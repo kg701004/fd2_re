@@ -26,6 +26,14 @@ class FD2SaveTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             fd2save.slot_bounds(4)
 
+    def test_summary_exposes_verified_empty_sentinel_only(self):
+        plain = bytearray(fd2save.FILE_SIZE)
+        start, _ = fd2save.slot_bounds(0)
+        plain[start + fd2save.ROSTER_SIZE] = 0xFF
+        report = fd2save.summarize(bytes(plain))
+        self.assertIn("slot=0", report)
+        self.assertIn("chapter=0xff empty=True", report)
+
 
 if __name__ == "__main__":
     unittest.main()
