@@ -252,7 +252,7 @@
       unsigned mono raw PCM 子樣本)+ 戰鬥音效動態 index(同檔案,依攻擊資料決定 index);播放走
       `AIL_init/set_sample_address/set_sample_loop_count/start_sample`(0x26896/0x26945)。
       待:14 子樣本→UI事件對照、戰鬥動態 index 表還原、remake 端接入(SDL_mixer/ebiten audio)
-- [~] **radial 指令環**：orig_04 截圖裁 4 圖示、十字繞單位+選中橘框；Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，runtime mapping 已修正。`0x1bbdc` case0→`0x1bb8c`/`0x1b8e7` item effect/slot chain 已釘出；待 sub-callee/effect table、圖示 provenance、攻防預覽。
+- [~] **radial 指令環**：orig_04 截圖裁 4 圖示、十字繞單位+選中橘框；Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，runtime mapping 已修正。`0x1bbdc` 的 item selector/equip/transfer branches 已部分追到 `0x1b932`、`0x1bb8c` insertion、`0x1bffe` equip、`0x1b8e7` removal；case0 `0x20c6f` effect path、圖示 provenance、攻防預覽仍待解碼。
 - [~] **魔法系統**（資料表與基礎 Cast 已接，native command/effect 尚未閉合）:magic.go(spells.json=EXE dump 36條+normalized spell names;InCastRange/Cast
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
       待:AoE(range>0)、命中率、輔助系(魔刃/風行…)效果。

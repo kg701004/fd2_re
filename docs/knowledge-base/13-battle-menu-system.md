@@ -61,7 +61,7 @@ native magic raw / menu state:
 |---:|---|---|---|
 | 0 | ↑ | `0x1f04a` → `0x28a6c`：攻擊目標／全螢幕攻擊演出 | 攻擊（case 0） |
 | 1 | ← | `0x1cff0`：配置 320×200 演出 buffer、法術 command／演出 loop（`0x1c269` 失敗會 disable） | 法術選單（case 1） |
-| 2 | → | `0x1bbdc`：item action loop；case 0 讀 item record `+0xd/+0x12/+0x15`、做 target geometry，呼叫 `0x1bb8c` effect 並以 `0x1b8e7` 更新/消耗 slot；特殊 item `type=0x17` 另檢查 class/level | 物品（case 2） |
+| 2 | → | `0x1bbdc`：item action loop；case 0 讀 item record `+0xd/+0x10/+0x12/+0x15`、做 target geometry，進 `0x20c6f` effect/target path；case 1 transfer uses `0x1bb8c` insertion + `0x1b8e7` removal；case 2 `0x1bffe` equips via `0x1c1c3` compatibility + `0x1c142` slot flags | 物品（case 2） |
 | 3 | ↓ | `0x13fd4`（未移動時 HP/狀態處理）→ `0x190ac` 格子互動／寶物檢查 | 待機／格子互動（case 3） |
 
 因此撤回舊 mapping「↑道具／←攻擊／→魔法／↓待機」。`0x1cff0` 的 command-`0x1e` spell path 已證實；family priority、damage/effect jump table 仍待完整拆解，本表不宣稱所有 effect 已完成。
@@ -74,7 +74,9 @@ native magic raw / menu state:
 
 ### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）
 
-物品 action 不是「完全不存在」：case 0 由游標選 item record，取 `+0xd` type、`+0x12` message/effect index、`+0x15` target/range；先以 `0x14818` 建 target list，再呼叫 `0x1bb8c`，成功後用 `0x1b8e7` 更新／消耗 inventory slot。`type=0x17` 走特殊 class/level gate（角色 `+8==0x18` 時另要求 level `+0x46 >= 20`）。`0x1b932`、`0x1bffe` 與 item effect table 仍未完整解碼，因此 remake item action 繼續 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
+物品 action 不是「完全不存在」：`0x1b932` 是 8-slot selector（status `0x80` 空槽、`0x40` equipped；方向鍵/wrap、Enter/Space、ESC）。`0x1bb8c` 只把 item 插入第一個空槽；case 1 將它與 `0x1b8e7` removal 串成 transfer。case 2 進入 `0x1bffe`，由 `0x1c1c3` compatibility predicate 與 `0x1c142` 設定選中 slot 的 `0x40` flag，再呼叫 `0x1b750` 重算。case 0 讀 `+0xd/+0x10/+0x12/+0x15`，其 effect/target callee 是 `0x20c6f`，仍未解碼；`type=0x17` 有 class/level gate（角色 `+8==0x18` 時另要求 level `+0x46 >= 20`）。因此 remake item action 繼續 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
+
+`0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`），並在部分分支更新 unit state、顯示 effect、最後統一回收選取／戰鬥 UI。這只證實 type-dispatch 與具體 callee provenance；各 routine 的數值語意尚未閉合，不能直接映射成藥水／卷軸規則。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 

@@ -81,7 +81,8 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
-- **[~] 物品使用效果碼**：`0x1bbdc`→`0x1bb8c`／`0x1b8e7` 的 item action/slot 消耗鏈已釘出，`+0xd/+0x12/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸各 effect table 仍未反組譯完。
+- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 `0x20c6f` effect/target path 仍待解碼。`+0xd/+0x10/+0x12/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸各 effect table 仍未反組譯完。
+- `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
 - **[阻] 轉職系統**:攻略層有(Lv20+教會、轉職道具表 58h–60h→英雄/聖者/召喚師…,doc 02 §5.10);反組譯機制(職業數值替換、能力繼承、成長表切換)未做。
 - **[阻] 轉職與 sprite**:角色 id = 肖像 = sprite組 恆等(doc 31,memory.md 權威);轉職後換成轉職態肖像編號(memory.md 0x20–0x41),sprite組是否隨之切到另一組**待反組譯轉職碼確認**。⚠ 舊版「凱拉斯組17→49、轉職當機」已作廢(DATO_067 誤判,凱拉斯實為 id16,三者恆等)。
 
