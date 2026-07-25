@@ -2575,6 +2575,13 @@ func (g *Game) ringInput() bool {
 			g.msg = "攻擊:選擇目標"
 		case 1: // 法術(原版 0x1cff0；有法術者才可用)
 			if ids := g.sel.NativeCommandIDs(); len(ids) > 0 && len(g.nativeCommandLabels) > 0 && len(g.nativeUIPalette) >= 0xce {
+				// Native 0x18d8c disables its command action when raw unit+0x27
+				// is nonzero.  NativeTransient[5] preserves exactly that byte;
+				// legacy Sealed is a separate normalized compatibility status.
+				if nativeCommandActionBlocked(g.sel) {
+					g.msg = "原始指令目前不可用"
+					return true
+				}
 				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
 				return true
 			}
@@ -3970,7 +3977,14 @@ func (g *Game) actionOverlayAvailability() [4]int {
 	if !attack {
 		availability[0] = 1
 	}
-	if g.sel.Sealed || !hasNativeCommandOrEditableSpell(g.sel) {
+	if hasNativeCommand(g.sel) {
+		// A raw command inventory follows the original unit+0x27 gate.  The
+		// normalized Spells list is retained only for old editable scenarios;
+		// it has its own legacy Sealed gate and is not evidence about FD2 ABI.
+		if nativeCommandActionBlocked(g.sel) {
+			availability[1] = 1
+		}
+	} else if g.sel.Sealed || len(g.sel.Spells) == 0 {
 		availability[1] = 1
 	}
 	if len(g.sel.Inventory) == 0 {
@@ -3994,10 +4008,9 @@ func hasNativeEquippedWeapon(unit *battle.Unit) bool {
 	return false
 }
 
-// hasNativeCommandOrEditableSpell uses the exact 0x1c269 bit inventory when
-// editable scenario data supplies it. Legacy scenarios without that raw field
-// retain their explicit normalized spell list as a compatibility fallback.
-func hasNativeCommandOrEditableSpell(unit *battle.Unit) bool {
+// hasNativeCommand uses only the exact 0x1c269 bit inventory.  It must not
+// infer native command availability from the normalized editable Spells list.
+func hasNativeCommand(unit *battle.Unit) bool {
 	if unit == nil {
 		return false
 	}
@@ -4006,7 +4019,15 @@ func hasNativeCommandOrEditableSpell(unit *battle.Unit) bool {
 			return true
 		}
 	}
-	return len(unit.Spells) != 0
+	return false
+}
+
+// nativeCommandActionBlocked is the raw action-menu gate recovered from
+// 0x18d8c: after 0x1c269 finds a command, unit+0x27 nonzero disables the
+// command direction.  Its gameplay name and writer remain intentionally
+// unknown; NativeTransient[5] is the fail-closed storage of that byte.
+func nativeCommandActionBlocked(unit *battle.Unit) bool {
+	return unit == nil || unit.NativeTransient[5] != 0
 }
 
 func nativeActionOffsetXY(offset int) (int, int) {

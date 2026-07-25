@@ -624,8 +624,9 @@
       renderer/effect stack 後才可重製原版 menu。2026-07-25 再釘 `0x18d8c` wrapper 的 item-side raw
       preconditions：`0x1b83d` 找八格 inventory 中 equipped(bit0x40) 且 ID<0x80 的項目，失敗寫 output+0；
       `0x1b8a6==0`（八格全 empty bit0x80）寫 output+8。它們對應哪個圖示仍未有 callee/E2，禁止猜接 UI。
-      同輪 direct scan 證實 `unit+0x27!=0` 令 `0x1598a` 在任何 command/MP/target 操作前直接無候選 return，
-      是完整 command submenu gate；尚未找出 writer 或 status 名稱，仍不得接 effect。
+      2026-07-26 再以完整 `0x18d8c` dataflow 固定四個 disabled words 的順序為 attack/native-command/item/wait，
+      `0x173e7/0x177fc` 僅選值 0；`0x1c269==0` 或 `unit+0x27!=0` 都寫 native-command `+4=1`。
+      remake 已以 `NativeTransient[5]` gate raw command；撤回任何「`+0x27` 就是 legacy `Sealed`」的斷言，writer／status 名稱仍未知。
       action chooser 本體亦已完成 E0：availability=0 才可用 ↑/←/→/↓ 選 action 0/1/2/3，Enter/Space 確認、
       Esc 取消；四張 indexed asset 自中心做 4-frame 十字 slide，72×72 backup 每幀 restore。尚缺 resource
       anchor 與畫面 oracle，故仍不可將現有文字/ring UI 當成 original renderer。resource provenance 已補：

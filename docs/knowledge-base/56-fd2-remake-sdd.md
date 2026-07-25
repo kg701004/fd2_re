@@ -112,6 +112,24 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。
 
+### UI-03 action chooser availability contract（E0 partial）
+
+`0x18d8c` 先清四個 dword，按固定順序傳給 `0x173e7/0x177fc`：`[+0]` attack、`[+4]`
+native command、`[+8]` item、`[+12]` wait。`0x173e7` 選第一個值為 0 的方向，`0x177fc`
+只允許落在值為 0 的方向；因此這些值是 disabled flag（非可用 count）。具體 E0 precondition 為：
+
+- attack：`0x1b83d(actor,0)` 必須在 runtime inventory 的八個 2-byte slots 找到 flag `0x40`
+  且 ID `<0x80` 的 entry；其 item record `+0xb/+0xc` 傳入 `0x14818` 後仍須產生 target，否則 `+0=1`。
+- native command：`0x1c269(actor,0)` 必須枚舉至少一個 raw command bit，且 raw `unit+0x27==0`；任一失敗皆寫 `+4=1`。
+  `+0x27` 的 writer／遊戲名稱尚未閉合，故 remake 只以 `NativeTransient[5]` 保存並 gate raw command，**不得再說它等於 legacy `Sealed`**。
+- item：`0x1b8a6(actor)` 計數八 slot 中 flag `0x80` 未設的 entries；零個即 `+8=1`。目前 editable
+  inventory 沒有這個 runtime flag，故 `len(Inventory)` 僅是明確標記的 approximation。
+- wait：wrapper 未寫 `+12`，故在這條 chooser path 永遠可選。
+
+既有 normalized `Spells`／`Sealed` 只保留給缺 raw command mask 的舊 editable scenario 相容 UI；它不得作為
+FD2 native action gate 的證據，也不得覆蓋 raw mask 已存在時的 `unit+0x27` gate。攻擊 geometry 與 item selector/effect
+仍未閉合，native overlay 維持 partial。
+
 同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
 
 玩家 table 的 IDs0..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
