@@ -40,9 +40,9 @@ attack pipeline、1 走 `0x1cff0` command selector、2 走 `0x1bbdc` item select
 `unit+0x27` 的 action effect 已額外由 `0x1598a` 固定：它先取 `0x1c269` command count，隨即讀
 `unit+0x27`；count 為零或此 byte 非零都在**任何** command record、MP gate、target-grid 建立之前
 直接走 zero return。因此 `+0x27` 是整個 native command submenu 的 gate，不只是 wrapper 的一個
-局部 flag。全 code 掃描的另外兩個 `+0x27` 命中是這個 read 與 wrapper read；`0x1eb64` 的 `lea
-[ebx+0x27]` 是 UI resource frame index，並非 unit access。尚未定位此 byte 的寫入者／遊戲名稱，
-故不得稱其為沉默、封魔或任一 status effect。
+局部 flag。`0x1eb64` 的 `lea [ebx+0x27]` 是 UI resource frame index，並非 unit access。後續已定位
+command 22 的 `0x22BE1→0x22D1B` 會寫入 `rand()%4+2`；狀態名稱與所有 producer 仍未閉合，故不得稱其為
+沉默、封魔或任一 status effect。
 
 ### UI-03 action overlay/input closure（2026-07-25，E0 partial）
 

@@ -4032,7 +4032,8 @@ func hasNativeCommand(unit *battle.Unit) bool {
 
 // nativeCommandActionBlocked is the raw action-menu gate recovered from
 // 0x18d8c: after 0x1c269 finds a command, unit+0x27 nonzero disables the
-// command direction.  Its gameplay name and writer remain intentionally
+// command direction. Command 22 is a verified writer of this duration byte,
+// but its gameplay name and exhaustive producer set remain intentionally
 // unknown; NativeTransient[5] is the fail-closed storage of that byte.
 func nativeCommandActionBlocked(unit *battle.Unit) bool {
 	return unit == nil || unit.NativeTransient[5] != 0
