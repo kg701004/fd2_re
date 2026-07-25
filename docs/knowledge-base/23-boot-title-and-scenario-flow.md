@@ -286,6 +286,10 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 - **此主選單迴圈未見 ESC 分支**(只有移動 + 確認)[驗];ESC 取消是戰場/子選單的行為(見 doc 13),非主選單。
 - 回傳值分派(回 `0x25ebb`，2026-07-25 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀檔**（配置 save resource 後進 `0x30550` slot selector，再從選中記錄拷出 0xA00 bytes 至 runtime state）。`eax != 0 && eax != 1` 則跳到 `0x26124`，直接呼叫 battle setup `0x10010`；這是與 slot selector 分離的第三分支。其使用的持久資料／玩家可見名稱尚未閉合，故不得把它武斷命名為「靜默讀檔」或讓 remake 的單一 JSON load 冒充等價行為。
 
+### `0x30550` LOAD slot selector（2026-07-25，E0 partial）
+
+title return `1` 後的 selector 以 `[0x53c57]` 作 slot cursor，確實只接受 **0..3**：`0x3069d..0x306d7` 的 ↓ 只在 `<3` 時加一，`0x306d9..0x30705` 的 ↑ 只在 `>0` 時減一，**不 wrap**。`0x30437` 依新 cursor 重繪 selection；`0x305f0` 的第一次畫面亦以同一 global cursor 畫出 entry。`0x1c`／`0x39`（Enter／Space）回 `1` confirm，`0x01`（Esc）回 `-1` cancel。這與 DOSBox empty-save screenshot 的四列 slot 與第一列 outline 一致，但只有 E0/E2 的空槽／輸入證據；有效 record layout、刪除、overwrite、成功 LOAD 後各場景恢復仍未閉合。
+
 ---
 
 ## 4. 新遊戲 → 開場對話 → 自動進戰場(B)
