@@ -47,4 +47,10 @@ func TestDecodeOriginalFDICON(t *testing.T) {
 	if len(b.Sprites) != 1680 || len(b.Sprites[0].Pixels) != NativeSize*NativeSize {
 		t.Fatalf("bank=%#v", b)
 	}
+	if got, err := b.SpriteFor(4, 2, 1); err != nil || len(got.Pixels) != NativeSize*NativeSize {
+		t.Fatalf("native group×12+pose×3+frame selector: sprite=%#v err=%v", got, err)
+	}
+	if _, err := b.SpriteFor(4, 4, 0); err == nil {
+		t.Fatal("out-of-range native pose was accepted")
+	}
 }

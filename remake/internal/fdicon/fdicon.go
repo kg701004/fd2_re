@@ -16,6 +16,21 @@ type Bank struct{ Sprites []Sprite }
 
 type Sprite struct{ Pixels, Mask []byte }
 
+// SpriteFor implements the native 0x127e0 selector after 0x11019 has built
+// its pointer table: group×12 + pose×3 + frame. Pose is the raw runtime byte
+// (+3) and frame is +4; callers must supply both explicitly rather than
+// deriving an animation frame from a legacy UI approximation.
+func (b *Bank) SpriteFor(group, pose, frame int) (Sprite, error) {
+	if b == nil || group < 0 || pose < 0 || pose >= 4 || frame < 0 || frame >= 3 {
+		return Sprite{}, errors.New("fdicon: invalid native sprite selector")
+	}
+	i := group*12 + pose*3 + frame
+	if i < 0 || i >= len(b.Sprites) {
+		return Sprite{}, errors.New("fdicon: sprite selector is out of bank")
+	}
+	return b.Sprites[i], nil
+}
+
 func DecodeFile(path string) (*Bank, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {

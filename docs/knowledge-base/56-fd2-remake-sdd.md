@@ -431,6 +431,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `group×12 + pose×3 + frame`. The remaining adapter boundary is runtime roster state, remap selection and layer order—not an invented FIGANI or unknown archive mapping.
 
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus the optional 256-byte LUT blit distinction. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
+
+   `Bank.SpriteFor(group,pose,frame)` now enforces the recovered `group×12 + pose×3 + frame` selector (pose 0..3, frame 0..2). Battle `Fig` and `Dir` provide only part of that ABI; the current native frame must remain explicit until the roster animation scheduler is recovered.
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
 5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
 
