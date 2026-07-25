@@ -19,6 +19,22 @@
 | UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present；`0x1f42d` 的 LMI1 #0x52 double-slide entry/anchor 已釘 | partial | MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
 | UI-12 save/load | F5/F9 global path；save package 自有 schema | partial | scene-safe boundaries、versioning、原版 save semantics |
 
+### UI-03 dispatch-wrapper recheck（2026-07-25，E0 partial）
+
+Docker/Capstone 重新從 `0x18d8c` 入口線性追到 return，確認這是 action dispatch 的
+**wrapper**，不能誤當 command-grid renderer：它先清 caller output 的 `+0` 與 global
+`[0x53ec8]`，以 `0x1b83d(unitSlot,0)` 取得前序選擇；若回傳 `-1`，只將 output `+0=1`
+後結束。非取消路徑會經 `0x1b722 → 0x4e56c` 取 record `+0xb/+0xc`，再呼叫
+`0x14818(x,y,0,record+0xc,record+0xb,0)` 建立前序 target state。
+
+其後 `0x1b8a6(unitSlot)` 為零時設 output `+8=1`；`0x1c269(unitSlot,0)` 為零及
+`unit[+0x27] != 0` 都設 output `+4=1`。這三個 caller-visible flags 的完整玩法名稱尚未
+由 callee 或實機畫面閉合，SDD 只保留 raw offsets，不能擅自畫成某個 disabled icon。`0x177fc`
+是 wrapper 等待的選擇 loop，回傳 `-1` 則直接取消；非取消才按 `[0x53c57]` 分派：0 走
+attack pipeline、1 走 `0x1cff0` command selector、2 走 `0x1bbdc` item selector，其他值才走
+`0x13fd4/0x190ac` 的 wait/field path。這補強 UI-03 的取消階層與 dispatch 邊界，但不增加
+任何 renderer 或 flag 語意斷言。
+
 ## 明確缺口（不可用 fallback 掩蓋）
 
 - `item` action 仍是提示字串，不能宣稱道具 UI 完成。
