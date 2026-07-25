@@ -58,4 +58,4 @@ indexed cell/座標/節奏，不足以命名 MAP/TURN 欄位或確認其為「�
 仍 partial。
 
 下一輪先處理 UI-03／UI-04 的原版 dispatch 與 weapon reach provenance，再補 D8 的
-`0x1f42d` 資源 ABI；在此之前不新增猜測性 renderer。
+MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 renderer。
