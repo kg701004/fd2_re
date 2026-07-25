@@ -435,6 +435,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    `Bank.SpriteFor(group,pose,cycle)` enforces the recovered `group×12 + pose×3 + cycle` selector (pose 0..3, cycle 0..2). `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
 
    The raw/palette-band choice is also closed: `0x127e0` tests runtime unit `+5 bit7`; clear uses raw `0x4deda`, set uses `0x4de56` band. `fdicon.BlitForNativeFlags` makes that dependency explicit; it is not a guessed camp or LUT selection.
+
+   Native placement is also represented as a pure byte-offset primitive: `NativePlacementOffset` preserves `0x127e0`'s `0x75d8 + (y-cameraY)*24*456 + (x-cameraX)*24 + unit[+4]*directionOffset` equation (pose 0/1/2/3 = down/left/up/right), with the `unit+0x26`-gated native 0-or-1 pixel shift. It deliberately does not claim an Ebiten coordinate or layer order.
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
 5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
 

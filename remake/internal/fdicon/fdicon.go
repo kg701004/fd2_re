@@ -10,7 +10,11 @@ import (
 	"os"
 )
 
-const NativeSize = 24
+const (
+	NativeSize            = 24
+	NativeMapStride       = 0x1c8
+	NativeUnitOriginBytes = 0x75d8
+)
 
 type Bank struct{ Sprites []Sprite }
 
@@ -49,6 +53,24 @@ func NativeFrameIndex(motionOffset int, forceBase bool, idleCycle, movingCycle i
 		cycle = 0
 	}
 	return cycle, nil
+}
+
+// NativePlacementOffset reproduces 0x127e0's byte destination before it is
+// added to the native 0x53a49 framebuffer. Map cells are 24×24 indexed pixels
+// in a 456-byte stride. motionOffset is unit+4 and advances in byte space in
+// the runtime pose direction: down, left, up, right. forceBase is unit+0x26
+// nonzero; the original then adds its toggled global pixelShift (0 or 1).
+// This returns a byte offset rather than pretending it is a GUI coordinate.
+func NativePlacementOffset(x, y, cameraX, cameraY, pose, motionOffset, pixelShift int, forceBase bool) (int, error) {
+	if pose < 0 || pose >= 4 || pixelShift < 0 || pixelShift > 1 {
+		return 0, errors.New("fdicon: invalid native placement")
+	}
+	directionOffset := [4]int{NativeSize * NativeMapStride, -4, -NativeSize * NativeMapStride, 4}
+	offset := NativeUnitOriginBytes + (y-cameraY)*NativeSize*NativeMapStride + (x-cameraX)*NativeSize + motionOffset*directionOffset[pose]
+	if forceBase {
+		offset += pixelShift
+	}
+	return offset, nil
 }
 
 func DecodeFile(path string) (*Bank, error) {

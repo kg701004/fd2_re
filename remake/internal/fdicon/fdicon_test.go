@@ -84,3 +84,30 @@ func TestNativeFrameIndexMatches127E0(t *testing.T) {
 		t.Fatal("invalid cycle accepted")
 	}
 }
+
+func TestNativePlacementOffsetMatches127E0(t *testing.T) {
+	const base = NativeUnitOriginBytes + 2*NativeSize*NativeMapStride + 3*NativeSize
+	cases := []struct {
+		pose, motion, shift int
+		force               bool
+		want                int
+	}{
+		{0, 2, 0, false, base + 2*NativeSize*NativeMapStride},
+		{1, 2, 0, false, base - 8},
+		{2, 2, 0, false, base - 2*NativeSize*NativeMapStride},
+		{3, 2, 0, false, base + 8},
+		{3, 1, 1, true, base + 5},
+	}
+	for _, tc := range cases {
+		got, err := NativePlacementOffset(8, 6, 5, 4, tc.pose, tc.motion, tc.shift, tc.force)
+		if err != nil || got != tc.want {
+			t.Fatalf("%+v got=%#x err=%v", tc, got, err)
+		}
+	}
+	if _, err := NativePlacementOffset(0, 0, 0, 0, 4, 0, 0, false); err == nil {
+		t.Fatal("invalid pose accepted")
+	}
+	if _, err := NativePlacementOffset(0, 0, 0, 0, 0, 0, 2, true); err == nil {
+		t.Fatal("invalid native pixel shift accepted")
+	}
+}

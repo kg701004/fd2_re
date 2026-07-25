@@ -68,12 +68,12 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表),**差別在 tile �
 0x1291e  imul edi, edi, 0xc        ; 組 × 12
 0x12921  mov eax,esi; shl 2; sub esi   ; 方向 × 3
 0x12928  add eax, edi              ; 組×12 + 方向×3
-0x1292a  add eax, edx              ; + 幀(unit+0x26 動作)
+0x1292a  add eax, edx              ; + cycle（由全域 idle/moving phase 選出）
 0x1292c  mov edx,[0x53a61]         ; FDICON sprite 指標表
 0x12932  mov eax,[edx + eax*4]     ; sprite[index]
 ```
 
-→ **FDICON sprite index = 組 × 12 + 方向 × 3 + 幀**(公式已驗證),組 = `unit[+2]`(經 `call 0x11019` 從 `unit[+7]` 決定)。
+→ **FDICON sprite index = 組 × 12 + 方向 × 3 + cycle**（公式已驗證）；組為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x11019(group)` 建立每組 12 個 FDICON pointers 的表。
 
 > **mapping = 角色身份恆等(青衫 memory.md 權威證實 2026-06-28)**:
 > 我方 32 角色:**角色 index = 肖像(FA)= sprite組(Z1)= 角色名,基本態三者恆等**。
