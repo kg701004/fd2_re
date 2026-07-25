@@ -9,7 +9,7 @@
 | UI-01 title/menu | F2/F3/F5/F9 global input（約 3065、3291）；title boot path 尚未拆成獨立 scene contract | partial | Ghidra/IDA：menu item table、scan-code dispatch、save/load branch |
 | UI-02 field | map/camera/cursor/unit/HUD Draw 約 3441–3568、4571、4595 | partial | 原版 cursor camera、HUD anchor、FDOTHER panel resource |
 | UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；remake `ringInput` 約 2407 已改同序；item branch `0x1bbdc` selector/equip/transfer partially traced；battle selector `0x19953` 讀 `0x36d98`，確認鍵回傳 1、取消鍵回傳 -1，左右鍵更新 `[0x53c57]` | partial | `0x1cff0` command/effect table、`0x20c6f` item effect path、完整 enable gate、end-turn entry |
-| UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；Docker/Capstone 已釘 `0x14818` 核心以 `abs(x-cx)+abs(y-cy) < radius` 標 target grid，再依 unit camp/active state 過濾輸出；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化 |
+| UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；Docker/Capstone 已釘 `0x14818` 先以 table record 更新 target grid，再疊 `abs(x-cx)+abs(y-cy) < radius` marker、依 unit camp/active state 過濾輸出；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化 |
 | UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
 | UI-06 HUD | target HUD 約 3557–3568；full-screen battle panel 約 4065、4180 | partial | FDOTHER loader、數字 cell、游標避讓和 320×200 ground truth |
 | UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開 | partial | 以原版 handler offset／DOSBox input 差分核對每章是否進 town/shop/rest/preparation/ending |
@@ -65,12 +65,13 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
-`0x14818` 先以 source cell `(cx,cy)` 掃全格；對每一格算
-`abs(x-cx)+abs(y-cy)`，只有嚴格小於 caller radius 的格寫入 `0xff` target-grid marker。
-隨後掃 0x50-byte unit buffer：死亡／inactive unit 跳過、非 marker cell 跳過，再依 caller
-selector 對 `unit+6` camp 過濾，將 slot index 寫入可選 target output。當另一個 mode argument
-大於等於 `0x10` 時另走一條十字形 clear path；它的玩法語意與 weapon `min/max` 欄位尚未完成
-caller-dataflow 對照，不能把這個 raw `radius` 直接等同 remake `AtkMax` 或宣稱已解 LOS。
+`0x14818` 先以 `0x61646 + 0x14*n` 的 20-byte record 呼叫 `0x4e040`，建立／更新 target grid；
+此 table-driven 路徑尚未命名。其後才有可獨立證實的一層幾何：以 source cell `(cx,cy)` 掃全格、
+對每一格算 `abs(x-cx)+abs(y-cy)`，只有嚴格小於 caller radius 的格寫入 `0xff` marker。
+最後掃 0x50-byte unit buffer：死亡／inactive unit 跳過、非 marker cell 跳過，再依 caller selector
+對 `unit+6` camp 過濾，將 slot index 寫入可選 target output。當另一個 mode argument 大於等於
+`0x10` 時另走一條十字形 clear path；它的玩法語意與 weapon `min/max` 欄位尚未完成 caller-dataflow
+對照，不能把這個 raw `radius` 直接等同 remake `AtkMax` 或宣稱已解 LOS。
 
 補作 `0x1cff0` caller 的 stack-dataflow 後，`0x14818` 的參數順序已可固定為
 `(x, y, output, mode, radius, campSelector)`：`mode` 是第 4 參數、上述嚴格曼哈頓比較使用

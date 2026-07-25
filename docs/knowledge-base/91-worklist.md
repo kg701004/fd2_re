@@ -583,8 +583,9 @@
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
 - [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
-- [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：target grid 核心是 `|x-cx|+|y-cy| < caller radius`，
-      再依 marker／unit active flag／camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這證實曼哈頓幾何，
+- [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它先以 `0x61646` 的 20-byte record 呼叫
+      `0x4e040` 建立／更新 target grid，後續再有 `|x-cx|+|y-cy| < caller radius` 的 marker 層、unit active flag／
+      camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這只證實其中的曼哈頓幾何，
       `0x1cff0` stack-dataflow 亦已固定參數為 `(x,y,out,mode,radius,campSelector)`：special `0x17` 用
       `record+3`/radius 1，一般 path 用 `record+4`/radius 0 並消費既有 marker。尚未將這些 producer
       同武器 `range_min/range_max` table 完整對位，故不改寫為「所有武器 max inclusive」或 LOS 定論。
