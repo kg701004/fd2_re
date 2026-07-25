@@ -210,6 +210,23 @@ func (s Sprite) BlitLUT(dst []byte, stride, x, y int, lut []byte) error {
 	return nil
 }
 
+// BlitLUTTransparent reproduces 0x4dd52: source writes are LUT-mapped while
+// mode-3 spans preserve the destination (unlike 0x4dcc6's BlitLUT).
+func (s Sprite) BlitLUTTransparent(dst []byte, stride, x, y int, lut []byte) error {
+	if len(lut) != 256 || len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
+		return errors.New("fdicon: invalid transparent LUT blit")
+	}
+	for row := 0; row < NativeSize; row++ {
+		for col := 0; col < NativeSize; col++ {
+			i := row*NativeSize + col
+			if s.Mask[i] != 0 {
+				dst[(y+row)*stride+x+col] = lut[s.Pixels[i]]
+			}
+		}
+	}
+	return nil
+}
+
 func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {
 	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
 		return errors.New("fdicon: invalid blit")

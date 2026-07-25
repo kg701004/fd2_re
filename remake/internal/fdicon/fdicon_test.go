@@ -63,6 +63,15 @@ func TestParseAndBlitPreserveTransparentDitherAndPaletteBand(t *testing.T) {
 	if err := b.Sprites[0].BlitLUT(dst, 32, 0, 0, lut[:255]); err == nil {
 		t.Fatal("short LUT accepted")
 	}
+	for i := range dst {
+		dst[i] = 1
+	}
+	if err := b.Sprites[0].BlitLUTTransparent(dst, 32, 0, 0, lut); err != nil {
+		t.Fatal(err)
+	}
+	if got := dst[:5]; got[0] != 0x27 || got[2] != 0x29 || got[3] != 1 || got[4] != 1 {
+		t.Fatalf("transparent LUT pixels=%v", got)
+	}
 }
 
 func TestDecodeOriginalFDICON(t *testing.T) {
