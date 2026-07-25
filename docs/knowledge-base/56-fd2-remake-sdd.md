@@ -124,7 +124,10 @@ branch）以 `record[+3]` 和 `record[+6]` 呼叫 `0x14818`，把 candidate unit
 array；再以 `0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後同一個 array 與 count
 直接傳入 `0x2a6bd(unit, commandID, count, array)`，後者逐 index 呼叫 `0x1c75e`。這證實 command 0 的
 numeric resolver 是 **per candidate**，而非 legacy UI 的單格 `CastArea` contract；`0x14818` 的方向／形狀
-與 target-code semantics 尚未逐值命名，native UI 必須繼續 fail-closed。
+與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
+使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須是 alive/on-grid，並以 target code 對 runtime
+`unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。這些值尚未全部命名為玩家／友軍／敵軍，
+亦未重建 `sub_4e555` 的 map-mask 規則，故 native UI 仍 fail-closed。
 
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組

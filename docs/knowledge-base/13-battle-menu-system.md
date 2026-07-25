@@ -77,6 +77,9 @@ native magic raw / menu state:
 
 同一條 caller dataflow 排除了「confirm 只傳回一個格子」的猜測：一般 record 以 `+3/+6` 呼叫 `0x14818` 產生 stack candidate-index array，`0x115b6` 接收 `(mode=+6,count,array)` 做游標／確認，成功後 `0x2a6bd` 接到的仍是該 `array,count`，並逐 element 呼叫 `0x1c75e`。故 command0 有 per-candidate 傷害，而 `+6` target-code 的值域與 `0x14818` geometry 仍須逐值 RE；現有單格 normalized target UI 不是原版證明。
 
+`0x14818` 本體現已釘其 raw geometry：record `+3 < 0x10` 時交由 `0x4e555` 產生 map/reach mask；`+3 >= 0x10`
+時只 mark 同 x 或同 y、距離不超過 `(+3-0x10)` 的十字格。接著掃 roster，略過 inactive unit 與 mask=`0xff` 格，再用 record `+6` 篩 runtime `unit+6`：code 0 要 `==0`、1 要 `!=0`、2 要 `!=1`、3 要 `==2`。這是 direct branch evidence；不可在未追 unit+6 constructor／map mask 前把四值改名成完整陣營語意。
+
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 
 ### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）
