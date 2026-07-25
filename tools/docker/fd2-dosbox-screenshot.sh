@@ -86,10 +86,10 @@ for step in "${steps[@]}"; do
     kind="${step%%:*}"
     arg="${step#*:}"
     case "$kind" in
-        wait) sleep "$arg" ;;
-        key) xdotool windowfocus "$window"; xdotool key "$arg" ;;
-        type) xdotool windowfocus "$window"; xdotool type --delay 80 "$arg" ;;
-        shot) import -window root "/shots/${arg}.png" ;;
+        wait) echo "[fd2-shot] wait $arg"; sleep "$arg" ;;
+        key) echo "[fd2-shot] key $arg"; xdotool windowfocus "$window"; xdotool key "$arg" ;;
+        type) echo "[fd2-shot] type $arg"; xdotool windowfocus "$window"; xdotool type --delay 80 "$arg" ;;
+        shot) echo "[fd2-shot] shot $arg"; import -window root "/shots/${arg}.png" ;;
         *) echo "unknown timeline step: $step" >&2; exit 2 ;;
     esac
 done
