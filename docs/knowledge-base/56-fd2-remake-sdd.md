@@ -137,7 +137,9 @@ cardinal range（無阻擋時才等於 Manhattan）。
 `battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把**一次** verified `0x14818` 呼叫做成獨立資料層：
 caller 必須提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`，並明確選定 first
 selection stage (`actor,+3`) 或 confirmed effect stage (`cursor,+4`)。它覆蓋 four-way flood-fill、bit40/bit80、
-cross branch 與四個 camp predicates；UI 尚未接管兩階段 confirm/effect，故不可自動替換 legacy cast。
+cross branch 與四個 camp predicates。`NativeCommandEffectTargets` 進一步要求 confirmed unit 確在 first candidate
+list，才以其 cell 與 `+4` 取 effect list，固定 generic two-stage contract；UI 尚未接管這個流程，故不可自動替換
+legacy cast。
 
 Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
 low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出

@@ -129,3 +129,29 @@ func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []b
 	}
 	return targets, nil
 }
+
+// NativeCommandEffectTargets mirrors the generic two-stage 0x1cff0 path.
+// The first 0x14818 call originates at actor with record+3; 0x115b6 confirms
+// one member of that list; the second call originates at the confirmed unit's
+// cell with record+4 and supplies the effect list to 0x2a6bd.  It deliberately
+// excludes the command 0x17/0x1e special branches and all presentation.
+func NativeCommandEffectTargets(w, h int, actor, confirmed *Unit, selectionMode, effectMode, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
+	if actor == nil || confirmed == nil || !actor.OnField || !confirmed.OnField {
+		return nil, fmt.Errorf("invalid native command actor/confirmed unit")
+	}
+	selection, err := NativeCommandTargets(w, h, Cell{X: actor.X, Y: actor.Y}, selectionMode, targetCode, flags, units)
+	if err != nil {
+		return nil, err
+	}
+	confirmedCandidate := false
+	for _, candidate := range selection {
+		if candidate == confirmed {
+			confirmedCandidate = true
+			break
+		}
+	}
+	if !confirmedCandidate {
+		return nil, fmt.Errorf("confirmed unit is not a native command candidate")
+	}
+	return NativeCommandTargets(w, h, Cell{X: confirmed.X, Y: confirmed.Y}, effectMode, targetCode, flags, units)
+}

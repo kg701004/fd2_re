@@ -47,3 +47,20 @@ func TestNativeCommandTargetCellsFailsClosedWithoutRawFlags(t *testing.T) {
 		t.Fatal("missing raw flags must fail closed")
 	}
 }
+
+func TestNativeCommandEffectTargetsRequiresOriginalTwoStages(t *testing.T) {
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, OnField: true}
+	confirmed := &Unit{Camp: Enemy, X: 1, Y: 0, HP: 10, OnField: true}
+	otherEnemy := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, OnField: true}
+	units := []*Unit{actor, confirmed, otherEnemy}
+
+	// Generic command: +3=1 chooses the adjacent enemy as center; +4=0
+	// resolves the final effect only on that confirmed cell.
+	effects, err := NativeCommandEffectTargets(3, 1, actor, confirmed, 1, 0, 0, make([]byte, 3), units)
+	if err != nil || len(effects) != 1 || effects[0] != confirmed {
+		t.Fatalf("effects=%v err=%v", effects, err)
+	}
+	if _, err := NativeCommandEffectTargets(3, 1, actor, otherEnemy, 1, 0, 0, make([]byte, 3), units); err == nil {
+		t.Fatal("a non-selection candidate must not become the effect origin")
+	}
+}
