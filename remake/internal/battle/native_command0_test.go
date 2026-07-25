@@ -20,8 +20,8 @@ func TestExecuteNativeCommand0UsesTwoStageTargetsAndOneMPDebit(t *testing.T) {
 	if err != nil || len(results) != 1 || results[0].Target != confirmed || !results[0].Hit {
 		t.Fatalf("results=%+v err=%v", results, err)
 	}
-	if actor.MP != 1 || confirmed.HP >= 100 || other.HP != 100 {
-		t.Fatalf("mp/hp actor=%d confirmed=%d other=%d", actor.MP, confirmed.HP, other.HP)
+	if actor.MP != 1 || !actor.Acted || confirmed.HP >= 100 || other.HP != 100 {
+		t.Fatalf("mp/acted/hp actor=%d acted=%v confirmed=%d other=%d", actor.MP, actor.Acted, confirmed.HP, other.HP)
 	}
 }
 
@@ -34,8 +34,8 @@ func TestExecuteNativeCommand0FailsBeforeMPOnMissingResistance(t *testing.T) {
 	}
 	book[0] = NativeCommandRecord{ID: 0, Damage: 50, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 2, TargetCode: 0}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
-	if _, err := st.ExecuteNativeCommand0(actor, target, map[int]int{}, rand.New(rand.NewSource(1))); err == nil || actor.MP != 3 || target.HP != 100 {
-		t.Fatalf("missing resistance mutated state: mp=%d hp=%d err=%v", actor.MP, target.HP, err)
+	if _, err := st.ExecuteNativeCommand0(actor, target, map[int]int{}, rand.New(rand.NewSource(1))); err == nil || actor.MP != 3 || actor.Acted || target.HP != 100 {
+		t.Fatalf("missing resistance mutated state: mp=%d acted=%v hp=%d err=%v", actor.MP, actor.Acted, target.HP, err)
 	}
 }
 

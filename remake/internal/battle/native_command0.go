@@ -58,5 +58,8 @@ func (s *State) ExecuteNativeCommand0(actor, confirmed *Unit, resistByClass map[
 		}
 		results = append(results, NativeCommand0Result{Target: target, NativeCommand0Damage: resolved})
 	}
+	// 0x18D8C calls 0x13512 only after 0x1CFF0 reports success; 0x13512 is
+	// the direct unit+5 bit0x80 writer projected as Unit.Acted.
+	actor.Acted = true
 	return results, nil
 }
