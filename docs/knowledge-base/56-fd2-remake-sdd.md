@@ -176,8 +176,10 @@ ID24 必須和上段嚴格分開。`funcs_1541f[24]` 雖然在 AI／自動執行
 玩家 ID24 的效果或 MP ABI。玩家 `0x276ec` 的 state dataflow 已知：它選固定倍率 `15`，算
 `trunc(actor.+0x48 * 15 / 10)`，逐 final target 扣 target `+0x4a` 後送入
 `0x1c81f(target, amount)`；該共用 writer 再以其既有 90–99.9% RNG 路徑扣 `+0x40`、clamp 至零。
-其多段 presentation、是否／何時扣 MP 的 event boundary、AI alias 的設計意圖與 native UI 均未以
-remake regression 關閉，故不可冒充 ID16 heal 或接入 generic numeric executor。
+`0x276ec` 先經 `0x2b659`；該 event 對 ID24 以 `0x1ca89(actor,0x18)` 扣 record24 `+5` MP。原版為了
+多段演出會先暫存 total delta、把 HP 復原，再以等份遞減回最終值；state-only remake 因此可一次套用相同
+最終 delta。AI alias 的設計意圖與 native UI/SFX/timing 仍未以 remake regression 關閉，故不可冒充 ID16 heal
+或接入 generic numeric executor。
 
 IDs17..19 是第三條 transient-modifier family，亦不能交給 damage/heal executor。ID17
 `0x226EA→0x22721`、ID18 `0x2282F→0x22866`、ID19 `0x22960→0x22997` 都在 final target loop 中先拒絕
@@ -262,7 +264,7 @@ acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，�
 | 20–21 | `0x22A85/22BC6→22AF6`，clear `+0x25/+0x26` 並借 record10 restore | `ExecuteNativeCommandClearRestore` | 未接 |
 | 22 | `0x22BE1→22D1B`，class/RNG gate、fixed 10 HP、write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
 | 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
-| 24 | 玩家 `2A6BD→276EC→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | 未接：MP/event 與 multi-hit/presentation contract 未關閉 | 未接 |
+| 24 | 玩家 `2A6BD→276EC→2B659/1CA89→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | `ExecuteNativeCommand24`（state-only final delta） | multi-hit／SFX／native UI 未接 |
 | 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
 | 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
 | 28–35 | raw table／dispatch 可達；effect family未完整關閉 | 禁止接線 | 禁止接線 |
