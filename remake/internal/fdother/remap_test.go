@@ -81,3 +81,30 @@ func TestApplyRadialLUTRemapRejectsIncompleteABI(t *testing.T) {
 		t.Fatal("overflowing radius was accepted")
 	}
 }
+
+func TestApplyCenteredRectLUTRemapClipsAndKeepsEndExclusive(t *testing.T) {
+	dst := make([]byte, 8*4)
+	for i := range dst {
+		dst[i] = byte(i)
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(200 + i%20)
+	}
+	spec := CenteredRectLUTRemap{CenterX: 1, HorizontalRadius: 3, StartY: 1, EndY: 3, ClipWidth: 6}
+	if err := ApplyCenteredRectLUTRemap(dst, 8, lut, spec); err != nil {
+		t.Fatal(err)
+	}
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 8; x++ {
+			got := dst[y*8+x]
+			want := byte(y*8 + x)
+			if y >= 1 && y < 3 && x < 4 { // [-2,4) clipped to [0,4)
+				want = lut[want]
+			}
+			if got != want {
+				t.Fatalf("y=%d x=%d: got %d want %d", y, x, got, want)
+			}
+		}
+	}
+}
