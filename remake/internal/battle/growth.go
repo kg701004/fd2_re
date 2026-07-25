@@ -31,8 +31,8 @@ func (r StatRange) roll(rng *rand.Rand) int {
 	return r.Min + rng.Intn(r.Max-r.Min+1)
 }
 
-// GrowthRow 一個(角色,職業)每級成長範圍(doc03「升級成長 11B」欄位;MG 習得索引與本
-// 系統無關,不收錄)。
+// GrowthRow 一個(角色,職業)每級成長範圍。原生第 11 byte 的 learn_idx 已另由
+// CommandLearn 表處理，不能再被稱為 magic/spell index。
 type GrowthRow struct{ AP, DP, DX, HP, MP StatRange }
 
 // growthTable — 各角色×職業每級成長範圍(doc02 §7.2 逐格與 EXE 升級成長表
@@ -189,6 +189,7 @@ type LevelUpEvent struct {
 	NewLv                  int
 	ApGain, DpGain, DxGain int
 	HpGain, MpGain         int
+	LearnedCommandIDs      []int
 }
 
 // applyLevelUpGrowth 依 growthTable 查到的(Name,ClsName)範圍擲骰套用一次升級成長。
@@ -240,6 +241,12 @@ func (u *Unit) applyLevelUpGrowth(rng *rand.Rand) (LevelUpEvent, bool) {
 // 決定」)。只對 Own/Ally 生效(見檔頭說明);Enemy 呼叫此函式一律 no-op、回 nil。
 // amount<=0 也直接回 nil(miss、或 growthTable 查無資料等情形上游已算出 0,不必進來擲骰)。
 func GainExp(u *Unit, amount float64, rng *rand.Rand) []LevelUpEvent {
+	return gainExp(u, amount, rng, nil)
+}
+
+// GainExp applies the legacy standalone growth path. State.GainExp additionally
+// applies the exact portrait-indexed native command-learning table.
+func gainExp(u *Unit, amount float64, rng *rand.Rand, learn func(*Unit) []int) []LevelUpEvent {
 	if u == nil || (u.Camp != Own && u.Camp != Ally) || amount <= 0 {
 		return nil
 	}
@@ -248,14 +255,25 @@ func GainExp(u *Unit, amount float64, rng *rand.Rand) []LevelUpEvent {
 	for u.Exp >= expThreshold {
 		u.Exp -= expThreshold
 		if ev, ok := u.applyLevelUpGrowth(rng); ok {
+			if learn != nil {
+				ev.LearnedCommandIDs = learn(u)
+			}
 			events = append(events, ev)
 		} else {
 			// 查無成長資料:等級與經驗池仍照門檻演進(避免經驗卡死無法歸零),
 			// 只是不套用屬性成長——誠實反映「這個單位缺成長曲線」而非静默丟棄經驗。
 			u.Lv++
+			if learn != nil {
+				learn(u)
+			}
 		}
 	}
 	return events
+}
+
+// GainExp applies level growth plus recovered native command learning.
+func (s *State) GainExp(u *Unit, amount float64, rng *rand.Rand) []LevelUpEvent {
+	return gainExp(u, amount, rng, s.learnNativeCommandsAtLevel)
 }
 
 // ---- 經驗值公式(doc02 §4.5,逐條見檔頭表)----

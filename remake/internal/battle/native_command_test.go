@@ -1,6 +1,7 @@
 package battle
 
 import (
+	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -20,6 +21,28 @@ func TestNativeCommandMaskConstructorAndDynamicFifthByte(t *testing.T) {
 	}
 	if got, want := u.NativeCommandIDs(), []int{0, 7, 8, 31, 32, 39}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("expanded IDs=%v want %v", got, want)
+	}
+}
+
+func TestStateGainExpLearnsExactNativeCommandAtLevel(t *testing.T) {
+	u := &Unit{Camp: Own, Name: "索爾", ClsName: "劍士", Portrait: 0, Lv: 1, AP: 6, DP: 4, DX: 2, HP: 42, MaxHP: 42}
+	st := &State{CommandLearn: map[int][]CommandLearnEntry{0: {{RequiredLevel: 2, CommandID: 32}}}}
+	events := st.GainExp(u, 100, rand.New(rand.NewSource(1)))
+	if len(events) != 1 || !reflect.DeepEqual(events[0].LearnedCommandIDs, []int{32}) {
+		t.Fatalf("level-up learning events=%#v", events)
+	}
+	if got := u.NativeCommandIDs(); !reflect.DeepEqual(got, []int{32}) {
+		t.Fatalf("native command mask after level=%v", got)
+	}
+}
+
+func TestLoadCommandLearnUsesDenseNativeRows(t *testing.T) {
+	table, err := LoadCommandLearn("../../../docs/data/exe_tables/command_learn.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := table[0]; len(table) != 20 || !reflect.DeepEqual(got[:2], []CommandLearnEntry{{RequiredLevel: 5, CommandID: 17}, {RequiredLevel: 9, CommandID: 1}}) {
+		t.Fatalf("native learn table=%#v", table[0])
 	}
 }
 

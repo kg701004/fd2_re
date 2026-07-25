@@ -80,7 +80,7 @@ func (s *State) AttackWithRNG(a, d *Unit, rng *rand.Rand) AttackResult {
 			dmgForExp = d.MaxHP
 		}
 		exp = AttackExp(a.Lv, d.Lv, dmgForExp, d.MaxHP, d.ExpPerLevel)
-		levelUps = GainExp(a, exp, rng)
+		levelUps = s.GainExp(a, exp, rng)
 	}
 
 	return AttackResult{Amount: dmg, Crit: crit, ExpGained: exp, LevelUps: levelUps}

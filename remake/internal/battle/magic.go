@@ -169,7 +169,7 @@ func (s *State) CastArea(caster *Unit, cx, cy int, sp Spell, rng *rand.Rand) []C
 		exp, levelUps := 0.0, []LevelUpEvent(nil)
 		if sp.ID == 23 && (caster.Camp == Own || caster.Camp == Ally) {
 			exp = TeleportExp(caster.Lv, caster.Lv)
-			levelUps = GainExp(caster, exp, rng)
+			levelUps = s.GainExp(caster, exp, rng)
 		}
 		return []CastResult{{Target: caster, Amount: 0, Missed: false, ExpGained: exp, LevelUps: levelUps}}
 	}
@@ -191,7 +191,7 @@ func (s *State) CastArea(caster *Unit, cx, cy int, sp Spell, rng *rand.Rand) []C
 
 	if caster.Camp == Own || caster.Camp == Ally {
 		exp := awardCastExp(caster, sp, results)
-		levelUps := GainExp(caster, exp, rng)
+		levelUps := s.GainExp(caster, exp, rng)
 		for i := range results {
 			results[i].ExpGained = exp
 			results[i].LevelUps = levelUps

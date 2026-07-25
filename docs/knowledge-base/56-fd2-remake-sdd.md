@@ -97,9 +97,10 @@ materialize，並只提供原版 byte-major／low-bit-first 列舉與 bounded OR
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
-`docs/data/exe_tables/command_learn.json` 已保存 20 張 raw table（`FF/FF` sentinel 不轉成假資料）。目前的
-level/growth runtime 尚未可靠持有原版 portrait→growth-row provenance，因此不可由 legacy `Spells` 補造
-升級結果；先以資料/ABI 與 fail-closed hook 表達。
+`docs/data/exe_tables/command_learn.json` 已保存 20 張 raw table（`FF/FF` sentinel 不轉成假資料）。
+portrait→growth-row provenance 是 direct ABI：`0x4e4d1(unit+7)=0x620a1+portrait*11`，第 11 byte 就是
+`learn_idx`。remake `State.GainExp` 因此只在已注入這個 editable table 時，於剛達到的 level OR exact
+command bit；legacy standalone `GainExp` 與 `Spells` 都不補造結果。
 
 remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定四個 ring action：
 
