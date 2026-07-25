@@ -269,17 +269,18 @@ type State struct {
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
 	// SPAWN calls append their group without reserving slots ahead of time.
-	Roster         []*Unit
-	PendingGroups  map[int]bool
-	OwnDeploy      []Cell                      // 我方可部署格
-	Turn           int                         // 回合數(無上限,doc 27;只由劇本事件限制)
-	Flags          map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
-	Cost           []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
-	SpellBook      []Spell                     // scenario-injected spell table; AI command mapping remains data-only
-	CommandLearn   map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
-	AICommandSpell map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
-	Treasures      map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	OpenedTreasure map[int]bool                // 原版 [0x53ad5] battle-local opened[slot]
+	Roster            []*Unit
+	PendingGroups     map[int]bool
+	OwnDeploy         []Cell                      // 我方可部署格
+	Turn              int                         // 回合數(無上限,doc 27;只由劇本事件限制)
+	Flags             map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
+	Cost              []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
+	NativeTargetFlags []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
+	SpellBook         []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	CommandLearn      map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
+	AICommandSpell    map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
+	Treasures         map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	OpenedTreasure    map[int]bool                // 原版 [0x53ad5] battle-local opened[slot]
 	// 來源:tools/export_engine_assets.py 依地形控制表(doc01 §5)換算,由 Load 讀同目錄
 	// map.json 的 "cost" 陣列自動接上(worklist 第 8 輪「地形屬性接線」)。
 }
@@ -466,18 +467,21 @@ func Load(path string) (*State, error) {
 		// FDFIELD 的 own(如哈諾/哈瓦特)用自己的出場座標(房子位置),由事件按回合放出。
 		st.Units = append(st.Units, nu)
 	}
-	st.Cost = loadTerrainCost(filepath.Join(filepath.Dir(path), "map.json"), f.W, f.H)
+	mapPath := filepath.Join(filepath.Dir(path), "map.json")
+	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
+	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
 	st.Treasures = loadTreasures(filepath.Join(filepath.Dir(path), "map.json"), f.W, f.H, f.Chests)
 	return st, nil
 }
 
 // mapCostFile map.json 裡跟地形成本相關的欄位(其餘欄位 main.go 的 MapData 自己讀,這裡只挑 cost 用)。
 type mapCostFile struct {
-	W              int    `json:"w"`
-	H              int    `json:"h"`
-	Cost           []int  `json:"cost"`
-	TreasureSlots  []int  `json:"treasure_slots"`
-	TreasureHidden []bool `json:"treasure_hidden"`
+	W                 int    `json:"w"`
+	H                 int    `json:"h"`
+	Cost              []int  `json:"cost"`
+	NativeTargetFlags []byte `json:"native_target_flags"`
+	TreasureSlots     []int  `json:"treasure_slots"`
+	TreasureHidden    []bool `json:"treasure_hidden"`
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -528,6 +532,21 @@ func loadTerrainCost(mapJSONPath string, w, h int) []int {
 		return nil
 	}
 	return m.Cost
+}
+
+// loadNativeTargetFlags accepts only an exact FDFIELD composition export.
+// Missing or malformed fields remain nil so callers of the native resolver
+// fail closed rather than interpreting movement costs as original flags.
+func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
+	raw, err := os.ReadFile(mapJSONPath)
+	if err != nil {
+		return nil
+	}
+	var m mapCostFile
+	if json.Unmarshal(raw, &m) != nil || m.W != w || m.H != h || len(m.NativeTargetFlags) != w*h {
+		return nil
+	}
+	return append([]byte(nil), m.NativeTargetFlags...)
 }
 
 // AddUnit 把一個單位加入戰場(事件 spawn / 主角隊進場用)。

@@ -142,6 +142,10 @@ Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path b
 low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出
 `native_target_flags` raw array。runtime map loader 尚未接這個資產前 resolver 維持 caller-supplied/fail-closed。
 
+`battle.Load` 現只在 map dimensions 與 array length 都精確吻合時載入 `State.NativeTargetFlags`；缺檔／舊 export／
+壞長度皆保持 nil。這使 engine data layer 已可把它傳給 `NativeCommandTargets`，但 UI 尚未自動切換 native target
+mode，避免未完成 command effect/confirm contract 時搶走 legacy playable path。
+
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。

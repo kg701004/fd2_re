@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -110,7 +111,7 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	}
 	mapRaw, _ := json.Marshal(map[string]any{
 		"w": 2, "h": 2, "tileW": 24, "tileH": 24, "cols": 16,
-		"tiles": []int{0, 0, 0, 0}, "cost": []int{1, 2, 99, 1},
+		"tiles": []int{0, 0, 0, 0}, "cost": []int{1, 2, 99, 1}, "native_target_flags": []byte{0, 0x40, 0x80, 0},
 	})
 	if err := os.WriteFile(filepath.Join(dir, "map.json"), mapRaw, 0644); err != nil {
 		t.Fatal(err)
@@ -132,6 +133,9 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	if got := st.MoveCost(0, 1); got != 99 {
 		t.Errorf("MoveCost(0,1) = %d, want 99", got)
 	}
+	if got, want := st.NativeTargetFlags, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
+		t.Errorf("NativeTargetFlags=%v want %v", got, want)
+	}
 }
 
 // TestLoad_NoMapJSON_CostNil:同目錄沒有 map.json(舊資產或還沒重新匯出)時,
@@ -151,6 +155,9 @@ func TestLoad_NoMapJSON_CostNil(t *testing.T) {
 	}
 	if st.Cost != nil {
 		t.Errorf("Cost = %v, want nil(無 map.json)", st.Cost)
+	}
+	if st.NativeTargetFlags != nil {
+		t.Errorf("NativeTargetFlags=%v want nil", st.NativeTargetFlags)
 	}
 	if got := st.MoveCost(1, 1); got != 1 {
 		t.Errorf("MoveCost = %d, want 1", got)
