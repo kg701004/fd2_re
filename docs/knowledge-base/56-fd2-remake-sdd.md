@@ -102,19 +102,22 @@ remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定
 ```
 
 `unit_command_mask` 必須是固定五 bytes；初始 source 可只填前四 bytes，但 runtime mutation 不得截斷
-第 5 byte。可見 command 的最小 gate 是「該 bit set 且 `current_mp >= mp_cost`」。`label`、
-`target_contract`、其他 `enabled_when` 在未有 E0 producer／effect evidence 時維持 `null`／空集合，
-renderer 必須顯示未解析或禁用狀態，不得將 ID 猜成 attack/spell/item。驗收 test 應涵蓋 bit 0、7、8、31、32、39
+第 5 byte。可見 command 的最小 gate 是「該 bit set 且 `current_mp >= mp_cost`」。`label` 已有可編輯、
+逐 slot 的原始證據：`docs/data/command_labels.json` 保留 FDTXT_000 的 physical index
+`0x1b9+command_id` 與 decoded text。它只表示 native renderer 讀到的文字；空字串或系統訊息 slot
+不能被提升為可選戰技。`target_contract`、其他 `enabled_when` 在未有 E0 producer／effect evidence 時維持
+`null`／空集合，renderer 必須顯示未解析或禁用狀態，不得將 ID 猜成 attack/spell/item。驗收 test 應涵蓋 bit 0、7、8、31、32、39
 的展開順序、MP 邊界（cost-1/cost）與 unknown ID fail-closed；只有在 ID→label/render/effect trace 完整後，
 才可淘汰現有 four-way ring approximation。
 
 原版 selector `0x1d51d` 對這份展開 list 使用**每欄四列、欄數可變**的 grid：↑／↓在線性 index 上
 -1/+1 並 wrap，←／右只在合法時 -4/+4；Enter／Space 在重新檢查 MP gate 後確認，Esc cancel。`0x1ceed`
 renderer 已釘 x=`0x12+0x64*floor(index/4)`、y=`0x67+0x16*(index%4)`，並以 `0x1b9+command_id` 作
-`[0x53a7d]` label index。故 UI state 至少要有 `selected_index`、`rows_per_column=4`、
+`[0x53a7d]` label index；該常駐 table 是 FDTXT_000，且 `0x1b9..0x1e0` 的 40 physical strings
+已由 raw resource 逐筆匯出。故 UI state 至少要有 `selected_index`、`rows_per_column=4`、
 `visible_command_ids` 與 `cancel_parent`，並以 command count 而非固定四個 action 計算邊界。這是
-selector／label ABI，並不證明每個 ID 的實體文字、圖示或 effect；那些欄位仍保持 fail-closed，直到
-resource／effect call graph 補齊。
+selector／label ABI，並不證明每個 ID 可達、圖示或 effect；那些欄位仍保持 fail-closed，直到
+producer／effect call graph 補齊。
 
 ## 5. Campaign / postbattle 設計
 
