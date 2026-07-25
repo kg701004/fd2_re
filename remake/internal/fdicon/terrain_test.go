@@ -2,6 +2,29 @@ package fdicon
 
 import "testing"
 
+func TestNativeForegroundRedrawEligibleMatches129ECGates(t *testing.T) {
+	cases := []struct {
+		name                         string
+		inactive, group, race, class byte
+		want                         bool
+	}{
+		{"inactive always skips", 1, 0x1c, 0, 0, false},
+		{"ordinary active", 0, 0, 0, 0, true},
+		{"group 1c overrides raw gate", 0, 0x1c, 4, 0x13, true},
+		{"class 13 skips", 0, 0, 0, 0x13, false},
+		{"race 4 skips", 0, 0, 4, 0, false},
+		{"race 5 skips", 0, 0, 5, 0, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := NativeForegroundRedrawEligible(tc.inactive != 0, tc.group, tc.race, tc.class)
+			if got != tc.want {
+				t.Fatalf("eligible=%v want=%v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNativeForegroundRedrawCellsMatches129EC(t *testing.T) {
 	cases := []struct {
 		name           string

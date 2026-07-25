@@ -17,6 +17,18 @@ type NativeCellCoordinate struct {
 	Y int
 }
 
+// NativeForegroundRedrawEligible reproduces 0x129ec's two roster gates. A
+// slot must first be active (the 0x3453e unit+5 bit0 query), then pass the
+// raw 0x1f183 predicate. That predicate suppresses the foreground pass for
+// group!=0x1c with class==0x13 or race in {4,5}. These are raw field values;
+// this function deliberately assigns them no gameplay/visual label.
+func NativeForegroundRedrawEligible(inactive bool, group, race, class byte) bool {
+	if inactive || group == 0x1c {
+		return !inactive
+	}
+	return class != 0x13 && race != 4 && race != 5
+}
+
 // NativeForegroundRedrawCells reproduces the exact 0x129ec call order after
 // one unit sprite has been drawn. It always redraws the unit cell then the
 // cell above it. A nonzero unit+4 movement offset adds one pose-dependent
