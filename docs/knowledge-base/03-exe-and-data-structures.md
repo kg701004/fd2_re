@@ -28,10 +28,10 @@
 | 0x40 | current HP(2) | `0x1c81f` 直接讀／減寫並向下 clamp 0；舊稱 DF 為錯誤斷言，已撤回 |
 | 0x42 | max HP(2) | `0x1c81f` 讀作 current HP 的上限；舊稱 MV 為錯誤斷言，已撤回 |
 | 0x43 | EX | 經驗(滿 100 升級) |
-| 0x46 | DX(2) | 速度(影響 HIT/EV) |
-| 0x48 | raw / 未重判 | 舊「目前／最大 HP」標記與 `0x1c81f` 的 direct runtime ABI 衝突，已撤回；待逐欄追 writer/readers |
-| 0x4C | M1(2),M2(2) | 目前 / 最大 MP |
-| ... | AP,DP,HT,EV | 衍生值(由上面計算，直接改無效) |
+| 0x46 | max MP(2) | `0x1CA89` 對 `+0x44` current MP 扣值；spawn 將 `+0x44/+0x46` 初始化為 current/max MP |
+| 0x48 | derived AP(2) | `0x1b750` synthesis 寫入；command 17 的 `+0x22` modifier 以 15% 增加 |
+| 0x4A | derived DP(2) | `0x1b750` synthesis 寫入；command 18 的 `+0x23` modifier 以 15% 增加 |
+| 0x4C / 0x4E | derived HIT / EV(2) | `0x1b750` synthesis 寫入；command 19 直接各加 15 |
 
 法術原始欄位與後續技能表、肖像編號(0x00–0x41)、職業編號(0x00–0x1A)
 詳見 `references/text/memory.md` 與本檔附錄。

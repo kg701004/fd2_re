@@ -86,17 +86,20 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
   - **血條鐵證**:`0x18c98 movsx ebp, word[esi+0x40]`(esi=[0x53a45]+idx×80)→ push 給 `0x18795`,
     算 `len = word[+0x40]×101 / word[+0x42]`(0x187ad imul 0x65 + idiv)。座標×101÷座標無意義,
     只有 **當前HP×101÷最大HP = 血條%長度** 才合理 → **+0x40=當前HP、+0x42=最大HP**。
-  - **lunge 不用 +0x40**:`0x29f72` 的二維方向位移內插實際吃 `[esp+0x24]=word[ebp+0x48]`(0x2a087)、
-    `[esp+0x2c]=word[edi+0x4a]`(0x2a0cc)= **+0x48/+0x4a 螢幕投影座標**,**不是 +0x40**。
-    +0x40 在 0x29f72 只是被讀進來算別的,沒參與位置。
+  - **lunge offset 未閉合**：先前把 `0x29f72` stack locals 反推為 runtime
+    `unit+0x48/+0x4a` 的螢幕投影座標，已被 command 17/18 的 direct writers 推翻：它們以
+    `+0x22/+0x23` 暫時旗標對這兩個 word 套 15% 增幅，而 class synthesis 亦寫
+    `+0x48/+0x4a/+0x4c/+0x4e` 作 derived AP/DP/HIT/EV。lunge 的 local provenance 需重新 trace，
+    不能再用這些 runtime offsets 當座標。
   - **正確欄位**:**`+0x40`=當前HP、`+0x42`=最大HP、`+0x44`=當前MP、`+0x46`=最大MP**(spawn 0x10fe9 設 cur=max=滿血滿魔);
-    **figure 位置(lunge)真正來源 = `+0x48`(螢幕X)/`+0x4a`(螢幕Y)**。HP/MP 演出中被攻擊/施法改寫,狀態欄即時反映。
+    figure lunge 的 runtime-coordinate source 尚未閉合；HP/MP 演出中被攻擊/施法改寫,狀態欄即時反映。
   - **寫入點**:spawn `0x10FE9`(`+0x40=+0x42=`HP、`+0x44=+0x46=`MP,值從 caller 參數來=該角色滿 HP/MP)、`0x1142A`(同款);
     戰鬥演出中 `0x2975A` 每幀寫 `word[unit+0x40]`——**= 被攻擊時 HP 抽乾的逐幀內插**(舊誤標「lunge 前衝 current X」);狀態欄血條即時跟著縮。
-  - **螢幕投影座標(figure 真正位置)在 `+0x48/+0x4a/+0x4c/+0x4e`**(unit icon 的螢幕 bounding box):由 `0x114E4` 累加 sprite 各幀錨點
-    (`0x4e56c` 取 descriptor → `word[+1/+3/+5/+7]` 累加)算出;另有 `0x1B821` 變體對 `+0x4a/+0x4e` 乘 **`[0x5018d]=1.15`** 浮點縮放(條件 `byte[unit+0x23]!=0`)。
+  - `0x114E4/0x1B821` 與 figure placement 的 exact ABI 需重新追查；先前把它們寫成
+    `+0x48..+0x4e` screen bounding box 的斷言已撤回。
 - **`0x29f72(攻方idx, 守方idx, &out)` = lunge / 接近內插器**(figure 最終位移來源):
-  - `ebp`/`edi` = 雙方 unit(各 `idx*80`,base `[0x53a45]`);位移內插吃 **`+0x48`(螢幕X)/`+0x4a`(螢幕Y)**(0x2a087/0x2a0cc 的 imul 來源),**非 +0x40**(+0x40 雖被讀進來但算別的)。
+  - `ebp`/`edi` = 雙方 unit(各 `idx*80`,base `[0x53a45]`)；其 position/local input 的 exact
+    runtime field provenance 尚未重新閉合，不能再斷言為 `+0x48/+0x4a`。
   - 用**動畫進度** `0x4e893` → `idiv 100`(百分比)把位移內插;再套**方向 / pose 微調表**
     `[dir*4 + 0x51a12]`(X,值 `[5,0,-5,-5,-5,…]` %)、`[dir*4 + 0x51a2a]`(Y,值 `[0,0,10,10,-5,…]` %)。
   - 輸出 struct(`esi[0]/4/8/0x10`=各種旗標、`esi[0x14]`=內插位移量)+ 寫全域 `[0x53ec8]`(=守方+0x21 × spriteW ÷ 攻方+0x21,縮放後的 X 用量)。
@@ -236,7 +239,8 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 - **0x1685c → 0x4e9bb**:`edx=[0x53a81]; edx += [edx + colorIdx*4 + 6]`(容器查 entry)→ `0x4e9bb` 逐列 `rep movsb` blit 該欄 cell。→ **條的像素是 [0x53a81] 容器裡的 1px-寬漸層欄 cell(素材),但「畫幾欄」由 HP 比例算(程式)**;空槽 = index 0x1d cell。
 - **血條長度來源釘死**:`unit+0x40 = 當前 HP`、`+0x42 = 最大 HP`、`+0x44 = 當前 MP`、`+0x46 = 最大 MP`(由 0x18795 的 `cur*101/max` 推得;spawn 時 0x10fe9 把 +0x40=+0x42、+0x44=+0x46 設成同值=滿血滿魔)。
   > ✅ **衝突已釐清(第一性原理追到底)**:`+0x40/+0x42/+0x44/+0x46` = **HP/MaxHP/MP/MaxMP**(血條算式鐵證)。
-  > 舊「戰場格 current/home X/Y」標法**錯誤,§2.2/§7 已修正**:figure lunge 位置真正讀 **`+0x48/+0x4a`(螢幕投影)**,
+  > 舊「戰場格 current/home X/Y」標法錯誤；其後把 figure lunge 位置改標為
+  > `+0x48/+0x4a`（螢幕投影）的說法也已撤回，
   > `0x29f72` 雖讀 +0x40 但沒拿去算位置。詳見 §2.2 開頭「重大修正」框。
 - → **修正 §4/§5 舊註「HP 條 = 色盤動畫 0x11d40」**:HP/MP 條是 0x18795/0x17d6f 程式畫(逐欄填),色盤 0x11d40 那段是 0x29164 的 figure 淡入,兩者無關。
 
@@ -353,10 +357,10 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | 0x187d6 / 0x1875d / 0x377d9 | 數值繪製(itoa → 6px digit cell @ [0x53a81];0x1875d 滿血換色) |
 | 0x2935b | 單幀 figure/台座 貼圖 wrapper(解 frame header dx/dy → 0x4e63d;dst/stride/transp 由 caller 傳穿) |
 | 0x2939d | figure 動畫 renderer(幀迴圈 + 百分比進度;0x29536 依 byte[unit+6] 分兩合成路徑) |
-| **0x29f72** | **lunge / 接近內插器**(讀雙方 +0x40/+0x48… + 動畫% + 方向微調表 → 內插位移;寫回 unit+0x40 @0x2975a、[0x53ec8]) |
+| **0x29f72** | **lunge / 接近內插器**(動畫% + 方向微調表 → 內插位移；其 runtime position input offsets 待重判) |
 | 0x29c90 | 合成路徑 A(byte[unit+6]≠0):BG (0,50) + figure 走 frame (dx,dy) + slide-in 方向 A |
 | 0x29ded | 合成路徑 B(byte[unit+6]==0):BG (0,50) + **figure 固定錨 (164,157)**(0x29ea2)+ slide-in 方向 B |
-| 0x114e4 / 0x1b821 | 單位螢幕投影:算 +0x48/+0x4a/+0x4c/+0x4e(後者對 +0x4a/+0x4e 乘 1.15) |
+| 0x114e4 / 0x1b821 | figure placement / derived-field interaction待重判；不得再命名 `+0x48..+0x4e` 為螢幕投影 |
 | 0x10fe9 / 0x1142a / 0x250b1 | unit 格座標寫入 / 布陣 / 演出後復位(+0x42→+0x40) |
 | 0x4e63d | blit 原語(原生尺寸 RLE,dst+Y*stride+X) |
 | 0x11eb0 | 矩形 present(逐列 memcpy,work↔VGA) |
@@ -385,13 +389,13 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | unit[+7] | FIGANI/FDICON 組號 |
 | unit[+0x40]/[+0x42] (word) | **當前 HP / 最大 HP**(0x18c6d 血條 `cur×101/max` + 第一性原理釘死;spawn 0x10fe9 設 cur=max)。✅ 已推翻舊「戰場格 X」誤標 |
 | unit[+0x44]/[+0x46] (word) | **當前 MP / 最大 MP** |
-| unit[+0x48]/[+0x4a] (word) | **螢幕投影 X / Y**(figure lunge 位置真正來源,0x29f72 用) |
+| unit[+0x48]/[+0x4a] (word) | **derived AP / DP**（class synthesis `0x1b750` 與 command 17/18 的 15% modifier writers）；非螢幕座標 |
 | unit[+0x44]/[+0x46] (word) | **當前 MP / 最大 MP**(同上;舊「戰場格 Y」標法推翻) |
 | unit[+8] | 角色名 / 職業 index(0x18d73 `byte[+8]+1` 查名字表 [0x53a7d]) |
 | unit[+0x21] | 狀態欄顯示的等級 / 數值(0x18d06 餵 0x187d6,mode2 上限 99) |
-| unit[+0x48]/[+0x4a]/[+0x4c]/[+0x4e] (word) | 螢幕投影 bounding box(0x114e4 累加;0x1b821 ×1.15) |
+| unit[+0x48]/[+0x4a]/[+0x4c]/[+0x4e] (word) | derived AP / DP / HIT / EV；先前 screen bounding-box 斷言已撤回 |
 | unit[+6] | 攻 / 守旗標:選合成路徑(0x29c90 vs 0x29ded)+ 左右 buffer 交換(0x28e05) |
-| [0x5018d] | 投影縮放常數 = **1.15**(double) |
+| [0x5018d] | 1.15 double 常數；與 transient modifier / renderer 的精確關係待重判 |
 | 0x51a12 / 0x51a2a | 方向 / pose 微調表(X:[5,0,-5,-5,-5,…]%、Y:[0,0,10,10,-5,…]%) |
 | [0x53ec8] | 0x29f72 輸出:縮放後 figure X 用量(被攻擊執行區 0x15/0x18/0x19xxx 廣泛讀取) |
 
@@ -400,7 +404,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 ## 8. 六項成果摘要 + 待確認
 
 1. **入口 + 呼叫鏈** ✅:單圖 0x28784(caller 0x15195)、攻守 0x28a6c(caller 0x1561f 傳 `攻方ebx, 守方[0x53c4b]`,另 0x18fc6/0x2c2aa/0x35435)。phase = [0x540ff]。
-2. **figure 座標 / 翻轉 / 縮放** ✅(重點):blit 0x4e63d 原生尺寸 `dst+Y*stride+X`,**全程無縮放運算**;螢幕錨點 = **固定常數 (164,157)**;figure lunge 位置來源 = **`word[unit+0x48]/[+0x4a]`(螢幕投影 X/Y)**,經 **0x29f72** 用動畫%(0x4e893/idiv 100)+ 方向微調表(0x51a12/0x51a2a)+ 投影縮放 1.15([0x5018d])內插;⚠ **`word[unit+0x40]`=當前 HP(非座標,舊誤標已修,見 §2.2)**;**無 runtime 水平翻轉**(blit 家族全前向,朝向燒進素材);`byte[unit+6]` 選合成路徑 0x29c90(≠0)/ 0x29ded(==0,用 (164,157))→ 即攻 / 守腳底 Y(175/150)不同之源。**待確認**:byte[unit+6] 攻守配對、土台 entry。
+2. **figure 座標 / 翻轉 / 縮放** partial:blit 0x4e63d 原生尺寸 `dst+Y*stride+X`,**全程無縮放運算**;螢幕錨點 = **固定常數 (164,157)**;`word[unit+0x40]`=當前 HP（非座標）。先前把 `+0x48/+0x4a` 當 lunge 座標的斷言已撤回，因 direct writers 證實它們屬 derived AP/DP；lunge input provenance 需重判。**待確認**:position inputs、byte[unit+6] 攻守配對、土台 entry。
 3. **BG 繪製 + 腳下圓圈** ✅:BG.DAT(0x52381 即 `"BG.DAT"` 字串)多層 → [0x54107…54113],全部 `0x4e63d(X=0,Y=50,寬320)`;戰場→章節 [0x53c03] 索引 0x52363。**腳下圓圈 / 土台 = BG 素材層(sprite blit),非程式畫純色**(戰鬥區無 rect/circle 原語,只有 0x4e63d/0x11eb0/0x11d40)。**待確認**:哪個 BG.DAT entry 是土台(需 dump 視覺對照)。
 4. **狀態欄(血條框)** ✅(本輪嚴格 RE 重做,§4):真函式 = **0x18c6d**(座標器 0x2a289,byte[+6]→ 我方(0,154)/敵方(171,4))。**0x29164 不是狀態欄,是 figure + 台座(TAI.DAT)淡入**(舊標錯已改)。三元素釘死:**① 框/深藍底/立體 bevel = 素材 sprite**(0x4e8af blit [0x53a81]+0x5e);**② HP/MP 條 = 程式畫**(0x18795 算 `len=cur*101/max+1` → 0x17d6f 逐欄 blit [0x53a81] 漸層欄 cell,空槽 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46);**③ 名 = 點陣字 glyph**([0x53a85],0x15f84/0x16559)、**數值 = 6px digit cell**([0x53a81],0x187d6)。**待確認**:[0x53a81]/[0x53a7d]/[0x53a85] 對應哪個 DAT loader、名字 glyph 確切像素、"HP/MP/LV" 標籤是否內含面板底圖。
 5. **動畫階段** ✅:[0x540ff] phase + 重複呼叫驅動;0x2939d 幀迴圈 + `idiv 100` 百分比進度;幀 (dx,dy) = swing 斬擊弧;**閃紅 = VGA DAC 色盤 0x3c8/0x3c9(0x11d40)**(figure 淡入同手法);**HP 條非色盤**(程式畫,見 §4.2,舊「HP 抽乾=色盤」已刪);idle fallback 0x5255f/0x52577。**待確認**:閃紅色值序列、各階段確切幀數。
