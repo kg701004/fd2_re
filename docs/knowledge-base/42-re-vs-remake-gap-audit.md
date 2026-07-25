@@ -21,7 +21,7 @@
 | 物理攻擊:**傷害隨機化(0.9×max~max−1)** | doc02 §4.1 | ✅ | `combat.go AttackWithRNG` 呼叫 `magic.go randomizeAmount`(與法術共用同一公式) | — |
 | native IDs24/28/29/31 derived strike | SDD56 UI-03 | 🟡 strict state-only | `ExecuteNativeCommand24`／`ExecuteNativeCommandDerivedStrike` 已依 `0x276EC` 的 verified multiplier 寫 final HP delta；two-stage UI、multi-hit/SFX 未接。legacy `CastArea` 不是證據 | 高 |
 | normalized spell attack/heal/hit | doc02；legacy `magic.go` | 🟡 approximation | `CastArea` 有可玩結算，但 native command ID、target geometry、effect family 和 renderer 沒有逐項閉合；不得以其數字證明原版法術完成 | 高 |
-| native IDs17–19 modifier | SDD56 UI-03 | ❌ engine fail-closed | 已驗 `+0x22..+0x24` raw writer／duration，但 derived-base、x87 rounding、presentation 未作 adapter；不能把 legacy Buff 視為同一機制 | 高 |
+| native IDs17–19 modifier | SDD56 UI-03 | ❌ engine fail-closed | 已驗 `+0x22..+0x24` raw writer／duration 與 `__CHP` toward-zero，唯 derived-base/equipment recompute、presentation 未作 adapter；不能把 legacy Buff 視為同一機制 | 高 |
 | native IDs20–22、25–27 clear/application | SDD56 UI-03 | 🟡 strict state-only | 已有 raw clear/application executors；status name、native UI、完整 tick/expiry 對照未閉合 | 高 |
 | native ID23 relocation | SDD56 UI-03 | ❌ | `0x2218A→0x22253` 是特殊 selector＋indexed presentation；不等同 normalized teleport，保持 fail-closed | 中 |
 | native IDs32–35 compound | SDD56 UI-03 | ❌ | static helper order 已知，但 MP transaction、rollback、UI/SFX 未閉合；禁止以 legacy combo 實作宣稱完成 | 高 |
