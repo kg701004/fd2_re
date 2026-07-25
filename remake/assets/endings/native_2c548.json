@@ -4,8 +4,8 @@
   "status": "mapped_first_party_cycle_fail_closed",
   "allocations": [
     {"bytes": 128000, "purpose": "320x400 staging surface", "source": "0x2c551"},
-    {"bytes": 64000, "purpose": "battle presentation buffer A", "source": "0x2c560"},
-    {"bytes": 64000, "purpose": "battle presentation buffer B", "source": "0x2c573"}
+    {"bytes": 64000, "purpose": "backdrop and figure restore buffer B", "source": "0x2c560"},
+    {"bytes": 64000, "purpose": "post-figure portrait restore snapshot C", "source": "0x2c573"}
   ],
   "resources": [
     {"archive": "TAI.DAT", "index": 3, "source": "0x2c584", "role": "raw 10x3 fully-transparent sprite; renderer role unrecovered"},
@@ -50,7 +50,9 @@
       "stage_end": 0,
       "stage_shift_bytes": 10,
       "palette_delta_formula": "stage*6",
-      "restore_buffer_bytes": 64000
+      "restore_buffer_bytes": 64000,
+      "restore_copy": "B->A(dstStride640,srcStride320,width320,rows200)",
+      "post_figure_snapshot": "memmove(C,B,64000)"
     },
     "portrait_text": {
       "source": "0x2c7a4..0x2c967",

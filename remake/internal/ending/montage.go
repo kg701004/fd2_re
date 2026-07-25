@@ -51,19 +51,21 @@ type PartyCycleSpec struct {
 }
 
 type FigureFadeSpec struct {
-	Source           string          `json:"source"`
-	UnitSideOffset   int             `json:"unit_side_offset"`
-	RequiredUnitSide int             `json:"required_unit_side"`
-	WorkStride       int             `json:"work_stride"`
-	ViewportWidth    int             `json:"viewport_width"`
-	ViewportHeight   int             `json:"viewport_height"`
-	Platform         FigureFadeAsset `json:"platform"`
-	Figure           FigureFadeAsset `json:"figure"`
-	StageStart       int             `json:"stage_start"`
-	StageEnd         int             `json:"stage_end"`
-	StageShiftBytes  int             `json:"stage_shift_bytes"`
-	PaletteFormula   string          `json:"palette_delta_formula"`
-	RestoreBytes     int             `json:"restore_buffer_bytes"`
+	Source             string          `json:"source"`
+	UnitSideOffset     int             `json:"unit_side_offset"`
+	RequiredUnitSide   int             `json:"required_unit_side"`
+	WorkStride         int             `json:"work_stride"`
+	ViewportWidth      int             `json:"viewport_width"`
+	ViewportHeight     int             `json:"viewport_height"`
+	Platform           FigureFadeAsset `json:"platform"`
+	Figure             FigureFadeAsset `json:"figure"`
+	StageStart         int             `json:"stage_start"`
+	StageEnd           int             `json:"stage_end"`
+	StageShiftBytes    int             `json:"stage_shift_bytes"`
+	PaletteFormula     string          `json:"palette_delta_formula"`
+	RestoreBytes       int             `json:"restore_buffer_bytes"`
+	RestoreCopy        string          `json:"restore_copy"`
+	PostFigureSnapshot string          `json:"post_figure_snapshot"`
 }
 
 type FigureFadeAsset struct {
@@ -129,7 +131,7 @@ func LoadMontage(path string) (*Montage, error) {
 		m.PartyCycle.PortraitText.Source != "0x2c7a4..0x2c967" || m.PartyCycle.PortraitText.PortraitArchive != "DATO.DAT" || m.PartyCycle.PortraitText.PortraitIndex != "unit[+7]" || m.PartyCycle.PortraitText.CurrentTextTable != "FDTXT_031" || m.PartyCycle.PortraitText.PermanentTextTable != "FDTXT_000" || len(m.PartyCycle.PortraitText.Fields) != 5 ||
 		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "unit[+8]+0x0c|45", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
 		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) || m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
-		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 ||
+		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 || m.PartyCycle.FigureFade.RestoreCopy != "B->A(dstStride640,srcStride320,width320,rows200)" || m.PartyCycle.FigureFade.PostFigureSnapshot != "memmove(C,B,64000)" ||
 		m.Gate.Source != "0x2c5e3" || m.Gate.Reason == "" {
 		return nil, fmt.Errorf("ending montage %q is incomplete or unsupported", path)
 	}

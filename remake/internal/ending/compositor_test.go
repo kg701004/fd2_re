@@ -6,6 +6,7 @@ import (
 
 	"github.com/wicanr2/fd2_re/remake/internal/afm"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/figani"
 )
 
 func TestIndexedCompositorCopiesBlitsAndClampsPalette(t *testing.T) {
@@ -368,5 +369,21 @@ func TestPlayerPhase0BridgeRefusesUnprovenPalette(t *testing.T) {
 	}
 	if state, err := p.Advance(0); err != nil || state != PlaybackBlocked || p.Blocked == nil || p.Blocked.Source != "0x2c172" {
 		t.Fatalf("state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
+}
+
+func TestRenderFigureFadePassRestoresBackdropThenShiftsSecondaryFrame(t *testing.T) {
+	c := NewIndexedCompositor()
+	c.Baseline[0] = 50
+	work, restore := make([]byte, Width*Height*2), make([]byte, Bytes)
+	for i := range restore {
+		restore[i] = 1
+	}
+	f := figani.Frame{X: 2, Y: 3, Width: 1, Height: 1, Pixels: []byte{9}, Mask: []byte{1}}
+	if err := RenderFigureFadePass(c, work, restore, []byte{0x0a, 0, 0x03, 0, 0xc9, 0xc9, 0xc9}, f, FigureFadePass{Stage: 8, SourceOffset: 80, PaletteDelta: 48}); err != nil {
+		t.Fatal(err)
+	}
+	if c.VGA[0] != 1 || c.VGA[3*Width+82] != 9 || c.Palette[0] != 2 {
+		t.Fatalf("vga/palette=%d/%d/%d", c.VGA[0], c.VGA[3*Width+82], c.Palette[0])
 	}
 }

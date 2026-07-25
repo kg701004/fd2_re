@@ -41,3 +41,14 @@ func TestDecodeOriginalFIGANIResource(t *testing.T) {
 		t.Fatalf("decoded resource 13 = %#v", a)
 	}
 }
+
+func TestFrameBlitAtBaseShiftsNativeWorkSurface(t *testing.T) {
+	f := Frame{X: 2, Y: 3, Width: 1, Height: 1, Pixels: []byte{9}, Mask: []byte{1}}
+	dst := make([]byte, 640*5)
+	if err := f.BlitAtBase(dst, 640, 80); err != nil {
+		t.Fatal(err)
+	}
+	if got := dst[80+3*640+2]; got != 9 {
+		t.Fatalf("shifted pixel=%d", got)
+	}
+}

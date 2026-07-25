@@ -121,4 +121,4 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
 ## 9. 本輪決策
 
-本 SDD 完成前不再新增新的 remake handler 或 renderer 語意。現有 working tree 的 finale figure-fade 變更保留，待 SDD gate 後另行驗證與提交；不得把它描述成已完成的 ending。下一輪先做 UI-01/UI-03/UI-07 的 RE evidence matrix，再選一條可截圖的 vertical slice。
+本 SDD 完成前不再新增新的 remake handler 或 renderer 語意。`0x29164` non-mirrored figure-fade 的窄 indexed primitive 已以實際 regression 驗證並可提交，但這不等於完整 ending：primary FIGANI、DATO text、mirrored branch 與 player integration 仍 fail-closed。下一輪仍需完成 UI-01/UI-03/UI-07 的 RE evidence matrix，再選一條可截圖的 vertical slice。

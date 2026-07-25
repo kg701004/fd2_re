@@ -123,14 +123,21 @@ func decodeRLE(src []byte, width, height int) ([]byte, []byte, error) {
 
 // BlitAt reproduces the transparent branch used by the 0x2c548 FIGANI calls.
 func (f Frame) BlitAt(dst []byte, stride int) error {
-	if f.Width <= 0 || f.Height <= 0 || len(f.Pixels) != f.Width*f.Height || len(f.Mask) != len(f.Pixels) || stride <= 0 || f.X < 0 || f.Y < 0 || f.X+f.Width > stride || (f.Y+f.Height)*stride > len(dst) {
+	return f.BlitAtBase(dst, stride, 0)
+}
+
+// BlitAtBase is BlitAt with an explicit byte origin within a larger native
+// work surface. 0x29164 uses it for its stage*10 shifts into a 640-stride
+// buffer; the frame's signed coordinates remain untouched.
+func (f Frame) BlitAtBase(dst []byte, stride, base int) error {
+	if f.Width <= 0 || f.Height <= 0 || len(f.Pixels) != f.Width*f.Height || len(f.Mask) != len(f.Pixels) || stride <= 0 || base < 0 || base > len(dst) || f.X < 0 || f.Y < 0 || f.X+f.Width > stride || base+(f.Y+f.Height)*stride > len(dst) {
 		return errors.New("figani: frame cannot be blitted to destination")
 	}
 	for y := 0; y < f.Height; y++ {
 		for x := 0; x < f.Width; x++ {
 			i := y*f.Width + x
 			if f.Mask[i] != 0 {
-				dst[(f.Y+y)*stride+f.X+x] = f.Pixels[i]
+				dst[base+(f.Y+y)*stride+f.X+x] = f.Pixels[i]
 			}
 		}
 	}
