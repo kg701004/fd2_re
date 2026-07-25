@@ -161,9 +161,12 @@ func TestFDOTHER081ArchiveShape(t *testing.T) {
 	if len(entry) < 10 || string(entry[:6]) != "LLLLLL" || binary.LittleEndian.Uint32(entry[6:10]) != 0x12 {
 		t.Fatalf("#81 is not the expected nested LLLLLL resource: len=%d head=% x", len(entry), entry[:min(32, len(entry))])
 	}
+	wantNestedBytes := []int{0x22ce, 0x2636}
 	for resource := 0; resource < 2; resource++ {
 		if nested, err := ArchiveEntry(entry, resource); err != nil || len(nested) == 0 {
 			t.Fatalf("#81 nested entry %d: len=%d err=%v", resource, len(nested), err)
+		} else if len(nested) != wantNestedBytes[resource] {
+			t.Fatalf("#81 nested entry %d: len=%d want=%d", resource, len(nested), wantNestedBytes[resource])
 		}
 	}
 	if nested, err := ArchiveEntry(entry, 2); err != nil || len(nested) != 0 {
