@@ -61,8 +61,8 @@ func (s *State) ExecuteNativeCommand24(actor, confirmed *Unit, rng *rand.Rand) (
 }
 
 // ExecuteNativeCommandDerivedStrike is the state-only 0x276EC family with
-// proven player dispatches 24, 28, 29 and 31.  ID30 reaches a special
-// 0x149F8 selector, and IDs32..35 use 0x27FC9, so neither is accepted here.
+// proven player dispatches 24, 28, 29 and 31. ID30 has its own special
+// cursor-selector entry point below; IDs32..35 use 0x27FC9 and stay closed.
 func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, commandID int, rng *rand.Rand) ([]NativeCommand24Damage, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native derived-strike state/rng")
@@ -96,6 +96,60 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 	}
 	// 0x18D8C applies the invoking actor's completion bit after 0x1CFF0
 	// returns success; 0x276EC is such a successful handler route.
+	actor.Acted = true
+	return results, nil
+}
+
+// ExecuteNativeCommand30 is the bounded player state slice for command 30:
+// 0x1CFF0 first validates a normal 0x14818 candidate, then 0x149F8 traces
+// from the saved pre-confirm cursor toward the confirmed cursor for
+// record+3-0x10 steps, before 0x2A6BD -> 0x276EC applies multiplier 18.
+// Its indexed multi-hit presentation and UI cursor lifecycle remain outside
+// this method; callers must supply both recovered cursor positions.
+func (s *State) ExecuteNativeCommand30(actor *Unit, savedCursor, confirmedCursor Cell, rng *rand.Rand) ([]NativeCommand24Damage, error) {
+	if s == nil || actor == nil || rng == nil || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[30].ID != 30 {
+		return nil, fmt.Errorf("native command 30 state unavailable")
+	}
+	record := s.NativeCommandBook[30]
+	if record.SelectionMode < 0x10 {
+		return nil, fmt.Errorf("native command 30 invalid selector mode=%d", record.SelectionMode)
+	}
+	// The preceding 0x14818 -> 0x115B6 confirmation is still required. It
+	// proves the provided confirmed cursor is a valid target candidate before
+	// the special line selector is allowed to mutate MP or HP.
+	selection, err := NativeCommandTargets(s.W, s.H, Cell{X: actor.X, Y: actor.Y}, record.SelectionMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	if err != nil {
+		return nil, err
+	}
+	confirmed := false
+	for _, candidate := range selection {
+		if candidate.X == confirmedCursor.X && candidate.Y == confirmedCursor.Y {
+			confirmed = true
+			break
+		}
+	}
+	if !confirmed {
+		return nil, fmt.Errorf("confirmed cursor is not a native command 30 candidate")
+	}
+	targets, err := NativeCommand30Targets(s.W, s.H, savedCursor, confirmedCursor, record.SelectionMode-0x10, s.Units)
+	if err != nil {
+		return nil, err
+	}
+	if !SpendNativeCommandMP(actor, record.MPCost) {
+		return nil, fmt.Errorf("native command 30 insufficient MP")
+	}
+	results := make([]NativeCommand24Damage, 0, len(targets))
+	for _, target := range targets {
+		amount, damage, err := ResolveNativeCommandDerivedStrikeDamage(actor.AP, target.DP, 18, rng)
+		if err != nil {
+			return nil, err
+		}
+		target.HP -= damage
+		if target.HP < 0 {
+			target.HP = 0
+		}
+		results = append(results, NativeCommand24Damage{Target: target, Amount: amount, Damage: damage})
+	}
 	actor.Acted = true
 	return results, nil
 }

@@ -60,6 +60,49 @@ func TestExecuteNativeCommandDerivedStrikeUsesRecoveredID28Multiplier(t *testing
 func TestExecuteNativeCommandDerivedStrikeRejectsSpecialSelectorID30(t *testing.T) {
 	actor := &Unit{MP: 30}
 	if _, err := (&State{}).ExecuteNativeCommandDerivedStrike(actor, nil, 30, rand.New(rand.NewSource(1))); err == nil || actor.MP != 30 || actor.Acted {
-		t.Fatalf("special selector ID30 must stay fail-closed: actor=%#v err=%v", actor, err)
+		t.Fatalf("generic derived-strike executor must reject ID30 special selector: actor=%#v err=%v", actor, err)
+	}
+}
+
+func TestNativeCommand30TargetsUsesSavedCursorAndXPriority(t *testing.T) {
+	xLine := &Unit{Camp: Enemy, OnField: true, HP: 1, X: 1, Y: 0}
+	yDiagonal := &Unit{Camp: Enemy, OnField: true, HP: 1, X: 0, Y: 1}
+	got, err := NativeCommand30Targets(5, 3, Cell{X: 0, Y: 0}, Cell{X: 2, Y: 2}, 4, []*Unit{xLine, yDiagonal})
+	if err != nil || len(got) != 1 || got[0] != xLine {
+		t.Fatalf("ID30 X-priority targets=%#v err=%v", got, err)
+	}
+	plusY := &Unit{Camp: Enemy, OnField: true, HP: 1, X: 1, Y: 2}
+	got, err = NativeCommand30Targets(3, 4, Cell{X: 1, Y: 1}, Cell{X: 1, Y: 1}, 1, []*Unit{plusY})
+	if err != nil || len(got) != 1 || got[0] != plusY {
+		t.Fatalf("ID30 equal-cursor must follow native +Y branch: targets=%#v err=%v", got, err)
+	}
+}
+
+func TestExecuteNativeCommand30UsesSpecialLineAndOneMPDebit(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	between := &Unit{Camp: Enemy, OnField: true, X: 2, Y: 0, DP: 20, HP: 300}
+	confirmed := &Unit{Camp: Enemy, OnField: true, X: 4, Y: 0, DP: 20, HP: 300}
+	friendly := &Unit{Camp: Own, OnField: true, X: 3, Y: 0, DP: 20, HP: 300}
+	book := nativeCommand24Book()
+	book[30] = NativeCommandRecord{ID: 30, SelectionMode: 20, EffectMode: 0, MPCost: 24, TargetCode: 0}
+	st := &State{W: 5, H: 1, Units: []*Unit{actor, between, confirmed, friendly}, NativeTargetFlags: make([]byte, 5), NativeCommandBook: book}
+
+	got, err := st.ExecuteNativeCommand30(actor, Cell{X: 0, Y: 0}, Cell{X: 4, Y: 0}, rand.New(rand.NewSource(2)))
+	if err != nil || len(got) != 2 || got[0].Target != between || got[1].Target != confirmed || got[0].Amount != 160 || got[1].Amount != 160 {
+		t.Fatalf("ID30 result=%#v err=%v", got, err)
+	}
+	if actor.MP != 6 || !actor.Acted || friendly.HP != 300 || between.HP >= 300 || confirmed.HP >= 300 {
+		t.Fatalf("ID30 mutation actor=%#v between=%#v confirmed=%#v friendly=%#v", actor, between, confirmed, friendly)
+	}
+}
+
+func TestExecuteNativeCommand30RejectsNonCandidateBeforeMP(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	target := &Unit{Camp: Enemy, OnField: true, X: 4, Y: 0, DP: 20, HP: 300}
+	book := nativeCommand24Book()
+	book[30] = NativeCommandRecord{ID: 30, SelectionMode: 20, MPCost: 24, TargetCode: 0}
+	st := &State{W: 5, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 5), NativeCommandBook: book}
+	if _, err := st.ExecuteNativeCommand30(actor, Cell{X: 0, Y: 0}, Cell{X: 1, Y: 0}, rand.New(rand.NewSource(2))); err == nil || actor.MP != 30 || actor.Acted || target.HP != 300 {
+		t.Fatalf("invalid ID30 confirmation mutated state actor=%#v target=%#v err=%v", actor, target, err)
 	}
 }

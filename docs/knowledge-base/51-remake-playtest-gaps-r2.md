@@ -39,7 +39,9 @@
 - **根因(修正)**:這段舊試玩結論已過期。`spellOpen`/`castSp`/case 1/`drawSpellMenu`/`InCastRange` 與
   normalized `CastArea` 結算皆已存在；剩下的是 native command target/effect ABI 與原版演出，不可再寫成
   「選完目標不會結算」。
-- **原版行為**:doc13 `Get_EasyMagic`(0x18ED0)法術面板已反組譯;法術數值/範圍/效果表在 EXE(spell.json 已有)。
+- **原版行為**:doc13 `Get_EasyMagic`/`0x1CFF0` 的 command selector 已部分反組譯；只有 raw
+  command inventory、record `+5` MP gate、部分 target/effect routes 已閉合。`spell.json` 是可編輯
+  normalized data，**不是**原版全量法術數值／範圍／效果表的完成證明。
 - **對策**:保留 normalized `CastArea` 為可玩的 editable approximation；native grid 僅在有 E0 data 的部分使用。
   command 0 的 single-target numeric resolver 已獨立閉合，但 target geometry／完整 effect family 尚未閉合，
   因此不得把 legacy cast path 宣稱成原版 command runtime。

@@ -5,6 +5,11 @@
 > 2026-07-25 重新校正本表：撤回已被後續 code 推翻的「零命中／完全沒有」斷言。序章主角隊進場(staging)由另一 agent 處理,本篇不重複列。
 > 狀態符號:✅已實作(含公式/資料對齊) 🟡部分(做了一半或簡化) ❌缺(RE 有記錄,remake 未做)。
 
+> **2026-07-26 native-command correction**：本表中 legacy `magic.go`／`CastArea` 的舊逐招
+> 勾選，不能再當作原版 command runtime 的完成宣告。權威逐 ID dataflow 與 strict engine 邊界是
+> SDD `56 §UI-03`，UI 證據則是 `57 §UI-03`；未有 E0 target、transaction、renderer 證據的 ID
+> 必須維持 fail-closed。下列舊表列已改為只描述 normalized approximation，不再宣稱與原版同義。
+
 ## 總表
 
 | 機制 | RE doc 出處 | remake 狀態 | 證據 | 優先度 |
@@ -14,15 +19,13 @@
 | 物理攻擊:**暴擊(DP÷2)** | doc02 §4.1「暴擊時 DP=守方DP/2」 | ✅ | `combat.go AttackWithRNG`:`CritPct>0 && rng.Intn(100)<a.CritPct` 觸發後 `dp/=2`,順序照 notes.md(先減半再套地形%);`CritPct` 來源 `resist_crit.json`(EXE 0x5219B,已與 doc02 §7.2 逐職業交叉驗證吻合) | — |
 | 物理攻擊:**命中率 (HIT−EV)%** | doc02 §4.1 | 🟡已補(HIT/EV 為近似值) | `model.go EffectiveHIT/EffectiveEV` + `combat.go rollsHitPct`;**HIT/EV 兩個基礎值本身是固定近似值(export_units.py DEFAULT_HIT=90/DEFAULT_EV=5)**,因為 doc03 明確記載這是「衍生值(由上面計算,直接改無效)」而非「敵/友單位 10B」表的原始欄位,且 remake 尚無裝備系統可提供真正來源(item.json 的 hit/ev 是掛在武器/防具上)——**doc42 原敘述「只是匯出腳本未取用」不完全準確,實際是來源表本身缺這兩欄**,見 export_units.py 檔頭更正說明 | 中(HIT/EV 真值待裝備系統) |
 | 物理攻擊:**傷害隨機化(0.9×max~max−1)** | doc02 §4.1 | ✅ | `combat.go AttackWithRNG` 呼叫 `magic.go randomizeAmount`(與法術共用同一公式) | — |
-| 劍技(破龍擊/熾炎刀/音速刃/淒煌斬):AP×加乘率、100%命中 | doc02 §4.2/§6.2 | ❌ | `magic.go:224-226` `case 24,28,29,30`:直接 `return CastResult{Target: tgt}`,無傷害,註解自承「加乘率未在 spell.json…待實裝」 | 高 |
-| 法術攻擊傷害(最大×(1−魔抗)、隨機化) | doc02 §4.3 | 🟡 | `magic.go:dealDamage` 做了隨機化,但**魔法抗性固定當 0**(`dealDamage` 註解:「魔法抗性欄位尚未進資料管線,先以 0 計」)→ 對高魔抗角色(悠妮 30-50%）傷害被高估 | 中 |
-| 恢復法術(最大×0.9~max−1) | doc02 §4.4 | ✅ | `applySpell` target=1 分支,`randomizeAmount` | — |
-| 命中率:法術內定命中率 | doc02 §4.3 | ✅(含資料矛盾已誠實記錄) | `magic.go rollsHit`,hit=0 視為必中,檔頭註解說明與 dump 值的取捨依據 | — |
-| 輔助法術(魔刃/魔鎧/風行,AP+15%/DP+15%/HIT+15,EV+15) | doc02 §6.4 | ✅ | `magic.go case17/18/19`,`applyBuff` | — |
-| 狀態法術(解毒/祛麻/封咒/毒擊/麻痺) | doc02 §6.4 | ✅ | `magic.go case20/21/22/26/27` | — |
-| 組合技(破壞神/暗邪鬼) | doc02 §6.4 | ✅ | `magic.go case34/35` | — |
-| 傳送術(目的地任選) | doc02 §6.4 | ❌ | `magic.go case23`:註解「battle 套件不處理定位——待實裝」,只回空效果 | 低(用途窄,多為劇情/特定角色) |
-| 經驗值公式(攻擊/恢復/各系術) | doc02 §4.5 | 🟡已補(worklist 第 9 輪) | `growth.go` 逐條實作攻擊/恢復/傳送/行動/魔刃魔鎧風行/麻痺毒擊/解毒祛麻七式,`combat.go AttackWithRNG`、`magic.go CastArea/awardCastExp` 已接上,僅 Own/Ally 攻方生效;**封咒術(22)/破壞神(34)/暗邪鬼(35)doc02 §4.5 未列公式,誠實回 0 不編造**;劍技(24/28/29/30)因傷害本身未實作(見上表)連帶無經驗值 | 中(劍技/組合技經驗待劍技傷害公式補上後一併收斂) |
+| native IDs24/28/29/31 derived strike | SDD56 UI-03 | 🟡 strict state-only | `ExecuteNativeCommand24`／`ExecuteNativeCommandDerivedStrike` 已依 `0x276EC` 的 verified multiplier 寫 final HP delta；two-stage UI、multi-hit/SFX 未接。legacy `CastArea` 不是證據 | 高 |
+| normalized spell attack/heal/hit | doc02；legacy `magic.go` | 🟡 approximation | `CastArea` 有可玩結算，但 native command ID、target geometry、effect family 和 renderer 沒有逐項閉合；不得以其數字證明原版法術完成 | 高 |
+| native IDs17–19 modifier | SDD56 UI-03 | ❌ engine fail-closed | 已驗 `+0x22..+0x24` raw writer／duration，但 derived-base、x87 rounding、presentation 未作 adapter；不能把 legacy Buff 視為同一機制 | 高 |
+| native IDs20–22、25–27 clear/application | SDD56 UI-03 | 🟡 strict state-only | 已有 raw clear/application executors；status name、native UI、完整 tick/expiry 對照未閉合 | 高 |
+| native ID23 relocation | SDD56 UI-03 | ❌ | `0x2218A→0x22253` 是特殊 selector＋indexed presentation；不等同 normalized teleport，保持 fail-closed | 中 |
+| native IDs32–35 compound | SDD56 UI-03 | ❌ | static helper order 已知，但 MP transaction、rollback、UI/SFX 未閉合；禁止以 legacy combo 實作宣稱完成 | 高 |
+| 經驗值公式(攻擊/恢復/各系術) | doc02 §4.5 | 🟡 normalized approximation | legacy `growth.go`／`CastArea` 的獎勵不證明 native command 逐 ID 的 EXP route；IDs22/32–35 等仍缺原版 transaction/effect evidence | 高 |
 | 升級(每 100 經驗一級、成長亂數) | doc02 §2/§4.6/§7.2 | ✅已補(worklist 第 9 輪) | `growth.go GainExp`/`applyLevelUpGrowth`,門檻 100(doc03 0x43),可連續跨級;`growthTable` 為 doc02 §7.2 顯示值與 EXE 升級成長表(`docs/data/exe_tables/growth.json` 0x55EA1)交叉比對後的精確版(63 列全比對成功,見該檔案頭註解),非估計值。`Unit` 新增 `Exp`/`ExpPerLevel`/`DX` 欄;`ExpPerLevel`(攻擊經驗公式的「守方每級經驗」)來源 EXE 敵/友單位表,由 `export_units.py` 新增 `ex` 欄接上,34 份本機 `map*_units.json` 資產已重新匯出;查無成長資料的單位(如無名雜兵)等級仍照門檻演進但不套用屬性成長,誠實標記非靜默丟棄。**升級是否立即回滿新增 HP**doc 未明講,採較合理的 RPG 慣例並於 `growth.go` 註解誠實標記為假設 | — |
 | 敵方 AI:目標評分(dmg、擊殺加成×2) | doc11 | 🟡 | `combat.go aiActUnit/NextAIPlan`:已套地形 AP/DP%、並依原版證據加入 **dmg≤2 略過**；擊殺加成仍是 remake 簡化版(`dmg≥HP→score×2+1000`)，**情境加成(0x1529E)、狀態倍率×1.5(0x152AB)** 尚待 RE | 中 |
 | 敵方 AI:**施法決策**(法師/僧侶主動用攻擊術/補血術) | direct disasm 已證實：`0x15688` 枚舉 command，`0x1579A–0x157B5` 對 `command>0x0F` 以 `spell_id=command-0x10` 評分；`0x150D3–0x150F1` 執行同一 spell command，`0x15168→0x28784` 播放施法演出；`0x15B77` 依 spell family 分流目標評分 | 🟡 | remake 已有 `AICommandSpell`、`AIAvailableSpells`、`AISpellCandidates` 與 `AIPlan.SpellID`，但 `NextAIPlan` 仍未把 spell score/target/execute 接完；不能再寫成「完全沒有保存 SpellID／恆為純物理」 | 高；補 native ranking、MP/command gate、runtime Cast |

@@ -155,3 +155,48 @@ func NativeCommandEffectTargets(w, h int, actor, confirmed *Unit, selectionMode,
 	}
 	return NativeCommandTargets(w, h, Cell{X: confirmed.X, Y: confirmed.Y}, effectMode, targetCode, flags, units)
 }
+
+// NativeCommand30Targets mirrors the special 0x149F8 selector used only by
+// player command 30.  It starts at the cursor position saved before 0x115B6,
+// advances SelectionMode-0x10 cells towards the confirmed cursor, and keeps
+// only the first active unit found in each cell when it is an enemy.  X has
+// priority: only when both cursors share X does it use Y.  This deliberately
+// does not reuse the generic 0x14818 two-stage geometry.
+func NativeCommand30Targets(w, h int, savedCursor, confirmedCursor Cell, steps int, units []*Unit) ([]*Unit, error) {
+	if w <= 0 || h <= 0 || savedCursor.X < 0 || savedCursor.Y < 0 || savedCursor.X >= w || savedCursor.Y >= h || confirmedCursor.X < 0 || confirmedCursor.Y < 0 || confirmedCursor.X >= w || confirmedCursor.Y >= h || steps < 0 {
+		return nil, fmt.Errorf("invalid native command 30 selector")
+	}
+	dx, dy := 0, 0
+	if savedCursor.X != confirmedCursor.X {
+		if savedCursor.X > confirmedCursor.X {
+			dx = -1
+		} else {
+			dx = 1
+		}
+	} else if savedCursor.Y > confirmedCursor.Y {
+		dy = -1
+	} else {
+		dy = 1
+	}
+	cell := savedCursor
+	targets := make([]*Unit, 0, steps)
+	for i := 0; i < steps; i++ {
+		cell.X += dx
+		cell.Y += dy
+		if cell.X < 0 || cell.Y < 0 || cell.X >= w || cell.Y >= h {
+			continue
+		}
+		// sub_12C0D returns the first active unit at a coordinate; it does
+		// not search past a non-enemy unit occupying the same malformed cell.
+		for _, unit := range units {
+			if unit == nil || !unit.OnField || !unit.Alive() || unit.X != cell.X || unit.Y != cell.Y {
+				continue
+			}
+			if unit.Camp == Enemy {
+				targets = append(targets, unit)
+			}
+			break
+		}
+	}
+	return targets, nil
+}
