@@ -133,9 +133,19 @@ animation、post-resolution 與 UI remain unbound。Game bootstrap 將 strict `n
 成功結束時才投影 wrapper `0x18d8c→0x13512` 的 runtime `unit+5|=0x80` 為 `actor.Acted=true`；失敗不設。
 UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate highlighter 進入 target mode，Enter 交
 `ExecuteBoundNativeCommand0` 作完整 verified core，ESC 回 native grid；缺 raw data／其他 ID 一律不接 legacy cast。
-官方 IDA 顯示 ID1、2、3 皆只將常數 ID push 後跳入同一 `sub_21227`，故 engine 的
-`ExecuteNativeCommandDamage` 嚴格支援 ID0..3 共用 numeric/MP/acted contract；UI 仍只啟用 ID0，直到每個
+官方 IDA 顯示 ID1、2、3 皆只將常數 ID push 後跳入同一 `sub_21227`；續查 ID4..7 亦進
+`sub_213B7`、ID8 回 `sub_2121A`、ID9 直接呼叫 `0x1CA89→0x1C75E`。故 engine 的
+`ExecuteNativeCommandDamage` 嚴格支援 ID0..9 共用 numeric/MP/acted contract；UI 仍只啟用 ID0，直到每個
 presentation/effect boundary 有獨立驗證。
+
+ID13 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handler
+`0x21AD9→0x21B18` 在 generic target-confirm 後，以同一 final target array 呼叫專用 indexed 演出
+`0x1C4CC/0x1C2DA`、再經 `0x1CA89(actor,13)` 扣 record `+5` MP。它逐 target 呼叫
+`0x1C8ED(target,13)→0x1C916(target,record.u16+0)`：`+0x40` 增加
+`floor(amount*9/10)+floor(rand()%100*amount/1000)`，上限 clamp 為 `+0x42`，並以
+`0x1E0DB(...,0x69,target)` 顯示結果。這直接證實 ID13 為 per-final-target HP restore（其 raw row 為
+`dmg=70, +3=4, +4=0, mp=3, target=1`），但尚未把這個獨立 resolver、專用 renderer、SFX 或 UI 接入 remake；
+在有對應 regression 前仍 fail-closed。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
