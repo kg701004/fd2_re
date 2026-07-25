@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"fd2-remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
 
 func TestApplyPersistentStatsPreservesDynamicNativeCommandMask(t *testing.T) {
