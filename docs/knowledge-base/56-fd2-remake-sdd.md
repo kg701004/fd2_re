@@ -265,9 +265,11 @@ acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，�
 | 22 | `0x22BE1→22D1B`，class/RNG gate、fixed 10 HP、write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
 | 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
 | 24 | 玩家 `2A6BD→276EC→2B659/1CA89→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | `ExecuteNativeCommand24`（state-only final delta） | multi-hit／SFX／native UI 未接 |
+| 28, 29, 31 | 同玩家 `276EC` derived-strike route，倍率分別 20、12、18；各自 record MP/一般 two-stage selector | `ExecuteNativeCommandDerivedStrike` | multi-hit／SFX／native UI 未接 |
+| 30 | `1CFF0` 特別走 `149F8` selector；不可套 generic two-stage target | 禁止接線 | 未接 |
 | 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
 | 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
-| 28–35 | raw table／dispatch 可達；effect family未完整關閉 | 禁止接線 | 禁止接線 |
+| 32–35 | `2A6BD→27FC9` 可達但 family state dataflow未完整關閉 | 禁止接線 | 禁止接線 |
 
 實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
 legacy `CastArea` 或宣稱整個 native command menu 已完成。

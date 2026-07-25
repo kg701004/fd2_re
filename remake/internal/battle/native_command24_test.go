@@ -40,3 +40,26 @@ func TestExecuteNativeCommand24RejectsInvalidBookBeforeMutation(t *testing.T) {
 		t.Fatalf("invalid ID24 book mutated state actor=%#v target=%#v err=%v", actor, target, err)
 	}
 }
+
+func TestExecuteNativeCommandDerivedStrikeUsesRecoveredID28Multiplier(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 300}
+	book := nativeCommand24Book()
+	book[28] = NativeCommandRecord{ID: 28, SelectionMode: 1, EffectMode: 0, MPCost: 22, TargetCode: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+
+	got, err := st.ExecuteNativeCommandDerivedStrike(actor, target, 28, rand.New(rand.NewSource(2)))
+	if err != nil || len(got) != 1 || got[0].Amount != 180 || got[0].Damage < 162 || got[0].Damage > 179 {
+		t.Fatalf("ID28 result=%#v err=%v", got, err)
+	}
+	if actor.MP != 8 || !actor.Acted || target.HP != 300-got[0].Damage {
+		t.Fatalf("ID28 state actor=%#v target=%#v result=%#v", actor, target, got[0])
+	}
+}
+
+func TestExecuteNativeCommandDerivedStrikeRejectsSpecialSelectorID30(t *testing.T) {
+	actor := &Unit{MP: 30}
+	if _, err := (&State{}).ExecuteNativeCommandDerivedStrike(actor, nil, 30, rand.New(rand.NewSource(1))); err == nil || actor.MP != 30 || actor.Acted {
+		t.Fatalf("special selector ID30 must stay fail-closed: actor=%#v err=%v", actor, err)
+	}
+}
