@@ -80,6 +80,8 @@ native magic raw / menu state:
 
 其中 type `8/9/0xa→0x21082` 的 body 可再確認為「以 caller 傳入的 unit-field offset 加上一個 word modifier，顯示 type `0x5e` effect，呼叫 `0x1b750` 重算，再移除來源 slot」；offset 與 modifier 的 item-table 對應尚未證實，故不命名成 HP/MP/AP 等具體效果。type `6/7→0x22af6` 則掃描 target list，依 target unit `+0x20/+0x21` 計算 accumulator 並清除已處理 target，仍不足以判定傷害／恢復方向。
 
+type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
+
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 
 | 掃描碼 | 鍵 | 行為 |
