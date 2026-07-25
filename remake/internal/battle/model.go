@@ -282,6 +282,8 @@ type State struct {
 	Flags                    map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
 	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
+	NativeTileBlitModes      []byte                      // FDFIELD composition entry byte+3; nil unless exact renderer export exists
+	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
 	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
 	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
 	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
@@ -478,18 +480,22 @@ func Load(path string) (*State, error) {
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
+	st.NativeTileBlitModes, st.NativeTerrainControl = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
 	st.Treasures = loadTreasures(filepath.Join(filepath.Dir(path), "map.json"), f.W, f.H, f.Chests)
 	return st, nil
 }
 
 // mapCostFile map.json 裡跟地形成本相關的欄位(其餘欄位 main.go 的 MapData 自己讀,這裡只挑 cost 用)。
 type mapCostFile struct {
-	W                 int    `json:"w"`
-	H                 int    `json:"h"`
-	Cost              []int  `json:"cost"`
-	NativeTargetFlags []byte `json:"native_target_flags"`
-	TreasureSlots     []int  `json:"treasure_slots"`
-	TreasureHidden    []bool `json:"treasure_hidden"`
+	W                    int    `json:"w"`
+	H                    int    `json:"h"`
+	Cost                 []int  `json:"cost"`
+	NativeTargetFlags    []byte `json:"native_target_flags"`
+	NativeTileBlitModes  []byte `json:"native_tile_blit_modes"`
+	NativeTerrainControl []byte `json:"native_terrain_control"`
+	Tiles                []int  `json:"tiles"`
+	TreasureSlots        []int  `json:"treasure_slots"`
+	TreasureHidden       []bool `json:"treasure_hidden"`
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -555,6 +561,25 @@ func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
 		return nil
 	}
 	return append([]byte(nil), m.NativeTargetFlags...)
+}
+
+// loadNativeTerrainRendererInputs accepts only a complete map export. It
+// deliberately keeps malformed data nil rather than repurposing Cost.
+func loadNativeTerrainRendererInputs(mapJSONPath string, w, h int) ([]byte, []byte) {
+	raw, err := os.ReadFile(mapJSONPath)
+	if err != nil {
+		return nil, nil
+	}
+	var m mapCostFile
+	if json.Unmarshal(raw, &m) != nil || m.W != w || m.H != h || len(m.Tiles) != w*h || len(m.NativeTileBlitModes) != w*h || len(m.NativeTerrainControl) == 0 || len(m.NativeTerrainControl)%4 != 0 {
+		return nil, nil
+	}
+	for _, tile := range m.Tiles {
+		if tile < 0 || tile&^0x3ff != 0 || tile >= len(m.NativeTerrainControl)/4 {
+			return nil, nil
+		}
+	}
+	return append([]byte(nil), m.NativeTileBlitModes...), append([]byte(nil), m.NativeTerrainControl...)
 }
 
 // AddUnit 把一個單位加入戰場(事件 spawn / 主角隊進場用)。

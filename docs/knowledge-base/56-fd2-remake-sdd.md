@@ -440,6 +440,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Export bridge: when supplied the paired FDSHAP terrain resource, `export_engine_assets.py` writes `native_terrain_control` (the complete raw four-byte records) alongside per-cell `native_tile_blit_modes`. This preserves the precise inputs of the region adapter; normalized `cost` remains a separate gameplay approximation.
 
+   Runtime bridge: `battle.Load` accepts those two fields only when map dimensions, cell count, control-record alignment and every 10-bit tile index validate exactly; otherwise both stay nil. The fields are retained on `State` for a future indexed renderer and are not silently substituted into the current PNG/Ebiten path.
+
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
 
    `fdother.ParseLUTBank`/`DecodeLUTResource` now close the FDOTHER #3 input boundary: its `LMI1` directory contains 23 independent 256-byte tables, not UI cells. The original-archive regression verifies that count and every table length. This loader plus `BlitLUT` is sufficient for a caller that has an evidenced selector; it does not infer one.

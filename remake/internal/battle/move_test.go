@@ -111,7 +111,7 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	}
 	mapRaw, _ := json.Marshal(map[string]any{
 		"w": 2, "h": 2, "tileW": 24, "tileH": 24, "cols": 16,
-		"tiles": []int{0, 0, 0, 0}, "cost": []int{1, 2, 99, 1}, "native_target_flags": []byte{0, 0x40, 0x80, 0},
+		"tiles": []int{0, 0, 0, 0}, "cost": []int{1, 2, 99, 1}, "native_target_flags": []byte{0, 0x40, 0x80, 0}, "native_tile_blit_modes": []byte{0, 0, 0, 0}, "native_terrain_control": []byte{0, 0, 0, 0},
 	})
 	if err := os.WriteFile(filepath.Join(dir, "map.json"), mapRaw, 0644); err != nil {
 		t.Fatal(err)
@@ -135,6 +135,9 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	}
 	if got, want := st.NativeTargetFlags, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
 		t.Errorf("NativeTargetFlags=%v want %v", got, want)
+	}
+	if got, want := st.NativeTileBlitModes, []byte{0, 0, 0, 0}; !reflect.DeepEqual(got, want) || !reflect.DeepEqual(st.NativeTerrainControl, []byte{0, 0, 0, 0}) {
+		t.Fatalf("Native terrain renderer inputs modes=%v control=%v", got, st.NativeTerrainControl)
 	}
 }
 
