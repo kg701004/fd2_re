@@ -80,10 +80,10 @@ native magic raw / menu state:
 `0x14818` 本體現已釘其 raw geometry：record `+3 < 0x10` 時交由 `0x4e555` 產生 map/reach mask；`+3 >= 0x10`
 時只 mark 同 x 或同 y、距離不超過 `(+3-0x10)` 的十字格。接著掃 roster，略過 inactive unit 與 mask=`0xff` 格，再用 record `+6` 篩 runtime `unit+6`：code 0 要 `==0`、1 要 `!=0`、2 要 `!=1`、3 要 `==2`。這是 direct branch evidence；不可在未追 unit+6 constructor／map mask 前把四值改名成完整陣營語意。
 
-上述 `dist<0x10` 不是 Manhattan：`0x4e555(0)` 僅回傳 20-byte terrain-cost row 的位址，真正的 `0x4e040`
-以 `dist` 為 path budget 做四方向 recursive flood-fill。每次從 tile type 取 cost 扣剩餘值，成本不足停止；grid flag
-`0x40` 不可通過，`0x80` 的格成本視為 0。故 remake `InCastRange` 的曼哈頓近似不能作為 native command target
-contract；需有同一 tile cost/flag 資料才可接線。
+上述 `dist<0x10` 不是無條件 Manhattan：`0x4e555(0)` 回傳 20-byte cost row，真正的 `0x4e040` 以 `dist`
+做四方向 flood-fill，grid flag `0x40` 不可通過、`0x80` 的格成本視為 0。對 command selector 而言 row index 固定
+為 0，EXE `word_61646` 的該 20-byte row 全為 1；故不套地形加權，但障礙仍可使可達格少於 Manhattan circle。
+remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 grid flags。
 
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 

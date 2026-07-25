@@ -127,10 +127,10 @@ numeric resolver 是 **per candidate**，而非 legacy UI 的單格 `CastArea` c
 與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
 使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須是 alive/on-grid，並以 target code 對 runtime
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。這些值尚未全部命名為玩家／友軍／敵軍，
-`dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 path-cost flood-fill：起點 budget=`dist`，每一步依 tile type
-從 `0x4e555(0)` 回傳的 20-byte cost row 扣成本，剩餘 budget 不足即停；grid flag bit `0x40` 阻擋、bit `0x80`
-使該步成本為零。這撤回「native range 是 Manhattan」的可能暗示；實作仍須帶入正確 tile-type/cost table，否則不可
-啟用 native target UI。
+`dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 flood-fill：起點 budget=`dist`，grid flag bit `0x40` 阻擋、
+bit `0x80` 使該步成本為零。雖然 callee 支援 terrain-cost row，command selector 固定呼叫 `0x4e555(0)`，而
+EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
+cardinal range（無阻擋時才等於 Manhattan）。
 
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
