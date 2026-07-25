@@ -1,0 +1,84 @@
+package fdother
+
+import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+)
+
+// LMI1Entry is one indexed UI cell from FDOTHER.DAT resource #5.
+// Pixels are decoded in row-major order; palette index 0 remains transparent
+// to the caller, matching native 0x4e916/0x4e8af.
+type LMI1Entry struct {
+	Width, Height int
+	Pixels        []byte
+}
+
+// ParseLMI1 decodes the small indexed sub-resource container used by the
+// native UI sprite bank. Its directory starts at byte 6 (after "LMI1" and a
+// u16 count), and each entry is {u16 width, u16 height, 0xc0 codec stream}.
+// The codec is intentionally kept separate from the FDOTHER frame-table RLE:
+// bytes <= 0xc0 are literal pixels; bytes > 0xc0 mean (byte-0xc0) repeats of
+// the following pixel byte.
+func ParseLMI1(data []byte) ([]LMI1Entry, error) {
+	if len(data) < 6 || string(data[:4]) != "LMI1" {
+		return nil, errors.New("fdother: missing LMI1 magic")
+	}
+	count := int(binary.LittleEndian.Uint16(data[4:]))
+	tableEnd := 6 + count*4
+	if count == 0 || tableEnd > len(data) {
+		return nil, errors.New("fdother: invalid LMI1 directory")
+	}
+	entries := make([]LMI1Entry, count)
+	previous := tableEnd
+	for i := 0; i < count; i++ {
+		off := int(binary.LittleEndian.Uint32(data[6+i*4:]))
+		end := len(data)
+		if i+1 < count {
+			end = int(binary.LittleEndian.Uint32(data[6+(i+1)*4:]))
+		}
+		if off < previous || off+4 > end || end > len(data) {
+			return nil, fmt.Errorf("fdother: LMI1 entry %d bounds invalid", i)
+		}
+		w := int(binary.LittleEndian.Uint16(data[off:]))
+		h := int(binary.LittleEndian.Uint16(data[off+2:]))
+		if w <= 0 || h <= 0 {
+			return nil, fmt.Errorf("fdother: LMI1 entry %d has empty dimensions", i)
+		}
+		pixels, err := decodeLMI1Pixels(data[off+4:end], w*h)
+		if err != nil {
+			return nil, fmt.Errorf("fdother: LMI1 entry %d: %w", i, err)
+		}
+		entries[i] = LMI1Entry{Width: w, Height: h, Pixels: pixels}
+		previous = off
+	}
+	return entries, nil
+}
+
+func decodeLMI1Pixels(stream []byte, want int) ([]byte, error) {
+	pixels := make([]byte, 0, want)
+	for len(pixels) < want {
+		if len(stream) == 0 {
+			return nil, errors.New("codec stream ends before dimensions are filled")
+		}
+		c := stream[0]
+		stream = stream[1:]
+		if c <= 0xc0 {
+			pixels = append(pixels, c)
+			continue
+		}
+		run := int(c) - 0xc0
+		if len(stream) == 0 {
+			return nil, errors.New("repeat command lacks pixel value")
+		}
+		if len(pixels)+run > want {
+			return nil, errors.New("repeat command exceeds dimensions")
+		}
+		v := stream[0]
+		stream = stream[1:]
+		for i := 0; i < run; i++ {
+			pixels = append(pixels, v)
+		}
+	}
+	return pixels, nil
+}

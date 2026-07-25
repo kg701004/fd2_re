@@ -45,7 +45,9 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 `0x11d40` palette/present。進一步 trace `0x15f0e` 可確定它以 `base + 6 + frame*4`
 取 frame offset，descriptor 前兩個 signed words 是 width/height，先配置
 `width*height+8` 再經 `0x4e96f` 解壓、`0x4e85b` 以 stride 寫入 indexed surface；
-這是可重用的 frame-resource ABI，但尚未證實 base `[0x53a81]` 的檔名與 entry 表。
+這是可重用的 frame-resource ABI；`[0x53a81]` 的 loader provenance 已由 UI trace
+確認為 `FDOTHER.DAT` resource #5 的 `LMI1` 容器（doc35 §4.2.5），remake 已新增
+strict `fdother.ParseLMI1` 與 codec regression。
 `0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
 MAP/TURN 欄位來源尚未閉合，因此 UI-11 仍 partial，不能直接把 0x52 命名成「行軍確認圖」。
 
