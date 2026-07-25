@@ -583,8 +583,9 @@
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
 - [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
-- [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它先以 `0x61646` 的 20-byte record 呼叫
-      `0x4e040` 建立／更新 target grid，後續再有 `|x-cx|+|y-cy| < caller radius` 的 marker 層、unit active flag／
+- [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它以固定 `0x61646` record 0 和原始 `(x,y,mode)`
+      呼叫 `0x4e040`，mode 作 seed grid byte 並經 terrain cost gate 建立／更新 target grid；後續再有
+      `|x-cx|+|y-cy| < caller radius` 的 marker 層、unit active flag／
       camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這只證實其中的曼哈頓幾何，
       另一 caller `0x14344` 證實同 helper 會以 unit `+0x20`（fallback 0x13）的 record 和 terrain table
       作格點 gate，故 SDD 必須保留 table+terrain+marker，而不能以單一 diamond 實作。

@@ -65,8 +65,10 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
-`0x14818` 先以 `0x61646 + 0x14*n` 的 20-byte record 呼叫 `0x4e040`，建立／更新 target grid；
-此 table-driven 路徑尚未命名。其後才有可獨立證實的一層幾何：以 source cell `(cx,cy)` 掃全格、
+`0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
+`(x,y,mode)` 傳入，建立／更新 target grid；`0x4e040` 以 mode 作 seed grid byte，內層再依
+tile flag 與 record byte table 的 cost gate 擴張。此 raw mode 的玩法名稱尚未確定。其後才有可獨立
+證實的一層幾何：以 source cell `(cx,cy)` 掃全格、
 對每一格算 `abs(x-cx)+abs(y-cy)`，只有嚴格小於 caller radius 的格寫入 `0xff` marker。
 最後掃 0x50-byte unit buffer：死亡／inactive unit 跳過、非 marker cell 跳過，再依 caller selector
 對 `unit+6` camp 過濾，將 slot index 寫入可選 target output。當另一個 mode argument 大於等於
@@ -81,7 +83,7 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 marker grid。`record+3/+4` 仍不能在未追到 producer 前命名為 weapon min/max。
 
 `0x4e040` 並非僅由這個 target caller 使用：`0x14344` 先以 unit `+0x20`（fallback record
-`0x13`）透過 `0x4e555` 取同樣的 20-byte record，再把 map grid、terrain table 一併傳入。
+`0x13`）透過 `0x4e555` 取另一個 20-byte record，再把 map grid、terrain table 一併傳入。
 其內層 `0x4e16e` 讀 tile flag 與該 record 的 byte table 後決定是否擴張。故目前可用的
-E0 模型是 **table + terrain/cost gate + marker + unit filter**；尚不可把 target highlight
+E0 模型是 **seed mode + table + terrain/cost gate + marker + unit filter**；尚不可把 target highlight
 reducer 成單一菱形或宣稱其完整路徑／LOS 規則。
