@@ -66,7 +66,13 @@ for 第 k 組(0x22..0x26):
 | 2 | → | `0x1bbdc`：讀 item record `+0xd/+0x10/+0x12/+0x15`、做 range/effect selection，特殊 item `0x17` 另有 gate | 物品（case 2） |
 | 3 | ↓ | `0x13fd4`（未移動時 HP/狀態處理）→ `0x190ac` 格子互動／寶物檢查 | 待機／格子互動（case 3） |
 
-因此撤回舊 mapping「↑道具／←攻擊／→魔法／↓待機」。`0x1cff0` 內部仍需再拆 spell-vs-attack 的 command table；本表只宣稱 switch/result order，不宣稱所有 effect 已完成。
+因此撤回舊 mapping「↑道具／←攻擊／→魔法／↓待機」。`0x1cff0` 的 command-`0x1e` spell path 已證實；family priority、damage/effect jump table 仍待完整拆解，本表不宣稱所有 effect 已完成。
+
+### `0x1cff0` command evidence（2026-07-25, Docker Capstone）
+
+`0x1cff0` 會以 `[0x3c57]` 選中的 byte 從 local command array 取出 `0x4e516` record；record `+3` 是 command code，`+4` 參與 MP／費用欄位，`+6` 參與目標幾何。已釘死的分支：command `0x17` 走特殊 target geometry（`0x14818`，使用 record `+6`）；command `0x1e` 走 `record+3-0x10` → `0x149f8` 的 spell-family path；其他 command 走 `0x2a6bd` 或 `0x1d6c8` jump-table effect path，最後統一回 `0x1aa1d`／`0x1d4f6` 收尾。
+
+因此「法術 command 以 `command-0x10` 形成 spell id」已有 direct caller 證據；但 `0x149f8` 的 family-specific damage/target priority 與 jump-table 每項 effect 尚未完整 lower，remake 仍保持 partial。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 

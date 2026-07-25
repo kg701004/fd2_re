@@ -253,7 +253,7 @@
       `AIL_init/set_sample_address/set_sample_loop_count/start_sample`(0x26896/0x26945)。
       待:14 子樣本→UI事件對照、戰鬥動態 index 表還原、remake 端接入(SDL_mixer/ebiten audio)
 - [~] **radial 指令環**：orig_04 截圖裁 4 圖示、十字繞單位+選中橘框；Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，runtime mapping 已修正。待：`0x1cff0`／`0x1bbdc` effect、圖示 resource provenance、左下 A+05/D+00 攻防預覽小欄
-- [x] **魔法系統** ✅(3c618c4):magic.go(spells.json=EXE dump 36條+M1-M5名稱表;InCastRange/Cast
+- [~] **魔法系統**（資料表與基礎 Cast 已接，native command/effect 尚未閉合）:magic.go(spells.json=EXE dump 36條+M1-M5名稱表;InCastRange/Cast
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
       待:AoE(range>0)、命中率、輔助系(魔刃/風行…)效果。
       ✅ 法術特效對映已 RE 定論(f8fffba 後,doc37):**不存在法術id→FIGANI對映**——施法演出=施法者
@@ -574,6 +574,7 @@
 - [x] **SDD-1 baseline matrix**：新增 `57-ui-evidence-matrix.md`，以目前 runtime 行號把 UI-01…UI-12 的 partial/missing 與下一個 E0/E1/E2 問題固定下來；這不是原版 verified。
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
 - [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
+- [x] **UI-04 spell command provenance**：Docker Capstone 延伸 `0x1cff0`，確認 local command record `+3`、`0x1e→spell_id=command-0x10→0x149f8`、`0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；完整 family priority/effect table 仍 partial，不把 spell runtime 宣稱完成。
 - [ ] **SDD-2 campaign transition matrix**：逐章標記 battle 結束後 town/shop/rest/church/preparation/ending 與連戰反例；postbattle 必須是可編輯 node。
 - [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
