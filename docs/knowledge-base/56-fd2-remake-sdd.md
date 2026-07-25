@@ -127,8 +127,9 @@ native command、`[+8]` item、`[+12]` wait。`0x173e7` 選第一個值為 0 的
 - wait：wrapper 未寫 `+12`，故在這條 chooser path 永遠可選。
 
 既有 normalized `Spells`／`Sealed` 只保留給缺 raw command mask 的舊 editable scenario 相容 UI；它不得作為
-FD2 native action gate 的證據，也不得覆蓋 raw mask 已存在時的 `unit+0x27` gate。攻擊 geometry 與 item selector/effect
-仍未閉合，native overlay 維持 partial。
+FD2 native action gate 的證據，也不得覆蓋 raw mask 已存在時的 `unit+0x27` gate。remake 的 confirm path 已同樣
+拒絕非零 disabled word，避免「灰色 cell 仍可 Enter 執行」。攻擊 geometry 與 item selector/effect 仍未閉合，native
+overlay 維持 partial。
 
 同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
 

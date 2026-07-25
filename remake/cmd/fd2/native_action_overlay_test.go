@@ -64,3 +64,15 @@ func TestActionOverlayNativeCommandGateUsesRawOffset27NotLegacySeal(t *testing.T
 		t.Fatalf("raw +0x27 must disable command: availability=%v", got)
 	}
 }
+
+func TestNativeActionSelectableRejectsDisabledWordAndInvalidDirection(t *testing.T) {
+	availability := [4]int{0, 1, 0, 0}
+	for _, direction := range []int{-1, 1, 4} {
+		if nativeActionSelectable(availability, direction) {
+			t.Fatalf("direction %d must not be selectable", direction)
+		}
+	}
+	if !nativeActionSelectable(availability, 0) || !nativeActionSelectable(availability, 3) {
+		t.Fatal("zero disabled-word must be selectable")
+	}
+}

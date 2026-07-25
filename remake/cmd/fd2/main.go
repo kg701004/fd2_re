@@ -2569,6 +2569,14 @@ func (g *Game) ringInput() bool {
 		return true
 	}
 	if enter {
+		// 0x177fc accepts a direction only when its corresponding 0x18d8c
+		// availability word is zero.  Rendering a disabled FDOTHER cell without
+		// enforcing the same input gate would let the remake execute an action
+		// the native chooser rejects.
+		if !nativeActionSelectable(g.actionOverlayAvailability(), g.ringSel) {
+			g.msg = "此指令目前不可用"
+			return true
+		}
 		switch g.ringSel {
 		case 0: // 攻擊 → 關環,進選目標(游標移到攻擊範圍內的敵人;範圍依武器射程,doc32)
 			g.ring = false
@@ -4028,6 +4036,12 @@ func hasNativeCommand(unit *battle.Unit) bool {
 // unknown; NativeTransient[5] is the fail-closed storage of that byte.
 func nativeCommandActionBlocked(unit *battle.Unit) bool {
 	return unit == nil || unit.NativeTransient[5] != 0
+}
+
+// nativeActionSelectable mirrors the final 0x177fc availability check after
+// a direction is chosen: only a zero disabled-word may dispatch an action.
+func nativeActionSelectable(availability [4]int, direction int) bool {
+	return direction >= 0 && direction < len(availability) && availability[direction] == 0
 }
 
 func nativeActionOffsetXY(offset int) (int, int) {

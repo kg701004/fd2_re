@@ -627,6 +627,7 @@
       2026-07-26 再以完整 `0x18d8c` dataflow 固定四個 disabled words 的順序為 attack/native-command/item/wait，
       `0x173e7/0x177fc` 僅選值 0；`0x1c269==0` 或 `unit+0x27!=0` 都寫 native-command `+4=1`。
       remake 已以 `NativeTransient[5]` gate raw command；撤回任何「`+0x27` 就是 legacy `Sealed`」的斷言，writer／status 名稱仍未知。
+      confirm input 同步拒絕任何 nonzero disabled word，避免僅 render 灰 cell 卻仍執行該 action。
       action chooser 本體亦已完成 E0：availability=0 才可用 ↑/←/→/↓ 選 action 0/1/2/3，Enter/Space 確認、
       Esc 取消；四張 indexed asset 自中心做 4-frame 十字 slide，72×72 backup 每幀 restore。尚缺 resource
       anchor 與畫面 oracle，故仍不可將現有文字/ring UI 當成 original renderer。resource provenance 已補：
