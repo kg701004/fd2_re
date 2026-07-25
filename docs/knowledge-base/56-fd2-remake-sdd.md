@@ -194,6 +194,12 @@ generic two-stage target contract，完成 record25 MP debit 後，對 final tar
 最後才將 actor 設為 acted。target invalid、缺 flags 或 MP 不足都在 mutation 前拒絕；它不使用 normalized CastArea，
 也未開 native grid/UI、renderer 或 message feedback。
 
+`State.ExecuteNativeCommandApplication` 現對 IDs26/27 提供另一條 strict non-UI core：以各自 record 建 generic
+two-stage final targets、扣各自 MP；每個 target 只在 raw `+0x25/+0x26` 為零、class 不為 `0x19/0x1a`、
+`rand()%100<50` 時固定扣 10 HP，並寫 `rand()%4+2` 到同一 raw byte。已有 duration/class gate 的 target 不會
+mutation，但 handler 已成功時仍遵循原版 MP debit/actor completion；unknown ID、缺 raw data 或 invalid target 在
+mutation 前拒絕。此 route 不映射 legacy Poisoned/Paralyzed fields，UI/renderer 仍 fail-closed。
+
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
