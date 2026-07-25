@@ -467,7 +467,8 @@
       → doc25 §7.5.1 已修正範圍(戰場進場直接定位仍成立;cutscene 幕內走位是另一機制,已推翻舊結論)。
 - [~] **D8:戰前 UI**(doc46 附帶發現):Docker/Capstone 已釘 `0x1a30b` battle-entry choreography：
       `0x1f1cc(0x52)`→20ms→`0x1f30a(0x52)`、64000-byte indexed surface、`0x1f42d` cell helper、
-      後續 `0x1a813/0x1a866` dispatch；證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死
+      後續 `0x1a813/0x1a866` dispatch；`0x15f0e` frame ABI 亦已釘為 offset-table + RLE
+      decode + stride blit。證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死
       MAP/TURN/ENEMY/FRIEND/NPC 欄位與 YES/NO input 的資源／字串 ABI，再做 remake shell 與截圖，
       不把 resource `0x52` 或 `0x51e81` 猜成畫面名稱。
 

@@ -42,7 +42,11 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 `[0x53ecc]==0` 時進入 `0x1a7bd → 0x1d80b → 0x1a7f1`。其中 `0x1a4c7` 明確呼叫
 `0x1f1cc(0x52)`、20ms、`0x1f30a(0x52)`，完成 redraw 後才進後續 dispatch；`0x1f1cc`
 與 `0x1f30a` 都配置 64000-byte indexed buffer、呼叫 `0x15f0e` 取資源並逐幀
-`0x11d40` palette/present。`0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
+`0x11d40` palette/present。進一步 trace `0x15f0e` 可確定它以 `base + 6 + frame*4`
+取 frame offset，descriptor 前兩個 signed words 是 width/height，先配置
+`width*height+8` 再經 `0x4e96f` 解壓、`0x4e85b` 以 stride 寫入 indexed surface；
+這是可重用的 frame-resource ABI，但尚未證實 base `[0x53a81]` 的檔名與 entry 表。
+`0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
 MAP/TURN 欄位來源尚未閉合，因此 UI-11 仍 partial，不能直接把 0x52 命名成「行軍確認圖」。
 
 下一輪先處理 UI-03／UI-04 的原版 dispatch 與 weapon reach provenance，再補 D8 的
