@@ -3333,6 +3333,15 @@ func (g *Game) Update() error {
 				}
 			}
 			if os.Getenv("FD2_SHOT_COMMAND") != "" && g.sel != nil {
+				// The raw command-grid oracle must choose a unit that actually owns
+				// a materialized native command mask. The generic ring fixture may
+				// have selected an enemy or a story-only record first.
+				for _, unit := range g.st.Units {
+					if unit != nil && len(unit.NativeCommandIDs()) > 0 {
+						g.sel, g.curX, g.curY = unit, unit.X, unit.Y
+						break
+					}
+				}
 				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
 			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
@@ -3636,9 +3645,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			if targets, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
 				ch := ebiten.NewImage(tw, th)
 				ch.Fill(color.RGBA{0xff, 0x80, 0x20, 0x68})
-				for _, target := range targets {
+				for _, unit := range targets {
 					op := &ebiten.DrawImageOptions{}
-					op.GeoM.Translate(float64(target.X*tw)-g.camX, float64(target.Y*th)-g.camY)
+					op.GeoM.Translate(float64(unit.X*tw)-g.camX, float64(unit.Y*th)-g.camY)
 					target.DrawImage(ch, op)
 				}
 			}
