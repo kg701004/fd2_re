@@ -67,8 +67,9 @@
 0x026a78  mov   [0x53eec], eax         ; 存起來
 ```
 
-同一段 init 另外把 `FDOTHER.DAT` 資源 `#1`、`#2` 分別載進 `[0x53a4d]`、`[0x53a89]`(這兩個非 SFX 用途,
-與 doc14 已知的「疑框角/箭頭」推測一致,留待後續確認,不影響本篇結論)。
+同一段 init 另外把 `FDOTHER.DAT` 資源 `#1`、`#2` 分別載進 `[0x53a4d]`、`[0x53a89]`。#2 已由
+UI renderer trace 確認為 action overlay 的 raw indexed cell bank（doc57）；#1 仍非 SFX 用途且待確認，
+不影響本篇結論。
 
 `[0x53eec]` 被 code 讀取(`push dword ptr [0x53eec]` 系列)共 **58 處**,散布在選單/游標/對話等一般 UI
 流程 ── 符合「UI 通用音效池」的角色。
@@ -167,8 +168,8 @@ uint32 表 + `ADLIB-`/樂器名字串),且遊戲程式碼中未找到任何對 `
 - [x] 取樣率呼叫端已追蹤(見下方「取樣率:負向證據」),**確認遊戲程式碼從未呼叫**
   `AIL_set_sample_type`/`AIL_set_sample_playback_rate`,故無法從呼叫端立即數反查——沿用 11025Hz/8-bit
   推定值,已從「未查證」升級為「查證後仍無直接證據,推定值維持」。
-- [ ] `FDOTHER.DAT` #1、#2(同一次 init 載入,`[0x53a4d]`/`[0x53a89]`)用途未確認,與本篇 SFX 無關但
-  同批載入,值得一併釐清避免誤判。
+- [ ] `FDOTHER.DAT` #1（同一次 init 載入至 `[0x53a4d]`）用途未確認，與本篇 SFX 無關；#2 已確認為
+  action overlay raw cell bank（doc57），不再列為未知。
 
 ## 導出 WAV(第 9 輪)
 

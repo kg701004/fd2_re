@@ -599,7 +599,9 @@
       是完整 command submenu gate；尚未找出 writer 或 status 名稱，仍不得接 effect。
       action chooser 本體亦已完成 E0：availability=0 才可用 ↑/←/→/↓ 選 action 0/1/2/3，Enter/Space 確認、
       Esc 取消；四張 indexed asset 自中心做 4-frame 十字 slide，72×72 backup 每幀 restore。尚缺 resource
-      provenance、anchor 與畫面 oracle，故仍不可將現有文字/ring UI 當成 original renderer。
+      anchor 與畫面 oracle，故仍不可將現有文字/ring UI 當成 original renderer。resource provenance 已補：
+      `[0x53a89]` = `FDOTHER.DAT#2` 的 78-cell raw offset bank，`0x4e9e4` 直接貼 index pixels（0 preserve）；
+      strict decoder/regression 已加入，仍未接 runtime renderer。
 - [x] **UI-03 command-record/table identity**：`0x4e516` 的 IDs 0..35 與 EXE spell table 7-byte rows
       byte-for-byte 相同，故 record `+3/+4/+5/+6` 可安全正名為 `dist/range/mp/target`；全 FDFIELD 和
       character-default initial masks 的已見 ID 範圍為 0..30。36..39 僅是 pointer 可達的相鄰 data、label
