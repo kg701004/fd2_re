@@ -6,6 +6,7 @@ package battle
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -42,20 +43,25 @@ type Unit struct {
 	AP, DP    int
 	HIT, EV   int // 命中/閃避基礎值(doc02 §2;doc03:EXE 內為「衍生值」非表格原始欄位,
 	// 敵/友單位 10B 表無此欄,export_units.py 暫用固定近似值,見該檔頭註解)
-	CritPct        int // 暴擊率(doc03 職業暴擊率表 0x5219B,resist_crit.json,依 class 已驗證吻合 doc02 §7.2)
-	MV             int // 移動力
-	AtkMin         int // 近戰攻擊距離下限(曼哈頓距離;0 視為預設 1,doc32 weapon_range.json 依武器 type 決定)
-	AtkMax         int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
-	Portrait       int
-	Fig            int // 地圖 sprite 組(= 角色 id,恆等,doc 31)
-	X, Y           int
-	Acted          bool   // 本回合已行動(原版 byte[+5] bit7)
-	Group          int    // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
-	OnField        bool   // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
-	Spells         []int  // normalized/editable spell IDs; not a raw unit+0x22 bitfield
-	Inventory      []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
-	Equipped       []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
-	InventorySlots []int  // 原始 8 個 source bytes；0xff 保留空槽位置
+	CritPct  int // 暴擊率(doc03 職業暴擊率表 0x5219B,resist_crit.json,依 class 已驗證吻合 doc02 §7.2)
+	MV       int // 移動力
+	AtkMin   int // 近戰攻擊距離下限(曼哈頓距離;0 視為預設 1,doc32 weapon_range.json 依武器 type 決定)
+	AtkMax   int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
+	Portrait int
+	Fig      int // 地圖 sprite 組(= 角色 id,恆等,doc 31)
+	X, Y     int
+	Acted    bool  // 本回合已行動(原版 byte[+5] bit7)
+	Group    int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
+	OnField  bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
+	Spells   []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
+	// NativeCommandMask is the runtime 40-bit command inventory enumerated by
+	// 0x1c269.  FDFIELD b13..b16 initializes bytes 0..3; byte 4 begins zero and
+	// can be OR-mutated by 0x1d7fb.  It is deliberately separate from Spells:
+	// command ID effects and target contracts are not inferred from this mask.
+	NativeCommandMask [5]byte `json:"native_command_mask,omitempty"`
+	Inventory         []int   // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
+	Equipped          []bool  // 與 Inventory 對齊；true 表示該欄位目前已裝備
+	InventorySlots    []int   // 原始 8 個 source bytes；0xff 保留空槽位置
 	// Base* are the persistent pre-remake equipment values. Existing scenario
 	// data stores effective values, so EquipmentBaseSet is true for those
 	// records and newly purchased equipment is added without double counting.
@@ -384,27 +390,28 @@ type unitsFile struct {
 		Value int    `json:"value"`
 	} `json:"chests,omitempty"`
 	Units []struct {
-		Camp           string       `json:"camp"`
-		ClassID        int          `json:"cls"`
-		Name           string       `json:"name"`
-		ClsName        string       `json:"cls_name"`
-		Lv             int          `json:"lv"`
-		HP             int          `json:"hp"`
-		MP             int          `json:"mp"`
-		Spells         []int        `json:"spells"`
-		Inventory      []int        `json:"inventory,omitempty"`
-		InventorySlots []int        `json:"inventory_slots,omitempty"`
-		DeathEffect    *DeathEffect `json:"death_effect,omitempty"`
-		DeathReward    *DeathEffect `json:"death_reward,omitempty"`
-		AP             int          `json:"ap"`
-		DP             int          `json:"dp"`
-		HIT            int          `json:"hit"`
-		EV             int          `json:"ev"`
-		Crit           int          `json:"crit"`
-		MV             int          `json:"mv"`
-		AtkMin         int          `json:"atk_min"` // 攻擊距離下限(0=預設1;沒此欄的舊版 units.json 一律 0,doc32)
-		AtkMax         int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
-		Ex             int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
+		Camp               string       `json:"camp"`
+		ClassID            int          `json:"cls"`
+		Name               string       `json:"name"`
+		ClsName            string       `json:"cls_name"`
+		Lv                 int          `json:"lv"`
+		HP                 int          `json:"hp"`
+		MP                 int          `json:"mp"`
+		Spells             []int        `json:"spells"`
+		InitialCommandMask []byte       `json:"initial_command_mask,omitempty"`
+		Inventory          []int        `json:"inventory,omitempty"`
+		InventorySlots     []int        `json:"inventory_slots,omitempty"`
+		DeathEffect        *DeathEffect `json:"death_effect,omitempty"`
+		DeathReward        *DeathEffect `json:"death_reward,omitempty"`
+		AP                 int          `json:"ap"`
+		DP                 int          `json:"dp"`
+		HIT                int          `json:"hit"`
+		EV                 int          `json:"ev"`
+		Crit               int          `json:"crit"`
+		MV                 int          `json:"mv"`
+		AtkMin             int          `json:"atk_min"` // 攻擊距離下限(0=預設1;沒此欄的舊版 units.json 一律 0,doc32)
+		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
+		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
 		Portrait int `json:"portrait"`
 		Fig      int `json:"fig"`
@@ -450,6 +457,9 @@ func Load(path string) (*State, error) {
 			DeathEffect: u.DeathEffect,
 			DeathReward: u.DeathReward,
 			Group:       u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
+		}
+		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
+			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)
 		}
 		// 註:不再自動把 own 塞部署格 — 部署格保留給 scenario 主角隊(spawn_party);
 		// FDFIELD 的 own(如哈諾/哈瓦特)用自己的出場座標(房子位置),由事件按回合放出。

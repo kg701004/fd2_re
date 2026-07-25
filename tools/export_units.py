@@ -125,6 +125,11 @@ def main(argv):
             rec["inventory"] = u["inventory"]
         if u.get("inventory_slots"):
             rec["inventory_slots"] = u["inventory_slots"]
+        # Raw FDFIELD b13..b16.  This is the initial four-byte portion of the
+        # runtime five-byte native command mask; it is intentionally not
+        # normalized into the remake's legacy `spells` list.
+        if "initial_command_mask" in u:
+            rec["initial_command_mask"] = u["initial_command_mask"]
         if u.get("death_effect") is not None:
             rec["death_effect"] = u["death_effect"]
             effect = u["death_effect"]

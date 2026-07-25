@@ -83,6 +83,11 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 4 bytes 至 `+0x1a..+0x1d`、清 `+0x1e`，而 `0x1d7fb` 可依 `id/8` 將 runtime bit OR 回 array。
 `0x159fa` 另要求 `command_record[5] <= unit.current_mp`（unit `+0x44`）。
 
+FDFIELD 26-byte roster 的 source bytes `b13..b16` 現由 `parse_field.py` 和
+`export_units.py` 保留為 `initial_command_mask`；battle `Unit.NativeCommandMask` 以五個 bytes
+materialize，並只提供原版 byte-major／low-bit-first 列舉與 bounded OR。這條管線刻意不覆蓋既有
+`Spells` normalized list：後者是 legacy gameplay approximation，不能再被宣稱為原版 raw command source。
+
 remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定四個 ring action：
 
 ```json

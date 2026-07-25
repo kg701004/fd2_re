@@ -6,7 +6,8 @@ FDFIELD.DAT 每 3 資源 = 一張戰場:
   資源 3N+1 控制: u8 地圖編號, u8 己方可出場數, u8 敵友出場總數,
                   回合事件[16]×3B(回合 u8, 全域事件id u8, 陣營 u8:0敵/1友/2特殊), 保留[16]×2B,
                   寶箱[16]×3B(型態u8:0物品/1金錢, 內容u16),
-                  出場人物[敵友總數]×26B(陣營,肖像,種族,職業,等級, 物品×8, 法術×8, group(波次), drop×4)
+                  出場人物[敵友總數]×26B(陣營,肖像,種族,職業,等級,物品×8,
+                  initial-command-mask×4,其餘未解 bytes×4,group(波次),drop×4)
     註:單位 b21=group(出場波次,turn_events 觸發);增援單位的座標在 3N+2 出場位置段(地圖角落)。
     事件腳本「在 FDFIELD.DAT 資料」(非 EXE);EXE handler 只管勝負判定。remake 重新設計可擴充 DSL,不照搬本格式。
   資源 3N+2 出場位置: u16 人數, 每組 (u16 X, u16 Y, u16 肖像;0=己方)
@@ -55,6 +56,11 @@ def parse_map(raw, m):
                       "portrait": b[1], "race": b[2], "cls": b[3], "lv": b[4],
                       "inventory": [item for item in b[5:13] if item != 0xFF],
                       "inventory_slots": list(b[5:13]),
+                      # Constructor 0x10f7f copies exactly b[13:17] to runtime
+                      # unit+0x1a..+0x1d, then clears byte +0x1e.  Do not turn
+                      # these bits into spell IDs here: they are native command
+                      # inventory and individual ID effects remain unresolved.
+                      "initial_command_mask": list(b[13:17]),
                       "group": b[21],
                       # 0=item、1=gold 已由原攻略確認；2/3 是特殊死亡效果，
                       # 語意未全解前保留原值，不猜成一般掉落物。

@@ -592,6 +592,10 @@
       已對齊 FDTXT_000，40 個 physical label slots 已由 `tools/export_command_labels.py` 匯出為
       `docs/data/command_labels.json`；label 不等於可達／有 gameplay effect。待 command producer、完整
       renderer/effect stack 後才可重製原版 menu。
+- [x] **UI-03 raw command-mask pipeline**：FDFIELD roster `b13..b16` 已由 parser/exporter 保留為
+      `initial_command_mask`；battle runtime materialize 為可持久的 5-byte `NativeCommandMask`，並有原版
+      order 的 ID expansion／`0x1d7fb` bounded-OR regression。舊 `Spells` 是 normalized approximation，
+      不再冒充 raw source；尚未將未知 command effect 接入。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
 - [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它以固定 `0x61646` record 0 和原始 `(x,y,mode)`
       呼叫 `0x4e040`，mode 作 seed grid byte 並經 terrain cost gate 建立／更新 target grid；後續再有
