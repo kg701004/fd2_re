@@ -58,3 +58,28 @@ func TestBlitNativeTerrainCellSelectsRawOrLUTBranch(t *testing.T) {
 		t.Fatalf("LUT branch=%#x,%#x", dst[0], dst[1])
 	}
 }
+
+func TestBlitNativeTerrainRegionMatches11EEECellOrder(t *testing.T) {
+	pixels, mask := make([]byte, NativeSize*NativeSize), make([]byte, NativeSize*NativeSize)
+	pixels[0], mask[0] = 7, 1
+	b := &Bank{Sprites: make([]Sprite, 12)}
+	for i := range b.Sprites {
+		b.Sprites[i] = Sprite{Pixels: pixels, Mask: mask, RemapMask: make([]byte, NativeSize*NativeSize)}
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(i + 0x10)
+	}
+	dst := make([]byte, NativeSize*NativeSize*2)
+	if err := b.BlitNativeTerrainRegion(dst, NativeSize*2, 0, 0, 2,
+		[]NativeTerrainCell{{Tile: 0, BlitMode: 0xff}, {Tile: 0, BlitMode: 0}},
+		[]byte{0, 0, 0, 0}, 0, 0, 2, 1, 0, 0, lut); err != nil {
+		t.Fatal(err)
+	}
+	if dst[0] != 7 || dst[NativeSize] != 0x17 {
+		t.Fatalf("region cells=%#x,%#x", dst[0], dst[NativeSize])
+	}
+	if err := b.BlitNativeTerrainRegion(dst, NativeSize, 0, 0, 1, []NativeTerrainCell{{}}, nil, 0, 0, 1, 1, 0, 0, lut); err == nil {
+		t.Fatal("short control table accepted")
+	}
+}

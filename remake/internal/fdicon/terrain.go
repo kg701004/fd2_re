@@ -2,6 +2,13 @@ package fdicon
 
 import "errors"
 
+// NativeTerrainCell is one decoded FDFIELD composition cell. Tile is the raw
+// terrain word; BlitMode is composition entry byte+3 (event word high byte).
+type NativeTerrainCell struct {
+	Tile     uint16
+	BlitMode byte
+}
+
 // NativeTerrainFrameIndex reproduces 0x11eee's FDSHAP descriptor selector.
 // tile is the composition word's low 10 bits; flags is the selected terrain
 // control byte. flip is native 0x53a40 (0 or 1), and cycle is 0x53c0b.
@@ -46,4 +53,27 @@ func (b *Bank) BlitNativeTerrainCell(dst []byte, stride, x, y, tile int, flags, 
 		return sprite.BlitAt(dst, stride, x, y)
 	}
 	return sprite.BlitLUT(dst, stride, x, y, lut)
+}
+
+// BlitNativeTerrainRegion reproduces 0x11eee's visible-cell loop. controls is
+// the raw selected FDSHAP terrain-control table (four bytes per base tile);
+// only byte 0 is consumed here, exactly as the native code does. The caller
+// owns timing and chooses the explicit LUT; this routine does not advance it.
+func (b *Bank) BlitNativeTerrainRegion(dst []byte, stride, dstX, dstY, mapWidth int, cells []NativeTerrainCell, controls []byte, mapX, mapY, width, height, flip, cycle int, lut []byte) error {
+	if mapWidth <= 0 || width < 0 || height < 0 || mapX < 0 || mapY < 0 || len(cells)%mapWidth != 0 || mapX+width > mapWidth || mapY+height > len(cells)/mapWidth {
+		return errors.New("fdicon: invalid native terrain region")
+	}
+	for row := 0; row < height; row++ {
+		for col := 0; col < width; col++ {
+			cell := cells[(mapY+row)*mapWidth+mapX+col]
+			tile := int(cell.Tile & 0x3ff)
+			if tile*4 >= len(controls) {
+				return errors.New("fdicon: terrain control table is too short")
+			}
+			if err := b.BlitNativeTerrainCell(dst, stride, dstX+col*NativeSize, dstY+row*NativeSize, tile, controls[tile*4], cell.BlitMode, flip, cycle, lut); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
