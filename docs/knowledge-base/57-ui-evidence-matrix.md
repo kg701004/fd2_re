@@ -105,6 +105,12 @@ normalized `Spells` list 自動成為原版 command grid。
 malformed JSON 維持 normalized labels。這改善既有 spell presentation 的原始文字 fidelity，並沒有把
 legacy vertical spell UI 宣稱成 `0x1ceed` command grid，也沒有擴大 effect semantics。
 
+2026-07-26 native command-grid runtime slice：當 player-provided FDOTHER VGA palette 與 editable
+`command_labels.json` 都存在，ring 的 command branch 以 `NativeCommandMask` 開 native four-row grid，
+label 直接採原始 `0xc9/0xcd` palette entries，↑↓／←→採 recovered ABI。confirm 僅可進入已有 EXE spell
+row 的 command；無 row 的 raw ID 顯示明確未接 effect，缺任一 asset 則退回 legacy spell UI。這是可視
+layout/input slice，不是所有 command effect 或 native frame/background renderer 的完成宣告。
+
 2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
 的共同地址為 `framebuffer + 0x8088 + 0x18*cursorColumn + (0x18*0x1c8)*cursorRow`。
 `0x11bfa/0x11c59` 的 cursor movement 證明 `[0x53ab9]/[0x53abd]` 是這對可視 cursor coordinates：

@@ -125,60 +125,64 @@ type Game struct {
 	cutTick  int
 	cutCur   []*ebiten.Image
 	// radial 指令環(原版 [0x3C57]:↑0=攻擊/←1=法術/→2=物品/↓3=待機)
-	ring               bool
-	ringSel            int
-	ringIcons          [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
-	nativeActionCells  [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
-	spellOpen          bool
-	spellSel           int
-	castSp             *battle.Spell // 施法目標選擇中
-	spells             []battle.Spell
-	commandLearn       map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
-	bgm                *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
-	bgmCur             string
-	bgmSource          string                // 音源設定 "fm"/"mt32"(settings.go;F2 切換)
-	debug              bool                  // F3:開發除錯 HUD(座標/陣營原文等)
-	unitLabels         bool                  // FD2_UNIT_LABELS=1:cutscene sprite 左上標 [idx]fig+名+座標(協助回報/對映原版 slot)
-	cutsceneLog        bool                  // FD2_CUTSCENE_LOG=1:過場 node/beat/走位逐步 log 到 stderr(協助對原版資料比對)
-	banner             string                // 回合橫幅文字(PLAYER/ENEMY PHASE)
-	bannerT            int                   // 橫幅剩餘 tick
-	sfx                map[int][]byte        // SFX PCM(doc36 FDOTHER#31 14樣本)
-	sfxSwing           []byte                // 戰鬥揮擊音(doc36 戰鬥池 #48-64 sub0,七池共用)
-	sfxImpact          []byte                // 命中音(近似:最短最尖池;attack_id→sfx 對照表 doc36 未 RE)
-	sfxDeath           []byte                // 陣亡/重擊音(近似:最長池)
-	sfxTransition      []byte                // FDOTHER #88 sub1: ch24 transition SFX
-	handlerResource    int                   // currently loaded handler resource-table id
-	prevCurX, prevCurY int                   // 游標移動音偵測
-	aiBusy             bool                  // AI 回合進行中(逐單位行走動畫)
-	deathRewarded      map[*battle.Unit]bool // 每個死亡 transition 的 reward 只執行一次
-	rng                *rand.Rand            // 施法擲骰(FD2_SEED 可固定,headless 重現)
-	gold               int                   // 金幣(商店)
-	items              []string              // 隊伍道具(名稱;道具效果待實裝)
-	shopSel            int                   // 商店游標
-	shopRecipientSel   int
-	shopRecipients     []int
-	shopPicking        bool
-	shopPending        campaign.Good
-	shopEquipPrompt    bool
-	shopEquipUnit      int
-	shopEquipSlot      int
-	shopItemTypes      map[int]int
-	shopEquipTypes     map[int][]int
-	shopItemPrices     map[int]int
-	shopItemStats      map[int]campaign.ItemStats
-	reviveFeeRates     []int  // church 0x30dc3 class fee words
-	shopMode           string // buy or sell
-	shopSellPicking    bool
-	shopSellUnitSel    int
-	shopSellSlotSel    int
-	portraits          map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
-	mouthOpen          bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
-	mouthTimer         int                     // 閉嘴倒數(原版 rand%30+2 tick)
-	curX               int
-	curY               int
-	camX               float64
-	camY               float64
-	loadErr            string
+	ring                bool
+	ringSel             int
+	ringIcons           [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
+	nativeActionCells   [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
+	nativeUIPalette     color.Palette
+	nativeCommandLabels map[int]string
+	nativeCommandOpen   bool
+	nativeCommandSel    int
+	spellOpen           bool
+	spellSel            int
+	castSp              *battle.Spell // 施法目標選擇中
+	spells              []battle.Spell
+	commandLearn        map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
+	bgm                 *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
+	bgmCur              string
+	bgmSource           string                // 音源設定 "fm"/"mt32"(settings.go;F2 切換)
+	debug               bool                  // F3:開發除錯 HUD(座標/陣營原文等)
+	unitLabels          bool                  // FD2_UNIT_LABELS=1:cutscene sprite 左上標 [idx]fig+名+座標(協助回報/對映原版 slot)
+	cutsceneLog         bool                  // FD2_CUTSCENE_LOG=1:過場 node/beat/走位逐步 log 到 stderr(協助對原版資料比對)
+	banner              string                // 回合橫幅文字(PLAYER/ENEMY PHASE)
+	bannerT             int                   // 橫幅剩餘 tick
+	sfx                 map[int][]byte        // SFX PCM(doc36 FDOTHER#31 14樣本)
+	sfxSwing            []byte                // 戰鬥揮擊音(doc36 戰鬥池 #48-64 sub0,七池共用)
+	sfxImpact           []byte                // 命中音(近似:最短最尖池;attack_id→sfx 對照表 doc36 未 RE)
+	sfxDeath            []byte                // 陣亡/重擊音(近似:最長池)
+	sfxTransition       []byte                // FDOTHER #88 sub1: ch24 transition SFX
+	handlerResource     int                   // currently loaded handler resource-table id
+	prevCurX, prevCurY  int                   // 游標移動音偵測
+	aiBusy              bool                  // AI 回合進行中(逐單位行走動畫)
+	deathRewarded       map[*battle.Unit]bool // 每個死亡 transition 的 reward 只執行一次
+	rng                 *rand.Rand            // 施法擲骰(FD2_SEED 可固定,headless 重現)
+	gold                int                   // 金幣(商店)
+	items               []string              // 隊伍道具(名稱;道具效果待實裝)
+	shopSel             int                   // 商店游標
+	shopRecipientSel    int
+	shopRecipients      []int
+	shopPicking         bool
+	shopPending         campaign.Good
+	shopEquipPrompt     bool
+	shopEquipUnit       int
+	shopEquipSlot       int
+	shopItemTypes       map[int]int
+	shopEquipTypes      map[int][]int
+	shopItemPrices      map[int]int
+	shopItemStats       map[int]campaign.ItemStats
+	reviveFeeRates      []int  // church 0x30dc3 class fee words
+	shopMode            string // buy or sell
+	shopSellPicking     bool
+	shopSellUnitSel     int
+	shopSellSlotSel     int
+	portraits           map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
+	mouthOpen           bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
+	mouthTimer          int                     // 閉嘴倒數(原版 rand%30+2 tick)
+	curX                int
+	curY                int
+	camX                float64
+	camY                float64
+	loadErr             string
 	// 截圖鉤子(FD2_SHOT=path 啟用):第 shotFrame 幀存 PNG 後自動退出(有界,供無人值守驗證)
 	frame      int
 	shotPath   string
@@ -2432,6 +2436,44 @@ func (g *Game) campInput() bool {
 func (g *Game) ringInput() bool {
 	enter := inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)
 	esc := inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace)
+	if g.nativeCommandOpen {
+		if g.sel == nil {
+			g.nativeCommandOpen = false
+			return false
+		}
+		ids := g.sel.NativeCommandIDs()
+		if esc {
+			g.nativeCommandOpen, g.ring = false, true
+			return true
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+			g.nativeCommandSel = battle.NativeCommandGridMove(g.nativeCommandSel, len(ids), 0)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+			g.nativeCommandSel = battle.NativeCommandGridMove(g.nativeCommandSel, len(ids), 1)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+			g.nativeCommandSel = battle.NativeCommandGridMove(g.nativeCommandSel, len(ids), 2)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+			g.nativeCommandSel = battle.NativeCommandGridMove(g.nativeCommandSel, len(ids), 3)
+		}
+		if enter && g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) {
+			for i := range g.spells {
+				if g.spells[i].ID == ids[g.nativeCommandSel] {
+					if g.sel.MP < g.spells[i].MP {
+						g.msg = "MP 不足!"
+						return true
+					}
+					g.castSp, g.nativeCommandOpen = &g.spells[i], false
+					g.msg = fmt.Sprintf("%s:選擇目標(射程 %d)", g.spells[i].Name, g.spells[i].Dist)
+					return true
+				}
+			}
+			g.msg = "此原始指令尚未接入效果"
+		}
+		return true
+	}
 	if g.spellOpen { // 法術選單
 		if g.sel == nil {
 			g.spellOpen = false
@@ -2499,6 +2541,10 @@ func (g *Game) ringInput() bool {
 			g.ring = false
 			g.msg = "攻擊:選擇目標"
 		case 1: // 法術(原版 0x1cff0；有法術者才可用)
+			if ids := g.sel.NativeCommandIDs(); len(ids) > 0 && len(g.nativeCommandLabels) > 0 && len(g.nativeUIPalette) >= 0xce {
+				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+				return true
+			}
 			if len(g.sel.Spells) > 0 {
 				if g.sel.Sealed {
 					g.msg = "被封咒,無法施法!"
@@ -3232,6 +3278,9 @@ func (g *Game) Update() error {
 					g.moved, g.reach, g.ring, g.ringSel = true, nil, true, 1
 				}
 			}
+			if os.Getenv("FD2_SHOT_COMMAND") != "" && g.sel != nil {
+				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
 				g.dialog = nil
 				g.confirm()
@@ -3745,6 +3794,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Command UI is an indexed-sprite layer; it must not depend on an optional
 	// Chinese font being available in the runtime environment.
 	g.drawRing(screen)
+	g.drawNativeCommandGrid(screen)
 	g.drawSpellMenu(screen)
 
 	// 場景淡出/淡入轉場(doc46 §5.2):全螢幕黑色疊層,alpha 隨 fade.t 漸變。
@@ -3945,6 +3995,27 @@ func (g *Game) drawSpellMenu(screen *ebiten.Image) {
 			c = color.RGBA{0x80, 0x80, 0x90, 0xff} // MP 不足變暗
 		}
 		g.font.Draw(screen, fmt.Sprintf("%s%s  MP%d", pre, sp.Name, sp.MP), 32, 96+float64(i)*30, 1.0, c)
+	}
+}
+
+// drawNativeCommandGrid renders the recovered 0x1ceed four-row layout only
+// when its player-provided labels and VGA palette are both available.
+func (g *Game) drawNativeCommandGrid(screen *ebiten.Image) {
+	if !g.nativeCommandOpen || g.sel == nil || g.font == nil || len(g.nativeUIPalette) < 0xce {
+		return
+	}
+	for _, cell := range battle.NativeCommandGrid(g.sel.NativeCommandIDs(), g.nativeCommandSel) {
+		label := g.nativeCommandLabels[cell.CommandID]
+		if label == "" {
+			continue
+		}
+		index := 0xcd
+		if cell.Selected {
+			index = 0xc9
+		}
+		r, green, b, a := g.nativeUIPalette[index].RGBA()
+		c := color.RGBA{R: uint8(r >> 8), G: uint8(green >> 8), B: uint8(b >> 8), A: uint8(a >> 8)}
+		g.font.Draw(screen, label, float64(cell.X*2), float64(cell.Y*2), 1.0, c)
 	}
 }
 
@@ -4490,18 +4561,26 @@ func nativeFDOTHERPath() string {
 	return ""
 }
 
-func loadNativeActionCells() [10]*ebiten.Image {
-	var out [10]*ebiten.Image
+func loadNativeUIPalette() color.Palette {
 	datPath := nativeFDOTHERPath()
 	if datPath == "" {
-		return out
+		return nil
 	}
-	paletteRaw, err := fdother.ReadResource(datPath, 0)
+	raw, err := fdother.ReadResource(datPath, 0)
 	if err != nil {
-		return out
+		return nil
 	}
-	palette, err := fdother.ParseVGAPalette(paletteRaw)
+	palette, err := fdother.ParseVGAPalette(raw)
 	if err != nil {
+		return nil
+	}
+	return palette
+}
+
+func loadNativeActionCells(palette color.Palette) [10]*ebiten.Image {
+	var out [10]*ebiten.Image
+	datPath := nativeFDOTHERPath()
+	if datPath == "" || len(palette) < 256 {
 		return out
 	}
 	cells, err := fdother.DecodeRawCellResource(datPath, 2)
@@ -4606,7 +4685,8 @@ func loadGame() *Game {
 	g.portraits = loadPortraits()
 	g.figani = loadFIGANI()
 	g.figMeta = loadFigMeta()
-	g.nativeActionCells = loadNativeActionCells()
+	g.nativeUIPalette = loadNativeUIPalette()
+	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
 	if raw, e := os.ReadFile(assetPath("assets/bg/bg.png")); e == nil { // 戰鬥背景(BG.DAT)
 		if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {
 			g.bg = ebiten.NewImageFromImage(im)
@@ -4639,6 +4719,7 @@ func loadGame() *Game {
 	}
 	if sp, e := battle.LoadSpells(assetPath("assets/spells.json")); e == nil { // 法術表(EXE dump)
 		labels := loadNativeCommandLabels()
+		g.nativeCommandLabels = labels
 		for i := range sp {
 			if label := labels[sp[i].ID]; label != "" {
 				sp[i].Name = label
