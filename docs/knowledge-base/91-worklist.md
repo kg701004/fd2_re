@@ -465,10 +465,11 @@
       discover 幕走位動畫三階段截圖(進場遠/中/抵達)+ march 幕靜默→自動轉場→抵達海島全程截圖,
       build+test 綠、gofmt 乾淨。**D8(戰前 MAP/TURN 資訊畫面+行軍確認 UI)不在本輪範圍,已登記獨立項**。
       → doc25 §7.5.1 已修正範圍(戰場進場直接定位仍成立;cutscene 幕內走位是另一機制,已推翻舊結論)。
-- [ ] **D8:戰前 UI**(doc46 附帶發現,team-lead 裁定另開項不與本輪合併):原版每場戰鬥開局有
-      「MAP·NN TURN·NNN,勝利/失敗條件,ENEMY/FRIEND/NPC 數」資訊畫面 + 「決定要行軍嗎?YES/NO」
-      確認,remake `resetBattle` 目前直接進場沒有這兩個畫面。低優先,等 ch1 開場核心問題(D1-D6)
-      使用者驗收後再排。
+- [~] **D8:戰前 UI**(doc46 附帶發現):Docker/Capstone 已釘 `0x1a30b` battle-entry choreography：
+      `0x1f1cc(0x52)`→20ms→`0x1f30a(0x52)`、64000-byte indexed surface、`0x1f42d` cell helper、
+      後續 `0x1a813/0x1a866` dispatch；證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死
+      MAP/TURN/ENEMY/FRIEND/NPC 欄位與 YES/NO input 的資源／字串 ABI，再做 remake shell 與截圖，
+      不把 resource `0x52` 或 `0x51e81` 猜成畫面名稱。
 
 ## 待辦:實測回饋(使用者 playtest,2026-07-03)
 - [ ] **開場過場節奏 3x 太快 RE**(dragon-fx2 DOS 對比發現,doc39 §10.8):原版魔王立繪捲動
@@ -577,7 +578,10 @@
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
 - [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
-- [ ] **SDD-2 campaign transition matrix**：逐章標記 battle 結束後 town/shop/rest/church/preparation/ending 與連戰反例；postbattle 必須是可編輯 node。
+- [~] **SDD-2 campaign transition matrix**：已從 `campaign_full.json` 逐一展開 30 個 battle 的 `on_win`，
+      明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入
+      `56-fd2-remake-sdd.md` §5.1（E1 editable graph）。仍待逐列補原版 handler E0／DOSBox E2 證據與 save/reload regression，
+      未把 authored graph 當作原版已驗證。
 - [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 

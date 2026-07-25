@@ -12,11 +12,11 @@
 | UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、weapon reach、AOE/LOS、不可用目標灰化 |
 | UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
 | UI-06 HUD | target HUD 約 3557–3568；full-screen battle panel 約 4065、4180 | partial | FDOTHER loader、數字 cell、游標避讓和 320×200 ground truth |
-| UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node | partial | 每章 on-win handler 是否進 town/shop/rest/preparation/ending |
+| UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開 | partial | 以原版 handler offset／DOSBox input 差分核對每章是否進 town/shop/rest/preparation/ending |
 | UI-08 town | `enterNode`/`campInput` 的 `town` branch 約 1584、2133 | partial | 原版 town menu、church/shop 入口與戰後 persistent timing |
 | UI-09 shop | buy/sell/equip/recipient 約 2256–2391 | partial | 商品 menu sprite、游標邊界、secret shop flag、原版 cancel semantics |
 | UI-10 church | revive/class-change 約 2162–2256；未接服務明確顯示待 callee | partial/fail-closed | 0x30dc3/0x31385 完整 fee、候選、確認與 renderer |
-| UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位 | partial | native layout、JOIN chronology、preview、auto-confirm timing |
+| UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present 與選擇後續處理 | partial | `0x1f42d` 的文字/資源 ABI、MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
 | UI-12 save/load | F5/F9 global path；save package 自有 schema | partial | scene-safe boundaries、versioning、原版 save semantics |
 
 ## 明確缺口（不可用 fallback 掩蓋）
@@ -35,4 +35,15 @@ git diff --check
 test ! -e /tmp/fd2cap
 ```
 
-下一輪先處理 UI-03／UI-04 的原版 dispatch 與 weapon reach provenance，再接 UI-07 的逐章 transition matrix；在此之前不新增猜測性 renderer。
+### D8 native trace（2026-07-25，E0 partial）
+
+Docker/Capstone 直讀 `0x1a30b`：battle-entry 先掃 unit buffer、以 `0x1da16` 更新 320×200
+offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a866`，並在 phase
+`[0x53ecc]==0` 時進入 `0x1a7bd → 0x1d80b → 0x1a7f1`。其中 `0x1a4c7` 明確呼叫
+`0x1f1cc(0x52)`、20ms、`0x1f30a(0x52)`，完成 redraw 後才進後續 dispatch；`0x1f1cc`
+與 `0x1f30a` 都配置 64000-byte indexed buffer、呼叫 `0x15f0e` 取資源並逐幀
+`0x11d40` palette/present。`0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
+MAP/TURN 欄位來源尚未閉合，因此 UI-11 仍 partial，不能直接把 0x52 命名成「行軍確認圖」。
+
+下一輪先處理 UI-03／UI-04 的原版 dispatch 與 weapon reach provenance，再補 D8 的
+`0x1f42d` 資源 ABI；在此之前不新增猜測性 renderer。

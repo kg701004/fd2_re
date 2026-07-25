@@ -90,6 +90,27 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 
 Persistent party 的 transaction 順序固定為：結算結果 → reward/drop → transient status cleanup → MaxHP/MaxMP／equipment recompute → roster save → branch flags → 下一個 node。任何中途資料缺失都停在錯誤畫面，不自動跳到下一戰。
 
+### 5.1 目前 editable graph audit（E1，不等同原版 E0）
+
+`remake/assets/scenarios/campaign_full.json` 的 30 個 battle node 已逐一展開
+`on_win`，並沿著 post/cutscene 節點走到第一個可操作戰間節點。這張表是目前 remake
+的可編輯基線；只有標成「native 待核」的項目仍不可宣稱已還原原版 handler。
+
+| battle | 勝利後第一個戰間節點 | 路線型態 | native 證據狀態 |
+|---|---|---|---|
+| 01 | `story_ch02` → `town_ch02` | 劇情→城鎮 | native 待核 |
+| 02–20 | `story/postbattle_chNN` → `town_ch(NN+1)` | 劇情／持久化→城鎮 | native 待核 |
+| 21 | `story_ch21_post_sky_key_intro` → `inventory_recipe_ch21_sky_key` | 劇情→合成 gate（非直接下一戰） | gate E1；native 待核 |
+| 22–24 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | native 待核 |
+| 25–26 | `postbattle_chNN_persist` → `town_ch(NN+1)` | 持久化→城鎮 | native 待核 |
+| 27 | `inventory_gate_ch27_sky_key` → success/missing branch | 道具 gate→分支劇情 | gate E1；native 待核 |
+| 28–29 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | native 待核 |
+| 30 | `ending` | 終局（不接下一戰） | ending renderer fail-closed |
+
+因此不能以「battle node 有 `on_win`」推導下一節就是下一戰；town、shop、church、
+preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 子任務是以
+原版 handler offset／DOSBox 操作逐列補 E0/E2 證據，並為每列加入 save/reload regression。
+
 ## 6. Reverse-engineering re-audit workstreams
 
 SDD 通過後按以下順序重審，不先補 renderer 猜測：
