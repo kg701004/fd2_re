@@ -70,7 +70,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；buy/sell/equip 有 code，UI sprite/layout 與原版分支未驗 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；現有 service menu 對未接 callee 明確擋下 |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，原版 layout/操作未做差分 |
-| UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；自有格式可用。native 已知 `FD2.SAV` rolling-XOR/checksum envelope 與 4×logical records（`+0x312b+i*0x1450`、roster prefix `0xa00`），但 record remainder 未閉合，尚非相容實作 |
+| UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；自有格式可用。native 已知 `FD2.SAV` rolling-XOR/checksum envelope 與 4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`），但 metadata 語意未閉合，尚非相容實作 |
 
 ### UI acceptance gate
 

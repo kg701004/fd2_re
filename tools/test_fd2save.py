@@ -21,8 +21,8 @@ class FD2SaveTest(unittest.TestCase):
             fd2save.decode(bytes(stored))
 
     def test_slot_bounds_are_exact_and_bounded(self):
-        self.assertEqual(fd2save.slot_bounds(0), (0x312B, 0x457B))
-        self.assertEqual(fd2save.slot_bounds(3), (0x6E1B, 0x826B))
+        self.assertEqual(fd2save.slot_bounds(0), (0x312B, 0x3B53))
+        self.assertEqual(fd2save.slot_bounds(3), (0x4FA3, 0x59CB))
         with self.assertRaises(ValueError):
             fd2save.slot_bounds(4)
 

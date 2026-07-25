@@ -17,7 +17,7 @@
 | UI-09 shop | buy/sell/equip/recipient 約 2256–2391 | partial | 商品 menu sprite、游標邊界、secret shop flag、原版 cancel semantics |
 | UI-10 church | revive/class-change 約 2162–2256；未接服務明確顯示待 callee | partial/fail-closed | 0x30dc3/0x31385 完整 fee、候選、確認與 renderer |
 | UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present；`0x1f42d` 的 LMI1 #0x52 double-slide entry/anchor 已釘 | partial | MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
-| UI-12 save/load | F5/F9 global path；save package 自有 schema；原版 `FD2.SAV` 的 `0x59cb` boundary、rolling-XOR/u32 byte-sum checksum、4×logical `0x1450` records at `+0x312b`、each roster prefix=`0xa00` 已有 codec regression；`0x30550` 明確為 4-slot（0..3）、↑↓ bounded、Enter/Space confirm、Esc cancel；empty-slot oracle `docs/figures/load-empty-original-dosbox.png` 證實 1–4 四列框與第一列 cursor | partial | record remainder、valid-record marker、delete/overwrite、successful-load restore、remake 四槽 model 與畫面差分 |
+| UI-12 save/load | F5/F9 global path；save package 自有 schema；原版 `FD2.SAV` 的 `0x59cb` boundary、rolling-XOR/u32 byte-sum checksum、4×logical `0xa28` records at `+0x312b`（metadata `0x28` + roster `0xa00`）已由真實 sandbox decode 與 codec regression 覆蓋；`0x30550` 明確為 4-slot（0..3）、↑↓ bounded、Enter/Space confirm、Esc cancel；empty-slot oracle `docs/figures/load-empty-original-dosbox.png` 證實 1–4 四列框與第一列 cursor | partial | metadata semantics、valid-record marker、delete/overwrite、successful-load restore、remake 四槽 model 與畫面差分 |
 
 ### UI-03 dispatch-wrapper recheck（2026-07-25，E0 partial）
 

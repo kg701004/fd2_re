@@ -62,7 +62,7 @@
       (0-31 共 32 + 48/66/68/96/97 共 5 + 本輪新增 126=ASR-06);其餘約 97 組多為泛用怪物/路人,
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
 - [x] `FDICON.B24`=1680個24×24地圖單位sprite(sprite-RLE,見 `31`);`TAI.DAT`=WxH圖像(sprite-RLE)
-- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0x1450`、前 `0xa00`=persistent roster；`0x4dbd8` rolling-XOR 與 `0x4dbb9` byte-sum checksum 已由 `tools/fd2save.py` round-trip/tamper regression 固定。不得再稱「強加密／無結構」；record remainder 尚待命名，重製仍用自有格式，native compatibility 低優先。
+- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` raw metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。不得再稱「強加密／無結構」；metadata 尚待命名，重製仍用自有格式，native compatibility 低優先。
 - [x] **音色合成評估+MT-32實證**(SoundFont/MT-32/版本切換,munt渲染15首)→ `16`
 - [x] **擴充劇本/玩法可行性評估**(戰場/對話/商店/機制)→ `17`
 - [~] SoundFont/MT-32 → 見 `16`(MT-32 已渲染);SoundFont 試聽 + TIMB 配器對映待補
@@ -579,7 +579,7 @@
 
 - [x] **可重現 UI/core regression container**：`fd2-go-test-local` 在 Docker build 時取得 Go modules、在 runtime 使用 `--network=none`；已實跑 `go test ./cmd/fd2 ./internal/... -count=1` exit 0。image 內含 Ebiten 所需 ALSA/X11/GL headers；這只驗 source build/test，並非原版 UI 畫面對照。
 - [x] **UI-01 original title screenshot oracle**：新增隔離 `fd2-dosbox-screenshot-local` runner（SVGA/Xvfb/xdotool，原始 FLAME2 不掛載、只用 `/tmp` sandbox），連續 Escape 跳過 opening 後得到 320×200 `docs/figures/title-original-dosbox.png`。畫面證實 START／LOAD／CONTINUE 及初始 cursor；title input/save semantics 仍未關閉。
-- [~] **UI-12 LOAD selector contract**：同一 runner 的 title→LOAD flow 在全空 sandbox 得到 320×200 `docs/figures/load-empty-original-dosbox.png`，鎖住四個 slot rows、空記錄文字與第一列 outline；Docker Capstone `0x30550` 另釘死 slots `0..3`、↑↓ bounded（不 wrap）、Enter/Space confirm、Esc cancel，並固定 native save boundary=`0x59cb`、record=`+0x312b+i*0x1450`、roster prefix=`0xa00`。它不是 transform/delete/overwrite/load-success 證明，remake 四槽 save UI 待建。
+- [~] **UI-12 LOAD selector contract**：同一 runner 的 title→LOAD flow 在全空 sandbox 得到 320×200 `docs/figures/load-empty-original-dosbox.png`，鎖住四個 slot rows、空記錄文字與第一列 outline；Docker Capstone `0x30550` 另釘死 slots `0..3`、↑↓ bounded（不 wrap）、Enter/Space confirm、Esc cancel，並固定 native save boundary=`0x59cb`、record=`+0x312b+i*0xa28`（metadata=`0x28`、roster=`0xa00`）、rolling-XOR/checksum。它不是 metadata semantics/delete/overwrite/load-success 證明，remake 四槽 save UI 待建。
 - [x] **UI-05 ch01 dialogue screenshot oracle**：START 分支得到 320×200 `docs/figures/ch01-dialogue-original-dosbox.png`，鎖住一種 lower/left DATO portrait、藍框、兩行文字與 page indicator；upper/right/control code/pagination 尚未由這張圖宣稱完成。
 - [x] **FD2 remake SDD**：新增 `56-fd2-remake-sdd.md`，定義 UI contracts、battle→postbattle→town/shop/church/preparation flow、persistent party/save、native indexed renderer、E0–E3 證據分級與 milestone gates。
 - [~] **SDD-1 UI evidence matrix**：以 Ghidra/IDA + Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；矩陣與 Capstone E0 已建立。使用者合法 `idapro.hexlic` 已由官方 Docker `idat -h` 驗證可讀；批次 FD2 xref export 仍待官方 GUI 首次接受授權後才可產生 report，絕不用既存 `kg_patch`。未有 E0/E1/E2 不解除 gate。
