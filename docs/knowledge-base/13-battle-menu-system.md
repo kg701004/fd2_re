@@ -61,7 +61,7 @@ native magic raw / menu state:
 |---:|---|---|---|
 | 0 | ↑ | `0x1f04a` → `0x28a6c`：攻擊目標／全螢幕攻擊演出 | 攻擊（case 0） |
 | 1 | ← | `0x1cff0`：配置 320×200 演出 buffer、法術 command／演出 loop（`0x1c269` 失敗會 disable） | 法術選單（case 1） |
-| 2 | → | `0x1bbdc`：讀 item record `+0xd/+0x10/+0x12/+0x15`、做 range/effect selection，特殊 item `0x17` 另有 gate | 物品（case 2） |
+| 2 | → | `0x1bbdc`：item action loop；case 0 讀 item record `+0xd/+0x12/+0x15`、做 target geometry，呼叫 `0x1bb8c` effect 並以 `0x1b8e7` 更新/消耗 slot；特殊 item `type=0x17` 另檢查 class/level | 物品（case 2） |
 | 3 | ↓ | `0x13fd4`（未移動時 HP/狀態處理）→ `0x190ac` 格子互動／寶物檢查 | 待機／格子互動（case 3） |
 
 因此撤回舊 mapping「↑道具／←攻擊／→魔法／↓待機」。`0x1cff0` 的 command-`0x1e` spell path 已證實；family priority、damage/effect jump table 仍待完整拆解，本表不宣稱所有 effect 已完成。
@@ -71,6 +71,10 @@ native magic raw / menu state:
 `0x1cff0` 會以 `[0x3c57]` 選中的 byte 從 local command array 取出 `0x4e516` record；record `+3` 是 command code，`+4` 參與 MP／費用欄位，`+6` 參與目標幾何。已釘死的分支：command `0x17` 走特殊 target geometry（`0x14818`，使用 record `+6`）；command `0x1e` 走 `record+3-0x10` → `0x149f8` 的 spell-family path；其他 command 走 `0x2a6bd` 或 `0x1d6c8` jump-table effect path，最後統一回 `0x1aa1d`／`0x1d4f6` 收尾。
 
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
+
+### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）
+
+物品 action 不是「完全不存在」：case 0 由游標選 item record，取 `+0xd` type、`+0x12` message/effect index、`+0x15` target/range；先以 `0x14818` 建 target list，再呼叫 `0x1bb8c`，成功後用 `0x1b8e7` 更新／消耗 inventory slot。`type=0x17` 走特殊 class/level gate（角色 `+8==0x18` 時另要求 level `+0x46 >= 20`）。`0x1b932`、`0x1bffe` 與 item effect table 仍未完整解碼，因此 remake item action 繼續 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 
