@@ -595,6 +595,8 @@
       renderer/effect stack 後才可重製原版 menu。2026-07-25 再釘 `0x18d8c` wrapper 的 item-side raw
       preconditions：`0x1b83d` 找八格 inventory 中 equipped(bit0x40) 且 ID<0x80 的項目，失敗寫 output+0；
       `0x1b8a6==0`（八格全 empty bit0x80）寫 output+8。它們對應哪個圖示仍未有 callee/E2，禁止猜接 UI。
+      同輪 direct scan 證實 `unit+0x27!=0` 令 `0x1598a` 在任何 command/MP/target 操作前直接無候選 return，
+      是完整 command submenu gate；尚未找出 writer 或 status 名稱，仍不得接 effect。
 - [x] **UI-03 command-record/table identity**：`0x4e516` 的 IDs 0..35 與 EXE spell table 7-byte rows
       byte-for-byte 相同，故 record `+3/+4/+5/+6` 可安全正名為 `dist/range/mp/target`；全 FDFIELD 和
       character-default initial masks 的已見 ID 範圍為 0..30。36..39 僅是 pointer 可達的相鄰 data、label

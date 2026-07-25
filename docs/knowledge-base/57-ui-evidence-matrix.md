@@ -37,6 +37,13 @@ attack pipeline、1 走 `0x1cff0` command selector、2 走 `0x1bbdc` item select
 `0x13fd4/0x190ac` 的 wait/field path。這補強 UI-03 的取消階層與 dispatch 邊界，但不增加
 任何 renderer 或 flag 語意斷言。
 
+`unit+0x27` 的 action effect 已額外由 `0x1598a` 固定：它先取 `0x1c269` command count，隨即讀
+`unit+0x27`；count 為零或此 byte 非零都在**任何** command record、MP gate、target-grid 建立之前
+直接走 zero return。因此 `+0x27` 是整個 native command submenu 的 gate，不只是 wrapper 的一個
+局部 flag。全 code 掃描的另外兩個 `+0x27` 命中是這個 read 與 wrapper read；`0x1eb64` 的 `lea
+[ebx+0x27]` 是 UI resource frame index，並非 unit access。尚未定位此 byte 的寫入者／遊戲名稱，
+故不得稱其為沉默、封魔或任一 status effect。
+
 ## 明確缺口（不可用 fallback 掩蓋）
 
 - `item` action 仍是提示字串，不能宣稱道具 UI 完成。
