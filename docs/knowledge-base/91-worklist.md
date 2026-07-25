@@ -490,7 +490,7 @@
       → `docs/knowledge-base/25-battle-event-system.md` §7.5.1
 - [~] **playtest 8 項修正**(playfix agent 執行中,#7=我 kill 誤殺非 bug 已排除):
       #1 方向鍵按住持續移動、#2 預設沒開場動畫、#4 移動後 ESC 取消退回、
-      #5 指令環白框沒對齊+中央錯放索爾頭、#6 地圖狀態欄還原原版、#8 單位走完轉回正面朝向
+      #5 action overlay／command grid 的原版 side-by-side 視覺對照、#6 地圖狀態欄還原原版、#8 單位走完轉回正面朝向
       → **batch1 已 commit(0f32d25)**;#7 非 bug(kill 誤殺);#3 部分(鏡頭對準部隊)
 - [ ] **#9 法術特效時序**(待使用者釐清):playfix 靜態審查=攻擊系法術路徑乾淨無殘留;
       真根因疑「治療系法術 target=1 無全螢幕演出(只文字)」→ 打治療咒後緊接敵方攻擊演出,

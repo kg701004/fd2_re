@@ -36,11 +36,13 @@
 ## 3. 法術路徑 partial（歷史試玩快照已修正）
 
 - **歷史症狀**:法術打不出來。現行 code 已接 `spellOpen`/`castSp`/指令環 case 1 法術/`drawSpellMenu`/`InCastRange`，但 native command/effect 仍未閉合。
-- **根因(修正)**:其實**部分已接**——`spellOpen`/`castSp`/指令環 case 1 魔法/`drawSpellMenu`/`InCastRange` 都在,
-  悠妮 ch01 帶 spells[0,4,13]。缺的是**施法結算與演出**(選完目標後傷害/治療套用+全螢幕法術動畫)可能未完成或有 bug。
+- **根因(修正)**:這段舊試玩結論已過期。`spellOpen`/`castSp`/case 1/`drawSpellMenu`/`InCastRange` 與
+  normalized `CastArea` 結算皆已存在；剩下的是 native command target/effect ABI 與原版演出，不可再寫成
+  「選完目標不會結算」。
 - **原版行為**:doc13 `Get_EasyMagic`(0x18ED0)法術面板已反組譯;法術數值/範圍/效果表在 EXE(spell.json 已有)。
-- **對策**:順著現有 castSp 路徑補 native 對照:目標選定→扣 MP→套 spell 效果(傷害/治療/狀態,對齊青衫公式 doc02 §4)
-  →法術演出(暫用現有 atkAnim 框架或簡化閃光)。先讓「悠妮對敵放火球扣血」跑通,再補演出。
+- **對策**:保留 normalized `CastArea` 為可玩的 editable approximation；native grid 僅在有 E0 data 的部分使用。
+  command 0 的 single-target numeric resolver 已獨立閉合，但 target geometry／完整 effect family 尚未閉合，
+  因此不得把 legacy cast path 宣稱成原版 command runtime。
 - **RE**:低-中。效果公式青衫已有;施法射程/AOE 形狀若不確定 → dosbox 觀察。
 
 ## 4. 狀態欄應隨游標自動移位(左下 ↔ 右上)
