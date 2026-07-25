@@ -432,6 +432,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Native terrain-frame contract: for each visible FDFIELD composition cell, `0x11eee` masks the tile ID to 10 bits and reads the selected FDSHAP terrain-control byte. Frame selection is priority-ordered: bit `0x08` adds `2*flip(0x53a40)`; otherwise bit `0x10` adds truncating `0x3c0b/2`; otherwise bit `0x04` adds `flip(0x53a40)`; otherwise it uses the base tile. It then performs the raw/LUT branch above. These are raw flag semantics only—names such as water/fire animation are not inferred.
 
+   `fdicon.NativeTerrainFrameIndex` is the strict pure form of that selector: it accepts only a 10-bit tile and flip 0/1, preserves the native priority and signed toward-zero division, and returns a descriptor index rather than a rendered image.
+
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
 
    `fdother.ParseLUTBank`/`DecodeLUTResource` now close the FDOTHER #3 input boundary: its `LMI1` directory contains 23 independent 256-byte tables, not UI cells. The original-archive regression verifies that count and every table length. This loader plus `BlitLUT` is sufficient for a caller that has an evidenced selector; it does not infer one.
