@@ -30,9 +30,10 @@
 
 本輪重新核對的已知更正：`0x16559` 是 DATO mouth-frame／glyph blit caller，`0x4ea2a` 才是 native glyph renderer；FDTXT `0x2c469` 的 `load_ch_text(30)` 對 archive resource #31 的物理表，不能直接命名成 ch30；`0x2c548` 有 `i=0→slot1、i=1→slot0` swap；`0x29164` 第一參數是 party unit index，TAI#3 是 7-byte transparent aux，不是可見台座。這些結論要在新工具鏈重跑後才能再擴展，不可由名稱推導 renderer 語意。
 
-`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。repo 已提供不含 license／遊戲資料的
-`tools/docker/fd2-ida.Dockerfile` 與 `tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA
-workspace 匯出 xref 後重跑；在實際 report 可驗證前，現有結論仍以 Docker Capstone 作 E0，不以工具名稱或缺檔猜測。
+`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic` 為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
+
+repo 提供不含 license／遊戲資料的 `tools/docker/fd2-ida.Dockerfile` 與
+`tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA workspace 匯出 xref 後重跑。2026-07-25 嘗試以官方 `idat -A` 分析唯讀 FD2.EXE 時沒有產生 `.i64` 或 `fd2_xrefs.json`；這符合 IDA 尚待首次 GUI 接受授權條款的狀態。待使用者在官方 GUI 一次性完成接受後，才可重跑 batch export；在實際 report 可驗證前，現有結論仍以 Docker Capstone 作 E0，不以工具名稱或缺檔猜測。
 
 ## 3. 目標架構
 

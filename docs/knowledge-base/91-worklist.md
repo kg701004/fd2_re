@@ -582,7 +582,7 @@
 - [x] **UI-12 empty LOAD screenshot oracle**：同一 runner 的 title→LOAD flow 在全空 sandbox 得到 320×200 `docs/figures/load-empty-original-dosbox.png`，鎖住四個 slot rows、空記錄文字與第一列 outline。它不是 save-format/overwrite/load-success 證明。
 - [x] **UI-05 ch01 dialogue screenshot oracle**：START 分支得到 320×200 `docs/figures/ch01-dialogue-original-dosbox.png`，鎖住一種 lower/left DATO portrait、藍框、兩行文字與 page indicator；upper/right/control code/pagination 尚未由這張圖宣稱完成。
 - [x] **FD2 remake SDD**：新增 `56-fd2-remake-sdd.md`，定義 UI contracts、battle→postbattle→town/shop/church/preparation flow、persistent party/save、native indexed renderer、E0–E3 證據分級與 milestone gates。
-- [ ] **SDD-1 UI evidence matrix**：以 Ghidra/IDA（文件在目前環境不可見）+ Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；未有 E0/E1/E2 不解除 gate。
+- [~] **SDD-1 UI evidence matrix**：以 Ghidra/IDA + Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；矩陣與 Capstone E0 已建立。使用者合法 `idapro.hexlic` 已由官方 Docker `idat -h` 驗證可讀；批次 FD2 xref export 仍待官方 GUI 首次接受授權後才可產生 report，絕不用既存 `kg_patch`。未有 E0/E1/E2 不解除 gate。
 - [x] **SDD-1 baseline matrix**：新增 `57-ui-evidence-matrix.md`，以目前 runtime 行號把 UI-01…UI-12 的 partial/missing 與下一個 E0/E1/E2 問題固定下來；這不是原版 verified。
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
 - [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
