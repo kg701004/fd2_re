@@ -71,6 +71,12 @@ right=`0x16+(unit[0x3af9]!=0)`、down=`0x18+(unit[0x1aab]==0)`。這是 raw tabl
 不是這四 globals 的玩法名稱或 icon 語意。exact screen anchor 與 runtime renderer 接線仍未完成，不能宣稱完成原版圖示／
 皮膚，也不能把它降格成一般文字 ring。
 
+2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
+的共同地址為 `framebuffer + 0x8088 + 0x18*A + (0x18*0x1c8)*B`。`A/B` 直接來自兩個原始
+global values；目前只可稱 raw column/row，不可把它們命名成玩家座標、camera 或 tile。`fdother.ActionOverlayOrigin`
+已把這個無語意假設的 byte-address expression 獨立測試。剩餘的是將 native indexed framebuffer
+接到 runtime，並以 DOSBox 實機對應 A/B 的來源與視覺位置。
+
 ## 明確缺口（不可用 fallback 掩蓋）
 
 - `item` action 仍是提示字串，不能宣稱道具 UI 完成。

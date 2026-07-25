@@ -19,6 +19,20 @@ func TestActionOverlayCellIndex(t *testing.T) {
 	}
 }
 
+func TestActionOverlayOriginMatchesNativeAddressExpression(t *testing.T) {
+	got, err := ActionOverlayOrigin(6, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := 0x8088 + 6*0x18 + 5*0x18*0x1c8
+	if got != want {
+		t.Fatalf("origin=%#x, want %#x", got, want)
+	}
+	if _, err := ActionOverlayOrigin(-1, 0); err == nil {
+		t.Fatal("negative origin was accepted")
+	}
+}
+
 func TestActionOverlayFrameOffsets(t *testing.T) {
 	got, err := ActionOverlayFrameOffsets(1, false)
 	if err != nil {

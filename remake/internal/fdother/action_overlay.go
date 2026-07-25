@@ -1,6 +1,9 @@
 package fdother
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // ActionOverlayState is the native cell-selection state for the four action
 // directions, in native order: up, left, right, down. The values intentionally
@@ -8,6 +11,22 @@ import "fmt"
 type ActionOverlayState struct {
 	Availability   [4]int
 	DirectionState [4]int
+}
+
+const (
+	nativeFramebufferStride = 0x1c8
+	nativeActionOverlayBase = 0x8088
+	nativeActionOverlayStep = 0x18
+)
+
+// ActionOverlayOrigin implements the common 0x1741c/0x179d5 framebuffer
+// address expression. column and row are deliberately raw source values;
+// their originating globals' gameplay meaning is not yet recovered.
+func ActionOverlayOrigin(column, row int) (int, error) {
+	if column < 0 || row < 0 {
+		return 0, errors.New("fdother: negative action overlay origin")
+	}
+	return nativeActionOverlayBase + nativeActionOverlayStep*column + nativeActionOverlayStep*nativeFramebufferStride*row, nil
 }
 
 // CellIndex implements the FD2.EXE 0x1741c table ABI:
