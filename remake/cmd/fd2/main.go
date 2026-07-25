@@ -188,6 +188,8 @@ type Game struct {
 	shotCurX   int    // 截圖時把游標放這(FD2_SHOT_CUR=x,y)
 	shotCurY   int
 	shotSel    bool // 截圖前自動選取游標單位(FD2_SHOT_SELECT=1)
+	shotSetup  bool // screenshot setup also must tolerate skipped exact frames
+	shotTaken  bool // frame scheduling may skip an exact number; capture once at-or-after it
 	// 選取狀態
 	sel                *battle.Unit
 	reach              map[battle.Cell]bool
@@ -3093,7 +3095,7 @@ func (g *Game) Update() error {
 	}
 	if g.titlePhase != "" {
 		if g.titleUpdate() {
-			if g.shotPath != "" && g.frame > g.shotFrame { // 截圖模式在 title 也要能退出
+			if g.shotPath != "" && g.shotTaken { // 截圖模式在 title 也要能退出
 				return ebiten.Termination
 			}
 			return nil
@@ -3117,7 +3119,7 @@ func (g *Game) Update() error {
 				g.nativeEnding.player.ResumeBlockedDialogue()
 			}
 		}
-		if g.shotPath != "" && g.frame > g.shotFrame {
+		if g.shotPath != "" && g.shotTaken {
 			return ebiten.Termination
 		}
 		return nil
@@ -3201,7 +3203,11 @@ func (g *Game) Update() error {
 	}
 	// 截圖模式:到指定幀後自動退出(畫面已於 Draw 存檔)
 	if g.shotPath != "" {
-		if g.frame == 1 {
+		// Apply screenshot-only setup immediately before capture, after scenario
+		// setup has had time to spawn its party. Frame 1 is too early for
+		// FD2_SHOT_RING on battle-start event scenarios.
+		if !g.shotSetup && g.frame >= g.shotFrame-1 {
+			g.shotSetup = true
 			for i := 0; i < g.shotTurn; i++ { // 推進 N 個回合(觸發增援事件),驗證進場
 				g.endTurn()
 			}
@@ -3211,10 +3217,20 @@ func (g *Game) Update() error {
 			if g.shotSel {
 				g.confirm()
 			}
-			if os.Getenv("FD2_SHOT_RING") != "" { // 截圖驗證:選單位後原地開指令環
+			if os.Getenv("FD2_SHOT_RING") != "" { // 截圖驗證:建立可重現的戰場 action-overlay state
 				g.dialog = nil // 清開場對白(避免蓋住環)
-				g.confirm()
-				g.confirm()
+				for _, unit := range g.st.Units {
+					// The shot harness proves renderer state, not player eligibility;
+					// event-driven scenarios can still have all party records hidden
+					// at this exact frame. Pick the first materialized unit deterministically.
+					if unit != nil {
+						g.sel, g.curX, g.curY = unit, unit.X, unit.Y
+						break
+					}
+				}
+				if g.sel != nil {
+					g.moved, g.reach, g.ring, g.ringSel = true, nil, true, 1
+				}
 			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
 				g.dialog = nil
@@ -3248,7 +3264,7 @@ func (g *Game) Update() error {
 			if g.frame > 2 && g.atk == nil {
 				return ebiten.Termination
 			}
-		} else if g.frame > g.shotFrame {
+		} else if g.shotTaken {
 			return ebiten.Termination
 		}
 	}
@@ -3429,8 +3445,8 @@ func clamp(v *float64, lo, hi float64) {
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.titlePhase != "" {
 		g.drawTitle(screen)
-		if g.shotPath != "" && g.frame == g.shotFrame {
-			saveShot(screen, g.shotPath)
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
 		}
 		return
 	}
@@ -3440,16 +3456,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	if g.m == nil {
 		ebitenutil.DebugPrint(screen, "FD2 重製 MVP\n缺 assets/(tileset.png + map.json)\n用 tools/export_engine_assets.py 產生\n"+g.loadErr)
-		if g.shotPath != "" && g.frame == g.shotFrame { // 打包驗證:資產缺失時也要能截圖存證(舊版此分支漏存,見打包 worklist)
-			saveShot(screen, g.shotPath)
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame { // 打包驗證:資產缺失時也要能截圖存證(舊版此分支漏存,見打包 worklist)
+			g.captureShot(screen)
 		}
 		return
 	}
 	// 攻擊演出:切全螢幕戰鬥畫面(蓋地圖,對照原版 orig_05 全螢幕戰鬥)
 	if g.atk != nil {
 		g.drawBattleScene(screen)
-		if g.shotPath != "" && g.frame == g.shotFrame {
-			saveShot(screen, g.shotPath)
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
 		}
 		return
 	}
@@ -3603,8 +3619,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-		g.drawRing(screen)
-		g.drawSpellMenu(screen)
 		if len(g.dialog) > 0 && !(g.storyBG && g.walkFirst && len(g.storyWalks) > 0) && g.dlgShown != dlgNone {
 			// 對話框:原版素材(FDOTHER#5 LMI1 #21,310×99 素藍細邊框)+ orig 量測佈局。
 			// walk_first 節點在進場走位期間不顯示(2-1:原版索爾走到王座前對話框才出現)。
@@ -3728,6 +3742,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	g.drawCampaignUI(screen)
 
+	// Command UI is an indexed-sprite layer; it must not depend on an optional
+	// Chinese font being available in the runtime environment.
+	g.drawRing(screen)
+	g.drawSpellMenu(screen)
+
 	// 場景淡出/淡入轉場(doc46 §5.2):全螢幕黑色疊層,alpha 隨 fade.t 漸變。
 	if g.fade != nil {
 		frac := float64(g.fade.t) / float64(g.fade.total)
@@ -3741,9 +3760,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// 截圖鉤子:指定幀把畫面存 PNG(無人值守驗證用)
-	if g.shotPath != "" && g.frame == g.shotFrame {
-		saveShot(screen, g.shotPath)
+	if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+		g.captureShot(screen)
 	}
+}
+
+func (g *Game) captureShot(screen *ebiten.Image) {
+	g.shotTaken = true
+	saveShot(screen, g.shotPath)
 }
 
 // drawRing shows the native FDOTHER #2 action overlay when the player has

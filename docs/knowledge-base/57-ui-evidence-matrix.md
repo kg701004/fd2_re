@@ -75,7 +75,9 @@ available cells=`[0,2,4,6]`，disabled cells=`[3,5,7,9]`。先前把 `0x1728c` �
 `assets/original/FDOTHER.DAT`：FDOTHER#0 的 6-bit VGA palette 轉為透明 index-0 palette，#2 的 raw
 cells 0..9 以 final open frame 幾何直接貼到 cursor。這不包含原版 asset，也不把 current remake 的
 attack/spell/item availability approximation 說成 native `0x1b83d/0x1c269/0x1b8a6` 全等價；open/close
-動畫與 DOSBox skin visual-diff 仍待驗證。
+動畫與原版 DOSBox side-by-side pixel diff 仍待驗證。Docker/Xvfb 以 player-provided FDOTHER.DAT read-only
+實跑的 [native overlay remake screenshot](../figures/action-overlay-native-remake.png) 已證實 loader、palette、
+cell geometry 與 font-independent draw path 實際出畫；它不是原版畫面對照。
 
 2026-07-25 renderer gate 縮小：native skin adapter 現至少直接套用 `0x1b83d` 的「equipped 且
 ID `<0x80`」attack 前提，並在 raw `NativeCommandMask` 非零時以其作 spell availability；沒有 raw
