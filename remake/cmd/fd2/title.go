@@ -236,7 +236,11 @@ func (g *Game) titleUpdate() bool {
 			g.titleFlash--
 			if g.titleFlash == 0 {
 				switch g.titleSel {
-				case 1, 2: // LOAD / CONTINUE:讀檔(CONTINUE 原版=接續戰役,存檔語意,先同 LOAD)
+				case 1, 2:
+					// The remake currently has one self-owned JSON save.  The native
+					// return-1 branch opens its slot selector (0x30550), while the
+					// other return branch is separate; do not claim this shared
+					// fallback reproduces either native save/continue flow.
 					g.loadGame()
 				}
 				g.titlePhase = "" // START 或讀檔後 → 進遊戲
