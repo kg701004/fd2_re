@@ -79,3 +79,9 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 作 radius、`record+6` 作 selector；一般 command 則傳 `record+4` 作 mode、`0` 作 radius、
 `record+6` 作 selector。因此一般 path 不會在這一 call 新畫 diamond，而是消費前序已建立的
 marker grid。`record+3/+4` 仍不能在未追到 producer 前命名為 weapon min/max。
+
+`0x4e040` 並非僅由這個 target caller 使用：`0x14344` 先以 unit `+0x20`（fallback record
+`0x13`）透過 `0x4e555` 取同樣的 20-byte record，再把 map grid、terrain table 一併傳入。
+其內層 `0x4e16e` 讀 tile flag 與該 record 的 byte table 後決定是否擴張。故目前可用的
+E0 模型是 **table + terrain/cost gate + marker + unit filter**；尚不可把 target highlight
+reducer 成單一菱形或宣稱其完整路徑／LOS 規則。

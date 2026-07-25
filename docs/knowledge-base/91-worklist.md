@@ -586,6 +586,8 @@
 - [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它先以 `0x61646` 的 20-byte record 呼叫
       `0x4e040` 建立／更新 target grid，後續再有 `|x-cx|+|y-cy| < caller radius` 的 marker 層、unit active flag／
       camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這只證實其中的曼哈頓幾何，
+      另一 caller `0x14344` 證實同 helper 會以 unit `+0x20`（fallback 0x13）的 record 和 terrain table
+      作格點 gate，故 SDD 必須保留 table+terrain+marker，而不能以單一 diamond 實作。
       `0x1cff0` stack-dataflow 亦已固定參數為 `(x,y,out,mode,radius,campSelector)`：special `0x17` 用
       `record+3`/radius 1，一般 path 用 `record+4`/radius 0 並消費既有 marker。尚未將這些 producer
       同武器 `range_min/range_max` table 完整對位，故不改寫為「所有武器 max inclusive」或 LOS 定論。
