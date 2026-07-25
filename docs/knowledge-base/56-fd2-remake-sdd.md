@@ -269,10 +269,22 @@ acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，�
 | 30 | `1CFF0` 特別走 `149F8` selector；不可套 generic two-stage target | 禁止接線 | 未接 |
 | 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
 | 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
-| 32–35 | `2A6BD→27FC9` 可達但 family state dataflow未完整關閉 | 禁止接線 | 禁止接線 |
+| 32 | `2A6BD→27FC9→2111A→1C75E` numeric per-final-target；選單 MP gate已知但此 chain 未見 debit | 未接：transaction boundary未關閉 | 未接 |
+| 33 | `27FC9` 先清每 target `+25..+27`，再 `211A4(...,800)` restore | 未接：transaction boundary、raw clear/restore contract待 regression | 未接 |
+| 34 | `27FC9` 依序呼 `22721/22866/22997`，嘗試三種 modifier writer | 未接：transaction／baseline-recompute／x87 rounding boundary | 未接 |
+| 35 | `27FC9` 依序以 IDs26/22/27 呼 `22D1B`，對 `+25/+27/+26` 三 application gates | 未接：transaction boundary；不可由三次 helper 推論 UI/status name | 未接 |
 
 實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
 legacy `CastArea` 或宣稱整個 native command menu 已完成。
+
+IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
+family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target
+`memset(+0x25, 0, 3)` 後傳固定 `0x320` 給 `0x211a4→0x1c916`；34 連續呼
+`0x22721/0x22866/0x22997`；35 連續呼 `0x22d1b(actor,26,...,+0x25)`、
+`0x22d1b(actor,22,...,+0x27)`、`0x22d1b(actor,27,...,+0x26)`。但 `0x27fc9`、這些被呼 helper 和
+`0x1d4cb` presentation setup 中尚未見 `0x1ca89` 或另一個已證實的 MP writer；這只構成「selector gate 與
+debit dataflow 有缺口」，**不**能據此斷言原版免費施放或由 remake 擅自扣 MP。保持 fail-closed，待 runtime
+trace 或額外 writer evidence。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
