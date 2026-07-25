@@ -108,6 +108,13 @@ mask，因此 `0x1d7fb` 型 level-up OR 不會在 town/preparation 邊界遺失�
 
 同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
 
+command 0 的 damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
+`record.u16[+0] * multiplier[unit+0x20] / 10` 為 base，對 command 0 以 `record[+2]` 做 `rand()%100`
+命中門檻；命中才呼叫後者。`0x1c81f` 算 `damage = floor(base*0.9) + floor((rand()%100)*base/1000)`，
+將 target `unit+0x40` 減去 damage，並 clamp 至 0，直接證實 `+0x40=current HP`、`+0x42=max HP`。
+`unit+0x20` multiplier index 的角色／職業語意尚未命名，故 remake 仍不可把這條 raw contract 靜默等同現有
+normalized magic formula；但 native command 0 已不再是「效果未知」的全黑箱。
+
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
