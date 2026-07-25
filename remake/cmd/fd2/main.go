@@ -1713,6 +1713,7 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.Portrait, dst.Fig = src.Portrait, src.Fig
 	dst.Exp, dst.ExpPerLevel = src.Exp, src.ExpPerLevel
 	dst.Spells = append(dst.Spells[:0], src.Spells...)
+	dst.NativeCommandMask = src.NativeCommandMask
 	dst.Inventory = append(dst.Inventory[:0], src.Inventory...)
 	dst.Equipped = append(dst.Equipped[:0], src.Equipped...)
 	dst.InventorySlots = append(dst.InventorySlots[:0], src.InventorySlots...)

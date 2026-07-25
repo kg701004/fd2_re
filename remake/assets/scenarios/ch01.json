@@ -22,7 +22,13 @@
       "crit": 5,
       "mv": 6,
       "atk_min": 1,
-      "atk_max": 1
+      "atk_max": 1,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "亞雷斯",
@@ -39,7 +45,13 @@
       "crit": 3,
       "mv": 7,
       "atk_min": 1,
-      "atk_max": 2
+      "atk_max": 2,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "悠妮",
@@ -61,6 +73,12 @@
         0,
         4,
         13
+      ],
+      "initial_command_mask": [
+        1,
+        0,
+        0,
+        0
       ]
     },
     {
@@ -78,7 +96,13 @@
       "crit": 0,
       "mv": 6,
       "atk_min": 1,
-      "atk_max": 1
+      "atk_max": 1,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     }
   ],
   "deploy_cells": [

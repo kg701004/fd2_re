@@ -111,10 +111,11 @@ label 直接採原始 `0xc9/0xcd` palette entries，↑↓／←→採 recovered
 row 的 command；無 row 的 raw ID 顯示明確未接 effect，缺任一 asset 則退回 legacy spell UI。這是可視
 layout/input slice，不是所有 command effect 或 native frame/background renderer 的完成宣告。
 
-runtime audit（2026-07-26）：現行 chapter `Scenario.Party` override 是 normalized party data，尚未保存
-FDFIELD `initial_command_mask`；因此實戰 party materialize 後可能是 zero mask，native grid 會按設計退回
-legacy spell UI。這是資料 bridge missing，不應以 screenshot fixture 或 normalized `Spells` 填補成假 raw
-mask；下一個必要工作是 exporter/scenario schema 將 proven raw bytes 帶入 party override。
+runtime audit（2026-07-26，更新）：chapter `Scenario.Party` 現已保存 exact
+`initial_command_mask`；產生器從 EXE `character_defaults.json` 依角色 index 帶入，並已重產 ch01..ch30。
+loader 僅接受空值或四 bytes，避免以截斷值製造假 command inventory；persistent roster 亦保留 runtime
+fifth byte。這只閉合 raw availability bridge，不以 normalized `Spells` 填補，也不證明 command effect、frame
+background 或全部原版 input state。
 
 2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
 的共同地址為 `framebuffer + 0x8088 + 0x18*cursorColumn + (0x18*0x1c8)*cursorRow`。

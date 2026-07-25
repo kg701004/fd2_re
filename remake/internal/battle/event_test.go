@@ -1,6 +1,10 @@
 package battle
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestScenarioPartyUnitsPreserveRuntimeOrderAndDeployment(t *testing.T) {
 	sc := &Scenario{
@@ -39,6 +43,30 @@ func TestScenarioPartyUnitsCaptureEffectiveStatsAsEquipmentBase(t *testing.T) {
 	u := sc.PartyUnits(nil)[0]
 	if u.EquipmentBaseSet || u.BaseAP != 16 || u.BaseDP != 12 || u.BaseHIT != 97 || u.BaseEV != 2 || u.BaseMV != 4 || len(u.Equipped) != 0 {
 		t.Fatalf("equipment base not captured: %#v", u)
+	}
+}
+
+func TestScenarioPartyUnitsMaterializeRawCommandMask(t *testing.T) {
+	sc := &Scenario{Party: []PartyMember{{Name: "原始指令", InitialCommandMask: []byte{0x81, 0x01, 0, 0x80}}}}
+	u := sc.PartyUnits(nil)[0]
+	got, want := u.NativeCommandIDs(), []int{0, 7, 8, 31}
+	if len(got) != len(want) {
+		t.Fatalf("native command IDs=%v want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("native command IDs=%v want %v", got, want)
+		}
+	}
+}
+
+func TestLoadScenarioRejectsMalformedPartyCommandMask(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad-mask.json")
+	if err := os.WriteFile(path, []byte(`{"party":[{"name":"bad","initial_command_mask":[1,2,3]}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("malformed party command mask was accepted")
 	}
 }
 

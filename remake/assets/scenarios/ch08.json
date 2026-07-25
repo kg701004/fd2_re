@@ -20,7 +20,13 @@
       "mp": 0,
       "ap": 41,
       "dp": 27,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "亞雷斯",
@@ -32,7 +38,13 @@
       "mp": 0,
       "ap": 44,
       "dp": 28,
-      "mv": 7
+      "mv": 7,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "悠妮",
@@ -49,6 +61,12 @@
         0,
         4,
         13
+      ],
+      "initial_command_mask": [
+        1,
+        0,
+        0,
+        0
       ]
     },
     {
@@ -61,7 +79,13 @@
       "mp": 0,
       "ap": 58,
       "dp": 42,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "哈諾",
@@ -73,7 +97,13 @@
       "mp": 0,
       "ap": 23,
       "dp": 14,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "希莉亞",
@@ -85,7 +115,13 @@
       "mp": 0,
       "ap": 19,
       "dp": 11,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "鐵諾",
@@ -97,7 +133,13 @@
       "mp": 0,
       "ap": 19,
       "dp": 11,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "瑪琳",
@@ -109,7 +151,13 @@
       "mp": 21,
       "ap": 14,
       "dp": 11,
-      "mv": 5
+      "mv": 5,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "貝克威",
@@ -121,7 +169,13 @@
       "mp": 0,
       "ap": 19,
       "dp": 11,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "凱麗",
@@ -133,7 +187,13 @@
       "mp": 0,
       "ap": 25,
       "dp": 15,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     }
   ],
   "deploy_cells": [

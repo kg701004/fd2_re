@@ -230,6 +230,8 @@ def load_characters(path: str, defaults_path: str) -> dict[str, dict]:
         if default := defaults.get(row["index"]):
             row["inventory"] = list(default["inventory"])
             row["inventory_slots"] = list(default.get("inventory_slots", default["inventory"]))
+            # Exact EXE constructor source, not a normalized spell list.
+            row["initial_command_mask"] = list(default["initial_command_mask"])
     return {r["name"]: r for r in rows}
 
 
@@ -278,6 +280,7 @@ def build_base4_stats(
         **({"spells": base["spells"]} if "spells" in base else {}),
         **({"inventory": char["inventory"]} if char and char.get("inventory") else {}),
         **({"inventory_slots": char["inventory_slots"]} if char and char.get("inventory_slots") else {}),
+        **({"initial_command_mask": char["initial_command_mask"]} if char else {}),
     }
 
 
@@ -305,6 +308,7 @@ def build_recruit_stats(
         "mv": MV_BY_CLASS.get(char["cls_name"], DEFAULT_MV),
         **({"inventory": char["inventory"]} if char.get("inventory") else {}),
         **({"inventory_slots": char["inventory_slots"]} if char.get("inventory_slots") else {}),
+        "initial_command_mask": char["initial_command_mask"],
     }
 
 
@@ -540,6 +544,19 @@ def build_campaign(
             reinforce_counts[cid] = n_reinforced
             reinforce_skipped.extend(skipped)
             out_scn = os.path.join(REMAKE, "assets", "scenarios", f"ch{cid}.json")
+            # Existing scenarios contain hand-verified handler ordering and authored
+            # stats which the metadata stub is not allowed to replace. Merge only
+            # this EXE-proven constructor field into those editable records.
+            if os.path.exists(out_scn):
+                with open(out_scn, encoding="utf-8") as f:
+                    authored = json.load(f)
+                generated_by_fig = {member["fig"]: member for member in party}
+                for member in authored.get("party", []):
+                    generated = generated_by_fig.get(member.get("fig"))
+                    if generated is None or "initial_command_mask" not in generated:
+                        raise ValueError(f"{out_scn}: no EXE command mask for fig={member.get('fig')}")
+                    member["initial_command_mask"] = generated["initial_command_mask"]
+                scenario = authored
             with open(out_scn, "w", encoding="utf-8") as f:
                 json.dump(scenario, f, ensure_ascii=False, indent=2)
                 f.write("\n")

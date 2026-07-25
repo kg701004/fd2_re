@@ -89,6 +89,13 @@ FDFIELD 26-byte roster 的 source bytes `b13..b16` 現由 `parse_field.py` 和
 materialize，並只提供原版 byte-major／low-bit-first 列舉與 bounded OR。這條管線刻意不覆蓋既有
 `Spells` normalized list：後者是 legacy gameplay approximation，不能再被宣稱為原版 raw command source。
 
+Scenario party override 也已採同一欄位：`PartyMember.initial_command_mask` 只接受空值（舊 editable
+scenario）或精確四 bytes；`LoadScenario` 對其他長度 fail-closed，避免截斷後偽造另一個 command inventory。
+`gen_campaign.py` 從 EXE `character_defaults.json` 依角色 index 帶入該 raw source，並已重產
+`ch01..ch30.json`，且不覆寫既有手工驗證的 scenario 欄位。ch01 的悠妮為 `[1,0,0,0]`，其餘初始三人為全零，均直接來自
+character-default table，絕非由 legacy `Spells` 反推。戰後 persistent snapshot 亦保留完整五-byte runtime
+mask，因此 `0x1d7fb` 型 level-up OR 不會在 town/preparation 邊界遺失。
+
 `0x4e516(id)` 的 backing bytes 對 `id=0..35` 與 EXE `spell.json` 7-byte rows 逐 byte 相同，故這個
 已證實範圍的 record layout 可共用 `dmg:u16, hit:u8, dist:u8, range:u8, mp:u8, target:u8`；MP gate 是其
 第 5 byte 的獨立直接證據。IDs 36..39 雖可由 pointer arithmetic 取到相鄰 7-byte data，FDTXT labels

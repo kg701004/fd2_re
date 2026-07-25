@@ -7,6 +7,7 @@ package battle
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -25,24 +26,27 @@ type Scenario struct {
 
 // PartyMember 主角隊成員(數值來自 characters.json / EXE 表)。
 type PartyMember struct {
-	Name           string `json:"name"`
-	Cls            string `json:"cls"`
-	Fig            int    `json:"fig"` // sprite 組 = 角色 id(恆等,doc 31)
-	Portrait       int    `json:"portrait"`
-	HP             int    `json:"hp"`
-	MP             int    `json:"mp"`
-	AP             int    `json:"ap"`
-	DP             int    `json:"dp"`
-	HIT            int    `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
-	EV             int    `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
-	CritPct        int    `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
-	MV             int    `json:"mv"`
-	AtkMin         int    `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
-	AtkMax         int    `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
-	Lv             int    `json:"lv"`
-	Spells         []int  `json:"spells"` // 已習得法術 id(spell.json)
-	Inventory      []int  `json:"inventory,omitempty"`
-	InventorySlots []int  `json:"inventory_slots,omitempty"`
+	Name     string `json:"name"`
+	Cls      string `json:"cls"`
+	Fig      int    `json:"fig"` // sprite 組 = 角色 id(恆等,doc 31)
+	Portrait int    `json:"portrait"`
+	HP       int    `json:"hp"`
+	MP       int    `json:"mp"`
+	AP       int    `json:"ap"`
+	DP       int    `json:"dp"`
+	HIT      int    `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
+	EV       int    `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
+	CritPct  int    `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
+	MV       int    `json:"mv"`
+	AtkMin   int    `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
+	AtkMax   int    `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
+	Lv       int    `json:"lv"`
+	Spells   []int  `json:"spells"` // 已習得法術 id(spell.json)
+	// InitialCommandMask is the exact four-byte constructor source for
+	// unit+0x1a..+0x1d. It is deliberately not derived from Spells.
+	InitialCommandMask []byte `json:"initial_command_mask,omitempty"`
+	Inventory          []int  `json:"inventory,omitempty"`
+	InventorySlots     []int  `json:"inventory_slots,omitempty"`
 }
 
 // Event 一條事件規則。
@@ -94,6 +98,14 @@ func LoadScenario(path string) (*Scenario, error) {
 	var sc Scenario
 	if err := json.Unmarshal(raw, &sc); err != nil {
 		return nil, err
+	}
+	for i, member := range sc.Party {
+		// Validate at the editable boundary. PartyUnits has a legacy no-error
+		// signature, so accepting malformed JSON there would otherwise silently
+		// change the native command inventory to zero.
+		if err := (&Unit{}).SetInitialCommandMask(member.InitialCommandMask); err != nil {
+			return nil, fmt.Errorf("scenario party member %d (%s) initial_command_mask: %w", i, member.Name, err)
+		}
 	}
 	return &sc, nil
 }
@@ -263,6 +275,10 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 		// so preserve them as the base for later shop purchases.
 		u.BaseAP, u.BaseDP, u.BaseHIT, u.BaseEV, u.BaseMV = u.AP, u.DP, u.HIT, u.EV, u.MV
 		u.BaseAtkMin, u.BaseAtkMax, u.EquipmentBaseSet = u.AtkMin, u.AtkMax, false
+		// LoadScenario validates authored masks before this materialization. Keep
+		// direct in-memory Scenario construction backward compatible: an invalid
+		// field is not partially copied into a different command inventory.
+		_ = u.SetInitialCommandMask(pm.InitialCommandMask)
 		units = append(units, u)
 	}
 	return units

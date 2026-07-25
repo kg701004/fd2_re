@@ -16,7 +16,13 @@
       "mp": 0,
       "ap": 34,
       "dp": 22,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "亞雷斯",
@@ -28,7 +34,13 @@
       "mp": 0,
       "ap": 37,
       "dp": 23,
-      "mv": 7
+      "mv": 7,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "悠妮",
@@ -45,6 +57,12 @@
         0,
         4,
         13
+      ],
+      "initial_command_mask": [
+        1,
+        0,
+        0,
+        0
       ]
     },
     {
@@ -57,7 +75,13 @@
       "mp": 0,
       "ap": 47,
       "dp": 33,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "哈諾",
@@ -69,7 +93,13 @@
       "mp": 0,
       "ap": 17,
       "dp": 10,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "希莉亞",
@@ -81,7 +111,13 @@
       "mp": 0,
       "ap": 15,
       "dp": 9,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "鐵諾",
@@ -93,7 +129,13 @@
       "mp": 0,
       "ap": 19,
       "dp": 11,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "瑪琳",
@@ -105,7 +147,13 @@
       "mp": 21,
       "ap": 14,
       "dp": 11,
-      "mv": 5
+      "mv": 5,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
     {
       "name": "貝克威",
@@ -117,7 +165,13 @@
       "mp": 0,
       "ap": 19,
       "dp": 11,
-      "mv": 6
+      "mv": 6,
+      "initial_command_mask": [
+        0,
+        0,
+        0,
+        0
+      ]
     }
   ],
   "deploy_cells": [
