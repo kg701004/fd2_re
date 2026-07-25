@@ -78,7 +78,7 @@ native magic raw / menu state:
 同一條 caller dataflow 排除了「confirm 只傳回一個格子」的猜測：一般 record 以 `+3/+6` 呼叫 `0x14818` 產生 stack candidate-index array，`0x115b6` 接收 `(mode=+6,count,array)` 做游標／確認，成功後 `0x2a6bd` 接到的仍是該 `array,count`，並逐 element 呼叫 `0x1c75e`。故 command0 有 per-candidate 傷害，而 `+6` target-code 的值域與 `0x14818` geometry 仍須逐值 RE；現有單格 normalized target UI 不是原版證明。
 
 `0x14818` 本體現已釘其 raw geometry：record `+3 < 0x10` 時交由 `0x4e555` 產生 map/reach mask；`+3 >= 0x10`
-時只 mark 同 x 或同 y、距離不超過 `(+3-0x10)` 的十字格。接著掃 roster，略過 inactive unit 與 mask=`0xff` 格，再用 record `+6` 篩 runtime `unit+6`：code 0 要 `==0`、1 要 `!=0`、2 要 `!=1`、3 要 `==2`。這是 direct branch evidence；不可在未追 unit+6 constructor／map mask 前把四值改名成完整陣營語意。
+時只 mark 同 x 或同 y、距離不超過 `(+3-0x10)` 的十字格。接著掃 roster，略過 inactive unit 與 mask=`0xff` 格，再用 record `+6` 篩 runtime `unit+6`：code 0 要 `==0`、1 要 `!=0`、2 要 `!=1`、3 要 `==2`。`0x10c50` constructor 已證實 `unit+6` 是 FDFIELD `b0` camp（0敵/1友/2己）；故 code 0=敵、1=非敵、2=非友、3=己。這是 direct branch evidence。
 
 上述 `dist<0x10` 不是無條件 Manhattan：`0x4e555(0)` 回傳 20-byte cost row，真正的 `0x4e040` 以 `dist`
 做四方向 flood-fill，grid flag `0x40` 不可通過、`0x80` 的格成本視為 0。對 command selector 而言 row index 固定
