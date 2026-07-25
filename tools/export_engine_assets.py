@@ -63,13 +63,16 @@ def main(argv):
     terrainp = argv[6] if len(argv) > 6 else None
     os.makedirs(out, exist_ok=True)
     pal = load_palette(palp)
-    tw, th, tiles = decode_tileset(shapp)
+    tw, th, tiles, masks = decode_tileset(shapp, with_masks=True)
     rows = (len(tiles) + cols - 1) // cols
-    sheet = Image.new("P", (cols * tw, rows * th), 0)
-    sheet.putpalette(pal)
-    for i, px in enumerate(tiles):
-        sheet.paste(Image.frombytes("P", (tw, th), px), ((i % cols) * tw, (i // cols) * th))
-    sheet.convert("RGB").save(os.path.join(out, "tileset.png"))
+    sheet = Image.new("RGBA", (cols * tw, rows * th), (0, 0, 0, 0))
+    for i, (px, mask) in enumerate(zip(tiles, masks)):
+        tile = Image.frombytes("P", (tw, th), px)
+        tile.putpalette(pal)
+        tile = tile.convert("RGBA")
+        tile.putalpha(Image.frombytes("L", (tw, th), mask))
+        sheet.alpha_composite(tile, ((i % cols) * tw, (i // cols) * th))
+    sheet.save(os.path.join(out, "tileset.png"))
 
     d = open(fieldp, "rb").read()
     w, h = struct.unpack_from("<HH", d, 0)

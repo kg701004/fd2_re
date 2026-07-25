@@ -20,8 +20,9 @@ from PIL import Image
 
 
 def _tile_rle(body, width, height):
-    """Native 0x4deda-compatible 24×24 RLE; transparent spans remain index 0."""
+    """Native 0x4deda-compatible RLE; returns indexed pixels plus opacity mask."""
     out = bytearray(width * height)
+    mask = bytearray(width * height)
     p = 0
     for y in range(height):
         x = 0
@@ -33,28 +34,35 @@ def _tile_rle(body, width, height):
                 break
             if mode == 0:
                 if p >= len(body): break
-                out[y * width + x:y * width + x + count] = bytes([body[p]]) * count; p += 1
+                out[y * width + x:y * width + x + count] = bytes([body[p]]) * count
+                mask[y * width + x:y * width + x + count] = b"\xff" * count; p += 1
             elif mode == 1:
                 if p >= len(body): break
-                out[y * width + x + 1:y * width + x + span:2] = bytes([body[p]]) * count; p += 1
+                out[y * width + x + 1:y * width + x + span:2] = bytes([body[p]]) * count
+                mask[y * width + x + 1:y * width + x + span:2] = b"\xff" * count; p += 1
             elif mode == 2:
                 if p + count > len(body): break
-                out[y * width + x:y * width + x + count] = body[p:p + count]; p += count
+                out[y * width + x:y * width + x + count] = body[p:p + count]
+                mask[y * width + x:y * width + x + count] = b"\xff" * count; p += count
             # mode 3 is transparent: zero-filled destination and no payload.
             x += span
-    return bytes(out)
+    return bytes(out), bytes(mask)
 
 
-def decode_tileset(path):
-    """回傳 (tileW, tileH, [tile_pixels...]),依 offset 表定位(無漂移)。"""
+def decode_tileset(path, with_masks=False):
+    """回傳 indexed tiles; with_masks keeps native transparent spans distinct from index 0."""
     d = open(path, "rb").read()
     tw, th, cnt = struct.unpack_from("<HHH", d, 0)
     offs = [struct.unpack_from("<I", d, 6 + 4 * i)[0] for i in range(cnt)]
-    tiles = []
+    tiles, masks = [], []
     for k in range(cnt):
         s = offs[k]
         e = offs[k + 1] if k + 1 < cnt else len(d)
-        tiles.append(_tile_rle(d[s:e], tw, th))
+        pixels, mask = _tile_rle(d[s:e], tw, th)
+        tiles.append(pixels)
+        masks.append(mask)
+    if with_masks:
+        return tw, th, tiles, masks
     return tw, th, tiles
 
 
