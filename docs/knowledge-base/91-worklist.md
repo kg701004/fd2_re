@@ -244,7 +244,7 @@
 - [x] **移動動畫** ✅(74bf386):battle.Path(BFS 路徑)+ walkAnim 沿路徑逐格走(方向幀+OffX/Y 內插,
       ~4-5 tick/格,走完進攻擊/待命,期間鎖輸入);AI 移動沿用瞬移(待接同管線)
 - [x] internal/battle 測試失敗已修 ✅(e09c68c):部署格斷言=舊設計殘留,對齊現行(部署格屬 spawn_party)
-- [x] **魔法系統** ✅(第7-8輪完成,commit 3c618c4/74366fa:radial 指令環+法術+MP+青衫公式;code: ringInput/castSp/spells.json)——原盤點:法術選單(radial 指令環,doc13 0x18ED0)、MP 消耗、青衫法術公式、
+- [~] **魔法系統** (第7-8輪完成資料與部分 runtime,commit 3c618c4/74366fa:radial 指令環+法術+MP+青衫公式;code: ringInput/castSp/spells.json)——`0x18d8c` 已證實方向 result order，但 `0x1cff0` command table、完整 native 演出仍待；
       法術特效動畫(FIGANI 內含法術特效,可沿用資料驅動管線)
 - [x] **音樂** ✅(e09c68c):audio.go(ebiten/audio+vorbis;忠實 play_bgm 0x26777:同曲不重播/換曲釋放/
       無限迴圈);campaign 節點 bgm 驅動;FD2_MUTE 靜默。待:非 campaign 模式場景→曲號自動對映(doc12 表)
@@ -252,9 +252,7 @@
       unsigned mono raw PCM 子樣本)+ 戰鬥音效動態 index(同檔案,依攻擊資料決定 index);播放走
       `AIL_init/set_sample_address/set_sample_loop_count/start_sample`(0x26896/0x26945)。
       待:14 子樣本→UI事件對照、戰鬥動態 index 表還原、remake 端接入(SDL_mixer/ebiten audio)
-- [x] **radial 指令環** ✅(3c618c4):orig_04 截圖裁 4 圖示(道具/攻擊/狀態/待機),十字繞單位+選中橘框;
-      ↑←→↓+Enter/ESC(doc13 [0x3C57]);移動到位自動開環。待:方向↔指令原版精確配對 dosbox 驗證、
-      道具 stub、左下 A+05/D+00 攻防預覽小欄
+- [~] **radial 指令環**：orig_04 截圖裁 4 圖示、十字繞單位+選中橘框；Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，runtime mapping 已修正。待：`0x1cff0`／`0x1bbdc` effect、圖示 resource provenance、左下 A+05/D+00 攻防預覽小欄
 - [x] **魔法系統** ✅(3c618c4):magic.go(spells.json=EXE dump 36條+M1-M5名稱表;InCastRange/Cast
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
       待:AoE(range>0)、命中率、輔助系(魔刃/風行…)效果。
@@ -575,6 +573,7 @@
 - [ ] **SDD-1 UI evidence matrix**：以 Ghidra/IDA（文件在目前環境不可見）+ Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；未有 E0/E1/E2 不解除 gate。
 - [x] **SDD-1 baseline matrix**：新增 `57-ui-evidence-matrix.md`，以目前 runtime 行號把 UI-01…UI-12 的 partial/missing 與下一個 E0/E1/E2 問題固定下來；這不是原版 verified。
 - [x] **UI-03 action caller recheck**：Docker Capstone 重審 `0x18890`，確認它呼叫 `0x18d8c` 取得 action result 並串接 `0x13488` path-walk／`0x13a44` target path；撤回「只是繪圖」類推，`0x18d8c` 本體仍是下一個 RE gate。
+- [x] **UI-03 action switch closure**：Docker Capstone 完成 `0x18d8c`：`↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動`；同步修正 `main.go` ring mapping 與 13/14/57 文件，撤回舊 screenshot-derived mapping。
 - [ ] **SDD-2 campaign transition matrix**：逐章標記 battle 結束後 town/shop/rest/church/preparation/ending 與連戰反例；postbattle 必須是可編輯 node。
 - [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。

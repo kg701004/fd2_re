@@ -55,6 +55,19 @@ for 第 k 組(0x22..0x26):
 
 這段 caller 沒有單獨證實 `0x18d8c` 的選項表與 result 編號，因此撤回「`0x18890` 只是選單繪圖」類推；目前 remake radial 方向 mapping 仍不得宣稱原版一致，直到 `0x18d8c` 本體和 menu/resource table 完成交叉引用。
 
+### `0x18d8c` switch closure（2026-07-25, Docker Capstone）
+
+`0x18d8c` 讀 `[0x3c57]` 後的四個分支已釘死：
+
+| `[0x3c57]` | 方向 | native callee / 行為 | remake 對應 |
+|---:|---|---|---|
+| 0 | ↑ | `0x1f04a` → `0x28a6c`：攻擊目標／全螢幕攻擊演出 | 攻擊（case 0） |
+| 1 | ← | `0x1cff0`：配置 320×200 演出 buffer、法術 command／演出 loop（`0x1c269` 失敗會 disable） | 法術選單（case 1） |
+| 2 | → | `0x1bbdc`：讀 item record `+0xd/+0x10/+0x12/+0x15`、做 range/effect selection，特殊 item `0x17` 另有 gate | 物品（case 2） |
+| 3 | ↓ | `0x13fd4`（未移動時 HP/狀態處理）→ `0x190ac` 格子互動／寶物檢查 | 待機／格子互動（case 3） |
+
+因此撤回舊 mapping「↑道具／←攻擊／→魔法／↓待機」。`0x1cff0` 內部仍需再拆 spell-vs-attack 的 command table；本表只宣稱 switch/result order，不宣稱所有 effect 已完成。
+
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 
 | 掃描碼 | 鍵 | 行為 |

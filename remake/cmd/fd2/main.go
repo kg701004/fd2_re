@@ -123,10 +123,10 @@ type Game struct {
 	cutFrame int
 	cutTick  int
 	cutCur   []*ebiten.Image
-	// radial 指令環(原版 4 圖示十字繞單位,doc13 [0x3C57]:↑0/←1/→2/↓3)+ 法術
+	// radial 指令環(原版 [0x3C57]:↑0=攻擊/←1=法術/→2=物品/↓3=待機)
 	ring               bool
 	ringSel            int
-	ringIcons          [4]*ebiten.Image // 0上=道具 1左=攻擊 2右=魔法/狀態 3下=待機
+	ringIcons          [4]*ebiten.Image // 0上=攻擊 1左=法術 2右=物品 3下=待機；圖示資源語意仍待 native table
 	spellOpen          bool
 	spellSel           int
 	castSp             *battle.Spell // 施法目標選擇中
@@ -2405,7 +2405,7 @@ func (g *Game) campInput() bool {
 }
 
 // ringInput radial 指令環 + 法術選單輸入。回傳 true = 已攔截。
-// 方向配對(↑0道具/←1攻擊/→2魔法或狀態/↓3待機)為可玩性配置;原版方向↔指令待 dosbox 驗證(worklist)。
+// 方向配對已由 Docker Capstone 0x18d8c switch 釘死：↑0攻擊/←1法術/→2物品/↓3待機。
 func (g *Game) ringInput() bool {
 	enter := inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)
 	esc := inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace)
@@ -2443,7 +2443,7 @@ func (g *Game) ringInput() bool {
 	if !g.ring || g.sel == nil {
 		return false
 	}
-	// 環導航(doc13 [0x3C57]:↑0/←1/→2/↓3)
+	// 環導航(doc13 [0x3C57]:↑0攻擊/←1法術/→2物品/↓3待機)
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
 		g.ringSel = 0
 	}
@@ -2472,12 +2472,10 @@ func (g *Game) ringInput() bool {
 	}
 	if enter {
 		switch g.ringSel {
-		case 0: // 道具(未實裝)
-			g.msg = "道具:尚未實裝"
-		case 1: // 攻擊 → 關環,進選目標(游標移到攻擊範圍內的敵人;範圍依武器射程,doc32)
+		case 0: // 攻擊 → 關環,進選目標(游標移到攻擊範圍內的敵人;範圍依武器射程,doc32)
 			g.ring = false
 			g.msg = "攻擊:選擇目標"
-		case 2: // 魔法(有法術者)/狀態
+		case 1: // 法術(原版 0x1cff0；有法術者才可用)
 			if len(g.sel.Spells) > 0 {
 				if g.sel.Sealed {
 					g.msg = "被封咒,無法施法!"
@@ -2485,10 +2483,11 @@ func (g *Game) ringInput() bool {
 					g.ring, g.spellOpen, g.spellSel = false, true, 0
 				}
 			} else {
-				g.msg = fmt.Sprintf("%s Lv%d HP%d/%d MP%d AP%d DP%d",
-					g.sel.Name, g.sel.Lv, g.sel.HP, g.sel.MaxHP, g.sel.MP, g.sel.AP, g.sel.DP)
+				g.msg = "沒有可用法術"
 			}
-		case 3: // 待機
+		case 2: // 物品(原版 0x1bbdc；完整 item action 仍 fail-closed)
+			g.msg = "物品:尚未實裝"
+		case 3: // 待機／格子互動(原版 0x13fd4→0x190ac)
 			g.finishSelectedWait()
 		}
 	}
@@ -4420,7 +4419,10 @@ func loadGame() *Game {
 			g.dlgBox = ebiten.NewImageFromImage(im)
 		}
 	}
-	for i, nm := range []string{"item", "attack", "status", "wait"} { // 指令環圖示(orig_04 截圖 oracle 裁出)
+	// Native 0x18d8c result order is attack, spell, item, wait.  There is no
+	// separately proven spell icon in the extracted set; keep the historical
+	// status asset as the spell slot until the resource table is decoded.
+	for i, nm := range []string{"attack", "status", "item", "wait"} {
 		if raw, e := os.ReadFile(assetPath("assets/ui/ring_" + nm + ".png")); e == nil {
 			if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {
 				g.ringIcons[i] = ebiten.NewImageFromImage(im)
