@@ -411,7 +411,7 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
    指標]; call 0x1c269`。`0x1c269` 的 direct body 只定案為：從單位資料表
    (`[0x53a45]+idx*80`)偏移 `+0x1a` 起掃描 **5 bytes(40 bit)**，把已設定 bit 轉成 0–39 byte index，
    寫入呼叫端緊密陣列；輸出究竟是 spell、move 或其他 command inventory 仍未證實。
-   - `unit+0x1a..+0x1d` 與 FDFIELD magic_raw 複製範圍重疊；`unit+0x22..+0x24` 則是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。不得用後者反推前者的 spell bitfield。
+   - `unit+0x1a..+0x1d` 與 FDFIELD `initial_command_mask` 複製範圍重疊；它是 runtime 五位元組 command bitset 的初始四位元組。`unit+0x22..+0x24` 則是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。不得用後者反推前者的 spell bitfield。
    - 但 `0x027fc9` 真正讀取的是 **`[esp+0xd0+counter]`**(offset 0xd0,與 `0xc8` 相差 8,且並非同一次
      `call 0x1c269` 填的緊密陣列——`0x1c269` 只填一個目標緩衝區),**這個陣列的填值來源本輪仍未追出**,
      是下一輪的直接切入點。

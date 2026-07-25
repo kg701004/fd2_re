@@ -74,7 +74,7 @@ def dump_unit(d):
 
 
 def dump_character_defaults(d):
-    """人物出場屬性:32×24B = RA CL LV HP MP MV MG×4 IT×6 AP DP DX。
+    """人物出場屬性:32×24B = RA CL LV HP MP MV CMD×4 IT×6 AP DP DX。
 
     這張表是 JOIN 建立命名角色時的 authoritative default。特別是索菲亞 index11
     的 IT[2]=0xD1 黃金徽章；FDFIELD 場景用的索菲亞 record 本身沒有這件物品。
@@ -87,7 +87,9 @@ def dump_character_defaults(d):
         rows.append({
             "idx": i, "off": hex(o), "race": r[0], "cls": r[1], "lv": r[2],
             "hp": u16(d, o + 3), "mp": u16(d, o + 5), "mv": r[7],
-            "magic_raw": list(r[8:12]),
+            # Constructor 0x10f7f copies these four bytes to runtime unit+0x1a..+0x1d.
+            # They are the initial portion of the five-byte command bitset, not a spell table.
+            "initial_command_mask": list(r[8:12]),
             "inventory": [item for item in r[12:18] if item != 0xFF],
             "inventory_slots": list(r[12:18]) + [0xFF, 0xFF],
             "ap": u16(d, o + 18), "dp": u16(d, o + 20), "dx": u16(d, o + 22),

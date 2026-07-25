@@ -313,7 +313,7 @@
 - [ ] 戰鬥曲/勝利曲聽辨(使用者)
 - [ ] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub
 - [ ] ch10 等圖少數 tile 雜色查因
-- [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 magic_raw vs transient modifier flags
+- [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs transient modifier flags（舊稱 `magic_raw` 已撤回）
 - [ ] +0xd0 陣列填值(逐招音效對照,低優先)
 
 ## 第 12 輪 ✅(招募成長/劇情文本/編輯器規劃/政策更新)

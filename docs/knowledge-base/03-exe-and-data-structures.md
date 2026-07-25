@@ -17,7 +17,7 @@
 | 0x0F | FA | 肖像編號(見附錄) |
 | 0x10 | NN(2) | 姓名 |
 | 0x12 | IT×8 | 物品，各 2 byte = 狀態 + 編號；狀態 40=裝備 00=持有 80=空 |
-| 0x1A | magic_raw(4) | FDFIELD b13..b16 複製到 runtime 的法術／技能原始欄位 |
+| 0x1A | initial_command_mask(4) | FDFIELD b13..b16 複製到 runtime command bitset 的 bytes 0..3（command IDs 0..31）；個別 ID 的玩法語意仍待對照 |
 | 0x22 | raw modifier bytes | constructor 先清零；後續流程使用 `+0x22/+0x23` 的 AP/DP×1.15 旗標與 `+0x24` 的 DX/HIT+15 旗標，並非法術 bitfield |
 | 0x27 | RA,CL,LV | 種族 / 職業 / 等級 |
 | 0x2A | A+,D+,H+,-H,XA,XM | 增強 / 中毒 / 麻痺 / 封咒狀態旗標 |
