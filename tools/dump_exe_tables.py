@@ -55,6 +55,30 @@ def dump_growth(d):
     return rows
 
 
+def dump_command_learn(d, growth):
+    """升級學招表: learn_idx×12B = 最多六組 (required_level, command_id)。
+
+    `0x1e292` 取 growth row 的 learn_idx，經 `0x4e4a2` 取得
+    0x626b3 + idx*12，逐 pair 比較 runtime level，命中即呼叫 0x1d79c OR
+    command bit。FF/FF 是 unused pair，保留 raw 以避免憑空延長表。
+    """
+    used = [row["learn_idx"] for row in growth if row["learn_idx"] != 0xFF]
+    count = max(used) + 1 if used else 0
+    base = ANCHORS["learn"][0]
+    rows = []
+    for idx in range(count):
+        o = base + idx * 12
+        raw = d[o:o + 12]
+        pairs = []
+        for pos in range(0, 12, 2):
+            level, command_id = raw[pos], raw[pos + 1]
+            if level == 0xFF and command_id == 0xFF:
+                break
+            pairs.append({"required_level": level, "command_id": command_id})
+        rows.append({"idx": idx, "off": hex(o), "entries": pairs, "raw": raw.hex()})
+    return rows
+
+
 def dump_unit(d):
     """敵/友單位每級成長:10B = RA CL HP MP AP DP DX MV EX。傾印到 char 表(0x55BA1)前。"""
     base = ANCHORS["unit"][0]
@@ -181,13 +205,19 @@ UNIT_CHECK = {
 }
 
 
-def selftest(growth, unit, characters, resist, equip):
+def selftest(growth, command_learn, unit, characters, resist, equip):
     ok = True
     for i, exp in GROWTH_CHECK.items():
         got = growth[i]["raw"]
         m = got == exp
         ok &= m
         print(f"  升級成長[{i}] {'✓' if m else '✗ 期望 '+exp} {got}")
+    expected_learn0 = [{"required_level": 5, "command_id": 17}, {"required_level": 9, "command_id": 1},
+                       {"required_level": 15, "command_id": 26}, {"required_level": 21, "command_id": 2},
+                       {"required_level": 26, "command_id": 27}]
+    m = len(command_learn) == 20 and command_learn[0]["entries"] == expected_learn0 and command_learn[19]["entries"][-1] == {"required_level": 23, "command_id": 32}
+    ok &= m
+    print(f"  升級學招表 {'✓' if m else '✗ learn_idx 0/19 anchor mismatch'}")
     for i, exp in UNIT_CHECK.items():
         u = unit[i]
         got = (u["cls_name"], u["race"], u["cls"], u["hp"], u["mp"], u["ap"], u["dp"], u["dx"], u["mv"], u["ex"])
@@ -232,6 +262,7 @@ def main(argv):
         print("⚠ 部分錨定特徵未對齊,offset 可能不適用此版本!")
 
     growth = dump_growth(d)
+    command_learn = dump_command_learn(d, growth)
     unit = dump_unit(d)
     characters = dump_character_defaults(d)
     spell = dump_spell(d)
@@ -239,13 +270,13 @@ def main(argv):
     rc = dump_resist_crit(d)
     equip = dump_class_equip_types(d)
 
-    for name, rows in [("growth", growth), ("unit", unit), ("character_defaults", characters), ("spell", spell),
+    for name, rows in [("growth", growth), ("command_learn", command_learn), ("unit", unit), ("character_defaults", characters), ("spell", spell),
                        ("item", item), ("resist_crit", rc), ("class_equip_types", equip)]:
         write_out(out, name, rows)
         print(f"  -> {name}.json  ({len(rows)} 列)")
 
     print("數值自驗(對照青衫攻略字面值):")
-    ok = selftest(growth, unit, characters, rc, equip)
+    ok = selftest(growth, command_learn, unit, characters, rc, equip)
     print("自驗結果:", "全部通過 ✓" if ok else "有不符 ✗")
     return 0 if ok else 2
 

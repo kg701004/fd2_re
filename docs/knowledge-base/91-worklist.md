@@ -596,6 +596,10 @@
       byte-for-byte 相同，故 record `+3/+4/+5/+6` 可安全正名為 `dist/range/mp/target`；全 FDFIELD 和
       character-default initial masks 的已見 ID 範圍為 0..30。36..39 僅是 pointer 可達的相鄰 data、label
       為空／系統訊息，未被升格為 spell。
+- [x] **UI-03 level-up command producer**：`0x1e292→0x1d79c` 已釘為升級習得 command；growth row 的
+      `learn_idx` 經 `0x4e4a2` 查 20×12-byte、最多六組 `(required_level,command_id)` 表，命中即 OR bit
+      並顯示 FDTXT_000 #587「學會了！」。已導出 `command_learn.json`，保留 FF/FF sentinel；portrait→growth
+      row runtime provenance 尚未接線，不能用 legacy `Spells` 偽造結果。
 - [x] **UI-03 raw command-mask pipeline**：FDFIELD roster `b13..b16` 已由 parser/exporter 保留為
       `initial_command_mask`；battle runtime materialize 為可持久的 5-byte `NativeCommandMask`，並有原版
       order 的 ID expansion／`0x1d7fb` bounded-OR regression。舊 `Spells` 是 normalized approximation，
