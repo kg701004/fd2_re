@@ -133,6 +133,11 @@ bit `0x80` 使該步成本為零。雖然 callee 支援 terrain-cost row，comma
 EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
 cardinal range（無阻擋時才等於 Manhattan）。
 
+`battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把這個 verified subset 做成獨立資料層：必須由
+caller 提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`。它覆蓋 four-way
+flood-fill、bit40/bit80、cross branch 與四個 camp predicates，但尚未有 exporter 產生每章原版 flags，故不可
+自動接入 native command UI。
+
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
