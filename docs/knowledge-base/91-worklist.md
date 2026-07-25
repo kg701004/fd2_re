@@ -585,7 +585,9 @@
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
 - [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：target grid 核心是 `|x-cx|+|y-cy| < caller radius`，
       再依 marker／unit active flag／camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這證實曼哈頓幾何，
-      但還沒將 caller radius/mode 同武器 `range_min/range_max` table 完整對位，故不改寫為「所有武器 max inclusive」或 LOS 定論。
+      `0x1cff0` stack-dataflow 亦已固定參數為 `(x,y,out,mode,radius,campSelector)`：special `0x17` 用
+      `record+3`/radius 1，一般 path 用 `record+4`/radius 0 並消費既有 marker。尚未將這些 producer
+      同武器 `range_min/range_max` table 完整對位，故不改寫為「所有武器 max inclusive」或 LOS 定論。
 - [~] **UI-03 battle selector input**：Docker/Capstone 重檢 `0x19953`，確認它呼叫 `0x36d98` 讀 ASCII/scancode；Enter/Space/`0xe0`/`0x52` family 走確認回傳、`0x01`/`0x53` family 走取消回傳，`0x4b`/`0x4d` 更新左右選擇狀態。這是 battle selector 的 E0 input ABI，不等於已閉合 action enable/end-turn 或 D8 行軍確認。
 - [~] **SDD-2 campaign transition matrix**：已從 `campaign_full.json` 逐一展開 30 個 battle 的 `on_win`，
       明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入

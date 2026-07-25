@@ -71,3 +71,10 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 selector 對 `unit+6` camp 過濾，將 slot index 寫入可選 target output。當另一個 mode argument
 大於等於 `0x10` 時另走一條十字形 clear path；它的玩法語意與 weapon `min/max` 欄位尚未完成
 caller-dataflow 對照，不能把這個 raw `radius` 直接等同 remake `AtkMax` 或宣稱已解 LOS。
+
+補作 `0x1cff0` caller 的 stack-dataflow 後，`0x14818` 的參數順序已可固定為
+`(x, y, output, mode, radius, campSelector)`：`mode` 是第 4 參數、上述嚴格曼哈頓比較使用
+第 5 參數，unit filter 使用第 6 參數。特別 command `0x17` 傳入 `record+3` 作 mode、`1`
+作 radius、`record+6` 作 selector；一般 command 則傳 `record+4` 作 mode、`0` 作 radius、
+`record+6` 作 selector。因此一般 path 不會在這一 call 新畫 diamond，而是消費前序已建立的
+marker grid。`record+3/+4` 仍不能在未追到 producer 前命名為 weapon min/max。
