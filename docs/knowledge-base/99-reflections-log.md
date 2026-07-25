@@ -118,8 +118,8 @@
 - `FIGANI 首欄 167 為解碼寬` → 錯,是外框寬;真實寬 103 在 +9。
 - `24×24 文法直接套 FIGANI` → 需用參數化版 0x4F43D + 正確幀標頭。
 
-**狀態**:7 大資產子系統(容器/數值表/圖像/音樂/文本+字型/動畫)**全數破解**。
-反組譯研究主體完成。後續為加值(glyph→Unicode、招式命名、地圖渲染、ANI 過場、重製垂直切片)。
+**歷史快照（已過時）**：這段當時僅涵蓋資產容器／codec，不能延伸成「反組譯研究主體完成」。
+後續已證實 native command、transient lifecycle、player selector、battle UI、campaign/town flow 仍有大量未閉合資料流；現況以 SDD `56`、UI matrix `57` 與 worklist `91` 為準。
 
 ## 第 4 輪 — 遊戲機制反組譯 + LE 重定位工具 + 劇情轉錄(2026-06-28)
 
