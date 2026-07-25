@@ -178,6 +178,12 @@ IDs17..19 是第三條 transient-modifier family，亦不能交給 damage/heal e
 這些 offsets 稱為 screen coordinates 的斷言。duration 的 tick/clear、玩家可見 status 名稱、專用演出與
 remake state/UI 仍未閉合，不能據此補出 gameplay names。
 
+這一族的 MP transaction 有一個不可泛化的細節：jump-table ID17 的 `0x226EA` 與 ID18 的
+`0x2282F` 都直接呼叫 `0x1CA89(actor,0x12)`，而 raw records 17、18 的七個 bytes 都是
+`00 00 00 04 02 05 01`。因此目前只可證實兩者在這個版本有相同 MP debit；不得從 wrapper index
+推導「所有 handler 都把自身 command ID 傳給 `0x1CA89`」。ID19 則明確傳 `0x13`。這不改變其
+modifier writer／duration 證據，但阻止錯誤泛化 command transaction ABI。
+
 IDs20..21 共享另一條「flag-present 才生效」route：`0x22A85/0x22BC6→0x22AA8→0x22AF6` 各以
 command ID 20/21 扣 MP，對每個 final target 讀 `+0x25/+0x26`。該 byte 為零時只走失敗 display；非零時呼叫
 `0x1C916(target,10)` 的既有 HP-restore writer、清零該 byte，並顯示結果。這證實 raw gate、clear 與
