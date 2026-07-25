@@ -102,3 +102,26 @@ func TestBlitNativeTerrainRegionMatches11EEECellOrder(t *testing.T) {
 		t.Fatal("short control table accepted")
 	}
 }
+
+func TestBlitNativeForegroundCellMatches12AC6(t *testing.T) {
+	b := &Bank{Sprites: make([]Sprite, 12)}
+	for i := range b.Sprites {
+		b.Sprites[i] = Sprite{Pixels: make([]byte, NativeSize*NativeSize), Mask: make([]byte, NativeSize*NativeSize), RemapMask: make([]byte, NativeSize*NativeSize)}
+	}
+	b.Sprites[1].Pixels[0], b.Sprites[1].Mask[0] = 7, 1
+	b.Sprites[1].RemapMask[1] = 1
+	dst := make([]byte, NativeSize*NativeSize)
+	for i := range dst {
+		dst[i] = 1
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(i + 0x10)
+	}
+	if err := b.BlitNativeForegroundCell(dst, NativeSize, 0, 0, 0, 0x80, 0, 0, lut); err != nil {
+		t.Fatal(err)
+	}
+	if dst[0] != 0x17 || dst[1] != 1 {
+		t.Fatalf("foreground=%#x,%#x", dst[0], dst[1])
+	}
+}

@@ -72,6 +72,24 @@ func (b *Bank) BlitNativeTerrainCell(dst []byte, stride, x, y, tile int, flags, 
 	return sprite.BlitLUT(dst, stride, x, y, lut)
 }
 
+// BlitNativeForegroundCell reproduces 0x12ac6 after unit drawing. A missing
+// foreground flag is a no-op; the alternate branch uses 0x4dd52 semantics,
+// whose mode-3 spans preserve destination pixels.
+func (b *Bank) BlitNativeForegroundCell(dst []byte, stride, x, y, tile int, flags, blitMode byte, flip int, lut []byte) error {
+	index, present, err := NativeForegroundFrameIndex(tile, flags, flip)
+	if err != nil || !present {
+		return err
+	}
+	sprite, err := b.SpriteFor(index/12, (index%12)/3, index%3)
+	if err != nil {
+		return err
+	}
+	if blitMode == 0xff {
+		return sprite.BlitAt(dst, stride, x, y)
+	}
+	return sprite.BlitLUTTransparent(dst, stride, x, y, lut)
+}
+
 // BlitNativeTerrainRegion reproduces 0x11eee's visible-cell loop. controls is
 // the raw selected FDSHAP terrain-control table (four bytes per base tile);
 // only byte 0 is consumed here, exactly as the native code does. The caller
