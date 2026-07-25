@@ -3332,7 +3332,7 @@ func (g *Game) Update() error {
 					g.moved, g.reach, g.ring, g.ringSel = true, nil, true, 1
 				}
 			}
-			if os.Getenv("FD2_SHOT_COMMAND") != "" && g.sel != nil {
+			if os.Getenv("FD2_SHOT_COMMAND") != "" && g.st != nil {
 				// The raw command-grid oracle must choose a unit that actually owns
 				// a materialized native command mask. The generic ring fixture may
 				// have selected an enemy or a story-only record first.
@@ -3342,7 +3342,9 @@ func (g *Game) Update() error {
 						break
 					}
 				}
-				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+				if g.sel != nil {
+					g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+				}
 			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
 				g.dialog = nil
