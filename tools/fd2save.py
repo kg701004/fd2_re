@@ -75,17 +75,23 @@ def slot_bounds(slot: int) -> tuple[int, int]:
 
 
 def summarize(plain: bytes) -> str:
-    """Print only fixed raw boundaries; do not assign unproven field names."""
+    """Print only fixed raw mappings; do not assign unproven gameplay names."""
     lines = [
         f"plaintext_size={len(plain):#x}",
         f"checksum={struct.unpack_from('<I', plain, CHECKSUM_OFFSET)[0]:#010x}",
     ]
     for slot in range(SLOT_COUNT):
         start, end = slot_bounds(slot)
-        raw = plain[start + ROSTER_SIZE:start + ROSTER_SIZE + 10]
+        meta = plain[start + ROSTER_SIZE:start + SLOT_SIZE]
+        chapter = meta[0]
+        roster_count = meta[1]
+        global_3bf3, = struct.unpack_from("<I", meta, 2)
         lines.append(
             f"slot={slot} range={start:#06x}..{end:#06x} "
-            f"roster={ROSTER_UNITS}x{UNIT_SIZE:#x} metadata10={raw.hex()}"
+            f"roster={ROSTER_UNITS}x{UNIT_SIZE:#x} "
+            f"chapter_raw={chapter:#04x} roster_count_raw={roster_count:#04x} "
+            f"global_53bf3={global_3bf3:#010x} "
+            f"globals_51aab_53af9_51e61_51e62={meta[6:10].hex()}"
         )
     return "\n".join(lines)
 
