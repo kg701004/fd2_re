@@ -8,7 +8,7 @@
 |---|---|---|---|
 | UI-01 title/menu | F2/F3/F5/F9 global input（約 3065、3291）；title boot path 尚未拆成獨立 scene contract | partial | Ghidra/IDA：menu item table、scan-code dispatch、save/load branch |
 | UI-02 field | map/camera/cursor/unit/HUD Draw 約 3441–3568、4571、4595 | partial | 原版 cursor camera、HUD anchor、FDOTHER panel resource |
-| UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；remake `ringInput` 約 2407 已改同序；item branch `0x1bbdc` selector/equip/transfer partially traced；battle selector `0x19953` 讀 `0x36d98`，確認鍵回傳 1、取消鍵回傳 -1，左右鍵更新 `[0x53c57]` | partial | `0x1cff0` command/effect table、`0x20c6f` item effect path、完整 enable gate、end-turn entry |
+| UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；但 native `0x1c269` 實際從 unit `+0x1a..+0x1e` 五個 bitmask 列舉最多 40 個 command ID，再餵 `0x4e516`；remake `ringInput` 約 2407 的四格 mapping 僅為 partial approximation。item branch `0x1bbdc` selector/equip/transfer partially traced；battle selector `0x19953` 讀 `0x36d98`，確認鍵回傳 1、取消鍵回傳 -1，左右鍵更新 `[0x53c57]` | partial | command bitmask 的 producer／各 ID label+enable gate、`0x20c6f` item effect table、完整 menu renderer、end-turn entry |
 | UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；Docker/Capstone 已釘 `0x14818` 先以 table record 更新 target grid，再疊 `abs(x-cx)+abs(y-cy) < radius` marker、依 unit camp/active state 過濾輸出；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化 |
 | UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
 | UI-06 HUD | target HUD 約 3557–3568；full-screen battle panel 約 4065、4180 | partial | FDOTHER loader、數字 cell、游標避讓和 320×200 ground truth |
@@ -86,6 +86,12 @@ marker grid。`record+3/+4` 仍不能在未追到 producer 前命名為 weapon m
 `0x4e516(id) = 0x619fd + 7*id`。因此 `+3/+4/+6` 是靜態 7-byte command ABI 的欄位，
 不是這個 handler 自行組出的暫存結構；在有 field-name 或實機資料對照前，仍以 raw offset
 記錄，不擅自命名成攻擊／法術的 min/max range。
+
+command ID 並非 four-way ring 的固定索引：`0x1c269(unitIndex, out)` 讀取該 0x50-byte unit
+record 的 `+0x1a..+0x1e` 五個 byte，逐 bit 把 set bit 寫出成 `byteIndex*8 + bitIndex`（0..39）。
+`0x1cff0` 以這份 list 的目前選項取得 ID、再呼叫 `0x4e516`。因此 UI-03 的完整 SDD 必須資料化
+command bitmask、ID→label/rendering、enable gate 與 cancel hierarchy；現行四格 `ringInput` 只能保留
+為 provisional interaction，不能冒充原版完整 command menu。
 
 `0x4e040` 並非僅由這個 target caller 使用：`0x14344` 先以 unit `+0x20`（fallback record
 `0x13`）透過 `0x4e555` 取另一個 20-byte record，再把 map grid、terrain table 一併傳入。
