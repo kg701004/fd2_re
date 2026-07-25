@@ -3,7 +3,7 @@
 
 輸出:
   <out>/tileset.png  該 tileset 全部 24×24 圖塊排成網格(cols 欄)
-  <out>/map.json     {"w","h","tileW","tileH","cols","tiles":[地形索引...],"cost":[移動成本...],"native_target_flags":[FDFIELD event low bytes...],"native_tile_blit_modes":[FDFIELD event high bytes...]}
+  <out>/map.json     {"w","h","tileW","tileH","cols","tiles":[地形索引...],"cost":[移動成本...],"native_target_flags":[FDFIELD event low bytes...],"native_tile_blit_modes":[FDFIELD event high bytes...],"native_terrain_control":[raw FDSHAP control bytes...]}
 
 引擎(remake/cmd/fd2)讀這兩個檔即可渲染地圖。資產屬遊戲著作權,只在本機,不入庫。
 
@@ -52,7 +52,7 @@ def load_terrain_records(terrainp):
     n = len(d) // 4
     flags = [d[i * 4] for i in range(n)]
     costs = [MOVE_CODE_TO_WALK_COST.get(d[i * 4 + 1], 1) for i in range(n)]
-    return flags, costs
+    return flags, costs, d
 
 
 def main(argv):
@@ -89,7 +89,10 @@ def main(argv):
     # "remap existing destination" operation.
     meta["native_tile_blit_modes"] = [(word >> 8) & 0xFF for word in event_words]
     if terrainp:
-        terrain_flags, costs = load_terrain_records(terrainp)
+        terrain_flags, costs, terrain_raw = load_terrain_records(terrainp)
+        # Keep the original four-byte records for the strict 0x11eee renderer
+        # adapter. "cost" is only a normalized movement approximation.
+        meta["native_terrain_control"] = list(terrain_raw)
         oob = 0
         cost_arr = []
         treasure_slots = []
