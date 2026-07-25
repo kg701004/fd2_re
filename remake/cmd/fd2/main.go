@@ -125,65 +125,66 @@ type Game struct {
 	cutTick  int
 	cutCur   []*ebiten.Image
 	// radial 指令環(原版 [0x3C57]:↑0=攻擊/←1=法術/→2=物品/↓3=待機)
-	ring                bool
-	ringSel             int
-	ringIcons           [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
-	nativeActionCells   [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
-	nativeUIPalette     color.Palette
-	nativeCommandLabels map[int]string
-	nativeCommandOpen   bool
-	nativeCommandSel    int
-	spellOpen           bool
-	spellSel            int
-	castSp              *battle.Spell // 施法目標選擇中
-	spells              []battle.Spell
-	nativeCommandBook   []battle.NativeCommandRecord
-	commandLearn        map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
-	bgm                 *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
-	bgmCur              string
-	bgmSource           string                // 音源設定 "fm"/"mt32"(settings.go;F2 切換)
-	debug               bool                  // F3:開發除錯 HUD(座標/陣營原文等)
-	unitLabels          bool                  // FD2_UNIT_LABELS=1:cutscene sprite 左上標 [idx]fig+名+座標(協助回報/對映原版 slot)
-	cutsceneLog         bool                  // FD2_CUTSCENE_LOG=1:過場 node/beat/走位逐步 log 到 stderr(協助對原版資料比對)
-	banner              string                // 回合橫幅文字(PLAYER/ENEMY PHASE)
-	bannerT             int                   // 橫幅剩餘 tick
-	sfx                 map[int][]byte        // SFX PCM(doc36 FDOTHER#31 14樣本)
-	sfxSwing            []byte                // 戰鬥揮擊音(doc36 戰鬥池 #48-64 sub0,七池共用)
-	sfxImpact           []byte                // 命中音(近似:最短最尖池;attack_id→sfx 對照表 doc36 未 RE)
-	sfxDeath            []byte                // 陣亡/重擊音(近似:最長池)
-	sfxTransition       []byte                // FDOTHER #88 sub1: ch24 transition SFX
-	handlerResource     int                   // currently loaded handler resource-table id
-	prevCurX, prevCurY  int                   // 游標移動音偵測
-	aiBusy              bool                  // AI 回合進行中(逐單位行走動畫)
-	deathRewarded       map[*battle.Unit]bool // 每個死亡 transition 的 reward 只執行一次
-	rng                 *rand.Rand            // 施法擲骰(FD2_SEED 可固定,headless 重現)
-	gold                int                   // 金幣(商店)
-	items               []string              // 隊伍道具(名稱;道具效果待實裝)
-	shopSel             int                   // 商店游標
-	shopRecipientSel    int
-	shopRecipients      []int
-	shopPicking         bool
-	shopPending         campaign.Good
-	shopEquipPrompt     bool
-	shopEquipUnit       int
-	shopEquipSlot       int
-	shopItemTypes       map[int]int
-	shopEquipTypes      map[int][]int
-	shopItemPrices      map[int]int
-	shopItemStats       map[int]campaign.ItemStats
-	reviveFeeRates      []int  // church 0x30dc3 class fee words
-	shopMode            string // buy or sell
-	shopSellPicking     bool
-	shopSellUnitSel     int
-	shopSellSlotSel     int
-	portraits           map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
-	mouthOpen           bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
-	mouthTimer          int                     // 閉嘴倒數(原版 rand%30+2 tick)
-	curX                int
-	curY                int
-	camX                float64
-	camY                float64
-	loadErr             string
+	ring                     bool
+	ringSel                  int
+	ringIcons                [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
+	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
+	nativeUIPalette          color.Palette
+	nativeCommandLabels      map[int]string
+	nativeCommandOpen        bool
+	nativeCommandSel         int
+	spellOpen                bool
+	spellSel                 int
+	castSp                   *battle.Spell // 施法目標選擇中
+	spells                   []battle.Spell
+	nativeCommandBook        []battle.NativeCommandRecord
+	nativeCommandResistances map[int]int
+	commandLearn             map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
+	bgm                      *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
+	bgmCur                   string
+	bgmSource                string                // 音源設定 "fm"/"mt32"(settings.go;F2 切換)
+	debug                    bool                  // F3:開發除錯 HUD(座標/陣營原文等)
+	unitLabels               bool                  // FD2_UNIT_LABELS=1:cutscene sprite 左上標 [idx]fig+名+座標(協助回報/對映原版 slot)
+	cutsceneLog              bool                  // FD2_CUTSCENE_LOG=1:過場 node/beat/走位逐步 log 到 stderr(協助對原版資料比對)
+	banner                   string                // 回合橫幅文字(PLAYER/ENEMY PHASE)
+	bannerT                  int                   // 橫幅剩餘 tick
+	sfx                      map[int][]byte        // SFX PCM(doc36 FDOTHER#31 14樣本)
+	sfxSwing                 []byte                // 戰鬥揮擊音(doc36 戰鬥池 #48-64 sub0,七池共用)
+	sfxImpact                []byte                // 命中音(近似:最短最尖池;attack_id→sfx 對照表 doc36 未 RE)
+	sfxDeath                 []byte                // 陣亡/重擊音(近似:最長池)
+	sfxTransition            []byte                // FDOTHER #88 sub1: ch24 transition SFX
+	handlerResource          int                   // currently loaded handler resource-table id
+	prevCurX, prevCurY       int                   // 游標移動音偵測
+	aiBusy                   bool                  // AI 回合進行中(逐單位行走動畫)
+	deathRewarded            map[*battle.Unit]bool // 每個死亡 transition 的 reward 只執行一次
+	rng                      *rand.Rand            // 施法擲骰(FD2_SEED 可固定,headless 重現)
+	gold                     int                   // 金幣(商店)
+	items                    []string              // 隊伍道具(名稱;道具效果待實裝)
+	shopSel                  int                   // 商店游標
+	shopRecipientSel         int
+	shopRecipients           []int
+	shopPicking              bool
+	shopPending              campaign.Good
+	shopEquipPrompt          bool
+	shopEquipUnit            int
+	shopEquipSlot            int
+	shopItemTypes            map[int]int
+	shopEquipTypes           map[int][]int
+	shopItemPrices           map[int]int
+	shopItemStats            map[int]campaign.ItemStats
+	reviveFeeRates           []int  // church 0x30dc3 class fee words
+	shopMode                 string // buy or sell
+	shopSellPicking          bool
+	shopSellUnitSel          int
+	shopSellSlotSel          int
+	portraits                map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
+	mouthOpen                bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
+	mouthTimer               int                     // 閉嘴倒數(原版 rand%30+2 tick)
+	curX                     int
+	curY                     int
+	camX                     float64
+	camY                     float64
+	loadErr                  string
 	// 截圖鉤子(FD2_SHOT=path 啟用):第 shotFrame 幀存 PNG 後自動退出(有界,供無人值守驗證)
 	frame      int
 	shotPath   string
@@ -1637,6 +1638,7 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 		g.st = st
 		g.bindCommandLearn(st)
 		g.bindNativeCommandBook(st)
+		g.bindNativeCommandResistances(st)
 	}
 	g.result, g.sel, g.reach, g.moved = "", nil, nil, false
 	g.atk, g.walk, g.dialog, g.msg = nil, nil, nil, ""
@@ -1670,6 +1672,16 @@ func (g *Game) bindNativeCommandBook(st *battle.State) {
 		return
 	}
 	st.NativeCommandBook = append([]battle.NativeCommandRecord(nil), g.nativeCommandBook...)
+}
+
+func (g *Game) bindNativeCommandResistances(st *battle.State) {
+	if st == nil || len(g.nativeCommandResistances) == 0 {
+		return
+	}
+	st.NativeCommandResistances = make(map[int]int, len(g.nativeCommandResistances))
+	for classID, raw := range g.nativeCommandResistances {
+		st.NativeCommandResistances[classID] = raw
+	}
 }
 
 // bindCommandLearn makes every newly loaded battle state use the same
@@ -4742,6 +4754,12 @@ func loadGame() *Game {
 		g.bindNativeCommandBook(g.st)
 	} else if g.loadErr == "" {
 		g.loadErr = "native command records: " + e.Error()
+	}
+	if resistances, e := battle.LoadNativeCommandResistances(assetPath("assets/data/native_command_resistances.json")); e == nil {
+		g.nativeCommandResistances = resistances
+		g.bindNativeCommandResistances(g.st)
+	} else if g.loadErr == "" {
+		g.loadErr = "native command resistances: " + e.Error()
 	}
 	learnPath := assetPath("assets/data/command_learn.json")
 	if !fileExists(learnPath) {

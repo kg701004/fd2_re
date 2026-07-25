@@ -128,7 +128,8 @@ geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值
 `State.ExecuteNativeCommand0` 現將已證實的 core contract 組合為 non-UI engine slice：strict ID-0 record、
 actor `+3`→confirmed candidate→cursor `+4`、一次 `+5` MP debit、每個 final candidate 的 class multiplier/hit/HP
 clamp。任何缺失 raw flags、record、confirmed candidate 或 resistance row 都在 mutation 前拒絕；special command、
-animation、post-resolution 與 UI remain unbound。
+animation、post-resolution 與 UI remain unbound。Game bootstrap 將 strict `native_command_resistances.json` copy 到
+`State.NativeCommandResistances`；`ExecuteBoundNativeCommand0` 只使用此 state-bound raw table，缺表不回退 legacy magic。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller

@@ -269,19 +269,20 @@ type State struct {
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
 	// SPAWN calls append their group without reserving slots ahead of time.
-	Roster            []*Unit
-	PendingGroups     map[int]bool
-	OwnDeploy         []Cell                      // 我方可部署格
-	Turn              int                         // 回合數(無上限,doc 27;只由劇本事件限制)
-	Flags             map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
-	Cost              []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
-	NativeTargetFlags []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
-	SpellBook         []Spell                     // scenario-injected spell table; AI command mapping remains data-only
-	NativeCommandBook []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
-	CommandLearn      map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
-	AICommandSpell    map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
-	Treasures         map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	OpenedTreasure    map[int]bool                // 原版 [0x53ad5] battle-local opened[slot]
+	Roster                   []*Unit
+	PendingGroups            map[int]bool
+	OwnDeploy                []Cell                      // 我方可部署格
+	Turn                     int                         // 回合數(無上限,doc 27;只由劇本事件限制)
+	Flags                    map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
+	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
+	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
+	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
+	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
+	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
+	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
+	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	OpenedTreasure           map[int]bool                // 原版 [0x53ad5] battle-local opened[slot]
 	// 來源:tools/export_engine_assets.py 依地形控制表(doc01 §5)換算,由 Load 讀同目錄
 	// map.json 的 "cost" 陣列自動接上(worklist 第 8 輪「地形屬性接線」)。
 }

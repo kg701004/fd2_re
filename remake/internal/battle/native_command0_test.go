@@ -38,3 +38,9 @@ func TestExecuteNativeCommand0FailsBeforeMPOnMissingResistance(t *testing.T) {
 		t.Fatalf("missing resistance mutated state: mp=%d hp=%d err=%v", actor.MP, target.HP, err)
 	}
 }
+
+func TestExecuteBoundNativeCommand0RejectsMissingStateTable(t *testing.T) {
+	if _, err := (&State{}).ExecuteBoundNativeCommand0(nil, nil, rand.New(rand.NewSource(1))); err == nil {
+		t.Fatal("missing bound resistance table must fail closed")
+	}
+}

@@ -13,6 +13,16 @@ type NativeCommand0Result struct {
 	NativeCommand0Damage
 }
 
+// ExecuteBoundNativeCommand0 uses the state-bound verified resistance table.
+// A missing table remains a fail-closed error rather than falling back to the
+// legacy magic resistance approximation.
+func (s *State) ExecuteBoundNativeCommand0(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommand0Result, error) {
+	if s == nil || len(s.NativeCommandResistances) == 0 {
+		return nil, fmt.Errorf("native command 0 resistances unavailable")
+	}
+	return s.ExecuteNativeCommand0(actor, confirmed, s.NativeCommandResistances, rng)
+}
+
 // ExecuteNativeCommand0 joins only the recovered command-0 mechanics:
 // record lookup, generic two-stage target selection, one successful MP debit,
 // and the 0x1c75e -> 0x1c81f numeric mutation for each final candidate.
