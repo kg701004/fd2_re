@@ -1,0 +1,131 @@
+// Package fdicon decodes FD2's 24×24 tactical-map unit sprites. It keeps
+// indexed pixels and transparent spans separate so the native raw and LUT
+// blitters (0x4deda / 0x4de56) can be reproduced without PNG conversion.
+package fdicon
+
+import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"os"
+)
+
+const NativeSize = 24
+
+type Bank struct{ Sprites []Sprite }
+
+type Sprite struct{ Pixels, Mask []byte }
+
+func DecodeFile(path string) (*Bank, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return Parse(raw)
+}
+
+// Parse reads the FDICON.B24 header {u16 width,height,count; u32 offsets[]}.
+func Parse(raw []byte) (*Bank, error) {
+	if len(raw) < 6 {
+		return nil, errors.New("fdicon: file is too short")
+	}
+	w, h, n := int(binary.LittleEndian.Uint16(raw)), int(binary.LittleEndian.Uint16(raw[2:])), int(binary.LittleEndian.Uint16(raw[4:]))
+	if w != NativeSize || h != NativeSize || n == 0 || 6+n*4 > len(raw) {
+		return nil, errors.New("fdicon: invalid header")
+	}
+	bank := &Bank{Sprites: make([]Sprite, n)}
+	previous := 6 + n*4
+	for i := range bank.Sprites {
+		off := int(binary.LittleEndian.Uint32(raw[6+i*4:]))
+		end := len(raw)
+		if i+1 < n {
+			end = int(binary.LittleEndian.Uint32(raw[6+(i+1)*4:]))
+		}
+		if off < previous || off >= end || end > len(raw) {
+			return nil, fmt.Errorf("fdicon: invalid sprite %d offset", i)
+		}
+		pixels, mask, err := decode(raw[off:end])
+		if err != nil {
+			return nil, fmt.Errorf("fdicon: sprite %d: %w", i, err)
+		}
+		bank.Sprites[i] = Sprite{Pixels: pixels, Mask: mask}
+		previous = off
+	}
+	return bank, nil
+}
+
+func decode(src []byte) ([]byte, []byte, error) {
+	pixels, mask := make([]byte, NativeSize*NativeSize), make([]byte, NativeSize*NativeSize)
+	p := 0
+	for y := 0; y < NativeSize; y++ {
+		x := 0
+		for x < NativeSize {
+			if p >= len(src) {
+				return nil, nil, errors.New("RLE ends early")
+			}
+			c := src[p]
+			p++
+			count, mode := int(c&0x3f)+1, c>>6
+			span := count
+			if mode == 1 {
+				span *= 2
+			}
+			if x+span > NativeSize {
+				return nil, nil, errors.New("RLE overruns row")
+			}
+			write := func(at int, v byte) { pixels[y*NativeSize+at], mask[y*NativeSize+at] = v, 1 }
+			switch mode {
+			case 0:
+				if p >= len(src) {
+					return nil, nil, errors.New("run lacks value")
+				}
+				v := src[p]
+				p++
+				for i := 0; i < count; i++ {
+					write(x+i, v)
+				}
+			case 1:
+				if p >= len(src) {
+					return nil, nil, errors.New("dither lacks value")
+				}
+				v := src[p]
+				p++
+				for i := 0; i < count; i++ {
+					write(x+2*i+1, v)
+				}
+			case 2:
+				if p+count > len(src) {
+					return nil, nil, errors.New("literal exceeds data")
+				}
+				for i, v := range src[p : p+count] {
+					write(x+i, v)
+				}
+				p += count
+			}
+			x += span
+		}
+	}
+	return pixels, mask, nil
+}
+
+// BlitAt writes the native 24×24 sprite at x,y. A nil LUT is the 0x4deda raw
+// path; a 256-byte LUT is the palette-remap path. Transparent spans preserve
+// destination bytes in both cases.
+func (s Sprite) BlitAt(dst []byte, stride, x, y int, lut []byte) error {
+	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride || (lut != nil && len(lut) != 256) {
+		return errors.New("fdicon: invalid blit")
+	}
+	for row := 0; row < NativeSize; row++ {
+		for col := 0; col < NativeSize; col++ {
+			i := row*NativeSize + col
+			if s.Mask[i] != 0 {
+				v := s.Pixels[i]
+				if lut != nil {
+					v = lut[v]
+				}
+				dst[(y+row)*stride+x+col] = v
+			}
+		}
+	}
+	return nil
+}
