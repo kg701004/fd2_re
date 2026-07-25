@@ -133,6 +133,9 @@ animation、post-resolution 與 UI remain unbound。Game bootstrap 將 strict `n
 成功結束時才投影 wrapper `0x18d8c→0x13512` 的 runtime `unit+5|=0x80` 為 `actor.Acted=true`；失敗不設。
 UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate highlighter 進入 target mode，Enter 交
 `ExecuteBoundNativeCommand0` 作完整 verified core，ESC 回 native grid；缺 raw data／其他 ID 一律不接 legacy cast。
+官方 IDA 顯示 ID1、2、3 皆只將常數 ID push 後跳入同一 `sub_21227`，故 engine 的
+`ExecuteNativeCommandDamage` 嚴格支援 ID0..3 共用 numeric/MP/acted contract；UI 仍只啟用 ID0，直到每個
+presentation/effect boundary 有獨立驗證。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
