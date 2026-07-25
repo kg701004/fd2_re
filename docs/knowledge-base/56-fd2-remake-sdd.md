@@ -164,6 +164,12 @@ target 的 `+0x27` 必為零、class `+0x20` 不得為 `0x19/0x1a`、且 `rand()
 `0x1C81F(target,10)` 固定扣 10 HP、顯示 damage，並寫 `rand()%4+2` 至 `+0x27`。它須獨立追蹤，不能併稱為 cure
 或依 raw offsets 猜測 status name。
 
+這六個 transient bytes 的生命週期已由 `0x1A866(camp)` 閉合：turn/camp phase driver `0x1A30B` 對各 camp
+呼叫它；routine 只掃該 camp 的 active unit，依序對 `unit+0x22..+0x27` 的每個非零 byte decrement。任何一個
+byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived fields；因此 ID17/18 的 AP/DP 增幅會在
+自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，
+不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
+
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
