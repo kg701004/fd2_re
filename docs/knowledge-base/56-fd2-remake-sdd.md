@@ -108,6 +108,14 @@ renderer 必須顯示未解析或禁用狀態，不得將 ID 猜成 attack/spell
 的展開順序、MP 邊界（cost-1/cost）與 unknown ID fail-closed；只有在 ID→label/render/effect trace 完整後，
 才可淘汰現有 four-way ring approximation。
 
+原版 selector `0x1d51d` 對這份展開 list 使用**每欄四列、欄數可變**的 grid：↑／↓在線性 index 上
+-1/+1 並 wrap，←／右只在合法時 -4/+4；Enter／Space 在重新檢查 MP gate 後確認，Esc cancel。`0x1ceed`
+renderer 已釘 x=`0x12+0x64*floor(index/4)`、y=`0x67+0x16*(index%4)`，並以 `0x1b9+command_id` 作
+`[0x53a7d]` label index。故 UI state 至少要有 `selected_index`、`rows_per_column=4`、
+`visible_command_ids` 與 `cancel_parent`，並以 command count 而非固定四個 action 計算邊界。這是
+selector／label ABI，並不證明每個 ID 的實體文字、圖示或 effect；那些欄位仍保持 fail-closed，直到
+resource／effect call graph 補齊。
+
 ## 5. Campaign / postbattle 設計
 
 每個 battle node 必須明確指定：

@@ -587,7 +587,9 @@
       只是 partial interaction；`0x159fa` 再證實 record `+5 <= unit+0x44`（current MP）的 availability gate。
       `0x10f7f/0x11399` construction 各 copy source 的 4 bytes 到 `+0x1a..+0x1d` 並清 `+0x1e`，
       `0x1d7fb` 可按 commandID/8 OR 回 runtime bit，故 40-bit ABI 初始為 32-bit source、可動態擴充。
-      待 source 語意、ID label/render、完整 enable/cancel stack 後才可重製原版 menu。
+      selector `0x1d51d` 已鎖每欄四列的 variable-column grid：↑/↓ linear wrap、←/→ ±4、Enter/Space 重查
+      MP gate、Esc cancel；`0x1ceed` 再鎖 x/y formula 與 label index=`0x1b9+commandID`。待 source 語意、
+      實體 label/resource、完整 renderer/effect stack 後才可重製原版 menu。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
 - [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它以固定 `0x61646` record 0 和原始 `(x,y,mode)`
       呼叫 `0x4e040`，mode 作 seed grid byte 並經 terrain cost gate 建立／更新 target grid；後續再有
