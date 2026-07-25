@@ -69,7 +69,7 @@
 | `TITLE_000` | 320×200 | RLE | 遊戲標題畫面 |
 | `BG_003` | 320×100 | RLE | 戰鬥背景(山脈) |
 | `FDOTHER_015` | 320×200 | 未壓縮 | 熔岩材質 |
-| `FDSHAP_000` | 24×24 tile | RLE tileset | ~300 個 bg-RLE 壓縮 24×24 地形圖塊(見 §8) |
+| `FDSHAP_000` | 24×24 tile | four-mode RLE tileset | 288 個 24×24 地形／前景圖塊；`0x4deda/0x4dd52` ABI 與 FDSHAP_000 全 tile token scan 均可完整解碼，含 transparent span（見 §8） |
 
 **覆蓋**：背景/標題類全幅圖 ~125 張已可解(本節 RLE)。其他資產用各自的 codec,均已解:
 `FIGANI` 戰鬥動畫(4 模式 sprite RLE,見 `06`)、`DATO` 頭像(高值-run RLE,見 §7)。

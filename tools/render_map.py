@@ -3,8 +3,8 @@
 
 == FDSHAP 圖塊庫 ==
 大資源 = tileset。標頭:u16 tileW(24)、u16 tileH(24)、u16 count、然後 **u32[count] 圖塊 offset 表**
-(首個 offset = 6+count*4 = 表尾)。每塊為 **bg-RLE 壓縮的 24×24 圖塊**(解到 576 px;RLE 同 05-image:
-c>=0x80 literal、c<0x80 run),依 offset 表定位(不可逐塊累積解,會漂移錯位)。
+(首個 offset = 6+count*4 = 表尾)。每塊為原生 24×24 **four-mode sprite RLE**；FDSHAP_000
+已實測含 mode-3 transparent spans，不能以舊的「不透明 bg-RLE」解到下一 tile。依 offset 表定位。
 FDSHAP 資源「大 / 1200B」交替成對,1200B = 該 tileset 的地形控制表(300×4)。
 
 == FDFIELD 地圖(LLLLLL 容器)==
@@ -19,20 +19,30 @@ import struct
 from PIL import Image
 
 
-def _bgrle(body, total):
-    out = bytearray()
-    i = 0
-    n = len(body)
-    while len(out) < total and i < n:
-        c = body[i]; i += 1
-        if c >= 0x80:
-            cnt = (c & 0x7f) + 1
-            out += body[i:i + cnt]; i += cnt
-        else:
-            if i >= n:
+def _tile_rle(body, width, height):
+    """Native 0x4deda-compatible 24×24 RLE; transparent spans remain index 0."""
+    out = bytearray(width * height)
+    p = 0
+    for y in range(height):
+        x = 0
+        while x < width and p < len(body):
+            control = body[p]; p += 1
+            count, mode = (control & 0x3f) + 1, control >> 6
+            span = count * 2 if mode == 1 else count
+            if x + span > width:
                 break
-            out += bytes([body[i]]) * (c + 1); i += 1
-    return bytes(out[:total]).ljust(total, b"\0")
+            if mode == 0:
+                if p >= len(body): break
+                out[y * width + x:y * width + x + count] = bytes([body[p]]) * count; p += 1
+            elif mode == 1:
+                if p >= len(body): break
+                out[y * width + x + 1:y * width + x + span:2] = bytes([body[p]]) * count; p += 1
+            elif mode == 2:
+                if p + count > len(body): break
+                out[y * width + x:y * width + x + count] = body[p:p + count]; p += count
+            # mode 3 is transparent: zero-filled destination and no payload.
+            x += span
+    return bytes(out)
 
 
 def decode_tileset(path):
@@ -44,7 +54,7 @@ def decode_tileset(path):
     for k in range(cnt):
         s = offs[k]
         e = offs[k + 1] if k + 1 < cnt else len(d)
-        tiles.append(_bgrle(d[s:e], tw * th))
+        tiles.append(_tile_rle(d[s:e], tw, th))
     return tw, th, tiles
 
 
