@@ -8,7 +8,7 @@
 
 - 原版 30 關的 campaign、戰鬥、戰後城鎮／商店／教會／整備、存檔與結局可循環遊玩。
 - 對話、事件、商店、部署、過場和 UI layout 都由外部資料／腳本驅動；新增戰役不需修改 Go runtime。
-- UI 操作語意與原版一致：游標、指令環、射程／目標、對話框、狀態欄、商店、教會和戰後節點均有可見且可測的操作入口。
+- UI 操作語意以原版為目標：游標、action overlay／command grid、射程／目標、對話框、狀態欄、商店、教會和戰後節點均須有可見且可測的操作入口；未取得 E0/E1/E2 證據的現有 UI 只算 approximation。
 - native indexed renderer 與現代 RGBA/Ebiten 顯示層分離；未完成 native ABI 時不得用泛用淡出、PNG 或空白畫面冒充完成。
 
 ### 1.2 現況（以 2026-07-25 working tree 與程式碼為準）

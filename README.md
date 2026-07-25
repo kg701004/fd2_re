@@ -148,7 +148,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 - **對話系統**:TTF 中文台詞 + DATO 大頭像 + **嘴型開合**(反組譯 `0x16d00` 狀態機,[`14`](docs/knowledge-base/14-text-control-codes.md))+ 全形『』;**全 33 章劇情文本 1452 句**逐句轉錄。
 - **戰棋核心**:flood-fill 移動 + **地形移動成本**(反組譯 FDSHAP 地形表)、攻擊結算(青衫公式)、
   評分式敵方 AI、**魔法系統**(AoE / buff / 毒麻封咒)、勝負判定。
-- **玩法系統**:radial 指令環、商店(含祕密商店)、存讀檔(F5/F9)、BGM + 音效(反組譯自 FDOTHER)。
+- **玩法系統**:目前的四向 action UI（原版十字 overlay／command grid 尚在依 SDD 還原）、商店(含祕密商店)、存讀檔(F5/F9)、BGM + 音效(反組譯自 FDOTHER)。
 - **音源可切換**(F2):**Roland MT-32**(真 ROM 經 munt 渲染)⇄ **Sound Blaster / AdLib FM**
   (遊戲自帶 `SAMPLE.AD` 音色庫經 OPL 渲染)——還原原版 `SETSOUND` 選音效卡的體驗,見下節。
 

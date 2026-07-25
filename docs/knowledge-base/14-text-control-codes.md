@@ -136,7 +136,7 @@
 - **彈出效果**(使用者述「跳出來」):實機未細捕捉到漸變幀,待 `autolock=false` 慢速錄影確認;remake 暫用簡單淡入/瞬開,確認後再校。
 - remake 現況:已做下框左頭像(對照索爾);上/下框 + 左/右頭像依說話者畫面位置切換待補。
 
-> 註:選單方向鍵輸入(掃描碼 `0x48`上/`0x50`下/`0x4B`左/`0x4D`右 + Enter/Space)處理在 `0x177FC`(寫游標方向 `[0x3C57]`)；Docker Capstone `0x18d8c` 已釘死 result order 為 **↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動**。原版是 radial 指令環，圖示素材的逐項語意仍以 native resource table 為準，不再用舊 screenshot 猜 mapping。
+> 註:選單方向鍵輸入(掃描碼 `0x48`上/`0x50`下/`0x4B`左/`0x4D`右 + Enter/Space)處理在 `0x177FC`(寫游標方向 `[0x3C57]`)；Docker Capstone `0x18d8c` 已釘死 result order 為 **↑0=攻擊、←1=法術、→2=物品、↓3=待機／格子互動**。原版是四張 indexed asset 的十字 action overlay（doc57），不是可由舊 screenshot 概括的 radial ring；圖示素材逐項語意仍以 native resource table 為準。
 
 ## 對中文化 / 重製的意義
 
