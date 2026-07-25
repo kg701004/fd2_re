@@ -107,9 +107,9 @@ legacy vertical spell UI 宣稱成 `0x1ceed` command grid，也沒有擴大 effe
 
 2026-07-26 native command-grid runtime slice：當 player-provided FDOTHER VGA palette 與 editable
 `command_labels.json` 都存在，ring 的 command branch 以 `NativeCommandMask` 開 native four-row grid，
-label 直接採原始 `0xc9/0xcd` palette entries，↑↓／←→採 recovered ABI。confirm 僅可進入已有 EXE spell
-row 的 command；無 row 的 raw ID 顯示明確未接 effect，缺任一 asset 則退回 legacy spell UI。這是可視
-layout/input slice，不是所有 command effect 或 native frame/background renderer 的完成宣告。
+label 直接採原始 `0xc9/0xcd` palette entries，↑↓／←→採 recovered ABI。confirm 現一律明確停在未接 native
+two-stage target/effect，**不再**因 ID 剛好有 EXE spell row 就送入 legacy `CastArea`；缺任一 asset 則退回 legacy
+spell UI。這是可視 layout/input slice，不是所有 command effect 或 native frame/background renderer 的完成宣告。
 
 runtime audit（2026-07-26，更新）：chapter `Scenario.Party` 現已保存 exact
 `initial_command_mask`；產生器從 EXE `character_defaults.json` 依角色 index 帶入，並已重產 ch01..ch30。

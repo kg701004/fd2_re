@@ -2460,18 +2460,13 @@ func (g *Game) ringInput() bool {
 			g.nativeCommandSel = battle.NativeCommandGridMove(g.nativeCommandSel, len(ids), 3)
 		}
 		if enter && g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) {
-			for i := range g.spells {
-				if g.spells[i].ID == ids[g.nativeCommandSel] {
-					if g.sel.MP < g.spells[i].MP {
-						g.msg = "MP 不足!"
-						return true
-					}
-					g.castSp, g.nativeCommandOpen = &g.spells[i], false
-					g.msg = fmt.Sprintf("%s:選擇目標(射程 %d)", g.spells[i].Name, g.spells[i].Dist)
-					return true
-				}
-			}
-			g.msg = "此原始指令尚未接入效果"
+			// Do not translate a raw command ID into legacy CastArea.  Native
+			// 0x1cff0 is two-stage: record+3 picks a cursor candidate, then
+			// record+4 builds the final effect list from the confirmed cursor.
+			// Matching bytes in spells.json only prove the table identity for
+			// IDs 0..35, not legacy target/effect equivalence.
+			g.nativeCommandOpen, g.ring = false, true
+			g.msg = fmt.Sprintf("原始指令 %d：目標／效果尚未驗證", ids[g.nativeCommandSel])
 		}
 		return true
 	}
