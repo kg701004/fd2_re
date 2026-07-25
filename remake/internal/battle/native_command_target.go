@@ -85,7 +85,9 @@ func absInt(n int) int {
 }
 
 // NativeCommandTargetMatches is the exact record+6 predicate in 0x14818.
-// Camp values match the direct constructor ABI: Enemy=0, Ally=1, Own=2.
+// The native constructor ABI is Enemy=0, Ally=1, Own=2, whereas the Go Camp
+// enum is Own=0, Ally=1, Enemy=2.  Use named values here rather than copying
+// the native ordinals into the remake model.
 func NativeCommandTargetMatches(code int, camp Camp) bool {
 	switch code {
 	case 0:

@@ -135,16 +135,24 @@ cardinal range（無阻擋時才等於 Manhattan）。
 
 `battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把這個 verified subset 做成獨立資料層：必須由
 caller 提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`。它覆蓋 four-way
-flood-fill、bit40/bit80、cross branch 與四個 camp predicates，但尚未有 exporter 產生每章原版 flags，故不可
-自動接入 native command UI。
+flood-fill、bit40/bit80、cross branch 與四個 camp predicates；資料層可供 native command UI 使用，但 UI 尚未
+接管 target confirm/effect，故不可自動替換 legacy cast。
 
 Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
 low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出
-`native_target_flags` raw array。runtime map loader 尚未接這個資產前 resolver 維持 caller-supplied/fail-closed。
+`native_target_flags` raw array。
 
 `battle.Load` 現只在 map dimensions 與 array length 都精確吻合時載入 `State.NativeTargetFlags`；缺檔／舊 export／
 壞長度皆保持 nil。這使 engine data layer 已可把它傳給 `NativeCommandTargets`，但 UI 尚未自動切換 native target
 mode，避免未完成 command effect/confirm contract 時搶走 legacy playable path。
+
+### Native command MP transaction（E0 verified, UI unbound）
+
+`0x21227`（generic command 0 route）在 candidate array 建立後、逐 target effect 前呼叫 `0x1CA89(actor, commandID)`；後者以
+`0x4e516(commandID)` 取 record，讀 `byte+5`，直接從 runtime `unit+0x44` 扣除。可達性 gate 已在 selector
+先比較 `currentMP >= record+5`，因此扣除不應在失敗 confirm 發生。`battle.SpendNativeCommandMP` 保留這個交易
+contract：只接受 raw 0..255 cost，MP 不足／無 unit 一律不變更。它刻意不吃 normalized `Spell`，也尚未接 UI，直到
+native candidate confirm、command 0 effect sequence 與原版 renderer 都能一起驗證。
 
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
