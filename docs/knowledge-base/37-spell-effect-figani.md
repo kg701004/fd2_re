@@ -46,21 +46,19 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
   供 `0x12d7b`/`0x12cea` 印出戰鬥log文字(「OO 使用 XX 之術」),**與 FIGANI 無關**,純文字系統。
 - 兩者都不產生任何額外的 FIGANI 載入。
 
-## 3. 排除項:0x2a6bd 不是「法術特效 FIGANI 表」(避免後續誤用)
+## 3. `0x2a6bd` 的已知邊界（避免後續誤用）
 
-反組譯初期曾懷疑 `0x2a6bd`(內含 `call dword ptr [eax*4 + 0x523b9]` 十筆函式指標跳表)是本題要找的「法術特效」系統,
-細查後**排除**,原因附完整證據鏈,供後續研究者省去重踩:
+反組譯初期曾把 `0x2a6bd` 說成只屬於「武器特殊攻擊結果 UI」、與 native command 無關；此斷言已撤回。
+官方 IDA 9.4 已證實玩家 command confirm 的 `0x1cff0` 對 IDs `0..8`、`0x18`、`>=0x1c` 直接呼叫它。
+因此它是 native command 的大型 presentation／state dispatcher，不能再以物品 `atk_attr` 枚舉取代 command ID。
 
-- **觸發路徑**:`0x2a6bd` 只從 `0x015400`(`0x015311` 函式內,武器物理攻擊 `0x14818` 之後)與
-  `0x01d43c`(`0x01d1c9`/`0x01d211` 一帶,同樣先 `call 0x14818`)呼叫——**兩處都先算物理傷害(0x14818),
-  從未先算法術傷害(0x149f8)**,不在施法路徑上(`callgraph_le.py callers 0x2a6bd` 只回 2 個 caller,均此)。
-- **參數語意**:兩呼叫端都以 `cmp id,0xa; jge 跳過` 或等價比較閘門(`0x015396`/`0x01d414-0x01d421`)守門,
-  值域對應到 `item.json` 的 `atk_attr`(武器特殊攻擊屬性)欄——目前資料實際出現的值只有 `2/3/4`
-  (`docs/data/exe_tables/item.json`,例 id4/14/46… atk_attr=2),與法術 id(0–0x23,36 個)是**不同的列舉空間**。
-- **內容驗證**:跳表 10 個進入點之一,`entry0`(0x16152)載入 `"DATO.DAT"`(頭像,doc01 §7)非 FIGANI;
-  `entry2`(0x16528 起)反組譯確認整段只呼叫數字/飄字繪製函式(`0x4e96f`/`0x168b6`/`0x15e9e` 等),
-  **完全不含 `0x111ba`/FIGANI 呼叫**。→ 這是「武器特殊攻擊結果 UI(頭像閃現 + 傷害數字花色)」系統,
-  不是法術動畫特效系統,故本文件正題結論不受影響,**與法術 id 無關,不列入對映表**。
+目前可保留的狹窄結論如下：
+
+- **player dispatch**：`0x1cff0` 的 `0x18`（ID24）會在 `0x2a6bd` 選特別分支 `0x276ec`，而不是跳表
+  `funcs_1541f[24]`；該 route 將 derived stat 運算送進 `0x1c81f` HP writer。這已排除「jump table alias 即玩家效果」的捷徑。
+- **presentation boundary**：`0x2a6bd` 的 `funcs_2ac25` entry 確實負責 indexed compositor／結果數字等畫面工作；
+  某些 entry 載入 DATO.DAT 並不代表整個 caller 是武器專用，更不構成「沒有 command-specific visual」的證明。
+- **尚未證實**：每個 command ID 的完整 FIGANI／SFX mapping、ID24 的 multi-hit presentation 與其可編輯 remake contract。
 
 ## 結論
 
@@ -71,7 +69,7 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
 
 ## 待確認
 
-- `0x2a6bd` 跳表其餘 8 個 entry(1,3-9)、以及 `id==0x18`/`0x1c–0x1f`(→0x276ec)、`id>=0x20`(→0x27fc9)分支的
-  完整語意(武器特殊屬性名稱枚舉,如麻痹/中毒/即死對照 `item.json` K 欄)——與本題（法術特效）無關，留待「武器特殊攻擊」專題另篇處理。
+- `0x2a6bd` 的各 command-specific presentation branch（尤其 `id==0x18` → `0x276ec`、`id>=0x20` → `0x27fc9`）
+  的完整 renderer／SFX／多段命中 contract；不得再以武器 `atk_attr` 對照來命名它們。
 - 施法 lunge/位移(doc35 §2.2 的 `+0x48/+0x4a`)是否對不同法術 `target`(0=單體/1=範圍,spell.json)有差異走位——
   屬「目標選取與範圍」子題，非本題「特效動畫 id」範圍，未查。
