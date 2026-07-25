@@ -36,6 +36,23 @@ func truncDiv2(v int) int {
 	return v / 2
 }
 
+// NativeForegroundFrameIndex reproduces 0x12ac6's foreground selector. Only
+// terrain-control bit 0x80 draws a foreground cell. Bit 0x08 adds two times
+// the native flip, and the FDSHAP offset lookup is one entry past that index
+// (base+0x0a rather than the terrain pass's base+0x06).
+func NativeForegroundFrameIndex(tile int, flags byte, flip int) (int, bool, error) {
+	if tile < 0 || tile > 0x3ff || (flip != 0 && flip != 1) {
+		return 0, false, errors.New("fdicon: invalid native foreground selector")
+	}
+	if flags&0x80 == 0 {
+		return 0, false, nil
+	}
+	if flags&0x08 != 0 {
+		tile += 2 * flip
+	}
+	return tile + 1, true, nil
+}
+
 // BlitNativeTerrainCell composes one already-selected FDFIELD terrain cell as
 // 0x11eee does: select the FDSHAP frame, then use raw 0x4deda only for entry
 // byte+3 == 0xff, otherwise use LUT-aware 0x4dcc6. Camera iteration, LUT

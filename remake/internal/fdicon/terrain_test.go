@@ -25,6 +25,25 @@ func TestNativeTerrainFrameIndexMatches11EEE(t *testing.T) {
 	}
 }
 
+func TestNativeForegroundFrameIndexMatches12AC6(t *testing.T) {
+	cases := []struct {
+		flags, flip int
+		want        int
+		present     bool
+	}{
+		{0x00, 0, 0, false}, {0x80, 0, 101, true}, {0x88, 1, 103, true}, {0x88, 0, 101, true},
+	}
+	for _, tc := range cases {
+		got, present, err := NativeForegroundFrameIndex(100, byte(tc.flags), tc.flip)
+		if err != nil || got != tc.want || present != tc.present {
+			t.Fatalf("%+v got=%d present=%v err=%v", tc, got, present, err)
+		}
+	}
+	if _, _, err := NativeForegroundFrameIndex(0x400, 0x80, 0); err == nil {
+		t.Fatal("out-of-range tile accepted")
+	}
+}
+
 func TestBlitNativeTerrainCellSelectsRawOrLUTBranch(t *testing.T) {
 	sprites := make([]Sprite, 12)
 	for i := range sprites {
