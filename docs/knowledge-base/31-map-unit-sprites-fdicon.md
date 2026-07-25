@@ -6,8 +6,8 @@
 
 ## 0. 一個差點殘留的誤判(教訓)
 
-`FDICON.B24`(624010 bytes,無 `LLLLLL` 外殼)早先用 FDSHAP 的 **bg-RLE** 解 → 全是橫條亂圖,於是一度想把「1680 個 24×24」這個斷言改成「待確認」。
-**但斷言是對的,錯的是解碼方法**:FDICON 的 tile 是**含透明的 sprite,要用 sprite 4-mode RLE**(FIGANI 那套),不是 bg-RLE。換對解碼器立刻解出 Q 版小人。
+`FDICON.B24`(624010 bytes,無 `LLLLLL` 外殼)早先被誤用「不透明 bg-RLE」模型解 → 全是橫條亂圖,於是一度想把「1680 個 24×24」這個斷言改成「待確認」。
+**但斷言是對的,錯的是解碼方法**:FDICON 與 FDSHAP 都使用 native four-mode RLE ABI；FDICON 是含透明的單位 sprite，FDSHAP 也可含 mode-3 span，但原版 renderer 對兩者的 raw/LUT 分支不同。換對 four-mode 解碼器立刻解出 Q 版小人。
 → 教訓:**解碼失敗 ≠ 斷言錯,先換解碼器/方法再質疑事實**(rulebook 62/63)。
 
 ## 1. 格式
@@ -20,7 +20,7 @@
 各 tile:sprite 4-mode RLE(高 2 bit=模式:色run/dither/literal/透明;低 6 bit=count−1)
         透明 = index 0
 ```
-header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表),**差別在 tile 的 RLE**:FDSHAP 地形用 bg-RLE(不透明),FDICON 單位用 sprite-RLE(有透明背景)。
+header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可用同一 four-mode RLE ABI 解讀；差別是資產用途與 renderer branch：FDICON 走 unit raw/palette-band，FDSHAP 依 FDFIELD entry 可走 raw 或 destination-LUT compositor。
 
 ## 2. 分組:每角色 12 sprite = 4 方向 × 3 待機幀 [驗]
 

@@ -46,7 +46,7 @@
 - [x] 各 track 呼叫端對應確切遊戲狀態名(片頭/世界圖/城鎮/戰鬥/劇情)→ doc12「場景切換時的換曲」已列 5 狀態對映(2026-07-05 核實)
 - [x] **FDSHAP 圖塊庫解碼**:標頭 count + u32 offset 表 + native 24×24 four-mode RLE；2026-07-26 直接掃 FDSHAP_000 的 288 tiles，mode `[0,2,3]` 全部完整解碼，撤回「僅不透明 bg-RLE」錯誤。`render_map.py` 依 `0x4deda` ABI 保留 transparent spans 為 index0；多層 foreground composition 仍不得由單張 export 推論。→ `01`§8
 - [x] **全 33 張戰場地圖抽取**:FDFIELD×FDSHAP(配對 map N→FDSHAP[2N],索引驗證全通過)→ 本機 `extracted/maps/`;`tools/extract_maps.py`、`render_map.py`
-- [x] **FDICON.B24** = 1680 個 24×24 **地圖單位 Q版小人 sprite**(sprite 4-mode RLE 含透明,**非 FDSHAP bg-RLE**;每角色組12=4方向×3幀)→ `31`
+- [x] **FDICON.B24** = 1680 個 24×24 **地圖單位 Q版小人 sprite**（four-mode RLE；撤回「與 FDSHAP 為不同 bg-RLE codec」，兩者共享 ABI、renderer branch 不同；每角色組12=4方向×3幀）→ `31`
 - [x] **TAI.DAT** = WxH 圖像(sprite-RLE,如 155×42);多為 UI/特殊圖
 - [x] 寫一篇總覽:「1995 年怎麼做出炎龍騎士團2」→ `15`
 - [x] 寫一篇總覽:「1995 年台灣怎麼做遊戲 — 炎龍騎士團2 技術全紀錄」→ `docs/knowledge-base/15-how-fd2-was-made-1995.md`(2026-07-05 核實存在)
