@@ -59,9 +59,15 @@ type Unit struct {
 	// can be OR-mutated by 0x1d7fb.  It is deliberately separate from Spells:
 	// command ID effects and target contracts are not inferred from this mask.
 	NativeCommandMask [5]byte `json:"native_command_mask,omitempty"`
-	Inventory         []int   // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
-	Equipped          []bool  // 與 Inventory 對齊；true 表示該欄位目前已裝備
-	InventorySlots    []int   // 原始 8 個 source bytes；0xff 保留空槽位置
+	// NativeTransient is the exact six-byte runtime interval unit+0x22..+0x27.
+	// It is distinct from the legacy normalized Buff*/Poison*/Seal*/Paralyze*
+	// approximation below: native command IDs 17..27 read/write individual raw
+	// bytes, and 0x1A866 decrements them separately once per camp phase.
+	// No gameplay name is inferred for an index from this storage alone.
+	NativeTransient [6]byte `json:"native_transient"`
+	Inventory       []int   // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
+	Equipped        []bool  // 與 Inventory 對齊；true 表示該欄位目前已裝備
+	InventorySlots  []int   // 原始 8 個 source bytes；0xff 保留空槽位置
 	// Base* are the persistent pre-remake equipment values. Existing scenario
 	// data stores effective values, so EquipmentBaseSet is true for those
 	// records and newly purchased equipment is added without double counting.

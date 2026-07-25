@@ -170,6 +170,11 @@ byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived
 自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，
 不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
 
+Remake 已以 `Unit.NativeTransient[6]` 保留這段 raw ABI，並提供 bounded offset access（只接受
+`0x22..0x27`）及 `State.TickNativeTransients(camp)`：只對 active/alive 同-camp unit 個別遞減，且只在
+byte 歸零時回傳 expiry。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接
+campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
+
 ID23 走 `0x1CFF0` 的 command-`0x17` special selector，不能套 generic two-stage target contract。其 handler
 `0x2218A` 以 record23 扣 MP，並呼叫 `0x22253` 兩次：依 C stack ABI，第一次將 selected unit 的 runtime
 `+0/+1` 寫為 `0xff/0xff`（以原座標作離場 indexed 演出），第二次直接寫為 selector cursor globals
