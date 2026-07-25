@@ -48,6 +48,8 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 這是可重用的 frame-resource ABI；`[0x53a81]` 的 loader provenance 已由 UI trace
 確認為 `FDOTHER.DAT` resource #5 的 `LMI1` 容器（doc35 §4.2.5），remake 已新增
 strict `fdother.ParseLMI1` 與 codec regression。
+`LMI1Entry.BlitAt` 亦已對應 `0x4e8af` 的 index-0 transparent preserve 與
+`0x4e8e1` 水平鏡像路徑；它只接受顯式 surface/anchor，尚未擅自接入 D8 layout。
 `0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
 MAP/TURN 欄位來源尚未閉合，因此 UI-11 仍 partial，不能直接把 0x52 命名成「行軍確認圖」。
 

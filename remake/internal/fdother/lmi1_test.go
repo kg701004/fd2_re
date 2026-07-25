@@ -44,3 +44,23 @@ func TestParseLMI1RejectsMalformedCodec(t *testing.T) {
 		t.Fatal("truncated LMI1 stream must fail closed")
 	}
 }
+
+func TestLMI1BlitPreservesTransparentAndMirrors(t *testing.T) {
+	e := LMI1Entry{Width: 3, Height: 1, Pixels: []byte{1, 0, 2}}
+	dst := make([]byte, 16)
+	for i := range dst {
+		dst[i] = 9
+	}
+	if err := e.BlitAt(dst, 8, 1, 0, false); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst[:5], []byte{9, 1, 9, 2, 9}; string(got) != string(want) {
+		t.Fatalf("forward blit=%v, want %v", got, want)
+	}
+	if err := e.BlitAt(dst, 8, 1, 1, true); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst[8:13], []byte{9, 2, 9, 1, 9}; string(got) != string(want) {
+		t.Fatalf("mirrored blit=%v, want %v", got, want)
+	}
+}

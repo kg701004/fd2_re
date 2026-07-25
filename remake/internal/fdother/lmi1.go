@@ -14,6 +14,32 @@ type LMI1Entry struct {
 	Pixels        []byte
 }
 
+// BlitAt copies an LMI1 cell to an indexed destination using the native
+// 0x4e8af transparent rule: palette index 0 preserves the destination.
+// mirror applies the 0x4e8e1 horizontal reverse path. Coordinates are
+// explicit so callers cannot accidentally infer the native panel anchor.
+func (e LMI1Entry) BlitAt(dst []byte, stride, x, y int, mirror bool) error {
+	if e.Width <= 0 || e.Height <= 0 || len(e.Pixels) != e.Width*e.Height {
+		return errors.New("fdother: invalid LMI1 entry geometry")
+	}
+	if x < 0 || y < 0 || stride <= 0 || stride < x+e.Width || y > len(dst)/stride || e.Height > (len(dst)-y*stride)/stride {
+		return errors.New("fdother: LMI1 destination is too small")
+	}
+	for row := 0; row < e.Height; row++ {
+		for col := 0; col < e.Width; col++ {
+			src := col
+			if mirror {
+				src = e.Width - 1 - col
+			}
+			v := e.Pixels[row*e.Width+src]
+			if v != 0 {
+				dst[(y+row)*stride+x+col] = v
+			}
+		}
+	}
+	return nil
+}
+
 // ParseLMI1 decodes the small indexed sub-resource container used by the
 // native UI sprite bank. Its directory starts at byte 6 (after "LMI1" and a
 // u16 count), and each entry is {u16 width, u16 height, 0xc0 codec stream}.
