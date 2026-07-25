@@ -49,6 +49,12 @@ for 第 k 組(0x22..0x26):
 
 ## 游標 / 鍵盤操作(已反組譯)
 
+### 2026-07-25 Docker Capstone recheck: `0x18890` action dispatcher
+
+`0x18890` 是「單位移動後進入 action dispatch」的 caller，而非單純繪圖 helper：它以 `ebp` 計算 `[0x53a45] + unit*0x50`，讀 unit context，呼叫 `0x18d8c(ebp, ..., mode)` 取得 action result；result `0` 繼續等待，`-1` 走取消／返回，其他 result 進入 `0x13a44` target/action path。它同時串接 `0x13488` path-walk 與 `0x134e4` 完成通知，移動後重寫 unit X/Y bytes，再由 `0x13512`／`0x13a44` 進後續 action。
+
+這段 caller 沒有單獨證實 `0x18d8c` 的選項表與 result 編號，因此撤回「`0x18890` 只是選單繪圖」類推；目前 remake radial 方向 mapping 仍不得宣稱原版一致，直到 `0x18d8c` 本體和 menu/resource table 完成交叉引用。
+
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 
 | 掃描碼 | 鍵 | 行為 |
