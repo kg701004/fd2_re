@@ -31,13 +31,13 @@ func (s *State) ExecuteNativeCommand0(actor, confirmed *Unit, resistByClass map[
 	return s.ExecuteNativeCommandDamage(actor, confirmed, 0, resistByClass, rng)
 }
 
-// ExecuteNativeCommandDamage covers the byte-for-byte shared sub_21227 route
-// proven for command IDs 0..3. Other IDs stay fail-closed.
+// ExecuteNativeCommandDamage covers the byte-for-byte numeric route proven
+// for command IDs 0..9. Other IDs stay fail-closed.
 func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int, resistByClass map[int]int, rng *rand.Rand) ([]NativeCommand0Result, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command state/rng")
 	}
-	if commandID < 0 || commandID > 3 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if commandID < 0 || commandID > 9 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
