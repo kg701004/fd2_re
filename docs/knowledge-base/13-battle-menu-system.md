@@ -43,7 +43,7 @@ native magic raw / menu state:
     （`+0x22..+0x24` 不可當法術 bitfield）
 ```
 
-→ 即玩家按「法術」時看到的面板:**哪幾系法術可用 + 目前 HP/MP**。繪字 / 數字用 `0x195D6`(在 320 寬 buffer 定位繪製)。實際施法時再由各組 bitfield 展開成可選法術清單(法術編號見 `02`/`03`)。
+→ 即玩家按「法術」時看到的面板：可用 command 與目前 HP/MP。繪字／數字用 `0x195D6`（在 320 寬 buffer 定位繪製）。可用 command 的 label、spell-family、個別 spell ID 對照仍待完成，不得由 raw bit 或舊 M1–M5 名稱推導。
 
 ## 游標 / 鍵盤操作(已反組譯)
 
@@ -129,4 +129,4 @@ type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入�
 - ✅ 按鍵綁定(Enter/Space 確認、ESC 取消、方向鍵)— 已反組譯。
 - [~] `Get_EasyMagic`(0x18ED0) 的 UI caller 已定位；magic raw=`+0x1a..+0x1d`、modifier flags=`+0x22..+0x24`，完整 bit 展開仍待重審。
 - 各選項的 enable gate 條件(已移動 / MP / 道具 / 攻擊範圍內有無目標)的完整反組譯。
-- 施法時各 bitfield → 可選法術清單的展開(法術編號見 `02`/`03`)。
+- command bits → 可選 command／spell ID 的完整展開（法術編號見 `02`/`03`）。
