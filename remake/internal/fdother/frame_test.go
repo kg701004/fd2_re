@@ -146,6 +146,23 @@ func TestFDOTHER056SingleFramePayload(t *testing.T) {
 	}
 }
 
+func TestFDOTHER081ArchiveShape(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	entry, err := ReadResource(datPath, 0x51)
+	if os.IsNotExist(err) {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entry) == 0 {
+		t.Fatal("#81 is empty")
+	}
+	if len(entry) < 10 || string(entry[:6]) != "LLLLLL" || binary.LittleEndian.Uint32(entry[6:10]) != 0x12 {
+		t.Fatalf("#81 is not the expected nested LLLLLL resource: len=%d head=% x", len(entry), entry[:min(32, len(entry))])
+	}
+}
+
 func TestFinaleTAI003IsTransparentPlaceholder(t *testing.T) {
 	const path = "../../../extracted/raw/TAI/TAI_003.bin"
 	data, err := os.ReadFile(path)

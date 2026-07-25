@@ -96,7 +96,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
 1. **Boot/menu/UI dispatch**：以 Ghidra/IDA 建立 call graph、keyboard scan、menu item table、resource loader；Docker Capstone 只作可重跑交叉驗證。
 2. **Resource provenance**：把 FDOTHER/FDTXT/DATO/FIGANI/TAI/FDFIELD 的 loader、entry、palette、stride、clip 寫成 machine-readable bindings，並與 UI contract 對應。
-   `0x22253` 的 Docker trace 已固定為 FDOTHER immediate `0x51`（十進位 **81**）→ LLLLLL sub1，`0x22547` 以 `0x53a6d` descriptor table 做 6 次 indexed `0x22046` blit/present（每次 10ms），尾端再兩次 BIOS tick；這是 renderer provenance，不可寫成 layout 或音訊資源。
+   `0x22253` 的 Docker trace 已固定為 FDOTHER immediate `0x51`（十進位 **81**）→ 一個 nested `LLLLLL` entry（directory first-word `0x12`）；其後由 `0x11eee` 準備 renderer data，`0x22547` 以 `0x53a6d` descriptor table 做 6 次 indexed `0x22046` blit/present（每次 10ms），尾端再兩次 BIOS tick。現有 outer-archive/frame-table parser 不能直接吞這個 nested entry；這是 renderer provenance，不可寫成 layout 或音訊資源。
 3. **Battle interaction**：追 action menu enable gates、weapon reach、spell inventory/targeting、end-turn 判定、HUD anchor；每一項先找 caller/data flow，再改 Go。
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
 5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
