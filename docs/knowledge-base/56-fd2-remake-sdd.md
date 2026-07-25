@@ -239,6 +239,28 @@ actor；不映射 legacy named status/UI。
 acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，並不因共用 restore primitive 而推論
 `0x1C4CC/0x1C2DA` 專用演出、SFX、message 或 UI 已完成。
 
+### UI-03 native command family implementation matrix（E0/E1 status）
+
+下表是 raw command table ID，不是 legacy `Spell.ID` 的別名。`engine` 只表示 strict non-UI state core；
+沒有 UI/renderer evidence 的列不得由 command grid 開放。這個 matrix 是每次擴充 effect 時的 fail-closed gate。
+
+| IDs | 原版已驗 dataflow | engine 狀態 | UI / renderer 狀態 |
+|---|---|---|---|
+| 0–8 | `0x2A6BD→2B659/1C75E`，two-stage final targets、MP event、numeric hit/HP | `ExecuteNativeCommandDamage`；ID0 有 target slice | 僅 ID0 grid target；compositor/SFX/post-resolution 未接 |
+| 9–12 | direct/`0x21548` tail → `1CA89→1C75E` | `ExecuteNativeCommandDamage` | 未接；numeric 共用不代表演出共用 |
+| 13–16 | `0x21AD9…0x22153→21B18→1C8ED/1C916` | `ExecuteNativeCommandHeal` | 專用 animation/SFX/grid confirm 未接 |
+| 17–19 | `0x226EA/2282F/22960` modifier writers、`+0x22..+0x24` duration | 未接：derived-base/equipment recompute 與 x87 rounding boundary尚未以 battle-only adapter 關閉 | 未接 |
+| 20–21 | `0x22A85/22BC6→22AF6`，clear `+0x25/+0x26` 並借 record10 restore | `ExecuteNativeCommandClearRestore` | 未接 |
+| 22 | `0x22BE1→22D1B`，class/RNG gate、fixed 10 HP、write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
+| 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
+| 24 | jump-table target 已知但尚未完成 state dataflow | 禁止接線 | 禁止接線 |
+| 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
+| 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
+| 28–35 | raw table／dispatch 可達；effect family未完整關閉 | 禁止接線 | 禁止接線 |
+
+實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
+legacy `CastArea` 或宣稱整個 native command menu 已完成。
+
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
