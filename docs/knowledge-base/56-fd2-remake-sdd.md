@@ -138,12 +138,13 @@ UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate hi
 `ExecuteNativeCommandDamage` 嚴格支援 ID0..9 共用 numeric/MP/acted contract；UI 仍只啟用 ID0，直到每個
 presentation/effect boundary 有獨立驗證。
 
-ID13 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handler
-`0x21AD9→0x21B18` 在 generic target-confirm 後，以同一 final target array 呼叫專用 indexed 演出
-`0x1C4CC/0x1C2DA`、再經 `0x1CA89(actor,13)` 扣 record `+5` MP。它逐 target 呼叫
-`0x1C8ED(target,13)→0x1C916(target,record.u16+0)`：`+0x40` 增加
+IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handlers
+`0x21AD9/0x21B99/0x2211C/0x22153` 各以 ID `13/14/15/16` 和各自的演出參數跳到共同
+`0x21B18`；它在 generic target-confirm 後，以同一 final target array 呼叫專用 indexed 演出
+`0x1C4CC/0x1C2DA`、再經 `0x1CA89(actor,id)` 扣 record `+5` MP。它逐 target 呼叫
+`0x1C8ED(target,id)→0x1C916(target,record.u16+0)`：`+0x40` 增加
 `floor(amount*9/10)+floor(rand()%100*amount/1000)`，上限 clamp 為 `+0x42`，並以
-`0x1E0DB(...,0x69,target)` 顯示結果。這直接證實 ID13 為 per-final-target HP restore（其 raw row 為
+`0x1E0DB(...,0x69,target)` 顯示結果。這直接證實 IDs13..16 是 per-final-target HP restore（ID13 raw row 為
 `dmg=70, +3=4, +4=0, mp=3, target=1`），但尚未把這個獨立 resolver、專用 renderer、SFX 或 UI 接入 remake；
 在有對應 regression 前仍 fail-closed。
 
