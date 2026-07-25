@@ -90,7 +90,7 @@ def summarize(plain: bytes) -> str:
             f"slot={slot} range={start:#06x}..{end:#06x} "
             f"roster={ROSTER_UNITS}x{UNIT_SIZE:#x} "
             f"chapter={chapter:#04x} empty={chapter == 0xFF} roster_count={roster_count:#04x} "
-            f"global_53bf3={global_3bf3:#010x} "
+            f"currency={global_3bf3:#010x} "
             f"globals_51aab_53af9_51e61_51e62={meta[6:10].hex()}"
         )
     return "\n".join(lines)
