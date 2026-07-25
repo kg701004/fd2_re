@@ -436,6 +436,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    `fdother.ParseLUTBank`/`DecodeLUTResource` now close the FDOTHER #3 input boundary: its `LMI1` directory contains 23 independent 256-byte tables, not UI cells. The original-archive regression verifies that count and every table length. This loader plus `BlitLUT` is sufficient for a caller that has an evidenced selector; it does not infer one.
 
+   The default `0x11eee` selector is now evidenced too: static table `0x51a97` maps runtime phase `0x53c1f` 0..19 to FDOTHER #3 entries `[0,1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]`. `fdother.NativeTerrainLUTIndex` makes the bounded sequence explicit. The separate explicit-override branch remains raw/unlabelled; no visual name is inferred for the cycle.
+
    Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `group×12 + pose×3 + cycle`. Cycle is global idle/moving animation state, not unit `+4`; that byte offsets the camera-relative placement. The remaining adapter boundary is runtime roster state, remap selection and layer order—not an invented FIGANI or unknown archive mapping.
 
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus both exact native blits: `0x4deda` raw indices and `0x4de56` opaque-index transform `(index&7)+0x18`. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
