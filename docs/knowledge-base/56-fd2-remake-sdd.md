@@ -138,10 +138,9 @@ caller 提供精確原版 grid flags，缺失或長度不符即 fail-closed；�
 flood-fill、bit40/bit80、cross branch 與四個 camp predicates，但尚未有 exporter 產生每章原版 flags，故不可
 自動接入 native command UI。
 
-Provenance guard：`tools/export_engine_assets.py` 現輸出的 terrain-control `byte0` 是寶箱／隱藏物品資訊，
-不是 `0x4e040` 讀取的 runtime grid entry `+1` flag byte；不可把兩者的同名 bit `0x40` 混用。下一個 RE
-gate 是從 FDFIELD composition → runtime grid constructor 找出這個 `+1` byte 的 writer，再產生 editable flags
-asset；在此之前 resolver 維持 caller-supplied/fail-closed。
+Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
+low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出
+`native_target_flags` raw array。runtime map loader 尚未接這個資產前 resolver 維持 caller-supplied/fail-closed。
 
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
