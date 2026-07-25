@@ -41,7 +41,7 @@
         "addr": "0x01d43c",
         "function_entry": "0x01cff0",
         "id_source": "byte ptr [esp + [0x3c57] + 0xd0]  (區域性陣列,[0x3c57]為目前步驟計數器)",
-        "note": "此路徑同一函式內有一個平行陣列 [esp+0xc8+counter](攻擊類型碼,比對 9/0x17/0x18/0x1b/0x1e)已找到填值來源(見 known_move_bitmask_decoder);但 [esp+0xd0+counter] 陣列本身填值來源本輪未追出(不是同一次 call 0x1c269 填的,是獨立陣列)"
+        "note": "此路徑同一函式內有一個平行陣列 [esp+0xc8+counter](比對 9/0x17/0x18/0x1b/0x1e)已找到填值來源(見 native_0x1c269_bit_scan);但 [esp+0xd0+counter] 陣列本身填值來源本輪未追出(不是同一次 call 0x1c269 填的,是獨立陣列)"
       }
     ]
   },
