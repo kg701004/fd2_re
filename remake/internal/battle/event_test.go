@@ -60,6 +60,28 @@ func TestScenarioPartyUnitsMaterializeRawCommandMask(t *testing.T) {
 	}
 }
 
+func TestChapter1SetupMaterializesYuniCommandZero(t *testing.T) {
+	st, err := Load("../../assets/map0_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := LoadScenario("../../assets/scenarios/ch01.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc.Setup(st)
+	for _, u := range st.Units {
+		if u != nil && u.Name == "悠妮" {
+			got := u.NativeCommandIDs()
+			if len(got) != 1 || got[0] != 0 {
+				t.Fatalf("悠妮 native commands=%v, want [0]", got)
+			}
+			return
+		}
+	}
+	t.Fatal("悠妮 was not materialized by ch01 spawn_party")
+}
+
 func TestLoadScenarioRejectsMalformedPartyCommandMask(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "bad-mask.json")
 	if err := os.WriteFile(path, []byte(`{"party":[{"name":"bad","initial_command_mask":[1,2,3]}]}`), 0o600); err != nil {
