@@ -151,11 +151,11 @@ func TestCompileIndexedTransitionRequiresRecoveredBinding(t *testing.T) {
 	}
 }
 
-func TestCompileUnitPresentKeepsRecoveredTiming(t *testing.T) {
+func TestCompileUnitPresentRejectsIncompleteSixFrameSchema(t *testing.T) {
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
 		Op: "unit_present", UnitPresent: &HandlerUnitPresent{Slot: 2, X: 4, Y: 5, Frames: 6, FrameDelayMs: 10, TailTicks: 2},
 	}}}, HandlerBindings{RuntimeContext: &HandlerRuntimeContext{SlotCount: 4}})
-	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "unit_present" || beats[0].UnitPresent == nil {
+	if len(beats) != 0 || len(issues) != 1 || issues[0].Op != "unit_present" {
 		t.Fatalf("unit_present=%#v issues=%#v", beats, issues)
 	}
 }
@@ -1624,18 +1624,15 @@ func TestCompileChapter29PostPreservesDialogueAcrossChapterTextSwitch(t *testing
 	}
 }
 
-func TestCompileUnitPresentRequiresRecoveredTimingAndRuntimeSlot(t *testing.T) {
+func TestCompileUnitPresentRejectsFormerlyAcceptedBinding(t *testing.T) {
 	p := HandlerUnitPresent{Slot: 18, X: 22, Y: 24, Frames: 6, FrameDelayMs: 10, TailTicks: 2}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
 		Op:          "unit_present",
 		Source:      HandlerSource{Addr: "0x33ea4", Target: "0x22253"},
 		UnitPresent: &p,
 	}}}, HandlerBindings{RuntimeContext: &HandlerRuntimeContext{SlotCount: 19}})
-	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "unit_present" || beats[0].UnitPresent == nil {
+	if len(beats) != 0 || len(issues) != 1 || issues[0].Op != "unit_present" {
 		t.Fatalf("unit_present lowering=%#v issues=%#v", beats, issues)
-	}
-	if got := *beats[0].UnitPresent; got != p {
-		t.Fatalf("unit_present payload=%#v want %#v", got, p)
 	}
 }
 

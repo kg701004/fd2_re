@@ -148,11 +148,10 @@ type HandlerIndexedTransition struct {
 	PaletteDelayMs    int `json:"palette_delay_ms"`
 }
 
-// HandlerUnitPresent is the evidence-backed shape of native 0x22253 when the
-// caller passes the same source and destination coordinate. The native helper
-// presents six frames (10ms each), followed by two one-tick waits. Keeping
-// these timings explicit prevents editors from silently replacing the effect
-// with a generic spawn or redraw.
+// HandlerUnitPresent retains the formerly recovered metadata shape for native
+// 0x22253. It is not currently compilable: later direct trace found 11+6+10
+// presentation phases, so this six-frame schema is deliberately rejected
+// until a full indexed choreography representation exists.
 type HandlerUnitPresent struct {
 	Slot         int `json:"slot"`
 	X            int `json:"x"`

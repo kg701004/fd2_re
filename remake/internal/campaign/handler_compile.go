@@ -670,31 +670,16 @@ func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Be
 			}
 			issue(i, input, "operation has no proven runtime lowering")
 		case "unit_present":
-			// Native 0x22253 is not a spawn or a generic redraw.  Only accept
-			// the fully recovered same-coordinate form: six 10ms present
-			// frames followed by two one-tick waits.  The renderer/audio
-			// adapter is intentionally not implied by this compiler lowering.
+			// Native 0x22253 is not a spawn or a generic redraw. The former
+			// six-frame metadata covered only 0x22547; direct trace now proves
+			// an 11+6+10 indexed choreography. Reject it until that full ABI is
+			// represented, rather than producing a falsely runnable handler.
 			p := input.UnitPresent
 			if p == nil {
 				issue(i, input, "unit_present requires an explicit placement payload")
 				continue
 			}
-			if activeSlotCount <= 0 || p.Slot < 0 || p.Slot >= activeSlotCount {
-				issue(i, input, "unit_present slot must be within an active loadch runtime context")
-				continue
-			}
-			if p.X < 0 || p.Y < 0 {
-				issue(i, input, "unit_present coordinates must be non-negative")
-				continue
-			}
-			if p.Frames != 6 || p.FrameDelayMs != 10 || p.TailTicks != 2 {
-				issue(i, input, "unit_present requires the recovered 0x22253 timing (6x10ms plus 2 ticks)")
-				continue
-			}
-			beat := runtime(input, "unit_present")
-			placement := *p
-			beat.UnitPresent = &placement
-			beats = append(beats, beat)
+			issue(i, input, "unit_present is blocked: native 0x22253 full 11+6+10 choreography is not represented")
 		case "layout_units":
 			if bindings.Layout == nil {
 				issue(i, input, "layout_units requires an explicit runtime-slot layout mapping")
