@@ -1,0 +1,669 @@
+{
+  "imagebase": 0,
+  "input_file": "/work/FD2.EXE",
+  "targets": [
+    {
+      "address": 71094,
+      "function": {
+        "start": 71094,
+        "end": 71655,
+        "name": "sub_115B6"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 100737,
+          "from_function": {
+            "start": 100496,
+            "end": 101252,
+            "name": "sub_18890"
+          }
+        },
+        {
+          "from": 102262,
+          "from_function": {
+            "start": 101772,
+            "end": 102572,
+            "name": "sub_18D8C"
+          }
+        },
+        {
+          "from": 114004,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 114162,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 114395,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 119258,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119352,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119523,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119724,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 83992,
+      "function": {
+        "start": 83992,
+        "end": 84472,
+        "name": "sub_14818"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 83016,
+          "from_function": {
+            "start": 82487,
+            "end": 83405,
+            "name": "sub_14237"
+          }
+        },
+        {
+          "from": 86292,
+          "from_function": {
+            "start": 86101,
+            "end": 86801,
+            "name": "sub_15055"
+          }
+        },
+        {
+          "from": 86913,
+          "from_function": {
+            "start": 86801,
+            "end": 87182,
+            "name": "sub_15311"
+          }
+        },
+        {
+          "from": 87898,
+          "from_function": {
+            "start": 87678,
+            "end": 88192,
+            "name": "sub_1567E"
+          }
+        },
+        {
+          "from": 88020,
+          "from_function": {
+            "start": 87678,
+            "end": 88192,
+            "name": "sub_1567E"
+          }
+        },
+        {
+          "from": 88746,
+          "from_function": {
+            "start": 88458,
+            "end": 88951,
+            "name": "sub_1598A"
+          }
+        },
+        {
+          "from": 101925,
+          "from_function": {
+            "start": 101772,
+            "end": 102572,
+            "name": "sub_18D8C"
+          }
+        },
+        {
+          "from": 102250,
+          "from_function": {
+            "start": 101772,
+            "end": 102572,
+            "name": "sub_18D8C"
+          }
+        },
+        {
+          "from": 113724,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 113987,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 114067,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 114383,
+          "from_function": {
+            "start": 113628,
+            "end": 114686,
+            "name": "sub_1BBDC"
+          }
+        },
+        {
+          "from": 119241,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119313,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119487,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119594,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 119694,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 84472,
+      "function": {
+        "start": 84472,
+        "end": 84758,
+        "name": "sub_149F8"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 86257,
+          "from_function": {
+            "start": 86101,
+            "end": 86801,
+            "name": "sub_15055"
+          }
+        },
+        {
+          "from": 87989,
+          "from_function": {
+            "start": 87678,
+            "end": 88192,
+            "name": "sub_1567E"
+          }
+        },
+        {
+          "from": 119644,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 88458,
+      "function": {
+        "start": 88458,
+        "end": 88951,
+        "name": "sub_1598A"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 81417,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 85781,
+          "from_function": {
+            "start": 85744,
+            "end": 86101,
+            "name": "sub_14EF0"
+          }
+        },
+        {
+          "from": 121114,
+          "from_function": {
+            "start": 121018,
+            "end": 121366,
+            "name": "sub_1D8BA"
+          }
+        }
+      ]
+    },
+    {
+      "address": 115305,
+      "function": {
+        "start": 115305,
+        "end": 115418,
+        "name": "sub_1C269"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 88570,
+          "from_function": {
+            "start": 88458,
+            "end": 88951,
+            "name": "sub_1598A"
+          }
+        },
+        {
+          "from": 89440,
+          "from_function": {
+            "start": 88951,
+            "end": 89506,
+            "name": "sub_15B77"
+          }
+        },
+        {
+          "from": 97044,
+          "from_function": {
+            "start": 97005,
+            "end": 97647,
+            "name": "sub_17AED"
+          }
+        },
+        {
+          "from": 102029,
+          "from_function": {
+            "start": 101772,
+            "end": 102572,
+            "name": "sub_18D8C"
+          }
+        },
+        {
+          "from": 118533,
+          "from_function": {
+            "start": 118509,
+            "end": 118768,
+            "name": "sub_1CEED"
+          }
+        },
+        {
+          "from": 119135,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 120157,
+          "from_function": {
+            "start": 120093,
+            "end": 120520,
+            "name": "sub_1D51D"
+          }
+        },
+        {
+          "from": 120450,
+          "from_function": {
+            "start": 120093,
+            "end": 120520,
+            "name": "sub_1D51D"
+          }
+        }
+      ]
+    },
+    {
+      "address": 118768,
+      "function": {
+        "start": 118768,
+        "end": 120011,
+        "name": "sub_1CFF0"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 102415,
+          "from_function": {
+            "start": 101772,
+            "end": 102572,
+            "name": "sub_18D8C"
+          }
+        }
+      ]
+    },
+    {
+      "address": 319552,
+      "function": {
+        "start": 319552,
+        "end": 319708,
+        "name": "sub_4E040"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 82756,
+          "from_function": {
+            "start": 82487,
+            "end": 83405,
+            "name": "sub_14237"
+          }
+        },
+        {
+          "from": 84061,
+          "from_function": {
+            "start": 83992,
+            "end": 84472,
+            "name": "sub_14818"
+          }
+        },
+        {
+          "from": 85191,
+          "from_function": {
+            "start": 84856,
+            "end": 85744,
+            "name": "sub_14B78"
+          }
+        },
+        {
+          "from": 85373,
+          "from_function": {
+            "start": 84856,
+            "end": 85744,
+            "name": "sub_14B78"
+          }
+        },
+        {
+          "from": 88672,
+          "from_function": {
+            "start": 88458,
+            "end": 88951,
+            "name": "sub_1598A"
+          }
+        },
+        {
+          "from": 100685,
+          "from_function": {
+            "start": 100496,
+            "end": 101252,
+            "name": "sub_18890"
+          }
+        }
+      ]
+    },
+    {
+      "address": 320790,
+      "function": {
+        "start": 320790,
+        "end": 320813,
+        "name": "sub_4E516"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 85952,
+          "from_function": {
+            "start": 85744,
+            "end": 86101,
+            "name": "sub_14EF0"
+          }
+        },
+        {
+          "from": 86823,
+          "from_function": {
+            "start": 86801,
+            "end": 87182,
+            "name": "sub_15311"
+          }
+        },
+        {
+          "from": 88377,
+          "from_function": {
+            "start": 88192,
+            "end": 88458,
+            "name": "sub_15880"
+          }
+        },
+        {
+          "from": 88623,
+          "from_function": {
+            "start": 88458,
+            "end": 88951,
+            "name": "sub_1598A"
+          }
+        },
+        {
+          "from": 88978,
+          "from_function": {
+            "start": 88951,
+            "end": 89506,
+            "name": "sub_15B77"
+          }
+        },
+        {
+          "from": 116638,
+          "from_function": {
+            "start": 116574,
+            "end": 116767,
+            "name": "sub_1C75E"
+          }
+        },
+        {
+          "from": 116988,
+          "from_function": {
+            "start": 116973,
+            "end": 117014,
+            "name": "sub_1C8ED"
+          }
+        },
+        {
+          "from": 117400,
+          "from_function": {
+            "start": 117385,
+            "end": 117447,
+            "name": "sub_1CA89"
+          }
+        },
+        {
+          "from": 118655,
+          "from_function": {
+            "start": 118509,
+            "end": 118768,
+            "name": "sub_1CEED"
+          }
+        },
+        {
+          "from": 119157,
+          "from_function": {
+            "start": 118768,
+            "end": 120011,
+            "name": "sub_1CFF0"
+          }
+        },
+        {
+          "from": 120472,
+          "from_function": {
+            "start": 120093,
+            "end": 120520,
+            "name": "sub_1D51D"
+          }
+        }
+      ]
+    },
+    {
+      "address": 320853,
+      "function": {
+        "start": 320853,
+        "end": 320876,
+        "name": "sub_4E555"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 71388,
+          "from_function": {
+            "start": 71094,
+            "end": 71655,
+            "name": "sub_115B6"
+          }
+        },
+        {
+          "from": 82299,
+          "from_function": {
+            "start": 82209,
+            "end": 82487,
+            "name": "sub_14121"
+          }
+        },
+        {
+          "from": 82669,
+          "from_function": {
+            "start": 82487,
+            "end": 83405,
+            "name": "sub_14237"
+          }
+        },
+        {
+          "from": 84052,
+          "from_function": {
+            "start": 83992,
+            "end": 84472,
+            "name": "sub_14818"
+          }
+        },
+        {
+          "from": 84955,
+          "from_function": {
+            "start": 84856,
+            "end": 85744,
+            "name": "sub_14B78"
+          }
+        },
+        {
+          "from": 87707,
+          "from_function": {
+            "start": 87678,
+            "end": 88192,
+            "name": "sub_1567E"
+          }
+        },
+        {
+          "from": 88487,
+          "from_function": {
+            "start": 88458,
+            "end": 88951,
+            "name": "sub_1598A"
+          }
+        },
+        {
+          "from": 100616,
+          "from_function": {
+            "start": 100496,
+            "end": 101252,
+            "name": "sub_18890"
+          }
+        }
+      ]
+    }
+  ]
+}

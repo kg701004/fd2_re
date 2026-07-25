@@ -33,7 +33,11 @@
 `~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic` 為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
 
 repo 提供不含 license／遊戲資料的 `tools/docker/fd2-ida.Dockerfile` 與
-`tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA workspace 匯出 xref 後重跑。2026-07-25 嘗試以官方 `idat -A` 分析唯讀 FD2.EXE 時沒有產生 `.i64` 或 `fd2_xrefs.json`；這符合 IDA 尚待首次 GUI 接受授權條款的狀態。待使用者在官方 GUI 一次性完成接受後，才可重跑 batch export；在實際 report 可驗證前，現有結論仍以 Docker Capstone 作 E0，不以工具名稱或缺檔猜測。
+`tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA workspace 匯出 xref 後重跑。2026-07-26 已以使用者
+合法的本機 IDA Docker image、臨時 overlay 的容器內 Python 3.12、唯讀遊戲檔與 `/tmp` IDA database 實跑；
+`docs/data/ida/fd2_xrefs.json` 已由 IDA 9.4/Hex-Rays 產出。過程修正 IDA 9.4 移除的
+`ida_xref.get_xref_type` API；export 現只保存 address/caller/function metadata，絕不提交 binary、database 或 license。
+這份 report 可作 call-graph E0 交叉驗證，但不自行證明遊戲語意；語意仍須由指令與資料流佐證。
 
 ## 3. 目標架構
 

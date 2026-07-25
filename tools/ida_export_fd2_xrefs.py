@@ -28,7 +28,9 @@ TARGETS = (
     0x4E516,
     0x4E555,
 )
-OUT_PATH = "/workspace/fd2_xrefs.json"
+# Address-only metadata is safe to retain as a reproducible RE artifact.  The
+# input binary, IDA database, and license stay outside the repository.
+OUT_PATH = "/workspace/docs/data/ida/fd2_xrefs.json"
 
 
 def func_info(ea):
@@ -49,7 +51,6 @@ def code_xrefs_to(ea):
         result.append({
             "from": cur,
             "from_function": func_info(cur),
-            "type": ida_xref.get_xref_type(cur, ea),
         })
         cur = ida_xref.get_next_cref_to(ea, cur)
     return result
