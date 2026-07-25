@@ -125,6 +125,11 @@ IDA `word_51f96` 的 loaded-data file offset 正是既有 `0x51d96` 職業魔抗
 resolver。`remake/assets/data/native_command_resistances.json` 是同一 raw table 的可編輯 runtime copy；target
 geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。
 
+`State.ExecuteNativeCommand0` 現將已證實的 core contract 組合為 non-UI engine slice：strict ID-0 record、
+actor `+3`→confirmed candidate→cursor `+4`、一次 `+5` MP debit、每個 final candidate 的 class multiplier/hit/HP
+clamp。任何缺失 raw flags、record、confirmed candidate 或 resistance row 都在 mutation 前拒絕；special command、
+animation、post-resolution 與 UI remain unbound。
+
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
