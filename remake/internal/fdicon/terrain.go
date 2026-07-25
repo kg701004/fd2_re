@@ -9,6 +9,40 @@ type NativeTerrainCell struct {
 	BlitMode byte
 }
 
+// NativeCellCoordinate is a world-cell coordinate in the native field map.
+// It deliberately permits coordinates outside the visible/map range: 0x129ec
+// delegates that check to 0x12ac6 rather than clipping its call schedule.
+type NativeCellCoordinate struct {
+	X int
+	Y int
+}
+
+// NativeForegroundRedrawCells reproduces the exact 0x129ec call order after
+// one unit sprite has been drawn. It always redraws the unit cell then the
+// cell above it. A nonzero unit+4 movement offset adds one pose-dependent
+// neighbour: down, left, up (two cells), or right for every other pose value.
+//
+// The native callee owns map/camera bounds checks, so this pure schedule must
+// not discard negative or off-screen coordinates. The returned count is two
+// when stationary and three while moving.
+func NativeForegroundRedrawCells(x, y int, pose byte, movementOffset int) ([3]NativeCellCoordinate, int) {
+	cells := [3]NativeCellCoordinate{{X: x, Y: y}, {X: x, Y: y - 1}}
+	if movementOffset == 0 {
+		return cells, 2
+	}
+	switch pose {
+	case 0:
+		cells[2] = NativeCellCoordinate{X: x, Y: y + 1}
+	case 1:
+		cells[2] = NativeCellCoordinate{X: x - 1, Y: y}
+	case 2:
+		cells[2] = NativeCellCoordinate{X: x, Y: y - 2}
+	default:
+		cells[2] = NativeCellCoordinate{X: x + 1, Y: y}
+	}
+	return cells, 3
+}
+
 // NativeTerrainFrameIndex reproduces 0x11eee's FDSHAP descriptor selector.
 // tile is the composition word's low 10 bits; flags is the selected terrain
 // control byte. flip is native 0x53a40 (0 or 1), and cycle is 0x53c0b.

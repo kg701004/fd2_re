@@ -438,6 +438,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    `fdicon.Bank.BlitNativeTerrainRegion` now supplies the corresponding pure `0x11eee` row-major visible-cell pass. It accepts raw composition cells, the raw four-byte-per-tile FDSHAP control table, map origin and explicit destination/LUT; it validates map/control bounds before calling the single-cell compositor. `0x11cac` establishes the normal caller ABI as destination `buffer+0x8088`, stride 456, width 13, height 8, camera X/Y, followed by range overlay, unit layer, then foreground overlay. The pure region adapter does not schedule those later passes.
 
+   `fdicon.NativeForegroundRedrawCells` is the corresponding pure `0x129ec` schedule primitive. It preserves the exact ordered calls `(x,y)`, `(x,y-1)`, then only for nonzero `unit+4` one neighbour selected by pose: 0→`(x,y+1)`, 1→`(x-1,y)`, 2→`(x,y-2)`, all other values→`(x+1,y)`. It intentionally returns off-map coordinates too, because the native `0x12ac6` callee performs its own visibility/bounds gate. It neither identifies a runtime roster nor invokes a GUI renderer.
+
    Export bridge: when supplied the paired FDSHAP terrain resource, `export_engine_assets.py` writes `native_terrain_control` (the complete raw four-byte records) alongside per-cell `native_tile_blit_modes`. This preserves the precise inputs of the region adapter; normalized `cost` remains a separate gameplay approximation.
 
    Runtime bridge: `battle.Load` accepts those two fields only when map dimensions, cell count, control-record alignment and every 10-bit tile index validate exactly; otherwise both stay nil. The fields are retained on `State` for a future indexed renderer and are not silently substituted into the current PNG/Ebiten path.

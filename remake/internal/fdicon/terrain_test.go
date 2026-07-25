@@ -2,6 +2,40 @@ package fdicon
 
 import "testing"
 
+func TestNativeForegroundRedrawCellsMatches129EC(t *testing.T) {
+	cases := []struct {
+		name           string
+		pose           byte
+		movementOffset int
+		want           []NativeCellCoordinate
+	}{
+		{"stationary", 0, 0, []NativeCellCoordinate{{10, 20}, {10, 19}}},
+		{"down", 0, 1, []NativeCellCoordinate{{10, 20}, {10, 19}, {10, 21}}},
+		{"left", 1, -1, []NativeCellCoordinate{{10, 20}, {10, 19}, {9, 20}}},
+		{"up", 2, 1, []NativeCellCoordinate{{10, 20}, {10, 19}, {10, 18}}},
+		{"right", 3, 1, []NativeCellCoordinate{{10, 20}, {10, 19}, {11, 20}}},
+		{"native default right", 0xff, 1, []NativeCellCoordinate{{10, 20}, {10, 19}, {11, 20}}},
+		{"unclipped", 1, 1, []NativeCellCoordinate{{0, 0}, {0, -1}, {-1, 0}}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			x, y := 10, 20
+			if tc.name == "unclipped" {
+				x, y = 0, 0
+			}
+			got, n := NativeForegroundRedrawCells(x, y, tc.pose, tc.movementOffset)
+			if n != len(tc.want) {
+				t.Fatalf("count=%d want=%d", n, len(tc.want))
+			}
+			for i := range tc.want {
+				if got[i] != tc.want[i] {
+					t.Fatalf("cell[%d]=%+v want=%+v", i, got[i], tc.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestNativeTerrainFrameIndexMatches11EEE(t *testing.T) {
 	cases := []struct {
 		flags       byte
