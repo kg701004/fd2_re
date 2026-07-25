@@ -151,10 +151,16 @@ IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage ro
 IDs17..19 是第三條 transient-modifier family，亦不能交給 damage/heal executor。ID17
 `0x226EA→0x22721`、ID18 `0x2282F→0x22866`、ID19 `0x22960→0x22997` 都在 final target loop 中先拒絕
 已設 flag 的 unit：17/18 在 `+0x22/+0x23` 為零時設 `rand()%4+2`，並分別對 `+0x48/+0x4a`
-加 `ceil(value*0.15+1)`；19 對 `+0x24` 同樣設 duration，並對 `+0x4c/+0x4e` 各加 15。
+加 `__CHP(value*0.15+1)` 的 FPU-rounded increment；19 對 `+0x24` 同樣設 duration，並對 `+0x4c/+0x4e` 各加 15。
 這與 `0x1b750` 對 `+0x48/+0x4a/+0x4c/+0x4e` 的 derived AP/DP/HIT/EV synthesis 相容，因而撤回先前把
 這些 offsets 稱為 screen coordinates 的斷言。duration 的 tick/clear、玩家可見 status 名稱、專用演出與
 remake state/UI 仍未閉合，不能據此補出 gameplay names。
+
+IDs20..21 共享另一條「flag-present 才生效」route：`0x22A85/0x22BC6→0x22AA8→0x22AF6` 各以
+command ID 20/21 扣 MP，對每個 final target 讀 `+0x25/+0x26`。該 byte 為零時只走失敗 display；非零時呼叫
+`0x1C916(target,10)` 的既有 HP-restore writer、清零該 byte，並顯示結果。這證實 raw gate、clear 與
+HP writer，但尚未命名兩個 status，亦未接 engine/UI。ID22 是不同的 `0x22D1B` route（`+0x27`、class and RNG gate、
+damage writer and duration write），須獨立追蹤，不能併稱為 cure。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
