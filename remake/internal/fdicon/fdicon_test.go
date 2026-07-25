@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestParseAndBlitPreserveTransparentDitherAndLUT(t *testing.T) {
+func TestParseAndBlitPreserveTransparentDitherAndPaletteBand(t *testing.T) {
 	// 24 rows: first is run/dither/transparent; remaining rows are transparent.
 	body := []byte{0x00, 7, 0x40, 9, 0xd4}
 	for i := 1; i < NativeSize; i++ {
@@ -19,19 +19,21 @@ func TestParseAndBlitPreserveTransparentDitherAndLUT(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lut := make([]byte, 256)
-	for i := range lut {
-		lut[i] = byte(i + 10)
-	}
 	dst := make([]byte, 32*24)
 	for i := range dst {
 		dst[i] = 1
 	}
-	if err := b.Sprites[0].BlitAt(dst, 32, 0, 0, lut); err != nil {
+	if err := b.Sprites[0].BlitAt(dst, 32, 0, 0); err != nil {
 		t.Fatal(err)
 	}
-	if got := dst[:6]; got[0] != 17 || got[1] != 1 || got[2] != 19 || got[3] != 1 || got[4] != 1 {
+	if got := dst[:6]; got[0] != 7 || got[1] != 1 || got[2] != 9 || got[3] != 1 || got[4] != 1 {
 		t.Fatalf("pixels=%v", got)
+	}
+	if err := b.Sprites[0].BlitPaletteBand(dst, 32, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got := dst[:6]; got[0] != 0x1f || got[1] != 1 || got[2] != 0x19 || got[3] != 1 || got[4] != 1 {
+		t.Fatalf("band pixels=%v", got)
 	}
 }
 

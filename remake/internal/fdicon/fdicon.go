@@ -143,11 +143,19 @@ func decode(src []byte) ([]byte, []byte, error) {
 	return pixels, mask, nil
 }
 
-// BlitAt writes the native 24×24 sprite at x,y. A nil LUT is the 0x4deda raw
-// path; a 256-byte LUT is the palette-remap path. Transparent spans preserve
-// destination bytes in both cases.
-func (s Sprite) BlitAt(dst []byte, stride, x, y int, lut []byte) error {
-	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride || (lut != nil && len(lut) != 256) {
+// BlitAt is native 0x4deda: raw indexed RLE, preserving transparent spans.
+func (s Sprite) BlitAt(dst []byte, stride, x, y int) error {
+	return s.blit(dst, stride, x, y, false)
+}
+
+// BlitPaletteBand is native 0x4de56. It maps each opaque source index to
+// (index & 7) + 0x18; it is not a general 256-byte LUT path.
+func (s Sprite) BlitPaletteBand(dst []byte, stride, x, y int) error {
+	return s.blit(dst, stride, x, y, true)
+}
+
+func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {
+	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
 		return errors.New("fdicon: invalid blit")
 	}
 	for row := 0; row < NativeSize; row++ {
@@ -155,8 +163,8 @@ func (s Sprite) BlitAt(dst []byte, stride, x, y int, lut []byte) error {
 			i := row*NativeSize + col
 			if s.Mask[i] != 0 {
 				v := s.Pixels[i]
-				if lut != nil {
-					v = lut[v]
+				if paletteBand {
+					v = (v & 7) + 0x18
 				}
 				dst[(y+row)*stride+x+col] = v
 			}

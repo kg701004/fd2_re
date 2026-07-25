@@ -430,7 +430,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `group×12 + pose×3 + cycle`. Cycle is global idle/moving animation state, not unit `+4`; that byte offsets the camera-relative placement. The remaining adapter boundary is runtime roster state, remap selection and layer order—not an invented FIGANI or unknown archive mapping.
 
-   `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus the optional 256-byte LUT blit distinction. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
+   `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus both exact native blits: `0x4deda` raw indices and `0x4de56` opaque-index transform `(index&7)+0x18`. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
 
    `Bank.SpriteFor(group,pose,cycle)` enforces the recovered `group×12 + pose×3 + cycle` selector (pose 0..3, cycle 0..2). `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
