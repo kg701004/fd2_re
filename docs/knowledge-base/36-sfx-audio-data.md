@@ -412,9 +412,7 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
    (`[0x53a45]+idx*80`,與全專案既有 stride 80 公式一致)偏移 `+0x1a` 起的 **5 bytes(40 bit)**逐位元
    掃描,每個「已設定」的 bit 換算成招式編號(`byte_idx*8+bit_pos`,範圍 0–39),依序寫進呼叫端提供的
    緊密陣列(即這個「已學會招式清單」)。
-   - ⚠ 這個 `unit+0x1a` 與 doc03 記載的「`0x22` = M1..M5 五組法術 bitfield」**offset 不同**(差 8
-     bytes,落在 doc03 `IT×8` 物品欄位範圍內)——是 doc03 的 offset 基準與本輪指標差 8 bytes 系統性
-     誤差,還是本來就是「招式/技能」與「法術」兩張不同表,本輪未查證,標記待確認。
+   - `unit+0x1a..+0x1d` 是 FDFIELD magic_raw；`unit+0x22..+0x24` 是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。舊 offset 差異／兩張表待確認假說已刪除。
    - 但 `0x027fc9` 真正讀取的是 **`[esp+0xd0+counter]`**(offset 0xd0,與 `0xc8` 相差 8,且並非同一次
      `call 0x1c269` 填的緊密陣列——`0x1c269` 只填一個目標緩衝區),**這個陣列的填值來源本輪仍未追出**,
      是下一輪的直接切入點。

@@ -126,7 +126,7 @@
 **做了什麼**
 - **機制文件 5 篇**:`09` 劇情/對話結構、`10` 敵我/狀態繪製、`11` 戰場 AI、`12` 音樂播放/場景切換、`13` 戰場選單。
 - **AI**(`0x15140`):flood-fill 可達格 → 逐落點×逐目標評分(預期傷害/可擊殺×2/狀態×1.5/地形)→ 取最佳。
-- **選單**:Enter/Space 確認、ESC 取消、方向鍵游標(`[0x3C57]`);`Get_EasyMagic`(0x18ED0)讀 M1–M5 法術 bitfield。
+- **選單**:Enter/Space 確認、ESC 取消、方向鍵游標(`[0x3C57]`);`Get_EasyMagic` caller 已定位，但 magic raw/command schema 以 `unit+0x1a..+0x1d` 與 `0x1cff0` 為準，不能把 `+0x22..+0x24` 當 bitfield。
 - **音樂**:`play_bgm`(0x26777),`[0x1A11]`=目前曲、track=−1 停、否則載 `FDMUS[track]`;32 處呼叫得場景→曲號。
 - **LE 重定位 xref 工具**(`tools/le_xref.py`):解析 LE object/fixup 表,解開 DOS4GW 絕對位址重定位。
 - **劇情轉錄**:序章+第2+第3章(本機 `extracted/story/`),含說話者標註與主線伏筆(悠妮公主身份、葛雷/卡蘿娜)。

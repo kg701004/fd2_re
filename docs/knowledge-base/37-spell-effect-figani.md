@@ -1,17 +1,15 @@
 # 37 — 法術 id → FIGANI 特效動畫 id 對映(反組譯結論)
 
 > 任務:確認施法演出時「法術 id → FIGANI 特效動畫 id」的對映公式或表。
-> 結論(附位址,已視覺驗證):**這個對映不存在**——施法演出**不會**依法術 id 挑選另一段 FIGANI「特效」動畫;
-> 全程只播放施法者**自己**的職業/角色動畫(doc 06 既有公式 `unit[+7]×3`/`×3+1`),法術 id 只影響傷害數值與訊息文字,
-> 從未進入任何 FIGANI 載入或索引運算。與 doc 35 §0/§1、doc 06 一致,本篇是對「施法特效」子題的專項深挖與證偽。
+> 結論(附位址,已視覺驗證):目前沒有證據顯示 spell id 會挑選另一段 FIGANI「特效」動畫；施法演出會播放施法者自身的職業/角色動畫(doc 06 公式 `unit[+7]×3`/`×3+1`)。
+> 但 spell/command 仍會參與 target geometry、family selector、傷害/狀態與訊息等路徑（見 doc13 `0x1cff0→0x149f8`）；因此撤回「spell id 只影響傷害與文字」的過強斷言。本篇只證明沒有獨立 spell-id→FIGANI 索引，不宣稱完整 spell runtime 已閉合。
 
 ## 0. 追蹤路徑總覽
 
 ```
 選單施法 cmd byte(0..0xF=武器攻擊, 0x10+=法術)  [byte[esi+0x10], esi=0x4e56c(單位)取得的 FDICON 描述子]
   └─ cmd>=0x10 → spell_id = cmd-0x10           [0x0150d3]
-       ├─ call 0x149f8(x,y, edi0,edi1, &out, spell_id, 0)   ← 傷害/命中計算(讀 spell.json 表,0x557fd+id×7)
-       │     全函式(0x149f8–0x14e00 反組譯確認)不含任何 0x111ba / FIGANI(0x52388)呼叫 —— 傷害計算與畫面無關。
+       ├─ call 0x149f8(...)   ← target-candidate geometry/selector builder；不含任何 0x111ba / FIGANI 呼叫
        └─ 續行 0x01511c → 0x015168 → **call 0x28784(ebp)**   ← 施法演出,唯一參數 = 施法者 unit idx(ebp)
 ```
 
@@ -41,7 +39,7 @@
 
 ## 2. spell_id 實際流向(釐清「那 id 是拿去做什麼」)
 
-- **傷害/命中**:`0x149f8` 讀 `spell.json`(`0x557fd + id×7`:dmg/hit/dist/range/mp/target,doc03)。
+- **target/geometry**:`0x149f8` 沿格步進、篩選 unit index；其 selector 對 spell family 的完整對照仍待 RE。傷害/命中資料流不可由此函式單獨宣稱。
 - **戰鬥訊息**:`[0x51a83] = weapon_or_spell_type + 2`(`0x015139`/`0x0153aa`/`0x01d181` 等處一致寫法)→ 訊息索引,
   供 `0x12d7b`/`0x12cea` 印出戰鬥log文字(「OO 使用 XX 之術」),**與 FIGANI 無關**,純文字系統。
 - 兩者都不產生任何額外的 FIGANI 載入。

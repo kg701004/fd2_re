@@ -1,5 +1,6 @@
-// magic.go — 法術系統(doc 02/03/13):法術表 = EXE dump(spell.json,36 條),
-// 名稱依原版 M1–M5 bitfield 順序(青衫攻略 memory.md)。
+// magic.go — 法術系統(doc 02/03/13):法術表 = EXE dump(spell.json,36 條)。
+// Names/order are an editable normalized mapping; native unit+0x22..0x24
+// are modifier flags, not M1–M5 spell bitfields (see doc03/direct constructor trace).
 //
 // 公式依據(docs/knowledge-base/02-game-data-reference.md §4/§6,青衫攻略 notes.md/spell.md 交叉驗證):
 //   - §4.3 法術攻擊傷害:實際傷害 = 最大傷害 × 0.9 ～ 最大傷害-1(亂數,無條件捨去)。
@@ -37,7 +38,8 @@ type Spell struct {
 	Name   string
 }
 
-// spellNames 原版 M1–M5 bitfield 展開順序(青衫攻略;M4 7 招+補位、M5 4 招)。
+// spellNames is the current normalized spell ordering used by assets/UI; the
+// native raw magic bytes and command expansion still require RE closure.
 var spellNames = [36]string{
 	"火炎", "烈炎", "炎龍", "天火", "電擊", "落雷", "轟雷", "神雷",
 	"聖光彈", "咒殺", "碎岩", "地震", "裂地", "治療", "回復", "再生",

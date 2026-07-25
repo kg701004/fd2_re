@@ -52,7 +52,7 @@ type Unit struct {
 	Acted          bool   // 本回合已行動(原版 byte[+5] bit7)
 	Group          int    // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
 	OnField        bool   // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
-	Spells         []int  // 已習得法術 id(spell.json;原版 M1-M5 bitfield 展開)
+	Spells         []int  // normalized/editable spell IDs; not a raw unit+0x22 bitfield
 	Inventory      []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
 	Equipped       []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
 	InventorySlots []int  // 原始 8 個 source bytes；0xff 保留空槽位置

@@ -35,14 +35,12 @@
 
 ### `Get_EasyMagic` — 法術 / 狀態面板(已反組譯 `0x18ED0+`)
 
-EXE 內洩漏的函式名 `Get_EasyMagic`,位於 `0x18ED0` 起。逐一讀單位的 **5 組法術 bitfield
-`M1–M5`(結構 0x22–0x26)**,判斷該組是否已習得法術:
+EXE 內洩漏的函式名 `Get_EasyMagic`,位於 `0x18ED0` 起。舊文件曾把 runtime `unit+0x22..0x26` 誤標成 **5 組法術 bitfield**；constructor direct trace（`0x10f6b..0x10fa5`）已推翻此說：magic raw 是 `unit+0x1a..0x1d`，`+0x22/+0x23` 是 AP/DP×1.15 modifier、`+0x24` 是 DX/HIT+15 modifier。以下只保留函式名與 UI caller 的已證實部分，法術欄位對映維持 partial：
 
 ```
-for 第 k 組(0x22..0x26):
-    if  [ebx+0x22+k] != 0 :  顯示「可用」標記(glyph 0x77)
-    else                  :  顯示「不可用」標記(glyph 0x2A)
-    並繪出對應數值(HP [ebx+0x48] / MP [ebx+0x4C] 等)
+native magic raw / menu state:
+    由 `+0x1a..+0x1d` 與 `0x1cff0` command path 產生可選項
+    （`+0x22..+0x24` 不可當法術 bitfield）
 ```
 
 → 即玩家按「法術」時看到的面板:**哪幾系法術可用 + 目前 HP/MP**。繪字 / 數字用 `0x195D6`(在 320 寬 buffer 定位繪製)。實際施法時再由各組 bitfield 展開成可選法術清單(法術編號見 `02`/`03`)。
@@ -72,7 +70,7 @@ for 第 k 組(0x22..0x26):
 
 `0x1cff0` 會以 `[0x3c57]` 選中的 byte 從 local command array 取出 `0x4e516` record；record `+3` 是 command code，`+4` 參與 MP／費用欄位，`+6` 參與目標幾何。已釘死的分支：command `0x17` 走特殊 target geometry（`0x14818`，使用 record `+6`）；command `0x1e` 走 `record+3-0x10` → `0x149f8` 的 spell-family path；其他 command 走 `0x2a6bd` 或 `0x1d6c8` jump-table effect path，最後統一回 `0x1aa1d`／`0x1d4f6` 收尾。
 
-因此「法術 command 以 `command-0x10` 形成 spell id」已有 direct caller 證據；但 `0x149f8` 的 family-specific damage/target priority 與 jump-table 每項 effect 尚未完整 lower，remake 仍保持 partial。
+`0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 
@@ -113,12 +111,12 @@ for 第 k 組(0x22..0x26):
 | AA 行動狀態(00/01/80) | unit.state enum(idle/dead/done),回合結束條件 = 全 done |
 | flood-fill 移動範圍 | BFS/Dijkstra(MV + 地形成本)→ 高亮可走格 |
 | `[0x3C57]` 選單游標 + 方向鍵 | 選單元件,↑↓←→ 導航、Enter 確認、ESC 取消(見離開鐵則) |
-| Get_EasyMagic | 依已習得法術(M1–M5 bitfield)動態產生法術選單 |
+| Get_EasyMagic | 依 native magic raw／command inventory 動態產生法術選單（`+0x22..+0x24` 不是 bitfield） |
 | 選目標範圍判定 | 共用攻擊/法術 range + LOS 計算 |
 
 ## 待辦(後輪)
 - 反組譯選單繪製與選項表,確認確切選項與排列(2D 位置)。
 - ✅ 按鍵綁定(Enter/Space 確認、ESC 取消、方向鍵)— 已反組譯。
-- ✅ `Get_EasyMagic`(0x18ED0,讀 M1–M5 bitfield 顯示可用法術 + HP/MP)— 已反組譯。
+- [~] `Get_EasyMagic`(0x18ED0) 的 UI caller 已定位；magic raw=`+0x1a..+0x1d`、modifier flags=`+0x22..+0x24`，完整 bit 展開仍待重審。
 - 各選項的 enable gate 條件(已移動 / MP / 道具 / 攻擊範圍內有無目標)的完整反組譯。
 - 施法時各 bitfield → 可選法術清單的展開(法術編號見 `02`/`03`)。

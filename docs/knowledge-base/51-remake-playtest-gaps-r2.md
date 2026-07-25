@@ -33,13 +33,13 @@
   ③靜態反組譯 0x15356 傷害鏈上游的射程檢查,看它讀物品結構哪個 byte。→ 更新 doc32。
   dosbox BP trace 僅在上述三路都對不上(靜態臆測屢錯)時才 fallback,不是首選。
 
-## 3. 法術尚未實作
+## 3. 法術路徑 partial（歷史試玩快照已修正）
 
-- **症狀**:法術打不出來。
-- **根因(修正)**:其實**部分已接**——`spellOpen`/`castSp`/指令環 case 2 魔法/`drawSpellMenu`/`InCastRange` 都在,
+- **歷史症狀**:法術打不出來。現行 code 已接 `spellOpen`/`castSp`/指令環 case 1 法術/`drawSpellMenu`/`InCastRange`，但 native command/effect 仍未閉合。
+- **根因(修正)**:其實**部分已接**——`spellOpen`/`castSp`/指令環 case 1 魔法/`drawSpellMenu`/`InCastRange` 都在,
   悠妮 ch01 帶 spells[0,4,13]。缺的是**施法結算與演出**(選完目標後傷害/治療套用+全螢幕法術動畫)可能未完成或有 bug。
 - **原版行為**:doc13 `Get_EasyMagic`(0x18ED0)法術面板已反組譯;法術數值/範圍/效果表在 EXE(spell.json 已有)。
-- **對策**:順著現有 castSp 路徑補完:目標選定→扣 MP→套 spell 效果(傷害/治療/狀態,對齊青衫公式 doc02 §4)
+- **對策**:順著現有 castSp 路徑補 native 對照:目標選定→扣 MP→套 spell 效果(傷害/治療/狀態,對齊青衫公式 doc02 §4)
   →法術演出(暫用現有 atkAnim 框架或簡化閃光)。先讓「悠妮對敵放火球扣血」跑通,再補演出。
 - **RE**:低-中。效果公式青衫已有;施法射程/AOE 形狀若不確定 → dosbox 觀察。
 
