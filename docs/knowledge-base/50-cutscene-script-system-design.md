@@ -77,6 +77,10 @@
   `0x13937..0x13949` 依 pose 寫邏輯格：`0:Y+1, 1:X-1, 2:Y-1, 3:X+1`。所以**低7位拍數 = 該 frame 的格數**。
 - **bit7=1 特殊顯示**(`0x137c7/0x1370b`)：只寫 `+3`、重繪，**不搬格子**；低7位是原地顯示/節奏次數。
 
+其中 `bit7=1` 且低 7 位為 0 仍是有效 frame，不是 terminator：原版先寫入該 frame 的
+pose，經 delay(1)+地形/單位重繪，再 delay(2) 才進下一 frame。remake 以三個 runtime tick
+保留這個時序，並在每 tick 重寫 pose；不可把它當成零時間跳過。
+
 實機佐證：草地末段對 slot3 X 設保護模式寫入中斷，捕到 `4→5`；堆疊回溯到正常模式
 `0x1391e call 0x2c9ec`。因此 `decode_acting` 先前「acting 只設面向」的輸出語意錯，正確模型是：
 **acting 的正常 frame = `pose` 指定方向、`beat` 指定走幾格；特殊 frame = 原地姿態。**

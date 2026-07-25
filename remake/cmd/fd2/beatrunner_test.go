@@ -306,8 +306,12 @@ func TestBeatActingUsesOriginalSlotBeforeDuplicateFig(t *testing.T) {
 func TestBeatActingZeroSpecialPreservesOriginalThreeTickTransition(t *testing.T) {
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "act", Acting: []campaign.ActingFrame{{
 		Beats: 0, Special: true,
+		Units: []campaign.ActingUnit{{Fig: 0, Pose: 2}},
 	}}}})
 	g.beatAdvance()
+	if g.storyActors[0].Dir != 2 {
+		t.Fatalf("zero-special frame must apply native pose before delay, got dir=%d", g.storyActors[0].Dir)
+	}
 	g.tick(2)
 	if g.actJob == nil {
 		t.Fatal("zero-special frame advanced before original delay(1)+delay(2)")

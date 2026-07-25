@@ -684,6 +684,14 @@ func (g *Game) stepOriginalActing(j *actPoseJob) {
 		// 0x137c5 performs a terrain/unit composite bracketed by delay(1) and
 		// delay(2), then redraws. Ebiten redraws continuously, so retain its
 		// three-tick hold before advancing to preserve handler timing.
+		// The native loop writes pose (+3) before every redraw even for this
+		// zero-duration special frame.  Re-apply it here so a concurrent
+		// actor update cannot leave the frame with a stale direction.
+		for _, au := range f.Units {
+			if u := g.actingActor(au); u != nil {
+				u.Dir = au.Pose
+			}
+		}
 		j.tick++
 		if j.tick >= 3 {
 			g.nextActingFrame(j)

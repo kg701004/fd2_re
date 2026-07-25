@@ -501,9 +501,11 @@
 - [x] **過場腳本機制第一性原理解答(doc47)**(2026-07-04,使用者問「RE 為何沒還原 staging」,旗艦親做):
       方案 b 證偽=FDTXT 純對話碼無 staging;方案 a=序章 handler 0x3231b 逐 beat 全轉錄。
       原語翻新:0x135dd=平滑鏡頭平移、0x15f84=對白播放器(doc23 舊判「逐格貼圖」誤)、
-      0x1366a=演出(acting)播放器(格式已破,資源容器未定位)、0x112a5=入隊(0/9/4/30)。
+      0x1366a=演出(acting)播放器（direct bank 格式與 106 筆資源已解出；normal=逐格搬移、
+      special=原地 pose，zero-special 保留三 tick 時序）、0x112a5=入隊(0/9/4/30)。
       重大:王城→草地=同 map32 鏡頭平移轉場非淡出換景;對白與演出逐條交錯;海島幕 3 個平移點。
-      → remake 修正指示 doc47 §4;未解(acting 容器/0x627d8 填表)doc47 §5
+      → remake 修正指示 doc47 §4；尚待逐章把 direct acting 資源接入可編輯 cutscene 節點，
+      並以實機截圖核對 renderer/presentation 差異（不猜測性補 handler 語意）。
 - [~] **王座廳 NPC 擺位**(cutscene-bg 執行中):國王/王后坐王座 + 索爾站紅毯中央,對照 f_006.png;
       story 節點加 actor 擺位欄。RE 查 FDFIELD 組32 是否帶 NPC roster(sprite id/cell 直接來自原版)
 - [x] **ch21/ch22 pre-handler**：FDTXT_022 index0（11句）與 map21/70-slot、pan(16,28)、acting67 已接 editable binding；`story_ch22` 已接回原版 pre-handler，compiler/campaign/battle regression 通過。
