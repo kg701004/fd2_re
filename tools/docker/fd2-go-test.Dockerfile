@@ -6,7 +6,7 @@ ENV PATH=/usr/local/go/bin:${PATH}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        pkg-config libasound2-dev xorg-dev libgl1-mesa-dev \
+        pkg-config libasound2-dev xorg-dev libgl1-mesa-dev xvfb xauth \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src/remake

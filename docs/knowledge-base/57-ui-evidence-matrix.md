@@ -71,8 +71,11 @@ available cells=`[0,2,4,6]`，disabled cells=`[3,5,7,9]`。先前把 `0x1728c` �
 `[0x12+(byte_51e61==0),0x14+(byte_51e62==0),0x16+(byte_53af9!=0),0x18+(byte_51aab==0)]`
 套到 battle action 是錯誤；該 caller 選中方向後只切換這些 byte state 並重畫自己的巢狀四向 menu。
 `fdother.BattleActionOverlayState` 現以 unit test 固化真正 battle table；它不替這個另一個 submenu
-的四個 byte 命名。runtime indexed renderer 與實機 skin visual-diff 仍未完成，不能把現有文字 ring
-稱為原版皮膚。
+的四個 byte 命名。remake runtime 現可選擇性讀玩家自己的 `FD2_ORIGINAL_FDOTHER`／
+`assets/original/FDOTHER.DAT`：FDOTHER#0 的 6-bit VGA palette 轉為透明 index-0 palette，#2 的 raw
+cells 0..9 以 final open frame 幾何直接貼到 cursor。這不包含原版 asset，也不把 current remake 的
+attack/spell/item availability approximation 說成 native `0x1b83d/0x1c269/0x1b8a6` 全等價；open/close
+動畫與 DOSBox skin visual-diff 仍待驗證。
 
 2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
 的共同地址為 `framebuffer + 0x8088 + 0x18*cursorColumn + (0x18*0x1c8)*cursorRow`。

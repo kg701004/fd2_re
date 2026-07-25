@@ -35,6 +35,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 const (
@@ -126,7 +127,8 @@ type Game struct {
 	// radial 指令環(原版 [0x3C57]:↑0=攻擊/←1=法術/→2=物品/↓3=待機)
 	ring               bool
 	ringSel            int
-	ringIcons          [4]*ebiten.Image // 0上=攻擊 1左=法術 2右=物品 3下=待機；圖示資源語意仍待 native table
+	ringIcons          [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
+	nativeActionCells  [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	spellOpen          bool
 	spellSel           int
 	castSp             *battle.Spell // 施法目標選擇中
@@ -3744,7 +3746,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
-// drawRing radial 指令環(原版 4 圖示十字繞單位,orig_04;圖示=原版截圖裁出素材)。
+// drawRing shows the native FDOTHER #2 action overlay when the player has
+// supplied FDOTHER.DAT. The historical PNG ring remains a fail-closed fallback.
 func (g *Game) drawRing(screen *ebiten.Image) {
 	if !g.ring || g.sel == nil || g.m == nil {
 		return
@@ -3752,6 +3755,9 @@ func (g *Game) drawRing(screen *ebiten.Image) {
 	tw, th := g.m.TileW, g.m.TileH
 	ux := float64(g.sel.X*tw) - g.camX
 	uy := float64(g.sel.Y*th) - g.camY
+	if g.drawNativeActionOverlay(screen, ux, uy) {
+		return
+	}
 	// 行動中單位標記 + 補畫其 sprite 在最上層:部署較密的隊形下,鄰格友軍的 sprite
 	// 可能探進環的中央空隙,讓人誤以為環中央是別的角色(playfix #5)。用橘色底標記
 	// 「這是誰在動」+ 把 g.sel 自己的 sprite 疊到最上層,消除歧義。
@@ -3791,6 +3797,60 @@ func (g *Game) drawRing(screen *ebiten.Image) {
 		op.GeoM.Translate(x, y)
 		screen.DrawImage(ic, op)
 	}
+}
+
+func (g *Game) actionOverlayAvailability() [4]int {
+	availability := [4]int{}
+	if g.sel == nil || g.st == nil {
+		return [4]int{1, 1, 1, 1}
+	}
+	attack := false
+	for _, unit := range g.st.Units {
+		if unit.OnField && unit.HP > 0 && unit.Camp != battle.Own && g.st.InAttackRange(g.sel, unit.X, unit.Y) {
+			attack = true
+			break
+		}
+	}
+	if !attack {
+		availability[0] = 1
+	}
+	if g.sel.Sealed || len(g.sel.Spells) == 0 {
+		availability[1] = 1
+	}
+	if len(g.sel.Inventory) == 0 {
+		availability[2] = 1
+	}
+	return availability
+}
+
+func nativeActionOffsetXY(offset int) (int, int) {
+	const stride = 0x1c8
+	y, x := offset/stride, offset%stride
+	if x > stride/2 {
+		x -= stride
+		y++
+	}
+	return x, y
+}
+
+func (g *Game) drawNativeActionOverlay(screen *ebiten.Image, cursorX, cursorY float64) bool {
+	state := fdother.BattleActionOverlayState(g.actionOverlayAvailability())
+	offsets, err := fdother.ActionOverlayFrameOffsets(3, false)
+	if err != nil {
+		return false
+	}
+	for direction, offset := range offsets {
+		index, err := state.CellIndex(direction)
+		if err != nil || index >= len(g.nativeActionCells) || g.nativeActionCells[index] == nil {
+			return false
+		}
+		dx, dy := nativeActionOffsetXY(offset)
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(2, 2)
+		op.GeoM.Translate(cursorX+float64(dx*2), cursorY+float64(dy*2))
+		screen.DrawImage(g.nativeActionCells[index], op)
+	}
+	return true
 }
 
 // drawSpellMenu 法術選單(名稱 + MP;↑↓選、Enter 施放、ESC 回環)。
@@ -4357,6 +4417,48 @@ func (g *Game) Layout(outsideW, outsideH int) (int, int) {
 	return logicalW, logicalH
 }
 
+// nativeFDOTHERPath opts into original UI data without distributing it. A
+// player may point FD2_ORIGINAL_FDOTHER at their own FLAME2/FDOTHER.DAT, or
+// install it as the user-overridable assets/original/FDOTHER.DAT.
+func nativeFDOTHERPath() string {
+	if path := os.Getenv("FD2_ORIGINAL_FDOTHER"); path != "" {
+		return path
+	}
+	path := assetPath("assets/original/FDOTHER.DAT")
+	if fileExists(path) {
+		return path
+	}
+	return ""
+}
+
+func loadNativeActionCells() [10]*ebiten.Image {
+	var out [10]*ebiten.Image
+	datPath := nativeFDOTHERPath()
+	if datPath == "" {
+		return out
+	}
+	paletteRaw, err := fdother.ReadResource(datPath, 0)
+	if err != nil {
+		return out
+	}
+	palette, err := fdother.ParseVGAPalette(paletteRaw)
+	if err != nil {
+		return out
+	}
+	cells, err := fdother.DecodeRawCellResource(datPath, 2)
+	if err != nil || len(cells) < len(out) {
+		return out
+	}
+	for i := range out {
+		im, err := cells[i].Paletted(palette)
+		if err != nil {
+			return [10]*ebiten.Image{}
+		}
+		out[i] = ebiten.NewImageFromImage(im)
+	}
+	return out
+}
+
 func loadGame() *Game {
 	g := &Game{shotFrame: 20}
 	g.bgmSource = loadSettings().BGMSource // 音源設定(預設 fm=Sound Blaster)
@@ -4418,6 +4520,7 @@ func loadGame() *Game {
 	g.portraits = loadPortraits()
 	g.figani = loadFIGANI()
 	g.figMeta = loadFigMeta()
+	g.nativeActionCells = loadNativeActionCells()
 	if raw, e := os.ReadFile(assetPath("assets/bg/bg.png")); e == nil { // 戰鬥背景(BG.DAT)
 		if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {
 			g.bg = ebiten.NewImageFromImage(im)
