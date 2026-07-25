@@ -114,7 +114,7 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
 
-玩家 table 的 IDs9..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
+玩家 table 的 IDs0..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
 `record.u16[+0] * resist_raw[unit+0x20] / 10` 為 base；constructor `0x10f7f/0x11399` 直接把 source
 class byte 寫入 `unit+0x20`，故這是 target class-ID-indexed table，而非未明角色欄位。這些 handler 以 `record[+2]` 做 `rand()%100`
 命中門檻；命中才呼叫後者。`0x1c81f` 算 `damage = floor(base*0.9) + floor((rand()%100)*base/1000)`，
@@ -125,16 +125,16 @@ IDA `word_51f96` 的 loaded-data file offset 正是既有 `0x51d96` 職業魔抗
 resolver。`remake/assets/data/native_command_resistances.json` 是同一 raw table 的可編輯 runtime copy；target
 geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。
 
-玩家 dispatch 的可達性已重新核對：`0x1cff0` 對 IDs 0..8 直接呼叫 `0x2a6bd`，並不經 table 內雖存在的
-`0x21227/0x213b7` wrappers。尚未在 `0x2a6bd` 取得 ID0 的 state writer dataflow，故舊的
-`ExecuteNativeCommand0`、ID0 target UI 與「IDs0..8 共用 numeric damage」斷言都已移除；原始 grid 對這些 ID
-明確 fail-closed，不能再以 normalized spell 或 numeric resolver 代替。
+玩家 dispatch 的可達性已重新核對：`0x1cff0` 對 IDs0..8 直接呼叫 `0x2a6bd`，沒有經 table 內的
+`0x21227/0x213b7` wrappers；但 `0x2a6bd` 不是純 renderer：它先經 `sub_2b659` 的 MP event，final-target loop
+直接以 array slot 和 command ID 呼叫 `0x1c75e(targetSlot, commandID)`。因此 IDs0..8 與 ID9 direct path、及
+IDs10..12 compositor tail 都已閉合為同一 numeric/MP/success-acted contract；dispatch 分流不表示 state effect
+缺失，也不表示 renderer 等同。
 
-`State.ExecuteNativeCommandDamage` 僅支援真正由玩家 table dispatch 到數值 writer 的 IDs9..12：ID9 直接
-`0x1CA89→0x1C75E`，IDs10..12 經 `0x21548` indexed compositor 後執行同一 MP debit／逐 final target writer。
-它以 strict raw record、兩階段 target、class multiplier/hit/HP clamp 和 success-only `Acted` 做 non-UI engine
-slice；任何缺 flags、record、candidate 或 resistance row 都在 mutation 前拒絕。renderer、SFX、post-resolution
-與這些 ID 的 UI 仍未接入，不能由數值共用推論 presentation equivalence。
+`State.ExecuteNativeCommandDamage` 嚴格支援 IDs0..12，以 raw record、兩階段 target、class multiplier/hit/HP
+clamp 和 success-only `Acted` 做 bounded engine slice。`ExecuteBoundNativeCommand0`／raw-grid ID0 target slice
+只接此 state core；缺 flags、record、candidate 或 resistance row 均在 mutation 前拒絕。專用 renderer、SFX、
+post-resolution、其他 ID UI 與 screenshot oracle 仍未完成。
 
 IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handlers
 `0x21AD9/0x21B99/0x2211C/0x22153` 各以 ID `13/14/15/16` 和各自的演出參數跳到共同

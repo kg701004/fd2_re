@@ -133,6 +133,7 @@ type Game struct {
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
+	nativeCommand0Targeting  bool
 	spellOpen                bool
 	spellSel                 int
 	castSp                   *battle.Spell // 施法目標選擇中
@@ -2484,6 +2485,18 @@ func (g *Game) ringInput() bool {
 		}
 		if enter && g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) {
 			id := ids[g.nativeCommandSel]
+			if id == 0 && g.st != nil && len(g.st.NativeCommandBook) == 36 && len(g.st.NativeCommandResistances) > 0 {
+				record := g.st.NativeCommandBook[0]
+				if g.sel.MP < record.MPCost {
+					g.msg = "MP 不足!"
+					return true
+				}
+				if _, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
+					g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
+					g.msg = "原始指令 0：選擇目標"
+					return true
+				}
+			}
 			// Do not translate a raw command ID into legacy CastArea.  Native
 			// 0x1cff0 is two-stage: record+3 picks a cursor candidate, then
 			// record+4 builds the final effect list from the confirmed cursor.
@@ -3068,6 +3081,27 @@ func (g *Game) confirm() {
 		g.checkResult()
 		return
 	}
+	if g.nativeCommand0Targeting {
+		tgt := g.st.UnitAt(g.curX, g.curY)
+		results, err := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.rng)
+		if err != nil {
+			g.msg = "原始指令 0：請選擇有效目標"
+			return
+		}
+		hit, total := 0, 0
+		for _, result := range results {
+			if result.Hit {
+				hit++
+				total += result.Damage
+			}
+			g.awardDeathReward(result.Target, g.sel)
+		}
+		g.sel.Dir = dirToward(g.sel.X, g.sel.Y, g.curX, g.curY)
+		g.msg = fmt.Sprintf("原始指令 0：命中 %d，傷害 %d", hit, total)
+		g.nativeCommand0Targeting, g.sel, g.reach, g.moved = false, nil, nil, false
+		g.checkResult()
+		return
+	}
 	if !g.moved { // 移動階段
 		switch {
 		case g.curX == g.sel.X && g.curY == g.sel.Y: // 原地 → 不移動,開指令環
@@ -3419,9 +3453,9 @@ func (g *Game) Update() error {
 		}
 		return nil
 	}
-	if g.castSp != nil { // spell target selection: ESC 回 command grid
+	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-			g.castSp, g.nativeCommandOpen = nil, true
+			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true
 			return nil
 		}
 	}
@@ -3594,6 +3628,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						op.GeoM.Translate(float64(x*tw)-g.camX, float64(y*th)-g.camY)
 						target.DrawImage(ch, op)
 					}
+				}
+			}
+		}
+		if g.nativeCommand0Targeting && g.sel != nil && len(g.st.NativeCommandBook) == 36 {
+			record := g.st.NativeCommandBook[0]
+			if targets, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
+				ch := ebiten.NewImage(tw, th)
+				ch.Fill(color.RGBA{0xff, 0x80, 0x20, 0x68})
+				for _, target := range targets {
+					op := &ebiten.DrawImageOptions{}
+					op.GeoM.Translate(float64(target.X*tw)-g.camX, float64(target.Y*th)-g.camY)
+					target.DrawImage(ch, op)
 				}
 			}
 		}

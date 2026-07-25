@@ -13,17 +13,27 @@ type NativeCommandDamageResult struct {
 	NativeCommandDamage
 }
 
+// ExecuteBoundNativeCommand0 uses the state-bound verified resistance table.
+// A missing table remains fail-closed rather than falling back to the legacy
+// normalized magic approximation.
+func (s *State) ExecuteBoundNativeCommand0(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommandDamageResult, error) {
+	if s == nil || len(s.NativeCommandResistances) == 0 {
+		return nil, fmt.Errorf("native command 0 resistances unavailable")
+	}
+	return s.ExecuteNativeCommandDamage(actor, confirmed, 0, s.NativeCommandResistances, rng)
+}
+
 // ExecuteNativeCommandDamage covers the byte-for-byte numeric route proven
-// for player-dispatched command IDs 9..12. ID9 directly invokes
-// 0x1CA89 -> 0x1C75E; IDs10..12 run their distinct indexed compositor
-// (0x21548) before the same state sequence. IDs0..8 instead dispatch directly
-// to 0x2A6BD, whose gameplay writer has not been recovered, so they stay
-// fail-closed.
+// for player-dispatched command IDs 0..12. IDs0..8 dispatch directly to
+// 0x2A6BD, which runs sub_2B659's MP event and its final-target loop directly
+// calls 0x1C75E(targetSlot, commandID). ID9 invokes 0x1CA89 -> 0x1C75E;
+// IDs10..12 run their distinct indexed compositor (0x21548) before the same
+// state sequence. Other IDs stay fail-closed.
 func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int, resistByClass map[int]int, rng *rand.Rand) ([]NativeCommandDamageResult, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command state/rng")
 	}
-	if commandID < 9 || commandID > 12 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if commandID < 0 || commandID > 12 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
