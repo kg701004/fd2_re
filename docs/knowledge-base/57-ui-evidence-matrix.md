@@ -82,6 +82,11 @@ tile flag 與 record byte table 的 cost gate 擴張。此 raw mode 的玩法名
 `record+6` 作 selector。因此一般 path 不會在這一 call 新畫 diamond，而是消費前序已建立的
 marker grid。`record+3/+4` 仍不能在未追到 producer 前命名為 weapon min/max。
 
+該 record 的 producer 已定位：`0x1cff0` 將選單結果 ID 傳給 `0x4e516`，而
+`0x4e516(id) = 0x619fd + 7*id`。因此 `+3/+4/+6` 是靜態 7-byte command ABI 的欄位，
+不是這個 handler 自行組出的暫存結構；在有 field-name 或實機資料對照前，仍以 raw offset
+記錄，不擅自命名成攻擊／法術的 min/max range。
+
 `0x4e040` 並非僅由這個 target caller 使用：`0x14344` 先以 unit `+0x20`（fallback record
 `0x13`）透過 `0x4e555` 取另一個 20-byte record，再把 map grid、terrain table 一併傳入。
 其內層 `0x4e16e` 讀 tile flag 與該 record 的 byte table 後決定是否擴張。故目前可用的

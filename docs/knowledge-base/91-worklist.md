@@ -591,7 +591,8 @@
       作格點 gate，故 SDD 必須保留 table+terrain+marker，而不能以單一 diamond 實作。
       `0x1cff0` stack-dataflow 亦已固定參數為 `(x,y,out,mode,radius,campSelector)`：special `0x17` 用
       `record+3`/radius 1，一般 path 用 `record+4`/radius 0 並消費既有 marker。尚未將這些 producer
-      同武器 `range_min/range_max` table 完整對位，故不改寫為「所有武器 max inclusive」或 LOS 定論。
+      同武器 `range_min/range_max` table 完整對位；record producer 已鎖為 `0x4e516(id)=0x619fd+7*id`，
+      故 `+3/+4/+6` 是 command ABI raw fields，仍不改寫為「所有武器 max inclusive」或 LOS 定論。
 - [~] **UI-03 battle selector input**：Docker/Capstone 重檢 `0x19953`，確認它呼叫 `0x36d98` 讀 ASCII/scancode；Enter/Space/`0xe0`/`0x52` family 走確認回傳、`0x01`/`0x53` family 走取消回傳，`0x4b`/`0x4d` 更新左右選擇狀態。這是 battle selector 的 E0 input ABI，不等於已閉合 action enable/end-turn 或 D8 行軍確認。
 - [~] **SDD-2 campaign transition matrix**：已從 `campaign_full.json` 逐一展開 30 個 battle 的 `on_win`，
       明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入
