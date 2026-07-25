@@ -262,6 +262,7 @@
 - [~] **native command ID0 UI slice**：raw four-row grid 的 ID0 現可進 verified `+3` candidate highlight、Enter two-stage core、ESC 回 grid；成功才設 acted。只有 ID0，未接 native compositor/post-resolution、full visual diff 或其他 IDs，仍不可稱 command system complete。
 - [x] **shared native damage route IDs0..9**：IDA `sub_2134B/364/37D`、`21449/462/47B` 與 `21494` 皆進 shared `21227/213B7`，ID9 亦 direct `1CA89→1C75E`；同樣扣 MP、逐 target numeric writer、success acted。engine bounded support 0..9，UI 未擴張。
 - [~] **native command ID10 boundary**：ID10 jump-table callee `0x21527→0x21548` 已確認為 320×200/640-stride indexed compositor、unit redraw/tick 的大型演出路徑；尚未定位獨立 gameplay state writer，禁止沿用 IDs0..9 numeric executor。
+- [~] **native command IDs10..12 compositor family**：ID11 `0x2185F`、ID12 `0x21A9E` 都以參數後跳 `0x2153B→0x21548`；`0x2189A/219AD` 是 indexed scroll/composite helper。先追 family 後續 effect/state helper，不能以畫面演出當作傷害或 status 證據。
 - [x] **scenario native command-mask bridge**：`PartyMember.initial_command_mask` 已接 exact four-byte source，loader 對 malformed length fail-closed；`gen_campaign.py` 從 EXE `character_defaults.json` 依角色 index 合併至 ch01..ch30 而不覆寫既有手工 scenario 欄位。戰後 persistent snapshot 也保留完整五-byte runtime mask，level-up OR 不會跨 town/preparation 消失。ch01 悠妮 `[1,0,0,0]` 有 per-scenario materialization regression；不可由 normalized `Spells` 反造 raw bytes。待：逐章真機 availability 對照、未知 command effect／frame renderer。
 - [~] **魔法系統**（資料表與基礎 Cast 已接，native command/effect 尚未閉合）:magic.go(spells.json=EXE dump 36條+normalized spell names;InCastRange/Cast
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
