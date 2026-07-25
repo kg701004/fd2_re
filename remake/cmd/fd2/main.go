@@ -4518,6 +4518,33 @@ func loadNativeActionCells() [10]*ebiten.Image {
 	return out
 }
 
+// loadNativeCommandLabels reads the editable export of FDTXT_000 command
+// labels. It is optional because the export is player-provided original text;
+// absence deliberately leaves the normalized presentation names intact.
+func loadNativeCommandLabels() map[int]string {
+	path := assetPath("assets/data/command_labels.json")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var document struct {
+		Entries []struct {
+			CommandID int    `json:"command_id"`
+			Label     string `json:"label"`
+		} `json:"entries"`
+	}
+	if err := json.Unmarshal(raw, &document); err != nil {
+		return nil
+	}
+	labels := make(map[int]string, len(document.Entries))
+	for _, entry := range document.Entries {
+		if entry.CommandID >= 0 && entry.CommandID < 40 && entry.Label != "" {
+			labels[entry.CommandID] = entry.Label
+		}
+	}
+	return labels
+}
+
 func loadGame() *Game {
 	g := &Game{shotFrame: 20}
 	g.bgmSource = loadSettings().BGMSource // 音源設定(預設 fm=Sound Blaster)
@@ -4611,6 +4638,12 @@ func loadGame() *Game {
 		}
 	}
 	if sp, e := battle.LoadSpells(assetPath("assets/spells.json")); e == nil { // 法術表(EXE dump)
+		labels := loadNativeCommandLabels()
+		for i := range sp {
+			if label := labels[sp[i].ID]; label != "" {
+				sp[i].Name = label
+			}
+		}
 		g.spells = sp
 		if g.st != nil {
 			g.st.SpellBook = append([]battle.Spell(nil), sp...)
