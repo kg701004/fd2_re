@@ -44,6 +44,22 @@ attack pipeline、1 走 `0x1cff0` command selector、2 走 `0x1bbdc` item select
 [ebx+0x27]` 是 UI resource frame index，並非 unit access。尚未定位此 byte 的寫入者／遊戲名稱，
 故不得稱其為沉默、封魔或任一 status effect。
 
+### UI-03 action overlay/input closure（2026-07-25，E0 partial）
+
+`0x173e7` 先由四個 availability words 找第一個零值，寫 global current action `[0x53c57]`。
+`0x177fc` 的 input loop 再以同一四-word state 拒絕不可用方向：scancode `0x48/0x4b/0x4d/0x50`
+分別只在 word `0/1/2/3 == 0` 時選擇 `↑/←/→/↓` action `0/1/2/3`；`0x1c`/`0x39`
+（Enter/Space）回 confirm，`0x01` 回 `-1` cancel。這是 command-grid `0x1d51d` 以外的 action
+chooser ABI，現有 remake ring 的四向 mapping 只可作 interaction approximation。
+
+renderer `0x1741c` 以 `[0x53a89]` 的 relative asset table 選四張 state-dependent images，透過
+`0x4e9e4` 寫入 indexed overlay。它不是瞬間顯示：四張都從 shared origin `+0x390` 開始，每次
+present 後 4-frame slide 分別更新 offset `up -= 0x8e8`（5 native rows）、`left -= 6`、
+`right += 6`、`down += 0x8e8`。`0x175a9` 在開啟前備份 72×72 bytes（`0x1440`）到 private buffer，
+`0x17643` 在每幀 restore；`0x176b4` 是相反的關閉 transition。這證實十字狀 indexed overlay、方向
+與節奏，尚未定位 `[0x53a89]` 的 archive/resource provenance 或 exact screen anchor，不能宣稱
+完成原版圖示／皮膚，也不能把它降格成一般文字 ring。
+
 ## 明確缺口（不可用 fallback 掩蓋）
 
 - `item` action 仍是提示字串，不能宣稱道具 UI 完成。
