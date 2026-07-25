@@ -206,6 +206,11 @@ raw byte。restore 精確算 `amount*9/10 + rand()%100*amount/1000`、HP cap，�
 HP delta，避免把原版 display number 誤當 mutation。empty flag 不 restore，但 successful handler 仍 debit MP/complete
 actor；不映射 legacy named status/UI。
 
+`State.ExecuteNativeCommandHeal` 現對 IDs13..16 接 strict non-UI core：每個 ID 只使用自己的 raw record
+完成 generic two-stage targets、MP debit、並以同 record `u16 damage` 走 `0x1C916` restore/cap；成功後 actor 才
+acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，並不因共用 restore primitive 而推論
+`0x1C4CC/0x1C2DA` 專用演出、SFX、message 或 UI 已完成。
+
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
