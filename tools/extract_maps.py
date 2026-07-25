@@ -16,7 +16,7 @@ import glob
 import struct
 
 sys.path.insert(0, os.path.dirname(__file__))
-from render_map import decode_tileset, load_palette, _bgrle  # noqa
+from render_map import decode_tileset, load_palette
 from PIL import Image
 
 
