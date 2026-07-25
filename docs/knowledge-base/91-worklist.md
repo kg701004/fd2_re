@@ -597,9 +597,9 @@
       升格成 legacy spell effect。ID0 的 `0x2a6bd` entry 也只閉合 compositor（`funcs_2ac25[0]=0x26152`），
       尚未定位 HP/status writer。`0x1b6b7→0x1aa1d` 已排除為該 writer：前者只收集符合 post-resolution
       條件的 runtime record 三-byte資料，後者處理其後續訊息／掉落／互動。
-      `0x1c75e→0x1c81f` 現已釘 command0 hit/damage：record `u16+0`×unit`+0x20` multiplier/10，
+      `0x1c75e→0x1c81f` 現已釘 command0 hit/damage：record `u16+0`×target class-ID（unit`+0x20`）multiplier/10，
       `rand()%100 < record+2`，命中後以 90..99.9% base 扣 `unit+0x40` 並 clamp0（`+0x42` 是 HP cap）。
-      multiplier identity／完整 target family 仍待，尚不可直接替換為 legacy magic formula。
+      multiplier table gameplay identity／完整 target family 仍待，尚不可直接替換為 legacy magic formula。
       selector `0x1d51d` 已鎖每欄四列的 variable-column grid：↑/↓ linear wrap、←/→ ±4、Enter/Space 重查
       MP gate、Esc cancel；`0x1ceed` 再鎖 x/y formula 與 label index=`0x1b9+commandID`。常駐 table
       已對齊 FDTXT_000，40 個 physical label slots 已由 `tools/export_command_labels.py` 匯出為

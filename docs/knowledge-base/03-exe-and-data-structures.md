@@ -19,7 +19,10 @@
 | 0x12 | IT×8 | 物品，各 2 byte = 狀態 + 編號；狀態 40=裝備 00=持有 80=空 |
 | 0x1A | initial_command_mask(4) | FDFIELD b13..b16 複製到 runtime command bitset 的 bytes 0..3（command IDs 0..31）；個別 ID 的玩法語意仍待對照 |
 | 0x22 | raw modifier bytes | constructor 先清零；後續流程使用 `+0x22/+0x23` 的 AP/DP×1.15 旗標與 `+0x24` 的 DX/HIT+15 旗標，並非法術 bitfield |
-| 0x27 | RA,CL,LV | 種族 / 職業 / 等級 |
+| 0x1F | race | constructor `0x10f7f/0x11399` 由 source byte0 寫入 |
+| 0x20 | class ID | constructor 由 source byte1 寫入；`0x1c75e` 用作 command damage multiplier table index |
+| 0x21 | level | constructor 由 source level 寫入 |
+| 0x27 | raw / 未重判 | 舊「RA,CL,LV」標記與 direct constructor ABI 衝突，已撤回 |
 | 0x2A | A+,D+,H+,-H,XA,XM | 增強 / 中毒 / 麻痺 / 封咒狀態旗標 |
 | 0x3F | MT | 力量(影響 AP) |
 | 0x40 | current HP(2) | `0x1c81f` 直接讀／減寫並向下 clamp 0；舊稱 DF 為錯誤斷言，已撤回 |

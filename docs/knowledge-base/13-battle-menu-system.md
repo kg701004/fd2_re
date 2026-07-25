@@ -72,7 +72,7 @@ native magic raw / menu state:
 
 官方 IDA 9.4 的 `0x1d3f3` dispatch 再釘細一層：target confirm 後 command ID `0..8`、`0x18`、以及 `>=0x1c` 直接呼叫 `0x2a6bd(unit, commandID, target, scratch)`；ID `0x09..0x17` 與 `0x19..0x1b` 則先以 `0x1d6c8(commandID)` 做四輪 palette flicker，再呼叫 `funcs_1541f[commandID]` effect jump table。故悠妮 source mask 的 command 0 已能證實進 generic effect pipeline，卻尚未證實其效果名、傷害公式或等同 legacy `Spells[0]`；remake 對 unknown effect 必須繼續 fail-closed。
 
-後續 direct dataflow 已閉合 command 0 的數值 writer：`0x2a6bd` 對每個 target 呼叫 `0x1c75e(target,commandID)`；它讀 command record `u16+0`／byte `+2`，以 unit `+0x20` 索引的 multiplier 形成 base、擲 `rand()%100 < record[+2]`，命中才由 `0x1c81f` 以 90% 加 0..9.9% random 的整數值扣 target `+0x40`，clamp 0。這是 native damage/HP ABI；`+0x20` multiplier 的語意、command0 effect name、target family與 normalized spell equivalence 尚未證實。
+後續 direct dataflow 已閉合 command 0 的數值 writer：`0x2a6bd` 對每個 target 呼叫 `0x1c75e(target,commandID)`；它讀 command record `u16+0`／byte `+2`，以 target class ID（constructor 寫入 unit `+0x20`）索引 multiplier table 形成 base、擲 `rand()%100 < record[+2]`，命中才由 `0x1c81f` 以 90% 加 0..9.9% random 的整數值扣 target `+0x40`，clamp 0。這是 native damage/HP ABI；class multiplier 的玩法名稱、command0 effect name、target family與 normalized spell equivalence 尚未證實。
 
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 
