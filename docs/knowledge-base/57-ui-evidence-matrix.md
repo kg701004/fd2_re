@@ -77,6 +77,11 @@ cells 0..9 以 final open frame 幾何直接貼到 cursor。這不包含原版 a
 attack/spell/item availability approximation 說成 native `0x1b83d/0x1c269/0x1b8a6` 全等價；open/close
 動畫與 DOSBox skin visual-diff 仍待驗證。
 
+2026-07-25 renderer gate 縮小：native skin adapter 現至少直接套用 `0x1b83d` 的「equipped 且
+ID `<0x80`」attack 前提，並在 raw `NativeCommandMask` 非零時以其作 spell availability；沒有 raw
+mask 的舊 editable scenario 才退回 normalized `Spells`。attack target geometry、`unit+0x27` 的名稱及
+item effect 仍未閉合，因此這不是 native gate 全等價。
+
 2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
 的共同地址為 `framebuffer + 0x8088 + 0x18*cursorColumn + (0x18*0x1c8)*cursorRow`。
 `0x11bfa/0x11c59` 的 cursor movement 證明 `[0x53ab9]/[0x53abd]` 是這對可視 cursor coordinates：

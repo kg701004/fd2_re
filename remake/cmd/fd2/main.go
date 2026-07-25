@@ -3805,22 +3805,57 @@ func (g *Game) actionOverlayAvailability() [4]int {
 		return [4]int{1, 1, 1, 1}
 	}
 	attack := false
-	for _, unit := range g.st.Units {
-		if unit.OnField && unit.HP > 0 && unit.Camp != battle.Own && g.st.InAttackRange(g.sel, unit.X, unit.Y) {
-			attack = true
-			break
+	// 0x1b83d first requires an equipped inventory entry whose ID is < 0x80.
+	// The following target geometry is still the current remake range model;
+	// the original item-record +0xb/+0xc calculation is not yet an adapter.
+	if hasNativeEquippedWeapon(g.sel) {
+		for _, unit := range g.st.Units {
+			if unit.OnField && unit.HP > 0 && unit.Camp != battle.Own && g.st.InAttackRange(g.sel, unit.X, unit.Y) {
+				attack = true
+				break
+			}
 		}
 	}
 	if !attack {
 		availability[0] = 1
 	}
-	if g.sel.Sealed || len(g.sel.Spells) == 0 {
+	if g.sel.Sealed || !hasNativeCommandOrEditableSpell(g.sel) {
 		availability[1] = 1
 	}
 	if len(g.sel.Inventory) == 0 {
 		availability[2] = 1
 	}
 	return availability
+}
+
+// hasNativeEquippedWeapon is the recovered 0x1b83d inventory precondition.
+// Inventory/Equipped are the remake's compact projection of the native eight
+// slots; a missing equipped entry is deliberately not treated as a weapon.
+func hasNativeEquippedWeapon(unit *battle.Unit) bool {
+	if unit == nil {
+		return false
+	}
+	for i, itemID := range unit.Inventory {
+		if itemID >= 0 && itemID < 0x80 && i < len(unit.Equipped) && unit.Equipped[i] {
+			return true
+		}
+	}
+	return false
+}
+
+// hasNativeCommandOrEditableSpell uses the exact 0x1c269 bit inventory when
+// editable scenario data supplies it. Legacy scenarios without that raw field
+// retain their explicit normalized spell list as a compatibility fallback.
+func hasNativeCommandOrEditableSpell(unit *battle.Unit) bool {
+	if unit == nil {
+		return false
+	}
+	for _, bits := range unit.NativeCommandMask {
+		if bits != 0 {
+			return true
+		}
+	}
+	return len(unit.Spells) != 0
 }
 
 func nativeActionOffsetXY(offset int) (int, int) {

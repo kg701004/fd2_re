@@ -32,3 +32,17 @@ func TestActionOverlayAvailabilityUsesCurrentRemakeGates(t *testing.T) {
 		t.Fatalf("availability=%v", got)
 	}
 }
+
+func TestActionOverlayAvailabilityRequiresRecoveredNativeInventoryGates(t *testing.T) {
+	selected := battle.Unit{OnField: true, HP: 10, AtkMin: 1, AtkMax: 1, Inventory: []int{3}, Equipped: []bool{false}}
+	enemy := &battle.Unit{OnField: true, HP: 10, Camp: battle.Enemy, X: 1, Y: 0}
+	g := &Game{st: &battle.State{Units: []*battle.Unit{enemy}}, sel: &selected}
+	if got := g.actionOverlayAvailability(); got != [4]int{1, 1, 0, 0} {
+		t.Fatalf("without equipped weapon/raw command availability=%v", got)
+	}
+	selected.Equipped[0] = true
+	selected.NativeCommandMask[0] = 0x01
+	if got := g.actionOverlayAvailability(); got != [4]int{0, 0, 0, 0} {
+		t.Fatalf("with equipped weapon/raw command availability=%v", got)
+	}
+}
