@@ -423,7 +423,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
 1. **Boot/menu/UI dispatch**：以 Ghidra/IDA 建立 call graph、keyboard scan、menu item table、resource loader；Docker Capstone 只作可重跑交叉驗證。
 2. **Resource provenance**：把 FDOTHER/FDTXT/DATO/FIGANI/TAI/FDFIELD 的 loader、entry、palette、stride、clip 寫成 machine-readable bindings，並與 UI contract 對應。
-   `0x22253` 的 Docker trace 已固定為 FDOTHER immediate `0x51`（十進位 **81**）→ nested `LLLLLL` entry（outer 18710 bytes、directory first-word `0x12`；nested payload #1 為 9782 bytes）；其後由 `0x11eee` 準備 renderer data，`0x22547` 以 `0x53a6d` descriptor table 做 6 次 indexed `0x22046` blit/present（每次 10ms），尾端再兩次 BIOS tick。`internal/fdother.ArchiveEntry` 現可驗證 nested raw boundary，但 frame-table／`0x11eee` data selection 尚未閉合；這是 renderer provenance，不可寫成 layout 或音訊資源。
+   `0x22253` 的 Docker trace 已固定為 FDOTHER immediate `0x51`（十進位 **81**）→ nested `LLLLLL` entry（outer 18710 bytes、directory first-word `0x12`；nested payload #1 為 9782 bytes）。更正舊說：`0x11eee` 是背景／tile redraw，不是 #81 frame-selection loader；boot `0x25c97..0x25cac` 以 `0x111ba(FDOTHER,#3)` 載入 `0x53a6d`，`0x22547` 固定倒序取 #3 descriptor entries 5→0，做 6 次 indexed `0x22046` blit/present（每次 10ms），尾端再兩次 BIOS tick。#81 local payload 如何供應 call args 及其 frame decoder 仍未閉合。`internal/fdother.ArchiveEntry` 現可驗證 nested raw boundary；這是 renderer provenance，不可寫成 layout 或音訊資源。
 3. **Battle interaction**：追 action menu enable gates、weapon reach、spell inventory/targeting、end-turn 判定、HUD anchor；每一項先找 caller/data flow，再改 Go。
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
 5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
