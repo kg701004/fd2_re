@@ -35,6 +35,15 @@ func TestParseAndBlitPreserveTransparentDitherAndPaletteBand(t *testing.T) {
 	if got := dst[:6]; got[0] != 0x1f || got[1] != 1 || got[2] != 0x19 || got[3] != 1 || got[4] != 1 {
 		t.Fatalf("band pixels=%v", got)
 	}
+	for i := range dst {
+		dst[i] = 1
+	}
+	if err := b.Sprites[0].BlitForNativeFlags(dst, 32, 0, 0, 0x80); err != nil {
+		t.Fatal(err)
+	}
+	if got := dst[0]; got != 0x1f {
+		t.Fatalf("acted flag used raw path: %d", got)
+	}
 }
 
 func TestDecodeOriginalFDICON(t *testing.T) {

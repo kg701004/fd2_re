@@ -154,6 +154,12 @@ func (s Sprite) BlitPaletteBand(dst []byte, stride, x, y int) error {
 	return s.blit(dst, stride, x, y, true)
 }
 
+// BlitForNativeFlags mirrors 0x127e0's test of runtime unit+5 bit7: clear
+// selects 0x4deda raw pixels, set selects 0x4de56's palette-band pixels.
+func (s Sprite) BlitForNativeFlags(dst []byte, stride, x, y int, flags byte) error {
+	return s.blit(dst, stride, x, y, flags&0x80 != 0)
+}
+
 func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {
 	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
 		return errors.New("fdicon: invalid blit")
