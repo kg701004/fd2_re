@@ -23,13 +23,15 @@
 
 Docker/Capstone 重新從 `0x18d8c` 入口線性追到 return，確認這是 action dispatch 的
 **wrapper**，不能誤當 command-grid renderer：它先清 caller output 的 `+0` 與 global
-`[0x53ec8]`，以 `0x1b83d(unitSlot,0)` 取得前序選擇；若回傳 `-1`，只將 output `+0=1`
-後結束。非取消路徑會經 `0x1b722 → 0x4e56c` 取 record `+0xb/+0xc`，再呼叫
-`0x14818(x,y,0,record+0xc,record+0xb,0)` 建立前序 target state。
+`[0x53ec8]`。先前把 `0x1b83d(unitSlot,0)` 寫成「前序選擇」是錯的，現已刪除：它精確掃
+unit `+0x0a + slot*2` 的八個 inventory slots，找 `bit0x40` 已設且 item ID `<0x80` 的第一格；
+找不到時回 `-1`，wrapper 只設 output `+0=1`。命中時才經 `0x1b722 → 0x4e56c` 取該 slot 的
+item record `+0xb/+0xc`，再呼叫 `0x14818(x,y,0,record+0xc,record+0xb,0)` 建立前序 target state。
 
-其後 `0x1b8a6(unitSlot)` 為零時設 output `+8=1`；`0x1c269(unitSlot,0)` 為零及
-`unit[+0x27] != 0` 都設 output `+4=1`。這三個 caller-visible flags 的完整玩法名稱尚未
-由 callee 或實機畫面閉合，SDD 只保留 raw offsets，不能擅自畫成某個 disabled icon。`0x177fc`
+其後 `0x1b8a6(unitSlot)` 精確計數八格中 `bit0x80` **未**設的 slots，因此它為零（所有 slots
+空）時設 output `+8=1`；`0x1c269(unitSlot,0)` 為零及 `unit[+0x27] != 0` 都設 output
+`+4=1`。前兩個 raw precondition 已閉合，三個 caller-visible flags 對應哪個可見 action／disabled
+icon 仍未由 callee 或實機畫面閉合，SDD 保留 raw offsets，不能擅自畫圖示。`0x177fc`
 是 wrapper 等待的選擇 loop，回傳 `-1` 則直接取消；非取消才按 `[0x53c57]` 分派：0 走
 attack pipeline、1 走 `0x1cff0` command selector、2 走 `0x1bbdc` item selector，其他值才走
 `0x13fd4/0x190ac` 的 wait/field path。這補強 UI-03 的取消階層與 dispatch 邊界，但不增加

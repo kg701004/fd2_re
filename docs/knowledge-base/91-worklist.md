@@ -592,7 +592,9 @@
       MP gate、Esc cancel；`0x1ceed` 再鎖 x/y formula 與 label index=`0x1b9+commandID`。常駐 table
       已對齊 FDTXT_000，40 個 physical label slots 已由 `tools/export_command_labels.py` 匯出為
       `docs/data/command_labels.json`；label 不等於可達／有 gameplay effect。待 command producer、完整
-      renderer/effect stack 後才可重製原版 menu。
+      renderer/effect stack 後才可重製原版 menu。2026-07-25 再釘 `0x18d8c` wrapper 的 item-side raw
+      preconditions：`0x1b83d` 找八格 inventory 中 equipped(bit0x40) 且 ID<0x80 的項目，失敗寫 output+0；
+      `0x1b8a6==0`（八格全 empty bit0x80）寫 output+8。它們對應哪個圖示仍未有 callee/E2，禁止猜接 UI。
 - [x] **UI-03 command-record/table identity**：`0x4e516` 的 IDs 0..35 與 EXE spell table 7-byte rows
       byte-for-byte 相同，故 record `+3/+4/+5/+6` 可安全正名為 `dist/range/mp/target`；全 FDFIELD 和
       character-default initial masks 的已見 ID 範圍為 0..30。36..39 僅是 pointer 可達的相鄰 data、label
