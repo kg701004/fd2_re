@@ -213,7 +213,7 @@
 - [x] **狀態欄機制 RE**(agent):真繪製器 0x18c6d(非 0x29164);框=素材sprite、HP=逐欄cell(len=curHP×101/maxHP)、名=16×16點陣字、數值=6px digit cell → `35`§4
 - [x] **清除錯誤斷言**:土台正名 FIGANI自帶→**TAI.DAT 台座**(0x29164 載 0x28c46);figure-X=word[unit+0x40] 誤讀;對話框開框碼 0x16F40
 - [x] **① TAI.DAT 台座解碼 + remake 貼上** ✅(v23):TAI_004=154×42 綠草橢圓台座(decode_sprite 解 body[4:],index0透明17%);remake 載 tai_004.png 貼我方腳下(z:狀態欄<台座<figure);對齊 orig 取代偏灰 dither。確切 entry↔職業/地形對映待後續
-- [x] **② 複查 `+0x40` 衝突** ✅(第一性原理):**+0x40=當前HP**(0x18c98 血條 `word[+0x40]×101/word[+0x42]`=HP% 鐵證);figure lunge 位置實際讀 **+0x48/+0x4a 螢幕投影**(0x29f72 不用+0x40);agent-A「戰場格X」誤標已清。+0x44/46=MP/maxMP。doc35 §2.2/§4/§7 全修正
+- [~] **② 複查 `+0x40`／lunge offset**：**`+0x40=當前HP`**（`0x18c98` 血條 `word[+0x40]×101/word[+0x42]`=HP%）與 `+0x44/+0x46=current/max MP` 已閉合，舊「戰場格 X」已清。先前稱 `0x29f72` lunge 讀 `+0x48/+0x4a` 螢幕投影的 assertion 已撤回：command17/18 direct writers 證實兩欄是 derived AP/DP，lunge stack-local provenance 必須重判；doc35 已同步降為 partial。
 - [x] **③ 狀態欄框/HP 用真素材** ✅(v25-26):破解 FDOTHER#5 LMI1 sub-sprite codec(反組譯 0x4e916:c≤0xC0 literal/c>0xC0 run,新 codec,`tools/decode_lmi.py`);框=#22(149×42 含bevel+標籤+槽)貼 panel.png、血條 cell=#27-30;修 HP靠左(槽 x21-123)/提亮/數字對位。doc35 §4.2.5。盜賊 y 軸對齊(276→296,頭頂偏上一排)
 - [x] **④ BG 草地延伸到 figure 腳下** ✅(2026-07-05 使用者確認 `docs/figures/battle_restore_grid.png` 網格對照:左原版/右 remake 兩邊草地都延伸到 figure 腳下、台座疊綠草非黑底,一致)
 
