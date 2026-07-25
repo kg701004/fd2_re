@@ -50,6 +50,9 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 strict `fdother.ParseLMI1` 與 codec regression。
 `LMI1Entry.BlitAt` 亦已對應 `0x4e8af` 的 index-0 transparent preserve 與
 `0x4e8e1` 水平鏡像路徑；它只接受顯式 surface/anchor，尚未擅自接入 D8 layout。
+實際玩家 `FDOTHER.DAT#5` regression（138 entries，#0x52=72×14）另證實 directory
+offset 只標示 entry start：`0x4e916` 的 repeat 可跨下一個 offset，原版依 width×height
+停止，因此 parser 不得把 next offset 誤當壓縮 stream 結尾。
 `0x1f42d` 不是文字 helper：`0x1f1cc` 以 offset `100,75,50,25,0` 各呼叫一次，
 每幀把 LMI1 **entry #0x52** 貼到 offscreen `(85-offset,82)` 與
 `(165+offset,81)`（stride 456），present 一 tick，再以 `0x15e71` restore；這是

@@ -255,6 +255,9 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 
 `[0x53a81]` = `0x111ba("FDOTHER.DAT", [0x53a81], 5)` 載入的 **FDOTHER 第 5 個資源**,本身是 **"LMI1" 子容器**(doc 14 對話框框圖同源):
 - **LMI1 結構**:`char[4]"LMI1"` + `uint16 N`(sub-resource 數,FDOTHER#5=138) + `uint32[N] offset` + 各 sub-resource(`uint16 w, uint16 h, codec 資料`)。
+  - 2026-07-25 player-asset regression 更正：offset 是各 entry 的**開始**位址，不是壓縮資料的嚴格 end；
+    `0x4e916` 依目的 `w×h` 停止，最後一段 repeat 可跨下一 entry 的 offset。解析器須以容器末端為
+    唯一 source bound，不得以 `offset[i+1]` 截斷資料並誤判原版 #5 為 malformed。
 - **像素 codec(反組譯 `0x4e916`,逐像素取值)** —— **本輪關鍵破解,跟 FIGANI/TAI 的 4-mode、doc05 image-RLE 都不同**:
   ```
   讀控制 byte c:

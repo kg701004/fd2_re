@@ -14,6 +14,17 @@ type LMI1Entry struct {
 	Pixels        []byte
 }
 
+// DecodeLMI1Resource reads one player-provided FDOTHER archive entry and
+// decodes it as an LMI1 UI container. It keeps the archive boundary explicit,
+// just like DecodeResource does for frame-table entries.
+func DecodeLMI1Resource(datPath string, resource int) ([]LMI1Entry, error) {
+	data, err := ReadResource(datPath, resource)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLMI1(data)
+}
+
 // BlitAt copies an LMI1 cell to an indexed destination using the native
 // 0x4e8af transparent rule: palette index 0 preserves the destination.
 // mirror applies the 0x4e8e1 horizontal reverse path. Coordinates are
@@ -71,7 +82,11 @@ func ParseLMI1(data []byte) ([]LMI1Entry, error) {
 		if w <= 0 || h <= 0 {
 			return nil, fmt.Errorf("fdother: LMI1 entry %d has empty dimensions", i)
 		}
-		pixels, err := decodeLMI1Pixels(data[off+4:end], w*h)
+		// The LMI1 directory gives entry starts, not a strict compressed-stream
+		// end. Native 0x4e916 reads until its width×height destination loop is
+		// full, and a repeat may cross the next directory offset. Bound only at
+		// the containing resource, matching that behavior.
+		pixels, err := decodeLMI1Pixels(data[off+4:], w*h)
 		if err != nil {
 			return nil, fmt.Errorf("fdother: LMI1 entry %d: %w", i, err)
 		}
@@ -97,11 +112,15 @@ func decodeLMI1Pixels(stream []byte, want int) ([]byte, error) {
 		if len(stream) == 0 {
 			return nil, errors.New("repeat command lacks pixel value")
 		}
-		if len(pixels)+run > want {
-			return nil, errors.New("repeat command exceeds dimensions")
-		}
 		v := stream[0]
 		stream = stream[1:]
+		// 0x4e916 retains its repeat counter across scanlines. If a final
+		// repeat crosses the cell boundary, the native width×height loop simply
+		// stops consuming pixels; the surplus repeat state is discarded with
+		// this blit. Mirror that bounded destination behavior here.
+		if remain := want - len(pixels); run > remain {
+			run = remain
+		}
 		for i := 0; i < run; i++ {
 			pixels = append(pixels, v)
 		}

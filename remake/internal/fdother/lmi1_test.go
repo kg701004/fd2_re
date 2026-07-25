@@ -2,6 +2,7 @@ package fdother
 
 import (
 	"encoding/binary"
+	"os"
 	"testing"
 )
 
@@ -62,5 +63,23 @@ func TestLMI1BlitPreservesTransparentAndMirrors(t *testing.T) {
 	}
 	if got, want := dst[8:13], []byte{9, 2, 9, 1, 9}; string(got) != string(want) {
 		t.Fatalf("mirrored blit=%v, want %v", got, want)
+	}
+}
+
+func TestFDOTHER005LMI1UIContainer(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	entries, err := DecodeLMI1Resource(datPath, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 138 {
+		t.Fatalf("FDOTHER#5 LMI1 entry count=%d, want 138", len(entries))
+	}
+	// Native 0x1f42d selects LMI1 entry #0x52 for its pre-battle split slide.
+	if e := entries[0x52]; e.Width != 72 || e.Height != 14 || len(e.Pixels) != 72*14 {
+		t.Fatalf("FDOTHER#5 LMI1 entry#0x52=%dx%d pixels=%d, want 72x14", e.Width, e.Height, len(e.Pixels))
 	}
 }

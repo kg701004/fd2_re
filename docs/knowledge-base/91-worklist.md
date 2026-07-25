@@ -471,7 +471,8 @@
       後續 `0x1a813/0x1a866` dispatch；`0x15f0e` frame ABI 亦已釘為 offset-table + RLE
       decode + stride blit；`[0x53a81]` 已由既有 loader trace 對位為 `FDOTHER.DAT#5`
       的 `LMI1`，remake `fdother.ParseLMI1`／`LMI1Entry.BlitAt`（透明 preserve + mirror）
-      與 regression 已補。證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死
+      與 player-asset regression 已補（#0x52=72×14；directory offset 不是 RLE 結尾）。
+      證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死
       MAP/TURN/ENEMY/FRIEND/NPC 欄位與 YES/NO input 的資源／字串 ABI，再做 remake shell 與截圖，
       不把 resource `0x52` 或 `0x51e81` 猜成畫面名稱。
 
