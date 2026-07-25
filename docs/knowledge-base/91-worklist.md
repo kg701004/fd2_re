@@ -592,6 +592,9 @@
       只是 partial interaction；`0x159fa` 再證實 record `+5 <= unit+0x44`（current MP）的 availability gate。
       `0x10f7f/0x11399` construction 各 copy source 的 4 bytes 到 `+0x1a..+0x1d` 並清 `+0x1e`，
       `0x1d7fb` 可按 commandID/8 OR 回 runtime bit，故 40-bit ABI 初始為 32-bit source、可動態擴充。
+      官方 IDA 再釘 confirm dispatch：IDs `0..8/0x18/>=0x1c` 走 `0x2a6bd` generic pipeline，
+      `0x09..0x17/0x19..0x1b` 才經 `0x1d6c8` palette flicker→`funcs_1541f[id]`；這不把 command 0
+      升格成 legacy spell effect。
       selector `0x1d51d` 已鎖每欄四列的 variable-column grid：↑/↓ linear wrap、←/→ ±4、Enter/Space 重查
       MP gate、Esc cancel；`0x1ceed` 再鎖 x/y formula 與 label index=`0x1b9+commandID`。常駐 table
       已對齊 FDTXT_000，40 個 physical label slots 已由 `tools/export_command_labels.py` 匯出為
