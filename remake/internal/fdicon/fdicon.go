@@ -17,18 +17,38 @@ type Bank struct{ Sprites []Sprite }
 type Sprite struct{ Pixels, Mask []byte }
 
 // SpriteFor implements the native 0x127e0 selector after 0x11019 has built
-// its pointer table: group×12 + pose×3 + frame. Pose is the raw runtime byte
-// (+3) and frame is +4; callers must supply both explicitly rather than
-// deriving an animation frame from a legacy UI approximation.
-func (b *Bank) SpriteFor(group, pose, frame int) (Sprite, error) {
-	if b == nil || group < 0 || pose < 0 || pose >= 4 || frame < 0 || frame >= 3 {
+// its pointer table: group×12 + pose×3 + cycle. Pose is runtime +3; cycle is
+// resolved from the global idle/moving counters, not directly from unit +4.
+func (b *Bank) SpriteFor(group, pose, cycle int) (Sprite, error) {
+	if b == nil || group < 0 || pose < 0 || pose >= 4 || cycle < 0 || cycle >= 3 {
 		return Sprite{}, errors.New("fdicon: invalid native sprite selector")
 	}
-	i := group*12 + pose*3 + frame
+	i := group*12 + pose*3 + cycle
 	if i < 0 || i >= len(b.Sprites) {
 		return Sprite{}, errors.New("fdicon: sprite selector is out of bank")
 	}
 	return b.Sprites[i], nil
+}
+
+// NativeFrameIndex reproduces 0x127e0's cycle selector. motionOffset is the
+// raw unit+4 movement offset: zero selects the idle counter, nonzero selects
+// the moving counter. Native counters run 0..3 but map 3 back to frame 1;
+// unit+0x26 forces the base frame regardless of either counter.
+func NativeFrameIndex(motionOffset int, forceBase bool, idleCycle, movingCycle int) (int, error) {
+	if idleCycle < 0 || idleCycle > 3 || movingCycle < 0 || movingCycle > 3 {
+		return 0, errors.New("fdicon: invalid native cycle")
+	}
+	cycle := idleCycle
+	if motionOffset != 0 {
+		cycle = movingCycle
+	}
+	if cycle == 3 {
+		cycle = 1
+	}
+	if forceBase {
+		cycle = 0
+	}
+	return cycle, nil
 }
 
 func DecodeFile(path string) (*Bank, error) {

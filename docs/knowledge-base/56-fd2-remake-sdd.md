@@ -428,11 +428,11 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Renderer boundary addendum: `0x127e0` chooses a camera-relative 24×24 object sprite and writes the current indexed buffer through either `0x4deda` (raw indexed RLE) or `0x4de56` (RLE palette-remap path). `0x127a9` then calls `0x129ec`, which performs further map/object overlay work on that same buffer. Therefore this is a real compositing phase, not merely a redraw marker; descriptor/RLE ABI must be recovered before an Ebiten adapter can claim native presentation.
 
-   Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `group×12 + pose×3 + frame`. The remaining adapter boundary is runtime roster state, remap selection and layer order—not an invented FIGANI or unknown archive mapping.
+   Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `group×12 + pose×3 + cycle`. Cycle is global idle/moving animation state, not unit `+4`; that byte offsets the camera-relative placement. The remaining adapter boundary is runtime roster state, remap selection and layer order—not an invented FIGANI or unknown archive mapping.
 
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus the optional 256-byte LUT blit distinction. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
 
-   `Bank.SpriteFor(group,pose,frame)` now enforces the recovered `group×12 + pose×3 + frame` selector (pose 0..3, frame 0..2). Battle `Fig` and `Dir` provide only part of that ABI; the current native frame must remain explicit until the roster animation scheduler is recovered.
+   `Bank.SpriteFor(group,pose,cycle)` enforces the recovered `group×12 + pose×3 + cycle` selector (pose 0..3, cycle 0..2). `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
 4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
 5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
 

@@ -54,3 +54,22 @@ func TestDecodeOriginalFDICON(t *testing.T) {
 		t.Fatal("out-of-range native pose was accepted")
 	}
 }
+
+func TestNativeFrameIndexMatches127E0(t *testing.T) {
+	cases := []struct {
+		motion             int
+		force              bool
+		idle, moving, want int
+	}{
+		{0, false, 2, 0, 2}, {0, false, 3, 2, 1}, {1, false, 2, 3, 1}, {7, false, 0, 2, 2}, {1, true, 2, 2, 0},
+	}
+	for _, tc := range cases {
+		got, err := NativeFrameIndex(tc.motion, tc.force, tc.idle, tc.moving)
+		if err != nil || got != tc.want {
+			t.Fatalf("%+v got=%d err=%v", tc, got, err)
+		}
+	}
+	if _, err := NativeFrameIndex(0, false, 4, 0); err == nil {
+		t.Fatal("invalid cycle accepted")
+	}
+}
