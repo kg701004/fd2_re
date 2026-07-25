@@ -51,6 +51,17 @@ func TestExecuteNativeCommandApplicationKeepsRawGateButConsumesSuccessfulCommand
 	}
 }
 
+func TestExecuteNativeCommandApplicationSupportsRecoveredIDTwentyTwo(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
+	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
+
+	got, err := st.ExecuteNativeCommandApplication(actor, target, 22, passingNativeApplicationRNG(t))
+	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Offset != 0x27 || target.NativeTransient[5] != got[0].Duration || target.HP != 10 {
+		t.Fatalf("ID22 application = %#v actor=%#v target=%#v err=%v", got, actor, target, err)
+	}
+}
+
 func TestExecuteNativeCommandApplicationRejectsUnknownIDBeforeMutation(t *testing.T) {
 	actor := &Unit{MP: 5}
 	if _, err := (&State{}).ExecuteNativeCommandApplication(actor, nil, 25, rand.New(rand.NewSource(1))); err == nil || actor.MP != 5 || actor.Acted {
