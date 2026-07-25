@@ -41,41 +41,42 @@ func LoadNativeCommandResistances(path string) (map[int]int, error) {
 	return table, nil
 }
 
-// NativeCommand0Damage is the fully recovered numeric part of command 0.
+// NativeCommandDamage is the recovered numeric writer used by verified
+// player-dispatched commands 9..12.
 // Target geometry, animation, and post-resolution processing deliberately do
 // not live here: they are separate native contracts still being recovered.
-type NativeCommand0Damage struct {
+type NativeCommandDamage struct {
 	Hit    bool
 	Damage int
 }
 
-// ResolveNativeCommand0Damage mirrors 0x1c75e -> 0x1c81f for a single target.
+// ResolveNativeCommandDamage mirrors 0x1c75e -> 0x1c81f for a single target.
 // It consumes exactly two rand()%100 draws on a hit (hit roll, then damage
 // variance), and only the hit-roll draw on a miss.  It does not mutate target.
-func ResolveNativeCommand0Damage(recordDamage, hit, targetResistRaw int, rng *rand.Rand) (NativeCommand0Damage, error) {
+func ResolveNativeCommandDamage(recordDamage, hit, targetResistRaw int, rng *rand.Rand) (NativeCommandDamage, error) {
 	if rng == nil {
-		return NativeCommand0Damage{}, fmt.Errorf("nil rng")
+		return NativeCommandDamage{}, fmt.Errorf("nil rng")
 	}
 	if recordDamage < 0 || hit < 0 || hit > 100 || targetResistRaw < 0 || targetResistRaw > 10 {
-		return NativeCommand0Damage{}, fmt.Errorf("invalid command0 damage=%d hit=%d resist_raw=%d", recordDamage, hit, targetResistRaw)
+		return NativeCommandDamage{}, fmt.Errorf("invalid native damage=%d hit=%d resist_raw=%d", recordDamage, hit, targetResistRaw)
 	}
 	if rng.Intn(100) >= hit {
-		return NativeCommand0Damage{}, nil
+		return NativeCommandDamage{}, nil
 	}
 	base := recordDamage * targetResistRaw / 10
 	damage := base*9/10 + rng.Intn(100)*base/1000
-	return NativeCommand0Damage{Hit: true, Damage: damage}, nil
+	return NativeCommandDamage{Hit: true, Damage: damage}, nil
 }
 
-// ApplyNativeCommand0Damage is the state mutation proven at 0x1c81f: subtract
+// ApplyNativeCommandDamage is the state mutation proven at 0x1c81f: subtract
 // the resolved damage from current HP and clamp at zero.  Callers must supply
 // the raw target-class multiplier; this method intentionally does not reuse
 // the legacy normalized spell resolver.
-func ApplyNativeCommand0Damage(target *Unit, recordDamage, hit, targetResistRaw int, rng *rand.Rand) (NativeCommand0Damage, error) {
+func ApplyNativeCommandDamage(target *Unit, recordDamage, hit, targetResistRaw int, rng *rand.Rand) (NativeCommandDamage, error) {
 	if target == nil {
-		return NativeCommand0Damage{}, fmt.Errorf("nil target")
+		return NativeCommandDamage{}, fmt.Errorf("nil target")
 	}
-	result, err := ResolveNativeCommand0Damage(recordDamage, hit, targetResistRaw, rng)
+	result, err := ResolveNativeCommandDamage(recordDamage, hit, targetResistRaw, rng)
 	if err != nil || !result.Hit {
 		return result, err
 	}

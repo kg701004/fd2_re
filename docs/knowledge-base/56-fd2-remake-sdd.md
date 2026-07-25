@@ -114,31 +114,27 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
 
-command 0 的 damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
+玩家 table 的 IDs9..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
 `record.u16[+0] * resist_raw[unit+0x20] / 10` 為 base；constructor `0x10f7f/0x11399` 直接把 source
-class byte 寫入 `unit+0x20`，故這是 target class-ID-indexed table，而非未明角色欄位。對 command 0 以 `record[+2]` 做 `rand()%100`
+class byte 寫入 `unit+0x20`，故這是 target class-ID-indexed table，而非未明角色欄位。這些 handler 以 `record[+2]` 做 `rand()%100`
 命中門檻；命中才呼叫後者。`0x1c81f` 算 `damage = floor(base*0.9) + floor((rand()%100)*base/1000)`，
 將 target `unit+0x40` 減去 damage，並 clamp 至 0，直接證實 `+0x40=current HP`、`+0x42=max HP`。
 IDA `word_51f96` 的 loaded-data file offset 正是既有 `0x51d96` 職業魔抗表：每 class 的 4-byte row
 低 byte 是 `resist_raw`（法師=7 即 30% magic resistance）。因此這個乘數的 raw ABI 與玩法名稱都已閉合，
-並以 `NativeCommand0Damage` 的獨立 resolver 實作及 regression 固定；它不共用 legacy normalized magic
+並以 `NativeCommandDamage` 的獨立 resolver 實作及 regression 固定；它不共用 legacy normalized magic
 resolver。`remake/assets/data/native_command_resistances.json` 是同一 raw table 的可編輯 runtime copy；target
 geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。
 
-`State.ExecuteNativeCommand0` 現將已證實的 core contract 組合為 non-UI engine slice：strict ID-0 record、
-actor `+3`→confirmed candidate→cursor `+4`、一次 `+5` MP debit、每個 final candidate 的 class multiplier/hit/HP
-clamp。任何缺失 raw flags、record、confirmed candidate 或 resistance row 都在 mutation 前拒絕；special command、
-animation、post-resolution 與 UI remain unbound。Game bootstrap 將 strict `native_command_resistances.json` copy 到
-`State.NativeCommandResistances`；`ExecuteBoundNativeCommand0` 只使用此 state-bound raw table，缺表不回退 legacy magic。
-成功結束時才投影 wrapper `0x18d8c→0x13512` 的 runtime `unit+5|=0x80` 為 `actor.Acted=true`；失敗不設。
-UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate highlighter 進入 target mode，Enter 交
-`ExecuteBoundNativeCommand0` 作完整 verified core，ESC 回 native grid；缺 raw data／其他 ID 一律不接 legacy cast。
-官方 IDA 顯示 ID1、2、3 皆只將常數 ID push 後跳入同一 `sub_21227`；續查 ID4..7 亦進
-`sub_213B7`、ID8 回 `sub_2121A`、ID9 直接呼叫 `0x1CA89→0x1C75E`。故 engine 的
-`ExecuteNativeCommandDamage` 嚴格支援 ID0..12 共用 numeric/MP/acted contract；ID10..12 雖經
-`0x21548` 的專用 indexed compositor，但其尾端同樣先 `0x1CA89(actor,id)`、再逐 final target
-`0x1C75E(target,id)`。UI 仍只啟用 ID0，直到每個
-presentation/effect boundary 有獨立驗證。
+玩家 dispatch 的可達性已重新核對：`0x1cff0` 對 IDs 0..8 直接呼叫 `0x2a6bd`，並不經 table 內雖存在的
+`0x21227/0x213b7` wrappers。尚未在 `0x2a6bd` 取得 ID0 的 state writer dataflow，故舊的
+`ExecuteNativeCommand0`、ID0 target UI 與「IDs0..8 共用 numeric damage」斷言都已移除；原始 grid 對這些 ID
+明確 fail-closed，不能再以 normalized spell 或 numeric resolver 代替。
+
+`State.ExecuteNativeCommandDamage` 僅支援真正由玩家 table dispatch 到數值 writer 的 IDs9..12：ID9 直接
+`0x1CA89→0x1C75E`，IDs10..12 經 `0x21548` indexed compositor 後執行同一 MP debit／逐 final target writer。
+它以 strict raw record、兩階段 target、class multiplier/hit/HP clamp 和 success-only `Acted` 做 non-UI engine
+slice；任何缺 flags、record、candidate 或 resistance row 都在 mutation 前拒絕。renderer、SFX、post-resolution
+與這些 ID 的 UI 仍未接入，不能由數值共用推論 presentation equivalence。
 
 IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handlers
 `0x21AD9/0x21B99/0x2211C/0x22153` 各以 ID `13/14/15/16` 和各自的演出參數跳到共同
@@ -217,8 +213,9 @@ command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
 `record[+4]` 和同一 target code 再呼叫 `0x14818`，此第二個 candidate array/count 才傳入
-`0x2a6bd(unit, commandID, count, array)`，後者逐 index 呼叫 `0x1c75e`。這證實 command 0 的 numeric resolver
-是 **per final-effect candidate**，而非 legacy UI 的單格 `CastArea` contract；`0x14818` 的方向／形狀
+`0x2a6bd(unit, commandID, count, array)`。這證實 command 0 的 selector 是 **per final-effect candidate**，
+而非 legacy UI 的單格 `CastArea` contract；`0x2a6bd` 對 IDs0..8 的 state writer 尚未閉合，不能從 final array
+推論 numeric resolver。`0x14818` 的方向／形狀
 與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
 使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須是 alive/on-grid，並以 target code 對 runtime
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`

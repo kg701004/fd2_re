@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestResolveNativeCommand0DamageMatchesRecoveredFormula(t *testing.T) {
+func TestResolveNativeCommandDamageMatchesRecoveredFormula(t *testing.T) {
 	rng := rand.New(rand.NewSource(7))
 	// Mirror the two draws explicitly so this checks integer order, not merely a
 	// possible range.  50 * 7 / 10 = 35 before the 90..99.9% variance.
@@ -17,16 +17,16 @@ func TestResolveNativeCommand0DamageMatchesRecoveredFormula(t *testing.T) {
 	}
 	base := 50 * 7 / 10
 	want := base*9/10 + wantRNG.Intn(100)*base/1000
-	got, err := ResolveNativeCommand0Damage(50, 100, 7, rng)
+	got, err := ResolveNativeCommandDamage(50, 100, 7, rng)
 	if err != nil || !got.Hit || got.Damage != want {
 		t.Fatalf("got %+v err=%v, want hit damage=%d", got, err, want)
 	}
 }
 
-func TestNativeCommand0DamageMissDoesNotConsumeVarianceOrMutate(t *testing.T) {
+func TestNativeCommandDamageMissDoesNotConsumeVarianceOrMutate(t *testing.T) {
 	rng := rand.New(rand.NewSource(1))
 	target := &Unit{HP: 40, MaxHP: 40}
-	got, err := ApplyNativeCommand0Damage(target, 50, 0, 10, rng)
+	got, err := ApplyNativeCommandDamage(target, 50, 0, 10, rng)
 	if err != nil || got.Hit || got.Damage != 0 || target.HP != 40 {
 		t.Fatalf("got=%+v hp=%d err=%v", got, target.HP, err)
 	}
@@ -39,9 +39,9 @@ func TestNativeCommand0DamageMissDoesNotConsumeVarianceOrMutate(t *testing.T) {
 	}
 }
 
-func TestApplyNativeCommand0DamageClampsHP(t *testing.T) {
+func TestApplyNativeCommandDamageClampsHP(t *testing.T) {
 	target := &Unit{HP: 1, MaxHP: 100}
-	got, err := ApplyNativeCommand0Damage(target, 100, 100, 10, rand.New(rand.NewSource(2)))
+	got, err := ApplyNativeCommandDamage(target, 100, 100, 10, rand.New(rand.NewSource(2)))
 	if err != nil || !got.Hit || got.Damage < 90 || got.Damage > 99 || target.HP != 0 {
 		t.Fatalf("got=%+v hp=%d err=%v", got, target.HP, err)
 	}
