@@ -3336,6 +3336,7 @@ func (g *Game) Update() error {
 				// The raw command-grid oracle must choose a unit that actually owns
 				// a materialized native command mask. The generic ring fixture may
 				// have selected an enemy or a story-only record first.
+				g.dialog = nil
 				for _, unit := range g.st.Units {
 					if unit != nil && len(unit.NativeCommandIDs()) > 0 {
 						g.sel, g.curX, g.curY = unit, unit.X, unit.Y
