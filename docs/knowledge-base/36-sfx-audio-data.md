@@ -406,24 +406,25 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
      地圖寬高 + 半徑參數判定),不是單純的「招式編號查表」——此路徑 id 的真實語意存疑,未追到函式
      真正 `ret` 處確認回傳值定義。
    - `0x01d43c`(`0x01cff0` 函式內):id = `byte ptr [esp + [0x3c57] + 0xd0]`,`[0x3c57]` 是目前步驟計數器。
-4. **意外收穫**:`0x01cff0` 內有一個**平行陣列** `[esp+0xc8+counter]`(攻擊類型碼,比對 `9`/`0x17`/
-   `0x18`/`0x1b`/`0x1e`),其填值來源**已追出**:`0x01d150 lea eax,[esp+0xc8]; push eax; push [招式資料
-   指標]; call 0x1c269`。`0x1c269` 是一支**「40-bit 已知招式/技能遮罩解碼器」**:把單位資料表
-   (`[0x53a45]+idx*80`,與全專案既有 stride 80 公式一致)偏移 `+0x1a` 起的 **5 bytes(40 bit)**逐位元
-   掃描,每個「已設定」的 bit 換算成招式編號(`byte_idx*8+bit_pos`,範圍 0–39),依序寫進呼叫端提供的
-   緊密陣列(即這個「已學會招式清單」)。
-   - `unit+0x1a..+0x1d` 是 FDFIELD magic_raw；`unit+0x22..+0x24` 是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。舊 offset 差異／兩張表待確認假說已刪除。
+4. **意外收穫**:`0x01cff0` 內有一個**平行陣列** `[esp+0xc8+counter]`(比對 `9`/`0x17`/
+   `0x18`/`0x1b`/`0x1e`),其填值來源**已追出**:`0x01d150 lea eax,[esp+0xc8]; push eax; push [資料
+   指標]; call 0x1c269`。`0x1c269` 的 direct body 只定案為：從單位資料表
+   (`[0x53a45]+idx*80`)偏移 `+0x1a` 起掃描 **5 bytes(40 bit)**，把已設定 bit 轉成 0–39 byte index，
+   寫入呼叫端緊密陣列；輸出究竟是 spell、move 或其他 command inventory 仍未證實。
+   - `unit+0x1a..+0x1d` 與 FDFIELD magic_raw 複製範圍重疊；`unit+0x22..+0x24` 則是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。不得用後者反推前者的 spell bitfield。
    - 但 `0x027fc9` 真正讀取的是 **`[esp+0xd0+counter]`**(offset 0xd0,與 `0xc8` 相差 8,且並非同一次
      `call 0x1c269` 填的緊密陣列——`0x1c269` 只填一個目標緩衝區),**這個陣列的填值來源本輪仍未追出**,
      是下一輪的直接切入點。
 
 **結論(一句話)**:`index2`(真正 SFX table_ptr 的 index)填值來源**部分解出**——確認它不是 `0x027fc9`
 自己的區域表,而是源自呼叫鏈上游(`0x01cff0` 函式)一個尚未定位填值來源的陣列(`[esp+0xd0+counter]`);
-同一函式內一個平行陣列(`+0xc8`,攻擊類型碼)已完整追出填值來源為「單位 40-bit 已知招式遮罩解碼」
+   同一函式內一個平行陣列(`+0xc8`)已完整追出填值來源為 `0x1c269` 的 40-bit bit-scan
 (`0x1c269`),是本輪最扎實的具體成果,但與 SFX index2 本身仍隔一層未接上。`docs/data/battle_sfx_map.json`
 記錄完整位址證據鏈與候選 FDOTHER 資源池(沿用第 10 輪 PCM 特徵掃描結果,未變動)。
 
 ## 導出 WAV:戰鬥音效候選池(第 10 輪)
+
+> **記憶修正（2026-07-25）**：本節舊版「40-bit 已知招式遮罩／已學會招式清單」措辭已作廢。`0x1c269` 目前只證實為 5-byte bit-scan 與輸出 ABI；其欄位不命名為 spell、move 或 learned-list，且不得把 `unit+0x22..+0x24` modifier flags 當成法術 bitfield。
 
 `tools/export_sfx.py --battle` 把上表 9 個候選資源解開巢狀容器,逐子樣本補 WAV 檔頭,輸出到
 `remake/assets/sfx/battle_<資源號>_<子序>.wav`(共 42 個,`wave` 模組開啟全數驗證合法)。
