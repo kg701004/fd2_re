@@ -32,12 +32,14 @@ func (s *State) ExecuteNativeCommand0(actor, confirmed *Unit, resistByClass map[
 }
 
 // ExecuteNativeCommandDamage covers the byte-for-byte numeric route proven
-// for command IDs 0..9. Other IDs stay fail-closed.
+// for command IDs 0..12. IDs10..12 have a distinct indexed compositor
+// (0x21548), but it performs the same 0x1CA89 -> per-target 0x1C75E state
+// sequence after presentation. Other IDs stay fail-closed.
 func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int, resistByClass map[int]int, rng *rand.Rand) ([]NativeCommand0Result, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command state/rng")
 	}
-	if commandID < 0 || commandID > 9 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if commandID < 0 || commandID > 12 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]

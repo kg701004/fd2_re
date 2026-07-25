@@ -58,3 +58,18 @@ func TestExecuteNativeCommandDamageAcceptsRecoveredIDOne(t *testing.T) {
 		t.Fatalf("got=%+v err=%v", got, err)
 	}
 }
+
+func TestExecuteNativeCommandDamageAcceptsRecoveredCompositorIDTen(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 3, X: 0, Y: 0}
+	target := &Unit{Camp: Enemy, ClassID: 5, OnField: true, HP: 200, MaxHP: 200, X: 1, Y: 0}
+	book := make([]NativeCommandRecord, 36)
+	for id := range book {
+		book[id] = NativeCommandRecord{ID: id}
+	}
+	book[10] = NativeCommandRecord{ID: 10, Damage: 100, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 1, TargetCode: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+
+	if got, err := st.ExecuteNativeCommandDamage(actor, target, 10, map[int]int{5: 10}, rand.New(rand.NewSource(1))); err != nil || len(got) != 1 || !got[0].Hit || actor.MP != 2 || !actor.Acted || target.HP >= 200 {
+		t.Fatalf("ID10 numeric route = %#v actor=%#v target=%#v err=%v", got, actor, target, err)
+	}
+}

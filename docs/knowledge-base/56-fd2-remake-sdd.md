@@ -135,7 +135,9 @@ UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate hi
 `ExecuteBoundNativeCommand0` 作完整 verified core，ESC 回 native grid；缺 raw data／其他 ID 一律不接 legacy cast。
 官方 IDA 顯示 ID1、2、3 皆只將常數 ID push 後跳入同一 `sub_21227`；續查 ID4..7 亦進
 `sub_213B7`、ID8 回 `sub_2121A`、ID9 直接呼叫 `0x1CA89→0x1C75E`。故 engine 的
-`ExecuteNativeCommandDamage` 嚴格支援 ID0..9 共用 numeric/MP/acted contract；UI 仍只啟用 ID0，直到每個
+`ExecuteNativeCommandDamage` 嚴格支援 ID0..12 共用 numeric/MP/acted contract；ID10..12 雖經
+`0x21548` 的專用 indexed compositor，但其尾端同樣先 `0x1CA89(actor,id)`、再逐 final target
+`0x1C75E(target,id)`。UI 仍只啟用 ID0，直到每個
 presentation/effect boundary 有獨立驗證。
 
 IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handlers
