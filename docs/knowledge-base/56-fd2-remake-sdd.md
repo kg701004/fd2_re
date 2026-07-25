@@ -266,7 +266,7 @@ acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，�
 | 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
 | 24 | 玩家 `2A6BD→276EC→2B659/1CA89→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | `ExecuteNativeCommand24`（state-only final delta） | multi-hit／SFX／native UI 未接 |
 | 28, 29, 31 | 同玩家 `276EC` derived-strike route，倍率分別 20、12、18；各自 record MP/一般 two-stage selector | `ExecuteNativeCommandDerivedStrike` | multi-hit／SFX／native UI 未接 |
-| 30 | `1CFF0→149F8` special selector，之後 `2A6BD→276EC` default倍率18；globals/axis provenance未關閉 | 禁止接線：special selector contract未重製 | 未接 |
+| 30 | `1CFF0→115B6` cursor globals `53AB1/53AB5` confirm，再 `149F8→2A6BD→276EC` default倍率18；axis convention未關閉 | 禁止接線：special selector contract未重製 | 未接 |
 | 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
 | 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
 | 32 | `2A6BD→27FC9→2111A→1C75E` numeric per-final-target；選單 MP gate已知但此 chain 未見 debit | 未接：transaction boundary未關閉 | 未接 |

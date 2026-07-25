@@ -87,6 +87,8 @@ remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 gri
 
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 
+`0x115b6` 的 confirm loop 已直接讀 `0x53ab1/0x53ab5`，並以兩值比對 runtime unit `+0/+1`；方向鍵 helpers 改寫同一對 globals。因此它們是這條 selector 的 cursor cell，而不是相機 scroll。ID30 在呼叫 `0x149f8` 前保存舊 cursor、confirm 後以新 cursor 為另一端；`0x149f8` 本身也暫存／覆寫／復原 globals。惟同軸情況的 `<=` 分支仍產生正步進，兩端的實際座標 convention 尚未以動態 trace 關閉，故不可降成 remake ray geometry。
+
 ### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）
 
 物品 action 不是「完全不存在」：`0x1b932` 是 8-slot selector（status `0x80` 空槽、`0x40` equipped；方向鍵/wrap、Enter/Space、ESC）。`0x1bb8c` 只把 item 插入第一個空槽；case 1 將它與 `0x1b8e7` removal 串成 transfer。case 2 進入 `0x1bffe`，由 `0x1c1c3` compatibility predicate 與 `0x1c142` 設定選中 slot 的 `0x40` flag，再呼叫 `0x1b750` 重算。case 0 讀 `+0xd/+0x10/+0x12/+0x15`，其 effect/target callee 是 `0x20c6f`，仍未解碼；`type=0x17` 有 class/level gate（角色 `+8==0x18` 時另要求 level `+0x46 >= 20`）。因此 remake item action 繼續 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
