@@ -28,13 +28,19 @@ func (s *State) ExecuteBoundNativeCommand0(actor, confirmed *Unit, rng *rand.Ran
 // and the 0x1c75e -> 0x1c81f numeric mutation for each final candidate.
 // It fails before any mutation if a required raw table entry is absent.
 func (s *State) ExecuteNativeCommand0(actor, confirmed *Unit, resistByClass map[int]int, rng *rand.Rand) ([]NativeCommand0Result, error) {
+	return s.ExecuteNativeCommandDamage(actor, confirmed, 0, resistByClass, rng)
+}
+
+// ExecuteNativeCommandDamage covers the byte-for-byte shared sub_21227 route
+// proven for command IDs 0..3. Other IDs stay fail-closed.
+func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int, resistByClass map[int]int, rng *rand.Rand) ([]NativeCommand0Result, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command state/rng")
 	}
-	if len(s.NativeCommandBook) != 36 || s.NativeCommandBook[0].ID != 0 {
-		return nil, fmt.Errorf("native command 0 record unavailable")
+	if commandID < 0 || commandID > 3 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+		return nil, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
-	record := s.NativeCommandBook[0]
+	record := s.NativeCommandBook[commandID]
 	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, s.NativeTargetFlags, s.Units)
 	if err != nil {
 		return nil, err

@@ -44,3 +44,17 @@ func TestExecuteBoundNativeCommand0RejectsMissingStateTable(t *testing.T) {
 		t.Fatal("missing bound resistance table must fail closed")
 	}
 }
+
+func TestExecuteNativeCommandDamageAcceptsRecoveredIDOne(t *testing.T) {
+	book := make([]NativeCommandRecord, 36)
+	for id := range book {
+		book[id].ID = id
+	}
+	book[1] = NativeCommandRecord{ID: 1, Damage: 120, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 1, TargetCode: 0}
+	actor := &Unit{Camp: Own, X: 0, MP: 2, HP: 1, OnField: true}
+	target := &Unit{Camp: Enemy, ClassID: 5, X: 1, HP: 200, OnField: true}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+	if got, err := st.ExecuteNativeCommandDamage(actor, target, 1, map[int]int{5: 10}, rand.New(rand.NewSource(1))); err != nil || len(got) != 1 || actor.MP != 1 || !actor.Acted || target.HP >= 200 {
+		t.Fatalf("got=%+v err=%v", got, err)
+	}
+}
