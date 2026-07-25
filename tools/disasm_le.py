@@ -13,6 +13,7 @@ linear ↔ file:obj1 first_page=1,page_size=0x1000,data_off=0x10e00。
   python3 disasm_le.py <FD2.EXE> range <start_hex> <end_hex>   反組譯 linear 範圍
   python3 disasm_le.py <FD2.EXE> calls <target_hex>            找對 target 的相對 call/jmp 來源(linear)
   python3 disasm_le.py <FD2.EXE> refs <abs_hex>                找 code 中被 fixup 成 abs 的位置(資料 xref)
+  python3 disasm_le.py <FD2.EXE> data <linear_hex> <length>   印出同一 LE object 的 raw bytes/ASCII
 """
 import sys, struct
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
@@ -35,6 +36,22 @@ def load_code(d, meta):
     o = meta['objs'][0]
     start = lin2file(meta, o['base'])
     return d[start:start + o['vsize']], o['base']
+
+
+def dump_data(d, meta, start, length):
+    """Print a bounded, reproducible LE-linear hexdump for data/table RE."""
+    if length < 0 or length > 0x10000:
+        raise ValueError("length must be in 0..0x10000")
+    obj = next((o for o in meta['objs'] if o['base'] <= start and start + length <= o['base'] + o['vsize']), None)
+    if obj is None:
+        raise ValueError("range outside one LE object")
+    foff = meta['data_off'] + (obj['first'] - 1) * meta['page_size'] + (start - obj['base'])
+    raw = d[foff:foff + length]
+    for i in range(0, len(raw), 16):
+        row = raw[i:i + 16]
+        hexes = " ".join(f"{b:02x}" for b in row)
+        text = "".join(chr(b) if 0x20 <= b < 0x7f else "." for b in row)
+        print(f"{start + i:#08x}  {hexes:<47}  |{text}|")
 
 
 def build_fixups(d, meta):
@@ -77,6 +94,16 @@ def main(a):
     md = Cs(CS_ARCH_X86, CS_MODE_32)
     md.detail = False
     cmd = a[2]
+
+    if cmd == 'data':
+        if len(a) != 5:
+            print(__doc__); return 1
+        try:
+            dump_data(d, meta, int(a[3], 16), int(a[4], 0))
+        except ValueError as e:
+            print(f"data: {e}", file=sys.stderr)
+            return 1
+        return 0
 
     if cmd in ('dis', 'range'):
         if cmd == 'dis':

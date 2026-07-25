@@ -287,6 +287,8 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 
 title return `1` 後的 selector 以 `[0x53c57]` 作 slot cursor，確實只接受 **0..3**：`0x3069d..0x306d7` 的 ↓ 只在 `<3` 時加一，`0x306d9..0x30705` 的 ↑ 只在 `>0` 時減一，**不 wrap**。`0x30437` 依新 cursor 重繪 selection；`0x305f0` 的第一次畫面亦以同一 global cursor 畫出 entry。`0x1c`／`0x39`（Enter／Space）回 `1` confirm，`0x01`（Esc）回 `-1` cancel。這與 DOSBox empty-save screenshot 的四列 slot 與第一列 outline 一致，但只有 E0/E2 的空槽／輸入證據；有效 record layout、刪除、overwrite、成功 LOAD 後各場景恢復仍未閉合。
 
+save storage boundary 已由同一條 caller chain 固定：`0x25fb7` 以 `"rb"` 開 `FD2.SAV` 並讀入 **`0x59cb` bytes**；save path `0x30119` 則以 `"wb"` 寫回同檔。selector 確認後，slot `i` 的 logical record 起點是 buffer `+0x312b + i*0x1450`；前 **`0xa00` bytes** 直接 copy 到／從 `[0x53bf7]` 的 32×0x50-byte persistent roster，record `+0xa00` 起至少讀／寫 chapter、roster count 與其他 raw state bytes。read/write 前後另有未解的 transform/file helper，故高熵檔案**不能**再寫成「強加密已證實」；目前只可稱 native packed/encoded representation，且不得讓自有 JSON 格式冒充 FD2.SAV compatibility。
+
 ---
 
 ## 4. 新遊戲 → 開場對話 → 自動進戰場(B)
