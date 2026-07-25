@@ -569,6 +569,14 @@
 全部資產格式可解(解包+解壓+轉現代格式)、核心數值表全 dump 並驗證、
 主要遊戲規則演算法(戰鬥/移動/升級/AI)有反組譯依據、地圖可渲染、文本可讀可改。
 
+## 2026-07-25 SDD gate（使用者要求先重審反組譯與 UI）
+
+- [x] **FD2 remake SDD**：新增 `56-fd2-remake-sdd.md`，定義 UI contracts、battle→postbattle→town/shop/church/preparation flow、persistent party/save、native indexed renderer、E0–E3 證據分級與 milestone gates。
+- [ ] **SDD-1 UI evidence matrix**：以 Ghidra/IDA（文件在目前環境不可見）+ Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；未有 E0/E1/E2 不解除 gate。
+- [ ] **SDD-2 campaign transition matrix**：逐章標記 battle 結束後 town/shop/rest/church/preparation/ending 與連戰反例；postbattle 必須是可編輯 node。
+- [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
+- [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
+
 ## 2026-07-20 ending prefix playback slice
 
 - [x] **0x2bce5 可播放前綴（仍 fail-closed）**：`internal/ending.Player` 現以毫秒 clock 依原序執行 frame0 transparent blit、64000-byte copy、1000ms hold、ANI #2（首幀立即、後續每100ms），以及 direct-Capstone 證實的 `0x11df2(0,255,EBX)` 63→0、每步4ms palette ramp；玩家 `FDOTHER.DAT #54` + `ANI.DAT #2` regression 已走到第一個 native text gate。遇 native text 或 composite 一律保留最後 VGA frame 並回報 `blocked`，絕不改用 generic fade／結局。
@@ -599,3 +607,4 @@
 - [x] **indexed FIGANI decoder foundation**：新增 `internal/figani`，直接讀 FIGANI LLLLLL resource、13-byte frame header（signed X/Y、delay、real W/H）和 4-mode RLE，透明 span 以 mask 保留而非轉 palette0；`BlitAt` 寫入 indexed surface，實機 `FIGANI.DAT` #13 regression 通過。下一步是 TAI frame 與 native 0x29164 fade/composite，不能改走 RGBA PNG。
 - [x] **0x29164 first fade closure**：第一參數是 party loop unit index（讀 `[0x53a45]+unit×80+6`），不是 TAI；TAI#3 是尾端 aux argument，7-byte transparent raw 不可餵 `0x2935b`。兩條 native path 都做 `esi=8..0` 共9次 present，每次 DAC baseline delta=`esi×6`（48→0）；geometry／aux platform role 尚待拆完，故 renderer 仍不接。
 - [x] **non-mirrored figure-fade schedule**：`native_2c548.json`／`Montage.PlanFigureFade(1)` 現嚴格記錄 final caller 的 `unit+6==1` branch：work stride640、320×200 left viewport、stage byte offset `8..0 ×10`、palette delta `48..0`，TAI#3@164,157 explicit transparent no-op、secondary FIGANI frame0。`unit+6==0` mirrored branch 仍拒絕，不拿非鏡像公式套用。
+- [x] **non-mirrored indexed fade primitive**：`RenderFigureFadePass` 現真正執行每輪 B→A（320→640）restore、secondary FIGANI 在 `stage×10` 的 indexed blit、A left viewport→VGA 與 baseline DAC delta；TAI#3 bytes 必須是原始透明 no-op。像素 regression 鎖住 backdrop 保留、stage shift 與 48→2 palette；B→C 的 post-figure `memmove(64000)` 亦已記錄，供下一段 portrait renderer 使用。

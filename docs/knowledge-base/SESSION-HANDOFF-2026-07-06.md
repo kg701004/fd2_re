@@ -1,5 +1,13 @@
 # 交接文件 — 給下一個 session(2026-07-06)
 
+## 2026-07-25 resume note — SDD first
+
+依使用者要求本輪先建立 `56-fd2-remake-sdd.md`，暫停新增 handler／renderer。盤點確認目前已有 Ebiten battle/story/cutscene、shop、church、preparation、save 與部分 native ending primitive，但原版 menu dispatch、完整 postbattle town/rest flow、weapon reach、item UI、native indexed presentation 仍未達 remake。`42`/`51` 只作 baseline。
+
+working tree 的 `native_2c548.json`、`internal/ending`、`internal/figani` figure-fade 變更是上一輪未提交工作，已保留未覆蓋；待 SDD gate 後另行 Docker regression。`/tmp/fd2cap` 不存在。使用者所述 `~/.codex/knowledge-base` 在本環境無可讀檔案，Ghidra/IDA 技巧尚未宣稱已套用，待提供可見路徑或下一輪補入。
+
+下一項：UI evidence matrix（title/menu/action/target/HUD/dialog）與逐章 battle→postbattle→town/shop/church/preparation/ending matrix；保持 fail-closed。
+
 > 炎龍騎士團2 RE + Go/Ebiten remake(`/home/anr2/cht/fd2`,repo `wicanr2/fd2_re` main)。
 > 記憶檔(`~/.claude/projects/.../memory/`)會自動載入=長期真相;本檔補「這段 session 的當前狀態 + 開放線索」。
 > **動手前先讀:記憶索引 MEMORY.md、`docs/knowledge-base/00-index.md`(問題導向路由)、`doc50`(過場機制主檔)。**
@@ -381,4 +389,5 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 indexed FIGANI decoder：新增 `remake/internal/figani`，以通用 LLLLLL reader 讀 FIGANI resource，嚴格驗 frame offset table、13-byte header（signed dx/dy、`+6` delay、`+9/+11` real geometry），完整 4-mode RLE 轉成 indexed `Pixels+Mask`；transparent/dither span 保持 native destination-preserve，不把它化成 PNG alpha 或 palette0。`Frame.BlitAt` 可供 native 320/640 stride surface 使用，synthetic codec 與 player-provided `FIGANI.DAT` #13 regression 都通過。尚未宣稱 `0x29164` 完成：仍需 TAI #3、640-stride layout、8-step palette fade 和 specific slot renderer state。
 - 2026-07-20 `0x29164` argument/fade correction（Docker-only Capstone）：`0x2c663` 的最後 push（前方已有6 pushes）才是 arg1=party loop unit index；callee 以 arg1×0x50 讀 `[0x53a45]+6` 決定兩條 path。因此 TAI#3 是尾端 aux argument，且其7-byte all-transparent raw **不能**是 `0x2935b` frame table。兩 path 都從 `esi=8` 倒數到0，逐輪 `0x11d40(0,255,esi*6)`，即 delta 48,42,36,30,24,18,12,6,0，合計9次 320×200 present（不是先前籠統寫的8-step fade）。640-stride figure/platform geometry 與 aux role仍待下輪，禁止接 RGBA renderer。
 - 2026-07-20 `0x29164` final-caller non-mirrored geometry：`0x2c663` 呼叫 mode=1、使 finale party records 走 `unit+6!=0` path。每 stage 8→0 以 `work640 + stage*10` 為 byte origin，對 TAI#3 以 (164,157) 做 transparent no-op，對 **secondary** FIGANI（group×3）以 `0x2935b(frame0)` blit，再從 work left viewport copy 320×200 至 VGA；DAC delta=stage×6。這一條已資料化成 `Montage.PlanFigureFade(1)` 的九 pass，且 test 明確拒絕 unitSide0 mirrored path。restore buffer的實際初始來源／後段 primary FIGANI仍未 lower，故 schedule 本身不是可播放 renderer。
+- 2026-07-20 `0x29164` restore/compositor closure（Docker-only Capstone）：`A=0x1f400` work、`B=first 0xfa00`、`C=second 0xfa00`；FDOTHER#56 先 blit 到 B。每 non-mirror fade pass 的直接 `0x11eb0` 是 **B→A**（dstStride640/srcStride320、320×200），再 secondary FIGANI→`A+stage*10`、A left viewport→VGA；`RenderFigureFadePass` 已用 indexed buffer 實作這個完整且窄的 primitive，要求 TAI#3 exact transparent bytes。primary FIGANI animation 後 `0x373c4(C,B,0xfa00)`，故 C 是 portrait/text loop 的 frozen restore base（後段每 tick C→A 都為320 stride）。這解除 restore 來源，但未 lower primary animation/DATO text 或 mirrored path，player integration 仍封閉。
 - 2026-07-20 finale #56 format closure：玩家 raw `FDOTHER_056.bin` 為13609 bytes，前4 bytes直接是 little-endian 320×200，後接**單一** `0x4e63d` payload、沒有 #54 的 frame-table。新增 player-asset regression 證實以 `Frame{Width:320,Height:200,Pixels:data}.Blit(...,320,-1)` 成功 decode；可重用既有 transparent RLE grammar，但不可使用 `ParseFrames` offset table parser。

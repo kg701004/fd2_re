@@ -1,0 +1,124 @@
+# 56 — FD2 remake 系統設計規格（SDD，2026-07-25）
+
+> 本文件是重新開始 remake 前的設計闸門。目標不是把目前能啟動的 Ebiten demo 擴張成更多 placeholder，而是以可追溯的反組譯證據，重建原版的操作介面、戰間流程、資料與腳本引擎。未滿足證據與驗收條件的語意保持 fail-closed。
+
+## 1. 目標與現況判定
+
+### 1.1 目標
+
+- 原版 30 關的 campaign、戰鬥、戰後城鎮／商店／教會／整備、存檔與結局可循環遊玩。
+- 對話、事件、商店、部署、過場和 UI layout 都由外部資料／腳本驅動；新增戰役不需修改 Go runtime。
+- UI 操作語意與原版一致：游標、指令環、射程／目標、對話框、狀態欄、商店、教會和戰後節點均有可見且可測的操作入口。
+- native indexed renderer 與現代 RGBA/Ebiten 顯示層分離；未完成 native ABI 時不得用泛用淡出、PNG 或空白畫面冒充完成。
+
+### 1.2 現況（以 2026-07-25 working tree 與程式碼為準）
+
+目前不是「沒有程式」，而是「有一個可跑的垂直切片，尚未達 remake」：`remake/cmd/fd2/main.go` 仍承擔 scene state、輸入 dispatch、戰鬥 UI、對話、town、shop、church、preparation 與 Draw；`internal/battle`、`internal/campaign`、`internal/ending`、`internal/figani` 已有可測的部分 primitive。這些 primitive 不等於原版 UI 或完整 campaign。
+
+已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。
+
+## 2. 證據分級與反組譯規則
+
+每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：
+
+| 等級 | 來源 | 可否解除 implementation gate |
+|---|---|---|
+| E0 | 原版 EXE/DAT bytes、Docker `fd2-cap-local` Capstone、Ghidra/IDA call graph | 可以，需保留 offset、呼叫者與反組譯片段 |
+| E1 | deterministic parser、pixel/byte regression、資產 round-trip | 可以，需能重跑且輸出穩定 |
+| E2 | DOSBox/Xvfb 實機操作、逐幀截圖／輸入差分 | 可以，需保存 command、frame、artifact |
+| E3 | 攻略、影片、視覺推論或 UX 慣例 | 只能列為假設，不得解除 native/handler gate |
+
+本輪重新核對的已知更正：`0x16559` 是 DATO mouth-frame／glyph blit caller，`0x4ea2a` 才是 native glyph renderer；FDTXT `0x2c469` 的 `load_ch_text(30)` 對 archive resource #31 的物理表，不能直接命名成 ch30；`0x2c548` 有 `i=0→slot1、i=1→slot0` swap；`0x29164` 第一參數是 party unit index，TAI#3 是 7-byte transparent aux，不是可見台座。這些結論要在新工具鏈重跑後才能再擴展，不可由名稱推導 renderer 語意。
+
+`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此 Ghidra/IDA 技巧尚未納入本輪證據；文件可見後，應以相同 E0 規則補 call graph、資料流和交叉引用，不以缺檔猜測。
+
+## 3. 目標架構
+
+```text
+Input adapters (keyboard/mouse/gamepad)
+        ↓ normalized Commands
+Scene FSM: title → story/cutscene → battle → postbattle → town/shop/church/preparation
+        ↓                         ↘ save/load snapshot
+Campaign/Script runner          Persistent party + flags + inventory
+        ↓
+Battle rules / target selection / AI / animation scheduler
+        ↓
+Indexed native surfaces + RGBA/Ebiten presentation adapter
+        ↓
+UI skin/assets (FDOTHER/FDTXT/DATO/FIGANI/TAI/FDFIELD) + audio
+```
+
+Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像素座標。下一階段先定義 interfaces，再搬移；在搬移完成前不增加新的 hard-coded handler。
+
+## 4. UI interaction contracts
+
+每個 contract 都必須有 state、可見 render model、輸入 command、side effect、headless test 與一個實機／截圖 gate。
+
+| ID | UI / 流程 | 必須還原的操作契約 | 目前狀態 |
+|---|---|---|---|
+| UI-01 | Title/main menu | 上下選擇、確認、取消、save/load、游標音效與 focus state | partial；需從 boot/menu call graph 重審 |
+| UI-02 | Battle field | 游標格、鏡頭、可移動格、高亮、單位 HUD、方向／面向 | partial；HUD 固定錨點與完整 native sprite 未閉合 |
+| UI-03 | Action menu | move/attack/magic/item/status/wait/end-turn 的可見項、enable gate、取消回上一層 | partial；目前 ring mapping 有配置註記，end-turn 仍非原版可見流程 |
+| UI-04 | Target/range | 武器 min/max reach、法術 range/AOE、不可用目標灰化、確認／取消 | missing/partial；不能再把攻擊距離寫死相鄰格 |
+| UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；已有 regression，但 native frame/資源與所有 speaker layout 未閉合 |
+| UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
+| UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 可表達，逐關 branch 證據仍不足 |
+| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`town` 可選 node，但需逐章節驗證 |
+| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；buy/sell/equip 有 code，UI sprite/layout 與原版分支未驗 |
+| UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；現有 service menu 對未接 callee 明確擋下 |
+| UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，原版 layout/操作未做差分 |
+| UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum | partial；自有格式可用，尚非 FD2.SAV 相容 |
+
+### UI acceptance gate
+
+在 `UI-01…UI-12` 每項至少有一個 deterministic input script、預期 state trace 和 screenshot artifact；只通過 Go unit test 不算 UI 完成。截圖測試需記錄解析度、幀號、輸入序列，並比較 cursor/menu/dialog/panel 的 bounding boxes。無法取得原版 ground truth 的項目標為 blocked/assumption，不得用「看起來合理」關閉。
+
+## 5. Campaign / postbattle 設計
+
+每個 battle node 必須明確指定：
+
+```json
+{
+  "on_win": "post_chNN",
+  "on_lose": "lose_chNN",
+  "persistent": ["roster_cleanup", "reward", "flags"],
+  "next": "town_or_shop_or_preparation_or_ending"
+}
+```
+
+`postbattle` 是一級可編輯 node，不是 `battle.on_win` 的隱含 callback。允許 `battle→town/rest`、`battle→shop`、`battle→church`、`battle→preparation`、`battle→ending`，也允許連戰區間明確沒有 town/shop。每個 transition 都需有 handler offset／資產／攻略旁證的 evidence list；只有攻略證據時仍標 E3。
+
+Persistent party 的 transaction 順序固定為：結算結果 → reward/drop → transient status cleanup → MaxHP/MaxMP／equipment recompute → roster save → branch flags → 下一個 node。任何中途資料缺失都停在錯誤畫面，不自動跳到下一戰。
+
+## 6. Reverse-engineering re-audit workstreams
+
+SDD 通過後按以下順序重審，不先補 renderer 猜測：
+
+1. **Boot/menu/UI dispatch**：以 Ghidra/IDA 建立 call graph、keyboard scan、menu item table、resource loader；Docker Capstone 只作可重跑交叉驗證。
+2. **Resource provenance**：把 FDOTHER/FDTXT/DATO/FIGANI/TAI/FDFIELD 的 loader、entry、palette、stride、clip 寫成 machine-readable bindings，並與 UI contract 對應。
+3. **Battle interaction**：追 action menu enable gates、weapon reach、spell inventory/targeting、end-turn 判定、HUD anchor；每一項先找 caller/data flow，再改 Go。
+4. **Campaign/postbattle**：逐關標記 battle end handler、town/shop/church/preparation/rest、persistent record append/reset、敗北路線；不能以章號順序推導。
+5. **Native presentation**：完成 indexed off-screen/double-buffer、palette、透明 RLE、FIGANI/TAI/DATO compositing 後才接 Ebiten；任何 opaque segment 保持 fail-closed。
+
+## 7. Milestones / gates
+
+| Milestone | Deliverable | Gate |
+|---|---|---|
+| SDD-0 | 本文件、requirements matrix、證據分級、缺口清單 | 文件 review；無未標註的推測 |
+| UI-1 | title→story→battle field→action menu→dialog→town/shop 的 shell vertical slice | command trace + headless tests + screenshots |
+| UI-2 | battle target/range/end-turn/HUD 正確 | weapon/spell/menu RE evidence + differential tests |
+| FLOW-1 | 全部 battle→postbattle→town/shop/church/preparation branches 可編輯 | 每章 transition matrix、save/reload regression |
+| NATIVE-1 | indexed renderer primitives（含 ending／FIGANI／TAI） | byte/pixel regression；無 generic fallback |
+| CONTENT-1 | ch01–ch30 script、資產、事件與結局完整 | campaign replay、無 load error、可編輯 round-trip |
+
+## 8. Definition of done
+
+- 所有 UI contract 有明確 state machine 和輸入測試；玩家不需要 debug key 才能完成基本流程。
+- 所有戰後段落可在 campaign JSON 中看見；town/shop/rest/preparation 不被隱含吞掉。
+- 所有 native 值有 E0/E1/E2 證據；E3 只存在於標註為 blocked 的文件，不進 runtime。
+- Docker-only Capstone 與 Go regression 可重跑；`/tmp/fd2cap` 不存在，host Python 不安裝 Capstone。
+- headless、畫面、存檔、reload、資源缺失 fail-closed 測試全綠；`git diff --check` 通過。
+
+## 9. 本輪決策
+
+本 SDD 完成前不再新增新的 remake handler 或 renderer 語意。現有 working tree 的 finale figure-fade 變更保留，待 SDD gate 後另行驗證與提交；不得把它描述成已完成的 ending。下一輪先做 UI-01/UI-03/UI-07 的 RE evidence matrix，再選一條可截圖的 vertical slice。
