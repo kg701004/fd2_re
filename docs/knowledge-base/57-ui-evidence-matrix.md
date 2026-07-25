@@ -56,8 +56,10 @@ renderer `0x1741c` 以 `[0x53a89]` 的 relative asset table 選四張 state-depe
 `0x4e9e4` 寫入 indexed overlay。它不是瞬間顯示：四張都從 shared origin `+0x390` 開始，每次
 present 後 4-frame slide 分別更新 offset `up -= 0x8e8`（5 native rows）、`left -= 6`、
 `right += 6`、`down += 0x8e8`。`0x175a9` 在開啟前備份 72×72 bytes（`0x1440`）到 private buffer，
-`0x17643` 在每幀 restore；`0x176b4` 是相反的關閉 transition。這證實十字狀 indexed overlay、方向
-與節奏。asset provenance 現已閉合：boot `0x25c97..0x25cac` 將 `FDOTHER.DAT #2` 交給 `0x111ba`
+`0x17643` 在每幀 restore。Docker Capstone 重讀 `0x176b4` 後，撤回「單純反向」的過度概括：它的
+四幀 close 初始 byte offset 是 `[−0x23a0,0x378,0x3a8,0x2ac0]`，每幀改為
+`[+0x8e8,+6,−6,−0x8e8]`。這證實十字狀 indexed overlay、方向與節奏。asset provenance 現已閉合：boot
+`0x25c97..0x25cac` 將 `FDOTHER.DAT #2` 交給 `0x111ba`
 並寫入 `[0x53a89]`。raw #2 是 untagged 78-cell offset bank（首 `u32=0x138` 即 directory end），cell
 為 `{u16 width,u16 height,width*height indexed pixels}`；`0x4e9e4` 逐列 direct blit，index 0 preserve。
 實測為 74 個 24×20、4 個 24×16 cells，strict `fdother.ParseRawCellBank` 與 player asset regression 已覆蓋。
