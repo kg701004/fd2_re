@@ -17,7 +17,7 @@
 | UI-09 shop | buy/sell/equip/recipient 約 2256–2391 | partial | 商品 menu sprite、游標邊界、secret shop flag、原版 cancel semantics |
 | UI-10 church | revive/class-change 約 2162–2256；未接服務明確顯示待 callee | partial/fail-closed | 0x30dc3/0x31385 完整 fee、候選、確認與 renderer |
 | UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present；`0x1f42d` 的 LMI1 #0x52 double-slide entry/anchor 已釘 | partial | MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
-| UI-12 save/load | F5/F9 global path；save package 自有 schema | partial | scene-safe boundaries、versioning、原版 save semantics |
+| UI-12 save/load | F5/F9 global path；save package 自有 schema；原版 LOAD empty-slot oracle `docs/figures/load-empty-original-dosbox.png` 證實 1–4 四列框與第一列 cursor | partial | scene-safe boundaries、versioning、原版 save semantics |
 
 ### UI-03 dispatch-wrapper recheck（2026-07-25，E0 partial）
 
@@ -88,6 +88,10 @@ test ! -e /tmp/fd2cap
 `docs/figures/title-original-dosbox.png`（320×200 crop）。畫面直接證實 title 的 START／LOAD／CONTINUE
 縱列與 START cursor；這是 UI-01 的 E2 畫面 oracle，不證明 title input dispatch、存讀檔語意或 remake
 title renderer 已完成。
+
+同一 timeline 在 title 選 LOAD 後可重現 `docs/figures/load-empty-original-dosbox.png`：原版在空 save
+sandbox 顯示四列 `1)` 到 `4)`、每列「無儲存記錄」，第一列有 selection outline。這是 UI-12 的空槽
+E2 oracle；它沒有有效存檔資料，因此不證明 record layout、LOAD 成功路徑或 SAVE overwrite confirmation。
 
 ### D8 native trace（2026-07-25，E0 partial）
 
