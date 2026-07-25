@@ -131,6 +131,8 @@ clamp。任何缺失 raw flags、record、confirmed candidate 或 resistance row
 animation、post-resolution 與 UI remain unbound。Game bootstrap 將 strict `native_command_resistances.json` copy 到
 `State.NativeCommandResistances`；`ExecuteBoundNativeCommand0` 只使用此 state-bound raw table，缺表不回退 legacy magic。
 成功結束時才投影 wrapper `0x18d8c→0x13512` 的 runtime `unit+5|=0x80` 為 `actor.Acted=true`；失敗不設。
+UI vertical slice 現僅對 ID0 開啟：raw grid Enter 會以 `+3` candidate highlighter 進入 target mode，Enter 交
+`ExecuteBoundNativeCommand0` 作完整 verified core，ESC 回 native grid；缺 raw data／其他 ID 一律不接 legacy cast。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
