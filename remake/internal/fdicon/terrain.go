@@ -28,3 +28,22 @@ func truncDiv2(v int) int {
 	}
 	return v / 2
 }
+
+// BlitNativeTerrainCell composes one already-selected FDFIELD terrain cell as
+// 0x11eee does: select the FDSHAP frame, then use raw 0x4deda only for entry
+// byte+3 == 0xff, otherwise use LUT-aware 0x4dcc6. Camera iteration, LUT
+// phase selection and foreground redraw remain responsibilities of its caller.
+func (b *Bank) BlitNativeTerrainCell(dst []byte, stride, x, y, tile int, flags, blitMode byte, flip, cycle int, lut []byte) error {
+	index, err := NativeTerrainFrameIndex(tile, flags, flip, cycle)
+	if err != nil {
+		return err
+	}
+	sprite, err := b.SpriteFor(index/12, (index%12)/3, index%3)
+	if err != nil {
+		return err
+	}
+	if blitMode == 0xff {
+		return sprite.BlitAt(dst, stride, x, y)
+	}
+	return sprite.BlitLUT(dst, stride, x, y, lut)
+}
