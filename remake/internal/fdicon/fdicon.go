@@ -18,7 +18,10 @@ const (
 
 type Bank struct{ Sprites []Sprite }
 
-type Sprite struct{ Pixels, Mask []byte }
+// Sprite preserves native four-mode RLE effects after decoding. Mask marks
+// source writes; RemapMask marks mode-3 spans, which 0x4dcc6 remaps from the
+// destination rather than treating as ordinary transparency.
+type Sprite struct{ Pixels, Mask, RemapMask []byte }
 
 // SpriteFor implements the native 0x127e0 selector after 0x11019 has built
 // its pointer table: group×12 + pose×3 + cycle. Pose is runtime +3; cycle is
@@ -101,24 +104,24 @@ func Parse(raw []byte) (*Bank, error) {
 		if off < previous || off >= end || end > len(raw) {
 			return nil, fmt.Errorf("fdicon: invalid sprite %d offset", i)
 		}
-		pixels, mask, err := decode(raw[off:end])
+		pixels, mask, remapMask, err := decode(raw[off:end])
 		if err != nil {
 			return nil, fmt.Errorf("fdicon: sprite %d: %w", i, err)
 		}
-		bank.Sprites[i] = Sprite{Pixels: pixels, Mask: mask}
+		bank.Sprites[i] = Sprite{Pixels: pixels, Mask: mask, RemapMask: remapMask}
 		previous = off
 	}
 	return bank, nil
 }
 
-func decode(src []byte) ([]byte, []byte, error) {
-	pixels, mask := make([]byte, NativeSize*NativeSize), make([]byte, NativeSize*NativeSize)
+func decode(src []byte) ([]byte, []byte, []byte, error) {
+	pixels, mask, remapMask := make([]byte, NativeSize*NativeSize), make([]byte, NativeSize*NativeSize), make([]byte, NativeSize*NativeSize)
 	p := 0
 	for y := 0; y < NativeSize; y++ {
 		x := 0
 		for x < NativeSize {
 			if p >= len(src) {
-				return nil, nil, errors.New("RLE ends early")
+				return nil, nil, nil, errors.New("RLE ends early")
 			}
 			c := src[p]
 			p++
@@ -128,13 +131,13 @@ func decode(src []byte) ([]byte, []byte, error) {
 				span *= 2
 			}
 			if x+span > NativeSize {
-				return nil, nil, errors.New("RLE overruns row")
+				return nil, nil, nil, errors.New("RLE overruns row")
 			}
 			write := func(at int, v byte) { pixels[y*NativeSize+at], mask[y*NativeSize+at] = v, 1 }
 			switch mode {
 			case 0:
 				if p >= len(src) {
-					return nil, nil, errors.New("run lacks value")
+					return nil, nil, nil, errors.New("run lacks value")
 				}
 				v := src[p]
 				p++
@@ -143,7 +146,7 @@ func decode(src []byte) ([]byte, []byte, error) {
 				}
 			case 1:
 				if p >= len(src) {
-					return nil, nil, errors.New("dither lacks value")
+					return nil, nil, nil, errors.New("dither lacks value")
 				}
 				v := src[p]
 				p++
@@ -152,17 +155,21 @@ func decode(src []byte) ([]byte, []byte, error) {
 				}
 			case 2:
 				if p+count > len(src) {
-					return nil, nil, errors.New("literal exceeds data")
+					return nil, nil, nil, errors.New("literal exceeds data")
 				}
 				for i, v := range src[p : p+count] {
 					write(x+i, v)
 				}
 				p += count
+			case 3:
+				for i := 0; i < count; i++ {
+					remapMask[y*NativeSize+x+i] = 1
+				}
 			}
 			x += span
 		}
 	}
-	return pixels, mask, nil
+	return pixels, mask, remapMask, nil
 }
 
 // BlitAt is native 0x4deda: raw indexed RLE, preserving transparent spans.
@@ -180,6 +187,27 @@ func (s Sprite) BlitPaletteBand(dst []byte, stride, x, y int) error {
 // selects 0x4deda raw pixels, set selects 0x4de56's palette-band pixels.
 func (s Sprite) BlitForNativeFlags(dst []byte, stride, x, y int, flags byte) error {
 	return s.blit(dst, stride, x, y, flags&0x80 != 0)
+}
+
+// BlitLUT reproduces 0x4dcc6. Source-written RLE pixels are translated through
+// lut; mode-3 spans translate the existing destination index through lut.
+// Dither holes remain untouched, as in the native mode-1 loop.
+func (s Sprite) BlitLUT(dst []byte, stride, x, y int, lut []byte) error {
+	if len(lut) != 256 || len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || len(s.RemapMask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
+		return errors.New("fdicon: invalid LUT blit")
+	}
+	for row := 0; row < NativeSize; row++ {
+		for col := 0; col < NativeSize; col++ {
+			i := row*NativeSize + col
+			d := (y+row)*stride + x + col
+			if s.Mask[i] != 0 {
+				dst[d] = lut[s.Pixels[i]]
+			} else if s.RemapMask[i] != 0 {
+				dst[d] = lut[dst[d]]
+			}
+		}
+	}
+	return nil
 }
 
 func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {

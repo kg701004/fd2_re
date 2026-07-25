@@ -44,6 +44,25 @@ func TestParseAndBlitPreserveTransparentDitherAndPaletteBand(t *testing.T) {
 	if got := dst[0]; got != 0x1f {
 		t.Fatalf("acted flag used raw path: %d", got)
 	}
+	if got := b.Sprites[0].RemapMask[4]; got != 1 {
+		t.Fatalf("native mode-3 span was not retained: %d", got)
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(i + 0x20)
+	}
+	for i := range dst {
+		dst[i] = 1
+	}
+	if err := b.Sprites[0].BlitLUT(dst, 32, 0, 0, lut); err != nil {
+		t.Fatal(err)
+	}
+	if got := dst[:6]; got[0] != 0x27 || got[1] != 1 || got[2] != 0x29 || got[3] != 0x21 || got[4] != 0x21 {
+		t.Fatalf("LUT pixels=%v", got)
+	}
+	if err := b.Sprites[0].BlitLUT(dst, 32, 0, 0, lut[:255]); err == nil {
+		t.Fatal("short LUT accepted")
+	}
 }
 
 func TestDecodeOriginalFDICON(t *testing.T) {
