@@ -161,6 +161,17 @@ func TestFDOTHER081ArchiveShape(t *testing.T) {
 	if len(entry) < 10 || string(entry[:6]) != "LLLLLL" || binary.LittleEndian.Uint32(entry[6:10]) != 0x12 {
 		t.Fatalf("#81 is not the expected nested LLLLLL resource: len=%d head=% x", len(entry), entry[:min(32, len(entry))])
 	}
+	for resource := 0; resource < 2; resource++ {
+		if nested, err := ArchiveEntry(entry, resource); err != nil || len(nested) == 0 {
+			t.Fatalf("#81 nested entry %d: len=%d err=%v", resource, len(nested), err)
+		}
+	}
+	if nested, err := ArchiveEntry(entry, 2); err != nil || len(nested) != 0 {
+		t.Fatalf("#81 nested terminator entry: len=%d err=%v", len(nested), err)
+	}
+	if _, err := ArchiveEntry(entry, 3); err == nil {
+		t.Fatal("#81 accepted a fourth nested entry")
+	}
 }
 
 func TestFinaleTAI003IsTransparentPlaceholder(t *testing.T) {

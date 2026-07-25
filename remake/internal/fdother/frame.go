@@ -41,14 +41,18 @@ func ReadResource(datPath string, resource int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	entry, err := archiveEntry(data, resource)
+	entry, err := ArchiveEntry(data, resource)
 	if err != nil {
 		return nil, err
 	}
 	return append([]byte(nil), entry...), nil
 }
 
-func archiveEntry(data []byte, resource int) ([]byte, error) {
+// ArchiveEntry extracts one raw entry from an LLLLLL archive byte slice.
+// FDOTHER #81 is itself a nested LLLLLL archive; exposing this boundary lets
+// callers validate nested provenance without pretending its payload is a
+// normal FDOTHER frame table.
+func ArchiveEntry(data []byte, resource int) ([]byte, error) {
 	if len(data) < 10 || string(data[:6]) != "LLLLLL" {
 		return nil, errors.New("fdother: missing LLLLLL archive magic")
 	}
@@ -69,6 +73,10 @@ func archiveEntry(data []byte, resource int) ([]byte, error) {
 		return nil, errors.New("fdother: invalid archive resource bounds")
 	}
 	return data[start:end], nil
+}
+
+func archiveEntry(data []byte, resource int) ([]byte, error) {
+	return ArchiveEntry(data, resource)
 }
 
 // ParseFrames parses the raw archive entry returned by FD2's 0x111ba loader.
