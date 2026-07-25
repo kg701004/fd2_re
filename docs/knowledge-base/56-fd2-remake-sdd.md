@@ -30,7 +30,9 @@
 
 本輪重新核對的已知更正：`0x16559` 是 DATO mouth-frame／glyph blit caller，`0x4ea2a` 才是 native glyph renderer；FDTXT `0x2c469` 的 `load_ch_text(30)` 對 archive resource #31 的物理表，不能直接命名成 ch30；`0x2c548` 有 `i=0→slot1、i=1→slot0` swap；`0x29164` 第一參數是 party unit index，TAI#3 是 7-byte transparent aux，不是可見台座。這些結論要在新工具鏈重跑後才能再擴展，不可由名稱推導 renderer 語意。
 
-`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此 Ghidra/IDA 技巧尚未納入本輪證據；文件可見後，應以相同 E0 規則補 call graph、資料流和交叉引用，不以缺檔猜測。
+`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。repo 已提供不含 license／遊戲資料的
+`tools/docker/fd2-ida.Dockerfile` 與 `tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA
+workspace 匯出 xref 後重跑；在實際 report 可驗證前，現有結論仍以 Docker Capstone 作 E0，不以工具名稱或缺檔猜測。
 
 ## 3. 目標架構
 
@@ -72,6 +74,39 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 ### UI acceptance gate
 
 在 `UI-01…UI-12` 每項至少有一個 deterministic input script、預期 state trace 和 screenshot artifact；只通過 Go unit test 不算 UI 完成。截圖測試需記錄解析度、幀號、輸入序列，並比較 cursor/menu/dialog/panel 的 bounding boxes。無法取得原版 ground truth 的項目標為 blocked/assumption，不得用「看起來合理」關閉。
+
+### UI-03 native command data contract（E0 partial）
+
+原版 `0x1c269` 將 0x50-byte unit record 的 `+0x1a..+0x1e` bit array 展開為
+`command_id = byte_index*8 + bit_index`（0..39）；`0x4e516(id)` 對應到
+`0x619fd + id*7` 的 command record。construction path `0x10f7f/0x11399` 只 copy initial
+4 bytes 至 `+0x1a..+0x1d`、清 `+0x1e`，而 `0x1d7fb` 可依 `id/8` 將 runtime bit OR 回 array。
+`0x159fa` 另要求 `command_record[5] <= unit.current_mp`（unit `+0x44`）。
+
+remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定四個 ring action：
+
+```json
+{
+  "unit_command_mask": [0, 0, 0, 0, 0],
+  "commands": [
+    {
+      "id": 0,
+      "mp_cost": 0,
+      "native_record": { "raw_hex": "00000000000000" },
+      "label": null,
+      "target_contract": null,
+      "enabled_when": []
+    }
+  ]
+}
+```
+
+`unit_command_mask` 必須是固定五 bytes；初始 source 可只填前四 bytes，但 runtime mutation 不得截斷
+第 5 byte。可見 command 的最小 gate 是「該 bit set 且 `current_mp >= mp_cost`」。`label`、
+`target_contract`、其他 `enabled_when` 在未有 E0 producer／effect evidence 時維持 `null`／空集合，
+renderer 必須顯示未解析或禁用狀態，不得將 ID 猜成 attack/spell/item。驗收 test 應涵蓋 bit 0、7、8、31、32、39
+的展開順序、MP 邊界（cost-1/cost）與 unknown ID fail-closed；只有在 ID→label/render/effect trace 完整後，
+才可淘汰現有 four-way ring approximation。
 
 ## 5. Campaign / postbattle 設計
 
