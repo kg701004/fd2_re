@@ -600,7 +600,8 @@
       `learn_idx` 經 `0x4e4a2` 查 20×12-byte、最多六組 `(required_level,command_id)` 表，命中即 OR bit
       並顯示 FDTXT_000 #587「學會了！」。已導出 `command_learn.json`，保留 FF/FF sentinel；portrait→growth
       row 是 `0x4e4d1(portrait)=0x620a1+portrait*11` direct ABI；`State.GainExp` 已以 injectable table 接線，
-      不能用 legacy `Spells` 偽造結果。
+      runtime asset `assets/data/command_learn.json` 已在每個新 battle state bind，不能用 legacy `Spells`
+      偽造結果。
 - [x] **UI-03 raw command-mask pipeline**：FDFIELD roster `b13..b16` 已由 parser/exporter 保留為
       `initial_command_mask`；battle runtime materialize 為可持久的 5-byte `NativeCommandMask`，並有原版
       order 的 ID expansion／`0x1d7fb` bounded-OR regression。舊 `Spells` 是 normalized approximation，

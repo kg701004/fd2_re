@@ -1,0 +1,438 @@
+[
+ {
+  "idx": 0,
+  "off": "0x564b3",
+  "entries": [
+   {
+    "required_level": 5,
+    "command_id": 17
+   },
+   {
+    "required_level": 9,
+    "command_id": 1
+   },
+   {
+    "required_level": 15,
+    "command_id": 26
+   },
+   {
+    "required_level": 21,
+    "command_id": 2
+   },
+   {
+    "required_level": 26,
+    "command_id": 27
+   }
+  ],
+  "raw": "051109010f1a15021a1bffff"
+ },
+ {
+  "idx": 1,
+  "off": "0x564bf",
+  "entries": [
+   {
+    "required_level": 7,
+    "command_id": 20
+   },
+   {
+    "required_level": 11,
+    "command_id": 14
+   },
+   {
+    "required_level": 16,
+    "command_id": 18
+   },
+   {
+    "required_level": 24,
+    "command_id": 22
+   },
+   {
+    "required_level": 30,
+    "command_id": 23
+   }
+  ],
+  "raw": "07140b0e101218161e17ffff"
+ },
+ {
+  "idx": 2,
+  "off": "0x564cb",
+  "entries": [
+   {
+    "required_level": 18,
+    "command_id": 19
+   },
+   {
+    "required_level": 24,
+    "command_id": 21
+   },
+   {
+    "required_level": 30,
+    "command_id": 25
+   }
+  ],
+  "raw": "121318151e19ffffffffffff"
+ },
+ {
+  "idx": 3,
+  "off": "0x564d7",
+  "entries": [
+   {
+    "required_level": 20,
+    "command_id": 10
+   },
+   {
+    "required_level": 24,
+    "command_id": 6
+   }
+  ],
+  "raw": "140a1806ffffffffffffffff"
+ },
+ {
+  "idx": 4,
+  "off": "0x564e3",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 24
+   }
+  ],
+  "raw": "0418ffffffffffffffffffff"
+ },
+ {
+  "idx": 5,
+  "off": "0x564ef",
+  "entries": [
+   {
+    "required_level": 2,
+    "command_id": 30
+   }
+  ],
+  "raw": "021effffffffffffffffffff"
+ },
+ {
+  "idx": 6,
+  "off": "0x564fb",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 29
+   }
+  ],
+  "raw": "041dffffffffffffffffffff"
+ },
+ {
+  "idx": 7,
+  "off": "0x56507",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 27
+   },
+   {
+    "required_level": 7,
+    "command_id": 3
+   },
+   {
+    "required_level": 13,
+    "command_id": 19
+   },
+   {
+    "required_level": 22,
+    "command_id": 11
+   }
+  ],
+  "raw": "031b07030d13160bffffffff"
+ },
+ {
+  "idx": 8,
+  "off": "0x56513",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 2
+   },
+   {
+    "required_level": 8,
+    "command_id": 7
+   },
+   {
+    "required_level": 12,
+    "command_id": 11
+   }
+  ],
+  "raw": "040208070c0bffffffffffff"
+ },
+ {
+  "idx": 9,
+  "off": "0x5651f",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 15
+   },
+   {
+    "required_level": 9,
+    "command_id": 21
+   },
+   {
+    "required_level": 18,
+    "command_id": 19
+   },
+   {
+    "required_level": 23,
+    "command_id": 16
+   }
+  ],
+  "raw": "030f091512131710ffffffff"
+ },
+ {
+  "idx": 10,
+  "off": "0x5652b",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 15
+   },
+   {
+    "required_level": 8,
+    "command_id": 3
+   },
+   {
+    "required_level": 14,
+    "command_id": 7
+   },
+   {
+    "required_level": 20,
+    "command_id": 8
+   },
+   {
+    "required_level": 24,
+    "command_id": 12
+   },
+   {
+    "required_level": 30,
+    "command_id": 23
+   }
+  ],
+  "raw": "040f08030e071408180c1e17"
+ },
+ {
+  "idx": 11,
+  "off": "0x56537",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 15
+   },
+   {
+    "required_level": 9,
+    "command_id": 8
+   },
+   {
+    "required_level": 16,
+    "command_id": 19
+   },
+   {
+    "required_level": 21,
+    "command_id": 21
+   },
+   {
+    "required_level": 26,
+    "command_id": 16
+   }
+  ],
+  "raw": "030f0908101315151a10ffff"
+ },
+ {
+  "idx": 12,
+  "off": "0x56543",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 15
+   },
+   {
+    "required_level": 8,
+    "command_id": 8
+   },
+   {
+    "required_level": 15,
+    "command_id": 27
+   },
+   {
+    "required_level": 20,
+    "command_id": 21
+   },
+   {
+    "required_level": 25,
+    "command_id": 16
+   }
+  ],
+  "raw": "030f08080f1b14151910ffff"
+ },
+ {
+  "idx": 13,
+  "off": "0x5654f",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 15
+   },
+   {
+    "required_level": 10,
+    "command_id": 8
+   },
+   {
+    "required_level": 15,
+    "command_id": 22
+   },
+   {
+    "required_level": 20,
+    "command_id": 20
+   },
+   {
+    "required_level": 24,
+    "command_id": 7
+   }
+  ],
+  "raw": "040f0a080f1614141807ffff"
+ },
+ {
+  "idx": 14,
+  "off": "0x5655b",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 15
+   },
+   {
+    "required_level": 9,
+    "command_id": 8
+   },
+   {
+    "required_level": 16,
+    "command_id": 21
+   },
+   {
+    "required_level": 21,
+    "command_id": 18
+   },
+   {
+    "required_level": 25,
+    "command_id": 3
+   }
+  ],
+  "raw": "030f0908101515121903ffff"
+ },
+ {
+  "idx": 15,
+  "off": "0x56567",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 18
+   },
+   {
+    "required_level": 11,
+    "command_id": 15
+   },
+   {
+    "required_level": 18,
+    "command_id": 20
+   }
+  ],
+  "raw": "04120b0f1214ffffffffffff"
+ },
+ {
+  "idx": 16,
+  "off": "0x56573",
+  "entries": [
+   {
+    "required_level": 3,
+    "command_id": 19
+   },
+   {
+    "required_level": 9,
+    "command_id": 15
+   },
+   {
+    "required_level": 16,
+    "command_id": 20
+   }
+  ],
+  "raw": "0313090f1014ffffffffffff"
+ },
+ {
+  "idx": 17,
+  "off": "0x5657f",
+  "entries": [
+   {
+    "required_level": 15,
+    "command_id": 11
+   },
+   {
+    "required_level": 20,
+    "command_id": 18
+   },
+   {
+    "required_level": 23,
+    "command_id": 11
+   }
+  ],
+  "raw": "0f0b1412170bffffffffffff"
+ },
+ {
+  "idx": 18,
+  "off": "0x5658b",
+  "entries": [
+   {
+    "required_level": 4,
+    "command_id": 15
+   },
+   {
+    "required_level": 10,
+    "command_id": 22
+   },
+   {
+    "required_level": 18,
+    "command_id": 16
+   },
+   {
+    "required_level": 24,
+    "command_id": 18
+   }
+  ],
+  "raw": "040f0a1612101812ffffffff"
+ },
+ {
+  "idx": 19,
+  "off": "0x56597",
+  "entries": [
+   {
+    "required_level": 2,
+    "command_id": 34
+   },
+   {
+    "required_level": 6,
+    "command_id": 35
+   },
+   {
+    "required_level": 11,
+    "command_id": 23
+   },
+   {
+    "required_level": 15,
+    "command_id": 3
+   },
+   {
+    "required_level": 19,
+    "command_id": 33
+   },
+   {
+    "required_level": 23,
+    "command_id": 32
+   }
+  ],
+  "raw": "022206230b170f0313211720"
+ }
+]

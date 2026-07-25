@@ -100,7 +100,8 @@ level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx
 `docs/data/exe_tables/command_learn.json` 已保存 20 張 raw table（`FF/FF` sentinel 不轉成假資料）。
 portrait→growth-row provenance 是 direct ABI：`0x4e4d1(unit+7)=0x620a1+portrait*11`，第 11 byte 就是
 `learn_idx`。remake `State.GainExp` 因此只在已注入這個 editable table 時，於剛達到的 level OR exact
-command bit；legacy standalone `GainExp` 與 `Spells` 都不補造結果。
+command bit；`remake/assets/data/command_learn.json` 是 runtime copy，`Game` 在每個新 battle state bind
+同一張 table。legacy standalone `GainExp` 與 `Spells` 都不補造結果。
 
 remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定四個 ring action：
 

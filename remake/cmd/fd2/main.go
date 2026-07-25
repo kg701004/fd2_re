@@ -131,7 +131,8 @@ type Game struct {
 	spellSel           int
 	castSp             *battle.Spell // 施法目標選擇中
 	spells             []battle.Spell
-	bgm                *audio.Player // BGM(doc12 play_bgm 語意:同曲不重播)
+	commandLearn       map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
+	bgm                *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
 	bgmCur             string
 	bgmSource          string                // 音源設定 "fm"/"mt32"(settings.go;F2 切換)
 	debug              bool                  // F3:開發除錯 HUD(座標/陣營原文等)
@@ -1625,6 +1626,7 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	}
 	if st, err := battle.Load(assetPath(unitsPath)); err == nil {
 		g.st = st
+		g.bindCommandLearn(st)
 	}
 	g.result, g.sel, g.reach, g.moved = "", nil, nil, false
 	g.atk, g.walk, g.dialog, g.msg = nil, nil, nil, ""
@@ -1648,6 +1650,15 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 			g.applyPersistentParty(g.st)
 			g.focusOnParty()
 		}
+	}
+}
+
+// bindCommandLearn makes every newly loaded battle state use the same
+// explicit editable export. A missing table leaves the state fail-closed;
+// it never falls back to the legacy normalized Spells list.
+func (g *Game) bindCommandLearn(st *battle.State) {
+	if st != nil && g.commandLearn != nil {
+		st.CommandLearn = g.commandLearn
 	}
 }
 
@@ -4442,6 +4453,16 @@ func loadGame() *Game {
 		if g.st != nil {
 			g.st.SpellBook = append([]battle.Spell(nil), sp...)
 		}
+	}
+	learnPath := assetPath("assets/data/command_learn.json")
+	if !fileExists(learnPath) {
+		learnPath = "../docs/data/exe_tables/command_learn.json"
+	}
+	if table, e := battle.LoadCommandLearn(learnPath); e == nil {
+		g.commandLearn = table
+		g.bindCommandLearn(g.st)
+	} else if g.loadErr == "" {
+		g.loadErr = "command learn: " + e.Error()
 	}
 	if commands, e := campaign.LoadAICommandSpellMap(assetPath("assets/data/item.json")); e == nil && g.st != nil {
 		g.st.AICommandSpell = commands
