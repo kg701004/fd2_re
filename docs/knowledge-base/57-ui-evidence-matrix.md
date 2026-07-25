@@ -16,7 +16,7 @@
 | UI-08 town | `enterNode`/`campInput` 的 `town` branch 約 1584、2133 | partial | 原版 town menu、church/shop 入口與戰後 persistent timing |
 | UI-09 shop | buy/sell/equip/recipient 約 2256–2391 | partial | 商品 menu sprite、游標邊界、secret shop flag、原版 cancel semantics |
 | UI-10 church | revive/class-change 約 2162–2256；未接服務明確顯示待 callee | partial/fail-closed | 0x30dc3/0x31385 完整 fee、候選、確認與 renderer |
-| UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present 與選擇後續處理 | partial | `0x1f42d` 的文字/資源 ABI、MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
+| UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present；`0x1f42d` 的 LMI1 #0x52 double-slide entry/anchor 已釘 | partial | MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
 | UI-12 save/load | F5/F9 global path；save package 自有 schema | partial | scene-safe boundaries、versioning、原版 save semantics |
 
 ## 明確缺口（不可用 fallback 掩蓋）
@@ -50,8 +50,12 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 strict `fdother.ParseLMI1` 與 codec regression。
 `LMI1Entry.BlitAt` 亦已對應 `0x4e8af` 的 index-0 transparent preserve 與
 `0x4e8e1` 水平鏡像路徑；它只接受顯式 surface/anchor，尚未擅自接入 D8 layout。
-`0x1f42d` 只可確定是其文字/圖形 cell helper，字串與
-MAP/TURN 欄位來源尚未閉合，因此 UI-11 仍 partial，不能直接把 0x52 命名成「行軍確認圖」。
+`0x1f42d` 不是文字 helper：`0x1f1cc` 以 offset `100,75,50,25,0` 各呼叫一次，
+每幀把 LMI1 **entry #0x52** 貼到 offscreen `(85-offset,82)` 與
+`(165+offset,81)`（stride 456），present 一 tick，再以 `0x15e71` restore；這是
+兩側 UI cell 的五幀滑入。它的反向 path 由 `0x1f30a` 使用同一 helper。這只閉合
+indexed cell/座標/節奏，不足以命名 MAP/TURN 欄位或確認其為「行軍確認圖」，故 UI-11
+仍 partial。
 
 下一輪先處理 UI-03／UI-04 的原版 dispatch 與 weapon reach provenance，再補 D8 的
 `0x1f42d` 資源 ABI；在此之前不新增猜測性 renderer。

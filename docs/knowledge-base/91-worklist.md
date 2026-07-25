@@ -466,7 +466,8 @@
       build+test 綠、gofmt 乾淨。**D8(戰前 MAP/TURN 資訊畫面+行軍確認 UI)不在本輪範圍,已登記獨立項**。
       → doc25 §7.5.1 已修正範圍(戰場進場直接定位仍成立;cutscene 幕內走位是另一機制,已推翻舊結論)。
 - [~] **D8:戰前 UI**(doc46 附帶發現):Docker/Capstone 已釘 `0x1a30b` battle-entry choreography：
-      `0x1f1cc(0x52)`→20ms→`0x1f30a(0x52)`、64000-byte indexed surface、`0x1f42d` cell helper、
+      `0x1f1cc(0x52)`→20ms→`0x1f30a(0x52)`、64000-byte indexed surface；`0x1f42d` 已釘為
+      LMI1 entry #0x52 的雙側五幀 slide-in/restore（x=85−offset、165+offset；offset=100..0）、
       後續 `0x1a813/0x1a866` dispatch；`0x15f0e` frame ABI 亦已釘為 offset-table + RLE
       decode + stride blit；`[0x53a81]` 已由既有 loader trace 對位為 `FDOTHER.DAT#5`
       的 `LMI1`，remake `fdother.ParseLMI1`／`LMI1Entry.BlitAt`（透明 preserve + mirror）
