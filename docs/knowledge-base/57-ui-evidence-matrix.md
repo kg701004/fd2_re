@@ -61,7 +61,12 @@ present 後 4-frame slide 分別更新 offset `up -= 0x8e8`（5 native rows）�
 並寫入 `[0x53a89]`。raw #2 是 untagged 78-cell offset bank（首 `u32=0x138` 即 directory end），cell
 為 `{u16 width,u16 height,width*height indexed pixels}`；`0x4e9e4` 逐列 direct blit，index 0 preserve。
 實測為 74 個 24×20、4 個 24×16 cells，strict `fdother.ParseRawCellBank` 與 player asset regression 已覆蓋。
-exact screen anchor、relative table→四個 cell index 與 runtime renderer 接線仍未完成，不能宣稱完成原版圖示／
+`0x1741c` 的 relative table index ABI 也可重跑：每個方向取 `availabilityWord`（同一個供
+`0x177fc` gate 的四-word array）與 `directionState`，cell index=`3*availabilityWord +
+2*directionState`，再讀 `u32 relativeOffset=base[index]`、貼 `base+relativeOffset`。chooser
+`0x1728c` 的 directionState 初值為 up=`0x12+(unit[0x1e61]==0)`、left=`0x14+(unit[0x1e62]==0)`、
+right=`0x16+(unit[0x3af9]!=0)`、down=`0x18+(unit[0x1aab]==0)`。這是 raw table／state contract，
+不是這四 globals 的玩法名稱或 icon 語意。exact screen anchor 與 runtime renderer 接線仍未完成，不能宣稱完成原版圖示／
 皮膚，也不能把它降格成一般文字 ring。
 
 ## 明確缺口（不可用 fallback 掩蓋）

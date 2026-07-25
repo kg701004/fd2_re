@@ -252,7 +252,7 @@
       unsigned mono raw PCM 子樣本)+ 戰鬥音效動態 index(同檔案,依攻擊資料決定 index);播放走
       `AIL_init/set_sample_address/set_sample_loop_count/start_sample`(0x26896/0x26945)。
       待:14 子樣本→UI事件對照、戰鬥動態 index 表還原、remake 端接入(SDL_mixer/ebiten audio)
-- [~] **native action overlay／現行四向 approximation**：Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，而 `0x1741c` 已證實為 FDOTHER#2 四張 indexed asset 的十字 slide；現行 runtime mapping 僅為 interaction approximation，不再稱原版 radial ring。`0x1bbdc` 的 item selector/equip/transfer branches 已部分追到 `0x1b932`、`0x1bb8c` insertion、`0x1bffe` equip、`0x1b8e7` removal；`0x20c6f` type dispatch、`0x21082/0x22af6` body 與 type `0x17→0x2218a→0x22253` renderer/state branch 已釘出，但 item-table 欄位／效果方向、圖示 provenance、攻防預覽仍待解碼。
+- [~] **native action overlay／現行四向 approximation**：Docker Capstone `0x18d8c` 已釘死 `↑0=攻擊/←1=法術/→2=物品/↓3=待機`，而 `0x1741c` 已證實為 FDOTHER#2 四張 indexed asset 的十字 slide，並閉合 raw cell index=`3*availabilityWord+2*directionState` 與四個 directionState gate；現行 runtime mapping 僅為 interaction approximation，不再稱原版 radial ring。`0x1bbdc` 的 item selector/equip/transfer branches 已部分追到 `0x1b932`、`0x1bb8c` insertion、`0x1bffe` equip、`0x1b8e7` removal；`0x20c6f` type dispatch、`0x21082/0x22af6` body 與 type `0x17→0x2218a→0x22253` renderer/state branch 已釘出，但 action anchor／indexed adapter、item-table 欄位／效果方向、圖示 provenance、攻防預覽仍待解碼。
 - [~] **魔法系統**（資料表與基礎 Cast 已接，native command/effect 尚未閉合）:magic.go(spells.json=EXE dump 36條+normalized spell names;InCastRange/Cast
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
       待:AoE(range>0)、命中率、輔助系(魔刃/風行…)效果。
