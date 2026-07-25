@@ -38,8 +38,11 @@ type Spell struct {
 	Name   string
 }
 
-// spellNames is the current normalized spell ordering used by assets/UI; the
-// native raw magic bytes and command expansion still require RE closure.
+// spellNames is a legacy normalized presentation list used by the current
+// gameplay approximation. It is not the native label source: IDs 0..35 are
+// now byte-identical to the EXE command-record/spell table and their original
+// text lives in docs/data/command_labels.json (FDTXT_000). Keep this list
+// separate until the native command selector replaces the legacy spell menu.
 var spellNames = [36]string{
 	"火炎", "烈炎", "炎龍", "天火", "電擊", "落雷", "轟雷", "神雷",
 	"聖光彈", "咒殺", "碎岩", "地震", "裂地", "治療", "回復", "再生",

@@ -88,6 +88,12 @@ FDFIELD 26-byte roster 的 source bytes `b13..b16` 現由 `parse_field.py` 和
 materialize，並只提供原版 byte-major／low-bit-first 列舉與 bounded OR。這條管線刻意不覆蓋既有
 `Spells` normalized list：後者是 legacy gameplay approximation，不能再被宣稱為原版 raw command source。
 
+`0x4e516(id)` 的 backing bytes 對 `id=0..35` 與 EXE `spell.json` 7-byte rows 逐 byte 相同，故這個
+已證實範圍的 record layout 可共用 `dmg:u16, hit:u8, dist:u8, range:u8, mp:u8, target:u8`；MP gate 是其
+第 5 byte 的獨立直接證據。IDs 36..39 雖可由 pointer arithmetic 取到相鄰 7-byte data，FDTXT labels
+卻是空字串／系統訊息，且所有 FDFIELD + character-default initial masks 實測最高只設到 ID 30。故不得把
+36..39 加進 `SpellBook` 或宣稱第五 byte 的 dynamic path 已被實機素材證實。
+
 remake 的可編輯資料模型必須至少表達這些 raw facts，而非固定四個 ring action：
 
 ```json
