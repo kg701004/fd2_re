@@ -120,10 +120,11 @@ resolver。`remake/assets/data/native_command_resistances.json` 是同一 raw ta
 geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
-branch）以 `record[+3]` 和 `record[+6]` 呼叫 `0x14818`，把 candidate unit indices 寫進 caller stack
-array；再以 `0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後同一個 array 與 count
-直接傳入 `0x2a6bd(unit, commandID, count, array)`，後者逐 index 呼叫 `0x1c75e`。這證實 command 0 的
-numeric resolver 是 **per candidate**，而非 legacy UI 的單格 `CastArea` contract；`0x14818` 的方向／形狀
+branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
+stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
+`record[+4]` 和同一 target code 再呼叫 `0x14818`，此第二個 candidate array/count 才傳入
+`0x2a6bd(unit, commandID, count, array)`，後者逐 index 呼叫 `0x1c75e`。這證實 command 0 的 numeric resolver
+是 **per final-effect candidate**，而非 legacy UI 的單格 `CastArea` contract；`0x14818` 的方向／形狀
 與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
 使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須是 alive/on-grid，並以 target code 對 runtime
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
@@ -133,10 +134,10 @@ bit `0x80` 使該步成本為零。雖然 callee 支援 terrain-cost row，comma
 EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
 cardinal range（無阻擋時才等於 Manhattan）。
 
-`battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把這個 verified subset 做成獨立資料層：必須由
-caller 提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`。它覆蓋 four-way
-flood-fill、bit40/bit80、cross branch 與四個 camp predicates；資料層可供 native command UI 使用，但 UI 尚未
-接管 target confirm/effect，故不可自動替換 legacy cast。
+`battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把**一次** verified `0x14818` 呼叫做成獨立資料層：
+caller 必須提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`，並明確選定 first
+selection stage (`actor,+3`) 或 confirmed effect stage (`cursor,+4`)。它覆蓋 four-way flood-fill、bit40/bit80、
+cross branch 與四個 camp predicates；UI 尚未接管兩階段 confirm/effect，故不可自動替換 legacy cast。
 
 Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
 low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出

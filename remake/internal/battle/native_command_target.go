@@ -11,7 +11,13 @@ const (
 	NativeCommandGridZeroCost byte = 0x80
 )
 
-// NativeCommandTargetCells mirrors 0x14818's geometry before roster filtering.
+// NativeCommandTargetCells mirrors one 0x14818 geometry invocation before
+// roster filtering.  It intentionally accepts the raw fourth argument
+// (called mode in the original callsite), rather than declaring it a command
+// range: generic 0x1cff0 first calls it with record+3 from the actor, lets the
+// cursor confirm a candidate, then calls it again with record+4 from that
+// cursor cell to build the effect list.  Callers must select the correct stage.
+//
 // flags is the original per-cell grid flag byte (+1 in its 4-byte grid entry),
 // not the remake map's exported movement cost.  Requiring it avoids silently
 // treating a modern approximation as original targeting data.
@@ -103,8 +109,10 @@ func NativeCommandTargetMatches(code int, camp Camp) bool {
 	}
 }
 
-// NativeCommandTargets applies the recovered geometry and record+6 camp
-// predicate to runtime units.  It is deliberately independent of CastArea.
+// NativeCommandTargets applies one recovered 0x14818 invocation and its
+// record+6 camp predicate to runtime units.  It is deliberately independent
+// of CastArea; for generic commands its origin/mode must be the confirmed
+// cursor and record+4 to represent the final effect list.
 func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
 	cells, err := NativeCommandTargetCells(w, h, origin, dist, flags)
 	if err != nil {
