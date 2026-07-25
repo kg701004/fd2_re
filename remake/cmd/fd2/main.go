@@ -137,6 +137,7 @@ type Game struct {
 	spellSel            int
 	castSp              *battle.Spell // 施法目標選擇中
 	spells              []battle.Spell
+	nativeCommandBook   []battle.NativeCommandRecord
 	commandLearn        map[int][]battle.CommandLearnEntry // native portrait-indexed level-up command table
 	bgm                 *audio.Player                      // BGM(doc12 play_bgm 語意:同曲不重播)
 	bgmCur              string
@@ -1635,6 +1636,7 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	if st, err := battle.Load(assetPath(unitsPath)); err == nil {
 		g.st = st
 		g.bindCommandLearn(st)
+		g.bindNativeCommandBook(st)
 	}
 	g.result, g.sel, g.reach, g.moved = "", nil, nil, false
 	g.atk, g.walk, g.dialog, g.msg = nil, nil, nil, ""
@@ -1659,6 +1661,15 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 			g.focusOnParty()
 		}
 	}
+}
+
+// bindNativeCommandBook gives each freshly loaded battle the immutable raw
+// ABI table.  It never derives records from the legacy SpellBook.
+func (g *Game) bindNativeCommandBook(st *battle.State) {
+	if st == nil {
+		return
+	}
+	st.NativeCommandBook = append([]battle.NativeCommandRecord(nil), g.nativeCommandBook...)
 }
 
 // bindCommandLearn makes every newly loaded battle state use the same
@@ -4725,6 +4736,12 @@ func loadGame() *Game {
 		if g.st != nil {
 			g.st.SpellBook = append([]battle.Spell(nil), sp...)
 		}
+	}
+	if records, e := battle.LoadNativeCommandRecords(assetPath("assets/spells.json")); e == nil {
+		g.nativeCommandBook = records
+		g.bindNativeCommandBook(g.st)
+	} else if g.loadErr == "" {
+		g.loadErr = "native command records: " + e.Error()
 	}
 	learnPath := assetPath("assets/data/command_learn.json")
 	if !fileExists(learnPath) {

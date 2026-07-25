@@ -277,6 +277,7 @@ type State struct {
 	Cost              []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
 	NativeTargetFlags []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
 	SpellBook         []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	NativeCommandBook []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
 	CommandLearn      map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
 	AICommandSpell    map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
 	Treasures         map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
