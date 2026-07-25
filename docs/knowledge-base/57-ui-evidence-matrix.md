@@ -10,7 +10,7 @@
 | UI-02 field | map/camera/cursor/unit/HUD Draw 約 3441–3568、4571、4595 | partial | 原版 cursor camera、HUD anchor、FDOTHER panel resource |
 | UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；但 native `0x1c269` 實際從 unit `+0x1a..+0x1e` 五個 bitmask 列舉最多 40 個 command ID，再餵 `0x4e516`；`0x159fa` 再以 command `+5 <= unit+0x44`（current MP）過濾。真正 selector `0x1d51d` 是每欄四列、可變欄數的 command grid：↑/↓ linear wrap、←/→ ±4、Enter/Space 僅 MP 足夠確認、Esc cancel；renderer `0x1ceed` 以 `0x1b9+commandID` 查 label。remake `ringInput` 約 2407 的四格 mapping 僅為 partial approximation。item branch `0x1bbdc` selector/equip/transfer partially traced；`0x19953` 是另一個 battle selector，不取代此 ABI | partial | command bitmask 的 producer／label 資料表、完整 renderer、`0x20c6f` item effect table、end-turn entry |
 | UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；Docker/Capstone 已釘 `0x14818` 先以 table record 更新 target grid，再疊 `abs(x-cx)+abs(y-cy) < radius` marker、依 unit camp/active state 過濾輸出；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化 |
-| UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
+| UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state；ch01 original oracle `docs/figures/ch01-dialogue-original-dosbox.png` 固定左肖像下框、文字、page indicator | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
 | UI-06 HUD | target HUD 約 3557–3568；full-screen battle panel 約 4065、4180 | partial | FDOTHER loader、數字 cell、游標避讓和 320×200 ground truth |
 | UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開 | partial | 以原版 handler offset／DOSBox input 差分核對每章是否進 town/shop/rest/preparation/ending |
 | UI-08 town | `enterNode`/`campInput` 的 `town` branch 約 1584、2133 | partial | 原版 town menu、church/shop 入口與戰後 persistent timing |
@@ -92,6 +92,10 @@ title renderer 已完成。
 同一 timeline 在 title 選 LOAD 後可重現 `docs/figures/load-empty-original-dosbox.png`：原版在空 save
 sandbox 顯示四列 `1)` 到 `4)`、每列「無儲存記錄」，第一列有 selection outline。這是 UI-12 的空槽
 E2 oracle；它沒有有效存檔資料，因此不證明 record layout、LOAD 成功路徑或 SAVE overwrite confirmation。
+
+START 分支首個可重現對話 crop 為 `docs/figures/ch01-dialogue-original-dosbox.png`：第一章場景中可見
+左側 DATO portrait、下方藍框、兩行文字與框底中央 page indicator。這提升 UI-05 的一個 lower/left
+E2 anchor；它不涵蓋 upper/right speaker、FFxx control code、完整 pagination timing 或 remake renderer。
 
 ### D8 native trace（2026-07-25，E0 partial）
 
