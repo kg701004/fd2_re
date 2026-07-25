@@ -65,11 +65,14 @@ present 後 4-frame slide 分別更新 offset `up -= 0x8e8`（5 native rows）�
 實測為 74 個 24×20、4 個 24×16 cells，strict `fdother.ParseRawCellBank` 與 player asset regression 已覆蓋。
 `0x1741c` 的 relative table index ABI 也可重跑：每個方向取 `availabilityWord`（同一個供
 `0x177fc` gate 的四-word array）與 `directionState`，cell index=`3*availabilityWord +
-2*directionState`，再讀 `u32 relativeOffset=base[index]`、貼 `base+relativeOffset`。chooser
-`0x1728c` 的 directionState 初值為 up=`0x12+(unit[0x1e61]==0)`、left=`0x14+(unit[0x1e62]==0)`、
-right=`0x16+(unit[0x3af9]!=0)`、down=`0x18+(unit[0x1aab]==0)`。這是 raw table／state contract，
-不是這四 globals 的玩法名稱或 icon 語意。exact screen anchor 與 runtime renderer 接線仍未完成，不能宣稱完成原版圖示／
-皮膚，也不能把它降格成一般文字 ring。
+2*directionState`，再讀 `u32 relativeOffset=base[index]`、貼 `base+relativeOffset`。官方 IDA 重新
+追 `0x18d8c` 後更正舊斷言：**battle action wrapper 的 directionState 是固定 `[0,1,2,3]`**，故
+available cells=`[0,2,4,6]`，disabled cells=`[3,5,7,9]`。先前把 `0x1728c` 的
+`[0x12+(byte_51e61==0),0x14+(byte_51e62==0),0x16+(byte_53af9!=0),0x18+(byte_51aab==0)]`
+套到 battle action 是錯誤；該 caller 選中方向後只切換這些 byte state 並重畫自己的巢狀四向 menu。
+`fdother.BattleActionOverlayState` 現以 unit test 固化真正 battle table；它不替這個另一個 submenu
+的四個 byte 命名。runtime indexed renderer 與實機 skin visual-diff 仍未完成，不能把現有文字 ring
+稱為原版皮膚。
 
 2026-07-25 重讀 `0x1741c` 並以 `0x179d5` 交叉驗證後，收斂了一層 framebuffer anchor：四張 cell
 的共同地址為 `framebuffer + 0x8088 + 0x18*cursorColumn + (0x18*0x1c8)*cursorRow`。

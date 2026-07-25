@@ -61,7 +61,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 |---|---|---|---|
 | UI-01 | Title/main menu | 上下選擇、確認、取消、save/load、游標音效與 focus state | partial；需從 boot/menu call graph 重審 |
 | UI-02 | Battle field | 游標格、鏡頭、可移動格、高亮、單位 HUD、方向／面向 | partial；HUD 固定錨點與完整 native sprite 未閉合 |
-| UI-03 | Action menu | move/attack/magic/item/status/wait/end-turn 的可見項、enable gate、取消回上一層 | partial；原版 action overlay 的 raw cell selection、open/close 四幀 byte-offset、以可視 cursor column/row 算出的 framebuffer anchor 已閉合；`fdother` 已有可測 blit primitive。runtime indexed adapter、skin visual-diff 與 end-turn 可見流程仍缺 |
+| UI-03 | Action menu | move/attack/magic/item/status/wait/end-turn 的可見項、enable gate、取消回上一層 | partial；原版 action overlay 的 battle cell table（enabled `[0,2,4,6]`／disabled `[3,5,7,9]`）、open/close 四幀 byte-offset、以可視 cursor column/row 算出的 framebuffer anchor 已閉合；`fdother` 已有可測 blit primitive。runtime indexed adapter、skin visual-diff 與 end-turn 可見流程仍缺 |
 | UI-04 | Target/range | 武器 min/max reach、法術 range/AOE、不可用目標灰化、確認／取消 | missing/partial；不能再把攻擊距離寫死相鄰格 |
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；已有 regression，但 native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |

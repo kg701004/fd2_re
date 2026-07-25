@@ -19,6 +19,20 @@ func TestActionOverlayCellIndex(t *testing.T) {
 	}
 }
 
+func TestBattleActionOverlayStateMatches18D8C(t *testing.T) {
+	state := BattleActionOverlayState([4]int{0, 1, 0, 1})
+	if state.DirectionState != [4]int{0, 1, 2, 3} {
+		t.Fatalf("direction states=%v", state.DirectionState)
+	}
+	want := [4]int{0, 5, 4, 9}
+	for direction := range want {
+		got, err := state.CellIndex(direction)
+		if err != nil || got != want[direction] {
+			t.Fatalf("direction %d: index=%d err=%v, want %d", direction, got, err, want[direction])
+		}
+	}
+}
+
 func TestActionOverlayOriginMatchesNativeAddressExpression(t *testing.T) {
 	got, err := ActionOverlayOrigin(6, 5)
 	if err != nil {

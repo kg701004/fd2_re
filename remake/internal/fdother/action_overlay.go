@@ -13,6 +13,18 @@ type ActionOverlayState struct {
 	DirectionState [4]int
 }
 
+// BattleActionOverlayState constructs the state passed by the native battle
+// action wrapper 0x18d8c. Its direction states are a fixed [0,1,2,3], so an
+// enabled action selects cells [0,2,4,6] and a disabled action selects
+// [3,5,7,9]. Other 0x1741c callers (such as 0x1728c) use separate state
+// tables and must construct ActionOverlayState explicitly.
+func BattleActionOverlayState(availability [4]int) ActionOverlayState {
+	return ActionOverlayState{
+		Availability:   availability,
+		DirectionState: [4]int{0, 1, 2, 3},
+	}
+}
+
 const (
 	nativeFramebufferStride = 0x1c8
 	nativeActionOverlayBase = 0x8088
