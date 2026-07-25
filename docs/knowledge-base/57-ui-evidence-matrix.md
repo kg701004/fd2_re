@@ -6,7 +6,7 @@
 
 | Contract | 現有 code evidence | 判定 | 下一個證據問題 |
 |---|---|---|---|
-| UI-01 title/menu | F2/F3/F5/F9 global input（約 3065、3291）；title boot path 尚未拆成獨立 scene contract | partial | Ghidra/IDA：menu item table、scan-code dispatch、save/load branch |
+| UI-01 title/menu | F2/F3/F5/F9 global input（約 3065、3291）；原版 DOSBox oracle `docs/figures/title-original-dosbox.png` 已固定 START／LOAD／CONTINUE 與 title cursor，但 remake title boot path 尚未拆成獨立 scene contract | partial | Ghidra/IDA：menu item table、scan-code dispatch、save/load branch |
 | UI-02 field | map/camera/cursor/unit/HUD Draw 約 3441–3568、4571、4595 | partial | 原版 cursor camera、HUD anchor、FDOTHER panel resource |
 | UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；但 native `0x1c269` 實際從 unit `+0x1a..+0x1e` 五個 bitmask 列舉最多 40 個 command ID，再餵 `0x4e516`；`0x159fa` 再以 command `+5 <= unit+0x44`（current MP）過濾。真正 selector `0x1d51d` 是每欄四列、可變欄數的 command grid：↑/↓ linear wrap、←/→ ±4、Enter/Space 僅 MP 足夠確認、Esc cancel；renderer `0x1ceed` 以 `0x1b9+commandID` 查 label。remake `ringInput` 約 2407 的四格 mapping 僅為 partial approximation。item branch `0x1bbdc` selector/equip/transfer partially traced；`0x19953` 是另一個 battle selector，不取代此 ABI | partial | command bitmask 的 producer／label 資料表、完整 renderer、`0x20c6f` item effect table、end-turn entry |
 | UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 也呼叫 `0x14818`；Docker/Capstone 已釘 `0x14818` 先以 table record 更新 target grid，再疊 `abs(x-cx)+abs(y-cy) < radius` marker、依 unit camp/active state 過濾輸出；remake movement/attack/spell selection 已有，item action 約 2475 仍提示未實裝 | partial/missing | selector↔spell family 對照、`0x20c6f` item effect table、native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化 |
@@ -79,6 +79,15 @@ rg -n 'func \(g \*Game\) (enterNode|campInput|Draw)|ringInput|尚未實裝|尚�
 git diff --check
 test ! -e /tmp/fd2cap
 ```
+
+### UI-01 DOSBox title oracle（2026-07-25，E2 partial）
+
+`tools/docker/fd2-dosbox-screenshot.Dockerfile` 以既有 Xvfb/xdotool/ImageMagick image 建立隔離 runner；
+它只接受可寫的 **`/tmp` game sandbox** 掛載與明確 `/tmp` shots mount，原始 `FLAME2` 不掛進容器。
+以 `svga_s3`、`fixed 18000` 跑 `wait:2; Escape ×4; wait:8` 後取得
+`docs/figures/title-original-dosbox.png`（320×200 crop）。畫面直接證實 title 的 START／LOAD／CONTINUE
+縱列與 START cursor；這是 UI-01 的 E2 畫面 oracle，不證明 title input dispatch、存讀檔語意或 remake
+title renderer 已完成。
 
 ### D8 native trace（2026-07-25，E0 partial）
 

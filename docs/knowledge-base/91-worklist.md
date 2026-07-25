@@ -578,6 +578,7 @@
 ## 2026-07-25 SDD gate（使用者要求先重審反組譯與 UI）
 
 - [x] **可重現 UI/core regression container**：`fd2-go-test-local` 在 Docker build 時取得 Go modules、在 runtime 使用 `--network=none`；已實跑 `go test ./cmd/fd2 ./internal/... -count=1` exit 0。image 內含 Ebiten 所需 ALSA/X11/GL headers；這只驗 source build/test，並非原版 UI 畫面對照。
+- [x] **UI-01 original title screenshot oracle**：新增隔離 `fd2-dosbox-screenshot-local` runner（SVGA/Xvfb/xdotool，原始 FLAME2 不掛載、只用 `/tmp` sandbox），連續 Escape 跳過 opening 後得到 320×200 `docs/figures/title-original-dosbox.png`。畫面證實 START／LOAD／CONTINUE 及初始 cursor；title input/save semantics 仍未關閉。
 - [x] **FD2 remake SDD**：新增 `56-fd2-remake-sdd.md`，定義 UI contracts、battle→postbattle→town/shop/church/preparation flow、persistent party/save、native indexed renderer、E0–E3 證據分級與 milestone gates。
 - [ ] **SDD-1 UI evidence matrix**：以 Ghidra/IDA（文件在目前環境不可見）+ Docker Capstone 重審 title/menu/action/target/HUD/dialog input dispatch；未有 E0/E1/E2 不解除 gate。
 - [x] **SDD-1 baseline matrix**：新增 `57-ui-evidence-matrix.md`，以目前 runtime 行號把 UI-01…UI-12 的 partial/missing 與下一個 E0/E1/E2 問題固定下來；這不是原版 verified。
