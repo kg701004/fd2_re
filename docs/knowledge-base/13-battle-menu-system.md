@@ -75,6 +75,8 @@ native magic raw / menu state:
 
 後續 direct dataflow 已閉合 command 0 的數值 writer：`0x2a6bd` 對每個 target 呼叫 `0x1c75e(target,commandID)`；它讀 command record `u16+0`／byte `+2`，以 target class ID（constructor 寫入 unit `+0x20`）索引 `word_51f96` 形成 base、擲 `rand()%100 < record[+2]`，命中才由 `0x1c81f` 以 90% 加 0..9.9% random 的整數值扣 target `+0x40`，clamp 0。`word_51f96` 的 loaded file offset=`0x51d96`，就是 `resist_crit.json` 每職業的 `resist_raw`（每 row 4 bytes）；因此 base=`record.dmg*resist_raw/10`，等價於既有職業魔抗百分比。這是 native damage/HP ABI；command0 effect name、target family與 normalized spell equivalence 仍未證實。
 
+同一條 caller dataflow 排除了「confirm 只傳回一個格子」的猜測：一般 record 以 `+3/+6` 呼叫 `0x14818` 產生 stack candidate-index array，`0x115b6` 接收 `(mode=+6,count,array)` 做游標／確認，成功後 `0x2a6bd` 接到的仍是該 `array,count`，並逐 element 呼叫 `0x1c75e`。故 command0 有 per-candidate 傷害，而 `+6` target-code 的值域與 `0x14818` geometry 仍須逐值 RE；現有單格 normalized target UI 不是原版證明。
+
 `0x149f8` 的本體語意是 target-candidate builder：依起點／方向步進 `count` 次，做地圖邊界檢查，呼叫 `0x12c0d` 取 unit，依 selector 篩選 `unit+6` 狀態後把 unit index 寫入輸出陣列。`0x1cff0` 的 `command=0x1e` 會傳 `command-0x10`（14）給這個候選器；這證實該 command 使用 spell-family/target selector，但不能單靠此 caller 宣稱所有 spell id 或傷害公式已閉合。jump-table effect 與 `0x149f8` caller 的完整 selector 對照仍待 RE，remake 保持 partial。
 
 ### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）

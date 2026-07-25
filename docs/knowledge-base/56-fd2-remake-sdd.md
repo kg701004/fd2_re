@@ -119,6 +119,13 @@ IDA `word_51f96` 的 loaded-data file offset 正是既有 `0x51d96` 職業魔抗
 resolver。`remake/assets/data/native_command_resistances.json` 是同一 raw table 的可編輯 runtime copy；target
 geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。
 
+command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
+branch）以 `record[+3]` 和 `record[+6]` 呼叫 `0x14818`，把 candidate unit indices 寫進 caller stack
+array；再以 `0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後同一個 array 與 count
+直接傳入 `0x2a6bd(unit, commandID, count, array)`，後者逐 index 呼叫 `0x1c75e`。這證實 command 0 的
+numeric resolver 是 **per candidate**，而非 legacy UI 的單格 `CastArea` contract；`0x14818` 的方向／形狀
+與 target-code semantics 尚未逐值命名，native UI 必須繼續 fail-closed。
+
 升級的 dynamic producer 現已閉合，但僅限資料層：native `0x1e292` 在 EXP 達門檻後增加 runtime
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
