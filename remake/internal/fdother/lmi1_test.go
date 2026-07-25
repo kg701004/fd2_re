@@ -83,3 +83,31 @@ func TestFDOTHER005LMI1UIContainer(t *testing.T) {
 		t.Fatalf("FDOTHER#5 LMI1 entry#0x52=%dx%d pixels=%d, want 72x14", e.Width, e.Height, len(e.Pixels))
 	}
 }
+
+func TestFDOTHER006NativeUnitPresentBank(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	entries, err := DecodeLMI1Resource(datPath, 6)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 230 {
+		t.Fatalf("FDOTHER#6 LMI1 entry count=%d, want 230", len(entries))
+	}
+	// 0x22470 reads #6 entries 0x72..0x7c; 0x22253's +0x1f6
+	// directory pointer is entry 0x7c. These geometry anchors keep the
+	// native unit-present resource separate from #81's unused allocation.
+	if e := entries[0x72]; e.Width != 12 || e.Height != 21 {
+		t.Fatalf("FDOTHER#6 entry#0x72=%dx%d, want 12x21", e.Width, e.Height)
+	}
+	for index := 0x73; index <= 0x7b; index++ {
+		if e := entries[index]; e.Width != 20 || e.Height != 22 {
+			t.Fatalf("FDOTHER#6 entry#%#x=%dx%d, want 20x22", index, e.Width, e.Height)
+		}
+	}
+	if e := entries[0x7c]; e.Width != 24 || e.Height != 23 {
+		t.Fatalf("FDOTHER#6 entry#0x7c=%dx%d, want 24x23", e.Width, e.Height)
+	}
+}
