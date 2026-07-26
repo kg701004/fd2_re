@@ -54,7 +54,7 @@
 - **`FDOTHER` 資源 #3 = `"LMI1"` 容器,內含 23 張 256-byte remap LUT**(magic `LMI1` + uint16 數量 + uint32 offset 表)。
 
 **實測套用效果**(把同一騎士 sprite 套不同 LUT,`tools/dump_remap.py`):
-- **LUT0 = 灰階** → 對應「已行動」單位變灰(配 `AA=0x80`)。
+- **LUT0 = 灰階** → 可作畫面上的灰階觀察；與 record `+5` bit7 的關聯仍是 caller/UI projection，不能回推舊 `AA=0x80` 欄位。
 - LUT1–4 = 披風紅↔橙的色階、LUT15 = 藍色調、LUT20 = 褐色調 → 陣營 / 狀態 / 場景時段染色。
 
 **LUT 索引怎麼選**(已反組譯 `0x13980`):LUT 指標 = `[0x3A6D] + idx*4 + 6`(吻合 LMI1 offset 表)。

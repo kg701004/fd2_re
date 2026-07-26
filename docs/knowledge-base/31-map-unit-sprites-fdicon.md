@@ -55,7 +55,7 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 
 ## 5. remake 接法
 
-- 引擎 `loadSprites()` 載 `fig_<grp>_f*.png` 分組;`drawUnitSprite()` 用 `(g.frame/12)%3` 循環待機幀,**24×24 直貼格**(略上移讓單位站在格上),陣營色腳標 + HP bar,已行動套灰(對映原版動作狀態 AA `+0x0D`=0x80 行動完畢,§6 / doc 27)。
+- 引擎 `loadSprites()` 載 `fig_<grp>_f*.png` 分組;`drawUnitSprite()` 用 `(g.frame/12)%3` 循環待機幀,**24×24 直貼格**(略上移讓單位站在格上),陣營色腳標 + HP bar,已行動套灰（對映原版已驗證 record `+5 bit7=0x80`，不是舊 AA `+0x0D` 標記；§6 / doc 27）。
 - 原版實機截圖與 DATO face 可做單一角色素材的 oracle，但不能單獨證明 runtime map selector。battle FIGANI
   走另一條已閉合的 `unit+7×3` 路徑（doc06）。
 

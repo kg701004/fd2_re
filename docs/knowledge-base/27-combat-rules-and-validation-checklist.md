@@ -43,10 +43,10 @@
 
 → **結論:重製需要的動態驗證已被領域知識 + 攻略清空**;唯一剩 `[0x53ec8]`(低優先、非阻塞、非重製核心)。原本的 DOSBox 驗證計畫實質取消。
 
-### 確定後的單位狀態旗標 `byte[+5]`(重製可直接採用)
-- **bit0 = 死亡/隱藏/inactive**(1；active/alive=0)→ `0x3453e` 應命名 `unit_inactive(idx)`；`0x32975` 應命名 `deactivate_unit`。
-- **bit7 (0x80) = 已行動**(本回合是否已下過指令)→ 對映 doc 10 的灰階顯示(AA=0x80)。
-- 重製 `Unit` 用布林 `alive` / `acted` 表達即可,不必照搬 byte/bit 佈局。
+### 已閉合的單位 raw predicates `byte[+5]`
+- **bit0** 僅能描述為 caller-specific admission/reject mask：`0x3453e` 回傳 `record+5 & 1`，不能在此文件命名成死亡、隱藏或 inactive。
+- **bit7 (0x80)** 僅能描述為 caller-specific test/set/clear mask；`0x32975` 的整 byte overwrite 與 `0x13512` 的 bit7 writer 必須分開追蹤，不能直接命名成已行動或回合完成。
+- 重製可用 `Unit` 的 `alive`／`acted` 作 projection，但那是引擎語意，不能當作 native 欄位對映。
 
 > **歷史勘誤(2026-07-16)**：先前依使用者記憶記成「bit0=1 表示存活、初始化=1」，現已由完整反組譯推翻。當時誤把另一個寫1位置當成有效單位 constructor；真正 constructor `0x10eed` 寫0，而 HP=0 的 death 路徑寫1，因此舊定案明確撤回。
 

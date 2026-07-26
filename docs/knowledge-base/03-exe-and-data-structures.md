@@ -12,7 +12,7 @@
 |---|---|---|
 | 0x08 | XX, YY | 地圖座標(左上 0,0) |
 | 0x0A | Z1,Z2,Z3 | 圖形 / 方向 / 跑步動作 |
-| 0x0D | AA | 行動狀態 00=未動 01=死亡 80=完畢 |
+| 0x0D | raw / 未重判 | 舊 AA 行動狀態標記未通過 current constructor/caller trace；已驗證的 inactive/action bits 位於 byte `+5`（bit0 / bit7） |
 | 0x06 | camp | `0x10c50` constructor 將 FDFIELD unit `b0` 直接寫入；00=敵、01=友、02=己方。舊「0x0E BB=陣營」已被 direct trace 推翻並撤回 |
 | 0x0F | FA | 肖像編號(見附錄) |
 | 0x10 | NN(2) | 姓名 |

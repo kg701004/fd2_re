@@ -191,11 +191,11 @@ geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值
 玩家 dispatch 的可達性已重新核對：`0x1cff0` 對 IDs0..8 直接呼叫 `0x2a6bd`，沒有經 table 內的
 `0x21227/0x213b7` wrappers；但 `0x2a6bd` 不是純 renderer：它先經 `sub_2b659` 的 MP event，final-target loop
 直接以 array slot 和 command ID 呼叫 `0x1c75e(targetSlot, commandID)`。因此 IDs0..8 與 ID9 direct path、及
-IDs10..12 compositor tail 都已閉合為同一 numeric/MP/success-acted contract；dispatch 分流不表示 state effect
+IDs10..12 compositor tail 都已閉合為同一 numeric/MP/raw-completion contract；dispatch 分流不表示 state effect
 缺失，也不表示 renderer 等同。
 
 `State.ExecuteNativeCommandDamage` 嚴格支援 IDs0..12，以 raw record、兩階段 target、class multiplier/hit/HP
-clamp 和 success-only `Acted` 做 bounded engine slice。`ExecuteBoundNativeCommand0`／raw-grid ID0 target slice
+clamp 和 success-only raw completion writer 做 bounded engine slice。`ExecuteBoundNativeCommand0`／raw-grid ID0 target slice
 只接此 state core；缺 flags、record、candidate 或 resistance row 均在 mutation 前拒絕。專用 renderer、SFX、
 post-resolution、其他 ID UI 與 screenshot oracle 仍未完成。
 
@@ -254,21 +254,21 @@ ID23 走 `0x1CFF0` 的 command-`0x17` special selector，不能套 generic two-s
 target effect。
 
 IDs25..27 也已由 jump-table 閉合。ID25 `0x22C04` 以 record25 扣 MP，僅對 final target 已有
-`unit+5 bit0x80` 的項目清該 bit，直接對應 action-complete 的 raw state writer（不憑名稱推導）。ID26
+`record+5` bit `0x80` 已設的項目清該 bit，直接保留 raw clear writer（不命名 acted/action-complete）。ID26
 `0x22CBF` 與 ID27 `0x22E41` 分別將 command ID 和 flag offset `+0x25/+0x26` 傳給與 ID22 同一
 `0x22CDA→0x22D1B` application helper，所以同樣受 zero flag、class、`rand()%100<50` gate，成功固定扣 10 HP
 並寫 2..5 duration。這使 ID20→`+0x25` clear 與 ID26→`+0x25` apply、ID21→`+0x26` clear 與 ID27→`+0x26`
 apply 成為 direct code-pairs；仍不以此取代 UI/status icon 的獨立驗證。
 
 `State.ExecuteNativeCommand25` 現是另一個 non-UI, fail-closed engine slice：它只接受完整 raw book/flags 的
-generic two-stage target contract，完成 record25 MP debit 後，對 final targets 的 `Unit.Acted` 作精確 clear-if-set，
-最後才將 actor 設為 acted。target invalid、缺 flags 或 MP 不足都在 mutation 前拒絕；它不使用 normalized CastArea，
+generic two-stage target contract，完成 record25 MP debit 後，對 final targets 的 raw `+5` bit `0x80` 作精確 clear-if-set，
+最後才套用 actor raw bit writer。`Unit.Acted` 只是目前 engine projection，不是 native semantic。target invalid、缺 flags 或 MP 不足都在 mutation 前拒絕；它不使用 normalized CastArea，
 也未開 native grid/UI、renderer 或 message feedback。
 
 `State.ExecuteNativeCommandApplication` 現對 IDs22/26/27 提供另一條 strict non-UI core：以各自 record 建 generic
 two-stage final targets、扣各自 MP；每個 target 只在 raw `+0x27/+0x25/+0x26` 為零、class 不為 `0x19/0x1a`、
 `rand()%100<50` 時固定扣 10 HP，並寫 `rand()%4+2` 到同一 raw byte。已有 duration/class gate 的 target 不會
-mutation，但 handler 已成功時仍遵循原版 MP debit/actor completion；unknown ID、缺 raw data 或 invalid target 在
+mutation，但 handler 已成功時仍遵循原版 MP debit/actor raw completion writer；unknown ID、缺 raw data 或 invalid target 在
 mutation 前拒絕。此 route 不映射 legacy Poisoned/Paralyzed fields，UI/renderer 仍 fail-closed。
 
 `State.ExecuteNativeCommandClearRestore` 對 IDs20/21 亦已接 strict non-UI core：各自 record 只供 target/MP；
@@ -278,8 +278,8 @@ HP delta，避免把原版 display number 誤當 mutation。empty flag 不 resto
 actor；不映射 legacy named status/UI。
 
 `State.ExecuteNativeCommandHeal` 現對 IDs13..16 接 strict non-UI core：每個 ID 只使用自己的 raw record
-完成 generic two-stage targets、MP debit、並以同 record `u16 damage` 走 `0x1C916` restore/cap；成功後 actor 才
-acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，並不因共用 restore primitive 而推論
+完成 generic two-stage targets、MP debit、並以同 record `u16 damage` 走 `0x1C916` restore/cap；成功後才執行
+actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore route 明確分開，並不因共用 restore primitive 而推論
 `0x1C4CC/0x1C2DA` 專用演出、SFX、message 或 UI 已完成。
 
 ### UI-03 native command family implementation matrix（E0/E1 status）

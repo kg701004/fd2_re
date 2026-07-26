@@ -6,27 +6,24 @@
 ## 一個單位的回合:行動狀態機
 
 以下「AA／一回合」段落是早期 gameplay 摘要，並非目前已閉合的 native UI contract；現行 action chooser、
-command grid、end-turn 與 campaign transition 以 SDD56／UI matrix57 的 raw evidence 為準。每個場上單位的
-行動狀態在結構欄位 **`AA`(0x0D)**(見 `03-…`):
+command grid、end-turn 與 campaign transition 以 SDD56／UI matrix57 的 raw evidence 為準。舊文件把行動狀態
+誤掛到 `AA(0x0D)`；目前只保留已驗證的 record byte `+5` bit0／bit7 raw predicates：
 
 ```
-00 = 尚未行動    01 = 死亡    80 = 行動完畢
++5 bit0: admission test `(+5 & 1)==0`／reject test `(+5 & 1)!=0`（raw mask only）
++5 bit7: test/set/clear `(+5 & 0x80)`（raw mask only）
 ```
 
 回合流程:
 
 ```
-選我方單位(AA=00)
-  → 顯示可移動範圍(flood-fill,依 MV 0x42 與地形成本;同 AI 的 0x4EE40)
-  → 移動到目標格(或原地不動)
-  → 跳出【行動選單】(見下)
-  → 執行選項 → 單位 AA 設為 0x80(行動完畢,圖像變灰)
-全部我方單位 AA=80 → 該回合結束,換敵方/友軍 AI(見 11-…)
+已觀察的 caller fragments：raw `+5` mask gate → 可能的移動／target helper → action chooser；
+各段是否必然串成完整回合、何時呼叫 writer，仍待 current UI/campaign evidence。
 ```
 
 > 攻略 modify1 揭露的行動規則(改的就是這套狀態機):
-> - #5/#6「行動後可再行動」= 不把 AA 設成 0x80。
-> - #7「移動後可施法,隨時可存檔」= 放寬移動後的可選動作與存檔 gate。
+> - #5/#6「行動後可再行動」的攻略說法不能直接映射成 raw writer；是否設 `+5 bit7` 需看具體 handler。
+> - #7「移動後可施法,隨時可存檔」是攻略層摘要，不能當 native end-turn 或 command gate 證據。
 > - 動作完畢旗標 `0x80` 的檢查見 `0x12717`(`test byte [..+5],0x80`)。
 
 ## 行動選單選項
@@ -131,13 +128,13 @@ type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入�
 ## 相關全域 / 結構
 
 - `[0x3C57]` 選單游標選項;`[0x3C43]`/`[0x3C47]`/`[0x3C4B]`/`[0x3C4F]` AI 最佳落點/目標(見 11-…)。
-- 單位陣列 `[0x3A45]`,每單位 0x50,數量 `[0x3BEB]`;行動狀態 `AA`(0x0D)。
+- 單位陣列 `[0x3A45]`,每單位 0x50,數量 `[0x3BEB]`;已驗證 action/inactive predicates 在 record `+5`，其餘欄位保持 raw。
 
 ## 重製對應(SDL2 / Ebiten)
 
 | 原版 | 現代 |
 |---|---|
-| AA 行動狀態(00/01/80) | unit.state enum(idle/dead/done),回合結束條件 = 全 done |
+| 舊 AA 行動狀態(00/01/80) | 已撤回；目前只保存 raw `+5` bit0/bit7 predicates，end-turn 組合條件仍待 evidence |
 | flood-fill 移動範圍 | BFS/Dijkstra(MV + 地形成本)→ 高亮可走格 |
 | `[0x3C57]` 選單游標 + 方向鍵 | 選單元件,↑↓←→ 導航、Enter 確認、ESC 取消(見離開鐵則) |
 | Get_EasyMagic | 依 native magic raw／command inventory 動態產生法術選單（`+0x22..+0x24` 不是 bitfield） |
