@@ -29,3 +29,35 @@ func RenderFigureFadePass(c *IndexedCompositor, work, restore, tai003 []byte, se
 	}
 	return c.SetBaselineDelta(0, 255, pass.PaletteDelta)
 }
+
+// RenderMirrorFigureFadePass executes one recovered unit[+6]==0 pass from
+// 0x29164. Unlike RenderFigureFadePass, native 0x292ad expects the caller's
+// 640-stride work surface to already contain the backdrop at +0x140; it
+// renders the primary frame at +0x140-stage*10 and optionally renders the
+// secondary frame at +0x140 when arg4==0. TAI#3 is only validated here: the
+// native caller has already staged its transparent bytes before this callee.
+func RenderMirrorFigureFadePass(c *IndexedCompositor, work, tai003 []byte, primary, secondary figani.Frame, pass MirrorFigureFadePass) error {
+	if c == nil || len(work) != Width*Height*2 || pass.Stage < 0 || pass.Stage > 8 || pass.PrimarySourceOffset != 0x140-pass.Stage*10 || pass.PaletteDelta != pass.Stage*6 {
+		return fmt.Errorf("ending: invalid native mirror figure fade pass")
+	}
+	if pass.DrawPlatform && !bytes.Equal(tai003, tai003Transparent) {
+		return fmt.Errorf("ending: invalid native mirror TAI#3")
+	}
+	// 0x292ad first presents the right 320-pixel viewport, then mutates that
+	// same viewport before presenting it again.
+	if err := CopyRect(c.VGA, Width, work[Width:], Width*2, Width, Height, 0); err != nil {
+		return err
+	}
+	if pass.DrawSecondary {
+		if err := secondary.BlitAtBase(work, Width*2, 0x140); err != nil {
+			return err
+		}
+	}
+	if err := primary.BlitAtBase(work, Width*2, pass.PrimarySourceOffset); err != nil {
+		return err
+	}
+	if err := CopyRect(c.VGA, Width, work[Width:], Width*2, Width, Height, 0); err != nil {
+		return err
+	}
+	return c.SetBaselineDelta(0, 255, pass.PaletteDelta)
+}
