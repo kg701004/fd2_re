@@ -198,7 +198,7 @@
 - [x] **回合計數釐清**:`[0x53bef]`=回合數(開始1/inc/cmp N),`[0x53ec8]`=累積計數(非回合)；**修正前輪把 [0x53ec8] 當回合**。byte+5 歷史判讀經 2026-07-16 完整反組譯定案為 bit0=inactive。
 - [x] **戰鬥規則來源盤點 + 動態驗證清單** → `27`:青衫公式=remake 實作依據+交叉驗證;列出 10 項需 DOSBox 實機驗證(核心 #1-4=戰鬥狀態機旗標/計數語意);新增「回合無上限」需求
 - [x] **動態驗證清單更新** → `27`§3:byte+5 bit0 已由反組譯定案為 inactive(1)/active(0)，bit7=已行動；回合=我方全動+敵方AI全動完;7-8用青衫攻略;9-10不需要;3([0x53ec8])低優先。舊「bit0=1 是存活」使用者記憶已撤回。
-- [x] **撤回 `[0x53ad5]`=opened-treasure 斷言**：ch25 post `0x24f30/0x24fb1` 將 `[0x53ad5]` 解參考後讀 byte `+0x0c` 來選 FDTXT index（base+5/base+8），故它至少是 runtime-unit-style pointer，不能標成寶箱 slot table。`OpenedTreasure` 保留為 remake-owned editable-node state，不再聲稱原版位址。
+- [x] **撤回 `[0x53ad5]`=opened-treasure／unit-pointer 斷言**：`0x10322` 初始化時複製 0x20 bytes 到 `[0x53ad5]` 指向的 buffer，`0x13d00` 以 event index 寫其 byte；ch25 post `0x24f30/0x24fb1` 讀 entry #12 來選 FDTXT index（base+5/base+8）。它是 battle-local state table，但高階 event 意義未命名；`OpenedTreasure` 保留 remake-owned state，不再聲稱原版位址。
 - [x] **全 30 關卡目標表(攻略 ground truth)** → `28`:每關勝利/失敗/加入條件;**失敗條件=護衛目標**證實 unit_state 機制;加入=roster_has;ch30 魔神連鎖=回合事件;remake 關卡規格直接可用
 - [x] **撤回章17 alive 誤讀**:依 `unit_inactive` 重新解讀，指定單位 inactive 才依 jcc 設碼；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填
 - [~] 單位 0x50B 結構:+5(bit0=inactive/bit7=已行動)/+8角色ID/+0/+1/+2/+6/+0x31 已解;完整逐欄佈局 [阻](remake 用自有 struct,不需)
