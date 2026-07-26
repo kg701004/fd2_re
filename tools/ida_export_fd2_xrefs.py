@@ -7,6 +7,7 @@ cross-checked against tools/disasm_le.py's LE linear addresses.
 """
 
 import json
+import os
 
 import ida_auto
 import ida_funcs
@@ -18,6 +19,11 @@ import idc
 
 
 TARGETS = (
+    # Spawn constructor / visual-selector boundary.  These stay raw addresses:
+    # the report establishes call topology, not a guessed FDFIELD schema.
+    0x10B4E,
+    0x10C50,
+    0x11019,
     0x115B6,
     0x14818,
     0x149F8,
@@ -33,6 +39,8 @@ TARGETS = (
     0x1CFF0,
     0x22D1B,
     0x4E040,
+    0x4E4A2,
+    0x4E4D1,
     0x4E516,
     0x4E555,
 )
@@ -75,7 +83,9 @@ def main():
     ida_auto.auto_wait()
     report = {
         "imagebase": idaapi.get_imagebase(),
-        "input_file": idc.get_input_file_path(),
+        # Keep the checked-in report reproducible when the disposable analysis
+        # directory changes; it must not record a host path.
+        "input_file": os.path.basename(idc.get_input_file_path()),
         "targets": [
             {
                 "address": ea,

@@ -341,8 +341,9 @@ native candidate confirm、command 0 effect sequence 與原版 renderer 都能�
 level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx*12`，逐一比對最多六組
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
 `docs/data/exe_tables/command_learn.json` 已保存 20 張 raw table（`FF/FF` sentinel 不轉成假資料）。
-portrait→growth-row provenance 是 direct ABI：`0x4e4d1(unit+7)=0x620a1+portrait*11`，第 11 byte 就是
-`learn_idx`。remake `State.GainExp` 因此只在已注入這個 editable table 時，於剛達到的 level OR exact
+growth-row 的**raw selector**是 direct ABI：`0x4e4d1(unit+7)=0x620a1+unit[+7]*11`，第 11 byte 就是
+`learn_idx`。`unit+7` 的 FDFIELD source／高階名稱尚未閉合，不能再把它泛稱 portrait；remake `State.GainExp`
+因此只在已注入這個 editable table 時，於剛達到的 level OR exact
 command bit；`remake/assets/data/command_learn.json` 是 runtime copy，`Game` 在每個新 battle state bind
 同一張 table。legacy standalone `GainExp` 與 `Spells` 都不補造結果。
 
