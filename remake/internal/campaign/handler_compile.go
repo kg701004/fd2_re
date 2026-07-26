@@ -850,7 +850,12 @@ func handlerBranchChangesCompileContext(beats []HandlerBeat) bool {
 func handlerBranchNeedsActiveLoadCH(beats []HandlerBeat) bool {
 	for _, beat := range beats {
 		switch beat.Op {
-		case "act", "scroll_step", "spawn", "spawn_intro", "deactivate_unit", "focus_unit":
+		// A proven LOADCH already establishes the roster frontier for a
+		// conditional spawn.  SPAWN's local cardinality update is deliberately
+		// discarded at the branch merge, so later beats cannot assume the new
+		// slots exist on both arms.  Other slot-addressed operations still need
+		// an explicit branch-context model.
+		case "act", "scroll_step", "spawn_intro", "deactivate_unit", "focus_unit":
 			return true
 		}
 		if beat.Op == "if" && (handlerBranchNeedsActiveLoadCH(beat.Then) || handlerBranchNeedsActiveLoadCH(beat.Else)) {

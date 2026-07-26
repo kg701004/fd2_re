@@ -45,7 +45,7 @@ func TestDlgShortLineSinglePage(t *testing.T) {
 }
 
 func TestDlgPaginationStartsSmoothScrollAndBlocksSkip(t *testing.T) {
-	long := battle.DialogLine{Speaker: 0, Text: "這是一段需要分頁顯示的長對白,按下確認後應該平滑往上捲動。"}
+	long := battle.DialogLine{Speaker: 0, Text: "這是一段需要分頁顯示的長對白,按下確認後應該平滑往上捲動,並且要在第二頁完整顯示剩餘內容後才能換句。"}
 	g := Game{dialog: []battle.DialogLine{long}}
 	if g.dlgAdvance() {
 		t.Fatal("翻到下一頁不應立即換句")

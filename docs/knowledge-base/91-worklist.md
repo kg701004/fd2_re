@@ -748,7 +748,7 @@
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [ ] **RE-UNIT-STATIC-TABLES**：將 constructor `0x10d7f..0x10efc` 的兩條 class branch 以 editable raw schema 表達：高 branch `b1-0x44 → 0x61af9` 10-byte record；lower branch `0x61da1` 24-byte／`0x620a1` 11-byte records。`0x619fd` 不屬於此 constructor。先補 branch selector 與 byte-for-byte fixtures，再考慮解除 HUD optional unit/HP gate；禁止回退到 portrait/class 猜測。
 - [x] **INDEXED-FRAME-TEST-CONTRACT**：修正 native compositor fixture 的 `work+0x8088` 來源邊界、range descriptor bank 與 viewport copy 座標；Docker indexedmap regression 通過，未放寬 production fail-closed 條件。
-- [ ] **REGRESSION-BLOCKERS-2026-07-26**：補足 headless Ebiten DISPLAY/Xvfb harness；重新核對 ch14 final dialogue line mapping 與 ch16 conditional-spawn compiler context。不得透過放寬 compiler 或刪除 regression assertion 讓 full suite 假綠。
+- [x] **REGRESSION-BLOCKERS-2026-07-26**：Docker image 內建 Xvfb 已納入完整 regression command；ch14 final dialogue line mapping 依 FDTXT_015 count-aligned continuation 修正，ch16 conditional spawn 僅 branch-local after LOADCH。完整 suite 通過，未刪除有效 assertion 或放寬 fail-closed compiler。
 
 ## 2026-07-20 ending prefix playback slice
 

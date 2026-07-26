@@ -1122,12 +1122,14 @@ func TestCompileChapter14PreLowersRosterHasDialogueVariants(t *testing.T) {
 	if len(beats[2].Acting) == 0 || beats[2].Acting[0].Units[0].Slot == nil || *beats[2].Acting[0].Units[0].Slot != 64 {
 		t.Fatalf("ch14_pre acting=%#v", beats[2])
 	}
-	for arm, want := range []struct{ scene, count int }{{0, 9}, {1, 5}} {
+	// FDTXT_015 string indexes 2/5 are count-aligned continuations after
+	// strings 0/1 and 3/4, so their editable story lines begin at 4, not 0.
+	for arm, want := range []struct{ scene, firstLine, count int }{{0, 4, 9}, {1, 4, 5}} {
 		branch := beats[3]
 		if arm == 1 {
 			branch.Then = branch.Else
 		}
-		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != want.count || branch.Then[0].Op != "dialog" || branch.Then[0].SceneIndex == nil || *branch.Then[0].SceneIndex != want.scene || branch.Then[len(branch.Then)-1].Line != want.count-1 {
+		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != want.count || branch.Then[0].Op != "dialog" || branch.Then[0].SceneIndex == nil || *branch.Then[0].SceneIndex != want.scene || branch.Then[0].Line != want.firstLine || branch.Then[len(branch.Then)-1].Line != want.firstLine+want.count-1 {
 			t.Fatalf("ch14_pre final variant %d=%#v", arm, branch)
 		}
 	}

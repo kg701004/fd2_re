@@ -9,6 +9,7 @@
 //     cwd 不一定是 remake/,資產解不到會靜默跳過開場動畫直接進戰場;開發模式 cwd=remake/
 //     時這層與第4層同值,行為不變)
 //  4. cwd 相對(開發模式既有行為,未設 APPDIR、也無 XDG 覆蓋時)
+//  5. cwd 的祖先目錄(供 `go test` 在 cmd/fd2 package cwd 執行時回到 remake/)
 //
 // 可寫檔(存檔/設定)一律走 $XDG_DATA_HOME/fd2_re/,不再用 cwd(唯讀 mount 內無法寫入)。
 package main
@@ -87,6 +88,17 @@ func assetPath(rel string) string {
 	if d := exeDir(); d != "" {
 		if p := filepath.Join(d, rel); fileExists(p) {
 			return p
+		}
+	}
+	if cwd, err := os.Getwd(); err == nil {
+		for dir, i := cwd, 0; i < 5; dir, i = filepath.Dir(dir), i+1 {
+			if p := filepath.Join(dir, rel); fileExists(p) {
+				return p
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
 		}
 	}
 	return rel
