@@ -30,3 +30,13 @@ func NativeAvailableCommandIDs(unit *Unit, book []NativeCommandRecord) []int {
 	}
 	return ids
 }
+
+// NativeAvailableAICommandIDs adds the 0x1598a dispatcher gate to the
+// bounded command scan: raw unit+0x27 must be zero before command bytes are
+// enumerated. Unknown physical IDs 36..39 remain omitted.
+func NativeAvailableAICommandIDs(unit *Unit, book []NativeCommandRecord) []int {
+	if unit == nil || unit.NativeTransient[5] != 0 {
+		return nil
+	}
+	return NativeAvailableCommandIDs(unit, book)
+}

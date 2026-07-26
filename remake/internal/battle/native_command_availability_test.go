@@ -43,3 +43,18 @@ func TestNativeCommandAvailabilityFailsClosedOnMalformedBook(t *testing.T) {
 		t.Fatal("malformed command book did not fail closed")
 	}
 }
+
+func TestNativeAvailableAICommandIDsAppliesRaw27Gate(t *testing.T) {
+	book := make([]NativeCommandRecord, 36)
+	for id := range book {
+		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
+	}
+	u := &Unit{MP: 1, NativeCommandMask: [5]byte{1, 0, 0, 0, 0}}
+	if got := NativeAvailableAICommandIDs(u, book); len(got) != 1 || got[0] != 0 {
+		t.Fatalf("ungated AI commands=%v", got)
+	}
+	u.NativeTransient[5] = 1
+	if got := NativeAvailableAICommandIDs(u, book); got != nil {
+		t.Fatalf("raw +0x27 gate ignored: %v", got)
+	}
+}

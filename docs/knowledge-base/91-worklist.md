@@ -118,6 +118,7 @@
 - [x] **RE-AI-SPELL-FLAGS-15B77**：Hex-Rays 釘死 ID20/21→raw `+0x25/+0x26` nonzero flag score，每筆各加6；ID26/27→同兩 offsets zero flag score，每筆各加4；新增 `ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`，不清除、不命名 flag，也不接施法 runtime。
 - [x] **RE-AI-SPELL-MODIFIERS-15B77**：Hex-Rays 釘死 ID17/18/19→raw `+0x22/+0x23/+0x24` zero flag score，每筆各加3；`ScoreNativeAISpellZeroFlag` 保存該 raw helper，未命名 transient 欄位或接 AI runtime。
 - [x] **RE-AI-DISPATCH-1598A**：合法 Hex-Rays pseudocode 釘死 `0x1598a` 的 caller order：`+0x27==0` gate→`0x1c269` command bytes→record `+5 <= unit+0x44` MP gate→target resolver→`0x15b77` score；最高 score 勝，平手比較 command record `+0`，再保存 raw `(x,y,command)`。新增 `SelectNativeAISpellCandidate`，只做 score/tie-break，不接 MP、target、UI 或施法執行。
+- [x] **RE-AI-DISPATCH-GATE-1598A**：`NativeAvailableAICommandIDs` 將 `0x1598a` 的 raw `+0x27==0` gate 加在既有 bounded command scan 前；unknown physical IDs36..39 仍 fail-closed，不接 target resolver 或 runtime action。
 - [x] **RE-AI-SPELL-ID22-15B77**：`0x15d30` 先 gate raw `+0x27==0`，再呼 `0x1c269(unit,nil)` 掃 `+0x1a..+0x1e` 五 bytes；任一 bit set 即累加6。新增 `ScoreNativeAISpell22`，不命名欄位、不接 ID22 effect/status runtime。
 - [ ] 勝敗判定 + **回合推進(回合無上限;上限只由劇本事件 turn>=N 設定,見 `27`§1)**
 - [ ] headless 確定性回歸:固定種子打一場 → 結果可重現(驗演算法,不靠手玩)
