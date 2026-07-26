@@ -127,9 +127,9 @@ type HandlerLayout struct {
 }
 
 // HandlerIndexedTransition records the recovered 0x24618 double-buffer
-// choreography. Coordinates and source stepping are kept explicit because
-// this is not a generic fade; the PNG renderer may only execute it once an
-// indexed descriptor adapter is available.
+// choreography. Tile geometry, radial radius progression, and row bounds are
+// kept explicit because this is not a generic fade; the PNG renderer may only
+// execute it once an indexed descriptor adapter is available.
 type HandlerIndexedTransition struct {
 	TileX int `json:"tile_x"`
 	TileY int `json:"tile_y"`
@@ -138,10 +138,13 @@ type HandlerIndexedTransition struct {
 	// 0x219ad radial LUT-remap calls and derives its final rect radius from it.
 	// They are not source-buffer coordinates or the radial scale (which is
 	// fixed to 16 by 0x22046).
-	RadialRadius      int `json:"radial_radius"`
-	RadialRadiusStep  int `json:"radial_radius_step"`
-	SourceY           int `json:"source_y"`
-	BlitWidth         int `json:"blit_width"`
+	RadialRadius     int `json:"radial_radius"`
+	RadialRadiusStep int `json:"radial_radius_step"`
+	// StartY/EndY are the row range passed to 0x22046; this routine reads its
+	// indexed buffers from globals, so these are not source-image coordinates
+	// or a blit width. EndY is exclusive.
+	StartY            int `json:"start_y"`
+	EndY              int `json:"end_y"`
 	ClipWidth         int `json:"clip_width"`
 	ClipHeight        int `json:"clip_height"`
 	Frames            int `json:"frames"`

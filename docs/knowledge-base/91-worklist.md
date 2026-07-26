@@ -569,7 +569,7 @@
 - [x] **ch29 post final pan**：`0x25937 → 0x135dd(11,12)` 已依 X-first/Y-second native ABI lower 為 tile-step `(264,288)`，compiler regression 通過；終局 transition/renderer 仍待。
 - [~] **0x24618 indexed transition metadata**：已保存 tile/radial-radius/frame/timing 與 32-step 全 palette brightness ramp（delta 0→62, step2）之 editable schema、binding resolver/compiler regression；descriptor/double-buffer PNG adapter 尚未完成，故仍 fail-closed。
 - [x] **ch29 final 0x24618 arguments**：依 layout→focus 的 native scroll-offset writes，`0x25848` dynamic args 已定案為 tile `(6,6)`、radial radius `(10,step8)`，並寫入 binding/compiler regression；真正 indexed descriptor/double-buffer adapter 尚待，整支 handler 繼續 fail-closed。
-- [~] **0x24618 fixed blit metadata**：補上 source_y=0、blit width=0xc0、clip 0x138×0xc0 與 source step 欄位；仍待以 `0x53a6d` descriptor table 和 `0x219ad` row clip 建立真正 indexed adapter。
+- [~] **0x24618 pass-range metadata**：`0x22046` 的固定最後兩參數是 row range `[start_y,end_y)=[0,0xc0)`，不是 source_y 或 blit width；另保留 clip 0x138×0xc0 與 radial-radius step。仍待以 `0x53a6d` LUT bank 和 `0x219ad` row clip 建立真正 indexed adapter。
 - [~] **ch29 post persistent roster cleanup**：`0x25089` 已實作獨立 `reset_persistent_roster_state` compiler/runtime beat（清 transient、MaxHP/MaxMP 回填），避免誤併入 `sync_party`；需補 binding、測試並接到正確 town/shop/preparation 節點。
 - [~] **ch29 pre native unit presentation**：舊「6×(render+present+10ms)+2 ticks」結論已撤回。完整 `0x22253` trace 是前段 `0x22470` 11 次 LMI present/tick、中央 `0x22547` 6 次 10ms remap present+2 ticks、後段 `0x22656` 10 次 remap present/tick，合計 27 次 present；既有 `unit_present` metadata 不完整，維持 fail-closed。
 - [~] **ch29 post BIOS tick wait**：`0x17aa9` 已證實讀 DOS BIOS tick（約54.9ms），lower 為每 tick 3 個 remake frames 並通過 compiler regression；若要逐毫秒重現，需在 runtime 加 BIOS-tick clock adapter。

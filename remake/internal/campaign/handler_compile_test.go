@@ -142,7 +142,7 @@ func TestCompileDynamicPaletteLoopMaterializesDescendingRange(t *testing.T) {
 }
 
 func TestCompileIndexedTransitionRequiresRecoveredBinding(t *testing.T) {
-	transition := HandlerIndexedTransition{TileX: 9, TileY: 8, RadialRadius: 10, RadialRadiusStep: 8, SourceY: 0, BlitWidth: 0xc0, ClipWidth: 0x138, ClipHeight: 0xc0, Frames: 9, FrameDelayMs: 5, TailDelayMs: 500, PaletteRangeStart: 0, PaletteRangeEnd: 255, PaletteDeltaStart: 0, PaletteDeltaEnd: 62, PaletteDeltaStep: 2, PaletteDelayMs: 4}
+	transition := HandlerIndexedTransition{TileX: 9, TileY: 8, RadialRadius: 10, RadialRadiusStep: 8, StartY: 0, EndY: 0xc0, ClipWidth: 0x138, ClipHeight: 0xc0, Frames: 9, FrameDelayMs: 5, TailDelayMs: 500, PaletteRangeStart: 0, PaletteRangeEnd: 255, PaletteDeltaStart: 0, PaletteDeltaEnd: 62, PaletteDeltaStep: 2, PaletteDelayMs: 4}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x24618", RawArgs: []any{"global_x", "global_y", 10, 8}}}}, HandlerBindings{Transition: func(HandlerBeat) (HandlerIndexedTransition, bool) {
 		return transition, true
 	}})
