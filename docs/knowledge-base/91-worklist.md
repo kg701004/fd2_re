@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=390`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=391`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -20,6 +20,7 @@
 - [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 `0x2e341` 的 hub variant→FDOTHER resource（3→29、5→63、其他→12）與 service selector `0..3→0x2f0b0/0x2f642/0x2f883/0x2f8ea`；新增 `fdother.ResolveNativeShopServiceRoute` raw plan/regression。只保存 resource/callee，不命名服務、不呼叫 scene、不解除 campaign UI gate。
 - [x] **RE-TOWN-HOTEL-SERVICE-2FC85**：Docker Capstone 固定 `0x2fc85` raw resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute` raw plan/regression。只保存 address-level order，不命名服務、不執行 scene。
 - [x] **RE-PREPARATION-CAP-318AD**：Docker Capstone 重核 `0x318ad`：`[0x53c03] <= 0x1a` 時 cap=15，`>0x1a` 時 cap=19；新增 `fdother.NativePreparationPartyLimit` 與 boundary regression。明確以 native index 為輸入，不把 late cap 猜成顯示章號或直接改寫 JOIN roster。
+- [x] **RE-PREPARATION-PREVIEW-31E80**：Docker Capstone 完整 trace 固定 `0x31e80` 讀 caller-owned 30-byte selection table、以 `0x320ce` 計數，依 flag 分支 `0x4deda/0x4de56` 做 indexed preview；body 未寫 selection table／persistent roster。撤回把它當 Enter/toggle mutation，remake 保持 `partyDeploy` mutation 與 renderer boundary 分離。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)

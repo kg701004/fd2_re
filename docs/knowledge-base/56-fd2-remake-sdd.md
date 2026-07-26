@@ -580,6 +580,14 @@ The `0x318ad` cap gate is now explicit in
 index rather than a human-facing chapter number, preventing a chapter-label
 conversion from silently changing the original boundary.
 
+The first full `0x31e80` trace narrows the neighboring UI contract: it reads
+the caller-owned 30-byte selection table (`[selection+slot]`), counts selected
+entries through `0x320ce`, and chooses the selected/unselected indexed blit
+branch (`0x4deda` versus `0x4de56`) for each roster row. This body shows no
+write to the selection table or persistent roster; it is a preview/presentation
+consumer, not the Enter/toggle mutation primitive. The remake must therefore
+keep `partyDeploy` mutation separate from this raw renderer boundary.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:
