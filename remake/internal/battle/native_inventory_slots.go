@@ -2,10 +2,12 @@ package battle
 
 import "fmt"
 
-// NativeInventoryFreeSlotCount reproduces 0x1b8a6: eight two-byte inventory
-// cells begin at record+0x0a, and a cell is available when its flag byte's
-// bit7 is clear. The item byte and higher-level item meaning stay opaque.
-func NativeInventoryFreeSlotCount(records []byte, unitIndex int) (int, error) {
+// NativeInventoryOccupiedCount reproduces 0x1b8a6: eight two-byte inventory
+// cells begin at record+0x0a, and the native count increments when a cell's
+// flag byte bit7 is clear. In the surrounding ABI this is the occupied/raw
+// prefix length consumed by 0x31860/0x1b722; bit7 set is the reserved empty
+// state used by 0x1bb8c. Item bytes and higher-level item meaning stay opaque.
+func NativeInventoryOccupiedCount(records []byte, unitIndex int) (int, error) {
 	base := unitIndex * nativeRecordSize
 	if unitIndex < 0 || base < 0 || base+0x1a > len(records) {
 		return 0, fmt.Errorf("native inventory record %d is out of bounds", unitIndex)
