@@ -2453,18 +2453,9 @@
    "next": "battle_ch16"
   },
   "story_ch17": {
-   "type": "story",
+   "type": "cutscene",
    "bgm": "FDMUS_010",
-   "lines": [
-    {
-     "speaker": -1,
-     "text": "第17章:血與冰之刃"
-    },
-    {
-     "speaker": -1,
-     "text": "目標:敵全滅。"
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch16_pre.json",
    "next": "battle_ch17"
   },
   "shop_ch17_weapon": {

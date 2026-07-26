@@ -130,15 +130,22 @@ type HandlerCompileIssue struct {
 // supplies mappings for map geometry, text layout, and acting resources while
 // this compiler owns no FD2 chapter-specific constants.
 func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Beat, []HandlerCompileIssue) {
+	activeSlotCount := 0
+	if bindings.RuntimeContext != nil {
+		activeSlotCount = bindings.RuntimeContext.MinimumSlotCount()
+	}
+	return compileHandlerScript(script, bindings, activeSlotCount)
+}
+
+// compileHandlerScript carries the proven pre-branch slot frontier into each
+// arm.  Branches still may not change the outer compiler context: after a
+// merge, callers may rely only on slots known before the branch.
+func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activeSlotCount int) ([]Beat, []HandlerCompileIssue) {
 	if script == nil {
 		return nil, []HandlerCompileIssue{{Reason: "nil handler script"}}
 	}
 	beats := make([]Beat, 0, len(script.Beats))
 	issues := make([]HandlerCompileIssue, 0)
-	activeSlotCount := 0
-	if bindings.RuntimeContext != nil {
-		activeSlotCount = bindings.RuntimeContext.MinimumSlotCount()
-	}
 	issue := func(i int, input HandlerBeat, reason string) {
 		issues = append(issues, HandlerCompileIssue{Beat: i, Op: input.Op, Source: input.Source, Reason: reason})
 	}
@@ -192,8 +199,8 @@ func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Be
 				issue(i, input, "if arms cannot use active-slot operations before branch compiler context is modeled")
 				continue
 			}
-			thenBeats, thenIssues := CompileHandlerScript(&HandlerScript{Beats: input.Then}, bindings)
-			elseBeats, elseIssues := CompileHandlerScript(&HandlerScript{Beats: input.Else}, bindings)
+			thenBeats, thenIssues := compileHandlerScript(&HandlerScript{Beats: input.Then}, bindings, activeSlotCount)
+			elseBeats, elseIssues := compileHandlerScript(&HandlerScript{Beats: input.Else}, bindings, activeSlotCount)
 			if len(thenIssues) > 0 || len(elseIssues) > 0 {
 				for _, branchIssue := range thenIssues {
 					branchIssue.Reason = "if then: " + branchIssue.Reason

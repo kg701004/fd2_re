@@ -192,6 +192,10 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 	if ch15 == nil || ch15.Type != "cutscene" || ch15.HandlerBinding != "assets/cutscenes/bindings/ch14_pre.json" || ch15.Next != "battle_ch15" || len(ch15.Beats) != 0 {
 		t.Fatalf("chapter 15 must execute the recovered dynamic ch14 pre-handler: %#v", ch15)
 	}
+	ch17 := c.Nodes["story_ch17"]
+	if ch17 == nil || ch17.Type != "cutscene" || ch17.HandlerBinding != "assets/cutscenes/bindings/ch16_pre.json" || ch17.Next != "battle_ch17" || len(ch17.Beats) != 0 {
+		t.Fatalf("chapter 17 must execute the recovered conditional ch16 pre-handler: %#v", ch17)
+	}
 	post15 := c.Nodes["postbattle_ch15_persist"]
 	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
 		t.Fatalf("chapter 15 must preserve the recovered dynamic post-handler before town: %#v", post15)

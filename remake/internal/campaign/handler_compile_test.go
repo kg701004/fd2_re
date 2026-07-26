@@ -1171,6 +1171,16 @@ func TestCompileChapter15PreUsesRecoveredChapter16TextGroups(t *testing.T) {
 	}
 }
 
+func TestCompileChapter16PreLowersAbsentRosterSpawn(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch16_pre.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch16_pre err=%v issues=%#v", err, issues)
+	}
+	if len(beats) < 4 || beats[0].Op != "loadch" || beats[0].LoadCH == nil || beats[0].LoadCH.Chapter != 16 || beats[0].LoadCH.Map != "assets/maps/map16" || beats[0].LoadCH.SlotCount != 60 || beats[1].Op != "if" || beats[1].Condition == nil || beats[1].Condition.Op != "roster_has" || beats[1].Condition.CharID == nil || *beats[1].Condition.CharID != 18 || len(beats[1].Then) != 0 || len(beats[1].Else) != 1 || beats[1].Else[0].Op != "spawn" || beats[1].Else[0].Group != 1 {
+		t.Fatalf("ch16_pre roster branch=%#v", beats)
+	}
+}
+
 func TestCompileChapter17PreUsesRecoveredChapter18TextGroups(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch17_pre.json")
 	if err != nil || len(issues) != 0 {
