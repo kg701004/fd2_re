@@ -173,7 +173,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 仍未達原版等價的主要範圍：
 
 - 完整 30 章逐章 playthrough 與每一場戰後 town/shop/preparation 順序回歸；
-- 完整 item effect callee、raw identity sync、indexed renderer/HUD/ending compositor；
+- 完整 item effect callee、全 roster/save 的 raw identity sync（目前僅有可選欄位與 fail-closed matching）、indexed renderer/HUD/ending compositor；
 - 全部原版音訊 runtime、DOS timing、跨平台打包實機驗證。
 
 這些差距由 SDD 的 evidence gate 與 worklist 狀態標註；未知 handler 不會以猜測性 normalized
