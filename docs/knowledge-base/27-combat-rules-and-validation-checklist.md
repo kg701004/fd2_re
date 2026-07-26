@@ -33,15 +33,16 @@
 
 | # | 項目 | 結論 |
 |---|---|---|
-| 1 | 單位 `byte[+5] bit0` | ✅ **= 死亡/隱藏/inactive**：有效單位 constructor `0x10eed` 設0(active/alive)，HP=0 路徑 `0x1dc61/0x1dd4c` 設1；`0x32975` 設1以停用劇情單位。[反組譯定案] |
-| 2 | `byte[+5] bit7(0x80)` | ✅ **= 已行動**:單位下完任一指令(攻擊 / 施法 / 休息 / 移動後待命 / 移動後攻擊 / 移動)後置位(配 doc 10 灰階)。[使用者確認] |
-| 4 | `[0x53bef]` 回合遞增 | ✅ **1 回合 = 我方全單位行動完 + 敵方 AI 全執行完**;回合末 `inc`。[使用者確認] |
+| 1 | 單位 `byte[+5] bit0` | ◐ **raw caller-specific mask**：已觀察 constructor `0x10eed` 寫0、HP0 路徑 `0x1dc61/0x1dd4c` 寫1、`0x32975` 覆寫1；不能把這些 writer 合併成全域死亡/存活欄位。 |
+| 2 | `byte[+5] bit7(0x80)` | ◐ **raw caller-specific mask**：已觀察 bit7 writer/test，但尚未證明所有指令完成都共用此欄位；不得直接命名成已行動。 |
+| 4 | `[0x53bef]` 回合遞增 | ◐ **只證實有 increment/compare counter**；我方/敵方 phase 完成條件尚未由完整 state-machine E0 閉合，不採用使用者記憶作原版定案。 |
 | 7–8 | 暴擊率 / 地形修正率 / 成長亂數 | ✅ **用青衫攻略數值**(doc 02 §3/§4),不需動態。[使用者確認] |
 | 3 | `[0x53ec8]` 累積計數 | ◐ 仍不確定。靜態追到「累加單位欄位 `+0x21` 之值,`clamp 99`」(0x1c81f 函式)。**非重製核心**(回合用 `[0x53bef]`、戰鬥用公式)→ 降為低優先 / 可選,不阻塞。 |
 | 5–6 | 章節↔地圖、unit idx→角色 | 重製可略過(自定義對應)。 |
 | 9–10 | `roster byte[+8]`、單位完整佈局 | ❌ **不需要**:重製用自有 `Unit` struct,無需對齊原版 0x50B 佈局 / idx。[使用者確認移除] |
 
-→ **結論:重製需要的動態驗證已被領域知識 + 攻略清空**;唯一剩 `[0x53ec8]`(低優先、非阻塞、非重製核心)。原本的 DOSBox 驗證計畫實質取消。
+→ **結論：領域知識與攻略可作 baseline，但不能清空 raw predicate／回合 state-machine 的 E0 驗證**；`[0x53ec8]` 仍是低優先，
+而 byte+5 caller semantics、phase completion 與 native UI 仍需以直接證據逐項閉合。原本的 DOSBox 驗證計畫不可整體取消。
 
 ### 已閉合的單位 raw predicates `byte[+5]`
 - **bit0** 僅能描述為 caller-specific admission/reject mask：`0x3453e` 回傳 `record+5 & 1`，不能在此文件命名成死亡、隱藏或 inactive。

@@ -136,16 +136,15 @@ working tree 的 `native_2c548.json`、`internal/ending`、`internal/figani` fig
 > 改為 party-first runtime append，group255 不再汙染 slots。更重要的是回原始 FDTXT_003 找回舊
 > `ch03.json` 真正漏掉的六句 turn3 葛雷／卡蘿硬編碼對話，全文由33補成39，索引重生後達39/39
 > count-aligned（generated contexts 81→83、skipped 89→87）。campaign `story_ch03` 已由章標 stub
-> 改接 authored ch02_pre。後續已以 constructor/death/revive 完整 body 解開 slot6 bit0 方向，
-> 下一筆更新與 `doc50 §3.7` 為現行定案。
+> 改接 authored ch02_pre。後續以 constructor/death/revive 完整 body 補足各 writer，
+> 但 caller-specific bit0 高階語意仍由後續 audit 收斂，不能把該輪筆記當成全域定案。
 
-> **2026-07-16 第十二次 Codex 更新（bit0 全域翻案 + ch03 條件）**：完整反組譯與 live
-> dump 交叉證實 `unit+5 bit0=0` 才是 active/alive，`1` 是死亡／隱藏／inactive；bit7 才是
-> acted。有效 constructor `0x10eed` 寫0，HP0 路徑 `0x1dc61/0x1dd4c` 寫1，復活 `0x30f9c`
-> 清0。exporter/runtime 因此改名 `unit_inactive`、`any_unit_inactive`、`deactivate_unit`，60 支 handler
-> 已由原 EXE 重生。ch01 post 現為六村民全存活才 #6+item198；ch03 turn3 新增
-> `unit_slot_active:6`，鐵諾死亡時不再誤生 group2。`0x11506` 也同步校正為存活者 HP 回滿、
-> 死亡者保留零 HP。`ch02_post` 真 CFG 已釘死為 `sync → inactive?#6:(layout+#7+JOIN2) → chapter3`；
+> **2026-07-16 第十二次 Codex 更新（bit0 writer 交叉檢查 + ch03 條件）**：後續 caller audit
+> 撤回把 `unit+5 bit0` 全域命名為 active/alive/dead；目前只保留 `0x3453e` 的 raw `&1` predicate，
+> 與 constructor、HP、revive、`0x32975` 等獨立 writer。exporter/runtime 的 `unit_inactive` 是
+> caller-specific projection，不能當成 native 欄位全域語意。ch03 turn3 的 branch 仍以其直接
+> CFG predicate 維持；`0x11506` 的 raw HP/roster 行為另由對應測試驗證。`ch02_post` 真 CFG 已釘死為
+> `sync → raw predicate #6:(layout+#7+JOIN2) → chapter3`；
 > 下一優先是 single-slot diamond、`0x233c6 layout_units` 與 15/27-slot runtime frontier。
 
 > **2026-07-16 第十三次 Codex 更新（ch02 post 完整閉合）**：extractor 已以通用指令形狀
