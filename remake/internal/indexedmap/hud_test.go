@@ -36,6 +36,23 @@ func hudFrames() NativeMapHUDFrames {
 	return frames
 }
 
+func TestAdvanceNativeMapHUDAnchorMatches1AD2A(t *testing.T) {
+	for _, tc := range []struct {
+		anchor, raw53ABD, raw53AB9, want int
+	}{
+		{1, 6, 2, 0xf2},
+		{0xf2, 6, 10, 1},
+		{0xf2, 5, 2, 0xf2},
+		{0xf2, 6, 3, 0xf2},
+		{0xf2, 6, 9, 0xf2},
+		{7, 99, 7, 7},
+	} {
+		if got := AdvanceNativeMapHUDAnchor(tc.anchor, tc.raw53ABD, tc.raw53AB9); got != tc.want {
+			t.Fatalf("anchor=%#x raw=(%d,%d): got %#x, want %#x", tc.anchor, tc.raw53ABD, tc.raw53AB9, got, tc.want)
+		}
+	}
+}
+
 func TestBlitNativeMapHUDPanelGatesAndOrigin(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*200)
 	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, false, 1); err != nil {

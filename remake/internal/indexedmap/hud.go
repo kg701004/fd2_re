@@ -22,6 +22,23 @@ type NativeMapHUDFrames struct {
 	Digits                            [10]fdother.Frame
 }
 
+// AdvanceNativeMapHUDAnchor preserves the small persistent-global branch at
+// 0x1ad2a..0x1ad5f. The native code changes the raw anchor only in either
+// outer region; every other coordinate pair retains the prior global value.
+// It deliberately accepts and returns a raw anchor rather than assigning a
+// semantic name to either coordinate global.
+func AdvanceNativeMapHUDAnchor(anchor, raw53ABD, raw53AB9 int) int {
+	if raw53ABD > 5 {
+		if raw53AB9 < 3 {
+			return 0xf2
+		}
+		if raw53AB9 > 9 {
+			return 1
+		}
+	}
+	return anchor
+}
+
 // DecodeNativeMapHUDFrames loads only the verified FDOTHER #5 directory
 // entries. It avoids the incorrect assumption that all LMI1 entries share
 // ParseLMI1's 0x4e916 cell codec.
