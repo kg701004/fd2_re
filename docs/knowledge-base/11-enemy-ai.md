@@ -1,7 +1,15 @@
 # 11 — 戰場 AI:敵人 / NPC 的行動決策
 
+> **2026-07-27 canonical-binary recheck (Docker Capstone):** 重新對版控中的
+> `org_game/炎龍騎士團/FLAME2/FD2.EXE` 做 direct scan，`calls 0x15140` 與
+> `calls 0x15356` 均沒有結果；`0x15140` 的實際指令落在過場／畫面流程，不能以本檔舊摘要
+> 直接當作 AI 主函式或傷害公式。現階段唯一保留的 AI score callsite 是
+> `0x15ad8 → 0x15b77`，但其 caller context 與完整 entry 仍待重建。因此下文原有
+> `0x15140`、`0x1527b`、`0x1529e`、`0x152ab`、`0x15356` 流程降級為**歷史待核對假說**，
+> 不得作為 remake parity 證據或接入 runtime。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
-> 第 3 輪反組譯 `FD2.EXE`(capstone)還原。AI 主決策函式 **`0x15140`**;單位陣列 `[0x3A45]`、
+> 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。
 
 ## 敵與友 NPC 共用同一套 AI
