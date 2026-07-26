@@ -2,10 +2,9 @@
   "chapter": 17,
   "name": "血與冰之刃",
   "map": 16,
-  "initial_groups": [
-    0,
-    1,
-    3
+  "initial_groups": [0],
+  "initial_groups_if_party_absent": [
+    { "char_id": 18, "group": 1 }
   ],
   "party": [
     {

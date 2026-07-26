@@ -13,15 +13,24 @@ import (
 
 // Scenario 一關的劇本(對映原版 FDFIELD turn_events + 青衫 ground truth)。
 type Scenario struct {
-	Chapter             int           `json:"chapter"`
-	Name                string        `json:"name"`
-	Map                 int           `json:"map"`
-	RuntimeAppendGroups bool          `json:"runtime_append_groups,omitempty"` // party first; FDFIELD groups append only when constructed
-	InitialGroups       []int         `json:"initial_groups"`                  // 開局即在場的 unit group;其餘待命
-	Party               []PartyMember `json:"party"`                           // 主角隊(不在 FDFIELD roster,on_battle_start 進場)
-	DeployCells         [][2]int      `json:"deploy_cells"`                    // 主角隊進場目標格
-	Events              []Event       `json:"events"`
+	Chapter             int                  `json:"chapter"`
+	Name                string               `json:"name"`
+	Map                 int                  `json:"map"`
+	RuntimeAppendGroups bool                 `json:"runtime_append_groups,omitempty"`          // party first; FDFIELD groups append only when constructed
+	InitialGroups       []int                `json:"initial_groups"`                           // 開局即在場的 unit group;其餘待命
+	InitialGroupsAbsent []InitialGroupAbsent `json:"initial_groups_if_party_absent,omitempty"` // native pre-handler conditional FDFIELD group
+	Party               []PartyMember        `json:"party"`                                    // 主角隊(不在 FDFIELD roster,on_battle_start 進場)
+	DeployCells         [][2]int             `json:"deploy_cells"`                             // 主角隊進場目標格
+	Events              []Event              `json:"events"`
 	pendingJoins        []int
+}
+
+// InitialGroupAbsent is an evidence-backed pre-battle condition: materialize
+// its FDFIELD group only when the permanent party lacks CharID. It is not a
+// generic event expression and does not claim runtime-slot append identity.
+type InitialGroupAbsent struct {
+	CharID int `json:"char_id"`
+	Group  int `json:"group"`
 }
 
 // PartyMember 主角隊成員(數值來自 characters.json / EXE 表)。
@@ -142,6 +151,15 @@ func (sc *Scenario) Setup(st *State) []DialogLine {
 		init := map[int]bool{}
 		for _, g := range sc.InitialGroups {
 			init[g] = true
+		}
+		present := map[int]bool{}
+		for _, member := range sc.Party {
+			present[member.Fig] = true
+		}
+		for _, conditional := range sc.InitialGroupsAbsent {
+			if !present[conditional.CharID] {
+				init[conditional.Group] = true
+			}
 		}
 		for _, u := range st.Units {
 			if !init[u.Group] {
