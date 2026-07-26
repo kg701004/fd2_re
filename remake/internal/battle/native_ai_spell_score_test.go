@@ -50,6 +50,14 @@ func TestScoreNativeAISpellFlagUsesVerifiedOffsets(t *testing.T) {
 	if err != nil || got != 4 {
 		t.Fatalf("ID21 score=%d err=%v", got, err)
 	}
+	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 26)
+	if err != nil || got != 4 {
+		t.Fatalf("ID26 score=%d err=%v", got, err)
+	}
+	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 27)
+	if err != nil || got != 4 {
+		t.Fatalf("ID27 score=%d err=%v", got, err)
+	}
 }
 
 func TestScoreNativeAISpell22UsesRawGateAndBitRange(t *testing.T) {
