@@ -165,7 +165,7 @@ def export_handler(
     if not is_nonnegative_int(chapter) or not isinstance(beats, list):
         raise ValueError(f"handler {handler_path} lacks non-negative chapter or beats array")
 
-    # 0x205da → 0x1088d loads FDTXT resource chapter+1 (doc23 §4).
+    # 0x205da → 0x1088d enters the full chapter loader; its FDTXT resource is chapter+1 (doc23 §4).
     initial_source: str | None = source_dat_for_chapter(chapter)
     current_source = initial_source
     context_reason: str | None = (

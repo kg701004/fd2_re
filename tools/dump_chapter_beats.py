@@ -50,7 +50,7 @@ PRIM = {
     0x33499: ('roster_has', 1),   # (char_id) 查我方名冊 [0x53bf7](doc26 已知)
     0x111ba: ('load_res', 0),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知,參數個數未逐一核對)
     0x25a96: ('play_sfx', 1),     # 播音效(event_handler_dump.py 已知,參數個數未逐一核對)
-    0x1088d: ('load_ch_text', 0), # 載章節文本資源(doc47/event_handler_dump.py 已知)
+    0x1088d: ('loadch', 0),      # 完整章節 loader：FDTXT + FDFIELD/roster/map，不是文字-only
     0x10652: ('load_ch_bg', 0),   # 載章節大圖(doc47 §5 已知)
     0x11cac: ('redraw', 1),       # 主重繪函式,每幀呼叫(doc25 已知「每幀呼叫」)
 }

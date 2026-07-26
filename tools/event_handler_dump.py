@@ -9,7 +9,7 @@
   0x3453e(idx)         查單位 #idx 狀態 [0x53a45][idx+5]&1
   0x205be / 0x205da    handler prologue(載該章 FDTXT 文本、預設結果碼)
   0x15f84              繪事件畫面(全螢幕圖)
-  0x1088d              載章節文本資源
+  0x1088d              完整章節 loader（FDTXT + FDFIELD/roster/map）
   [0x53ecc]=N          設結果碼(1=中途事件 / 2=勝利 / 0=續打)
   [0x53ec8]            回合計數(clamp 99)
   [0x53a45]            戰場單位陣列基底(每單位 0x50B)
@@ -25,7 +25,7 @@ from callgraph_le import CG, fixup_map
 
 PRIM = {
     0x3453e: 'unit_inactive?(idx)', 0x205be: 'prologue(載章文本/預設碼)', 0x205da: 'prologue2',
-    0x15f84: '繪畫面', 0x1088d: '載章節文本', 0x111ba: '載資源', 0x25977: 'play_bgm/scene',
+    0x15f84: '繪畫面', 0x1088d: '完整章節載入', 0x111ba: '載資源', 0x25977: 'play_bgm/scene',
     0x25a96: 'play_sfx', 0x36cd7: '__STK', 0x2cad7: '結局判定?', 0x18890: '戰鬥行動',
 }
 VAR = {0x53ecc: '結果碼', 0x53ec8: '回合數', 0x53a45: '單位陣列', 0x53c03: '章節', 0x51a83: 'flagA'}
