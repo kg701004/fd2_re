@@ -21,6 +21,37 @@ type Animation struct {
 	HeaderByte4 byte
 }
 
+// NativeScheduler mirrors 0x2b9a1's two-byte global state (0x540fd frame
+// index, 0x540fc subframe counter). It selects a frame before advancing; the
+// caller remains responsible for the 0x2935b indexed blit.
+type NativeScheduler struct {
+	FrameIndex int
+	Subframe   int
+}
+
+// Step returns the frame to render for this call. advance=false is the native
+// arg4==0 initialization call: it clears subframe and performs no rendering.
+func (s *NativeScheduler) Step(animation *Animation, advance bool) (int, bool, error) {
+	if s == nil || animation == nil || len(animation.Frames) == 0 || s.FrameIndex < 0 || s.FrameIndex >= len(animation.Frames) || s.Subframe < 0 {
+		return 0, false, errors.New("figani: invalid native scheduler state")
+	}
+	if !advance {
+		s.Subframe = 0
+		return s.FrameIndex, false, nil
+	}
+	selected := s.FrameIndex
+	delay := animation.Frames[selected].Delay
+	s.Subframe++
+	if s.Subframe >= delay {
+		s.Subframe = 0
+		s.FrameIndex++
+		if s.FrameIndex >= len(animation.Frames) {
+			s.FrameIndex = 0
+		}
+	}
+	return selected, true, nil
+}
+
 // Frame holds the 13-byte FIGANI header fields consumed by 0x2935b. X/Y are
 // signed native 320x200 coordinates; Pixels is a decoded W×H indexed image
 // where Mask distinguishes transparent codec output from palette index zero.

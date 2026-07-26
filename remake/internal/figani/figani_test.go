@@ -63,6 +63,26 @@ func TestDecodeOriginalPlayerClass19HeaderFlags(t *testing.T) {
 	}
 }
 
+func TestNativeSchedulerInitializesWithoutRenderingAndAdvancesAfterRender(t *testing.T) {
+	a := &Animation{Frames: []Frame{{Delay: 1}, {Delay: 2}, {Delay: 1}}}
+	s := NativeScheduler{}
+	if index, rendered, err := s.Step(a, false); err != nil || index != 0 || rendered || s.Subframe != 0 {
+		t.Fatalf("init index/render/state=%d/%v/%#v err=%v", index, rendered, s, err)
+	}
+	if index, rendered, err := s.Step(a, true); err != nil || index != 0 || !rendered || s.FrameIndex != 1 || s.Subframe != 0 {
+		t.Fatalf("first index/render/state=%d/%v/%#v err=%v", index, rendered, s, err)
+	}
+	if index, _, err := s.Step(a, true); err != nil || index != 1 || s.FrameIndex != 1 || s.Subframe != 1 {
+		t.Fatalf("second state=%#v index=%d err=%v", s, index, err)
+	}
+	if index, _, err := s.Step(a, true); err != nil || index != 1 || s.FrameIndex != 2 || s.Subframe != 0 {
+		t.Fatalf("third state=%#v index=%d err=%v", s, index, err)
+	}
+	if index, _, err := s.Step(a, true); err != nil || index != 2 || s.FrameIndex != 0 {
+		t.Fatalf("wrap state=%#v index=%d err=%v", s, index, err)
+	}
+}
+
 func TestFrameBlitAtBaseShiftsNativeWorkSurface(t *testing.T) {
 	f := Frame{X: 2, Y: 3, Width: 1, Height: 1, Pixels: []byte{9}, Mask: []byte{1}}
 	dst := make([]byte, 640*5)
