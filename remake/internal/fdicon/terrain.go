@@ -30,6 +30,29 @@ type NativeMapHUDLayout struct {
 	Unit, HP       int
 }
 
+// NativeCommandBackgroundTarget is the raw per-final-target input consumed
+// by 0x2b5e1. Gate is the unlabelled 0x1f183 result; Control is the selected
+// four-byte FDSHAP record produced by 0x12e38.
+type NativeCommandBackgroundTarget struct {
+	Gate    bool
+	Control [4]byte
+}
+
+// NativeCommandBackgroundSelector reproduces 0x2b5e1's reverse final-target
+// scan. It retains the initial selector while a target passes the raw gate
+// and it is nonzero; otherwise it replaces it with decoded control byte+2.
+// The byte's scene/terrain meaning is deliberately not inferred here.
+func NativeCommandBackgroundSelector(initial byte, targets []NativeCommandBackgroundTarget) byte {
+	selector := initial
+	for i := len(targets) - 1; i >= 0; i-- {
+		target := targets[i]
+		if !target.Gate || selector == 0 {
+			selector = target.Control[2]
+		}
+	}
+	return selector
+}
+
 // NativeMapHUDLayoutFor reproduces the fixed offsets used by 0x1acf3 after
 // its raw horizontal anchor has been selected.  The original caller always
 // supplies the 456-byte map work-buffer stride; accepting another stride

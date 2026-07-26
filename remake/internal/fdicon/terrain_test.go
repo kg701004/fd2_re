@@ -49,6 +49,27 @@ func TestNativeMapHUDLayoutForMatches1ACF3(t *testing.T) {
 	}
 }
 
+func TestNativeCommandBackgroundSelectorMatches2B5E1(t *testing.T) {
+	targets := []NativeCommandBackgroundTarget{
+		{Gate: true, Control: [4]byte{0, 0, 0x11, 0}},
+		{Gate: false, Control: [4]byte{0, 0, 0x22, 0}},
+		{Gate: true, Control: [4]byte{0, 0, 0x33, 0}},
+	}
+	// Native order is reverse: target #2 cannot replace nonzero 0x07, #1
+	// replaces it due to a false gate, and #0 then retains that result.
+	if got := NativeCommandBackgroundSelector(0x07, targets); got != 0x22 {
+		t.Fatalf("selector=%#x, want %#x", got, 0x22)
+	}
+	// A zero initial selector permits the last target to seed the selector;
+	// subsequent passing targets preserve it.
+	if got := NativeCommandBackgroundSelector(0, []NativeCommandBackgroundTarget{
+		{Gate: true, Control: [4]byte{0, 0, 0x11, 0}},
+		{Gate: true, Control: [4]byte{0, 0, 0x33, 0}},
+	}); got != 0x33 {
+		t.Fatalf("zero-initial selector=%#x, want %#x", got, 0x33)
+	}
+}
+
 func TestNativeForegroundRedrawEligibleMatches129ECGates(t *testing.T) {
 	cases := []struct {
 		name                         string
