@@ -559,6 +559,14 @@ options `0`, `1/3`, `2`, and `4` to `0x2fc85`, `0x2e341`, `0x318ad`, and
 `0x3072f` respectively. It performs no scene call and does not label the
 callees as hotel, shop, church, or leave; invalid index/option fails closed.
 
+The shop-family subscene is now also represented by
+`fdother.ResolveNativeShopServiceRoute`: raw hub variants `3` and `5` select
+FDOTHER resources `29` and `63`, while every other variant selects resource
+`12`; the confirmed service selector `0..3` maps to raw callees
+`0x2f0b0/0x2f642/0x2f883/0x2f8ea`. This is an address/resource plan only; it
+does not name the four services, call them, or bypass the existing campaign
+town/shop UI gate.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:

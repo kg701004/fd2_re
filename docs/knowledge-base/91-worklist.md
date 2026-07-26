@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=387`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=388`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -17,6 +17,7 @@
 - [x] 2026-07-27 second-pass dialogue wording audit：`14` §4 的組合說明與 `-17/-18` 讀取步驟仍殘留「直接肖像 ID」舊斷言，已改成 identity lookup／record `+7`／direct-DATO fallback 三路 provenance；未修改任何未證實的 story operand。
 - [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 remake 自有 JSON projection，不冒稱 `FD2.SAV` byte identity。
 - [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依 official IDA/Capstone 的 `0x2cad7/0x2d093` 與 `0x526b9` raw table，新增 `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、hub selector→raw callee mapping、invalid fail-closed。只保存 address-level route，不把 option 命名成酒店／商店／教會，也不直接呼叫 scene。
+- [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 `0x2e341` 的 hub variant→FDOTHER resource（3→29、5→63、其他→12）與 service selector `0..3→0x2f0b0/0x2f642/0x2f883/0x2f8ea`；新增 `fdother.ResolveNativeShopServiceRoute` raw plan/regression。只保存 resource/callee，不命名服務、不呼叫 scene、不解除 campaign UI gate。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)
