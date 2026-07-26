@@ -179,6 +179,35 @@ func (m Montage) PlanFigureFade(unitSide int) ([]FigureFadePass, error) {
 	return passes, nil
 }
 
+// MirrorFigureFadePass is the exact scheduling plan for 0x29164's
+// unit[+6]==0 branch. It carries no pixels and therefore cannot be used as a
+// renderer substitute; it only makes the recovered source offsets and the
+// arg4-gated draws executable by a future indexed adapter.
+type MirrorFigureFadePass struct {
+	Stage               int
+	PrimarySourceOffset int
+	PaletteDelta        int
+	DrawSecondary       bool
+	DrawPlatform        bool
+}
+
+func (m Montage) PlanMirrorFigureFade(unitSide, sideFlag int) ([]MirrorFigureFadePass, error) {
+	s := m.PartyCycle.MirrorBranch
+	if m.Status != "mapped_first_party_cycle_fail_closed" || unitSide != s.RequiredUnitSide ||
+		s.StageStart != 8 || s.StageEnd != 0 || s.StageShiftBytes != 10 || s.PaletteDeltaFormula != "stage*6" ||
+		s.SideFlagArgument != "arg4" || sideFlag < 0 {
+		return nil, fmt.Errorf("ending: unavailable mirror figure fade")
+	}
+	passes := make([]MirrorFigureFadePass, 0, s.StageStart-s.StageEnd+1)
+	for stage := s.StageStart; stage >= s.StageEnd; stage-- {
+		passes = append(passes, MirrorFigureFadePass{
+			Stage: stage, PrimarySourceOffset: 0x140 - stage*s.StageShiftBytes,
+			PaletteDelta: stage * 6, DrawSecondary: sideFlag == 0, DrawPlatform: sideFlag == 0,
+		})
+	}
+	return passes, nil
+}
+
 // PartyCyclePlan is the exact recoverable selection portion of the native
 // loop. It iterates loop indexes descending, but the native first two unit
 // slots are deliberately swapped (i=0→slot1, i=1→slot0). It uses the visual
