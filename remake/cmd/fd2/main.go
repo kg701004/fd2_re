@@ -60,6 +60,7 @@ type MapData struct {
 
 type Game struct {
 	m                 *MapData
+	nativeMapAssets   *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
 	tileset           *ebiten.Image
 	tiles             []*ebiten.Image     // 切好的圖塊
 	st                *battle.State       // 戰鬥狀態(單位)
@@ -2790,6 +2791,13 @@ func (g *Game) loadMap(dir string) error {
 		g.tiles = append(g.tiles, g.tileset.SubImage(r).(*ebiten.Image))
 	}
 	g.m = &m
+	// Keep the existing PNG map playable, but expose native resources only as
+	// an all-or-nothing bundle. The indexed presentation bridge consumes this
+	// field later; no partial resource is allowed to affect gameplay.
+	g.nativeMapAssets = nil
+	if native, nativeErr := loadNativeMapAssets(dir); nativeErr == nil && nativeMapAssetsAvailable(native) {
+		g.nativeMapAssets = native
+	}
 	return nil
 }
 
