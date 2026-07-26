@@ -39,13 +39,14 @@ Worklist 目前是 **361 個 `[x]`、92 個 `[~]`、66 個 `[ ]`**；這些是�
 | 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
-| 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) |
+| 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load／class UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) ![class targets](docs/figures/church-class-targets.png) |
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 
-> 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 徹底逆向，
-> 用第一性原理還原規則與素材，並以兩套現代技術重製成可在**網頁與手機**上重新遊玩的版本。
+> 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
+> 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，
+> 目前不宣稱已完成跨平台 runtime parity。
 
 這是一個**乾淨重寫**的逆向工程專案：以原版 DOS 程式作為「行為真值 oracle」抽取演算法、
 破解原版資料格式，再手寫可公開、可維護、易中文化的引擎。原版程式與素材受著作權保護，
@@ -53,8 +54,8 @@ Worklist 目前是 **361 個 `[x]`、92 個 `[~]`、66 個 `[ ]`**；這些是�
 
 ## 為什麼這個專案值得做
 
-《炎龍騎士團2》是 1990 年代華文單機 SRPG 的代表作之一，但只有 DOS 版、且**沒有 DOSBox debugger 級別的逆向資料**留存。
-本專案從零開始，把它的封裝、資產、數值與規則一塊塊還原成公開知識，並重建成跨平台可玩版本。
+《炎龍騎士團2》是 1990 年代華文單機 SRPG 的代表作之一。本專案從零開始，
+把它的封裝、資產、數值與規則一塊塊還原成公開知識，並以垂直切片驗證重製方向；完整跨平台可玩版本仍在開發。
 
 ## 第 1 輪成果：`.DAT` 容器格式全破
 
@@ -89,7 +90,7 @@ python3 tools/unpack_dat.py --all   FLAME2/  extracted/
 
 - **RLE 壓縮**破解(`c≥0x80` literal / `c<0x80` run)+ VGA 256 色調色盤 → 約 125 張全幅圖可解。詳見 [`05-image-compression-format.md`](docs/knowledge-base/05-image-compression-format.md)。
 - **音樂**確認為 Miles AIL 的 **XMIDI**，寫 `tools/xmi2mid.py` 轉出 15 首標準 MIDI(音符平衡、tempo 保留)。詳見 [`07-music-xmidi-format.md`](docs/knowledge-base/07-music-xmidi-format.md)。
-- **EXE 數值表**全部 dump 並對攻略自驗通過(物品 215 / 法術 36 / 敵我單位 68 / 升級成長…)，連攻略原本缺的法術數值編號都還原了。見 [`docs/data/exe_tables/`](docs/data/exe_tables/)。
+- **EXE 數值表**已將目前已定位的物品 215、法術 36、敵我單位 68 與部分成長表 dump，並與攻略交叉驗證；仍有未定位欄位，不宣稱所有 runtime 表已閉合。見 [`docs/data/exe_tables/`](docs/data/exe_tables/)。
 
 ## 第 3 輪成果：文本與中文字型全破
 
@@ -168,7 +169,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 ### 文件閱讀路線（避免把 RE 筆記當成完成度）
 
 1. **先看本 README 的狀態表**：只描述可驗證的引擎切片與主要差距。
-2. **看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)**：目前唯一的 evidence gate／fail-closed 規範，裁決哪些 raw ABI 可以接線。
+2. **看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)**：核心 evidence gate／fail-closed 規範；UI 細項另看 [`57` matrix](docs/knowledge-base/57-ui-evidence-matrix.md)。
 3. **看 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md)**：以玩法功能整理原版／重製差距。
 4. **看 [`91` worklist](docs/knowledge-base/91-worklist.md)**：逐項工程狀態；`[x]` 是已驗證項目、`[~]` 是部分閉合、`[ ]` 是未完成。
 5. 其餘編號文件是**專題證據與歷史推導**（資產 codec、UI、handler、戰鬥規則），不應單獨用來推算整體完成百分比；重複或過時斷言以 SDD、gap audit、worklist 的最新勘誤為準。
@@ -192,7 +193,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 這些差距由 SDD 的 evidence gate 與 worklist 狀態標註；未知 handler 不會以猜測性 normalized
 邏輯接入。AFM VM、文字、地圖與資料 codec 已可由玩家自備原版資產重現，但那不等於 campaign parity。
 
-可行性 [`20`](docs/knowledge-base/20-first-principles-feasibility.md)、架構 [`21`](docs/knowledge-base/21-go-ebiten-remake-plan.md)。(WASM 也可編譯。)
+可行性 [`20`](docs/knowledge-base/20-first-principles-feasibility.md)、架構 [`21`](docs/knowledge-base/21-go-ebiten-remake-plan.md)；WASM 編譯驗證屬技術切片，不代表瀏覽器版已完成。
 
 ### 🎬 開場動畫:一個 1993 年的「繪圖位元組碼 VM」
 
@@ -276,7 +277,7 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 | **Go / Ebiten** | Web(WASM) / Android | **開發中**（垂直切片；非全 30 章 parity） | 《魔法大帝》重製 |
 | **SDL2 + C++** | 桌面(Linux/Windows/Mac) | 規劃中 | 精訊《勇者鬥惡龍三》重製 |
 
-兩者共用同一份從原版還原的資料與規則。詳見 [`90-re-plan.md`](docs/knowledge-base/90-re-plan.md)。
+Go/Ebiten 是目前唯一持續整合的引擎線；SDL2+C++ 仍是歷史規劃，不宣稱已有第二套 runtime。共同資料／規則是架構意圖，詳見 [`90-re-plan.md`](docs/knowledge-base/90-re-plan.md)。
 
 ## 逆向工具索引
 
@@ -313,7 +314,7 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 ## 倉庫結構
 
 ```
-docs/knowledge-base/   逆向知識庫(00–25 逐輪累積 + 90/91/99 計畫)
+docs/knowledge-base/   逆向知識庫(格式、RE 證據、SDD、worklist 與歷史記錄)
 docs/data/             結構化資料(glyph_map.json、campaign_sample.json…)
 docs/figures/          圖解(SVG + PNG)
 tools/                 逆向工具(見上「逆向工具索引」)

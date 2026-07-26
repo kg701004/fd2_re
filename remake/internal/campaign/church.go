@@ -45,10 +45,10 @@ func AdvanceNativeTwoColumnSelection(current, count, delta int) int {
 		return 0
 	}
 	if current < 0 {
-		current = 0
+		return 0
 	}
 	if current >= count {
-		current = count - 1
+		return count - 1
 	}
 	if delta != -2 && delta != -1 && delta != 1 && delta != 2 {
 		return current

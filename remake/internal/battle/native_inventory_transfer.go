@@ -45,10 +45,40 @@ func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Uni
 	destinationInventory := append([]int(nil), destination.Inventory...)
 	destinationEquipped := append([]bool(nil), destination.Equipped...)
 	destinationSlots := append([]int(nil), destination.InventorySlots...)
-	if !source.RemoveInventoryIndex(sourceIndex) || !destination.AddInventoryItem(itemID, false) {
+	if !removeNativeCompactInventory(source, sourceIndex) || !destination.AddInventoryItem(itemID, false) {
 		source.Inventory, source.Equipped, source.InventorySlots = sourceInventory, sourceEquipped, sourceSlots
 		destination.Inventory, destination.Equipped, destination.InventorySlots = destinationInventory, destinationEquipped, destinationSlots
 		return fmt.Errorf("native inventory transfer: mutation failed")
 	}
 	return nil
+}
+
+// removeNativeCompactInventory combines the compact editable view with the
+// fixed-cell shift performed by native 0x1b8e7.  The latter does not leave a
+// hole: cells after the removed slot move left and the tail is marked 0x80.
+func removeNativeCompactInventory(u *Unit, compactIndex int) bool {
+	if u == nil || compactIndex < 0 || compactIndex >= len(u.Inventory) {
+		return false
+	}
+	u.normalizeInventorySlots()
+	seen, slot := 0, -1
+	for i, id := range u.InventorySlots {
+		if id != 0xff {
+			if seen == compactIndex {
+				slot = i
+				break
+			}
+			seen++
+		}
+	}
+	if slot < 0 {
+		return false
+	}
+	copy(u.InventorySlots[slot:], u.InventorySlots[slot+1:])
+	u.InventorySlots[len(u.InventorySlots)-1] = 0xff
+	u.Inventory = append(u.Inventory[:compactIndex], u.Inventory[compactIndex+1:]...)
+	if compactIndex < len(u.Equipped) {
+		u.Equipped = append(u.Equipped[:compactIndex], u.Equipped[compactIndex+1:]...)
+	}
+	return true
 }
