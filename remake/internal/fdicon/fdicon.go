@@ -22,10 +22,8 @@ type Bank struct{ Sprites []Sprite }
 // The native routine compares only its raw-key table; its archive pointer is
 // consumed only while materializing a previously unseen twelve-pointer block.
 // A caller supplies the raw byte key (the FDFIELD spawn constructor passes b0)
-// and receives the slot later written to runtime unit+2. A cache belongs to one
-// FDICON resource: the native routine's resource pointer is part of its cache
-// identity, so callers must not share one cache across different resources.
-// The returned slot is not a character, portrait, or direct archive index.
+// and receives the slot later written to runtime unit+2. The returned slot is
+// not a character, portrait, or direct archive index.
 type NativeSelectorCache struct {
 	slots map[byte]int
 	keys  []byte
