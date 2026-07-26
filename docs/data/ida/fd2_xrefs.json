@@ -1640,6 +1640,317 @@
       ]
     },
     {
+      "address": 129154,
+      "function": {
+        "start": 129154,
+        "end": 129172,
+        "name": "sub_1F882"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 129151,
+          "from_function": {
+            "start": 129054,
+            "end": 129154,
+            "name": "sub_1F81E"
+          }
+        },
+        {
+          "from": 65802,
+          "from_function": {
+            "start": 65552,
+            "end": 67104,
+            "name": "sub_10010"
+          }
+        },
+        {
+          "from": 128842,
+          "from_function": {
+            "start": 128831,
+            "end": 129054,
+            "name": "sub_1F73F"
+          }
+        },
+        {
+          "from": 128964,
+          "from_function": {
+            "start": 128831,
+            "end": 129054,
+            "name": "sub_1F73F"
+          }
+        },
+        {
+          "from": 129387,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 129466,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 129854,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 129889,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 129924,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 130865,
+          "from_function": {
+            "start": 129172,
+            "end": 130937,
+            "name": "sub_1F894"
+          }
+        },
+        {
+          "from": 142973,
+          "from_function": {
+            "start": 142940,
+            "end": 143094,
+            "name": "sub_22E5C"
+          }
+        },
+        {
+          "from": 144352,
+          "from_function": {
+            "start": 144326,
+            "end": 144571,
+            "name": "sub_233C6"
+          }
+        },
+        {
+          "from": 144931,
+          "from_function": {
+            "start": 144889,
+            "end": 145296,
+            "name": "sub_235F9"
+          }
+        },
+        {
+          "from": 147130,
+          "from_function": {
+            "start": 147060,
+            "end": 147706,
+            "name": "sub_23E74"
+          }
+        },
+        {
+          "from": 148986,
+          "from_function": {
+            "start": 148662,
+            "end": 149016,
+            "name": "sub_244B6"
+          }
+        },
+        {
+          "from": 152346,
+          "from_function": {
+            "start": 151756,
+            "end": 152676,
+            "name": "sub_250CC"
+          }
+        },
+        {
+          "from": 155345,
+          "from_function": {
+            "start": 155323,
+            "end": 155986,
+            "name": "sub_25EBB"
+          }
+        },
+        {
+          "from": 155490,
+          "from_function": {
+            "start": 155323,
+            "end": 155986,
+            "name": "sub_25EBB"
+          }
+        },
+        {
+          "from": 162353,
+          "from_function": {
+            "start": 161516,
+            "end": 163785,
+            "name": "sub_276EC"
+          }
+        },
+        {
+          "from": 163734,
+          "from_function": {
+            "start": 161516,
+            "end": 163785,
+            "name": "sub_276EC"
+          }
+        },
+        {
+          "from": 164059,
+          "from_function": {
+            "start": 163785,
+            "end": 165565,
+            "name": "sub_27FC9"
+          }
+        },
+        {
+          "from": 166016,
+          "from_function": {
+            "start": 165764,
+            "end": 166508,
+            "name": "sub_28784"
+          }
+        },
+        {
+          "from": 166419,
+          "from_function": {
+            "start": 165764,
+            "end": 166508,
+            "name": "sub_28784"
+          }
+        },
+        {
+          "from": 167096,
+          "from_function": {
+            "start": 166508,
+            "end": 168215,
+            "name": "sub_28A6C"
+          }
+        },
+        {
+          "from": 168103,
+          "from_function": {
+            "start": 166508,
+            "end": 168215,
+            "name": "sub_28A6C"
+          }
+        },
+        {
+          "from": 173015,
+          "from_function": {
+            "start": 172776,
+            "end": 173520,
+            "name": "sub_2A2E8"
+          }
+        },
+        {
+          "from": 173394,
+          "from_function": {
+            "start": 172776,
+            "end": 173520,
+            "name": "sub_2A2E8"
+          }
+        },
+        {
+          "from": 174691,
+          "from_function": {
+            "start": 173757,
+            "end": 177633,
+            "name": "sub_2A6BD"
+          }
+        },
+        {
+          "from": 177582,
+          "from_function": {
+            "start": 173757,
+            "end": 177633,
+            "name": "sub_2A6BD"
+          }
+        },
+        {
+          "from": 179614,
+          "from_function": {
+            "start": 179429,
+            "end": 181147,
+            "name": "sub_2BCE5"
+          }
+        },
+        {
+          "from": 180743,
+          "from_function": {
+            "start": 179429,
+            "end": 181147,
+            "name": "sub_2BCE5"
+          }
+        },
+        {
+          "from": 180985,
+          "from_function": {
+            "start": 179429,
+            "end": 181147,
+            "name": "sub_2BCE5"
+          }
+        },
+        {
+          "from": 181731,
+          "from_function": {
+            "start": 181253,
+            "end": 182764,
+            "name": "sub_2C405"
+          }
+        },
+        {
+          "from": 183595,
+          "from_function": {
+            "start": 182999,
+            "end": 184177,
+            "name": "sub_2CAD7"
+          }
+        },
+        {
+          "from": 189911,
+          "from_function": {
+            "start": 189249,
+            "end": 190136,
+            "name": "sub_2E341"
+          }
+        },
+        {
+          "from": 196309,
+          "from_function": {
+            "start": 195717,
+            "end": 196517,
+            "name": "sub_2FC85"
+          }
+        },
+        {
+          "from": 198987,
+          "from_function": {
+            "start": 198447,
+            "end": 199167,
+            "name": "sub_3072F"
+          }
+        }
+      ]
+    },
+    {
       "address": 142619,
       "function": {
         "start": 142619,

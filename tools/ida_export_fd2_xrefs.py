@@ -42,6 +42,9 @@ TARGETS = (
     0x1C8ED,
     0x1CA89,
     0x1CFF0,
+    # Shared native palette-fade entry.  Its tail is a separate IDA chunk, so
+    # retain the public entry/caller topology instead of calling it vsync.
+    0x1F882,
     0x22D1B,
     # Event-state entry #12 writer.  Its dispatch provenance is required
     # before the item-0xd0 branch can become an editable scenario event.
