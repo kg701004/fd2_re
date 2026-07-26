@@ -215,9 +215,7 @@ func (sc *Scenario) ExecuteAction(st *State, a Action) (DialogLine, bool) {
 		// cells. Chapter 0 then immediately plays decoded ACT(0), which moves all
 		// four runtime slots six cells upward; the old "no movement animation"
 		// conclusion confused construction with the following handler operation.
-		for _, unit := range sc.PartyUnits(st.OwnDeploy) {
-			st.AddUnit(unit)
-		}
+		st.AppendNativeMapSelectorBatchOrLegacy(sc.PartyUnits(st.OwnDeploy))
 	case "spawn_group": // 增援登場(原版 turn_events;doc 25)
 		camp := campFrom(a.Camp)
 		for _, g := range a.Groups {

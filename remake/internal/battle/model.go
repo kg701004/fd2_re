@@ -322,6 +322,11 @@ type State struct {
 	// AppendNativeMapSelectorBatch; legacy callers may keep using Units without
 	// claiming an indexed-native selector state.
 	NativeMapSelectorCache *fdicon.NativeSelectorCache
+	// NativeMapSelectorError records a rejected native construction batch.  The
+	// battle continues with legacy Fig rendering, but NativeMapSpriteKey remains
+	// fail-closed for the entire state rather than mixing native and guessed
+	// selectors after a malformed editable source.
+	NativeMapSelectorError error
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
@@ -678,6 +683,33 @@ func (s *State) AppendNativeMapSelectorBatch(units []*Unit) error {
 	return nil
 }
 
+// AppendNativeMapSelectorBatchOrLegacy attempts the evidenced constructor
+// contract, but preserves playable legacy construction if editable source data
+// is malformed.  The failure is retained on State so renderers cannot quietly
+// claim a partial native selector state.
+func (s *State) AppendNativeMapSelectorBatchOrLegacy(units []*Unit) {
+	if err := s.AppendNativeMapSelectorBatch(units); err != nil {
+		s.NativeMapSelectorError = err
+		s.Units = append(s.Units, units...)
+	}
+}
+
+// NativeMapSpriteKey resolves an explicitly materialized unit+2 slot back to
+// its FDICON raw key.  It returns false unless the whole State remains in the
+// proven native construction mode; callers must then retain their legacy Fig
+// presentation rather than guessing a raw selector.
+func (s *State) NativeMapSpriteKey(u *Unit) (int, bool) {
+	if s == nil || s.NativeMapSelectorCache == nil || s.NativeMapSelectorError != nil ||
+		u == nil || !u.HasMapSelectorSlot {
+		return 0, false
+	}
+	key, err := s.NativeMapSelectorCache.KeyForSlot(u.MapSelectorSlot)
+	if err != nil {
+		return 0, false
+	}
+	return key, true
+}
+
 // AppendGroup implements the original 0x10b4e constructor: matching FDFIELD
 // records are removed from the source roster and appended to the canonical
 // runtime unit array in record order. It intentionally has no reinforcement
@@ -688,7 +720,7 @@ func (s *State) AppendGroup(group int) int {
 		return 0
 	}
 	remaining := s.Roster[:0]
-	n := 0
+	batch := make([]*Unit, 0)
 	for _, u := range s.Roster {
 		if u.Group != group {
 			remaining = append(remaining, u)
@@ -696,11 +728,18 @@ func (s *State) AppendGroup(group int) int {
 		}
 		u.OnField = true
 		u.OffX, u.OffY = 0, 0
-		s.Units = append(s.Units, u)
-		n++
+		batch = append(batch, u)
 	}
 	s.Roster = remaining
-	return n
+	if len(batch) == 0 {
+		return 0
+	}
+	if s.NativeMapSelectorCache != nil && s.NativeMapSelectorError == nil {
+		s.AppendNativeMapSelectorBatchOrLegacy(batch)
+	} else {
+		s.Units = append(s.Units, batch...)
+	}
+	return len(batch)
 }
 
 // SpawnGroup 讓某 group 的待命單位登場(可改陣營;act=true 表示當回合可行動)。

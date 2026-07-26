@@ -148,3 +148,23 @@ func TestStateNativeMapSelectorCachePreservesConstructionOrder(t *testing.T) {
 		t.Fatal("failed append mutated native cache")
 	}
 }
+
+func TestNativeMapSpriteKeyFailsClosedAfterLegacyFallback(t *testing.T) {
+	st := &State{}
+	valid := []*Unit{{MapSelectorKey: 7, HasMapSelectorKey: true}}
+	st.AppendNativeMapSelectorBatchOrLegacy(valid)
+	if got, ok := st.NativeMapSpriteKey(valid[0]); !ok || got != 7 {
+		t.Fatalf("native map key=(%d,%v), want (7,true)", got, ok)
+	}
+	invalid := []*Unit{{Fig: 99}}
+	st.AppendNativeMapSelectorBatchOrLegacy(invalid)
+	if st.NativeMapSelectorError == nil {
+		t.Fatal("malformed batch did not record native selector failure")
+	}
+	if _, ok := st.NativeMapSpriteKey(valid[0]); ok {
+		t.Fatal("prior native slot remained enabled after malformed fallback")
+	}
+	if len(st.Units) != 2 || st.Units[1] != invalid[0] {
+		t.Fatalf("legacy fallback did not preserve unit order: %#v", st.Units)
+	}
+}

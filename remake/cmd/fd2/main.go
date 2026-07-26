@@ -3701,7 +3701,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			if ux < -float64(tw) || ux > float64(viewW) || uy < -float64(th) || uy > float64(viewH) {
 				continue
 			}
-			g.drawUnitSprite(target, ux, uy, float64(tw), float64(th), u)
+			g.drawUnitSprite(target, ux, uy, float64(tw), float64(th), u, g.mapSpriteGroup(u))
 		}
 	}
 	// storyBG 場景靜態角色(doc23 §4:王座廳國王/王后/主角等 cutscene 擺位,同一 sprite 繪法無戰鬥邏輯)
@@ -3712,7 +3712,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		ux := float64(u.X*tw) - g.camX
 		uy := float64(u.Y*th) - g.camY
-		g.drawUnitSprite(target, ux, uy, float64(tw), float64(th), u)
+		g.drawUnitSprite(target, ux, uy, float64(tw), float64(th), u, u.Fig)
 	}
 	if legacyViewport { // 離屏世界層放大貼回畫布(48px/格,原版取景)
 		op := &ebiten.DrawImageOptions{}
@@ -3936,7 +3936,7 @@ func (g *Game) drawRing(screen *ebiten.Image) {
 	mop := &ebiten.DrawImageOptions{}
 	mop.GeoM.Translate(ux, uy)
 	screen.DrawImage(mark, mop)
-	g.drawUnitSprite(screen, ux, uy, float64(tw), float64(th), g.sel)
+	g.drawUnitSprite(screen, ux, uy, float64(tw), float64(th), g.sel, g.mapSpriteGroup(g.sel))
 	const iw, ih = 56.0, 52.0 // 28×26 ×2
 	pos := [4][2]float64{     // 0上 1左 2右 3下
 		{ux + float64(tw)/2 - iw/2, uy - ih - 6},
@@ -4600,12 +4600,26 @@ func drawStatBar(screen *ebiten.Image, x, y, w, frac float64, c color.RGBA) {
 	}
 }
 
+// mapSpriteGroup chooses the exact native raw FDICON key only for a battle
+// State whose whole construction sequence materialized successfully. Story
+// actors remain on their editable legacy Fig path by construction.
+func (g *Game) mapSpriteGroup(u *battle.Unit) int {
+	if g.st != nil {
+		if key, ok := g.st.NativeMapSpriteKey(u); ok {
+			return key
+		}
+	}
+	return u.Fig
+}
+
 // drawUnitSprite 畫一個單位:純 FDICON Q 版 sprite(原版無 HP bar/腳標,還原乾淨)。
 // 用方向走動分鏡(FDICON 12幀=4方向×3:站/抬左手/抬右手);行軍時套用 OffX/OffY 位移。
-func (g *Game) drawUnitSprite(screen *ebiten.Image, x, y, w, h float64, u *battle.Unit) {
+// spriteGroup is either a proven native raw key or an explicit legacy Fig;
+// this helper never infers one from the other.
+func (g *Game) drawUnitSprite(screen *ebiten.Image, x, y, w, h float64, u *battle.Unit, spriteGroup int) {
 	x += u.OffX // 行軍/移動位移
 	y += u.OffY
-	frames := g.sprites[u.Fig]
+	frames := g.sprites[spriteGroup]
 	if len(frames) == 0 {
 		drawUnit(screen, x, y, w, h, campColor(u.Camp), u) // fallback 色塊
 		return

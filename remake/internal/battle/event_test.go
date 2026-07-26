@@ -105,6 +105,20 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 		t.Fatal(err)
 	}
 	sc.Setup(st)
+	if st.NativeMapSelectorError != nil {
+		t.Fatalf("native selector construction failed: %v", st.NativeMapSelectorError)
+	}
+	for index, u := range st.Units[5:] {
+		slot := index + 5
+		key, ok := st.NativeMapSpriteKey(u)
+		if !ok {
+			t.Fatalf("runtime slot %d lacks an enabled native map key", slot)
+		}
+		want := map[Camp]int{Enemy: 0, Ally: 1, Own: 2}[u.Camp]
+		if key != want {
+			t.Fatalf("runtime slot %d native key=%d, want camp raw %d", slot, key, want)
+		}
+	}
 	if len(st.Units) != 21 {
 		t.Fatalf("setup runtime units=%d, want party5 + group1/2=16", len(st.Units))
 	}
@@ -124,6 +138,11 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 	}
 	if got := st.SpawnGroup(3, Ally, true, false); got != 6 || len(st.Units) != 27 {
 		t.Fatalf("turn3 spawn=%d runtime units=%d, want 6/27", got, len(st.Units))
+	}
+	for slot, u := range st.Units {
+		if _, ok := st.NativeMapSpriteKey(u); !ok {
+			t.Fatalf("post-spawn runtime slot %d lacks an enabled native map key", slot)
+		}
 	}
 	if got := st.AppendGroup(4); got != 1 || len(st.Units) != 28 {
 		t.Fatalf("post SPAWN4=%d runtime units=%d, want 1/28", got, len(st.Units))
