@@ -41,4 +41,7 @@ func TestNative2C548FigureFadeIsNineNonMirroredPasses(t *testing.T) {
 	if passes, err := montage.PlanFigureFade(0); err == nil || passes != nil {
 		t.Fatalf("mirrored passes=%#v err=%v", passes, err)
 	}
+	if montage.PartyCycle.MirrorBranch.RequiredUnitSide != 0 || montage.PartyCycle.MirrorBranch.PrimarySource != "staging+0x140-stage*10" || montage.PartyCycle.MirrorBranch.SecondaryWhen != "arg4==0" {
+		t.Fatalf("mirror branch = %#v", montage.PartyCycle.MirrorBranch)
+	}
 }

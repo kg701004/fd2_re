@@ -48,6 +48,7 @@ type PartyCycleSpec struct {
 	SourceRange       string           `json:"source_range"`
 	PortraitText      PortraitTextSpec `json:"portrait_text"`
 	FigureFade        FigureFadeSpec   `json:"figure_fade"`
+	MirrorBranch      MirrorBranchSpec `json:"mirror_branch"`
 }
 
 type FigureFadeSpec struct {
@@ -74,6 +75,25 @@ type FigureFadeAsset struct {
 	Y        int    `json:"y"`
 	Effect   string `json:"effect"`
 	Frame    int    `json:"frame"`
+}
+
+// MirrorBranchSpec is the separately recovered unit[+6]==0 path in
+// 0x29164. It is metadata only: loading it does not enable a renderer.
+type MirrorBranchSpec struct {
+	Source              string          `json:"source"`
+	RequiredUnitSide    int             `json:"required_unit_side"`
+	SideFlagArgument    string          `json:"side_flag_argument"`
+	WorkStride          int             `json:"work_stride"`
+	StageStart          int             `json:"stage_start"`
+	StageEnd            int             `json:"stage_end"`
+	StageShiftBytes     int             `json:"stage_shift_bytes"`
+	PaletteDeltaFormula string          `json:"palette_delta_formula"`
+	PrimarySource       string          `json:"primary_source"`
+	SecondarySource     string          `json:"secondary_source"`
+	SecondaryWhen       string          `json:"secondary_when"`
+	PlatformWhen        string          `json:"platform_when"`
+	Platform            FigureFadeAsset `json:"platform"`
+	Renderer            string          `json:"renderer"`
 }
 
 type PortraitTextSpec struct {
@@ -132,6 +152,7 @@ func LoadMontage(path string) (*Montage, error) {
 		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "unit[+8]+0x0c|45", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
 		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) || m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
 		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 || m.PartyCycle.FigureFade.RestoreCopy != "B->A(dstStride640,srcStride320,width320,rows200)" || m.PartyCycle.FigureFade.PostFigureSnapshot != "memmove(C,B,64000)" ||
+		m.PartyCycle.MirrorBranch != (MirrorBranchSpec{Source: "0x2927e..0x29357", RequiredUnitSide: 0, SideFlagArgument: "arg4", WorkStride: 640, StageStart: 8, StageEnd: 0, StageShiftBytes: 10, PaletteDeltaFormula: "stage*6", PrimarySource: "staging+0x140-stage*10", SecondarySource: "staging+0x140", SecondaryWhen: "arg4==0", PlatformWhen: "arg4==0", Platform: FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}, Renderer: "0x29164"}) ||
 		m.Gate.Source != "0x2c5e3" || m.Gate.Reason == "" {
 		return nil, fmt.Errorf("ending montage %q is incomplete or unsupported", path)
 	}
