@@ -210,7 +210,7 @@ logo 落地那一瞬的短促起手曲,隨後畫面接續(角色/城堡等更多
 兩處 `push 0;push 0xa;call 0x25977`(track=10 字面值):
 
 - **`linear 0x2cd34`**:前置 `push [0x53c03]; call 0x4e4b9` → `al=[eax]`(取「目前章節城鎮資料」)
-  → `call 0x1f882`(vsync 輔助)→ `play_bgm(0,10)`。與函式 `0x2d098`(下條)共用同一個
+  → `call 0x1f882`(64-step palette fade-out，非 vsync)→ `play_bgm(0,10)`。與函式 `0x2d098`(下條)共用同一個
   `0x4e4b9([0x53c03])` helper 開場,判斷是「進城鎮」的共用前置動作。
 - **`linear 0x2d2f9`**:在函式 `0x2d098`–`0x2d316`(依全域 `[0x412b]` 分支的場景轉場邏輯)尾端。
   該函式一進入就 `play_bgm(0,-1)` 停曲,依 `[0x412b]` 值(0/4/3/預設)先暫放 track 13/11/15/14

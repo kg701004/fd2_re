@@ -184,7 +184,7 @@ DOS/4GW entry 0x3c964 ──► Watcom CRT ──► main 0x25bf4
 6. wait_ticks(1); wait_ticks(6)                          ; ⚠0x17aa9 是 tick 計數忙等(讀全域計數器
                                                             [0x46c],非 doc39 §10.7 原猜測的 BGM/SFX——
                                                             本輪修正)
-7. call 0x1f882                                          ; 同步/vsync 輔助(語意同 doc39 §10.7 未展開)
+7. call 0x1f882                                          ; 64-step native palette fade-out（非 vsync；見 SDD56 §5.0.1）
 8. load("FDOTHER.DAT", oldbuf=[cache], idx=0x65)         ; 重載 #0x65(標準 768B 淡入調色盤)進快取
 9. addr = edi + esi*320                                  ; edi/esi = title_seq 傳入的捲動緩衝基址/列號
 10. copy_rect(dst=0xA0000, dst_w=0x140, src=addr, 0x140, 0x140, 0xc8)  ; 0x11eb0,320×200

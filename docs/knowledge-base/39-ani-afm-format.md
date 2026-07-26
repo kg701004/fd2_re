@@ -261,7 +261,7 @@ esi==0x14a(330) → wrapper(A=4,B=90,C=0x63) → play_afm(index=4,delay=90,skip=
                    接著 jmp 復用同一 call 指令 → wrapper(A=5,B=50,C=0) → play_afm(index=5,delay=50,skip=0)
 esi==0xd2 (210) → wrapper(A=6,B=90,C=0x63) → play_afm(index=6,delay=90,skip=0)
                    接著 → wrapper(A=7,B=50,C=0) → play_afm(index=7,delay=50,skip=0)
-esi==0x6e (110) → call 0x1f882(輔助/同步,細節未展開) → wrapper(A=8,B=90,C=0x63) → play_afm(index=8,delay=90,skip=0)
+esi==0x6e (110) → call 0x1f882(64-step palette fade-out，非同步 helper) → wrapper(A=8,B=90,C=0x63) → play_afm(index=8,delay=90,skip=0)
 esi==0x19  (25) → wrapper(A=0,B=15,C=0)     → play_afm(index=0,delay=15,skip=0)     ; 金鎖(96幀)
 esi==0xa   (10) → call 0x1f73f(esi,edi,0x4c,0x4b)   ; 同上,另一套靜態 blit 機制
 esi==0     → 額外 +1000ms 停留(push 0x3e8;call 0x375b2)
@@ -325,7 +325,7 @@ const cutTicksPerFrame = 6   // 全域固定 6 tick/幀(≈100ms@60fps)
 - **[待補]** `0x024404`(index=0 重用)的完整呼叫鏈只追到 `0x0242c9`,再上層(哪個章節、
   透過哪個跳表項間接呼叫)未展開;不影響本輪「排除非開場呼叫點」的結論,但若要在 remake
   重現該中期章節過場,需要補這段。
-- **[待補]** `0x1f882`(esi==0x6e 觸發前的輔助呼叫)內部只追到 `jmp 0x1f51e`,語意未展開
+- ~~**[待補]** `0x1f882`~~：已由 Docker Capstone 展開為 `ebx=0..63`、每步 `0x11d40(0,255,ebx)`＋2ms wait 的 native palette fade-out；它不是 vsync/sync helper。indexed palette adapter 尚未接入，不能以一般 fade 假冒。
   (推測與遊戲速度設定/vsync 同步有關,不影響排程結論)。
 
 **方法論**:全程 esp-relative 靜態反推(規則 62),**首次推導 `[esp+0x2c]` 時因漏算前一條

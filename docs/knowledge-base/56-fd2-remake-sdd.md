@@ -417,6 +417,8 @@ Inventory gates are distinct from item-consuming event commands. Native `0x24b14
 
 `0x25052(start,delay_ms)` is an independently editable palette-ramp primitive: it emits inclusive descending `0x11df2(0,255,start..0)` updates, waiting after each update. The ch26 success arm calls `(5,80)`, `(4,80)`, `(3,80)`, then `(2,80)`, `(2,80)`, `(2,80)` interleaved with native waits. This is not a black fade and must preserve every delta including zero; compiler input is restricted to immediate `start∈[0,63]` and non-negative delay.
 
+`0x1f882` is a separate native palette fade-out, not a timing/vsync helper: it initializes `ebx=0`, then emits 64 inclusive `0x11d40(0,255,ebx)` steps with a 2 ms wait after each. Unlike `0x25052`, `0x11d40` applies the native darkening path rather than `0x11df2`'s signed RGB delta. Until the indexed DAC adapter exists this call remains fail-closed; it must not silently become a generic story fade.
+
 ### 5.1 目前 editable graph audit（E1，不等同原版 E0）
 
 `remake/assets/scenarios/campaign_full.json` 的 30 個 battle node 已逐一展開
