@@ -746,7 +746,7 @@
       未把 authored graph 當作原版已驗證。
 - [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
-- [ ] **RE-UNIT-STATIC-TABLES**：將 constructor `0x10d7f..0x10efc` 的兩條 class branch 以 editable raw schema 表達：高 branch `b1-0x44 → 0x61af9` 10-byte record；lower branch 的 `0x61da1` 24-byte／`0x619fd` 7-byte records。先補 branch selector 與 byte-for-byte fixtures，再考慮解除 HUD optional unit/HP gate；禁止回退到 portrait/class 猜測。
+- [ ] **RE-UNIT-STATIC-TABLES**：將 constructor `0x10d7f..0x10efc` 的兩條 class branch 以 editable raw schema 表達：高 branch `b1-0x44 → 0x61af9` 10-byte record；lower branch `0x61da1` 24-byte／`0x620a1` 11-byte records。`0x619fd` 不屬於此 constructor。先補 branch selector 與 byte-for-byte fixtures，再考慮解除 HUD optional unit/HP gate；禁止回退到 portrait/class 猜測。
 
 ## 2026-07-20 ending prefix playback slice
 
