@@ -158,6 +158,28 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 	}
 }
 
+func TestInitialGroupAbsentPartyConditionControlsOnlyOpeningVisibility(t *testing.T) {
+	makeState := func() *State {
+		return &State{Units: []*Unit{{Group: 0, OnField: true}, {Group: 1, OnField: true}}}
+	}
+	sc := &Scenario{
+		InitialGroups:       []int{0},
+		InitialGroupsAbsent: []InitialGroupAbsent{{CharID: 18, Group: 1}},
+	}
+	present := makeState()
+	sc.Party = []PartyMember{{Fig: 18}}
+	sc.Setup(present)
+	if !present.Units[0].OnField || present.Units[1].OnField {
+		t.Fatalf("present char18 opening groups = %#v", present.Units)
+	}
+	absent := makeState()
+	sc.Party = nil
+	sc.Setup(absent)
+	if !absent.Units[0].OnField || !absent.Units[1].OnField {
+		t.Fatalf("absent char18 opening groups = %#v", absent.Units)
+	}
+}
+
 func TestChapter1Turn3JoinsHanoBeforeSpawningHisGroup(t *testing.T) {
 	st, err := Load("../../assets/maps/map0/map0_units.json")
 	if err != nil {
