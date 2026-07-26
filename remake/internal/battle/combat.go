@@ -259,6 +259,17 @@ type AIPlan struct {
 	Path    []Cell // 含起點;len>=2 = 要移動(引擎播行走動畫)
 	Target  *Unit  // 到位後攻擊目標(nil = 僅移動/待機)
 	SpellID int    // 原版 spell command 的資料欄位；-1 表示本計畫不施法
+	// NativeSpellCommands preserves raw command IDs >= 0x10 that passed the
+	// verified inventory/+0x27/MP gates. It is evidence only: planner code
+	// must still resolve target, score, presentation, and execution separately.
+	NativeSpellCommands []int
+}
+
+func (s *State) nativeAIPlanSpellCommands(u *Unit) []int {
+	if s == nil || len(s.NativeCommandBook) != 36 {
+		return nil
+	}
+	return NativeAvailableAISpellCommandIDs(u, s.NativeCommandBook)
 }
 
 // AIAvailableSpells mirrors the data portion of the native AI command scan:
@@ -354,13 +365,13 @@ func (s *State) NextAIPlan() *AIPlan {
 		}
 		best, moveTarget := s.aiTargets(u)
 		if moveTarget == nil {
-			return &AIPlan{U: u, SpellID: -1}
+			return &AIPlan{U: u, SpellID: -1, NativeSpellCommands: s.nativeAIPlanSpellCommands(u)}
 		}
 		if best == nil {
-			return &AIPlan{U: u, Path: s.aiApproachPath(u, moveTarget), SpellID: -1}
+			return &AIPlan{U: u, Path: s.aiApproachPath(u, moveTarget), SpellID: -1, NativeSpellCommands: s.nativeAIPlanSpellCommands(u)}
 		}
 		if s.InAttackRange(u, best.X, best.Y) {
-			return &AIPlan{U: u, Target: best, SpellID: -1}
+			return &AIPlan{U: u, Target: best, SpellID: -1, NativeSpellCommands: s.nativeAIPlanSpellCommands(u)}
 		}
 		reach := s.Reachable(u)
 		dstX, dstY := u.X, u.Y
@@ -375,7 +386,7 @@ func (s *State) NextAIPlan() *AIPlan {
 				dstX, dstY = c.X, c.Y
 			}
 		}
-		p := &AIPlan{U: u, Path: s.Path(u, dstX, dstY), SpellID: -1}
+		p := &AIPlan{U: u, Path: s.Path(u, dstX, dstY), SpellID: -1, NativeSpellCommands: s.nativeAIPlanSpellCommands(u)}
 		// 到位後若可攻擊 best,帶上目標(引擎走完動畫再結算)
 		du, dv := dstX-best.X, dstY-best.Y
 		if du < 0 {
