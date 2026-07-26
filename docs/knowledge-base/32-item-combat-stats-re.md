@@ -90,6 +90,7 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 - 相鄰 `0x1c9dd` MP path 亦已新增 `battle.ApplyNativeRawMPRestore`：同一 arithmetic 寫 `+0x44`/cap `+0x46`，但 score 僅用 `+0x21`、沒有 HP 的 class bonus；仍保持 raw adapter。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
+- `0x22af6` common flag branch 已新增 `battle.ApplyNativeRawFlagRestore`：nonzero paired flag 才以 raw `0x1c916(target,10)` 恢復、清 flag、累加 `effective*4`；flag/status 語意與 presentation 保持未命名。
 - type `0x17→0x2218a` 已確認會呼叫 `0x22253` indexed renderer，並寫 target unit `+0/+1`；這是特殊 state/演出 branch，但欄位與玩法語意仍保持 unknown。
 - **[阻] 轉職系統**:攻略層有(Lv20+教會、轉職道具表 58h–60h→英雄/聖者/召喚師…,doc 02 §5.10);反組譯機制(職業數值替換、能力繼承、成長表切換)未做。
 - **[阻] 轉職與 sprite**:角色 id = 肖像 = sprite組 恆等(doc 31,memory.md 權威);轉職後換成轉職態肖像編號(memory.md 0x20–0x41),sprite組是否隨之切到另一組**待反組譯轉職碼確認**。⚠ 舊版「凱拉斯組17→49、轉職當機」已作廢(DATO_067 誤判,凱拉斯實為 id16,三者恆等)。
