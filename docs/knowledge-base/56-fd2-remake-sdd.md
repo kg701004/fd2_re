@@ -574,6 +574,12 @@ reads the raw preparation input through `0x19953` and then enters `0x197e5`.
 This preserves the observed two-call branch without naming the services or
 executing the scene.
 
+The `0x318ad` cap gate is now explicit in
+`fdother.NativePreparationPartyLimit`: raw global `[0x53c03] <= 0x1a` yields
+15, while values greater than `0x1a` yield 19. The adapter accepts a native
+index rather than a human-facing chapter number, preventing a chapter-label
+conversion from silently changing the original boundary.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:
