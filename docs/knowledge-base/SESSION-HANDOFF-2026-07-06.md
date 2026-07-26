@@ -6,6 +6,14 @@
 > `42-re-vs-remake-gap-audit.md`、`91-worklist.md` 為準；具體 RE 證據回到各專題文件。
 > 保留本檔僅為提交與判讀 provenance，已被後續文件推翻的斷言須以後者為準。
 
+## 2026-07-27 raw byte5 handler bridge
+
+`Scenario.PartyUnits`／`battle.Load` 對 HP>0 的 constructor materialization 保存 `NativeRecordByte5=0`；
+`cmd/fd2` 的 `any_unit_inactive` 在有 raw provenance 時優先讀 `+5&1`，`deactivate_unit` 同步保留
+`0x32975` 的整 byte overwrite=1。舊 authored JSON 缺 raw 時仍保留 `OnField/Alive` 相容 projection，
+因此這是 E1 partial、不是 native parity；下一輪需補 death writer／LOADCH raw propagation，並在缺 raw 的
+strict binding fail-closed。
+
 ## 2026-07-25 resume note — SDD first
 
 依使用者要求本輪先建立 `56-fd2-remake-sdd.md`，暫停新增 handler／renderer。盤點確認目前已有 Ebiten battle/story/cutscene、shop、church、preparation、save 與部分 native ending primitive，但原版 menu dispatch、完整 postbattle town/rest flow、weapon reach、item UI、native indexed presentation 仍未達 remake。`42`/`51` 只作 baseline。

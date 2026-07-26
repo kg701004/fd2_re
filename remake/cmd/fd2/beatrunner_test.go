@@ -810,6 +810,35 @@ func TestBeatAnyUnitInactiveFailsClosedWithoutCompleteRoster(t *testing.T) {
 	}
 }
 
+func TestBeatAnyUnitInactivePrefersNativeByte5Predicate(t *testing.T) {
+	itemID := 0xc6
+	condition := &campaign.BeatCondition{Op: "any_unit_inactive", UnitSlots: []int{5}}
+	branch := campaign.Beat{Op: "if", Condition: condition,
+		Then: []campaign.Beat{{Op: "join", CharID: 4}},
+		Else: []campaign.Beat{{Op: "grant_item", ItemID: &itemID}}}
+
+	rawInactive := newBeatTestGame(t, []campaign.Beat{branch})
+	rawInactive.st = &battle.State{Units: make([]*battle.Unit, 6)}
+	for i := range rawInactive.st.Units {
+		rawInactive.st.Units[i] = &battle.Unit{HP: 9, OnField: true, HasNativeRecordByte5: true}
+	}
+	rawInactive.st.Units[5].NativeRecordByte5 = 1
+	rawInactive.beatAdvance()
+	if rawInactive.loadErr != "" || !rawInactive.partyMembers[4] {
+		t.Fatalf("raw bit0=1 did not select native branch: err=%q party=%#v", rawInactive.loadErr, rawInactive.partyMembers)
+	}
+
+	rawActive := newBeatTestGame(t, []campaign.Beat{branch})
+	rawActive.st = &battle.State{Units: make([]*battle.Unit, 6)}
+	for i := range rawActive.st.Units {
+		rawActive.st.Units[i] = &battle.Unit{HP: 0, OnField: false, HasNativeRecordByte5: true, NativeRecordByte5: 0}
+	}
+	rawActive.beatAdvance()
+	if rawActive.loadErr != "" || rawActive.partyMembers[4] || len(rawActive.st.Units[0].Inventory) != 1 || rawActive.st.Units[0].Inventory[0] != itemID {
+		t.Fatalf("raw bit0=0 incorrectly used HP/OnField fallback: err=%q party=%#v inventory=%#v", rawActive.loadErr, rawActive.partyMembers, rawActive.st.Units[0].Inventory)
+	}
+}
+
 func TestBeatRosterHasUsesPersistentPartyAndFailsClosedWithoutIt(t *testing.T) {
 	charID := 12
 	branch := campaign.Beat{

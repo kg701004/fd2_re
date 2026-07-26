@@ -301,6 +301,13 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,
 		}
+		// The native constructor writes record byte +5 as zero for a newly
+		// materialized unit. Keep that provenance explicit so handler predicates
+		// can prefer the raw byte instead of inferring it from HP/OnField.
+		if u.HP > 0 {
+			u.NativeRecordByte5 = 0
+			u.HasNativeRecordByte5 = true
+		}
 		if flags, flagErr := NativeInventoryFlagsFromSource(pm.InventorySlots); flagErr == nil {
 			u.NativeInventoryFlags = flags
 		}

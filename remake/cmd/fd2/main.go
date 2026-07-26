@@ -1100,7 +1100,12 @@ func (g *Game) beatStart(b campaign.Beat) {
 			g.loadErr = fmt.Sprintf("beat deactivate_unit: runtime slot %v unavailable (materialized=%d)", b.Slot, g.handlerUnitCount())
 			return
 		}
-		g.handlerUnitAt(*b.Slot).OnField = false
+		u := g.handlerUnitAt(*b.Slot)
+		u.OnField = false
+		if u.HasNativeRecordByte5 {
+			// 0x32975 overwrites the complete byte with 1; do not OR only bit0.
+			u.NativeRecordByte5 = 1
+		}
 		g.beatAdvance()
 	case "reset_pose":
 		if g.st != nil {
@@ -1301,6 +1306,15 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 		}
 		for _, slot := range condition.UnitSlots {
 			unit := g.st.Units[slot]
+			if unit.HasNativeRecordByte5 {
+				if unit.NativeRecordByte5&1 != 0 {
+					return true, nil
+				}
+				continue
+			}
+			// Compatibility projection for old authored JSON without raw record
+			// provenance. This remains E1, not native parity; SDD56 documents the
+			// gap and future LOADCH paths must remove this fallback.
 			if !unit.OnField || !unit.Alive() {
 				return true, nil
 			}

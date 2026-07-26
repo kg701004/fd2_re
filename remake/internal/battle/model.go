@@ -595,6 +595,13 @@ func Load(path string) (*State, error) {
 			NativeConstructor: u.NativeConstructor,
 			Group:             u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
 		}
+		// 0x10eed initializes a freshly constructed record's byte +5 to zero.
+		// Do not fabricate a raw value for an already-zero-HP input record: its
+		// death writer/provenance is not present in this JSON boundary.
+		if nu.HP > 0 {
+			nu.NativeRecordByte5 = 0
+			nu.HasNativeRecordByte5 = true
+		}
 		if flags, flagErr := NativeInventoryFlagsFromSource(u.InventorySlots); flagErr == nil {
 			nu.NativeInventoryFlags = flags
 		}
