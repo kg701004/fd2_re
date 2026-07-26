@@ -599,3 +599,4 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 preparation input closure：Docker Capstone 重讀 `0x19953`，確認 `E0/52/1C/39` return1、`01/53` return-1、`4B/4D` 更新 raw cursor `[0x53c57]` 0/1，unknown key continue；新增 `ApplyNativePreparationInput` regression，不命名 YES/NO。
 - 2026-07-26 correction：重新 decode `extracted/raw/FDTXT/FDTXT_000.bin` physical `0x1b0..0x1b3`，內容是敵人掉落／道具滿／金錢訊息；因此撤回把 `0x1ac62` 稱為 preparation command stream。raw layout 保留但改名 `ParseNativePostResolutionCommands`，明確不接 D8/UI-11。
 - 2026-07-26 D8 scope correction：官方 `0x1a30b` 重新確認沒有 `0x15f84` text call；raw record gate 為 `+6==2`、`+5&0x81==0`、`+0x25/+0x26==0`，`+0x40` 向 `+0x42` 每次加 `max/5` 並 clamp。新增 `NativeBattleEntryStep`；MAP/TURN labels 與 YES/NO input 不得由此函式或 resource #0x52 推導。
+- 2026-07-26 raw action-bit closure：官方 Capstone `0x13512`/`0x13536` 確認 0x50-byte record 的 `+5 bit7` set/all-clear；新增 battle raw helpers/regression，保留 byte-level contract，不覆寫高階 turn 語意。

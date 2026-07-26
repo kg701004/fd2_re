@@ -510,6 +510,7 @@
       MAP/TURN/ENEMY/FRIEND/NPC 欄位與 YES/NO input 的資源／字串 ABI，再做 remake shell 與截圖，
       不把 resource `0x52` 或 `0x51e81` 猜成畫面名稱。
 - [x] **D8 scope correction / raw entry step**：重新檢查官方 `0x1a30b`，確認本體沒有 `0x15f84` 文字呼叫；只對 selector/gate 通過的 raw record 做 `+0x40 += +0x42/5`、上限 clamp 與 indexed redraw，之後才呼叫 `0x1f1cc/#0x52`。新增 `NativeBattleEntryStep` regression；MAP/TURN/ENEMY/FRIEND/NPC 資源與 YES/NO input 仍未證實，不能由 `0x52` 命名。
+- [x] **native raw action-bit writer**：Docker Capstone 固定 `0x13512(index)` 設 `record[index*0x50+5] |= 0x80`、`0x13536` 全表清 bit7；新增 `battle.SetNativeRecordBit7`／`ClearNativeRecordBit7All` 與 bounds/other-bit regression，保留 raw offset，不把 bit7 強行命名成回合狀態。
 
 ## 待辦:實測回饋(使用者 playtest,2026-07-03)
 - [ ] **開場過場節奏 3x 太快 RE**(dragon-fx2 DOS 對比發現,doc39 §10.8):原版魔王立繪捲動

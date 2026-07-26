@@ -566,6 +566,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    D8 scope correction: the official `0x1a30b` body contains no `0x15f84` text call and therefore does not prove MAP/TURN/ENEMY/FRIEND/NPC labels. Its first loop gates raw record bytes `+6==2`, `+5&0x81==0`, `+0x25==0`, `+0x26==0`, then advances word `+0x40` by `word+0x42/5` with an upper clamp before indexed redraw. `fdother.NativeBattleEntryStep` preserves this numeric transition only; the later `0x1f1cc/#0x52` slide is a separate indexed choreography.
 
+   Raw action-bit helpers: official `0x13512(index)` sets `record[index*0x50+5] |= 0x80`, while `0x13536` clears that bit across the record count. `battle.SetNativeRecordBit7` and `ClearNativeRecordBit7All` now preserve these byte-level mutations with bounds checks; they do not force a higher-level turn interpretation.
+
    Correction: the `0x1ac62` loop is not a preparation command stream. Its caller `0x1aa1d` uses FDTXT_000 indices `0x1b0..0x1b3`, which decode to post-resolution loot/interaction messages (enemy item, full inventory, money), so the higher-level preparation label is withdrawn. The proven part is only a `base+3*i` `{kind:byte,payload:u16le}` stream with observed kind `0/1/2/3` branches; `fdother.ParseNativePostResolutionCommands` preserves it and refuses truncation without assigning event names.
 
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
