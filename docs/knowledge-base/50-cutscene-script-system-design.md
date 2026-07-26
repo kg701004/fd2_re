@@ -378,8 +378,8 @@ remake 的 first complete consumer 是 `assets/cutscenes/handlers/ch00_post.json
 `assets/cutscenes/bindings/ch00_post.json` 供 `campaign_full.json:story_ch02` 載入。runtime 將快照存入
 `Game.partyRoster`，下一張 battle/cutscene materialize 玩家時按 stable `Fig`/charID 覆蓋可持久的
 能力、HP、MP、EXP 與 spells，但保留新場景的部署座標／group／on-field 狀態；`saveData.PartyRoster`
-與 `Chapter` 一併 JSON serialize/restore。因此 battle→post handler→下一章／讀檔 的持久資料鏈已接通，
-而不是只在當前戰場記憶體做畫面效果。remake 目前會同步所有 `JOIN` 成員（包含 ID 0），因為尚未
+與 `Chapter` 一併 JSON serialize/restore。因此 remake 自有 JSON projection 的 battle→post handler→下一章／讀檔持久資料鏈已接通，
+而不是只在當前戰場記憶體做畫面效果；這不等於原版 `FD2.SAV` byte identity。remake 目前會同步所有 `JOIN` 成員（包含 ID 0），因為尚未
 重製原版 ID 0 可能使用的另一條持久化路徑；這是刻意標記的 projection 差異，不能宣稱該特例已 1:1。
 
 ### 3.3 戰後獎勵 `0x1c220(item_id)`：第一個有空位的我方角色（2026-07-15）

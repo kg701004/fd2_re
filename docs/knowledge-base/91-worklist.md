@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=385`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=386`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -15,6 +15,7 @@
 - [x] 2026-07-27 README/KB review：README 改正「跨平台已完成」「EXE 全部表已閉合」「SDL2 第二條 runtime」等過強敘述，補上原版／重製對話圖與可驗證差距說明；`00-index` 明列 README→56→57→42→91 裁決順序；`08` 修正兩個圖片相對路徑。`90`、`30`、`51`、`SESSION-HANDOFF-*` 不合併，保留 address-level/historical provenance，避免把舊快照當現況。
 - [x] 2026-07-27 stale dialogue-operand assertion cleanup：`09`、`01`、`18` 不再把控制碼第二 word 一律稱為固定肖像/DATO ID；依 `0x15f84→0x12c60` 分開 identity lookup、runtime unit `+7` 與 direct-DATO fallback，並將 `FFFA/FFFB` 統一修正為遞迴名稱／數值插入碼，不是特效。
 - [x] 2026-07-27 second-pass dialogue wording audit：`14` §4 的組合說明與 `-17/-18` 讀取步驟仍殘留「直接肖像 ID」舊斷言，已改成 identity lookup／record `+7`／direct-DATO fallback 三路 provenance；未修改任何未證實的 story operand。
+- [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 remake 自有 JSON projection，不冒稱 `FD2.SAV` byte identity。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)
