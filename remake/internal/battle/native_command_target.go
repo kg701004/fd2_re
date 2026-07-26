@@ -130,6 +130,38 @@ func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []b
 	return targets, nil
 }
 
+// NativeAttackCandidates preserves the additional 0x14818 geometry used by
+// 0x14237. mode is raw a4 and innerRadius is raw a5 from the item row; for
+// mode<0x10 the callee excludes cells with Manhattan distance strictly less
+// than innerRadius after the four-way grid pass. mode>=0x10 is the native
+// cross branch and does not apply the inner-radius marker.
+func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
+	if innerRadius < 0 {
+		return nil, fmt.Errorf("invalid native attack inner radius")
+	}
+	cells, err := NativeCommandTargetCells(w, h, origin, mode, flags)
+	if err != nil {
+		return nil, err
+	}
+	if mode < 0x10 && innerRadius > 0 {
+		for cell := range cells {
+			if absInt(cell.X-origin.X)+absInt(cell.Y-origin.Y) < innerRadius {
+				delete(cells, cell)
+			}
+		}
+	}
+	targets := make([]*Unit, 0)
+	for _, unit := range units {
+		if unit == nil || !unit.OnField || !unit.Alive() || !NativeCommandTargetMatches(targetCode, unit.Camp) {
+			continue
+		}
+		if cells[Cell{X: unit.X, Y: unit.Y}] {
+			targets = append(targets, unit)
+		}
+	}
+	return targets, nil
+}
+
 // NativeCommandEffectTargets mirrors the generic two-stage 0x1cff0 path.
 // The first 0x14818 call originates at actor with record+3; 0x115b6 confirms
 // one member of that list; the second call originates at the confirmed unit's

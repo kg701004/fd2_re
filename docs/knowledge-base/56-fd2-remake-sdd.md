@@ -353,6 +353,12 @@ cross branch 與四個 camp predicates。`NativeCommandEffectTargets` 進一步�
 list，才以其 cell 與 `+4` 取 effect list，固定 generic two-stage contract；UI 尚未接管這個流程，故不可自動替換
 legacy cast。
 
+`battle.NativeAttackCandidates` 另保存 `0x14237` 的 caller-specific geometry：它先以 item-row
+傳入的 raw `(a4=mode,a5=innerRadius)` 執行同一 `0x14818` grid pass，僅在 `mode<0x10` 時排除
+Manhattan distance `< innerRadius` 的 marker cell；`mode>=0x10` 保留 native cross branch，不套
+inner-radius。這個 adapter 不把 `+0x0b/+0x0c` 命名成 range min/max，也不宣稱已完成 item-row producer、LOS、UI
+或 attack effect。
+
 Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
 low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出
 `native_target_flags` raw array。
