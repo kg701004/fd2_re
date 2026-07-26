@@ -552,6 +552,13 @@ preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 
 
 `0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then admits the party to `0x318ad`, whose cap is 15 before the late chapters and 19 afterwards. The Hex-Rays bodies close the subscene boundary further: `0x2e341` selects raw resource `12`, `29`, or `63` for the ordinary/alternate/secret shop branches, dispatches its service choices to `0x2f0b0`, `0x2f642`, `0x2f883`, or `0x2f8ea`, and fades back to the hub; `0x2fc85` loops its hotel choices through `0x2ffa5`, `0x30012`, `0x301f4`, or the character/preparation path using `0x197e5`, then likewise fades back. These callee labels remain address-level names where their service semantics are not independently proven. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. Docker raw-table reading confirms `byte_526b9[22..24]` and `[27..29]` are `1`, while `[0..21]` and `[25..26]` are `0`; in `0x2cad7`, nonzero entries take the preparation-only path and zero entries enter the selectable town hub. Chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
 
+`fdother.ResolveNativePostbattleRoute` now preserves this gate as editable
+address-level data: nonzero `0x526b9[index]` entries return the raw
+`0x318ad` preparation route before reading a hub option; zero entries map
+options `0`, `1/3`, `2`, and `4` to `0x2fc85`, `0x2e341`, `0x318ad`, and
+`0x3072f` respectively. It performs no scene call and does not label the
+callees as hotel, shop, church, or leave; invalid index/option fails closed.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:
