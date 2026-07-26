@@ -132,6 +132,8 @@ Codec correction: the `0x1685c→0x4e9bb` path copies each selected `FDOTHER#5` 
 
 `RenderDialogueFrameGrid` now executes that narrow primitive against the 49 verified placements, writing literal zero bytes and preserving native overwrite order. It is only the C-buffer frame layer; DATO portrait paste, text glyphs, input, and ending runtime remain gated.
 
+`RenderDialogueFrameGridResource` now runs the same contract against the player-provided `FDOTHER.DAT#5` entries 1..17, with missing assets failing closed. This verifies the raw resource boundary without promoting the frame bank into a guessed semantic UI renderer.
+
 `RenderDATOFrameAt` and `dato.Frame.BlitAtOffset` now cover the separate opaque `0x4e8af` portrait paste with explicit stride/offset inputs. The caller must supply the recovered staging destination (the ending call site uses `staging+[0x53c67]`); the helper deliberately does not turn that global into a universal UI anchor or infer mouth timing.
 
 `RenderMirrorFigureFadePass` now implements only the proven `0x292ad` indexed primitive: it requires a caller-preseeded 640-stride work surface, presents `work+0x140`, blits primary at `+0x140-stage*10`, conditionally blits secondary for `arg4==0`, and presents the same right viewport again. It validates TAI#3's transparent bytes but does not claim to render the unresolved DATO/portrait or complete montage.

@@ -27,3 +27,34 @@ func RenderDialogueFrameGrid(m Montage, cells []fdother.RawCell, dst []byte) err
 	}
 	return nil
 }
+
+// RenderDialogueFrameGridResource loads the exact FDOTHER#5 cells referenced
+// by the recovered plan, then executes the raw compositor. Missing player
+// assets fail closed; no fallback UI is synthesized.
+func RenderDialogueFrameGridResource(m Montage, datPath string, dst []byte) error {
+	placements, err := m.PlanDialogueFrameGrid()
+	if err != nil {
+		return err
+	}
+	maxIndex := 0
+	for _, placement := range placements {
+		if placement.ResourceIndex > maxIndex {
+			maxIndex = placement.ResourceIndex
+		}
+	}
+	cells := make([]fdother.RawCell, maxIndex+1)
+	loaded := make([]bool, maxIndex+1)
+	for _, placement := range placements {
+		index := placement.ResourceIndex
+		if loaded[index] {
+			continue
+		}
+		cell, err := fdother.DecodeLMI1RawEntry(datPath, m.PartyCycle.DialogueFrameLayout.Resource, index)
+		if err != nil {
+			return fmt.Errorf("ending: FDOTHER#5 raw cell %d: %w", index, err)
+		}
+		cells[index] = cell
+		loaded[index] = true
+	}
+	return RenderDialogueFrameGrid(m, cells, dst)
+}

@@ -1,6 +1,7 @@
 package ending
 
 import (
+	"os"
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
@@ -97,6 +98,30 @@ func TestRenderDATOFrameAtKeepsCallerOffsetExplicit(t *testing.T) {
 	}
 	if dst[0x0c88] != 0 || dst[0x0c89] != 7 {
 		t.Fatalf("DATO staging paste=%d/%d", dst[0x0c88], dst[0x0c89])
+	}
+}
+
+func TestRenderDialogueFrameGridResourceUsesPlayerFDOTHERWhenPresent(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dst := make([]byte, Bytes)
+	if err := RenderDialogueFrameGridResource(*montage, datPath, dst); err != nil {
+		t.Fatal(err)
+	}
+	nonzero := 0
+	for _, v := range dst {
+		if v != 0 {
+			nonzero++
+		}
+	}
+	if nonzero == 0 {
+		t.Fatal("FDOTHER#5 dialogue frame grid remained empty")
 	}
 }
 
