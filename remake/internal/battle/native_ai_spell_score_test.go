@@ -52,6 +52,17 @@ func TestScoreNativeAISpellFlagUsesVerifiedOffsets(t *testing.T) {
 	}
 }
 
+func TestScoreNativeAISpell22UsesRawGateAndBitRange(t *testing.T) {
+	records := make([]byte, 2*nativeRecordSize)
+	records[0x1a] = 1
+	records[nativeRecordSize+0x1f-1] = 1
+	records[nativeRecordSize+0x27] = 1
+	got, err := ScoreNativeAISpell22(records, []byte{0, 1})
+	if err != nil || got != 6 {
+		t.Fatalf("score=%d err=%v", got, err)
+	}
+}
+
 func TestScoreNativeAISpellRejectsMalformedCandidates(t *testing.T) {
 	if _, err := ScoreNativeAISpellRecovery(make([]byte, nativeRecordSize-1), []byte{0}, 13); err == nil {
 		t.Fatal("malformed record buffer accepted")

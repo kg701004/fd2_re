@@ -91,6 +91,34 @@ func ScoreNativeAISpellFlag(records []byte, candidates []byte, spellID int) (int
 	return score, nil
 }
 
+// ScoreNativeAISpell22 preserves the ID22 branch at 0x15d30: a zero raw
+// +0x27 gate followed by 0x1c269(unit, nil), which scans raw +0x1a..+0x1e
+// bits. A candidate with any set bit contributes six points. The bytes are
+// intentionally left unnamed and untouched.
+func ScoreNativeAISpell22(records []byte, candidates []byte) (int, error) {
+	if err := validateNativeAISpellCandidates(records, candidates); err != nil {
+		return 0, err
+	}
+	score := 0
+	for _, rawIndex := range candidates {
+		record := records[int(rawIndex)*nativeRecordSize : (int(rawIndex)+1)*nativeRecordSize]
+		if record[0x27] != 0 {
+			continue
+		}
+		set := false
+		for _, b := range record[0x1a:0x1f] {
+			if b != 0 {
+				set = true
+				break
+			}
+		}
+		if set {
+			score += 6
+		}
+	}
+	return score, nil
+}
+
 func validateNativeAISpellCandidates(records []byte, candidates []byte) error {
 	if len(records)%nativeRecordSize != 0 {
 		return fmt.Errorf("native AI spell score: malformed record buffer")
