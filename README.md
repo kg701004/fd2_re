@@ -57,6 +57,9 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 viewport `312×192`，以及 `0x11EB0` 複製到 320-byte VGA stride 的契約；descriptor 解碼與 indexed compositor
 仍未接入，故不把它宣稱成已完成的轉場演出。
 
+另外已確認 `0x4DB9C` 只是 `(LUT, count, pixels)` 的原地索引重映射，`0x24618` 的 `9..1` 是
+FDOTHER#3 的 LUT bank entry，而不是新的圖像 descriptor；此 selector 已資料化並測試，runtime compositor 仍保持 fail-closed。
+
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
 > 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，
 > 目前不宣稱已完成跨平台 runtime parity。

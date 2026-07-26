@@ -7,7 +7,7 @@ func TestBuildNativeIndexedTransitionSchedulePreservesRawLoop(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Frames) != 9 || s.Frames[0].DescriptorIdx != 9 || s.Frames[8].DescriptorIdx != 1 {
+	if len(s.Frames) != 9 || s.Frames[0].LUTIndex != 9 || s.Frames[8].LUTIndex != 1 {
 		t.Fatalf("frames=%#v", s.Frames)
 	}
 	if s.Frames[0].Radius != 10 || s.Frames[8].Radius != 74 || s.TailDelayMs != 500 {
