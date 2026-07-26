@@ -50,7 +50,7 @@ func TestLoadSerial0(t *testing.T) {
 func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "units.json")
-	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"battle_fig":23,"portrait":23,"x":0,"y":0}]}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"battle_fig":23,"map_selector_slot":0,"portrait":23,"x":0,"y":0}]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	st, err := Load(path)
@@ -59,6 +59,9 @@ func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
 	}
 	if got := st.Units[0]; got.Fig != 7 || got.BattleFig != 23 {
 		t.Fatalf("selectors = map %d battle %d, want 7/23", got.Fig, got.BattleFig)
+	}
+	if got := st.Units[0]; !got.HasMapSelectorSlot || got.MapSelectorSlot != 0 {
+		t.Fatalf("native map selector=%d known=%v, want slot 0", got.MapSelectorSlot, got.HasMapSelectorSlot)
 	}
 
 	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"portrait":23,"x":0,"y":0}]}`), 0o600); err != nil {

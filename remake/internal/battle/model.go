@@ -49,6 +49,10 @@ type Unit struct {
 	AtkMax   int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
 	Portrait int
 	Fig      int // 地圖 FDICON selector approximation; native source is unit+2.
+	// MapSelectorSlot is native runtime unit+2 only when HasMapSelectorSlot is
+	// true. It is a per-resource FDICON cache slot, never a character identity.
+	MapSelectorSlot    int
+	HasMapSelectorSlot bool
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
@@ -429,12 +433,13 @@ type unitsFile struct {
 		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
 		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
-		Portrait  int  `json:"portrait"`
-		Fig       int  `json:"fig"`
-		BattleFig *int `json:"battle_fig,omitempty"`
-		Group     int  `json:"group"`
-		X         int  `json:"x"`
-		Y         int  `json:"y"`
+		Portrait        int  `json:"portrait"`
+		Fig             int  `json:"fig"`
+		BattleFig       *int `json:"battle_fig,omitempty"`
+		MapSelectorSlot *int `json:"map_selector_slot,omitempty"`
+		Group           int  `json:"group"`
+		X               int  `json:"x"`
+		Y               int  `json:"y"`
 	} `json:"units"`
 }
 
@@ -480,6 +485,9 @@ func Load(path string) (*State, error) {
 		nu.BattleFig = u.Fig
 		if u.BattleFig != nil {
 			nu.BattleFig = *u.BattleFig
+		}
+		if u.MapSelectorSlot != nil {
+			nu.MapSelectorSlot, nu.HasMapSelectorSlot = *u.MapSelectorSlot, true
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)
