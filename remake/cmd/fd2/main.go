@@ -5020,10 +5020,10 @@ func (g *Game) drawPhaseBanner(screen *ebiten.Image) {
 	g.font.Draw(screen, g.banner, (float64(logicalW)-w)/2, float64(logicalH)/2-24, 2.2, c)
 }
 
-// drawUnitHUD 左下單位資訊面板。改沿用 drawBattlePanel 同一份原版框素材(FDOTHER#5
-// LMI1 #22,doc35 §4)而非自訂半透明黑框,地圖上與全螢幕戰鬥的單位欄才是同一套視覺
-// (playfix #6:對照 orig_04/orig_07,原版狀態欄一律走這個框,remake 先前地圖版沒沿用)。
-// AP/DP/MV 素材未涵蓋(框只留 HP/MP 槽),另加一行文字補在框下方。
+// drawUnitHUD 是目前可玩的 map-HUD approximation，復用 full-screen battle panel
+// 的 FDOTHER#5 LMI1 #22 frame。它不可宣稱等同原版 map HUD：native 0x1acf3 有
+// 獨立的 cursor-unit lookup、兩個 display gates、resource/digit pipeline 與 anchor
+// correction，尚未接入。AP/DP/MV 素材也未證實屬於此 native panel，故仍以文字補列。
 func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 	nm := u.Name
 	if nm == "" {
