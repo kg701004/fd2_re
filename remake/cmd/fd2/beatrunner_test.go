@@ -783,6 +783,30 @@ func TestBeatRosterHasUsesPersistentPartyAndFailsClosedWithoutIt(t *testing.T) {
 	}
 }
 
+func TestBeatNativeEventStateConditionSelectsOnlyProvenIndex(t *testing.T) {
+	index := 12
+	branch := campaign.Beat{Op: "if", Condition: &campaign.BeatCondition{Op: "native_event_state_nonzero", EventStateIndex: &index}, Then: []campaign.Beat{{Op: "join", CharID: 4}}, Else: []campaign.Beat{{Op: "join", CharID: 9}}}
+	for _, tc := range []struct {
+		value byte
+		want  int
+	}{{0, 9}, {1, 4}} {
+		g := newBeatTestGame(t, []campaign.Beat{branch})
+		g.st = &battle.State{}
+		g.st.NativeEventState[12] = tc.value
+		g.beatAdvance()
+		if g.loadErr != "" || !g.partyMembers[tc.want] {
+			t.Fatalf("event state %d chose party=%#v err=%q", tc.value, g.partyMembers, g.loadErr)
+		}
+	}
+	bad := 32
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: &campaign.BeatCondition{Op: "native_event_state_nonzero", EventStateIndex: &bad}}})
+	g.st = &battle.State{}
+	g.beatAdvance()
+	if g.loadErr == "" {
+		t.Fatal("out-of-range native event state index did not fail closed")
+	}
+}
+
 func TestReorderScenarioPartyUsesOriginalJoinSlots(t *testing.T) {
 	sc := &battle.Scenario{
 		Party:       []battle.PartyMember{{Fig: 0}, {Fig: 4}, {Fig: 9}, {Fig: 30}},
