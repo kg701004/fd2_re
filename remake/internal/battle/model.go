@@ -63,6 +63,11 @@ type Unit struct {
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
+	// NativeIdentity is the persistent-record +0x08 key consumed by native
+	// post-handler 0x11506. It is optional provenance and must never be inferred
+	// from Fig, BattleFig, portrait, or map-selector fields.
+	NativeIdentity    int
+	HasNativeIdentity bool
 	// NativeConstructor preserves the proven EXE static-table provenance for
 	// unit+0x1f/+0x20 without assigning any gameplay meaning to raw bytes.
 	NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`

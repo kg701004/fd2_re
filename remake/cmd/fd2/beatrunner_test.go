@@ -686,6 +686,37 @@ func TestScenarioJoinPersistsRecruitedAllyThroughPostBattleSync(t *testing.T) {
 	}
 }
 
+func TestSyncPartyUsesNativeIdentityWhenFigDiffers(t *testing.T) {
+	g := &Game{
+		partyMembers: map[int]bool{4: true},
+		partyRoster:  map[int]battle.Unit{4: {Fig: 4, NativeIdentity: 0x2a, HasNativeIdentity: true, MaxHP: 30, MaxMP: 7}},
+		st:           &battle.State{Units: []*battle.Unit{{Camp: battle.Own, Fig: 99, NativeIdentity: 0x2a, HasNativeIdentity: true, HP: 10, MaxHP: 30, MP: 2, MaxMP: 7, OnField: true}}},
+	}
+	if err := g.syncPartyFromBattle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.partyRoster[4]; got.HP != 30 || got.MP != 7 {
+		t.Fatalf("raw identity did not update persistent member: %#v", got)
+	}
+	if _, ok := g.partyRoster[99]; ok {
+		t.Fatal("Fig selector was incorrectly used as persistent key")
+	}
+}
+
+func TestSyncPartySkipsUnknownNativeIdentity(t *testing.T) {
+	g := &Game{
+		partyMembers: map[int]bool{4: true},
+		partyRoster:  map[int]battle.Unit{4: {Fig: 4, NativeIdentity: 0x2a, HasNativeIdentity: true, HP: 21, MaxHP: 30}},
+		st:           &battle.State{Units: []*battle.Unit{{Camp: battle.Own, Fig: 4, NativeIdentity: 0x2b, HasNativeIdentity: true, HP: 1, MaxHP: 30, OnField: true}}},
+	}
+	if err := g.syncPartyFromBattle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.partyRoster[4].HP; got != 21 {
+		t.Fatalf("unknown raw identity should fail closed, HP=%d", got)
+	}
+}
+
 func TestBeatGrantItemUsesFirstPlayerInventoryWithRoom(t *testing.T) {
 	itemID := 0xc6
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "grant_item", ItemID: &itemID}, {Op: "sync_party"}})

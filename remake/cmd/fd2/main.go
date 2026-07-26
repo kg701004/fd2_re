@@ -1905,9 +1905,10 @@ func (g *Game) applyInventoryRecipe(n *campaign.Node) (bool, error) {
 
 // syncPartyFromBattle is the remake projection of original 0x11506. The EXE
 // matches persistent records by raw +0x08 identity before copying its full
-// 0x50-byte runtime record; this projection currently selects permanent
-// members through normalized Fig/party membership because State does not yet
-// carry raw +0x08 records. It clears transient state/path bytes, restores
+// 0x50-byte runtime record. When optional raw identities are present, this
+// projection uses that exact key; records with an unknown raw key are skipped
+// (fail closed). Records without raw identity retain the legacy Fig projection.
+// It clears transient state/path bytes, restores
 // active survivors to full HP and restores everyone's MP. Defeated/inactive
 // members retain their zero HP. The projection snapshots JOIN member 0 as
 // compatibility behavior; it is not byte-identical proof of native 0x11506.
@@ -1923,6 +1924,18 @@ func (g *Game) syncPartyFromBattle() error {
 			continue
 		}
 		id := current.Fig
+		if current.HasNativeIdentity {
+			matched := false
+			for rosterID, roster := range g.partyRoster {
+				if roster.HasNativeIdentity && roster.NativeIdentity == current.NativeIdentity {
+					id, matched = rosterID, true
+					break
+				}
+			}
+			if !matched {
+				continue
+			}
+		}
 		if len(g.partyMembers) != 0 {
 			if !g.partyMembers[id] {
 				continue

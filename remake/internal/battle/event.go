@@ -40,20 +40,23 @@ type PartyMember struct {
 	// Fig is the stable JOIN/roster identity used by the remake's persistent
 	// party map. For a fresh native JOIN record it also seeds raw +7, but it is
 	// not the mutable map/battle selector after class change.
-	Fig      int   `json:"fig"`
-	Portrait int   `json:"portrait"`
-	HP       int   `json:"hp"`
-	MP       int   `json:"mp"`
-	AP       int   `json:"ap"`
-	DP       int   `json:"dp"`
-	HIT      int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
-	EV       int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
-	CritPct  int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
-	MV       int   `json:"mv"`
-	AtkMin   int   `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
-	AtkMax   int   `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
-	Lv       int   `json:"lv"`
-	Spells   []int `json:"spells"` // 已習得法術 id(spell.json)
+	Fig int `json:"fig"`
+	// NativeIdentity is the optional persistent-record +0x08 key used by
+	// native 0x11506. It is intentionally separate from Fig/+7 selectors.
+	NativeIdentity *int  `json:"native_identity,omitempty"`
+	Portrait       int   `json:"portrait"`
+	HP             int   `json:"hp"`
+	MP             int   `json:"mp"`
+	AP             int   `json:"ap"`
+	DP             int   `json:"dp"`
+	HIT            int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
+	EV             int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
+	CritPct        int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
+	MV             int   `json:"mv"`
+	AtkMin         int   `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
+	AtkMax         int   `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
+	Lv             int   `json:"lv"`
+	Spells         []int `json:"spells"` // 已習得法術 id(spell.json)
 	// InitialCommandMask is the exact four-byte constructor source for
 	// unit+0x1a..+0x1d. It is deliberately not derived from Spells.
 	InitialCommandMask []byte `json:"initial_command_mask,omitempty"`
@@ -117,6 +120,9 @@ func LoadScenario(path string) (*Scenario, error) {
 		// change the native command inventory to zero.
 		if err := (&Unit{}).SetInitialCommandMask(member.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("scenario party member %d (%s) initial_command_mask: %w", i, member.Name, err)
+		}
+		if member.NativeIdentity != nil && (*member.NativeIdentity < 0 || *member.NativeIdentity > 0xff) {
+			return nil, fmt.Errorf("scenario party member %d (%s) native_identity %d out of byte range", i, member.Name, *member.NativeIdentity)
 		}
 	}
 	return &sc, nil
@@ -294,6 +300,10 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			X: x, Y: y, OnField: true,
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,
+		}
+		if pm.NativeIdentity != nil && *pm.NativeIdentity >= 0 && *pm.NativeIdentity <= 0xff {
+			u.NativeIdentity = *pm.NativeIdentity
+			u.HasNativeIdentity = true
 		}
 		// Editable scenario AP/DP/HIT/EV are already effective values (doc32),
 		// so preserve them as the base for later shop purchases.

@@ -63,6 +63,29 @@ func TestScenarioPartyUnitsMaterializeRawCommandMask(t *testing.T) {
 	}
 }
 
+func TestScenarioPartyUnitsPreserveOptionalNativeIdentity(t *testing.T) {
+	identity := 0x2a
+	sc := &Scenario{Party: []PartyMember{{Fig: 9, NativeIdentity: &identity}}}
+	u := sc.PartyUnits(nil)[0]
+	if !u.HasNativeIdentity || u.NativeIdentity != identity {
+		t.Fatalf("native identity=%d known=%v, want %d/true", u.NativeIdentity, u.HasNativeIdentity, identity)
+	}
+	legacy := (&Scenario{Party: []PartyMember{{Fig: 9}}}).PartyUnits(nil)[0]
+	if legacy.HasNativeIdentity {
+		t.Fatal("legacy Fig must not imply native +0x08 identity")
+	}
+}
+
+func TestLoadScenarioRejectsNativeIdentityOutsideByte(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad-identity.json")
+	if err := os.WriteFile(path, []byte(`{"party":[{"name":"bad","native_identity":256}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("out-of-range native identity accepted")
+	}
+}
+
 func TestChapter1SetupMaterializesYuniCommandZero(t *testing.T) {
 	st, err := Load("../../assets/map0_units.json")
 	if err != nil {
