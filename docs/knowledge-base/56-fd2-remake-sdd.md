@@ -43,6 +43,14 @@ runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反�
 selection boundary，不證明 item row 欄位名稱、法術效果、MP transaction 或完整 AI turn；
 `battle.AIPlan.NativeSpellCommands` 仍只保存 raw provenance。
 
+`0x15880` score helper 的 raw ABI 也已閉合：它先以 `0x4E56C` 取得 item row，讀 row
+`+0x0D` type 與 `+0x0E` word。type `5`／`0x0D` 逐候選讀 target `+0x40/+0x42`，以
+`maxHP/3` 分支產生 raw score `8/3/0`；target record `+0x34 bit7` 會將該分數乘 3。
+type `0x14`／`0x15`／`0x18` 另走 item-word／target-HP threshold 分支，命中時累加 raw
+score `0x12`，否則 `8`；其他 type 回傳零。這些是 command selection 的數值分支，
+不把 type 命名成治療、攻擊或 status，也不把 `+0x34 bit7` 命名成可見效果；item row
+producer、target transaction、UI 與 runtime executor 仍由各自 evidence gate 控制。
+
 ## 2. 證據分級與反組譯規則
 
 每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：
