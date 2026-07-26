@@ -7,7 +7,7 @@ import (
 
 func TestParsePreservesTransparentAndDitherPixels(t *testing.T) {
 	// One 4x1 frame: run(7), dither(9), then transparent skip.
-	raw := []byte{1, 0, 0, 0, 0, 0, 12, 0, 12, 0, 0, 0, 2, 0, 3, 0, 0, 0, 2, 0, 0, 4, 0, 1, 0, 0x00, 7, 0x40, 9, 0xc0}
+	raw := []byte{1, 0, 0, 0, 0x7e, 0, 12, 0, 12, 0, 0, 0, 2, 0, 3, 0, 0, 0, 2, 0, 0, 4, 0, 1, 0, 0x00, 7, 0x40, 9, 0xc0}
 	a, err := Parse(raw)
 	if err != nil {
 		t.Fatal(err)
@@ -15,6 +15,9 @@ func TestParsePreservesTransparentAndDitherPixels(t *testing.T) {
 	f := a.Frames[0]
 	if f.X != 2 || f.Y != 3 || f.Width != 4 || f.Height != 1 || f.Delay != 2 {
 		t.Fatalf("frame=%#v", f)
+	}
+	if a.HeaderByte4 != 0x7e {
+		t.Fatalf("HeaderByte4=%#x, want 0x7e", a.HeaderByte4)
 	}
 	dst := make([]byte, 50)
 	for i := range dst {

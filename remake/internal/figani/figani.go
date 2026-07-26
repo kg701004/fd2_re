@@ -12,7 +12,14 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
-type Animation struct{ Frames []Frame }
+// Animation is a FIGANI resource. HeaderByte4 preserves the raw container
+// byte consumed by the native 0x2b659 path; its gameplay meaning is not yet
+// named. Keeping it prevents presentation-side transaction tracing from
+// silently discarding an original asset input.
+type Animation struct {
+	Frames      []Frame
+	HeaderByte4 byte
+}
 
 // Frame holds the 13-byte FIGANI header fields consumed by 0x2935b. X/Y are
 // signed native 320x200 coordinates; Pixels is a decoded W×H indexed image
@@ -62,7 +69,7 @@ func Parse(raw []byte) (*Animation, error) {
 		frames[i] = Frame{X: int(int16(binary.LittleEndian.Uint16(raw[off:]))), Y: int(int16(binary.LittleEndian.Uint16(raw[off+2:]))), Width: w, Height: h, Pixels: pixels, Mask: mask, Delay: int(binary.LittleEndian.Uint16(raw[off+6:]))}
 		previous = off
 	}
-	return &Animation{Frames: frames}, nil
+	return &Animation{Frames: frames, HeaderByte4: raw[4]}, nil
 }
 
 func decodeRLE(src []byte, width, height int) ([]byte, []byte, error) {

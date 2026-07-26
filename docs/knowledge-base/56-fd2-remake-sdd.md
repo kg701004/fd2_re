@@ -289,7 +289,7 @@ family 出現就直接重用既有 executor。direct static trace 已見：32 �
 `0x22721/0x22866/0x22997`；35 連續呼 `0x22d1b(actor,26,...,+0x25)`、
 `0x22d1b(actor,22,...,+0x27)`、`0x22d1b(actor,27,...,+0x26)`。先前「wrapper／helper 未見
 `0x1ca89`」的負向斷言已撤回：`0x27fc9` 在 `0x28189` 進共同 presentation/effect routine `0x2b659`，而
-`0x2b738..0x2b753` 會在其**載入 animation descriptor 的 `byte+4 == 1`**時呼
+`0x2b738..0x2b753` 會在其**載入 FIGANI container header 的 `byte+4 == 1`**時呼
 `0x1ca89(actor, commandID)`。目前尚未把 IDs32..35 各自實際選到的 descriptor 與這個 byte 值以 runtime
 trace 關閉，因此仍只有「selector MP gate 與條件式 debit sink 之間尚缺 per-ID dataflow」，**不能**據此斷言
 原版免費施放、必然扣 MP，或由 remake 擅自扣 MP。保持 fail-closed，待 descriptor provenance/runtime trace。
