@@ -39,6 +39,26 @@ func BlitNativeUnitPresentLMI(entry LMI1Entry, dst []byte, x, y, cameraX, camera
 	return entry.BlitAt(dst, nativeUnitPresentStride, origin%nativeUnitPresentStride, origin/nativeUnitPresentStride, false)
 }
 
+// RunNativeUnitPresentLMIIntro executes 0x22470's first 11 presentation
+// passes. Each FDOTHER#6 entry 0x72..0x7c is blitted at the same recovered
+// destination, then redrawPresentTick must perform the native intervening
+// unit redraw, 320x192 present, and one BIOS tick. Keeping that callback
+// mandatory prevents this helper from silently collapsing the 11 presents.
+func RunNativeUnitPresentLMIIntro(entries []LMI1Entry, dst []byte, x, y, cameraX, cameraY int, redrawPresentTick func() error) error {
+	if len(entries) <= 0x7c || redrawPresentTick == nil {
+		return errors.New("fdother: incomplete unit-present LMI intro adapter")
+	}
+	for index := 0x72; index <= 0x7c; index++ {
+		if err := BlitNativeUnitPresentLMI(entries[index], dst, x, y, cameraX, cameraY); err != nil {
+			return fmt.Errorf("fdother: unit-present LMI entry %#x: %w", index, err)
+		}
+		if err := redrawPresentTick(); err != nil {
+			return fmt.Errorf("fdother: unit-present LMI entry %#x present: %w", index, err)
+		}
+	}
+	return nil
+}
+
 // UnitPresentStep is one native present boundary in 0x22253. It records only
 // the resource/index/timing contract proven by the three callees; geometry,
 // buffers and the intervening terrain/unit redraw are deliberately owned by a

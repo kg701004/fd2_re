@@ -72,3 +72,24 @@ func TestBlitNativeUnitPresentLMIUses22470OriginAndTransparency(t *testing.T) {
 		t.Fatal("offscreen origin was accepted")
 	}
 }
+
+func TestRunNativeUnitPresentLMIIntroPreservesElevenRedrawPresentTicks(t *testing.T) {
+	entries := make([]LMI1Entry, 0x7d)
+	for i := 0x72; i <= 0x7c; i++ {
+		entries[i] = LMI1Entry{Width: 1, Height: 1, Pixels: []byte{byte(i)}}
+	}
+	dst := make([]byte, nativeUnitPresentStride*200)
+	var presents int
+	if err := RunNativeUnitPresentLMIIntro(entries, dst, 22, 23, 16, 19, func() error { presents++; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if presents != 11 {
+		t.Fatalf("presents=%d, want 11", presents)
+	}
+	if got := dst[NativeUnitPresentByteOrigin(22, 23, 16, 19)]; got != 0x7c {
+		t.Fatalf("last entry pixel=%#x", got)
+	}
+	if err := RunNativeUnitPresentLMIIntro(entries[:0x7c], dst, 22, 23, 16, 19, func() error { return nil }); err == nil {
+		t.Fatal("short entry table was accepted")
+	}
+}
