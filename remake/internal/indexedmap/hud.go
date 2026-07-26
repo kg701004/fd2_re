@@ -18,8 +18,10 @@ const (
 // 0x1acf3/0x1aeb1. These entries are deliberately Frame values, not LMI1Entry:
 // native sends them to 0x4e63d's four-mode RLE decoder.
 type NativeMapHUDFrames struct {
-	Panel, PositiveSign, NegativeSign fdother.Frame
-	Digits                            [10]fdother.Frame
+	Panel, PositiveSign, NegativeSign   fdother.Frame
+	Digits                              [10]fdother.Frame
+	HPMismatchDigits                    [10]fdother.Frame
+	HPEqualOverflow, HPMismatchOverflow fdother.Frame
 }
 
 // AdvanceNativeMapHUDAnchor preserves the small persistent-global branch at
@@ -62,6 +64,19 @@ func DecodeNativeMapHUDFrames(datPath string) (NativeMapHUDFrames, error) {
 			return NativeMapHUDFrames{}, err
 		}
 		frames.Digits[digit] = frame
+	}
+	for digit := range frames.HPMismatchDigits {
+		frame, err := fdother.DecodeLMI1FrameResource(datPath, 5, 0x2a+digit)
+		if err != nil {
+			return NativeMapHUDFrames{}, err
+		}
+		frames.HPMismatchDigits[digit] = frame
+	}
+	if frames.HPEqualOverflow, err = fdother.DecodeLMI1FrameResource(datPath, 5, 0x29); err != nil {
+		return NativeMapHUDFrames{}, err
+	}
+	if frames.HPMismatchOverflow, err = fdother.DecodeLMI1FrameResource(datPath, 5, 0x34); err != nil {
+		return NativeMapHUDFrames{}, err
 	}
 	return frames, nil
 }
@@ -175,6 +190,45 @@ func BlitNativeMapHUDTerrainAPDP(frames NativeMapHUDFrames, dst []byte, anchorX 
 	}
 	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, layout.DP, dp); err != nil {
 		return err
+	}
+	copy(dst, frame)
+	return nil
+}
+
+// BlitNativeMapHUDHP reproduces 0x1ae8e..0x1aea4's call into
+// 0x1875d/0x187d6. The native caller supplies unsigned unit words: current
+// is formatted as exactly three decimal digits. Equal current/max uses glyph
+// base #0x1f, unequal words base #0x2a, and values over 999 use the matching
+// base+10 18x8 overflow entry rather than a truncated number.
+func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, current, maximum uint16) error {
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	if err != nil {
+		return err
+	}
+	digits := frames.Digits
+	overflow := frames.HPEqualOverflow
+	if current != maximum {
+		digits = frames.HPMismatchDigits
+		overflow = frames.HPMismatchOverflow
+	}
+	frame := append([]byte(nil), dst...)
+	if current > 999 {
+		if overflow.Width != 18 || overflow.Height != 8 {
+			return errors.New("indexedmap: native map HUD HP overflow geometry differs from entries #0x29/#0x34")
+		}
+		if err := overflow.BlitAt(frame, fdicon.NativeMapStride, layout.HP, -1); err != nil {
+			return err
+		}
+	} else {
+		for place, digit := range [3]int{int(current) / 100, int(current) / 10 % 10, int(current) % 10} {
+			glyph := digits[digit]
+			if glyph.Width < 5 || glyph.Width > 6 || glyph.Height != 8 {
+				return errors.New("indexedmap: native map HUD HP glyph geometry differs from entries #0x1f..#0x33")
+			}
+			if err := glyph.BlitAt(frame, fdicon.NativeMapStride, layout.HP+place*6, -1); err != nil {
+				return err
+			}
+		}
 	}
 	copy(dst, frame)
 	return nil

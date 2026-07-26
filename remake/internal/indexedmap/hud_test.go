@@ -31,8 +31,12 @@ func hudFrames() NativeMapHUDFrames {
 	frames := NativeMapHUDFrames{Panel: frame(69, 34, 0x5a), PositiveSign: frame(6, 7, 0x31), NegativeSign: frame(6, 5, 0x42)}
 	for digit := range frames.Digits {
 		frames.Digits[digit] = frame(6, 8, byte(0x50+digit))
+		frames.HPMismatchDigits[digit] = frame(6, 8, byte(0x70+digit))
 	}
 	frames.Digits[1] = frame(5, 8, 0x51) // FDOTHER #5 entry #0x20 is 5x8.
+	frames.HPMismatchDigits[1] = frame(5, 8, 0x71)
+	frames.HPEqualOverflow = frame(18, 8, 0x7a)
+	frames.HPMismatchOverflow = frame(18, 8, 0x7b)
 	return frames
 }
 
@@ -156,6 +160,46 @@ func TestBlitNativeMapHUDTerrainAPDPUsesLayoutAndIsAtomic(t *testing.T) {
 	}
 }
 
+func TestBlitNativeMapHUDHPMatches1875DAnd187D6(t *testing.T) {
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	for _, tc := range []struct {
+		current, maximum     uint16
+		first, second, third byte
+	}{
+		{7, 7, 0x50, 0x50, 0x57},
+		{7, 8, 0x70, 0x70, 0x77},
+	} {
+		dst := make([]byte, fdicon.NativeMapStride*200)
+		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, tc.current, tc.maximum); err != nil {
+			t.Fatal(err)
+		}
+		if dst[layout.HP] != tc.first || dst[layout.HP+6] != tc.second || dst[layout.HP+12] != tc.third {
+			t.Fatalf("HP %d/%d=%#x/%#x/%#x", tc.current, tc.maximum, dst[layout.HP], dst[layout.HP+6], dst[layout.HP+12])
+		}
+	}
+	for _, tc := range []struct {
+		maximum uint16
+		want    byte
+	}{{1000, 0x7a}, {1001, 0x7b}} {
+		dst := make([]byte, fdicon.NativeMapStride*200)
+		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, 1000, tc.maximum); err != nil {
+			t.Fatal(err)
+		}
+		if dst[layout.HP] != tc.want {
+			t.Fatalf("HP overflow 1000/%d=%#x, want %#x", tc.maximum, dst[layout.HP], tc.want)
+		}
+	}
+	frames, dst := hudFrames(), make([]byte, fdicon.NativeMapStride*200)
+	frames.HPMismatchOverflow = frame(1, 1, 0)
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDHP(frames, dst, 1, 1000, 1001); err == nil {
+		t.Fatal("invalid overflow geometry accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("rejected HP overflow mutated HUD")
+	}
+}
+
 func TestBlitNativeMapHUDSignedNumberSelectsSignAndAbsoluteValue(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*30)
 	calledOrigin, calledAbsolute := -1, -1
@@ -228,6 +272,18 @@ func TestDecodeNativeMapHUDFramesUsesFourModeDirectoryEntries(t *testing.T) {
 		if digit.Width != wantWidth || digit.Height != 8 {
 			t.Fatalf("digit %d=%dx%d", i, digit.Width, digit.Height)
 		}
+	}
+	for i, digit := range frames.HPMismatchDigits {
+		wantWidth := 6
+		if i == 1 {
+			wantWidth = 5
+		}
+		if digit.Width != wantWidth || digit.Height != 8 {
+			t.Fatalf("mismatch digit %d=%dx%d", i, digit.Width, digit.Height)
+		}
+	}
+	if frames.HPEqualOverflow.Width != 18 || frames.HPEqualOverflow.Height != 8 || frames.HPMismatchOverflow.Width != 18 || frames.HPMismatchOverflow.Height != 8 {
+		t.Fatalf("HP overflow=%dx%d/%dx%d", frames.HPEqualOverflow.Width, frames.HPEqualOverflow.Height, frames.HPMismatchOverflow.Width, frames.HPMismatchOverflow.Height)
 	}
 	if err := BlitNativeMapHUDPanel(frames, make([]byte, fdicon.NativeMapStride*200), true, true, 1); err != nil {
 		t.Fatal(err)

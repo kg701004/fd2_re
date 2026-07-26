@@ -597,6 +597,7 @@
 - [x] **native HUD unit-icon subpass**：`0x12c0d` 成功後，`0x1acf3` 以 unit+2 selector-cache slot、raw global state（3→1 alias）選 cached FDICON 12-frame block，raw blit 至 panel `stride*5+6`。`BlitNativeMapHUDUnitIcon` 有 cache/state/bounds regression；slot 不命名為角色或 portrait。
 - [x] **native HUD terrain AP/DP subpass**：resolver raw control byte+1 經 `0x51a12/0x51a2a` 固定 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5)。`NativeMapHUDTerrainAPDP`／`BlitNativeMapHUDTerrainAPDP` 用 exact AP/DP layout origin、sign和兩位 glyph renderer，invalid code／render失敗 atomic；不替 control byte 命名。
 - [x] **native HUD persistent anchor branch**：Docker Capstone 實讀 `0x1ad2a..0x1ad5f`：raw `0x53abd>5 && 0x53ab9<3` 才寫 anchor `0xf2`，`0x53abd>5 && 0x53ab9>9` 才寫 `1`，其餘座標保留既有 `0x51a0c`；`indexedmap.AdvanceNativeMapHUDAnchor` 覆蓋兩臨界值與 retention，不把 globals 命名為未證實 UI 語意。
+- [x] **native HUD HP subpass**：`0x1ae8e→0x1875d→0x187d6` 的 incoming stack 已逐項驗：unit unsigned `+0x40/+0x42` 傳 current/max 和 mode3；current==max 選 glyph base #0x1f，否則 #0x2a，畫 current 三位、每位 advance6；current>999 改畫 base+10。真實 #5 #0x29/#0x34 均18×8，兩 digit bank 僅 digit1=5×8。`BlitNativeMapHUDHP` 覆蓋 equal/unequal／overflow和 invalid-resource atomic，未將 unequal 命名成 damage。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
 
