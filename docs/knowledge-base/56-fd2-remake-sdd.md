@@ -686,6 +686,8 @@ The type `5/0xd` callee `0x211a4` is now bounded at call topology: it receives t
 
 The shared `0x1c916` HP mutation core is now separately executable as `battle.ApplyNativeRawHPRestore`: it advances the Docker-verified 16-bit RNG, applies `amount*9/10 + (rng%100)*amount/1000`, clamps raw `+0x40` to `+0x42`, and preserves the native raw score gate (`record+0x07 < 0x4b`, class byte range `9..24` adds `0x1e`, score factor `40*effective*delta/max`). It is an isolated raw adapter; no normalized item, heal, or UI semantics are inferred.
 
+The sibling `0x1c9dd` MP mutation is now captured by `battle.ApplyNativeRawMPRestore`: the same RNG and amount arithmetic writes `+0x44` capped by `+0x46`, while its score uses only `record+0x21` (no HP routine's class-range bonus). This remains raw state/evidence only.
+
 Caller-level evidence around `0x24838` must remain separate from the raw lookup adapters. It first branches on `0x24b14(0x64)`; the success arm presents text `#8` and calls `0x112a5(0x16)`. It then branches on `0x24bde(0x12)`: hit presents text `#10`, acting `#0x48`, and `0x32975(0x11)`; miss branches on global count `0x53bef < 0x0f`, choosing text `#13` plus `0x112a5(0x13)` or text `#12` plus `0x32975(0x11)`. Shared sync/presentation follows. These are address/order facts only; no item, character, chapter, or NPC names are inferred from the immediates.
 
 The downstream `0x32975(index)` mutation is independently closed: it computes the selected runtime record at `base + index*0x50` and writes byte `+0x05 = 1`, overwriting the entire byte. `battle.SetNativeRecordByte5One` preserves that overwrite and bounds behavior. It is intentionally separate from the `0x13512` bit7 setter and does not name byte5 as acted, turn, or action state.

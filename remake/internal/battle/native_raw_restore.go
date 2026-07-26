@@ -54,3 +54,34 @@ func ApplyNativeRawHPRestore(records []byte, unitIndex, amount int, rngState uin
 	}
 	return NativeRawRestoreResult{UnitIndex: unitIndex, Rolled: rolled, Actual: delta, Score: score, RNGState: nextRNG}, nil
 }
+
+// ApplyNativeRawMPRestore is the sibling 0x1c9dd mutation. It uses raw
+// +0x44/+0x46 and the same RNG/amount arithmetic, but its score path uses only
+// byte +0x21 (the HP routine has an additional class-range adjustment).
+func ApplyNativeRawMPRestore(records []byte, unitIndex, amount int, rngState uint16) (NativeRawRestoreResult, error) {
+	if unitIndex < 0 || unitIndex >= len(records)/nativeRecordSize {
+		return NativeRawRestoreResult{}, recordBoundsError(unitIndex)
+	}
+	if amount < 0 {
+		return NativeRawRestoreResult{}, fmt.Errorf("native restore amount %d is negative", amount)
+	}
+	record := records[unitIndex*nativeRecordSize:]
+	current := int(binary.LittleEndian.Uint16(record[0x44:0x46]))
+	max := int(binary.LittleEndian.Uint16(record[0x46:0x48]))
+	nextRNG := fdother.NativeRNGStep(rngState)
+	rolled := amount*9/10 + int(nextRNG%100)*amount/1000
+	next := current + rolled
+	if next > max {
+		next = max
+	}
+	if next < 0 {
+		next = 0
+	}
+	binary.LittleEndian.PutUint16(record[0x44:0x46], uint16(next))
+	delta := next - current
+	score := 0
+	if record[7] < 0x4b && max != 0 {
+		score = (40 * int(record[0x21]) * delta) / max
+	}
+	return NativeRawRestoreResult{UnitIndex: unitIndex, Rolled: rolled, Actual: delta, Score: score, RNGState: nextRNG}, nil
+}

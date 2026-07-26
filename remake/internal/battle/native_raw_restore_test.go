@@ -35,3 +35,14 @@ func TestApplyNativeRawHPRestoreClampsAndPreflights(t *testing.T) {
 		t.Fatal("negative unit unexpectedly accepted")
 	}
 }
+
+func TestApplyNativeRawMPRestoreUsesMPOffsetsAndNoClassBonus(t *testing.T) {
+	records := make([]byte, nativeRecordSize)
+	binary.LittleEndian.PutUint16(records[0x44:0x46], 10)
+	binary.LittleEndian.PutUint16(records[0x46:0x48], 100)
+	records[0x20], records[0x21], records[7] = 9, 2, 0
+	got, err := ApplyNativeRawMPRestore(records, 0, 20, 0)
+	if err != nil || got.Actual != 18 || got.Score != 14 || binary.LittleEndian.Uint16(records[0x44:0x46]) != 28 {
+		t.Fatalf("result=%+v mp=%d err=%v", got, binary.LittleEndian.Uint16(records[0x44:0x46]), err)
+	}
+}
