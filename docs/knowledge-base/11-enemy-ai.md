@@ -23,6 +23,13 @@ current/max HP 與 record `+0x34 bit0`；`0x14..0x16` 掃 raw `+0x25/+0x26/+0x27
 並呼叫 `0x1c269`。這些是 raw score branches，不足以替欄位命名成攻擊、治療或狀態，
 也尚未證明它就是完整 AI 回合入口。
 
+同一輪 caller scan 找到一個較可信的 dispatch boundary：`0x14ef0` 有六個 direct callers
+（`0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`）。其 body 先呼叫
+`0x14237`、`0x1598a`、`0x1567e`，再依 raw score/global state 分派至 `0x1548e`、
+`0x15311` 或 `0x15055`。這足以取代舊 `0x15140` 作為下一輪追蹤起點，但目前仍只稱
+**candidate dispatch boundary**：六個 callers 的 turn/camp 語意、`0x14237` 與
+`0x1567e` 的完整資料契約尚未閉合。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。
