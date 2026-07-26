@@ -309,6 +309,10 @@ acted。它與 ID20/21「借 record10」的 clear/restore route 明確分開，�
 實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
 legacy `CastArea` 或宣稱整個 native command menu 已完成。
 
+AI boundary correction：在 `0x1598a` 的 spell-command path，`0x149F8` 目前只可稱為 target-candidate
+builder；候選建立後才進 `0x15B77` 的 family-specific score branches。任何文件或 adapter 都不得把
+`0x149F8` 直接命名成傷害／命中評分，也不得把 `unit+0x22..+0x27` 的 raw bytes 直接命名成 AP/DP/HIT/status。
+
 IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target
 `memset(+0x25, 0, 3)` 後傳固定 `0x320` 給 `0x211a4→0x1c916`；34 連續呼

@@ -59,7 +59,7 @@
 
 先前把 `0x154D1` 誤當施法入口的判讀已撤回；真正的證據在 AI 命令枚舉與執行函式：
 
-- `0x15688` 開始的函式逐一掃描單位可用命令。`0x15735` 讀取命令描述子的 command byte；`command<=0x0F` 走物理攻擊，`command>0x0F` 在 `0x1579A–0x157B5` 做 `spell_id=command-0x10`，並呼叫 `0x149F8` 取得法術傷害／命中評分。
+- `0x15688` 開始的函式逐一掃描單位可用命令。`0x15735` 讀取命令描述子的 command byte；`command<=0x0F` 走物理攻擊，`command>0x0F` 在 `0x1579A–0x157B5` 做 `spell_id=command-0x10`，並呼叫 `0x149F8` 取得／建立後續 target-candidate 資料；candidate 之後才交給 `0x15B77` score branches，不能把 `0x149F8` 直接命名成傷害／命中評分。
 - 選中的命令由全域 `0x53C3F` 保存。`0x15055` 執行 AI 行動時於 `0x150C2` 讀回同一 command byte；`command>=0x10` 在 `0x150D3–0x150F1` 再次轉成 spell id 並呼叫 `0x149F8`，之後 `0x15168→0x28784` 播放施法者演出。
 - 因此「敵方 AI 施法」不是推測機制，而是已由 callsite 證實；尚待補的是 command inventory/可用法術條件、治療目標選擇，以及 `0x15880/0x15B77` 對不同法術效果的精確優先級。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
@@ -73,7 +73,7 @@
 - spell id `0..12` 走攻擊術分支，逐一掃候選目標；依目標 HP 與施法者法術值累加基本／高優先分數（可見常數 `8` 與 `0x18`）。
 - spell id `13..16` 走治療／恢復分支，改掃己方候選；Hex-Rays `0x15c30..0x15c4b` 顯示 `current HP < max/3` 給 raw score 8，否則 `< max/2` 給 3，否則 0，且 record `+0x34` bit0 會把該分數乘 2。這是 score gate，不命名 bit0 或效果。
 - spell id `17..19` 進入另一個 raw scoring helper；`20/21/26/27` 讀取 `+0x25/+0x26` flag bytes，ID22 先 gate `+0x27` 再呼 `0x1C269`。這些是 call/score topology，不足以命名成增益、毒麻或其他 gameplay status。
-- 依 spawn constructor `0x10f6b..0x10fa5` 的 direct trace，FDFIELD b13..b16 的 `initial_command_mask` 只複製到 runtime `unit+0x1a..+0x1d`，而 `unit+0x22..+0x27` 另由 constructor 清零。前者是 runtime 五位元組 command bitset 的初始四位元組；故 `+0x22/+0x23` 是 AP/DP×1.15 旗標、`+0x24` 是 DX/HIT+15 旗標；不能再把它們標成 M1–M5 spell bitfield。AI 仍依 spell family 選目標，individual command ID 與後續 modifier writer 待另行接線。
+- 依 spawn constructor `0x10f6b..0x10fa5` 的 direct trace，FDFIELD b13..b16 的 `initial_command_mask` 只複製到 runtime `unit+0x1a..+0x1d`，而 `unit+0x22..+0x27` 另由 constructor 清零。前者是 runtime 五位元組 command bitset 的初始四位元組；後者目前只能稱為 raw transient／modifier bytes。雖然 writer paths 會讀寫其中幾個欄位，derived-stat/property/status 名稱仍未由完整 equipment recompute、presentation 與 caller evidence 證實；不能把它們命名成 AP/DP/HIT 或 M1–M5 spell bitfield。AI 仍依 spell family 選目標，individual command ID 與後續 modifier writer 待另行接線。
 
 ## 仍待確認(後輪)
 

@@ -111,6 +111,6 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 ## 5. 對 remake 的暫行做法
 
-數值都在 `item.json` / `unit.json` / `growth.json` + 攻略公式(doc 02 §4),所以 **M1 可先用「base(unit表)+ 裝備(item表 ap/dp)」實作,攻略公式當規則**,反組譯機制(精確累加/使用效果/轉職)當後續校正,不阻塞戰鬥切片。
+數值都在 `item.json` / `unit.json` / `growth.json` + 攻略公式(doc 02 §4),所以 **M1 僅可作 normalized vertical slice：暫用「base(unit表)+裝備(item表 ap/dp)」與攻略公式**；這不是 native item/stat source 的證明，也不得接入 native command/effect/UI 或宣稱原版一致。反組譯機制(精確累加/使用效果/轉職)仍需後續校正，不阻塞戰鬥切片。
 
 > 相關:doc 02(數值/公式)· 03(EXE 表)· 11(AI/傷害)· 13(物品選單)· 27(戰鬥規則)。資料:`docs/data/exe_tables/`。

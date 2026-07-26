@@ -5,7 +5,9 @@
 
 ## 一個單位的回合:行動狀態機
 
-每個場上單位的行動狀態在結構欄位 **`AA`(0x0D)**(見 `03-…`):
+以下「AA／一回合」段落是早期 gameplay 摘要，並非目前已閉合的 native UI contract；現行 action chooser、
+command grid、end-turn 與 campaign transition 以 SDD56／UI matrix57 的 raw evidence 為準。每個場上單位的
+行動狀態在結構欄位 **`AA`(0x0D)**(見 `03-…`):
 
 ```
 00 = 尚未行動    01 = 死亡    80 = 行動完畢
@@ -36,12 +38,12 @@ chooser 現有 E0 的四項只可寫為 `↑=attack`、`←=command`、`→=item
 
 ### `Get_EasyMagic` — 法術 / 狀態面板(已反組譯 `0x18ED0+`)
 
-EXE 內洩漏的函式名 `Get_EasyMagic`,位於 `0x18ED0` 起。舊文件曾把 runtime `unit+0x22..0x26` 誤標成 **5 組法術 bitfield**；constructor direct trace（`0x10f6b..0x10fa5`）已推翻此說：magic raw 是 `unit+0x1a..0x1d`，`+0x22/+0x23` 是 AP/DP×1.15 modifier、`+0x24` 是 DX/HIT+15 modifier。以下只保留函式名與 UI caller 的已證實部分，法術欄位對映維持 partial：
+EXE 內洩漏的函式名 `Get_EasyMagic`,位於 `0x18ED0` 起。舊文件曾把 runtime `unit+0x22..0x26` 誤標成 **5 組法術 bitfield**；constructor direct trace（`0x10f6b..0x10fa5`）已推翻此說：magic raw 是 `unit+0x1a..0x1d`；`+0x22..+0x27` 目前只保留 raw transient／modifier bytes，不能由局部 writer 直接命名成 AP/DP/HIT 或 status。以下只保留函式名與 UI caller 的已證實部分，法術欄位對映維持 partial：
 
 ```
 native magic raw / menu state:
     由 `+0x1a..+0x1d` 與 `0x1cff0` command path 產生可選項
-    （`+0x22..+0x24` 不可當法術 bitfield）
+    （`+0x22..+0x27` 不可當法術 bitfield，也不自動等於 named stats/status）
 ```
 
 → 即玩家按「法術」時看到的面板：可用 command 與目前 HP/MP。繪字／數字用 `0x195D6`（在 320 寬 buffer 定位繪製）。可用 command 的 label、spell-family、個別 spell ID 對照仍待完成，不得由 raw bit 或舊 M1–M5 名稱推導。
