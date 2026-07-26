@@ -50,20 +50,22 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 
 - `tools/decode_fdicon.py`:解全 1680 sprite(sprite-RLE,index 0 透明)→ 透明 PNG;`--overview` 出標 index 的總覽(看分組)。
 - `tools/export_sprites.py`:對指定**角色組**導出「面向下」3 待機幀 → `remake/assets/sprites/fig_<grp>_f<0..2>.png`。
-- `tools/export_units.py`:寫 `fig` 欄位(sprite組)。**fig = 角色 id(恆等,§6);敵方/我方皆同**。
+- `tools/export_units.py`:保留 legacy `fig` compatibility 欄位。它不是已閉合的 FDICON selector source；真正的
+  runtime `unit+2` producer 仍在追查。
 
 ## 5. remake 接法
 
 - 引擎 `loadSprites()` 載 `fig_<grp>_f*.png` 分組;`drawUnitSprite()` 用 `(g.frame/12)%3` 循環待機幀,**24×24 直貼格**(略上移讓單位站在格上),陣營色腳標 + HP bar,已行動套灰(對映原版動作狀態 AA `+0x0D`=0x80 行動完畢,§6 / doc 27)。
-- 原版實機截圖(`real_pic/`)+ DATO face 當 oracle 佐證地圖 sprite 組(0→0)。`fig`=地圖組;戰鬥動畫 FIGANI=sprite組×3(doc06)。
+- 原版實機截圖與 DATO face 可做單一角色素材的 oracle，但不能單獨證明 runtime map selector。battle FIGANI
+  走另一條已閉合的 `unit+7×3` 路徑（doc06）。
 
-## 6. sprite index 公式(已驗證)+ 角色 id = 肖像 = sprite組(memory.md 權威,恆等)
+## 6. sprite index 公式（已驗證）；source identity 待閉合
 
 不靠猜測,**反組譯戰場單位繪製碼(0x128e0–0x12932)鎖死了公式**:
 
 ```asm
 0x12823  mov  eax,[0x53a45]        ; 單位陣列基底
-0x12831  movzx edi, byte[eax+2]    ; 組 = 單位欄位 +2(= 角色 id)
+0x12831  movzx edi, byte[eax+2]    ; raw map selector
 0x12835  movzx esi, byte[eax+3]    ; 方向(0..3)
 0x1291e  imul edi, edi, 0xc        ; 組 × 12
 0x12921  mov eax,esi; shl 2; sub esi   ; 方向 × 3
@@ -75,19 +77,12 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 
 → **FDICON sprite index = 組 × 12 + 方向 × 3 + cycle**（公式已驗證）；組為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x11019(group)` 建立每組 12 個 FDICON pointers 的表。
 
-> **mapping = 角色身份恆等(青衫 memory.md 權威證實 2026-06-28)**:
-> 我方 32 角色:**角色 index = 肖像(FA)= sprite組(Z1)= 角色名,基本態三者恆等**。
-> 依據:青衫 memory.md「肖像編號 0x00–0x1F」對上角色表 `[0x55BA1]` 的 index 0–31,**32 角色職業全部吻合**
-> (索爾0劍士 … 蘭斯洛特7聖騎士 希莉亞8弓兵 悠妮9法師 瑪琳10/索菲亞11僧侶 凱麗12武者 珊14法師
-> 凱拉斯16/米亞斯多德17龍劍士 蜜蒂18/羅德曼19劍聖 約拿21聖者 蓋亞30/渥德31機兵)。
-> **敵方/通用**:地圖 FDICON sprite 組是 `unit[+2]`，而 battle FIGANI selector 是 `unit[+7]`；兩者都可能與
-> DATO 對話肖像不同，且不能再由其中一者推導另一者。盜賊的已驗證 battle selector 96→FIGANI288（doc06），
-> 不證明其 `unit+2` 或 DATO 值必為96。玩家 0–31 的已驗證 visual values可相等，仍不是 raw ABI alias。
-> **轉職(已驗證恆等延續)**:角色換成轉職態肖像編號(memory.md 0x20–0x41,如索爾→劍聖0x20→英雄0x32、亞雷斯→聖騎士0x24→龍騎士0x36),**sprite組 = 轉職態肖像(恆等延續)**。圖證:索爾組0→組32(劍聖)→組50(英雄)、哈諾組1→組33(聖戰士)→組51(魔戰士),FDICON 轉職態組(32–65)都有畫同角色不同職業 sprite。**∴ 青衫 memory.md + 恆等原則已足,不需反組譯轉職碼。**
->
-> ⚠ **前一版作廢的錯誤斷言**:「龍人系打破恆等」「凱拉斯=portrait67 / sprite組17 / 轉職組49」「轉職當機」── 全部來自**我誤判 DATO_067 是凱拉斯 + 用 index17 循環論證**。memory.md 證明凱拉斯是 **id16**(肖像16=sprite組16=icon_192,放大確認龍人戰士),三者恆等,無跳號。
->
-> remake:**fig = 角色 id(恆等)**;只有上戰場角色有 sprite 組。
+> **撤回全域 identity assertion（2026-07-26）**：角色表、DATO、FDICON 素材與若干玩家 roster 的數值相同，
+> 只能作為素材觀察，不能證明 `unit+2 = character id = portrait`。完整 constructor trace 已證實 FDFIELD
+> `b1→unit+7`，但 `unit+2` 是 `0x11019` 的 cache-slot 回傳值；其 source/resource pairing 尚未閉合。
+> 因此敵方、玩家及轉職都不得由「恆等」推導 map group，`fig` 僅保留 compatibility approximation。`unit+7`
+> 的 battle FIGANI/DATO path 也不能反推 `unit+2`。先前關於特定轉職 group、龍人例外與 DATO_067 的敘述皆
+> 不再作為 renderer/exporter 的證據。
 
 | 欄位(memory.md 80B 單位結構) | 意義 | offset |
 |---|---|---|
@@ -119,26 +114,20 @@ remake 把角色做成**單一資料表**(同一角色 id 對應 face 與 sprite
   **對話時循環播放做嘴巴開合 + 眨眼,不是單張靜圖**(漢堂讓對話有生氣的手法)。characters.json 的 `face` 指向「一組 4 幀」。
 - **sprite**:地圖 12 幀(FDICON 組 N=4方向×3幀;或自繪同規格)
 
-> 對映關係:**同一角色 id N → DATO_N(4 嘴型 face)+ FDICON 組 N(12 地圖 sprite)**。
-> 加新人時兩者都要備齊同 id:4 張嘴型頭像 + 12 幀地圖 sprite。
+> 新引擎可自行定義角色 asset id；這是 remake extension schema，**不是**原版 runtime map-selector
+> provenance。原版 `unit+2` 與 DATO/FIGANI field 的關係仍須由 constructor/resource trace 決定。
 - **加新人**:分配未用 id(≥137)、給 face PNG + 12 幀 sprite + 數值 → 引擎自動吃,事件/招募(doc 26/28 `roster_has`)直接用該 id。
 - **角色總覽**:`tools/char_summary.py` → 本機 character_summary.png(140 組 sprite+face 並排,統一編號全圖佐證、加新人看缺號)。
-- 工具:`decode_fdicon.py`(導原版組)、`decode_dato.py`(導原版頭像)、`export_units.py`(`fig=portrait`)已就緒;未來補 `gen_characters.py` 從 DATO+FDICON 自動生成 characters.json。
+- 工具:`decode_fdicon.py`(導原版組)、`decode_dato.py`(導原版頭像)、`export_units.py`（legacy `fig` compatibility）已就緒；
+  不得由此自動生成原版 selector mapping。
 
 → 這把「炎龍 remake」從「複刻」升級成**可擴角色的平台**:配合可擴展事件系統(doc 29),能做原版沒有的角色 + 劇情 + 戰役。
 
 ## 8. 受阻 / 待校
 
-- **[已定論] 角色 id = 肖像(FA)= sprite組(Z1)= 角色名,基本態恆等(青衫 memory.md 權威 + 反組譯交叉驗證)**:
-  - **memory.md(青衫攻略)** 給出三張權威表:① 單位 80B 結構(Z1 圖形 `+0x0A`、FA 肖像 `+0x0F` 等,見 §6 表)② 肖像編號 0x00–0x1F = 32 我方角色名(+ 0x20–0x41 轉職態)③ 職業編號 00–19。
-  - **角色表 `[0x55BA1]`**(32 槽 × 24B:byte0=RA 種族、1=CL 職業、2=LV、3=baseHP;`0x300`=32×24 整除)的 index 0–31,**CL 職業逐一對上 memory.md 角色名**(32/32 吻合)→ 確認 **index = 肖像 = 角色**。
-  - sprite組(Z1)在前 9(0–9 索爾→悠妮)、龍人系(16 凱拉斯/17 米亞斯多德,放大 icon_192/204 皆龍人戰士)均 = 角色 id → **sprite組 = 角色 id(恆等)**。
-  - **敵方/通用**:id>31,肖像/sprite組另排但仍恆等(士兵68、盜賊96、頭目97)。
-  - **轉職**:角色換轉職態肖像(memory.md 0x20–0x41);sprite組是否隨之切組待確認。
-  - 產物:`docs/data/exe_tables/characters.json`(32 角色 id/sprite_group/face_portrait/race/cls/lv/baseHP + 全名),三者恆等,remake 加新人即用此表。
-  - **職業編號表(memory.md,hex)**:00龍 01劍士 02戰士 03騎士 04弓兵 05法師 06僧侶 07盜賊 08武者 09劍聖 0A聖戰士 0B聖騎士 0C狙擊手 0D大法師 0E祭師 0F龍劍士 10鬥士 11英雄 12魔戰士 13龍騎士 14神射手 15召喚師 16聖者 17忍者 18武聖 19機兵。
-  - ⚠ **作廢的錯誤鏈(compact 防呆)**:曾依「`unit[+7]` 非 portrait 公式」「sprite組 = 角色定義 index 而非 portrait」「龍人打破恆等」「凱拉斯 portrait67 / sprite組17 / 轉職組49 / 轉職當機」推演 → **全錯**,根因是我把 DATO_067 誤當凱拉斯 + 用 index17 循環論證。**正解:凱拉斯 = id16,三者恆等,無跳號、無「組49」、攻略無當機明文。**
-  - 注:roster 26B(modify2 §7)無獨立 sprite組欄,正因 sprite組 = 角色 id 本身,不需額外欄位。
+- **[待閉合] original map-selector provenance**：`0x127e0` 的公式和 `unit+2` read 已證實；但完整
+  `0x10c50→0x11019` trace 顯示它是 resource-aware cache result，不能由角色表、DATO id、FDICON 檔案序號或
+  轉職表直接定值。保留玩家/怪物素材的個別對照資料，但不把它當 exporter 或 runtime mapping。
 - **[線索] 廢案人物**:FDICON 有些組**沒畫滿 12 格**(未採用角色,僅部分方向/幀);因 sprite 用「組×12 + 方向×3 + 幀」定位,廢案組仍佔 12 格 stride(部分空/重複)。未來可挖廢案角色來用(加新人素材庫)。
 - **[M2 待做]** 對話框**嘴型動畫**:DATO_N 的 m0~m3 對話時播放(嘴開合 + 眨眼)。哪幀=閉嘴/開嘴/眨眼、播放節奏(隨文字推進?固定循環?)待反組譯文字渲染器(0x16D00 區,doc 14)確認;M2 對話層實作。
 - 方向:目前只導「面向下」待機;4 方向(走動/面敵)待加。
