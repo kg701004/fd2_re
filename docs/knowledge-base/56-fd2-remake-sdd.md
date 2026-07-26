@@ -116,6 +116,8 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。
 
+Generic presentation 的 BG selector 亦已閉合為 raw dataflow：`0x2a6bd` 呼 `0x2b5e1(finalCount, finalTargetArray)`，後者倒序掃 target slot，對該 unit cell 呼 `0x12e38`、以 `0x1f183` gate 決定是否採 output byte `+6`，回傳的 raw selector 才餵 `0x111ba("BG.DAT", selector)`。因此 command ID 的 generic branch 不可被說成直接選 BG resource；selector 的高階地形／場景語意仍不命名。
+
 ### UI-03 action chooser availability contract（E0 partial）
 
 `0x18d8c` 先清四個 dword，按固定順序傳給 `0x173e7/0x177fc`：`[+0]` attack、`[+4]`
