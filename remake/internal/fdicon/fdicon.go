@@ -26,6 +26,7 @@ type Bank struct{ Sprites []Sprite }
 // The returned slot is not a character, portrait, or direct archive index.
 type NativeSelectorCache struct {
 	slots map[byte]int
+	keys  []byte
 	next  int
 }
 
@@ -43,8 +44,31 @@ func (c *NativeSelectorCache) SlotFor(key int) (int, error) {
 	}
 	slot := c.next
 	c.slots[b] = slot
+	c.keys = append(c.keys, b)
 	c.next++
 	return slot, nil
+}
+
+// KeyForSlot resolves a runtime unit+2 cache slot back to the raw B24 key
+// whose twelve pointers 0x11019 copied into that slot.
+func (c *NativeSelectorCache) KeyForSlot(slot int) (int, error) {
+	if slot < 0 || slot >= len(c.keys) {
+		return 0, errors.New("fdicon: unknown native selector slot")
+	}
+	return int(c.keys[slot]), nil
+}
+
+// SpriteForNativeSlot mirrors the two native stages: unit+2 chooses a cached
+// twelve-pointer block, then pose/cycle chooses one pointer within it.
+func (b *Bank) SpriteForNativeSlot(cache *NativeSelectorCache, slot, pose, cycle int) (Sprite, error) {
+	if cache == nil {
+		return Sprite{}, errors.New("fdicon: nil native selector cache")
+	}
+	key, err := cache.KeyForSlot(slot)
+	if err != nil {
+		return Sprite{}, err
+	}
+	return b.SpriteFor(key, pose, cycle)
 }
 
 // Sprite preserves native four-mode RLE effects after decoding. Mask marks

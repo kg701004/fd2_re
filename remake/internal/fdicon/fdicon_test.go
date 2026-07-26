@@ -121,11 +121,32 @@ func TestNativeSelectorCacheMatches11019FirstSeenSlots(t *testing.T) {
 			t.Fatalf("key=%d got=%d err=%v want=%d", tc.key, got, err, tc.want)
 		}
 	}
+	if key, err := cache.KeyForSlot(1); err != nil || key != 0 {
+		t.Fatalf("slot 1 key=%d err=%v", key, err)
+	}
+	if _, err := cache.KeyForSlot(3); err == nil {
+		t.Fatal("unknown slot accepted")
+	}
 	if _, err := cache.SlotFor(-1); err == nil {
 		t.Fatal("negative raw key accepted")
 	}
 	if _, err := cache.SlotFor(0x100); err == nil {
 		t.Fatal("wide raw key accepted")
+	}
+}
+
+func TestSpriteForNativeSlotResolvesCacheKeyBeforeB24Selector(t *testing.T) {
+	bank := &Bank{Sprites: make([]Sprite, 3*12)}
+	bank.Sprites[2*12+3] = Sprite{Pixels: make([]byte, NativeSize*NativeSize), Mask: make([]byte, NativeSize*NativeSize)}
+	var cache NativeSelectorCache
+	if _, err := cache.SlotFor(2); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := bank.SpriteForNativeSlot(&cache, 0, 1, 0); err != nil || len(got.Pixels) != NativeSize*NativeSize {
+		t.Fatalf("cached native selector sprite=%#v err=%v", got, err)
+	}
+	if _, err := bank.SpriteForNativeSlot(&cache, 1, 0, 0); err == nil {
+		t.Fatal("unknown native slot accepted")
 	}
 }
 
