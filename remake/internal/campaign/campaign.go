@@ -133,11 +133,13 @@ type HandlerLayout struct {
 type HandlerIndexedTransition struct {
 	TileX int `json:"tile_x"`
 	TileY int `json:"tile_y"`
-	// RemapScale and RemapScaleStep are the third/fourth native arguments.
-	// 0x24618 passes the running scale to 0x22046's two radial LUT-remap
-	// passes; they are not source-buffer coordinates.
-	RemapScale        int `json:"remap_scale"`
-	RemapScaleStep    int `json:"remap_scale_step"`
+	// RadialRadius and RadialRadiusStep are the third/fourth native arguments.
+	// 0x24618 advances the radius on every pass; 0x22046 passes it to the two
+	// 0x219ad radial LUT-remap calls and derives its final rect radius from it.
+	// They are not source-buffer coordinates or the radial scale (which is
+	// fixed to 16 by 0x22046).
+	RadialRadius      int `json:"radial_radius"`
+	RadialRadiusStep  int `json:"radial_radius_step"`
 	SourceY           int `json:"source_y"`
 	BlitWidth         int `json:"blit_width"`
 	ClipWidth         int `json:"clip_width"`

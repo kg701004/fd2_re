@@ -53,8 +53,8 @@
       "indexed_transition": {
         "tile_x": 6,
         "tile_y": 6,
-        "remap_scale": 10,
-        "remap_scale_step": 8,
+        "radial_radius": 10,
+        "radial_radius_step": 8,
         "source_y": 0,
         "blit_width": 192,
         "clip_width": 312,

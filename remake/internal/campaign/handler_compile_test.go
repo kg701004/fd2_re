@@ -142,7 +142,7 @@ func TestCompileDynamicPaletteLoopMaterializesDescendingRange(t *testing.T) {
 }
 
 func TestCompileIndexedTransitionRequiresRecoveredBinding(t *testing.T) {
-	transition := HandlerIndexedTransition{TileX: 9, TileY: 8, RemapScale: 10, RemapScaleStep: 8, SourceY: 0, BlitWidth: 0xc0, ClipWidth: 0x138, ClipHeight: 0xc0, Frames: 9, FrameDelayMs: 5, TailDelayMs: 500, PaletteRangeStart: 0, PaletteRangeEnd: 255, PaletteDeltaStart: 0, PaletteDeltaEnd: 62, PaletteDeltaStep: 2, PaletteDelayMs: 4}
+	transition := HandlerIndexedTransition{TileX: 9, TileY: 8, RadialRadius: 10, RadialRadiusStep: 8, SourceY: 0, BlitWidth: 0xc0, ClipWidth: 0x138, ClipHeight: 0xc0, Frames: 9, FrameDelayMs: 5, TailDelayMs: 500, PaletteRangeStart: 0, PaletteRangeEnd: 255, PaletteDeltaStart: 0, PaletteDeltaEnd: 62, PaletteDeltaStep: 2, PaletteDelayMs: 4}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x24618", RawArgs: []any{"global_x", "global_y", 10, 8}}}}, HandlerBindings{Transition: func(HandlerBeat) (HandlerIndexedTransition, bool) {
 		return transition, true
 	}})
@@ -1637,7 +1637,7 @@ func TestCompileChapter29PostPreservesDialogueAcrossChapterTextSwitch(t *testing
 			break
 		}
 	}
-	if transition.Op != "indexed_transition" || transition.IndexedTransition == nil || transition.IndexedTransition.TileX != 6 || transition.IndexedTransition.TileY != 6 || transition.IndexedTransition.RemapScale != 10 || transition.IndexedTransition.RemapScaleStep != 8 {
+	if transition.Op != "indexed_transition" || transition.IndexedTransition == nil || transition.IndexedTransition.TileX != 6 || transition.IndexedTransition.TileY != 6 || transition.IndexedTransition.RadialRadius != 10 || transition.IndexedTransition.RadialRadiusStep != 8 {
 		t.Fatalf("ch29_post indexed transition=%#v", transition)
 	}
 	want := []struct {
