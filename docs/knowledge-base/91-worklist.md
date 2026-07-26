@@ -819,3 +819,4 @@
 - [x] **RE-RAW-WORD-GROWTH-22866**：Docker Capstone 固定 `0x22866` 與 `0x22721` 同構，僅 offsets 改為 marker `+0x23`、word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用實作並有 variant regression，未命名欄位。
 - [x] **RE-RAW-PAIR-22997**：Docker Capstone 固定 `0x22997` marker `+0x24` zero gate、同 RNG marker、raw `+0x4c/+0x4e` 各 `+0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，覆蓋 wrap/marked skip/preflight regression，未命名欄位。
 - [~] **RE-ITEM-22D1B-BRANCH**：Docker Capstone 固定 `0x22d1b` 的 raw `a5` marker gate、class `+0x20 != 0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker 與 `8*record+0x21` accumulator。保持 evidence-only，不能誤稱 type14 為 status 或併入 17–19 modifier。
+- [x] **RE-COMMAND23-COORD-WRITE**：官方 IDA 9.4 閉合 `0x22253` 尾端 `record[+0]=a13`、`record[+1]=a14`；`0x2218a` caller 的 `0xff/0xff` 是 pre-render pair，最後寫 cursor-derived pair。新增 `battle.SetNativeUnitCoordinateBytes` raw writer/regression；renderer/pathfinding 仍未接。

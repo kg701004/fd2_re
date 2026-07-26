@@ -615,3 +615,4 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 0x22866 family closure：Capstone 確認同一 growth arithmetic 只換 marker `+0x23`／word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用 raw adapter，variant regression 通過，不猜 gameplay 欄位。
 - 2026-07-26 0x22997 pair mutation closure：Capstone 固定 marker `+0x24`、成功後 `+0x4c/+0x4e` 各加 `0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，16-bit wrap 與 marked skip regression 通過，renderer/tail 不接。
 - 2026-07-26 0x22d1b branch audit：Capstone 固定 raw `a5` zero gate、class `+0x20` 排除 `0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker `(rng%4)+2` 與 score `8*record+0x21`。未接 runtime，未把 type14/branch 命名成 status，避免和 17–19 modifier family 混淆。
+- 2026-07-26 command-23 coordinate write closure（official IDA 9.4）：`0x22253` 最終將 supplied `a13/a14` 寫回 unit raw `+0/+1`；`0x2218a` 先傳 `0xff/0xff`，再用 cursor pair。新增 `battle.SetNativeUnitCoordinateBytes`，只接 raw writer，不接 renderer/pathfinding。
