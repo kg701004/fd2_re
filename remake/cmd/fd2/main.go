@@ -4232,7 +4232,13 @@ func (g *Game) actionOverlayAvailability() [4]int {
 	} else if g.sel.Sealed || len(g.sel.Spells) == 0 {
 		availability[1] = 1
 	}
-	if len(g.sel.Inventory) == 0 {
+	if len(g.sel.NativeInventoryFlags) == 8 {
+		if count, err := battle.NativeInventoryAvailableCount(g.sel.NativeInventoryFlags); err != nil || count == 0 {
+			availability[2] = 1
+		}
+	} else if len(g.sel.Inventory) == 0 {
+		// Legacy editable JSON has no raw eight-cell flags; this is explicitly
+		// a compatibility approximation, not native item availability.
 		availability[2] = 1
 	}
 	return availability

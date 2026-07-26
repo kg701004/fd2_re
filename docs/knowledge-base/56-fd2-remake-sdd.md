@@ -165,8 +165,9 @@ native command、`[+8]` item、`[+12]` wait。`0x173e7` 選第一個值為 0 的
   選定 command 的 MP availability 另由 `0x159fa` 驗證 record `+5 <= unit+0x44`；`battle.NativeCommandAvailable`
   只在 raw bit、完整 0..35 command record 與 MP gate 同時成立時回 true，未知 36..39 bits 與 malformed book
   fail-closed，不把 selector gate 誤當 action-direction 或 target geometry。
-- item：`0x1b8a6(actor)` 計數八 slot 中 flag `0x80` 未設的 entries；零個即 `+8=1`。目前 editable
-  inventory 沒有這個 runtime flag，故 `len(Inventory)` 僅是明確標記的 approximation。
+- item：`0x1b8a6(actor)` 計數八 slot 中 flag `0x80` 未設的 entries；零個即 `+8=1`。
+  `battle.NativeInventoryAvailableCount` 已保存此 raw count，overlay 在 constructor flags 存在時不再用
+  `len(Inventory)` 取代它；沒有八格 provenance 的 legacy JSON 才保留明確標記的 approximation。
 - wait：wrapper 未寫 `+12`，故在這條 chooser path 永遠可選。
 
 既有 normalized `Spells`／`Sealed` 只保留給缺 raw command mask 的舊 editable scenario 相容 UI；它不得作為
