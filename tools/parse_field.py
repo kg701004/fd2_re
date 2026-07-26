@@ -53,6 +53,11 @@ def parse_map(raw, m):
         death_type = b[22]
         death_value = b[23] | (b[24] << 8) | (b[25] << 16)
         units.append({"camp": ["enemy", "ally", "own"][b[0]] if b[0] < 3 else b[0],
+                      # 0x10ec1/0x10ef5 copy this raw byte to runtime +6,
+                      # while 0x10ed6 passes it to 0x11019 before writing the
+                      # returned FDICON cache slot to +2. Keep the raw key
+                      # separate from the human-readable camp label.
+                      "native_map_selector_key": b[0],
                       "portrait": b[1], "race": b[2], "cls": b[3], "lv": b[4],
                       "inventory": [item for item in b[5:13] if item != 0xFF],
                       "inventory_slots": list(b[5:13]),

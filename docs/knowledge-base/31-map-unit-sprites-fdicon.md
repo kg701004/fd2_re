@@ -79,7 +79,9 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 
 > **撤回全域 identity assertion（2026-07-26）**：角色表、DATO、FDICON 素材與若干玩家 roster 的數值相同，
 > 只能作為素材觀察，不能證明 `unit+2 = character id = portrait`。完整 constructor trace 已證實 FDFIELD
-> `b1→unit+7`，但 `unit+2` 是 `0x11019` 的 cache-slot 回傳值；其 source/resource pairing 尚未閉合。
+> `b1→unit+7`，而 scripted FDFIELD constructor 已閉合 `b0→0x11019→unit+2 cache slot`：`b0` 亦寫
+> native camp `+6`（敵0／友1／己2），不是角色／portrait byte。玩家 persistent roster 則有獨立的 `+7`
+> source path；兩者共享 cache ABI，不能 alias。
 > 因此敵方、玩家及轉職都不得由「恆等」推導 map group，`fig` 僅保留 compatibility approximation。`unit+7`
 > 的 battle FIGANI/DATO path 也不能反推 `unit+2`。先前關於特定轉職 group、龍人例外與 DATO_067 的敘述皆
 > 不再作為 renderer/exporter 的證據。
