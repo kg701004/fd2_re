@@ -364,13 +364,13 @@
       → **全 30 章一條龍可玩**(FD2_CAMPAIGN=assets/scenarios/campaign_full.json)
 - [x] **戰鬥命中音接真素材**(旗艦):battle 池共用揮擊音(#48 sub0)接命中幀;loadWav/playRaw
 - [x] **SFX index2 追蹤**(sonnet,部分解出誠實標記):真路徑=0x01cff0 [esp+計數+0xd0](填值待追);
-      **意外收穫:0x1c269 從 unit+0x1a 起掃描 5 bytes/40 bits 並輸出 byte index；欄位語意尚未定案**；`+0x22..+0x24` 是另一路 transient modifier flags;
+      **意外收穫:0x1c269 從 unit+0x1a 起掃描 5 bytes/40 bits 並輸出 byte index；欄位語意尚未定案**；`+0x22..+0x24` 是另一路 raw transient/modifier bytes;
       battle_sfx_map.json 骨架。依「夠用就停」:+0xd0 續追降低優先(共用音已可用)
 - [x] 聽辨清單(extracted/music_ogg/聽辨清單.md,待使用者逐曲填)
 - [ ] 戰鬥曲/勝利曲聽辨(使用者)
 - [ ] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub
 - [ ] ch10 等圖少數 tile 雜色查因
-- [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs transient modifier flags（舊稱 `magic_raw` 已撤回）
+- [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs raw transient/modifier bytes（舊稱 `magic_raw` 已撤回）
 - [ ] +0xd0 陣列填值(逐招音效對照,低優先)
 
 ## 第 12 輪 ✅(招募成長/劇情文本/編輯器規劃/政策更新)

@@ -146,6 +146,6 @@ type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入�
 ## 待辦(後輪)
 - 反組譯選單繪製與選項表,確認確切選項與排列(2D 位置)。
 - ✅ 按鍵綁定(Enter/Space 確認、ESC 取消、方向鍵)— 已反組譯。
-- [~] `Get_EasyMagic`(0x18ED0) 的 UI caller 已定位；magic raw=`+0x1a..+0x1d`、modifier flags=`+0x22..+0x24`，完整 bit 展開仍待重審。
+- [~] `Get_EasyMagic`(0x18ED0) 的 UI caller 已定位；magic raw=`+0x1a..+0x1d`、`+0x22..+0x24` 僅保留 raw transient/modifier bytes，完整 bit 展開與高階欄位語意仍待重審。
 - 各選項的 enable gate 條件(已移動 / MP / 道具 / 攻擊範圍內有無目標)的完整反組譯。
 - command bits → 可選 command／spell ID 的完整展開（法術編號見 `02`/`03`）。

@@ -76,7 +76,7 @@ DOS 不顯示中文,他們的解法是 1990 年代台灣遊戲的通行做法,�
 - **數值全在 `FD2.EXE` 的資料表**:物品(23B)、法術(7B)、敵我單位(10B)、升級成長(11B)、職業抗性/暴擊…
   我們依錨定特徵定位後整批 dump,並與青衫攻略字面值交叉驗證無誤。
 - **場上每單位 80 byte**:座標、圖形/方向/動作、行動狀態(`AA`:未動/死/完畢)、陣營(`BB`:敵/友/己)、
-  肖像、物品 8、5-byte command bitset 與各屬性。其 command／spell 對照尚未閉合；`+0x22..+0x24` 是 transient modifier flags，並非法術 bitfield。
+  肖像、物品 8、5-byte command bitset 與各屬性。其 command／spell 對照尚未閉合；`+0x22..+0x24` 是 raw transient/modifier bytes，並非法術 bitfield，不能由此命名高階 stat/status。
 - **AI**(`0x15140`):對行動單位 flood-fill 算可達格,逐落點×逐目標評分
   (預期傷害 = 我 AP×地形% − 目標 DP×地形%;可擊殺 ×2;狀態 ×1.5),取最高分行動。敵與友軍 NPC 共用此引擎。
 - **選單**:行動狀態機(全員 `AA=完畢` → 換邊)、方向鍵游標、Enter/Space 確認、ESC 取消；

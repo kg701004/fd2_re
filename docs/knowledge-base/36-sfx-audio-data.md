@@ -413,7 +413,7 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
    指標]; call 0x1c269`。`0x1c269` 的 direct body 只定案為：從單位資料表
    (`[0x53a45]+idx*80`)偏移 `+0x1a` 起掃描 **5 bytes(40 bit)**，把已設定 bit 轉成 0–39 byte index，
    寫入呼叫端緊密陣列；輸出究竟是 spell、move 或其他 command inventory 仍未證實。
-   - `unit+0x1a..+0x1d` 與 FDFIELD `initial_command_mask` 複製範圍重疊；它是 runtime 五位元組 command bitset 的初始四位元組。`unit+0x22..+0x24` 則是 constructor 清零後由能力流程寫入的 AP/DP/DX modifier flags。不得用後者反推前者的 spell bitfield。
+   - `unit+0x1a..+0x1d` 與 FDFIELD `initial_command_mask` 複製範圍重疊；它是 runtime 五位元組 command bitset 的初始四位元組。`unit+0x22..+0x24` 則是 constructor 清零後由能力流程寫入的 raw transient/modifier bytes；其 derived-stat/property/status 名稱仍待完整 caller 證據。不得用後者反推前者的 spell bitfield。
    - 但 `0x027fc9` 真正讀取的是 **`[esp+0xd0+counter]`**(offset 0xd0,與 `0xc8` 相差 8,且並非同一次
      `call 0x1c269` 填的緊密陣列——`0x1c269` 只填一個目標緩衝區),**這個陣列的填值來源本輪仍未追出**,
      是下一輪的直接切入點。
@@ -426,7 +426,7 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
 
 ## 導出 WAV:戰鬥音效候選池(第 10 輪)
 
-> **記憶修正（2026-07-25）**：本節舊版「40-bit 已知招式遮罩／已學會招式清單」措辭已作廢。`0x1c269` 目前只證實為 5-byte bit-scan 與輸出 ABI；其欄位不命名為 spell、move 或 learned-list，且不得把 `unit+0x22..+0x24` modifier flags 當成法術 bitfield。
+> **記憶修正（2026-07-25）**：本節舊版「40-bit 已知招式遮罩／已學會招式清單」措辭已作廢。`0x1c269` 目前只證實為 5-byte bit-scan 與輸出 ABI；其欄位不命名為 spell、move 或 learned-list，且不得把 `unit+0x22..+0x24` raw transient/modifier bytes 當成法術 bitfield。
 
 `tools/export_sfx.py --battle` 把上表 9 個候選資源解開巢狀容器,逐子樣本補 WAV 檔頭,輸出到
 `remake/assets/sfx/battle_<資源號>_<子序>.wav`(共 42 個,`wave` 模組開啟全數驗證合法)。
