@@ -51,6 +51,14 @@ score `0x12`，否則 `8`；其他 type 回傳零。這些是 command selection 
 不把 type 命名成治療、攻擊或 status，也不把 `+0x34 bit7` 命名成可見效果；item row
 producer、target transaction、UI 與 runtime executor 仍由各自 evidence gate 控制。
 
+`0x149F8` 則已確認為另一個 raw candidate scanner：它保存 caller 起點，依兩組座標比較
+產生 ±X/±Y cardinal step，最多走 caller-supplied count；每一步先以 `[0x53AB1]/[0x53AB5]`
+更新 cursor，檢查 map bounds `[0x53AC1]/[0x53AC5]`，再呼 `0x12C0D` 將格子解析為 unit index。
+找到 record 後依 caller selector（raw `+6` 的 polarity gate）決定是否把 index 寫入 supplied
+byte buffer；完成後恢復 cursor globals 並回傳 count。這證明它是座標／候選收集器，不是
+damage、hit 或 spell-effect scorer；selector polarity、LOS／terrain semantics、buffer
+ownership 與 command-30 caller contract 仍由各自 evidence gate 控制。
+
 ## 2. 證據分級與反組譯規則
 
 每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：

@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=382`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=383`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -47,6 +47,7 @@
 - [x] **RE-AI-PHASE-CALLS-1A4EB**：Docker Capstone 固定 `0x1A4EB` 的 `0x1A813(1)→0x1A866(1)→0x1A7BD→0x1D80B→0x1A7F1` 與 `0x1A58F` 的 selector-0 對應鏈；只記 phase-specific raw callsites，不命名回合開始／結束。
 - [x] **RE-AI-COMMAND-ENUM-1567E**：Docker Capstone 閉合 `0x1567E` 的 inventory prefix/count→item row `+0x0B` command-list scan、`command<=0x0F→0x14818`、`command>0x0F→0x149F8(spell_id-0x10)`、`0x15880` score 與 `0x53C33/37/3B/3F` best writes；不命名 item/effect/MP/turn 語意。
 - [x] **RE-AI-SCORE-15880**：Docker Capstone 閉合 `0x15880` 的 item row `+0x0D/+0x0E` type/word 分支：type5/0x0D 的 `maxHP/3→8/3/0` 與 raw `+0x34 bit7` ×3、type0x14/0x15/0x18 的 threshold→0x12/8；其餘回零。只保存 raw score ABI，不命名效果或 status。
+- [x] **RE-AI-CANDIDATE-149F8**：Docker Capstone 閉合 `0x149F8` 的 cardinal ±X/±Y cursor steps、map bounds、`0x12C0D` unit lookup、raw `+6` selector gate、supplied byte-buffer writes 與 cursor restore；明確標為 candidate scanner，不命名 damage/hit/LOS/spell effect。
 - [x] **RE-PHASE-RESOURCE-1A7BD**：Docker Capstone 固定 `0x1A7BD` 是 `[0x53AF9]` gate 下的 `0x111BA(0x1A4D,0,0x40)` resource-handle setup，`0x1A7F1` 釋放 `[0x53B0F]`；已從 transient selector／campaign phase 語意中分離。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`
