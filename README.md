@@ -62,6 +62,7 @@ FDOTHER#3 的 LUT bank entry，而不是新的圖像 descriptor；此 selector �
 
 目前也已有可測試的純 indexed transition frame primitive：`indexedmap.ComposeNativeTransitionFrame` 依原版順序組合
 terrain、unit/foreground redraw、兩段 LUT 與 312×192 viewport copy；它需要玩家提供的完整 raw banks，尚未接入 campaign runtime 或 Ebiten 場景切換。
+Map JSON 的 `native_tile_blit_modes`／`native_terrain_control` 也已由 `MapData` 嚴格讀取，舊版 PNG-only map 不會被誤當成 native indexed 資產。
 
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
 > 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，

@@ -59,6 +59,11 @@ type MapData struct {
 	TileH int   `json:"tileH"`
 	Cols  int   `json:"cols"` // tileset 每列圖塊數
 	Tiles []int `json:"tiles"`
+	// Native fields are optional: legacy PNG-only maps must not be treated as
+	// verified indexed input. They mirror export_engine_assets.py's raw FDFIELD
+	// event-high bytes and FDSHAP four-byte control table.
+	NativeTileBlitModes  []byte `json:"native_tile_blit_modes,omitempty"`
+	NativeTerrainControl []byte `json:"native_terrain_control,omitempty"`
 }
 
 type Game struct {

@@ -62,6 +62,24 @@ type NativeTransitionFrameInput struct {
 	ForegroundUnits                       []fdicon.NativeForegroundLayerEntry
 }
 
+// BuildNativeTerrainCells materializes the exact per-cell pair exported by
+// tools/export_engine_assets.py. The tile word and event high byte are kept
+// separate because native 0x11eee consumes both; missing or mismatched arrays
+// are rejected instead of defaulting old PNG-only maps into a native path.
+func BuildNativeTerrainCells(tiles []int, blitModes []byte) ([]fdicon.NativeTerrainCell, error) {
+	if len(tiles) == 0 || len(tiles) != len(blitModes) {
+		return nil, errors.New("indexedmap: native terrain cell arrays are incomplete")
+	}
+	cells := make([]fdicon.NativeTerrainCell, len(tiles))
+	for i, tile := range tiles {
+		if tile < 0 || tile > 0x3ff {
+			return nil, fmt.Errorf("indexedmap: native terrain tile %d=%d outside 10-bit range", i, tile)
+		}
+		cells[i] = fdicon.NativeTerrainCell{Tile: uint16(tile), BlitMode: blitModes[i]}
+	}
+	return cells, nil
+}
+
 // ComposeNativeFrame is the strict native-HUD form of ComposeFrame. It uses
 // the exact indexed HUD assembly at its recovered position, rather than
 // accepting an arbitrary callback. All source data remain explicit and any

@@ -159,3 +159,21 @@ func TestComposeNativeTransitionFrameRejectsMissingRawInputAtomically(t *testing
 		t.Fatal("rejected transition mutated caller buffers")
 	}
 }
+
+func TestBuildNativeTerrainCellsRequiresExporterArrays(t *testing.T) {
+	cells, err := BuildNativeTerrainCells([]int{1, 2}, []byte{0xff, 0x00})
+	if err != nil || len(cells) != 2 || cells[0].Tile != 1 || cells[1].BlitMode != 0 {
+		t.Fatalf("cells=%#v err=%v", cells, err)
+	}
+	for _, tc := range []struct {
+		tiles []int
+		modes []byte
+	}{
+		{[]int{1}, nil},
+		{[]int{0x400}, []byte{0}},
+	} {
+		if _, err := BuildNativeTerrainCells(tc.tiles, tc.modes); err == nil {
+			t.Fatalf("accepted incomplete/invalid arrays: %#v", tc)
+		}
+	}
+}
