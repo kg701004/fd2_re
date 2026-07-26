@@ -594,6 +594,7 @@
 - [x] **native HUD signed-number selector**：`indexedmap.BlitNativeMapHUDSignedNumber` 固定 `0x1aeb1` 的 raw LMI #0x83（非負 6×7）／#0x84（負值 6×5）選擇、absolute value、`origin+8` digit callback。callback 必填且 failure atomic，不把 sign 留半張；font、table value、AP/DP/HP來源與語意仍未命名。
 - [x] **native HUD two-digit renderer**：`0x1aeb1→0x187d6` call-site 固定 glyph base #0x1f、width=2；`%0.5d` 被 patch 成 `%0.2d`，每位以 six-pixel advance 走 `0x16886→0x4e63d` Frame。`BlitNativeMapHUDTwoDigitNumber` 接上完整 #0x1f..#0x28（實檔 #0x20=5×8、其餘6×8）與 sign selector，超過99 fail-closed，不讓 native truncation變成可編輯資料的隱性行為。數值來源／AP/DP/HP語意仍不命名。
 - [x] **native HUD terrain-icon subpass**：`0x1acf3` 在 panel 後以 `0x12e38` local word0（masked terrain descriptor）直接選 selected FDSHAP bank descriptor，`0x4deda` raw blit 到 panel `+6`。`BlitNativeMapHUDTerrainIcon` 固定此 10-bit selector／anchor並拒絕 bank 外資料；不以 PNG preview 或 terrain 名稱代替原始 source。
+- [x] **native HUD unit-icon subpass**：`0x12c0d` 成功後，`0x1acf3` 以 unit+2 selector-cache slot、raw global state（3→1 alias）選 cached FDICON 12-frame block，raw blit 至 panel `stride*5+6`。`BlitNativeMapHUDUnitIcon` 有 cache/state/bounds regression；slot 不命名為角色或 portrait。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
 

@@ -85,6 +85,30 @@ func TestBlitNativeMapHUDTerrainIconUses12E38TileAtPanelPlus6(t *testing.T) {
 	}
 }
 
+func TestBlitNativeMapHUDUnitIconUsesCacheAndAliasesStateThree(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	units := bank(12, 0)
+	units.Sprites[1] = solid(0x77) // cache key 0, pose 0, aliased cycle 1
+	dst := make([]byte, fdicon.NativeMapStride*200)
+	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 3); err != nil {
+		t.Fatal(err)
+	}
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	if dst[layout.Unit] != 0x77 {
+		t.Fatalf("unit icon=%#x", dst[layout.Unit])
+	}
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 4); err == nil {
+		t.Fatal("invalid raw state accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("rejected unit icon selector mutated HUD")
+	}
+}
+
 func TestBlitNativeMapHUDSignedNumberSelectsSignAndAbsoluteValue(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*30)
 	calledOrigin, calledAbsolute := -1, -1

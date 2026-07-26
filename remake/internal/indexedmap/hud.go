@@ -91,6 +91,37 @@ func BlitNativeMapHUDTerrainIcon(terrain *fdicon.Bank, dst []byte, anchorX, tile
 	return nil
 }
 
+// BlitNativeMapHUDUnitIcon reproduces 0x1ae4d..0x1ae8b after the cursor-cell
+// unit lookup succeeds. slot is runtime unit+2's selector-cache slot; rawState
+// is the global state read by that HUD path, where 3 aliases 1. The underlying
+// FDICON selector cache resolves the slot back to its raw twelve-frame block.
+func BlitNativeMapHUDUnitIcon(units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, anchorX, slot, rawState int) error {
+	if units == nil || cache == nil {
+		return errors.New("indexedmap: native map HUD unit icon source is absent")
+	}
+	if _, err := fdicon.NativeMapHUDUnitFrameIndex(slot, rawState); err != nil {
+		return err
+	}
+	cycle := rawState
+	if cycle == 3 {
+		cycle = 1
+	}
+	sprite, err := units.SpriteForNativeSlot(cache, slot, 0, cycle)
+	if err != nil {
+		return err
+	}
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	if err != nil {
+		return err
+	}
+	frame := append([]byte(nil), dst...)
+	if err := sprite.BlitAt(frame, fdicon.NativeMapStride, layout.Unit%fdicon.NativeMapStride, layout.Unit/fdicon.NativeMapStride); err != nil {
+		return err
+	}
+	copy(dst, frame)
+	return nil
+}
+
 // BlitNativeMapHUDSignedNumber preserves 0x1aeb1's raw sign selector: a
 // nonnegative value uses LMI1 #0x83 (6x7), a negative value uses #0x84
 // (6x5), then native passes the absolute value to its decimal renderer at a
