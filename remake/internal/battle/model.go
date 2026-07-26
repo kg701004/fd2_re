@@ -347,7 +347,11 @@ type State struct {
 	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
 	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
 	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	OpenedTreasure           map[int]bool                // 原版 [0x53ad5] battle-local opened[slot]
+	// OpenedTreasure is remake-owned state for editable treasure nodes.  It has
+	// no asserted native-global address: ch25 handler 0x24f30 proves [0x53ad5]
+	// is dereferenced as a runtime-unit pointer (+0x0c selects dialogue), not a
+	// battle-local opened-treasure slot table.
+	OpenedTreasure map[int]bool
 	// 來源:tools/export_engine_assets.py 依地形控制表(doc01 §5)換算,由 Load 讀同目錄
 	// map.json 的 "cost" 陣列自動接上(worklist 第 8 輪「地形屬性接線」)。
 }
