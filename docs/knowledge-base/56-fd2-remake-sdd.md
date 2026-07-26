@@ -488,9 +488,13 @@ caller dispatches raw selection `0→0x2ffa5`, `1→0x2f8ea`, `2→0x30dc3`, and
 callee semantics are independently proven.
 
 `0x2d669` is the indexed church-menu transition: it snapshots a 64000-byte
-buffer, clears a 20×104 region at the native menu origin, performs four
-direction-dependent cell blits for each of four passes, restores the buffer,
-and finally restores the source frame when opening (`a1==0`). This is evidence
+buffer, clears a 20×104 region at the native menu origin
+`buffer + 320*(169+i) + 201` with byte `0x4a`, then performs four
+direction-dependent cell blits for each of four passes. The copied cell-offset
+bank at `0x526da` is the signed sequence `[-39,-13,13,39]`; the transition
+uses divisor `4-j` while opening (`a1==0`) and `j+1` while closing. Each blit
+uses the native width/stride argument `0x140`, restores the buffer between
+passes, and finally restores the source frame when opening. This is evidence
 for a native transition/compositor boundary, not proof of a particular menu
 layout or service label. The remake therefore adopts only the verified
 left/right selector ABI and keeps the menu art/service names fail-closed.
