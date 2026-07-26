@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 )
 
 // 驗證序章 units.json 正確載入(M1-8 headless 回歸雛形)。
@@ -73,5 +75,40 @@ func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
 	}
 	if got := st.Units[0].BattleFig; got != 7 {
 		t.Fatalf("legacy BattleFig=%d, want fallback 7", got)
+	}
+}
+
+func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
+	units := []*Unit{
+		{MapSelectorKey: 2, HasMapSelectorKey: true},
+		{MapSelectorKey: 0, HasMapSelectorKey: true},
+		{MapSelectorKey: 2, HasMapSelectorKey: true},
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if err := MaterializeNativeMapSelectorSlots(units, cache); err != nil {
+		t.Fatal(err)
+	}
+	for i, want := range []int{0, 1, 0} {
+		if !units[i].HasMapSelectorSlot || units[i].MapSelectorSlot != want {
+			t.Fatalf("unit %d native slot=%d known=%v, want %d", i, units[i].MapSelectorSlot, units[i].HasMapSelectorSlot, want)
+		}
+	}
+	missing := []*Unit{{Fig: 99}}
+	if err := MaterializeNativeMapSelectorSlots(missing, &fdicon.NativeSelectorCache{}); err == nil {
+		t.Fatal("missing raw key must fail rather than fall back to Fig")
+	}
+	if missing[0].HasMapSelectorSlot {
+		t.Fatal("failed materialization must not mutate slots")
+	}
+	invalid := []*Unit{
+		{MapSelectorKey: 9, HasMapSelectorKey: true},
+		{MapSelectorKey: 0x100, HasMapSelectorKey: true},
+	}
+	cache = &fdicon.NativeSelectorCache{}
+	if err := MaterializeNativeMapSelectorSlots(invalid, cache); err == nil {
+		t.Fatal("invalid raw key must fail")
+	}
+	if _, err := cache.KeyForSlot(0); err == nil {
+		t.Fatal("preflight failure must not mutate cache")
 	}
 }

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 )
 
 // Camp 陣營。
@@ -53,6 +55,11 @@ type Unit struct {
 	// true. It is a per-resource FDICON cache slot, never a character identity.
 	MapSelectorSlot    int
 	HasMapSelectorSlot bool
+	// MapSelectorKey is the raw byte passed to 0x11019 before it returns the
+	// cache slot above. It is optional because legacy map JSON does not carry
+	// its native source provenance. It must never be inferred from Fig.
+	MapSelectorKey    int
+	HasMapSelectorKey bool
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
@@ -113,6 +120,38 @@ type Unit struct {
 	// 敵/友單位表 EX 欄,docs/data/exe_tables/unit.json,由 export_units.py 依 (race,cls)
 	// 帶入 units.json 的 "ex" 欄;舊版(尚未重新匯出的)units.json 無此欄則為 0,
 	// 該次攻擊經驗值算出 0,見 growth.go AttackExp 註解)
+}
+
+// MaterializeNativeMapSelectorSlots applies 0x11019's first-seen cache rule
+// to one already-proven construction order. Callers must supply exactly the
+// native source order for one FDICON resource (player persistent roster or a
+// scripted FDFIELD spawn group); this function deliberately does not choose
+// that order or fall back to Fig/Portrait. It makes no partial mutation when
+// a key is absent or invalid.
+func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelectorCache) error {
+	if cache == nil {
+		return fmt.Errorf("native map selector: nil cache")
+	}
+	for i, u := range units {
+		if u == nil || !u.HasMapSelectorKey {
+			return fmt.Errorf("native map selector: unit %d has no explicit raw key", i)
+		}
+		if u.MapSelectorKey < 0 || u.MapSelectorKey > 0xff {
+			return fmt.Errorf("native map selector: unit %d has invalid raw key", i)
+		}
+	}
+	slots := make([]int, len(units))
+	for i, u := range units {
+		slot, err := cache.SlotFor(u.MapSelectorKey)
+		if err != nil {
+			return fmt.Errorf("native map selector: unit %d: %w", i, err)
+		}
+		slots[i] = slot
+	}
+	for i, u := range units {
+		u.MapSelectorSlot, u.HasMapSelectorSlot = slots[i], true
+	}
+	return nil
 }
 
 // initialEquipmentFlags mirrors the original spawn constructor: its first
@@ -437,6 +476,7 @@ type unitsFile struct {
 		Fig             int  `json:"fig"`
 		BattleFig       *int `json:"battle_fig,omitempty"`
 		MapSelectorSlot *int `json:"map_selector_slot,omitempty"`
+		MapSelectorKey  *int `json:"map_selector_key,omitempty"`
 		Group           int  `json:"group"`
 		X               int  `json:"x"`
 		Y               int  `json:"y"`
@@ -488,6 +528,9 @@ func Load(path string) (*State, error) {
 		}
 		if u.MapSelectorSlot != nil {
 			nu.MapSelectorSlot, nu.HasMapSelectorSlot = *u.MapSelectorSlot, true
+		}
+		if u.MapSelectorKey != nil {
+			nu.MapSelectorKey, nu.HasMapSelectorKey = *u.MapSelectorKey, true
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)
