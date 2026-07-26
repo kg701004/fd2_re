@@ -37,6 +37,13 @@ movement／portrait／score fallback；`0x0b` 分支直接呼叫 `0x1598a`，在
 後選 `0x15311` 或 `0x1548e`。這是「record command→action helper」的已證實邊界，
 但尚不能把 nibble 值命名成攻擊、移動或 AI 陣營語意。
 
+`0x1d80b`、`0x1d8ba`、`0x1d988` 是目前確認的上層掃描 callers：三段都以
+`[0x3beb]` 遍歷 `0x50`-byte records，先檢查 raw `+6`、`+5 & 0x81`、`+0x26`，再分別
+呼叫 `0x13a9f` 或 `0x1598a→0x1567e→0x13a9f`。每筆之後依 `[0x51a8f]` function table
+與 `[0x53c03]` table dispatch，並受 `[0x53ecc]` loop flag 控制。這證明它們是
+unit-scan/action-loop 的 caller boundary；`+6` 的 camp/phase 名稱、table entry 的
+劇本語意仍不命名。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。
