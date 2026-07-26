@@ -317,8 +317,8 @@ func (u *Unit) TickStatus() {
 type State struct {
 	W, H  int
 	Units []*Unit
-	// NativeMapSelectorCache is the single FDICON-resource cache accumulated in
-	// native construction order. It is intentionally populated only through
+	// NativeMapSelectorCache is the single process-global raw-key cache accumulated
+	// in native construction order. It is intentionally populated only through
 	// AppendNativeMapSelectorBatch; legacy callers may keep using Units without
 	// claiming an indexed-native selector state.
 	NativeMapSelectorCache *fdicon.NativeSelectorCache
