@@ -75,7 +75,7 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 0x12932  mov eax,[edx + eax*4]     ; sprite[index]
 ```
 
-→ **FDICON sprite index = 組 × 12 + 方向 × 3 + cycle**（公式已驗證）；組為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x11019(group)` 建立每組 12 個 FDICON pointers 的表。
+→ **FDICON sprite index = slot × 12 + 方向 × 3 + cycle**（公式已驗證）；slot 為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x10c50→0x11019` 以 FDFIELD `b0` 與 caller resource 查／建 12-pointer block，回傳 cache slot 寫入 `unit+2`；它不是直接 copy 的角色／肖像 byte。
 
 > **撤回全域 identity assertion（2026-07-26）**：角色表、DATO、FDICON 素材與若干玩家 roster 的數值相同，
 > 只能作為素材觀察，不能證明 `unit+2 = character id = portrait`。完整 constructor trace 已證實 FDFIELD
