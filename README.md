@@ -49,6 +49,10 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 
+本輪新增：對話嘴型節拍已依合法 IDA `0x16D00` 證據整理為可測試的
+`remake/internal/dato.MouthState`（每 2 frame tick、閉嘴隨機 2–31 tick、開嘴 1 tick，選用 DATO m0/m3），
+並接入重製對話更新迴圈。這是可驗證的 UI 子系統進展，不等於所有 DATO 資源、框圖排版或 30 章流程已還原。
+
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
 > 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，
 > 目前不宣稱已完成跨平台 runtime parity。

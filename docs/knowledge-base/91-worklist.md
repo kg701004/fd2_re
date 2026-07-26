@@ -133,7 +133,7 @@
 - [x] 對話框 UI ✅(debd52d):原版框素材(LMI1 #21 310×99)+ orig 佈局(下框(5,112)@320/上框鏡射)+
       大側臉頭像(我方左面右/對方右鏡像面左,對映 0x4E8AF/0x4E8E1)+ 白字『』框內換行(≤3行);
       翻頁=campaign story 逐句 Enter。LMI1 #20=單位詳細狀態面板(待用)
-- [ ] DATO 頭像接入:**4 嘴型幀 m0~m3 對話動畫(嘴開合+眨眼)**,非單張(對齊 `01`§7 / `31`§7);播放時機待反組譯 0x16D00
+- [~] DATO 頭像接入：已新增 `internal/dato.MouthState`，以 native `0x16D00` 的每 2 frame tick、開嘴 1 tick、閉嘴 `rand()%30+2` cadence 驅動 m0/m3；完整 DATO frame/grid、speaker layout 與 runtime dialogue parity 仍未閉合。
 
 ## M3 — 音訊層
 > 驗收:戰鬥/城鎮/劇情切場景時 BGM 正確切換,用預錄 OGG(MT-32 音源)。
@@ -825,7 +825,7 @@
 - [x] **finale `0x2c548` first party-cycle map**：Docker Capstone 切出三個 native buffers（128000、64000、64000）、TAI#3 與 FDOTHER#56 backdrop；更正：TAI#3 raw 是 `10×3`、三列 `C9` 的全透明 placeholder，不能誤稱可見 platform。loop index 從 `[0x53bfb]-1` 向下，但必做 `i=0→slot1、i=1→slot0` swap，才以 unit stride80／visual group `+7` 載 `FIGANI group*3+1` 與 `group*3`。`0x29164` 後先有 `0x2b9a1` 的20×1ms loop，再跑 primary FIGANI descriptor frames。已入 `assets/endings/native_2c548.json`，但 DATO/text/input 與 dedicated indexed renderer 未解，保持 fail-closed。
 - [x] **finale party portrait/text map**：DATO=`unit+7`；FDTXT_031 的 #10/#11/ending epilogue 與 FDTXT_000 的角色名／職業名，五個 destination 與 CD/4C glyph style 均已直接對齊 `0x2c7ed..0x2c967`。IDA correction 刪除錯誤的 `unit[+8]+0x0c|45` 斷言，epilogue 改為 `edi<0xdc ? unit[+8]+0x0c : 0x2d`；`Montage.PlanPortraitText` 已有 regression。DATO countdown/anchor、special slot 與 native indexed renderer 尚未可執行，仍 fail-closed。
 - [x] **finale dialogue-frame layout call ABI**：IDA/`14-text-control-codes.md` 交叉確認 `[0x53a81]` 是 `FDOTHER.DAT#5`，不是 DATO；`0x2c773→0x168b6` 實參為 `(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)`，先建立 dialogue frame/grid，後續才由 DATO `[0x53a85]` 經 `0x4e8af` 貼 portrait。已撤回 `dato_layout` 錯誤命名，schema 改為 `dialogue_frame_layout`。
-- [x] **DATO indexed decoder foundation**：新增 `internal/dato`，按 `0x4e8af→0x4e916` 高值-run codec 解四個 80×80 mouth frames，零值保持 opaque（不套 transparent sprite 規則），並提供 strict bounds checked indexed blit；synthetic RLE/opaque-zero 與玩家 DATO#37 regression 已加入。`0x168b6` 的 5×7×5×5 grid 排版與 native mouth cadence 尚未接 runtime。
+- [x] **DATO indexed decoder foundation**：新增 `internal/dato`，按 `0x4e8af→0x4e916` 高值-run codec 解四個 80×80 mouth frames，零值保持 opaque（不套 transparent sprite 規則），並提供 strict bounds checked indexed blit；synthetic RLE/opaque-zero 與玩家 DATO#37 regression 已加入。`0x168b6` 的 5×7×5×5 grid 排版仍未接 runtime；mouth cadence 已由 `MouthState` 接入對話更新迴圈，但不宣稱完整 DATO/grid parity。
 - [x] **dialogue-frame `0x168b6` raw grid plan**：`Montage.PlanDialogueFrameGrid()` 逐一保存 49 次 `sub_1685c` 的 `FDOTHER#5` raw resource index/destination byte（固定 12 次、兩組 3×2 loop、5×5 grid），保留 exact arithmetic；不替 cell 命名 border/portrait，也未解除 dialogue/DATO renderer gate。
 - [x] **FDOTHER#5 raw-cell codec correction**：`0x1685c→0x4e9bb` 只讀 width/height 後逐 row `rep movsb`，不使用 `0x4e916` high-run；新增 `fdother.ParseLMI1RawEntry/DecodeLMI1RawEntry`，真實 #5 entry1 (`3×3`, literal `60 be bd...`) regression 固定此 path，避免把 dialogue frame bank 誤套 LMI1 RLE。
 - [x] **dialogue-frame raw compositor**：`RenderDialogueFrameGrid` 依 49 個 verified placements 直接將 `FDOTHER#5` raw cells 寫入 C buffer，明確使用 opaque `rep movsb`（包含 zero bytes），不接 DATO/text/input；synthetic overlap/zero regression 通過。

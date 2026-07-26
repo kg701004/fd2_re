@@ -35,6 +35,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
@@ -188,6 +189,7 @@ type Game struct {
 	portraits                map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
 	mouthOpen                bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
 	mouthTimer               int                     // 閉嘴倒數(原版 rand%30+2 tick)
+	mouthState               dato.MouthState         // native 0x16d00 cadence adapter
 	curX                     int
 	curY                     int
 	camX                     float64
@@ -3544,11 +3546,14 @@ func (g *Game) Update() error {
 	g.aiStep() // AI 回合驅動(aiBusy 時逐單位行走→攻擊演出)
 	// 嘴型動畫(忠實原版 0x16d00,doc14):每 2 frame 一 tick;閉嘴隨機 2-31 tick、開嘴一瞬
 	if len(g.dialog) > 0 && g.frame%2 == 0 {
-		if g.mouthOpen {
-			g.mouthOpen = false
-			g.mouthTimer = rand.Intn(30) + 2
-		} else if g.mouthTimer--; g.mouthTimer <= 0 {
-			g.mouthOpen = true
+		randomMod30 := 0
+		if g.mouthState.Open {
+			randomMod30 = rand.Intn(30)
+		}
+		if next, err := g.mouthState.Tick(randomMod30); err == nil {
+			g.mouthState = next
+			g.mouthOpen = next.FrameIndex() == 3
+			g.mouthTimer = next.Countdown
 		}
 	}
 	// 截圖模式:到指定幀後自動退出(畫面已於 Draw 存檔)

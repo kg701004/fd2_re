@@ -72,7 +72,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-02 | Battle field | 游標格、鏡頭、可移動格、高亮、單位 HUD、方向／面向 | partial；HUD 固定錨點與完整 native sprite 未閉合 |
 | UI-03 | Action menu | move/attack/magic/item/status/wait/end-turn 的可見項、enable gate、取消回上一層 | partial；原版 action overlay 的 battle cell table（enabled `[0,2,4,6]`／disabled `[3,5,7,9]`）、open/close 四幀 byte-offset、以可視 cursor column/row 算出的 framebuffer anchor 已閉合。native command grid 亦已定為 320×200、每欄四列，label `(18+100*col,103+22*row)`、MP 右側、↑↓ wrap/←→±4 bounded；scenario raw command mask 已可 materialize。Docker/Xvfb 以 player FDOTHER.DAT 捕捉的 [悠妮 command-0 grid](../figures/native-command-grid-remake.png) 證實 mask→label→palette/font→renderer 路徑，非 original visual diff。玩家提供 `FD2_ORIGINAL_FDOTHER`（或 user assets）時，remake 會直接讀 FDOTHER#0 palette＋#2 cells 並畫 final-open skin；舊 PNG ring 是 fail-closed fallback。raw grid confirm 現明確拒絕送入 legacy `CastArea`，直到 native two-stage target/effect 閉合。動畫、完整 native gate 與 visual-diff 尚缺 |
 | UI-04 | Target/range | 武器 min/max reach、法術 range/AOE、不可用目標灰化、確認／取消 | missing/partial；不能再把攻擊距離寫死相鄰格 |
-| UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；已有 regression，但 native frame/資源與所有 speaker layout 未閉合 |
+| UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 可表達，逐關 branch 證據仍不足 |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`town` 可選 node，但需逐章節驗證 |
@@ -129,7 +129,7 @@ The same IDA pass closes the previously omitted `0x29164` mirror branch. When `u
 
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
-`internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. It is a decoder/compositor primitive only; the `0x168b6` grid choreography, mouth cadence, and ending UI integration remain explicit gates.
+`internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. `MouthState` preserves the verified `0x16D00` cadence as a pure tested adapter and is used by the dialogue update loop; the `0x168b6` grid choreography, complete DATO runtime resource binding, and ending UI integration remain explicit gates.
 
 `Montage.PlanDialogueFrameGrid()` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid). It exposes only `FDOTHER#5` resource indices and byte offsets; cell semantics and DATO mouth timing remain intentionally unnamed.
 
