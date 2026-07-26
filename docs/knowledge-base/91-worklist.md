@@ -113,7 +113,7 @@
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
 - [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
-- [~] 敵方 AI 回合:flood-fill + 評分選目標(擊殺×2),對齊 `11`(0x15140)：已補地形 AP/DP 與原版 `dmg≤2` 跳過門檻；情境加成、狀態倍率待 RE，且已證實原版 `0x157B5/0x150F1` 有 SpellID 評分／執行、`0x15B77` 依 spell family 分流目標。remake 已建立 `State.SpellBook`/`AIPlan.SpellID`、item raw K4 (`0x11`) command inventory、`AIAvailableSpells` 與 `AISpellCandidates`（攻擊／補血／增益／解毒祛麻／敵方狀態）；尚未接原版評分與實際施法行動。
+- [~] 敵方 AI 回合:flood-fill + 評分選目標(擊殺×2),對齊 `11`(0x15140)：已補地形 AP/DP 與原版 `dmg≤2` 跳過門檻；`0x15B77` 的 attack/recovery/flag/ID22 raw score slices 已各自有 adapter，但情境加成、ID17–19 score、完整狀態優先級仍待 RE。remake 已建立 `State.SpellBook`/`AIPlan.SpellID`、item raw K4 (`0x11`) command inventory、`AIAvailableSpells` 與 `AISpellCandidates`（攻擊／補血／增益／解毒祛麻／敵方狀態）；尚未接 AI runtime、target selection 與實際施法行動。
 - [x] **RE-AI-SPELL-SCORE-15B77**：Docker Capstone 釘死 `0x15b77` 的 attack IDs0..12 score（HP `<` spell value→24，否則8；record `+0x08==0` 時乘 1.5 並 toward-zero）與 recovery IDs13..16 score（current HP `<` max/2→3，`+0x34 bit0` 再×2）；新增 raw-only `ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`，ID10..12 嚴格要求 caller-supplied `0x1f183` gate。未接 AI runtime、command inventory、target UI 或效果名稱。
 - [x] **RE-AI-SPELL-FLAGS-15B77**：同一 `0x15b77` 釘死 ID20/26→raw `+0x25`、ID21/27→raw `+0x26` 的 nonzero flag score，每筆各加4；新增 `ScoreNativeAISpellFlag`，不清除、不命名 flag，也不接施法 runtime。
 - [x] **RE-AI-SPELL-ID22-15B77**：`0x15d30` 先 gate raw `+0x27==0`，再呼 `0x1c269(unit,nil)` 掃 `+0x1a..+0x1e` 五 bytes；任一 bit set 即累加6。新增 `ScoreNativeAISpell22`，不命名欄位、不接 ID22 effect/status runtime。
