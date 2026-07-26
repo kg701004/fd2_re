@@ -744,6 +744,7 @@
       明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入
       `56-fd2-remake-sdd.md` §5.1（E1 editable graph）。仍待逐列補原版 handler E0／DOSBox E2 證據與 save/reload regression，
       未把 authored graph 當作原版已驗證。
+- [x] **UI-11 preparation split-slide primitive**：官方 IDA 確認 `0x1f42d/0x1f1cc` 使用 FDOTHER#5 LMI1 entry `0x52`，以 456-stride 在 `(85-offset,82)`／`(165+offset,81)` 執行 `100,75,50,25,0` 五步，每步 present 後 restore；新增 `NativeSplitSlideSteps`、edge-clipped cell blit 與 callback executor/regression。未命名 MAP/TURN，也未接未證實的行軍 input。
 - [ ] **SDD-3 UI shell vertical slice**：title→story→battle field→action menu→dialog→town/shop，加入 input trace、headless regression 與真實截圖 artifact。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [~] **RE-UNIT-STATIC-TABLES**：已新增 `tools/extract_native_unit_tables.py` 並以實際 FD2.EXE 產生/驗證 raw fixture：高 branch `b1-0x44 → 0x61af9` 68×10；lower branch `0x61da1` 32×24／`0x620a1` 68×11。尚缺 runtime branch selector 與 unit record byte-for-byte join，故 HUD optional unit/HP 仍 fail-closed；`0x619fd` 不屬於 constructor。

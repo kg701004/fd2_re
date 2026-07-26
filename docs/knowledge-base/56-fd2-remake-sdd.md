@@ -73,7 +73,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`town` 可選 node，但需逐章節驗證 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；buy/sell/equip 有 code，UI sprite/layout 與原版分支未驗 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；現有 service menu 對未接 callee 明確擋下 |
-| UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，原版 layout/操作未做差分 |
+| UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；自有格式可用。native 已知 `FD2.SAV` rolling-XOR/checksum envelope 與 4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）；metadata `+0`=chapter/`0xff` empty、`+2..+5`=currency 已閉合，其餘語意未閉合，尚非相容實作 |
 
 ### UI acceptance gate
@@ -553,6 +553,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    FIGANI placement bridge: `0x2935b` uses each frame header's signed X/Y, so runtime `assets/figani/meta.json` is placement data, not a hand-tuned animation hint. `cmd/fd2` regression reads every metadata resource from player-provided `FIGANI.DAT` and checks every exported `(X,Y)` against `internal/figani.DecodeResource`; a missing archive skips only that player-asset assertion. PNG rendering remains a presentation adapter, but cannot silently drift from the native frame coordinates.
 
    FIGANI scheduler boundary: official IDA at `0x2b9a1` shows `arg4==0` only clears the subframe counter and performs no render. On the advancing path, native code selects the current frame first, calls `0x2935b`, then reads descriptor `+6` as the delay; only after the rendered subframe reaches that delay does it reset subframe and wrap the frame index. `internal/figani.NativeScheduler.Step` implements this state machine as a pure, caller-owned primitive. It does not infer `0x2935b` presentation semantics or authorize an ending renderer.
+
+   Preparation split-slide boundary: official IDA at `0x1f42d`/`0x1f1cc` fixes FDOTHER#5 LMI1 entry `0x52`, stride 456, five offsets `100,75,50,25,0`, and placements `(85-offset,82)` plus `(165+offset,81)`. `fdother.NativeSplitSlideSteps`, clipped cell blit, and `RunNativeSplitSlide` preserve one present/restore pair per pass. This proves indexed choreography only; MAP/TURN labels, movement confirmation input, and native VGA restore remain caller-owned and fail-closed.
 
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
 

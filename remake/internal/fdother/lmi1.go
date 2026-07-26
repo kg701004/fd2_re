@@ -51,6 +51,39 @@ func (e LMI1Entry) BlitAt(dst []byte, stride, x, y int, mirror bool) error {
 	return nil
 }
 
+// BlitAtClipped is the explicit edge-clipped variant used by native slide
+// callers whose cell begins outside the indexed viewport.  The strict
+// BlitAt contract remains unchanged for ordinary UI assets.
+func (e LMI1Entry) BlitAtClipped(dst []byte, stride, x, y int, mirror bool) error {
+	if e.Width <= 0 || e.Height <= 0 || len(e.Pixels) != e.Width*e.Height {
+		return errors.New("fdother: invalid LMI1 entry geometry")
+	}
+	if stride <= 0 || y >= len(dst)/stride || y+e.Height <= 0 {
+		return errors.New("fdother: clipped LMI1 destination is outside surface")
+	}
+	for row := 0; row < e.Height; row++ {
+		dy := y + row
+		if dy < 0 || dy >= len(dst)/stride {
+			continue
+		}
+		for col := 0; col < e.Width; col++ {
+			dx := x + col
+			if dx < 0 || dx >= stride {
+				continue
+			}
+			src := col
+			if mirror {
+				src = e.Width - 1 - col
+			}
+			v := e.Pixels[row*e.Width+src]
+			if v != 0 {
+				dst[dy*stride+dx] = v
+			}
+		}
+	}
+	return nil
+}
+
 // ParseLMI1 decodes the small indexed sub-resource container used by the
 // native UI sprite bank. Its directory starts at byte 6 (after "LMI1" and a
 // u16 count), and each entry is {u16 width, u16 height, 0xc0 codec stream}.
