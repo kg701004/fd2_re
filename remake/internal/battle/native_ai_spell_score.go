@@ -65,6 +65,32 @@ func ScoreNativeAISpellRecovery(records []byte, candidates []byte, spellID int) 
 	return score, nil
 }
 
+// ScoreNativeAISpellFlag preserves the ID20/21 helper calls at 0x15cfe and
+// 0x15d30: each nonzero raw flag contributes four points. The bytes remain
+// unnamed and this function does not apply or clear them.
+func ScoreNativeAISpellFlag(records []byte, candidates []byte, spellID int) (int, error) {
+	offset := 0
+	switch spellID {
+	case 20:
+		offset = 0x25
+	case 21:
+		offset = 0x26
+	default:
+		return 0, fmt.Errorf("native AI flag score: unsupported spell id %d", spellID)
+	}
+	if err := validateNativeAISpellCandidates(records, candidates); err != nil {
+		return 0, err
+	}
+	score := 0
+	for _, rawIndex := range candidates {
+		record := records[int(rawIndex)*nativeRecordSize : (int(rawIndex)+1)*nativeRecordSize]
+		if record[offset] != 0 {
+			score += 4
+		}
+	}
+	return score, nil
+}
+
 func validateNativeAISpellCandidates(records []byte, candidates []byte) error {
 	if len(records)%nativeRecordSize != 0 {
 		return fmt.Errorf("native AI spell score: malformed record buffer")

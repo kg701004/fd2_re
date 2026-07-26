@@ -17,7 +17,7 @@
 
 已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。
 
-AI spell scoring raw slice：Docker Capstone 已閉合 `0x15b77` attack IDs0..12 的 HP threshold/`+0x08` branch 與 recovery IDs13..16 的 half-HP/`+0x34 bit0` branch；`ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery` 只接受 raw records，ID10..12 另要求 caller-supplied `0x1f183` gate。這些函式不命名欄位、不接 AI runtime 或 target UI。
+AI spell scoring raw slice：Docker Capstone 已閉合 `0x15b77` attack IDs0..12 的 HP threshold/`+0x08` branch、recovery IDs13..16 的 half-HP/`+0x34 bit0` branch，以及 ID20/21 的 `+0x25/+0x26` nonzero flag score；`ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`／`ScoreNativeAISpellFlag` 只接受 raw records，ID10..12 另要求 caller-supplied `0x1f183` gate。這些函式不命名欄位、不接 AI runtime 或 target UI。
 
 ## 2. 證據分級與反組譯規則
 

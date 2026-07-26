@@ -38,6 +38,20 @@ func TestScoreNativeAISpellRecoveryUsesHalfAndRawBit(t *testing.T) {
 	}
 }
 
+func TestScoreNativeAISpellFlagUsesVerifiedOffsets(t *testing.T) {
+	records := make([]byte, 2*nativeRecordSize)
+	records[0x25] = 1
+	records[nativeRecordSize+0x26] = 1
+	got, err := ScoreNativeAISpellFlag(records, []byte{0, 1}, 20)
+	if err != nil || got != 4 {
+		t.Fatalf("ID20 score=%d err=%v", got, err)
+	}
+	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 21)
+	if err != nil || got != 4 {
+		t.Fatalf("ID21 score=%d err=%v", got, err)
+	}
+}
+
 func TestScoreNativeAISpellRejectsMalformedCandidates(t *testing.T) {
 	if _, err := ScoreNativeAISpellRecovery(make([]byte, nativeRecordSize-1), []byte{0}, 13); err == nil {
 		t.Fatal("malformed record buffer accepted")
