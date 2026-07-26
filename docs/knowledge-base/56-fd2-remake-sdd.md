@@ -588,6 +588,17 @@ write to the selection table or persistent roster; it is a preview/presentation
 consumer, not the Enter/toggle mutation primitive. The remake must therefore
 keep `partyDeploy` mutation separate from this raw renderer boundary.
 
+The preparation input wait loop is a separate raw boundary at `0x32004`,
+called by `0x31a29`. It polls `0x10620`; when the DOS key word changes it
+redraws through `0x31e80`, otherwise it reads the two-byte record at
+`0x53a8d/0x53a8e` via `0x36d98`. The verified return-byte branches are
+extended `0xe0/0x52` unchanged, `[0x53a8d]==0x20` to `0x1c`, and
+`[0x53a8e]==0x53` to `1`, with the helper's seeded default `0x10` otherwise.
+The caller treats return `1` and `0x1c` as raw branch values before invoking
+`0x320ce` and `0x320fc`; the remake captures only this byte contract in
+`NormalizeNativePreparationKey` and does not assign key names, roster
+mutation, or renderer semantics.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:
