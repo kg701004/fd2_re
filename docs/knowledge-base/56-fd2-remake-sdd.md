@@ -116,6 +116,8 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。
 
+Generic scheduler closure：`funcs_2ac25` 是 command-indexed function bank（ID0 entry `0x26152`）。`0x2a6bd` 先以 mode 0 呼該 entry 取得 animation step count，接著在 640-stride off-screen buffer 的逐 step loop 呼 mode 2、`0x11eb0` copy 320×200 至 VGA、`0x17aa9(1)` tick、再呼 mode 1；收尾的雙 buffer path 還會呼 mode 4。`0x2b9a1` 並非未知 effect，它以 descriptor `frameIndex*4+8` 指向 frame的 byte+6 delay，遞增 `0x540fc`／`0x540fd` subframe counters並在上界 reset。這固定了 phase/order，仍不替每個 command entry 的視覺語意命名。
+
 Generic presentation 的 BG selector 亦已閉合為 raw dataflow：`0x2a6bd` 呼 `0x2b5e1(finalCount, finalTargetArray)`，後者**倒序**掃 target slot，對該 unit cell 呼 `0x12e38`；若 raw `0x1f183` gate 不通、或累積 selector 為零，才以 decoded control byte+2 取代 selector，最後才餵 `0x111ba("BG.DAT", selector)`。`fdicon.NativeCommandBackgroundSelector` 保留該 strict pure rule。command ID 的 generic branch 不可被說成直接選 BG resource；selector 的高階地形／場景語意仍不命名。
 
 BG asset boundary：`BG.DAT` 是 LLLLLL archive；generic compositor 的前三個已知 layer #0/#1/#2 都是 `{u16 width,u16 height, 0x4e63d four-mode RLE}` single-frame payload，實測各為 320×100。`fdother.DecodeArchiveSingleFrame` 明確解這種無 frame-directory 的 archive entry，player-archive regression 對三個 layer 解入 320×100 indexed surface。它不替 `0x2b5e1` 的其他 raw selector 命名，也不自動把 current PNG background 當 native layer schedule。
