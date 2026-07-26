@@ -11,7 +11,8 @@
 > (反組譯 doc47/50、dosbox doc48、青衫、影片、FDFIELD 直讀)。不知道就先 RE 拿真值,拿不到就誠實停,不准猜。
 > (BeatRunner 外推 pan 值→越改越偏的教訓;驗收對 reference 實測非「測試綠」,規則 65。)
 
-> **進度入口**：整體完成度先看根目錄 [`README.md`](../../README.md) 狀態表，再看 `56` SDD、`42` gap audit、`91` worklist。
+> **進度入口**：整體完成度先看根目錄 [`README.md`](../../README.md) 狀態表，再看 `56` SDD、`57` UI evidence matrix、
+> `42` gap audit、`91` worklist。`SESSION-HANDOFF-*` 是歷史 provenance，不是目前工作指令。
 > 本索引與其他專題文件是證據路由，不是「已完成全遊戲」清單。
 
 ---

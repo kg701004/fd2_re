@@ -54,20 +54,8 @@
 - **施法入口已找到**：`0x154D1` 仍不是入口；`0x15688/0x157B5` 的 AI command 評分、`0x15B77` 的 spell-family 目標分支與 `0x15055/0x150F1` 的 spell 執行 callsite 已定案。runtime `unit+0x1a..+0x1d` 是 magic raw，`+0x22..+0x24` 是 modifier flags，不是 M1–M5 bitfield。remake 缺口是 command inventory、SpellID、治療／攻擊目標優先級與 runtime execution 尚未接完。
 - **doc32 §4 三個 `[阻]` 項目(裝備加成精確公式、物品使用效果碼、轉職系統機制)本身就還沒反組譯完**,remake 的裝備/道具/轉職缺口有一部分要等 RE 補完才能對照實作,不能單純算「remake 沒做」。
 
-## 落差統計（歷史快照，已失效）
+## 已移除的歷史統計與排序
 
-> 原始 33 項的 17/4/13 計數來自較早 working tree，不能代表 2026-07-25 現況；後續 code 已加入 equipment、church、shop sell、AI command data 等實作。新的狀態以本表逐列與 `57-ui-evidence-matrix.md` 為準，禁止引用下面舊數字作完成度宣稱。
-
-- 舊快照：❌ 17、🟡 4、✅ 13；**不得當作現況統計**。
-
-> **worklist 第 8 輪更新(物理攻擊公式補全)**:上表「物理攻擊:地形AP/DP%修正/暴擊/命中率/傷害隨機化」與「地形攻防加成」5 條由 ❌ 轉為 ✅/🟡,「敵方AI:目標評分」補上地形%(仍 🟡,其餘子項未變)。相對本節原始統計:❌ 減 5(暴擊、傷害隨機化轉✅共2項;地形AP/DP%修正、命中率、地形攻防加成轉🟡共3項)→ **12** 項;✅ 加 2 → **15** 項;🟡 加 3 → **7** 項(其中地形AP/DP%修正、命中率、地形攻防加成 3 項為「已補但含近似值」,見對應列的誠實標記:HIT/EV 為固定近似值、森林修正因資料管線限制未接)。
-
-## 最該補的前 5 項(依「影響原版可玩性/戰鬥正確性」排序,worklist 第 8 輪前的排序,第 1、5 項已部分處理見上方更新註記)
-
-1. ~~**物理攻擊補全命中率/暴擊/地形修正/傷害隨機化**~~(worklist 第 8 輪已補:暴擊/傷害隨機化完整實作;命中率/地形AP-DP%修正因來源資料本身缺 HIT/EV 欄與森林/正常地形無法從 `cost[]` 分辨,採誠實標記的近似值,細節見上表對應列與 `combat.go`/`terrain.go`/`export_units.py` 檔頭註解)。
-2. ~~**經驗值與升級系統**~~(worklist 第 9 輪已補:`growth.go` 七式經驗公式 + 升級成長,`combat.go`/`magic.go` 已接上,見上表。轉職系統本身仍未實作,`growthTable` 已含轉職後職業的成長列供未來銜接)。
-3. **道具使用與原版裝備數值閉合**(doc02 §5、doc32)——inventory/shop/equip 已存在，但 item action、裝備法術與 HIT/EV/native stat source 尚未閉合；不能把「資料已載入」當成完整機制。
-4. **敵方 AI 施法 runtime**——RE callsite 與 command mapping 已有，remake 目前只完成資料層與候選族群，尚未把 native ranking、目標選擇、MP gate、施法演出接到 `NextAIPlan`。
-5. ~~**地形攻防加成**~~(worklist 第 8 輪已補一般/沼澤兩類;森林 AP-5%/DP+10% 待 `export_engine_assets.py` 匯出管線補獨立地形代碼欄位後才能收斂,見上表)。
-
-轉職系統、劍技傷害、商店賣出、傳送術等排在此 5 項之後,原因是:轉職依賴裝備系統先到位才有意義;劍技/傳送使用頻率相對低;商店賣出是純數值缺口、不影響戰鬥正確性。
+早期的 33 項計數、worklist 第 8 輪增減帳與「前 5 項」排序已被後續程式與 RE 證據取代，
+會與上方逐列現況互相矛盾，故不保留在本文件。需要歷史 provenance 請查 Git；當前優先序
+由 `56` SDD 的 evidence gate、`57` UI matrix 與 `91` worklist 決定。

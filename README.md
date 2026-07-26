@@ -17,10 +17,15 @@ Worklist 目前是 **357 個 `[x]`、92 個 `[~]`、66 個 `[ ]`**；這些是�
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
+這組數字不能換算成「原版完成了幾％」：`[x]` 可能只代表一個格式、函式或 raw adapter 已通過證據 gate，
+而不是一個章節已可通關。以玩家可見功能衡量，目前是「多個垂直切片」；30 章逐章的戰前／戰後、城鎮、商店、
+整備、存檔與演出順序仍未逐章閉合。因此本專案目前與原版的主要差距不是素材解碼，而是 campaign runtime、
+完整 UI renderer、item effect、音訊／DOS timing 與跨平台回歸。
+
 ### 文件治理（避免把反組譯筆記當成進度）
 
 摘要看 README 狀態表；證據 gate 與玩法差距看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)／[`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md)；
-逐項追蹤看 [`91` worklist](docs/knowledge-base/91-worklist.md)。`00` 是路由索引；`01`–`57`、`99` 是專題證據與歷史記錄；`90`、`30` 是規劃/WBS 基線。
+逐項追蹤看 [`91` worklist](docs/knowledge-base/91-worklist.md)。`00` 是路由索引；`01`–`55`、`99` 是專題證據與歷史記錄；`56` SDD 與 `57` UI evidence matrix 是現行 gate；`90`、`30` 是規劃/WBS 基線。
 專題文件中的「全破／完成」只限該段格式、資源或函式已驗證，不代表全遊戲 parity；若歷史筆記與三份權威文件衝突，以最新證據與 fail-closed 標註為準。
 
 ### 已有成果圖片
@@ -234,7 +239,8 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 {{branch: "追上去" -> [spawn:hanno@10,4]   "留下防守" -> [spawn_wave:defenders]}}
 ```
 
-→ 新增事件、分支劇情、自創戰役**只要寫資料,零引擎改動**;原版 30 關用同一套 DSL 忠實重現,同引擎也能跑
+→ 新增事件、分支劇情、自創戰役以資料驅動，目標是**只改腳本、不改引擎**；原版 30 關的逐章轉換與 parity
+仍在進行中，尚不能宣稱已用同一套 DSL 忠實重現。
 玩家自製戰役。完整設計見 [`29` 可擴展事件系統](docs/knowledge-base/29-remake-extensible-event-system.md)。這是 remake 相對原版「擺脫固定 33 路線」的關鍵。
 
 ### ⚔️ 戰鬥演出：局部原版對照（非整體 renderer parity）
