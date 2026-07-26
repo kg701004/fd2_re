@@ -783,3 +783,4 @@
 - [x] **non-mirrored indexed fade primitive**：`RenderFigureFadePass` 現真正執行每輪 B→A（320→640）restore、secondary FIGANI 在 `stage×10` 的 indexed blit、A left viewport→VGA 與 baseline DAC delta；TAI#3 bytes 必須是原始透明 no-op。像素 regression 鎖住 backdrop 保留、stage shift 與 48→2 palette；B→C 的 post-figure `memmove(64000)` 亦已記錄，供下一段 portrait renderer 使用。
 - [x] **RE-UNIT-RAW-SCHEMA**：`export_units.py` 與 `battle.NativeConstructorTable` 已保存已證實 branch/index/raw records，嚴格拒絕 malformed dimensions；此項只完成資料邊界，不代表 renderer/gameplay 已接通。
 - [x] **RE-HUD-RAW-CYCLE**：閉合 `sub_1297d` 的 `[0x53c0b]/[0x53c0f]` raw state 更新規則並加入 pure adapter/regression；runtime scanline source/call timing 尚未接入，禁止用 `g.frame` 替代。
+- [x] **CH29-POST-FLOW-WIRING**：`postbattle_ch29_persist` 已接 recovered `ch29_post` handler→`preparation_ch30`；移除錯誤 synthetic sync/set beats，保留 native LOADCH persistent-roster boundary。`0x2bce5` renderer 未完成前仍 fail-closed。
