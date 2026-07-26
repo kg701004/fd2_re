@@ -30,3 +30,16 @@ func TestApplyNativeRawWordStepRejectsBadIndexBeforeMutation(t *testing.T) {
 		t.Fatal("bad input mutated records")
 	}
 }
+
+func TestApplyNativeRawWordStepAtOffsetsMatches22866Family(t *testing.T) {
+	records := make([]byte, nativeRecordSize)
+	records[0x20], records[0x21] = 10, 1
+	records[0x4a], records[0x4b] = 100, 0
+	got, state, score, err := ApplyNativeRawWordStepAtOffsets(records, []byte{0}, 0, 0x23, 0x4a)
+	if err != nil || state != 0x80a4 || len(got) != 1 || !got[0].Processed || got[0].Marker != 2 || got[0].Delta != 16 || score != 62 {
+		t.Fatalf("results=%#v state=%#x score=%d err=%v", got, state, score, err)
+	}
+	if records[0x23] != 2 || records[0x4a] != 116 {
+		t.Fatalf("raw offsets = %#x %#x", records[0x23], records[0x4a])
+	}
+}
