@@ -155,6 +155,9 @@ native command、`[+8]` item、`[+12]` wait。`0x173e7` 選第一個值為 0 的
 - native command：`0x1c269(actor,0)` 必須枚舉至少一個 raw command bit，且 raw `unit+0x27==0`；任一失敗皆寫 `+4=1`。
   command 22 已證實會寫入此 duration byte；其遊戲名稱與所有 producer 尚未閉合，故 remake 只以
   `NativeTransient[5]` 保存並 gate raw command，**不得再說它等於 legacy `Sealed`**。
+  選定 command 的 MP availability 另由 `0x159fa` 驗證 record `+5 <= unit+0x44`；`battle.NativeCommandAvailable`
+  只在 raw bit、完整 0..35 command record 與 MP gate 同時成立時回 true，未知 36..39 bits 與 malformed book
+  fail-closed，不把 selector gate 誤當 action-direction 或 target geometry。
 - item：`0x1b8a6(actor)` 計數八 slot 中 flag `0x80` 未設的 entries；零個即 `+8=1`。目前 editable
   inventory 沒有這個 runtime flag，故 `len(Inventory)` 僅是明確標記的 approximation。
 - wait：wrapper 未寫 `+12`，故在這條 chooser path 永遠可選。
