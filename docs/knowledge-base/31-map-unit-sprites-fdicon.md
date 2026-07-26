@@ -88,7 +88,10 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 > 0x50-byte record 時，直接將同一 `join_id` 寫入 `+7` 與 `+8`；`0x33499` 已證實 `+8` 是
 > roster character-ID lookup。之後 `0x10a77` 讀 copied persistent `+7` 當 `0x11019` key。因此新加入
 > 的玩家 record **初始** map key 等於 character ID。這是特定 writer 的資料流，不是 FDFIELD/NPC 的
-> identity rule，也尚未證明所有後續 save mutation 都保持等值。
+> identity rule。它也不是 immutable：class-change flow `0x314a7..0x3157a` 以 selected roster slot
+> 定位 live `0x53a45+slot×0x50`，最後把 UI-selected raw byte 寫回 `+7`（同時重算 `+0x20`）。因此
+> 「join-id 相等」只適用於 fresh record；target byte 的高階名稱及它何時經 sync/save 落入 persistent
+> record 仍須另追。
 
 | runtime byte | 已證實的狹窄意義 | evidence |
 |---|---|---|
