@@ -49,6 +49,23 @@ func TestNative2C548PortraitTextUsesEDIForSpecialEpilogue(t *testing.T) {
 	}
 }
 
+func TestNative2C548DatoGridTranscribesAllRawCells(t *testing.T) {
+	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cells, err := montage.PlanDatoGrid()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cells) != 49 || cells[0] != (DatoCellPlacement{ResourceIndex: 1, DestinationByte: 2240}) || cells[1].ResourceIndex != 2 || cells[1].DestinationByte != 2323 {
+		t.Fatalf("DATO cells head=%#v len=%d", cells[:2], len(cells))
+	}
+	if cells[len(cells)-1].ResourceIndex != 13 || cells[len(cells)-1].DestinationByte != 22812 {
+		t.Fatalf("DATO cells tail=%#v", cells[len(cells)-1])
+	}
+}
+
 func TestNative2C548FigureFadeIsNineNonMirroredPasses(t *testing.T) {
 	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
 	if err != nil {
