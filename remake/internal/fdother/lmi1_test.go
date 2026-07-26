@@ -84,14 +84,14 @@ func TestFDOTHER005LMI1UIContainer(t *testing.T) {
 	}
 }
 
-func TestFDOTHER005MapHUDUses4ModeFrameDescriptors(t *testing.T) {
+func TestFDOTHER005MapHUDUses4ModeFrameEntries(t *testing.T) {
 	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	if _, err := os.Stat(datPath); err != nil {
 		t.Skip("player-provided FDOTHER.DAT is absent")
 	}
-	// These are decimal LMI1 directory indices. Writing them as 0x83/0x84
-	// accidentally selected entries 131/132 (6x7/6x5), not HUD entries 83/84.
-	for index, want := range map[int][2]int{83: {44, 12}, 84: {45, 12}, 130: {69, 34}} {
+	// 0x1aeb1 has literal native immediates 0x83/0x84, so these are
+	// hexadecimal directory indices 131/132, not decimal 83/84.
+	for index, want := range map[int][2]int{0x83: {6, 7}, 0x84: {6, 5}, 130: {69, 34}} {
 		frame, err := DecodeLMI1FrameResource(datPath, 5, index)
 		if err != nil {
 			t.Fatalf("entry %#x: %v", index, err)
@@ -99,11 +99,9 @@ func TestFDOTHER005MapHUDUses4ModeFrameDescriptors(t *testing.T) {
 		if [2]int{frame.Width, frame.Height} != want {
 			t.Fatalf("entry %#x geometry=%dx%d, want %dx%d", index, frame.Width, frame.Height, want[0], want[1])
 		}
-		// 0x1aeb1 directly calls 0x4e63d for entries 83/84. The current
-		// generic four-mode decoder does not yet accept their streams, so this
-		// test intentionally records descriptor provenance/geometry only. It
-		// must not claim a successful GUI/frame decode before that mismatch is
-		// independently resolved.
+		if err := frame.BlitAt(make([]byte, 320*200), 320, 320*157+1, -1); err != nil {
+			t.Fatalf("entry %#x 0x4e63d decode: %v", index, err)
+		}
 	}
 }
 
