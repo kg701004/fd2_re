@@ -43,3 +43,14 @@ func TestDATOPlayerResourceIfPresent(t *testing.T) {
 		t.Fatalf("DATO#37=%#v", frames)
 	}
 }
+
+func TestDATOFrameBlitAtOffsetIsOpaque(t *testing.T) {
+	dst := make([]byte, 320*20)
+	frame := Frame{Width: 2, Height: 2, Pixels: []byte{0, 7, 8, 0}}
+	if err := frame.BlitAtOffset(dst, 320, 3*320+4); err != nil {
+		t.Fatal(err)
+	}
+	if dst[3*320+4] != 0 || dst[3*320+5] != 7 || dst[4*320+4] != 8 || dst[4*320+5] != 0 {
+		t.Fatalf("DATO offset blit=%v", dst[3*320+4:3*320+6])
+	}
+}

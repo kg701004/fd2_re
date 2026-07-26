@@ -3,6 +3,7 @@ package ending
 import (
 	"testing"
 
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
@@ -85,6 +86,17 @@ func TestRenderDialogueFrameGridUsesRawOpaqueCopies(t *testing.T) {
 	}
 	if dst[2240] != 1 || dst[2323] != 5 || dst[22812] != 13 {
 		t.Fatalf("dialogue frame pixels=%d/%d/%d", dst[2240], dst[2323], dst[22812])
+	}
+}
+
+func TestRenderDATOFrameAtKeepsCallerOffsetExplicit(t *testing.T) {
+	dst := make([]byte, Bytes)
+	frame := dato.Frame{Width: 2, Height: 1, Pixels: []byte{0, 7}}
+	if err := RenderDATOFrameAt(dst, frame, 320, 0x0c88); err != nil {
+		t.Fatal(err)
+	}
+	if dst[0x0c88] != 0 || dst[0x0c89] != 7 {
+		t.Fatalf("DATO staging paste=%d/%d", dst[0x0c88], dst[0x0c89])
 	}
 }
 

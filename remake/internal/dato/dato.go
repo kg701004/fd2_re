@@ -98,3 +98,12 @@ func (f Frame) BlitAt(dst []byte, stride, x, y int) error {
 	}
 	return nil
 }
+
+// BlitAtOffset is the offset form used by native 0x4e8af callers. The
+// caller owns the proven staging anchor; this helper does not invent one.
+func (f Frame) BlitAtOffset(dst []byte, stride, offset int) error {
+	if stride <= 0 || offset < 0 || offset%stride+f.Width > stride {
+		return errors.New("dato: frame offset is invalid")
+	}
+	return f.BlitAt(dst, stride, offset%stride, offset/stride)
+}
