@@ -70,6 +70,7 @@
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
 - [x] `FDICON.B24`=1680個24×24地圖單位sprite(sprite-RLE,見 `31`);`TAI.DAT`=WxH圖像(sprite-RLE)
 - [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。metadata `+0`=chapter、`0xff`=empty marker 已由 renderer `0x30437` 關閉，`+2..+5`=currency 已由 `0x2d411/0x2d528` 加減／UI render 關閉；其餘 metadata 尚待命名。不得再稱「強加密／無結構」；重製仍用自有格式，native compatibility 低優先。
+- [x] **RE-SAVE-ENVELOPE-ADAPTER**：新增 `remake/internal/fdsave` typed raw adapter，依 `0x4dbd8/0x4dbb9` 保存 rolling-XOR、u32 byte-sum、四槽 bounds 與已證實 metadata `chapter/roster_count/currency`；opaque roster/metadata bytes 不命名、不接 campaign save，Go Docker round-trip/tamper/bounds regression 通過。
 - [x] **音色合成評估+MT-32實證**(SoundFont/MT-32/版本切換,munt渲染15首)→ `16`
 - [x] **擴充劇本/玩法可行性評估**(戰場/對話/商店/機制)→ `17`
 - [~] SoundFont/MT-32 → 見 `16`(MT-32 已渲染);SoundFont 試聽 + TIMB 配器對映待補
