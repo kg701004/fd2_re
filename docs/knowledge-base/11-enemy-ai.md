@@ -30,6 +30,13 @@ current/max HP 與 record `+0x34 bit0`；`0x14..0x16` 掃 raw `+0x25/+0x26/+0x27
 **candidate dispatch boundary**：六個 callers 的 turn/camp 語意、`0x14237` 與
 `0x1567e` 的完整資料契約尚未閉合。
 
+更上游的 `0x13a9f` 是目前可重現的 unit-action dispatcher：它以 `unit index` 建立
+`0x50`-byte record，先檢查 raw `+5` 的 `0x05` bits，再取 `record+0x34 & 0x0f`。
+command nibble `0/1/2/3/5/10` 會呼叫 `0x14ef0`，`4`/`7`/`9`/`11` 則各走不同
+movement／portrait／score fallback；`0x0b` 分支直接呼叫 `0x1598a`，在 score gate
+後選 `0x15311` 或 `0x1548e`。這是「record command→action helper」的已證實邊界，
+但尚不能把 nibble 值命名成攻擊、移動或 AI 陣營語意。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。
