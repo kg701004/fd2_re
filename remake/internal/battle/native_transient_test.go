@@ -18,21 +18,28 @@ func TestNativeTransientStorageIsBoundedByOriginalOffsets(t *testing.T) {
 	}
 }
 
-func TestTickNativeTransientsMatchesSeparateCampPhaseSweep(t *testing.T) {
-	active := &Unit{Camp: Own, OnField: true, HP: 1, NativeTransient: [6]byte{1, 2, 0, 1, 0, 3}}
-	otherCamp := &Unit{Camp: Enemy, OnField: true, HP: 1, NativeTransient: [6]byte{1, 1}}
-	inactive := &Unit{Camp: Own, OnField: false, HP: 1, NativeTransient: [6]byte{1, 1}}
-	dead := &Unit{Camp: Own, OnField: true, HP: 0, NativeTransient: [6]byte{1, 1}}
-	st := &State{Units: []*Unit{active, otherCamp, inactive, dead}}
+func TestTickNativeTransientsUsesRawGates(t *testing.T) {
+	active := &Unit{Camp: Enemy, OnField: false, HP: 0, NativeRecordByte5: 0, HasNativeRecordByte5: true, NativeRecordByte6: 7, HasNativeRecordByte6: true, NativeTransient: [6]byte{1, 2, 0, 1, 0, 3}}
+	otherSelector := &Unit{NativeRecordByte5: 0, HasNativeRecordByte5: true, NativeRecordByte6: 8, HasNativeRecordByte6: true, NativeTransient: [6]byte{1, 1}}
+	blocked := &Unit{NativeRecordByte5: 1, HasNativeRecordByte5: true, NativeRecordByte6: 7, HasNativeRecordByte6: true, NativeTransient: [6]byte{1, 1}}
+	missingRaw := &Unit{Camp: Own, OnField: true, HP: 1, NativeTransient: [6]byte{1, 1}}
+	st := &State{Units: []*Unit{active, otherSelector, blocked, missingRaw}}
 
-	expired := st.TickNativeTransients(Own)
+	expired := st.TickNativeTransientsRaw(7)
 	if got, want := active.NativeTransient, [6]byte{0, 1, 0, 0, 0, 2}; got != want {
 		t.Fatalf("active sweep = %#v, want %#v", got, want)
 	}
 	if len(expired) != 2 || expired[0].Unit != active || expired[0].Offset != 0x22 || expired[1].Offset != 0x25 {
 		t.Fatalf("expiry = %#v, want +0x22/+0x25 for active unit", expired)
 	}
-	if otherCamp.NativeTransient != [6]byte{1, 1} || inactive.NativeTransient != [6]byte{1, 1} || dead.NativeTransient != [6]byte{1, 1} {
-		t.Fatal("only active units in the requested camp may be decremented")
+	if otherSelector.NativeTransient != [6]byte{1, 1} || blocked.NativeTransient != [6]byte{1, 1} || missingRaw.NativeTransient != [6]byte{1, 1} {
+		t.Fatal("units failing the native raw gate must not be decremented")
+	}
+}
+
+func TestTickNativeTransientsCampWrapperFailsClosed(t *testing.T) {
+	u := &Unit{NativeRecordByte6: 1, HasNativeRecordByte6: true, NativeRecordByte5: 0, HasNativeRecordByte5: true, NativeTransient: [6]byte{1}}
+	if got := (&State{Units: []*Unit{u}}).TickNativeTransients(Own); got != nil || u.NativeTransient[0] != 1 {
+		t.Fatal("normalized Camp must not be guessed as the native selector")
 	}
 }

@@ -39,18 +39,18 @@ func (u *Unit) SetNativeTransientDuration(offset int, duration byte) bool {
 	return true
 }
 
-// TickNativeTransients mirrors the raw mutation portion of 0x1A866(camp): on
-// a camp phase boundary it visits active, alive units in that camp and
-// decrements every nonzero byte +0x22..+0x27 independently.  Expiry is
-// reported precisely when a byte becomes zero.  It deliberately does not
-// reuse Unit.TickStatus, whose normalized shared timers are not the native ABI.
-func (s *State) TickNativeTransients(camp Camp) []NativeTransientExpiry {
+// TickNativeTransientsRaw mirrors the recovered raw mutation portion of
+// 0x1A866. The native routine gates on record+6 == selector and
+// (record+5 & 1) == 0; it does not prove an OnField/Alive/Camp equivalence.
+// Every nonzero byte +0x22..+0x27 is decremented independently.
+func (s *State) TickNativeTransientsRaw(selector byte) []NativeTransientExpiry {
 	if s == nil {
 		return nil
 	}
 	var expired []NativeTransientExpiry
 	for _, u := range s.Units {
-		if u == nil || u.Camp != camp || !u.OnField || !u.Alive() {
+		if u == nil || !u.HasNativeRecordByte6 || u.NativeRecordByte6 != selector ||
+			!u.HasNativeRecordByte5 || u.NativeRecordByte5&1 != 0 {
 			continue
 		}
 		for i, duration := range u.NativeTransient {
@@ -65,3 +65,9 @@ func (s *State) TickNativeTransients(camp Camp) []NativeTransientExpiry {
 	}
 	return expired
 }
+
+// TickNativeTransients is retained for source compatibility only. Camp is a
+// normalized remake enum, not the raw selector passed as 0x1A866's argument;
+// mapping one to the other would reintroduce the withdrawn assertion. Callers
+// must provide the recovered raw selector through TickNativeTransientsRaw.
+func (s *State) TickNativeTransients(_ Camp) []NativeTransientExpiry { return nil }

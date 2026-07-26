@@ -87,9 +87,16 @@ type Unit struct {
 	// bytes, and 0x1A866 decrements them separately once per camp phase.
 	// No gameplay name is inferred for an index from this storage alone.
 	NativeTransient [6]byte `json:"native_transient"`
-	Inventory       []int   // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
-	Equipped        []bool  // 與 Inventory 對齊；true 表示該欄位目前已裝備
-	InventorySlots  []int   // 原始 8 個 source bytes；0xff 保留空槽位置
+	// NativeRecordByte5/6 preserve the two raw gate bytes consumed by
+	// 0x1A866. Their gameplay meaning is intentionally unknown; neither is
+	// inferred from Acted, OnField, Alive, or Camp.
+	NativeRecordByte5    byte   `json:"native_record_byte5,omitempty"`
+	HasNativeRecordByte5 bool   `json:"has_native_record_byte5,omitempty"`
+	NativeRecordByte6    byte   `json:"native_record_byte6,omitempty"`
+	HasNativeRecordByte6 bool   `json:"has_native_record_byte6,omitempty"`
+	Inventory            []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
+	Equipped             []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
+	InventorySlots       []int  // 原始 8 個 source bytes；0xff 保留空槽位置
 	// NativeInventoryFlags is the constructor's raw eight-cell flag view. It is
 	// present only when InventorySlots came from the proven source layout.
 	NativeInventoryFlags []int
