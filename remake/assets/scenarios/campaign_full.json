@@ -2196,18 +2196,9 @@
    "next": "battle_ch14"
   },
   "story_ch15": {
-   "type": "story",
+   "type": "cutscene",
    "bgm": "FDMUS_010",
-   "lines": [
-    {
-     "speaker": -1,
-     "text": "第15章:拉卡湖的激戰"
-    },
-    {
-     "speaker": -1,
-     "text": "目標:敵全滅。務必保護「賽可邦勒」存活。"
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch14_pre.json",
    "next": "battle_ch15"
   },
   "shop_ch15_weapon": {

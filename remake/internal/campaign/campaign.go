@@ -106,6 +106,7 @@ type LoadCHState struct {
 type BeatCondition struct {
 	Op        string `json:"op"`
 	UnitSlots []int  `json:"unit_slots,omitempty"`
+	CharID    *int   `json:"char_id,omitempty"`
 }
 
 // HandlerUnitLayout is one absolute runtime-slot placement recovered from a

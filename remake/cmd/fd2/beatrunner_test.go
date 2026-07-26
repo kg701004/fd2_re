@@ -749,6 +749,40 @@ func TestBeatAnyUnitInactiveFailsClosedWithoutCompleteRoster(t *testing.T) {
 	}
 }
 
+func TestBeatRosterHasUsesPersistentPartyAndFailsClosedWithoutIt(t *testing.T) {
+	charID := 12
+	branch := campaign.Beat{
+		Op: "if", Condition: &campaign.BeatCondition{Op: "roster_has", CharID: &charID},
+		Then: []campaign.Beat{{Op: "join", CharID: 4}},
+		Else: []campaign.Beat{{Op: "join", CharID: 9}},
+	}
+	for _, tc := range []struct {
+		name    string
+		members map[int]bool
+		want    int
+		fail    bool
+	}{
+		{name: "present", members: map[int]bool{12: true}, want: 4},
+		{name: "absent", members: map[int]bool{0: true}, want: 9},
+		{name: "missing roster", members: nil, fail: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newBeatTestGame(t, []campaign.Beat{branch})
+			g.partyMembers = tc.members
+			g.beatAdvance()
+			if tc.fail {
+				if g.loadErr == "" || len(g.partyMembers) != 0 {
+					t.Fatalf("missing permanent roster did not fail closed: err=%q party=%#v", g.loadErr, g.partyMembers)
+				}
+				return
+			}
+			if g.loadErr != "" || !g.partyMembers[tc.want] {
+				t.Fatalf("roster variant=%d err=%q party=%#v", tc.want, g.loadErr, g.partyMembers)
+			}
+		})
+	}
+}
+
 func TestReorderScenarioPartyUsesOriginalJoinSlots(t *testing.T) {
 	sc := &battle.Scenario{
 		Party:       []battle.PartyMember{{Fig: 0}, {Fig: 4}, {Fig: 9}, {Fig: 30}},

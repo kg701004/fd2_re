@@ -401,6 +401,12 @@ producer／effect call graph 補齊。
 
 Persistent party 的 transaction 順序固定為：結算結果 → reward/drop → transient status cleanup → MaxHP/MaxMP／equipment recompute → roster save → branch flags → 下一個 node。任何中途資料缺失都停在錯誤畫面，不自動跳到下一戰。
 
+### 5.0.1 Handler predicate boundary（E0 slice）
+
+可編輯 handler 的 `if` 不是自由表達式。每種 predicate 都必須對應已反組譯的 native helper，並在 runtime 缺資料時 fail-closed。現有 `any_unit_inactive` 對應場上 runtime slot；`roster_has(char_id)` 對應 `0x33499` 對永久我方名冊 `[0x53bf7]` 的 `record[+8]` 掃描，`char_id` 僅限原版永久玩家 `0..31`，不得改以暫時出戰隊伍、portrait、NPC 或 story actor 推論。
+
+ch14 pre-handler (`0x334d9`) 是已閉合的動態文字例：`0x33499(12)` 的回傳經 `xor al,1; mul 3` 得到 FDTXT_015 base index。因此有 char_id 12 時依序播放 index `0/1/2`，否則 `3/4/5`；中間仍依原順序 pan `(24,17)`、呼叫 acting 48、最後 focus slot 0。資料以 `handlers/ch14_pre.json` 的兩個結構化 `if roster_has` 與 address-keyed binding 表達，保留六個原始 dialog call-site，避免在 runtime 猜 EBX/EAX。
+
 ### 5.1 目前 editable graph audit（E1，不等同原版 E0）
 
 `remake/assets/scenarios/campaign_full.json` 的 30 個 battle node 已逐一展開

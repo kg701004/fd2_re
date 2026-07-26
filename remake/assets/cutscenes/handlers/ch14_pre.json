@@ -13,41 +13,19 @@
       "chapter_expr": null
     },
     {
-      "op": "roster_has",
-      "args": [
-        12
+      "op": "if",
+      "source": { "addr": "0x334eb", "target": "0x33499" },
+      "condition": { "op": "roster_has", "char_id": 12 },
+      "then": [
+        { "op": "dialog", "text_index": 0, "source": { "addr": "0x3351a", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" },
+        { "op": "pan", "grid_x": 24, "grid_y": 17, "source": { "addr": "0x33526", "target": "0x135dd" } },
+        { "op": "dialog", "text_index": 1, "source": { "addr": "0x3354f", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
       ],
-      "source": {
-        "addr": "0x334eb",
-        "target": "0x33499"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": "ebx",
-      "source": {
-        "addr": "0x3351a",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
-      "op": "pan",
-      "grid_x": 24,
-      "grid_y": 17,
-      "source": {
-        "addr": "0x33526",
-        "target": "0x135dd"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": "eax",
-      "source": {
-        "addr": "0x3354f",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
+      "else": [
+        { "op": "dialog", "text_index": 3, "source": { "addr": "0x3351a", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" },
+        { "op": "pan", "grid_x": 24, "grid_y": 17, "source": { "addr": "0x33526", "target": "0x135dd" } },
+        { "op": "dialog", "text_index": 4, "source": { "addr": "0x3354f", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
+      ]
     },
     {
       "op": "act",
@@ -58,13 +36,15 @@
       }
     },
     {
-      "op": "dialog",
-      "text_index": "ebx",
-      "source": {
-        "addr": "0x3358c",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
+      "op": "if",
+      "source": { "addr": "0x33582" },
+      "condition": { "op": "roster_has", "char_id": 12 },
+      "then": [
+        { "op": "dialog", "text_index": 2, "source": { "addr": "0x3358c", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
+      ],
+      "else": [
+        { "op": "dialog", "text_index": 5, "source": { "addr": "0x3358c", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
+      ]
     },
     {
       "op": "focus_unit",

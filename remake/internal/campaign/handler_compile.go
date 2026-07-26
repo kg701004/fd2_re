@@ -148,25 +148,40 @@ func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Be
 	for i, input := range script.Beats {
 		switch input.Op {
 		case "if":
-			if input.Condition == nil || input.Condition.Op != "any_unit_inactive" {
-				issue(i, input, "if requires the proven any_unit_inactive condition")
+			if input.Condition == nil {
+				issue(i, input, "if requires a proven condition")
 				continue
 			}
-			if len(input.Condition.UnitSlots) == 0 {
-				issue(i, input, "any_unit_inactive requires at least one runtime unit slot")
-				continue
-			}
-			seen := make(map[int]bool, len(input.Condition.UnitSlots))
-			validSlots := true
-			for _, slot := range input.Condition.UnitSlots {
-				if slot < 0 || seen[slot] || (activeSlotCount > 0 && slot >= activeSlotCount) {
-					validSlots = false
-					break
+			condition := &BeatCondition{Op: input.Condition.Op}
+			switch input.Condition.Op {
+			case "any_unit_inactive":
+				if len(input.Condition.UnitSlots) == 0 {
+					issue(i, input, "any_unit_inactive requires at least one runtime unit slot")
+					continue
 				}
-				seen[slot] = true
-			}
-			if !validSlots {
-				issue(i, input, "any_unit_inactive slots must be unique non-negative integers within the active runtime context")
+				seen := make(map[int]bool, len(input.Condition.UnitSlots))
+				validSlots := true
+				for _, slot := range input.Condition.UnitSlots {
+					if slot < 0 || seen[slot] || (activeSlotCount > 0 && slot >= activeSlotCount) {
+						validSlots = false
+						break
+					}
+					seen[slot] = true
+				}
+				if !validSlots {
+					issue(i, input, "any_unit_inactive slots must be unique non-negative integers within the active runtime context")
+					continue
+				}
+				condition.UnitSlots = append([]int(nil), input.Condition.UnitSlots...)
+			case "roster_has":
+				if input.Condition.CharID == nil || !JoinableCharacterID(*input.Condition.CharID) {
+					issue(i, input, "roster_has requires an original 0..31 permanent-player char_id")
+					continue
+				}
+				charID := *input.Condition.CharID
+				condition.CharID = &charID
+			default:
+				issue(i, input, "if requires a proven condition")
 				continue
 			}
 			if handlerBranchChangesCompileContext(input.Then) || handlerBranchChangesCompileContext(input.Else) {
@@ -189,10 +204,6 @@ func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Be
 					issues = append(issues, branchIssue)
 				}
 				continue
-			}
-			condition := &BeatCondition{
-				Op:        input.Condition.Op,
-				UnitSlots: append([]int(nil), input.Condition.UnitSlots...),
 			}
 			beat := runtime(input, "if")
 			beat.Condition, beat.Then, beat.Else = condition, thenBeats, elseBeats

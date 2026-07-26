@@ -1099,6 +1099,40 @@ func TestCompileChapter13PreUsesRecoveredChapter14TextGroups(t *testing.T) {
 	}
 }
 
+func TestCompileChapter14PreLowersRosterHasDialogueVariants(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch14_pre.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch14_pre err=%v issues=%#v", err, issues)
+	}
+	if len(beats) != 5 || beats[0].Op != "loadch" || beats[1].Op != "if" || beats[2].Op != "act" || beats[3].Op != "if" || beats[4].Op != "focus_unit" {
+		t.Fatalf("ch14_pre top-level beats=%#v", beats)
+	}
+	if load := beats[0].LoadCH; load == nil || load.Chapter != 14 || load.Map != "assets/maps/map14" || load.SlotCount != 80 || load.Script != "assets/story/ch15.json" || load.PartyScenario != "assets/scenarios/ch15.json" {
+		t.Fatalf("ch14_pre LOADCH=%#v", load)
+	}
+	for arm, want := range [][]int{{0, 1}, {3, 4}} {
+		branch := beats[1]
+		if arm == 1 {
+			branch.Then = branch.Else
+		}
+		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 3 || branch.Then[0].Op != "dialog" || branch.Then[0].Line != want[0] || branch.Then[1].Op != "pan" || branch.Then[1].X != 576 || branch.Then[1].Y != 408 || !branch.Then[1].TileStep || branch.Then[2].Op != "dialog" || branch.Then[2].Line != want[1] {
+			t.Fatalf("ch14_pre variant %d=%#v", arm, branch)
+		}
+	}
+	if len(beats[2].Acting) == 0 || beats[2].Acting[0].Units[0].Slot == nil || *beats[2].Acting[0].Units[0].Slot != 64 {
+		t.Fatalf("ch14_pre acting=%#v", beats[2])
+	}
+	for arm, want := range []int{2, 5} {
+		branch := beats[3]
+		if arm == 1 {
+			branch.Then = branch.Else
+		}
+		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 1 || branch.Then[0].Op != "dialog" || branch.Then[0].Line != want {
+			t.Fatalf("ch14_pre final variant %d=%#v", arm, branch)
+		}
+	}
+}
+
 func TestCompileChapter15PreUsesRecoveredChapter16TextGroups(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch15_pre.json")
 	if err != nil || len(issues) != 0 {

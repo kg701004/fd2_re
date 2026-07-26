@@ -14,12 +14,14 @@ type HandlerSource struct {
 }
 
 // HandlerCondition is the editable, evidence-level predicate attached to a
-// structured handler branch. Start with only the fixed runtime-slot inactive
-// scan proven in ch01 post; future predicates must be added from disassembly,
-// not guessed into a generic expression language.
+// structured handler branch.  Each predicate is a direct transcription of a
+// native helper; this is deliberately not a generic expression language.
 type HandlerCondition struct {
 	Op        string `json:"op"`
 	UnitSlots []int  `json:"unit_slots,omitempty"`
+	// CharID is the one-byte permanent-player ID accepted by native 0x33499.
+	// It is meaningful only for roster_has, never a portrait/NPC identifier.
+	CharID *int `json:"char_id,omitempty"`
 }
 
 // HandlerRepeatHint records a directly recovered fixed-count loop around one

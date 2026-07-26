@@ -1223,24 +1223,43 @@ func (g *Game) resolveCampaignDialogLine(line campaign.Line, upperOverride *bool
 }
 
 func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error) {
-	if condition == nil || condition.Op != "any_unit_inactive" || len(condition.UnitSlots) == 0 {
-		return false, fmt.Errorf("缺少有效 any_unit_inactive condition")
+	if condition == nil {
+		return false, fmt.Errorf("缺少有效 handler condition")
 	}
-	if g.st == nil {
-		return false, fmt.Errorf("any_unit_inactive 缺少 runtime battle state")
-	}
-	for _, slot := range condition.UnitSlots {
-		if slot < 0 || slot >= len(g.st.Units) || g.st.Units[slot] == nil {
-			return false, fmt.Errorf("any_unit_inactive slot %d unavailable (units=%d)", slot, len(g.st.Units))
+	switch condition.Op {
+	case "roster_has":
+		if condition.CharID == nil || !campaign.JoinableCharacterID(*condition.CharID) {
+			return false, fmt.Errorf("缺少有效 roster_has char_id")
 		}
-	}
-	for _, slot := range condition.UnitSlots {
-		unit := g.st.Units[slot]
-		if !unit.OnField || !unit.Alive() {
-			return true, nil
+		// 0x33499 reads the permanent player roster, not the temporary deployed
+		// battle party.  Do not infer it from story actors: a direct/debug entry
+		// without persistent membership must stop instead of choosing a branch.
+		if g.partyMembers == nil {
+			return false, fmt.Errorf("roster_has 缺少 permanent party roster")
 		}
+		return g.partyMembers[*condition.CharID], nil
+	case "any_unit_inactive":
+		if len(condition.UnitSlots) == 0 {
+			return false, fmt.Errorf("缺少有效 any_unit_inactive condition")
+		}
+		if g.st == nil {
+			return false, fmt.Errorf("any_unit_inactive 缺少 runtime battle state")
+		}
+		for _, slot := range condition.UnitSlots {
+			if slot < 0 || slot >= len(g.st.Units) || g.st.Units[slot] == nil {
+				return false, fmt.Errorf("any_unit_inactive slot %d unavailable (units=%d)", slot, len(g.st.Units))
+			}
+		}
+		for _, slot := range condition.UnitSlots {
+			unit := g.st.Units[slot]
+			if !unit.OnField || !unit.Alive() {
+				return true, nil
+			}
+		}
+		return false, nil
+	default:
+		return false, fmt.Errorf("未知 handler condition %q", condition.Op)
 	}
-	return false, nil
 }
 
 // spliceBeatsAfterCurrent chooses one structured branch without mutating the
