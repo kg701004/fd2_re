@@ -471,6 +471,10 @@ Inventory gates are distinct from item-consuming event commands. Native `0x24b14
 preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 子任務是以
 原版 handler offset／DOSBox 操作逐列補 E0/E2 證據，並為每列加入 save/reload regression。
 
+### 5.2 Native campaign loop ordering（E0，IDA 9.4）
+
+Official IDA pseudocode of `0x25de5` closes the outer ordering that the editable graph must preserve. After `sub_25ebb` returns the battle-driver result, the loop calls `sub_117e7`; when global phase `[0x53ecc]==1`, it calls the fixed chapter-1 interlude `0x22e5c`, clears the phase, and continues. When `[0x53ecc]==2`, it first stops BGM, calls the chapter-indexed post-handler table `funcs_25e23[dword_53c03]`, and only then calls `sub_2cad7()`. If `sub_2cad7()` returns nonzero, the loop exits through the terminal/return path; only when it returns zero does the loop call the second chapter-indexed table `funcs_25e3a[dword_53c03]`, select `byte_51e63[dword_53c03]` for the next battle BGM, clear the phase, and resume the driver. The exact table entries and `0x2cad7` visual/menu labels remain separate evidence work, but this call order is enough to reject any generic `battle → next battle` shortcut. A remake transition must retain an explicit post-handler/menu gate before a next-battle node, even when the high-level node is still opaque.
+
 ## 6. Reverse-engineering re-audit workstreams
 
 ### 6.0 Runtime/UI boundary（2026-07-26 audit）
