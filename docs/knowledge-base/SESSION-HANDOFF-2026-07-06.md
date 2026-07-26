@@ -8,7 +8,8 @@
 
 ## 2026-07-27 raw byte5 handler bridge
 
-`Scenario.PartyUnits`／`battle.Load` 對 HP>0 的 constructor materialization 保存 `NativeRecordByte5=0`；
+`Scenario.PartyUnits`／`battle.Load` 對 HP>0 的 constructor materialization 保存 `NativeRecordByte5=0`；已知 damage/death
+與 church revive writer 也會在 raw provenance 存在時設／清 bit0；
 `cmd/fd2` 的 `any_unit_inactive` 在有 raw provenance 時優先讀 `+5&1`，`deactivate_unit` 同步保留
 `0x32975` 的整 byte overwrite=1。舊 authored JSON 缺 raw 時仍保留 `OnField/Alive` 相容 projection，
 因此這是 E1 partial、不是 native parity；下一輪需補 death writer／LOADCH raw propagation，並在缺 raw 的

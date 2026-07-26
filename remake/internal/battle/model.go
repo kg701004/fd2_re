@@ -33,7 +33,8 @@ func (c Camp) String() string {
 	}
 }
 
-// Unit 戰場單位。數值來自 EXE 表(doc 03);狀態旗標對映原版 byte[+5](doc 27)。
+// Unit 戰場單位。數值來自 EXE 表(doc 03); raw byte fields are optional
+// provenance and normalized fields remain engine projections.
 type Unit struct {
 	Camp      Camp
 	Name      string // 角色名(characters.json;敵方多為職業名)
@@ -72,7 +73,7 @@ type Unit struct {
 	// unit+0x1f/+0x20 without assigning any gameplay meaning to raw bytes.
 	NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
 	X, Y              int
-	Acted             bool  // 本回合已行動(原版 byte[+5] bit7)
+	Acted             bool  // engine projection; native bit7 is raw provenance only
 	Group             int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
 	OnField           bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
 	Spells            []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
@@ -315,9 +316,37 @@ func (u *Unit) RemoveInventoryIndex(index int) bool {
 	return true
 }
 
-// Alive 是 remake 的 HP 判定。原版 byte[+5] bit0 剛好相反：
-// 0=有效／存活，1=死亡／隱藏／未啟用；對應到 remake 時需同時看 HP 與 OnField。
+// Alive is the remake's normalized HP projection. It is intentionally not a
+// native byte+5 decoder; callers with raw provenance must use the raw field.
 func (u *Unit) Alive() bool { return u.HP > 0 }
+
+// ApplyHPDamage updates the engine HP projection and, when raw provenance is
+// present, mirrors the native death writer's byte+5 bit0.  It intentionally
+// does not fabricate raw provenance for legacy/normalized units.
+func (u *Unit) ApplyHPDamage(damage int) {
+	if u == nil || damage <= 0 {
+		return
+	}
+	u.HP -= damage
+	if u.HP < 0 {
+		u.HP = 0
+	}
+	if u.HP == 0 && u.HasNativeRecordByte5 {
+		u.NativeRecordByte5 = 1
+	}
+}
+
+// RestoreNativeHP mirrors the proven revive writer: restore current HP and
+// clear only raw byte+5 bit0 when the unit carries native provenance.
+func (u *Unit) RestoreNativeHP() {
+	if u == nil {
+		return
+	}
+	u.HP = u.MaxHP
+	if u.HasNativeRecordByte5 {
+		u.NativeRecordByte5 &^= 1
+	}
+}
 
 // EffectiveAP/EffectiveDP 套用魔刃術/魔鎧術暫時加成後的攻防值。地形% 修正另外在
 // combat.go AttackWithRNG 套用(取決於單位當下座標,不是固定加成,不適合放在這裡)。

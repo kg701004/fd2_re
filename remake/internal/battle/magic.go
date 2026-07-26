@@ -346,10 +346,7 @@ func (s *State) applySpell(caster, tgt *Unit, sp Spell, rng *rand.Rand) CastResu
 // dealDamage 一般攻擊型法術傷害結算(doc02 §4.3)。魔法抗性欄位尚未進資料管線,先以 0 計。
 func (s *State) dealDamage(tgt *Unit, sp Spell, rng *rand.Rand) int {
 	dmg := randomizeAmount(sp.Dmg, rng)
-	tgt.HP -= dmg
-	if tgt.HP < 0 {
-		tgt.HP = 0
-	}
+	tgt.ApplyHPDamage(dmg)
 	return dmg
 }
 

@@ -229,9 +229,9 @@ func ReviveUnit(gold int, u *battle.Unit, feeRate int) (int, int, error) {
 		return gold, cost, fmt.Errorf("revive: insufficient gold")
 	}
 	gold -= cost
-	// 0x30f9c clears the death/inactive flag; 0x30fa0 copies max HP to
-	// current HP. OnField is the remake projection of that flag.
-	u.HP = u.MaxHP
+	// 0x30f9c clears the raw death/inactive bit; 0x30fa0 copies max HP to
+	// current HP. OnField is retained as the remake projection.
+	u.RestoreNativeHP()
 	u.OnField = true
 	return gold, cost, nil
 }

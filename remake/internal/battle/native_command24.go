@@ -88,10 +88,7 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 		if err != nil {
 			return nil, err
 		}
-		target.HP -= damage
-		if target.HP < 0 {
-			target.HP = 0
-		}
+		target.ApplyHPDamage(damage)
 		results = append(results, NativeCommand24Damage{Target: target, Amount: amount, Damage: damage})
 	}
 	// 0x18D8C applies the invoking actor's completion bit after 0x1CFF0
@@ -144,10 +141,7 @@ func (s *State) ExecuteNativeCommand30(actor *Unit, savedCursor, confirmedCursor
 		if err != nil {
 			return nil, err
 		}
-		target.HP -= damage
-		if target.HP < 0 {
-			target.HP = 0
-		}
+		target.ApplyHPDamage(damage)
 		results = append(results, NativeCommand24Damage{Target: target, Amount: amount, Damage: damage})
 	}
 	actor.Acted = true

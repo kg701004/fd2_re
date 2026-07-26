@@ -55,10 +55,7 @@ func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandI
 		result := NativeCommandApplicationResult{Target: target, Offset: offset}
 		duration, _ := target.NativeTransientDuration(offset)
 		if duration == 0 && target.ClassID != 0x19 && target.ClassID != 0x1A && rng.Intn(100) < 50 {
-			target.HP -= 10 // direct 0x1C81F(target, 10), not record damage math
-			if target.HP < 0 {
-				target.HP = 0
-			}
+			target.ApplyHPDamage(10) // direct 0x1C81F(target, 10), not record damage math
 			result.Applied = true
 			result.Damage = 10
 			result.Duration = byte(rng.Intn(4) + 2)

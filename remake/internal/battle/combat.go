@@ -64,10 +64,7 @@ func (s *State) AttackWithRNG(a, d *Unit, rng *rand.Rand) AttackResult {
 	if dmg < 1 {
 		dmg = 1
 	}
-	d.HP -= dmg
-	if d.HP < 0 {
-		d.HP = 0
-	}
+	d.ApplyHPDamage(dmg)
 
 	// 經驗值(doc02 §4.5「攻擊」列,growth.go AttackExp):致死視同傷害HP=總HP。
 	// 只有 Own/Ally 攻方才計算/回報經驗值(見 growth.go 檔頭說明);Enemy 攻方 ExpGained

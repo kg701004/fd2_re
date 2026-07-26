@@ -418,7 +418,8 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beats = append(beats, beat)
 		case "deactivate_unit":
 			// 0x32975(unit_idx) writes unit[idx].flags=1. Constructor and
-			// death paths prove bit0 means inactive/dead, so clear OnField.
+			// The authored op is a caller-specific raw byte+5 writer; OnField is
+			// retained only as the engine projection for old bindings.
 			if input.UnitSlot == nil && input.UnitSlotExpr == "ebx" && input.RepeatHint != nil {
 				if input.RepeatHint.Limit <= 0 {
 					issue(i, input, "deactivate_unit repeat_hint limit must be positive")

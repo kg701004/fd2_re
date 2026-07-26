@@ -80,9 +80,6 @@ func ApplyNativeCommandDamage(target *Unit, recordDamage, hit, targetResistRaw i
 	if err != nil || !result.Hit {
 		return result, err
 	}
-	target.HP -= result.Damage
-	if target.HP < 0 {
-		target.HP = 0
-	}
+	target.ApplyHPDamage(result.Damage)
 	return result, nil
 }
