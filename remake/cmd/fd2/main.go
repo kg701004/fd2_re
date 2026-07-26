@@ -885,6 +885,16 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// this visible pulse with an RGBA fade or a delay-only approximation.
 		g.loadErr = "beat native_palette_pulse: native indexed DAC adapter未完成"
 		return
+	case "native_staging_present":
+		present := b.NativeStagingPresent
+		if present == nil || present.Slot < 0 || present.X < 0 || present.Y < 0 || present.FocusX != present.Slot || present.FocusY != present.X {
+			g.loadErr = "beat native_staging_present:缺少原版 wrapper ABI payload"
+			return
+		}
+		// 0x33f78 calls 0x22253 after focusing; its indexed 11+6+10
+		// choreography is not a spawn, position change, or ordinary camera pan.
+		g.loadErr = "beat native_staging_present: native 0x22253 renderer adapter未完成"
+		return
 	case "layout_units":
 		if b.Layout == nil || len(b.Layout.Units) == 0 {
 			g.loadErr = "beat layout_units:缺少可編輯的 runtime layout"

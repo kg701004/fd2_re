@@ -640,6 +640,11 @@ D3/D5 不採「搬走敵人全部 inventory」的猜法，而使用上述特殊�
 `native_palette_pulse{rise:0..63/8ms,hold:400ms,fall:62..0/8ms}`；現行 PNG renderer
 沒有 indexed DAC surface 時必須 fail-closed，禁止用 delay 或 RGBA fade 假裝完成。
 
+`0x33f78` 則是不同的 ch29 staging wrapper：原始 push-order 為 `[y,x,slot]`，它先
+`0x12cea(slot,x)`，再精確轉交 `0x22253(slot,x,y,x,y)`。因此 compiler 保存
+`native_staging_present` 的 slot/x/y 與 focus payload；`0x22253` 已可見 11+6+10 個
+indexed presentation pass，但 renderer 尚未完成，仍必須 fail-closed，不能降成 spawn 或 pan。
+
 ## 4. 未解(低優先)+ 工具紀律
 
 - ~~acting 原始靜態容器未定位~~：已定位為 `FD2.EXE file+0x565d8` 的 106×u32 offset directory，

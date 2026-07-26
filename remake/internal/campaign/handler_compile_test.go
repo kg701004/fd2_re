@@ -1501,6 +1501,49 @@ func TestCompileNativePalettePulse35E5APreservesExactDACSchedule(t *testing.T) {
 	}
 }
 
+func TestCompileNativeStagingPresent33F78PreservesWrapperABI(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "unknown", NativeTarget: "0x33f78", RawArgs: []any{5, 23, 22}, Source: HandlerSource{Addr: "0x33eb2", Target: "0x33f78"},
+	}}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_staging_present" || beats[0].NativeStagingPresent == nil {
+		t.Fatalf("0x33f78 beats=%#v issues=%#v", beats, issues)
+	}
+	if got := beats[0].NativeStagingPresent; got.Slot != 22 || got.X != 23 || got.Y != 5 || got.FocusX != 22 || got.FocusY != 23 {
+		t.Fatalf("0x33f78 payload=%#v", got)
+	}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x33f78", RawArgs: []any{5, 23}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("malformed 0x33f78 issues=%#v", issues)
+	}
+}
+
+func TestCompileChapter29PreLowersEveryNativeStagingPresent(t *testing.T) {
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch29_pre.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	for _, issue := range issues {
+		if issue.Source.Target == "0x33f78" {
+			t.Fatalf("ch29 unresolved staging: %#v", issue)
+		}
+	}
+	want := map[string]bool{"0x33ea4": false, "0x33eb2": false, "0x33ec0": false, "0x33ece": false, "0x33f45": false, "0x33f53": false, "0x33f61": false}
+	for _, beat := range beats {
+		if _, ok := want[beat.Source]; ok {
+			if beat.Op != "native_staging_present" || beat.NativeStagingPresent == nil {
+				t.Fatalf("ch29 source %s=%#v", beat.Source, beat)
+			}
+			want[beat.Source] = true
+		}
+	}
+	for source, seen := range want {
+		if !seen {
+			t.Errorf("ch29 staging source %s was not lowered", source)
+		}
+	}
+}
+
 func TestCompileChapterHandlersLowerEveryNativePalettePulse(t *testing.T) {
 	paths := []string{
 		"../../assets/cutscenes/handlers/ch28_post.json",

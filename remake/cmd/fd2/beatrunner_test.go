@@ -344,6 +344,14 @@ func TestBeatNativePalettePulseFailsClosedWithoutIndexedDACAdapter(t *testing.T)
 	}
 }
 
+func TestBeatNativeStagingPresentFailsClosedWithoutRendererAdapter(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "native_staging_present", NativeStagingPresent: &campaign.NativeStagingPresent{Slot: 22, X: 23, Y: 5, FocusX: 22, FocusY: 23}}})
+	g.beatAdvance()
+	if g.loadErr != "beat native_staging_present: native 0x22253 renderer adapter未完成" {
+		t.Fatalf("native staging present error=%q", g.loadErr)
+	}
+}
+
 func TestBeatActingDecodedNormalSlotMovement(t *testing.T) {
 	// Direct resource102 at ch00 source 0x32461: slot4 left×2, up×1,
 	// left×1. A duplicate Fig at slot0 must remain untouched.

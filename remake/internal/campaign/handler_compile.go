@@ -703,6 +703,25 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, beat)
 				continue
 			}
+			if input.NativeTarget == "0x33f78" {
+				if len(input.RawArgs) != 3 {
+					issue(i, input, "0x33f78 staging wrapper requires three immediate arguments")
+					continue
+				}
+				y, okY := immediateHandlerInt(input.RawArgs, 0)
+				x, okX := immediateHandlerInt(input.RawArgs, 1)
+				slot, okSlot := immediateHandlerInt(input.RawArgs, 2)
+				if !okY || !okX || !okSlot || x < 0 || y < 0 || slot < 0 {
+					issue(i, input, "0x33f78 staging wrapper requires non-negative immediate y/x/slot arguments")
+					continue
+				}
+				// Extracted arguments retain native push order [y,x,slot]. The
+				// wrapper calls 0x12cea(slot,x), then 0x22253(slot,x,y,x,y).
+				beat := runtime(input, "native_staging_present")
+				beat.NativeStagingPresent = &NativeStagingPresent{Slot: slot, X: x, Y: y, FocusX: slot, FocusY: x}
+				beats = append(beats, beat)
+				continue
+			}
 			if input.NativeTarget == "0x24618" {
 				if bindings.Transition == nil {
 					issue(i, input, "0x24618 indexed transition requires an explicit editable binding")
