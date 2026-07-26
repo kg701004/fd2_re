@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=374`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=375`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -40,6 +40,7 @@
 - [x] **序章(FDTXT_001)逐章轉錄完成**(`extracted/story/序章_transcript.md`,本機)
 - [x] **敵/我方動畫機制文件**:解碼器變體家族(全彩/remap調色/silhouette/dither)+ 陣營/面向 → `10-…`
 - [~] **敵人/NPC 戰場 AI** 反組譯文件：舊 `0x15140` 評分決策斷言已由 2026-07-27 canonical Docker recheck 撤回；`0x15140/0x15356` 無 direct caller，僅保留 `0x15AD8→0x15B77` raw lead，需重建真正 entry 與 caller context → `11-…`
+- [x] **RE-AI-CALLER-15AD8**：Docker Capstone 閉合 `0x15A1E..0x15B76` 的 bounded candidate→`0x14818` target builder→`0x15B77` score→best-score/tie-break/write globals 邊界；`0x15B77` 的 command `<0x0d`、recovery `0x0d..0x10`、raw flag `0x14..0x16` branches 已寫入 `11`，不把它升格成完整 AI turn。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`
 - [x] README 知識庫總索引(可點選分類)

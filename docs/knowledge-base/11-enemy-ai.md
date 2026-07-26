@@ -8,6 +8,21 @@
 > `0x15140`、`0x1527b`、`0x1529e`、`0x152ab`、`0x15356` 流程降級為**歷史待核對假說**，
 > 不得作為 remake parity 證據或接入 runtime。
 
+## 目前可重現的 raw score 邊界（2026-07-27）
+
+Docker Capstone 直接讀到 `0x15a1e..0x15b76` 的 caller：它枚舉 bounded candidate
+array，呼叫 `0x14818` 建立 target data，接著以 `(candidate, target, command)` 呼叫
+`0x15b77`，回傳值和既有 best score 比較；平手時再比較 candidate record word，最後寫入
+`0x53c23/0x53c27/0x53c2b/0x53c2f`。這是目前唯一足夠的 AI-like score topology，不能把
+caller 自動命名為完整 enemy-turn dispatcher。
+
+`0x15b77` 本身目前可確認：command `<0x0d` 逐目標讀 runtime record `+0x40`，基礎分數
+為 8，若 spell value 大於 record value 則為 `0x18`；record `+8==0` 時以 native
+FPU path 對分數乘 `1.5` 並轉回整數。command `0x0d..0x10` 走 recovery 分支，讀
+current/max HP 與 record `+0x34 bit0`；`0x14..0x16` 掃 raw `+0x25/+0x26/+0x27`
+並呼叫 `0x1c269`。這些是 raw score branches，不足以替欄位命名成攻擊、治療或狀態，
+也尚未證明它就是完整 AI 回合入口。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。
