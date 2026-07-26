@@ -242,6 +242,15 @@ func (s Sprite) BlitForNativeFlags(dst []byte, stride, x, y int, flags byte) err
 	return s.blit(dst, stride, x, y, flags&0x80 != 0)
 }
 
+// BlitForNativeFlagsAtOffset is the same 0x127e0 raw/palette-band branch as
+// BlitForNativeFlags, but accepts the already-computed native work-buffer byte
+// offset.  The original routine passes a pointer rather than a clipped (x,y)
+// pair, so this form deliberately permits a 24-pixel span to cross a stride
+// boundary while still rejecting an out-of-buffer write.
+func (s Sprite) BlitForNativeFlagsAtOffset(dst []byte, stride, offset int, flags byte) error {
+	return s.blitAtOffset(dst, stride, offset, flags&0x80 != 0)
+}
+
 // BlitLUT reproduces 0x4dcc6. Source-written RLE pixels are translated through
 // lut; mode-3 spans translate the existing destination index through lut.
 // Dither holes remain untouched, as in the native mode-1 loop.
@@ -293,6 +302,25 @@ func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {
 					v = (v & 7) + 0x18
 				}
 				dst[(y+row)*stride+x+col] = v
+			}
+		}
+	}
+	return nil
+}
+
+func (s Sprite) blitAtOffset(dst []byte, stride, offset int, paletteBand bool) error {
+	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride <= 0 || offset < 0 || offset+(NativeSize-1)*stride+NativeSize > len(dst) {
+		return errors.New("fdicon: invalid offset blit")
+	}
+	for row := 0; row < NativeSize; row++ {
+		for col := 0; col < NativeSize; col++ {
+			i := row*NativeSize + col
+			if s.Mask[i] != 0 {
+				v := s.Pixels[i]
+				if paletteBand {
+					v = (v & 7) + 0x18
+				}
+				dst[offset+row*stride+col] = v
 			}
 		}
 	}
