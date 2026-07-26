@@ -17,6 +17,12 @@ Worklist 目前是 **349 個 `[x]`、92 個 `[~]`、67 個 `[ ]`**；這些是�
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
+### 文件治理（避免把反組譯筆記當成進度）
+
+摘要看 README 狀態表；證據 gate 與玩法差距看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)／[`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md)；
+逐項追蹤看 [`91` worklist](docs/knowledge-base/91-worklist.md)。`00` 是路由索引；`01`–`57`、`99` 是專題證據與歷史記錄；`90`、`30` 是規劃/WBS 基線。
+專題文件中的「全破／完成」只限該段格式、資源或函式已驗證，不代表全遊戲 parity；若歷史筆記與三份權威文件衝突，以最新證據與 fail-closed 標註為準。
+
 ### 已有成果圖片
 
 以下圖片是 repo 內的測試／比對產物，不代表整個遊戲已完成：
@@ -28,6 +34,8 @@ Worklist 目前是 **349 個 `[x]`、92 個 `[~]`、67 個 `[ ]`**；這些是�
 | 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
+| 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) |
+| battle command／load／class UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) ![class targets](docs/figures/church-class-targets.png) |
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 
