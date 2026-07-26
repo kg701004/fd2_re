@@ -13,7 +13,7 @@
 
 | 原語(EXE) | 語意 | DSL 對應 |
 |---|---|---|
-| `0x3453e(idx)` | **unit_inactive(idx)**:取第 idx 單位(`[0x53a45] + idx*0x50 + 5`)的 `byte[+5] bit0` | `unit_inactive(idx)` [驗]；**1=死亡/隱藏/inactive，0=active/alive** |
+| `0x3453e(idx)` | **NativeRecordByte5Bit0(idx)**：取第 idx 單位(`[0x53a45] + idx*0x50 + 5`) 的 `byte[+5] & 1` | raw predicate [驗]；高階語意由各 caller branch 另證 |
 | 迴圈 `for idx in a..b: 0x3453e` | 查一段單位群的狀態旗標 | `units_in_range(a,b)` [驗] |
 | `0x33499(id)` | **roster_has(id)**:線性搜尋我方名冊 `[0x53bf7]`(32 槽×0x50B,計數 `[0x53bfb]`),找 `byte[+8]==id` | `roster_has(id)` [驗];byte[+8]=角色 ID [推] |
 | `cmp [0x53bef], N` | 比較回合/進度計數 | `turn >= N` [推] |
@@ -23,12 +23,12 @@
 | default 尾段 `0x2067e` | 遍歷單位陣列做標準勝敗(殲滅即勝) | `default_win: annihilate` [驗] |
 
 **`0x3453e` 全貌(已驗證)**:`idx*4 + idx = idx*5`,再 `<<4` = `idx*0x50`(單位結構大小)+ 基底 + 5 → 取 bit0。
-**bit0 語意(2026-07-16 反組譯定案)**:`byte[+5]` 是多 bit 狀態旗標。真正建立有效/可見單位的 constructor 在 `0x10eed` 明確寫 `byte[+5]=0`；HP 歸 0 的兩條 death 路徑 `0x1dc61/0x1dd4c` 明確寫 1；另有 `0x32975` 寫1來隱藏/停用劇情單位。因此 **bit0=1 表示死亡/隱藏/inactive，bit0=0 表示 active/alive**，`0x3453e` 應稱 `unit_inactive(idx)`；bit7(0x80)=已行動。先前「使用者確認 bit0=存活、初始化=1」是把另一寫入點誤認為有效單位 constructor，現已由完整反組譯撤回。護衛目標等玩法仍成立，但 handler 的 `test/jcc` 必須按 inactive 布林值逐條解讀，不能沿用舊的 alive 命名。
+**raw byte 說明(2026-07-27)**：constructor `0x10eed` 寫 `byte[+5]=0`，HP 路徑 `0x1dc61/0x1dd4c` 與 `0x32975` 會寫入 `1`；這些是已觀察的 writer，不能單獨把 bit0 提升成所有 caller 共用的死亡／存活欄位。`0x3453e` 只回傳 `byte[+5] & 1`，bit7 writer 亦另行追蹤。每個 handler 的 `test/jcc` 必須按該 caller 的 raw predicate 解讀。
 
 這個定案亦直接解開兩個劇情/回合 handler：
 
-- **ch01 post `0x22f42`** 掃 slots 5..10：任一 slot bit0=1(inactive)走對白 #7、無獎勵；全部 bit0=0(active)才走對白 #6 並給 item 198。這是「村民全存活才有獎勵」，不是舊命名造成的「全死才獎勵」。
-- **ch03 turn 3 `0x344c2`** 查 slot6：`unit_inactive(6)!=0` 直接跳過；slot6 active(bit0=0)才生成 group2、移鏡並播對白 #4。對白中提諾表示自己仍活著，與控制流完全吻合。
+- **ch01 post `0x22f42`** 掃 slots 5..10：任一 slot 的 raw bit0 非零走對白 #7、無獎勵；全部為零才走對白 #6 並給 item 198。這是該 caller 的 raw branch，不泛化成全域生命欄位。
+- **ch03 turn 3 `0x344c2`** 查 slot6：raw bit0 非零直接跳過；為零才生成 group2、移鏡並播對白 #4。對白旁證不能取代 raw branch evidence。
 
 > **關鍵結論:戰場事件 handler 不含任何「動作函式」**(`battle_events.json` 全部 `action_fns` 為空)——
 > handler 只做「**條件查詢(unit_inactive / roster_has / 回合)→ 設碼(1/2)+ 可選繪圖**」。
@@ -37,9 +37,9 @@
 > 單位索引是**戰場單位陣列 `[0x53a45]` 的全域 index**(我方 + 敵方 + NPC,每單位 0x50B);對應到角色名需配合各章 roster(`extracted/maps/maps_metadata.json` 的 `units`,含 camp/portrait/race/cls/lv)。我方/敵方在陣列中的精確分界(我方槽數 M)未隔離驗證 → 重製時自行定義單位陣列,trigger 用「具名單位 / 陣營」表達即可,不必對齊原版 idx。
 
 **兩個單位陣列(別混淆)** [驗]:
-- **`[0x53a45]` = 戰場全單位陣列**(malloc `0x1e00` = **96 槽** × 0x50B,我方上場+敵方+NPC)→ `unit_inactive(idx)`(0x3453e)查它。
+- **`[0x53a45]` = 戰場全單位陣列**(malloc `0x1e00` = **96 槽** × 0x50B,我方上場+敵方+NPC)→ `NativeRecordByte5Bit0(idx)`(0x3453e)查 raw bit。
 - **`[0x53bf7]` = 我方隊伍/角色名冊**(場景載入時 memcpy `0xa00` = **32 槽** × 0x50B,計數 `[0x53bfb]`)→ `roster_has(id)`(0x33499)查它,找 `byte[+8]==id`。
-- 即:`unit_inactive` 問「**場上**某單位是否死亡/隱藏/inactive」;`roster_has` 問「**我方隊伍**是否擁有某角色」(招募/角色分支條件)。章 16 即用 `roster_has(0x12=角色18)`。
+- 即：remake 的 `unit_inactive` alias 只包裝「**場上**某 caller 的 raw bit0 predicate」；`roster_has` 問「**我方隊伍**是否擁有某角色」(招募/角色分支條件)。章 16 即用 `roster_has(0x12=角色18)`。
 
 ### 回合計數:`[0x53bef]` 是回合數(非 `[0x53ec8]`)[驗]
 
@@ -61,7 +61,7 @@
 | +0 | roster[0](種族/陣營相關) | [驗] |
 | +1 | roster[2] | [驗] |
 | +2 | 由 [+7] 複製 | [驗] |
-| +5 | **狀態旗標 byte**:**bit0=死亡/隱藏/inactive**(1；active/alive=0)、**bit7(0x80)=已行動** | [驗] |
+| +5 | **raw mask byte**：已驗證 caller 讀取 `bit0`／`bit7(0x80)`；不得直接命名成死亡、存活或已行動 | [驗] |
 | +6 | 初始=2(推定面向/陣營預設) | [驗] |
 | +8 | **角色 ID**(roster 名冊 `roster_has` 也比 +8) | [驗 欄位 / 推 語意] |
 | +0x31 | 初始=0xFF | [驗] |
@@ -107,7 +107,7 @@
 0x2090d push 0x34; call 0x3453e; test; je 0x20925    ; 單位52 active→跳過
 0x2091b mov [0x53ecc],2                              ;★ 單位52 inactive → 碼2
 ```
-即章 17 規則(bit0=inactive):**「單位 0/16/17 任一 inactive → 播中途事件；單位 52 inactive → 設碼 2」**。這一版才與 death 路徑寫 bit0=1 一致；先前「存活觸發」的判讀已撤回。#52 確切角色/陣營未深究(重製不需,見 doc 27 #9-10)。
+即章 17 caller 規則:**「單位 0/16/17 任一 raw bit0 非零→播中途事件；單位 52 raw bit0 非零→設碼 2」**。這是該 handler 的 branch，不能泛化成全域生命欄位。#52 確切角色/陣營未深究(重製不需,見 doc 27 #9-10)。
 
 ## 4. 提議的 remake 腳本 schema(取代硬編碼)
 
@@ -140,12 +140,12 @@
 
 ## 6. 受阻 / 待驗(誠實標註)
 
-- **[修正→定案]** byte[+5] **bit0=1 是死亡/隱藏/inactive，0 是 active/alive**；`0x3453e=unit_inactive`，`0x32975=deactivate_unit`。證據是 constructor `0x10eed` 寫0，HP=0 的 `0x1dc61/0x1dd4c` 與停用函式 `0x32975` 寫1。舊說「使用者確認 bit0=存活」已由反組譯推翻並撤回。
+- **[修正]** byte[+5] 的 bit0 reader／writer 已分開閉合：`0x3453e` 是 raw `&1` predicate，`0x32975` 是整 byte overwrite，constructor/death writers 是其他 caller。舊說「使用者確認 bit0=存活」已撤回；各 handler 仍需保留自己的 branch evidence。
 - **[已驗]** 章16 `0x33499` 不是動作,是條件查詢(roster_has);全 30 章 `action_fns` 皆空 → **handler 無動作函式**。
 - **[已驗]** 回合數 = **`[0x53bef]`**(戰場開始 `mov 1`、`inc`、handler `cmp N`),**非 `[0x53ec8]`**(後者是 `add reg` 累積計數+clamp 99,語意待定)。詳見 §7。
 - **[阻]** 迴圈查的單位群(章 1/12/19/21/25)精確 idx 範圍見逐指令 dump(章1=5–10、章12=<12、章19=<46);`battle_events.json` 的 `trigger_units_flag` 只收立即數 push,迴圈索引另記於 `extra_conditions`。
 - **[阻]** 單位全域 idx → 角色/敵人名 對應 + 我方槽數 M;重製可略過(自定義單位陣列)。
-- **[已定案]** byte[+5] bit0=inactive、bit7=已行動；回合 [0x53bef] inc=我方全動+敵方AI全動完。
+- **[已驗證 raw]** byte[+5] bit0／bit7 的個別 mask 使用；回合 `[0x53bef]` increment 與 team-completion 語意仍需 state-machine caller evidence，不在本表宣稱。
 - **[低優先]** `[0x53ec8]` 累積計數(靜態:累加單位 +0x21,clamp99)非重製核心,可選。
 
 > 相關:doc 25(事件系統架構)· doc 24(戰役迴圈 [0x53ecc] 狀態機)· doc 19(腳本系統)· doc 09(劇情)· doc 03(單位結構/roster)。工具:`tools/event_handler_dump.py`;資料:`docs/data/battle_events.json`。

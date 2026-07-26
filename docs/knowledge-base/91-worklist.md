@@ -213,19 +213,20 @@
 - [x] **[0x53ecc] 戰後/事件完整狀態機**:事件解譯器(0x205c9-0x20c64,28處設1/2)↔戰役迴圈(==1進世界圖/中場 0x22e5c、==2勝利→戰後跳表+結局判定+下一章)→ `24`§6
 - [x] **挖完事件指令集** → `25`:第三張章節跳表 0x51b19(戰場事件,30章/18 handler)、FD2 事件=每章 C handler 非 byte-code、事件原語(0x3453e 查單位/0x205be prologue/回合數=[0x53bef])
 - [x] **逐關挖 18 特殊 handler** → `26` + `tools/event_handler_dump.py` + `docs/data/battle_events.json`(30章條件→動作,供 remake 去 hardcoding)
-- [x] **補完事件語意（2026-07-16 勘誤）**:`0x3453e(idx)=unit_inactive`([0x53a45]+idx*0x50+5 bit0；1=死亡/隱藏/inactive，0=active/alive)；`0x33499`=roster_has(查 [0x53bf7] 我方名冊);**handler 無動作函式**(只條件→設碼+繪圖)→ `25`/`26` 回填。舊記「使用者確認 bit0=存活」已被 constructor/death-path 反組譯推翻並撤回。
+- [x] **補完事件 raw predicates（2026-07-27 勘誤）**：`0x3453e(idx)` 只閉合為 `[0x53a45]+idx*0x50+5 & 1`；remake 的 `unit_inactive` 是 caller-specific projection，不是全域死亡／存活欄位。`0x33499`=roster_has（查 `[0x53bf7]` 我方名冊）；**handler 無動作函式**（只條件→設碼+繪圖）→ `25`/`26` 回填。舊 bit0 高階命名已撤回。
+- [~] **handler raw-byte5 runtime bridge**：`0x3453e` raw adapter 與 byte5 writer 已有獨立 regression，但 `cmd/fd2` 的 `any_unit_inactive` 在缺少 `HasNativeRecordByte5` 時仍使用 `OnField/Alive` 相容 projection。需在 LOADCH／death／raw writer 路徑 materialize byte5，缺 raw 時 fail-closed，才可把 ch01/ch02 handler 升為 E0 native predicate。
 - [x] **反思日誌補第 7-10 輪** → `99`
 - [x] **挖完 `[0x53bf7]` 表語意**:不是 tile,是**我方隊伍名冊**(32槽×0x50B);`0x33499(id)=roster_has(id)` 查 byte[+8]==角色ID(章16 用)→ `25`/`26` 回填;兩單位陣列釐清([0x53a45]96槽全場 / [0x53bf7]32槽名冊)
-- [x] **回合計數釐清**:`[0x53bef]`=回合數(開始1/inc/cmp N),`[0x53ec8]`=累積計數(非回合)；**修正前輪把 [0x53ec8] 當回合**。byte+5 歷史判讀經 2026-07-16 完整反組譯定案為 bit0=inactive。
+- [x] **回合計數釐清**:`[0x53bef]`=回合/進度 counter（開始1/inc/cmp N），`[0x53ec8]`=累積計數（非回合）；**修正前輪把 [0x53ec8] 當回合**。byte+5 bit0 的歷史高階命名已撤回，僅保留 raw mask。
 - [x] **戰鬥規則來源盤點 + 動態驗證清單** → `27`:青衫公式=remake 實作依據+交叉驗證;列出 10 項需 DOSBox 實機驗證(核心 #1-4=戰鬥狀態機旗標/計數語意);新增「回合無上限」需求
-- [x] **動態驗證清單更新** → `27`§3:byte+5 bit0 已由反組譯定案為 inactive(1)/active(0)，bit7=已行動；回合=我方全動+敵方AI全動完;7-8用青衫攻略;9-10不需要;3([0x53ec8])低優先。舊「bit0=1 是存活」使用者記憶已撤回。
+- [x] **動態驗證清單更新** → `27`§3：byte+5 bit0／bit7 的 caller-specific raw tests 已列出；回合/換邊完成條件仍未由完整 state-machine 關閉。7-8 用青衫攻略；9-10 不需要；3(`[0x53ec8]`)低優先。舊「bit0=1 是存活」使用者記憶已撤回。
 - [x] **撤回 `[0x53ad5]`=opened-treasure／unit-pointer 斷言**：`0x10322` 初始化時複製 0x20 bytes 到 `[0x53ad5]` 指向的 buffer，`0x13d00` 以 event index 寫其 byte；ch25 post `0x24f30/0x24fb1` 讀 entry #12 來選 FDTXT index（base+5/base+8）。它是 battle-local state table，但高階 event 意義未命名；`OpenedTreasure` 保留 remake-owned state，不再聲稱原版位址。
 - [x] **state table entry12 writer closure**：`0x356bc..0x35821` 先 gate table[12]，成功臂以 actor class 查 item `0xd0`、`0x1b8e7` 消耗它、完成 presentation 後才設 table[12]=1，接 `spawn(1)→JOIN(31)→FDTXT #4`。因此 ch25 post 的 table[12] base+5/+8 有直接來源；尚未完成兩臂 runtime 資產，不能以 treasure／party condition 取代。
 - [x] **entry12 dispatch-scope audit（official IDA 9.4）**：`sub_356B7=0x356b7..0x35822` 有八個 generic dispatcher/UI control-flow xref（`0x117e7/0x16f55/0x190ac/0x1a813/0x1aa1d/0x1d80b/0x1d8ba`）；目前沒有 map25-local caller 證據。故 item `0xd0` 分支保持 raw event capability，禁止接成「ch25 固定寶箱／座標」或 campaign 自動流程。
 - [x] **撤回 ch27 `0x24618`=acting 的暗示**：official IDA 定義 `sub_24618=0x24618..0x24754`（含 post-handler `0x33af1/0x33c9d` callers）；Docker Capstone 證實它是 13×8 offscreen terrain + 固定 9-pass strip composite + 0..62 palette 收束的地圖轉場。四個參數是 tile/strip geometry/progression，不能降成 actor `act`、pan 或任意 fade；renderer adapter 待實作且維持 fail-closed。
 - [x] **全 30 關卡目標表(攻略 ground truth)** → `28`:每關勝利/失敗/加入條件;**失敗條件=護衛目標**證實 unit_state 機制;加入=roster_has;ch30 魔神連鎖=回合事件;remake 關卡規格直接可用
-- [x] **撤回章17 alive 誤讀**:依 `unit_inactive` 重新解讀，指定單位 inactive 才依 jcc 設碼；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填
-- [~] 單位 0x50B 結構:+5(bit0=inactive/bit7=已行動)/+8角色ID/+0/+1/+2/+6/+0x31 已解;完整逐欄佈局 [阻](remake 用自有 struct,不需)
+- [x] **撤回章17 alive 誤讀**：依 caller-specific raw bit0 branch 重新解讀；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填
+- [~] 單位 0x50B 結構：`+5` raw bit0/bit7 predicates、`+8`角色ID、`+0/+1/+2/+6/+0x31` 已解；完整逐欄佈局 [阻]（remake 用自有 struct，不需）
 - [ ] (補)更新 doc 12:修正「main=0x10000」、補章節→BGM 表 0x51e63 精確曲號
 
 ## 第 6 輪 ✅(戰鬥全螢幕演出畫面 1:1 還原 — 使用者逐項對照;①-④ 全完成 2026-07-05)

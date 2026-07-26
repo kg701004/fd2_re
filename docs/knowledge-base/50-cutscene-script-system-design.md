@@ -33,7 +33,7 @@
 | **走位 STEP/路徑** (step家族 + 0x13488) | 引擎逐格步進單位(方向陣列 0下1左2上3右);詳見 §1.1 | beat op:walk |
 | `PALFADE` (0x1f525) | 整幕 palette 淡入 | beat op:fade |
 | `DELAY(ms)` (0x375b2) | 延遲 | beat op:delay |
-| `DEACTIVATE_UNIT(slot)` (0x32975) | `unit[slot]+5 = 1`；bit0=1 是死亡／隱藏／未啟用，用於劇情退場 | beat op:deactivate_unit |
+| `DEACTIVATE_UNIT(slot)`（legacy DSL alias, 0x32975） | `unit[slot]+5 = 1`；此 caller 用於劇情退場，但 raw writer 本身不命名 bit0 的全域語意 | beat op:deactivate_unit（raw writer） |
 | `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再做 12-step reveal/present | beat op:spawn_intro |
 | `RESET_POSE` (0x134e4) | 所有 materialized units pose=0，再 delay 20ms | beat op:reset_pose |
 | `FOCUS_UNIT(slot)` (0x12d7b→0x12cea) | 讀 unit X/Y，先 X 後 Y 逐格移動游標；13×8 視窗在 X=2..10、Y=2..5 安全帶外才捲圖 | beat op:focus_unit；runtime 已照四個 step 函式 lower |
@@ -57,7 +57,7 @@
 
 **繪製公式 `0x127e0`**:單位畫在 `格 + tick × f(pose)`(pose=方向向量,tick 遞減→滑到定格)= 次格平滑內插。
 
-**單位結構(0x50B/槽,`[0x53a45]+idx×0x50`)**:+0=X格、+1=Y格、+3=pose(=方向)、+4=tick倒數、+5=狀態旗標(bit0=1 死亡／隱藏，0 有效存活；bit7=已行動)、+8=角色ID。
+**單位結構(0x50B/槽,`[0x53a45]+idx×0x50`)**:+0=X格、+1=Y格、+3=pose(=方向)、+4=tick倒數、+5=raw mask byte（caller 讀 bit0／bit7）、+8=角色ID；高階狀態不由此欄位表泛化。
 
 **序章王座走位(handler 0x3231b)**:`0x13185` 直接 ×15 → 對話#0 → ×13 → 對話#1(「全上」特例,不經 0x13488)。停位(對原版兩截圖 + FDFIELD 守衛地標三角測量):第一次對話 **(8,21)**(守衛 (5,21)/(12,21) 左右緊鄰索爾)、最終 **(8,8)**(王前 3 格「最跟前」)。詳細轉錄見 doc47 §11。
 
@@ -255,7 +255,7 @@ runtime 位址」與錯 context table dump，不是 entry breakpoint 本身。
    push/call 配對抽取，再正規化為 **60 個可編輯檔案**
    `remake/assets/cutscenes/handlers/chNN_{pre,post}.json` 與 manifest。
    每個 beat 都保留 EXE 原始 call-site (`source.addr`) 作稽核證據；原語呼叫則轉成
-   `loadch/pan/dialog/act/spawn/spawn_intro/deactivate_unit/reset_pose/focus_unit/join/bgm/scroll_step/palette_fade/delay` 等可讀 op。
+   `loadch/pan/dialog/act/spawn/spawn_intro/deactivate_unit(raw writer)/reset_pose/focus_unit/join/bgm/scroll_step/palette_fade/delay` 等可讀 op。
    尚未證實的 native call **保留為 `unknown`**，不可靜默丟失或猜譯。ch0(序章)仍逐項
    對照 doc47 §7；其中迴圈由 parser 自動辨識，精確匯成
    `scroll_step(unit_slot:2,repeat:15)` 與 `repeat:13`。**slot 不是方向**：它是 0x13185
@@ -292,7 +292,7 @@ append 尚未 materialize 的同 group records，對應
 slots 0–4，完整保留 frame movement/special timing。
 `0x32999(group)` 已由完整函式本體重反組譯確認為同一個 append constructor 加 12-step present loop；
 BeatRunner 的 `spawn_intro` 先 materialize group、保留 12 個顯示 step，再進下一個 ACT。`0x32975(slot)`
-則明確 lower 成 `deactivate_unit`：它寫 bit0=1，是死亡／隱藏／未啟用的劇情退場，不是 camera reveal。
+則明確 lower 成 `deactivate_unit`（raw writer）：它覆寫 byte+5 為 1，是劇情退場 caller，不是 camera reveal；不得由此泛化 bit0 語意。
 `JOIN` 已可 lower 原版 0–31 player charID 並保存 party membership；NPC portrait（例如商店店員 75）
 一律拒絕。
    `remake/assets/cutscenes/bindings/` 的 `HandlerBinding` 則是這個顯式 mapper 的可編輯
@@ -328,7 +328,7 @@ compiler 保持 issue，等待 scene-loading adapter，不能偷當成同一 sce
 editable scene，不能回退到 enclosing Node 的 lines 而播錯 `loadch` context。這只解決已編譯 dialog 的
 文字選擇；handler 整體仍須所有 map/roster/acting 原語完成 binding 才能宣告可忠實播放。
 3. 引擎 BeatRunner：依序執行已證實的 runtime beats
-   (pan/dialog/walk/act/spawn/spawn_intro/deactivate_unit/reset_pose/redraw/join/bgm/fade/delay)。其 `acting_frames` 已可精確播放已
+   (pan/dialog/walk/act/spawn/spawn_intro/deactivate_unit(raw writer)/reset_pose/redraw/join/bgm/fade/delay)。其 `acting_frames` 已可精確播放已
    解的 0x1366a 格式；handler 腳本不直接把 EXE 位址交給引擎。
 4. 驗收：每章過場對照 DOSBox 錄影（規則 65，對 reference 不對內部訊號），並以 Go
    loader test 驗證 60 份腳本全可讀取、每一筆均帶 source address。
@@ -348,7 +348,7 @@ beat 總數直接相比。2026-07-15 branch 結構化前全量匯出為 **626 �
 
 | 位址 | 次數 | 淺層定性(證據) |
 |---|---|---|
-| `0x11506` | 24 | **戰後 runtime→persistent roster 同步**（完整 body 已驗，見 §3.2）：雙迴圈以 `+8` charID 配對 battle `[0x53a45]` 與 persistent `[0x53bf7]`，複製完整 `0x50`-byte record、清戰場暫態、復原存活者 HP 與全員 MP，最後重算裝備衍生值。ID 0 特例是 `unit_inactive(runtime_idx) != 0` 時跳過配對。 |
+| `0x11506` | 24 | **戰後 runtime→persistent roster 同步**（完整 body 已驗，見 §3.2）：雙迴圈以 `+8` charID 配對 battle `[0x53a45]` 與 persistent `[0x53bf7]`，複製完整 `0x50`-byte record、清戰場暫態、依 caller 的 raw bit0 branch 處理 HP 與 MP，最後重算裝備衍生值。ID 0 特例是 `NativeRecordByte5Bit0(runtime_idx)!=0` 時跳過配對。 |
 | `0x233c6` | 15 | **批次寫入單位陣列 X/Y 座標+初始 pose**:迴圈對 `unitbase+idx*0x50` 寫 `+0`(從 edi 陣列讀 X)、`+1`(從 ebp 陣列讀 Y)、`+3`(<4 的小常數,疑初始 pose)。疑是「roster/FDFIELD own 展開寫入戰場陣列」的初始化實作,呼應 doc47/48 單位結構 `+0=X,+1=Y,+3=pose` 定案。 |
 | `0x24b4d` | 15 | **畫面過渡效果**:push 鏡頭 `[0x53aa9]/[0x53aad]` 呼叫 `0x11eee`(地形重繪)+`0x11cac`(主重繪)+迴圈呼叫 `0x11eb0`(present)+`DELAY(20ms)`。與 acting bit7 特殊模式分支(doc47 §9)看到的同一組呼叫序列相同,疑是該分支背後共用的「reveal/漸現」子程序。 |
 | `0x11df2` | 12 | **VGA 調色盤處理**(**推翻 team-lead「疑 0x11cac 同族」的猜測**):操作 `[0x53a65]`(新變數,調色盤資料表?)+呼叫 `0x37795`(push 常數 `0x3c8`/`0x3c9`——VGA DAC 索引/資料 I/O port 位址),跟 `0x11cac`(畫面重繪)不同族,是獨立的調色盤/淡變數值計算函式。 |
@@ -359,15 +359,15 @@ beat 總數直接相比。2026-07-15 branch 結構化前全量匯出為 **626 �
 
 `0x11506` 出現在 **24 個 post/victory handler caller**。它不是 roster 查詢；每次戰後會外層掃
 runtime battle array `[0x53a45]`（`0..[0x53beb)`），內層掃 persistent player roster `[0x53bf7]`
-（`0..[0x53bfb)`），以 unit `+8` 的角色 ID 配對。ID 0 另呼叫 `unit_inactive(runtime_idx)`；反組譯的
-精確分支是 **回傳非零（bit0=inactive/dead）便跳回內層迴圈、不做 copy**，只有回傳零的有效存活索爾才落入 copy。
+（`0..[0x53bfb)`），以 unit `+8` 的角色 ID 配對。ID 0 另讀取 `NativeRecordByte5Bit0(runtime_idx)`；反組譯的
+精確分支是 **回傳非零便跳回內層迴圈、不做 copy**，只有回傳零的 branch 才落入 copy。
 
-對每一個配對，原版依序：
+對每一個配對，原版依序（以下是該同步 caller 的直接 writer／branch，不是全域欄位命名）：
 
 - 以 `0x373c4` 把完整 **`0x50` bytes 從 runtime unit 複製到 persistent unit**；方向不可反過來。
-- 將 persistent `+0x22..+0x27` **六 bytes 清零**，並把 `+5` state flags 收斂為 bit0（inactive/dead）而不帶走
+- 將 persistent `+0x22..+0x27` **六 bytes 清零**，並把 `+5` state flags 收斂為 raw bit0 而不帶走
   戰場 path／行動等 transient state。
-- 若 bit0=0（active/alive），將 HP current `+0x40` 回填為 HP max `+0x42`；bit0=1 的陣亡／inactive 單位保留其零 HP。
+- 若 raw bit0=0，將 HP current `+0x40` 回填為 HP max `+0x42`；raw bit0=1 的 branch 保留其當時 HP。
   無論存活與否，都將 MP current `+0x44` 回填為 MP max `+0x46`。
 - 呼叫 `0x1145a(persistent_index)`：由 persistent record 的 base 值（`+0x37/+0x39/+0x3e`）起算，逐一
   累加已裝備欄位（`+0x0a` 起、bit `0x40`）所指 item 的數值，寫回 `+0x48/+0x4a/+0x4c/+0x4e`。
@@ -407,10 +407,10 @@ remake lower 為 editable `grant_item(item_id)`；`battle.Unit.Inventory` 保存
 ### 3.4 `ch01_post` inactive diamond：structured `if any_unit_inactive`（2026-07-16 更正）
 
 原版 `0x22f44` 從 slot 5 起，`0x22f52 cmp edx,0xb` 限定掃 slots **5..10**；
-`0x22f61 test byte [unit+5],1` 累積 inactive/dead bit，最後 `0x22f71 jne 0x22fa9` 分流：
+`0x22f61 test byte [unit+5],1` 累積 raw bit0，最後 `0x22f71 jne 0x22fa9` 分流：
 
 - 任一村民死亡／inactive：只播 FDTXT #7（call-site `0x22fc8`），不給獎勵。
-- 六名村民全部 active/alive：播 #6（`0x22f92`），再 `grant_item(0xC6)`（`0x22f9f`）。
+- 六名村民全部 raw bit0=0：播 #6（`0x22f92`），再 `grant_item(0xC6)`（`0x22f9f`）。
 - `0x22fd0` 匯合後才共同執行 pan / SPAWN4 / ACT14..16 / 後續對白。
 
 舊 exporter 依地址排序 call，會把 #6、送物品、#7 錯誤串成三拍。現在 extractor 依 Watcom 的
@@ -488,7 +488,7 @@ campaign 的 `story_ch03` 已由章標 stub 改接 authored `ch02_pre.json` 後�
 2026-07-16 完整 writer/death/revive body 已釘死方向：有效 constructor `0x10eed` 寫 bit0=0，
 HP 歸零路徑 `0x1dc61/0x1dd4c` 寫1，復活 `0x30f9c` 再清0；所以 `0x3453e` 是
 `unit_inactive`，不是 `unit_alive`。ch03 turn3 `0x344d8 jne` 表示 slot6 死亡／inactive 就跳過；
-只有鐵諾仍 active/alive 才 SPAWN2、PAN、delay 並播 #4。scenario 已增加 editable
+只有鐵諾的 raw bit0=0 才 SPAWN2、PAN、delay 並播 #4。scenario 已增加 editable
 `when:{turn:3,unit_slot_active:6}` 防止死亡路徑誤生援軍；FDTXT_003 #4 七句已接入同一
 battle event，並以原始 portrait 77/2/77/8/2/8/77 顯示。PAN `(3,0)→(3,17)` 與 800/200ms
 現已由通用 `battleEventRun` 依 editable action 原序播放：SPAWN2 → PAN grid(3,0) → delay800ms →

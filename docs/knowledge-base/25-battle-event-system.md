@@ -37,7 +37,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 
 | 原語 | linear | 次數 | 作用 | 狀態 |
 |---|---|---|---|---|
-| **查單位 inactive 旗標** | `0x3453e` | 36 | `unit_inactive(idx)`:`[0x53a45] + idx*0x50 + 5` 的 bit0；**1=死亡/隱藏/inactive，0=active/alive**。有效單位 constructor `0x10eed` 寫 0，HP=0 路徑 `0x1dc61/0x1dd4c` 寫 1；bit7=已行動 | [驗] |
+| **查單位 raw bit** | `0x3453e` | 36 | `NativeRecordByte5Bit0(idx)`：`[0x53a45] + idx*0x50 + 5` 的 `&1`；高階語意必須由 caller branch 證明 | [驗] |
 | **handler prologue** | `0x205be` | 15 | 預設 `[0x53ecc]=2` → 清 `[0x53ecc]=0` → `call 0x1088d`(載該章 FDTXT 文本/腳本) | [驗] |
 | **繪事件畫面** | `0x15f84` | 6 | 全螢幕圖繪製(過場 / 事件畫面) | [驗] |
 | 我方名冊查詢 | `0x33499(id)` | 1(章16) | `roster_has(id)`:查我方名冊 `[0x53bf7]`(32槽×0x50B)byte[+8]==id | [驗] |
@@ -64,10 +64,10 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 0x20718  push 0x32; call 0x3453e   ; 另查單位 #0x32(50)狀態
 0x2073...  push 0x33; call 0x3453e ; 查單位 #0x33(51)
 ```
-即:**章 1 的腳本邏輯 = 「若單位 5–10 全部 inactive(+5 bit0=1)→ 觸發劇情事件;再依單位 50/51 是否 inactive 分支」**。
+即:**章 1 的腳本邏輯 = 「若單位 5–10 的 raw bit0 全部為 1→ 觸發劇情事件;再依單位 50/51 的 raw predicate 分支」**。
 這就是一條「事件指令」的真身——一段檢查單位狀態的硬編碼條件 + 設 `[0x53ecc]`。
 
-> 單位 byte(+5):**bit0=死亡/隱藏/inactive(1)；active/alive=0**，bit7(0x80)=已行動。先前依「初始化=1」與使用者記憶寫成「bit0=存活」的說法，已由真正有效單位 constructor `0x10eed` 與 HP=0 寫入點 `0x1dc61/0x1dd4c` 推翻並撤回。回合數 [0x53bef] inc=我方全動+敵方AI全動完一輪。
+> 單位 byte(+5) 的 bit0／bit7 目前只作 raw mask；constructor、HP writer、`0x32975` 的寫入點不能自動推出所有 caller 的高階欄位語意。先前依「初始化=1」與使用者記憶寫成「bit0=存活」的說法已撤回。回合數 `[0x53bef]` 的 increment 已觀察，但 team-completion／換邊語意仍待完整 state-machine caller。
 
 ## 6. 完整事件流(串起 doc 23/24/25)
 
@@ -309,7 +309,7 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
   spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 只是第1章專屬固定過場,與 turn_events 無關。
   map0/章1 ground truth 4/4 驗證通過,`docs/data/turn_events.json` 已補 `groups` 欄。
 - **[已解,見 doc 26]** ~~18 handler 逐章語意 + 動作函式~~ → 全挖完:handler 無動作函式(只條件→設碼+繪圖);條件原語 `unit_inactive`/`roster_has`/回合;機器可讀 `docs/data/battle_events.json`。
-- **[修正→定案]** byte(+5)bit0 **1=死亡/隱藏/inactive，0=active/alive**；證據為 constructor `0x10eed` 寫0、HP=0 路徑 `0x1dc61/0x1dd4c` 寫1。舊說「bit0=存活、初始化=1」已撤回：該寫1位置不是有效單位 constructor。回合數=`[0x53bef]`(非 `[0x53ec8]`,後者為累積計數)。詳見 doc 26。
+- **[修正]** byte(+5) bit0 reader／writer 已分開：`0x3453e` 僅回傳 `&1`，constructor／HP writer／`0x32975` 是獨立 caller；不得把它們合併成全域死亡／存活欄位。舊說「bit0=存活、初始化=1」已撤回。回合數=`[0x53bef]`（非 `[0x53ec8]`，後者為累積計數）；team-completion 語意仍待 state-machine evidence。
 - **修正 doc 24**:§6 稱「事件腳本解譯器(大函式 0x205c9–0x20c64)」用詞不精確 → 實為**章節戰場事件 handler 表 0x51b19,各 handler 在 0x205b4–0x20bf5**(非單一解譯器,非 byte-code)。已於 doc 24 §6.3 附註。
 
 > 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`。
