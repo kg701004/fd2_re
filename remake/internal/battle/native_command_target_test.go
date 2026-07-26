@@ -42,6 +42,18 @@ func TestNativeCommandTargetsMatchesRecoveredCampCodes(t *testing.T) {
 	}
 }
 
+func TestNativeCommandTargetsPrefersRawByte5Predicate(t *testing.T) {
+	// A fully materialized roster follows the recovered 0x14818 byte+5 gate;
+	// normalized HP/OnField values must not reintroduce a second predicate.
+	usableRaw := &Unit{Camp: Enemy, X: 1, Y: 0, HP: 0, OnField: false, HasNativeRecordByte5: true, NativeRecordByte5: 0}
+	inactiveRaw := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, OnField: true, HasNativeRecordByte5: true, NativeRecordByte5: 1}
+	units := []*Unit{usableRaw, inactiveRaw}
+	got, err := NativeCommandTargets(3, 1, Cell{X: 0, Y: 0}, 2, 0, make([]byte, 3), units)
+	if err != nil || len(got) != 1 || got[0] != usableRaw {
+		t.Fatalf("raw target filter got=%v err=%v", got, err)
+	}
+}
+
 func TestNativeCommandTargetCellsFailsClosedWithoutRawFlags(t *testing.T) {
 	if _, err := NativeCommandTargetCells(2, 2, Cell{}, 1, nil); err == nil {
 		t.Fatal("missing raw flags must fail closed")

@@ -109,6 +109,47 @@ func NativeCommandTargetMatches(code int, camp Camp) bool {
 	}
 }
 
+// nativeTargetUnitUsable applies the raw 0x14818 inactive predicate whenever
+// the supplied roster is fully materialized. Legacy hand-built test/scenario
+// units without raw provenance retain the normalized projection only as an
+// explicit compatibility boundary.
+func nativeTargetUnitUsable(unit *Unit, rawComplete bool) bool {
+	if unit == nil {
+		return false
+	}
+	if rawComplete {
+		return unit.HasNativeRecordByte5 && unit.NativeRecordByte5&1 == 0
+	}
+	if unit.HasNativeRecordByte5 {
+		return unit.NativeRecordByte5&1 == 0
+	}
+	return unit.OnField && unit.Alive()
+}
+
+func nativeTargetRosterRawComplete(units []*Unit) bool {
+	if len(units) == 0 {
+		return false
+	}
+	for _, unit := range units {
+		if unit == nil || !unit.HasNativeRecordByte5 {
+			return false
+		}
+	}
+	return true
+}
+
+func nativeTargetActorUsable(unit *Unit, rawComplete bool) bool {
+	if unit == nil {
+		return false
+	}
+	if rawComplete {
+		return nativeTargetUnitUsable(unit, true)
+	}
+	// The legacy caller only established an on-grid actor/confirmed pointer;
+	// keep that compatibility boundary while candidate lists remain alive-gated.
+	return unit.OnField
+}
+
 // NativeCommandTargets applies one recovered 0x14818 invocation and its
 // record+6 camp predicate to runtime units.  It is deliberately independent
 // of CastArea; for generic commands its origin/mode must be the confirmed
@@ -118,9 +159,10 @@ func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []b
 	if err != nil {
 		return nil, err
 	}
+	rawComplete := nativeTargetRosterRawComplete(units)
 	var targets []*Unit
 	for _, unit := range units {
-		if unit == nil || !unit.OnField || !unit.Alive() || !NativeCommandTargetMatches(targetCode, unit.Camp) {
+		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, unit.Camp) {
 			continue
 		}
 		if cells[Cell{X: unit.X, Y: unit.Y}] {
@@ -150,9 +192,10 @@ func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode
 			}
 		}
 	}
+	rawComplete := nativeTargetRosterRawComplete(units)
 	targets := make([]*Unit, 0)
 	for _, unit := range units {
-		if unit == nil || !unit.OnField || !unit.Alive() || !NativeCommandTargetMatches(targetCode, unit.Camp) {
+		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, unit.Camp) {
 			continue
 		}
 		if cells[Cell{X: unit.X, Y: unit.Y}] {
@@ -168,7 +211,8 @@ func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode
 // cell with record+4 and supplies the effect list to 0x2a6bd.  It deliberately
 // excludes the command 0x17/0x1e special branches and all presentation.
 func NativeCommandEffectTargets(w, h int, actor, confirmed *Unit, selectionMode, effectMode, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
-	if actor == nil || confirmed == nil || !actor.OnField || !confirmed.OnField {
+	rawComplete := nativeTargetRosterRawComplete(units)
+	if !nativeTargetActorUsable(actor, rawComplete) || !nativeTargetActorUsable(confirmed, rawComplete) {
 		return nil, fmt.Errorf("invalid native command actor/confirmed unit")
 	}
 	selection, err := NativeCommandTargets(w, h, Cell{X: actor.X, Y: actor.Y}, selectionMode, targetCode, flags, units)
@@ -212,6 +256,7 @@ func NativeCommand30Targets(w, h int, savedCursor, confirmedCursor Cell, steps i
 	}
 	cell := savedCursor
 	targets := make([]*Unit, 0, steps)
+	rawComplete := nativeTargetRosterRawComplete(units)
 	for i := 0; i < steps; i++ {
 		cell.X += dx
 		cell.Y += dy
@@ -221,7 +266,7 @@ func NativeCommand30Targets(w, h int, savedCursor, confirmedCursor Cell, steps i
 		// sub_12C0D returns the first active unit at a coordinate; it does
 		// not search past a non-enemy unit occupying the same malformed cell.
 		for _, unit := range units {
-			if unit == nil || !unit.OnField || !unit.Alive() || unit.X != cell.X || unit.Y != cell.Y {
+			if !nativeTargetUnitUsable(unit, rawComplete) || unit.X != cell.X || unit.Y != cell.Y {
 				continue
 			}
 			if unit.Camp == Enemy {

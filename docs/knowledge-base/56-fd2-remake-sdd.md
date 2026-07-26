@@ -340,7 +340,7 @@ stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。conf
 而非 legacy UI 的單格 `CastArea` contract；`0x2a6bd` 對 IDs0..8 的 state writer 尚未閉合，不能從 final array
 推論 numeric resolver。`0x14818` 的方向／形狀
 與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
-使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須是 alive/on-grid，並以 target code 對 runtime
+使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須在 grid geometry 內，並以 raw byte+5 active gate 及 target code 對 runtime
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
 直接來自 FDFIELD `b0` camp（敵=0、友=1、己=2），故四個 code 分別是 enemy/non-enemy/non-ally/own；
 `dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 flood-fill：起點 budget=`dist`，grid flag bit `0x40` 阻擋、
@@ -354,6 +354,12 @@ selection stage (`actor,+3`) 或 confirmed effect stage (`cursor,+4`)。它覆�
 cross branch 與四個 camp predicates。`NativeCommandEffectTargets` 進一步要求 confirmed unit 確在 first candidate
 list，才以其 cell 與 `+4` 取 effect list，固定 generic two-stage contract；UI 尚未接管這個流程，故不可自動替換
 legacy cast。
+
+候選 unit 的 active gate 也已按 raw provenance 收斂：當 roster 每筆都有 FDFIELD-derived byte+5 時，
+`NativeCommandTargets`、`NativeAttackCandidates`、`NativeCommandEffectTargets` 與 command-30 cardinal
+resolver 只採用 `byte+5 bit0 == 0`；不再以 HP 或 `OnField` 另造 alive predicate。舊 hand-built JSON／測試資料缺少
+完整 raw roster 時才保留 normalized projection，明確標為 E1 compatibility boundary，不能宣稱 native state 已完全
+materialize。
 
 `battle.NativeAttackCandidates` 另保存 `0x14237` 的 caller-specific geometry：它先以 item-row
 傳入的 raw `(a4=mode,a5=innerRadius)` 執行同一 `0x14818` grid pass，僅在 `mode<0x10` 時排除
