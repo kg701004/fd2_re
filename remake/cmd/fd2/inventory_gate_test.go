@@ -13,10 +13,10 @@ func TestPartyHasItemIDMatchesOriginalSixteenRuntimeSlotSearch(t *testing.T) {
 	units[16] = &battle.Unit{Camp: battle.Own, Inventory: []int{0x65}}
 	g := &Game{st: &battle.State{Units: units}}
 	if !g.partyHasItemID(0x64) {
-		t.Fatal("original lookup must include inactive/non-player runtime slots")
+		t.Fatal("campaign projection must include inactive/non-player runtime slots")
 	}
 	if g.partyHasItemID(0x65) {
-		t.Fatal("original lookup must stop after runtime slot 15")
+		t.Fatal("campaign projection must stop after runtime slot 15")
 	}
 
 	g.st = nil

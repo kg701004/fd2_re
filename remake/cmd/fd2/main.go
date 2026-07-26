@@ -1821,10 +1821,14 @@ func (g *Game) grantItemToParty(itemID int) bool {
 	return false
 }
 
-// partyHasItemID implements the campaign-level equivalent of original 0x24b14:
-// search runtime slots 0..15 without filtering camp/activity for an exact
-// unsigned-byte item identity. The persistent roster fallback also makes a
-// node-boundary save/load lossless when there is no active runtime array.
+// partyHasItemID is the campaign projection used when only normalized Unit
+// inventory values are available: it searches runtime slots 0..15 without a
+// camp/activity filter, then falls back to the persistent roster at a
+// node-boundary save/load. It is deliberately not called byte-identical to
+// native 0x24b14: that routine first counts raw flag-bit7-clear cells and only
+// scans the resulting prefix. battle.FindNativeInventoryItem is the exact raw
+// adapter; this projection remains a compatibility path until runtime raw
+// records are carried through the campaign boundary.
 func (g *Game) partyHasItemID(itemID int) bool {
 	if g.st != nil {
 		limit := len(g.st.Units)
