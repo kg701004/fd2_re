@@ -1227,6 +1227,11 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 		return false, fmt.Errorf("缺少有效 handler condition")
 	}
 	switch condition.Op {
+	case "native_event_state_nonzero":
+		if g.st == nil || condition.EventStateIndex == nil || *condition.EventStateIndex < 0 || *condition.EventStateIndex >= len(g.st.NativeEventState) {
+			return false, fmt.Errorf("缺少有效 native_event_state condition")
+		}
+		return g.st.NativeEventState[*condition.EventStateIndex] != 0, nil
 	case "roster_has":
 		if condition.CharID == nil || !campaign.JoinableCharacterID(*condition.CharID) {
 			return false, fmt.Errorf("缺少有效 roster_has char_id")

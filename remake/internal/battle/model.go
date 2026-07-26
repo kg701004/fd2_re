@@ -336,6 +336,7 @@ type State struct {
 	OwnDeploy                []Cell                      // 我方可部署格
 	Turn                     int                         // 回合數(無上限,doc 27;只由劇本事件限制)
 	Flags                    map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
+	NativeEventState         [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
 	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
 	NativeTileBlitModes      []byte                      // FDFIELD composition entry byte+3; nil unless exact renderer export exists

@@ -104,9 +104,10 @@ type LoadCHState struct {
 
 // BeatCondition is the runtime form of a proven handler predicate.
 type BeatCondition struct {
-	Op        string `json:"op"`
-	UnitSlots []int  `json:"unit_slots,omitempty"`
-	CharID    *int   `json:"char_id,omitempty"`
+	Op              string `json:"op"`
+	UnitSlots       []int  `json:"unit_slots,omitempty"`
+	CharID          *int   `json:"char_id,omitempty"`
+	EventStateIndex *int   `json:"event_state_index,omitempty"`
 }
 
 // HandlerUnitLayout is one absolute runtime-slot placement recovered from a

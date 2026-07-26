@@ -21,7 +21,8 @@ type HandlerCondition struct {
 	UnitSlots []int  `json:"unit_slots,omitempty"`
 	// CharID is the one-byte permanent-player ID accepted by native 0x33499.
 	// It is meaningful only for roster_has, never a portrait/NPC identifier.
-	CharID *int `json:"char_id,omitempty"`
+	CharID          *int `json:"char_id,omitempty"`
+	EventStateIndex *int `json:"event_state_index,omitempty"`
 }
 
 // HandlerRepeatHint records a directly recovered fixed-count loop around one

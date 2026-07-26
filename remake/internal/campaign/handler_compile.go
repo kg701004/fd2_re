@@ -187,6 +187,13 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				}
 				charID := *input.Condition.CharID
 				condition.CharID = &charID
+			case "native_event_state_nonzero":
+				if input.Condition.EventStateIndex == nil || *input.Condition.EventStateIndex < 0 || *input.Condition.EventStateIndex >= 0x20 {
+					issue(i, input, "native_event_state_nonzero requires a 0..31 event_state_index")
+					continue
+				}
+				index := *input.Condition.EventStateIndex
+				condition.EventStateIndex = &index
 			default:
 				issue(i, input, "if requires a proven condition")
 				continue

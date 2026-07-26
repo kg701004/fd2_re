@@ -12,13 +12,11 @@
       }
     },
     {
-      "op": "dialog",
-      "text_index": "eax",
-      "source": {
-        "addr": "0x24f43",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
+      "op": "if",
+      "source": { "addr": "0x24f30" },
+      "condition": { "op": "native_event_state_nonzero", "event_state_index": 12 },
+      "then": [{ "op": "dialog", "text_index": 6, "source": { "addr": "0x24f43", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }],
+      "else": [{ "op": "dialog", "text_index": 5, "source": { "addr": "0x24f43", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }]
     },
     {
       "op": "act",
@@ -46,13 +44,11 @@
       }
     },
     {
-      "op": "dialog",
-      "text_index": "eax",
-      "source": {
-        "addr": "0x24fc4",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
+      "op": "if",
+      "source": { "addr": "0x24fb1" },
+      "condition": { "op": "native_event_state_nonzero", "event_state_index": 12 },
+      "then": [{ "op": "dialog", "text_index": 9, "source": { "addr": "0x24fc4", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }],
+      "else": [{ "op": "dialog", "text_index": 8, "source": { "addr": "0x24fc4", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }]
     },
     {
       "op": "act",
