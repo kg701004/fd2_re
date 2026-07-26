@@ -66,6 +66,17 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 ## 4. 待續(需後續輪次)[阻]
 
+### 4.0 2026-07-27 item row caller audit（新增證據）
+
+官方 IDA 9.4 重新檢查 `0x4e56c` 的多個呼叫者，確認 raw row 的用途比單一攻擊 caller 更廣：
+
+- `0x1145a` 與 `0x1b750` 都只在 inventory flag `&0x40` 時讀 row `+1/+3/+5/+7`，分別累加到衍生 AP/HIT/DP/EV；這是裝備合成資料流，不是 UI 顯示專用欄位。
+- `0x14237` 讀 row `+0x0b/+0x0c` 後呼叫 `0x14818`；目前只把它記為 caller-specific geometry inputs，不能把 `+0x0b` 命名為通用射程上限。
+- `0x1567e` 會讀 row `+0x0d/+0x10/+0x11/+0x12`，依分支呼叫 `0x14818` 或 `0x149f8`；這證實特殊物品效果共用幾何 routines，但仍不足以命名效果或欄位。
+- `0x1bbdc`／`0x20c6f` 以 row `+0x0d` 做 type dispatch，並由不同原生 callee 消費；數值方向、顯示語意與 target ABI 仍未閉合。
+
+因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的 `weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride `0x17` 已知，但 runtime table 邊界及其餘欄位仍 fail-closed，不能直接把 215 筆 normalized rows 宣稱為 runtime table 的完整證明。
+
 ### 4.1 2026-07-20 direct range-field trace
 
 以 `tools/disasm_le.py` 追 `0x318ad` 與 item pointer helper `0x4e56c` 後，欄位偏移更正如下：
