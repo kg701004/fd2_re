@@ -53,6 +53,10 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 `remake/internal/dato.MouthState`（每 2 frame tick、閉嘴隨機 2–31 tick、開嘴 1 tick，選用 DATO m0/m3），
 並接入重製對話更新迴圈。這是可驗證的 UI 子系統進展，不等於所有 DATO 資源、框圖排版或 30 章流程已還原。
 
+同輪亦固定 `0x24618` indexed transition 的 raw buffer 邊界：staging offset `32904`、stride `456`、
+viewport `312×192`，以及 `0x11EB0` 複製到 320-byte VGA stride 的契約；descriptor 解碼與 indexed compositor
+仍未接入，故不把它宣稱成已完成的轉場演出。
+
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
 > 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，
 > 目前不宣稱已完成跨平台 runtime parity。

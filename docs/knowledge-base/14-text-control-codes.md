@@ -63,11 +63,11 @@
 | `0xFFED` | −19 | `0x16367` | `0x728`(上框) | **戰場單位** idx→`byte[unit+7]` | `0x4E8AF` | `0xA0B4F` |
 | `0xFFEC` | −20 | `0x163E3` | `0x9017`(下框) | **戰場單位** idx→`byte[unit+7]` | `0x4E8E1` | `0xA951F` |
 
-→ 4 碼 = {上框 `0x728` / 下框 `0x9017`} × {肖像 ID 直接給(`-17/-18`)/ 用戰場單位 index 查(`-19/-20`)}。
+→ 4 碼 = {上框 `0x728` / 下框 `0x9017`} × {`-17/-18` 的 identity lookup／direct-DATO fallback、`-19/-20` 的 runtime unit index}；不能把前一組簡化成固定肖像 ID。
 開框流程(以 `-17` `0x16140` 為例):
 1. 若已有開框(`[esp+0x18]!=0`)→ 先收:`0x16559(0)`(清嘴型)+ `0x16C57(0)` + `0x16B43`(復原存底背景)。
 2. 設框位置 `[0x3C67] = 0x728`(上)或 `0x9017`(下)。
-3. 讀肖像來源(`-17/-18` 取下個 word 當 DATO ID;`-19/-20` 取單位 index → `[0x53A45]+idx*80` 的 `byte[+7]`)。
+3. 讀肖像來源：`-17/-18` 先把 operand 送入 `0x12C60` identity lookup，命中時取 record `+7`，未命中才保留 direct-DATO fallback；`-19/-20` 取 runtime unit index → `[0x53A45]+idx*80` 的 `byte[+7]`。
 4. 從 **`DATO.DAT`**(字串 linear `0x51A70`)載肖像:`0x111BA(0x51A70, [0x53A85], id)` → `[0x53A85]`=肖像 buffer。
 5. blit 肖像到 VGA `0xA0000 + [0x3C67]`(上框 `0x4E8AF` / 下框 `0x4E8E1`,width `0x140`)。
 6. 設文字起點(`0xA0B4F` 上 / `0xA951F` 下),之後字模畫進框內。
