@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 func solid(v byte) fdicon.Sprite {
@@ -109,5 +110,52 @@ func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
 	// anchor 136 therefore lands at viewport (x=64,y=85).
 	if got := vga[85*viewWidth+64]; got != 0x5a {
 		t.Fatalf("native HUD did not reach viewport: %#x", got)
+	}
+}
+
+func TestComposeNativeTransitionFramePreservesNativeLayerOrder(t *testing.T) {
+	work := make([]byte, workStride*320)
+	vga := make([]byte, viewWidth*viewHeight)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	identity := make([]byte, 256)
+	for i := range identity {
+		identity[i] = byte(i)
+	}
+	pass, err := fdother.BuildNativeIndexedTransitionPass(6, 6, 10, 0, 192)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := NativeTransitionFrameInput{
+		TerrainBank: bank(12, 7), UnitBank: bank(12, 0), ForegroundBank: bank(12, 0), SelectorCache: cache,
+		Cells: cells, Controls: []byte{0, 0, 0, 0}, TerrainLUT: identity, MapWidth: 13,
+	}
+	if err := ComposeNativeTransitionFrame(work, vga, in, pass, identity); err != nil {
+		t.Fatal(err)
+	}
+	if got := vga[0]; got != 7 {
+		t.Fatalf("transition viewport first pixel=%d want terrain 7", got)
+	}
+}
+
+func TestComposeNativeTransitionFrameRejectsMissingRawInputAtomically(t *testing.T) {
+	work := make([]byte, workStride*320)
+	vga := make([]byte, viewWidth*viewHeight)
+	work[0], vga[0] = 9, 8
+	pass, err := fdother.BuildNativeIndexedTransitionPass(6, 6, 10, 0, 192)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ComposeNativeTransitionFrame(work, vga, NativeTransitionFrameInput{}, pass, nil); err == nil {
+		t.Fatal("missing transition input accepted")
+	}
+	if work[0] != 9 || vga[0] != 8 {
+		t.Fatal("rejected transition mutated caller buffers")
 	}
 }

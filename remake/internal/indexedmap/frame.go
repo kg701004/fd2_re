@@ -46,6 +46,22 @@ type NativeFrameInput struct {
 	HUDCache             *fdicon.NativeSelectorCache
 }
 
+// NativeTransitionFrameInput is the raw layer subset used by 0x24618. Unlike
+// the steady tactical redraw, the transition starts with terrain only; the
+// middle 0x127a9 callback adds unit and foreground layers between two LUT
+// remaps. Range and HUD are intentionally absent from this contract.
+type NativeTransitionFrameInput struct {
+	TerrainBank, UnitBank, ForegroundBank *fdicon.Bank
+	SelectorCache                         *fdicon.NativeSelectorCache
+	Cells                                 []fdicon.NativeTerrainCell
+	Controls, TerrainLUT                  []byte
+	MapWidth, CameraX, CameraY            int
+	Flip, TerrainCycle, IdleCycle         int
+	MovingCycle, PixelShift               int
+	Units                                 []fdicon.NativeUnitLayerEntry
+	ForegroundUnits                       []fdicon.NativeForegroundLayerEntry
+}
+
 // ComposeNativeFrame is the strict native-HUD form of ComposeFrame. It uses
 // the exact indexed HUD assembly at its recovered position, rather than
 // accepting an arbitrary callback. All source data remain explicit and any
@@ -54,6 +70,44 @@ func ComposeNativeFrame(work, vga []byte, in NativeFrameInput) error {
 	return ComposeFrame(work, vga, in.Frame, func(dst []byte) error {
 		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst, in.HUD)
 	})
+}
+
+// ComposeNativeTransitionFrame performs one verified indexed 0x24618 frame:
+// terrain redraw → first LUT pass → 0x127a9 unit/foreground redraw → second
+// LUT pass → centered rectangle LUT → 312×192 viewport copy. It clones the
+// work buffer before every operation, so missing raw banks or malformed
+// coordinates cannot partially mutate either caller buffer.
+func ComposeNativeTransitionFrame(work, vga []byte, in NativeTransitionFrameInput, pass fdother.IndexedTransitionPass, lut []byte) error {
+	if len(work) < (fdother.NativeTransitionStageOffset+fdother.NativeTransitionStageHeight*fdother.NativeTransitionStageStride) || len(vga) < fdother.NativeTransitionPresentStride*fdother.NativeTransitionStageHeight {
+		return errors.New("indexedmap: incomplete native transition buffers")
+	}
+	if in.TerrainBank == nil || in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 || len(in.TerrainLUT) != 256 || len(lut) != 256 {
+		return errors.New("indexedmap: incomplete native transition input")
+	}
+	frame := append([]byte(nil), work...)
+	baseX, baseY := workBase%workStride, workBase/workStride
+	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 13, 8, in.Flip, in.TerrainCycle, in.TerrainLUT); err != nil {
+		return fmt.Errorf("indexedmap: transition terrain: %w", err)
+	}
+	redraw := func(dst []byte) error {
+		if err := in.UnitBank.BlitNativeUnitLayer(dst, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, 12, 7, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
+			return fmt.Errorf("indexedmap: transition units: %w", err)
+		}
+		if err := in.ForegroundBank.BlitNativeForegroundLayer(dst, workStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 12, 7, in.Flip, in.TerrainLUT); err != nil {
+			return fmt.Errorf("indexedmap: transition foreground: %w", err)
+		}
+		return nil
+	}
+	if err := fdother.ApplyIndexedTransitionPass(frame, workStride, lut, pass, redraw); err != nil {
+		return fmt.Errorf("indexedmap: transition pass: %w", err)
+	}
+	viewport := make([]byte, fdother.NativeTransitionPresentStride*fdother.NativeTransitionStageHeight)
+	if err := fdother.CopyNativeTransitionViewport(viewport, fdother.NativeTransitionPresentStride, frame, fdother.NativeTransitionStageOffset, fdother.NativeTransitionStageStride, fdother.NativeTransitionStageWidth, fdother.NativeTransitionStageHeight); err != nil {
+		return fmt.Errorf("indexedmap: transition viewport: %w", err)
+	}
+	copy(work, frame)
+	copy(vga, viewport)
+	return nil
 }
 
 // ComposeFrame performs the recovered steady order:
