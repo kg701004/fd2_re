@@ -193,7 +193,7 @@
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
 - [x] **頂層狀態機反組譯**:真 main=0x25bf4(雙層迴圈),核心狀態變數 `[0x53c03]`=章節,兩張章節跳表(0x51d71 戰前劇情 / 0x51de9 戰後)→ `23`
 - [x] **標題序列**:角色立繪 5 幀(FDOTHER #0x45-0x49,320×147)垂直捲動(非旋轉)+ FLAME DRAGON logo(#7 sub0)+ 主選單;**解碼器當 oracle 解圖視覺驗證** → `23`
-- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` slot selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`、持久資料來源未閉合。remake 現有單一 JSON save 是 fallback，不能稱原版 LOAD/CONTINUE 已還原 → `23`、`57`
+- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` slot selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`、持久資料來源未閉合。remake 現有四槽自有 JSON selector 是 fallback，不能稱原版 LOAD/CONTINUE 已還原 → `23`、`57`
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **釘死 cutscene→戰場鏈**:0x10010 真 caller=0x1a251/0x26130,路徑 main→0x25ebb→0x10010,獨立驗證章節跳表(修 data 段 fixup)→ `24`;排除偽命中 0x1b051/0x26f30
@@ -324,7 +324,7 @@
 - [ ] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)
 - [ ] UI 音效 index 2-0xb 語意畫面實測
 
-## 第 10 輪 ✅(3-subagent 續批:全流程骨架/素材滿覆蓋/戰鬥音效)
+## 第 10 輪（歷史快照；不代表目前 parity）
 - [x] **全 30 章 campaign 生成器**(sonnet):gen_campaign.py→campaign_full.json(183 節點,
       雙重驗證 python+真 campaign.Load;章→map 順序對應依據誠實);旗艦修 resetBattle fallback
       (scenario 空不再錯載 ch01 → roster 全員登場);ch02/map1 實測 33 單位 ✓
@@ -342,7 +342,7 @@
 - [ ] 戰鬥 SFX:index 陣列填值上游、#48-64 逐招對照、remake 接入(atkAnim 命中掛 battle 池)
 - [ ] UI 音效 index 2-0xb 語意畫面實測
 
-## 第 11 輪 ✅(campaign 全 30 章能玩 + SFX 收線)
+## 第 11 輪（歷史快照；「全 30 章一條龍」斷言已由後續誠實揭露降級）
 - [x] **ch2-30 scenario stub**(sonnet):29 個 chNN.json(party 4 人/deploy=own_deploy 真資料
       (9 章資源瑕疵 spiral fallback)/groups 全開排除 group==255 padding);campaign_full 30/30
       掛 scenario(含修 ch01 campaign 模式沒主角隊的壞點);三層驗證+3 章實跑
@@ -833,7 +833,7 @@
 - [~] **SYNC-PARTY-RAW-IDENTITY-GATE**：`PartyMember.native_identity`/`Unit.NativeIdentity` 已可選地攜帶 native persistent `+0x08`，`syncPartyFromBattle` 有 raw-key matching 與 unknown-key fail-closed regression；缺欄位時才保留 Fig projection。仍未完成全 roster/save/export 的 raw record 接線，故不宣稱 byte-identical。
 - [x] **RE-PERSISTENT-COPY-MUTATION-11506**：Docker Capstone 閉合 `0x11506` 配對後 mutation core：runtime→persistent copy `0x50` bytes；清 persistent `+0x22..+0x27`；`+0x05 &= 1`；若結果非1，`+0x40 = +0x42`；固定 `+0x44 = +0x46`。新增 `battle.ApplyNativePersistentRecordCopy` read/write/bounds regression；`0x3453e` zero-identity gate 與 `0x1145a` tail 保留 caller-owned，未猜測性接入 sync runtime。
 - [x] **RE-RAW-BYTE5-BIT0-3453E**：Docker Capstone 閉合 `0x3453e(index)`：回傳 selected record `+0x05 & 1`，不改寫資料。新增 `battle.NativeRecordByte5Bit0` mask/bounds regression；保持 raw predicate，不命名 acted/alive/active。
-- [~] **RE-EQUIPMENT-RECALC-1145A**：Docker Capstone 閉合 `0x1145a(persistentIndex)` raw arithmetic：signed base words `+0x37/+0x39/+0x3e`，掃 8 slots；flag byte bit `0x40` set 才以 item byte `+1` 查 `0x4e56c`，累加 effect words `+1/+5/+3/+7` 至 raw destinations `+0x48/+0x4a/+0x4c/+0x4e`。現有 normalized `campaign.RecomputeEquipment` 保持 projection-only；raw item-effect table/record adapter 尚待，不能把 normalized inventory 宣稱 byte-identical。
+- [x] **RE-EQUIPMENT-RECALC-1145A**：Docker Capstone 閉合 `0x1145a(persistentIndex)` raw arithmetic，並由 `battle.ApplyNativeEquipmentRecalc` 保存 signed base words `+0x37/+0x39/+0x3e`、八格 `0x40` flag gate、`0x4e56c` row stride、四個 raw destinations 與 16-bit wrap。normalized `campaign.RecomputeEquipment` 仍是 projection-only；row 欄位語意與 campaign 接線仍未閉合，不能宣稱 full gameplay byte identity。
 - [x] **RE-EQUIPMENT-RAW-ADAPTER-1145A**：新增 `battle.ApplyNativeEquipmentRecalc`，依 raw `[flag,item]` 八格、bit `0x40` gate、`0x602ad+item*0x17` row 與 signed/wrapping word arithmetic 寫入四個 raw destinations；bounds preflight atomic、unequipped/missing-row regression 通過。row 欄位仍不命名，也未接 normalized equipment/campaign。
 - [~] **RE-ITEM-EFFECT-ROW-4E56C**：已用 Docker Capstone 閉合 `0x4e56c` 的純定址：`0x602ad + item*0x17`，新增 `battle.NativeItemEffectRowOffset` 與 byte-selector regression；23-byte row 的欄位語意、實際 table 長度及 normalized equipment 接線仍待證據，保持 fail-closed。
 - [~] **RE-ITEM-EFFECT-211A4**：Docker Capstone 已閉合 type `5/0xd` 的 list-driven topology：`0x1c4cc/0x1c2da` raw subcommand `0xd` → supplied byte list 逐筆 `0x1c916(item-word,target)` → `0x1e0db` presentation；不命名成治療／藥水，caller 的 list/count/amount ABI 與 effect fields 尚待。

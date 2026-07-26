@@ -281,7 +281,7 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 
 - 游標索引 = `ebp`,選單項由 0x1ff79 繪製/反白;項數與預設項來自設定結構 0x5204e。
 - **此主選單迴圈未見 ESC 分支**(只有移動 + 確認)[驗];ESC 取消是戰場/子選單的行為(見 doc 13),非主選單。
-- 回傳值分派(回 `0x25ebb`，2026-07-25 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀檔**（配置 save resource 後進 `0x30550` slot selector，再從選中記錄拷出 0xA00 bytes 至 runtime state）。`eax != 0 && eax != 1` 則跳到 `0x26124`，直接呼叫 battle setup `0x10010`；這是與 slot selector 分離的第三分支。其使用的持久資料／玩家可見名稱尚未閉合，故不得把它武斷命名為「靜默讀檔」或讓 remake 的單一 JSON load 冒充等價行為。
+- 回傳值分派(回 `0x25ebb`，2026-07-25 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀檔**（配置 save resource 後進 `0x30550` slot selector，再從選中記錄拷出 0xA00 bytes 至 runtime state）。`eax != 0 && eax != 1` 則跳到 `0x26124`，直接呼叫 battle setup `0x10010`；這是與 slot selector 分離的第三分支。其使用的持久資料／玩家可見名稱尚未閉合，故不得把它武斷命名為「靜默讀檔」或讓 remake 的四槽自有 JSON load 冒充等價行為。
 
 ### `0x30550` LOAD slot selector（2026-07-25，E0 partial）
 
