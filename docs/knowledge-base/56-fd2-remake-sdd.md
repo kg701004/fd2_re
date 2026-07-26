@@ -33,6 +33,16 @@ command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 
 `+6`／table selectors 的 camp/turn 語意、完整 target transaction、movement/effect/UI 與
 runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
 
+`0x1567E` 的 command enumerator 也已由 canonical Docker Capstone 重讀：它以 unit index
+算 `0x50`-byte record，先呼 `0x1B8A6` 取得 inventory prefix/count，再逐 item row 讀
+`+0x0B` 的 command-list bytes。每個 command record 取 `+0x10` command、`+0x11` auxiliary；
+`command <= 0x0F` 走 `0x14818` geometry/target builder，`command > 0x0F` 轉
+`spell_id=command-0x10` 後走 `0x149F8` candidate builder。通過 candidate 後呼
+`0x15880` score helper，最大值才寫 raw globals `0x53C33`（score）、`0x53C37/0x53C3B`
+（candidate coordinates）、`0x53C3F`（command-list index）。這是 command enumeration／
+selection boundary，不證明 item row 欄位名稱、法術效果、MP transaction 或完整 AI turn；
+`battle.AIPlan.NativeSpellCommands` 仍只保存 raw provenance。
+
 ## 2. 證據分級與反組譯規則
 
 每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：
