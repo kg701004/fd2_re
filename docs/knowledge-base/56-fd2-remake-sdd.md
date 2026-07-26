@@ -560,6 +560,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Preparation dispatch boundary: `0x1a813` computes each candidate as `base+3*i` for exactly 16 slots, compares bytes `+3` and `+5` to caller/global gates, then reads byte `+4` as an index into a separate function table and invokes it with zero. `fdother.FindNativePreparationDispatch` preserves the overlapping 3-byte stride and returns raw matches only; it does not invoke callbacks or assign event names.
 
+   Preparation timer boundary: official `0x1a941` scans 0x50-byte records selected by `+6==selector` and `+5 bit0==0`, then decrements six bytes at `+0x22..+0x27`; only a nonzero byte that becomes zero emits the downstream redraw path, whose source argument is `0x1e1+counterIndex`. `fdother.TickNativePreparationTimers` preserves this in-place transition and returns raw expiry metadata without naming statuses or effects.
+
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
 
    `fdother.ParseLUTBank`/`DecodeLUTResource` now close the FDOTHER #3 input boundary: its `LMI1` directory contains 23 independent 256-byte tables, not UI cells. The original-archive regression verifies that count and every table length. This loader plus `BlitLUT` is sufficient for a caller that has an evidenced selector; it does not infer one.
