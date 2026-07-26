@@ -289,6 +289,23 @@ func (s Sprite) BlitLUTTransparent(dst []byte, stride, x, y int, lut []byte) err
 	return nil
 }
 
+// BlitLUTTransparentAtOffset is 0x4dd52 with the native pointer-style
+// destination used by 0x12ac6.  Mode-3 spans remain untouched.
+func (s Sprite) BlitLUTTransparentAtOffset(dst []byte, stride, offset int, lut []byte) error {
+	if len(lut) != 256 || len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride <= 0 || offset < 0 || offset+(NativeSize-1)*stride+NativeSize > len(dst) {
+		return errors.New("fdicon: invalid transparent LUT offset blit")
+	}
+	for row := 0; row < NativeSize; row++ {
+		for col := 0; col < NativeSize; col++ {
+			i := row*NativeSize + col
+			if s.Mask[i] != 0 {
+				dst[offset+row*stride+col] = lut[s.Pixels[i]]
+			}
+		}
+	}
+	return nil
+}
+
 func (s Sprite) blit(dst []byte, stride, x, y int, paletteBand bool) error {
 	if len(s.Pixels) != NativeSize*NativeSize || len(s.Mask) != len(s.Pixels) || stride < x+NativeSize || x < 0 || y < 0 || y+NativeSize > len(dst)/stride {
 		return errors.New("fdicon: invalid blit")
