@@ -75,7 +75,7 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 0x12932  mov eax,[edx + eax*4]     ; sprite[index]
 ```
 
-→ **FDICON sprite index = slot × 12 + 方向 × 3 + cycle**（公式已驗證）；slot 為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x10c50→0x11019` 以 FDFIELD `b0` 與 caller resource 查／建 12-pointer block，回傳 cache slot 寫入 `unit+2`；它不是直接 copy 的角色／肖像 byte。
+→ **FDICON sprite index = slot × 12 + 方向 × 3 + cycle**（公式已驗證）；slot 為 `unit[+2]`。第三項不是 runtime `+4` 或 `+0x26`：`+4` 是沿方向的次格 placement offset；`+4==0` 選 global idle phase `0x3c0b`、非零選 moving phase `0x3c07`，phase 3 會正規化為 1，而 `+0x26!=0` 只強制 cycle 0 並加上已證實的全域繪製偏移。`0x10c50→0x11019` 以 FDFIELD `b0` 查全域 raw-key table；只有新 key 才用 caller archive pointer 建十二指標 block，回傳 cache slot 寫入 `unit+2`。它不是直接 copy 的角色／肖像 byte。
 
 > **撤回全域 identity assertion（2026-07-26）**：角色表、DATO、FDICON 素材與若干玩家 roster 的數值相同，
 > 只能作為素材觀察，不能證明 `unit+2 = character id = portrait`。完整 constructor trace 已證實 FDFIELD
@@ -137,9 +137,10 @@ remake 把角色做成**單一資料表**(同一角色 id 對應 face 與 sprite
 
 ## 8. 受阻 / 待校
 
-- **[待閉合] original map-selector provenance**：`0x127e0` 的公式和 `unit+2` read 已證實；但完整
-  `0x10c50→0x11019` trace 顯示它是 resource-aware cache result，不能由角色表、DATO id、FDICON 檔案序號或
-  轉職表直接定值。保留玩家/怪物素材的個別對照資料，但不把它當 exporter 或 runtime mapping。
+- **[待閉合] original map-selector presentation adapter**：`0x127e0` 的公式和 `unit+2` read 已證實；
+  `0x11019` 已證實為全域 raw-key cache，且 player/scripted loaders 都開啟 `FDICON.B24`。但 indexed
+  framebuffer 的 layer/palette schedule 尚未接到 GUI，故不能由角色表、DATO id、FDICON 檔案序號或轉職表直接
+  定 legacy `Fig`。保留玩家/怪物素材的個別對照資料，但不把它當 exporter 或 runtime mapping。
 - **[線索] 廢案人物**:FDICON 有些組**沒畫滿 12 格**(未採用角色,僅部分方向/幀);因 sprite 用「組×12 + 方向×3 + 幀」定位,廢案組仍佔 12 格 stride(部分空/重複)。未來可挖廢案角色來用(加新人素材庫)。
 - **[M2 待做]** 對話框**嘴型動畫**:DATO_N 的 m0~m3 對話時播放(嘴開合 + 眨眼)。哪幀=閉嘴/開嘴/眨眼、播放節奏(隨文字推進?固定循環?)待反組譯文字渲染器(0x16D00 區,doc 14)確認;M2 對話層實作。
 - 方向:目前只導「面向下」待機;4 方向(走動/面敵)待加。

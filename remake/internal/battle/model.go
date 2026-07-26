@@ -52,7 +52,7 @@ type Unit struct {
 	Portrait int
 	Fig      int // 地圖 FDICON selector approximation; native source is unit+2.
 	// MapSelectorSlot is native runtime unit+2 only when HasMapSelectorSlot is
-	// true. It is a per-resource FDICON cache slot, never a character identity.
+	// true. It is a process-global FDICON cache slot, never a character identity.
 	MapSelectorSlot    int
 	HasMapSelectorSlot bool
 	// MapSelectorKey is the raw byte passed to 0x11019 before it returns the
@@ -124,8 +124,8 @@ type Unit struct {
 
 // MaterializeNativeMapSelectorSlots applies 0x11019's first-seen cache rule
 // to one already-proven construction order. Callers must supply exactly the
-// native source order for one FDICON resource (player persistent roster or a
-// scripted FDFIELD spawn group); this function deliberately does not choose
+// native source order within one battle construction session (player persistent
+// roster followed by scripted FDFIELD spawn groups); this function deliberately does not choose
 // that order or fall back to Fig/Portrait. It makes no partial mutation when
 // a key is absent or invalid.
 func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelectorCache) error {
@@ -658,7 +658,7 @@ func loadNativeTerrainRendererInputs(mapJSONPath string, w, h int) ([]byte, []by
 func (s *State) AddUnit(u *Unit) { s.Units = append(s.Units, u) }
 
 // AppendNativeMapSelectorBatch atomically appends one proven construction
-// batch and assigns its unit+2 slots using the State's per-resource cache.
+// batch and assigns its unit+2 slots using the State's process-global cache.
 // Callers must preserve the native order (party first, then scripted groups)
 // and must not call this for legacy units without explicit raw keys. A failed
 // batch changes neither Units nor the cache.
