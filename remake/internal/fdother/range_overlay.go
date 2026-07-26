@@ -1,6 +1,18 @@
 package fdother
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+)
+
+const (
+	nativeRangeOverlayResource = 1
+	nativeRangeOverlayStride   = 0x1c8
+	nativeRangeOverlayBase     = 0x8088
+	nativeRangeOverlayTiles    = 20
+)
 
 // NativeRangeOverlayPlacement is one direct 0x126f7 invocation emitted by
 // 0x122dc. Descriptor is the caller's raw descriptor-bank index; it is not a
@@ -48,6 +60,71 @@ func NativeRangeOverlayMode6ByteAddress(width, cursorX, cursorY int) (int, error
 		return 0, fmt.Errorf("fdother: native range overlay mode 6 width must be positive")
 	}
 	return 4*(cursorX+cursorY*width) + 7, nil
+}
+
+// DecodeNativeRangeOverlayBank reads the exact FDOTHER #1 resource loaded to
+// [0x53a4d] at 0x25c7d..0x25c92.  Its {24,24,20,u32 offsets[]} header is the
+// same four-mode RLE bank ABI as FDICON.B24; only descriptors 0..18 are used
+// by 0x122dc's modes 1..5.  Requiring the observed 20 entries prevents a
+// partial editable asset from silently changing the native descriptor table.
+func DecodeNativeRangeOverlayBank(datPath string) (*fdicon.Bank, error) {
+	raw, err := ReadResource(datPath, nativeRangeOverlayResource)
+	if err != nil {
+		return nil, err
+	}
+	bank, err := fdicon.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("fdother: native range overlay bank: %w", err)
+	}
+	if len(bank.Sprites) != nativeRangeOverlayTiles {
+		return nil, fmt.Errorf("fdother: native range overlay has %d descriptors, want %d", len(bank.Sprites), nativeRangeOverlayTiles)
+	}
+	return bank, nil
+}
+
+// BlitNativeRangeOverlay executes the verified drawable part of 0x122dc and
+// 0x126f7 against the native 456-stride work buffer.  The descriptor cells
+// are direct 0x4deda RLE input, so Sprite.BlitAt deliberately preserves
+// mode-3 spans.  Camera clipping happens before descriptor lookup exactly as
+// in 0x126f7.  Mode 6 remains rejected because it is a separate raw grid
+// mutation, not a drawing operation.
+//
+// All selected visible sprites and their destinations are preflighted before
+// writing. This is the editable-input safety boundary, not a claim that the
+// original performed bounds checks on its framebuffer pointer.
+func BlitNativeRangeOverlay(bank *fdicon.Bank, dst []byte, cameraX, cameraY, visibleWidth, visibleHeight, mode, cursorX, cursorY int) error {
+	if bank == nil || len(bank.Sprites) != nativeRangeOverlayTiles {
+		return errors.New("fdother: incomplete native range overlay descriptor bank")
+	}
+	if visibleWidth <= 0 || visibleHeight <= 0 || len(dst)%nativeRangeOverlayStride != 0 {
+		return errors.New("fdother: invalid native range overlay framebuffer")
+	}
+	placements, err := NativeRangeOverlayPlacements(mode, cursorX, cursorY)
+	if err != nil {
+		return err
+	}
+	type blit struct{ x, y, descriptor int }
+	visible := make([]blit, 0, len(placements))
+	for _, placement := range placements {
+		if placement.X < cameraX || placement.X >= cameraX+visibleWidth || placement.Y < cameraY || placement.Y >= cameraY+visibleHeight {
+			continue
+		}
+		if placement.Descriptor < 0 || placement.Descriptor >= len(bank.Sprites) {
+			return errors.New("fdother: native range overlay descriptor is outside bank")
+		}
+		x := nativeRangeOverlayBase%nativeRangeOverlayStride + (placement.X-cameraX)*fdicon.NativeSize
+		y := nativeRangeOverlayBase/nativeRangeOverlayStride + (placement.Y-cameraY)*fdicon.NativeSize
+		if x < 0 || y < 0 || x+fdicon.NativeSize > nativeRangeOverlayStride || y+fdicon.NativeSize > len(dst)/nativeRangeOverlayStride {
+			return errors.New("fdother: native range overlay destination is outside framebuffer")
+		}
+		visible = append(visible, blit{x, y, placement.Descriptor})
+	}
+	for _, draw := range visible {
+		if err := bank.Sprites[draw.descriptor].BlitAt(dst, nativeRangeOverlayStride, draw.x, draw.y); err != nil {
+			return fmt.Errorf("fdother: native range overlay descriptor %d: %w", draw.descriptor, err)
+		}
+	}
+	return nil
 }
 
 // The literals below are transcribed in call order from 0x122dc..0x126f6.

@@ -1,6 +1,11 @@
 package fdother
 
-import "testing"
+import (
+	"os"
+	"testing"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+)
 
 func TestNativeRangeOverlayPlacementsMatch122DC(t *testing.T) {
 	tests := []struct {
@@ -44,5 +49,50 @@ func TestNativeRangeOverlayMode6ByteAddress(t *testing.T) {
 	}
 	if _, err := NativeRangeOverlayMode6ByteAddress(0, 3, 2); err == nil {
 		t.Fatal("zero width accepted")
+	}
+}
+
+func TestNativeRangeOverlayBankAndBlit(t *testing.T) {
+	const path = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	bank, err := DecodeNativeRangeOverlayBank(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bank.Sprites) != 20 {
+		t.Fatalf("FDOTHER#1 descriptor count=%d, want 20", len(bank.Sprites))
+	}
+	for i, sprite := range bank.Sprites {
+		if len(sprite.Pixels) != fdicon.NativeSize*fdicon.NativeSize {
+			t.Fatalf("FDOTHER#1 descriptor %d has %d pixels", i, len(sprite.Pixels))
+		}
+	}
+	dst := make([]byte, nativeRangeOverlayStride*300)
+	if err := BlitNativeRangeOverlay(bank, dst, 10, 20, 13, 8, 4, 10, 20); err != nil {
+		t.Fatal(err)
+	}
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeRangeOverlay(bank, dst, 10, 20, 13, 8, 6, 10, 20); err == nil {
+		t.Fatal("mode 6 was accepted as drawable")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("rejected mode mutated framebuffer")
+	}
+}
+
+func TestBlitNativeRangeOverlayPreflightsDestination(t *testing.T) {
+	bank := &fdicon.Bank{Sprites: make([]fdicon.Sprite, 20)}
+	for i := range bank.Sprites {
+		bank.Sprites[i] = fdicon.Sprite{Pixels: make([]byte, 24*24), Mask: make([]byte, 24*24), RemapMask: make([]byte, 24*24)}
+	}
+	dst := make([]byte, nativeRangeOverlayStride*80)
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeRangeOverlay(bank, dst, 0, 0, 13, 8, 1, 0, 0); err == nil {
+		t.Fatal("undersized framebuffer accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("failed preflight mutated framebuffer")
 	}
 }
