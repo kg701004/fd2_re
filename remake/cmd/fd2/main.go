@@ -1822,6 +1822,8 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.Exp, dst.ExpPerLevel = src.Exp, src.ExpPerLevel
 	dst.Spells = append(dst.Spells[:0], src.Spells...)
 	dst.NativeCommandMask = src.NativeCommandMask
+	dst.NativeRecordByte5, dst.HasNativeRecordByte5 = src.NativeRecordByte5, src.HasNativeRecordByte5
+	dst.NativeRecordByte6, dst.HasNativeRecordByte6 = src.NativeRecordByte6, src.HasNativeRecordByte6
 	dst.Inventory = append(dst.Inventory[:0], src.Inventory...)
 	dst.Equipped = append(dst.Equipped[:0], src.Equipped...)
 	dst.InventorySlots = append(dst.InventorySlots[:0], src.InventorySlots...)
@@ -1976,7 +1978,11 @@ func (g *Game) syncPartyFromBattle() error {
 		if snapshot.MaxMP < snapshot.MP {
 			snapshot.MaxMP = snapshot.MP
 		}
-		if snapshot.OnField && snapshot.Alive() {
+		if snapshot.HasNativeRecordByte5 {
+			if snapshot.NativeRecordByte5&1 == 0 {
+				snapshot.HP = snapshot.MaxHP
+			}
+		} else if snapshot.OnField && snapshot.Alive() {
 			snapshot.HP = snapshot.MaxHP
 		}
 		snapshot.MP = snapshot.MaxMP

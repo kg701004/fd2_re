@@ -441,6 +441,10 @@ producer／effect call graph 補齊。
 
 Persistent party 的 transaction 順序固定為：結算結果 → reward/drop → transient status cleanup → MaxHP/MaxMP／equipment recompute → roster save → branch flags → 下一個 node。任何中途資料缺失都停在錯誤畫面，不自動跳到下一戰。
 
+`syncPartyFromBattle`／`applyPersistentStats` 現在會在 raw provenance 存在時保存 `NativeRecordByte5/6`，並以
+byte5 bit0 決定戰後 HP refill；缺 raw 才退回舊的 `OnField/Alive` projection。這個 fallback 仍是 E1，不能當成
+原版 `0x11506` byte-for-byte compatibility；LOADCH 完整 raw record materialization 後才可移除。
+
 ### 5.0.1 Handler predicate boundary（E0 slice）
 
 可編輯 handler 的 `if` 不是自由表達式。每種 predicate 都必須對應已反組譯的 native helper，並在 runtime 缺資料時 fail-closed。現有 `any_unit_inactive` 是 remake 對「指定 caller 讀取 runtime `record+5 & 1`」的投影名稱，不是宣稱全域生命欄位；`roster_has(char_id)` 對應 `0x33499` 對永久我方名冊 `[0x53bf7]` 的 `record[+8]` 掃描，`char_id` 僅限原版永久玩家 `0..31`，不得改以暫時出戰隊伍、portrait、NPC 或 story actor 推論。

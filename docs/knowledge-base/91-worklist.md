@@ -215,6 +215,7 @@
 - [x] **逐關挖 18 特殊 handler** → `26` + `tools/event_handler_dump.py` + `docs/data/battle_events.json`(30章條件→動作,供 remake 去 hardcoding)
 - [x] **補完事件 raw predicates（2026-07-27 勘誤）**：`0x3453e(idx)` 只閉合為 `[0x53a45]+idx*0x50+5 & 1`；remake 的 `unit_inactive` 是 caller-specific projection，不是全域死亡／存活欄位。`0x33499`=roster_has（查 `[0x53bf7]` 我方名冊）；**handler 無動作函式**（只條件→設碼+繪圖）→ `25`/`26` 回填。舊 bit0 高階命名已撤回。
 - [~] **handler raw-byte5 runtime bridge**：`0x3453e` raw adapter、constructor、已知 damage/death writer、revive writer 與 `deactivate_unit` 已有 raw propagation/regression；但 `cmd/fd2` 的 `any_unit_inactive` 在缺少 `HasNativeRecordByte5` 時仍使用 `OnField/Alive` 相容 projection。需補完整 LOADCH／所有死亡入口並讓 strict binding 缺 raw 時 fail-closed，才可把 ch01/ch02 handler 升為 E0 native predicate。
+- [~] **persistent raw-byte5 bridge**：`syncPartyFromBattle`／`applyPersistentStats` 已保存 `NativeRecordByte5/6`，並在 raw bit0 有 provenance 時依 native branch 決定 HP refill；缺 raw 仍保留 E1 projection。需完成 LOADCH raw record materialization 才能移除 fallback。
 - [x] **反思日誌補第 7-10 輪** → `99`
 - [x] **挖完 `[0x53bf7]` 表語意**:不是 tile,是**我方隊伍名冊**(32槽×0x50B);`0x33499(id)=roster_has(id)` 查 byte[+8]==角色ID(章16 用)→ `25`/`26` 回填;兩單位陣列釐清([0x53a45]96槽全場 / [0x53bf7]32槽名冊)
 - [x] **回合計數釐清**:`[0x53bef]`=回合/進度 counter（開始1/inc/cmp N），`[0x53ec8]`=累積計數（非回合）；**修正前輪把 [0x53ec8] 當回合**。byte+5 bit0 的歷史高階命名已撤回，僅保留 raw mask。

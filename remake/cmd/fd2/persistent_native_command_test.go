@@ -8,9 +8,34 @@ import (
 
 func TestApplyPersistentStatsPreservesDynamicNativeCommandMask(t *testing.T) {
 	dst := &battle.Unit{NativeCommandMask: [5]byte{1, 2, 3, 4, 5}}
-	src := &battle.Unit{NativeCommandMask: [5]byte{0x81, 0x01, 0, 0x80, 0x11}}
+	src := &battle.Unit{NativeCommandMask: [5]byte{0x81, 0x01, 0, 0x80, 0x11}, NativeRecordByte5: 1, HasNativeRecordByte5: true, NativeRecordByte6: 7, HasNativeRecordByte6: true}
 	applyPersistentStats(dst, src)
 	if got, want := dst.NativeCommandMask, src.NativeCommandMask; got != want {
 		t.Fatalf("persistent native command mask=%v want %v", got, want)
+	}
+	if dst.NativeRecordByte5 != 1 || !dst.HasNativeRecordByte5 || dst.NativeRecordByte6 != 7 || !dst.HasNativeRecordByte6 {
+		t.Fatalf("persistent raw record bytes not preserved: byte5=%#x/%v byte6=%#x/%v", dst.NativeRecordByte5, dst.HasNativeRecordByte5, dst.NativeRecordByte6, dst.HasNativeRecordByte6)
+	}
+}
+
+func TestSyncPartyUsesRawByte5ForHPRefill(t *testing.T) {
+	g := &Game{
+		st:           &battle.State{Units: []*battle.Unit{{Fig: 0, Camp: battle.Own, OnField: false, HP: 0, MaxHP: 50, MP: 2, MaxMP: 8, HasNativeRecordByte5: true, NativeRecordByte5: 0}}},
+		partyMembers: map[int]bool{0: true}, partyRoster: map[int]battle.Unit{0: {Fig: 0, Camp: battle.Own, MaxHP: 50, MaxMP: 8}},
+	}
+	if err := g.syncPartyFromBattle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.partyRoster[0].HP; got != 50 {
+		t.Fatalf("raw byte5=0 did not refill HP: got %d", got)
+	}
+
+	g.st.Units[0].NativeRecordByte5 = 1
+	g.st.Units[0].HP = 0
+	if err := g.syncPartyFromBattle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.partyRoster[0].HP; got != 0 {
+		t.Fatalf("raw byte5=1 incorrectly refilled HP: got %d", got)
 	}
 }
