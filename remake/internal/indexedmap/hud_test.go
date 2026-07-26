@@ -86,6 +86,45 @@ func TestBlitNativeMapHUDPanelRejectsInvalidEntryBeforeWrite(t *testing.T) {
 	}
 }
 
+func TestBlitNativeMapHUDComposesRecoveredSubpassesAtomically(t *testing.T) {
+	terrain := bank(2, 0)
+	terrain.Sprites[1] = solid(0x66)
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	units := bank(12, 0)
+	units.Sprites[1] = solid(0x77)
+	in := NativeMapHUDInput{
+		DisplayGateA: true, DisplayGateB: true, AnchorX: 1,
+		TerrainDescriptor: 1, TerrainControl: 2,
+		OptionalUnit: &NativeMapHUDOptionalUnit{SelectorSlot: 0, RawState: 3, Current: 7, Maximum: 8},
+	}
+	dst := make([]byte, fdicon.NativeMapStride*200)
+	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in); err != nil {
+		t.Fatal(err)
+	}
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	if dst[layout.Frame] != 0x5a || dst[layout.Terrain] != 0x66 || dst[layout.AP] != 0x42 || dst[layout.DP] != 0x31 || dst[layout.Unit] != 0x77 || dst[layout.HP] != 0x70 {
+		t.Fatalf("HUD composition=%#x/%#x/%#x/%#x/%#x/%#x", dst[layout.Frame], dst[layout.Terrain], dst[layout.AP], dst[layout.DP], dst[layout.Unit], dst[layout.HP])
+	}
+	before := append([]byte(nil), dst...)
+	in.TerrainControl = 6
+	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in); err == nil {
+		t.Fatal("invalid terrain control accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("failed full HUD composition mutated destination")
+	}
+	in.DisplayGateB = false
+	if err := BlitNativeMapHUD(hudFrames(), nil, nil, nil, dst, in); err != nil {
+		t.Fatal(err)
+	}
+	if string(dst) != string(before) {
+		t.Fatal("closed display gates mutated destination")
+	}
+}
+
 func TestBlitNativeMapHUDTerrainIconUses12E38TileAtPanelPlus6(t *testing.T) {
 	terrain := bank(2, 0)
 	terrain.Sprites[1] = solid(0x66)

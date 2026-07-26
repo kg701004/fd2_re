@@ -24,6 +24,25 @@ type NativeMapHUDFrames struct {
 	HPEqualOverflow, HPMismatchOverflow fdother.Frame
 }
 
+// NativeMapHUDOptionalUnit is the already-admitted unit slice after
+// 0x12c0d and 0x1ae2a..0x1ae47. A nil value preserves either native skip
+// path. The caller must not manufacture admission from a guessed role/name.
+type NativeMapHUDOptionalUnit struct {
+	SelectorSlot, RawState int
+	Current, Maximum       uint16
+}
+
+// NativeMapHUDInput is the raw data boundary required to compose every
+// currently proven 0x1acf3 subpass. TerrainDescriptor and TerrainControl are
+// outputs of 0x12e38; OptionalUnit is non-nil only after the native unit gate.
+type NativeMapHUDInput struct {
+	DisplayGateA, DisplayGateB bool
+	AnchorX                    int
+	TerrainDescriptor          int
+	TerrainControl             byte
+	OptionalUnit               *NativeMapHUDOptionalUnit
+}
+
 // AdvanceNativeMapHUDAnchor preserves the small persistent-global branch at
 // 0x1ad2a..0x1ad5f. The native code changes the raw anchor only in either
 // outer region; every other coordinate pair retains the prior global value.
@@ -100,6 +119,38 @@ func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, 
 		return errors.New("indexedmap: native map HUD panel geometry differs from entry #130")
 	}
 	return panel.BlitAt(dst, fdicon.NativeMapStride, layout.Frame, -1)
+}
+
+// BlitNativeMapHUD composes the proven 0x1acf3 draw order atomically:
+// panel → terrain → AP → DP → optional unit icon → optional HP. A closed
+// display gate performs the native no-op before requiring any resource input.
+// It intentionally leaves cursor-cell and optional-unit admission to their
+// separately recovered raw resolvers.
+func BlitNativeMapHUD(frames NativeMapHUDFrames, terrain, units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, in NativeMapHUDInput) error {
+	if !in.DisplayGateA || !in.DisplayGateB {
+		return nil
+	}
+	frame := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDPanel(frames, frame, true, true, in.AnchorX); err != nil {
+		return err
+	}
+	if err := BlitNativeMapHUDTerrainIcon(terrain, frame, in.AnchorX, in.TerrainDescriptor); err != nil {
+		return err
+	}
+	if err := BlitNativeMapHUDTerrainAPDP(frames, frame, in.AnchorX, in.TerrainControl); err != nil {
+		return err
+	}
+	if in.OptionalUnit != nil {
+		unit := in.OptionalUnit
+		if err := BlitNativeMapHUDUnitIcon(units, cache, frame, in.AnchorX, unit.SelectorSlot, unit.RawState); err != nil {
+			return err
+		}
+		if err := BlitNativeMapHUDHP(frames, frame, in.AnchorX, unit.Current, unit.Maximum); err != nil {
+			return err
+		}
+	}
+	copy(dst, frame)
+	return nil
 }
 
 // BlitNativeMapHUDTerrainIcon reproduces 0x1ad90..0x1adc9 after 0x12e38:
