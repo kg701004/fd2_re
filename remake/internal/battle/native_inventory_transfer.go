@@ -1,0 +1,54 @@
+package battle
+
+import "fmt"
+
+// TransferNativeInventoryItem mirrors the mutation topology proven in the
+// 0x2f8ea -> 0x1b8e7 -> 0x1bb8c branch.  The source item is removed from its
+// compact inventory slot and inserted into the first empty destination cell;
+// 0x1bb8c writes an un-equipped destination cell.  The caller must already
+// have applied the native signed-flag eligibility filter (0x2f8ea's list
+// builder); this function does not infer equipped state from an item ID.
+//
+// It is deliberately a raw operation rather than a named church service.
+func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Unit) error {
+	if source == nil || destination == nil {
+		return fmt.Errorf("native inventory transfer: missing unit")
+	}
+	if source == destination {
+		return fmt.Errorf("native inventory transfer: source equals destination")
+	}
+	if sourceIndex < 0 || sourceIndex >= len(source.Inventory) {
+		return fmt.Errorf("native inventory transfer: source slot %d out of bounds", sourceIndex)
+	}
+	itemID := source.Inventory[sourceIndex]
+	if itemID < 0 || itemID > 0xff {
+		return fmt.Errorf("native inventory transfer: invalid item id %d", itemID)
+	}
+	// Preflight both fixed-slot layouts before changing either unit.  A full
+	// destination is the native failure path and must not consume the source.
+	destination.normalizeInventorySlots()
+	free := false
+	for _, id := range destination.InventorySlots {
+		if id == 0xff {
+			free = true
+			break
+		}
+	}
+	if !free || len(destination.Inventory) >= 8 {
+		return fmt.Errorf("native inventory transfer: destination inventory full")
+	}
+	// Snapshot the compact and source-slot views so an unexpected insertion
+	// failure remains atomic even if a future Unit representation changes.
+	sourceInventory := append([]int(nil), source.Inventory...)
+	sourceEquipped := append([]bool(nil), source.Equipped...)
+	sourceSlots := append([]int(nil), source.InventorySlots...)
+	destinationInventory := append([]int(nil), destination.Inventory...)
+	destinationEquipped := append([]bool(nil), destination.Equipped...)
+	destinationSlots := append([]int(nil), destination.InventorySlots...)
+	if !source.RemoveInventoryIndex(sourceIndex) || !destination.AddInventoryItem(itemID, false) {
+		source.Inventory, source.Equipped, source.InventorySlots = sourceInventory, sourceEquipped, sourceSlots
+		destination.Inventory, destination.Equipped, destination.InventorySlots = destinationInventory, destinationEquipped, destinationSlots
+		return fmt.Errorf("native inventory transfer: mutation failed")
+	}
+	return nil
+}

@@ -518,6 +518,16 @@ meaning are not independently named here; remake must not lower this branch
 to sell, donate, equip, or any other normalized service until that writer is
 closed.
 
+The writer is now closed at raw level: `0x1bb8c(destination,item)` scans the
+destination's eight two-byte cells, finds the first cell whose flag byte is
+negative, writes flag `0` and the supplied item byte, and returns `1`; a full
+destination returns `-1` without mutation. In the `0x2f8ea` topology the
+source cell is removed by `0x1b8e7` before this insertion, so the proven
+operation is a source-to-destination inventory transfer with an unequipped
+destination cell. The item ID and higher-level menu label remain raw; the
+remake exposes `TransferNativeInventoryItem` as an atomic adapter but does
+not silently wire it to an unnamed church menu branch.
+
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
 Official IDA pseudocode of `0x25de5` closes the outer ordering that the editable graph must preserve. After `sub_25ebb` returns the battle-driver result, the loop calls `sub_117e7`; when global phase `[0x53ecc]==1`, it calls the fixed chapter-1 interlude `0x22e5c`, clears the phase, and continues. When `[0x53ecc]==2`, it first stops BGM, calls the chapter-indexed post-handler table `funcs_25e23[dword_53c03]`, and only then calls `sub_2cad7()`. If `sub_2cad7()` returns nonzero, the loop exits through the terminal/return path; only when it returns zero does the loop call the second chapter-indexed table `funcs_25e3a[dword_53c03]`, select `byte_51e63[dword_53c03]` for the next battle BGM, clear the phase, and resume the driver. The exact table entries and `0x2cad7` visual/menu labels remain separate evidence work, but this call order is enough to reject any generic `battle → next battle` shortcut. A remake transition must retain an explicit post-handler/menu gate before a next-battle node, even when the high-level node is still opaque.
