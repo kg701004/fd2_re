@@ -238,7 +238,7 @@
 
 **做了什麼**
 - `tools/export_units.py`:序章單位 = FDFIELD roster(camp/cls/lv)+ 出場座標(positions)+ EXE 數值表(hp/ap/dp/mv)→ `remake/assets/map0_units.json`(本機)。
-- `remake/internal/battle/model.go`:Unit/Camp/State + `Load()`;`Alive()`=HP>0(對映原版 byte+5 bit0)、`Acted`(bit7)。
+- `remake/internal/battle/model.go`:Unit/Camp/State + `Load()`；`Alive()`=HP>0、`Acted` 是 remake 的 normalized projection。這兩者不可宣稱為原版 `byte+5` 的全域對映；native byte+5 目前只在已確認的 caller 邊界以 raw mask 讀取。
 - `cmd/fd2/main.go`:在 MVP 地圖上畫單位層(陣營色塊 我方藍/友綠/敵紅 + HP bar),游標選中顯示 Lv/HP/AP/DP/MV + 回合與各陣營存活數。
 - headless test(`model_test.go`)驗證序章:own=2 ally=4 enemy=24,我方落部署格、HP/MV 合理、UnitAt 排除陣亡 → 全綠。桌面 ELF 建置成功。
 
