@@ -26,6 +26,24 @@ func TestPartyHasItemIDMatchesOriginalSixteenRuntimeSlotSearch(t *testing.T) {
 	}
 }
 
+func TestPartyHasItemIDUsesRawGateWhenRosterProvenanceIsComplete(t *testing.T) {
+	units := make([]*battle.Unit, 16)
+	for i := range units {
+		units[i] = &battle.Unit{InventorySlots: []int{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, NativeInventoryFlags: []int{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}}
+	}
+	// Normalized data claims the item, but the complete raw cells do not.
+	units[0].Inventory = []int{0x64}
+	g := &Game{st: &battle.State{Units: units}}
+	if g.partyHasItemID(0x64) {
+		t.Fatal("complete raw inventory provenance must override normalized item projection")
+	}
+	units[3].InventorySlots[0] = 0x64
+	units[3].NativeInventoryFlags[0] = 0
+	if !g.partyHasItemID(0x64) {
+		t.Fatal("raw occupied inventory cell was not found")
+	}
+}
+
 func TestPersistentRosterCleanupRestoresNativeMaxFields(t *testing.T) {
 	g := &Game{partyRoster: map[int]battle.Unit{3: {
 		HP: 0, MaxHP: 41, MP: 2, MaxMP: 9, Acted: true, OnField: false,

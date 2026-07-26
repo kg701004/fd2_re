@@ -1872,6 +1872,12 @@ func (g *Game) grantItemToParty(itemID int) bool {
 // records are carried through the campaign boundary.
 func (g *Game) partyHasItemID(itemID int) bool {
 	if g.st != nil {
+		if itemID >= 0 && itemID <= 0xff {
+			if records, err := battle.NativeInventoryRecords(g.st.Units, 16); err == nil {
+				unit, _, searchErr := battle.FindNativeInventoryItem(records, byte(itemID))
+				return searchErr == nil && unit >= 0
+			}
+		}
 		limit := len(g.st.Units)
 		if limit > 16 {
 			limit = 16
