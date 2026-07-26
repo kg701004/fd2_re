@@ -28,7 +28,12 @@ func frame(width, height int, pixel byte) fdother.Frame {
 }
 
 func hudFrames() NativeMapHUDFrames {
-	return NativeMapHUDFrames{Panel: frame(69, 34, 0x5a), PositiveSign: frame(6, 7, 0x31), NegativeSign: frame(6, 5, 0x42)}
+	frames := NativeMapHUDFrames{Panel: frame(69, 34, 0x5a), PositiveSign: frame(6, 7, 0x31), NegativeSign: frame(6, 5, 0x42)}
+	for digit := range frames.Digits {
+		frames.Digits[digit] = frame(6, 8, byte(0x50+digit))
+	}
+	frames.Digits[1] = frame(5, 8, 0x51) // FDOTHER #5 entry #0x20 is 5x8.
+	return frames
 }
 
 func TestBlitNativeMapHUDPanelGatesAndOrigin(t *testing.T) {
@@ -94,6 +99,24 @@ func TestBlitNativeMapHUDSignedNumberIsAtomicOnDigitFailure(t *testing.T) {
 	}
 }
 
+func TestBlitNativeMapHUDTwoDigitNumberMatches187D6CallSlice(t *testing.T) {
+	dst := make([]byte, fdicon.NativeMapStride*30)
+	origin := fdicon.NativeMapStride + 10
+	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, origin, -12); err != nil {
+		t.Fatal(err)
+	}
+	if dst[origin] != 0x42 || dst[origin+8] != 0x51 || dst[origin+14] != 0x52 {
+		t.Fatalf("sign/digits=%#x %#x %#x", dst[origin], dst[origin+8], dst[origin+14])
+	}
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, origin, 100); err == nil {
+		t.Fatal("three-digit value accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("rejected value mutated HUD")
+	}
+}
+
 func TestDecodeNativeMapHUDFramesUsesFourModeDirectoryEntries(t *testing.T) {
 	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	if _, err := os.Stat(datPath); os.IsNotExist(err) {
@@ -105,6 +128,15 @@ func TestDecodeNativeMapHUDFramesUsesFourModeDirectoryEntries(t *testing.T) {
 	}
 	if frames.Panel.Width != 69 || frames.Panel.Height != 34 || frames.PositiveSign.Width != 6 || frames.PositiveSign.Height != 7 || frames.NegativeSign.Width != 6 || frames.NegativeSign.Height != 5 {
 		t.Fatalf("frames=%#v", frames)
+	}
+	for i, digit := range frames.Digits {
+		wantWidth := 6
+		if i == 1 {
+			wantWidth = 5
+		}
+		if digit.Width != wantWidth || digit.Height != 8 {
+			t.Fatalf("digit %d=%dx%d", i, digit.Width, digit.Height)
+		}
 	}
 	if err := BlitNativeMapHUDPanel(frames, make([]byte, fdicon.NativeMapStride*200), true, true, 1); err != nil {
 		t.Fatal(err)

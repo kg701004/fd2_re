@@ -19,6 +19,7 @@ const (
 // native sends them to 0x4e63d's four-mode RLE decoder.
 type NativeMapHUDFrames struct {
 	Panel, PositiveSign, NegativeSign fdother.Frame
+	Digits                            [10]fdother.Frame
 }
 
 // DecodeNativeMapHUDFrames loads only the verified FDOTHER #5 directory
@@ -37,7 +38,15 @@ func DecodeNativeMapHUDFrames(datPath string) (NativeMapHUDFrames, error) {
 	if err != nil {
 		return NativeMapHUDFrames{}, err
 	}
-	return NativeMapHUDFrames{Panel: panel, PositiveSign: positive, NegativeSign: negative}, nil
+	frames := NativeMapHUDFrames{Panel: panel, PositiveSign: positive, NegativeSign: negative}
+	for digit := range frames.Digits {
+		frame, err := fdother.DecodeLMI1FrameResource(datPath, 5, 0x1f+digit)
+		if err != nil {
+			return NativeMapHUDFrames{}, err
+		}
+		frames.Digits[digit] = frame
+	}
+	return frames, nil
 }
 
 // BlitNativeMapHUDPanel performs the proven first draw of 0x1acf3: both raw
@@ -99,5 +108,32 @@ func BlitNativeMapHUDSignedNumber(frames NativeMapHUDFrames, dst []byte, origin,
 		return err
 	}
 	copy(dst, frame)
+	return nil
+}
+
+// BlitNativeMapHUDTwoDigitNumber is the exact decimal slice selected by
+// 0x1aeb1: 0x187d6 receives glyph base #0x1f and a fixed width of two, writes
+// each character six pixels apart, and its format string is "%0.2d" at this
+// call site. Values outside two decimal digits are rejected instead of
+// silently truncating an editable value to native's first two characters.
+func BlitNativeMapHUDTwoDigitNumber(frames NativeMapHUDFrames, dst []byte, origin, value int) error {
+	return BlitNativeMapHUDSignedNumber(frames, dst, origin, value, func(frame []byte, digitOrigin, absolute int) error {
+		return blitNativeMapHUDTwoDigits(frames, frame, digitOrigin, absolute)
+	})
+}
+
+func blitNativeMapHUDTwoDigits(frames NativeMapHUDFrames, dst []byte, origin, absolute int) error {
+	if absolute < 0 || absolute > 99 || origin < 0 || origin >= len(dst) {
+		return errors.New("indexedmap: native map HUD two-digit value is invalid")
+	}
+	for place, digit := range [2]int{absolute / 10, absolute % 10} {
+		glyph := frames.Digits[digit]
+		if glyph.Width < 5 || glyph.Width > 6 || glyph.Height != 8 {
+			return errors.New("indexedmap: native map HUD decimal glyph geometry differs from entries #0x1f..#0x28")
+		}
+		if err := glyph.BlitAt(dst, fdicon.NativeMapStride, origin+place*6, -1); err != nil {
+			return err
+		}
+	}
 	return nil
 }
