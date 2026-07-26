@@ -74,6 +74,8 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 - `0x14237` 讀 row `+0x0b/+0x0c` 後呼叫 `0x14818`；目前只把它記為 caller-specific geometry inputs，不能把 `+0x0b` 命名為通用射程上限。
 - `0x1567e` 會讀 row `+0x0d/+0x10/+0x11/+0x12`，依分支呼叫 `0x14818` 或 `0x149f8`；這證實特殊物品效果共用幾何 routines，但仍不足以命名效果或欄位。
 - `0x1bbdc`／`0x20c6f` 以 row `+0x0d` 做 type dispatch，並由不同原生 callee 消費；數值方向、顯示語意與 target ABI 仍未閉合。
+- `0x1e0db(value, digitBias, target)` 只在 target 位於 camera bounds 時，把 `value` 轉成四位十進位字元，寫入四組 raw presentation queue（位置碼 `2,7,12,17`、target index 與 digit bytes），最後遞增 queue count。它不是 HP/MP/damage/heal 的命名 renderer；`0x1e1dc` 是相鄰的四 byte raw queue writer。
+- `0x1debe(actor, x, y)` 只證實 active gate、曼哈頓相鄰一格與 equipped item row `+0x0b <= 1`；它不能推出 item `+0x0b` 是所有武器的通用最大射程。
 
 因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的 `weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride `0x17` 已知，但 runtime table 邊界及其餘欄位仍 fail-closed，不能直接把 215 筆 normalized rows 宣稱為 runtime table 的完整證明。
 
