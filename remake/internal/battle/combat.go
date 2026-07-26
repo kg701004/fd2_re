@@ -7,8 +7,8 @@
 //	AP = AP×(1+攻方地形AP%)、DP = DP×(1+守方地形DP%)(取整,terrain.go)
 //	最大傷害 = AP − DP;實際傷害 = 最大傷害×0.9 ～ 最大傷害-1(亂數,magic.go randomizeAmount)
 //
-// AI 評分式(doc 11 0x15140):選能對最有價值目標造成最大傷害的落點,dmg≤2 略過,
-// 現含地形% 修正(doc42 gap-audit 第 5 項)。
+// AI normalized approximation：舊 doc11 的 0x15140 地址已由 canonical recheck 撤回；
+// 此處只保留 remake-owned 估值與 dmg≤2 相容行為，不宣稱 native AI parity。
 // 演出動畫(FIGANI/移動)後補;此處先把邏輯層做對,讓第一關可玩。
 package battle
 
@@ -118,14 +118,14 @@ func abs(v int) int {
 
 func manhattan(ax, ay, bx, by int) int { return abs(ax-bx) + abs(ay-by) }
 
-// estDamage AI 評分用的預估傷害(doc11 0x15140 反組譯公式):
+// estDamage 是 remake normalized AI 估值；舊 doc11 0x15140 反組譯地址已撤回，
+// 不把這個 helper 當作 native score proof：
 //
 //	myAP'  = myAP  × 地形AP%[u當下座標] / 100
 //	tarDP' = tarDP × 地形DP%[t當下座標] / 100
 //	估計傷害 = myAP' − tarDP'
 //
-// 只是選目標用的估值,不擲骰(不含命中率/暴擊/傷害隨機化——那些留給 AttackWithRNG 實際結算,
-// doc42 gap-audit 第 5 項只要求 AI 評分補上地形%,未要求 AI 決策也模擬命中/暴擊機率)。
+// 只是選目標用的估值,不擲骰(不含命中率/暴擊/傷害隨機化——那些留給 AttackWithRNG 實際結算)。
 func (s *State) estDamage(u, t *Unit) int {
 	apPct, _ := s.TerrainAPDPPct(u.X, u.Y)
 	_, dpPct := s.TerrainAPDPPct(t.X, t.Y)
@@ -135,9 +135,10 @@ func (s *State) estDamage(u, t *Unit) int {
 }
 
 // aiTargets separates the original AI's attack candidate from its movement
-// fallback.  The 0x15140 scorer ignores targets whose estimated damage is at
-// most two; when every hostile target is below that threshold, the unit may
-// still advance toward the nearest hostile but must not attack it.
+// fallback.  This normalized compatibility rule ignores targets whose estimated
+// damage is at most two; it is not proof that the withdrawn 0x15140 address has
+// that native behavior. When every hostile target is below the threshold, the
+// unit may still advance toward the nearest hostile but must not attack it.
 func (s *State) aiTargets(u *Unit) (attack, move *Unit) {
 	bestScore := -1 << 30
 	bestDistance := 1 << 30

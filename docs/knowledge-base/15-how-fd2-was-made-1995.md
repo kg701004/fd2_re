@@ -78,7 +78,7 @@ DOS 不顯示中文,他們的解法是 1990 年代台灣遊戲的通行做法,�
 - **場上每單位 80 byte**:座標、圖形/方向/動作、raw record bytes `+5/+6`、肖像、物品 8、5-byte
   command bitset 與各屬性。舊 AA/BB 高階欄位命名已撤回；`+5`／`+6` 目前只按各 caller 的 raw mask/selector 使用。
   其 command／spell 對照尚未閉合；`+0x22..+0x24` 是 raw transient/modifier bytes，並非法術 bitfield，不能由此命名高階 stat/status。
-- **AI**(`0x15140`):對行動單位 flood-fill 算可達格,逐落點×逐目標評分
+- **AI（歷史筆記，地址已撤回）**：舊資料曾以 `0x15140` 描述行動單位 flood-fill／逐落點評分；現況以 `0x13A9F/0x14EF0/0x15B77` raw boundaries 與 SDD fail-closed 狀態為準。
   (預期傷害 = 我 AP×地形% − 目標 DP×地形%;可擊殺 ×2;狀態 ×1.5),取最高分行動。敵與友軍 NPC 共用此引擎。
 - **選單**:方向鍵游標、Enter/Space 確認、ESC 取消等 input fragments 已有證據；全員 end-turn／換邊流程仍未閉合；
   command submenu 以 5-byte command bitset 列舉候選項，個別 command 是否為法術及其 label 仍須由 table／caller 對照。

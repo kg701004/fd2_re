@@ -126,7 +126,7 @@
 
 **做了什麼**
 - **機制文件 5 篇**:`09` 劇情/對話結構、`10` 敵我/狀態繪製、`11` 戰場 AI、`12` 音樂播放/場景切換、`13` 戰場選單。
-- **AI**(`0x15140`):flood-fill 可達格 → 逐落點×逐目標評分(預期傷害/可擊殺×2/狀態×1.5/地形)→ 取最佳。
+- **AI（歷史假說，已撤回地址）**：舊筆記曾以 `0x15140` 描述 flood-fill／逐落點評分；canonical Docker recheck 已證該地址不是可確認的 AI entry。現況只保留 `0x13A9F` unit dispatcher、`0x14EF0` candidate boundary、`0x15B77` raw score branches，完整 AI 仍未閉合。
 - **選單**:Enter/Space 確認、ESC 取消、方向鍵游標(`[0x3C57]`);`Get_EasyMagic` caller 已定位，但 magic raw/command schema 以 `unit+0x1a..+0x1d` 與 `0x1cff0` 為準，不能把 `+0x22..+0x24` 當 bitfield。
 - **音樂**:`play_bgm`(0x26777),`[0x1A11]`=目前曲、track=−1 停、否則載 `FDMUS[track]`;32 處呼叫得場景→曲號。
 - **LE 重定位 xref 工具**(`tools/le_xref.py`):解析 LE object/fixup 表,解開 DOS4GW 絕對位址重定位。

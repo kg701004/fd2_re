@@ -18,11 +18,11 @@
 攻擊執行(大函式 0x15xxx,含演出+結算)
    ├ 算攻方 AP → 全域暫存 [0x53c27](0x15aff 寫)
    ├ 算守方 DP → 全域暫存 [0x53c2b](0x15b08 寫)
-   └ 傷害公式 0x15356(doc 11):
-        dmg = AP×地形AP%[地形]/100 − DP×地形DP%[地形]/100   (地形表 0x1A12 / 0x1A2A)
-        dmg≤2 → 跳過(AI);擊殺加成見 doc 11
+   └ 舊筆記標為 0x15356 的傷害公式（地址未由 canonical scan 證實）：
+        normalized dmg = AP×地形AP%[地形]/100 − DP×地形DP%[地形]/100
+        （地形表 0x1A12 / 0x1A2A；`dmg≤2`/擊殺加成不得當作 native AI 證據）
 ```
-即 **傷害讀的是 `[0x53c27]`(攻方AP)/`[0x53c2b]`(守方DP)全域暫存**,在攻擊執行時先算好填入,非直接讀 unit 欄位。
+即 **normalized/remake 的傷害估值**可使用 `[0x53c27]`/`[0x53c2b]` 作 raw lead；canonical scan 尚未證明 `0x15356` 是 native callee，也不能以此行宣稱完整 attack/AI parity。
 
 ## 3. 已知操作(攻略/doc 13)
 

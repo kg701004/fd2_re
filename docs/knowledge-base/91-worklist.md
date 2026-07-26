@@ -74,7 +74,7 @@
 ## 第 4 輪以後(暫定)
 - [x] 地圖格式完整解析(FDFIELD 三段)+ 渲染全 33 圖(見上)
 - [ ] 反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證
-- [~] **物品系統反組譯**(M1 用)→ `32`:已確認 物品表23B結構、傷害鏈(AP/DP 全域暫存 0x53c27/0x53c2b → 公式 0x15356)、roster 8裝備欄;[阻] 裝備加成精確累加點(夾攻擊大函式,表base-relative)、使用效果碼待續
+- [~] **物品系統反組譯**(M1 用)→ `32`:已確認物品表23B結構、roster 8裝備欄與 AP/DP raw temporary leads；舊 `0x15356` 傷害公式地址未由 canonical scan 證實。裝備加成精確累加點（夾攻擊大函式、表 base-relative）與使用效果碼待續。
 - [ ] **轉職系統反組譯**(M4):轉職觸發(教會/道具)、職業數值替換、能力繼承、轉職後成長表切換 → 攻略道具表(勇者徽章→英雄…)交叉驗
 - [~] **角色名對應**:補全 portrait→角色名 → `49`。核實後「12 個」已過期,實際已定案 38 組
       (0-31 共 32 + 48/66/68/96/97 共 5 + 本輪新增 126=ASR-06);其餘約 97 組多為泛用怪物/路人,
@@ -125,8 +125,8 @@
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
 - [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
-- [~] 敵方 AI 回合:flood-fill + 評分選目標(擊殺×2),對齊 `11`(0x15140)：已補地形 AP/DP 與原版 `dmg≤2` 跳過門檻；`0x15B77` 的 attack/recovery/flag/ID22 raw score slices 已各自有 adapter，但情境加成、ID17–19 score、完整狀態優先級仍待 RE。更正文件命名：`0x149F8` 目前只證實 candidate-builder 邊界，raw `+0x22..+0x27` 也不得直接命名 AP/DP/HIT/status。remake 已建立 `State.SpellBook`/`AIPlan.SpellID`、item raw K4 (`0x11`) command inventory、`AIAvailableSpells`/`AISpellCandidates`，以及 `NativeAvailableAISpellCommandIDs`（raw +0x27、40-bit mask、36-record、MP gates）；尚未接 AI runtime、target selection 與實際施法行動。
-- [~] 敵方 AI 回合:flood-fill + 評分選目標(擊殺×2),對齊 `11`(0x15140)：已補地形 AP/DP 與原版 `dmg≤2` 跳過門檻；`0x15B77` 的 attack/recovery/flag/ID22 raw score slices 已各自有 adapter，但情境加成、ID17–19 score、完整狀態優先級仍待 RE。更正文件命名：`0x149F8` 目前只證實 candidate-builder 邊界，raw `+0x22..+0x27` 也不得直接命名 AP/DP/HIT/status。remake 已建立 `State.SpellBook`/`AIPlan.SpellID`、item raw K4 (`0x11`) command inventory、`AIAvailableSpells`/`AISpellCandidates`、`NativeAvailableAISpellCommandIDs`，以及 optional `AIPlan.NativeSpellCommands` raw bridge；bridge 不選 target／score／effect，完整 AI runtime 仍未閉合。
+- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x149F8` 只證實 candidate-builder，raw `+0x22..+0x27` 不命名 AP/DP/HIT/status；`State.SpellBook`、`AIPlan.SpellID`、raw command inventory 與 `NativeAvailableAISpellCommandIDs` 仍是 fail-closed bridge。
+- [~] 敵方 AI spell bridge：`State.SpellBook`/`AIPlan.SpellID`、item raw K4 command inventory、`AIAvailableSpells`/`AISpellCandidates`、`NativeAvailableAISpellCommandIDs` 與 optional `AIPlan.NativeSpellCommands` 已保存 raw provenance；bridge 不選 target／score／effect，完整 AI runtime 仍未閉合。
 - [x] **RE-AI-SPELL-SCORE-15B77**：Docker Capstone/Hex-Rays 釘死 `0x15b77` 的 attack IDs0..12 score（HP `<` spell value→24，否則8；record `+0x08==0` 時乘 1.5 並 toward-zero）與 recovery IDs13..16 score（HP `<` max/3→8、否則 `<` max/2→3、否則0；`+0x34 bit0` 再×2）；新增 raw-only `ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`，ID10..12 嚴格要求 caller-supplied `0x1f183` gate。未接 AI runtime、command inventory、target UI 或效果名稱。
 - [x] **RE-AI-SPELL-FLAGS-15B77**：Hex-Rays 釘死 ID20/21→raw `+0x25/+0x26` nonzero flag score，每筆各加6；ID26/27→同兩 offsets zero flag score，每筆各加4；新增 `ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`，不清除、不命名 flag，也不接施法 runtime。
 - [x] **RE-AI-SPELL-MODIFIERS-15B77**：Hex-Rays 釘死 ID17/18/19→raw `+0x22/+0x23/+0x24` zero flag score，每筆各加3；`ScoreNativeAISpellZeroFlag` 保存該 raw helper，未命名 transient 欄位或接 AI runtime。
