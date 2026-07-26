@@ -576,6 +576,8 @@ type unitsFile struct {
 		BattleFig         *int                    `json:"battle_fig,omitempty"`
 		MapSelectorSlot   *int                    `json:"map_selector_slot,omitempty"`
 		MapSelectorKey    *int                    `json:"map_selector_key,omitempty"`
+		NativeRecordByte5 *byte                   `json:"native_record_byte5,omitempty"`
+		NativeRecordByte6 *byte                   `json:"native_record_byte6,omitempty"`
 		Group             int                     `json:"group"`
 		NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
 		X                 int                     `json:"x"`
@@ -631,6 +633,10 @@ func Load(path string) (*State, error) {
 			nu.NativeRecordByte5 = 0
 			nu.HasNativeRecordByte5 = true
 		}
+		if u.NativeRecordByte5 != nil {
+			nu.NativeRecordByte5 = *u.NativeRecordByte5
+			nu.HasNativeRecordByte5 = true
+		}
 		if flags, flagErr := NativeInventoryFlagsFromSource(u.InventorySlots); flagErr == nil {
 			nu.NativeInventoryFlags = flags
 		}
@@ -645,6 +651,12 @@ func Load(path string) (*State, error) {
 		}
 		if u.MapSelectorKey != nil {
 			nu.MapSelectorKey, nu.HasMapSelectorKey = *u.MapSelectorKey, true
+			// FDFIELD b0 is copied directly to native record +6 by the
+			// constructor; map_selector_key is retained as separate provenance.
+			nu.NativeRecordByte6, nu.HasNativeRecordByte6 = byte(*u.MapSelectorKey), true
+		}
+		if u.NativeRecordByte6 != nil {
+			nu.NativeRecordByte6, nu.HasNativeRecordByte6 = *u.NativeRecordByte6, true
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)

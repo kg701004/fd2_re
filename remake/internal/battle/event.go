@@ -308,6 +308,9 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			u.NativeRecordByte5 = 0
 			u.HasNativeRecordByte5 = true
 		}
+		// Party constructors use FDFIELD camp code 2 for native record +6.
+		u.NativeRecordByte6 = 2
+		u.HasNativeRecordByte6 = true
 		if flags, flagErr := NativeInventoryFlagsFromSource(pm.InventorySlots); flagErr == nil {
 			u.NativeInventoryFlags = flags
 		}

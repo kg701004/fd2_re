@@ -244,7 +244,7 @@ target 的 `+0x27` 必為零、class `+0x20` 不得為 `0x19/0x1a`、且 `rand()
 
 這六個 transient bytes 的 decrement 已由 official IDA 釘死，但 gate 仍是 raw ABI：turn/camp phase driver `0x1A30B` 傳入 selector，`0x1A866` 只接受 `record+6 == selector` 且 `(record+5 & 1)==0` 的 record；不可把它改寫成 `Camp/OnField/Alive` normalized 條件。通過 gate 後依序對 `unit+0x22..+0x27` 的每個非零 byte decrement。任何一個 byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived fields；因此 ID17/18 的 AP/DP 增幅會在自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
 
-Remake 已以 `Unit.NativeTransient[6]` 及 optional `NativeRecordByte5/6` 保留這段 raw ABI，並提供 bounded offset access（只接受 `0x22..0x27`）及 `State.TickNativeTransientsRaw(selector)`；缺少 raw gates 時 fail-closed。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接 campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
+Remake 已以 `Unit.NativeTransient[6]` 及 optional `NativeRecordByte5/6` 保留這段 raw ABI，並提供 bounded offset access（只接受 `0x22..0x27`）及 `State.TickNativeTransientsRaw(selector)`；FDFIELD b0→runtime `+6` 的 parser/exporter provenance 也已補上，缺少 raw gates 時仍 fail-closed。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接 campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
 
 ID23 走 `0x1CFF0` 的 command-`0x17` special selector，不能套 generic two-stage target contract。其 handler
 `0x2218A` 以 record23 扣 MP，並呼叫 `0x22253` 兩次：依 C stack ABI，第一次將 selected unit 的 runtime

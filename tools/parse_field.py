@@ -58,6 +58,10 @@ def parse_map(raw, m):
                       # returned FDICON cache slot to +2. Keep the raw key
                       # separate from the human-readable camp label.
                       "native_map_selector_key": b[0],
+                      # 0x10ec1/0x10ef5 copy the same FDFIELD b0 directly to
+                      # runtime record +6. Preserve this raw provenance; it
+                      # is not a normalized camp synonym.
+                      "native_record_byte6": b[0],
                       "portrait": b[1], "race": b[2], "cls": b[3], "lv": b[4],
                       "inventory": [item for item in b[5:13] if item != 0xFF],
                       "inventory_slots": list(b[5:13]),

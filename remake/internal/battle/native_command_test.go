@@ -59,7 +59,7 @@ func TestNativeCommandMaskRejectsMalformedSourceWithoutMutation(t *testing.T) {
 func TestLoadMaterializesFDFIELDInitialCommandMask(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "units.json")
-	if err := os.WriteFile(path, []byte(`{"map":0,"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"initial_command_mask":[1,0,0,128]}]}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"map":0,"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"map_selector_key":0,"native_record_byte5":128,"initial_command_mask":[1,0,0,128]}]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	st, err := Load(path)
@@ -68,6 +68,9 @@ func TestLoadMaterializesFDFIELDInitialCommandMask(t *testing.T) {
 	}
 	if got, want := st.Units[0].NativeCommandIDs(), []int{0, 31}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("loaded IDs=%v want %v", got, want)
+	}
+	if !st.Units[0].HasNativeRecordByte5 || st.Units[0].NativeRecordByte5 != 0x80 || !st.Units[0].HasNativeRecordByte6 || st.Units[0].NativeRecordByte6 != 0 {
+		t.Fatalf("loaded raw record bytes=%#x/%v %#x/%v", st.Units[0].NativeRecordByte5, st.Units[0].HasNativeRecordByte5, st.Units[0].NativeRecordByte6, st.Units[0].HasNativeRecordByte6)
 	}
 	if err := os.WriteFile(path, []byte(`{"map":0,"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"initial_command_mask":[1,2,3]}]}`), 0o600); err != nil {
 		t.Fatal(err)

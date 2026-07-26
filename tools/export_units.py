@@ -144,6 +144,7 @@ def main(argv):
             "hit": DEFAULT_HIT, "ev": DEFAULT_EV, "crit": crit_by_cls(resist_crit, u["cls"]),
             "fig": u["portrait"],  # legacy compatibility approximation; not native unit+2
             "map_selector_key": u["native_map_selector_key"],  # FDFIELD b0 -> 0x11019 -> unit+2 slot
+            "native_record_byte6": u["native_record_byte6"],  # FDFIELD b0 -> runtime record +6
             "battle_fig": u["portrait"],  # FDFIELD b1 -> native unit+7 (FIGANI/DATO selector)
             # ex:每級經驗(doc02 §4.5「守方每級經驗」;worklist 第 9 輪經驗值系統補接線)。
             # 與 hp/mp/ap/dp/mv 用同一顆 base_stats() (race,cls) 查表——同一份已驗證 EXE
