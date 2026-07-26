@@ -1449,6 +1449,26 @@ func TestCompileTransitionRevealFromNativeCall(t *testing.T) {
 	}
 }
 
+func TestCompilePaletteRamp25052PreservesInclusiveDescendingDeltas(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "unknown", NativeTarget: "0x25052", RawArgs: []any{2, 80},
+		Source: HandlerSource{Addr: "0x252a9", Target: "0x25052"},
+	}}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 6 {
+		t.Fatalf("0x25052 beats=%#v issues=%#v", beats, issues)
+	}
+	for i, delta := range []int{2, 1, 0} {
+		palette, delay := beats[i*2], beats[i*2+1]
+		if palette.Op != "palette_update" || palette.Source != "0x252a9" || palette.PaletteStart != 0 || palette.PaletteEnd != 255 || palette.PaletteDelta != delta || delay.Op != "delay" || delay.Ms != 80 {
+			t.Fatalf("ramp step %d = %#v / %#v", i, palette, delay)
+		}
+	}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x25052", RawArgs: []any{64, 1}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("invalid 0x25052 ramp issues=%#v", issues)
+	}
+}
+
 func TestCompileChapter23PreUsesRecoveredChapter24TextGroups(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch23_pre.json")
 	if err != nil {

@@ -655,6 +655,26 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, beat)
 				continue
 			}
+			if input.NativeTarget == "0x25052" {
+				// 0x25052(start, delay_ms) is a palette-brightness ramp, not
+				// a generic fade: it calls 0x11df2(0, 255, start..0), waiting
+				// after every inclusive step.
+				start, okStart := immediateHandlerInt(input.RawArgs, 0)
+				delay, okDelay := immediateHandlerInt(input.RawArgs, 1)
+				if !okStart || !okDelay || start < 0 || start > 63 || delay < 0 {
+					issue(i, input, "0x25052 palette ramp requires immediate start 0..63 and non-negative delay")
+					continue
+				}
+				for delta := start; delta >= 0; delta-- {
+					palette := runtime(input, "palette_update")
+					palette.PaletteStart, palette.PaletteEnd, palette.PaletteDelta = 0, 255, delta
+					beats = append(beats, palette)
+					wait := runtime(input, "delay")
+					wait.Ms = delay
+					beats = append(beats, wait)
+				}
+				continue
+			}
 			if input.NativeTarget == "0x24618" {
 				if bindings.Transition == nil {
 					issue(i, input, "0x24618 indexed transition requires an explicit editable binding")
