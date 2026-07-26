@@ -147,7 +147,7 @@
 - [x] ch11/ch12 pre-handler：FDTXT_012 index0 跨 scene0/1（2+9句）與 map11/acting40/41 已接 binding，`story_ch12` 已接回 editable handler。
 - [x] ch12/ch13 pre-handler：FDTXT_013 index0（6句）與 map12/70-slot 已接 binding，`story_ch13` 已接回 editable handler。
 - [x] ch13/ch14 pre-handler：FDTXT_014 index0（4句）與 map13/70-slot、pan 20,20 已接 binding，`story_ch14` 已接回 editable handler。
-- [x] ch14/ch15 pre-handler：Docker Capstone 已證實 `0x33499(12)` 回傳永久我方名冊是否含 char_id 12，`0x334f3..0x334f7` 將其反相後乘 3，故 ch14 的 FDTXT_015 對話是「有 12：index 0/1/2；無 12：3/4/5」。`handlers/ch14_pre.json` 現以兩個 editable `if roster_has` 保留原本的共用 acting/焦點順序，binding 含 map14/80-slot、FDTXT_015、pan 與 acting48；runtime 只讀 permanent party roster，缺此資料 fail-closed。ch15 已接 FDTXT_016 index0（16句）與 map15/60-slot，`story_ch16` 已接回 editable handler。
+- [x] ch14/ch15 handler：Docker Capstone 已證實 pre `0x334f3..0x334f7` 的 `roster_has(12)`→FDTXT_015「有 12：0/1/2；無：3/4/5」，以及 post `0x239d1..0x239d3` 的「有：12；無：13」。pre/post 都已轉為 editable `if roster_has`；pre binding 含 map14/80-slot、pan、acting48，post 保留 dialog→sync_party→JOIN15→set_chapter15→town_ch16。runtime 只讀 permanent party roster，缺此資料 fail-closed；`story_ch15` 與 `postbattle_ch15_persist` 都已接回 handler。
 - [x] ch17/ch18 pre-handler：FDTXT_018 index0/1/2（7+4+13句）與 map17/70-slot、acting54/55 已接 binding，`story_ch18` 已接回 editable handler。
 - [x] ch18/ch19 pre-handler：`ch18_pre` 實際 index0（8句）與 map18/70-slot 已接 binding，`story_ch19` 已接回 editable handler；未把未呼叫的 FDTXT_019 其他 strings 硬播。
 - [x] ch19/ch20 pre-handler：FDTXT_020 index0（17句）與 map19/70-slot 已接 binding，`story_ch20` 已接回 editable handler。

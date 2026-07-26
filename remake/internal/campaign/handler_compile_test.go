@@ -1110,26 +1110,40 @@ func TestCompileChapter14PreLowersRosterHasDialogueVariants(t *testing.T) {
 	if load := beats[0].LoadCH; load == nil || load.Chapter != 14 || load.Map != "assets/maps/map14" || load.SlotCount != 80 || load.Script != "assets/story/ch15.json" || load.PartyScenario != "assets/scenarios/ch15.json" {
 		t.Fatalf("ch14_pre LOADCH=%#v", load)
 	}
-	for arm, want := range [][]int{{0, 1}, {3, 4}} {
+	for arm, wantScene := range []int{0, 1} {
 		branch := beats[1]
 		if arm == 1 {
 			branch.Then = branch.Else
 		}
-		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 3 || branch.Then[0].Op != "dialog" || branch.Then[0].Line != want[0] || branch.Then[1].Op != "pan" || branch.Then[1].X != 576 || branch.Then[1].Y != 408 || !branch.Then[1].TileStep || branch.Then[2].Op != "dialog" || branch.Then[2].Line != want[1] {
+		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 5 || branch.Then[0].Op != "dialog" || branch.Then[0].SceneIndex == nil || *branch.Then[0].SceneIndex != wantScene || branch.Then[2].Op != "dialog" || branch.Then[2].Line != 2 || branch.Then[3].Op != "pan" || branch.Then[3].X != 576 || branch.Then[3].Y != 408 || !branch.Then[3].TileStep || branch.Then[4].Op != "dialog" || branch.Then[4].Line != 3 {
 			t.Fatalf("ch14_pre variant %d=%#v", arm, branch)
 		}
 	}
 	if len(beats[2].Acting) == 0 || beats[2].Acting[0].Units[0].Slot == nil || *beats[2].Acting[0].Units[0].Slot != 64 {
 		t.Fatalf("ch14_pre acting=%#v", beats[2])
 	}
-	for arm, want := range []int{2, 5} {
+	for arm, want := range []struct{ scene, count int }{{0, 9}, {1, 5}} {
 		branch := beats[3]
 		if arm == 1 {
 			branch.Then = branch.Else
 		}
-		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 1 || branch.Then[0].Op != "dialog" || branch.Then[0].Line != want {
+		if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != want.count || branch.Then[0].Op != "dialog" || branch.Then[0].SceneIndex == nil || *branch.Then[0].SceneIndex != want.scene || branch.Then[len(branch.Then)-1].Line != want.count-1 {
 			t.Fatalf("ch14_pre final variant %d=%#v", arm, branch)
 		}
+	}
+}
+
+func TestCompileChapter14PostLowersRosterHasDialogueVariants(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch14_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch14_post err=%v issues=%#v", err, issues)
+	}
+	if len(beats) != 4 || beats[0].Op != "if" || beats[1].Op != "sync_party" || beats[2].Op != "join" || beats[2].CharID != 15 || beats[3].Op != "set_chapter" || beats[3].Chapter == nil || *beats[3].Chapter != 15 {
+		t.Fatalf("ch14_post beats=%#v", beats)
+	}
+	branch := beats[0]
+	if branch.Condition == nil || branch.Condition.Op != "roster_has" || branch.Condition.CharID == nil || *branch.Condition.CharID != 12 || len(branch.Then) != 12 || len(branch.Else) != 12 || branch.Then[0].Op != "dialog" || branch.Then[0].Line != 0 || branch.Then[11].Line != 11 || branch.Else[0].Op != "dialog" || branch.Else[0].Line != 0 || branch.Else[11].Line != 11 || branch.Then[0].SceneIndex == nil || *branch.Then[0].SceneIndex != 4 || branch.Else[0].SceneIndex == nil || *branch.Else[0].SceneIndex != 5 {
+		t.Fatalf("ch14_post dialogue variants=%#v", branch)
 	}
 }
 

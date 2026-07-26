@@ -192,6 +192,10 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 	if ch15 == nil || ch15.Type != "cutscene" || ch15.HandlerBinding != "assets/cutscenes/bindings/ch14_pre.json" || ch15.Next != "battle_ch15" || len(ch15.Beats) != 0 {
 		t.Fatalf("chapter 15 must execute the recovered dynamic ch14 pre-handler: %#v", ch15)
 	}
+	post15 := c.Nodes["postbattle_ch15_persist"]
+	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
+		t.Fatalf("chapter 15 must preserve the recovered dynamic post-handler before town: %#v", post15)
+	}
 	battle2, post2 := c.Nodes["battle_ch02"], c.Nodes["story_ch02_post"]
 	if battle2 == nil || battle2.OnWin != "story_ch02_post" || post2 == nil || post2.Type != "cutscene" || post2.HandlerBinding != "assets/cutscenes/bindings/ch01_post.json" || post2.Next != "town_ch03" {
 		t.Fatalf("chapter2 battle must flow through editable post handler: battle=%#v post=%#v", battle2, post2)
@@ -218,8 +222,17 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		battleID := fmt.Sprintf("battle_ch%02d", tc.chapter)
 		postID := fmt.Sprintf("postbattle_ch%02d_persist", tc.chapter)
 		battleNode, post := c.Nodes[battleID], c.Nodes[postID]
-		if battleNode == nil || battleNode.OnWin != postID || post == nil || post.Type != "cutscene" || post.Next != tc.town || len(post.Beats) != 2 || post.Beats[0].Op != "sync_party" || post.Beats[1].Op != "set_chapter" || post.Beats[1].Chapter == nil || *post.Beats[1].Chapter != tc.chapter {
+		if battleNode == nil || battleNode.OnWin != postID || post == nil || post.Type != "cutscene" || post.Next != tc.town {
 			t.Fatalf("chapter%d material acquisition must sync before %s: battle=%#v post=%#v", tc.chapter, tc.town, battleNode, post)
+		}
+		if tc.chapter == 15 {
+			if post.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || len(post.Beats) != 0 {
+				t.Fatalf("chapter15 must preserve dynamic post handler: %#v", post)
+			}
+			continue
+		}
+		if len(post.Beats) != 2 || post.Beats[0].Op != "sync_party" || post.Beats[1].Op != "set_chapter" || post.Beats[1].Chapter == nil || *post.Beats[1].Chapter != tc.chapter {
+			t.Fatalf("chapter%d persistent post beats=%#v", tc.chapter, post.Beats)
 		}
 	}
 	battle27 := c.Nodes["battle_ch27"]
