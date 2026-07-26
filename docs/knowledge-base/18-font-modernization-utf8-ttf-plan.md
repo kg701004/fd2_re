@@ -33,7 +33,7 @@ FDTXT.DAT ─(glyph_map)→ 每章 script.json:
     ... ]
 ```
 - 控制碼(`14`)→ 轉成腳本的結構欄位(開框/頭像/換行/翻頁),不再是 inline byte。
-- 說話者肖像 ID → 角色名(顯示)+ 頭像資源編號(DATO,見 `01`§7)。
+- 說話者 operand → 角色名（經場景／persistent identity mapping）＋頭像資源編號（最終 record `+7`→DATO；見 `14`／`40`）；不能直接把文本中的數字當固定 DATO index。
 - 工具:擴充 `decode_story_text.py` 多一個 `--script-json` 輸出模式即可。
 
 ## TTF 渲染(runtime)

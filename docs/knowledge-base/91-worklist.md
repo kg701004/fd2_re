@@ -11,6 +11,7 @@
 - [x] `20`／`22` 的「所有必要能力已完成／只剩工程整合」過強斷言降級為「資料與工具證明可行，runtime integration 尚待」；`90`／`51` 明確標成歷史計畫／試玩快照。
 - [~] 專題 RE 文件仍保留各自證據與歷史修正；不直接合併成單一長文，避免丟失 address-level provenance。若內容與 README 狀態衝突，以 `56`、`42`、本表最新勘誤為準。
 - [x] 2026-07-27 README/KB review：README 改正「跨平台已完成」「EXE 全部表已閉合」「SDL2 第二條 runtime」等過強敘述，補上原版／重製對話圖與可驗證差距說明；`00-index` 明列 README→56→57→42→91 裁決順序；`08` 修正兩個圖片相對路徑。`90`、`30`、`51`、`SESSION-HANDOFF-*` 不合併，保留 address-level/historical provenance，避免把舊快照當現況。
+- [x] 2026-07-27 stale dialogue-operand assertion cleanup：`09`、`01`、`18` 不再把控制碼第二 word 一律稱為固定肖像/DATO ID；依 `0x15f84→0x12c60` 分開 identity lookup、runtime unit `+7` 與 direct-DATO fallback，並將 `FFFA/FFFB` 統一修正為遞迴名稱／數值插入碼，不是特效。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)

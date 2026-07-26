@@ -150,7 +150,7 @@ RLE codec(反組譯 `0x4F716`,比 sprite 簡單,無透明):
 ```
 
 頭像索引 = 肖像 ID(`DATO_000`=索爾、`001`=哈諾…對上 memory.md 肖像表,已逐張驗證)。
-對話框由控制碼 `0xFFEF` 依說話者肖像 ID 載入對應頭像(見 `14-text-control-codes`)。
+對話框由控制碼 `0xFFEF` 依 operand 的場景／persistent identity lookup（必要時 direct-DATO fallback）載入對應頭像；operand 不可一律當成固定肖像 ID（見 `14-text-control-codes`）。
 工具 `tools/decode_dato.py`;全 136 頭像 ×4 幀已匯出本機 `extracted/portraits/`。
 
 ## 8. 地圖圖塊庫(FDSHAP tileset)+ 地圖渲染 [已驗證]
