@@ -20,6 +20,35 @@ type NativeTerrainCursorInfo struct {
 	Control  [4]byte
 }
 
+// NativeMapHUDLayout is the byte-offset contract of 0x1acf3 inside its
+// 456-byte-stride work buffer.  It describes only its proven compositor
+// destinations; resource selection and decimal glyph rendering remain the
+// responsibility of their separate native primitives.
+type NativeMapHUDLayout struct {
+	Frame, Terrain int
+	AP, DP         int
+	Unit, HP       int
+}
+
+// NativeMapHUDLayoutFor reproduces the fixed offsets used by 0x1acf3 after
+// its raw horizontal anchor has been selected.  The original caller always
+// supplies the 456-byte map work-buffer stride; accepting another stride
+// would hide an adapter mismatch, so it fails closed.
+func NativeMapHUDLayoutFor(anchorX, stride int) (NativeMapHUDLayout, error) {
+	if stride != NativeMapStride || anchorX < 0 || anchorX+69 > 320 {
+		return NativeMapHUDLayout{}, errors.New("fdicon: invalid native map HUD layout")
+	}
+	base := stride*157 + anchorX
+	return NativeMapHUDLayout{
+		Frame:   base,
+		Terrain: base + 6,
+		AP:      base + stride*8 + 0x2b,
+		DP:      base + stride*19 + 0x2b,
+		Unit:    base + stride*5 + 6,
+		HP:      base + stride*21 + 9,
+	}, nil
+}
+
 // NativeTerrainCursorInfoForCell reproduces 0x12e38's decode of one raw
 // FDFIELD tile/event pair. controls must be the selected FDSHAP control table
 // in four-byte records; malformed input is rejected rather than guessed.

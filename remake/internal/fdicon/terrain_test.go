@@ -29,6 +29,26 @@ func TestNativeMapHUDUnitFrameIndexMatches1AE4D(t *testing.T) {
 	}
 }
 
+func TestNativeMapHUDLayoutForMatches1ACF3(t *testing.T) {
+	l, err := NativeMapHUDLayoutFor(1, NativeMapStride)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l != (NativeMapHUDLayout{
+		Frame: NativeMapStride*157 + 1, Terrain: NativeMapStride*157 + 7,
+		AP: NativeMapStride*165 + 0x2c, DP: NativeMapStride*176 + 0x2c,
+		Unit: NativeMapStride*162 + 7, HP: NativeMapStride*178 + 10,
+	}) {
+		t.Fatalf("layout=%+v", l)
+	}
+	if _, err := NativeMapHUDLayoutFor(252, NativeMapStride); err == nil {
+		t.Fatal("off-screen native HUD frame was accepted")
+	}
+	if _, err := NativeMapHUDLayoutFor(1, 320); err == nil {
+		t.Fatal("non-native stride was accepted")
+	}
+}
+
 func TestNativeForegroundRedrawEligibleMatches129ECGates(t *testing.T) {
 	cases := []struct {
 		name                         string
