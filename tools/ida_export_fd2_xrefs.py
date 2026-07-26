@@ -43,6 +43,9 @@ TARGETS = (
     0x1CA89,
     0x1CFF0,
     0x22D1B,
+    # Post-battle layout primitive.  Retain its exact IDA function boundary
+    # and callers while call-site array ABI is audited separately.
+    0x233C6,
     0x4E040,
     0x4E4A2,
     0x4E4D1,
