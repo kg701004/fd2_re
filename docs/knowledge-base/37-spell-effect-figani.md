@@ -62,10 +62,11 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
 
 ## 結論
 
-**炎龍騎士團2 沒有「法術 id → FIGANI 特效動畫」的對映公式或表**——設計上，施法演出＝施法者自身
-`sprite_group×3`/`×3+1` 動畫（doc06 既有公式的延伸驗證，非新公式），法術專屬的視覺差異（若有）只能來自
-角色自身動畫幀裡手繪的火花細節（如悠妮 f05/f10），**remake 不需要（也做不到）依法術 id 切換特效 sprite**——
-按角色（非法術）配一組施法動作即可，與原版行為一致。
+**尚未發現「法術 id → FIGANI 特效動畫」的對映公式或表**：`0x28784` 的已證實單圖施法手勢只取
+施法者 `sprite_group×3`/`×3+1`，不讀 spell id。這只排除「另一段 FIGANI 由 spell id 選擇」；角色幀內
+的火花確實是該手勢的一部分。它**不**證明整個 spell presentation 沒有 command-specific 視覺：
+`0x2a6bd` 的 dispatcher／DATO、SFX、命中與多段畫面分支尚未閉合。remake 可以把角色手勢當作已證實的
+局部 adapter，但不能稱為完整原版施法演出或宣告不需再補特效。
 
 ## 待確認
 

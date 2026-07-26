@@ -277,8 +277,9 @@
       固定表值傷害/治療capMax);悠妮火炎/電擊/治療;法術選單→射程紫高亮→施放接戰鬥演出+扣MP。
       待:AoE(range>0)、命中率、輔助系(魔刃/風行…)效果。
       ✅ 法術特效對映已 RE 定論(f8fffba 後,doc37):**不存在獨立法術id→FIGANI對映**——施法演出=施法者
-      自己的組×3/×3+1(火花燒在 sprite 幀,0x28784 不讀 spell_id;0x2a6bd 跳表=武器屬性UI已排除)
-      → remake 現行「施法用角色攻擊動畫」與原版行為一致,不需改
+      自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
+      `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
+      不得稱完整原版一致。
 - [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問已接線；
       待：賣出、裝備後 AP/DP/HIT/EV 重算、同類舊裝替換、原版祕密商店進入方式 RE(攻略#16 方向鍵位置)
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
@@ -288,8 +289,9 @@
 - [x] **商店品項表**(haiku):docs/data/shops.json 69家/23祕密(含進入方式「酒店前Shift+F1」等);campaign 換真值
 - [x] **SFX 破案**(sonnet):FDOTHER#31=14×8bit PCM+AIL 鏈 → doc36;WAV 導出(export_sfx.py,11025Hz 負向證據);
       **index0=游標音確認**(5處方向鍵分支);戰鬥音效=另一獨立池([0x5411f])待導出
-- [x] **法術特效定論**(sonnet):不存在法術id→FIGANI對映(0x28784 不讀 spell_id;火花燒在角色幀)→ doc37;
-      remake 施法用角色動畫=與原版一致,結案
+- [~] **法術 FIGANI 手勢邊界**：`0x28784` 不讀 spell id，沒有另一段 FIGANI 由 spell id 選擇（火花在角色幀）→ doc37；
+      但 `0x2a6bd` command-specific presentation／SFX／命中分支未閉合，remake 角色動畫不可稱完整原版施法演出，
+      不結案。
 - [~] **歷史 legacy magic snapshot（不可作 native completion claim）**：舊條目所稱「魔法完整版」僅指
       `CastArea` AoE/命中擲骰與 normalized 輔助法術；2026-07-26 已由 SDD56/UI-03 取代為逐 command
       E0 matrix。native target/effect/transaction/presentation 未閉合者維持 fail-closed。
