@@ -55,6 +55,18 @@ func TestNativeUnitPresentByteOriginMatches22470AddressExpression(t *testing.T) 
 	}
 }
 
+func TestNativeUnitPresentContractRadiusMatches22547(t *testing.T) {
+	for _, tc := range []struct{ raw, lut, want int }{{0, 5, 15}, {1, 5, 35}, {3, 2, 34}, {3, 0, 0}} {
+		got, err := NativeUnitPresentContractRadius(tc.raw, tc.lut)
+		if err != nil || got != tc.want {
+			t.Fatalf("raw=%d lut=%d got=%d err=%v", tc.raw, tc.lut, got, err)
+		}
+	}
+	if _, err := NativeUnitPresentContractRadius(0, 6); err == nil {
+		t.Fatal("invalid LUT index was accepted")
+	}
+}
+
 func TestBlitNativeUnitPresentLMIUses22470OriginAndTransparency(t *testing.T) {
 	dst := make([]byte, nativeUnitPresentStride*200)
 	for i := range dst {

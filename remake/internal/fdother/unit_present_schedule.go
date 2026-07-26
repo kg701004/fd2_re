@@ -23,6 +23,17 @@ func NativeUnitPresentByteOrigin(x, y, cameraX, cameraY int) int {
 		nativeUnitPresentStride
 }
 
+// NativeUnitPresentContractRadius is 0x22547's middle-phase radius formula.
+// raw53ABD is deliberately named after its native storage, whose higher-level
+// role is not yet proven. Native computes local=24*raw53ABD+15, truncates the
+// signed division by five, then multiplies by LUT index (5 down through 0).
+func NativeUnitPresentContractRadius(raw53ABD, lutIndex int) (int, error) {
+	if lutIndex < 0 || lutIndex > 5 {
+		return 0, errors.New("fdother: unit-present LUT index is outside 0..5")
+	}
+	return (24*raw53ABD + 15) / 5 * lutIndex, nil
+}
+
 // BlitNativeUnitPresentLMI reproduces one 0x22470 LMI-cell write before that
 // phase redraws units and presents the 320x192 viewport.  Native 0x4e85b
 // decodes through 0x4e916 and preserves destination pixels when the decoded
