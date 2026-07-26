@@ -90,8 +90,9 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 > 的玩家 record **初始** map key 等於 character ID。這是特定 writer 的資料流，不是 FDFIELD/NPC 的
 > identity rule。它也不是 immutable：class-change flow `0x314a7..0x3157a` 以 selected roster slot
 > 定位 live `0x53a45+slot×0x50`，最後把 UI-selected raw byte 寫回 `+7`（同時重算 `+0x20`）。因此
-> 「join-id 相等」只適用於 fresh record；target byte 的高階名稱及它何時經 sync/save 落入 persistent
-> record 仍須另追。
+> 「join-id 相等」只適用於 fresh record；target byte 的高階名稱仍須另追。其 persistence ABI 已知：戰後
+> `0x11506` 以 `+8` 配對後完整 copy 0x50 bytes runtime→persistent，故只要 flow 呼叫 `sync_party`，這個
+> `+7` mutation 就會被保存；class-change flow 是否在同一 town interaction 立刻進該 post handler 仍不可假定。
 
 | runtime byte | 已證實的狹窄意義 | evidence |
 |---|---|---|
