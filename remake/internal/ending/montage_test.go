@@ -40,6 +40,9 @@ func TestNative2C548PortraitTextUsesEDIForSpecialEpilogue(t *testing.T) {
 	if plan.PortraitID != 37 || plan.CharacterName.Index != 5 || plan.ClassName.Index != 0x98 || plan.Epilogue.Index != 0x10 || plan.Epilogue.Destination != 0x7d08 {
 		t.Fatalf("portrait plan = %#v", plan)
 	}
+	if montage.PartyCycle.DatoLayout.Stride != 320 || montage.PartyCycle.DatoLayout.Arg8 != 5 || montage.PartyCycle.DatoLayout.ArgC != 7 || montage.PartyCycle.DatoLayout.Arg10 != 5 || montage.PartyCycle.DatoLayout.Arg14 != 5 || montage.PartyCycle.DatoLayout.Destination != "portrait_restore_buffer_C" {
+		t.Fatalf("DATO layout = %#v", montage.PartyCycle.DatoLayout)
+	}
 	plan, err = montage.PlanPortraitText(unit, 0xdc)
 	if err != nil || plan.Epilogue.Index != 0x2d {
 		t.Fatalf("special epilogue plan = %#v err=%v", plan, err)
