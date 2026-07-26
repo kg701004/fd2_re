@@ -57,3 +57,35 @@ func TestSlotBoundsAndVerifiedMetadata(t *testing.T) {
 		t.Fatalf("metadata=%#v err=%v", meta, err)
 	}
 }
+
+func TestWriteSlotPreservesOtherSlotsAndUsesOpaqueRegions(t *testing.T) {
+	plain := make([]byte, FileSize)
+	for i := range plain {
+		plain[i] = byte(i * 13)
+	}
+	replacement := Slot{Roster: make([]byte, RosterSize), Metadata: make([]byte, metadataSize)}
+	for i := range replacement.Roster {
+		replacement.Roster[i] = 0xa5
+	}
+	for i := range replacement.Metadata {
+		replacement.Metadata[i] = 0x5a
+	}
+	got, err := WriteSlot(plain, 2, replacement)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start, end, _ := SlotBounds(2)
+	if got[start] != 0xa5 || got[end-1] != 0x5a {
+		t.Fatal("replacement did not reach requested raw slot")
+	}
+	otherStart, _, _ := SlotBounds(1)
+	if got[otherStart] != plain[otherStart] {
+		t.Fatal("write changed a different slot")
+	}
+	if plain[start] == got[start] {
+		t.Fatal("write unexpectedly mutated caller image")
+	}
+	if _, err := WriteSlot(plain, 0, Slot{Roster: []byte{1}, Metadata: make([]byte, metadataSize)}); err == nil {
+		t.Fatal("short roster unexpectedly accepted")
+	}
+}

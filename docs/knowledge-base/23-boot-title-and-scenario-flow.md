@@ -289,6 +289,8 @@ title return `1` 後的 selector 以 `[0x53c57]` 作 slot cursor，確實只接�
 
 save storage boundary 已由同一條 caller chain 固定：`0x25fb7` 以 `"rb"` 開 `FD2.SAV` 並讀入 **`0x59cb` bytes**；save path `0x30119` 則以 `"wb"` 寫回同檔。selector 確認後，slot `i` 的 logical record 起點是 buffer `+0x312b + i*0xa28`；record 前 **`0xa00` bytes** 直接 copy 到／從 `[0x53bf7]` 的 32×0x50-byte persistent roster，剩餘 `0x28` bytes 為 metadata。這四段精確覆蓋至 checksum offset `0x59c7`；真實 sandbox `FD2.SAV` 已由 codec 解碼並通過 checksum。metadata 的 direct mapping 已固定：`+0→[0x53c03]` chapter、`+1→[0x53bfb]` roster count、`+2..+5→[0x53bf3]` currency balance、`+6/+7/+8/+9→[0x51aab]/[0x53af9]/[0x51e61]/[0x51e62]`。`0x2d411/0x2d528` 對此 dword 做加／減並以 numeric UI render，故 currency 名稱是 dataflow 結論而非值域猜測。renderer `0x30437` 對 metadata `+0==0xff` 直接顯示空槽；否則以它索引章節文字，故 `0xff` 是 verified empty sentinel。後四 byte globals 的玩法名稱仍不猜。`0x4dbb9` 是前 `0x59c7` bytes 的 u32 byte-sum checksum，存於最後 4 bytes；`0x4dbd8` 則是可逆 rolling XOR（u16 seed `0x00a5`，每 byte `seed=rol16(seed+0x9014,3)`，XOR low byte）。`tools/fd2save.py` 有 round-trip／tamper regression；不得讓自有 JSON 格式冒充 FD2.SAV compatibility。
 
+Official IDA 9.4 further closes the write-side copy order in `0x30012`: after a confirmed slot selector it copies exactly 2560 roster bytes to `record+0`, writes metadata bytes `+0..+9` from the verified globals, recomputes the checksum over the first `0x59c7` bytes, applies `0x4dbd8`, and writes the complete `0x59cb` envelope. `fdsave.WriteSlot` now preserves this opaque record boundary in a pure adapter; it does not claim that the remaining metadata bytes or native roster fields are normalized campaign state.
+
 ---
 
 ## 4. 新遊戲 → 開場對話 → 自動進戰場(B)

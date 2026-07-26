@@ -101,6 +101,30 @@ func ReadSlot(plain []byte, slot int) (Slot, error) {
 	}, nil
 }
 
+// WriteSlot replaces one native logical record in a plaintext save image.
+// Roster and Metadata remain opaque byte regions; callers must use Encode
+// afterward to rebuild the native checksum/envelope. Validation happens before
+// copying so malformed editable input cannot partially mutate the image.
+func WriteSlot(plain []byte, slot int, replacement Slot) ([]byte, error) {
+	if len(plain) != FileSize {
+		return nil, errors.New("fdsave: invalid plaintext size")
+	}
+	if len(replacement.Roster) != RosterSize {
+		return nil, fmt.Errorf("fdsave: roster size=%#x, want %#x", len(replacement.Roster), RosterSize)
+	}
+	if len(replacement.Metadata) != metadataSize {
+		return nil, fmt.Errorf("fdsave: metadata size=%#x, want %#x", len(replacement.Metadata), metadataSize)
+	}
+	start, end, err := SlotBounds(slot)
+	if err != nil {
+		return nil, err
+	}
+	out := append([]byte(nil), plain...)
+	copy(out[start:start+RosterSize], replacement.Roster)
+	copy(out[start+RosterSize:end], replacement.Metadata)
+	return out, nil
+}
+
 // VerifiedMetadata exposes only fields whose address/dataflow is closed:
 // chapter (+0), roster count (+1), and currency dword (+2..+5). The remaining
 // metadata bytes are intentionally not surfaced with gameplay names.
