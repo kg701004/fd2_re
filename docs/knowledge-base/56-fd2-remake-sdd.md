@@ -157,6 +157,8 @@ native command、`[+8]` item、`[+12]` wait。`0x173e7` 選第一個值為 0 的
 
 - attack：`0x1b83d(actor,0)` 必須在 runtime inventory 的八個 2-byte slots 找到 flag `0x40`
   且 ID `<0x80` 的 entry；其 item record `+0xb/+0xc` 傳入 `0x14818` 後仍須產生 target，否則 `+0=1`。
+  `battle.NativeEquippedInventorySlot` 已保存此 raw predicate；有 constructor flags 時 overlay 不再以
+  normalized `Equipped` 取代它，缺 provenance 仍保留 legacy fallback。
 - native command：`0x1c269(actor,0)` 必須枚舉至少一個 raw command bit，且 raw `unit+0x27==0`；任一失敗皆寫 `+4=1`。
   command 22 已證實會寫入此 duration byte；其遊戲名稱與所有 producer 尚未閉合，故 remake 只以
   `NativeTransient[5]` 保存並 gate raw command，**不得再說它等於 legacy `Sealed`**。

@@ -4245,6 +4245,10 @@ func hasNativeEquippedWeapon(unit *battle.Unit) bool {
 	if unit == nil {
 		return false
 	}
+	if len(unit.NativeInventoryFlags) == 8 && len(unit.InventorySlots) == 8 {
+		slot, err := battle.NativeEquippedInventorySlot(unit.NativeInventoryFlags, unit.InventorySlots, 0)
+		return err == nil && slot >= 0
+	}
 	for i, itemID := range unit.Inventory {
 		if itemID >= 0 && itemID < 0x80 && i < len(unit.Equipped) && unit.Equipped[i] {
 			return true
