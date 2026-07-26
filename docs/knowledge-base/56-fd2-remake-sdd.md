@@ -499,6 +499,25 @@ for a native transition/compositor boundary, not proof of a particular menu
 layout or service label. The remake therefore adopts only the verified
 left/right selector ABI and keeps the menu art/service names fail-closed.
 
+The two raw service branches share a second selector contract. `0x2e6b8` is a
+roster/list selector used by `0x2ffa5` and `0x2f8ea`: left/right move by one,
+up/down move by two, movement is bounded (no wrap), and the visible window
+scrolls in two-entry increments once the cursor crosses its six-entry window.
+Enter/Space return `1`, while Escape returns `-1`. `0x2df6b` is the same
+bounded two-column selector for a caller-supplied list count and calls the
+caller renderer after movement. These helpers are input/layout evidence only;
+their caller-owned list entries do not establish service names.
+
+`0x2f8ea` then builds a caller-local list by scanning the selected runtime
+record's eight inventory cells and retaining cells whose signed flag byte is
+non-negative (the native un-equipped/eligible gate remains raw). It enters a
+second `0x2e0bd`/`0x2df6b` list, confirms through another selector, performs
+the caller's `0x2f4c6` indexed feedback and `0x2d516` amount path, then invokes
+the native item removal/recompute sequence. The `0x1bb8c` call and amount
+meaning are not independently named here; remake must not lower this branch
+to sell, donate, equip, or any other normalized service until that writer is
+closed.
+
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
 Official IDA pseudocode of `0x25de5` closes the outer ordering that the editable graph must preserve. After `sub_25ebb` returns the battle-driver result, the loop calls `sub_117e7`; when global phase `[0x53ecc]==1`, it calls the fixed chapter-1 interlude `0x22e5c`, clears the phase, and continues. When `[0x53ecc]==2`, it first stops BGM, calls the chapter-indexed post-handler table `funcs_25e23[dword_53c03]`, and only then calls `sub_2cad7()`. If `sub_2cad7()` returns nonzero, the loop exits through the terminal/return path; only when it returns zero does the loop call the second chapter-indexed table `funcs_25e3a[dword_53c03]`, select `byte_51e63[dword_53c03]` for the next battle BGM, clear the phase, and resume the driver. The exact table entries and `0x2cad7` visual/menu labels remain separate evidence work, but this call order is enough to reject any generic `battle → next battle` shortcut. A remake transition must retain an explicit post-handler/menu gate before a next-battle node, even when the high-level node is still opaque.
