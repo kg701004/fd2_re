@@ -605,6 +605,7 @@
 - [x] **FDSHAP map resource pairing**：`DecodeMapTerrainResources(mapIndex)` 只讀已證 map N→image #`2N`、control #`2N+1`，並驗 bank frame count 不超 control-record count；FDSHAP map0 真實 regression=288 frame/1200 control bytes。明確拒絕從 tile count/cost 猜 map 資源。
 - [x] **exported map-path binding**：`MapIndexFromAssetPath` 僅接受 legacy `assets`=map0 或 basename 精確 `mapN`，拒絕 suffix/負數/任意目錄；runtime 將用此 explicit N 餵 FDSHAP pair loader，不以檔名近似猜配。
 - [x] **production native-map asset gate**：`Game.loadMap` 載入 HUD FDOTHER frames、明示 FDSHAP pair、FDICON.B24、VGA palette 為 all-or-nothing `nativeMapAssets`；任一缺失/解碼失敗保持既有 PNG renderer，indexed-to-Ebiten presentation 尚待下一步。
+- [x] **indexed→Ebiten native HUD partial bridge**：`drawNativeMapHUD` 以 456-stride buffer→320×200 paletted image 實際呈現 panel/terrain/AP/DP；raw tile/control bounds 或任何 decoder failure 立即回 legacy UI。optional unit/HP 尚未接，因 runtime roster admission bytes 未 export，不猜測性補上。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
 

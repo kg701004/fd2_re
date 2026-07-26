@@ -35,7 +35,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
 )
 
 const (
@@ -3800,7 +3802,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// HUD(對照原版 orig_04/08):游標單位資訊=左下面板(非常駐頂列);回合切換=中央大字橫幅。
 	if g.st != nil && g.font != nil && !legacyViewport {
 		if u := g.st.UnitAt(g.curX, g.curY); u != nil { // 左下單位面板(orig 樣式)
-			g.drawUnitHUD(screen, u)
+			if !g.drawNativeMapHUD(screen) {
+				g.drawUnitHUD(screen, u)
+			}
 		}
 		if g.debug { // F3:詳細除錯(回合/戰況/座標)
 			ebitenutil.DebugPrintAt(screen, fmt.Sprintf("T%d own%d ally%d enemy%d cur(%d,%d)",
@@ -5113,6 +5117,36 @@ func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 	bx, by := 6.0, float64(logicalH)-bh-6-20
 	g.drawBattlePanel(screen, bx, by, nm, u.Lv, u.HP, u.MaxHP, u.MP)
 	g.font.Draw(screen, fmt.Sprintf("AP %d  DP %d  MV %d", u.AP, u.DP, u.MV), bx+8, by+bh+2, 0.9, color.RGBA{0xc8, 0xe0, 0xff, 0xff})
+}
+
+// drawNativeMapHUD presents the proven indexed 0x1acf3 panel/terrain/AP/DP
+// subpasses at the native 320x200 surface. It returns false on any missing or
+// unverified raw input, preserving the legacy approximation without partial
+// drawing. Optional unit/HP remains omitted until its unit-record admission
+// bytes are available from the runtime roster.
+func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
+	a := g.nativeMapAssets
+	if !nativeMapAssetsAvailable(a) || g.m == nil || g.curX < 0 || g.curY < 0 || g.curX >= g.m.W || g.curY >= g.m.H {
+		return false
+	}
+	tile := g.m.Tiles[g.curY*g.m.W+g.curX]
+	if tile < 0 || tile >= len(a.Controls)/4 || tile > 0x3ff {
+		return false
+	}
+	control := a.Controls[tile*4+1]
+	frame := make([]byte, fdicon.NativeMapStride*200)
+	in := indexedmap.NativeMapHUDInput{DisplayGateA: true, DisplayGateB: true, AnchorX: 1, TerrainDescriptor: tile, TerrainControl: control}
+	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, nil, nil, frame, in); err != nil {
+		return false
+	}
+	img := image.NewPaletted(image.Rect(0, 0, 320, 200), a.Palette)
+	for y := 0; y < 200; y++ {
+		copy(img.Pix[y*img.Stride:y*img.Stride+320], frame[y*fdicon.NativeMapStride:y*fdicon.NativeMapStride+320])
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(2, 2)
+	screen.DrawImage(ebiten.NewImageFromImage(img), op)
+	return true
 }
 
 func (g *Game) endTurn() {
