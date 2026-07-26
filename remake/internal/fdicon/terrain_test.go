@@ -17,6 +17,18 @@ func TestNativeTerrainCursorInfoForCellMatches12E38(t *testing.T) {
 	}
 }
 
+func TestNativeMapHUDUnitFrameIndexMatches1AE4D(t *testing.T) {
+	for _, tc := range []struct{ group, state, want int }{{0, 0, 0}, {2, 1, 25}, {2, 2, 26}, {2, 3, 25}} {
+		got, err := NativeMapHUDUnitFrameIndex(tc.group, tc.state)
+		if err != nil || got != tc.want {
+			t.Errorf("(%d,%d)=(%d,%v), want %d", tc.group, tc.state, got, err, tc.want)
+		}
+	}
+	if _, err := NativeMapHUDUnitFrameIndex(0, 4); err == nil {
+		t.Fatal("out-of-range raw state was accepted")
+	}
+}
+
 func TestNativeForegroundRedrawEligibleMatches129ECGates(t *testing.T) {
 	cases := []struct {
 		name                         string

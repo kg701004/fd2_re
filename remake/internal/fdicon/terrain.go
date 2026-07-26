@@ -34,6 +34,20 @@ func NativeTerrainCursorInfoForCell(tileWord, eventWord uint16, controls []byte)
 	return info, nil
 }
 
+// NativeMapHUDUnitFrameIndex reproduces 0x1ae4d's optional cursor-unit icon
+// selector. It indexes the runtime FDICON pointer bank as unit+2 * 12 plus
+// raw animation state, except state 3 aliases state 1. The raw state is kept
+// unnamed because this HUD-specific use does not establish a gameplay label.
+func NativeMapHUDUnitFrameIndex(spriteGroup, rawState int) (int, error) {
+	if spriteGroup < 0 || rawState < 0 || rawState > 3 {
+		return 0, errors.New("fdicon: invalid native map HUD unit selector")
+	}
+	if rawState == 3 {
+		rawState = 1
+	}
+	return spriteGroup*12 + rawState, nil
+}
+
 // NativeCellCoordinate is a world-cell coordinate in the native field map.
 // It deliberately permits coordinates outside the visible/map range: 0x129ec
 // delegates that check to 0x12ac6 rather than clipping its call schedule.
