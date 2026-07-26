@@ -89,7 +89,9 @@ func TestFDOTHER005MapHUDUses4ModeFrameEntries(t *testing.T) {
 	if _, err := os.Stat(datPath); err != nil {
 		t.Skip("player-provided FDOTHER.DAT is absent")
 	}
-	for index, want := range map[int][2]int{0x83: {44, 12}, 0x84: {45, 12}, 130: {69, 34}} {
+	// These are decimal LMI1 directory indices. Writing them as 0x83/0x84
+	// accidentally selected entries 131/132 (6x7/6x5), not HUD entries 83/84.
+	for index, want := range map[int][2]int{83: {44, 12}, 84: {45, 12}, 130: {69, 34}} {
 		frame, err := DecodeLMI1FrameResource(datPath, 5, index)
 		if err != nil {
 			t.Fatalf("entry %#x: %v", index, err)
