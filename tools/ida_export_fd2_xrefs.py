@@ -19,6 +19,11 @@ import idc
 
 
 TARGETS = (
+    # Save/load → persistent roster → battle-roster bootstrap.  These retain
+    # the two source paths for the map-selector cache without naming +7.
+    0x10010,
+    0x1088D,
+    0x10A77,
     # Spawn constructor / visual-selector boundary.  These stay raw addresses:
     # the report establishes call topology, not a guessed FDFIELD schema.
     0x10B4E,

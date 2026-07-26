@@ -3,6 +3,99 @@
   "input_file": "FD2.EXE",
   "targets": [
     {
+      "address": 65552,
+      "function": {
+        "start": 65552,
+        "end": 67104,
+        "name": "sub_10010"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 107089,
+          "from_function": {
+            "start": 105975,
+            "end": 107275,
+            "name": "sub_19DF7"
+          }
+        },
+        {
+          "from": 155952,
+          "from_function": {
+            "start": 155323,
+            "end": 155986,
+            "name": "sub_25EBB"
+          }
+        }
+      ]
+    },
+    {
+      "address": 67725,
+      "function": {
+        "start": 67725,
+        "end": 68430,
+        "name": "sub_1088D"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 132607,
+          "from_function": {
+            "start": 132570,
+            "end": 132733,
+            "name": "sub_205DA"
+          }
+        },
+        {
+          "from": 153712,
+          "from_function": {
+            "start": 153431,
+            "end": 153975,
+            "name": "sub_25757"
+          }
+        },
+        {
+          "from": 181303,
+          "from_function": {
+            "start": 181253,
+            "end": 182764,
+            "name": "sub_2C405"
+          }
+        }
+      ]
+    },
+    {
+      "address": 68215,
+      "function": {
+        "start": 67725,
+        "end": 68430,
+        "name": "sub_1088D"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 68352,
+          "from_function": {
+            "start": 67725,
+            "end": 68430,
+            "name": "sub_1088D"
+          }
+        }
+      ]
+    },
+    {
       "address": 68430,
       "function": {
         "start": 68430,

@@ -579,6 +579,7 @@
   - [~] battle selector bridge：`battle_fig`→`Unit.BattleFig`→全螢幕 `newAtkAnim` 已可承載 split ABI，loader regression 固定它可與 legacy map `fig` 不同；constructor `0x10d7f..0x10efc` 已閉合 FDFIELD `b1→unit+7`，正式 exporter 已寫入該欄、舊 JSON 才 fallback。map `unit+2` source 仍未拆出，`fig` 不宣稱原版 field。
   - [~] map selector provenance audit：`0x10c50→0x11019` 是 resource-aware FDICON cache path；已釘 spawn caller 以 FDFIELD `b0` 與 resource argument 查／建 block，回傳 slot 才寫 `unit+2`。撤回把角色表/DATO/素材 index 的相等值當成全域 map-selector mapping。下一步是釘 resource identity 與 key→FDICON archive-index ABI，完成前不得重新產出 `fig` mapping。
     - [x] player-party source split：`0x1088d→0x10a77` 先 copy persistent `[0x53bf7]` 0x50-byte record，再用 copied `+7` 作 `0x11019` key，回傳 slot 寫 `unit+2`。它不是 FDFIELD `b0` 路徑；slot allocation 順序必須保留這條 roster loop 的順序。
+      Official IDA 9.4 address-only xref report再確認 `0x10a77` 屬於 `sub_1088d`，而 `sub_1088d` 的 callers 是 `0x205ff`、`0x25870`、`0x2c437`；不得將 selector initialization 當成只有一般 battle setup 才會做的步驟。
     `fdicon.NativeSelectorCache` 已以 first-seen key→slot regression 表達 cache 部分；resource/key decoder 尚未接入 runtime。
     `KeyForSlot`／`SpriteForNativeSlot` 已閉合 slot→raw B24 key→`key×12+pose×3+cycle` 的 pointer-block lookup；runtime materialization 仍待。
 - [x] **FDICON native placement primitive**：`NativePlacementOffset` 逐指令重現 `0x127e0` 的 456-byte buffer stride、`0x75d8` origin、24-pixel tile 與 `unit+4 × {+0x720,-4,-0x720,+4}` direction offset；`+0x26` 才加入 native 0/1 pixel shift。它回傳 framebuffer byte offset，不把未證實的 framebuffer origin/layer/UI 自動轉成 remake screen coordinate。
