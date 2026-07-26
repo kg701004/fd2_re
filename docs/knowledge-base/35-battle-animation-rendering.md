@@ -260,21 +260,21 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
   - → **數字 = 6px-寬預渲染 digit cell 素材**([0x53a81] 容器),itoa 後逐位 blit;不是字型。
 - **"HP" / "MP" / "LV" 標籤字**:內含在 ① 的面板底圖 sprite 裡(已視覺確認:框圖 #22 自帶 HP/MP/LV‧ 標籤,見 §4.2.5)。
 
-### 4.2.5 [已破解] UI 容器 = FDOTHER#5 "LMI1" + 0x4e916 codec(框 / 血條 cell / 數字 cell 全在此)
+### 4.2.5 [已破解] UI 容器 = FDOTHER#5 "LMI1" directory（codec 必須依 caller 決定）
 
 `[0x53a81]` = `0x111ba("FDOTHER.DAT", [0x53a81], 5)` 載入的 **FDOTHER 第 5 個資源**,本身是 **"LMI1" 子容器**(doc 14 對話框框圖同源):
 - **LMI1 結構**:`char[4]"LMI1"` + `uint16 N`(sub-resource 數,FDOTHER#5=138) + `uint32[N] offset` + 各 sub-resource(`uint16 w, uint16 h, codec 資料`)。
   - 2026-07-25 player-asset regression 更正：offset 是各 entry 的**開始**位址，不是壓縮資料的嚴格 end；
     `0x4e916` 依目的 `w×h` 停止，最後一段 repeat 可跨下一 entry 的 offset。解析器須以容器末端為
     唯一 source bound，不得以 `offset[i+1]` 截斷資料並誤判原版 #5 為 malformed。
-- **像素 codec(反組譯 `0x4e916`,逐像素取值)** —— **本輪關鍵破解,跟 FIGANI/TAI 的 4-mode、doc05 image-RLE 都不同**:
+- **`0x4e916` 像素 codec（僅適用其 caller 選到的 entries）** —— **本輪關鍵破解,跟 FIGANI/TAI 的 4-mode、doc05 image-RLE 都不同**:
   ```
   讀控制 byte c:
     c <= 0xC0 : c 本身就是一個像素值(literal 單 px)        ; 0x4e91e cmp 0xc0 / 0x4e922 xor ah,ah
     c >  0xC0 : run,長度 = c - 0xC0,後跟 1 個像素值,重複  ; 0x4e925 sub ah,0xc1 / 0x4e92a lodsb
   (透明 = palette index 0;run 跨行,線性解 w*h;純 literal 小圖等同 raw)
   ```
-- **blit 端**:`0x4e8af`(正向)/ `0x4e8e1`(水平鏡像 `dec edi`)逐列呼叫 `0x4e916` 取像素 `stosb`。
+- **`0x4e916` blit 端**:`0x4e8af`(正向)/ `0x4e8e1`(水平鏡像 `dec edi`)逐列呼叫 `0x4e916` 取像素 `stosb`；不得據此推論整個 LMI1 directory 都走這條 codec。
 - **⚠ LMI1 容器內混用兩種 codec**(對應兩條 blit 路徑,踩過):
   - 大圖(框 #20/21/22)= **0x4e916 codec**(上述),blit 走 `0x4e8af`;
   - 小 cell(血條欄 / 數字)= **FIGANI 4-mode sprite RLE**(doc06),blit 走 `0x1685c→0x4e9bb`。
