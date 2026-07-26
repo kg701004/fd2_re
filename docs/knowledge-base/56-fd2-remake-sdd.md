@@ -346,10 +346,10 @@ actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore 
 | 30 | `1CFF0→14818→115B6` 先確認 record+3 candidate；再以 saved cursor→confirmed cursor 進 `149F8`，`count=record+3-16`、X-first cardinal line、只收 enemy，最後 `2A6BD→276EC` default倍率18 | `ExecuteNativeCommand30`（顯式兩 cursor、state-only final delta） | native cursor lifecycle／multi-hit／SFX／indexed UI 未接 |
 | 25 | `0x22C04` clear target acted bit | `ExecuteNativeCommand25` | 未接 |
 | 26–27 | `0x22CBF/22E41→22D1B`，分別 write `+0x25/+0x26` | `ExecuteNativeCommandApplication` | 未接 |
-| 32 | `2A6BD→27FC9→2111A→1C75E` numeric per-final-target；選單 MP gate已知但此 chain 未見 debit | 未接：transaction boundary未關閉 | 未接 |
-| 33 | `27FC9` 先清每 target `+25..+27`，再 `211A4(...,800)` restore | 未接：transaction boundary、raw clear/restore contract待 regression | 未接 |
-| 34 | `27FC9` 依序呼 `22721/22866/22997`，嘗試三種 modifier writer | 未接：transaction／baseline-recompute／x87 rounding boundary | 未接 |
-| 35 | `27FC9` 依序以 IDs26/22/27 呼 `22D1B`，對 `+25/+27/+26` 三 application gates | 未接：transaction boundary；不可由三次 helper 推論 UI/status name | 未接 |
+| 32 | `2A6BD→27FC9→2111A→1C75E` numeric per-final-target；選單 MP gate已知但此 chain 未見 debit | `NativeCompoundCommandPlan(32)` 僅保存 raw callee 順序 | 未接 |
+| 33 | `27FC9` 先清每 target `+25..+27`，再 `211A4(...,800)` restore | `NativeCompoundCommandPlan(33)` 僅保存 direct-clear 順序與 raw amount | 未接 |
+| 34 | `27FC9` 依序呼 `22721/22866/22997`，嘗試三種 modifier writer | `NativeCompoundCommandPlan(34)` 僅保存三個 raw writer 順序 | 未接 |
+| 35 | `27FC9` 依序以 IDs26/22/27 呼 `22D1B`，對 `+25/+27/+26` 三 application gates | `NativeCompoundCommandPlan(35)` 僅保存 marker offsets/呼叫順序 | 未接 |
 
 實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
 legacy `CastArea` 或宣稱整個 native command menu 已完成。
@@ -376,6 +376,16 @@ IDs32..35；原始可達來源是 portrait/visual group 4..7 的 optional class-
 因此可證實這些**玩家可達 class-19 路徑不經已知 MP debit sink**，即使 record `+5` 的 selector gate 仍要求
 76/52/28/36 MP。這不是「所有 runtime entity 免費」或 transaction rollback 的結論；AI／未盤點 runtime unit
 visual group、其他 MP writer 與 compound effect ordering 仍未閉合，engine 保持 fail-closed。
+
+The wrapper's only direct caller is `0x2a7ce`, entered from `0x2a6bd` when
+the opaque command selector is `>=0x20`; it passes four caller-owned values
+without a proven normalized type. Inside `0x27fc9`, resource setup and the
+`0x29164`/`0x2b659` presentation chain precede the ID-specific raw operations,
+then indexed redraw/present loops and resource cleanup run for all four IDs.
+`battle.NativeCompoundCommandPlan` exposes only this verified order and raw
+marker/amount bytes as editable data. `Callee==0` denotes ID33's three direct
+byte clears, not a guessed helper. The plan does not execute, debit MP, choose
+targets, or infer effect/status names.
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
