@@ -5,6 +5,10 @@
 > **SDL2 + C++**(參考 `~/dq3` 勇者鬥惡龍三)與 **Go / Ebiten**(參考 `~/master-of-maigc` 魔法大帝)。
 > RE 要徹底，且**沒有 DOSBox debugger 支援**——以靜態反組譯 + 資料格式破解 + 差分觀察為主。
 
+> **狀態校正（2026-07-27）**：下方「第 1／2 輪」階段表是歷史計畫快照，不是目前完成度。
+> 目前進度請看根目錄 README 狀態表、`56` SDD、`42` gap audit、`91` worklist；Go/Ebiten 已有垂直切片，
+> 但尚非全 30 章 parity。
+
 ## 階段總覽(對映 retro-game-remake 七階段)
 
 | 階段 | 目標 | 狀態 |

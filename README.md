@@ -1,17 +1,35 @@
 # 炎龍騎士團2 逆向工程與重製 · fd2_re
 
-1995 年,漢堂國際的《炎龍騎士團2:黃金城傳說》是許多台灣玩家的青春——DOS 時代的戰棋 RPG,
-一段登登登登的開場配樂,就是一個下午。這個專案用第一性原理把它整個反組譯,再用 Go/Ebiten
-一塊塊重製,讓它能重新玩一次:從那段屠龍、騎馬夜行、滿月浮空城的開場過場,到全 30 章戰役。
+1995 年漢堂國際的《炎龍騎士團2：黃金城傳說》是一款 DOS 戰棋 RPG。本專案分成兩條
+明確的工作線：以合法原版檔案為 oracle 的反組譯／資料保存，以及不攜帶版權資產的
+Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已破解」宣稱成「遊戲已重製」。
 
-- 🐉 **開場動畫完整還原**:那段過場原來是漢堂 1993 年自製的「繪圖位元組碼引擎」(AFM),
-  已反組譯成純程式,在現代重新跑起來。
-- ⚔️ **全 30 章戰役可打**:隊伍隨劇情招募成長、回合增援、商店、魔法、地形,全對照原版規則。
-- 📜 **33 章劇情 1452 句**,逐句人工轉錄。
-- 🎵 **雙音源可切換**:Roland MT-32,以及大家當年真正聽到、比較有氣勢的 Sound Blaster FM 版。
-- 🎯 **戰鬥演出像素級對齊**原版,連命中閃紅都照原版的 VGA 色盤還原。
+## 目前狀態（2026-07-27）
 
-為 1995 年的台灣遊戲,留一份能跑、能玩、也留得住的紀念。
+| 領域 | 已驗證成果 | 與原版的差距 |
+|---|---|---|
+| 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
+| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、UI input evidence 持續收斂 | item effect、indexed renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
+| Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
+| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會與 command overlay 截圖 | `0x22253` indexed renderer、ending compositor、HUD/layer caller 仍 fail-closed |
+
+Worklist 目前是 **334 個 `[x]`、91 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
+與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
+
+### 已有成果圖片
+
+以下圖片是 repo 內的測試／比對產物，不代表整個遊戲已完成：
+
+| 原版／重製畫面 | 產物 |
+|---|---|
+| 開場／標題 | ![title](docs/figures/title.png) |
+| 對話與中文字型 | ![dialogue](docs/figures/dialogue.png) |
+| 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
+| action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
+| preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
+
+為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 徹底逆向，
 > 用第一性原理還原規則與素材，並以兩套現代技術重製成可在**網頁與手機**上重新遊玩的版本。
@@ -134,23 +152,32 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 - [`04` 當年開發工具考證](docs/knowledge-base/04-original-toolchain.md) ・ [`90` 逆向與重製計畫](docs/knowledge-base/90-re-plan.md)
 - [`91` Worklist](docs/knowledge-base/91-worklist.md) ・ [`99` 逐輪反思日誌](docs/knowledge-base/99-reflections-log.md)
 
-## 🎮 重製已開工(Go/Ebiten,桌面/Web/手機)
+### 文件閱讀路線（避免把 RE 筆記當成完成度）
 
-[`remake/`](remake/) 是 Go/Ebiten 重製。**開場動畫 → 主選單 → 全 30 章戰役已一條龍可跑**,
-全部對照**原版實機(dosbox)+ 青衫攻略 + 反組譯**還原,不憑空:
+1. **先看本 README 的狀態表**：只描述可驗證的引擎切片與主要差距。
+2. **看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)**：目前唯一的 evidence gate／fail-closed 規範，裁決哪些 raw ABI 可以接線。
+3. **看 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md)**：以玩法功能整理原版／重製差距。
+4. **看 [`91` worklist](docs/knowledge-base/91-worklist.md)**：逐項工程狀態；`[x]` 是已驗證項目、`[~]` 是部分閉合、`[ ]` 是未完成。
+5. 其餘編號文件是**專題證據與歷史推導**（資產 codec、UI、handler、戰鬥規則），不應單獨用來推算整體完成百分比；重複或過時斷言以 SDD、gap audit、worklist 的最新勘誤為準。
 
-- **開場動畫**:33 秒多幕過場(守護者→屠龍→騎馬夜行→標題 logo)由**反組譯出的 AFM 動畫 VM**
-  執行期解碼玩家自己的 `ANI.DAT` 播出(見下節);主選單 START/LOAD/CONTINUE。
-- **全 30 章戰役**:節點圖驅動(戰鬥/劇情/選擇/商店/結局 + 旗標 + 敗北路線);隊伍**隨劇情招募成長**
-  (序章 4 人 → 終章 30 人);**回合增援**按原版事件表登場(反組譯 58-entry 跳表 `0x51b91`)。
-- **事件進場**:主角隊從戰場邊緣**行軍進場**;增援各按回合登場 —— 資料來自反組譯 FDFIELD
-  `turn_events`(原版事件腳本竟在資料而非 EXE,見 [`25`](docs/knowledge-base/25-battle-event-system.md))。
-- **對話系統**:TTF 中文台詞 + DATO 大頭像 + **嘴型開合**(反組譯 `0x16d00` 狀態機,[`14`](docs/knowledge-base/14-text-control-codes.md))+ 全形『』;**全 33 章劇情文本 1452 句**逐句轉錄。
-- **戰棋核心**:flood-fill 移動 + **地形移動成本**(反組譯 FDSHAP 地形表)、攻擊結算(青衫公式)、
-  評分式敵方 AI、**魔法系統**(AoE / buff / 毒麻封咒)、勝負判定。
-- **玩法系統**:目前的四向 action UI（原版十字 overlay／command grid 尚在依 SDD 還原）、商店(含祕密商店)、存讀檔(F5/F9)、BGM + 音效(反組譯自 FDOTHER)。
-- **音源可切換**(F2):**Roland MT-32**(真 ROM 經 munt 渲染)⇄ **Sound Blaster / AdLib FM**
-  (遊戲自帶 `SAMPLE.AD` 音色庫經 OPL 渲染)——還原原版 `SETSOUND` 選音效卡的體驗,見下節。
+## 🎮 重製進度（Go/Ebiten）
+
+[`remake/`](remake/) 是可公開建置的 Go/Ebiten 引擎與資料驅動腳本。現在最可靠的描述是
+「多個垂直切片已可測試」，不是「全 30 章已等價通關」。已接上的範圍包括：
+
+- 地圖／游標／相機、flood-fill 移動、地形成本、基本戰鬥與部分 AI；
+- 可編輯對話／事件節點、部分 chapter pre/post handler、敗北／retreat 路線；
+- 商店／祕密商店、persistent party/save、preparation 與 church/class-change 的可操作切片；
+- 原版 input evidence 對應的 command overlay、對話文字與數張原版比對畫面。
+
+仍未達原版等價的主要範圍：
+
+- 完整 30 章逐章 playthrough 與每一場戰後 town/shop/preparation 順序回歸；
+- 完整 item effect callee、raw identity sync、indexed renderer/HUD/ending compositor；
+- 全部原版音訊 runtime、DOS timing、跨平台打包實機驗證。
+
+這些差距由 SDD 的 evidence gate 與 worklist 狀態標註；未知 handler 不會以猜測性 normalized
+邏輯接入。AFM VM、文字、地圖與資料 codec 已可由玩家自備原版資產重現，但那不等於 campaign parity。
 
 可行性 [`20`](docs/knowledge-base/20-first-principles-feasibility.md)、架構 [`21`](docs/knowledge-base/21-go-ebiten-remake-plan.md)。(WASM 也可編譯。)
 
@@ -202,12 +229,12 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 → 新增事件、分支劇情、自創戰役**只要寫資料,零引擎改動**;原版 30 關用同一套 DSL 忠實重現,同引擎也能跑
 玩家自製戰役。完整設計見 [`29` 可擴展事件系統](docs/knowledge-base/29-remake-extensible-event-system.md)。這是 remake 相對原版「擺脫固定 33 路線」的關鍵。
 
-### ⚔️ 戰鬥演出:像素級 1:1 還原(左原版 / 右重製,同步播放)
+### ⚔️ 戰鬥演出：局部原版對照（非整體 renderer parity）
 
 ![戰鬥演出還原對照](docs/figures/battle_restore.gif)
 
-全螢幕攻擊演出(亞雷斯 vs 盜賊)對照原版逐幀還原。**動畫不是手調的**——反組譯出關鍵機制後,
-整段演出由**原版資料驅動**:
+下圖是亞雷斯 vs 盜賊的一個可重現對照切片。**動畫不是手調的**——已反組譯的資料／codec
+與原版截圖可用來驗證局部位置與幀資料；這不代表所有 command、HUD、ending renderer 都已等價：
 
 - **每幀自帶絕對螢幕座標**:FIGANI 幀標頭 +0/+2 就是該幀的 (x,y)@320×200——旋轉蓄力、劈擊、
   突刺的「走位」全燒在資料裡,引擎每幀照著貼即可([`06`](docs/knowledge-base/06-animation-format.md))。
@@ -217,7 +244,7 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 - **命中閃紅 = VGA DAC 色盤操作**(`0x11d40`):重製以全紅剪影交替重現。
 - **我方腳下台座 = TAI.DAT 獨立素材**(`0x29164` 載入;我方背影+台座 / 敵方正面的固定視角設計)。
 
-五階段分鏡對照(蓄力 → 大弧 → 劈中 → 突刺 → 收勢):
+五階段分鏡對照（蓄力 → 大弧 → 劈中 → 突刺 → 收勢）:
 
 ![戰鬥五階段分鏡](docs/figures/battle_storyboard.png)
 
@@ -232,7 +259,7 @@ remake 執行期直接解玩家自備的 `ANI.DAT`——引擎本身不夾帶任
 
 | 技術棧 | 目標平台 | 狀態 | 參考專案 |
 |---|---|---|---|
-| **Go / Ebiten** | Web(WASM) / Android | **開發中**(全 30 章可跑) | 《魔法大帝》重製 |
+| **Go / Ebiten** | Web(WASM) / Android | **開發中**（垂直切片；非全 30 章 parity） | 《魔法大帝》重製 |
 | **SDL2 + C++** | 桌面(Linux/Windows/Mac) | 規劃中 | 精訊《勇者鬥惡龍三》重製 |
 
 兩者共用同一份從原版還原的資料與規則。詳見 [`90-re-plan.md`](docs/knowledge-base/90-re-plan.md)。

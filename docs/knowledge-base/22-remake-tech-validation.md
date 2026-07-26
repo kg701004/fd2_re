@@ -71,7 +71,8 @@ GOOS=js GOARCH=wasm go build -o web/fd2.wasm ./cmd/fd2   # 10.5 MB
 ## 結論
 
 1. **技術選型成立**:Go/Ebiten 一套碼覆蓋桌面(本機優先)+ Web + 手機,且都已實證可建。
-2. **重製性質已定**:從「研究」降為「工程整合」—— 所有必要能力(資料格式、演算法、資產)都已逆向完成(見 [`20`](20-first-principles-feasibility.md)),引擎只是把它們組起來。
-3. **下一步走本機路線**:先把桌面執行檔從「能渲染地圖」推進到「能玩一場戰鬥」(戰棋核心),再逐層疊文字、音訊、流程,最後才回頭處理網頁/手機打包。完整步驟見 [`91-worklist`](91-worklist.md) 的「重製 worklist」。
+2. **重製性質已定**:資產格式與多數資料來源已足以證明工程可行，但 native command/effect、indexed renderer、campaign transition
+   仍在反組譯與整合中；不能把目前工作簡化成「只剩組裝」。現況以 [`20`](20-first-principles-feasibility.md)、`42` gap audit、`56` SDD 為準。
+3. **歷史路線（已部分超前）**:原先由「能渲染地圖」推進到一場戰鬥的規劃已產生多個垂直切片；目前優先項改以 [`91-worklist`](91-worklist.md)、`42` gap audit 與 `56` SDD 的未完成項為準，尤其是 native UI/effect、campaign postbattle 與 renderer。
 
 > 相關:架構設計 [`21`](21-go-ebiten-remake-plan.md) · 可行性 [`20`](20-first-principles-feasibility.md) · 字型現代化 [`18`](18-font-modernization-plan.md) · 腳本系統 [`19`](19-scenario-script-system-design.md)

@@ -1,10 +1,15 @@
 # 炎龍騎士團2 重製 — Go / Ebiten
 
-一套程式碼跑**桌面 / 網頁(WASM)/ 手機**的 FD2 重製。設計見 [`../docs/knowledge-base/21-go-ebiten-remake-plan.md`](../docs/knowledge-base/21-go-ebiten-remake-plan.md)。
+一套以玩家自備原版資產為 oracle 的 Go/Ebiten FD2 重製引擎。設計與證據 gate 見
+[`56` SDD](../docs/knowledge-base/56-fd2-remake-sdd.md)，工程待辦見 [`91` worklist](../docs/knowledge-base/91-worklist.md)。
 
-> **狀態**:MVP 垂直切片——載入序章戰場(tileset + 地圖)→ hi-res 渲染 → 方向鍵 / WASD / 觸控移動游標、相機跟隨。
-> **本機桌面執行檔已建成**(Linux ELF 10.8MB);WASM 也可編譯(10.5MB)。技術驗證見 [`22`](../docs/knowledge-base/22-remake-tech-validation.md)。
-> 後續里程碑見 [`91-worklist`](../docs/knowledge-base/91-worklist.md) 重製區(M1 戰棋核心 → 文字 → 音訊 → 腳本 → 內容 → 跨平台打包)。
+> **狀態（2026-07-27）**：多個可測試垂直切片已完成（地圖／戰棋核心／對話／部分 action overlay、
+> shop、persistent save、preparation/church），但**尚非完整 30 章原版等價通關**。未知的 native
+> handler、renderer 與 campaign transition 維持 fail-closed；請不要把本 README 的切片列表解讀成 parity 宣稱。
+
+目前進度與差距總覽請先讀根目錄 [`README.md`](../README.md) 的「目前狀態」表；可視化驗證產物在
+[`docs/figures`](../docs/figures/)（例如 [`battle_restore.gif`](../docs/figures/battle_restore.gif)、
+[`preparation-remake.png`](../docs/figures/preparation-remake.png)）。
 
 ## 資產(玩家自備原版)
 

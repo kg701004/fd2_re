@@ -4,6 +4,13 @@
 > 每輪結束更新本表(打勾 / 補新項 / 調整順序)，與 `99-reflections-log.md` 互補。
 > 圖例:✅ 完成 · 🟡 進行中 · ⬜ 待辦 · ❌ 放棄(註明原因)
 
+## 文件狀態入口（2026-07-27）
+
+- [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
+- [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
+- [x] `20`／`22` 的「所有必要能力已完成／只剩工程整合」過強斷言降級為「資料與工具證明可行，runtime integration 尚待」；`90`／`51` 明確標成歷史計畫／試玩快照。
+- [~] 專題 RE 文件仍保留各自證據與歷史修正；不直接合併成單一長文，避免丟失 address-level provenance。若內容與 README 狀態衝突，以 `56`、`42`、本表最新勘誤為準。
+
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)
 - [x] 破解 `.DAT` 容器格式 + 寫 `tools/unpack_dat.py`
