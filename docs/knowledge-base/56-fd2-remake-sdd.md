@@ -22,6 +22,17 @@ AI spell scoring raw slice：Docker Capstone/Hex-Rays 已閉合 `0x15b77` attack
 `0x1598a` dispatcher 的 raw selection boundary 也已閉合：`unit+0x27==0` 後，`0x1c269` 產生 command bytes；每筆 command 先以 record `+5 <= unit+0x44` 過濾，再由 `0x4e040`/`0x14818` 產生目標候選，呼 `0x15b77(command,candidateCount,candidateBytes)` 評分。最大 score 勝；同分比較 command record `+0`，仍同分則保留先出現者。`battle.SelectNativeAISpellCandidate` 只保存此 score/tie-break 與 raw `(x,y,command)`，不代替 MP、target resolver、`+0x27` gate、UI 或施法執行。
 `battle.NativeAvailableAICommandIDs` 另保存 dispatcher 前置 gate：raw `+0x27` 非零時不產生任何 AI command IDs；為避免把第五 command byte 的未知 physical IDs36..39 當可執行命令，仍只回傳已驗證的 0..35 records。
 
+### AI unit/action call-graph boundary（E0 raw, runtime 未開放）
+
+Canonical Docker Capstone 目前可重現的上層順序是：`0x1A4EB`／`0x1A58F` 的 phase-specific
+setup 後進入 `0x1D80B`／`0x1D8BA` unit scans；每筆 `0x50`-byte record 經 raw `+6`、
+`+5`、`+0x26` gates 後進 `0x13A9F`。`0x13A9F` 讀 `record+0x34 & 0x0f`，再依 raw
+command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 內有
+`0x14237→0x1598A→0x1567E` candidate path，`0x15AD8→0x15B77` 負責 raw score/tie-break。
+這取代舊文件把 `0x15140` 稱作 AI entry 的說法。SDD 只授權保存上述 raw call topology；
+`+6`／table selectors 的 camp/turn 語意、完整 target transaction、movement/effect/UI 與
+runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
+
 ## 2. 證據分級與反組譯規則
 
 每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：
