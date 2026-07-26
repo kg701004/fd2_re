@@ -146,6 +146,25 @@ func TestFDOTHER056SingleFramePayload(t *testing.T) {
 	}
 }
 
+func TestBGArchiveSingleFramesUse4ModePayload(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/BG.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided BG.DAT is absent")
+	}
+	for _, index := range []int{0, 1, 2} {
+		frame, err := DecodeArchiveSingleFrame(datPath, index)
+		if err != nil {
+			t.Fatalf("BG entry %d: %v", index, err)
+		}
+		if frame.Width != 320 || frame.Height != 100 {
+			t.Fatalf("BG entry %d=%dx%d, want 320x100", index, frame.Width, frame.Height)
+		}
+		if err := frame.Blit(make([]byte, 320*100), 320, -1); err != nil {
+			t.Fatalf("BG entry %d 0x4e63d decode: %v", index, err)
+		}
+	}
+}
+
 func TestFDOTHER081ArchiveShape(t *testing.T) {
 	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	entry, err := ReadResource(datPath, 0x51)

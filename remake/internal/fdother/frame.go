@@ -33,6 +33,18 @@ func DecodeResource(datPath string, resource int) ([]Frame, error) {
 	return ParseFrames(entry)
 }
 
+// DecodeArchiveSingleFrame reads one LLLLLL archive entry whose payload is a
+// width/height header followed directly by 0x4e63d four-mode RLE.  BG.DAT
+// uses this form; keeping it separate from ParseFrames avoids inventing an
+// offset table where the native loader has none.
+func DecodeArchiveSingleFrame(datPath string, resource int) (Frame, error) {
+	entry, err := ReadResource(datPath, resource)
+	if err != nil {
+		return Frame{}, err
+	}
+	return ParseSingleFrame(entry)
+}
+
 // ReadResource returns one raw LLLLLL archive entry without assuming a frame
 // table. FDOTHER #4 (the native FDTXT bitmap font) is one such non-frame
 // payload; its decoding belongs to internal/fdtxt.
