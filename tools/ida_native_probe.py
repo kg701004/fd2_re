@@ -4,8 +4,9 @@ import ida_xref
 import idaapi
 import idc
 import ida_hexrays
+import os
 
-TARGET = 0x1B8E7
+TARGET = int(os.environ.get("IDA_TARGET", "0x1B8E7"), 0)
 
 def main():
     ida_auto.auto_wait()
