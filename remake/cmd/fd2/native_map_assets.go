@@ -18,7 +18,11 @@ type nativeMapAssets struct {
 	Terrain  *fdicon.Bank
 	Units    *fdicon.Bank
 	Controls []byte
-	Palette  color.Palette
+	// LUTs is FDOTHER#3's raw 256-byte remap bank. Entries 1..9 are the
+	// verified 0x24618 transition selectors; loading them here does not by
+	// itself authorize scene presentation.
+	LUTs    [][]byte
+	Palette color.Palette
 }
 
 func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
@@ -43,6 +47,13 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 	if err != nil {
 		return nil, err
 	}
+	luts, err := fdother.DecodeLUTResource(fdotherPath, 3)
+	if err != nil || len(luts) <= 9 {
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New("native map assets: FDOTHER#3 LUT bank lacks transition entries 1..9")
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		return nil, err
@@ -51,9 +62,9 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &nativeMapAssets{MapIndex: mapIndex, Frames: frames, Terrain: terrain, Units: units, Controls: controls, Palette: palette}, nil
+	return &nativeMapAssets{MapIndex: mapIndex, Frames: frames, Terrain: terrain, Units: units, Controls: controls, LUTs: luts, Palette: palette}, nil
 }
 
 func nativeMapAssetsAvailable(a *nativeMapAssets) bool {
-	return a != nil && a.Terrain != nil && a.Units != nil && len(a.Controls) > 0 && len(a.Palette) == 256
+	return a != nil && a.Terrain != nil && a.Units != nil && len(a.Controls) > 0 && len(a.LUTs) > 9 && len(a.Palette) == 256
 }
