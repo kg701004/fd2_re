@@ -458,18 +458,22 @@ Inventory gates are distinct from item-consuming event commands. Native `0x24b14
 
 | battle | 勝利後第一個戰間節點 | 路線型態 | native 證據狀態 |
 |---|---|---|---|
-| 01 | `story_ch02` → `town_ch02` | 劇情→城鎮 | native 待核 |
-| 02–20 | `story/postbattle_chNN` → `town_ch(NN+1)` | 劇情／持久化→城鎮 | native 待核 |
+| 01 | `story_ch02` → `town_ch02` | 劇情→城鎮 | E0 hub gate；逐章文字／E2 待核 |
+| 02–20 | `story/postbattle_chNN` → `town_ch(NN+1)` | 劇情／持久化→城鎮 | E0 hub gate；逐章 handler／E2 待核 |
 | 21 | `story_ch21_post_sky_key_intro` → `inventory_recipe_ch21_sky_key` | 劇情→合成 gate（非直接下一戰） | gate E1；native 待核 |
-| 22–24 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | native 待核 |
-| 25–26 | `postbattle_chNN_persist` → `town_ch(NN+1)` | 持久化→城鎮 | native 待核 |
+| 22–24 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | E0 preparation route；逐章 handler／E2 待核 |
+| 25–26 | `postbattle_chNN_persist` → `town_ch(NN+1)` | 持久化→城鎮 | E0 hub gate；逐章 handler／E2 待核 |
 | 27 | `inventory_gate_ch27_sky_key` → success/missing branch | 道具 gate→分支劇情 | gate E1；native 待核 |
-| 28–29 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | native 待核 |
+| 28–29 | `postbattle_chNN_persist` → `preparation_ch(NN+1)` | 持久化→整備 | E0 preparation route；逐章 handler／E2 待核 |
 | 30 | `ending` | 終局（不接下一戰） | ending renderer fail-closed |
 
 因此不能以「battle node 有 `on_win`」推導下一節就是下一戰；town、shop、church、
 preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 子任務是以
 原版 handler offset／DOSBox 操作逐列補 E0/E2 證據，並為每列加入 save/reload regression。
+
+### 5.3 Native postbattle hub gate（E0，IDA 9.4）
+
+`0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then admits the party to `0x318ad`, whose cap is 15 before the late chapters and 19 afterwards. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. The chapter table at `0x526b9` selects whether this gate presents a town hub (chapters 0–21 and 25–26) or preparation-only route (22–24 and 27–29); chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
 
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
