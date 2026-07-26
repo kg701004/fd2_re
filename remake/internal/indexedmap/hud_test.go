@@ -57,6 +57,22 @@ func TestAdvanceNativeMapHUDAnchorMatches1AD2A(t *testing.T) {
 	}
 }
 
+func TestNativeMapHUDOptionalUnitEligibleMatches1AE2A(t *testing.T) {
+	for _, tc := range []struct {
+		rawByte7, rawByte1F, rawByte6 byte
+		want                          bool
+	}{
+		{0x79, 0, 0, false},
+		{0, 0x0a, 1, false},
+		{0, 0x0a, 0, true},
+		{0, 9, 1, true},
+	} {
+		if got := NativeMapHUDOptionalUnitEligible(tc.rawByte7, tc.rawByte1F, tc.rawByte6); got != tc.want {
+			t.Fatalf("raw=(%#x,%#x,%#x): got %t, want %t", tc.rawByte7, tc.rawByte1F, tc.rawByte6, got, tc.want)
+		}
+	}
+}
+
 func TestBlitNativeMapHUDPanelGatesAndOrigin(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*200)
 	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, false, 1); err != nil {

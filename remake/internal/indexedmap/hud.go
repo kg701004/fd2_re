@@ -43,6 +43,13 @@ type NativeMapHUDInput struct {
 	OptionalUnit               *NativeMapHUDOptionalUnit
 }
 
+// NativeMapHUDOptionalUnitEligible preserves the two post-0x12c0d skip
+// branches at 0x1ae2a..0x1ae47. The three arguments are raw bytes from the
+// resolved unit record; their higher-level meanings remain unassigned.
+func NativeMapHUDOptionalUnitEligible(rawByte7, rawByte1F, rawByte6 byte) bool {
+	return rawByte7 != 0x79 && (rawByte1F != 0x0a || rawByte6 != 1)
+}
+
 // AdvanceNativeMapHUDAnchor preserves the small persistent-global branch at
 // 0x1ad2a..0x1ad5f. The native code changes the raw anchor only in either
 // outer region; every other coordinate pair retains the prior global value.

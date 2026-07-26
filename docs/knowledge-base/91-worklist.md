@@ -599,6 +599,7 @@
 - [x] **native HUD persistent anchor branch**：Docker Capstone 實讀 `0x1ad2a..0x1ad5f`：raw `0x53abd>5 && 0x53ab9<3` 才寫 anchor `0xf2`，`0x53abd>5 && 0x53ab9>9` 才寫 `1`，其餘座標保留既有 `0x51a0c`；`indexedmap.AdvanceNativeMapHUDAnchor` 覆蓋兩臨界值與 retention，不把 globals 命名為未證實 UI 語意。
 - [x] **native HUD HP subpass**：`0x1ae8e→0x1875d→0x187d6` 的 incoming stack 已逐項驗：unit unsigned `+0x40/+0x42` 傳 current/max 和 mode3；current==max 選 glyph base #0x1f，否則 #0x2a，畫 current 三位、每位 advance6；current>999 改畫 base+10。真實 #5 #0x29/#0x34 均18×8，兩 digit bank 僅 digit1=5×8。`BlitNativeMapHUDHP` 覆蓋 equal/unequal／overflow和 invalid-resource atomic，未將 unequal 命名成 damage。
 - [x] **native full HUD assembly**：Docker Capstone `0x1ad72..0x1aea9` 確認順序 panel→terrain→AP→DP→optional icon→optional HP；`BlitNativeMapHUD` 以 `NativeMapHUDInput` 將所有已證實 subpass atomic 組裝。`OptionalUnit=nil` 嚴格代表 `0x12c0d` 或後續 raw unit-byte gate 的 skip，helper 不猜測 gate 角色語意；display gates 關閉時 no-op 且不要求資源。
+- [x] **native HUD optional-unit gate**：`0x1ae2a..0x1ae47` 已直接固定：raw `unit+7==0x79` skip；否則僅 raw `unit+0x1f==0x0a && unit+6==1` skip。`NativeMapHUDOptionalUnitEligible` 覆蓋兩 skip 與兩放行，供 caller 正確產生 `OptionalUnit=nil`；三 byte 不命名。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
 
