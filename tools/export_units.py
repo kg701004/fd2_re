@@ -57,10 +57,9 @@ def crit_by_cls(resist_crit, cls):
     return 0  # 查不到(如怪物專屬職業,超出 26 種玩家職業表)保守回 0
 
 # Native unit+2 (map FDICON) and unit+7 (battle FIGANI/DATO consumers) are
-# distinct runtime fields. Their exact FDFIELD source mapping is still under
-# trace; do not export either from a guessed control-record byte. Legacy fig
-# remains the existing map approximation, while battle_fig is reserved for a
-# future independently evidenced export.
+# distinct runtime fields. Constructor 0x10d7f..0x10efc directly copies
+# FDFIELD roster b1 to unit+7, so battle_fig is safely exportable. The unit+2
+# source remains unresolved; legacy fig is only its compatibility approximation.
 
 # 職業名(cls_name)顯示錯位 bug 根因(worklist 第 8 輪職業名映射修復):
 #   exe unit.json 的 cls_name 是 CLASS_NAMES[cls]——「機械職業(戰鬥動畫/成長曲線用)」,
@@ -116,6 +115,7 @@ def main(argv):
             "hp": bs["hp"], "mp": bs["mp"], "ap": bs["ap"], "dp": bs["dp"], "mv": bs["mv"],
             "hit": DEFAULT_HIT, "ev": DEFAULT_EV, "crit": crit_by_cls(resist_crit, u["cls"]),
             "fig": u["portrait"],  # legacy map-FDICON approximation; unit+2 source pending
+            "battle_fig": u["portrait"],  # FDFIELD b1 -> native unit+7 (FIGANI/DATO selector)
             # ex:每級經驗(doc02 §4.5「守方每級經驗」;worklist 第 9 輪經驗值系統補接線)。
             # 與 hp/mp/ap/dp/mv 用同一顆 base_stats() (race,cls) 查表——同一份已驗證 EXE
             # 資料(docs/data/exe_tables/unit.json),同一種「該表多筆同 (race,cls) 只取第一筆」

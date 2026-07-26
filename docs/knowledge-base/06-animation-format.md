@@ -108,9 +108,9 @@ codec 解碼只還原「幀→圖」;**哪個單位用哪個 FIGANI** 反組譯�
 - `unit[+7]` 是這條**戰鬥 FIGANI** selector 的 raw input；它不可和地圖 FDICON selector 混稱。後者已由
   `0x127e0` 直接證實使用 `unit[+2]×12`。已盤點 roster 的兩個 visual id 可相同，但這不使 ABI 欄位等價。
   - 索爾的已驗證 battle value 0→FIGANI0、亞雷斯4→12、**盜賊96→FIGANI288**(實測 FIGANI_288/289=盜賊,對上 orig_05 守方)。
-- **remake**:`battle_fig` 現保留 future verified battle input 的位置，`figaniIndex` 只對它做 `×3`；但 FDFIELD
-  `b1→unit+7` 的舊推論已撤回，正式 export 尚未寫入該欄、loader 顯式 fallback legacy `fig`。現有 `fig`
-  亦只是 map `unit+2` compatibility approximation；兩欄可不同，不能用「地圖組=FIGANI/3」作全域對應表。
+- **remake**:`battle_fig` 現保存已驗證的 FDFIELD roster `b1→unit+7` input，`figaniIndex` 只對它做 `×3`；
+  舊 JSON 缺欄才顯式 fallback legacy `fig`。現有 `fig` 仍只是 map `unit+2` compatibility approximation；兩欄
+  可不同，不能用「地圖組=FIGANI/3」作全域對應表。
 
 > 教訓:做動畫前先 RE 組成機制,別 codec 解碼完就視覺猜 index(FIGANI_289=96×3+1 印證就是組×3)。
 

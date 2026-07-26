@@ -49,9 +49,8 @@ type Unit struct {
 	AtkMax   int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
 	Portrait int
 	Fig      int // 地圖 FDICON selector approximation; native source is unit+2.
-	// BattleFig reserves the separately sourced native unit+7 selector for
-	// FIGANI. Current exports lack a verified source, so Load uses the explicit
-	// legacy Fig fallback until a future raw export supplies battle_fig.
+	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
+	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
 	X, Y      int
 	Acted     bool  // 本回合已行動(原版 byte[+5] bit7)
@@ -476,9 +475,8 @@ func Load(path string) (*State, error) {
 			DeathReward: u.DeathReward,
 			Group:       u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
 		}
-		// Current exports lack a verified battle_fig source. Preserve their old
-		// visual behavior as an explicit compatibility fallback; a future raw
-		// exporter may supply the independent native value.
+		// Older generated JSON lacks battle_fig; preserve its compatibility
+		// behavior, while new exports carry the direct FDFIELD-b1 value.
 		nu.BattleFig = u.Fig
 		if u.BattleFig != nil {
 			nu.BattleFig = *u.BattleFig

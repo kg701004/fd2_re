@@ -342,8 +342,9 @@ level，從 portrait growth row 的 `learn_idx` 經 `0x4e4a2` 查 `0x626b3 + idx
 `(required_level, command_id)`；命中就呼叫 `0x1d79c` OR command bit，並顯示 FDTXT_000 #587「學會了！」。
 `docs/data/exe_tables/command_learn.json` 已保存 20 張 raw table（`FF/FF` sentinel 不轉成假資料）。
 growth-row 的**raw selector**是 direct ABI：`0x4e4d1(unit+7)=0x620a1+unit[+7]*11`，第 11 byte 就是
-`learn_idx`。`unit+7` 的 FDFIELD source／高階名稱尚未閉合，不能再把它泛稱 portrait；remake `State.GainExp`
-因此只在已注入這個 editable table 時，於剛達到的 level OR exact
+`learn_idx`。constructor `0x10d7f..0x10efc` 已閉合 FDFIELD roster `b1→unit+7`；這是 battle
+FIGANI/DATO selector 的來源，並不使它和 map `unit+2` alias。remake `State.GainExp` 因此只在已注入這個
+editable table 時，於剛達到的 level OR exact
 command bit；`remake/assets/data/command_learn.json` 是 runtime copy，`Game` 在每個新 battle state bind
 同一張 table。legacy standalone `GainExp` 與 `Spells` 都不補造結果。
 
@@ -473,7 +474,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    The default `0x11eee` selector is now evidenced too: static table `0x51a97` maps runtime phase `0x53c1f` 0..19 to FDOTHER #3 entries `[0,1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]`. `fdother.NativeTerrainLUTIndex` makes the bounded sequence explicit. The separate explicit-override branch remains raw/unlabelled; no visual name is inferred for the cycle.
 
-   Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `unit+2 × 12 + pose×3 + cycle`. This is a distinct raw field from battle `0x287b5..0x2884c`, which selects `FIGANI.DAT` by `unit+7 × 3`. `battle.Unit.BattleFig` can carry an independently evidenced `battle_fig` without aliasing map `fig`, but the previous FDFIELD `b1` source assertion has been withdrawn: map0 raw records and constructor dataflow do not prove it, so current exports omit `battle_fig` and load an explicit legacy fallback. `fig` remains an unseparated map-`+2` approximation. Cycle is global idle/moving animation state, not unit `+4`; that byte offsets the camera-relative placement. The remaining adapter boundary is both raw-selector export paths, remap selection and layer order—not an invented FIGANI mapping.
+   Correction: the sprite pointer table is no longer opaque. `0x11019(group)` constructs `0x53a61` as twelve pointers per FDICON map-sprite group, and `0x127e0` selects `unit+2 × 12 + pose×3 + cycle`. This is a distinct raw field from battle `0x287b5..0x2884c`, which selects `FIGANI.DAT` by `unit+7 × 3`. Constructor `0x10d7f..0x10efc` now closes FDFIELD `b1→unit+7`, so `export_units.py` writes `battle_fig`; missing older JSON retains an explicit `fig` fallback. `fig` remains an unseparated map-`+2` approximation. Cycle is global idle/moving animation state, not unit `+4`; that byte offsets the camera-relative placement. The remaining adapter boundary is map selector export, remap selection and layer order—not an invented FIGANI mapping.
 
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus both exact native blits: `0x4deda` raw indices and `0x4de56` opaque-index transform `(index&7)+0x18`. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
 
