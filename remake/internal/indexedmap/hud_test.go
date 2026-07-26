@@ -65,6 +65,26 @@ func TestBlitNativeMapHUDPanelRejectsInvalidEntryBeforeWrite(t *testing.T) {
 	}
 }
 
+func TestBlitNativeMapHUDTerrainIconUses12E38TileAtPanelPlus6(t *testing.T) {
+	terrain := bank(2, 0)
+	terrain.Sprites[1] = solid(0x66)
+	dst := make([]byte, fdicon.NativeMapStride*200)
+	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 1); err != nil {
+		t.Fatal(err)
+	}
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	if dst[layout.Terrain] != 0x66 {
+		t.Fatalf("terrain icon=%#x", dst[layout.Terrain])
+	}
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 2); err == nil {
+		t.Fatal("out-of-bank terrain descriptor accepted")
+	}
+	if string(dst) != string(before) {
+		t.Fatal("rejected terrain descriptor mutated HUD")
+	}
+}
+
 func TestBlitNativeMapHUDSignedNumberSelectsSignAndAbsoluteValue(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*30)
 	calledOrigin, calledAbsolute := -1, -1

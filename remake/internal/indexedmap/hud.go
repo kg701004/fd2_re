@@ -70,6 +70,27 @@ func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, 
 	return panel.BlitAt(dst, fdicon.NativeMapStride, layout.Frame, -1)
 }
 
+// BlitNativeMapHUDTerrainIcon reproduces 0x1ad90..0x1adc9 after 0x12e38:
+// tile is its already-masked ten-bit FDFIELD terrain descriptor index, which
+// directly indexes the selected FDSHAP bank and is raw-blitted at panel +6.
+// It intentionally does not reuse a PNG terrain preview or infer a semantic
+// terrain/icon category.
+func BlitNativeMapHUDTerrainIcon(terrain *fdicon.Bank, dst []byte, anchorX, tile int) error {
+	if terrain == nil || tile < 0 || tile > 0x3ff || tile >= len(terrain.Sprites) {
+		return errors.New("indexedmap: native map HUD terrain descriptor is invalid")
+	}
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	if err != nil {
+		return err
+	}
+	frame := append([]byte(nil), dst...)
+	if err := terrain.Sprites[tile].BlitAt(frame, fdicon.NativeMapStride, layout.Terrain%fdicon.NativeMapStride, layout.Terrain/fdicon.NativeMapStride); err != nil {
+		return err
+	}
+	copy(dst, frame)
+	return nil
+}
+
 // BlitNativeMapHUDSignedNumber preserves 0x1aeb1's raw sign selector: a
 // nonnegative value uses LMI1 #0x83 (6x7), a negative value uses #0x84
 // (6x5), then native passes the absolute value to its decimal renderer at a
