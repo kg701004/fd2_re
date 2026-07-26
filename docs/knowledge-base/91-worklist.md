@@ -558,7 +558,7 @@
 - [~] **ch26/ch27 pre-handler**：FDTXT_027 idx0/3/4/5/6/7 已高信心對到 ch27 scene0 全部 21 句，新增六組 editable direct overrides 並接 `story_ch27`；`0x24b14` item `0x64` gate 與 0x24618 視覺 effects 尚未接 runtime，不能視為完整章節流程完成。
 - [x] **ch27 post/ch28 flow**：FDTXT_028 string7 已精確對到 ch28 scene1 lines 11–15，新增 post-handler binding 並接 `story_ch28`；sync_party/set_chapter 保留，下一節仍進可編輯 preparation_ch28。
 - [x] **ch28/ch29 pre-handler**：Docker 隔離 Capstone 實際解析 `0x35822(x,y,group)` 的 pan→spawn→300ms→兩次 palette no-op／200ms→redraw choreography；compiler 已 lower，FDTXT_029 idx7/idx8、map27/pan/acting86 binding 通過 regression，`story_ch28` 已接回 editable handler。
-- [~] **ch26 post item-gate branch**：已證實 `0x25186` 的 item `0x64` present/missing 雙臂與 FDTXT_027 idx8–12 / idx13–16 對應；需先把 visual/effect calls 與缺匙 editable branch 資料化，不能只保留 generic ending。
+- [~] **ch26 post item-gate branch**：`0x25186→0x24b14(0x64)` 是前 16 個 runtime slots 的 exact inventory search，無 camp/activity filter；成功臂無 `0x1b8e7`，天空之鑰不消耗，之後才 sync→chapter increment→persistent cleanup。FDTXT_027 idx8–12 / idx13–16 對應兩臂；仍需把 visual/effect calls 與缺匙 editable branch 資料化，不能只保留 generic ending。
 - [~] **ch29 post staged mapping**：四組對白已精確接到 ch29/ch30 authored lines；`0x12cea` focus、`0x25089` persistent cleanup、`0x17aa9` tick、dynamic palette loop 與 terminal `loadch` 均已 lower 並各有後述 regression。`0x24618` 仍只保存 complete metadata，`0x2bce5` 仍是專用 ending renderer；兩者未完成前整支 handler 不接 campaign runtime。
 - [~] **ch29 post focus lowering**：`0x12cea` 已安全 lower 成 tile-step pan(22,23) 並通過 regression；其餘 native cleanup/transition/ending 仍待 lower。
 - [~] **ch29 post persistent cleanup**：`0x25089` 已 lower 為 editable `reset_persistent_roster_state`，並以 runtime/campaign regression 鎖定清 transient、回填 MaxHP/MaxMP；0x24618 transition、0x2bce5 ending renderer 仍待。

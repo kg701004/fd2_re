@@ -413,6 +413,8 @@ ch14 pre-handler (`0x334d9`) 是已閉合的動態文字例：`0x33499(12)` 的�
 
 Native battle-local event state is a separate editable boundary. `[0x53ad5]` points to a 32-byte table, but an index must not be named from a single reader. For example, entry 12 is set only on the successful `0x356bc` path after item `0xd0` is consumed; that path also runs its presentation, spawns FDFIELD group 1, JOINs char 31, and displays FDTXT #4. ch25 post later reads entry 12 to select its FDTXT base (`+5` or `+8`). Official IDA 9.4 identifies `0x356b7..0x35822` and eight control-flow xrefs from generic event/UI dispatcher functions (`0x117e7`, `0x16f55`, `0x190ac`, `0x1a813`, `0x1aa1d`, `0x1d80b`, `0x1d8ba`); this does **not** prove a ch25-only trigger or a map-local event coordinate. A future binding may expose this as an address/index-backed event-state predicate only after its persistent/runtime representation and both branch arms are complete; it must not substitute a treasure, unit, or generic party predicate.
 
+Inventory gates are distinct from item-consuming event commands. Native `0x24b14(item)` scans only runtime slots `0..15` through `0x31860` and returns found/not-found; it neither filters camp/activity nor removes an item. In ch26 post, `0x24b14(0x64)` selects the sky-key success arm; that arm contains no `0x1b8e7` call and only later performs sync/chapter increment/persistent cleanup. The missing arm is a separate ending presentation path. Therefore an editable `inventory_gate` must preserve item `0x64`; it may not be lowered to a recipe, reward, or consume action.
+
 ### 5.1 目前 editable graph audit（E1，不等同原版 E0）
 
 `remake/assets/scenarios/campaign_full.json` 的 30 個 battle node 已逐一展開
