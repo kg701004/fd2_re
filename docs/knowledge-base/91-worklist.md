@@ -513,6 +513,7 @@
 - [x] **0x1a30b shared-caller correction**：Docker Capstone xrefs 固定 callers=`0x135c5/0x17154/0x17272`；`0x1716f/0x17241` 旁有 FDTXT_000 `0x19c/0x1a4` 互動訊息，`0x1728c` 處理 selector flags。故 `NativeBattleEntryStep` 保持 reusable raw record primitive，不接成 D8-only preparation action。
 - [x] **UI-11 remake shell screenshot artifact**：Docker `fd2-go-test-local` + Xvfb 實跑 `FD2_CAMP_NODE=preparation_ch02 FD2_SHOT_FRAME=30`，產生 [`preparation-remake.png`](../figures/preparation-remake.png)（640×400，2× 320×200）；只證明 editable preparation node 與地圖背景/overlay 可呈現，不取代原版 DOSBox 差分，也不關閉 MAP/TURN/YES-NO evidence gate。
 - [x] **native raw action-bit writer**：Docker Capstone 固定 `0x13512(index)` 設 `record[index*0x50+5] |= 0x80`、`0x13536` 全表清 bit7；新增 `battle.SetNativeRecordBit7`／`ClearNativeRecordBit7All` 與 bounds/other-bit regression，保留 raw offset，不把 bit7 強行命名成回合狀態。
+- [x] **post-resolution inventory free-slot ABI**：Docker Capstone 固定 `0x1b8a6(unit)` 掃 `record+0x0a+2*i` 八個 cell，僅 flag byte bit7 決定 free count；新增 `battle.NativeInventoryFreeSlotCount` 與 item-byte-is-opaque regression，避免掉落流程以 normalized `len(Inventory)` 取代 raw cell flags。
 
 ## 待辦:實測回饋(使用者 playtest,2026-07-03)
 - [ ] **開場過場節奏 3x 太快 RE**(dragon-fx2 DOS 對比發現,doc39 §10.8):原版魔王立繪捲動

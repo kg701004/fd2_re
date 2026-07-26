@@ -570,6 +570,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Raw action-bit helpers: official `0x13512(index)` sets `record[index*0x50+5] |= 0x80`, while `0x13536` clears that bit across the record count. `battle.SetNativeRecordBit7` and `ClearNativeRecordBit7All` now preserve these byte-level mutations with bounds checks; they do not force a higher-level turn interpretation.
 
+   Inventory-cell boundary: official `0x1b8a6(unit)` scans exactly eight two-byte cells at `record+0x0a+2*i`; only each cell's flag byte bit7 determines the free-slot count. `battle.NativeInventoryFreeSlotCount` preserves that raw availability rule and ignores item-byte values; it does not lower the result to a normalized inventory length or item semantic.
+
    Correction: the `0x1ac62` loop is not a preparation command stream. Its caller `0x1aa1d` uses FDTXT_000 indices `0x1b0..0x1b3`, which decode to post-resolution loot/interaction messages (enemy item, full inventory, money), so the higher-level preparation label is withdrawn. The proven part is only a `base+3*i` `{kind:byte,payload:u16le}` stream with observed kind `0/1/2/3` branches; `fdother.ParseNativePostResolutionCommands` preserves it and refuses truncation without assigning event names.
 
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
