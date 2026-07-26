@@ -122,6 +122,47 @@ func BlitNativeMapHUDUnitIcon(units *fdicon.Bank, cache *fdicon.NativeSelectorCa
 	return nil
 }
 
+// NativeMapHUDTerrainAPDP is the pair of signed values looked up by 0x1acf3
+// with the control byte+1 returned by 0x12e38. The byte's broader terrain
+// meaning is deliberately not inferred here.
+func NativeMapHUDTerrainAPDP(controlByte1 byte) (ap, dp int, err error) {
+	switch controlByte1 {
+	case 0:
+		return 5, 0, nil
+	case 1, 5:
+		return 0, 0, nil
+	case 2, 3:
+		return -5, 10, nil
+	case 4:
+		return -5, -5, nil
+	default:
+		return 0, 0, errors.New("indexedmap: native map HUD terrain control byte is outside 0..5")
+	}
+}
+
+// BlitNativeMapHUDTerrainAPDP is the two 0x1aeb1 calls following terrain-icon
+// blit. It uses layout AP/DP origins and retains an atomic editable boundary:
+// an invalid raw control byte or any number-render failure changes nothing.
+func BlitNativeMapHUDTerrainAPDP(frames NativeMapHUDFrames, dst []byte, anchorX int, controlByte1 byte) error {
+	ap, dp, err := NativeMapHUDTerrainAPDP(controlByte1)
+	if err != nil {
+		return err
+	}
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	if err != nil {
+		return err
+	}
+	frame := append([]byte(nil), dst...)
+	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, layout.AP, ap); err != nil {
+		return err
+	}
+	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, layout.DP, dp); err != nil {
+		return err
+	}
+	copy(dst, frame)
+	return nil
+}
+
 // BlitNativeMapHUDSignedNumber preserves 0x1aeb1's raw sign selector: a
 // nonnegative value uses LMI1 #0x83 (6x7), a negative value uses #0x84
 // (6x5), then native passes the absolute value to its decimal renderer at a

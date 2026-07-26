@@ -496,6 +496,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Unit-icon subpass closure: if `0x12c0d(cursor)` returns a runtime unit index, `0x1acf3` uses `unit+2` as the global selector-cache slot, reads the raw global state counter (3 aliases 1), resolves that cached twelve-frame FDICON block and raw-blits it to panel `stride*5+6`. `indexedmap.BlitNativeMapHUDUnitIcon` preserves the cache slot/state boundary and makes no inference that slot is a character or portrait identity.
 
+   Terrain AP/DP subpass closure: `0x1acf3` indexes its two static signed tables with the resolver's raw control byte+1: 0→(+5,0), 1/5→(0,0), 2/3→(-5,+10), 4→(-5,-5). `indexedmap.NativeMapHUDTerrainAPDP` keeps that bounded raw mapping, and `BlitNativeMapHUDTerrainAPDP` calls the verified signed two-digit renderer at the exact AP/DP layout origins atomically. The control byte's higher meaning and HP ratio path remain separate.
+
    Export bridge: when supplied the paired FDSHAP terrain resource, `export_engine_assets.py` writes `native_terrain_control` (the complete raw four-byte records) alongside per-cell `native_tile_blit_modes`. This preserves the precise inputs of the region adapter; normalized `cost` remains a separate gameplay approximation.
 
    Runtime bridge: `battle.Load` accepts those two fields only when map dimensions, cell count, control-record alignment and every 10-bit tile index validate exactly; otherwise all native renderer/mechanics fields stay nil. It retains the raw tables and derives `NativeTerrainMoveCodes` from each tile's FDSHAP control byte+1. This is the authoritative combat AP/DP input; normalized `cost` is used only as a legacy incomplete-export fallback. The fields are not silently substituted into the current PNG/Ebiten path.
