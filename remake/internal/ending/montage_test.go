@@ -26,6 +26,26 @@ func TestNative2C548MontageRefusesEmptyParty(t *testing.T) {
 	}
 }
 
+func TestNative2C548PortraitTextUsesEDIForSpecialEpilogue(t *testing.T) {
+	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	unit := make([]byte, 0x21)
+	unit[7], unit[8], unit[0x20] = 37, 4, 2
+	plan, err := montage.PlanPortraitText(unit, 0xdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.PortraitID != 37 || plan.CharacterName.Index != 5 || plan.ClassName.Index != 0x98 || plan.Epilogue.Index != 0x10 || plan.Epilogue.Destination != 0x7d08 {
+		t.Fatalf("portrait plan = %#v", plan)
+	}
+	plan, err = montage.PlanPortraitText(unit, 0xdc)
+	if err != nil || plan.Epilogue.Index != 0x2d {
+		t.Fatalf("special epilogue plan = %#v err=%v", plan, err)
+	}
+}
+
 func TestNative2C548FigureFadeIsNineNonMirroredPasses(t *testing.T) {
 	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
 	if err != nil {

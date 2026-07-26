@@ -81,7 +81,7 @@
         {"table": "permanent", "index": "unit[+8]+1", "destination": "staging+0x171b", "meaning": "character_name"},
         {"table": "current", "index": "11", "destination": "staging+0x2fe9", "meaning": "class_label"},
         {"table": "permanent", "index": "unit[+0x20]+0x96", "destination": "staging+0x301b", "meaning": "class_name"},
-        {"table": "current", "index": "unit[+8]+0x0c|45", "destination": "staging+0x7d08", "meaning": "epilogue"}
+        {"table": "current", "index": "edi<0xdc ? unit[+8]+0x0c : 0x2d", "destination": "staging+0x7d08", "meaning": "epilogue"}
       ],
       "glyph_style": {"stride": 320, "foreground": 205, "shadow": 76, "background": 0},
       "input": {"poll": "0x10620", "skip_action": "outer_counter=1;0x4e031", "source": "0x2c950..0x2c961"}

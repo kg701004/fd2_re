@@ -114,6 +114,24 @@ type MontageTextField struct {
 	Meaning     string `json:"meaning"`
 }
 
+// PortraitTextPlan is the verified index/destination dataflow emitted by
+// 0x2c7a4..0x2c967 for one party unit. It intentionally stops before glyph
+// rendering; EDI is the native outer portrait-loop counter, not a unit byte.
+type PortraitTextPlan struct {
+	PortraitID    int
+	NameLabel     TextPlacement
+	CharacterName TextPlacement
+	ClassLabel    TextPlacement
+	ClassName     TextPlacement
+	Epilogue      TextPlacement
+}
+
+type TextPlacement struct {
+	Table       string
+	Index       int
+	Destination int
+}
+
 type MontageGlyphStyle struct {
 	Stride     int `json:"stride"`
 	Foreground int `json:"foreground"`
@@ -149,7 +167,7 @@ func LoadMontage(path string) (*Montage, error) {
 		m.PartyCycle.FigureArchive != "FIGANI.DAT" || len(m.PartyCycle.FigureIndices) != 2 || m.PartyCycle.FigureIndices[0] != "group*3+1" || m.PartyCycle.FigureIndices[1] != "group*3" ||
 		m.PartyCycle.FigureRenderer != "0x29164" || m.PartyCycle.FrameRenderer != "0x2b9a1" || m.PartyCycle.InitialFrames != 20 || m.PartyCycle.FrameDelayMS != 1 || m.PartyCycle.SourceRange != "0x2c5e3..0x2c9a9" ||
 		m.PartyCycle.PortraitText.Source != "0x2c7a4..0x2c967" || m.PartyCycle.PortraitText.PortraitArchive != "DATO.DAT" || m.PartyCycle.PortraitText.PortraitIndex != "unit[+7]" || m.PartyCycle.PortraitText.CurrentTextTable != "FDTXT_031" || m.PartyCycle.PortraitText.PermanentTextTable != "FDTXT_000" || len(m.PartyCycle.PortraitText.Fields) != 5 ||
-		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "unit[+8]+0x0c|45", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
+		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "edi<0xdc ? unit[+8]+0x0c : 0x2d", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
 		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) || m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
 		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 || m.PartyCycle.FigureFade.RestoreCopy != "B->A(dstStride640,srcStride320,width320,rows200)" || m.PartyCycle.FigureFade.PostFigureSnapshot != "memmove(C,B,64000)" ||
 		m.PartyCycle.MirrorBranch != (MirrorBranchSpec{Source: "0x2927e..0x29357", RequiredUnitSide: 0, SideFlagArgument: "arg4", WorkStride: 640, StageStart: 8, StageEnd: 0, StageShiftBytes: 10, PaletteDeltaFormula: "stage*6", PrimarySource: "staging+0x140-stage*10", SecondarySource: "staging+0x140", SecondaryWhen: "arg4==0", PlatformWhen: "arg4==0", Platform: FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}, Renderer: "0x29164"}) ||
@@ -157,6 +175,28 @@ func LoadMontage(path string) (*Montage, error) {
 		return nil, fmt.Errorf("ending montage %q is incomplete or unsupported", path)
 	}
 	return &m, nil
+}
+
+// PlanPortraitText materializes the five native 0x2c548 text calls without
+// interpreting their glyph/control-code renderer. edi is the outer party
+// portrait-loop counter observed at 0x2c8f7; the special 0x2d index is chosen
+// only once edi reaches 0xdc.
+func (m Montage) PlanPortraitText(unit []byte, edi int) (PortraitTextPlan, error) {
+	if m.Status != "mapped_first_party_cycle_fail_closed" || len(unit) < 0x21 || edi < 0 {
+		return PortraitTextPlan{}, fmt.Errorf("ending: invalid portrait text inputs")
+	}
+	epilogue := int(unit[8]) + 0x0c
+	if edi >= 0xdc {
+		epilogue = 0x2d
+	}
+	return PortraitTextPlan{
+		PortraitID:    int(unit[7]),
+		NameLabel:     TextPlacement{Table: "current", Index: 10, Destination: 0x16e9},
+		CharacterName: TextPlacement{Table: "permanent", Index: int(unit[8]) + 1, Destination: 0x171b},
+		ClassLabel:    TextPlacement{Table: "current", Index: 11, Destination: 0x2fe9},
+		ClassName:     TextPlacement{Table: "permanent", Index: int(unit[0x20]) + 0x96, Destination: 0x301b},
+		Epilogue:      TextPlacement{Table: "current", Index: epilogue, Destination: 0x7d08},
+	}, nil
 }
 
 // FigureFadePass is one fully evidenced 0x29164 non-mirrored presentation.
