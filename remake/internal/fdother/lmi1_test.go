@@ -84,6 +84,38 @@ func TestFDOTHER005LMI1UIContainer(t *testing.T) {
 	}
 }
 
+func TestFDOTHER005MapHUDUses4ModeFrameEntries(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	for index, want := range map[int][2]int{0x83: {44, 12}, 0x84: {45, 12}, 130: {69, 34}} {
+		frame, err := DecodeLMI1FrameResource(datPath, 5, index)
+		if err != nil {
+			t.Fatalf("entry %#x: %v", index, err)
+		}
+		if [2]int{frame.Width, frame.Height} != want {
+			t.Fatalf("entry %#x geometry=%dx%d, want %dx%d", index, frame.Width, frame.Height, want[0], want[1])
+		}
+		if err := frame.BlitAt(make([]byte, 320*200), 320, 320*157+1, -1); err != nil {
+			t.Fatalf("entry %#x 0x4e63d decode: %v", index, err)
+		}
+	}
+}
+
+func TestParseLMI1FrameEntryRejectsOtherContainerOrIndex(t *testing.T) {
+	if _, err := ParseLMI1FrameEntry([]byte("bad"), 0); err == nil {
+		t.Fatal("non-LMI1 container was accepted")
+	}
+	data := make([]byte, 10)
+	copy(data, "LMI1")
+	binary.LittleEndian.PutUint16(data[4:], 1)
+	binary.LittleEndian.PutUint32(data[6:], 10)
+	if _, err := ParseLMI1FrameEntry(data, 1); err == nil {
+		t.Fatal("out-of-range LMI1 index was accepted")
+	}
+}
+
 func TestFDOTHER006NativeUnitPresentBank(t *testing.T) {
 	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	if _, err := os.Stat(datPath); err != nil {
