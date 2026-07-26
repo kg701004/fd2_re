@@ -246,6 +246,12 @@ target 的 `+0x27` 必為零、class `+0x20` 不得為 `0x19/0x1a`、且 `rand()
 
 Remake 已以 `Unit.NativeTransient[6]` 及 optional `NativeRecordByte5/6` 保留這段 raw ABI，並提供 bounded offset access（只接受 `0x22..0x27`）及 `State.TickNativeTransientsRaw(selector)`；FDFIELD b0→runtime `+6` 的 parser/exporter provenance 也已補上，缺少 raw gates 時仍 fail-closed。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接 campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
 
+Selector caller audit（Docker Capstone）已補上 raw 值但不替它們命名：`0x1a4d1` 以 `push 1` 呼叫
+`0x1a866`，`0x1a55e` 以 `push 0` 呼叫，`0x1a797` 以 `push 2` 呼叫；三者各自位於不同
+redraw/phase caller，不能直接映射成 Go `Camp` 或玩家／敵方回合。`0x1a30b` 內部另有
+`record+6 == 2` 的 sweep，與上述 direct callers 分開。故 runtime 仍只提供 raw selector API，
+不把 `completeTurn` 或 normalized camp 自動綁到任一 selector。
+
 ID23 走 `0x1CFF0` 的 command-`0x17` special selector，不能套 generic two-stage target contract。其 handler
 `0x2218A` 以 record23 扣 MP，並呼叫 `0x22253` 兩次：依 C stack ABI，第一次將 selected unit 的 runtime
 `+0/+1` 寫為 `0xff/0xff`（以原座標作離場 indexed 演出），第二次直接寫為 selector cursor globals
