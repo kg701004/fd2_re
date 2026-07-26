@@ -165,16 +165,13 @@ HP18/AP5/DP2 極弱）與 group 11（3×「聖騎士」，portrait 103，HP44/AP
    （已逐筆核對 `docs/knowledge-base/02-game-data-reference.md`）。
 3. 換句話說：**`export_units.py` 把「玩家轉職職業表」誤當「敵方/NPC 顯示名稱表」在用**——這張表對
    「玩家角色算數值」是對的（remake 的 `growth.go` 用它算轉職成長已交叉驗證過），但拿來當**敵方單位
-   UI 顯示名稱**是誤用。真正的顯示名稱（盜賊/士兵/…）另有來源，目前最可能的線索是 `portrait` 欄位——
-   `docs/knowledge-base/31-map-unit-sprites-fdicon.md` 已證實「地圖 sprite 組 = portrait 恆等」且已有
-   兩筆獨立驗證的 portrait→名稱對應（`68→一般士兵`、`96–107 組→綠衣盜賊`，與本輪影片實測的
-   「portrait96＝盜賊」完全吻合），加上 FDTXT_000 另一段「士兵/精英戰士/…/盜賊/盜賊頭目/…」的
-   NPC/怪物名單（54 筆，`extracted/story/full_story_auto.md:41-99`），兩者對得上就是正確的顯示名稱表。
+   UI 顯示名稱**是誤用。真正的顯示名稱（盜賊/士兵/…）另有來源；先前把 `portrait`、FDICON selector
+   和名稱表視為恆等的說法已撤回：`unit+2` 是 cache slot，而非 portrait。FDTXT_000 的 NPC/怪物名單
+   （54 筆，`extracted/story/full_story_auto.md:41-99`）可作候選語料，但尚未構成 runtime name-key mapping。
 
-**修復建議**：`export_units.py` 的 `cls_name` 欄位改成**用 `portrait` 查一張新的「portrait→顯示名稱」
-表**（延伸 doc31 已有的兩筆對應，逐一比對 FDTXT_000 的 54 筆 NPC/怪物名單，需要再一輪針對性 RE 補齊
-portrait 96/97/103/76/68 等第一章用到的全部 portrait 的正確名稱)，`(race,cls)` 繼續專職算數值
-（HP/AP/DP/MV/暴擊，這條路徑本身正確不要動）,兩者分離。**不建議**直接改 `dump_exe_tables.py` 的
+**修復建議**：暫時不要再由 `portrait` 建 name table；需要先釘 persistent roster／script record 的顯示名稱
+key 或 text caller。`(race,cls)` 繼續專職算數值（HP/AP/DP/MV/暴擊，這條路徑本身正確不要動）,顯示名
+來源維持 fail-closed。**不建議**直接改 `dump_exe_tables.py` 的
 `CLASS_NAMES` 表——那張表對玩家轉職是正確的，錯的是「拿它給敵方單位命名」這個用法本身。
 
 **未完全坐實的部分（誠實標記）**：「士兵→聖騎士」這組使用者回報，本輪**找到了完全相同性質的根因

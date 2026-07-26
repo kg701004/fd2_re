@@ -482,9 +482,11 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Runtime stores native map selection separately as optional `MapSelectorSlot`: its presence means an explicit native `unit+2` cache slot (including slot zero); absence must not fall back from legacy story/save `Fig`. This keeps the indexed compositor fail-closed while legacy UI remains compatible.
 
+   Player-party construction is a separate proven source path: `0x1088d` copies each persistent 0x50-byte roster record from `[0x53bf7]` into the battle roster at `0x10a77`, then passes the copied record's `+7` byte and the chapter FDICON resource to `0x11019`; only its returned slot is written to runtime `unit+2` at `0x10aa2`. Map-script construction instead reaches `0x10c50` and supplies FDFIELD `b0`. These are distinct inputs to the same cache ABI. The remake must preserve explicit source provenance/order before it materializes slots, and must not derive either path from legacy `Fig`.
+
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus both exact native blits: `0x4deda` raw indices and `0x4de56` opaque-index transform `(index&7)+0x18`. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
 
-   `Bank.SpriteFor(group,pose,cycle)` enforces the recovered `group×12 + pose×3 + cycle` selector (pose 0..3, cycle 0..2). `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
+   `Bank.SpriteFor(key,pose,cycle)` enforces the recovered raw-key `key×12 + pose×3 + cycle` lookup inside one FDICON resource (pose 0..3, cycle 0..2). The renderer-facing formula remains `slot×12 + pose×3 + cycle`; `0x11019` performs the key→slot block copy. `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
 
    The raw/palette-band choice is also closed: `0x127e0` tests runtime unit `+5 bit7`; clear uses raw `0x4deda`, set uses `0x4de56` band. `fdicon.BlitForNativeFlags` makes that dependency explicit; it is not a guessed camp or LUT selection.
 

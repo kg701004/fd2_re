@@ -84,17 +84,17 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 > 的 battle FIGANI/DATO path 也不能反推 `unit+2`。先前關於特定轉職 group、龍人例外與 DATO_067 的敘述皆
 > 不再作為 renderer/exporter 的證據。
 
-| 欄位(memory.md 80B 單位結構) | 意義 | offset |
+| runtime byte | 已證實的狹窄意義 | evidence |
 |---|---|---|
-| Z1 = sprite組 | FDICON 組(= 角色 id,恆等) | `+0x0A` |
-| Z2 = 方向 | 0=下 1=左 2=上 3=右 | `+0x0B` |
-| Z3 = 跑步動作幀 | 待機/走 3 幀(手擺) | `+0x0C` |
-| AA = 動作狀態 | 00=未行動 01=死亡 80=行動完畢 | `+0x0D` |
-| BB = 陣營 | 00=敵 01=友 02=己 | `+0x0E` |
-| FA = 肖像 | DATO 對話頭像 id(= 角色 id,恆等) | `+0x0F` |
-| index | `組×12 + 方向×3 + 幀` | 繪製碼 0x1291e |
+| `unit+2` | `0x11019` 回傳的 FDICON cache slot；不可命名為角色／肖像／素材組 | `0x10a92..0x10aa2`、`0x10c50→0x11019`、`0x12831` |
+| `unit+3` | map pose/direction selector (`0..3`) | `0x12835`、`pose×3` |
+| `unit+4` | movement placement offset；不是 animation frame | `0x127e0` placement branch |
+| `unit+6` | native camp raw byte（FDFIELD 路徑的 `b0`） | `0x10ef1`、target predicates |
+| `unit+7` | battle FIGANI selector（FDFIELD 路徑的 `b1`） | `0x10ef8`、`0x287b5..0x2884c` |
+| index | `slot×12 + pose×3 + cycle` | `0x1291e` |
 
-> 反組譯一致性:繪製碼 0x12831 `movzx edi,byte[eax+2]`(eax = 單位 base+8)即讀 `+0x0A` 的 Z1,與 memory.md 對齊。
+> **刪除舊表的錯誤 offset/identity 對應**：它把另一份結構標記混入 runtime 0x50-byte
+> battle roster，並把觀察到的相等值升格為欄位 alias。今後僅以以上直接讀寫為準；未閉合欄位不另命名。
 
 ## 7. sprite & face 統一角色系統(remake 加新人的基礎)
 
