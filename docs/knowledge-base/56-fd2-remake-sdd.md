@@ -287,10 +287,12 @@ IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不�
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target
 `memset(+0x25, 0, 3)` 後傳固定 `0x320` 給 `0x211a4→0x1c916`；34 連續呼
 `0x22721/0x22866/0x22997`；35 連續呼 `0x22d1b(actor,26,...,+0x25)`、
-`0x22d1b(actor,22,...,+0x27)`、`0x22d1b(actor,27,...,+0x26)`。但 `0x27fc9`、這些被呼 helper 和
-`0x1d4cb` presentation setup 中尚未見 `0x1ca89` 或另一個已證實的 MP writer；這只構成「selector gate 與
-debit dataflow 有缺口」，**不**能據此斷言原版免費施放或由 remake 擅自扣 MP。保持 fail-closed，待 runtime
-trace 或額外 writer evidence。
+`0x22d1b(actor,22,...,+0x27)`、`0x22d1b(actor,27,...,+0x26)`。先前「wrapper／helper 未見
+`0x1ca89`」的負向斷言已撤回：`0x27fc9` 在 `0x28189` 進共同 presentation/effect routine `0x2b659`，而
+`0x2b738..0x2b753` 會在其**載入 animation descriptor 的 `byte+4 == 1`**時呼
+`0x1ca89(actor, commandID)`。目前尚未把 IDs32..35 各自實際選到的 descriptor 與這個 byte 值以 runtime
+trace 關閉，因此仍只有「selector MP gate 與條件式 debit sink 之間尚缺 per-ID dataflow」，**不能**據此斷言
+原版免費施放、必然扣 MP，或由 remake 擅自扣 MP。保持 fail-closed，待 descriptor provenance/runtime trace。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
