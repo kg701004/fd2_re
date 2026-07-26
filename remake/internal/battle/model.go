@@ -63,11 +63,14 @@ type Unit struct {
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
-	X, Y      int
-	Acted     bool  // 本回合已行動(原版 byte[+5] bit7)
-	Group     int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
-	OnField   bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
-	Spells    []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
+	// NativeConstructor preserves the proven EXE static-table provenance for
+	// unit+0x1f/+0x20 without assigning any gameplay meaning to raw bytes.
+	NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
+	X, Y              int
+	Acted             bool  // 本回合已行動(原版 byte[+5] bit7)
+	Group             int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
+	OnField           bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
+	Spells            []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
 	// NativeCommandMask is the runtime 40-bit command inventory enumerated by
 	// 0x1c269.  FDFIELD b13..b16 initializes bytes 0..3; byte 4 begins zero and
 	// can be OR-mutated by 0x1d7fb.  It is deliberately separate from Spells:
@@ -120,6 +123,36 @@ type Unit struct {
 	// 敵/友單位表 EX 欄,docs/data/exe_tables/unit.json,由 export_units.py 依 (race,cls)
 	// 帶入 units.json 的 "ex" 欄;舊版(尚未重新匯出的)units.json 無此欄則為 0,
 	// 該次攻擊經驗值算出 0,見 growth.go AttackExp 註解)
+}
+
+// NativeConstructorTable is an editable, raw-only view of the constructor's
+// portrait-selected EXE tables. Record is 10 bytes for high_class and 24
+// bytes for lower_class; AuxRecord is the paired 11-byte 0x620a1 record for
+// the lower branch. It is never used as a portrait/class substitute.
+type NativeConstructorTable struct {
+	Branch    string `json:"branch"`
+	Index     int    `json:"index"`
+	Record    []byte `json:"record"`
+	AuxRecord []byte `json:"aux_record,omitempty"`
+}
+
+func (t *NativeConstructorTable) validate() error {
+	if t == nil {
+		return nil
+	}
+	switch t.Branch {
+	case "high_class":
+		if t.Index < 0 || t.Index >= 68 || len(t.Record) != 10 || len(t.AuxRecord) != 0 {
+			return fmt.Errorf("invalid high_class table record")
+		}
+	case "lower_class":
+		if t.Index < 0 || t.Index >= 32 || len(t.Record) != 24 || len(t.AuxRecord) != 11 {
+			return fmt.Errorf("invalid lower_class table records")
+		}
+	default:
+		return fmt.Errorf("unknown constructor table branch %q", t.Branch)
+	}
+	return nil
 }
 
 // MaterializeNativeMapSelectorSlots applies 0x11019's first-seen cache rule
@@ -488,14 +521,15 @@ type unitsFile struct {
 		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
 		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
-		Portrait        int  `json:"portrait"`
-		Fig             int  `json:"fig"`
-		BattleFig       *int `json:"battle_fig,omitempty"`
-		MapSelectorSlot *int `json:"map_selector_slot,omitempty"`
-		MapSelectorKey  *int `json:"map_selector_key,omitempty"`
-		Group           int  `json:"group"`
-		X               int  `json:"x"`
-		Y               int  `json:"y"`
+		Portrait          int                     `json:"portrait"`
+		Fig               int                     `json:"fig"`
+		BattleFig         *int                    `json:"battle_fig,omitempty"`
+		MapSelectorSlot   *int                    `json:"map_selector_slot,omitempty"`
+		MapSelectorKey    *int                    `json:"map_selector_key,omitempty"`
+		Group             int                     `json:"group"`
+		NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
+		X                 int                     `json:"x"`
+		Y                 int                     `json:"y"`
 	} `json:"units"`
 }
 
@@ -523,6 +557,9 @@ func Load(path string) (*State, error) {
 	st := &State{W: f.W, H: f.H, OwnDeploy: f.OwnDeploy, Turn: 1, Flags: map[string]bool{},
 		Treasures: map[Cell]Treasure{}, OpenedTreasure: map[int]bool{}}
 	for _, u := range f.Units {
+		if err := u.NativeConstructor.validate(); err != nil {
+			return nil, fmt.Errorf("battle: native_constructor: %w", err)
+		}
 		camp := campFrom(u.Camp)
 		inventory, equipped, runtimeSlots := materializeInventory(u.InventorySlots, u.Inventory)
 		nu := &Unit{
@@ -532,9 +569,10 @@ func Load(path string) (*State, error) {
 			AtkMin: u.AtkMin, AtkMax: u.AtkMax,
 			Portrait: u.Portrait, Fig: u.Fig, X: u.X, Y: u.Y,
 			Spells: append([]int(nil), u.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
-			DeathEffect: u.DeathEffect,
-			DeathReward: u.DeathReward,
-			Group:       u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
+			DeathEffect:       u.DeathEffect,
+			DeathReward:       u.DeathReward,
+			NativeConstructor: u.NativeConstructor,
+			Group:             u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
 		}
 		// Older generated JSON lacks battle_fig; preserve its compatibility
 		// behavior, while new exports carry the direct FDFIELD-b1 value.

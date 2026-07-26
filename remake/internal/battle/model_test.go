@@ -81,6 +81,30 @@ func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
 	}
 }
 
+func TestLoadPreservesNativeConstructorRawTable(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "units.json")
+	raw := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"portrait":68,"x":0,"y":0,"native_constructor":{"branch":"high_class","index":0,"record":[1,2,3,4,5,6,7,8,9,10]}}]}`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := st.Units[0].NativeConstructor
+	if got == nil || got.Branch != "high_class" || got.Index != 0 || len(got.Record) != 10 || got.Record[0] != 1 || got.Record[9] != 10 {
+		t.Fatalf("native constructor=%#v", got)
+	}
+	bad := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"native_constructor":{"branch":"high_class","index":0,"record":[1]}}]}`
+	if err := os.WriteFile(path, []byte(bad), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Fatal("malformed native constructor must fail closed")
+	}
+}
+
 func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 	units := []*Unit{
 		{MapSelectorKey: 2, HasMapSelectorKey: true},
