@@ -1,6 +1,7 @@
 package fdother
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -60,6 +61,33 @@ func NativeRangeOverlayMode6ByteAddress(width, cursorX, cursorY int) (int, error
 		return 0, fmt.Errorf("fdother: native range overlay mode 6 width must be positive")
 	}
 	return 4*(cursorX+cursorY*width) + 7, nil
+}
+
+// ClearNativeRangeOverlayMode6FieldByte applies mode 6 to a raw FDFIELD
+// composition resource.  0x108f0..0x10932 loads that resource to [0x53a51],
+// whose signed u16 header is width/height followed by four bytes per cell;
+// 0x4dbfc initializes the fourth byte (event high byte / raw blit-mode byte)
+// to 0xff.  Mode 6's [base + 4*(x+y*width) + 7] write is therefore exactly
+// the fourth byte of the selected cell, not a range-overlay sprite operation.
+// No higher gameplay meaning is assigned to clearing that byte.
+func ClearNativeRangeOverlayMode6FieldByte(field []byte, cursorX, cursorY int) error {
+	if len(field) < 4 {
+		return errors.New("fdother: native range overlay mode 6 field is too short")
+	}
+	width := int(int16(binary.LittleEndian.Uint16(field)))
+	height := int(int16(binary.LittleEndian.Uint16(field[2:])))
+	if width <= 0 || height <= 0 || cursorX < 0 || cursorX >= width || cursorY < 0 || cursorY >= height || width > (len(field)-4)/4/height {
+		return errors.New("fdother: invalid native range overlay mode 6 field coordinate")
+	}
+	offset, err := NativeRangeOverlayMode6ByteAddress(width, cursorX, cursorY)
+	if err != nil {
+		return err
+	}
+	if offset >= len(field) {
+		return errors.New("fdother: native range overlay mode 6 field is truncated")
+	}
+	field[offset] = 0
+	return nil
 }
 
 // DecodeNativeRangeOverlayBank reads the exact FDOTHER #1 resource loaded to

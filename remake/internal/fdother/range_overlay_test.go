@@ -1,6 +1,7 @@
 package fdother
 
 import (
+	"encoding/binary"
 	"os"
 	"testing"
 
@@ -49,6 +50,34 @@ func TestNativeRangeOverlayMode6ByteAddress(t *testing.T) {
 	}
 	if _, err := NativeRangeOverlayMode6ByteAddress(0, 3, 2); err == nil {
 		t.Fatal("zero width accepted")
+	}
+}
+
+func TestClearNativeRangeOverlayMode6FieldByte(t *testing.T) {
+	field := make([]byte, 4+3*2*4)
+	binary.LittleEndian.PutUint16(field, 3)
+	binary.LittleEndian.PutUint16(field[2:], 2)
+	for i := 0; i < 6; i++ {
+		field[4+4*i+3] = 0xff
+	}
+	if err := ClearNativeRangeOverlayMode6FieldByte(field, 1, 1); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 6; i++ {
+		want := byte(0xff)
+		if i == 4 { // x + y*width = 1 + 1*3
+			want = 0
+		}
+		if got := field[4+4*i+3]; got != want {
+			t.Fatalf("cell %d high byte=%#x, want %#x", i, got, want)
+		}
+	}
+	before := append([]byte(nil), field...)
+	if err := ClearNativeRangeOverlayMode6FieldByte(field, 3, 1); err == nil {
+		t.Fatal("out-of-range coordinate accepted")
+	}
+	if string(field) != string(before) {
+		t.Fatal("invalid field mutation changed data")
 	}
 }
 
