@@ -367,8 +367,9 @@
 
 ## 第 12 輪 ✅(招募成長/劇情文本/編輯器規劃/政策更新)
 - [x] **gen_campaign v3**(sonnet):26 角色 21 章招募累積(ch30 全 30 人)+ 成長(HP 真表值,
-      AP/DP 近似明標);**增援誠實跳過**(battle_events.json 實為勝負 metadata、
-      event_id→group 卡未反組譯 0x22e5c,經 ch01 ground truth 反測拒絕硬湊)→
+      AP/DP 近似明標);**增援誠實跳過**(battle_events.json 實為勝負 metadata；此處的
+      「event_id→group 未反組譯 0x22e5c」是本輪歷史快照，已由第 13 輪的 `0x1a813`／`0x51b91`
+      證據取代，不得再當現況)→
       docs/data/turn_events.json 真資料 dump + doc26 防誤用註記
 - [x] **story 管線**(sonnet):story_to_script.py,ch01-03 精校文本 156 句(speaker 對映 78-85%);
       引擎 story script 載入(旗艦:Node.Script+loadStoryScript,無檔 fallback)
@@ -394,7 +395,9 @@
       units.json 同目錄 map.json 接上(main.go 未改動)。全 33 圖 + 頂層 map0 重新匯出。
       新增 6 個測試(`move_test.go`)。**限制**:僅步行成本,騎兵/飛行差異(notes.md 另有數字)
       待 Unit 加兵種欄位才能接;地形 AP/DP 戰鬥加成本輪未接。
-- [ ] **0x22e5c RE**(world-map handler:event_id→group 對應)→ 接回合增援
+- [x] **0x22e5c 語意更正**：已確認它是章1專屬固定中場過場，並非 `turn_events.event_id→group` 消費點；
+      真正增援消費鏈為 `0x1a813`（turn/camp filter）→`0x51b91`（58-entry event handler table）→spawn 原語。
+      舊「待反組譯 0x22e5c→接增援」條目已撤回，詳見 `25` §6.1；不得重開同一錯誤工作。
 - [ ] ch04-33 劇情文本精校(30 章,PNG 人眼轉錄;對白已可入庫)
 - [ ] 視窗縮放 filter 查證(可能 linear 暈染,tile-debug 提醒)
 
