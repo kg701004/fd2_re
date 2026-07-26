@@ -564,6 +564,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Preparation input boundary: official `0x19953` maps scan codes `0xe0/0x52/0x1c/0x39` to return `1`, `0x01/0x53` to return `-1`, and updates raw cursor `[0x53c57]` to `0` for `0x4b` or `1` for `0x4d`; all other keys continue waiting. `fdother.ApplyNativePreparationInput` preserves this result/state contract, without labeling the two terminal returns as YES/NO.
 
+   Preparation command-stream boundary: the `0x1ac62` loop reads `base+3*i` records as `{kind:byte,payload:u16le}`. The observed kind branches are `0`/`1` (selector-2 presentation paths), `2` (200ms wait then function-table dispatch), and `3` (indexed resource call); other bytes remain unverified. `fdother.ParseNativePreparationCommands` preserves only the raw stream and refuses truncation, so no command is lowered to an authored event name.
+
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
 
    `fdother.ParseLUTBank`/`DecodeLUTResource` now close the FDOTHER #3 input boundary: its `LMI1` directory contains 23 independent 256-byte tables, not UI cells. The original-archive regression verifies that count and every table length. This loader plus `BlitLUT` is sufficient for a caller that has an evidenced selector; it does not infer one.
