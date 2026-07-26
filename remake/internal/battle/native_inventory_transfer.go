@@ -42,15 +42,30 @@ func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Uni
 	sourceInventory := append([]int(nil), source.Inventory...)
 	sourceEquipped := append([]bool(nil), source.Equipped...)
 	sourceSlots := append([]int(nil), source.InventorySlots...)
+	sourceFlags := append([]int(nil), source.NativeInventoryFlags...)
 	destinationInventory := append([]int(nil), destination.Inventory...)
 	destinationEquipped := append([]bool(nil), destination.Equipped...)
 	destinationSlots := append([]int(nil), destination.InventorySlots...)
+	destinationFlags := append([]int(nil), destination.NativeInventoryFlags...)
+	destinationSlot := firstInventoryHole(destination.InventorySlots)
 	if !removeNativeCompactInventory(source, sourceIndex) || !destination.AddInventoryItem(itemID, false) {
-		source.Inventory, source.Equipped, source.InventorySlots = sourceInventory, sourceEquipped, sourceSlots
-		destination.Inventory, destination.Equipped, destination.InventorySlots = destinationInventory, destinationEquipped, destinationSlots
+		source.Inventory, source.Equipped, source.InventorySlots, source.NativeInventoryFlags = sourceInventory, sourceEquipped, sourceSlots, sourceFlags
+		destination.Inventory, destination.Equipped, destination.InventorySlots, destination.NativeInventoryFlags = destinationInventory, destinationEquipped, destinationSlots, destinationFlags
 		return fmt.Errorf("native inventory transfer: mutation failed")
 	}
+	if len(destination.NativeInventoryFlags) == nativeInventoryCells && destinationSlot >= 0 {
+		destination.NativeInventoryFlags[destinationSlot] = 0
+	}
 	return nil
+}
+
+func firstInventoryHole(slots []int) int {
+	for i, item := range slots {
+		if item == 0xff {
+			return i
+		}
+	}
+	return -1
 }
 
 // removeNativeCompactInventory combines the compact editable view with the
@@ -76,6 +91,10 @@ func removeNativeCompactInventory(u *Unit, compactIndex int) bool {
 	}
 	copy(u.InventorySlots[slot:], u.InventorySlots[slot+1:])
 	u.InventorySlots[len(u.InventorySlots)-1] = 0xff
+	if len(u.NativeInventoryFlags) == nativeInventoryCells {
+		copy(u.NativeInventoryFlags[slot:], u.NativeInventoryFlags[slot+1:])
+		u.NativeInventoryFlags[len(u.NativeInventoryFlags)-1] = 0x80
+	}
 	u.Inventory = append(u.Inventory[:compactIndex], u.Inventory[compactIndex+1:]...)
 	if compactIndex < len(u.Equipped) {
 		u.Equipped = append(u.Equipped[:compactIndex], u.Equipped[compactIndex+1:]...)

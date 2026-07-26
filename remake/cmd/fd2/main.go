@@ -2101,8 +2101,9 @@ func (g *Game) setupChurch() {
 }
 
 func (g *Game) churchTransferSourceIDs() []int {
-	// The native branch filters signed inventory flag bytes. The editable
-	// projection exposes that gate as Equipped; do not use item IDs to infer it.
+	// The native branch keeps every occupied cell whose signed flag is
+	// non-negative (including 0x40 equipped cells); only 0x80 reserved cells
+	// are excluded. Raw constructor flags take precedence over projections.
 	ids := make([]int, 0)
 	for _, id := range g.partyJoinOrder {
 		u, ok := g.partyRoster[id]
@@ -2113,7 +2114,20 @@ func (g *Game) churchTransferSourceIDs() []int {
 			continue
 		}
 		for i := range u.Inventory {
-			if !u.Equipped[i] {
+			eligible := true
+			if i < len(u.Equipped) {
+				// Legacy JSON has no raw flags; preserve its conservative projection
+				// until source provenance is available.
+				eligible = !u.Equipped[i]
+			}
+			if len(u.NativeInventoryFlags) == 8 && len(u.InventorySlots) == 8 {
+				var err error
+				eligible, err = battle.NativeInventoryCompactEligible(u.NativeInventoryFlags, u.InventorySlots, i)
+				if err != nil {
+					eligible = false
+				}
+			}
+			if eligible {
 				ids = append(ids, id)
 				break
 			}
@@ -2132,7 +2146,18 @@ func (g *Game) churchTransferItemSlots(id int) []int {
 	}
 	slots := make([]int, 0)
 	for i := range u.Inventory {
-		if !u.Equipped[i] {
+		eligible := true
+		if i < len(u.Equipped) {
+			eligible = !u.Equipped[i]
+		}
+		if len(u.NativeInventoryFlags) == 8 && len(u.InventorySlots) == 8 {
+			var err error
+			eligible, err = battle.NativeInventoryCompactEligible(u.NativeInventoryFlags, u.InventorySlots, i)
+			if err != nil {
+				return nil
+			}
+		}
+		if eligible {
 			slots = append(slots, i)
 		}
 	}

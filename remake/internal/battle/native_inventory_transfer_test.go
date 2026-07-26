@@ -3,8 +3,8 @@ package battle
 import "testing"
 
 func TestTransferNativeInventoryItemUsesFirstDestinationHole(t *testing.T) {
-	source := &Unit{Inventory: []int{0x44, 0x55}, Equipped: []bool{false, true}, InventorySlots: []int{0x44, 0x55, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}
-	destination := &Unit{Inventory: []int{0x10}, Equipped: []bool{true}, InventorySlots: []int{0xff, 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}
+	source := &Unit{Inventory: []int{0x44, 0x55}, Equipped: []bool{false, true}, InventorySlots: []int{0x44, 0x55, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, NativeInventoryFlags: []int{0, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}}
+	destination := &Unit{Inventory: []int{0x10}, Equipped: []bool{true}, InventorySlots: []int{0xff, 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, NativeInventoryFlags: []int{0x80, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}}
 	if err := TransferNativeInventoryItem(source, 0, destination); err != nil {
 		t.Fatal(err)
 	}
@@ -13,6 +13,9 @@ func TestTransferNativeInventoryItemUsesFirstDestinationHole(t *testing.T) {
 	}
 	if len(destination.Inventory) != 2 || destination.Inventory[1] != 0x44 || destination.InventorySlots[0] != 0x44 || destination.Equipped[1] {
 		t.Fatalf("destination did not receive unequipped item in first hole: inventory=%v slots=%v equipped=%v", destination.Inventory, destination.InventorySlots, destination.Equipped)
+	}
+	if source.NativeInventoryFlags[0] != 0x40 || destination.NativeInventoryFlags[0] != 0 {
+		t.Fatalf("native flags did not shift/clear: source=%v destination=%v", source.NativeInventoryFlags, destination.NativeInventoryFlags)
 	}
 }
 

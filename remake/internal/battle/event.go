@@ -301,6 +301,9 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,
 		}
+		if flags, flagErr := NativeInventoryFlagsFromSource(pm.InventorySlots); flagErr == nil {
+			u.NativeInventoryFlags = flags
+		}
 		if pm.NativeIdentity != nil && *pm.NativeIdentity >= 0 && *pm.NativeIdentity <= 0xff {
 			u.NativeIdentity = *pm.NativeIdentity
 			u.HasNativeIdentity = true

@@ -510,7 +510,8 @@ their caller-owned list entries do not establish service names.
 
 `0x2f8ea` then builds a caller-local list by scanning the selected runtime
 record's eight inventory cells and retaining cells whose signed flag byte is
-non-negative (the native un-equipped/eligible gate remains raw). It enters a
+non-negative. This includes both `0x40` equipped cells and `0x00` ordinary
+cells; only bit-7-set (`0x80`) reserved cells are excluded. It enters a
 second `0x2e0bd`/`0x2df6b` list, confirms through another selector, performs
 the caller's `0x2f4c6` indexed feedback and `0x2d516` amount path, then invokes
 the native item removal/recompute sequence. The `0x1bb8c` call and amount
@@ -531,10 +532,10 @@ not silently wire it to an unnamed church menu branch.
 The remake now exposes this proven transfer topology as an explicit church
 mechanics slice: `transfer_source` → `transfer_item` → `transfer_dest`, with
 bounded two-column cursor movement and atomic source/destination update. Its
-source eligibility uses the editable `Equipped` projection because the raw
-signed flag bytes are not yet exported; therefore this is a mechanics adapter,
-not native UI/renderer parity, and malformed or missing inventory provenance
-must remain fail-closed.
+source eligibility uses constructor-derived raw flags when `inventory_slots`
+provenance is available; legacy JSON without that provenance retains a
+conservative projection and is not native parity. Malformed or missing raw
+provenance remains fail-closed for the native gate.
 
 The other raw branch, `0x2ffa5 → 0x17aed`, is a separate boundary. Its body
 allocates/copies three 64000-byte indexed buffers, calls `0x17e0b` to stage the
@@ -793,3 +794,18 @@ The common `0x22af6` flag branch is now captured by `battle.ApplyNativeRawFlagRe
 Caller-level evidence around `0x24838` must remain separate from the raw lookup adapters. It first branches on `0x24b14(0x64)`; the success arm presents text `#8` and calls `0x112a5(0x16)`. It then branches on `0x24bde(0x12)`: hit presents text `#10`, acting `#0x48`, and `0x32975(0x11)`; miss branches on global count `0x53bef < 0x0f`, choosing text `#13` plus `0x112a5(0x13)` or text `#12` plus `0x32975(0x11)`. Shared sync/presentation follows. These are address/order facts only; no item, character, chapter, or NPC names are inferred from the immediates.
 
 The downstream `0x32975(index)` mutation is independently closed: it computes the selected runtime record at `base + index*0x50` and writes byte `+0x05 = 1`, overwriting the entire byte. `battle.SetNativeRecordByte5One` preserves that overwrite and bounds behavior. It is intentionally separate from the `0x13512` bit7 setter and does not name byte5 as acted, turn, or action state.
+
+### 2026-07-27 — constructor inventory flag materialization
+
+Official IDA 9.4 pseudocode for `0x10c50` closes the constructor's eight raw
+inventory flags. The first cell always receives `0x40`; if source byte 0 is
+`0xff`, source byte 1 is placed in that first item cell and the second flag is
+reserved `0x80`; otherwise the second flag is also `0x40`. Source bytes 2..7
+copy to the remaining item cells, with flag `0x00` for a present item and
+`0x80` for source `0xff`. `battle.NativeInventoryFlagsFromSource` preserves
+only those byte writes, and `NativeInventoryCompactEligible` applies the
+caller gate as a signed-byte test: `0x40` and `0x00` are eligible, `0x80` is
+not. `Load`/`PartyUnits` retain these flags when the eight `inventory_slots`
+source is present; legacy JSON remains a conservative projection. This fixes
+the former incorrect “un-equipped only” description and does not assign an
+item category or church service name.

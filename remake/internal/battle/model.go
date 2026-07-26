@@ -90,6 +90,9 @@ type Unit struct {
 	Inventory       []int   // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
 	Equipped        []bool  // 與 Inventory 對齊；true 表示該欄位目前已裝備
 	InventorySlots  []int   // 原始 8 個 source bytes；0xff 保留空槽位置
+	// NativeInventoryFlags is the constructor's raw eight-cell flag view. It is
+	// present only when InventorySlots came from the proven source layout.
+	NativeInventoryFlags []int
 	// Base* are the persistent pre-remake equipment values. Existing scenario
 	// data stores effective values, so EquipmentBaseSet is true for those
 	// records and newly purchased equipment is added without double counting.
@@ -269,6 +272,9 @@ func (u *Unit) AddInventoryItem(id int, equipped bool) bool {
 		return false
 	}
 	u.InventorySlots[slot] = id
+	if len(u.NativeInventoryFlags) == nativeInventoryCells {
+		u.NativeInventoryFlags[slot] = 0
+	}
 	u.Inventory = append(u.Inventory, id)
 	u.Equipped = append(u.Equipped, equipped)
 	return true
@@ -291,6 +297,9 @@ func (u *Unit) RemoveInventoryIndex(index int) bool {
 	}
 	if slot >= 0 {
 		u.InventorySlots[slot] = 0xff
+		if len(u.NativeInventoryFlags) == nativeInventoryCells {
+			u.NativeInventoryFlags[slot] = 0x80
+		}
 	}
 	u.Inventory = append(u.Inventory[:index], u.Inventory[index+1:]...)
 	if index < len(u.Equipped) {
@@ -578,6 +587,9 @@ func Load(path string) (*State, error) {
 			DeathReward:       u.DeathReward,
 			NativeConstructor: u.NativeConstructor,
 			Group:             u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
+		}
+		if flags, flagErr := NativeInventoryFlagsFromSource(u.InventorySlots); flagErr == nil {
+			nu.NativeInventoryFlags = flags
 		}
 		// Older generated JSON lacks battle_fig; preserve its compatibility
 		// behavior, while new exports carry the direct FDFIELD-b1 value.
