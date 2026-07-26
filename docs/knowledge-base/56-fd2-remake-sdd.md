@@ -634,4 +634,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 ## 9. 本輪決策
 
 本 SDD 完成前不再新增新的 remake handler 或 renderer 語意。`0x29164` non-mirrored figure-fade 的窄 indexed primitive 已以實際 regression 驗證並可提交，但這不等於完整 ending：primary FIGANI、DATO text、mirrored branch 與 player integration 仍 fail-closed。下一輪仍需完成 UI-01/UI-03/UI-07 的 RE evidence matrix，再選一條可截圖的 vertical slice。
+
+### 2026-07-26 — native phase dispatch raw boundary
+
+Official Docker Capstone recheck of `0x1d80b` closes only its first loop's admission boundary: records are addressed as `[0x53a45] + unit*0x50`, bounded by `[0x53beb]`; a candidate must satisfy raw `+6 == 1`, `(+5 & 0x81) == 0`, and `+0x26 == 0`. The native caller then passes `(unitIndex, record+6)` to `0x13a9f`, which may set `[0x51a8f]` before the event and chapter function tables are called and `[0x53ecc]` is checked. `fdother.FindNativePhaseDispatchCandidates` preserves this as an offset-level, fail-closed planner. It intentionally does not invoke callbacks or assign event names; no campaign node may treat it as a completed phase/event renderer.
 Portrait text correction (official IDA, 2026-07-26): the epilogue selector at `0x2c8f7..0x2c8f9` is controlled by the outer `edi` portrait-loop counter, not a bitwise `|45` expression. It is `unit[+8]+0x0c` while `edi < 0xdc`, then fixed current-FDTXT index `0x2d`. `Montage.PlanPortraitText` preserves this exact branch and rejects short unit records; no text renderer is inferred from the mapping.
