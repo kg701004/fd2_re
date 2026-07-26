@@ -38,7 +38,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | 原語 | linear | 次數 | 作用 | 狀態 |
 |---|---|---|---|---|
 | **查單位 raw bit** | `0x3453e` | 36 | `NativeRecordByte5Bit0(idx)`：`[0x53a45] + idx*0x50 + 5` 的 `&1`；高階語意必須由 caller branch 證明 | [驗] |
-| **handler prologue** | `0x205be` | 15 | 預設 `[0x53ecc]=2` → 清 `[0x53ecc]=0` → `call 0x1088d`(載該章 FDTXT 文本/腳本) | [驗] |
+| **handler prologue** | `0x205be` | 15 | 預設 `[0x53ecc]=2` → 清 `[0x53ecc]=0` → `call 0x1088d`（完整章節 loader：FDTXT + FDFIELD/roster/map） | [驗] |
 | **繪事件畫面** | `0x15f84` | 6 | 全螢幕圖繪製(過場 / 事件畫面) | [驗] |
 | 我方名冊查詢 | `0x33499(id)` | 1(章16) | `roster_has(id)`:查我方名冊 `[0x53bf7]`(32槽×0x50B)byte[+8]==id | [驗] |
 
@@ -53,7 +53,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 ## 5. 實例:章 1 handler `0x206c5` [驗]
 
 ```
-0x206d0  call 0x205be             ; prologue:載章節文本、預設碼
+0x206d0  call 0x205be             ; prologue:進入完整章節 loader、設定預設碼
 0x206d5  edx = 5                   ; 迴圈單位 5..10
 0x206dd  cmp edx,0xb; jge 0x206fb
 0x206ed  eax=[0x53a45]            ; 單位陣列
