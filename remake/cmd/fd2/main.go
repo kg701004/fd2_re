@@ -61,61 +61,64 @@ type MapData struct {
 }
 
 type Game struct {
-	m                 *MapData
-	nativeMapAssets   *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
-	tileset           *ebiten.Image
-	tiles             []*ebiten.Image     // 切好的圖塊
-	st                *battle.State       // 戰鬥狀態(單位)
-	sc                *battle.Scenario    // 劇本(事件系統,doc 29)
-	dialog            []battle.DialogLine // 待顯示對話(事件產生,含說話者)
-	storyBG           bool                // 場景背景模式(story 節點指定 Map):鏡頭固定不跟游標,不畫單位/游標/HUD(doc23 §4)
-	storyActors       []battle.Unit       // 原版目前已 materialize 的 scene unit array；index 只在該 load/spawn 時序內有意義
-	storyRoster       []battle.Unit       // LOADCH 保留的 FDFIELD records；SPAWN 按 group 順序 append 到 storyActors
-	storySpawned      map[int]bool        // 原版 group 已 materialize；防止 handler 重複 SPAWN 時重複 append
-	partyMembers      map[int]bool        // JOIN 建立的永久玩家名冊；key=原版 0..31 charID，不使用 NPC portrait
-	partyJoinOrder    []int               // JOIN 首次出現順序；章0 cutscene 的 party runtime slot 以此為準
-	partyRoster       map[int]battle.Unit // 0x11506 戰後同步的跨關角色能力／HP／MP／經驗快照
-	partyDeploy       map[int]bool        // preparation 0x318ad 的本戰出擊勾選；不改永久 JOIN 名冊
-	prepIDs           []int               // preparation UI 角色順序（JOIN chronology）
-	prepSel           int                 // preparation UI 游標
-	prepLimit         int                 // preparation UI 原版出擊上限（15，末段 19）
-	churchSel         int                 // church service menu cursor (0..3)
-	churchMode        string              // menu / revive / class
-	churchIDs         []int               // current church candidate ids
-	churchClassID     int                 // selected class-change candidate
-	churchBranches    []campaign.ClassChangeBranch
-	titleSlotSel      int // title LOAD selector: native 0x30550 slots 0..3
-	classChangeTable  campaign.ClassChangeTable
-	classChangeGrowth map[int]campaign.ClassChangeGrowth
-	handlerChapter    int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter
-	storyWalks        []*storyWalkJob // 場景走位動畫佇列(doc46 §5.3);逐幀推進、完成後移除
-	storyAutoAdvance  int             // story 節點無對白時的自動轉場倒數幀(doc46 行軍蒙太奇,0=不自動)
-	storyView         *ebiten.Image   // story 場景離屏世界層(320×200,放大 storyZoom 倍貼上畫布;2-1 原版取景)
-	walkFirst         bool            // 本節點:進場走位走完才顯示對白(campaign.Node.WalkFirst)
-	followWalk        bool            // 本節點:走位期間鏡頭跟隨走位者(campaign.Node.FollowWalk;beat walk 依 Follow 逐拍設值)
-	camMaxY           float64         // 本節點:鏡頭 Y 上限(campaign.Node.CamMaxY;0=不限)
-	camPan            *camPanJob      // beat「pan」進行中(doc50 §1);storyBG 專用,與 followWalk 互斥
-	focusJob          *focusUnitJob   // beat「focus_unit」：依原版 0x12cea 先 X 後 Y 逐格移動游標／鏡頭
-	actJob            *actPoseJob     // beat「act」進行中(近似姿態循環,見 actPoseJob 註解)
-	beats             []campaign.Beat // 目前 cutscene 節點的過場原語序列(doc50 §2)
-	beatIdx           int             // 目前執行到第幾拍(-1=尚未開始)
-	beatDelay         int             // beat「delay」剩餘幀數(0=非等待中)
-	battleEvent       *battleEventRun // 戰場事件的阻塞 action 序列；與 campaign BeatRunner 分離
-	battleEventDelay  int             // battle event delay 剩餘幀數
-	campLines         []campaign.Line // cutscene 節點載入的章文本(dialog beat 依 Line/Count 取子段)
-	dlgShown          int             // 對話框目前顯示的說話者(dlgNone=無;換人時播縮/展動畫)
-	dlgUpper          *bool           // 與 dlgShown 同步的上/下框覆蓋(來自 DialogLine.Upper;nil=沿用預設規則)
-	dlgPhase          int             // 對話框動畫相位:0=常態 1=縮小(換人前收合) 2=展開
-	dlgT              int             // 對話框動畫相位內計時(幀)
-	dlgPage           int             // 目前對白的頁碼(0起);一句>3行時分頁,Enter 先翻頁翻完才換句(使用者回饋 2026-07-05)
-	dlgScrollT        int             // 分頁捲動剩餘幀數(0=靜止)
-	dlgScrollFrom     int             // 分頁捲動開始頁碼
-	fade              *storyFade      // 場景淡出/淡入轉場(doc46 §5.2)
-	transitionReveal  *transitionRevealJob
-	nativeEnding      *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
-	walk              *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
-	camp              *campaign.Runner     // 劇本節點圖(doc 19;FD2_CAMPAIGN 啟用)
-	campSel           int                  // choice 節點游標
+	m                    *MapData
+	nativeMapAssets      *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
+	tileset              *ebiten.Image
+	tiles                []*ebiten.Image     // 切好的圖塊
+	st                   *battle.State       // 戰鬥狀態(單位)
+	sc                   *battle.Scenario    // 劇本(事件系統,doc 29)
+	dialog               []battle.DialogLine // 待顯示對話(事件產生,含說話者)
+	storyBG              bool                // 場景背景模式(story 節點指定 Map):鏡頭固定不跟游標,不畫單位/游標/HUD(doc23 §4)
+	storyActors          []battle.Unit       // 原版目前已 materialize 的 scene unit array；index 只在該 load/spawn 時序內有意義
+	storyRoster          []battle.Unit       // LOADCH 保留的 FDFIELD records；SPAWN 按 group 順序 append 到 storyActors
+	storySpawned         map[int]bool        // 原版 group 已 materialize；防止 handler 重複 SPAWN 時重複 append
+	partyMembers         map[int]bool        // JOIN 建立的永久玩家名冊；key=原版 0..31 charID，不使用 NPC portrait
+	partyJoinOrder       []int               // JOIN 首次出現順序；章0 cutscene 的 party runtime slot 以此為準
+	partyRoster          map[int]battle.Unit // 0x11506 戰後同步的跨關角色能力／HP／MP／經驗快照
+	partyDeploy          map[int]bool        // preparation 0x318ad 的本戰出擊勾選；不改永久 JOIN 名冊
+	prepIDs              []int               // preparation UI 角色順序（JOIN chronology）
+	prepSel              int                 // preparation UI 游標
+	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
+	churchSel            int                 // church service menu cursor (0..3)
+	churchMode           string              // menu / transfer_source / transfer_item / transfer_dest / revive / class
+	churchIDs            []int               // current church candidate ids
+	churchTransferSource int                 // raw transfer source roster id
+	churchTransferItem   int                 // compact source inventory index
+	churchTransferItems  []int               // compact source inventory indices
+	churchClassID        int                 // selected class-change candidate
+	churchBranches       []campaign.ClassChangeBranch
+	titleSlotSel         int // title LOAD selector: native 0x30550 slots 0..3
+	classChangeTable     campaign.ClassChangeTable
+	classChangeGrowth    map[int]campaign.ClassChangeGrowth
+	handlerChapter       int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter
+	storyWalks           []*storyWalkJob // 場景走位動畫佇列(doc46 §5.3);逐幀推進、完成後移除
+	storyAutoAdvance     int             // story 節點無對白時的自動轉場倒數幀(doc46 行軍蒙太奇,0=不自動)
+	storyView            *ebiten.Image   // story 場景離屏世界層(320×200,放大 storyZoom 倍貼上畫布;2-1 原版取景)
+	walkFirst            bool            // 本節點:進場走位走完才顯示對白(campaign.Node.WalkFirst)
+	followWalk           bool            // 本節點:走位期間鏡頭跟隨走位者(campaign.Node.FollowWalk;beat walk 依 Follow 逐拍設值)
+	camMaxY              float64         // 本節點:鏡頭 Y 上限(campaign.Node.CamMaxY;0=不限)
+	camPan               *camPanJob      // beat「pan」進行中(doc50 §1);storyBG 專用,與 followWalk 互斥
+	focusJob             *focusUnitJob   // beat「focus_unit」：依原版 0x12cea 先 X 後 Y 逐格移動游標／鏡頭
+	actJob               *actPoseJob     // beat「act」進行中(近似姿態循環,見 actPoseJob 註解)
+	beats                []campaign.Beat // 目前 cutscene 節點的過場原語序列(doc50 §2)
+	beatIdx              int             // 目前執行到第幾拍(-1=尚未開始)
+	beatDelay            int             // beat「delay」剩餘幀數(0=非等待中)
+	battleEvent          *battleEventRun // 戰場事件的阻塞 action 序列；與 campaign BeatRunner 分離
+	battleEventDelay     int             // battle event delay 剩餘幀數
+	campLines            []campaign.Line // cutscene 節點載入的章文本(dialog beat 依 Line/Count 取子段)
+	dlgShown             int             // 對話框目前顯示的說話者(dlgNone=無;換人時播縮/展動畫)
+	dlgUpper             *bool           // 與 dlgShown 同步的上/下框覆蓋(來自 DialogLine.Upper;nil=沿用預設規則)
+	dlgPhase             int             // 對話框動畫相位:0=常態 1=縮小(換人前收合) 2=展開
+	dlgT                 int             // 對話框動畫相位內計時(幀)
+	dlgPage              int             // 目前對白的頁碼(0起);一句>3行時分頁,Enter 先翻頁翻完才換句(使用者回饋 2026-07-05)
+	dlgScrollT           int             // 分頁捲動剩餘幀數(0=靜止)
+	dlgScrollFrom        int             // 分頁捲動開始頁碼
+	fade                 *storyFade      // 場景淡出/淡入轉場(doc46 §5.2)
+	transitionReveal     *transitionRevealJob
+	nativeEnding         *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
+	walk                 *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
+	camp                 *campaign.Runner     // 劇本節點圖(doc 19;FD2_CAMPAIGN 啟用)
+	campSel              int                  // choice 節點游標
 	// 開頭動畫/主選單(title.go,doc23)
 	titleAssets *titleAssets
 	titlePhase  string  // "scroll"→"menu"→""(進遊戲)
@@ -2090,8 +2093,62 @@ func (g *Game) setupChurch() {
 	g.churchSel = 0
 	g.churchMode = "menu"
 	g.churchIDs = nil
+	g.churchTransferSource = -1
+	g.churchTransferItem = -1
+	g.churchTransferItems = nil
 	g.churchClassID = -1
 	g.churchBranches = nil
+}
+
+func (g *Game) churchTransferSourceIDs() []int {
+	// The native branch filters signed inventory flag bytes. The editable
+	// projection exposes that gate as Equipped; do not use item IDs to infer it.
+	ids := make([]int, 0)
+	for _, id := range g.partyJoinOrder {
+		u, ok := g.partyRoster[id]
+		if !ok {
+			continue
+		}
+		if len(u.Equipped) != len(u.Inventory) {
+			continue
+		}
+		for i := range u.Inventory {
+			if !u.Equipped[i] {
+				ids = append(ids, id)
+				break
+			}
+		}
+	}
+	return ids
+}
+
+func (g *Game) churchTransferItemSlots(id int) []int {
+	u, ok := g.partyRoster[id]
+	if !ok {
+		return nil
+	}
+	if len(u.Equipped) != len(u.Inventory) {
+		return nil
+	}
+	slots := make([]int, 0)
+	for i := range u.Inventory {
+		if !u.Equipped[i] {
+			slots = append(slots, i)
+		}
+	}
+	return slots
+}
+
+func (g *Game) churchTransferDestinationIDs(source int) []int {
+	ids := make([]int, 0, len(g.partyJoinOrder))
+	for _, id := range g.partyJoinOrder {
+		if id != source {
+			if _, ok := g.partyRoster[id]; ok {
+				ids = append(ids, id)
+			}
+		}
+	}
+	return ids
 }
 
 func (g *Game) churchCandidates(mode string) []int {
@@ -2303,12 +2360,78 @@ func (g *Game) campInput() bool {
 			}
 			if enter {
 				switch g.churchSel {
+				case 1: // native 0x2f8ea raw source→destination inventory transfer
+					g.churchMode = "transfer_source"
+					g.churchIDs = g.churchTransferSourceIDs()
+					g.churchSel = 0
 				case 2, 3: // native 0x30dc3 revive / 0x31385 class-change services
 					g.churchMode = map[int]string{2: "revive", 3: "class"}[g.churchSel]
 					g.churchIDs = g.churchCandidates(g.churchMode)
 					g.churchSel = 0
 				default:
 					g.msg = "此教會服務尚待原版 callee 完整接線"
+				}
+			}
+			return true
+		}
+		if g.churchMode == "transfer_source" || g.churchMode == "transfer_item" || g.churchMode == "transfer_dest" {
+			listLen := len(g.churchIDs)
+			if g.churchMode == "transfer_item" {
+				listLen = len(g.churchTransferItems)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, -1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, 1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, -2)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, 2)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				switch g.churchMode {
+				case "transfer_source":
+					g.churchMode = "menu"
+				case "transfer_item":
+					g.churchMode = "transfer_source"
+					g.churchIDs = g.churchTransferSourceIDs()
+				case "transfer_dest":
+					g.churchMode = "transfer_item"
+					g.churchTransferItems = g.churchTransferItemSlots(g.churchTransferSource)
+				}
+				g.churchSel = 0
+				return true
+			}
+			if enter && listLen > 0 && g.churchSel < listLen {
+				switch g.churchMode {
+				case "transfer_source":
+					g.churchTransferSource = g.churchIDs[g.churchSel]
+					g.churchTransferItems = g.churchTransferItemSlots(g.churchTransferSource)
+					g.churchMode = "transfer_item"
+					g.churchSel = 0
+				case "transfer_item":
+					g.churchTransferItem = g.churchTransferItems[g.churchSel]
+					g.churchIDs = g.churchTransferDestinationIDs(g.churchTransferSource)
+					g.churchMode = "transfer_dest"
+					g.churchSel = 0
+				case "transfer_dest":
+					source := g.partyRoster[g.churchTransferSource]
+					itemID := source.Inventory[g.churchTransferItem]
+					destinationID := g.churchIDs[g.churchSel]
+					destination := g.partyRoster[destinationID]
+					if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
+						g.msg = err.Error()
+					} else {
+						g.partyRoster[g.churchTransferSource] = source
+						g.partyRoster[destinationID] = destination
+						g.msg = fmt.Sprintf("物品 %02Xh 已轉移", itemID)
+					}
+					g.churchMode = "menu"
+					g.churchIDs = nil
+					g.churchSel = 0
 				}
 			}
 			return true
@@ -4373,6 +4496,43 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 				g.font.Draw(screen, pre+label, 188, 158+float64(i)*24, 1.0, c)
 			}
 			g.font.Draw(screen, "←/→ 切換／Enter 選擇／ESC 返回城鎮", 188, 266, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
+		} else if g.churchMode == "transfer_source" || g.churchMode == "transfer_item" || g.churchMode == "transfer_dest" {
+			fillBox(120, 90, 400, 260)
+			title := "選擇來源角色"
+			if g.churchMode == "transfer_item" {
+				title = "選擇未裝備物品"
+			} else if g.churchMode == "transfer_dest" {
+				title = "選擇目的角色"
+			}
+			g.font.Draw(screen, title, 150, 108, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+			listLen := len(g.churchIDs)
+			if g.churchMode == "transfer_item" {
+				listLen = len(g.churchTransferItems)
+			}
+			if listLen == 0 {
+				g.font.Draw(screen, "目前沒有可選項目", 150, 150, 1.0, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
+			}
+			for i := 0; i < listLen; i++ {
+				pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+				if i == g.churchSel {
+					pre, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
+				}
+				label := ""
+				if g.churchMode == "transfer_item" {
+					label = fmt.Sprintf("物品 %02Xh", g.partyRoster[g.churchTransferSource].Inventory[g.churchTransferItems[i]])
+				} else {
+					id := g.churchIDs[i]
+					name := fmt.Sprintf("角色%d", id)
+					if u, ok := g.partyRoster[id]; ok && u.Name != "" {
+						name = u.Name
+					}
+					label = name
+				}
+				x := 150.0 + float64(i%2)*180
+				y := 150.0 + float64(i/2)*26
+				g.font.Draw(screen, fmt.Sprintf("%s%s", pre, label), x, y, 1.0, c)
+			}
+			g.font.Draw(screen, "←→±1／↑↓±2／Enter 確認／ESC 返回", 150, 330, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 		} else {
 			listLen := len(g.churchIDs)
 			if g.churchMode == "class_target" {

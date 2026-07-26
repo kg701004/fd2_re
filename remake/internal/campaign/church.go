@@ -37,6 +37,29 @@ func AdvanceNativeChurchServiceSelection(current, delta int) int {
 	return current
 }
 
+// AdvanceNativeTwoColumnSelection mirrors the bounded list movement used by
+// 0x2e6b8/0x2df6b. delta is one of -2,-1,+1,+2 (left/up/right/down); invalid
+// counts or moves leave the cursor unchanged, and there is no wrap.
+func AdvanceNativeTwoColumnSelection(current, count, delta int) int {
+	if count <= 0 {
+		return 0
+	}
+	if current < 0 {
+		current = 0
+	}
+	if current >= count {
+		current = count - 1
+	}
+	if delta != -2 && delta != -1 && delta != 1 && delta != 2 {
+		return current
+	}
+	next := current + delta
+	if next < 0 || next >= count {
+		return current
+	}
+	return next
+}
+
 // ClassName is the EXE mechanical class-name table used by target class IDs.
 func ClassName(classID int) string {
 	if classID >= 0 && classID < len(classNames) {

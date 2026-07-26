@@ -528,6 +528,14 @@ destination cell. The item ID and higher-level menu label remain raw; the
 remake exposes `TransferNativeInventoryItem` as an atomic adapter but does
 not silently wire it to an unnamed church menu branch.
 
+The remake now exposes this proven transfer topology as an explicit church
+mechanics slice: `transfer_source` → `transfer_item` → `transfer_dest`, with
+bounded two-column cursor movement and atomic source/destination update. Its
+source eligibility uses the editable `Equipped` projection because the raw
+signed flag bytes are not yet exported; therefore this is a mechanics adapter,
+not native UI/renderer parity, and malformed or missing inventory provenance
+must remain fail-closed.
+
 The other raw branch, `0x2ffa5 → 0x17aed`, is a separate boundary. Its body
 allocates/copies three 64000-byte indexed buffers, calls `0x17e0b` to stage the
 selected record, calls `0x16c57(0)` for the input wait, conditionally renders

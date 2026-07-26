@@ -37,6 +37,26 @@ func TestAdvanceNativeChurchServiceSelectionWrapsLeftRight(t *testing.T) {
 	}
 }
 
+func TestAdvanceNativeTwoColumnSelectionIsBounded(t *testing.T) {
+	tests := []struct {
+		current, count, delta, want int
+	}{
+		{0, 8, -1, 0},
+		{0, 8, -2, 0},
+		{1, 8, 1, 2},
+		{2, 8, -2, 0},
+		{6, 8, 2, 6},
+		{5, 8, 2, 7},
+		{7, 8, 1, 7},
+		{99, 2, -1, 1},
+	}
+	for _, tc := range tests {
+		if got := AdvanceNativeTwoColumnSelection(tc.current, tc.count, tc.delta); got != tc.want {
+			t.Fatalf("two-column current=%d count=%d delta=%d got=%d want=%d", tc.current, tc.count, tc.delta, got, tc.want)
+		}
+	}
+}
+
 func TestReviveUnitUsesLevelFeeAndRestoresNativeFields(t *testing.T) {
 	u := &battle.Unit{Fig: 9, Lv: 4, HP: 0, MaxHP: 37, OnField: false}
 	gold, cost, err := ReviveUnit(321, u, 7)
