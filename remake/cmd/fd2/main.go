@@ -1304,17 +1304,31 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 				return false, fmt.Errorf("any_unit_inactive slot %d unavailable (units=%d)", slot, len(g.st.Units))
 			}
 		}
+		rawComplete := true
+		for _, unit := range g.st.Units {
+			if unit == nil || !unit.HasNativeRecordByte5 {
+				rawComplete = false
+				break
+			}
+		}
 		for _, slot := range condition.UnitSlots {
 			unit := g.st.Units[slot]
+			if rawComplete {
+				// A fully materialized runtime must use the native raw predicate;
+				// do not silently substitute HP/OnField semantics.
+				if unit.NativeRecordByte5&1 != 0 {
+					return true, nil
+				}
+				continue
+			}
+			// Compatibility projection for old authored JSON without complete raw
+			// provenance. This remains E1, not native parity; SDD56 documents it.
 			if unit.HasNativeRecordByte5 {
 				if unit.NativeRecordByte5&1 != 0 {
 					return true, nil
 				}
 				continue
 			}
-			// Compatibility projection for old authored JSON without raw record
-			// provenance. This remains E1, not native parity; SDD56 documents the
-			// gap and future LOADCH paths must remove this fallback.
 			if !unit.OnField || !unit.Alive() {
 				return true, nil
 			}
