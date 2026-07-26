@@ -40,7 +40,7 @@
 ## 1. FIGANI 載入(組 × 3)+ buffer
 
 - 攻方組 = `unit_attacker[+7]`(0x28ad6 → `[esp+0x10]`);守方組 = `unit_defender[+7]`(0x28ade → `[esp+0xc]`)。
-  與 doc 31/06 一致:`unit[+7]` = FDICON/FIGANI 組號。
+  這是 battle FIGANI selector；map FDICON `0x127e0` 另讀 `unit+2`，不得稱為同一欄。
 - **FIGANI 動畫 index = 組 × 3**:0x28c57 `mov edx,[esp+0x10]; shl eax,2; sub eax,edx`(= 組×4−組 = 組×3),
   再 0x28c78 `組×3`、0x28c99 `inc`(組×3+1)。**每組 3 個動畫**(待機 / 出招 / 受擊,+0/+1/+2;對映待確認),
   確認了既有結論「FIGANI = sprite組 × 3」。
@@ -392,7 +392,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | [0x54107]/[0x54103]/[0x5410b]/[0x5410f]/[0x54113] | BG 各層 buffer |
 | [0x53c03] | 當前章節 |
 | [0x53c4b] | 守方 unit idx(0x1561f 傳入) |
-| unit[+7] | FIGANI/FDICON 組號 |
+| unit[+7] | battle FIGANI resource selector（`×3`）；非 map FDICON `unit+2` selector |
 | unit[+0x40]/[+0x42] (word) | **當前 HP / 最大 HP**(0x18c6d 血條 `cur×101/max` + 第一性原理釘死;spawn 0x10fe9 設 cur=max)。✅ 已推翻舊「戰場格 X」誤標 |
 | unit[+0x44]/[+0x46] (word) | **當前 MP / 最大 MP** |
 | unit[+0x48]/[+0x4a] (word) | **derived AP / DP**（class synthesis `0x1b750` 與 command 17/18 的 15% modifier writers）；非螢幕座標 |

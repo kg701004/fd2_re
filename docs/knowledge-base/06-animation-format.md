@@ -105,9 +105,11 @@ codec 解碼只還原「幀→圖」;**哪個單位用哪個 FIGANI** 反組譯�
 - 戰鬥演出載入碼 `0x287b5`:`movzx esi,[ebx+7]`(讀 `unit[+7]`),
   `0x2884c` `mov eax,esi; shl eax,2; sub eax,esi`(= esi×4−esi = **esi×3**)→ 組 FIGANI 資源 index;`inc` 後再載 `×3+1`。
 - **FIGANI index = `unit[+7]` × 3**(+0/+1 兩攻擊動作幀組)。
-- **`unit[+7]` = FDICON 地圖組號(恆等,我方敵方統一)**:同一 `unit[+7]` 經 `0x11019` ×12 算地圖 sprite、經 `0x2884c` ×3 算 FIGANI。
-  - 索爾組0→FIGANI0、亞雷斯組4→12、**盜賊組96→FIGANI288**(實測 FIGANI_288/289=盜賊,對上 orig_05 守方)。
-- **remake**:`figaniIndex(fig)=fig×3`,不需任何對應表(地圖組=FIGANI/3)。
+- `unit[+7]` 是這條**戰鬥 FIGANI** selector 的 raw input；它不可和地圖 FDICON selector 混稱。後者已由
+  `0x127e0` 直接證實使用 `unit[+2]×12`。已盤點 roster 的兩個 visual id 可相同，但這不使 ABI 欄位等價。
+  - 索爾的已驗證 battle value 0→FIGANI0、亞雷斯4→12、**盜賊96→FIGANI288**(實測 FIGANI_288/289=盜賊,對上 orig_05 守方)。
+- **remake**:`figaniIndex` 只處理已驗證的 battle visual input `×3`；直到 exporter 保存 `unit+2` 和 `unit+7`
+  的各自來源，不能用「地圖組=FIGANI/3」作全域對應表。
 
 > 教訓:做動畫前先 RE 組成機制,別 codec 解碼完就視覺猜 index(FIGANI_289=96×3+1 印證就是組×3)。
 

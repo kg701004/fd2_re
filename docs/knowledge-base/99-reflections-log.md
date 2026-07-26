@@ -260,6 +260,6 @@
 - **FDICON=地圖單位 / FIGANI=戰鬥全身**,兩套分工別混(之前誤用 FIGANI 當地圖單位)。
 - 原版實機截圖是最強 oracle:一眼定位「該找什麼 sprite」。
 
-**★ sprite / 動畫機制定論(反組譯)**:① 地圖 sprite index = **組×12 + 方向×3 + 幀**(0x128e0–0x12932,組=`unit[+2]` 經 0x11019)。② **角色 id = 肖像(FA+0x0F)= sprite組(Z1+0x0A)= FDICON組,我方 0–31 三者恆等**(memory.md 肖像表對上角色表 `[0x55BA1]`,職業 32/32 吻合;凱拉斯=id16)。③ **戰鬥 FIGANI = 組×3**(0x2884c),全螢幕演出主函式 0x28a6c **無 runtime 縮放**(守小攻大是 FIGANI 美術本身尺寸,景深燒進素材);完整繪圖機制見 doc 35。
+**★ sprite / 動畫機制定論(反組譯，2026-07-26 勘誤)**:① 地圖 sprite index = **`unit+2`×12 + 方向×3 + 幀**(0x128e0–0x12932,經 0x11019)。② 已驗證的玩家 roster 可讓角色 id／肖像／map visual id 相等，但不能把它寫成所有 runtime 的欄位 alias。③ **戰鬥 FIGANI = `unit+7`×3**(0x2884c)，與地圖 selector 是不同 raw field；全螢幕演出主函式 0x28a6c **無 runtime 縮放**(守小攻大是 FIGANI 美術本身尺寸,景深燒進素材);完整繪圖機制見 doc 35。
 
 > 教訓(高代價,踩過兩次):撞到「打破規律的特例」先查權威資料(攻略 memory.md / 實機)再下手,**別憑自己未證實的角色↔檔名對應建例外映射表** → 循環論證一錯到底。sprite 誤判 DATO_067=凱拉斯、FIGANI 亂建 figaniID,都是同一坑。

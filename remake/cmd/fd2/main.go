@@ -2762,9 +2762,11 @@ func (g *Game) newAtkAnim(atkGroup, defGroup int, atkName, defName string,
 		fpt: fpt, terrain: terrain, atkOwn: atkOwn}
 }
 
-// figaniIndex:戰鬥全身動畫 FIGANI index = FDICON組 × 3(恆等,反組譯 0x2884c:unit[+7]×3;doc06)。
-// unit[+7]=FDICON組(0x11019 ×12→地圖sprite、0x2884c ×3→FIGANI,同一欄)。我方敵方統一:
-// 索爾組0→FIGANI0、亞雷斯組4→12、盜賊組96→288。地圖組=FIGANI/3,不需對應表。
+// figaniIndex maps the battle FIGANI visual selector to its resource trio.
+// Native ABI keeps this separate from the map FDICON selector: 0x127e0 uses
+// unit+2 ×12 for map sprites, while 0x287b5..0x2884c uses unit+7 ×3 for
+// FIGANI. Current exported records only pass the shared visual id where that
+// equality is evidenced; this helper must not be read as an ABI field alias.
 func figaniIndex(fig int) int { return fig * 3 }
 
 // loadSprites 載入 assets/sprites/fig_NNN_fMM.png,按 fig index 分組成幀序列。
