@@ -49,6 +49,10 @@ TARGETS = (
     # Post-battle layout primitive.  Retain its exact IDA function boundary
     # and callers while call-site array ABI is audited separately.
     0x233C6,
+    # Multi-pass map transition compositor.  This is deliberately separate
+    # from acting: its ABI is camera/strip geometry and must not become an
+    # actor-animation alias.
+    0x24618,
     0x4E040,
     0x4E4A2,
     0x4E4D1,
