@@ -567,6 +567,13 @@ FDOTHER resources `29` and `63`, while every other variant selects resource
 does not name the four services, call them, or bypass the existing campaign
 town/shop UI gate.
 
+The sibling hotel/preparation family is represented by
+`fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,
+then selector `0/1/2` maps to `0x2ffa5/0x30012/0x301f4`; selector `3` first
+reads the raw preparation input through `0x19953` and then enters `0x197e5`.
+This preserves the observed two-call branch without naming the services or
+executing the scene.
+
 ### Church service selector input/transition boundary (IDA E0, 2026-07-27)
 
 Official IDA 9.4 decompilation closes the previously missing selector edge:
