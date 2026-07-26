@@ -5,7 +5,7 @@
 > 方法:`tools/event_handler_dump.py`(遞迴反組譯單一 handler + 標註事件原語);機器可讀結果在 [`docs/data/battle_events.json`](../data/battle_events.json)。
 > 標 **[驗]**(disasm 直證)/ **[推]**(語意推定)。
 
-> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的勝負判定 metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,30 章裡只有 7 章有 `roster_has`/`unit_flag` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json);但 event_id → 具體哪個 unit group 出場,線索在尚未反組譯的 world-map/中場 handler(`0x22e5c`,doc 25 §6,標 `[阻]`),不在本篇任何資料裡——見 `tools/gen_campaign.py` 檔頭「RE 撞牆記錄」段落的實測反例。
+> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的勝負判定 metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,30 章裡只有 7 章有 `roster_has`/`unit_flag` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json)。event_id→group 的消費鏈已由 `25` §6.1 閉合：`0x1a813` 依 turn/camp 篩選，呼叫 `0x51b91` 的 58-entry handler，再由 handler 呼叫 spawn 原語；`0x22e5c` 是章1專屬固定中場過場，與 turn_events 無關。`tools/gen_campaign.py` 舊「RE 撞牆」文字僅保留歷史 provenance，不得當成現況。
 
 ## 1. 事件原語(handler 的「指令集」)
 

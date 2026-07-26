@@ -150,7 +150,9 @@ doc 23 把 `[0x53ecc]` 標為「戰鬥結果碼(1 事件、2 勝利),戰後狀�
 ## 本輪受阻 / 待續(誠實標註)
 
 - **[阻]** `0x25ebb` 是個大 driver,內部「新遊戲分支 / 讀檔分支 / 戰役續打迴圈」的精確邊界與各分支條件未逐條展開(只確認三者匯流到 0x26130 進戰場)。`funcof` 用「最近 call target」近似函式宿主,對「非被 call、靠 fall-through 進入」的相鄰函式入口會歸併——描述以「driver 區段」為準,未強斷 C 函式邊界。
-- **[阻]** 相位變數 `[0x53ecc]` 的完整戰後狀態圖(1=事件 0x22e5c、2=勝利跳表 0x51de9)未逐分支追完。
+- **狀態校正**：`[0x53ecc]==1` 的 caller 與 `0x22e5c` 已確認為章1專屬固定中場過場；回合增援不是由此函式消費，
+  而是 `0x1a813`→`0x51b91`→spawn 原語。`[0x53ecc]==2` 的戰後跳表仍有各章 town/shop/preparation/ending 分支待逐列 E0/E2 核對，
+  因此只撤回「0x22e5c 未解」斷言，不宣稱整個 campaign flow 已完成。
 - **工具**:`callgraph_le.py` 的 `edges`/`path` 為近似版;間接呼叫(跳表)需手動以 `jtab` 解出再分析。
 
 > 相關:doc 23(開場流程,本篇釘死其受阻項)· doc 12(BGM)· doc 19/21(重製對映)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`、`tools/le_xref.py`。
