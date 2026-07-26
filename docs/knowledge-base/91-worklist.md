@@ -817,3 +817,4 @@
 - [x] **RE-RNG-GROWTH-MARKER**：官方 Capstone 固定 `0x4e893` 為 `rol16(state+0x9014,3)`；`0x22721/0x22866/0x22997` 的 `idiv 4` 取 EDX remainder，再 `+2` 寫 marker。新增 `fdother.NativeRNGStep/NativeRNGMarker` regression，刪除 quotient-based 誤讀；成長欄位與 FPU multiplier 仍未命名。
 - [x] **RE-RAW-WORD-GROWTH-22721**：官方 IDA 9.4 固定 `+0x22` zero gate、RNG marker、`+0x48` 的 `trunc(word*0.15+1)` 與 `2*effective(+0x21)` raw accumulator；新增 `battle.ApplyNativeRawWordStep`，覆蓋 marked skip、RNG consumption、rounding、word update、score 與 preflight bounds。未命名成長效果，未接 presentation/tail。
 - [x] **RE-RAW-WORD-GROWTH-22866**：Docker Capstone 固定 `0x22866` 與 `0x22721` 同構，僅 offsets 改為 marker `+0x23`、word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用實作並有 variant regression，未命名欄位。
+- [x] **RE-RAW-PAIR-22997**：Docker Capstone 固定 `0x22997` marker `+0x24` zero gate、同 RNG marker、raw `+0x4c/+0x4e` 各 `+0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，覆蓋 wrap/marked skip/preflight regression，未命名欄位。
