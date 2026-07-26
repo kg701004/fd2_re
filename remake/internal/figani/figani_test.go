@@ -45,6 +45,24 @@ func TestDecodeOriginalFIGANIResource(t *testing.T) {
 	}
 }
 
+func TestDecodeOriginalPlayerClass19HeaderFlags(t *testing.T) {
+	const path = "../../../org_game/炎龍騎士團/FLAME2/FIGANI.DAT"
+	// Player-reachable class-19 sources use visual groups 4..7 (optional
+	// class change) or 20 (Sara's initial class). 0x2b659 receives group*3+1.
+	for resource, want := range map[int]byte{13: 2, 16: 2, 19: 2, 22: 5, 61: 5} {
+		a, err := DecodeResource(path, resource)
+		if os.IsNotExist(err) {
+			t.Skip("player-provided FIGANI.DAT is absent")
+		}
+		if err != nil {
+			t.Fatalf("resource %d: %v", resource, err)
+		}
+		if a.HeaderByte4 != want {
+			t.Errorf("resource %d HeaderByte4=%d, want %d", resource, a.HeaderByte4, want)
+		}
+	}
+}
+
 func TestFrameBlitAtBaseShiftsNativeWorkSurface(t *testing.T) {
 	f := Frame{X: 2, Y: 3, Width: 1, Height: 1, Pixels: []byte{9}, Mask: []byte{1}}
 	dst := make([]byte, 640*5)

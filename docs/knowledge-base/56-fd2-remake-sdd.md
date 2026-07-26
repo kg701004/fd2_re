@@ -290,9 +290,13 @@ family 出現就直接重用既有 executor。direct static trace 已見：32 �
 `0x22d1b(actor,22,...,+0x27)`、`0x22d1b(actor,27,...,+0x26)`。先前「wrapper／helper 未見
 `0x1ca89`」的負向斷言已撤回：`0x27fc9` 在 `0x28189` 進共同 presentation/effect routine `0x2b659`，而
 `0x2b738..0x2b753` 會在其**載入 FIGANI container header 的 `byte+4 == 1`**時呼
-`0x1ca89(actor, commandID)`。目前尚未把 IDs32..35 各自實際選到的 descriptor 與這個 byte 值以 runtime
-trace 關閉，因此仍只有「selector MP gate 與條件式 debit sink 之間尚缺 per-ID dataflow」，**不能**據此斷言
-原版免費施放、必然扣 MP，或由 remake 擅自扣 MP。保持 fail-closed，待 descriptor provenance/runtime trace。
+`0x1ca89(actor, commandID)`。這個 resource 選擇已對 player class-19 path 關閉：command-learn row 19 提供
+IDs32..35；原始可達來源是 portrait/visual group 4..7 的 optional class-change 與 group20 的初始 class19，
+故 `group*3+1` 分別取 FIGANI #13/#16/#19/#22/#61。原 archive header byte4 依序為 `2/2/2/5/5`，全不等於 1；
+而 `0x27fc9` 唯一 caller 是 `0x2a6bd`，`0x2b659` 是這條 presentation path 中唯一的 `0x1ca89` call site。
+因此可證實這些**玩家可達 class-19 路徑不經已知 MP debit sink**，即使 record `+5` 的 selector gate 仍要求
+76/52/28/36 MP。這不是「所有 runtime entity 免費」或 transaction rollback 的結論；AI／未盤點 runtime unit
+visual group、其他 MP writer 與 compound effect ordering 仍未閉合，engine 保持 fail-closed。
 
 command 0 的 selector boundary 也已縮小：`0x1cff0` 對一般 record（非 command `0x17`／`0x1e` special
 branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把可選中心的 unit indices 寫進 caller
