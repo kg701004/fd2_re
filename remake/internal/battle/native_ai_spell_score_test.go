@@ -31,6 +31,11 @@ func TestScoreNativeAISpellRecoveryUsesHalfAndRawBit(t *testing.T) {
 	if err != nil || got != 6 {
 		t.Fatalf("score=%d err=%v", got, err)
 	}
+	binary.LittleEndian.PutUint16(records[0x40:], 2)
+	got, err = ScoreNativeAISpellRecovery(records, []byte{0}, 13)
+	if err != nil || got != 16 {
+		t.Fatalf("below-third score=%d err=%v", got, err)
+	}
 	binary.LittleEndian.PutUint16(records[0x40:], 5)
 	got, err = ScoreNativeAISpellRecovery(records, []byte{0}, 13)
 	if err != nil || got != 0 {
@@ -43,20 +48,30 @@ func TestScoreNativeAISpellFlagUsesVerifiedOffsets(t *testing.T) {
 	records[0x25] = 1
 	records[nativeRecordSize+0x26] = 1
 	got, err := ScoreNativeAISpellFlag(records, []byte{0, 1}, 20)
-	if err != nil || got != 4 {
+	if err != nil || got != 6 {
 		t.Fatalf("ID20 score=%d err=%v", got, err)
 	}
 	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 21)
-	if err != nil || got != 4 {
+	if err != nil || got != 6 {
 		t.Fatalf("ID21 score=%d err=%v", got, err)
 	}
-	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 26)
+	got, err = ScoreNativeAISpellZeroFlag(records, []byte{0, 1}, 26)
 	if err != nil || got != 4 {
-		t.Fatalf("ID26 score=%d err=%v", got, err)
+		t.Fatalf("ID26 zero score=%d err=%v", got, err)
 	}
-	got, err = ScoreNativeAISpellFlag(records, []byte{0, 1}, 27)
+	got, err = ScoreNativeAISpellZeroFlag(records, []byte{0, 1}, 27)
 	if err != nil || got != 4 {
-		t.Fatalf("ID27 score=%d err=%v", got, err)
+		t.Fatalf("ID27 zero score=%d err=%v", got, err)
+	}
+}
+
+func TestScoreNativeAISpellZeroFlagUsesTransientOffsets(t *testing.T) {
+	records := make([]byte, nativeRecordSize)
+	for _, id := range []int{17, 18, 19} {
+		got, err := ScoreNativeAISpellZeroFlag(records, []byte{0}, id)
+		if err != nil || got != 3 {
+			t.Fatalf("ID%d score=%d err=%v", id, got, err)
+		}
 	}
 }
 

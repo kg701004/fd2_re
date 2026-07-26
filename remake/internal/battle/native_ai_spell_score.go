@@ -40,7 +40,8 @@ func ScoreNativeAISpellAttack(records []byte, candidates []byte, spellID, spellV
 }
 
 // ScoreNativeAISpellRecovery preserves the raw spell IDs 13..16 branch:
-// score 3 when current HP is below half of max HP, doubled by raw +0x34 bit0.
+// score 8 below max/3, score 3 below max/2, otherwise zero; raw +0x34 bit0
+// doubles the selected score.
 func ScoreNativeAISpellRecovery(records []byte, candidates []byte, spellID int) (int, error) {
 	if spellID < 13 || spellID > 16 {
 		return 0, fmt.Errorf("native AI recovery score: unsupported spell id %d", spellID)
@@ -53,10 +54,12 @@ func ScoreNativeAISpellRecovery(records []byte, candidates []byte, spellID int) 
 		record := records[int(rawIndex)*nativeRecordSize : (int(rawIndex)+1)*nativeRecordSize]
 		current := int(binary.LittleEndian.Uint16(record[0x40:0x42]))
 		max := int(binary.LittleEndian.Uint16(record[0x42:0x44]))
-		if current >= max/2 {
-			continue
+		value := 0
+		if max/3 > current {
+			value = 8
+		} else if max/2 > current {
+			value = 3
 		}
-		value := 3
 		if record[0x34]&1 != 0 {
 			value *= 2
 		}
@@ -65,16 +68,15 @@ func ScoreNativeAISpellRecovery(records []byte, candidates []byte, spellID int) 
 	return score, nil
 }
 
-// ScoreNativeAISpellFlag preserves the ID20/21 and ID26/27 helper calls at
-// 0x15cfe, 0x15d30, and 0x15d71: each nonzero raw flag contributes four
-// points. The bytes remain unnamed and this function does not apply or clear
-// them.
+// ScoreNativeAISpellFlag preserves the ID20/21 branches: each nonzero raw
+// +0x25/+0x26 flag contributes six points. The byte remains unnamed and this
+// function does not apply or clear it.
 func ScoreNativeAISpellFlag(records []byte, candidates []byte, spellID int) (int, error) {
 	offset := 0
 	switch spellID {
-	case 20, 26:
+	case 20:
 		offset = 0x25
-	case 21, 27:
+	case 21:
 		offset = 0x26
 	default:
 		return 0, fmt.Errorf("native AI flag score: unsupported spell id %d", spellID)
@@ -86,7 +88,39 @@ func ScoreNativeAISpellFlag(records []byte, candidates []byte, spellID int) (int
 	for _, rawIndex := range candidates {
 		record := records[int(rawIndex)*nativeRecordSize : (int(rawIndex)+1)*nativeRecordSize]
 		if record[offset] != 0 {
-			score += 4
+			score += 6
+		}
+	}
+	return score, nil
+}
+
+// ScoreNativeAISpellZeroFlag preserves the 0x15b77 helper branches that add
+// a score when a raw byte is zero: IDs17/18/19 use +0x22/+0x23/+0x24 and add
+// three; IDs26/27 use +0x25/+0x26 and add four.
+func ScoreNativeAISpellZeroFlag(records []byte, candidates []byte, spellID int) (int, error) {
+	offset, increment := 0, 0
+	switch spellID {
+	case 17:
+		offset, increment = 0x22, 3
+	case 18:
+		offset, increment = 0x23, 3
+	case 19:
+		offset, increment = 0x24, 3
+	case 26:
+		offset, increment = 0x25, 4
+	case 27:
+		offset, increment = 0x26, 4
+	default:
+		return 0, fmt.Errorf("native AI zero-flag score: unsupported spell id %d", spellID)
+	}
+	if err := validateNativeAISpellCandidates(records, candidates); err != nil {
+		return 0, err
+	}
+	score := 0
+	for _, rawIndex := range candidates {
+		record := records[int(rawIndex)*nativeRecordSize : (int(rawIndex)+1)*nativeRecordSize]
+		if record[offset] == 0 {
+			score += increment
 		}
 	}
 	return score, nil

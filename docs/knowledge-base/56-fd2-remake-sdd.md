@@ -17,7 +17,7 @@
 
 已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。
 
-AI spell scoring raw slice：Docker Capstone 已閉合 `0x15b77` attack IDs0..12 的 HP threshold/`+0x08` branch、recovery IDs13..16 的 half-HP/`+0x34 bit0` branch、ID20/26 對 `+0x25`、ID21/27 對 `+0x26` 的 nonzero flag score，以及 ID22 的 `+0x27` gate→`0x1c269` bit scan→6 分支；`ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`／`ScoreNativeAISpellFlag`／`ScoreNativeAISpell22` 只接受 raw records，ID10..12 另要求 caller-supplied `0x1f183` gate。這些函式不命名欄位、不接 AI runtime 或 target UI。
+AI spell scoring raw slice：Docker Capstone/Hex-Rays 已閉合 `0x15b77` attack IDs0..12 的 HP threshold/`+0x08` branch、recovery IDs13..16 的 max/3→8、max/2→3 tiers/`+0x34 bit0` branch、ID17/18/19 的 `+0x22/+0x23/+0x24` zero flag score 3、ID20/21 的 nonzero `+0x25/+0x26` score 6、ID22 的 `+0x27` gate→`0x1c269` bit scan→6，以及 ID26/27 的 zero `+0x25/+0x26` score 4；`ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`／`ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`／`ScoreNativeAISpell22` 只接受 raw records，ID10..12 另要求 caller-supplied `0x1f183` gate。這些函式不命名欄位、不接 AI runtime 或 target UI。
 
 ## 2. 證據分級與反組譯規則
 
