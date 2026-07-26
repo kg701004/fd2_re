@@ -478,6 +478,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    `fdicon.NativeSelectorCache` is the fail-closed data primitive for this ABI: per FDICON resource it allocates a stable first-seen slot for raw byte keys and rejects non-byte keys. It deliberately does not map a slot to a character, portrait, or archive index; the resource/key decoder remains the next evidence boundary.
 
+   The pointer-copy detail is now represented too: `KeyForSlot` reverses `unit+2` to the raw B24 key, and `SpriteForNativeSlot` then applies `key×12 + pose×3 + cycle`. This matches `0x11019`'s copied twelve-pointer block followed by `0x127e0`; it remains a per-resource cache and does not infer character identity.
+
    `internal/fdicon` now decodes the 24×24 FDICON B24 container and preserves four-mode RLE transparency/dither plus both exact native blits: `0x4deda` raw indices and `0x4de56` opaque-index transform `(index&7)+0x18`. It has an original-asset 1680-sprite regression, but it is only an indexed asset primitive; no native frame schedule or UI handler is thereby enabled.
 
    `Bank.SpriteFor(group,pose,cycle)` enforces the recovered `group×12 + pose×3 + cycle` selector (pose 0..3, cycle 0..2). `NativeFrameIndex` captures the proven global idle/moving counters; battle `Fig` and `Dir` still provide only part of the runtime ABI, and no GUI integration is inferred.
