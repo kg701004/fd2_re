@@ -57,6 +57,22 @@ func TestAdvanceNativeMapHUDAnchorMatches1AD2A(t *testing.T) {
 	}
 }
 
+func TestAdvanceNativeMapHUDStateMatches1297D(t *testing.T) {
+	for _, tc := range []struct {
+		state, scanline, last, wantState, wantLast int
+	}{
+		{0, 10, 5, 1, 10},
+		{3, 10, 5, 0, 10},
+		{2, 8, 10, 3, 8},
+		{1, 8, 10, 2, 8},
+	} {
+		state, last := AdvanceNativeMapHUDState(tc.state, tc.scanline, tc.last)
+		if state != tc.wantState || last != tc.wantLast {
+			t.Fatalf("raw=(state=%d scanline=%d last=%d): got (%d,%d), want (%d,%d)", tc.state, tc.scanline, tc.last, state, last, tc.wantState, tc.wantLast)
+		}
+	}
+}
+
 func TestNativeMapHUDOptionalUnitEligibleMatches1AE2A(t *testing.T) {
 	for _, tc := range []struct {
 		rawByte7, rawByte1F, rawByte6 byte

@@ -67,6 +67,23 @@ func AdvanceNativeMapHUDAnchor(anchor, raw53ABD, raw53AB9 int) int {
 	return anchor
 }
 
+// AdvanceNativeMapHUDState reproduces sub_1297d's raw cycle update used by
+// 0x1acf3 through [0x53c0b]. rawScanline is the signed word read from [0x46c]
+// and rawLastScanline is [0x53c0f]. The state advances only when the delta is
+// negative or greater than four, wrapping 3→0; otherwise it is preserved.
+// The caller owns the persistent globals and their call timing.
+func AdvanceNativeMapHUDState(state, rawScanline, rawLastScanline int) (nextState, nextLastScanline int) {
+	delta := rawScanline - rawLastScanline
+	if delta > 4 || delta < 0 {
+		state++
+		if state == 4 {
+			state = 0
+		}
+		rawLastScanline = rawScanline
+	}
+	return state, rawLastScanline
+}
+
 // DecodeNativeMapHUDFrames loads only the verified FDOTHER #5 directory
 // entries. It avoids the incorrect assumption that all LMI1 entries share
 // ParseLMI1's 0x4e916 cell codec.
