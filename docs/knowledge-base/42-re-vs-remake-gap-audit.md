@@ -31,7 +31,7 @@
 | 敵方 AI:**施法決策**(法師/僧侶主動用攻擊術/補血術) | direct disasm 已證實：`0x15688` 枚舉 command，`0x1579A–0x157B5` 對 `command>0x0F` 以 `spell_id=command-0x10` 評分；`0x150D3–0x150F1` 執行同一 spell command，`0x15168→0x28784` 播放施法演出；`0x15B77` 依 spell family 分流目標評分 | 🟡 | remake 已有 `AICommandSpell`、`AIAvailableSpells`、`AISpellCandidates` 與 `AIPlan.SpellID`，但 `NextAIPlan` 仍未把 spell score/target/execute 接完；不能再寫成「完全沒有保存 SpellID／恆為純物理」 | 高；補 native ranking、MP/command gate、runtime Cast |
 | 敵方 AI:**使用道具** | doc11 未記錄此分支(doc11「仍待確認」清單也未提道具);doc02 未給 AI 道具規則 | ❌(RE 亦未記錄機制) | `aiActUnit` 無任何道具邏輯;RE doc11 本身也沒有「AI 用道具」的反組譯條目——這條是 RE 與 remake 雙缺,非「RE 有記 remake 沒做」 | 低(先確認原版是否真有此行為,再排 RE 工作) |
 | 移動地形成本(森林/沼澤耗 MV) | doc02 §3.1 | ✅ | `move.go MoveCost` 讀 `map.json` 的 `cost` 陣列(worklist 第8輪「地形屬性接線」) | — |
-| **地形攻防加成(+5%/-5%、森林-5%/+10%、沼澤-5%/-5%)** | doc02 §3.2 | 🟡已補(一般/沼澤;森林待補) | 同上「物理攻擊:地形 AP/DP% 修正」條:`terrain.go` 已接一般(+5%/-5%)、沼澤(-5%/-5%)兩類;森林因 `map.json cost[]` 資料管線把森林/正常都存成 cost=1,無法分辨,待該管線補地形代碼欄位 | 中(森林細節待補) |
+| **地形攻防加成** | native `0x1acf3`、`0x51a12/0x51a2a` | ✅原版逐格資料 | 同上「物理攻擊:地形 AP/DP% 修正」條：完整 raw map 直接用 FDSHAP control byte+1；0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5)。這取代 doc02 對一般地面 DP-5 的舊摘要；Cost 僅是 legacy fallback。 | 低 |
 | 裝備欄 / 裝備加成 AP/DP/HIT/EV | doc02 §5、doc32 §1/§5 | 🟡 | `Unit` 有 `Inventory`/`Equipped`/`InventorySlots`；`campaign.EquipItem`、`RecomputeEquipment` 與 shop equip UI 已接線。HIT/EV 真值與戰鬥全鏈仍需對照原版欄位，不能再說「無裝備欄」 | 高；補 native stat source 與 battle integration |
 | 道具使用效果(藥水回血、卷軸) | doc02 §5.13 | ❌ | battle action 的 item command 仍是未實作入口；但 inventory/reward/shop/equip 並非全缺 | 高 |
 | 裝備自帶法術(不耗MP、無經驗) | doc02 §4.6、doc32 | 🟡 | 裝備資料與裝備重算已存在，裝備法術在 `Cast`/action menu 尚未接成獨立不耗 MP 路徑 | 中 |
