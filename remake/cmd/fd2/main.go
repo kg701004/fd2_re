@@ -3088,7 +3088,7 @@ func (g *Game) confirm() {
 			if nm == "" {
 				nm = tgt.ClsName
 			}
-			g.atk = g.newAtkAnim(g.sel.Fig, tgt.Fig, g.sel.Name, nm,
+			g.atk = g.newAtkAnim(g.sel.BattleFig, tgt.BattleFig, g.sel.Name, nm,
 				g.sel.HP, g.sel.MaxHP, g.sel.Lv, g.sel.MP, tgt.Lv, tgt.MP,
 				tgt.HP+first.Amount, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), true)
 		}
@@ -3154,7 +3154,7 @@ func (g *Game) confirm() {
 		dmg := g.st.Attack(g.sel, tgt)
 		g.awardDeathReward(tgt, g.sel)
 		g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
-		g.atk = g.newAtkAnim(g.sel.Fig, tgt.Fig, anm, nm,
+		g.atk = g.newAtkAnim(g.sel.BattleFig, tgt.BattleFig, anm, nm,
 			g.sel.HP, g.sel.MaxHP, g.sel.Lv, g.sel.MP, tgt.Lv, tgt.MP,
 			defHP0, tgt.HP, tgt.MaxHP, g.terrainAt(g.curX, g.curY), true) // 戰鬥背景 = 守方格地形
 		g.sel, g.reach, g.moved = nil, nil, false
@@ -5188,7 +5188,7 @@ func (g *Game) aiStep() {
 			dmg := g.st.Attack(u, tgt)
 			g.awardDeathReward(tgt, u)
 			g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
-			g.atk = g.newAtkAnim(u.Fig, tgt.Fig, anm, nm,
+			g.atk = g.newAtkAnim(u.BattleFig, tgt.BattleFig, anm, nm,
 				u.HP, u.MaxHP, u.Lv, u.MP, tgt.Lv, tgt.MP,
 				hp0, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), u.Camp == battle.Own)
 			g.checkResult()

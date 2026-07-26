@@ -267,7 +267,7 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			HP: pm.HP, MaxHP: pm.HP, MP: pm.MP, MaxMP: pm.MP, AP: pm.AP, DP: pm.DP, MV: pm.MV,
 			HIT: pm.HIT, EV: pm.EV, CritPct: pm.CritPct,
 			AtkMin: pm.AtkMin, AtkMax: pm.AtkMax,
-			Portrait: pm.Portrait, Fig: pm.Fig, X: x, Y: y, OnField: true,
+			Portrait: pm.Portrait, Fig: pm.Fig, BattleFig: pm.Fig, X: x, Y: y, OnField: true,
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,
 		}

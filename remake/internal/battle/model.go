@@ -48,12 +48,15 @@ type Unit struct {
 	AtkMin   int // 近戰攻擊距離下限(曼哈頓距離;0 視為預設 1,doc32 weapon_range.json 依武器 type 決定)
 	AtkMax   int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
 	Portrait int
-	Fig      int // 地圖 sprite 組(= 角色 id,恆等,doc 31)
-	X, Y     int
-	Acted    bool  // 本回合已行動(原版 byte[+5] bit7)
-	Group    int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
-	OnField  bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
-	Spells   []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
+	Fig      int // 地圖 FDICON selector approximation; native source is unit+2.
+	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
+	// It must not be inferred from Fig for newly exported data.
+	BattleFig int
+	X, Y      int
+	Acted     bool  // 本回合已行動(原版 byte[+5] bit7)
+	Group     int   // 出場波次(原版 FDFIELD b21;事件按 group 放出,doc 25/29)
+	OnField   bool  // 是否已登場(事件進場機制:false=待命,尚未出現在戰場,doc 25)
+	Spells    []int // normalized/editable spell IDs; not a raw unit+0x22 bitfield
 	// NativeCommandMask is the runtime 40-bit command inventory enumerated by
 	// 0x1c269.  FDFIELD b13..b16 initializes bytes 0..3; byte 4 begins zero and
 	// can be OR-mutated by 0x1d7fb.  It is deliberately separate from Spells:
@@ -426,11 +429,12 @@ type unitsFile struct {
 		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
 		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
-		Portrait int `json:"portrait"`
-		Fig      int `json:"fig"`
-		Group    int `json:"group"`
-		X        int `json:"x"`
-		Y        int `json:"y"`
+		Portrait  int  `json:"portrait"`
+		Fig       int  `json:"fig"`
+		BattleFig *int `json:"battle_fig,omitempty"`
+		Group     int  `json:"group"`
+		X         int  `json:"x"`
+		Y         int  `json:"y"`
 	} `json:"units"`
 }
 
@@ -470,6 +474,13 @@ func Load(path string) (*State, error) {
 			DeathEffect: u.DeathEffect,
 			DeathReward: u.DeathReward,
 			Group:       u.Group, OnField: true, // 預設登場;Scenario 會把待命 group 設 false
+		}
+		// Legacy exports lack battle_fig. Preserve their old visual behavior as a
+		// compatibility fallback; new exports carry the independently sourced
+		// FDFIELD b1 -> native unit+7 value.
+		nu.BattleFig = u.Fig
+		if u.BattleFig != nil {
+			nu.BattleFig = *u.BattleFig
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)

@@ -1,6 +1,10 @@
 package battle
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 // 驗證序章 units.json 正確載入(M1-8 headless 回歸雛形)。
 func TestLoadSerial0(t *testing.T) {
@@ -40,5 +44,31 @@ func TestLoadSerial0(t *testing.T) {
 	u0.HP = 0
 	if st.UnitAt(u0.X, u0.Y) == u0 {
 		t.Error("陣亡單位不應被 UnitAt 回傳")
+	}
+}
+
+func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "units.json")
+	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"battle_fig":23,"portrait":23,"x":0,"y":0}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := st.Units[0]; got.Fig != 7 || got.BattleFig != 23 {
+		t.Fatalf("selectors = map %d battle %d, want 7/23", got.Fig, got.BattleFig)
+	}
+
+	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"portrait":23,"x":0,"y":0}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err = Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := st.Units[0].BattleFig; got != 7 {
+		t.Fatalf("legacy BattleFig=%d, want fallback 7", got)
 	}
 }
