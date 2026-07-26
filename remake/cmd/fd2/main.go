@@ -874,6 +874,17 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// with the RGBA story fade or 0x11df2 palette-update approximation.
 		g.loadErr = "beat native_palette_fade_out: native indexed DAC adapter未完成"
 		return
+	case "native_palette_pulse":
+		pulse := b.NativePalettePulse
+		if pulse == nil || pulse.RiseStart != 0 || pulse.RiseEnd != 63 || pulse.RiseDelayMs != 8 || pulse.HoldMs != 400 || pulse.FallStart != 62 || pulse.FallEnd != 0 || pulse.FallDelayMs != 8 {
+			g.loadErr = "beat native_palette_pulse:缺少原版 DAC pulse payload"
+			return
+		}
+		// 0x35e5a repeatedly calls 0x11df2 across the complete DAC range.
+		// The PNG renderer has no indexed palette surface, so do not replace
+		// this visible pulse with an RGBA fade or a delay-only approximation.
+		g.loadErr = "beat native_palette_pulse: native indexed DAC adapter未完成"
+		return
 	case "layout_units":
 		if b.Layout == nil || len(b.Layout.Units) == 0 {
 			g.loadErr = "beat layout_units:缺少可編輯的 runtime layout"

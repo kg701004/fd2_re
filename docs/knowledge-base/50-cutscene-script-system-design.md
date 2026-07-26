@@ -631,6 +631,15 @@ D3/D5 不採「搬走敵人全部 inventory」的猜法，而使用上述特殊�
 29×7 表取得（首 byte 常數、後六 byte 白名單），已匯出為 editable `class_equip_types.json`。
 尚待把這份資料接進收件者 UI、裝備 flag 與能力重算；舊 `Game.items []string` 不可再作交易真相。
 
+### 3.11 原生 palette pulse（0x35e5a，2026-07-26）
+
+`0x35e5a` 沒有參數，完整 body 固定呼叫 `0x11df2(0,255,delta)`：先
+`delta=0..63`（含端點，每步 8ms），停留 400ms，再 `delta=62..0`（含端點，每步
+8ms）。這是整個 DAC 的亮度脈衝，不是 `0x1f882` 的 baseline darkening，也不是
+普通 story fade。handler compiler 因此將它保存為可編輯的
+`native_palette_pulse{rise:0..63/8ms,hold:400ms,fall:62..0/8ms}`；現行 PNG renderer
+沒有 indexed DAC surface 時必須 fail-closed，禁止用 delay 或 RGBA fade 假裝完成。
+
 ## 4. 未解(低優先)+ 工具紀律
 
 - ~~acting 原始靜態容器未定位~~：已定位為 `FD2.EXE file+0x565d8` 的 106×u32 offset directory，

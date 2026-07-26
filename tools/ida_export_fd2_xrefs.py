@@ -45,6 +45,10 @@ TARGETS = (
     # Shared native palette-fade entry.  Its tail is a separate IDA chunk, so
     # retain the public entry/caller topology instead of calling it vsync.
     0x1F882,
+    # ch29 staging wrapper and the whole-DAC pulse it invokes.  These remain
+    # distinct from 0x22253 and generic story fades.
+    0x33F78,
+    0x35E5A,
     0x22D1B,
     # Event-state entry #12 writer.  Its dispatch provenance is required
     # before the item-0xd0 branch can become an editable scenario event.

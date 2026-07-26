@@ -685,6 +685,24 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, beat)
 				continue
 			}
+			if input.NativeTarget == "0x35e5a" {
+				if len(input.RawArgs) != 0 {
+					issue(i, input, "0x35e5a palette pulse takes no arguments")
+					continue
+				}
+				// 0x35e5a applies 0x11df2(0,255,delta) for inclusive
+				// 0..63, holds 400ms, then applies inclusive 62..0. Keep
+				// the asymmetric endpoints as data instead of approximating it
+				// as a generic fade or silently losing the final DAC value.
+				beat := runtime(input, "native_palette_pulse")
+				beat.NativePalettePulse = &NativePalettePulse{
+					RiseStart: 0, RiseEnd: 63, RiseDelayMs: 8,
+					HoldMs:    400,
+					FallStart: 62, FallEnd: 0, FallDelayMs: 8,
+				}
+				beats = append(beats, beat)
+				continue
+			}
 			if input.NativeTarget == "0x24618" {
 				if bindings.Transition == nil {
 					issue(i, input, "0x24618 indexed transition requires an explicit editable binding")

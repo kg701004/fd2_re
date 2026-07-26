@@ -167,6 +167,21 @@ type NativePaletteFadeOut struct {
 	DelayMs int `json:"delay_ms"`
 }
 
+// NativePalettePulse is the exact whole-DAC pulse performed by 0x35e5a.
+// It is deliberately not represented as a generic fade: the first and
+// second ramps have different inclusive bounds and are separated by a hold.
+// An indexed DAC adapter must execute this schedule before a handler can play
+// it.
+type NativePalettePulse struct {
+	RiseStart   int `json:"rise_start"`
+	RiseEnd     int `json:"rise_end"`
+	RiseDelayMs int `json:"rise_delay_ms"`
+	HoldMs      int `json:"hold_ms"`
+	FallStart   int `json:"fall_start"`
+	FallEnd     int `json:"fall_end"`
+	FallDelayMs int `json:"fall_delay_ms"`
+}
+
 // HandlerUnitPresent retains the formerly recovered metadata shape for native
 // 0x22253. It is not currently compilable: later direct trace found 11+6+10
 // presentation phases, so this six-frame schema is deliberately rejected
@@ -185,16 +200,17 @@ type HandlerUnitPresent struct {
 // 一比一對映原版 EXE handler 的呼叫序列(LOADCH/PAN/TXT/ACT/SPAWN/JOIN/BGM/FADE/DELAY)。
 // 每個 op 只用到自己相關的欄位,其餘留零值即可(同 Node 的稀疏欄位風格)。
 type Beat struct {
-	Op                string                    `json:"op"`               // loadch/pan/walk/dialog/act/spawn/spawn_intro/deactivate_unit/reset_pose/redraw/...
-	Source            string                    `json:"source,omitempty"` // original handler call-site; empty for authored-only beats
-	Condition         *BeatCondition            `json:"condition,omitempty"`
-	Then              []Beat                    `json:"then,omitempty"`
-	Else              []Beat                    `json:"else,omitempty"`
-	RuntimeContext    *HandlerRuntimeContext    `json:"runtime_context,omitempty"`
-	Layout            *HandlerLayout            `json:"layout,omitempty"`
-	IndexedTransition *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
-	NativePaletteFade *NativePaletteFadeOut     `json:"native_palette_fade_out,omitempty"`
-	UnitPresent       *HandlerUnitPresent       `json:"unit_present,omitempty"`
+	Op                 string                    `json:"op"`               // loadch/pan/walk/dialog/act/spawn/spawn_intro/deactivate_unit/reset_pose/redraw/...
+	Source             string                    `json:"source,omitempty"` // original handler call-site; empty for authored-only beats
+	Condition          *BeatCondition            `json:"condition,omitempty"`
+	Then               []Beat                    `json:"then,omitempty"`
+	Else               []Beat                    `json:"else,omitempty"`
+	RuntimeContext     *HandlerRuntimeContext    `json:"runtime_context,omitempty"`
+	Layout             *HandlerLayout            `json:"layout,omitempty"`
+	IndexedTransition  *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
+	NativePaletteFade  *NativePaletteFadeOut     `json:"native_palette_fade_out,omitempty"`
+	NativePalettePulse *NativePalettePulse       `json:"native_palette_pulse,omitempty"`
+	UnitPresent        *HandlerUnitPresent       `json:"unit_present,omitempty"`
 
 	// loadch: atomically replace the active map, FDFIELD roster and FDTXT
 	// story context.  It is deliberately a nested required state object so a

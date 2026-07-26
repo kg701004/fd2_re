@@ -1485,6 +1485,58 @@ func TestCompileNativePaletteFadeOut1882PreservesExactDACSchedule(t *testing.T) 
 	}
 }
 
+func TestCompileNativePalettePulse35E5APreservesExactDACSchedule(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "unknown", NativeTarget: "0x35e5a", Source: HandlerSource{Addr: "0x33efd", Target: "0x35e5a"},
+	}}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_palette_pulse" || beats[0].NativePalettePulse == nil {
+		t.Fatalf("0x35e5a beats=%#v issues=%#v", beats, issues)
+	}
+	if got := beats[0].NativePalettePulse; got.RiseStart != 0 || got.RiseEnd != 63 || got.RiseDelayMs != 8 || got.HoldMs != 400 || got.FallStart != 62 || got.FallEnd != 0 || got.FallDelayMs != 8 {
+		t.Fatalf("0x35e5a payload=%#v", got)
+	}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x35e5a", RawArgs: []any{1}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("argument-bearing 0x35e5a issues=%#v", issues)
+	}
+}
+
+func TestCompileChapterHandlersLowerEveryNativePalettePulse(t *testing.T) {
+	paths := []string{
+		"../../assets/cutscenes/handlers/ch28_post.json",
+		"../../assets/cutscenes/handlers/ch29_pre.json",
+	}
+	wantSources := map[string]bool{
+		"0x25682": false, "0x25694": false, "0x256a6": false, "0x33efd": false,
+	}
+	for _, path := range paths {
+		script, err := LoadHandlerScript(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		beats, issues := CompileHandlerScript(script, HandlerBindings{})
+		for _, issue := range issues {
+			if issue.Source.Target == "0x35e5a" {
+				t.Fatalf("%s left pulse unresolved: %#v", path, issue)
+			}
+		}
+		for _, beat := range beats {
+			if _, ok := wantSources[beat.Source]; !ok {
+				continue
+			}
+			if beat.Op != "native_palette_pulse" || beat.NativePalettePulse == nil {
+				t.Fatalf("%s source %s=%#v", path, beat.Source, beat)
+			}
+			wantSources[beat.Source] = true
+		}
+	}
+	for source, seen := range wantSources {
+		if !seen {
+			t.Errorf("native palette pulse source %s was not lowered", source)
+		}
+	}
+}
+
 func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
 	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch26_post.json")
 	if err != nil {
