@@ -22,8 +22,9 @@ Worklist 目前是 **372 個 `[x]`、93 個 `[~]`、65 個 `[ ]`**；這些是�
 整備、存檔與演出順序仍未逐章閉合。因此本專案目前與原版的主要差距不是素材解碼，而是 campaign runtime、
 完整 UI renderer、item effect、音訊／DOS timing 與跨平台回歸。
 
-本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成與攻擊幾何的證據分開，
-但尚未證實 runtime item table 的完整邊界，也沒有把未命名的 effect／renderer 欄位接進引擎。這代表目前的
+本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
+`0x20c6f` item type→raw callee routing 的證據分開；`NativeItemEffectRouteForType` 只保存 call topology，
+不執行未閉合的 effect。尚未證實 runtime item table 的完整邊界，也沒有把未命名的 effect／renderer 欄位接進引擎。這代表目前的
 「進度」是可驗證的函式與資料切片，不是原版剩餘工作百分比；後續會以 `56` SDD 的 evidence gate 關閉每個
 campaign、town/shop、persistent save、UI renderer 缺口。
 
