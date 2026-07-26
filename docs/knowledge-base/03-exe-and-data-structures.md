@@ -18,7 +18,7 @@
 | 0x10 | NN(2) | 姓名 |
 | 0x12 | IT×8 | 物品，各 2 byte = 狀態 + 編號；狀態 40=裝備 00=持有 80=空 |
 | 0x1A | initial_command_mask(4) | FDFIELD b13..b16 複製到 runtime command bitset 的 bytes 0..3（command IDs 0..31）；個別 ID 的玩法語意仍待對照 |
-| 0x22 | raw modifier bytes | constructor 先清零；後續流程使用 `+0x22/+0x23` 的 AP/DP×1.15 旗標與 `+0x24` 的 DX/HIT+15 旗標，並非法術 bitfield |
+| 0x22 | raw modifier bytes | constructor 先清零；後續 writer／AI score 會讀取這段 raw bytes，但 derived-stat/property/status 名稱尚未由完整 caller、equipment recompute 與 presentation 證實；並非法術 bitfield |
 | 0x1F | race | constructor `0x10f7f/0x11399` 由 source byte0 寫入 |
 | 0x20 | class ID | constructor 由 source byte1 寫入；`0x1c75e` 用作 command damage multiplier table index |
 | 0x21 | level | constructor 由 source level 寫入 |
