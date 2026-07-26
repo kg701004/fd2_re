@@ -572,6 +572,8 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Inventory-cell boundary: official `0x1b8a6(unit)` scans exactly eight two-byte cells at `record+0x0a+2*i`; only each cell's flag byte bit7 determines the free-slot count. `battle.NativeInventoryFreeSlotCount` preserves that raw availability rule and ignores item-byte values; it does not lower the result to a normalized inventory length or item semantic.
 
+   Inventory reservation boundary: official `0x1bb8c(unit,item)` scans those same eight cells, takes the first flag-bit7 cell, clears its flag, writes the supplied item byte, and returns native success/failure (`1/-1`). `battle.AssignNativeReservedItem` reproduces this atomic raw mutation; no item category or shop meaning is inferred.
+
    Correction: the `0x1ac62` loop is not a preparation command stream. Its caller `0x1aa1d` uses FDTXT_000 indices `0x1b0..0x1b3`, which decode to post-resolution loot/interaction messages (enemy item, full inventory, money), so the higher-level preparation label is withdrawn. The proven part is only a `base+3*i` `{kind:byte,payload:u16le}` stream with observed kind `0/1/2/3` branches; `fdother.ParseNativePostResolutionCommands` preserves it and refuses truncation without assigning event names.
 
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
