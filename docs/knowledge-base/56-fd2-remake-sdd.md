@@ -122,11 +122,11 @@ The same IDA pass closes the previously omitted `0x29164` mirror branch. When `u
 
 `Montage.PlanMirrorFigureFade(unitSide,sideFlag)` exposes that schedule as a pure, testable plan (nine exact offsets and DAC deltas, with the `arg4==0` secondary/platform gate). The planner is deliberately not a pixel adapter and keeps the montage fail-closed.
 
-The adjacent DATO call is now separately recorded: official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)`. `0x168b6` builds the mouth-frame/grid into the portrait restore buffer, while `0x4e8af` performs the later paste into staging. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
+Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
 `internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. It is a decoder/compositor primitive only; the `0x168b6` grid choreography, mouth cadence, and ending UI integration remain explicit gates.
 
-`Montage.PlanDatoGrid()` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid). It exposes only resource indices and byte offsets; cell semantics and mouth timing remain intentionally unnamed.
+`Montage.PlanDialogueFrameGrid()` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid). It exposes only `FDOTHER#5` resource indices and byte offsets; cell semantics and DATO mouth timing remain intentionally unnamed.
 
 `RenderMirrorFigureFadePass` now implements only the proven `0x292ad` indexed primitive: it requires a caller-preseeded 640-stride work surface, presents `work+0x140`, blits primary at `+0x140-stage*10`, conditionally blits secondary for `arg4==0`, and presents the same right viewport again. It validates TAI#3's transparent bytes but does not claim to render the unresolved DATO/portrait or complete montage.
 

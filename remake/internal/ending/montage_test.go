@@ -40,8 +40,8 @@ func TestNative2C548PortraitTextUsesEDIForSpecialEpilogue(t *testing.T) {
 	if plan.PortraitID != 37 || plan.CharacterName.Index != 5 || plan.ClassName.Index != 0x98 || plan.Epilogue.Index != 0x10 || plan.Epilogue.Destination != 0x7d08 {
 		t.Fatalf("portrait plan = %#v", plan)
 	}
-	if montage.PartyCycle.DatoLayout.Stride != 320 || montage.PartyCycle.DatoLayout.Arg8 != 5 || montage.PartyCycle.DatoLayout.ArgC != 7 || montage.PartyCycle.DatoLayout.Arg10 != 5 || montage.PartyCycle.DatoLayout.Arg14 != 5 || montage.PartyCycle.DatoLayout.Destination != "portrait_restore_buffer_C" {
-		t.Fatalf("DATO layout = %#v", montage.PartyCycle.DatoLayout)
+	if montage.PartyCycle.DialogueFrameLayout.Stride != 320 || montage.PartyCycle.DialogueFrameLayout.Resource != 5 || montage.PartyCycle.DialogueFrameLayout.Arg8 != 5 || montage.PartyCycle.DialogueFrameLayout.ArgC != 7 || montage.PartyCycle.DialogueFrameLayout.Arg10 != 5 || montage.PartyCycle.DialogueFrameLayout.Arg14 != 5 || montage.PartyCycle.DialogueFrameLayout.Destination != "portrait_restore_buffer_C" {
+		t.Fatalf("dialogue frame layout = %#v", montage.PartyCycle.DialogueFrameLayout)
 	}
 	plan, err = montage.PlanPortraitText(unit, 0xdc)
 	if err != nil || plan.Epilogue.Index != 0x2d {
@@ -49,20 +49,20 @@ func TestNative2C548PortraitTextUsesEDIForSpecialEpilogue(t *testing.T) {
 	}
 }
 
-func TestNative2C548DatoGridTranscribesAllRawCells(t *testing.T) {
+func TestNative2C548DialogueFrameGridTranscribesAllRawCells(t *testing.T) {
 	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	cells, err := montage.PlanDatoGrid()
+	cells, err := montage.PlanDialogueFrameGrid()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cells) != 49 || cells[0] != (DatoCellPlacement{ResourceIndex: 1, DestinationByte: 2240}) || cells[1].ResourceIndex != 2 || cells[1].DestinationByte != 2323 {
-		t.Fatalf("DATO cells head=%#v len=%d", cells[:2], len(cells))
+	if len(cells) != 49 || cells[0] != (DialogueFramePlacement{ResourceIndex: 1, DestinationByte: 2240}) || cells[1].ResourceIndex != 2 || cells[1].DestinationByte != 2323 {
+		t.Fatalf("dialogue frame cells head=%#v len=%d", cells[:2], len(cells))
 	}
 	if cells[len(cells)-1].ResourceIndex != 13 || cells[len(cells)-1].DestinationByte != 22812 {
-		t.Fatalf("DATO cells tail=%#v", cells[len(cells)-1])
+		t.Fatalf("dialogue frame cells tail=%#v", cells[len(cells)-1])
 	}
 }
 

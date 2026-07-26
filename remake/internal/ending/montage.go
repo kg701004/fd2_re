@@ -33,23 +33,23 @@ type MontageAsset struct {
 }
 
 type PartyCycleSpec struct {
-	Source            string           `json:"source"`
-	CountGlobal       string           `json:"count_global"`
-	UnitBaseGlobal    string           `json:"unit_base_global"`
-	UnitStride        int              `json:"unit_stride"`
-	SlotSelection     string           `json:"slot_selection"`
-	VisualGroupOffset int              `json:"visual_group_offset"`
-	FigureArchive     string           `json:"figure_archive"`
-	FigureIndices     []string         `json:"figure_indices"`
-	FigureRenderer    string           `json:"figure_renderer"`
-	FrameRenderer     string           `json:"frame_renderer"`
-	InitialFrames     int              `json:"initial_frames"`
-	FrameDelayMS      int              `json:"frame_delay_ms"`
-	SourceRange       string           `json:"source_range"`
-	PortraitText      PortraitTextSpec `json:"portrait_text"`
-	DatoLayout        DatoLayoutSpec   `json:"dato_layout"`
-	FigureFade        FigureFadeSpec   `json:"figure_fade"`
-	MirrorBranch      MirrorBranchSpec `json:"mirror_branch"`
+	Source              string                  `json:"source"`
+	CountGlobal         string                  `json:"count_global"`
+	UnitBaseGlobal      string                  `json:"unit_base_global"`
+	UnitStride          int                     `json:"unit_stride"`
+	SlotSelection       string                  `json:"slot_selection"`
+	VisualGroupOffset   int                     `json:"visual_group_offset"`
+	FigureArchive       string                  `json:"figure_archive"`
+	FigureIndices       []string                `json:"figure_indices"`
+	FigureRenderer      string                  `json:"figure_renderer"`
+	FrameRenderer       string                  `json:"frame_renderer"`
+	InitialFrames       int                     `json:"initial_frames"`
+	FrameDelayMS        int                     `json:"frame_delay_ms"`
+	SourceRange         string                  `json:"source_range"`
+	PortraitText        PortraitTextSpec        `json:"portrait_text"`
+	DialogueFrameLayout DialogueFrameLayoutSpec `json:"dialogue_frame_layout"`
+	FigureFade          FigureFadeSpec          `json:"figure_fade"`
+	MirrorBranch        MirrorBranchSpec        `json:"mirror_branch"`
 }
 
 type FigureFadeSpec struct {
@@ -146,9 +146,10 @@ type MontageInput struct {
 	Source     string `json:"source"`
 }
 
-type DatoLayoutSpec struct {
+type DialogueFrameLayoutSpec struct {
 	Source      string `json:"source"`
 	Archive     string `json:"archive"`
+	Resource    int    `json:"resource"`
 	Destination string `json:"destination"`
 	Stride      int    `json:"stride"`
 	Arg8        int    `json:"arg8"`
@@ -158,7 +159,7 @@ type DatoLayoutSpec struct {
 	Role        string `json:"role"`
 }
 
-type DatoCellPlacement struct {
+type DialogueFramePlacement struct {
 	ResourceIndex   int
 	DestinationByte int
 }
@@ -186,7 +187,7 @@ func LoadMontage(path string) (*Montage, error) {
 		m.PartyCycle.FigureRenderer != "0x29164" || m.PartyCycle.FrameRenderer != "0x2b9a1" || m.PartyCycle.InitialFrames != 20 || m.PartyCycle.FrameDelayMS != 1 || m.PartyCycle.SourceRange != "0x2c5e3..0x2c9a9" ||
 		m.PartyCycle.PortraitText.Source != "0x2c7a4..0x2c967" || m.PartyCycle.PortraitText.PortraitArchive != "DATO.DAT" || m.PartyCycle.PortraitText.PortraitIndex != "unit[+7]" || m.PartyCycle.PortraitText.CurrentTextTable != "FDTXT_031" || m.PartyCycle.PortraitText.PermanentTextTable != "FDTXT_000" || len(m.PartyCycle.PortraitText.Fields) != 5 ||
 		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "edi<0xdc ? unit[+8]+0x0c : 0x2d", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
-		m.PartyCycle.DatoLayout != (DatoLayoutSpec{Source: "0x2c773->0x168b6", Archive: "DATO.DAT", Destination: "portrait_restore_buffer_C", Stride: 320, Arg8: 5, ArgC: 7, Arg10: 5, Arg14: 5, Role: "native DATO mouth-frame/grid staging; final paste is 0x4e8af"}) ||
+		m.PartyCycle.DialogueFrameLayout != (DialogueFrameLayoutSpec{Source: "0x2c773->0x168b6", Archive: "FDOTHER.DAT", Resource: 5, Destination: "portrait_restore_buffer_C", Stride: 320, Arg8: 5, ArgC: 7, Arg10: 5, Arg14: 5, Role: "native dialogue-frame/grid staging; later DATO portrait paste is 0x4e8af"}) ||
 		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) || m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
 		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 || m.PartyCycle.FigureFade.RestoreCopy != "B->A(dstStride640,srcStride320,width320,rows200)" || m.PartyCycle.FigureFade.PostFigureSnapshot != "memmove(C,B,64000)" ||
 		m.PartyCycle.MirrorBranch != (MirrorBranchSpec{Source: "0x2927e..0x29357", RequiredUnitSide: 0, SideFlagArgument: "arg4", WorkStride: 640, StageStart: 8, StageEnd: 0, StageShiftBytes: 10, PaletteDeltaFormula: "stage*6", PrimarySource: "staging+0x140-stage*10", SecondarySource: "staging+0x140", SecondaryWhen: "arg4==0", PlatformWhen: "arg4==0", Platform: FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}, Renderer: "0x29164"}) ||
@@ -218,20 +219,20 @@ func (m Montage) PlanPortraitText(unit []byte, edi int) (PortraitTextPlan, error
 	}, nil
 }
 
-// PlanDatoGrid transcribes every sub_1685c call made by 0x168b6 for the
+// PlanDialogueFrameGrid transcribes every sub_1685c call made by 0x168b6 for the
 // recovered (stride=320, arg8=5, argC=7, arg10=5, arg14=5) invocation. The
 // result is raw resource-index/destination data; it intentionally does not
 // assign names such as frame, border, or portrait to any cell.
-func (m Montage) PlanDatoGrid() ([]DatoCellPlacement, error) {
-	d := m.PartyCycle.DatoLayout
+func (m Montage) PlanDialogueFrameGrid() ([]DialogueFramePlacement, error) {
+	d := m.PartyCycle.DialogueFrameLayout
 	if m.Status != "mapped_first_party_cycle_fail_closed" || d.Stride != 320 || d.Arg8 != 5 || d.ArgC != 7 || d.Arg10 != 5 || d.Arg14 != 5 {
-		return nil, fmt.Errorf("ending: unavailable DATO grid")
+		return nil, fmt.Errorf("ending: unavailable dialogue frame grid")
 	}
 	stride := d.Stride
 	base := d.ArgC * stride
-	placements := make([]DatoCellPlacement, 0, 63)
+	placements := make([]DialogueFramePlacement, 0, 49)
 	add := func(index, offset int) {
-		placements = append(placements, DatoCellPlacement{ResourceIndex: index, DestinationByte: offset})
+		placements = append(placements, DialogueFramePlacement{ResourceIndex: index, DestinationByte: offset})
 	}
 	add(1, base)
 	add(2, base+3+d.Arg10*16)

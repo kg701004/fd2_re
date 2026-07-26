@@ -86,16 +86,17 @@
       "glyph_style": {"stride": 320, "foreground": 205, "shadow": 76, "background": 0},
       "input": {"poll": "0x10620", "skip_action": "outer_counter=1;0x4e031", "source": "0x2c950..0x2c961"}
     },
-    "dato_layout": {
+    "dialogue_frame_layout": {
       "source": "0x2c773->0x168b6",
-      "archive": "DATO.DAT",
+      "archive": "FDOTHER.DAT",
+      "resource": 5,
       "destination": "portrait_restore_buffer_C",
       "stride": 320,
       "arg8": 5,
       "argC": 7,
       "arg10": 5,
       "arg14": 5,
-      "role": "native DATO mouth-frame/grid staging; final paste is 0x4e8af"
+      "role": "native dialogue-frame/grid staging; later DATO portrait paste is 0x4e8af"
     },
     "source_range": "0x2c5e3..0x2c9a9"
   },
