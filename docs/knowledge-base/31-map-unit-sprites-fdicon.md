@@ -84,6 +84,12 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 > 的 battle FIGANI/DATO path 也不能反推 `unit+2`。先前關於特定轉職 group、龍人例外與 DATO_067 的敘述皆
 > 不再作為 renderer/exporter 的證據。
 
+> **玩家初始 record 的狹窄例外（2026-07-26）**：`JOIN` 的 `0x112a5(join_id)` 建立 persistent
+> 0x50-byte record 時，直接將同一 `join_id` 寫入 `+7` 與 `+8`；`0x33499` 已證實 `+8` 是
+> roster character-ID lookup。之後 `0x10a77` 讀 copied persistent `+7` 當 `0x11019` key。因此新加入
+> 的玩家 record **初始** map key 等於 character ID。這是特定 writer 的資料流，不是 FDFIELD/NPC 的
+> identity rule，也尚未證明所有後續 save mutation 都保持等值。
+
 | runtime byte | 已證實的狹窄意義 | evidence |
 |---|---|---|
 | `unit+2` | `0x11019` 回傳的 FDICON cache slot；不可命名為角色／肖像／素材組 | `0x10a92..0x10aa2`、`0x10c50→0x11019`、`0x12831` |
