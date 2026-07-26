@@ -72,5 +72,6 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
 
 - `0x2a6bd` 的各 command-specific presentation branch（尤其 `id==0x18` → `0x276ec`、`id>=0x20` → `0x27fc9`）
   的完整 renderer／SFX／多段命中 contract；不得再以武器 `atk_attr` 對照來命名它們。
-- 施法 lunge/位移(doc35 §2.2 的 `+0x48/+0x4a`)是否對不同法術 `target`(0=單體/1=範圍,spell.json)有差異走位——
-  屬「目標選取與範圍」子題，非本題「特效動畫 id」範圍，未查。
+- 施法 figure displacement 是否對不同法術 `target`(0=單體/1=範圍,spell.json)有差異走位——
+  `+0x48/+0x4a` 與 `0x29f72` 不是此問題的座標來源（已重判為 derived AP/DP 與 combat result resolver）；
+  仍屬「目標選取與範圍」子題，非本題「特效動畫 id」範圍，未查。
