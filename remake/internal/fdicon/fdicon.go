@@ -18,6 +18,35 @@ const (
 
 type Bank struct{ Sprites []Sprite }
 
+// NativeSelectorCache preserves 0x11019's per-resource key-to-slot allocation.
+// A caller supplies the raw byte key (the FDFIELD spawn constructor passes b0)
+// and receives the slot later written to runtime unit+2. A cache belongs to one
+// FDICON resource: the native routine's resource pointer is part of its cache
+// identity, so callers must not share one cache across different resources.
+// The returned slot is not a character, portrait, or direct archive index.
+type NativeSelectorCache struct {
+	slots map[byte]int
+	next  int
+}
+
+// SlotFor returns the stable first-seen slot for a raw FDICON key.
+func (c *NativeSelectorCache) SlotFor(key int) (int, error) {
+	if key < 0 || key > 0xff {
+		return 0, errors.New("fdicon: invalid native selector key")
+	}
+	if c.slots == nil {
+		c.slots = make(map[byte]int)
+	}
+	b := byte(key)
+	if slot, ok := c.slots[b]; ok {
+		return slot, nil
+	}
+	slot := c.next
+	c.slots[b] = slot
+	c.next++
+	return slot, nil
+}
+
 // Sprite preserves native four-mode RLE effects after decoding. Mask marks
 // source writes; RemapMask marks mode-3 spans, which 0x4dcc6 remaps from the
 // destination rather than treating as ordinary transparency.

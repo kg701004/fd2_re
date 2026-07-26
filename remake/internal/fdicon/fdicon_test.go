@@ -113,6 +113,22 @@ func TestNativeFrameIndexMatches127E0(t *testing.T) {
 	}
 }
 
+func TestNativeSelectorCacheMatches11019FirstSeenSlots(t *testing.T) {
+	var cache NativeSelectorCache
+	for _, tc := range []struct{ key, want int }{{2, 0}, {0, 1}, {2, 0}, {1, 2}, {0, 1}} {
+		got, err := cache.SlotFor(tc.key)
+		if err != nil || got != tc.want {
+			t.Fatalf("key=%d got=%d err=%v want=%d", tc.key, got, err, tc.want)
+		}
+	}
+	if _, err := cache.SlotFor(-1); err == nil {
+		t.Fatal("negative raw key accepted")
+	}
+	if _, err := cache.SlotFor(0x100); err == nil {
+		t.Fatal("wide raw key accepted")
+	}
+}
+
 func TestNativePlacementOffsetMatches127E0(t *testing.T) {
 	const base = NativeUnitOriginBytes + 2*NativeSize*NativeMapStride + 3*NativeSize
 	cases := []struct {
