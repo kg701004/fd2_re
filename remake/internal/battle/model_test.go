@@ -115,3 +115,36 @@ func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 		t.Fatal("preflight failure must not mutate cache")
 	}
 }
+
+func TestStateNativeMapSelectorCachePreservesConstructionOrder(t *testing.T) {
+	st := &State{}
+	party := []*Unit{
+		{MapSelectorKey: 9, HasMapSelectorKey: true},
+		{MapSelectorKey: 4, HasMapSelectorKey: true},
+	}
+	if err := st.AppendNativeMapSelectorBatch(party); err != nil {
+		t.Fatal(err)
+	}
+	scripted := []*Unit{
+		{MapSelectorKey: 0, HasMapSelectorKey: true},
+		{MapSelectorKey: 2, HasMapSelectorKey: true},
+		{MapSelectorKey: 0, HasMapSelectorKey: true},
+	}
+	if err := st.AppendNativeMapSelectorBatch(scripted); err != nil {
+		t.Fatal(err)
+	}
+	for i, want := range []int{0, 1, 2, 3, 2} {
+		if st.Units[i].MapSelectorSlot != want {
+			t.Fatalf("construction slot %d=%d, want %d", i, st.Units[i].MapSelectorSlot, want)
+		}
+	}
+	if err := st.AppendNativeMapSelectorBatch([]*Unit{{Fig: 123}}); err == nil {
+		t.Fatal("missing raw key must reject whole append")
+	}
+	if len(st.Units) != 5 {
+		t.Fatalf("failed append mutated unit order: %d", len(st.Units))
+	}
+	if _, err := st.NativeMapSelectorCache.KeyForSlot(4); err == nil {
+		t.Fatal("failed append mutated native cache")
+	}
+}

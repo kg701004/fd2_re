@@ -317,6 +317,11 @@ func (u *Unit) TickStatus() {
 type State struct {
 	W, H  int
 	Units []*Unit
+	// NativeMapSelectorCache is the single FDICON-resource cache accumulated in
+	// native construction order. It is intentionally populated only through
+	// AppendNativeMapSelectorBatch; legacy callers may keep using Units without
+	// claiming an indexed-native selector state.
+	NativeMapSelectorCache *fdicon.NativeSelectorCache
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
@@ -648,8 +653,30 @@ func loadNativeTerrainRendererInputs(mapJSONPath string, w, h int) ([]byte, []by
 	return append([]byte(nil), m.NativeTileBlitModes...), append([]byte(nil), m.NativeTerrainControl...), moveCodes
 }
 
-// AddUnit 把一個單位加入戰場(事件 spawn / 主角隊進場用)。
+// AddUnit 把一個單位加入戰場(事件 spawn / 主角隊進場用)。 Legacy callers
+// do not materialize a native selector slot implicitly.
 func (s *State) AddUnit(u *Unit) { s.Units = append(s.Units, u) }
+
+// AppendNativeMapSelectorBatch atomically appends one proven construction
+// batch and assigns its unit+2 slots using the State's per-resource cache.
+// Callers must preserve the native order (party first, then scripted groups)
+// and must not call this for legacy units without explicit raw keys. A failed
+// batch changes neither Units nor the cache.
+func (s *State) AppendNativeMapSelectorBatch(units []*Unit) error {
+	if s == nil {
+		return fmt.Errorf("native map selector: nil state")
+	}
+	cache := s.NativeMapSelectorCache
+	if cache == nil {
+		cache = &fdicon.NativeSelectorCache{}
+	}
+	if err := MaterializeNativeMapSelectorSlots(units, cache); err != nil {
+		return err
+	}
+	s.NativeMapSelectorCache = cache
+	s.Units = append(s.Units, units...)
+	return nil
+}
 
 // AppendGroup implements the original 0x10b4e constructor: matching FDFIELD
 // records are removed from the source roster and appended to the canonical
