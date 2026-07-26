@@ -52,7 +52,9 @@
 
 ## 4. DOSBox 驗證的紀律(host 有 dosbox,但無 debugger)
 
-- 無 source-level debugger → 用 **DOSBox 內建 debugger 版(`dosbox-x` / debug build)** 的記憶體檢視,或**存檔差分**:在關鍵動作前後存檔,比對 `FD2.SAV`(但已知強加密,doc 03)→ 改用記憶體 dump。
+- 無 source-level debugger → 可用 **DOSBox 內建 debugger 版(`dosbox-x` / debug build)** 的記憶體檢視，或以
+  `tools/fd2save.py` 解碼的 **存檔差分** 比對 `FD2.SAV`；其 envelope 已閉合為 rolling-XOR/checksum，record
+  欄位仍須以 direct dataflow 命名。記憶體 dump 僅在差分不足以判定 runtime 時序時使用。
 - 對齊靜態位址:遊戲在保護模式,linear 位址 = 我們反組譯的 `[0x53xxx]`;DOSBox debugger 可直接看該線性位址。
 - 有界、可重現:每項驗證設計成「明確操作 → 觀察特定位址/畫面 → 記錄」,不漫無目的跑(對齊 rulebook 35/64)。
 - **截圖 oracle 補充**:行為類(變灰、回合切換、事件觸發畫面)可純看畫面截圖判定,不必讀記憶體(規則 64)。

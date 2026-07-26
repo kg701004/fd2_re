@@ -33,8 +33,9 @@
 | `ANI.DAT` | 2.44 MB | 10 | 動畫(含 "AFM " chunk) |
 | `TITLE.DAT` | 23 KB | 8 | 標題 / 片頭圖 |
 
-> `FDICON.B24`(624 KB)**無** LLLLLL magic，是另一種格式 [假設] 可能是 24-bit 圖或圖示集，待後輪解。
-> `FD2.SAV`(存檔, 22987 B)高熵、無 magic，疑似加密或壓縮 [假設]，是重製存檔相容性的 RE 標的。
+> **勘誤（2026-07-26）**：`FDICON.B24` 是 1680 個 24×24、four-mode RLE 的地圖 sprite container，非 24-bit 圖。
+> `FD2.SAV` 是 `0x59cb` byte rolling-XOR envelope 加 u32 byte-sum checksum，已有嚴格 decode/encode
+> regression；四個 slot 的 persistent roster / metadata 邊界見 doc23。未命名的 record bytes 維持 raw，不能稱為加密或壓縮。
 
 ## 2. 圖像格式 [已驗證]
 

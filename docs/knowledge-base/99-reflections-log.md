@@ -26,7 +26,7 @@
 **待消除/存疑清單**(後輪確認後更新或刪除)
 - [假設] 圖像壓縮為 RLE — ✅ 第 2 輪已證並破解。
 - [假設] FDTXT 字串為 Big5 — 未逐字證(第 3 輪)。
-- [假設] `FDICON.B24` 格式、`FD2.SAV` 加密 — 未解。
+- [已更正] `FDICON.B24` 已解為 24×24 four-mode RLE；`FD2.SAV` 已解為 rolling-XOR/checksum envelope（record bytes 仍逐欄位 RE）。
 - [假設] DATO=立繪、TAI/ANI/FIGANI 內部結構 — FIGANI 結構已解,像素透明 RLE 與 DATO 未解。
 
 ## 第 2 輪 — 開發工具考證 + EXE 表 + 圖像/音樂解碼(2026-06-28)
@@ -179,7 +179,7 @@
 - **offset 表 vs 逐塊累積**:RLE tile 庫一定要用顯式 offset 表定位,否則單塊微小溢出會累積、整圖錯位
   (這就是「地圖全亂掉」的根因,使用者一眼看出)。
 - **MT32MPU.MDI 的存在 = 音樂為 MT-32 而寫**:故 munt 渲染是還原原意,非腦補;沿用 dq3 既有 munt 流程即可。
-- **FD2.SAV 強加密**(熵 7.99):破解 ROI 低,重製用自有存檔即可。
+- **勘誤**：`FD2.SAV` 並非未解的「強加密」；已由 `0x4dbd8/0x4dbb9` 關閉為 rolling-XOR/checksum，並有 `tools/fd2save.py` round-trip/tamper regression。重製使用自有存檔是產品選擇，不是工具鏈無法讀取原版。
 
 **狀態**:資產格式全解(容器/圖/動畫/音樂/文字字型/頭像/圖塊/地圖/圖示/remap/TAI);
 全 33 地圖 + metadata、136 頭像、15 首 MT-32 音樂、全劇情皆已抽出(本機)。知識庫 17 篇 + 工具 ~20 支。
