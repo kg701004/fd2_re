@@ -51,7 +51,7 @@
 | **武器/攻擊範圍/物品數值**(靜態表,不需 debugger) | `32` + `02` + `03`(青衫+反組譯) |
 | **法術**(id→特效、效果、面板) | `37` + `02` + `13`(Get_EasyMagic) |
 | 戰鬥公式(命中/暴擊/傷害/**成長**) | `02` §4 + `27` + `internal/battle/growth.go` |
-| 敵/NPC **AI** 決策 | `11` |
+| 敵/NPC **AI** 決策 | `11`（`0x13A9F/0x14EF0/0x15B77` raw boundaries；完整 runtime 仍 fail-closed） |
 | 全 30 關**目標/勝敗/加入條件** | `28` + `docs/data/battle_events.json` |
 | 逐關戰鬥事件 handler 細節 | `25`(機制)+ `26`(逐關)+ `battle_events.json` |
 | 地圖單位 sprite(FDICON Q版小人/待機動畫) | `31` |
