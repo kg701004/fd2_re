@@ -44,6 +44,12 @@ movement／portrait／score fallback；`0x0b` 分支直接呼叫 `0x1598a`，在
 unit-scan/action-loop 的 caller boundary；`+6` 的 camp/phase 名稱、table entry 的
 劇本語意仍不命名。
 
+更高一層的 callsite 也已固定：`0x1a4eb` 在 `0x1a813(1) → 0x1a866(1)` 後呼叫
+`0x1a7bd → 0x1d80b → 0x1a7f1`；另一段 `0x1a58f` 在 `0x1a813(0) → 0x1a866(0)`
+後呼叫 `0x1a7bd → 0x1d8ba → 0x1a7f1`。這只證明兩個 phase-specific unit-scan
+callsites 位於同一場景流程；`0x1a813/0x1a866` 的 selector 與 campaign phase 仍保持
+raw，不能把它們直接命名成「敵方回合開始／結束」。
+
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
 > 每單位 0x50 byte、數量 `[0x3BEB]`(見 `03-…` 單位結構)。

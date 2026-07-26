@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=378`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=379`、`[~]=98`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -44,6 +44,7 @@
 - [x] **RE-AI-DISPATCH-14EF0**：Docker Capstone 找到 `0x14EF0` 的六個 direct callers 與 `0x14237→0x1598A→0x1567E` 後續分派至 `0x1548E/0x15311/0x15055`；已記為 candidate dispatch boundary，不命名 turn/camp 或宣稱完整 AI parity。
 - [x] **RE-AI-UNIT-DISPATCH-13A9F**：Docker Capstone 閉合 `0x13A9F` 的 unit `0x50`-byte record、raw `+5 & 0x05` gate、`record+0x34 & 0x0f` command nibble 與 `0x14EF0/0x1598A/0x15311/0x1548E` 分支；保留 nibble 語意未命名。
 - [x] **RE-AI-UNIT-SCANS-1D80B**：Docker Capstone 閉合 `0x1D80B/0x1D8BA/0x1D988` 三段 `[0x3BEB]` record scans、raw `+6/+5/+0x26` gates、`0x13A9F`／`0x1598A→0x1567E` 呼叫與 `[0x51A8F]/[0x53C03]` table dispatch；保留 raw table/loop semantic 未命名。
+- [x] **RE-AI-PHASE-CALLS-1A4EB**：Docker Capstone 固定 `0x1A4EB` 的 `0x1A813(1)→0x1A866(1)→0x1A7BD→0x1D80B→0x1A7F1` 與 `0x1A58F` 的 selector-0 對應鏈；只記 phase-specific raw callsites，不命名回合開始／結束。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`
 - [x] README 知識庫總索引(可點選分類)
