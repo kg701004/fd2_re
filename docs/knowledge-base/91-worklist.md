@@ -818,3 +818,4 @@
 - [x] **RE-RAW-WORD-GROWTH-22721**：官方 IDA 9.4 固定 `+0x22` zero gate、RNG marker、`+0x48` 的 `trunc(word*0.15+1)` 與 `2*effective(+0x21)` raw accumulator；新增 `battle.ApplyNativeRawWordStep`，覆蓋 marked skip、RNG consumption、rounding、word update、score 與 preflight bounds。未命名成長效果，未接 presentation/tail。
 - [x] **RE-RAW-WORD-GROWTH-22866**：Docker Capstone 固定 `0x22866` 與 `0x22721` 同構，僅 offsets 改為 marker `+0x23`、word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用實作並有 variant regression，未命名欄位。
 - [x] **RE-RAW-PAIR-22997**：Docker Capstone 固定 `0x22997` marker `+0x24` zero gate、同 RNG marker、raw `+0x4c/+0x4e` 各 `+0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，覆蓋 wrap/marked skip/preflight regression，未命名欄位。
+- [~] **RE-ITEM-22D1B-BRANCH**：Docker Capstone 固定 `0x22d1b` 的 raw `a5` marker gate、class `+0x20 != 0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker 與 `8*record+0x21` accumulator。保持 evidence-only，不能誤稱 type14 為 status 或併入 17–19 modifier。
