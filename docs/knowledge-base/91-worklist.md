@@ -603,6 +603,7 @@
 - [x] **strict native indexed-frame entrypoint**：`ComposeNativeFrame` 把 `FrameInput` 與 `NativeMapHUDInput`/frame/terrain/unit/cache 綁為單一 `NativeFrameInput`，直接以 `BlitNativeMapHUD` 填滿 `0x11cac` 的 HUD slot，不再把完整 native frame 交給任意 callback。regression 驗 HUD bytes 進 work buffer 及 `0x11eb0` viewport copy；PNG/Ebiten presentation 仍是下一個獨立 asset/palette bridge。
 - [x] **FDSHAP archive sprite-bank bridge**：`fdother.DecodeSpriteBankResource` 以 LLLLLL `ReadResource→fdicon.Parse` 解 FDSHAP even image resource，不混入相鄰 terrain-control resource；player-provided FDSHAP#0 regression 固定 288 個24×24 four-mode frames。這提供 native HUD terrain icon／indexed compositor 的真實 archive input，但 map↔resource pairing仍由上層明示。
 - [x] **FDSHAP map resource pairing**：`DecodeMapTerrainResources(mapIndex)` 只讀已證 map N→image #`2N`、control #`2N+1`，並驗 bank frame count 不超 control-record count；FDSHAP map0 真實 regression=288 frame/1200 control bytes。明確拒絕從 tile count/cost 猜 map 資源。
+- [x] **exported map-path binding**：`MapIndexFromAssetPath` 僅接受 legacy `assets`=map0 或 basename 精確 `mapN`，拒絕 suffix/負數/任意目錄；runtime 將用此 explicit N 餵 FDSHAP pair loader，不以檔名近似猜配。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
 
