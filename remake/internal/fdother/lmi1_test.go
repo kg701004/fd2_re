@@ -105,6 +105,24 @@ func TestFDOTHER005MapHUDUses4ModeFrameEntries(t *testing.T) {
 	}
 }
 
+func TestFDOTHER005DialogueFrameUsesRawLMI1EntryPath(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	cell, err := DecodeLMI1RawEntry(datPath, 5, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cell.Width != 3 || cell.Height != 3 || len(cell.Pixels) != 9 || cell.Pixels[0] != 0x60 || cell.Pixels[1] != 0xbe || cell.Pixels[2] != 0xbd {
+		t.Fatalf("raw dialogue cell=%#v", cell)
+	}
+	// 0xbe/bd are literal indexed pixels on this native path, not repeat codes.
+	if err := cell.BlitAt(make([]byte, 16), 4, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestParseLMI1FrameEntryRejectsOtherContainerOrIndex(t *testing.T) {
 	if _, err := ParseLMI1FrameEntry([]byte("bad"), 0); err == nil {
 		t.Fatal("non-LMI1 container was accepted")
