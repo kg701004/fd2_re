@@ -284,6 +284,7 @@ type State struct {
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
 	NativeTileBlitModes      []byte                      // FDFIELD composition entry byte+3; nil unless exact renderer export exists
 	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
+	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
 	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
 	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
 	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
@@ -480,7 +481,7 @@ func Load(path string) (*State, error) {
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
-	st.NativeTileBlitModes, st.NativeTerrainControl = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
+	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
 	st.Treasures = loadTreasures(filepath.Join(filepath.Dir(path), "map.json"), f.W, f.H, f.Chests)
 	return st, nil
 }
@@ -565,21 +566,25 @@ func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
 
 // loadNativeTerrainRendererInputs accepts only a complete map export. It
 // deliberately keeps malformed data nil rather than repurposing Cost.
-func loadNativeTerrainRendererInputs(mapJSONPath string, w, h int) ([]byte, []byte) {
+func loadNativeTerrainRendererInputs(mapJSONPath string, w, h int) ([]byte, []byte, []byte) {
 	raw, err := os.ReadFile(mapJSONPath)
 	if err != nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	var m mapCostFile
 	if json.Unmarshal(raw, &m) != nil || m.W != w || m.H != h || len(m.Tiles) != w*h || len(m.NativeTileBlitModes) != w*h || len(m.NativeTerrainControl) == 0 || len(m.NativeTerrainControl)%4 != 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
+	moveCodes := make([]byte, len(m.Tiles))
 	for _, tile := range m.Tiles {
 		if tile < 0 || tile&^0x3ff != 0 || tile >= len(m.NativeTerrainControl)/4 {
-			return nil, nil
+			return nil, nil, nil
 		}
 	}
-	return append([]byte(nil), m.NativeTileBlitModes...), append([]byte(nil), m.NativeTerrainControl...)
+	for i, tile := range m.Tiles {
+		moveCodes[i] = m.NativeTerrainControl[tile*4+1]
+	}
+	return append([]byte(nil), m.NativeTileBlitModes...), append([]byte(nil), m.NativeTerrainControl...), moveCodes
 }
 
 // AddUnit 把一個單位加入戰場(事件 spawn / 主角隊進場用)。

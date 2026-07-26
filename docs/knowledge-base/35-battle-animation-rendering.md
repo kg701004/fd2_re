@@ -100,8 +100,9 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 - **`0x29f72(攻方idx, 守方idx, &out)` = lunge / 接近內插器**(figure 最終位移來源):
   - `ebp`/`edi` = 雙方 unit(各 `idx*80`,base `[0x53a45]`)；其 position/local input 的 exact
     runtime field provenance 尚未重新閉合，不能再斷言為 `+0x48/+0x4a`。
-  - 用**動畫進度** `0x4e893` → `idiv 100`(百分比)把位移內插;再套**方向 / pose 微調表**
-    `[dir*4 + 0x51a12]`(X,值 `[5,0,-5,-5,-5,…]` %)、`[dir*4 + 0x51a2a]`(Y,值 `[0,0,10,10,-5,…]` %)。
+  - 用**動畫進度** `0x4e893` → `idiv 100`(百分比)把位移內插。先前把 `0x51a12/0x51a2a`
+    誤列為此處的方向／pose 微調表，該斷言已撤回：兩表是 map HUD `0x1acf3` 以 FDSHAP
+    control byte+1 索引的地形 AP/DP 百分比表，不能拿來解釋 figure 位移。
   - 輸出 struct(`esi[0]/4/8/0x10`=各種旗標、`esi[0x14]`=內插位移量)+ 寫全域 `[0x53ec8]`(=守方+0x21 × spriteW ÷ 攻方+0x21,縮放後的 X 用量)。
   - → **figure 前衝幅度 = 雙方格距 × 動畫% × 方向微調**,疊在固定錨點 (164,157) 上。
 - **frame 自帶 (dx,dy)**:figure 繪製 wrapper **0x2935b** 解單幀:
@@ -396,7 +397,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | unit[+0x48]/[+0x4a]/[+0x4c]/[+0x4e] (word) | derived AP / DP / HIT / EV；先前 screen bounding-box 斷言已撤回 |
 | unit[+6] | 攻 / 守旗標:選合成路徑(0x29c90 vs 0x29ded)+ 左右 buffer 交換(0x28e05) |
 | [0x5018d] | 1.15 double 常數；與 transient modifier / renderer 的精確關係待重判 |
-| 0x51a12 / 0x51a2a | 方向 / pose 微調表(X:[5,0,-5,-5,-5,…]%、Y:[0,0,10,10,-5,…]%) |
+| 0x51a12 / 0x51a2a | map HUD `0x1acf3` 的地形 AP / DP 百分比表，索引為 FDSHAP control byte+1；已驗證 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5) |
 | [0x53ec8] | 0x29f72 輸出:縮放後 figure X 用量(被攻擊執行區 0x15/0x18/0x19xxx 廣泛讀取) |
 
 ---
