@@ -1904,12 +1904,13 @@ func (g *Game) applyInventoryRecipe(n *campaign.Node) (bool, error) {
 }
 
 // syncPartyFromBattle is the remake projection of original 0x11506. The EXE
-// copies a matching 0x50-byte battle unit back to the persistent roster,
-// clears transient state/path bytes, restores active survivors to full HP and
-// restores everyone's MP. Defeated/inactive members retain their zero HP. The
-// EXE skips an inactive charID 0 record; the remake snapshots JOIN member 0 as
-// well because a successful post-battle handler cannot normally receive a
-// defeated protagonist and dropping his progression would be destructive.
+// matches persistent records by raw +0x08 identity before copying its full
+// 0x50-byte runtime record; this projection currently selects permanent
+// members through normalized Fig/party membership because State does not yet
+// carry raw +0x08 records. It clears transient state/path bytes, restores
+// active survivors to full HP and restores everyone's MP. Defeated/inactive
+// members retain their zero HP. The projection snapshots JOIN member 0 as
+// compatibility behavior; it is not byte-identical proof of native 0x11506.
 func (g *Game) syncPartyFromBattle() error {
 	if g.st == nil {
 		return fmt.Errorf("no completed battle state")
