@@ -64,6 +64,10 @@
 - 因此「敵方 AI 施法」不是推測機制，而是已由 callsite 證實；尚待補的是 command inventory/可用法術條件、治療目標選擇，以及 `0x15880/0x15B77` 對不同法術效果的精確優先級。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
 
+2026-07-27 raw availability slice：`NativeAvailableAISpellCommandIDs` 現重用 `0x1598a` 的 `unit+0x27==0` gate、
+40-bit command mask、36-entry command book 與 `record+5 <= unit+0x44` MP gate，只回傳 raw command IDs `>=0x10`。
+它不在 adapter 內轉換 `command-0x10`，也不接 target、score、Cast 或 effect；因此不會把 inventory bridge 誤宣稱成 AI 施法完成。
+
 `0x15B77` 的 spell-target 評分分支也已直接反組譯（呼叫點 `0x15AD8`）：
 
 - spell id `0..12` 走攻擊術分支，逐一掃候選目標；依目標 HP 與施法者法術值累加基本／高優先分數（可見常數 `8` 與 `0x18`）。
@@ -79,7 +83,10 @@
 - 無可攻擊目標時的「接近最近敵人」路徑選擇分支(0x15192 一帶)。
 - flood-fill `0x4EE40` 的移動成本表(哪些地形耗幾點 MV)。
 
-## 重製對應
+## 重製對應（fail-closed）
 
-可直接照搬此評分式 AI(全枚舉落點×目標,score=傷害×擊殺加成×狀態倍率×地形,取最高優先+分數),
-即能重現原版敵人行為。難度調整可改門檻(≤2)、加成倍率與是否啟用地形評估。
+目前只能把已釘死的 raw scoring branches 保存成 adapter；不可直接宣稱照搬這段摘要即可重現原版 AI。
+`0x1ECBE` 情境加成、`[ebx+0x40]` 擊殺門檻、`[ebx+8]` 狀態旗標、無攻擊目標時的移動分支，以及
+spell command inventory/MP/target transaction 尚未全部閉合。remake 的 normalized `aiActUnit`／`NextAIPlan`
+因此維持 approximation，只有具備完整 raw record、caller gate 與 target evidence 時才可新增 native AI slice；
+難度調整參數也不得被當成原版等價設定。
