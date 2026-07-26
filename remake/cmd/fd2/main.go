@@ -84,6 +84,7 @@ type Game struct {
 	churchIDs         []int               // current church candidate ids
 	churchClassID     int                 // selected class-change candidate
 	churchBranches    []campaign.ClassChangeBranch
+	titleSlotSel      int // title LOAD selector: native 0x30550 slots 0..3
 	classChangeTable  campaign.ClassChangeTable
 	classChangeGrowth map[int]campaign.ClassChangeGrowth
 	handlerChapter    int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter

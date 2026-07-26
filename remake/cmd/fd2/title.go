@@ -236,15 +236,35 @@ func (g *Game) titleUpdate() bool {
 			g.titleFlash--
 			if g.titleFlash == 0 {
 				switch g.titleSel {
-				case 1, 2:
-					// The remake currently has one self-owned JSON save.  The native
-					// return-1 branch opens its slot selector (0x30550), while the
-					// other return branch is separate; do not claim this shared
-					// fallback reproduces either native save/continue flow.
-					g.loadGame()
+				case 1:
+					g.titleSlotSel = 0
+					g.titlePhase = "loadslots"
+					return true
+				case 2:
+					g.loadGameFromSlot(0)
 				}
 				g.titlePhase = "" // START 或讀檔後 → 進遊戲
 			}
+		}
+		return true
+	case "loadslots":
+		// Native 0x30550 selector: four bounded slots, no wrap, Enter/Space
+		// confirms and Esc cancels back to the title menu.
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.titleSlotSel > 0 {
+			g.titleSlotSel--
+			g.playSFX(sfxCursor)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.titleSlotSel < 3 {
+			g.titleSlotSel++
+			g.playSFX(sfxCursor)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			g.titlePhase = "menu"
+			return true
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			g.loadGameFromSlot(g.titleSlotSel)
+			g.titlePhase = ""
 		}
 		return true
 	}
@@ -331,6 +351,34 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 		if g.font != nil {
 			g.font.Draw(screen, "♪ F2  "+bgmSourceName[g.bgmSource], 8, float64(logicalH)-24, 0.9,
 				color.RGBA{0xa0, 0xc0, 0xff, 0xff})
+		}
+	case "loadslots":
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(2, 2)
+		screen.DrawImage(ta.title, op)
+		if g.font == nil {
+			return
+		}
+		box := ebiten.NewImage(360, 250)
+		box.Fill(color.RGBA{0x08, 0x14, 0x30, 0xf0})
+		bop := &ebiten.DrawImageOptions{}
+		bop.GeoM.Translate(140, 70)
+		screen.DrawImage(box, bop)
+		g.font.Draw(screen, "讀取存檔（↑↓選擇，Enter 確認，Esc 返回）", 158, 86, 0.9, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+		for slot := 0; slot < 4; slot++ {
+			c := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			prefix := "　"
+			if slot == g.titleSlotSel {
+				prefix = "▶"
+				c = color.RGBA{0xff, 0xff, 0xff, 0xff}
+			}
+			label := fmt.Sprintf("%s槽位 %d", prefix, slot+1)
+			if _, err := os.Stat(saveSlotPath(slot)); err != nil {
+				label += "　（空）"
+			} else {
+				label += "　（已有存檔）"
+			}
+			g.font.Draw(screen, label, 176, 124+float64(slot)*34, 1.0, c)
 		}
 	}
 }

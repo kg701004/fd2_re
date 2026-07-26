@@ -38,6 +38,16 @@ func TestSaveDataRoundTripsPersistentParty(t *testing.T) {
 	}
 }
 
+func TestSaveSlotsAreBoundedAndDistinct(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	if saveSlotPath(-1) != saveSlotPath(0) || saveSlotPath(4) != saveSlotPath(0) {
+		t.Fatal("invalid save slot did not fail closed to slot 0")
+	}
+	if saveSlotPath(0) == saveSlotPath(1) || filepath.Base(saveSlotPath(3)) != "fd2_save_3.json" {
+		t.Fatalf("save slot paths are not distinct/bounded: %q %q", saveSlotPath(0), saveSlotPath(3))
+	}
+}
+
 func TestSaveRejectsPostBattleHandlerWithoutSerializableRuntimeContext(t *testing.T) {
 	c := &campaign.Campaign{Start: "post", Nodes: map[string]*campaign.Node{
 		"post":   {Type: "cutscene", HandlerBinding: "assets/cutscenes/bindings/ch01_post.json", Next: "choice"},

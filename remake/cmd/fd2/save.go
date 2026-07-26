@@ -4,14 +4,27 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
 
-// savePath 存檔位置:$XDG_DATA_HOME/fd2_re/fd2_save.json(唯讀 AppImage mount 內無法寫 cwd,見 assets.go)。
-func savePath() string { return userDataPath("fd2_save.json") }
+// savePath/saveSlotPath 存檔位置:$XDG_DATA_HOME/fd2_re/fd2_save_N.json；四槽
+// selector 對應 native 0x30550 的 UI contract，但 JSON 不是原版 FD2.SAV ABI。
+func savePath() string { return saveSlotPath(0) }
+
+func saveSlotPath(slot int) string {
+	if slot < 0 || slot > 3 {
+		slot = 0
+	}
+	if slot == 0 {
+		// Preserve the pre-selector single-save file as slot 1.
+		return userDataPath("fd2_save.json")
+	}
+	return userDataPath(fmt.Sprintf("fd2_save_%d.json", slot))
+}
 
 // writeSaveFile replaces the save in one rename. Campaign progress is only
 // persisted at node boundaries, so a truncated JSON file must never turn a
@@ -50,7 +63,9 @@ type saveData struct {
 	Chapter        int                 `json:"chapter,omitempty"`
 }
 
-func (g *Game) saveGame() {
+func (g *Game) saveGame() { g.saveGameToSlot(0) }
+
+func (g *Game) saveGameToSlot(slot int) {
 	if g.camp == nil {
 		g.msg = "存檔:僅 campaign 模式支援(FD2_CAMPAIGN=1)"
 		return
@@ -73,16 +88,18 @@ func (g *Game) saveGame() {
 	if err != nil {
 		return
 	}
-	if writeSaveFile(savePath(), raw) == nil {
-		g.msg = "已存檔(" + g.camp.Cur + ")"
+	if writeSaveFile(saveSlotPath(slot), raw) == nil {
+		g.msg = fmt.Sprintf("已存檔(槽位%d：%s)", slot+1, g.camp.Cur)
 	}
 }
 
-func (g *Game) loadGame() {
+func (g *Game) loadGame() { g.loadGameFromSlot(0) }
+
+func (g *Game) loadGameFromSlot(slot int) {
 	if g.camp == nil {
 		return
 	}
-	raw, err := os.ReadFile(savePath())
+	raw, err := os.ReadFile(saveSlotPath(slot))
 	if err != nil {
 		g.msg = "無存檔"
 		return
@@ -102,5 +119,5 @@ func (g *Game) loadGame() {
 	g.partyDeploy = d.PartyDeploy
 	g.partyRoster, g.handlerChapter = d.PartyRoster, d.Chapter
 	g.enterNode()
-	g.msg = "已讀檔(" + d.Node + ")"
+	g.msg = fmt.Sprintf("已讀檔(槽位%d：%s)", slot+1, d.Node)
 }
