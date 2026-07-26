@@ -1469,6 +1469,44 @@ func TestCompilePaletteRamp25052PreservesInclusiveDescendingDeltas(t *testing.T)
 	}
 }
 
+func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch26_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	for _, issue := range issues {
+		if issue.Source.Target == "0x25052" {
+			t.Fatalf("native palette ramp remained unresolved: %#v", issue)
+		}
+	}
+	wantStarts := map[string]int{"0x25244": 5, "0x25277": 4, "0x25290": 3, "0x252a9": 2, "0x252bf": 2, "0x252d5": 2}
+	seen := make(map[string][]Beat)
+	for _, beat := range beats {
+		if _, ok := wantStarts[beat.Source]; ok {
+			seen[beat.Source] = append(seen[beat.Source], beat)
+		}
+	}
+	for source, start := range wantStarts {
+		sequence := seen[source]
+		if len(sequence) != 2*(start+1) {
+			t.Fatalf("%s lowered beat count=%d want %d: %#v", source, len(sequence), 2*(start+1), sequence)
+		}
+		for i, delta := range func() []int {
+			out := make([]int, start+1)
+			for j := range out {
+				out[j] = start - j
+			}
+			return out
+		}() {
+			palette, delay := sequence[i*2], sequence[i*2+1]
+			if palette.Op != "palette_update" || palette.PaletteStart != 0 || palette.PaletteEnd != 255 || palette.PaletteDelta != delta || delay.Op != "delay" || delay.Ms != 80 {
+				t.Fatalf("%s ramp[%d]=%#v/%#v", source, i, palette, delay)
+			}
+		}
+	}
+}
+
 func TestCompileChapter23PreUsesRecoveredChapter24TextGroups(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch23_pre.json")
 	if err != nil {
