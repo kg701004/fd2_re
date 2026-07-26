@@ -52,6 +52,17 @@ func TestRawCellBankRejectsMalformedGeometry(t *testing.T) {
 	}
 }
 
+func TestRawCellOpaqueOffsetWritesLiteralZero(t *testing.T) {
+	dst := []byte{9, 9, 9, 9, 9, 9}
+	cell := RawCell{Width: 2, Height: 1, Pixels: []byte{0, 7}}
+	if err := cell.BlitOpaqueAtOffset(dst, 3, 1); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst, []byte{9, 0, 7, 9, 9, 9}; string(got) != string(want) {
+		t.Fatalf("opaque offset=%v, want %v", got, want)
+	}
+}
+
 func TestFDOTHER002ActionOverlayCells(t *testing.T) {
 	const path = "../../../extracted/raw/FDOTHER/FDOTHER_002.bin"
 	data, err := os.ReadFile(path)

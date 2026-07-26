@@ -84,3 +84,16 @@ func (c RawCell) BlitAt(dst []byte, stride, x, y int) error {
 	}
 	return nil
 }
+
+// BlitOpaqueAtOffset reproduces 0x4e9bb's direct row copy. Unlike BlitAt,
+// zero bytes are written as literal indexed pixels because this is the
+// FDOTHER#5 dialogue-frame path, not the transparent 0x4e9e4 path.
+func (c RawCell) BlitOpaqueAtOffset(dst []byte, stride, offset int) error {
+	if c.Width <= 0 || c.Height <= 0 || len(c.Pixels) != c.Width*c.Height || stride <= 0 || offset < 0 || offset%stride+c.Width > stride || offset > len(dst) || c.Height > (len(dst)-offset)/stride {
+		return errors.New("fdother: opaque raw cell destination is too small")
+	}
+	for row := 0; row < c.Height; row++ {
+		copy(dst[offset+row*stride:offset+row*stride+c.Width], c.Pixels[row*c.Width:(row+1)*c.Width])
+	}
+	return nil
+}

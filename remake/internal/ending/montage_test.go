@@ -1,6 +1,10 @@
 package ending
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+)
 
 func TestNative2C548MontageMapPlansNativePartySlotOrder(t *testing.T) {
 	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
@@ -63,6 +67,24 @@ func TestNative2C548DialogueFrameGridTranscribesAllRawCells(t *testing.T) {
 	}
 	if cells[len(cells)-1].ResourceIndex != 13 || cells[len(cells)-1].DestinationByte != 22812 {
 		t.Fatalf("dialogue frame cells tail=%#v", cells[len(cells)-1])
+	}
+}
+
+func TestRenderDialogueFrameGridUsesRawOpaqueCopies(t *testing.T) {
+	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cells := make([]fdother.RawCell, 18)
+	for i := range cells {
+		cells[i] = fdother.RawCell{Width: 1, Height: 1, Pixels: []byte{byte(i)}}
+	}
+	dst := make([]byte, Bytes)
+	if err := RenderDialogueFrameGrid(*montage, cells, dst); err != nil {
+		t.Fatal(err)
+	}
+	if dst[2240] != 1 || dst[2323] != 5 || dst[22812] != 13 {
+		t.Fatalf("dialogue frame pixels=%d/%d/%d", dst[2240], dst[2323], dst[22812])
 	}
 }
 
