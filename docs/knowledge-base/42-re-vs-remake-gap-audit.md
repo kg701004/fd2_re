@@ -47,7 +47,7 @@
 | 存檔/讀檔 | doc19 | ✅(自有格式,非破解 FD2.SAV,已在 save.go 註明是刻意設計) | `save.go` 存 campaign 節點/旗標/金幣/道具 | — |
 | BGM 播放 | doc12 | ✅ | `audio.go playBGM`,同曲不重播/換曲釋放語意對齊 `0x26777` | — |
 | SFX(命中/陣亡/選單音) | doc36 | ✅(池對照為近似值,doc36 已註記真實 attack_id→sfx 池對照未 RE 完成) | `audio.go loadSFX/playSFX`,`main.go` 多處呼叫 | — |
-| 出場人數上限(前27章16人/末3章20人) | doc02 §4.6 | ❌ | grep `16.*人\|20.*人\|MaxDeploy` 零命中;remake 依 `own_deploy` 格數放人,無顯式上限規則 | 低(多數地圖部署格數本身就 < 上限,實務影響小) |
+| 出場人數上限(前27章16人/末3章20人) | doc02 §4.6、native `0x318ad` | 🟡 | remake 已把 raw 勾選表的 selection cap 資料化為一般 `party_limit=15`、末路線 `party_limit=19`，並由 preparation UI/測試套用；這是 native 0-based cap 的目前證據，不把顯示人數 16/20 與內部上限混為同一欄。仍待完整 native deployment cursor／overflow 行為與實機 UI 對照 | 中 |
 
 ## RE 側也需要補的缺口(非 remake 落差,附帶記錄)
 
