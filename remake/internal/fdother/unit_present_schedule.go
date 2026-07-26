@@ -2,6 +2,24 @@ package fdother
 
 import "fmt"
 
+const (
+	nativeUnitPresentStride     = 0x1c8
+	nativeUnitPresentTilePixels = 0x18
+	nativeUnitPresentBase       = 0x8088
+)
+
+// NativeUnitPresentByteOrigin is the exact destination address expression in
+// 0x22470. The first LMI phase receives map coordinates x/y and writes at one
+// tile row below the visible terrain origin. It returns a byte offset into the
+// native 456-stride indexed work buffer rather than inventing a screen anchor.
+// Negative results are retained: the original caller owns viewport validity.
+func NativeUnitPresentByteOrigin(x, y, cameraX, cameraY int) int {
+	return nativeUnitPresentBase +
+		nativeUnitPresentTilePixels*(x-cameraX) +
+		nativeUnitPresentTilePixels*nativeUnitPresentStride*(y-cameraY) +
+		nativeUnitPresentStride
+}
+
 // UnitPresentStep is one native present boundary in 0x22253. It records only
 // the resource/index/timing contract proven by the three callees; geometry,
 // buffers and the intervening terrain/unit redraw are deliberately owned by a

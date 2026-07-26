@@ -41,3 +41,16 @@ func TestValidateNativeUnitPresentScheduleRejectsShortcuts(t *testing.T) {
 		t.Fatal("middle tail ticks were accepted at the wrong timing")
 	}
 }
+
+func TestNativeUnitPresentByteOriginMatches22470AddressExpression(t *testing.T) {
+	got := NativeUnitPresentByteOrigin(22, 23, 16, 19)
+	want := 0x8088 + 0x18*(22-16) + 0x18*0x1c8*(23-19) + 0x1c8
+	if got != want {
+		t.Fatalf("origin=%#x, want %#x", got, want)
+	}
+	// Keep raw signed arithmetic: clipping is a renderer/caller decision, and
+	// must not be silently folded into the recovered native address formula.
+	if got := NativeUnitPresentByteOrigin(0, 0, 1, 1); got != 0x8088-0x18-0x18*0x1c8+0x1c8 {
+		t.Fatalf("offscreen origin=%#x", got)
+	}
+}
