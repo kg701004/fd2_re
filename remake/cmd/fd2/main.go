@@ -1734,7 +1734,9 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.AtkMin, dst.AtkMax = src.AtkMin, src.AtkMax
 	dst.BaseAP, dst.BaseDP, dst.BaseHIT, dst.BaseEV, dst.BaseMV = src.BaseAP, src.BaseDP, src.BaseHIT, src.BaseEV, src.BaseMV
 	dst.BaseAtkMin, dst.BaseAtkMax, dst.EquipmentBaseSet = src.BaseAtkMin, src.BaseAtkMax, src.EquipmentBaseSet
-	dst.Portrait, dst.Fig = src.Portrait, src.Fig
+	dst.Portrait, dst.Fig, dst.BattleFig = src.Portrait, src.Fig, src.BattleFig
+	dst.MapSelectorKey, dst.HasMapSelectorKey = src.MapSelectorKey, src.HasMapSelectorKey
+	dst.MapSelectorSlot, dst.HasMapSelectorSlot = src.MapSelectorSlot, src.HasMapSelectorSlot
 	dst.Exp, dst.ExpPerLevel = src.Exp, src.ExpPerLevel
 	dst.Spells = append(dst.Spells[:0], src.Spells...)
 	dst.NativeCommandMask = src.NativeCommandMask

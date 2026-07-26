@@ -27,6 +27,9 @@ func TestScenarioPartyUnitsPreserveRuntimeOrderAndDeployment(t *testing.T) {
 		if u.Fig != want.fig || u.X != want.x || u.Y != want.y || !u.OnField || u.Camp != Own {
 			t.Fatalf("runtime slot %d = %#v, want fig=%d at (%d,%d)", slot, u, want.fig, want.x, want.y)
 		}
+		if u.BattleFig != want.fig || !u.HasMapSelectorKey || u.MapSelectorKey != want.fig {
+			t.Fatalf("fresh JOIN selector source slot %d = battle=%d key=%d known=%v", slot, u.BattleFig, u.MapSelectorKey, u.HasMapSelectorKey)
+		}
 	}
 }
 

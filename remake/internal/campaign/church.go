@@ -90,6 +90,13 @@ func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, 
 	u.MV += growthGroup
 	u.Exp = 0
 	u.Portrait, u.ClassID = targetPortrait, classID
+	// Native class-change flow 0x31576..0x3157a writes the selected target
+	// byte to live unit+7. For player construction that byte is both the
+	// FIGANI selector and the next 0x11019 raw map key; stable Fig remains the
+	// JOIN/+8 identity. A previous cache slot belongs to the old key.
+	u.BattleFig = targetPortrait
+	u.MapSelectorKey, u.HasMapSelectorKey = targetPortrait, true
+	u.MapSelectorSlot, u.HasMapSelectorSlot = 0, false
 	return nil
 }
 

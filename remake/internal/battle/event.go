@@ -26,22 +26,25 @@ type Scenario struct {
 
 // PartyMember 主角隊成員(數值來自 characters.json / EXE 表)。
 type PartyMember struct {
-	Name     string `json:"name"`
-	Cls      string `json:"cls"`
-	Fig      int    `json:"fig"` // sprite 組 = 角色 id(恆等,doc 31)
-	Portrait int    `json:"portrait"`
-	HP       int    `json:"hp"`
-	MP       int    `json:"mp"`
-	AP       int    `json:"ap"`
-	DP       int    `json:"dp"`
-	HIT      int    `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
-	EV       int    `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
-	CritPct  int    `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
-	MV       int    `json:"mv"`
-	AtkMin   int    `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
-	AtkMax   int    `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
-	Lv       int    `json:"lv"`
-	Spells   []int  `json:"spells"` // 已習得法術 id(spell.json)
+	Name string `json:"name"`
+	Cls  string `json:"cls"`
+	// Fig is the stable JOIN/roster identity used by the remake's persistent
+	// party map. For a fresh native JOIN record it also seeds raw +7, but it is
+	// not the mutable map/battle selector after class change.
+	Fig      int   `json:"fig"`
+	Portrait int   `json:"portrait"`
+	HP       int   `json:"hp"`
+	MP       int   `json:"mp"`
+	AP       int   `json:"ap"`
+	DP       int   `json:"dp"`
+	HIT      int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
+	EV       int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
+	CritPct  int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
+	MV       int   `json:"mv"`
+	AtkMin   int   `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
+	AtkMax   int   `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
+	Lv       int   `json:"lv"`
+	Spells   []int `json:"spells"` // 已習得法術 id(spell.json)
 	// InitialCommandMask is the exact four-byte constructor source for
 	// unit+0x1a..+0x1d. It is deliberately not derived from Spells.
 	InitialCommandMask []byte `json:"initial_command_mask,omitempty"`
@@ -267,7 +270,12 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			HP: pm.HP, MaxHP: pm.HP, MP: pm.MP, MaxMP: pm.MP, AP: pm.AP, DP: pm.DP, MV: pm.MV,
 			HIT: pm.HIT, EV: pm.EV, CritPct: pm.CritPct,
 			AtkMin: pm.AtkMin, AtkMax: pm.AtkMax,
-			Portrait: pm.Portrait, Fig: pm.Fig, BattleFig: pm.Fig, X: x, Y: y, OnField: true,
+			Portrait: pm.Portrait, Fig: pm.Fig,
+			// Fresh native JOIN writes join_id to persistent +7/+8. Fig is the
+			// authored JOIN identity here; class change later writes raw +7
+			// explicitly and must not alter Fig/+8 identity.
+			BattleFig: pm.Fig, MapSelectorKey: pm.Fig, HasMapSelectorKey: true,
+			X: x, Y: y, OnField: true,
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,
 		}

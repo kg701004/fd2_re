@@ -54,7 +54,7 @@ func TestClassChangeCandidatesMatchOriginal31793Predicate(t *testing.T) {
 }
 
 func TestApplyClassChangeAddsGrowthAndConsumesItem(t *testing.T) {
-	u := &battle.Unit{Portrait: 9, ClassID: 5, Lv: 27, Exp: 73, AP: 99, DP: 88, DX: 77, MV: 5,
+	u := &battle.Unit{Fig: 9, Portrait: 9, BattleFig: 9, MapSelectorKey: 9, HasMapSelectorKey: true, MapSelectorSlot: 3, HasMapSelectorSlot: true, ClassID: 5, Lv: 27, Exp: 73, AP: 99, DP: 88, DX: 77, MV: 5,
 		Inventory: []int{0x5a, 0x20}, Equipped: []bool{true, false}, InventorySlots: []int{0x5a, 0x20}}
 	row := ClassChangeGrowth{AP: [2]int{10, 11}, DP: [2]int{20, 21}, DX: [2]int{30, 31}, HP: [2]int{40, 41}, MP: [2]int{50, 51}}
 	if err := ApplyClassChange(u, 0x34, 21, 2, row, rand.New(rand.NewSource(1)), 0); err != nil {
@@ -65,6 +65,9 @@ func TestApplyClassChangeAddsGrowthAndConsumesItem(t *testing.T) {
 	}
 	if u.Lv != 27 || u.Exp != 0 || u.MV != 7 || u.Portrait != 0x34 || u.ClassID != 21 {
 		t.Fatalf("metadata lv=%d exp=%v mv=%d portrait=%x class=%d", u.Lv, u.Exp, u.MV, u.Portrait, u.ClassID)
+	}
+	if u.Fig != 9 || u.BattleFig != 0x34 || !u.HasMapSelectorKey || u.MapSelectorKey != 0x34 || u.HasMapSelectorSlot {
+		t.Fatalf("class-change selectors fig=%d battle=%d key=%d known=%v slot-known=%v", u.Fig, u.BattleFig, u.MapSelectorKey, u.HasMapSelectorKey, u.HasMapSelectorSlot)
 	}
 	if len(u.Inventory) != 1 || u.Inventory[0] != 0x20 || u.Equipped[0] {
 		t.Fatalf("item removal inventory=%v equipped=%v", u.Inventory, u.Equipped)
