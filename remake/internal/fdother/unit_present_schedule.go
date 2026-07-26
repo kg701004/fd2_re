@@ -1,6 +1,9 @@
 package fdother
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	nativeUnitPresentStride     = 0x1c8
@@ -18,6 +21,22 @@ func NativeUnitPresentByteOrigin(x, y, cameraX, cameraY int) int {
 		nativeUnitPresentTilePixels*(x-cameraX) +
 		nativeUnitPresentTilePixels*nativeUnitPresentStride*(y-cameraY) +
 		nativeUnitPresentStride
+}
+
+// BlitNativeUnitPresentLMI reproduces one 0x22470 LMI-cell write before that
+// phase redraws units and presents the 320x192 viewport.  Native 0x4e85b
+// decodes through 0x4e916 and preserves destination pixels when the decoded
+// value is zero; LMI1Entry.BlitAt has that exact transparent rule.
+//
+// The caller supplies the full native work buffer (not a cropped viewport).
+// Offscreen origins are rejected rather than emulating unchecked native memory
+// writes; a future renderer must make its clipping policy explicit.
+func BlitNativeUnitPresentLMI(entry LMI1Entry, dst []byte, x, y, cameraX, cameraY int) error {
+	origin := NativeUnitPresentByteOrigin(x, y, cameraX, cameraY)
+	if origin < 0 || origin >= len(dst) {
+		return errors.New("fdother: unit-present LMI origin is outside destination")
+	}
+	return entry.BlitAt(dst, nativeUnitPresentStride, origin%nativeUnitPresentStride, origin/nativeUnitPresentStride, false)
 }
 
 // UnitPresentStep is one native present boundary in 0x22253. It records only

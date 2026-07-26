@@ -54,3 +54,21 @@ func TestNativeUnitPresentByteOriginMatches22470AddressExpression(t *testing.T) 
 		t.Fatalf("offscreen origin=%#x", got)
 	}
 }
+
+func TestBlitNativeUnitPresentLMIUses22470OriginAndTransparency(t *testing.T) {
+	dst := make([]byte, nativeUnitPresentStride*200)
+	for i := range dst {
+		dst[i] = 0xee
+	}
+	entry := LMI1Entry{Width: 2, Height: 1, Pixels: []byte{0, 0x44}}
+	if err := BlitNativeUnitPresentLMI(entry, dst, 22, 23, 16, 19); err != nil {
+		t.Fatal(err)
+	}
+	origin := NativeUnitPresentByteOrigin(22, 23, 16, 19)
+	if dst[origin] != 0xee || dst[origin+1] != 0x44 {
+		t.Fatalf("LMI blit=%#x,%#x", dst[origin], dst[origin+1])
+	}
+	if err := BlitNativeUnitPresentLMI(entry, dst, 0, 0, 100, 100); err == nil {
+		t.Fatal("offscreen origin was accepted")
+	}
+}
