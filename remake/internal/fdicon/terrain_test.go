@@ -2,6 +2,21 @@ package fdicon
 
 import "testing"
 
+func TestNativeTerrainCursorInfoForCellMatches12E38(t *testing.T) {
+	controls := make([]byte, 0x12*4)
+	copy(controls[0x11*4:], []byte{0x80, 0x12, 0x34, 0x56})
+	got, err := NativeTerrainCursorInfoForCell(0xfc11, 0xffe5, controls)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tile != 0x11 || got.EventLow != 5 || got.Control != [4]byte{0x80, 0x12, 0x34, 0x56} {
+		t.Fatalf("info=%+v", got)
+	}
+	if _, err := NativeTerrainCursorInfoForCell(0x12, 0, controls); err == nil {
+		t.Fatal("out-of-range control accepted")
+	}
+}
+
 func TestNativeForegroundRedrawEligibleMatches129ECGates(t *testing.T) {
 	cases := []struct {
 		name                         string

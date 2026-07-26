@@ -9,6 +9,31 @@ type NativeTerrainCell struct {
 	BlitMode byte
 }
 
+// NativeTerrainCursorInfo is the eight-byte result produced by 0x12e38 for
+// one FDFIELD composition cell. Tile is the composition word masked to ten
+// bits, EventLow is the next byte masked to five bits, and Control is the raw
+// four-byte FDSHAP terrain record selected by that tile. The native map HUD
+// consumes these values before it optionally looks up a unit at the cursor.
+type NativeTerrainCursorInfo struct {
+	Tile     uint16
+	EventLow byte
+	Control  [4]byte
+}
+
+// NativeTerrainCursorInfoForCell reproduces 0x12e38's decode of one raw
+// FDFIELD tile/event pair. controls must be the selected FDSHAP control table
+// in four-byte records; malformed input is rejected rather than guessed.
+func NativeTerrainCursorInfoForCell(tileWord, eventWord uint16, controls []byte) (NativeTerrainCursorInfo, error) {
+	tile := tileWord & 0x3ff
+	off := int(tile) * 4
+	if off+4 > len(controls) {
+		return NativeTerrainCursorInfo{}, errors.New("fdicon: terrain cursor control table is too short")
+	}
+	info := NativeTerrainCursorInfo{Tile: tile, EventLow: byte(eventWord) & 0x1f}
+	copy(info.Control[:], controls[off:off+4])
+	return info, nil
+}
+
 // NativeCellCoordinate is a world-cell coordinate in the native field map.
 // It deliberately permits coordinates outside the visible/map range: 0x129ec
 // delegates that check to 0x12ac6 rather than clipping its call schedule.
