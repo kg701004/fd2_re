@@ -242,7 +242,9 @@ target 的 `+0x27` 必為零、class `+0x20` 不得為 `0x19/0x1a`、且 `rand()
 `0x1C81F(target,10)` 固定扣 10 HP、顯示 damage，並寫 `rand()%4+2` 至 `+0x27`。它須獨立追蹤，不能併稱為 cure
 或依 raw offsets 猜測 status name。
 
-這六個 transient bytes 的 decrement 已由 official IDA 釘死，但 gate 仍是 raw ABI：turn/camp phase driver `0x1A30B` 傳入 selector，`0x1A866` 只接受 `record+6 == selector` 且 `(record+5 & 1)==0` 的 record；不可把它改寫成 `Camp/OnField/Alive` normalized 條件。通過 gate 後依序對 `unit+0x22..+0x27` 的每個非零 byte decrement。任何一個 byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived fields；因此 ID17/18 的 AP/DP 增幅會在自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
+這六個 transient bytes 的 decrement 已由 official IDA 釘死，但 gate 仍是 raw ABI：已重跑的 caller `0x1A4D1`、`0x1A55E`、`0x1A797` 分別傳入 selector 1/0/2；`0x1A866` 只接受 `record+6 == selector` 且 `(record+5 & 1)==0` 的 record；不可把它改寫成 `Camp/OnField/Alive` normalized 條件。通過 gate 後依序對 `unit+0x22..+0x27` 的每個非零 byte decrement。任何一個 byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived fields；因此 ID17/18 的 AP/DP 增幅會在自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
+
+同一場景流程中的 `0x1A7BD`/`0x1A7F1` 不是 transient selector 語意本身：前者在 `[0x53AF9] != 0` 時以 `0x111BA(0x1A4D,0,0x40)` 建立 resource handle 並寫 `[0x53B0F]`，後者釋放該 handle。`0x1A4EB` 與 `0x1A58F` 都採「setup → unit scan → release」順序；因此 selector→campaign phase 仍不可由這兩個 resource helper 推導。
 
 Remake 已以 `Unit.NativeTransient[6]` 及 optional `NativeRecordByte5/6` 保留這段 raw ABI，並提供 bounded offset access（只接受 `0x22..0x27`）及 `State.TickNativeTransientsRaw(selector)`；FDFIELD b0→runtime `+6` 的 parser/exporter provenance 也已補上，缺少 raw gates 時仍 fail-closed。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接 campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
 
