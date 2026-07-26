@@ -4487,7 +4487,7 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		if g.churchMode == "menu" {
 			fillBox(150, 110, 340, 180)
 			g.font.Draw(screen, n.Text, 182, 126, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
-			labels := []string{"服務一（待 callee）", "服務二（待 callee）", "復活", "轉職"}
+			labels := []string{"服務一（待 callee）", "物品轉移（raw mechanics）", "復活", "轉職"}
 			for i, label := range labels {
 				pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 				if i == g.churchSel {
