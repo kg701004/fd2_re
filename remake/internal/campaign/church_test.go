@@ -18,6 +18,25 @@ func TestLoadReviveFeeRatesUsesExportedEXETable(t *testing.T) {
 	}
 }
 
+func TestAdvanceNativeChurchServiceSelectionWrapsLeftRight(t *testing.T) {
+	tests := []struct {
+		current, delta, want int
+	}{
+		{0, -1, 3},
+		{3, 1, 0},
+		{1, -1, 0},
+		{2, 1, 3},
+		{99, 1, 1},
+		{-1, -1, 3},
+		{2, 0, 2},
+	}
+	for _, tc := range tests {
+		if got := AdvanceNativeChurchServiceSelection(tc.current, tc.delta); got != tc.want {
+			t.Fatalf("selection current=%d delta=%d got=%d want=%d", tc.current, tc.delta, got, tc.want)
+		}
+	}
+}
+
 func TestReviveUnitUsesLevelFeeAndRestoresNativeFields(t *testing.T) {
 	u := &battle.Unit{Fig: 9, Lv: 4, HP: 0, MaxHP: 37, OnField: false}
 	gold, cost, err := ReviveUnit(321, u, 7)

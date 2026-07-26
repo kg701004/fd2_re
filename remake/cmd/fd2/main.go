@@ -2290,11 +2290,11 @@ func (g *Game) campInput() bool {
 			return true
 		}
 		if g.churchMode == "menu" {
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.churchSel > 0 {
-				g.churchSel--
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, -1)
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.churchSel < 3 {
-				g.churchSel++
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, 1)
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 				g.camp.Advance("")
@@ -4372,7 +4372,7 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 				}
 				g.font.Draw(screen, pre+label, 188, 158+float64(i)*24, 1.0, c)
 			}
-			g.font.Draw(screen, "Enter 選擇／ESC 返回城鎮", 188, 266, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
+			g.font.Draw(screen, "←/→ 切換／Enter 選擇／ESC 返回城鎮", 188, 266, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 		} else {
 			listLen := len(g.churchIDs)
 			if g.churchMode == "class_target" {

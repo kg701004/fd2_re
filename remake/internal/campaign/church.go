@@ -11,6 +11,32 @@ import (
 
 var classNames = []string{"龍", "劍士", "戰士", "騎士", "弓兵", "法師", "僧侶", "盜賊", "武者", "劍聖", "聖戰士", "聖騎士", "狙擊手", "大法師", "祭師", "龍劍士", "鬥士", "英雄", "魔戰士", "龍騎士", "神射手", "召喚師", "聖者", "忍者", "武聖", "機兵", "？？？"}
 
+// AdvanceNativeChurchServiceSelection mirrors 0x2d7bd's four-entry service
+// cursor. The native selector reacts to left (raw scancode 75) and right
+// (raw scancode 77), wrapping 0..3; it does not use the up/down movement
+// contract of the party/character lists. Keep the operation pure so the UI
+// can share the recovered ABI without assigning names to the four services.
+func AdvanceNativeChurchServiceSelection(current, delta int) int {
+	if current < 0 || current > 3 {
+		current = 0
+	}
+	if delta < 0 {
+		delta = -1
+	} else if delta > 0 {
+		delta = 1
+	} else {
+		return current
+	}
+	current += delta
+	if current < 0 {
+		return 3
+	}
+	if current > 3 {
+		return 0
+	}
+	return current
+}
+
 // ClassName is the EXE mechanical class-name table used by target class IDs.
 func ClassName(classID int) string {
 	if classID >= 0 && classID < len(classNames) {

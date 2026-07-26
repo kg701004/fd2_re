@@ -475,6 +475,26 @@ preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 
 
 `0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then admits the party to `0x318ad`, whose cap is 15 before the late chapters and 19 afterwards. The Hex-Rays bodies close the subscene boundary further: `0x2e341` selects raw resource `12`, `29`, or `63` for the ordinary/alternate/secret shop branches, dispatches its service choices to `0x2f0b0`, `0x2f642`, `0x2f883`, or `0x2f8ea`, and fades back to the hub; `0x2fc85` loops its hotel choices through `0x2ffa5`, `0x30012`, `0x301f4`, or the character/preparation path using `0x197e5`, then likewise fades back. These callee labels remain address-level names where their service semantics are not independently proven. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. The chapter table at `0x526b9` selects whether this gate presents a town hub (chapters 0–21 and 25–26) or preparation-only route (22–24 and 27–29); chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
 
+### Church service selector input/transition boundary (IDA E0, 2026-07-27)
+
+Official IDA 9.4 decompilation closes the previously missing selector edge:
+`0x3072f` calls `0x2d669(0)` to open the church menu, then `0x2d7bd()` to read the
+selection. `0x2d7bd` accepts raw scancodes `75` (left) and `77` (right), updates
+`[0x53c57]` with four-entry wrap (`0→3`, `3→0`), returns `1` on Enter/Space
+(raw `28`/`57`), and returns `-1` on Escape (`1`). It does not use the up/down
+bounded list contract used by character selection. After confirmation, the
+caller dispatches raw selection `0→0x2ffa5`, `1→0x2f8ea`, `2→0x30dc3`, and
+`3→0x31385`; these remain address-level service branches unless their own
+callee semantics are independently proven.
+
+`0x2d669` is the indexed church-menu transition: it snapshots a 64000-byte
+buffer, clears a 20×104 region at the native menu origin, performs four
+direction-dependent cell blits for each of four passes, restores the buffer,
+and finally restores the source frame when opening (`a1==0`). This is evidence
+for a native transition/compositor boundary, not proof of a particular menu
+layout or service label. The remake therefore adopts only the verified
+left/right selector ABI and keeps the menu art/service names fail-closed.
+
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
 Official IDA pseudocode of `0x25de5` closes the outer ordering that the editable graph must preserve. After `sub_25ebb` returns the battle-driver result, the loop calls `sub_117e7`; when global phase `[0x53ecc]==1`, it calls the fixed chapter-1 interlude `0x22e5c`, clears the phase, and continues. When `[0x53ecc]==2`, it first stops BGM, calls the chapter-indexed post-handler table `funcs_25e23[dword_53c03]`, and only then calls `sub_2cad7()`. If `sub_2cad7()` returns nonzero, the loop exits through the terminal/return path; only when it returns zero does the loop call the second chapter-indexed table `funcs_25e3a[dword_53c03]`, select `byte_51e63[dword_53c03]` for the next battle BGM, clear the phase, and resume the driver. The exact table entries and `0x2cad7` visual/menu labels remain separate evidence work, but this call order is enough to reject any generic `battle → next battle` shortcut. A remake transition must retain an explicit post-handler/menu gate before a next-battle node, even when the high-level node is still opaque.
