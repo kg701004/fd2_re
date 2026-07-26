@@ -865,6 +865,15 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// indexed renderer is available; it must not silently become a fade.
 		g.loadErr = "beat indexed_transition: native 0x24618 renderer adapter未完成"
 		return
+	case "native_palette_fade_out":
+		if b.NativePaletteFade == nil || b.NativePaletteFade.Start != 0 || b.NativePaletteFade.End != 63 || b.NativePaletteFade.DelayMs != 2 {
+			g.loadErr = "beat native_palette_fade_out:缺少原版 64-step DAC payload"
+			return
+		}
+		// 0x1f882 uses 0x11d40's indexed DAC darkening path. Do not replace it
+		// with the RGBA story fade or 0x11df2 palette-update approximation.
+		g.loadErr = "beat native_palette_fade_out: native indexed DAC adapter未完成"
+		return
 	case "layout_units":
 		if b.Layout == nil || len(b.Layout.Units) == 0 {
 			g.loadErr = "beat layout_units:缺少可編輯的 runtime layout"

@@ -675,6 +675,16 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				}
 				continue
 			}
+			if input.NativeTarget == "0x1f882" {
+				if len(input.RawArgs) != 0 {
+					issue(i, input, "0x1f882 palette fade takes no arguments")
+					continue
+				}
+				beat := runtime(input, "native_palette_fade_out")
+				beat.NativePaletteFade = &NativePaletteFadeOut{Start: 0, End: 63, DelayMs: 2}
+				beats = append(beats, beat)
+				continue
+			}
 			if input.NativeTarget == "0x24618" {
 				if bindings.Transition == nil {
 					issue(i, input, "0x24618 indexed transition requires an explicit editable binding")

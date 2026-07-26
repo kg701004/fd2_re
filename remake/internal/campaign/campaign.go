@@ -158,6 +158,15 @@ type HandlerIndexedTransition struct {
 	PaletteDelayMs    int `json:"palette_delay_ms"`
 }
 
+// NativePaletteFadeOut is the exact 0x1f882 DAC-darkening schedule.  It is
+// separate from palette_update (0x11df2) and generic story fades: an indexed
+// DAC adapter must execute every inclusive step before a handler can play it.
+type NativePaletteFadeOut struct {
+	Start   int `json:"start"`
+	End     int `json:"end"`
+	DelayMs int `json:"delay_ms"`
+}
+
 // HandlerUnitPresent retains the formerly recovered metadata shape for native
 // 0x22253. It is not currently compilable: later direct trace found 11+6+10
 // presentation phases, so this six-frame schema is deliberately rejected
@@ -184,6 +193,7 @@ type Beat struct {
 	RuntimeContext    *HandlerRuntimeContext    `json:"runtime_context,omitempty"`
 	Layout            *HandlerLayout            `json:"layout,omitempty"`
 	IndexedTransition *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
+	NativePaletteFade *NativePaletteFadeOut     `json:"native_palette_fade_out,omitempty"`
 	UnitPresent       *HandlerUnitPresent       `json:"unit_present,omitempty"`
 
 	// loadch: atomically replace the active map, FDFIELD roster and FDTXT

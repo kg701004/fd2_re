@@ -1469,6 +1469,22 @@ func TestCompilePaletteRamp25052PreservesInclusiveDescendingDeltas(t *testing.T)
 	}
 }
 
+func TestCompileNativePaletteFadeOut1882PreservesExactDACSchedule(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "unknown", NativeTarget: "0x1f882", Source: HandlerSource{Addr: "0x2531a", Target: "0x1f882"},
+	}}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_palette_fade_out" || beats[0].NativePaletteFade == nil {
+		t.Fatalf("0x1f882 beats=%#v issues=%#v", beats, issues)
+	}
+	if got := beats[0].NativePaletteFade; got.Start != 0 || got.End != 63 || got.DelayMs != 2 {
+		t.Fatalf("0x1f882 payload=%#v", got)
+	}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x1f882", RawArgs: []any{1}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("argument-bearing 0x1f882 issues=%#v", issues)
+	}
+}
+
 func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
 	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch26_post.json")
 	if err != nil {
@@ -1476,8 +1492,8 @@ func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
 	}
 	beats, issues := CompileHandlerScript(script, HandlerBindings{})
 	for _, issue := range issues {
-		if issue.Source.Target == "0x25052" {
-			t.Fatalf("native palette ramp remained unresolved: %#v", issue)
+		if issue.Source.Target == "0x25052" || issue.Source.Target == "0x1f882" {
+			t.Fatalf("native palette operation remained unresolved: %#v", issue)
 		}
 	}
 	wantStarts := map[string]int{"0x25244": 5, "0x25277": 4, "0x25290": 3, "0x252a9": 2, "0x252bf": 2, "0x252d5": 2}
@@ -1504,6 +1520,15 @@ func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
 				t.Fatalf("%s ramp[%d]=%#v/%#v", source, i, palette, delay)
 			}
 		}
+	}
+	var fades []Beat
+	for _, beat := range beats {
+		if beat.Source == "0x2531a" {
+			fades = append(fades, beat)
+		}
+	}
+	if len(fades) != 1 || fades[0].Op != "native_palette_fade_out" || fades[0].NativePaletteFade == nil || fades[0].NativePaletteFade.Start != 0 || fades[0].NativePaletteFade.End != 63 || fades[0].NativePaletteFade.DelayMs != 2 {
+		t.Fatalf("ch26 native palette fade=%#v", fades)
 	}
 }
 

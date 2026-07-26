@@ -322,6 +322,16 @@ func TestBeatActingZeroSpecialPreservesOriginalThreeTickTransition(t *testing.T)
 	}
 }
 
+func TestBeatNativePaletteFadeOutFailsClosedWithoutIndexedDACAdapter(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{{
+		Op: "native_palette_fade_out", NativePaletteFade: &campaign.NativePaletteFadeOut{Start: 0, End: 63, DelayMs: 2},
+	}})
+	g.beatAdvance()
+	if g.loadErr != "beat native_palette_fade_out: native indexed DAC adapter未完成" {
+		t.Fatalf("native palette fade error=%q", g.loadErr)
+	}
+}
+
 func TestBeatActingDecodedNormalSlotMovement(t *testing.T) {
 	// Direct resource102 at ch00 source 0x32461: slot4 left×2, up×1,
 	// left×1. A duplicate Fig at slot0 must remain untouched.
