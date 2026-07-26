@@ -34,6 +34,28 @@ type FrameInput struct {
 	ForegroundUnits                                  []fdicon.NativeForegroundLayerEntry
 }
 
+// NativeFrameInput is the complete, directly composable steady redraw slice.
+// It binds the separately verified 0x1acf3 resources/input to 0x11cac's
+// terrain/range/unit/foreground scheduler without allowing a caller to swap
+// in an approximation at the HUD boundary.
+type NativeFrameInput struct {
+	Frame                FrameInput
+	HUD                  NativeMapHUDInput
+	Frames               NativeMapHUDFrames
+	HUDTerrain, HUDUnits *fdicon.Bank
+	HUDCache             *fdicon.NativeSelectorCache
+}
+
+// ComposeNativeFrame is the strict native-HUD form of ComposeFrame. It uses
+// the exact indexed HUD assembly at its recovered position, rather than
+// accepting an arbitrary callback. All source data remain explicit and any
+// rejection keeps work/VGA unchanged through ComposeFrame's transaction.
+func ComposeNativeFrame(work, vga []byte, in NativeFrameInput) error {
+	return ComposeFrame(work, vga, in.Frame, func(dst []byte) error {
+		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst, in.HUD)
+	})
+}
+
 // ComposeFrame performs the recovered steady order:
 //
 //	0x11eee terrain → 0x122dc range → 0x127a9 unit/foreground

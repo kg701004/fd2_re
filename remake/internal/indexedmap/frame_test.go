@@ -67,3 +67,42 @@ func TestComposeFrameRejectsMissingHUDBeforeMutation(t *testing.T) {
 		t.Fatal("rejected input mutated VGA buffer")
 	}
 }
+
+func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
+	work := make([]byte, workStride*200)
+	vga := make([]byte, viewWidth*viewHeight)
+	terrain := bank(2, 0)
+	terrain.Sprites[0] = solid(1)
+	terrain.Sprites[1] = solid(0x66)
+	units := bank(12, 0)
+	units.Sprites[0] = solid(2)
+	units.Sprites[1] = solid(0x77)
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	in := NativeFrameInput{
+		Frame: FrameInput{
+			TerrainBank: terrain, RangeBank: terrain, UnitBank: units, ForegroundBank: terrain, SelectorCache: cache,
+			Cells: cells, Controls: []byte{0, 2, 0, 0, 0, 2, 0, 0}, MapWidth: 13,
+			RangeMode: 1, Units: []fdicon.NativeUnitLayerEntry{{X: 0, Y: 0, Slot: 0}},
+		},
+		HUD: NativeMapHUDInput{DisplayGateA: true, DisplayGateB: true, AnchorX: 1, TerrainDescriptor: 1, TerrainControl: 2,
+			OptionalUnit: &NativeMapHUDOptionalUnit{SelectorSlot: 0, RawState: 3, Current: 7, Maximum: 8}},
+		Frames: hudFrames(), HUDTerrain: terrain, HUDUnits: units, HUDCache: cache,
+	}
+	if err := ComposeNativeFrame(work, vga, in); err != nil {
+		t.Fatal(err)
+	}
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, workStride)
+	if work[layout.Frame] != 0x5a || work[layout.Terrain] != 0x66 || work[layout.Unit] != 0x77 || work[layout.HP] != 0x70 {
+		t.Fatalf("native HUD missing from work: %#x/%#x/%#x/%#x", work[layout.Frame], work[layout.Terrain], work[layout.Unit], work[layout.HP])
+	}
+	if got := vga[(layout.Frame-workBase)/workStride*viewWidth+(layout.Frame-workBase)%workStride]; got != 0x5a {
+		t.Fatalf("native HUD did not reach viewport: %#x", got)
+	}
+}
