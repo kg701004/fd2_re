@@ -131,10 +131,13 @@ type HandlerLayout struct {
 // this is not a generic fade; the PNG renderer may only execute it once an
 // indexed descriptor adapter is available.
 type HandlerIndexedTransition struct {
-	TileX             int `json:"tile_x"`
-	TileY             int `json:"tile_y"`
-	SourceX           int `json:"source_x"`
-	SourceStep        int `json:"source_step"`
+	TileX int `json:"tile_x"`
+	TileY int `json:"tile_y"`
+	// RemapScale and RemapScaleStep are the third/fourth native arguments.
+	// 0x24618 passes the running scale to 0x22046's two radial LUT-remap
+	// passes; they are not source-buffer coordinates.
+	RemapScale        int `json:"remap_scale"`
+	RemapScaleStep    int `json:"remap_scale_step"`
 	SourceY           int `json:"source_y"`
 	BlitWidth         int `json:"blit_width"`
 	ClipWidth         int `json:"clip_width"`
