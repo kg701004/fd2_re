@@ -43,6 +43,9 @@ TARGETS = (
     0x1CA89,
     0x1CFF0,
     0x22D1B,
+    # Event-state entry #12 writer.  Its dispatch provenance is required
+    # before the item-0xd0 branch can become an editable scenario event.
+    0x356B7,
     # Post-battle layout primitive.  Retain its exact IDA function boundary
     # and callers while call-site array ABI is audited separately.
     0x233C6,

@@ -200,6 +200,7 @@
 - [x] **動態驗證清單更新** → `27`§3:byte+5 bit0 已由反組譯定案為 inactive(1)/active(0)，bit7=已行動；回合=我方全動+敵方AI全動完;7-8用青衫攻略;9-10不需要;3([0x53ec8])低優先。舊「bit0=1 是存活」使用者記憶已撤回。
 - [x] **撤回 `[0x53ad5]`=opened-treasure／unit-pointer 斷言**：`0x10322` 初始化時複製 0x20 bytes 到 `[0x53ad5]` 指向的 buffer，`0x13d00` 以 event index 寫其 byte；ch25 post `0x24f30/0x24fb1` 讀 entry #12 來選 FDTXT index（base+5/base+8）。它是 battle-local state table，但高階 event 意義未命名；`OpenedTreasure` 保留 remake-owned state，不再聲稱原版位址。
 - [x] **state table entry12 writer closure**：`0x356bc..0x35821` 先 gate table[12]，成功臂以 actor class 查 item `0xd0`、`0x1b8e7` 消耗它、完成 presentation 後才設 table[12]=1，接 `spawn(1)→JOIN(31)→FDTXT #4`。因此 ch25 post 的 table[12] base+5/+8 有直接來源；尚未完成兩臂 runtime 資產，不能以 treasure／party condition 取代。
+- [x] **entry12 dispatch-scope audit（official IDA 9.4）**：`sub_356B7=0x356b7..0x35822` 有八個 generic dispatcher/UI control-flow xref（`0x117e7/0x16f55/0x190ac/0x1a813/0x1aa1d/0x1d80b/0x1d8ba`）；目前沒有 map25-local caller 證據。故 item `0xd0` 分支保持 raw event capability，禁止接成「ch25 固定寶箱／座標」或 campaign 自動流程。
 - [x] **全 30 關卡目標表(攻略 ground truth)** → `28`:每關勝利/失敗/加入條件;**失敗條件=護衛目標**證實 unit_state 機制;加入=roster_has;ch30 魔神連鎖=回合事件;remake 關卡規格直接可用
 - [x] **撤回章17 alive 誤讀**:依 `unit_inactive` 重新解讀，指定單位 inactive 才依 jcc 設碼；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填
 - [~] 單位 0x50B 結構:+5(bit0=inactive/bit7=已行動)/+8角色ID/+0/+1/+2/+6/+0x31 已解;完整逐欄佈局 [阻](remake 用自有 struct,不需)

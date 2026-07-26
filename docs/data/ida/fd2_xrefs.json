@@ -1695,6 +1695,85 @@
       ]
     },
     {
+      "address": 218807,
+      "function": {
+        "start": 218807,
+        "end": 219170,
+        "name": "sub_356B7"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 72092,
+          "from_function": {
+            "start": 71655,
+            "end": 72360,
+            "name": "sub_117E7"
+          }
+        },
+        {
+          "from": 94509,
+          "from_function": {
+            "start": 94037,
+            "end": 94860,
+            "name": "sub_16F55"
+          }
+        },
+        {
+          "from": 103697,
+          "from_function": {
+            "start": 102572,
+            "end": 103787,
+            "name": "sub_190AC"
+          }
+        },
+        {
+          "from": 108634,
+          "from_function": {
+            "start": 108563,
+            "end": 108646,
+            "name": "sub_1A813"
+          }
+        },
+        {
+          "from": 109594,
+          "from_function": {
+            "start": 109085,
+            "end": 109811,
+            "name": "sub_1AA1D"
+          }
+        },
+        {
+          "from": 120976,
+          "from_function": {
+            "start": 120843,
+            "end": 121018,
+            "name": "sub_1D80B"
+          }
+        },
+        {
+          "from": 121180,
+          "from_function": {
+            "start": 121018,
+            "end": 121366,
+            "name": "sub_1D8BA"
+          }
+        },
+        {
+          "from": 121324,
+          "from_function": {
+            "start": 121018,
+            "end": 121366,
+            "name": "sub_1D8BA"
+          }
+        }
+      ]
+    },
+    {
       "address": 144326,
       "function": {
         "start": 144326,
