@@ -844,7 +844,16 @@ The preceding `0x3453e(index)` predicate is now closed independently: it returns
 
 The shared item-row helper `0x4e56c(item)` is now bounded at the proven arithmetic boundary: it returns a pointer at linear table base `0x602ad + item*0x17` (23-byte rows). `battle.NativeItemEffectRowOffset` exposes only the table-relative offset for a byte-sized selector; row size/field semantics and table bounds remain unproven, so no normalized `ItemStats` field is wired to these bytes.
 
-The type `5/0xd` callee `0x211a4` is now bounded at call topology: it receives the caller's target-list context, enters `0x1c4cc`/`0x1c2da` with raw subcommand `0xd`, then iterates the supplied byte list and calls `0x1c916` with the item-row word and each target byte before the `0x1e0db` presentation call. This proves a list-driven raw mutation/presentation loop, not a generic heal/potion contract; target-list/count/amount argument names and the presentation path remain fail-closed.
+The `0x211a4` callee is now bounded at call topology: item-action caller
+`0x20ce0` passes caller-owned target-list context, enters `0x1c4cc`/`0x1c2da`
+with raw subcommand `0xd`, then iterates the supplied byte list and calls
+`0x1c916` with the item-row word and each target byte before `0x1e0db`.
+Canonical Capstone also finds a second direct caller, `0x285ed`, outside the
+item dispatcher: under opaque selector `0x21` it prepares a byte list, passes
+raw amount `0x320`, and reuses the same helper.  Therefore this is a shared
+list-driven raw mutation/presentation loop, not a type-5/13-only or generic
+heal/potion contract; list producer, amount/effect names, and presentation
+asset provenance remain fail-closed.
 
 Official IDA 9.4 pseudocode now closes the previously opaque presentation callers without naming their gameplay effect. `0x1c4cc(a1, subcommand, count, targetBytes)` copies three 33-byte global frame tables, snapshots the indexed 456-stride buffer, iterates `frame < frameCount[subcommand]`, selects a frame from `frameBank[subcommand]`, redraws each supplied target's visible 24×24 cell when it is inside the camera bounds, presents the 312×192 viewport, and emits only the observed subcommand/frame-specific SFX branches before a BIOS-tick wait. `0x1c2da(a1, subcommand, count, targetBytes)` starts the same presentation family with SFX index 1, redraws each target through the indexed pointer bank selected by `12*unitVisual + currentCycle` (with the native `cycle==3` remap), then performs five restore/present pairs before returning the saved buffer. `0x211a4` calls both with raw subcommand `13` before the per-target `0x1c916` mutation. This closes the caller ABI, frame ordering, camera bounds, and restore cadence only; the item row word, target list producer, SFX labels, and native renderer asset provenance remain opaque and fail-closed.
 
