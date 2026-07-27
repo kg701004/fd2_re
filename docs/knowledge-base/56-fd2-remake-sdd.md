@@ -1091,9 +1091,11 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    Pre-handler→battle roster correction (2026-07-28): the remaining ch01
    roster mismatch was not a compositor omission. `ch00_pre` performs
    `LOADCH(map0)` and constructs the party first, then acting resource 0 moves
-   runtime slots 0..3 upward for six normal beats, from deployment Y
-   `[20,22,21,23]` to `[14,16,15,17]`; later SPAWN/ACT operations append the
-   initial FDFIELD groups in the same runtime array. The original 434.5-second
+   runtime slots 0..3 upward for six normal beats. The authored scenario stores
+   deploy cells in UI party order `0,4,9,30` with Y `[20,22,21,23]`, but handler
+   construction first applies JOIN order `0,9,4,30`; its runtime Y therefore
+   changes from `[20,21,22,23]` to `[14,15,16,17]`. Later SPAWN/ACT operations
+   append the initial FDFIELD groups in the same runtime array. The original 434.5-second
    frame shows those post-ACT positions. The remake's old `resetBattle`
    unconditionally discarded `storyActors` and replayed scenario
    `on_battle_start`, returning the party to deployment cells; the comment
@@ -1104,8 +1106,18 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    remaining FDFIELD roster for turn events, and marks the already represented
    `on_battle_start` event consumed. Direct node starts, retries, unrelated
    cutscenes, mismatched sources and non-runtime-append scenarios still rebuild
-   normally. Regression fixes both the adopted `[14,16,15,17]` state and the
+   normally. Regression fixes both the adopted `[14,15,16,17]` state and the
    direct-start `[20,22,21,23]` state.
+
+   End-to-end runtime proof (2026-07-28): a bounded regression now compiles the
+   actual `ch00_pre` binding, executes every BeatRunner job and dialogue boundary,
+   crosses the real campaign fade into `battle_ch01`, and then checks the adopted
+   state. The exact frontier is 12 records: party slots 0..3 in JOIN order
+   `[0,9,4,30]`, group 1 in slots 4..7 and group 2 in slots 8..11. Party
+   coordinates are `0:(7,14)`, `9:(10,15)`, `4:(8,16)`, `30:(11,17)`;
+   recovered deactivate writer slot 9 has raw byte `+5 == 1`, while scenario
+   pending groups 3..7 remain attached. This is runtime evidence beyond the
+   earlier compiler-only “0 unresolved issues” claim.
 
    Production steady-frame and drawable-target slice (2026-07-28): ch01 now materializes the explicitly sourced persistent selector one, uses the original party-first/initial-group append constructor order, and consumes regenerated FDFIELD/FDSHAP raw map fields. Runtime composition byte+3 is initialized to `0xff` exactly as `0x4dbfc`; using serialized zeroes was an incorrect assertion that forced the whole steady map through the LUT branch and visibly washed out the palette. `nativeBIOSClock` supplies a battle-local signed BIOS low word at the PIT rate; one Update corresponds to the one `0x1297d` call at `0x11cb7`, while terrain phase and the two independent BIOS-word latches consume the same sample. `drawNativeMapFrame` executes the proven interactive `0x11cac` pipeline and FDOTHER#1 descriptor 0 supplies the native steady cursor; the former white rectangle approximation is removed. Command target entry materializes the first-stage `0x14818` remaining-budget grid and writes `record+4+2`; selectors 2–5 remain in the same production indexed compositor and use their exact ordered FDOTHER#1 call tables. Cancel and successful effect exit perform the `0x4dbfc` reset and restore selector one. Selector 6 is a separate field mutation and 7+ have no `0x122dc` draw table, so they still fall back; target flash and indexed effects remain incomplete.
 

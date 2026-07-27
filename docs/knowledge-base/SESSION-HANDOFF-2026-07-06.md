@@ -1227,7 +1227,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   audit確認remake圖只見一個party不是`NativeMapFrameRoster`漏畫；direct
   `battle_ch01`從deploy Y `[20,22,21,23]`開始，在cameraY13只有第一筆
   落在下緣。正常原版`ch00_pre`先LOADCH map0，在同一runtime array以
-  ACT0六個normal beats把slots0..3移至Y `[14,16,15,17]`，再SPAWN
+  JOIN順序`0,9,4,30`把scenario UI順序的deploy cells重排為Y
+  `[20,21,22,23]`，再由ACT0六個normal beats把slots0..3移至
+  `[14,15,16,17]`，接著SPAWN
   initial groups；原版錄影的可見位置符合此序列。舊`resetBattle`的
   「清pre cutscene units避免疊入」註解與行為錯誤：它丟掉已ACT/SPAWN
   records並重播`on_battle_start`。現在handler LOADCH保存exact roster與
@@ -1235,4 +1237,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   runtime array、重建selector slots、保留remaining roster/pending groups
   並consume opening event。direct start、retry、mismatch與非-runtime-append
   scenario仍重建。focused tests覆蓋carry座標、direct部署、opening不重播與
-  turn-group事件。
+  turn-group事件。後續完整runtime regression更進一步實際compile並執行整份
+  `ch00_pre`，逐一排空blocking ACT／PAN／SPAWN／dialog／fade，成功進入
+  `battle_ch01`；採用狀態精確為12 slots（party4、group1四筆、group2四筆），
+  party座標`0:(7,14),9:(10,15),4:(8,16),30:(11,17)`，slot9的raw
+  record `+5` whole-byte overwrite為1，pending groups 3..7完整保留。
+  這是end-to-end runtime證據，不再把先前compiler「0 unresolved issues」
+  誤當作已跑通handler→battle。

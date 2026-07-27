@@ -1055,6 +1055,72 @@ func TestApplyLoadCHDirectReplayUsesBindingPartyOrder(t *testing.T) {
 	}
 }
 
+func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testing.T) {
+	c, err := campaign.Load(assetPath("assets/scenarios/campaign_full.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{camp: campaign.NewRunner(c)}
+	g.enterNode()
+	if g.loadErr != "" {
+		t.Fatalf("enter ch00 handler: %s", g.loadErr)
+	}
+
+	// Drive the same blocking jobs that Update owns and dismiss each compiled
+	// dialog beat as campInput would.  The bound keeps this a regression test:
+	// an unresolved native op or a stalled handler must fail instead of being
+	// silently skipped.
+	for frame := 0; frame < 100000 && g.camp.NodeID() != "battle_ch01"; frame++ {
+		if len(g.dialog) > 0 {
+			g.dialog = nil
+			g.beatAdvance()
+		}
+		g.tick(1)
+		if g.loadErr != "" {
+			t.Fatalf("compiled ch00 handler stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+		}
+	}
+	if g.camp.NodeID() != "battle_ch01" {
+		t.Fatalf("compiled ch00 handler did not reach battle_ch01: node=%q beat=%d/%d", g.camp.NodeID(), g.beatIdx, len(g.beats))
+	}
+	if g.st == nil || g.sc == nil {
+		t.Fatalf("battle handoff did not materialize state/scenario: st=%v sc=%v", g.st != nil, g.sc != nil)
+	}
+	if len(g.st.Units) != 12 {
+		t.Fatalf("handler runtime frontier=%d, want 4 party + two four-record groups = 12", len(g.st.Units))
+	}
+	for slot, want := range []struct {
+		fig, group, x, y int
+		onField          bool
+	}{
+		{0, 0, 7, 14, true},
+		{9, 0, 10, 15, true},
+		{4, 0, 8, 16, true},
+		{30, 0, 11, 17, true},
+		{96, 1, 1, 4, true},
+		{96, 1, 2, 2, true},
+		{96, 1, 4, 2, true},
+		{96, 1, 6, 1, true},
+		{96, 2, 3, 18, true},
+		{96, 2, 4, 23, false},
+		{96, 2, 2, 18, true},
+		{96, 2, 5, 19, true},
+	} {
+		u := g.st.Units[slot]
+		if u == nil || u.Fig != want.fig || u.Group != want.group || u.X != want.x || u.Y != want.y || u.OnField != want.onField {
+			t.Fatalf("battle slot%d = %#v, want fig%d group%d at (%d,%d) onField=%v", slot, u, want.fig, want.group, want.x, want.y, want.onField)
+		}
+	}
+	if g.st.Units[9].NativeRecordByte5 != 1 {
+		t.Fatalf("ch00 deactivate(slot9) was not carried across battle handoff: %#v", g.st.Units[9])
+	}
+	for _, group := range []int{3, 4, 5, 6, 7} {
+		if !g.st.PendingGroups[group] {
+			t.Fatalf("adopted battle lost pending spawn group %d: %#v", group, g.st.PendingGroups)
+		}
+	}
+}
+
 func TestChapter1PreLoadCHUsesFiveMemberJoinOrderAndSpawnFrontiers(t *testing.T) {
 	beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch01_pre.json"))
 	if err != nil || len(issues) != 0 || len(beats) == 0 || beats[0].LoadCH == nil {

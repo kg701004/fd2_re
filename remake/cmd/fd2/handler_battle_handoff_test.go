@@ -15,6 +15,9 @@ func TestChapterZeroHandlerRosterCarriesIntoBattleWithoutReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := reorderScenarioParty(sc, []int{0, 9, 4, 30}); err != nil {
+		t.Fatal(err)
+	}
 	sc.Setup(source)
 	if len(source.Units) != 12 {
 		t.Fatalf("source runtime units=%d, want party4+groups1/2", len(source.Units))
@@ -47,7 +50,7 @@ func TestChapterZeroHandlerRosterCarriesIntoBattleWithoutReplay(t *testing.T) {
 	if len(g.st.Units) != 12 {
 		t.Fatalf("adopted runtime units=%d", len(g.st.Units))
 	}
-	for slot, wantY := range []int{14, 16, 15, 17} {
+	for slot, wantY := range []int{14, 15, 16, 17} {
 		u := g.st.Units[slot]
 		if u.Y != wantY || !u.HasMapSelectorSlot || !u.HasNativeMapPresentation {
 			t.Fatalf("slot%d=%#v want y%d with native presentation", slot, u, wantY)
