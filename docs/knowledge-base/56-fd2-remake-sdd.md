@@ -974,9 +974,10 @@ are: `5/13→0x211a4`, `6→0x22af6` subcommand `0x14`,
 `20/24→0x1c4cc→0x1cd17` loop, `21→0x2111a`,
 `22→0x22d1b/0x16`, `23→0x2218a`. `NativeItemEffectRouteForType`
 preserves the whole raw map; typed closures now supersede its opaque boundary
-for 5/13 (HP restore with consume/retain split) and 8/9/10 (permanent base
-AP/DP/DX). Remaining branches must not receive gameplay labels until their
-caller/callee contracts are closed.
+for 5/13 (HP restore with consume/retain split), 8/9/10 (permanent base
+AP/DP/DX), 11 (consumable MP restore), and 12 (retained HIT/EV +15,
+marker-gated). Remaining branches must not receive
+gameplay labels until their caller/callee contracts are closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -992,7 +993,15 @@ Official IDA 9.4 decompilation of `0x22721(a1,count,indexBytes)` closes the firs
 
 The adjacent `0x22866` branch is byte-for-byte the same arithmetic with marker `+0x23` and word `+0x4a`; `battle.ApplyNativeRawWordStepAtOffsets` shares the implementation and regression without assigning either field a gameplay name.
 
-The neighboring `0x22997` branch is a separate fixed-pair mutation: marker `+0x24` is gated, successful units advance the same RNG and add `0x0f` independently to raw words `+0x4c` and `+0x4e`, then contribute the same `2*effective(+0x21)` raw score. `battle.ApplyNativeRawPairStep` captures this with 16-bit wrap and marked-skip behavior; presentation remains outside scope.
+The neighboring `0x22997` branch is a separate fixed-pair mutation: marker
+`+0x24` is gated; successful units advance the same RNG and add `0x0f` to
+derived HIT/EV `+0x4c/+0x4e`, then contribute
+`2*effective(+0x21)` raw score. The type-12 item caller passes its final target
+list to this helper and then goes directly to cleanup without `0x1b8e7`, so
+the source is retained. `NativeItemHITEVStepRoute` /
+`ApplyNativeItemHITEVStep` capture marker-gated RNG, 16-bit wrap, typed
+HIT/EV increment and retention; tracked ID210 supplies this type. Presentation
+and marker display name remain outside scope.
 
 The `0x22d1b` path is intentionally kept separate from that family. Its raw loop skips a nonzero `record+a5` or class byte `+0x20` equal to `0x19/0x1a`; otherwise the first `0x4e893()%100` remainder must be `<50`, then it calls `0x1c81f(unit,10)`, advances RNG again, writes `(rng%4)+2` to `record+a5`, and adds `8*record[+0x21]` to the raw presentation accumulator. This is an evidence-only branch map: the HP writer and renderer are separate contracts, and no status/effect name is inferred.
 
@@ -1062,7 +1071,15 @@ class byte range `9..24` adds `0x1e`, score factor
 `40*effective*delta/max`). The primitive alone does not imply an item; the
 closed type5/13 caller contract above supplies that scope.
 
-The sibling `0x1c9dd` MP mutation is now captured by `battle.ApplyNativeRawMPRestore`: the same RNG and amount arithmetic writes `+0x44` capped by `+0x46`, while its score uses only `record+0x21` (no HP routine's class-range bonus). This remains raw state/evidence only.
+The sibling `0x1c9dd` MP mutation is captured by
+`battle.ApplyNativeRawMPRestore`: the same RNG and amount arithmetic writes
+current MP `+0x44` capped by max MP `+0x46`, while its score uses only
+`record+0x21` (no HP routine's class-range bonus). The type-11 item caller is
+now closed around that primitive: it skips a target with zero max MP without
+advancing RNG, restores remaining targets in list order, then consumes the
+source slot via `0x1b8e7`. `ApplyNativeItemMPRestore` preserves the whole
+atomic transaction; tracked IDs206/207 supply amounts 80/200. Presentation
+and display names remain outside this closure.
 
 The type-`21` callee `0x2111a` has a separate raw boundary: it establishes target context through `0x1c4cc`, calls `0x1cac7`, then iterates the supplied byte list through `0x1c75e` and `0x1e0db`. `0x1cac7` obtains a byte from `0x4e516` and subtracts it from selected runtime record word `+0x44` with native 16-bit wrap. The source record/byte and list ABI are preserved as opaque inputs; no MP-cost or item-effect name is inferred.
 

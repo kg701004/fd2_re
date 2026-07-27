@@ -15,7 +15,8 @@ type NativeRawPairStepResult struct {
 
 // ApplyNativeRawPairStep reproduces 0x22997: skip a nonzero marker at +0x24;
 // otherwise advance the shared RNG, write marker=(rng%4)+2, and add 0x0f to
-// both raw words at +0x4c and +0x4e. The raw score is 2*effective(+0x21).
+// the derived HIT/EV words at +0x4c/+0x4e. The raw score is
+// 2*effective(+0x21).
 func ApplyNativeRawPairStep(records []byte, unitIndices []byte, rngState uint16) ([]NativeRawPairStepResult, uint16, int, error) {
 	for _, rawIndex := range unitIndices {
 		base := int(rawIndex) * nativeRecordSize

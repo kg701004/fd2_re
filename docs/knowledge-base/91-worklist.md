@@ -916,14 +916,19 @@
 - [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
   type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
   topology。後續 typed closures 已完成 5/13（HP restore，consume/retain）
-  與 8–10（永久 base AP/DP/DX）；6/7、11/12、14–24 中尚未閉合者仍不得
+  與 8–10（永久 base AP/DP/DX）、11（MP restore consumable）、
+  12（retained HIT/EV+15）；6/7、14–24 中尚未閉合者仍不得
   由 raw route 猜 gameplay 名稱。
 - [x] **RE-ITEM-TYPE67-MUTATION**：官方 IDA 9.4 decompile `0x22af6` 固定 unit-index byte-list、caller raw field offset `a5`、nonzero→clear，以及 `(+0x20 in 9..24 ? +30 : +0) * 4` raw accumulator；新增 `battle.ClearNativeUnitByte` regression。renderer/全域寫入與 gameplay 名稱仍未接。
 - [x] **RE-ITEM-WORD-DELTA**：官方 IDA 9.4 decompile `0x21082` 固定 `word(record[index]+a3) += low16(a2)`、16-bit wrap，隨後呼叫 `0x1b8e7(a1,a4)`；新增 `battle.ApplyNativeWordDeltaAndRemove`，explicit target/removal units 與 bounds/atomic regression 完成。欄位仍不命名，renderer/effect callback 不接。
 - [x] **RE-RNG-GROWTH-MARKER**：官方 Capstone 固定 `0x4e893` 為 `rol16(state+0x9014,3)`；`0x22721/0x22866/0x22997` 的 `idiv 4` 取 EDX remainder，再 `+2` 寫 marker。新增 `fdother.NativeRNGStep/NativeRNGMarker` regression，刪除 quotient-based 誤讀；成長欄位與 FPU multiplier 仍未命名。
 - [x] **RE-RAW-WORD-GROWTH-22721**：官方 IDA 9.4 固定 `+0x22` zero gate、RNG marker、`+0x48` 的 `trunc(word*0.15+1)` 與 `2*effective(+0x21)` raw accumulator；新增 `battle.ApplyNativeRawWordStep`，覆蓋 marked skip、RNG consumption、rounding、word update、score 與 preflight bounds。未命名成長效果，未接 presentation/tail。
 - [x] **RE-RAW-WORD-GROWTH-22866**：Docker Capstone 固定 `0x22866` 與 `0x22721` 同構，僅 offsets 改為 marker `+0x23`、word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用實作並有 variant regression，未命名欄位。
-- [x] **RE-RAW-PAIR-22997**：Docker Capstone 固定 `0x22997` marker `+0x24` zero gate、同 RNG marker、raw `+0x4c/+0x4e` 各 `+0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，覆蓋 wrap/marked skip/preflight regression，未命名欄位。
+- [x] **RE-RAW-PAIR-22997**：Docker Capstone 固定 `0x22997` marker
+  `+0x24` zero gate、同 RNG marker、`+0x4c/+0x4e` 各 `+0x0f`、score
+  `2*effective(+0x21)`；新增 `ApplyNativeRawPairStep` 覆蓋
+  wrap/marked skip/preflight。後續 equipment cross-check 已將兩 words
+  定案為 derived HIT/EV，type12 caller closure 見下方。
 - [~] **RE-ITEM-22D1B-BRANCH**：Docker Capstone 固定 `0x22d1b` 的 raw `a5` marker gate、class `+0x20 != 0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker 與 `8*record+0x21` accumulator。保持 evidence-only，不能誤稱 type14 為 status 或併入 17–19 modifier。
 - [x] **RE-COMMAND23-COORD-WRITE**：官方 IDA 9.4 閉合 `0x22253` 尾端 `record[+0]=a13`、`record[+1]=a14`；`0x2218a` caller 的 `0xff/0xff` 是 pre-render pair，最後寫 cursor-derived pair。新增 `battle.SetNativeUnitCoordinateBytes` raw writer/regression；renderer/pathfinding 仍未接。
 - [x] **RE-PERSISTENT-IDENTITY-LOOKUP-24BDE**：Docker Capstone 閉合 `0x24bde` 的 raw lookup：掃 caller-supplied persistent count（native capacity 32），stride `0x50`，只比較 record `+0x08` unsigned byte，命中即回 1、否則 0。新增 `battle.FindNativePersistentIdentity`，保留 first-index/read-only/bounds regression；不把 `+8` 泛化成 portrait、Fig 或 NPC identity。
@@ -970,7 +975,18 @@
   current/max HP `+0x40/+0x42` clamp 與 `record+0x07`/class-derived
   score gate；shared primitive 本身不冒充 item，但 type5/13 caller 已另行
   閉合成 HP restore。UI/presentation 仍未完成。
-- [~] **RE-RAW-MP-RESTORE-1C9DD**：新增 `battle.ApplyNativeRawMPRestore`，保存 `+0x44/+0x46` clamp 與無 class bonus 的 score gate regression；不把 raw path 命名成 MP/heal item 規則。
+- [x] **RE-RAW-MP-RESTORE-1C9DD**：新增
+  `battle.ApplyNativeRawMPRestore` 保存 current/max MP `+0x44/+0x46`
+  clamp 與無 class bonus 的 score gate；type11 caller 另由
+  `ApplyNativeItemMPRestore` 保存 zero-max target 不消耗 RNG、list order
+  與來源 slot consumption。IDs206/207 amounts=80/200；UI/presentation
+  仍待完成。
+- [x] **RE-ITEM-TYPE12-HIT-EV-22997**：結合 dispatcher tail、
+  `0x22997` 與已定案的 derived words，閉合 type12：marker `+0x24`
+  非零跳過且不耗 RNG；成功寫 `(rng%4)+2`、HIT/EV
+  `+0x4c/+0x4e` 各加15，來源 slot 保留。新增
+  `NativeItemHITEVStepRoute`／`ApplyNativeItemHITEVStep` 與 ID210
+  fixture regression；marker UI 名稱仍未知。
 - [~] **RE-ITEM-EFFECT-2111A**：Docker Capstone 已閉合 type `21` 的 raw topology：`0x1c4cc` → `0x1cac7`，由 `0x4e516` 來源 byte 對 selected record `+0x44` 做 16-bit subtract，再走 target-list predicate/presentation；來源 byte、list ABI 與玩法名稱保持 fail-closed。
 - [~] **RE-RAW-WORD-SUBTRACT-1CAC7**：新增 `battle.ApplyNativeRawWordSubtract`，保存 `0x1cac7` 的顯式 word offset、byte-sized subtract、low-16 wrap 與 preflight bounds；不把 raw word 命名成 MP 或 item effect。
 - [~] **RE-RAW-FLAG-RESTORE-22AF6**：新增 `battle.ApplyNativeRawFlagRestore`，保存 paired target/flag preflight、nonzero→`0x1c916(target,10)`、flag clear 與 `effective*4` raw accumulator；不命名 flag/status 或接 UI。

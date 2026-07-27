@@ -102,6 +102,16 @@ base AP(`+0x37`)、DP(`+0x39`)、DX(`+0x3e`)，呼叫 `0x1b750` 重算後移除
 target list，依 target unit `+0x20/+0x21` 計算 accumulator 並清除已處理
 target，仍不足以判定其 status 名稱。
 
+type11 已由同一 dispatcher loop 閉合為 MP restore consumable：row `+0xe`
+是 amount，target max MP `+0x46==0` 時跳過且不前進 RNG；其餘依 list 順序
+由 `0x1c9dd` 增加 current MP `+0x44`、cap `+0x46`，最後經 `0x1b8e7`
+消耗來源 slot。已知 raw IDs206/207 amounts=80/200；顯示名稱仍不猜測。
+
+type12 則重用 `0x22997`：target marker `+0x24` 非零時跳過且不耗 RNG；
+成功時寫 `(rng%4)+2` 並把 derived HIT/EV `+0x4c/+0x4e` 各加 15。
+dispatcher 直接 cleanup、不移除來源 slot。raw fixture 目前只有 ID210
+走此 type；道具名稱與 marker 的 UI 顯示仍未閉合。
+
 type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:

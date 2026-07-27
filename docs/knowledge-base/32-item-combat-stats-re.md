@@ -144,7 +144,16 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   current HP `+0x40` cap max HP `+0x42` 與 raw score gate 均保存。
   此 helper 仍是 shared primitive；只有 caller 已閉合的 type5/13 item
   route 可宣稱 item HP restore。
-- 相鄰 `0x1c9dd` MP path 亦已新增 `battle.ApplyNativeRawMPRestore`：同一 arithmetic 寫 `+0x44`/cap `+0x46`，但 score 僅用 `+0x21`、沒有 HP 的 class bonus；仍保持 raw adapter。
+- 相鄰 `0x1c9dd` MP path 亦已新增
+  `battle.ApplyNativeRawMPRestore`：同一 arithmetic 寫 current MP
+  `+0x44`、cap max MP `+0x46`，score 僅用 `+0x21`、沒有 HP class
+  bonus。`0x20c6f` type11 caller 已閉合成 consumable MP restore：
+  max MP 為零的 target 跳過且不消耗 RNG，其餘依 list 順序恢復，最後
+  移除來源 slot；IDs206/207 amounts=80/200。
+- type12 已閉合為 retained HIT/EV modifier：`0x22997` 只處理 marker
+  `+0x24==0` 的 target，成功才前進 RNG、寫 `(rng%4)+2`，並把 derived
+  HIT/EV `+0x4c/+0x4e` 各加 15；dispatcher 不呼 `0x1b8e7`。tracked
+  raw row 是 ID210。marker 的玩家可見名稱仍未知。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
 - `0x22af6` common flag branch 已新增 `battle.ApplyNativeRawFlagRestore`：nonzero paired flag 才以 raw `0x1c916(target,10)` 恢復、清 flag、累加 `effective*4`；flag/status 語意與 presentation 保持未命名。

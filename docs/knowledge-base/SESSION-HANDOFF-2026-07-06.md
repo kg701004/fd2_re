@@ -675,7 +675,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `battle.ApplyNativeRawHPRestore`，依 16-bit RNG 與原生 arithmetic 寫
   current HP `+0x40`、cap max HP `+0x42`，保存 score gate。當時保持
   shared primitive；後續 type5/13 caller 已閉合 item scope，UI 仍未接。
-- 2026-07-27 `0x1c9dd` raw MP mutation closure（Docker Capstone）：新增 `battle.ApplyNativeRawMPRestore`，同一 RNG/amount arithmetic 寫 `+0x44` 並 cap `+0x46`；score 只用 `+0x21`、無 HP class bonus，保持 raw-only。
+- 2026-07-27 `0x1c9dd` MP mutation closure（後續已閉合 item caller）：
+  新增 `battle.ApplyNativeRawMPRestore`，同一 RNG/amount arithmetic 寫
+  current MP `+0x44`、cap max MP `+0x46`；score 只用 `+0x21`。後續
+  type11 caller 已閉合為 consumable MP restore，見本檔尾端。
 - 2026-07-27 type-21 `0x2111a` caller closure（Docker Capstone）：`0x1c4cc` 建 context 後呼 `0x1cac7`，由 `0x4e516` 來源 byte 對 selected runtime `+0x44` 做 16-bit subtract，再逐 target 經 `0x1c75e`/`0x1e0db`；不命名成 MP cost 或 item 效果，source/list ABI 未閉合。
 - 2026-07-27 `0x1cac7` raw subtract adapter（Docker Go regression）：新增 `battle.ApplyNativeRawWordSubtract`，顯式保留 unit/word offset/byte amount、low-16 wrap 與 bounds；不接 normalized MP 或 item 語意。
 - 2026-07-27 official IDA `0x1c4cc/0x1c2da` item presentation closure：Hex-Rays 閉合兩 caller 的 `(actor, raw subcommand, target count, target-byte list)` ABI；`0x1c4cc` 逐 frame 取三張 33-byte frame table、對 camera-visible targets 做 456-stride indexed redraw、312×192 present、subcommand/frame SFX branch 與 BIOS tick，`0x1c2da` 依 `12*visual+cycle` pointer bank 做 target blit，再五次 restore/present。此證據只加入 SDD/worklist 的 presentation ordering，不替 item type、row word、SFX 或 frame asset 命名，也不解除 item runtime/UI gate。
@@ -700,7 +703,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 `0x24e80` raw marker rewrite closure（Docker Capstone）：runtime slot `0x10..count-1` 中，只有 record `+0x07==0x1f` 才寫 `+0=0x10/+1=0x06`；新增 `battle.RewriteNativeMarker1F` regression。欄位保持未命名，不接 renderer/identity。
 - 2026-07-27 caller `0x24838` audit（Docker Capstone）：`0x24b14(0x64)` success→text#8→`join(0x16)`；`0x24bde(0x12)` hit→text#10/acting#0x48/`0x32975(0x11)`，miss 再依 `0x53bef<0x0f`→text#13/`join(0x13)` 或 text#12/`0x32975(0x11)`；共用 sync/presentation。只留 raw call order，不命名 immediate 語意，campaign binding 維持 fail-closed。
 - 2026-07-27 raw record byte5 closure（Docker Capstone）：`0x32975(index)` 直接把 selected `0x50` record 的 `+0x05` 整 byte 覆寫為 `1`；新增 `battle.SetNativeRecordByte5One` overwrite/bounds regression。與 bit7 writer 分開，byte5 仍不命名成 acted/turn/action。
-- 2026-07-27 command 17–19 raw dispatcher：新增 `battle.ApplyNativeCommandModifier`，嚴格映射 ID17→`0x22721`、ID18→`0x22866`、ID19→`0x22997`，保留 word/pair branch-specific raw result、RNG 與 accumulator；不接 MP、target、presentation 或 stat 名稱，unsupported ID fail-closed。derived-base/equipment recompute 與 transaction 仍未閉合。
+- 2026-07-27 command 17–19 raw dispatcher：新增
+  `battle.ApplyNativeCommandModifier`，嚴格映射 ID17→`0x22721`、
+  ID18→`0x22866`、ID19→`0x22997`，保留 branch-specific result/RNG/
+  accumulator。後續 equipment cross-check 已定案 destinations 為
+  derived AP/DP/HIT/EV；command MP、target、presentation transaction
+  仍須依各 caller 證據閉合。
 - 2026-07-27 AI spell score raw slice（Docker Capstone，後由 Hex-Rays 校正）：attack IDs0..12 為 `HP < spellValue → 24`、否則8，raw `+0x08==0` 時乘 `1.5` toward-zero；recovery IDs13..16 為 `<max/3→8`、`<max/2→3`、否則0，再乘 `+0x34 bit0`。新增 `battle.ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`；ID10..12 要求 caller-supplied `0x1f183` gate。未接 AI runtime、command inventory、target UI 或效果名稱。
 - 2026-07-27 AI flag-score slice（Hex-Rays 校正）：ID20/21 逐候選讀 raw `+0x25/+0x26`，nonzero 各累加6；ID26/27 讀同兩 offsets，zero 各累加4；新增 `battle.ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`。只保存 score/read ABI，不清除、不命名 flag，也不接施法 runtime。
 - 2026-07-27 AI ID22 score slice（Docker Capstone）：`0x15d30` 對候選先要求 raw `+0x27==0`，再呼 `0x1c269(unit,nil)` 掃 `+0x1a..+0x1e` 五 bytes 的 bitset；任一 bit set 時累加6。新增 `battle.ScoreNativeAISpell22`，不命名欄位、不接 ID22 effect/status runtime。
@@ -787,3 +795,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   RNG 與 target/source atomic preflight；IDs192/195/211 fixture regression
   固定 40/999/200 amounts 與 consumption branch。道具顯示名稱與 renderer
   不猜測。
+- 2026-07-27 type11 MP item transaction：Docker Capstone 重讀
+  `0x20db3..0x20e4c` 與 `0x1c9dd`，固定 row `+0xe` amount、current/max
+  MP `+0x44/+0x46`；max MP 零的 target 直接走 `0x1e1dc`，不呼
+  `0x1c9dd`、不前進 RNG，其他 target 依 list 順序 restore，最後跳
+  `0x1b8e7` 消耗來源。新增 `NativeItemMPRestoreRoute`／
+  `ApplyNativeItemMPRestore` atomic transaction；IDs206/207 fixture
+  amounts=80/200。renderer/名稱仍 fail-closed。
+- 2026-07-27 type12 HIT/EV item route：dispatcher 對 type12 呼
+  `0x22997` 後直接 cleanup，沒有 `0x1b8e7`；callee 以 marker
+  `+0x24` gate，成功才前進 RNG、寫 `(rng%4)+2`，並把已定案的
+  derived HIT/EV `+0x4c/+0x4e` 各加15。新增
+  `NativeItemHITEVStepRoute`／`ApplyNativeItemHITEVStep`，ID210
+  fixture regression 固定 retained-source contract；marker UI 名稱不猜。

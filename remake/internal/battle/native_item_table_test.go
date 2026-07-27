@@ -124,6 +124,42 @@ func TestTrackedHPRestoreItemRowsPreserveConsumptionBranch(t *testing.T) {
 	}
 }
 
+func TestTrackedMPRestoreItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID int
+		amount uint16
+	}{{206, 80}, {207, 200}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		typ := row[0x0d]
+		amount := binary.LittleEndian.Uint16(row[0x0e:])
+		if typ != 11 || amount != tc.amount {
+			t.Fatalf("item %d type/amount = %#x/%d, want 0xb/%d", tc.itemID, typ, amount, tc.amount)
+		}
+		if route, ok := NativeItemMPRestoreRouteForType(typ, amount); !ok || route.Amount != tc.amount {
+			t.Fatalf("item %d MP route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
+func TestTrackedHITEVStepItemRow(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := table[210*NativeItemEffectRowSize:]
+	if typ := row[0x0d]; typ != 12 {
+		t.Fatalf("item 210 effect type = %#x, want 0xc", typ)
+	}
+	route, ok := NativeItemHITEVStepRouteForType(row[0x0d])
+	if !ok || route.Increment != 15 || route.ConsumesSource {
+		t.Fatalf("item 210 HIT/EV route = %#v, %v", route, ok)
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`
