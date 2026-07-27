@@ -308,7 +308,7 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
   真正消費點是 `0x1a813`(3 呼叫點 camp filter)+ 全域 `event_id` 跳表 `0x51b91`(58 entry)+
   spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 只是第1章專屬固定過場,與 turn_events 無關。
   map0/章1 ground truth 4/4 驗證通過,`docs/data/turn_events.json` 已補 `groups` 欄。
-- **[已解,見 doc 26]** ~~18 handler 逐章語意 + 動作函式~~ → 全挖完:handler 無動作函式(只條件→設碼+繪圖);條件原語 `unit_inactive`/`roster_has`/回合;機器可讀 `docs/data/battle_events.json`。
+- **[已解,範圍限定見 doc 26]** ~~18 battle-event skeleton 語意 + 動作函式~~ → `docs/data/battle_events.json` 目前匯出的 battle-event skeleton 未記錄 action_fns，故該資料集只保存條件→設碼/繪圖；這不能外推到含 dialog/acting/sync/JOIN 的 postbattle cutscene handlers。條件原語與 raw caller 仍以各 handler CFG 為準。
 - **[修正]** byte(+5) bit0 reader／writer 已分開：`0x3453e` 僅回傳 `&1`，constructor／HP writer／`0x32975` 是獨立 caller；不得把它們合併成全域死亡／存活欄位。舊說「bit0=存活、初始化=1」已撤回。回合數=`[0x53bef]`（非 `[0x53ec8]`，後者為累積計數）；team-completion 語意仍待 state-machine evidence。
 - **修正 doc 24**:§6 稱「事件腳本解譯器(大函式 0x205c9–0x20c64)」用詞不精確 → 實為**章節戰場事件 handler 表 0x51b19,各 handler 在 0x205b4–0x20bf5**(非單一解譯器,非 byte-code)。已於 doc 24 §6.3 附註。
 

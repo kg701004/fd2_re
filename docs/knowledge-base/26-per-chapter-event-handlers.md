@@ -30,11 +30,13 @@
 - **ch01 post `0x22f42`** 掃 slots 5..10：任一 slot 的 raw bit0 非零走對白 #7、無獎勵；全部為零才走對白 #6 並給 item 198。這是該 caller 的 raw branch，不泛化成全域生命欄位。
 - **ch03 turn 3 `0x344c2`** 查 slot6：raw bit0 非零直接跳過；為零才生成 group2、移鏡並播對白 #4。對白旁證不能取代 raw branch evidence。
 
-> **關鍵結論:戰場事件 handler 不含任何「動作函式」**(`battle_events.json` 全部 `action_fns` 為空)——
-> handler 只做「**條件查詢(unit_inactive / roster_has / 回合)→ 設碼(1/2)+ 可選繪圖**」。
-> 增援、對話、劇情演出都在「碼 1 → 戰役迴圈 → 世界地圖/中場 → 章節跳表(0x51d71/0x51de9)劇情」後續發生,**不在戰場 handler 內**。這讓重製大幅簡化:handler 邏輯純粹是判定。
+> **範圍更正:**`battle_events.json` 這份匯出目前只記錄到的戰場事件 caller，其 `action_fns`
+> 為空；在這個資料集範圍內可說它們只保存「**條件查詢→設碼/可選繪圖**」。這不能外推到
+> postbattle/cutscene handlers：ch14/ch15 post 已直接證實含 layout、dialog、acting、sync、JOIN
+> 與 set-chapter 原語，這些動作仍須由 editable handler script 保存。增援、對話是否在 handler
+> 內執行，必須按每個 caller 的 CFG 判定，不能一概移到世界地圖流程。
 
-> 單位索引是**戰場單位陣列 `[0x53a45]` 的全域 index**(我方 + 敵方 + NPC,每單位 0x50B);對應到角色名需配合各章 roster(`extracted/maps/maps_metadata.json` 的 `units`,含 camp/portrait/race/cls/lv)。我方/敵方在陣列中的精確分界(我方槽數 M)未隔離驗證 → 重製時自行定義單位陣列,trigger 用「具名單位 / 陣營」表達即可,不必對齊原版 idx。
+> 單位索引是**戰場單位陣列 `[0x53a45]` 的全域 index**(我方 + 敵方 + NPC,每單位 0x50B);對應到角色名需配合各章 roster(`extracted/maps/maps_metadata.json` 的 `units`,含 camp/portrait/race/cls/lv)。一般 normalized scenario 可用具名單位/陣營投影，但凡 handler 直接呼叫 `0x3453e`、`0x233c6` 或以 raw slot 讀寫 record，重製必須保留原始 slot order/數量與 provenance；不能再宣稱所有 trigger 都可脫離原版 idx。
 
 **兩個單位陣列(別混淆)** [驗]:
 - **`[0x53a45]` = 戰場全單位陣列**(malloc `0x1e00` = **96 槽** × 0x50B,我方上場+敵方+NPC)→ `NativeRecordByte5Bit0(idx)`(0x3453e)查 raw bit。
@@ -141,10 +143,10 @@
 ## 6. 受阻 / 待驗(誠實標註)
 
 - **[修正]** byte[+5] 的 bit0 reader／writer 已分開閉合：`0x3453e` 是 raw `&1` predicate，`0x32975` 是整 byte overwrite，constructor/death writers 是其他 caller。舊說「使用者確認 bit0=存活」已撤回；各 handler 仍需保留自己的 branch evidence。
-- **[已驗]** 章16 `0x33499` 不是動作,是條件查詢(roster_has);全 30 章 `action_fns` 皆空 → **handler 無動作函式**。
+- **[已驗，範圍限定]** 章16 `0x33499` 不是動作,是條件查詢(roster_has)；`battle_events.json` 的 battle-event skeleton 匯出 `action_fns` 皆空，僅代表該匯出層未記錄動作，不能推廣為所有 postbattle/cutscene handler 無動作。後者須按實際 CFG 與 editable script 逐一驗證。
 - **[已驗]** 回合數 = **`[0x53bef]`**(戰場開始 `mov 1`、`inc`、handler `cmp N`),**非 `[0x53ec8]`**(後者是 `add reg` 累積計數+clamp 99,語意待定)。詳見 §7。
 - **[阻]** 迴圈查的單位群(章 1/12/19/21/25)精確 idx 範圍見逐指令 dump(章1=5–10、章12=<12、章19=<46);`battle_events.json` 的 `trigger_units_flag` 只收立即數 push,迴圈索引另記於 `extra_conditions`。
-- **[阻]** 單位全域 idx → 角色/敵人名 對應 + 我方槽數 M;重製可略過(自定義單位陣列)。
+- **[阻]** 單位全域 idx → 角色/敵人名 對應 + 我方槽數 M；normalized remake 可使用自有具名單位投影，但 raw handler path 仍需保留原始 96-slot order/provenance，不能一概略過。
 - **[已驗證 raw]** byte[+5] bit0／bit7 的個別 mask 使用；回合 `[0x53bef]` increment 與 team-completion 語意仍需 state-machine caller evidence，不在本表宣稱。
 - **[低優先]** `[0x53ec8]` 累積計數(靜態:累加單位 +0x21,clamp99)非重製核心,可選。
 
