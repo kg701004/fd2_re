@@ -153,6 +153,8 @@ type Game struct {
 	nativeCommandTargetID    int
 	spellOpen                bool
 	spellSel                 int
+	itemOpen                 bool // native 0x1b932 eight-slot selector; effect dispatch remains fail-closed
+	itemSel                  int
 	castSp                   *battle.Spell // 施法目標選擇中
 	spells                   []battle.Spell
 	nativeCommandBook        []battle.NativeCommandRecord
@@ -2937,6 +2939,34 @@ func (g *Game) stepCampaignMenu(event campaign.MenuEvent) (selected int, confirm
 func (g *Game) ringInput() bool {
 	enter := inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)
 	esc := inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace)
+	if g.itemOpen {
+		if g.sel == nil {
+			g.itemOpen = false
+			return false
+		}
+		if esc {
+			g.itemOpen, g.ring = false, true
+			return true
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.itemSel > 0 {
+			g.itemSel--
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.itemSel < 7 {
+			g.itemSel++
+		}
+		if enter {
+			occupied, itemID := g.nativeItemMenuSlot(g.sel, g.itemSel)
+			if !occupied {
+				g.msg = "空物品欄"
+				return true
+			}
+			// 0x1bbdc case 0 delegates to 0x20c6f.  Its effect/target table
+			// is not yet closed, so selection is visible but never mutates state.
+			g.msg = fmt.Sprintf("物品 %02Xh：使用效果尚未驗證", itemID)
+			return true
+		}
+		return true
+	}
 	if g.nativeCommandOpen {
 		if g.sel == nil {
 			g.nativeCommandOpen = false
@@ -3084,7 +3114,8 @@ func (g *Game) ringInput() bool {
 				g.msg = "沒有可用法術"
 			}
 		case 2: // 物品(原版 0x1bbdc；完整 item action 仍 fail-closed)
-			g.msg = "物品:尚未實裝"
+			g.ring, g.itemOpen, g.itemSel = false, true, 0
+			g.msg = "物品：選擇欄位"
 		case 3: // 待機／格子互動(原版 0x13fd4→0x190ac)
 			g.finishSelectedWait()
 		}
@@ -4470,6 +4501,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawRing(screen)
 	g.drawNativeCommandGrid(screen)
 	g.drawSpellMenu(screen)
+	g.drawItemMenu(screen)
 
 	// 場景淡出/淡入轉場(doc46 §5.2):全螢幕黑色疊層,alpha 隨 fade.t 漸變。
 	if g.fade != nil {
@@ -4589,6 +4621,27 @@ func (g *Game) actionOverlayAvailability() [4]int {
 	return availability
 }
 
+// nativeItemMenuSlot preserves the eight-cell selector boundary used by
+// 0x1b932.  InventorySlots/NativeInventoryFlags are required for the raw
+// layout; legacy units fall back to their compact editable inventory solely
+// to keep the selector visible.  It never assigns an effect meaning to the
+// selected row.
+func (g *Game) nativeItemMenuSlot(u *battle.Unit, slot int) (occupied bool, itemID int) {
+	if u == nil || slot < 0 || slot >= 8 {
+		return false, 0
+	}
+	if len(u.InventorySlots) == 8 && len(u.NativeInventoryFlags) == 8 {
+		if u.NativeInventoryFlags[slot]&0x80 != 0 {
+			return false, u.InventorySlots[slot]
+		}
+		return true, u.InventorySlots[slot]
+	}
+	if slot >= len(u.Inventory) {
+		return false, 0
+	}
+	return true, u.Inventory[slot]
+}
+
 // hasNativeEquippedWeapon is the recovered 0x1b83d inventory precondition.
 // Inventory/Equipped are the remake's compact projection of the native eight
 // slots; a missing equipped entry is deliberately not treated as a weapon.
@@ -4700,6 +4753,36 @@ func (g *Game) drawSpellMenu(screen *ebiten.Image) {
 			c = color.RGBA{0x80, 0x80, 0x90, 0xff} // MP 不足變暗
 		}
 		g.font.Draw(screen, fmt.Sprintf("%s%s  MP%d", pre, sp.Name, sp.MP), 32, 96+float64(i)*30, 1.0, c)
+	}
+}
+
+// drawItemMenu is the proven eight-slot item selector shell.  It deliberately
+// shows raw slot occupancy only; using an item remains blocked until 0x20c6f
+// effect/target dispatch is independently decoded.
+func (g *Game) drawItemMenu(screen *ebiten.Image) {
+	if !g.itemOpen || g.sel == nil || g.font == nil {
+		return
+	}
+	box := ebiten.NewImage(250, 270)
+	box.Fill(color.RGBA{0x10, 0x1c, 0x40, 0xee})
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(18, 42)
+	screen.DrawImage(box, op)
+	g.font.Draw(screen, fmt.Sprintf("物品　%s", g.sel.Name), 32, 52, 1.0, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+	for slot := 0; slot < 8; slot++ {
+		occupied, itemID := g.nativeItemMenuSlot(g.sel, slot)
+		c := color.RGBA{0x80, 0x88, 0x98, 0xff}
+		label := "空"
+		if occupied {
+			c = color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			label = fmt.Sprintf("%02Xh", itemID)
+		}
+		pre := "　"
+		if slot == g.itemSel {
+			pre = "▶"
+			c = color.RGBA{0xff, 0xff, 0xff, 0xff}
+		}
+		g.font.Draw(screen, fmt.Sprintf("%s[%d] %s", pre, slot+1, label), 32, 82+float64(slot)*25, 1.0, c)
 	}
 }
 
