@@ -110,6 +110,19 @@ func renderNativeChurchText(
 	font *fdtxt.Font,
 	textIndex int,
 ) ([]byte, error) {
+	return ComposeNativeChurchTextAt(
+		frame, strings, font, textIndex, nativeChurchTextOffset,
+	)
+}
+
+// ComposeNativeChurchTextAt applies the proven 0x15f84 church text style at
+// a caller-owned VGA offset. It supports only the verified FFFE soft newline.
+func ComposeNativeChurchTextAt(
+	frame []byte,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	textIndex, baseOffset int,
+) ([]byte, error) {
 	words, err := strings.Words(textIndex)
 	if err != nil {
 		return nil, err
@@ -125,7 +138,7 @@ func renderNativeChurchText(
 		if word >= fdtxt.ControlMin {
 			return nil, fmt.Errorf("campaign: unsupported church text control %#x", word)
 		}
-		offset := nativeChurchTextOffset + line*19*320 + column*fdtxt.GlyphWidth
+		offset := baseOffset + line*19*320 + column*fdtxt.GlyphWidth
 		if err := font.BlitNativeGlyph(frame, 320, offset, int(word), style); err != nil {
 			return nil, err
 		}

@@ -70,8 +70,10 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 閉合 `0x30dc3→0x309ff/0x30c22/0x30a47`：候選資格嚴格讀 roster record `+5 bit0`，
 費用使用 raw class `+0x20` 對 `0x52669` 費率乘 raw level `+0x21`；三列名單、角色／
 種族／職業／費用、FDTXT590 動態名字與金額、Yes/No 及 6-open/5-close、4-open/9-close
-已接原版 indexed runtime。無候選 FDTXT588、金額不足 FDTXT504 與成功
-`SFX17→0x2f4c6→SFX11` 的完整等待／演出仍 fail-closed，不以 authored toast 宣稱 parity。
+已接原版 indexed runtime。後續 IDA 重核已刪除「復活確認固定 4+5 幀關閉」的錯誤
+斷言：原版先只關 YES/NO 四幀；不足金才把 FDTXT504 寫在仍開著的確認框第三行，
+等待後再關對話框。FDTXT588 無候選與 FDTXT504 不足金的 indexed 開框／等待／關框
+均已接；成功 `SFX17→0x2f4c6→SFX11` 的專用演出仍 fail-closed。
 
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、
@@ -161,6 +163,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源 indexed 轉職確認框（`0x19953` selected-pulse frame；非 DOSBox 截圖） | ![native indexed class confirmation](docs/figures/native-class-confirm-indexed.png) |
 | 原版資源 indexed 復活候選清單（`0x30c22→0x30a47`；raw class5、Lv4 fixture，非 DOSBox 截圖） | ![native indexed revive list](docs/figures/native-revive-list-indexed.png) |
 | 原版資源 indexed 復活確認框（FDTXT590 動態名字／費用；非 DOSBox 截圖） | ![native indexed revive confirmation](docs/figures/native-revive-confirm-indexed.png) |
+| 原版資源 indexed 復活訊息（FDTXT588 無候選／FDTXT504 不足金；非 DOSBox 截圖） | ![native indexed revive empty](docs/figures/native-revive-empty-indexed.png) ![native indexed revive insufficient](docs/figures/native-revive-insufficient-indexed.png) |
 | 原版資源 indexed 教會主選單（`0x3072f+0x2d669+0x2d85f`；gold=1000 fixture，非 DOSBox 截圖） | ![native indexed church menu](docs/figures/native-church-menu-indexed.png) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |

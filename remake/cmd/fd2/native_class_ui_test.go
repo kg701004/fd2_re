@@ -55,6 +55,7 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		},
 		nativeChurchTextIndex: 585,
 		reviveFeeRates:        []int{0, 10, 20, 30, 40, 50},
+		gold:                  1000,
 	}
 	screen := ebiten.NewImage(640, 400)
 	if !g.drawNativeClassList(screen) {
@@ -141,5 +142,34 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	if !g.beginNativeChurchReviveConfirmationClosing(nil) ||
 		len(g.nativeClassUIJob.frames) != 9 || len(g.nativeClassUIJob.restore) != 320*200 {
 		t.Fatal("native revive confirmation choice/dialogue closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchReviveChoiceClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 4 || len(g.nativeClassUIJob.restore) != 0 {
+		t.Fatal("native revive choice-only closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	g.churchMode = "revive_insufficient"
+	if !g.drawNativeChurchReviveMessage(screen) {
+		t.Fatal("native insufficient-gold message unexpectedly fell back")
+	}
+	if !g.beginNativeChurchReviveMessageClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native insufficient-gold five-frame dialogue closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	g.churchMode, g.nativeChurchTextIndex = "revive_empty", 586
+	if !g.drawNativeChurchReviveMessage(screen) {
+		t.Fatal("native no-candidate message unexpectedly fell back")
+	}
+	g.openNativeChurchReviveEmpty()
+	if g.churchMode != "revive_empty" || g.nativeClassUIJob == nil ||
+		len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native no-candidate six-frame dialogue opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchReviveMessageClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native no-candidate five-frame dialogue closing unexpectedly fell back")
 	}
 }

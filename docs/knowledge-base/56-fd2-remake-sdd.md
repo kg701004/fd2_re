@@ -874,6 +874,34 @@ provenance is available; legacy JSON without that provenance retains a
 conservative projection and is not native parity. Malformed or missing raw
 provenance remains fail-closed for the native gate.
 
+### Church revive service boundary (IDA E0, 2026-07-28)
+
+`0x30dc3` rebuilds its candidate array through `0x309ff`; the predicate is
+exactly `0x3453e(index) == 1`, i.e. roster record byte `+5` bit 0. HP,
+`OnField`, and other normalized projections are not substitutes when raw
+provenance is absent. `0x30a47` renders at most three rows selected by the
+stateful `0x30c22` viewport. Each row contains the map sprite, FDTXT
+`identity+1`, race `+140`, raw class `+150`, currency cell 15, and a five-digit
+fee. The fee is `word_52669[record+0x20] * record+0x21`; no minimum level is
+invented.
+
+The dialogue branch is not the same lifecycle as class change. FDTXT590 uses
+FFFC for the selected name, FFFA for the decimal fee, and FFFE for a 19-pixel
+soft newline. After confirmation `0x197e5` closes only the YES/NO cells in four
+frames. On insufficient gold, the caller writes FDTXT504 at VGA `(12,157)` in
+the still-open question box, calls `0x16c57(1)` to wait with its marker, then
+calls `0x2d31b` for the five-frame dialogue close. With no candidates it opens
+FDTXT588, waits through `0x16c57(0)`, closes, and returns. The earlier
+class-derived assertion that every revive confirmation performs an immediate
+four-plus-five-frame close is deleted.
+
+The remake implements the candidate list, dynamic confirmation, no-candidate,
+and insufficient-gold indexed lifecycles with original-resource regression.
+The successful branch remains partial: its state mutation is proven, but the
+native sequence redraws gold, plays SFX 17, runs `0x2f4c6`, then plays SFX 11.
+That facility animation and audio timing must be restored before revive can be
+promoted from partial UI parity.
+
 The indexed runtime now follows the caller lifecycle rather than the earlier
 authored stack. Source and destination use the shared six-entry roster. The
 middle `0x2dc55(mode=1)` panel uses FDOTHER#14 entry16 and raw cell15; each

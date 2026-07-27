@@ -20,14 +20,15 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 11 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png")
+	if len(os.Args) != 13 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png revive-empty.png revive-insufficient.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, fdiconPath, datoPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 	itemRowsPath := os.Args[5]
 	listOutputPath, confirmOutputPath, transferOutputPath := os.Args[6], os.Args[7], os.Args[8]
 	reviveListOutputPath, reviveConfirmOutputPath := os.Args[9], os.Args[10]
+	reviveEmptyOutputPath, reviveInsufficientOutputPath := os.Args[11], os.Args[12]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -201,6 +202,24 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
+	reviveEmptyBase, err := campaign.ComposeNativeChurchDialogueOverlay(
+		source, dialogue, portraits[0],
+	)
+	if err != nil {
+		fail(err)
+	}
+	reviveEmpty, err := campaign.ComposeNativeChurchTextAt(
+		reviveEmptyBase, strings, font, 588, 119*320+12,
+	)
+	if err != nil {
+		fail(err)
+	}
+	reviveInsufficient, err := campaign.ComposeNativeChurchTextAt(
+		reviveQuestion, strings, font, 504, 157*320+12,
+	)
+	if err != nil {
+		fail(err)
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		fail(err)
@@ -215,6 +234,8 @@ func main() {
 	writePNG(transferOutputPath, transfer, palette)
 	writePNG(reviveListOutputPath, reviveList, palette)
 	writePNG(reviveConfirmOutputPath, reviveConfirm, palette)
+	writePNG(reviveEmptyOutputPath, reviveEmpty, palette)
+	writePNG(reviveInsufficientOutputPath, reviveInsufficient, palette)
 }
 
 func writePNG(path string, pixels []byte, palette color.Palette) {

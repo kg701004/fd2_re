@@ -206,6 +206,127 @@ func (g *Game) beginNativeChurchReviveConfirmationClosing(after func()) bool {
 	return true
 }
 
+// beginNativeChurchReviveChoiceClosing reproduces only 0x197e5. Unlike the
+// class-change caller, revive keeps the dialogue open so it can show FDTXT504
+// or run the success feedback after the four YES/NO closing frames.
+func (g *Game) beginNativeChurchReviveChoiceClosing(after func()) bool {
+	question, ok := g.composeNativeChurchReviveQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassConfirmationClosingFrames(
+		question, g.nativeClassUI.choices,
+	)
+	if err != nil || len(frames) != 4 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames, after: after}
+	return true
+}
+
+func (g *Game) composeNativeChurchReviveMessage() ([]byte, bool) {
+	a := g.nativeClassUI
+	if a == nil {
+		return nil, false
+	}
+	switch g.churchMode {
+	case "revive_empty":
+		base, ok := g.composeNativeChurchSourceFrame()
+		if !ok {
+			return nil, false
+		}
+		dialogue, err := campaign.ComposeNativeChurchDialogueOverlay(
+			base, a.dialogue, a.portrait,
+		)
+		if err != nil {
+			return nil, false
+		}
+		frame, err := campaign.ComposeNativeChurchTextAt(
+			dialogue, a.strings, a.font, 588, 119*320+12,
+		)
+		return frame, err == nil
+	case "revive_insufficient":
+		question, ok := g.composeNativeChurchReviveQuestion()
+		if !ok {
+			return nil, false
+		}
+		// 0x30f39 passes literal VGA 0xac44c = base + (157,12).
+		frame, err := campaign.ComposeNativeChurchTextAt(
+			question, a.strings, a.font, 504, 157*320+12,
+		)
+		return frame, err == nil
+	default:
+		return nil, false
+	}
+}
+
+func (g *Game) drawNativeChurchReviveMessage(screen *ebiten.Image) bool {
+	frame, ok := g.composeNativeChurchReviveMessage()
+	if !ok {
+		return false
+	}
+	g.presentNativeClassFrame(screen, frame)
+	return true
+}
+
+func (g *Game) openNativeChurchReviveEmpty() {
+	g.churchMode = "revive_empty"
+	final, ok := g.composeNativeChurchReviveMessage()
+	if !ok {
+		g.returnToNativeChurchMenu()
+		return
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		g.returnToNativeChurchMenu()
+		return
+	}
+	frames, err := campaign.NativeClassListOpeningFrames(source, final)
+	if err != nil || len(frames) != 6 {
+		g.returnToNativeChurchMenu()
+		return
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames}
+}
+
+func (g *Game) beginNativeChurchReviveMessageClosing(after func()) bool {
+	final, ok := g.composeNativeChurchReviveMessage()
+	if !ok {
+		return false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(source, final)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{
+		frames: frames, restore: source, after: after,
+	}
+	return true
+}
+
+func (g *Game) beginNativeChurchReviveDialogueClosing(after func()) bool {
+	question, ok := g.composeNativeChurchReviveQuestion()
+	if !ok {
+		return false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(source, question)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{
+		frames: frames, restore: source, after: after,
+	}
+	return true
+}
+
 func (g *Game) returnToNativeReviveList() {
 	g.churchMode = "revive"
 	g.churchIDs = g.churchCandidates("revive")
@@ -214,8 +335,7 @@ func (g *Game) returnToNativeReviveList() {
 	g.churchSel = 0
 	g.churchVerticalStart = 0
 	if len(g.churchIDs) == 0 {
-		g.msg = "隊伍中沒有須要復活的！"
-		g.returnToNativeChurchMenu()
+		g.openNativeChurchReviveEmpty()
 		return
 	}
 	g.nativeChurchTextIndex = 589

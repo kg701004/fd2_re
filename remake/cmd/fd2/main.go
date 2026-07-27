@@ -92,7 +92,7 @@ type Game struct {
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
 	churchSel            int                 // church service menu cursor (0..3)
-	churchMode           string              // menu / status_* / transfer_* / revive / revive_confirm / class / class_confirm
+	churchMode           string              // menu / status_* / transfer_* / revive* / class / class_confirm
 	churchIDs            []int               // current church candidate ids
 	churchRosterStart    int                 // 0x2e6b8 [0x5412f], even six-entry viewport origin
 	churchVerticalStart  int                 // 0x30c22/0x311dc three-row viewport origin
@@ -2722,8 +2722,7 @@ func (g *Game) campInput() bool {
 						if g.churchMode == "class" {
 							g.beginNativeClassListOpening()
 						} else if len(g.churchIDs) == 0 {
-							g.msg = "隊伍中沒有須要復活的！"
-							g.returnToNativeChurchMenu()
+							g.openNativeChurchReviveEmpty()
 						} else {
 							g.nativeChurchTextIndex = 589
 							g.beginNativeChurchReviveListOpening()
@@ -2912,14 +2911,32 @@ func (g *Game) campInput() bool {
 			if enter {
 				if g.churchSel == 0 {
 					apply := func() {
+						if g.gold < g.churchReviveFee {
+							g.churchMode = "revive_insufficient"
+							return
+						}
 						g.reviveChurchUnit(g.churchReviveID)
-						g.returnToNativeReviveList()
+						if !g.beginNativeChurchReviveDialogueClosing(g.returnToNativeReviveList) {
+							g.returnToNativeReviveList()
+						}
 					}
-					if !g.beginNativeChurchReviveConfirmationClosing(apply) {
+					if !g.beginNativeChurchReviveChoiceClosing(apply) {
 						apply()
 					}
 				} else if !g.beginNativeChurchReviveConfirmationClosing(g.returnToNativeReviveList) {
 					g.returnToNativeReviveList()
+				}
+			}
+			return true
+		}
+		if g.churchMode == "revive_empty" || g.churchMode == "revive_insufficient" {
+			if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				after := g.returnToNativeReviveList
+				if g.churchMode == "revive_empty" {
+					after = g.returnToNativeChurchMenu
+				}
+				if !g.beginNativeChurchReviveMessageClosing(after) {
+					after()
 				}
 			}
 			return true
@@ -5742,6 +5759,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeChurchReviveConfirmation(screen) {
+			return
+		}
+		if g.drawNativeChurchReviveMessage(screen) {
 			return
 		}
 		if g.drawNativeChurchReviveList(screen) {
