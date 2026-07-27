@@ -85,7 +85,9 @@
 
 - **框圖資源**:UI 載入函式 `0x25C63`–`0x25D19` 一次把 `FDOTHER.DAT`(字串 linear `0x51A4D`)多個 entry 解進全域:
   - **`0x111BA("FDOTHER.DAT", [0x53A81], 5)` → `[0x53A81]` = 對話框框圖(entry #5)**(`0x25CF2`)。
-  - `0x111BA(…, [0x53A75], 4)` → `[0x53A75]` = 框內文字區底圖(entry #4)。
+  - `0x111BA("FDOTHER.DAT", [0x53A75], 4)` → `[0x53A75]` =
+    **16×16 1bpp glyph font resource**；一般文字由
+    `0x15F84→0x4EA2A([0x53A75],glyph,...)` 繪製，不是文字區底圖。
   - entry 1/2/3/0x1F → `[0x53A4D]`/`[0x53A89]`/`[0x53A6D]`/`[0x53EEC]`(其他 UI 片)。
   - 另 `0x111BA("FDTXT.DAT"@`0x51A43`, [0x53A7D], 0)` → `[0x53A7D]` = 對話字模 / 文字資料。
 - **彈出動畫(開框)`0x165AC`**:用 `[0x53A81]` 框圖,以 `[0x53AB9]×[0x53ABD]`(框寬 / 高,單位 ×`0x18`=24px)為終點,
@@ -106,7 +108,7 @@
 | `[0x3A85]` | 目前頭像資料緩衝(DATO.DAT) |
 | `[0x3C1B]` | 目前說話者結構 |
 | `[0x53A81]` | **對話框框圖**(FDOTHER.DAT entry #5) |
-| `[0x53A75]` | 框內文字區底圖(FDOTHER.DAT entry #4) |
+| `[0x53A75]` | FDOTHER.DAT resource #4 的 16×16 1bpp glyph font |
 | `[0x53A7D]` | 對話字模 / 文字資料(FDTXT.DAT entry 0) |
 | `[0x53AB9]` / `[0x53ABD]` | 框寬 / 框高(×0x18=24px) |
 | `[0x53AD9]`/`[0x53ADD]`/`[0x53AE1]` | 名字插入碼 `-4`/`-5`/`-6` 的來源字串指標 |

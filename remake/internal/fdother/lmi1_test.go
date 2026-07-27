@@ -66,6 +66,23 @@ func TestLMI1BlitPreservesTransparentAndMirrors(t *testing.T) {
 	}
 }
 
+func TestLMI1OpaqueBlitMatches4E8AFZeroWrites(t *testing.T) {
+	e := LMI1Entry{Width: 3, Height: 1, Pixels: []byte{1, 0, 2}}
+	dst := []byte{9, 9, 9, 9, 9, 9, 9, 9}
+	if err := e.BlitOpaqueAt(dst, 8, 1, 0, false); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst[:5], []byte{9, 1, 0, 2, 9}; string(got) != string(want) {
+		t.Fatalf("opaque blit=%v, want %v", got, want)
+	}
+	if err := e.BlitOpaqueAt(dst, 8, 4, 0, true); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst[4:7], []byte{2, 0, 1}; string(got) != string(want) {
+		t.Fatalf("opaque mirror=%v, want %v", got, want)
+	}
+}
+
 func TestFDOTHER005LMI1UIContainer(t *testing.T) {
 	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	if _, err := os.Stat(datPath); err != nil {

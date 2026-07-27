@@ -170,8 +170,10 @@ offscreen surface，再呼叫 `0x11eb0` present；接著呼叫 `0x1a813`／`0x1a
 這是可重用的 frame-resource ABI；`[0x53a81]` 的 loader provenance 已由 UI trace
 確認為 `FDOTHER.DAT` resource #5 的 `LMI1` 容器（doc35 §4.2.5），remake 已新增
 strict `fdother.ParseLMI1` 與 codec regression。
-`LMI1Entry.BlitAt` 亦已對應 `0x4e8af` 的 index-0 transparent preserve 與
-`0x4e8e1` 水平鏡像路徑；它只接受顯式 surface/anchor，尚未擅自接入 D8 layout。
+Codec/blit correction：`0x4e8af` 對每個 decoded pixel 都直接 store，index 0
+也是 opaque overwrite；舊「index-0 transparent preserve」斷言已撤回。
+`LMI1Entry.BlitOpaqueAt` 保存此路徑，`BlitAt` 則只留給另有證據會 preserve zero
+的 caller；兩者都要求顯式 surface/anchor，未擅自接入 D8 layout。
 實際玩家 `FDOTHER.DAT#5` regression（138 entries，#0x52=72×14）另證實 directory
 offset 只標示 entry start：`0x4e916` 的 repeat 可跨下一個 offset，原版依 width×height
 停止，因此 parser 不得把 next offset 誤當壓縮 stream 結尾。

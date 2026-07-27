@@ -252,8 +252,14 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 **③ 名字 / LV / 數值 = 素材文字 cell(點陣字 + 數字 cell),非 TTF、非單張預渲染整條**
 - **角色名(亞雷斯 / 盜賊)**:`0x15f84([0x53a7d] 字串表, nameIdx=byte[unit+8]+1, dstAddr, …, 0xcd, 0x4c)`(0x18d61-0x18d7f)。
   0x15f84 = 字串排版器:`esi=字串表; eax=index; movsx eax,word[esi+idx*2]; esi+=eax`(word-offset 字串表)→ 逐字 `call 0x16559`。
-  **0x16559 = 單字 glyph blit**:`edx=[0x53a85]`(CJK 點陣字 glyph 容器);`eax=[edx+glyph*4]; eax+=edx`(查 glyph entry)→ `call 0x4e8af(VGA+[0x53c67], glyphSprite, 0x140)`。
-  → **名字 = 點陣字 glyph sprite(每字一張、自帶 w×h header,0x4e8af RLE blit),不是 TTF、不是整條預渲染**。字模容器 = `[0x53a85]`(= 字型 glyph 表,1824 字模 glyph 0x000–0x71F,見 doc 08/09);**全形 CJK 字 = 16×16**(對話框路徑游標 advance = 0x10=16px,doc 14)。
+  **2026-07-27 official IDA correction**：一般字不是走 `0x16559/[0x53a85]`。
+  `0x15f84` 對每個普通 word 呼叫
+  `0x4ea2a([0x53a75],glyph,dst,stride,foreground,shadow,background)`；
+  `[0x53a75]` 是 boot 載入的 **FDOTHER.DAT #4 16×16 1bpp font**。
+  `0x16559(index)` 才會從目前 DATO `[0x53a85]` 的 offset table取 mouth
+  frame並以 `0x4e8af/0x4e8e1` 重貼 portrait，只由對話控制／嘴型路徑呼叫。
+  → **名字 = 16×16 1bpp glyph + 程式指定 foreground/shadow/background**，
+  不是 TTF、不是 DATO sprite、不是整條預渲染。
   → **remake 名字偏小的修法**:名字用 16px-class 點陣字(每全形字 16px 寬),別用 TTF 縮放;名字寬 ≈ 字數 × 16(狀態欄路徑 0x15f84 的實際 advance 可能略窄,精確值待確認)。
 - **數值(LV-NN / HP 028 / MP 000)**:`0x187d6` = 數字繪製器(`call 0x377d9` itoa → 逐位 `[0x53a81]` 容器取 **digit cell**,`imul eax,ebx,6` → **每位數字 cell 寬 6px**,blit 經 0x1685c/0x4e9bb)。
   - LV/狀態值:0x18d02 `0x187d6(…, byte[unit+0x21], 0x1f, mode2)`(mode2 上限 99);HP/MP 數值:`0x1875d`(0x18d25/0x18d42)→ 內部 `cur==max ? 色0x1f : 色0x2a` 再 `call 0x187d6`(滿血 / 非滿血換色)。
@@ -294,7 +300,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 |---|---|---|
 | 框 + 深藍底 + 立體 bevel | **素材 sprite(blit)** | 0x4e8af blit `[0x53a81]+0x5e`(UI 容器面板底圖);繪製器 0x18c6d,座標器 0x2a289(byte[+6]: 0→(0,154)、≠0→(171,4)) |
 | HP / MP 血條 | **程式畫長度 + 逐欄 cell** | 0x18795(len=`cur*101/max+1`)→ 0x17d6f 逐欄 0x1685c blit `[0x53a81]` 漸層欄 cell;空槽 cell 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46 |
-| 角色名 | **點陣字 glyph 素材** | 0x15f84 排版 → 0x16559 blit `[0x53a85]` CJK glyph(0x4e8af);字串表 `[0x53a7d]`,index byte[unit+8]+1;全形 **16×16**(doc 14 advance 0x10) |
+| 角色名 | **16×16 1bpp 點陣 glyph** | 0x15f84 排版 → 0x4ea2a blit `[0x53a75]` FDOTHER#4 font；字串表 `[0x53a7d]`,index byte[unit+8]+1；caller指定前景/陰影/背景色 |
 | LV / HP / MP 數值 | **6px digit cell 素材** | 0x187d6 itoa→逐位 blit `[0x53a81]` digit cell(寬6);0x1875d 滿血換色 |
 | 台座(figure 腳下) | **素材 sprite** | TAI.DAT(0x52393)entry,0x29164 經 0x2935b blit;155×42 菱形 dais |
 
@@ -359,7 +365,8 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | 0x4e8af / 0x4e8e1 | RLE 逐列 blit 原語(正向 / 水平鏡像);面板底圖 + glyph 都走它 |
 | 0x18795 | 血條長度算 + 畫(`len=cur*101/max+1` → 0x17d6f) |
 | 0x17d6f / 0x1685c / 0x4e9bb | 逐欄畫條(查 [0x53a81] cell → 逐列 rep movsb);空槽 cell 0x1d |
-| 0x15f84 / 0x16559 | 名字排版 / 單字 glyph blit([0x53a85] 字模,0x4e8af) |
+| 0x15f84 / 0x4ea2a | FDTXT 排版 / FDOTHER#4 16×16 1bpp glyph blit |
+| 0x16559 | 從目前 DATO `[0x53a85]` 取 mouth frame重貼 portrait；不是一般 glyph renderer |
 | 0x187d6 / 0x1875d / 0x377d9 | 數值繪製(itoa → 6px digit cell @ [0x53a81];0x1875d 滿血換色) |
 | 0x2935b | 單幀 figure/台座 貼圖 wrapper(解 frame header dx/dy → 0x4e63d;dst/stride/transp 由 caller 傳穿) |
 | 0x2939d | figure 動畫 renderer(幀迴圈 + 百分比進度;0x29536 依 byte[unit+6] 分兩合成路徑) |
@@ -412,6 +419,6 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 1. **入口 + 呼叫鏈** ✅:單圖 0x28784(caller 0x15195)、攻守 0x28a6c(caller 0x1561f 傳 `攻方ebx, 守方[0x53c4b]`,另 0x18fc6/0x2c2aa/0x35435)。phase = [0x540ff]。
 2. **figure 座標 / 翻轉 / 縮放** partial:blit 0x4e63d 原生尺寸 `dst+Y*stride+X`,**全程無縮放運算**;每幀 displacement=descriptor header `u16 X/Y`，固定 `(164,157)` 是某些 figure/台座 caller 的 anchor；`word[unit+0x40]`=當前 HP（非座標）。`+0x48/+0x4a` 是 derived AP/DP，`0x29f72` 是 combat-result resolver。**待確認**:byte[unit+6] 攻守配對、土台 entry、所有 caller 的 schedule。
 3. **BG 繪製 + 腳下圓圈** ✅:BG.DAT(0x52381 即 `"BG.DAT"` 字串)多層 → [0x54107…54113],全部 `0x4e63d(X=0,Y=50,寬320)`;戰場→章節 [0x53c03] 索引 0x52363。**腳下圓圈 / 土台 = BG 素材層(sprite blit),非程式畫純色**(戰鬥區無 rect/circle 原語,只有 0x4e63d/0x11eb0/0x11d40)。**待確認**:哪個 BG.DAT entry 是土台(需 dump 視覺對照)。
-4. **狀態欄(血條框)** ✅(本輪嚴格 RE 重做,§4):真函式 = **0x18c6d**(座標器 0x2a289,byte[+6]→ 我方(0,154)/敵方(171,4))。**0x29164 不是狀態欄,是 figure + 台座(TAI.DAT)淡入**(舊標錯已改)。三元素釘死:**① 框/深藍底/立體 bevel = 素材 sprite**(0x4e8af blit [0x53a81]+0x5e);**② HP/MP 條 = 程式畫**(0x18795 算 `len=cur*101/max+1` → 0x17d6f 逐欄 blit [0x53a81] 漸層欄 cell,空槽 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46);**③ 名 = 點陣字 glyph**(該 caller 當下的 `[0x53a85]`,0x15f84/0x16559)、**數值 = 6px digit cell**([0x53a81],0x187d6)。`[0x53a81]` loader 已由 boot `0x25c97` 定案為 FDOTHER #5；待確認只剩名字 glyph 確切像素與各 caller 對 `[0x53a85]` 的生命週期，不再把 loader provenance 列為未知。
+4. **狀態欄(血條框)** ✅(本輪嚴格 RE 重做,§4):真函式 = **0x18c6d**(座標器 0x2a289,byte[+6]→ 我方(0,154)/敵方(171,4))。**0x29164 不是狀態欄,是 figure + 台座(TAI.DAT)淡入**(舊標錯已改)。三元素釘死:**① 框/深藍底/立體 bevel = 素材 sprite**(0x4e8af blit [0x53a81]+0x5e);**② HP/MP 條 = 程式畫**(0x18795 算 `len=cur*101/max+1` → 0x17d6f 逐欄 blit [0x53a81] 漸層欄 cell,空槽 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46);**③ 名 = `0x15f84→0x4ea2a` 以 `[0x53a75]` FDOTHER#4 font畫 16×16 glyph**、**數值 = 6px digit cell**([0x53a81],0x187d6)。`[0x53a81]` loader 已由 boot `0x25c97` 定案為 FDOTHER #5；`[0x53a85]` 是 DATO mouth-frame工作指標，不再誤稱字模。
 5. **動畫階段** ✅:[0x540ff] phase + 重複呼叫驅動;0x2939d 幀迴圈 + `idiv 100` 百分比進度;幀 (dx,dy) = swing 斬擊弧;**閃紅 = VGA DAC 色盤 0x3c8/0x3c9(0x11d40)**(figure 淡入同手法);**HP 條非色盤**(程式畫,見 §4.2,舊「HP 抽乾=色盤」已刪);idle fallback 0x5255f/0x52577。**待確認**:閃紅色值序列、各階段確切幀數。
 6. **座標系** ✅:320×200、VGA 0xa0000、**work stride 640 但只 present 左半 320**(雙寬 off-screen 預備區,用途待確認)。

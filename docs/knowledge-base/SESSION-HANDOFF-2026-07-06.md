@@ -916,3 +916,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `NativeItemPanelBaseLayoutFor`／`NativeItemPanelDataPlanFor` 並有
   regression。doc35 舊「`[0x53a81]` loader待確認」已刪；boot
   `0x25c97` 明確載 FDOTHER.DAT #5。尚未接 indexed→Ebiten renderer。
+- 2026-07-27 `0x168b6` planner重大更正與 item base compositor：舊
+  ending-only formula 漏掉 `v6=dst+stride*a4+a3` 的 `a3=5`，且數個
+  placement混用 byte/stride，故撤回「exact arithmetic」斷言。共用
+  `fdother.PlanNativeDialogueFrameGrid` 修正首 offsets為2245/2328、
+  portrait-overwritten grid origin為3208、尾格23752；ending已改用它。
+  `RenderNativeItemPanelBaseResources` 以玩家 archive執行 corrected
+  49-cell grid→DATO frame0→FDOTHER#5 entries20/21並 atomic commit。
+  另由 `0x4e8af` store loop確認 index0也是 opaque，新增
+  `LMI1Entry.BlitOpaqueAt`，刪除 UI matrix舊 transparent斷言。
+  dynamic `0x17fc0` overlay與 Ebiten bridge尚待。
+- 2026-07-27 item text-helper correction：合法 IDA Docker重核
+  `0x15f84/0x16559`。一般 word由
+  `0x4ea2a([0x53a75],glyph,dst,stride,fg,shadow,bg)` 使用
+  FDOTHER#4 16×16 1bpp font；`0x16559`只從目前 DATO
+  `[0x53a85]` offset table取 mouth frame作 portrait animation。
+  doc14/doc35 舊「`[0x53a75]`文字區底圖／`[0x53a85]`字模容器」
+  斷言已刪。item panel call style為205/76/0。

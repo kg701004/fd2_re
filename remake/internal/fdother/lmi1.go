@@ -7,8 +7,8 @@ import (
 )
 
 // LMI1Entry is one indexed UI cell from FDOTHER.DAT resource #5.
-// Pixels are decoded in row-major order; palette index 0 remains transparent
-// to the caller, matching native 0x4e916/0x4e8af.
+// Pixels are decoded in row-major order. Transparency is a property of the
+// caller's blit primitive, not of the 0x4e916 decoder.
 type LMI1Entry struct {
 	Width, Height int
 	Pixels        []byte
@@ -25,10 +25,9 @@ func DecodeLMI1Resource(datPath string, resource int) ([]LMI1Entry, error) {
 	return ParseLMI1(data)
 }
 
-// BlitAt copies an LMI1 cell to an indexed destination using the native
-// 0x4e8af transparent rule: palette index 0 preserves the destination.
-// mirror applies the 0x4e8e1 horizontal reverse path. Coordinates are
-// explicit so callers cannot accidentally infer the native panel anchor.
+// BlitAt copies an LMI1 cell with palette index zero preserving destination.
+// It is used only by callers whose recovered drawing primitive has that
+// rule; native 0x4e8af itself is opaque and uses BlitOpaqueAt below.
 func (e LMI1Entry) BlitAt(dst []byte, stride, x, y int, mirror bool) error {
 	if e.Width <= 0 || e.Height <= 0 || len(e.Pixels) != e.Width*e.Height {
 		return errors.New("fdother: invalid LMI1 entry geometry")
@@ -46,6 +45,27 @@ func (e LMI1Entry) BlitAt(dst []byte, stride, x, y int, mirror bool) error {
 			if v != 0 {
 				dst[(y+row)*stride+x+col] = v
 			}
+		}
+	}
+	return nil
+}
+
+// BlitOpaqueAt reproduces 0x4e8af's direct decoded-pixel writes. In
+// particular, palette index zero overwrites the destination.
+func (e LMI1Entry) BlitOpaqueAt(dst []byte, stride, x, y int, mirror bool) error {
+	if e.Width <= 0 || e.Height <= 0 || len(e.Pixels) != e.Width*e.Height {
+		return errors.New("fdother: invalid LMI1 entry geometry")
+	}
+	if x < 0 || y < 0 || stride <= 0 || stride < x+e.Width || y > len(dst)/stride || e.Height > (len(dst)-y*stride)/stride {
+		return errors.New("fdother: LMI1 destination is too small")
+	}
+	for row := 0; row < e.Height; row++ {
+		for col := 0; col < e.Width; col++ {
+			src := col
+			if mirror {
+				src = e.Width - 1 - col
+			}
+			dst[(y+row)*stride+x+col] = e.Pixels[row*e.Width+src]
 		}
 	}
 	return nil

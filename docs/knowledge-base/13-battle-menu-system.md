@@ -123,8 +123,11 @@ LMI1 directory entries 20/21，分別貼到 `(92,7)` 與 `(5,94)`。
 `0x17fc0` 的兩條 bar、四個 compared-number、八個 raw-number、三段
 FDTXT及四組 icon destination/record-offset schedule 已由
 `NativeItemPanelBaseLayoutFor`／`NativeItemPanelDataPlanFor` 資料化並測試。
-目前缺的是把這些 indexed sources/buffers接到 Ebiten，而不是缺來源、
-動畫時序或欄位落點；尚未獨立證實的 raw offsets 仍不命名。
+`RenderNativeItemPanelBaseResources` 已以玩家 FDOTHER/DATO archive完成
+corrected 49-cell grid、portrait frame0與 entries20/21 的 opaque indexed
+composition並 atomic commit。現在剩下 `0x17fc0` dynamic overlay與
+indexed→Ebiten bridge，不再缺 base source、動畫時序或欄位落點；
+尚未獨立證實的 raw offsets 仍不命名。
 
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 

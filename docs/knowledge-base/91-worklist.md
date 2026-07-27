@@ -904,8 +904,8 @@
 - [x] **finale `0x2c548` first party-cycle map**：Docker Capstone 切出三個 native buffers（128000、64000、64000）、TAI#3 與 FDOTHER#56 backdrop；更正：TAI#3 raw 是 `10×3`、三列 `C9` 的全透明 placeholder，不能誤稱可見 platform。loop index 從 `[0x53bfb]-1` 向下，但必做 `i=0→slot1、i=1→slot0` swap，才以 unit stride80／visual group `+7` 載 `FIGANI group*3+1` 與 `group*3`。`0x29164` 後先有 `0x2b9a1` 的20×1ms loop，再跑 primary FIGANI descriptor frames。已入 `assets/endings/native_2c548.json`，但 DATO/text/input 與 dedicated indexed renderer 未解，保持 fail-closed。
 - [x] **finale party portrait/text map**：DATO=`unit+7`；FDTXT_031 的 #10/#11/ending epilogue 與 FDTXT_000 的角色名／職業名，五個 destination 與 CD/4C glyph style 均已直接對齊 `0x2c7ed..0x2c967`。IDA correction 刪除錯誤的 `unit[+8]+0x0c|45` 斷言，epilogue 改為 `edi<0xdc ? unit[+8]+0x0c : 0x2d`；`Montage.PlanPortraitText` 已有 regression。DATO countdown/anchor、special slot 與 native indexed renderer 尚未可執行，仍 fail-closed。
 - [x] **finale dialogue-frame layout call ABI**：IDA/`14-text-control-codes.md` 交叉確認 `[0x53a81]` 是 `FDOTHER.DAT#5`，不是 DATO；`0x2c773→0x168b6` 實參為 `(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)`，先建立 dialogue frame/grid，後續才由 DATO `[0x53a85]` 經 `0x4e8af` 貼 portrait。已撤回 `dato_layout` 錯誤命名，schema 改為 `dialogue_frame_layout`。
-- [x] **DATO indexed decoder foundation**：新增 `internal/dato`，按 `0x4e8af→0x4e916` 高值-run codec 解四個 80×80 mouth frames，零值保持 opaque（不套 transparent sprite 規則），並提供 strict bounds checked indexed blit；synthetic RLE/opaque-zero 與玩家 DATO#37 regression 已加入。`0x168b6` 的 5×7×5×5 grid 排版仍未接 runtime；mouth cadence 已由 `MouthState` 接入對話更新迴圈，但不宣稱完整 DATO/grid parity。
-- [x] **dialogue-frame `0x168b6` raw grid plan**：`Montage.PlanDialogueFrameGrid()` 逐一保存 49 次 `sub_1685c` 的 `FDOTHER#5` raw resource index/destination byte（固定 12 次、兩組 3×2 loop、5×5 grid），保留 exact arithmetic；不替 cell 命名 border/portrait，也未解除 dialogue/DATO renderer gate。
+- [x] **DATO indexed decoder foundation**：新增 `internal/dato`，按 `0x4e8af→0x4e916` 高值-run codec 解四個 80×80 mouth frames，零值保持 opaque（不套 transparent sprite 規則），並提供 strict bounds checked indexed blit；synthetic RLE/opaque-zero 與玩家 DATO#37 regression 已加入。mouth cadence 已由 `MouthState` 接入對話更新迴圈，但不宣稱完整 dialogue parity。
+- [x] **dialogue-frame `0x168b6` raw grid plan（2026-07-27 correction）**：舊 `Montage.PlanDialogueFrameGrid()` 漏掉 `v6` 的 `a3=5` 並混用 byte/stride 項，所謂 exact arithmetic 斷言錯誤。新增共用 `fdother.PlanNativeDialogueFrameGrid` 逐一保存49次呼叫；首 offsets 修為2245/2328、portrait grid origin=3208、尾格=23752，ending改委派此 planner。
 - [x] **FDOTHER#5 raw-cell codec correction**：`0x1685c→0x4e9bb` 只讀 width/height 後逐 row `rep movsb`，不使用 `0x4e916` high-run；新增 `fdother.ParseLMI1RawEntry/DecodeLMI1RawEntry`，真實 #5 entry1 (`3×3`, literal `60 be bd...`) regression 固定此 path，避免把 dialogue frame bank 誤套 LMI1 RLE。
 - [x] **dialogue-frame raw compositor**：`RenderDialogueFrameGrid` 依 49 個 verified placements 直接將 `FDOTHER#5` raw cells 寫入 C buffer，明確使用 opaque `rep movsb`（包含 zero bytes），不接 DATO/text/input；synthetic overlap/zero regression 通過。
 - [x] **dialogue-frame resource-backed compositor**：`RenderDialogueFrameGridResource` 現實際載入玩家 `FDOTHER.DAT#5` entries 1..17，再按 native placement/overwrite order 寫入 C buffer；缺檔仍 fail-closed，asset regression 驗證非空輸出。
@@ -1015,6 +1015,19 @@
   base/flag icons之 exact destination/record-offset schedule 已落入
   `NativeItemPanelBaseLayoutFor`／`NativeItemPanelDataPlanFor` regression。
   尚未證實的 raw offsets 不命名；下一步是 indexed renderer/Ebiten bridge。
+- [x] **UI-ITEM-PANEL-BASE-INDEXED**：`RenderNativeItemPanelBaseResources`
+  現從玩家 FDOTHER/DATO archive 原子化執行完整 `0x17eef`：corrected
+  49-cell raw grid→DATO frame0→FDOTHER#5 entries20/21。新增
+  `LMI1Entry.BlitOpaqueAt` 修正舊「`0x4e8af` index0 transparent」錯誤；
+  synthetic overwrite/atomic failure與玩家資產 regression通過。
+  `0x17fc0` dynamic overlays及 Ebiten bridge仍待。
+- [x] **RE-ITEM-TEXT-HELPER-15F84**：official IDA重核
+  `0x15f84/0x16559`，刪除 doc35 舊「`[0x53a85]` 是 CJK glyph容器」
+  斷言。普通文字實際走
+  `0x4ea2a([0x53a75]=FDOTHER#4,fontGlyph,...)`；`0x16559`只從目前
+  DATO `[0x53a85]` 取 mouth frame重貼 portrait。item panel三段文字
+  style固定 foreground205/shadow76/background0；含控制碼時仍須
+  fail-closed。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

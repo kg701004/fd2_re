@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 // Montage is the evidence-only transcription of the first 0x2c548 party
@@ -228,37 +230,15 @@ func (m Montage) PlanDialogueFrameGrid() ([]DialogueFramePlacement, error) {
 	if m.Status != "mapped_first_party_cycle_fail_closed" || d.Stride != 320 || d.Arg8 != 5 || d.ArgC != 7 || d.Arg10 != 5 || d.Arg14 != 5 {
 		return nil, fmt.Errorf("ending: unavailable dialogue frame grid")
 	}
-	stride := d.Stride
-	base := d.ArgC * stride
-	placements := make([]DialogueFramePlacement, 0, 49)
-	add := func(index, offset int) {
-		placements = append(placements, DialogueFramePlacement{ResourceIndex: index, DestinationByte: offset})
+	raw, err := fdother.PlanNativeDialogueFrameGrid(d.Stride, d.Arg8, d.ArgC, d.Arg10, d.Arg14)
+	if err != nil {
+		return nil, err
 	}
-	add(1, base)
-	add(2, base+3+d.Arg10*16)
-	add(3, base+d.Arg14*5+d.Arg10*16)
-	add(4, base+d.Arg14*5+d.Arg10*16+d.Arg14*5)
-	add(5, base+3+d.Arg10*16)
-	add(6, base+0x13+(d.Arg10-2)*16)
-	add(7, base+3+d.Arg10*16+d.Arg14*5)
-	add(8, base+0x13+(d.Arg10-2)*16+d.Arg14*5)
-	add(14, base+d.Arg14*5)
-	add(15, base+d.Arg14*5+0x23+(d.Arg10-2)*16)
-	gridStride := 16 * stride
-	add(16, base+d.Arg14*5+(d.Arg14-2+1)*gridStride)
-	add(17, base+d.Arg14*5+0x23+(d.Arg10-2)*16+(d.Arg14-2+1)*gridStride)
-	for i := 0; i < d.Arg10-2; i++ {
-		add(9, base+0x13+i*16)
-		add(12, base+0x13+i*16+d.Arg14*gridStride+d.Arg14*5)
-	}
-	for i := 0; i < d.Arg14-2; i++ {
-		offset := base + (i+1)*gridStride + d.Arg14*5
-		add(10, offset)
-		add(11, offset+d.Arg10*16+3)
-	}
-	for row := 0; row < d.Arg14; row++ {
-		for col := 0; col < d.Arg10; col++ {
-			add(13, base+d.Arg14*5+col*16+row*gridStride+3)
+	placements := make([]DialogueFramePlacement, len(raw))
+	for i, placement := range raw {
+		placements[i] = DialogueFramePlacement{
+			ResourceIndex:   placement.ResourceIndex,
+			DestinationByte: placement.DestinationByte,
 		}
 	}
 	return placements, nil

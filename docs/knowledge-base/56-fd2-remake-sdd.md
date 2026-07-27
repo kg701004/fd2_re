@@ -265,9 +265,9 @@ The same IDA pass closes the previously omitted `0x29164` mirror branch. When `u
 
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
-`internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. `MouthState` preserves the verified `0x16D00` cadence as a pure tested adapter and is used by the dialogue update loop; the `0x168b6` grid choreography, complete DATO runtime resource binding, and ending UI integration remain explicit gates. For the separate `0x24618` transition, `fdother` now preserves the native full-buffer seed and 456→320 viewport copy contract, but runtime LUT selection and indexed presentation are still fail-closed.
+`internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. `MouthState` preserves the verified `0x16D00` cadence as a pure tested adapter and is used by the dialogue update loop; complete DATO runtime resource binding and ending UI integration remain explicit gates. For the separate `0x24618` transition, `fdother` now preserves the native full-buffer seed and 456→320 viewport copy contract, but runtime LUT selection and indexed presentation are still fail-closed.
 
-`Montage.PlanDialogueFrameGrid()` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid). It exposes only `FDOTHER#5` resource indices and byte offsets; cell semantics and DATO mouth timing remain intentionally unnamed.
+`fdother.PlanNativeDialogueFrameGrid` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid); `Montage.PlanDialogueFrameGrid()` delegates to it. **2026-07-27 correction:** the former ending-only formula omitted `a3=5` from `v6=dst+stride*a4+a3` and mixed byte/stride terms in several placements. The exact first cells are now offsets 2245/2328 (not 2240/2323), portrait-overwritten grid origin is 3208, and the final grid cell is 23752 (not 22812). The common planner exposes only resource indices and byte offsets; cell semantics and DATO mouth timing remain intentionally unnamed.
 
 Codec correction: the `0x1685c→0x4e9bb` path copies each selected `FDOTHER#5` cell's width×height bytes directly (`rep movsb`). It is not the `0x4e916` high-run codec used by DATO portraits. `fdother.ParseLMI1RawEntry` now preserves this separate contract and has a real entry-1 byte regression.
 
@@ -276,6 +276,26 @@ Codec correction: the `0x1685c→0x4e9bb` path copies each selected `FDOTHER#5` 
 `RenderDialogueFrameGridResource` now runs the same contract against the player-provided `FDOTHER.DAT#5` entries 1..17, with missing assets failing closed. This verifies the raw resource boundary without promoting the frame bank into a guessed semantic UI renderer.
 
 `RenderDATOFrameAt` and `dato.Frame.BlitAtOffset` now cover the separate opaque `0x4e8af` portrait paste with explicit stride/offset inputs. The caller must supply the recovered staging destination (the ending call site uses `staging+[0x53c67]`); the helper deliberately does not turn that global into a universal UI anchor or infer mouth timing.
+
+`battle.RenderNativeItemPanelBaseResources` now executes the complete proven
+`0x17eef` base composition from player archives: corrected 49-cell opaque raw
+grid, DATO frame zero at `(8,10)`, then FDOTHER #5 entries 20/21 at `(92,7)`
+and `(5,94)`. It stages all writes and commits atomically. The two large
+entries use the newly explicit opaque `LMI1Entry.BlitOpaqueAt`, because
+`0x4e8af` stores every decoded byte, including palette index zero. The older
+statement that `LMI1Entry.BlitAt` represented a “transparent 0x4e8af” was
+wrong; transparent callers retain the separate `BlitAt` API. `0x17fc0`
+dynamic overlays and Ebiten presentation remain separate.
+
+Item text-helper correction: official IDA of `0x15f84/0x16559` resolves the
+apparent `[0x53a85]` lifetime contradiction. Ordinary words call
+`0x4ea2a([0x53a75],glyph,destination,stride,foreground,shadow,background)`;
+boot `[0x53a75]` is FDOTHER #4's packed 16×16 1bpp font. `0x16559` instead
+indexes the currently loaded DATO `[0x53a85]` and repastes a mouth frame for
+dialogue control/animation. Therefore the old “`[0x53a85]` CJK glyph
+container” assertion is deleted. For item panel calls, the proven glyph style
+is foreground 205, shadow 76, background 0; control-bearing strings must
+still fail closed.
 
 `RenderMirrorFigureFadePass` now implements only the proven `0x292ad` indexed primitive: it requires a caller-preseeded 640-stride work surface, presents `work+0x140`, blits primary at `+0x140-stage*10`, conditionally blits secondary for `arg4==0`, and presents the same right viewport again. It validates TAI#3's transparent bytes but does not claim to render the unresolved DATO/portrait or complete montage.
 

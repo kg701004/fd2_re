@@ -64,10 +64,10 @@ func TestNative2C548DialogueFrameGridTranscribesAllRawCells(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cells) != 49 || cells[0] != (DialogueFramePlacement{ResourceIndex: 1, DestinationByte: 2240}) || cells[1].ResourceIndex != 2 || cells[1].DestinationByte != 2323 {
+	if len(cells) != 49 || cells[0] != (DialogueFramePlacement{ResourceIndex: 1, DestinationByte: 2245}) || cells[1].ResourceIndex != 2 || cells[1].DestinationByte != 2328 {
 		t.Fatalf("dialogue frame cells head=%#v len=%d", cells[:2], len(cells))
 	}
-	if cells[len(cells)-1].ResourceIndex != 13 || cells[len(cells)-1].DestinationByte != 22812 {
+	if cells[len(cells)-1].ResourceIndex != 13 || cells[len(cells)-1].DestinationByte != 23752 {
 		t.Fatalf("dialogue frame cells tail=%#v", cells[len(cells)-1])
 	}
 }
@@ -85,8 +85,8 @@ func TestRenderDialogueFrameGridUsesRawOpaqueCopies(t *testing.T) {
 	if err := RenderDialogueFrameGrid(*montage, cells, dst); err != nil {
 		t.Fatal(err)
 	}
-	if dst[2240] != 1 || dst[2323] != 5 || dst[22812] != 13 {
-		t.Fatalf("dialogue frame pixels=%d/%d/%d", dst[2240], dst[2323], dst[22812])
+	if dst[2245] != 1 || dst[2248] != 5 || dst[23752] != 13 {
+		t.Fatalf("dialogue frame pixels=%d/%d/%d", dst[2245], dst[2248], dst[23752])
 	}
 }
 
