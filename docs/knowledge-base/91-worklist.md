@@ -843,7 +843,8 @@
   type8/9/0xa：row `+0xe` 永久增加 base AP/DP/DX
   (`+0x37/+0x39/+0x3e`)，重算後移除來源 slot；IDs198/199/200 amount
   為 9/9/7。`NativeItemWordDeltaRouteForType` 現回傳 typed stat。
-  presentation selector、道具名稱與 type17–19 不在此證據範圍。
+  presentation selector、道具名稱與 type17–19 不在此項證據範圍；
+  type17–19 已由下方獨立 producer/consumer 證據閉合。
 - [~] **UI-03 battle selector input**：Docker/Capstone 重檢 `0x19953`，確認它呼叫 `0x36d98` 讀 ASCII/scancode；Enter/Space/`0xe0`/`0x52` family 走確認回傳、`0x01`/`0x53` family 走取消回傳，`0x4b`/`0x4d` 更新左右選擇狀態。這是 battle selector 的 E0 input ABI，不等於已閉合 action enable/end-turn 或 D8 行軍確認。
 - [~] **SDD-2 campaign transition matrix**：已從 `campaign_full.json` 逐一展開 30 個 battle 的 `on_win`，
       明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入
@@ -921,8 +922,8 @@
 - [x] **RE-UNIT-MODE-DISPATCH**：Docker Capstone 重讀共享 `0x13a9f`，固定 raw gate `record+5&5==0` 與 mode/argument reads `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode`，short/gate/masked-mode regression 通過。只保存 mode plan，不呼叫 `0x14ef0/0x14b78/...` 或命名效果；mode 6/8/其他仍保留未命名分支。
 - [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
   type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
-  topology。typed closures 已完成 5/13、6/7、8–12、14–16、22；
-  其餘 17–21、23–24 中尚未閉合者仍不得由 raw route 猜 gameplay 名稱。
+  topology。typed closures 已完成 5/13、6/7、8–19、22；
+  其餘 20/21/23/24 中尚未閉合者仍不得由 raw route 猜 gameplay 名稱。
 - [x] **RE-ITEM-TYPE67-MUTATION**：重讀 `0x22af6` 修正舊 adapter：
   marker 位於 target `record+a5`，不是 parallel `flags[]`。type6/7 用
   `+0x25/+0x26`，nonzero 時 base10→actual9 HP restore、清 record marker，
@@ -1015,6 +1016,12 @@
   `trunc(current×0.15+1)`，marked target 不耗 RNG，來源保留。新增
   `NativeItemAPDPStepRoute`／`ApplyNativeItemAPDPStep` 與
   IDs213/214 fixture regression；marker UI 名稱仍未知。
+- [x] **RE-ITEM-TYPE17-19-CAPACITY-MV**：type17/18 將 row amount20
+  加到 max HP `+0x42`／max MP `+0x46`；type19 對 word `+0x3b`
+  加1，但 caller 保存並恢復 `+0x3c` EXP，故 net effect 是 MV byte +1、
+  EXP 不變。三條都由 `0x21082→0x1b8e7` 消耗來源；新增
+  `NativeItemCapacityStepRoute`／`ApplyNativeItemCapacityStep` 與
+  IDs94/95/96 fixture、atomic removal regression。
 - [~] **RE-RAW-BUFFER-LATCH-24D22**：Docker Capstone 重讀 `0x24d22(arg)`：`arg!=0` 只把低 byte 寫入 global `0x51a10` 後返回；`arg==0` 配置 `latch*0x138` bytes，從 `0x53aff+(0xc0-latch)*0x138` 複製，接著以 `0xbf-latch` 向下做 `0x138` bytes row copy，最後再 copy 一列並經 `0x37416` free。此輪只保存 setter/render 分支與 loop 邊界，不命名 global 或把 copy loop 當 generic fade；renderer adapter 仍 fail-closed。
 - [x] **RE-RAW-MARKER-REWRITE-24E80**：Docker Capstone 閉合 `0x24e80` 的 raw mutation：從 runtime slot `0x10` 到 caller count，若 record `+0x07==0x1f`，寫 `+0=0x10`、`+1=0x06`。新增 `battle.RewriteNativeMarker1F` 與 prefix/nonmatching/bounds regression；欄位仍不命名，不接 renderer 或 roster identity。
 - [~] **RE-CHAPTER-CALLER-24838**：Docker Capstone 重讀唯一 `0x24bde` caller `0x24838`：先以 `0x24b14(0x64)` 分支，成功臂 `dialog #8→join(0x16)`；接著 `0x24bde(0x12)` 命中才走 `dialog #10→acting #0x48→0x32975(0x11)`，缺失時再依 global count `0x53bef<0x0f` 分成 `dialog #13→join(0x13)` 或 `dialog #12→0x32975(0x11)`，共同 sync/presentation 後才進後續 handler。只保存 raw call order；不把 `0x64`、`0x12`、`0x16/0x13` 命名成道具／角色／章節語意，runtime campaign binding 仍 fail-closed。

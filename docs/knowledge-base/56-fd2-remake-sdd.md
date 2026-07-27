@@ -978,8 +978,9 @@ for 5/13 (HP restore with consume/retain split), 6/7 (consumable record-marker
 clear plus HP restore), 8/9/10 (permanent base
 AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
 14/22 (retained marker application with randomized HP damage), and 15/16
-(retained derived DP/AP modifier). Remaining branches must not receive
-gameplay labels until their caller/callee contracts are closed.
+(retained derived DP/AP modifier), plus 17/18/19 (consumable max HP/max MP/MV
+increase with type19 preserving EXP). Remaining 20/21/23/24 branches must not
+receive gameplay labels until their caller/callee contracts are closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -1056,9 +1057,19 @@ cross-check identifies persistent offsets `+0x37/+0x39/+0x3e` as base
 AP/DP/DX. Each branch passes row word `+0xe` to `0x21082`, permanently adds it
 to the corresponding base stat, calls the proven synthesis path, and removes
 the source slot. Known raw item IDs 198/199/200 carry amounts 9/9/7.
-`battle.NativeItemWordDeltaRouteForType` now exposes a typed AP/DP/DX contract;
-presentation selectors `0x11/0x12/0x13`, item labels, and the shared callee's
-type17–19 semantics remain outside this closure.
+`battle.NativeItemWordDeltaRouteForType` exposes a typed AP/DP/DX contract;
+presentation selectors and item labels remain outside this closure. The
+shared callee's type17–19 routes are independently closed rather than
+inheriting these base-stat labels.
+
+Type17/18 pass row amount20 to max HP `+0x42` / max MP `+0x46`. Type19 passes
+amount1 to word `+0x3b`; its caller saves byte `+0x3c` before `0x21082` and
+restores it afterward. Existing class-change provenance identifies `+0x3b`
+as MV and `+0x3c` as EXP, so the net operation is MV-byte +1 with EXP
+unchanged. All three paths consume their source slots inside `0x21082`.
+`NativeItemCapacityStepRoute` / `ApplyNativeItemCapacityStep` preserve these
+typed mutations, type19's cross-byte save/restore, and atomic removal;
+tracked IDs94/95/96 fix the amounts.
 
 The `0x211a4(actor,count,targetBytes,amount)` ABI is now closed by official IDA 9.4 pseudocode: item-action caller
 `0x20c6f(a1,a2,a3,a4)` passes `a3/a4` unchanged as count/list and supplies item-row word `+0x0e` as amount. The callee enters `0x1c4cc`/`0x1c2da`

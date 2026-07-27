@@ -223,6 +223,30 @@ func TestTrackedMarkerClearRestoreItemRows(t *testing.T) {
 	}
 }
 
+func TestTrackedCapacityStepItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID int
+		typ    byte
+		amount uint16
+		stat   NativeItemCapacityStat
+	}{{94, 17, 20, NativeItemMaxHP}, {95, 18, 20, NativeItemMaxMP}, {96, 19, 1, NativeItemMV}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		typ := row[0x0d]
+		amount := binary.LittleEndian.Uint16(row[0x0e:])
+		if typ != tc.typ || amount != tc.amount {
+			t.Fatalf("item %d type/amount = %#x/%d, want %#x/%d", tc.itemID, typ, amount, tc.typ, tc.amount)
+		}
+		route, ok := NativeItemCapacityStepRouteForType(typ, amount)
+		if !ok || route.Stat != tc.stat || !route.ConsumesSource {
+			t.Fatalf("item %d capacity route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

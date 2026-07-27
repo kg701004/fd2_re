@@ -801,7 +801,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   type8/9/0xa 分別把 row `+0xe` 永久加到 base AP/DP/DX
   (`+0x37/+0x39/+0x3e`)，再重算並移除來源 slot；raw IDs198/199/200
   amounts=9/9/7。route 已型別化；presentation selectors、名稱與共用
-  callee 的 type17–19 語意不猜測。
+  callee 的 type17–19 不在此項證據範圍。後續已由獨立欄位
+  producer/consumer 閉合，見本文件尾端 type17–19 項目。
 - 2026-07-27 type5/13 HP item transaction：Docker Capstone 重讀
   `0x20c6f` 尾端，確認兩者都以 row `+0xe` 經 `0x211a4→0x1c916`
   恢復 target-list current HP、cap max HP；type5 隨後跳 `0x1b8e7`
@@ -840,3 +841,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   9 HP、清 record marker，dispatcher 再消耗來源。修正
   `ApplyNativeRawFlagRestore` API，新增 atomic typed transaction 與
   IDs196/197 fixture regression；status/presentation 名稱不猜。
+- 2026-07-27 type17–19 capacity/MV closure：dispatcher 與
+  `0x21082` 固定 type17/18 將 row amount20 加到 max HP `+0x42`／
+  max MP `+0x46`。type19 以 amount1 對 word `+0x3b` 相加，但 caller
+  在呼叫前保存 `+0x3c`、返回後恢復；既有 class-change producer 已將
+  `+0x3b/+0x3c` 定案為 MV/EXP，因此 net effect 是 MV byte +1、EXP
+  不變。三條都由 callee `0x1b8e7` 消耗來源；新增 typed route/executor、
+  source preflight 與 IDs94/95/96 fixture regression。

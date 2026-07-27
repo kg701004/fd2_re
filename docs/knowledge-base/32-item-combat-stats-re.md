@@ -130,8 +130,8 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   item row `+0xe` unsigned word 分別加到 persistent `+0x37/+0x39/+0x3e`
   的 base AP/DP/DX，經 `0x1b750` 重算後移除來源 slot。三筆已知 raw item
   IDs 198/199/200 的 amount 分別是 AP+9／DP+9／DX+7。presentation
-  selectors `0x11/0x12/0x13` 的顯示名稱仍保持 opaque；這項證據不延伸
-  到共用 `0x21082` 的 type17–19 routes。
+  selectors `0x11/0x12/0x13` 的顯示名稱仍保持 opaque；共用 callee 的
+  type17–19 由下列獨立欄位證據閉合，不套用 base AP/DP/DX 名稱。
 - `0x211a4(actor,count,targetBytes,amount)` ABI 已由官方 IDA 9.4 閉合：
   `0x20c6f` 把自己的 `a3/a4` 直接作 count/list，item row `+0x0e` word
   作 HP restore amount；callee 依 list 順序逐筆呼叫
@@ -161,6 +161,10 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   `+0x23/+0x22` 為零才前進 RNG並寫 `(rng%4)+2`；derived
   DP `+0x4a`／AP `+0x48` 分別增加 `trunc(current×0.15+1)`。dispatcher
   不移除來源，tracked rows 是 ID213/214。
+- type17/18/19 已閉合為 consumable maxHP/maxMP/MV modifier：
+  `+0x42/+0x46` 分別加 row amount20；type19 對 word `+0x3b` 加1，
+  caller 在 `0x21082` 前後保存/恢復 byte `+0x3c`，故只改 MV byte、
+  EXP 不變。三條都由共用 callee `0x1b8e7` 消耗來源；IDs94/95/96。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
 - `0x22af6` 舊 adapter 把 marker 當 caller-owned parallel `flags[]` 是錯的，

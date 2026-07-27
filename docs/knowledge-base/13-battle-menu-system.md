@@ -125,6 +125,11 @@ class 不能是 `0x19/0x1a`；第一 RNG `%100<50` 才呼
 第二 RNG，原生整數公式在 amount=10 時實際減 9 HP；第三 RNG 才寫
 `(rng%4)+2` marker。tracked rows 是 ID212/57。marker 的 status 名稱未知。
 
+type17–19 雖共用 `0x21082`，欄位已由獨立 producer/consumer 閉合：
+type17 max HP `+0x42` +20、type18 max MP `+0x46` +20；type19 對
+`+0x3b` 做 word +1，但 caller 保存並恢復 `+0x3c` EXP，因此結果只增加
+MV byte、EXP 不變。三條都由 callee 移除來源 slot；tracked IDs94/95/96。
+
 type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
