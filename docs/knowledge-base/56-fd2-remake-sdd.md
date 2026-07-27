@@ -17,6 +17,26 @@
 
 已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。
 
+### 1.3 進度停滯審計（2026-07-27）
+
+最近一批 commit 的共同特徵是 AI、town/preparation、item 等單一 native offset
+的 E0 raw slice 與文件勘誤；它們多數沒有接到 `main.go` 的 scene FSM、可見 UI、
+campaign JSON transition 或玩家可操作測試。因此 worklist 的 `[x]` 數量會增加，
+但玩家可走的原版等價流程沒有同步增加。這不是 Capstone、IDA 或 Docker blocker，
+而是「證據切片完成」被誤當成「機制垂直切片完成」的流程問題。
+
+根因有四個：`remake/cmd/fd2/main.go` 仍同時承擔 scene state、輸入、規則、繪圖
+與 town/shop/church/preparation；UI-01…UI-12 多數只有 unit test 或 normalized
+approximation，缺少同一 input trace 的 state trace、畫面 artifact 與原版 E2 對照；
+30 章 postbattle→town/shop/church/preparation/save graph 尚未逐章驗收；歷史文件
+曾把「格式／函式已解」寫成「系統已完成」。
+
+從本節起，新的 RE 條目只有在同一輪明確指定 caller、資料契約、runtime consumer、
+deterministic regression 與（若屬 UI）截圖／E2 trace，才可解除 implementation
+gate；只有 E0 raw slice 的項目保持 `[~]`，不得再用新增同類 adapter 充當進度。
+下一個主里程碑改為 UI-01→UI-08 的垂直操作鏈（title→dialog→battle→postbattle
+hub→preparation/town），完成前暫停無 caller/consumer 的孤立 RE 擴張。
+
 AI spell scoring raw slice：Docker Capstone/Hex-Rays 已閉合 `0x15b77` attack IDs0..12 的 HP threshold/`+0x08` branch、recovery IDs13..16 的 max/3→8、max/2→3 tiers/`+0x34 bit0` branch、ID17/18/19 的 `+0x22/+0x23/+0x24` zero flag score 3、ID20/21 的 nonzero `+0x25/+0x26` score 6、ID22 的 `+0x27` gate→`0x1c269` bit scan→6，以及 ID26/27 的 zero `+0x25/+0x26` score 4；`ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`／`ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`／`ScoreNativeAISpell22` 只接受 raw records，ID10..12 另要求 caller-supplied `0x1f183` gate。這些函式不命名欄位、不接 AI runtime 或 target UI。
 
 `0x1598a` dispatcher 的 raw selection boundary 也已閉合：`unit+0x27==0` 後，`0x1c269` 產生 command bytes；每筆 command 先以 record `+5 <= unit+0x44` 過濾，再由 `0x4e040`/`0x14818` 產生目標候選，呼 `0x15b77(command,candidateCount,candidateBytes)` 評分。最大 score 勝；同分比較 command record `+0`，仍同分則保留先出現者。`battle.SelectNativeAISpellCandidate` 只保存此 score/tie-break 與 raw `(x,y,command)`，不代替 MP、target resolver、`+0x27` gate、UI 或施法執行。

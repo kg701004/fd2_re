@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會與 command overlay 截圖 | `0x22253` indexed renderer、ending compositor、HUD/layer caller 仍 fail-closed |
 
-Worklist 目前是 **392 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **393 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -21,6 +21,17 @@ Worklist 目前是 **392 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是�
 而不是一個章節已可通關。以玩家可見功能衡量，目前是「多個垂直切片」；30 章逐章的戰前／戰後、城鎮、商店、
 整備、存檔與演出順序仍未逐章閉合。因此本專案目前與原版的主要差距不是素材解碼，而是 campaign runtime、
 完整 UI renderer、item effect、音訊／DOS timing 與跨平台回歸。
+
+### 為什麼最近看起來一直在反組譯、但進度沒有等比例前進
+
+2026-07-27 審計確認：近期成果多是單一 offset 的 E0 raw slice 或錯誤斷言撤回，
+尚未同時完成 runtime consumer、可重播輸入／狀態 trace 與 UI 截圖驗收；而
+`remake/cmd/fd2/main.go` 仍是 scene、輸入、規則與 Draw 的集中 owner，30 章戰後
+town/shop/church/preparation graph 也未逐章回歸。這是流程與架構瓶頸，不是 Docker、
+Capstone 或 IDA 缺少功能。後續只有能直接餵給垂直操作鏈的 RE 工作才解除 fail-closed；
+下一個里程碑是 `title → dialogue → battle → postbattle hub → preparation/town` 的
+deterministic input trace 與實機截圖，而不是繼續累積孤立 adapter。完整審計見
+[`56 §1.3`](docs/knowledge-base/56-fd2-remake-sdd.md) 與 [`42`](docs/knowledge-base/42-re-vs-remake-gap-audit.md)。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；`NativeItemEffectRouteForType` 只保存 call topology，

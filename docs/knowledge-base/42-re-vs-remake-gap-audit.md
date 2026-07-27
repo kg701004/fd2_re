@@ -5,6 +5,20 @@
 > 2026-07-25 重新校正本表：撤回已被後續 code 推翻的「零命中／完全沒有」斷言。序章主角隊進場(staging)由另一 agent 處理,本篇不重複列。
 > 狀態符號:✅已實作(含公式/資料對齊) 🟡部分(做了一半或簡化) ❌缺(RE 有記錄,remake 未做)。
 
+## 2026-07-27 進度停滯審計
+
+近期 commit 主要增加 E0 raw adapters 與斷言撤回，沒有等比例增加可操作的
+campaign/UI 路徑。根因不是反組譯工具不足，而是 E0→runtime→E2 的串接缺口：
+`main.go` 仍是 monolithic scene/input/draw owner；UI contract 缺 deterministic
+input/state trace 與 screenshot gate；30 章 postbattle graph 尚未逐章驗收；worklist
+勾選數也容易把函式級成果誤讀成玩法完成。
+
+本表後續採用「垂直閉環」判定：raw slice 若沒有 caller/data contract、runtime
+consumer、regression，且 UI 項目沒有 E2 artifact，只能列為 🟡，不得提升為完成。
+下一個優先工作不是再開新的孤立 offset，而是把 title→dialog→battle→postbattle
+hub→preparation/town 做成可重播 input trace；item effect、AI runtime 等新 RE
+只有在能直接供應該垂直鏈時才解除 fail-closed。
+
 > **2026-07-26 native-command correction**：本表中 legacy `magic.go`／`CastArea` 的舊逐招
 > 勾選，不能再當作原版 command runtime 的完成宣告。權威逐 ID dataflow 與 strict engine 邊界是
 > SDD `56 §UI-03`，UI 證據則是 `57 §UI-03`；未有 E0 target、transaction、renderer 證據的 ID
