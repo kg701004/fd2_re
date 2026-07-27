@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+const NativeCommandRecordCount = 36
+
 // NativeCommandRecord is the verified 7-byte 0x4e516 record for IDs 0..35.
 // The field names intentionally describe only their proven call-site roles:
 // generic 0x1cff0 uses SelectionMode (+3) from the actor, then EffectMode
@@ -46,8 +48,8 @@ func LoadNativeCommandRecords(path string) ([]NativeCommandRecord, error) {
 	if err := json.Unmarshal(raw, &rows); err != nil {
 		return nil, err
 	}
-	if len(rows) != 36 {
-		return nil, fmt.Errorf("native command records len=%d want 36", len(rows))
+	if len(rows) != NativeCommandRecordCount {
+		return nil, fmt.Errorf("native command records len=%d want %d", len(rows), NativeCommandRecordCount)
 	}
 	result := make([]NativeCommandRecord, len(rows))
 	for i, row := range rows {

@@ -689,8 +689,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   新增 `battle.ApplyNativeRawMPRestore`，同一 RNG/amount arithmetic 寫
   current MP `+0x44`、cap max MP `+0x46`；score 只用 `+0x21`。後續
   type11 caller 已閉合為 consumable MP restore，見本檔尾端。
-- 2026-07-27 type-21 `0x2111a` caller closure（Docker Capstone）：`0x1c4cc` 建 context 後呼 `0x1cac7`，由 `0x4e516` 來源 byte 對 selected runtime `+0x44` 做 16-bit subtract，再逐 target 經 `0x1c75e`/`0x1e0db`；不命名成 MP cost 或 item 效果，source/list ABI 未閉合。
-- 2026-07-27 `0x1cac7` raw subtract adapter（Docker Go regression）：新增 `battle.ApplyNativeRawWordSubtract`，顯式保留 unit/word offset/byte amount、low-16 wrap 與 bounds；不接 normalized MP 或 item 語意。
+- 2026-07-27 type-21 `0x2111a` 舊結論已撤回：當時把相鄰的
+  `0x1ca89` command-MP debit 誤算成 `0x1cac7`；後續 official IDA/Capstone
+  重核與正確 closure 見文件尾端。
+- 2026-07-27 raw subtract adapter address correction：既有
+  `ApplyNativeRawWordSubtract` arithmetic 對應 `0x1ca89`，不是
+  `0x1cac7`；type21 不呼叫此 helper。
 - 2026-07-27 official IDA `0x1c4cc/0x1c2da` item presentation closure：Hex-Rays 閉合兩 caller 的 `(actor, raw subcommand, target count, target-byte list)` ABI；`0x1c4cc` 逐 frame 取三張 33-byte frame table、對 camera-visible targets 做 456-stride indexed redraw、312×192 present、subcommand/frame SFX branch 與 BIOS tick，`0x1c2da` 依 `12*visual+cycle` pointer bank 做 target blit，再五次 restore/present。此證據只加入 SDD/worklist 的 presentation ordering，不替 item type、row word、SFX 或 frame asset 命名，也不解除 item runtime/UI gate。
 - 2026-07-27 official IDA `0x1cd17/0x1c1c3` item closure：Hex-Rays 閉合 type20/24 的十幀 presentation loop（30-byte remap table、saved-buffer restore、camera-visible target redraw、`7-(frame%8)` blend arg、312×192 present、BIOS tick）與 selector compatibility predicate（actor class 的 six-byte raw table 對 item row `+0`）。兩者只寫入 opaque ABI/evidence，不命名 status/damage/equipment，也不解除 item runtime/UI gate。
 - 2026-07-27 official IDA `0x4e53e` table provenance：Hex-Rays 固定 class compatibility row pointer=`0x6188a+class*7`；`0x1c1c3` 只讀 row+0..+5，row+6 保持 opaque。新增 `battle.NativeClassCompatibilityRowOffset`／`NativeClassItemCompatible` 與 Docker Go regression；不接 normalized class/equipment。
@@ -848,3 +852,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `+0x3b/+0x3c` 定案為 MV/EXP，因此 net effect 是 MV byte +1、EXP
   不變。三條都由 callee `0x1b8e7` 消耗來源；新增 typed route/executor、
   source preflight 與 IDs94/95/96 fixture regression。
+- 2026-07-27 type21 command-damage item + address correction：official
+  IDA 9.4 固定 `0x20c6f` 將 row word 傳進 `0x2111a`；後者以該 word
+  作 `0x1c75e(target,commandID)` 的 command ID。Docker Capstone 證實
+  `0x1cac7` 是 allocation／`0x1cb94` drawing／四輪 320×192 present，
+  不是 MP subtract；真正的 subtract helper 是相鄰 `0x1ca89`，而 type21
+  不呼叫它。dispatcher 亦不呼 `0x1b8e7`，故來源保留。IDs29/38/51/99
+  對 commands6/1/7/6；新增 typed executor、全 target preflight 與 fixture
+  regression，未命名道具顯示文字或宣稱 presentation parity。

@@ -247,6 +247,24 @@ func TestTrackedCapacityStepItemRows(t *testing.T) {
 	}
 }
 
+func TestTrackedCommandDamageItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID, commandID int
+	}{{29, 6}, {38, 1}, {51, 7}, {99, 6}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		typ := row[0x0d]
+		commandID := binary.LittleEndian.Uint16(row[0x0e:])
+		route, ok := NativeItemCommandDamageRouteForType(typ, commandID)
+		if !ok || route.CommandID != tc.commandID || route.ConsumesSource {
+			t.Fatalf("item %d command-damage route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

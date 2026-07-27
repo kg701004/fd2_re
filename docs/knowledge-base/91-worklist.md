@@ -922,8 +922,8 @@
 - [x] **RE-UNIT-MODE-DISPATCH**：Docker Capstone 重讀共享 `0x13a9f`，固定 raw gate `record+5&5==0` 與 mode/argument reads `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode`，short/gate/masked-mode regression 通過。只保存 mode plan，不呼叫 `0x14ef0/0x14b78/...` 或命名效果；mode 6/8/其他仍保留未命名分支。
 - [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
   type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
-  topology。typed closures 已完成 5/13、6/7、8–19、22；
-  其餘 20/21/23/24 中尚未閉合者仍不得由 raw route 猜 gameplay 名稱。
+  topology。typed closures 已完成 5/13、6/7、8–19、21、22；
+  其餘 20/23/24 中尚未閉合者仍不得由 raw route 猜 gameplay 名稱。
 - [x] **RE-ITEM-TYPE67-MUTATION**：重讀 `0x22af6` 修正舊 adapter：
   marker 位於 target `record+a5`，不是 parallel `flags[]`。type6/7 用
   `+0x25/+0x26`，nonzero 時 base10→actual9 HP restore、清 record marker，
@@ -1000,8 +1000,14 @@
   `+0x4c/+0x4e` 各加15，來源 slot 保留。新增
   `NativeItemHITEVStepRoute`／`ApplyNativeItemHITEVStep` 與 ID210
   fixture regression；marker UI 名稱仍未知。
-- [~] **RE-ITEM-EFFECT-2111A**：Docker Capstone 已閉合 type `21` 的 raw topology：`0x1c4cc` → `0x1cac7`，由 `0x4e516` 來源 byte 對 selected record `+0x44` 做 16-bit subtract，再走 target-list predicate/presentation；來源 byte、list ABI 與玩法名稱保持 fail-closed。
-- [~] **RE-RAW-WORD-SUBTRACT-1CAC7**：新增 `battle.ApplyNativeRawWordSubtract`，保存 `0x1cac7` 的顯式 word offset、byte-sized subtract、low-16 wrap 與 preflight bounds；不把 raw word 命名成 MP 或 item effect。
+- [x] **RE-ITEM-EFFECT-2111A**：official IDA 9.4 固定 type21 將 row word
+  當 command ID，`0x2111a` 經 `0x1cac7` indexed presentation 後，逐 target
+  呼 `0x1c75e(target,commandID)`；dispatcher 不呼 `0x1ca89`、不移除來源。
+  IDs29/38/51/99→commands6/1/7/6；新增 retained-source typed executor。
+- [x] **RE-RAW-WORD-SUBTRACT-ADDRESS-CORRECTION**：Docker Capstone 證實
+  word `+0x44` subtract 位於 `0x1ca89`，`0x1cac7` 是 allocation、
+  `0x1cb94` drawing 與四輪 320×192 present helper。修正 adapter attribution
+  並刪除 type21 MP-subtract 斷言；兩個地址不再混用。
 - [x] **RE-RAW-FLAG-RESTORE-22AF6**：
   `ApplyNativeRawFlagRestore(records,targets,markerOffset,rng)` 現正確保存
   record-local marker read/clear、conditional HP restore、sequential RNG、

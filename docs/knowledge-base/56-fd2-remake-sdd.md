@@ -977,10 +977,11 @@ preserves the whole raw map; typed closures now supersede its opaque boundary
 for 5/13 (HP restore with consume/retain split), 6/7 (consumable record-marker
 clear plus HP restore), 8/9/10 (permanent base
 AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
-14/22 (retained marker application with randomized HP damage), and 15/16
-(retained derived DP/AP modifier), plus 17/18/19 (consumable max HP/max MP/MV
-increase with type19 preserving EXP). Remaining 20/21/23/24 branches must not
-receive gameplay labels until their caller/callee contracts are closed.
+14/22 (retained marker application with randomized HP damage), 15/16
+(retained derived DP/AP modifier), 17/18/19 (consumable max HP/max MP/MV
+increase with type19 preserving EXP), and 21 (retained reuse of a row-selected
+native command damage record). Remaining 20/23/24 branches must not receive
+gameplay labels until their caller/callee contracts are closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -1112,9 +1113,19 @@ source slot via `0x1b8e7`. `ApplyNativeItemMPRestore` preserves the whole
 atomic transaction; tracked IDs206/207 supply amounts 80/200. Presentation
 and display names remain outside this closure.
 
-The type-`21` callee `0x2111a` has a separate raw boundary: it establishes target context through `0x1c4cc`, calls `0x1cac7`, then iterates the supplied byte list through `0x1c75e` and `0x1e0db`. `0x1cac7` obtains a byte from `0x4e516` and subtracts it from selected runtime record word `+0x44` with native 16-bit wrap. The source record/byte and list ABI are preserved as opaque inputs; no MP-cost or item-effect name is inferred.
+The type-`21` callee `0x2111a` establishes target context through `0x1c4cc`,
+calls indexed presentation helper `0x1cac7`, then passes the item-row word as
+the command ID to `0x1c75e(target,commandID)` for every target and queues the
+numeric result through `0x1e0db`. The dispatcher performs neither
+`0x1ca89` command-MP debit nor `0x1b8e7` inventory removal. Tracked item IDs
+29/38/51/99 select command IDs6/1/7/6. `NativeItemCommandDamageRoute` and
+`ApplyNativeItemCommandDamage` preserve the retained-source, no-MP-debit and
+sequential target-damage contract without assigning item display names.
 
-`battle.ApplyNativeRawWordSubtract` now preserves that `0x1cac7` mutation as an explicit `(unit, wordOffset, byteAmount)` adapter with low-16-bit wrap and preflight bounds. It is deliberately generic and does not replace the normalized `SpendNativeCommandMP` path or assign a gameplay field name.
+The earlier attribution of a word subtract to `0x1cac7` was an address error:
+that arithmetic belongs to `0x1ca89`, the independently verified command MP
+debit helper. `battle.ApplyNativeRawWordSubtract` retains only that raw
+arithmetic boundary; type21 does not call it.
 
 The corrected common `0x22af6` primitive is captured by
 `ApplyNativeRawFlagRestore(records,targets,markerOffset,rng)`: it preflights

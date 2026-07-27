@@ -5,10 +5,11 @@ import (
 	"fmt"
 )
 
-// ApplyNativeRawWordSubtract reproduces the write core used by 0x1cac7:
+// ApplyNativeRawWordSubtract reproduces the arithmetic core used by 0x1ca89:
 // subtract a caller-supplied byte-sized value from a selected record word and
 // store the low 16 bits. The word offset remains explicit because the native
-// caller's field name is not proven by this helper.
+// command-record lookup is caller-owned. It is not part of 0x1cac7, which is
+// an indexed presentation helper.
 func ApplyNativeRawWordSubtract(records []byte, unitIndex, wordOffset, amount int) (uint16, error) {
 	if unitIndex < 0 || unitIndex >= len(records)/nativeRecordSize {
 		return 0, recordBoundsError(unitIndex)
