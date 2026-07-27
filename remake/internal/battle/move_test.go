@@ -136,7 +136,7 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	if got, want := st.NativeTargetFlags, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
 		t.Errorf("NativeTargetFlags=%v want %v", got, want)
 	}
-	if got, want := st.NativeTileBlitModes, []byte{0, 0, 0, 0}; !reflect.DeepEqual(got, want) || !reflect.DeepEqual(st.NativeTerrainControl, []byte{0, 0, 0, 0, 0, 4, 0, 0}) || !reflect.DeepEqual(st.NativeTerrainMoveCodes, []byte{0, 4, 0, 4}) {
+	if got, want := st.NativeTileBlitModes, []byte{0xff, 0xff, 0xff, 0xff}; !reflect.DeepEqual(got, want) || !reflect.DeepEqual(st.NativeTerrainControl, []byte{0, 0, 0, 0, 0, 4, 0, 0}) || !reflect.DeepEqual(st.NativeTerrainMoveCodes, []byte{0, 4, 0, 4}) {
 		t.Fatalf("Native terrain renderer inputs modes=%v control=%v move codes=%v", got, st.NativeTerrainControl, st.NativeTerrainMoveCodes)
 	}
 }

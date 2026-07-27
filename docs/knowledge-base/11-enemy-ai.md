@@ -2,7 +2,8 @@
 
 > **2026-07-27 canonical-binary recheck (Docker Capstone):** 重新對版控中的
 > `org_game/炎龍騎士團/FLAME2/FD2.EXE` 做 direct scan，`calls 0x15140` 與
-> `calls 0x15356` 均沒有結果；`0x15140` 的實際指令落在過場／畫面流程，不能以本檔舊摘要
+> `calls 0x15356` 均沒有結果；`0x15140` 實際是 `0x15055` 函式中段把
+> record byte `+0x12` 加 2 寫入 `[0x51a83]` 的 raw selector writer，不能以本檔舊摘要
 > 直接當作 AI 主函式或傷害公式。現階段唯一保留的 AI score callsite 是
 > `0x15ad8 → 0x15b77`，但其 caller context 與完整 entry 仍待重建。因此下文原有
 > `0x15140`、`0x1527b`、`0x1529e`、`0x152ab`、`0x15356` 流程降級為**歷史待核對假說**，

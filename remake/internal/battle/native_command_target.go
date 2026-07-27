@@ -6,9 +6,10 @@ const (
 	// NativeCommandGridBlocked is original grid flag bit 0x40: 0x4e16e
 	// refuses to enter this cell during the dist<0x10 flood-fill.
 	NativeCommandGridBlocked byte = 0x40
-	// NativeCommandGridZeroCost is original grid flag bit 0x80: 0x4e16e
-	// clears the step cost after passing the blocked check.
-	NativeCommandGridZeroCost byte = 0x80
+	// NativeCommandGridZeroBudget is original grid flag bit 0x80: 0x4e16e
+	// forces the destination cell's remaining byte to zero after subtracting
+	// the terrain cost. It does not make a zero-cost chain.
+	NativeCommandGridZeroBudget byte = 0x80
 )
 
 // NativeCommandTargetCells mirrors one 0x14818 geometry invocation before
@@ -22,6 +23,18 @@ const (
 // not the remake map's exported movement cost.  Requiring it avoids silently
 // treating a modern approximation as original targeting data.
 func NativeCommandTargetCells(w, h int, origin Cell, dist int, flags []byte) (map[Cell]bool, error) {
+	budgets, err := nativeCommandTargetBudgets(w, h, origin, dist, flags)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[Cell]bool, len(budgets))
+	for cell := range budgets {
+		result[cell] = true
+	}
+	return result, nil
+}
+
+func nativeCommandTargetBudgets(w, h int, origin Cell, dist int, flags []byte) (map[Cell]int, error) {
 	if w <= 0 || h <= 0 || origin.X < 0 || origin.Y < 0 || origin.X >= w || origin.Y >= h {
 		return nil, fmt.Errorf("invalid native target grid/origin")
 	}
@@ -31,17 +44,17 @@ func NativeCommandTargetCells(w, h int, origin Cell, dist int, flags []byte) (ma
 	if dist < 0 {
 		return nil, fmt.Errorf("invalid native target dist=%d", dist)
 	}
-	result := make(map[Cell]bool)
+	result := make(map[Cell]int)
 	if dist >= 0x10 { // 0x148c7: cross ignores the grid flags.
 		radius := dist - 0x10
 		for x := 0; x < w; x++ {
 			if absInt(x-origin.X) <= radius {
-				result[Cell{X: x, Y: origin.Y}] = true
+				result[Cell{X: x, Y: origin.Y}] = 0
 			}
 		}
 		for y := 0; y < h; y++ {
 			if absInt(y-origin.Y) <= radius {
-				result[Cell{X: origin.X, Y: y}] = true
+				result[Cell{X: origin.X, Y: y}] = 0
 			}
 		}
 		return result, nil
@@ -51,7 +64,7 @@ func NativeCommandTargetCells(w, h int, origin Cell, dist int, flags []byte) (ma
 	// four cardinal neighbours. Row 0's twenty terrain costs are all one.
 	remaining := map[Cell]int{{X: origin.X, Y: origin.Y}: dist}
 	queue := []Cell{origin}
-	result[origin] = true
+	result[origin] = dist
 	for len(queue) > 0 {
 		cell := queue[0]
 		queue = queue[1:]
@@ -64,23 +77,49 @@ func NativeCommandTargetCells(w, h int, origin Cell, dist int, flags []byte) (ma
 			if flag&NativeCommandGridBlocked != 0 {
 				continue
 			}
-			step := 1
-			if flag&NativeCommandGridZeroCost != 0 {
-				step = 0
-			}
-			nextBudget := remaining[cell] - step
+			nextBudget := remaining[cell] - 1
 			if nextBudget < 0 {
 				continue
+			}
+			if flag&NativeCommandGridZeroBudget != 0 {
+				nextBudget = 0
 			}
 			if old, seen := remaining[next]; seen && old >= nextBudget {
 				continue
 			}
 			remaining[next] = nextBudget
-			result[next] = true
+			result[next] = nextBudget
 			queue = append(queue, next)
 		}
 	}
 	return result, nil
+}
+
+// NativeCommandTargetFieldBytes materializes the byte+3 state produced by
+// 0x14818 for one target stage. 0x4dbfc first fills every cell with 0xff;
+// 0x4e040 then writes remaining-budget bytes for dist<0x10, while the cross
+// branch writes zero. A nonzero inner radius restores the strict inner
+// Manhattan area to 0xff.
+func NativeCommandTargetFieldBytes(w, h int, origin Cell, dist, innerRadius int, flags []byte) ([]byte, error) {
+	if innerRadius < 0 {
+		return nil, fmt.Errorf("invalid native target inner radius")
+	}
+	budgets, err := nativeCommandTargetBudgets(w, h, origin, dist, flags)
+	if err != nil {
+		return nil, err
+	}
+	field := make([]byte, w*h)
+	for i := range field {
+		field[i] = 0xff
+	}
+	for cell, budget := range budgets {
+		if dist < 0x10 && innerRadius > 0 &&
+			absInt(cell.X-origin.X)+absInt(cell.Y-origin.Y) < innerRadius {
+			continue
+		}
+		field[cell.Y*w+cell.X] = byte(budget)
+	}
+	return field, nil
 }
 
 func absInt(n int) int {

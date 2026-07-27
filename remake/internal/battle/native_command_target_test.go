@@ -5,7 +5,7 @@ import "testing"
 func TestNativeCommandTargetCellsFloodFillHonorsRawFlags(t *testing.T) {
 	flags := make([]byte, 5)
 	flags[1] = NativeCommandGridBlocked
-	flags[3] = NativeCommandGridZeroCost
+	flags[3] = NativeCommandGridZeroBudget
 	cells, err := NativeCommandTargetCells(5, 1, Cell{X: 0, Y: 0}, 2, flags)
 	if err != nil {
 		t.Fatal(err)
@@ -13,12 +13,41 @@ func TestNativeCommandTargetCellsFloodFillHonorsRawFlags(t *testing.T) {
 	if cells[Cell{X: 1, Y: 0}] || cells[Cell{X: 2, Y: 0}] {
 		t.Fatalf("blocked cell leaked through: %v", cells)
 	}
-	// A zero-cost chain reaches beyond the normal two-step budget.
+	// Bit 0x80 forces the entered cell's remaining byte to zero, so it is
+	// reachable but cannot form the previously asserted zero-cost chain.
 	flags = make([]byte, 5)
-	flags[1], flags[2], flags[3] = NativeCommandGridZeroCost, NativeCommandGridZeroCost, NativeCommandGridZeroCost
+	flags[1], flags[2], flags[3] = NativeCommandGridZeroBudget, NativeCommandGridZeroBudget, NativeCommandGridZeroBudget
 	cells, err = NativeCommandTargetCells(5, 1, Cell{}, 1, flags)
-	if err != nil || !cells[Cell{X: 4, Y: 0}] {
-		t.Fatalf("zero-cost path cells=%v err=%v", cells, err)
+	if err != nil || !cells[Cell{X: 1, Y: 0}] || cells[Cell{X: 2, Y: 0}] {
+		t.Fatalf("zero-budget terminal cells=%v err=%v", cells, err)
+	}
+}
+
+func TestNativeCommandTargetFieldBytesMatches14818Lifecycle(t *testing.T) {
+	got, err := NativeCommandTargetFieldBytes(5, 1, Cell{X: 2}, 2, 1, make([]byte, 5))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []byte{0, 1, 0xff, 1, 0}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("field[%d]=%#x want %#x; all=%#v", i, got[i], want[i], got)
+		}
+	}
+	cross, err := NativeCommandTargetFieldBytes(5, 1, Cell{X: 2}, 0x11, 0, []byte{
+		NativeCommandGridBlocked, NativeCommandGridBlocked, 0, NativeCommandGridBlocked, NativeCommandGridBlocked,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []byte{0xff, 0, 0, 0, 0xff}; len(cross) != len(want) {
+		t.Fatalf("cross len=%d", len(cross))
+	} else {
+		for i := range want {
+			if cross[i] != want[i] {
+				t.Fatalf("cross[%d]=%#x want %#x", i, cross[i], want[i])
+			}
+		}
 	}
 }
 

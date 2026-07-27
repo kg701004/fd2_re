@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay | **尚非全 30 章原版等價可通關**；selector 6 mutation、7+ target visual／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **464 個 `[x]`、98 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **465 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -150,7 +150,9 @@ FDOTHER#3 的 LUT bank entry，而不是新的圖像 descriptor；此 selector �
 
 目前也已有可測試的純 indexed transition frame primitive：`indexedmap.ComposeNativeTransitionFrame` 依原版順序組合
 terrain、unit/foreground redraw、兩段 LUT 與 312×192 viewport copy；它需要玩家提供的完整 raw banks，尚未接入 campaign runtime 或 Ebiten 場景切換。
-Map JSON 的 `native_tile_blit_modes`／`native_terrain_control` 也已由 `MapData` 嚴格讀取，舊版 PNG-only map 不會被誤當成 native indexed 資產。
+Map JSON 的 `native_tile_blit_modes`／`native_terrain_control` 也已嚴格讀取；前者只作
+FDFIELD provenance，runtime 會依原版 `0x4dbfc` 初始化為 `0xff`，再由 `0x14818`
+建立 target grid。舊版 PNG-only map 不會被誤當成 native indexed 資產。
 
 > 把 1995 年漢堂國際的經典戰棋 RPG《炎龍騎士團2》(Flame Dragon Knight 2) 逐步反組譯，
 > 用第一性原理還原規則與素材，並以 Go/Ebiten 建立可擴充的重製引擎；網頁／手機是後續目標，

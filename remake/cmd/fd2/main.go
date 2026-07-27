@@ -3138,11 +3138,8 @@ func (g *Game) ringInput() bool {
 					return true
 				}
 				if _, err := g.nativeCommandTargetUnitsFor(id); err == nil {
-					if record.EffectMode < 0 || record.EffectMode > 0xff ||
-						!g.st.MaterializeNativeMapRangeMode(
-							battle.NativeMapOverlaySelectorFromRecordByte(byte(record.EffectMode)),
-						) {
-						g.msg = fmt.Sprintf("原始指令 %d：overlay selector 無效", id)
+					if err := g.materializeNativeCommandTargetField(record); err != nil {
+						g.msg = fmt.Sprintf("原始指令 %d：target grid 無法 materialize", id)
 						return true
 					}
 					g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
@@ -3305,6 +3302,40 @@ func (g *Game) nativeCommandTargetUnitsFor(id int) ([]*battle.Unit, error) {
 		record.SelectionMode, record.TargetCode,
 		g.st.NativeTargetFlags, g.st.Units,
 	)
+}
+
+func (g *Game) materializeNativeCommandTargetField(record battle.NativeCommandRecord) error {
+	if g == nil || g.st == nil || g.sel == nil {
+		return fmt.Errorf("native command target field context unavailable")
+	}
+	fieldBytes, err := battle.NativeCommandTargetFieldBytes(
+		g.st.W, g.st.H,
+		battle.Cell{X: g.sel.X, Y: g.sel.Y},
+		record.SelectionMode, 0, g.st.NativeTargetFlags,
+	)
+	if err != nil || len(g.st.NativeTileBlitModes) != len(fieldBytes) {
+		return fmt.Errorf("native command target field incomplete")
+	}
+	if record.EffectMode < 0 || record.EffectMode > 0xff ||
+		!g.st.MaterializeNativeMapRangeMode(
+			battle.NativeMapOverlaySelectorFromRecordByte(byte(record.EffectMode)),
+		) {
+		return fmt.Errorf("native command overlay selector invalid")
+	}
+	copy(g.st.NativeTileBlitModes, fieldBytes)
+	return nil
+}
+
+func (g *Game) resetNativeCommandTargetField() bool {
+	if g == nil || g.st == nil || g.st.W <= 0 || g.st.H <= 0 ||
+		len(g.st.NativeTileBlitModes) != g.st.W*g.st.H {
+		return false
+	}
+	// 0x4dbfc runs immediately after 0x115b6 returns.
+	for i := range g.st.NativeTileBlitModes {
+		g.st.NativeTileBlitModes[i] = 0xff
+	}
+	return true
 }
 
 // finishSelectedWait 對應原版行動選單第四項「下／休息」。0x19077 在未移動時
@@ -3957,6 +3988,7 @@ func (g *Game) confirm() {
 		}
 		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		g.msg = message
+		g.resetNativeCommandTargetField()
 		g.st.MaterializeNativeMapRangeMode(1)
 		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
 		g.checkResult()
@@ -4330,6 +4362,7 @@ func (g *Game) Update() error {
 	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			if g.nativeCommand0Targeting && g.st != nil {
+				g.resetNativeCommandTargetField()
 				g.st.MaterializeNativeMapRangeMode(1)
 			}
 			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true

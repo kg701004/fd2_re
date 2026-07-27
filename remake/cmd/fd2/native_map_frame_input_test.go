@@ -104,6 +104,7 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 		t.Fatal("HUD state materialization rejected")
 	}
 	state.W, state.H = field.W, field.H
+	state.NativeTileBlitModes = append([]byte(nil), field.NativeTileBlitModes...)
 	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{}); err != nil {
 		t.Fatal(err)
 	}

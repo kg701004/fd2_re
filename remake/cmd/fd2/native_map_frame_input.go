@@ -41,7 +41,7 @@ func buildNativeMapFrameInput(
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: raw runtime globals are outside verified bounds")
 	}
 	view := state.NativeMapViewState
-	cells, err := indexedmap.BuildNativeTerrainCells(field.Tiles, field.NativeTileBlitModes)
+	cells, err := indexedmap.BuildNativeTerrainCells(field.Tiles, state.NativeTileBlitModes)
 	if err != nil {
 		return indexedmap.NativeFrameInput{}, fmt.Errorf("native map frame: terrain cells: %w", err)
 	}

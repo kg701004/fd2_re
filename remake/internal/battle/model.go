@@ -480,7 +480,7 @@ type State struct {
 	NativeEventState         [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
 	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
-	NativeTileBlitModes      []byte                      // FDFIELD composition entry byte+3; nil unless exact renderer export exists
+	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
 	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
 	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
 	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
@@ -760,6 +760,12 @@ func Load(path string) (*State, error) {
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
 	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
+	// 0x4dbfc is the runtime constructor for composition byte+3: it replaces
+	// every serialized value with 0xff before 0x14818/0x122dc mutate the grid.
+	// Keep the exported field only as exact map provenance, never as live state.
+	for i := range st.NativeTileBlitModes {
+		st.NativeTileBlitModes[i] = 0xff
+	}
 	st.Treasures = loadTreasures(filepath.Join(filepath.Dir(path), "map.json"), f.W, f.H, f.Chests)
 	return st, nil
 }

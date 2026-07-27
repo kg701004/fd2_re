@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
@@ -105,5 +106,31 @@ func TestNativeCommandTargetProjectionUsesSelectedRawCommandRecord(t *testing.T)
 	}
 	if _, err := g.nativeCommandTargetUnits(); err == nil {
 		t.Fatal("selected raw command record was not used")
+	}
+}
+
+func TestNativeCommandTargetFieldMaterializeAndReset(t *testing.T) {
+	actor := &battle.Unit{X: 0, Y: 0}
+	g := &Game{
+		st: &battle.State{
+			W: 3, H: 1,
+			NativeTargetFlags:   make([]byte, 3),
+			NativeTileBlitModes: []byte{0xff, 0xff, 0xff},
+		},
+		sel: actor,
+	}
+	record := battle.NativeCommandRecord{SelectionMode: 1}
+	if err := g.materializeNativeCommandTargetField(record); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := g.st.NativeTileBlitModes, []byte{1, 0, 0xff}; !slices.Equal(got, want) {
+		t.Fatalf("target field=%#v want %#v", got, want)
+	}
+	if !g.st.HasNativeMapRangeModeState || g.st.NativeMapRangeMode != 2 {
+		t.Fatalf("target selector=%d/%v", g.st.NativeMapRangeMode, g.st.HasNativeMapRangeModeState)
+	}
+	if !g.resetNativeCommandTargetField() ||
+		!slices.Equal(g.st.NativeTileBlitModes, []byte{0xff, 0xff, 0xff}) {
+		t.Fatalf("target field reset=%#v", g.st.NativeTileBlitModes)
 	}
 }
