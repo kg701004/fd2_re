@@ -2377,19 +2377,16 @@ func (g *Game) campInput() bool {
 		}
 		return true
 	case "choice", "town":
-		vis := g.camp.Visible()
-		menu := campaign.MenuState{Selection: g.campSel, Count: len(vis)}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-			menu.Step(campaign.MenuUp)
+			g.stepCampaignMenu(campaign.MenuUp)
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-			menu.Step(campaign.MenuDown)
+			g.stepCampaignMenu(campaign.MenuDown)
 		}
-		selected, confirm := menu.Step(campaign.MenuTick)
+		selected, confirm := g.stepCampaignMenu(campaign.MenuTick)
 		if enter {
-			selected, confirm = menu.Step(campaign.MenuConfirm)
+			selected, confirm = g.stepCampaignMenu(campaign.MenuConfirm)
 		}
-		g.campSel = menu.Selection
 		if confirm {
 			g.camp.Advance(fmt.Sprintf("opt%d", selected))
 			g.enterNode()
@@ -2733,6 +2730,19 @@ func (g *Game) campInput() bool {
 		return false // 戰鬥照常
 	}
 	return false
+}
+
+// stepCampaignMenu is the runtime seam for deterministic choice/town input
+// traces. It owns only cursor state; the runner still owns editable option
+// visibility and transition targets.
+func (g *Game) stepCampaignMenu(event campaign.MenuEvent) (selected int, confirm bool) {
+	if g.camp == nil {
+		return 0, false
+	}
+	menu := campaign.MenuState{Selection: g.campSel, Count: len(g.camp.Visible())}
+	selected, confirm = menu.Step(event)
+	g.campSel = menu.Selection
+	return selected, confirm
 }
 
 // ringInput radial 指令環 + 法術選單輸入。回傳 true = 已攔截。

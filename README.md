@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會與 command overlay 截圖 | `0x22253` indexed renderer、ending compositor、HUD/layer caller 仍 fail-closed |
 
-Worklist 目前是 **396 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **397 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -36,6 +36,11 @@ deterministic input trace 與實機截圖，而不是繼續累積孤立 adapter�
 本輪已把 `choice/town` hub 的 bounded cursor 與 `optN` confirm transition 抽成
 `campaign.MenuState`，並讓 `campInput` 共用；這是 postbattle/town 垂直鏈的 state
 contract，不代表原版各章節服務、BGM 或畫面 parity 已完成。
+
+目前第一個可重播的 campaign/UI trace 已保存於
+[`town-preparation-ch02.json`](docs/data/ui-traces/town-preparation-ch02.json)：
+`town_ch02 → preparation_ch02 → story_ch02_pre → battle_ch02`，並以目前 source
+重建產生 town/preparation 截圖。這是可驗證的 runtime state closure，不是完整 30 章通關。
 
 ### Round／畫面更新統計（Git audit，2026-07-27）
 
@@ -71,6 +76,7 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
 | 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |
+| 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load／class UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) ![class targets](docs/figures/church-class-targets.png) |
 
