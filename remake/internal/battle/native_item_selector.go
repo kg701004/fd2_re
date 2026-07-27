@@ -133,3 +133,85 @@ func NativeItemSelectorCells(
 	}
 	return cells, nil
 }
+
+type NativeItemPanelRegion struct {
+	Enabled          bool
+	SourceX, SourceY int
+	DestX, DestY     int
+	Width, Height    int
+}
+
+type NativeItemPanelFrame struct {
+	Frame  int
+	Left   NativeItemPanelRegion
+	Upper  NativeItemPanelRegion
+	Bottom NativeItemPanelRegion
+}
+
+// NativeItemPanelFrameFor reproduces 0x18409's three clipped 320-stride
+// memmove regions. Frame 11 is the smallest state; frame 0 is fully open.
+func NativeItemPanelFrameFor(frame int) (NativeItemPanelFrame, error) {
+	if frame < 0 || frame > 11 {
+		return NativeItemPanelFrame{}, fmt.Errorf("native item panel frame=%d is invalid", frame)
+	}
+	result := NativeItemPanelFrame{Frame: frame}
+
+	leftArg := 5
+	if frame >= 6 {
+		leftArg = 101 - 16*frame
+	}
+	result.Left = NativeItemPanelRegion{
+		Enabled: true, SourceX: 5, SourceY: 7, DestX: leftArg, DestY: 7,
+		Width: 86, Height: 86,
+	}
+	if leftArg < 0 {
+		result.Left.SourceX = 5 - leftArg
+		result.Left.DestX = 0
+		result.Left.Width = 86 + leftArg
+	}
+
+	if frame <= 8 {
+		upperArg := 7
+		if frame >= 3 {
+			upperArg = 55 - 16*frame
+		}
+		result.Upper = NativeItemPanelRegion{
+			Enabled: true, SourceX: 92, SourceY: 7, DestX: 92, DestY: upperArg,
+			Width: 223, Height: 86,
+		}
+		if upperArg < 0 {
+			result.Upper.SourceY = 7 - upperArg
+			result.Upper.DestY = 0
+			result.Upper.Height = 86 + upperArg
+		}
+	}
+
+	if frame < 6 {
+		bottomY := 94 + 16*frame
+		height := 102
+		if bottomY+height > 200 {
+			height = 200 - bottomY
+		}
+		result.Bottom = NativeItemPanelRegion{
+			Enabled: true, SourceX: 5, SourceY: 94, DestX: 5, DestY: bottomY,
+			Width: 310, Height: height,
+		}
+	}
+	return result, nil
+}
+
+func NativeItemPanelSchedule(opening bool) ([]NativeItemPanelFrame, error) {
+	result := make([]NativeItemPanelFrame, 0, 12)
+	for step := 0; step < 12; step++ {
+		frame := step
+		if opening {
+			frame = 11 - step
+		}
+		pass, err := NativeItemPanelFrameFor(frame)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, pass)
+	}
+	return result, nil
+}

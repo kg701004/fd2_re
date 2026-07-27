@@ -1000,6 +1000,13 @@
   201/205、category icon59–61/equipped+3及stat icon64–67/41。
   `AdvanceNativeItemSelector`／`NativeItemSelectorCells` regression完成；
   GUI shell/Enter/indexed animation仍待依此改寫。
+- [x] **RE-ITEM-SELECTOR-12FRAME-PANELS**：`0x17e0b` opening固定
+  frames11→0，`0x1b932` closing固定0→11；每幀由 saved 64000-byte
+  buffer重建。`0x18409→0x182ad/0x18312/0x1839b` 的三區已資料化：
+  left `(src5,7,86×86)` frame6後left-clip16px；upper
+  `(92,7,223×86)` frame3後up-clip16px、frame9消失；bottom
+  `(5,94,310×102)` 每幀y+16、frame6消失。`NativeItemPanelSchedule`
+  exact reverse/clip regression通過；indexed source buffer與GUI adapter仍待。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

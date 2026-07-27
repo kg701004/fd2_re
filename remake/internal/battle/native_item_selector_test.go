@@ -82,3 +82,52 @@ func TestNativeItemSelectorFifthCellStartsRightColumn(t *testing.T) {
 		t.Fatalf("fifth cell=%#v", cells[4])
 	}
 }
+
+func TestNativeItemPanelFrameClipping(t *testing.T) {
+	closed, err := NativeItemPanelFrameFor(11)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if closed.Left.SourceX != 80 || closed.Left.DestX != 0 ||
+		closed.Left.Width != 11 || closed.Upper.Enabled || closed.Bottom.Enabled {
+		t.Fatalf("frame11=%#v", closed)
+	}
+	middle, err := NativeItemPanelFrameFor(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if middle.Left.DestX != 5 || middle.Left.Width != 86 ||
+		!middle.Upper.Enabled || middle.Upper.SourceY != 32 || middle.Upper.Height != 61 ||
+		!middle.Bottom.Enabled || middle.Bottom.DestY != 174 || middle.Bottom.Height != 26 {
+		t.Fatalf("frame5=%#v", middle)
+	}
+	open, err := NativeItemPanelFrameFor(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if open.Left.DestX != 5 || open.Upper.DestY != 7 ||
+		open.Bottom.DestY != 94 || open.Bottom.Height != 102 {
+		t.Fatalf("frame0=%#v", open)
+	}
+}
+
+func TestNativeItemPanelSchedulesReverseExactly(t *testing.T) {
+	opening, err := NativeItemPanelSchedule(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closing, err := NativeItemPanelSchedule(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(opening) != 12 || len(closing) != 12 ||
+		opening[0].Frame != 11 || opening[11].Frame != 0 ||
+		closing[0].Frame != 0 || closing[11].Frame != 11 {
+		t.Fatalf("opening=%v closing=%v", opening, closing)
+	}
+	for i := range opening {
+		if opening[i] != closing[11-i] {
+			t.Fatalf("step %d does not reverse", i)
+		}
+	}
+}

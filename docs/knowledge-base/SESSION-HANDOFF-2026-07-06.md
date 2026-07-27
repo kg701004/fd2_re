@@ -899,3 +899,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   color201/205；category icons59/60/61、equipped+3，stat icons
   64/65/66/67/41。新增 pure input/layout adapters與真實 row regression；
   舊 raw-hole shell明確降級為provenance/debug UI，非original parity。
+- 2026-07-27 item selector panel schedule：official IDA閉合
+  `0x17e0b/0x1b932→0x18409`，opening=11→0、closing=0→11，每幀先
+  restore saved 64000-byte framebuffer。三個 raw copy region為left
+  `src(5,7) 86×86`（frame6後向左clip16px，frame11寬11）、
+  upper `src(92,7) 223×86`（frame3後向上clip16px，frame9起off）、
+  bottom `src(5,94) 310×102`（dest y=94+16f，frame6起off）。
+  `NativeItemPanelSchedule` 保存exact rectangles/reverse ordering；
+  尚未宣稱 indexed source/buffer 已接 Ebiten。

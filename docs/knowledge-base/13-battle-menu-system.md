@@ -109,6 +109,15 @@ selected/unselected color raw 201/205。row byte0 `<0x15`／`<0x20`／其他
 type5/11 分流。`NativeItemSelectorCells` 保存 compact layout與raw icon
 IDs，但 indexed blit/字型與 opening/closing animation 尚未接 GUI。
 
+opening/closing schedule 本身現已閉合：`0x17e0b` 依 frame11→0 開啟，
+`0x1b932` 依0→11關閉，每幀都先從 saved 64000-byte buffer重建，再由
+`0x18409` 組三塊 320-stride region並present。left panel來源
+`(5,7,86,86)` 在 frame6後每幀向左clip16px，frame11只剩11px；
+upper來源 `(92,7,223,86)` 在 frame3後向上clip16px，frame9起消失；
+bottom來源 `(5,94,310,102)` 從 y94每幀下移16px，frame6起消失。
+`NativeItemPanelSchedule` 保存十二幀與exact clipped rectangles。
+目前缺的是把這些 indexed sources/buffers接到 Ebiten，而不是缺動畫時序。
+
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 
 其中 type `8/9/0xa→0x21082` 已由 raw table 全表對齊與 `0x1145a`
