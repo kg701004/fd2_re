@@ -92,7 +92,7 @@ remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 gri
 
 物品 action 不是「完全不存在」：`0x1b932` 是 8-slot selector（status `0x80` 空槽、`0x40` equipped；方向鍵/wrap、Enter/Space、ESC）。`0x1bb8c` 只把 item 插入第一個空槽；case 1 將它與 `0x1b8e7` removal 串成 transfer。case 2 進入 `0x1bffe`，由 `0x1c1c3` compatibility predicate 與 `0x1c142` 設定選中 slot 的 `0x40` flag，再呼叫 `0x1b750` 重算。case 0 的 raw two-stage target ABI 現已閉合：第一階段用 row `+0x10/+0x15`，只有 type `0x17` 帶 inner marker 1；`0x115b6` 確認後，第二階段從 confirmed cell 以 `+0x12/+0x15` 建 final list，再交 `0x20c6f(actor,slot,count,list)`。完整 row producer、各 effect gameplay 名稱與 renderer 仍未閉合，因此 remake item action 保持 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
 
-`0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`），並在部分分支更新 unit state、顯示 effect、最後統一回收選取／戰鬥 UI。這只證實 type-dispatch 與具體 callee provenance；各 routine 的數值語意尚未閉合，不能直接映射成藥水／卷軸規則。
+`0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 
 其中 type `8/9/0xa→0x21082` 已由 raw table 全表對齊與 `0x1145a`
 base/equipment data flow 閉合：item row `+0xe` 分別永久增加 persistent

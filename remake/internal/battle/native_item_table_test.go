@@ -95,6 +95,35 @@ func TestTrackedPermanentBaseStatItemRows(t *testing.T) {
 	}
 }
 
+func TestTrackedHPRestoreItemRowsPreserveConsumptionBranch(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		itemID   int
+		typ      byte
+		amount   uint16
+		consumes bool
+	}{
+		{192, 5, 40, true},
+		{195, 5, 999, true},
+		{211, 13, 200, false},
+	}
+	for _, tc := range cases {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		typ := row[0x0d]
+		amount := binary.LittleEndian.Uint16(row[0x0e:])
+		if typ != tc.typ || amount != tc.amount {
+			t.Fatalf("item %d type/amount = %#x/%d, want %#x/%d", tc.itemID, typ, amount, tc.typ, tc.amount)
+		}
+		route, ok := NativeItemHPRestoreRouteForType(typ, amount)
+		if !ok || route.ConsumesSource != tc.consumes {
+			t.Fatalf("item %d route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

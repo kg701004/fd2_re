@@ -964,7 +964,19 @@ The same audit rechecked `0x1b8e7` because it is shared by class-change, item, a
 
 The shared upstream `0x13a9f` is bounded at its raw mode boundary: after `record+5 & 5 == 0`, it reads `mode=(record+0x34)&0x0f`, bytes `+0x35/+0x36`, and byte `+0x3d`. `fdother.PlanNativeUnitMode` records those values plus the caller's unit/second argument and performs no callee invocation. Mode branches remain evidence-only; no battle, town, shop, or event meaning is assigned from the mode number.
 
-The item-action effect dispatcher `0x20c6f` is now also transcribed at call-topology level. It reads item-row byte `+0x0d` and word `+0x0e`; observed raw branches are: `5/13→0x211a4`, `6→0x22af6` subcommand `0x14`, `7→0x22af6/0x15`, `8→0x21082/0x37`, `9→0x21082/0x39`, `10→0x21082/0x3e`, `11→0x1c4cc→0x1c2da` loop, `12→0x22997`, `14→0x22d1b/0x1b`, `15→0x22866`, `16→0x22721`, `17→0x21082/0x42`, `18→0x21082/0x46`, `19→0x21082/0x3b`, `20/24→0x1c4cc→0x1cd17` loop, `21→0x2111a`, `22→0x22d1b/0x16`, `23→0x2218a`. `battle.NativeItemEffectRouteForType` now preserves this raw route and integer arguments without invoking any callee. This is an editable evidence map only; the remake must not label these type IDs as potion, status, damage, or equipment effects until the callees and target ABI are closed.
+The item-action effect dispatcher `0x20c6f` is transcribed at call-topology
+level. It reads item-row byte `+0x0d` and word `+0x0e`; observed raw branches
+are: `5/13→0x211a4`, `6→0x22af6` subcommand `0x14`,
+`7→0x22af6/0x15`, `8→0x21082/0x37`, `9→0x21082/0x39`,
+`10→0x21082/0x3e`, `11→0x1c4cc→0x1c2da` loop, `12→0x22997`,
+`14→0x22d1b/0x1b`, `15→0x22866`, `16→0x22721`,
+`17→0x21082/0x42`, `18→0x21082/0x46`, `19→0x21082/0x3b`,
+`20/24→0x1c4cc→0x1cd17` loop, `21→0x2111a`,
+`22→0x22d1b/0x16`, `23→0x2218a`. `NativeItemEffectRouteForType`
+preserves the whole raw map; typed closures now supersede its opaque boundary
+for 5/13 (HP restore with consume/retain split) and 8/9/10 (permanent base
+AP/DP/DX). Remaining branches must not receive gameplay labels until their
+caller/callee contracts are closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -1026,8 +1038,15 @@ with raw subcommand `0xd`, then iterates the byte list in order and calls
 Canonical Capstone also finds a second direct caller, `0x285ed`, outside the
 item dispatcher: under opaque selector `0x21` it prepares a byte list, passes
 raw amount `0x320`, and reuses the same helper.  Therefore this is a shared
-list-driven raw mutation/presentation loop, not a type-5/13-only or generic
-heal/potion contract. `battle.ApplyNativeRawHPRestoreList` preserves the verified sequential RNG/mutation/score loop with full target-list preflight; target selection policy, amount/effect names, and presentation asset provenance remain fail-closed.
+list-driven raw mutation/presentation primitive, not a type-5/13-only
+function. That shared-callee fact does not erase the item caller's semantics:
+`0x20c6f` type 5 and 13 both supply row word `+0x0e` to the proven current-HP
+`+0x40` / max-HP `+0x42` restore path; after return, type 5 alone jumps through
+`0x1b8e7` to consume its source slot, while type 13 goes directly to cleanup
+and retains it. `battle.ApplyNativeItemHPRestore` preserves the sequential
+RNG/mutation/score loop, full target/source preflight, and this consumption
+branch. Item display names and presentation asset provenance remain
+fail-closed.
 
 Official IDA 9.4 pseudocode now closes the previously opaque presentation callers without naming their gameplay effect. `0x1c4cc(a1, subcommand, count, targetBytes)` copies three 33-byte global frame tables, snapshots the indexed 456-stride buffer, iterates `frame < frameCount[subcommand]`, selects a frame from `frameBank[subcommand]`, redraws each supplied target's visible 24×24 cell when it is inside the camera bounds, presents the 312×192 viewport, and emits only the observed subcommand/frame-specific SFX branches before a BIOS-tick wait. `0x1c2da(a1, subcommand, count, targetBytes)` starts the same presentation family with SFX index 1, redraws each target through the indexed pointer bank selected by `12*unitVisual + currentCycle` (with the native `cycle==3` remap), then performs five restore/present pairs before returning the saved buffer. `0x211a4` calls both with raw subcommand `13` before the per-target `0x1c916` mutation. This closes the caller ABI, frame ordering, camera bounds, and restore cadence only; the amount's gameplay meaning, upstream target-selection policy, SFX labels, and native renderer asset provenance remain opaque and fail-closed.
 
@@ -1035,7 +1054,13 @@ The same IDA pass closes the type `20/24` presentation loop at `0x1cd17(a1, subc
 
 The table provenance is now closed at `0x4e53e(class)`: it returns `0x6188a + class*7`, so the selector's six-byte comparison consumes bytes `row+0..row+5` and leaves `row+6` opaque. `battle.NativeClassCompatibilityRowOffset` and `NativeClassItemCompatible` preserve this address/length contract with bounds and short-row rejection. This is a raw selector adapter only; it does not expose a normalized class or item compatibility field.
 
-The shared `0x1c916` HP mutation core is now separately executable as `battle.ApplyNativeRawHPRestore`: it advances the Docker-verified 16-bit RNG, applies `amount*9/10 + (rng%100)*amount/1000`, clamps raw `+0x40` to `+0x42`, and preserves the native raw score gate (`record+0x07 < 0x4b`, class byte range `9..24` adds `0x1e`, score factor `40*effective*delta/max`). It is an isolated raw adapter; no normalized item, heal, or UI semantics are inferred.
+The shared `0x1c916` HP mutation core is separately executable as
+`battle.ApplyNativeRawHPRestore`: it advances the Docker-verified 16-bit RNG,
+applies `amount*9/10 + (rng%100)*amount/1000`, clamps current HP `+0x40` to
+max HP `+0x42`, and preserves the native raw score gate (`record+0x07 < 0x4b`,
+class byte range `9..24` adds `0x1e`, score factor
+`40*effective*delta/max`). The primitive alone does not imply an item; the
+closed type5/13 caller contract above supplies that scope.
 
 The sibling `0x1c9dd` MP mutation is now captured by `battle.ApplyNativeRawMPRestore`: the same RNG and amount arithmetic writes `+0x44` capped by `+0x46`, while its score uses only `record+0x21` (no HP routine's class-range bonus). This remains raw state/evidence only.
 

@@ -638,7 +638,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 native phase-dispatch raw gate：worktree resume 時保持乾淨；`/tmp/fd2cap` 仍不存在，Capstone 只在 `fd2-cap-local` 執行。官方 Capstone 重讀 `0x1d80b`，新增 `fdother.FindNativePhaseDispatchCandidates`：0x50 stride、count `[0x53beb]`、只接受 `+6==1`、`+5&0x81==0`、`+0x26==0`，回傳 raw unit/selector。未呼叫 `0x13a9f`、event/chapter tables，未猜事件語意；caller-level integration 留待後續。
 - 2026-07-26 inventory removal ABI closure（official IDA 9.4）：decompiler 直接給出 `sub_1B8E7(int unit,int slot)`，以 `memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))` 左移後續 raw cells，再寫 `record+0x18=0x80`；新增 `battle.RemoveNativeInventorySlot` 與 slot0/2/7、stale-tail-byte、bounds regression。刪除先前「第三個 stack value 未閉合」的錯誤斷言；caller 仍需決定移除原因，但 raw removal 已可接 persistent inventory。
 - 2026-07-26 unit mode dispatch raw boundary：`0x13a9f` 在 `record+5&5==0` 後讀 `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode` 保存 raw mode/args，短 record 與 gate fail-closed。mode-specific callee、event/AI/item 語意尚未命名，也未接 runtime。
-- 2026-07-26 item effect dispatch topology：Docker Capstone 重讀 `0x20c6f`，固定 item row `+0x0d` type、`+0x0e` word 及 type→callee/subcommand raw map（5/13、6–10、11–24 branches）。這只是 call topology，不把 type 命名為藥水／狀態／傷害／裝備效果；callee target 與 mutation ABI 尚待逐一閉合。
+- 2026-07-26 item effect dispatch topology（後續已有 typed closures）：
+  Docker Capstone 固定 row `+0x0d/+0x0e` 與 type→callee/subcommand raw
+  map。當時只保存 topology；後續 5/13 與 8–10 已分別閉合 HP restore
+  consume/retain、永久 base AP/DP/DX，其餘 branch 仍依個別證據處理。
 - 2026-07-26 type-6/7 mutation boundary（official IDA 9.4）：`0x22af6(a1..a5)` 逐 `a4` unit-index byte list，清除 `record+a5` 的 nonzero byte，raw score=`4*(record+0x21 + (record+0x20∈9..24 ? 30 : 0))`；新增 `battle.ClearNativeUnitByte`，renderer/global write 不接，未命名 gameplay effect。
 - 2026-07-26 item word-delta closure（official IDA 9.4）：`0x21082` 從 `a6` 讀一個 unit index，對 `record+a3` 16-bit word 加 `low16(a2)`，再呼叫已閉合的 `0x1b8e7(a1,a4)`；新增 `battle.ApplyNativeWordDeltaAndRemove`，明示 target/removal units、raw offset 與 wrap semantics，未命名 HP/MP/能力效果。
 - 2026-07-26 RNG marker correction：重讀 `0x4e893` 與 `0x22721/0x22866/0x22997`，確認 state=`rol16(state+0x9014,3)`，`idiv 4` 後使用 EDX remainder `+2`，不是 quotient。新增 `fdother.NativeRNGStep/NativeRNGMarker`，growth raw marker 保持未命名。
@@ -661,9 +664,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 `0x1145a` equipment recalculation audit（Docker Capstone）：signed base `+0x37/+0x39/+0x3e`，八格中 flag bit `0x40` 才查 item `+1` 的 `0x4e56c` effect words `+1/+5/+3/+7`，寫 raw `+0x48/+0x4a/+0x4c/+0x4e`；normalized `campaign.RecomputeEquipment` 保持 projection-only，raw item table adapter 未接。
 - 2026-07-27 `0x4e56c` item-row address closure（Docker Capstone）：函式只做 `0x602ad + item*0x17` 指標算術，row stride 為 23 bytes；新增 `battle.NativeItemEffectRowOffset`，只暴露 table-relative offset 並限制 byte-sized selector。row 欄位／table 長度與 normalized equipment 接線仍未證實，維持 fail-closed。
 - 2026-07-27 item dispatcher route slice（official IDA 9.4）：`0x20c6f` pseudocode 固定 item row `+0x0d` type、`+0x0e` word 與各 branch 的 raw callee/argument（含 type22→`0x22d1b(arg2=22,arg5=39)`；撤回舊 evidence map 將它誤寫成 `0x21082/0x27`）。新增 `battle.NativeItemEffectRouteForType` 與 route regression；只保存 call topology，不執行 callee、不命名 potion/status/damage/equipment effect，target/mutation/UI 仍 fail-closed。
-- 2026-07-27 `0x211a4` item-effect ABI closure（official IDA 9.4）：偽碼固定 signature `(actor,count,targetBytes,amount)`；`0x20c6f` 直接傳自己的 `a3/a4` 作 count/list，item row `+0x0e` word 作 amount。新增 `ApplyNativeRawHPRestoreList` 保存 list order、sequential RNG、raw score 與 atomic preflight；target selection policy、renderer/SFX、gameplay 名稱仍 fail-closed，不能命名成治療／藥水。
+- 2026-07-27 `0x211a4` item-effect ABI closure（後續補上 gameplay scope）：
+  偽碼固定 `(actor,count,targetBytes,amount)`；`0x20c6f` 傳 `a3/a4`
+  count/list 與 row `+0x0e` amount。後續 dispatcher-tail 複核已證實這兩條
+  item branch 寫 current/max HP：type5 restore 後消耗來源 slot，type13
+  保留來源。共享 callee 仍不可整體命名成專用 potion routine，但 item caller
+  的 HP restore/consumption contract 已閉合。
 - 2026-07-27 `0x1bbdc` item target closure：官方 IDA/Capstone 固定 case0 first stage=`row +0x10` mode、`+0x15` target code、type0x17 inner marker1；`0x115b6` 確認後 second stage從 confirmed cell用 `+0x12/+0x15`、inner0 建 final list，再呼 `0x20c6f(actor,slot,count,list)`。新增 `NativeItemTargetPlanFromRow`／`NativeItemEffectTargets` 與 regression；完整 runtime row producer、renderer/gameplay mapping 未閉合，UI仍 fail-closed。
-- 2026-07-27 `0x1c916` raw HP mutation closure（Docker Capstone）：新增 `battle.ApplyNativeRawHPRestore`，依 16-bit RNG、`amount*9/10 + (rng%100)*amount/1000` 寫 raw `+0x40` 並 cap `+0x42`，保存 `record+0x07<0x4b` 與 class `9..24` 的 raw score gate；不接 normalized heal/item/UI 語意。
+- 2026-07-27 `0x1c916` HP mutation closure（Docker Capstone）：新增
+  `battle.ApplyNativeRawHPRestore`，依 16-bit RNG 與原生 arithmetic 寫
+  current HP `+0x40`、cap max HP `+0x42`，保存 score gate。當時保持
+  shared primitive；後續 type5/13 caller 已閉合 item scope，UI 仍未接。
 - 2026-07-27 `0x1c9dd` raw MP mutation closure（Docker Capstone）：新增 `battle.ApplyNativeRawMPRestore`，同一 RNG/amount arithmetic 寫 `+0x44` 並 cap `+0x46`；score 只用 `+0x21`、無 HP class bonus，保持 raw-only。
 - 2026-07-27 type-21 `0x2111a` caller closure（Docker Capstone）：`0x1c4cc` 建 context 後呼 `0x1cac7`，由 `0x4e516` 來源 byte 對 selected runtime `+0x44` 做 16-bit subtract，再逐 target 經 `0x1c75e`/`0x1e0db`；不命名成 MP cost 或 item 效果，source/list ABI 未閉合。
 - 2026-07-27 `0x1cac7` raw subtract adapter（Docker Go regression）：新增 `battle.ApplyNativeRawWordSubtract`，顯式保留 unit/word offset/byte amount、low-16 wrap 與 bounds；不接 normalized MP 或 item 語意。
@@ -708,7 +719,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 README/KB review：補上原版與 remake 對話成果圖，並把 README 的跨平台、EXE 表完整性、SDL2 runtime 等強斷言降級為已驗證切片／長期目標；`08-text-and-font-format.md` 兩個圖片連結修正為 `../figures/...`。文件不做大合併：`56`/`57`/`42`/`91` 是現行裁決入口，`90`/`30`/`51`/本 handoff 保留歷史與 address-level provenance。
 - 2026-07-27 assertion audit correction：刪除／降級 `11-enemy-ai` 將 `0x149F8` 稱為傷害／命中評分、將 `+0x22..+0x24` 命名為 AP/DP/HIT 的說法；改為 candidate-builder 與 raw transient/modifier bytes。`13-battle-menu-system` 的 AA／回合摘要標為歷史摘要，`32-item-combat-stats-re` 的 M1 裝備公式標為 normalized-only；README 撤回 `0x29164`＝可見台座素材斷言，與 SDD56 的 TAI#3 opaque boundary 對齊。
 - 2026-07-27 transient helper scope correction（supersedes earlier `0x1A30B` wording）：canonical Docker Capstone confirms direct `0x1A866` callers `0x1A4D1→selector 1`、`0x1A55E→0`、`0x1A797→2`; `0x1A30B` is a separate internal selector-2 raw transition/sweep and is not interchangeable with those callers. `0x1A7BD` allocates the `0x111BA(0x1A4D,0,0x40)` resource handle and `0x1A7F1` releases it. Keep selector/campaign semantics fail-closed.
-- 2026-07-27 `0x211A4` shared-caller correction：canonical Docker Capstone confirms direct callers `0x20CE0`（item-action path）與 `0x285ED`（opaque selector `0x21` path）。後者準備 caller-owned byte list 並傳 raw amount `0x320`，重用同一 list-driven mutation/presentation helper；因此不可把 `0x211A4` 命名為 type5/13 專屬效果。list producer、amount/effect 與 renderer 仍未命名，維持 fail-closed。
+- 2026-07-27 `0x211A4` shared-caller correction：canonical Docker
+  Capstone confirms `0x20CE0` item path 與 `0x285ED` opaque selector
+  `0x21` path 共用 helper，故函式本身不能命名成 type5/13 專屬 routine。
+  後續 dispatcher caller 已獨立閉合 type5/13 的 HP restore/consumption；
+  `0x285ED` 上層語意與 renderer 仍 fail-closed。
 - 2026-07-27 postbattle hub route adapter：依 `0x2cad7/0x2d093` 與 `0x526b9` raw table 新增 `fdother.ResolveNativePostbattleRoute`，保存 nonzero preparation-first 與 zero-table hub selector→`0x2fc85/0x2e341/0x318ad/0x3072f` address mapping；不執行 scene、不命名 option 語意，invalid input fail-closed。
 - 2026-07-27 shop subscene raw plan：Docker Capstone 重核 `0x2e341`，固定 hub variant `3→FDOTHER#29`、`5→#63`、其他→`#12`，service selector `0..3→0x2f0b0/0x2f642/0x2f883/0x2f8ea`；新增 `fdother.ResolveNativeShopServiceRoute`，只保存 resource/callee address，不命名服務或接 runtime UI。
 - 2026-07-27 hotel/preparation subscene raw plan：Docker Capstone 重核 `0x2fc85`，固定 FDOTHER resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute`，只保存 raw order，不命名服務或接 runtime UI。
@@ -764,3 +779,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   (`+0x37/+0x39/+0x3e`)，再重算並移除來源 slot；raw IDs198/199/200
   amounts=9/9/7。route 已型別化；presentation selectors、名稱與共用
   callee 的 type17–19 語意不猜測。
+- 2026-07-27 type5/13 HP item transaction：Docker Capstone 重讀
+  `0x20c6f` 尾端，確認兩者都以 row `+0xe` 經 `0x211a4→0x1c916`
+  恢復 target-list current HP、cap max HP；type5 隨後跳 `0x1b8e7`
+  消耗來源 slot，type13 直接 cleanup 並保留來源。新增
+  `NativeItemHPRestoreRoute`／`ApplyNativeItemHPRestore`，保存 sequential
+  RNG 與 target/source atomic preflight；IDs192/195/211 fixture regression
+  固定 40/999/200 amounts 與 consumption branch。道具顯示名稱與 renderer
+  不猜測。

@@ -913,7 +913,11 @@
 - [x] **RE-PHASE-DISPATCH-GATE**：Docker Capstone 重讀 `0x1d80b` 第一個 phase loop，固定 0x50-byte record stride、`count=[0x53beb]`、raw gates `record+6==1`、`record+5&0x81==0`、`record+0x26==0`；新增 `fdother.FindNativePhaseDispatchCandidates` 與 short-input/opaque-byte regression。只回傳 raw unit/selector，不執行 `0x13a9f` 或命名 event effects。
 - [x] **RE-INVENTORY-COMPACTION-AUDIT**：官方 IDA 9.4 decompiler 直接閉合 `0x1b8e7(int unit,int slot)`：`memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))`，再寫最後 cell flag `record+0x18=0x80`；新增 `battle.RemoveNativeInventorySlot`，保留 stale tail item byte，並覆蓋 slot0/slot2/slot7/short-input regression。先前「第三個 stack argument 未閉合」斷言已刪除。
 - [x] **RE-UNIT-MODE-DISPATCH**：Docker Capstone 重讀共享 `0x13a9f`，固定 raw gate `record+5&5==0` 與 mode/argument reads `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode`，short/gate/masked-mode regression 通過。只保存 mode plan，不呼叫 `0x14ef0/0x14b78/...` 或命名效果；mode 6/8/其他仍保留未命名分支。
-- [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 讀 item row `+0x0d/+0x0e` 並建立 type→raw callee/argument map（5/13→`0x211a4`、6/7→`0x22af6` arg2=20/21、8–10/17–19→`0x21082` 的 raw modifier/frame args、11/20/24→presentation loops、12/14–16/21/23→專用 entrances、22→`0x22d1b` arg2=22/arg5=39）。新增 `battle.NativeItemEffectRouteForType` 只回傳 raw route，不執行 callee、不把 type ID 命名為效果；各 callee target/effect ABI 仍待閉合。
+- [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
+  type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
+  topology。後續 typed closures 已完成 5/13（HP restore，consume/retain）
+  與 8–10（永久 base AP/DP/DX）；6/7、11/12、14–24 中尚未閉合者仍不得
+  由 raw route 猜 gameplay 名稱。
 - [x] **RE-ITEM-TYPE67-MUTATION**：官方 IDA 9.4 decompile `0x22af6` 固定 unit-index byte-list、caller raw field offset `a5`、nonzero→clear，以及 `(+0x20 in 9..24 ? +30 : +0) * 4` raw accumulator；新增 `battle.ClearNativeUnitByte` regression。renderer/全域寫入與 gameplay 名稱仍未接。
 - [x] **RE-ITEM-WORD-DELTA**：官方 IDA 9.4 decompile `0x21082` 固定 `word(record[index]+a3) += low16(a2)`、16-bit wrap，隨後呼叫 `0x1b8e7(a1,a4)`；新增 `battle.ApplyNativeWordDeltaAndRemove`，explicit target/removal units 與 bounds/atomic regression 完成。欄位仍不命名，renderer/effect callback 不接。
 - [x] **RE-RNG-GROWTH-MARKER**：官方 Capstone 固定 `0x4e893` 為 `rol16(state+0x9014,3)`；`0x22721/0x22866/0x22997` 的 `idiv 4` 取 EDX remainder，再 `+2` 寫 marker。新增 `fdother.NativeRNGStep/NativeRNGMarker` regression，刪除 quotient-based 誤讀；成長欄位與 FPU multiplier 仍未命名。
@@ -940,9 +944,20 @@
   exporter 與 Go loader regression 固定跨 normalized-row 邊界的 byte
   行為。實際 table 終點、未命名欄位與 normalized equipment 接線仍待證據，
   保持 fail-closed。
-- [x] **RE-ITEM-EFFECT-211A4-ABI**：官方 IDA 9.4 閉合 `0x211a4(actor,count,targetBytes,amount)`；item caller `0x20c6f` 直接傳 `a3/a4` count/list 與 item row `+0x0e` amount。新增 `ApplyNativeRawHPRestoreList`，保存 list 順序、sequential RNG、raw score 與 atomic preflight。target selection policy、renderer/SFX、gameplay 名稱仍 fail-closed。
+- [x] **RE-ITEM-EFFECT-211A4-ABI**：官方 IDA 9.4 閉合
+  `0x211a4(actor,count,targetBytes,amount)`；item caller `0x20c6f` 直接傳
+  `a3/a4` count/list 與 row `+0x0e` HP amount。type5 返回後經
+  `0x1b8e7` 消耗來源 slot，type13 直接 cleanup 並保留來源。
+  `ApplyNativeItemHPRestore` 保存 list 順序、sequential RNG、raw score、
+  target/source atomic preflight 與 consumption 分歧。renderer/SFX/道具名稱
+  仍 fail-closed。
 - [x] **RE-ITEM-TWO-STAGE-TARGET-1BBDC**：官方 IDA/Capstone 閉合 case0 的兩次 `0x14818`：actor-origin first stage用 row `+0x10/+0x15`（type0x17 才 inner marker=1），`0x115b6` 確認後以 confirmed-origin row `+0x12/+0x15`、inner=0 產 final list，傳 `0x20c6f(actor,slot,count,list)`。新增 `NativeItemTargetPlanFromRow`／`NativeItemEffectTargets` 與 confirmed-candidate/short-row regression；runtime row producer、renderer與 gameplay 名稱仍 fail-closed。
-- [x] **RE-ITEM-211A4-SHARED-CALLERS**：canonical Docker Capstone 交叉核對 `0x211a4` 兩個 direct callers：item path `0x20ce0` 與 opaque selector `0x21` path `0x285ed`。後者先建立 caller-owned byte list，再以 raw amount `0x320` 重用同一 `0x211a4`；故該 callee 不是 type5/13 專屬 effect。已補 SDD scope correction；list producer、amount/effect 語意與 renderer 仍 fail-closed。
+- [x] **RE-ITEM-211A4-SHARED-CALLERS**：canonical Docker Capstone
+  核對 direct callers `0x20ce0` item path 與 opaque selector `0x21`
+  path `0x285ed`；後者以 caller-owned list、amount `0x320` 重用 helper，
+  故 callee 本身不是 type5/13 專屬 routine。這不否定已由 dispatcher
+  caller 閉合的 type5/13 HP restore/consumption；opaque caller 的上層語意
+  與 renderer 仍 fail-closed。
 - [x] **RE-ITEM-PRESENTATION-1E0DB**：官方 IDA 9.4 閉合 `0x1e0db(value,digitBias,target)` 的 camera gate、四位十進位格式化、queue position codes `2,7,12,17`、target index 與 digit-byte 寫入；`0x1e1dc` 保留 parallel raw queue writer。新增 `battle.AppendNativePresentationDigits` raw adapter/regression。這只關閉 presentation queue ABI，不命名 HP/MP/damage/heal，也不接 normalized item UI。
 - [x] **RE-ITEM-ADJACENCY-GATE-1DEBE**：官方 IDA 9.4 閉合 `0x1debe(actor,x,y)` 的 active gate、曼哈頓相鄰一格與 equipped row `+0x0b<=1` 條件；此為 caller-specific precondition，不宣稱 `+0x0b` 是通用 weapon max range。
 - [x] **RE-ITEM-PRESENTATION-1C4CC**：官方 IDA 9.4 pseudocode 閉合 `0x1c4cc/0x1c2da` caller ABI：兩者都接 `(opaque actor, raw subcommand, target count, target-byte list)`；`1c4cc` 依三張 33-byte frame table 逐 frame 做 456-stride target redraw、312×192 present、subcommand/frame SFX 分支與 BIOS tick，`1c2da` 以 native cycle/visual bank 做 target blit，再做五次 restore/present pair。這只關閉 presentation ordering/camera bounds/restore cadence，不命名 item effect、frame asset、SFX 或 target producer；`RE-ITEM-EFFECT-211A4` 仍保持 partial。
@@ -950,7 +965,11 @@
 - [x] **RE-ITEM-COMPAT-1C1C3**：官方 IDA 9.4 閉合 item selector compatibility predicate：`0x1c1c3(actor,item)` 取 actor class 對應的六-byte raw table，逐一比較 item row `+0`；只保存 six-byte table／row-byte ABI，不命名 class 或 equipment 語意。
 - [x] **UI-ITEM-8SLOT-SHELL**：Docker Capstone 重跑 `0x1bbdc` 確認 `0x1b932` 八格 selector；remake `itemOpen/itemSel` 保留 `InventorySlots` 的空洞與 raw `0x80` 空槽旗標，支援 ↑↓／Enter／ESC。Enter 不猜 `0x20c6f` effect/target，僅 fail-closed；效果表與 native target producer 未閉合前不得扣物品或改 HP/MP。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
-- [~] **RE-RAW-HP-RESTORE-1C916**：新增 `battle.ApplyNativeRawHPRestore`，保存 RNG step、raw amount arithmetic、`+0x40/+0x42` clamp 與 `record+0x07`/class-derived score gate regression；保持獨立 raw adapter，未猜測 item/heal/UI 語意。
+- [x] **RE-RAW-HP-RESTORE-1C916**：新增
+  `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、
+  current/max HP `+0x40/+0x42` clamp 與 `record+0x07`/class-derived
+  score gate；shared primitive 本身不冒充 item，但 type5/13 caller 已另行
+  閉合成 HP restore。UI/presentation 仍未完成。
 - [~] **RE-RAW-MP-RESTORE-1C9DD**：新增 `battle.ApplyNativeRawMPRestore`，保存 `+0x44/+0x46` clamp 與無 class bonus 的 score gate regression；不把 raw path 命名成 MP/heal item 規則。
 - [~] **RE-ITEM-EFFECT-2111A**：Docker Capstone 已閉合 type `21` 的 raw topology：`0x1c4cc` → `0x1cac7`，由 `0x4e516` 來源 byte 對 selected record `+0x44` 做 16-bit subtract，再走 target-list predicate/presentation；來源 byte、list ABI 與玩法名稱保持 fail-closed。
 - [~] **RE-RAW-WORD-SUBTRACT-1CAC7**：新增 `battle.ApplyNativeRawWordSubtract`，保存 `0x1cac7` 的顯式 word offset、byte-sized subtract、low-16 wrap 與 preflight bounds；不把 raw word 命名成 MP 或 item effect。

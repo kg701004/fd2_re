@@ -129,9 +129,21 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   IDs 198/199/200 的 amount 分別是 AP+9／DP+9／DX+7。presentation
   selectors `0x11/0x12/0x13` 的顯示名稱仍保持 opaque；這項證據不延伸
   到共用 `0x21082` 的 type17–19 routes。
-- `0x211a4(actor,count,targetBytes,amount)` ABI 已由官方 IDA 9.4 閉合：`0x20c6f` 把自己的 `a3/a4` 直接作 count/list，item row `+0x0e` word 作 amount；callee 先以 raw subcommand `0xd` 跑 presentation，再依 list 順序逐筆呼叫 `0x1c916(target,amount)` 與 `0x1e0db`。`ApplyNativeRawHPRestoreList` 保存 sequential RNG/mutation/score 與 atomic preflight；仍不能把 type `5/0xd` 命名成治療／藥水，renderer/SFX/gameplay mapping 保持 fail-closed。
+- `0x211a4(actor,count,targetBytes,amount)` ABI 已由官方 IDA 9.4 閉合：
+  `0x20c6f` 把自己的 `a3/a4` 直接作 count/list，item row `+0x0e` word
+  作 HP restore amount；callee 依 list 順序逐筆呼叫
+  `0x1c916(target,amount)`，寫 current HP `+0x40` 並 cap max HP
+  `+0x42`。dispatcher 尾端進一步證實 type5 restore 後跳
+  `0x1b8e7` 消耗來源 slot，type13 則保留來源。`ApplyNativeItemHPRestore`
+  保存 sequential RNG、atomic preflight 與這個 consumption 分歧。
+  道具顯示名稱、renderer/SFX 仍 fail-closed；共享 `0x211a4` 的非 item
+  caller 不改變這兩條 item branch 的已證實語意。
 - `0x1bbdc` target transaction 已由官方 IDA 9.4/Capstone 閉合：row `+0x10` 是 first-stage raw mode、`+0x15` 是兩階段共用 target code；只有 type `0x17` 的 first stage 帶 inner marker 1。確認後以 row `+0x12` 從 confirmed cell 建 final list，inner marker 固定 0。`NativeItemTargetPlanFromRow`／`NativeItemEffectTargets` 保存此 ABI、confirmed-candidate gate 與 raw grid flags；不把三個 byte命名為 normalized range/AOE。
-- `0x1c916` 的 raw HP mutation 已新增 `battle.ApplyNativeRawHPRestore` regression：RNG step、`amount*9/10 + (rng%100)*amount/1000`、`+0x40` cap `+0x42` 與 raw score gate 均保存；仍不把它接成 normalized heal/item effect。
+- `0x1c916` 的 HP mutation 已新增 `battle.ApplyNativeRawHPRestore`
+  regression：RNG step、`amount*9/10 + (rng%100)*amount/1000`、
+  current HP `+0x40` cap max HP `+0x42` 與 raw score gate 均保存。
+  此 helper 仍是 shared primitive；只有 caller 已閉合的 type5/13 item
+  route 可宣稱 item HP restore。
 - 相鄰 `0x1c9dd` MP path 亦已新增 `battle.ApplyNativeRawMPRestore`：同一 arithmetic 寫 `+0x44`/cap `+0x46`，但 score 僅用 `+0x21`、沒有 HP 的 class bonus；仍保持 raw adapter。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
