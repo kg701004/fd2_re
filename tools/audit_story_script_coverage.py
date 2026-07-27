@@ -28,11 +28,14 @@ def audit(path: Path) -> dict:
             "next": node.get("next", ""),
         })
     scripted = [entry for entry in entries if entry["script"]]
+    handler_bound = [entry for entry in entries if entry["handler_binding"]]
+    fallback = [entry for entry in entries if not entry["script"] and not entry["handler_binding"]]
     return {
         "campaign": str(path),
         "story_or_cutscene_nodes": len(entries),
         "scripted_nodes": len(scripted),
-        "unresolved_nodes": len(entries) - len(scripted),
+        "handler_bound_nodes": len(handler_bound),
+        "fallback_nodes_without_script_or_handler": len(fallback),
         "nodes": entries,
     }
 
@@ -46,10 +49,17 @@ def main() -> int:
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
-        print(f"story/cutscene={report['story_or_cutscene_nodes']} scripted={report['scripted_nodes']} unresolved={report['unresolved_nodes']}")
+        print(
+            f"story/cutscene={report['story_or_cutscene_nodes']} "
+            f"scripted={report['scripted_nodes']}"
+        )
+        print(
+            f"handler_bound={report['handler_bound_nodes']} "
+            f"fallback_without_script_or_handler={report['fallback_nodes_without_script_or_handler']}"
+        )
         for node in report["nodes"]:
-            if not node["script"]:
-                print(f"UNRESOLVED {node['id']} type={node['type']} next={node['next']}")
+            if not node["script"] and not node["handler_binding"]:
+                print(f"FALLBACK {node['id']} type={node['type']} next={node['next']}")
     return 0
 
 

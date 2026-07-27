@@ -621,7 +621,19 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			scripted++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 {
-		t.Fatalf("campaign story/script coverage changed: nodes=%d scripted=%d, update the audit before changing claims", storyNodes, scripted)
+	handlerBound := 0
+	fallback := 0
+	for _, n := range c.Nodes {
+		if n.Type != "story" && n.Type != "cutscene" {
+			continue
+		}
+		if n.HandlerBinding != "" {
+			handlerBound++
+		} else if n.Script == "" {
+			fallback++
+		}
+	}
+	if storyNodes != 121 || scripted != 9 || handlerBound != 33 || fallback != 79 {
+		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback)
 	}
 }
