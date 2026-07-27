@@ -992,7 +992,14 @@
   再恢復原 buffer。此 helper 本身不做 gameplay mutation；其後獨立的
   row-selected command-damage loop 已由下方 caller closure 定案。
 - [x] **RE-ITEM-COMPAT-1C1C3**：官方 IDA 9.4 閉合 item selector compatibility predicate：`0x1c1c3(actor,item)` 取 actor class 對應的六-byte raw table，逐一比較 item row `+0`；只保存 six-byte table／row-byte ABI，不命名 class 或 equipment 語意。
-- [x] **UI-ITEM-8SLOT-SHELL**：Docker Capstone 重跑 `0x1bbdc` 確認 `0x1b932` 八格 selector；remake `itemOpen/itemSel` 保留 `InventorySlots` 的空洞與 raw `0x80` 空槽旗標，支援 ↑↓／Enter／ESC。Enter 不猜 `0x20c6f` effect/target，僅 fail-closed；效果表與 native target producer 未閉合前不得扣物品或改 HP/MP。
+- [~] **UI-ITEM-8SLOT-SHELL**：舊 shell保留八個 raw holes並只支援↑↓，
+  現已證實這不是 original parity。`0x1b9de` 依 signed flag非負 compact
+  occupied prefix成兩欄四列；↑/↓ linear wrap、←/→±4，battle-use
+  Enter拒絕effect type0。`0x184c0` 固定 label `(42+150*col,
+  103+22*row)`、FDTXT `itemID+181`、selected/unselected raw color
+  201/205、category icon59–61/equipped+3及stat icon64–67/41。
+  `AdvanceNativeItemSelector`／`NativeItemSelectorCells` regression完成；
+  GUI shell/Enter/indexed animation仍待依此改寫。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

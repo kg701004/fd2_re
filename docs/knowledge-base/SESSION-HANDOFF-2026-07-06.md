@@ -701,7 +701,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 official IDA `0x1c4cc/0x1c2da` item presentation closure：Hex-Rays 閉合兩 caller 的 `(actor, raw subcommand, target count, target-byte list)` ABI；`0x1c4cc` 逐 frame 取三張 33-byte frame table、對 camera-visible targets 做 456-stride indexed redraw、312×192 present、subcommand/frame SFX branch 與 BIOS tick，`0x1c2da` 依 `12*visual+cycle` pointer bank 做 target blit，再五次 restore/present。此證據只加入 SDD/worklist 的 presentation ordering，不替 item type、row word、SFX 或 frame asset 命名，也不解除 item runtime/UI gate。
 - 2026-07-27 official IDA `0x1cd17/0x1c1c3` item closure：Hex-Rays 閉合 type20/24 的十幀 presentation loop（30-byte remap table、saved-buffer restore、camera-visible target redraw、`7-(frame%8)` blend arg、312×192 present、BIOS tick）與 selector compatibility predicate（actor class 的 six-byte raw table 對 item row `+0`）。兩者只寫入 opaque ABI/evidence，不命名 status/damage/equipment，也不解除 item runtime/UI gate。
 - 2026-07-27 official IDA `0x4e53e` table provenance：Hex-Rays 固定 class compatibility row pointer=`0x6188a+class*7`；`0x1c1c3` 只讀 row+0..+5，row+6 保持 opaque。新增 `battle.NativeClassCompatibilityRowOffset`／`NativeClassItemCompatible` 與 Docker Go regression；不接 normalized class/equipment。
-- 2026-07-27 item UI shell：Docker Capstone 重跑 `0x1bbdc`，確認 `0x1b932` 是保留八格空槽／裝備旗標的 item selector；remake 已接 `itemOpen/itemSel`、raw `InventorySlots` 空洞顯示、↑↓／Enter／ESC。case 0 的 `0x20c6f` effect/target 仍未閉合，Enter 只 fail-closed，不改 HP/MP/inventory。
+- 2026-07-27 item UI shell（後續已更正）：當時 remake以八個 raw位置
+  顯示空洞且只接↑↓／Enter／ESC；後續 official IDA已證明 original
+  selector會 compact occupied prefix、兩欄四列並支援←/→±4，見文件尾端。
 - 2026-07-27 item type 8/9/0xa route（後續已閉合欄位）：
   Docker Capstone 固定三個 branch 以 item row `+0xe` word 寫 target
   `+0x37/+0x39/+0x3e`，並帶 presentation selectors
@@ -888,3 +890,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   exporter 新增 editable `native_movement_cost_rows.json`，Go strict loader
   與 `NativeRelocationDestinationAllowed` regression完成。這閉合 legality
   predicate，不等於 cursor/indexed renderer 已接入 GUI。
+- 2026-07-27 original item selector input/layout correction：official IDA
+  `0x1b932→0x1b9de→0x184c0` 證實 signed flag非負的 raw slots會 compact
+  顯示；native inventory writer維持 occupied prefix。layout為兩欄四列，
+  ↑/↓在 prefix linear wrap、←/→±4；battle-use mode Enter/Space只接受
+  selected item row effect type非零，Esc cancel。display index n 的 label
+  `(42+150*(n/4),103+22*(n%4))`，FDTXT index=`itemID+181`，
+  color201/205；category icons59/60/61、equipped+3，stat icons
+  64/65/66/67/41。新增 pure input/layout adapters與真實 row regression；
+  舊 raw-hole shell明確降級為provenance/debug UI，非original parity。

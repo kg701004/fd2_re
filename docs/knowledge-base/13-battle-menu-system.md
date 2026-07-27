@@ -90,7 +90,24 @@ remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 gri
 
 ### `0x1bbdc` item action evidence（2026-07-25, Docker Capstone）
 
-物品 action 不是「完全不存在」：`0x1b932` 是 8-slot selector（status `0x80` 空槽、`0x40` equipped；方向鍵/wrap、Enter/Space、ESC）。`0x1bb8c` 只把 item 插入第一個空槽；case 1 將它與 `0x1b8e7` removal 串成 transfer。case 2 進入 `0x1bffe`，由 `0x1c1c3` compatibility predicate 與 `0x1c142` 設定選中 slot 的 `0x40` flag，再呼叫 `0x1b750` 重算。case 0 的 raw two-stage target ABI 現已閉合：第一階段用 row `+0x10/+0x15`，只有 type `0x17` 帶 inner marker 1；`0x115b6` 確認後，第二階段從 confirmed cell 以 `+0x12/+0x15` 建 final list，再交 `0x20c6f(actor,slot,count,list)`。完整 row producer、各 effect gameplay 名稱與 renderer 仍未閉合，因此 remake item action 保持 fail-closed，不以 shop/inventory code 冒充戰鬥 item use。
+物品 action 不是「完全不存在」：`0x1b932→0x1b9de` 是八格 raw
+inventory 的 **兩欄×四列** selector。它只計算 signed flag非負的 occupied
+prefix；原版 insertion/removal 維持 compact prefix，不把 raw hole 畫成
+固定空白列。↑/↓沿 prefix linear wrap（slot3→4會跨欄），←/→以±4切欄；
+Enter/Space confirm、Esc cancel。battle-use mode另外拒絕 selected item
+row `+0x0d==0`，非 battle mode不套此 gate。`0x1bb8c` 只把 item 插入
+第一個空槽；case1 與 `0x1b8e7` 串成 transfer。case2 進 `0x1bffe`，
+由 `0x1c1c3` compatibility 與 `0x1c142` 設 `0x40` equipped flag，再
+呼 `0x1b750` 重算。case0 的 target/effect ABI現已閉合；remake item
+Enter仍未接 transaction。
+
+`0x184c0` 的 original geometry 也已固定：display index `n` 的 label
+在 `x=42+150*(n/4), y=103+22*(n%4)`，第五筆從 `(192,103)` 開始；
+category icon在 `x-29,y-2`，item文字取 FDTXT index `itemID+181`，
+selected/unselected color raw 201/205。row byte0 `<0x15`／`<0x20`／其他
+選 icon59/60/61，equipped再+3；右側 stat icon/value 依同 byte與
+type5/11 分流。`NativeItemSelectorCells` 保存 compact layout與raw icon
+IDs，但 indexed blit/字型與 opening/closing animation 尚未接 GUI。
 
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 

@@ -112,7 +112,15 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
 
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
-- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 target ABI、`0x20c6f` observed type5–24 dispatch 與各 mutation route已閉合，但 indexed presentation 與 remake UI integration 仍待。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 目前仍 fail-closed。`+0xd/+0x10/+0x12/+0x15` 已保存；type23 gate 正確是 actor raw identity `+8==24` 與 max MP `+0x46>=20`，不是 class/level。
+- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches
+  與 observed type5–24 mutation routes已閉合。重要 UI correction：
+  `0x1b9de/0x184c0` 不是把八個 raw holes原位顯示，而是依 signed flag
+  非負 compact成兩欄四列；native writers 維持 occupied prefix。
+  ↑/↓ linear wrap、←/→±4；battle-use Enter拒絕 effect type0。
+  `NativeItemSelectorCells`／`AdvanceNativeItemSelector` 已保存 input、
+  `(42/192,103+22r)` geometry、category/equipped/stat icon raw IDs。
+  現行 remake shell仍保留八個 raw位置，是 provenance/debug UI而非原版
+  parity；Enter transaction、indexed animation仍待接。
 - Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base
   `0x602ad`、row stride `0x17`（23 bytes）。EXE file view 已確認從
   `0x540ad` 起，與 normalized `item.json` 的 `0x540ac` 起點相差一 byte；
