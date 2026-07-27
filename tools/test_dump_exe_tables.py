@@ -37,6 +37,19 @@ class NativeItemEffectRowsTest(unittest.TestCase):
             [],
         )
 
+    def test_native_movement_cost_rows_have_exact_29_by_20_boundary(self):
+        base = 0x55445
+        data = bytearray(base + 29 * 20)
+        for selector in range(29):
+            data[base + selector * 20:base + (selector + 1) * 20] = bytes([selector] * 20)
+
+        rows = dump_exe_tables.dump_native_movement_cost_rows(data)
+
+        self.assertEqual(len(rows), 29)
+        self.assertEqual(rows[0]["linear"], "0x61646")
+        self.assertEqual(rows[28]["linear"], hex(0x61646 + 28 * 20))
+        self.assertEqual(rows[17]["costs"], [17] * 20)
+
 
 if __name__ == "__main__":
     unittest.main()

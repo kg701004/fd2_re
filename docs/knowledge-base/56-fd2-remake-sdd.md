@@ -1044,7 +1044,15 @@ The item dispatcher does not call `0x1b8e7`, so tracked item ID101 is
 retained; its row word1 is ignored by this handler.
 `NativeItemRelocationRoute` / `ApplyNativeItemRelocation` preserve this
 post-confirm state transaction, first-target behavior and MP wrap. Selector
-mode6's occupancy/terrain-code checks, the 27-present renderer, and Ebiten UI
+mode6's destination predicate is now executable too. Apart from the selected
+target, any record at the destination with raw `+5 bit0==0` blocks admission.
+The 29×20 table returned by `0x4e555(selector)` is exported as editable
+`native_movement_cost_rows.json`; selector normally uses target class `+0x20`,
+is overridden to 1 for `+7==0x1c`, or to 19 for the recovered `0x1f183`
+class/race gate. The resolved terrain index must contain literal value20.
+`NativeRelocationDestinationAllowed` preserves those gates and rejects
+malformed tables/counts. Terrain-index production through `0x12e38` is already
+the raw cursor/FDSHAP resolver boundary; the 27-present renderer and Ebiten UI
 remain separate integration gates.
 
 Caller-scope correction (Docker Capstone, 2026-07-26): `0x22253` is shared by the chapter-ending/post handler at `0x250cc`, not command-23-only. That path calls it after `0x1c2da` with unit index `1`, pre-render bytes `0xff/0xff`, and the selected record's raw `+0/+1` bytes, then continues to `0x25089` cleanup and `0x2bce5` ending rendering. The remake therefore treats `SetNativeUnitCoordinateBytes` as a shared raw writer only; command-23 selector, ending layout, renderer, and campaign transition remain independent fail-closed contracts.

@@ -879,3 +879,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   row word1 未被 handler 使用。新增 typed relocation executor、MP wrap、
   identity/maxMP/target atomic preflight 與 fixture regression；mode6
   indexed UI/renderer integration仍獨立待辦。
+- 2026-07-27 type23 mode6 destination legality：official IDA
+  `0x115b6` 與 Docker raw table cross-check 固定 other-unit occupancy
+  (`same x/y && +5 bit0==0`)、target-derived selector（class；`+7==0x1c`
+  override1；class `0x13`／race4,5 override19）與
+  `0x4e555(selector)[terrainIndex]==20`。`0x61646..0x61889` 精確為
+  29×20 bytes，下一 byte `0x6188a` 已屬 class compatibility table；
+  exporter 新增 editable `native_movement_cost_rows.json`，Go strict loader
+  與 `NativeRelocationDestinationAllowed` regression完成。這閉合 legality
+  predicate，不等於 cursor/indexed renderer 已接入 GUI。

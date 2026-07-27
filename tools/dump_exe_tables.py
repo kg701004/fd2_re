@@ -188,6 +188,32 @@ def dump_native_item_effect_rows(d, count=0xD7):
     return rows
 
 
+def dump_native_movement_cost_rows(d):
+    """0x4e555 selector→20-byte terrain-cost rows.
+
+    The linear table is 0x61646..0x61889. In this anchored executable it maps
+    to file 0x55445; 0x6188a begins the separately exported compatibility
+    table, proving an exact 29-row boundary.
+    """
+    file_base = 0x55445
+    linear_base = 0x61646
+    stride = 20
+    rows = []
+    for selector in range(29):
+        o = file_base + selector * stride
+        raw = d[o:o + stride]
+        if len(raw) != stride:
+            break
+        rows.append({
+            "selector": selector,
+            "off": hex(o),
+            "linear": hex(linear_base + selector * stride),
+            "costs": list(raw),
+            "raw": raw.hex(),
+        })
+    return rows
+
+
 def dump_resist_crit(d):
     """職業魔抗(4B/職業,由編號01起)+ 暴擊率(1B/職業)。"""
     rb, cb = ANCHORS["resist"][0], ANCHORS["crit"][0]
@@ -300,11 +326,13 @@ def main(argv):
     spell = dump_spell(d)
     item = dump_item(d)
     native_item_effect_rows = dump_native_item_effect_rows(d)
+    native_movement_cost_rows = dump_native_movement_cost_rows(d)
     rc = dump_resist_crit(d)
     equip = dump_class_equip_types(d)
 
     for name, rows in [("growth", growth), ("command_learn", command_learn), ("unit", unit), ("character_defaults", characters), ("spell", spell),
                        ("item", item), ("native_item_effect_rows", native_item_effect_rows),
+                       ("native_movement_cost_rows", native_movement_cost_rows),
                        ("resist_crit", rc), ("class_equip_types", equip)]:
         write_out(out, name, rows)
         print(f"  -> {name}.json  ({len(rows)} 列)")

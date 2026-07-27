@@ -1024,6 +1024,13 @@
   class/level 加 raw accumulator，再由兩次 `0x22253` 寫
   `0xff/0xff→destination cursor`。dispatcher 保留 item ID101；
   `NativeItemRelocationRoute`／executor 與 MP-wrap/preflight fixture 已補。
+- [x] **RE-RELOCATION-MODE6-LEGALITY**：`0x115b6` mode6 Enter predicate
+  已資料化：selected target 不算 occupant；其他同座標且 raw
+  `+5 bit0==0` 的 record 阻擋。target selector 通常取 class `+0x20`，
+  `+7==0x1c` 改1，class `0x13`／race `4,5` 改19；`0x4e555` 的
+  29×20 row 在 resolved terrain index 必須為 literal20。新增 editable
+  `native_movement_cost_rows.json`、strict loader、pure adapter 與 fixture
+  regression；cursor UI/27-present renderer仍未接。
 - [x] **RE-RAW-WORD-SUBTRACT-ADDRESS-CORRECTION**：Docker Capstone 證實
   word `+0x44` subtract 位於 `0x1ca89`，`0x1cac7` 是 allocation、
   `0x1cb94` drawing 與四輪 320×192 present helper。修正 adapter attribution

@@ -148,7 +148,11 @@ raw accumulator。兩次 `0x22253` 先以原座標演出並寫 `0xff/0xff`，
 再寫 destination cursor globals 至 target `+0/+1`；不走 path traversal，
 dispatcher 也不移除來源物品。tracked item ID101 的 row word1 不被
 handler 使用。`NativeItemRelocationRoute`／executor 保存這些 state
-mutation；mode-6 indexed renderer 與 Ebiten UI 尚未接。
+mutation。mode-6 落點 predicate 也已資料化：除 selected target 外，
+任何同座標且 raw `+5 bit0==0` 的 record 都阻擋；movement selector
+通常取 target class `+0x20`，`+7==0x1c` 改1，否則 class `0x13` 或
+race `+0x1f∈{4,5}` 改19；`0x4e555` 對應 29×20 table 的目的地 terrain
+entry 必須等於20。indexed renderer 與 Ebiten UI 尚未接。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 

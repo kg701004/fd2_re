@@ -194,6 +194,9 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   accumulator delta，最後把 destination cursor bytes 寫入 target
   `+0/+1`。actor gate 是 identity `+8==24`、max MP `+0x46>=20`；
   dispatcher 保留來源物品。落點 mode-6 raw legality已定位，但完整
+  predicate 現由 `NativeRelocationDestinationAllowed` 保存：排除 other
+  raw-active occupant，依 target class/race/unit+7 選 29×20
+  `0x4e555` editable cost row，目的地 terrain entry 必須為20。完整
   indexed renderer/Ebiten selector仍未接。
 - **[阻] 轉職系統**:攻略層有(Lv20+教會、轉職道具表 58h–60h→英雄/聖者/召喚師…,doc 02 §5.10);反組譯機制(職業數值替換、能力繼承、成長表切換)未做。
 - **[阻] 轉職與 sprite**:角色 id = 肖像 = sprite組 恆等(doc 31,memory.md 權威);轉職後換成轉職態肖像編號(memory.md 0x20–0x41),sprite組是否隨之切到另一組**待反組譯轉職碼確認**。⚠ 舊版「凱拉斯組17→49、轉職當機」已作廢(DATO_067 誤判,凱拉斯實為 id16,三者恆等)。
