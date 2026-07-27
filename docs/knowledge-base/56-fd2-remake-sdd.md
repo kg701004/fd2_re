@@ -438,7 +438,7 @@ actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore 
 | 13–16 | `0x21AD9…0x22153→21B18→1C8ED/1C916` | `ExecuteNativeCommandHeal` | 專用 animation/SFX/grid confirm 未接 |
 | 17–19 | `0x226EA/2282F/22960` modifier writers、`+0x22..+0x24` duration；`__CHP` toward-zero 已釘死 | `ApplyNativeCommandModifier` 僅 dispatch 到已閉合 raw word/pair branches；derived-base/equipment recompute、transaction 仍未接 | 未接 |
 | 20–21 | `0x22A85/22BC6→22AF6`，clear `+0x25/+0x26` 並借 record10 restore | `ExecuteNativeCommandClearRestore` | 未接 |
-| 22 | `0x22BE1→22D1B`，class/RNG gate、fixed 10 HP、write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
+| 22 | `0x22BE1→22D1B`，class/RNG gate、base10 經第二 RNG 實際9 HP、第三 RNG write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
 | 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
 | 24 | 玩家 `2A6BD→276EC→2B659/1CA89→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | `ExecuteNativeCommand24`（state-only final delta） | multi-hit／SFX／native UI 未接 |
 | 28, 29, 31 | 同玩家 `276EC` derived-strike route，倍率分別 20、12、18；各自 record MP/一般 two-stage selector | `ExecuteNativeCommandDerivedStrike` | multi-hit／SFX／native UI 未接 |
@@ -975,8 +975,9 @@ are: `5/13→0x211a4`, `6→0x22af6` subcommand `0x14`,
 `22→0x22d1b/0x16`, `23→0x2218a`. `NativeItemEffectRouteForType`
 preserves the whole raw map; typed closures now supersede its opaque boundary
 for 5/13 (HP restore with consume/retain split), 8/9/10 (permanent base
-AP/DP/DX), 11 (consumable MP restore), and 12 (retained HIT/EV +15,
-marker-gated). Remaining branches must not receive
+AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
+14/22 (retained marker application with randomized HP damage), and 15/16
+(retained derived DP/AP modifier). Remaining branches must not receive
 gameplay labels until their caller/callee contracts are closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
@@ -1003,9 +1004,17 @@ the source is retained. `NativeItemHITEVStepRoute` /
 HIT/EV increment and retention; tracked ID210 supplies this type. Presentation
 and marker display name remain outside scope.
 
-The `0x22d1b` path is intentionally kept separate from that family. Its raw loop skips a nonzero `record+a5` or class byte `+0x20` equal to `0x19/0x1a`; otherwise the first `0x4e893()%100` remainder must be `<50`, then it calls `0x1c81f(unit,10)`, advances RNG again, writes `(rng%4)+2` to `record+a5`, and adds `8*record[+0x21]` to the raw presentation accumulator. This is an evidence-only branch map: the HP writer and renderer are separate contracts, and no status/effect name is inferred.
+The `0x22d1b` path is separate from the word/pair modifier family. Its loop
+skips a nonzero marker or class `0x19/0x1a`; otherwise the first RNG remainder
+must be `<50`. It then calls `0x1c81f(unit,10)`, which consumes a **second**
+RNG and applies `10*9/10 + (rng%100)*10/1000 = 9` HP damage, before a
+**third** RNG writes `(rng%4)+2` to the marker. The earlier “two RNG draws /
+fixed 10 HP damage” statement was incorrect and is removed.
 
-The raw mutation is now executable without normalized command semantics: `battle.ApplyNativeRawHPDamage` preserves the `0x1c81f` subtract/clamp core, and `battle.ApplyNativeRawApplication` preserves the `0x22d1b` marker-zero/class gate, two RNG draws, marker write, and `8*record[+0x21]` accumulator. Its presentation and status meaning remain fail-closed.
+`ApplyNativeRawApplication` preserves this three-draw sequence. Typed item
+callers 14/22 select marker `+0x26/+0x27`, retain their source slots, and are
+exposed by `ApplyNativeItemMarkerApplication`; tracked rows are ID212/57.
+The marker/status display name and presentation remain fail-closed.
 
 Official IDA 9.4 decompilation of `0x22253` closes the command-23 state write: after its indexed renderer work, it writes the supplied final `a13/a14` bytes to `record[+0]/record[+1]`. Caller `0x2218a` passes `0xff/0xff` as the pre-render pair and cursor globals as the final pair. `battle.SetNativeUnitCoordinateBytes` preserves only this raw write; movement pathfinding, camera, indexed presentation, and cursor semantics remain separate.
 

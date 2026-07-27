@@ -9,7 +9,6 @@ import (
 )
 
 // NativeRawWordStepResult records the mutation-only portion of 0x22721.
-// Offsets and values remain raw; no gameplay effect is inferred.
 type NativeRawWordStepResult struct {
 	UnitIndex int
 	Processed bool
@@ -20,15 +19,16 @@ type NativeRawWordStepResult struct {
 // ApplyNativeRawWordStep reproduces 0x22721's per-unit branch.  Each index
 // addresses one 0x50-byte record. A nonzero record+0x22 is skipped. Otherwise
 // the shared 0x4e893 RNG advances, marker+0x22 receives (rng%4)+2, and the
-// word at +0x48 gains trunc(word*0.15+1) with native toward-zero semantics.
+// derived AP at +0x48 gains trunc(AP*0.15+1) with native toward-zero semantics.
 // The returned score is the raw 2*effective(+0x21) accumulator. Renderer and
 // presentation calls are deliberately excluded.
 func ApplyNativeRawWordStep(records []byte, unitIndices []byte, rngState uint16) ([]NativeRawWordStepResult, uint16, int, error) {
 	return ApplyNativeRawWordStepAtOffsets(records, unitIndices, rngState, 0x22, 0x48)
 }
 
-// ApplyNativeRawWordStepAtOffsets is the shared raw implementation used by
-// the 0x22721 (+0x22/+0x48) and 0x22866 (+0x23/+0x4a) native branches.
+// ApplyNativeRawWordStepAtOffsets is the shared implementation used by
+// 0x22721 (+0x22/derived AP +0x48) and
+// 0x22866 (+0x23/derived DP +0x4a).
 func ApplyNativeRawWordStepAtOffsets(records []byte, unitIndices []byte, rngState uint16, markerOffset, wordOffset int) ([]NativeRawWordStepResult, uint16, int, error) {
 	if markerOffset < 0 || markerOffset >= nativeRecordSize || wordOffset < 0 || wordOffset+2 > nativeRecordSize {
 		return nil, rngState, 0, fmt.Errorf("native raw word offsets marker=%#x word=%#x out of bounds", markerOffset, wordOffset)

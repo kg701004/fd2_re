@@ -5,6 +5,17 @@ import (
 	"testing"
 )
 
+type countingZeroSource struct {
+	draws int
+}
+
+func (s *countingZeroSource) Int63() int64 {
+	s.draws++
+	return 0
+}
+
+func (s *countingZeroSource) Seed(int64) {}
+
 func nativeCommandApplicationBook(id int) []NativeCommandRecord {
 	book := make([]NativeCommandRecord, 36)
 	for i := range book {
@@ -26,17 +37,32 @@ func passingNativeApplicationRNG(t *testing.T) *rand.Rand {
 	return nil
 }
 
-func TestExecuteNativeCommandApplicationUsesRawDurationAndFixedDamage(t *testing.T) {
+func TestExecuteNativeCommandApplicationUsesThreeRNGDrawsAndNativeDamage(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 26, passingNativeApplicationRNG(t))
-	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Damage != 10 || got[0].Duration < 2 || got[0].Duration > 5 {
+	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Damage != 9 || got[0].Duration < 2 || got[0].Duration > 5 {
 		t.Fatalf("application = %#v, %v", got, err)
 	}
-	if target.HP != 10 || target.NativeTransient[3] != got[0].Duration || actor.MP != 3 || !actor.Acted {
+	if target.HP != 11 || target.NativeTransient[3] != got[0].Duration || actor.MP != 3 || !actor.Acted {
 		t.Fatalf("post application actor=%#v target=%#v", actor, target)
+	}
+}
+
+func TestExecuteNativeCommandApplicationConsumesGateDamageMarkerDraws(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
+	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
+	source := &countingZeroSource{}
+
+	got, err := st.ExecuteNativeCommandApplication(actor, target, 22, rand.New(source))
+	if err != nil || len(got) != 1 || !got[0].Applied {
+		t.Fatalf("application = %#v, %v", got, err)
+	}
+	if source.draws != 3 || got[0].Damage != 9 || got[0].Duration != 2 {
+		t.Fatalf("draws=%d result=%+v", source.draws, got[0])
 	}
 }
 
@@ -57,7 +83,7 @@ func TestExecuteNativeCommandApplicationSupportsRecoveredIDTwentyTwo(t *testing.
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 22, passingNativeApplicationRNG(t))
-	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Offset != 0x27 || target.NativeTransient[5] != got[0].Duration || target.HP != 10 {
+	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Offset != 0x27 || target.NativeTransient[5] != got[0].Duration || target.HP != 11 {
 		t.Fatalf("ID22 application = %#v actor=%#v target=%#v err=%v", got, actor, target, err)
 	}
 }

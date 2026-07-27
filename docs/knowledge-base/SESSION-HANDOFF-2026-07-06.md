@@ -465,10 +465,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 native command 22 application closure（official IDA 9.4 ASM）：`0x22BE1→0x22CDA→0x22D1B` 對 final target 先檢查 `+0x27==0`、class `+0x20` 非 `0x19/0x1a` 及 `rand()%100<0x32`；三者成立才以 `0x1C81F(target,10)` 固定扣 10 HP、display damage、寫 `rand()%4+2` 至 `+0x27`，否則只失敗 display。未命名 status、tick/UI/remake integration，禁止以 raw offset 臆測。
 - 2026-07-26 transient command duration lifecycle correction（official IDA 9.4 ASM）：`0x1A30B` 傳 raw selector 給 `0x1A866`；第二段 sweep gate 是 `record+6 == selector` 且 `(record+5 & 1)==0`，不可宣稱 active/alive/same-camp normalized equivalence。通過 gate 後對 `+0x22..+0x27` 六個 duration byte 各自 decrement，任一歸零才顯示 expiry feedback 並呼 `0x1B750` 重算 derived AP/DP/HIT/EV。故 command17..22 寫入的 `rand()%4+2` 是 camp-phase duration，非每 action/frame timer；status names/icons/UI/remake state未接。
 - 2026-07-26 native command 23 relocation boundary（official IDA 9.4 ASM）：ID23 走 `0x1CFF0` command-`0x17` special selector；`0x2218A` 用 record23 扣 MP，對 selected unit 兩次呼 `0x22253`。C stack ABI 釘住第一次 direct write unit `+0/+1=0xff/0xff`（原座標離場演出），第二次 direct write `+0/+1=0x51CF9/0x51CFD` cursor globals（入場演出）。這證實直接格座標 relocation、非 path movement；落點 legality/UI/camera/renderer 未閉合。
-- 2026-07-26 native commands 25..27 closure（official IDA 9.4 ASM）：ID25 `0x22C04` 以 record25 MP debit，僅在 final target `unit+5 bit0x80` 已設時清 bit；ID26 `0x22CBF`、ID27 `0x22E41` 只換 command ID 與 `+0x25/+0x26` flag offset，皆進 ID22 的 `0x22CDA→0x22D1B` application helper，保留 zero/class/RNG gate、10 HP damage、`rand()%4+2` duration。故 ID20/26 與 ID21/27 分別是 direct raw clear/apply pairs；status names/UI/remake integration未接。
+- 2026-07-26 native commands 25..27 closure（後續 RNG/damage 勘誤）：
+  ID25 清 raw bit；ID26/27 復用 ID22 `0x22d1b` 到 `+0x25/+0x26`。
+  當時把 argument10 誤寫成 fixed-10 damage；後續完整 trace 證實它是
+  `0x1c81f` base amount，另耗 damage RNG，實際9 HP，再耗第三 RNG
+  寫 marker。status names/UI 仍未接。
 - 2026-07-26 raw transient data-layer correction：`battle.Unit.NativeTransient[6]` 現保存原始 `+0x22..+0x27`，並以 optional `NativeRecordByte5/6` 保存 gate provenance；`State.TickNativeTransientsRaw(selector)` 缺 raw gate 時 fail-closed。舊 normalized `TickNativeTransients(camp)` 不再猜測 selector 映射；不混用 legacy normalized Buff/Poison/Seal/Paralyze timers，也尚未自動做 `0x1B750` equipment/stat recompute。
 - 2026-07-26 native command25 engine slice：`State.ExecuteNativeCommand25` 依 `0x22C04` 只接 generic two-stage targets、record25 MP debit 與 final target `Acted` clear-if-set；wrapper-success 後才設 actor acted。缺 raw book/flags、invalid confirmation 或 MP不足均在 mutation 前拒絕。UI/renderer/message feedback 未接，且不重用 normalized CastArea。
-- 2026-07-26 native commands22/26/27 engine slice：`State.ExecuteNativeCommandApplication` 只接受 IDs22/26/27，依各 record generic two-stage targets/MP debit；final target 需 raw `+0x27/+0x25/+0x26==0`、class 非 `0x19/0x1a`、`rand()%100<50` 才 fixed-10 HP damage 並寫 `rand()%4+2` raw duration。target gate 失敗時不 mutation，但已成功 handler 仍耗 MP/actor completion；不映射 legacy Poisoned/Paralyzed，UI/renderer未接。
+- 2026-07-26 native commands22/26/27 engine slice（後續已修正）：
+  `ExecuteNativeCommandApplication` 接 two-stage targets/MP；marker/class/
+  50% gate 通過後，現正確消耗 damage RNG 並套 base10→actual9 HP，
+  再消耗第三 RNG 寫 marker。失敗 target 不 mutation，command transaction
+  仍耗 MP/完成 actor；不映射 legacy status 名稱。
 - 2026-07-26 native commands20/21 engine slice：`State.ExecuteNativeCommandClearRestore` 只接受 IDs20/21，依各 record generic targets/MP debit；final target 的 `+0x25/+0x26` 非零時，以 **record10** amount 走 `0x1C916` formula/HP cap 後清同 raw byte，empty flag仍是 successful command completion。`ApplyNativeCommandRestore` 分離 rolled display amount 與 actual HP delta；不映射 legacy named status，UI/renderer未接。
 - 2026-07-26 native commands13..16 engine slice：`State.ExecuteNativeCommandHeal` 只接受 IDs13..16，使用自己的 raw record generic targets/MP debit/`0x1C916` restore-cap/actor completion；與 IDs20/21 借 record10 的 clear/restore route 分開。專用 indexed animation、SFX/message/UI未接，保持 fail-closed。
 - 2026-07-26 native damage route correction for IDs0..12（official IDA 9.4 ASM）：`0x21548` 開頭 `0x1CA89(actor,id)` 扣 MP，尾端 final target loop 直接 `0x1C75E(target,id)`；ID10 `0x21527`、ID11 `0x2185F`、ID12 `0x21A9E` 皆可閉合 numeric core，ID9 亦 direct `1CA89→1C75E`，IDs0..8 則是 `2A6BD→2B659/1C75E` direct family。`ExecuteNativeCommandDamage` bounded range 恢復 0..12；presentation/SFX 不推論相同。
@@ -648,7 +656,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 raw word growth closure（official IDA 9.4）：`0x22721` 對 index byte list 逐筆 gate `record+0x22==0`；成功才 RNG→marker `+0x22`、`trunc(word+0x48*0.15+1)` 寫回 `+0x48`、score `2*effective(+0x21)`。新增 `battle.ApplyNativeRawWordStep`，保留 marked skip、RNG state、16-bit word wrap 與 preflight bounds；未接 renderer/`0x1317d` tail，未命名 gameplay stat。
 - 2026-07-26 0x22866 family closure：Capstone 確認同一 growth arithmetic 只換 marker `+0x23`／word `+0x4a`；`ApplyNativeRawWordStepAtOffsets` 共用 raw adapter，variant regression 通過，不猜 gameplay 欄位。
 - 2026-07-26 0x22997 pair mutation closure：Capstone 固定 marker `+0x24`、成功後 `+0x4c/+0x4e` 各加 `0x0f`、score `2*effective(+0x21)`；新增 `battle.ApplyNativeRawPairStep`，16-bit wrap 與 marked skip regression 通過，renderer/tail 不接。
-- 2026-07-26 0x22d1b branch audit：Capstone 固定 raw `a5` zero gate、class `+0x20` 排除 `0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker `(rng%4)+2` 與 score `8*record+0x21`。未接 runtime，未把 type14/branch 命名成 status，避免和 17–19 modifier family 混淆。
+- 2026-07-26 `0x22d1b` branch audit（後續 RNG 勘誤）：marker/class gate
+  與第一 RNG 50% 正確；但 `0x1c81f(unit,10)` 內部另耗第二 RNG，
+  marker 是第三 RNG，不是第二。base amount10 的整數 damage 為9。
 - 2026-07-26 command-23 coordinate write closure（official IDA 9.4）：`0x22253` 最終將 supplied `a13/a14` 寫回 unit raw `+0/+1`；`0x2218a` 先傳 `0xff/0xff`，再用 cursor pair。新增 `battle.SetNativeUnitCoordinateBytes`，只接 raw writer，不接 renderer/pathfinding。
 - 2026-07-27 persistent identity lookup closure（Docker Capstone）：`0x24bde` 逐 persistent record（caller count、上限32、stride `0x50`）比較 raw `+0x08` unsigned byte，命中回1、缺失回0；新增 `battle.FindNativePersistentIdentity` first-index/read-only/bounds regression。此 raw field 仍只稱 identity lookup，不命名 portrait/Fig/NPC。
 - 2026-07-27 raw identity plumbing：`PartyMember.native_identity`（可選 JSON）與 `Unit.NativeIdentity`/presence flag 已加入；`syncPartyFromBattle` 對明確 raw key 走 persistent `+0x08` matching，未知 key fail-closed，缺欄位才沿用 Fig projection。新增 loader range、不得由 Fig 推導、Fig 不同仍能同步的 regression。全 roster/save/export 尚未攜帶 raw record，`SYNC-PARTY-RAW-IDENTITY-GATE` 維持 `[~]`。
@@ -697,7 +707,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 raw gate-table verification：Docker `data 0x526b9 0x30` 讀出 `byte_526b9[22..24]`、`[27..29]`=`1`，其餘 town 範圍 `[0..21]`、`[25..26]`=`0`；配合 `0x2cad7` branch 明確證實 nonzero 是 preparation-only，zero 才進 selectable town hub。此修正只補 table provenance，不替 raw gate 命名高階劇情。
 - 2026-07-27 official IDA `0x2e341/0x2fc85` hub subscene closure：shop raw selection/resource branches dispatch `0x2f0b0/0x2f642/0x2f883/0x2f8ea`，hotel choices dispatch `0x2ffa5/0x30012/0x301f4/0x197e5` path；Hex-Rays 固定各子場景完成後 indexed fade 回 hub。未知 callee 僅留 address-level，未命名 normalized service。
 - 2026-07-27 `0x22af6` raw flag restore closure（Docker Capstone/Go）：新增 `battle.ApplyNativeRawFlagRestore`，paired nonzero flag 才呼 raw `0x1c916(target,10)`、清 flag、累加 `effective*4`（class 9..24 bonus）；flag/status/UI 維持 fail-closed。
-- 2026-07-27 `0x22d1b` raw application closure（Docker Capstone/Go）：新增 `battle.ApplyNativeRawApplication`／`ApplyNativeHPDamage`，保存 marker-zero/class `0x19/0x1a` gate、兩次 RNG、raw HP subtract、marker `(rng%4)+2` 與 `8*+0x21` accumulator；presentation/status 不猜。
+- 2026-07-27 `0x22d1b` raw application closure（後續修正）：adapter
+  現保存 gate/damage/marker 三 RNG、base10→actual9 HP、marker與
+  accumulator；normalized command executor 同步修正。status 名稱不猜。
 - 2026-07-27 README／markdown scope audit：根 README 改為資產／RE／引擎切片／原版差距四欄狀態表，加入 title/dialogue/battle/preparation/church/overlay 圖片；`remake/README`、`00-index`、`20`、`22`、`90`、`51` 與 worklist 均降級過強的「全 30 章／只剩整合」宣稱。專題 RE 文件不合併，保留 address-level provenance；完成度以 README→SDD56→gap42→worklist91 路線判讀。
 - 2026-07-27 `0x24d22` branch audit（Docker Capstone）：非零 arg 僅寫 global `0x51a10` low byte 後返回；零 arg 才配置／copy stride `0x138` indexed buffers 並走 `0x37416` free。global 與 copy loop 保持 raw/evidence-only，不命名成 fade、cursor 或 UI renderer。
 - 2026-07-27 `0x24e80` raw marker rewrite closure（Docker Capstone）：runtime slot `0x10..count-1` 中，只有 record `+0x07==0x1f` 才寫 `+0=0x10/+1=0x06`；新增 `battle.RewriteNativeMarker1F` regression。欄位保持未命名，不接 renderer/identity。
@@ -808,3 +820,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   derived HIT/EV `+0x4c/+0x4e` 各加15。新增
   `NativeItemHITEVStepRoute`／`ApplyNativeItemHITEVStep`，ID210
   fixture regression 固定 retained-source contract；marker UI 名稱不猜。
+- 2026-07-27 type15/16 AP/DP item routes：dispatcher 分別走
+  `0x22866/0x22721` 並直接 cleanup，來源保留；type15 marker
+  `+0x23`／derived DP `+0x4a`，type16 marker `+0x22`／derived AP
+  `+0x48`，成功增加 `trunc(current×0.15+1)`，marked target 不耗 RNG。
+  新增 typed route/executor 與 IDs213/214 fixture regression。
+- 2026-07-27 type14/22 marker application + correction：完整 Docker
+  trace 證實 marker/class gate 後依序消耗 gate RNG、`0x1c81f` damage
+  RNG、marker RNG；base amount10 實際減9 HP，而非舊斷言 fixed10。
+  type14/22 markers=`+0x26/+0x27` 且來源保留。新增
+  `NativeItemMarkerApplicationRoute`／executor 與 IDs212/57 regression；
+  `ExecuteNativeCommandApplication` 亦修成三 draws。status/UI 名稱未知。

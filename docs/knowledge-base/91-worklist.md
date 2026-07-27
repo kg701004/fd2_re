@@ -347,7 +347,13 @@
 - [~] **transient command duration lifecycle**：official IDA/Capstone 固定 `0x1A866` gate 為 `record+6 == selector` 且 `(record+5 & 1)==0`，direct callers 已觀察 `0x1a4d1→push1`、`0x1a55e→push0`、`0x1a797→push2`；另有 `0x1a30b` 內部 `record+6==2` sweep，不能混成同一 phase。通過 raw gate 後，六個 bytes `+0x22..+0x27` 才逐一 decrement，歸零才發 expiry feedback 並 `0x1B750` 重算 derived stats。remake 現以 `NativeRecordByte5/6` 保存 provenance，`TickNativeTransientsRaw` fail-closed；舊 `TickNativeTransients(camp)` 不再猜測映射。selector→campaign phase、expiry equipment recompute、UI/status icon 或 native command executor 仍未接，故不可稱 gameplay 完成。
 - [~] **native command 23 special relocation**：`0x2218A→0x22253` 已確認先把 selected unit `+0/+1` 寫 `0xff/0xff` 以作離場演出，再直接寫 selector cursor globals `0x51CF9/0x51CFD` 進場；這是 direct coordinate relocation，非 path movement。其 `0x17` special selector 的落點合法性、camera/render/UI 和 remake integration 尚未閉合。
 - [x] **RE-RAW-BYTE6-FDFIELD-CONSTRUCTOR**：`parse_field.py` 保存 FDFIELD roster b0 的 `native_record_byte6`，`export_units.py` 將其寫入 units JSON；`battle.Load`／`Scenario.PartyUnits` materialize raw `+6`（own party=2，map selector key 亦保留 direct provenance）。這只閉合 constructor source，不替 `+6` 命名 camp 或 phase 語意。
-- [~] **native commands 25..27 closure**：ID25 `0x22C04` 以 record25 MP debit，僅在 target `+5 bit0x80` 已設時清除該 raw bit；`ExecuteNativeCommand25` 已接 strict non-UI engine slice（two-stage targets、MP、target clear、raw actor writer，invalid raw state pre-mutation reject）。ID26/27 `0x22CBF/0x22E41` 分別復用 ID22 的 application helper 到 `+0x25/+0x26`，同樣有 class/RNG gate、固定 10 HP damage 與 2..5 duration；`ExecuteNativeCommandApplication` 已以 raw duration storage 接 strict non-UI engine slice（gated target 不 mutation，但 successful handler 仍 debit MP/raw-completion writer）。20↔26、21↔27 的 raw clear/apply pair 已閉合；UI/status labels/其餘 engine integration 待。
+- [~] **native commands 25..27 closure**：ID25 `0x22C04` 以 record25
+  MP debit，僅在 target `+5 bit0x80` 已設時清 raw bit；
+  `ExecuteNativeCommand25` 已接 strict non-UI slice。ID26/27 復用
+  `0x22d1b` 到 `+0x25/+0x26`；舊「固定10 HP／兩 RNG」已修正為
+  gate RNG→damage RNG（base10 實際9 HP）→duration RNG 三 draws。
+  `ExecuteNativeCommandApplication` 已同步修正。UI/status labels 與其餘
+  engine integration 待。
 - [~] **native command IDs10..12 compositor family**：ID10 `0x21527`、ID11 `0x2185F`、ID12 `0x21A9E` 都會進 `0x21548` 的 320×200/640-stride indexed presentation；**修正舊斷言**：其尾端已直接定位 `1CA89→per-target 1C75E`，故 numeric state core 已由 `ExecuteNativeCommandDamage` 支援。`0x2189A/219AD` scroll/composite、專用演出/SFX/UI 仍待，不可從數值共用推論 visual equivalence。
 - [x] **scenario native command-mask bridge**：`PartyMember.initial_command_mask` 已接 exact four-byte source，loader 對 malformed length fail-closed；`gen_campaign.py` 從 EXE `character_defaults.json` 依角色 index 合併至 ch01..ch30 而不覆寫既有手工 scenario 欄位。戰後 persistent snapshot 也保留完整五-byte runtime mask，level-up OR 不會跨 town/preparation 消失。ch01 悠妮 `[1,0,0,0]` 有 per-scenario materialization regression；不可由 normalized `Spells` 反造 raw bytes。待：逐章真機 availability 對照、未知 command effect／frame renderer。
 - [~] **魔法系統**（資料表與基礎 Cast 已接，native command/effect 尚未閉合）:magic.go(spells.json=EXE dump 36條+normalized spell names;InCastRange/Cast
@@ -929,7 +935,11 @@
   `2*effective(+0x21)`；新增 `ApplyNativeRawPairStep` 覆蓋
   wrap/marked skip/preflight。後續 equipment cross-check 已將兩 words
   定案為 derived HIT/EV，type12 caller closure 見下方。
-- [~] **RE-ITEM-22D1B-BRANCH**：Docker Capstone 固定 `0x22d1b` 的 raw `a5` marker gate、class `+0x20 != 0x19/0x1a`、第一 RNG `%100<50`、`0x1c81f(unit,10)`、第二 RNG marker 與 `8*record+0x21` accumulator。保持 evidence-only，不能誤稱 type14 為 status 或併入 17–19 modifier。
+- [x] **RE-ITEM-22D1B-BRANCH**：Docker Capstone 重核撤回舊「兩次 RNG/
+  固定10 damage」：gate RNG 成功後 `0x1c81f(base=10)` 消耗第二 RNG，
+  實際減9 HP；第三 RNG 才寫 marker。type14/22 item caller 使用
+  `+0x26/+0x27` 並保留來源；`ApplyNativeItemMarkerApplication`
+  保存 class gate、三次 RNG 與 atomic mutation。status 名稱仍未知。
 - [x] **RE-COMMAND23-COORD-WRITE**：官方 IDA 9.4 閉合 `0x22253` 尾端 `record[+0]=a13`、`record[+1]=a14`；`0x2218a` caller 的 `0xff/0xff` 是 pre-render pair，最後寫 cursor-derived pair。新增 `battle.SetNativeUnitCoordinateBytes` raw writer/regression；renderer/pathfinding 仍未接。
 - [x] **RE-PERSISTENT-IDENTITY-LOOKUP-24BDE**：Docker Capstone 閉合 `0x24bde` 的 raw lookup：掃 caller-supplied persistent count（native capacity 32），stride `0x50`，只比較 record `+0x08` unsigned byte，命中即回 1、否則 0。新增 `battle.FindNativePersistentIdentity`，保留 first-index/read-only/bounds regression；不把 `+8` 泛化成 portrait、Fig 或 NPC identity。
 - [~] **SYNC-PARTY-RAW-IDENTITY-GATE**：`PartyMember.native_identity`/`Unit.NativeIdentity` 已可選地攜帶 native persistent `+0x08`，`syncPartyFromBattle` 有 raw-key matching 與 unknown-key fail-closed regression；缺欄位時才保留 Fig projection。仍未完成全 roster/save/export 的 raw record 接線，故不宣稱 byte-identical。
@@ -990,7 +1000,16 @@
 - [~] **RE-ITEM-EFFECT-2111A**：Docker Capstone 已閉合 type `21` 的 raw topology：`0x1c4cc` → `0x1cac7`，由 `0x4e516` 來源 byte 對 selected record `+0x44` 做 16-bit subtract，再走 target-list predicate/presentation；來源 byte、list ABI 與玩法名稱保持 fail-closed。
 - [~] **RE-RAW-WORD-SUBTRACT-1CAC7**：新增 `battle.ApplyNativeRawWordSubtract`，保存 `0x1cac7` 的顯式 word offset、byte-sized subtract、low-16 wrap 與 preflight bounds；不把 raw word 命名成 MP 或 item effect。
 - [~] **RE-RAW-FLAG-RESTORE-22AF6**：新增 `battle.ApplyNativeRawFlagRestore`，保存 paired target/flag preflight、nonzero→`0x1c916(target,10)`、flag clear 與 `effective*4` raw accumulator；不命名 flag/status 或接 UI。
-- [~] **RE-RAW-APPLICATION-22D1B**：新增 `battle.ApplyNativeRawApplication`／`ApplyNativeRawHPDamage`，保存 marker-zero/class `0x19/0x1a` gate、兩次 RNG、`0x1c81f` HP subtract、marker `(rng%4)+2` 與 `8*+0x21` accumulator；presentation/status 維持 fail-closed。
+- [x] **RE-RAW-APPLICATION-22D1B**：`ApplyNativeRawApplication`／
+  `ApplyNativeRawHPDamage` 保存 marker-zero/class gate、gate/damage/
+  marker 三次 RNG、base10→actual9 HP subtract、marker `(rng%4)+2`
+  與 accumulator；normalized command executor 亦修正為消耗三個 random
+  draws。presentation/status 維持 fail-closed。
+- [x] **RE-ITEM-TYPE15-16-AP-DP**：type15 marker `+0x23`／derived
+  DP `+0x4a`，type16 marker `+0x22`／derived AP `+0x48`；成功增
+  `trunc(current×0.15+1)`，marked target 不耗 RNG，來源保留。新增
+  `NativeItemAPDPStepRoute`／`ApplyNativeItemAPDPStep` 與
+  IDs213/214 fixture regression；marker UI 名稱仍未知。
 - [~] **RE-RAW-BUFFER-LATCH-24D22**：Docker Capstone 重讀 `0x24d22(arg)`：`arg!=0` 只把低 byte 寫入 global `0x51a10` 後返回；`arg==0` 配置 `latch*0x138` bytes，從 `0x53aff+(0xc0-latch)*0x138` 複製，接著以 `0xbf-latch` 向下做 `0x138` bytes row copy，最後再 copy 一列並經 `0x37416` free。此輪只保存 setter/render 分支與 loop 邊界，不命名 global 或把 copy loop 當 generic fade；renderer adapter 仍 fail-closed。
 - [x] **RE-RAW-MARKER-REWRITE-24E80**：Docker Capstone 閉合 `0x24e80` 的 raw mutation：從 runtime slot `0x10` 到 caller count，若 record `+0x07==0x1f`，寫 `+0=0x10`、`+1=0x06`。新增 `battle.RewriteNativeMarker1F` 與 prefix/nonmatching/bounds regression；欄位仍不命名，不接 renderer 或 roster identity。
 - [~] **RE-CHAPTER-CALLER-24838**：Docker Capstone 重讀唯一 `0x24bde` caller `0x24838`：先以 `0x24b14(0x64)` 分支，成功臂 `dialog #8→join(0x16)`；接著 `0x24bde(0x12)` 命中才走 `dialog #10→acting #0x48→0x32975(0x11)`，缺失時再依 global count `0x53bef<0x0f` 分成 `dialog #13→join(0x13)` 或 `dialog #12→0x32975(0x11)`，共同 sync/presentation 後才進後續 handler。只保存 raw call order；不把 `0x64`、`0x12`、`0x16/0x13` 命名成道具／角色／章節語意，runtime campaign binding 仍 fail-closed。

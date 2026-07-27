@@ -160,6 +160,48 @@ func TestTrackedHITEVStepItemRow(t *testing.T) {
 	}
 }
 
+func TestTrackedAPDPModifierItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID int
+		typ    byte
+		stat   NativeItemDerivedStat
+	}{{213, 15, NativeItemDerivedDP}, {214, 16, NativeItemDerivedAP}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		if row[0x0d] != tc.typ {
+			t.Fatalf("item %d effect type = %#x, want %#x", tc.itemID, row[0x0d], tc.typ)
+		}
+		route, ok := NativeItemAPDPStepRouteForType(row[0x0d])
+		if !ok || route.DerivedStat != tc.stat || route.ConsumesSource {
+			t.Fatalf("item %d AP/DP route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
+func TestTrackedMarkerApplicationItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID int
+		typ    byte
+		marker int
+	}{{212, 14, 0x26}, {57, 22, 0x27}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		if row[0x0d] != tc.typ {
+			t.Fatalf("item %d effect type = %#x, want %#x", tc.itemID, row[0x0d], tc.typ)
+		}
+		route, ok := NativeItemMarkerApplicationRouteForType(row[0x0d])
+		if !ok || route.MarkerOffset != tc.marker || route.ConsumesSource {
+			t.Fatalf("item %d marker route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

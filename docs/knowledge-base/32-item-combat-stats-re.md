@@ -119,7 +119,10 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   215-row raw prefix 已獨立匯出並由 loader regression 固定。table 最終
   長度與其餘未命名欄位仍未證實；只有已全表交叉的 `+1/+3/+5/+7`
   可命名為 AP/HIT/DP/EV。
-- `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
+- `0x20c6f` 的 Docker trace 已確認完整 type dispatch；目前 typed gameplay
+  closures 已覆蓋 5/13、8–12、14–16、22。其餘 callee 或 presentation
+  語意仍依個別證據 fail-closed，不能再用「全部效果都未完成」的舊斷言
+  掩蓋已閉合 routes。
 - `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、
   `0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃
   target list 並累加全域結果，但後者的 status/gameplay 名稱仍不可猜測。
@@ -154,10 +157,19 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   `+0x24==0` 的 target，成功才前進 RNG、寫 `(rng%4)+2`，並把 derived
   HIT/EV `+0x4c/+0x4e` 各加 15；dispatcher 不呼 `0x1b8e7`。tracked
   raw row 是 ID210。marker 的玩家可見名稱仍未知。
+- type15/16 已閉合為 retained DP/AP modifier：marker
+  `+0x23/+0x22` 為零才前進 RNG並寫 `(rng%4)+2`；derived
+  DP `+0x4a`／AP `+0x48` 分別增加 `trunc(current×0.15+1)`。dispatcher
+  不移除來源，tracked rows 是 ID213/214。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
 - `0x22af6` common flag branch 已新增 `battle.ApplyNativeRawFlagRestore`：nonzero paired flag 才以 raw `0x1c916(target,10)` 恢復、清 flag、累加 `effective*4`；flag/status 語意與 presentation 保持未命名。
-- `0x22d1b` application branch 已新增 `battle.ApplyNativeRawApplication` 與 `ApplyNativeHPDamage`：保存 marker-zero/class gate、兩次 RNG、raw HP subtract、marker `(rng%4)+2` 與 `8*+0x21` accumulator；不接 status/UI 名稱。
+- `0x22d1b` application branch 的舊「兩次 RNG／固定10 damage」斷言已
+  撤回。正確順序是：gate RNG；成功後 `0x1c81f(...,baseAmount=10)`
+  再消耗 damage RNG，實際整數結果為 9 HP；第三 RNG 寫 marker。
+  type14/22 item callers 分別用 marker `+0x26/+0x27`，來源保留；
+  `ApplyNativeItemMarkerApplication` 保存 class exclusion、50% gate、
+  三次 RNG、HP mutation、marker與 atomic preflight。status/UI 名稱仍未知。
 - type `0x17→0x2218a` 已確認會呼叫 `0x22253` indexed renderer，並寫 target unit `+0/+1`；這是特殊 state/演出 branch，但欄位與玩法語意仍保持 unknown。
 - **[阻] 轉職系統**:攻略層有(Lv20+教會、轉職道具表 58h–60h→英雄/聖者/召喚師…,doc 02 §5.10);反組譯機制(職業數值替換、能力繼承、成長表切換)未做。
 - **[阻] 轉職與 sprite**:角色 id = 肖像 = sprite組 恆等(doc 31,memory.md 權威);轉職後換成轉職態肖像編號(memory.md 0x20–0x41),sprite組是否隨之切到另一組**待反組譯轉職碼確認**。⚠ 舊版「凱拉斯組17→49、轉職當機」已作廢(DATO_067 誤判,凱拉斯實為 id16,三者恆等)。

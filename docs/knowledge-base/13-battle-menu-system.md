@@ -112,6 +112,17 @@ type12 則重用 `0x22997`：target marker `+0x24` 非零時跳過且不耗 RNG�
 dispatcher 直接 cleanup、不移除來源 slot。raw fixture 目前只有 ID210
 走此 type；道具名稱與 marker 的 UI 顯示仍未閉合。
 
+type15/16 也是 retained modifier：type15 以 marker `+0x23` gate，將
+derived DP `+0x4a` 增加 `trunc(DP×0.15+1)`；type16 對 marker `+0x22`
+與 derived AP `+0x48` 做同式。marker 已存在就不耗 RNG，兩條 dispatcher
+都不移除來源；tracked rows 是 ID213/214。
+
+type14/22 共用 `0x22d1b` 且保留來源。marker (`+0x26/+0x27`) 必須為零、
+class 不能是 `0x19/0x1a`；第一 RNG `%100<50` 才呼
+`0x1c81f(target,10)`。注意 10 是 damage base amount：`0x1c81f` 再消耗
+第二 RNG，原生整數公式在 amount=10 時實際減 9 HP；第三 RNG 才寫
+`(rng%4)+2` marker。tracked rows 是 ID212/57。marker 的 status 名稱未知。
+
 type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
