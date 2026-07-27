@@ -649,13 +649,19 @@ func TestCampaignPersistenceStubKeepsInventoryAfterBattleStateClears(t *testing.
 	if n == nil || n.Type != "cutscene" {
 		t.Fatalf("missing chapter four persistence node: %#v", n)
 	}
-	g := newBeatTestGame(t, n.Beats)
+	chapter := 4
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "sync_party"}, {Op: "set_chapter", Chapter: &chapter}})
 	g.partyMembers = map[int]bool{0: true}
-	g.st = &battle.State{Units: []*battle.Unit{{
+	units := make([]*battle.Unit, 50)
+	for i := range units {
+		units[i] = &battle.Unit{Camp: battle.Enemy, Fig: i, OnField: false}
+	}
+	units[0] = &battle.Unit{
 		Camp: battle.Own, Fig: 0, Name: "索爾", Lv: 8,
 		HP: 13, MaxHP: 55, MP: 4, MaxMP: 12, OnField: true,
 		Inventory: []int{0xc0, 0xd2},
-	}}}
+	}
+	g.st = &battle.State{Units: units}
 	g.beatAdvance()
 	if g.loadErr != "" || g.handlerChapter != 4 {
 		t.Fatalf("persistence beats failed: err=%q chapter=%d", g.loadErr, g.handlerChapter)

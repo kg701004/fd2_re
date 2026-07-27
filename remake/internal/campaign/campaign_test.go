@@ -650,8 +650,34 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 38 || fallback != 74 || retreat != 30 || rumor != 23 || postbattle != 17 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 39 || fallback != 73 || retreat != 30 || rumor != 23 || postbattle != 16 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
+	}
+}
+
+func TestCh04PostBindingMaterializesLayoutAndDialogue(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch04_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch04 post compile err=%v issues=%#v", err, issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 50 {
+		t.Fatalf("ch04 runtime context=%#v", beats[:min(len(beats), 1)])
+	}
+	var layout *Beat
+	var dialogs []*Beat
+	for i := range beats {
+		switch beats[i].Op {
+		case "layout_units":
+			layout = &beats[i]
+		case "dialog":
+			dialogs = append(dialogs, &beats[i])
+		}
+	}
+	if layout == nil || len(layout.Layout.Units) != 8 || layout.Layout.Units[7].Slot != 41 || layout.Layout.CamX != 144 || layout.Layout.CamY != 96 {
+		t.Fatalf("ch04 layout=%#v", layout)
+	}
+	if len(dialogs) != 17+2 || dialogs[0].SceneIndex == nil || *dialogs[0].SceneIndex != 5 || dialogs[16].Line != 16 || dialogs[17].SceneIndex == nil || *dialogs[17].SceneIndex != 6 || dialogs[18].Line != 1 {
+		t.Fatalf("ch04 dialogs=%#v", dialogs)
 	}
 }
 
