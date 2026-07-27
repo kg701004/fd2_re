@@ -1664,6 +1664,15 @@ func (g *Game) enterNode() {
 				}
 				g.beats = beats
 			}
+			// An unbound postbattle node must never be treated as an empty
+			// interlude: doing so would silently skip persistent sync/rewards and
+			// jump straight to town. Keep the authored graph cursor in place until
+			// an active handler binding is supplied.
+			if len(g.beats) == 0 && n.HandlerBinding == "" && strings.HasPrefix(g.camp.NodeID(), "postbattle_") {
+				g.loadErr = fmt.Sprintf("postbattle node %q has no active handler binding", g.camp.NodeID())
+				g.msg = "戰後 handler 尚未接線，流程已停止"
+				return
+			}
 			g.beatAdvance() // beatIdx -1 → 0,啟動第一拍(doc50 BeatRunner)
 		} else if len(lines) == 0 && n.AutoAdvance > 0 { // 無對白節點(行軍蒙太奇):進場後自動倒數轉場
 			g.storyAutoAdvance = n.AutoAdvance
