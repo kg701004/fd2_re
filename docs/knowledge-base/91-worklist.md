@@ -500,11 +500,12 @@
 - **部分節點接 script、其餘仍依 placeholder/default fallback** → 兩者尚未完全連起來 ✗
 **教訓**:子系統各自報「完成」不等於整合完成;跨模組「接線」要獨立驗(truth-in-code,
 配 rulebook/63)。使用者實玩才揭露——沒實玩/沒查,文件會一直顯示「完成」。
-**目前修法狀態**:9 個節點有 direct script、40 個由 handler binding 供應過場資料；另外 30 個 retreat、23 個 rumor 是刻意的短 authored node，15 個 unbound postbattle 與 4 個 generic story fallback 才是待 mapping/handler 的缺口。24 個 postbattle 有 generated binding skeleton（其中 9 個已由 authored binding 啟用），未經 override/compile gate 仍不算 active handler，不能把同一章 script 盲目灌入其餘節點。
+**目前修法狀態**:9 個節點有 direct script、41 個由 handler binding 供應過場資料；另外 30 個 retreat、23 個 rumor 是刻意的短 authored node，14 個 unbound postbattle 與 4 個 generic story fallback 才是待 mapping/handler 的缺口。24 個 postbattle 有 generated binding skeleton（其中 10 個已由 authored binding 啟用），未經 override/compile gate 仍不算 active handler，不能把同一章 script 盲目灌入其餘節點。
 下一步要依原版 handler／FDTXT scene label 逐節建立 mapping，完成後才可宣稱接通。
-- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、coverage role、script、scene、handler、generated skeleton 與 next，固定目前 121/9/40/30/23/15/4 + 24 skeleton（其中 15 個 unbound）分類；不依章號猜測映射。
+- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、coverage role、script、scene、handler、generated skeleton 與 next，固定目前 121/9/41/30/23/14/4 + 24 skeleton（其中 14 個 unbound）分類；不依章號猜測映射。
 - [x] **ch04 postbattle binding**：Docker Capstone 證實 `0x2324c→0x233c6` 的 X/Y/pose 陣列（各 7 bytes）、slots0–6、special slot41 `(12,8,pose0)`、camera raw `(6,4)`；map4 raw roster frontier=50，FDTXT_005 index9 count-aligned 為 scene5 lines0–16 加 scene6 lines0–1。新增 authored binding、compiler regression，並接 `postbattle_ch04_persist→town_ch05`；未宣稱 renderer parity。
 - [x] **ch05 postbattle binding**：Docker acting exporter 解碼 resource27 為 3 beats、slot34/pose2；raw map5 `enemy_ally_total=40` 且 group3 僅一筆，handler `0x10b4e(3)` 因而保存 `spawn_groups[3]=1`。`0x232b8` pan `(5,14)` 依既有 tile ABI materialize `(120,336)`，FDTXT_006 index6 對 ch06 scene6 lines0–18；新增 authored binding、compiler regression，並接 `postbattle_ch05_persist→town_ch06`，未宣稱 renderer parity。
+- [x] **ch08 postbattle binding**：Docker acting exporter 解碼 resource36 為 5 beats、slot47/pose0；raw map8 `enemy_ally_total=60` 且 group4 僅一筆，handler `0x10b4e(4)` 保存 `spawn_groups[4]=1`。`0x235d8` pan `(6,1)` materialize `(144,24)`，FDTXT_009 index4 對 ch09 scene4 lines0–4；新增 authored binding、compiler regression，並接 `postbattle_ch08_persist→town_ch09`，未宣稱 renderer parity。
 - [x] ch01 開場三幕(王城父子/草地悠妮蓋亞/遇海盜)手動接線+轉錄 FDTXT_033/032(intro-scenes)
 - [x] **ch01 開場三幕背景圖 RE+接線**(使用者實測發現對白疊在戰場地圖上,非王座廳/草地,2026-07-04):
       RE 修正 doc23 §4 誤記(「FDTXT 序幕『影像』資源」不存在,FDTXT 純文字)——真正背景是

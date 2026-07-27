@@ -1349,15 +1349,7 @@
   },
   "postbattle_ch08_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 8
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch08_post.json",
    "next": "town_ch09"
   },
   "retreat_ch08": {
