@@ -59,17 +59,39 @@ func TestAdvanceNativeMapHUDAnchorMatches1AD2A(t *testing.T) {
 
 func TestAdvanceNativeMapHUDStateMatches1297D(t *testing.T) {
 	for _, tc := range []struct {
-		state, scanline, last, wantState, wantLast int
+		state, timerTick, last, wantState, wantLast int
 	}{
 		{0, 10, 5, 1, 10},
 		{3, 10, 5, 0, 10},
 		{2, 8, 10, 3, 8},
 		{1, 8, 10, 2, 8},
 	} {
-		state, last := AdvanceNativeMapHUDState(tc.state, tc.scanline, tc.last)
+		state, last := AdvanceNativeMapHUDState(tc.state, tc.timerTick, tc.last)
 		if state != tc.wantState || last != tc.wantLast {
-			t.Fatalf("raw=(state=%d scanline=%d last=%d): got (%d,%d), want (%d,%d)", tc.state, tc.scanline, tc.last, state, last, tc.wantState, tc.wantLast)
+			t.Fatalf("raw=(state=%d timer=%d last=%d): got (%d,%d), want (%d,%d)", tc.state, tc.timerTick, tc.last, state, last, tc.wantState, tc.wantLast)
 		}
+	}
+}
+
+func TestAdvanceNativeMapSpriteCyclesMatchesComplete1297D(t *testing.T) {
+	tests := []struct {
+		name                           string
+		idle, moving, timerTick, last  int
+		wantIdle, wantMoving, wantLast int
+	}{
+		{"within gate still advances moving", 2, 1, 13, 10, 2, 2, 10},
+		{"positive boundary four stays closed", 3, 3, 14, 10, 3, 0, 10},
+		{"positive delta five advances both", 3, 2, 15, 10, 0, 3, 15},
+		{"negative delta advances idle and moving", 1, 3, 9, 10, 2, 0, 9},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			idle, moving, last := AdvanceNativeMapSpriteCycles(tc.idle, tc.moving, tc.timerTick, tc.last)
+			if idle != tc.wantIdle || moving != tc.wantMoving || last != tc.wantLast {
+				t.Fatalf("got idle=%d moving=%d last=%d, want %d/%d/%d",
+					idle, moving, last, tc.wantIdle, tc.wantMoving, tc.wantLast)
+			}
+		})
 	}
 }
 

@@ -67,21 +67,28 @@ func AdvanceNativeMapHUDAnchor(anchor, raw53ABD, raw53AB9 int) int {
 	return anchor
 }
 
-// AdvanceNativeMapHUDState reproduces sub_1297d's raw cycle update used by
-// 0x1acf3 through [0x53c0b]. rawScanline is the signed word read from [0x46c]
-// and rawLastScanline is [0x53c0f]. The state advances only when the delta is
-// negative or greater than four, wrapping 3→0; otherwise it is preserved.
-// The caller owns the persistent globals and their call timing.
-func AdvanceNativeMapHUDState(state, rawScanline, rawLastScanline int) (nextState, nextLastScanline int) {
-	delta := rawScanline - rawLastScanline
+// AdvanceNativeMapHUDState preserves the [0x53c0b]/[0x53c0f] half of
+// sub_1297d for callers which only need the native HUD/idle selector.
+func AdvanceNativeMapHUDState(state, rawTimerTick, rawLastTimerTick int) (nextState, nextLastTimerTick int) {
+	nextState, _, nextLastTimerTick = AdvanceNativeMapSpriteCycles(state, 0, rawTimerTick, rawLastTimerTick)
+	return nextState, nextLastTimerTick
+}
+
+// AdvanceNativeMapSpriteCycles reproduces all mutations in sub_1297d.
+// idleCycle is [0x53c0b], movingCycle is [0x53c07], rawTimerTick is the low
+// signed word of the BIOS timer tick at [0x46c], and rawLastTimerTick is
+// [0x53c0f]. The idle selector advances only when the timer delta is negative
+// or greater than four. The moving selector advances on every call. Both wrap
+// 3→0. The caller still owns the original call timing and persistent globals.
+func AdvanceNativeMapSpriteCycles(idleCycle, movingCycle, rawTimerTick, rawLastTimerTick int) (nextIdle, nextMoving, nextLastTimerTick int) {
+	nextIdle, nextMoving, nextLastTimerTick = idleCycle, movingCycle, rawLastTimerTick
+	delta := rawTimerTick - rawLastTimerTick
 	if delta > 4 || delta < 0 {
-		state++
-		if state == 4 {
-			state = 0
-		}
-		rawLastScanline = rawScanline
+		nextIdle = (idleCycle + 1) & 3
+		nextLastTimerTick = rawTimerTick
 	}
-	return state, rawLastScanline
+	nextMoving = (movingCycle + 1) & 3
+	return nextIdle, nextMoving, nextLastTimerTick
 }
 
 // DecodeNativeMapHUDFrames loads only the verified FDOTHER #5 directory

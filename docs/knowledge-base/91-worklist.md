@@ -937,7 +937,20 @@
 - [x] **mirror fade planner**：`Montage.PlanMirrorFigureFade(unitSide,sideFlag)` 現輸出 9 個 exact stage/offset/palette pass，並明確保存 `arg4==0` 的 secondary/platform gate；純計畫器有 wrong-side 與 side-flag regression，不代表已完成 pixel renderer。
 - [x] **mirror indexed fade primitive**：`RenderMirrorFigureFadePass` 依 `0x292ad` 的 caller-preseeded 640-stride right viewport，先 present `work+0x140`，再以 `staging+0x140-stage*10` 畫 primary、按 `arg4==0` 畫 secondary，最後 present 同一 viewport；TAI#3 僅做透明 raw validation。pixel regression 通過，但 DATO/完整 montage 仍 fail-closed。
 - [x] **RE-UNIT-RAW-SCHEMA**：`export_units.py` 與 `battle.NativeConstructorTable` 已保存已證實 branch/index/raw records，嚴格拒絕 malformed dimensions；此項只完成資料邊界，不代表 renderer/gameplay 已接通。
-- [x] **RE-HUD-RAW-CYCLE**：閉合 `sub_1297d` 的 `[0x53c0b]/[0x53c0f]` raw state 更新規則並加入 pure adapter/regression；runtime scanline source/call timing 尚未接入，禁止用 `g.frame` 替代。
+- [x] **RE-MAP-SPRITE-RAW-CYCLES**：閉合 `sub_1297d` 的完整 mutation：
+  moving `[0x53c07]` 每次 call 必定 0..3 循環；idle `[0x53c0b]`
+  只有 signed `BIOS-tick-last<0 || >4` 才循環並更新 `[0x53c0f]`。
+  `AdvanceNativeMapSpriteCycles` 保存兩條 pure ABI；舊 HUD-only helper
+  委派同一實作。`[0x46c]` 已由 `0x17aa9` 的 0x10000 wrap busy-wait
+  及 `0x16d00` 的 two-tick gate閉合為 low 16-bit BIOS timer tick，不是
+  VGA scanline；runtime monotonic-clock materialization/call timing尚未接。
+- [x] **RE-RUNTIME-POSE-MOTION-LIFECYCLE**：player materializer
+  `0x10a77..0x10aad` 與 FDFIELD constructor 都建立 raw `+3/+4=0/0`。
+  四向 movement entries 固定寫 `+3=方向`，每格 draw loop 寫
+  `+4=1..6`，第七拍更新 X/Y 後寫 `+4=0` 且保留 pose；`0x1366a`
+  normal acting 相同，special 只寫 pose。doc54 已刪除錯位 acting dump
+  的影片推測，改成 direct writer/consumer lifecycle。remake 尚待單一
+  battle-local raw presentation state；未完成前 GUI adapter維持 fail-closed。
 - [x] **CH29-POST-FLOW-WIRING**：`postbattle_ch29_persist` 已接 recovered `ch29_post` handler→`preparation_ch30`；移除錯誤 synthetic sync/set beats，保留 native LOADCH persistent-roster boundary。`0x2bce5` renderer 未完成前仍 fail-closed。
 - [x] **RE-PHASE-DISPATCH-GATE**：Docker Capstone 重讀 `0x1d80b` 第一個 phase loop，固定 0x50-byte record stride、`count=[0x53beb]`、raw gates `record+6==1`、`record+5&0x81==0`、`record+0x26==0`；新增 `fdother.FindNativePhaseDispatchCandidates` 與 short-input/opaque-byte regression。只回傳 raw unit/selector，不執行 `0x13a9f` 或命名 event effects。
 - [x] **RE-INVENTORY-COMPACTION-AUDIT**：官方 IDA 9.4 decompiler 直接閉合 `0x1b8e7(int unit,int slot)`：`memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))`，再寫最後 cell flag `record+0x18=0x80`；新增 `battle.RemoveNativeInventorySlot`，保留 stale tail item byte，並覆蓋 slot0/slot2/slot7/short-input regression。先前「第三個 stack argument 未閉合」斷言已刪除。

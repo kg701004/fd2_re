@@ -635,7 +635,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 native unit table raw export：新增 `tools/extract_native_unit_tables.py`，Docker 對實際 FD2.EXE 驗證 `0x61af9` 68×10、`0x61da1` 32×24、`0x620a1` 68×11 records；IDA stack trace 進一步閉合 selector 為 FDFIELD roster b1/portrait（高 branch 先減 `0x44`）。輸出只含 selector/helper provenance 與 `bytes_hex`，不把 record byte 命名成 DATO/gameplay/class。此 fixture 尚未接 runtime unit/HUD admission，維持 fail-closed。
 - 2026-07-26 editable constructor raw field：`export_units.py` 可選讀 raw-table JSON，依已證實 portrait selector 輸出 `native_constructor` branch/index/record/aux_record；`battle.Load` 嚴格驗證 record 尺寸並保留舊 JSON 相容。Docker battle regression 通過；renderer/gameplay 尚未讀 raw bytes，避免過早解除 HUD gate。
 - 2026-07-27 constructor `+0x42` projection closure：Docker Capstone 重讀 `0x10db4..0x10e58`，確認 high=`u16(record+2)*level`、lower=`u16(record+3)+aux_byte6*(level-1)`，兩者都由 constructor `0x10fe9` 原樣寫入 runtime `+0x40/+0x42`。新增 `native_record_word42_for_portrait`、標準庫 regression 與 `native_unit_tables.json` raw fixture；`sync_native_selector_fields.py --native-tables` 只把這個 provenance 欄位合併到 33 張 map assets，不覆寫 normalized `hp`。table 未覆蓋的 selector 維持缺值，HUD/handler consumer 仍 fail-closed。
-- 2026-07-26 HUD raw-state closure：Docker Capstone/IDA 確認 `sub_11cac→sub_1297d` 在 `0x1acf3` 前更新 `[0x53c0b]`；只有 `scanline-last`<0 或 >4 才 3→0 advance，並更新 `[0x53c0f]`。新增 `indexedmap.AdvanceNativeMapHUDState` pure primitive/regression；尚未把未 materialize 的 scanline globals 猜成 frame counter，optional icon 仍 fail-closed。
+- 2026-07-26 HUD raw-state closure（2026-07-27 名稱更正）：Docker
+  Capstone/IDA確認 `sub_11cac→sub_1297d` 在 `0x1acf3` 前更新
+  `[0x53c0b]`；只有 `BIOS-tick-last`<0 或 >4 才3→0 advance並更新
+  `[0x53c0f]`。`[0x46c]`不是scanline；完整timer證據與moving half見本檔
+  2026-07-27 raw pose/motion/cycle lifecycle。
 - 2026-07-26 ch29 post campaign wiring：修正 `campaign_full.json` 的 `postbattle_ch29_persist`，改接 `assets/cutscenes/bindings/ch29_post.json`、再進 `preparation_ch30`；撤回 synthetic `sync_party/set_chapter`，因 native ch29 handler 的 LOADCH/persistent roster reconstruction 才是已證實 persistence boundary。campaign regression 只容許已知 `0x2bce5` unresolved renderer issue，不把它當成已完成終局。
 - 2026-07-26 official IDA `0x2c548` gate recheck：`0x2c405` 完成 500-pass phase-0 後，`0x2c548` free staging、配置 `0x1f400 + 0xfa00 + 0xfa00` 三個 indexed buffers，呼叫 `sub_111ba("TAI.DAT",3)` 與 `sub_111ba("FDOTHER.DAT",0x38)`，並以 `sub_4e63d(FDOTHER#0x38, transparent=-1, stride=0x140, destination=first 0xfa00 buffer)` 建立 backdrop；其後才從 `[0x53bfb]-1` 反向進 party-cycle。這與既有 `native_2c548.json` first-cycle mapping 一致，但不代表 montage renderer 已完成，PNG/generic fade 仍禁止接入。
 - 2026-07-26 `0x29164` mirror-branch ABI：official IDA 釘出 `unit[+6]==0` 會進 `0x2927e..0x29357`，仍做 9 次 stage `8..0`、palette `stage*6`，但 primary FIGANI frame pointer 改為 `staging+0x140-stage*10`；`arg4==0` 才執行額外 TAI#3 與 secondary FIGANI blit。新增 `native_2c548.json` `mirror_branch` schema 與 loader regression；此為 evidence-only，未解除 indexed renderer gate。
@@ -1016,3 +1020,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `ApplyNativeItemRelocation`扣command23 MP、寫target `+0/+1`，來源保留、
   actor結束action。Escape回target selector；缺terrain/raw provenance
   fail-closed。`0x22253`的27-present indexed renderer仍未接。
+- 2026-07-27 raw pose/motion/cycle lifecycle：Docker Capstone確認玩家
+  materializer `0x10a77..0x10aad` 與 FDFIELD constructor 都初始化
+  runtime `+3/+4=0/0`。四向move entries先固定pose，逐格寫motion
+  `1..6`，第七拍改X/Y後清0並保留最終pose；`0x1366a` normal同規則，
+  special只改pose。另補齊`0x1297d`：moving `[0x53c07]`每call都循環，
+  idle `[0x53c0b]`才受timer delta gate。`[0x46c]`再由`0x17aa9`
+  的0x10000 wrap busy-wait及`0x16d00` two-tick gate證實為low 16-bit
+  BIOS timer tick，不是VGA scanline。新增完整pure cycle helper/regression；
+  doc54刪除舊錯位acting dump影片斷言。GUI仍需統一的battle-local raw
+  presentation state及monotonic BIOS-tick/call timing才可接。

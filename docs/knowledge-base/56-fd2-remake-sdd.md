@@ -938,7 +938,24 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and can write `native_constructor:{branch,index,record,aux_record}` plus the independently derived `native_record_word42` when the constructor formula has complete provenance. To avoid duplicating full tables in every map row, `tools/sync_native_selector_fields.py --native-tables` now merges only consumed raw `native_record_race/class` bytes and `native_record_word42` into all 33 editable map assets, preserving manual normalized stats. `battle.NativeConstructorTable` remains a validated optional audit object; malformed records fail closed rather than falling back to portrait/class semantics.
 
-   HUD raw-state closure: `sub_11cac` calls `sub_1297d` immediately before the native map compositor. Its `[0x53c0b]` state advances `3→0` only when signed `rawScanline([0x46c])-rawLastScanline([0x53c0f])` is negative or greater than four, then stores the new last scanline; all other calls preserve it. `indexedmap.AdvanceNativeMapHUDState` now preserves this pure ABI and its boundary tests. The actual runtime caller still owns scanline/call timing, so the Ebiten optional unit icon remains fail-closed until those globals are materialized.
+   HUD raw-state closure: `sub_11cac` calls `sub_1297d` immediately before the native map compositor. Its `[0x53c0b]` state advances `3→0` only when signed `rawTimerTick([0x46c])-rawLastTimerTick([0x53c0f])` is negative or greater than four, then stores the new last tick; all other calls preserve it. `[0x46c]` is the low 16-bit BIOS timer tick, not a VGA scanline: `0x17aa9` performs a tick busy-wait with explicit 0x10000 wrap correction, and `0x16d00` uses the same word as a two-tick update gate. `indexedmap.AdvanceNativeMapHUDState` preserves the pure ABI. The actual runtime caller still owns timer/call timing, so the Ebiten optional unit icon remains fail-closed until those globals are materialized.
+
+   Sprite-cycle correction (2026-07-27): the same `sub_1297d` always advances
+   moving selector `[0x53c07]` on every call, independently of the gated idle
+   selector above; both wrap 3→0. `AdvanceNativeMapSpriteCycles` now preserves
+   the complete mutation and the HUD-only helper delegates its idle half.
+   Runtime monotonic-clock BIOS tick/call timing is still not materialized.
+
+   Raw pose/motion lifecycle (2026-07-27): both player materialization
+   `0x10a77..0x10aad` and FDFIELD spawn initialize runtime `+3/+4=0/0`.
+   Direction entries `0x12eaa/0x1300d/0x13185/0x13315` write pose
+   down/left/up/right, write motion `1..6` during each grid step, then mutate
+   X/Y at the seventh boundary and clear motion to zero without restoring
+   pose. `0x1366a` normal acting follows the same lifecycle; special frames
+   only write pose. Therefore persistent/scenario Dir is not itself the raw
+   initialization source, and normalized `Unit.Dir/OffX/OffY` remain
+   insufficient for a native presentation adapter until all writers share a
+   battle-local raw state API.
 
    Campaign flow correction: `postbattle_ch29_persist` now points to the recovered editable `ch29_post` binding before `preparation_ch30`; it no longer replaces that handler with synthetic `sync_party → set_chapter` beats. The native handler's proven LOADCH/persistent-roster reconstruction is the persistence boundary, while unresolved `0x2bce5` remains the sole tolerated fail-closed renderer issue. Campaign regression explicitly allows this native persistence exception and still forbids a direct battle→preparation edge.
 
