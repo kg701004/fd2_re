@@ -27,6 +27,36 @@ func (g *Game) composeNativeChurchScene() ([]byte, bool) {
 	return frame, err == nil
 }
 
+func (g *Game) composeNativeChurchSceneBase() ([]byte, bool) {
+	a := g.nativeClassUI
+	if a == nil || len(a.entries) <= 16 {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeChurchSceneBase(
+		a.background, a.entries[1], a.dialogue, a.digits, a.portrait, g.gold,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativeChurchSourceFrame() ([]byte, bool) {
+	scene, ok := g.composeNativeChurchScene()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.NativeChurchMenuBase(scene)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativeChurchDialogueBase() ([]byte, bool) {
+	a := g.nativeClassUI
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeChurchDialogueOverlay(source, a.dialogue, a.portrait)
+	return frame, err == nil
+}
+
 func (g *Game) composeNativeChurchMenuFrame() ([]byte, bool) {
 	a := g.nativeClassUI
 	scene, ok := g.composeNativeChurchScene()

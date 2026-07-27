@@ -2765,6 +2765,12 @@ func (g *Game) campInput() bool {
 				}
 				return true
 			}
+			if g.churchMode == "class" {
+				if !g.beginNativeClassListClosing(g.returnToNativeChurchMenu) {
+					g.returnToNativeChurchMenu()
+				}
+				return true
+			}
 			g.returnToNativeChurchMenu()
 			return true
 		}
@@ -2808,15 +2814,20 @@ func (g *Game) campInput() bool {
 			if g.churchMode == "revive" {
 				g.reviveChurchUnit(id)
 			} else {
-				g.churchClassID = id
 				target, ok := campaign.NativeClassChangeTarget(&u, g.classChangeTable)
 				if !ok {
 					g.msg = "缺少原版轉職目標資料"
 				} else {
-					g.churchBranches = []campaign.ClassChangeBranch{target}
-					g.churchMode = "class_confirm"
-					g.churchSel = 0
-					g.beginNativeClassConfirmationOpening()
+					openConfirmation := func() {
+						g.churchClassID = id
+						g.churchBranches = []campaign.ClassChangeBranch{target}
+						g.churchMode = "class_confirm"
+						g.churchSel = 0
+						g.beginNativeClassConfirmationOpening()
+					}
+					if !g.beginNativeClassListClosing(openConfirmation) {
+						openConfirmation()
+					}
 				}
 			}
 		}

@@ -8,10 +8,11 @@ import (
 )
 
 type nativeClassUIJob struct {
-	frames [][]byte
-	frame  int
-	drawn  bool
-	after  func()
+	frames  [][]byte
+	restore []byte
+	frame   int
+	drawn   bool
+	after   func()
 }
 
 func (g *Game) beginNativeClassListOpening() bool {
@@ -19,11 +20,32 @@ func (g *Game) beginNativeClassListOpening() bool {
 	if !ok {
 		return false
 	}
-	frames, err := campaign.NativeClassListOpeningFrames(g.nativeClassUI.background, final)
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListOpeningFrames(source, final)
 	if err != nil || len(frames) != 6 {
 		return false
 	}
 	g.nativeClassUIJob = &nativeClassUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativeClassListClosing(after func()) bool {
+	final, ok := g.composeNativeClassListFrame()
+	if !ok {
+		return false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(source, final)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames, restore: source, after: after}
 	return true
 }
 
@@ -46,11 +68,24 @@ func (g *Game) beginNativeClassConfirmationClosing(after func()) bool {
 	if !ok {
 		return false
 	}
-	frames, err := campaign.NativeClassConfirmationClosingFrames(question, g.nativeClassUI.choices)
-	if err != nil || len(frames) != 4 {
+	choiceFrames, err := campaign.NativeClassConfirmationClosingFrames(question, g.nativeClassUI.choices)
+	if err != nil || len(choiceFrames) != 4 {
 		return false
 	}
-	g.nativeClassUIJob = &nativeClassUIJob{frames: frames, after: after}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	dialogue, ok := g.composeNativeChurchDialogueBase()
+	if !ok {
+		return false
+	}
+	dialogueFrames, err := campaign.NativeClassListClosingFrames(source, dialogue)
+	if err != nil || len(dialogueFrames) != 5 {
+		return false
+	}
+	frames := append(choiceFrames, dialogueFrames...)
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames, restore: source, after: after}
 	return true
 }
 
@@ -60,7 +95,12 @@ func (g *Game) stepNativeClassUILifecycle(now time.Time) {
 	job := g.nativeClassUIJob
 	if job != nil && job.drawn {
 		job.drawn = false
-		job.frame++
+		if job.frame < len(job.frames) {
+			job.frame++
+			if job.frame < len(job.frames) || len(job.restore) != 0 {
+				return
+			}
+		}
 		if job.frame >= len(job.frames) {
 			after := job.after
 			g.nativeClassUIJob = nil
@@ -76,12 +116,20 @@ func (g *Game) stepNativeClassUILifecycle(now time.Time) {
 
 func (g *Game) drawNativeClassUIJob(screen *ebiten.Image) bool {
 	job := g.nativeClassUIJob
-	if job == nil || job.frame < 0 || job.frame >= len(job.frames) {
+	if job == nil || job.frame < 0 {
 		return false
 	}
-	g.presentNativeClassFrame(screen, job.frames[job.frame])
-	job.drawn = true
-	return true
+	if job.frame < len(job.frames) {
+		g.presentNativeClassFrame(screen, job.frames[job.frame])
+		job.drawn = true
+		return true
+	}
+	if len(job.restore) == 320*200 {
+		g.presentNativeClassFrame(screen, job.restore)
+		job.drawn = true
+		return true
+	}
+	return false
 }
 
 func (g *Game) nativeClassUIBlocksInput() bool {

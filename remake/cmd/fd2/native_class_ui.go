@@ -130,6 +130,10 @@ func (g *Game) composeNativeClassListFrame() ([]byte, bool) {
 	if visible == 0 {
 		return nil, false
 	}
+	background, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return nil, false
+	}
 	rows := make([]campaign.NativeClassListRow, 0, visible)
 	for row := 0; row < visible; row++ {
 		id := g.churchIDs[start+row]
@@ -151,7 +155,7 @@ func (g *Game) composeNativeClassListFrame() ([]byte, bool) {
 		})
 	}
 	frame, err := campaign.ComposeNativeClassListFrame(
-		a.background, a.panel, rows, g.churchSel-start, a.strings, a.font,
+		background, a.panel, rows, g.churchSel-start, a.strings, a.font,
 	)
 	if err != nil {
 		return nil, false
@@ -185,8 +189,12 @@ func (g *Game) composeNativeClassConfirmationQuestion() ([]byte, bool) {
 	if !ok {
 		return nil, false
 	}
+	background, ok := g.composeNativeChurchDialogueBase()
+	if !ok {
+		return nil, false
+	}
 	frame, err := campaign.ComposeNativeClassConfirmationQuestion(
-		a.background, a.strings, a.font, nameTextIndex,
+		background, a.strings, a.font, nameTextIndex,
 	)
 	return frame, err == nil
 }
@@ -196,8 +204,12 @@ func (g *Game) composeNativeClassConfirmationFrame() ([]byte, bool) {
 	if !ok {
 		return nil, false
 	}
+	background, ok := g.composeNativeChurchDialogueBase()
+	if !ok {
+		return nil, false
+	}
 	frame, err := campaign.ComposeNativeClassConfirmationFrame(
-		a.background, a.choices, a.strings, a.font,
+		background, a.choices, a.strings, a.font,
 		nameTextIndex, g.churchSel, g.nativeClassUIPulse/2,
 	)
 	if err != nil {

@@ -75,9 +75,10 @@ Church class-change round-trip 也已可重播：[`town-church-class-change-ch02
 左右 Yes/No 確認、角色轉職、物品消耗與 `Escape → town_ch02`。候選清單的
 `0x311DC+0x31019` 已使用原版 FDOTHER#14、FDICON、FDTXT/font 接回 runtime；
 `0x1974c` 的六幀 opening 只在每個 frame 的 Draw acknowledgement 後前進。
-`0x19953` 的動態角色名、FDOTHER#2 YES/NO normal/pulse cells 與四幀 open/close compositor
-亦已接回 runtime：opening／closing 都以四個 Draw acknowledgement 排程，Yes mutation 與
-No／Escape 返回都延後至 closing 第四幀已呈現。確認 pulse 依原始 BIOS low-word delta>=2
+`0x19953` 的動態角色名、FDOTHER#2 YES/NO normal/pulse cells 與四幀 choice compositor
+亦已接回 runtime。候選清單先以 `0x2d31b` 五幀關閉並還原教會 source，才開啟確認框；
+確認結束則依序呈現四幀 choice closing、五幀 dialogue closing、最後還原 source。Yes mutation
+與 No／Escape 返回都延後至完整關閉序列已呈現。確認 pulse 依原始 BIOS low-word delta>=2
 遞增 counter mod4，選中 cell 使用 counter/2 variant。教會主畫面 `0x3072f` 亦已用
 FDOTHER#5/#14、DATO#131、FDTXT585/586 合成完整 indexed scene；`0x2d669` 四幀
 opening/closing＋source restore與 `0x2d85f` 兩-tick selected pulse 已接 runtime。raw service 0

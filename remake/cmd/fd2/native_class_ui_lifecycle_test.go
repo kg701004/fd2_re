@@ -45,6 +45,30 @@ func TestNativeClassUIClosingDefersContinuationUntilFourthPresent(t *testing.T) 
 	}
 }
 
+func TestNativeClassUIClosingPresentsRestoreBeforeContinuation(t *testing.T) {
+	completed := false
+	g := &Game{nativeClassUIJob: &nativeClassUIJob{
+		frames:  [][]byte{{0}, {1}},
+		restore: make([]byte, 320*200),
+		after:   func() { completed = true },
+	}}
+	for want := 0; want < 2; want++ {
+		if completed || g.nativeClassUIJob.frame != want {
+			t.Fatalf("before frame %d: completed=%v job=%#v", want, completed, g.nativeClassUIJob)
+		}
+		g.nativeClassUIJob.drawn = true
+		g.stepNativeClassUILifecycle(time.Time{})
+	}
+	if completed || g.nativeClassUIJob == nil || g.nativeClassUIJob.frame != 2 {
+		t.Fatalf("continuation ran before restore: completed=%v job=%#v", completed, g.nativeClassUIJob)
+	}
+	g.nativeClassUIJob.drawn = true
+	g.stepNativeClassUILifecycle(time.Time{})
+	if !completed || g.nativeClassUIJob != nil {
+		t.Fatalf("restore completion=%v job=%#v", completed, g.nativeClassUIJob)
+	}
+}
+
 func TestNativeClassUIPulseUsesTwoBIOSTickCadenceAndWrap(t *testing.T) {
 	g := &Game{}
 	check := func(tick, want int) {

@@ -188,6 +188,38 @@ func TestNativeClassListOpeningFramesMatch1974CCropSchedule(t *testing.T) {
 	}
 }
 
+func TestNativeClassListClosingFramesMatch2D31BCropSchedule(t *testing.T) {
+	background := make([]byte, 320*200)
+	composed := make([]byte, 320*200)
+	for y := 112; y < 198; y++ {
+		for x := 5; x < 315; x++ {
+			composed[y*320+x] = byte(y - 111)
+		}
+	}
+	frames, err := NativeClassListClosingFrames(background, composed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(frames) != 5 {
+		t.Fatalf("frames=%d want 5", len(frames))
+	}
+	destinations := []int{125, 138, 151, 164, 177}
+	for i, y := range destinations {
+		if got := frames[i][y*320+5]; got != 1 {
+			t.Fatalf("frame%d origin=%d want source row1", i, got)
+		}
+		if y > 0 && frames[i][(y-1)*320+5] != 0 {
+			t.Fatalf("frame%d wrote before destination y=%d", i, y)
+		}
+	}
+	if got := frames[0][197*320+5]; got != 73 {
+		t.Fatalf("first clipped tail=%d want 73", got)
+	}
+	if got := frames[4][199*320+5]; got != 23 {
+		t.Fatalf("last clipped tail=%d want 23", got)
+	}
+}
+
 func TestNativeClassListComposesPlayerOriginalResources(t *testing.T) {
 	const base = "../../../org_game/炎龍騎士團/FLAME2"
 	fdotherPath := filepath.Join(base, "FDOTHER.DAT")

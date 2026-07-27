@@ -29,24 +29,31 @@ func ComposeNativeChurchScene(
 	font *fdtxt.Font,
 	gold, textIndex int,
 ) ([]byte, error) {
-	if len(background) != 320*200 || len(dialogueCells) <= 17 ||
-		len(digitFrames) != 10 || strings == nil || font == nil ||
-		gold < 0 || gold > 99_999_999 {
-		return nil, errors.New("campaign: native church scene assets/state are invalid")
-	}
-	frame := append([]byte(nil), background...)
-	placements, err := fdother.PlanNativeDialogueFrameGrid(320, 5, 112, 19, 5)
+	frame, err := ComposeNativeChurchSceneBase(
+		background, decoration, dialogueCells, digitFrames, portrait, gold,
+	)
 	if err != nil {
 		return nil, err
 	}
-	for _, placement := range placements {
-		if err := dialogueCells[placement.ResourceIndex].BlitOpaqueAtOffset(
-			frame, 320, placement.DestinationByte,
-		); err != nil {
-			return nil, err
-		}
+	return renderNativeChurchText(frame, strings, font, textIndex)
+}
+
+// ComposeNativeChurchSceneBase builds 0x3072f's stable scene before FDTXT585
+// or FDTXT586 is written.
+func ComposeNativeChurchSceneBase(
+	background []byte,
+	decoration fdother.LMI1Entry,
+	dialogueCells []fdother.RawCell,
+	digitFrames []fdother.Frame,
+	portrait dato.Frame,
+	gold int,
+) ([]byte, error) {
+	if len(background) != 320*200 || len(dialogueCells) <= 17 ||
+		len(digitFrames) != 10 || gold < 0 || gold > 99_999_999 {
+		return nil, errors.New("campaign: native church scene assets/state are invalid")
 	}
-	if err := portrait.BlitAtOffset(frame, 320, nativeChurchPortraitOffset); err != nil {
+	frame, err := ComposeNativeChurchDialogueOverlay(background, dialogueCells, portrait)
+	if err != nil {
 		return nil, err
 	}
 	if err := decoration.BlitOpaqueAt(
@@ -64,7 +71,37 @@ func ComposeNativeChurchScene(
 			return nil, err
 		}
 	}
-	return renderNativeChurchText(frame, strings, font, textIndex)
+	return frame, nil
+}
+
+// ComposeNativeChurchDialogueOverlay reproduces sub_1956b's stable target:
+// the FDOTHER#5 19×5 dialogue grid and DATO#131 frame zero over a caller-owned
+// source snapshot. Text is intentionally excluded because 0x2d31b closes
+// against this buffer after the text was drawn only to VGA.
+func ComposeNativeChurchDialogueOverlay(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+) ([]byte, error) {
+	if len(background) != 320*200 || len(dialogueCells) <= 17 {
+		return nil, errors.New("campaign: native church dialogue overlay assets are invalid")
+	}
+	frame := append([]byte(nil), background...)
+	placements, err := fdother.PlanNativeDialogueFrameGrid(320, 5, 112, 19, 5)
+	if err != nil {
+		return nil, err
+	}
+	for _, placement := range placements {
+		if err := dialogueCells[placement.ResourceIndex].BlitOpaqueAtOffset(
+			frame, 320, placement.DestinationByte,
+		); err != nil {
+			return nil, err
+		}
+	}
+	if err := portrait.BlitAtOffset(frame, 320, nativeChurchPortraitOffset); err != nil {
+		return nil, err
+	}
+	return frame, nil
 }
 
 func renderNativeChurchText(

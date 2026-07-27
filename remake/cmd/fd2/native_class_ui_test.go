@@ -41,6 +41,7 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 				0x34: {Portrait: 0x34, ClassID: 21},
 			},
 		},
+		nativeChurchTextIndex: 585,
 	}
 	screen := ebiten.NewImage(640, 400)
 	if !g.drawNativeClassList(screen) {
@@ -48,6 +49,11 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	}
 	if !g.beginNativeClassListOpening() || len(g.nativeClassUIJob.frames) != 6 {
 		t.Fatal("native six-frame class list opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeClassListClosing(nil) || len(g.nativeClassUIJob.frames) != 5 ||
+		len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native five-frame class list closing and source restore unexpectedly fell back")
 	}
 	g.nativeClassUIJob = nil
 	g.churchMode, g.churchClassID, g.churchSel = "class_confirm", 9, 0
@@ -58,7 +64,8 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		t.Fatal("native four-frame confirmation opening unexpectedly fell back")
 	}
 	g.nativeClassUIJob = nil
-	if !g.beginNativeClassConfirmationClosing(nil) || len(g.nativeClassUIJob.frames) != 4 {
-		t.Fatal("native four-frame confirmation closing unexpectedly fell back")
+	if !g.beginNativeClassConfirmationClosing(nil) || len(g.nativeClassUIJob.frames) != 9 ||
+		len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native confirmation choice/dialogue closing and source restore unexpectedly fell back")
 	}
 }

@@ -130,6 +130,31 @@ func NativeClassListOpeningFrames(background, composed []byte) ([][]byte, error)
 	return out, nil
 }
 
+// NativeClassListClosingFrames reproduces 0x2d31b's five 0x1974c passes
+// (i=1..5). The caller must present the untouched source restore afterward.
+func NativeClassListClosingFrames(background, composed []byte) ([][]byte, error) {
+	if len(background) != NativeClassListStride*NativeClassListHeight ||
+		len(composed) != NativeClassListStride*NativeClassListHeight {
+		return nil, errors.New("campaign: native class closing requires two 320x200 indexed frames")
+	}
+	out := make([][]byte, 0, 5)
+	for i := 1; i < 6; i++ {
+		destinationY := 13*i + nativeClassPanelY
+		height := nativeClassPanelH
+		if destinationY+height > NativeClassListHeight {
+			height = NativeClassListHeight - destinationY
+		}
+		frame := append([]byte(nil), background...)
+		for row := 0; row < height; row++ {
+			src := (nativeClassPanelY+row)*NativeClassListStride + nativeClassPanelX
+			dst := (destinationY+row)*NativeClassListStride + nativeClassPanelX
+			copy(frame[dst:dst+nativeClassPanelW], composed[src:src+nativeClassPanelW])
+		}
+		out = append(out, frame)
+	}
+	return out, nil
+}
+
 func blitNativeClassListText(
 	dst []byte,
 	strings *fdtxt.Strings,
