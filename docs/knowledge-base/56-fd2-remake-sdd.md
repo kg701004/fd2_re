@@ -146,6 +146,11 @@ regression；`postbattle_ch15_persist` 不得重用 `ch14_post`，因其原生 `
 文字 binding 尚未完成，現維持 unbound fail-closed。這保留原版 chapter index 與玩家章節之間的 offset，
 也避免第15戰重播錯誤的第14戰招募事件。
 
+同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫
+special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49 操作 slot65；之後掃
+slots66..73，只有 inactive 計數大於4才走後續 branch。現有條件模型只有 `any_unit_inactive`，不能
+把「count > 4」降成 any／roster_has，因此這段仍保持 raw handler evidence，不接入 campaign runtime。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset
