@@ -484,18 +484,20 @@
 - [ ] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)
 - [ ] 待展開(位址已釘):0x3453E 額外檢查、tag==0x27 sentinel、[0x53BF7] 表用途
 
-## ⚠ 誠實揭露:全 33 章劇情文本「轉錄完成但從未接進遊戲」(2026-07-03 使用者質疑後查證)
+## ⚠ 誠實揭露:全 33 章劇情文本「大部分轉錄完成但尚未接進遊戲」(2026-07-27 重查)
 
-**症狀**:remake 每章開場只顯示 2 句佔位(「第N章:.../目標:...」),1452 句真對白全沒播。
-**查證**:campaign_full.json 的 **83 個 story 節點,`script` 欄全部是空的**(0/83 接真對白檔),
-而 `assets/story/ch01~33.json` 的 33 章 1452 句轉錄**全都在、全躺著沒用**。
+**症狀**:尚未接 script 的 remake story 節點仍會使用短佔位文字；已接的節點則會載入對應劇本。
+**查證**:目前實際 `campaign_full.json` 有 **121 個 story/cutscene 節點，其中 9 個有 `script`**；
+其餘 112 個仍依 node lines/default fallback，不能把 33 章轉錄宣稱成已接入。
+`assets/story/ch01~33.json` 的 33 章 1452 句轉錄存在，但不等於每個 story node 都有正確 scene/line 對映。
 **根因**:各自完成、接線沒人做——
 - 「全 33 章文本完成」(story 流水線 6 批)✓ 真的轉錄好了
-- 「全 30 章可玩 / campaign 183 節點」(gen_campaign)✓ 節點生成了
-- **但 gen_campaign 生成 story 節點時從沒接 `script` 欄** → 兩者從未連起來 ✗
+- 「全 30 章 campaign 節點生成」✓ 節點圖生成了，但不代表 story 對映完成
+- **部分節點接 script、其餘仍依 placeholder/default fallback** → 兩者尚未完全連起來 ✗
 **教訓**:子系統各自報「完成」不等於整合完成;跨模組「接線」要獨立驗(truth-in-code,
 配 rulebook/63)。使用者實玩才揭露——沒實玩/沒查,文件會一直顯示「完成」。
-**修法**:story_chNN 節點加 `script:assets/story/chNN.json`;gen_campaign 修+重生成 → 全章接通。
+**目前修法狀態**:僅已證實對映的 9 個節點保留 script；不能把同一章 script 盲目灌入其餘節點。
+下一步要依原版 handler／FDTXT scene label 逐節建立 mapping，完成後才可宣稱接通。
 - [x] ch01 開場三幕(王城父子/草地悠妮蓋亞/遇海盜)手動接線+轉錄 FDTXT_033/032(intro-scenes)
 - [x] **ch01 開場三幕背景圖 RE+接線**(使用者實測發現對白疊在戰場地圖上,非王座廳/草地,2026-07-04):
       RE 修正 doc23 §4 誤記(「FDTXT 序幕『影像』資源」不存在,FDTXT 純文字)——真正背景是
