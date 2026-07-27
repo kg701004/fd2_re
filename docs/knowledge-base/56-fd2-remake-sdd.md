@@ -168,6 +168,14 @@ fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression，�
 handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 與 save boundary
 閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
 
+後續 producer trace 又閉合一層：constructor `0x10e7e..0x1100b` 在 `0x10fe9` 將同一個
+caller-supplied value 寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9`
+則以另一個輸入寫入 `+0x44`／`+0x46`，最後才呼 `0x1b750` 重算 derived fields。這是
+`+0x42` 的 raw producer／field-equality 證據；但現有 `export_units.py` 的 `hp` 可能來自
+舊 editable/base-stat projection，尚未證明等同該 constructor 輸入，因此 exporter 不得
+自動填 `NativeRecordWord42`。只有帶有明確 constructor input 的 units source 才能開啟
+`native_record_word_gte`，其餘仍 fail-closed。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset
