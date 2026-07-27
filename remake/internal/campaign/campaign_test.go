@@ -650,7 +650,30 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 37 || fallback != 75 || retreat != 30 || rumor != 23 || postbattle != 18 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 38 || fallback != 74 || retreat != 30 || rumor != 23 || postbattle != 17 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
+	}
+}
+
+func TestCh19PostBindingPreservesRawSlotFrontier(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch19_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch19 post compile err=%v issues=%#v", err, issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 83 {
+		t.Fatalf("ch19 runtime context=%#v", beats[:min(len(beats), 1)])
+	}
+	spawn := -1
+	for i, beat := range beats {
+		if beat.Op == "spawn" {
+			spawn = i
+			break
+		}
+	}
+	if spawn < 0 || beats[spawn].Group != 1 {
+		t.Fatalf("ch19 spawn group missing: %#v", beats)
+	}
+	if spawn+1 >= len(beats) || beats[spawn+1].Op != "act" || len(beats[spawn+1].Acting) != 1 || beats[spawn+1].Acting[0].Units[0].Slot == nil || *beats[spawn+1].Acting[0].Units[0].Slot != 83 {
+		t.Fatalf("ch19 post-spawn acting slot=%#v", beats[spawn+1])
 	}
 }
