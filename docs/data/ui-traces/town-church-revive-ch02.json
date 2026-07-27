@@ -1,0 +1,17 @@
+{
+  "name": "town_ch02 to church revive and return",
+  "source_campaign": "remake/assets/scenarios/campaign_full.json",
+  "start": "town_ch02",
+  "events": [
+    {"input": "down", "selection": 1},
+    {"input": "enter", "outcome": "opt1", "node": "church_ch02"},
+    {"service": "revive", "class_id": 1, "level": 3, "fee_rate": 7, "gold_before": 100, "gold_after": 79},
+    {"input": "escape", "node": "town_ch02"}
+  ],
+  "expected_nodes": ["town_ch02", "church_ch02", "town_ch02"],
+  "artifacts": ["docs/figures/town-hub-remake.png", "docs/figures/church-current-remake.png"],
+  "limitations": [
+    "Revive uses the verified remake fee/candidate boundary; native FD2.SAV compatibility is not claimed.",
+    "Unknown church service callees and original E2 visual parity remain fail-closed."
+  ]
+}

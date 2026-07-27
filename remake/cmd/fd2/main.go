@@ -2429,8 +2429,7 @@ func (g *Game) campInput() bool {
 				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, 1)
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-				g.camp.Advance("")
-				g.enterNode()
+				g.leaveChurch()
 				return true
 			}
 			if enter {
@@ -2557,18 +2556,7 @@ func (g *Game) campInput() bool {
 			id := g.churchIDs[g.churchSel]
 			u := g.partyRoster[id]
 			if g.churchMode == "revive" {
-				if u.ClassID < 0 || u.ClassID >= len(g.reviveFeeRates) {
-					g.msg = fmt.Sprintf("復活費率缺少 class=%d", u.ClassID)
-				} else if gold, cost, err := campaign.ReviveUnit(g.gold, &u, g.reviveFeeRates[u.ClassID]); err != nil {
-					g.msg = fmt.Sprintf("復活費用 %d G：%v", cost, err)
-				} else {
-					g.gold, g.partyRoster[id] = gold, u
-					g.msg = fmt.Sprintf("%s 已復活（-%d G）", u.Name, cost)
-					g.churchIDs = g.churchCandidates("revive")
-					if g.churchSel >= len(g.churchIDs) {
-						g.churchSel = 0
-					}
-				}
+				g.reviveChurchUnit(id)
 			} else {
 				g.churchClassID = id
 				g.churchBranches = campaign.ClassChangeTargets(&u, g.classChangeTable)
@@ -2729,6 +2717,42 @@ func (g *Game) campInput() bool {
 		return false // 戰鬥照常
 	}
 	return false
+}
+
+// leaveChurch is the editable campaign boundary for the church menu's Escape
+// action. It never assumes a specific town or service return target.
+func (g *Game) leaveChurch() {
+	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "church" {
+		return
+	}
+	g.camp.Advance("")
+	g.enterNode()
+}
+
+// reviveChurchUnit is the runtime seam for the native revive branch. Fee data
+// and candidate filtering remain explicit; unknown class rows fail closed.
+func (g *Game) reviveChurchUnit(id int) bool {
+	u, ok := g.partyRoster[id]
+	if !ok {
+		g.msg = fmt.Sprintf("復活角色不存在 id=%d", id)
+		return false
+	}
+	if u.ClassID < 0 || u.ClassID >= len(g.reviveFeeRates) {
+		g.msg = fmt.Sprintf("復活費率缺少 class=%d", u.ClassID)
+		return false
+	}
+	gold, cost, err := campaign.ReviveUnit(g.gold, &u, g.reviveFeeRates[u.ClassID])
+	if err != nil {
+		g.msg = fmt.Sprintf("復活費用 %d G：%v", cost, err)
+		return false
+	}
+	g.gold, g.partyRoster[id] = gold, u
+	g.msg = fmt.Sprintf("%s 已復活（-%d G）", u.Name, cost)
+	g.churchIDs = g.churchCandidates("revive")
+	if g.churchSel >= len(g.churchIDs) {
+		g.churchSel = 0
+	}
+	return true
 }
 
 // leaveShop is the campaign boundary for the shop's Escape/leave action. It
