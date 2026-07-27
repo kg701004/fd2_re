@@ -205,6 +205,7 @@
 - [~] 追 `[0x53a45]` producer、runtime slot 對應及 save/persistent boundary：constructor raw writer 已閉合，slot producer 與 persistent/save boundary 尚待完成。
 - [x] **ch15 +0x42 constructor producer**：Docker Capstone 固定 constructor `0x10fe9` 將 caller-supplied 同值寫入 `+0x40/+0x42`，`+0x44/+0x46` 使用另一輸入；`export_units.py` 的 projection 未閉合前不自動填 `NativeRecordWord42`。
 - [x] **ch15 compound predicate primitive**：新增受限 `native_any_of`，只接受已驗證的 raw round／inactive-count 子條件；任一子條件可證實為真才通過，全部缺 provenance 仍 fail-closed。尚未改寫 immutable `ch15_post.json` 或解除 campaign binding。
+- [x] **ch15 +0x42 persistence bridge**：`syncPartyFromBattle` snapshot 與 `applyPersistentStats` 現保留 `NativeRecordWord42/HasNativeRecordWord42`，測試覆蓋 raw word `0x140`；不由 normalized HP 推導，units source 缺 constructor provenance 時仍 fail-closed。
 - [ ] 將 ch15 的 `round>18 OR inactive_count>4`／`else word42>=0x140` 編成可驗證 branch CFG；完成前保持 unbound fail-closed。
 - [x] ch16/ch17 pre-handler：`0x335bb` 的 `roster_has(18)` 接 `test/jne 0x3344d`；有角色18直接進 shared tail，沒有才 `spawn(group 1)`。已轉為 editable `if roster_has`，map16/60-slot/FDTXT_017 binding 接入 `story_ch17`。compiler branch 現繼承前置 LOADCH slot frontier，但 merge 後不假設分支新增 slots。
 - [x] ch17 battle initial-group correction：原版 ch16 pre 只在 char18 缺席時 append group1，group3 是 ch16 post 才 spawn；`ch17.json` 不再把 1/3 固定 initial。Scenario 加入可編輯 `initial_groups_if_party_absent`，只控制戰前 `OnField` visibility；它不宣稱已還原 native append-slot identity，post handler 仍 fail-closed。

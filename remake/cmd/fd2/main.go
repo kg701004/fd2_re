@@ -1931,6 +1931,9 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.NativeCommandMask = src.NativeCommandMask
 	dst.NativeRecordByte5, dst.HasNativeRecordByte5 = src.NativeRecordByte5, src.HasNativeRecordByte5
 	dst.NativeRecordByte6, dst.HasNativeRecordByte6 = src.NativeRecordByte6, src.HasNativeRecordByte6
+	// +0x42 is a raw persistent word used by ch15_post; preserve it only when
+	// the source carries explicit provenance, never derive it from normalized HP.
+	dst.NativeRecordWord42, dst.HasNativeRecordWord42 = src.NativeRecordWord42, src.HasNativeRecordWord42
 	dst.Inventory = append(dst.Inventory[:0], src.Inventory...)
 	dst.Equipped = append(dst.Equipped[:0], src.Equipped...)
 	dst.InventorySlots = append(dst.InventorySlots[:0], src.InventorySlots...)

@@ -983,7 +983,7 @@ func TestBeatNativeAnyOfCombinesOnlyRawPredicates(t *testing.T) {
 	round, threshold := 18, 4
 	condition := &campaign.BeatCondition{Op: "native_any_of", Any: []campaign.BeatCondition{
 		{Op: "native_round_gt", NativeRound: &round},
-		{Op: "native_inactive_count_gt", UnitSlots: []int{66, 67}, Threshold: &threshold},
+		{Op: "native_inactive_count_gt", UnitSlots: []int{66, 67, 68, 69, 70}, Threshold: &threshold},
 	}}
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: condition, Then: []campaign.Beat{{Op: "join", CharID: 18}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}})
 	g.st = &battle.State{NativeRoundCounter: 19, Units: make([]*battle.Unit, 68)}
@@ -992,8 +992,8 @@ func TestBeatNativeAnyOfCombinesOnlyRawPredicates(t *testing.T) {
 		t.Fatalf("native_any_of round branch failed: party=%#v err=%q", g.partyMembers, g.loadErr)
 	}
 	g = newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: condition, Then: []campaign.Beat{{Op: "join", CharID: 18}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}})
-	g.st = &battle.State{Units: make([]*battle.Unit, 68)}
-	for _, slot := range []int{66, 67} {
+	g.st = &battle.State{Units: make([]*battle.Unit, 71)}
+	for _, slot := range []int{66, 67, 68, 69, 70} {
 		g.st.Units[slot] = &battle.Unit{HasNativeRecordByte5: true, NativeRecordByte5: 1}
 	}
 	g.beatAdvance()
@@ -1001,8 +1001,8 @@ func TestBeatNativeAnyOfCombinesOnlyRawPredicates(t *testing.T) {
 		t.Fatalf("native_any_of count branch failed: party=%#v err=%q", g.partyMembers, g.loadErr)
 	}
 	g = newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: condition}})
-	g.st = &battle.State{Units: make([]*battle.Unit, 68)}
-	for _, slot := range []int{66, 67} {
+	g.st = &battle.State{Units: make([]*battle.Unit, 71)}
+	for _, slot := range []int{66, 67, 68, 69, 70} {
 		g.st.Units[slot] = &battle.Unit{}
 	}
 	g.beatAdvance()
