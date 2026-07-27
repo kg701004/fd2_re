@@ -58,7 +58,7 @@ func TestAdvanceNativeTwoColumnSelectionIsBounded(t *testing.T) {
 }
 
 func TestReviveUnitUsesLevelFeeAndRestoresNativeFields(t *testing.T) {
-	u := &battle.Unit{Fig: 9, Lv: 4, HP: 0, MaxHP: 37, OnField: false}
+	u := &battle.Unit{Fig: 9, Lv: 4, HP: 0, MaxHP: 37, OnField: false, NativeRecordByte5: 1, HasNativeRecordByte5: true}
 	gold, cost, err := ReviveUnit(321, u, 7)
 	if err != nil || cost != 28 || gold != 293 {
 		t.Fatalf("revive result gold=%d cost=%d err=%v", gold, cost, err)
@@ -69,13 +69,28 @@ func TestReviveUnitUsesLevelFeeAndRestoresNativeFields(t *testing.T) {
 }
 
 func TestReviveUnitIsAtomicOnInsufficientGoldOrInvalidCandidate(t *testing.T) {
-	dead := &battle.Unit{Lv: 4, HP: 0, MaxHP: 37, OnField: false}
+	dead := &battle.Unit{Lv: 4, HP: 0, MaxHP: 37, OnField: false, NativeRecordByte5: 1, HasNativeRecordByte5: true}
 	if gold, cost, err := ReviveUnit(27, dead, 7); err == nil || gold != 27 || cost != 28 || dead.HP != 0 || dead.OnField {
 		t.Fatalf("insufficient-gold mutation gold=%d cost=%d err=%v unit=%#v", gold, cost, err, dead)
 	}
-	alive := &battle.Unit{Lv: 4, HP: 1, MaxHP: 37, OnField: true}
+	alive := &battle.Unit{Lv: 4, HP: 1, MaxHP: 37, OnField: true, NativeRecordByte5: 0, HasNativeRecordByte5: true}
 	if gold, cost, err := ReviveUnit(100, alive, 7); err == nil || gold != 100 || cost != 0 || alive.HP != 1 {
 		t.Fatalf("alive candidate mutation gold=%d cost=%d err=%v unit=%#v", gold, cost, err, alive)
+	}
+	legacyDead := &battle.Unit{Lv: 4, HP: 0, MaxHP: 37}
+	if CanRevive(legacyDead) {
+		t.Fatal("HP projection without raw byte5 provenance must fail closed")
+	}
+}
+
+func TestReviveUnitUsesRawLevelWithoutInventedMinimum(t *testing.T) {
+	u := &battle.Unit{
+		Lv: 0, HP: 0, MaxHP: 9,
+		NativeRecordByte5: 1, HasNativeRecordByte5: true,
+	}
+	gold, cost, err := ReviveUnit(12, u, 7)
+	if err != nil || gold != 12 || cost != 0 || u.HP != 9 || u.NativeRecordByte5&1 != 0 {
+		t.Fatalf("level-zero raw revive gold=%d cost=%d err=%v unit=%#v", gold, cost, err, u)
 	}
 }
 
@@ -120,6 +135,21 @@ func TestNativeClassCandidateWindowShowsThreeRowsAndScrolls(t *testing.T) {
 		start, visible := NativeClassCandidateWindow(tt.count, tt.selected)
 		if start != tt.start || visible != tt.visible {
 			t.Fatalf("window(%d,%d)=(%d,%d), want (%d,%d)", tt.count, tt.selected, start, visible, tt.start, tt.visible)
+		}
+	}
+}
+
+func TestNativeThreeRowWindowPreservesStatefulOrigin(t *testing.T) {
+	start := 0
+	for _, step := range []struct {
+		selected, want int
+	}{
+		{0, 0}, {2, 0}, {3, 1}, {4, 2}, {3, 2}, {1, 1}, {0, 0},
+	} {
+		var visible int
+		start, visible = NativeThreeRowWindow(6, step.selected, start)
+		if start != step.want || visible != 3 {
+			t.Fatalf("selected%d window=(%d,%d), want (%d,3)", step.selected, start, visible, step.want)
 		}
 	}
 }

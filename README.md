@@ -66,9 +66,12 @@ fail-closed。這讓 command UI 能實際進入部分原版 target 流程，但�
 effect renderer、SFX、動畫或所有 command 語意已還原。
 
 Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/ui-traces/town-church-revive-ch02.json)
-驗證 `town_ch02 → church_ch02 → revive → town_ch02`，並保存目前 source rebuild 的
-[`church-current-remake.png`](docs/figures/church-current-remake.png)。未知 native service
-仍 fail-closed。
+驗證 `town_ch02 → church_ch02 → revive → town_ch02`。2026-07-28 續以 official IDA
+閉合 `0x30dc3→0x309ff/0x30c22/0x30a47`：候選資格嚴格讀 roster record `+5 bit0`，
+費用使用 raw class `+0x20` 對 `0x52669` 費率乘 raw level `+0x21`；三列名單、角色／
+種族／職業／費用、FDTXT590 動態名字與金額、Yes/No 及 6-open/5-close、4-open/9-close
+已接原版 indexed runtime。無候選 FDTXT588、金額不足 FDTXT504 與成功
+`SFX17→0x2f4c6→SFX11` 的完整等待／演出仍 fail-closed，不以 authored toast 宣稱 parity。
 
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、
@@ -156,6 +159,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 最新 church class-change contract（source trace, 2026-07-27） | [`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json) |
 | 原版資源 indexed 轉職候選清單（`0x311DC+0x31019` final frame；非 DOSBox 截圖） | ![native indexed class list](docs/figures/native-class-list-indexed.png) |
 | 原版資源 indexed 轉職確認框（`0x19953` selected-pulse frame；非 DOSBox 截圖） | ![native indexed class confirmation](docs/figures/native-class-confirm-indexed.png) |
+| 原版資源 indexed 復活候選清單（`0x30c22→0x30a47`；raw class5、Lv4 fixture，非 DOSBox 截圖） | ![native indexed revive list](docs/figures/native-revive-list-indexed.png) |
+| 原版資源 indexed 復活確認框（FDTXT590 動態名字／費用；非 DOSBox 截圖） | ![native indexed revive confirmation](docs/figures/native-revive-confirm-indexed.png) |
 | 原版資源 indexed 教會主選單（`0x3072f+0x2d669+0x2d85f`；gold=1000 fixture，非 DOSBox 截圖） | ![native indexed church menu](docs/figures/native-church-menu-indexed.png) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |

@@ -70,6 +70,33 @@ func NativeClassCandidateWindow(count, selected int) (start, visible int) {
 	return start, visible
 }
 
+// NativeThreeRowWindow mirrors the stateful vertical viewport shared by
+// 0x30c22 and 0x311dc. The caller preserves start between moves; it changes
+// by one only after the selection crosses the current three-row window.
+func NativeThreeRowWindow(count, selected, start int) (nextStart, visible int) {
+	if count <= 0 || selected < 0 || selected >= count || start < 0 {
+		return 0, 0
+	}
+	maxStart := count - 3
+	if maxStart < 0 {
+		maxStart = 0
+	}
+	if start > maxStart {
+		start = maxStart
+	}
+	for selected < start && start > 0 {
+		start--
+	}
+	for selected >= start+3 && start < maxStart {
+		start++
+	}
+	visible = count - start
+	if visible > 3 {
+		visible = 3
+	}
+	return start, visible
+}
+
 // AdvanceNativeTwoColumnSelection mirrors the bounded list movement used by
 // 0x2e6b8/0x2df6b. delta is one of -2,-1,+1,+2 (left/up/right/down); invalid
 // counts or moves leave the cursor unchanged, and there is no wrap.
@@ -235,11 +262,10 @@ func ClassChangeCandidates(roster map[int]battle.Unit, order []int) []int {
 	return out
 }
 
-// CanRevive matches the original church candidate filter: the character must
-// have a valid max HP and currently be dead/inactive. The native handler's
-// 0x309ff list is built from roster records, not from the active battle array.
+// CanRevive reproduces 0x309ff -> 0x3453e: the roster record is a candidate
+// exactly when raw byte +5 has bit 0 set. Unknown raw provenance fails closed.
 func CanRevive(u *battle.Unit) bool {
-	return u != nil && u.MaxHP > 0 && u.HP <= 0
+	return u != nil && u.HasNativeRecordByte5 && u.NativeRecordByte5&1 != 0
 }
 
 // ReviveUnit applies the proven 0x30dc3 write-back sequence. feeRate is the
@@ -256,11 +282,10 @@ func ReviveUnit(gold int, u *battle.Unit, feeRate int) (int, int, error) {
 	if feeRate < 0 {
 		return gold, 0, fmt.Errorf("revive: invalid fee rate")
 	}
-	level := u.Lv
-	if level < 1 {
-		level = 1
+	if u.Lv < 0 {
+		return gold, 0, fmt.Errorf("revive: invalid level")
 	}
-	cost := feeRate * level
+	cost := feeRate * u.Lv
 	if gold < cost {
 		return gold, cost, fmt.Errorf("revive: insufficient gold")
 	}

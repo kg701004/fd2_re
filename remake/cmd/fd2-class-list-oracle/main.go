@@ -20,13 +20,14 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 9 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png")
+	if len(os.Args) != 11 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, fdiconPath, datoPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 	itemRowsPath := os.Args[5]
 	listOutputPath, confirmOutputPath, transferOutputPath := os.Args[6], os.Args[7], os.Args[8]
+	reviveListOutputPath, reviveConfirmOutputPath := os.Args[9], os.Args[10]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -160,6 +161,46 @@ func main() {
 	); err != nil {
 		fail(err)
 	}
+	reviveScene, err := campaign.ComposeNativeChurchScene(
+		background, entries[1], dialogue, digits, portraits[0], strings, font, 1000, 589,
+	)
+	if err != nil {
+		fail(err)
+	}
+	reviveSource, err := campaign.NativeChurchMenuBase(reviveScene)
+	if err != nil {
+		fail(err)
+	}
+	reviveList := append([]byte(nil), reviveSource...)
+	if err := entries[16].BlitOpaqueAt(reviveList, 320, 5, 112, false); err != nil {
+		fail(err)
+	}
+	if err := battle.RenderNativeReviveRows(
+		itemAssets, priceCell, []battle.NativeReviveRow{{
+			Sprite: sprite, NameTextIndex: 10,
+			RaceTextIndex: 141, ClassTextIndex: 155, Fee: 200,
+		}}, 0, reviveList,
+	); err != nil {
+		fail(err)
+	}
+	reviveDialogue, err := campaign.ComposeNativeChurchDialogueOverlay(
+		reviveSource, dialogue, portraits[0],
+	)
+	if err != nil {
+		fail(err)
+	}
+	reviveQuestion, err := campaign.ComposeNativeReviveConfirmationQuestion(
+		reviveDialogue, strings, font, 10, 200,
+	)
+	if err != nil {
+		fail(err)
+	}
+	reviveConfirm, err := campaign.ComposeNativeConfirmationChoices(
+		reviveQuestion, cells, 0, 1,
+	)
+	if err != nil {
+		fail(err)
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		fail(err)
@@ -172,6 +213,8 @@ func main() {
 	writePNG(listOutputPath, frame, palette)
 	writePNG(confirmOutputPath, confirm, palette)
 	writePNG(transferOutputPath, transfer, palette)
+	writePNG(reviveListOutputPath, reviveList, palette)
+	writePNG(reviveConfirmOutputPath, reviveConfirm, palette)
 }
 
 func writePNG(path string, pixels []byte, palette color.Palette) {

@@ -32,6 +32,10 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 				Name: "悠妮", Portrait: 9, ClassID: 5,
 				NativeIdentity: 9, HasNativeIdentity: true,
 				MapSelectorKey: 9, HasMapSelectorKey: true,
+				NativeRecordRace: 1, HasNativeRecordRace: true,
+				NativeRecordClass: 5, HasNativeRecordClass: true,
+				NativeRecordByte5: 1, HasNativeRecordByte5: true,
+				Lv: 4, HP: 0, MaxHP: 31,
 				Inventory: []int{0x5a},
 			},
 			0: {
@@ -50,6 +54,7 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 			},
 		},
 		nativeChurchTextIndex: 585,
+		reviveFeeRates:        []int{0, 10, 20, 30, 40, 50},
 	}
 	screen := ebiten.NewImage(640, 400)
 	if !g.drawNativeClassList(screen) {
@@ -103,5 +108,38 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	if !g.beginNativeChurchTransferItemClosing(nil) ||
 		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
 		t.Fatal("native transfer item five-frame closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	g.churchMode, g.churchIDs, g.churchSel = "revive", []int{9}, 0
+	g.nativeChurchTextIndex = 589
+	if !g.drawNativeChurchReviveList(screen) {
+		t.Fatal("native revive candidate list unexpectedly fell back")
+	}
+	if !g.beginNativeChurchReviveListOpening() || len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native revive candidate six-frame opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchReviveListClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native revive candidate five-frame closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	g.churchMode, g.churchReviveID, g.churchReviveFee, g.churchSel =
+		"revive_confirm", 9, 200, 0
+	if _, err := campaign.ComposeNativeReviveConfirmationQuestion(
+		make([]byte, 320*200), assets.strings, assets.font, 10, 200,
+	); err != nil {
+		t.Fatalf("native revive question composition failed: %v", err)
+	}
+	if !g.drawNativeChurchReviveConfirmation(screen) {
+		t.Fatal("native revive confirmation unexpectedly fell back")
+	}
+	if !g.beginNativeChurchReviveConfirmationOpening() || len(g.nativeClassUIJob.frames) != 4 {
+		t.Fatal("native revive confirmation four-frame opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchReviveConfirmationClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 9 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native revive confirmation choice/dialogue closing unexpectedly fell back")
 	}
 }

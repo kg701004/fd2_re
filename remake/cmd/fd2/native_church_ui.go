@@ -190,6 +190,8 @@ func (g *Game) returnToNativeChurchMenu() {
 	g.churchStatusID = -1
 	g.churchStatusPanel = nil
 	g.churchCommandPanel = nil
+	g.churchReviveID = -1
+	g.churchReviveFee = 0
 	g.churchBranches = nil
 	g.churchClassID = -1
 	g.churchSel = 0

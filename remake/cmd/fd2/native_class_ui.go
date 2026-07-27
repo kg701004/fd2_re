@@ -131,10 +131,13 @@ func (g *Game) composeNativeClassListFrame() ([]byte, bool) {
 	if a == nil || g.churchMode != "class" || len(g.churchIDs) == 0 {
 		return nil, false
 	}
-	start, visible := campaign.NativeClassCandidateWindow(len(g.churchIDs), g.churchSel)
+	start, visible := campaign.NativeThreeRowWindow(
+		len(g.churchIDs), g.churchSel, g.churchVerticalStart,
+	)
 	if visible == 0 {
 		return nil, false
 	}
+	g.churchVerticalStart = start
 	background, ok := g.composeNativeChurchSourceFrame()
 	if !ok {
 		return nil, false

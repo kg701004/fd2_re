@@ -92,9 +92,10 @@ type Game struct {
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
 	churchSel            int                 // church service menu cursor (0..3)
-	churchMode           string              // menu / status_roster / status_view / status_commands / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
+	churchMode           string              // menu / status_* / transfer_* / revive / revive_confirm / class / class_confirm
 	churchIDs            []int               // current church candidate ids
 	churchRosterStart    int                 // 0x2e6b8 [0x5412f], even six-entry viewport origin
+	churchVerticalStart  int                 // 0x30c22/0x311dc three-row viewport origin
 	churchStatusID       int                 // selected actor passed to 0x17aed
 	churchStatusPanel    []byte              // 0x17eef/0x17fc0 + 0x184c0(actor,-1)
 	churchCommandPanel   []byte              // 0x17eef/0x17fc0 + 0x1ceed(actor,-1)
@@ -102,6 +103,8 @@ type Game struct {
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
 	churchTransferItems  []int               // compact source inventory indices
+	churchReviveID       int                 // selected 0x30dc3 candidate
+	churchReviveFee      int                 // level * raw class fee
 	churchClassID        int                 // selected class-change candidate
 	churchBranches       []campaign.ClassChangeBranch
 	hotelSel             int // raw 0x2fc85 selector (0..3)
@@ -2376,10 +2379,13 @@ func (g *Game) setupChurch() {
 	g.churchMode = "menu"
 	g.churchIDs = nil
 	g.churchRosterStart = 0
+	g.churchVerticalStart = 0
 	g.churchTransferSource = -1
 	g.churchTransferItem = -1
 	g.churchTransferItems = nil
 	g.churchItemStart = 0
+	g.churchReviveID = -1
+	g.churchReviveFee = 0
 	g.churchClassID = -1
 	g.churchStatusID = -1
 	g.churchStatusPanel = nil
@@ -2712,8 +2718,15 @@ func (g *Game) campInput() bool {
 						g.churchMode = map[int]string{2: "revive", 3: "class"}[selected]
 						g.churchIDs = g.churchCandidates(g.churchMode)
 						g.churchSel = 0
+						g.churchVerticalStart = 0
 						if g.churchMode == "class" {
 							g.beginNativeClassListOpening()
+						} else if len(g.churchIDs) == 0 {
+							g.msg = "隊伍中沒有須要復活的！"
+							g.returnToNativeChurchMenu()
+						} else {
+							g.nativeChurchTextIndex = 589
+							g.beginNativeChurchReviveListOpening()
 						}
 					default:
 						g.msg = "此教會服務尚待原版 callee 完整接線"
@@ -2883,6 +2896,34 @@ func (g *Game) campInput() bool {
 			}
 			return true
 		}
+		if g.churchMode == "revive_confirm" {
+			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				if !g.beginNativeChurchReviveConfirmationClosing(g.returnToNativeReviveList) {
+					g.returnToNativeReviveList()
+				}
+				return true
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				g.churchSel = campaign.AdvanceNativeClassConfirmation(g.churchSel, -1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				g.churchSel = campaign.AdvanceNativeClassConfirmation(g.churchSel, 1)
+			}
+			if enter {
+				if g.churchSel == 0 {
+					apply := func() {
+						g.reviveChurchUnit(g.churchReviveID)
+						g.returnToNativeReviveList()
+					}
+					if !g.beginNativeChurchReviveConfirmationClosing(apply) {
+						apply()
+					}
+				} else if !g.beginNativeChurchReviveConfirmationClosing(g.returnToNativeReviveList) {
+					g.returnToNativeReviveList()
+				}
+			}
+			return true
+		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			if g.churchMode == "class_confirm" {
 				if !g.beginNativeClassConfirmationClosing(g.returnToNativeClassList) {
@@ -2892,6 +2933,12 @@ func (g *Game) campInput() bool {
 			}
 			if g.churchMode == "class" {
 				if !g.beginNativeClassListClosing(g.returnToNativeChurchMenu) {
+					g.returnToNativeChurchMenu()
+				}
+				return true
+			}
+			if g.churchMode == "revive" {
+				if !g.beginNativeChurchReviveListClosing(g.returnToNativeChurchMenu) {
 					g.returnToNativeChurchMenu()
 				}
 				return true
@@ -2933,11 +2980,30 @@ func (g *Game) campInput() bool {
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.churchSel+1 < listLen {
 			g.churchSel++
 		}
+		if g.churchMode == "class" || g.churchMode == "revive" {
+			g.churchVerticalStart, _ = campaign.NativeThreeRowWindow(
+				listLen, g.churchSel, g.churchVerticalStart,
+			)
+		}
 		if enter && len(g.churchIDs) > 0 {
 			id := g.churchIDs[g.churchSel]
 			u := g.partyRoster[id]
 			if g.churchMode == "revive" {
-				g.reviveChurchUnit(id)
+				fee, ok := g.nativeReviveFeeForUnit(u)
+				if !ok {
+					g.msg = "缺少原版復活費率資料"
+					return true
+				}
+				openConfirmation := func() {
+					g.churchReviveID = id
+					g.churchReviveFee = fee
+					g.churchMode = "revive_confirm"
+					g.churchSel = 0
+					g.beginNativeChurchReviveConfirmationOpening()
+				}
+				if !g.beginNativeChurchReviveListClosing(openConfirmation) {
+					openConfirmation()
+				}
 			} else {
 				target, ok := campaign.NativeClassChangeTarget(&u, g.classChangeTable)
 				if !ok {
@@ -3154,6 +3220,7 @@ func (g *Game) applyChurchClassChange(branchIndex int) bool {
 	g.msg = fmt.Sprintf("%s 已轉職為%s", u.Name, u.ClsName)
 	g.churchMode, g.churchBranches, g.churchIDs = "class", nil, g.churchCandidates("class")
 	g.churchSel = 0
+	g.churchVerticalStart = 0
 	return true
 }
 
@@ -3175,11 +3242,13 @@ func (g *Game) reviveChurchUnit(id int) bool {
 		g.msg = fmt.Sprintf("復活角色不存在 id=%d", id)
 		return false
 	}
-	if u.ClassID < 0 || u.ClassID >= len(g.reviveFeeRates) {
-		g.msg = fmt.Sprintf("復活費率缺少 class=%d", u.ClassID)
+	if !u.HasNativeRecordClass || int(u.NativeRecordClass) >= len(g.reviveFeeRates) {
+		g.msg = fmt.Sprintf("復活費率缺少 raw class=%d", u.NativeRecordClass)
 		return false
 	}
-	gold, cost, err := campaign.ReviveUnit(g.gold, &u, g.reviveFeeRates[u.ClassID])
+	gold, cost, err := campaign.ReviveUnit(
+		g.gold, &u, g.reviveFeeRates[int(u.NativeRecordClass)],
+	)
 	if err != nil {
 		g.msg = fmt.Sprintf("復活費用 %d G：%v", cost, err)
 		return false
@@ -5670,6 +5739,12 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeChurchTransferItem(screen) {
+			return
+		}
+		if g.drawNativeChurchReviveConfirmation(screen) {
+			return
+		}
+		if g.drawNativeChurchReviveList(screen) {
 			return
 		}
 		if g.drawNativeChurchRoster(screen) {

@@ -20,7 +20,18 @@ func TestCampaignTownChurchReviveReturnTrace(t *testing.T) {
 			"church_ch02": {Type: "church", Next: "town_ch02"},
 		},
 	}
-	dead := battle.Unit{Name: "亞雷斯", ClassID: 1, Lv: 3, HP: 0, MaxHP: 24, OnField: false}
+	dead := battle.Unit{
+		Name:                 "亞雷斯",
+		ClassID:              1,
+		NativeRecordClass:    1,
+		HasNativeRecordClass: true,
+		NativeRecordByte5:    1,
+		HasNativeRecordByte5: true,
+		Lv:                   3,
+		HP:                   0,
+		MaxHP:                24,
+		OnField:              false,
+	}
 	g := &Game{
 		camp:           campaign.NewRunner(c),
 		gold:           100,

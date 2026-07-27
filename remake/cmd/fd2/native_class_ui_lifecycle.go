@@ -109,7 +109,8 @@ func (g *Game) stepNativeClassUILifecycle(now time.Time) {
 			}
 		}
 	}
-	if g.nativeClassUIJob == nil && g.churchMode == "class_confirm" {
+	if g.nativeClassUIJob == nil &&
+		(g.churchMode == "class_confirm" || g.churchMode == "revive_confirm") {
 		g.stepNativeClassUIPulseTick(g.nativeClassUIClock.Sample(now))
 	}
 }
@@ -164,5 +165,6 @@ func (g *Game) returnToNativeClassList() {
 	g.churchBranches = nil
 	g.churchClassID = -1
 	g.churchSel = 0
+	g.churchVerticalStart = 0
 	g.beginNativeClassListOpening()
 }
