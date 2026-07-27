@@ -6133,10 +6133,10 @@ func (g *Game) drawPhaseBanner(screen *ebiten.Image) {
 	g.font.Draw(screen, g.banner, (float64(logicalW)-w)/2, float64(logicalH)/2-24, 2.2, c)
 }
 
-// drawUnitHUD 是目前可玩的 map-HUD approximation，復用 full-screen battle panel
-// 的 FDOTHER#5 LMI1 #22 frame。它不可宣稱等同原版 map HUD：native 0x1acf3 有
-// 獨立的 cursor-unit lookup、兩個 display gates、resource/digit pipeline 與 anchor
-// correction，尚未接入。AP/DP/MV 素材也未證實屬於此 native panel，故仍以文字補列。
+// drawUnitHUD 是 native full-frame admission 失敗時的 playable fallback，
+// 復用 full-screen battle panel 的 FDOTHER#5 LMI1 #22 frame。ch01 production
+// path 已由 ComposeNativeFrame 接入完整 0x1acf3 HUD；本函式不可再用來描述
+// native HUD 的完成度。AP/DP/MV 素材也未證實屬於 #22，故 fallback 仍以文字補列。
 func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 	nm := u.Name
 	if nm == "" {

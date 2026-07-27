@@ -116,8 +116,8 @@ func TestComposeFrameMode6MutatesBetweenTerrainAndForegroundAtomically(t *testin
 }
 
 func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
-	// The native work pointer is 0x8088, so the 192-row viewport reaches
-	// through row 319 even though the HUD itself occupies the final 200 rows.
+	// 0x11cfa passes work+0x8088 to 0x1acf3. The HUD offsets are relative to
+	// that pointer and the following viewport copy uses the same base.
 	work := make([]byte, workStride*320)
 	vga := make([]byte, NativeMapVGASize)
 	terrain := bank(2, 0)
@@ -149,13 +149,16 @@ func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
 		t.Fatal(err)
 	}
 	layout, _ := fdicon.NativeMapHUDLayoutFor(136, workStride)
-	if work[layout.Frame] != 0x5a || work[layout.Terrain] != 0x66 || work[layout.Unit] != 0x77 || work[layout.HP] != 0x70 {
-		t.Fatalf("native HUD missing from work: %#x/%#x/%#x/%#x", work[layout.Frame], work[layout.Terrain], work[layout.Unit], work[layout.HP])
+	if work[workBase+layout.Frame] != 0x5a ||
+		work[workBase+layout.Terrain] != 0x66 ||
+		work[workBase+layout.Unit] != 0x77 ||
+		work[workBase+layout.HP] != 0x70 {
+		t.Fatalf("native HUD missing from viewport-relative work: %#x/%#x/%#x/%#x",
+			work[workBase+layout.Frame], work[workBase+layout.Terrain],
+			work[workBase+layout.Unit], work[workBase+layout.HP])
 	}
-	// The source viewport starts at workBase=(x=72,y=72); the HUD panel at
-	// anchor 136 lands at source-relative (64,85), then 0x11cac places the
-	// 312x192 viewport at VGA (4,4).
-	if got := vga[(85+4)*viewWidth+64+4]; got != 0x5a {
+	// 0x11eb0 places the same viewport-relative HUD position at VGA (4,4).
+	if got := vga[(157+4)*viewWidth+136+4]; got != 0x5a {
 		t.Fatalf("native HUD did not reach viewport: %#x", got)
 	}
 }

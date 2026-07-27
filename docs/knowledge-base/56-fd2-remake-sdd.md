@@ -1066,6 +1066,19 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Presentation bridge (strict gate): `drawNativeMapHUD` converts the verified 456-stride indexed buffer to a 320×200 paletted Ebiten image only when `NativeMapHUDRuntimeState`, selector cache/cycle and every selected-unit raw admission byte are present. It now draws panel/terrain/AP/DP plus the proven unit icon and `+0x40/+0x42` HP path together. The former hardcoded `DisplayGateA=true, DisplayGateB=true, AnchorX=1` partial path has been removed because native load can overwrite gate A. Missing provenance falls back before any native drawing. `battle_ch01` now materializes the exact player-save view `(camera 1,13; cursor 8,17; visible 7,4)` and HUD raw bytes `(1,1,1)` through editable campaign fields; other chapters remain unmaterialized pending chapter-specific evidence, so this does not claim whole-campaign visual parity.
 
+   HUD pointer-base correction (2026-07-28): direct Capstone at
+   `0x11cfa..0x11d0a` proves the caller pushes stride `0x1c8` and
+   `[0x53a49]+0x8088` into `0x1acf3`. Therefore every recovered HUD offset,
+   including row157, is relative to the same viewport pointer used by terrain
+   and the later `0x11eb0` copy. The earlier production adapter passed the
+   allocation base, causing the HUD to land 72 rows／72 bytes away and disappear
+   from the final bottom edge; its regression had encoded that wrong coordinate.
+   `ComposeNativeFrame` now passes `work[0x8088:]`, keeps failure atomicity, and
+   verifies the panel reaches VGA `(anchor+4,161)`. The original-video
+   [HUD oracle](../figures/native-map-ch01-original-video.png) and rebuilt
+   [remake frame](../figures/native-map-ch01-remake.png) both show the panel at
+   the lower edge. They do not yet constitute a same-state full-frame pixel diff.
+
    Production steady-frame and drawable-target slice (2026-07-28): ch01 now materializes the explicitly sourced persistent selector one, uses the original party-first/initial-group append constructor order, and consumes regenerated FDFIELD/FDSHAP raw map fields. Runtime composition byte+3 is initialized to `0xff` exactly as `0x4dbfc`; using serialized zeroes was an incorrect assertion that forced the whole steady map through the LUT branch and visibly washed out the palette. `nativeBIOSClock` supplies a battle-local signed BIOS low word at the PIT rate; one Update corresponds to the one `0x1297d` call at `0x11cb7`, while terrain phase and the two independent BIOS-word latches consume the same sample. `drawNativeMapFrame` executes the proven interactive `0x11cac` pipeline and FDOTHER#1 descriptor 0 supplies the native steady cursor; the former white rectangle approximation is removed. Command target entry materializes the first-stage `0x14818` remaining-budget grid and writes `record+4+2`; selectors 2–5 remain in the same production indexed compositor and use their exact ordered FDOTHER#1 call tables. Cancel and successful effect exit perform the `0x4dbfc` reset and restore selector one. Selector 6 is a separate field mutation and 7+ have no `0x122dc` draw table, so they still fall back; target flash and indexed effects remain incomplete.
 
    Palette assertion correction: `FDOTHER#0` is a VGA DAC palette and index zero is not globally transparent. `ParseVGAPalette` now returns 256 opaque entries; only blitter-specific adapters such as `RawCell.Paletted` clone the palette and make zero transparent when their native zero-source rule requires destination preservation. This prevents a full indexed VGA frame's four-pixel border from leaking the legacy renderer beneath it.

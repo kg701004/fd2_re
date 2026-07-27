@@ -1200,3 +1200,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   foreground前清selector6 selected cell，僅full-frame成功才commit，並不
   猜接其仍未知的production owner。focused Docker/Xvfb
   `go test ./internal/indexedmap ./cmd/fd2 -count=1`通過。
+- 2026-07-28 HUD production-base correction：文件稽核先發現UI matrix仍把
+  ch01誤寫成只畫full-screen #22 approximation；實際
+  `BlitNativeMapHUD→ComposeNativeFrame`早已接入完整已證實subpasses。
+  但原版錄影frame oracle又揭露production截圖下緣沒有HUD。Docker-only
+  Capstone重讀`0x11cfa..0x11d0a`固定caller傳入
+  `[0x53a49]+0x8088`與stride456；舊adapter卻把row157等offset套在work
+  allocation base，連unit test都鎖住錯位。`ComposeNativeFrame`現傳
+  `work[0x8088:]`，regression驗work與VGA `(anchor+4,161)`位置，HUD重新
+  出現在左下角。新增原版錄影412秒
+  `docs/figures/native-map-ch01-original-video.png`，並以Docker/Xvfb重建
+  `native-map-ch01-remake.png`。兩者證實lower-edge placement，不宣稱
+  same-state pixel parity；ch02+ raw view/gates/anchor仍不可複製ch01值。

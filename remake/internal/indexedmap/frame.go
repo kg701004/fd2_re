@@ -341,7 +341,13 @@ func BuildNativeTerrainCells(tiles []int, blitModes []byte) ([]fdicon.NativeTerr
 // rejection keeps work/VGA unchanged through ComposeFrame's transaction.
 func ComposeNativeFrame(work, vga []byte, in NativeFrameInput) error {
 	return ComposeFrame(work, vga, in.Frame, func(dst []byte) error {
-		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst, in.HUD)
+		// 0x11cfa passes [0x53a49]+0x8088 to 0x1acf3, not the allocation
+		// base. HUD row/column offsets are therefore viewport-relative, just
+		// like the preceding 0x11eee terrain destination.
+		if len(dst) < workBase {
+			return errors.New("indexedmap: native HUD viewport base outside work buffer")
+		}
+		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst[workBase:], in.HUD)
 	})
 }
 
