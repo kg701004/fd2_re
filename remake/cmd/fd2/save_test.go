@@ -61,6 +61,18 @@ func TestSaveRejectsPostBattleHandlerWithoutSerializableRuntimeContext(t *testin
 	}
 }
 
+func TestSaveRejectsUnboundPostbattleBoundary(t *testing.T) {
+	c := &campaign.Campaign{Start: "postbattle_ch04_persist", Nodes: map[string]*campaign.Node{
+		"postbattle_ch04_persist": {Type: "cutscene", Next: "town_ch05"},
+		"town_ch05":               {Type: "town"},
+	}}
+	g := &Game{camp: campaign.NewRunner(c)}
+	g.saveGame()
+	if g.msg != "戰後演出進行中，請在下一個節點存檔" {
+		t.Fatalf("unbound postbattle save was not rejected: %q", g.msg)
+	}
+}
+
 func TestWriteSaveFileReplacesCompleteJSONAtomically(t *testing.T) {
 	path := t.TempDir() + "/fd2_save.json"
 	if err := os.WriteFile(path, []byte(`{"node":"old"}`), 0o644); err != nil {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
@@ -70,11 +71,13 @@ func (g *Game) saveGameToSlot(slot int) {
 		g.msg = "存檔:僅 campaign 模式支援(FD2_CAMPAIGN=1)"
 		return
 	}
-	if n := g.camp.Node(); n != nil && n.Type == "cutscene" && n.HandlerBinding != "" && g.st != nil {
+	if n := g.camp.Node(); n != nil && n.Type == "cutscene" && ((n.HandlerBinding != "" && g.st != nil) || strings.HasPrefix(g.camp.NodeID(), "postbattle_")) {
 		// Post-battle handlers intentionally retain the completed canonical battle
 		// array for slot predicates, rewards, SPAWN, ACT and sync_party. The save
 		// format is node-boundary-only and does not serialize that transient array;
-		// saving this node would reload into a guaranteed fail-closed context.
+		// saving this node would reload into a guaranteed fail-closed context. This
+		// applies equally to an unbound node: it must not create a fake save that
+		// appears to have crossed the persistence boundary.
 		g.msg = "戰後演出進行中，請在下一個節點存檔"
 		return
 	}
