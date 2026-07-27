@@ -299,7 +299,7 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 			// Fresh native JOIN writes join_id to persistent +7/+8. Fig is the
 			// authored JOIN identity here; class change later writes raw +7
 			// explicitly and must not alter Fig/+8 identity.
-			BattleFig: pm.Fig, MapSelectorKey: pm.Fig, HasMapSelectorKey: true,
+			BattleFig: pm.Fig, HasBattleFig: true, MapSelectorKey: pm.Fig, HasMapSelectorKey: true,
 			X: x, Y: y, OnField: true,
 			Spells: append([]int(nil), pm.Spells...), Inventory: inventory, Equipped: equipped, InventorySlots: runtimeSlots,
 			Dir: 0,

@@ -705,6 +705,12 @@
 - [~] **shared object redraw compositor**：`0x127a9` 的 `0x127e0` 不是單純 loop bookkeeping：active roster entry 以 camera-relative placement 選 24×24 descriptor，走 `0x4deda` raw indexed-RLE 或 `0x4de56` palette-band-RLE 寫 `0x53a49`；尾端 `0x129ec` 又在同 buffer 疊 map/object layer。`+5 bit7` clear→raw、set→band 已由 direct branch 關閉。`BlitNativeUnitLayer` 現以 raw slot／pose／movement／base-frame／active gate、camera bounds、cycles 及 pixel shift 完整表達 steady unit layer，且 preflight 失敗不寫半張 frame；它不接 GUI。`0x53a61` 是 global raw-key cache 的 pointer blocks，runtime index 是回傳 `slot×12 + pose×3 + cycle`，而非角色 group。仍待將 terrain→range→unit→foreground→HUD→viewport copy 組成 caller adapter；在此之前不得把 `0x22046` passes 或 `unit_present` 接成 native UI。
 - [x] **`0x11cac` range-layer provenance**：Docker Capstone 釘住 redraw order 為 `0x11eee terrain → 0x122dc range overlay → 0x127a9 unit+foreground → 0x1acf3 HUD → 0x11eb0 viewport copy`。`0x122dc` 依 raw `[0x51a83]` mode 1..6 展開固定 offset/descriptor calls 到 `0x126f7`；後者 camera-bound 後以 `0x4deda` 直接寫 `buffer+0x8088`。range mode table／descriptor bank 尚待資料化，不能以 GUI highlight 冒充。
 - [x] **`0x122dc` range call-table／asset closure**：Docker Capstone 完整直讀 modes 1..5，`fdother.NativeRangeOverlayPlacements` 保留原始 call order 的 1/1/5/13/21 個 `(x,y,descriptor)`；特別固定 mode3 centre=`#14`、mode5 的重複座標／不同 descriptor，禁止圖形化 normalize。`0x25c7d..0x25c92` 已證明 `FDOTHER#1→0x53a4d`；實檔 header 是 20-entry 24×24 four-mode-RLE bank，`0x126f7` 以 `base+6+4*descriptor` 選 #0..18 後 `0x4deda`。`DecodeNativeRangeOverlayBank`／`BlitNativeRangeOverlay` 以真實 resource regression 固定 456 stride、0x8088、camera clip 和 preflight。mode6 不呼 `0x126f7`，而是算 `4*(x+y*raw53ac1)+7` 後清 `[0x53a51]` 指向資料的一個 byte；drawable API 明確拒絕 mode6。仍待 native buffer/grid lifetime 與 runtime/Ebiten adapter。
+- [x] **RE-RANGE-MODE-ZERO-NOOP**：官方 IDA 9.4 重讀 `0x122dc`
+  證實 switch default不draw；Capstone另固定bootstrap `0x10483`
+  先寫`[0x51a83]=0`再呼`0x11cac(1)`。故raw mode0是正常steady frame，
+  不是invalid editable input。`BlitNativeRangeOverlay`現以byte-for-byte
+  regression接受0為exact no-op；pure modes1..5 placement API仍拒絕0，
+  mode6仍只走獨立field mutation。
 - [x] **`0x122dc` mode6 raw-field closure**：`0x108f0..0x10932` 載 FDFIELD composition 至 `0x53a51`、讀 signed `u16 width/height`；`0x4dbfc` 由 header 後的 4-byte cells 逐筆將 byte+3 初始化為`0xff`，再對 byte+2 mask `0x1f`。所以 mode6 的 `4*(x+y*width)+7` 正是 selected cell byte+3（event-high／raw blit-mode byte），不是 overlay sprite 或抽象 grid。`ClearNativeRangeOverlayMode6FieldByte` 有 bounds/no-partial-mutation regression；不替清零後的 renderer/gameplay效果命名。
 - [x] **steady native indexed map-frame scheduler**：新增 `internal/indexedmap.ComposeFrame`，強制順序 `0x11eee terrain → 0x122dc range → 0x127a9 unit → 0x129ec foreground → HUD callback → 0x11eb0` 320×192 copy。HUD callback 缺失即拒絕，private work clone 讓任一 layer/HUD 失敗不污染 caller 的 work/VGA；regression 固定 foreground 在 HUD 前、HUD byte 必進 viewport。這是純 indexed compositor，不等同 Ebiten UI／DAC／timing closure。
 - [x] **native map HUD panel subpass**：`indexedmap.BlitNativeMapHUDPanel` 直接接 `0x1acf3` 已證實的雙 raw gate、FDOTHER#5 LMI1 #130（69×34）、`stride*157+anchorX`；entry geometry 不符即拒絕且不寫 destination。**撤回**把它當一般 LMI1 cell 的實作：#130/#0x83/#0x84 必走 `ParseLMI1FrameEntry→0x4e63d` four-mode `Frame`，`DecodeNativeMapHUDFrames` 已以真實 FDOTHER regression 固定。它只畫 panel，terrain/unit icon 與 AP/DP/HP digit paths 仍分離，不能把完整 HUD 標成完成。
@@ -721,7 +727,7 @@
 - [x] **FDSHAP archive sprite-bank bridge**：`fdother.DecodeSpriteBankResource` 以 LLLLLL `ReadResource→fdicon.Parse` 解 FDSHAP even image resource，不混入相鄰 terrain-control resource；player-provided FDSHAP#0 regression 固定 288 個24×24 four-mode frames。這提供 native HUD terrain icon／indexed compositor 的真實 archive input，但 map↔resource pairing仍由上層明示。
 - [x] **FDSHAP map resource pairing**：`DecodeMapTerrainResources(mapIndex)` 只讀已證 map N→image #`2N`、control #`2N+1`，並驗 bank frame count 不超 control-record count；FDSHAP map0 真實 regression=288 frame/1200 control bytes。明確拒絕從 tile count/cost 猜 map 資源。
 - [x] **exported map-path binding**：`MapIndexFromAssetPath` 僅接受 legacy `assets`=map0 或 basename 精確 `mapN`，拒絕 suffix/負數/任意目錄；runtime 將用此 explicit N 餵 FDSHAP pair loader，不以檔名近似猜配。
-- [x] **production native-map asset gate**：`Game.loadMap` 載入 HUD FDOTHER frames、明示 FDSHAP pair、FDICON.B24、VGA palette 為 all-or-nothing `nativeMapAssets`；任一缺失/解碼失敗保持既有 PNG renderer，indexed-to-Ebiten presentation 尚待下一步。
+- [x] **production native-map asset gate**：`Game.loadMap` 載入 HUD FDOTHER frames、FDOTHER #1 range bank、明示 FDSHAP pair、FDICON.B24、FDOTHER #3 LUTs與VGA palette為all-or-nothing `nativeMapAssets`；任一缺失/解碼失敗保持既有PNG renderer。bundle regression明確拒絕缺range bank；indexed-to-Ebiten presentation仍待camera/global-state bridge。
 - [x] **indexed→Ebiten native HUD partial bridge**：`drawNativeMapHUD` 以 456-stride buffer→320×200 paletted image 實際呈現 panel/terrain/AP/DP；raw tile/control bounds 或任何 decoder failure 立即回 legacy UI。optional unit/HP 尚未接，因 runtime roster admission bytes 未 export，不猜測性補上。
 - [x] **HUD unit-gate constructor provenance**：Docker Capstone `0x10d7f..0x10efc` 固定 runtime `+6=FDFIELD b0`、`+7/+8=FDFIELD b1`，與 editable `map_selector_key`/`battle_fig` 對齊；`+0x1f` 改由 portrait/resource branch 寫入，不能拿 portrait/class 直接代替。缺少該 resource byte 時 optional icon/HP 繼續 fail-closed。
 
@@ -957,10 +963,29 @@
 - [~] **RUNTIME-NATIVE-MAP-CLOCK-AND-FRAME-INPUT**：成功建立 native
   selector batch 後，`battle.State.NativeMapCycleState` 已擁有
   `[0x53c0b]/[0x53c07]/[0x53c0f]`，且只接受 signed low BIOS word；
-  legacy state 不會猜值。尚待以 monotonic clock 產生約18.2Hz BIOS
-  tick/call cadence，並由完整 raw roster 建立 `NativeFrameInput` 接到
-  indexed compositor。現階段七拍「狀態序列」已一致，但每拍仍由
-  Ebiten Update 驅動，不宣稱原版 wall-clock 或完整 UI presentation。
+  legacy state 不會猜值。official IDA/Capstone另關閉`0x11eee`：
+  `[0x51a93]==-1`時signed BIOS delta>2或wrap才令`[0x53c1f]`
+  modulo20前進並更新`[0x539f4]`；override0..19直接選phase且不改latch。
+  terrain `[0x53a40/0x53a00]`與unit pixel shift
+  `[0x53a04/0x53a08]`則是兩組獨立「新BIOS word翻轉」state，均已由
+  State持有。尚待monotonic約18.2Hz caller cadence；七拍movement仍由
+  Ebiten Update驅動，不宣稱原版wall-clock。
+- [x] **RUNTIME-NATIVE-MAP-RAW-ROSTER**：新增
+  `NativeMapFrameRoster`，一次性建立unit/foreground arrays與cycle
+  snapshot。foreground另外要求explicit `unit+7`、race、class；
+  舊JSON的`BattleFig=Fig` fallback以`HasBattleFig=false`隔離，不能混入
+  native compositor。任一record缺provenance即整批拒絕，不回傳半張
+  native frame。它已供strict `NativeFrameInput` builder使用；尚待的是
+  clock、camera/range/HUD globals的production caller ownership。
+- [x] **RUNTIME-NATIVE-FRAME-INPUT-ADMISSION**：
+  `buildNativeMapFrameInput`已將original banks、FDFIELD cells、
+  selector cache、完整raw roster、terrain LUT phase、idle/moving
+  cycles、terrain flip與unit pixel shift組成單一
+  `indexedmap.NativeFrameInput`。editable control table必須與實際
+  FDSHAP bytes完全相等；camera/range/cursor/HUD globals必須由caller
+  明示，禁止從640×400 camera、normalized reach或PNG UI猜值。
+  下一步是原版320×200 camera與HUD gate/anchor/clock runtime ownership，
+  不是再做一個renderer primitive。
 - [x] **RE-UNIT-PRESENT-SNAPSHOT-OWNERSHIP**：`0x22253` 只配置一塊
   `0x25680` snapshot：terrain-only狀態供11個intro frames restore；
   `0x22547` entry再把final LMI `#0x7c`畫進同一塊，後續6 contract +

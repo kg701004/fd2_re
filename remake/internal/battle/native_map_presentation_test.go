@@ -88,6 +88,11 @@ func TestStateOwnsNativeMapCycleGlobalsAfterConstruction(t *testing.T) {
 	if !st.HasNativeMapCycleState || !st.AdvanceNativeMapPresentationCycles(5) {
 		t.Fatal("native cycle globals were not materialized")
 	}
+	if !st.HasNativeTerrainPhaseState || !st.AdvanceNativeTerrainPhase(3, -1) ||
+		st.NativeTerrainPhaseState.Phase != 1 {
+		t.Fatalf("terrain phase state=%+v valid=%v",
+			st.NativeTerrainPhaseState, st.HasNativeTerrainPhaseState)
+	}
 	if st.NativeMapCycleState != (fdicon.NativeMapSpriteCycleState{
 		Idle: 1, Moving: 1, LastTimerTick: 5,
 	}) {
@@ -98,5 +103,65 @@ func TestStateOwnsNativeMapCycleGlobalsAfterConstruction(t *testing.T) {
 			Idle: 1, Moving: 2, LastTimerTick: 5,
 		}) {
 		t.Fatalf("gated cycle call=%+v", st.NativeMapCycleState)
+	}
+}
+
+func TestNativeMapFrameRosterRequiresCompleteRawRoster(t *testing.T) {
+	st := &State{}
+	u := &Unit{
+		X: 1, Y: 2, MapSelectorKey: 7, HasMapSelectorKey: true,
+		NativeRecordByte5: 0x80, HasNativeRecordByte5: true,
+		BattleFig: 9, HasBattleFig: true,
+		NativeRecordRace: 3, HasNativeRecordRace: true,
+		NativeRecordClass: 4, HasNativeRecordClass: true,
+	}
+	if err := st.AppendNativeMapSelectorBatch([]*Unit{u}); err != nil {
+		t.Fatal(err)
+	}
+	if !u.SetNativeMapGridMotion(1, 5) {
+		t.Fatal("raw motion rejected")
+	}
+	roster, err := st.NativeMapFrameRoster()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(roster.Units) != 1 || len(roster.Foreground) != 1 ||
+		roster.Units[0].MotionOffset != 5 ||
+		roster.Foreground[0] != (fdicon.NativeForegroundLayerEntry{
+			X: 1, Y: 2, Pose: 1, MotionOffset: 5,
+			Unit7: 9, Race: 3, Class: 4,
+		}) {
+		t.Fatalf("roster=%+v", roster)
+	}
+
+	u.HasBattleFig = false
+	if _, err := st.NativeMapFrameRoster(); err == nil {
+		t.Fatal("accepted legacy BattleFig fallback as raw unit+7")
+	}
+}
+
+func TestNativeMapFrameRosterDoesNotReturnPartialInput(t *testing.T) {
+	st := &State{}
+	units := []*Unit{
+		{
+			X: 1, Y: 2, MapSelectorKey: 7, HasMapSelectorKey: true,
+			NativeRecordByte5: 0, HasNativeRecordByte5: true,
+			BattleFig: 9, HasBattleFig: true,
+			NativeRecordRace: 3, HasNativeRecordRace: true,
+			NativeRecordClass: 4, HasNativeRecordClass: true,
+		},
+		{
+			X: 3, Y: 4, MapSelectorKey: 8, HasMapSelectorKey: true,
+			NativeRecordByte5: 0, HasNativeRecordByte5: true,
+			BattleFig: 10, HasBattleFig: true,
+			NativeRecordRace: 5, HasNativeRecordRace: true,
+		},
+	}
+	if err := st.AppendNativeMapSelectorBatch(units); err != nil {
+		t.Fatal(err)
+	}
+	roster, err := st.NativeMapFrameRoster()
+	if err == nil || roster.Units != nil || roster.Foreground != nil {
+		t.Fatalf("partial roster=%+v err=%v", roster, err)
 	}
 }

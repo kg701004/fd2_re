@@ -114,8 +114,9 @@ func DecodeNativeRangeOverlayBank(datPath string) (*fdicon.Bank, error) {
 // 0x126f7 against the native 456-stride work buffer.  The descriptor cells
 // are direct 0x4deda RLE input, so Sprite.BlitAt deliberately preserves
 // mode-3 spans.  Camera clipping happens before descriptor lookup exactly as
-// in 0x126f7.  Mode 6 remains rejected because it is a separate raw grid
-// mutation, not a drawing operation.
+// in 0x126f7. Raw mode 0 follows 0x122dc's default no-op branch. Mode 6
+// remains rejected because it is a separate raw grid mutation, not a drawing
+// operation.
 //
 // All selected visible sprites and their destinations are preflighted before
 // writing. This is the editable-input safety boundary, not a claim that the
@@ -126,6 +127,9 @@ func BlitNativeRangeOverlay(bank *fdicon.Bank, dst []byte, cameraX, cameraY, vis
 	}
 	if visibleWidth <= 0 || visibleHeight <= 0 || len(dst)%nativeRangeOverlayStride != 0 {
 		return errors.New("fdother: invalid native range overlay framebuffer")
+	}
+	if mode == 0 {
+		return nil
 	}
 	placements, err := NativeRangeOverlayPlacements(mode, cursorX, cursorY)
 	if err != nil {

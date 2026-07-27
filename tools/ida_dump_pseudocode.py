@@ -4,6 +4,7 @@ The script is intended to run inside the user-authorized IDA Docker image;
 output is written to the caller-provided path so no IDA database is stored in
 the repository.
 """
+import os
 import sys
 
 import ida_auto
@@ -12,8 +13,15 @@ import idaapi
 
 
 def main():
-    out_path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/fd2-pseudocode.txt"
-    addresses = [int(value, 16) for value in sys.argv[2:]] or [0x15B77, 0x15DA2]
+    out_path = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else os.environ.get("FD2_IDA_OUTPUT", "/tmp/fd2-pseudocode.txt")
+    )
+    raw_addresses = sys.argv[2:]
+    if not raw_addresses:
+        raw_addresses = os.environ.get("FD2_IDA_ADDRESSES", "").split()
+    addresses = [int(value, 16) for value in raw_addresses] or [0x15B77, 0x15DA2]
     ida_auto.auto_wait()
     if not ida_hexrays.init_hexrays_plugin():
         raise RuntimeError("Hex-Rays is unavailable")

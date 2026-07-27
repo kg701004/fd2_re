@@ -888,7 +888,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    `fdicon.Bank.BlitNativeTerrainRegion` now supplies the corresponding pure `0x11eee` row-major visible-cell pass. It accepts raw composition cells, the raw four-byte-per-tile FDSHAP control table, map origin and explicit destination/LUT; it validates map/control bounds before calling the single-cell compositor. `0x11cac` establishes the normal caller ABI as destination `buffer+0x8088`, stride 456, width 13, height 8, camera X/Y, followed by range overlay, unit layer, then foreground overlay. The pure region adapter does not schedule those later passes.
 
-   Native range-overlay contract: `0x122dc` dispatches raw mode 1..5 to an **ordered** table of `0x126f7(x,y,descriptor)` calls. `fdother.NativeRangeOverlayPlacements` preserves all 1/1/5/13/21 calls respectively, including the mode-3 centre descriptor `14` and the mode-5 repeated coordinates with distinct descriptors; it must not normalize them into an inferred diamond or ordinary movement range. `0x25c7d..0x25c92` loads FDOTHER #1 to `0x53a4d`; real asset inspection fixes its `{24,24,20,u32 offsets[]}` four-mode RLE bank and `0x126f7` selects `base + *(base+6+4*descriptor)` before direct `0x4deda`. `fdother.DecodeNativeRangeOverlayBank` requires all 20 entries and `BlitNativeRangeOverlay` reproduces the 456-stride base `0x8088`, 24-pixel camera-relative placement and pre-blit camera clip. Mode 6 is not a draw table: `0x108f0..0x10932` establishes `[0x53a51]` as raw FDFIELD `{i16 width,i16 height,cell[4]}` and `0x4dbfc` initializes each cell byte+3 to `0xff`; its write therefore clears precisely that selected cell's event-high/raw-blit-mode byte. `ClearNativeRangeOverlayMode6FieldByte` preserves that raw mutation without assigning it a gameplay label. Native framebuffer lifetime and the runtime/Ebiten presentation adapter remain unclosed, so GUI range highlights are still not native-equivalent.
+   Native range-overlay contract: `0x122dc` dispatches raw mode 1..5 to an **ordered** table of `0x126f7(x,y,descriptor)` calls. `fdother.NativeRangeOverlayPlacements` preserves all 1/1/5/13/21 calls respectively, including the mode-3 centre descriptor `14` and the mode-5 repeated coordinates with distinct descriptors; it must not normalize them into an inferred diamond or ordinary movement range. Official IDA 9.4 confirms the switch default performs no draw, and bootstrap `0x10483` explicitly writes `[0x51a83]=0` immediately before `0x11cac(1)`. Therefore `BlitNativeRangeOverlay` accepts raw mode 0 as an exact no-op while the pure placement-table API still rejects it. `0x25c7d..0x25c92` loads FDOTHER #1 to `0x53a4d`; real asset inspection fixes its `{24,24,20,u32 offsets[]}` four-mode RLE bank and `0x126f7` selects `base + *(base+6+4*descriptor)` before direct `0x4deda`. `fdother.DecodeNativeRangeOverlayBank` requires all 20 entries and drawable modes reproduce the 456-stride base `0x8088`, 24-pixel camera-relative placement and pre-blit camera clip. Mode 6 is not a draw table: `0x108f0..0x10932` establishes `[0x53a51]` as raw FDFIELD `{i16 width,i16 height,cell[4]}` and `0x4dbfc` initializes each cell byte+3 to `0xff`; its write therefore clears precisely that selected cell's event-high/raw-blit-mode byte. `ClearNativeRangeOverlayMode6FieldByte` preserves that raw mutation without assigning it a gameplay label. Native framebuffer lifetime and the runtime/Ebiten presentation adapter remain unclosed, so GUI range highlights are still not native-equivalent.
 
    Steady-frame scheduler boundary: `indexedmap.ComposeFrame` is the first executable owner of the recovered normal order `terrain → range → unit → foreground → HUD → 0x11eb0 copy`. It requires an explicit HUD callback; omitting it fails before mutation, so callers cannot accidentally present a frame that skipped the native HUD position. `ComposeNativeFrame` is the non-approximation form: it binds `NativeFrameInput`'s recovered HUD resources/raw input directly to that position. Both compose into a private 456-stride work clone and only commit work/VGA after all layers and HUD succeed; final copy is the verified 320×192 source `work+0x8088` to 320-stride indexed VGA. This closes an indexed orchestration primitive, not an Ebiten adapter: map/resource lifetime, palette DAC and presentation timing remain separate gates.
 
@@ -974,7 +974,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Map resource pairing closure: `DecodeMapTerrainResources` accepts an explicit map index N and loads only FDSHAP image #`2N` plus control bytes #`2N+1`; it rejects an inconsistent bank/control capacity. This replaces any future tile-count heuristic. Player archive map 0 regression fixes the concrete pair to 288 frames and 1200 control bytes.
 
-   Production gate: `cmd/fd2.Game.loadMap` now attempts this complete original bundle (HUD FDOTHER frames, explicit FDSHAP pair, FDICON.B24, FDOTHER palette) and stores it only when every decoder succeeds. The current PNG presentation remains unchanged until the indexed-to-Ebiten bridge consumes the bundle; missing or malformed original files therefore cannot create a half-native frame.
+   Production gate: `cmd/fd2.Game.loadMap` now attempts this complete original bundle (HUD FDOTHER frames, FDOTHER #1 range bank, explicit FDSHAP pair, FDICON.B24, FDOTHER #3 LUTs and palette) and stores it only when every decoder succeeds. The current PNG presentation remains unchanged until the indexed-to-Ebiten bridge consumes the bundle; missing or malformed original files therefore cannot create a half-native frame.
 
    Regression/harness closure (2026-07-26): Docker image `fd2-go-test-local` already contains Xvfb; running `GOMAXPROCS=1 GOFLAGS=-p=1 xvfb-run -a -s "-screen 0 1280x1024x24" go test ./...` passes every remake package. `cmd/fd2.assetPath` now searches cwd ancestors after the existing user-data/AppImage/executable layers, because Go runs package tests with cwd `cmd/fd2`; this fixes test/runtime asset resolution without weakening the editable-user override or fail-closed resource rules. The ch14 continuation-line assertion now follows FDTXT_015 count-aligned indices 2/5 (scene lines 4..12 / 4..8), and conditional ch16 SPAWN remains branch-local after LOADCH with no merged-slot assumption.
 
@@ -993,6 +993,19 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    states fail closed. Runtime monotonic-clock BIOS tick/call timing is still
    not materialized.
 
+   Terrain timing correction (2026-07-28): official IDA 9.4 and instruction
+   level Capstone close `0x11eee`'s independent globals. With raw override
+   `[0x51a93]==-1`, phase `[0x53c1f]` advances modulo 20 only when the
+   sign-extended BIOS low word minus `[0x539f4]` is greater than two, or the
+   current signed word is less than the latch; an override `0..19` writes the
+   phase directly without updating the latch. This is not a per-compositor-call
+   counter. `fdother.AdvanceNativeTerrainPhase` and battle-local
+   `NativeTerrainPhaseState` preserve both paths. `0x11eee` separately toggles
+   `[0x53a40]` once per new BIOS word, while `0x127e0` toggles independent
+   `[0x53a04]` once when that unit-layer call first observes a new word.
+   `NativeBinaryTickState` represents these two latches independently; neither
+   is an alias of the terrain LUT phase or the idle/moving sprite cycles.
+
    Raw pose/motion lifecycle (2026-07-27): both player materialization
    `0x10a77..0x10aad` and FDFIELD spawn initialize runtime `+3/+4=0/0`.
    Direction entries `0x12eaa/0x1300d/0x13185/0x13315` write pose
@@ -1010,6 +1023,27 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    treated as aliases. This closes the state sequence, not wall-clock parity:
    the current Ebiten update cadence is not yet the original BIOS 18.2 Hz
    scheduler, and the indexed frame input/presentation bridge remains separate.
+
+   Raw roster admission (2026-07-28): `NativeMapFrameRoster` now builds the
+   unit and foreground arrays as one transaction from the battle state.
+   Foreground admission additionally requires explicit `unit+7`, race and
+   class provenance; the older `BattleFig=Fig` compatibility projection is
+   tracked by `HasBattleFig=false` and cannot enter the indexed compositor.
+   Any missing unit/foreground field rejects the entire snapshot, so one
+   legacy record cannot create a mixed native/normalized frame.
+
+   Strict runtime frame-input boundary (2026-07-28):
+   `cmd/fd2.buildNativeMapFrameInput` now joins the all-or-nothing original
+   banks, exact FDFIELD tile/blit-mode arrays, validated selector cache/raw
+   roster, selected terrain LUT and the recovered cycles/flips into one
+   `indexedmap.NativeFrameInput`. It requires the editable raw control table
+   to equal the selected FDSHAP bytes and accepts only explicit tile-space
+   camera, raw range mode `0..5`, cursor and complete HUD input. It never
+   derives those globals from the remake's 640×400 pixel camera, normalized
+   reachability, selected unit or PNG state. This closes the composition-input
+   admission transaction, not production presentation: the native 320×200
+   camera lifecycle, HUD gate/anchor persistence and monotonic BIOS-clock
+   caller still must be connected before replacing the visible map renderer.
 
    Campaign flow correction: `postbattle_ch29_persist` now points to the recovered editable `ch29_post` binding before `preparation_ch30`; it no longer replaces that handler with synthetic `sync_party → set_chapter` beats. The native handler's proven LOADCH/persistent-roster reconstruction is the persistence boundary, while unresolved `0x2bce5` remains the sole tolerated fail-closed renderer issue. Campaign regression explicitly allows this native persistence exception and still forbids a direct battle→preparation edge.
 

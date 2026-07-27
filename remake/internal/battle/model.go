@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 // Camp 陣營。
@@ -68,7 +69,8 @@ type Unit struct {
 	HasNativeMapPresentation bool
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
-	BattleFig int
+	BattleFig    int
+	HasBattleFig bool
 	// NativeIdentity is the persistent-record +0x08 key consumed by native
 	// post-handler 0x11506. It is optional provenance and must never be inferred
 	// from Fig, BattleFig, portrait, or map-selector fields.
@@ -439,6 +441,15 @@ type State struct {
 	// selector construction batch succeeds.
 	NativeMapCycleState    fdicon.NativeMapSpriteCycleState
 	HasNativeMapCycleState bool
+	// NativeTerrainPhaseState owns 0x11eee's independent 20-phase terrain
+	// selector and last BIOS tick for this battle session.
+	NativeTerrainPhaseState    fdother.NativeTerrainPhaseState
+	HasNativeTerrainPhaseState bool
+	// NativeTerrainFlipState and NativeUnitPixelShiftState are the independent
+	// 0x53a40/0x53a00 and 0x53a04/0x53a08 BIOS-word latches.
+	NativeTerrainFlipState        fdicon.NativeBinaryTickState
+	NativeUnitPixelShiftState     fdicon.NativeBinaryTickState
+	HasNativeMapBinaryTimingState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
@@ -686,7 +697,7 @@ func Load(path string) (*State, error) {
 		// behavior, while new exports carry the direct FDFIELD-b1 value.
 		nu.BattleFig = u.Fig
 		if u.BattleFig != nil {
-			nu.BattleFig = *u.BattleFig
+			nu.BattleFig, nu.HasBattleFig = *u.BattleFig, true
 		}
 		if u.NativeIdentity != nil {
 			if *u.NativeIdentity < 0 || *u.NativeIdentity > 0xff {
@@ -864,6 +875,15 @@ func (s *State) AppendNativeMapSelectorBatch(units []*Unit) error {
 		s.NativeMapCycleState = fdicon.NativeMapSpriteCycleState{}
 		s.HasNativeMapCycleState = true
 	}
+	if !s.HasNativeTerrainPhaseState {
+		s.NativeTerrainPhaseState = fdother.NativeTerrainPhaseState{}
+		s.HasNativeTerrainPhaseState = true
+	}
+	if !s.HasNativeMapBinaryTimingState {
+		s.NativeTerrainFlipState = fdicon.NativeBinaryTickState{}
+		s.NativeUnitPixelShiftState = fdicon.NativeBinaryTickState{}
+		s.HasNativeMapBinaryTimingState = true
+	}
 	s.Units = append(s.Units, units...)
 	return nil
 }
@@ -876,6 +896,45 @@ func (s *State) AdvanceNativeMapPresentationCycles(rawTimerTick int) bool {
 		return false
 	}
 	s.NativeMapCycleState = fdicon.AdvanceNativeMapSpriteCycles(s.NativeMapCycleState, rawTimerTick)
+	return true
+}
+
+// AdvanceNativeTerrainPhase applies one proven 0x11eee phase-selection call.
+// override is raw [0x51a93]: -1 for the BIOS-timed path or 0..19 for the
+// explicit selector path.
+func (s *State) AdvanceNativeTerrainPhase(rawTimerTick, override int) bool {
+	if s == nil || !s.HasNativeTerrainPhaseState {
+		return false
+	}
+	next, err := fdother.AdvanceNativeTerrainPhase(s.NativeTerrainPhaseState, rawTimerTick, override)
+	if err != nil {
+		return false
+	}
+	s.NativeTerrainPhaseState = next
+	return true
+}
+
+func (s *State) AdvanceNativeTerrainFlip(rawTimerTick int) bool {
+	if s == nil || !s.HasNativeMapBinaryTimingState {
+		return false
+	}
+	next, err := fdicon.AdvanceNativeBinaryTick(s.NativeTerrainFlipState, rawTimerTick)
+	if err != nil {
+		return false
+	}
+	s.NativeTerrainFlipState = next
+	return true
+}
+
+func (s *State) AdvanceNativeUnitPixelShift(rawTimerTick int) bool {
+	if s == nil || !s.HasNativeMapBinaryTimingState {
+		return false
+	}
+	next, err := fdicon.AdvanceNativeBinaryTick(s.NativeUnitPixelShiftState, rawTimerTick)
+	if err != nil {
+		return false
+	}
+	s.NativeUnitPixelShiftState = next
 	return true
 }
 

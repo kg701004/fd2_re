@@ -1,6 +1,7 @@
 package fdother
 
 import (
+	"bytes"
 	"encoding/binary"
 	"os"
 	"testing"
@@ -123,5 +124,20 @@ func TestBlitNativeRangeOverlayPreflightsDestination(t *testing.T) {
 	}
 	if string(dst) != string(before) {
 		t.Fatal("failed preflight mutated framebuffer")
+	}
+}
+
+func TestBlitNativeRangeOverlayModeZeroIsExactNoOp(t *testing.T) {
+	bank := &fdicon.Bank{Sprites: make([]fdicon.Sprite, 20)}
+	dst := make([]byte, nativeRangeOverlayStride*200)
+	for i := range dst {
+		dst[i] = byte(i)
+	}
+	before := append([]byte(nil), dst...)
+	if err := BlitNativeRangeOverlay(bank, dst, 0, 0, 13, 8, 0, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(dst, before) {
+		t.Fatal("raw range mode zero mutated the frame")
 	}
 }

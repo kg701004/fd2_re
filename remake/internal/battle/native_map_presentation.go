@@ -16,6 +16,18 @@ type NativeMapPresentationState struct {
 	Motion byte
 }
 
+// NativeMapFrameRoster is the atomically materialized roster subset consumed
+// by the steady unit and foreground layers. Cycles are the battle-session
+// globals selected by those same entries.
+type NativeMapFrameRoster struct {
+	Units          []fdicon.NativeUnitLayerEntry
+	Foreground     []fdicon.NativeForegroundLayerEntry
+	Cycles         fdicon.NativeMapSpriteCycleState
+	TerrainPhase   int
+	TerrainFlip    int
+	UnitPixelShift int
+}
+
 // MaterializeNativeMapPresentation reproduces the constructor's initial
 // +0/+1 coordinates and +3/+4=0/0. Callers must establish the native selector
 // slot separately; this method performs no identity/Fig fallback.
@@ -101,4 +113,52 @@ func (u *Unit) NativeUnitLayerEntry() (fdicon.NativeUnitLayerEntry, bool) {
 		Flags: u.NativeRecordByte5, ForceBase: u.NativeTransient[4] != 0,
 		Inactive: u.NativeRecordByte5&1 != 0,
 	}, true
+}
+
+// NativeForegroundLayerEntry returns the exact raw subset consumed by
+// 0x129ec. BattleFig's legacy Fig fallback is rejected: unit+7, race and class
+// must each carry explicit native provenance.
+func (u *Unit) NativeForegroundLayerEntry() (fdicon.NativeForegroundLayerEntry, bool) {
+	if u == nil || !u.HasNativeMapPresentation || !u.HasNativeRecordByte5 ||
+		!u.HasBattleFig || u.BattleFig < 0 || u.BattleFig > 0xff ||
+		!u.HasNativeRecordRace || !u.HasNativeRecordClass {
+		return fdicon.NativeForegroundLayerEntry{}, false
+	}
+	raw := u.NativeMapPresentation
+	return fdicon.NativeForegroundLayerEntry{
+		X: int(raw.X), Y: int(raw.Y), Pose: raw.Pose,
+		MotionOffset: int(raw.Motion), Inactive: u.NativeRecordByte5&1 != 0,
+		Unit7: byte(u.BattleFig), Race: u.NativeRecordRace, Class: u.NativeRecordClass,
+	}, true
+}
+
+// NativeMapFrameRoster materializes one complete compositor input snapshot.
+// The native loop has no nil or guessed records, so any missing provenance
+// rejects the entire roster instead of producing a partially native frame.
+func (s *State) NativeMapFrameRoster() (NativeMapFrameRoster, error) {
+	if s == nil || s.NativeMapSelectorError != nil || s.NativeMapSelectorCache == nil ||
+		!s.HasNativeMapCycleState || !s.HasNativeTerrainPhaseState ||
+		!s.HasNativeMapBinaryTimingState {
+		return NativeMapFrameRoster{}, fmt.Errorf("battle: native map frame state is incomplete")
+	}
+	out := NativeMapFrameRoster{
+		Units:          make([]fdicon.NativeUnitLayerEntry, len(s.Units)),
+		Foreground:     make([]fdicon.NativeForegroundLayerEntry, len(s.Units)),
+		Cycles:         s.NativeMapCycleState,
+		TerrainPhase:   s.NativeTerrainPhaseState.Phase,
+		TerrainFlip:    s.NativeTerrainFlipState.Value,
+		UnitPixelShift: s.NativeUnitPixelShiftState.Value,
+	}
+	for i, u := range s.Units {
+		unit, ok := u.NativeUnitLayerEntry()
+		if !ok {
+			return NativeMapFrameRoster{}, fmt.Errorf("battle: native map frame unit %d lacks unit-layer provenance", i)
+		}
+		foreground, ok := u.NativeForegroundLayerEntry()
+		if !ok {
+			return NativeMapFrameRoster{}, fmt.Errorf("battle: native map frame unit %d lacks foreground provenance", i)
+		}
+		out.Units[i], out.Foreground[i] = unit, foreground
+	}
+	return out, nil
 }

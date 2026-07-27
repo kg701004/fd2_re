@@ -1071,3 +1071,38 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `fd2-go-test-local`+Xvfb通過。限制仍是實時間距：七拍目前跟Ebiten
   Update走，尚未接monotonic約18.2Hz BIOS clock，也尚未把raw roster
   組成production `NativeFrameInput`；不得稱完整原版UI renderer。
+- 2026-07-28 official IDA scheduler recheck：合法
+  `fd2-ida-authorized-local`以容器內`idapyswitch`選Python3.12後成功
+  Hex-Rays `0x11cac/0x122dc`；repo的`ida_dump_pseudocode.py`新增
+  `FD2_IDA_OUTPUT/FD2_IDA_ADDRESSES`，避免該entrypoint誤解析帶參數
+  `-S`。新證據是`0x122dc` default branch確實no-op，且bootstrap
+  `0x10483`寫`[0x51a83]=0`後立即`0x11cac(1)`；修正renderer錯把
+  mode0當invalid的阻塞。mode6仍是field byte mutation，不是drawable。
+- 2026-07-28 raw frame-roster admission：`Unit`新增`HasBattleFig`以區分
+  explicit FDFIELD `unit+7`與舊JSON的`Fig` fallback；
+  `NativeMapFrameRoster`要求每個unit具備raw presentation、selector、
+  byte5、unit+7、race、class，原子化輸出unit/foreground arrays與cycles。
+  任一缺失整批fail-closed。fdother/indexedmap/battle/cmd聚焦
+  Docker/Xvfb tests通過；production frame仍待clock/camera/HUD globals。
+- 2026-07-28 production native-map bundle補齊已證實的FDOTHER #1
+  20-entry range-overlay bank；`nativeMapAssetsAvailable`缺此bank即整包
+  fail-closed，不能只載terrain/unit後宣稱完整steady compositor資源。
+  完整Docker/Xvfb `go test ./... -count=1`通過。這仍未改畫面輸出；
+  原版320×200相機與remake 640×400視野、terrain phase、HUD globals
+  尚未對齊前不做猜測性切換。
+- 2026-07-28 terrain/global timing closure：官方IDA data-xref與Hex-Rays
+  加Docker Capstone指令級確認，`0x11eee`只有在
+  `[0x51a93]==-1`且signed BIOS low-word delta>2或wrap時才將
+  `[0x53c1f]` modulo20前進；override0..19直接寫phase、不更新
+  `[0x539f4]`。terrain flip `[0x53a40/0x53a00]`與unit pixel shift
+  `[0x53a04/0x53a08]`是兩組獨立new-tick toggle，不能與phase或
+  sprite cycles混用。新增`NativeTerrainPhaseState`、
+  `NativeBinaryTickState`及battle ownership/regression。
+- 2026-07-28 strict `NativeFrameInput` admission：
+  `buildNativeMapFrameInput`現原子化結合original banks、raw map cells、
+  selector cache、unit/foreground roster、selected LUT及所有已物化
+  cycles/flips；editable control bytes與FDSHAP不一致即拒絕。
+  tile-space camera、range mode0..5、cursor、HUD input仍須caller明示，
+  不從現行640×400 camera或normalized highlight猜值。這使下一個工作
+  明確收斂到native camera/HUD/monotonic clock runtime，而非繼續堆
+  disconnected compositor primitives。

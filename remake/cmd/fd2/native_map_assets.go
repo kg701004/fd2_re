@@ -16,6 +16,7 @@ type nativeMapAssets struct {
 	MapIndex int
 	Frames   indexedmap.NativeMapHUDFrames
 	Terrain  *fdicon.Bank
+	Range    *fdicon.Bank
 	Units    *fdicon.Bank
 	Controls []byte
 	// LUTs is FDOTHER#3's raw 256-byte remap bank. Entries 1..9 are the
@@ -47,6 +48,10 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 	if err != nil {
 		return nil, err
 	}
+	rangeBank, err := fdother.DecodeNativeRangeOverlayBank(fdotherPath)
+	if err != nil {
+		return nil, err
+	}
 	luts, err := fdother.DecodeLUTResource(fdotherPath, 3)
 	if err != nil || len(luts) <= 9 {
 		if err != nil {
@@ -62,9 +67,14 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &nativeMapAssets{MapIndex: mapIndex, Frames: frames, Terrain: terrain, Units: units, Controls: controls, LUTs: luts, Palette: palette}, nil
+	return &nativeMapAssets{
+		MapIndex: mapIndex, Frames: frames,
+		Terrain: terrain, Range: rangeBank, Units: units,
+		Controls: controls, LUTs: luts, Palette: palette,
+	}, nil
 }
 
 func nativeMapAssetsAvailable(a *nativeMapAssets) bool {
-	return a != nil && a.Terrain != nil && a.Units != nil && len(a.Controls) > 0 && len(a.LUTs) > 9 && len(a.Palette) == 256
+	return a != nil && a.Terrain != nil && a.Range != nil && a.Units != nil &&
+		len(a.Controls) > 0 && len(a.LUTs) > 9 && len(a.Palette) == 256
 }
