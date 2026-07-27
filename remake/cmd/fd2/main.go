@@ -1863,9 +1863,9 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 		g.loadErr = "native map runtime view: " + err.Error()
 		return false
 	}
-	if view.RangeMode == nil || *view.RangeMode != 0 ||
+	if view.RangeMode == nil || *view.RangeMode != 1 ||
 		!g.st.MaterializeNativeMapRangeMode(*view.RangeMode) {
-		g.loadErr = "native map campaign bootstrap selector is not the verified zero"
+		g.loadErr = "native map campaign selector is not the verified interactive one"
 		g.st.HasNativeMapViewState = false
 		return false
 	}
@@ -3138,6 +3138,13 @@ func (g *Game) ringInput() bool {
 					return true
 				}
 				if _, err := g.nativeCommandTargetUnitsFor(id); err == nil {
+					if record.EffectMode < 0 || record.EffectMode > 0xff ||
+						!g.st.MaterializeNativeMapRangeMode(
+							battle.NativeMapOverlaySelectorFromRecordByte(byte(record.EffectMode)),
+						) {
+						g.msg = fmt.Sprintf("原始指令 %d：overlay selector 無效", id)
+						return true
+					}
 					g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
 					g.nativeCommandTargetID = id
 					g.msg = fmt.Sprintf("原始指令 %d：選擇目標", id)
@@ -3869,6 +3876,22 @@ func (g *Game) confirm() {
 	if g.nativeCommand0Targeting {
 		id := g.nativeCommandTargetID
 		tgt := g.st.UnitAt(g.curX, g.curY)
+		if len(g.st.NativeCommandBook) != 36 || id < 0 || id >= len(g.st.NativeCommandBook) ||
+			len(g.st.NativeTileBlitModes) != g.st.W*g.st.H ||
+			g.curX < 0 || g.curX >= g.st.W || g.curY < 0 || g.curY >= g.st.H {
+			g.msg = fmt.Sprintf("原始指令 %d：cursor-confirm raw state 不完整", id)
+			return
+		}
+		record := g.st.NativeCommandBook[id]
+		allowed, gateErr := battle.NativeCursorConfirmationAllowed(
+			battle.Cell{X: g.curX, Y: g.curY},
+			g.st.NativeTileBlitModes[g.curY*g.st.W+g.curX],
+			g.st.NativeMapRangeMode, record.TargetCode, g.st.Units,
+		)
+		if gateErr != nil || !allowed {
+			g.msg = fmt.Sprintf("原始指令 %d：游標確認不合法", id)
+			return
+		}
 		message := ""
 		var err error
 		var damageTargets []*battle.Unit
@@ -3934,6 +3957,7 @@ func (g *Game) confirm() {
 		}
 		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		g.msg = message
+		g.st.MaterializeNativeMapRangeMode(1)
 		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
 		g.checkResult()
 		return
@@ -4305,6 +4329,9 @@ func (g *Game) Update() error {
 	}
 	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if g.nativeCommand0Targeting && g.st != nil {
+				g.st.MaterializeNativeMapRangeMode(1)
+			}
 			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true
 			return nil
 		}
@@ -4638,24 +4665,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawPhaseBanner(screen) // 回合橫幅(PLAYER/ENEMY PHASE,transient)
 	}
 	// A complete original indexed frame supersedes the normalized map/unit/HUD
-	// layers only at raw selector zero. [0x51a83] is not a small command/target
+	// layers at the verified interactive selector one. [0x51a83] is not a small command/target
 	// enum: record-byte+2 writers can exceed six and target validation consumes
 	// those values even when 0x122dc draws no overlay. Keep the playable
 	// renderer until that complete interactive lifecycle is materialized.
 	if !legacyViewport && campaignBattleView && g.sel == nil &&
 		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
 		nativeMapPresented = g.drawNativeMapFrame(screen)
-		if nativeMapPresented && g.st != nil && g.st.HasNativeMapViewState {
-			// Cursor artwork/flash is still unresolved; retain the existing
-			// visible selector at the exact native camera-relative cell.
-			view := g.st.NativeMapViewState
-			drawCursor(
-				screen,
-				float64((4+view.VisibleCursorX*24)*2),
-				float64((4+view.VisibleCursorY*24)*2),
-				48, 48,
-			)
-		}
 	}
 
 	// 中文層(原版點陣字型,doc 08):選中單位名 + 對話框(DebugPrint 不支援中文)
@@ -6172,8 +6188,8 @@ func (g *Game) composeNativeMapFrame() error {
 	a := g.nativeMapAssets
 	hud, ok := g.nativeMapHUDInput()
 	if !ok || g.st == nil || !g.st.HasNativeMapRangeModeState ||
-		g.st.NativeMapRangeMode != 0 {
-		return errors.New("native map frame: HUD or neutral range state unavailable")
+		g.st.NativeMapRangeMode != 1 {
+		return errors.New("native map frame: HUD or interactive selector state unavailable")
 	}
 	in, err := buildNativeMapFrameInput(a, g.m, g.st, nativeMapFrameRuntime{HUD: hud})
 	if err != nil {

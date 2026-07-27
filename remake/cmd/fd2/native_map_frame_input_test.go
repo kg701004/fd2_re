@@ -106,7 +106,7 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{}); err != nil {
 		t.Fatal(err)
 	}
-	if !state.MaterializeNativeMapRangeMode(0) {
+	if !state.MaterializeNativeMapRangeMode(1) {
 		t.Fatal("range mode materialization rejected")
 	}
 	return assets, field, state
@@ -186,7 +186,7 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 	}
 	if got.Frame.TerrainCycle != 2 || got.Frame.IdleCycle != 2 || got.Frame.MovingCycle != 3 ||
 		got.Frame.Flip != 1 || got.Frame.PixelShift != 1 ||
-		got.Frame.RangeMode != 0 || got.Frame.ForegroundBank != assets.Terrain ||
+		got.Frame.RangeMode != 1 || got.Frame.ForegroundBank != assets.Terrain ||
 		got.Frame.SelectorCache != state.NativeMapSelectorCache ||
 		len(got.Frame.Units) != 1 || len(got.Frame.ForegroundUnits) != 1 ||
 		got.HUDCache != state.NativeMapSelectorCache ||

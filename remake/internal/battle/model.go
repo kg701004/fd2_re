@@ -460,8 +460,9 @@ type State struct {
 	// NativeMapRangeMode is raw [0x51a83]. Despite the retained field name it
 	// is an overlay/selection selector, not a bounded GUI range enum:
 	// 0x122dc draws only 1..5 and mutates the field for 6, while 0x115b6 still
-	// consumes values above 6 in target validation. The verified bootstrap is
-	// zero; interactive lifecycle ownership remains a separate UI bridge.
+	// consumes values above 6 in target validation. Battle setup briefly uses
+	// zero for its opening frame at 0x10483, then returns with interactive
+	// selector one at 0x1060c.
 	NativeMapRangeMode         int
 	HasNativeMapRangeModeState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which

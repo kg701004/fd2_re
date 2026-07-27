@@ -445,10 +445,11 @@ func Load(path string) (*Campaign, error) {
 		}
 		if n.NativeMapView != nil {
 			mode := n.NativeMapView.RangeMode
-			// Campaign JSON owns only the verified battle bootstrap. Runtime
-			// command/item writers subsequently own nonzero [0x51a83].
-			if mode == nil || *mode != 0 {
-				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 目前只允許已證實的 bootstrap 0", id)
+			// Campaign JSON owns only the verified post-bootstrap interactive
+			// state at 0x1060c. Runtime command/item writers subsequently own
+			// every selector transition away from and back to steady-state 1.
+			if mode == nil || *mode != 1 {
+				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 目前只允許已證實的 interactive selector 1", id)
 			}
 		}
 		if n.NativeMapHUD != nil {

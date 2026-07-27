@@ -10,10 +10,10 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
-| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；另有戰棋核心、對話、商店、preparation/church、campaign/save 垂直切片 | **尚非全 30 章原版等價可通關**；native overlay/target-selector lifecycle、cursor artwork、演出、音訊與跨平台 runtime 尚未閉合 |
+| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame，steady selector 1 亦使用原生游標；另有戰棋核心、對話、商店、preparation/church、campaign/save 垂直切片 | **尚非全 30 章原版等價可通關**；動態 target-selector／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **462 個 `[x]`、97 個 `[~]`、65 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **464 個 `[x]`、98 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -27,7 +27,9 @@ all-or-nothing admission 後，`0x11cac` 的 terrain、range、unit、foreground
 HUD 與 VGA copy 會直接形成 Ebiten 畫面。重讀原始指令同時撤回舊的
 「320×192 貼左上」斷言；正確契約是 312×192 貼到 VGA `(4,4)`。ch01 已接
 18.2065Hz battle-local BIOS low-word clock與真正 constructor append order；
-非零 overlay/selection selector 狀態仍回到 playable renderer，游標框也暫保留 approximation，
+原版 setup 在 selector 0 的短暫 opening frame 後寫回可操作 selector 1；ch01 現已用
+FDOTHER#1 descriptor 0 畫出原生 steady cursor，不再疊白色 approximation。尚未 materialize
+的動態 target selector（2+ 與 record-driven 值）仍回到 playable renderer，
 不能把這張圖解讀成整套戰場 UI 已完成。
 
 ### 為什麼最近看起來一直在反組譯、但進度沒有等比例前進

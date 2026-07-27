@@ -526,7 +526,7 @@
     "cursor_y": 17,
     "visible_cursor_x": 7,
     "visible_cursor_y": 4,
-    "range_mode": 0
+    "range_mode": 1
    },
    "native_map_hud": {
     "display_gate_a": 1,

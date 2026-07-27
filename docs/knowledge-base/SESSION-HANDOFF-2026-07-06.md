@@ -1143,8 +1143,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x1297d`及terrain/binary latches，保留signed-low-word wrap。
   `ParseVGAPalette`不再錯把DAC index0全域透明；完整VGA palette全opaque，
   只有zero-source透明blitter自行clone alpha0。artifact：
-  `docs/figures/native-map-ch01-remake.png`。nonzero overlay/selection
-  selector lifecycle與原版cursor artwork仍未閉合，不宣稱完整battle UI parity。
+  `docs/figures/native-map-ch01-remake.png`。此段已被下方 selector-lifecycle
+  correction 取代；動態target/flash仍未閉合，不宣稱完整battle UI parity。
 - 2026-07-28 `[0x51a83]` domain correction：合法 IDA 9.4 完整
   data xrefs 保存為`docs/data/ida/fd2_51a83_xrefs.txt`。撤回舊
   `0..5` bound、`flagA`與doc37「戰鬥訊息索引」斷言。完整xref後逐一
@@ -1153,8 +1153,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   原表range 5/7/9
   實際產生selector 7/9/11。`0x122dc`對>6 no-draw，不代表無作用：
   `0x115b6`仍把selector-1送入`0x14742` target legality。
-  battle state改保留observed `0..0x101` domain；campaign bootstrap
-  仍只接受已證實0。後續須接完整互動lifecycle，不能把它降成renderer enum。
+  battle state改保留observed `0..0x101` domain；此處campaign selector0
+  斷言已被下方 lifecycle correction 撤回。
 - 2026-07-28 `0x115b6→0x14742` cursor-confirm closure：合法IDA與
   Docker Capstone證實`0x14742`唯一caller是`0x1175f`。Enter/Space時
   code5先拒絕；cell byte+3=`0xff`亦在code4前拒絕；非`0xff` code4接受；
@@ -1163,3 +1163,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   新增fail-closed `NativeCursorConfirmationAllowed`與identity regression。
   同次逐跳修正`0x14818/0x14742` code2為camp `==1`；舊`!=1/non-allies`
   斷言與Go resolver已撤回。
+- 2026-07-28 interactive selector lifecycle correction：Docker Capstone
+  固定setup `0x10483`先寫0並呼`0x11cac(1)`，`0x105eb`呼`0x11cac(0)`，
+  `0x1060c`再寫persistent selector1；故0只是transient opening no-op，
+  campaign/runtime steady state已改為1。`0x1cff0`另證實target entry寫
+  `record+4+2`，cancel/effect期間暫寫0，exit恢復1。remake已接此狀態轉移
+  與exact cursor-confirm gate，並由FDOTHER#1 descriptor0呈現原生steady
+  cursor；白色方框已移除。動態target overlay/flash與indexed effect renderer
+  仍維持fail-closed／playable fallback。
