@@ -93,6 +93,7 @@ func TestGameCursorUsesMaterializedNativeMapView(t *testing.T) {
 }
 
 func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
+	rangeMode := 0
 	g := &Game{
 		m:  &MapData{W: 24, H: 24, TileW: 24, TileH: 24},
 		st: &battle.State{W: 24, H: 24},
@@ -101,6 +102,7 @@ func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
 		NativeMapView: &campaign.NativeMapViewConfig{
 			CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
 			VisibleCursorX: 7, VisibleCursorY: 4,
+			RangeMode: &rangeMode,
 		},
 		NativeMapHUD: &campaign.NativeMapHUDConfig{
 			DisplayGateA: 1, DisplayGateB: 1, AnchorX: 1,
@@ -110,6 +112,7 @@ func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
 		t.Fatal(g.loadErr)
 	}
 	if !g.st.HasNativeMapViewState || !g.st.HasNativeMapHUDState ||
+		!g.st.HasNativeMapRangeModeState || g.st.NativeMapRangeMode != 0 ||
 		g.curX != 8 || g.curY != 17 || g.camX != 24 || g.camY != 13*24 {
 		t.Fatalf("materialized game=%+v view=%+v HUD=%+v",
 			g, g.st.NativeMapViewState, g.st.NativeMapHUDState)
@@ -117,6 +120,7 @@ func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
 }
 
 func TestGameRejectsInvalidEditableNativeMapRuntime(t *testing.T) {
+	rangeMode := 0
 	g := &Game{
 		m:  &MapData{W: 24, H: 24, TileW: 24, TileH: 24},
 		st: &battle.State{W: 24, H: 24},
@@ -125,6 +129,7 @@ func TestGameRejectsInvalidEditableNativeMapRuntime(t *testing.T) {
 		NativeMapView: &campaign.NativeMapViewConfig{
 			CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
 			VisibleCursorX: 8, VisibleCursorY: 4,
+			RangeMode: &rangeMode,
 		},
 		NativeMapHUD: &campaign.NativeMapHUDConfig{
 			DisplayGateA: 1, DisplayGateB: 1, AnchorX: 1,

@@ -30,7 +30,7 @@ func TestComposeFramePreservesNativeLayerOrder(t *testing.T) {
 	}
 	foreground := bank(12, 0)
 	foreground.Sprites[1] = solid(4) // tile 0 + foreground index-one rule
-	work, vga := make([]byte, 456*300), make([]byte, 320*192)
+	work, vga := make([]byte, 456*300), make([]byte, NativeMapVGASize)
 	cells := make([]fdicon.NativeTerrainCell, 13*8)
 	for i := range cells {
 		cells[i].BlitMode = 0xff
@@ -50,13 +50,16 @@ func TestComposeFramePreservesNativeLayerOrder(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if vga[0] != 5 {
-		t.Fatalf("viewport pixel=%d, want HUD 5", vga[0])
+	if vga[steadyViewportOffset] != 5 {
+		t.Fatalf("viewport pixel=%d, want HUD 5", vga[steadyViewportOffset])
+	}
+	if vga[steadyViewportOffset-1] != 0 || vga[steadyViewportOffset+steadyViewportWidth] != 0 {
+		t.Fatal("steady viewport overwrote the native four-pixel border")
 	}
 }
 
 func TestComposeFrameRejectsMissingHUDBeforeMutation(t *testing.T) {
-	work, vga := make([]byte, 456*300), make([]byte, 320*192)
+	work, vga := make([]byte, 456*300), make([]byte, NativeMapVGASize)
 	beforeWork, beforeVGA := append([]byte(nil), work...), append([]byte(nil), vga...)
 	if err := ComposeFrame(work, vga, FrameInput{}, nil); err == nil {
 		t.Fatal("incomplete input accepted")
@@ -73,7 +76,7 @@ func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
 	// The native work pointer is 0x8088, so the 192-row viewport reaches
 	// through row 319 even though the HUD itself occupies the final 200 rows.
 	work := make([]byte, workStride*320)
-	vga := make([]byte, viewWidth*viewHeight)
+	vga := make([]byte, NativeMapVGASize)
 	terrain := bank(2, 0)
 	terrain.Sprites[0] = solid(1)
 	terrain.Sprites[1] = solid(0x66)
@@ -106,9 +109,10 @@ func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
 	if work[layout.Frame] != 0x5a || work[layout.Terrain] != 0x66 || work[layout.Unit] != 0x77 || work[layout.HP] != 0x70 {
 		t.Fatalf("native HUD missing from work: %#x/%#x/%#x/%#x", work[layout.Frame], work[layout.Terrain], work[layout.Unit], work[layout.HP])
 	}
-	// The viewport copy starts at workBase=(x=72,y=72); the HUD panel at
-	// anchor 136 therefore lands at viewport (x=64,y=85).
-	if got := vga[85*viewWidth+64]; got != 0x5a {
+	// The source viewport starts at workBase=(x=72,y=72); the HUD panel at
+	// anchor 136 lands at source-relative (64,85), then 0x11cac places the
+	// 312x192 viewport at VGA (4,4).
+	if got := vga[(85+4)*viewWidth+64+4]; got != 0x5a {
 		t.Fatalf("native HUD did not reach viewport: %#x", got)
 	}
 }

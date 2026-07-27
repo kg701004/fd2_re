@@ -67,3 +67,14 @@ func TestNativeMapCursorFieldEdgeIsValidNoMove(t *testing.T) {
 		t.Fatal("accepted diagonal move")
 	}
 }
+
+func TestNativeMapRangeModeRequiresExplicitRawBounds(t *testing.T) {
+	st := &State{}
+	if !st.MaterializeNativeMapRangeMode(0) ||
+		!st.HasNativeMapRangeModeState || st.NativeMapRangeMode != 0 {
+		t.Fatal("raw bootstrap range mode rejected")
+	}
+	if st.MaterializeNativeMapRangeMode(6) || st.NativeMapRangeMode != 0 {
+		t.Fatal("out-of-range mode changed materialized state")
+	}
+}

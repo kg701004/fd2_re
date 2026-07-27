@@ -2,7 +2,7 @@ package fdother
 
 import "testing"
 
-func TestParseVGAPalettePreservesSixBitScaleAndTransparency(t *testing.T) {
+func TestParseVGAPalettePreservesSixBitScaleAsOpaqueVGA(t *testing.T) {
 	raw := make([]byte, 256*3)
 	raw[3], raw[4], raw[5] = 63, 32, 1
 	palette, err := ParseVGAPalette(raw)
@@ -15,8 +15,8 @@ func TestParseVGAPalettePreservesSixBitScaleAndTransparency(t *testing.T) {
 		t.Fatal("palette index zero missing")
 	}
 	_, _, _, alpha := palette[0].RGBA()
-	if alpha != 0 {
-		t.Fatalf("transparent index alpha=%#x", alpha)
+	if alpha != 0xffff {
+		t.Fatalf("VGA index-zero alpha=%#x", alpha)
 	}
 	r, g, b, a := palette[1].RGBA()
 	if r != 0xffff || g != 0x8282 || b != 0x0404 || a != 0xffff {
@@ -38,5 +38,10 @@ func TestRawCellPalettedPreservesZeroIndex(t *testing.T) {
 	}
 	if got := im.ColorIndexAt(1, 0); got != 7 {
 		t.Fatalf("opaque index=%d", got)
+	}
+	_, _, _, rawAlpha := palette[0].RGBA()
+	_, _, _, cellAlpha := im.Palette[0].RGBA()
+	if rawAlpha != 0xffff || cellAlpha != 0 {
+		t.Fatalf("palette alpha leaked across codec boundary: VGA=%#x cell=%#x", rawAlpha, cellAlpha)
 	}
 }

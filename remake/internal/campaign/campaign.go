@@ -135,12 +135,13 @@ type HandlerLayout struct {
 // NativeMapViewConfig is an explicitly sourced original 13x8 tactical view.
 // Values are map tiles, not remake pixels.
 type NativeMapViewConfig struct {
-	CameraX        int `json:"camera_x"`
-	CameraY        int `json:"camera_y"`
-	CursorX        int `json:"cursor_x"`
-	CursorY        int `json:"cursor_y"`
-	VisibleCursorX int `json:"visible_cursor_x"`
-	VisibleCursorY int `json:"visible_cursor_y"`
+	CameraX        int  `json:"camera_x"`
+	CameraY        int  `json:"camera_y"`
+	CursorX        int  `json:"cursor_x"`
+	CursorY        int  `json:"cursor_y"`
+	VisibleCursorX int  `json:"visible_cursor_x"`
+	VisibleCursorY int  `json:"visible_cursor_y"`
+	RangeMode      *int `json:"range_mode"`
 }
 
 // NativeMapHUDConfig carries only the persistent 0x1acf3 raw globals. Gate
@@ -441,6 +442,12 @@ func Load(path string) (*Campaign, error) {
 		}
 		if (n.NativeMapView == nil) != (n.NativeMapHUD == nil) {
 			return nil, fmt.Errorf("battle 節點 %q 必須同時定義 native_map_view / native_map_hud", id)
+		}
+		if n.NativeMapView != nil {
+			mode := n.NativeMapView.RangeMode
+			if mode == nil || *mode < 0 || *mode > 5 {
+				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 必須是明示的 0..5", id)
+			}
 		}
 		if n.NativeMapHUD != nil {
 			hud := n.NativeMapHUD

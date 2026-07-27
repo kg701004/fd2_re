@@ -712,7 +712,7 @@
   regression接受0為exact no-op；pure modes1..5 placement API仍拒絕0，
   mode6仍只走獨立field mutation。
 - [x] **`0x122dc` mode6 raw-field closure**：`0x108f0..0x10932` 載 FDFIELD composition 至 `0x53a51`、讀 signed `u16 width/height`；`0x4dbfc` 由 header 後的 4-byte cells 逐筆將 byte+3 初始化為`0xff`，再對 byte+2 mask `0x1f`。所以 mode6 的 `4*(x+y*width)+7` 正是 selected cell byte+3（event-high／raw blit-mode byte），不是 overlay sprite 或抽象 grid。`ClearNativeRangeOverlayMode6FieldByte` 有 bounds/no-partial-mutation regression；不替清零後的 renderer/gameplay效果命名。
-- [x] **steady native indexed map-frame scheduler**：新增 `internal/indexedmap.ComposeFrame`，強制順序 `0x11eee terrain → 0x122dc range → 0x127a9 unit → 0x129ec foreground → HUD callback → 0x11eb0` 320×192 copy。HUD callback 缺失即拒絕，private work clone 讓任一 layer/HUD 失敗不污染 caller 的 work/VGA；regression 固定 foreground 在 HUD 前、HUD byte 必進 viewport。這是純 indexed compositor，不等同 Ebiten UI／DAC／timing closure。
+- [x] **steady native indexed map-frame scheduler**：新增 `internal/indexedmap.ComposeFrame`，強制順序 `0x11eee terrain → 0x122dc range → 0x127a9 unit → 0x129ec foreground → HUD callback → 0x11eb0`。**更正舊 320×192 斷言**：direct `0x11d12..0x11d36` 是 width312、height192、dst `A0504`／stride320，即 VGA `(4,4)` 四邊留4px；compositor/regression已照此修正。HUD callback 缺失即拒絕，private work clone 讓任一 layer/HUD 失敗不污染 caller 的 work/VGA。
 - [x] **native map HUD panel subpass**：`indexedmap.BlitNativeMapHUDPanel` 直接接 `0x1acf3` 已證實的雙 raw gate、FDOTHER#5 LMI1 #130（69×34）、`stride*157+anchorX`；entry geometry 不符即拒絕且不寫 destination。**撤回**把它當一般 LMI1 cell 的實作：#130/#0x83/#0x84 必走 `ParseLMI1FrameEntry→0x4e63d` four-mode `Frame`，`DecodeNativeMapHUDFrames` 已以真實 FDOTHER regression 固定。它只畫 panel，terrain/unit icon 與 AP/DP/HP digit paths 仍分離，不能把完整 HUD 標成完成。
 - [x] **native HUD signed-number selector**：`indexedmap.BlitNativeMapHUDSignedNumber` 固定 `0x1aeb1` 的 raw LMI #0x83（非負 6×7）／#0x84（負值 6×5）選擇、absolute value、`origin+8` digit callback。callback 必填且 failure atomic，不把 sign 留半張；font、table value、AP/DP/HP來源與語意仍未命名。
 - [x] **native HUD two-digit renderer**：`0x1aeb1→0x187d6` call-site 固定 glyph base #0x1f、width=2；`%0.5d` 被 patch 成 `%0.2d`，每位以 six-pixel advance 走 `0x16886→0x4e63d` Frame。`BlitNativeMapHUDTwoDigitNumber` 接上完整 #0x1f..#0x28（實檔 #0x20=5×8、其餘6×8）與 sign selector，超過99 fail-closed，不讓 native truncation變成可編輯資料的隱性行為。數值來源／AP/DP/HP語意仍不命名。
@@ -758,7 +758,7 @@
 - [x] **native `0x4dcc6` LUT primitive**：`fdicon.Sprite.BlitLUT` 精確保留 source write→`lut[source]`、mode3→`lut[existing destination]`、mode1 dither holes 不改寫三種行為，short LUT fail-closed 並 regression。它不選 LUT／不管 map camera/layer，避免把原始 pure blitter 誤接成完整 terrain renderer。
 - [x] **native single-cell terrain compositor**：`Bank.BlitNativeTerrainCell` 組合 exact frame selector 與 FDFIELD `entry+3==0xff` raw／否則 LUT branch，regression 覆蓋兩支及 mode3 destination remap。camera-visible loop、LUT phase、foreground `0x129ec` 不在此 pure adapter 範圍。
 - [x] **native visible terrain pass**：`Bank.BlitNativeTerrainRegion` 以 raw FDFIELD cell、FDSHAP 4-byte control records、map origin／explicit LUT 做 `0x11eee` row-major visible region，bounds fail-closed、regression 覆蓋 raw/LUT cell order。正常 `0x11cac` ABI 已釘為 `(buffer+0x8088,456,13,8,camX,camY)`，其後 range→unit→foreground passes 仍分離。
-- [x] **native indexed viewport copy**：official IDA 9.4 關閉 `0x11eb0` 為逐列 `memmove`；`0x11cac` 明確以 source `buffer+0x8088`／stride456、width320、height192 複製到 VGA `0xA0504`／stride320。`fdicon.CopyNativeIndexedRegion` regression 覆蓋 row stride、source offset 與 fail-closed bounds；尚未自動接成 Ebiten presentation。
+- [x] **native indexed viewport copy**：official IDA/Capstone 關閉 `0x11eb0` 為逐列 `memmove`；`0x11cac` 明確以 source `buffer+0x8088`／stride456、width312、height192 複製到 VGA `0xA0504`／stride320。regression 覆蓋 row stride、source/destination offset、4px border 與 fail-closed bounds；ch01 已接 Ebiten production presentation。
 - [~] **native terrain/unit map HUD (`0x1acf3`)**：它在 `0x11cac` 的 terrain/range/unit+foreground 後、viewport copy 前執行，且須 raw gates `0x51aab`、`0x51aac` 都非零。先以 `0x12e38(cursor)` 解 FDFIELD tile10/event-low5/FDSHAP control4，再以 `0x12c0d(cursor)` optional active-unit lookup；`NativeTerrainCursorInfoForCell` regression 固定前一 raw ABI。已釘住 control byte+1→`0x51a12/0x51a2a` 的 AP/DP 表，並由 `battle.Load` 以逐格 raw tile/control 接至戰鬥計算。layout 已收斂為 LMI1 #130（69×34）`buffer+stride*157+x`、terrain `+6`、AP `stride*8+0x2b`、DP `stride*19+0x2b`；`0x1aeb1` 依 table 值正負選 raw directory decimal #83/#84、取絕對值再走 native digits，兩 resource 的視覺語意仍不命名。`x` raw 初值1，已見條件改為0xf2或1。unit icon/HP resource、高階 global 名稱仍待。**撤回**把現行 map HUD 的 FDOTHER#5 full-screen battle frame 當 native equivalent 的說法；目前只保留可玩 approximation。
   - [x] HUD runtime provenance：data初值anchor=1、gateA/gateB=1；
     load `0x10010`由plaintext `0x30d2`覆寫gateA。anchor只由visible
@@ -990,8 +990,11 @@
   modulo20前進並更新`[0x539f4]`；override0..19直接選phase且不改latch。
   terrain `[0x53a40/0x53a00]`與unit pixel shift
   `[0x53a04/0x53a08]`則是兩組獨立「新BIOS word翻轉」state，均已由
-  State持有。尚待monotonic約18.2Hz caller cadence；七拍movement仍由
-  Ebiten Update驅動，不宣稱原版wall-clock。
+  State持有。`nativeBIOSClock`現以PIT `1193182/65536≈18.2065Hz`
+  的battle-local monotonic low word，在每次steady redraw只呼一次
+  `0x1297d`並更新terrain phase／兩個binary latch；signed 16-bit wrap
+  有regression。七拍movement仍由Ebiten Update驅動，command/target
+  range-mode writers也尚未materialize，故整項仍partial。
 - [x] **RUNTIME-NATIVE-MAP-RAW-ROSTER**：新增
   `NativeMapFrameRoster`，一次性建立unit/foreground arrays與cycle
   snapshot。foreground另外要求explicit `unit+7`、race、class；
@@ -1008,6 +1011,12 @@
   明示，禁止從640×400 camera、normalized reach或PNG UI猜值。
   下一步是原版320×200 camera與HUD gate/anchor/clock runtime ownership，
   不是再做一個renderer primitive。
+  - [x] 2026-07-28 production neutral-frame bridge：ch01 map JSON重新由
+    合法原版輸出576個blit modes、1200-byte control table與target flags；
+    ch01改走已證實party-first、initial-groups-append constructor順序。
+    玩家原始DAT integration test可完整通過`ComposeNativeFrame`並由Ebiten
+    呈現，artifact為`docs/figures/native-map-ch01-remake.png`。raw range
+    mode只接受campaign明示0；其他UI modes未接前回playable renderer。
 - [x] **RE-UNIT-PRESENT-SNAPSHOT-OWNERSHIP**：`0x22253` 只配置一塊
   `0x25680` snapshot：terrain-only狀態供11個intro frames restore；
   `0x22547` entry再把final LMI `#0x7c`畫進同一塊，後續6 contract +

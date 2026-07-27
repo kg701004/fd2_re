@@ -1,13 +1,68 @@
 package main
 
 import (
+	"encoding/binary"
 	"image/color"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
 )
+
+func nativeFrameTestSprite(pixel byte) fdicon.Sprite {
+	pixels, mask := make([]byte, 24*24), make([]byte, 24*24)
+	for i := range pixels {
+		pixels[i], mask[i] = pixel, 1
+	}
+	return fdicon.Sprite{Pixels: pixels, Mask: mask, RemapMask: make([]byte, 24*24)}
+}
+
+func nativeFrameTestBank(count int, pixel byte) *fdicon.Bank {
+	bank := &fdicon.Bank{Sprites: make([]fdicon.Sprite, count)}
+	for i := range bank.Sprites {
+		bank.Sprites[i] = nativeFrameTestSprite(pixel)
+	}
+	return bank
+}
+
+func nativeFrameTestHUDFrame(width, height int, pixel byte) fdother.Frame {
+	raw := make([]byte, 4)
+	binary.LittleEndian.PutUint16(raw, uint16(width))
+	binary.LittleEndian.PutUint16(raw[2:], uint16(height))
+	for row := 0; row < height; row++ {
+		for remaining := width; remaining > 0; {
+			count := remaining
+			if count > 64 {
+				count = 64
+			}
+			raw = append(raw, byte(count-1), pixel)
+			remaining -= count
+		}
+	}
+	return fdother.Frame{Width: width, Height: height, Pixels: raw}
+}
+
+func nativeFrameTestHUDFrames() indexedmap.NativeMapHUDFrames {
+	frames := indexedmap.NativeMapHUDFrames{
+		Panel:        nativeFrameTestHUDFrame(69, 34, 0x5a),
+		PositiveSign: nativeFrameTestHUDFrame(6, 7, 0x31),
+		NegativeSign: nativeFrameTestHUDFrame(6, 5, 0x42),
+	}
+	for digit := range frames.Digits {
+		frames.Digits[digit] = nativeFrameTestHUDFrame(6, 8, byte(0x50+digit))
+		frames.HPMismatchDigits[digit] = nativeFrameTestHUDFrame(6, 8, byte(0x70+digit))
+	}
+	frames.Digits[1] = nativeFrameTestHUDFrame(5, 8, 0x51)
+	frames.HPMismatchDigits[1] = nativeFrameTestHUDFrame(5, 8, 0x71)
+	frames.HPEqualOverflow = nativeFrameTestHUDFrame(18, 8, 0x7a)
+	frames.HPMismatchOverflow = nativeFrameTestHUDFrame(18, 8, 0x7b)
+	return frames
+}
 
 func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *battle.State) {
 	t.Helper()
@@ -17,8 +72,11 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 		luts[i] = make([]byte, 256)
 	}
 	assets := &nativeMapAssets{
-		Terrain: &fdicon.Bank{}, Range: &fdicon.Bank{}, Units: &fdicon.Bank{},
-		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256),
+		Terrain: nativeFrameTestBank(2, 1), Range: nativeFrameTestBank(20, 2), Units: nativeFrameTestBank(96, 3),
+		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256), Frames: nativeFrameTestHUDFrames(),
+	}
+	for i := range assets.Palette {
+		assets.Palette[i] = color.RGBA{byte(i), byte(i), byte(i), 0xff}
 	}
 	field := &MapData{
 		W: 13, H: 8, Tiles: make([]int, 13*8),
@@ -34,6 +92,8 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 		BattleFig: 9, HasBattleFig: true,
 		NativeRecordRace: 3, HasNativeRecordRace: true,
 		NativeRecordClass: 4, HasNativeRecordClass: true,
+		HP: 5, NativeRecordWord42: 10, HasNativeRecordWord42: true,
+		NativeRecordByte6: 0, HasNativeRecordByte6: true,
 	}
 	state := &battle.State{}
 	if err := state.AppendNativeMapSelectorBatch([]*battle.Unit{unit}); err != nil {
@@ -46,7 +106,68 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{}); err != nil {
 		t.Fatal(err)
 	}
+	if !state.MaterializeNativeMapRangeMode(0) {
+		t.Fatal("range mode materialization rejected")
+	}
 	return assets, field, state
+}
+
+func TestDrawNativeMapFramePresentsCorrectedVGABorder(t *testing.T) {
+	assets, field, state := completeNativeMapFrameFixture(t)
+	g := &Game{
+		nativeMapAssets: assets,
+		m:               field,
+		st:              state,
+	}
+	screen := ebiten.NewImage(640, 400)
+	if !g.drawNativeMapFrame(screen) {
+		t.Fatal("complete materialized native map frame was not presented")
+	}
+	if len(g.nativeMapVGA) != indexedmap.NativeMapVGASize {
+		t.Fatalf("VGA bytes=%d", len(g.nativeMapVGA))
+	}
+	if g.nativeMapVGA[0] != 0 || g.nativeMapVGA[4*320+3] != 0 {
+		t.Fatal("native four-pixel border was overwritten")
+	}
+	if got := g.nativeMapVGA[4*320+4]; got != 3 {
+		t.Fatalf("first viewport pixel=%d, want unit layer 3", got)
+	}
+}
+
+func TestPlayerChapterOneNativeFrameAdmission(t *testing.T) {
+	fdotherPath, err := filepath.Abs("../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(fdotherPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT unavailable")
+	}
+	t.Setenv("FD2_MUTE", "1")
+	t.Setenv("FD2_CAMPAIGN", "assets/scenarios/campaign_full.json")
+	t.Setenv("FD2_CAMP_NODE", "battle_ch01")
+	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
+	g := loadGame()
+	if g.loadErr != "" {
+		t.Fatal(g.loadErr)
+	}
+	if g.camp == nil || g.camp.Cur != "battle_ch01" {
+		t.Fatalf("campaign node=%v", g.camp)
+	}
+	if err := g.composeNativeMapFrame(); err != nil {
+		for i, unit := range g.st.Units {
+			t.Logf("unit %d fig=%d hp=%d on=%v presentation=%v slot=%v byte5=%#x/%v battleFig=%d/%v race=%d/%v class=%d/%v",
+				i, unit.Fig, unit.HP, unit.OnField,
+				unit.HasNativeMapPresentation, unit.HasMapSelectorSlot,
+				unit.NativeRecordByte5, unit.HasNativeRecordByte5,
+				unit.BattleFig, unit.HasBattleFig,
+				unit.NativeRecordRace, unit.HasNativeRecordRace,
+				unit.NativeRecordClass, unit.HasNativeRecordClass)
+		}
+		t.Fatal(err)
+	}
+	if got := g.nativeMapVGA[4*320+4]; got == 0 {
+		t.Fatal("player-backed native viewport remained empty")
+	}
 }
 
 func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
@@ -58,10 +179,7 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 	if !state.AdvanceNativeTerrainFlip(1) || !state.AdvanceNativeUnitPixelShift(1) {
 		t.Fatal("binary map timing advance rejected")
 	}
-	runtime := nativeMapFrameRuntime{
-		RangeMode: 0,
-		HUD:       indexedmap.NativeMapHUDInput{},
-	}
+	runtime := nativeMapFrameRuntime{HUD: indexedmap.NativeMapHUDInput{}}
 	got, err := buildNativeMapFrameInput(assets, field, state, runtime)
 	if err != nil {
 		t.Fatal(err)

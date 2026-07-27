@@ -14,8 +14,13 @@ import (
 const (
 	workStride = fdicon.NativeMapStride
 	workBase   = 0x8088
-	viewWidth  = 320
+	viewWidth  = 320 // VGA row stride, not the steady copied width
 	viewHeight = 192
+	// 0x11cac calls 0x11eb0(dst=A000:0504, dstStride=320,
+	// src=work+0x8088, srcStride=456, width=312, height=192).
+	steadyViewportOffset = 0x504
+	steadyViewportWidth  = 312
+	NativeMapVGASize     = 320 * 200
 	// NativeUnitPresentWorkSize is 0x22253's exact temporary allocation.
 	NativeUnitPresentWorkSize = 0x25680
 )
@@ -387,7 +392,7 @@ func ComposeNativeTransitionFrame(work, vga []byte, in NativeTransitionFrameInpu
 // order. All work happens on a private clone first, so rejected editable input
 // or a HUD error never leaves either caller buffer partially changed.
 func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error) error {
-	if renderHUD == nil || len(work)%workStride != 0 || len(vga) < viewWidth*viewHeight || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 {
+	if renderHUD == nil || len(work)%workStride != 0 || len(vga) < NativeMapVGASize || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 {
 		return errors.New("indexedmap: incomplete native frame input")
 	}
 	if in.TerrainBank == nil || in.RangeBank == nil || in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil {
@@ -410,8 +415,12 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 	if err := renderHUD(frame); err != nil {
 		return fmt.Errorf("indexedmap: HUD: %w", err)
 	}
-	copyFrame := make([]byte, viewWidth*viewHeight)
-	if err := fdicon.CopyNativeIndexedRegion(copyFrame, viewWidth, frame[workBase:], workStride, viewWidth, viewHeight); err != nil {
+	copyFrame := append([]byte(nil), vga...)
+	if err := fdicon.CopyNativeIndexedRegion(
+		copyFrame[steadyViewportOffset:], viewWidth,
+		frame[workBase:], workStride,
+		steadyViewportWidth, viewHeight,
+	); err != nil {
 		return fmt.Errorf("indexedmap: viewport copy: %w", err)
 	}
 	copy(work, frame)

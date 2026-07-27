@@ -14,8 +14,7 @@ import (
 // one steady 0x11cac frame. It deliberately has no conversion from the
 // remake's 640x400 pixel camera or normalized selection/highlight state.
 type nativeMapFrameRuntime struct {
-	RangeMode int
-	HUD       indexedmap.NativeMapHUDInput
+	HUD indexedmap.NativeMapHUDInput
 }
 
 // buildNativeMapFrameInput joins the all-or-nothing original asset bundle,
@@ -37,7 +36,8 @@ func buildNativeMapFrameInput(
 		!bytes.Equal(field.NativeTerrainControl, assets.Controls) {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: editable field does not match native FDSHAP controls")
 	}
-	if !state.HasNativeMapViewState || runtime.RangeMode < 0 || runtime.RangeMode > 5 {
+	if !state.HasNativeMapViewState || !state.HasNativeMapRangeModeState ||
+		state.NativeMapRangeMode < 0 || state.NativeMapRangeMode > 5 {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: raw runtime globals are outside verified bounds")
 	}
 	view := state.NativeMapViewState
@@ -62,7 +62,7 @@ func buildNativeMapFrameInput(
 		Flip: roster.TerrainFlip, TerrainCycle: roster.Cycles.Idle,
 		IdleCycle: roster.Cycles.Idle, MovingCycle: roster.Cycles.Moving,
 		PixelShift: roster.UnitPixelShift,
-		RangeMode:  runtime.RangeMode, CursorX: view.CursorX, CursorY: view.CursorY,
+		RangeMode:  state.NativeMapRangeMode, CursorX: view.CursorX, CursorY: view.CursorY,
 		Units: roster.Units, ForegroundUnits: roster.Foreground,
 	}
 	hud := runtime.HUD

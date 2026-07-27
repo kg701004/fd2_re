@@ -41,6 +41,15 @@ func (s *State) MaterializeNativeMapViewState(view NativeMapViewState) error {
 	return nil
 }
 
+func (s *State) MaterializeNativeMapRangeMode(mode int) bool {
+	if s == nil || mode < 0 || mode > 5 {
+		return false
+	}
+	s.NativeMapRangeMode = mode
+	s.HasNativeMapRangeModeState = true
+	return true
+}
+
 // MoveNativeMapCursor reproduces the four helpers at 0x11b48..0x11cac.
 // moved is false at a field edge; ok is false for malformed state/input.
 func (s *State) MoveNativeMapCursor(dx, dy int) (moved, ok bool) {

@@ -16,6 +16,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -69,9 +70,12 @@ type MapData struct {
 type Game struct {
 	m                    *MapData
 	nativeMapAssets      *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
+	nativeMapWork        []byte           // persistent 456-stride original tactical framebuffer
+	nativeMapVGA         []byte           // persistent 320x200 indexed VGA surface
 	tileset              *ebiten.Image
 	tiles                []*ebiten.Image     // 切好的圖塊
 	st                   *battle.State       // 戰鬥狀態(單位)
+	nativeMapClock       nativeBIOSClock     // battle-local 18.2065Hz BIOS low-word adapter
 	sc                   *battle.Scenario    // 劇本(事件系統,doc 29)
 	dialog               []battle.DialogLine // 待顯示對話(事件產生,含說話者)
 	storyBG              bool                // 場景背景模式(story 節點指定 Map):鏡頭固定不跟游標,不畫單位/游標/HUD(doc23 §4)
@@ -1859,6 +1863,11 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 		g.loadErr = "native map runtime view: " + err.Error()
 		return false
 	}
+	if view.RangeMode == nil || !g.st.MaterializeNativeMapRangeMode(*view.RangeMode) {
+		g.loadErr = "native map runtime range mode is outside raw bounds"
+		g.st.HasNativeMapViewState = false
+		return false
+	}
 	hud := n.NativeMapHUD
 	if hud.DisplayGateA < 0 || hud.DisplayGateA > 0xff ||
 		hud.DisplayGateB < 0 || hud.DisplayGateB > 0xff ||
@@ -1873,6 +1882,8 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 
 // resetBattle 重開一場戰鬥(campaign battle 節點;敗北重試也走這裡)。
 func (g *Game) resetBattle(unitsPath, scnPath string) {
+	g.nativeMapClock.Reset()
+	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	g.storyActors, g.storyRoster, g.storySpawned = nil, nil, nil // 不讓上一個 pre cutscene 的 scene units 疊進戰場
 	if unitsPath == "" {
 		unitsPath = "assets/map0_units.json"
@@ -4048,6 +4059,7 @@ func (g *Game) Update() error {
 		}
 		return nil
 	}
+	g.advanceNativeMapClock(time.Now())
 	// 攻擊演出推進(FIGANI 全身分鏡;演出期間鎖玩家輸入)
 	if g.atk != nil {
 		g.atk.timer--
@@ -4109,6 +4121,12 @@ func (g *Game) Update() error {
 		// FD2_SHOT_RING on battle-start event scenarios.
 		if !g.shotSetup && g.frame >= g.shotFrame-1 {
 			g.shotSetup = true
+			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
+				for len(g.dialog) > 0 {
+					g.dialog = g.dialog[:len(g.dialog)-1]
+				}
+				g.dlgShown, g.dlgPhase, g.dlgPage, g.dlgScrollT = dlgNone, 0, 0, 0
+			}
 			for i := 0; i < g.shotTurn; i++ { // 推進 N 個回合(觸發增援事件),驗證進場
 				g.endTurn()
 			}
@@ -4458,6 +4476,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// 原版從未觸發,無「原版清色」可對齊;黑色是 remake 自訂 FOV(640 寬、tile 維持原生 24px)才會露出的
 	// 邊,選黑純為視覺乾淨、非還原原版行為。
 	screen.Fill(color.RGBA{0, 0, 0, 0xff})
+	nativeMapPresented := false
 	// story 場景與原版阻塞 battle event 走 320×200 離屏再放大 storyZoom 倍
 	// (還原 13×8 格取景)；一般可操作戰場維持 640×400 直繪。
 	// 對話框/HUD/淡幕仍畫在 screen 原生解析度。
@@ -4617,10 +4636,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if !legacyViewport && campaignBattleView {
 		g.drawPhaseBanner(screen) // 回合橫幅(PLAYER/ENEMY PHASE,transient)
 	}
+	// A complete original indexed frame supersedes the normalized map/unit/HUD
+	// layers only in the raw neutral range-mode state. Command/target modes keep
+	// the playable renderer until their [0x51a83] writers are materialized.
+	if !legacyViewport && campaignBattleView && g.sel == nil &&
+		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
+		nativeMapPresented = g.drawNativeMapFrame(screen)
+		if nativeMapPresented && g.st != nil && g.st.HasNativeMapViewState {
+			// Cursor artwork/flash is still unresolved; retain the existing
+			// visible selector at the exact native camera-relative cell.
+			view := g.st.NativeMapViewState
+			drawCursor(
+				screen,
+				float64((4+view.VisibleCursorX*24)*2),
+				float64((4+view.VisibleCursorY*24)*2),
+				48, 48,
+			)
+		}
+	}
 
 	// 中文層(原版點陣字型,doc 08):選中單位名 + 對話框(DebugPrint 不支援中文)
 	if g.font != nil {
-		if g.st != nil && !legacyViewport { // 選中單位中文名(放游標格上方,避開頂部 DebugPrint)
+		if g.st != nil && !legacyViewport && !nativeMapPresented { // 選中單位中文名(放游標格上方,避開頂部 DebugPrint)
 			if u := g.st.UnitAt(g.curX, g.curY); u != nil {
 				nm := u.Name
 				if nm == "" {
@@ -6048,19 +6085,18 @@ func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 // unverified raw input, preserving the legacy approximation without partial
 // drawing. Raw gates/anchor and optional unit/HP must all come from the
 // materialized battle runtime; this function never hardcodes native globals.
-func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
+func (g *Game) nativeMapHUDInput() (indexedmap.NativeMapHUDInput, bool) {
 	a := g.nativeMapAssets
 	if !nativeMapAssetsAvailable(a) || g.m == nil || g.st == nil ||
 		!g.st.HasNativeMapHUDState || !g.st.HasNativeMapCycleState || g.st.NativeMapSelectorCache == nil ||
 		g.curX < 0 || g.curY < 0 || g.curX >= g.m.W || g.curY >= g.m.H {
-		return false
+		return indexedmap.NativeMapHUDInput{}, false
 	}
 	tile := g.m.Tiles[g.curY*g.m.W+g.curX]
 	if tile < 0 || tile >= len(a.Controls)/4 || tile > 0x3ff {
-		return false
+		return indexedmap.NativeMapHUDInput{}, false
 	}
 	control := a.Controls[tile*4+1]
-	frame := make([]byte, fdicon.NativeMapStride*200)
 	rawHUD := g.st.NativeMapHUDState
 	in := indexedmap.NativeMapHUDInput{
 		DisplayGateA: rawHUD.DisplayGateA != 0,
@@ -6071,7 +6107,7 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 		if !u.HasMapSelectorSlot || !u.HasBattleFig || u.BattleFig < 0 || u.BattleFig > 0xff ||
 			!u.HasNativeRecordRace || !u.HasNativeRecordByte6 ||
 			!u.HasNativeRecordWord42 || u.HP < 0 || u.HP > 0xffff {
-			return false
+			return indexedmap.NativeMapHUDInput{}, false
 		}
 		if indexedmap.NativeMapHUDOptionalUnitEligible(
 			byte(u.BattleFig), u.NativeRecordRace, u.NativeRecordByte6,
@@ -6084,10 +6120,25 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 			}
 		}
 	}
+	return in, true
+}
+
+func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
+	a := g.nativeMapAssets
+	in, ok := g.nativeMapHUDInput()
+	if !ok {
+		return false
+	}
+	frame := make([]byte, fdicon.NativeMapStride*200)
 	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, a.Units, g.st.NativeMapSelectorCache, frame, in); err != nil {
 		return false
 	}
-	img := image.NewPaletted(image.Rect(0, 0, 320, 200), a.Palette)
+	overlayPalette := append(color.Palette(nil), a.Palette...)
+	r, green, b, _ := overlayPalette[0].RGBA()
+	overlayPalette[0] = color.NRGBA{
+		R: uint8(r >> 8), G: uint8(green >> 8), B: uint8(b >> 8), A: 0,
+	}
+	img := image.NewPaletted(image.Rect(0, 0, 320, 200), overlayPalette)
 	for y := 0; y < 200; y++ {
 		copy(img.Pix[y*img.Stride:y*img.Stride+320], frame[y*fdicon.NativeMapStride:y*fdicon.NativeMapStride+320])
 	}
@@ -6095,6 +6146,46 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 	op.GeoM.Scale(2, 2)
 	screen.DrawImage(ebiten.NewImageFromImage(img), op)
 	return true
+}
+
+// drawNativeMapFrame is the production 0x11cac bridge for the currently
+// materialized neutral tactical state. It composes terrain, range, units,
+// foreground and HUD atomically, then presents the corrected 312x192 viewport
+// at VGA (4,4) on a 320x200 paletted surface.
+func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
+	if err := g.composeNativeMapFrame(); err != nil {
+		return false
+	}
+	a := g.nativeMapAssets
+	img := image.NewPaletted(image.Rect(0, 0, 320, 200), a.Palette)
+	copy(img.Pix, g.nativeMapVGA)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(2, 2)
+	screen.DrawImage(ebiten.NewImageFromImage(img), op)
+	return true
+}
+
+func (g *Game) composeNativeMapFrame() error {
+	a := g.nativeMapAssets
+	hud, ok := g.nativeMapHUDInput()
+	if !ok || g.st == nil || !g.st.HasNativeMapRangeModeState ||
+		g.st.NativeMapRangeMode != 0 {
+		return errors.New("native map frame: HUD or neutral range state unavailable")
+	}
+	in, err := buildNativeMapFrameInput(a, g.m, g.st, nativeMapFrameRuntime{HUD: hud})
+	if err != nil {
+		return err
+	}
+	if len(g.nativeMapWork) != indexedmap.NativeUnitPresentWorkSize {
+		g.nativeMapWork = make([]byte, indexedmap.NativeUnitPresentWorkSize)
+	}
+	if len(g.nativeMapVGA) != indexedmap.NativeMapVGASize {
+		g.nativeMapVGA = make([]byte, indexedmap.NativeMapVGASize)
+	}
+	if err := indexedmap.ComposeNativeFrame(g.nativeMapWork, g.nativeMapVGA, in); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (g *Game) endTurn() {

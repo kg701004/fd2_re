@@ -525,7 +525,8 @@
     "cursor_x": 8,
     "cursor_y": 17,
     "visible_cursor_x": 7,
-    "visible_cursor_y": 4
+    "visible_cursor_y": 4,
+    "range_mode": 0
    },
    "native_map_hud": {
     "display_gate_a": 1,

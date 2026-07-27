@@ -457,6 +457,11 @@ type State struct {
 	HasNativeMapHUDState  bool
 	NativeMapViewState    NativeMapViewState
 	HasNativeMapViewState bool
+	// NativeMapRangeMode is raw [0x51a83]. It is materialized separately from
+	// normalized selection/reach state; the verified process/battle bootstrap
+	// is zero, while interactive writers remain a separate UI bridge.
+	NativeMapRangeMode         int
+	HasNativeMapRangeModeState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later

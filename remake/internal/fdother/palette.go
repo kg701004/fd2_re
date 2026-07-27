@@ -6,9 +6,10 @@ import (
 	"image/color"
 )
 
-// ParseVGAPalette converts FDOTHER #0's 256×RGB six-bit DAC payload to a Go
-// palette. Palette index zero is transparent because 0x4e9e4 preserves the
-// destination for zero source pixels; all other entries are opaque.
+// ParseVGAPalette converts FDOTHER #0's 256×RGB six-bit DAC payload to an
+// opaque VGA palette. Transparency is a property of individual native
+// blitters/masks, not of a DAC index; a complete mode-13h framebuffer may
+// legitimately contain visible palette index zero.
 func ParseVGAPalette(data []byte) (color.Palette, error) {
 	if len(data) != 256*3 {
 		return nil, errors.New("fdother: VGA palette must contain 768 bytes")
@@ -19,11 +20,7 @@ func ParseVGAPalette(data []byte) (color.Palette, error) {
 		if r > 63 || g > 63 || b > 63 {
 			return nil, errors.New("fdother: VGA palette component exceeds six bits")
 		}
-		a := uint8(0xff)
-		if i == 0 {
-			a = 0
-		}
-		palette[i] = color.NRGBA{R: (r << 2) | (r >> 4), G: (g << 2) | (g >> 4), B: (b << 2) | (b >> 4), A: a}
+		palette[i] = color.NRGBA{R: (r << 2) | (r >> 4), G: (g << 2) | (g >> 4), B: (b << 2) | (b >> 4), A: 0xff}
 	}
 	return palette, nil
 }
@@ -38,7 +35,12 @@ func (c RawCell) Paletted(palette color.Palette) (*image.Paletted, error) {
 	if len(palette) < 256 {
 		return nil, errors.New("fdother: palette has fewer than 256 entries")
 	}
-	im := image.NewPaletted(image.Rect(0, 0, c.Width, c.Height), palette)
+	cellPalette := append(color.Palette(nil), palette...)
+	r, g, b, _ := cellPalette[0].RGBA()
+	cellPalette[0] = color.NRGBA{
+		R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(b >> 8), A: 0,
+	}
+	im := image.NewPaletted(image.Rect(0, 0, c.Width, c.Height), cellPalette)
 	copy(im.Pix, c.Pixels)
 	return im, nil
 }
