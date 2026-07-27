@@ -1123,3 +1123,14 @@
 - [x] **RE-COMMAND23-CALLER-SCOPE-CORRECTION**：Docker Capstone 重讀 `0x250cc→0x22253`，確認 `0x22253` 不是 command-23 專屬：chapter-ending/post handler 在 `0x1c2da` 後也以 unit `1`、pre-render `0xff/0xff`、record `+0/+1` 呼叫同一 indexed routine，隨後才進 `0x25089` cleanup 與 `0x2bce5` ending renderer。故 `SetNativeUnitCoordinateBytes` 僅是 shared raw writer；command-23 selector、ch29 ending layout、renderer/campaign semantics 仍分開且 fail-closed。
 - [x] **CHAPTER-ENDING-250CC-BRANCH-AUDIT**：Docker Capstone 對齊 `0x25348` 分支確認：ending path 先送 FDOTHER frame `#0x0d/#0x0e/#0x0f`，呼 `0x1c2da`，再以 shared `0x22253` 寫 unit `1` 的 raw `+0/+1`，送 frame `#0x10`，最後 `0x25089→0x2bce5` 並 self-loop。這只固定 call order/終局邊界，不把 `0x24b14` 回傳或 frame IDs 命名成 town/shop/gameplay；一般戰後 flow 仍不得接此 self-loop。
 - [~] **RE-INVENTORY-ITEM-GATE-24B14**：Docker Capstone 閉合 `0x24b14(item)`→`0x31860(unit,item)`→`0x1b8a6/0x1b722`：只掃 runtime unit `0..15`；每 unit 先取 occupied/prefix count（flag bit7 clear），再只比對該 prefix 的 item bytes `record+0x0b+2*slot`，成功回 native `1`，缺失回 `-1`。新增 `battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` 與 `NativeInventoryRecords` regression；campaign `partyHasItemID` 在完整 `InventorySlots` + `NativeInventoryFlags` provenance 時已走 raw gate，缺資料才 fallback normalized。它不消耗 item、不加 camp/activity filter，也不把 `0x64` 命名成天空之鑰以外的泛用效果；完整 native save/runtime roster 接線仍待。
+- [x] **RE-NATIVE-RNG-LIFECYCLE-627B8**：Docker LE object/fixup audit
+  確認 shared RNG word `0x627b8` 位於 initialized object 3，image初值
+  `0x0000`；全EXE只有 `0x4e893` 自身load/store兩個reference，save/load
+  與chapter handler都不讀寫。因此生命周期是process-wide、初值0、
+  不進FD2.SAV。runtime新增獨立`uint16` state，不混用Go RNG。
+- [x] **REMAKE-ITEM-HP-MP-TARGET-TRANSACTION**：Ebiten item Enter已將
+  types5/13 HP與type11 MP接到兩階段`0x14818` target planner；確認目標後
+  才atomic materialize/commit 0x50-byte records、依list order消耗native
+  RNG、按type保留或compact移除來源，最後設raw `+5 bit7`並結束action。
+  任一unit缺raw provenance即fail-closed；indexed effect presentation與
+  types6/7/12/14–16/20–24 runtime接線仍待。

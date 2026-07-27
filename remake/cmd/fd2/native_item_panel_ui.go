@@ -210,6 +210,167 @@ func (g *Game) applyNativeImmediateItem(rawSlot, itemID int) (bool, error) {
 	return true, nil
 }
 
+// beginNativeRestoreItem enters the recovered first-stage 0x14818 selector
+// only for the closed HP/MP restore families. The mutation remains deferred
+// until a concrete runtime unit passes both target-planner stages.
+func (g *Game) beginNativeRestoreItem(rawSlot, itemID int) (bool, error) {
+	rowOffset, err := battle.NativeItemEffectRowOffset(itemID)
+	if err != nil || rowOffset+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
+		return false, fmt.Errorf("native item row %d is unavailable", itemID)
+	}
+	row := g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize]
+	amount := binary.LittleEndian.Uint16(row[0x0e:0x10])
+	if _, ok := battle.NativeItemHPRestoreRouteForType(row[0x0d], amount); !ok {
+		if _, ok := battle.NativeItemMPRestoreRouteForType(row[0x0d], amount); !ok {
+			return false, nil
+		}
+	}
+	if _, err := battle.NativeItemTargetPlanFromRow(row); err != nil {
+		return false, err
+	}
+	g.nativeItemTargeting = true
+	g.nativeItemTargetID = itemID
+	g.nativeItemTargetRawSlot = rawSlot
+	g.itemOpen = false
+	rows := g.nativeItemEffectRows
+	g.clearNativeItemPanel()
+	g.nativeItemEffectRows = rows
+	g.curX, g.curY = g.sel.X, g.sel.Y
+	g.reach = nil
+	return true, nil
+}
+
+func (g *Game) nativeItemSelectionTargets() []*battle.Unit {
+	if g == nil || g.st == nil || g.sel == nil || !g.nativeItemTargeting {
+		return nil
+	}
+	rowOffset, err := battle.NativeItemEffectRowOffset(g.nativeItemTargetID)
+	if err != nil || rowOffset+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
+		return nil
+	}
+	plan, err := battle.NativeItemTargetPlanFromRow(
+		g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize],
+	)
+	if err != nil {
+		return nil
+	}
+	targets, err := battle.NativeAttackCandidates(
+		g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y},
+		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode,
+		g.st.NativeTargetFlags, g.st.Units,
+	)
+	if err != nil {
+		return nil
+	}
+	return targets
+}
+
+func nativeItemRuntimeRecords(units []*battle.Unit) ([]byte, error) {
+	records := make([]byte, 0, len(units)*80)
+	for index, unit := range units {
+		record, err := battle.NativeItemPanelRecordForUnit(unit)
+		if err != nil {
+			return nil, fmt.Errorf("runtime unit %d lacks native item record: %w", index, err)
+		}
+		records = append(records, record...)
+	}
+	return records, nil
+}
+
+func syncNativeItemRuntimeRecord(unit *battle.Unit, record []byte) {
+	unit.HP = int(int16(binary.LittleEndian.Uint16(record[0x40:0x42])))
+	unit.MP = int(int16(binary.LittleEndian.Uint16(record[0x44:0x46])))
+	unit.InventorySlots = make([]int, 8)
+	unit.NativeInventoryFlags = make([]int, 8)
+	unit.Inventory = unit.Inventory[:0]
+	unit.Equipped = unit.Equipped[:0]
+	for slot := 0; slot < 8; slot++ {
+		flag, item := int(record[0x0a+slot*2]), int(record[0x0b+slot*2])
+		unit.NativeInventoryFlags[slot], unit.InventorySlots[slot] = flag, item
+		if flag&0x80 == 0 {
+			unit.Inventory = append(unit.Inventory, item)
+			unit.Equipped = append(unit.Equipped, flag&0x40 != 0)
+		}
+	}
+}
+
+// applyNativeRestoreItem commits types 5/11/13 using the original raw target
+// list order and the shared process-lifetime 16-bit RNG state.
+func (g *Game) applyNativeRestoreItem(confirmed *battle.Unit) (bool, error) {
+	if g == nil || g.st == nil || g.sel == nil || !g.nativeItemTargeting || confirmed == nil {
+		return false, nil
+	}
+	rowOffset, err := battle.NativeItemEffectRowOffset(g.nativeItemTargetID)
+	if err != nil || rowOffset+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
+		return false, fmt.Errorf("native item row %d is unavailable", g.nativeItemTargetID)
+	}
+	row := g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize]
+	plan, err := battle.NativeItemTargetPlanFromRow(row)
+	if err != nil {
+		return false, err
+	}
+	targets, err := battle.NativeItemEffectTargets(
+		g.st.W, g.st.H, g.sel, confirmed, plan,
+		g.st.NativeTargetFlags, g.st.Units,
+	)
+	if err != nil {
+		return false, nil
+	}
+	sourceUnit := -1
+	targetIndices := make([]byte, len(targets))
+	for index, unit := range g.st.Units {
+		if unit == g.sel {
+			sourceUnit = index
+		}
+		for targetIndex, target := range targets {
+			if unit == target {
+				targetIndices[targetIndex] = byte(index)
+			}
+		}
+	}
+	if sourceUnit < 0 {
+		return false, fmt.Errorf("native item source is absent from runtime roster")
+	}
+	records, err := nativeItemRuntimeRecords(g.st.Units)
+	if err != nil {
+		return false, err
+	}
+	amount := binary.LittleEndian.Uint16(row[0x0e:0x10])
+	nextRNG := g.nativeRNGState
+	if route, ok := battle.NativeItemHPRestoreRouteForType(row[0x0d], amount); ok {
+		result, err := battle.ApplyNativeItemHPRestore(
+			records, targetIndices, route, g.nativeRNGState,
+			sourceUnit, g.nativeItemTargetRawSlot,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = result.RNGState
+	} else if route, ok := battle.NativeItemMPRestoreRouteForType(row[0x0d], amount); ok {
+		result, err := battle.ApplyNativeItemMPRestore(
+			records, targetIndices, route, g.nativeRNGState,
+			sourceUnit, g.nativeItemTargetRawSlot,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = result.RNGState
+	} else {
+		return false, nil
+	}
+	for index, unit := range g.st.Units {
+		syncNativeItemRuntimeRecord(unit, records[index*80:(index+1)*80])
+	}
+	g.nativeRNGState = nextRNG
+	g.sel.NativeRecordByte5 |= 0x80
+	g.sel.HasNativeRecordByte5 = true
+	g.sel.Acted = true
+	g.nativeItemTargeting = false
+	g.nativeItemEffectRows = nil
+	g.sel, g.reach, g.moved = nil, nil, false
+	return true, nil
+}
+
 func (g *Game) drawNativeItemPanel(screen *ebiten.Image) bool {
 	if g.nativeItemPanel == nil {
 		return false

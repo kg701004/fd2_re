@@ -969,3 +969,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   AP/DP/DX或MaxHP/MaxMP/MV（MV保存EXP）、`0x1b8e7` compact移除來源、
   必要的equipment recompute並設raw `+5 bit7`/normalized Acted。
   缺base provenance原子拒絕；RNG及非self效果仍封閉。
+- 2026-07-27 native RNG lifecycle與回復道具接線：Docker解析LE object
+  table、fixups及`0x627b8` image bytes，確認RNG word初值0，唯一references
+  是`0x4e893`的load/store，無FD2.SAV或chapter reset，因此是process-wide
+  非persistent state。Ebiten現以獨立`uint16`串接types5/13 HP與type11 MP：
+  item row先進兩階段target planner，確認後才atomic建立所有runtime raw
+  records、按target list推進RNG、同步HP/MP與compact inventory，最後設
+  raw `+5 bit7`並結束action。缺任何raw record即拒絕；effect renderer
+  與其餘typed item families仍未接。

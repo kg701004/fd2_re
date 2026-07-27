@@ -1091,6 +1091,23 @@ Official IDA 9.4 decompilation of common callee `0x21082(a1..a7)` closes the cor
 
 The growth-marker callers around `0x22721/0x22866/0x22997` use `0x4e893`: 16-bit `rol3(state+0x9014)`, then `idiv 4` and the **remainder** in `EDX`, followed by `+2`. `fdother.NativeRNGStep`/`NativeRNGMarker` preserve this state transition and marker source. Any earlier interpretation as quotient-based growth marker is invalid and must not be used.
 
+The shared state used by `0x4e893` is word `0x627b8`. LE fixup enumeration
+finds exactly two references, the helper's own load and store. The address is
+inside object 3's initialized pages and its executable image bytes are
+`0x0000`; no save/load or chapter routine references it. Therefore its
+verified lifecycle is process start at zero, then continuous mutation for the
+life of that process, with no `FD2.SAV` persistence. The remake keeps this
+`uint16` state separate from Go's normalized `math/rand` stream.
+
+The Ebiten item action now commits the closed HP/MP families after the same
+two-stage row-derived target validation: types 5/13 call the native HP restore
+transaction and type 11 calls MP restore, preserving target-list order,
+per-target RNG consumption, type-specific source retention/removal, compact
+inventory cells, raw `+5 bit7`, and end-of-action state. Every runtime unit
+must materialize a complete proven 0x50-byte item record before mutation; a
+missing record rejects the entire transaction. Indexed effect presentation
+and the remaining item families are still fail-closed.
+
 Official IDA 9.4 decompilation of `0x22721(a1,count,indexBytes)` closes the first raw growth writer: it skips records whose `+0x22` marker is nonzero; for each zero marker it advances the shared RNG, writes `+0x22=(rng%4)+2`, computes `trunc(word(+0x48)*0.15+1)` using the native toward-zero `_CHP` helper, adds that low-word increment to `+0x48`, and accumulates `2*effective(+0x21)`. `battle.ApplyNativeRawWordStep` reproduces this batch mutation and score while leaving presentation and the `0x1317d` tail outside the adapter. It does not call the function for already-marked records or consume RNG for them.
 
 The adjacent `0x22866` branch is byte-for-byte the same arithmetic with marker `+0x23` and word `+0x4a`; `battle.ApplyNativeRawWordStepAtOffsets` shares the implementation and regression without assigning either field a gameplay name.

@@ -7,6 +7,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 func nativeItemPanelTestUnit() *battle.Unit {
@@ -162,5 +163,58 @@ func TestApplyNativeImmediateCapacityItemKeepsCurrentHP(t *testing.T) {
 	if unit.HP != 40 || unit.MaxHP != 120 || len(unit.Inventory) != 0 ||
 		!unit.Acted || unit.NativeRecordByte5&0x80 == 0 || g.sel != nil {
 		t.Fatalf("native capacity item transaction incomplete: unit=%#v", unit)
+	}
+}
+
+func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *testing.T) {
+	actor := nativeItemPanelTestUnit()
+	actor.X, actor.Y, actor.OnField = 1, 1, true
+	actor.NativeRecordByte5, actor.HasNativeRecordByte5 = 0, true
+	actor.Inventory = []int{192}
+	actor.Equipped = []bool{false}
+	actor.InventorySlots = []int{192, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	actor.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+
+	target := nativeItemPanelTestUnit()
+	target.X, target.Y, target.OnField = 1, 2, true
+	target.NativeIdentity = 1
+	target.NativeRecordByte5, target.HasNativeRecordByte5 = 0, true
+	target.HP, target.MaxHP = 20, 100
+
+	g := &Game{
+		st: &battle.State{
+			W: 3, H: 3, Units: []*battle.Unit{actor, target},
+			NativeTargetFlags: make([]byte, 9),
+		},
+		sel: actor, moved: true, itemOpen: true,
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	targeting, err := g.beginNativeRestoreItem(0, 192)
+	if err != nil || !targeting || !g.nativeItemTargeting || g.itemOpen {
+		t.Fatalf("targeting=%v state=%v itemOpen=%v err=%v", targeting, g.nativeItemTargeting, g.itemOpen, err)
+	}
+	candidates := g.nativeItemSelectionTargets()
+	foundTarget := false
+	for _, candidate := range candidates {
+		foundTarget = foundTarget || candidate == target
+	}
+	if !foundTarget {
+		t.Fatalf("native item selection candidates=%v", candidates)
+	}
+	applied, err := g.applyNativeRestoreItem(target)
+	if err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	wantState := fdother.NativeRNGStep(0)
+	wantHP := 20 + 40*9/10 + int(wantState%100)*40/1000
+	if target.HP != wantHP || g.nativeRNGState != wantState ||
+		len(actor.Inventory) != 0 || actor.NativeInventoryFlags[0]&0x80 == 0 ||
+		!actor.Acted || actor.NativeRecordByte5&0x80 == 0 ||
+		g.sel != nil || g.nativeItemTargeting {
+		t.Fatalf("native HP transaction actor=%#v targetHP=%d rng=%#x game=%#v", actor, target.HP, g.nativeRNGState, g)
 	}
 }

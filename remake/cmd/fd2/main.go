@@ -157,6 +157,10 @@ type Game struct {
 	itemSel                  int
 	itemAnimStep             int
 	itemClosing              bool
+	nativeItemTargeting      bool
+	nativeItemTargetID       int
+	nativeItemTargetRawSlot  int
+	nativeRNGState           uint16 // original 0x627b8: initialized to zero, process-lifetime only
 	nativeItemPanel          *ebiten.Image
 	nativeItemPanelBase      []byte
 	nativeItemPanelRecord    []byte
@@ -3017,6 +3021,13 @@ func (g *Game) ringInput() bool {
 					g.msg = fmt.Sprintf("物品 %02Xh：原始效果完成", itemID)
 					return true
 				}
+				if targeting, targetErr := g.beginNativeRestoreItem(rawSlot, itemID); targetErr != nil {
+					g.msg = fmt.Sprintf("物品 %02Xh：%v", itemID, targetErr)
+					return true
+				} else if targeting {
+					g.msg = fmt.Sprintf("物品 %02Xh：選擇目標", itemID)
+					return true
+				}
 				g.msg = fmt.Sprintf("物品 %02Xh：使用效果尚未驗證", itemID)
 			}
 			return true
@@ -3732,6 +3743,19 @@ func (g *Game) confirm() {
 		g.checkResult()
 		return
 	}
+	if g.nativeItemTargeting {
+		tgt := g.st.UnitAt(g.curX, g.curY)
+		applied, err := g.applyNativeRestoreItem(tgt)
+		if err != nil {
+			g.msg = fmt.Sprintf("物品 %02Xh：%v", g.nativeItemTargetID, err)
+			return
+		}
+		if !applied {
+			return
+		}
+		g.msg = fmt.Sprintf("物品 %02Xh：原始回復效果完成", g.nativeItemTargetID)
+		return
+	}
 	if g.nativeCommand0Targeting {
 		id := g.nativeCommandTargetID
 		tgt := g.st.UnitAt(g.curX, g.curY)
@@ -4167,6 +4191,14 @@ func (g *Game) Update() error {
 		}
 		return nil
 	}
+	if g.nativeItemTargeting { // 原始物品第一階段 target selector：ESC 回物品列
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+			g.nativeItemTargeting = false
+			g.itemOpen = true
+			g.prepareNativeItemPanel(g.sel)
+			return nil
+		}
+	}
 	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true
@@ -4343,6 +4375,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						target.DrawImage(ch, op)
 					}
 				}
+			}
+		}
+		if g.nativeItemTargeting {
+			ih := ebiten.NewImage(tw, th)
+			ih.Fill(color.RGBA{0x50, 0xd0, 0x80, 0x68})
+			for _, unit := range g.nativeItemSelectionTargets() {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(float64(unit.X*tw)-g.camX, float64(unit.Y*th)-g.camY)
+				target.DrawImage(ih, op)
 			}
 		}
 		if g.nativeCommand0Targeting {
