@@ -1122,6 +1122,26 @@ func TestChapter2PreLoadCHUsesSixMemberJoinOrderAndGroupOneFrontier(t *testing.T
 	}
 }
 
+func TestCh15CandidateBindingCompilesRawCFGButRemainsDataOnly(t *testing.T) {
+	beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch15_post_candidate.json"))
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch15 candidate binding compile err=%v issues=%#v", err, issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 80 {
+		t.Fatalf("candidate runtime context=%#v", beats)
+	}
+	var branch *campaign.Beat
+	for _, beat := range beats {
+		if beat.Op == "if" {
+			branch = &beat
+			break
+		}
+	}
+	if branch == nil || branch.Condition == nil || branch.Condition.Op != "native_any_of" || len(branch.Condition.Any) != 2 || len(branch.Else) != 1 || branch.Else[0].Condition == nil || branch.Else[0].Condition.Op != "native_record_word_gte" {
+		t.Fatalf("candidate raw CFG=%#v", beats)
+	}
+}
+
 func TestFilterScenarioPartyUsesJoinMembership(t *testing.T) {
 	sc := &battle.Scenario{
 		Party:       []battle.PartyMember{{Fig: 0}, {Fig: 9}, {Fig: 30}, {Fig: 75}},

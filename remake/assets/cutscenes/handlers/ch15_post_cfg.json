@@ -77,6 +77,6 @@
   ],
   "diagnostics": {
     "unknown_ops": 0,
-    "status": "candidate_unbound_until_layout_camera_and_raw_record_provenance"
+    "candidate_unbound": 1
   }
 }
