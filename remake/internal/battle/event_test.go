@@ -116,6 +116,36 @@ func TestChapter1SetupMaterializesYuniCommandZero(t *testing.T) {
 	t.Fatal("悠妮 was not materialized by ch01 spawn_party")
 }
 
+func TestAdoptHandlerBattleStateSkipsRepeatedOpeningAndKeepsTurnGroups(t *testing.T) {
+	sc := &Scenario{
+		RuntimeAppendGroups: true,
+		Events: []Event{
+			{Trigger: "on_battle_start", Once: true, Do: []Action{
+				{Type: "spawn_party"},
+				{Type: "dialogue", Text: "must not replay"},
+			}},
+			{Trigger: "on_turn_end", Once: true, When: &When{Turn: 3}, Do: []Action{
+				{Type: "spawn_group", Groups: []int{4}},
+			}},
+		},
+	}
+	st := &State{Units: []*Unit{{OnField: true}}, Roster: []*Unit{{Group: 4}}}
+	if err := sc.AdoptHandlerBattleState(st); err != nil {
+		t.Fatal(err)
+	}
+	if got := sc.Fire(st, "on_battle_start", ""); len(got) != 0 || len(st.Units) != 1 {
+		t.Fatalf("adopted opening replayed: dialogue=%v units=%d", got, len(st.Units))
+	}
+	if !st.PendingGroups[4] {
+		t.Fatalf("pending groups=%v", st.PendingGroups)
+	}
+	st.Turn = 3
+	sc.Fire(st, "on_turn_end", "")
+	if len(st.Units) != 2 || st.Units[1].Group != 4 {
+		t.Fatalf("turn event did not retain adopted roster: %#v", st.Units)
+	}
+}
+
 func TestLoadScenarioRejectsMalformedPartyCommandMask(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "bad-mask.json")
 	if err := os.WriteFile(path, []byte(`{"party":[{"name":"bad","initial_command_mask":[1,2,3]}]}`), 0o600); err != nil {

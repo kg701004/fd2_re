@@ -140,16 +140,7 @@ func (sc *Scenario) Setup(st *State) []DialogLine {
 		// exactly matching the runtime slots addressed by handler bytecode.
 		st.Roster = st.Units
 		st.Units = nil
-		st.PendingGroups = map[int]bool{}
-		for _, event := range sc.Events {
-			for _, action := range event.Do {
-				if action.Type == "spawn_group" {
-					for _, group := range action.Groups {
-						st.PendingGroups[group] = true
-					}
-				}
-			}
-		}
+		sc.materializePendingGroups(st)
 		dialogues := sc.Fire(st, "on_battle_start", "")
 		for _, group := range sc.InitialGroups {
 			st.AppendGroup(group)
@@ -177,6 +168,41 @@ func (sc *Scenario) Setup(st *State) []DialogLine {
 		}
 	}
 	return sc.Fire(st, "on_battle_start", "")
+}
+
+func (sc *Scenario) materializePendingGroups(st *State) {
+	st.PendingGroups = map[int]bool{}
+	for _, event := range sc.Events {
+		for _, action := range event.Do {
+			if action.Type == "spawn_group" {
+				for _, group := range action.Groups {
+					st.PendingGroups[group] = true
+				}
+			}
+		}
+	}
+}
+
+// AdoptHandlerBattleState attaches turn/death events to a runtime roster that
+// the immediately preceding native pre-handler already constructed and moved.
+// It must not replay on_battle_start: LOADCH/SPAWN/ACT effects are already
+// present in that roster. Callers are responsible for proving that handler and
+// battle use the same roster/scenario sources.
+func (sc *Scenario) AdoptHandlerBattleState(st *State) error {
+	if sc == nil || st == nil || !sc.RuntimeAppendGroups || len(st.Units) == 0 {
+		return fmt.Errorf("battle: handler state cannot satisfy runtime-append scenario")
+	}
+	sc.materializePendingGroups(st)
+	for i := range sc.Events {
+		event := &sc.Events[i]
+		if event.Trigger == "on_battle_start" {
+			if !event.Once {
+				return fmt.Errorf("battle: repeatable on_battle_start cannot be adopted")
+			}
+			event.fired = true
+		}
+	}
+	return nil
 }
 
 // Fire 對某 trigger 評估所有事件,執行符合者的動作。回傳要播的對話(含說話者)。

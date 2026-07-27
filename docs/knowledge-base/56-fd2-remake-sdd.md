@@ -1088,6 +1088,25 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    HUD-anchor updates. Roster/event presentation still differs, so these images
    prove camera/cursor/terrain/HUD alignment but not a full-frame pixel diff.
 
+   Pre-handler→battle roster correction (2026-07-28): the remaining ch01
+   roster mismatch was not a compositor omission. `ch00_pre` performs
+   `LOADCH(map0)` and constructs the party first, then acting resource 0 moves
+   runtime slots 0..3 upward for six normal beats, from deployment Y
+   `[20,22,21,23]` to `[14,16,15,17]`; later SPAWN/ACT operations append the
+   initial FDFIELD groups in the same runtime array. The original 434.5-second
+   frame shows those post-ACT positions. The remake's old `resetBattle`
+   unconditionally discarded `storyActors` and replayed scenario
+   `on_battle_start`, returning the party to deployment cells; the comment
+   that every pre-cutscene array must be cleared was therefore false.
+   Runtime handoff now occurs only when the last handler LOADCH roster path and
+   party-scenario path exactly equal the following battle node. It rebuilds
+   native selector slots over the already moved/appended records, preserves the
+   remaining FDFIELD roster for turn events, and marks the already represented
+   `on_battle_start` event consumed. Direct node starts, retries, unrelated
+   cutscenes, mismatched sources and non-runtime-append scenarios still rebuild
+   normally. Regression fixes both the adopted `[14,16,15,17]` state and the
+   direct-start `[20,22,21,23]` state.
+
    Production steady-frame and drawable-target slice (2026-07-28): ch01 now materializes the explicitly sourced persistent selector one, uses the original party-first/initial-group append constructor order, and consumes regenerated FDFIELD/FDSHAP raw map fields. Runtime composition byte+3 is initialized to `0xff` exactly as `0x4dbfc`; using serialized zeroes was an incorrect assertion that forced the whole steady map through the LUT branch and visibly washed out the palette. `nativeBIOSClock` supplies a battle-local signed BIOS low word at the PIT rate; one Update corresponds to the one `0x1297d` call at `0x11cb7`, while terrain phase and the two independent BIOS-word latches consume the same sample. `drawNativeMapFrame` executes the proven interactive `0x11cac` pipeline and FDOTHER#1 descriptor 0 supplies the native steady cursor; the former white rectangle approximation is removed. Command target entry materializes the first-stage `0x14818` remaining-budget grid and writes `record+4+2`; selectors 2–5 remain in the same production indexed compositor and use their exact ordered FDOTHER#1 call tables. Cancel and successful effect exit perform the `0x4dbfc` reset and restore selector one. Selector 6 is a separate field mutation and 7+ have no `0x122dc` draw table, so they still fall back; target flash and indexed effects remain incomplete.
 
    Palette assertion correction: `FDOTHER#0` is a VGA DAC palette and index zero is not globally transparent. `ParseVGAPalette` now returns 256 opaque entries; only blitter-specific adapters such as `RawCell.Paletted` clone the palette and make zero transparent when their native zero-source rule requires destination preservation. This prevents a full indexed VGA frame's four-pixel border from leaking the legacy renderer beneath it.

@@ -1223,3 +1223,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   camera、visible cursor與HUD anchor，並加regression。重建remake後兩圖
   同為tree HUD icon與`A -05/D +10`。roster/event差異仍存在，不把此
   camera/cursor/HUD alignment提升成完整pixel parity。
+- 2026-07-28 pre-handler→battle runtime handoff correction：唯讀roster
+  audit確認remake圖只見一個party不是`NativeMapFrameRoster`漏畫；direct
+  `battle_ch01`從deploy Y `[20,22,21,23]`開始，在cameraY13只有第一筆
+  落在下緣。正常原版`ch00_pre`先LOADCH map0，在同一runtime array以
+  ACT0六個normal beats把slots0..3移至Y `[14,16,15,17]`，再SPAWN
+  initial groups；原版錄影的可見位置符合此序列。舊`resetBattle`的
+  「清pre cutscene units避免疊入」註解與行為錯誤：它丟掉已ACT/SPAWN
+  records並重播`on_battle_start`。現在handler LOADCH保存exact roster與
+  party-scenario paths；只有兩者與下一battle node完全相等時才carry
+  runtime array、重建selector slots、保留remaining roster/pending groups
+  並consume opening event。direct start、retry、mismatch與非-runtime-append
+  scenario仍重建。focused tests覆蓋carry座標、direct部署、opening不重播與
+  turn-group事件。

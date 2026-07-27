@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；selector6的field-mutation scheduler已有atomic adapter | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接；兩層item cancel／selector-grid reset已對齊原版 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **467 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **468 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -100,6 +100,11 @@ first-target與destination取消都直接回item panel，兩次grid reset已接�
 不是仍把所有 item Enter 封閉。這代表目前的
 「進度」是可驗證的函式與資料切片，不是原版剩餘工作百分比；後續會以 `56` SDD 的 evidence gate 關閉每個
 campaign、town/shop、persistent save、UI renderer 缺口。
+
+原版434.5秒與remake的camera/cursor/HUD對齊後，也抓出先前「只剩一個角色」並非renderer漏畫：
+正常`ch00_pre`會在同一runtime roster上先執行ACT0，再進戰場；舊版進`battle_ch01`時把這批
+已移動的records清掉並重新部署。現在只有handler與battle的roster/scenario來源完全相符才carry該runtime
+array，direct debug start仍保留部署狀態；完整同roster pixel diff待重新捕捉正常campaign流程。
 
 ### 文件治理（避免把反組譯筆記當成進度）
 

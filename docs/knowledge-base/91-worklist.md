@@ -791,6 +791,15 @@
     remake現對齊camera `(1,13)`、absolute/visible cursor `(8,15)/(7,2)`、
     tree terrain與`A -05/D +10`；screenshot hook也改走native cursor/camera/
     HUD anchor state machine。roster/event仍不同，完整pixel diff仍待。
+  - [x] pre-handler→battle runtime roster handoff：原版`ch00_pre`
+    `LOADCH(map0)`後由ACT0將party slots0..3從部署Y
+    `[20,22,21,23]`上移六格成`[14,16,15,17]`，再於同一runtime array
+    append initial groups；舊`resetBattle`卻清掉全部`storyActors`並重播
+    `on_battle_start`，是原版錄影與remake可見roster不一致的根因。
+    現僅在handler roster／party-scenario paths與battle node完全相等時
+    carry已ACT/SPAWN的array、重建native selector slots、保留pending roster
+    並consume已完成opening；direct start／retry／mismatch仍走部署重建。
+    regression同時鎖定carry與direct兩條座標。
 - [x] **native terrain renderer export bridge**：`export_engine_assets.py` 在帶 FDSHAP terrain resource 時輸出完整 `native_terrain_control` raw bytes 加既有 per-cell `native_tile_blit_modes`。map0 實測為 576 cell modes、1200 control bytes；因此 region adapter 不必把 normalized `cost` 當 native renderer input。
 - [x] **native terrain renderer runtime bridge**：`battle.Load` 以 serialized `native_tile_blit_modes` 驗證 exact map provenance，但依`0x4dbfc`將 live `State.NativeTileBlitModes`全填`0xff`；`native_terrain_control`維持原始資料。dimensions/cell count/control alignment/tile bounds任一失敗即fail-closed。舊版把archive zeroes直接當live renderer state、造成整張圖走LUT的斷言已撤回。
 - [x] **FDOTHER#3 LUT bank loader**：`fdother.ParseLUTBank`／`DecodeLUTResource` 嚴格解析 LMI1 directory 的 23×256-byte remap tables（非 UI LMI cell），fixture 與 player-provided archive regression 通過。現可把確證 LUT 交給 `BlitLUT`；map selector、palette timing、renderer layer 仍不猜接。

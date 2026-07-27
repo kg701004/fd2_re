@@ -82,6 +82,8 @@ type Game struct {
 	storyActors          []battle.Unit       // 原版目前已 materialize 的 scene unit array；index 只在該 load/spawn 時序內有意義
 	storyRoster          []battle.Unit       // LOADCH 保留的 FDFIELD records；SPAWN 按 group 順序 append 到 storyActors
 	storySpawned         map[int]bool        // 原版 group 已 materialize；防止 handler 重複 SPAWN 時重複 append
+	storyRosterPath      string              // 最近一次 handler LOADCH 的 exact roster source；battle handoff gate
+	storyPartyScenario   string              // 最近一次 handler LOADCH 的 exact party scenario；battle handoff gate
 	partyMembers         map[int]bool        // JOIN 建立的永久玩家名冊；key=原版 0..31 charID，不使用 NPC portrait
 	partyJoinOrder       []int               // JOIN 首次出現順序；章0 cutscene 的 party runtime slot 以此為準
 	partyRoster          map[int]battle.Unit // 0x11506 戰後同步的跨關角色能力／HP／MP／經驗快照
@@ -1556,6 +1558,8 @@ func (g *Game) applyLoadCH(state *campaign.LoadCHState) error {
 		}
 	}
 	g.storySpawned[0] = true
+	g.storyRosterPath = state.Roster
+	g.storyPartyScenario = state.PartyScenario
 	g.storyWalks = nil
 	g.storyBG = true
 	g.walkFirst, g.followWalk = false, false
@@ -1733,6 +1737,7 @@ func (g *Game) enterNode() {
 			g.camX, g.camY = float64(n.CamX), float64(n.CamY)
 			g.storyActors = nil
 			g.storyRoster, g.storySpawned = nil, nil
+			g.storyRosterPath, g.storyPartyScenario = "", ""
 			for _, a := range n.Actors { // cutscene 靜態擺位(國王/王后/主角等),無 AI/戰鬥邏輯
 				u := battle.Unit{Fig: a.Fig, X: a.X, Y: a.Y, Dir: a.Dir, OnField: true}
 				g.storyActors = append(g.storyActors, u)
@@ -1748,6 +1753,7 @@ func (g *Game) enterNode() {
 		} else {
 			g.storyActors = nil
 			g.storyRoster, g.storySpawned = nil, nil
+			g.storyRosterPath, g.storyPartyScenario = "", ""
 		}
 		if g.cutsceneLog { // FD2_CUTSCENE_LOG:進場印節點 + 每個 actor(idx/名/座標/dir)
 			fmt.Fprintf(os.Stderr, "[cutscene] === node %q map=%s cam=(%d,%d) ===\n", g.camp.Cur, n.Map, n.CamX, n.CamY)
@@ -1885,15 +1891,41 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
-	g.storyActors, g.storyRoster, g.storySpawned = nil, nil, nil // 不讓上一個 pre cutscene 的 scene units 疊進戰場
 	if unitsPath == "" {
 		unitsPath = "assets/map0_units.json"
 	}
+	// A verified pre-handler LOADCH owns the same runtime array used by the
+	// following battle. Preserve it only when both editable source paths match
+	// exactly; direct/debug starts and unrelated scene maps still rebuild.
+	adoptHandlerState := len(g.storyActors) > 0 &&
+		g.storyRosterPath == unitsPath &&
+		g.storyPartyScenario == scnPath
+	handlerActors := g.storyActors
+	handlerRoster := g.storyRoster
+	g.storyActors, g.storyRoster, g.storySpawned = nil, nil, nil
+	g.storyRosterPath, g.storyPartyScenario = "", ""
 	if st, err := battle.Load(assetPath(unitsPath)); err == nil {
 		g.st = st
 		g.bindCommandLearn(st)
 		g.bindNativeCommandBook(st)
 		g.bindNativeCommandResistances(st)
+		if adoptHandlerState {
+			st.Units = nil
+			st.Roster = make([]*battle.Unit, len(handlerRoster))
+			for i := range handlerRoster {
+				st.Roster[i] = &handlerRoster[i]
+			}
+			st.NativeMapSelectorCache = nil
+			st.NativeMapSelectorError = nil
+			actors := make([]*battle.Unit, len(handlerActors))
+			for i := range handlerActors {
+				actors[i] = &handlerActors[i]
+			}
+			if err := st.AppendNativeMapSelectorBatch(actors); err != nil {
+				g.loadErr = "handler battle roster: " + err.Error()
+				return
+			}
+		}
 	}
 	g.result, g.sel, g.reach, g.moved = "", nil, nil, false
 	g.atk, g.walk, g.dialog, g.msg = nil, nil, nil, ""
@@ -1911,7 +1943,14 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 				return
 			}
 			g.sc = sc
-			g.dialog = append(g.dialog, sc.Setup(g.st)...)
+			if adoptHandlerState {
+				if err := sc.AdoptHandlerBattleState(g.st); err != nil {
+					g.loadErr = "handler battle scenario: " + err.Error()
+					return
+				}
+			} else {
+				g.dialog = append(g.dialog, sc.Setup(g.st)...)
+			}
 			g.initializeEquipmentBases(g.st)
 			g.applyScenarioPartyJoins()
 			g.applyPersistentParty(g.st)
