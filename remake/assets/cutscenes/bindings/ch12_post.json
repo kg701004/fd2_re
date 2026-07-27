@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "handler_script": "../handlers/ch12_post.json",
+  "story_index_map": "../dialogue-index/count-aligned.json",
+  "dialogue_contexts": {
+    "0x238c8": {
+      "source_dat": "FDTXT_013",
+      "script": "ch13.json"
+    }
+  },
+  "overrides": {}
+}
