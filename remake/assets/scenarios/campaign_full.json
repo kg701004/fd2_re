@@ -3472,15 +3472,7 @@
   },
   "postbattle_ch24_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 24
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch24_post.json",
    "next": "preparation_ch25"
   },
   "retreat_ch24": {

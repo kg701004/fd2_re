@@ -657,8 +657,33 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 43 || fallback != 69 || retreat != 30 || rumor != 23 || postbattle != 12 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 44 || fallback != 68 || retreat != 30 || rumor != 23 || postbattle != 11 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
+	}
+}
+
+func TestCh24PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch24_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch24 post compile err=%v issues=%#v", err, issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 70 || beats[0].RuntimeContext.SpawnGroups[2] != 1 {
+		t.Fatalf("ch24 runtime context=%#v", beats[:min(len(beats), 1)])
+	}
+	var pan, act *Beat
+	var dialogs []*Beat
+	for i := range beats {
+		switch beats[i].Op {
+		case "pan":
+			pan = &beats[i]
+		case "act":
+			act = &beats[i]
+		case "dialog":
+			dialogs = append(dialogs, &beats[i])
+		}
+	}
+	if pan == nil || pan.X != 96 || pan.Y != 384 || !pan.TileStep || act == nil || len(act.Acting) != 1 || act.Acting[0].Units[0].Slot == nil || *act.Acting[0].Units[0].Slot != 70 || len(dialogs) != 18 || dialogs[0].Line != 0 || dialogs[17].Line != 17 {
+		t.Fatalf("ch24 pan=%#v act=%#v dialogs=%#v", pan, act, dialogs)
 	}
 }
 
