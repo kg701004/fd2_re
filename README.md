@@ -113,7 +113,9 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 
 劇情接線 coverage 可用唯讀工具重查：`python3 tools/audit_story_script_coverage.py`。
 目前 `campaign_full.json` 有 121 個 story/cutscene 節點：9 個 direct script、33 個 handler-bound；
-其餘 79 個分成 30 個 retreat、23 個 rumor、22 個 unbound postbattle、4 個 generic story fallback。
+其餘 79 個分成 30 個 retreat、23 個 rumor、22 個 unbound postbattle、4 個 generic story fallback；
+22 個 unbound postbattle 另有 generated binding skeleton（全節點共 24 個，含 2 個 active handler 的對照檔），
+但未經 override/compile gate 不算 active handler。
 工具不會依章號自動套劇本，避免把 pre/post/分支 scene 誤接。
 
 同輪亦固定 `0x24618` indexed transition 的 raw buffer 邊界：staging offset `32904`、stride `456`、
