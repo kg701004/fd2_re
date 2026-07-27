@@ -599,6 +599,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   object redraw callback→second radial→rectangle→present callback。
   strict size/LUT/callback gates與regression已補；剩餘runtime blocker是
   Ebiten側exact indexed map snapshot/object redraw/present scheduling。
+- 2026-07-27 unit-present indexed frame composers：`indexedmap`新增
+  `ComposeNativeUnitPresentTerrainSnapshot`（只跑`0x11eee`）、
+  `RedrawNativeUnitPresentObjects`（只跑`0x127a9/0x129ec`）、
+  `CopyNativeUnitPresentViewport`（312×192,456→320 stride）與atomic
+  intro/LUT frame composers。測試固定terrain→LMI→objects→viewport
+  layer order及右側8px不覆寫。下一個真實runtime blocker是Game尚未保存
+  raw unit+3 pose、unit+4 motion與native selector cycles，以及release
+  snapshot provenance；禁止由normalized PNG/Dir猜造。
 - 2026-07-26 native map redraw range-layer closure（Docker Capstone）：`0x11cac` 的順序是 terrain `0x11eee`、range `0x122dc`、unit/foreground `0x127a9`、HUD `0x1acf3`、viewport copy `0x11eb0`。`0x122dc` 分派 raw mode1..6 的固定 offset/descriptor index 至 `0x126f7`；該 helper 做 camera bounds 後以 raw `0x4deda` 寫 `0x53a49+0x8088`。尚未將 mode table/descriptor bank 接資料化 renderer，GUI highlight 不可宣稱 native equivalent。
 - 2026-07-26 `0x122dc` exact range-table closure（isolated Docker Capstone）：modes 1..5 的所有 `0x126f7(x,y,descriptor)` 已逐指令轉成 `fdother.NativeRangeOverlayPlacements`（call counts 1/1/5/13/21）。保留 mode3 centre descriptor 14 與 mode5 的重複座標、不同 descriptor，不能簡化為推測的菱形或移動範圍。mode6 沒有 blit：其 raw expression 是 `4*(cursorX + cursorY*[0x53ac1])+7`，對 `[0x53a51]` 指向資料寫 0；drawable API 拒絕它，另以 `NativeRangeOverlayMode6ByteAddress` 保存 checked arithmetic。`0x53a4d` descriptor-bank loader、RLE asset binding、camera clip 與 indexed renderer remain fail-closed.
 - 2026-07-26 range descriptor-bank closure（isolated Docker Capstone + real FDOTHER）：撤回 doc36「FDOTHER#1 用途未確認」的舊斷言。`0x25c7d..0x25c92` 載 #1 至 `[0x53a4d]`；真實 header `{24,24,20,u32 offsets[]}`，`0x126f7` 按 `base+6+4*descriptor` 取 24×24 four-mode RLE stream 再 `0x4deda`。modes 1..5 使用 descriptors #0..18。新增 `DecodeNativeRangeOverlayBank`（嚴格 20 entries）及 `BlitNativeRangeOverlay`，保留 `0x8088`／stride456／24-pixel camera-relative destination、native pre-blit camera clip，且以實檔 decode+blit regression 驗證。mode6 raw grid mutation、native buffer lifetime 和 Ebiten adapter 仍維持 fail-closed。

@@ -692,6 +692,12 @@
   mandatory full-buffer object redraw、second radial、rectangle及present。
   防止錯誤累積16次LUT或略過中間sprite mutation；Ebiten snapshot producer
   與present scheduler仍待。
+- [x] **`0x22253` INDEXED-FRAME-COMPOSERS**：新增exact
+  `0x25680` terrain-only snapshot、atomic object-only `0x127a9/0x129ec`
+  redraw、source`+0x8088` stride456→destination stride320的312×192
+  viewport copy，以及`0x22470` intro／`0x22547/0x22656` LUT frame
+  composers。剩餘runtime gate縮小為Unit raw pose/motion、cycle globals與
+  phase-specific snapshots，不再籠統寫成「沒有indexed buffer」。
 - [~] **ch29 post BIOS tick wait**：`0x17aa9` 已證實讀 DOS BIOS tick（約54.9ms），lower 為每 tick 3 個 remake frames 並通過 compiler regression；若要逐毫秒重現，需在 runtime 加 BIOS-tick clock adapter。
 - [~] **native `0x22253` renderer adapter**：已釘死 `0x22547→0x22046` indexed off-screen blit 呼叫鏈。2026-07-26 stack-slot recheck：FDOTHER #81 的 nested `LLLLLL` allocation 只存 local、尾端 free，未傳 renderer callees，故不再叫它 frame/pixel source；`0x11eee` 只做背景/tile redraw。真正已見資料是 boot `0x111ba(FDOTHER,#3)`→descriptor base `0x53a6d`（`0x22547` 倒序 entries 5→0）與 FDOTHER#6 `LMI1` bank：230 entries，`0x22470` entries 0x72..0x7c（12×21、九個20×22、24×23），`+0x1f6`=entry0x7c。**修正舊斷言**：`0x22046` 有六個靜態 caller，不是 unit-present 專屬；它只**兩次**呼 `0x219ad`，後者逐 row 用 `sqrt(radius²-dy²)*scale/10` 求 clip span，再以 remap LUT in-place map pixels，之後 `0x22046` 自己對另一矩形範圍作同 LUT remap。`__CHP` 已釘死為 toward-zero；`fdother.ApplyRadialLUTRemap` 與 `ApplyCenteredRectLUTRemap` 都有 boundary／clip／256-byte LUT regression。**原本的中間 redraw 已證實會 mutation**：`0x127a9→0x127e0` 依 camera-relative object sprites 經 `0x4deda/0x4de56` 寫 `0x53a49`，不可合併兩 radial passes 或省略。個別 caller 視覺語意、descriptor/buffer adapter、Ebiten adapter 仍缺，`unit_present` 暫維持 fail-closed。
 - [~] **chapter ending renderer (`0x2bce5`)**：已釘死 FDOTHER `#0x36`（十進位54）、320×200 雙 buffer、palette 0→63/4ms、2000ms hold、chapter26/29 分支文字與 fade-out；仍缺 ANI/FDOTHER compositing adapter，禁止把它吞成 generic ending。

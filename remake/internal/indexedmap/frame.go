@@ -16,6 +16,8 @@ const (
 	workBase   = 0x8088
 	viewWidth  = 320
 	viewHeight = 192
+	// NativeUnitPresentWorkSize is 0x22253's exact temporary allocation.
+	NativeUnitPresentWorkSize = 0x25680
 )
 
 // FrameInput is the raw, already-selected input required by 0x11cac's normal
@@ -60,6 +62,135 @@ type NativeTransitionFrameInput struct {
 	MovingCycle, PixelShift               int
 	Units                                 []fdicon.NativeUnitLayerEntry
 	ForegroundUnits                       []fdicon.NativeForegroundLayerEntry
+}
+
+// ComposeNativeUnitPresentTerrainSnapshot reproduces 0x22253's initial
+// 0x11eee terrain-only draw into its exact 0x25680-byte buffer. Units,
+// foreground, range and HUD are intentionally excluded: 0x22470/0x22046 call
+// 0x127a9 at their own recovered points.
+func ComposeNativeUnitPresentTerrainSnapshot(work []byte, in NativeTransitionFrameInput) error {
+	if len(work) != NativeUnitPresentWorkSize {
+		return errors.New("indexedmap: native unit-present work must be exactly 0x25680 bytes")
+	}
+	if in.TerrainBank == nil || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 ||
+		len(in.TerrainLUT) != 256 {
+		return errors.New("indexedmap: incomplete native unit-present terrain input")
+	}
+	frame := append([]byte(nil), work...)
+	baseX, baseY := workBase%workStride, workBase/workStride
+	if err := in.TerrainBank.BlitNativeTerrainRegion(
+		frame, workStride, baseX, baseY,
+		in.MapWidth, in.Cells, in.Controls,
+		in.CameraX, in.CameraY, 13, 8,
+		in.Flip, in.TerrainCycle, in.TerrainLUT,
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present terrain: %w", err)
+	}
+	copy(work, frame)
+	return nil
+}
+
+// RedrawNativeUnitPresentObjects is the isolated 0x127a9-equivalent callback
+// required after the LMI intro writes and between 0x22046's radial passes.
+// It commits atomically and never redraws terrain/range/HUD.
+func RedrawNativeUnitPresentObjects(work []byte, in NativeTransitionFrameInput) error {
+	if len(work) != NativeUnitPresentWorkSize {
+		return errors.New("indexedmap: native unit-present work must be exactly 0x25680 bytes")
+	}
+	if in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil ||
+		in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 || len(in.TerrainLUT) != 256 {
+		return errors.New("indexedmap: incomplete native unit-present object input")
+	}
+	frame := append([]byte(nil), work...)
+	if err := in.UnitBank.BlitNativeUnitLayer(
+		frame, workStride, in.SelectorCache, in.Units,
+		in.CameraX, in.CameraY, 12, 7,
+		in.IdleCycle, in.MovingCycle, in.PixelShift,
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present units: %w", err)
+	}
+	if err := in.ForegroundBank.BlitNativeForegroundLayer(
+		frame, workStride, in.ForegroundUnits,
+		in.MapWidth, in.Cells, in.Controls,
+		in.CameraX, in.CameraY, 12, 7,
+		in.Flip, in.TerrainLUT,
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present foreground: %w", err)
+	}
+	copy(work, frame)
+	return nil
+}
+
+// CopyNativeUnitPresentViewport reproduces the 0x11eb0 calls in
+// 0x22470/0x22547/0x22656: source work+0x8088, source stride456,
+// width312, height192, destination stride320.
+func CopyNativeUnitPresentViewport(vga, work []byte) error {
+	if len(work) != NativeUnitPresentWorkSize || len(vga) < viewWidth*viewHeight {
+		return errors.New("indexedmap: incomplete native unit-present viewport buffers")
+	}
+	return fdother.CopyNativeTransitionViewport(
+		vga, viewWidth, work,
+		workBase, workStride, 312, viewHeight,
+	)
+}
+
+// ComposeNativeUnitPresentIntroFrame executes one 0x22470 frame atomically:
+// restore terrain snapshot, blit one FDOTHER#6 LMI entry at the recovered map
+// coordinate, redraw objects, then copy the 312×192 viewport.
+func ComposeNativeUnitPresentIntroFrame(
+	work, vga, snapshot []byte,
+	in NativeTransitionFrameInput,
+	entry fdother.LMI1Entry,
+	mapX, mapY int,
+) error {
+	if len(work) != NativeUnitPresentWorkSize ||
+		len(snapshot) != NativeUnitPresentWorkSize ||
+		len(vga) < viewWidth*viewHeight {
+		return errors.New("indexedmap: incomplete native unit-present intro buffers")
+	}
+	frame, viewport := append([]byte(nil), snapshot...), append([]byte(nil), vga...)
+	if err := fdother.BlitNativeUnitPresentLMI(
+		entry, frame, mapX, mapY, in.CameraX, in.CameraY,
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present intro LMI: %w", err)
+	}
+	if err := RedrawNativeUnitPresentObjects(frame, in); err != nil {
+		return err
+	}
+	if err := CopyNativeUnitPresentViewport(viewport, frame); err != nil {
+		return err
+	}
+	copy(work, frame)
+	copy(vga, viewport)
+	return nil
+}
+
+// ComposeNativeUnitPresentLUTFrame binds fdother's exact snapshot/remap
+// transaction to indexedmap's native object redraw and viewport copy.
+// Contract and release phases may pass different recovered snapshots.
+func ComposeNativeUnitPresentLUTFrame(
+	work, vga, snapshot, lut []byte,
+	in NativeTransitionFrameInput,
+	frame fdother.UnitPresentLUTFrame,
+) error {
+	if len(work) != NativeUnitPresentWorkSize ||
+		len(snapshot) != NativeUnitPresentWorkSize ||
+		len(vga) < viewWidth*viewHeight {
+		return errors.New("indexedmap: incomplete native unit-present LUT buffers")
+	}
+	nextWork, nextVGA := append([]byte(nil), work...), append([]byte(nil), vga...)
+	if err := fdother.RunNativeUnitPresentLUTFrame(
+		nextWork, snapshot, lut, frame,
+		func(full []byte) error { return RedrawNativeUnitPresentObjects(full, in) },
+		func(full []byte, _ fdother.UnitPresentLUTFrame) error {
+			return CopyNativeUnitPresentViewport(nextVGA, full)
+		},
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present LUT frame: %w", err)
+	}
+	copy(work, nextWork)
+	copy(vga, nextVGA)
+	return nil
 }
 
 // BuildNativeTerrainCells materializes the exact per-cell pair exported by

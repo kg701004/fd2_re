@@ -160,6 +160,114 @@ func TestComposeNativeTransitionFrameRejectsMissingRawInputAtomically(t *testing
 	}
 }
 
+func TestNativeUnitPresentSnapshotRedrawAndViewportStaySeparated(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize)
+	vga := make([]byte, viewWidth*viewHeight)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	identity := make([]byte, 256)
+	for i := range identity {
+		identity[i] = byte(i)
+	}
+	foreground := bank(12, 0)
+	foreground.Sprites[1] = solid(4)
+	in := NativeTransitionFrameInput{
+		TerrainBank: bank(12, 1), UnitBank: bank(12, 3), ForegroundBank: foreground,
+		SelectorCache: cache, Cells: cells, Controls: []byte{0x80, 0, 0, 0},
+		TerrainLUT: identity, MapWidth: 13,
+		Units:           []fdicon.NativeUnitLayerEntry{{X: 0, Y: 0, Slot: 0}},
+		ForegroundUnits: []fdicon.NativeForegroundLayerEntry{{X: 0, Y: 0}},
+	}
+	if err := ComposeNativeUnitPresentTerrainSnapshot(work, in); err != nil {
+		t.Fatal(err)
+	}
+	if got := work[workBase]; got != 1 {
+		t.Fatalf("terrain snapshot pixel=%d", got)
+	}
+	if err := RedrawNativeUnitPresentObjects(work, in); err != nil {
+		t.Fatal(err)
+	}
+	if got := work[workBase]; got != 4 {
+		t.Fatalf("object redraw pixel=%d", got)
+	}
+	for y := 0; y < viewHeight; y++ {
+		for x := 312; x < viewWidth; x++ {
+			vga[y*viewWidth+x] = 0xee
+		}
+	}
+	if err := CopyNativeUnitPresentViewport(vga, work); err != nil {
+		t.Fatal(err)
+	}
+	if vga[0] != 4 || vga[312] != 0xee {
+		t.Fatalf("unit-present viewport=%d tail=%#x", vga[0], vga[312])
+	}
+}
+
+func TestNativeUnitPresentSnapshotRejectsWrongAllocationAtomically(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize-1)
+	work[0] = 9
+	if err := ComposeNativeUnitPresentTerrainSnapshot(work, NativeTransitionFrameInput{}); err == nil || work[0] != 9 {
+		t.Fatalf("short snapshot mutation/error=%v first=%d", err, work[0])
+	}
+	if err := RedrawNativeUnitPresentObjects(work, NativeTransitionFrameInput{}); err == nil || work[0] != 9 {
+		t.Fatalf("short redraw mutation/error=%v first=%d", err, work[0])
+	}
+}
+
+func TestComposeNativeUnitPresentIntroAndLUTFramesProduceViewport(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize)
+	snapshot := make([]byte, NativeUnitPresentWorkSize)
+	vga := make([]byte, viewWidth*viewHeight)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	identity := make([]byte, 256)
+	for i := range identity {
+		identity[i] = byte(i)
+	}
+	in := NativeTransitionFrameInput{
+		TerrainBank: bank(12, 1), UnitBank: bank(12, 3), ForegroundBank: bank(12, 0),
+		SelectorCache: cache, Cells: cells, Controls: []byte{0, 0, 0, 0},
+		TerrainLUT: identity, MapWidth: 13,
+	}
+	if err := ComposeNativeUnitPresentTerrainSnapshot(snapshot, in); err != nil {
+		t.Fatal(err)
+	}
+	entry := fdother.LMI1Entry{Width: 1, Height: 1, Pixels: []byte{7}}
+	// Native origin for map(0,0), camera(0,0) is viewport x=0,y=1.
+	if err := ComposeNativeUnitPresentIntroFrame(work, vga, snapshot, in, entry, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got := vga[viewWidth]; got != 7 {
+		t.Fatalf("intro viewport LMI pixel=%d", got)
+	}
+	frames, err := fdother.NativeUnitPresentLUTFrames(3, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(i)
+	}
+	if err := ComposeNativeUnitPresentLUTFrame(work, vga, snapshot, lut, in, frames[5]); err != nil {
+		t.Fatal(err)
+	}
+	if vga[0] != 1 {
+		t.Fatalf("LUT viewport terrain pixel=%d", vga[0])
+	}
+}
+
 func TestBuildNativeTerrainCellsRequiresExporterArrays(t *testing.T) {
 	cells, err := BuildNativeTerrainCells([]int{1, 2}, []byte{0xff, 0x00})
 	if err != nil || len(cells) != 2 || cells[0].Tile != 1 || cells[1].BlitMode != 0 {
