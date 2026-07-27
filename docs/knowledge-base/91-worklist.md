@@ -951,6 +951,23 @@
   normal acting 相同，special 只寫 pose。doc54 已刪除錯位 acting dump
   的影片推測，改成 direct writer/consumer lifecycle。remake 尚待單一
   battle-local raw presentation state；未完成前 GUI adapter維持 fail-closed。
+- [x] **RE-UNIT-PRESENT-SNAPSHOT-OWNERSHIP**：`0x22253` 只配置一塊
+  `0x25680` snapshot：terrain-only狀態供11個intro frames restore；
+  `0x22547` entry再把final LMI `#0x7c`畫進同一塊，後續6 contract +
+  10 release全部restore這份terrain+LMI snapshot。coordinate rewrite與
+  strip-copy bridge不改它。新增atomic
+  `ComposeNativeUnitPresentLUTSnapshot`及invalid-input regression，撤回
+  contract/release可任意提供不同snapshot的舊註解。
+- [x] **RE-UNIT-PRESENT-DIRECT-VGA-BRIDGE**：更正「總共27 presents」
+  的不完整斷言：27只計full-viewport `0x11eb0`。contract後另以FDOTHER
+  #3 entry0 pointer+1做一次不present的`0x22046`，再逐row從456-stride
+  work buffer直接memmove 24 bytes到320-stride VGA，每row delay10ms。
+  targetY==cameraY時從target row寫18 rows；否則從上方6 pixels起寫24
+  rows。新增layout/progressive-copy/bounds regressions；故可觀察schedule
+  是27 full presents + 18/24 direct row reveals。
+  `ComposeNativeUnitPresentStripBridge`另將snapshot restore→bridge-only
+  LUT/object redraw→direct rows接成單一transaction，並以untouched VGA
+  regression防止誤插full viewport copy。
 - [x] **CH29-POST-FLOW-WIRING**：`postbattle_ch29_persist` 已接 recovered `ch29_post` handler→`preparation_ch30`；移除錯誤 synthetic sync/set beats，保留 native LOADCH persistent-roster boundary。`0x2bce5` renderer 未完成前仍 fail-closed。
 - [x] **RE-PHASE-DISPATCH-GATE**：Docker Capstone 重讀 `0x1d80b` 第一個 phase loop，固定 0x50-byte record stride、`count=[0x53beb]`、raw gates `record+6==1`、`record+5&0x81==0`、`record+0x26==0`；新增 `fdother.FindNativePhaseDispatchCandidates` 與 short-input/opaque-byte regression。只回傳 raw unit/selector，不執行 `0x13a9f` 或命名 event effects。
 - [x] **RE-INVENTORY-COMPACTION-AUDIT**：官方 IDA 9.4 decompiler 直接閉合 `0x1b8e7(int unit,int slot)`：`memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))`，再寫最後 cell flag `record+0x18=0x80`；新增 `battle.RemoveNativeInventorySlot`，保留 stale tail item byte，並覆蓋 slot0/slot2/slot7/short-input regression。先前「第三個 stack argument 未閉合」斷言已刪除。
@@ -1121,7 +1138,7 @@
   `+7==0x1c` 改1，class `0x13`／race `4,5` 改19；`0x4e555` 的
   29×20 row 在 resolved terrain index 必須為 literal20。新增 editable
   `native_movement_cost_rows.json`、strict loader、pure adapter 與 fixture
-  regression；cursor UI/27-present renderer仍未接。
+  regression；cursor UI／27 full-present + 18/24 direct-row renderer仍未接。
 - [x] **RE-RAW-WORD-SUBTRACT-ADDRESS-CORRECTION**：Docker Capstone 證實
   word `+0x44` subtract 位於 `0x1ca89`，`0x1cac7` 是 allocation、
   `0x1cb94` drawing 與四輪 320×192 present helper。修正 adapter attribution
@@ -1178,5 +1195,5 @@
   不立即改座標，而是進獨立destination cursor；逐格使用完整raw roster、
   `NativeTerrainMoveCodes`與29×20 cost rows執行mode6 occupancy/terrain
   predicate，合法格才扣command23 MP、寫target raw `+0/+1`、保留來源並
-  結束action。Escape回first-target selection；27-present indexed
-  renderer仍待。
+  結束action。Escape回first-target selection；27 full-present +
+  18/24 direct-row indexed renderer仍待。

@@ -1030,3 +1030,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   BIOS timer tick，不是VGA scanline。新增完整pure cycle helper/regression；
   doc54刪除舊錯位acting dump影片斷言。GUI仍需統一的battle-local raw
   presentation state及monotonic BIOS-tick/call timing才可接。
+- 2026-07-27 `0x22253` snapshot ownership：整個routine只有一塊
+  `0x25680` allocation。intro每frame restore terrain-only snapshot；
+  `0x22547` entry把final LMI `#0x7c`寫入同一snapshot後，6 contract與
+  10 release都restore它。中間coordinate mutation/strip-copy不改snapshot。
+  新增atomic `ComposeNativeUnitPresentLUTSnapshot` regression；撤回兩phase
+  可使用不同未知snapshot的舊註解。完整runtime scheduler仍待raw roster
+  materialization與bridge/present call timing。
+- 2026-07-27 `0x22253` direct-VGA bridge：撤回「合計27 presents」作為
+  完整schedule的說法；它只計11+6+10個`0x11eb0`。contract後helper回傳
+  FDOTHER #3 entry0 pointer+1，caller以此做bridge-only `0x22046`後，
+  逐row由work stride456 direct memmove 24 bytes到VGA stride320，每row
+  delay10ms。targetY==cameraY寫18 rows；否則由target上方6 pixels起寫
+  24 rows。新增exact layout、progressive visibility與preflight bounds
+  regression；`ComposeNativeUnitPresentStripBridge`將restore→額外LUT/
+  object redraw→direct rows接成transaction，並驗證不會誤做full viewport
+  copy。完整可見序列為27 full presents + 18/24 direct row writes。

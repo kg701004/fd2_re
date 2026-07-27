@@ -64,6 +64,62 @@ type NativeTransitionFrameInput struct {
 	ForegroundUnits                       []fdicon.NativeForegroundLayerEntry
 }
 
+// NativeUnitPresentStripLayout is 0x22390..0x22434's direct work-buffer to
+// VGA bridge. Offsets are relative to their supplied buffers, not original
+// process addresses.
+type NativeUnitPresentStripLayout struct {
+	WorkOffset int
+	VGAOffset  int
+	Rows       int
+}
+
+// NativeUnitPresentStripLayoutFor reproduces the two native row ranges.
+// A target on cameraY copies 18 rows beginning at the target row. Every other
+// target copies 24 rows beginning six rows above it.
+func NativeUnitPresentStripLayoutFor(mapX, mapY, cameraX, cameraY int) NativeUnitPresentStripLayout {
+	dx, dy := mapX-cameraX, mapY-cameraY
+	work := workBase + dx*24 + dy*24*workStride
+	vga := dx*24 + dy*24*viewWidth
+	rows := 24
+	if mapY == cameraY {
+		rows = 18
+	} else {
+		work -= 6 * workStride
+		vga -= 6 * viewWidth
+	}
+	return NativeUnitPresentStripLayout{WorkOffset: work, VGAOffset: vga, Rows: rows}
+}
+
+// RunNativeUnitPresentStripBridge reproduces the progressive direct VGA writes
+// after 0x22253's bridge-only 0x22046 pass. Each row copies 24 bytes from the
+// 456-stride work buffer to the 320-stride VGA buffer, then invokes delay10ms.
+// Unlike a full 0x11eb0 viewport present, every completed row is immediately
+// observable. Bounds are preflighted before the first write.
+func RunNativeUnitPresentStripBridge(
+	work, vga []byte,
+	mapX, mapY, cameraX, cameraY int,
+	delay10ms func(row int) error,
+) error {
+	if len(work) != NativeUnitPresentWorkSize || len(vga) < viewWidth*viewHeight || delay10ms == nil {
+		return errors.New("indexedmap: incomplete native unit-present strip bridge")
+	}
+	layout := NativeUnitPresentStripLayoutFor(mapX, mapY, cameraX, cameraY)
+	lastWork := layout.WorkOffset + (layout.Rows-1)*workStride + 24
+	lastVGA := layout.VGAOffset + (layout.Rows-1)*viewWidth + 24
+	if layout.WorkOffset < 0 || layout.VGAOffset < 0 || lastWork > len(work) || lastVGA > len(vga) {
+		return errors.New("indexedmap: native unit-present strip exceeds buffer")
+	}
+	for row := 0; row < layout.Rows; row++ {
+		src := layout.WorkOffset + row*workStride
+		dst := layout.VGAOffset + row*viewWidth
+		copy(vga[dst:dst+24], work[src:src+24])
+		if err := delay10ms(row); err != nil {
+			return fmt.Errorf("indexedmap: unit-present strip row %d delay: %w", row, err)
+		}
+	}
+	return nil
+}
+
 // ComposeNativeUnitPresentTerrainSnapshot reproduces 0x22253's initial
 // 0x11eee terrain-only draw into its exact 0x25680-byte buffer. Units,
 // foreground, range and HUD are intentionally excluded: 0x22470/0x22046 call
@@ -165,9 +221,34 @@ func ComposeNativeUnitPresentIntroFrame(
 	return nil
 }
 
+// ComposeNativeUnitPresentLUTSnapshot reproduces the phase boundary at the
+// start of 0x22547. Native keeps the original 0x22253 allocation, restores its
+// terrain-only contents, and blits the final intro LMI entry #0x7c into that
+// allocation once. The resulting terrain+LMI snapshot is then shared by all
+// six contract frames and all ten release frames; object layers are redrawn
+// only after each frame restores this snapshot.
+func ComposeNativeUnitPresentLUTSnapshot(
+	dst, terrainSnapshot []byte,
+	in NativeTransitionFrameInput,
+	finalIntro fdother.LMI1Entry,
+	mapX, mapY int,
+) error {
+	if len(dst) != NativeUnitPresentWorkSize || len(terrainSnapshot) != NativeUnitPresentWorkSize {
+		return errors.New("indexedmap: incomplete native unit-present LUT snapshot buffers")
+	}
+	frame := append([]byte(nil), terrainSnapshot...)
+	if err := fdother.BlitNativeUnitPresentLMI(
+		finalIntro, frame, mapX, mapY, in.CameraX, in.CameraY,
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present LUT snapshot LMI: %w", err)
+	}
+	copy(dst, frame)
+	return nil
+}
+
 // ComposeNativeUnitPresentLUTFrame binds fdother's exact snapshot/remap
 // transaction to indexedmap's native object redraw and viewport copy.
-// Contract and release phases may pass different recovered snapshots.
+// Contract and release both consume the one snapshot built at 0x22547.
 func ComposeNativeUnitPresentLUTFrame(
 	work, vga, snapshot, lut []byte,
 	in NativeTransitionFrameInput,
@@ -191,6 +272,44 @@ func ComposeNativeUnitPresentLUTFrame(
 	copy(work, nextWork)
 	copy(vga, nextVGA)
 	return nil
+}
+
+// ComposeNativeUnitPresentStripBridge binds 0x22253's transition between the
+// six contract and ten release frames. Native restores the shared
+// terrain+final-LMI snapshot, applies one extra 0x22046 pass with the
+// pointer+1 LUT returned by 0x22547, redraws objects between radial passes,
+// then progressively copies the target strip directly to VGA. There is no
+// full-viewport 0x11eb0 present in this transaction.
+func ComposeNativeUnitPresentStripBridge(
+	work, vga, snapshot, bridgeLUT []byte,
+	in NativeTransitionFrameInput,
+	mapX, mapY, raw53AB9, raw53ABD int,
+	delay10ms func(row int) error,
+) error {
+	if len(work) != NativeUnitPresentWorkSize ||
+		len(snapshot) != NativeUnitPresentWorkSize ||
+		len(vga) < viewWidth*viewHeight ||
+		len(bridgeLUT) != 256 ||
+		delay10ms == nil {
+		return errors.New("indexedmap: incomplete native unit-present strip composition")
+	}
+	pass, err := fdother.NativeUnitPresentLUTPass(24*raw53AB9+12, 24*raw53ABD+15, 0)
+	if err != nil {
+		return fmt.Errorf("indexedmap: unit-present strip geometry: %w", err)
+	}
+	frame := append([]byte(nil), snapshot...)
+	if err := fdother.ApplyIndexedTransitionPass(
+		frame[workBase:], workStride, bridgeLUT, pass,
+		func([]byte) error { return RedrawNativeUnitPresentObjects(frame, in) },
+	); err != nil {
+		return fmt.Errorf("indexedmap: unit-present strip LUT: %w", err)
+	}
+	// Match native observability: work has completed the remap before the first
+	// progressive VGA row becomes visible.
+	copy(work, frame)
+	return RunNativeUnitPresentStripBridge(
+		work, vga, mapX, mapY, in.CameraX, in.CameraY, delay10ms,
+	)
 }
 
 // BuildNativeTerrainCells materializes the exact per-cell pair exported by

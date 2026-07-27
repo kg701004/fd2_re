@@ -104,10 +104,9 @@ func RunNativeUnitPresentLMIIntro(entries []LMI1Entry, dst []byte, x, y, cameraX
 	return nil
 }
 
-// UnitPresentStep is one native present boundary in 0x22253. It records only
-// the resource/index/timing contract proven by the three callees; geometry,
-// buffers and the intervening terrain/unit redraw are deliberately owned by a
-// future indexed renderer adapter.
+// UnitPresentStep is one full-viewport 0x11eb0 present boundary in 0x22253.
+// The separately recovered 18/24 progressive direct-VGA strip writes between
+// contract and release are intentionally not collapsed into this list.
 type UnitPresentStep struct {
 	Phase      string
 	Resource   int
@@ -193,11 +192,12 @@ func RunNativeUnitPresentLUTFrame(
 	return nil
 }
 
-// NativeUnitPresentSchedule returns the 27 present boundaries of 0x22253:
+// NativeUnitPresentSchedule returns the 27 full-viewport present boundaries:
 // 0x22470's 11 FDOTHER#6 LMI cells, 0x22547's six FDOTHER#3 LUT remaps, and
 // 0x22656's ten FDOTHER#3 LUT remaps. The two BIOS ticks after the middle
 // phase are represented by DelayTicks on its last present, so their position
-// cannot be accidentally moved before the sixth present.
+// cannot be accidentally moved before the sixth present. The middle direct
+// VGA bridge adds 18 or 24 observable row writes and is owned by indexedmap.
 func NativeUnitPresentSchedule() []UnitPresentStep {
 	steps := make([]UnitPresentStep, 0, 27)
 	for entry := 0x72; entry <= 0x7c; entry++ {

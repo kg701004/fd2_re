@@ -252,6 +252,15 @@ func TestComposeNativeUnitPresentIntroAndLUTFramesProduceViewport(t *testing.T) 
 	if got := vga[viewWidth]; got != 7 {
 		t.Fatalf("intro viewport LMI pixel=%d", got)
 	}
+	lutSnapshot := make([]byte, NativeUnitPresentWorkSize)
+	if err := ComposeNativeUnitPresentLUTSnapshot(lutSnapshot, snapshot, in, entry, 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	lmiOrigin := fdother.NativeUnitPresentByteOrigin(0, 0, 0, 0)
+	if lutSnapshot[lmiOrigin] != 7 || snapshot[lmiOrigin] == 7 {
+		t.Fatalf("LUT snapshot did not preserve separate terrain+final-LMI phase: lut=%d terrain=%d",
+			lutSnapshot[lmiOrigin], snapshot[lmiOrigin])
+	}
 	frames, err := fdother.NativeUnitPresentLUTFrames(3, 2)
 	if err != nil {
 		t.Fatal(err)
@@ -260,11 +269,129 @@ func TestComposeNativeUnitPresentIntroAndLUTFramesProduceViewport(t *testing.T) 
 	for i := range lut {
 		lut[i] = byte(i)
 	}
-	if err := ComposeNativeUnitPresentLUTFrame(work, vga, snapshot, lut, in, frames[5]); err != nil {
+	if err := ComposeNativeUnitPresentLUTFrame(work, vga, lutSnapshot, lut, in, frames[5]); err != nil {
 		t.Fatal(err)
 	}
 	if vga[0] != 1 {
 		t.Fatalf("LUT viewport terrain pixel=%d", vga[0])
+	}
+}
+
+func TestComposeNativeUnitPresentLUTSnapshotRejectsInvalidInputAtomically(t *testing.T) {
+	dst := make([]byte, NativeUnitPresentWorkSize)
+	dst[0] = 9
+	entry := fdother.LMI1Entry{Width: 1, Height: 1, Pixels: []byte{7}}
+	if err := ComposeNativeUnitPresentLUTSnapshot(
+		dst, make([]byte, NativeUnitPresentWorkSize-1),
+		NativeTransitionFrameInput{}, entry, 0, 0,
+	); err == nil || dst[0] != 9 {
+		t.Fatalf("invalid LUT snapshot input mutated destination: err=%v first=%d", err, dst[0])
+	}
+}
+
+func TestNativeUnitPresentStripLayoutMatches22390(t *testing.T) {
+	top := NativeUnitPresentStripLayoutFor(7, 3, 5, 3)
+	if top != (NativeUnitPresentStripLayout{
+		WorkOffset: workBase + 2*24,
+		VGAOffset:  2 * 24,
+		Rows:       18,
+	}) {
+		t.Fatalf("top-row layout=%+v", top)
+	}
+	lower := NativeUnitPresentStripLayoutFor(7, 6, 5, 3)
+	if lower != (NativeUnitPresentStripLayout{
+		WorkOffset: workBase + 2*24 + (3*24-6)*workStride,
+		VGAOffset:  2*24 + (3*24-6)*viewWidth,
+		Rows:       24,
+	}) {
+		t.Fatalf("lower layout=%+v", lower)
+	}
+}
+
+func TestRunNativeUnitPresentStripBridgeCopiesRowsProgressively(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize)
+	vga := make([]byte, viewWidth*viewHeight)
+	layout := NativeUnitPresentStripLayoutFor(2, 2, 0, 0)
+	for row := 0; row < layout.Rows; row++ {
+		for x := 0; x < 24; x++ {
+			work[layout.WorkOffset+row*workStride+x] = byte(row + 1)
+		}
+	}
+	var delayed []int
+	err := RunNativeUnitPresentStripBridge(work, vga, 2, 2, 0, 0, func(row int) error {
+		delayed = append(delayed, row)
+		if got := vga[layout.VGAOffset+row*viewWidth]; got != byte(row+1) {
+			t.Fatalf("row %d was not visible before delay: %d", row, got)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(delayed) != 24 {
+		t.Fatalf("delay calls=%d", len(delayed))
+	}
+	if vga[layout.VGAOffset+23*viewWidth+23] != 24 {
+		t.Fatal("last 24-byte row was not copied")
+	}
+}
+
+func TestRunNativeUnitPresentStripBridgePreflightsBounds(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize)
+	vga := make([]byte, viewWidth*viewHeight)
+	vga[0] = 9
+	calls := 0
+	err := RunNativeUnitPresentStripBridge(work, vga, 0, 0, 5, 5, func(int) error {
+		calls++
+		return nil
+	})
+	if err == nil || calls != 0 || vga[0] != 9 {
+		t.Fatalf("out-of-range bridge was not atomic: err=%v calls=%d first=%d", err, calls, vga[0])
+	}
+}
+
+func TestComposeNativeUnitPresentStripBridgeUsesNoFullViewportCopy(t *testing.T) {
+	work := make([]byte, NativeUnitPresentWorkSize)
+	snapshot := make([]byte, NativeUnitPresentWorkSize)
+	vga := make([]byte, viewWidth*viewHeight)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	identity := make([]byte, 256)
+	for i := range identity {
+		identity[i] = byte(i)
+	}
+	in := NativeTransitionFrameInput{
+		UnitBank: bank(12, 3), ForegroundBank: bank(12, 0),
+		SelectorCache: cache, Cells: cells, Controls: []byte{0, 0, 0, 0},
+		TerrainLUT: identity, MapWidth: 13,
+	}
+	layout := NativeUnitPresentStripLayoutFor(2, 2, 0, 0)
+	for row := 0; row < layout.Rows; row++ {
+		for x := 0; x < 24; x++ {
+			snapshot[layout.WorkOffset+row*workStride+x] = byte(row + 1)
+		}
+	}
+	vga[0] = 0xa5 // outside the revealed strip; a full viewport copy would overwrite it.
+	delays := 0
+	err := ComposeNativeUnitPresentStripBridge(
+		work, vga, snapshot, identity, in,
+		2, 2, 2, 2,
+		func(int) error { delays++; return nil },
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if delays != 24 || vga[0] != 0xa5 {
+		t.Fatalf("bridge delays=%d untouched VGA=%#x", delays, vga[0])
+	}
+	if got := vga[layout.VGAOffset]; got != 1 {
+		t.Fatalf("first revealed row=%d", got)
 	}
 }
 
