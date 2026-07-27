@@ -1,0 +1,15 @@
+{
+  "name": "campaign town boundary save/load",
+  "format": "remake-json-v1",
+  "start": "town_ch02",
+  "events": [
+    {"input": "f5", "slot": 2, "saved_node": "town_ch02"},
+    {"mutation": "discard_transient_scene_and_party_runtime"},
+    {"input": "f9", "slot": 2, "loaded_node": "town_ch02"}
+  ],
+  "assertions": [
+    "gold, items, party_members, party_join_order, party_deploy, party_roster and chapter restore",
+    "town enterNode clears battle selection and shop/church transient state",
+    "save is remake JSON and is not FD2.SAV byte-compatible"
+  ]
+}

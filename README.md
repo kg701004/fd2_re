@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會與 command overlay 截圖 | `0x22253` indexed renderer、ending compositor、HUD/layer caller 仍 fail-closed |
 
-Worklist 目前是 **400 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **401 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -55,6 +55,10 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證 editable branch 的角色轉職、物品消耗與 `Escape → town_ch02`；原版 class-target renderer
 與 FD2.SAV 相容性仍 fail-closed。
+
+Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
+驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
+contract，不是 native `FD2.SAV` byte parity。
 
 ### Round／畫面更新統計（Git audit，2026-07-27）
 

@@ -40,6 +40,7 @@ func TestSaveDataRoundTripsPersistentParty(t *testing.T) {
 
 func TestSaveSlotsAreBoundedAndDistinct(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	t.Setenv("FD2_MUTE", "1")
 	if saveSlotPath(-1) != saveSlotPath(0) || saveSlotPath(4) != saveSlotPath(0) {
 		t.Fatal("invalid save slot did not fail closed to slot 0")
 	}
@@ -86,3 +87,38 @@ func TestWriteSaveFileReplacesCompleteJSONAtomically(t *testing.T) {
 		}
 	}
 }
+
+func TestCampaignSaveLoadRestoresTownBoundaryAndParty(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	userDataDirCached = ""
+	c := &campaign.Campaign{Start: "town_ch02", Flags: map[string]bool{}, Nodes: map[string]*campaign.Node{
+		"town_ch02":   {Type: "town"},
+		"church_ch02": {Type: "church", Next: "town_ch02"},
+	}}
+	u := battle.Unit{Name: "悠妮", Portrait: 0x34, ClassID: 21, Lv: 20, HP: 44, MaxHP: 44, MV: 7, Inventory: []int{0x64}}
+	g := &Game{
+		camp: cRunner(c), gold: 279, items: []string{"sky-key"}, handlerChapter: 2,
+		partyMembers: map[int]bool{0: true}, partyJoinOrder: []int{0},
+		partyDeploy: map[int]bool{0: true}, partyRoster: map[int]battle.Unit{0: u},
+	}
+	g.saveGameToSlot(2)
+	if g.msg != "已存檔(槽位3：town_ch02)" {
+		t.Fatalf("save boundary message=%q", g.msg)
+	}
+	g.camp.Cur, g.gold, g.items = "church_ch02", 1, nil
+	g.partyMembers, g.partyJoinOrder = nil, nil
+	g.partyDeploy, g.partyRoster = nil, nil
+	g.loadGameFromSlot(2)
+	if g.camp.NodeID() != "town_ch02" || g.gold != 279 || len(g.items) != 1 || g.items[0] != "sky-key" {
+		t.Fatalf("campaign boundary did not restore: node=%q gold=%d items=%#v", g.camp.NodeID(), g.gold, g.items)
+	}
+	got, ok := g.partyRoster[0]
+	if !ok || got.Portrait != 0x34 || got.ClassID != 21 || got.MV != 7 || got.HP != 44 || len(g.partyJoinOrder) != 1 || !g.partyDeploy[0] {
+		t.Fatalf("persistent party did not restore: roster=%#v join=%#v deploy=%#v", g.partyRoster, g.partyJoinOrder, g.partyDeploy)
+	}
+	if g.st != nil || g.sel != nil || g.shopMode != "" || g.churchMode != "" {
+		t.Fatalf("town boundary retained transient scene state: st=%v sel=%v shop=%q church=%q", g.st, g.sel, g.shopMode, g.churchMode)
+	}
+}
+
+func cRunner(c *campaign.Campaign) *campaign.Runner { return campaign.NewRunner(c) }
