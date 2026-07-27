@@ -37,6 +37,16 @@ deterministic input trace 與實機截圖，而不是繼續累積孤立 adapter�
 `campaign.MenuState`，並讓 `campInput` 共用；這是 postbattle/town 垂直鏈的 state
 contract，不代表原版各章節服務、BGM 或畫面 parity 已完成。
 
+### Round／畫面更新統計（Git audit，2026-07-27）
+
+目前文件可辨識的命名 round 是 **14 輪**（`91` worklist 與 `99` reflection log
+各有 14 個 round 段落）。Git 歷史共有 **1,025 個 commits**；其中 2026-07-25
+以後 499 個、2026-07-27 單日 130 個，這些 commits 不能直接當成玩家功能 round。
+早期 README 圖片確實集中在 6/28–7/2（格式、標題、對話、戰鬥）；7/25–7/26
+才補了原版 title/dialogue、action overlay、command grid、preparation 等少數
+新 artifact。本次以目前 source 重建後新增 [`town-hub-remake.png`](docs/figures/town-hub-remake.png)，
+讓 GitHub README 不再只展示舊畫面；它仍是 remake screenshot，不是原版 parity 證據。
+
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；`NativeItemEffectRouteForType` 只保存 call topology，
 不執行未閉合的 effect。尚未證實 runtime item table 的完整邊界，也沒有把未命名的 effect／renderer 欄位接進引擎。這代表目前的
