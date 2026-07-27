@@ -547,6 +547,8 @@ Inventory gates are distinct from item-consuming event commands. Native `0x24b14
 
 `0x1f882` is a separate native palette fade-out, not a timing/vsync helper: it initializes `ebx=0`, then emits 64 inclusive `0x11d40(0,255,ebx)` steps with a 2 ms wait after each. Unlike `0x25052`, `0x11d40` applies the native darkening path rather than `0x11df2`'s signed RGB delta. The handler compiler preserves this as `native_palette_fade_out{start:0,end:63,delay_ms:2}`; until the indexed DAC adapter exists runtime explicitly fails closed, and it must not silently become a generic story fade.
 
+ch19 post 的 Docker acting exporter 已解出 resource 59/60/61/62；其中 resource 59 直接引用 slots 53–60，resource 60 是 slot83，resource 61/62 是 slot1。這些 bytes 本身已可保存為 editable frames，但 handler 同時有 `spawn(group 1)`；目前 `map18_units.json` 的 group 1 只出現一筆，不能把它猜成 slots 53–60 的八筆 runtime frontier。因此 ch19 不因「resource 已解碼」而啟用，仍需 FDFIELD group cardinality／slot identity 證據與完整 runtime context。
+
 ### 5.1 目前 editable graph audit（E1，不等同原版 E0）
 
 `remake/assets/scenarios/campaign_full.json` 的 30 個 battle node 已逐一展開
