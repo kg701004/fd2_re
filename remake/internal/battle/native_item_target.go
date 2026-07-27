@@ -1,0 +1,71 @@
+package battle
+
+import "fmt"
+
+// NativeItemTargetPlan preserves the two 0x14818 calls in 0x1bbdc item
+// action case 0.  Field names describe only call roles, not gameplay range,
+// item effects, or normalized spell semantics.
+type NativeItemTargetPlan struct {
+	ItemType           byte
+	SelectionMode      int
+	SelectionInnerMark int
+	EffectMode         int
+	TargetCode         int
+}
+
+// NativeItemTargetPlanFromRow reads only the item-row bytes consumed by the
+// verified 0x1bbdc selector.  The first stage uses +0x10 and +0x15; type 0x17
+// alone supplies inner marker 1.  After 0x115b6 confirms one candidate, the
+// second stage uses +0x12, inner marker 0, and the same +0x15 target code.
+func NativeItemTargetPlanFromRow(row []byte) (NativeItemTargetPlan, error) {
+	if len(row) != NativeItemEffectRowSize {
+		return NativeItemTargetPlan{}, fmt.Errorf("native item row len=%d want %d", len(row), NativeItemEffectRowSize)
+	}
+	inner := 0
+	if row[0x0d] == 0x17 {
+		inner = 1
+	}
+	return NativeItemTargetPlan{
+		ItemType:           row[0x0d],
+		SelectionMode:      int(row[0x10]),
+		SelectionInnerMark: inner,
+		EffectMode:         int(row[0x12]),
+		TargetCode:         int(row[0x15]),
+	}, nil
+}
+
+// NativeItemEffectTargets reproduces the mutation-free target transaction
+// around 0x115b6: actor-origin first-stage candidates, confirmed-candidate
+// validation, then confirmed-origin final effect targets.  The caller must
+// provide a row-derived plan and the original grid flags.
+func NativeItemEffectTargets(w, h int, actor, confirmed *Unit, plan NativeItemTargetPlan, flags []byte, units []*Unit) ([]*Unit, error) {
+	rawComplete := nativeTargetRosterRawComplete(units)
+	if !nativeTargetActorUsable(actor, rawComplete) || !nativeTargetActorUsable(confirmed, rawComplete) {
+		return nil, fmt.Errorf("invalid native item actor/confirmed unit")
+	}
+	selection, err := NativeAttackCandidates(
+		w, h,
+		Cell{X: actor.X, Y: actor.Y},
+		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode,
+		flags, units,
+	)
+	if err != nil {
+		return nil, err
+	}
+	found := false
+	for _, candidate := range selection {
+		if candidate == confirmed {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("confirmed unit is not a native item candidate")
+	}
+	return NativeAttackCandidates(
+		w, h,
+		Cell{X: confirmed.X, Y: confirmed.Y},
+		plan.EffectMode, 0, plan.TargetCode,
+		flags, units,
+	)
+}
