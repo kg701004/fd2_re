@@ -46,3 +46,45 @@ func TestApplyNativeRawMPRestoreUsesMPOffsetsAndNoClassBonus(t *testing.T) {
 		t.Fatalf("result=%+v mp=%d err=%v", got, binary.LittleEndian.Uint16(records[0x44:0x46]), err)
 	}
 }
+
+func TestApplyNativeRawHPRestoreListMatches211A4Order(t *testing.T) {
+	records := make([]byte, 2*nativeRecordSize)
+	for unit := 0; unit < 2; unit++ {
+		base := unit * nativeRecordSize
+		binary.LittleEndian.PutUint16(records[base+0x40:base+0x42], uint16(10+unit))
+		binary.LittleEndian.PutUint16(records[base+0x42:base+0x44], 100)
+		records[base+0x20], records[base+0x21], records[base+7] = 9, byte(2+unit), 0
+	}
+	wantRecords := append([]byte(nil), records...)
+	first, err := ApplyNativeRawHPRestore(wantRecords, 1, 20, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := ApplyNativeRawHPRestore(wantRecords, 0, 20, first.RNGState)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := ApplyNativeRawHPRestoreList(records, []byte{1, 0}, 20, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.RNGState != second.RNGState || got.Score != first.Score+second.Score || len(got.Results) != 2 {
+		t.Fatalf("batch=%+v first=%+v second=%+v", got, first, second)
+	}
+	if string(records) != string(wantRecords) {
+		t.Fatal("batch mutation order differs from 0x211a4 sequential loop")
+	}
+}
+
+func TestApplyNativeRawHPRestoreListPreflightsAtomically(t *testing.T) {
+	records := make([]byte, nativeRecordSize)
+	binary.LittleEndian.PutUint16(records[0x40:0x42], 10)
+	binary.LittleEndian.PutUint16(records[0x42:0x44], 100)
+	before := append([]byte(nil), records...)
+	if _, err := ApplyNativeRawHPRestoreList(records, []byte{0, 1}, 20, 0); err == nil {
+		t.Fatal("invalid later target unexpectedly accepted")
+	}
+	if string(records) != string(before) {
+		t.Fatal("invalid target list partially mutated an earlier record")
+	}
+}

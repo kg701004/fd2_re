@@ -18,6 +18,45 @@ type NativeRawRestoreResult struct {
 	RNGState  uint16
 }
 
+// NativeRawRestoreBatch is the mutation-only result of the 0x211a4 target
+// loop.  Presentation queue writes and indexed animation remain outside this
+// adapter.
+type NativeRawRestoreBatch struct {
+	Results  []NativeRawRestoreResult
+	RNGState uint16
+	Score    int
+}
+
+// ApplyNativeRawHPRestoreList reproduces the per-target mutation loop in
+// 0x211a4(actor,count,targetBytes,amount).  Official IDA 9.4 confirms that
+// 0x20c6f passes its a3/a4 target count/list unchanged and supplies item-row
+// word +0x0e as amount.  Inputs are preflighted so an invalid later target
+// cannot leave an earlier record partially mutated.
+func ApplyNativeRawHPRestoreList(records []byte, targetIndices []byte, amount int, rngState uint16) (NativeRawRestoreBatch, error) {
+	if amount < 0 {
+		return NativeRawRestoreBatch{RNGState: rngState}, fmt.Errorf("native restore amount %d is negative", amount)
+	}
+	for _, rawIndex := range targetIndices {
+		if int(rawIndex) >= len(records)/nativeRecordSize {
+			return NativeRawRestoreBatch{RNGState: rngState}, recordBoundsError(int(rawIndex))
+		}
+	}
+	result := NativeRawRestoreBatch{
+		Results:  make([]NativeRawRestoreResult, 0, len(targetIndices)),
+		RNGState: rngState,
+	}
+	for _, rawIndex := range targetIndices {
+		entry, err := ApplyNativeRawHPRestore(records, int(rawIndex), amount, result.RNGState)
+		if err != nil {
+			return NativeRawRestoreBatch{RNGState: rngState}, err
+		}
+		result.Results = append(result.Results, entry)
+		result.RNGState = entry.RNGState
+		result.Score += entry.Score
+	}
+	return result, nil
+}
+
 // ApplyNativeRawHPRestore reproduces the mutation core of 0x1c916 on a
 // 0x50-byte runtime record. The native routine advances the shared 16-bit RNG,
 // applies toward-zero integer arithmetic, clamps +0x40 to +0x42, and adds a
