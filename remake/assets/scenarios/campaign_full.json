@@ -1630,15 +1630,8 @@
   },
   "postbattle_ch10_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 10
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch10_post.json",
+   "beats": [],
    "next": "town_ch11"
   },
   "retreat_ch10": {
@@ -2722,15 +2715,8 @@
   },
   "postbattle_ch18_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 18
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch18_post.json",
+   "beats": [],
    "next": "town_ch19"
   },
   "retreat_ch18": {

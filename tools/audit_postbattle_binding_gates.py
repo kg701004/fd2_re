@@ -65,7 +65,9 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
                 covered = isinstance(override, dict) and field in override
             if not covered:
                 gaps.append({"op": op, "source_addr": addr, "required": field})
-        if not handler_path.exists() or not binding_path.exists():
+        if node.get("handler_binding"):
+            status = "active"
+        elif not handler_path.exists() or not binding_path.exists():
             status = "blocked"
         elif gaps:
             status = "blocked"
