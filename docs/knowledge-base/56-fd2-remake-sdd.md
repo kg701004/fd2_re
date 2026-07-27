@@ -514,7 +514,7 @@ actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore 
 | 17–19 | `0x226EA/2282F/22960` modifier writers、`+0x22..+0x24` duration；`__CHP` toward-zero 已釘死 | `ApplyNativeCommandModifier` 僅 dispatch 到已閉合 raw word/pair branches；derived-base/equipment recompute、transaction 仍未接 | 未接 |
 | 20–21 | `0x22A85/22BC6→22AF6`，clear `+0x25/+0x26` 並借 record10 restore | `ExecuteNativeCommandClearRestore` | 未接 |
 | 22 | `0x22BE1→22D1B`，class/RNG gate、base10 經第二 RNG 實際9 HP、第三 RNG write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
-| 23 | `0x2218A→22253` special relocation selector | 未接；普通 two-stage target 不適用 | 未接 |
+| 23 | `0x2218A→22253` special relocation selector | 已接 first target → mode-6 destination cursor；27-present indexed renderer 未接 | 已接 raw MP/座標 transaction |
 | 24 | 玩家 `2A6BD→276EC→2B659/1CA89→1C81F`：`actor +48 * 15/10 - target +4a`；AI table 另別名 `22153`，不可混用 | `ExecuteNativeCommand24`（state-only final delta） | multi-hit／SFX／native UI 未接 |
 | 28, 29, 31 | 同玩家 `276EC` derived-strike route，倍率分別 20、12、18；各自 record MP/一般 two-stage selector | `ExecuteNativeCommandDerivedStrike` | multi-hit／SFX／native UI 未接 |
 | 30 | `1CFF0→14818→115B6` 先確認 record+3 candidate；再以 saved cursor→confirmed cursor 進 `149F8`，`count=record+3-16`、X-first cardinal line、只收 enemy，最後 `2A6BD→276EC` default倍率18 | `ExecuteNativeCommand30`（顯式兩 cursor、state-only final delta） | native cursor lifecycle／multi-hit／SFX／indexed UI 未接 |
@@ -1156,8 +1156,13 @@ is overridden to 1 for `+7==0x1c`, or to 19 for the recovered `0x1f183`
 class/race gate. The resolved terrain index must contain literal value20.
 `NativeRelocationDestinationAllowed` preserves those gates and rejects
 malformed tables/counts. Terrain-index production through `0x12e38` is already
-the raw cursor/FDSHAP resolver boundary; the 27-present renderer and Ebiten UI
-remain separate integration gates.
+the raw cursor/FDSHAP resolver boundary. Ebiten now keeps the selected first
+target and opens a distinct destination cursor, highlights only cells accepted
+by `NativeRelocationDestinationAllowed`, supports Escape back to target
+selection, and commits command23 MP subtraction plus raw coordinates only
+after destination confirmation. It requires the exact per-cell
+`NativeTerrainMoveCodes` provenance and fails closed without it. The native
+27-present indexed renderer remains a separate integration gate.
 
 Caller-scope correction (Docker Capstone, 2026-07-26): `0x22253` is shared by the chapter-ending/post handler at `0x250cc`, not command-23-only. That path calls it after `0x1c2da` with unit index `1`, pre-render bytes `0xff/0xff`, and the selected record's raw `+0/+1` bytes, then continues to `0x25089` cleanup and `0x2bce5` ending rendering. The remake therefore treats `SetNativeUnitCoordinateBytes` as a shared raw writer only; command-23 selector, ending layout, renderer, and campaign transition remain independent fail-closed contracts.
 

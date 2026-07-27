@@ -1144,3 +1144,9 @@
   types15/16 DP/AP、types14/22 marker application+damage，以及
   types20/21/24 command damage。raw transient、HP、derived words、
   retained/consumed inventory皆同步；indexed effect presentations仍待。
+- [x] **REMAKE-ITEM-TYPE23-DESTINATION-CURSOR**：item101完成first-target後
+  不立即改座標，而是進獨立destination cursor；逐格使用完整raw roster、
+  `NativeTerrainMoveCodes`與29×20 cost rows執行mode6 occupancy/terrain
+  predicate，合法格才扣command23 MP、寫target raw `+0/+1`、保留來源並
+  結束action。Escape回first-target selection；27-present indexed
+  renderer仍待。

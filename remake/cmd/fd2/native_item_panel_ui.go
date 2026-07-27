@@ -227,7 +227,8 @@ func (g *Game) beginNativeTargetItem(rawSlot, itemID int) (bool, error) {
 	_, apDP := battle.NativeItemAPDPStepRouteForType(row[0x0d])
 	_, markerApply := battle.NativeItemMarkerApplicationRouteForType(row[0x0d])
 	_, commandDamage := battle.NativeItemCommandDamageRouteForType(row[0x0d], amount)
-	if !hp && !mp && !markerClear && !hitEV && !apDP && !markerApply && !commandDamage {
+	_, relocation := battle.NativeItemRelocationRouteForType(row[0x0d], amount)
+	if !hp && !mp && !markerClear && !hitEV && !apDP && !markerApply && !commandDamage && !relocation {
 		return false, nil
 	}
 	if _, err := battle.NativeItemTargetPlanFromRow(row); err != nil {
@@ -277,6 +278,11 @@ func nativeItemRuntimeRecords(units []*battle.Unit) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("runtime unit %d lacks native item record: %w", index, err)
 		}
+		if unit.X < 0 || unit.X > 0xff || unit.Y < 0 || unit.Y > 0xff ||
+			!unit.HasNativeRecordByte5 {
+			return nil, fmt.Errorf("runtime unit %d lacks native coordinate/activity provenance", index)
+		}
+		record[0], record[1], record[5] = byte(unit.X), byte(unit.Y), unit.NativeRecordByte5
 		records = append(records, record...)
 	}
 	return records, nil
@@ -285,6 +291,7 @@ func nativeItemRuntimeRecords(units []*battle.Unit) ([]byte, error) {
 func syncNativeItemRuntimeRecord(unit *battle.Unit, record []byte) {
 	unit.HP = int(int16(binary.LittleEndian.Uint16(record[0x40:0x42])))
 	unit.MP = int(int16(binary.LittleEndian.Uint16(record[0x44:0x46])))
+	unit.X, unit.Y = int(record[0]), int(record[1])
 	unit.AP = int(int16(binary.LittleEndian.Uint16(record[0x48:0x4a])))
 	unit.DP = int(int16(binary.LittleEndian.Uint16(record[0x4a:0x4c])))
 	unit.HIT = int(int16(binary.LittleEndian.Uint16(record[0x4c:0x4e])))
@@ -413,6 +420,23 @@ func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 				uint16(int16(unit.HP)),
 			)
 		}
+	} else if _, ok := battle.NativeItemRelocationRouteForType(row[0x0d], amount); ok {
+		if len(targetIndices) == 0 {
+			return false, fmt.Errorf("native relocation has no target")
+		}
+		rows, err := battle.LoadNativeMovementCostRows(
+			assetPath("assets/data/native_movement_cost_rows.json"),
+		)
+		if err != nil {
+			return false, err
+		}
+		g.nativeMovementCostRows = rows
+		g.nativeItemRelocationUnit = int(targetIndices[0])
+		g.nativeItemTargeting = false
+		g.nativeItemRelocating = true
+		target := g.st.Units[g.nativeItemRelocationUnit]
+		g.curX, g.curY = target.X, target.Y
+		return false, nil
 	} else {
 		return false, nil
 	}
@@ -424,6 +448,97 @@ func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 	g.sel.HasNativeRecordByte5 = true
 	g.sel.Acted = true
 	g.nativeItemTargeting = false
+	g.nativeItemEffectRows = nil
+	g.sel, g.reach, g.moved = nil, nil, false
+	return true, nil
+}
+
+func (g *Game) nativeRelocationDestinationAllowed(x, y int) (bool, error) {
+	if g == nil || g.st == nil || !g.nativeItemRelocating ||
+		x < 0 || y < 0 || x >= g.st.W || y >= g.st.H ||
+		len(g.st.NativeTerrainMoveCodes) != g.st.W*g.st.H {
+		return false, fmt.Errorf("native relocation terrain provenance is unavailable")
+	}
+	records, err := nativeItemRuntimeRecords(g.st.Units)
+	if err != nil {
+		return false, err
+	}
+	return battle.NativeRelocationDestinationAllowed(
+		records, len(g.st.Units), g.nativeItemRelocationUnit,
+		byte(x), byte(y), int(g.st.NativeTerrainMoveCodes[y*g.st.W+x]),
+		g.nativeMovementCostRows,
+	)
+}
+
+func (g *Game) nativeRelocationDestinations() map[battle.Cell]bool {
+	result := map[battle.Cell]bool{}
+	if g == nil || g.st == nil || !g.nativeItemRelocating ||
+		len(g.st.NativeTerrainMoveCodes) != g.st.W*g.st.H {
+		return result
+	}
+	records, err := nativeItemRuntimeRecords(g.st.Units)
+	if err != nil {
+		return result
+	}
+	for y := 0; y < g.st.H; y++ {
+		for x := 0; x < g.st.W; x++ {
+			allowed, err := battle.NativeRelocationDestinationAllowed(
+				records, len(g.st.Units), g.nativeItemRelocationUnit,
+				byte(x), byte(y), int(g.st.NativeTerrainMoveCodes[y*g.st.W+x]),
+				g.nativeMovementCostRows,
+			)
+			if err == nil && allowed {
+				result[battle.Cell{X: x, Y: y}] = true
+			}
+		}
+	}
+	return result
+}
+
+func (g *Game) applyNativeRelocationDestination(x, y int) (bool, error) {
+	allowed, err := g.nativeRelocationDestinationAllowed(x, y)
+	if err != nil || !allowed {
+		return false, err
+	}
+	records, err := nativeItemRuntimeRecords(g.st.Units)
+	if err != nil {
+		return false, err
+	}
+	sourceUnit := -1
+	for index, unit := range g.st.Units {
+		if unit == g.sel {
+			sourceUnit = index
+			break
+		}
+	}
+	if sourceUnit < 0 {
+		return false, fmt.Errorf("native relocation source is absent")
+	}
+	rowOffset, err := battle.NativeItemEffectRowOffset(g.nativeItemTargetID)
+	if err != nil {
+		return false, err
+	}
+	row := g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize]
+	route, ok := battle.NativeItemRelocationRouteForType(
+		row[0x0d], binary.LittleEndian.Uint16(row[0x0e:0x10]),
+	)
+	if !ok {
+		return false, fmt.Errorf("native relocation route is unavailable")
+	}
+	if _, err := battle.ApplyNativeItemRelocation(
+		records, sourceUnit, []byte{byte(g.nativeItemRelocationUnit)},
+		byte(x), byte(y), route, g.nativeCommandBook,
+	); err != nil {
+		return false, err
+	}
+	for index, unit := range g.st.Units {
+		syncNativeItemRuntimeRecord(unit, records[index*80:(index+1)*80])
+	}
+	g.sel.NativeRecordByte5 |= 0x80
+	g.sel.HasNativeRecordByte5 = true
+	g.sel.Acted = true
+	g.nativeItemRelocating = false
+	g.nativeMovementCostRows = nil
 	g.nativeItemEffectRows = nil
 	g.sel, g.reach, g.moved = nil, nil, false
 	return true, nil

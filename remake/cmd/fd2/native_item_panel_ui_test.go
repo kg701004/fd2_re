@@ -392,3 +392,61 @@ func TestNativeCommandDamageItemUsesSharedUint16RNGAndRetainsSource(t *testing.T
 		t.Fatalf("command item actor=%#v target=%#v rng=%#x", actor, target, g.nativeRNGState)
 	}
 }
+
+func TestNativeRelocationUsesSeparateDestinationCursorAndMode6Legality(t *testing.T) {
+	actor := nativeItemPanelTestUnit()
+	actor.X, actor.Y, actor.OnField, actor.Camp = 0, 0, true, battle.Own
+	actor.NativeIdentity = 24
+	actor.NativeRecordByte5, actor.HasNativeRecordByte5 = 0, true
+	actor.MP, actor.MaxMP = 30, 40
+	actor.Inventory = []int{101}
+	actor.Equipped = []bool{false}
+	actor.InventorySlots = []int{101, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	actor.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+
+	target := nativeItemPanelTestUnit()
+	target.X, target.Y, target.OnField, target.Camp = 1, 0, true, battle.Own
+	target.NativeIdentity = 1
+	target.NativeRecordClass = 1
+	target.NativeRecordByte5, target.HasNativeRecordByte5 = 0, true
+
+	book := make([]battle.NativeCommandRecord, battle.NativeCommandRecordCount)
+	for id := range book {
+		book[id].ID = id
+	}
+	book[23].MPCost = 20
+	g := &Game{
+		st: &battle.State{
+			W: 3, H: 3, Units: []*battle.Unit{actor, target},
+			NativeTargetFlags:      make([]byte, 9),
+			NativeTerrainMoveCodes: []byte{2, 2, 2, 2, 2, 2, 2, 2, 2},
+		},
+		sel: actor, moved: true, itemOpen: true,
+		nativeCommandBook: book,
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if targeting, err := g.beginNativeTargetItem(0, 101); err != nil || !targeting {
+		t.Fatalf("targeting=%v err=%v", targeting, err)
+	}
+	if applied, err := g.applyNativeTargetItem(target); err != nil || applied ||
+		!g.nativeItemRelocating || g.nativeItemTargeting {
+		t.Fatalf("target stage applied=%v relocating=%v targeting=%v err=%v", applied, g.nativeItemRelocating, g.nativeItemTargeting, err)
+	}
+	destinations := g.nativeRelocationDestinations()
+	if !destinations[battle.Cell{X: 2, Y: 2}] ||
+		destinations[battle.Cell{X: actor.X, Y: actor.Y}] {
+		t.Fatalf("mode6 destinations=%v", destinations)
+	}
+	if applied, err := g.applyNativeRelocationDestination(2, 2); err != nil || !applied {
+		t.Fatalf("destination applied=%v err=%v", applied, err)
+	}
+	if target.X != 2 || target.Y != 2 || actor.MP != 10 ||
+		len(actor.Inventory) != 1 || actor.Inventory[0] != 101 ||
+		!actor.Acted || g.sel != nil || g.nativeItemRelocating {
+		t.Fatalf("relocation actor=%#v target=%#v game=%#v", actor, target, g)
+	}
+}

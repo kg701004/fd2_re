@@ -153,13 +153,16 @@ type Game struct {
 	nativeCommandTargetID    int
 	spellOpen                bool
 	spellSel                 int
-	itemOpen                 bool // native 0x1b932 eight-slot selector; effect dispatch remains fail-closed
+	itemOpen                 bool // native 0x1b932 eight-slot selector; unsupported effect presentations remain fail-closed
 	itemSel                  int
 	itemAnimStep             int
 	itemClosing              bool
 	nativeItemTargeting      bool
 	nativeItemTargetID       int
 	nativeItemTargetRawSlot  int
+	nativeItemRelocating     bool
+	nativeItemRelocationUnit int
+	nativeMovementCostRows   [][]byte
 	nativeRNGState           uint16 // original 0x627b8: initialized to zero, process-lifetime only
 	nativeItemPanel          *ebiten.Image
 	nativeItemPanelBase      []byte
@@ -3751,9 +3754,23 @@ func (g *Game) confirm() {
 			return
 		}
 		if !applied {
+			if g.nativeItemRelocating {
+				g.msg = fmt.Sprintf("物品 %02Xh：選擇目的地", g.nativeItemTargetID)
+			}
 			return
 		}
 		g.msg = fmt.Sprintf("物品 %02Xh：原始回復效果完成", g.nativeItemTargetID)
+		return
+	}
+	if g.nativeItemRelocating {
+		applied, err := g.applyNativeRelocationDestination(g.curX, g.curY)
+		if err != nil {
+			g.msg = fmt.Sprintf("物品 %02Xh：%v", g.nativeItemTargetID, err)
+			return
+		}
+		if applied {
+			g.msg = fmt.Sprintf("物品 %02Xh：原始移位效果完成", g.nativeItemTargetID)
+		}
 		return
 	}
 	if g.nativeCommand0Targeting {
@@ -4202,6 +4219,14 @@ func (g *Game) Update() error {
 			return nil
 		}
 	}
+	if g.nativeItemRelocating {
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+			g.nativeItemRelocating = false
+			g.nativeItemTargeting = true
+			g.curX, g.curY = g.sel.X, g.sel.Y
+			return nil
+		}
+	}
 	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true
@@ -4387,6 +4412,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Translate(float64(unit.X*tw)-g.camX, float64(unit.Y*th)-g.camY)
 				target.DrawImage(ih, op)
+			}
+		}
+		if g.nativeItemRelocating {
+			rh := ebiten.NewImage(tw, th)
+			rh.Fill(color.RGBA{0x40, 0xd8, 0xd8, 0x68})
+			for cell := range g.nativeRelocationDestinations() {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(float64(cell.X*tw)-g.camX, float64(cell.Y*th)-g.camY)
+				target.DrawImage(rh, op)
 			}
 		}
 		if g.nativeCommand0Targeting {

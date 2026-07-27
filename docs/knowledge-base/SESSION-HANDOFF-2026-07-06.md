@@ -985,3 +985,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x1c7ed`及`0x1c869`皆call `0x4e893`。現player command0及item
   command damage共用process-wide uint16 state（miss 1 step/hit 2）。
   indexed effect presentation仍未接。
+- 2026-07-27 type23 runtime closure：item101 first-target確認後現進獨立
+  destination cursor，不把角色確認誤當目的地確認。每格以raw roster
+  occupancy、exact `NativeTerrainMoveCodes`與editable 29×20 rows走
+  `NativeRelocationDestinationAllowed`；合法確認才由
+  `ApplyNativeItemRelocation`扣command23 MP、寫target `+0/+1`，來源保留、
+  actor結束action。Escape回target selector；缺terrain/raw provenance
+  fail-closed。`0x22253`的27-present indexed renderer仍未接。
