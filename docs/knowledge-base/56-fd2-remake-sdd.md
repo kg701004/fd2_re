@@ -140,6 +140,25 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 
 ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
 
+### UI restoration execution plan（2026-07-27）
+
+UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset
+或一張漂亮截圖當成完成：
+
+1. 先以同一條 deterministic trace 串起 `title → story → battle → postbattle → town/shop`；
+   `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary` 已固定 battle win 必須經
+   editable postbattle node，再進 town，shop 結束後回 town，不能直接進下一戰。
+2. 對每個節點保存 state trace、可編輯 JSON 轉場、headless regression 與 screenshot artifact；
+   原版沒有 E2 ground truth 的畫面維持 partial/blocked，不以 normalized UI 升級 native parity。
+3. 再將 battle field、action overlay、command grid、target selector、dialog、HUD 依原版
+   input/layout evidence 接入同一個 modal state stack；native target/effect 未閉合前 confirm
+   必須 fail-closed。
+4. 最後才做 indexed compositor、palette、FDOTHER/FDTXT/DATO 資源差分與逐章 campaign trace。
+
+目前 SDD-3 已進入 `[~]`：title／campaign hub／shop 的 state chain 與既有截圖可重跑，
+但 battle field/action/dialog 的同一路線畫面差分尚未完成。這是「可操作 shell 有進度、
+原版 UI 尚未等價」的明確判定。
+
 ### UI acceptance gate
 
 在 `UI-01…UI-12` 每項至少有一個 deterministic input script、預期 state trace 和 screenshot artifact；只通過 Go unit test 不算 UI 完成。截圖測試需記錄解析度、幀號、輸入序列，並比較 cursor/menu/dialog/panel 的 bounding boxes。無法取得原版 ground truth 的項目標為 blocked/assumption，不得用「看起來合理」關閉。
