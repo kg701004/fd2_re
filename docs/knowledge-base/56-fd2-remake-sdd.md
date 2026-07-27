@@ -979,10 +979,11 @@ clear plus HP restore), 8/9/10 (permanent base
 AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
 14/22 (retained marker application with randomized HP damage), 15/16
 (retained derived DP/AP modifier), 17/18/19 (consumable max HP/max MP/MV
-increase with type19 preserving EXP), and 20/21/24 (retained reuse of a
-row-selected native command damage record with distinct presentation paths).
-The remaining type23 branch must not receive a gameplay label until its
-caller/callee contract is closed.
+increase with type19 preserving EXP), 20/21/24 (retained reuse of a
+row-selected native command damage record with distinct presentation paths),
+and 23 (retained direct relocation with command23 MP debit). All observed
+effect branches 5–24 now have typed post-confirm contracts; this does not
+mean the item selector UI or indexed presentations are integrated.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -1031,6 +1032,20 @@ exposed by `ApplyNativeItemMarkerApplication`; tracked rows are ID212/57.
 The marker/status display name and presentation remain fail-closed.
 
 Official IDA 9.4 decompilation of `0x22253` closes the command-23 state write: after its indexed renderer work, it writes the supplied final `a13/a14` bytes to `record[+0]/record[+1]`. Caller `0x2218a` passes `0xff/0xff` as the pre-render pair and cursor globals as the final pair. `battle.SetNativeUnitCoordinateBytes` preserves only this raw write; movement pathfinding, camera, indexed presentation, and cursor semantics remain separate.
+
+The item-type23 caller is now closed separately. `0x1bbdc` admits it only
+when actor raw identity `+0x08==24` and max MP word `+0x46>=20`; the older
+“class/level gate” label was wrong. After mode-6 destination confirmation,
+`0x2218a` uses only the first target byte, calls `0x1ca89(actor,23)` (native
+16-bit current-MP subtraction using command23 record cost20), and adds
+`10*(target level + 30 when class is 9..24)` to the raw accumulator. It then
+uses `0x22253` for the `0xff/0xff` exit and cursor-coordinate entry writes.
+The item dispatcher does not call `0x1b8e7`, so tracked item ID101 is
+retained; its row word1 is ignored by this handler.
+`NativeItemRelocationRoute` / `ApplyNativeItemRelocation` preserve this
+post-confirm state transaction, first-target behavior and MP wrap. Selector
+mode6's occupancy/terrain-code checks, the 27-present renderer, and Ebiten UI
+remain separate integration gates.
 
 Caller-scope correction (Docker Capstone, 2026-07-26): `0x22253` is shared by the chapter-ending/post handler at `0x250cc`, not command-23-only. That path calls it after `0x1c2da` with unit index `1`, pre-render bytes `0xff/0xff`, and the selected record's raw `+0/+1` bytes, then continues to `0x25089` cleanup and `0x2bce5` ending rendering. The remake therefore treats `SetNativeUnitCoordinateBytes` as a shared raw writer only; command-23 selector, ending layout, renderer, and campaign transition remain independent fail-closed contracts.
 

@@ -414,7 +414,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 finale #56 format closure：玩家 raw `FDOTHER_056.bin` 為13609 bytes，前4 bytes直接是 little-endian 320×200，後接**單一** `0x4e63d` payload、沒有 #54 的 frame-table。新增 player-asset regression 證實以 `Frame{Width:320,Height:200,Pixels:data}.Blit(...,320,-1)` 成功 decode；可重用既有 transparent RLE grammar，但不可使用 `ParseFrames` offset table parser。
 - 2026-07-25 item-action provenance correction：Docker/Capstone 重檢 `0x1bbdc` 與 `0x20c6f`。`0x1bb8c` 僅是把 item 插入第一個空 inventory slot，不是 item effect；case1 為 transfer（插入+`0x1b8e7` removal），case2 為 `0x1bffe` equip。case0 依 item `+0xd` type 進 `0x20c6f`，再分派至多個原生 effect routines；各 callee 數值語意仍未閉合，remake 維持 fail-closed。已同步更新 battle-menu、item RE、UI evidence、worklist，刪除錯誤 effect/consume 斷言。
 - 2026-07-25 non-mirrored figure-fade implementation：將已證實的 `0x29164` 窄 primitive（B→A 320→640 restore、secondary FIGANI frame0 置於 `stage*10`、A left viewport→VGA、baseline DAC `stage*6`）整理成 `RenderFigureFadePass`，`BlitAtBase` 支援 native work-surface origin，並以 exact TAI#3 transparent bytes 與像素 regression 鎖定。這只完成 evidence-backed primitive；primary FIGANI、DATO text、mirrored branch 與完整 ending player 仍 fail-closed。
-- 2026-07-25 type-0x17 item callee audit：Docker/Capstone 展開 `0x2218a`，確認它依 target unit `+0x20/+0x21` 更新全域 accumulator，呼叫 `0x22253` indexed off-screen renderer，並把 caller bytes 寫回 target unit `+0/+1`。文件不再把此 branch 猜成轉職／復活；只保留特殊 renderer/state-write provenance，欄位玩法語意維持 unknown。
+- 2026-07-25 type-0x17 item callee audit（後續已 superseded）：當時只確認
+  `0x2218a` 依 target `+0x20/+0x21` 更新 raw accumulator、呼
+  `0x22253` 並寫 target `+0/+1`；完整 MP debit、identity/maxMP gate、
+  relocation transaction 已於本文件尾端閉合。
 - 2026-07-25 nested FDOTHER boundary：`FDOTHER.DAT#0x51` raw entry 已由 Docker-backed regression 證實是 nested `LLLLLL`（first-word `0x12`、18710 bytes）；新增 `fdother.ArchiveEntry` 只做 raw boundary validation，不把 nested payload 猜成 frame table。**2026-07-26 更正**：`0x11eee` 是背景 redraw、不是 nested data selector；#81 allocation 只 free、不傳 renderer，真正仍 fail-closed 的是 FDOTHER#6-derived local pointer decoder/call semantics 與 `0x22253` indexed runtime adapter。
 - 2026-07-25 acting decoder correction：Docker/Capstone 直接重檢 `0x1366a`。`bit7=0` 每格固定 7 tick，逐 tick 寫 unit `+3=pose`、`+4=1..7`，第 7 tick 才依 pose 更新 X/Y；`bit7=1` 不搬格。`bit7=1/low7=0` 仍是有效 frame，原版含 delay(1)+重繪+delay(2)，remake 以三 tick 保留時序並每 tick 重寫 pose；新增 zero-special pose/timing regression。direct 106-entry acting bank 與 slot ABI 維持已解定，renderer/presentation 尚不猜測接入。
 - 2026-07-25 command-label table closure：Docker-only Capstone 的 `0x1ceed` 直接呼叫 `0x15f84([0x53a7d], 0x1b9+commandID, ...)`；既有 permanent-table trace 對齊 `[0x53a7d]` 為 FDTXT_000。從 raw offset table strict decode 的 physical strings #441..#480 已匯出到 `docs/data/command_labels.json`（含空 slot 與系統訊息）。這使 label 成為 editable evidence；它**不**證明每個 command ID 可達或定義 effect／target，後者仍 fail-closed。
@@ -866,3 +869,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   saved-buffer restore、target redraw、312×192 present 與 BIOS tick。
   dispatcher 不扣 MP、不移除來源。type20 IDs11/56/60→commands2/0/2，
   type24 ID79→command3；共用 typed executor 已擴充並新增 fixture regression。
+- 2026-07-27 type23 item relocation closure + gate correction：official
+  IDA `0x1bbdc` 證實 actor gate 是 runtime identity `+8==24` 與 max MP
+  `+0x46>=20`，撤回舊「class/level gate」。Docker Capstone 展開
+  `0x2218a`：只取 first target，呼 `0x1ca89(actor,23)` 依 command23
+  cost20 對 current MP 做 16-bit subtract；target class9..24 時 level
+  額外+30，再乘10加 raw accumulator。兩次 `0x22253` 依序寫
+  `0xff/0xff` 與 destination cursor bytes；dispatcher 不移除 item ID101，
+  row word1 未被 handler 使用。新增 typed relocation executor、MP wrap、
+  identity/maxMP/target atomic preflight 與 fixture regression；mode6
+  indexed UI/renderer integration仍獨立待辦。

@@ -139,7 +139,16 @@ target list 呼叫既有 command damage writer。dispatcher 不呼叫
 先前把 `0x1cac7` 說成 MP subtract 是地址混淆，已撤回；真正的 command
 MP debit helper 是 `0x1ca89`。
 
-type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
+type23（`0x17→0x2218a`）也已閉合 post-confirm transaction。item selector
+要求 actor runtime `+0x08==24` 且 max MP `+0x46>=20`；舊稱
+class/level gate 是錯的。handler 只取 target list 第一筆，以
+`0x1ca89(actor,command23)` 直接按 command record `+5` 扣 current MP
+（原生 16-bit wrap），再依 target class `+0x20`／level `+0x21` 增加
+raw accumulator。兩次 `0x22253` 先以原座標演出並寫 `0xff/0xff`，
+再寫 destination cursor globals 至 target `+0/+1`；不走 path traversal，
+dispatcher 也不移除來源物品。tracked item ID101 的 row word1 不被
+handler 使用。`NativeItemRelocationRoute`／executor 保存這些 state
+mutation；mode-6 indexed renderer 與 Ebiten UI 尚未接。
 
 選單游標導航在 `0x1864D` 一帶,用 PC 方向鍵掃描碼:
 

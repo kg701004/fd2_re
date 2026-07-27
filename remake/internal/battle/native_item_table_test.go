@@ -266,6 +266,21 @@ func TestTrackedCommandDamageItemRows(t *testing.T) {
 	}
 }
 
+func TestTrackedRelocationItemRow(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := table[101*NativeItemEffectRowSize:]
+	typ := row[0x0d]
+	word := binary.LittleEndian.Uint16(row[0x0e:])
+	route, ok := NativeItemRelocationRouteForType(typ, word)
+	if !ok || route.RowWord != 1 || route.CommandID != 23 ||
+		route.RequiredIdentity != 24 || route.RequiredMaxMP != 20 || route.ConsumesSource {
+		t.Fatalf("item 101 relocation route = %#v, %v", route, ok)
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

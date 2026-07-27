@@ -345,7 +345,12 @@
 - [~] **native commands 20..21 flag-clear/restore route**：`0x22A85/0x22BC6→0x22AA8→0x22AF6` 分別對 `+0x25/+0x26` 做 nonzero gate；成功時以 command record 10 呼 `0x1C916` HP writer 後清 flag，零 flag 只顯示失敗。MP debit 仍以 command20/21 record。`ExecuteNativeCommandClearRestore` 已接 strict non-UI core（record10 amount、raw clear、cap-aware restore、empty gate仍 successful completion）。兩個 status 名稱與 UI 未閉合；ID22 的 `+0x27` application route 不可混入。
 - [~] **native command 22 application route**：`0x22BE1→0x22CDA→0x22D1B` 在 `+0x27==0`、class `+0x20∉{0x19,0x1a}` 且 `rand()%100<50` 時，固定以 `0x1C81F(target,10)` 扣 10 HP，寫 `rand()%4+2` 至 `+0x27`；其他路徑僅失敗顯示。它已接入 `ExecuteNativeCommandApplication` 的 strict raw core；status name/tick、UI、expiry recompute integration 未閉合。
 - [~] **transient command duration lifecycle**：official IDA/Capstone 固定 `0x1A866` gate 為 `record+6 == selector` 且 `(record+5 & 1)==0`，direct callers 已觀察 `0x1a4d1→push1`、`0x1a55e→push0`、`0x1a797→push2`；另有 `0x1a30b` 內部 `record+6==2` sweep，不能混成同一 phase。通過 raw gate 後，六個 bytes `+0x22..+0x27` 才逐一 decrement，歸零才發 expiry feedback 並 `0x1B750` 重算 derived stats。remake 現以 `NativeRecordByte5/6` 保存 provenance，`TickNativeTransientsRaw` fail-closed；舊 `TickNativeTransients(camp)` 不再猜測映射。selector→campaign phase、expiry equipment recompute、UI/status icon 或 native command executor 仍未接，故不可稱 gameplay 完成。
-- [~] **native command 23 special relocation**：`0x2218A→0x22253` 已確認先把 selected unit `+0/+1` 寫 `0xff/0xff` 以作離場演出，再直接寫 selector cursor globals `0x51CF9/0x51CFD` 進場；這是 direct coordinate relocation，非 path movement。其 `0x17` special selector 的落點合法性、camera/render/UI 和 remake integration 尚未閉合。
+- [~] **native command 23 special relocation**：`0x2218A→0x22253` 已確認
+  先把 selected unit `+0/+1` 寫 `0xff/0xff` 作離場演出，再直接寫 selector
+  cursor globals `0x51CF9/0x51CFD` 進場；這是 direct coordinate
+  relocation，非 path movement。mode6 legality 已釘為 other-active-unit
+  occupancy gate 與 target-dependent terrain code20；camera/render/UI integration
+  尚未完成。
 - [x] **RE-RAW-BYTE6-FDFIELD-CONSTRUCTOR**：`parse_field.py` 保存 FDFIELD roster b0 的 `native_record_byte6`，`export_units.py` 將其寫入 units JSON；`battle.Load`／`Scenario.PartyUnits` materialize raw `+6`（own party=2，map selector key 亦保留 direct provenance）。這只閉合 constructor source，不替 `+6` 命名 camp 或 phase 語意。
 - [~] **native commands 25..27 closure**：ID25 `0x22C04` 以 record25
   MP debit，僅在 target `+5 bit0x80` 已設時清 raw bit；
@@ -922,8 +927,9 @@
 - [x] **RE-UNIT-MODE-DISPATCH**：Docker Capstone 重讀共享 `0x13a9f`，固定 raw gate `record+5&5==0` 與 mode/argument reads `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode`，short/gate/masked-mode regression 通過。只保存 mode plan，不呼叫 `0x14ef0/0x14b78/...` 或命名效果；mode 6/8/其他仍保留未命名分支。
 - [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
   type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
-  topology。typed closures 已完成 5/13、6/7、8–22、24；
-  剩餘 type23 仍不得只由 raw route 猜 gameplay 名稱。
+  topology。observed effect branches 5–24 的 typed post-confirm closures
+  已完成；item selector UI、indexed presentations 與 normalized engine
+  integration 仍是獨立缺口。
 - [x] **RE-ITEM-TYPE67-MUTATION**：重讀 `0x22af6` 修正舊 adapter：
   marker 位於 target `record+a5`，不是 parallel `flags[]`。type6/7 用
   `+0x25/+0x26`，nonzero 時 base10→actual9 HP restore、清 record marker，
@@ -1011,6 +1017,13 @@
   21 用 `0x2111a→0x1cac7`。dispatcher 不呼 `0x1ca89`、不移除來源。
   type20 IDs11/56/60→commands2/0/2，type21 IDs29/38/51/99→6/1/7/6，
   type24 ID79→command3；typed executor 保存 presentation 分歧與 transaction。
+- [x] **RE-ITEM-TYPE23-RELOCATION**：official IDA/Capstone 閉合
+  `0x1bbdc→0x2218a`：actor gate 是 raw identity `+8==24` 與 max MP
+  `+0x46>=20`，不是舊稱 class/level；只取第一 target，以 command23
+  cost20 對 current MP `+0x44` 做 16-bit subtract，按 target
+  class/level 加 raw accumulator，再由兩次 `0x22253` 寫
+  `0xff/0xff→destination cursor`。dispatcher 保留 item ID101；
+  `NativeItemRelocationRoute`／executor 與 MP-wrap/preflight fixture 已補。
 - [x] **RE-RAW-WORD-SUBTRACT-ADDRESS-CORRECTION**：Docker Capstone 證實
   word `+0x44` subtract 位於 `0x1ca89`，`0x1cac7` 是 allocation、
   `0x1cb94` drawing 與四輪 320×192 present helper。修正 adapter attribution

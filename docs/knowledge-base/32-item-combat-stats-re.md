@@ -112,7 +112,7 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
 
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
-- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 two-stage target ABI、`0x20c6f` type dispatch 與數條 raw mutation route已閉合，但完整 item-row producer、presentation 與玩法語意仍待解碼。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 對 case 0 只顯示 fail-closed 訊息，不改變 HP/MP/inventory。`+0xd/+0x10/+0x12/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸等 gameplay mapping 不得由目前 raw route 猜出。
+- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 target ABI、`0x20c6f` observed type5–24 dispatch 與各 mutation route已閉合，但 indexed presentation 與 remake UI integration 仍待。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 目前仍 fail-closed。`+0xd/+0x10/+0x12/+0x15` 已保存；type23 gate 正確是 actor raw identity `+8==24` 與 max MP `+0x46>=20`，不是 class/level。
 - Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base
   `0x602ad`、row stride `0x17`（23 bytes）。EXE file view 已確認從
   `0x540ad` 起，與 normalized `item.json` 的 `0x540ac` 起點相差一 byte；
@@ -188,7 +188,13 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   type14/22 item callers 分別用 marker `+0x26/+0x27`，來源保留；
   `ApplyNativeItemMarkerApplication` 保存 class exclusion、50% gate、
   三次 RNG、HP mutation、marker與 atomic preflight。status/UI 名稱仍未知。
-- type `0x17→0x2218a` 已確認會呼叫 `0x22253` indexed renderer，並寫 target unit `+0/+1`；這是特殊 state/演出 branch，但欄位與玩法語意仍保持 unknown。
+- type23 `0x2218a` 已閉合為 post-confirm direct relocation：只取第一
+  target，以 command23 record cost 對 actor current MP `+0x44` 做
+  16-bit subtract；target class `+0x20`／level `+0x21` 形成 raw
+  accumulator delta，最後把 destination cursor bytes 寫入 target
+  `+0/+1`。actor gate 是 identity `+8==24`、max MP `+0x46>=20`；
+  dispatcher 保留來源物品。落點 mode-6 raw legality已定位，但完整
+  indexed renderer/Ebiten selector仍未接。
 - **[阻] 轉職系統**:攻略層有(Lv20+教會、轉職道具表 58h–60h→英雄/聖者/召喚師…,doc 02 §5.10);反組譯機制(職業數值替換、能力繼承、成長表切換)未做。
 - **[阻] 轉職與 sprite**:角色 id = 肖像 = sprite組 恆等(doc 31,memory.md 權威);轉職後換成轉職態肖像編號(memory.md 0x20–0x41),sprite組是否隨之切到另一組**待反組譯轉職碼確認**。⚠ 舊版「凱拉斯組17→49、轉職當機」已作廢(DATO_067 誤判,凱拉斯實為 id16,三者恆等)。
 
