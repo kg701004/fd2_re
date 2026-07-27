@@ -961,3 +961,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   輸出JOIN identity/race/class與8格defaults；persistent overlay保存raw
   identity/class/transient/inventory flags，轉職寫回raw class。正常ch01
   scenario加玩家archives已通過原版Ebiten item panel integration test。
+- 2026-07-27 first complete item Enter family：Capstone補核
+  `0x1bbdc` success在`0x20c6f`後呼`0x13512`、回傳1，caller退出action；
+  IDs198/199/200的type8/9/10及IDs94/95/96的type17/18/19 rows皆為
+  selection/effect mode0、target code1。新增Unit-level `0x21082`
+  projections，經兩段target planner驗證self-target後，處理raw base
+  AP/DP/DX或MaxHP/MaxMP/MV（MV保存EXP）、`0x1b8e7` compact移除來源、
+  必要的equipment recompute並設raw `+5 bit7`/normalized Acted。
+  缺base provenance原子拒絕；RNG及非self效果仍封閉。

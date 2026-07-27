@@ -1049,8 +1049,11 @@
   Docker/Xvfb玩家資產 regression走完整12+12幀。FDFIELD map roster的
   raw欄位已同步；JOIN `0x112a5` lower record與class-change只改
   `+0x20/+7`的lifecycle亦已接進30章scenario/persistence，正常ch01
-  campaign asset可開啟原版面板。Enter effect/target transaction仍
-  fail-closed。
+  campaign asset可開啟原版面板。tracked IDs198/199/200（type8/9/10）
+  及 IDs94/95/96（type17/18/19）已接完整Enter transaction：兩段
+  self-target驗證、raw base AP/DP/DX或MaxHP/MaxMP/MV加值、compact消耗、
+  必要的equipment recompute、`+5 bit7`及action結束；其他effect/target
+  transaction仍fail-closed。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

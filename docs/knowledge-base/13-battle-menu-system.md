@@ -138,7 +138,16 @@ compact ↑↓/←→ input及 opening11→0/closing0→11 clipped presentation�
 lower constructor record，寫 `+0x1f/+0x20`；轉職只改 `+0x20`與`+7`。
 30章scenario、persistent overlay及class-change writer現保留這組獨立raw
 provenance，正常ch01 campaign integration已可準備原版面板。現在剩 item
-Enter effect/target transaction；尚未獨立證實的 raw offsets 仍不命名。
+Enter的大多數 effect/target transaction；尚未獨立證實的 raw offsets 仍不命名。
+
+第一組完整 Enter transaction 已接：tracked IDs198/199/200 的 type8/9/10
+與 IDs94/95/96 的 type17/18/19 均以 row selection/effect mode0、
+target code1 經兩段 `0x14818` 驗證 actor self-target。前組依 `0x21082`
+對 raw base AP/DP/DX 做16-bit wrap加值；後組對 MaxHP/MaxMP/MV 加值，
+其中 MV保存相鄰EXP byte，Max值增加不回填current值。兩組都依
+`0x1b8e7` compact移除來源。成功後 `0x1bbdc` 直接呼 `0x13512`，故 runtime
+同時設 raw `+5 bit7`、normalized `Acted`並退出action；不是回到item menu。
+AP/DP缺 equipment-base provenance時整筆拒絕，不以有效值冒充raw base。
 
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 

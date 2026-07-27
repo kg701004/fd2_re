@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/binary"
+	"fmt"
 	"image"
 	"image/color"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
 
 func nativeOriginalArchivePath(environment, name string) string {
@@ -138,6 +141,73 @@ func (g *Game) beginNativeItemPanelClose() {
 	}
 	g.itemClosing = true
 	g.itemAnimStep = 0
+}
+
+// applyNativeImmediateItem executes only the fully closed, non-RNG type
+// 8/9/10 transaction. Their tracked rows use selection/effect mode zero, so
+// actor confirmation is still validated through the recovered two-stage
+// target planner instead of being assumed from the item name.
+func (g *Game) applyNativeImmediateItem(rawSlot, itemID int) (bool, error) {
+	if g == nil || g.st == nil || g.sel == nil {
+		return false, fmt.Errorf("native item transaction context is unavailable")
+	}
+	rowOffset, err := battle.NativeItemEffectRowOffset(itemID)
+	if err != nil || rowOffset+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
+		return false, fmt.Errorf("native item row %d is unavailable", itemID)
+	}
+	row := g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize]
+	wordRoute, wordSupported := battle.NativeItemWordDeltaRouteForType(int(row[0x0d]))
+	delta := binary.LittleEndian.Uint16(row[0x0e:0x10])
+	capacityRoute, capacitySupported := battle.NativeItemCapacityStepRouteForType(row[0x0d], delta)
+	if !wordSupported && !capacitySupported {
+		return false, nil
+	}
+	plan, err := battle.NativeItemTargetPlanFromRow(row)
+	if err != nil {
+		return false, err
+	}
+	targets, err := battle.NativeItemEffectTargets(
+		g.st.W, g.st.H, g.sel, g.sel, plan,
+		g.st.NativeTargetFlags, g.st.Units,
+	)
+	if err != nil {
+		return false, err
+	}
+	if len(targets) != 1 || targets[0] != g.sel {
+		return false, fmt.Errorf("native immediate item target list is not actor-only")
+	}
+	if wordSupported {
+		if g.shopItemStats == nil {
+			return false, fmt.Errorf("native equipment recomputation table is unavailable")
+		}
+		for index, equipped := range g.sel.Equipped {
+			if equipped && index < len(g.sel.Inventory) {
+				if _, ok := g.shopItemStats[g.sel.Inventory[index]]; !ok {
+					return false, fmt.Errorf("native equipped item %d is absent from recomputation table", g.sel.Inventory[index])
+				}
+			}
+		}
+		if _, err := battle.ApplyNativeItemBaseStatDeltaToUnit(
+			g.sel, g.sel, wordRoute, delta, rawSlot,
+		); err != nil {
+			return false, err
+		}
+		campaign.RecomputeEquipment(g.sel, g.shopItemStats)
+	} else {
+		if _, err := battle.ApplyNativeItemCapacityToUnit(
+			g.sel, g.sel, capacityRoute, rawSlot,
+		); err != nil {
+			return false, err
+		}
+	}
+	// 0x1bbdc calls 0x13512 immediately after successful 0x20c6f.
+	g.sel.NativeRecordByte5 |= 0x80
+	g.sel.HasNativeRecordByte5 = true
+	g.sel.Acted = true
+	g.itemOpen, g.ring = false, false
+	g.clearNativeItemPanel()
+	g.sel, g.reach, g.moved = nil, nil, false
+	return true, nil
 }
 
 func (g *Game) drawNativeItemPanel(screen *ebiten.Image) bool {

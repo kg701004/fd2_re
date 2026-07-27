@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
 
 func nativeItemPanelTestUnit() *battle.Unit {
@@ -99,5 +100,67 @@ func TestCampaignChapterOnePartyPreparesNativeItemPanel(t *testing.T) {
 	g := &Game{sel: unit, itemOpen: true, nativeUIPalette: loadNativeUIPalette()}
 	if !g.prepareNativeItemPanel(unit) || g.nativeItemPanel == nil {
 		t.Fatal("normal campaign party did not prepare native item panel")
+	}
+}
+
+func TestApplyNativeImmediateItemUsesTwoStageSelfTargetAndEndsAction(t *testing.T) {
+	unit := nativeItemPanelTestUnit()
+	unit.Inventory = []int{198, 0x20}
+	unit.Equipped = []bool{false, true}
+	unit.InventorySlots = []int{198, 0x20, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	unit.NativeInventoryFlags = []int{0, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+	unit.OnField, unit.EquipmentBaseSet, unit.BaseAP = true, true, 20
+	g := &Game{
+		st: &battle.State{
+			W: 1, H: 1, Units: []*battle.Unit{unit},
+			NativeTargetFlags: []byte{0},
+		},
+		sel: unit, moved: true, itemOpen: true,
+		shopItemStats: map[int]campaign.ItemStats{0x20: {AP: 2}},
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	applied, err := g.applyNativeImmediateItem(0, 198)
+	if err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	if unit.BaseAP != 29 || unit.AP != 31 || !unit.Acted ||
+		!unit.HasNativeRecordByte5 || unit.NativeRecordByte5&0x80 == 0 ||
+		len(unit.Inventory) != 1 || unit.Inventory[0] != 0x20 ||
+		g.sel != nil || g.itemOpen || g.moved {
+		t.Fatalf("native immediate item transaction incomplete: unit=%#v game=%#v", unit, g)
+	}
+}
+
+func TestApplyNativeImmediateCapacityItemKeepsCurrentHP(t *testing.T) {
+	unit := nativeItemPanelTestUnit()
+	unit.HP, unit.MaxHP = 40, 100
+	unit.Inventory = []int{94}
+	unit.Equipped = []bool{false}
+	unit.InventorySlots = []int{94, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	unit.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+	unit.OnField = true
+	g := &Game{
+		st: &battle.State{
+			W: 1, H: 1, Units: []*battle.Unit{unit},
+			NativeTargetFlags: []byte{0},
+		},
+		sel: unit, moved: true, itemOpen: true,
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	applied, err := g.applyNativeImmediateItem(0, 94)
+	if err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	if unit.HP != 40 || unit.MaxHP != 120 || len(unit.Inventory) != 0 ||
+		!unit.Acted || unit.NativeRecordByte5&0x80 == 0 || g.sel != nil {
+		t.Fatalf("native capacity item transaction incomplete: unit=%#v", unit)
 	}
 }

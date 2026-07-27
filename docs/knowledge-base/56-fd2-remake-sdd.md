@@ -335,6 +335,22 @@ overlay preserves the raw fields/inventory flags, and class change updates raw
 class without fabricating a new constructor record. A real ch01 campaign asset
 plus player archives passes the Ebiten preparation regression.
 
+The first complete Enter family is now executable for tracked item IDs
+198/199/200 (types 8/9/10) and IDs94/95/96 (types 17/18/19). Their rows
+independently fix both target stages to mode zero and target code one; the
+runtime still validates the actor as the confirmed candidate through
+`NativeItemEffectTargets`. The Unit-level
+`ApplyNativeItemBaseStatDeltaToUnit` preserves `0x21082` 16-bit wrapping over
+raw base AP/DP/DX and `0x1b8e7` compact source removal, then the caller runs
+the existing equipment recomputation. `ApplyNativeItemCapacityToUnit` adds
+MaxHP/MaxMP without filling current values and applies the low-byte MV wrap
+while preserving adjacent EXP, then performs the same compact removal.
+Direct caller trace shows successful
+`0x20c6f` is followed by `0x13512`; the bridge therefore sets raw `+5 bit7`,
+the normalized acted projection, closes the panel and exits the action.
+Missing AP/DP equipment-base provenance fails atomically. RNG effects and
+non-self target presentations remain outside this completed slice.
+
 `RenderMirrorFigureFadePass` now implements only the proven `0x292ad` indexed primitive: it requires a caller-preseeded 640-stride work surface, presents `work+0x140`, blits primary at `+0x140-stage*10`, conditionally blits secondary for `arg4==0`, and presents the same right viewport again. It validates TAI#3's transparent bytes but does not claim to render the unresolved DATO/portrait or complete montage.
 
 Generic scheduler closure：`funcs_2ac25` 是 command-indexed function bank（ID0 entry `0x26152`）。`0x2a6bd` 先以 mode 0 呼該 entry 取得 animation step count，接著在 640-stride off-screen buffer 的逐 step loop 呼 mode 2、`0x11eb0` copy 320×200 至 VGA、`0x17aa9(1)` tick、再呼 mode 1；收尾的雙 buffer path 還會呼 mode 4。`0x2b9a1` 並非未知 effect，它以 descriptor `frameIndex*4+8` 指向 frame的 byte+6 delay，遞增 `0x540fc`／`0x540fd` subframe counters並在上界 reset。這固定了 phase/order，仍不替每個 command entry 的視覺語意命名。

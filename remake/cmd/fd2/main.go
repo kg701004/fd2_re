@@ -3010,6 +3010,13 @@ func (g *Game) ringInput() bool {
 					g.msg = "此物品不能在戰場使用"
 					return true
 				}
+				if applied, applyErr := g.applyNativeImmediateItem(rawSlot, itemID); applyErr != nil {
+					g.msg = fmt.Sprintf("物品 %02Xh：%v", itemID, applyErr)
+					return true
+				} else if applied {
+					g.msg = fmt.Sprintf("物品 %02Xh：原始效果完成", itemID)
+					return true
+				}
 				g.msg = fmt.Sprintf("物品 %02Xh：使用效果尚未驗證", itemID)
 			}
 			return true
