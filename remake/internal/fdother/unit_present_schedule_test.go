@@ -55,15 +55,100 @@ func TestNativeUnitPresentByteOriginMatches22470AddressExpression(t *testing.T) 
 	}
 }
 
-func TestNativeUnitPresentContractRadiusMatches22547(t *testing.T) {
+func TestNativeUnitPresentContractStartYMatches22547(t *testing.T) {
 	for _, tc := range []struct{ raw, lut, want int }{{0, 5, 15}, {1, 5, 35}, {3, 2, 34}, {3, 0, 0}} {
-		got, err := NativeUnitPresentContractRadius(tc.raw, tc.lut)
+		got, err := NativeUnitPresentContractStartY(tc.raw, tc.lut)
 		if err != nil || got != tc.want {
 			t.Fatalf("raw=%d lut=%d got=%d err=%v", tc.raw, tc.lut, got, err)
 		}
 	}
-	if _, err := NativeUnitPresentContractRadius(0, 6); err == nil {
+	if _, err := NativeUnitPresentContractStartY(0, 6); err == nil {
 		t.Fatal("invalid LUT index was accepted")
+	}
+}
+
+func TestNativeUnitPresentLUTPassUsesFixedRadiusAndSplitRows(t *testing.T) {
+	pass, err := NativeUnitPresentLUTPass(84, 63, 35)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pass.FirstRadial.CenterX != 84 || pass.FirstRadial.CenterY != 63 ||
+		pass.FirstRadial.Radius != 11 || pass.FirstRadial.Scale != 16 ||
+		pass.FirstRadial.StartY != 35 || pass.FirstRadial.EndY != 192 ||
+		pass.SecondRadial.StartY != 63 || pass.SecondRadial.EndY != 192 ||
+		pass.FinalRect.HorizontalRadius != 17 ||
+		pass.FinalRect.StartY != 35 || pass.FinalRect.EndY != 63 {
+		t.Fatalf("unit-present pass=%#v", pass)
+	}
+	if _, err := NativeUnitPresentLUTPass(400, 63, 35); err == nil {
+		t.Fatal("offscreen center unexpectedly accepted")
+	}
+}
+
+func TestNativeUnitPresentLUTFramesPreserveSixPlusTenGeometry(t *testing.T) {
+	frames, err := NativeUnitPresentLUTFrames(3, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(frames) != 16 || frames[0].Phase != "lut_contract" ||
+		frames[0].LUTIndex != 5 || frames[0].Pass.FirstRadial.StartY != 60 ||
+		frames[5].LUTIndex != 0 || frames[5].Pass.FirstRadial.StartY != 0 ||
+		frames[5].DelayTicks != 2 || frames[6].Phase != "lut_release" ||
+		frames[6].LUTIndex != 0 || frames[15].LUTIndex != 9 ||
+		frames[15].Pass.FirstRadial.StartY != 0 {
+		t.Fatalf("unit-present LUT frames=%#v", frames)
+	}
+	for _, frame := range frames {
+		if frame.Pass.FirstRadial.CenterX != 84 ||
+			frame.Pass.FirstRadial.CenterY != 63 ||
+			frame.Pass.FirstRadial.Radius != 11 {
+			t.Fatalf("unit-present frame geometry=%#v", frame)
+		}
+	}
+	if _, err := NativeUnitPresentLUTFrames(20, 2); err == nil {
+		t.Fatal("offscreen native center unexpectedly accepted")
+	}
+}
+
+func TestRunNativeUnitPresentLUTFrameRestoresSnapshotAndKeepsRedrawBetweenPasses(t *testing.T) {
+	frames, err := NativeUnitPresentLUTFrames(3, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := make([]byte, nativeUnitPresentWorkBytes)
+	snapshot := make([]byte, nativeUnitPresentWorkBytes)
+	for i := range snapshot {
+		snapshot[i] = 1
+		work[i] = 0xee
+	}
+	lut := make([]byte, 256)
+	for i := range lut {
+		lut[i] = byte(i + 1)
+	}
+	redraws, presents := 0, 0
+	err = RunNativeUnitPresentLUTFrame(
+		work, snapshot, lut, frames[5],
+		func(full []byte) error {
+			redraws++
+			full[nativeUnitPresentBase+63*nativeUnitPresentStride+84] = 9
+			return nil
+		},
+		func(full []byte, frame UnitPresentLUTFrame) error {
+			presents++
+			if frame.LUTIndex != 0 || full[0] != 1 {
+				t.Fatalf("present frame=%#v prefix=%d", frame, full[0])
+			}
+			return nil
+		},
+	)
+	if err != nil || redraws != 1 || presents != 1 {
+		t.Fatalf("err=%v redraws=%d presents=%d", err, redraws, presents)
+	}
+	if work[0] != 1 {
+		t.Fatal("full snapshot was not restored")
+	}
+	if err := RunNativeUnitPresentLUTFrame(work[:10], snapshot, lut, frames[0], func([]byte) error { return nil }, func([]byte, UnitPresentLUTFrame) error { return nil }); err == nil {
+		t.Fatal("short work buffer unexpectedly accepted")
 	}
 }
 

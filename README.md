@@ -9,18 +9,18 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 領域 | 已驗證成果 | 與原版的差距 |
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
-| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、UI input evidence 持續收斂 | item effect、indexed renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
+| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter及正常campaign主角資料鏈 | item Enter effect、`0x22253`、ending compositor等尚未閉合；原版 archives 缺少時仍fallback |
+| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **441 個 `[x]`、96 個 `[~]`、65 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **448 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
 這組數字不能換算成「原版完成了幾％」：`[x]` 可能只代表一個格式、函式或 raw adapter 已通過證據 gate，
 而不是一個章節已可通關。以玩家可見功能衡量，目前是「多個垂直切片」；30 章逐章的戰前／戰後、城鎮、商店、
 整備、存檔與演出順序仍未逐章閉合。因此本專案目前與原版的主要差距不是素材解碼，而是 campaign runtime、
-完整 UI renderer、item effect、音訊／DOS timing 與跨平台回歸。
+完整 UI／indexed effect renderer、音訊／DOS timing 與跨平台回歸。
 
 ### 為什麼最近看起來一直在反組譯、但進度沒有等比例前進
 
@@ -81,8 +81,10 @@ mutation 未被猜測接入，未知 selector 維持 fail-closed。
 讓 GitHub README 不再只展示舊畫面；它仍是 remake screenshot，不是原版 parity 證據。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
-`0x20c6f` item type→raw callee routing 的證據分開；`NativeItemEffectRouteForType` 只保存 call topology，
-不執行未閉合的 effect。尚未證實 runtime item table 的完整邊界，也沒有把未命名的 effect／renderer 欄位接進引擎。這代表目前的
+`0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
+已有 typed transaction，並接入原版 two-stage target planner、process-wide uint16 RNG及
+type23 mode6 destination cursor。尚未接的是各分支的 indexed effect presentation，
+不是仍把所有 item Enter 封閉。這代表目前的
 「進度」是可驗證的函式與資料切片，不是原版剩餘工作百分比；後續會以 `56` SDD 的 evidence gate 關閉每個
 campaign、town/shop、persistent save、UI renderer 缺口。
 
@@ -281,7 +283,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 仍未達原版等價的主要範圍：
 
 - 完整 30 章逐章 playthrough 與每一場戰後 town/shop/preparation 順序回歸；
-- 完整 item effect callee、全 roster/save 的 raw identity sync（目前僅有可選欄位與 fail-closed matching）、indexed renderer/HUD/ending compositor；
+- 未追蹤 item rows／indexed effect presentation、完整 roster/save compatibility、indexed HUD/ending compositor；
 - 全部原版音訊 runtime、DOS timing、跨平台打包實機驗證。
 
 這些差距由 SDD 的 evidence gate 與 worklist 狀態標註；未知 handler 不會以猜測性 normalized

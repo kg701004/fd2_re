@@ -581,8 +581,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 `0x22470` LMI phase origin closure（Docker Capstone）：destination 是 `buffer+0x8088 + 24*(x-camX) + 24*456*(y-camY) + 456`，隨後才 `0x127a9`、320×192 present、tick1。新增 raw `NativeUnitPresentByteOrigin` regression；offscreen clip 不在這個位址公式中，仍由 native caller/未來 renderer adapter 處理。
 - 2026-07-26 `0x22470→0x4e85b` first executable primitive：Capstone 直接確認 `0x4e85b` header width/height 後每 pixel 呼 `0x4e916`，只在 decoded value 非零時寫 destination。新增 `BlitNativeUnitPresentLMI`，以 `LMI1Entry.BlitAt` 的相同 preserve-zero semantics 寫 verified origin，offscreen origin fail-closed；尚未把 unit redraw/present/tick 或 27-step schedule 接 GUI。
 - 2026-07-26 `0x22470` intro phase executor：新增 `RunNativeUnitPresentLMIIntro`，以 #6 `0x72..0x7c` 的原序跑完整11次；每次 blit 後必透過 callback 執行 native 的 redraw/present/tick boundary，缺 callback／entry table 短缺即拒絕。這是 indexed phase primitive，尚非 Ebiten renderer。
-- 2026-07-26 `0x22253→0x22547` stack-slot mapping：按兩層 prologue/push stack 算術，`0x22547` 的 `arg1/arg2`（用於 `(arg1-camX)*24+(arg2-camY)*24*456+456`）正是 `0x22253` 的第4/第5 incoming args；`0x22547` 的 `esi` 來自 `0x22253` local `+0x0c`，其 direct definition 是 `24*[0x53abd]+15`，middle phase radius 為 `trunc(esi/5)*LUTIndex`。`[0x53abd]` 的高階語意尚未定義，故 SDD 不得命名為 tile/actor/rawValue；LUT #3 仍 5→0、10ms each，最後兩 ticks。
-- 2026-07-26 `0x22547` radius primitive：新增 strict `NativeUnitPresentContractRadius(raw53ABD,lutIndex)`，實作 `trunc((24*raw53ABD+15)/5)*lutIndex`，只接受0..5。這僅保存 direct arithmetic，尚未接 `0x22046` terrain/unit redraw/present adapter。
+- 2026-07-26 `0x22253→0x22547` stack-slot mapping（2026-07-27更正）：
+  `arg1/arg2`仍證實是source map座標；但重新映射`0x22046`六參數後，
+  舊「middle phase dynamic radius」錯誤。literal arg3=11才是radius，
+  scale固定16；`trunc((24*[0x53abd]+15)/5)*LUTIndex`是first radial與
+  final rectangle的startY。第二radial從centerY開始，三者end/split
+  rows已由`NativeUnitPresentLUTPass`固定。
+- 2026-07-27 `0x22547/0x22656` geometry plan：刪除
+  `NativeUnitPresentContractRadius`，改為
+  `NativeUnitPresentContractStartY`；新增完整6 contract +10 release
+  `NativeUnitPresentLUTFrames`，每frame保存fixed radius11/scale16、
+  first/second radial與horizontal radius17 rectangle。indexed buffer
+  snapshot、object redraw callback、present adapter仍待。
+- 2026-07-27 unit-present buffer transaction：
+  `RunNativeUnitPresentLUTFrame`保存callee每frame的`0x25680` memcpy
+  restore，然後在`+0x8088` viewport依序跑first radial→完整buffer
+  object redraw callback→second radial→rectangle→present callback。
+  strict size/LUT/callback gates與regression已補；剩餘runtime blocker是
+  Ebiten側exact indexed map snapshot/object redraw/present scheduling。
 - 2026-07-26 native map redraw range-layer closure（Docker Capstone）：`0x11cac` 的順序是 terrain `0x11eee`、range `0x122dc`、unit/foreground `0x127a9`、HUD `0x1acf3`、viewport copy `0x11eb0`。`0x122dc` 分派 raw mode1..6 的固定 offset/descriptor index 至 `0x126f7`；該 helper 做 camera bounds 後以 raw `0x4deda` 寫 `0x53a49+0x8088`。尚未將 mode table/descriptor bank 接資料化 renderer，GUI highlight 不可宣稱 native equivalent。
 - 2026-07-26 `0x122dc` exact range-table closure（isolated Docker Capstone）：modes 1..5 的所有 `0x126f7(x,y,descriptor)` 已逐指令轉成 `fdother.NativeRangeOverlayPlacements`（call counts 1/1/5/13/21）。保留 mode3 centre descriptor 14 與 mode5 的重複座標、不同 descriptor，不能簡化為推測的菱形或移動範圍。mode6 沒有 blit：其 raw expression 是 `4*(cursorX + cursorY*[0x53ac1])+7`，對 `[0x53a51]` 指向資料寫 0；drawable API 拒絕它，另以 `NativeRangeOverlayMode6ByteAddress` 保存 checked arithmetic。`0x53a4d` descriptor-bank loader、RLE asset binding、camera clip 與 indexed renderer remain fail-closed.
 - 2026-07-26 range descriptor-bank closure（isolated Docker Capstone + real FDOTHER）：撤回 doc36「FDOTHER#1 用途未確認」的舊斷言。`0x25c7d..0x25c92` 載 #1 至 `[0x53a4d]`；真實 header `{24,24,20,u32 offsets[]}`，`0x126f7` 按 `base+6+4*descriptor` 取 24×24 four-mode RLE stream 再 `0x4deda`。modes 1..5 使用 descriptors #0..18。新增 `DecodeNativeRangeOverlayBank`（嚴格 20 entries）及 `BlitNativeRangeOverlay`，保留 `0x8088`／stride456／24-pixel camera-relative destination、native pre-blit camera clip，且以實檔 decode+blit regression 驗證。mode6 raw grid mutation、native buffer lifetime 和 Ebiten adapter 仍維持 fail-closed。
