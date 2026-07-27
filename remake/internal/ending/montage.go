@@ -46,7 +46,7 @@ type PartyCycleSpec struct {
 	FigureRenderer      string                  `json:"figure_renderer"`
 	FrameRenderer       string                  `json:"frame_renderer"`
 	InitialFrames       int                     `json:"initial_frames"`
-	FrameDelayMS        int                     `json:"frame_delay_ms"`
+	FrameDelayTicks     int                     `json:"frame_delay_ticks"`
 	SourceRange         string                  `json:"source_range"`
 	PortraitText        PortraitTextSpec        `json:"portrait_text"`
 	DialogueFrameLayout DialogueFrameLayoutSpec `json:"dialogue_frame_layout"`
@@ -107,7 +107,24 @@ type PortraitTextSpec struct {
 	PermanentTextTable string             `json:"permanent_text_table"`
 	Fields             []MontageTextField `json:"fields"`
 	GlyphStyle         MontageGlyphStyle  `json:"glyph_style"`
+	Cycle              PortraitCycleSpec  `json:"cycle"`
 	Input              MontageInput       `json:"input"`
+}
+
+type PortraitCycleSpec struct {
+	Source                  string `json:"source"`
+	Destination             int    `json:"destination"`
+	NormalFrame             int    `json:"normal_frame"`
+	MouthFrame              int    `json:"mouth_frame"`
+	InitialCountdown        int    `json:"initial_countdown"`
+	ResetFormula            string `json:"reset_formula"`
+	Decrement               string `json:"decrement"`
+	MouthCondition          string `json:"mouth_condition"`
+	RegularIterations       int    `json:"regular_iterations"`
+	FinalLoopIndex          int    `json:"final_loop_index"`
+	FinalIterations         int    `json:"final_iterations"`
+	SpecialEpilogueFromTick int    `json:"special_epilogue_from_tick"`
+	WaitTicks               int    `json:"wait_ticks"`
 }
 
 type MontageTextField struct {
@@ -186,11 +203,13 @@ func LoadMontage(path string) (*Montage, error) {
 		m.PartyCycle.Source != "0x2c5d7" || m.PartyCycle.CountGlobal != "0x53bfb" || m.PartyCycle.UnitBaseGlobal != "0x53a45" || m.PartyCycle.UnitStride != 0x50 || m.PartyCycle.VisualGroupOffset != 7 ||
 		m.PartyCycle.SlotSelection != "i==0?1:i==1?0:i" ||
 		m.PartyCycle.FigureArchive != "FIGANI.DAT" || len(m.PartyCycle.FigureIndices) != 2 || m.PartyCycle.FigureIndices[0] != "group*3+1" || m.PartyCycle.FigureIndices[1] != "group*3" ||
-		m.PartyCycle.FigureRenderer != "0x29164" || m.PartyCycle.FrameRenderer != "0x2b9a1" || m.PartyCycle.InitialFrames != 20 || m.PartyCycle.FrameDelayMS != 1 || m.PartyCycle.SourceRange != "0x2c5e3..0x2c9a9" ||
+		m.PartyCycle.FigureRenderer != "0x29164" || m.PartyCycle.FrameRenderer != "0x2b9a1" || m.PartyCycle.InitialFrames != 20 || m.PartyCycle.FrameDelayTicks != 1 || m.PartyCycle.SourceRange != "0x2c5e3..0x2c9a9" ||
 		m.PartyCycle.PortraitText.Source != "0x2c7a4..0x2c967" || m.PartyCycle.PortraitText.PortraitArchive != "DATO.DAT" || m.PartyCycle.PortraitText.PortraitIndex != "unit[+7]" || m.PartyCycle.PortraitText.CurrentTextTable != "FDTXT_031" || m.PartyCycle.PortraitText.PermanentTextTable != "FDTXT_000" || len(m.PartyCycle.PortraitText.Fields) != 5 ||
 		m.PartyCycle.PortraitText.Fields[0] != (MontageTextField{Table: "current", Index: "10", Destination: "staging+0x16e9", Meaning: "name_label"}) || m.PartyCycle.PortraitText.Fields[1] != (MontageTextField{Table: "permanent", Index: "unit[+8]+1", Destination: "staging+0x171b", Meaning: "character_name"}) || m.PartyCycle.PortraitText.Fields[2] != (MontageTextField{Table: "current", Index: "11", Destination: "staging+0x2fe9", Meaning: "class_label"}) || m.PartyCycle.PortraitText.Fields[3] != (MontageTextField{Table: "permanent", Index: "unit[+0x20]+0x96", Destination: "staging+0x301b", Meaning: "class_name"}) || m.PartyCycle.PortraitText.Fields[4] != (MontageTextField{Table: "current", Index: "edi<0xdc ? unit[+8]+0x0c : 0x2d", Destination: "staging+0x7d08", Meaning: "epilogue"}) ||
 		m.PartyCycle.DialogueFrameLayout != (DialogueFrameLayoutSpec{Source: "0x2c773->0x168b6", Archive: "FDOTHER.DAT", Resource: 5, Destination: "portrait_restore_buffer_C", Stride: 320, Arg8: 5, ArgC: 7, Arg10: 5, Arg14: 5, Role: "native dialogue-frame/grid staging; later DATO portrait paste is 0x4e8af"}) ||
-		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) || m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
+		m.PartyCycle.PortraitText.GlyphStyle != (MontageGlyphStyle{Stride: 320, Foreground: 0xcd, Shadow: 0x4c, Background: 0}) ||
+		m.PartyCycle.PortraitText.Cycle != (PortraitCycleSpec{Source: "0x2c430,0x2c43f,0x2c7cf..0x2c9a9", Destination: 0x0c88, NormalFrame: 0, MouthFrame: 3, InitialCountdown: 0, ResetFormula: "(random_byte&0x1f)+0x28", Decrement: "only_when_nonzero_before_frame_selection", MouthCondition: "countdown<2", RegularIterations: 0xdc, FinalLoopIndex: 0, FinalIterations: 0x1b8, SpecialEpilogueFromTick: 0xdc, WaitTicks: 1}) ||
+		m.PartyCycle.PortraitText.Input != (MontageInput{Poll: "0x10620", SkipAction: "outer_counter=1;0x4e031", Source: "0x2c950..0x2c961"}) ||
 		m.PartyCycle.FigureFade.Source != "0x291197..0x29258" || m.PartyCycle.FigureFade.UnitSideOffset != 6 || m.PartyCycle.FigureFade.RequiredUnitSide != 1 || m.PartyCycle.FigureFade.WorkStride != 640 || m.PartyCycle.FigureFade.ViewportWidth != 320 || m.PartyCycle.FigureFade.ViewportHeight != 200 || m.PartyCycle.FigureFade.Platform != (FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}) || m.PartyCycle.FigureFade.Figure != (FigureFadeAsset{Resource: "secondary_figani", Frame: 0}) || m.PartyCycle.FigureFade.StageStart != 8 || m.PartyCycle.FigureFade.StageEnd != 0 || m.PartyCycle.FigureFade.StageShiftBytes != 10 || m.PartyCycle.FigureFade.PaletteFormula != "stage*6" || m.PartyCycle.FigureFade.RestoreBytes != 0xfa00 || m.PartyCycle.FigureFade.RestoreCopy != "B->A(dstStride640,srcStride320,width320,rows200)" || m.PartyCycle.FigureFade.PostFigureSnapshot != "memmove(C,B,64000)" ||
 		m.PartyCycle.MirrorBranch != (MirrorBranchSpec{Source: "0x2927e..0x29357", RequiredUnitSide: 0, SideFlagArgument: "arg4", WorkStride: 640, StageStart: 8, StageEnd: 0, StageShiftBytes: 10, PaletteDeltaFormula: "stage*6", PrimarySource: "staging+0x140-stage*10", SecondarySource: "staging+0x140", SecondaryWhen: "arg4==0", PlatformWhen: "arg4==0", Platform: FigureFadeAsset{Resource: "TAI.DAT#3", X: 164, Y: 157, Effect: "transparent_noop"}, Renderer: "0x29164"}) ||
 		m.Gate.Source != "0x2c5e3" || m.Gate.Reason == "" {
@@ -305,7 +324,7 @@ type PartyCyclePlan struct {
 	PrimaryFIGANI   int
 	SecondaryFIGANI int
 	Frames          int
-	FrameDelayMS    int
+	FrameDelayTicks int
 }
 
 func (m Montage) PlanPartyCycle(groups []byte) ([]PartyCyclePlan, error) {
@@ -321,7 +340,7 @@ func (m Montage) PlanPartyCycle(groups []byte) ([]PartyCyclePlan, error) {
 			slot = 0
 		}
 		group := int(groups[slot])
-		plans = append(plans, PartyCyclePlan{LoopIndex: i, UnitSlot: slot, VisualGroup: group, PrimaryFIGANI: group*3 + 1, SecondaryFIGANI: group * 3, Frames: m.PartyCycle.InitialFrames, FrameDelayMS: m.PartyCycle.FrameDelayMS})
+		plans = append(plans, PartyCyclePlan{LoopIndex: i, UnitSlot: slot, VisualGroup: group, PrimaryFIGANI: group*3 + 1, SecondaryFIGANI: group * 3, Frames: m.PartyCycle.InitialFrames, FrameDelayTicks: m.PartyCycle.FrameDelayTicks})
 	}
 	return plans, nil
 }

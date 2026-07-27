@@ -257,7 +257,7 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。
 
-2026-07-26 official IDA recheck further closes the `0x2c405 → 0x2c548` hand-off boundary. After the 500-pass phase-0 scroll, native code frees staging, allocates one `0x1f400` and two `0xfa00` buffers, loads `TAI.DAT` entry `3` and `FDOTHER.DAT` entry `0x38`, and blits the latter into the first indexed buffer before iterating party records from `[0x53bfb]-1`. This resource/buffer contract is now recorded in `assets/endings/native_2c548.json`/worklist; it does **not** authorize a PNG or generic-fade adapter. DATO/FIGANI scheduling, mirror branch, and the dedicated indexed renderer remain fail-closed.
+2026-07-26 official IDA recheck further closes the `0x2c405 → 0x2c548` hand-off boundary. After the 500-pass phase-0 scroll, native code frees staging, allocates one `0x1f400` and two `0xfa00` buffers, loads `TAI.DAT` entry `3` and `FDOTHER.DAT` entry `0x38`, and blits the latter into the first indexed buffer before iterating party records from `[0x53bfb]-1`. This resource/buffer contract is now recorded in `assets/endings/native_2c548.json`/worklist; it does **not** authorize a PNG or generic-fade adapter. The isolated FIGANI fade and portrait/text primitives are executable, but their full per-party scheduler and the dedicated indexed renderer remain fail-closed.
 
 Runtime audit correction (2026-07-28): the prefix player already executes
 frame12..108 and both 40/200-pass compositors, but its preview adapter retained
@@ -280,6 +280,26 @@ Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-fram
 `internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. `MouthState` preserves the verified `0x16D00` cadence as a pure tested adapter and is used by the dialogue update loop; complete DATO runtime resource binding and ending UI integration remain explicit gates. For the separate `0x24618` transition, `fdother` now preserves the native full-buffer seed and 456→320 viewport copy contract, but runtime LUT selection and indexed presentation are still fail-closed.
 
 `fdother.PlanNativeDialogueFrameGrid` now transcribes all 49 `sub_1685c` calls for the proven `0x168b6` invocation (12 fixed cells, two `3×2` loops, and a `5×5` raw grid); `Montage.PlanDialogueFrameGrid()` delegates to it. **2026-07-27 correction:** the former ending-only formula omitted `a3=5` from `v6=dst+stride*a4+a3` and mixed byte/stride terms in several placements. The exact first cells are now offsets 2245/2328 (not 2240/2323), portrait-overwritten grid origin is 3208, and the final grid cell is 23752 (not 22812). The common planner exposes only resource indices and byte offsets; cell semantics and DATO mouth timing remain intentionally unnamed.
+
+2026-07-28 `0x2c548` portrait-loop closure: direct Docker Capstone recheck of
+`0x2c430`, `0x2c43f`, and `0x2c7cf..0x2c9a9` fixes the DATO paste at byte
+offset `0x0c88` and the local countdown at zero initially. A zero value is
+replaced by `(random_byte&0x1f)+0x28` without immediate decrement; otherwise it
+is decremented first. Results below two choose DATO pointer-table entry 3,
+otherwise entry 0. Nonzero party loop indexes run 220 iterations; loop index
+zero (the swapped slot 1) runs 440, so it alone reaches tick 220 and switches
+the epilogue to FDTXT_031 #45. `ComposeMontagePortraitFrame` now restores the
+FDOTHER#5 grid, pastes the selected original DATO frame, and renders all five
+FDTXT fields with the proven CD/4C/transparent glyph ABI. It accepts only the
+observed FFFE line break and fails closed on other controls. Original-archive
+regression exercises both normal and mouth/special-epilogue frames without
+mutating the restore buffer.
+
+Timing correction: the calls to `0x17aa9(1)` in the 20-frame secondary loop
+and portrait loop consume one native BIOS tick, not one millisecond. The
+editable schema and planner therefore use `frame_delay_ticks`; primary FIGANI
+descriptor byte `+6` is likewise a tick count. This correction is local to the
+montage and does not rewrite separately evidenced millisecond waits elsewhere.
 
 Codec correction: the `0x1685c→0x4e9bb` path copies each selected `FDOTHER#5` cell's width×height bytes directly (`rep movsb`). It is not the `0x4e916` high-run codec used by DATO portraits. `fdother.ParseLMI1RawEntry` now preserves this separate contract and has a real entry-1 byte regression.
 

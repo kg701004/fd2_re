@@ -1,11 +1,13 @@
 package ending
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
 func TestNative2C548MontageMapPlansNativePartySlotOrder(t *testing.T) {
@@ -17,8 +19,123 @@ func TestNative2C548MontageMapPlansNativePartySlotOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plans) != 3 || plans[0] != (PartyCyclePlan{LoopIndex: 2, UnitSlot: 2, VisualGroup: 96, PrimaryFIGANI: 289, SecondaryFIGANI: 288, Frames: 20, FrameDelayMS: 1}) || plans[1].LoopIndex != 1 || plans[1].UnitSlot != 0 || plans[1].PrimaryFIGANI != 13 || plans[2].LoopIndex != 0 || plans[2].UnitSlot != 1 || plans[2].PrimaryFIGANI != 1 || plans[2].SecondaryFIGANI != 0 {
+	if len(plans) != 3 || plans[0] != (PartyCyclePlan{LoopIndex: 2, UnitSlot: 2, VisualGroup: 96, PrimaryFIGANI: 289, SecondaryFIGANI: 288, Frames: 20, FrameDelayTicks: 1}) || plans[1].LoopIndex != 1 || plans[1].UnitSlot != 0 || plans[1].PrimaryFIGANI != 13 || plans[2].LoopIndex != 0 || plans[2].UnitSlot != 1 || plans[2].PrimaryFIGANI != 1 || plans[2].SecondaryFIGANI != 0 {
 		t.Fatalf("party plans = %#v", plans)
+	}
+}
+
+func TestNative2C548PortraitCountdownMatchesZeroResetAndMouthFrames(t *testing.T) {
+	state := MontagePortraitState{}
+	frame, err := state.Step(0xff)
+	if err != nil || frame != NativeMontagePortraitNormalFrame || state.Countdown != 0x47 {
+		t.Fatalf("reset frame=%d countdown=%d err=%v", frame, state.Countdown, err)
+	}
+	state.Countdown = 2
+	frame, err = state.Step(0)
+	if err != nil || frame != NativeMontagePortraitMouthFrame || state.Countdown != 1 {
+		t.Fatalf("mouth1 frame=%d countdown=%d err=%v", frame, state.Countdown, err)
+	}
+	frame, err = state.Step(0)
+	if err != nil || frame != NativeMontagePortraitMouthFrame || state.Countdown != 0 {
+		t.Fatalf("mouth0 frame=%d countdown=%d err=%v", frame, state.Countdown, err)
+	}
+	frame, err = state.Step(0)
+	if err != nil || frame != NativeMontagePortraitNormalFrame || state.Countdown != 0x28 {
+		t.Fatalf("next reset frame=%d countdown=%d err=%v", frame, state.Countdown, err)
+	}
+	state.Countdown = 0x48
+	if _, err := state.Step(0); err == nil {
+		t.Fatal("invalid native countdown accepted")
+	}
+}
+
+func TestNative2C548PortraitDurationMakesOnlyLoopZeroReachSpecialText(t *testing.T) {
+	if got, err := NativeMontagePortraitIterations(1); err != nil || got != 0xdc {
+		t.Fatalf("regular iterations=%d err=%v", got, err)
+	}
+	if got, err := NativeMontagePortraitIterations(0); err != nil || got != 0x1b8 {
+		t.Fatalf("final iterations=%d err=%v", got, err)
+	}
+	if _, err := NativeMontagePortraitIterations(-1); err == nil {
+		t.Fatal("negative loop index accepted")
+	}
+}
+
+func TestComposeNative2C548PortraitFrameWithPlayerResources(t *testing.T) {
+	const (
+		base        = "../../../org_game/炎龍騎士團/FLAME2/"
+		fdotherPath = base + "FDOTHER.DAT"
+		fdtxtPath   = base + "FDTXT.DAT"
+		datoPath    = base + "DATO.DAT"
+	)
+	for _, path := range []string{fdotherPath, fdtxtPath, datoPath} {
+		if _, err := os.Stat(path); err != nil {
+			t.Skip("player-provided original archives are absent")
+		}
+	}
+	montage, err := LoadMontage("../../assets/endings/native_2c548.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	restore := make([]byte, Bytes)
+	if err := RenderDialogueFrameGridResource(*montage, fdotherPath, restore); err != nil {
+		t.Fatal(err)
+	}
+	originalRestore := append([]byte(nil), restore...)
+	portraits, err := dato.DecodeResource(datoPath, 37)
+	if err != nil {
+		t.Fatal(err)
+	}
+	currentRaw, err := fdother.ReadResource(fdtxtPath, 31)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, err := fdtxt.Parse(currentRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	permanentRaw, err := fdother.ReadResource(fdtxtPath, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	permanent, err := fdtxt.Parse(permanentRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fontRaw, err := fdother.ReadResource(fdotherPath, 4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	font, err := fdtxt.ParseFont(fontRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unit := make([]byte, 0x21)
+	unit[7], unit[8], unit[0x20] = 37, 4, 2
+	normal, err := ComposeMontagePortraitFrame(*montage, restore, unit, 0, 0, portraits, current, permanent, font)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mouth, err := ComposeMontagePortraitFrame(*montage, restore, unit, 0xdc, 3, portraits, current, permanent, font)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(restore, originalRestore) {
+		t.Fatal("portrait composition mutated restore snapshot")
+	}
+	if len(normal) != Bytes || len(mouth) != Bytes || bytes.Equal(normal, mouth) {
+		t.Fatal("original portrait frames were not independently composed")
+	}
+	for _, frame := range [][]byte{normal, mouth} {
+		visible := 0
+		for _, pixel := range frame {
+			if pixel == 0xcd || pixel == 0x4c {
+				visible++
+			}
+		}
+		if visible == 0 {
+			t.Fatal("native montage text colors are absent")
+		}
 	}
 }
 
