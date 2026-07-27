@@ -47,6 +47,12 @@ contract，不代表原版各章節服務、BGM 或畫面 parity 已完成。
 `town_ch02 → shop_ch02_weapon → town_ch02`，包含 reserve/finalize 金幣邊界與
 Escape 離店；這是 remake campaign contract，不是 native shop service parity。
 
+2026-07-27 補上 native command 的 target state slice：command grid confirm 先通過
+`NativeCommandTargets`，再接入已有 raw executor 的 IDs `0,13–16,20–22,24–29,31`；
+未知 command、ID30 special cursor、缺 raw map flags 或缺 resistance/book 資料仍停在
+fail-closed。這讓 command UI 能實際進入部分原版 target 流程，但不宣稱完整 indexed
+effect renderer、SFX、動畫或所有 command 語意已還原。
+
 Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/ui-traces/town-church-revive-ch02.json)
 驗證 `town_ch02 → church_ch02 → revive → town_ch02`，並保存目前 source rebuild 的
 [`church-current-remake.png`](docs/figures/church-current-remake.png)。未知 native service
