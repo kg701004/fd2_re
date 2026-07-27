@@ -49,7 +49,7 @@ hub→preparation/town 做成可重播 input trace；item effect、AI runtime �
 | 裝備欄 / 裝備加成 AP/DP/HIT/EV | doc02 §5、doc32 §1/§5 | 🟡 | `Unit` 有 `Inventory`/`Equipped`/`InventorySlots`；`campaign.EquipItem`、`RecomputeEquipment` 與 shop equip UI 已接線。HIT/EV 真值與戰鬥全鏈仍需對照原版欄位，不能再說「無裝備欄」 | 高；補 native stat source 與 battle integration |
 | 道具使用效果(藥水回血、卷軸) | doc02 §5.13 | ❌ | battle action 的 item command 仍是未實作入口；但 inventory/reward/shop/equip 並非全缺 | 高 |
 | 裝備自帶法術(不耗MP、無經驗) | doc02 §4.6、doc32 | 🟡 | 裝備資料與裝備重算已存在，裝備法術在 `Cast`/action menu 尚未接成獨立不耗 MP 路徑 | 中 |
-| 轉職系統(Lv20+教會、轉職道具→最高職業) | doc02 §7.1、doc32 §4「[阻] 轉職系統」 | 🟡 | `church` UI、`ClassChangeCandidates`、`ApplyClassChange`、growth table 已存在；native eligibility/fee/所有分支仍需 RE，不能再寫成 remake 零命中 | 中 |
+| 轉職系統(Lv20+教會、轉職道具→最高職業) | doc02 §7.1、doc32 §4「[阻] 轉職系統」；official IDA `0x31385/0x31793/0x311DC/0x19953` | 🟡 | `church` UI、`ClassChangeCandidates`、單一 target resolution（special>optional>default）、Yes/No confirmation、`ApplyClassChange` 與 growth table 已存在；exact indexed renderer、fee／數值實機差分仍待 | 中 |
 | legacy 中毒/麻痺/封咒與 Buff 的回合處理 | doc02 §6.4 | 🟡 normalized approximation | `model.go TickStatus`,`main.go:1962` 每回合結尾呼叫；但 native `0x1A866` 實際對 raw `+0x22..+0x27` 逐 camp、逐 byte 遞減，只有歸零才重算，尚不能宣稱 `TickStatus` 的 named status／每回合語意等同原版 | 高（native transient/UI/expiry recompute） |
 | legacy 中毒每回合 −10% HP | doc02 §6.4 | 🟡 normalized approximation | `TickStatus` 使用 `dmg := u.MaxHP/10`；現已知 native command transient `+0x25..+0x27` 不能直接命名為 legacy Poison/Paralyze/Seal，故此不是原版 native status closure | 高 |
 | legacy Buff(魔刃/魔鎧/風行)到期清除 | doc02 §6.4 | 🟡 normalized approximation | `TickStatus` 的共享 `BuffTurns` 歸零清空；native IDs17..19 則分別寫 `+0x22/+0x23/+0x24`、2..5 camp phases、並依 `0x1B750` 重算衍生值，shared timer 不等同原版 | 高 |

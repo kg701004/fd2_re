@@ -37,6 +37,39 @@ func AdvanceNativeChurchServiceSelection(current, delta int) int {
 	return current
 }
 
+// AdvanceNativeClassConfirmation mirrors 0x19953's two-choice prompt:
+// left selects zero and right selects one. There is no wrap or up/down path.
+func AdvanceNativeClassConfirmation(current, horizontal int) int {
+	if current != 0 && current != 1 {
+		current = 0
+	}
+	if horizontal < 0 {
+		return 0
+	}
+	if horizontal > 0 {
+		return 1
+	}
+	return current
+}
+
+// NativeClassCandidateWindow mirrors 0x311DC's three-row viewport. The
+// selection is bounded by the caller; once it moves below the third visible
+// row, the window follows it one row at a time.
+func NativeClassCandidateWindow(count, selected int) (start, visible int) {
+	if count <= 0 || selected < 0 || selected >= count {
+		return 0, 0
+	}
+	start = selected - 2
+	if start < 0 {
+		start = 0
+	}
+	visible = count - start
+	if visible > 3 {
+		visible = 3
+	}
+	return start, visible
+}
+
 // AdvanceNativeTwoColumnSelection mirrors the bounded list movement used by
 // 0x2e6b8/0x2df6b. delta is one of -2,-1,+1,+2 (left/up/right/down); invalid
 // counts or moves leave the cursor unchanged, and there is no wrap.
@@ -141,7 +174,7 @@ func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, 
 	u.Portrait, u.ClassID = targetPortrait, classID
 	// 0x31571..0x3157a rewrites raw +0x20 and +7, but not +0x1f.
 	u.NativeRecordClass, u.HasNativeRecordClass = byte(classID), true
-	// Native class-change flow 0x31576..0x3157a writes the selected target
+	// Native class-change flow 0x31576..0x3157a writes the resolved target
 	// byte to live unit+7. For player construction that byte is both the
 	// FIGANI selector and the next 0x11019 raw map key; stable Fig remains the
 	// JOIN/+8 identity. A previous cache slot belongs to the old key.

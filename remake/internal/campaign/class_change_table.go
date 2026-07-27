@@ -30,7 +30,9 @@ type ClassChangeTarget struct {
 	MobilityIncrement int `json:"mobility_increment"`
 }
 
-// ClassChangeBranch is one target shown after selecting a church candidate.
+// ClassChangeBranch is the single target selected by native 0x31793 for one
+// church candidate. Despite the historical name, the native UI does not show
+// these as player-selectable branches.
 type ClassChangeBranch struct {
 	Branch            string
 	Portrait          int
@@ -95,36 +97,49 @@ func inventoryIndex(u *battle.Unit, itemID int) int {
 	return -1
 }
 
-// ClassChangeTargets mirrors native branch order: default, optional table
-// item branch, then portrait-9's special item 0x5a branch.
-func ClassChangeTargets(u *battle.Unit, t ClassChangeTable) []ClassChangeBranch {
+// NativeClassChangeTarget mirrors 0x31793's overwrite order. Every eligible
+// unit receives exactly one target: default first, the table-item target
+// replaces it when the item is present, and portrait 9's item-0x5a target
+// replaces both. The original UI then asks the player to choose a character
+// and confirm; it does not expose a target-branch selector.
+func NativeClassChangeTarget(u *battle.Unit, t ClassChangeTable) (ClassChangeBranch, bool) {
 	if u == nil {
-		return nil
+		return ClassChangeBranch{}, false
 	}
 	row, ok := t.Current[u.Portrait]
 	if !ok {
-		return nil
+		return ClassChangeBranch{}, false
 	}
-	add := func(branch string, portrait, itemID, itemIndex int, out *[]ClassChangeBranch) {
+	resolve := func(branch string, portrait, itemID, itemIndex int) (ClassChangeBranch, bool) {
 		target, ok := t.Targets[portrait]
 		if !ok {
-			return
+			return ClassChangeBranch{}, false
 		}
-		*out = append(*out, ClassChangeBranch{Branch: branch, Portrait: target.Portrait, ClassID: target.ClassID, MobilityIncrement: target.MobilityIncrement, RequiredItemID: itemID, InventoryIndex: itemIndex})
+		return ClassChangeBranch{Branch: branch, Portrait: target.Portrait, ClassID: target.ClassID, MobilityIncrement: target.MobilityIncrement, RequiredItemID: itemID, InventoryIndex: itemIndex}, true
 	}
-	out := make([]ClassChangeBranch, 0, 3)
-	add("default", row.DefaultTarget, -1, -1, &out)
+	selected, ok := resolve("default", row.DefaultTarget, -1, -1)
+	if !ok {
+		return ClassChangeBranch{}, false
+	}
 	if row.OptionalTarget != nil {
 		if idx := inventoryIndex(u, row.ItemID); idx >= 0 {
-			add("optional", *row.OptionalTarget, row.ItemID, idx, &out)
+			if branch, found := resolve("optional", *row.OptionalTarget, row.ItemID, idx); found {
+				selected = branch
+			} else {
+				return ClassChangeBranch{}, false
+			}
 		}
 	}
 	if row.SpecialTarget != nil {
 		if idx := inventoryIndex(u, row.SpecialItem); idx >= 0 {
-			add("special", *row.SpecialTarget, row.SpecialItem, idx, &out)
+			if branch, found := resolve("special", *row.SpecialTarget, row.SpecialItem, idx); found {
+				selected = branch
+			} else {
+				return ClassChangeBranch{}, false
+			}
 		}
 	}
-	return out
+	return selected, true
 }
 
 // LoadClassChangeGrowth reads docs/data/exe_tables/growth.json. Rows 32..67

@@ -71,8 +71,9 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 仍 fail-closed。
 
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
-驗證 editable branch 的角色轉職、物品消耗與 `Escape → town_ch02`；原版 class-target renderer
-與 FD2.SAV 相容性仍 fail-closed。
+驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、
+左右 Yes/No 確認、角色轉職、物品消耗與 `Escape → town_ch02`；目前確認框只有狀態／輸入對齊，
+原版 indexed renderer 與 FD2.SAV 相容性仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
@@ -133,7 +134,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |
 | 最新 church class-change contract（source trace, 2026-07-27） | [`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
-| battle command／load／class UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) ![class targets](docs/figures/church-class-targets.png) |
+| battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 

@@ -45,26 +45,22 @@ func TestClassChangeTableSeparatesCurrentAndTargetIndexes(t *testing.T) {
 	}
 }
 
-func TestClassChangeTargetsUsesItemPresenceAndKeepsBranches(t *testing.T) {
+func TestNativeClassChangeTargetUsesOriginalOverwritePriority(t *testing.T) {
 	table := classChangeFixture(t)
 	u := &battle.Unit{Portrait: 9, Inventory: []int{0x5a, 0x58}}
-	got := ClassChangeTargets(u, table)
-	if len(got) != 3 {
-		t.Fatalf("targets=%+v, want default+optional+special", got)
+	got, ok := NativeClassChangeTarget(u, table)
+	if !ok || got.Branch != "special" || got.RequiredItemID != 0x5a || got.InventoryIndex != 0 || got.Portrait != 0x34 {
+		t.Fatalf("special override=%+v ok=%v", got, ok)
 	}
-	if got[0].Branch != "default" || got[0].RequiredItemID != -1 || got[0].InventoryIndex != -1 || got[0].Portrait != 0x29 {
-		t.Fatalf("default target=%+v", got[0])
+	u.Inventory = []int{0x58}
+	got, ok = NativeClassChangeTarget(u, table)
+	if !ok || got.Branch != "optional" || got.RequiredItemID != 0x58 || got.InventoryIndex != 0 || got.Portrait != 0x3b {
+		t.Fatalf("optional override=%+v ok=%v", got, ok)
 	}
-	if got[1].Branch != "optional" || got[1].RequiredItemID != 0x58 || got[1].InventoryIndex != 1 || got[1].Portrait != 0x3b {
-		t.Fatalf("optional target=%+v", got[1])
-	}
-	if got[2].Branch != "special" || got[2].RequiredItemID != 0x5a || got[2].InventoryIndex != 0 || got[2].Portrait != 0x34 {
-		t.Fatalf("special target=%+v", got[2])
-	}
-	u.Inventory = []int{0x5a}
-	got = ClassChangeTargets(u, table)
-	if len(got) != 2 || got[1].RequiredItemID != 0x5a {
-		t.Fatalf("without optional item targets=%+v", got)
+	u.Inventory = nil
+	got, ok = NativeClassChangeTarget(u, table)
+	if !ok || got.Branch != "default" || got.RequiredItemID != -1 || got.InventoryIndex != -1 || got.Portrait != 0x29 {
+		t.Fatalf("default target=%+v ok=%v", got, ok)
 	}
 }
 

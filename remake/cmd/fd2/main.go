@@ -92,7 +92,7 @@ type Game struct {
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
 	churchSel            int                 // church service menu cursor (0..3)
-	churchMode           string              // menu / transfer_source / transfer_item / transfer_dest / revive / class
+	churchMode           string              // menu / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
 	churchIDs            []int               // current church candidate ids
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
@@ -2727,6 +2727,13 @@ func (g *Game) campInput() bool {
 			return true
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if g.churchMode == "class_confirm" {
+				g.churchMode = "class"
+				g.churchBranches = nil
+				g.churchClassID = -1
+				g.churchSel = 0
+				return true
+			}
 			g.churchMode = "menu"
 			g.churchIDs = nil
 			g.churchBranches = nil
@@ -2734,32 +2741,45 @@ func (g *Game) campInput() bool {
 			g.churchSel = 0
 			return true
 		}
+		if g.churchMode == "class_confirm" {
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				g.churchSel = campaign.AdvanceNativeClassConfirmation(g.churchSel, -1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				g.churchSel = campaign.AdvanceNativeClassConfirmation(g.churchSel, 1)
+			}
+			if enter {
+				if g.churchSel == 0 {
+					g.applyChurchClassChange(0)
+				} else {
+					g.churchMode = "class"
+					g.churchBranches = nil
+					g.churchClassID = -1
+					g.churchSel = 0
+				}
+			}
+			return true
+		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.churchSel > 0 {
 			g.churchSel--
 		}
 		listLen := len(g.churchIDs)
-		if g.churchMode == "class_target" {
-			listLen = len(g.churchBranches)
-		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.churchSel+1 < listLen {
 			g.churchSel++
 		}
 		if enter && len(g.churchIDs) > 0 {
-			if g.churchMode == "class_target" {
-				g.applyChurchClassChange(g.churchSel)
-				return true
-			}
 			id := g.churchIDs[g.churchSel]
 			u := g.partyRoster[id]
 			if g.churchMode == "revive" {
 				g.reviveChurchUnit(id)
 			} else {
 				g.churchClassID = id
-				g.churchBranches = campaign.ClassChangeTargets(&u, g.classChangeTable)
-				if len(g.churchBranches) == 0 {
-					g.msg = "缺少可用的轉職分支資料"
+				target, ok := campaign.NativeClassChangeTarget(&u, g.classChangeTable)
+				if !ok {
+					g.msg = "缺少原版轉職目標資料"
 				} else {
-					g.churchMode = "class_target"
+					g.churchBranches = []campaign.ClassChangeBranch{target}
+					g.churchMode = "class_confirm"
 					g.churchSel = 0
 				}
 			}
@@ -2931,11 +2951,13 @@ func (g *Game) campInput() bool {
 }
 
 // applyChurchClassChange is the runtime seam for the native class-change
-// mutation. Candidate/branch data stays editable and unknown growth rows fail
+// mutation. 0x31793 preselects exactly one target per candidate; the branch
+// slice therefore contains one confirmation target, never a player menu.
+// Candidate/target data stays editable and unknown growth rows fail
 // closed before touching the persistent roster.
 func (g *Game) applyChurchClassChange(branchIndex int) bool {
 	if g.churchClassID < 0 || branchIndex < 0 || branchIndex >= len(g.churchBranches) {
-		g.msg = "缺少有效轉職分支"
+		g.msg = "缺少有效轉職目標"
 		return false
 	}
 	id := g.churchClassID
@@ -5515,42 +5537,51 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			g.font.Draw(screen, "←→±1／↑↓±2／Enter 確認／ESC 返回", 150, 330, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 		} else {
 			listLen := len(g.churchIDs)
-			if g.churchMode == "class_target" {
-				listLen = len(g.churchBranches)
+			if g.churchMode == "class_confirm" {
+				listLen = 2
 			}
-			h := 120 + float64(listLen)*26
+			visibleLen := listLen
+			if g.churchMode == "class" && visibleLen > 3 {
+				visibleLen = 3
+			}
+			h := 120 + float64(visibleLen)*26
 			fillBox(120, 90, 400, h)
 			title := "復活"
 			if g.churchMode == "class" {
 				title = "轉職"
-			} else if g.churchMode == "class_target" {
-				title = "選擇轉職分支"
+			} else if g.churchMode == "class_confirm" {
+				title = "確定要轉職嗎？"
 			}
 			g.font.Draw(screen, title, 150, 108, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
 			if listLen == 0 {
 				g.font.Draw(screen, "目前沒有符合條件的角色", 150, 150, 1.0, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
-			} else if g.churchMode == "class_target" {
-				for i, branch := range g.churchBranches {
+			} else if g.churchMode == "class_confirm" {
+				target := campaign.ClassChangeBranch{}
+				if len(g.churchBranches) == 1 {
+					target = g.churchBranches[0]
+				}
+				g.font.Draw(screen, fmt.Sprintf("目標：%s", campaign.ClassName(target.ClassID)), 150, 150, 1.0, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
+				for i, label := range []string{"是", "否"} {
 					pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 					if i == g.churchSel {
 						pre, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
 					}
-					label := "基本轉職"
-					if branch.Branch == "optional" {
-						label = fmt.Sprintf("道具 %02Xh", branch.RequiredItemID)
-					} else if branch.Branch == "special" {
-						label = fmt.Sprintf("特殊道具 %02Xh", branch.RequiredItemID)
-					}
-					g.font.Draw(screen, fmt.Sprintf("%s%s → portrait %02Xh / class %d", pre, label, branch.Portrait, branch.ClassID), 150, 150+float64(i)*26, 0.95, c)
+					g.font.Draw(screen, pre+label, 150+float64(i)*100, 180, 1.0, c)
 				}
 			} else {
-				for i, id := range g.churchIDs {
+				start, visible := 0, len(g.churchIDs)
+				if g.churchMode == "class" {
+					start, visible = campaign.NativeClassCandidateWindow(len(g.churchIDs), g.churchSel)
+				}
+				for row := 0; row < visible; row++ {
+					i := start + row
+					id := g.churchIDs[i]
 					pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 					if i == g.churchSel {
 						pre, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
 					}
 					u := g.partyRoster[id]
-					g.font.Draw(screen, fmt.Sprintf("%s%s Lv%d", pre, u.Name, u.Lv), 150, 150+float64(i)*26, 1.0, c)
+					g.font.Draw(screen, fmt.Sprintf("%s%s Lv%d", pre, u.Name, u.Lv), 150, 150+float64(row)*26, 1.0, c)
 				}
 			}
 			g.font.Draw(screen, "Enter 執行／ESC 返回服務選單", 150, 108+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})

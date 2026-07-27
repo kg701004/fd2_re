@@ -92,6 +92,38 @@ func TestClassChangeCandidatesMatchOriginal31793Predicate(t *testing.T) {
 	}
 }
 
+func TestNativeClassConfirmationUsesLeftRightWithoutWrap(t *testing.T) {
+	if got := AdvanceNativeClassConfirmation(1, -1); got != 0 {
+		t.Fatalf("left=%d want 0", got)
+	}
+	if got := AdvanceNativeClassConfirmation(0, 1); got != 1 {
+		t.Fatalf("right=%d want 1", got)
+	}
+	if got := AdvanceNativeClassConfirmation(1, 0); got != 1 {
+		t.Fatalf("no input=%d want 1", got)
+	}
+}
+
+func TestNativeClassCandidateWindowShowsThreeRowsAndScrolls(t *testing.T) {
+	tests := []struct {
+		count, selected int
+		start, visible  int
+	}{
+		{0, 0, 0, 0},
+		{2, 1, 0, 2},
+		{5, 0, 0, 3},
+		{5, 2, 0, 3},
+		{5, 3, 1, 3},
+		{5, 4, 2, 3},
+	}
+	for _, tt := range tests {
+		start, visible := NativeClassCandidateWindow(tt.count, tt.selected)
+		if start != tt.start || visible != tt.visible {
+			t.Fatalf("window(%d,%d)=(%d,%d), want (%d,%d)", tt.count, tt.selected, start, visible, tt.start, tt.visible)
+		}
+	}
+}
+
 func TestApplyClassChangeAddsGrowthAndConsumesItem(t *testing.T) {
 	u := &battle.Unit{Fig: 9, Portrait: 9, BattleFig: 9, MapSelectorKey: 9, HasMapSelectorKey: true, MapSelectorSlot: 3, HasMapSelectorSlot: true, ClassID: 5, NativeRecordRace: 1, HasNativeRecordRace: true, NativeRecordClass: 5, HasNativeRecordClass: true, Lv: 27, Exp: 73, AP: 99, DP: 88, DX: 77, MV: 5,
 		Inventory: []int{0x5a, 0x20}, Equipped: []bool{true, false}, InventorySlots: []int{0x5a, 0x20}}

@@ -22,11 +22,23 @@ func TestCampaignTownChurchClassChangeReturnTrace(t *testing.T) {
 		},
 	}
 	u := battle.Unit{Name: "悠妮", Portrait: 9, BattleFig: 9, ClassID: 5, Lv: 20, Exp: 31, AP: 20, DP: 18, DX: 12, MV: 5, Inventory: []int{0x5a}, Equipped: []bool{true}, InventorySlots: []int{0x5a}}
+	optionalTarget, specialTarget := 0x3b, 0x34
 	g := &Game{
-		camp:              campaign.NewRunner(c),
-		partyRoster:       map[int]battle.Unit{0: u},
-		partyMembers:      map[int]bool{0: true},
-		partyJoinOrder:    []int{0},
+		camp:           campaign.NewRunner(c),
+		partyRoster:    map[int]battle.Unit{0: u},
+		partyMembers:   map[int]bool{0: true},
+		partyJoinOrder: []int{0},
+		classChangeTable: campaign.ClassChangeTable{
+			Current: map[int]campaign.ClassChangeCurrent{9: {
+				Portrait: 9, DefaultTarget: 0x29, ItemID: 0x58,
+				OptionalTarget: &optionalTarget, SpecialItem: 0x5a, SpecialTarget: &specialTarget,
+			}},
+			Targets: map[int]campaign.ClassChangeTarget{
+				0x29: {Portrait: 0x29, ClassID: 13},
+				0x3b: {Portrait: 0x3b, ClassID: 22},
+				0x34: {Portrait: 0x34, ClassID: 21, MobilityIncrement: 2},
+			},
+		},
 		classChangeGrowth: map[int]campaign.ClassChangeGrowth{0x34: {AP: [2]int{10, 11}, DP: [2]int{20, 21}, DX: [2]int{30, 31}, HP: [2]int{40, 41}, MP: [2]int{50, 51}}},
 		rng:               rand.New(rand.NewSource(1)),
 	}
@@ -35,8 +47,12 @@ func TestCampaignTownChurchClassChangeReturnTrace(t *testing.T) {
 	if selected != 1 || !confirm || g.camp.Advance("opt1") != "church_ch02" {
 		t.Fatalf("town→church trace=(%d,%v,%q)", selected, confirm, g.camp.NodeID())
 	}
-	g.churchMode, g.churchClassID = "class_target", 0
-	g.churchBranches = []campaign.ClassChangeBranch{{Portrait: 0x34, ClassID: 21, MobilityIncrement: 2, InventoryIndex: 0}}
+	target, ok := campaign.NativeClassChangeTarget(&u, g.classChangeTable)
+	if !ok || target.Branch != "special" || target.Portrait != 0x34 {
+		t.Fatalf("native target priority=%+v ok=%v", target, ok)
+	}
+	g.churchMode, g.churchClassID = "class_confirm", 0
+	g.churchBranches = []campaign.ClassChangeBranch{target}
 	if !g.applyChurchClassChange(0) {
 		t.Fatalf("class change failed: msg=%q", g.msg)
 	}
