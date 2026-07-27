@@ -46,4 +46,8 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	if !g.drawNativeClassList(screen) {
 		t.Fatal("native class list unexpectedly fell back")
 	}
+	g.churchMode, g.churchClassID, g.churchSel = "class_confirm", 9, 0
+	if !g.drawNativeClassConfirmation(screen) {
+		t.Fatal("native class confirmation unexpectedly fell back")
+	}
 }

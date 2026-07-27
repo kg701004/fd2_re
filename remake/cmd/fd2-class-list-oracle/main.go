@@ -18,11 +18,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 5 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 output.png")
+	if len(os.Args) != 6 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 list.png confirm.png")
 		os.Exit(2)
 	}
-	fdotherPath, fdtxtPath, fdiconPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+	fdotherPath, fdtxtPath, fdiconPath := os.Args[1], os.Args[2], os.Args[3]
+	listOutputPath, confirmOutputPath := os.Args[4], os.Args[5]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -76,6 +77,20 @@ func main() {
 	if _, err := campaign.NativeClassListOpeningFrames(background, frame); err != nil {
 		fail(err)
 	}
+	cells, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+	if err != nil {
+		fail(err)
+	}
+	confirm, err := campaign.ComposeNativeClassConfirmationFrame(background, cells, strings, font, 10, 0, 1)
+	if err != nil {
+		fail(err)
+	}
+	if _, err := campaign.NativeClassConfirmationOpeningFrames(confirm, cells); err != nil {
+		fail(err)
+	}
+	if _, err := campaign.NativeClassConfirmationClosingFrames(confirm, cells); err != nil {
+		fail(err)
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		fail(err)
@@ -85,9 +100,14 @@ func main() {
 		fail(err)
 	}
 	palette[0] = color.NRGBA{A: 0xff}
+	writePNG(listOutputPath, frame, palette)
+	writePNG(confirmOutputPath, confirm, palette)
+}
+
+func writePNG(path string, pixels []byte, palette color.Palette) {
 	out := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
-	copy(out.Pix, frame)
-	file, err := os.Create(outputPath)
+	copy(out.Pix, pixels)
+	file, err := os.Create(path)
 	if err != nil {
 		fail(err)
 	}

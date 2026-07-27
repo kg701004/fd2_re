@@ -5487,6 +5487,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":
+		if g.drawNativeClassConfirmation(screen) {
+			return
+		}
 		if g.drawNativeClassList(screen) {
 			return
 		}

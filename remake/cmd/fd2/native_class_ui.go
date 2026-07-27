@@ -16,6 +16,7 @@ import (
 type nativeClassUIAssets struct {
 	background []byte
 	panel      fdother.LMI1Entry
+	choices    []fdother.RawCell
 	units      *fdicon.Bank
 	strings    *fdtxt.Strings
 	font       *fdtxt.Font
@@ -70,6 +71,10 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	if err != nil {
 		return nil, err
 	}
+	choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+	if err != nil {
+		return nil, err
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		return nil, err
@@ -81,7 +86,7 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	palette[0] = color.NRGBA{A: 0xff}
 	return &nativeClassUIAssets{
 		background: background, panel: entries[16], units: units,
-		strings: strings, font: font, palette: palette,
+		choices: choices, strings: strings, font: font, palette: palette,
 	}, nil
 }
 
@@ -123,11 +128,36 @@ func (g *Game) drawNativeClassList(screen *ebiten.Image) bool {
 	if err != nil {
 		return false
 	}
+	g.presentNativeClassFrame(screen, frame)
+	return true
+}
+
+func (g *Game) drawNativeClassConfirmation(screen *ebiten.Image) bool {
+	a := g.nativeClassUI
+	if a == nil || g.churchMode != "class_confirm" || g.churchClassID < 0 {
+		return false
+	}
+	unit, ok := g.partyRoster[g.churchClassID]
+	if !ok || unit.Portrait < 0 {
+		return false
+	}
+	frame, err := campaign.ComposeNativeClassConfirmationFrame(
+		a.background, a.choices, a.strings, a.font,
+		unit.Portrait+1, g.churchSel, 1,
+	)
+	if err != nil {
+		return false
+	}
+	g.presentNativeClassFrame(screen, frame)
+	return true
+}
+
+func (g *Game) presentNativeClassFrame(screen *ebiten.Image, frame []byte) {
+	a := g.nativeClassUI
 	paletted := image.NewPaletted(image.Rect(0, 0, 320, 200), a.palette)
 	copy(paletted.Pix, frame)
 	native := ebiten.NewImageFromImage(paletted)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(2, 2)
 	screen.DrawImage(native, op)
-	return true
 }

@@ -13,27 +13,33 @@ import (
 
 func nativeClassListStrings(t *testing.T) *fdtxt.Strings {
 	t.Helper()
-	const count = 594
+	const count = 595
 	offsetsBytes := count * 2
 	raw := make([]byte, offsetsBytes)
 	payload := make([]byte, 0, count*4)
 	for i := 0; i < count; i++ {
 		binary.LittleEndian.PutUint16(raw[i*2:], uint16(offsetsBytes+len(payload)))
-		word := uint16(0)
+		words := []uint16{0}
 		switch i {
 		case 1:
-			word = 1
+			words = []uint16{1}
 		case 150:
-			word = 2
+			words = []uint16{2}
 		case 151:
-			word = 3
+			words = []uint16{3}
 		case 593:
-			word = 4
+			words = []uint16{4}
+		case 594:
+			words = []uint16{0xfffc, 4}
 		}
-		var pair [4]byte
-		binary.LittleEndian.PutUint16(pair[:2], word)
-		binary.LittleEndian.PutUint16(pair[2:], fdtxt.StringEnd)
-		payload = append(payload, pair[:]...)
+		for _, word := range words {
+			var pair [2]byte
+			binary.LittleEndian.PutUint16(pair[:], word)
+			payload = append(payload, pair[:]...)
+		}
+		var end [2]byte
+		binary.LittleEndian.PutUint16(end[:], fdtxt.StringEnd)
+		payload = append(payload, end[:]...)
 	}
 	strings, err := fdtxt.Parse(append(raw, payload...))
 	if err != nil {
@@ -245,5 +251,33 @@ func TestNativeClassListComposesPlayerOriginalResources(t *testing.T) {
 	}
 	if len(frames) != 6 || frame[117*320+14] == background[117*320+14] {
 		t.Fatal("player original class-list composition produced no visible native row")
+	}
+	cells, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	question, err := ComposeNativeClassConfirmationFrame(background, cells, strings, font, 10, 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openConfirm, err := NativeClassConfirmationOpeningFrames(question, cells)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closeConfirm, err := NativeClassConfirmationClosingFrames(question, cells)
+	if err != nil {
+		t.Fatal(err)
+	}
+	questionChanged := false
+	for y := 119; y < 136 && !questionChanged; y++ {
+		for x := 12; x < 220; x++ {
+			if question[y*320+x] != background[y*320+x] {
+				questionChanged = true
+				break
+			}
+		}
+	}
+	if len(openConfirm) != 4 || len(closeConfirm) != 4 || !questionChanged {
+		t.Fatal("player original confirmation composition produced no visible native question")
 	}
 }
