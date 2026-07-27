@@ -848,12 +848,13 @@ their caller-owned list entries do not establish service names.
 record's eight inventory cells and retaining cells whose signed flag byte is
 non-negative. This includes both `0x40` equipped cells and `0x00` ordinary
 cells; only bit-7-set (`0x80`) reserved cells are excluded. It enters a
-second `0x2e0bd`/`0x2df6b` list, confirms through another selector, performs
-the caller's `0x2f4c6` indexed feedback and `0x2d516` amount path, then invokes
-the native item removal/recompute sequence. The `0x1bb8c` call and amount
-meaning are not independently named here; remake must not lower this branch
-to sell, donate, equip, or any other normalized service until that writer is
-closed.
+second `0x2e0bd`/`0x2df6b` list and then a destination roster selector.
+FDTXT510/511/512 are respectively「要給誰呢？」、「沒東西了！」、
+「誰的東西呢？」; together with the writer below this closes the service as
+item transfer. A previous document revision incorrectly attached `0x2f4c6`
+feedback and `0x2d516` amount handling to this caller; the complete `0x2f8ea`
+body calls neither function and performs no gold mutation, so that assertion
+is deleted.
 
 The writer is now closed at raw level: `0x1bb8c(destination,item)` scans the
 destination's eight two-byte cells, finds the first cell whose flag byte is
@@ -872,6 +873,18 @@ source eligibility uses constructor-derived raw flags when `inventory_slots`
 provenance is available; legacy JSON without that provenance retains a
 conservative projection and is not native parity. Malformed or missing raw
 provenance remains fail-closed for the native gate.
+
+The indexed runtime now follows the caller lifecycle rather than the earlier
+authored stack. Source and destination use the shared six-entry roster. The
+middle `0x2dc55(mode=1)` panel uses FDOTHER#14 entry16 and raw cell15; each
+visible item uses columns at x=`10/158`, rows y=`119+26r`, FDTXT `181+itemID`,
+category cells59/60/61, stat cells64..67 (or frame41), and a five-digit
+`(3*word[itemRow+19])>>2` field with digit base119. Its viewport is stateful
+and even, with six opening and five closing frames plus source restore.
+Escaping either the item or destination selector returns to the source roster;
+success and a full destination likewise return to the source loop, matching
+`0x2f8ea` rather than the former remake shortcut back to the church menu. The
+destination-full indexed message/animation remains the visual gap.
 
 The other raw branch, `0x2ffa5 → 0x17aed`, is a separate boundary. Direct
 instruction decoding fixes `0x17aed` as a one-argument function; an apparent

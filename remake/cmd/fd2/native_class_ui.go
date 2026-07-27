@@ -18,6 +18,7 @@ type nativeClassUIAssets struct {
 	background []byte
 	entries    []fdother.LMI1Entry
 	panel      fdother.LMI1Entry
+	priceCell  fdother.RawCell
 	choices    []fdother.RawCell
 	dialogue   []fdother.RawCell
 	digits     []fdother.Frame
@@ -54,6 +55,10 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	}
 	background := make([]byte, 320*200)
 	if err := backgroundFrame.BlitAt(background, 320, 0, -1); err != nil {
+		return nil, err
+	}
+	priceCell, err := fdother.ParseLMI1RawEntry(resource14, 15)
+	if err != nil {
 		return nil, err
 	}
 	textRaw, err := fdother.ReadResource(filepath.Join(base, "FDTXT.DAT"), 0)
@@ -115,7 +120,7 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	}
 	palette[0] = color.NRGBA{A: 0xff}
 	return &nativeClassUIAssets{
-		background: background, entries: entries, panel: entries[16], units: units,
+		background: background, entries: entries, panel: entries[16], priceCell: priceCell, units: units,
 		choices: choices, dialogue: dialogue, digits: digits, portrait: portraits[0],
 		strings: strings, font: font, palette: palette,
 	}, nil

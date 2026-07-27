@@ -7,7 +7,11 @@ import (
 
 func (g *Game) composeNativeChurchRosterFrame() ([]byte, bool) {
 	a := g.nativeClassUI
-	if a == nil || g.churchMode != "status_roster" || len(g.churchIDs) == 0 {
+	if a == nil ||
+		(g.churchMode != "status_roster" &&
+			g.churchMode != "transfer_source" &&
+			g.churchMode != "transfer_dest") ||
+		len(g.churchIDs) == 0 {
 		return nil, false
 	}
 	start, visible := campaign.NativeTwoColumnWindow(

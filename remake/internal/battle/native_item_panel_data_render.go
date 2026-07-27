@@ -233,7 +233,7 @@ func blitNativeItemPanelNumber(
 	if width == 2 && value > 99 {
 		return blitNativeItemPanelDigitFrame(frames, dst, destination, 93)
 	}
-	if width != 2 && width != 3 {
+	if width != 2 && width != 3 && width != 5 {
 		return fmt.Errorf("battle: native item panel number width %d is unsupported", width)
 	}
 	text := fmt.Sprintf("%0*d", width, value)

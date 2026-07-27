@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"os"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
@@ -19,12 +20,13 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 7 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT list.png confirm.png")
+	if len(os.Args) != 9 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, fdiconPath, datoPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
-	listOutputPath, confirmOutputPath := os.Args[5], os.Args[6]
+	itemRowsPath := os.Args[5]
+	listOutputPath, confirmOutputPath, transferOutputPath := os.Args[6], os.Args[7], os.Args[8]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -137,6 +139,27 @@ func main() {
 	if _, err := campaign.NativeClassListClosingFrames(source, dialogueBase); err != nil {
 		fail(err)
 	}
+	transfer := append([]byte(nil), source...)
+	if err := entries[16].BlitOpaqueAt(transfer, 320, 5, 112, false); err != nil {
+		fail(err)
+	}
+	itemAssets, err := battle.LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath)
+	if err != nil {
+		fail(err)
+	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(itemRowsPath)
+	if err != nil {
+		fail(err)
+	}
+	priceCell, err := fdother.ParseLMI1RawEntry(resource14, 15)
+	if err != nil {
+		fail(err)
+	}
+	if err := battle.RenderNativeTransferItemRows(
+		itemAssets, priceCell, []int{0, 79, 90}, 0, 1, itemRows, transfer,
+	); err != nil {
+		fail(err)
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		fail(err)
@@ -148,6 +171,7 @@ func main() {
 	palette[0] = color.NRGBA{A: 0xff}
 	writePNG(listOutputPath, frame, palette)
 	writePNG(confirmOutputPath, confirm, palette)
+	writePNG(transferOutputPath, transfer, palette)
 }
 
 func writePNG(path string, pixels []byte, palette color.Palette) {

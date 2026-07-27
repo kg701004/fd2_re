@@ -98,6 +98,7 @@ type Game struct {
 	churchStatusID       int                 // selected actor passed to 0x17aed
 	churchStatusPanel    []byte              // 0x17eef/0x17fc0 + 0x184c0(actor,-1)
 	churchCommandPanel   []byte              // 0x17eef/0x17fc0 + 0x1ceed(actor,-1)
+	churchItemStart      int                 // 0x2df6b even six-entry item viewport origin
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
 	churchTransferItems  []int               // compact source inventory indices
@@ -2378,6 +2379,7 @@ func (g *Game) setupChurch() {
 	g.churchTransferSource = -1
 	g.churchTransferItem = -1
 	g.churchTransferItems = nil
+	g.churchItemStart = 0
 	g.churchClassID = -1
 	g.churchStatusID = -1
 	g.churchStatusPanel = nil
@@ -2703,6 +2705,9 @@ func (g *Game) campInput() bool {
 						g.churchMode = "transfer_source"
 						g.churchIDs = g.churchTransferSourceIDs()
 						g.churchSel = 0
+						g.churchRosterStart = 0
+						g.nativeChurchTextIndex = 512
+						g.beginNativeChurchRosterOpening()
 					case 2, 3: // native 0x30dc3 revive / 0x31385 class-change services
 						g.churchMode = map[int]string{2: "revive", 3: "class"}[selected]
 						g.churchIDs = g.churchCandidates(g.churchMode)
@@ -2794,46 +2799,86 @@ func (g *Game) campInput() bool {
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
 				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, 2)
 			}
+			if g.churchMode == "transfer_item" {
+				g.churchItemStart, _ = campaign.NativeTwoColumnWindow(
+					listLen, g.churchSel, g.churchItemStart,
+				)
+			} else {
+				g.churchRosterStart, _ = campaign.NativeTwoColumnWindow(
+					listLen, g.churchSel, g.churchRosterStart,
+				)
+			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 				switch g.churchMode {
 				case "transfer_source":
-					g.returnToNativeChurchMenu()
+					if !g.beginNativeChurchRosterClosing(g.returnToNativeChurchMenu) {
+						g.returnToNativeChurchMenu()
+					}
 					return true
 				case "transfer_item":
-					g.churchMode = "transfer_source"
-					g.churchIDs = g.churchTransferSourceIDs()
+					if !g.beginNativeChurchTransferItemClosing(g.returnToNativeTransferSource) {
+						g.returnToNativeTransferSource()
+					}
+					return true
 				case "transfer_dest":
-					g.churchMode = "transfer_item"
-					g.churchTransferItems = g.churchTransferItemSlots(g.churchTransferSource)
+					if !g.beginNativeChurchRosterClosing(g.returnToNativeTransferSource) {
+						g.returnToNativeTransferSource()
+					}
+					return true
 				}
-				g.churchSel = 0
-				return true
 			}
 			if enter && listLen > 0 && g.churchSel < listLen {
 				switch g.churchMode {
 				case "transfer_source":
-					g.churchTransferSource = g.churchIDs[g.churchSel]
-					g.churchTransferItems = g.churchTransferItemSlots(g.churchTransferSource)
-					g.churchMode = "transfer_item"
-					g.churchSel = 0
-				case "transfer_item":
-					g.churchTransferItem = g.churchTransferItems[g.churchSel]
-					g.churchIDs = g.churchTransferDestinationIDs(g.churchTransferSource)
-					g.churchMode = "transfer_dest"
-					g.churchSel = 0
-				case "transfer_dest":
-					source := g.partyRoster[g.churchTransferSource]
-					itemID := source.Inventory[g.churchTransferItem]
-					destinationID := g.churchIDs[g.churchSel]
-					destination := g.partyRoster[destinationID]
-					if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
-						g.msg = err.Error()
-					} else {
-						g.partyRoster[g.churchTransferSource] = source
-						g.partyRoster[destinationID] = destination
-						g.msg = fmt.Sprintf("物品 %02Xh 已轉移", itemID)
+					sourceID := g.churchIDs[g.churchSel]
+					items := g.churchTransferItemSlots(sourceID)
+					if len(items) == 0 {
+						g.msg = "沒東西了！"
+						return true
 					}
-					g.returnToNativeChurchMenu()
+					openItems := func() {
+						g.churchTransferSource = sourceID
+						g.churchTransferItems = items
+						g.churchMode = "transfer_item"
+						g.churchSel = 0
+						g.churchItemStart = 0
+						g.beginNativeChurchTransferItemOpening()
+					}
+					if !g.beginNativeChurchRosterClosing(openItems) {
+						openItems()
+					}
+				case "transfer_item":
+					itemSlot := g.churchTransferItems[g.churchSel]
+					openDestinations := func() {
+						g.churchTransferItem = itemSlot
+						g.churchIDs = g.churchTransferDestinationIDs(g.churchTransferSource)
+						g.churchMode = "transfer_dest"
+						g.churchSel = 0
+						g.churchRosterStart = 0
+						g.nativeChurchTextIndex = 510
+						g.beginNativeChurchRosterOpening()
+					}
+					if !g.beginNativeChurchTransferItemClosing(openDestinations) {
+						openDestinations()
+					}
+				case "transfer_dest":
+					destinationID := g.churchIDs[g.churchSel]
+					apply := func() {
+						source := g.partyRoster[g.churchTransferSource]
+						itemID := source.Inventory[g.churchTransferItem]
+						destination := g.partyRoster[destinationID]
+						if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
+							g.msg = err.Error()
+						} else {
+							g.partyRoster[g.churchTransferSource] = source
+							g.partyRoster[destinationID] = destination
+							g.msg = fmt.Sprintf("物品 %02Xh 已轉移", itemID)
+						}
+						g.returnToNativeTransferSource()
+					}
+					if !g.beginNativeChurchRosterClosing(apply) {
+						apply()
+					}
 				}
 			}
 			return true
@@ -5624,6 +5669,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		if g.drawNativeChurchStatus(screen) {
 			return
 		}
+		if g.drawNativeChurchTransferItem(screen) {
+			return
+		}
 		if g.drawNativeChurchRoster(screen) {
 			return
 		}
@@ -5639,7 +5687,7 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		if g.churchMode == "menu" {
 			fillBox(150, 110, 340, 180)
 			g.font.Draw(screen, n.Text, 182, 126, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
-			labels := []string{"服務一（待 callee）", "物品轉移（raw mechanics）", "復活", "轉職"}
+			labels := []string{"角色資訊", "物品轉交", "復活", "轉職"}
 			for i, label := range labels {
 				pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 				if i == g.churchSel {

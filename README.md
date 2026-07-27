@@ -88,6 +88,12 @@ closing＋source restore。角色確認後的 `0x17aed` 唯讀流程亦已接：
 overlay，第二次按鍵再 12-close＋source restore 回名冊。command effect/target 執行與 FD2.SAV
 相容性仍 fail-closed。
 
+raw service 1 也已由文字與 writer dataflow 定名為物品轉交：FDTXT510/511/512 分別是
+「要給誰呢？」／「沒東西了！」／「誰的東西呢？」。來源、目的角色共用原版兩欄名冊；
+中間 `0x2dc55(mode=1)` 物品列表使用原版 item icon/name/stat、五位數 `3/4×row+19`
+欄位與 6-open/5-close。成功或目的物品欄已滿都回來源角色迴圈，不會錯誤跳回教會主選單；
+目的欄滿的 indexed message animation仍待接入。
+
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
 contract，不是 native `FD2.SAV` byte parity。
@@ -139,6 +145,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | action overlay 4-open / 4-close | ![native action overlay lifecycle](docs/figures/action-overlay-open-close-remake.png) |
 | 原版 indexed item panel（`0x17eef+0x17fc0+0x184c0`；Ebiten adapter oracle） | ![native item panel](docs/figures/item-panel-native-indexed.png) |
 | 原版 indexed status command/MP overlay（`0x17aed→0x1ceed`；原版資源 fixture，非 DOSBox 截圖） | ![native status command overlay](docs/figures/native-status-command-indexed.png) |
+| 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；原版資源 fixture，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
 | 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |

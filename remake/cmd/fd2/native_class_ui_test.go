@@ -17,6 +17,7 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		t.Skip("player-provided FDOTHER.DAT is absent")
 	}
 	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
+	t.Setenv("FD2_ORIGINAL_FDTXT", filepath.Join(base, "FDTXT.DAT"))
 	assets, err := loadNativeClassUIAssets()
 	if err != nil {
 		t.Fatal(err)
@@ -26,12 +27,19 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		nativeClassUI: assets,
 		churchMode:    "class",
 		churchIDs:     []int{9},
-		partyRoster: map[int]battle.Unit{9: {
-			Name: "悠妮", Portrait: 9, ClassID: 5,
-			NativeIdentity: 9, HasNativeIdentity: true,
-			MapSelectorKey: 9, HasMapSelectorKey: true,
-			Inventory: []int{0x5a},
-		}},
+		partyRoster: map[int]battle.Unit{
+			9: {
+				Name: "悠妮", Portrait: 9, ClassID: 5,
+				NativeIdentity: 9, HasNativeIdentity: true,
+				MapSelectorKey: 9, HasMapSelectorKey: true,
+				Inventory: []int{0x5a},
+			},
+			0: {
+				Name: "索爾", Portrait: 0, ClassID: 0,
+				NativeIdentity: 0, HasNativeIdentity: true,
+				MapSelectorKey: 0, HasMapSelectorKey: true,
+			},
+		},
 		classChangeTable: campaign.ClassChangeTable{
 			Current: map[int]campaign.ClassChangeCurrent{9: {
 				Portrait: 9, DefaultTarget: 0x29, SpecialItem: 0x5a, SpecialTarget: &special,
@@ -80,5 +88,20 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	if !g.beginNativeChurchRosterClosing(nil) || len(g.nativeClassUIJob.frames) != 5 ||
 		len(g.nativeClassUIJob.restore) != 320*200 {
 		t.Fatal("native five-frame church roster closing and source restore unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	g.churchMode, g.churchSel = "transfer_item", 0
+	g.churchTransferSource, g.churchTransferItems = 9, []int{0}
+	g.nativeChurchTextIndex = 512
+	if !g.drawNativeChurchTransferItem(screen) {
+		t.Fatal("native transfer item list unexpectedly fell back")
+	}
+	if !g.beginNativeChurchTransferItemOpening() || len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native transfer item six-frame opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchTransferItemClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native transfer item five-frame closing unexpectedly fell back")
 	}
 }
