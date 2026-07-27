@@ -219,6 +219,22 @@ func TestPlayerRunsRecoveredNativePrefixWithPlayerAssets(t *testing.T) {
 	if state, err := p.Advance(2000); err != nil || state != PlaybackBlocked || p.Blocked == nil || p.Blocked.Op != "native_text_branch_opaque" {
 		t.Fatalf("prefix gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
 	}
+	if p.Blocked.Source != "0x2be44" || !p.ResumeBlockedDialogue() {
+		t.Fatalf("first native text gate did not resume: %#v", p.Blocked)
+	}
+	if state, err := p.Advance(5000); err != nil || state != PlaybackBlocked ||
+		p.Blocked == nil || p.Blocked.Op != "native_text_branch_opaque" ||
+		p.Blocked.Source != "0x2bf1c" {
+		t.Fatalf("second text gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
+	if !p.ResumeBlockedDialogue() {
+		t.Fatal("second native text gate did not resume")
+	}
+	if state, err := p.Advance(7000); err != nil || state != PlaybackBlocked ||
+		p.Blocked == nil || p.Blocked.Op != "native_post_composite_opaque" ||
+		p.Blocked.Source != "0x2c172" {
+		t.Fatalf("post-composite gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
 }
 
 func TestBlockedDialogueSelectsOnlyNativeTextBranch(t *testing.T) {
@@ -239,6 +255,41 @@ func TestBlockedDialogueSelectsOnlyNativeTextBranch(t *testing.T) {
 	p.Blocked.Op = "native_text_branch_opaque"
 	if !p.ResumeBlockedDialogue() || p.State != PlaybackRunning || p.Blocked != nil || p.Segment != 1 {
 		t.Fatalf("text resume state=%s blocked=%#v segment=%d", p.State, p.Blocked, p.Segment)
+	}
+}
+
+func TestPlayerCanResumeTwoRecoveredNativeTextGates(t *testing.T) {
+	timeline := Timeline{Segments: []Segment{
+		{Op: "native_text_branch_opaque", Source: "first",
+			ElseDialogue: []DialogueBlock{{PortraitID: 37}}},
+		{Op: "native_text_branch_opaque", Source: "second",
+			ElseDialogue: []DialogueBlock{{PortraitID: 45}}},
+		{Op: "still_opaque", Source: "stop"},
+	}}
+	p, err := NewPlayer(timeline, nil, nil, NewIndexedCompositor())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state, err := p.Advance(0); err != nil || state != PlaybackBlocked ||
+		p.Blocked == nil || p.Blocked.Source != "first" {
+		t.Fatalf("first gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
+	if !p.ResumeBlockedDialogue() {
+		t.Fatal("first gate did not resume")
+	}
+	if state, err := p.Advance(0); err != nil || state != PlaybackBlocked ||
+		p.Blocked == nil || p.Blocked.Source != "second" {
+		t.Fatalf("second gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
+	if !p.ResumeBlockedDialogue() {
+		t.Fatal("second gate did not resume")
+	}
+	if state, err := p.Advance(0); err != nil || state != PlaybackBlocked ||
+		p.Blocked == nil || p.Blocked.Source != "stop" {
+		t.Fatalf("post-dialogue gate state=%s err=%v blocked=%#v", state, err, p.Blocked)
+	}
+	if p.ResumeBlockedDialogue() {
+		t.Fatal("unrecovered post-dialogue gate was skipped")
 	}
 }
 

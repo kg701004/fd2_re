@@ -4513,7 +4513,7 @@ func (g *Game) Update() error {
 		}
 		if len(g.dialog) > 0 && (inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)) {
 			if g.dlgAdvance() && len(g.dialog) == 0 {
-				g.nativeEnding.player.ResumeBlockedDialogue()
+				g.resumeNativeEndingDialogue()
 			}
 		}
 		if g.shotPath != "" && g.shotTaken {

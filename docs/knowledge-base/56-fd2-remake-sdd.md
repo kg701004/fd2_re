@@ -259,6 +259,18 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 2026-07-26 official IDA recheck further closes the `0x2c405 → 0x2c548` hand-off boundary. After the 500-pass phase-0 scroll, native code frees staging, allocates one `0x1f400` and two `0xfa00` buffers, loads `TAI.DAT` entry `3` and `FDOTHER.DAT` entry `0x38`, and blits the latter into the first indexed buffer before iterating party records from `[0x53bfb]-1`. This resource/buffer contract is now recorded in `assets/endings/native_2c548.json`/worklist; it does **not** authorize a PNG or generic-fade adapter. DATO/FIGANI scheduling, mirror branch, and the dedicated indexed renderer remain fail-closed.
 
+Runtime audit correction (2026-07-28): the prefix player already executes
+frame12..108 and both 40/200-pass compositors, but its preview adapter retained
+a single `queued` latch after the first `0x2c39b` block. That made the second
+text call at `0x2bf1c` unreachable despite the recovered Player state machine.
+The adapter now releases and resets the latch only after every page/line of the
+current block is acknowledged, so both chapter26/final branches run in native
+sequence. The preview also loads FDTXT resource31 and FDOTHER font resource4
+and enables the existing `0x2c405` bridge. A player-archive integration test
+now proves the complete recovered path stops at `0x2c548`, not the obsolete
+first-text or `0x2c172` gates. This still does not authorize the montage or a
+campaign terminal route.
+
 The same IDA pass closes the previously omitted `0x29164` mirror branch. When `unit[+6]==0`, the native path at `0x2927e..0x29357` retains the 9-pass `stage=8..0` and `stage*6` DAC cadence, but addresses the primary FIGANI frame at `staging+0x140-stage*10`; `arg4==0` gates the extra TAI#3 and secondary-FIGANI draws. This is now an explicit `mirror_branch` record in the editable montage schema with a loader regression. It remains evidence-only: no PNG approximation or runtime renderer permission follows from the transcription.
 
 `Montage.PlanMirrorFigureFade(unitSide,sideFlag)` exposes that schedule as a pure, testable plan (nine exact offsets and DAC deltas, with the `arg4==0` secondary/platform gate). The planner is deliberately not a pixel adapter and keeps the montage fail-closed.

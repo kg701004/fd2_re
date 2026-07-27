@@ -58,6 +58,33 @@ func newNativeEndingPreview() (*nativeEndingPreview, error) {
 	if err != nil {
 		return nil, err
 	}
+	phase0, err := ending.LoadFinalePhase(assetPath("assets/endings/native_2c405.json"))
+	if err != nil {
+		return nil, err
+	}
+	fdtxtPath := playerAssetPath("FD2_FDTXT", []string{
+		filepath.Join(filepath.Dir(fdotherPath), "FDTXT.DAT"),
+		"assets/FDTXT.DAT",
+		"../org_game/炎龍騎士團/FLAME2/FDTXT.DAT",
+		"org_game/炎龍騎士團/FLAME2/FDTXT.DAT",
+	})
+	if fdtxtPath == "" {
+		return nil, fmt.Errorf("ending: player-provided FDTXT.DAT is unavailable")
+	}
+	textResource, err := fdother.ReadResource(fdtxtPath, 31)
+	if err != nil {
+		return nil, err
+	}
+	fontResource, err := fdother.ReadResource(fdotherPath, 4)
+	if err != nil {
+		return nil, err
+	}
+	if err := player.EnableRecoveredPhase0(*phase0, ending.Phase0Assets{
+		TextResource: textResource,
+		FontResource: fontResource,
+	}); err != nil {
+		return nil, err
+	}
 	chapter := 29 // 0x2bce5 branches only on exact native chapter 26.
 	if raw := os.Getenv("FD2_ENDING_CHAPTER"); raw != "" {
 		value, err := strconv.Atoi(raw)
@@ -102,6 +129,19 @@ func (g *Game) queueNativeEndingDialogue() error {
 	g.dlgPage, g.dlgScrollT, g.dlgScrollFrom = 0, 0, 0
 	p.queued = true
 	return nil
+}
+
+// resumeNativeEndingDialogue releases exactly the text gate whose queued
+// lines have all been acknowledged. Resetting queued is required because
+// 0x2bce5 reaches a second, independently recovered 0x2c39b call later in the
+// same timeline.
+func (g *Game) resumeNativeEndingDialogue() bool {
+	p := g.nativeEnding
+	if p == nil || !p.queued || !p.player.ResumeBlockedDialogue() {
+		return false
+	}
+	p.queued = false
+	return true
 }
 
 func playerAssetPath(environment string, candidates []string) string {
