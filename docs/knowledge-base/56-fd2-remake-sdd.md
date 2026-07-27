@@ -909,10 +909,15 @@ restored at `(118,4)`.
 
 This pixel/palette sequence is now a monotonic indexed runtime timeline; its
 zero-duration final portrait restore must be presented before control returns.
-The two surrounding `sub_25977(17,1)` and `sub_25977(11,1)` calls are still
-partial: their PCM resource-bank provenance is not yet mapped to the remake's
-0–13 UI SFX files, so the runtime deliberately remains silent instead of
-playing guessed substitutes.
+The two surrounding calls are `sub_25977(17,1)` and
+`sub_25977(11,1)`. A subsequent instruction-level audit deletes the incorrect
+PCM/SFX interpretation: `0x25977(track, loop_count)` loads the track-indexed
+entry directly from FDMUS.DAT and passes its second argument to
+`AIL_set_sequence_loop_count`. The revive branch therefore starts FDMUS track
+17 once immediately before `0x2f4c6`, then starts track 11 once immediately
+after the final portrait restore. `playBGMCount` now preserves both one-shot
+transitions; it does not route them through the unrelated FDOTHER#31 UI SFX
+bank.
 
 The indexed runtime now follows the caller lifecycle rather than the earlier
 authored stack. Source and destination use the shared six-entry roster. The

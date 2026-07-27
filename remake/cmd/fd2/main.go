@@ -2916,7 +2916,23 @@ func (g *Game) campInput() bool {
 							return
 						}
 						g.reviveChurchUnit(g.churchReviveID)
-						if !g.beginNativeChurchReviveSuccess(g.returnToNativeReviveList) {
+						success := campaign.PlanNativeChurchReviveSuccess()
+						g.playBGMCount(
+							fmt.Sprintf("FDMUS_%03d", success.StartMusicTrack),
+							success.MusicLoopCount,
+						)
+						after := func() {
+							g.playBGMCount(
+								fmt.Sprintf("FDMUS_%03d", success.ReturnMusicTrack),
+								success.MusicLoopCount,
+							)
+							g.returnToNativeReviveList()
+						}
+						if !g.beginNativeChurchReviveSuccess(after) {
+							g.playBGMCount(
+								fmt.Sprintf("FDMUS_%03d", success.ReturnMusicTrack),
+								success.MusicLoopCount,
+							)
 							g.returnToNativeReviveList()
 						}
 					}

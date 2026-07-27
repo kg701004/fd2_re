@@ -1,5 +1,5 @@
 // audio.go — BGM 播放(doc 12):OGG(MT-32 預錄,assets/music/FDMUS_NNN.ogg,玩家自備原版轉出)。
-// 忠實 play_bgm(0x26777)語意:同曲不重播;換曲=釋放舊曲再播新曲(無限迴圈)。
+// 忠實 play_bgm(0x25977)語意:同曲不重播;換曲=釋放舊曲再依 Miles loop count 播放。
 package main
 
 import (
@@ -30,7 +30,17 @@ func musicPath(source, track string) string {
 // playBGM 播指定曲(如 "FDMUS_008");同曲不重播;檔案缺失/解碼失敗靜默略過。
 // FD2_MUTE=1 或截圖模式(headless 無音訊裝置)不播。
 func (g *Game) playBGM(track string) {
+	g.playBGMCount(track, 0)
+}
+
+// playBGMCount reproduces 0x25977(track, loopCount). Miles loop count zero is
+// indefinite; one plays the decoded sequence once. The native same-track
+// early return ignores a changed loop count, so bgmCur remains the sole gate.
+func (g *Game) playBGMCount(track string, loopCount int) {
 	if track == "" || track == g.bgmCur || os.Getenv("FD2_MUTE") != "" || g.shotPath != "" {
+		return
+	}
+	if loopCount < 0 || loopCount > 1 {
 		return
 	}
 	raw, err := os.ReadFile(musicPath(g.bgmSource, track))
@@ -44,7 +54,11 @@ func (g *Game) playBGM(track string) {
 	if err != nil {
 		return
 	}
-	p, err := audioCtx.NewPlayer(audio.NewInfiniteLoop(s, s.Length()))
+	var source io.Reader = s
+	if loopCount == 0 {
+		source = audio.NewInfiniteLoop(s, s.Length())
+	}
+	p, err := audioCtx.NewPlayer(source)
 	if err != nil {
 		return
 	}

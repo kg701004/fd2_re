@@ -11,7 +11,9 @@ import (
 
 func TestPlanNativeChurchReviveSuccessPreservesCase4Schedule(t *testing.T) {
 	plan := PlanNativeChurchReviveSuccess()
-	if plan.AnimationDelayBIOSTicks != 2 || plan.PaletteDelayMS != 4 ||
+	if plan.StartMusicTrack != 17 || plan.ReturnMusicTrack != 11 ||
+		plan.MusicLoopCount != 1 ||
+		plan.AnimationDelayBIOSTicks != 2 || plan.PaletteDelayMS != 4 ||
 		plan.RiseLatchBIOSTicks != 10 || plan.FallLatchBIOSTicks != 5 ||
 		len(plan.RisePaletteDeltas) != 32 || len(plan.FallPaletteDeltas) != 32 ||
 		plan.RisePaletteDeltas[0] != 0 || plan.RisePaletteDeltas[31] != 62 ||

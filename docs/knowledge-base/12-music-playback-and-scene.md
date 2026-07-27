@@ -44,22 +44,25 @@ AIL_map_sequence_channel(...)          聲道對映
 3. 從 FDMUS.DAT 取該場景對應曲 → AIL_init_sequence → AIL_start_sequence
 ```
 
-### `play_bgm(flag, track)` — 已反組譯(`0x25977`)
+### `play_bgm(track, loop_count)` — 已反組譯(`0x25977`)
 
 > 修正(第15輪):先前記錄的位址 `0x26777` 是誤植——實測該處是一段動畫幀計數器程式碼
 > (`inc byte ptr [ebx]` 一類),與音樂無關。`play_bgm` 真正位址是 **`0x25977`**
-> (與 doc23 §5 offset 總表一致),cdecl `push flag; push track; call 0x25977`,
-> track 取自 `[esp+8]`。已用 `tools/disasm_le.py dis 0x25977 60` 逐指令核對。
+> (與 doc23 §5 offset 總表一致)。2026-07-28 再以 official IDA + Docker
+> Capstone 修正舊參數命名：cdecl caller 是 `push loop_count; push track`;
+> 函式 `push ebx` 後的 `[esp+8]` 是第一參數 `track`，`[esp+0xc]` 是
+> `loop_count`，後者原樣傳給 `AIL_set_sequence_loop_count`。
 
 切場景換曲走同一個函式 `play_bgm`(`0x25977`):
 
 ```
-play_bgm(flag, track):
+play_bgm(track, loop_count):
     if track == 目前曲號 [0x1A11]:  直接 return(同曲不重播)
     [0x1A11] = track                 記錄目前曲號
     if track == -1 (0xFF):           停曲(釋放序列,call 0x3BBD4)
     else:                            釋放舊曲 → 從 FDMUS.DAT 載入第 track 個資源(call 0x11FBA)
                                      → AIL init + start sequence(handle [0x3BFF], buffer [0x3EE0])
+                                     → AIL_set_sequence_loop_count(loop_count)
 ```
 
 - **`[0x1A11]`**(linear `0x51a11`,obj2 data base `0x50000`)= 目前播放曲號(全域)。**`track = -1`** = 停止音樂(場景轉換常先停曲)。
@@ -79,7 +82,7 @@ play_bgm(flag, track):
 | 13 / 15 / 16 / 17 | 0x2E099 / 0x2E0E2 / 0x32344 / 0x31DF5 | 各特定場景 / 事件 |
 
 > ⚠ 定案(2026-07-03,推翻兩次舊推定):track 18 = **標題 / 開場曲**。反組譯 boot 0x025DB5 唯一
-> play_bgm(0,18) 在進標題 driver 前設定、全開場路徑不再換曲(bgm-title);使用者實聽確認=記憶中
+> play_bgm(18,0) 在進標題 driver 前設定、全開場路徑不再換曲(bgm-title);使用者實聽確認=記憶中
 > 「登登登登氣勢磅礡」那首。**2026-07-02 的「商店」與更早的「戰鬥」標記都是誤判**(商店=單聽檔案
 > 觀感非溯源、戰鬥=doc12 早期推定);remake 曾把 018 誤掛 30 個戰鬥節點,真戰鬥/商店曲另 RE
 > (章節曲表 0x51e63/0x51e81)。教訓:「推定場景」欄不可盡信,曲號→場景必須溯源到呼叫點,不能憑曲風印象。
@@ -101,7 +104,7 @@ play_bgm(flag, track):
 ```
 0x025db1  push    0
 0x025db3  push    0x12          ; track = 0x12 = 18
-0x025db5  call    0x25977       ; play_bgm(0, 18)
+0x025db5  call    0x25977       ; play_bgm(18, 0)
 0x025dba  add     esp, 8
 0x025dbd  call    0x25ebb       ; ← 緊接著進標題序列 + 新遊戲/讀檔分流
 ```
@@ -141,12 +144,12 @@ play_bgm(flag, track):
 序章借 `0x20`/`0x1f`)分支選圖,尾段:
 
 ```
-0x02c1ac  call 0x25977(1,-1)     ; 停曲
+0x02c1ac  call 0x25977(-1,1)     ; 停曲
 0x02c1c9..0x02c1e9  載入+blit 一張動態索引的 FDOTHER 圖
 0x02c1ec  call 0x1f525           ; 調色盤淡入
-0x02c1f5  call 0x25977(0,0x12)   ; ★ 起 track18 = FDMUS_018
+0x02c1f5  call 0x25977(0x12,0)   ; ★ 起 track18 = FDMUS_018
 ...(續畫兩張角色相關圖、跑一段陣列迴圈)...
-0x02c5cf  call 0x25977(0,4)      ; ★ 切換到 track4 = FDMUS_004
+0x02c5cf  call 0x25977(4,0)      ; ★ 切換到 track4 = FDMUS_004
 ```
 
 「停曲→淡入新圖→起曲」這個模式與 doc23 §2.4①(dosbox 實拍:紅閃光→『2』縮放定位→
@@ -210,12 +213,12 @@ logo 落地那一瞬的短促起手曲,隨後畫面接續(角色/城堡等更多
 兩處 `push 0;push 0xa;call 0x25977`(track=10 字面值):
 
 - **`linear 0x2cd34`**:前置 `push [0x53c03]; call 0x4e4b9` → `al=[eax]`(取「目前章節城鎮資料」)
-  → `call 0x1f882`(64-step palette fade-out，非 vsync)→ `play_bgm(0,10)`。與函式 `0x2d098`(下條)共用同一個
+  → `call 0x1f882`(64-step palette fade-out，非 vsync)→ `play_bgm(10,0)`。與函式 `0x2d098`(下條)共用同一個
   `0x4e4b9([0x53c03])` helper 開場,判斷是「進城鎮」的共用前置動作。
 - **`linear 0x2d2f9`**:在函式 `0x2d098`–`0x2d316`(依全域 `[0x412b]` 分支的場景轉場邏輯)尾端。
-  該函式一進入就 `play_bgm(0,-1)` 停曲,依 `[0x412b]` 值(0/4/3/預設)先暫放 track 13/11/15/14
+  該函式一進入就 `play_bgm(-1,0)` 停曲,依 `[0x412b]` 值(0/4/3/預設)先暫放 track 13/11/15/14
   其中一首、呼叫對應子場景載入函式(`0x2fc85`/`0x3072f`/`0x2e341`),**但除了 `[0x412b]==2` 這條
-  例外分支,其餘所有路徑最終都會再呼叫一次 `play_bgm(0,10)` 才 `ret`**,同時把 doc13 記錄的
+  例外分支,其餘所有路徑最終都會再呼叫一次 `play_bgm(10,0)` 才 `ret`**,同時把 doc13 記錄的
   「單位陣列 `[0x53a45]`」歸零(離開戰鬥狀態的訊號)。也就是說 13/11/15/14 只是這個轉場函式內部
   的過渡/中繼曲,**最終收斂的城鎮曲固定是 10**。
 - **商店是城鎮的子選單,不另開新曲**:doc13 記錄的「神秘商店方向鍵游標」判定碼在 `0x2dbf3`,

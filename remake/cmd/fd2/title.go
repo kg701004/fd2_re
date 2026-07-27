@@ -149,7 +149,7 @@ func (g *Game) titleUpdate() bool {
 		}
 		step := cutScript[g.cutIdx]
 		if g.cutIdx == 0 && g.cutFrame == 0 && g.cutTick == 0 {
-			g.playBGM("FDMUS_018") // 開場/標題曲(RE 確認:boot 0x025db5 play_bgm(0,18),doc12 §15)
+			g.playBGM("FDMUS_018") // 開場/標題曲(RE 確認:boot 0x025db5 play_bgm(18,0),doc12 §15)
 		}
 		// 按鍵跳過:該步 skippable 才可按任意鍵跳(原版旗標);ESC 一律跳整段(remake 便利)。
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||

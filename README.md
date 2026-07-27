@@ -75,8 +75,9 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 等待後再關對話框。FDTXT588 無候選與 FDTXT504 不足金的 indexed 開框／等待／關框
 均已接。成功分支的 `0x2f4c6` case4 亦已用 FDOTHER#14 entries23–31、
 九幀逐次疊圖、BIOS 2-tick cadence、DAC `0→62→0` 與 latch-relative waits
-接入 monotonic indexed timeline；`sub_25977(17/11)` 的原版 PCM bank 尚未閉合，
-因此不以現有 0–13 UI SFX 假冒。
+接入 monotonic indexed timeline。再次指令級核對亦撤回「17／11 是 SFX」的錯誤
+斷言：`0x25977(track,loop_count)` 是 FDMUS/AIl sequence helper，成功前後精確為
+`play_bgm(17,1)` 與 `play_bgm(11,1)`；runtime 已以一次播放模式切換兩首音樂。
 
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、

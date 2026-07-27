@@ -13,6 +13,9 @@ const nativeChurchReviveEffectOffset = 665747 - 655360
 // BIOS waits and millisecond DAC waits remain distinct because the original
 // uses 0x17aa9 for the former and delay(4) for the latter.
 type NativeChurchReviveSuccessPlan struct {
+	StartMusicTrack         int
+	ReturnMusicTrack        int
+	MusicLoopCount          int
 	AnimationDelayBIOSTicks int
 	RisePaletteDeltas       []int
 	PaletteDelayMS          int
@@ -31,6 +34,9 @@ func PlanNativeChurchReviveSuccess() NativeChurchReviveSuccessPlan {
 		fall = append(fall, delta)
 	}
 	return NativeChurchReviveSuccessPlan{
+		StartMusicTrack:         17,
+		ReturnMusicTrack:        11,
+		MusicLoopCount:          1,
 		AnimationDelayBIOSTicks: 2,
 		RisePaletteDeltas:       rise,
 		PaletteDelayMS:          4,
