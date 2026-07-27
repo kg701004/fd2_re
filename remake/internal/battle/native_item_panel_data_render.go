@@ -96,7 +96,7 @@ func RenderNativeItemPanelData(assets NativeItemPanelDataAssets, record, dst []b
 	}
 	for _, call := range plan.Text {
 		index := int(record[call.RecordOffset]) + call.FDTXTBase
-		if err := blitNativeItemPanelText(assets.Strings, assets.Font, staged, call.Destination, index); err != nil {
+		if err := blitNativeItemPanelText(assets.Strings, assets.Font, staged, call.Destination, index, 205); err != nil {
 			return err
 		}
 	}
@@ -106,6 +106,70 @@ func RenderNativeItemPanelData(assets NativeItemPanelDataAssets, record, dst []b
 	for _, call := range plan.FlagIcons {
 		if err := blitNativeItemPanelIcon(assets.RawCells, staged, call, record); err != nil {
 			return err
+		}
+	}
+	copy(dst, staged)
+	return nil
+}
+
+// RenderNativeItemPanelRows executes 0x184c0's compact two-column item list
+// over the completed 0x17eef/0x17fc0 panel. selectedRawSlot follows the
+// native raw inventory cell; layout compaction remains display-only.
+func RenderNativeItemPanelRows(
+	assets NativeItemPanelDataAssets,
+	record []byte,
+	selectedRawSlot int,
+	effectRows []byte,
+	dst []byte,
+) error {
+	if len(record) < nativeRecordSize || len(dst) != nativeItemPanelBytes {
+		return errors.New("battle: native item panel row inputs are invalid")
+	}
+	cells, err := NativeItemSelectorCells(record, 0, selectedRawSlot, effectRows)
+	if err != nil {
+		return err
+	}
+	staged := append([]byte(nil), dst...)
+	for _, cell := range cells {
+		category := NativeItemPanelPoint{X: cell.LabelX - 29, Y: cell.LabelY - 2}
+		if err := blitNativeItemPanelRawCell(
+			assets.RawCells, cell.CategoryIcon, staged,
+			category.Y*320+category.X,
+		); err != nil {
+			return err
+		}
+		foreground := byte(205)
+		if cell.Selected {
+			foreground = 201
+		}
+		if err := blitNativeItemPanelText(
+			assets.Strings, assets.Font, staged,
+			NativeItemPanelPoint{X: cell.LabelX, Y: cell.LabelY},
+			int(cell.ItemID)+181, foreground,
+		); err != nil {
+			return err
+		}
+		statPoint := NativeItemPanelPoint{X: cell.LabelX + 68, Y: cell.LabelY + 4}
+		if cell.StatIcon == 41 {
+			if err := blitNativeItemPanelDigitFrame(assets.Frames, staged, statPoint, 41); err != nil {
+				return err
+			}
+		} else {
+			if err := blitNativeItemPanelRawCell(
+				assets.RawCells, cell.StatIcon, staged,
+				statPoint.Y*320+statPoint.X,
+			); err != nil {
+				return err
+			}
+		}
+		if cell.HasStatValue {
+			if err := blitNativeItemPanelNumber(
+				assets.Frames, staged,
+				NativeItemPanelPoint{X: cell.LabelX + 93, Y: cell.LabelY + 4},
+				cell.StatValue, 42, 3,
+			); err != nil {
+				return err
+			}
 		}
 	}
 	copy(dst, staged)
@@ -206,12 +270,13 @@ func blitNativeItemPanelText(
 	dst []byte,
 	destination NativeItemPanelPoint,
 	index int,
+	foreground byte,
 ) error {
 	words, err := strings.Words(index)
 	if err != nil {
 		return fmt.Errorf("battle: native item panel text %d: %w", index, err)
 	}
-	style := fdtxt.NativeGlyphStyle{Foreground: 205, Shadow: 76}
+	style := fdtxt.NativeGlyphStyle{Foreground: foreground, Shadow: 76}
 	for i, word := range words {
 		if word >= fdtxt.ControlMin {
 			return fmt.Errorf("battle: native item panel text %d contains control %#x", index, word)
@@ -254,7 +319,11 @@ func LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath string) (NativeItemPan
 		RawCells: make(map[int]fdother.RawCell),
 		Frames:   make(map[int]fdother.Frame),
 	}
-	for _, index := range []int{23, 24, 25, 26, 27, 28, 29, 30, 53, 54, 55, 56, 57} {
+	for _, index := range []int{
+		23, 24, 25, 26, 27, 28, 29, 30,
+		53, 54, 55, 56, 57,
+		59, 60, 61, 62, 63, 64, 65, 66, 67,
+	} {
 		assets.RawCells[index], err = fdother.ParseLMI1RawEntry(raw, index)
 		if err != nil {
 			return NativeItemPanelDataAssets{}, fmt.Errorf("battle: native item panel raw cell %d: %w", index, err)

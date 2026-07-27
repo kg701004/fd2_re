@@ -11,7 +11,7 @@ import (
 
 func nativeItemPanelTestStrings(t *testing.T, word uint16) *fdtxt.Strings {
 	t.Helper()
-	const count = 151
+	const count = 220
 	data := make([]byte, count*2+count*4)
 	for index := 0; index < count; index++ {
 		offset := count*2 + index*4
@@ -29,7 +29,7 @@ func nativeItemPanelTestStrings(t *testing.T, word uint16) *fdtxt.Strings {
 func nativeItemPanelTestAssets(t *testing.T, textWord uint16) NativeItemPanelDataAssets {
 	t.Helper()
 	raw := make(map[int]fdother.RawCell)
-	for index := 0; index <= 60; index++ {
+	for index := 0; index <= 70; index++ {
 		raw[index] = fdother.RawCell{
 			Width: 1, Height: 1, Pixels: []byte{byte(index)},
 		}
@@ -116,6 +116,34 @@ func TestRenderNativeItemPanelDataFailsAtomicallyOnTextControl(t *testing.T) {
 	}
 }
 
+func TestRenderNativeItemPanelRowsMatches184C0GeometryAndSelection(t *testing.T) {
+	assets := nativeItemPanelTestAssets(t, 0)
+	record := make([]byte, nativeRecordSize)
+	for slot := 0; slot < 8; slot++ {
+		record[0x0a+slot*2] = 0x80
+	}
+	record[0x0a], record[0x0b] = 0, 0
+	effectRows := make([]byte, NativeItemEffectRowSize)
+	effectRows[0] = 0
+	binary.LittleEndian.PutUint16(effectRows[1:], 12)
+	dst := make([]byte, nativeItemPanelBytes)
+	if err := RenderNativeItemPanelRows(assets, record, 0, effectRows, dst); err != nil {
+		t.Fatal(err)
+	}
+	if dst[101*320+13] != 59 {
+		t.Fatalf("category icon=%d", dst[101*320+13])
+	}
+	if dst[103*320+42] != 201 {
+		t.Fatalf("selected item text=%d", dst[103*320+42])
+	}
+	if dst[107*320+110] != 64 {
+		t.Fatalf("stat icon=%d", dst[107*320+110])
+	}
+	if dst[107*320+135] != 42 || dst[107*320+141] != 43 || dst[107*320+147] != 44 {
+		t.Fatalf("stat number=%d/%d/%d", dst[107*320+135], dst[107*320+141], dst[107*320+147])
+	}
+}
+
 func TestNativeItemPanelBaseAndDataWithPlayerAssets(t *testing.T) {
 	const (
 		fdotherPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
@@ -129,11 +157,26 @@ func TestNativeItemPanelBaseAndDataWithPlayerAssets(t *testing.T) {
 	}
 	dst := make([]byte, nativeItemPanelBytes)
 	record := make([]byte, nativeRecordSize)
+	for slot := 0; slot < 8; slot++ {
+		record[0x0a+slot*2] = 0x80
+	}
+	record[0x0a], record[0x0b] = 0, 0
 	binary.LittleEndian.PutUint16(record[64:], 80)
 	binary.LittleEndian.PutUint16(record[66:], 100)
 	binary.LittleEndian.PutUint16(record[68:], 20)
 	binary.LittleEndian.PutUint16(record[70:], 40)
 	if err := RenderNativeItemPanelResources(fdotherPath, fdtxtPath, datoPath, record, dst); err != nil {
+		t.Fatal(err)
+	}
+	assets, err := LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemRows, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := RenderNativeItemPanelRows(assets, record, 0, itemRows, dst); err != nil {
 		t.Fatal(err)
 	}
 	nonzero := 0

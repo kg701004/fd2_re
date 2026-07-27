@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=404`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=441`、`[~]=96`、`[ ]=65`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -1037,7 +1037,18 @@
   整張 atomic commit，control word fail-closed；synthetic與玩家 archive
   regression通過。新增可重現工具 `cmd/fd2-item-panel-oracle` 與
   [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
-  Ebiten input/12-frame player仍待。
+  後續 Ebiten bridge見下一項。
+- [~] **UI-ITEM-PANEL-ROWS-EBITEN**：新增
+  `RenderNativeItemPanelRows` 完成 `0x184c0` category/stat icons、
+  FDTXT `itemID+181`、color201/205及stat number；oracle更新為有實際
+  item rows。`NativeItemPanelRecordForUnit` 僅在 raw `+6/+8`、
+  constructor、DATO與8格inventory provenance齊全時建立80-byte輸入。
+  `cmd/fd2` 已有 complete indexed image adapter、compact四方向input、
+  opening11→0與closing0→11；缺證據/archives才用legacy shell。
+  Docker/Xvfb玩家資產 regression走完整12+12幀。FDFIELD map roster的
+  raw `+6/+8`已同步，但正常campaign主角尚缺可驗證constructor/class-change
+  lifecycle，故實際流程仍fallback；Enter effect/target transaction也
+  fail-closed。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

@@ -155,6 +155,13 @@ type Game struct {
 	spellSel                 int
 	itemOpen                 bool // native 0x1b932 eight-slot selector; effect dispatch remains fail-closed
 	itemSel                  int
+	itemAnimStep             int
+	itemClosing              bool
+	nativeItemPanel          *ebiten.Image
+	nativeItemPanelBase      []byte
+	nativeItemPanelRecord    []byte
+	nativeItemPanelAssets    *battle.NativeItemPanelDataAssets
+	nativeItemEffectRows     []byte
 	castSp                   *battle.Spell // 施法目標選擇中
 	spells                   []battle.Spell
 	nativeCommandBook        []battle.NativeCommandRecord
@@ -2942,10 +2949,63 @@ func (g *Game) ringInput() bool {
 	if g.itemOpen {
 		if g.sel == nil {
 			g.itemOpen = false
+			g.clearNativeItemPanel()
 			return false
 		}
+		if g.stepNativeItemPanelAnimation() {
+			return true
+		}
 		if esc {
-			g.itemOpen, g.ring = false, true
+			g.beginNativeItemPanelClose()
+			return true
+		}
+		if g.nativeItemPanel != nil {
+			rawSlots := nativeItemRawSlots(g.sel)
+			if len(rawSlots) == 0 {
+				g.itemOpen, g.ring = false, true
+				g.clearNativeItemPanel()
+				return true
+			}
+			key := 0
+			switch {
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+				key = 72
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+				key = 80
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+				key = 75
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+				key = 77
+			}
+			if key != 0 {
+				selected, _, err := battle.AdvanceNativeItemSelector(g.itemSel, len(rawSlots), key, true, 1)
+				if err == nil && selected != g.itemSel {
+					g.itemSel = selected
+					g.refreshNativeItemPanel(g.sel)
+				}
+			}
+			if enter {
+				rawSlot := rawSlots[g.itemSel]
+				occupied, itemID := g.nativeItemMenuSlot(g.sel, rawSlot)
+				if !occupied {
+					g.msg = "空物品欄"
+					return true
+				}
+				row := itemID * battle.NativeItemEffectRowSize
+				if row < 0 || row+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
+					g.msg = "物品資料不完整"
+					return true
+				}
+				_, result, err := battle.AdvanceNativeItemSelector(
+					g.itemSel, len(rawSlots), 28, true,
+					g.nativeItemEffectRows[row+0x0d],
+				)
+				if err != nil || result != battle.NativeItemSelectorConfirm {
+					g.msg = "此物品不能在戰場使用"
+					return true
+				}
+				g.msg = fmt.Sprintf("物品 %02Xh：使用效果尚未驗證", itemID)
+			}
 			return true
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.itemSel > 0 {
@@ -3115,6 +3175,8 @@ func (g *Game) ringInput() bool {
 			}
 		case 2: // 物品(原版 0x1bbdc；完整 item action 仍 fail-closed)
 			g.ring, g.itemOpen, g.itemSel = false, true, 0
+			g.itemAnimStep, g.itemClosing = 0, false
+			g.prepareNativeItemPanel(g.sel)
 			g.msg = "物品：選擇欄位"
 		case 3: // 待機／格子互動(原版 0x13fd4→0x190ac)
 			g.finishSelectedWait()
@@ -4756,11 +4818,14 @@ func (g *Game) drawSpellMenu(screen *ebiten.Image) {
 	}
 }
 
-// drawItemMenu is the proven eight-slot item selector shell.  It deliberately
-// shows raw slot occupancy only; using an item remains blocked until 0x20c6f
-// effect/target dispatch is independently decoded.
+// drawItemMenu prefers the proven indexed native panel. The text shell below
+// is only a legacy/missing-original-assets fallback; using an item remains
+// blocked when its 0x20c6f effect/target transaction is unavailable.
 func (g *Game) drawItemMenu(screen *ebiten.Image) {
 	if !g.itemOpen || g.sel == nil || g.font == nil {
+		return
+	}
+	if g.drawNativeItemPanel(screen) {
 		return
 	}
 	box := ebiten.NewImage(250, 270)

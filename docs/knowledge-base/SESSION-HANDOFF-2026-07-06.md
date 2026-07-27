@@ -942,3 +942,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `cmd/fd2-item-panel-oracle` 產生
   [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
   尚未接 Ebiten item input與12-frame presentation。
+- 2026-07-27 item rows與Ebiten runtime closure：
+  `RenderNativeItemPanelRows` 完成 `0x184c0` compact rows之 raw/frame
+  icons、FDTXT `ID+181`、selected201/unselected205與stat values；
+  oracle PNG已更新有兩筆真實item rows。新增 strict
+  `NativeItemPanelRecordForUnit`，raw `+6/+8`、constructor、DATO與八格
+  inventory缺一即拒絕。`cmd/fd2` 現使用完整 indexed panel、
+  `AdvanceNativeItemSelector` compact四方向input，以及opening11→0/
+  closing0→11 clipped Ebiten player；缺archive/provenance才fallback。
+  Xvfb玩家archive test跑完整開關。後續實際資產audit發現正常campaign
+  主角沒有constructor provenance，因此目前正式流程仍fallback，不能把
+  oracle成功寫成runtime替換完成；FDFIELD map roster的raw `+6/+8` identity
+  已由同步工具補齊。下一步是閉合主角constructor/class-change lifecycle，
+  Enter effect transaction仍封閉。

@@ -15,11 +15,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 5 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-item-panel-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT output.png")
+	if len(os.Args) != 6 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-item-panel-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT native_item_effect_rows.json output.png")
 		os.Exit(2)
 	}
-	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+	fdotherPath, fdtxtPath, datoPath := os.Args[1], os.Args[2], os.Args[3]
+	itemRowsPath, outputPath := os.Args[4], os.Args[5]
 
 	record := make([]byte, 80)
 	record[7] = 0
@@ -28,6 +29,11 @@ func main() {
 	record[32] = 0
 	record[33] = 12
 	record[37] = 1
+	for slot := 0; slot < 8; slot++ {
+		record[0x0a+slot*2] = 0x80
+	}
+	record[0x0a], record[0x0b] = 0x40, 0
+	record[0x0c], record[0x0d] = 0, 79
 	binary.LittleEndian.PutUint16(record[62:], 345)
 	binary.LittleEndian.PutUint16(record[64:], 80)
 	binary.LittleEndian.PutUint16(record[66:], 100)
@@ -40,6 +46,20 @@ func main() {
 
 	pixels := make([]byte, 320*200)
 	if err := battle.RenderNativeItemPanelResources(fdotherPath, fdtxtPath, datoPath, record, pixels); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	assets, err := battle.LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(itemRowsPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := battle.RenderNativeItemPanelRows(assets, record, 0, itemRows, pixels); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

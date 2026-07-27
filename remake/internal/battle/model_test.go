@@ -84,7 +84,7 @@ func TestLoadKeepsBattleFigSeparateFromLegacyMapFig(t *testing.T) {
 func TestLoadPreservesNativeConstructorRawTable(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "units.json")
-	raw := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"portrait":68,"x":0,"y":0,"native_constructor":{"branch":"high_class","index":0,"record":[1,2,3,4,5,6,7,8,9,10]}}]}`
+	raw := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"mp":0,"fig":7,"portrait":68,"x":0,"y":0,"native_identity":68,"native_constructor":{"branch":"high_class","index":0,"record":[1,2,3,4,5,6,7,8,9,10]}}]}`
 	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -96,12 +96,26 @@ func TestLoadPreservesNativeConstructorRawTable(t *testing.T) {
 	if got == nil || got.Branch != "high_class" || got.Index != 0 || len(got.Record) != 10 || got.Record[0] != 1 || got.Record[9] != 10 {
 		t.Fatalf("native constructor=%#v", got)
 	}
+	if !st.Units[0].HasNativeIdentity || st.Units[0].NativeIdentity != 68 {
+		t.Fatalf("native identity=%d known=%v", st.Units[0].NativeIdentity, st.Units[0].HasNativeIdentity)
+	}
 	bad := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"native_constructor":{"branch":"high_class","index":0,"record":[1]}}]}`
 	if err := os.WriteFile(path, []byte(bad), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := Load(path); err == nil {
 		t.Fatal("malformed native constructor must fail closed")
+	}
+}
+
+func TestLoadRejectsNativeIdentityOutsideByte(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "units.json")
+	if err := os.WriteFile(path, []byte(`{"w":1,"h":1,"units":[{"camp":"own","hp":1,"native_identity":256}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Fatal("native identity outside byte must fail closed")
 	}
 }
 

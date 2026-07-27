@@ -3,15 +3,16 @@
 
 The editable map assets contain manual corrections which a full export_units.py
 regeneration must not overwrite.  FDFIELD construction at 0x10d7f..0x10efc
-does, however, close two fields for every scripted roster entry:
+does, however, close three fields for every scripted roster entry:
 
 * roster b0 -> 0x11019 raw key -> runtime unit+2 cache slot
-* roster b1 -> runtime unit+7 / unit+8 FIGANI selector
+* roster b0 -> runtime unit+6
+* roster b1 -> runtime unit+7 / unit+8 FIGANI selector and identity
 
 This tool preserves every existing asset field and updates only
-``map_selector_key`` and ``battle_fig``.  It refuses mismatched roster counts
-or conflicting existing values.  Use --check in regression verification; use
---write to make the mechanical update.
+the fields above. The optional native table input adds only the independently
+proven runtime ``+0x42`` word; it deliberately does not duplicate constructor
+tables into every unit asset.
 
 Optional constructor provenance can be synchronized without touching the
 normalized HP field:
@@ -32,7 +33,7 @@ import parse_field
 import export_units
 
 
-FIELDS = ("map_selector_key", "battle_fig")
+FIELDS = ("map_selector_key", "native_record_byte6", "battle_fig", "native_identity")
 
 
 def expected_units(raw, map_index, native_tables=None):
@@ -40,7 +41,9 @@ def expected_units(raw, map_index, native_tables=None):
     for unit in parse_field.parse_map(str(raw), map_index)["units"]:
         item = {
             "map_selector_key": unit["native_map_selector_key"],
+            "native_record_byte6": unit["native_record_byte6"],
             "battle_fig": unit["portrait"],
+            "native_identity": unit["portrait"],
         }
         if native_tables is not None:
             word42 = export_units.native_record_word42_for_portrait(
@@ -72,9 +75,9 @@ def sync_asset(raw, asset_path, write, native_tables=None):
     for index, (unit, native) in enumerate(zip(units, expected)):
         if not isinstance(unit, dict):
             raise ValueError(f"{asset_path}: unit {index} is not an object")
-        fields = FIELDS
-        if native_tables is not None and "native_record_word42" in native:
-            fields = FIELDS + ("native_record_word42",)
+        fields = list(FIELDS)
+        if "native_record_word42" in native:
+            fields.append("native_record_word42")
         for field in fields:
             current = unit.get(field)
             value = native[field]

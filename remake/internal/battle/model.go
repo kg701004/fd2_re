@@ -585,6 +585,7 @@ type unitsFile struct {
 		Portrait           int                     `json:"portrait"`
 		Fig                int                     `json:"fig"`
 		BattleFig          *int                    `json:"battle_fig,omitempty"`
+		NativeIdentity     *int                    `json:"native_identity,omitempty"`
 		MapSelectorSlot    *int                    `json:"map_selector_slot,omitempty"`
 		MapSelectorKey     *int                    `json:"map_selector_key,omitempty"`
 		NativeRecordByte5  *byte                   `json:"native_record_byte5,omitempty"`
@@ -660,6 +661,12 @@ func Load(path string) (*State, error) {
 		nu.BattleFig = u.Fig
 		if u.BattleFig != nil {
 			nu.BattleFig = *u.BattleFig
+		}
+		if u.NativeIdentity != nil {
+			if *u.NativeIdentity < 0 || *u.NativeIdentity > 0xff {
+				return nil, fmt.Errorf("battle: unit %d native_identity %d outside byte range", len(st.Units), *u.NativeIdentity)
+			}
+			nu.NativeIdentity, nu.HasNativeIdentity = *u.NativeIdentity, true
 		}
 		if u.MapSelectorSlot != nil {
 			nu.MapSelectorSlot, nu.HasMapSelectorSlot = *u.MapSelectorSlot, true
