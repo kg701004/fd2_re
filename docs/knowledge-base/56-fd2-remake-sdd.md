@@ -188,6 +188,13 @@ primitive，不是開放式腳本 expression language。ch15 handler JSON 尚未
 該檔案的 filesystem owner 不允許寫入，且 `[0x53a45]` persistent slot boundary 尚未閉合；
 因此現行 campaign 仍不會執行這個 branch。
 
+另新增 [`ch15_post_cfg.json`](../../remake/assets/cutscenes/handlers/ch15_post_cfg.json) 作為
+address-preserving candidate：它把 `0x23a9a` 的 `round>18 OR inactive_count>4` 與
+`0x23aad` 的 `else +0x42>=0x140` 寫成 nested editable CFG，並保留 dialog/acting/JOIN/
+set-chapter source addresses。這不是 active binding；camera raw `(22,25)` 的像素座標、96-slot
+runtime materialization 與 constructor input provenance 未閉合前，原始 `ch15_post.json` 與
+campaign node 都維持 fail-closed。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset
