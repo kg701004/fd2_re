@@ -1134,3 +1134,13 @@
   RNG、按type保留或compact移除來源，最後設raw `+5 bit7`並結束action。
   任一unit缺raw provenance即fail-closed；indexed effect presentation與
   types6/7/12/14–16/20–24 runtime接線仍待。
+- [x] **RE-COMMAND-DAMAGE-RNG-CORRECTION**：Docker Capstone直讀
+  `0x1c75e/0x1c81f`，確認`0x1c7ed`命中與`0x1c869`變異都呼
+  `0x4e893`；miss耗1 step、hit耗2 steps。刪除舊
+  `math/rand`替代，player command0與item types20/21/24改用同一
+  process-wide uint16 state，並補state-sequence regression。
+- [x] **REMAKE-ITEM-TARGETED-EFFECT-BATCH-2**：兩階段item target runtime
+  已新增types6/7 marker-clear+conditional HP、type12 HIT/EV、
+  types15/16 DP/AP、types14/22 marker application+damage，以及
+  types20/21/24 command damage。raw transient、HP、derived words、
+  retained/consumed inventory皆同步；indexed effect presentations仍待。

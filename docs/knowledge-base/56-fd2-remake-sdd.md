@@ -389,8 +389,9 @@ overlay 維持 partial。
 
 玩家 table 的 IDs0..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
 `record.u16[+0] * resist_raw[unit+0x20] / 10` 為 base；constructor `0x10f7f/0x11399` 直接把 source
-class byte 寫入 `unit+0x20`，故這是 target class-ID-indexed table，而非未明角色欄位。這些 handler 以 `record[+2]` 做 `rand()%100`
-命中門檻；命中才呼叫後者。`0x1c81f` 算 `damage = floor(base*0.9) + floor((rand()%100)*base/1000)`，
+class byte 寫入 `unit+0x20`，故這是 target class-ID-indexed table，而非未明角色欄位。這些 handler 先呼
+`0x4e893`，以 shared `uint16 state % 100 < record[+2]` 做命中門檻；命中才呼叫後者。`0x1c81f`
+再呼一次 `0x4e893`，算 `damage = floor(base*0.9) + floor((state%100)*base/1000)`，
 將 target `unit+0x40` 減去 damage，並 clamp 至 0，直接證實 `+0x40=current HP`、`+0x42=max HP`。
 IDA `word_51f96` 的 loaded-data file offset 正是既有 `0x51d96` 職業魔抗表：每 class 的 4-byte row
 低 byte 是 `resist_raw`（法師=7 即 30% magic resistance）。因此這個乘數的 raw ABI 與玩法名稱都已閉合，
@@ -1250,7 +1251,17 @@ inventory removal. Tracked type20 IDs11/56/60 select commands2/0/2, type21
 IDs29/38/51/99 select 6/1/7/6, and type24 ID79 selects command3.
 `NativeItemCommandDamageRoute` and `ApplyNativeItemCommandDamage` preserve
 the presentation distinction, retained-source, no-MP-debit and sequential
-target-damage contract without assigning item display names.
+target-damage contract without assigning item display names. A previous
+adapter incorrectly substituted Go `math/rand` for both calls. Direct
+Capstone at `0x1c7ed` and `0x1c869` proves both are `0x4e893`; the adapter,
+player command 0 runtime, and item types20/21/24 now consume the same
+process-lifetime `uint16` state (one step on miss, two on hit).
+
+The Ebiten item target transaction now also executes types6/7, 12, 14–16 and
+20/21/24. It synchronizes raw transient markers, HP, AP/DP/HIT/EV and compact
+inventory back to Units; retained-source families remain retained. This is a
+mutation/runtime closure only: each branch's indexed effect presentation is
+still pending and must not be represented as restored.
 
 The earlier attribution of a word subtract to `0x1cac7` was an address error:
 that arithmetic belongs to `0x1ca89`, the independently verified command MP

@@ -210,20 +210,25 @@ func (g *Game) applyNativeImmediateItem(rawSlot, itemID int) (bool, error) {
 	return true, nil
 }
 
-// beginNativeRestoreItem enters the recovered first-stage 0x14818 selector
-// only for the closed HP/MP restore families. The mutation remains deferred
-// until a concrete runtime unit passes both target-planner stages.
-func (g *Game) beginNativeRestoreItem(rawSlot, itemID int) (bool, error) {
+// beginNativeTargetItem enters the recovered first-stage 0x14818 selector
+// only for effect families with a closed raw transaction. The mutation stays
+// deferred until a concrete runtime unit passes both target-planner stages.
+func (g *Game) beginNativeTargetItem(rawSlot, itemID int) (bool, error) {
 	rowOffset, err := battle.NativeItemEffectRowOffset(itemID)
 	if err != nil || rowOffset+battle.NativeItemEffectRowSize > len(g.nativeItemEffectRows) {
 		return false, fmt.Errorf("native item row %d is unavailable", itemID)
 	}
 	row := g.nativeItemEffectRows[rowOffset : rowOffset+battle.NativeItemEffectRowSize]
 	amount := binary.LittleEndian.Uint16(row[0x0e:0x10])
-	if _, ok := battle.NativeItemHPRestoreRouteForType(row[0x0d], amount); !ok {
-		if _, ok := battle.NativeItemMPRestoreRouteForType(row[0x0d], amount); !ok {
-			return false, nil
-		}
+	_, hp := battle.NativeItemHPRestoreRouteForType(row[0x0d], amount)
+	_, mp := battle.NativeItemMPRestoreRouteForType(row[0x0d], amount)
+	_, markerClear := battle.NativeItemMarkerClearRestoreRouteForType(row[0x0d])
+	_, hitEV := battle.NativeItemHITEVStepRouteForType(row[0x0d])
+	_, apDP := battle.NativeItemAPDPStepRouteForType(row[0x0d])
+	_, markerApply := battle.NativeItemMarkerApplicationRouteForType(row[0x0d])
+	_, commandDamage := battle.NativeItemCommandDamageRouteForType(row[0x0d], amount)
+	if !hp && !mp && !markerClear && !hitEV && !apDP && !markerApply && !commandDamage {
+		return false, nil
 	}
 	if _, err := battle.NativeItemTargetPlanFromRow(row); err != nil {
 		return false, err
@@ -280,6 +285,11 @@ func nativeItemRuntimeRecords(units []*battle.Unit) ([]byte, error) {
 func syncNativeItemRuntimeRecord(unit *battle.Unit, record []byte) {
 	unit.HP = int(int16(binary.LittleEndian.Uint16(record[0x40:0x42])))
 	unit.MP = int(int16(binary.LittleEndian.Uint16(record[0x44:0x46])))
+	unit.AP = int(int16(binary.LittleEndian.Uint16(record[0x48:0x4a])))
+	unit.DP = int(int16(binary.LittleEndian.Uint16(record[0x4a:0x4c])))
+	unit.HIT = int(int16(binary.LittleEndian.Uint16(record[0x4c:0x4e])))
+	unit.EV = int(int16(binary.LittleEndian.Uint16(record[0x4e:0x50])))
+	copy(unit.NativeTransient[:], record[0x22:0x28])
 	unit.InventorySlots = make([]int, 8)
 	unit.NativeInventoryFlags = make([]int, 8)
 	unit.Inventory = unit.Inventory[:0]
@@ -294,9 +304,9 @@ func syncNativeItemRuntimeRecord(unit *battle.Unit, record []byte) {
 	}
 }
 
-// applyNativeRestoreItem commits types 5/11/13 using the original raw target
-// list order and the shared process-lifetime 16-bit RNG state.
-func (g *Game) applyNativeRestoreItem(confirmed *battle.Unit) (bool, error) {
+// applyNativeTargetItem commits the closed targeted families using original
+// raw target-list order and the shared process-lifetime 16-bit RNG state.
+func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 	if g == nil || g.st == nil || g.sel == nil || !g.nativeItemTargeting || confirmed == nil {
 		return false, nil
 	}
@@ -355,6 +365,54 @@ func (g *Game) applyNativeRestoreItem(confirmed *battle.Unit) (bool, error) {
 			return false, err
 		}
 		nextRNG = result.RNGState
+	} else if route, ok := battle.NativeItemMarkerClearRestoreRouteForType(row[0x0d]); ok {
+		_, state, _, err := battle.ApplyNativeItemMarkerClearRestore(
+			records, targetIndices, route, g.nativeRNGState,
+			sourceUnit, g.nativeItemTargetRawSlot,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = state
+	} else if route, ok := battle.NativeItemHITEVStepRouteForType(row[0x0d]); ok {
+		_, state, _, err := battle.ApplyNativeItemHITEVStep(
+			records, targetIndices, route, g.nativeRNGState,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = state
+	} else if route, ok := battle.NativeItemAPDPStepRouteForType(row[0x0d]); ok {
+		_, state, _, err := battle.ApplyNativeItemAPDPStep(
+			records, targetIndices, route, g.nativeRNGState,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = state
+	} else if route, ok := battle.NativeItemMarkerApplicationRouteForType(row[0x0d]); ok {
+		_, state, _, err := battle.ApplyNativeItemMarkerApplication(
+			records, targetIndices, route, g.nativeRNGState,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = state
+	} else if route, ok := battle.NativeItemCommandDamageRouteForType(row[0x0d], amount); ok {
+		_, state, err := battle.ApplyNativeItemCommandDamage(
+			targets, route, g.nativeCommandBook,
+			g.nativeCommandResistances, g.nativeRNGState,
+		)
+		if err != nil {
+			return false, err
+		}
+		nextRNG = state
+		for index, unit := range g.st.Units {
+			binary.LittleEndian.PutUint16(
+				records[index*80+0x40:index*80+0x42],
+				uint16(int16(unit.HP)),
+			)
+		}
 	} else {
 		return false, nil
 	}

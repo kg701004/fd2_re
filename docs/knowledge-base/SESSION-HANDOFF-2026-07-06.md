@@ -977,3 +977,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   records、按target list推進RNG、同步HP/MP與compact inventory，最後設
   raw `+5 bit7`並結束action。缺任何raw record即拒絕；effect renderer
   與其餘typed item families仍未接。
+- 2026-07-27 targeted item batch 2與command RNG correction：types6/7、
+  12、14–16、20/21/24已接同一兩階段target runtime，保存marker
+  clear/application、conditional HP、AP/DP/HIT/EV、retained/consumed
+  source與raw Unit同步。接type20/21/24前重讀`0x1c75e/0x1c81f`，
+  發現舊`NativeCommandDamage`錯用Go math/rand；Capstone證實
+  `0x1c7ed`及`0x1c869`皆call `0x4e893`。現player command0及item
+  command damage共用process-wide uint16 state（miss 1 step/hit 2）。
+  indexed effect presentation仍未接。

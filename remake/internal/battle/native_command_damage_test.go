@@ -1,47 +1,36 @@
 package battle
 
 import (
-	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 func TestResolveNativeCommandDamageMatchesRecoveredFormula(t *testing.T) {
-	rng := rand.New(rand.NewSource(7))
-	// Mirror the two draws explicitly so this checks integer order, not merely a
-	// possible range.  50 * 7 / 10 = 35 before the 90..99.9% variance.
-	wantRNG := rand.New(rand.NewSource(7))
-	if got := wantRNG.Intn(100); got >= 100 {
-		t.Fatal("impossible deterministic hit roll")
-	}
+	first := fdother.NativeRNGStep(7)
+	second := fdother.NativeRNGStep(first)
 	base := 50 * 7 / 10
-	want := base*9/10 + wantRNG.Intn(100)*base/1000
-	got, err := ResolveNativeCommandDamage(50, 100, 7, rng)
-	if err != nil || !got.Hit || got.Damage != want {
-		t.Fatalf("got %+v err=%v, want hit damage=%d", got, err, want)
+	want := base*9/10 + int(second%100)*base/1000
+	got, state, err := ResolveNativeCommandDamage(50, 100, 7, 7)
+	if err != nil || !got.Hit || got.Damage != want || state != second {
+		t.Fatalf("got %+v state=%#x err=%v, want hit damage=%d state=%#x", got, state, err, want, second)
 	}
 }
 
 func TestNativeCommandDamageMissDoesNotConsumeVarianceOrMutate(t *testing.T) {
-	rng := rand.New(rand.NewSource(1))
 	target := &Unit{HP: 40, MaxHP: 40}
-	got, err := ApplyNativeCommandDamage(target, 50, 0, 10, rng)
-	if err != nil || got.Hit || got.Damage != 0 || target.HP != 40 {
-		t.Fatalf("got=%+v hp=%d err=%v", got, target.HP, err)
-	}
-	// 0x1c75e returns before the variance draw on a miss.
-	wantRNG := rand.New(rand.NewSource(1))
-	wantRNG.Intn(100) // hit-roll consumed by the miss
-	want := wantRNG.Intn(100)
-	if next := rng.Intn(100); next != want {
-		t.Fatalf("miss consumed unexpected variance draw: next=%d want=%d", next, want)
+	got, state, err := ApplyNativeCommandDamage(target, 50, 0, 10, 1)
+	if err != nil || got.Hit || got.Damage != 0 || target.HP != 40 ||
+		state != fdother.NativeRNGStep(1) {
+		t.Fatalf("got=%+v state=%#x hp=%d err=%v", got, state, target.HP, err)
 	}
 }
 
 func TestApplyNativeCommandDamageClampsHP(t *testing.T) {
 	target := &Unit{HP: 1, MaxHP: 100}
-	got, err := ApplyNativeCommandDamage(target, 100, 100, 10, rand.New(rand.NewSource(2)))
+	got, _, err := ApplyNativeCommandDamage(target, 100, 100, 10, 2)
 	if err != nil || !got.Hit || got.Damage < 90 || got.Damage > 99 || target.HP != 0 {
 		t.Fatalf("got=%+v hp=%d err=%v", got, target.HP, err)
 	}

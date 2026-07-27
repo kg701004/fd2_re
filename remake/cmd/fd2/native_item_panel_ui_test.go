@@ -193,7 +193,7 @@ func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	targeting, err := g.beginNativeRestoreItem(0, 192)
+	targeting, err := g.beginNativeTargetItem(0, 192)
 	if err != nil || !targeting || !g.nativeItemTargeting || g.itemOpen {
 		t.Fatalf("targeting=%v state=%v itemOpen=%v err=%v", targeting, g.nativeItemTargeting, g.itemOpen, err)
 	}
@@ -205,7 +205,7 @@ func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *test
 	if !foundTarget {
 		t.Fatalf("native item selection candidates=%v", candidates)
 	}
-	applied, err := g.applyNativeRestoreItem(target)
+	applied, err := g.applyNativeTargetItem(target)
 	if err != nil || !applied {
 		t.Fatalf("applied=%v err=%v", applied, err)
 	}
@@ -216,5 +216,179 @@ func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *test
 		!actor.Acted || actor.NativeRecordByte5&0x80 == 0 ||
 		g.sel != nil || g.nativeItemTargeting {
 		t.Fatalf("native HP transaction actor=%#v targetHP=%d rng=%#x game=%#v", actor, target.HP, g.nativeRNGState, g)
+	}
+}
+
+func TestNativeMarkerClearTargetTransactionSyncsTransientAndRNG(t *testing.T) {
+	actor := nativeItemPanelTestUnit()
+	actor.X, actor.Y, actor.OnField = 1, 1, true
+	actor.NativeRecordByte5, actor.HasNativeRecordByte5 = 0, true
+	actor.Inventory = []int{196}
+	actor.Equipped = []bool{false}
+	actor.InventorySlots = []int{196, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	actor.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+
+	target := nativeItemPanelTestUnit()
+	target.X, target.Y, target.OnField = 1, 2, true
+	target.NativeIdentity = 1
+	target.NativeRecordByte5, target.HasNativeRecordByte5 = 0, true
+	target.HP, target.MaxHP = 20, 100
+	target.NativeTransient[3] = 4 // raw record +0x25, type-6 marker
+
+	g := &Game{
+		st: &battle.State{
+			W: 3, H: 3, Units: []*battle.Unit{actor, target},
+			NativeTargetFlags: make([]byte, 9),
+		},
+		sel: actor, moved: true, itemOpen: true,
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if targeting, err := g.beginNativeTargetItem(0, 196); err != nil || !targeting {
+		t.Fatalf("targeting=%v err=%v", targeting, err)
+	}
+	if applied, err := g.applyNativeTargetItem(target); err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	wantState := fdother.NativeRNGStep(0)
+	if target.NativeTransient[3] != 0 || target.HP != 29 ||
+		g.nativeRNGState != wantState || len(actor.Inventory) != 0 ||
+		!actor.Acted || actor.NativeRecordByte5&0x80 == 0 {
+		t.Fatalf("marker-clear actor=%#v target=%#v rng=%#x", actor, target, g.nativeRNGState)
+	}
+}
+
+func TestNativeRetainedStatItemsSyncDerivedWordsAndMarkers(t *testing.T) {
+	for _, tc := range []struct {
+		itemID                  int
+		marker                  int
+		wantAP, wantHIT, wantEV int
+	}{
+		{itemID: 210, marker: 2, wantAP: 123, wantHIT: 91, wantEV: 69},
+		{itemID: 214, marker: 0, wantAP: 142, wantHIT: 76, wantEV: 54},
+	} {
+		unit := nativeItemPanelTestUnit()
+		unit.X, unit.Y, unit.OnField = 1, 1, true
+		unit.NativeRecordByte5, unit.HasNativeRecordByte5 = 0, true
+		unit.Inventory = []int{tc.itemID}
+		unit.Equipped = []bool{false}
+		unit.InventorySlots = []int{tc.itemID, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+		unit.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+		unit.NativeTransient[tc.marker] = 0
+		g := &Game{
+			st: &battle.State{
+				W: 3, H: 3, Units: []*battle.Unit{unit},
+				NativeTargetFlags: make([]byte, 9),
+			},
+			sel: unit, moved: true, itemOpen: true,
+		}
+		var err error
+		g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if targeting, err := g.beginNativeTargetItem(0, tc.itemID); err != nil || !targeting {
+			t.Fatalf("item %d targeting=%v err=%v", tc.itemID, targeting, err)
+		}
+		if applied, err := g.applyNativeTargetItem(unit); err != nil || !applied {
+			t.Fatalf("item %d applied=%v err=%v", tc.itemID, applied, err)
+		}
+		if unit.AP != tc.wantAP || unit.HIT != tc.wantHIT || unit.EV != tc.wantEV ||
+			unit.NativeTransient[tc.marker] < 2 || unit.NativeTransient[tc.marker] > 5 ||
+			g.nativeRNGState != fdother.NativeRNGStep(0) ||
+			len(unit.Inventory) != 1 || unit.Inventory[0] != tc.itemID {
+			t.Fatalf("item %d unit=%#v rng=%#x", tc.itemID, unit, g.nativeRNGState)
+		}
+	}
+}
+
+func TestNativeRetainedMarkerApplicationSyncsDamageAndThreeRNGSteps(t *testing.T) {
+	actor := nativeItemPanelTestUnit()
+	actor.X, actor.Y, actor.OnField, actor.Camp = 1, 1, true, battle.Own
+	actor.NativeRecordByte5, actor.HasNativeRecordByte5 = 0, true
+	actor.Inventory = []int{212}
+	actor.Equipped = []bool{false}
+	actor.InventorySlots = []int{212, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	actor.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+
+	target := nativeItemPanelTestUnit()
+	target.X, target.Y, target.OnField, target.Camp = 1, 2, true, battle.Enemy
+	target.NativeIdentity = 1
+	target.NativeRecordByte5, target.HasNativeRecordByte5 = 0, true
+	target.HP, target.MaxHP = 50, 100
+	target.NativeTransient[4] = 0 // type-14 raw marker +0x26
+
+	g := &Game{
+		st: &battle.State{
+			W: 3, H: 3, Units: []*battle.Unit{actor, target},
+			NativeTargetFlags: make([]byte, 9),
+		},
+		sel: actor, moved: true, itemOpen: true,
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if targeting, err := g.beginNativeTargetItem(0, 212); err != nil || !targeting {
+		t.Fatalf("targeting=%v err=%v", targeting, err)
+	}
+	if applied, err := g.applyNativeTargetItem(target); err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	state := fdother.NativeRNGStep(fdother.NativeRNGStep(fdother.NativeRNGStep(0)))
+	if target.HP != 41 || target.NativeTransient[4] < 2 || target.NativeTransient[4] > 5 ||
+		g.nativeRNGState != state || len(actor.Inventory) != 1 ||
+		actor.Inventory[0] != 212 || !actor.Acted {
+		t.Fatalf("marker application actor=%#v target=%#v rng=%#x", actor, target, g.nativeRNGState)
+	}
+}
+
+func TestNativeCommandDamageItemUsesSharedUint16RNGAndRetainsSource(t *testing.T) {
+	actor := nativeItemPanelTestUnit()
+	actor.X, actor.Y, actor.OnField, actor.Camp = 0, 0, true, battle.Own
+	actor.NativeRecordByte5, actor.HasNativeRecordByte5 = 0, true
+	actor.Inventory = []int{56}
+	actor.Equipped = []bool{false}
+	actor.InventorySlots = []int{56, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	actor.NativeInventoryFlags = []int{0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+
+	target := nativeItemPanelTestUnit()
+	target.X, target.Y, target.OnField, target.Camp = 1, 0, true, battle.Enemy
+	target.NativeIdentity, target.ClassID = 1, 1
+	target.NativeRecordByte5, target.HasNativeRecordByte5 = 0, true
+	target.HP, target.MaxHP = 200, 200
+	book := make([]battle.NativeCommandRecord, battle.NativeCommandRecordCount)
+	for id := range book {
+		book[id].ID = id
+	}
+	book[0] = battle.NativeCommandRecord{ID: 0, Damage: 100, Hit: 100}
+	g := &Game{
+		st: &battle.State{
+			W: 2, H: 1, Units: []*battle.Unit{actor, target},
+			NativeTargetFlags: make([]byte, 2),
+		},
+		sel: actor, moved: true, itemOpen: true,
+		nativeCommandBook:        book,
+		nativeCommandResistances: map[int]int{1: 10},
+	}
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if targeting, err := g.beginNativeTargetItem(0, 56); err != nil || !targeting {
+		t.Fatalf("targeting=%v err=%v", targeting, err)
+	}
+	if applied, err := g.applyNativeTargetItem(target); err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	state := fdother.NativeRNGStep(fdother.NativeRNGStep(0))
+	if target.HP >= 200 || g.nativeRNGState != state ||
+		len(actor.Inventory) != 1 || actor.Inventory[0] != 56 || !actor.Acted {
+		t.Fatalf("command item actor=%#v target=%#v rng=%#x", actor, target, g.nativeRNGState)
 	}
 }

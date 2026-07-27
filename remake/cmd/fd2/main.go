@@ -3021,7 +3021,7 @@ func (g *Game) ringInput() bool {
 					g.msg = fmt.Sprintf("物品 %02Xh：原始效果完成", itemID)
 					return true
 				}
-				if targeting, targetErr := g.beginNativeRestoreItem(rawSlot, itemID); targetErr != nil {
+				if targeting, targetErr := g.beginNativeTargetItem(rawSlot, itemID); targetErr != nil {
 					g.msg = fmt.Sprintf("物品 %02Xh：%v", itemID, targetErr)
 					return true
 				} else if targeting {
@@ -3745,7 +3745,7 @@ func (g *Game) confirm() {
 	}
 	if g.nativeItemTargeting {
 		tgt := g.st.UnitAt(g.curX, g.curY)
-		applied, err := g.applyNativeRestoreItem(tgt)
+		applied, err := g.applyNativeTargetItem(tgt)
 		if err != nil {
 			g.msg = fmt.Sprintf("物品 %02Xh：%v", g.nativeItemTargetID, err)
 			return
@@ -3764,8 +3764,11 @@ func (g *Game) confirm() {
 		var damageTargets []*battle.Unit
 		switch {
 		case id == 0:
-			results, e := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.rng)
+			results, state, e := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.nativeRNGState)
 			err = e
+			if e == nil {
+				g.nativeRNGState = state
+			}
 			hit, total := 0, 0
 			for _, result := range results {
 				if result.Hit {

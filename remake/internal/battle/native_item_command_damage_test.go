@@ -1,9 +1,6 @@
 package battle
 
-import (
-	"math/rand"
-	"testing"
-)
+import "testing"
 
 func TestNativeType21ReusesCommandDamageWithoutConsumingSource(t *testing.T) {
 	route, ok := NativeItemCommandDamageRouteForType(21, 6)
@@ -16,7 +13,7 @@ func TestNativeType21ReusesCommandDamageWithoutConsumingSource(t *testing.T) {
 	}
 	book[6] = NativeCommandRecord{ID: 6, Damage: 100, Hit: 100}
 	targets := []*Unit{{ClassID: 3, HP: 200, MaxHP: 200}, {ClassID: 3, HP: 200, MaxHP: 200}}
-	results, err := ApplyNativeItemCommandDamage(targets, route, book, map[int]int{3: 10}, rand.New(rand.NewSource(1)))
+	results, _, err := ApplyNativeItemCommandDamage(targets, route, book, map[int]int{3: 10}, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,9 +39,9 @@ func TestNativeType21PreflightsAllTargets(t *testing.T) {
 	}
 	book[1] = NativeCommandRecord{ID: 1, Damage: 100, Hit: 100}
 	first := &Unit{ClassID: 3, HP: 200, MaxHP: 200}
-	if _, err := ApplyNativeItemCommandDamage(
+	if _, _, err := ApplyNativeItemCommandDamage(
 		[]*Unit{first, {ClassID: 4, HP: 200, MaxHP: 200}},
-		route, book, map[int]int{3: 10}, rand.New(rand.NewSource(1)),
+		route, book, map[int]int{3: 10}, 1,
 	); err == nil {
 		t.Fatal("missing resistance unexpectedly accepted")
 	}
