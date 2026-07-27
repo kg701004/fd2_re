@@ -117,6 +117,8 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 22 個 unbound postbattle 另有 generated binding skeleton（全節點共 24 個，含 2 個 active handler 的對照檔），
 但未經 override/compile gate 不算 active handler。
 工具不會依章號自動套劇本，避免把 pre/post/分支 scene 誤接。
+逐項缺口可用唯讀 `python3 tools/audit_postbattle_binding_gates.py` 檢查；目前 22 個仍是
+blocked，另 2 個 mapping-complete 只列 review candidate，絕不自動寫回 `handler_binding`。
 
 同輪亦固定 `0x24618` indexed transition 的 raw buffer 邊界：staging offset `32904`、stride `456`、
 viewport `312×192`，以及 `0x11EB0` 複製到 320-byte VGA stride 的契約；descriptor 解碼與 indexed compositor
