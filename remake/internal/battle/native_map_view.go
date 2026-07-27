@@ -5,6 +5,9 @@ import "fmt"
 const (
 	nativeMapViewWidth  = 13
 	nativeMapViewHeight = 8
+	// Non-constant writers zero-extend a record byte and add two.  Together
+	// with literal 0/1/6 writers this bounds the observed dword selector.
+	nativeMapOverlaySelectorMax = 0x101
 )
 
 // NativeMapViewState owns camera [0x53aa9/0x53aad], absolute cursor
@@ -42,12 +45,20 @@ func (s *State) MaterializeNativeMapViewState(view NativeMapViewState) error {
 }
 
 func (s *State) MaterializeNativeMapRangeMode(mode int) bool {
-	if s == nil || mode < 0 || mode > 5 {
+	if s == nil || mode < 0 || mode > nativeMapOverlaySelectorMax {
 		return false
 	}
 	s.NativeMapRangeMode = mode
 	s.HasNativeMapRangeModeState = true
 	return true
+}
+
+// NativeMapOverlaySelectorFromRecordByte preserves the recurring writer
+// dword_51A83 = recordByte + 2 at 0x15140, 0x153b1, 0x1bd14 and 0x1d188.
+// Values above six are meaningful to target validation even though 0x122dc
+// has no drawing branch for them.
+func NativeMapOverlaySelectorFromRecordByte(recordByte byte) int {
+	return int(recordByte) + 2
 }
 
 // MoveNativeMapCursor reproduces the four helpers at 0x11b48..0x11cac.

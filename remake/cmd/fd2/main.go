@@ -1863,8 +1863,9 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 		g.loadErr = "native map runtime view: " + err.Error()
 		return false
 	}
-	if view.RangeMode == nil || !g.st.MaterializeNativeMapRangeMode(*view.RangeMode) {
-		g.loadErr = "native map runtime range mode is outside raw bounds"
+	if view.RangeMode == nil || *view.RangeMode != 0 ||
+		!g.st.MaterializeNativeMapRangeMode(*view.RangeMode) {
+		g.loadErr = "native map campaign bootstrap selector is not the verified zero"
 		g.st.HasNativeMapViewState = false
 		return false
 	}
@@ -4637,8 +4638,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawPhaseBanner(screen) // 回合橫幅(PLAYER/ENEMY PHASE,transient)
 	}
 	// A complete original indexed frame supersedes the normalized map/unit/HUD
-	// layers only in the raw neutral range-mode state. Command/target modes keep
-	// the playable renderer until their [0x51a83] writers are materialized.
+	// layers only at raw selector zero. [0x51a83] is not a small command/target
+	// enum: record-byte+2 writers can exceed six and target validation consumes
+	// those values even when 0x122dc draws no overlay. Keep the playable
+	// renderer until that complete interactive lifecycle is materialized.
 	if !legacyViewport && campaignBattleView && g.sel == nil &&
 		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
 		nativeMapPresented = g.drawNativeMapFrame(screen)

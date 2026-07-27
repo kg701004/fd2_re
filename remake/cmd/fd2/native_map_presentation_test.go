@@ -140,3 +140,25 @@ func TestGameRejectsInvalidEditableNativeMapRuntime(t *testing.T) {
 		t.Fatalf("invalid native runtime was not rejected: err=%q state=%+v", g.loadErr, g.st)
 	}
 }
+
+func TestGameRejectsRuntimeSelectorAsCampaignBootstrap(t *testing.T) {
+	rangeMode := 11
+	g := &Game{
+		m:  &MapData{W: 24, H: 24, TileW: 24, TileH: 24},
+		st: &battle.State{W: 24, H: 24},
+	}
+	n := &campaign.Node{
+		NativeMapView: &campaign.NativeMapViewConfig{
+			CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
+			VisibleCursorX: 7, VisibleCursorY: 4,
+			RangeMode: &rangeMode,
+		},
+		NativeMapHUD: &campaign.NativeMapHUDConfig{
+			DisplayGateA: 1, DisplayGateB: 1, AnchorX: 1,
+		},
+	}
+	if g.materializeNativeMapRuntime(n) || g.loadErr == "" ||
+		g.st.HasNativeMapRangeModeState {
+		t.Fatalf("runtime-owned selector was accepted as campaign bootstrap: err=%q state=%+v", g.loadErr, g.st)
+	}
+}

@@ -42,8 +42,13 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
 ## 2. spell_id 實際流向(釐清「那 id 是拿去做什麼」)
 
 - **target/geometry**:`0x149f8` 沿格步進、篩選 unit index；其 selector 對 spell family 的完整對照仍待 RE。傷害/命中資料流不可由此函式單獨宣稱。
-- **戰鬥訊息**:`[0x51a83] = weapon_or_spell_type + 2`(`0x015139`/`0x0153aa`/`0x01d181` 等處一致寫法)→ 訊息索引,
-  供 `0x12d7b`/`0x12cea` 印出戰鬥log文字(「OO 使用 XX 之術」),**與 FIGANI 無關**,純文字系統。
+- **overlay／target selector（2026-07-28 撤回舊斷言）**：
+  `[0x51a83] = command_record.range + 2`（`0x015140`／`0x0153b1`／
+  `0x01bd14`／`0x01d188`）。它不是訊息索引；`0x122dc` 依值1..5
+  直接畫固定 overlay descriptors，值6改 FDFIELD byte，而
+  `0x115b6` 對大於1的值以 `selector-1` 送入 target legality。
+  `0x12d7b→0x12cea` 是把游標移到 unit/cell 的 camera-pan helper，
+  並沒有印「使用 XX 之術」。舊「戰鬥訊息／純文字系統」說法已刪除。
 - 兩者都不產生任何額外的 FIGANI 載入。
 
 ## 3. `0x2a6bd` 的已知邊界（避免後續誤用）

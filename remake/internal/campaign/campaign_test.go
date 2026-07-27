@@ -103,6 +103,7 @@ func TestNativeMapRuntimeRequiresCompleteRawState(t *testing.T) {
 		"hud only":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
 		"bad gate":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":0},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
 		"missing range mode": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"runtime selector":   `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":11},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "invalid-native-map.json")

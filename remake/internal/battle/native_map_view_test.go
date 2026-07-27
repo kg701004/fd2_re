@@ -68,13 +68,21 @@ func TestNativeMapCursorFieldEdgeIsValidNoMove(t *testing.T) {
 	}
 }
 
-func TestNativeMapRangeModeRequiresExplicitRawBounds(t *testing.T) {
+func TestNativeMapRangeModePreservesFullRawSelectorBounds(t *testing.T) {
 	st := &State{}
 	if !st.MaterializeNativeMapRangeMode(0) ||
 		!st.HasNativeMapRangeModeState || st.NativeMapRangeMode != 0 {
 		t.Fatal("raw bootstrap range mode rejected")
 	}
-	if st.MaterializeNativeMapRangeMode(6) || st.NativeMapRangeMode != 0 {
+	for _, mode := range []int{6, 7, 9, 11, 0x101} {
+		if !st.MaterializeNativeMapRangeMode(mode) || st.NativeMapRangeMode != mode {
+			t.Fatalf("verified raw selector %d rejected", mode)
+		}
+	}
+	if got := NativeMapOverlaySelectorFromRecordByte(9); got != 11 {
+		t.Fatalf("record byte 9 selector=%d, want 11", got)
+	}
+	if st.MaterializeNativeMapRangeMode(0x102) || st.NativeMapRangeMode != 0x101 {
 		t.Fatal("out-of-range mode changed materialized state")
 	}
 }

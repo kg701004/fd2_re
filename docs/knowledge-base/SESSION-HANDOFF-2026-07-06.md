@@ -1102,7 +1102,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `buildNativeMapFrameInput`現原子化結合original banks、raw map cells、
   selector cache、unit/foreground roster、selected LUT及所有已物化
   cycles/flips；editable control bytes與FDSHAP不一致即拒絕。
-  tile-space camera、range mode0..5、cursor、HUD input仍須caller明示，
+  tile-space camera、compositor可畫的selector0..5、cursor、HUD input
+  仍須caller明示；這不是battle raw dword的完整domain，
   不從現行640×400 camera或normalized highlight猜值。這使下一個工作
   明確收斂到native camera/HUD/monotonic clock runtime，而非繼續堆
   disconnected compositor primitives。
@@ -1142,5 +1143,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x1297d`及terrain/binary latches，保留signed-low-word wrap。
   `ParseVGAPalette`不再錯把DAC index0全域透明；完整VGA palette全opaque，
   只有zero-source透明blitter自行clone alpha0。artifact：
-  `docs/figures/native-map-ch01-remake.png`。command/target range writers與
-  原版cursor artwork仍未閉合，不宣稱完整battle UI parity。
+  `docs/figures/native-map-ch01-remake.png`。nonzero overlay/selection
+  selector lifecycle與原版cursor artwork仍未閉合，不宣稱完整battle UI parity。
+- 2026-07-28 `[0x51a83]` domain correction：合法 IDA 9.4 完整
+  data xrefs 保存為`docs/data/ida/fd2_51a83_xrefs.txt`。撤回舊
+  `0..5` bound、`flagA`與doc37「戰鬥訊息索引」斷言。完整xref後逐一
+  用Capstone核對variable writers：非零來源是zero-extended
+  command/item record byte `+2`，其餘eax/esi writers在控制流上均為0；
+  原表range 5/7/9
+  實際產生selector 7/9/11。`0x122dc`對>6 no-draw，不代表無作用：
+  `0x115b6`仍把selector-1送入`0x14742` target legality。
+  battle state改保留observed `0..0x101` domain；campaign bootstrap
+  仍只接受已證實0。後續須接完整互動lifecycle，不能把它降成renderer enum。

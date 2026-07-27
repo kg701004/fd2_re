@@ -457,9 +457,11 @@ type State struct {
 	HasNativeMapHUDState  bool
 	NativeMapViewState    NativeMapViewState
 	HasNativeMapViewState bool
-	// NativeMapRangeMode is raw [0x51a83]. It is materialized separately from
-	// normalized selection/reach state; the verified process/battle bootstrap
-	// is zero, while interactive writers remain a separate UI bridge.
+	// NativeMapRangeMode is raw [0x51a83]. Despite the retained field name it
+	// is an overlay/selection selector, not a bounded GUI range enum:
+	// 0x122dc draws only 1..5 and mutates the field for 6, while 0x115b6 still
+	// consumes values above 6 in target validation. The verified bootstrap is
+	// zero; interactive lifecycle ownership remains a separate UI bridge.
 	NativeMapRangeMode         int
 	HasNativeMapRangeModeState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which

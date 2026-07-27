@@ -445,8 +445,10 @@ func Load(path string) (*Campaign, error) {
 		}
 		if n.NativeMapView != nil {
 			mode := n.NativeMapView.RangeMode
-			if mode == nil || *mode < 0 || *mode > 5 {
-				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 必須是明示的 0..5", id)
+			// Campaign JSON owns only the verified battle bootstrap. Runtime
+			// command/item writers subsequently own nonzero [0x51a83].
+			if mode == nil || *mode != 0 {
+				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 目前只允許已證實的 bootstrap 0", id)
 			}
 		}
 		if n.NativeMapHUD != nil {
