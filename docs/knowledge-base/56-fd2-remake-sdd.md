@@ -148,8 +148,10 @@ regression；`postbattle_ch15_persist` 不得重用 `ch14_post`，因其原生 `
 
 同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫
 special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49 操作 slot65；之後掃
-slots66..73，只有 inactive 計數大於4才走後續 branch。現有條件模型只有 `any_unit_inactive`，不能
-把「count > 4」降成 any／roster_has，因此這段仍保持 raw handler evidence，不接入 campaign runtime。
+slots66..73；inactive 計數大於4、raw global `[0x53bef] > 18`，或 record word `+0x42 >= 0x140`
+會分別影響後續 dialog/acting/join branch。現有條件模型沒有 count/比較運算，也沒有這些 raw
+來源的 runtime contract，不能把它降成 any／roster_has，因此這段仍保持 raw handler evidence，
+不接入 campaign runtime。
 
 ### UI restoration execution plan（2026-07-27）
 
