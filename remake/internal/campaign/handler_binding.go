@@ -19,8 +19,12 @@ type HandlerBinding struct {
 	ActingResources  string                            `json:"acting_resources,omitempty"`
 	StoryIndexMap    string                            `json:"story_index_map,omitempty"`
 	DialogueContexts map[string]HandlerDialogueContext `json:"dialogue_contexts,omitempty"`
-	RuntimeContext   *HandlerRuntimeContext            `json:"runtime_context,omitempty"`
-	Overrides        map[string]HandlerBindingOverride `json:"overrides"`
+	// DialogueOverrides are keyed by "source_addr#text_index".  Native
+	// handlers sometimes reuse one call site for mutually exclusive FDTXT
+	// indices; an address-only context cannot represent that branch safely.
+	DialogueOverrides map[string]HandlerDialog          `json:"dialogue_overrides,omitempty"`
+	RuntimeContext    *HandlerRuntimeContext            `json:"runtime_context,omitempty"`
+	Overrides         map[string]HandlerBindingOverride `json:"overrides"`
 
 	storyIndex *StoryIndexMap
 	acting     map[int][]ActingFrame
@@ -118,6 +122,11 @@ func LoadHandlerBinding(path string) (*HandlerBinding, error) {
 		}
 		if binding.storyIndex == nil {
 			return nil, fmt.Errorf("handler binding %q dialogue context %q lacks story_index_map", path, addr)
+		}
+	}
+	for key, dialog := range binding.DialogueOverrides {
+		if key == "" || (len(dialog.Segments) == 0 && len(dialog.Lines) == 0 && dialog.Script == "" && dialog.SceneIndex == nil) {
+			return nil, fmt.Errorf("handler binding %q has invalid dialogue override at %q", path, key)
 		}
 	}
 	for addr, override := range binding.Overrides {
@@ -236,6 +245,9 @@ func (binding *HandlerBinding) CompilerBindings() HandlerBindings {
 				// Hand-authored overrides retain priority for observations such as
 				// the prologue's non-default upper dialogue-box placement.
 				return *override.Dialog, true
+			}
+			if dialog, ok := binding.dialogueOverride(input); ok {
+				return dialog, true
 			}
 			return binding.indexedDialog(input)
 		},
@@ -362,6 +374,18 @@ func (binding *HandlerBinding) indexedDialog(input HandlerBeat) (HandlerDialog, 
 		dialog.Lines = append(dialog.Lines, HandlerDialogLine{Line: line})
 	}
 	return dialog, true
+}
+
+func (binding *HandlerBinding) dialogueOverride(input HandlerBeat) (HandlerDialog, bool) {
+	if binding == nil || binding.DialogueOverrides == nil || input.Source.Addr == "" {
+		return HandlerDialog{}, false
+	}
+	textIndex, ok := handlerTextIndex(input.TextIndex)
+	if !ok {
+		return HandlerDialog{}, false
+	}
+	dialog, ok := binding.DialogueOverrides[fmt.Sprintf("%s#%d", input.Source.Addr, textIndex)]
+	return dialog, ok
 }
 
 func handlerTextIndex(value any) (int, bool) {

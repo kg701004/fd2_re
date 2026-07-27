@@ -45,6 +45,7 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
         handler = json.loads(handler_path.read_text(encoding="utf-8")) if handler_path.exists() else {}
         binding = json.loads(binding_path.read_text(encoding="utf-8")) if binding_path.exists() else {}
         overrides = binding.get("overrides", {})
+        dialogue_overrides = binding.get("dialogue_overrides", {})
         contexts = binding.get("dialogue_contexts", {})
         gaps = []
         ops = Counter()
@@ -61,6 +62,9 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             if field == "dialog":
                 covered = isinstance(override, dict) and "dialog" in override
                 covered = covered or (isinstance(addr, str) and addr in contexts)
+                text_index = beat.get("text_index")
+                if isinstance(addr, str) and isinstance(text_index, int):
+                    covered = covered or f"{addr}#{text_index}" in dialogue_overrides
             else:
                 covered = isinstance(override, dict) and field in override
             if not covered:

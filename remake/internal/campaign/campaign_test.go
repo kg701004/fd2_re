@@ -657,7 +657,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 44 || fallback != 68 || retreat != 30 || rumor != 23 || postbattle != 11 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 45 || fallback != 67 || retreat != 30 || rumor != 23 || postbattle != 10 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
@@ -687,18 +687,13 @@ func TestCh24PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
 	}
 }
 
-func TestCh25PostEvidenceKeepsDialogueMismatchFailClosed(t *testing.T) {
+func TestCh25PostEvidenceResolvesBranchDialogueByTextIndex(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch25_post.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(issues) != 7 {
-		t.Fatalf("ch25 unresolved dialogue issues=%#v", issues)
-	}
-	for _, issue := range issues {
-		if issue.Source.Addr != "0x24f43" && issue.Source.Addr != "0x24f7e" && issue.Source.Addr != "0x24fc4" && issue.Source.Addr != "0x24fff" && issue.Source.Addr != "0x2503a" {
-			t.Fatalf("ch25 unexpected unresolved op=%#v", issue)
-		}
+	if len(issues) != 0 {
+		t.Fatalf("ch25 branch dialogue issues=%#v", issues)
 	}
 	var layout *Beat
 	acts := map[int]bool{}
