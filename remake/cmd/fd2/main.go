@@ -2715,8 +2715,7 @@ func (g *Game) campInput() bool {
 			}
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) { // 離店
-			g.camp.Advance("")
-			g.enterNode()
+			g.leaveShop()
 		}
 		return true
 	case "ending":
@@ -2730,6 +2729,17 @@ func (g *Game) campInput() bool {
 		return false // 戰鬥照常
 	}
 	return false
+}
+
+// leaveShop is the campaign boundary for the shop's Escape/leave action. It
+// deliberately delegates the next node to editable campaign data instead of
+// assuming every shop returns to the same town.
+func (g *Game) leaveShop() {
+	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "shop" {
+		return
+	}
+	g.camp.Advance("")
+	g.enterNode()
 }
 
 // stepCampaignMenu is the runtime seam for deterministic choice/town input

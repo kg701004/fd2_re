@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=397`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=398`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -26,6 +26,7 @@
 - [x] **UI-07-08-CAMPAIGN-MENU-TRACE**：新增 `campaign.MenuState`，將 `choice/town` hub 的 bounded cursor、空選項 fail-closed 與 confirm→`optN` transition 抽成純 state contract；`campInput` 已共用該 contract，internal/campaign 與 Docker/Xvfb focused regression 通過。未命名 town service、未跳過 handler，逐章 route/E2 仍是 partial。
 - [x] **UI-08-TOWN-HUB-SOURCE-SCREENSHOT**：用目前 source 在 `fd2-go-test-local` 內重新 build（不使用舊 `fd2-linux`），以 `FD2_CAMP_NODE=town_ch02`、frame 30 產生 [`town-hub-remake.png`](../figures/town-hub-remake.png) 並加入 README；這是 remake current artifact，不是原版 visual parity。
 - [x] **UI-VERTICAL-CH02-TOWN-PREPARATION**：將 `Game.stepCampaignMenu` 接到 `campInput`，新增 `TestCampaignTownPreparationInputTrace`，以 `down,down,enter(opt2)` 驗證 `town_ch02→preparation_ch02→story_ch02_pre→battle_ch02`；保存可編輯 trace [`town-preparation-ch02.json`](../data/ui-traces/town-preparation-ch02.json) 與目前 source rebuild 的 [`preparation-current-remake.png`](../figures/preparation-current-remake.png)。這是第一個 campaign/UI state vertical closure，仍不等於逐章原版 parity。
+- [x] **UI-VERTICAL-CH02-TOWN-SHOP-RETURN**：新增 `Game.leaveShop` 與 `TestCampaignTownShopPurchaseReturnTrace`，驗證 `town_ch02→shop_ch02_weapon`、reserve 不先扣金、finalize 後回 town；保存 [`town-shop-ch02.json`](../data/ui-traces/town-shop-ch02.json) 與 source rebuild 的 [`shop-current-remake.png`](../figures/shop-current-remake.png)。這只閉合 remake shop/campaign boundary，不命名 native shop callee 或宣稱原版 parity。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)
