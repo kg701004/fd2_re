@@ -230,9 +230,13 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		if battleNode == nil || battleNode.OnWin != postID || post == nil || post.Type != "cutscene" || post.Next != tc.town {
 			t.Fatalf("chapter%d material acquisition must sync before %s: battle=%#v post=%#v", tc.chapter, tc.town, battleNode, post)
 		}
-		if tc.chapter == 15 {
-			if post.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || len(post.Beats) != 0 {
-				t.Fatalf("chapter15 must preserve dynamic post handler: %#v", post)
+		if tc.chapter == 11 || tc.chapter == 15 {
+			wantBinding := "assets/cutscenes/bindings/ch11_post.json"
+			if tc.chapter == 15 {
+				wantBinding = "assets/cutscenes/bindings/ch14_post.json"
+			}
+			if post.HandlerBinding != wantBinding || len(post.Beats) != 0 {
+				t.Fatalf("chapter%d must preserve dynamic post handler: %#v", tc.chapter, post)
 			}
 			continue
 		}
@@ -650,8 +654,33 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 41 || fallback != 71 || retreat != 30 || rumor != 23 || postbattle != 14 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 42 || fallback != 70 || retreat != 30 || rumor != 23 || postbattle != 13 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
+	}
+}
+
+func TestCh11PostBindingMaterializesLayoutActAndDialogue(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch11_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch11 post compile err=%v issues=%#v", err, issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 60 {
+		t.Fatalf("ch11 runtime context=%#v", beats[:min(len(beats), 1)])
+	}
+	var layout, act *Beat
+	var dialogs []*Beat
+	for i := range beats {
+		switch beats[i].Op {
+		case "layout_units":
+			layout = &beats[i]
+		case "act":
+			act = &beats[i]
+		case "dialog":
+			dialogs = append(dialogs, &beats[i])
+		}
+	}
+	if layout == nil || len(layout.Layout.Units) != 14 || layout.Layout.Units[2].X != 10 || layout.Layout.Units[2].Y != 4 || layout.Layout.Units[2].Pose != 0 || layout.Layout.CamX != 336 || layout.Layout.CamY != 0 || act == nil || len(act.Acting) != 2 || !act.Acting[0].Special || act.Acting[0].Units[0].Slot == nil || *act.Acting[0].Units[0].Slot != 8 || len(dialogs) != 10 || dialogs[0].SceneIndex == nil || *dialogs[0].SceneIndex != 3 || dialogs[2].Line != 2 || dialogs[3].SceneIndex == nil || *dialogs[3].SceneIndex != 3 || dialogs[9].Line != 9 {
+		t.Fatalf("ch11 layout=%#v act=%#v dialogs=%#v", layout, act, dialogs)
 	}
 }
 

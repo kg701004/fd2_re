@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "resources": {
+    "45": [
+      {
+        "beats": 0,
+        "special": true,
+        "units": [
+          { "slot": 8, "pose": 2 }
+        ]
+      },
+      {
+        "beats": 6,
+        "special": true,
+        "units": [
+          { "slot": 8, "pose": 2 }
+        ]
+      }
+    ]
+  }
+}
