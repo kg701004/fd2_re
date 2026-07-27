@@ -253,13 +253,14 @@ func TestTrackedCommandDamageItemRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct {
-		itemID, commandID int
-	}{{29, 6}, {38, 1}, {51, 7}, {99, 6}} {
+		itemID, itemType, commandID int
+	}{{11, 20, 2}, {29, 21, 6}, {38, 21, 1}, {51, 21, 7}, {56, 20, 0},
+		{60, 20, 2}, {79, 24, 3}, {99, 21, 6}} {
 		row := table[tc.itemID*NativeItemEffectRowSize:]
 		typ := row[0x0d]
 		commandID := binary.LittleEndian.Uint16(row[0x0e:])
 		route, ok := NativeItemCommandDamageRouteForType(typ, commandID)
-		if !ok || route.CommandID != tc.commandID || route.ConsumesSource {
+		if !ok || int(route.ItemType) != tc.itemType || route.CommandID != tc.commandID || route.ConsumesSource {
 			t.Fatalf("item %d command-damage route = %#v, %v", tc.itemID, route, ok)
 		}
 	}

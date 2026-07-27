@@ -979,9 +979,10 @@ clear plus HP restore), 8/9/10 (permanent base
 AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
 14/22 (retained marker application with randomized HP damage), 15/16
 (retained derived DP/AP modifier), 17/18/19 (consumable max HP/max MP/MV
-increase with type19 preserving EXP), and 21 (retained reuse of a row-selected
-native command damage record). Remaining 20/23/24 branches must not receive
-gameplay labels until their caller/callee contracts are closed.
+increase with type19 preserving EXP), and 20/21/24 (retained reuse of a
+row-selected native command damage record with distinct presentation paths).
+The remaining type23 branch must not receive a gameplay label until its
+caller/callee contract is closed.
 
 Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digitBias, target)`: after a camera-bounds check it formats `value` as four decimal digits and appends four raw queue entries with position codes `2,7,12,17`, target index, and digit bytes; `0x1e1dc` writes a parallel four-byte queue from a global raw source. This is a presentation-queue ABI, not proof of HP/MP/damage/heal semantics. The adjacent `0x1debe(actor,x,y)` gate only checks active state, Manhattan adjacency, and equipped row byte `+0x0b <= 1`; it must not be promoted to a universal weapon max-range rule.
 
@@ -1091,7 +1092,7 @@ fail-closed.
 
 Official IDA 9.4 pseudocode now closes the previously opaque presentation callers without naming their gameplay effect. `0x1c4cc(a1, subcommand, count, targetBytes)` copies three 33-byte global frame tables, snapshots the indexed 456-stride buffer, iterates `frame < frameCount[subcommand]`, selects a frame from `frameBank[subcommand]`, redraws each supplied target's visible 24×24 cell when it is inside the camera bounds, presents the 312×192 viewport, and emits only the observed subcommand/frame-specific SFX branches before a BIOS-tick wait. `0x1c2da(a1, subcommand, count, targetBytes)` starts the same presentation family with SFX index 1, redraws each target through the indexed pointer bank selected by `12*unitVisual + currentCycle` (with the native `cycle==3` remap), then performs five restore/present pairs before returning the saved buffer. `0x211a4` calls both with raw subcommand `13` before the per-target `0x1c916` mutation. This closes the caller ABI, frame ordering, camera bounds, and restore cadence only; the amount's gameplay meaning, upstream target-selection policy, SFX labels, and native renderer asset provenance remain opaque and fail-closed.
 
-The same IDA pass closes the type `20/24` presentation loop at `0x1cd17(a1, subcommand, count, targetBytes)`: it copies a 30-byte frame-remap table, runs exactly ten frames, restores the saved indexed buffer before every frame, redraws each camera-visible target through `0x4dc34` using `7-(frame mod 8)` as the raw blend argument, presents the same 312×192 viewport, waits one BIOS tick, then restores the original frame. This is a distinct ten-frame path from `0x1c4cc`/`0x1c2da`; it is not evidence that item type 20/24 is a named status or damage effect. The compatibility predicate used by the item selector is also exact at `0x1c1c3(actor,item)`: `0x4e53e(actor class)` supplies six raw item bytes and the predicate compares item-row byte `+0` against those six entries. The six-byte table and row byte remain opaque inputs; no class/equipment name is inferred.
+The same IDA pass closes the type `20/24` presentation loop at `0x1cd17(a1, subcommand, count, targetBytes)`: it copies a 30-byte frame-remap table, runs exactly ten frames, restores the saved indexed buffer before every frame, redraws each camera-visible target through `0x4dc34` using `7-(frame mod 8)` as the raw blend argument, presents the same 312×192 viewport, waits one BIOS tick, then restores the original frame. This is a distinct ten-frame path from `0x1c4cc`/`0x1c2da`; the presentation body itself performs no gameplay mutation. The later caller closure below proves the separate row-selected command-damage loop. The compatibility predicate used by the item selector is also exact at `0x1c1c3(actor,item)`: `0x4e53e(actor class)` supplies six raw item bytes and the predicate compares item-row byte `+0` against those six entries. The six-byte table and row byte remain opaque inputs; no class/equipment name is inferred.
 
 The table provenance is now closed at `0x4e53e(class)`: it returns `0x6188a + class*7`, so the selector's six-byte comparison consumes bytes `row+0..row+5` and leaves `row+6` opaque. `battle.NativeClassCompatibilityRowOffset` and `NativeClassItemCompatible` preserve this address/length contract with bounds and short-row rejection. This is a raw selector adapter only; it does not expose a normalized class or item compatibility field.
 
@@ -1113,14 +1114,17 @@ source slot via `0x1b8e7`. `ApplyNativeItemMPRestore` preserves the whole
 atomic transaction; tracked IDs206/207 supply amounts 80/200. Presentation
 and display names remain outside this closure.
 
-The type-`21` callee `0x2111a` establishes target context through `0x1c4cc`,
-calls indexed presentation helper `0x1cac7`, then passes the item-row word as
-the command ID to `0x1c75e(target,commandID)` for every target and queues the
-numeric result through `0x1e0db`. The dispatcher performs neither
-`0x1ca89` command-MP debit nor `0x1b8e7` inventory removal. Tracked item IDs
-29/38/51/99 select command IDs6/1/7/6. `NativeItemCommandDamageRoute` and
-`ApplyNativeItemCommandDamage` preserve the retained-source, no-MP-debit and
-sequential target-damage contract without assigning item display names.
+Types20/21/24 all pass the item-row word as the command ID to
+`0x1c75e(target,commandID)` for every target and queue the numeric result
+through `0x1e0db`. Types20/24 use the ten-frame `0x1cd17` presentation;
+type21 reaches the distinct indexed `0x1cac7` helper through `0x2111a`.
+Neither path mutates gameplay state before the shared damage loop. The
+dispatcher performs neither `0x1ca89` command-MP debit nor `0x1b8e7`
+inventory removal. Tracked type20 IDs11/56/60 select commands2/0/2, type21
+IDs29/38/51/99 select 6/1/7/6, and type24 ID79 selects command3.
+`NativeItemCommandDamageRoute` and `ApplyNativeItemCommandDamage` preserve
+the presentation distinction, retained-source, no-MP-debit and sequential
+target-damage contract without assigning item display names.
 
 The earlier attribution of a word subtract to `0x1cac7` was an address error:
 that arithmetic belongs to `0x1ca89`, the independently verified command MP

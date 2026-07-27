@@ -860,3 +860,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   不呼叫它。dispatcher 亦不呼 `0x1b8e7`，故來源保留。IDs29/38/51/99
   對 commands6/1/7/6；新增 typed executor、全 target preflight 與 fixture
   regression，未命名道具顯示文字或宣稱 presentation parity。
+- 2026-07-27 type20/24 command-damage extension：official IDA 9.4 重讀
+  `0x20c6f` 與 `0x1cd17`，確認兩 type 在十幀 indexed presentation 後，
+  同樣把 row word 當 command ID 逐 target 呼 `0x1c75e`；動畫本體只做
+  saved-buffer restore、target redraw、312×192 present 與 BIOS tick。
+  dispatcher 不扣 MP、不移除來源。type20 IDs11/56/60→commands2/0/2，
+  type24 ID79→command3；共用 typed executor 已擴充並新增 fixture regression。

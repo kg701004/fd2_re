@@ -922,8 +922,8 @@
 - [x] **RE-UNIT-MODE-DISPATCH**：Docker Capstone 重讀共享 `0x13a9f`，固定 raw gate `record+5&5==0` 與 mode/argument reads `+0x34&0x0f`、`+0x35`、`+0x36`、`+0x3d`；新增 `fdother.PlanNativeUnitMode`，short/gate/masked-mode regression 通過。只保存 mode plan，不呼叫 `0x14ef0/0x14b78/...` 或命名效果；mode 6/8/其他仍保留未命名分支。
 - [~] **RE-ITEM-EFFECT-DISPATCH**：Docker Capstone 固定 `0x20c6f` 的
   type→callee/argument 全 map；`NativeItemEffectRouteForType` 保留 raw
-  topology。typed closures 已完成 5/13、6/7、8–19、21、22；
-  其餘 20/23/24 中尚未閉合者仍不得由 raw route 猜 gameplay 名稱。
+  topology。typed closures 已完成 5/13、6/7、8–22、24；
+  剩餘 type23 仍不得只由 raw route 猜 gameplay 名稱。
 - [x] **RE-ITEM-TYPE67-MUTATION**：重讀 `0x22af6` 修正舊 adapter：
   marker 位於 target `record+a5`，不是 parallel `flags[]`。type6/7 用
   `+0x25/+0x26`，nonzero 時 base10→actual9 HP restore、清 record marker，
@@ -979,7 +979,12 @@
 - [x] **RE-ITEM-PRESENTATION-1E0DB**：官方 IDA 9.4 閉合 `0x1e0db(value,digitBias,target)` 的 camera gate、四位十進位格式化、queue position codes `2,7,12,17`、target index 與 digit-byte 寫入；`0x1e1dc` 保留 parallel raw queue writer。新增 `battle.AppendNativePresentationDigits` raw adapter/regression。這只關閉 presentation queue ABI，不命名 HP/MP/damage/heal，也不接 normalized item UI。
 - [x] **RE-ITEM-ADJACENCY-GATE-1DEBE**：官方 IDA 9.4 閉合 `0x1debe(actor,x,y)` 的 active gate、曼哈頓相鄰一格與 equipped row `+0x0b<=1` 條件；此為 caller-specific precondition，不宣稱 `+0x0b` 是通用 weapon max range。
 - [x] **RE-ITEM-PRESENTATION-1C4CC**：官方 IDA 9.4 pseudocode 閉合 `0x1c4cc/0x1c2da` caller ABI：兩者都接 `(opaque actor, raw subcommand, target count, target-byte list)`；`1c4cc` 依三張 33-byte frame table 逐 frame 做 456-stride target redraw、312×192 present、subcommand/frame SFX 分支與 BIOS tick，`1c2da` 以 native cycle/visual bank 做 target blit，再做五次 restore/present pair。這只關閉 presentation ordering/camera bounds/restore cadence，不命名 item effect、frame asset、SFX 或 target producer；`RE-ITEM-EFFECT-211A4` 仍保持 partial。
-- [x] **RE-ITEM-20-24-PRESENTATION-1CD17**：官方 IDA 9.4 閉合 type20/24 共用的 `0x1cd17`：30-byte remap table、固定十幀、每幀 restore saved indexed buffer、camera-visible target redraw、`7-(frame%8)` raw blend argument、312×192 present、單 BIOS tick，再恢復原 buffer。這是獨立 presentation path，不命名 type20/24 效果。
+- [x] **RE-ITEM-20-24-PRESENTATION-1CD17**：官方 IDA 9.4 閉合
+  type20/24 共用的 `0x1cd17`：30-byte remap table、固定十幀、每幀
+  restore saved indexed buffer、camera-visible target redraw、
+  `7-(frame%8)` raw blend argument、312×192 present、單 BIOS tick，
+  再恢復原 buffer。此 helper 本身不做 gameplay mutation；其後獨立的
+  row-selected command-damage loop 已由下方 caller closure 定案。
 - [x] **RE-ITEM-COMPAT-1C1C3**：官方 IDA 9.4 閉合 item selector compatibility predicate：`0x1c1c3(actor,item)` 取 actor class 對應的六-byte raw table，逐一比較 item row `+0`；只保存 six-byte table／row-byte ABI，不命名 class 或 equipment 語意。
 - [x] **UI-ITEM-8SLOT-SHELL**：Docker Capstone 重跑 `0x1bbdc` 確認 `0x1b932` 八格 selector；remake `itemOpen/itemSel` 保留 `InventorySlots` 的空洞與 raw `0x80` 空槽旗標，支援 ↑↓／Enter／ESC。Enter 不猜 `0x20c6f` effect/target，僅 fail-closed；效果表與 native target producer 未閉合前不得扣物品或改 HP/MP。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
@@ -1000,10 +1005,12 @@
   `+0x4c/+0x4e` 各加15，來源 slot 保留。新增
   `NativeItemHITEVStepRoute`／`ApplyNativeItemHITEVStep` 與 ID210
   fixture regression；marker UI 名稱仍未知。
-- [x] **RE-ITEM-EFFECT-2111A**：official IDA 9.4 固定 type21 將 row word
-  當 command ID，`0x2111a` 經 `0x1cac7` indexed presentation 後，逐 target
-  呼 `0x1c75e(target,commandID)`；dispatcher 不呼 `0x1ca89`、不移除來源。
-  IDs29/38/51/99→commands6/1/7/6；新增 retained-source typed executor。
+- [x] **RE-ITEM-EFFECT-COMMAND-DAMAGE-20-21-24**：official IDA 9.4
+  固定三 type 都將 row word 當 command ID，逐 target 呼
+  `0x1c75e(target,commandID)`；20/24 用 `0x1cd17` 十幀 presentation，
+  21 用 `0x2111a→0x1cac7`。dispatcher 不呼 `0x1ca89`、不移除來源。
+  type20 IDs11/56/60→commands2/0/2，type21 IDs29/38/51/99→6/1/7/6，
+  type24 ID79→command3；typed executor 保存 presentation 分歧與 transaction。
 - [x] **RE-RAW-WORD-SUBTRACT-ADDRESS-CORRECTION**：Docker Capstone 證實
   word `+0x44` subtract 位於 `0x1ca89`，`0x1cac7` 是 allocation、
   `0x1cb94` drawing 與四輪 320×192 present helper。修正 adapter attribution

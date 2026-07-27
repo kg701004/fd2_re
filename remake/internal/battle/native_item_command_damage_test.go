@@ -7,7 +7,7 @@ import (
 
 func TestNativeType21ReusesCommandDamageWithoutConsumingSource(t *testing.T) {
 	route, ok := NativeItemCommandDamageRouteForType(21, 6)
-	if !ok || route.CommandID != 6 || route.ConsumesSource {
+	if !ok || route.CommandID != 6 || route.Presentation != 0x1cac7 || route.ConsumesSource {
 		t.Fatalf("route = %#v, %v", route, ok)
 	}
 	book := make([]NativeCommandRecord, NativeCommandRecordCount)
@@ -22,6 +22,15 @@ func TestNativeType21ReusesCommandDamageWithoutConsumingSource(t *testing.T) {
 	}
 	if len(results) != 2 || !results[0].Hit || !results[1].Hit || targets[0].HP >= 200 || targets[1].HP >= 200 {
 		t.Fatalf("results=%#v hp=%d/%d", results, targets[0].HP, targets[1].HP)
+	}
+}
+
+func TestNativeTypes20And24UseTenFramePresentationAndCommandDamage(t *testing.T) {
+	for _, typ := range []byte{20, 24} {
+		route, ok := NativeItemCommandDamageRouteForType(typ, 2)
+		if !ok || route.CommandID != 2 || route.Presentation != 0x1cd17 || route.ConsumesSource {
+			t.Fatalf("type %d route = %#v, %v", typ, route, ok)
+		}
 	}
 }
 
@@ -48,7 +57,7 @@ func TestNativeType21RejectsNonCommandWord(t *testing.T) {
 	if _, ok := NativeItemCommandDamageRouteForType(21, NativeCommandRecordCount); ok {
 		t.Fatal("out-of-range command word unexpectedly accepted")
 	}
-	if _, ok := NativeItemCommandDamageRouteForType(20, 1); ok {
+	if _, ok := NativeItemCommandDamageRouteForType(19, 1); ok {
 		t.Fatal("wrong item type unexpectedly accepted")
 	}
 }

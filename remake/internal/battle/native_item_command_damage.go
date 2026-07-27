@@ -5,27 +5,39 @@ import (
 	"math/rand"
 )
 
-// NativeItemCommandDamageRoute closes item type 21 around 0x2111a. The item
-// row word is reused as a 0x4e516 command ID by 0x1c75e; the dispatcher does
-// not remove the source slot.
+// NativeItemCommandDamageRoute closes item types 20/21/24. The item row word
+// is reused as a 0x4e516 command ID by 0x1c75e; 20/24 use the ten-frame
+// 0x1cd17 presentation while 21 reaches 0x1cac7 through 0x2111a. None removes
+// the source slot.
 type NativeItemCommandDamageRoute struct {
 	ItemType       byte
 	CommandID      int
+	Presentation   uint32
 	ConsumesSource bool
 }
 
 func NativeItemCommandDamageRouteForType(itemType byte, rowWord uint16) (NativeItemCommandDamageRoute, bool) {
-	if itemType != 21 || int(rowWord) >= NativeCommandRecordCount {
+	if int(rowWord) >= NativeCommandRecordCount {
+		return NativeItemCommandDamageRoute{}, false
+	}
+	var presentation uint32
+	switch itemType {
+	case 20, 24:
+		presentation = 0x1cd17
+	case 21:
+		presentation = 0x1cac7
+	default:
 		return NativeItemCommandDamageRoute{}, false
 	}
 	return NativeItemCommandDamageRoute{
-		ItemType: itemType, CommandID: int(rowWord), ConsumesSource: false,
+		ItemType: itemType, CommandID: int(rowWord), Presentation: presentation,
+		ConsumesSource: false,
 	}, true
 }
 
-// ApplyNativeItemCommandDamage preserves the post-presentation target loop in
-// 0x2111a. It intentionally performs no 0x1ca89 MP debit and no inventory
-// removal: neither call exists in the type-21 dispatcher branch.
+// ApplyNativeItemCommandDamage preserves the shared post-presentation target
+// loop. It intentionally performs no 0x1ca89 MP debit and no inventory
+// removal: neither call exists in these dispatcher branches.
 func ApplyNativeItemCommandDamage(
 	targets []*Unit,
 	route NativeItemCommandDamageRoute,

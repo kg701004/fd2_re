@@ -165,14 +165,17 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   `+0x42/+0x46` 分別加 row amount20；type19 對 word `+0x3b` 加1，
   caller 在 `0x21082` 前後保存/恢復 byte `+0x3c`，故只改 MV byte、
   EXP 不變。三條都由共用 callee `0x1b8e7` 消耗來源；IDs94/95/96。
-- type21 已由 official IDA 9.4 caller ABI 與 Docker Capstone 重核閉合：
-  row word 直接成為 `0x1c75e(target,commandID)` 的 command ID；
-  `0x1cac7` 是 indexed presentation helper，不做 word subtract。
-  dispatcher 沒有 `0x1ca89` MP debit 或 `0x1b8e7` inventory removal，
-  故來源保留。IDs29/38/51/99 對應 command IDs6/1/7/6。
+- type20/21/24 已由 official IDA 9.4 caller ABI 與 Docker Capstone
+  重核閉合：row word 直接成為 `0x1c75e(target,commandID)` 的 command
+  ID。20/24 用 `0x1cd17` 十幀 presentation，21 用
+  `0x2111a→0x1cac7`；兩個 presentation helpers 都不做 gameplay
+  mutation。dispatcher 沒有 `0x1ca89` MP debit 或 `0x1b8e7` inventory
+  removal，故來源保留。type20 IDs11/56/60→commands2/0/2，
+  type21 IDs29/38/51/99→6/1/7/6，type24 ID79→command3。
 - `battle.ApplyNativeRawWordSubtract` 的 arithmetic core 實際對應
   `0x1ca89`，不是 `0x1cac7`；既有 normalized `SpendNativeCommandMP`
-  才保存 verified selector-success MP transaction。type21 不呼叫兩者。
+  才保存 verified selector-success MP transaction。type20/21/24
+  都不呼叫兩者。
 - `0x22af6` 舊 adapter 把 marker 當 caller-owned parallel `flags[]` 是錯的，
   已撤回。正確 ABI 是 target runtime `record+a5`：type6/7 分別用
   `+0x25/+0x26`，nonzero 才以 base amount10 經 `0x1c916` 實際恢復
