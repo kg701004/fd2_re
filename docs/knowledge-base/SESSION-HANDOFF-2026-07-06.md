@@ -907,3 +907,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   bottom `src(5,94) 310×102`（dest y=94+16f，frame6起off）。
   `NativeItemPanelSchedule` 保存exact rectangles/reverse ordering；
   尚未宣稱 indexed source/buffer 已接 Ebiten。
+- 2026-07-27 item panel source/data closure：official IDA 9.4 重核
+  `0x17eef/0x17fc0`。base先以 `0x168b6(dst,320,5,7,5,5)` 建
+  `(5,7)` 的5×5框；unit record `+7` 選 DATO貼 `(8,10)`；
+  FDOTHER#5 LMI1 entries20/21（directory offsets `+86/+90`）貼
+  `(92,7)`／`(5,94)`。後續2 bar、4 compared-number、8 raw-number、
+  3 FDTXT與4組icon的 destination/record-offset schedule均已資料化為
+  `NativeItemPanelBaseLayoutFor`／`NativeItemPanelDataPlanFor` 並有
+  regression。doc35 舊「`[0x53a81]` loader待確認」已刪；boot
+  `0x25c97` 明確載 FDOTHER.DAT #5。尚未接 indexed→Ebiten renderer。

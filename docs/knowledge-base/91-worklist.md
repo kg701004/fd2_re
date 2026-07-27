@@ -1007,6 +1007,14 @@
   `(92,7,223×86)` frame3後up-clip16px、frame9消失；bottom
   `(5,94,310×102)` 每幀y+16、frame6消失。`NativeItemPanelSchedule`
   exact reverse/clip regression通過；indexed source buffer與GUI adapter仍待。
+- [x] **RE-ITEM-PANEL-SOURCES-17EEF-17FC0**：official IDA 9.4 確認
+  `0x17eef` 以 `0x168b6(dst,320,5,7,5,5)` 建 `(5,7)` 的5×5框，
+  unit record `+7` 選 DATO portrait貼 `(8,10)`；FDOTHER#5 directory
+  offsets `+86/+90` 即 entries20/21，貼 `(92,7)`／`(5,94)`。
+  `0x17fc0` 的2 bar、4 compared-number、8 raw-number、3 FDTXT與
+  base/flag icons之 exact destination/record-offset schedule 已落入
+  `NativeItemPanelBaseLayoutFor`／`NativeItemPanelDataPlanFor` regression。
+  尚未證實的 raw offsets 不命名；下一步是 indexed renderer/Ebiten bridge。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

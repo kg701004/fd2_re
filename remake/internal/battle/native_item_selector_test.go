@@ -131,3 +131,52 @@ func TestNativeItemPanelSchedulesReverseExactly(t *testing.T) {
 		}
 	}
 }
+
+func TestNativeItemPanelBaseLayoutMatches17EEF(t *testing.T) {
+	got := NativeItemPanelBaseLayoutFor()
+	if got.Stride != 320 || got.FDOTHERResource != 5 ||
+		got.GridOrigin != (NativeItemPanelPoint{X: 5, Y: 7}) ||
+		got.GridColumns != 5 || got.GridRows != 5 ||
+		got.PortraitRecordOffset != 7 ||
+		got.PortraitDestination != (NativeItemPanelPoint{X: 8, Y: 10}) ||
+		got.UpperDirectoryEntry != 20 ||
+		got.UpperDestination != (NativeItemPanelPoint{X: 92, Y: 7}) ||
+		got.BottomDirectoryEntry != 21 ||
+		got.BottomDestination != (NativeItemPanelPoint{X: 5, Y: 94}) {
+		t.Fatalf("base layout=%#v", got)
+	}
+}
+
+func TestNativeItemPanelDataPlanMatches17FC0(t *testing.T) {
+	got := NativeItemPanelDataPlanFor()
+	if len(got.Bars) != 2 || len(got.ComparedNumbers) != 4 ||
+		len(got.RawNumbers) != 8 || len(got.Text) != 3 || len(got.FlagIcons) != 3 {
+		t.Fatalf("plan cardinality=%#v", got)
+	}
+	if got.Bars[0] != (NativeItemPanelBarCall{
+		Destination:      NativeItemPanelPoint{X: 198, Y: 33},
+		FDOTHERBaseEntry: 23, CurrentOffset: 64, MaximumOffset: 66,
+	}) || got.Bars[1].Destination != (NativeItemPanelPoint{X: 198, Y: 52}) {
+		t.Fatalf("bars=%#v", got.Bars)
+	}
+	if got.ComparedNumbers[0].Destination != (NativeItemPanelPoint{X: 267, Y: 41}) ||
+		got.ComparedNumbers[3].Destination != (NativeItemPanelPoint{X: 293, Y: 59}) {
+		t.Fatalf("compared numbers=%#v", got.ComparedNumbers)
+	}
+	if got.RawNumbers[0].ValueBytes != 1 || got.RawNumbers[3].ValueBytes != 2 ||
+		got.RawNumbers[4].ValueOffset != 72 || got.RawNumbers[4].AlternateFlagOffset != 34 ||
+		got.RawNumbers[7].ValueOffset != 78 || got.RawNumbers[7].AlternateFlagOffset != 36 {
+		t.Fatalf("raw numbers=%#v", got.RawNumbers)
+	}
+	if got.Text[0] != (NativeItemPanelTextCall{
+		Destination: NativeItemPanelPoint{X: 99, Y: 13}, RecordOffset: 8, FDTXTBase: 1,
+	}) || got.Text[2].FDTXTBase != 150 {
+		t.Fatalf("text=%#v", got.Text)
+	}
+	if got.BaseIcon.FDOTHEREntry != 53 || got.BaseIcon.AlternateFDOTHEREntry != 54 ||
+		!got.BaseIcon.UseAlternateWhenFlagZero || got.BaseIcon.FlagOffset != 6 ||
+		got.FlagIcons[0].FDOTHEREntry != 55 || !got.FlagIcons[0].DrawWhenFlagNonzero ||
+		got.FlagIcons[2].FlagOffset != 39 {
+		t.Fatalf("icons=%#v / %#v", got.BaseIcon, got.FlagIcons)
+	}
+}

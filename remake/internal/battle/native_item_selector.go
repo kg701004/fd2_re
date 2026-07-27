@@ -148,6 +148,131 @@ type NativeItemPanelFrame struct {
 	Bottom NativeItemPanelRegion
 }
 
+type NativeItemPanelPoint struct {
+	X, Y int
+}
+
+type NativeItemPanelBaseLayout struct {
+	Stride               int
+	FDOTHERResource      int
+	GridOrigin           NativeItemPanelPoint
+	GridColumns          int
+	GridRows             int
+	PortraitRecordOffset int
+	PortraitDestination  NativeItemPanelPoint
+	UpperDirectoryEntry  int
+	UpperDestination     NativeItemPanelPoint
+	BottomDirectoryEntry int
+	BottomDestination    NativeItemPanelPoint
+}
+
+// NativeItemPanelBaseLayoutFor transcribes 0x17eef without assigning guessed
+// meanings to the two large FDOTHER cells. 0x168b6 builds the 5x5 frame at
+// (5,7); DATO is selected by unit-record byte +7 and pasted at (8,10).
+// FDOTHER#5 LMI1 directory offsets +86/+90 are entries 20/21.
+func NativeItemPanelBaseLayoutFor() NativeItemPanelBaseLayout {
+	return NativeItemPanelBaseLayout{
+		Stride:               320,
+		FDOTHERResource:      5,
+		GridOrigin:           NativeItemPanelPoint{X: 5, Y: 7},
+		GridColumns:          5,
+		GridRows:             5,
+		PortraitRecordOffset: 7,
+		PortraitDestination:  NativeItemPanelPoint{X: 8, Y: 10},
+		UpperDirectoryEntry:  20,
+		UpperDestination:     NativeItemPanelPoint{X: 92, Y: 7},
+		BottomDirectoryEntry: 21,
+		BottomDestination:    NativeItemPanelPoint{X: 5, Y: 94},
+	}
+}
+
+type NativeItemPanelBarCall struct {
+	Destination                  NativeItemPanelPoint
+	FDOTHERBaseEntry             int
+	CurrentOffset, MaximumOffset int
+}
+
+type NativeItemPanelComparedNumberCall struct {
+	Destination                NativeItemPanelPoint
+	ValueOffset, CompareOffset int
+	Width                      int
+}
+
+type NativeItemPanelRawNumberCall struct {
+	Destination         NativeItemPanelPoint
+	ValueOffset         int
+	ValueBytes          int
+	Color               int
+	AlternateColor      int
+	AlternateFlagOffset int
+	Width               int
+}
+
+type NativeItemPanelTextCall struct {
+	Destination             NativeItemPanelPoint
+	RecordOffset, FDTXTBase int
+}
+
+type NativeItemPanelIconCall struct {
+	Destination              NativeItemPanelPoint
+	FDOTHEREntry             int
+	AlternateFDOTHEREntry    int
+	FlagOffset               int
+	UseAlternateWhenFlagZero bool
+	DrawWhenFlagNonzero      bool
+}
+
+type NativeItemPanelDataPlan struct {
+	Bars            []NativeItemPanelBarCall
+	ComparedNumbers []NativeItemPanelComparedNumberCall
+	RawNumbers      []NativeItemPanelRawNumberCall
+	Text            []NativeItemPanelTextCall
+	BaseIcon        NativeItemPanelIconCall
+	FlagIcons       []NativeItemPanelIconCall
+}
+
+// NativeItemPanelDataPlanFor is the exact 0x17fc0 destination/record schedule.
+// Record offsets and primitive inputs stay raw where their game meaning has
+// not been independently established.
+func NativeItemPanelDataPlanFor() NativeItemPanelDataPlan {
+	return NativeItemPanelDataPlan{
+		Bars: []NativeItemPanelBarCall{
+			{Destination: NativeItemPanelPoint{X: 198, Y: 33}, FDOTHERBaseEntry: 23, CurrentOffset: 64, MaximumOffset: 66},
+			{Destination: NativeItemPanelPoint{X: 198, Y: 52}, FDOTHERBaseEntry: 26, CurrentOffset: 68, MaximumOffset: 70},
+		},
+		ComparedNumbers: []NativeItemPanelComparedNumberCall{
+			{Destination: NativeItemPanelPoint{X: 267, Y: 41}, ValueOffset: 64, CompareOffset: 66, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 293, Y: 41}, ValueOffset: 66, CompareOffset: 66, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 267, Y: 59}, ValueOffset: 68, CompareOffset: 70, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 293, Y: 59}, ValueOffset: 70, CompareOffset: 70, Width: 3},
+		},
+		RawNumbers: []NativeItemPanelRawNumberCall{
+			{Destination: NativeItemPanelPoint{X: 157, Y: 33}, ValueOffset: 33, ValueBytes: 1, Color: 42, Width: 2},
+			{Destination: NativeItemPanelPoint{X: 157, Y: 44}, ValueOffset: 60, ValueBytes: 1, Color: 42, Width: 2},
+			{Destination: NativeItemPanelPoint{X: 157, Y: 55}, ValueOffset: 59, ValueBytes: 1, Color: 42, Width: 2},
+			{Destination: NativeItemPanelPoint{X: 117, Y: 55}, ValueOffset: 62, ValueBytes: 2, Color: 42, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 157, Y: 67}, ValueOffset: 72, ValueBytes: 2, Color: 42, AlternateColor: 119, AlternateFlagOffset: 34, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 157, Y: 79}, ValueOffset: 74, ValueBytes: 2, Color: 42, AlternateColor: 119, AlternateFlagOffset: 35, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 117, Y: 67}, ValueOffset: 76, ValueBytes: 2, Color: 42, AlternateColor: 119, AlternateFlagOffset: 36, Width: 3},
+			{Destination: NativeItemPanelPoint{X: 117, Y: 79}, ValueOffset: 78, ValueBytes: 2, Color: 42, AlternateColor: 119, AlternateFlagOffset: 36, Width: 3},
+		},
+		Text: []NativeItemPanelTextCall{
+			{Destination: NativeItemPanelPoint{X: 99, Y: 13}, RecordOffset: 8, FDTXTBase: 1},
+			{Destination: NativeItemPanelPoint{X: 211, Y: 13}, RecordOffset: 31, FDTXTBase: 140},
+			{Destination: NativeItemPanelPoint{X: 251, Y: 13}, RecordOffset: 32, FDTXTBase: 150},
+		},
+		BaseIcon: NativeItemPanelIconCall{
+			Destination: NativeItemPanelPoint{X: 101, Y: 30}, FDOTHEREntry: 53,
+			AlternateFDOTHEREntry: 54, FlagOffset: 6, UseAlternateWhenFlagZero: true,
+		},
+		FlagIcons: []NativeItemPanelIconCall{
+			{Destination: NativeItemPanelPoint{X: 194, Y: 68}, FDOTHEREntry: 55, FlagOffset: 37, DrawWhenFlagNonzero: true},
+			{Destination: NativeItemPanelPoint{X: 229, Y: 68}, FDOTHEREntry: 56, FlagOffset: 38, DrawWhenFlagNonzero: true},
+			{Destination: NativeItemPanelPoint{X: 264, Y: 68}, FDOTHEREntry: 57, FlagOffset: 39, DrawWhenFlagNonzero: true},
+		},
+	}
+}
+
 // NativeItemPanelFrameFor reproduces 0x18409's three clipped 320-stride
 // memmove regions. Frame 11 is the smallest state; frame 0 is fully open.
 func NativeItemPanelFrameFor(frame int) (NativeItemPanelFrame, error) {

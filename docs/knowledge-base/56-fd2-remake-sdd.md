@@ -895,6 +895,18 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Inventory reservation boundary: official `0x1bb8c(unit,item)` scans those same eight cells, takes the first flag-bit7 reserved cell, clears its flag, writes the supplied item byte, and returns native success/failure (`1/-1`). `battle.AssignNativeReservedItem` reproduces this atomic raw mutation; no item category or shop meaning is inferred.
 
+   Item-panel source/data boundary: official IDA 9.4 closes `0x17eef` as
+   `0x168b6(dst,320,5,7,5,5)` for the frame at `(5,7)`, DATO selected by unit
+   record byte `+7` at `(8,10)`, and FDOTHER #5 LMI1 directory entries 20/21
+   (header offsets `+86/+90`) at `(92,7)` and `(5,94)`. The following
+   `0x17fc0` schedule has two bar calls, four compared-number calls, eight raw
+   number calls, three FDTXT calls and one base plus three conditional icons
+   at fixed 320-stride destinations. `battle.NativeItemPanelBaseLayoutFor`
+   and `NativeItemPanelDataPlanFor` preserve those source IDs, coordinates,
+   record offsets, colors and primitive widths as data. This closes the
+   reconstruction contract, not the indexed-to-Ebiten renderer; raw record
+   offsets without independent semantic evidence remain unnamed.
+
    Correction: the `0x1ac62` loop is not a preparation command stream. Its caller `0x1aa1d` uses FDTXT_000 indices `0x1b0..0x1b3`, which decode to post-resolution loot/interaction messages (enemy item, full inventory, money), so the higher-level preparation label is withdrawn. The proven part is only a `base+3*i` `{kind:byte,payload:u16le}` stream with observed kind `0/1/2/3` branches; `fdother.ParseNativePostResolutionCommands` preserves it and refuses truncation without assigning event names.
 
    `internal/fdicon.Sprite.BlitLUT` now reproduces the `0x4dcc6` pixel contract as a pure indexed primitive: RLE source writes become `lut[source]`; mode-3 spans become `lut[destination]`; mode-1 dither holes remain unchanged. Its fixture regression covers all three effects. It deliberately accepts an explicit LUT and destination buffer only—the map palette-entry selector, frame scheduler and foreground pass remain separate adapters.
