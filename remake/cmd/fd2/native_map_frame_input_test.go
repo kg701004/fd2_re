@@ -74,13 +74,13 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 	}
 	assets := &nativeMapAssets{
 		Terrain: nativeFrameTestBank(2, 1), Range: nativeFrameTestBank(20, 2), Units: nativeFrameTestBank(96, 3),
-		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256), Frames: nativeFrameTestHUDFrames(),
+		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256), PaletteDAC: make([]byte, 256*3), Frames: nativeFrameTestHUDFrames(),
 	}
 	for i := range assets.Palette {
 		assets.Palette[i] = color.RGBA{byte(i), byte(i), byte(i), 0xff}
 	}
 	field := &MapData{
-		W: 13, H: 8, Tiles: make([]int, 13*8),
+		W: 13, H: 8, TileW: 24, TileH: 24, Tiles: make([]int, 13*8),
 		NativeTileBlitModes:  make([]byte, 13*8),
 		NativeTerrainControl: append([]byte(nil), controls...),
 	}

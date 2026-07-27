@@ -10,10 +10,10 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
-| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；selector6的field-mutation scheduler已有atomic adapter | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
+| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass map transition與baseline-derived DAC ramp已有strict runtime | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2bce5` ending、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接；兩層item cancel／selector-grid reset已對齊原版 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **468 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **452 個 `[x]`、92 個 `[~]`、65 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 

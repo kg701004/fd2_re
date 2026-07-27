@@ -130,6 +130,7 @@ type Game struct {
 	dlgScrollFrom        int             // 分頁捲動開始頁碼
 	fade                 *storyFade      // 場景淡出/淡入轉場(doc46 §5.2)
 	transitionReveal     *transitionRevealJob
+	indexedTransition    *nativeIndexedTransitionJob
 	nativeEnding         *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
 	walk                 *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
 	camp                 *campaign.Runner     // 劇本節點圖(doc 19;FD2_CAMPAIGN 啟用)
@@ -912,9 +913,9 @@ func (g *Game) beatStart(b campaign.Beat) {
 			g.loadErr = "beat indexed_transition:缺少 transition payload"
 			return
 		}
-		// Keep the descriptor/double-buffer operation fail-closed until the
-		// indexed renderer is available; it must not silently become a fade.
-		g.loadErr = "beat indexed_transition: native 0x24618 renderer adapter未完成"
+		if err := g.startNativeIndexedTransition(*b.IndexedTransition, g.beatAdvance); err != nil {
+			g.loadErr = "beat indexed_transition: " + err.Error()
+		}
 		return
 	case "native_palette_fade_out":
 		if b.NativePaletteFade == nil || b.NativePaletteFade.Start != 0 || b.NativePaletteFade.End != 63 || b.NativePaletteFade.DelayMs != 2 {
@@ -1707,6 +1708,7 @@ func (g *Game) enterNode() {
 	g.walkFirst, g.followWalk, g.camMaxY = false, false, 0
 	g.camPan, g.focusJob, g.actJob, g.beats, g.beatIdx, g.beatDelay = nil, nil, nil, nil, -1, 0
 	g.transitionReveal = nil
+	g.indexedTransition = nil
 	g.handlerResource = 0
 	g.battleEvent, g.battleEventDelay = nil, 0
 	g.dlgShown, g.dlgPhase, g.dlgT = dlgNone, 0, 0
@@ -1896,6 +1898,7 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 // resetBattle 重開一場戰鬥(campaign battle 節點;敗北重試也走這裡)。
 func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.resetActionOverlayLifecycle()
+	g.indexedTransition = nil
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	if unitsPath == "" {
@@ -4372,6 +4375,7 @@ func (g *Game) Update() error {
 	}
 	g.stepFade()                                 // 場景淡出/淡入轉場(doc46 §5.2;beat「fade」兩個方向都靠 then 接回下一拍)
 	g.stepTransitionReveal()                     // native 0x24b4d alternating present loop
+	g.stepNativeIndexedTransition()              // native 0x24618 indexed map/palette transition
 	if g.camp != nil && g.storyAutoAdvance > 0 { // 無對白節點自動轉場倒數(行軍蒙太奇)
 		g.storyAutoAdvance--
 		if g.storyAutoAdvance == 0 {
@@ -4645,6 +4649,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.m == nil {
 		ebitenutil.DebugPrint(screen, "FD2 重製 MVP\n缺 assets/(tileset.png + map.json)\n用 tools/export_engine_assets.py 產生\n"+g.loadErr)
 		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame { // 打包驗證:資產缺失時也要能截圖存證(舊版此分支漏存,見打包 worklist)
+			g.captureShot(screen)
+		}
+		return
+	}
+	if g.indexedTransition != nil {
+		screen.Fill(color.Black)
+		if !g.drawNativeIndexedTransition(screen) {
+			ebitenutil.DebugPrint(screen, "native 0x24618 transition unavailable")
+		}
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
 			g.captureShot(screen)
 		}
 		return

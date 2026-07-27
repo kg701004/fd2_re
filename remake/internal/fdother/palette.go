@@ -25,6 +25,36 @@ func ParseVGAPalette(data []byte) (color.Palette, error) {
 	return palette, nil
 }
 
+// VGAPaletteFromDAC converts a caller-owned 6-bit VGA DAC snapshot to the
+// opaque palette used by the host presenter. The indexed framebuffer remains
+// untouched; native palette effects update only dac between presents.
+func VGAPaletteFromDAC(dac []byte) (color.Palette, error) {
+	return ParseVGAPalette(dac)
+}
+
+// ApplyVGAPaletteDelta reproduces 0x11df2: every component is read from the
+// immutable palette at [0x53a65], delta is added, and the result is clamped at
+// the upper six-bit bound before being written to the caller-owned DAC. It is
+// therefore a baseline-derived range write, not an addition to current DAC.
+// All recovered callers use non-negative deltas; unsupported signed variants
+// fail closed rather than inventing the port-write truncation semantics.
+func ApplyVGAPaletteDelta(dac, baseline []byte, start, end, delta int) error {
+	if len(dac) != 256*3 || len(baseline) != 256*3 ||
+		start < 0 || end < start || end > 255 || delta < 0 || delta > 63 {
+		return errors.New("fdother: invalid VGA palette delta input")
+	}
+	next := append([]byte(nil), dac...)
+	for i := start * 3; i <= end*3+2; i++ {
+		v := int(baseline[i]) + delta
+		if v > 63 {
+			v = 63
+		}
+		next[i] = byte(v)
+	}
+	copy(dac, next)
+	return nil
+}
+
 // Paletted returns an image form of a direct-indexed raw cell. Its zero index
 // remains transparent, matching the native 0x4e9e4 destination-preserving
 // blitter rather than turning transparent pixels into opaque black.

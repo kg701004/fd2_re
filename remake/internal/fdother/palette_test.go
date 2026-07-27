@@ -1,6 +1,9 @@
 package fdother
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestParseVGAPalettePreservesSixBitScaleAsOpaqueVGA(t *testing.T) {
 	raw := make([]byte, 256*3)
@@ -43,5 +46,30 @@ func TestRawCellPalettedPreservesZeroIndex(t *testing.T) {
 	_, _, _, cellAlpha := im.Palette[0].RGBA()
 	if rawAlpha != 0xffff || cellAlpha != 0 {
 		t.Fatalf("palette alpha leaked across codec boundary: VGA=%#x cell=%#x", rawAlpha, cellAlpha)
+	}
+}
+
+func TestApplyVGAPaletteDeltaUsesImmutableBaselineInclusiveAndAtomic(t *testing.T) {
+	baseline := make([]byte, 256*3)
+	baseline[3], baseline[4], baseline[5] = 1, 62, 63
+	dac := bytes.Repeat([]byte{9}, 256*3)
+	if err := ApplyVGAPaletteDelta(dac, baseline, 1, 1, 4); err != nil {
+		t.Fatal(err)
+	}
+	if got := dac[3:9]; !bytes.Equal(got, []byte{5, 63, 63, 9, 9, 9}) {
+		t.Fatalf("first delta=%v", got)
+	}
+	if err := ApplyVGAPaletteDelta(dac, baseline, 1, 1, 2); err != nil {
+		t.Fatal(err)
+	}
+	if got := dac[3:9]; !bytes.Equal(got, []byte{3, 63, 63, 9, 9, 9}) {
+		t.Fatalf("baseline-derived second delta=%v", got)
+	}
+	before := append([]byte(nil), dac...)
+	if err := ApplyVGAPaletteDelta(dac, baseline, 2, 1, 1); err == nil {
+		t.Fatal("invalid range accepted")
+	}
+	if !bytes.Equal(dac, before) {
+		t.Fatal("rejected delta mutated DAC")
 	}
 }

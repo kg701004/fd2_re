@@ -24,6 +24,10 @@ type nativeMapAssets struct {
 	// itself authorize scene presentation.
 	LUTs    [][]byte
 	Palette color.Palette
+	// PaletteDAC retains FDOTHER#0's exact 768-byte, six-bit DAC baseline.
+	// Native 0x11df2 effects require mutable raw components; color.Palette is
+	// presentation-only and must not be used as the effect state.
+	PaletteDAC []byte
 }
 
 func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
@@ -71,10 +75,20 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 		MapIndex: mapIndex, Frames: frames,
 		Terrain: terrain, Range: rangeBank, Units: units,
 		Controls: controls, LUTs: luts, Palette: palette,
+		PaletteDAC: append([]byte(nil), paletteRaw...),
 	}, nil
 }
 
 func nativeMapAssetsAvailable(a *nativeMapAssets) bool {
-	return a != nil && a.Terrain != nil && a.Range != nil && a.Units != nil &&
-		len(a.Controls) > 0 && len(a.LUTs) > 9 && len(a.Palette) == 256
+	if a == nil || a.Terrain == nil || a.Range == nil || a.Units == nil ||
+		len(a.Controls) == 0 || len(a.LUTs) <= 9 || len(a.Palette) != 256 ||
+		len(a.PaletteDAC) != 256*3 {
+		return false
+	}
+	for i := 1; i <= 9; i++ {
+		if len(a.LUTs[i]) != 256 {
+			return false
+		}
+	}
+	return true
 }

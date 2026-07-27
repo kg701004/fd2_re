@@ -228,21 +228,11 @@ func (c *IndexedCompositor) Blit(frame fdother.Frame, destination []byte, stride
 	return frame.Blit(destination, stride, -1)
 }
 
-// PaletteDelta reproduces 0x11df2's clamp-to-0..63 RGB addition for every
-// palette entry in the inclusive index range.
+// PaletteDelta reproduces 0x11df2's baseline-derived inclusive range write.
+// The native function reads [0x53a65], not the current DAC contents.
 func (c *IndexedCompositor) PaletteDelta(start, end, delta int) error {
-	if start < 0 || end < start || end > 255 {
-		return errors.New("ending: invalid palette range")
+	if c == nil || !c.baselineKnown {
+		return errors.New("ending: baseline palette is unavailable")
 	}
-	for i := start * 3; i <= end*3+2; i++ {
-		v := int(c.Palette[i]) + delta
-		if v < 0 {
-			v = 0
-		}
-		if v > 63 {
-			v = 63
-		}
-		c.Palette[i] = byte(v)
-	}
-	return nil
+	return fdother.ApplyVGAPaletteDelta(c.Palette[:], c.Baseline[:], start, end, delta)
 }

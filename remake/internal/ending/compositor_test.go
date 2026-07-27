@@ -20,7 +20,8 @@ func TestIndexedCompositorCopiesBlitsAndClampsPalette(t *testing.T) {
 	if c.VGA[Width+1] != 9 || c.VGA[Width+2] != 9 {
 		t.Fatalf("blit/copy=%v", c.VGA[Width:Width+4])
 	}
-	c.Palette[3], c.Palette[4], c.Palette[5] = 2, 62, 63
+	c.Baseline[3], c.Baseline[4], c.Baseline[5] = 2, 62, 63
+	c.baselineKnown = true
 	if err := c.PaletteDelta(1, 1, 4); err != nil {
 		t.Fatal(err)
 	}
@@ -243,7 +244,9 @@ func TestBlockedDialogueSelectsOnlyNativeTextBranch(t *testing.T) {
 
 func TestPlayerExpandsRepeatedPaletteRampBeforeNextGate(t *testing.T) {
 	timeline := Timeline{Segments: []Segment{{Op: "palette_ramp_repeat", Source: "repeat", PaletteStart: intPtr(1), PaletteEnd: intPtr(0), PaletteStep: -1, PaletteDelay: 4, Repeat: 2, TailDelay: 3}, {Op: "native_text_branch_opaque", Source: "gate"}}}
-	p, err := NewPlayer(timeline, nil, nil, NewIndexedCompositor())
+	compositor := NewIndexedCompositor()
+	compositor.baselineKnown = true
+	p, err := NewPlayer(timeline, nil, nil, compositor)
 	if err != nil {
 		t.Fatal(err)
 	}
