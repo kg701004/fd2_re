@@ -129,7 +129,7 @@ func TestNativeCommandTargetFieldMaterializeAndReset(t *testing.T) {
 	if !g.st.HasNativeMapRangeModeState || g.st.NativeMapRangeMode != 2 {
 		t.Fatalf("target selector=%d/%v", g.st.NativeMapRangeMode, g.st.HasNativeMapRangeModeState)
 	}
-	if !g.resetNativeCommandTargetField() ||
+	if !g.resetNativeTargetField() ||
 		!slices.Equal(g.st.NativeTileBlitModes, []byte{0xff, 0xff, 0xff}) {
 		t.Fatalf("target field reset=%#v", g.st.NativeTileBlitModes)
 	}

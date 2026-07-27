@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -184,7 +185,8 @@ func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *test
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags: make([]byte, 9),
+			NativeTargetFlags:   make([]byte, 9),
+			NativeTileBlitModes: make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -238,7 +240,8 @@ func TestNativeMarkerClearTargetTransactionSyncsTransientAndRNG(t *testing.T) {
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags: make([]byte, 9),
+			NativeTargetFlags:   make([]byte, 9),
+			NativeTileBlitModes: make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -281,7 +284,8 @@ func TestNativeRetainedStatItemsSyncDerivedWordsAndMarkers(t *testing.T) {
 		g := &Game{
 			st: &battle.State{
 				W: 3, H: 3, Units: []*battle.Unit{unit},
-				NativeTargetFlags: make([]byte, 9),
+				NativeTargetFlags:   make([]byte, 9),
+				NativeTileBlitModes: make([]byte, 9),
 			},
 			sel: unit, moved: true, itemOpen: true,
 		}
@@ -324,7 +328,8 @@ func TestNativeRetainedMarkerApplicationSyncsDamageAndThreeRNGSteps(t *testing.T
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags: make([]byte, 9),
+			NativeTargetFlags:   make([]byte, 9),
+			NativeTileBlitModes: make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -369,7 +374,8 @@ func TestNativeCommandDamageItemUsesSharedUint16RNGAndRetainsSource(t *testing.T
 	g := &Game{
 		st: &battle.State{
 			W: 2, H: 1, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags: make([]byte, 2),
+			NativeTargetFlags:   make([]byte, 2),
+			NativeTileBlitModes: make([]byte, 2),
 		},
 		sel: actor, moved: true, itemOpen: true,
 		nativeCommandBook:        book,
@@ -419,6 +425,7 @@ func TestNativeRelocationUsesSeparateDestinationCursorAndMode6Legality(t *testin
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
 			NativeTargetFlags:      make([]byte, 9),
+			NativeTileBlitModes:    make([]byte, 9),
 			NativeTerrainMoveCodes: []byte{2, 2, 2, 2, 2, 2, 2, 2, 2},
 		},
 		sel: actor, moved: true, itemOpen: true,
@@ -432,9 +439,30 @@ func TestNativeRelocationUsesSeparateDestinationCursorAndMode6Legality(t *testin
 	if targeting, err := g.beginNativeTargetItem(0, 101); err != nil || !targeting {
 		t.Fatalf("targeting=%v err=%v", targeting, err)
 	}
+	wantFirstSelector := int(g.nativeItemEffectRows[101*battle.NativeItemEffectRowSize+0x12]) + 2
+	if g.st.NativeMapRangeMode != wantFirstSelector {
+		t.Fatalf("type23 first-stage selector=%d, want row+0x12+2 == %d", g.st.NativeMapRangeMode, wantFirstSelector)
+	}
 	if applied, err := g.applyNativeTargetItem(target); err != nil || applied ||
 		!g.nativeItemRelocating || g.nativeItemTargeting {
 		t.Fatalf("target stage applied=%v relocating=%v targeting=%v err=%v", applied, g.nativeItemRelocating, g.nativeItemTargeting, err)
+	}
+	allFF := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	if g.st.NativeMapRangeMode != 1 || !slices.Equal(g.st.NativeTileBlitModes, allFF) {
+		t.Fatalf("destination stage selector/grid=%d/%#v", g.st.NativeMapRangeMode, g.st.NativeTileBlitModes)
+	}
+	if !g.cancelNativeItemTargetModal() || !g.itemOpen ||
+		g.nativeItemTargeting || g.nativeItemRelocating ||
+		g.st.NativeMapRangeMode != 1 ||
+		!slices.Equal(g.st.NativeTileBlitModes, allFF) {
+		t.Fatalf("destination cancel did not return to item panel: %#v", g)
+	}
+	if targeting, err := g.beginNativeTargetItem(0, 101); err != nil || !targeting {
+		t.Fatalf("retargeting=%v err=%v", targeting, err)
+	}
+	if applied, err := g.applyNativeTargetItem(target); err != nil || applied ||
+		!g.nativeItemRelocating {
+		t.Fatalf("second target stage applied=%v relocating=%v err=%v", applied, g.nativeItemRelocating, err)
 	}
 	destinations := g.nativeRelocationDestinations()
 	if !destinations[battle.Cell{X: 2, Y: 2}] ||
@@ -446,7 +474,9 @@ func TestNativeRelocationUsesSeparateDestinationCursorAndMode6Legality(t *testin
 	}
 	if target.X != 2 || target.Y != 2 || actor.MP != 10 ||
 		len(actor.Inventory) != 1 || actor.Inventory[0] != 101 ||
-		!actor.Acted || g.sel != nil || g.nativeItemRelocating {
+		!actor.Acted || g.sel != nil || g.nativeItemRelocating ||
+		g.st.NativeMapRangeMode != 1 ||
+		!slices.Equal(g.st.NativeTileBlitModes, allFF) {
 		t.Fatalf("relocation actor=%#v target=%#v game=%#v", actor, target, g)
 	}
 }

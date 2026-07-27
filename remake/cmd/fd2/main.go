@@ -3326,7 +3326,7 @@ func (g *Game) materializeNativeCommandTargetField(record battle.NativeCommandRe
 	return nil
 }
 
-func (g *Game) resetNativeCommandTargetField() bool {
+func (g *Game) resetNativeTargetField() bool {
 	if g == nil || g.st == nil || g.st.W <= 0 || g.st.H <= 0 ||
 		len(g.st.NativeTileBlitModes) != g.st.W*g.st.H {
 		return false
@@ -3335,6 +3335,23 @@ func (g *Game) resetNativeCommandTargetField() bool {
 	for i := range g.st.NativeTileBlitModes {
 		g.st.NativeTileBlitModes[i] = 0xff
 	}
+	return true
+}
+
+func (g *Game) cancelNativeItemTargetModal() bool {
+	if g == nil || g.st == nil || (!g.nativeItemTargeting && !g.nativeItemRelocating) {
+		return false
+	}
+	g.resetNativeTargetField()
+	g.st.MaterializeNativeMapRangeMode(1)
+	g.nativeItemTargeting = false
+	g.nativeItemRelocating = false
+	g.nativeMovementCostRows = nil
+	g.itemOpen = true
+	// The native item panel remains the caller-owned parent while either
+	// selector is active.  Redraw the retained panel state; re-preparing it
+	// would clear the already loaded raw effect table before a second confirm.
+	g.refreshNativeItemPanel(g.sel)
 	return true
 }
 
@@ -3988,7 +4005,7 @@ func (g *Game) confirm() {
 		}
 		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		g.msg = message
-		g.resetNativeCommandTargetField()
+		g.resetNativeTargetField()
 		g.st.MaterializeNativeMapRangeMode(1)
 		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
 		g.checkResult()
@@ -4345,24 +4362,20 @@ func (g *Game) Update() error {
 	}
 	if g.nativeItemTargeting { // 原始物品第一階段 target selector：ESC 回物品列
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-			g.nativeItemTargeting = false
-			g.itemOpen = true
-			g.prepareNativeItemPanel(g.sel)
+			g.cancelNativeItemTargetModal()
 			return nil
 		}
 	}
 	if g.nativeItemRelocating {
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-			g.nativeItemRelocating = false
-			g.nativeItemTargeting = true
-			g.curX, g.curY = g.sel.X, g.sel.Y
+			g.cancelNativeItemTargetModal()
 			return nil
 		}
 	}
 	if g.castSp != nil || g.nativeCommand0Targeting { // native target selection: ESC 回 command grid
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			if g.nativeCommand0Targeting && g.st != nil {
-				g.resetNativeCommandTargetField()
+				g.resetNativeTargetField()
 				g.st.MaterializeNativeMapRangeMode(1)
 			}
 			g.castSp, g.nativeCommand0Targeting, g.nativeCommandOpen = nil, false, true
@@ -4704,7 +4717,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// even when 0x122dc draws no overlay; those states retain the playable
 	// renderer until their complete presentation lifecycle is materialized.
 	if !legacyViewport && campaignBattleView &&
-		(g.sel == nil || g.nativeCommand0Targeting) &&
+		(g.sel == nil || g.nativeCommand0Targeting ||
+			g.nativeItemTargeting || g.nativeItemRelocating) &&
 		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
 		nativeMapPresented = g.drawNativeMapFrame(screen)
 	}

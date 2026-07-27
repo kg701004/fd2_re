@@ -10,10 +10,10 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
-| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay | **尚非全 30 章原版等價可通關**；selector 6 mutation、7+ target visual／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
+| Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；selector6的field-mutation scheduler已有atomic adapter | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、演出、音訊與跨平台 runtime 尚未閉合 |
+| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接；兩層item cancel／selector-grid reset已對齊原版 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
 
-Worklist 目前是 **465 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **466 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -29,8 +29,9 @@ HUD 與 VGA copy 會直接形成 Ebiten 畫面。重讀原始指令同時撤回�
 18.2065Hz battle-local BIOS low-word clock與真正 constructor append order；
 原版 setup 在 selector 0 的短暫 opening frame 後寫回可操作 selector 1；ch01 現已用
 FDOTHER#1 descriptor 0 畫出原生 steady cursor，不再疊白色 approximation。target 模式的
-drawable selectors 2–5 也已走相同 indexed compositor；selector 6 與 7+ record-driven 值
-仍回到 playable renderer，
+drawable selectors 2–5 也已走相同 indexed compositor；selector 6的
+terrain後field mutation已有failure-atomic compositor primitive，但尚未猜接其production owner；
+7+ record-driven 值仍回到 playable renderer，
 不能把這張圖解讀成整套戰場 UI 已完成。
 
 ### 為什麼最近看起來一直在反組譯、但進度沒有等比例前進
@@ -94,7 +95,8 @@ mutation 未被猜測接入，未知 selector 維持 fail-closed。
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
 已有 typed transaction，並接入原版 two-stage target planner、process-wide uint16 RNG及
-type23 mode6 destination cursor。尚未接的是各分支的 indexed effect presentation，
+type23 destination cursor。這裡的destination是literal target code6，global selector仍為1；
+first-target與destination取消都直接回item panel，兩次grid reset已接。尚未接的是各分支的 indexed effect presentation，
 不是仍把所有 item Enter 封閉。這代表目前的
 「進度」是可驗證的函式與資料切片，不是原版剩餘工作百分比；後續會以 `56` SDD 的 evidence gate 關閉每個
 campaign、town/shop、persistent save、UI renderer 缺口。

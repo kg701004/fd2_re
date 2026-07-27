@@ -231,9 +231,24 @@ func (g *Game) beginNativeTargetItem(rawSlot, itemID int) (bool, error) {
 	if !hp && !mp && !markerClear && !hitEV && !apDP && !markerApply && !commandDamage && !relocation {
 		return false, nil
 	}
-	if _, err := battle.NativeItemTargetPlanFromRow(row); err != nil {
+	plan, err := battle.NativeItemTargetPlanFromRow(row)
+	if err != nil {
 		return false, err
 	}
+	fieldBytes, err := battle.NativeCommandTargetFieldBytes(
+		g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y},
+		plan.SelectionMode, plan.SelectionInnerMark, g.st.NativeTargetFlags,
+	)
+	if err != nil || len(g.st.NativeTileBlitModes) != len(fieldBytes) {
+		return false, fmt.Errorf("native item target field is unavailable")
+	}
+	if plan.EffectMode < 0 || plan.EffectMode > 0xff ||
+		!g.st.MaterializeNativeMapRangeMode(
+			battle.NativeMapOverlaySelectorFromRecordByte(byte(plan.EffectMode)),
+		) {
+		return false, fmt.Errorf("native item overlay selector is invalid")
+	}
+	copy(g.st.NativeTileBlitModes, fieldBytes)
 	g.nativeItemTargeting = true
 	g.nativeItemTargetID = itemID
 	g.nativeItemTargetRawSlot = rawSlot
@@ -333,6 +348,11 @@ func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 	if err != nil {
 		return false, nil
 	}
+	// 0x1bd5e..0x1bd6c resets byte+3 immediately after the first selector
+	// returns, then restores the global overlay selector to one before the
+	// second target list and the type23 destination selector.
+	g.resetNativeTargetField()
+	g.st.MaterializeNativeMapRangeMode(1)
 	sourceUnit := -1
 	targetIndices := make([]byte, len(targets))
 	for index, unit := range g.st.Units {
@@ -537,6 +557,8 @@ func (g *Game) applyNativeRelocationDestination(x, y int) (bool, error) {
 	g.sel.NativeRecordByte5 |= 0x80
 	g.sel.HasNativeRecordByte5 = true
 	g.sel.Acted = true
+	g.resetNativeTargetField()
+	g.st.MaterializeNativeMapRangeMode(1)
 	g.nativeItemRelocating = false
 	g.nativeMovementCostRows = nil
 	g.nativeItemEffectRows = nil

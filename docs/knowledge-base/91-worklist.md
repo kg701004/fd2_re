@@ -704,14 +704,14 @@
 
 - [~] **shared object redraw compositor**：`0x127a9` 的 `0x127e0` 不是單純 loop bookkeeping：active roster entry 以 camera-relative placement 選 24×24 descriptor，走 `0x4deda` raw indexed-RLE 或 `0x4de56` palette-band-RLE 寫 `0x53a49`；尾端 `0x129ec` 又在同 buffer 疊 map/object layer。`+5 bit7` clear→raw、set→band 已由 direct branch 關閉。`BlitNativeUnitLayer` 現以 raw slot／pose／movement／base-frame／active gate、camera bounds、cycles 及 pixel shift 完整表達 steady unit layer，且 preflight 失敗不寫半張 frame；它不接 GUI。`0x53a61` 是 global raw-key cache 的 pointer blocks，runtime index 是回傳 `slot×12 + pose×3 + cycle`，而非角色 group。仍待將 terrain→range→unit→foreground→HUD→viewport copy 組成 caller adapter；在此之前不得把 `0x22046` passes 或 `unit_present` 接成 native UI。
 - [x] **`0x11cac` range-layer provenance**：Docker Capstone 釘住 redraw order 為 `0x11eee terrain → 0x122dc range overlay/mutation → 0x127a9 unit+foreground → 0x1acf3 HUD → 0x11eb0 viewport copy`。修正舊斷言：只有 modes1..5 展開固定 calls 到 `0x126f7`；mode6直接清 selected cell byte+3，7+直接return。`0x126f7` camera-bound 後以 `0x4deda` 寫 `buffer+0x8088`。
-- [x] **`0x122dc` range call-table／asset closure**：Docker Capstone 完整直讀 modes 1..5，`fdother.NativeRangeOverlayPlacements` 保留原始 call order 的 1/1/5/13/21 個 `(x,y,descriptor)`；特別固定 mode3 centre=`#14`、mode5 的重複座標／不同 descriptor，禁止圖形化 normalize。`0x25c7d..0x25c92` 已證明 `FDOTHER#1→0x53a4d`；實檔 header 是 20-entry 24×24 four-mode-RLE bank，`0x126f7` 以 `base+6+4*descriptor` 選 #0..18 後 `0x4deda`。`DecodeNativeRangeOverlayBank`／`BlitNativeRangeOverlay` 以真實 resource regression 固定 456 stride、0x8088、camera clip 和 preflight。mode6 不呼 `0x126f7`，而是算 `4*(x+y*raw53ac1)+7` 後清 `[0x53a51]` 指向資料的一個 byte；drawable API 明確拒絕 mode6。仍待 native buffer/grid lifetime 與 runtime/Ebiten adapter。
+- [x] **`0x122dc` range call-table／asset closure**：Docker Capstone 完整直讀 modes 1..5，`fdother.NativeRangeOverlayPlacements` 保留原始 call order 的 1/1/5/13/21 個 `(x,y,descriptor)`；特別固定 mode3 centre=`#14`、mode5 的重複座標／不同 descriptor，禁止圖形化 normalize。`0x25c7d..0x25c92` 已證明 `FDOTHER#1→0x53a4d`；實檔 header 是 20-entry 24×24 four-mode-RLE bank，`0x126f7` 以 `base+6+4*descriptor` 選 #0..18 後 `0x4deda`。`DecodeNativeRangeOverlayBank`／`BlitNativeRangeOverlay` 以真實 resource regression 固定 456 stride、0x8088、camera clip 和 preflight。mode6 不呼 `0x126f7`，而是算 `4*(x+y*raw53ac1)+7` 後清 `[0x53a51]` 指向資料的一個 byte；drawable API 明確拒絕 mode6。native buffer/grid lifetime已接；mode6 production caller仍待。
 - [x] **RE-RANGE-MODE-ZERO-NOOP**：官方 IDA 9.4 重讀 `0x122dc`
   證實 switch default不draw；Capstone另固定bootstrap `0x10483`
   先寫`[0x51a83]=0`再呼`0x11cac(1)`。故raw mode0是transient opening frame，
   不是persistent steady state。`BlitNativeRangeOverlay`現以byte-for-byte
   regression接受0為exact no-op；pure modes1..5 placement API仍拒絕0，
   mode6仍只走獨立field mutation。
-- [x] **`0x122dc` mode6 raw-field closure**：`0x108f0..0x10932` 載 FDFIELD composition 至 `0x53a51`、讀 signed `u16 width/height`；`0x4dbfc` 由 header 後的 4-byte cells 逐筆將 byte+3 初始化為`0xff`，再對 byte+2 mask `0x1f`。所以 mode6 的 `4*(x+y*width)+7` 正是 selected cell byte+3（event-high／raw blit-mode byte），不是 overlay sprite 或抽象 grid。`ClearNativeRangeOverlayMode6FieldByte` 有 bounds/no-partial-mutation regression；不替清零後的 renderer/gameplay效果命名。
+- [x] **`0x122dc` mode6 raw-field／scheduler closure**：`0x108f0..0x10932` 載 FDFIELD composition 至 `0x53a51`、讀 signed `u16 width/height`；`0x4dbfc` 由 header 後的 4-byte cells 逐筆將 byte+3 初始化為`0xff`，再對 byte+2 mask `0x1f`。所以 mode6 的 `4*(x+y*width)+7` 正是 selected cell byte+3（event-high／raw blit-mode byte），不是 overlay sprite或抽象grid。`ComposeFrame`現按原順序在terrain後清selected cell、再畫unit/foreground，且只有full-frame成功才commit caller field；bounds/HUD failure regression保證atomic。這只閉合compositor primitive，尚未把未證實的global-selector6 owner接進production。
 - [x] **`[0x51a83]` full-domain correction**：合法 IDA 9.4 完整 data xrefs 已保存於 [`fd2_51a83_xrefs.txt`](../data/ida/fd2_51a83_xrefs.txt)。撤回把它限制為`0..5`或稱「戰鬥訊息索引」：`0x15140/0x153b1/0x1bd14/0x1d188` 都是 zero-extended record byte `+2`；原 spell table 的 range 5/7/9 會產生7/9/11。`0x122dc`對>6不畫圖，但`0x115b6`仍以selector-1進`0x14742` target legality。battle raw state現保留writer可達的`0..0x101`；campaign JSON只允許`0x1060c`已證實的persistent interactive selector 1，避免靜態資料冒充互動writer。
 - [x] **RE-INTERACTIVE-SELECTOR-LIFECYCLE**：Docker Capstone固定setup `0x10483=0→0x11cac(1)→0x105eb:0x11cac(0)→0x1060c=1`，並固定`0x1cff0` target entry寫`record+4+2`、cancel/effect期間暫寫0、exit恢復1。remake campaign/production frame現以selector1和FDOTHER#1 descriptor0呈現原生steady cursor，移除白框 approximation；target modal亦直接呈現完整call-table已閉合的selectors2–5，regression要求每一 selector 實際改變indexed VGA frame。selector6 mutation、7+ no-draw target visual、flash與indexed effect仍維持partial。
 - [x] **`0x115b6→0x14742` cursor-confirm closure**：Capstone證實`0x14742`唯一caller為`0x1175f`。code5先拒絕；cell byte+3=`0xff`也在code4前拒絕；非`0xff`的code4接受；codes0..3以`[0x51a83]`（>1才減1）作strict Manhattan `< radius` roster count，count非零才確認。code6維持獨立relocation branch。新增`NativeCursorConfirmationAllowed` fail-closed raw-roster regression。同步撤回target code2=`camp!=1`舊斷言；direct branches是`camp==1`，即只選友軍。
@@ -1275,7 +1275,15 @@
   retained/consumed inventory皆同步；indexed effect presentations仍待。
 - [x] **REMAKE-ITEM-TYPE23-DESTINATION-CURSOR**：item101完成first-target後
   不立即改座標，而是進獨立destination cursor；逐格使用完整raw roster、
-  `NativeTerrainMoveCodes`與29×20 cost rows執行mode6 occupancy/terrain
-  predicate，合法格才扣command23 MP、寫target raw `+0/+1`、保留來源並
-  結束action。Escape回first-target selection；27 full-present +
-  18/24 direct-row indexed renderer仍待。
+  `NativeTerrainMoveCodes`與29×20 cost rows執行literal target-code6的
+  occupancy/terrain predicate，合法格才扣command23 MP、寫target raw
+  `+0/+1`、保留來源並結束action。原版first-target與destination兩層
+  Escape都直接回caller-owned item panel；舊destination→first-target
+  行為已刪除。27 full-present + 18/24 direct-row indexed renderer仍待。
+- [x] **REMAKE-ITEM-TARGET-SELECTOR-LIFECYCLE**：item target entry以
+  `row[+0x12]+2` materialize global selector，first target field仍使用
+  `row[+0x10]`／type23 inner marker／`row[+0x15]`。第一次`0x115b6`返回後
+  reset所有cell byte+3並恢復selector1；final target list後再reset。
+  type23 destination維持global selector1，只把literal code6傳給
+  `0x115b6`，不再把兩個「6」混成同一狀態。focused Docker/Xvfb regression
+  覆蓋兩層cancel、重新進入、成功commit與grid/selector reset。

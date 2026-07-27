@@ -399,17 +399,27 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 		return errors.New("indexedmap: missing native frame bank")
 	}
 	frame := append([]byte(nil), work...)
+	cells := append([]fdicon.NativeTerrainCell(nil), in.Cells...)
 	baseX, baseY := workBase%workStride, workBase/workStride
-	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 13, 8, in.Flip, in.TerrainCycle, in.LUT); err != nil {
+	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, 13, 8, in.Flip, in.TerrainCycle, in.LUT); err != nil {
 		return fmt.Errorf("indexedmap: terrain: %w", err)
 	}
-	if err := fdother.BlitNativeRangeOverlay(in.RangeBank, frame, in.CameraX, in.CameraY, 13, 8, in.RangeMode, in.CursorX, in.CursorY); err != nil {
+	if in.RangeMode == 6 {
+		if in.CursorX < 0 || in.CursorY < 0 || in.CursorX >= in.MapWidth ||
+			in.CursorY >= len(cells)/in.MapWidth {
+			return errors.New("indexedmap: mode6 cursor outside field")
+		}
+		// 0x122dc mutates composition byte+3 after 0x11eee terrain and before
+		// 0x127a9 foreground. Commit to caller state only after the full frame
+		// succeeds, retaining the adapter's failure-atomic boundary.
+		cells[in.CursorY*in.MapWidth+in.CursorX].BlitMode = 0
+	} else if err := fdother.BlitNativeRangeOverlay(in.RangeBank, frame, in.CameraX, in.CameraY, 13, 8, in.RangeMode, in.CursorX, in.CursorY); err != nil {
 		return fmt.Errorf("indexedmap: range: %w", err)
 	}
 	if err := in.UnitBank.BlitNativeUnitLayer(frame, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, 12, 7, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
 		return fmt.Errorf("indexedmap: units: %w", err)
 	}
-	if err := in.ForegroundBank.BlitNativeForegroundLayer(frame, workStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 12, 7, in.Flip, in.LUT); err != nil {
+	if err := in.ForegroundBank.BlitNativeForegroundLayer(frame, workStride, in.ForegroundUnits, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, 12, 7, in.Flip, in.LUT); err != nil {
 		return fmt.Errorf("indexedmap: foreground: %w", err)
 	}
 	if err := renderHUD(frame); err != nil {
@@ -425,5 +435,6 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 	}
 	copy(work, frame)
 	copy(vga, copyFrame)
+	copy(in.Cells, cells)
 	return nil
 }

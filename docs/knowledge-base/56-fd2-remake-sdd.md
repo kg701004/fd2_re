@@ -128,7 +128,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-01 | Title/main menu | 上下選擇、確認、取消、save/load、游標音效與 focus state | partial；`TitleMenuState`／`TitleSlotState` 已與 Ebiten 輸入共用並有 deterministic trace，仍缺原版逐幀 E2 對照與完整 boot/campaign 接線 |
 | UI-02 | Battle field | 游標格、鏡頭、可移動格、高亮、單位 HUD、方向／面向 | partial；HUD 固定錨點與完整 native sprite 未閉合 |
 | UI-03 | Action menu | move/attack/magic/item/status/wait/end-turn 的可見項、enable gate、取消回上一層 | partial；原版 action overlay 的 battle cell table（enabled `[0,2,4,6]`／disabled `[3,5,7,9]`）、open/close 四幀 byte-offset、以可視 cursor column/row 算出的 framebuffer anchor 已閉合。native command grid 亦已定為 320×200、每欄四列，label `(18+100*col,103+22*row)`、MP 右側、↑↓ wrap/←→±4 bounded；scenario raw command mask 已可 materialize。Docker/Xvfb 以 player FDOTHER.DAT 捕捉的 [悠妮 command-0 grid](../figures/native-command-grid-remake.png) 證實 mask→label→palette/font→renderer 路徑，非 original visual diff。玩家提供 `FD2_ORIGINAL_FDOTHER`（或 user assets）時，remake 會直接讀 FDOTHER#0 palette＋#2 cells 並畫 final-open skin；舊 PNG ring 是 fail-closed fallback。supported native IDs 現以 selected raw record 完成 candidate→confirm state slice，並永久拒絕把 raw command 送入 legacy `CastArea`；indexed effect renderer、動畫、完整 native gate 與 visual-diff 尚缺 |
-| UI-04 | Target/range/item selector | 武器 min/max reach、法術 range/AOE、item兩欄四列、不可用目標灰化、確認／取消 | partial；command/item targets與 observed item effects已閉合。`0x1b9de/0x184c0` 固定 compact prefix、input、layout與raw icon IDs；`0x18409` 的12-frame open11→0/close0→11及left/upper/bottom clipped rectangles也有pure schedule。現行raw-hole shell不是original parity，Enter transaction與indexed-buffer→Ebiten adapter仍fail-closed |
+| UI-04 | Target/range/item selector | 武器 min/max reach、法術 range/AOE、item兩欄四列、不可用目標灰化、確認／取消 | partial；command/item targets與 observed item effects已閉合。`0x1b9de/0x184c0` 固定 compact prefix、input、layout與raw icon IDs；`0x18409` 的12-frame open11→0/close0→11及left/upper/bottom clipped rectangles已有Ebiten adapter。tracked item Enter transaction已接，但indexed effect presentation、完整weapon/AOE/LOS與DOSBox visual diff仍fail-closed |
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
@@ -1273,8 +1273,8 @@ uses `0x22253` for the `0xff/0xff` exit and cursor-coordinate entry writes.
 The item dispatcher does not call `0x1b8e7`, so tracked item ID101 is
 retained; its row word1 is ignored by this handler.
 `NativeItemRelocationRoute` / `ApplyNativeItemRelocation` preserve this
-post-confirm state transaction, first-target behavior and MP wrap. Selector
-mode6's destination predicate is now executable too. Apart from the selected
+post-confirm state transaction, first-target behavior and MP wrap. Literal
+target code 6's destination predicate is now executable too. Apart from the selected
 target, any record at the destination with raw `+5 bit0==0` blocks admission.
 The 29×20 table returned by `0x4e555(selector)` is exported as editable
 `native_movement_cost_rows.json`; selector normally uses target class `+0x20`,
@@ -1283,12 +1283,26 @@ class/race gate. The resolved terrain index must contain literal value20.
 `NativeRelocationDestinationAllowed` preserves those gates and rejects
 malformed tables/counts. Terrain-index production through `0x12e38` is already
 the raw cursor/FDSHAP resolver boundary. Ebiten now keeps the selected first
-target and opens a distinct destination cursor, highlights only cells accepted
-by `NativeRelocationDestinationAllowed`, supports Escape back to target
-selection, and commits command23 MP subtraction plus raw coordinates only
-after destination confirmation. It requires the exact per-cell
+target and opens a distinct destination cursor, admitting only cells accepted
+by `NativeRelocationDestinationAllowed`. Both first-target cancel and
+destination cancel return directly to the caller-owned item panel; the older
+destination-to-first-target behavior was a remake invention and is removed.
+Only destination confirmation commits command23 MP subtraction plus raw
+coordinates. It requires the exact per-cell
 `NativeTerrainMoveCodes` provenance and fails closed without it. The native
 27-present indexed renderer remains a separate integration gate.
+
+The surrounding selector/grid lifecycle is caller-closed. Item target entry
+writes the global selector as `row[+0x12]+2`, while its first target field is
+built from `row[+0x10]`, the type-23 inner marker, and `row[+0x15]`.
+Immediately after the first `0x115b6` returns, `0x4dbfc` resets all runtime
+cell byte `+3` values and the global selector returns to `1`; the final target
+list is then built from `row[+0x12]` and reset again. Type23 subsequently
+passes literal target code `6` to `0x115b6` while the global selector remains
+`1`: it does **not** materialize global selector 6. The indexed compositor
+does preserve the separately verified global-selector-6 mutation primitive
+(terrain draw, selected cell byte `+3=0`, then foreground), but its production
+owner is a different, still-unintegrated battle presentation path.
 
 Caller-scope correction (Docker Capstone, 2026-07-26): `0x22253` is shared by the chapter-ending/post handler at `0x250cc`, not command-23-only. That path calls it after `0x1c2da` with unit index `1`, pre-render bytes `0xff/0xff`, and the selected record's raw `+0/+1` bytes, then continues to `0x25089` cleanup and `0x2bce5` ending rendering. The remake therefore treats `SetNativeUnitCoordinateBytes` as a shared raw writer only; command-23 selector, ending layout, renderer, and campaign transition remain independent fail-closed contracts.
 

@@ -1,6 +1,7 @@
 package indexedmap
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
@@ -69,6 +70,48 @@ func TestComposeFrameRejectsMissingHUDBeforeMutation(t *testing.T) {
 	}
 	if string(vga) != string(beforeVGA) {
 		t.Fatal("rejected input mutated VGA buffer")
+	}
+}
+
+func TestComposeFrameMode6MutatesBetweenTerrainAndForegroundAtomically(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	makeInput := func(cells []fdicon.NativeTerrainCell) FrameInput {
+		return FrameInput{
+			TerrainBank: bank(12, 1), RangeBank: bank(20, 2),
+			UnitBank: bank(12, 3), ForegroundBank: bank(12, 4),
+			SelectorCache: cache, Cells: cells,
+			Controls: []byte{0, 0, 0, 0}, LUT: make([]byte, 256),
+			MapWidth: 13, RangeMode: 6, CursorX: 1, CursorY: 0,
+		}
+	}
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	work, vga := make([]byte, workStride*320), make([]byte, NativeMapVGASize)
+	if err := ComposeFrame(work, vga, makeInput(cells), func([]byte) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if cells[1].BlitMode != 0 || cells[0].BlitMode != 0xff {
+		t.Fatalf("mode6 cells=%#v/%#v", cells[0], cells[1])
+	}
+
+	failedCells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range failedCells {
+		failedCells[i].BlitMode = 0xff
+	}
+	beforeWork, beforeVGA := append([]byte(nil), work...), append([]byte(nil), vga...)
+	if err := ComposeFrame(work, vga, makeInput(failedCells), func([]byte) error {
+		return errors.New("HUD fail")
+	}); err == nil {
+		t.Fatal("mode6 frame accepted failed HUD")
+	}
+	if failedCells[1].BlitMode != 0xff ||
+		string(work) != string(beforeWork) || string(vga) != string(beforeVGA) {
+		t.Fatal("failed mode6 frame leaked field or framebuffer mutation")
 	}
 }
 

@@ -1187,3 +1187,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x4e19a`會把已扣cost的destination budget強制歸零，因此該格是可達終點，
   不能形成zero-cost chain。focused regression與更新後
   `docs/figures/native-map-ch01-remake.png`證實正常飽和indexed terrain。
+- 2026-07-28 item target／type23 selector lifecycle correction：direct
+  `0x1bbdc` caller evidence固定item entry將global selector寫成
+  `row[+0x12]+2`，first target field則以`row[+0x10]`、type23 inner marker
+  與`row[+0x15]`建立。第一次`0x115b6`返回後立即`0x4dbfc` reset並恢復
+  selector1；second/final target list建立後再reset。type23 destination呼叫
+  `0x115b6(6,...)`的6是literal target code，global selector仍為1；不得再把
+  它與`0x122dc` selector6混為一談。first-target cancel與destination cancel
+  都直接回caller-owned item panel，舊destination→first-target行為已刪除。
+  remake現保存panel/effect-table以支援取消後重新確認，並在success/cancel
+  reset field與selector。`ComposeFrame`另依已證實scheduler在terrain後、
+  foreground前清selector6 selected cell，僅full-frame成功才commit，並不
+  猜接其仍未知的production owner。focused Docker/Xvfb
+  `go test ./internal/indexedmap ./cmd/fd2 -count=1`通過。
