@@ -101,12 +101,54 @@ func NativeCommandTargetMatches(code int, camp Camp) bool {
 	case 1:
 		return camp != Enemy
 	case 2:
-		return camp != Ally
+		return camp == Ally
 	case 3:
 		return camp == Own
 	default:
 		return false
 	}
+}
+
+// NativeCursorConfirmationAllowed preserves the non-relocation Enter/Space
+// gate in 0x115b6. fieldByte is the selected FDFIELD cell's fourth byte
+// ([0x53a51 + 4*cell + 7]), not NativeTargetFlags. targetCode 5 and a 0xff
+// cell reject before targetCode 4 accepts.
+//
+// For target codes 0..3 on a non-0xff cell, 0x115b6 derives a strict
+// Manhattan radius from [0x51a83] (decrementing values above one) and accepts
+// only when 0x14742 finds at least one active matching unit inside that radius.
+// targetCode 6 owns a separate relocation legality branch and is rejected
+// here rather than being approximated.
+func NativeCursorConfirmationAllowed(cursor Cell, fieldByte byte, overlaySelector, targetCode int, units []*Unit) (bool, error) {
+	if overlaySelector < 0 || overlaySelector > nativeMapOverlaySelectorMax {
+		return false, fmt.Errorf("invalid native overlay selector %d", overlaySelector)
+	}
+	if targetCode == 5 || fieldByte == 0xff {
+		return false, nil
+	}
+	if targetCode == 4 {
+		return true, nil
+	}
+	if targetCode < 0 || targetCode > 3 {
+		return false, fmt.Errorf("native cursor target code %d uses another branch", targetCode)
+	}
+	if !nativeTargetRosterRawComplete(units) {
+		return false, fmt.Errorf("native cursor confirmation requires complete raw roster")
+	}
+	radius := overlaySelector
+	if radius > 1 {
+		radius--
+	}
+	for _, unit := range units {
+		if !nativeTargetUnitUsable(unit, true) ||
+			!NativeCommandTargetMatches(targetCode, unit.Camp) {
+			continue
+		}
+		if absInt(unit.X-cursor.X)+absInt(unit.Y-cursor.Y) < radius {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // nativeTargetUnitUsable applies the raw 0x14818 inactive predicate whenever

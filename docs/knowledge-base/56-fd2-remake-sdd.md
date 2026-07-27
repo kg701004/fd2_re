@@ -566,16 +566,30 @@ branch）先以 actor cell、`record[+3]`、`record[+6]` 呼叫 `0x14818`，把�
 stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。confirm 成功後，它以**確認游標格**、
 `record[+4]` 和同一 target code 再呼叫 `0x14818`，此第二個 candidate array/count 才傳入
 `0x2a6bd(unit, commandID, count, array)`。這證實 command 0 的 selector 是 **per final-effect candidate**，
-而非 legacy UI 的單格 `CastArea` contract；`0x2a6bd` 對 IDs0..8 的 state writer 尚未閉合，不能從 final array
-推論 numeric resolver。`0x14818` 的方向／形狀
+而非 legacy UI 的單格 `CastArea` contract。final array 本身不能單獨證明 numeric resolver；該部分已由後續
+獨立的 `0x2a6bd→0x2b659/0x1c75e` direct dataflow closure建立。`0x14818` 的方向／形狀
 與 target-code semantics 已有 raw closure：`dist<0x10` 經 native map/reach mask 決定可見格；`dist>=0x10`
 使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須在 grid geometry 內，並以 raw byte+5 active gate 及 target code 對 runtime
-`unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: !=1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
-直接來自 FDFIELD `b0` camp（敵=0、友=1、己=2），故四個 code 分別是 enemy/non-enemy/non-ally/own；
+`unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: ==1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
+直接來自 FDFIELD `b0` camp（敵=0、友=1、己=2），故四個 code 分別是 enemy/non-enemy/ally/own；
 `dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 flood-fill：起點 budget=`dist`，grid flag bit `0x40` 阻擋、
 bit `0x80` 使該步成本為零。雖然 callee 支援 terrain-cost row，command selector 固定呼叫 `0x4e555(0)`，而
 EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
 cardinal range（無阻擋時才等於 Manhattan）。
+
+`0x115b6` cursor-confirm gate is a separate contract from the `0x14818`
+candidate list. Docker Capstone proves `0x14742` has exactly one caller,
+`0x1175f`. For Enter/Space, raw target code 5 rejects before inspecting the
+cell; FDFIELD selected-cell byte+3 equal to `0xff` also rejects before code4,
+while code4 on a non-`0xff` cell accepts. Codes0..3 on a non-`0xff` cell call
+`0x14742(cursorX,cursorY,radius,0,targetCode)`, where radius is `[0x51a83]`
+decremented only when above one. The helper scans active raw records and
+counts matching camps at strict Manhattan distance `< radius`; confirmation
+accepts only when that count is nonzero. Code6 uses the already separate
+relocation branch. `NativeCursorConfirmationAllowed` preserves these branch
+orders and requires a complete raw roster. This direct reread also corrects
+the old code2 predicate from `camp != 1` to `camp == 1`; tests assert target
+identity rather than only list length.
 
 `battle.NativeCommandTargetCells`／`NativeCommandTargets` 已把**一次** verified `0x14818` 呼叫做成獨立資料層：
 caller 必須提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`，並明確選定 first

@@ -452,9 +452,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 command class-multiplier closure（official IDA 9.4 DB/ASM）：constructor `0x10f7f/0x11399` direct copy source race/class/level 至 runtime `+0x1f/+0x20/+0x21`；故 `0x1c75e` 的 `word_51f96[unit+0x20]` 是 target class-ID-indexed damage multiplier。撤回 doc03 將 race/class/level 放在 `+0x27` 的舊標記；個別 multiplier 的玩法名稱仍待 table/data 對照。
 - 2026-07-26 numeric damage resistance closure（official IDA 9.4 DB/ASM + EXE bytes）：`word_51f96` 的 loaded-data file mapping 是 `0x51d96`，即既有職業魔抗 table 的 4-byte rows；其 low byte=`resist_raw`（法師=7 即 30% magic resistance）。已閉合 numeric route 的 base 為 `record.dmg*resist_raw[target class]/10`，並以 `NativeCommandDamage` resolver（hit draw、damage draw、HP clamp）及 fail-closed editable-table loader 實作；不可再把它專屬歸因給 ID0。
 - 2026-07-26 command0 target-array closure（official IDA 9.4 ASM）：一般 command record 的 `+3/+6` 進 `0x14818` 產生 candidate unit-index stack array；`0x115b6(mode=+6,count,array)` 做 cursor/confirm，之後第二階段 effect array 才傳 `0x2a6bd(unit,id,count,array)`，其 final loop 可達 `0x1c75e`。撤回把 native command0 當單格 legacy cast 的暗示；尚未命名 target-code/geometry 值域。
-- 2026-07-26 `0x14818` target geometry closure（official IDA 9.4 ASM）：`record+3<0x10` 用 `0x4e555` map/reach mask；`>=0x10` 為 horizontal/vertical cross，radius=`+3-0x10`。scan roster 跳 inactive/mask `0xff`，record `+6` 的 raw predicate 是 0:`unit+6==0`, 1:`!=0`, 2:`!=1`, 3:`==2`。保留 raw values，尚未猜命名／map-mask 行走規則。
+- 2026-07-26 `0x14818` target geometry closure（2026-07-28 predicate correction）：`record+3<0x10` 用 `0x4e555` map/reach mask；`>=0x10` 為 horizontal/vertical cross，radius=`+3-0x10`。scan roster 跳 inactive/mask `0xff`；direct Capstone修正 record `+6` predicate為 0:`unit+6==0`, 1:`!=0`, 2:`==1`, 3:`==2`。舊code2 `!=1`是分支方向抄反，已撤回。
 - 2026-07-26 target reach closure correction（official IDA 9.4 ASM/data）：`0x4e555` 是 20-byte cost-row helper，mask producer 是 `0x4e040`。它做 cardinal flood-fill，grid bit40 block、bit80 cost=0；但 command selector 固定取 row0，而 `word_61646` row0 的 20 bytes 全=1。因此 command target 不用 terrain-weight，但會受 blockers 限制；撤回「需要 class/tile cost 才能接 native command range」及「無條件 Manhattan」兩種錯誤暗示。
-- 2026-07-26 camp offset correction（official IDA 9.4 `0x10c50` constructor）：FDFIELD unit `b0` 直接寫 runtime `unit+6`，值 0敵/1友/2己。撤回 docs 把 runtime `+0x0e` 寫成 camp 的舊表；這也正名 `0x14818` target codes 0=enemies、1=non-enemies、2=non-allies、3=own。
+- 2026-07-26 camp offset correction（2026-07-28 target-code correction）：FDFIELD unit `b0` 直接寫 runtime `unit+6`，值 0敵/1友/2己。撤回 docs 把 runtime `+0x0e` 寫成 camp 的舊表；`0x14818` target codes正確為0=enemies、1=non-enemies、2=allies、3=own。
 - 2026-07-26 native command MP transaction closure（official IDA 9.4 ASM）：generic route `0x21227` 在 candidate array 建立後、逐 target effect 前呼叫 `0x1CA89(actor,commandID)`；後者由 `0x4e516(commandID)` 取 record `byte+5`，直接扣 runtime current MP `unit+0x44`。selector 的 `currentMP >= byte+5` gate 在此前，因此 remake `SpendNativeCommandMP` 只表達已確認交易、invalid/不足不寫入，且不以 normalized `Spell` 冒充 raw command。target confirm/effect/UI 仍不接。
 - 2026-07-26 native command two-stage target correction（official IDA 9.4 ASM）：撤回「`0x115b6` confirm 後把 first `record+3` candidate array 直接交給 `0x2a6bd`」的錯誤捷徑。一般 `0x1cff0` 先以 actor cell/`+3`/`+6` 建可選中心並交 `0x115b6`；confirm 後以 cursor cell/`+4`/`+6` **再**建 final-effect array，僅第二 array/count 傳入 `0x2a6bd`。`NativeCommandTargetCells` 只表達一次 `0x14818` primitive，caller 必須明確選 stage；UI 繼續 fail-closed。
 - 2026-07-26 raw command UI fail-closed correction：撤回 native command grid「有同 ID `spells.json` row 就可進 legacy `CastArea`」的暫接。這會跳過已證實的 actor `+3`→cursor confirm→cursor `+4` target pipeline，且 table identity 不證明 effect equivalence。grid confirm 現清楚顯示未驗證並回 action overlay；legacy spell menu 仍是獨立、可編輯的 approximation。
@@ -1155,3 +1155,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x115b6`仍把selector-1送入`0x14742` target legality。
   battle state改保留observed `0..0x101` domain；campaign bootstrap
   仍只接受已證實0。後續須接完整互動lifecycle，不能把它降成renderer enum。
+- 2026-07-28 `0x115b6→0x14742` cursor-confirm closure：合法IDA與
+  Docker Capstone證實`0x14742`唯一caller是`0x1175f`。Enter/Space時
+  code5先拒絕；cell byte+3=`0xff`亦在code4前拒絕；非`0xff` code4接受；
+  codes0..3才以selector（>1減1）作strict Manhattan `<radius` raw
+  roster count，count非零才確認。code6維持既有relocation branch。
+  新增fail-closed `NativeCursorConfirmationAllowed`與identity regression。
+  同次逐跳修正`0x14818/0x14742` code2為camp `==1`；舊`!=1/non-allies`
+  斷言與Go resolver已撤回。

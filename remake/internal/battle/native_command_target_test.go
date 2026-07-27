@@ -34,11 +34,61 @@ func TestNativeCommandTargetsMatchesRecoveredCampCodes(t *testing.T) {
 	enemy := &Unit{Camp: Enemy, X: 0, Y: 0, HP: 1, OnField: true}
 	ally := &Unit{Camp: Ally, X: 1, Y: 0, HP: 1, OnField: true}
 	own := &Unit{Camp: Own, X: 2, Y: 0, HP: 1, OnField: true}
-	for code, want := range map[int]int{0: 1, 1: 2, 2: 2, 3: 1} {
+	for code, want := range map[int][]*Unit{
+		0: {enemy},
+		1: {ally, own},
+		2: {ally},
+		3: {own},
+	} {
 		got, err := NativeCommandTargets(3, 1, Cell{X: 1, Y: 0}, 2, code, make([]byte, 3), []*Unit{enemy, ally, own})
-		if err != nil || len(got) != want {
-			t.Fatalf("code=%d got=%d err=%v want=%d", code, len(got), err, want)
+		if err != nil || len(got) != len(want) {
+			t.Fatalf("code=%d got=%v err=%v want=%v", code, got, err, want)
 		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Fatalf("code=%d got[%d]=%p want=%p", code, i, got[i], want[i])
+			}
+		}
+	}
+}
+
+func TestNativeCursorConfirmationMatches115B6And14742(t *testing.T) {
+	enemy := &Unit{Camp: Enemy, X: 1, Y: 0, HasNativeRecordByte5: true}
+	ally := &Unit{Camp: Ally, X: 0, Y: 0, HasNativeRecordByte5: true}
+	inactive := &Unit{Camp: Enemy, X: 0, Y: 0, HasNativeRecordByte5: true, NativeRecordByte5: 1}
+	units := []*Unit{enemy, ally, inactive}
+
+	// targetCode 5 and 0xff cells reject before the 0x14742 count. A
+	// non-0xff targetCode 4 accepts before any roster scan.
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0, 3, 5, nil); err != nil || ok {
+		t.Fatalf("target code 5 reject ok=%v err=%v", ok, err)
+	}
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0xff, 3, 4, nil); err != nil || ok {
+		t.Fatalf("0xff reject ok=%v err=%v", ok, err)
+	}
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0, 3, 4, nil); err != nil || !ok {
+		t.Fatalf("target code 4 accept ok=%v err=%v", ok, err)
+	}
+
+	// selector 3 becomes strict radius 2, so the enemy at distance one
+	// accepts. Selector 2 becomes radius one, where distance one is excluded.
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0, 3, 0, units); err != nil || !ok {
+		t.Fatalf("enemy inside strict radius rejected: ok=%v err=%v", ok, err)
+	}
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0, 2, 0, units); err != nil || ok {
+		t.Fatalf("strict radius boundary accepted: ok=%v err=%v", ok, err)
+	}
+	if ok, err := NativeCursorConfirmationAllowed(Cell{}, 0, 2, 2, units); err != nil || !ok {
+		t.Fatalf("code 2 failed to match ally exactly: ok=%v err=%v", ok, err)
+	}
+}
+
+func TestNativeCursorConfirmationFailsClosedWithoutRawRoster(t *testing.T) {
+	if _, err := NativeCursorConfirmationAllowed(Cell{}, 0, 3, 0, []*Unit{{Camp: Enemy}}); err == nil {
+		t.Fatal("incomplete raw roster accepted")
+	}
+	if _, err := NativeCursorConfirmationAllowed(Cell{}, 0, 3, 6, nil); err == nil {
+		t.Fatal("relocation target code accepted by generic gate")
 	}
 }
 
