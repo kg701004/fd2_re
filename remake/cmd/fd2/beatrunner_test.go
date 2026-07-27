@@ -344,6 +344,18 @@ func TestBeatNativePalettePulseFailsClosedWithoutIndexedDACAdapter(t *testing.T)
 	}
 }
 
+func TestBeatClearNativeRecordBit7PreservesOtherBits(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "clear_native_record_bit7"}})
+	g.st = &battle.State{Units: []*battle.Unit{
+		{HasNativeRecordByte5: true, NativeRecordByte5: 0xff},
+		{HasNativeRecordByte5: true, NativeRecordByte5: 0x81},
+	}}
+	g.beatAdvance()
+	if g.loadErr != "" || g.st.Units[0].NativeRecordByte5 != 0x7f || g.st.Units[1].NativeRecordByte5 != 0x01 {
+		t.Fatalf("raw bit7 clear mutated wrong bytes: err=%q bytes=%#x/%#x", g.loadErr, g.st.Units[0].NativeRecordByte5, g.st.Units[1].NativeRecordByte5)
+	}
+}
+
 func TestBeatNativeStagingPresentFailsClosedWithoutRendererAdapter(t *testing.T) {
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "native_staging_present", NativeStagingPresent: &campaign.NativeStagingPresent{Slot: 22, X: 23, Y: 5, FocusX: 22, FocusY: 23}}})
 	g.beatAdvance()

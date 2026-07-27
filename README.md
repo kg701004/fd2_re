@@ -113,12 +113,12 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 
 劇情接線 coverage 可用唯讀工具重查：`python3 tools/audit_story_script_coverage.py`。
 目前 `campaign_full.json` 有 121 個 story/cutscene 節點：9 個 direct script、33 個 handler-bound；
-其餘 76 個分成 30 個 retreat、23 個 rumor、19 個 unbound postbattle、4 個 generic story fallback；
-19 個 unbound postbattle 另有 generated binding skeleton（全節點共 24 個，含 5 個 active handler 的對照檔），
+其餘 75 個分成 30 個 retreat、23 個 rumor、18 個 unbound postbattle、4 個 generic story fallback；
+18 個 unbound postbattle 另有 generated binding skeleton（全節點共 24 個，含 6 個 active handler 的對照檔），
 但未經 override/compile gate 不算 active handler。
 工具不會依章號自動套劇本，避免把 pre/post/分支 scene 誤接。
 逐項缺口可用唯讀 `python3 tools/audit_postbattle_binding_gates.py` 檢查；目前 22 個仍是
-blocked；ch10/ch12/ch18 已以 compiler regression 驗證並提升為 active handler，其餘 mapping-complete 檔仍不會自動寫回 `handler_binding`。
+blocked；ch09/ch10/ch12/ch18 已以 compiler regression 驗證並提升為 active handler；ch09 的 resource 37 由 Docker exporter 逐幀解碼，其餘 mapping-complete 檔仍不會自動寫回 `handler_binding`。
 
 同輪亦固定 `0x24618` indexed transition 的 raw buffer 邊界：staging offset `32904`、stride `456`、
 viewport `312×192`，以及 `0x11EB0` 複製到 320-byte VGA stride 的契約；descriptor 解碼與 indexed compositor

@@ -677,13 +677,27 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				continue
 			}
 			if input.NativeTarget == "0x1f882" {
-				if len(input.RawArgs) != 0 {
+				// The handler exporter records the caller's register snapshot for
+				// this no-argument helper as [ebx,esi,edi]. Those are provenance,
+				// not call arguments; reject all other payloads fail-closed.
+				if len(input.RawArgs) != 0 && !nativePaletteFadeRegisterSnapshot(input.RawArgs) {
 					issue(i, input, "0x1f882 palette fade takes no arguments")
 					continue
 				}
 				beat := runtime(input, "native_palette_fade_out")
 				beat.NativePaletteFade = &NativePaletteFadeOut{Start: 0, End: 63, DelayMs: 2}
 				beats = append(beats, beat)
+				continue
+			}
+			if input.NativeTarget == "0x13536" {
+				if len(input.RawArgs) != 0 {
+					issue(i, input, "0x13536 record-bit7 clear takes no arguments")
+					continue
+				}
+				// 0x13536 scans every materialized native record and clears only
+				// byte +5 bit7. Keep this raw operation distinct from resetting
+				// the remake's Acted projection.
+				beats = append(beats, runtime(input, "clear_native_record_bit7"))
 				continue
 			}
 			if input.NativeTarget == "0x35e5a" {
@@ -829,6 +843,19 @@ func immediateHandlerInt(args []any, index int) (int, bool) {
 	default:
 		return 0, false
 	}
+}
+
+func nativePaletteFadeRegisterSnapshot(args []any) bool {
+	if len(args) != 3 {
+		return false
+	}
+	want := [...]string{"ebx", "esi", "edi"}
+	for i, value := range args {
+		if register, ok := value.(string); !ok || register != want[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // JoinableCharacterID identifies the original permanent-player roster.  This

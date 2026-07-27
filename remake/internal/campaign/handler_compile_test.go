@@ -1503,6 +1503,20 @@ func TestCompileNativePalettePulse35E5APreservesExactDACSchedule(t *testing.T) {
 	}
 }
 
+func TestCompileNativeRecordBit7ClearAndPaletteRegisterSnapshot(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{
+		{Op: "unknown", NativeTarget: "0x1f882", RawArgs: []any{"ebx", "esi", "edi"}, Source: HandlerSource{Addr: "0x23623", Target: "0x1f882"}},
+		{Op: "unknown", NativeTarget: "0x13536", Source: HandlerSource{Addr: "0x23628", Target: "0x13536"}},
+	}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 2 || beats[0].Op != "native_palette_fade_out" || beats[1].Op != "clear_native_record_bit7" {
+		t.Fatalf("raw handler lowerings beats=%#v issues=%#v", beats, issues)
+	}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "unknown", NativeTarget: "0x1f882", RawArgs: []any{1}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("immediate argument-bearing palette fade should remain rejected: %#v", issues)
+	}
+}
+
 func TestCompileNativeStagingPresent33F78PreservesWrapperABI(t *testing.T) {
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
 		Op: "unknown", NativeTarget: "0x33f78", RawArgs: []any{5, 23, 22}, Source: HandlerSource{Addr: "0x33eb2", Target: "0x33f78"},

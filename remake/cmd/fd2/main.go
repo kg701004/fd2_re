@@ -1153,6 +1153,21 @@ func (g *Game) beatStart(b campaign.Beat) {
 			return
 		}
 		g.beatAdvance()
+	case "clear_native_record_bit7":
+		if g.st == nil || len(g.st.Units) == 0 {
+			g.loadErr = "beat clear_native_record_bit7:缺少 runtime battle records"
+			return
+		}
+		for i, unit := range g.st.Units {
+			if unit == nil || !unit.HasNativeRecordByte5 {
+				g.loadErr = fmt.Sprintf("beat clear_native_record_bit7: slot%d lacks raw byte+5 provenance", i)
+				return
+			}
+		}
+		for _, unit := range g.st.Units {
+			unit.NativeRecordByte5 &= 0x7f
+		}
+		g.beatAdvance()
 	case "reset_persistent_roster_state":
 		g.resetPersistentRosterState()
 		g.beatAdvance()
