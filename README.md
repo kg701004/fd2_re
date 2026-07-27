@@ -82,7 +82,9 @@ Church class-change round-trip 也已可重播：[`town-church-class-change-ch02
 遞增 counter mod4，選中 cell 使用 counter/2 variant。教會主畫面 `0x3072f` 亦已用
 FDOTHER#5/#14、DATO#131、FDTXT585/586 合成完整 indexed scene；`0x2d669` 四幀
 opening/closing＋source restore與 `0x2d85f` 兩-tick selected pulse 已接 runtime。raw service 0
-與 FD2.SAV 相容性仍 fail-closed。
+已接 `0x2e6b8/0x2ea90` 的兩欄六人名冊、bounded ±1/±2 input、六幀 opening 與五幀
+closing＋source restore；角色確認後的 `0x17aed` status/command overlay 與 FD2.SAV 相容性
+仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON

@@ -92,8 +92,9 @@ type Game struct {
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
 	churchSel            int                 // church service menu cursor (0..3)
-	churchMode           string              // menu / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
+	churchMode           string              // menu / status_roster / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
 	churchIDs            []int               // current church candidate ids
+	churchRosterStart    int                 // 0x2e6b8 [0x5412f], even six-entry viewport origin
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
 	churchTransferItems  []int               // compact source inventory indices
@@ -2370,6 +2371,7 @@ func (g *Game) setupChurch() {
 	g.churchSel = 0
 	g.churchMode = "menu"
 	g.churchIDs = nil
+	g.churchRosterStart = 0
 	g.churchTransferSource = -1
 	g.churchTransferItem = -1
 	g.churchTransferItems = nil
@@ -2410,6 +2412,16 @@ func (g *Game) churchTransferSourceIDs() []int {
 				ids = append(ids, id)
 				break
 			}
+		}
+	}
+	return ids
+}
+
+func (g *Game) churchRosterIDs() []int {
+	ids := make([]int, 0, len(g.partyJoinOrder))
+	for _, id := range g.partyJoinOrder {
+		if _, ok := g.partyRoster[id]; ok {
+			ids = append(ids, id)
 		}
 	}
 	return ids
@@ -2675,6 +2687,12 @@ func (g *Game) campInput() bool {
 				selected := g.churchSel
 				openService := func() {
 					switch selected {
+					case 0: // 0x2ffa5 caller-owned roster → 0x17aed(actor)
+						g.churchMode = "status_roster"
+						g.churchIDs = g.churchRosterIDs()
+						g.churchSel = 0
+						g.churchRosterStart = 0
+						g.beginNativeChurchRosterOpening()
 					case 1: // native 0x2f8ea raw source→destination inventory transfer
 						g.churchMode = "transfer_source"
 						g.churchIDs = g.churchTransferSourceIDs()
@@ -2694,6 +2712,34 @@ func (g *Game) campInput() bool {
 				if !g.beginNativeChurchMenuClosing(openService) {
 					openService()
 				}
+			}
+			return true
+		}
+		if g.churchMode == "status_roster" {
+			listLen := len(g.churchIDs)
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, -1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, 1)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, -2)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+				g.churchSel = campaign.AdvanceNativeTwoColumnSelection(g.churchSel, listLen, 2)
+			}
+			g.churchRosterStart, _ = campaign.NativeTwoColumnWindow(
+				listLen, g.churchSel, g.churchRosterStart,
+			)
+			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				if !g.beginNativeChurchRosterClosing(g.returnToNativeChurchMenu) {
+					g.returnToNativeChurchMenu()
+				}
+				return true
+			}
+			if enter && listLen > 0 && g.churchSel < listLen {
+				g.msg = "角色狀態頁已定位至 0x17aed；command/MP overlay 尚未閉合，維持 fail-closed"
 			}
 			return true
 		}
@@ -5539,6 +5585,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeClassUIJob(screen) {
+			return
+		}
+		if g.drawNativeChurchRoster(screen) {
 			return
 		}
 		if g.drawNativeClassConfirmation(screen) {

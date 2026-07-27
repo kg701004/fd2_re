@@ -186,6 +186,7 @@ func (g *Game) stepNativeChurchUIPulseTick(rawTick int) {
 func (g *Game) returnToNativeChurchMenu() {
 	g.churchMode = "menu"
 	g.churchIDs = nil
+	g.churchRosterStart = 0
 	g.churchBranches = nil
 	g.churchClassID = -1
 	g.churchSel = 0

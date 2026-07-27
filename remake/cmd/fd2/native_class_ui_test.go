@@ -68,4 +68,17 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		len(g.nativeClassUIJob.restore) != 320*200 {
 		t.Fatal("native confirmation choice/dialogue closing and source restore unexpectedly fell back")
 	}
+	g.nativeClassUIJob = nil
+	g.churchMode, g.churchIDs, g.churchSel = "status_roster", []int{9}, 0
+	if !g.drawNativeChurchRoster(screen) {
+		t.Fatal("native two-column church roster unexpectedly fell back")
+	}
+	if !g.beginNativeChurchRosterOpening() || len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native six-frame church roster opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchRosterClosing(nil) || len(g.nativeClassUIJob.frames) != 5 ||
+		len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native five-frame church roster closing and source restore unexpectedly fell back")
+	}
 }

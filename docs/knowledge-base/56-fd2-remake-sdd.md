@@ -885,7 +885,13 @@ service" wording. Data flow now supports the narrower name character
 information/status presentation: `0x17e0b(actor)` builds the item/status panel,
 then `0x1c269(actor,0)` gates an optional same-actor command/MP overlay rendered
 by `0x1ceed(actor,-1,...)`. The native command overlay and full interaction
-lifecycle are not yet closed, so remake runtime remains fail-closed.
+lifecycle are not yet closed. The remake now wires raw selector 0 only as far
+as the proven caller-owned roster: FDOTHER#14 entry16 at `(5,112)`, six visible
+entries in two columns, FDICON at `(14+132c,117+26r)`, name at
+`(40+132c,121+26r)`, selected/unselected palette `201/205`, shadow `76`,
+bounded `±1/±2` input, six opening frames, five closing frames, then source
+restore. Selecting an actor stops at the unresolved `0x17aed` status/command
+overlay boundary and performs no mutation.
 
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
