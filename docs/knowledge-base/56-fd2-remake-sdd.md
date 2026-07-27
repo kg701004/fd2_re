@@ -1009,6 +1009,8 @@ The preceding `0x3453e(index)` predicate is now closed independently: it returns
 
 The shared item-row helper `0x4e56c(item)` is now bounded at the proven arithmetic boundary: it returns a pointer at linear table base `0x602ad + item*0x17` (23-byte rows). `battle.NativeItemEffectRowOffset` exposes only the table-relative offset for a byte-sized selector; row size/field semantics and table bounds remain unproven, so no normalized `ItemStats` field is wired to these bytes.
 
+The type 8/9/0xa branch of `0x20c6f` now has a separate raw route table: each branch passes the item row `+0xe` word as the delta to `0x21082`, writes the target raw word at offsets `0x37/0x39/0x3e`, and carries presentation selectors `0x11/0x12/0x13`. `battle.NativeItemWordDeltaRouteForType` preserves only this dispatch ABI; it does not name the target words, map them to normalized stats, or open item-use UI.
+
 The `0x211a4` callee is now bounded at call topology: item-action caller
 `0x20ce0` passes caller-owned target-list context, enters `0x1c4cc`/`0x1c2da`
 with raw subcommand `0xd`, then iterates the supplied byte list and calls

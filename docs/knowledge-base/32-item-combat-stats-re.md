@@ -79,18 +79,18 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的 `weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride `0x17` 已知，但 runtime table 邊界及其餘欄位仍 fail-closed，不能直接把 215 筆 normalized rows 宣稱為 runtime table 的完整證明。
 
-### 4.1 2026-07-20 direct range-field trace
+### 4.1 2026-07-20 direct range-field trace（2026-07-27 勘誤）
 
 以 `tools/disasm_le.py` 追 `0x318ad` 與 item pointer helper `0x4e56c` 後，欄位偏移更正如下：
 
 ```
 +0x0 type, +0x01 AP, +0x03 HIT, +0x05 DP, +0x07 EV
-+0x0a atk_attr, +0x0b atk_rate, +0x0c range_min, +0x0d range_max, +0x0e..0x13 K[6]
++0x0a..+0x0d caller-specific raw inputs, +0x0e..0x13 K[6]
 ```
 
-`0x14237` 是戰鬥指令／攻擊目標路徑；它讀 `item+0x0c`，再把該值傳入 `0x14818`。後者在 `<16` 分支以 Manhattan 距離與此參數比較並標記可選格，因此 `range_min` 的確是通用目標幾何 cutoff。相同 caller 讀到的 `item+0x0b` 在該攻擊路徑後未再使用。另一條 `0x18d8c` 是物品使用／效果路徑，雖也把 `+0x0b/+0x0c` 傳給 `0x14818`，不能反推成武器射程。`+0x0d` 在 `0x15723` 的特殊效果分支有幾何用途，也不能直接當通用武器距離。
+原先把這四個 byte 命名成 `atk_attr/atk_rate/range_min/range_max` 並把 `0x14237` 的 `+0x0c` 稱為通用 `range_min`，現撤回。已確認的安全描述是：`0x14237` 將 item row `+0x0b/+0x0c` 以 caller-specific 順序傳入 `0x14818` 的 `a5/a4`；`mode<0x10` 時 `a5` 會排除 marker cells，`mode>=0x10` 走 cross branch。另一條 `0x18d8c` 也讀相鄰 raw bytes，`+0x0d` 另有特殊 effect dispatch caller；這些都不足以反推出通用武器射程或 normalized `AtkMin/AtkMax`。
 
-因此 remake 暫時只沿用已由 `weapon_range.json` 驗證的武器射程；不得把 `atk_attr/atk_rate/range_max` 臆測成 `AtkMax`。這輪只補 provenance 與欄位註解，不改變未證實的戰鬥公式。
+因此 remake 暫時只沿用已由 `weapon_range.json` 獨立驗證的 normalized 武器射程；不得把 raw `+0x0b..+0x0d` 臆測成 `AtkMin/AtkMax`。這輪只修正 provenance 斷言，不改變未證實的戰鬥公式。
 
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
@@ -98,6 +98,7 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 - Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base `0x602ad`、row stride `0x17`（23 bytes）。這只確定 raw 定址；row 欄位與 table 長度尚未證實，不能把 bytes 直接填入本文件的 normalized `ItemStats`。
 - `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
 - `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、`0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃 target list 並累加全域結果，但兩者的 item-table 欄位對應與正負方向仍不可命名。
+- `0x20c6f`→`0x21082` 的 type 8/9/0xa raw route 已補閉合：三者分別把 item row `+0xe` word 作 delta，將 target raw word 寫入 offsets `0x37/0x39/0x3e`，並傳 presentation selectors `0x11/0x12/0x13`；這些 offset/selector 仍保持 opaque，不命名成 HP/MP/AP 或其他玩法。
 - `0x211a4`（item type `5/0xd`）已由 Docker Capstone 閉合部分資料流：先以 raw subcommand `0xd` 建立／清除 target context，再逐 supplied byte list 呼叫 `0x1c916`（word amount + target byte），並呼叫 `0x1e0db` 做 presentation。這只證實 list-driven mutation topology，不能把 type 命名成治療／藥水；caller 的 list/count/amount ABI 與 effect fields 尚待。
 - `0x1c916` 的 raw HP mutation 已新增 `battle.ApplyNativeRawHPRestore` regression：RNG step、`amount*9/10 + (rng%100)*amount/1000`、`+0x40` cap `+0x42` 與 raw score gate 均保存；仍不把它接成 normalized heal/item effect。
 - 相鄰 `0x1c9dd` MP path 亦已新增 `battle.ApplyNativeRawMPRestore`：同一 arithmetic 寫 `+0x44`/cap `+0x46`，但 score 僅用 `+0x21`、沒有 HP 的 class bonus；仍保持 raw adapter。

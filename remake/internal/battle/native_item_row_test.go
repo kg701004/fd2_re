@@ -22,3 +22,22 @@ func TestNativeItemEffectRowOffset(t *testing.T) {
 		}
 	}
 }
+
+func TestNativeItemWordDeltaRouteForTypePreservesRawDispatch(t *testing.T) {
+	tests := []struct {
+		itemType, field, presentation int
+	}{
+		{8, 0x37, 0x11},
+		{9, 0x39, 0x12},
+		{0xa, 0x3e, 0x13},
+	}
+	for _, tc := range tests {
+		route, ok := NativeItemWordDeltaRouteForType(tc.itemType)
+		if !ok || route.ItemType != tc.itemType || route.FieldOffset != tc.field || route.PresentationCode != tc.presentation {
+			t.Fatalf("type %#x route=%#v ok=%v", tc.itemType, route, ok)
+		}
+	}
+	if _, ok := NativeItemWordDeltaRouteForType(7); ok {
+		t.Fatal("unsupported item type became a word-delta route")
+	}
+}
