@@ -14,10 +14,8 @@ import (
 // one steady 0x11cac frame. It deliberately has no conversion from the
 // remake's 640x400 pixel camera or normalized selection/highlight state.
 type nativeMapFrameRuntime struct {
-	CameraX, CameraY int
-	RangeMode        int
-	CursorX, CursorY int
-	HUD              indexedmap.NativeMapHUDInput
+	RangeMode int
+	HUD       indexedmap.NativeMapHUDInput
 }
 
 // buildNativeMapFrameInput joins the all-or-nothing original asset bundle,
@@ -32,14 +30,17 @@ func buildNativeMapFrameInput(
 	if !nativeMapAssetsAvailable(assets) || field == nil || state == nil {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: incomplete assets, field, or battle state")
 	}
+	if !state.HasNativeMapHUDState {
+		return indexedmap.NativeFrameInput{}, errors.New("native map frame: HUD runtime state is not materialized")
+	}
 	if field.W <= 0 || field.H <= 0 || len(field.Tiles) != field.W*field.H ||
 		!bytes.Equal(field.NativeTerrainControl, assets.Controls) {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: editable field does not match native FDSHAP controls")
 	}
-	if runtime.CameraX < 0 || runtime.CameraY < 0 ||
-		runtime.RangeMode < 0 || runtime.RangeMode > 5 {
+	if !state.HasNativeMapViewState || runtime.RangeMode < 0 || runtime.RangeMode > 5 {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: raw runtime globals are outside verified bounds")
 	}
+	view := state.NativeMapViewState
 	cells, err := indexedmap.BuildNativeTerrainCells(field.Tiles, field.NativeTileBlitModes)
 	if err != nil {
 		return indexedmap.NativeFrameInput{}, fmt.Errorf("native map frame: terrain cells: %w", err)
@@ -57,15 +58,19 @@ func buildNativeMapFrameInput(
 		UnitBank: assets.Units, ForegroundBank: assets.Terrain,
 		SelectorCache: state.NativeMapSelectorCache,
 		Cells:         cells, Controls: assets.Controls, LUT: assets.LUTs[lutIndex],
-		MapWidth: field.W, CameraX: runtime.CameraX, CameraY: runtime.CameraY,
+		MapWidth: field.W, CameraX: view.CameraX, CameraY: view.CameraY,
 		Flip: roster.TerrainFlip, TerrainCycle: roster.Cycles.Idle,
 		IdleCycle: roster.Cycles.Idle, MovingCycle: roster.Cycles.Moving,
 		PixelShift: roster.UnitPixelShift,
-		RangeMode:  runtime.RangeMode, CursorX: runtime.CursorX, CursorY: runtime.CursorY,
+		RangeMode:  runtime.RangeMode, CursorX: view.CursorX, CursorY: view.CursorY,
 		Units: roster.Units, ForegroundUnits: roster.Foreground,
 	}
+	hud := runtime.HUD
+	hud.DisplayGateA = state.NativeMapHUDState.DisplayGateA != 0
+	hud.DisplayGateB = state.NativeMapHUDState.DisplayGateB != 0
+	hud.AnchorX = state.NativeMapHUDState.AnchorX
 	return indexedmap.NativeFrameInput{
-		Frame: frame, HUD: runtime.HUD, Frames: assets.Frames,
+		Frame: frame, HUD: hud, Frames: assets.Frames,
 		HUDTerrain: assets.Terrain, HUDUnits: assets.Units,
 		HUDCache: state.NativeMapSelectorCache,
 	}, nil

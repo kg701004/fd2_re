@@ -26,6 +26,19 @@
       "bgm": "",
       "units": "assets/map0_units.json",
       "scenario": "assets/scenarios/ch01.json",
+      "native_map_view": {
+        "camera_x": 1,
+        "camera_y": 13,
+        "cursor_x": 8,
+        "cursor_y": 17,
+        "visible_cursor_x": 7,
+        "visible_cursor_y": 4
+      },
+      "native_map_hud": {
+        "display_gate_a": 1,
+        "display_gate_b": 1,
+        "anchor_x": 1
+      },
       "on_win": "victory",
       "on_lose": "retreat"
     },

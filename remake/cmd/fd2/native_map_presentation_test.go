@@ -69,3 +69,69 @@ func TestOriginalActingUpdatesMaterializedRawPresentation(t *testing.T) {
 			u.NativeMapPresentation, u.X, u.Y)
 	}
 }
+
+func TestGameCursorUsesMaterializedNativeMapView(t *testing.T) {
+	st := &battle.State{W: 30, H: 30}
+	if err := st.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CameraX: 4, CameraY: 5, CursorX: 15, CursorY: 11,
+		VisibleCursorX: 11, VisibleCursorY: 6,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !st.MaterializeNativeMapHUDState(1, 1, 0xf2) {
+		t.Fatal("HUD state rejected")
+	}
+	g := &Game{m: &MapData{W: 30, H: 30, TileW: 24, TileH: 24}, st: st}
+	g.moveMapCursor(1, 0)
+	if g.curX != 16 || g.curY != 11 || g.camX != 5*24 || g.camY != 5*24 {
+		t.Fatalf("game view cursor=(%d,%d) camera=(%v,%v)",
+			g.curX, g.curY, g.camX, g.camY)
+	}
+	if st.NativeMapHUDState.AnchorX != 1 {
+		t.Fatalf("HUD anchor did not follow visible cursor: %+v", st.NativeMapHUDState)
+	}
+}
+
+func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
+	g := &Game{
+		m:  &MapData{W: 24, H: 24, TileW: 24, TileH: 24},
+		st: &battle.State{W: 24, H: 24},
+	}
+	n := &campaign.Node{
+		NativeMapView: &campaign.NativeMapViewConfig{
+			CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
+			VisibleCursorX: 7, VisibleCursorY: 4,
+		},
+		NativeMapHUD: &campaign.NativeMapHUDConfig{
+			DisplayGateA: 1, DisplayGateB: 1, AnchorX: 1,
+		},
+	}
+	if !g.materializeNativeMapRuntime(n) {
+		t.Fatal(g.loadErr)
+	}
+	if !g.st.HasNativeMapViewState || !g.st.HasNativeMapHUDState ||
+		g.curX != 8 || g.curY != 17 || g.camX != 24 || g.camY != 13*24 {
+		t.Fatalf("materialized game=%+v view=%+v HUD=%+v",
+			g, g.st.NativeMapViewState, g.st.NativeMapHUDState)
+	}
+}
+
+func TestGameRejectsInvalidEditableNativeMapRuntime(t *testing.T) {
+	g := &Game{
+		m:  &MapData{W: 24, H: 24, TileW: 24, TileH: 24},
+		st: &battle.State{W: 24, H: 24},
+	}
+	n := &campaign.Node{
+		NativeMapView: &campaign.NativeMapViewConfig{
+			CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
+			VisibleCursorX: 8, VisibleCursorY: 4,
+		},
+		NativeMapHUD: &campaign.NativeMapHUDConfig{
+			DisplayGateA: 1, DisplayGateB: 1, AnchorX: 1,
+		},
+	}
+	if g.materializeNativeMapRuntime(n) || g.loadErr == "" ||
+		g.st.HasNativeMapViewState || g.st.HasNativeMapHUDState {
+		t.Fatalf("invalid native runtime was not rejected: err=%q state=%+v", g.loadErr, g.st)
+	}
+}

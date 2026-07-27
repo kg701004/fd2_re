@@ -450,6 +450,13 @@ type State struct {
 	NativeTerrainFlipState        fdicon.NativeBinaryTickState
 	NativeUnitPixelShiftState     fdicon.NativeBinaryTickState
 	HasNativeMapBinaryTimingState bool
+	// NativeMapHUDState owns the two raw 0x1acf3 display bytes and persistent
+	// anchor. Unlike timing globals, it is not fabricated by selector
+	// construction because gate A can be restored from native save state.
+	NativeMapHUDState     NativeMapHUDRuntimeState
+	HasNativeMapHUDState  bool
+	NativeMapViewState    NativeMapViewState
+	HasNativeMapViewState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later

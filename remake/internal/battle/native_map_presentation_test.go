@@ -165,3 +165,27 @@ func TestNativeMapFrameRosterDoesNotReturnPartialInput(t *testing.T) {
 		t.Fatalf("partial roster=%+v err=%v", roster, err)
 	}
 }
+
+func TestNativeMapHUDStatePreservesRawGatesAndPersistentAnchor(t *testing.T) {
+	st := &State{}
+	if st.AdvanceNativeMapHUDAnchor(2, 6) {
+		t.Fatal("legacy state accepted HUD anchor update")
+	}
+	if !st.MaterializeNativeMapHUDState(0, 7, 1) {
+		t.Fatal("HUD state materialization rejected")
+	}
+	if st.NativeMapHUDState != (NativeMapHUDRuntimeState{
+		DisplayGateA: 0, DisplayGateB: 7, AnchorX: 1,
+	}) {
+		t.Fatalf("HUD state=%+v", st.NativeMapHUDState)
+	}
+	if !st.AdvanceNativeMapHUDAnchor(2, 6) || st.NativeMapHUDState.AnchorX != 0xf2 {
+		t.Fatalf("left anchor=%+v", st.NativeMapHUDState)
+	}
+	if !st.AdvanceNativeMapHUDAnchor(5, 6) || st.NativeMapHUDState.AnchorX != 0xf2 {
+		t.Fatalf("retained anchor=%+v", st.NativeMapHUDState)
+	}
+	if !st.AdvanceNativeMapHUDAnchor(10, 6) || st.NativeMapHUDState.AnchorX != 1 {
+		t.Fatalf("right anchor=%+v", st.NativeMapHUDState)
+	}
+}

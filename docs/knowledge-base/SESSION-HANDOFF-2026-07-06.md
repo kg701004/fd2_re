@@ -1106,3 +1106,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   不從現行640×400 camera或normalized highlight猜值。這使下一個工作
   明確收斂到native camera/HUD/monotonic clock runtime，而非繼續堆
   disconnected compositor primitives。
+- 2026-07-28 HUD assertion/runtime correction：刪除doc14將
+  `[0x53ab9]/[0x53abd]`稱為對話框寬高、並據此命名
+  `0x165ac/0x16b43`為對話框zoom的舊斷言；direct cursor writers證實
+  兩者是camera-relative visible cursor column/row。原始data固定
+  anchor初值1、gateA/B初值1，但`0x10010`會從native-save plaintext
+  `0x30d2`覆寫gateA，故不能hardcode。新增
+  `NativeMapHUDRuntimeState`與anchor retention tests；
+  `drawNativeMapHUD`現在要求raw state及完整optional unit/HP provenance，
+  移除舊true/true/1 partial path。
+- 2026-07-28 native save current-runtime map：`tools/fd2save.py`現在列出
+  plaintext `0x30c3..0x30d4`的persistent/runtime count、chapter、
+  camera XY、absolute cursor XY、visible cursor XY、raw globals與
+  HUD gateA。player FD2.SAV真實decode/checksum驗證通過；這提供後續
+  camera/HUD exporter的byte-level來源，不把slot垃圾資料當active state。
+- 2026-07-28 camera/cursor executable bridge：direct四個cursor helpers
+  `0x11b48..0x11cac`已落成`NativeMapViewState`。它保存
+  `visible=absolute-camera`，以原版上/左 `<2`、下 `>5`、右 `>10`
+  threshold及13×8 viewport捲動；keyboard與touch都經同一state machine，
+  不再由640×400 normalized camera覆蓋。`battle_ch01`新增可編輯
+  `native_map_view/native_map_hud`，內容取自玩家FD2.SAV：
+  camera `(1,13)`、cursor `(8,17)`、visible `(7,4)`、HUD `(1,1,1)`。
+  campaign loader要求兩組欄位成對且raw範圍合法；其餘章節在取得
+  chapter-specific來源前維持未materialize，禁止複製ch01值。

@@ -23,6 +23,9 @@ SLOT_COUNT = 4
 ROSTER_SIZE = 0xA00
 UNIT_SIZE = 0x50
 ROSTER_UNITS = ROSTER_SIZE // UNIT_SIZE
+# 0x10010 restores the active runtime header from these fixed plaintext
+# offsets before entering 0x11cac. Keep the still-opaque neighbours raw.
+CURRENT_RUNTIME_OFFSET = 0x30C3
 
 
 def rol16(value: int, count: int) -> int:
@@ -80,6 +83,19 @@ def summarize(plain: bytes) -> str:
         f"plaintext_size={len(plain):#x}",
         f"checksum={struct.unpack_from('<I', plain, CHECKSUM_OFFSET)[0]:#010x}",
     ]
+    runtime = plain[CURRENT_RUNTIME_OFFSET:CURRENT_RUNTIME_OFFSET + 18]
+    lines.append(
+        f"current_runtime={CURRENT_RUNTIME_OFFSET:#06x} "
+        f"persistent_count={runtime[0]:#04x} runtime_count={runtime[1]:#04x} "
+        f"chapter={runtime[2]:#04x} "
+        f"camera_xy={runtime[3]:#04x},{runtime[4]:#04x} "
+        f"cursor_xy={runtime[5]:#04x},{runtime[6]:#04x} "
+        f"visible_cursor_xy={runtime[7]:#04x},{runtime[8]:#04x} "
+        f"raw_30cc={runtime[9]:#04x} "
+        f"raw_53bf3={struct.unpack_from('<I', runtime, 10)[0]:#010x} "
+        f"raw_53af9={runtime[14]:#04x} hud_gate_a={runtime[15]:#04x} "
+        f"raw_51e61_51e62={runtime[16:18].hex()}"
+    )
     for slot in range(SLOT_COUNT):
         start, end = slot_bounds(slot)
         meta = plain[start + ROSTER_SIZE:start + SLOT_SIZE]

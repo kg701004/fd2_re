@@ -1781,6 +1781,9 @@ func (g *Game) enterNode() {
 			}
 		}
 		g.resetBattle(n.Units, n.Scenario)
+		if !g.materializeNativeMapRuntime(n) {
+			return
+		}
 	case "inventory_gate":
 		if n.ItemID == nil { // Load 已拒絕；保留 runtime fail-closed 防線給手工測試 Campaign。
 			g.loadErr = "inventory_gate: missing item_id"
@@ -1837,6 +1840,35 @@ func (g *Game) enterNode() {
 	case "ending":
 		g.dialog, g.st, g.sel = nil, nil, nil
 	}
+}
+
+func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD == nil {
+		return true
+	}
+	if g.st == nil {
+		g.loadErr = "native map runtime: battle state is unavailable"
+		return false
+	}
+	view := n.NativeMapView
+	if err := g.st.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CameraX: view.CameraX, CameraY: view.CameraY,
+		CursorX: view.CursorX, CursorY: view.CursorY,
+		VisibleCursorX: view.VisibleCursorX, VisibleCursorY: view.VisibleCursorY,
+	}); err != nil {
+		g.loadErr = "native map runtime view: " + err.Error()
+		return false
+	}
+	hud := n.NativeMapHUD
+	if hud.DisplayGateA < 0 || hud.DisplayGateA > 0xff ||
+		hud.DisplayGateB < 0 || hud.DisplayGateB > 0xff ||
+		!g.st.MaterializeNativeMapHUDState(byte(hud.DisplayGateA), byte(hud.DisplayGateB), hud.AnchorX) {
+		g.loadErr = "native map runtime HUD is outside raw bounds"
+		g.st.HasNativeMapViewState = false
+		return false
+	}
+	g.syncNativeMapView()
+	return true
 }
 
 // resetBattle 重開一場戰鬥(campaign battle 節點;敗北重試也走這裡)。
@@ -4203,10 +4235,12 @@ func (g *Game) Update() error {
 			}
 		}
 	} else if g.battleEvent == nil {
-		g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
-		g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
-		clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
-		clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+		if !g.syncNativeMapView() {
+			g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
+			g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
+			clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
+			clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF5) { // 快速存檔(節點邊界語意:存 campaign 進度)
 		g.saveGame()
@@ -4258,22 +4292,44 @@ func (g *Game) Update() error {
 	}
 	// 游標移動:方向鍵 / WASD(按住持續移動,keyRepeat)/ 觸控
 	if keyRepeat(ebiten.KeyArrowLeft) || keyRepeat(ebiten.KeyA) {
-		g.curX--
+		g.moveMapCursor(-1, 0)
 	}
 	if keyRepeat(ebiten.KeyArrowRight) || keyRepeat(ebiten.KeyD) {
-		g.curX++
+		g.moveMapCursor(1, 0)
 	}
 	if keyRepeat(ebiten.KeyArrowUp) || keyRepeat(ebiten.KeyW) {
-		g.curY--
+		g.moveMapCursor(0, -1)
 	}
 	if keyRepeat(ebiten.KeyArrowDown) || keyRepeat(ebiten.KeyS) {
-		g.curY++
+		g.moveMapCursor(0, 1)
 	}
 	// 觸控:點哪格移到哪格
 	for _, id := range inpututil.AppendJustPressedTouchIDs(nil) {
 		tx, ty := ebiten.TouchPosition(id)
-		g.curX = (int(g.camX) + tx) / g.m.TileW
-		g.curY = (int(g.camY) + ty) / g.m.TileH
+		targetX := (int(g.camX) + tx) / g.m.TileW
+		targetY := (int(g.camY) + ty) / g.m.TileH
+		if targetX < 0 {
+			targetX = 0
+		} else if targetX >= g.m.W {
+			targetX = g.m.W - 1
+		}
+		if targetY < 0 {
+			targetY = 0
+		} else if targetY >= g.m.H {
+			targetY = g.m.H - 1
+		}
+		for g.curX < targetX {
+			g.moveMapCursor(1, 0)
+		}
+		for g.curX > targetX {
+			g.moveMapCursor(-1, 0)
+		}
+		for g.curY < targetY {
+			g.moveMapCursor(0, 1)
+		}
+		for g.curY > targetY {
+			g.moveMapCursor(0, -1)
+		}
 	}
 	// 邊界
 	if g.curX < 0 {
@@ -4306,11 +4362,39 @@ func (g *Game) Update() error {
 		g.endTurn()
 	}
 	// 相機跟隨游標(置中,夾在地圖內)
-	g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
-	g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
-	clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
-	clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+	if !g.syncNativeMapView() {
+		g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
+		g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
+		clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
+		clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+	}
 	return nil
+}
+
+func (g *Game) syncNativeMapView() bool {
+	if g == nil || g.m == nil || g.st == nil || !g.st.HasNativeMapViewState {
+		return false
+	}
+	view := g.st.NativeMapViewState
+	g.curX, g.curY = view.CursorX, view.CursorY
+	g.camX = float64(view.CameraX * g.m.TileW)
+	g.camY = float64(view.CameraY * g.m.TileH)
+	return true
+}
+
+func (g *Game) moveMapCursor(dx, dy int) {
+	if g.st != nil && g.st.HasNativeMapViewState {
+		if _, ok := g.st.MoveNativeMapCursor(dx, dy); ok {
+			view := g.st.NativeMapViewState
+			if g.st.HasNativeMapHUDState {
+				g.st.AdvanceNativeMapHUDAnchor(view.VisibleCursorX, view.VisibleCursorY)
+			}
+			g.syncNativeMapView()
+		}
+		return
+	}
+	g.curX += dx
+	g.curY += dy
 }
 
 // keyRepeat 方向鍵按住持續觸發(playfix #1):首次按下立即動一格,按住 12 tick 後
@@ -5962,11 +6046,13 @@ func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 // drawNativeMapHUD presents the proven indexed 0x1acf3 panel/terrain/AP/DP
 // subpasses at the native 320x200 surface. It returns false on any missing or
 // unverified raw input, preserving the legacy approximation without partial
-// drawing. Optional unit/HP remains omitted until its unit-record admission
-// bytes are available from the runtime roster.
+// drawing. Raw gates/anchor and optional unit/HP must all come from the
+// materialized battle runtime; this function never hardcodes native globals.
 func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 	a := g.nativeMapAssets
-	if !nativeMapAssetsAvailable(a) || g.m == nil || g.curX < 0 || g.curY < 0 || g.curX >= g.m.W || g.curY >= g.m.H {
+	if !nativeMapAssetsAvailable(a) || g.m == nil || g.st == nil ||
+		!g.st.HasNativeMapHUDState || !g.st.HasNativeMapCycleState || g.st.NativeMapSelectorCache == nil ||
+		g.curX < 0 || g.curY < 0 || g.curX >= g.m.W || g.curY >= g.m.H {
 		return false
 	}
 	tile := g.m.Tiles[g.curY*g.m.W+g.curX]
@@ -5975,8 +6061,30 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 	}
 	control := a.Controls[tile*4+1]
 	frame := make([]byte, fdicon.NativeMapStride*200)
-	in := indexedmap.NativeMapHUDInput{DisplayGateA: true, DisplayGateB: true, AnchorX: 1, TerrainDescriptor: tile, TerrainControl: control}
-	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, nil, nil, frame, in); err != nil {
+	rawHUD := g.st.NativeMapHUDState
+	in := indexedmap.NativeMapHUDInput{
+		DisplayGateA: rawHUD.DisplayGateA != 0,
+		DisplayGateB: rawHUD.DisplayGateB != 0,
+		AnchorX:      rawHUD.AnchorX, TerrainDescriptor: tile, TerrainControl: control,
+	}
+	if u := g.st.UnitAt(g.curX, g.curY); u != nil {
+		if !u.HasMapSelectorSlot || !u.HasBattleFig || u.BattleFig < 0 || u.BattleFig > 0xff ||
+			!u.HasNativeRecordRace || !u.HasNativeRecordByte6 ||
+			!u.HasNativeRecordWord42 || u.HP < 0 || u.HP > 0xffff {
+			return false
+		}
+		if indexedmap.NativeMapHUDOptionalUnitEligible(
+			byte(u.BattleFig), u.NativeRecordRace, u.NativeRecordByte6,
+		) {
+			in.OptionalUnit = &indexedmap.NativeMapHUDOptionalUnit{
+				SelectorSlot: u.MapSelectorSlot,
+				RawState:     g.st.NativeMapCycleState.Idle,
+				Current:      uint16(u.HP),
+				Maximum:      u.NativeRecordWord42,
+			}
+		}
+	}
+	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, a.Units, g.st.NativeMapSelectorCache, frame, in); err != nil {
 		return false
 	}
 	img := image.NewPaletted(image.Rect(0, 0, 320, 200), a.Palette)

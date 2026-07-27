@@ -132,6 +132,25 @@ type HandlerLayout struct {
 	CamY  int                 `json:"cam_y"`
 }
 
+// NativeMapViewConfig is an explicitly sourced original 13x8 tactical view.
+// Values are map tiles, not remake pixels.
+type NativeMapViewConfig struct {
+	CameraX        int `json:"camera_x"`
+	CameraY        int `json:"camera_y"`
+	CursorX        int `json:"cursor_x"`
+	CursorY        int `json:"cursor_y"`
+	VisibleCursorX int `json:"visible_cursor_x"`
+	VisibleCursorY int `json:"visible_cursor_y"`
+}
+
+// NativeMapHUDConfig carries only the persistent 0x1acf3 raw globals. Gate
+// bytes remain byte-valued because native code tests nonzero, not boolean one.
+type NativeMapHUDConfig struct {
+	DisplayGateA int `json:"display_gate_a"`
+	DisplayGateB int `json:"display_gate_b"`
+	AnchorX      int `json:"anchor_x"`
+}
+
 // HandlerIndexedTransition records the recovered 0x24618 double-buffer
 // choreography. Tile geometry, radial radius progression, and row bounds are
 // kept explicit because this is not a generic fade; the PNG renderer may only
@@ -315,11 +334,13 @@ type Node struct {
 	Map      string `json:"map,omitempty"`      // battle:戰場資產目錄;story:場景背景圖(doc23 §4:
 	// 原版序幕王城/草地背景是 FDFIELD map32 複合場景,與戰場同一渲染器非另開圖片系統;
 	// story 填同一 assets/maps/mapN 目錄即可換場景背景;battle 空=沿用當前)
-	Units  string  `json:"units,omitempty"` // battle:單位配置檔
-	CamX   int     `json:"cam_x,omitempty"` // story+Map:固定鏡頭像素座標(場景不跟游標走,取代預設 focusOnParty)
-	CamY   int     `json:"cam_y,omitempty"`
-	Actors []Actor `json:"actors,omitempty"` // story+Map:場景背景上的靜態角色擺位
-	Scene  string  `json:"scene,omitempty"`  // story+Script:只取 Script 檔裡 label 對映的那個 scene(doc46 §5.2;
+	Units         string               `json:"units,omitempty"` // battle:單位配置檔
+	CamX          int                  `json:"cam_x,omitempty"` // story+Map:固定鏡頭像素座標(場景不跟游標走,取代預設 focusOnParty)
+	CamY          int                  `json:"cam_y,omitempty"`
+	NativeMapView *NativeMapViewConfig `json:"native_map_view,omitempty"`
+	NativeMapHUD  *NativeMapHUDConfig  `json:"native_map_hud,omitempty"`
+	Actors        []Actor              `json:"actors,omitempty"` // story+Map:場景背景上的靜態角色擺位
+	Scene         string               `json:"scene,omitempty"`  // story+Script:只取 Script 檔裡 label 對映的那個 scene(doc46 §5.2;
 	// 空=舊行為,整份 Script 攤平全部 scenes 成一條對白隊列——別讓一個節點播完整份劇本)
 	ExitWalk  *ActorWalk  `json:"exit_walk,omitempty"`  // story:對白播完、換場前先走一段路再淡出(doc46 §5.3;單一角色)
 	ExitWalks []ActorWalk `json:"exit_walks,omitempty"` // 多角色同時退場(全部走完才轉場)。
@@ -416,6 +437,17 @@ func Load(path string) (*Campaign, error) {
 			}
 			if n.IfCrafted == "" || n.IfInsufficient == "" {
 				return nil, fmt.Errorf("inventory_recipe 節點 %q 必須同時定義 if_crafted / if_insufficient", id)
+			}
+		}
+		if (n.NativeMapView == nil) != (n.NativeMapHUD == nil) {
+			return nil, fmt.Errorf("battle 節點 %q 必須同時定義 native_map_view / native_map_hud", id)
+		}
+		if n.NativeMapHUD != nil {
+			hud := n.NativeMapHUD
+			if hud.DisplayGateA < 0 || hud.DisplayGateA > 0xff ||
+				hud.DisplayGateB < 0 || hud.DisplayGateB > 0xff ||
+				hud.AnchorX < 0 || hud.AnchorX > 0xfb {
+				return nil, fmt.Errorf("battle 節點 %q 的 native_map_hud 超出原版 raw 範圍", id)
 			}
 		}
 		for _, o := range n.Options {

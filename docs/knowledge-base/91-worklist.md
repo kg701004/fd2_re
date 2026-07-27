@@ -728,7 +728,14 @@
 - [x] **FDSHAP map resource pairing**：`DecodeMapTerrainResources(mapIndex)` 只讀已證 map N→image #`2N`、control #`2N+1`，並驗 bank frame count 不超 control-record count；FDSHAP map0 真實 regression=288 frame/1200 control bytes。明確拒絕從 tile count/cost 猜 map 資源。
 - [x] **exported map-path binding**：`MapIndexFromAssetPath` 僅接受 legacy `assets`=map0 或 basename 精確 `mapN`，拒絕 suffix/負數/任意目錄；runtime 將用此 explicit N 餵 FDSHAP pair loader，不以檔名近似猜配。
 - [x] **production native-map asset gate**：`Game.loadMap` 載入 HUD FDOTHER frames、FDOTHER #1 range bank、明示 FDSHAP pair、FDICON.B24、FDOTHER #3 LUTs與VGA palette為all-or-nothing `nativeMapAssets`；任一缺失/解碼失敗保持既有PNG renderer。bundle regression明確拒絕缺range bank；indexed-to-Ebiten presentation仍待camera/global-state bridge。
-- [x] **indexed→Ebiten native HUD partial bridge**：`drawNativeMapHUD` 以 456-stride buffer→320×200 paletted image 實際呈現 panel/terrain/AP/DP；raw tile/control bounds 或任何 decoder failure 立即回 legacy UI。optional unit/HP 尚未接，因 runtime roster admission bytes 未 export，不猜測性補上。
+- [x] **indexed→Ebiten native HUD strict bridge**：撤回舊hardcode
+  `gateA=true/gateB=true/anchor=1` partial presentation；`0x10010`證實
+  gateA由native save plaintext `0x30d2`恢復。`drawNativeMapHUD`現只在
+  `NativeMapHUDRuntimeState`、selector/cache cycle、unit+7/race/+6、
+  raw maxHP全部有provenance時，一次畫panel/terrain/AP/DP +
+  optional unit/HP；缺任一在draw前回legacy。`battle_ch01`已用可編輯
+  campaign欄位materialize玩家save證實的view/HUD；其他章仍須逐章來源，
+  故此項是strict bridge而非全戰役畫面已native。
 - [x] **HUD unit-gate constructor provenance**：Docker Capstone `0x10d7f..0x10efc` 固定 runtime `+6=FDFIELD b0`、`+7/+8=FDFIELD b1`，與 editable `map_selector_key`/`battle_fig` 對齊；`+0x1f` 改由 portrait/resource branch 寫入，不能拿 portrait/class 直接代替。缺少該 resource byte 時 optional icon/HP 繼續 fail-closed。
 
 - [x] **FDICON indexed asset primitive**：`internal/fdicon` 現直接 decode `FDICON.B24` header/offset table/24×24 four-mode RLE，保留透明與 dither spans；`Sprite.BlitAt` 是 raw `0x4deda`，`BlitPaletteBand` 是 `0x4de56` 的 `(index&7)+0x18`。**撤回 256-byte LUT 對應說法**（那是其他 renderer path）；fixture 與 player-provided 原始 1680-sprite regression 通過；仍未替代 roster/frame/timing/layer adapter。
@@ -753,6 +760,21 @@
 - [x] **native visible terrain pass**：`Bank.BlitNativeTerrainRegion` 以 raw FDFIELD cell、FDSHAP 4-byte control records、map origin／explicit LUT 做 `0x11eee` row-major visible region，bounds fail-closed、regression 覆蓋 raw/LUT cell order。正常 `0x11cac` ABI 已釘為 `(buffer+0x8088,456,13,8,camX,camY)`，其後 range→unit→foreground passes 仍分離。
 - [x] **native indexed viewport copy**：official IDA 9.4 關閉 `0x11eb0` 為逐列 `memmove`；`0x11cac` 明確以 source `buffer+0x8088`／stride456、width320、height192 複製到 VGA `0xA0504`／stride320。`fdicon.CopyNativeIndexedRegion` regression 覆蓋 row stride、source offset 與 fail-closed bounds；尚未自動接成 Ebiten presentation。
 - [~] **native terrain/unit map HUD (`0x1acf3`)**：它在 `0x11cac` 的 terrain/range/unit+foreground 後、viewport copy 前執行，且須 raw gates `0x51aab`、`0x51aac` 都非零。先以 `0x12e38(cursor)` 解 FDFIELD tile10/event-low5/FDSHAP control4，再以 `0x12c0d(cursor)` optional active-unit lookup；`NativeTerrainCursorInfoForCell` regression 固定前一 raw ABI。已釘住 control byte+1→`0x51a12/0x51a2a` 的 AP/DP 表，並由 `battle.Load` 以逐格 raw tile/control 接至戰鬥計算。layout 已收斂為 LMI1 #130（69×34）`buffer+stride*157+x`、terrain `+6`、AP `stride*8+0x2b`、DP `stride*19+0x2b`；`0x1aeb1` 依 table 值正負選 raw directory decimal #83/#84、取絕對值再走 native digits，兩 resource 的視覺語意仍不命名。`x` raw 初值1，已見條件改為0xf2或1。unit icon/HP resource、高階 global 名稱仍待。**撤回**把現行 map HUD 的 FDOTHER#5 full-screen battle frame 當 native equivalent 的說法；目前只保留可玩 approximation。
+  - [x] HUD runtime provenance：data初值anchor=1、gateA/gateB=1；
+    load `0x10010`由plaintext `0x30d2`覆寫gateA。anchor只由visible
+    cursor row/column `[0x53abd]/[0x53ab9]`兩條branch改0xf2/1；doc14
+    舊「框寬高」斷言已刪。`NativeMapHUDRuntimeState`保存raw bytes與
+    persistent anchor，未materialize時不畫native HUD。
+  - [x] camera/cursor runtime provenance：`0x11b48..0x11cac`四個direct
+    helpers證實absolute cursor、camera及visible cursor identity。
+    上/左在visible `<2`且camera非零時捲動；下在visible `>5`且未達
+    `height-8`時捲動；右在visible `>10`且未達`width-13`時捲動。
+    `NativeMapViewState`與keyboard/touch bridge保存原版13×8 window，
+    並拒絕broken identity或diagonal raw move。
+  - [x] chapter-1 editable vertical slice：`battle_ch01` campaign節點保存
+    真實FD2.SAV的camera `(1,13)`、cursor `(8,17)`、visible `(7,4)`及
+    HUD `(gateA=1,gateB=1,anchor=1)`；loader要求view/HUD成對且raw
+    bounds合法，runtime錯誤fail-closed。其餘章節不套用這組值。
   - [x] codec boundary：#130／hex #0x83／#0x84 不走 `ParseLMI1` 的 `0x4e916` cell codec；native `0x1aeb1` 有 literal `mov ebx,0x83/0x84`，明確走 four-mode `0x4e63d`。`ParseLMI1FrameEntry`／`DecodeLMI1FrameResource` regression 驗證 geometry 69×34、6×7、6×5 及 transparent decode。撤回剛才將 hex immediate 誤改成 decimal #83/#84（44×12／45×12）的錯誤斷言。
   - [x] optional unit selector：`0x1ae4d` 以 raw `unit+2*12 + state` 選 FDICON，state=3 alias 1，並在 panel `stride*5+6` raw blit；HP `+0x40/+0x42` 經 `0x1875d` 畫至 `stride*21+9`（mode3）。`NativeMapHUDUnitFrameIndex` regression 保留 selector，不替 state 命名。
   - [x] strict compositor layout：`NativeMapHUDLayoutFor(anchor,456)` 固定 frame／terrain／AP／DP／unit／HP 的六個 byte destinations，拒絕非 native stride 與 69-pixel frame 出 320-pixel viewport 的 anchor；留給後續 indexed renderer 組裝，未宣稱已接 Ebiten。

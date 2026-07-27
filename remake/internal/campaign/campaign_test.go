@@ -97,6 +97,44 @@ func TestLoadValidation(t *testing.T) {
 	}
 }
 
+func TestNativeMapRuntimeRequiresCompleteRawState(t *testing.T) {
+	for name, raw := range map[string]string{
+		"view only": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4}}}}`,
+		"hud only":  `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"bad gate":  `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "invalid-native-map.json")
+			if err := os.WriteFile(path, []byte(raw), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(path); err == nil {
+				t.Fatal("incomplete or out-of-range native map state must fail closed")
+			}
+		})
+	}
+}
+
+func TestFullCampaignCarriesVerifiedChapterOneNativeMapRuntime(t *testing.T) {
+	c, err := Load("../../assets/scenarios/campaign_full.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := c.Nodes["battle_ch01"]
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD == nil {
+		t.Fatal("battle_ch01 must carry the verified native map view and HUD state")
+	}
+	view := *n.NativeMapView
+	if view.CameraX != 1 || view.CameraY != 13 ||
+		view.CursorX != 8 || view.CursorY != 17 ||
+		view.VisibleCursorX != 7 || view.VisibleCursorY != 4 {
+		t.Fatalf("battle_ch01 native map view=%+v", view)
+	}
+	if hud := *n.NativeMapHUD; hud.DisplayGateA != 1 || hud.DisplayGateB != 1 || hud.AnchorX != 1 {
+		t.Fatalf("battle_ch01 native map HUD=%+v", hud)
+	}
+}
+
 func TestInventoryGateRequiresBothTargetsAndRoutesWithoutPlayerChoice(t *testing.T) {
 	itemID := 100
 	c := &Campaign{Start: "gate", Nodes: map[string]*Node{

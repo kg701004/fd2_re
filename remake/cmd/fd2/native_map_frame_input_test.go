@@ -21,9 +21,12 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256),
 	}
 	field := &MapData{
-		W: 1, H: 1, Tiles: []int{0},
-		NativeTileBlitModes:  []byte{0xff},
+		W: 13, H: 8, Tiles: make([]int, 13*8),
+		NativeTileBlitModes:  make([]byte, 13*8),
 		NativeTerrainControl: append([]byte(nil), controls...),
+	}
+	for i := range field.NativeTileBlitModes {
+		field.NativeTileBlitModes[i] = 0xff
 	}
 	unit := &battle.Unit{
 		X: 0, Y: 0, MapSelectorKey: 7, HasMapSelectorKey: true,
@@ -34,6 +37,13 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 	}
 	state := &battle.State{}
 	if err := state.AppendNativeMapSelectorBatch([]*battle.Unit{unit}); err != nil {
+		t.Fatal(err)
+	}
+	if !state.MaterializeNativeMapHUDState(2, 3, 1) {
+		t.Fatal("HUD state materialization rejected")
+	}
+	state.W, state.H = field.W, field.H
+	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{}); err != nil {
 		t.Fatal(err)
 	}
 	return assets, field, state
@@ -49,9 +59,8 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 		t.Fatal("binary map timing advance rejected")
 	}
 	runtime := nativeMapFrameRuntime{
-		CameraX: 0, CameraY: 0,
-		RangeMode: 0, CursorX: 0, CursorY: 0,
-		HUD: indexedmap.NativeMapHUDInput{DisplayGateA: true, DisplayGateB: true, AnchorX: 1},
+		RangeMode: 0,
+		HUD:       indexedmap.NativeMapHUDInput{},
 	}
 	got, err := buildNativeMapFrameInput(assets, field, state, runtime)
 	if err != nil {
@@ -62,7 +71,8 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 		got.Frame.RangeMode != 0 || got.Frame.ForegroundBank != assets.Terrain ||
 		got.Frame.SelectorCache != state.NativeMapSelectorCache ||
 		len(got.Frame.Units) != 1 || len(got.Frame.ForegroundUnits) != 1 ||
-		got.HUDCache != state.NativeMapSelectorCache {
+		got.HUDCache != state.NativeMapSelectorCache ||
+		!got.HUD.DisplayGateA || !got.HUD.DisplayGateB || got.HUD.AnchorX != 1 {
 		t.Fatalf("frame input=%+v", got.Frame)
 	}
 }

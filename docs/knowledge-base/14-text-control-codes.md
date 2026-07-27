@@ -78,10 +78,14 @@
   **每框最多 3 行**;到第 3 行再換行 → `call 0x17C24`(捲動 / 等一下)後行數 −1。
 - **`0xFFFD` 翻頁**(`0x16DC4`):同換行,但額外 `call 0x17A57(1)`(等待按鍵 + 清框),進下一頁。
 
-## 對話框「框」= FDOTHER.DAT 素材圖,不是程式畫的矩形(第 6 輪 RE)
+## 對話框／地圖 UI 素材邊界（第 6 輪原結論已修正）
 
-**問題**:地圖戰場對話框那個「深藍底 + 淺藍立體邊」的框,是程式 fillrect / 畫線畫的,還是素材圖?
-**結論:是素材圖(sprite),從 `FDOTHER.DAT` 載入,帶縮放彈出 / 收合動畫貼上;全程沒有任何 rect 填充或畫線原語。**
+FDOTHER.DAT 確實供應框、字型與多組地圖 UI sprite；但舊版把
+`0x165AC/0x16B43` 與 `[0x53AB9]/[0x53ABD]` 直接命名成「對話框寬高／
+縮放動畫」的斷言已撤回。後續 direct cursor writer 證明這兩個 globals
+是 camera-relative visible cursor column/row，不能再拿它們當框尺寸證據。
+下列資源載入事實仍成立；個別 open/close routine 屬於哪一種 UI，必須
+另由 caller 與目的 framebuffer 證明。
 
 - **框圖資源**:UI 載入函式 `0x25C63`–`0x25D19` 一次把 `FDOTHER.DAT`(字串 linear `0x51A4D`)多個 entry 解進全域:
   - **`0x111BA("FDOTHER.DAT", [0x53A81], 5)` → `[0x53A81]` = 對話框框圖(entry #5)**(`0x25CF2`)。
@@ -90,13 +94,10 @@
     `0x15F84→0x4EA2A([0x53A75],glyph,...)` 繪製，不是文字區底圖。
   - entry 1/2/3/0x1F → `[0x53A4D]`/`[0x53A89]`/`[0x53A6D]`/`[0x53EEC]`(其他 UI 片)。
   - 另 `0x111BA("FDTXT.DAT"@`0x51A43`, [0x53A7D], 0)` → `[0x53A7D]` = 對話字模 / 文字資料。
-- **彈出動畫(開框)`0x165AC`**:用 `[0x53A81]` 框圖,以 `[0x53AB9]×[0x53ABD]`(框寬 / 高,單位 ×`0x18`=24px)為終點,
-  逐格內插出一個由小放大的矩形,把框圖縮放 blit 進去(`0x16649` 讀 `[0x53A81]` header `word[+6]` 取尺寸再貼)。
-  → 使用者述「框跳出來」= **這段 zoom-in**(縮放素材,不是淡入)。
-- **收合動畫(關框)`0x16B43`**:反向 zoom-out,並用 `0x15E71` 把先前存底的 4 條背景 strip 貼回 VGA(復原被框蓋住的畫面)。
+- **`0x165AC`／`0x16B43`**：確有 FDOTHER sprite、插值 blit 與背景
+  strip restore；但因舊參數命名錯誤，本文件不再稱它們是對話框
+  zoom-in/zoom-out。待 caller-level UI state 關閉後再命名。
 - **每 tick 重繪 / 嘴型 `0x16C57`**:同樣吃 `[0x53A81]` 框圖 + `[0x53A81]` 文字區,配 `0x4E893` 動畫進度推進。
-- **框尺寸來源**:`[0x53AB9]`(寬)/`[0x53ABD]`(高)由某 context descriptor 的 `byte[+7]`/`byte[+8]` 填(`0x1040C`/`0x10415`),
-  ×24px 得像素框大小;戰鬥 / 場景切換時被歸零重設(多處 `0x53AB9/ABD = 0`)。
 - **3D 立體邊(深藍 + 淺藍)**:就畫在 FDOTHER entry #5 那張框圖的像素裡 → remake 應**直接抽 FDOTHER 框圖貼**,
   不要自己 drawRect + 描邊湊立體感(顏色 / 邊框寬度都燒在素材)。
 
@@ -110,7 +111,7 @@
 | `[0x53A81]` | **對話框框圖**(FDOTHER.DAT entry #5) |
 | `[0x53A75]` | FDOTHER.DAT resource #4 的 16×16 1bpp glyph font |
 | `[0x53A7D]` | 對話字模 / 文字資料(FDTXT.DAT entry 0) |
-| `[0x53AB9]` / `[0x53ABD]` | 框寬 / 框高(×0x18=24px) |
+| `[0x53AB9]` / `[0x53ABD]` | camera-relative visible cursor column / row；不是框寬高 |
 | `[0x53AD9]`/`[0x53ADD]`/`[0x53AE1]` | 名字插入碼 `-4`/`-5`/`-6` 的來源字串指標 |
 | `0x51A70` | 字串 `"DATO.DAT"`(頭像) · `0x51A4D` `"FDOTHER.DAT"`(框 / UI) · `0x51A43` `"FDTXT.DAT"`(文字) |
 | 開框 `0x16140`/`0x1622A`/`0x16367`/`0x163E3` · 開 anim `0x165AC` · 關 anim `0x16B43` · tick `0x16C57` | |

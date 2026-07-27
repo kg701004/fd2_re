@@ -16,6 +16,48 @@ type NativeMapPresentationState struct {
 	Motion byte
 }
 
+// NativeMapHUDRuntimeState is the raw persistent subset consumed by 0x1acf3.
+// Display bytes retain byte identity; only their zero/nonzero tests are known.
+type NativeMapHUDRuntimeState struct {
+	DisplayGateA, DisplayGateB byte
+	AnchorX                    int
+}
+
+func (s *State) MaterializeNativeMapHUDState(gateA, gateB byte, anchorX int) bool {
+	if s == nil {
+		return false
+	}
+	if _, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride); err != nil {
+		return false
+	}
+	s.NativeMapHUDState = NativeMapHUDRuntimeState{
+		DisplayGateA: gateA, DisplayGateB: gateB, AnchorX: anchorX,
+	}
+	s.HasNativeMapHUDState = true
+	return true
+}
+
+// AdvanceNativeMapHUDAnchor applies the only two proven writes in 0x1acf3.
+// rawVisibleX/Y are [0x53ab9]/[0x53abd], not dialogue-box dimensions.
+func (s *State) AdvanceNativeMapHUDAnchor(rawVisibleX, rawVisibleY int) bool {
+	if s == nil || !s.HasNativeMapHUDState {
+		return false
+	}
+	next := s.NativeMapHUDState.AnchorX
+	if rawVisibleY > 5 {
+		if rawVisibleX < 3 {
+			next = 0xf2
+		} else if rawVisibleX > 9 {
+			next = 1
+		}
+	}
+	if _, err := fdicon.NativeMapHUDLayoutFor(next, fdicon.NativeMapStride); err != nil {
+		return false
+	}
+	s.NativeMapHUDState.AnchorX = next
+	return true
+}
+
 // NativeMapFrameRoster is the atomically materialized roster subset consumed
 // by the steady unit and foreground layers. Cycles are the battle-session
 // globals selected by those same entries.
