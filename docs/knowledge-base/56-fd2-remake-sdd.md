@@ -140,6 +140,12 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 
 ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
 
+2026-07-27 zero-based post-handler audit 修正一個 campaign assertion：`postbattle_ch14_persist` 對應
+`ch14_post`（native `0x239bd`，條件對話→sync→JOIN15→set_chapter15），已接回並通過 compiler
+regression；`postbattle_ch15_persist` 不得重用 `ch14_post`，因其原生 `ch15_post` 的 layout／acting／
+文字 binding 尚未完成，現維持 unbound fail-closed。這保留原版 chapter index 與玩家章節之間的 offset，
+也避免第15戰重播錯誤的第14戰招募事件。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset

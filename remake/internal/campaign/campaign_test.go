@@ -198,8 +198,8 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		t.Fatalf("chapter 17 must execute the recovered conditional ch16 pre-handler: %#v", ch17)
 	}
 	post15 := c.Nodes["postbattle_ch15_persist"]
-	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
-		t.Fatalf("chapter 15 must preserve the recovered dynamic post-handler before town: %#v", post15)
+	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
+		t.Fatalf("chapter 15 must keep its unresolved post-handler fail-closed before town: %#v", post15)
 	}
 	battle2, post2 := c.Nodes["battle_ch02"], c.Nodes["story_ch02_post"]
 	if battle2 == nil || battle2.OnWin != "story_ch02_post" || post2 == nil || post2.Type != "cutscene" || post2.HandlerBinding != "assets/cutscenes/bindings/ch01_post.json" || post2.Next != "town_ch03" {
@@ -236,7 +236,12 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 				wantBinding = "assets/cutscenes/bindings/ch13_post.json"
 			}
 			if tc.chapter == 15 {
-				wantBinding = "assets/cutscenes/bindings/ch14_post.json"
+				// ch15_post has raw calls but no complete editable binding;
+				// preserving an empty binding is intentional fail-closed behavior.
+				if post.HandlerBinding != "" || len(post.Beats) != 0 {
+					t.Fatalf("chapter15 unresolved post handler was guessed: %#v", post)
+				}
+				continue
 			}
 			if post.HandlerBinding != wantBinding || len(post.Beats) != 0 {
 				t.Fatalf("chapter%d must preserve dynamic post handler: %#v", tc.chapter, post)
@@ -572,6 +577,11 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 					if chapter == 29 {
 						// Native ch29 post handler copies persistent roster records as
 						// part of its proven LOADCH path; no synthetic sync beat.
+						wantSyncs = 0
+					}
+					if chapter == 15 {
+						// ch15_post has proven raw calls but no complete editable
+						// binding yet; do not synthesize sync_party into its graph node.
 						wantSyncs = 0
 					}
 					if syncs != wantSyncs {

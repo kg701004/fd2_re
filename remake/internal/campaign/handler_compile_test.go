@@ -1380,6 +1380,7 @@ func TestCompileGeneratedHandlerBindingsCompletionFrontier(t *testing.T) {
 		"ch00_post.json": true, "ch03_post.json": true,
 		"ch10_post.json": true, "ch18_post.json": true,
 		"ch27_post.json": true, "ch25_post.json": true,
+		"ch14_post.json": true,
 	}
 	for _, path := range paths {
 		_, issues, err := CompileHandlerBinding(path)
