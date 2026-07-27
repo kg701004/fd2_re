@@ -949,6 +949,36 @@ func TestBeatNativeInactiveCountGreaterThanUsesRawByteOnly(t *testing.T) {
 	}
 }
 
+func TestBeatNativeCh15RawComparisonsFailClosedWithoutProvenance(t *testing.T) {
+	round := 18
+	wordOffset, wordValue, slot := 0x42, 0x140, 0
+	for _, tc := range []struct {
+		name      string
+		condition *campaign.BeatCondition
+		state     *battle.State
+		want      bool
+	}{
+		{"round-hit", &campaign.BeatCondition{Op: "native_round_gt", NativeRound: &round}, &battle.State{NativeRoundCounter: 19}, true},
+		{"round-miss", &campaign.BeatCondition{Op: "native_round_gt", NativeRound: &round}, &battle.State{NativeRoundCounter: 18}, false},
+		{"word-hit", &campaign.BeatCondition{Op: "native_record_word_gte", UnitSlot: &slot, NativeRecordWordOffset: &wordOffset, NativeRecordWordValue: &wordValue}, &battle.State{Units: []*battle.Unit{{HasNativeRecordWord42: true, NativeRecordWord42: 0x140}}}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: tc.condition, Then: []campaign.Beat{{Op: "join", CharID: 18}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}})
+			g.st = tc.state
+			g.beatAdvance()
+			if g.loadErr != "" || !g.partyMembers[map[bool]int{true: 18, false: 19}[tc.want]] {
+				t.Fatalf("want=%v party=%#v err=%q", tc.want, g.partyMembers, g.loadErr)
+			}
+		})
+	}
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: &campaign.BeatCondition{Op: "native_record_word_gte", UnitSlot: &slot, NativeRecordWordOffset: &wordOffset, NativeRecordWordValue: &wordValue}}})
+	g.st = &battle.State{Units: []*battle.Unit{{MaxHP: 999}}}
+	g.beatAdvance()
+	if g.loadErr == "" {
+		t.Fatal("normalized MaxHP did not fail closed as raw +0x42")
+	}
+}
+
 func TestReorderScenarioPartyUsesOriginalJoinSlots(t *testing.T) {
 	sc := &battle.Scenario{
 		Party:       []battle.PartyMember{{Fig: 0}, {Fig: 4}, {Fig: 9}, {Fig: 30}},

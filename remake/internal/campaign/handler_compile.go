@@ -201,6 +201,26 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				threshold := *input.Condition.Threshold
 				condition.UnitSlots = append([]int(nil), input.Condition.UnitSlots...)
 				condition.Threshold = &threshold
+			case "native_round_gt":
+				if input.Condition.NativeRound == nil || *input.Condition.NativeRound < 0 {
+					issue(i, input, "native_round_gt requires a non-negative raw round threshold")
+					continue
+				}
+				threshold := *input.Condition.NativeRound
+				condition.NativeRound = &threshold
+			case "native_record_word_gte":
+				if input.Condition.UnitSlot == nil || *input.Condition.UnitSlot < 0 || input.Condition.NativeRecordWordOffset == nil || *input.Condition.NativeRecordWordOffset != 0x42 || input.Condition.NativeRecordWordValue == nil || *input.Condition.NativeRecordWordValue < 0 || *input.Condition.NativeRecordWordValue > 0xffff {
+					issue(i, input, "native_record_word_gte requires unit_slot, raw offset 0x42, and u16 value")
+					continue
+				}
+				slot, offset, value := *input.Condition.UnitSlot, *input.Condition.NativeRecordWordOffset, *input.Condition.NativeRecordWordValue
+				if activeSlotCount > 0 && slot >= activeSlotCount {
+					issue(i, input, "native_record_word_gte unit_slot exceeds active runtime context")
+					continue
+				}
+				condition.UnitSlot = &slot
+				condition.NativeRecordWordOffset = &offset
+				condition.NativeRecordWordValue = &value
 			case "roster_has":
 				if input.Condition.CharID == nil || !JoinableCharacterID(*input.Condition.CharID) {
 					issue(i, input, "roster_has requires an original 0..31 permanent-player char_id")

@@ -91,13 +91,18 @@ type Unit struct {
 	// NativeRecordByte5/6 preserve the two raw gate bytes consumed by
 	// 0x1A866. Their gameplay meaning is intentionally unknown; neither is
 	// inferred from Acted, OnField, Alive, or Camp.
-	NativeRecordByte5    byte   `json:"native_record_byte5,omitempty"`
-	HasNativeRecordByte5 bool   `json:"has_native_record_byte5,omitempty"`
-	NativeRecordByte6    byte   `json:"native_record_byte6,omitempty"`
-	HasNativeRecordByte6 bool   `json:"has_native_record_byte6,omitempty"`
-	Inventory            []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
-	Equipped             []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
-	InventorySlots       []int  // 原始 8 個 source bytes；0xff 保留空槽位置
+	NativeRecordByte5    byte `json:"native_record_byte5,omitempty"`
+	HasNativeRecordByte5 bool `json:"has_native_record_byte5,omitempty"`
+	NativeRecordByte6    byte `json:"native_record_byte6,omitempty"`
+	HasNativeRecordByte6 bool `json:"has_native_record_byte6,omitempty"`
+	// NativeRecordWord42 is the optional raw u16 at runtime record +0x42.
+	// It is separate from MaxHP: ch15_post compares this word directly, and
+	// old editable units without provenance must fail closed.
+	NativeRecordWord42    uint16 `json:"native_record_word42,omitempty"`
+	HasNativeRecordWord42 bool   `json:"has_native_record_word42,omitempty"`
+	Inventory             []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
+	Equipped              []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
+	InventorySlots        []int  // 原始 8 個 source bytes；0xff 保留空槽位置
 	// NativeInventoryFlags is the constructor's raw eight-cell flag view. It is
 	// present only when InventorySlots came from the proven source layout.
 	NativeInventoryFlags []int
@@ -414,10 +419,13 @@ type State struct {
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
 	// SPAWN calls append their group without reserving slots ahead of time.
-	Roster                   []*Unit
-	PendingGroups            map[int]bool
-	OwnDeploy                []Cell                      // 我方可部署格
-	Turn                     int                         // 回合數(無上限,doc 27;只由劇本事件限制)
+	Roster        []*Unit
+	PendingGroups map[int]bool
+	OwnDeploy     []Cell // 我方可部署格
+	Turn          int    // 回合數(無上限,doc 27;只由劇本事件限制)
+	// NativeRoundCounter preserves executable global [0x53bef], incremented at
+	// the native turn-advance boundary (0x1a5b9), apart from normalized Turn.
+	NativeRoundCounter       int                         `json:"native_round_counter,omitempty"`
 	Flags                    map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
 	NativeEventState         [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
 	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
@@ -542,7 +550,10 @@ type unitsFile struct {
 	W         int    `json:"w"`
 	H         int    `json:"h"`
 	OwnDeploy []Cell `json:"own_deploy"`
-	Chests    []struct {
+	// Optional raw global snapshot; absent legacy/editable files must not
+	// fabricate provenance for native round predicates.
+	NativeRoundCounter *int `json:"native_round_counter,omitempty"`
+	Chests             []struct {
 		Slot  int    `json:"slot"`
 		Kind  string `json:"type"`
 		Value int    `json:"value"`
@@ -571,17 +582,18 @@ type unitsFile struct {
 		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
 		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
-		Portrait          int                     `json:"portrait"`
-		Fig               int                     `json:"fig"`
-		BattleFig         *int                    `json:"battle_fig,omitempty"`
-		MapSelectorSlot   *int                    `json:"map_selector_slot,omitempty"`
-		MapSelectorKey    *int                    `json:"map_selector_key,omitempty"`
-		NativeRecordByte5 *byte                   `json:"native_record_byte5,omitempty"`
-		NativeRecordByte6 *byte                   `json:"native_record_byte6,omitempty"`
-		Group             int                     `json:"group"`
-		NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
-		X                 int                     `json:"x"`
-		Y                 int                     `json:"y"`
+		Portrait           int                     `json:"portrait"`
+		Fig                int                     `json:"fig"`
+		BattleFig          *int                    `json:"battle_fig,omitempty"`
+		MapSelectorSlot    *int                    `json:"map_selector_slot,omitempty"`
+		MapSelectorKey     *int                    `json:"map_selector_key,omitempty"`
+		NativeRecordByte5  *byte                   `json:"native_record_byte5,omitempty"`
+		NativeRecordByte6  *byte                   `json:"native_record_byte6,omitempty"`
+		NativeRecordWord42 *uint16                 `json:"native_record_word42,omitempty"`
+		Group              int                     `json:"group"`
+		NativeConstructor  *NativeConstructorTable `json:"native_constructor,omitempty"`
+		X                  int                     `json:"x"`
+		Y                  int                     `json:"y"`
 	} `json:"units"`
 }
 
@@ -608,6 +620,9 @@ func Load(path string) (*State, error) {
 	}
 	st := &State{W: f.W, H: f.H, OwnDeploy: f.OwnDeploy, Turn: 1, Flags: map[string]bool{},
 		Treasures: map[Cell]Treasure{}, OpenedTreasure: map[int]bool{}}
+	if f.NativeRoundCounter != nil && *f.NativeRoundCounter > 0 {
+		st.NativeRoundCounter = *f.NativeRoundCounter
+	}
 	for _, u := range f.Units {
 		if err := u.NativeConstructor.validate(); err != nil {
 			return nil, fmt.Errorf("battle: native_constructor: %w", err)
@@ -657,6 +672,9 @@ func Load(path string) (*State, error) {
 		}
 		if u.NativeRecordByte6 != nil {
 			nu.NativeRecordByte6, nu.HasNativeRecordByte6 = *u.NativeRecordByte6, true
+		}
+		if u.NativeRecordWord42 != nil {
+			nu.NativeRecordWord42, nu.HasNativeRecordWord42 = *u.NativeRecordWord42, true
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)

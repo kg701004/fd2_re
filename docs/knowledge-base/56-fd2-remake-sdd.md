@@ -158,6 +158,16 @@ threshold，逐 slot 要求 native record byte5 provenance，再以 bit0 inactiv
 缺 slot 或缺 raw byte5 不得退回 HP/OnField。這可表達 ch15 的第一個 predicate，但不替代同一
 handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 implementation gate。
 
+本輪再以 Docker Capstone 重讀 ch15 `0x23a0a..0x23b52`：`0x1a5b9` 明確對全域
+`[0x53bef]` 做 `inc`，而 handler 在 `0x23a9a` 直接比較 `>0x12`；`0x23aad..0x23abb`
+則從 `[0x53a45]` 取 runtime record 的 raw u16 `+0x42` 並比較 `>=0x140`。remake 現以
+`State.NativeRoundCounter`（只在有 raw provenance 的載入狀態初始化／遞增）及
+`Unit.NativeRecordWord42`／`HasNativeRecordWord42` 保存兩個來源；compiler/runtime 新增
+`native_round_gt` 與 `native_record_word_gte`，缺 provenance 或 offset 不是 `0x42` 一律
+fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression，但尚未把 ch15
+handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 與 save boundary
+閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset

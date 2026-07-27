@@ -22,6 +22,15 @@ type HandlerCondition struct {
 	// Threshold is used only by raw count predicates; it is never inferred
 	// from a roster size or normalized alive count.
 	Threshold *int `json:"threshold,omitempty"`
+	// NativeRound is the raw [0x53bef] comparison used by handlers such as
+	// ch15_post. It is intentionally separate from the normalized battle Turn.
+	NativeRound *int `json:"native_round,omitempty"`
+	// NativeRecordWordOffset/Value identify a direct raw record-word compare;
+	// only the recovered +0x42 u16 contract is currently accepted.
+	NativeRecordWordOffset *int `json:"native_record_word_offset,omitempty"`
+	NativeRecordWordValue  *int `json:"native_record_word_value,omitempty"`
+	// UnitSlot selects the raw runtime record for native_record_word_gte.
+	UnitSlot *int `json:"unit_slot,omitempty"`
 	// CharID is the one-byte permanent-player ID accepted by native 0x33499.
 	// It is meaningful only for roster_has, never a portrait/NPC identifier.
 	CharID          *int `json:"char_id,omitempty"`

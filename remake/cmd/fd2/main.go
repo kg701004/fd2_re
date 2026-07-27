@@ -1374,6 +1374,24 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			}
 		}
 		return inactive > *condition.Threshold, nil
+	case "native_round_gt":
+		if g.st == nil || condition.NativeRound == nil || *condition.NativeRound < 0 || g.st.NativeRoundCounter <= 0 {
+			return false, fmt.Errorf("native_round_gt lacks raw [0x53bef] provenance")
+		}
+		return g.st.NativeRoundCounter > *condition.NativeRound, nil
+	case "native_record_word_gte":
+		if g.st == nil || condition.UnitSlot == nil || condition.NativeRecordWordOffset == nil || *condition.NativeRecordWordOffset != 0x42 || condition.NativeRecordWordValue == nil || *condition.NativeRecordWordValue < 0 || *condition.NativeRecordWordValue > 0xffff {
+			return false, fmt.Errorf("native_record_word_gte lacks raw +0x42 contract")
+		}
+		slot := *condition.UnitSlot
+		if slot < 0 || slot >= len(g.st.Units) || g.st.Units[slot] == nil {
+			return false, fmt.Errorf("native_record_word_gte slot %d unavailable (units=%d)", slot, len(g.st.Units))
+		}
+		u := g.st.Units[slot]
+		if !u.HasNativeRecordWord42 {
+			return false, fmt.Errorf("native_record_word_gte slot %d lacks raw +0x42", slot)
+		}
+		return int(u.NativeRecordWord42) >= *condition.NativeRecordWordValue, nil
 	default:
 		return false, fmt.Errorf("未知 handler condition %q", condition.Op)
 	}
@@ -5766,6 +5784,12 @@ func (g *Game) finishTurn() {
 
 func (g *Game) completeTurn() {
 	g.st.Turn++
+	// Keep the executable [0x53bef] counter only for states that entered with
+	// explicit native provenance; hand-authored tests/legacy states remain
+	// unproven (zero) and therefore fail closed for native round predicates.
+	if g.st.NativeRoundCounter > 0 {
+		g.st.NativeRoundCounter++
+	}
 	for _, u := range g.st.Units {
 		u.Acted = false
 		u.TickStatus()             // buff/封咒/中毒/麻痺回合遞減+中毒扣血(doc02 §6.4)

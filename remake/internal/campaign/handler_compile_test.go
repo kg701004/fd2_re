@@ -305,6 +305,24 @@ func TestCompileNativeInactiveCountGreaterThanPreservesRawThreshold(t *testing.T
 	}
 }
 
+func TestCompileNativeRawCh15ComparisonsPreserveProvenance(t *testing.T) {
+	round := 18
+	offset, value, slot := 0x42, 0x140, 0
+	script := &HandlerScript{Beats: []HandlerBeat{
+		{Op: "if", Condition: &HandlerCondition{Op: "native_round_gt", NativeRound: &round}},
+		{Op: "if", Condition: &HandlerCondition{Op: "native_record_word_gte", UnitSlot: &slot, NativeRecordWordOffset: &offset, NativeRecordWordValue: &value}},
+	}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 2 || beats[0].Condition.NativeRound == nil || *beats[0].Condition.NativeRound != 18 || beats[1].Condition.NativeRecordWordOffset == nil || *beats[1].Condition.NativeRecordWordOffset != 0x42 {
+		t.Fatalf("raw ch15 comparisons were not preserved: beats=%#v issues=%#v", beats, issues)
+	}
+	badOffset := 0x40
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: &HandlerCondition{Op: "native_record_word_gte", UnitSlot: &slot, NativeRecordWordOffset: &badOffset, NativeRecordWordValue: &value}}}}, HandlerBindings{})
+	if len(issues) == 0 {
+		t.Fatal("non-proven raw record offset did not fail closed")
+	}
+}
+
 func TestCompileChapter1PostResolvesBothDialogueBranchArms(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch01_post.json")
 	if err != nil {
