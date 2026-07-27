@@ -193,9 +193,10 @@ primitive，不是開放式腳本 expression language。ch15 handler JSON 尚未
 另新增 [`ch15_post_cfg.json`](../../remake/assets/cutscenes/handlers/candidates/ch15_post_cfg.json) 作為
 address-preserving candidate：它把 `0x23a9a` 的 `round>18 OR inactive_count>4` 與
 `0x23aad` 的 `else +0x42>=0x140` 寫成 nested editable CFG，並保留 dialog/acting/JOIN/
-set-chapter source addresses。這不是 active binding；camera raw `(22,25)` 的像素座標、96-slot
-runtime materialization 與 constructor input provenance 未閉合前，原始 `ch15_post.json` 與
-campaign node 都維持 fail-closed。
+set-chapter source addresses。binding 的 fixed `runtime_context.slot_count=80` 現已足以讓
+compiler 驗證 branch 內 acting；未提供固定 context 的 branch 仍 fail-closed。camera raw
+`(22,25)`、persistent slot producer 與 campaign consumer 尚未閉合前，原始 `ch15_post.json`
+與 campaign node 都維持 fail-closed。
 
 ### UI restoration execution plan（2026-07-27）
 

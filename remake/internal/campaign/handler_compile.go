@@ -287,7 +287,11 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				issue(i, input, "if arms cannot change loadch or chapter context before a proven merge model exists")
 				continue
 			}
-			if handlerBranchNeedsActiveLoadCH(input.Then) || handlerBranchNeedsActiveLoadCH(input.Else) {
+			// A fixed runtime_context (or a proven LOADCH frontier before this
+			// branch) is already the active-slot model.  Without it, retain the
+			// conservative rejection: acting/slot operations in an arm could
+			// otherwise observe a branch-local roster shape that is not merged.
+			if activeSlotCount == 0 && (handlerBranchNeedsActiveLoadCH(input.Then) || handlerBranchNeedsActiveLoadCH(input.Else)) {
 				issue(i, input, "if arms cannot use active-slot operations before branch compiler context is modeled")
 				continue
 			}
