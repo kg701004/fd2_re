@@ -14,7 +14,7 @@
     "0x2503a#11": { "script": "ch26.json", "scene_index": 4, "lines": [{"line":5},{"line":6},{"line":7}] }
   },
   "overrides": {
-    "0x24f11": { "layout": { "units": [{"slot":0,"x":14,"y":6,"pose":0},{"slot":1,"x":15,"y":9,"pose":2},{"slot":2,"x":15,"y":6,"pose":0},{"slot":3,"x":14,"y":9,"pose":2},{"slot":4,"x":16,"y":9,"pose":2},{"slot":5,"x":14,"y":10,"pose":2},{"slot":6,"x":15,"y":10,"pose":2},{"slot":7,"x":16,"y":10,"pose":2},{"slot":8,"x":13,"y":11,"pose":2},{"slot":9,"x":14,"y":11,"pose":2},{"slot":10,"x":15,"y":11,"pose":2},{"slot":11,"x":16,"y":11,"pose":2},{"slot":12,"x":17,"y":11,"pose":2},{"slot":13,"x":14,"y":12,"pose":2},{"slot":14,"x":15,"y":12,"pose":2},{"slot":15,"x":16,"y":12,"pose":2}], "cam_x":120,"cam_y":216 } },
+    "0x24f11": { "layout": { "units": [{"slot":0,"x":14,"y":6,"pose":0},{"slot":1,"x":15,"y":9,"pose":2},{"slot":2,"x":15,"y":6,"pose":0},{"slot":3,"x":14,"y":9,"pose":2},{"slot":4,"x":16,"y":9,"pose":2},{"slot":5,"x":14,"y":10,"pose":2},{"slot":6,"x":15,"y":10,"pose":2},{"slot":7,"x":16,"y":10,"pose":2},{"slot":8,"x":13,"y":11,"pose":2},{"slot":9,"x":14,"y":11,"pose":2},{"slot":10,"x":15,"y":11,"pose":2},{"slot":11,"x":16,"y":11,"pose":2},{"slot":12,"x":17,"y":11,"pose":2},{"slot":13,"x":14,"y":12,"pose":2},{"slot":14,"x":15,"y":12,"pose":2},{"slot":15,"x":16,"y":12,"pose":2}], "cam_x":216,"cam_y":120 } },
     "0x24f57": { "act": { "resource": 77 } },
     "0x24f92": { "act": { "resource": 78 } },
     "0x24fd8": { "act": { "resource": 79 } },

@@ -711,7 +711,7 @@ func TestCh25PostEvidenceResolvesBranchDialogueByTextIndex(t *testing.T) {
 			}
 		}
 	}
-	if layout == nil || layout.Layout == nil || len(layout.Layout.Units) != 16 || layout.Layout.CamX != 120 || layout.Layout.CamY != 216 || !acts[0] || !acts[1] || !acts[2] {
+	if layout == nil || layout.Layout == nil || len(layout.Layout.Units) != 16 || layout.Layout.CamX != 216 || layout.Layout.CamY != 120 || !acts[0] || !acts[1] || !acts[2] {
 		t.Fatalf("ch25 evidence layout=%#v acting slots=%v", layout, acts)
 	}
 }
