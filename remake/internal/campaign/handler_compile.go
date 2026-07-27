@@ -221,6 +221,50 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				condition.UnitSlot = &slot
 				condition.NativeRecordWordOffset = &offset
 				condition.NativeRecordWordValue = &value
+			case "native_any_of":
+				if len(input.Condition.Any) == 0 {
+					issue(i, input, "native_any_of requires at least one proven raw predicate")
+					continue
+				}
+				for _, child := range input.Condition.Any {
+					compiled := BeatCondition{Op: child.Op}
+					switch child.Op {
+					case "native_round_gt":
+						if child.NativeRound == nil || *child.NativeRound < 0 {
+							issue(i, input, "native_any_of contains invalid native_round_gt")
+							continue
+						}
+						v := *child.NativeRound
+						compiled.NativeRound = &v
+					case "native_inactive_count_gt":
+						if len(child.UnitSlots) == 0 || child.Threshold == nil || *child.Threshold < 0 {
+							issue(i, input, "native_any_of contains invalid native_inactive_count_gt")
+							continue
+						}
+						seen := map[int]bool{}
+						valid := true
+						for _, slot := range child.UnitSlots {
+							if slot < 0 || seen[slot] || (activeSlotCount > 0 && slot >= activeSlotCount) {
+								valid = false
+							}
+							seen[slot] = true
+						}
+						if !valid {
+							issue(i, input, "native_any_of contains invalid inactive-count slots")
+							continue
+						}
+						compiled.UnitSlots = append([]int(nil), child.UnitSlots...)
+						v := *child.Threshold
+						compiled.Threshold = &v
+					default:
+						issue(i, input, fmt.Sprintf("native_any_of contains unsupported predicate %q", child.Op))
+						continue
+					}
+					condition.Any = append(condition.Any, compiled)
+				}
+				if len(condition.Any) != len(input.Condition.Any) {
+					continue
+				}
 			case "roster_has":
 				if input.Condition.CharID == nil || !JoinableCharacterID(*input.Condition.CharID) {
 					issue(i, input, "roster_has requires an original 0..31 permanent-player char_id")

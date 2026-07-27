@@ -176,6 +176,13 @@ caller-supplied value 寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff
 自動填 `NativeRecordWord42`。只有帶有明確 constructor input 的 units source 才能開啟
 `native_record_word_gte`，其餘仍 fail-closed。
 
+為保留 ch15 的實際 OR 控制流，條件模型另新增受限的 `native_any_of`：compiler 只允許
+已閉合的 `native_round_gt` 與 `native_inactive_count_gt` 子條件；runtime 在任一 raw 子條件
+已證實為真時才回 true，所有子條件都無法取得 provenance 時仍回 error。這是 compound gate
+primitive，不是開放式腳本 expression language。ch15 handler JSON 尚未改寫／綁定，因目前
+該檔案的 filesystem owner 不允許寫入，且 `[0x53a45]` persistent slot boundary 尚未閉合；
+因此現行 campaign 仍不會執行這個 branch。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset

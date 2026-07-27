@@ -31,6 +31,10 @@ type HandlerCondition struct {
 	NativeRecordWordValue  *int `json:"native_record_word_value,omitempty"`
 	// UnitSlot selects the raw runtime record for native_record_word_gte.
 	UnitSlot *int `json:"unit_slot,omitempty"`
+	// Any contains a bounded OR of already-proven native predicates. It is
+	// intentionally not a general expression language; the compiler accepts
+	// only the raw predicate ops it knows how to validate.
+	Any []HandlerCondition `json:"any,omitempty"`
 	// CharID is the one-byte permanent-player ID accepted by native 0x33499.
 	// It is meaningful only for roster_has, never a portrait/NPC identifier.
 	CharID          *int `json:"char_id,omitempty"`

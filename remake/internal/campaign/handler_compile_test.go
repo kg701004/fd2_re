@@ -323,6 +323,24 @@ func TestCompileNativeRawCh15ComparisonsPreserveProvenance(t *testing.T) {
 	}
 }
 
+func TestCompileNativeAnyOfRestrictsChildrenToProvenRawOps(t *testing.T) {
+	round := 18
+	threshold := 4
+	script := &HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: &HandlerCondition{Op: "native_any_of", Any: []HandlerCondition{
+		{Op: "native_round_gt", NativeRound: &round},
+		{Op: "native_inactive_count_gt", UnitSlots: []int{66, 67}, Threshold: &threshold},
+	}}}}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || len(beats[0].Condition.Any) != 2 {
+		t.Fatalf("native_any_of was not preserved: beats=%#v issues=%#v", beats, issues)
+	}
+	bad := &HandlerCondition{Op: "native_any_of", Any: []HandlerCondition{{Op: "roster_has", CharID: func() *int { v := 1; return &v }()}}}
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: bad}}}, HandlerBindings{})
+	if len(issues) == 0 {
+		t.Fatal("unsupported native_any_of child did not fail closed")
+	}
+}
+
 func TestCompileChapter1PostResolvesBothDialogueBranchArms(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch01_post.json")
 	if err != nil {

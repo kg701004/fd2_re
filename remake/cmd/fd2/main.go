@@ -1392,6 +1392,27 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			return false, fmt.Errorf("native_record_word_gte slot %d lacks raw +0x42", slot)
 		}
 		return int(u.NativeRecordWord42) >= *condition.NativeRecordWordValue, nil
+	case "native_any_of":
+		if len(condition.Any) == 0 {
+			return false, fmt.Errorf("native_any_of lacks proven child predicates")
+		}
+		var firstErr error
+		for i := range condition.Any {
+			matched, err := g.evalBeatCondition(&condition.Any[i])
+			if err != nil {
+				if firstErr == nil {
+					firstErr = err
+				}
+				continue
+			}
+			if matched {
+				return true, nil
+			}
+		}
+		if firstErr != nil {
+			return false, firstErr
+		}
+		return false, nil
 	default:
 		return false, fmt.Errorf("未知 handler condition %q", condition.Op)
 	}
