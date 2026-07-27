@@ -1353,6 +1353,27 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			}
 		}
 		return false, nil
+	case "native_inactive_count_gt":
+		if len(condition.UnitSlots) == 0 || condition.Threshold == nil || *condition.Threshold < 0 {
+			return false, fmt.Errorf("缺少有效 native_inactive_count_gt condition")
+		}
+		if g.st == nil {
+			return false, fmt.Errorf("native_inactive_count_gt 缺少 runtime battle state")
+		}
+		inactive := 0
+		for _, slot := range condition.UnitSlots {
+			if slot < 0 || slot >= len(g.st.Units) || g.st.Units[slot] == nil {
+				return false, fmt.Errorf("native_inactive_count_gt slot %d unavailable (units=%d)", slot, len(g.st.Units))
+			}
+			unit := g.st.Units[slot]
+			if !unit.HasNativeRecordByte5 {
+				return false, fmt.Errorf("native_inactive_count_gt slot %d lacks raw byte5", slot)
+			}
+			if unit.NativeRecordByte5&1 != 0 {
+				inactive++
+			}
+		}
+		return inactive > *condition.Threshold, nil
 	default:
 		return false, fmt.Errorf("未知 handler condition %q", condition.Op)
 	}

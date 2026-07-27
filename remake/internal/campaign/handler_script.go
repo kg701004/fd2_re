@@ -19,6 +19,9 @@ type HandlerSource struct {
 type HandlerCondition struct {
 	Op        string `json:"op"`
 	UnitSlots []int  `json:"unit_slots,omitempty"`
+	// Threshold is used only by raw count predicates; it is never inferred
+	// from a roster size or normalized alive count.
+	Threshold *int `json:"threshold,omitempty"`
 	// CharID is the one-byte permanent-player ID accepted by native 0x33499.
 	// It is meaningful only for roster_has, never a portrait/NPC identifier.
 	CharID          *int `json:"char_id,omitempty"`

@@ -153,6 +153,11 @@ slots66..73；inactive 計數大於4、raw global `[0x53bef] > 18`，或 record 
 來源的 runtime contract，不能把它降成 any／roster_has，因此這段仍保持 raw handler evidence，
 不接入 campaign runtime。
 
+條件模型現新增 `native_inactive_count_gt`：它只接受 address-independent 的明確 slot list 與
+threshold，逐 slot 要求 native record byte5 provenance，再以 bit0 inactive count 做嚴格 `>` 比較；
+缺 slot 或缺 raw byte5 不得退回 HP/OnField。這可表達 ch15 的第一個 predicate，但不替代同一
+handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 implementation gate。
+
 ### UI restoration execution plan（2026-07-27）
 
 UI 還原採「先操作契約、再 renderer fidelity」的垂直順序，不把單一 native offset

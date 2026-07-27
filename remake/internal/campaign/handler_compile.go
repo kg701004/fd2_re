@@ -180,6 +180,27 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 					continue
 				}
 				condition.UnitSlots = append([]int(nil), input.Condition.UnitSlots...)
+			case "native_inactive_count_gt":
+				if len(input.Condition.UnitSlots) == 0 || input.Condition.Threshold == nil || *input.Condition.Threshold < 0 {
+					issue(i, input, "native_inactive_count_gt requires unit_slots and a non-negative threshold")
+					continue
+				}
+				seen := make(map[int]bool, len(input.Condition.UnitSlots))
+				validSlots := true
+				for _, slot := range input.Condition.UnitSlots {
+					if slot < 0 || seen[slot] || (activeSlotCount > 0 && slot >= activeSlotCount) {
+						validSlots = false
+						break
+					}
+					seen[slot] = true
+				}
+				if !validSlots {
+					issue(i, input, "native_inactive_count_gt slots must be unique non-negative integers within the active runtime context")
+					continue
+				}
+				threshold := *input.Condition.Threshold
+				condition.UnitSlots = append([]int(nil), input.Condition.UnitSlots...)
+				condition.Threshold = &threshold
 			case "roster_has":
 				if input.Condition.CharID == nil || !JoinableCharacterID(*input.Condition.CharID) {
 					issue(i, input, "roster_has requires an original 0..31 permanent-player char_id")

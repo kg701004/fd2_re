@@ -106,6 +106,7 @@ type LoadCHState struct {
 type BeatCondition struct {
 	Op              string `json:"op"`
 	UnitSlots       []int  `json:"unit_slots,omitempty"`
+	Threshold       *int   `json:"threshold,omitempty"`
 	CharID          *int   `json:"char_id,omitempty"`
 	EventStateIndex *int   `json:"event_state_index,omitempty"`
 }

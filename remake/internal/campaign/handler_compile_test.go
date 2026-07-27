@@ -287,6 +287,24 @@ func TestCompileAnyUnitInactiveRejectsInvalidCondition(t *testing.T) {
 	}
 }
 
+func TestCompileNativeInactiveCountGreaterThanPreservesRawThreshold(t *testing.T) {
+	threshold := 4
+	condition := &HandlerCondition{Op: "native_inactive_count_gt", UnitSlots: []int{66, 67, 68, 69, 70, 71, 72, 73}, Threshold: &threshold}
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "if", Condition: condition,
+		Then: []HandlerBeat{},
+		Else: []HandlerBeat{},
+	}}}, HandlerBindings{RuntimeContext: &HandlerRuntimeContext{SlotCount: 74}})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Condition == nil || beats[0].Condition.Op != "native_inactive_count_gt" || beats[0].Condition.Threshold == nil || *beats[0].Condition.Threshold != 4 {
+		t.Fatalf("raw inactive-count lowering=%#v issues=%#v", beats, issues)
+	}
+	bad := -1
+	_, issues = CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: &HandlerCondition{Op: "native_inactive_count_gt", UnitSlots: []int{66}, Threshold: &bad}}}}, HandlerBindings{})
+	if len(issues) != 1 {
+		t.Fatalf("negative threshold must fail closed: %#v", issues)
+	}
+}
+
 func TestCompileChapter1PostResolvesBothDialogueBranchArms(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch01_post.json")
 	if err != nil {

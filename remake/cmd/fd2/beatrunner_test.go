@@ -915,6 +915,40 @@ func TestBeatNativeEventStateConditionSelectsOnlyProvenIndex(t *testing.T) {
 	}
 }
 
+func TestBeatNativeInactiveCountGreaterThanUsesRawByteOnly(t *testing.T) {
+	threshold := 4
+	branch := campaign.Beat{Op: "if", Condition: &campaign.BeatCondition{Op: "native_inactive_count_gt", UnitSlots: []int{66, 67, 68, 69, 70, 71, 72, 73}, Threshold: &threshold}, Then: []campaign.Beat{{Op: "join", CharID: 18}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}
+	for _, tc := range []struct {
+		inactive int
+		want     int
+	}{
+		{inactive: 5, want: 18},
+		{inactive: 4, want: 19},
+	} {
+		g := newBeatTestGame(t, []campaign.Beat{branch})
+		g.st = &battle.State{Units: make([]*battle.Unit, 74)}
+		for i := 66; i <= 73; i++ {
+			g.st.Units[i] = &battle.Unit{HasNativeRecordByte5: true}
+		}
+		for i := 66; i < 66+tc.inactive; i++ {
+			g.st.Units[i].NativeRecordByte5 = 1
+		}
+		g.beatAdvance()
+		if g.loadErr != "" || !g.partyMembers[tc.want] {
+			t.Fatalf("inactive=%d party=%#v err=%q", tc.inactive, g.partyMembers, g.loadErr)
+		}
+	}
+	g := newBeatTestGame(t, []campaign.Beat{branch})
+	g.st = &battle.State{Units: make([]*battle.Unit, 74)}
+	for i := 66; i <= 73; i++ {
+		g.st.Units[i] = &battle.Unit{}
+	}
+	g.beatAdvance()
+	if g.loadErr == "" {
+		t.Fatal("missing raw byte5 did not fail closed")
+	}
+}
+
 func TestReorderScenarioPartyUsesOriginalJoinSlots(t *testing.T) {
 	sc := &battle.Scenario{
 		Party:       []battle.PartyMember{{Fig: 0}, {Fig: 4}, {Fig: 9}, {Fig: 30}},
