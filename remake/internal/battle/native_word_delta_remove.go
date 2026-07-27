@@ -7,9 +7,10 @@ import (
 
 // ApplyNativeWordDeltaAndRemove reproduces the mutation portion of 0x21082:
 // add a signed caller-supplied delta to a raw unit word, then invoke the
-// proven 0x1b8e7 inventory-slot removal on the caller's unit/slot.  The word
-// offset and values remain unnamed because the native renderer/effect context
-// is outside this adapter.
+// proven 0x1b8e7 inventory-slot removal on the caller's unit/slot. Types
+// 8/9/0xa identify offsets +0x37/+0x39/+0x3e as base AP/DP/DX; other callers
+// must retain their own evidence boundary. Native renderer/recalculation
+// callbacks remain outside this adapter.
 func ApplyNativeWordDeltaAndRemove(records []byte, targetUnit, wordOffset int, delta int, removalUnit, removalSlot int) (uint16, error) {
 	base := targetUnit * nativeRecordSize
 	if targetUnit < 0 || base < 0 || base+nativeRecordSize > len(records) {

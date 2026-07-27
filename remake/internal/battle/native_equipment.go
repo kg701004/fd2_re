@@ -23,9 +23,10 @@ func nativePutWord(buf []byte, off int, value int16) {
 // ApplyNativeEquipmentRecalc reproduces the proven arithmetic tail of
 // 0x1145a. record is one native 0x50-byte persistent record; itemTable starts
 // at the relocated 0x602ad row table. The eight inventory cells are raw
-// [flag,item] pairs at +0x0a. Only flag bit 0x40 selects a row. Row fields and
-// destination words remain unnamed: row +1/+5/+3/+7 accumulate into record
-// +0x48/+0x4a/+0x4c/+0x4e, respectively. All word writes wrap at 16 bits.
+// [flag,item] pairs at +0x0a. Only flag bit 0x40 selects a row. Cross-checking
+// all 215 known raw rows against item.json identifies row +1/+3/+5/+7 as the
+// AP/HIT/DP/EV equipment words. Native accumulation order is AP/DP/HIT/EV into
+// record +0x48/+0x4a/+0x4c/+0x4e. All word writes wrap at 16 bits.
 //
 // The operation is fail-closed and atomic: malformed record/table input is
 // rejected before any destination byte is changed.

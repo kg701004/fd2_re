@@ -1005,11 +1005,19 @@ The mutation core after a selected `0x11506` pair is independently transcribed: 
 
 The preceding `0x3453e(index)` predicate is now closed independently: it returns exactly `record[index*0x50+0x05] & 1` and performs no write. `battle.NativeRecordByte5Bit0` preserves this mask/bounds contract without labeling the bit as acted, alive, or active; callers must still prove their own higher-level gate.
 
-   The `0x1145a(persistentIndex)` tail is also data-flow closed: it starts signed base words at record `+0x37`, `+0x39`, and `+0x3e`; scans eight cells; only a cell flag with bit `0x40` set causes its item byte `+1` to index `0x4e56c`; effect words `+1`, `+5`, `+3`, and `+7` accumulate into raw destinations `+0x48`, `+0x4a`, `+0x4c`, and `+0x4e`. `battle.ApplyNativeEquipmentRecalc` now preserves this raw operation with atomic bounds validation and 16-bit wrapping. Existing `campaign.RecomputeEquipment` remains a normalized projection, not proof of byte-identical raw item-table plumbing; row fields remain unnamed.
+   The `0x1145a(persistentIndex)` tail is also data-flow closed: it starts signed base words at record `+0x37`, `+0x39`, and `+0x3e`; scans eight cells; only a cell flag with bit `0x40` set causes its item byte `+1` to index `0x4e56c`; effect words `+1`, `+5`, `+3`, and `+7` accumulate into raw destinations `+0x48`, `+0x4a`, `+0x4c`, and `+0x4e`. All 215 materialized rows now cross-check those little-endian words against normalized AP/HIT/DP/EV without a mismatch, fixing native accumulation order as AP/DP/HIT/EV. `battle.ApplyNativeEquipmentRecalc` preserves the raw operation with atomic bounds validation and 16-bit wrapping. Existing `campaign.RecomputeEquipment` remains a normalized projection; the cross-check closes these four equipment words, not the remaining effect fields or complete campaign byte identity.
 
 The shared item-row helper `0x4e56c(item)` is now bounded at the proven arithmetic boundary: it returns a pointer at linear table base `0x602ad + item*0x17` (23-byte rows). Byte comparison fixes the corresponding EXE file view at `0x540ad`, one byte after the normalized/guide exporter view at `0x540ac`; each raw row consequently ends with the next normalized row's leading byte. `native_item_effect_rows.json` now materializes the 215 known selectors as a byte-exact prefix, and `LoadNativeItemEffectRowPrefix` enforces consecutive IDs and exact 23-byte rows. `battle.NativeItemEffectRowOffset` exposes only the table-relative offset for a byte-sized selector. The fixture is not proof that the native table ends at ID 214, and unnamed row fields remain disconnected from normalized `ItemStats`.
 
-The type 8/9/0xa branch of `0x20c6f` now has a separate raw route table: each branch passes the item row `+0xe` word as the delta to `0x21082`, writes the target raw word at offsets `0x37/0x39/0x3e`, and carries presentation selectors `0x11/0x12/0x13`. `battle.NativeItemWordDeltaRouteForType` preserves only this dispatch ABI; it does not name the target words, map them to normalized stats, or open item-use UI.
+The type 8/9/0xa branch of `0x20c6f` is now closed beyond raw topology. The
+`0x1145a` base/equipment data flow plus the 215-row raw-vs-normalized
+cross-check identifies persistent offsets `+0x37/+0x39/+0x3e` as base
+AP/DP/DX. Each branch passes row word `+0xe` to `0x21082`, permanently adds it
+to the corresponding base stat, calls the proven synthesis path, and removes
+the source slot. Known raw item IDs 198/199/200 carry amounts 9/9/7.
+`battle.NativeItemWordDeltaRouteForType` now exposes a typed AP/DP/DX contract;
+presentation selectors `0x11/0x12/0x13`, item labels, and the shared callee's
+type17–19 semantics remain outside this closure.
 
 The `0x211a4(actor,count,targetBytes,amount)` ABI is now closed by official IDA 9.4 pseudocode: item-action caller
 `0x20c6f(a1,a2,a3,a4)` passes `a3/a4` unchanged as count/list and supplies item-row word `+0x0e` as amount. The callee enters `0x1c4cc`/`0x1c2da`

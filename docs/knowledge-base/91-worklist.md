@@ -832,7 +832,12 @@
 - [x] **RE-ATTACK-GEOMETRY-14237**：官方 IDA 9.4 `0x14237→0x14818` 閉合 caller-specific raw geometry：item row `+0x0b/+0x0c` 作 `a5/a4`；`mode<0x10` 時排除 Manhattan `<a5` 的 marker cells，`mode>=0x10` 走 cross 且不套 inner marker。新增 `battle.NativeAttackCandidates` regression；欄位、LOS、item effect 與 UI 仍不命名／不接猜測。
 - [x] **RE-NATIVE-TARGET-BYTE5-GATE**：完整 raw roster 時，`NativeCommandTargets`／`NativeAttackCandidates`／`NativeCommandEffectTargets`／command-30 cardinal resolver 已以 raw byte+5 bit0 作唯一 active gate，新增 HP/OnField 相反值 regression；缺 raw 的舊 JSON／測試資料保留 E1 projection，避免猜測性擴大 native binding。
 - [x] **RE-ITEM-ROW-CALLER-AUDIT-20260727**：官方 IDA 9.4 交叉檢查 `0x1145a/0x14237/0x1567e/0x1bbdc` 的 `0x4e56c` row consumers；確認 `+1/+3/+5/+7` 是裝備合成輸入，`+0x0b/+0x0c` 只在攻擊 caller 作 geometry inputs，`+0x0d` 另作 effect type dispatch。runtime table 邊界、其餘欄位語意與 normalized row 的一一對應仍未證實，維持 fail-closed。
-- [x] **RE-ITEM-WORD-DELTA-TYPE8-10**：Docker Capstone 閉合 `0x20c6f` type 8/9/0xa → `0x21082` 的 raw dispatch：item row `+0xe` 作 delta，target offsets `0x37/0x39/0x3e`，presentation selectors `0x11/0x12/0x13`；新增 `NativeItemWordDeltaRouteForType` 與 regression。欄位仍 opaque，不接 normalized HP/MP/AP 或 item-use UI。
+- [x] **RE-ITEM-WORD-DELTA-TYPE8-10**：Docker Capstone dispatch、
+  `0x1145a` base/equipment data flow 與 215-row cross-check 共同閉合
+  type8/9/0xa：row `+0xe` 永久增加 base AP/DP/DX
+  (`+0x37/+0x39/+0x3e`)，重算後移除來源 slot；IDs198/199/200 amount
+  為 9/9/7。`NativeItemWordDeltaRouteForType` 現回傳 typed stat。
+  presentation selector、道具名稱與 type17–19 不在此證據範圍。
 - [~] **UI-03 battle selector input**：Docker/Capstone 重檢 `0x19953`，確認它呼叫 `0x36d98` 讀 ASCII/scancode；Enter/Space/`0xe0`/`0x52` family 走確認回傳、`0x01`/`0x53` family 走取消回傳，`0x4b`/`0x4d` 更新左右選擇狀態。這是 battle selector 的 E0 input ABI，不等於已閉合 action enable/end-turn 或 D8 行軍確認。
 - [~] **SDD-2 campaign transition matrix**：已從 `campaign_full.json` 逐一展開 30 個 battle 的 `on_win`，
       明確保留 town/shop/church/preparation/inventory-gate/ending 節點與連戰例外，表格已寫入
@@ -922,7 +927,12 @@
 - [x] **RE-PERSISTENT-COPY-MUTATION-11506**：Docker Capstone 閉合 `0x11506` 配對後 mutation core：runtime→persistent copy `0x50` bytes；清 persistent `+0x22..+0x27`；`+0x05 &= 1`；若結果非1，`+0x40 = +0x42`；固定 `+0x44 = +0x46`。新增 `battle.ApplyNativePersistentRecordCopy` read/write/bounds regression；`0x3453e` zero-identity gate 與 `0x1145a` tail 保留 caller-owned，未猜測性接入 sync runtime。
 - [x] **RE-RAW-BYTE5-BIT0-3453E**：Docker Capstone 閉合 `0x3453e(index)`：回傳 selected record `+0x05 & 1`，不改寫資料。新增 `battle.NativeRecordByte5Bit0` mask/bounds regression；保持 raw predicate，不命名 acted/alive/active。
 - [x] **RE-EQUIPMENT-RECALC-1145A**：Docker Capstone 閉合 `0x1145a(persistentIndex)` raw arithmetic，並由 `battle.ApplyNativeEquipmentRecalc` 保存 signed base words `+0x37/+0x39/+0x3e`、八格 `0x40` flag gate、`0x4e56c` row stride、四個 raw destinations 與 16-bit wrap。normalized `campaign.RecomputeEquipment` 仍是 projection-only；row 欄位語意與 campaign 接線仍未閉合，不能宣稱 full gameplay byte identity。
-- [x] **RE-EQUIPMENT-RAW-ADAPTER-1145A**：新增 `battle.ApplyNativeEquipmentRecalc`，依 raw `[flag,item]` 八格、bit `0x40` gate、`0x602ad+item*0x17` row 與 signed/wrapping word arithmetic 寫入四個 raw destinations；bounds preflight atomic、unequipped/missing-row regression 通過。row 欄位仍不命名，也未接 normalized equipment/campaign。
+- [x] **RE-EQUIPMENT-RAW-ADAPTER-1145A**：新增 `battle.ApplyNativeEquipmentRecalc`，依 raw `[flag,item]` 八格、bit `0x40` gate、`0x602ad+item*0x17` row 與 signed/wrapping word arithmetic 寫入四個 raw destinations；bounds preflight atomic、unequipped/missing-row regression 通過。此項落地時 row 欄位尚未命名；後續全表 cross-check 已在下一項閉合四個 equipment words，但仍未接完整 native campaign record。
+- [x] **RE-EQUIPMENT-ROW-WORDS-CROSSCHECK**：215 個已知 runtime rows
+  的 `+1/+3/+5/+7` little-endian words 已逐筆與 normalized `item.json`
+  AP/HIT/DP/EV 比對，全部一致；Go regression 鎖定 fixture 間 contract，
+  `0x1145a` 的 native 寫入順序可定案為 AP/DP/HIT/EV。其餘 effect bytes
+  與 table 最終邊界不因本項而開放。
 - [~] **RE-ITEM-EFFECT-ROW-4E56C**：已用 Docker Capstone 閉合
   `0x602ad + item*0x17`，並逐 byte 證實 EXE file view 從 `0x540ad`
   起、比 normalized `item.json` 的 `0x540ac` 起點偏移一 byte。新增

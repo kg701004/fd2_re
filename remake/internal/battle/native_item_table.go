@@ -16,7 +16,7 @@ type nativeItemEffectRowJSON struct {
 // 0x4e56c table. Rows must be consecutive and exactly 0x17 bytes. The function
 // deliberately does not infer that the fixture's final ID is the native table
 // boundary.
-func LoadNativeItemEffectRowPrefix(path string) ([][]byte, error) {
+func LoadNativeItemEffectRowPrefix(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read native item effect rows: %w", err)
@@ -28,7 +28,7 @@ func LoadNativeItemEffectRowPrefix(path string) ([][]byte, error) {
 	if len(encoded) == 0 || len(encoded) > 0x100 {
 		return nil, fmt.Errorf("native item effect row count %d is invalid", len(encoded))
 	}
-	rows := make([][]byte, len(encoded))
+	table := make([]byte, len(encoded)*NativeItemEffectRowSize)
 	for i, row := range encoded {
 		if row.ID != i {
 			return nil, fmt.Errorf("native item effect row %d has id %d", i, row.ID)
@@ -43,7 +43,7 @@ func LoadNativeItemEffectRowPrefix(path string) ([][]byte, error) {
 				i, len(raw), NativeItemEffectRowSize,
 			)
 		}
-		rows[i] = raw
+		copy(table[i*NativeItemEffectRowSize:], raw)
 	}
-	return rows, nil
+	return table, nil
 }

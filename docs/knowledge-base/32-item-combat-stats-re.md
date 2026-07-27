@@ -81,7 +81,10 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 官方 IDA 9.4 重新檢查 `0x4e56c` 的多個呼叫者，確認 raw row 的用途比單一攻擊 caller 更廣：
 
-- `0x1145a` 與 `0x1b750` 都只在 inventory flag `&0x40` 時讀 row `+1/+3/+5/+7`，分別累加到衍生 AP/HIT/DP/EV；這是裝備合成資料流，不是 UI 顯示專用欄位。
+- `0x1145a` 與 `0x1b750` 都只在 inventory flag `&0x40` 時讀 row
+  `+1/+3/+5/+7`；215 個已知 raw rows 已逐筆與 normalized `item.json`
+  交叉，四個 little-endian words 全數等於 AP/HIT/DP/EV。這是裝備合成
+  資料流，不是 UI 顯示專用欄位。
 - `0x14237` 讀 row `+0x0b/+0x0c` 後呼叫 `0x14818`；目前只把它記為 caller-specific geometry inputs，不能把 `+0x0b` 命名為通用射程上限。
 - `0x1567e` 會讀 row `+0x0d/+0x10/+0x11/+0x12`，依分支呼叫 `0x14818` 或 `0x149f8`；這證實特殊物品效果共用幾何 routines，但仍不足以命名效果或欄位。
 - `0x1bbdc`／`0x20c6f` 以 row `+0x0d` 做 type dispatch，並由不同原生 callee 消費；數值方向、顯示語意與 target ABI 仍未閉合。
@@ -114,10 +117,18 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   `0x602ad`、row stride `0x17`（23 bytes）。EXE file view 已確認從
   `0x540ad` 起，與 normalized `item.json` 的 `0x540ac` 起點相差一 byte；
   215-row raw prefix 已獨立匯出並由 loader regression 固定。table 最終
-  長度與未命名欄位仍未證實，不能直接填入 normalized `ItemStats`。
+  長度與其餘未命名欄位仍未證實；只有已全表交叉的 `+1/+3/+5/+7`
+  可命名為 AP/HIT/DP/EV。
 - `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
-- `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、`0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃 target list 並累加全域結果，但兩者的 item-table 欄位對應與正負方向仍不可命名。
-- `0x20c6f`→`0x21082` 的 type 8/9/0xa raw route 已補閉合：三者分別把 item row `+0xe` word 作 delta，將 target raw word 寫入 offsets `0x37/0x39/0x3e`，並傳 presentation selectors `0x11/0x12/0x13`；這些 offset/selector 仍保持 opaque，不命名成 HP/MP/AP 或其他玩法。
+- `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、
+  `0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃
+  target list 並累加全域結果，但後者的 status/gameplay 名稱仍不可猜測。
+- `0x20c6f`→`0x21082` 的 type 8/9/0xa 已閉合為永久 base-stat item：
+  item row `+0xe` unsigned word 分別加到 persistent `+0x37/+0x39/+0x3e`
+  的 base AP/DP/DX，經 `0x1b750` 重算後移除來源 slot。三筆已知 raw item
+  IDs 198/199/200 的 amount 分別是 AP+9／DP+9／DX+7。presentation
+  selectors `0x11/0x12/0x13` 的顯示名稱仍保持 opaque；這項證據不延伸
+  到共用 `0x21082` 的 type17–19 routes。
 - `0x211a4(actor,count,targetBytes,amount)` ABI 已由官方 IDA 9.4 閉合：`0x20c6f` 把自己的 `a3/a4` 直接作 count/list，item row `+0x0e` word 作 amount；callee 先以 raw subcommand `0xd` 跑 presentation，再依 list 順序逐筆呼叫 `0x1c916(target,amount)` 與 `0x1e0db`。`ApplyNativeRawHPRestoreList` 保存 sequential RNG/mutation/score 與 atomic preflight；仍不能把 type `5/0xd` 命名成治療／藥水，renderer/SFX/gameplay mapping 保持 fail-closed。
 - `0x1bbdc` target transaction 已由官方 IDA 9.4/Capstone 閉合：row `+0x10` 是 first-stage raw mode、`+0x15` 是兩階段共用 target code；只有 type `0x17` 的 first stage 帶 inner marker 1。確認後以 row `+0x12` 從 confirmed cell 建 final list，inner marker 固定 0。`NativeItemTargetPlanFromRow`／`NativeItemEffectTargets` 保存此 ABI、confirmed-candidate gate 與 raw grid flags；不把三個 byte命名為 normalized range/AOE。
 - `0x1c916` 的 raw HP mutation 已新增 `battle.ApplyNativeRawHPRestore` regression：RNG step、`amount*9/10 + (rng%100)*amount/1000`、`+0x40` cap `+0x42` 與 raw score gate 均保存；仍不把它接成 normalized heal/item effect。

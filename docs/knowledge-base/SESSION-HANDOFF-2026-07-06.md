@@ -671,7 +671,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 official IDA `0x1cd17/0x1c1c3` item closure：Hex-Rays 閉合 type20/24 的十幀 presentation loop（30-byte remap table、saved-buffer restore、camera-visible target redraw、`7-(frame%8)` blend arg、312×192 present、BIOS tick）與 selector compatibility predicate（actor class 的 six-byte raw table 對 item row `+0`）。兩者只寫入 opaque ABI/evidence，不命名 status/damage/equipment，也不解除 item runtime/UI gate。
 - 2026-07-27 official IDA `0x4e53e` table provenance：Hex-Rays 固定 class compatibility row pointer=`0x6188a+class*7`；`0x1c1c3` 只讀 row+0..+5，row+6 保持 opaque。新增 `battle.NativeClassCompatibilityRowOffset`／`NativeClassItemCompatible` 與 Docker Go regression；不接 normalized class/equipment。
 - 2026-07-27 item UI shell：Docker Capstone 重跑 `0x1bbdc`，確認 `0x1b932` 是保留八格空槽／裝備旗標的 item selector；remake 已接 `itemOpen/itemSel`、raw `InventorySlots` 空洞顯示、↑↓／Enter／ESC。case 0 的 `0x20c6f` effect/target 仍未閉合，Enter 只 fail-closed，不改 HP/MP/inventory。
-- 2026-07-27 item type 8/9/0xa route：Docker Capstone 閉合 `0x20c6f` 對 `0x21082` 的 raw 參數，三個 branch 都以 item row `+0xe` word 作 delta，分別寫 target offsets `0x37/0x39/0x3e`，並帶 presentation selectors `0x11/0x12/0x13`。新增 `NativeItemWordDeltaRouteForType` 與 regression；offset/selector 仍 opaque，未接 normalized stats 或 item-use UI。
+- 2026-07-27 item type 8/9/0xa route（後續已閉合欄位）：
+  Docker Capstone 固定三個 branch 以 item row `+0xe` word 寫 target
+  `+0x37/+0x39/+0x3e`，並帶 presentation selectors
+  `0x11/0x12/0x13`。當時 offset 尚保持 opaque；同日後續的全表
+  cross-check 已定案三者為 base AP/DP/DX，見本檔尾端 type8–10
+  gameplay closure。presentation selectors 仍未命名。
 - 2026-07-27 item RE wording correction：`32-item-combat-stats-re.md` 舊「case 0 的 0x20c6f 仍待解碼」已改為「type dispatch 與數條 raw mutation route 已閉合；target-list producer、presentation、玩法語意仍待」，避免抹除已完成的 raw evidence，也避免宣稱 item-use 已完成。
 - 2026-07-27 official IDA `0x25de5` campaign-loop closure：主迴圈在 phase2 先 stop BGM、呼叫 `funcs_25e23[chapter]` post-handler，再呼 `0x2cad7` gate；只有 gate 回傳 zero 才呼叫 `funcs_25e3a[chapter]`、切換 `0x51e63[chapter]` battle BGM 並回到下一戰。phase1 另走固定 `0x22e5c` interlude。這只閉合 call order，未把 `0x2cad7` 命名成 town/shop/menu，也不解除各章 transition E0/E2 gate。
 - 2026-07-27 official IDA `0x2d093/0x318ad` town-preparation closure：`[0x5412b]` option0→`0x2fc85` hotel、1/3→`0x2e341` shop family、4→`0x3072f` church、2→save/confirm→`0x318ad` preparation；facility return 後恢復 BGM10。`0x526b9` next-index table 固定 town/preparation-only 章節集合。只閉合 native branch/order，不把 option label、cursor art 或逐章 E2 視覺宣稱完成。
@@ -748,3 +753,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   byte-exact prefix；Python shift regression 與 Go consecutive-ID/23-byte
   loader regression 已補。這不證明 native table 在 ID214 結束，未知欄位
   仍不接 normalized gameplay。
+- 2026-07-27 equipment word cross-check：以新 raw fixture 對 215 個已知
+  selector 全表驗證，runtime row `+1/+3/+5/+7` little-endian words 與
+  normalized `item.json` AP/HIT/DP/EV 全數一致；`0x1145a` 的 native
+  accumulation order 因此定案為 AP/DP/HIT/EV。Go regression 固定兩份
+  fixture contract；未命名 effect bytes 與 table 終點仍 fail-closed。
+- 2026-07-27 type8–10 gameplay closure：結合 `0x21082` mutation/removal、
+  `0x1145a` base/equipment data flow 與全表 cross-check，定案 item effect
+  type8/9/0xa 分別把 row `+0xe` 永久加到 base AP/DP/DX
+  (`+0x37/+0x39/+0x3e`)，再重算並移除來源 slot；raw IDs198/199/200
+  amounts=9/9/7。route 已型別化；presentation selectors、名稱與共用
+  callee 的 type17–19 語意不猜測。

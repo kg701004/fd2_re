@@ -10,13 +10,24 @@ const (
 	NativeItemEffectRowSize   = 0x17
 )
 
+// NativeItemBaseStat identifies the three persistent base words consumed by
+// 0x1145a. Their meanings are closed by the 215-row AP/HIT/DP/EV cross-check,
+// not inferred from presentation codes.
+type NativeItemBaseStat string
+
+const (
+	NativeItemBaseAP NativeItemBaseStat = "ap"
+	NativeItemBaseDP NativeItemBaseStat = "dp"
+	NativeItemBaseDX NativeItemBaseStat = "dx"
+)
+
 // NativeItemWordDeltaRoute is the raw dispatch contract for item types 8, 9
 // and 0xa in 0x20c6f.  0x21082 receives the item row's +0xe word as delta,
-// adds it to the target record field selected by FieldOffset, and receives a
-// separate presentation selector.  None of these values is given a gameplay
-// name here.
+// permanently adds it to the target record's base AP/DP/DX word, and receives
+// a separate presentation selector whose meaning remains opaque.
 type NativeItemWordDeltaRoute struct {
 	ItemType         int
+	BaseStat         NativeItemBaseStat
 	FieldOffset      int
 	PresentationCode int
 }
@@ -24,11 +35,11 @@ type NativeItemWordDeltaRoute struct {
 func NativeItemWordDeltaRouteForType(itemType int) (NativeItemWordDeltaRoute, bool) {
 	switch itemType {
 	case 8:
-		return NativeItemWordDeltaRoute{ItemType: itemType, FieldOffset: 0x37, PresentationCode: 0x11}, true
+		return NativeItemWordDeltaRoute{ItemType: itemType, BaseStat: NativeItemBaseAP, FieldOffset: 0x37, PresentationCode: 0x11}, true
 	case 9:
-		return NativeItemWordDeltaRoute{ItemType: itemType, FieldOffset: 0x39, PresentationCode: 0x12}, true
+		return NativeItemWordDeltaRoute{ItemType: itemType, BaseStat: NativeItemBaseDP, FieldOffset: 0x39, PresentationCode: 0x12}, true
 	case 0xa:
-		return NativeItemWordDeltaRoute{ItemType: itemType, FieldOffset: 0x3e, PresentationCode: 0x13}, true
+		return NativeItemWordDeltaRoute{ItemType: itemType, BaseStat: NativeItemBaseDX, FieldOffset: 0x3e, PresentationCode: 0x13}, true
 	default:
 		return NativeItemWordDeltaRoute{}, false
 	}

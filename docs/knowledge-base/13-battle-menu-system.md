@@ -94,7 +94,13 @@ remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 gri
 
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`），並在部分分支更新 unit state、顯示 effect、最後統一回收選取／戰鬥 UI。這只證實 type-dispatch 與具體 callee provenance；各 routine 的數值語意尚未閉合，不能直接映射成藥水／卷軸規則。
 
-其中 type `8/9/0xa→0x21082` 的 body 可再確認為「以 caller 傳入的 unit-field offset 加上一個 word modifier，顯示 type `0x5e` effect，呼叫 `0x1b750` 重算，再移除來源 slot」；offset 與 modifier 的 item-table 對應尚未證實，故不命名成 HP/MP/AP 等具體效果。type `6/7→0x22af6` 則掃描 target list，依 target unit `+0x20/+0x21` 計算 accumulator 並清除已處理 target，仍不足以判定傷害／恢復方向。
+其中 type `8/9/0xa→0x21082` 已由 raw table 全表對齊與 `0x1145a`
+base/equipment data flow 閉合：item row `+0xe` 分別永久增加 persistent
+base AP(`+0x37`)、DP(`+0x39`)、DX(`+0x3e`)，呼叫 `0x1b750` 重算後移除
+來源 slot；已知 IDs 198/199/200 的量為 9/9/7。顯示 selector 仍未命名，
+也不能把此語意套到共用 callee 的 type17–19。type `6/7→0x22af6` 則掃描
+target list，依 target unit `+0x20/+0x21` 計算 accumulator 並清除已處理
+target，仍不足以判定其 status 名稱。
 
 type `0x17→0x2218a` 也已展開：它先以 target unit `+0x20/+0x21` 算入全域 accumulator，呼叫 `0x22253`（native indexed off-screen renderer）做專用演出，並將 caller 提供的兩個 byte 寫回 target unit `+0/+1`。這證實 type `0x17` 是帶有 renderer/state-write 的特殊 item branch；`+0/+1` 的欄位語意及 class/level gate 之外的規則仍未證實，不能命名為轉職、復活或其他具體玩法。
 
