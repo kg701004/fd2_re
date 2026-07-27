@@ -22,6 +22,74 @@ func TestNativeActionOffsetXYMatchesFinalOpenFrame(t *testing.T) {
 	}
 }
 
+func TestActionOverlayLifecyclePresentsAllOpeningAndClosingFrames(t *testing.T) {
+	g := &Game{}
+	g.beginActionOverlayOpen(2)
+	if !g.ring || g.ringSel != 2 || !g.actionOverlayBlocksInput() {
+		t.Fatalf("opening state = ring:%v sel:%d phase:%q", g.ring, g.ringSel, g.actionOverlayPhase)
+	}
+	for want := 0; want < 4; want++ {
+		frame, closing := g.actionOverlayRenderState()
+		if frame != want || closing {
+			t.Fatalf("opening present %d = frame%d closing=%v", want, frame, closing)
+		}
+		g.markActionOverlayDrawn()
+		g.stepActionOverlayLifecycle()
+	}
+	if !g.ring || g.actionOverlayPhase != actionOverlayOpen || g.actionOverlayBlocksInput() {
+		t.Fatalf("settled open state = ring:%v phase:%q", g.ring, g.actionOverlayPhase)
+	}
+
+	completed := false
+	g.beginActionOverlayClose(func() { completed = true })
+	for want := 0; want < 4; want++ {
+		frame, closing := g.actionOverlayRenderState()
+		if frame != want || !closing || completed {
+			t.Fatalf("closing present %d = frame%d closing=%v completed=%v", want, frame, closing, completed)
+		}
+		g.markActionOverlayDrawn()
+		g.stepActionOverlayLifecycle()
+	}
+	if g.ring || g.actionOverlayPhase != "" || !completed {
+		t.Fatalf("completed close state = ring:%v phase:%q completed=%v", g.ring, g.actionOverlayPhase, completed)
+	}
+}
+
+func TestActionOverlayCloseDefersChildMenuUntilFourthPresent(t *testing.T) {
+	g := &Game{}
+	g.beginActionOverlayOpen(1)
+	for g.actionOverlayBlocksInput() {
+		g.markActionOverlayDrawn()
+		g.stepActionOverlayLifecycle()
+	}
+	g.beginActionOverlayClose(func() { g.nativeCommandOpen = true })
+	for present := 0; present < 4; present++ {
+		if g.nativeCommandOpen {
+			t.Fatalf("child menu opened beneath close frame %d", present)
+		}
+		g.markActionOverlayDrawn()
+		g.stepActionOverlayLifecycle()
+	}
+	if !g.nativeCommandOpen || g.ring {
+		t.Fatalf("close did not hand off to child menu: command=%v ring=%v", g.nativeCommandOpen, g.ring)
+	}
+}
+
+func TestActionOverlayLifecycleCannotSkipAnUndrawnFrame(t *testing.T) {
+	g := &Game{}
+	g.beginActionOverlayOpen(1)
+	g.stepActionOverlayLifecycle()
+	g.stepActionOverlayLifecycle()
+	if frame, closing := g.actionOverlayRenderState(); frame != 0 || closing {
+		t.Fatalf("undrawn opening frame advanced to frame%d closing=%v", frame, closing)
+	}
+	g.markActionOverlayDrawn()
+	g.stepActionOverlayLifecycle()
+	if frame, _ := g.actionOverlayRenderState(); frame != 1 {
+		t.Fatalf("drawn opening frame did not advance: frame%d", frame)
+	}
+}
+
 func TestActionOverlayAvailabilityUsesCurrentRemakeGates(t *testing.T) {
 	g := &Game{st: &battle.State{}, sel: &battle.Unit{Spells: []int{1}, Inventory: []int{2}}}
 	if got := g.actionOverlayAvailability(); got != [4]int{1, 0, 0, 0} {

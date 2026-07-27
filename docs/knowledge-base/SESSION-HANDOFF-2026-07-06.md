@@ -1244,3 +1244,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   record `+5` whole-byte overwrite為1，pending groups 3..7完整保留。
   這是end-to-end runtime證據，不再把先前compiler「0 unresolved issues」
   誤當作已跑通handler→battle。
+- 2026-07-28 native action-overlay lifecycle closure：原本 production
+  `drawNativeActionOverlay` 永遠硬編 `ActionOverlayFrameOffsets(3,false)`，
+  所以只畫 final-open skin，雖然 open/close offsets 早已破解。現新增
+  caller-owned opening／open／closing state；opening與獨立closing都依序呈現
+  frame0..3，期間攔截輸入，且 attack/command/item/spell/wait/cancel mutation
+  延至close frame3完成後才提交。`0x1741c/0x176b4` loop沒有delay call，
+  因此remake只採「每個Ebiten present一幀」的顯示政策，不把它冒稱原版毫秒值。
+  focused lifecycle與全套Docker/Xvfb regression通過；以read-only玩家
+  `FDOTHER.DAT`產生的[`action-overlay-open-close-remake.png`](../figures/action-overlay-open-close-remake.png)
+  保存上排open0..3、下排close0..3。這是remake runtime artifact，原版DOSBox
+  side-by-side及72×72 indexed backup/restore仍未完成。

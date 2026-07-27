@@ -122,6 +122,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 對話與中文字型 | ![dialogue](docs/figures/dialogue.png) |
 | 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
+| action overlay 4-open / 4-close | ![native action overlay lifecycle](docs/figures/action-overlay-open-close-remake.png) |
 | 原版 indexed item panel（`0x17eef+0x17fc0+0x184c0`；Ebiten adapter oracle） | ![native item panel](docs/figures/item-panel-native-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
 | 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |

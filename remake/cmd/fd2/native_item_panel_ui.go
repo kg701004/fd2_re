@@ -123,7 +123,8 @@ func (g *Game) stepNativeItemPanelAnimation() bool {
 			g.itemAnimStep++
 			return true
 		}
-		g.itemOpen, g.ring = false, true
+		g.itemOpen = false
+		g.beginActionOverlayOpen(g.ringSel)
 		g.clearNativeItemPanel()
 		return true
 	}
@@ -136,7 +137,8 @@ func (g *Game) stepNativeItemPanelAnimation() bool {
 
 func (g *Game) beginNativeItemPanelClose() {
 	if g.nativeItemPanel == nil {
-		g.itemOpen, g.ring = false, true
+		g.itemOpen = false
+		g.beginActionOverlayOpen(g.ringSel)
 		return
 	}
 	g.itemClosing = true

@@ -149,6 +149,11 @@ type Game struct {
 	// radial 指令環(原版 [0x3C57]:↑0=攻擊/←1=法術/→2=物品/↓3=待機)
 	ring                     bool
 	ringSel                  int
+	actionOverlayPhase       string
+	actionOverlayFrame       int
+	actionOverlayAfter       func()
+	actionOverlayDrawn       bool
+	actionOverlayShotHold    bool
 	ringIcons                [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
 	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	nativeUIPalette          color.Palette
@@ -1690,6 +1695,7 @@ func (g *Game) enterNode() {
 	if g.camp == nil {
 		return
 	}
+	g.resetActionOverlayLifecycle()
 	n := g.camp.Node()
 	if n == nil {
 		return // 流程結束(game over)
@@ -1889,6 +1895,7 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 
 // resetBattle 重開一場戰鬥(campaign battle 節點;敗北重試也走這裡)。
 func (g *Game) resetBattle(unitsPath, scnPath string) {
+	g.resetActionOverlayLifecycle()
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	if unitsPath == "" {
@@ -3063,7 +3070,8 @@ func (g *Game) ringInput() bool {
 		if g.nativeItemPanel != nil {
 			rawSlots := nativeItemRawSlots(g.sel)
 			if len(rawSlots) == 0 {
-				g.itemOpen, g.ring = false, true
+				g.itemOpen = false
+				g.beginActionOverlayOpen(g.ringSel)
 				g.clearNativeItemPanel()
 				return true
 			}
@@ -3149,7 +3157,8 @@ func (g *Game) ringInput() bool {
 		}
 		ids := g.sel.NativeCommandIDs()
 		if esc {
-			g.nativeCommandOpen, g.ring = false, true
+			g.nativeCommandOpen = false
+			g.beginActionOverlayOpen(g.ringSel)
 			return true
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
@@ -3192,7 +3201,8 @@ func (g *Game) ringInput() bool {
 			// record+4 builds the final effect list from the confirmed cursor.
 			// Matching bytes in spells.json only prove the table identity for
 			// IDs 0..35, not legacy target/effect equivalence.
-			g.nativeCommandOpen, g.ring = false, true
+			g.nativeCommandOpen = false
+			g.beginActionOverlayOpen(g.ringSel)
 			g.msg = fmt.Sprintf("原始指令 %d：目標／效果尚未驗證", id)
 		}
 		return true
@@ -3209,7 +3219,8 @@ func (g *Game) ringInput() bool {
 			g.spellSel++
 		}
 		if esc {
-			g.spellOpen, g.ring = false, true
+			g.spellOpen = false
+			g.beginActionOverlayOpen(g.ringSel)
 		}
 		if enter && g.spellSel < len(g.sel.Spells) {
 			id := g.sel.Spells[g.spellSel]
@@ -3231,6 +3242,9 @@ func (g *Game) ringInput() bool {
 	if !g.ring || g.sel == nil {
 		return false
 	}
+	if g.actionOverlayBlocksInput() {
+		return true
+	}
 	// 環導航(doc13 [0x3C57]:↑0攻擊/←1法術/→2物品/↓3待機)
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
 		g.ringSel = 0
@@ -3244,17 +3258,18 @@ func (g *Game) ringInput() bool {
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
 		g.ringSel = 3
 	}
-	if esc { // ESC = 取消(doc13):退回移動前位置,回到「選此單位待移動」;原地開環(未移動)則直接取消選取
-		g.ring = false
-		g.msg = ""
-		if g.sel.X == g.selOrigX && g.sel.Y == g.selOrigY {
-			g.sel, g.reach, g.moved = nil, nil, false
-		} else {
-			g.sel.SetMapPlacement(g.selOrigX, g.selOrigY, g.sel.Dir)
-			g.moved = false
-			g.reach = g.st.Reachable(g.sel)
-			g.curX, g.curY = g.sel.X, g.sel.Y
-		}
+	if esc { // ESC = 取消(doc13):先播放0x176b4四幀，再退回移動前位置
+		g.beginActionOverlayClose(func() {
+			g.msg = ""
+			if g.sel.X == g.selOrigX && g.sel.Y == g.selOrigY {
+				g.sel, g.reach, g.moved = nil, nil, false
+			} else {
+				g.sel.SetMapPlacement(g.selOrigX, g.selOrigY, g.sel.Dir)
+				g.moved = false
+				g.reach = g.st.Reachable(g.sel)
+				g.curX, g.curY = g.sel.X, g.sel.Y
+			}
+		})
 		return true
 	}
 	if enter {
@@ -3268,8 +3283,9 @@ func (g *Game) ringInput() bool {
 		}
 		switch g.ringSel {
 		case 0: // 攻擊 → 關環,進選目標(游標移到攻擊範圍內的敵人;範圍依武器射程,doc32)
-			g.ring = false
-			g.msg = "攻擊:選擇目標"
+			g.beginActionOverlayClose(func() {
+				g.msg = "攻擊:選擇目標"
+			})
 		case 1: // 法術(原版 0x1cff0；有法術者才可用)
 			if ids := g.sel.NativeCommandIDs(); len(ids) > 0 && len(g.nativeCommandLabels) > 0 && len(g.nativeUIPalette) >= 0xce {
 				// Native 0x18d8c disables its command action when raw unit+0x27
@@ -3279,25 +3295,31 @@ func (g *Game) ringInput() bool {
 					g.msg = "原始指令目前不可用"
 					return true
 				}
-				g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+				g.beginActionOverlayClose(func() {
+					g.nativeCommandOpen, g.nativeCommandSel = true, 0
+				})
 				return true
 			}
 			if len(g.sel.Spells) > 0 {
 				if g.sel.Sealed {
 					g.msg = "被封咒,無法施法!"
 				} else {
-					g.ring, g.spellOpen, g.spellSel = false, true, 0
+					g.beginActionOverlayClose(func() {
+						g.spellOpen, g.spellSel = true, 0
+					})
 				}
 			} else {
 				g.msg = "沒有可用法術"
 			}
 		case 2: // 物品(原版 0x1bbdc；完整 item action 仍 fail-closed)
-			g.ring, g.itemOpen, g.itemSel = false, true, 0
-			g.itemAnimStep, g.itemClosing = 0, false
-			g.prepareNativeItemPanel(g.sel)
-			g.msg = "物品：選擇欄位"
+			g.beginActionOverlayClose(func() {
+				g.itemOpen, g.itemSel = true, 0
+				g.itemAnimStep, g.itemClosing = 0, false
+				g.prepareNativeItemPanel(g.sel)
+				g.msg = "物品：選擇欄位"
+			})
 		case 3: // 待機／格子互動(原版 0x13fd4→0x190ac)
-			g.finishSelectedWait()
+			g.beginActionOverlayClose(g.finishSelectedWait)
 		}
 	}
 	return true
@@ -3486,7 +3508,7 @@ func (g *Game) stepBattleWalk() {
 			w.then()
 		} else {
 			g.moved = true
-			g.ring, g.ringSel = true, 1
+			g.beginActionOverlayOpen(1)
 		}
 	}
 	if len(w.path) < 2 || w.seg >= len(w.path)-1 {
@@ -4055,14 +4077,14 @@ func (g *Game) confirm() {
 		case g.curX == g.sel.X && g.curY == g.sel.Y: // 原地 → 不移動,開指令環
 			g.moved = true
 			g.reach = nil
-			g.ring, g.ringSel = true, 1
+			g.beginActionOverlayOpen(1)
 		case g.reach[cur] && g.st.UnitAt(g.curX, g.curY) == nil: // 移動到可達空格:沿路徑逐格走
 			if p := g.st.Path(g.sel, g.curX, g.curY); len(p) >= 2 {
 				g.walk = &walkAnim{u: g.sel, path: p}
 			} else { // 理論上不會(reach 內必可達),保底瞬移
 				g.sel.SetMapPlacement(g.curX, g.curY, g.sel.Dir)
 				g.moved = true
-				g.ring, g.ringSel = true, 1
+				g.beginActionOverlayOpen(1)
 			}
 			g.reach = nil
 		}
@@ -4132,6 +4154,7 @@ func (g *Game) tileAt(idx int) *ebiten.Image {
 
 func (g *Game) Update() error {
 	g.frame++
+	g.stepActionOverlayLifecycle()
 	if inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -4261,7 +4284,27 @@ func (g *Game) Update() error {
 					}
 				}
 				if g.sel != nil {
-					g.moved, g.reach, g.ring, g.ringSel = true, nil, true, 1
+					g.moved, g.reach = true, nil
+					g.beginActionOverlayOpen(1)
+					// Default capture is the settled oracle. A documented
+					// open:N/close:N override exposes each recovered present
+					// without introducing synthetic input timing.
+					g.actionOverlayPhase = actionOverlayOpen
+					g.actionOverlayFrame = 3
+					if spec := os.Getenv("FD2_SHOT_RING_FRAME"); spec != "" {
+						phase, rawFrame, found := strings.Cut(spec, ":")
+						frame, err := strconv.Atoi(rawFrame)
+						if found && err == nil && frame >= 0 && frame < 4 {
+							switch phase {
+							case "open":
+								g.actionOverlayPhase, g.actionOverlayFrame = actionOverlayOpening, frame
+								g.actionOverlayShotHold = true
+							case "close":
+								g.actionOverlayPhase, g.actionOverlayFrame = actionOverlayClosing, frame
+								g.actionOverlayShotHold = true
+							}
+						}
+					}
 				}
 			}
 			if os.Getenv("FD2_SHOT_COMMAND") != "" && g.st != nil {
@@ -4276,7 +4319,8 @@ func (g *Game) Update() error {
 					}
 				}
 				if g.sel != nil {
-					g.ring, g.nativeCommandOpen, g.nativeCommandSel = false, true, 0
+					g.resetActionOverlayLifecycle()
+					g.nativeCommandOpen, g.nativeCommandSel = true, 0
 				}
 			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
@@ -4284,7 +4328,8 @@ func (g *Game) Update() error {
 				g.confirm()
 				g.confirm()
 				if g.sel != nil && len(g.sel.Spells) > 0 {
-					g.ring, g.spellOpen, g.spellSel = false, true, 0
+					g.resetActionOverlayLifecycle()
+					g.spellOpen, g.spellSel = true, 0
 				}
 			}
 			if v := os.Getenv("FD2_SHOT_ATTACK"); v != "" { // 全螢幕戰鬥演出(驗證用):亞雷斯打盜賊
@@ -4300,7 +4345,7 @@ func (g *Game) Update() error {
 				g.dialog = nil
 				g.confirm() // 選取游標上的單位
 				g.confirm() // 原地(游標未動)→ 開指令環(moved=true, ring=true, ringSel=1)
-				g.ring = false
+				g.resetActionOverlayLifecycle()
 				g.msg = "攻擊:選擇目標"
 				if v := os.Getenv("FD2_SHOT_CUR2"); v != "" { // 進攻擊階段後把游標挪開(驗證高亮不被HUD面板擋住)
 					fmt.Sscanf(v, "%d,%d", &g.curX, &g.curY)
@@ -4481,7 +4526,7 @@ func (g *Game) Update() error {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
 		if g.sel != nil && g.moved { // 已移動、正在選攻擊目標:退回指令環(取消一層,doc13;ring 的 ESC 才真正退回原位)
-			g.ring = true
+			g.beginActionOverlayOpen(g.ringSel)
 			g.msg = ""
 		} else {
 			g.sel, g.reach = nil, nil
@@ -4969,6 +5014,7 @@ func (g *Game) drawRing(screen *ebiten.Image) {
 	ux := float64(g.sel.X*tw) - g.camX
 	uy := float64(g.sel.Y*th) - g.camY
 	if g.drawNativeActionOverlay(screen, ux, uy) {
+		g.markActionOverlayDrawn()
 		return
 	}
 	// 行動中單位標記 + 補畫其 sprite 在最上層:部署較密的隊形下,鄰格友軍的 sprite
@@ -5010,6 +5056,7 @@ func (g *Game) drawRing(screen *ebiten.Image) {
 		op.GeoM.Translate(x, y)
 		screen.DrawImage(ic, op)
 	}
+	g.markActionOverlayDrawn()
 }
 
 func (g *Game) actionOverlayAvailability() [4]int {
@@ -5135,7 +5182,8 @@ func nativeActionOffsetXY(offset int) (int, int) {
 
 func (g *Game) drawNativeActionOverlay(screen *ebiten.Image, cursorX, cursorY float64) bool {
 	state := fdother.BattleActionOverlayState(g.actionOverlayAvailability())
-	offsets, err := fdother.ActionOverlayFrameOffsets(3, false)
+	frame, closing := g.actionOverlayRenderState()
+	offsets, err := fdother.ActionOverlayFrameOffsets(frame, closing)
 	if err != nil {
 		return false
 	}
