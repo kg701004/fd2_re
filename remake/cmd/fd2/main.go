@@ -164,6 +164,12 @@ type Game struct {
 	nativeClassUIPulse       int
 	nativeClassUILastTick    int
 	nativeClassUIHasTick     bool
+	nativeChurchUIJob        *nativeChurchUIJob
+	nativeChurchUIClock      nativeBIOSClock
+	nativeChurchUIPulse      int
+	nativeChurchUILastTick   int
+	nativeChurchUIHasTick    bool
+	nativeChurchTextIndex    int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -2359,6 +2365,8 @@ func (g *Game) preparationSelected() int {
 }
 
 func (g *Game) setupChurch() {
+	g.nativeClassUIJob = nil
+	g.nativeChurchUIJob = nil
 	g.churchSel = 0
 	g.churchMode = "menu"
 	g.churchIDs = nil
@@ -2367,6 +2375,8 @@ func (g *Game) setupChurch() {
 	g.churchTransferItems = nil
 	g.churchClassID = -1
 	g.churchBranches = nil
+	g.nativeChurchTextIndex = 585
+	g.beginNativeChurchMenuOpening()
 }
 
 func (g *Game) churchTransferSourceIDs() []int {
@@ -2643,35 +2653,46 @@ func (g *Game) campInput() bool {
 			}
 			return true
 		}
-		if g.nativeClassUIBlocksInput() {
+		if g.nativeClassUIBlocksInput() || g.nativeChurchUIBlocksInput() {
 			return true
 		}
 		if g.churchMode == "menu" {
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
 				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, -1)
+				g.resetNativeChurchUIPulse()
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
 				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, 1)
+				g.resetNativeChurchUIPulse()
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-				g.leaveChurch()
+				if !g.beginNativeChurchMenuClosing(g.leaveChurch) {
+					g.leaveChurch()
+				}
 				return true
 			}
 			if enter {
-				switch g.churchSel {
-				case 1: // native 0x2f8ea raw source→destination inventory transfer
-					g.churchMode = "transfer_source"
-					g.churchIDs = g.churchTransferSourceIDs()
-					g.churchSel = 0
-				case 2, 3: // native 0x30dc3 revive / 0x31385 class-change services
-					g.churchMode = map[int]string{2: "revive", 3: "class"}[g.churchSel]
-					g.churchIDs = g.churchCandidates(g.churchMode)
-					g.churchSel = 0
-					if g.churchMode == "class" {
-						g.beginNativeClassListOpening()
+				selected := g.churchSel
+				openService := func() {
+					switch selected {
+					case 1: // native 0x2f8ea raw source→destination inventory transfer
+						g.churchMode = "transfer_source"
+						g.churchIDs = g.churchTransferSourceIDs()
+						g.churchSel = 0
+					case 2, 3: // native 0x30dc3 revive / 0x31385 class-change services
+						g.churchMode = map[int]string{2: "revive", 3: "class"}[selected]
+						g.churchIDs = g.churchCandidates(g.churchMode)
+						g.churchSel = 0
+						if g.churchMode == "class" {
+							g.beginNativeClassListOpening()
+						}
+					default:
+						g.msg = "此教會服務尚待原版 callee 完整接線"
+						g.returnToNativeChurchMenu()
 					}
-				default:
-					g.msg = "此教會服務尚待原版 callee 完整接線"
+				}
+				if !g.beginNativeChurchMenuClosing(openService) {
+					openService()
 				}
 			}
 			return true
@@ -2696,7 +2717,8 @@ func (g *Game) campInput() bool {
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 				switch g.churchMode {
 				case "transfer_source":
-					g.churchMode = "menu"
+					g.returnToNativeChurchMenu()
+					return true
 				case "transfer_item":
 					g.churchMode = "transfer_source"
 					g.churchIDs = g.churchTransferSourceIDs()
@@ -2731,9 +2753,7 @@ func (g *Game) campInput() bool {
 						g.partyRoster[destinationID] = destination
 						g.msg = fmt.Sprintf("物品 %02Xh 已轉移", itemID)
 					}
-					g.churchMode = "menu"
-					g.churchIDs = nil
-					g.churchSel = 0
+					g.returnToNativeChurchMenu()
 				}
 			}
 			return true
@@ -2745,11 +2765,7 @@ func (g *Game) campInput() bool {
 				}
 				return true
 			}
-			g.churchMode = "menu"
-			g.churchIDs = nil
-			g.churchBranches = nil
-			g.churchClassID = -1
-			g.churchSel = 0
+			g.returnToNativeChurchMenu()
 			return true
 		}
 		if g.churchMode == "class_confirm" {
@@ -4201,6 +4217,7 @@ func (g *Game) Update() error {
 	g.frame++
 	g.stepActionOverlayLifecycle()
 	g.stepNativeClassUILifecycle(time.Now())
+	g.stepNativeChurchUILifecycle(time.Now())
 	if inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -5507,6 +5524,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":
+		if g.drawNativeChurchUIJob(screen) {
+			return
+		}
 		if g.drawNativeClassUIJob(screen) {
 			return
 		}
@@ -5514,6 +5534,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeClassList(screen) {
+			return
+		}
+		if g.drawNativeChurchMenu(screen) {
 			return
 		}
 		if g.churchMode == "menu" {

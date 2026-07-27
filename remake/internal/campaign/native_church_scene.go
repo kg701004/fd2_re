@@ -1,0 +1,98 @@
+package campaign
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
+)
+
+const (
+	nativeChurchPortraitOffset   = 4*320 + 118
+	nativeChurchDecorationOffset = 95*320 + 5
+	nativeChurchGoldOffset       = 99*320 + 16
+	nativeChurchTextOffset       = 119*320 + 12
+)
+
+// ComposeNativeChurchScene reproduces the stable 0x3072f indexed scene after
+// sub_1956b's six-frame reveal and before 0x2d669 opens the service cells.
+// Callers must provide the exact mixed-codec resources used by each callee.
+func ComposeNativeChurchScene(
+	background []byte,
+	decoration fdother.LMI1Entry,
+	dialogueCells []fdother.RawCell,
+	digitFrames []fdother.Frame,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	gold, textIndex int,
+) ([]byte, error) {
+	if len(background) != 320*200 || len(dialogueCells) <= 17 ||
+		len(digitFrames) != 10 || strings == nil || font == nil ||
+		gold < 0 || gold > 99_999_999 {
+		return nil, errors.New("campaign: native church scene assets/state are invalid")
+	}
+	frame := append([]byte(nil), background...)
+	placements, err := fdother.PlanNativeDialogueFrameGrid(320, 5, 112, 19, 5)
+	if err != nil {
+		return nil, err
+	}
+	for _, placement := range placements {
+		if err := dialogueCells[placement.ResourceIndex].BlitOpaqueAtOffset(
+			frame, 320, placement.DestinationByte,
+		); err != nil {
+			return nil, err
+		}
+	}
+	if err := portrait.BlitAtOffset(frame, 320, nativeChurchPortraitOffset); err != nil {
+		return nil, err
+	}
+	if err := decoration.BlitOpaqueAt(
+		frame, 320,
+		nativeChurchDecorationOffset%320,
+		nativeChurchDecorationOffset/320,
+		false,
+	); err != nil {
+		return nil, err
+	}
+	digits := fmt.Sprintf("%08d", gold)
+	for i := 0; i < 8; i++ {
+		index := int(digits[i] - '0')
+		if err := digitFrames[index].BlitAt(frame, 320, nativeChurchGoldOffset+6*i, -1); err != nil {
+			return nil, err
+		}
+	}
+	return renderNativeChurchText(frame, strings, font, textIndex)
+}
+
+func renderNativeChurchText(
+	frame []byte,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	textIndex int,
+) ([]byte, error) {
+	words, err := strings.Words(textIndex)
+	if err != nil {
+		return nil, err
+	}
+	line, column := 0, 0
+	style := fdtxt.NativeGlyphStyle{Foreground: 205, Shadow: 76, Background: 74}
+	for _, word := range words {
+		if word == 0xfffe {
+			line++
+			column = 0
+			continue
+		}
+		if word >= fdtxt.ControlMin {
+			return nil, fmt.Errorf("campaign: unsupported church text control %#x", word)
+		}
+		offset := nativeChurchTextOffset + line*19*320 + column*fdtxt.GlyphWidth
+		if err := font.BlitNativeGlyph(frame, 320, offset, int(word), style); err != nil {
+			return nil, err
+		}
+		column++
+	}
+	return frame, nil
+}

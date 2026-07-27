@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
@@ -15,8 +16,12 @@ import (
 
 type nativeClassUIAssets struct {
 	background []byte
+	entries    []fdother.LMI1Entry
 	panel      fdother.LMI1Entry
 	choices    []fdother.RawCell
+	dialogue   []fdother.RawCell
+	digits     []fdother.Frame
+	portrait   dato.Frame
 	units      *fdicon.Bank
 	strings    *fdtxt.Strings
 	font       *fdtxt.Font
@@ -67,6 +72,31 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	if err != nil {
 		return nil, err
 	}
+	resource5, err := fdother.ReadResource(fdotherPath, 5)
+	if err != nil {
+		return nil, err
+	}
+	dialogue := make([]fdother.RawCell, 18)
+	for index := 1; index <= 17; index++ {
+		dialogue[index], err = fdother.ParseLMI1RawEntry(resource5, index)
+		if err != nil {
+			return nil, err
+		}
+	}
+	digits := make([]fdother.Frame, 10)
+	for digit := 0; digit < 10; digit++ {
+		digits[digit], err = fdother.ParseLMI1FrameEntry(resource5, 31+digit)
+		if err != nil {
+			return nil, err
+		}
+	}
+	portraits, err := dato.DecodeResource(filepath.Join(base, "DATO.DAT"), 131)
+	if err != nil || len(portraits) == 0 {
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New("native church UI: DATO#131 has no frames")
+	}
 	units, err := fdicon.DecodeFile(filepath.Join(base, "FDICON.B24"))
 	if err != nil {
 		return nil, err
@@ -85,8 +115,9 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	}
 	palette[0] = color.NRGBA{A: 0xff}
 	return &nativeClassUIAssets{
-		background: background, panel: entries[16], units: units,
-		choices: choices, strings: strings, font: font, palette: palette,
+		background: background, entries: entries, panel: entries[16], units: units,
+		choices: choices, dialogue: dialogue, digits: digits, portrait: portraits[0],
+		strings: strings, font: font, palette: palette,
 	}, nil
 }
 

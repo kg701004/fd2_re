@@ -78,8 +78,10 @@ Church class-change round-trip 也已可重播：[`town-church-class-change-ch02
 `0x19953` 的動態角色名、FDOTHER#2 YES/NO normal/pulse cells 與四幀 open/close compositor
 亦已接回 runtime：opening／closing 都以四個 Draw acknowledgement 排程，Yes mutation 與
 No／Escape 返回都延後至 closing 第四幀已呈現。確認 pulse 依原始 BIOS low-word delta>=2
-遞增 counter mod4，選中 cell 使用 counter/2 variant。`0x2d669` church 主選單 transition
-尚未 indexed 還原，FD2.SAV 相容性仍 fail-closed。
+遞增 counter mod4，選中 cell 使用 counter/2 variant。教會主畫面 `0x3072f` 亦已用
+FDOTHER#5/#14、DATO#131、FDTXT585/586 合成完整 indexed scene；`0x2d669` 四幀
+opening/closing＋source restore與 `0x2d85f` 兩-tick selected pulse 已接 runtime。raw service 0
+與 FD2.SAV 相容性仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
@@ -141,6 +143,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 最新 church class-change contract（source trace, 2026-07-27） | [`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json) |
 | 原版資源 indexed 轉職候選清單（`0x311DC+0x31019` final frame；非 DOSBox 截圖） | ![native indexed class list](docs/figures/native-class-list-indexed.png) |
 | 原版資源 indexed 轉職確認框（`0x19953` selected-pulse frame；非 DOSBox 截圖） | ![native indexed class confirmation](docs/figures/native-class-confirm-indexed.png) |
+| 原版資源 indexed 教會主選單（`0x3072f+0x2d669+0x2d85f`；gold=1000 fixture，非 DOSBox 截圖） | ![native indexed church menu](docs/figures/native-church-menu-indexed.png) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |
 
