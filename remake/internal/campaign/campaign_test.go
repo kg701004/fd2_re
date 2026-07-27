@@ -687,6 +687,40 @@ func TestCh24PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
 	}
 }
 
+func TestCh25PostEvidenceKeepsDialogueMismatchFailClosed(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch25_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 7 {
+		t.Fatalf("ch25 unresolved dialogue issues=%#v", issues)
+	}
+	for _, issue := range issues {
+		if issue.Source.Addr != "0x24f43" && issue.Source.Addr != "0x24f7e" && issue.Source.Addr != "0x24fc4" && issue.Source.Addr != "0x24fff" && issue.Source.Addr != "0x2503a" {
+			t.Fatalf("ch25 unexpected unresolved op=%#v", issue)
+		}
+	}
+	var layout *Beat
+	acts := map[int]bool{}
+	for i := range beats {
+		switch beats[i].Op {
+		case "layout_units":
+			layout = &beats[i]
+		case "act":
+			for _, frame := range beats[i].Acting {
+				for _, unit := range frame.Units {
+					if unit.Slot != nil {
+						acts[*unit.Slot] = true
+					}
+				}
+			}
+		}
+	}
+	if layout == nil || layout.Layout == nil || len(layout.Layout.Units) != 16 || layout.Layout.CamX != 120 || layout.Layout.CamY != 216 || !acts[0] || !acts[1] || !acts[2] {
+		t.Fatalf("ch25 evidence layout=%#v acting slots=%v", layout, acts)
+	}
+}
+
 func TestCh13PostBindingMaterializesSpawnLayoutActAndDialogue(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch13_post.json")
 	if err != nil || len(issues) != 0 {
