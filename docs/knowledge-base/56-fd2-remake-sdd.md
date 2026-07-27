@@ -812,16 +812,28 @@ caller dispatches raw selection `0→0x2ffa5`, `1→0x2f8ea`, `2→0x30dc3`, and
 callee semantics are independently proven.
 
 `0x2d669` is the indexed church-menu transition: it snapshots a 64000-byte
-buffer, clears a 20×104 region at the native menu origin
-`buffer + 320*(169+i) + 201` with byte `0x4a`, then performs four
-direction-dependent cell blits for each of four passes. The copied cell-offset
-bank at `0x526da` is the signed sequence `[-39,-13,13,39]`; the transition
-uses divisor `4-j` while opening (`a1==0`) and `j+1` while closing. Each blit
-uses the native width/stride argument `0x140`, restores the buffer between
-passes, and finally restores the source frame when opening. This is evidence
-for a native transition/compositor boundary, not proof of a particular menu
-layout or service label. The remake therefore adopts only the verified
-left/right selector ABI and keeps the menu art/service names fail-closed.
+buffer, clears a 104×20 region at x=201, y=169 with byte `0x4a`, then performs
+four direction-dependent cell blits for each of four passes. Official IDA
+recheck fixes their provenance as FDOTHER#14 LMI1 entries 3/5/7/9, all 24×20,
+at base `(240,169)`. Both copied offset banks at `0x526da` and `0x526ea` are
+the signed sequence `[-39,-13,13,39]`; the transition uses divisor `4-j` while
+opening (`a1==0`) and `j+1` while closing. Each pass restores the cleared
+snapshot, blits with transparent `0x4e9e4` at stride `0x140`, then copies the
+frame to VGA. Contrary to the earlier direction assertion, only closing
+(`a1!=0`) restores the cleared snapshot after its fourth presented pass;
+opening leaves its fourth expanded frame visible.
+
+`0x2d85f(0)` owns the steady mode-zero animation. It uses the paired
+FDOTHER#14 cells `3/4,5/6,7/8,9/10`; all non-selected entries use the first
+cell and the selected entry uses `pair + counter/2`. The two-bit counter starts
+at 2, advances modulo four when BIOS low-word delta is at least two (or the
+signed word wraps), and `0x2d9fe` redraws only the selected cell. The remake
+now preserves the exact clear, four-pass transition, and steady selected-cell
+composition as a fail-closed indexed primitive with original-resource
+regression. It is not yet a complete church scene: `0x3072f`'s DATO face,
+FDTXT585/586, entry1 decorations and chapter-dependent resource state must be
+materialized together before this primitive may replace the authored runtime
+fallback. No cell is assigned a service label from its position.
 
 The two raw service branches share a second selector contract. `0x2e6b8` is a
 roster/list selector used by `0x2ffa5` and `0x2f8ea`: left/right move by one,
