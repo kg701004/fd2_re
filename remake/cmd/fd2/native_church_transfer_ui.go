@@ -105,10 +105,82 @@ func (g *Game) beginNativeChurchTransferItemClosing(after func()) bool {
 
 func (g *Game) returnToNativeTransferSource() {
 	g.churchMode = "transfer_source"
+	g.churchTransferDest = -1
 	g.churchIDs = g.churchTransferSourceIDs()
 	g.churchSel = 0
 	g.churchRosterStart = 0
 	g.churchItemStart = 0
 	g.nativeChurchTextIndex = 512
 	g.beginNativeChurchRosterOpening()
+}
+
+func (g *Game) composeNativeChurchTransferFullMessage() ([]byte, bool) {
+	a := g.nativeClassUI
+	if a == nil || g.churchMode != "transfer_full" ||
+		g.churchTransferDest < 0 {
+		return nil, false
+	}
+	destination, ok := g.partyRoster[g.churchTransferDest]
+	if !ok || !destination.HasNativeIdentity {
+		return nil, false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeChurchDialogueOverlay(
+		source, a.dialogue, a.portrait,
+	)
+	if err != nil {
+		return nil, false
+	}
+	frame, err = campaign.ComposeNativeChurchTextWithNameAt(
+		frame, a.strings, a.font, 506, destination.NativeIdentity+1, 119*320+12,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) drawNativeChurchTransferFull(screen *ebiten.Image) bool {
+	frame, ok := g.composeNativeChurchTransferFullMessage()
+	if !ok {
+		return false
+	}
+	g.presentNativeClassFrame(screen, frame)
+	return true
+}
+
+func (g *Game) beginNativeChurchTransferFullOpening() bool {
+	final, ok := g.composeNativeChurchTransferFullMessage()
+	if !ok {
+		return false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListOpeningFrames(source, final)
+	if err != nil || len(frames) != 6 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativeChurchTransferFullClosing(after func()) bool {
+	final, ok := g.composeNativeChurchTransferFullMessage()
+	if !ok {
+		return false
+	}
+	source, ok := g.composeNativeChurchSourceFrame()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(source, final)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{
+		frames: frames, restore: source, after: after,
+	}
+	return true
 }

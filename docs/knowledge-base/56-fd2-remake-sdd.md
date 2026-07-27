@@ -927,9 +927,16 @@ category cells59/60/61, stat cells64..67 (or frame41), and a five-digit
 `(3*word[itemRow+19])>>2` field with digit base119. Its viewport is stateful
 and even, with six opening and five closing frames plus source restore.
 Escaping either the item or destination selector returns to the source roster;
-success and a full destination likewise return to the source loop, matching
-`0x2f8ea` rather than the former remake shortcut back to the church menu. The
-destination-full indexed message/animation remains the visual gap.
+success returns directly to the source loop. A full destination does not return
+silently: after the destination roster closes, `0x2f8ea` stores
+`destination[+8]+1` as the dynamic name, selects FDTXT506 through
+`word_5265f[hubSelector=4]`, opens the dialogue in six frames, expands its
+leading FFFC with that name, waits through `0x16c57(1)`, closes in five frames,
+then returns to the source roster. The runtime now preserves this lifecycle and
+uses the exact eight raw inventory flags; missing flags or native identity fail
+closed rather than projecting a normalized full state. The deterministic
+original-resource oracle is
+[`native-transfer-full-indexed.png`](../figures/native-transfer-full-indexed.png).
 
 The other raw branch, `0x2ffa5 → 0x17aed`, is a separate boundary. Direct
 instruction decoding fixes `0x17aed` as a one-argument function; an apparent

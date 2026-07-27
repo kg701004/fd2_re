@@ -127,6 +127,42 @@ func ComposeNativeChurchTextAt(
 	if err != nil {
 		return nil, err
 	}
+	return composeNativeChurchWordsAt(frame, font, words, baseOffset)
+}
+
+// ComposeNativeChurchTextWithNameAt expands the proven FFFC actor-name
+// control used by facility feedback strings such as FDTXT506.
+func ComposeNativeChurchTextWithNameAt(
+	frame []byte,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	textIndex, nameTextIndex, baseOffset int,
+) ([]byte, error) {
+	words, err := strings.Words(textIndex)
+	if err != nil {
+		return nil, err
+	}
+	name, err := strings.Words(nameTextIndex)
+	if err != nil {
+		return nil, err
+	}
+	expanded := make([]uint16, 0, len(words)+len(name))
+	for _, word := range words {
+		if word == 0xfffc {
+			expanded = append(expanded, name...)
+			continue
+		}
+		expanded = append(expanded, word)
+	}
+	return composeNativeChurchWordsAt(frame, font, expanded, baseOffset)
+}
+
+func composeNativeChurchWordsAt(
+	frame []byte,
+	font *fdtxt.Font,
+	words []uint16,
+	baseOffset int,
+) ([]byte, error) {
 	line, column := 0, 0
 	style := fdtxt.NativeGlyphStyle{Foreground: 205, Shadow: 76, Background: 74}
 	for _, word := range words {

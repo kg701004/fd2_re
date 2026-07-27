@@ -111,6 +111,20 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		t.Fatal("native transfer item five-frame closing unexpectedly fell back")
 	}
 	g.nativeClassUIJob = nil
+	g.churchMode, g.churchTransferDest = "transfer_full", 0
+	g.nativeChurchTextIndex = 510
+	if !g.drawNativeChurchTransferFull(screen) {
+		t.Fatal("native transfer-full feedback unexpectedly fell back")
+	}
+	if !g.beginNativeChurchTransferFullOpening() || len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native transfer-full six-frame dialogue opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchTransferFullClosing(nil) ||
+		len(g.nativeClassUIJob.frames) != 5 || len(g.nativeClassUIJob.restore) != 320*200 {
+		t.Fatal("native transfer-full five-frame dialogue closing unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
 	g.churchMode, g.churchIDs, g.churchSel = "revive", []int{9}, 0
 	g.nativeChurchTextIndex = 589
 	if !g.drawNativeChurchReviveList(screen) {

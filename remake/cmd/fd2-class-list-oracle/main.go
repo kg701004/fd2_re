@@ -20,16 +20,17 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 15 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png revive-empty.png revive-insufficient.png revive-success.png revive-success-flash.png")
+	if len(os.Args) != 16 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png transfer-full.png revive-list.png revive-confirm.png revive-empty.png revive-insufficient.png revive-success.png revive-success-flash.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, fdiconPath, datoPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
 	itemRowsPath := os.Args[5]
 	listOutputPath, confirmOutputPath, transferOutputPath := os.Args[6], os.Args[7], os.Args[8]
-	reviveListOutputPath, reviveConfirmOutputPath := os.Args[9], os.Args[10]
-	reviveEmptyOutputPath, reviveInsufficientOutputPath := os.Args[11], os.Args[12]
-	reviveSuccessOutputPath, reviveSuccessFlashOutputPath := os.Args[13], os.Args[14]
+	transferFullOutputPath := os.Args[9]
+	reviveListOutputPath, reviveConfirmOutputPath := os.Args[10], os.Args[11]
+	reviveEmptyOutputPath, reviveInsufficientOutputPath := os.Args[12], os.Args[13]
+	reviveSuccessOutputPath, reviveSuccessFlashOutputPath := os.Args[14], os.Args[15]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -163,6 +164,28 @@ func main() {
 	); err != nil {
 		fail(err)
 	}
+	transferFullScene, err := campaign.ComposeNativeChurchScene(
+		background, entries[1], dialogue, digits, portraits[0], strings, font, 1000, 510,
+	)
+	if err != nil {
+		fail(err)
+	}
+	transferFullSource, err := campaign.NativeChurchMenuBase(transferFullScene)
+	if err != nil {
+		fail(err)
+	}
+	transferFullBase, err := campaign.ComposeNativeChurchDialogueOverlay(
+		transferFullSource, dialogue, portraits[0],
+	)
+	if err != nil {
+		fail(err)
+	}
+	transferFull, err := campaign.ComposeNativeChurchTextWithNameAt(
+		transferFullBase, strings, font, 506, 10, 119*320+12,
+	)
+	if err != nil {
+		fail(err)
+	}
 	reviveScene, err := campaign.ComposeNativeChurchScene(
 		background, entries[1], dialogue, digits, portraits[0], strings, font, 1000, 589,
 	)
@@ -268,6 +291,7 @@ func main() {
 	writePNG(listOutputPath, frame, palette)
 	writePNG(confirmOutputPath, confirm, palette)
 	writePNG(transferOutputPath, transfer, palette)
+	writePNG(transferFullOutputPath, transferFull, palette)
 	writePNG(reviveListOutputPath, reviveList, palette)
 	writePNG(reviveConfirmOutputPath, reviveConfirm, palette)
 	writePNG(reviveEmptyOutputPath, reviveEmpty, palette)

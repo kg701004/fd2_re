@@ -103,6 +103,7 @@ type Game struct {
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
 	churchTransferItems  []int               // compact source inventory indices
+	churchTransferDest   int                 // raw destination id used by FDTXT506 FFFC
 	churchReviveID       int                 // selected 0x30dc3 candidate
 	churchReviveFee      int                 // level * raw class fee
 	churchClassID        int                 // selected class-change candidate
@@ -2383,6 +2384,7 @@ func (g *Game) setupChurch() {
 	g.churchTransferSource = -1
 	g.churchTransferItem = -1
 	g.churchTransferItems = nil
+	g.churchTransferDest = -1
 	g.churchItemStart = 0
 	g.churchReviveID = -1
 	g.churchReviveFee = 0
@@ -2794,6 +2796,14 @@ func (g *Game) campInput() bool {
 			g.closeNativeChurchStatus(panel)
 			return true
 		}
+		if g.churchMode == "transfer_full" {
+			if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				if !g.beginNativeChurchTransferFullClosing(g.returnToNativeTransferSource) {
+					g.returnToNativeTransferSource()
+				}
+			}
+			return true
+		}
 		if g.churchMode == "transfer_source" || g.churchMode == "transfer_item" || g.churchMode == "transfer_dest" {
 			listLen := len(g.churchIDs)
 			if g.churchMode == "transfer_item" {
@@ -2879,6 +2889,21 @@ func (g *Game) campInput() bool {
 						source := g.partyRoster[g.churchTransferSource]
 						itemID := source.Inventory[g.churchTransferItem]
 						destination := g.partyRoster[destinationID]
+						count, err := battle.NativeInventoryAvailableCount(destination.NativeInventoryFlags)
+						if err != nil {
+							g.msg = fmt.Sprintf("目的角色缺少原版 8-byte 物品欄旗標：%v", err)
+							g.returnToNativeTransferSource()
+							return
+						}
+						if count == 8 {
+							g.churchTransferDest = destinationID
+							g.churchMode = "transfer_full"
+							if !g.beginNativeChurchTransferFullOpening() {
+								g.msg = "無法還原原版物品欄已滿提示"
+								g.returnToNativeTransferSource()
+							}
+							return
+						}
 						if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
 							g.msg = err.Error()
 						} else {
@@ -5772,6 +5797,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeChurchTransferItem(screen) {
+			return
+		}
+		if g.drawNativeChurchTransferFull(screen) {
 			return
 		}
 		if g.drawNativeChurchReviveConfirmation(screen) {
