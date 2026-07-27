@@ -187,6 +187,9 @@ func (g *Game) returnToNativeChurchMenu() {
 	g.churchMode = "menu"
 	g.churchIDs = nil
 	g.churchRosterStart = 0
+	g.churchStatusID = -1
+	g.churchStatusPanel = nil
+	g.churchCommandPanel = nil
 	g.churchBranches = nil
 	g.churchClassID = -1
 	g.churchSel = 0

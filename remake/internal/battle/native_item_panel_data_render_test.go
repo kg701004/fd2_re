@@ -11,7 +11,7 @@ import (
 
 func nativeItemPanelTestStrings(t *testing.T, word uint16) *fdtxt.Strings {
 	t.Helper()
-	const count = 220
+	const count = 500
 	data := make([]byte, count*2+count*4)
 	for index := 0; index < count; index++ {
 		offset := count*2 + index*4
@@ -29,7 +29,7 @@ func nativeItemPanelTestStrings(t *testing.T, word uint16) *fdtxt.Strings {
 func nativeItemPanelTestAssets(t *testing.T, textWord uint16) NativeItemPanelDataAssets {
 	t.Helper()
 	raw := make(map[int]fdother.RawCell)
-	for index := 0; index <= 70; index++ {
+	for index := 0; index <= 92; index++ {
 		raw[index] = fdother.RawCell{
 			Width: 1, Height: 1, Pixels: []byte{byte(index)},
 		}

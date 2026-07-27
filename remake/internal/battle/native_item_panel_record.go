@@ -47,6 +47,7 @@ func NativeItemPanelRecordForUnit(unit *Unit) ([]byte, error) {
 		record[0x0a+slot*2] = byte(unit.NativeInventoryFlags[slot])
 		record[0x0b+slot*2] = byte(unit.InventorySlots[slot])
 	}
+	copy(record[0x1a:0x1f], unit.NativeCommandMask[:])
 	record[0x1f] = unit.NativeRecordRace
 	record[0x20] = unit.NativeRecordClass
 	record[0x21] = byte(unit.Lv)

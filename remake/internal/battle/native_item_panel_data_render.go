@@ -323,6 +323,7 @@ func LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath string) (NativeItemPan
 		23, 24, 25, 26, 27, 28, 29, 30,
 		53, 54, 55, 56, 57,
 		59, 60, 61, 62, 63, 64, 65, 66, 67,
+		92,
 	} {
 		assets.RawCells[index], err = fdother.ParseLMI1RawEntry(raw, index)
 		if err != nil {

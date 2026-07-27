@@ -92,9 +92,12 @@ type Game struct {
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
 	churchSel            int                 // church service menu cursor (0..3)
-	churchMode           string              // menu / status_roster / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
+	churchMode           string              // menu / status_roster / status_view / status_commands / transfer_source / transfer_item / transfer_dest / revive / class / class_confirm
 	churchIDs            []int               // current church candidate ids
 	churchRosterStart    int                 // 0x2e6b8 [0x5412f], even six-entry viewport origin
+	churchStatusID       int                 // selected actor passed to 0x17aed
+	churchStatusPanel    []byte              // 0x17eef/0x17fc0 + 0x184c0(actor,-1)
+	churchCommandPanel   []byte              // 0x17eef/0x17fc0 + 0x1ceed(actor,-1)
 	churchTransferSource int                 // raw transfer source roster id
 	churchTransferItem   int                 // compact source inventory index
 	churchTransferItems  []int               // compact source inventory indices
@@ -2376,6 +2379,9 @@ func (g *Game) setupChurch() {
 	g.churchTransferItem = -1
 	g.churchTransferItems = nil
 	g.churchClassID = -1
+	g.churchStatusID = -1
+	g.churchStatusPanel = nil
+	g.churchCommandPanel = nil
 	g.churchBranches = nil
 	g.nativeChurchTextIndex = 585
 	g.beginNativeChurchMenuOpening()
@@ -2739,8 +2745,36 @@ func (g *Game) campInput() bool {
 				return true
 			}
 			if enter && listLen > 0 && g.churchSel < listLen {
-				g.msg = "角色狀態頁已定位至 0x17aed；command/MP overlay 尚未閉合，維持 fail-closed"
+				id := g.churchIDs[g.churchSel]
+				openStatus := func() {
+					if !g.beginNativeChurchStatus(id) {
+						g.msg = "角色缺少原版 status/command panel provenance"
+						g.returnToNativeStatusRoster()
+					}
+				}
+				if !g.beginNativeChurchRosterClosing(openStatus) {
+					openStatus()
+				}
 			}
+			return true
+		}
+		if g.churchMode == "status_view" || g.churchMode == "status_commands" {
+			ack := enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+				inpututil.IsKeyJustPressed(ebiten.KeyBackspace)
+			if !ack {
+				return true
+			}
+			if g.churchMode == "status_view" && len(g.churchCommandPanel) != 0 {
+				if !g.beginNativeChurchStatusCommandTransition() {
+					g.closeNativeChurchStatus(g.churchStatusPanel)
+				}
+				return true
+			}
+			panel := g.churchStatusPanel
+			if g.churchMode == "status_commands" {
+				panel = g.churchCommandPanel
+			}
+			g.closeNativeChurchStatus(panel)
 			return true
 		}
 		if g.churchMode == "transfer_source" || g.churchMode == "transfer_item" || g.churchMode == "transfer_dest" {
@@ -5585,6 +5619,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			return
 		}
 		if g.drawNativeClassUIJob(screen) {
+			return
+		}
+		if g.drawNativeChurchStatus(screen) {
 			return
 		}
 		if g.drawNativeChurchRoster(screen) {

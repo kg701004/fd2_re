@@ -884,14 +884,22 @@ inventory, gold, HP, or class writer. This rejects the previous "ability
 service" wording. Data flow now supports the narrower name character
 information/status presentation: `0x17e0b(actor)` builds the item/status panel,
 then `0x1c269(actor,0)` gates an optional same-actor command/MP overlay rendered
-by `0x1ceed(actor,-1,...)`. The native command overlay and full interaction
-lifecycle are not yet closed. The remake now wires raw selector 0 only as far
-as the proven caller-owned roster: FDOTHER#14 entry16 at `(5,112)`, six visible
+by `0x1ceed(actor,-1,...)`. Instruction decoding confirms all three calls reuse
+the single stack actor argument; the apparent Hex-Rays second parameter is an
+artifact. The remake wires the caller-owned roster as FDOTHER#14 entry16 at
+`(5,112)`, six visible
 entries in two columns, FDICON at `(14+132c,117+26r)`, name at
 `(40+132c,121+26r)`, selected/unselected palette `201/205`, shadow `76`,
 bounded `±1/±2` input, six opening frames, five closing frames, then source
-restore. Selecting an actor stops at the unresolved `0x17aed` status/command
-overlay boundary and performs no mutation.
+restore. Selecting an actor now runs the complete read-only presentation:
+`0x17eef/0x17fc0+0x184c0(actor,-1)` opens in frames `11→0`; the first key wait
+either closes immediately when the 40-bit command list is empty, or performs
+seven bottom-panel close frames `0→6` followed by seven command-panel open
+frames `6→0`. `0x1ceed(actor,-1)` renders FDTXT `441+commandID`, palette205,
+FDOTHER#5 raw cell92 and the record `+5` MP cost with digit base42. The second
+key wait closes frames `0→11`, restores the church source, and reopens the
+roster. This service is presentation-only and performs no mutation; command
+effects/targets remain the separate UI-03 execution workstream.
 
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 

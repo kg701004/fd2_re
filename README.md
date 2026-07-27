@@ -83,8 +83,10 @@ Church class-change round-trip 也已可重播：[`town-church-class-change-ch02
 FDOTHER#5/#14、DATO#131、FDTXT585/586 合成完整 indexed scene；`0x2d669` 四幀
 opening/closing＋source restore與 `0x2d85f` 兩-tick selected pulse 已接 runtime。raw service 0
 已接 `0x2e6b8/0x2ea90` 的兩欄六人名冊、bounded ±1/±2 input、六幀 opening 與五幀
-closing＋source restore；角色確認後的 `0x17aed` status/command overlay 與 FD2.SAV 相容性
-仍 fail-closed。
+closing＋source restore。角色確認後的 `0x17aed` 唯讀流程亦已接：status/items 12-open，
+第一次按鍵後有 command 時跑 7-close＋7-open 切換至 `0x1ceed` 四列 command/MP indexed
+overlay，第二次按鍵再 12-close＋source restore 回名冊。command effect/target 執行與 FD2.SAV
+相容性仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
@@ -136,6 +138,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | action overlay 4-open / 4-close | ![native action overlay lifecycle](docs/figures/action-overlay-open-close-remake.png) |
 | 原版 indexed item panel（`0x17eef+0x17fc0+0x184c0`；Ebiten adapter oracle） | ![native item panel](docs/figures/item-panel-native-indexed.png) |
+| 原版 indexed status command/MP overlay（`0x17aed→0x1ceed`；原版資源 fixture，非 DOSBox 截圖） | ![native status command overlay](docs/figures/native-status-command-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
 | 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |

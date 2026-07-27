@@ -15,12 +15,13 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 6 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-item-panel-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT native_item_effect_rows.json output.png")
+	if len(os.Args) != 8 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-item-panel-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT native_item_effect_rows.json spells.json item.png command.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath := os.Args[1], os.Args[2], os.Args[3]
-	itemRowsPath, outputPath := os.Args[4], os.Args[5]
+	itemRowsPath, spellsPath := os.Args[4], os.Args[5]
+	itemOutputPath, commandOutputPath := os.Args[6], os.Args[7]
 
 	record := make([]byte, 80)
 	record[7] = 0
@@ -44,8 +45,8 @@ func main() {
 	binary.LittleEndian.PutUint16(record[76:], 76)
 	binary.LittleEndian.PutUint16(record[78:], 54)
 
-	pixels := make([]byte, 320*200)
-	if err := battle.RenderNativeItemPanelResources(fdotherPath, fdtxtPath, datoPath, record, pixels); err != nil {
+	base := make([]byte, 320*200)
+	if err := battle.RenderNativeItemPanelResources(fdotherPath, fdtxtPath, datoPath, record, base); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -59,7 +60,20 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if err := battle.RenderNativeItemPanelRows(assets, record, 0, itemRows, pixels); err != nil {
+	itemPixels := append([]byte(nil), base...)
+	if err := battle.RenderNativeItemPanelRows(assets, record, 0, itemRows, itemPixels); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	book, err := battle.LoadNativeCommandRecords(spellsPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	commandPixels := append([]byte(nil), base...)
+	if err := battle.RenderNativeCommandOverlay(
+		assets, []int{0, 13, 20, 24, 26}, book, -1, commandPixels,
+	); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -76,10 +90,14 @@ func main() {
 	// The completed native framebuffer is opaque; palette index zero is no
 	// longer a sprite transparency marker at this presentation boundary.
 	palette[0] = color.NRGBA{A: 0xff}
+	writePNG(itemOutputPath, itemPixels, palette)
+	writePNG(commandOutputPath, commandPixels, palette)
+}
+
+func writePNG(path string, pixels []byte, palette color.Palette) {
 	frame := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
 	copy(frame.Pix, pixels)
-
-	output, err := os.Create(outputPath)
+	output, err := os.Create(path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
