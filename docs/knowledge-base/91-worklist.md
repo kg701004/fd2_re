@@ -496,9 +496,9 @@
 - **部分節點接 script、其餘仍依 placeholder/default fallback** → 兩者尚未完全連起來 ✗
 **教訓**:子系統各自報「完成」不等於整合完成;跨模組「接線」要獨立驗(truth-in-code,
 配 rulebook/63)。使用者實玩才揭露——沒實玩/沒查,文件會一直顯示「完成」。
-**目前修法狀態**:9 個節點有 direct script、33 個由 handler binding 供應過場資料，另有 79 個沒有 script/handler、仍使用 lines/default fallback；不能把同一章 script 盲目灌入其餘節點。
+**目前修法狀態**:9 個節點有 direct script、33 個由 handler binding 供應過場資料；另外 30 個 retreat、23 個 rumor 是刻意的短 authored node，22 個 unbound postbattle 與 4 個 generic story fallback 才是待 mapping/handler 的缺口。不能把同一章 script 盲目灌入其餘節點。
 下一步要依原版 handler／FDTXT scene label 逐節建立 mapping，完成後才可宣稱接通。
-- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、script、scene、handler 與 next，固定目前 121/9/33/79 分類；不依章號猜測映射。
+- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、coverage role、script、scene、handler 與 next，固定目前 121/9/33/30/23/22/4 分類；不依章號猜測映射。
 - [x] ch01 開場三幕(王城父子/草地悠妮蓋亞/遇海盜)手動接線+轉錄 FDTXT_033/032(intro-scenes)
 - [x] **ch01 開場三幕背景圖 RE+接線**(使用者實測發現對白疊在戰場地圖上,非王座廳/草地,2026-07-04):
       RE 修正 doc23 §4 誤記(「FDTXT 序幕『影像』資源」不存在,FDTXT 純文字)——真正背景是

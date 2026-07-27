@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -633,7 +634,23 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			fallback++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 33 || fallback != 79 {
-		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback)
+	retreat, rumor, postbattle, generic := 0, 0, 0, 0
+	for id, n := range c.Nodes {
+		if n.Type != "story" && n.Type != "cutscene" || n.Script != "" || n.HandlerBinding != "" {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(id, "retreat_"):
+			retreat++
+		case strings.HasPrefix(id, "rumor_"):
+			rumor++
+		case strings.HasPrefix(id, "postbattle_"):
+			postbattle++
+		default:
+			generic++
+		}
+	}
+	if storyNodes != 121 || scripted != 9 || handlerBound != 33 || fallback != 79 || retreat != 30 || rumor != 23 || postbattle != 22 || generic != 4 {
+		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }

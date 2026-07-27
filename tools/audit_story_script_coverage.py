@@ -19,23 +19,40 @@ def audit(path: Path) -> dict:
     for node_id, node in sorted(campaign.get("nodes", {}).items()):
         if node.get("type") not in {"story", "cutscene"}:
             continue
+        if node.get("script"):
+            role = "direct_script"
+        elif node.get("handler_binding"):
+            role = "handler_bound"
+        elif node_id.startswith("retreat_"):
+            role = "authored_retreat"
+        elif node_id.startswith("rumor_"):
+            role = "authored_rumor"
+        elif node_id.startswith("postbattle_"):
+            role = "unbound_postbattle"
+        else:
+            role = "generic_story_fallback"
         entries.append({
             "id": node_id,
             "type": node.get("type"),
+            "coverage_role": role,
             "script": node.get("script", ""),
             "scene": node.get("scene", ""),
             "handler_binding": node.get("handler_binding", ""),
             "next": node.get("next", ""),
         })
-    scripted = [entry for entry in entries if entry["script"]]
-    handler_bound = [entry for entry in entries if entry["handler_binding"]]
-    fallback = [entry for entry in entries if not entry["script"] and not entry["handler_binding"]]
+    counts = {}
+    for entry in entries:
+        counts[entry["coverage_role"]] = counts.get(entry["coverage_role"], 0) + 1
+    scripted = counts.get("direct_script", 0)
+    handler_bound = counts.get("handler_bound", 0)
+    fallback = len(entries) - scripted - handler_bound
     return {
         "campaign": str(path),
         "story_or_cutscene_nodes": len(entries),
-        "scripted_nodes": len(scripted),
-        "handler_bound_nodes": len(handler_bound),
-        "fallback_nodes_without_script_or_handler": len(fallback),
+        "scripted_nodes": scripted,
+        "handler_bound_nodes": handler_bound,
+        "fallback_nodes_without_script_or_handler": fallback,
+        "coverage_roles": counts,
         "nodes": entries,
     }
 
@@ -58,8 +75,8 @@ def main() -> int:
             f"fallback_without_script_or_handler={report['fallback_nodes_without_script_or_handler']}"
         )
         for node in report["nodes"]:
-            if not node["script"] and not node["handler_binding"]:
-                print(f"FALLBACK {node['id']} type={node['type']} next={node['next']}")
+            if node["coverage_role"] not in {"direct_script", "handler_bound"}:
+                print(f"{node['coverage_role'].upper()} {node['id']} type={node['type']} next={node['next']}")
     return 0
 
 
