@@ -220,52 +220,58 @@ func (g *Game) titleUpdate() bool {
 		}
 		return true
 	case "menu":
+		menu := TitleMenuState{Selection: g.titleSel, FlashTicks: g.titleFlash}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-			g.titleSel = (g.titleSel + 2) % 3 // wrap(doc23)
+			menu.Step(TitleMenuUp)
 			g.playSFX(sfxCursor)
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-			g.titleSel = (g.titleSel + 1) % 3
+			menu.Step(TitleMenuDown)
 			g.playSFX(sfxCursor)
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			menu.Step(TitleMenuConfirm)
 			g.playSFX(sfxConfirm)
-			g.titleFlash = 24 // 選中項閃 4 次(6 tick/次,原版 0x1fe2c 閃爍後回傳)
 		}
-		if g.titleFlash > 0 {
-			g.titleFlash--
-			if g.titleFlash == 0 {
-				switch g.titleSel {
-				case 1:
-					g.titleSlotSel = 0
-					g.titlePhase = "loadslots"
-					return true
-				case 2:
-					g.loadGameFromSlot(0)
-				}
-				g.titlePhase = "" // START 或讀檔後 → 進遊戲
+		if action := menu.Step(TitleMenuTick); action != TitleMenuNoAction {
+			g.titleSel, g.titleFlash = menu.Selection, menu.FlashTicks
+			switch action {
+			case TitleMenuLoadSlots:
+				g.titleSlotSel = 0
+				g.titlePhase = "loadslots"
+				return true
+			case TitleMenuLoadSlot:
+				g.loadGameFromSlot(0)
 			}
+			g.titlePhase = "" // START 或讀檔後 → 進遊戲
 		}
+		g.titleSel, g.titleFlash = menu.Selection, menu.FlashTicks
 		return true
 	case "loadslots":
+		slots := TitleSlotState{Selection: g.titleSlotSel}
 		// Native 0x30550 selector: four bounded slots, no wrap, Enter/Space
 		// confirms and Esc cancels back to the title menu.
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.titleSlotSel > 0 {
-			g.titleSlotSel--
+			slots.Step(TitleSlotUp)
 			g.playSFX(sfxCursor)
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.titleSlotSel < 3 {
-			g.titleSlotSel++
+			slots.Step(TitleSlotDown)
 			g.playSFX(sfxCursor)
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			slots.Step(TitleSlotCancel)
 			g.titlePhase = "menu"
 			return true
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-			g.loadGameFromSlot(g.titleSlotSel)
+			selected, confirm, _ := slots.Step(TitleSlotConfirm)
+			if confirm {
+				g.loadGameFromSlot(selected)
+			}
 			g.titlePhase = ""
 		}
+		g.titleSlotSel = slots.Selection
 		return true
 	}
 	return false

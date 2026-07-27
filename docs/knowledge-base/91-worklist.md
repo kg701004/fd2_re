@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=393`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=394`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -22,6 +22,7 @@
 - [x] **RE-PREPARATION-CAP-318AD**：Docker Capstone 重核 `0x318ad`：`[0x53c03] <= 0x1a` 時 cap=15，`>0x1a` 時 cap=19；新增 `fdother.NativePreparationPartyLimit` 與 boundary regression。明確以 native index 為輸入，不把 late cap 猜成顯示章號或直接改寫 JOIN roster。
 - [x] **RE-PREPARATION-PREVIEW-31E80**：Docker Capstone 完整 trace 固定 `0x31e80` 讀 caller-owned 30-byte selection table、以 `0x320ce` 計數，依 flag 分支 `0x4deda/0x4de56` 做 indexed preview；body 未寫 selection table／persistent roster。撤回把它當 Enter/toggle mutation，remake 保持 `partyDeploy` mutation 與 renderer boundary 分離。
 - [x] **PROGRESS-AUDIT-E0-TO-E2**：重新檢視近期對話、commit 與權威文件，確認停滯主因是 E0 raw slice 沒有同步 runtime consumer／UI input trace／E2 screenshot、`main.go` 仍是 monolithic scene owner，以及 30 章 postbattle graph 未逐章驗收；新增停止孤立 offset 擴張的門檻，下一里程碑改為 title→dialog→battle→postbattle hub→preparation/town 垂直鏈。
+- [x] **UI-01-TITLE-TRACE**：新增純 `TitleMenuState`／`TitleSlotState`，保存原版主選單三項 wrap、24-tick confirm flash、load branch 與 `0x30550` 四槽 bounded/no-wrap/cancel contract；`titleUpdate` 的 Ebiten input 已改走同一 state transition，Docker/Xvfb regression 可重播 selection/action trace。仍不宣稱原版逐幀 visual parity 或 FD2.SAV 相容。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)
