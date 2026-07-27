@@ -1077,7 +1077,16 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    verifies the panel reaches VGA `(anchor+4,161)`. The original-video
    [HUD oracle](../figures/native-map-ch01-original-video.png) and rebuilt
    [remake frame](../figures/native-map-ch01-remake.png) both show the panel at
-   the lower edge. They do not yet constitute a same-state full-frame pixel diff.
+   the lower edge. The reproducible extractor
+   `tools/extract_fd2_video_frame.sh video/fd2-ch1.mp4 434.5 ...` first crops
+   the recording's centered `(16,100,1408,880)` game viewport, then returns it
+   to 320×200; direct whole-video scaling was a distorted oracle and is removed.
+   The 434.5-second frame and remake now share camera `(1,13)`, absolute cursor
+   `(8,15)`, visible cursor `(7,2)`, tree terrain and HUD `A -05 / D +10`.
+   The screenshot hook formerly assigned only normalized `curX/curY`, leaving
+   `NativeMapViewState` stale; it now drives `MoveNativeMapCursor` and persistent
+   HUD-anchor updates. Roster/event presentation still differs, so these images
+   prove camera/cursor/terrain/HUD alignment but not a full-frame pixel diff.
 
    Production steady-frame and drawable-target slice (2026-07-28): ch01 now materializes the explicitly sourced persistent selector one, uses the original party-first/initial-group append constructor order, and consumes regenerated FDFIELD/FDSHAP raw map fields. Runtime composition byte+3 is initialized to `0xff` exactly as `0x4dbfc`; using serialized zeroes was an incorrect assertion that forced the whole steady map through the LUT branch and visibly washed out the palette. `nativeBIOSClock` supplies a battle-local signed BIOS low word at the PIT rate; one Update corresponds to the one `0x1297d` call at `0x11cb7`, while terrain phase and the two independent BIOS-word latches consume the same sample. `drawNativeMapFrame` executes the proven interactive `0x11cac` pipeline and FDOTHER#1 descriptor 0 supplies the native steady cursor; the former white rectangle approximation is removed. Command target entry materializes the first-stage `0x14818` remaining-budget grid and writes `record+4+2`; selectors 2–5 remain in the same production indexed compositor and use their exact ordered FDOTHER#1 call tables. Cancel and successful effect exit perform the `0x4dbfc` reset and restore selector one. Selector 6 is a separate field mutation and 7+ have no `0x122dc` draw table, so they still fall back; target flash and indexed effects remain incomplete.
 

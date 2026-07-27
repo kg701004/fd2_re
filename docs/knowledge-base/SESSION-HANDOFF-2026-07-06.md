@@ -1208,7 +1208,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `[0x53a49]+0x8088`與stride456；舊adapter卻把row157等offset套在work
   allocation base，連unit test都鎖住錯位。`ComposeNativeFrame`現傳
   `work[0x8088:]`，regression驗work與VGA `(anchor+4,161)`位置，HUD重新
-  出現在左下角。新增原版錄影412秒
+  出現在左下角。新增原版錄影oracle
   `docs/figures/native-map-ch01-original-video.png`，並以Docker/Xvfb重建
   `native-map-ch01-remake.png`。兩者證實lower-edge placement，不宣稱
   same-state pixel parity；ch02+ raw view/gates/anchor仍不可複製ch01值。
+- 2026-07-28 same-camera/cursor HUD oracle correction：原始錄影是
+  1440×1080，game viewport實為置中的`1408×880@(16,100)`；先前直接把
+  整張影片縮成320×200會混入黑邊並改變比例，已撤回。新增
+  `tools/extract_fd2_video_frame.sh`保存crop/scale命令與「非palette-byte
+  oracle」邊界。PSNR候選搜尋定位434.5秒frame；其camera `(1,13)`、
+  cursor `(8,15)`／visible `(7,2)`可由terrain與cursor格交叉驗證。
+  同時發現`FD2_SHOT_CUR`只改normalized`curX/curY`，production native
+  frame仍使用舊`NativeMapViewState`；現改以`MoveNativeMapCursor`逐格驅動
+  camera、visible cursor與HUD anchor，並加regression。重建remake後兩圖
+  同為tree HUD icon與`A -05/D +10`。roster/event差異仍存在，不把此
+  camera/cursor/HUD alignment提升成完整pixel parity。

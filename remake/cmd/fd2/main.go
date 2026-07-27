@@ -4205,7 +4205,7 @@ func (g *Game) Update() error {
 				g.endTurn()
 			}
 			if g.shotCurX != 0 || g.shotCurY != 0 {
-				g.curX, g.curY = g.shotCurX, g.shotCurY
+				g.positionScreenshotCursor(g.shotCurX, g.shotCurY)
 			}
 			if g.shotSel {
 				g.confirm()
@@ -4487,6 +4487,35 @@ func (g *Game) moveMapCursor(dx, dy int) {
 	}
 	g.curX += dx
 	g.curY += dy
+}
+
+// positionScreenshotCursor drives the same recovered cursor/camera state
+// machine as interactive input. Directly assigning curX/curY leaves the
+// production indexed frame on stale NativeMapViewState and produces a false
+// visual oracle.
+func (g *Game) positionScreenshotCursor(x, y int) bool {
+	if g == nil || g.st == nil || x < 0 || y < 0 || x >= g.st.W || y >= g.st.H {
+		return false
+	}
+	if !g.st.HasNativeMapViewState {
+		g.curX, g.curY = x, y
+		return true
+	}
+	for g.st.NativeMapViewState.CursorX != x {
+		dx := 1
+		if g.st.NativeMapViewState.CursorX > x {
+			dx = -1
+		}
+		g.moveMapCursor(dx, 0)
+	}
+	for g.st.NativeMapViewState.CursorY != y {
+		dy := 1
+		if g.st.NativeMapViewState.CursorY > y {
+			dy = -1
+		}
+		g.moveMapCursor(0, dy)
+	}
+	return g.curX == x && g.curY == y
 }
 
 // keyRepeat 方向鍵按住持續觸發(playfix #1):首次按下立即動一格,按住 12 tick 後

@@ -92,6 +92,34 @@ func TestGameCursorUsesMaterializedNativeMapView(t *testing.T) {
 	}
 }
 
+func TestScreenshotCursorUsesNativeViewAndHUDStateMachine(t *testing.T) {
+	st := &battle.State{W: 30, H: 30}
+	if err := st.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17,
+		VisibleCursorX: 7, VisibleCursorY: 4,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !st.MaterializeNativeMapHUDState(1, 1, 1) {
+		t.Fatal("HUD state rejected")
+	}
+	g := &Game{m: &MapData{W: 30, H: 30, TileW: 24, TileH: 24}, st: st}
+	g.syncNativeMapView()
+	if !g.positionScreenshotCursor(8, 15) {
+		t.Fatal("screenshot cursor rejected")
+	}
+	view := st.NativeMapViewState
+	if view.CameraX != 1 || view.CameraY != 13 ||
+		view.CursorX != 8 || view.CursorY != 15 ||
+		view.VisibleCursorX != 7 || view.VisibleCursorY != 2 ||
+		g.curX != 8 || g.curY != 15 {
+		t.Fatalf("screenshot view=%+v game=(%d,%d)", view, g.curX, g.curY)
+	}
+	if st.NativeMapHUDState.AnchorX != 1 {
+		t.Fatalf("screenshot HUD anchor=%+v", st.NativeMapHUDState)
+	}
+}
+
 func TestGameMaterializesEditableNativeMapRuntime(t *testing.T) {
 	rangeMode := 1
 	g := &Game{
