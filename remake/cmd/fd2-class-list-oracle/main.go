@@ -20,8 +20,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 13 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png revive-empty.png revive-insufficient.png")
+	if len(os.Args) != 15 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-class-list-oracle FDOTHER.DAT FDTXT.DAT FDICON.B24 DATO.DAT native_item_effect_rows.json list.png confirm.png transfer.png revive-list.png revive-confirm.png revive-empty.png revive-insufficient.png revive-success.png revive-success-flash.png")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, fdiconPath, datoPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -29,6 +29,7 @@ func main() {
 	listOutputPath, confirmOutputPath, transferOutputPath := os.Args[6], os.Args[7], os.Args[8]
 	reviveListOutputPath, reviveConfirmOutputPath := os.Args[9], os.Args[10]
 	reviveEmptyOutputPath, reviveInsufficientOutputPath := os.Args[11], os.Args[12]
+	reviveSuccessOutputPath, reviveSuccessFlashOutputPath := os.Args[13], os.Args[14]
 
 	resource14, err := fdother.ReadResource(fdotherPath, 14)
 	if err != nil {
@@ -220,6 +221,41 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
+	successScene, err := campaign.ComposeNativeChurchScene(
+		background, entries[1], dialogue, digits, portraits[0], strings, font, 800, 589,
+	)
+	if err != nil {
+		fail(err)
+	}
+	successSource, err := campaign.NativeChurchMenuBase(successScene)
+	if err != nil {
+		fail(err)
+	}
+	successDialogue, err := campaign.ComposeNativeChurchDialogueOverlay(
+		successSource, dialogue, portraits[0],
+	)
+	if err != nil {
+		fail(err)
+	}
+	successQuestion, err := campaign.ComposeNativeReviveConfirmationQuestion(
+		successDialogue, strings, font, 10, 200,
+	)
+	if err != nil {
+		fail(err)
+	}
+	successFX := make([]fdother.Frame, 9)
+	for i := range successFX {
+		successFX[i], err = fdother.ParseLMI1FrameEntry(resource14, 23+i)
+		if err != nil {
+			fail(err)
+		}
+	}
+	successFrames, _, err := campaign.ComposeNativeChurchReviveSuccessFrames(
+		successQuestion, successFX, portraits[0],
+	)
+	if err != nil {
+		fail(err)
+	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {
 		fail(err)
@@ -236,6 +272,17 @@ func main() {
 	writePNG(reviveConfirmOutputPath, reviveConfirm, palette)
 	writePNG(reviveEmptyOutputPath, reviveEmpty, palette)
 	writePNG(reviveInsufficientOutputPath, reviveInsufficient, palette)
+	writePNG(reviveSuccessOutputPath, successFrames[4], palette)
+	flashDAC := append([]byte(nil), paletteRaw...)
+	if err := fdother.ApplyVGAPaletteDelta(flashDAC, paletteRaw, 0, 255, 62); err != nil {
+		fail(err)
+	}
+	flashPalette, err := fdother.VGAPaletteFromDAC(flashDAC)
+	if err != nil {
+		fail(err)
+	}
+	flashPalette[0] = color.NRGBA{A: 0xff}
+	writePNG(reviveSuccessFlashOutputPath, successFrames[4], flashPalette)
 }
 
 func writePNG(path string, pixels []byte, palette color.Palette) {

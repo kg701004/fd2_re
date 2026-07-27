@@ -2916,7 +2916,7 @@ func (g *Game) campInput() bool {
 							return
 						}
 						g.reviveChurchUnit(g.churchReviveID)
-						if !g.beginNativeChurchReviveDialogueClosing(g.returnToNativeReviveList) {
+						if !g.beginNativeChurchReviveSuccess(g.returnToNativeReviveList) {
 							g.returnToNativeReviveList()
 						}
 					}

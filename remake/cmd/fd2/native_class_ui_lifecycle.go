@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -8,11 +9,20 @@ import (
 )
 
 type nativeClassUIJob struct {
-	frames  [][]byte
-	restore []byte
-	frame   int
-	drawn   bool
-	after   func()
+	frames   [][]byte
+	restore  []byte
+	frame    int
+	drawn    bool
+	after    func()
+	timeline []nativeClassUITimelineStep
+	started  time.Time
+	elapsed  time.Duration
+}
+
+type nativeClassUITimelineStep struct {
+	frame    []byte
+	palette  color.Palette
+	duration time.Duration
 }
 
 func (g *Game) beginNativeClassListOpening() bool {
@@ -93,6 +103,24 @@ func (g *Game) beginNativeClassConfirmationClosing(after func()) bool {
 // The continuation runs after the final closing frame has been presented.
 func (g *Game) stepNativeClassUILifecycle(now time.Time) {
 	job := g.nativeClassUIJob
+	if job != nil && len(job.timeline) != 0 {
+		if job.started.IsZero() {
+			job.started = now
+		}
+		job.elapsed = now.Sub(job.started)
+		total := time.Duration(0)
+		for _, step := range job.timeline {
+			total += step.duration
+		}
+		if job.frame == 1 && job.drawn {
+			after := job.after
+			g.nativeClassUIJob = nil
+			if after != nil {
+				after()
+			}
+		}
+		return
+	}
 	if job != nil && job.drawn {
 		job.drawn = false
 		if job.frame < len(job.frames) {
@@ -119,6 +147,27 @@ func (g *Game) drawNativeClassUIJob(screen *ebiten.Image) bool {
 	job := g.nativeClassUIJob
 	if job == nil || job.frame < 0 {
 		return false
+	}
+	if len(job.timeline) != 0 {
+		elapsed := job.elapsed
+		total := time.Duration(0)
+		for _, candidate := range job.timeline {
+			total += candidate.duration
+		}
+		step := job.timeline[len(job.timeline)-1]
+		for _, candidate := range job.timeline {
+			if elapsed < candidate.duration {
+				step = candidate
+				break
+			}
+			elapsed -= candidate.duration
+		}
+		if job.elapsed >= total {
+			job.frame = 1
+		}
+		g.presentNativeClassFrameWithPalette(screen, step.frame, step.palette)
+		job.drawn = true
+		return true
 	}
 	if job.frame < len(job.frames) {
 		g.presentNativeClassFrame(screen, job.frames[job.frame])

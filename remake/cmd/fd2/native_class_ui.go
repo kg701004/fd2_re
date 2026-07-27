@@ -27,6 +27,8 @@ type nativeClassUIAssets struct {
 	strings    *fdtxt.Strings
 	font       *fdtxt.Font
 	palette    color.Palette
+	paletteDAC []byte
+	reviveFX   []fdother.Frame
 }
 
 func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
@@ -60,6 +62,13 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	priceCell, err := fdother.ParseLMI1RawEntry(resource14, 15)
 	if err != nil {
 		return nil, err
+	}
+	reviveFX := make([]fdother.Frame, 9)
+	for i := range reviveFX {
+		reviveFX[i], err = fdother.ParseLMI1FrameEntry(resource14, 23+i)
+		if err != nil {
+			return nil, err
+		}
 	}
 	textRaw, err := fdother.ReadResource(filepath.Join(base, "FDTXT.DAT"), 0)
 	if err != nil {
@@ -123,6 +132,7 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 		background: background, entries: entries, panel: entries[16], priceCell: priceCell, units: units,
 		choices: choices, dialogue: dialogue, digits: digits, portrait: portraits[0],
 		strings: strings, font: font, palette: palette,
+		paletteDAC: append([]byte(nil), paletteRaw...), reviveFX: reviveFX,
 	}, nil
 }
 
@@ -236,8 +246,13 @@ func (g *Game) drawNativeClassConfirmation(screen *ebiten.Image) bool {
 }
 
 func (g *Game) presentNativeClassFrame(screen *ebiten.Image, frame []byte) {
-	a := g.nativeClassUI
-	paletted := image.NewPaletted(image.Rect(0, 0, 320, 200), a.palette)
+	g.presentNativeClassFrameWithPalette(screen, frame, g.nativeClassUI.palette)
+}
+
+func (g *Game) presentNativeClassFrameWithPalette(
+	screen *ebiten.Image, frame []byte, palette color.Palette,
+) {
+	paletted := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
 	copy(paletted.Pix, frame)
 	native := ebiten.NewImageFromImage(paletted)
 	op := &ebiten.DrawImageOptions{}

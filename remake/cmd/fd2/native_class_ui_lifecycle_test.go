@@ -86,3 +86,27 @@ func TestNativeClassUIPulseUsesTwoBIOSTickCadenceAndWrap(t *testing.T) {
 	check(-0x7ffd, 3)
 	check(-0x7ffb, 0)
 }
+
+func TestNativeClassUITimelineRequiresFinalFramePresentation(t *testing.T) {
+	completed := false
+	start := time.Unix(100, 0)
+	g := &Game{nativeClassUIJob: &nativeClassUIJob{
+		timeline: []nativeClassUITimelineStep{
+			{frame: []byte{1}, duration: 10 * time.Millisecond},
+			{frame: []byte{2}},
+		},
+		after: func() { completed = true },
+	}}
+	g.stepNativeClassUILifecycle(start)
+	g.nativeClassUIJob.drawn = true
+	g.stepNativeClassUILifecycle(start.Add(20 * time.Millisecond))
+	if completed || g.nativeClassUIJob == nil {
+		t.Fatal("timeline completed before its zero-duration final frame was presented")
+	}
+	g.nativeClassUIJob.frame = 1
+	g.nativeClassUIJob.drawn = true
+	g.stepNativeClassUILifecycle(start.Add(20 * time.Millisecond))
+	if !completed || g.nativeClassUIJob != nil {
+		t.Fatalf("timeline completion=%v job=%#v", completed, g.nativeClassUIJob)
+	}
+}

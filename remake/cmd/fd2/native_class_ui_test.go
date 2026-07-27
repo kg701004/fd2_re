@@ -149,6 +149,17 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 		t.Fatal("native revive choice-only closing unexpectedly fell back")
 	}
 	g.nativeClassUIJob = nil
+	if !g.beginNativeChurchReviveSuccess(nil) ||
+		len(g.nativeClassUIJob.timeline) != 76 ||
+		len(g.nativeClassUIJob.timeline[0].frame) != 320*200 ||
+		len(g.nativeClassUIJob.timeline[75].frame) != 320*200 {
+		t.Fatal("native revive success timeline unexpectedly fell back")
+	}
+	if g.nativeClassUIJob.timeline[9].palette[1] ==
+		g.nativeClassUIJob.timeline[40].palette[1] {
+		t.Fatal("native revive success palette rise did not change the DAC")
+	}
+	g.nativeClassUIJob = nil
 	g.churchMode = "revive_insufficient"
 	if !g.drawNativeChurchReviveMessage(screen) {
 		t.Fatal("native insufficient-gold message unexpectedly fell back")

@@ -897,10 +897,22 @@ four-plus-five-frame close is deleted.
 
 The remake implements the candidate list, dynamic confirmation, no-candidate,
 and insufficient-gold indexed lifecycles with original-resource regression.
-The successful branch remains partial: its state mutation is proven, but the
-native sequence redraws gold, plays SFX 17, runs `0x2f4c6`, then plays SFX 11.
-That facility animation and audio timing must be restored before revive can be
-promoted from partial UI parity.
+On success the hub selector is still 4, so `0x2f4c6` deterministically takes
+case 4. It sequentially transparent-blits FDOTHER#14 entries 23 through 31 at
+literal VGA `(147,32)`, waiting two BIOS ticks after each; it does not restore
+the background between frames. It then applies baseline-derived DAC deltas
+`0,2,...,62` and `62,60,...,0`, each with a 4ms delay. The intervening
+`0x17aa9(10)` and trailing `0x17aa9(5)` wait against the helper's previous BIOS
+latch, so their remaining duration is the latch interval minus the preceding
+32×4ms DAC loop—not an additional ten/five-tick hold. Finally DATO mode 0 is
+restored at `(118,4)`.
+
+This pixel/palette sequence is now a monotonic indexed runtime timeline; its
+zero-duration final portrait restore must be presented before control returns.
+The two surrounding `sub_25977(17,1)` and `sub_25977(11,1)` calls are still
+partial: their PCM resource-bank provenance is not yet mapped to the remake's
+0–13 UI SFX files, so the runtime deliberately remains silent instead of
+playing guessed substitutes.
 
 The indexed runtime now follows the caller lifecycle rather than the earlier
 authored stack. Source and destination use the shared six-entry roster. The

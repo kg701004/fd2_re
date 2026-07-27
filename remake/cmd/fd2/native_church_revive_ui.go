@@ -1,9 +1,12 @@
 package main
 
 import (
+	"time"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 func (g *Game) nativeReviveFeeForUnit(unit battle.Unit) (int, bool) {
@@ -324,6 +327,81 @@ func (g *Game) beginNativeChurchReviveDialogueClosing(after func()) bool {
 	g.nativeClassUIJob = &nativeClassUIJob{
 		frames: frames, restore: source, after: after,
 	}
+	return true
+}
+
+func (g *Game) beginNativeChurchReviveSuccess(after func()) bool {
+	a := g.nativeClassUI
+	if a == nil || len(a.paletteDAC) != 256*3 {
+		return false
+	}
+	background, ok := g.composeNativeChurchReviveQuestion()
+	if !ok {
+		return false
+	}
+	animation, final, err := campaign.ComposeNativeChurchReviveSuccessFrames(
+		background, a.reviveFX, a.portrait,
+	)
+	if err != nil {
+		return false
+	}
+	plan := campaign.PlanNativeChurchReviveSuccess()
+	timeline := make([]nativeClassUITimelineStep, 0, 9+32+1+32+1+1)
+	for _, frame := range animation {
+		timeline = append(timeline, nativeClassUITimelineStep{
+			frame: frame, palette: a.palette,
+			duration: time.Duration(plan.AnimationDelayBIOSTicks) * nativeBIOSTickPeriod,
+		})
+	}
+	last := animation[len(animation)-1]
+	appendPaletteDelta := func(delta int) bool {
+		dac := append([]byte(nil), a.paletteDAC...)
+		if err := fdother.ApplyVGAPaletteDelta(
+			dac, a.paletteDAC, 0, 255, delta,
+		); err != nil {
+			return false
+		}
+		palette, err := fdother.VGAPaletteFromDAC(dac)
+		if err != nil {
+			return false
+		}
+		palette[0] = a.palette[0]
+		timeline = append(timeline, nativeClassUITimelineStep{
+			frame: last, palette: palette,
+			duration: time.Duration(plan.PaletteDelayMS) * time.Millisecond,
+		})
+		return true
+	}
+	for _, delta := range plan.RisePaletteDeltas {
+		if !appendPaletteDelta(delta) {
+			return false
+		}
+	}
+	riseWait := time.Duration(plan.RiseLatchBIOSTicks)*nativeBIOSTickPeriod -
+		time.Duration(len(plan.RisePaletteDeltas)*plan.PaletteDelayMS)*time.Millisecond
+	if riseWait < 0 {
+		return false
+	}
+	timeline = append(timeline, nativeClassUITimelineStep{
+		frame: last, palette: timeline[len(timeline)-1].palette, duration: riseWait,
+	})
+	for _, delta := range plan.FallPaletteDeltas {
+		if !appendPaletteDelta(delta) {
+			return false
+		}
+	}
+	fallWait := time.Duration(plan.FallLatchBIOSTicks)*nativeBIOSTickPeriod -
+		time.Duration(len(plan.FallPaletteDeltas)*plan.PaletteDelayMS)*time.Millisecond
+	if fallWait < 0 {
+		return false
+	}
+	timeline = append(timeline,
+		nativeClassUITimelineStep{
+			frame: last, palette: timeline[len(timeline)-1].palette, duration: fallWait,
+		},
+		nativeClassUITimelineStep{frame: final, palette: a.palette},
+	)
+	g.nativeClassUIJob = &nativeClassUIJob{timeline: timeline, after: after}
 	return true
 }
 
