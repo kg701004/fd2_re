@@ -317,7 +317,7 @@ Item-row/runtime bridge: `RenderNativeItemPanelRows` executes `0x184c0` over
 the completed panel with compact raw-slot display, category/stat mixed-codec
 icons, FDTXT `itemID+181`, selected/unselected foreground 201/205 and exact
 stat-number origins. `NativeItemPanelRecordForUnit` materializes the required
-80-byte subset only when raw `+6/+8`, constructor bytes, DATO selector and all
+80-byte subset only when raw `+6/+8`, `+0x1f/+0x20`, DATO selector and all
 eight inventory cells have provenance; normalized HP/MP/AP/DP/DX/HIT/EV/MV,
 level and integral EXP are copied only into their independently established
 native offsets. The Ebiten adapter uses that record and player archives,
@@ -326,11 +326,14 @@ regions, and maps compact ↑/↓ plus ±4 left/right through
 `AdvanceNativeItemSelector`. Missing evidence/assets explicitly retain the
 legacy shell. Enter confirmation still refuses type zero and otherwise stops
 before the unresolved effect/target transaction. The tracked FDFIELD map
-rosters now carry proven raw `+6/+8` identity through
-`sync_native_selector_fields.py`, but campaign party records still lack a
-verified constructor lifecycle (especially after class change). Therefore the
-adapter is covered by a bounded player-archive oracle while ordinary campaign
-play still falls back; it is not yet a completed runtime replacement.
+rosters carry `+6/+8/+0x1f/+0x20` through
+`sync_native_selector_fields.py`. Direct `0x112a5` disassembly proves JOIN id
+selects the lower 24-byte record and writes record bytes0/1 to `+0x1f/+0x20`;
+`0x31571..0x3157a` later rewrites only class `+0x20` and selector `+7`.
+Scenario generation now projects the 32 cross-checked JOIN rows, persistent
+overlay preserves the raw fields/inventory flags, and class change updates raw
+class without fabricating a new constructor record. A real ch01 campaign asset
+plus player archives passes the Ebiten preparation regression.
 
 `RenderMirrorFigureFadePass` now implements only the proven `0x292ad` indexed primitive: it requires a caller-preseeded 640-stride work surface, presents `work+0x140`, blits primary at `+0x140-stage*10`, conditionally blits secondary for `arg4==0`, and presents the same right viewport again. It validates TAI#3's transparent bytes but does not claim to render the unresolved DATO/portrait or complete montage.
 
@@ -916,7 +919,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Native unit table export boundary (2026-07-26): `tools/extract_native_unit_tables.py` reads the LE object through `le_xref` and emits only raw records: `high_class` `0x61af9` (68×10, helper `0x4e4ff`, selector `FDFIELD b1-0x44`), `lower_class` `0x61da1` (32×24, helper `0x4e4e8`, selector `FDFIELD b1` in the lower branch), and `lower_aux` `0x620a1` (68×11, helper `0x4e4d1`, same selector). Docker extraction against the real FD2.EXE validates all 68/32/68 records. The JSON deliberately keeps selector provenance and `bytes_hex` without assigning gameplay names; it is an editable RE fixture, not permission to substitute portrait/class or to enable HUD optional unit/HP.
 
-   Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and writes `native_constructor:{branch,index,record,aux_record}` plus the independently derived `native_record_word42` when the constructor formula has complete provenance. `tools/sync_native_selector_fields.py --native-tables` merged only that raw field into the 33 editable map assets, preserving manual normalized stats; unsupported selectors remain absent. `battle.NativeConstructorTable` validates the exact 68/32/10/24/11 dimensions on load and preserves legacy assets without the field. No renderer or gameplay path reads these bytes yet; malformed records fail closed rather than falling back to portrait/class semantics.
+   Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and can write `native_constructor:{branch,index,record,aux_record}` plus the independently derived `native_record_word42` when the constructor formula has complete provenance. To avoid duplicating full tables in every map row, `tools/sync_native_selector_fields.py --native-tables` now merges only consumed raw `native_record_race/class` bytes and `native_record_word42` into all 33 editable map assets, preserving manual normalized stats. `battle.NativeConstructorTable` remains a validated optional audit object; malformed records fail closed rather than falling back to portrait/class semantics.
 
    HUD raw-state closure: `sub_11cac` calls `sub_1297d` immediately before the native map compositor. Its `[0x53c0b]` state advances `3→0` only when signed `rawScanline([0x46c])-rawLastScanline([0x53c0f])` is negative or greater than four, then stores the new last scanline; all other calls preserve it. `indexedmap.AdvanceNativeMapHUDState` now preserves this pure ABI and its boundary tests. The actual runtime caller still owns scanline/call timing, so the Ebiten optional unit icon remains fail-closed until those globals are materialized.
 

@@ -22,6 +22,24 @@
         0,
         0,
         0
+      ],
+      "native_identity": 0,
+      "native_record_race": 1,
+      "native_record_class": 1,
+      "inventory": [
+        0,
+        132,
+        192
+      ],
+      "inventory_slots": [
+        0,
+        132,
+        192,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -40,6 +58,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 4,
+      "native_record_race": 1,
+      "native_record_class": 3,
+      "inventory": [
+        20,
+        128
+      ],
+      "inventory_slots": [
+        20,
+        128,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -63,6 +98,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 9,
+      "native_record_race": 1,
+      "native_record_class": 5,
+      "inventory": [
+        52,
+        164
+      ],
+      "inventory_slots": [
+        52,
+        164,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -81,6 +133,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 30,
+      "native_record_race": 6,
+      "native_record_class": 25,
+      "inventory": [
+        72,
+        178
+      ],
+      "inventory_slots": [
+        72,
+        178,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -99,6 +168,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 1,
+      "native_record_race": 1,
+      "native_record_class": 2,
+      "inventory": [
+        0,
+        128
+      ],
+      "inventory_slots": [
+        0,
+        128,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -117,6 +203,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 8,
+      "native_record_race": 1,
+      "native_record_class": 4,
+      "inventory": [
+        44,
+        129
+      ],
+      "inventory_slots": [
+        44,
+        129,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -135,6 +238,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 2,
+      "native_record_race": 1,
+      "native_record_class": 1,
+      "inventory": [
+        0,
+        128
+      ],
+      "inventory_slots": [
+        0,
+        128,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -153,6 +273,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 10,
+      "native_record_race": 1,
+      "native_record_class": 6,
+      "inventory": [
+        0,
+        129
+      ],
+      "inventory_slots": [
+        0,
+        129,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     },
     {
@@ -171,6 +308,23 @@
         0,
         0,
         0
+      ],
+      "native_identity": 13,
+      "native_record_race": 2,
+      "native_record_class": 4,
+      "inventory": [
+        0,
+        129
+      ],
+      "inventory_slots": [
+        0,
+        129,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
       ]
     }
   ],

@@ -276,6 +276,9 @@ def build_base4_stats(
         mp += round(levels * _avg(growth["mp"]))
     return {
         "name": name, "cls": base["cls"], "fig": base["fig"], "portrait": base["portrait"],
+        "native_identity": char["index"],
+        "native_record_race": char["race"],
+        "native_record_class": char["cls"],
         "lv": lv, "hp": hp, "mp": mp, "ap": ap, "dp": dp, "mv": base["mv"],
         **({"spells": base["spells"]} if "spells" in base else {}),
         **({"inventory": char["inventory"]} if char and char.get("inventory") else {}),
@@ -302,6 +305,9 @@ def build_recruit_stats(
     return {
         "name": char["name"], "cls": char["cls_name"],
         "fig": char["sprite_group"], "portrait": char["face_portrait"],
+        "native_identity": char["index"],
+        "native_record_race": char["race"],
+        "native_record_class": char["cls"],
         "lv": lv, "hp": hp,
         "mp": round(hp * MP_HP_RATIO_CASTER) if is_caster else 0,
         "ap": round(hp * ap_ratio), "dp": round(hp * DP_HP_RATIO),
@@ -536,6 +542,24 @@ def build_campaign(
         scenario_path = f"assets/scenarios/ch{cid}.json"
         if c == 1:
             scenario_sources[cid] = "ch01(既有人工版,未覆寫)"
+            ch01_path = os.path.join(REMAKE, scenario_path)
+            with open(ch01_path, encoding="utf-8") as f:
+                authored = json.load(f)
+            generated_by_fig = {member["fig"]: member for member in party}
+            for member in authored.get("party", []):
+                generated = generated_by_fig.get(member.get("fig"))
+                if generated is None:
+                    raise ValueError(f"{ch01_path}: no JOIN provenance for fig={member.get('fig')}")
+                for field in ("native_identity", "native_record_race", "native_record_class"):
+                    if field in member and member[field] != generated[field]:
+                        raise ValueError(f"{ch01_path}: conflicting {field} for fig={member.get('fig')}")
+                    member[field] = generated[field]
+                for field in ("inventory", "inventory_slots"):
+                    if field not in member and field in generated:
+                        member[field] = generated[field]
+            with open(ch01_path, "w", encoding="utf-8") as f:
+                json.dump(authored, f, ensure_ascii=False, indent=2)
+                f.write("\n")
         else:
             scenario, source, n_reinforced, skipped = build_scenario_stub(
                 c, map_idx, row["title"], party, turn_events_by_ch.get(c, [])
@@ -556,6 +580,13 @@ def build_campaign(
                     if generated is None or "initial_command_mask" not in generated:
                         raise ValueError(f"{out_scn}: no EXE command mask for fig={member.get('fig')}")
                     member["initial_command_mask"] = generated["initial_command_mask"]
+                    for field in ("native_identity", "native_record_race", "native_record_class"):
+                        if field in member and member[field] != generated[field]:
+                            raise ValueError(f"{out_scn}: conflicting {field} for fig={member.get('fig')}")
+                        member[field] = generated[field]
+                    for field in ("inventory", "inventory_slots"):
+                        if field not in member and field in generated:
+                            member[field] = generated[field]
                 scenario = authored
             with open(out_scn, "w", encoding="utf-8") as f:
                 json.dump(scenario, f, ensure_ascii=False, indent=2)

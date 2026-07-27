@@ -69,6 +69,14 @@ type Unit struct {
 	// from Fig, BattleFig, portrait, or map-selector fields.
 	NativeIdentity    int
 	HasNativeIdentity bool
+	// NativeRecordRace/Class are the independently proven raw bytes at
+	// persistent/runtime +0x1f/+0x20. They remain separate from normalized
+	// class labels and from the immutable constructor-table provenance because
+	// class change rewrites only +0x20.
+	NativeRecordRace     byte
+	HasNativeRecordRace  bool
+	NativeRecordClass    byte
+	HasNativeRecordClass bool
 	// NativeConstructor preserves the proven EXE static-table provenance for
 	// unit+0x1f/+0x20 without assigning any gameplay meaning to raw bytes.
 	NativeConstructor *NativeConstructorTable `json:"native_constructor,omitempty"`
@@ -586,6 +594,8 @@ type unitsFile struct {
 		Fig                int                     `json:"fig"`
 		BattleFig          *int                    `json:"battle_fig,omitempty"`
 		NativeIdentity     *int                    `json:"native_identity,omitempty"`
+		NativeRecordRace   *byte                   `json:"native_record_race,omitempty"`
+		NativeRecordClass  *byte                   `json:"native_record_class,omitempty"`
 		MapSelectorSlot    *int                    `json:"map_selector_slot,omitempty"`
 		MapSelectorKey     *int                    `json:"map_selector_key,omitempty"`
 		NativeRecordByte5  *byte                   `json:"native_record_byte5,omitempty"`
@@ -667,6 +677,20 @@ func Load(path string) (*State, error) {
 				return nil, fmt.Errorf("battle: unit %d native_identity %d outside byte range", len(st.Units), *u.NativeIdentity)
 			}
 			nu.NativeIdentity, nu.HasNativeIdentity = *u.NativeIdentity, true
+		}
+		if u.NativeRecordRace != nil {
+			nu.NativeRecordRace, nu.HasNativeRecordRace = *u.NativeRecordRace, true
+		}
+		if u.NativeRecordClass != nil {
+			nu.NativeRecordClass, nu.HasNativeRecordClass = *u.NativeRecordClass, true
+		}
+		if u.NativeConstructor != nil {
+			if !nu.HasNativeRecordRace {
+				nu.NativeRecordRace, nu.HasNativeRecordRace = u.NativeConstructor.Record[0], true
+			}
+			if !nu.HasNativeRecordClass {
+				nu.NativeRecordClass, nu.HasNativeRecordClass = u.NativeConstructor.Record[1], true
+			}
 		}
 		if u.MapSelectorSlot != nil {
 			nu.MapSelectorSlot, nu.HasMapSelectorSlot = *u.MapSelectorSlot, true

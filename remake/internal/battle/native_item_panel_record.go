@@ -12,13 +12,10 @@ import (
 // where the native record meaning is independently established.
 func NativeItemPanelRecordForUnit(unit *Unit) ([]byte, error) {
 	if unit == nil || !unit.HasNativeRecordByte6 || !unit.HasNativeIdentity ||
-		unit.NativeConstructor == nil ||
+		!unit.HasNativeRecordRace || !unit.HasNativeRecordClass ||
 		len(unit.InventorySlots) != nativeInventoryCells ||
 		len(unit.NativeInventoryFlags) != nativeInventoryCells {
 		return nil, errors.New("native item panel: unit lacks raw record provenance")
-	}
-	if err := unit.NativeConstructor.validate(); err != nil {
-		return nil, err
 	}
 	if unit.BattleFig < 0 || unit.BattleFig > 0xff ||
 		unit.NativeIdentity < 0 || unit.NativeIdentity > 0xff ||
@@ -50,8 +47,8 @@ func NativeItemPanelRecordForUnit(unit *Unit) ([]byte, error) {
 		record[0x0a+slot*2] = byte(unit.NativeInventoryFlags[slot])
 		record[0x0b+slot*2] = byte(unit.InventorySlots[slot])
 	}
-	record[0x1f] = unit.NativeConstructor.Record[0]
-	record[0x20] = unit.NativeConstructor.Record[1]
+	record[0x1f] = unit.NativeRecordRace
+	record[0x20] = unit.NativeRecordClass
 	record[0x21] = byte(unit.Lv)
 	copy(record[0x22:0x28], unit.NativeTransient[:])
 	record[0x3b] = byte(unit.MV)

@@ -99,6 +99,10 @@ func TestLoadPreservesNativeConstructorRawTable(t *testing.T) {
 	if !st.Units[0].HasNativeIdentity || st.Units[0].NativeIdentity != 68 {
 		t.Fatalf("native identity=%d known=%v", st.Units[0].NativeIdentity, st.Units[0].HasNativeIdentity)
 	}
+	if !st.Units[0].HasNativeRecordRace || st.Units[0].NativeRecordRace != 1 ||
+		!st.Units[0].HasNativeRecordClass || st.Units[0].NativeRecordClass != 2 {
+		t.Fatalf("constructor raw race/class=%d/%d known=%v/%v", st.Units[0].NativeRecordRace, st.Units[0].NativeRecordClass, st.Units[0].HasNativeRecordRace, st.Units[0].HasNativeRecordClass)
+	}
 	bad := `{"w":1,"h":1,"units":[{"camp":"own","hp":1,"native_constructor":{"branch":"high_class","index":0,"record":[1]}}]}`
 	if err := os.WriteFile(path, []byte(bad), 0o600); err != nil {
 		t.Fatal(err)

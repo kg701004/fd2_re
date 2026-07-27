@@ -139,6 +139,8 @@ func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, 
 	u.MV += growthGroup
 	u.Exp = 0
 	u.Portrait, u.ClassID = targetPortrait, classID
+	// 0x31571..0x3157a rewrites raw +0x20 and +7, but not +0x1f.
+	u.NativeRecordClass, u.HasNativeRecordClass = byte(classID), true
 	// Native class-change flow 0x31576..0x3157a writes the selected target
 	// byte to live unit+7. For player construction that byte is both the
 	// FIGANI selector and the next 0x11019 raw map key; stable Fig remains the

@@ -8,11 +8,12 @@ does, however, close three fields for every scripted roster entry:
 * roster b0 -> 0x11019 raw key -> runtime unit+2 cache slot
 * roster b0 -> runtime unit+6
 * roster b1 -> runtime unit+7 / unit+8 FIGANI selector and identity
+* the bounded b1-selected constructor record -> runtime +0x1f/+0x20
 
 This tool preserves every existing asset field and updates only
-the fields above. The optional native table input adds only the independently
-proven runtime ``+0x42`` word; it deliberately does not duplicate constructor
-tables into every unit asset.
+the fields above. The optional native table input adds independently proven
+raw race/class bytes and runtime ``+0x42``; it deliberately does not duplicate
+whole constructor tables into every unit asset.
 
 Optional constructor provenance can be synchronized without touching the
 normalized HP field:
@@ -46,6 +47,12 @@ def expected_units(raw, map_index, native_tables=None):
             "native_identity": unit["portrait"],
         }
         if native_tables is not None:
+            constructor = export_units.native_constructor_for_portrait(
+                native_tables, unit["portrait"]
+            )
+            if constructor is not None:
+                item["native_record_race"] = constructor["record"][0]
+                item["native_record_class"] = constructor["record"][1]
             word42 = export_units.native_record_word42_for_portrait(
                 native_tables, unit["portrait"], unit["lv"]
             )
@@ -76,6 +83,8 @@ def sync_asset(raw, asset_path, write, native_tables=None):
         if not isinstance(unit, dict):
             raise ValueError(f"{asset_path}: unit {index} is not an object")
         fields = list(FIELDS)
+        if "native_record_race" in native:
+            fields.extend(("native_record_race", "native_record_class"))
         if "native_record_word42" in native:
             fields.append("native_record_word42")
         for field in fields:

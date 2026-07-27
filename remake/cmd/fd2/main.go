@@ -1938,6 +1938,10 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.Exp, dst.ExpPerLevel = src.Exp, src.ExpPerLevel
 	dst.Spells = append(dst.Spells[:0], src.Spells...)
 	dst.NativeCommandMask = src.NativeCommandMask
+	dst.NativeIdentity, dst.HasNativeIdentity = src.NativeIdentity, src.HasNativeIdentity
+	dst.NativeRecordRace, dst.HasNativeRecordRace = src.NativeRecordRace, src.HasNativeRecordRace
+	dst.NativeRecordClass, dst.HasNativeRecordClass = src.NativeRecordClass, src.HasNativeRecordClass
+	dst.NativeTransient = src.NativeTransient
 	dst.NativeRecordByte5, dst.HasNativeRecordByte5 = src.NativeRecordByte5, src.HasNativeRecordByte5
 	dst.NativeRecordByte6, dst.HasNativeRecordByte6 = src.NativeRecordByte6, src.HasNativeRecordByte6
 	// +0x42 is a raw persistent word used by ch15_post; preserve it only when
@@ -1946,6 +1950,7 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.Inventory = append(dst.Inventory[:0], src.Inventory...)
 	dst.Equipped = append(dst.Equipped[:0], src.Equipped...)
 	dst.InventorySlots = append(dst.InventorySlots[:0], src.InventorySlots...)
+	dst.NativeInventoryFlags = append(dst.NativeInventoryFlags[:0], src.NativeInventoryFlags...)
 }
 
 // grantItemToParty projects original 0x1c220 + 0x1bb8c: scan runtime units in
@@ -2100,6 +2105,7 @@ func (g *Game) syncPartyFromBattle() error {
 		snapshot.Inventory = append([]int(nil), current.Inventory...)
 		snapshot.Equipped = append([]bool(nil), current.Equipped...)
 		snapshot.InventorySlots = append([]int(nil), current.InventorySlots...)
+		snapshot.NativeInventoryFlags = append([]int(nil), current.NativeInventoryFlags...)
 		if snapshot.MaxMP < snapshot.MP {
 			snapshot.MaxMP = snapshot.MP
 		}

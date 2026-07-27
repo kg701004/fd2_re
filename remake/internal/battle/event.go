@@ -43,20 +43,23 @@ type PartyMember struct {
 	Fig int `json:"fig"`
 	// NativeIdentity is the optional persistent-record +0x08 key used by
 	// native 0x11506. It is intentionally separate from Fig/+7 selectors.
-	NativeIdentity *int  `json:"native_identity,omitempty"`
-	Portrait       int   `json:"portrait"`
-	HP             int   `json:"hp"`
-	MP             int   `json:"mp"`
-	AP             int   `json:"ap"`
-	DP             int   `json:"dp"`
-	HIT            int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
-	EV             int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
-	CritPct        int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
-	MV             int   `json:"mv"`
-	AtkMin         int   `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
-	AtkMax         int   `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
-	Lv             int   `json:"lv"`
-	Spells         []int `json:"spells"` // 已習得法術 id(spell.json)
+	NativeIdentity *int `json:"native_identity,omitempty"`
+	// Raw JOIN-constructor bytes written to persistent +0x1f/+0x20.
+	NativeRecordRace  *byte `json:"native_record_race,omitempty"`
+	NativeRecordClass *byte `json:"native_record_class,omitempty"`
+	Portrait          int   `json:"portrait"`
+	HP                int   `json:"hp"`
+	MP                int   `json:"mp"`
+	AP                int   `json:"ap"`
+	DP                int   `json:"dp"`
+	HIT               int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
+	EV                int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
+	CritPct           int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
+	MV                int   `json:"mv"`
+	AtkMin            int   `json:"atk_min"` // 攻擊距離下限(0=預設1;doc32 weapon_range.json)
+	AtkMax            int   `json:"atk_max"` // 攻擊距離上限(0=預設1;如亞雷斯騎士槍type3=2)
+	Lv                int   `json:"lv"`
+	Spells            []int `json:"spells"` // 已習得法術 id(spell.json)
 	// InitialCommandMask is the exact four-byte constructor source for
 	// unit+0x1a..+0x1d. It is deliberately not derived from Spells.
 	InitialCommandMask []byte `json:"initial_command_mask,omitempty"`
@@ -317,6 +320,12 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 		if pm.NativeIdentity != nil && *pm.NativeIdentity >= 0 && *pm.NativeIdentity <= 0xff {
 			u.NativeIdentity = *pm.NativeIdentity
 			u.HasNativeIdentity = true
+		}
+		if pm.NativeRecordRace != nil {
+			u.NativeRecordRace, u.HasNativeRecordRace = *pm.NativeRecordRace, true
+		}
+		if pm.NativeRecordClass != nil {
+			u.NativeRecordClass, u.HasNativeRecordClass = *pm.NativeRecordClass, true
 		}
 		// Editable scenario AP/DP/HIT/EV are already effective values (doc32),
 		// so preserve them as the base for later shop purchases.

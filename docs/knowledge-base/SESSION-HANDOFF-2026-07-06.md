@@ -946,12 +946,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `RenderNativeItemPanelRows` 完成 `0x184c0` compact rows之 raw/frame
   icons、FDTXT `ID+181`、selected201/unselected205與stat values；
   oracle PNG已更新有兩筆真實item rows。新增 strict
-  `NativeItemPanelRecordForUnit`，raw `+6/+8`、constructor、DATO與八格
+  `NativeItemPanelRecordForUnit`，raw `+6/+8/+0x1f/+0x20`、DATO與八格
   inventory缺一即拒絕。`cmd/fd2` 現使用完整 indexed panel、
   `AdvanceNativeItemSelector` compact四方向input，以及opening11→0/
   closing0→11 clipped Ebiten player；缺archive/provenance才fallback。
-  Xvfb玩家archive test跑完整開關。後續實際資產audit發現正常campaign
-  主角沒有constructor provenance，因此目前正式流程仍fallback，不能把
-  oracle成功寫成runtime替換完成；FDFIELD map roster的raw `+6/+8` identity
-  已由同步工具補齊。下一步是閉合主角constructor/class-change lifecycle，
-  Enter effect transaction仍封閉。
+  Xvfb玩家archive test跑完整開關。後續實際資產audit曾發現正常campaign
+  主角沒有constructor provenance，因此當時正式流程仍fallback；下一條
+  JOIN lifecycle closure已修正此限制。Enter effect transaction仍封閉。
+- 2026-07-27 JOIN/item-panel lifecycle closure：Docker Capstone重核
+  `0x112a5`，證實join id直接查lower record `0x4e4e8`與growth
+  `0x4e4d1`，record byte0/1寫runtime `+0x1f/+0x20`；class-change
+  `0x31571..0x3157a`只改`+0x20`與`+7`，不改race。新增獨立raw
+  race/class欄位，30章scenario由32筆characters/lower-table逐筆交叉核對後
+  輸出JOIN identity/race/class與8格defaults；persistent overlay保存raw
+  identity/class/transient/inventory flags，轉職寫回raw class。正常ch01
+  scenario加玩家archives已通過原版Ebiten item panel integration test。

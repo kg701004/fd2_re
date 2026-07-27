@@ -65,10 +65,18 @@ func TestScenarioPartyUnitsMaterializeRawCommandMask(t *testing.T) {
 
 func TestScenarioPartyUnitsPreserveOptionalNativeIdentity(t *testing.T) {
 	identity := 0x2a
-	sc := &Scenario{Party: []PartyMember{{Fig: 9, NativeIdentity: &identity}}}
+	race, class := byte(1), byte(5)
+	sc := &Scenario{Party: []PartyMember{{
+		Fig: 9, NativeIdentity: &identity,
+		NativeRecordRace: &race, NativeRecordClass: &class,
+	}}}
 	u := sc.PartyUnits(nil)[0]
 	if !u.HasNativeIdentity || u.NativeIdentity != identity {
 		t.Fatalf("native identity=%d known=%v, want %d/true", u.NativeIdentity, u.HasNativeIdentity, identity)
+	}
+	if !u.HasNativeRecordRace || u.NativeRecordRace != race ||
+		!u.HasNativeRecordClass || u.NativeRecordClass != class {
+		t.Fatalf("native race/class=%d/%d known=%v/%v", u.NativeRecordRace, u.NativeRecordClass, u.HasNativeRecordRace, u.HasNativeRecordClass)
 	}
 	legacy := (&Scenario{Party: []PartyMember{{Fig: 9}}}).PartyUnits(nil)[0]
 	if legacy.HasNativeIdentity {

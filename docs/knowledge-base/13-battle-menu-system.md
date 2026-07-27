@@ -132,13 +132,13 @@ category/stat icons、item FDTXT `ID+181`、selected color201、unselected205
 與 stat value座標。可重現 oracle 見
 [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
 Ebiten runtime現以 `NativeItemPanelRecordForUnit` 嚴格要求 raw `+6/+8`、
-constructor、DATO selector與8格inventory provenance，接完整 compositor、
+`+0x1f/+0x20`、DATO selector與8格inventory provenance，接完整 compositor、
 compact ↑↓/←→ input及 opening11→0/closing0→11 clipped presentation；
-缺證據／缺archive即回 legacy shell。目前 FDFIELD map roster 已同步
-raw `+6/+8` identity，但正常 campaign 主角仍缺 constructor provenance，
-所以這條 adapter 只有 bounded oracle 真正啟用，不能宣稱正常遊戲已替換
-legacy shell。現在剩主角 constructor lifecycle與 item Enter effect/target
-transaction；尚未獨立證實的 raw offsets 仍不命名。
+缺證據／缺archive即回 legacy shell。`0x112a5` 已證實 JOIN id直接選
+lower constructor record，寫 `+0x1f/+0x20`；轉職只改 `+0x20`與`+7`。
+30章scenario、persistent overlay及class-change writer現保留這組獨立raw
+provenance，正常ch01 campaign integration已可準備原版面板。現在剩 item
+Enter effect/target transaction；尚未獨立證實的 raw offsets 仍不命名。
 
 `0x20c6f` 已再以 Docker Capstone 展開：它依 item `+0xd` type 分派至多個原生 effect routines（例如 type `5/0xd→0x211a4`、`6/7→0x22af6`、`8/9/0xa→0x21082`、`0xe/0xf/0x10→0x22d1b/0x22866/0x22721`、`0x15→0x2111a`、`0x17→0x2218a`）。其中 type5/13 已定案為以 row `+0xe` 恢復 target-list HP：type5 隨後經 `0x1b8e7` 消耗來源 slot，type13 不移除來源；這是 effect 與 consumption contract，不推測道具顯示名稱。其餘尚未閉合的 routine 仍不可直接映射成藥水／卷軸規則。
 

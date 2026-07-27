@@ -9,10 +9,8 @@ func TestNativeItemPanelRecordForUnitUsesProvenRawSelectors(t *testing.T) {
 	unit := &Unit{
 		BattleFig: 9, NativeIdentity: 4, HasNativeIdentity: true,
 		NativeRecordByte6: 1, HasNativeRecordByte6: true,
-		NativeConstructor: &NativeConstructorTable{
-			Branch: "high_class", Index: 0,
-			Record: []byte{7, 8, 0, 0, 0, 0, 0, 0, 0, 0},
-		},
+		NativeRecordRace: 7, HasNativeRecordRace: true,
+		NativeRecordClass: 8, HasNativeRecordClass: true,
 		Lv: 12, MV: 5, Exp: 34, DX: 56,
 		HP: 80, MaxHP: 100, MP: 20, MaxMP: 40,
 		AP: 123, DP: 98, HIT: 76, EV: 54,
@@ -51,8 +49,9 @@ func TestNativeItemPanelRecordForUnitRejectsMissingRawProvenance(t *testing.T) {
 	unit := &Unit{
 		BattleFig: 1, NativeIdentity: 2, HasNativeIdentity: true,
 		NativeRecordByte6: 1, HasNativeRecordByte6: true,
-		NativeConstructor: &NativeConstructorTable{Branch: "high_class", Record: make([]byte, 10)},
-		Lv:                1, Exp: 1.5,
+		NativeRecordRace: 1, HasNativeRecordRace: true,
+		NativeRecordClass: 2, HasNativeRecordClass: true,
+		Lv: 1, Exp: 1.5,
 		InventorySlots: make([]int, 8), NativeInventoryFlags: make([]int, 8),
 	}
 	if record, err := NativeItemPanelRecordForUnit(unit); err == nil || record != nil {

@@ -12,10 +12,8 @@ func nativeItemPanelTestUnit() *battle.Unit {
 	return &battle.Unit{
 		BattleFig: 0, NativeIdentity: 0, HasNativeIdentity: true,
 		NativeRecordByte6: 1, HasNativeRecordByte6: true,
-		NativeConstructor: &battle.NativeConstructorTable{
-			Branch: "high_class", Index: 0,
-			Record: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		},
+		NativeRecordRace: 1, HasNativeRecordRace: true,
+		NativeRecordClass: 1, HasNativeRecordClass: true,
 		Lv: 12, MV: 5, Exp: 34, DX: 56,
 		HP: 80, MaxHP: 100, MP: 20, MaxMP: 40,
 		AP: 123, DP: 98, HIT: 76, EV: 54,
@@ -73,5 +71,33 @@ func TestPrepareNativeItemPanelAndTwelveFramePlayerWithOriginalAssets(t *testing
 	}
 	if g.itemOpen || !g.ring || g.nativeItemPanel != nil {
 		t.Fatalf("closed state item=%v ring=%v panel=%v", g.itemOpen, g.ring, g.nativeItemPanel)
+	}
+}
+
+func TestCampaignChapterOnePartyPreparesNativeItemPanel(t *testing.T) {
+	const base = "../../../org_game/炎龍騎士團/FLAME2/"
+	for _, name := range []string{"FDOTHER.DAT", "FDTXT.DAT", "DATO.DAT"} {
+		if _, err := os.Stat(base + name); err != nil {
+			t.Skip("player-provided original archives are absent")
+		}
+	}
+	sc, err := battle.LoadScenario("../../assets/scenarios/ch01.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	units := sc.PartyUnits(nil)
+	if len(units) == 0 {
+		t.Fatal("chapter one has no party")
+	}
+	unit := units[0]
+	if _, err := battle.NativeItemPanelRecordForUnit(unit); err != nil {
+		t.Fatalf("normal campaign party lacks native item-panel provenance: %v", err)
+	}
+	t.Setenv("FD2_ORIGINAL_FDOTHER", base+"FDOTHER.DAT")
+	t.Setenv("FD2_ORIGINAL_FDTXT", base+"FDTXT.DAT")
+	t.Setenv("FD2_ORIGINAL_DATO", base+"DATO.DAT")
+	g := &Game{sel: unit, itemOpen: true, nativeUIPalette: loadNativeUIPalette()}
+	if !g.prepareNativeItemPanel(unit) || g.nativeItemPanel == nil {
+		t.Fatal("normal campaign party did not prepare native item panel")
 	}
 }

@@ -1041,13 +1041,15 @@
 - [~] **UI-ITEM-PANEL-ROWS-EBITEN**：新增
   `RenderNativeItemPanelRows` 完成 `0x184c0` category/stat icons、
   FDTXT `itemID+181`、color201/205及stat number；oracle更新為有實際
-  item rows。`NativeItemPanelRecordForUnit` 僅在 raw `+6/+8`、
-  constructor、DATO與8格inventory provenance齊全時建立80-byte輸入。
+  item rows。`NativeItemPanelRecordForUnit` 僅在 raw
+  `+6/+8/+0x1f/+0x20`、DATO與8格inventory provenance齊全時建立
+  80-byte輸入。
   `cmd/fd2` 已有 complete indexed image adapter、compact四方向input、
   opening11→0與closing0→11；缺證據/archives才用legacy shell。
   Docker/Xvfb玩家資產 regression走完整12+12幀。FDFIELD map roster的
-  raw `+6/+8`已同步，但正常campaign主角尚缺可驗證constructor/class-change
-  lifecycle，故實際流程仍fallback；Enter effect/target transaction也
+  raw欄位已同步；JOIN `0x112a5` lower record與class-change只改
+  `+0x20/+7`的lifecycle亦已接進30章scenario/persistence，正常ch01
+  campaign asset可開啟原版面板。Enter effect/target transaction仍
   fail-closed。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
