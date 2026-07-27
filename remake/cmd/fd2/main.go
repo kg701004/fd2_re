@@ -2378,14 +2378,20 @@ func (g *Game) campInput() bool {
 		return true
 	case "choice", "town":
 		vis := g.camp.Visible()
-		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.campSel > 0 {
-			g.campSel--
+		menu := campaign.MenuState{Selection: g.campSel, Count: len(vis)}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+			menu.Step(campaign.MenuUp)
 		}
-		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.campSel < len(vis)-1 {
-			g.campSel++
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+			menu.Step(campaign.MenuDown)
 		}
-		if enter && len(vis) > 0 {
-			g.camp.Advance(fmt.Sprintf("opt%d", g.campSel))
+		selected, confirm := menu.Step(campaign.MenuTick)
+		if enter {
+			selected, confirm = menu.Step(campaign.MenuConfirm)
+		}
+		g.campSel = menu.Selection
+		if confirm {
+			g.camp.Advance(fmt.Sprintf("opt%d", selected))
 			g.enterNode()
 		}
 		return true

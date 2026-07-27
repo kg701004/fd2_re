@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | 地圖／游標、戰棋核心、對話、部分 action overlay、商店、preparation/church、campaign/save 垂直切片可測試 | **尚非全 30 章原版等價可通關**；完整 UI、演出、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會與 command overlay 截圖 | `0x22253` indexed renderer、ending compositor、HUD/layer caller 仍 fail-closed |
 
-Worklist 目前是 **394 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **395 個 `[x]`、97 個 `[~]`、66 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -32,6 +32,10 @@ Capstone 或 IDA 缺少功能。後續只有能直接餵給垂直操作鏈的 RE
 下一個里程碑是 `title → dialogue → battle → postbattle hub → preparation/town` 的
 deterministic input trace 與實機截圖，而不是繼續累積孤立 adapter。完整審計見
 [`56 §1.3`](docs/knowledge-base/56-fd2-remake-sdd.md) 與 [`42`](docs/knowledge-base/42-re-vs-remake-gap-audit.md)。
+
+本輪已把 `choice/town` hub 的 bounded cursor 與 `optN` confirm transition 抽成
+`campaign.MenuState`，並讓 `campInput` 共用；這是 postbattle/town 垂直鏈的 state
+contract，不代表原版各章節服務、BGM 或畫面 parity 已完成。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；`NativeItemEffectRouteForType` 只保存 call topology，
