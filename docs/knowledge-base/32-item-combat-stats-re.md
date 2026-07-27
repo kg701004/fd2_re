@@ -94,7 +94,7 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
-- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 `0x20c6f` effect/target path 仍待解碼。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 對 case 0 只顯示 fail-closed 訊息，不改變 HP/MP/inventory。`+0xd/+0x10/+0x12/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸各 effect table 仍未反組譯完。
+- **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 `0x20c6f` type dispatch 與數條 raw mutation route 已閉合，但 target-list producer、presentation 與玩法語意仍待解碼。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 對 case 0 只顯示 fail-closed 訊息，不改變 HP/MP/inventory。`+0xd/+0x10/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸等 gameplay mapping 不得由目前 raw route 猜出。
 - Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base `0x602ad`、row stride `0x17`（23 bytes）。這只確定 raw 定址；row 欄位與 table 長度尚未證實，不能把 bytes 直接填入本文件的 normalized `ItemStats`。
 - `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
 - `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、`0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃 target list 並累加全域結果，但兩者的 item-table 欄位對應與正負方向仍不可命名。
