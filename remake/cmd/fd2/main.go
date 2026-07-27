@@ -2530,27 +2530,7 @@ func (g *Game) campInput() bool {
 		}
 		if enter && len(g.churchIDs) > 0 {
 			if g.churchMode == "class_target" {
-				if g.churchSel >= len(g.churchBranches) {
-					return true
-				}
-				id := g.churchClassID
-				u := g.partyRoster[id]
-				branch := g.churchBranches[g.churchSel]
-				row, ok := g.classChangeGrowth[branch.Portrait]
-				if !ok {
-					g.msg = fmt.Sprintf("缺少轉職成長列 portrait=%02Xh", branch.Portrait)
-					return true
-				}
-				if err := campaign.ApplyClassChange(&u, branch.Portrait, branch.ClassID, branch.MobilityIncrement, row, g.rng, branch.InventoryIndex); err != nil {
-					g.msg = err.Error()
-					return true
-				}
-				u.ClsName = campaign.ClassName(branch.ClassID)
-				campaign.RecomputeAfterClassChange(&u, g.shopItemStats)
-				g.partyRoster[id] = u
-				g.msg = fmt.Sprintf("%s 已轉職為%s", u.Name, u.ClsName)
-				g.churchMode, g.churchBranches, g.churchIDs = "class", nil, g.churchCandidates("class")
-				g.churchSel = 0
+				g.applyChurchClassChange(g.churchSel)
 				return true
 			}
 			id := g.churchIDs[g.churchSel]
@@ -2717,6 +2697,39 @@ func (g *Game) campInput() bool {
 		return false // 戰鬥照常
 	}
 	return false
+}
+
+// applyChurchClassChange is the runtime seam for the native class-change
+// mutation. Candidate/branch data stays editable and unknown growth rows fail
+// closed before touching the persistent roster.
+func (g *Game) applyChurchClassChange(branchIndex int) bool {
+	if g.churchClassID < 0 || branchIndex < 0 || branchIndex >= len(g.churchBranches) {
+		g.msg = "缺少有效轉職分支"
+		return false
+	}
+	id := g.churchClassID
+	u, ok := g.partyRoster[id]
+	if !ok {
+		g.msg = fmt.Sprintf("轉職角色不存在 id=%d", id)
+		return false
+	}
+	branch := g.churchBranches[branchIndex]
+	row, ok := g.classChangeGrowth[branch.Portrait]
+	if !ok {
+		g.msg = fmt.Sprintf("缺少轉職成長列 portrait=%02Xh", branch.Portrait)
+		return false
+	}
+	if err := campaign.ApplyClassChange(&u, branch.Portrait, branch.ClassID, branch.MobilityIncrement, row, g.rng, branch.InventoryIndex); err != nil {
+		g.msg = err.Error()
+		return false
+	}
+	u.ClsName = campaign.ClassName(branch.ClassID)
+	campaign.RecomputeAfterClassChange(&u, g.shopItemStats)
+	g.partyRoster[id] = u
+	g.msg = fmt.Sprintf("%s 已轉職為%s", u.Name, u.ClsName)
+	g.churchMode, g.churchBranches, g.churchIDs = "class", nil, g.churchCandidates("class")
+	g.churchSel = 0
+	return true
 }
 
 // leaveChurch is the editable campaign boundary for the church menu's Escape

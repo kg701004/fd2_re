@@ -6,7 +6,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=399`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=400`、`[~]=97`、`[ ]=66`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -29,6 +29,7 @@
 - [x] **UI-VERTICAL-CH02-TOWN-SHOP-RETURN**：新增 `Game.leaveShop` 與 `TestCampaignTownShopPurchaseReturnTrace`，驗證 `town_ch02→shop_ch02_weapon`、reserve 不先扣金、finalize 後回 town；保存 [`town-shop-ch02.json`](../data/ui-traces/town-shop-ch02.json) 與 source rebuild 的 [`shop-current-remake.png`](../figures/shop-current-remake.png)。這只閉合 remake shop/campaign boundary，不命名 native shop callee 或宣稱原版 parity。
 
 - [x] **UI-VERTICAL-CH02-TOWN-CHURCH-REVIVE**：新增 `Game.reviveChurchUnit`／`Game.leaveChurch` 與 `TestCampaignTownChurchReviveReturnTrace`，驗證 `town_ch02→church_ch02→revive(level3,class1,fee7)→town_ch02`，gold 100→79、HP restore、OnField restore；保存 [`town-church-revive-ch02.json`](../data/ui-traces/town-church-revive-ch02.json) 與 source rebuild 的 [`church-current-remake.png`](../figures/church-current-remake.png)。未命名未知 church callee，不宣稱原版 service/E2 parity。
+- [x] **UI-VERTICAL-CH02-TOWN-CHURCH-CLASS-CHANGE**：新增 `Game.applyChurchClassChange` 與 `TestCampaignTownChurchClassChangeReturnTrace`，驗證可編輯分支將 portrait09 角色轉為 portrait34/class21、MV 5→7、Exp reset、消耗 inventory item `0x5a`，並可 Escape 回 `town_ch02`；保存 [`town-church-class-change-ch02.json`](../data/ui-traces/town-church-class-change-ch02.json)。原版 class-target renderer 與 FD2.SAV 相容性仍 fail-closed。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)

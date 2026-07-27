@@ -1,0 +1,16 @@
+{
+  "name": "town_ch02 to church class change and return",
+  "source_campaign": "remake/assets/scenarios/campaign_full.json",
+  "start": "town_ch02",
+  "events": [
+    {"input": "down", "selection": 1},
+    {"input": "enter", "outcome": "opt1", "node": "church_ch02"},
+    {"service": "class_change", "current_portrait": 9, "target_portrait": 52, "target_class": 21, "required_item": 90},
+    {"input": "escape", "node": "town_ch02"}
+  ],
+  "expected_nodes": ["town_ch02", "church_ch02", "town_ch02"],
+  "limitations": [
+    "The mutation is the verified editable class-change branch; native renderer and FD2.SAV compatibility are not claimed.",
+    "The current source church menu screenshot does not prove original class-target visual parity."
+  ]
+}
