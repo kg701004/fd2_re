@@ -90,32 +90,29 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	}, nil
 }
 
-// drawNativeClassList presents only the now-closed 0x31019 final list frame.
-// The six 0x1974c opening frames are preserved by the campaign compositor but
-// are not scheduled here until the runtime draw-ack cadence is recovered.
-func (g *Game) drawNativeClassList(screen *ebiten.Image) bool {
+func (g *Game) composeNativeClassListFrame() ([]byte, bool) {
 	a := g.nativeClassUI
 	if a == nil || g.churchMode != "class" || len(g.churchIDs) == 0 {
-		return false
+		return nil, false
 	}
 	start, visible := campaign.NativeClassCandidateWindow(len(g.churchIDs), g.churchSel)
 	if visible == 0 {
-		return false
+		return nil, false
 	}
 	rows := make([]campaign.NativeClassListRow, 0, visible)
 	for row := 0; row < visible; row++ {
 		id := g.churchIDs[start+row]
 		unit, ok := g.partyRoster[id]
 		if !ok || !unit.HasNativeIdentity || !unit.HasMapSelectorKey {
-			return false
+			return nil, false
 		}
 		target, ok := campaign.NativeClassChangeTarget(&unit, g.classChangeTable)
 		if !ok {
-			return false
+			return nil, false
 		}
 		sprite, err := a.units.SpriteFor(unit.MapSelectorKey, 0, 0)
 		if err != nil {
-			return false
+			return nil, false
 		}
 		rows = append(rows, campaign.NativeClassListRow{
 			Sprite: sprite, NameTextIndex: unit.NativeIdentity + 1,
@@ -126,26 +123,61 @@ func (g *Game) drawNativeClassList(screen *ebiten.Image) bool {
 		a.background, a.panel, rows, g.churchSel-start, a.strings, a.font,
 	)
 	if err != nil {
+		return nil, false
+	}
+	return frame, true
+}
+
+func (g *Game) drawNativeClassList(screen *ebiten.Image) bool {
+	frame, ok := g.composeNativeClassListFrame()
+	if !ok {
 		return false
 	}
 	g.presentNativeClassFrame(screen, frame)
 	return true
 }
 
-func (g *Game) drawNativeClassConfirmation(screen *ebiten.Image) bool {
+func (g *Game) nativeClassConfirmationState() (*nativeClassUIAssets, int, bool) {
 	a := g.nativeClassUI
 	if a == nil || g.churchMode != "class_confirm" || g.churchClassID < 0 {
-		return false
+		return nil, 0, false
 	}
 	unit, ok := g.partyRoster[g.churchClassID]
 	if !ok || unit.Portrait < 0 {
-		return false
+		return nil, 0, false
+	}
+	return a, unit.Portrait + 1, true
+}
+
+func (g *Game) composeNativeClassConfirmationQuestion() ([]byte, bool) {
+	a, nameTextIndex, ok := g.nativeClassConfirmationState()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeClassConfirmationQuestion(
+		a.background, a.strings, a.font, nameTextIndex,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativeClassConfirmationFrame() ([]byte, bool) {
+	a, nameTextIndex, ok := g.nativeClassConfirmationState()
+	if !ok {
+		return nil, false
 	}
 	frame, err := campaign.ComposeNativeClassConfirmationFrame(
 		a.background, a.choices, a.strings, a.font,
-		unit.Portrait+1, g.churchSel, 1,
+		nameTextIndex, g.churchSel, g.nativeClassUIPulse/2,
 	)
 	if err != nil {
+		return nil, false
+	}
+	return frame, true
+}
+
+func (g *Game) drawNativeClassConfirmation(screen *ebiten.Image) bool {
+	frame, ok := g.composeNativeClassConfirmationFrame()
+	if !ok {
 		return false
 	}
 	g.presentNativeClassFrame(screen, frame)

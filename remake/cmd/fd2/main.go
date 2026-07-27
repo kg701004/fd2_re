@@ -159,6 +159,11 @@ type Game struct {
 	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	nativeUIPalette          color.Palette
 	nativeClassUI            *nativeClassUIAssets
+	nativeClassUIJob         *nativeClassUIJob
+	nativeClassUIClock       nativeBIOSClock
+	nativeClassUIPulse       int
+	nativeClassUILastTick    int
+	nativeClassUIHasTick     bool
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -2638,6 +2643,9 @@ func (g *Game) campInput() bool {
 			}
 			return true
 		}
+		if g.nativeClassUIBlocksInput() {
+			return true
+		}
 		if g.churchMode == "menu" {
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
 				g.churchSel = campaign.AdvanceNativeChurchServiceSelection(g.churchSel, -1)
@@ -2659,6 +2667,9 @@ func (g *Game) campInput() bool {
 					g.churchMode = map[int]string{2: "revive", 3: "class"}[g.churchSel]
 					g.churchIDs = g.churchCandidates(g.churchMode)
 					g.churchSel = 0
+					if g.churchMode == "class" {
+						g.beginNativeClassListOpening()
+					}
 				default:
 					g.msg = "此教會服務尚待原版 callee 完整接線"
 				}
@@ -2729,10 +2740,9 @@ func (g *Game) campInput() bool {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			if g.churchMode == "class_confirm" {
-				g.churchMode = "class"
-				g.churchBranches = nil
-				g.churchClassID = -1
-				g.churchSel = 0
+				if !g.beginNativeClassConfirmationClosing(g.returnToNativeClassList) {
+					g.returnToNativeClassList()
+				}
 				return true
 			}
 			g.churchMode = "menu"
@@ -2751,12 +2761,20 @@ func (g *Game) campInput() bool {
 			}
 			if enter {
 				if g.churchSel == 0 {
-					g.applyChurchClassChange(0)
+					apply := func() {
+						if g.applyChurchClassChange(0) {
+							g.beginNativeClassListOpening()
+							return
+						}
+						g.returnToNativeClassList()
+					}
+					if !g.beginNativeClassConfirmationClosing(apply) {
+						apply()
+					}
 				} else {
-					g.churchMode = "class"
-					g.churchBranches = nil
-					g.churchClassID = -1
-					g.churchSel = 0
+					if !g.beginNativeClassConfirmationClosing(g.returnToNativeClassList) {
+						g.returnToNativeClassList()
+					}
 				}
 			}
 			return true
@@ -2782,6 +2800,7 @@ func (g *Game) campInput() bool {
 					g.churchBranches = []campaign.ClassChangeBranch{target}
 					g.churchMode = "class_confirm"
 					g.churchSel = 0
+					g.beginNativeClassConfirmationOpening()
 				}
 			}
 		}
@@ -4181,6 +4200,7 @@ func (g *Game) tileAt(idx int) *ebiten.Image {
 func (g *Game) Update() error {
 	g.frame++
 	g.stepActionOverlayLifecycle()
+	g.stepNativeClassUILifecycle(time.Now())
 	if inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -5487,6 +5507,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":
+		if g.drawNativeClassUIJob(screen) {
+			return
+		}
 		if g.drawNativeClassConfirmation(screen) {
 			return
 		}

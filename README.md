@@ -73,10 +73,13 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、
 左右 Yes/No 確認、角色轉職、物品消耗與 `Escape → town_ch02`。候選清單的
-`0x311DC+0x31019` 已使用原版 FDOTHER#14、FDICON、FDTXT/font 接回 runtime final frame；
-六幀 `0x1974c` opening compositor 已有 regression，但 runtime draw-ack cadence 尚未排程。
+`0x311DC+0x31019` 已使用原版 FDOTHER#14、FDICON、FDTXT/font 接回 runtime；
+`0x1974c` 的六幀 opening 只在每個 frame 的 Draw acknowledgement 後前進。
 `0x19953` 的動態角色名、FDOTHER#2 YES/NO normal/pulse cells 與四幀 open/close compositor
-亦已接回 runtime final frame；其 draw-ack／BIOS pulse cadence 與 FD2.SAV 相容性仍 fail-closed。
+亦已接回 runtime：opening／closing 都以四個 Draw acknowledgement 排程，Yes mutation 與
+No／Escape 返回都延後至 closing 第四幀已呈現。確認 pulse 依原始 BIOS low-word delta>=2
+遞增 counter mod4，選中 cell 使用 counter/2 variant。`0x2d669` church 主選單 transition
+尚未 indexed 還原，FD2.SAV 相容性仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON

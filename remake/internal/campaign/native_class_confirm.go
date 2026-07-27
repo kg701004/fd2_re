@@ -69,6 +69,34 @@ func ComposeNativeClassConfirmationFrame(
 	if selected < 0 || selected > 1 || pulse < 0 || pulse > 1 || strings == nil || font == nil {
 		return nil, errors.New("campaign: invalid native class confirmation state")
 	}
+	frame, err := ComposeNativeClassConfirmationQuestion(background, strings, font, nameTextIndex)
+	if err != nil {
+		return nil, err
+	}
+	for option, base := range []int{48, 51} {
+		index := base
+		if option == selected {
+			index += pulse
+		}
+		x := nativeConfirmBaseX + []int{-16, 16}[option]
+		if err := cells[index].BlitAt(frame, 320, x, nativeConfirmY); err != nil {
+			return nil, err
+		}
+	}
+	return frame, nil
+}
+
+// ComposeNativeClassConfirmationQuestion reproduces the class caller's
+// FDTXT#594 draw before 0x19953 starts its choice-cell opening.
+func ComposeNativeClassConfirmationQuestion(
+	background []byte,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	nameTextIndex int,
+) ([]byte, error) {
+	if len(background) != 320*200 || strings == nil || font == nil {
+		return nil, errors.New("campaign: native class confirmation question assets are unavailable")
+	}
 	question, err := strings.Words(594)
 	if err != nil {
 		return nil, err
@@ -95,16 +123,6 @@ func ComposeNativeClassConfirmationFrame(
 			return nil, fmt.Errorf("campaign: dynamic class name contains control %#x", word)
 		}
 		if err := font.BlitNativeGlyph(frame, 320, 119*320+12+i*fdtxt.GlyphWidth, int(word), style); err != nil {
-			return nil, err
-		}
-	}
-	for option, base := range []int{48, 51} {
-		index := base
-		if option == selected {
-			index += pulse
-		}
-		x := nativeConfirmBaseX + []int{-16, 16}[option]
-		if err := cells[index].BlitAt(frame, 320, x, nativeConfirmY); err != nil {
 			return nil, err
 		}
 	}

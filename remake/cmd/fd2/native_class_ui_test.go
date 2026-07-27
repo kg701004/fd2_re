@@ -46,8 +46,19 @@ func TestDrawNativeClassListUsesPlayerOriginalAssets(t *testing.T) {
 	if !g.drawNativeClassList(screen) {
 		t.Fatal("native class list unexpectedly fell back")
 	}
+	if !g.beginNativeClassListOpening() || len(g.nativeClassUIJob.frames) != 6 {
+		t.Fatal("native six-frame class list opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
 	g.churchMode, g.churchClassID, g.churchSel = "class_confirm", 9, 0
 	if !g.drawNativeClassConfirmation(screen) {
 		t.Fatal("native class confirmation unexpectedly fell back")
+	}
+	if !g.beginNativeClassConfirmationOpening() || len(g.nativeClassUIJob.frames) != 4 {
+		t.Fatal("native four-frame confirmation opening unexpectedly fell back")
+	}
+	g.nativeClassUIJob = nil
+	if !g.beginNativeClassConfirmationClosing(nil) || len(g.nativeClassUIJob.frames) != 4 {
+		t.Fatal("native four-frame confirmation closing unexpectedly fell back")
 	}
 }
