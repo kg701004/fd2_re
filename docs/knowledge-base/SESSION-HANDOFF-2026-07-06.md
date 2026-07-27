@@ -46,8 +46,9 @@ working tree 的 `native_2c548.json`、`internal/ending`、`internal/figani` fig
 > chapter30 保留 direct ending。下一個商店切片必須使用同一 `partyRoster` numeric inventory，不能再寫入舊
 > 的名稱字串清單。
 
-> **2026-07-16 第二十次 Codex 更新（商店資料與原版收件規則）**：`shops.json`、demo 與 full
-> campaign 的337筆商品皆已保存 EXE 原版 unsigned-byte `id`，逐筆以 `item.json` 的價格交叉驗證；
+> **2026-07-16 第二十次 Codex 更新（商店資料與原版收件規則；數量斷言已修正）**：`shops.json`、demo
+> 與 full campaign 目前保存的是 215 個 EXE 原版 unsigned-byte `id`（0..214），逐筆以 `item.json` 的價格交叉驗證；
+> 舊版「337筆商品」說法與現行 fixture 不一致，撤回；runtime `0x602ad` table 邊界仍未證實。
 > generator 會拒絕缺 ID 商品。原版購買順序已 RE 為「確認→金錢檢查→選收件者→8格容量→插入首空槽→
 > 裝備品詢問立即裝備→最後扣錢」；滿包／取消／無可裝備者均不扣錢。`0x1c1c3` 是純 class×item.type
 > 六欄白名單，EXE file `0x55689`、stride7、首 byte 常數、後六 byte 才是 type；已匯出

@@ -625,8 +625,9 @@ D3/D5 不採「搬走敵人全部 inventory」的猜法，而使用上述特殊�
 在第一個戰間節點前均恰有一次同步；chapter30 仍保留原版終局 `ending`。因此不會為保存物品而跳過
 商店／教會／整備。ch21 既有配方兩臂則仍共同 sync 後回 town22。
 
-商店資料現保存原版 numeric item ID：`docs/data/shops.json` 與 campaign 的337筆品項均以 EXE
-`item.json` 價格交叉驗證，generator 也拒絕缺 ID 的新增品項。購買的原版語意已定案為「確認商品、
+商店資料現保存原版 numeric item ID：目前 tracked `item.json`／shops fixture 為 215 個 ID（0..214），
+並以 EXE `item.json` 價格交叉驗證，generator 也拒絕缺 ID 的新增品項。較早「337 筆品項」說法與
+現行 fixture 不一致，已撤回；runtime `0x602ad` table 的完整邊界尚未證實。購買的原版語意已定案為「確認商品、
 檢查金錢、選收件角色、檢查該角色8格背包、放首空槽、裝備品可選立即裝備、最後才扣錢」；取消、
 無適格角色及滿欄均不得改動金錢。適格性是 `class × item.type`，由 EXE file `0x55689` 的
 29×7 表取得（首 byte 常數、後六 byte 白名單），已匯出為 editable `class_equip_types.json`。
