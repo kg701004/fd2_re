@@ -1,0 +1,76 @@
+// Command fd2-item-panel-oracle renders the recovered 0x17eef+0x17fc0
+// indexed item panel from player-provided original archives.
+package main
+
+import (
+	"encoding/binary"
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
+
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+)
+
+func main() {
+	if len(os.Args) != 5 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-item-panel-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT output.png")
+		os.Exit(2)
+	}
+	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
+
+	record := make([]byte, 80)
+	record[7] = 0
+	record[8] = 0
+	record[31] = 0
+	record[32] = 0
+	record[33] = 12
+	record[37] = 1
+	binary.LittleEndian.PutUint16(record[62:], 345)
+	binary.LittleEndian.PutUint16(record[64:], 80)
+	binary.LittleEndian.PutUint16(record[66:], 100)
+	binary.LittleEndian.PutUint16(record[68:], 20)
+	binary.LittleEndian.PutUint16(record[70:], 40)
+	binary.LittleEndian.PutUint16(record[72:], 123)
+	binary.LittleEndian.PutUint16(record[74:], 98)
+	binary.LittleEndian.PutUint16(record[76:], 76)
+	binary.LittleEndian.PutUint16(record[78:], 54)
+
+	pixels := make([]byte, 320*200)
+	if err := battle.RenderNativeItemPanelResources(fdotherPath, fdtxtPath, datoPath, record, pixels); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	paletteData, err := fdother.ReadResource(fdotherPath, 0)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	palette, err := fdother.ParseVGAPalette(paletteData)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	// The completed native framebuffer is opaque; palette index zero is no
+	// longer a sprite transparency marker at this presentation boundary.
+	palette[0] = color.NRGBA{A: 0xff}
+	frame := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
+	copy(frame.Pix, pixels)
+
+	output, err := os.Create(outputPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := png.Encode(output, frame); err != nil {
+		output.Close()
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := output.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}

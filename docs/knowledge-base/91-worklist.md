@@ -1006,7 +1006,8 @@
   left `(src5,7,86×86)` frame6後left-clip16px；upper
   `(92,7,223×86)` frame3後up-clip16px、frame9消失；bottom
   `(5,94,310×102)` 每幀y+16、frame6消失。`NativeItemPanelSchedule`
-  exact reverse/clip regression通過；indexed source buffer與GUI adapter仍待。
+  exact reverse/clip regression通過；indexed source已由下方完整
+  compositor閉合，GUI animation adapter仍待。
 - [x] **RE-ITEM-PANEL-SOURCES-17EEF-17FC0**：official IDA 9.4 確認
   `0x17eef` 以 `0x168b6(dst,320,5,7,5,5)` 建 `(5,7)` 的5×5框，
   unit record `+7` 選 DATO portrait貼 `(8,10)`；FDOTHER#5 directory
@@ -1020,7 +1021,7 @@
   49-cell raw grid→DATO frame0→FDOTHER#5 entries20/21。新增
   `LMI1Entry.BlitOpaqueAt` 修正舊「`0x4e8af` index0 transparent」錯誤；
   synthetic overwrite/atomic failure與玩家資產 regression通過。
-  `0x17fc0` dynamic overlays及 Ebiten bridge仍待。
+  `0x17fc0` dynamic overlays已由下方項目閉合；Ebiten bridge仍待。
 - [x] **RE-ITEM-TEXT-HELPER-15F84**：official IDA重核
   `0x15f84/0x16559`，刪除 doc35 舊「`[0x53a85]` 是 CJK glyph容器」
   斷言。普通文字實際走
@@ -1028,6 +1029,15 @@
   DATO `[0x53a85]` 取 mouth frame重貼 portrait。item panel三段文字
   style固定 foreground205/shadow76/background0；含控制碼時仍須
   fail-closed。
+- [x] **UI-ITEM-PANEL-DYNAMIC-17FC0**：新增
+  `RenderNativeItemPanelData/Resources`，完整執行2 bar、4
+  compared-number、8 raw-number、3 FDTXT與4 icon calls；精確保存
+  `0x18795/0x17d6f` zero/nonzero bar、`0x1875d/0x187d6` padding/
+  overflow/color、raw/four-mode/font三 codec與 record `+7` DATO selector。
+  整張 atomic commit，control word fail-closed；synthetic與玩家 archive
+  regression通過。新增可重現工具 `cmd/fd2-item-panel-oracle` 與
+  [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
+  Ebiten input/12-frame player仍待。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、

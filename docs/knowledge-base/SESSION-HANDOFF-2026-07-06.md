@@ -933,3 +933,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `[0x53a85]` offset table取 mouth frame作 portrait animation。
   doc14/doc35 舊「`[0x53a75]`文字區底圖／`[0x53a85]`字模容器」
   斷言已刪。item panel call style為205/76/0。
+- 2026-07-27 complete item-panel indexed compositor：
+  `RenderNativeItemPanelData/Resources` 現執行完整 `0x17fc0`，包含
+  `0x18795→0x17d6f` bars、`0x1875d/0x187d6` digits/overflow、
+  entries53–57 icons與三段FDTXT#0/FDOTHER#4文字；三種 codec不混用，
+  record `+7` 直接選 DATO，整張 base+overlay atomic commit。
+  control-bearing text拒絕。玩家資產 oracle由
+  `cmd/fd2-item-panel-oracle` 產生
+  [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
+  尚未接 Ebiten item input與12-frame presentation。
