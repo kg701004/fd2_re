@@ -1171,3 +1171,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   與exact cursor-confirm gate，並由FDOTHER#1 descriptor0呈現原生steady
   cursor；白色方框已移除。動態target overlay/flash與indexed effect renderer
   仍維持fail-closed／playable fallback。
+- 2026-07-28 drawable target-overlay production bridge：`composeNativeMapFrame`
+  與Draw modal gate已開放exact `0x122dc` call-table存在的selectors1–5；
+  `nativeCommand0Targeting`即使保留actor `g.sel`也能由原生indexed frame覆蓋
+  normalized橘色highlight。regression逐一要求selectors2–5相對selector1
+  產生不同VGA bytes。selector0 transient、selector6 field mutation及7+
+  no-draw values仍不進production compositor；不宣稱target flash／effect完成。

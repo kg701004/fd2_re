@@ -4665,11 +4665,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawPhaseBanner(screen) // 回合橫幅(PLAYER/ENEMY PHASE,transient)
 	}
 	// A complete original indexed frame supersedes the normalized map/unit/HUD
-	// layers at the verified interactive selector one. [0x51a83] is not a small command/target
-	// enum: record-byte+2 writers can exceed six and target validation consumes
-	// those values even when 0x122dc draws no overlay. Keep the playable
-	// renderer until that complete interactive lifecycle is materialized.
-	if !legacyViewport && campaignBattleView && g.sel == nil &&
+	// layers for the verified drawable selectors 1..5. Target selection keeps
+	// g.sel as its actor, so explicitly admit that modal state. Record-byte+2
+	// writers can exceed six and target validation still consumes those values
+	// even when 0x122dc draws no overlay; those states retain the playable
+	// renderer until their complete presentation lifecycle is materialized.
+	if !legacyViewport && campaignBattleView &&
+		(g.sel == nil || g.nativeCommand0Targeting) &&
 		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
 		nativeMapPresented = g.drawNativeMapFrame(screen)
 	}
@@ -6188,8 +6190,8 @@ func (g *Game) composeNativeMapFrame() error {
 	a := g.nativeMapAssets
 	hud, ok := g.nativeMapHUDInput()
 	if !ok || g.st == nil || !g.st.HasNativeMapRangeModeState ||
-		g.st.NativeMapRangeMode != 1 {
-		return errors.New("native map frame: HUD or interactive selector state unavailable")
+		g.st.NativeMapRangeMode < 1 || g.st.NativeMapRangeMode > 5 {
+		return errors.New("native map frame: HUD or drawable selector state unavailable")
 	}
 	in, err := buildNativeMapFrameInput(a, g.m, g.st, nativeMapFrameRuntime{HUD: hud})
 	if err != nil {

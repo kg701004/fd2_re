@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"image/color"
 	"os"
@@ -131,6 +132,45 @@ func TestDrawNativeMapFramePresentsCorrectedVGABorder(t *testing.T) {
 	}
 	if got := g.nativeMapVGA[4*320+4]; got != 3 {
 		t.Fatalf("first viewport pixel=%d, want unit layer 3", got)
+	}
+}
+
+func TestComposeNativeMapFrameAdmitsOnlyDrawableInteractiveSelectors(t *testing.T) {
+	assets, field, state := completeNativeMapFrameFixture(t)
+	for i := range assets.Range.Sprites {
+		assets.Range.Sprites[i] = nativeFrameTestSprite(byte(0x20 + i))
+	}
+	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CursorX: 4, CursorY: 4, VisibleCursorX: 4, VisibleCursorY: 4,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{
+		nativeMapAssets: assets,
+		m:               field,
+		st:              state,
+	}
+	var steady []byte
+	for mode := 1; mode <= 5; mode++ {
+		if !state.MaterializeNativeMapRangeMode(mode) {
+			t.Fatalf("selector %d rejected by raw state", mode)
+		}
+		if err := g.composeNativeMapFrame(); err != nil {
+			t.Fatalf("drawable selector %d: %v", mode, err)
+		}
+		if mode == 1 {
+			steady = append([]byte(nil), g.nativeMapVGA...)
+		} else if bytes.Equal(steady, g.nativeMapVGA) {
+			t.Fatalf("dynamic selector %d did not change the indexed frame", mode)
+		}
+	}
+	for _, mode := range []int{0, 6, 11} {
+		if !state.MaterializeNativeMapRangeMode(mode) {
+			t.Fatalf("selector %d rejected by raw state", mode)
+		}
+		if err := g.composeNativeMapFrame(); err == nil {
+			t.Fatalf("non-drawable production selector %d was admitted", mode)
+		}
 	}
 }
 
