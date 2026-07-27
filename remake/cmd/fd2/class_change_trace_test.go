@@ -21,13 +21,13 @@ func TestCampaignTownChurchClassChangeReturnTrace(t *testing.T) {
 			"church_ch02": {Type: "church", Next: "town_ch02"},
 		},
 	}
-	u := battle.Unit{Name: "悠妮", Portrait: 9, BattleFig: 9, ClassID: 5, Lv: 20, Exp: 31, AP: 20, DP: 18, DX: 12, MV: 5, Inventory: []int{0x5a}, Equipped: []bool{true}, InventorySlots: []int{0x5a}}
+	u := battle.Unit{Name: "悠妮", Portrait: 9, BattleFig: 9, ClassID: 5, NativeIdentity: 9, HasNativeIdentity: true, MapSelectorKey: 9, HasMapSelectorKey: true, Lv: 20, Exp: 31, AP: 20, DP: 18, DX: 12, MV: 5, Inventory: []int{0x5a}, Equipped: []bool{true}, InventorySlots: []int{0x5a}}
 	optionalTarget, specialTarget := 0x3b, 0x34
 	g := &Game{
 		camp:           campaign.NewRunner(c),
-		partyRoster:    map[int]battle.Unit{0: u},
-		partyMembers:   map[int]bool{0: true},
-		partyJoinOrder: []int{0},
+		partyRoster:    map[int]battle.Unit{9: u},
+		partyMembers:   map[int]bool{9: true},
+		partyJoinOrder: []int{9},
 		classChangeTable: campaign.ClassChangeTable{
 			Current: map[int]campaign.ClassChangeCurrent{9: {
 				Portrait: 9, DefaultTarget: 0x29, ItemID: 0x58,
@@ -51,12 +51,12 @@ func TestCampaignTownChurchClassChangeReturnTrace(t *testing.T) {
 	if !ok || target.Branch != "special" || target.Portrait != 0x34 {
 		t.Fatalf("native target priority=%+v ok=%v", target, ok)
 	}
-	g.churchMode, g.churchClassID = "class_confirm", 0
+	g.churchMode, g.churchClassID = "class_confirm", 9
 	g.churchBranches = []campaign.ClassChangeBranch{target}
 	if !g.applyChurchClassChange(0) {
 		t.Fatalf("class change failed: msg=%q", g.msg)
 	}
-	changed := g.partyRoster[0]
+	changed := g.partyRoster[9]
 	if changed.Portrait != 0x34 || changed.ClassID != 21 || changed.MV != 7 || changed.Exp != 0 || len(changed.Inventory) != 0 {
 		t.Fatalf("class mutation=%#v", changed)
 	}

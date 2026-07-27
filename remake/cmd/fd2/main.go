@@ -158,6 +158,7 @@ type Game struct {
 	ringIcons                [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
 	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	nativeUIPalette          color.Palette
+	nativeClassUI            *nativeClassUIAssets
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -5486,6 +5487,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":
+		if g.drawNativeClassList(screen) {
+			return
+		}
 		if g.churchMode == "menu" {
 			fillBox(150, 110, 340, 180)
 			g.font.Draw(screen, n.Text, 182, 126, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
@@ -6074,6 +6078,9 @@ func loadGame() *Game {
 	g.figMeta = loadFigMeta()
 	g.nativeUIPalette = loadNativeUIPalette()
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
+	if classUI, err := loadNativeClassUIAssets(); err == nil {
+		g.nativeClassUI = classUI
+	}
 	if raw, e := os.ReadFile(assetPath("assets/bg/bg.png")); e == nil { // 戰鬥背景(BG.DAT)
 		if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {
 			g.bg = ebiten.NewImageFromImage(im)
@@ -6212,13 +6219,15 @@ func loadGame() *Game {
 			if os.Getenv("FD2_CAMP_CLASS_FIXTURE") != "" {
 				// Bounded headless oracle only: construct one native-eligible
 				// Lv20+ roster record so xvfb can exercise the church target UI.
-				g.partyMembers = map[int]bool{0: true}
-				g.partyJoinOrder = []int{0}
-				g.partyRoster = map[int]battle.Unit{0: {
-					Camp: battle.Own, Name: "索爾", ClsName: "法師", ClassID: 5,
+				g.partyMembers = map[int]bool{9: true}
+				g.partyJoinOrder = []int{9}
+				g.partyRoster = map[int]battle.Unit{9: {
+					Camp: battle.Own, Name: "悠妮", ClsName: "法師", ClassID: 5,
 					Lv: 20, HP: 80, MaxHP: 80, MP: 20, MaxMP: 20,
 					AP: 30, DP: 20, DX: 10, MV: 5, HIT: 10, EV: 10,
-					Portrait: 9, Fig: 0, OnField: true,
+					Portrait: 9, Fig: 9, BattleFig: 9,
+					NativeIdentity: 9, HasNativeIdentity: true,
+					MapSelectorKey: 9, HasMapSelectorKey: true, OnField: true,
 					Inventory: []int{0x58, 0x5a}, Equipped: []bool{true, false},
 					InventorySlots: []int{0x58, 0x5a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 				}}

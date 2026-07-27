@@ -5,7 +5,7 @@
   "events": [
     {"input": "down", "selection": 1},
     {"input": "enter", "outcome": "opt1", "node": "church_ch02"},
-    {"service": "class_change", "candidate_portrait": 9},
+    {"service": "class_change", "candidate_native_identity": 9, "candidate_name": "悠妮", "candidate_portrait": 9},
     {"resolution": "native_single_target", "priority": "special_override", "target_portrait": 52, "target_class": 21, "required_item": 90},
     {"input": "left,enter", "confirmation_choice": "yes"},
     {"input": "escape", "node": "town_ch02"}

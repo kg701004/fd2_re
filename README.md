@@ -72,8 +72,10 @@ Church round-trip 也已可重播：[`town-church-revive-ch02.json`](docs/data/u
 
 Church class-change round-trip 也已可重播：[`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json)
 驗證候選角色的原版單一 target 解析優先序（special override > optional-item override > default）、
-左右 Yes/No 確認、角色轉職、物品消耗與 `Escape → town_ch02`；目前確認框只有狀態／輸入對齊，
-原版 indexed renderer 與 FD2.SAV 相容性仍 fail-closed。
+左右 Yes/No 確認、角色轉職、物品消耗與 `Escape → town_ch02`。候選清單的
+`0x311DC+0x31019` 已使用原版 FDOTHER#14、FDICON、FDTXT/font 接回 runtime final frame；
+六幀 `0x1974c` opening compositor 已有 regression，但 runtime draw-ack cadence 尚未排程。
+`0x19953` 確認框 renderer 與 FD2.SAV 相容性仍 fail-closed。
 
 Save/load boundary 也已可重播：[`save-town-boundary-ch02.json`](docs/data/ui-traces/save-town-boundary-ch02.json)
 驗證 town 節點 F5/F9 後 persistent party、資源與 transient scene reset；這是 remake JSON
@@ -133,6 +135,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch01 原版戰場 HUD（原版錄影 434.5 秒；camera/cursor 與下列 remake 對齊） | ![original map HUD](docs/figures/native-map-ch01-original-video.png) |
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |
 | 最新 church class-change contract（source trace, 2026-07-27） | [`town-church-class-change-ch02.json`](docs/data/ui-traces/town-church-class-change-ch02.json) |
+| 原版資源 indexed 轉職候選清單（`0x311DC+0x31019` final frame；非 DOSBox 截圖） | ![native indexed class list](docs/figures/native-class-list-indexed.png) |
 | 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
 | battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |
 
