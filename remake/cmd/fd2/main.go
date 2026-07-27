@@ -2971,7 +2971,7 @@ func (g *Game) ringInput() bool {
 					g.msg = "MP 不足!"
 					return true
 				}
-				if _, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
+				if _, err := g.nativeCommandTargetUnitsFor(id); err == nil {
 					g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
 					g.nativeCommandTargetID = id
 					g.msg = fmt.Sprintf("原始指令 %d：選擇目標", id)
@@ -3102,6 +3102,34 @@ func (g *Game) nativeCommandTargetSupported(id int) bool {
 	default:
 		return false
 	}
+}
+
+// nativeCommandTargetUnits is the shared target-candidate projection for the
+// command cursor and its renderer.  The selected raw command ID, rather than
+// command 0 or a normalized spell, supplies the record+3 selection fields.
+// Missing book/flags/actor state remains an error so UI cannot highlight or
+// confirm a target from an unrelated record.
+func (g *Game) nativeCommandTargetUnits() ([]*battle.Unit, error) {
+	if g == nil {
+		return nil, fmt.Errorf("native target command context unavailable")
+	}
+	return g.nativeCommandTargetUnitsFor(g.nativeCommandTargetID)
+}
+
+func (g *Game) nativeCommandTargetUnitsFor(id int) ([]*battle.Unit, error) {
+	if g == nil || g.st == nil || g.sel == nil || !g.nativeCommandTargetSupported(id) {
+		return nil, fmt.Errorf("native target command context unavailable")
+	}
+	if len(g.st.NativeCommandBook) != 36 {
+		return nil, fmt.Errorf("native command book incomplete")
+	}
+	record := g.st.NativeCommandBook[id]
+	return battle.NativeCommandTargets(
+		g.st.W, g.st.H,
+		battle.Cell{X: g.sel.X, Y: g.sel.Y},
+		record.SelectionMode, record.TargetCode,
+		g.st.NativeTargetFlags, g.st.Units,
+	)
 }
 
 // finishSelectedWait 對應原版行動選單第四項「下／休息」。0x19077 在未移動時
@@ -4211,9 +4239,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-		if g.nativeCommand0Targeting && g.sel != nil && len(g.st.NativeCommandBook) == 36 {
-			record := g.st.NativeCommandBook[0]
-			if targets, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
+		if g.nativeCommand0Targeting {
+			if targets, err := g.nativeCommandTargetUnits(); err == nil {
 				ch := ebiten.NewImage(tw, th)
 				ch.Fill(color.RGBA{0xff, 0x80, 0x20, 0x68})
 				for _, unit := range targets {

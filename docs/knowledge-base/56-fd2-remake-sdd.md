@@ -506,8 +506,9 @@ cardinal range（無阻擋時才等於 Manhattan）。
 caller 必須提供精確原版 grid flags，缺失或長度不符即 fail-closed；不重用現有 `map.json.cost`，並明確選定 first
 selection stage (`actor,+3`) 或 confirmed effect stage (`cursor,+4`)。它覆蓋 four-way flood-fill、bit40/bit80、
 cross branch 與四個 camp predicates。`NativeCommandEffectTargets` 進一步要求 confirmed unit 確在 first candidate
-list，才以其 cell 與 `+4` 取 effect list，固定 generic two-stage contract；UI 尚未接管這個流程，故不可自動替換
-legacy cast。
+list，才以其 cell 與 `+4` 取 effect list，固定 generic two-stage contract；command cursor 的
+highlight/confirm 已共用 selected raw command record，不再硬編 command 0 的 geometry；effect
+renderer／legacy cast replacement 仍未開放。
 
 候選 unit 的 active gate 也已按 raw provenance 收斂：當 roster 每筆都有 FDFIELD-derived byte+5 時，
 `NativeCommandTargets`、`NativeAttackCandidates`、`NativeCommandEffectTargets` 與 command-30 cardinal
@@ -526,8 +527,8 @@ low byte）作 block/zero-cost flags；它不是 terrain-control `byte0`。`expo
 `native_target_flags` raw array。
 
 `battle.Load` 現只在 map dimensions 與 array length 都精確吻合時載入 `State.NativeTargetFlags`；缺檔／舊 export／
-壞長度皆保持 nil。這使 engine data layer 已可把它傳給 `NativeCommandTargets`，但 UI 尚未自動切換 native target
-mode，避免未完成 command effect/confirm contract 時搶走 legacy playable path。
+壞長度皆保持 nil。這使 engine data layer 與 command cursor 都可把 selected raw record 傳給
+`NativeCommandTargets`；未知 effect/renderer 仍不會搶走 legacy playable path。
 
 ### Native command MP transaction（E0 verified, UI unbound）
 

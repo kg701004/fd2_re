@@ -90,3 +90,20 @@ func TestNativeCommandTargetWhitelistKeepsUnresolvedIDsFailClosed(t *testing.T) 
 		}
 	}
 }
+
+func TestNativeCommandTargetProjectionUsesSelectedRawCommandRecord(t *testing.T) {
+	book := make([]battle.NativeCommandRecord, 36)
+	book[0] = battle.NativeCommandRecord{ID: 0, SelectionMode: 1, TargetCode: 0}
+	// An invalid selected record must fail; hard-coding record 0 would
+	// incorrectly return a target list here.
+	book[13] = battle.NativeCommandRecord{ID: 13, SelectionMode: -1, TargetCode: 0}
+	actor := &battle.Unit{Camp: battle.Own, OnField: true, HP: 10, X: 0, Y: 0}
+	target := &battle.Unit{Camp: battle.Enemy, OnField: true, HP: 10, X: 1, Y: 0}
+	g := &Game{
+		st:  &battle.State{W: 2, H: 1, Units: []*battle.Unit{actor, target}, NativeCommandBook: book, NativeTargetFlags: make([]byte, 2)},
+		sel: actor, nativeCommandTargetID: 13,
+	}
+	if _, err := g.nativeCommandTargetUnits(); err == nil {
+		t.Fatal("selected raw command record was not used")
+	}
+}
