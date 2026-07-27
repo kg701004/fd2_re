@@ -38,8 +38,8 @@
 | 4 | `[0x53bef]` 回合遞增 | ◐ **只證實有 increment/compare counter**；我方/敵方 phase 完成條件尚未由完整 state-machine E0 閉合，不採用使用者記憶作原版定案。 |
 | 7–8 | 暴擊率 / 地形修正率 / 成長亂數 | ✅ **用青衫攻略數值**(doc 02 §3/§4),不需動態。[使用者確認] |
 | 3 | `[0x53ec8]` 累積計數 | ◐ 仍不確定。靜態追到「累加單位欄位 `+0x21` 之值,`clamp 99`」(0x1c81f 函式)。**非重製核心**(回合用 `[0x53bef]`、戰鬥用公式)→ 降為低優先 / 可選,不阻塞。 |
-| 5–6 | 章節↔地圖、unit idx→角色 | 重製可略過(自定義對應)。 |
-| 9–10 | `roster byte[+8]`、單位完整佈局 | ❌ **不需要**:重製用自有 `Unit` struct,無需對齊原版 0x50B 佈局 / idx。[使用者確認移除] |
+| 5–6 | 章節↔地圖、unit idx→角色 | normalized campaign 可用自有對應；raw handler／LOADCH／acting 路徑仍須保留原版 slot order 與 provenance，不能一概略過。 |
+| 9–10 | `roster byte[+8]`、單位完整佈局 | normalized engine 可用自有 `Unit` projection；但 raw persistence／handler path 仍需對齊已證實的 `0x50B` slot、`+8` identity 與必要欄位，不能宣稱整體不需要。 |
 
 → **結論：領域知識與攻略可作 baseline，但不能清空 raw predicate／回合 state-machine 的 E0 驗證**；`[0x53ec8]` 仍是低優先，
 而 byte+5 caller semantics、phase completion 與 native UI 仍需以直接證據逐項閉合。原本的 DOSBox 驗證計畫不可整體取消。

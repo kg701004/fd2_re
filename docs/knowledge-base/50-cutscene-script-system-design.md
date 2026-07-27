@@ -1,8 +1,9 @@
 # 50 — 過場腳本系統:原版指令集 → remake Beat DSL(全 33 關通用)
 
-> 結論整理(2026-07-04,doc47/48/49 三線收束)。使用者戰略:**第一關指令破解後,
-> 後續 32 關全部機械可解**——因為所有章節 handler 用同一套原語指令集,差別只在參數。
-> 本篇定義 remake 腳本系統如何一比一承接。
+> 結論整理(2026-07-04,doc47/48/49 三線收束)。本篇提供可擴充的 handler Beat DSL；目前已觀察的
+> handler 共享一組原語子集，但不同 caller 仍可能有未閉合的 layout、branch、resource 或
+> persistence contract。未知原語保留為 raw/blocked，不能由第一關證據推論後續 32 關已機械可解，
+> 也不能把「DSL 可表達」宣稱成「原版流程已還原」。
 
 > **⭐ 本檔 = 過場 / acting / 走位機制的唯一主檔(鐵則:同主題知識集中一份,禁散落)。**
 > 查「過場原語 / acting / 走位 / 面向 / 序章編排」**只讀本檔**;原始逐 beat 轉錄見 `doc47`(附錄性質)。
@@ -19,7 +20,7 @@
 | **演出** | EXE acting 資源目錄 + direct-ID getter，0x1366a(id) 播放 | EXE 靜態 bank 106 entries；ACT99/100 已以 live unit diff 交叉驗證 |
 | **走位** | **引擎逐格步進單位**(step 家族、路徑走位 0x13488，及 acting 正常 frame；見 §1.1/§1.2)+ 鏡頭鎖定跟隨 | 機制閉環;remake storyWalks+FollowWalk/acting player 同構 ✓ |
 
-原語指令集(= 所有章節 handler 的「組合語言」):
+原語指令集(= 已驗證 handler 可共用的「組合語言」子集；不是所有 handler 的完整語意):
 
 | 原語 | 語意 | remake 對應 |
 |---|---|---|

@@ -42,7 +42,10 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | **繪事件畫面** | `0x15f84` | 6 | 全螢幕圖繪製(過場 / 事件畫面) | [驗] |
 | 我方名冊查詢 | `0x33499(id)` | 1(章16) | `roster_has(id)`:查我方名冊 `[0x53bf7]`(32槽×0x50B)byte[+8]==id | [驗] |
 
-> **更正(doc 26 補完)**:早先把各章 ×1 的 `0x33499` 等列為「增援/對話動作」,經逐關反組譯確認 **handler 無動作函式**——`0x33499` 是條件查詢(roster_has),其餘是控制流;handler 只「條件→設碼+繪圖」。增援/對話在碼1後的世界地圖/章節跳表流程。
+> **更正(doc 26 補完，範圍限定)**:早先把各章 ×1 的 `0x33499` 等列為「增援/對話動作」；在
+> `battle_events.json` battle-event skeleton 的匯出範圍內，`0x33499` 是條件查詢(roster_has)，
+> 其餘記錄只保存控制流／設碼／繪圖。這不能外推到 postbattle/cutscene handlers；ch14/ch15
+> post 已證實含 dialog、acting、sync、JOIN 等動作，必須按 caller CFG 保存。
 
 關鍵狀態變數:
 - **`[0x53a45]`** = 戰場單位陣列基底(每單位 0x50 byte;doc 23)。事件條件多半在查它。[驗]
