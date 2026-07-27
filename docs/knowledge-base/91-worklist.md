@@ -498,6 +498,7 @@
 配 rulebook/63)。使用者實玩才揭露——沒實玩/沒查,文件會一直顯示「完成」。
 **目前修法狀態**:僅已證實對映的 9 個節點保留 script；不能把同一章 script 盲目灌入其餘節點。
 下一步要依原版 handler／FDTXT scene label 逐節建立 mapping，完成後才可宣稱接通。
+- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、script、scene、handler 與 next，固定目前 121/9/112 統計；不依章號猜測映射。
 - [x] ch01 開場三幕(王城父子/草地悠妮蓋亞/遇海盜)手動接線+轉錄 FDTXT_033/032(intro-scenes)
 - [x] **ch01 開場三幕背景圖 RE+接線**(使用者實測發現對白疊在戰場地圖上,非王座廳/草地,2026-07-04):
       RE 修正 doc23 §4 誤記(「FDTXT 序幕『影像』資源」不存在,FDTXT 純文字)——真正背景是

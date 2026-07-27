@@ -111,6 +111,10 @@ campaign、town/shop、persistent save、UI renderer 缺口。
 `remake/internal/dato.MouthState`（每 2 frame tick、閉嘴隨機 2–31 tick、開嘴 1 tick，選用 DATO m0/m3），
 並接入重製對話更新迴圈。這是可驗證的 UI 子系統進展，不等於所有 DATO 資源、框圖排版或 30 章流程已還原。
 
+劇情接線 coverage 可用唯讀工具重查：`python3 tools/audit_story_script_coverage.py`。
+目前 `campaign_full.json` 有 121 個 story/cutscene 節點、9 個已接 script、112 個待 mapping；
+工具不會依章號自動套劇本，避免把 pre/post/分支 scene 誤接。
+
 同輪亦固定 `0x24618` indexed transition 的 raw buffer 邊界：staging offset `32904`、stride `456`、
 viewport `312×192`，以及 `0x11EB0` 複製到 320-byte VGA stride 的契約；descriptor 解碼與 indexed compositor
 仍未接入，故不把它宣稱成已完成的轉場演出。
