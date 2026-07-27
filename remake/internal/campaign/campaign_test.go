@@ -605,3 +605,23 @@ func TestRunnerTownUsesVisibleOptionOutcome(t *testing.T) {
 		t.Fatalf("town opt1 transition = %q / current %q, want road", got, runner.Cur)
 	}
 }
+
+func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
+	c, err := Load("../../assets/scenarios/campaign_full.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	storyNodes, scripted := 0, 0
+	for _, n := range c.Nodes {
+		if n.Type != "story" && n.Type != "cutscene" {
+			continue
+		}
+		storyNodes++
+		if n.Script != "" {
+			scripted++
+		}
+	}
+	if storyNodes != 121 || scripted != 9 {
+		t.Fatalf("campaign story/script coverage changed: nodes=%d scripted=%d, update the audit before changing claims", storyNodes, scripted)
+	}
+}
