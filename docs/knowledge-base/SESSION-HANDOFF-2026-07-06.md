@@ -740,3 +740,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 ch25 camera assertion correction：重讀完整 `0x233c6` scalar ABI 後撤回 `(5,9)→(120,216)`；caller push 順序最後兩個 scalar 是 `cam_x=9, cam_y=5`，正確像素為 `(216,120)`。binding、test、SDD、worklist 已同步修正。
 - 2026-07-27 ch06 post branch recheck：Docker Capstone 固定 `[0x53ad5]+0x11==1` 才檢查 `unit_inactive(43)`；inactive 走 dialog #5，active 才走 `0x233c6` 9-slot layout（X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`）、special slot43=`(12,7,pose2)`、camera raw `(6,2)`，再 dialog #4/JOIN12。map6 只有 40 editable units，native slot43/96-slot buffer 尚未有 runtime model，故維持 fail-closed。
 - 2026-07-27 ch23 `0x24d22` boundary recheck：Docker Capstone 固定 `arg!=0` 僅寫 `byte(0x51a10)` 後返回；`arg==0` 配置 `latch*0x138`、從 `0x53aff+(0xc0-latch)*0x138` 複製，descending row loop `0xbf-latch..0` 後再做一列 copy，最後 `0x37416` free。這仍不足以命名 indexed buffer 或接 renderer；ch23 post 保持 fail-closed。
+- 2026-07-27 native item-row producer closure：逐 byte 比對 EXE 證實
+  `0x4e56c` 的 linear `0x602ad` 對應 file `0x540ad`，比既有 normalized
+  `item.json` 的 `0x540ac` 起點向後一 byte；stride 同為 23，故 raw row
+  尾 byte 會跨入下一 normalized row 的前導 byte。`dump_exe_tables.py`
+  現另產 `native_item_effect_rows.json`，docs/remake 保存 215 個已知 ID 的
+  byte-exact prefix；Python shift regression 與 Go consecutive-ID/23-byte
+  loader regression 已補。這不證明 native table 在 ID214 結束，未知欄位
+  仍不接 normalized gameplay。

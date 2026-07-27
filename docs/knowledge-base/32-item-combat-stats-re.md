@@ -3,14 +3,25 @@
 > 目標:反組譯「裝備如何加成 AP/DP」「物品使用效果」「轉職」,供 M1 戰鬥結算用。
 > 本篇記錄**已確認**與**待續**(誠實標註,rulebook 62/63)。本輪深度有限,物品/轉職機制需後續多輪。
 
-## 1. 物品表結構 [驗](EXE `0x540AC`,23B/item,215 筆)
+## 1. 物品表的兩種錯位視圖 [驗](2026-07-27 勘誤)
 
-`dump_exe_tables.py` → `docs/data/exe_tables/item.json`:
+`dump_exe_tables.py` 的攻略／normalized 視圖從 EXE file `0x540AC` 起，以
+23B/item 匯出目前攻略列出的 215 個 ID 到 `docs/data/exe_tables/item.json`：
 ```
 -- TY AP AP HT HT DP DP EV EV S1 S2 R1 R2 K1..K6 MM MM ...
    type  ap(u16) hit(u16) dp(u16) ev(u16) atk_attr atk_rate range[2] K[6] price(u16)
 ```
 例:item#64 `type7 ap80 hit95 price1200`(武器,攻擊力+80)。→ **物品帶 ap/dp/hit/ev 加值**,裝備時加到單位。
+
+這不是 `0x4e56c` 回傳指標的同一個 row 起點。Docker data dump 與 EXE
+逐 byte 比對確認：原生 helper 的 linear `0x602AD` 對應 file `0x540AD`，
+也就是比上述 normalized view 向後一 byte；stride 同為 `0x17`。因此 runtime
+row 0 是 normalized row 0 的 bytes 1..22 再接 normalized row 1 的 byte 0，
+不能直接把兩份資料用相同 offset 命名。
+
+匯出器現在另產生 `native_item_effect_rows.json`，保存 215 個已知 ID 的 raw
+runtime prefix，並在 docs 與 remake assets 各追蹤一份。這只閉合「已知 prefix
+的逐 byte producer」，不證明 native table 正好在 ID 214 結束。
 
 ## 2. 傷害計算鏈 [驗]
 
@@ -77,7 +88,11 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 - `0x1e0db(value, digitBias, target)` 只在 target 位於 camera bounds 時，把 `value` 轉成四位十進位字元，寫入四組 raw presentation queue（位置碼 `2,7,12,17`、target index 與 digit bytes），最後遞增 queue count。它不是 HP/MP/damage/heal 的命名 renderer；`0x1e1dc` 是相鄰的四 byte raw queue writer。
 - `0x1debe(actor, x, y)` 只證實 active gate、曼哈頓相鄰一格與 equipped item row `+0x0b <= 1`；它不能推出 item `+0x0b` 是所有武器的通用最大射程。
 
-因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的 `weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride `0x17` 已知，但 runtime table 邊界及其餘欄位仍 fail-closed，不能直接把 215 筆 normalized rows 宣稱為 runtime table 的完整證明。
+因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的
+`weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride
+`0x17` 與 215 個 ID 的 byte-exact prefix 已另存
+`native_item_effect_rows.json`。runtime table 的最終邊界及其餘欄位仍
+fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
 
 ### 4.1 2026-07-20 direct range-field trace（2026-07-27 勘誤）
 
@@ -95,7 +110,11 @@ IT[1]=起始防具 id(FDFIELD 出場人物資訊同款慣例:前兩個固定武�
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
 - **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches 已部分釘出：`0x1b932` 是保留八格空槽／裝備旗標的 selector、`0x1bb8c` first-empty-slot insertion、`0x1b8e7` source removal、`0x1bffe` equip；case 0 的 two-stage target ABI、`0x20c6f` type dispatch 與數條 raw mutation route已閉合，但完整 item-row producer、presentation 與玩法語意仍待解碼。remake 已接八格 item selector shell，保留 raw slot 空洞，Enter 對 case 0 只顯示 fail-closed 訊息，不改變 HP/MP/inventory。`+0xd/+0x10/+0x12/+0x15` 與 `type=0x17` class/level gate 已知；藥水/卷軸等 gameplay mapping 不得由目前 raw route 猜出。
-- Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base `0x602ad`、row stride `0x17`（23 bytes）。這只確定 raw 定址；row 欄位與 table 長度尚未證實，不能把 bytes 直接填入本文件的 normalized `ItemStats`。
+- Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base
+  `0x602ad`、row stride `0x17`（23 bytes）。EXE file view 已確認從
+  `0x540ad` 起，與 normalized `item.json` 的 `0x540ac` 起點相差一 byte；
+  215-row raw prefix 已獨立匯出並由 loader regression 固定。table 最終
+  長度與未命名欄位仍未證實，不能直接填入 normalized `ItemStats`。
 - `0x20c6f` 的 Docker trace 已確認 `item+0xd` type-dispatch 至 `0x211a4/0x22af6/0x21082/0x22d1b/0x22866/0x22721/0x2111a/0x2218a` 等原生 routines；這些 callee 的數值效果與顯示語意仍未完成，因此維持 fail-closed。
 - `0x21082` 已確認是 modifier-word + unit-field-offset、effect display、`0x1b750` synthesis、source removal 的共同路徑；`0x22af6` 已確認掃 target list 並累加全域結果，但兩者的 item-table 欄位對應與正負方向仍不可命名。
 - `0x20c6f`→`0x21082` 的 type 8/9/0xa raw route 已補閉合：三者分別把 item row `+0xe` word 作 delta，將 target raw word 寫入 offsets `0x37/0x39/0x3e`，並傳 presentation selectors `0x11/0x12/0x13`；這些 offset/selector 仍保持 opaque，不命名成 HP/MP/AP 或其他玩法。

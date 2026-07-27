@@ -137,7 +137,12 @@ def dump_spell(d):
 
 
 def dump_item(d):
-    """物品功效:23B = -- TY AP AP HT HT DP DP EV EV S1 S2 R1 R2 K1..K6 MM MM ?? ?? ..."""
+    """攻略/normalized 物品視圖，從 file 0x540ac 起每 23B 一筆。
+
+    注意：這個視圖每筆的 byte 0 是前導 byte，並不是 0x4e56c 回傳的
+    runtime row byte 0。原生 effect row 從 file 0x540ad 起，請使用
+    dump_native_item_effect_rows；兩種視圖不得混用欄位 offset。
+    """
     base = ANCHORS["item"][0]
     rows = []
     for i in range(0xD7):  # 攻略列至 0xD6
@@ -152,6 +157,33 @@ def dump_item(d):
             "atk_attr": r[10], "atk_rate": r[11],
             "range": [r[12], r[13]], "K": list(r[14:20]),
             "price": u16(d, o + 20), "raw": r.hex(),
+        })
+    return rows
+
+
+def dump_native_item_effect_rows(d, count=0xD7):
+    """0x4e56c 的 raw runtime item-row 視圖（已知 215 筆前綴）。
+
+    0x4e56c 回傳 linear 0x602ad + item*0x17；在目前錨定 EXE 中對應
+    file 0x540ad + item*0x17。它比 dump_item 的 normalized/攻略視圖
+    向後一 byte，因此每一筆 raw row 的最後一 byte 會跨入下一筆
+    normalized row 的前導 byte。count=0xd7 只代表目前可追蹤的已知
+    item ID 前綴，不宣稱 native table 在此結束。
+    """
+    file_base = ANCHORS["item"][0] + 1
+    linear_base = 0x602AD
+    stride = 0x17
+    rows = []
+    for i in range(count):
+        o = file_base + i * stride
+        raw = d[o:o + stride]
+        if len(raw) != stride:
+            break
+        rows.append({
+            "id": i,
+            "off": hex(o),
+            "linear": hex(linear_base + i * stride),
+            "raw": raw.hex(),
         })
     return rows
 
@@ -267,11 +299,13 @@ def main(argv):
     characters = dump_character_defaults(d)
     spell = dump_spell(d)
     item = dump_item(d)
+    native_item_effect_rows = dump_native_item_effect_rows(d)
     rc = dump_resist_crit(d)
     equip = dump_class_equip_types(d)
 
     for name, rows in [("growth", growth), ("command_learn", command_learn), ("unit", unit), ("character_defaults", characters), ("spell", spell),
-                       ("item", item), ("resist_crit", rc), ("class_equip_types", equip)]:
+                       ("item", item), ("native_item_effect_rows", native_item_effect_rows),
+                       ("resist_crit", rc), ("class_equip_types", equip)]:
         write_out(out, name, rows)
         print(f"  -> {name}.json  ({len(rows)} 列)")
 

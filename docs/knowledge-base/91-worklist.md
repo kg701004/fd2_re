@@ -923,7 +923,13 @@
 - [x] **RE-RAW-BYTE5-BIT0-3453E**：Docker Capstone 閉合 `0x3453e(index)`：回傳 selected record `+0x05 & 1`，不改寫資料。新增 `battle.NativeRecordByte5Bit0` mask/bounds regression；保持 raw predicate，不命名 acted/alive/active。
 - [x] **RE-EQUIPMENT-RECALC-1145A**：Docker Capstone 閉合 `0x1145a(persistentIndex)` raw arithmetic，並由 `battle.ApplyNativeEquipmentRecalc` 保存 signed base words `+0x37/+0x39/+0x3e`、八格 `0x40` flag gate、`0x4e56c` row stride、四個 raw destinations 與 16-bit wrap。normalized `campaign.RecomputeEquipment` 仍是 projection-only；row 欄位語意與 campaign 接線仍未閉合，不能宣稱 full gameplay byte identity。
 - [x] **RE-EQUIPMENT-RAW-ADAPTER-1145A**：新增 `battle.ApplyNativeEquipmentRecalc`，依 raw `[flag,item]` 八格、bit `0x40` gate、`0x602ad+item*0x17` row 與 signed/wrapping word arithmetic 寫入四個 raw destinations；bounds preflight atomic、unequipped/missing-row regression 通過。row 欄位仍不命名，也未接 normalized equipment/campaign。
-- [~] **RE-ITEM-EFFECT-ROW-4E56C**：已用 Docker Capstone 閉合 `0x4e56c` 的純定址：`0x602ad + item*0x17`，新增 `battle.NativeItemEffectRowOffset` 與 byte-selector regression；23-byte row 的欄位語意、實際 table 長度及 normalized equipment 接線仍待證據，保持 fail-closed。
+- [~] **RE-ITEM-EFFECT-ROW-4E56C**：已用 Docker Capstone 閉合
+  `0x602ad + item*0x17`，並逐 byte 證實 EXE file view 從 `0x540ad`
+  起、比 normalized `item.json` 的 `0x540ac` 起點偏移一 byte。新增
+  `native_item_effect_rows.json` 保存 215 個已知 selector 的 raw prefix，
+  exporter 與 Go loader regression 固定跨 normalized-row 邊界的 byte
+  行為。實際 table 終點、未命名欄位與 normalized equipment 接線仍待證據，
+  保持 fail-closed。
 - [x] **RE-ITEM-EFFECT-211A4-ABI**：官方 IDA 9.4 閉合 `0x211a4(actor,count,targetBytes,amount)`；item caller `0x20c6f` 直接傳 `a3/a4` count/list 與 item row `+0x0e` amount。新增 `ApplyNativeRawHPRestoreList`，保存 list 順序、sequential RNG、raw score 與 atomic preflight。target selection policy、renderer/SFX、gameplay 名稱仍 fail-closed。
 - [x] **RE-ITEM-TWO-STAGE-TARGET-1BBDC**：官方 IDA/Capstone 閉合 case0 的兩次 `0x14818`：actor-origin first stage用 row `+0x10/+0x15`（type0x17 才 inner marker=1），`0x115b6` 確認後以 confirmed-origin row `+0x12/+0x15`、inner=0 產 final list，傳 `0x20c6f(actor,slot,count,list)`。新增 `NativeItemTargetPlanFromRow`／`NativeItemEffectTargets` 與 confirmed-candidate/short-row regression；runtime row producer、renderer與 gameplay 名稱仍 fail-closed。
 - [x] **RE-ITEM-211A4-SHARED-CALLERS**：canonical Docker Capstone 交叉核對 `0x211a4` 兩個 direct callers：item path `0x20ce0` 與 opaque selector `0x21` path `0x285ed`。後者先建立 caller-owned byte list，再以 raw amount `0x320` 重用同一 `0x211a4`；故該 callee 不是 type5/13 專屬 effect。已補 SDD scope correction；list producer、amount/effect 語意與 renderer 仍 fail-closed。
