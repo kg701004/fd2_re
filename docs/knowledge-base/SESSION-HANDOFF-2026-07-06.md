@@ -706,7 +706,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 official IDA `0x2d093/0x318ad` town-preparation closure：`[0x5412b]` option0→`0x2fc85` hotel、1/3→`0x2e341` shop family、4→`0x3072f` church、2→save/confirm→`0x318ad` preparation；facility return 後恢復 BGM10。`0x526b9` next-index table 固定 town/preparation-only 章節集合。只閉合 native branch/order，不把 option label、cursor art 或逐章 E2 視覺宣稱完成。
 - 2026-07-27 raw gate-table verification：Docker `data 0x526b9 0x30` 讀出 `byte_526b9[22..24]`、`[27..29]`=`1`，其餘 town 範圍 `[0..21]`、`[25..26]`=`0`；配合 `0x2cad7` branch 明確證實 nonzero 是 preparation-only，zero 才進 selectable town hub。此修正只補 table provenance，不替 raw gate 命名高階劇情。
 - 2026-07-27 official IDA `0x2e341/0x2fc85` hub subscene closure：shop raw selection/resource branches dispatch `0x2f0b0/0x2f642/0x2f883/0x2f8ea`，hotel choices dispatch `0x2ffa5/0x30012/0x301f4/0x197e5` path；Hex-Rays 固定各子場景完成後 indexed fade 回 hub。未知 callee 僅留 address-level，未命名 normalized service。
-- 2026-07-27 `0x22af6` raw flag restore closure（Docker Capstone/Go）：新增 `battle.ApplyNativeRawFlagRestore`，paired nonzero flag 才呼 raw `0x1c916(target,10)`、清 flag、累加 `effective*4`（class 9..24 bonus）；flag/status/UI 維持 fail-closed。
+- 2026-07-27 `0x22af6` raw flag restore closure（後續 ABI 勘誤）：
+  當時 adapter 誤建 caller-owned parallel flags；完整 trace 證實 marker 是
+  target `record+a5`。API 已改成 `(records,targets,markerOffset,rng)`，
+  清除同一 record byte。
 - 2026-07-27 `0x22d1b` raw application closure（後續修正）：adapter
   現保存 gate/damage/marker 三 RNG、base10→actual9 HP、marker與
   accumulator；normalized command executor 同步修正。status 名稱不猜。
@@ -831,3 +834,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   type14/22 markers=`+0x26/+0x27` 且來源保留。新增
   `NativeItemMarkerApplicationRoute`／executor 與 IDs212/57 regression；
   `ExecuteNativeCommandApplication` 亦修成三 draws。status/UI 名稱未知。
+- 2026-07-27 type6/7 marker-clear item + ABI correction：Docker 重讀
+  `0x22af6` 證實 marker 是 target `record+a5`，不是舊 adapter 的 detached
+  flags。type6/7 用 `+0x25/+0x26`；nonzero 時 base10 經 RNG 實際恢復
+  9 HP、清 record marker，dispatcher 再消耗來源。修正
+  `ApplyNativeRawFlagRestore` API，新增 atomic typed transaction 與
+  IDs196/197 fixture regression；status/presentation 名稱不猜。

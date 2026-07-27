@@ -163,7 +163,12 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   不移除來源，tracked rows 是 ID213/214。
 - type `21→0x2111a` 已補 raw topology：`0x1c4cc` context → `0x1cac7` 對 selected record `+0x44` 減去 `0x4e516` 來源 byte（16-bit wrap）→ target list `0x1c75e`/`0x1e0db`。來源 record、byte 與 list ABI 尚未命名成 MP cost／具體效果。
 - 新增 `battle.ApplyNativeRawWordSubtract` 保存該 subtract core 的 `(unit, wordOffset, byteAmount)`、low-16 wrap 與 bounds regression；不取代 normalized `SpendNativeCommandMP`，也不替 raw word 命名。
-- `0x22af6` common flag branch 已新增 `battle.ApplyNativeRawFlagRestore`：nonzero paired flag 才以 raw `0x1c916(target,10)` 恢復、清 flag、累加 `effective*4`；flag/status 語意與 presentation 保持未命名。
+- `0x22af6` 舊 adapter 把 marker 當 caller-owned parallel `flags[]` 是錯的，
+  已撤回。正確 ABI 是 target runtime `record+a5`：type6/7 分別用
+  `+0x25/+0x26`，nonzero 才以 base amount10 經 `0x1c916` 實際恢復
+  9 HP、清該 record marker，最後 `0x1b8e7` 消耗來源。
+  `ApplyNativeItemMarkerClearRestore` 保存 record-local mutation、RNG 與
+  atomic source preflight；IDs196/197。status/presentation 名稱仍未知。
 - `0x22d1b` application branch 的舊「兩次 RNG／固定10 damage」斷言已
   撤回。正確順序是：gate RNG；成功後 `0x1c81f(...,baseAmount=10)`
   再消耗 damage RNG，實際整數結果為 9 HP；第三 RNG 寫 marker。

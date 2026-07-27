@@ -974,7 +974,8 @@ are: `5/13→0x211a4`, `6→0x22af6` subcommand `0x14`,
 `20/24→0x1c4cc→0x1cd17` loop, `21→0x2111a`,
 `22→0x22d1b/0x16`, `23→0x2218a`. `NativeItemEffectRouteForType`
 preserves the whole raw map; typed closures now supersede its opaque boundary
-for 5/13 (HP restore with consume/retain split), 8/9/10 (permanent base
+for 5/13 (HP restore with consume/retain split), 6/7 (consumable record-marker
+clear plus HP restore), 8/9/10 (permanent base
 AP/DP/DX), 11 (consumable MP restore), 12 (retained HIT/EV +15),
 14/22 (retained marker application with randomized HP damage), and 15/16
 (retained derived DP/AP modifier). Remaining branches must not receive
@@ -984,7 +985,17 @@ Official IDA 9.4 also closes the small presentation helper `0x1e0db(value, digit
 
 The remake has a data-only `battle.AppendNativePresentationDigits` adapter with right-alignment, bias, camera no-op, and raw position-code regression coverage. It deliberately stops before renderer, palette, SFX, or gameplay naming.
 
-Official IDA 9.4 decompilation of the shared type-6/7 callee `0x22af6(a1..a5)` closes one mutation-only boundary: it iterates `a3` unit indices from byte list `a4`, reads `record+a5`, clears nonzero bytes, and accumulates `4*effective(record+0x21)` where `+30` applies only when `record+0x20` is strictly between 8 and 25. `battle.ClearNativeUnitByte` reproduces that raw mutation and returns per-unit/raw totals without executing the native rendering calls or assigning a buff/debuff/experience meaning. Zero-byte entries remain unmodified.
+Official IDA 9.4 decompilation of the shared type-6/7 callee
+`0x22af6(a1..a5)` iterates target indices from byte list `a4` and reads the
+marker from the target runtime `record+a5`. A prior adapter incorrectly
+modeled this as a parallel caller-owned `flags[]`; that assertion and API are
+removed. A nonzero marker calls `0x1c916(target,10)` (base10 yields actual
+9 HP restore), clears the same record byte, and accumulates
+`4*effective(+0x21)`. Type6/7 select `a5=+0x25/+0x26`, then both jump through
+`0x1b8e7` to consume their source slots. `ApplyNativeItemMarkerClearRestore`
+preserves record-local marker mutation, sequential RNG, list order and atomic
+source preflight; tracked IDs196/197 supply these routes. Status names and
+presentation remain unknown.
 
 Official IDA 9.4 decompilation of common callee `0x21082(a1..a7)` closes the corresponding word-write path: it reads one unit index from `a6`, adds the low 16 bits of `a2` to the word at `record+a3` (native wrap semantics), then calls `0x1b8e7(a1,a4)` to compact/remove the caller's inventory slot. `battle.ApplyNativeWordDeltaAndRemove` preserves explicit target/removal units, raw word offset, signed delta representation, and atomic bounds validation; it does not name the word or run renderer/effect callbacks.
 
@@ -1094,7 +1105,11 @@ The type-`21` callee `0x2111a` has a separate raw boundary: it establishes targe
 
 `battle.ApplyNativeRawWordSubtract` now preserves that `0x1cac7` mutation as an explicit `(unit, wordOffset, byteAmount)` adapter with low-16-bit wrap and preflight bounds. It is deliberately generic and does not replace the normalized `SpendNativeCommandMP` path or assign a gameplay field name.
 
-The common `0x22af6` flag branch is now captured by `battle.ApplyNativeRawFlagRestore`: paired target/flag bytes are preflighted; each nonzero flag invokes the proven raw HP restore with amount `10`, clears only that flag, and adds the raw `effective*4` accumulator (class range `9..24` adds `0x1e`). Flag/status names and presentation remain outside the adapter.
+The corrected common `0x22af6` primitive is captured by
+`ApplyNativeRawFlagRestore(records,targets,markerOffset,rng)`: it preflights
+record bounds, reads and clears marker bytes in those records, invokes the
+proven HP restore only for nonzero markers, and adds the raw `effective*4`
+accumulator. It no longer accepts or mutates a detached flag array.
 
 Caller-level evidence around `0x24838` must remain separate from the raw lookup adapters. It first branches on `0x24b14(0x64)`; the success arm presents text `#8` and calls `0x112a5(0x16)`. It then branches on `0x24bde(0x12)`: hit presents text `#10`, acting `#0x48`, and `0x32975(0x11)`; miss branches on global count `0x53bef < 0x0f`, choosing text `#13` plus `0x112a5(0x13)` or text `#12` plus `0x32975(0x11)`. Shared sync/presentation follows. These are address/order facts only; no item, character, chapter, or NPC names are inferred from the immediates.
 

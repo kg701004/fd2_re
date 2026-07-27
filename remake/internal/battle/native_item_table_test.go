@@ -202,6 +202,27 @@ func TestTrackedMarkerApplicationItemRows(t *testing.T) {
 	}
 }
 
+func TestTrackedMarkerClearRestoreItemRows(t *testing.T) {
+	table, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		itemID int
+		typ    byte
+		marker int
+	}{{196, 6, 0x25}, {197, 7, 0x26}} {
+		row := table[tc.itemID*NativeItemEffectRowSize:]
+		if row[0x0d] != tc.typ {
+			t.Fatalf("item %d effect type = %#x, want %#x", tc.itemID, row[0x0d], tc.typ)
+		}
+		route, ok := NativeItemMarkerClearRestoreRouteForType(row[0x0d])
+		if !ok || route.MarkerOffset != tc.marker || !route.ConsumesSource {
+			t.Fatalf("item %d marker-clear route = %#v, %v", tc.itemID, route, ok)
+		}
+	}
+}
+
 func TestLoadNativeItemEffectRowPrefixRejectsNonConsecutiveID(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "rows.json")
 	raw := `[{"id":1,"raw":"0000000000000000000000000000000000000000000000"}]`

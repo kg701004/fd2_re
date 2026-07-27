@@ -98,9 +98,11 @@ remake `InCastRange` 仍不能作為 native contract，除非也帶入同一 gri
 base/equipment data flow 閉合：item row `+0xe` 分別永久增加 persistent
 base AP(`+0x37`)、DP(`+0x39`)、DX(`+0x3e`)，呼叫 `0x1b750` 重算後移除
 來源 slot；已知 IDs 198/199/200 的量為 9/9/7。顯示 selector 仍未命名，
-也不能把此語意套到共用 callee 的 type17–19。type `6/7→0x22af6` 則掃描
-target list，依 target unit `+0x20/+0x21` 計算 accumulator 並清除已處理
-target，仍不足以判定其 status 名稱。
+也不能把此語意套到共用 callee 的 type17–19。type6/7 已閉合成
+consumable marker-clear HP restore：分別讀 target runtime record
+`+0x25/+0x26`；nonzero 才以 base amount10 經 `0x1c916` 實際恢復
+9 HP、清同一 record marker，最後消耗來源 slot。tracked IDs196/197。
+舊 adapter 將 marker 當 parallel `flags[]` 的實作已修正；status 名稱未知。
 
 type11 已由同一 dispatcher loop 閉合為 MP restore consumable：row `+0xe`
 是 amount，target max MP `+0x46==0` 時跳過且不前進 RNG；其餘依 list 順序

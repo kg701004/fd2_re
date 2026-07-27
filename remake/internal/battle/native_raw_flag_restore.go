@@ -9,13 +9,13 @@ type NativeRawFlagRestoreResult struct {
 	Restore     NativeRawRestoreResult
 }
 
-// ApplyNativeRawFlagRestore reproduces the proven 0x22af6 branch: each target
-// byte is paired with a caller-owned flag byte; nonzero flags invoke
-// 0x1c916(target, 10), are then cleared, and contribute the native
-// effective-value*4 accumulator. Flag meaning and UI remain caller-owned.
-func ApplyNativeRawFlagRestore(records []byte, targetIndices, flags []byte, rngState uint16) ([]NativeRawFlagRestoreResult, uint16, int, error) {
-	if len(targetIndices) != len(flags) {
-		return nil, rngState, 0, fmt.Errorf("native flag restore target/flag lengths differ: %d/%d", len(targetIndices), len(flags))
+// ApplyNativeRawFlagRestore reproduces the proven 0x22af6 branch. For each
+// target, a nonzero byte at record+markerOffset invokes 0x1c916(target,10),
+// is then cleared in that same runtime record, and contributes the native
+// effective-value*4 accumulator. Marker meaning and UI remain caller-owned.
+func ApplyNativeRawFlagRestore(records []byte, targetIndices []byte, markerOffset int, rngState uint16) ([]NativeRawFlagRestoreResult, uint16, int, error) {
+	if markerOffset < 0 || markerOffset >= nativeRecordSize {
+		return nil, rngState, 0, fmt.Errorf("native flag restore marker offset %#x is out of bounds", markerOffset)
 	}
 	for _, rawIndex := range targetIndices {
 		if int(rawIndex) >= len(records)/nativeRecordSize {
@@ -24,20 +24,20 @@ func ApplyNativeRawFlagRestore(records []byte, targetIndices, flags []byte, rngS
 	}
 	results := make([]NativeRawFlagRestoreResult, 0, len(targetIndices))
 	total := 0
-	for i, rawIndex := range targetIndices {
+	for _, rawIndex := range targetIndices {
 		result := NativeRawFlagRestoreResult{TargetIndex: int(rawIndex)}
-		if flags[i] != 0 {
+		record := records[int(rawIndex)*nativeRecordSize:]
+		if record[markerOffset] != 0 {
 			restore, err := ApplyNativeRawHPRestore(records, int(rawIndex), 10, rngState)
 			if err != nil {
 				return nil, rngState, 0, err
 			}
 			rngState = restore.RNGState
-			record := records[int(rawIndex)*nativeRecordSize:]
 			effective := int(record[0x21])
 			if record[0x20] > 8 && record[0x20] < 0x19 {
 				effective += 0x1e
 			}
-			flags[i] = 0
+			record[markerOffset] = 0
 			total += effective * 4
 			result.Applied, result.Restore = true, restore
 		}
