@@ -4,6 +4,7 @@
 package main
 
 import (
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -1122,23 +1123,29 @@ func TestChapter2PreLoadCHUsesSixMemberJoinOrderAndGroupOneFrontier(t *testing.T
 	}
 }
 
-func TestCh15CandidateBindingCompilesRawCFGButRemainsDataOnly(t *testing.T) {
-	beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch15_post_candidate.json"))
-	if err != nil || len(issues) != 0 {
-		t.Fatalf("ch15 candidate binding compile err=%v issues=%#v", err, issues)
+func TestCh15CandidateBindingPreservesRawCFGButRemainsUnbound(t *testing.T) {
+	bindingPath := assetPath("assets/cutscenes/bindings/ch15_post_candidate.json")
+	binding, err := campaign.LoadHandlerBinding(bindingPath)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 80 {
-		t.Fatalf("candidate runtime context=%#v", beats)
+	script, err := campaign.LoadHandlerScript(filepath.Join(filepath.Dir(bindingPath), binding.HandlerScript))
+	if err != nil {
+		t.Fatal(err)
 	}
-	var branch *campaign.Beat
-	for _, beat := range beats {
-		if beat.Op == "if" {
-			branch = &beat
+	var branch *campaign.HandlerBeat
+	for i := range script.Beats {
+		if script.Beats[i].Op == "if" {
+			branch = &script.Beats[i]
 			break
 		}
 	}
 	if branch == nil || branch.Condition == nil || branch.Condition.Op != "native_any_of" || len(branch.Condition.Any) != 2 || len(branch.Else) != 1 || branch.Else[0].Condition == nil || branch.Else[0].Condition.Op != "native_record_word_gte" {
-		t.Fatalf("candidate raw CFG=%#v", beats)
+		t.Fatalf("candidate raw CFG=%#v", script.Beats)
+	}
+	_, issues := campaign.CompileHandlerScript(script, binding.CompilerBindings())
+	if len(issues) != 1 || issues[0].Reason != "if arms cannot use active-slot operations before branch compiler context is modeled" {
+		t.Fatalf("candidate must remain compiler-unbound: %#v", issues)
 	}
 }
 

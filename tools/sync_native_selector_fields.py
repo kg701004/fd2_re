@@ -13,6 +13,12 @@ This tool preserves every existing asset field and updates only
 or conflicting existing values.  Use --check in regression verification; use
 --write to make the mechanical update.
 
+Optional constructor provenance can be synchronized without touching the
+normalized HP field:
+
+  python3 tools/sync_native_selector_fields.py extracted/raw remake/assets/maps \
+    --native-tables docs/data/exe_tables/native_unit_tables.json --check
+
 Usage:
   python3 tools/sync_native_selector_fields.py extracted/raw remake/assets/maps --check
   python3 tools/sync_native_selector_fields.py extracted/raw remake/assets/maps --write
@@ -23,22 +29,32 @@ from pathlib import Path
 import sys
 
 import parse_field
+import export_units
 
 
 FIELDS = ("map_selector_key", "battle_fig")
 
 
-def expected_units(raw, map_index):
-    return [
-        {
+def expected_units(raw, map_index, native_tables=None):
+    expected = []
+    for unit in parse_field.parse_map(str(raw), map_index)["units"]:
+        item = {
             "map_selector_key": unit["native_map_selector_key"],
             "battle_fig": unit["portrait"],
         }
-        for unit in parse_field.parse_map(str(raw), map_index)["units"]
-    ]
+        if native_tables is not None:
+            word42 = export_units.native_record_word42_for_portrait(
+                native_tables, unit["portrait"], unit["lv"]
+            )
+            # Unsupported selector/table provenance remains absent.  The
+            # runtime loader therefore keeps native predicates fail-closed.
+            if word42 is not None:
+                item["native_record_word42"] = word42
+        expected.append(item)
+    return expected
 
 
-def sync_asset(raw, asset_path, write):
+def sync_asset(raw, asset_path, write, native_tables=None):
     asset = json.loads(asset_path.read_text(encoding="utf-8"))
     map_index = asset.get("map")
     if not isinstance(map_index, int):
@@ -46,7 +62,7 @@ def sync_asset(raw, asset_path, write):
     units = asset.get("units")
     if not isinstance(units, list):
         raise ValueError(f"{asset_path}: missing units list")
-    expected = expected_units(raw, map_index)
+    expected = expected_units(raw, map_index, native_tables)
     if len(units) != len(expected):
         raise ValueError(
             f"{asset_path}: asset has {len(units)} units but FDFIELD map {map_index} has {len(expected)}"
@@ -56,7 +72,10 @@ def sync_asset(raw, asset_path, write):
     for index, (unit, native) in enumerate(zip(units, expected)):
         if not isinstance(unit, dict):
             raise ValueError(f"{asset_path}: unit {index} is not an object")
-        for field in FIELDS:
+        fields = FIELDS
+        if native_tables is not None and "native_record_word42" in native:
+            fields = FIELDS + ("native_record_word42",)
+        for field in fields:
             current = unit.get(field)
             value = native[field]
             if current is not None and current != value:
@@ -78,6 +97,8 @@ def main(argv):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("raw", type=Path)
     parser.add_argument("assets", type=Path)
+    parser.add_argument("--native-tables", type=Path,
+                        help="raw constructor tables from extract_native_unit_tables.py")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
@@ -86,9 +107,12 @@ def main(argv):
     paths = sorted(args.assets.glob("map*/map*_units.json"), key=lambda p: int(p.parent.name[3:]))
     if not paths:
         raise ValueError(f"no map unit assets under {args.assets}")
+    native_tables = None
+    if args.native_tables is not None:
+        native_tables = json.loads(args.native_tables.read_text(encoding="utf-8"))
     changed = 0
     for path in paths:
-        map_index, count = sync_asset(args.raw, path, args.write)
+        map_index, count = sync_asset(args.raw, path, args.write, native_tables)
         changed += count
         print(f"map{map_index}: {'updated' if args.write else 'verified'} ({count} missing selector fields)")
     if args.check and changed:

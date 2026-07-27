@@ -171,10 +171,12 @@ handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 
 後續 producer trace 又閉合一層：constructor `0x10e7e..0x1100b` 在 `0x10fe9` 將同一個
 caller-supplied value 寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9`
 則以另一個輸入寫入 `+0x44`／`+0x46`，最後才呼 `0x1b750` 重算 derived fields。這是
-`+0x42` 的 raw producer／field-equality 證據；但現有 `export_units.py` 的 `hp` 可能來自
-舊 editable/base-stat projection，尚未證明等同該 constructor 輸入，因此 exporter 不得
-自動填 `NativeRecordWord42`。只有帶有明確 constructor input 的 units source 才能開啟
-`native_record_word_gte`，其餘仍 fail-closed。
+`+0x42` 的 raw producer／field-equality 證據；它不代表現有 normalized `hp` 欄位可被
+反推或覆寫。現在 `tools/export_units.py` 在取得實際 raw table fixture 時，依 constructor
+caller 的已證實公式導出獨立 `native_record_word42`；`sync_native_selector_fields.py`
+只補這個 provenance 欄位，不改 normalized HP/AP/DP。高 branch 是
+`u16(high[+2])*level`，lower branch 是 `u16(lower[+3])+lower_aux[+6]*(level-1)`；
+malformed 或 table 未覆蓋的 selector 不輸出，`native_record_word_gte` 仍 fail-closed。
 
 sync boundary 也已補上 provenance 傳遞：`syncPartyFromBattle` 的 snapshot 會保留
 `NativeRecordWord42/HasNativeRecordWord42`，`applyPersistentStats` 在 LOADCH／戰場重建時
@@ -188,7 +190,7 @@ primitive，不是開放式腳本 expression language。ch15 handler JSON 尚未
 該檔案的 filesystem owner 不允許寫入，且 `[0x53a45]` persistent slot boundary 尚未閉合；
 因此現行 campaign 仍不會執行這個 branch。
 
-另新增 [`ch15_post_cfg.json`](../../remake/assets/cutscenes/handlers/ch15_post_cfg.json) 作為
+另新增 [`ch15_post_cfg.json`](../../remake/assets/cutscenes/handlers/candidates/ch15_post_cfg.json) 作為
 address-preserving candidate：它把 `0x23a9a` 的 `round>18 OR inactive_count>4` 與
 `0x23aad` 的 `else +0x42>=0x140` 寫成 nested editable CFG，並保留 dialog/acting/JOIN/
 set-chapter source addresses。這不是 active binding；camera raw `(22,25)` 的像素座標、96-slot
@@ -857,7 +859,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Native unit table export boundary (2026-07-26): `tools/extract_native_unit_tables.py` reads the LE object through `le_xref` and emits only raw records: `high_class` `0x61af9` (68×10, helper `0x4e4ff`, selector `FDFIELD b1-0x44`), `lower_class` `0x61da1` (32×24, helper `0x4e4e8`, selector `FDFIELD b1` in the lower branch), and `lower_aux` `0x620a1` (68×11, helper `0x4e4d1`, same selector). Docker extraction against the real FD2.EXE validates all 68/32/68 records. The JSON deliberately keeps selector provenance and `bytes_hex` without assigning gameplay names; it is an editable RE fixture, not permission to substitute portrait/class or to enable HUD optional unit/HP.
 
-   Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and writes `native_constructor:{branch,index,record,aux_record}` per portrait-selected unit. `battle.NativeConstructorTable` validates the exact 68/32/10/24/11 dimensions on load and preserves legacy assets without the field. No renderer or gameplay path reads these bytes yet; malformed records fail closed rather than falling back to portrait/class semantics.
+   Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and writes `native_constructor:{branch,index,record,aux_record}` plus the independently derived `native_record_word42` when the constructor formula has complete provenance. `tools/sync_native_selector_fields.py --native-tables` merged only that raw field into the 33 editable map assets, preserving manual normalized stats; unsupported selectors remain absent. `battle.NativeConstructorTable` validates the exact 68/32/10/24/11 dimensions on load and preserves legacy assets without the field. No renderer or gameplay path reads these bytes yet; malformed records fail closed rather than falling back to portrait/class semantics.
 
    HUD raw-state closure: `sub_11cac` calls `sub_1297d` immediately before the native map compositor. Its `[0x53c0b]` state advances `3→0` only when signed `rawScanline([0x46c])-rawLastScanline([0x53c0f])` is negative or greater than four, then stores the new last scanline; all other calls preserve it. `indexedmap.AdvanceNativeMapHUDState` now preserves this pure ABI and its boundary tests. The actual runtime caller still owns scanline/call timing, so the Ebiten optional unit icon remains fail-closed until those globals are materialized.
 

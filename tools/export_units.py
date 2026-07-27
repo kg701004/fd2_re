@@ -68,10 +68,48 @@ def native_constructor_for_portrait(tables, portrait):
     if not table or index < 0 or index >= table.get("count", 0):
         return None
     rec = table["records"][index]
-    out = {"branch": branch, "index": index, "record": list(bytes.fromhex(rec["bytes_hex"]))}
+    try:
+        record = list(bytes.fromhex(rec["bytes_hex"]))
+    except (TypeError, ValueError):
+        return None
+    if len(record) != table.get("record_size"):
+        return None
+    out = {"branch": branch, "index": index, "record": record}
     if aux_table and index < aux_table.get("count", 0):
-        out["aux_record"] = list(bytes.fromhex(aux_table["records"][index]["bytes_hex"]))
+        try:
+            aux_record = list(bytes.fromhex(aux_table["records"][index]["bytes_hex"]))
+        except (TypeError, ValueError):
+            return None
+        if len(aux_record) != aux_table.get("record_size"):
+            return None
+        out["aux_record"] = aux_record
     return out
+
+
+def native_record_word42_for_portrait(tables, portrait, level):
+    """Compute the constructor input copied to runtime record ``+0x42``.
+
+    This is deliberately a raw ABI projection, not a replacement for the
+    editable ``hp`` field.  The constructor at 0x10fe9 receives the value
+    from its caller: high selectors use table byte ``+2`` times level; lower
+    selectors use lower-class word ``+3`` plus lower-aux byte ``+6`` times
+    ``level - 1``.  Missing/malformed provenance remains absent.
+    """
+    if not tables or level <= 0:
+        return None
+    native = native_constructor_for_portrait(tables, portrait)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) < 4:
+            return None
+        return (record[2] | (record[3] << 8)) * level
+    aux = native.get("aux_record")
+    if aux is None or len(record) < 5 or len(aux) <= 6:
+        return None
+    base = record[3] | (record[4] << 8)
+    return base + aux[6] * (level - 1)
 
 
 def crit_by_cls(resist_crit, cls):
@@ -155,6 +193,9 @@ def main(argv):
         native = native_constructor_for_portrait(native_tables, u["portrait"])
         if native is not None:
             rec["native_constructor"] = native
+            word42 = native_record_word42_for_portrait(native_tables, u["portrait"], u["lv"])
+            if word42 is not None:
+                rec["native_record_word42"] = word42
         if u.get("inventory"):
             rec["inventory"] = u["inventory"]
         if u.get("inventory_slots"):
