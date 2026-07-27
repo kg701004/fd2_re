@@ -526,6 +526,12 @@ renderer 已釘 x=`0x12+0x64*floor(index/4)`、y=`0x67+0x16*(index%4)`，並以 
 selector／label ABI，並不證明每個 ID 可達、圖示或 effect；那些欄位仍保持 fail-closed，直到
 producer／effect call graph 補齊。
 
+2026-07-27 補上狀態層的窄接線：command grid confirm 只有在 `NativeCommandTargets` 通過後，
+才允許已具備 raw executor 的 IDs `0,13–16,20–22,24–29,31` 進入 target cursor；ID30 的
+special cardinal cursor、未知 ID、缺少 raw flags/record/resistance 均維持 fail-closed。這些 executor
+只保存已證實的 MP/HP/raw-byte mutation，不能因此推導 command 名稱，也不代表 indexed effect
+renderer、SFX、動畫或完整 target visual 已完成。
+
 ## 5. Campaign / postbattle 設計
 
 每個 battle node 必須明確指定：

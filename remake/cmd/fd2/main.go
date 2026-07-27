@@ -150,6 +150,7 @@ type Game struct {
 	nativeCommandOpen        bool
 	nativeCommandSel         int
 	nativeCommand0Targeting  bool
+	nativeCommandTargetID    int
 	spellOpen                bool
 	spellSel                 int
 	castSp                   *battle.Spell // 施法目標選擇中
@@ -2897,15 +2898,20 @@ func (g *Game) ringInput() bool {
 		}
 		if enter && g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) {
 			id := ids[g.nativeCommandSel]
-			if id == 0 && g.st != nil && len(g.st.NativeCommandBook) == 36 && len(g.st.NativeCommandResistances) > 0 {
-				record := g.st.NativeCommandBook[0]
+			if g.nativeCommandTargetSupported(id) && g.st != nil && len(g.st.NativeCommandBook) == 36 {
+				record := g.st.NativeCommandBook[id]
+				if id == 0 && len(g.st.NativeCommandResistances) == 0 {
+					g.msg = "原始指令 0：抗性資料未驗證"
+					return true
+				}
 				if g.sel.MP < record.MPCost {
 					g.msg = "MP 不足!"
 					return true
 				}
 				if _, err := battle.NativeCommandTargets(g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y}, record.SelectionMode, record.TargetCode, g.st.NativeTargetFlags, g.st.Units); err == nil {
 					g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
-					g.msg = "原始指令 0：選擇目標"
+					g.nativeCommandTargetID = id
+					g.msg = fmt.Sprintf("原始指令 %d：選擇目標", id)
 					return true
 				}
 			}
@@ -3021,6 +3027,18 @@ func (g *Game) ringInput() bool {
 		}
 	}
 	return true
+}
+
+// nativeCommandTargetSupported is deliberately a small whitelist.  These
+// IDs have both the recovered two-stage target contract and a state-only
+// executor; other command labels remain visible but fail closed at confirm.
+func (g *Game) nativeCommandTargetSupported(id int) bool {
+	switch id {
+	case 0, 13, 14, 15, 16, 20, 21, 22, 24, 25, 26, 27, 28, 29, 31:
+		return true
+	default:
+		return false
+	}
 }
 
 // finishSelectedWait 對應原版行動選單第四項「下／休息」。0x19077 在未移動時
@@ -3518,23 +3536,71 @@ func (g *Game) confirm() {
 		return
 	}
 	if g.nativeCommand0Targeting {
+		id := g.nativeCommandTargetID
 		tgt := g.st.UnitAt(g.curX, g.curY)
-		results, err := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.rng)
+		message := ""
+		var err error
+		var damageTargets []*battle.Unit
+		switch {
+		case id == 0:
+			results, e := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.rng)
+			err = e
+			hit, total := 0, 0
+			for _, result := range results {
+				if result.Hit {
+					hit++
+					total += result.Damage
+				}
+				damageTargets = append(damageTargets, result.Target)
+			}
+			message = fmt.Sprintf("原始指令 0：命中 %d，傷害 %d", hit, total)
+		case id >= 13 && id <= 16:
+			results, e := g.st.ExecuteNativeCommandHeal(g.sel, tgt, id, g.rng)
+			err = e
+			total := 0
+			for _, result := range results {
+				total += result.Restore.Actual
+			}
+			message = fmt.Sprintf("原始指令 %d：回復 %d", id, total)
+		case id == 20 || id == 21:
+			results, e := g.st.ExecuteNativeCommandClearRestore(g.sel, tgt, id, g.rng)
+			err = e
+			message = fmt.Sprintf("原始指令 %d：完成 raw interval 處理 (%d targets)", id, len(results))
+		case id == 22 || id == 26 || id == 27:
+			results, e := g.st.ExecuteNativeCommandApplication(g.sel, tgt, id, g.rng)
+			err = e
+			for _, result := range results {
+				if result.Damage > 0 {
+					damageTargets = append(damageTargets, result.Target)
+				}
+			}
+			message = fmt.Sprintf("原始指令 %d：完成 raw application (%d targets)", id, len(results))
+		case id == 24 || id == 28 || id == 29 || id == 31:
+			results, e := g.st.ExecuteNativeCommandDerivedStrike(g.sel, tgt, id, g.rng)
+			err = e
+			total := 0
+			for _, result := range results {
+				total += result.Damage
+				damageTargets = append(damageTargets, result.Target)
+			}
+			message = fmt.Sprintf("原始指令 %d：傷害 %d", id, total)
+		case id == 25:
+			results, e := g.st.ExecuteNativeCommand25(g.sel, tgt)
+			err = e
+			message = fmt.Sprintf("原始指令 25：完成 raw clear (%d targets)", len(results))
+		default:
+			err = fmt.Errorf("native command target executor unavailable id=%d", id)
+		}
 		if err != nil {
-			g.msg = "原始指令 0：請選擇有效目標"
+			g.msg = fmt.Sprintf("原始指令 %d：請選擇有效目標 (%v)", id, err)
 			return
 		}
-		hit, total := 0, 0
-		for _, result := range results {
-			if result.Hit {
-				hit++
-				total += result.Damage
-			}
-			g.awardDeathReward(result.Target, g.sel)
+		for _, target := range damageTargets {
+			g.awardDeathReward(target, g.sel)
 		}
 		g.sel.Dir = dirToward(g.sel.X, g.sel.Y, g.curX, g.curY)
-		g.msg = fmt.Sprintf("原始指令 0：命中 %d，傷害 %d", hit, total)
-		g.nativeCommand0Targeting, g.sel, g.reach, g.moved = false, nil, nil, false
+		g.msg = message
+		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
 		g.checkResult()
 		return
 	}

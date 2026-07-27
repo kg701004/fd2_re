@@ -808,6 +808,7 @@
       不再冒充 raw source；尚未將未知 command effect 接入。
 - [x] **UI-03 command availability gate**：新增 `battle.NativeCommandAvailable`／`NativeAvailableCommandIDs`，只接受 raw command bit、完整 0..35 `0x4e516` record 與 `record+5 <= unit.MP`（`0x159fa`）；36..39 physical bits、malformed book 與負 cost fail-closed。未併入 `+0x27` action-direction gate、target geometry 或 command/status 語意。
 - [x] **UI-04 target-candidate provenance**：Docker Capstone 延伸 `0x1cff0→0x149f8`，確認 local command record `+3/+4/+6`、`command=0x1e` 傳 selector14、`0x149f8` 沿格步進並輸出符合 selector 的 unit index，另有 `0x17` special geometry 與 `0x2a6bd/0x1d6c8` effect paths；不再把 `0x149f8` 誤稱成傷害／完整 spell priority。
+- [~] **UI-03 native target/effect state dispatch**：battle command grid confirm 現以 verified two-stage target contract 開啟原始 target cursor，並只白名單已有 state executor 的 IDs `0,13–16,20–22,24–29,31`；`main.go` 以 `NativeCommandTargets` 驗證候選後才執行對應 raw state mutation，未知 IDs、ID30 special cursor、缺 raw flags/record/resistance 仍 fail-closed。這接通 state/UI boundary，不宣稱 indexed effect renderer、SFX、完整 target visual 或所有 command semantics。
 - [~] **UI-04 range geometry**：Docker/Capstone 已直讀 `0x14818`：它以固定 `0x61646` record 0 和原始 `(x,y,mode)`
       呼叫 `0x4e040`，mode 作 seed grid byte 並經 terrain cost gate 建立／更新 target grid；後續再有
       `|x-cx|+|y-cy| < caller radius` 的 marker 層、unit active flag／
