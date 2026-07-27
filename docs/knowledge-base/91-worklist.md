@@ -949,8 +949,18 @@
   四向 movement entries 固定寫 `+3=方向`，每格 draw loop 寫
   `+4=1..6`，第七拍更新 X/Y 後寫 `+4=0` 且保留 pose；`0x1366a`
   normal acting 相同，special 只寫 pose。doc54 已刪除錯位 acting dump
-  的影片推測，改成 direct writer/consumer lifecycle。remake 尚待單一
-  battle-local raw presentation state；未完成前 GUI adapter維持 fail-closed。
+  的影片推測，改成 direct writer/consumer lifecycle。remake 現以獨立
+  `NativeMapPresentationState` 保存 `+0/+1/+3/+4`；selector materialize
+  同時初始化 raw X/Y、pose0、motion0，一般移動與 acting 都跑來源格
+  motion1..6／第七拍提交。`NativeUnitLayerEntry` 缺 presentation、
+  selector slot 或 record byte5 任一 provenance 即 fail-closed。
+- [~] **RUNTIME-NATIVE-MAP-CLOCK-AND-FRAME-INPUT**：成功建立 native
+  selector batch 後，`battle.State.NativeMapCycleState` 已擁有
+  `[0x53c0b]/[0x53c07]/[0x53c0f]`，且只接受 signed low BIOS word；
+  legacy state 不會猜值。尚待以 monotonic clock 產生約18.2Hz BIOS
+  tick/call cadence，並由完整 raw roster 建立 `NativeFrameInput` 接到
+  indexed compositor。現階段七拍「狀態序列」已一致，但每拍仍由
+  Ebiten Update 驅動，不宣稱原版 wall-clock 或完整 UI presentation。
 - [x] **RE-UNIT-PRESENT-SNAPSHOT-OWNERSHIP**：`0x22253` 只配置一塊
   `0x25680` snapshot：terrain-only狀態供11個intro frames restore；
   `0x22547` entry再把final LMI `#0x7c`畫進同一塊，後續6 contract +
@@ -968,6 +978,19 @@
   `ComposeNativeUnitPresentStripBridge`另將snapshot restore→bridge-only
   LUT/object redraw→direct rows接成單一transaction，並以untouched VGA
   regression防止誤插full viewport copy。
+- [x] **RE-UNIT-PRESENT-SHIFTED-LUT**：真實FDOTHER #3 offsets
+  `0x66/0x166/0x266...`證實每table連續256 bytes；`0x22547` shared
+  epilogue回傳entry0 pointer+1，而`0x22046`仍讀256 entries，故bridge
+  table精確為`LUT0[1:256]+LUT1[0]`，不是LUT0或LUT1。
+  `NativeUnitPresentBridgeLUT`與player archive regression固定跨entry
+  boundary，禁止aligned LUT近似。
+- [x] **RE-UNIT-PRESENT-FIVE-ARG-ABI**：五個direct callers固定
+  `0x22253(unit,newX,newY,visualX,visualY)`；intro/contract先用visual
+  pair，之後才寫record `+0/+1=new pair`再跑bridge/release。command23
+  先`new=ff/ff,visual=current`消失、再`new=visual=destination`出現；
+  ending只做unit1消失，script helpers用兩pair相等。新增
+  `PlanNativeUnitPresentCall` byte-boundary regression，不再泛稱兩pair為
+  source/destination。
 - [x] **CH29-POST-FLOW-WIRING**：`postbattle_ch29_persist` 已接 recovered `ch29_post` handler→`preparation_ch30`；移除錯誤 synthetic sync/set beats，保留 native LOADCH persistent-roster boundary。`0x2bce5` renderer 未完成前仍 fail-closed。
 - [x] **RE-PHASE-DISPATCH-GATE**：Docker Capstone 重讀 `0x1d80b` 第一個 phase loop，固定 0x50-byte record stride、`count=[0x53beb]`、raw gates `record+6==1`、`record+5&0x81==0`、`record+0x26==0`；新增 `fdother.FindNativePhaseDispatchCandidates` 與 short-input/opaque-byte regression。只回傳 raw unit/selector，不執行 `0x13a9f` 或命名 event effects。
 - [x] **RE-INVENTORY-COMPACTION-AUDIT**：官方 IDA 9.4 decompiler 直接閉合 `0x1b8e7(int unit,int slot)`：`memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))`，再寫最後 cell flag `record+0x18=0x80`；新增 `battle.RemoveNativeInventorySlot`，保留 stale tail item byte，並覆蓋 slot0/slot2/slot7/short-input regression。先前「第三個 stack argument 未閉合」斷言已刪除。

@@ -148,6 +148,7 @@ func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, 
 	u.BattleFig = targetPortrait
 	u.MapSelectorKey, u.HasMapSelectorKey = targetPortrait, true
 	u.MapSelectorSlot, u.HasMapSelectorSlot = 0, false
+	u.NativeMapPresentation, u.HasNativeMapPresentation = battle.NativeMapPresentationState{}, false
 	return nil
 }
 

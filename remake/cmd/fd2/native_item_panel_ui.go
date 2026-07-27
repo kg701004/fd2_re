@@ -291,7 +291,7 @@ func nativeItemRuntimeRecords(units []*battle.Unit) ([]byte, error) {
 func syncNativeItemRuntimeRecord(unit *battle.Unit, record []byte) {
 	unit.HP = int(int16(binary.LittleEndian.Uint16(record[0x40:0x42])))
 	unit.MP = int(int16(binary.LittleEndian.Uint16(record[0x44:0x46])))
-	unit.X, unit.Y = int(record[0]), int(record[1])
+	unit.SetMapPlacement(int(record[0]), int(record[1]), unit.Dir)
 	unit.AP = int(int16(binary.LittleEndian.Uint16(record[0x48:0x4a])))
 	unit.DP = int(int16(binary.LittleEndian.Uint16(record[0x4a:0x4c])))
 	unit.HIT = int(int16(binary.LittleEndian.Uint16(record[0x4c:0x4e])))

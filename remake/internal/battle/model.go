@@ -61,6 +61,11 @@ type Unit struct {
 	// its native source provenance. It must never be inferred from Fig.
 	MapSelectorKey    int
 	HasMapSelectorKey bool
+	// NativeMapPresentation is the materialized battle-local runtime
+	// +0/+1/+3/+4 subset. It is valid only after the native selector
+	// construction path succeeds; normalized X/Y/Dir/OffX/OffY are not aliases.
+	NativeMapPresentation    NativeMapPresentationState
+	HasNativeMapPresentation bool
 	// BattleFig is the separately sourced native unit+7 selector for FIGANI.
 	// FDFIELD roster b1 supplies it; missing older JSON keeps the Fig fallback.
 	BattleFig int
@@ -201,6 +206,9 @@ func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelect
 		if u.MapSelectorKey < 0 || u.MapSelectorKey > 0xff {
 			return fmt.Errorf("native map selector: unit %d has invalid raw key", i)
 		}
+		if u.X < 0 || u.X > 0xff || u.Y < 0 || u.Y > 0xff {
+			return fmt.Errorf("native map selector: unit %d coordinate outside byte range", i)
+		}
 	}
 	slots := make([]int, len(units))
 	for i, u := range units {
@@ -212,6 +220,9 @@ func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelect
 	}
 	for i, u := range units {
 		u.MapSelectorSlot, u.HasMapSelectorSlot = slots[i], true
+		if err := u.MaterializeNativeMapPresentation(); err != nil {
+			return fmt.Errorf("native map selector: unit %d presentation: %w", i, err)
+		}
 	}
 	return nil
 }
@@ -423,6 +434,11 @@ type State struct {
 	// fail-closed for the entire state rather than mixing native and guessed
 	// selectors after a malformed editable source.
 	NativeMapSelectorError error
+	// NativeMapCycleState is the battle-session ownership of native globals
+	// 0x53c0b/0x53c07/0x53c0f. It becomes valid only when the first native
+	// selector construction batch succeeds.
+	NativeMapCycleState    fdicon.NativeMapSpriteCycleState
+	HasNativeMapCycleState bool
 	// Roster is the unmaterialized FDFIELD source used by scenarios which
 	// preserve the original constructor semantics. Units is then the canonical
 	// runtime array: party/initial groups are appended in event order, and later
@@ -844,8 +860,23 @@ func (s *State) AppendNativeMapSelectorBatch(units []*Unit) error {
 		return err
 	}
 	s.NativeMapSelectorCache = cache
+	if !s.HasNativeMapCycleState {
+		s.NativeMapCycleState = fdicon.NativeMapSpriteCycleState{}
+		s.HasNativeMapCycleState = true
+	}
 	s.Units = append(s.Units, units...)
 	return nil
+}
+
+// AdvanceNativeMapPresentationCycles applies one proven 0x1297d call to the
+// battle-local raw globals. The signed timer value must already be the low
+// BIOS word observed by the caller; legacy states fail closed.
+func (s *State) AdvanceNativeMapPresentationCycles(rawTimerTick int) bool {
+	if s == nil || !s.HasNativeMapCycleState || rawTimerTick < -0x8000 || rawTimerTick > 0x7fff {
+		return false
+	}
+	s.NativeMapCycleState = fdicon.AdvanceNativeMapSpriteCycles(s.NativeMapCycleState, rawTimerTick)
+	return true
 }
 
 // AppendNativeMapSelectorBatchOrLegacy attempts the evidenced constructor
@@ -921,7 +952,7 @@ func (s *State) SpawnGroup(group int, camp Camp, changeCamp, act bool) int {
 			u.Acted = !act
 			if occ := s.UnitAt(u.X, u.Y); occ != nil && occ != u {
 				if c, ok := s.nearestFree(u.X, u.Y); ok {
-					u.X, u.Y = c.X, c.Y
+					u.SetMapPlacement(c.X, c.Y, u.Dir)
 				}
 			}
 			n++
@@ -938,7 +969,7 @@ func (s *State) SpawnGroup(group int, camp Camp, changeCamp, act bool) int {
 			u.Acted = !act // act=true → 可行動;否則標記已行動(下回合才動)
 			if occ := s.UnitAt(u.X, u.Y); occ != nil && occ != u {
 				if c, ok := s.nearestFree(u.X, u.Y); ok {
-					u.X, u.Y = c.X, c.Y
+					u.SetMapPlacement(c.X, c.Y, u.Dir)
 				}
 			}
 			n++

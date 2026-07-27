@@ -442,18 +442,18 @@ func (g *Game) stepStoryWalks() {
 		if adx >= ady {               // 先走長軸,再走短軸(格線行走)
 			if dist <= float64(adx) {
 				cx, cy = dist*sgn(dx), 0
-				u.Dir = dirToward(0, 0, dx, 0)
+				u.SetMapPose(dirToward(0, 0, dx, 0))
 			} else {
 				cx, cy = float64(dx), (dist-float64(adx))*sgn(dy)
-				u.Dir = dirToward(0, 0, 0, dy)
+				u.SetMapPose(dirToward(0, 0, 0, dy))
 			}
 		} else {
 			if dist <= float64(ady) {
 				cx, cy = 0, dist*sgn(dy)
-				u.Dir = dirToward(0, 0, 0, dy)
+				u.SetMapPose(dirToward(0, 0, 0, dy))
 			} else {
 				cx, cy = (dist-float64(ady))*sgn(dx), float64(dy)
-				u.Dir = dirToward(0, 0, dx, 0)
+				u.SetMapPose(dirToward(0, 0, dx, 0))
 			}
 		}
 		u.X, u.Y = w.toX, w.toY // 掛在終點格,Off 為「當前位置-終點」(同 walkAnim 慣例)
@@ -470,7 +470,7 @@ func (g *Game) stepStoryWalks() {
 		if w.t >= w.frames {
 			u.OffX, u.OffY = 0, 0
 			if w.finalDir >= 0 { // 走完面向目標(如 Ares 走到索爾旁面向他),不停在走位末段的短軸方向
-				u.Dir = w.finalDir
+				u.SetMapPose(w.finalDir)
 			}
 			if g.cutsceneLog { // FD2_CUTSCENE_LOG:印走位完成(誰、從哪到哪、末向),對原版走位比對
 				fmt.Fprintf(os.Stderr, "[cutscene] walk done: %s (%d,%d)->(%d,%d) dir=%d\n",
@@ -693,7 +693,7 @@ func (g *Game) beginActingFrame(j *actPoseJob) {
 	j.beat, j.tick = 0, 0
 	for _, au := range j.acting[j.frame].Units {
 		if u := g.actingActor(au); u != nil {
-			u.Dir = au.Pose
+			u.SetMapPose(au.Pose)
 		}
 	}
 }
@@ -735,7 +735,7 @@ func (g *Game) stepOriginalActing(j *actPoseJob) {
 		// actor update cannot leave the frame with a stale direction.
 		for _, au := range f.Units {
 			if u := g.actingActor(au); u != nil {
-				u.Dir = au.Pose
+				u.SetMapPose(au.Pose)
 			}
 		}
 		j.tick++
@@ -764,6 +764,9 @@ func (g *Game) stepOriginalActing(j *actPoseJob) {
 			dx, dy := actingDelta(au.Pose)
 			u.OffX = float64(dx) * float64(g.m.TileW) * frac
 			u.OffY = float64(dy) * float64(g.m.TileH) * frac
+			if j.tick < 7 {
+				u.SetNativeMapGridMotion(au.Pose, j.tick)
+			}
 		}
 	}
 	if j.tick < 7 {
@@ -772,9 +775,12 @@ func (g *Game) stepOriginalActing(j *actPoseJob) {
 	for _, au := range f.Units {
 		if u := g.actingActor(au); u != nil {
 			dx, dy := actingDelta(au.Pose)
-			u.X += dx
-			u.Y += dy
-			u.OffX, u.OffY = 0, 0
+			x, y := u.X+dx, u.Y+dy
+			if !u.FinishNativeMapGridStep(au.Pose, x, y) {
+				u.X, u.Y = x, y
+				u.OffX, u.OffY = 0, 0
+				u.SetMapPose(au.Pose)
+			}
 		}
 	}
 	j.tick = 0
@@ -795,7 +801,7 @@ func (g *Game) stepActJob() {
 		return
 	}
 	u := &g.storyActors[j.actor]
-	u.Dir = j.poses[j.idx]
+	u.SetMapPose(j.poses[j.idx])
 	j.t++
 	if j.t >= j.frames {
 		j.t = 0
@@ -943,8 +949,7 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		for _, placement := range b.Layout.Units {
 			unit := g.handlerUnitAt(placement.Slot)
-			unit.X, unit.Y, unit.Dir = placement.X, placement.Y, placement.Pose
-			unit.OffX, unit.OffY = 0, 0
+			unit.SetMapPlacement(placement.X, placement.Y, placement.Pose)
 		}
 		g.camX, g.camY = float64(b.Layout.CamX), float64(b.Layout.CamY)
 		g.beatAdvance()
@@ -1131,12 +1136,12 @@ func (g *Game) beatStart(b campaign.Beat) {
 		if g.st != nil {
 			for _, unit := range g.st.Units {
 				if unit != nil {
-					unit.Dir = 0
+					unit.SetMapPose(0)
 				}
 			}
 		} else {
 			for i := range g.storyActors {
-				g.storyActors[i].Dir = 0
+				g.storyActors[i].SetMapPose(0)
 			}
 		}
 		g.beatDelay = 1 // original 20ms at a 60Hz remake clock
@@ -3158,8 +3163,7 @@ func (g *Game) ringInput() bool {
 		if g.sel.X == g.selOrigX && g.sel.Y == g.selOrigY {
 			g.sel, g.reach, g.moved = nil, nil, false
 		} else {
-			g.sel.X, g.sel.Y = g.selOrigX, g.selOrigY
-			g.sel.OffX, g.sel.OffY = 0, 0
+			g.sel.SetMapPlacement(g.selOrigX, g.selOrigY, g.sel.Dir)
 			g.moved = false
 			g.reach = g.st.Reachable(g.sel)
 			g.curX, g.curY = g.sel.X, g.sel.Y
@@ -3327,8 +3331,53 @@ type walkAnim struct {
 	u    *battle.Unit
 	path []battle.Cell // 含起點
 	seg  int           // 目前段:path[seg] → path[seg+1]
-	t    float64       // 段內進度 0→1
+	tick int           // 原版 unit+4:每格 1..6，第7 tick提交目的格
 	then func()        // 走完回呼(nil=玩家預設:開指令環)
+}
+
+func (g *Game) stepBattleWalk() {
+	w := g.walk
+	if w == nil || g.m == nil {
+		return
+	}
+	finish := func(pose int) {
+		last := w.path[len(w.path)-1]
+		w.u.SetMapPlacement(last.X, last.Y, pose)
+		g.walk = nil
+		if w.then != nil {
+			w.then()
+		} else {
+			g.moved = true
+			g.ring, g.ringSel = true, 1
+		}
+	}
+	if len(w.path) < 2 || w.seg >= len(w.path)-1 {
+		pose := w.u.Dir
+		if pose < 0 || pose > 3 {
+			pose = 0
+		}
+		finish(pose)
+		return
+	}
+	a, b := w.path[w.seg], w.path[w.seg+1]
+	pose := dirToward(a.X, a.Y, b.X, b.Y)
+	w.tick++
+	if w.tick < 7 {
+		w.u.X, w.u.Y = a.X, a.Y
+		w.u.SetMapPose(pose)
+		w.u.OffX = float64(b.X-a.X) * float64(g.m.TileW) * float64(w.tick) / 7
+		w.u.OffY = float64(b.Y-a.Y) * float64(g.m.TileH) * float64(w.tick) / 7
+		w.u.SetNativeMapGridMotion(pose, w.tick)
+		return
+	}
+	if !w.u.FinishNativeMapGridStep(pose, b.X, b.Y) {
+		w.u.SetMapPlacement(b.X, b.Y, pose)
+	}
+	w.seg++
+	w.tick = 0
+	if w.seg >= len(w.path)-1 {
+		finish(pose)
+	}
 }
 
 // SFX 事件 index(doc36 第 9 輪對照:index 0=游標移動已確認(5 處方向鍵分支證據);
@@ -3741,7 +3790,7 @@ func (g *Game) confirm() {
 				tgt.HP+first.Amount, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), true)
 		}
 		g.sel.Acted = true
-		g.sel.Dir = dirToward(g.sel.X, g.sel.Y, g.curX, g.curY)
+		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		g.castSp, g.sel, g.reach, g.moved = nil, nil, nil, false
 		g.checkResult()
 		return
@@ -3839,7 +3888,7 @@ func (g *Game) confirm() {
 		for _, target := range damageTargets {
 			g.awardDeathReward(target, g.sel)
 		}
-		g.sel.Dir = dirToward(g.sel.X, g.sel.Y, g.curX, g.curY)
+		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		g.msg = message
 		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
 		g.checkResult()
@@ -3855,7 +3904,7 @@ func (g *Game) confirm() {
 			if p := g.st.Path(g.sel, g.curX, g.curY); len(p) >= 2 {
 				g.walk = &walkAnim{u: g.sel, path: p}
 			} else { // 理論上不會(reach 內必可達),保底瞬移
-				g.sel.X, g.sel.Y = g.curX, g.curY
+				g.sel.SetMapPlacement(g.curX, g.curY, g.sel.Dir)
 				g.moved = true
 				g.ring, g.ringSel = true, 1
 			}
@@ -3867,7 +3916,7 @@ func (g *Game) confirm() {
 	if tgt := g.st.UnitAt(g.curX, g.curY); tgt != nil && tgt != g.sel &&
 		tgt.Camp != battle.Own && g.st.InAttackRange(g.sel, g.curX, g.curY) {
 		// 攻擊者面向目標(FDICON 方向幀)
-		g.sel.Dir = dirToward(g.sel.X, g.sel.Y, g.curX, g.curY)
+		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
 		nm := tgt.Name
 		if nm == "" {
 			nm = tgt.ClsName
@@ -4001,39 +4050,13 @@ func (g *Game) Update() error {
 				u.OffY *= 0.85
 				if u.OffY < 1 && u.OffY > -1 {
 					u.OffY = 0
-					u.Dir = 0 // 到位面向鏡頭待機
+					u.SetMapPose(0) // 到位面向鏡頭待機
 				}
 			}
 		}
 	}
-	// 移動動畫:沿路徑逐格走(方向幀 + OffX/OffY 內插;走完進入攻擊/待命階段)
-	if w := g.walk; w != nil && g.m != nil {
-		w.t += 0.22 // ~4-5 tick/格
-		for w.t >= 1 && w.seg < len(w.path)-1 {
-			w.t--
-			w.seg++
-		}
-		if w.seg >= len(w.path)-1 { // 到位
-			last := w.path[len(w.path)-1]
-			w.u.X, w.u.Y = last.X, last.Y
-			w.u.OffX, w.u.OffY = 0, 0
-			// Dir 不重設:保留最後一段的移動朝向(playfix #8 回報「走完又轉回正面朝玩家」是 bug,
-			// 原版待機朝向未 RE 出確切規則,查無反例前用「維持最後移動方向」為合理預設)
-			g.walk = nil
-			if w.then != nil { // AI:走完執行攻擊/收尾
-				w.then()
-			} else { // 玩家:開指令環
-				g.moved = true
-				g.ring, g.ringSel = true, 1
-			}
-		} else {
-			a, b := w.path[w.seg], w.path[w.seg+1]
-			w.u.Dir = dirToward(a.X, a.Y, b.X, b.Y)
-			w.u.X, w.u.Y = b.X, b.Y // 單位掛在目標格,Off 從來源格內插到 0
-			w.u.OffX = float64((a.X-b.X)*g.m.TileW) * (1 - w.t)
-			w.u.OffY = float64((a.Y-b.Y)*g.m.TileH) * (1 - w.t)
-		}
-	}
+	// 移動動畫:原版每格 unit+4=1..6，第7 tick提交目的格。
+	g.stepBattleWalk()
 	g.aiStep() // AI 回合驅動(aiBusy 時逐單位行走→攻擊演出)
 	// 嘴型動畫(忠實原版 0x16d00,doc14):每 2 frame 一 tick;閉嘴隨機 2-31 tick、開嘴一瞬
 	if len(g.dialog) > 0 && g.frame%2 == 0 {
@@ -6111,7 +6134,7 @@ func (g *Game) aiStep() {
 	act := func() {
 		if plan.Target != nil && plan.Target.Alive() {
 			tgt := plan.Target
-			u.Dir = dirToward(u.X, u.Y, tgt.X, tgt.Y)
+			u.SetMapPose(dirToward(u.X, u.Y, tgt.X, tgt.Y))
 			nm, anm := tgt.Name, u.Name
 			if nm == "" {
 				nm = tgt.ClsName

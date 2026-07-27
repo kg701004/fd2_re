@@ -30,6 +30,24 @@ func TestNativeUnitPresentSchedulePreservesAllTwentySevenPresents(t *testing.T) 
 	}
 }
 
+func TestPlanNativeUnitPresentCallPreservesMutationAndVisualPairs(t *testing.T) {
+	disappear, err := PlanNativeUnitPresentCall(1, 0xff, 0xff, 15, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if disappear.UnitSlot != 1 || disappear.NewX != 0xff || disappear.NewY != 0xff ||
+		disappear.VisualX != 15 || disappear.VisualY != 10 {
+		t.Fatalf("disappear call=%+v", disappear)
+	}
+	appear, err := PlanNativeUnitPresentCall(25, 21, 18, 21, 18)
+	if err != nil || appear.NewX != appear.VisualX || appear.NewY != appear.VisualY {
+		t.Fatalf("appear call=%+v err=%v", appear, err)
+	}
+	if _, err := PlanNativeUnitPresentCall(0x100, 0, 0, 0, 0); err == nil {
+		t.Fatal("accepted unit slot outside native byte range")
+	}
+}
+
 func TestValidateNativeUnitPresentScheduleRejectsShortcuts(t *testing.T) {
 	steps := NativeUnitPresentSchedule()
 	if err := ValidateNativeUnitPresentSchedule(steps[:6]); err == nil {

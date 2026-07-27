@@ -22,6 +22,24 @@ func TestParseLUTBank(t *testing.T) {
 	}
 }
 
+func TestNativeUnitPresentBridgeLUTCrossesEntryBoundary(t *testing.T) {
+	luts := [][]byte{make([]byte, 256), make([]byte, 256)}
+	for i := range luts[0] {
+		luts[0][i] = byte(i)
+	}
+	luts[1][0] = 0xa7
+	bridge, err := NativeUnitPresentBridgeLUT(luts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bridge[0] != 1 || bridge[254] != 255 || bridge[255] != 0xa7 {
+		t.Fatalf("shifted bridge boundaries=%#x/%#x/%#x", bridge[0], bridge[254], bridge[255])
+	}
+	if _, err := NativeUnitPresentBridgeLUT(luts[:1]); err == nil {
+		t.Fatal("accepted bridge source without adjacent entry")
+	}
+}
+
 func TestFDOTHER003LUTBank(t *testing.T) {
 	const path = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -38,5 +56,15 @@ func TestFDOTHER003LUTBank(t *testing.T) {
 		if len(lut) != 256 {
 			t.Fatalf("FDOTHER#3 LUT %d length=%d", i, len(lut))
 		}
+	}
+	bridge, err := NativeUnitPresentBridgeLUT(luts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bridge[0] != luts[0][1] || bridge[254] != luts[0][255] || bridge[255] != luts[1][0] {
+		t.Fatal("real FDOTHER#3 bridge LUT does not match entry0 pointer+1")
+	}
+	if string(bridge) == string(luts[0]) || string(bridge) == string(luts[1]) {
+		t.Fatal("real bridge LUT incorrectly aliases an aligned directory entry")
 	}
 }

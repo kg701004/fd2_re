@@ -922,6 +922,22 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    bridge-only LUT/object redraw → direct-row sequence and intentionally never
    performs a full viewport copy.
 
+   Bridge-LUT boundary correction: FDOTHER #3's real directory offsets are
+   `0x66,0x166,0x266...`, exactly 256 bytes apart. Because `0x22547` returns
+   entry0 pointer+1 while `0x22046` consumes a full 256-entry table, the bridge
+   LUT is exactly `entry0[1:256] + entry1[0]`; it is not aligned LUT0 or LUT1.
+   `NativeUnitPresentBridgeLUT` preserves this cross-entry view and real-archive
+   regression rejects either aligned approximation.
+
+   Five-argument caller ABI: `0x22253(unit,newX,newY,visualX,visualY)` renders
+   intro/contract at the independent visual pair, then writes `newX/newY` to
+   runtime record `+0/+1`, and only then runs bridge/release. Command23 first
+   calls `new=0xff/0xff, visual=current` to disappear, then
+   `new=visual=destination` to appear. The ending caller performs only the
+   first form for unit1; scripted helpers use `new=visual`. Therefore neither
+   pair should be generically renamed source/destination.
+   `PlanNativeUnitPresentCall` preserves this byte ABI.
+
    `fdicon.Bank.BlitNativeForegroundLayer` now supplies the matching steady indexed layer. It applies those raw unit gates and schedule in roster order, then reproduces `0x12ac6`'s camera interval, foreground-control bit7, bit8 flip adjustment, `index+1` descriptor selection, `buffer+0x8088` placement, and raw versus LUT-transparent branch. It preflights the full selected set before a write. Coordinates that would index outside the supplied editable map are intentionally skipped rather than reading unchecked native memory; that is an explicit fail-closed adapter boundary. Scripted `0x1366a` composition, range overlay, HUD and VGA present remain separate.
 
    `fdicon.Bank.BlitNativeUnitLayer` now closes the intervening steady `0x127a9→0x127e0` layer as a pure indexed pass. It accepts only raw unit subset fields (`+2` slot, `+3` pose, `+4` movement offset, `+5` bit7 palette branch, `+0x26` base-frame flag) plus the preceding inactive gate, exact camera extents, global idle/moving cycles and pixel shift. It preserves the native visible bounds `X∈[camX−1,camX+maxX]`, `Y∈[camY−1,camY+maxY+1]`, negative-offset skip, slot→key pointer resolution, and raw versus palette-band blit. All selected entries are preflighted before the destination changes, so malformed editable selector input cannot yield a partial indexed frame. It is deliberately not an Ebiten adapter and does not schedule foreground/HUD/present.
@@ -971,8 +987,11 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    Sprite-cycle correction (2026-07-27): the same `sub_1297d` always advances
    moving selector `[0x53c07]` on every call, independently of the gated idle
    selector above; both wrap 3→0. `AdvanceNativeMapSpriteCycles` now preserves
-   the complete mutation and the HUD-only helper delegates its idle half.
-   Runtime monotonic-clock BIOS tick/call timing is still not materialized.
+   the complete mutation and the HUD-only helper delegates to that single
+   implementation. A successfully constructed `battle.State` now owns these
+   three globals as `NativeMapCycleState`; legacy or partially materialized
+   states fail closed. Runtime monotonic-clock BIOS tick/call timing is still
+   not materialized.
 
    Raw pose/motion lifecycle (2026-07-27): both player materialization
    `0x10a77..0x10aad` and FDFIELD spawn initialize runtime `+3/+4=0/0`.
@@ -980,10 +999,17 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    down/left/up/right, write motion `1..6` during each grid step, then mutate
    X/Y at the seventh boundary and clear motion to zero without restoring
    pose. `0x1366a` normal acting follows the same lifecycle; special frames
-   only write pose. Therefore persistent/scenario Dir is not itself the raw
-   initialization source, and normalized `Unit.Dir/OffX/OffY` remain
-   insufficient for a native presentation adapter until all writers share a
-   battle-local raw state API.
+   only write pose. The remake now materializes an independent battle-local
+   `NativeMapPresentationState` (`+0/+1/+3/+4`) together with each verified
+   selector slot. Both ordinary grid walking and decoded acting advance raw
+   motion `1..6` on the source cell and commit the destination on tick seven;
+   placement and pose writers update the same state. `NativeUnitLayerEntry`
+   admits a unit only when presentation, selector-slot, and record-byte
+   provenance are all present. Persistent/scenario Dir is therefore not used
+   as the constructor source, and normalized `Unit.X/Y/Dir/OffX/OffY` are not
+   treated as aliases. This closes the state sequence, not wall-clock parity:
+   the current Ebiten update cadence is not yet the original BIOS 18.2 Hz
+   scheduler, and the indexed frame input/presentation bridge remains separate.
 
    Campaign flow correction: `postbattle_ch29_persist` now points to the recovered editable `ch29_post` binding before `preparation_ch30`; it no longer replaces that handler with synthetic `sync_party → set_chapter` beats. The native handler's proven LOADCH/persistent-roster reconstruction is the persistence boundary, while unresolved `0x2bce5` remains the sole tolerated fail-closed renderer issue. Campaign regression explicitly allows this native persistence exception and still forbids a direct battle→preparation edge.
 

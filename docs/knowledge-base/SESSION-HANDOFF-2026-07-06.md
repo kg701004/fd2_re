@@ -1046,3 +1046,28 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   regression；`ComposeNativeUnitPresentStripBridge`將restore→額外LUT/
   object redraw→direct rows接成transaction，並驗證不會誤做full viewport
   copy。完整可見序列為27 full presents + 18/24 direct row writes。
+- 2026-07-27 bridge shifted-LUT closure：真實FDOTHER #3 directory
+  offsets為`0x66,0x166,0x266...`。`0x22547`經shared epilogue回傳entry0
+  pointer+1，`0x22046`仍取256 bytes，故bridge LUT必為
+  `entry0[1:256]+entry1[0]`，不等於aligned LUT0/1。新增
+  `NativeUnitPresentBridgeLUT`與真實archive regression；runtime不得以
+  release LUT0替代。
+- 2026-07-27 `0x22253` caller ABI：五個call sites證實參數順序為
+  `(unit,newX,newY,visualX,visualY)`。visual pair先供intro/contract，
+  之後record `+0/+1`才改成new pair並進bridge/release。command23以
+  `ff/ff,current`消失再以`destination,destination`出現；ending只做
+  unit1消失；script helper兩pair相等。新增
+  `PlanNativeUnitPresentCall` regression，禁止用模糊source/destination
+  名稱交換兩對座標。
+- 2026-07-28 native map runtime-state bridge：新增battle-local
+  `NativeMapPresentationState`，只在selector slot成功materialize時建立
+  raw `+0/+1/+3/+4=(X,Y,0,0)`。一般battle walk與`decode_acting`
+  現共享原版來源格motion `1..6`、第七拍提交目的格並清motion的狀態
+  序列；placement／pose writers同步raw state。`NativeUnitLayerEntry`
+  要求presentation、selector slot與record byte5完整才輸出
+  `0x127e0` entry，否則fail-closed。State亦開始擁有
+  `[0x53c0b]/[0x53c07]/[0x53c0f]` cycle globals。聚焦
+  fdicon/indexedmap/battle/campaign/cmd tests已在
+  `fd2-go-test-local`+Xvfb通過。限制仍是實時間距：七拍目前跟Ebiten
+  Update走，尚未接monotonic約18.2Hz BIOS clock，也尚未把raw roster
+  組成production `NativeFrameInput`；不得稱完整原版UI renderer。

@@ -212,7 +212,7 @@ func (s *State) aiActUnit(u *Unit) {
 			dstX, dstY = c.X, c.Y
 		}
 	}
-	u.X, u.Y = dstX, dstY
+	u.SetMapPlacement(dstX, dstY, u.Dir)
 	if best != moveTarget && s.InAttackRange(u, best.X, best.Y) {
 		s.Attack(u, best)
 	}

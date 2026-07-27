@@ -42,3 +42,18 @@ func DecodeLUTResource(datPath string, resource int) ([][]byte, error) {
 	}
 	return ParseLUTBank(entry)
 }
+
+// NativeUnitPresentBridgeLUT materializes the deliberately unaligned table
+// returned by 0x22547. The helper exits through a shared epilogue which returns
+// FDOTHER #3 entry0 pointer+1; 0x22046 still indexes 256 bytes from that
+// address. Since native entries are contiguous 0x100-byte tables, byte 255 of
+// this view is entry1[0]. It is neither ordinary LUT0 nor LUT1.
+func NativeUnitPresentBridgeLUT(luts [][]byte) ([]byte, error) {
+	if len(luts) < 2 || len(luts[0]) != 256 || len(luts[1]) != 256 {
+		return nil, errors.New("fdother: incomplete unit-present bridge LUT source")
+	}
+	bridge := make([]byte, 256)
+	copy(bridge, luts[0][1:])
+	bridge[255] = luts[1][0]
+	return bridge, nil
+}

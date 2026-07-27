@@ -81,14 +81,10 @@ func AdvanceNativeMapHUDState(state, rawTimerTick, rawLastTimerTick int) (nextSt
 // or greater than four. The moving selector advances on every call. Both wrap
 // 3→0. The caller still owns the original call timing and persistent globals.
 func AdvanceNativeMapSpriteCycles(idleCycle, movingCycle, rawTimerTick, rawLastTimerTick int) (nextIdle, nextMoving, nextLastTimerTick int) {
-	nextIdle, nextMoving, nextLastTimerTick = idleCycle, movingCycle, rawLastTimerTick
-	delta := rawTimerTick - rawLastTimerTick
-	if delta > 4 || delta < 0 {
-		nextIdle = (idleCycle + 1) & 3
-		nextLastTimerTick = rawTimerTick
-	}
-	nextMoving = (movingCycle + 1) & 3
-	return nextIdle, nextMoving, nextLastTimerTick
+	state := fdicon.AdvanceNativeMapSpriteCycles(fdicon.NativeMapSpriteCycleState{
+		Idle: idleCycle, Moving: movingCycle, LastTimerTick: rawLastTimerTick,
+	}, rawTimerTick)
+	return state.Idle, state.Moving, state.LastTimerTick
 }
 
 // DecodeNativeMapHUDFrames loads only the verified FDOTHER #5 directory

@@ -115,6 +115,32 @@ type UnitPresentStep struct {
 	DelayTicks int
 }
 
+// NativeUnitPresentCall is 0x22253's five-argument ABI. VisualX/VisualY anchor
+// the intro, contract and direct-VGA bridge. NewX/NewY are written to runtime
+// unit+0/+1 only after contract. Native uses 0xff as the off-map mutation
+// value; the visual anchor remains independently caller-supplied.
+type NativeUnitPresentCall struct {
+	UnitSlot         int
+	NewX, NewY       byte
+	VisualX, VisualY byte
+}
+
+// PlanNativeUnitPresentCall preserves the byte truncation boundary while
+// rejecting values which an editable script could not have supplied through
+// the recovered five integer arguments.
+func PlanNativeUnitPresentCall(unitSlot, newX, newY, visualX, visualY int) (NativeUnitPresentCall, error) {
+	for _, value := range []int{unitSlot, newX, newY, visualX, visualY} {
+		if value < 0 || value > 0xff {
+			return NativeUnitPresentCall{}, errors.New("fdother: unit-present call argument outside byte range")
+		}
+	}
+	return NativeUnitPresentCall{
+		UnitSlot: unitSlot,
+		NewX:     byte(newX), NewY: byte(newY),
+		VisualX: byte(visualX), VisualY: byte(visualY),
+	}, nil
+}
+
 // UnitPresentLUTFrame is one of 0x22253's sixteen 0x22046 calls after the LMI
 // intro. Raw53AB9/Raw53ABD remain address-derived inputs: the code proves
 // their pixel-center arithmetic but not their higher-level gameplay names.
