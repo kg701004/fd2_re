@@ -1,0 +1,20 @@
+{
+  "name": "town_ch02 hotel raw route and return",
+  "source_campaign": "remake/assets/scenarios/campaign_full.json",
+  "start": "town_ch02",
+  "events": [
+    {"input": "enter", "outcome": "opt0", "node": "hotel_ch02"},
+    {"input": "enter", "selector": 0, "raw_resource": 13, "raw_callee": "0x2ffa5"},
+    {"input": "down", "selector": 1},
+    {"input": "enter", "raw_resource": 13, "raw_callee": "0x30012"},
+    {"input": "down", "selector": 2},
+    {"input": "enter", "raw_resource": 13, "raw_callee": "0x301f4"},
+    {"input": "down", "selector": 3, "secondary_raw_callee": "0x197e5"},
+    {"input": "enter", "raw_callee": "0x19953", "secondary_raw_callee": "0x197e5"},
+    {"input": "escape", "node": "town_ch02"}
+  ],
+  "limitations": [
+    "The four selector branches remain address-level; no service name or party/gold mutation is inferred.",
+    "The raw route is recorded for a future indexed/UI callee adapter and stays fail-closed."
+  ]
+}

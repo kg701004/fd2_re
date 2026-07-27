@@ -93,6 +93,9 @@ type Game struct {
 	churchTransferItems  []int               // compact source inventory indices
 	churchClassID        int                 // selected class-change candidate
 	churchBranches       []campaign.ClassChangeBranch
+	hotelSel             int // raw 0x2fc85 selector (0..3)
+	hotelRoute           fdother.NativeHotelServiceRoute
+	hotelHasRoute        bool
 	titleSlotSel         int // title LOAD selector: native 0x30550 slots 0..3
 	classChangeTable     campaign.ClassChangeTable
 	classChangeGrowth    map[int]campaign.ClassChangeGrowth
@@ -1709,6 +1712,11 @@ func (g *Game) enterNode() {
 		} else {
 			g.setupChurch()
 		}
+	case "hotel":
+		g.dialog, g.st, g.sel = nil, nil, nil
+		g.hotelSel = 0
+		g.hotelRoute = fdother.NativeHotelServiceRoute{}
+		g.hotelHasRoute = false
 	case "shop":
 		g.dialog, g.st, g.sel = nil, nil, nil
 		g.shopSel = 0
@@ -2686,6 +2694,21 @@ func (g *Game) campInput() bool {
 			g.leaveShop()
 		}
 		return true
+	case "hotel":
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.hotelSel > 0 {
+			g.hotelSel--
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.hotelSel < 3 {
+			g.hotelSel++
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			g.leaveHotel()
+			return true
+		}
+		if enter {
+			g.applyHotelServiceSelection(byte(g.hotelSel))
+		}
+		return true
 	case "ending":
 		return true
 	case "battle":
@@ -2773,6 +2796,35 @@ func (g *Game) reviveChurchUnit(id int) bool {
 // assuming every shop returns to the same town.
 func (g *Game) leaveShop() {
 	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "shop" {
+		return
+	}
+	g.camp.Advance("")
+	g.enterNode()
+}
+
+// applyHotelServiceSelection is deliberately raw: official 0x2fc85 proves
+// selector/resource/callee order, but not the high-level service names. It
+// records the route for an eventual indexed/UI consumer and never mutates
+// party, gold, or campaign state on its own.
+func (g *Game) applyHotelServiceSelection(selector byte) bool {
+	route, ok := fdother.ResolveNativeHotelServiceRoute(selector)
+	if !ok {
+		g.msg = fmt.Sprintf("旅館 raw selector %d 無效", selector)
+		return false
+	}
+	g.hotelRoute, g.hotelHasRoute = route, true
+	if route.Secondary != 0 {
+		g.msg = fmt.Sprintf("旅館 raw selector %d：%05X→%05X（待 UI callee）", selector, route.Primary, route.Secondary)
+	} else {
+		g.msg = fmt.Sprintf("旅館 raw selector %d：%05X（待 UI callee）", selector, route.Primary)
+	}
+	return true
+}
+
+// leaveHotel returns through the authored campaign edge. It never assumes a
+// specific town or converts an unresolved raw hotel callee into gameplay.
+func (g *Game) leaveHotel() {
+	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "hotel" {
 		return
 	}
 	g.camp.Advance("")
@@ -4601,6 +4653,25 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			}
 			g.font.Draw(screen, fmt.Sprintf("%s%s  %d G", pre, gd.Name, gd.Price), 156, 100+float64(i)*30, 1.0, c)
 		}
+	case n.Type == "hotel":
+		fillBox(140, 105, 360, 210)
+		title := n.Text
+		if title == "" {
+			title = "旅館／整備（raw route）"
+		}
+		g.font.Draw(screen, title, 166, 122, 1.1, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+		for i := 0; i < 4; i++ {
+			pre, c := "　", color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			if i == g.hotelSel {
+				pre, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
+			}
+			label := fmt.Sprintf("raw selector %d", i)
+			if g.hotelHasRoute && int(g.hotelRoute.Selector) == i {
+				label = fmt.Sprintf("raw selector %d → %05X", i, g.hotelRoute.Primary)
+			}
+			g.font.Draw(screen, pre+label, 176, 154+float64(i)*28, 1.0, c)
+		}
+		g.font.Draw(screen, "↑↓ 選擇／Enter 記錄 raw route／ESC 返回", 176, 286, 0.85, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "preparation":
 		h := 118 + float64((len(g.prepIDs)+1)/2)*24
 		if h < 170 {
