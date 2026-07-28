@@ -97,6 +97,54 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 	if string(frame) == string(assets.Background) {
 		t.Fatal("stable shop overlays did not change the original background")
 	}
+	stableBefore := append([]byte(nil), frame...)
+	for step := 0; step < 4; step++ {
+		opening, err := ComposeNativeShopServiceOpeningFrame(frame, assets, step)
+		if err != nil {
+			t.Fatalf("service opening step %d: %v", step, err)
+		}
+		if len(opening) != NativeShopWidth*NativeShopHeight ||
+			string(opening) == string(frame) {
+			t.Fatalf("service opening step %d did not render", step)
+		}
+	}
+	normal, err := ComposeNativeShopServiceSteadyFrame(frame, assets, 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := ComposeNativeShopServiceSteadyFrame(frame, assets, 0, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(normal) == string(selected) {
+		t.Fatal("selected service pulse variant did not change the frame")
+	}
+	if string(frame) != string(stableBefore) {
+		t.Fatal("service compositors mutated the caller-owned stable frame")
+	}
+}
+
+func TestComposeNativeShopServiceMenuRejectsInvalidState(t *testing.T) {
+	stable := make([]byte, NativeShopWidth*NativeShopHeight)
+	assets := &NativeShopAssets{}
+	for _, call := range []func() error{
+		func() error {
+			_, err := ComposeNativeShopServiceOpeningFrame(stable, assets, -1)
+			return err
+		},
+		func() error {
+			_, err := ComposeNativeShopServiceSteadyFrame(stable, assets, 4, 0)
+			return err
+		},
+		func() error {
+			_, err := ComposeNativeShopServiceSteadyFrame(stable, assets, 0, 4)
+			return err
+		},
+	} {
+		if err := call(); err == nil {
+			t.Fatal("invalid native service-menu state was accepted")
+		}
+	}
 }
 
 func TestDecodeNativeShopAssetsRejectsUnselectedResource(t *testing.T) {

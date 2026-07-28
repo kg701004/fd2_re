@@ -1297,3 +1297,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x2d669` 服務 entries 使用另一個 `0x4e9e4` primitive，因此保持 raw；
   production shop、圖示 transition/pulse、商品/recipient child panels與
   DOSBox E2 仍未完成，不把 stable fixture 宣稱為完整商店。
+- 2026-07-28 native shop service-menu E1 closure：Docker Capstone 固定
+  `0x4e9e4` 是 width×height raw literal、palette index0透明；`0x2d669`
+  以 entries3/5/7/9 畫四個normal icons，base `0xd430` 加
+  `[-39,-13,13,39]/(4-step)`，形成四步spread。`0x2d85f→0x2d9fe`
+  對selected option使用相鄰entry，phase/2在normal/selected間切換，
+  左右鍵selection 0..3循環。新增 strict raw-cell parser、opening/steady
+  compositor與三個FDOTHER variants真實資源 regression；成果圖已更新為
+  含四個icons與selected phase2。四個dispatch callee的玩法名稱、
+  production owner、child panels與E2仍保持partial。

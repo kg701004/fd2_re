@@ -6,6 +6,36 @@ import (
 	"testing"
 )
 
+func TestParseRawCellLiteralTransparentPayload(t *testing.T) {
+	cell, err := ParseRawCell([]byte{3, 0, 1, 0, 1, 0, 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cell.Width != 3 || cell.Height != 1 ||
+		string(cell.Pixels) != string([]byte{1, 0, 2}) {
+		t.Fatalf("cell=%#v", cell)
+	}
+	dst := []byte{9, 9, 9, 9, 9}
+	if err := cell.BlitAt(dst, 5, 1, 0); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := dst, []byte{9, 1, 9, 2, 9}; string(got) != string(want) {
+		t.Fatalf("blit=%v, want %v", got, want)
+	}
+}
+
+func TestParseRawCellRejectsTruncatedPayload(t *testing.T) {
+	for _, raw := range [][]byte{
+		nil,
+		{1, 0, 0, 0},
+		{2, 0, 1, 0, 7},
+	} {
+		if _, err := ParseRawCell(raw); err == nil {
+			t.Fatalf("malformed raw cell %#v was accepted", raw)
+		}
+	}
+}
+
 func rawCellBank(cells ...[]byte) []byte {
 	directoryEnd := len(cells) * 4
 	data := make([]byte, directoryEnd)

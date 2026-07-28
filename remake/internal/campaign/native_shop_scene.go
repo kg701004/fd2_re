@@ -31,10 +31,11 @@ var nativeFacilityPortraitOffsets = map[int]int{
 // one is the 0x4e8af opaque decoration. Later entries remain raw because
 // 0x2d669 draws selected odd entries through the distinct 0x4e9e4 primitive.
 type NativeShopAssets struct {
-	ResourceID int
-	Background []byte
-	Decoration fdother.LMI1Entry
-	RawEntries [][]byte
+	ResourceID   int
+	Background   []byte
+	Decoration   fdother.LMI1Entry
+	RawEntries   [][]byte
+	ServiceCells [4][2]fdother.RawCell
 }
 
 // DecodeNativeShopAssets accepts exactly the three resources selected by the
@@ -68,11 +69,25 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 	if err != nil {
 		return nil, fmt.Errorf("campaign: native shop decoration: %w", err)
 	}
+	var serviceCells [4][2]fdother.RawCell
+	for option := range serviceCells {
+		for variant := range serviceCells[option] {
+			entryIndex := 3 + option*2 + variant
+			serviceCells[option][variant], err = fdother.ParseRawCell(entries[entryIndex])
+			if err != nil {
+				return nil, fmt.Errorf(
+					"campaign: native shop service cell %d: %w",
+					entryIndex, err,
+				)
+			}
+		}
+	}
 	return &NativeShopAssets{
-		ResourceID: resourceID,
-		Background: background,
-		Decoration: decoration,
-		RawEntries: entries,
+		ResourceID:   resourceID,
+		Background:   background,
+		Decoration:   decoration,
+		RawEntries:   entries,
+		ServiceCells: serviceCells,
 	}, nil
 }
 

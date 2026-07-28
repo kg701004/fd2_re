@@ -1,7 +1,7 @@
 // Command fd2-shop-scene-oracle renders the recovered stable target of
 // 0x2E341+0x1956B from player-provided original indexed resources. The
 // deterministic fixture uses hub variant zero, DATO#129, gold=12345678,
-// and FDTXT_000 string #440.
+// FDTXT_000 string #440, and service option zero at native pulse phase two.
 package main
 
 import (
@@ -46,6 +46,8 @@ func main() {
 		assets, dialogue, digits, portraits[0], 0x81,
 		strings, font, 12345678, 0x1b8,
 	)
+	check(err)
+	frame, err = campaign.ComposeNativeShopServiceSteadyFrame(frame, assets, 0, 2)
 	check(err)
 	palette, err := fdother.ParseVGAPalette(mustResource(fdotherPath, 0))
 	check(err)

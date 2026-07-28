@@ -422,3 +422,11 @@ stable fixture。過程也抓到兩個若只看檔頭很容易犯的錯：
 其餘 service entries 保留 raw；這比「解得出一張看似合理的圖」更重要。
 目前畫面仍只是 opening 完成後的 stable target，不含服務圖示、輸入 pulse、
 商品／接收者子面板與 closing，所以 production owner 仍保持 partial。
+
+後續重讀 `0x2d669/0x2d9fe` 又證明「保留 raw」是正確決策：entries3–10
+不是前面 entry1 的 high-run opaque codec，而是 `0x4e9e4` 消費的
+width×height literal transparent cells。四個 normal/selected pairs 以
+`[-39,-13,13,39]` 做四步spread，selected cell再依phase/2切換。若上一輪
+為了讓所有entries都「成功decode」而放寬high-run parser，這批圖示很可能
+產生看似有圖、實際錯位或截斷的假成果。mixed scene的正確策略是讓direct
+caller決定每個entry的codec，而不是讓container magic決定。

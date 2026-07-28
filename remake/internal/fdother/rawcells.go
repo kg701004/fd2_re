@@ -14,6 +14,22 @@ type RawCell struct {
 	Pixels        []byte
 }
 
+// ParseRawCell decodes one width/height + width*height literal indexed cell.
+// It is the direct resource-entry form consumed by 0x4e9e4; palette index
+// zero remains transparent at blit time.
+func ParseRawCell(data []byte) (RawCell, error) {
+	if len(data) < 4 {
+		return RawCell{}, errors.New("fdother: raw cell is too short")
+	}
+	width := int(binary.LittleEndian.Uint16(data))
+	height := int(binary.LittleEndian.Uint16(data[2:]))
+	if width <= 0 || height <= 0 || width > (len(data)-4)/height {
+		return RawCell{}, errors.New("fdother: raw cell geometry is invalid")
+	}
+	pixels := append([]byte(nil), data[4:4+width*height]...)
+	return RawCell{Width: width, Height: height, Pixels: pixels}, nil
+}
+
 // DecodeRawCellResource reads a raw FDOTHER archive entry whose first u32 is
 // the byte end of a u32-offset directory. It deliberately does not try this
 // parser for LMI1 or frame-table resources.
