@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"os"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
@@ -18,8 +19,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 5 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT output.png")
+	if len(os.Args) != 5 && len(os.Args) != 6 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -42,17 +43,31 @@ func main() {
 	check(err)
 	font, err := fdtxt.ParseFont(mustResource(fdotherPath, 4))
 	check(err)
-	frame, err := campaign.ComposeNativeShopScene(
+	stable, err := campaign.ComposeNativeShopScene(
 		assets, dialogue, digits, portraits[0], 0x81,
 		strings, font, 12345678, 0x1b8,
 	)
 	check(err)
-	frame, err = campaign.ComposeNativeShopServiceSteadyFrame(frame, assets, 0, 2)
+	frame, err := campaign.ComposeNativeShopServiceSteadyFrame(stable, assets, 0, 2)
 	check(err)
 	palette, err := fdother.ParseVGAPalette(mustResource(fdotherPath, 0))
 	check(err)
 	palette[0] = color.NRGBA{A: 0xff}
 	writePNG(outputPath, frame, palette)
+	if len(os.Args) == 6 {
+		itemAssets, err := battle.LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath)
+		check(err)
+		effectRows, err := battle.LoadNativeItemEffectRowPrefix(
+			"assets/data/native_item_effect_rows.json",
+		)
+		check(err)
+		purchase, err := campaign.ComposeNativeShopItemListFrame(
+			stable, assets, itemAssets, []int{0, 1, 2, 3, 4, 5},
+			0, 0, effectRows, battle.NativeFacilityFullPrice,
+		)
+		check(err)
+		writePNG(os.Args[5], purchase, palette)
+	}
 }
 
 func mustResource(path string, index int) []byte {

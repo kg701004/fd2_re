@@ -430,3 +430,11 @@ width×height literal transparent cells。四個 normal/selected pairs 以
 為了讓所有entries都「成功decode」而放寬high-run parser，這批圖示很可能
 產生看似有圖、實際錯位或截斷的假成果。mixed scene的正確策略是讓direct
 caller決定每個entry的codec，而不是讓container magic決定。
+
+同樣原則也適用服務名稱：四個icon的圖案只適合提出假說，真正定名必須追
+到mutation writer。這次 `0x2f0b0` 的insert／optional equip／gold debit、
+`0x2f642` 的3⁄4 credit／remove、`0x2f883` 的compatibility／same-type
+replacement，以及`0x2f8ea`的source→destination writer，才足以把四項
+定名為purchase／sell／equip／transfer。這也修正了文件兩個相反問題：
+早期一處把normalized transaction標成完整✅，另一處卻在writer已充分時仍
+把四項全寫成unknown。證據門檻不是永遠保守，而是在證據到齊時精確升級。

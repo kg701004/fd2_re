@@ -167,6 +167,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
+| 原版資源 indexed 購買商品 child panel（`0x2e0bd→0x2dc55(mode0)`；item0–5／full-price fixture，非 DOSBox 截圖） | ![native indexed shop purchase list](docs/figures/native-shop-purchase-list-indexed.png) |
 | 最新 campaign church（source rebuild, 2026-07-27） | ![church current](docs/figures/church-current-remake.png) |
 | ch01 原版戰場 HUD（原版錄影 434.5 秒；camera/cursor 與下列 remake 對齊） | ![original map HUD](docs/figures/native-map-ch01-original-video.png) |
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |

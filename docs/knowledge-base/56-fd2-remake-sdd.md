@@ -144,7 +144,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用，並以 source rebuild 產生 [`town-hub-remake.png`](../figures/town-hub-remake.png)；shop/church/preparation 與 hotel raw route/return trace 已接，仍需逐章節 route、原版 E2 與 service visual 對照 |
-| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；`leaveShop` 與 `town_ch02→shop_ch02_weapon→town_ch02` purchase trace 已接；`0x2e341→0x1956b` stable indexed scene 已以 FDOTHER#12/#29/#63、variant DATO portrait、dialogue grid、gold與FDTXT greeting 重建。`0x2d669→0x4e9e4/0x2d9fe` 的四個raw icons、四步spread與selected odd/even pulse亦有original-resource fixture。production仍用generic商品清單；四個callee語意、child panels、完整 lifecycle與原版 E2 尚未驗 |
+| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene與四項service menu已有original-resource fixture，四個callee已依writer/dataflow定案。`0x2e0bd` entry16 child panel＋`0x2dc55` mode0全價、非零mode四分之三價格可合成兩欄六項icon/name/stat/price fixture。production仍用generic商品清單；recipient/equip/feedback lifecycle、variant文字、secret gate與原版 E2 尚未驗 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector（slot 1 保留舊 `fd2_save.json`，slot 2–4 使用 `fd2_save_1..3.json`），且 `TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證 town 節點存檔後可恢復 persistent party/gold/items 並清除 transient scene；`postbattle_*` 未完成 handler 也由 `TestSaveRejectsUnboundPostbattleBoundary` 拒絕存檔；保存 [`save-town-boundary-ch02.json`](../data/ui-traces/save-town-boundary-ch02.json)。`remake/internal/fdsave` 已提供 raw rolling-XOR/checksum、slot bounds、verified metadata 與 opaque `WriteSlot` adapter；但 native `FD2.SAV` roster/opaque metadata 尚未接入自有 campaign save；4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）仍非相容實作 |
@@ -802,13 +802,26 @@ options `0`, `1/3`, `2`, and `4` to `0x2fc85`, `0x2e341`, `0x318ad`, and
 `0x3072f` respectively. It performs no scene call and does not label the
 callees as hotel, shop, church, or leave; invalid index/option fails closed.
 
-The shop-family subscene is now also represented by
+The shop-family subscene is represented by
 `fdother.ResolveNativeShopServiceRoute`: raw hub variants `3` and `5` select
 FDOTHER resources `29` and `63`, while every other variant selects resource
-`12`; the confirmed service selector `0..3` maps to raw callees
-`0x2f0b0/0x2f642/0x2f883/0x2f8ea`. This is an address/resource plan only; it
-does not name the four services, call them, or bypass the existing campaign
-town/shop UI gate.
+`12`. The selector mapping is now independently closed beyond address level:
+`0→0x2f0b0` purchase, `1→0x2f642` sell, `2→0x2f883` equip, and
+`3→0x2f8ea` inventory transfer. These names come from the mutation writers,
+not icon appearance: purchase inserts through `0x1bb8c`, optionally equips,
+then `0x2d516` debits gold; sell computes `floor(3*price/4)`, credits through
+`0x2d3ff`, removes through `0x1b8e7`, then recomputes; equip uses
+`0x1c1c3→0x1c142→0x1b750` with no gold write; transfer uses the same proven
+source/destination topology as the church caller. The resolver still returns
+data only and never invokes a scene or bypasses the production UI gate.
+
+The shared product/source-item renderer at `0x2dc55` is likewise split by its
+actual mode byte rather than caller name. Mode zero displays item row `+0x13`
+full price and is used by purchase. Nonzero mode displays
+`trunc(3*price/4)` and is used by sell/transfer lists. The strict
+`RenderNativeFacilityItemRows` preserves this distinction while the legacy
+transfer wrapper remains mode-one compatibility; this does not yet close the
+parent panel opening/closing lifecycle.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

@@ -28,20 +28,23 @@ var nativeFacilityPortraitOffsets = map[int]int{
 
 // NativeShopAssets preserves the mixed-codec FDOTHER resource selected by
 // 0x2e341. Entry zero is the 0x16886 four-mode 320x200 background and entry
-// one is the 0x4e8af opaque decoration. Later entries remain raw because
-// 0x2d669 draws selected odd entries through the distinct 0x4e9e4 primitive.
+// one is the 0x4e8af opaque decoration. Entries 3..10 are decoded separately
+// as the literal transparent pairs consumed by 0x2d669 through 0x4e9e4;
+// every other entry remains raw until its direct caller proves a codec.
 type NativeShopAssets struct {
 	ResourceID   int
 	Background   []byte
 	Decoration   fdother.LMI1Entry
 	RawEntries   [][]byte
 	ServiceCells [4][2]fdother.RawCell
+	PriceCell    fdother.RawCell
+	Panel        fdother.LMI1Entry
 }
 
 // DecodeNativeShopAssets accepts exactly the three resources selected by the
 // native hub variants. Resources 12/63 use an outer LLLLLL directory while
-// resource 29 uses LMI1; the per-entry codec contract is identical at the
-// recovered call sites and is not inferred for unrelated resources.
+// resource 29 uses a scene-flavoured LMI1 directory. Per-entry codecs are
+// selected only from recovered call sites and are not inferred by container.
 func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, error) {
 	if resourceID != 12 && resourceID != 29 && resourceID != 63 {
 		return nil, errors.New("campaign: unsupported native shop resource")
@@ -82,12 +85,22 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 			}
 		}
 	}
+	priceCell, err := fdother.ParseRawCell(entries[15])
+	if err != nil {
+		return nil, fmt.Errorf("campaign: native shop price cell 15: %w", err)
+	}
+	panel, err := fdother.ParseOpaqueRunCell(entries[16])
+	if err != nil {
+		return nil, fmt.Errorf("campaign: native shop panel cell 16: %w", err)
+	}
 	return &NativeShopAssets{
 		ResourceID:   resourceID,
 		Background:   background,
 		Decoration:   decoration,
 		RawEntries:   entries,
 		ServiceCells: serviceCells,
+		PriceCell:    priceCell,
+		Panel:        panel,
 	}, nil
 }
 
@@ -125,8 +138,8 @@ func nativeShopEntries(raw []byte) ([][]byte, error) {
 	default:
 		return nil, errors.New("campaign: unknown native shop container")
 	}
-	// Nested LLLLLL uses its final value as a resource-length boundary. The
-	// LMI1-labelled variant instead stores an entry count and has no terminal.
+	// Both scene containers end their offset list with resource length. Their
+	// count encodings differ, which is why the branches above stay separate.
 	if hasTerminalBoundary {
 		if len(offsets) < 2 || offsets[len(offsets)-1] != len(raw) {
 			return nil, fmt.Errorf(

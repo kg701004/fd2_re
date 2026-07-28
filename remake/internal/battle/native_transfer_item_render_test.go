@@ -47,3 +47,33 @@ func TestRenderNativeTransferItemRowsMatches2DC55Mode1(t *testing.T) {
 		t.Fatalf("price leading digit=%d want base119", got)
 	}
 }
+
+func TestRenderNativeFacilityItemRowsModeZeroUsesFullPrice(t *testing.T) {
+	assets := nativeItemPanelTestAssets(t, 0)
+	rows := make([]byte, NativeItemEffectRowSize)
+	rows[0] = 1
+	binary.LittleEndian.PutUint16(rows[19:21], 1000)
+	facility := fdother.RawCell{Width: 1, Height: 1, Pixels: []byte{88}}
+	full := make([]byte, nativeItemPanelBytes)
+	sale := make([]byte, nativeItemPanelBytes)
+	if err := RenderNativeFacilityItemRows(
+		assets, facility, []int{0}, 0, 0, rows,
+		NativeFacilityFullPrice, full,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := RenderNativeFacilityItemRows(
+		assets, facility, []int{0}, 0, 0, rows,
+		NativeFacilityThreeQuarterPrice, sale,
+	); err != nil {
+		t.Fatal(err)
+	}
+	// Five digits start at x=114 with six-pixel advances. 1000 renders
+	// 01000 while 750 renders 00750; the middle digit therefore differs.
+	if got := full[131*320+126]; got != 119 {
+		t.Fatalf("full-price hundreds digit=%d, want frame119", got)
+	}
+	if got := sale[131*320+126]; got != 126 {
+		t.Fatalf("three-quarter hundreds digit=%d, want frame126", got)
+	}
+}

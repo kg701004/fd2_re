@@ -55,9 +55,9 @@ hub→preparation/town 做成可重播 input trace；item effect、AI runtime �
 | legacy Buff(魔刃/魔鎧/風行)到期清除 | doc02 §6.4 | 🟡 normalized approximation | `TickStatus` 的共享 `BuffTurns` 歸零清空；native IDs17..19 則分別寫 `+0x22/+0x23/+0x24`、2..5 camp phases、並依 `0x1B750` 重算衍生值，shared timer 不等同原版 | 高 |
 | 對話嘴型動畫(m0閉/m3開,doc14 0x16d00) | doc14、doc40 | 🟡 | `main.go`/`internal/dato.MouthState` 已對齊每 2 frame、開嘴 1 tick、`rand()%30+2` cadence，並可載入四幀 DATO；但 `0x168b6` dialogue-frame/grid、完整 resource binding、speaker layout 與 runtime dialogue parity 尚未閉合，不能列為完整 ✅ | 中 |
 | 法術施放演出(命中/傷害畫面) | doc35、doc37 | 🟡 approximation | remake 攻擊型法術(`sp.Target==0`)重用 `newAtkAnim`，治療型只有文字；這是目前 runtime 缺口，**不是原版「無獨立法術特效」的結論**。原版僅證實 `0x28784` 不以 spell-id 選另一段 FIGANI；`0x2a6bd` command presentation dispatcher 與命中／效果層仍待閉合。 | 中(補 native presentation/effect path) |
-| 商店(一般商品) | doc13 | ✅ | `main.go` `case "shop"`,`ShopGoods()`,購買扣金流程 | — |
+| 商店(一般商品) | `0x2e341→0x2f0b0/0x2f642/0x2f883/0x2f8ea`、doc56 UI-09 | 🟡 | `main.go case "shop"`／`ShopGoods()` 是可操作的 normalized 購買流程；原版 stable scene與四項service icons已有indexed fixture，但production仍是generic清單，child callee/panel、cancel semantics與DOSBox E2未閉合。舊✅把交易核心誤當完整原版商店，已撤回 | 高；先閉合四個callee與production indexed owner |
 | 祕密商店(旗標條件開啟) | doc13、campaign.go `SecretIf` | ✅ | `campaign.go:50` `SecretIf`;`ShopGoods()` 依旗標回傳 `Secret` 清單(commit e09c68c 已完成) | — |
-| 商店賣出(原價 75 折) | doc02 §4.6 | 🟡 | `campInput` shop sell mode、`campaign.SellSlot`、price×3/4 與 inventory/equipment recompute 已實作；原版 menu/cancel semantics 尚未 E2 驗證 | 低 |
+| 商店賣出(原價 75 折) | doc02 §4.6、native shop callee audit | 🟡 | `campInput` shop sell mode、`campaign.SellSlot`、price×3/4 與 inventory/equipment recompute 已實作；這只證明 normalized transaction，原版 service callee、indexed menu/cancel semantics尚未閉合 | 中 |
 | 存檔/讀檔 | doc19 | ✅(自有格式,非破解 FD2.SAV,已在 save.go 註明是刻意設計) | `save.go` 存 campaign 節點/旗標/金幣/道具 | — |
 | BGM 播放 | doc12 | ✅ | `audio.go playBGM`,同曲不重播/換曲釋放語意對齊 `0x26777` | — |
 | SFX(命中/陣亡/選單音) | doc36 | ✅(池對照為近似值,doc36 已註記真實 attack_id→sfx 池對照未 RE 完成) | `audio.go loadSFX/playSFX`,`main.go` 多處呼叫 | — |

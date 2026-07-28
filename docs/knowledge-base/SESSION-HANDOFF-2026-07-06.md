@@ -1306,3 +1306,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   compositor與三個FDOTHER variants真實資源 regression；成果圖已更新為
   含四個icons與selected phase2。四個dispatch callee的玩法名稱、
   production owner、child panels與E2仍保持partial。
+- 2026-07-28 native shop four-callee semantic closure：平行Docker Capstone
+  重讀四個完整body。`0x2f0b0` purchase：商品list→確認→gold/price檢查
+  →recipient→`0x1bb8c`插入→optional `0x1c142` equip→`0x2d516`
+  debit；`0x2f642` sell：來源item→`floor(3*price/4)`→確認→
+  `0x2d3ff`credit→`0x1b8e7`remove→`0x1b750`recalc；
+  `0x2f883` equip：角色→item selector→`0x1c1c3`compatibility→
+  `0x1c142`same-type replacement→recalc，無gold write；`0x2f8ea`
+  為既已閉合的source/destination transfer。`0x2dc55` mode0顯示
+  full row+19 price，nonzero顯示trunc(3/4)，新增typed shared renderer。
+  `ResolveNativeShopServiceRoute`不再錯稱四項全未知。variant-specific
+  FDTXT tables、child panel lifecycle與production integration仍待。
+- 2026-07-28 native purchase child-panel E1：續讀`0x2e0bd`證實
+  shop resource entry16經`0x4e8af`貼在`(5,112)`，再呼`0x2dc55`。
+  新增`ComposeNativeShopItemListFrame`，使用同一shop variant的entry15
+  price cell與entry16 panel；mode0顯示full price，nonzero顯示3⁄4。
+  真實FDOTHER/FDTXT及tracked item rows regression通過，新增
+  [`native-shop-purchase-list-indexed.png`](../figures/native-shop-purchase-list-indexed.png)
+  （item0–5 deterministic fixture）。這閉合stable child target，不代表
+  product stock table、opening/closing、recipient/equip prompt或production已完成。

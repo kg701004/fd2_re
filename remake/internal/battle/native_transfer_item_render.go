@@ -10,6 +10,13 @@ import (
 
 const NativeTransferVisible = 6
 
+type NativeFacilityPriceMode byte
+
+const (
+	NativeFacilityFullPrice NativeFacilityPriceMode = iota
+	NativeFacilityThreeQuarterPrice
+)
+
 // RenderNativeTransferItemRows reproduces 0x2dc55 mode 1, used by 0x2f8ea.
 // itemIDs is the caller's compact list of raw item bytes and start is the
 // stateful even viewport origin owned by 0x2df6b.
@@ -21,9 +28,29 @@ func RenderNativeTransferItemRows(
 	effectRows []byte,
 	dst []byte,
 ) error {
+	return RenderNativeFacilityItemRows(
+		assets, facilityCell, itemIDs, start, selected, effectRows,
+		NativeFacilityThreeQuarterPrice, dst,
+	)
+}
+
+// RenderNativeFacilityItemRows reproduces 0x2dc55's shared shop/facility
+// list. Mode zero displays row+0x13 unchanged for purchase; nonzero mode
+// displays trunc(3*price/4) for sale/transfer callers.
+func RenderNativeFacilityItemRows(
+	assets NativeItemPanelDataAssets,
+	facilityCell fdother.RawCell,
+	itemIDs []int,
+	start, selected int,
+	effectRows []byte,
+	priceMode NativeFacilityPriceMode,
+	dst []byte,
+) error {
 	if len(dst) != nativeItemPanelBytes || len(itemIDs) == 0 ||
 		start < 0 || start%2 != 0 || selected < start ||
-		selected >= len(itemIDs) || selected >= start+NativeTransferVisible {
+		selected >= len(itemIDs) || selected >= start+NativeTransferVisible ||
+		(priceMode != NativeFacilityFullPrice &&
+			priceMode != NativeFacilityThreeQuarterPrice) {
 		return errors.New("battle: native transfer item rows/state are invalid")
 	}
 	visible := len(itemIDs) - start
@@ -94,7 +121,10 @@ func RenderNativeTransferItemRows(
 		); err != nil {
 			return err
 		}
-		price := (3 * int(binary.LittleEndian.Uint16(row[19:21]))) >> 2
+		price := int(binary.LittleEndian.Uint16(row[19:21]))
+		if priceMode == NativeFacilityThreeQuarterPrice {
+			price = (3 * price) >> 2
+		}
 		if err := blitNativeItemPanelNumber(
 			assets.Frames, staged,
 			NativeItemPanelPoint{X: x + 104, Y: y + 12},

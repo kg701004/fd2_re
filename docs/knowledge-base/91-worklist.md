@@ -9,7 +9,7 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；目前完整操作界面視覺還原估計35–40%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [ ] **UI-VIS-TOWN**：以原版服務場景／menu resources建立320×200 indexed town owner，取代戰場map上的generic半透明清單；補DOSBox同章同輸入E2。
-- [~] **UI-VIS-SHOP**：`0x2e341→0x1956b` stable scene 已還原店內背景、variant DATO portrait、dialogue grid、cell1 decoration、八位gold與FDTXT greeting；`0x2d669→0x4e9e4/0x2d9fe` 四個service icons的四步spread與selected odd/even pulse亦已加入 [`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)。production仍是generic文字清單；下一 gate 是四個callee語意、item/recipient lifecycle與DOSBox E2。
+- [~] **UI-VIS-SHOP**：stable scene／service icons見[`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)；四個callee已定案。`0x2e0bd` entry16 panel＋`0x2dc55(mode0)` purchase兩欄六項、icon/name/stat/full price見[`native-shop-purchase-list-indexed.png`](../figures/native-shop-purchase-list-indexed.png)，nonzero mode則精確為3⁄4。production仍是generic文字清單；下一 gate 是recipient/equip/feedback lifecycle、variant text、secret gate與DOSBox E2。
 - [ ] **UI-VIS-PREPARATION**：接LMI1 #0x52 slide、MAP/TURN與YES/NO原生畫面；checkbox panel不得再宣稱原版整備UI。
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
@@ -27,7 +27,7 @@
 - [x] 2026-07-27 second-pass dialogue wording audit：`14` §4 的組合說明與 `-17/-18` 讀取步驟仍殘留「直接肖像 ID」舊斷言，已改成 identity lookup／record `+7`／direct-DATO fallback 三路 provenance；未修改任何未證實的 story operand。
 - [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 remake 自有 JSON projection，不冒稱 `FD2.SAV` byte identity。
 - [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依 official IDA/Capstone 的 `0x2cad7/0x2d093` 與 `0x526b9` raw table，新增 `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、hub selector→raw callee mapping、invalid fail-closed。只保存 address-level route，不把 option 命名成酒店／商店／教會，也不直接呼叫 scene。
-- [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 `0x2e341` 的 hub variant→FDOTHER resource（3→29、5→63、其他→12）與 service selector `0..3→0x2f0b0/0x2f642/0x2f883/0x2f8ea`；新增 `fdother.ResolveNativeShopServiceRoute` raw plan/regression。只保存 resource/callee，不命名服務、不呼叫 scene、不解除 campaign UI gate。
+- [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 resource與selector後續已完成callee dataflow：`0→0x2f0b0` purchase、`1→0x2f642` sell、`2→0x2f883` equip、`3→0x2f8ea` inventory transfer。命名依insert/remove/equip/gold writer與FDTXT，不依icon猜測；`ResolveNativeShopServiceRoute`現保存typed kind但仍不呼叫scene。
 - [x] **RE-TOWN-HOTEL-SERVICE-2FC85**：Docker Capstone 固定 `0x2fc85` raw resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute` raw plan/regression。只保存 address-level order，不命名服務、不執行 scene。
 - [x] **RE-PREPARATION-CAP-318AD**：Docker Capstone 重核 `0x318ad`：`[0x53c03] <= 0x1a` 時 cap=15，`>0x1a` 時 cap=19；新增 `fdother.NativePreparationPartyLimit` 與 boundary regression。明確以 native index 為輸入，不把 late cap 猜成顯示章號或直接改寫 JOIN roster。
 - [x] **RE-PREPARATION-PREVIEW-31E80**：Docker Capstone 完整 trace 固定 `0x31e80` 讀 caller-owned 30-byte selection table、以 `0x320ce` 計數，依 flag 分支 `0x4deda/0x4de56` 做 indexed preview；body 未寫 selection table／persistent roster。撤回把它當 Enter/toggle mutation，remake 保持 `partyDeploy` mutation 與 renderer boundary 分離。
@@ -378,8 +378,7 @@
       自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
       `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
       不得稱完整原版一致。
-- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問已接線；
-      待：賣出、裝備後 AP/DP/HIT/EV 重算、同類舊裝替換、原版祕密商店進入方式 RE(攻略#16 方向鍵位置)
+- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime；原版 stable scene／service icons已有E1 fixture。舊「賣出、裝備重算仍待」已過期並刪除；真正待辦是四個原版service callee／child panels、production indexed owner、祕密商店進入E0與DOSBox E2。
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
 
 ## 第 9 輪 ✅(3-subagent 成本分工;haiku=資料/sonnet=RE·套件/旗艦=架構·驗收)

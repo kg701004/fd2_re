@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
@@ -121,6 +122,38 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 	}
 	if string(frame) != string(stableBefore) {
 		t.Fatal("service compositors mutated the caller-owned stable frame")
+	}
+	itemAssets, err := battle.LoadNativeItemPanelDataAssets(
+		fdotherPath, filepath.Join(base, "FDTXT.DAT"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	effectRows, err := battle.LoadNativeItemEffectRowPrefix(
+		"../../assets/data/native_item_effect_rows.json",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	purchase, err := ComposeNativeShopItemListFrame(
+		frame, assets, itemAssets, []int{0, 1}, 0, 1, effectRows,
+		battle.NativeFacilityFullPrice,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sale, err := ComposeNativeShopItemListFrame(
+		frame, assets, itemAssets, []int{0, 1}, 0, 1, effectRows,
+		battle.NativeFacilityThreeQuarterPrice,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(purchase) == string(sale) {
+		t.Fatal("purchase and sale price modes rendered the same child panel")
+	}
+	if string(frame) != string(stableBefore) {
+		t.Fatal("child-panel compositor mutated the stable shop frame")
 	}
 }
 
