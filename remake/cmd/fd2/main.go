@@ -4692,6 +4692,15 @@ func (g *Game) Update() error {
 					)
 				}
 			}
+			if spec := os.Getenv("FD2_SHOT_SHOP_STATE"); spec != "" {
+				service, pulse, gold, ok := parseNativeShopShotState(spec)
+				if !ok || !g.setNativeShopShotState(service, pulse, gold) {
+					return fmt.Errorf(
+						"FD2_SHOT_SHOP_STATE expects service 0..3,pulse 0..3,gold 0..99999999 on a stable native shop menu: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]

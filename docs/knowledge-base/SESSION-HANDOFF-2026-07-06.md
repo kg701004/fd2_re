@@ -1559,3 +1559,30 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   上排原版、下排remake，selection0..5由左至右。variant0 steady redraw、
   normal wrap與hidden reveal E2已閉合；仍待variant1/2及selection5後續
   Enter→secret shop transition。
+
+## 2026-07-28 ch02 secret-shop service0 exact E2
+
+- 由同一 `/tmp/fd2-town-e2g` sandbox 以 `waittown0` 抵達 ch02 town，
+  Shift+F1 只揭露 selection5，再送一次 Return；原版約0.15秒仍是town、
+  0.5秒為淡入、1秒後為variant5/resource63/DATO portrait `0x84` 商店。
+  上游 route patch 邊界未變，town/shop handler、resource、input均未修改。
+- 新增 strict screenshot-only
+  `FD2_SHOT_SHOP_STATE=service,pulse,gold`。只接受已由production
+  `setupNativeShop` claim 的stable native shop menu、service/pulse 0..3與
+  gold 0..99999999；非法node/mode/variant/resource全部fail closed。gold是
+  同save畫面輸入，不應用來推導或改寫正常campaign的初始金額。
+- 第一輪同gold比較顯示phase0整幀相同，但四個requested pulse都輸出phase0。
+  原因是 `ComposeNativeShopServiceSteadyFrame` 已執行 `phase/2`，runtime又先
+  傳 `nativeShopUIPulse/2`。已只把service-menu caller改傳完整phase，並新增
+  production consumer regression；Yes/No等接受0/1 variant的compositor不改。
+- 高頻原版取樣證明service0在兩個selected states交替。gold0時phase0
+  original/remake raw RGB MD5均為
+  `12fad3c03096aae48098c8f9074370c7`，phase2均為
+  `e5654e8ed03d1e4fd30b2c76106bb7a1`，兩組320×200 AE均為0。
+  早期4秒樣本剩53像素差全在portrait mouth `(151..180,50..53)`，是獨立嘴型
+  animation，不能歸因於service pulse；後續同嘴型樣本已取得全幀相同。
+- 新圖
+  [`secret-shop-ch02-original-vs-remake.png`](../figures/secret-shop-ch02-original-vs-remake.png)
+  左為原版DOSBox、右為目前source-built remake selected phase。下一個 precise
+  gate 是原版Left/Right到service1–3與Escape closing→town restore；variant1/3
+  仍沒有同狀態DOSBox E2。

@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -17,6 +19,57 @@ type nativeShopUIAssets struct {
 	portraits  map[int]dato.Frame
 	itemAssets battle.NativeItemPanelDataAssets
 	effectRows []byte
+}
+
+func parseNativeShopShotState(spec string) (service, pulse, gold int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 3 {
+		return 0, 0, 0, false
+	}
+	service, err := strconv.Atoi(parts[0])
+	if err != nil || service < 0 || service > 3 {
+		return 0, 0, 0, false
+	}
+	pulse, err = strconv.Atoi(parts[1])
+	if err != nil || pulse < 0 || pulse > 3 {
+		return 0, 0, 0, false
+	}
+	gold, err = strconv.Atoi(parts[2])
+	if err != nil || gold < 0 || gold > 99999999 {
+		return 0, 0, 0, false
+	}
+	return service, pulse, gold, true
+}
+
+// setNativeShopShotState is a screenshot-only oracle hook. It may select a
+// stable service-menu frame after setupNativeShop has claimed a proven native
+// shop node. Gold is an explicit visible-state input for the one captured
+// frame; the hook never synthesizes a shop, advances the campaign, or executes
+// a transaction.
+func (g *Game) setNativeShopShotState(service, pulse, gold int) bool {
+	if service < 0 || service > 3 || pulse < 0 || pulse > 3 ||
+		gold < 0 || gold > 99999999 ||
+		g.camp == nil || g.nativeShopUI == nil ||
+		g.nativeShopMode != "menu" {
+		return false
+	}
+	n := g.camp.Node()
+	if n == nil || n.Type != "shop" ||
+		n.NativeHubVariant != g.nativeShopVariant {
+		return false
+	}
+	if _, ok := g.nativeShopUI.shops[n.NativeHubVariant]; !ok {
+		return false
+	}
+	if _, ok := g.nativeShopUI.portraits[n.NativeHubVariant]; !ok {
+		return false
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopServiceSel = service
+	g.resetNativeShopUIPulse()
+	g.nativeShopUIPulse = pulse
+	g.gold = gold
+	return true
 }
 
 func loadNativeShopUIAssets(
@@ -132,7 +185,7 @@ func (g *Game) composeNativeShopServiceMenu() ([]byte, bool) {
 		return nil, false
 	}
 	frame, err := campaign.ComposeNativeShopServiceSteadyFrame(
-		stable, assets, g.nativeShopServiceSel, g.nativeShopUIPulse/2,
+		stable, assets, g.nativeShopServiceSel, g.nativeShopUIPulse,
 	)
 	return frame, err == nil
 }

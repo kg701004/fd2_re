@@ -11,6 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 )
 
 func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T) {
@@ -58,6 +59,16 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	}
 	screen := ebiten.NewImage(640, 400)
 	g.nativeShopUIJob = nil
+	g.nativeShopUIPulse = 0
+	normalMenu, ok := g.composeNativeShopServiceMenu()
+	if !ok {
+		t.Fatal("native shop normal service pulse did not compose")
+	}
+	g.nativeShopUIPulse = 2
+	selectedMenu, ok := g.composeNativeShopServiceMenu()
+	if !ok || string(normalMenu) == string(selectedMenu) {
+		t.Fatal("production shop owner collapsed the four-phase service pulse")
+	}
 	if !g.drawNativeShop(screen) {
 		t.Fatal("native shop service menu unexpectedly fell back")
 	}
@@ -447,6 +458,83 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 		!g.beginNativeShopTransferMessageOpening() ||
 		len(g.nativeShopUIJob.frames) != 6 {
 		t.Fatal("native shop transfer full-destination feedback fell back")
+	}
+}
+
+func TestNativeShopShotStateIsStrictAndStableMenuOnly(t *testing.T) {
+	for _, tc := range []struct {
+		spec    string
+		service int
+		pulse   int
+		gold    int
+		ok      bool
+	}{
+		{spec: "0,0,0", service: 0, pulse: 0, gold: 0, ok: true},
+		{spec: "3,3,99999999", service: 3, pulse: 3, gold: 99999999, ok: true},
+		{spec: "-1,0,0"},
+		{spec: "4,0,0"},
+		{spec: "0,-1,0"},
+		{spec: "0,4,0"},
+		{spec: "0,0,-1"},
+		{spec: "0,0,100000000"},
+		{spec: "1"},
+		{spec: "1,2"},
+		{spec: "1,2,3,4"},
+		{spec: "x,0,0"},
+	} {
+		service, pulse, gold, ok := parseNativeShopShotState(tc.spec)
+		if ok != tc.ok || service != tc.service ||
+			pulse != tc.pulse || gold != tc.gold {
+			t.Fatalf(
+				"parseNativeShopShotState(%q)=(%d,%d,%d,%v), want (%d,%d,%d,%v)",
+				tc.spec, service, pulse, gold, ok,
+				tc.service, tc.pulse, tc.gold, tc.ok,
+			)
+		}
+	}
+
+	c := &campaign.Campaign{
+		Start: "shop",
+		Nodes: map[string]*campaign.Node{
+			"shop": {Type: "shop", NativeHubVariant: 5},
+		},
+	}
+	g := &Game{
+		camp: campaign.NewRunner(c),
+		nativeShopUI: &nativeShopUIAssets{
+			shops:     map[int]*campaign.NativeShopAssets{5: {}},
+			portraits: map[int]dato.Frame{5: {}},
+		},
+		nativeShopVariant:    5,
+		nativeShopMode:       "menu",
+		nativeShopUIJob:      &nativeClassUIJob{},
+		nativeShopUIPulse:    1,
+		nativeShopUILastTick: 123,
+		nativeShopUIHasTick:  true,
+	}
+	if !g.setNativeShopShotState(2, 3, 456) {
+		t.Fatal("native shop screenshot state rejected")
+	}
+	if g.nativeShopServiceSel != 2 || g.nativeShopUIPulse != 3 ||
+		g.gold != 456 ||
+		g.nativeShopUIJob != nil || g.nativeShopUIHasTick ||
+		g.nativeShopUILastTick != 0 {
+		t.Fatalf(
+			"shop shot state=(service %d pulse %d gold %d job %v last %d has %v)",
+			g.nativeShopServiceSel, g.nativeShopUIPulse, g.gold,
+			g.nativeShopUIJob != nil, g.nativeShopUILastTick,
+			g.nativeShopUIHasTick,
+		)
+	}
+
+	g.nativeShopMode = "purchase"
+	if g.setNativeShopShotState(0, 0, 0) {
+		t.Fatal("non-menu shop screenshot state accepted")
+	}
+	g.nativeShopMode = "menu"
+	g.nativeShopVariant = 3
+	if g.setNativeShopShotState(0, 0, 0) {
+		t.Fatal("mismatched native shop variant accepted")
 	}
 }
 
