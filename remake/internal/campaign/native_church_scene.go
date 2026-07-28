@@ -83,6 +83,20 @@ func ComposeNativeChurchDialogueOverlay(
 	dialogueCells []fdother.RawCell,
 	portrait dato.Frame,
 ) ([]byte, error) {
+	return ComposeNativeChurchDialogueOverlayAt(
+		background, dialogueCells, portrait, nativeChurchPortraitOffset,
+	)
+}
+
+// ComposeNativeChurchDialogueOverlayAt is the recovered stable target of
+// 0x1956b shared by shop, church, and other facility variants. The portrait
+// destination is selected by the native resource-ID switch at 0x195fc.
+func ComposeNativeChurchDialogueOverlayAt(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	portraitOffset int,
+) ([]byte, error) {
 	if len(background) != 320*200 || len(dialogueCells) <= 17 {
 		return nil, errors.New("campaign: native church dialogue overlay assets are invalid")
 	}
@@ -98,7 +112,7 @@ func ComposeNativeChurchDialogueOverlay(
 			return nil, err
 		}
 	}
-	if err := portrait.BlitAtOffset(frame, 320, nativeChurchPortraitOffset); err != nil {
+	if err := portrait.BlitAtOffset(frame, 320, portraitOffset); err != nil {
 		return nil, err
 	}
 	return frame, nil

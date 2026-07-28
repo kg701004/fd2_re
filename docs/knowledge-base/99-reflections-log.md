@@ -264,3 +264,161 @@
 **★ sprite / 動畫機制定論(反組譯，2026-07-26 勘誤)**:① 地圖 sprite index = **`unit+2`×12 + 方向×3 + 幀**(0x128e0–0x12932,經 0x11019)。② 已驗證的玩家 roster 可讓角色 id／肖像／map visual id 相等，但不能把它寫成所有 runtime 的欄位 alias。③ **戰鬥 FIGANI = `unit+7`×3**(0x2884c)，與地圖 selector 是不同 raw field；全螢幕演出主函式 0x28a6c **無 runtime 縮放**(守小攻大是 FIGANI 美術本身尺寸,景深燒進素材);完整繪圖機制見 doc 35。
 
 > 教訓(高代價,踩過兩次):撞到「打破規律的特例」先查權威資料(攻略 memory.md / 實機)再下手,**別憑自己未證實的角色↔檔名對應建例外映射表** → 循環論證一錯到底。sprite 誤判 DATO_067=凱拉斯、FIGANI 亂建 figaniID,都是同一坑。
+
+## 經驗補記 — 為什麼單一反組譯函式看不到完整 UI 排版（2026-07-28）
+
+### 問題
+
+單看一個 renderer 或 menu handler，往往只能看到局部座標與一次 blit，
+無法直接看出玩家最後看到的完整畫面。這不代表排版不能從反組譯還原，
+而是 UI 的責任被拆散在多個 caller、callee、資源、global state 與前一張
+framebuffer 之間。
+
+典型畫面可能由以下來源共同組成：
+
+- caller：決定場景流程、資源編號與 draw order；
+- renderer callee：決定 destination、stride、clip、transparent index；
+- `FDOTHER`／`FDICON`／`FDTXT`／`DATO`：保存背景、框、圖示、文字與肖像；
+- global variables：保存 camera、cursor、selected item、animation phase；
+- palette function：決定 indexed pixels 最終顯示的色彩；
+- input loop：決定 opening、steady、confirm、closing 的時序；
+- caller 進入前的 framebuffer：可能已經包含不能在目前函式內重新找到的背景。
+
+因此原版通常不會有一個容易辨認的
+`draw_shop(background, shopkeeper, menu)`。更常見的是：
+
+```text
+載入背景
+→ 貼店員
+→ 建立對話框
+→ 畫金額
+→ 開啟服務圖示選單
+→ 備份局部 framebuffer
+→ 滑入商品框
+→ 畫商品／游標
+→ restore／close／return
+```
+
+這條鏈可能散落在五至十個函式。只破解其中一個文字函式或一個 frame
+decoder，不能宣稱商店畫面已還原。
+
+### 反組譯可以精確回答的部分
+
+追完整 caller/callee dataflow 後，靜態反組譯通常能固定：
+
+- framebuffer 是 320×200、320-stride 或 640-stride work surface；
+- 元件 destination byte offset，以及換算後的 `(x,y)`；
+- width、height、clip rectangle、transparent index；
+- archive 名稱、resource index、nested entry index；
+- glyph foreground／shadow／background、line advance；
+- menu row／column、cursor wrap、confirm／cancel；
+- opening／closing 每幀 displacement；
+- copy、blit、present、palette、wait 的實際順序。
+
+所以「幾何排版無法反組譯」是錯誤結論。真正的限制是：需要追完整
+composition graph，不能只看一個函式。
+
+### 反組譯單獨不容易回答的部分
+
+只看 assembly 通常不足以可靠命名：
+
+- 某個畫面究竟是武器店、道具店、酒店或秘密商店；
+- 一張透明 sprite 在成品畫面中的美術角色；
+- callee 進入前 framebuffer 已留下什麼；
+- 哪一組 DAC palette 才是該畫面的正確顏色；
+- 某一幀是短暫 transition，還是可接受輸入的 steady state；
+- 畫面只在何種 chapter、save flag、party state 下出現。
+
+這些問題需要 DOSBox screenshot／video、攻略畫面、動態輸入 trace 或原始
+save state 交叉驗證。網路圖片只能協助辨認畫面結構，不能取代本機可重播
+oracle。
+
+### 已經踩過的錯誤
+
+1. **把 raw decode 當 runtime screenshot**
+   `docs/figures/title.png` 是錯 palette 的 resource decode，不是目前 remake
+   title 畫面；`dialogue.png` 也是文字／字型研究圖，不是對話 runtime。
+
+2. **把局部 primitive 當完整 scene**
+   解出 dialogue frame、shop transaction 或 selector input，不等於背景、
+   店員、金額、圖示、開關動畫都已組合。
+
+3. **用 generic UI 補掉未知排版**
+   `drawCampaignUI` 的現代半透明框能讓流程可玩，但不能成為原版 town、
+   shop、preparation、load 或 ending 的完成證據。
+
+4. **忽略 stack push 期間 ESP 位移**
+   caller 連續 `push [esp+N]` 時，每次 push 都會改變後續 `[esp+N]` 指向。
+   不做 symbolic stack trace，容易把 restore buffer、FIGANI、TAI、unit slot
+   對錯。
+
+5. **只比兩張不同狀態的截圖**
+   ch01 原版／remake 若 roster、camera、cursor、animation tick 不同，只能
+   證明素材與局部 compositor，不能用來宣稱整幀 parity。
+
+### 後續 UI 還原的必要流程
+
+每個完整操作界面都應採三層 evidence gate：
+
+1. **E0：反組譯完整 composition contract**
+   - 從 scene entry 追到所有 draw/present/input/close calls；
+   - 保存 address、resource、buffer、offset、stride、order、timing；
+   - 未證實的美術／玩法名稱保留 raw name。
+
+2. **E1：原始素材重建 indexed frame**
+   - 使用玩家自備 archive；
+   - 在 320×200 indexed buffer 中按原順序合成；
+   - 不用現代 panel、手調座標或 PNG convenience layer 補缺口；
+   - 不支援的 branch 必須 fail-closed。
+
+3. **E2：同狀態 DOSBox 對照**
+   - 固定同一 `FD2.SAV`、chapter、party、cursor、camera、menu selection；
+   - 固定 opening／steady／closing 的相同 presentation tick；
+   - 同時輸出 original、remake、pixel diff；
+   - geometry、palette、layer、input lifecycle 均通過後才標記 visual parity。
+
+### 工程單位必須從 primitive 改為完整畫面 owner
+
+後續不應只排「再解一個 frame／一個文字函式」。應以玩家可見 scene 為單位：
+
+```text
+town entry
+  ├─ service background
+  ├─ shopkeeper / church character
+  ├─ dialogue frame + text
+  ├─ gold / status
+  ├─ service selector
+  ├─ child buy/sell/revive/class panel
+  └─ close / return / campaign transition
+```
+
+每個 owner 都要擁有完整 resource binding、indexed buffers、state machine、
+input trace 與 screenshot oracle。只有這樣，address-level RE 才會真正收斂成
+原版畫面，而不是持續累積彼此沒有組起來的 primitives。
+
+### 本次結論
+
+反組譯能提供原版排版的精確資料，但「全貌」存在於完整 composition graph，
+不在單一函式中。FD2 現階段 asset/codec 進度高，操作界面視覺 parity 仍低，
+根因正是過去以 primitive 為工作單位，且過早用 generic UI 完成可玩流程。
+後續優先級應改成 town／shop／preparation／load 等完整 scene owner，再以
+DOSBox 同狀態 pixel diff 驗收。
+
+## 經驗補記 — 商店 stable scene 證明 composition graph 方法有效（2026-07-28）
+
+以 `0x2e341` 為 owner 往下追，而不是再孤立解一個 codec，這次一次串起了
+FDOTHER variant background、`0x1956b` 的 dialogue grid／DATO portrait、
+entry1 decoration、八位 gold 與 FDTXT greeting，產生第一張原版資源商店
+stable fixture。過程也抓到兩個若只看檔頭很容易犯的錯：
+
+1. 同一 scene resource 內有四模式 background、高位 run opaque cell，以及
+   `0x2d669` 透過 `0x4e9e4` 消費的另一類 entries，不能用一個 decoder
+   強解全部。
+2. nested `LLLLLL` 與 scene-flavoured `LMI1` 都有 terminal boundary，但
+   count/offset layout 不同；必須用真實三個 variants 做回歸，不能從單一
+   resource 外推。
+
+因此 asset parser 只 decode 已由 caller 證實的 background／decoration，
+其餘 service entries 保留 raw；這比「解得出一張看似合理的圖」更重要。
+目前畫面仍只是 opening 完成後的 stable target，不含服務圖示、輸入 pulse、
+商品／接收者子面板與 closing，所以 production owner 仍保持 partial。

@@ -92,6 +92,17 @@ ownership 與 command-30 caller contract 仍由各自 evidence gate 控制。
 
 本輪重新核對的已知更正：`0x16559` 是 DATO mouth-frame／glyph blit caller，`0x4ea2a` 才是 native glyph renderer；FDTXT `0x2c469` 前的 `0x1088d(30)` 會選 archive resource #31，不能直接把實體欄位命名成 ch30；`0x2c548` 有 `i=0→slot1、i=1→slot0` swap；`0x29164` 第一參數是 party unit index，TAI#3 是 7-byte transparent aux，不是可見台座。這些結論要在新工具鏈重跑後才能再擴展，不可由名稱推導 renderer 語意。
 
+2026-07-28 visual audit correction：codec／原資源 fixture 的完成度不得再
+寫成整體 UI parity。依 12 個主要界面逐項比較 repo DOSBox／錄影 oracle、
+source-rebuild screenshot 與外部原版畫面後，目前 asset/codec 可重現約
+75–85%、可操作 state flow 約50–55%，但玩家操作畫面的視覺還原只約
+35–40%。最大落差是 town、weapon/item shop、preparation、loadslots 與
+generic ending：它們仍由 `drawCampaignUI` 畫現代半透明框，和原版的
+320×200 indexed 場景、人物／店內背景、原生框與圖示選單不同。ch01 field
+與 church slices 最接近，但仍缺同一 save/roster/tick 的 DOSBox pixel diff。
+完整分項和證據分級以 doc57 為準；README 已撤回把 raw `title.png`／
+`dialogue.png` 稱為 remake runtime 對照的標示。
+
 `~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic` 為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
 
 repo 提供不含 license／遊戲資料的 `tools/docker/fd2-ida.Dockerfile` 與
@@ -133,7 +144,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用，並以 source rebuild 產生 [`town-hub-remake.png`](../figures/town-hub-remake.png)；shop/church/preparation 與 hotel raw route/return trace 已接，仍需逐章節 route、原版 E2 與 service visual 對照 |
-| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；`leaveShop` 與 `town_ch02→shop_ch02_weapon→town_ch02` purchase trace 已接，UI sprite/layout、native service 分支與原版 E2 仍未驗 |
+| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；`leaveShop` 與 `town_ch02→shop_ch02_weapon→town_ch02` purchase trace 已接；`0x2e341→0x1956b` stable indexed scene 已以 FDOTHER#12/#29/#63、variant DATO portrait、dialogue grid、gold與FDTXT greeting 重建並有 original-resource fixture。production仍用generic商品清單，`0x2d669→0x4e9e4` service icons、child panels、完整 lifecycle與原版 E2 尚未驗 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector（slot 1 保留舊 `fd2_save.json`，slot 2–4 使用 `fd2_save_1..3.json`），且 `TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證 town 節點存檔後可恢復 persistent party/gold/items 並清除 transient scene；`postbattle_*` 未完成 handler 也由 `TestSaveRejectsUnboundPostbattleBoundary` 拒絕存檔；保存 [`save-town-boundary-ch02.json`](../data/ui-traces/save-town-boundary-ch02.json)。`remake/internal/fdsave` 已提供 raw rolling-XOR/checksum、slot bounds、verified metadata 與 opaque `WriteSlot` adapter；但 native `FD2.SAV` roster/opaque metadata 尚未接入自有 campaign save；4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）仍非相容實作 |

@@ -11,11 +11,16 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺 parity | 已有原版／重製的開場、對話、戰鬥、準備、教會、command overlay；item panel已有原版 indexed compositor、compact input、12-frame Ebiten adapter，tracked type5–24 mutation與type23 destination cursor已接；兩層item cancel／selector-grid reset已對齊原版 | `0x22253`及其他item effect的 indexed presentation、ending compositor尚未閉合；原版 archives 缺少時仍fallback |
+| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay、商店 stable scene 與部分戰鬥演出已有原資源 indexed runtime／fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原仍僅 **35–40%**；town、shop service/商品 lifecycle、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
 
 Worklist 目前是 **452 個 `[x]`、92 個 `[~]`、65 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
+
+視覺完成度必須另看 [`57` UI evidence matrix](docs/knowledge-base/57-ui-evidence-matrix.md)。
+目前工程估計為：原始 asset/codec 可重現約 75–85%，可操作 state flow 約
+50–55%，但完整玩家操作畫面的原版視覺還原只有約 35–40%。這些是依界面
+證據分級的範圍，不是測試覆蓋率，也不能加總成遊戲完成百分比。
 
 這組數字不能換算成「原版完成了幾％」：`[x]` 可能只代表一個格式、函式或 raw adapter 已通過證據 gate，
 而不是一個章節已可通關。以玩家可見功能衡量，目前是「多個垂直切片」；30 章逐章的戰前／戰後、城鎮、商店、
@@ -148,8 +153,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 
 | 原版／重製畫面 | 產物 |
 |---|---|
-| 開場／標題 | ![title](docs/figures/title.png) |
-| 對話與中文字型 | ![dialogue](docs/figures/dialogue.png) |
+| 標題 raw resource decode（錯色盤研究產物，**不是 remake runtime 截圖**） | ![raw decoded title](docs/figures/title.png) |
+| 對話文字／字型解碼研究圖（**不是 remake runtime 截圖**） | ![decoded dialogue text](docs/figures/dialogue.png) |
 | 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | action overlay 4-open / 4-close | ![native action overlay lifecycle](docs/figures/action-overlay-open-close-remake.png) |
@@ -161,6 +166,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
+| 原版資源 indexed 商店 stable scene（`0x2e341→0x1956b`；variant0、DATO#129、gold fixture；尚未包含服務圖示，非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
 | 最新 campaign church（source rebuild, 2026-07-27） | ![church current](docs/figures/church-current-remake.png) |
 | ch01 原版戰場 HUD（原版錄影 434.5 秒；camera/cursor 與下列 remake 對齊） | ![original map HUD](docs/figures/native-map-ch01-original-video.png) |
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |
@@ -172,7 +178,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源 indexed 復活訊息（FDTXT588 無候選／FDTXT504 不足金；非 DOSBox 截圖） | ![native indexed revive empty](docs/figures/native-revive-empty-indexed.png) ![native indexed revive insufficient](docs/figures/native-revive-insufficient-indexed.png) |
 | 原版資源 indexed 復活成功演出（`0x2f4c6` case4 第5幀／DAC delta62；非 DOSBox 截圖） | ![native indexed revive success](docs/figures/native-revive-success-indexed.png) ![native indexed revive flash](docs/figures/native-revive-success-flash-indexed.png) |
 | 原版資源 indexed 教會主選單（`0x3072f+0x2d669+0x2d85f`；gold=1000 fixture，非 DOSBox 截圖） | ![native indexed church menu](docs/figures/native-church-menu-indexed.png) |
-| 原版與重製標題／對話 | ![original title](docs/figures/title-original-dosbox.png) ![remake title](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![remake dialogue](docs/figures/dialogue.png) |
+| 原版 DOSBox 標題／對話 oracle；右側舊圖僅為 raw decode，尚無同狀態 remake runtime 對照 | ![original title](docs/figures/title-original-dosbox.png) ![raw title decode](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![dialogue decode sheet](docs/figures/dialogue.png) |
 | battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。

@@ -2,6 +2,59 @@
 
 > 這是 SDD 的第一份可執行盤點，不是「已還原」宣告。行號以本輪 `remake/cmd/fd2/main.go` 為準；`partial`／`missing` 必須先補 E0/E1/E2 證據才可改成 verified。
 
+## 2026-07-28 visual-parity audit
+
+這一節回答的是「玩家目前看到的操作畫面與原版相差多少」，不能與
+codec、RE 函式數或可編譯測試數混算。分數是依 repo 內 DOSBox／錄影
+oracle、目前 source rebuild 截圖、indexed fixture，以及外部原版畫面逐項
+審查後的工程估計；它不是 pixel-diff 百分比，也不是遊戲總完成度。
+
+| 畫面／流程 | 視覺還原估計 | 直接證據與主要差距 |
+|---|---:|---|
+| title/main menu | 60–70% | runtime 使用原始 title/menu 圖與接近原座標；但 README 的 `title.png` 只是錯色盤的 raw 解碼產物，並非目前 runtime screenshot。畫面仍加了非原版 F2 提示，logozoom 是近似，四槽 load 畫面是現代字型半透明框 |
+| tactical field/HUD | 60–70%（限 ch01 slice） | `native-map-ch01-original-video.png` 與 `native-map-ch01-remake.png` 已對齊 terrain、cursor、HUD resource/layout；但兩張不是同一 roster/event frame，remake 畫面角色數與位置不同，ch02+ 尚未驗 |
+| action/command/item/target UI | 45–55% | action skin、command grid、item panel已有原資源 indexed adapters；完整 availability、selector 6/7+、effect presentation、同狀態 DOSBox diff 未閉合 |
+| story dialogue | 30–40% | 原版 oracle 固定左下 80×80 portrait、native frame/text/page marker；目前一般 runtime 仍有 RGBA/font/layout path，upper/right anchor、FFxx、scroll/clipping 未逐類驗收。README 的 `dialogue.png` 是文字解碼圖，不是 remake 對話 runtime screenshot |
+| full-screen battle presentation | 40–50% | FIGANI/AFM、部分 status frame與局部 pixel-equal slices可重播；command/spell/item完整 presentation、音效與 palette/timing sequence仍缺 |
+| postbattle/campaign transition | 25–35% | graph與部分 handler已接，但原版每章 postbattle→town／連戰／整備的可見轉場未逐章 E2 驗收 |
+| town hub | 5–15% | `town-hub-remake.png` 是戰場 map 上的現代半透明清單；不是原版服務場景／店員畫面，也沒有原版 indexed menu skin |
+| weapon/item shop | 25–35% | `0x2e341→0x1956b` stable scene 已能以原版 FDOTHER/FDTXT/DATO 組出店內背景、variant portrait、藍框、八位 gold 與 greeting；production shop 仍是現代文字清單，`0x2d669/0x4e9e4` 服務圖示、商品/recipient lifecycle與 DOSBox E2 尚未接 |
+| church | 60–70%（已接 slices） | church main/status/transfer/revive/class 多數已有原始 FDOTHER/FDICON/FDTXT indexed畫面與 lifecycle；缺 DOSBox side-by-side、部分 fallback與完整 persistent/save parity |
+| preparation | 10–20% | selection/quota有 state trace；`preparation-current-remake.png` 是兩欄 checkbox 半透明框，原版 LMI1 #0x52 slide、MAP/TURN、YES/NO完整畫面未接 |
+| save/load | 20–30% | 四槽 input與 native save codec已有基礎；remake loadslots是現代框／字型，和 `load-empty-original-dosbox.png` 的四列原生框、cursor、metadata layout不同 |
+| ending | 20–30% | prefix已跑到 `0x2c548`，portrait compositor已閉合一段；campaign仍可落入 generic「結局」半透明文字頁，party montage、音訊與terminal route未完成 |
+
+商店 stable fixture 的加入尚不足以改變整體區間：十二個主要界面等權
+平均仍約 **35–40%**，因此現階段應對外寫成「操作界面
+視覺還原約 35–40%」，而不是「原版視覺 parity 已完成」。如果評的是
+原始圖檔／字型／動畫／indexed codec 可解碼程度，則可合理估為 75–85%；
+如果評的是可操作 state flow，約 50–55%；這三種指標不可互相替代。
+
+外部交叉證據只用來辨認原版畫面結構，不取代本機 DOSBox oracle：
+
+- [巴哈文章搜尋摘要](https://home.gamer.com.tw/artwork.php?sn=1432264)
+  明確包含「進入教會的畫面」；頁面目前會拒絕自動抓取，故不作像素證據。
+- [小黑盒原版回顧](https://api.xiaoheihe.cn/maxnews/app/share/detail/2265131)
+  的原版 shop screenshot 可見店員、店內背景、藍色對話框、gold counter
+  與圖示選單，直接排除「地圖上通用半透明商品清單」是原版等價 UI。
+- [百度原版攻略畫面](https://jingyan.baidu.com/article/597a0643385421312b5243cf.html)
+  可見戰場 action menu 是原生像素 overlay，不是一般現代文字 panel。
+- [圖文攻略](https://egameinsider.com/p/dko871470c83/)
+  顯示章間服務並非每戰後同一流程；例如第22–25章是連續戰、沒有村落
+  補給，支持 campaign 必須逐章保存 town／shop／連戰節點。
+
+### 視覺優先順序
+
+1. 先把 town、weapon/item shop、preparation、loadslots 從 generic
+   `drawCampaignUI` 分離，建立 320×200 original-indexed scene owner。
+2. 每個 owner 必須有同一 state/input 的 DOSBox screenshot；不能只用
+   原資源 fixture 宣稱 E2 parity。
+3. 戰場驗收要固定同一 save／roster／camera／cursor／animation tick，再
+   做 palette-index或RGB pixel diff；目前兩張 ch01 圖只能證明 compositor
+   slice，不能證明整幀等價。
+4. README 只展示並列且標清 `original DOSBox`、`remake runtime`、
+   `indexed fixture`、`raw decode` 的圖片，禁止再把 raw decode 說成 remake。
+
 ## 現有 runtime evidence
 
 | Contract | 現有 code evidence | 判定 | 下一個證據問題 |
@@ -14,7 +67,7 @@
 | UI-06 HUD | native map HUD `0x1acf3` 的 panel→terrain→AP→DP→optional unit icon→HP 已由 `BlitNativeMapHUD→ComposeNativeFrame` 接入 ch01 production full frame；display gates、persistent anchor、LMI1 #130／hex #0x83/#0x84、digit banks與FDICON selector均有 regression。`0x11cfa`證實HUD base是`work+0x8088`；原版錄影434.5秒與remake已對齊camera `(1,13)`／cursor `(8,15)`、tree icon及`A -05/D +10`。#22只在native admission失敗時fallback | partial | ch02+逐章 view/gates/anchor provenance、`0x12c0d` exact raw lookup predicate/order、同一roster/event state的pixel diff；raw globals高階名稱仍不猜 |
 | UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開；ch24 handler `0x24df2` 已以 Docker Capstone/exporter 閉合 dialog idx6/7、PAN `(4,16)`→`(96,384)`、spawn group2=1、ACT75(slot70/pose2)，並接回 `town_ch25`；ch25 `0x24e80` 以 address+text-index dialogue override 閉合 scene2/3/4 branch、16-slot layout、ACT77–80，已接回 `town_ch26` | partial | 以原版 handler offset／DOSBox input 差分核對每章是否進 town/shop/rest/preparation/ending；ch06/ch07 等仍 fail-closed |
 | UI-08 town | `enterNode`/`campInput` 的 `town` branch 約 1584、2133 | partial | 原版 town menu、church/shop 入口與戰後 persistent timing |
-| UI-09 shop | buy/sell/equip/recipient 約 2256–2391 | partial | 商品 menu sprite、游標邊界、secret shop flag、原版 cancel semantics |
+| UI-09 shop | buy/sell/equip/recipient 約 2256–2391；`0x2e341` 的 FDOTHER#12/#29/#63 mixed-container、`0x1956b` dialogue-grid／DATO variant portrait、cell1 decoration、八位 gold與FDTXT#440/#501 stable compositor已有original-resource regression與indexed fixture | partial | `0x2d669→0x4e9e4` 四項服務圖示 transition/pulse、商品/recipient child panels、production owner、secret shop flag、原版 cancel semantics與DOSBox E2 |
 | UI-10 church | `0x2d7bd` 左右四項循環；`0x3072f` dispatch `0→0x2ffa5` status、`1→0x2f8ea` item transfer、`2→0x30dc3` revive、`3→0x31385` class。class path已接 exact list/confirmation lifecycle；raw0已接兩欄 roster與完整唯讀`0x17aed` status/items→command/MP lifecycle。raw1由FDTXT510/511/512與writer定名物品轉交，來源／目的使用共用 roster，`0x2dc55(mode1)` 已接 item icon/name/stat、3⁄4 price五位數、stateful viewport與6-open/5-close。目的八格滿時已接 FDTXT506＋FFFC 原始姓名、6-open／`0x16c57(1)`等待／5-close，再回來源 loop；缺 raw flags／identity fail-closed。revive已接 raw byte5 bit0候選、raw class×level費用、三列名單、FDTXT590動態確認；FDTXT588無候選與FDTXT504不足金的開框／等待／關框亦已接。重核刪除「所有確認固定choice4+dialogue5關閉」斷言：不足金是choice4後在仍開框的第三行顯示504。成功`0x2f4c6` case4的entries23..31九幀、2 BIOS-tick、DAC 0→62→0與relative latch waits已接；前後`0x25977`已更正為FDMUS track17/11、loop_count1並接runtime，不是SFX。舊`0x2f8ea→0x2f4c6/0x2d516`斷言已刪，caller不改gold。 | partial/fail-closed | command effect/target、FD2.SAV與DOSBox E2 visual diff |
 | UI-11 preparation | quota/checklist 約 1588、2133–2160；15/19 limit 欄位；native `0x1a30b` 會在 battle-entry loop 呼叫 `0x1f1cc/0x1f30a` 做 indexed buffer present；`0x1f42d` 的 LMI1 #0x52 double-slide entry/anchor 已釘 | partial | MAP/TURN 資料來源、行軍 YES/NO input 與 remake screenshot |
 | UI-12 save/load | F5/F9 global path；save package 自有 schema；原版 `FD2.SAV` 的 `0x59cb` boundary、rolling-XOR/u32 byte-sum checksum、4×logical `0xa28` records at `+0x312b`（metadata `0x28` + roster `0xa00`）已由真實 sandbox decode、`tools/fd2save.py` 與 `internal/fdsave` regression 覆蓋；metadata `+0`=chapter、`0xff`=empty marker；`0x30550` 明確為 4-slot（0..3）、↑↓ bounded、Enter/Space confirm、Esc cancel；empty-slot oracle `docs/figures/load-empty-original-dosbox.png` 證實 1–4 四列框與第一列 cursor；remake title 已提供四槽自有 JSON selector | partial | remaining native metadata semantics、delete/overwrite、successful native-load restore、native roster compatibility 與 remake/native 畫面差分 |

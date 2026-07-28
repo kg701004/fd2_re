@@ -14,6 +14,26 @@ type LMI1Entry struct {
 	Pixels        []byte
 }
 
+// ParseOpaqueRunCell decodes the width/height + 0x4e916 high-run payload used
+// by callers of 0x4e8af. It is intentionally separate from ParseLMI1 because
+// native scene resources may use an outer LLLLLL directory while retaining
+// the same per-cell codec.
+func ParseOpaqueRunCell(data []byte) (LMI1Entry, error) {
+	if len(data) < 4 {
+		return LMI1Entry{}, errors.New("fdother: opaque-run cell is too short")
+	}
+	w := int(binary.LittleEndian.Uint16(data))
+	h := int(binary.LittleEndian.Uint16(data[2:]))
+	if w <= 0 || h <= 0 {
+		return LMI1Entry{}, errors.New("fdother: opaque-run cell has empty dimensions")
+	}
+	pixels, err := decodeLMI1Pixels(data[4:], w*h)
+	if err != nil {
+		return LMI1Entry{}, err
+	}
+	return LMI1Entry{Width: w, Height: h, Pixels: pixels}, nil
+}
+
 // DecodeLMI1Resource reads one player-provided FDOTHER archive entry and
 // decodes it as an LMI1 UI container. It keeps the archive boundary explicit,
 // just like DecodeResource does for frame-table entries.

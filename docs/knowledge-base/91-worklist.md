@@ -4,6 +4,16 @@
 > 每輪結束更新本表(打勾 / 補新項 / 調整順序)，與 `99-reflections-log.md` 互補。
 > 圖例:✅ 完成 · 🟡 進行中 · ⬜ 待辦 · ❌ 放棄(註明原因)
 
+## Visual parity correction（2026-07-28）
+
+- [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；目前完整操作界面視覺還原估計35–40%，不能以75–85%的asset/codec完成度代替。
+- [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
+- [ ] **UI-VIS-TOWN**：以原版服務場景／menu resources建立320×200 indexed town owner，取代戰場map上的generic半透明清單；補DOSBox同章同輸入E2。
+- [~] **UI-VIS-SHOP**：`0x2e341→0x1956b` stable scene 已還原店內背景、variant DATO portrait、dialogue grid、cell1 decoration、八位gold與FDTXT greeting，並產生 [`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)。production仍是generic文字清單；下一 gate 是 `0x2d669→0x4e9e4` buy/sell icon menu、item/recipient lifecycle與DOSBox E2。
+- [ ] **UI-VIS-PREPARATION**：接LMI1 #0x52 slide、MAP/TURN與YES/NO原生畫面；checkbox panel不得再宣稱原版整備UI。
+- [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
+- [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
+
 ## 文件狀態入口（2026-07-27）
 
 目前統計：`[x]=441`、`[~]=96`、`[ ]=65`；僅代表 worklist 勾選項數，不是原版完成百分比。

@@ -1276,3 +1276,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   顯示原版5ms/4ms寫入，remake採每狀態至少一個present，不宣稱DOS wall-clock
   parity。focused與全`cmd/fd2` Docker/Xvfb regression通過；ch29 terminal
   handler仍因後段`0x2bce5` ending renderer維持campaign fail-closed。
+- 2026-07-28 visual-parity audit：使用者要求先量化「原版畫面 vs remake
+  畫面」，故暫停 `0x29164` scheduler。逐項查看 repo DOSBox／錄影 oracle、
+  source-rebuild screenshots、indexed fixtures，並以網路原版 church／shop／
+  battle UI畫面交叉確認。結論分三層：asset/codec約75–85%、可操作state
+  flow約50–55%，但完整操作界面視覺 parity僅約35–40%。town、shop、
+  preparation、loadslots、generic ending仍是`drawCampaignUI`現代半透明框；
+  ch01 field與church slices最好，但未有同save/roster/tick pixel diff。
+  README已撤回把`title.png`／`dialogue.png` raw decode稱作remake runtime
+  對照；doc57加入12界面分數／證據、doc91新增UI-VIS-TOWN/SHOP/PREPARATION/
+  LOAD/DIFF-HARNESS。此批是文件勘誤，尚未達單獨重大commit門檻。
+- 2026-07-28 native shop stable-scene vertical slice：Docker Capstone 重讀
+  `0x2e341/0x1956b/0x4e8af/0x4e8e1/0x2d669`，確認 hub variant 選
+  FDOTHER#12/#29/#63，`0x52659` 再選 DATO 128–132/0；`0x1956b`
+  先組 FDOTHER#5 dialogue grid＋variant portrait，再以六段水平帶揭幕。
+  stable frame 後續貼 entry1、在 `(16,99)` 畫八位 gold、於 `(12,119)`
+  畫 FDTXT#440（variant1為#501）。新增 mixed LLLLLL/LMI1 scene parser、
+  original-resource compositor regression與
+  [`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)。
+  `0x2d669` 服務 entries 使用另一個 `0x4e9e4` primitive，因此保持 raw；
+  production shop、圖示 transition/pulse、商品/recipient child panels與
+  DOSBox E2 仍未完成，不把 stable fixture 宣稱為完整商店。

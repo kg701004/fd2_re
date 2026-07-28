@@ -46,6 +46,34 @@ func TestParseLMI1RejectsMalformedCodec(t *testing.T) {
 	}
 }
 
+func TestParseOpaqueRunCellNativeCodec(t *testing.T) {
+	// The opaque 0x4e8af path has no LMI1 container: its entry begins
+	// directly with u16 width/height followed by the same high-run stream.
+	data := []byte{3, 0, 1, 0, 0, 0xc0, 0xc2, 7}
+	entry, err := ParseOpaqueRunCell(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entry.Width != 3 || entry.Height != 1 {
+		t.Fatalf("geometry=%dx%d, want 3x1", entry.Width, entry.Height)
+	}
+	if got, want := entry.Pixels, []byte{0, 0xc0, 7}; string(got) != string(want) {
+		t.Fatalf("pixels=%#v, want %#v", got, want)
+	}
+}
+
+func TestParseOpaqueRunCellRejectsMalformedInput(t *testing.T) {
+	for _, data := range [][]byte{
+		nil,
+		{1, 0, 0, 0},
+		{1, 0, 1, 0, 0xc2}, // repeat lacks its palette-index byte
+	} {
+		if _, err := ParseOpaqueRunCell(data); err == nil {
+			t.Fatalf("malformed opaque-run cell %#v was accepted", data)
+		}
+	}
+}
+
 func TestLMI1BlitPreservesTransparentAndMirrors(t *testing.T) {
 	e := LMI1Entry{Width: 3, Height: 1, Pixels: []byte{1, 0, 2}}
 	dst := make([]byte, 16)
