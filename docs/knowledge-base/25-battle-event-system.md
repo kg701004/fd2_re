@@ -160,7 +160,7 @@ handler 本體,兩者在 `call 0x10b4e` 前的計算完全同構:
 `[0x53bef]` 恆為正(回合數 1,2,3…),故實際等價於 **`group_id = turn_counter DIV 2`(無條件捨去)**。
 event_id 49(0x351e9)同一段位移量(handler+0x0a..0x12)逐位元組相同,同一公式。[驗]
 
-**ch21(map0→map20)/ch22(map21)套公式,對照 ground truth(`remake/assets/maps/map20|21_units.json` 實際存在的 group)**:
+**ch21(map0→map20)/ch22(map21)套公式，對照版本化map roster的group存在性**：
 
 | 章 | turn | event_id | 公式算出 group | map units.json 該 group 存在? | camp |
 |---|---|---|---|---|---|
@@ -181,7 +181,9 @@ handler 反組譯,非猜測**;`docs/data/turn_events.json` 對應 6 筆已把 `g
 > event47/49 是 `group=turn÷2`——同樣的「回合數驅動遞增 group」設計母題,但除以 2 是因為這兩章每 2 回合才觸發
 > 一次(turn events 只登記偶數/隔輪回合),group 编號仍要對齊「第幾波」而非「第幾回合」。
 
-**map0/章1 ground truth 全部驗證通過(4/4)**:對照 `remake/assets/scenarios/ch01.json`(青衫核對過的正解)——
+**map0/章1 event→group mapping 4/4交叉吻合**：對照
+`ch01.json` authored events與原版map roster；這只驗mapping，不把scenario
+升格成完整handler oracle——
 
 | turn_events(map0) | event_id | handler | 解出 group | ch01.json 正解 | 結果 |
 |---|---|---|---|---|---|
@@ -198,7 +200,9 @@ group 數字、單筆 vs 雙筆(T3 兩組)、觸發回合、camp 全部吻合。
 - **原版事件 = 編進 EXE 的每章 handler**,無法像資料般直接搬。重製要嘛逐章反組譯 handler 邏輯重寫,
   要嘛(建議)用**資料驅動 DSL** 取代:把「條件(單位群狀態 / 回合數)→ 動作(增援 / 對話 / 勝負)」表達成
   campaign.json 的事件節點(對映 doc 19 腳本系統)。
-- 已抽出的原語正好是 DSL 的詞彙:`when unit[i].flag` / `when turn>=N` → `spawn` / `dialogue` / `win` / `event`。
+- 已抽出的raw原語可形成DSL候選，例如
+  `when native_record_byte5_bit0(i)`／`when turn>=N`；前者必須保留
+  per-handler caller與branch方向，不得縮寫成全域`unit[i].flag`語意。
 - default handler(11 章)= 最簡單的「殲滅即勝」,重製預設規則即可;18 個特殊 handler 是需要逐關重建的事件腳本。
 
 ## 7.5 戰場單位有兩個來源:FDFIELD roster vs 事件進場(2026-06-28 證實)
@@ -206,17 +210,19 @@ group 數字、單筆 vs 雙筆(T3 兩組)、觸發回合、camp 全部吻合。
 掃全 12 關 FDFIELD `own`(己方)roster,**沒有任何一關含索爾(id0)/亞雷斯(4)等主角**。
 **第1章「初試身手」= 海邊第一戰 = map0**(敵方 portrait 盜賊96 + 海盜頭目97 + 海防/援軍76 + 103;
 與青衫第1章敵方完全對應),其 own roster **只有哈諾(1)+哈瓦特(3)**,且這兩人也不是第一回合就在場
-(青衫:第3回合己方結束才從房子出來)。索爾/亞雷斯/妮雅/蓋亞**完全不在 roster**。
+(青衫:第3回合己方結束才從房子出來)。索爾/亞雷斯/悠妮/蓋亞**完全不在 roster**。
 → 戰場單位是**雙來源**:
 
 | 來源 | 內容 | 機制 |
 |---|---|---|
 | **FDFIELD roster** | 每關的敵人 + 部分配角/ally(各關 map<N>) | 開場擺位 **或** 由事件按回合放出(哈諾/哈瓦特雖在 roster,T3 才進場) |
-| **隊伍名冊 `[0x53bf7]` + 事件** | 玩家主角隊(索爾/亞雷斯/妮雅/蓋亞) | **由 pre-battle cutscene / 事件腳本動態進場** |
+| **隊伍名冊 `[0x53bf7]` + 事件** | 玩家主角隊(索爾/亞雷斯/悠妮/蓋亞) | **由 pre-battle cutscene / 事件腳本動態進場** |
 
-**第1章開場演出(實機)**:索爾/亞雷斯/妮雅/蓋亞**從戰場邊緣移動進入中央 → 觸發對話**,
+**第1章開場演出(實機)**:索爾/亞雷斯/悠妮/蓋亞的部署與此前序章
+acting／camera是不同階段；舊「四人從戰場邊緣移入中央」不可直接由攻略推定。
 之後才進入可操作戰鬥。即第一戰不是「擺好棋子開打」,而是 scripted 入場 cutscene。
-全關進場時序見 doc 28 第1章(青衫 ground truth):開場主角隊 → T3 哈諾/哈瓦特(友) → T4 敵援軍(右下) → T5 海盜頭目+屬下(左下) → T6 警備隊/海防隊(右上,友,立即行動)。
+全關玩家可見時序可用doc28／青衫作E3案例：開場主角隊→T3哈諾／哈瓦特
+→T4敵援軍→T5海盜頭目→T6警備隊；每段實作仍以event handler/FDFIELD為準。
 
 > ⚠ 更正(2026-06-29):前一版誤把第一戰寫成「序章 ch0=map2」。**第一戰是 map0**;map2 敵方為 [76,77],屬另一關。map↔章節對應應以**各關敵方單位特徵對青衫各章**核對,別套「map=章節×3+2」公式(未對齊實際關卡)。
 
@@ -238,7 +244,7 @@ group 數字、單筆 vs 雙筆(T3 兩組)、觸發回合、camp 全部吻合。
 > 可能是同一 handler 內未逐一展開的呼叫、也可能在其他尚未追的子程序);remake 對應實作見
 > `remake/internal/campaign/campaign.go`(`Actor.FromX/FromY/WalkFrames` 進場走位、`Node.ExitWalk` 退場走位)
 > 與 `remake/cmd/fd2/main.go`(`storyWalkJob`),重用既有 `OffX/OffY` 插值,不等待 EXE 機制查清才動手
-> (影片已是可直接落地的 ground truth,見 doc46)。**下方 2026-07-03 內容保留原文(歷史記錄),
+> （影片可作視覺／時序oracle，機制仍須E0；見doc46）。**下方2026-07-03內容保留原文（歷史記錄），
 > 但讀者請以本段範圍修正為準**:「直接定位無行軍動畫」只在**戰場單位進場**成立,不適用於**序幕
 > cutscene 畫面內**的角色走位。
 
@@ -310,7 +316,7 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 - **[已解,見 §6.1]** ~~`turn_events.event_id → group` 對應機制(先前疑 `0x22e5c`,未解)~~ →
   真正消費點是 `0x1a813`(3 呼叫點 camp filter)+ 全域 `event_id` 跳表 `0x51b91`(58 entry)+
   spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 只是第1章專屬固定過場,與 turn_events 無關。
-  map0/章1 ground truth 4/4 驗證通過,`docs/data/turn_events.json` 已補 `groups` 欄。
+  map0/章1 event→group mapping 4/4交叉吻合，`docs/data/turn_events.json` 已補 `groups` 欄；不代表完整章節handler已驗。
 - **[已解,範圍限定見 doc 26]** ~~18 battle-event skeleton 語意 + 動作函式~~ → `docs/data/battle_events.json` 目前匯出的 battle-event skeleton 未記錄 action_fns，故該資料集只保存條件→設碼/繪圖；這不能外推到含 dialog/acting/sync/JOIN 的 postbattle cutscene handlers。條件原語與 raw caller 仍以各 handler CFG 為準。
 - **[修正]** byte(+5) bit0 reader／writer 已分開：`0x3453e` 僅回傳 `&1`，constructor／HP writer／`0x32975` 是獨立 caller；不得把它們合併成全域死亡／存活欄位。舊說「bit0=存活、初始化=1」已撤回。回合數=`[0x53bef]`（非 `[0x53ec8]`，後者為累積計數）；team-completion 語意仍待 state-machine evidence。
 - **修正 doc 24**:§6 稱「事件腳本解譯器(大函式 0x205c9–0x20c64)」用詞不精確 → 實為**章節戰場事件 handler 表 0x51b19,各 handler 在 0x205b4–0x20bf5**(非單一解譯器,非 byte-code)。已於 doc 24 §6.3 附註。

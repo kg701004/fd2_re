@@ -156,10 +156,11 @@ logo,其「2」數字縮放進場動畫實際也是由 `ANI.DAT` 資源 #1(AFM V
 
 ## 7. 對重製(Go/Ebiten)的意義
 
-- **AFM VM 可完整移植**:10 個 opcode 語意單純(填色/RLE/貼圖/調色盤更新),Go 端可直接用
-  `image.Paletted` + `[]byte` framebuffer 複刻(`decode_ani.py` 的 Python 實作可逐行翻譯)。
-- **不需保留原始 VM 執行順序的「增量疊加」語意**做即時播放——remake 可以離線把每個資源的
-  289 幀全部展開成獨立 PNG(如本輪產出),播放端只需逐張貼圖,不必重新實作 VM state machine。
+- 已解的10個opcode足以重播目前AFM resource pixels；Go可用indexed
+  framebuffer移植resource VM，但這不等於title/cutscene runtime parity。
+- 離線展開PNG可替代resource decode，**不能省略caller-owned schedule、
+  incremental scroll、palette、input/skip與present cadence**。播放端若只逐張
+  貼圖，仍須保存這些外層狀態與順序。
 - **9 個資源即 9 段可獨立播放的片段**,可對應到 remake 的 `cutscene` 系統做逐段觸發,
   不需要一次性播完整 32 秒(如需要跳過/加速功能,原生的 `skippable` 參數已提供設計參考)。
 

@@ -60,7 +60,7 @@ handler 序列(反組譯,✅來源確定):
 | 海島遇海盜對白 | FDTXT_001 txt#0-2 | FDTXT ✅ | story_ch01 script | ✅ |
 | 戰前UI(MAP/TURN+行軍確認) | 有 | 影片 doc46 D8 ✅ | 無 | ⚠須加(低優先) |
 
-## E. 第一關第一回合(系統 B,battle;青衫=事件 ground truth)
+## E. 第一關第一回合（系統B；青衫=E3玩家事件參考）
 
 | 元素 | 原版 | 來源 | 現況 | 判定 |
 |---|---|---|---|---|
@@ -79,6 +79,8 @@ handler 序列(反組譯,✅來源確定):
 - **✅ 2026-07-15 補齊**：direct acting bank 共 106 entries；ACT99 live 為 slot2 上行六格，ACT100
   live 為 slot2 下行十格；兩段 scroll_step 實測 `Y36→21→8`，每格七 ticks。map31 ACT90..98 的
   direct slots 皆落在當時已 spawn 的 2→4→5 個 active units 內，不再使用 `timing_only`。
-- **✅可直接寫**:START全段、FDFIELD所有座標、handler序列與scroll次數、0x13185機制、青衫事件骨架。
+- **✅可直接寫（僅限已有E0/E1欄位）**:START已閉合段、FDFIELD已解析座標、
+  已逐call保存provenance的handler序列／scroll次數與`0x13185`機制。
+  青衫事件骨架只能建立authored candidate與E2案例，不能解除逐章handler gate。
 
 > 下一步建議:先做全部 ⚠(都有RE值,純照抄,無推測);❓ 逐項評估「靜態/影片能不能補」,不能才問你。

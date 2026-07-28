@@ -26,12 +26,12 @@
 ### 過場 / 開場動畫 / 劇情演出(近期主線)
 | 我想知道… | 查 |
 |---|---|
-| 第一章**開場**逐幕時間軸(王座廳→草地→密林→行軍→海島)、remake 差異 | **`46`**(影片 ground truth,最準的視覺時間軸) |
+| 第一章**開場**逐幕時間軸(王座廳→草地→密林→行軍→海島)、remake 差異 | **`46`**(影片觀測時間軸；畫面／順序 oracle，不取代 handler E0) |
 | 開場 handler `0x3231b` **完整指令序列**(每 beat 的 call+參數+語意) | **`47`**(§3/§7 逐 beat 全轉錄) |
 | START→開場→第一關第一回合**逐項 RE 來源對照**(禁推測驗收表:哪些✅可寫/⚠須換/❓待RE) | **`53`** |
 | 過場**原語**(pan/走位/對白/演出/spawn/入隊/step家族)怎麼運作、位址 | **`50`**(過場機制唯一主檔;原始逐beat轉錄見`47`) |
 | 「兩套腳本系統」——開場 cutscene vs 戰鬥中事件對話,界線在哪 | **`52`** §0(**先讀這個再碰過場**) |
-| 某關**事件骨架**(第幾回合/增援/加入/勝敗)——還原 chNN.json 的 ground truth | **青衫攻略 `references/text/fd2-walkthrough-index.md`**(30 關分關卡索引)+ 全文 `references/text/fd2.md` |
+| 某關**玩家可見事件候選**(第幾回合/增援/加入/勝敗) | **青衫攻略 `references/text/fd2-walkthrough-index.md`**(E3 authored reference)+ 全文 `references/text/fd2.md`；忠實 chNN 仍須 handler/FDFIELD/DOSBox 證據 |
 | 某句對白**第幾回合/什麼事件**觸發(哈諾/海盜頭目/海防隊) | 青衫索引(時機)+ **`ch01.json` events**(Fable5 RE 範本)+ `26` + `battle_events.json` + `52` §1.2 |
 | 草地幕走位逐幀量測(原始數據) | `55`(機制見 **`50` §1.1**) |
 | 索爾四人**怎麼進戰場**(進場動畫/站位) | `52` §1.1 + `46` §4(⚠ 進場動畫細節待 dosbox 定稿) |
@@ -137,14 +137,18 @@
 
 remake 每關的劇本檔 `remake/assets/scenarios/chNN.json` = **事件骨架 + 對白文字**兩者合成:
 
-1. **事件骨架**(何時發生什麼)← **青衫攻略**(`references/text/fd2-walkthrough-index.md`,每關的回合時機/增援/
-   加入/勝敗,ground truth)+ `battle_events.json`(反組譯的 handler 條件,交叉驗證)。
+1. **事件候選骨架**(玩家觀測到何時發生什麼)← **青衫攻略**
+   (`references/text/fd2-walkthrough-index.md`,E3 authored reference)+
+   `battle_events.json`(只保存部分勝敗 handler metadata，不含完整動作／postbattle)；
+   兩者都不能單獨解除逐章 evidence gate。
 2. **對白文字**← FDTXT 轉錄(`extracted/story/`,全 1533 句)。
-3. **範本**:**`ch01.json` 是 Fable 5 RE 建立的黃金範本**——其餘 ch02~30 照它的結構(events: trigger/when/do,
-   dialogue speaker+text)仿製。系統 A(開場過場)進 cutscene 節點;系統 B(戰鬥中事件)進 scenario events(doc52)。
+3. **資料結構示例**:`ch01.json` 可示範現有 events/trigger/when/do 與 dialogue
+   schema，但不是其餘章的語意 oracle；ch02~30 必須各自轉錄 pre/battle/post
+   handler、FDFIELD、town/preparation 與 persistence 邊界。系統 A(開場過場)
+   進 cutscene 節點；系統 B(戰鬥中事件)進 scenario events(doc52)。
 
 ## 標註慣例
 - **[已驗證]** 原版實檔/反組譯/dosbox 交叉確認 · **[假設]** 待後輪確認/推翻 · **[攻略]** 青衫玩家觀測(實作以反組譯為準)
 
 ## 原始素材(不入 git,不散布)
-- 遊戲本體 `org_game/炎龍騎士團/FLAME2/` · 攻略鏡像 `references/` · 原版錄影 `video/`(ground truth)
+- 遊戲本體 `org_game/炎龍騎士團/FLAME2/` · 攻略鏡像 `references/`(E3 authored reference) · 原版錄影 `video/`(E2/E3 visual oracle，依捕捉 provenance 分級)

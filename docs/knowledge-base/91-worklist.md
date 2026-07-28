@@ -22,7 +22,7 @@
 
 ## 文件狀態入口（更新至 2026-07-28）
 
-目前統計：`[x]=492`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
+目前統計：`[x]=493`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -33,6 +33,7 @@
 - [x] 2026-07-27 second-pass dialogue wording audit：`14` §4 的組合說明與 `-17/-18` 讀取步驟仍殘留「直接肖像 ID」舊斷言，已改成 identity lookup／record `+7`／direct-DATO fallback 三路 provenance；未修改任何未證實的 story operand。
 - [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 remake 自有 JSON projection，不冒稱 `FD2.SAV` byte identity。
 - [x] **DOC-EVENT-DSL-ASSERTION-AUDIT-20260728**：將`29-remake-extensible-event-system.md`明確降級為歷史設計草案；刪除「handler只管勝負／動作全在FDFIELD」「record +5 bit0全域等同存活」「第一章主角含妮雅」「示例已完整重現30關」等會污染忠實模式的斷言。同步將第3/6/7/8輪的「核心全完成／通用1:1／像素級收官／魔法SFX補完」標題限定為當時codec或fixture範圍；SDD視覺估計統一為doc57的40–45%，shop recipient production接線明列為E1而非DOSBox lifecycle parity，並刪除已被後續closure取代的ch29 cleanup重複待辦。
+- [x] **DOC-REPO-WIDE-ASSERTION-AUDIT-20260728**：擴大審核歷史專題文件並修正會被當成規格的現行矛盾：`00/28/53`不再把攻略稱為handler ground truth；`19/29/30`把自動campaign與Registry降為尚未閉合的scaffold／設計提案；`25`保留raw byte5 caller predicate；`35`刪除BG=TAI台座與`0x53ec8`=縮放X；`39`區分AFM resource decode與caller schedule；`44`撤回「序章無單位移動」「group10/11全遊戲死資料」及過時兩行直進戰鬥live-state；`47/50`撤回所有章NPC永遠dir0；`50`的campaign graph test不再冒稱全戰役原版route E2；`99`的資產全解改為當時base-codec範圍。
 - [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依 official IDA/Capstone 的 `0x2cad7/0x2d093` 與 `0x526b9` raw table，新增 `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、hub selector→raw callee mapping、invalid fail-closed。只保存 address-level route，不把 option 命名成酒店／商店／教會，也不直接呼叫 scene。
 - [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 resource與selector後續已完成callee dataflow：`0→0x2f0b0` purchase、`1→0x2f642` sell、`2→0x2f883` equip、`3→0x2f8ea` inventory transfer。命名依insert/remove/equip/gold writer與FDTXT，不依icon猜測；`ResolveNativeShopServiceRoute`現保存typed kind但仍不呼叫scene。
 - [x] **RE-TOWN-HOTEL-SERVICE-2FC85**：Docker Capstone 固定 `0x2fc85` raw resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute` raw plan/regression。只保存 address-level order，不命名服務、不執行 scene。

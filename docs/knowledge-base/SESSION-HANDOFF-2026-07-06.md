@@ -1789,3 +1789,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   input/scroll、no-recipient/full/success及lifecycle timing仍需DOSBox E2。
 - ch29 `0x25089` cleanup已有binding/compiler/runtime regression；刪除同一
   worklist後段仍稱「需補binding、測試、接town/shop/preparation」的過時重複項。
+
+## 2026-07-28 repo-wide historical Markdown assertion audit
+
+- repo入口`00`與關卡整理`28/53`已把攻略統一降為E3 authored/player-visible
+  reference；攻略可建立candidate與E2案例，但不能命名raw bit、result code、
+  event id或取代逐章handler/postbattle/town/preparation/persistence evidence。
+- `19/29/30`中的「自動生成忠實原版33關」「ConditionRegistry/ActionRegistry
+  一行擴充」「所有差異已在資料」均改為設計目標或authored scaffold。production
+  目前沒有這兩個Registry，仍使用typed battle events、campaign beats與部分
+  chapter-specific adapter。
+- battle/renderer舊文件修正三個會直接造成錯畫的衝突：`35`摘要不再把TAI
+  台座稱為BG層，`[0x53ec8]`不再命名成縮放figure X，我方背影／台座與敵方
+  正面只限已驗fixture；`39`明確指出離線AFM PNG不能省略caller schedule、
+  scroll、palette與input/skip。
+- `44`撤回「序章完全沒有單位逐幀移動」；map0 direct deployment與此前
+  `0x13185`/ACT走位是不同階段。group10/11只可說在已審ch00/turn-event路徑
+  未見啟用，不能宣稱全遊戲死資料。舊「兩行文字直接開戰」標成歷史snapshot，
+  現行palace/forest/march仍以partial/E2 gate描述。
+- `47/50`把dir0限定為ch00與已觀測initial state；其他handler/ACT writer可
+  覆寫pose。`TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters`
+  只驗authored graph contract，不證明全戰役原版route或DOSBox E2。
+- `99`的「資產格式全解」已收窄成當時列舉base codecs/exports；mixed-resource
+  entries、caller binding與scene composition仍以doc56/57為現況權威。

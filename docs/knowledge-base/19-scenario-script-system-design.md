@@ -80,7 +80,9 @@
    - 劇情:`decode_story_text.py --script-json`(規劃中,`18`)→ 35 章 UTF-8 script。
    - 商店:EXE 商店表(`03`)→ 各章品項。
    - 音樂:scene→track(`12`)+ OGG(`16`)。
-2. **生成預設 campaign.json**:把上面串成一條線性圖(= 忠實原版 33 關),即「原版模式」。
+2. **生成 authored campaign scaffold**：把已抽資料串成候選線性圖；它不包含
+   自動證實的逐章handler CFG、postbattle、town/preparation、persistence或E2，
+   因此不能直接稱為「忠實原版33關」。
 3. **作者編輯**:在 campaign.json 上加分支 / 敗北路線 / 新戰場 / 新商店 / 旗標——擴充模式。
 
 ## 引擎執行(ScenarioRunner)
@@ -105,12 +107,15 @@ loop:
 
 - **資料驅動**:加關卡 / 改路線 = 編 JSON,不動引擎(呼應 `17`)。
 - **圖 > 線性**:天然支援敗北路線、岔路、多結局——原版做不到的「不一樣」。
-- **忠實 + 擴充並存**:預設圖 = 原版 33 關;擴充圖 = 自由創作。兩者同引擎、可切換(對應音源/字型的雙模式哲學)。
-- **零件已就位**:地圖、敵我、頭像、對話、商店、音樂都已 RE 成可讀資料,腳本系統只是把它們排成流程。
+- **忠實 + 擴充並存（目標）**：忠實圖須逐章證據閉合；擴充圖可自由創作。
+  兩者共用引擎，但不能把scaffold當作已完成的原版模式。
+- **部分零件已可讀**：地圖、roster、頭像、對話、部分商店／音樂資料已能
+  匯出；handler語意與runtime owner仍需工程與驗證，不是只剩排列。
 
 ## 實作階段(建議)
 1. 定 `campaign.json` schema(本篇)+ 寫一個範例(序章→商店→第2章 + 一條敗北路線)。見 `docs/data/campaign_sample.json`。
-2. `parse_field` / `decode_story_text --script-json` / 商店表 → 自動生成「原版線性 campaign」。
+2. `parse_field` / `decode_story_text --script-json` / 商店表 → 自動生成候選線性
+   scaffold；逐章補入已驗handler／route／save provenance後才可升級忠實模式。
 3. 引擎 `ScenarioRunner` 狀態機 + 各節點 runner(先 story/shop,再 battle)。
 4. 旗標系統 + 條件轉場 → 開放分支 / 敗北路線。
 5. 簡易關卡 / 劇本編輯器(吃同一份 schema),讓加關卡 = 填表。

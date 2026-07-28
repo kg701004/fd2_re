@@ -145,10 +145,13 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
   - 0x28d42(`[0x54107]`)、0x28e27(`[0x54103]`),stride 0x140=320;slide 合成 `0x29c90`/`0x29ded` 再把 `[0x5410b/0f/13]`(idx 0/1/2)循環貼於 (0,50)。
   - → **背景與各層都貼在 X=0, Y=50,寬 320**(整屏寬;上方 50px 與下方留給狀態 UI）。
 
-### 3.2.5 [設計鐵則] 我方=背影+土台 / 敵方=正面(使用者確認的原版視角設計)
+### 3.2.5 已驗 battle fixture：我方背影+台座／敵方正面（不可全域外推）
 
-- **原版固定視角**:玩家從**我方背後**看戰場 → **我方角色一律畫背影**(背對鏡頭)、**敵方角色一律畫正面**(面對鏡頭)。
-- **土台只在「我方」角色腳下**(標示我方站位),不是「攻方 / 守方」的概念——**與當回合誰攻誰守無關**,純粹「我方 vs 敵方」陣營。
+- 已驗收的亞雷斯／盜賊 capture 是從我方背後看戰場：我方背影並帶TAI台座，
+  敵方正面。這證明該fixture的合成選擇，不足以證明所有角色、特殊戰鬥或
+  `unit+6` raw分支永遠等同高階陣營。
+- 在這個fixture中台座跟隨我方slice，而不是當回合攻／守；跨caller規則仍須
+  由TAI selector與`unit+6` writer驗證。
 - 故 orig_05:亞雷斯(藍衣**背影**、腳下大 dither 土台)= **我方**;盜賊(紅頭巾**正面**)= **敵方**。
   (先前 doc 用「攻方 / 守方」描述左右是**誤框架**,正名為「我方(背影,右,有土台)/ 敵方(正面,左)」。)
 - remake 對映:我方單位用背影 FIGANI 幀 + 腳下貼 **TAI.DAT 台座**(見 §3.3);敵方用正面 FIGANI 幀、無台座。
@@ -410,7 +413,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | unit[+6] | 攻 / 守旗標:選合成路徑(0x29c90 vs 0x29ded)+ 左右 buffer 交換(0x28e05) |
 | [0x5018d] | 1.15 double 常數；與 transient modifier / renderer 的精確關係待重判 |
 | 0x51a12 / 0x51a2a | map HUD `0x1acf3` 的地形 AP / DP 百分比表，索引為 FDSHAP control byte+1；已驗證 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5) |
-| [0x53ec8] | 0x29f72 輸出:縮放後 figure X 用量(被攻擊執行區 0x15/0x18/0x19xxx 廣泛讀取) |
+| [0x53ec8] | `0x29f72`相關combat-result／presentation state；下游語意尚未閉合，不是已證實的縮放或figure X座標 |
 
 ---
 
@@ -418,7 +421,10 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 
 1. **入口 + 呼叫鏈** ✅:單圖 0x28784(caller 0x15195)、攻守 0x28a6c(caller 0x1561f 傳 `攻方ebx, 守方[0x53c4b]`,另 0x18fc6/0x2c2aa/0x35435)。phase = [0x540ff]。
 2. **figure 座標 / 翻轉 / 縮放** partial:blit 0x4e63d 原生尺寸 `dst+Y*stride+X`,**全程無縮放運算**;每幀 displacement=descriptor header `u16 X/Y`，固定 `(164,157)` 是某些 figure/台座 caller 的 anchor；`word[unit+0x40]`=當前 HP（非座標）。`+0x48/+0x4a` 是 derived AP/DP，`0x29f72` 是 combat-result resolver。**待確認**:byte[unit+6] 攻守配對、土台 entry、所有 caller 的 schedule。
-3. **BG 繪製 + 腳下圓圈** ✅:BG.DAT(0x52381 即 `"BG.DAT"` 字串)多層 → [0x54107…54113],全部 `0x4e63d(X=0,Y=50,寬320)`;戰場→章節 [0x53c03] 索引 0x52363。**腳下圓圈 / 土台 = BG 素材層(sprite blit),非程式畫純色**(戰鬥區無 rect/circle 原語,只有 0x4e63d/0x11eb0/0x11d40)。**待確認**:哪個 BG.DAT entry 是土台(需 dump 視覺對照)。
+3. **BG 繪製與TAI台座是兩條素材路徑**：BG.DAT多層走
+   `[0x54107…54113]`並以`0x4e63d(X=0,Y=50,寬320)`合成；腳下大台座由
+   `0x29164`另載TAI.DAT sprite，不是BG層或程式純色。TAI entry、raw selector
+   與跨角色對齊仍待逐caller驗證。
 4. **狀態欄(血條框)** ✅(本輪嚴格 RE 重做,§4):真函式 = **0x18c6d**(座標器 0x2a289,byte[+6]→ 我方(0,154)/敵方(171,4))。**0x29164 不是狀態欄,是 figure + 台座(TAI.DAT)淡入**(舊標錯已改)。三元素釘死:**① 框/深藍底/立體 bevel = 素材 sprite**(0x4e8af blit [0x53a81]+0x5e);**② HP/MP 條 = 程式畫**(0x18795 算 `len=cur*101/max+1` → 0x17d6f 逐欄 blit [0x53a81] 漸層欄 cell,空槽 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46);**③ 名 = `0x15f84→0x4ea2a` 以 `[0x53a75]` FDOTHER#4 font畫 16×16 glyph**、**數值 = 6px digit cell**([0x53a81],0x187d6)。`[0x53a81]` loader 已由 boot `0x25c97` 定案為 FDOTHER #5；`[0x53a85]` 是 DATO mouth-frame工作指標，不再誤稱字模。
 5. **動畫階段** ✅:[0x540ff] phase + 重複呼叫驅動;0x2939d 幀迴圈 + `idiv 100` 百分比進度;幀 (dx,dy) = swing 斬擊弧;**閃紅 = VGA DAC 色盤 0x3c8/0x3c9(0x11d40)**(figure 淡入同手法);**HP 條非色盤**(程式畫,見 §4.2,舊「HP 抽乾=色盤」已刪);idle fallback 0x5255f/0x52577。**待確認**:閃紅色值序列、各階段確切幀數。
 6. **座標系** ✅:320×200、VGA 0xa0000、**work stride 640 但只 present 左半 320**(雙寬 off-screen 預備區,用途待確認)。

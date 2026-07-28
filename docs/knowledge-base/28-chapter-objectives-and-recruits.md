@@ -1,19 +1,25 @@
-# 28 — 全 30 關卡目標:勝利/失敗/加入條件(攻略 ground truth × handler 驗證)
+# 28 — 全 30 關玩家可見目標候選（攻略整理 × 部分 handler 對照）
 
-> 使用者指出「保護某單位存活」確實是本作機制 → 查青衫攻略(`references/text/fd2.md`,玩家實測)證實:**每關的「失敗條件」就列明了護衛目標**,完美印證 doc 26 的 handler `unit_state(idx)` = 「指定單位是否存活」。
-> 本篇把攻略 30 關的勝利/失敗/加入條件結構化(remake 關卡規格的 ground truth),並與反組譯 handler 對照。
+> **證據邊界更正（2026-07-28）**：青衫攻略是玩家可見規則的E3 authored
+> reference，可建立逐章候選與測試案例，但不能「完美印證」raw predicate。
+> doc26的`0x3453e(idx)`只直接證實讀取runtime record `byte[+5]&1`；
+> constructor、HP writer及其他caller不足以把它全域命名成「指定單位存活」。
+> 本篇把攻略30關的勝利／失敗／加入條件結構化，並記錄部分handler對照；
+> 它不是可直接生成忠實campaign的ground truth。
 > 來源:青衫圖文攻略(僅整理事實性規則 + 標出處,不轉載原文)。章號對應:**攻略第 N 章 = `battle_events.json` chapter N−1**。
 
-## 1. 核心驗證:三種機制都被攻略證實
+## 1. 玩家規則與 native 候選的交叉對照（不是 ABI 證明）
 
-| 反組譯機制(doc 26) | 攻略對應 | 結論 |
+| native/raw 候選(doc 26) | 攻略對應 | 可安全採用的結論 |
 |---|---|---|
-| `unit_state(idx)` 查單位**存活** | 每關「失敗條件:索爾死亡 + 某某死亡」 | ✅ **護衛目標存活檢查**——護衛單位陣亡即敗北 |
-| `roster_has(id)` 查我方名冊 | 加入條件「若某角色未出現便消滅完則不加入」 | ✅ **角色加入/在隊檢查** |
-| 碼 1(中途事件)+ `0x15f84` 繪圖 | 攻略「事件:第 N 回合後…援軍/連鎖」 | ✅ **回合觸發的劇情/援軍事件** |
-| 特殊勝利(非 default 殲滅) | 勝利條件「消滅卡特那/擊毀機甲隊長/某某死亡/解除防衛系統」 | ✅ **擊殺指定目標型勝利** |
+| `0x3453e(idx)`讀`record+5 & 1` | 每關「失敗條件:索爾死亡 + 某某死亡」 | 某些caller很可能服務護衛／目標判定；每章仍須保留branch方向與slot provenance |
+| `0x33499(id)`查persistent roster identity | 加入條件「若某角色未出現便消滅完則不加入」 | 可作入隊／在隊條件候選；招募side effect與時機仍須handler證據 |
+| result code、回合global與event dispatcher | 攻略「第N回合後…援軍/連鎖」 | 可建立E2測試案例；不能由攻略把result code或event id全域命名 |
+| 非default勝利branches | 「消滅卡特那／擊毀機甲隊長／解除防衛系統」 | 玩家可見目標可信；native slot、predicate及後續流程仍逐章驗證 |
 
-> 最強印證:**攻略第 30 章**「事件:第二回合後若地魔神已消滅→空魔神傳送水魔神;第四回合後→風魔神;第六→火魔神;第八→空魔神親自出戰」——這串**回合條件 + 連鎖召喚**正是 handler 用 `[0x53bef]`(回合)+ `unit_state`(前一魔神是否已死)+ 碼 1 事件 實作的。
+> 攻略第30章的魔神時序是重要E3測試oracle，但目前不得直接寫成
+> `[0x53bef] + unit_state + result code1`的完整native實作；須由ch29 battle
+> handler／event dispatcher逐branch閉合。
 
 ## 2. 全 30 關目標表
 
@@ -54,13 +60,15 @@
 
 > 註:攻略章數與 `battle_events.json` 的 30 個 chapter 數一致(原版 33 張 FDFIELD 圖含少數非戰鬥/分支圖)。個別 bev ch 與攻略章的精確戰場對位,以實作時逐關核對為準。
 
-## 3. 勝利條件的三種型態(remake 直接實作)
+## 3. 玩家可見勝利條件分類（先作 authored candidate）
 
 1. **殲滅**(多數):敵全滅 → 對應 default handler `0x205b4`。
 2. **擊殺指定目標**:消滅卡特那(ch4)、黑暗騎士死亡(ch17)、擊毀機甲隊長(ch22/26/27)、空魔神死亡(ch29)。
 3. **特殊**:解除防衛系統(ch28)、沼澤怪物外全滅(ch19)。
 
-**失敗條件**統一型態:`索爾死亡 OR 任一護衛目標死亡`(= handler `unit_state(護衛idx)==0`)。
+攻略所列的**玩家可見失敗條件**可正規化為
+`索爾死亡 OR 任一護衛目標死亡`；括號中的native predicate與branch方向
+不得預設為`unit_state(idx)==0`，須由各章handler證明。
 
 ## 4. remake DSL(把攻略目標資料化,對映 doc 19/26 + battle_events.json)
 

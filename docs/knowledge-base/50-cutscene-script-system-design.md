@@ -62,7 +62,9 @@
 
 **序章王座走位(handler 0x3231b)**:`0x13185` 直接 ×15 → 對話#0 → ×13 → 對話#1(「全上」特例,不經 0x13488)。停位(對原版兩截圖 + FDFIELD 守衛地標三角測量):第一次對話 **(8,21)**(守衛 (5,21)/(12,21) 左右緊鄰索爾)、最終 **(8,8)**(王前 3 格「最跟前」)。詳細轉錄見 doc47 §11。
 
-**面向規則(所有劇本通用)**:dir/pose 預設 **0(下=面向玩家)**;**FDFIELD 不存面向**(出場資源每筆恰 6B=X,Y,portrait)→ 面向來自 zero-init。非 0 僅兩種:①走位者面向移動方向;②劇情主角對看。背景 NPC/守衛永遠 dir=0。
+**已驗ch00預設**：dir/pose由zero-init得到0，FDFIELD六bytes出場record不存
+獨立面向；走位／ACT可再覆寫pose。其他章的handler、背景NPC與守衛仍須
+各自檢查writer，不能由ch00推成「所有劇本通用／永遠dir0」。
 
 **remake 對映**:`storyWalkJob`(from→to 沿格線先長軸後短軸)+ `FollowWalk` 鏡頭跟隨 = 同構;`Actor.Dir` 預設 0;走完面向 `finalDir`。
 
@@ -560,9 +562,11 @@ FDTXT_000 `0x201` 詢問「要進入戰場嗎？」，然後進 `0x318ad` 出戰
 「要記錄戰況嗎？」，允許存檔後同樣進 `0x318ad` 隊伍整備。remake 因此新增可編輯
 `town`、`preparation`、`church` 節點；town 五個可見設施與隱藏神秘商店皆回 hub，
 出口才進 preparation。`TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters`
-對全戰役驗證：商店章集合為 `[2..22,26,27]`、`battle_ch(N-1)` 必先到對應 town，
+只對目前authored campaign graph驗證已編碼的章表／hub contract：商店章集合為
+`[2..22,26,27]`、`battle_ch(N-1)` 必先到對應 town，
 各設施必回 hub，章23/24/25/28/29/30 無 town 但必有 preparation，且第30章勝利才進 ending；
-`TestRunnerTownUsesVisibleOptionOutcome` 則固定 town option 轉移。
+`TestRunnerTownUsesVisibleOptionOutcome` 則固定 town option 轉移。這些測試不構成
+所有原版postbattle handler、逐章route或DOSBox E2的驗證。
 
 玩家第27章（零起算 post `ch26_post`）的天空之鑰分支已先接成 editable campaign gate：
 `battle_ch27 → inventory_gate_ch27_sky_key`。`0x25186 call 0x24b14(item 0x64)` 的完整 body

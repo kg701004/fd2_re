@@ -182,8 +182,10 @@
 - **MT32MPU.MDI 的存在 = 音樂為 MT-32 而寫**:故 munt 渲染是還原原意,非腦補;沿用 dq3 既有 munt 流程即可。
 - **勘誤**：`FD2.SAV` 並非未解的「強加密」；已由 `0x4dbd8/0x4dbb9` 關閉為 rolling-XOR/checksum，並有 `tools/fd2save.py` round-trip/tamper regression。重製使用自有存檔是產品選擇，不是工具鏈無法讀取原版。
 
-**狀態**:資產格式全解(容器/圖/動畫/音樂/文字字型/頭像/圖塊/地圖/圖示/remap/TAI);
-全 33 地圖 + metadata、136 頭像、15 首 MT-32 音樂、全劇情皆已抽出(本機)。知識庫 17 篇 + 工具 ~20 支。
+**當時狀態**:已完成列舉的base codecs與exports（容器／圖／動畫／音樂／
+文字字型／頭像／圖塊／地圖／圖示／remap／TAI），並抽出33地圖、
+136頭像、15首音樂與劇情素材。這不代表所有mixed-resource entry、
+caller binding或scene composition已閉合；現況以doc56/57為準。
 
 ## 第 7 輪 — 重製開工:Go/Ebiten + 本機執行檔(2026-06-28)
 

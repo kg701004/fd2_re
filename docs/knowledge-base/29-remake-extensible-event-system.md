@@ -56,7 +56,9 @@
 | `item_owned(id)` / `chest_opened(id)` | 持有道具/開過寶箱 | **擴充** |
 | `and[…] / or[…] / not(…)` | 邏輯組合 | **擴充**(條件樹) |
 
-> 原版只有前四種(且寫死在 C);remake 把它們資料化,再往上疊組合與新條件。新增一個條件 = 在 `ConditionRegistry` 註冊一個 `func(ctx) bool`。
+> 本表是目標schema，不是native enum。原版有哪些等價條件必須逐caller證明；
+> `ConditionRegistry`目前也尚未存在於production Go code，不得把「註冊一個
+> func」寫成現行擴充接口。
 
 ## 4. 動作原語 `do`(原版隱含 + remake 擴充)
 
@@ -143,9 +145,12 @@ ScenarioRunner (campaign 流程,doc 19)
         ├─ DialoguePlayer (解析 {{}} 事件控制碼 → 丟 EventSystem)
         └─ BattleState (units/turn/flags/counters)
 ```
-- 新增條件/動作 = 往 Registry 註冊一個函式(Go 一行);資料端立即可用。
+- Registry是提案中的擴充層；目前production使用typed `battle.Event/Action`
+  與campaign beats，新增條件／動作仍可能需要schema、validation、runtime與
+  tests，不是「Go一行即可」。
 - `flags`/`counters` 存進存檔(自有格式,doc 27)→ 跨關劇情狀態。
-- **核心迴圈完全不認得任何具體關卡**——所有關卡差異都在資料。
+- **目標**是核心迴圈不硬編具體關卡；目前仍有chapter-specific adapters、
+  screenshot hooks與未閉合handler，不能宣稱所有差異都已移到資料。
 
 ## 9. 工具鏈(讓非程式者也能做關卡)
 
@@ -211,8 +216,10 @@ presentation 必須依 handler call trace，不得只因不在 FDFIELD roster �
 }
 ```
 
-本實例**新增三個可擴充動作**(往 ActionRegistry 註冊即可,印證開放性):
+本實例**提議三個可擴充動作**；production目前沒有ActionRegistry，且這些
+名稱沒有逐項native provenance：
 `spawn_march`(從邊緣行軍進場演出)· `act_immediately`(增援當回合可動,對應青衫「立即行動」)· `set_ai:berserk`(哈諾死→哈瓦特暴走)。
-→ 原版寫死的進場/暴走,在 remake 全是資料 + 註冊函式;這份 ch01.json 即 task #8 的實作目標。
+→ 它們只能作未來設計候選；原版進場／暴走與remake現行ch01仍須各自以
+handler、FDFIELD、runtime及DOSBox證據驗收。
 
 > 相關:doc 19(腳本系統設計)· doc 25/26(原版事件)· doc 28(原版關卡目標)· doc 14(原版文本控制碼)· doc 21(Go/Ebiten 架構)。

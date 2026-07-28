@@ -3,13 +3,13 @@
 > 目的：回應使用者實玩 remake 回報的疑點（開場劇情缺口、增援時序、職業名稱錯位、站位/朝向），
 > 逐項對照**使用者提供的原版遊玩錄影**（`video/fd2-ch1.mp4`）+ **原版 dosbox 實機**（沿用
 > `extracted/orig_play_notes.md` 與 `docs/knowledge-base/25-battle-event-system.md §7.5.1` 同一輪
-> 今日已完成的連拍，未重複開新 dosbox session）+ **青衫攻略**（`references/text/fd2.md`，三方 ground
-> truth 互相印證），核對 remake 程式碼/資料（`remake/assets/scenarios/ch01.json`、`campaign_full.json`、
+> 今日已完成的連拍，未重複開新 dosbox session）+ **青衫攻略**（`references/text/fd2.md`，作玩家可見
+> 數值／時序的E3旁證），核對 remake 程式碼/資料（`remake/assets/scenarios/ch01.json`、`campaign_full.json`、
 > `remake/assets/maps/map0/map0_units.json`、`tools/export_units.py`）。唯讀稽核，未修改任何程式碼、未 commit。
 
-## 0. 證據來源（避免重工，見規則 63/64；影片與青衫攻略並列 ground truth）
+## 0. 證據來源（影片／DOSBox作visual oracle；攻略只作E3旁證）
 
-- **使用者提供的原版遊玩錄影（最高優先 ground truth）**：`video/fd2-ch1.mp4`（71 分）。已抽每 15 秒一幀
+- **使用者提供的原版遊玩錄影（visual/runtime oracle）**：`video/fd2-ch1.mp4`（71 分）。已抽每 15 秒一幀
   存 `extracted/story/ref_video/f_001.png`–`f_040.png`（前10分）+ contact sheet `_contact.png`；
   本輪針對第一戰（7:50–9:20）另用 ffmpeg 抽每 2 秒細幀存 `extracted/story/ref_video/fine/t001.png`–`t045.png`
   + `_fine_contact.png`，用來讀取戰鬥狀態欄的**單位名稱文字**（見 §2.5）。
@@ -20,7 +20,7 @@
   + §7.5.1 章節0 handler `0x3231b` 逐指令複驗）、`docs/data/turn_events.json`（EXE dump，非猜測）、
   `docs/data/exe_tables/unit.json`（(race,cls)→基礎數值/職業名表）、`tools/dump_exe_tables.py`（該表產生器）、
   `tools/parse_field.py`（FDFIELD roster 逐位元組解析）。
-- **青衫攻略（與影片並列 ground truth，數值/時序/職業名/敵方組成權威）**：`references/text/fd2.md` 第1章、
+- **青衫攻略（E3玩家可見數值／時序／職業名／敵方組成旁證）**：`references/text/fd2.md` 第1章、
   `docs/knowledge-base/28-chapter-objectives-and-recruits.md`。
 - **原始劇本文字**：`extracted/story/full_story_auto.md`（FDTXT 全 34 個資源自動解碼，1450+ 句）。
 - **remake 程式碼/資料**：`remake/assets/scenarios/{campaign_full.json,ch01.json}`、
@@ -53,13 +53,12 @@
 > 已知風險）。**劇情內容本身（誰做了什麼、說了什麼）已用 dosbox 截圖字幕逐句核對過，可信；只有
 > 「說話者姓名標籤」在①②兩段需要人工重新指認**，③（FDTXT_001）已有精校版不受影響。
 
-### 1.2 進戰場：直接定位，無行軍動畫
+### 1.2 map0部署與此前序章走位是不同階段
 
-`docs/knowledge-base/25-battle-event-system.md §7.5.1`（今日已反組譯 `0x3231b` 本體 + 220+ 張連拍複驗）
-已裁決：原版**沒有**任何單位逐幀移動/行軍動畫，索爾一行人與海盜/蓋亞都是**直接定位**在最終戰鬥座標，
-「移動」的視覺印象來自**攝影機平移**（`0x13185`/`0x32999`），不是單位位移。**remake 現行
-`focusOnParty`（鏡頭對準）+ `spawn_party`（直接定位）已忠實**，此點**非 bug**，收錄於此表僅為完整記錄
-使用者原始疑點 #4（位置/朝向），不重複列入下方錯誤清單。
+map0最後部署可由load/layout直接建立，但不能外推成整段序章「沒有逐幀
+移動」。`0x3231b`此前已有`0x13185` step與ACT99等會修改單位Y、pose與tick，
+並配合camera-follow。remake的direct placement只描述battle deployment
+slice，不代表前置acting／walk／camera已完整parity。
 
 ### 1.3 戰場：回合制增援（EXE `turn_events` 逐回合，青衫攻略逐句對應）
 
@@ -97,10 +96,9 @@ HP18/AP5/DP2 極弱）與 group 11（3×「聖騎士」，portrait 103，HP44/AP
 3. **青衫攻略**：第一章敵方/友方/事件三段完整列舉（見 §1.3），全程沒有「戰士」「聖騎士」字樣；
    `references/text/fd2.md` 全篇搜尋「聖騎士」的第一次出現在遠後段章節，非第一章。
 
-**結論**：group 10/11（4戰士+3聖騎士）是 map0 FDFIELD roster 裡確實存在、但**原版遊戲從未實際
-啟用過**的「死資料」（可能是保留/備用 slot，或需要另一個尚未反組譯的觸發路徑——但至少不是
-`turn_events` 也不是章節0 cutscene，兩條已知的第一章觸發機制都排除了）。remake 的 `initial_groups`
-把這批死資料當成「開局即在場」納入，是資料層面的誤用，不是刻意設計。
+**結論**：在已審核的ch00 handler與turn-event路徑中未見group10/11啟用；
+absence不能證明全遊戲「從未使用」。它們應保留為用途未證實的roster資料，
+不得放進initial groups，直到找到明確caller。
 
 **修復建議**：`ch01.json` 的 `initial_groups` 由 `[1, 2, 10, 11]` 改為 `[1, 2]`。
 若之後想保留 group 10/11 供未來反組譯出真正觸發條件時使用，可移出 `initial_groups` 陣列，
@@ -111,15 +109,16 @@ HP18/AP5/DP2 極弱）與 group 11（3×「聖騎士」，portrait 103，HP44/AP
 `extracted/story/staging_dosbox/proof_02_pirate_prebattle.png` 對峙畫面同樣只有 3 海盜 + 1 機械兵，
 兩張截圖都**沒有「戰士」類弱雜兵或「聖騎士」類重甲單位**，與 group 10/11 的存在矛盾。
 
-### 2.2【高】完全缺少開場劇情三幕（王城父子送別 / 草地小憩比劍 / 悠妮蓋亞加入）
+### 2.2【歷史缺口；現況仍partial】開場三幕
 
-**現象**：`remake/assets/scenarios/campaign_full.json` 的 `story_ch01` 節點只有兩行佔位文字
-（`"第1章:初試身手"` / `"目標:敵全滅。"`），直接銜接 `battle_ch01`——**完全沒有** §1.1 表格
-①②③三段開場劇情（父王傳位/索爾力辭、草地小憩比劍邀約、發現悠妮+蓋亞失憶加入、渡海遇海盜）。
+本文初寫時`story_ch01`只有兩行目標文字；目前campaign已加入
+`story_ch01_palace_path`、`forest_duel`、`forest_discover`與`march`等節點。
+但這些內容、handler beats、indexed visuals與DOSBox E2仍是partial；
+`story_ch01→battle_ch01`前的objective節點也仍是簡化呈現。
 
 **對照使用者原始回報 #1、#2**：均證實成立，且比使用者記憶更完整——不只「皇宮父子對話」缺失，
-連「草地小憩比劍邀約」「渡海抵達小島」兩段過場也完全沒有，remake 目前是「選新遊戲 → 兩行文字 →
-直接開戰」，跳過了原版三段、合計約 200 句對白的完整開場鋪陳。
+原始回報準確描述了當時版本，但不能再當作目前live-state斷言。現行差距應以
+doc56/57與逐節點E2為準。
 
 **修復建議**：`story_ch01` 拆成 3 個 story 節點（對應 FDTXT_033/032/001 三段），文字來源可用
 `extracted/story/full_story_auto.md:4828-5034`（②③已有精校版可直接用 `序章_transcript.md`）；
