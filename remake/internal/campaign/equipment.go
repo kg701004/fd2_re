@@ -163,6 +163,19 @@ func EquipItem(u *battle.Unit, slot int, stats map[int]ItemStats) error {
 		}
 	}
 	u.Equipped[slot] = true
+	if len(u.InventorySlots) == 8 && len(u.NativeInventoryFlags) == 8 {
+		compact := 0
+		for rawSlot, itemID := range u.InventorySlots {
+			if itemID == 0xff {
+				continue
+			}
+			u.NativeInventoryFlags[rawSlot] = 0
+			if compact < len(u.Equipped) && u.Equipped[compact] {
+				u.NativeInventoryFlags[rawSlot] = 0x40
+			}
+			compact++
+		}
+	}
 	RecomputeEquipment(u, stats)
 	return nil
 }

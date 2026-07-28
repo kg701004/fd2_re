@@ -1352,6 +1352,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `+0x37/+0x39` base AP/DP；新增專用adapter要求`EquipmentBaseSet`後明確
   填入，刪除把零值preview當正確的捷徑。非滿欄選擇目前仍fail-closed返回，
   下一步才接insert→optional equip→success→debit。
+- 2026-07-28 native purchase transaction production：非滿欄選擇先在深拷貝
+  unit上`ReserveGood`，consumer直接進success；equipment開FDTXT507
+  Yes/No，Yes才`EquipItem`，No/Escape保留未裝備新物。Docker Capstone
+  重核`0x1c142`確認替換分類是新舊item ID同為`<0x80`或同為`>=0x80`，
+  removed raw flag精確寫0、新slot精確寫`0x40`；compact/raw equipped現同步。
+  `0x2f4c6` production timeline依variant1/3/5保留5×2、pre1+post8、
+  7×2 BIOS ticks（總10/9/14）與portrait restore差異。staged unit在timeline
+  啟動前才publish，gold保持不變；final frame呈現後callback才debit並6幀
+  重開product list。完整transaction regression鎖定insert-before-animation、
+  debit-after-animation。剩餘purchase缺口縮為no-eligible message與E2。
 - 2026-07-28 purchase recipient E1：`0x2f30a`證實type≥`0x20`才走
   `0x2e6b8`兩欄六人；type<`0x20`走filtered `0x2e8cf→0x2ebe0`三列
   AP/DP/HIT/EV比較，故新增consumable-only compositor並拒絕裝備type。

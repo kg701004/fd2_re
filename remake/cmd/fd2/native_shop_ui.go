@@ -256,7 +256,7 @@ func (g *Game) beginNativeShopServiceOpening() bool {
 		}
 	}
 	g.resetNativeShopUIPulse()
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
 	return true
 }
 
@@ -276,7 +276,7 @@ func (g *Game) beginNativeShopServiceClosing(after func()) bool {
 			return false
 		}
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{
+	g.nativeShopUIJob = &nativeClassUIJob{
 		frames: frames, restore: stable, after: after,
 	}
 	return true
@@ -295,7 +295,7 @@ func (g *Game) beginNativeShopPurchaseOpening() bool {
 	if err != nil || len(frames) != 6 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
 	return true
 }
 
@@ -312,7 +312,7 @@ func (g *Game) beginNativeShopPurchaseClosing(after func()) bool {
 	if err != nil || len(frames) != 5 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{
+	g.nativeShopUIJob = &nativeClassUIJob{
 		frames: frames, restore: stable, after: after,
 	}
 	return true
@@ -330,7 +330,7 @@ func (g *Game) beginNativeShopConfirmationOpening() bool {
 		return false
 	}
 	g.resetNativeShopUIPulse()
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
 	return true
 }
 
@@ -345,7 +345,7 @@ func (g *Game) beginNativeShopConfirmationChoiceClosing(after func()) bool {
 	if err != nil || len(frames) != 4 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames, after: after}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames, after: after}
 	return true
 }
 
@@ -361,7 +361,7 @@ func (g *Game) beginNativeShopDialogueClosing(
 	if err != nil || len(frames) != 5 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{
+	g.nativeShopUIJob = &nativeClassUIJob{
 		frames: frames, restore: stable, after: after,
 	}
 	return true
@@ -377,6 +377,20 @@ func (g *Game) returnToNativeShopPurchaseList() {
 
 func (g *Game) stepNativeShopUILifecycle(now time.Time) {
 	job := g.nativeShopUIJob
+	if job != nil && len(job.timeline) != 0 {
+		if job.started.IsZero() {
+			job.started = now
+		}
+		job.elapsed = now.Sub(job.started)
+		if job.frame == 1 && job.drawn {
+			after := job.after
+			g.nativeShopUIJob = nil
+			if after != nil {
+				after()
+			}
+		}
+		return
+	}
 	if job != nil && job.drawn {
 		job.drawn = false
 		if job.frame < len(job.frames) {
@@ -394,7 +408,8 @@ func (g *Game) stepNativeShopUILifecycle(now time.Time) {
 		}
 	}
 	if g.nativeShopUIJob == nil &&
-		(g.nativeShopMode == "menu" || g.nativeShopMode == "confirm") {
+		(g.nativeShopMode == "menu" || g.nativeShopMode == "confirm" ||
+			g.nativeShopMode == "equip_confirm") {
 		g.stepNativeShopUIPulseTick(g.nativeShopUIClock.Sample(now))
 	}
 }
@@ -403,6 +418,27 @@ func (g *Game) drawNativeShopUIJob(screen *ebiten.Image) bool {
 	job := g.nativeShopUIJob
 	if job == nil {
 		return false
+	}
+	if len(job.timeline) != 0 {
+		elapsed := job.elapsed
+		total := time.Duration(0)
+		for _, candidate := range job.timeline {
+			total += candidate.duration
+		}
+		step := job.timeline[len(job.timeline)-1]
+		for _, candidate := range job.timeline {
+			if elapsed < candidate.duration {
+				step = candidate
+				break
+			}
+			elapsed -= candidate.duration
+		}
+		if job.elapsed >= total {
+			job.frame = 1
+		}
+		g.presentNativeClassFrameWithPalette(screen, step.frame, step.palette)
+		job.drawn = true
+		return true
 	}
 	if job.frame < len(job.frames) {
 		g.presentNativeClassFrame(screen, job.frames[job.frame])
@@ -439,6 +475,8 @@ func (g *Game) drawNativeShop(screen *ebiten.Image) bool {
 		frame, ok = g.composeNativeShopRecipient()
 	case "recipient_full":
 		frame, ok = g.composeNativeShopRecipientFull()
+	case "equip_confirm":
+		frame, ok = g.composeNativeShopEquipConfirmation()
 	}
 	if !ok {
 		return false
@@ -682,11 +720,16 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 				}
 				return true
 			}
-			g.msg = "原版購買 insert/success/debit production 尚未接線"
-			if !g.beginNativeShopRecipientClosing(
-				g.returnToNativeShopPurchaseList,
-			) {
-				g.returnToNativeShopPurchaseList()
+			beginTransaction := func() {
+				if !g.stageNativeShopPurchase() {
+					g.nativeShopHasPendingUnit = false
+					g.nativeShopPendingUnit = battle.Unit{}
+					g.msg = "原版購買交易缺少 raw 資料"
+					g.returnToNativeShopPurchaseList()
+				}
+			}
+			if !g.beginNativeShopRecipientClosing(beginTransaction) {
+				beginTransaction()
 			}
 			return true
 		}
@@ -696,6 +739,52 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 				g.returnToNativeShopPurchaseList,
 			) {
 				g.returnToNativeShopPurchaseList()
+			}
+			return true
+		}
+	case "equip_confirm":
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+			g.nativeShopEquipSel = campaign.AdvanceNativeClassConfirmation(
+				g.nativeShopEquipSel, -1,
+			)
+			g.resetNativeShopUIPulse()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+			g.nativeShopEquipSel = campaign.AdvanceNativeClassConfirmation(
+				g.nativeShopEquipSel, 1,
+			)
+			g.resetNativeShopUIPulse()
+		}
+		cancel := inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+			enter && g.nativeShopEquipSel == 1
+		if cancel || enter {
+			if enter && !cancel {
+				staged := cloneNativeShopUnit(g.nativeShopPendingUnit)
+				if err := campaign.EquipItem(
+					&staged, g.shopEquipSlot, g.shopItemStats,
+				); err != nil {
+					g.nativeShopHasPendingUnit = false
+					g.nativeShopPendingUnit = battle.Unit{}
+					g.msg = err.Error()
+					if !g.beginNativeShopEquipConfirmationClosing(
+						g.returnToNativeShopPurchaseList,
+					) {
+						g.returnToNativeShopPurchaseList()
+					}
+					return true
+				}
+				g.nativeShopPendingUnit = staged
+			}
+			afterPrompt := func() {
+				if !g.beginNativeShopPurchaseSuccess() {
+					g.nativeShopHasPendingUnit = false
+					g.nativeShopPendingUnit = battle.Unit{}
+					g.msg = "原版購買成功演出無法還原"
+					g.returnToNativeShopPurchaseList()
+				}
+			}
+			if !g.beginNativeShopEquipConfirmationClosing(afterPrompt) {
+				afterPrompt()
 			}
 			return true
 		}

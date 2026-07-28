@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
@@ -150,6 +151,84 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	if !g.beginNativeShopRecipientFullOpening() ||
 		len(g.nativeShopUIJob.frames) != 6 {
 		t.Fatal("native recipient-full feedback did not use six opening frames")
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopPendingUnit = cloneNativeShopUnit(unit)
+	g.nativeShopHasPendingUnit = true
+	g.shopPending = campaign.Good{ID: 0, Name: "item0", Price: 100}
+	g.shopEquipUnit = 0
+	for _, tc := range []struct {
+		variant int
+		steps   int
+		ticks   int
+	}{
+		{variant: 1, steps: 6, ticks: 10},
+		{variant: 3, steps: 3, ticks: 9},
+		{variant: 5, steps: 8, ticks: 14},
+	} {
+		g.nativeShopVariant = tc.variant
+		if !g.beginNativeShopPurchaseSuccess() {
+			t.Fatalf("native shop variant %d success timeline fell back", tc.variant)
+		}
+		if len(g.nativeShopUIJob.timeline) != tc.steps {
+			t.Fatalf(
+				"native shop variant %d timeline steps=%d, want %d",
+				tc.variant, len(g.nativeShopUIJob.timeline), tc.steps,
+			)
+		}
+		total := time.Duration(0)
+		for _, step := range g.nativeShopUIJob.timeline {
+			total += step.duration
+		}
+		if total != time.Duration(tc.ticks)*nativeBIOSTickPeriod {
+			t.Fatalf(
+				"native shop variant %d duration=%v, want %d BIOS ticks",
+				tc.variant, total, tc.ticks,
+			)
+		}
+		g.nativeShopUIJob = nil
+	}
+	g.nativeShopVariant = 1
+	g.nativeShopMode = "equip_confirm"
+	g.nativeShopEquipSel = 0
+	if !g.drawNativeShop(screen) ||
+		!g.beginNativeShopEquipConfirmationOpening() ||
+		len(g.nativeShopUIJob.frames) != 4 {
+		t.Fatal("native optional-equip confirmation unexpectedly fell back")
+	}
+	empty := cloneNativeShopUnit(unit)
+	empty.Inventory = nil
+	empty.Equipped = nil
+	empty.InventorySlots = []int{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	empty.NativeInventoryFlags = []int{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+	g.nativeShopUIJob = nil
+	g.nativeShopVariant = 1
+	g.nativeShopMode = "recipient_consumable"
+	g.nativeShopHasPendingUnit = false
+	g.partyRoster[0] = empty
+	g.shopRecipients = []int{0}
+	g.shopRecipientSel = 0
+	g.shopItemTypes[0] = 0x20
+	g.gold = 1234
+	if !g.stageNativeShopPurchase() {
+		t.Fatal("native consumable transaction did not enter success timeline")
+	}
+	if got := g.partyRoster[0]; len(got.Inventory) != 1 ||
+		got.Inventory[0] != 0 || g.gold != 1234 {
+		t.Fatalf(
+			"native insert/debit ordering changed: inventory=%#v gold=%d",
+			got.Inventory, g.gold,
+		)
+	}
+	finish := g.nativeShopUIJob.after
+	g.nativeShopUIJob = nil
+	finish()
+	if g.gold != 1134 || g.nativeShopMode != "purchase" ||
+		g.nativeShopUIJob == nil {
+		t.Fatalf(
+			"native debit/product-loop completion = gold %d mode %q job=%v",
+			g.gold, g.nativeShopMode, g.nativeShopUIJob != nil,
+		)
 	}
 }
 

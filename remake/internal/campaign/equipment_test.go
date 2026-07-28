@@ -7,7 +7,13 @@ import (
 )
 
 func TestEquipItemRecomputesFromBaseAndReplacesEXECategory(t *testing.T) {
-	u := &battle.Unit{AP: 16, DP: 12, HIT: 97, EV: 2, MV: 4, BaseAP: 6, BaseDP: 4, BaseHIT: 2, BaseEV: 2, BaseMV: 4, EquipmentBaseSet: true, Inventory: []int{0, 1, 132}}
+	u := &battle.Unit{
+		AP: 16, DP: 12, HIT: 97, EV: 2, MV: 4,
+		BaseAP: 6, BaseDP: 4, BaseHIT: 2, BaseEV: 2, BaseMV: 4,
+		EquipmentBaseSet: true, Inventory: []int{0, 1, 132},
+		InventorySlots:       []int{0, 0xff, 1, 132, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0, 0x80, 0, 0, 0x80, 0x80, 0x80, 0x80},
+	}
 	stats := map[int]ItemStats{
 		0:   {Type: 1, AP: 10, HIT: 95},
 		1:   {Type: 1, AP: 20, HIT: 95},
@@ -18,6 +24,11 @@ func TestEquipItemRecomputesFromBaseAndReplacesEXECategory(t *testing.T) {
 	}
 	if err := EquipItem(u, 1, stats); err != nil || u.AP != 26 || u.HIT != 97 || u.Equipped[0] || !u.Equipped[1] {
 		t.Fatalf("replacement err=%v AP=%d HIT=%d flags=%v", err, u.AP, u.HIT, u.Equipped)
+	}
+	if u.NativeInventoryFlags[0]&0x40 != 0 ||
+		u.NativeInventoryFlags[2]&0x40 == 0 ||
+		u.NativeInventoryFlags[3]&0x40 != 0 {
+		t.Fatalf("raw equipped flags did not follow compact replacement: %#v", u.NativeInventoryFlags)
 	}
 }
 

@@ -182,7 +182,7 @@ func (g *Game) beginNativeShopRecipientOpening() bool {
 	if err != nil || len(frames) != 6 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
 	return true
 }
 
@@ -199,7 +199,7 @@ func (g *Game) beginNativeShopRecipientClosing(after func()) bool {
 	if err != nil || len(frames) != 5 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{
+	g.nativeShopUIJob = &nativeClassUIJob{
 		frames: frames, restore: stable, after: after,
 	}
 	return true
@@ -254,7 +254,7 @@ func (g *Game) beginNativeShopRecipientFullOpening() bool {
 	if err != nil || len(frames) != 6 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
 	return true
 }
 
@@ -271,7 +271,7 @@ func (g *Game) beginNativeShopRecipientFullClosing(after func()) bool {
 	if err != nil || len(frames) != 5 {
 		return false
 	}
-	g.nativeShopUIJob = &nativeChurchUIJob{
+	g.nativeShopUIJob = &nativeClassUIJob{
 		frames: frames, restore: stable, after: after,
 	}
 	return true

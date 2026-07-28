@@ -461,6 +461,22 @@ instruction-order audit 也推翻本段早先「保留 steady Yes/No cells」的
 這種 fail-closed contract 比共用一個方便的 message renderer 更能防止
 後續 remake 悄悄偏離原版 lifecycle。
 
+## 經驗補記 — 同一個「裝備分類」可能有兩種原版 key（2026-07-28）
+
+equipment recipient preview 的 `0x2efb7` 以 item row type `<=0x14` 判斷
+要保留哪一類已裝備加成；真正寫回的 `0x1c142` 則直接以 item ID
+`<0x80`／`>=0x80` 決定卸下哪個 raw slot。兩者在原版資料上對應，但不能
+因此把 type、ID 與 raw flag 合併成一個抽象欄位。重製時應分別保存：
+
+1. item type：相容性與 preview 數值路徑；
+2. item ID：`0x1c142` replacement category；
+3. raw inventory flag：實際 equipped writer（0或`0x40`）。
+
+這次 production integration 也暴露 compact `Equipped[]` 只更新自己、
+未同步八格 raw flags 的舊缺口。現在 writer 完成後會按含內部空洞的
+`InventorySlots` 映射回 raw slot；否則當前畫面看似正確，存檔、下一次
+preview與native item command卻會讀到另一套裝備狀態。
+
 ### 同名操作不一定共用 widget
 
 購買後的「選收件者」依 item type 分成兩個 owner。消耗品走兩欄六人

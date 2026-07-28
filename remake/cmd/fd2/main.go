@@ -180,7 +180,7 @@ type Game struct {
 	nativeChurchUIHasTick    bool
 	nativeChurchTextIndex    int
 	nativeShopUI             *nativeShopUIAssets
-	nativeShopUIJob          *nativeChurchUIJob
+	nativeShopUIJob          *nativeClassUIJob
 	nativeShopUIClock        nativeBIOSClock
 	nativeShopUIPulse        int
 	nativeShopUILastTick     int
@@ -191,6 +191,9 @@ type Game struct {
 	nativeShopItemStart      int
 	nativeShopConfirmSel     int
 	nativeShopRecipientStart int
+	nativeShopEquipSel       int
+	nativeShopPendingUnit    battle.Unit
+	nativeShopHasPendingUnit bool
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int

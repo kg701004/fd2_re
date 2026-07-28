@@ -901,8 +901,26 @@ types may ask and apply optional equip/recalculation; only then does
 `0x2f4c6` present success, after which `0x2d516(price)` debits gold and control
 returns to the product loop. Thus neither confirmation nor insertion alone
 authorizes an early debit. The recipient owner deliberately returns
-fail-closed without mutation on a non-full selection until this exact
-insert→optional-equip→success→debit timeline is wired. DOSBox E2 remains open.
+fail-closed if any transaction asset or raw provenance is missing. With all
+inputs present, production stages a deep-copied unit, applies `0x1bb8c`
+insertion first, and leaves gold unchanged. Consumables proceed directly to
+success. Equipment opens FDTXT507 plus `0x19953`; Yes applies
+`0x1c142→0x1b750`, while No/Escape preserves the inserted unequipped item.
+Instruction revalidation confirms `0x1c142` categorizes replacement by item
+ID `<0x80` versus `>=0x80`, writes removed equipped flags to exact zero and
+the new raw slot to exact `0x40`; the normalized adapter now synchronizes all
+eight raw flags with its compact equipped view.
+
+Only after the staged unit is valid does production publish it and start the
+variant-specific success timeline. Variant 1 presents five frames for two
+BIOS ticks each plus a zero-duration portrait restore; variant 3 preserves
+one pre-tick, one effect frame for eight post-ticks, then portrait restore;
+variant 5 presents seven frames for two ticks each and has no portrait
+restore. The timeline completion callback alone calls `FinalizeGood`, so
+gold remains unchanged throughout insertion, optional equip, and animation,
+then is debited immediately before the six-frame product-list reopen.
+Regression asserts total durations of 10/9/14 BIOS ticks and this mutation
+ordering. DOSBox E2 remains open.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,
