@@ -89,8 +89,11 @@ func TestRenderNativeClassListRowsMatches31019CoordinatesAndColours(t *testing.T
 	if got := dst[(121+26)*320+40]; got != 201 {
 		t.Fatalf("selected foreground=%d want 201", got)
 	}
-	if got := dst[121*320+39]; got != 76 {
+	if got := dst[122*320+39]; got != 76 {
 		t.Fatalf("native shadow=%d want 76", got)
+	}
+	if got := dst[121*320+39]; got != 0 {
+		t.Fatalf("same-row shadow=%d want 0", got)
 	}
 	if got := dst[121*320+175]; got != 205 {
 		t.Fatalf("FDTXT593 foreground=%d want 205", got)

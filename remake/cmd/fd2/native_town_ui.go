@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
@@ -10,6 +12,40 @@ import (
 
 type nativeTownUIAssets struct {
 	scene *campaign.NativeTownAssets
+}
+
+func parseNativeTownShotState(spec string) (selection, pulse int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+	selection, err := strconv.Atoi(parts[0])
+	if err != nil || selection < 0 || selection > 5 {
+		return 0, 0, false
+	}
+	pulse, err = strconv.Atoi(parts[1])
+	if err != nil || pulse < 0 || pulse > 3 {
+		return 0, 0, false
+	}
+	return selection, pulse, true
+}
+
+// setNativeTownShotState is an explicit screenshot-only oracle hook. It
+// refuses to create town state outside a native town node and resets the
+// clock so Update cannot advance the requested pulse before the next Draw.
+func (g *Game) setNativeTownShotState(selection, pulse int) bool {
+	if selection < 0 || selection > 5 || pulse < 0 || pulse > 3 ||
+		g.camp == nil || g.nativeTownUI == nil {
+		return false
+	}
+	n := g.camp.Node()
+	if n == nil || n.Type != "town" || n.NativeTownVariant == nil {
+		return false
+	}
+	g.campSel = selection
+	g.resetNativeTownUIPulse()
+	g.nativeTownUIPulse = pulse
+	return true
 }
 
 // nativeTownMoveSelection preserves 0x2cf01..0x2cf65: right decrements and
@@ -28,6 +64,17 @@ func nativeTownMoveSelection(selection, delta int) (int, bool) {
 		selection = 0
 	}
 	return selection, true
+}
+
+// moveNativeTownSelection changes only the selector. The original
+// 0x2ce7a/0x2ceac branches do not write the shared pulse counter at 0x54133.
+func (g *Game) moveNativeTownSelection(delta int) bool {
+	selection, ok := nativeTownMoveSelection(g.campSel, delta)
+	if !ok {
+		return false
+	}
+	g.campSel = selection
+	return true
 }
 
 func loadNativeTownUIAssets() (*nativeTownUIAssets, error) {

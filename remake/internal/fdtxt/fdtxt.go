@@ -158,9 +158,8 @@ func (f *Font) BlitGlyph(dst []byte, stride, base, index int, color byte) error 
 }
 
 // NativeGlyphStyle is the exact visible colour portion of 0x4ea2a's ABI.
-// Foreground is written for each set 1bpp source bit; Shadow is written one
-// pixel to its left and one row below; Background fills the 16x16 cell only
-// when it is non-zero.
+// Foreground is written for each set 1bpp source bit; Shadow is written on the
+// next row at x-1 and x. Background fills the 16x16 cell only when non-zero.
 type NativeGlyphStyle struct {
 	Foreground byte
 	Shadow     byte
@@ -192,7 +191,7 @@ func (f *Font) BlitNativeGlyph(dst []byte, stride, base, index int, style Native
 			}
 			pos := base + y*stride + x
 			dst[pos] = style.Foreground
-			dst[pos-1] = style.Shadow
+			dst[pos+stride-1] = style.Shadow
 			dst[pos+stride] = style.Shadow
 		}
 	}

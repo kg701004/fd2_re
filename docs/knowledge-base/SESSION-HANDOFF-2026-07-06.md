@@ -1499,8 +1499,30 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   timeline steps；參數不合法即 exit 2。
 - 保存 [`town-hub-original-dosbox.png`](../figures/town-hub-original-dosbox.png)、
   [`town-hub-original-vs-remake.png`](../figures/town-hub-original-vs-remake.png)
-  與 [`town-hub-pixel-diff.png`](../figures/town-hub-pixel-diff.png)。原版與
-  remake 無插值縮成320×200後，差異只出現在角色與標籤 pulse；遮蔽
-  `(30,45,32,35)`、`(245,162,70,35)` 後 raw RGB MD5 均為
-  `d34b124775795f816209e53db603840a`。因此背景／viewport／label frame 的
-  ch02 E2 slice 已閉合，same-tick pulse、variant1/2、selection1–5與輸入仍未閉合。
+  與 [`town-hub-pixel-diff.png`](../figures/town-hub-pixel-diff.png)。初次 capture
+  只證明遮罩外一致；下一節已修正 glyph shadow 並取得 selection0/1 整幀相同，
+  因此本段的 masked hash 不再是目前最高證據。
+
+## 2026-07-28 town glyph shadow correction and two-state exact E2
+
+- DOSBox selection1 pulse 階梯顯示角色 sprite 可與 remake 完全相同，但中文
+  「武器店」仍殘缺，推翻「剩餘差異只是未同步 pulse」的斷言。Docker Capstone
+  重讀 `0x4ea2a`：set bit 先寫 foreground 到 `edi`，shadow 寫到
+  `edi+(stride-1)` 與 `edi+stride`；現有 `BlitNativeGlyph` 第一個 shadow
+  誤寫成同列 `edi-1`，會覆蓋相鄰 foreground。
+- `BlitNativeGlyph` 已修成下一列左下／正下，新增 adjacent source bits
+  regression，防止 shadow 再覆蓋連續筆畫。這是所有使用此共用 primitive 的
+  town/shop/church indexed text 修正，不只是一張 town 圖的特例。
+- 新增 strict screenshot-only `FD2_SHOT_TOWN_STATE=selection,pulse`；
+  selection 必須0..5、pulse必須0..3，且目前必須是有 native variant 的 town
+  node，否則 Update 回錯且不產生錯狀態 artifact。它只固定 oracle state，
+  不改正常玩家輸入。
+- `0x2ce7a/0x2ceac` 方向鍵只改 `[0x5412b]`，`0x2cef7` secret chord 也只寫5；
+  三者都不寫 pulse counter `[0x54133]`。remake 已刪除移動／reveal 時強制
+  reset pulse0 的錯誤行為；只有 screenshot hook 為下一次 Draw 固定指定 phase。
+- ch02 variant0 selection0/pulse2 原版與 remake 320×200 raw RGB MD5 均為
+  `8a6a4b03946d1958d3af95fd4bd775c3`，更新後
+  [`pixel diff`](../figures/town-hub-pixel-diff.png) 全黑。Left 後
+  selection1/pulse2 的 [`pair`](../figures/town-hub-selection1-original-vs-remake.png)
+  亦整幀相同，MD5 均為 `60a4791d60b32fd6efc82864afd63525`。
+  尚未閉合 variant1/2、selection2–5、Right/wrap、secret reveal/confirm。

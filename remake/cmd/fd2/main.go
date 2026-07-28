@@ -2693,24 +2693,13 @@ func (g *Game) campInput() bool {
 			if scanCode, ok := pressedNativeTownSecretScan(); ok &&
 				g.camp.MatchNativeTownSecret(g.campSel, scanCode) {
 				g.campSel = 5
-				g.resetNativeTownUIPulse()
 				return true
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
-				if selection, ok := nativeTownMoveSelection(
-					g.campSel, -1,
-				); ok {
-					g.campSel = selection
-				}
-				g.resetNativeTownUIPulse()
+				g.moveNativeTownSelection(-1)
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
-				if selection, ok := nativeTownMoveSelection(
-					g.campSel, 1,
-				); ok {
-					g.campSel = selection
-				}
-				g.resetNativeTownUIPulse()
+				g.moveNativeTownSelection(1)
 			}
 			if enter {
 				if g.camp.ConfirmNativeTownSecret(g.campSel) {
@@ -4695,6 +4684,15 @@ func (g *Game) Update() error {
 		// FD2_SHOT_RING on battle-start event scenarios.
 		if !g.shotSetup && g.frame >= g.shotFrame-1 {
 			g.shotSetup = true
+			if spec := os.Getenv("FD2_SHOT_TOWN_STATE"); spec != "" {
+				selection, pulse, ok := parseNativeTownShotState(spec)
+				if !ok || !g.setNativeTownShotState(selection, pulse) {
+					return fmt.Errorf(
+						"FD2_SHOT_TOWN_STATE expects selection 0..5,pulse 0..3 on a native town node: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]

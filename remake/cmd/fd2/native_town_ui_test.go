@@ -113,4 +113,79 @@ func TestNativeTownSelectionUsesOriginalLeftRightWrap(t *testing.T) {
 			t.Fatalf("invalid move %#v was accepted", invalid)
 		}
 	}
+
+	g := &Game{
+		campSel:              0,
+		nativeTownUIPulse:    2,
+		nativeTownUILastTick: 321,
+		nativeTownUIHasTick:  true,
+	}
+	if !g.moveNativeTownSelection(1) || g.campSel != 1 {
+		t.Fatalf("runtime move selection=%d", g.campSel)
+	}
+	if g.nativeTownUIPulse != 2 || g.nativeTownUILastTick != 321 ||
+		!g.nativeTownUIHasTick {
+		t.Fatalf(
+			"selection move reset pulse: pulse=%d last=%d has=%v",
+			g.nativeTownUIPulse, g.nativeTownUILastTick,
+			g.nativeTownUIHasTick,
+		)
+	}
+}
+
+func TestNativeTownShotStateIsStrictAndTownOnly(t *testing.T) {
+	for _, tc := range []struct {
+		spec      string
+		selection int
+		pulse     int
+		ok        bool
+	}{
+		{spec: "0,0", selection: 0, pulse: 0, ok: true},
+		{spec: "5,3", selection: 5, pulse: 3, ok: true},
+		{spec: "6,0"},
+		{spec: "0,4"},
+		{spec: "1"},
+		{spec: "1,2,3"},
+		{spec: "x,0"},
+	} {
+		selection, pulse, ok := parseNativeTownShotState(tc.spec)
+		if ok != tc.ok || selection != tc.selection || pulse != tc.pulse {
+			t.Fatalf(
+				"parseNativeTownShotState(%q)=(%d,%d,%v), want (%d,%d,%v)",
+				tc.spec, selection, pulse, ok,
+				tc.selection, tc.pulse, tc.ok,
+			)
+		}
+	}
+
+	variant := 0
+	g := &Game{
+		nativeTownUI: &nativeTownUIAssets{},
+		camp: &campaign.Runner{
+			Cur: "town",
+			C: &campaign.Campaign{
+				Nodes: map[string]*campaign.Node{
+					"town": {Type: "town", NativeTownVariant: &variant},
+				},
+			},
+		},
+		nativeTownUIHasTick:  true,
+		nativeTownUILastTick: 123,
+	}
+	if !g.setNativeTownShotState(1, 2) {
+		t.Fatal("native town screenshot state rejected")
+	}
+	if g.campSel != 1 || g.nativeTownUIPulse != 2 ||
+		g.nativeTownUIHasTick || g.nativeTownUILastTick != 0 {
+		t.Fatalf(
+			"shot state=(selection=%d pulse=%d hasTick=%v last=%d)",
+			g.campSel, g.nativeTownUIPulse,
+			g.nativeTownUIHasTick, g.nativeTownUILastTick,
+		)
+	}
+
+	g.camp.C.Nodes["town"] = &campaign.Node{Type: "choice"}
+	if g.setNativeTownShotState(0, 0) {
+		t.Fatal("non-town screenshot state accepted")
+	}
 }

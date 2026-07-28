@@ -77,8 +77,40 @@ func TestBlitNativeGlyphMatchesForegroundShadowAndBackgroundABI(t *testing.T) {
 	if err := f.BlitNativeGlyph(dst, 20, base, 0, NativeGlyphStyle{Foreground: 0xcd, Shadow: 0x4c, Background: 3}); err != nil {
 		t.Fatal(err)
 	}
-	if dst[base] != 0xcd || dst[base-1] != 0x4c || dst[base+20] != 0x4c || dst[base+1] != 3 || dst[base+15*20+15] != 3 {
-		t.Fatalf("native glyph pixels=%#x %#x %#x %#x %#x", dst[base], dst[base-1], dst[base+20], dst[base+1], dst[base+15*20+15])
+	if dst[base] != 0xcd || dst[base+20-1] != 0x4c || dst[base+20] != 0x4c || dst[base-1] != 7 || dst[base+1] != 3 || dst[base+15*20+15] != 3 {
+		t.Fatalf(
+			"native glyph pixels=%#x %#x %#x %#x %#x %#x",
+			dst[base], dst[base+20-1], dst[base+20],
+			dst[base-1], dst[base+1], dst[base+15*20+15],
+		)
+	}
+}
+
+func TestBlitNativeGlyphAdjacentForegroundIsNotOverwrittenByShadow(t *testing.T) {
+	data := make([]byte, GlyphBytes)
+	data[0] = 0xc0 // adjacent x=0 and x=1 source bits
+	f, err := ParseFont(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dst := make([]byte, 20*18)
+	base := 21
+	if err := f.BlitNativeGlyph(
+		dst, 20, base, 0,
+		NativeGlyphStyle{Foreground: 0xcd, Shadow: 0x4c},
+	); err != nil {
+		t.Fatal(err)
+	}
+	if dst[base] != 0xcd || dst[base+1] != 0xcd {
+		t.Fatalf(
+			"adjacent foreground overwritten: %#x %#x",
+			dst[base], dst[base+1],
+		)
+	}
+	for _, pos := range []int{base + 20 - 1, base + 20, base + 20 + 1} {
+		if dst[pos] != 0x4c {
+			t.Fatalf("shadow at %d=%#x", pos, dst[pos])
+		}
 	}
 }
 

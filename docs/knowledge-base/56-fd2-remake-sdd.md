@@ -143,7 +143,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
-| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0／selection0 已有原版 DOSBox 與 source-built remake 的 [`pair`](../figures/town-hub-original-vs-remake.png)／[`diff`](../figures/town-hub-pixel-diff.png)：遮蔽角色與標籤 pulse 區後 RGB MD5 相同；shop/church/preparation 與 hotel raw route/return trace 已接，仍需 pulse 同 tick、variant1/2、selection1–5、逐章 route 與 service E2 |
+| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0`](../figures/town-hub-original-vs-remake.png) 與 [`Left→selection1`](../figures/town-hub-selection1-original-vs-remake.png) 已在 pulse2 達到原版 DOSBox／source-built remake raw RGB 整幀相同；shop/church/preparation 與 hotel raw route/return trace 已接，仍需 variant1/2、selection2–5、Right/wrap、hidden selection、逐章 route 與 service E2 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。secret gate已由town record的selection+BIOS scan接production：chord先揭露selection5並重畫，後續confirm才進variant5；variant1/3/5與secret chord DOSBox E2仍待 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
@@ -851,12 +851,18 @@ source-built runtime capture of ch02 variant0/selection0. The matching original
 frame is now preserved as
 [`town-hub-original-dosbox.png`](../figures/town-hub-original-dosbox.png),
 captured after the ch00 postbattle handler through the original campaign gate.
-The [`side-by-side`](../figures/town-hub-original-vs-remake.png) and
-[`difference image`](../figures/town-hub-pixel-diff.png) localize all observed
-differences to the independently timed character and label pulse rectangles;
-after masking `(30,45,32,35)` and `(245,162,70,35)`, both 320×200 RGB frames
-hash to `d34b124775795f816209e53db603840a`. This closes one E2 visual slice, not
-the input trace, same-tick pulse, other selections, or variants 1/2.
+The first [`side-by-side`](../figures/town-hub-original-vs-remake.png) exposed
+that the FDICON sprite could match while the label glyph did not. Capstone
+re-read of `0x4ea2a` corrected the shared glyph shadow from the remake's
+same-row `x-1` write to native next-row `(x-1,x)` writes. After that correction,
+selection0/pulse2 hashes to `8a6a4b03946d1958d3af95fd4bd775c3`
+in both original and remake; its
+[`difference image`](../figures/town-hub-pixel-diff.png) is entirely black.
+The original Left input then produces selection1 without resetting global
+counter `0x54133`; [`selection1/pulse2`](../figures/town-hub-selection1-original-vs-remake.png)
+also matches completely at `60a4791d60b32fd6efc82864afd63525`.
+This closes two E2 visual states and one Left transition, not the other
+selections, Right/wrap, hidden selection, or variants 1/2.
 
 Standalone equip has a separate scene contract from the optional equip prompt
 inside purchase. `0x2f883` calls `0x2e6b8` for the two-column party roster,

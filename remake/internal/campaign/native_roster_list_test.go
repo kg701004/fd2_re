@@ -65,8 +65,11 @@ func TestRenderNativeRosterRowsMatches2EA90Geometry(t *testing.T) {
 	if got := dst[147*320+172]; got != 201 {
 		t.Fatalf("selected row3 foreground=%d want 201", got)
 	}
-	if got := dst[147*320+171]; got != 76 {
+	if got := dst[148*320+171]; got != 76 {
 		t.Fatalf("selected row3 shadow=%d want 76", got)
+	}
+	if got := dst[147*320+171]; got != 0 {
+		t.Fatalf("selected row3 same-row shadow=%d want 0", got)
 	}
 }
 
