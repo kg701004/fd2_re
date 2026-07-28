@@ -179,6 +179,16 @@ type Game struct {
 	nativeChurchUILastTick   int
 	nativeChurchUIHasTick    bool
 	nativeChurchTextIndex    int
+	nativeShopUI             *nativeShopUIAssets
+	nativeShopUIJob          *nativeChurchUIJob
+	nativeShopUIClock        nativeBIOSClock
+	nativeShopUIPulse        int
+	nativeShopUILastTick     int
+	nativeShopUIHasTick      bool
+	nativeShopVariant        int
+	nativeShopMode           string
+	nativeShopServiceSel     int
+	nativeShopItemStart      int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -1876,6 +1886,12 @@ func (g *Game) enterNode() {
 		g.shopSellSlotSel = 0
 		g.shopRecipientSel = 0
 		g.shopRecipients = nil
+		g.nativeShopUIJob = nil
+		g.nativeShopVariant = 0
+		g.nativeShopMode = ""
+		g.nativeShopServiceSel = 0
+		g.nativeShopItemStart = 0
+		g.setupNativeShop()
 	case "ending":
 		g.dialog, g.st, g.sel = nil, nil, nil
 	}
@@ -3082,6 +3098,9 @@ func (g *Game) campInput() bool {
 		}
 		return true
 	case "shop":
+		if g.handleNativeShopInput(enter) {
+			return true
+		}
 		goods := g.camp.ShopGoods()
 		if g.shopEquipPrompt {
 			// Original ESC at the equip prompt means "leave it unequipped";
@@ -3327,6 +3346,9 @@ func (g *Game) leaveShop() {
 	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "shop" {
 		return
 	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = ""
+	g.nativeShopVariant = 0
 	g.camp.Advance("")
 	g.enterNode()
 }
@@ -4481,6 +4503,7 @@ func (g *Game) Update() error {
 	g.stepActionOverlayLifecycle()
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
+	g.stepNativeShopUILifecycle(time.Now())
 	if inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -5665,6 +5688,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			g.font.Draw(screen, pre+o.Label, 190, 162+float64(i)*28, 1.0, c)
 		}
 	case n.Type == "shop":
+		if g.drawNativeShop(screen) {
+			return
+		}
 		if g.shopEquipPrompt {
 			fillBox(150, 150, 340, 120)
 			u := g.partyRoster[g.shopEquipUnit]
@@ -6413,6 +6439,9 @@ func loadGame() *Game {
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
 	if classUI, err := loadNativeClassUIAssets(); err == nil {
 		g.nativeClassUI = classUI
+		if shopUI, shopErr := loadNativeShopUIAssets(classUI); shopErr == nil {
+			g.nativeShopUI = shopUI
+		}
 	}
 	if raw, e := os.ReadFile(assetPath("assets/bg/bg.png")); e == nil { // 戰鬥背景(BG.DAT)
 		if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {

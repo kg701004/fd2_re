@@ -110,6 +110,14 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 			string(opening) == string(frame) {
 			t.Fatalf("service opening step %d did not render", step)
 		}
+		closing, err := ComposeNativeShopServiceClosingFrame(frame, assets, step)
+		if err != nil {
+			t.Fatalf("service closing step %d: %v", step, err)
+		}
+		if len(closing) != NativeShopWidth*NativeShopHeight ||
+			string(closing) == string(frame) {
+			t.Fatalf("service closing step %d did not render", step)
+		}
 	}
 	normal, err := ComposeNativeShopServiceSteadyFrame(frame, assets, 0, 0)
 	if err != nil {

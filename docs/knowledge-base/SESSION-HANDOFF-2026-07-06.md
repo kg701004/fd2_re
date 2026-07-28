@@ -1357,3 +1357,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   與`native-shop-purchase-success-indexed.png` contact sheet已補。
   caller順序為insert→optional equip/recalc→success→debit→product loop；
   production timeline owner與DOSBox E2仍待。
+- 2026-07-28 native shop production slice：campaign schema新增
+  `native_hub_variant`，69個原版weapon/item/secret shop節點分別明確
+  指定1/3/5；0保留自訂戰役generic fallback，其他值load時fail-closed。
+  `cmd/fd2`現以原版FDOTHER/DATO/FDTXT indexed assets擁有stable scene、
+  四格service menu與purchase list，並實作service 4-frame spread/
+  contract、purchase 6-frame open/5-frame close＋stable restore及
+  selected pulse。production regression會確認原版節點被native owner接管、
+  custom節點不被誤接。尚未接confirmation→recipient→success→debit，
+  其他三個service也仍fail-closed；不得把本切片描述成完整可交易商店。

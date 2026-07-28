@@ -563,6 +563,7 @@
   },
   "shop_ch02_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -590,6 +591,7 @@
   },
   "shop_ch02_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -650,6 +652,7 @@
   },
   "shop_ch03_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -682,6 +685,7 @@
   },
   "shop_ch03_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -742,6 +746,7 @@
   },
   "shop_ch04_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -789,6 +794,7 @@
   },
   "shop_ch04_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -854,6 +860,7 @@
   },
   "shop_ch05_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -891,6 +898,7 @@
   },
   "shop_ch05_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -971,6 +979,7 @@
   },
   "shop_ch06_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1028,6 +1037,7 @@
   },
   "shop_ch06_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1116,6 +1126,7 @@
   },
   "shop_ch07_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1183,6 +1194,7 @@
   },
   "shop_ch07_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1266,6 +1278,7 @@
   },
   "shop_ch08_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1323,6 +1336,7 @@
   },
   "shop_ch08_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1398,6 +1412,7 @@
   },
   "shop_ch09_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1445,6 +1460,7 @@
   },
   "shop_ch09_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1521,6 +1537,7 @@
   },
   "shop_ch10_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1568,6 +1585,7 @@
   },
   "shop_ch10_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1649,6 +1667,7 @@
   },
   "shop_ch11_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1696,6 +1715,7 @@
   },
   "shop_ch11_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1771,6 +1791,7 @@
   },
   "shop_ch12_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1818,6 +1839,7 @@
   },
   "shop_ch12_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1894,6 +1916,7 @@
   },
   "shop_ch13_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -1941,6 +1964,7 @@
   },
   "shop_ch13_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2026,6 +2050,7 @@
   },
   "shop_ch14_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2073,6 +2098,7 @@
   },
   "shop_ch14_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2148,6 +2174,7 @@
   },
   "shop_ch15_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2195,6 +2222,7 @@
   },
   "shop_ch15_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2279,6 +2307,7 @@
   },
   "shop_ch16_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2321,6 +2350,7 @@
   },
   "shop_ch16_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2404,6 +2434,7 @@
   },
   "shop_ch17_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2461,6 +2492,7 @@
   },
   "shop_ch17_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2554,6 +2586,7 @@
   },
   "shop_ch18_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2616,6 +2649,7 @@
   },
   "shop_ch18_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2702,6 +2736,7 @@
   },
   "shop_ch19_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2764,6 +2799,7 @@
   },
   "shop_ch19_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2850,6 +2886,7 @@
   },
   "shop_ch20_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -2912,6 +2949,7 @@
   },
   "shop_ch20_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3010,6 +3048,7 @@
   },
   "shop_ch21_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3072,6 +3111,7 @@
   },
   "shop_ch21_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3257,6 +3297,7 @@
   },
   "shop_ch22_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3319,6 +3360,7 @@
   },
   "shop_ch22_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3556,6 +3598,7 @@
   },
   "shop_ch26_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3618,6 +3661,7 @@
   },
   "shop_ch26_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3711,6 +3755,7 @@
   },
   "shop_ch27_weapon": {
    "type": "shop",
+   "native_hub_variant": 1,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -3773,6 +3818,7 @@
   },
   "shop_ch27_item": {
    "type": "shop",
+   "native_hub_variant": 3,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -4987,6 +5033,7 @@
   },
   "shop_ch02_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5024,6 +5071,7 @@
   },
   "shop_ch03_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5041,6 +5089,7 @@
   },
   "shop_ch04_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5058,6 +5107,7 @@
   },
   "shop_ch05_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5085,6 +5135,7 @@
   },
   "shop_ch06_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5102,6 +5153,7 @@
   },
   "shop_ch07_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5129,6 +5181,7 @@
   },
   "shop_ch08_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5156,6 +5209,7 @@
   },
   "shop_ch09_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5173,6 +5227,7 @@
   },
   "shop_ch10_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5190,6 +5245,7 @@
   },
   "shop_ch11_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5207,6 +5263,7 @@
   },
   "shop_ch12_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5224,6 +5281,7 @@
   },
   "shop_ch13_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5241,6 +5299,7 @@
   },
   "shop_ch14_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5258,6 +5317,7 @@
   },
   "shop_ch15_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5275,6 +5335,7 @@
   },
   "shop_ch16_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5302,6 +5363,7 @@
   },
   "shop_ch17_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5324,6 +5386,7 @@
   },
   "shop_ch18_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5341,6 +5404,7 @@
   },
   "shop_ch19_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5358,6 +5422,7 @@
   },
   "shop_ch20_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5375,6 +5440,7 @@
   },
   "shop_ch21_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5392,6 +5458,7 @@
   },
   "shop_ch22_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5409,6 +5476,7 @@
   },
   "shop_ch26_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {
@@ -5431,6 +5499,7 @@
   },
   "shop_ch27_secret": {
    "type": "shop",
+   "native_hub_variant": 5,
    "bgm": "FDMUS_010",
    "goods": [
     {

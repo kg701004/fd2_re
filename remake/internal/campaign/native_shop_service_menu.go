@@ -34,6 +34,33 @@ func ComposeNativeShopServiceOpeningFrame(
 	return frame, nil
 }
 
+// ComposeNativeShopServiceClosingFrame reproduces 0x2d669(a1!=0): each
+// option contracts from its full displacement using divisor step+1. After
+// step three the native caller restores the cleared stable snapshot.
+func ComposeNativeShopServiceClosingFrame(
+	stable []byte,
+	assets *NativeShopAssets,
+	step int,
+) ([]byte, error) {
+	if len(stable) != NativeShopWidth*NativeShopHeight || assets == nil ||
+		step < 0 || step >= 4 {
+		return nil, errors.New("campaign: native shop service closing state is invalid")
+	}
+	frame := append([]byte(nil), stable...)
+	divisor := step + 1
+	baseX := nativeShopServiceBaseOffset % NativeShopWidth
+	baseY := nativeShopServiceBaseOffset / NativeShopWidth
+	for option := range assets.ServiceCells {
+		x := baseX + nativeShopServiceDisplacements[option]/divisor
+		if err := assets.ServiceCells[option][0].BlitAt(
+			frame, NativeShopWidth, x, baseY,
+		); err != nil {
+			return nil, err
+		}
+	}
+	return frame, nil
+}
+
 // ComposeNativeShopServiceSteadyFrame reproduces 0x2d9fe's selected-option
 // redraw on the fully spread menu. Native phase/2 selects the odd normal cell
 // for phases 0..1 and the adjacent even selected cell for phases 2..3.

@@ -642,6 +642,7 @@ def build_campaign(
                 nodes[sid] = {
                     "type": "shop",
                     "bgm": BGM_STORY,
+                    "native_hub_variant": 1 if s["kind"] == "weapon" else 3,
                     "goods": [{"id": g["id"], "name": g["name"], "price": g["price"]} for g in s["goods"]],
                     "next": None,  # 稍後一律回 town hub
                 }
@@ -653,6 +654,7 @@ def build_campaign(
                 nodes[secret_shop_id] = {
                     "type": "shop",
                     "bgm": BGM_STORY,
+                    "native_hub_variant": 5,
                     "goods": [{"id": g["id"], "name": g["name"], "price": g["price"]} for g in secret_row["goods"]],
                     "next": None,
                 }

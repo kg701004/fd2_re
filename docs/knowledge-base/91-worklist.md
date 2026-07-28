@@ -378,7 +378,7 @@
       自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
       `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
       不得稱完整原版一致。
-- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime；原版 stable scene／service icons已有E1 fixture。舊「賣出、裝備重算仍待」已過期並刪除；真正待辦是四個原版service callee／child panels、production indexed owner、祕密商店進入E0與DOSBox E2。
+- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime。69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner，stable、四格service menu、purchase list及原版4/6/5-frame開關生命週期已接；custom 0保留擴充用generic fallback。購買confirmation/recipient/success及其他三個service仍未接production transaction，祕密商店進入E0與DOSBox E2亦待驗證。
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
 
 ## 第 9 輪 ✅(3-subagent 成本分工;haiku=資料/sonnet=RE·套件/旗艦=架構·驗收)
