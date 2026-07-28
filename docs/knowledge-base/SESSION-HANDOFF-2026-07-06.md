@@ -1584,8 +1584,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 新圖
   [`secret-shop-ch02-original-vs-remake.png`](../figures/secret-shop-ch02-original-vs-remake.png)
   左為原版DOSBox、右為目前source-built remake selected phase。下一個 precise
-  gate 原為service1–3與Escape return；下節已閉合。variant1/3仍沒有同狀態
-  DOSBox E2。
+  gate 原為service1–3與Escape return；下節已閉合。variant1/3也已由後續
+  ch02 trace閉合，不再是待辦。
 
 ## 2026-07-28 ch02 secret-shop four-service and return E2
 
@@ -1602,5 +1602,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 新圖
   [`secret-shop-ch02-services-return-original-vs-remake.png`](../figures/secret-shop-ch02-services-return-original-vs-remake.png)
   上排原版、下排remake，從左到右service0/1/2/3與returned town selection5，
-  每一格全幀AE=0。下一gate改為ordinary shop variant1/3，以及四個service
-  child panel的DOSBox同狀態E2。
+  每一格全幀AE=0。下一gate原改為ordinary shop variant1/3；下節已閉合，
+  現改為四個service child panel的DOSBox同狀態E2。
+
+## 2026-07-28 ch02 shop variants1/3/5 menu E2 closure
+
+- 同一原版town route由selection1進weapon variant1/resource12、selection3
+  進item variant3/resource29；各取10個stable樣本。variant1十張、variant3
+  排除首張transition後九張都在phase0/2間交替，且每張與
+  `FD2_SHOT_SHOP_STATE=0,pulse,0` production frame全幀AE=0。
+- selected phase raw RGB MD5：variant1
+  `69003be54f47c221916c1ed89cf1d26f`；variant3
+  `dd5d80bb761cc87980dff066773f6763`；variant5
+  `e5654e8ed03d1e4fd30b2c76106bb7a1`。每一值的原版與remake成對相同。
+- 新圖
+  [`shop-variants-1-3-5-original-vs-remake.png`](../figures/shop-variants-1-3-5-original-vs-remake.png)
+  上排原版、下排remake，左至右weapon/item/secret。ch02三種shop
+  stable service-menu的background、portrait、text、gold、icon layout與selected
+  pulse gate已閉合；不能把此證據推廣成purchase/sell/equip/transfer child
+  panel E2。下一個 precise gate 是service0 Enter後的purchase list。

@@ -147,7 +147,9 @@ variant0 的 selection0–5、Left/Right wrap 與 Shift+F1 hidden reveal 全部
 pulse frame。selection5 後 Enter 進入 ch02 secret variant5 的 service0
 phase0/2 亦已取得兩組 raw RGB 整幀相同 E2，並抓出及修正 production pulse
 雙重除以二。四個 service、Right/Left wrap 與 Escape 返回 hidden selection5
-亦已逐幀配對；仍待 variant1/2 town 與 shop variant1/3。
+亦已逐幀配對。ch02 武器店variant1、道具店variant3與秘密商店variant5的service0 selected
+phase目前也都與原版全幀相同；shop剩餘主缺口已轉為四項service的child panel
+與其他章節狀態，而不是三種主選單背景。town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
@@ -191,6 +193,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | town hub selection0 像素差圖（全黑，即 RGB 全幀無差異） | ![town hub pixel difference](docs/figures/town-hub-pixel-diff.png) |
 | ch02 隱藏 selection5 再確認後的秘密商店 service0／selected pulse（左原版 DOSBox、右 source-built remake；gold0、320×200 raw RGB 整幀相同） | ![secret shop original and remake](docs/figures/secret-shop-ch02-original-vs-remake.png) |
 | ch02 秘密商店四個 service 與 Escape 返回 hidden town（上排原版 DOSBox、下排 remake；每格320×200全幀AE=0） | ![secret shop services and return](docs/figures/secret-shop-ch02-services-return-original-vs-remake.png) |
+| ch02 shop variants 1／3／5（左武器店、中道具店、右秘密商店；上原版、下remake，三格raw RGB hash各自相同） | ![shop variants original and remake](docs/figures/shop-variants-1-3-5-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
