@@ -2691,8 +2691,7 @@ func (g *Game) campInput() bool {
 		nativeTown := n.Type == "town" && n.NativeTownVariant != nil
 		if nativeTown {
 			if scanCode, ok := pressedNativeTownSecretScan(); ok &&
-				g.camp.MatchNativeTownSecret(g.campSel, scanCode) {
-				g.campSel = 5
+				g.revealNativeTownSecret(scanCode) {
 				return true
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {

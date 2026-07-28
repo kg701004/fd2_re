@@ -141,7 +141,10 @@ selection0 原版幀；初次並排與像素差圖把剩餘差異定位到共用
 blitter。修正 `0x4ea2a` 的 shadow 目的地為下一列
 左下／正下後，selection0/pulse2 與 selection1/pulse2 均達到整張 320×200
 raw RGB MD5 相同，不需遮罩。這是兩個狀態的 E2 slice，不代表其他 variant、
-selection、輸入或 service 已完成 parity。
+selection、輸入或 service 已完成 parity。後續同一 sandbox oracle 已把
+variant0 的 selection0–5、Left/Right wrap 與 Shift+F1 hidden reveal 全部
+逐幀配對；六個 selection 都能找到整張 320×200 raw RGB 完全相同的 remake
+pulse frame。variant1/2 與 hidden confirm→secret shop 仍未閉合。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
@@ -181,6 +184,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
 | 原版 DOSBox／remake indexed town hub（ch02 variant0／selection0／pulse2；左右整幀相同） | ![original and remake town hub](docs/figures/town-hub-original-vs-remake.png) |
 | Left 後 selection1／pulse2 原版與 remake（左右整幀相同） | ![original and remake town selection1](docs/figures/town-hub-selection1-original-vs-remake.png) |
+| town variant0 六個 selection（上排原版 DOSBox、下排 remake；0→5 由左至右，每格整幀 hash 相同） | ![town six selections](docs/figures/town-hub-six-selections-original-vs-remake.png) |
 | town hub selection0 像素差圖（全黑，即 RGB 全幀無差異） | ![town hub pixel difference](docs/figures/town-hub-pixel-diff.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |

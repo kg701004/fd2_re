@@ -88,6 +88,13 @@ if [[ -z "$window" ]]; then
 fi
 
 xdotool windowfocus "$window"
+town_ready() {
+    import -window root /tmp/fd2-town-probe.png
+    [[ "$(convert /tmp/fd2-town-probe.png -format \
+        '%[pixel:p{10,10}]|%[pixel:p{160,130}]|%[pixel:p{300,190}]' info:)" == \
+        'srgb(56,77,16)|srgb(170,142,101)|srgb(117,138,138)' ]]
+}
+
 IFS=';' read -ra steps <<< "$timeline"
 for step in "${steps[@]}"; do
     [[ -z "$step" ]] && continue
@@ -106,6 +113,34 @@ for step in "${steps[@]}"; do
             echo "[fd2-shot] repeat $count $key every ${delay_ms}ms"
             xdotool windowfocus "$window"
             xdotool key --repeat "$count" --delay "$delay_ms" "$key"
+            ;;
+        waittown0)
+            IFS=',' read -r key delay max_tries <<< "$arg"
+            if [[ -z "$key" || ! "$delay" =~ ^[0-9]+([.][0-9]+)?$ ||
+                  ! "$max_tries" =~ ^[1-9][0-9]*$ ]]; then
+                echo "waittown0 expects key,delay_seconds,max_tries: $step" >&2
+                exit 2
+            fi
+            echo "[fd2-shot] waittown0 $key every ${delay}s, max $max_tries"
+            found=false
+            for _ in $(seq 1 "$max_tries"); do
+                if town_ready; then
+                    found=true
+                    break
+                fi
+                sleep 0.1
+                if town_ready; then
+                    found=true
+                    break
+                fi
+                xdotool windowfocus "$window"
+                xdotool key "$key"
+                sleep "$delay"
+            done
+            if [[ "$found" != true ]]; then
+                echo "town background signature not reached: $step" >&2
+                exit 3
+            fi
             ;;
         type) echo "[fd2-shot] type $arg"; xdotool windowfocus "$window"; xdotool type --delay 80 "$arg" ;;
         shot) echo "[fd2-shot] shot $arg"; import -window root "/shots/${arg}.png" ;;

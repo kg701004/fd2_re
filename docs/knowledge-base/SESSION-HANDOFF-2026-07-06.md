@@ -1526,3 +1526,36 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   selection1/pulse2 的 [`pair`](../figures/town-hub-selection1-original-vs-remake.png)
   亦整幀相同，MD5 均為 `60a4791d60b32fd6efc82864afd63525`。
   尚未閉合 variant1/2、selection2–5、Right/wrap、secret reveal/confirm。
+
+## 2026-07-28 town variant0 six-selection/input E2 closure
+
+- 固定 `repeat:20` 不可靠：原版打字／翻頁狀態會讓同一 Return 有時只完成文字，
+  有時才換頁，造成 capture 少一頁或多按進酒店。新增 runner action
+  `waittown0:key,delay_seconds,max_tries`；每次送 key 前先以 variant0 三個固定
+  背景像素 `(10,10)=(56,77,16)`、`(160,130)=(170,142,101)`、
+  `(300,190)=(117,138,138)` 判斷 full-colour town ready，命中即停止。
+  參數錯誤 exit2、上限未命中 exit3。名稱刻意是 `waittown0`，不能拿它宣稱
+  variant1/2 同步完成。
+- 原版 route patch sandbox 在多輪執行後可能更新 current-runtime/save 狀態；
+  本輪另建 `/tmp/fd2-town-e2g`，從原始 FLAME2 全新複製後只重套三個已驗證
+  上游 patch。Docker Capstone再次確認`0x117f3 call 0x205be`、
+  `0x117f8 jmp 0x1187a`、`0x205d5 jmp 0x206c3`。不得重用已改變狀態的
+  sandbox 又假設 CONTINUE 仍從同一戰場開始。
+- ch02 variant0 六項 E2 raw RGB MD5：
+  selection0=`8a6a4b03946d1958d3af95fd4bd775c3`；
+  selection1=`60a4791d60b32fd6efc82864afd63525`；
+  selection2=`10017309d3c833c8e323e8739d624f8b`；
+  selection3=`0e1db5b95951230b3c13d1f0309296d2`；
+  selection4=`1577fc5749410221497f512b52a12dbe`；
+  selection5=`e695d6cf391c45ccf4d2cf70096eb9bf`。每個原版幀都能與
+  `FD2_SHOT_TOWN_STATE=selection,pulse` 的某個 production runtime 幀整張
+  320×200 相同；不是只比較 crop 或遮罩。
+- 原版 input trace另外實測 Right `0→4`、Left `4→0`，以及 ch02
+  Shift+F1 (`scan 0x54`) `0→5` 顯示「???」。新增
+  `revealNativeTownSecret` production helper與 regression，預置非零 pulse、
+  lastTick、hasTick後 reveal只改selection5，三個 clock state完全不變。
+- 新 artifact
+  [`town-hub-six-selections-original-vs-remake.png`](../figures/town-hub-six-selections-original-vs-remake.png)
+  上排原版、下排remake，selection0..5由左至右。variant0 steady redraw、
+  normal wrap與hidden reveal E2已閉合；仍待variant1/2及selection5後續
+  Enter→secret shop transition。

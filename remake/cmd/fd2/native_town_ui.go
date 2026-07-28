@@ -77,6 +77,17 @@ func (g *Game) moveNativeTownSelection(delta int) bool {
 	return true
 }
 
+// revealNativeTownSecret changes only the selector. The original 0x2cef7
+// branch writes 5 to 0x5412b and does not touch pulse counter 0x54133.
+func (g *Game) revealNativeTownSecret(scanCode int) bool {
+	if g.camp == nil ||
+		!g.camp.MatchNativeTownSecret(g.campSel, scanCode) {
+		return false
+	}
+	g.campSel = 5
+	return true
+}
+
 func loadNativeTownUIAssets() (*nativeTownUIAssets, error) {
 	fdotherPath := nativeFDOTHERPath()
 	if fdotherPath == "" {

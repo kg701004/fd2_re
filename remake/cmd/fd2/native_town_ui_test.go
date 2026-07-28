@@ -189,3 +189,44 @@ func TestNativeTownShotStateIsStrictAndTownOnly(t *testing.T) {
 		t.Fatal("non-town screenshot state accepted")
 	}
 }
+
+func TestNativeTownSecretRevealPreservesPulseState(t *testing.T) {
+	variant := 0
+	g := &Game{
+		campSel: 0,
+		camp: &campaign.Runner{
+			Cur: "town",
+			C: &campaign.Campaign{
+				Nodes: map[string]*campaign.Node{
+					"town": {
+						Type:              "town",
+						NativeTownVariant: &variant,
+						NativeSecretGate: &campaign.NativeTownSecretGate{
+							Selection: 0,
+							ScanCode:  0x54,
+							To:        "secret",
+						},
+					},
+					"secret": {Type: "shop"},
+				},
+			},
+		},
+		nativeTownUIPulse:    2,
+		nativeTownUILastTick: 456,
+		nativeTownUIHasTick:  true,
+	}
+	if !g.revealNativeTownSecret(0x54) || g.campSel != 5 {
+		t.Fatalf("secret reveal selection=%d", g.campSel)
+	}
+	if g.nativeTownUIPulse != 2 || g.nativeTownUILastTick != 456 ||
+		!g.nativeTownUIHasTick {
+		t.Fatalf(
+			"secret reveal reset pulse: pulse=%d last=%d has=%v",
+			g.nativeTownUIPulse, g.nativeTownUILastTick,
+			g.nativeTownUIHasTick,
+		)
+	}
+	if g.revealNativeTownSecret(0x54) {
+		t.Fatal("hidden selection accepted the normal-selection chord again")
+	}
+}
