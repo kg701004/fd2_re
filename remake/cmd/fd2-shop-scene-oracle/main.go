@@ -22,8 +22,9 @@ import (
 
 func main() {
 	if (len(os.Args) < 5 || len(os.Args) > 8) &&
-		len(os.Args) != 10 && len(os.Args) != 11 && len(os.Args) != 12 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png]]]]]]")
+		len(os.Args) != 10 && len(os.Args) != 11 &&
+		len(os.Args) != 12 && len(os.Args) != 13 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png [purchase-success.png]]]]]]]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -119,7 +120,7 @@ func main() {
 				check(err)
 				writePNG(os.Args[10], full, palette)
 			}
-			if len(os.Args) == 12 {
+			if len(os.Args) >= 12 {
 				itemAssets, err := battle.LoadNativeItemPanelDataAssets(
 					fdotherPath, fdtxtPath,
 				)
@@ -157,6 +158,15 @@ func main() {
 				check(err)
 				writePNG(os.Args[11], equipment, palette)
 			}
+			if len(os.Args) == 13 {
+				animation, final, err := campaign.ComposeNativeShopPurchaseSuccessFrames(
+					purchaseSource, assets, purchasePortraits[0], 0x80, 1,
+				)
+				check(err)
+				writePNGFrames(
+					os.Args[12], append(animation, final), palette,
+				)
+			}
 		}
 	}
 }
@@ -170,6 +180,25 @@ func mustResource(path string, index int) []byte {
 func writePNG(path string, pixels []byte, palette color.Palette) {
 	out := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
 	copy(out.Pix, pixels)
+	file, err := os.Create(path)
+	check(err)
+	check(png.Encode(file, out))
+	check(file.Close())
+}
+
+func writePNGFrames(path string, frames [][]byte, palette color.Palette) {
+	out := image.NewPaletted(image.Rect(0, 0, 320*len(frames), 200), palette)
+	for frameIndex, pixels := range frames {
+		if len(pixels) != 320*200 {
+			check(fmt.Errorf("frame %d has %d pixels", frameIndex, len(pixels)))
+		}
+		for y := 0; y < 200; y++ {
+			copy(
+				out.Pix[y*out.Stride+frameIndex*320:],
+				pixels[y*320:(y+1)*320],
+			)
+		}
+	}
 	file, err := os.Create(path)
 	check(err)
 	check(png.Encode(file, out))

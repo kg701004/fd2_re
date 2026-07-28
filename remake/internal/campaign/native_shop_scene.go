@@ -39,14 +39,15 @@ func nativeFacilityPortraitOffset(portraitID int) int {
 // as the literal transparent pairs consumed by 0x2d669 through 0x4e9e4;
 // every other entry remains raw until its direct caller proves a codec.
 type NativeShopAssets struct {
-	ResourceID   int
-	Background   []byte
-	Decoration   fdother.LMI1Entry
-	RawEntries   [][]byte
-	ServiceCells [4][2]fdother.RawCell
-	PriceCell    fdother.RawCell
-	Panel        fdother.LMI1Entry
-	CompareCells [5]fdother.LMI1Entry
+	ResourceID    int
+	Background    []byte
+	Decoration    fdother.LMI1Entry
+	RawEntries    [][]byte
+	ServiceCells  [4][2]fdother.RawCell
+	PriceCell     fdother.RawCell
+	Panel         fdother.LMI1Entry
+	CompareCells  [5]fdother.LMI1Entry
+	SuccessFrames []fdother.Frame
 }
 
 // DecodeNativeShopAssets accepts exactly the three resources selected by the
@@ -112,15 +113,31 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 			)
 		}
 	}
+	successCount := map[int]int{12: 5, 29: 1, 63: 7}[resourceID]
+	if len(entries) < 23+successCount {
+		return nil, errors.New(
+			"campaign: native shop success animation entries are incomplete",
+		)
+	}
+	successFrames := make([]fdother.Frame, successCount)
+	for i := range successFrames {
+		successFrames[i], err = fdother.ParseSingleFrame(entries[23+i])
+		if err != nil {
+			return nil, fmt.Errorf(
+				"campaign: native shop success frame %d: %w", 23+i, err,
+			)
+		}
+	}
 	return &NativeShopAssets{
-		ResourceID:   resourceID,
-		Background:   background,
-		Decoration:   decoration,
-		RawEntries:   entries,
-		ServiceCells: serviceCells,
-		PriceCell:    priceCell,
-		Panel:        panel,
-		CompareCells: compareCells,
+		ResourceID:    resourceID,
+		Background:    background,
+		Decoration:    decoration,
+		RawEntries:    entries,
+		ServiceCells:  serviceCells,
+		PriceCell:     priceCell,
+		Panel:         panel,
+		CompareCells:  compareCells,
+		SuccessFrames: successFrames,
 	}, nil
 }
 

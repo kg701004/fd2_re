@@ -16,7 +16,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=474`、`[~]=97`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=475`、`[~]=97`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -1345,3 +1345,11 @@
   三列geometry、6-open/5-close均已有strict compositor、真實資源regression
   與indexed fixture。下一gate縮為成功insert→optional equip→`0x2f4c6`
   →debit、production owner與E2。
+- [x] **UI-SHOP-PURCHASE-SUCCESS-E1**：`0x2f4c6`不可沿用church case4
+  當通用動畫。shop variant1/resource12為entries23..27、`(169,45)`、
+  每幀2 ticks後portrait mode0 restore；variant3/resource29為entry23、
+  `(148,39)`、pre1/post8 ticks後restore；variant5/resource63為
+  entries23..29、`(131,28)`、每幀2 ticks且不restore。三條strict plan/
+  compositor與真實資源regression已補，variant1六格contact sheet已存。
+  caller順序固定insert→optional equip/recalc→success→`0x2d516` debit
+  →product loop；下一gate是production timeline owner與E2。

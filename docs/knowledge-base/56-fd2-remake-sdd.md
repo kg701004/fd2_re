@@ -868,8 +868,25 @@ current→candidate fields. The shop-resource offset provenance maps the panel
 and labels to entries 16 and 18..22; six `0x1974c` opening frames and five
 `0x2d31b` closing frames reuse the proven band schedule. Original-resource
 regression and a deterministic indexed fixture cover the stable target.
-Successful insert/equip animation, debit timing, production runtime owner,
-and DOSBox E2 remain open.
+At this point the stable recipient targets are closed; success/debit order,
+production runtime ownership, and DOSBox E2 are handled separately below.
+
+The shared `0x2f4c6` success helper must likewise be split by the caller's
+raw hub variant. Shop variant 1/resource 12 applies entries 23..27 at
+`(169,45)`, waiting two BIOS ticks per frame, then restores portrait mode 0.
+Variant 3/resource 29 waits one tick, applies entry 23 once at `(148,39)`,
+waits eight ticks, then restores the portrait. Variant 5/resource 63 applies
+entries 23..29 at `(131,28)`, two ticks each, with no `0x16559(0)` restore.
+Church variant 4 remains the separate nine-frame/palette case. Strict plans
+and real-resource regressions now cover all three shop branches and reject
+resource/variant mismatches.
+
+The caller order is also explicit: inventory insert occurs first; equipment
+types may ask and apply optional equip/recalculation; only then does
+`0x2f4c6` present success, after which `0x2d516(price)` debits gold and control
+returns to the product loop. Thus neither confirmation nor insertion alone
+authorizes an early debit. Production runtime ownership and DOSBox E2 remain
+open.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

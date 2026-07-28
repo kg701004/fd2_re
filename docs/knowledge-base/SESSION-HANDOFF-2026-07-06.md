@@ -1350,3 +1350,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   geometry與6-open/5-close已有原版資源regression，新增
   `native-shop-purchase-equipment-recipient-indexed.png`。尚待成功
   insert→optional equip→animation→debit與production/E2。
+- 2026-07-28 shop purchase success E1：共享`0x2f4c6`已按hub variant
+  拆開，不能誤用church case4。variant1/#12為5幀`(169,45)`＋portrait
+  restore；variant3/#29為單幀`(148,39)`、pre1/post8 ticks＋restore；
+  variant5/#63為7幀`(131,28)`且無restore。三variant原版資源regression
+  與`native-shop-purchase-success-indexed.png` contact sheet已補。
+  caller順序為insert→optional equip/recalc→success→debit→product loop；
+  production timeline owner與DOSBox E2仍待。

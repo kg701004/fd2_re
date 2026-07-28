@@ -338,6 +338,91 @@ func TestNativeShopEquipmentCandidateStatsReplacesSameCategoryOnly(t *testing.T)
 	}
 }
 
+func TestPlanNativeShopPurchaseSuccessPreservesThreeShopCases(t *testing.T) {
+	tests := []NativeShopPurchaseSuccessPlan{
+		{
+			HubVariant: 1, ResourceID: 12, FrameCount: 5,
+			EffectOffset:           45*320 + 169,
+			PerFrameDelayBIOSTicks: 2, RestorePortraitMode0: true,
+			OptionalEquipBefore: true, DebitAfterPresentation: true,
+			ReturnToProductLoop: true,
+		},
+		{
+			HubVariant: 3, ResourceID: 29, FrameCount: 1,
+			EffectOffset:      39*320 + 148,
+			PreDelayBIOSTicks: 1, PostDelayBIOSTicks: 8,
+			RestorePortraitMode0: true,
+			OptionalEquipBefore:  true, DebitAfterPresentation: true,
+			ReturnToProductLoop: true,
+		},
+		{
+			HubVariant: 5, ResourceID: 63, FrameCount: 7,
+			EffectOffset:           28*320 + 131,
+			PerFrameDelayBIOSTicks: 2,
+			OptionalEquipBefore:    true, DebitAfterPresentation: true,
+			ReturnToProductLoop: true,
+		},
+	}
+	for _, want := range tests {
+		got, err := PlanNativeShopPurchaseSuccess(want.HubVariant)
+		if err != nil || got != want {
+			t.Fatalf("variant%d plan=%+v,%v want %+v", want.HubVariant, got, err, want)
+		}
+	}
+	if _, err := PlanNativeShopPurchaseSuccess(4); err == nil {
+		t.Fatal("church success variant accepted by shop plan")
+	}
+}
+
+func TestNativeShopPurchaseSuccessUsesOriginalVariantResources(t *testing.T) {
+	const base = "../../../org_game/炎龍騎士團/FLAME2"
+	fdotherPath := filepath.Join(base, "FDOTHER.DAT")
+	datoPath := filepath.Join(base, "DATO.DAT")
+	if _, err := os.Stat(fdotherPath); err != nil {
+		t.Skip("player-provided original resources are absent")
+	}
+	tests := []struct {
+		variant, resourceID, portraitID int
+	}{
+		{1, 12, 0x80},
+		{3, 29, 0x82},
+		{5, 63, 0x84},
+	}
+	for _, test := range tests {
+		assets, err := DecodeNativeShopAssets(fdotherPath, test.resourceID)
+		if err != nil {
+			t.Fatalf("variant%d assets: %v", test.variant, err)
+		}
+		portraits, err := dato.DecodeResource(datoPath, test.portraitID)
+		if err != nil {
+			t.Fatalf("variant%d portrait: %v", test.variant, err)
+		}
+		animation, final, err := ComposeNativeShopPurchaseSuccessFrames(
+			assets.Background, assets, portraits[0],
+			test.portraitID, test.variant,
+		)
+		if err != nil {
+			t.Fatalf("variant%d success: %v", test.variant, err)
+		}
+		changed := false
+		for _, frame := range animation {
+			if string(frame) != string(assets.Background) {
+				changed = true
+				break
+			}
+		}
+		if len(animation) != len(assets.SuccessFrames) ||
+			len(final) != NativeShopWidth*NativeShopHeight ||
+			!changed {
+			t.Fatalf(
+				"variant%d frames=%d final=%d changed=%v assets=%dx%d",
+				test.variant, len(animation), len(final),
+				changed, assets.SuccessFrames[0].Width, assets.SuccessFrames[0].Height,
+			)
+		}
+	}
+}
+
 func TestNativeShopPurchaseTextTablesPreserveSixVariants(t *testing.T) {
 	want := [4][6]int{
 		{1, 502, 1, 439, 1, 439},
