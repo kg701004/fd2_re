@@ -839,6 +839,38 @@ cover both states. Recipient selection, recipient-full feedback, successful
 insert/equip animation, debit timing, opening/closing, and production shop
 integration remain fail-closed.
 
+Recipient selection has two distinct native owners and must not be normalized
+into one roster widget. After the gold check, item type `>=0x20` sets the
+native party count and enters `0x2e6b8`, the proven two-column/six-visible
+roster. Item type `<0x20` instead passes the compatibility-filtered byte list
+to `0x2e8cf→0x2ebe0`, a three-visible equipment comparison panel. The remake
+now has a strict consumable-recipient compositor that accepts only
+`itemType>=0x20`; attempting to draw equipment recipients through it fails
+closed. Its deterministic fixture uses the shop's own entry 16 panel,
+FDICON map sprites, FDTXT identity names, and the recovered selected text
+color.
+
+If the selected recipient has exactly eight occupied native cells,
+`0x2f36d` expands `word_5265f[hubVariant] =
+{1,506,1,506,506,506}` with `unit[+7]+1`, opens the dialogue, waits in mode
+one, and closes back to the product loop without inserting or debiting.
+The purchase-specific compositor now preserves that variant/name ABI and has
+an original-resource fixture.
+
+The `<0x20` comparison renderer is now also executable. `0x2efb7` starts from
+raw base AP `+0x37`, DP `+0x39`, and shared DX `+0x3e`, adds candidate item
+words `+1/+5/+3/+7`, then retains equipped contributions only from the
+opposite `type<=0x14` category. `0x2ebe0` compares those four results with
+derived AP/DP/HIT/EV `+0x48/+0x4a/+0x4c/+0x4e`; `0x2ef8f` selects raw digit
+bank 31/42/119 for equal/increase/decrease. Three rows are visible at
+`y=117+26r`, with FDICON, selected FDTXT name, and four
+current→candidate fields. The shop-resource offset provenance maps the panel
+and labels to entries 16 and 18..22; six `0x1974c` opening frames and five
+`0x2d31b` closing frames reuse the proven band schedule. Original-resource
+regression and a deterministic indexed fixture cover the stable target.
+Successful insert/equip animation, debit timing, production runtime owner,
+and DOSBox E2 remain open.
+
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,
 then selector `0/1/2` maps to `0x2ffa5/0x30012/0x301f4`; selector `3` first

@@ -457,3 +457,12 @@ replacement，以及`0x2f8ea`的source→destination writer，才足以把四項
 本輪把 insufficient-gold API 從 generic fresh overlay 移出，要求傳入已開啟
 的 confirmation 才能追加；這種 fail-closed contract 比共用一個方便的
 message renderer 更能防止後續 remake 悄悄偏離原版 lifecycle。
+
+### 同名操作不一定共用 widget
+
+購買後的「選收件者」依 item type 分成兩個 owner。消耗品走兩欄六人
+roster；裝備先過 compatibility，再用三列 AP/DP/HIT/EV 現值→候選值面板。
+只看兩者都回傳 actor index，會錯把裝備比較資訊刪掉。實作因此先讓
+consumable compositor 拒絕 equipment type，再獨立閉合
+`0x2e8cf→0x2ebe0/0x2efb7`。這是資料 discriminator 應進入 renderer API、
+不能只留在上層選單文字的實例。

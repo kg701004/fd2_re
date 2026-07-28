@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
@@ -14,13 +15,15 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
 func main() {
-	if len(os.Args) < 5 || len(os.Args) > 8 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png]]]")
+	if (len(os.Args) < 5 || len(os.Args) > 8) &&
+		len(os.Args) != 10 && len(os.Args) != 11 && len(os.Args) != 12 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png]]]]]]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -85,12 +88,75 @@ func main() {
 		)
 		check(err)
 		writePNG(os.Args[6], confirmation, palette)
-		if len(os.Args) == 8 {
+		if len(os.Args) >= 8 {
 			insufficient, err := campaign.ComposeNativeShopPurchaseInsufficientGold(
 				confirmation, strings, font, 1,
 			)
 			check(err)
 			writePNG(os.Args[7], insufficient, palette)
+		}
+		if len(os.Args) >= 10 {
+			units, err := fdicon.DecodeFile(os.Args[8])
+			check(err)
+			rows := make([]campaign.NativeRosterRow, 6)
+			for identity := range rows {
+				sprite, err := units.SpriteFor(identity, 0, 0)
+				check(err)
+				rows[identity] = campaign.NativeRosterRow{
+					Sprite: sprite, NameTextIndex: identity + 1,
+				}
+			}
+			recipient, err := campaign.ComposeNativeShopConsumableRecipientFrame(
+				purchaseSource, assets, rows, 0, 0x20, strings, font,
+			)
+			check(err)
+			writePNG(os.Args[9], recipient, palette)
+			if len(os.Args) >= 11 {
+				full, err := campaign.ComposeNativeShopPurchaseRecipientFull(
+					purchaseSource, dialogue, purchasePortraits[0], 0x80,
+					strings, font, 1, 1,
+				)
+				check(err)
+				writePNG(os.Args[10], full, palette)
+			}
+			if len(os.Args) == 12 {
+				itemAssets, err := battle.LoadNativeItemPanelDataAssets(
+					fdotherPath, fdtxtPath,
+				)
+				check(err)
+				effectRows, err := battle.LoadNativeItemEffectRowPrefix(
+					"assets/data/native_item_effect_rows.json",
+				)
+				check(err)
+				equipmentRows := make([]campaign.NativeShopEquipmentRecipientRow, 3)
+				for identity := range equipmentRows {
+					record := make([]byte, 0x50)
+					record[7], record[8] = byte(identity), byte(identity)
+					binary.LittleEndian.PutUint16(record[0x37:], uint16(40+identity))
+					binary.LittleEndian.PutUint16(record[0x39:], uint16(30+identity))
+					binary.LittleEndian.PutUint16(record[0x3e:], uint16(20+identity))
+					for stat, offset := range []int{0x48, 0x4a, 0x4c, 0x4e} {
+						binary.LittleEndian.PutUint16(
+							record[offset:], uint16(50+stat+identity),
+						)
+					}
+					candidate, err := campaign.NativeShopEquipmentCandidateStats(
+						record, 0, effectRows,
+					)
+					check(err)
+					current, err := campaign.NativeShopEquipmentCurrentStats(record)
+					check(err)
+					equipmentRows[identity] = campaign.NativeShopEquipmentRecipientRow{
+						Sprite: rows[identity].Sprite, NameTextIndex: identity + 1,
+						Current: current, Candidate: candidate,
+					}
+				}
+				equipment, err := campaign.ComposeNativeShopEquipmentRecipientFrame(
+					purchaseSource, assets, itemAssets, equipmentRows, 0,
+				)
+				check(err)
+				writePNG(os.Args[11], equipment, palette)
+			}
 		}
 	}
 }

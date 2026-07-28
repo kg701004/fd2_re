@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay、商店 stable scene 與部分戰鬥演出已有原資源 indexed runtime／fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原仍僅 **35–40%**；town、shop service/商品 lifecycle、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
 
-Worklist 目前是 **472 個 `[x]`、97 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **474 個 `[x]`、97 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -170,6 +170,9 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源 indexed 購買商品 child panel（`0x2e0bd→0x2dc55(mode0)`；item0–5／full-price fixture，非 DOSBox 截圖） | ![native indexed shop purchase list](docs/figures/native-shop-purchase-list-indexed.png) |
 | 原版資源 indexed 購買確認（`0x2f0b0→0x1956b→0x19953`；動態商品名／50元、Yes/No selected-pulse fixture，非 DOSBox 截圖） | ![native indexed shop purchase confirmation](docs/figures/native-shop-purchase-confirm-indexed.png) |
 | 原版資源 indexed 金額不足回饋（保留上述確認框，於 literal VGA `0xac44c`／`(12,157)` 追加第三行；非 DOSBox 截圖） | ![native indexed shop purchase insufficient](docs/figures/native-shop-purchase-insufficient-indexed.png) |
+| 原版資源 indexed 消耗品收件者（type≥`0x20` 的 `0x2e6b8` 兩欄六人名冊；非裝備比較面板、非 DOSBox 截圖） | ![native indexed shop purchase recipient](docs/figures/native-shop-purchase-recipient-indexed.png) |
+| 原版資源 indexed 收件者滿欄回饋（`word_5265f`＋FFFC 動態姓名；非 DOSBox 截圖） | ![native indexed shop recipient full](docs/figures/native-shop-purchase-recipient-full-indexed.png) |
+| 原版資源 indexed 裝備收件者比較（type<`0x20` 的 `0x2e8cf→0x2ebe0/0x2efb7`；三列 AP/DP/HIT/EV 現值→候選值，非 DOSBox 截圖） | ![native indexed shop equipment recipient](docs/figures/native-shop-purchase-equipment-recipient-indexed.png) |
 | 最新 campaign church（source rebuild, 2026-07-27） | ![church current](docs/figures/church-current-remake.png) |
 | ch01 原版戰場 HUD（原版錄影 434.5 秒；camera/cursor 與下列 remake 對齊） | ![original map HUD](docs/figures/native-map-ch01-original-video.png) |
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |

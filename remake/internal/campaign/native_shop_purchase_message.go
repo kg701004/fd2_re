@@ -29,6 +29,10 @@ var nativeShopPurchaseText = [4][6]int{
 	{1, 507, 1, 507, 1, 507},
 }
 
+// This is word_5265f, also consumed by the transfer caller. Purchase selects
+// it only after the chosen recipient's exact eight native slots are full.
+var nativeShopRecipientFullText = [6]int{1, 506, 1, 506, 506, 506}
+
 func NativeShopPurchaseTextIndex(
 	message NativeShopPurchaseMessage,
 	hubVariant int,
@@ -134,6 +138,42 @@ func ComposeNativeShopPurchaseInsufficientGold(
 	}
 	return ComposeNativeChurchTextAt(
 		confirmation, strings, font, textIndex, 157*NativeShopWidth+12,
+	)
+}
+
+// ComposeNativeShopPurchaseRecipientFull reproduces the 0x2f36d branch:
+// rebuild the facility dialogue overlay, expand FFFC with unit[+7]+1, wait in
+// mode one, then close back to the purchase product loop. This compositor
+// returns the stable open-message target; wait/close remain caller-owned.
+func ComposeNativeShopPurchaseRecipientFull(
+	source []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	portraitID int,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	hubVariant, recipientNameTextIndex int,
+) ([]byte, error) {
+	if len(source) != NativeShopWidth*NativeShopHeight ||
+		len(dialogueCells) <= 17 || strings == nil || font == nil ||
+		hubVariant < 0 || hubVariant >= len(nativeShopRecipientFullText) ||
+		recipientNameTextIndex < 0 {
+		return nil, errors.New(
+			"campaign: native shop recipient-full state is invalid",
+		)
+	}
+	frame, err := ComposeNativeChurchDialogueOverlayAt(
+		source, dialogueCells, portrait,
+		nativeFacilityPortraitOffset(portraitID),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ComposeNativeChurchTextWithNameAt(
+		frame, strings, font,
+		nativeShopRecipientFullText[hubVariant],
+		recipientNameTextIndex,
+		NativeShopTextOffset,
 	)
 }
 

@@ -1,12 +1,14 @@
 package campaign
 
 import (
+	"encoding/binary"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
@@ -218,6 +220,121 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 		strings, font, NativeShopPurchaseInsufficientGold, 1, 0, 50,
 	); err == nil {
 		t.Fatal("insufficient-gold feedback accepted a fresh dialogue source")
+	}
+	fdicons, err := fdicon.DecodeFile(filepath.Join(base, "FDICON.B24"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := make([]NativeRosterRow, 6)
+	for identity := range rows {
+		sprite, err := fdicons.SpriteFor(identity, 0, 0)
+		if err != nil {
+			t.Fatalf("recipient sprite %d: %v", identity, err)
+		}
+		rows[identity] = NativeRosterRow{
+			Sprite: sprite, NameTextIndex: identity + 1,
+		}
+	}
+	recipient, err := ComposeNativeShopConsumableRecipientFrame(
+		purchaseSource, assets, rows, 0, 0x20, strings, font,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(recipient) == string(purchaseSource) {
+		t.Fatal("consumable recipient list did not change the source frame")
+	}
+	if _, err := ComposeNativeShopConsumableRecipientFrame(
+		purchaseSource, assets, rows, 0, 0x1f, strings, font,
+	); err == nil {
+		t.Fatal("equipment recipient accepted the consumable roster renderer")
+	}
+	full, err := ComposeNativeShopPurchaseRecipientFull(
+		purchaseSource, dialogue, purchasePortraits[0], 0x80,
+		strings, font, 1, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(full) == string(purchaseSource) {
+		t.Fatal("recipient-full feedback did not change the source frame")
+	}
+	equipmentRows := make([]NativeShopEquipmentRecipientRow, 3)
+	for identity := range equipmentRows {
+		record := make([]byte, 0x50)
+		record[7], record[8] = byte(identity), byte(identity)
+		binary.LittleEndian.PutUint16(record[0x37:], uint16(40+identity))
+		binary.LittleEndian.PutUint16(record[0x39:], uint16(30+identity))
+		binary.LittleEndian.PutUint16(record[0x3e:], uint16(20+identity))
+		for stat, offset := range []int{0x48, 0x4a, 0x4c, 0x4e} {
+			binary.LittleEndian.PutUint16(record[offset:], uint16(50+stat+identity))
+		}
+		candidate, err := NativeShopEquipmentCandidateStats(
+			record, 0, effectRows,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		current, err := NativeShopEquipmentCurrentStats(record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		equipmentRows[identity] = NativeShopEquipmentRecipientRow{
+			Sprite: rows[identity].Sprite, NameTextIndex: identity + 1,
+			Current: current, Candidate: candidate,
+		}
+	}
+	equipment, err := ComposeNativeShopEquipmentRecipientFrame(
+		purchaseSource, assets, itemAssets, equipmentRows, 0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(equipment) == string(purchaseSource) {
+		t.Fatal("equipment recipient comparison did not change the source frame")
+	}
+	opening, err := NativeClassListOpeningFrames(purchaseSource, equipment)
+	if err != nil || len(opening) != 6 {
+		t.Fatalf("equipment recipient opening=%d,%v", len(opening), err)
+	}
+	closing, err := NativeClassListClosingFrames(purchaseSource, equipment)
+	if err != nil || len(closing) != 5 {
+		t.Fatalf("equipment recipient closing=%d,%v", len(closing), err)
+	}
+}
+
+func TestNativeShopEquipmentCandidateStatsReplacesSameCategoryOnly(t *testing.T) {
+	rows := make([]byte, 3*battle.NativeItemEffectRowSize)
+	// New weapon: AP/HIT/DP/EV = 10/20/30/40.
+	rows[0] = 0x10
+	for offset, value := range map[int]int16{1: 10, 3: 20, 5: 30, 7: 40} {
+		binary.LittleEndian.PutUint16(rows[offset:], uint16(value))
+	}
+	// Equipped weapon must be replaced and excluded.
+	weapon := rows[battle.NativeItemEffectRowSize:]
+	weapon[0] = 0x11
+	for _, offset := range []int{1, 3, 5, 7} {
+		binary.LittleEndian.PutUint16(weapon[offset:], 100)
+	}
+	// Equipped armor is the opposite category and remains included.
+	armor := rows[2*battle.NativeItemEffectRowSize:]
+	armor[0] = 0x15
+	for _, offset := range []int{1, 3, 5, 7} {
+		binary.LittleEndian.PutUint16(armor[offset:], 5)
+	}
+	record := make([]byte, 0x50)
+	binary.LittleEndian.PutUint16(record[0x37:], 1)
+	binary.LittleEndian.PutUint16(record[0x39:], 2)
+	binary.LittleEndian.PutUint16(record[0x3e:], 3)
+	record[0x0a], record[0x0b] = 0x40, 1
+	record[0x0c], record[0x0d] = 0x40, 2
+	got, err := NativeShopEquipmentCandidateStats(record, 0, rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := [4]int{16, 37, 28, 48}
+	if got != want {
+		t.Fatalf("candidate=%v want %v", got, want)
 	}
 }
 

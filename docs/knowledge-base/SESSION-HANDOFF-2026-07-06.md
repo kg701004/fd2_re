@@ -1334,3 +1334,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `native-shop-purchase-insufficient-indexed.png`、真實資源regression。
   下一個精確gate是recipient selector／full-inventory feedback與
   optional-equip→success→debit lifecycle，尚未接production owner。
+- 2026-07-28 purchase recipient E1：`0x2f30a`證實type≥`0x20`才走
+  `0x2e6b8`兩欄六人；type<`0x20`走filtered `0x2e8cf→0x2ebe0`三列
+  AP/DP/HIT/EV比較，故新增consumable-only compositor並拒絕裝備type。
+  `0x2f36d`滿欄分支以`word_5265f`與`unit[+7]+1`展開動態姓名、mode1
+  wait後回商品loop，無insert/debit。新增
+  `native-shop-purchase-recipient-indexed.png`與
+  `native-shop-purchase-recipient-full-indexed.png`。裝備比較面板與
+  success/equip/debit/production lifecycle仍待。
+- 2026-07-28 equipment recipient E1：`0x2e8cf/0x2ebe0/0x2ef8f/
+  0x2efb7`已完成strict實作。type<`0x20`顯示三列compatible actors；
+  `0x2efb7`依raw base AP/DP/DX、candidate item及另一裝備類別計算
+  AP/DP/HIT/EV，對current derived words用digit banks31/42/119表示
+  equal/increase/decrease。shop entries16/18..22、FDICON/FDTXT、三列
+  geometry與6-open/5-close已有原版資源regression，新增
+  `native-shop-purchase-equipment-recipient-indexed.png`。尚待成功
+  insert→optional equip→animation→debit與production/E2。

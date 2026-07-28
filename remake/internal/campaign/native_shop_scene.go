@@ -46,6 +46,7 @@ type NativeShopAssets struct {
 	ServiceCells [4][2]fdother.RawCell
 	PriceCell    fdother.RawCell
 	Panel        fdother.LMI1Entry
+	CompareCells [5]fdother.LMI1Entry
 }
 
 // DecodeNativeShopAssets accepts exactly the three resources selected by the
@@ -64,7 +65,7 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 	if err != nil {
 		return nil, fmt.Errorf("campaign: native shop resource directory: %w", err)
 	}
-	if len(entries) < 11 {
+	if len(entries) < 23 {
 		return nil, errors.New("campaign: native shop resource directory is incomplete")
 	}
 	backgroundFrame, err := fdother.ParseSingleFrame(entries[0])
@@ -100,6 +101,17 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 	if err != nil {
 		return nil, fmt.Errorf("campaign: native shop panel cell 16: %w", err)
 	}
+	var compareCells [5]fdother.LMI1Entry
+	for i := range compareCells {
+		entryIndex := 18 + i
+		compareCells[i], err = fdother.ParseOpaqueRunCell(entries[entryIndex])
+		if err != nil {
+			return nil, fmt.Errorf(
+				"campaign: native shop comparison cell %d: %w",
+				entryIndex, err,
+			)
+		}
+	}
 	return &NativeShopAssets{
 		ResourceID:   resourceID,
 		Background:   background,
@@ -108,6 +120,7 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 		ServiceCells: serviceCells,
 		PriceCell:    priceCell,
 		Panel:        panel,
+		CompareCells: compareCells,
 	}, nil
 }
 

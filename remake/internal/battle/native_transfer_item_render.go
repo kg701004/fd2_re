@@ -17,6 +17,24 @@ const (
 	NativeFacilityThreeQuarterPrice
 )
 
+// RenderNativeFacilityNumber exposes the already recovered 0x187d6 digit
+// primitive to facility scene owners. color is the native frame-bank base
+// (31 equal, 42 increased, 119 decreased in the equipment comparison caller).
+func RenderNativeFacilityNumber(
+	assets NativeItemPanelDataAssets,
+	dst []byte,
+	x, y, value, colorBase, width int,
+) error {
+	if len(dst) != nativeItemPanelBytes || width <= 0 {
+		return errors.New("battle: native facility number state is invalid")
+	}
+	return blitNativeItemPanelNumber(
+		assets.Frames, dst,
+		NativeItemPanelPoint{X: x, Y: y},
+		value, colorBase, width,
+	)
+}
+
 // RenderNativeTransferItemRows reproduces 0x2dc55 mode 1, used by 0x2f8ea.
 // itemIDs is the caller's compact list of raw item bytes and start is the
 // stateful even viewport origin owned by 0x2df6b.

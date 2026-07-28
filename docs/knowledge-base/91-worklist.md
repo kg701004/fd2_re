@@ -16,7 +16,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=472`、`[~]=97`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=474`、`[~]=97`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -1330,3 +1330,18 @@
   generic fresh-message API對此狀態fail-closed。真實FDOTHER/FDTXT/DATO
   regression與兩張indexed fixtures已補。下一步仍是recipient selector、
   inventory-full、optional-equip/success/debit lifecycle與production owner。
+- [x] **UI-SHOP-CONSUMABLE-RECIPIENT-E1**：`0x2f30a`分流已釘死：
+  item type≥`0x20`走`0x2e6b8`兩欄六人名冊；type<`0x20`走相容性篩選後
+  的`0x2e8cf→0x2ebe0`三列能力比較面板。新增strict consumable wrapper，
+  裝備type誤用即fail-closed；真實shop entry16、FDICON與FDTXT regression/
+  fixture已補。八格滿分支另保存`word_5265f={1,506,1,506,506,506}`、
+  `unit[+7]+1`動態姓名與mode1 wait，未插入也未扣金。下一gate是裝備比較
+  renderer、success/equip/debit與production lifecycle。
+- [x] **UI-SHOP-EQUIPMENT-RECIPIENT-E1**：完整`0x2e8cf/0x2ebe0/
+  0x2ef8f/0x2efb7`閉合type<`0x20`的filtered三列面板。candidate以raw
+  base AP/DP/DX＋item `+1/+5/+3/+7`，只保留另一`type<=0x14`類別的
+  已裝備貢獻；對derived AP/DP/HIT/EV選digit bank31/42/119
+  （equal/increase/decrease）。shop entries16/18..22、FDICON、FDTXT姓名、
+  三列geometry、6-open/5-close均已有strict compositor、真實資源regression
+  與indexed fixture。下一gate縮為成功insert→optional equip→`0x2f4c6`
+  →debit、production owner與E2。
