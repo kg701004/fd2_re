@@ -513,6 +513,25 @@ roster；真正 child 是 `0x1bffe`，它先由 `0x17e0b` 保存目前商店 VGA
 收件者、金錢 writer或成功對話。相容 item 由 `0x1c1c3` 判斷，成功才走
 `0x1c142→0x1b750` 並在同一 panel 原地重畫；不相容只回 selector。
 
+### Fixture 通過不代表 raw projection 足以做 E2（2026-07-28）
+
+裝備收件者 indexed fixture 曾讓三列面板看似完成，但真正DOSBox對照立刻暴露
+兩種不同錯誤。第一，direct shop node沒有persistent party；若硬塞三個姓名，
+只會掩蓋JOIN chronology與raw inventory/class來源。新的screenshot bridge只從
+compile通過且同時帶`PartyScenario+PartyOrder`的LOADCH binding建立typed
+projection；順序來自該binding所記錄的`PartyOrder`，hook本身不重新證明JOIN
+來源位址。這只是screenshot bridge，不代表正常campaign persistence或
+native FD2.SAV載入；缺任一必要provenance即拒絕。
+
+第二，scenario只保存derived HIT/EV卻漏了`0x2efb7`真正讀的DX projection
+`+0x3e`，fixture仍能用零值產生「合理」數字。ch01的2/2/1/2是以可見
+HIT/EV和已知equipment rows交叉約束出的projection，不是獨立raw dump。
+加入明確DX projection後，E2又抓出HIT/EV欄位相對
+AP/DP右移3px及arrow Y anchor錯誤。最後以FDICON idle cycle1對齊原版，
+整幀AE才從數千降為0。經驗是：renderer fixture、typed party provenance、
+global animation phase與DOSBox同狀態像素缺一不可；任何單項綠燈都不能宣稱
+操作界面已還原。
+
 這輪的工程教訓是把共享範圍切在「資料 mutation／原版 panel primitive」，
 而不是切在玩家語彙。購買後可選擇裝備與城鎮獨立裝備都會改 equipped flag，
 所以可共用 strict mutation；但兩者的 scene owner、input、framebuffer restore

@@ -136,13 +136,14 @@ func ComposeNativeShopEquipmentRecipientFrame(
 			return nil, fmt.Errorf("campaign: equipment recipient row %d name: %w", i, err)
 		}
 		positions := [4]struct {
-			cell  int
-			x, dy int
+			cell                                     int
+			x, dy                                    int
+			currentOffset, arrowOffset, resultOffset int
 		}{
-			{0, 122, 3},
-			{1, 122, 12},
-			{2, 196, 3},
-			{3, 196, 12},
+			{0, 122, 3, 15, 35, 43},
+			{1, 122, 12, 15, 35, 43},
+			{2, 196, 3, 18, 38, 46},
+			{3, 196, 12, 18, 38, 46},
 		}
 		for stat, position := range positions {
 			if err := shop.CompareCells[position.cell].BlitOpaqueAt(
@@ -154,23 +155,20 @@ func ComposeNativeShopEquipmentRecipientFrame(
 				row.Current[stat], row.Candidate[stat],
 			)
 			if err := battle.RenderNativeFacilityNumber(
-				itemAssets, frame, position.x+15, y+position.dy,
+				itemAssets, frame, position.x+position.currentOffset, y+position.dy,
 				row.Current[stat], colorBase, 3,
 			); err != nil {
 				return nil, err
 			}
-			arrowX := position.x + 35
-			arrowY := y + position.dy - 3
-			if position.dy == 12 {
-				arrowY++
-			}
+			arrowX := position.x + position.arrowOffset
+			arrowY := y + position.dy + 1
 			if err := shop.CompareCells[4].BlitOpaqueAt(
 				frame, NativeShopWidth, arrowX, arrowY, false,
 			); err != nil {
 				return nil, err
 			}
 			if err := battle.RenderNativeFacilityNumber(
-				itemAssets, frame, position.x+43, y+position.dy,
+				itemAssets, frame, position.x+position.resultOffset, y+position.dy,
 				row.Candidate[stat], colorBase, 3,
 			); err != nil {
 				return nil, err

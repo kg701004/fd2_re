@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、ch02 town variant0、ch02三種商店主選單與武器購買清單、教會多個服務、action/command/item overlay；另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town variant1/2、preparation、loadslots、ending與商店其餘child panels的DOSBox E2仍未閉合，不能稱原版視覺 parity |
 
-Worklist 目前是 **489 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **490 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -156,8 +156,11 @@ phase目前也都與原版全幀相同；shop剩餘主缺口已轉為四項servi
 `3→2`，四張穩定幀均與 production runtime 全畫面逐像素相同。其後 Enter
 開啟的「布衣50元／要不要啊？」Yes/No確認框也已閉合：原版 Right選No、
 Left回Yes，兩個可見selected pulse均與production全幀AE=0。gold0 選Yes後的
-「錢不夠！」與等待標記也已達production全幀AE=0。收件者、無合格收件者、
-購買成功／滿欄，以及 sell/equip/transfer 仍待同狀態 E2。
+「錢不夠！」與等待標記也已達production全幀AE=0。gold1000 的裝備收件者
+selection0／idle cycle1（索爾、悠妮、亞雷斯三列能力比較）亦已全幀AE=0；
+remake幀使用screenshot-only LOADCH typed-party bootstrap，並非正常campaign
+persistence或native FD2.SAV載入；這也不包含游標input／scroll。無合格收件者、購買成功／滿欄，以及
+sell/equip/transfer 仍待同狀態 E2。
 town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
@@ -208,6 +211,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 武器購買清單四個游標位置（上原版 DOSBox、下remake；順序0／1／3／2，每格320×200全幀AE=0） | ![shop purchase selections original and remake](docs/figures/shop-purchase-ch02-selections-original-vs-remake.png) |
 | ch02 武器購買 Yes／No 確認（上原版 DOSBox、下remake；左Yes、右No的可見selected pulse，兩格全幀AE=0） | ![shop purchase confirmation original and remake](docs/figures/shop-purchase-confirm-ch02-original-vs-remake.png) |
 | ch02 武器購買金額不足（左原版 DOSBox、右remake；gold0，整幀AE=0） | ![shop purchase insufficient original and remake](docs/figures/shop-purchase-insufficient-ch02-original-vs-remake.png) |
+| ch02 布衣裝備收件者（左原版 DOSBox、右remake；screenshot-only typed-party bootstrap，selection0／idle cycle1，整幀AE=0） | ![shop equipment recipient original and remake](docs/figures/shop-equipment-recipient-ch02-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |

@@ -107,6 +107,27 @@ func parseNativeShopInsufficientShotState(
 	return good, gold, true
 }
 
+func parseNativeShopEquipmentRecipientShotState(
+	spec string,
+) (good, selection, start, cycle, gold int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 5 {
+		return 0, 0, 0, 0, 0, false
+	}
+	values := make([]int, len(parts))
+	for i, part := range parts {
+		value, err := strconv.Atoi(part)
+		if err != nil || value < 0 {
+			return 0, 0, 0, 0, 0, false
+		}
+		values[i] = value
+	}
+	if values[3] > 2 || values[4] > 99999999 {
+		return 0, 0, 0, 0, 0, false
+	}
+	return values[0], values[1], values[2], values[3], values[4], true
+}
+
 // setNativeShopShotState is a screenshot-only oracle hook. It may select a
 // stable service-menu frame after setupNativeShop has claimed a proven native
 // shop node. Gold is an explicit visible-state input for the one captured
@@ -257,6 +278,66 @@ func (g *Game) setNativeShopInsufficientShotState(good, gold int) bool {
 		g.nativeShopUIJob = oldJob
 	}
 	return ok
+}
+
+// setNativeShopEquipmentRecipientShotState exposes only a recipient state
+// admitted from an already materialized persistent party. The companion
+// screenshot bootstrap may derive that party from a compiled LOADCH binding,
+// but this adapter never invents names, classes, order, or stats.
+func (g *Game) setNativeShopEquipmentRecipientShotState(
+	good, selection, start, cycle, gold int,
+) bool {
+	if good < 0 || selection < 0 || start < 0 || cycle < 0 || cycle > 2 ||
+		gold < 0 || gold > 99999999 ||
+		g.camp == nil || g.nativeShopUI == nil ||
+		g.nativeClassUI == nil || g.nativeShopMode != "menu" {
+		return false
+	}
+	goods := g.camp.ShopGoods()
+	if good >= len(goods) || gold < goods[good].Price {
+		return false
+	}
+	oldMode, oldShopSel, oldRecipientSel, oldRecipientStart, oldRecipientCycle,
+		oldGold, oldJob :=
+		g.nativeShopMode, g.shopSel, g.shopRecipientSel,
+		g.nativeShopRecipientStart, g.nativeShopRecipientCycle,
+		g.gold, g.nativeShopUIJob
+	oldRecipients := append([]int(nil), g.shopRecipients...)
+	rollback := func() {
+		g.nativeShopMode = oldMode
+		g.shopSel = oldShopSel
+		g.shopRecipientSel = oldRecipientSel
+		g.nativeShopRecipientStart = oldRecipientStart
+		g.nativeShopRecipientCycle = oldRecipientCycle
+		g.gold = oldGold
+		g.nativeShopUIJob = oldJob
+		g.shopRecipients = oldRecipients
+	}
+
+	g.nativeShopUIJob = nil
+	g.shopSel = good
+	g.gold = gold
+	if !g.setupNativeShopRecipients() ||
+		g.nativeShopMode != "recipient_equipment" ||
+		selection >= len(g.shopRecipients) {
+		rollback()
+		return false
+	}
+	normalizedStart, visible := campaign.NativeThreeRowWindow(
+		len(g.shopRecipients), selection, start,
+	)
+	if visible == 0 || normalizedStart != start {
+		rollback()
+		return false
+	}
+	g.shopRecipientSel = selection
+	g.nativeShopRecipientStart = start
+	g.nativeShopRecipientCycle = cycle
+	if _, ok := g.composeNativeShopEquipmentRecipient(); !ok {
+		rollback()
+		return false
+	}
+	return true
 }
 
 func loadNativeShopUIAssets(

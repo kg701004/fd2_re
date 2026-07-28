@@ -52,6 +52,7 @@ type PartyMember struct {
 	MP                int   `json:"mp"`
 	AP                int   `json:"ap"`
 	DP                int   `json:"dp"`
+	DX                int   `json:"dx"`   // projected into +0x3e; direct-raw provenance must be stated separately
 	HIT               int   `json:"hit"`  // 命中(doc32:DX+起始武器HIT增值,對照orig_07_unit_status.png逐位驗證)
 	EV                int   `json:"ev"`   // 閃避(doc32:DX+起始防具EV增值;起始4件防具EV增值皆為0)
 	CritPct           int   `json:"crit"` // 暴擊率(resist_crit.json 依角色職業)
@@ -318,7 +319,7 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 		inventory, equipped, runtimeSlots := materializeInventory(pm.InventorySlots, pm.Inventory)
 		u := &Unit{
 			Camp: Own, Name: pm.Name, ClsName: pm.Cls, Lv: pm.Lv,
-			HP: pm.HP, MaxHP: pm.HP, MP: pm.MP, MaxMP: pm.MP, AP: pm.AP, DP: pm.DP, MV: pm.MV,
+			HP: pm.HP, MaxHP: pm.HP, MP: pm.MP, MaxMP: pm.MP, AP: pm.AP, DP: pm.DP, DX: pm.DX, MV: pm.MV,
 			HIT: pm.HIT, EV: pm.EV, CritPct: pm.CritPct,
 			AtkMin: pm.AtkMin, AtkMax: pm.AtkMax,
 			Portrait: pm.Portrait, Fig: pm.Fig,

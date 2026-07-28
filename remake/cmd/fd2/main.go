@@ -196,6 +196,7 @@ type Game struct {
 	nativeShopItemStart      int
 	nativeShopConfirmSel     int
 	nativeShopRecipientStart int
+	nativeShopRecipientCycle int
 	nativeShopEquipSel       int
 	nativeShopPendingUnit    battle.Unit
 	nativeShopHasPendingUnit bool
@@ -4745,6 +4746,19 @@ func (g *Game) Update() error {
 					)
 				}
 			}
+			if spec := os.Getenv("FD2_SHOT_SHOP_EQUIPMENT_RECIPIENT_STATE"); spec != "" {
+				good, selection, start, cycle, gold, ok :=
+					parseNativeShopEquipmentRecipientShotState(spec)
+				if !ok ||
+					!g.setNativeShopEquipmentRecipientShotState(
+						good, selection, start, cycle, gold,
+					) {
+					return fmt.Errorf(
+						"FD2_SHOT_SHOP_EQUIPMENT_RECIPIENT_STATE expects good,selection,start,cycle,gold on an admitted native equipment recipient party: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]
@@ -6763,6 +6777,11 @@ func loadGame() *Game {
 							}
 						}
 					}
+				}
+			}
+			if binding := os.Getenv("FD2_SHOT_PARTY_BINDING"); binding != "" {
+				if err := g.materializeShotPartyFromBinding(binding); err != nil {
+					g.loadErr = "shot party binding: " + err.Error()
 				}
 			}
 			if n := os.Getenv("FD2_CAMP_NODE"); n != "" { // 驗證鉤子:直接跳指定節點

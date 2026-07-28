@@ -150,8 +150,9 @@ type Unit struct {
 	ParalyzeTurns int
 
 	// ---- 經驗值/升級(doc02 §4.5/§4.6;doc03 0x43;實作見 growth.go)----
-	DX int // 速度(doc03 0x46;影響 HIT/EV 的原始欄位,但 remake 尚無 DX→HIT/EV 合成公式
-	// (doc42:HIT/EV 現為 export_units.py 固定近似值),故 DX 目前只累加成長值供未來接線,
+	DX int // typed +0x3e projection；0x1145a/0x2efb7 以它為 HIT/EV 的共用 base；不等同直接 raw dump。
+	// FDFIELD export 的 generic enemy HIT/EV 仍可能是近似值；evidence-backed
+	// player scenarios必須顯式保存DX，shop preview/class growth不可由derived值猜回。
 	// 尚未實際影響命中/閃避。
 	Exp float64 // 目前經驗值(滿 100 升級,doc03 0x43「EX 經驗」);用 float64 累加,避免
 	// 攻擊/法術公式算出的小數經驗(如 40/施法者等級)逐次相加時被提早捨去。

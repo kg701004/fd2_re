@@ -1704,3 +1704,30 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   畫面，但目前screenshot啟動路徑沒有同一份production persistent party raw
   projection。不得硬編姓名或以fixture冒充runtime；recipient/no-recipient/
   full/success仍是下一批E2 gate。
+
+## 2026-07-28 ch02 equipment-recipient stable E2 closure
+
+- 真正阻塞不是renderer入口，而是`FD2_CAMP_NODE=shop_ch02_weapon`只進node、
+  不建立`partyRoster/partyJoinOrder`。新增screenshot-only
+  `FD2_SHOT_PARTY_BINDING`：只接受compile無issue且唯一LOADCH同時提供
+  `PartyScenario+PartyOrder`，依該binding記錄的order materialize scenario；
+  hook本身不重新證明JOIN來源位址。這只是screenshot bootstrap，不代表正常
+  campaign persistence或native FD2.SAV載入。
+  初始化equipment base，逐員要求identity/selector/race/class/byte6/raw八格
+  inventory與base provenance。姓名、職業、順序均不在code硬編。
+- 新增
+  `FD2_SHOT_SHOP_EQUIPMENT_RECIPIENT_STATE=good,selection,start,cycle,gold`；
+  只接受可負擔的真實equipment good、正規三列window、cycle0..2與完整final
+  compositor，失敗原子回復。這是bounded screenshot adapter，正常input不讀。
+- 第一張production已讓「索爾、悠妮、亞雷斯」順序正確，但E2抓出候選HIT/EV
+  少DX projection。`PartyMember`現顯式保存`dx`，ch01四人值2/2/1/2由
+  visible derived HIT/EV與已知equipment rows交叉約束；不是獨立raw
+  `+0x3e` dump，也不再用零值補projection。
+- 像素diff另固定原版geometry：AP/DP current/arrow/result offsets為
+  `+15/+35/+43`，HIT/EV為`+18/+38/+46`，所有arrow Y=`row+dy+1`。
+  高頻DOSBox樣本證實FDICON idle cycle1時，good0/selection0/start0/gold1000
+  原版與production raw RGB MD5皆
+  `28258fb3ce5bc42eb1c701a7792d193b`，整幀AE=0。新增
+  [`shop-equipment-recipient-ch02-original-vs-remake.png`](../figures/shop-equipment-recipient-ch02-original-vs-remake.png)。
+- 這只關閉stable selection0/cycle1，不證明recipient方向鍵／scroll、
+  native FD2.SAV相容、no-recipient/full/success或交易debit。

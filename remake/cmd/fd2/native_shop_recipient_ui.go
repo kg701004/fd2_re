@@ -83,7 +83,7 @@ func (g *Game) composeNativeShopConsumableRecipient() ([]byte, bool) {
 			return nil, false
 		}
 		sprite, err := g.nativeClassUI.units.SpriteFor(
-			unit.MapSelectorKey, 0, 0,
+			unit.MapSelectorKey, 0, g.nativeShopRecipientCycle,
 		)
 		if err != nil {
 			return nil, false
@@ -124,7 +124,7 @@ func (g *Game) composeNativeShopEquipmentRecipient() ([]byte, bool) {
 			return nil, false
 		}
 		sprite, err := g.nativeClassUI.units.SpriteFor(
-			unit.MapSelectorKey, 0, 0,
+			unit.MapSelectorKey, 0, g.nativeShopRecipientCycle,
 		)
 		if err != nil {
 			return nil, false
