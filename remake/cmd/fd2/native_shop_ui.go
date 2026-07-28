@@ -41,6 +41,28 @@ func parseNativeShopShotState(spec string) (service, pulse, gold int, ok bool) {
 	return service, pulse, gold, true
 }
 
+func parseNativeShopPurchaseShotState(
+	spec string,
+) (selection, start, gold int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 3 {
+		return 0, 0, 0, false
+	}
+	selection, err := strconv.Atoi(parts[0])
+	if err != nil || selection < 0 {
+		return 0, 0, 0, false
+	}
+	start, err = strconv.Atoi(parts[1])
+	if err != nil || start < 0 || start%2 != 0 {
+		return 0, 0, 0, false
+	}
+	gold, err = strconv.Atoi(parts[2])
+	if err != nil || gold < 0 || gold > 99999999 {
+		return 0, 0, 0, false
+	}
+	return selection, start, gold, true
+}
+
 // setNativeShopShotState is a screenshot-only oracle hook. It may select a
 // stable service-menu frame after setupNativeShop has claimed a proven native
 // shop node. Gold is an explicit visible-state input for the one captured
@@ -68,6 +90,44 @@ func (g *Game) setNativeShopShotState(service, pulse, gold int) bool {
 	g.nativeShopServiceSel = service
 	g.resetNativeShopUIPulse()
 	g.nativeShopUIPulse = pulse
+	g.gold = gold
+	return true
+}
+
+// setNativeShopPurchaseShotState is the stable purchase-panel counterpart to
+// setNativeShopShotState. It accepts the native raw selection/window state
+// only after the production shop owner has claimed the editable node.
+func (g *Game) setNativeShopPurchaseShotState(
+	selection, start, gold int,
+) bool {
+	if selection < 0 || start < 0 || start%2 != 0 ||
+		gold < 0 || gold > 99999999 ||
+		g.camp == nil || g.nativeShopUI == nil ||
+		g.nativeShopMode != "menu" {
+		return false
+	}
+	n := g.camp.Node()
+	if n == nil || n.Type != "shop" ||
+		n.NativeHubVariant != g.nativeShopVariant {
+		return false
+	}
+	if _, ok := g.nativeShopUI.shops[n.NativeHubVariant]; !ok {
+		return false
+	}
+	if _, ok := g.nativeShopUI.portraits[n.NativeHubVariant]; !ok {
+		return false
+	}
+	goods := g.camp.ShopGoods()
+	nextStart, visible := campaign.NativeTwoColumnWindow(
+		len(goods), selection, start,
+	)
+	if visible == 0 || nextStart != start {
+		return false
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "purchase"
+	g.shopSel = selection
+	g.nativeShopItemStart = start
 	g.gold = gold
 	return true
 }

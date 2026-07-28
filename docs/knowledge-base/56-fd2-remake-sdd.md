@@ -926,9 +926,26 @@ selected-phase raw RGB MD5 pairs are variant1
 `e5654e8ed03d1e4fd30b2c76106bb7a1`. The
 [`three-variant sheet`](../figures/shop-variants-1-3-5-original-vs-remake.png)
 places original DOSBox above remake. This closes the ch02 stable service-menu
-variant/background/portrait/text/layout gate; purchase, sell, equip and
-transfer child panels still require their own DOSBox state traces and cannot
-inherit E2 from the parent menu.
+variant/background/portrait/text/layout gate; child panels cannot inherit E2
+from the parent menu.
+
+The first child-panel trace now closes the ch02 weapon purchase-list steady
+state and navigation. A strict screenshot-only
+`FD2_SHOT_SHOP_PURCHASE_STATE=selection,start,gold` adapter admits only a
+production-claimed native purchase mode with a valid goods selection and a
+normalized even two-column window start; mismatched mode, variant, resource,
+selection or window fails closed. Original input reaches selections
+`0→1→3→2` by Right, Down and Left. After excluding the entry transient and
+portrait animation, all four original 320×200 stable frames have absolute
+pixel error zero against production. Their raw RGB MD5 values are
+`1589cee3c068936f0beb6058cfd63991`,
+`7480dbb0284b033b4e9ad8c8c7a8b78e`,
+`3c0a2c935260b8ca80432b25b3600111`, and
+`48d6182e261ebce574b08c4778b8a072` for selections 0, 1, 3, and 2.
+The [`purchase-list sheet`](../figures/shop-purchase-ch02-selections-original-vs-remake.png)
+places original above remake. This evidence covers only list steady rendering
+and cursor input; confirmation, recipient selection, result feedback, sell,
+equip, and transfer still require their own same-state DOSBox traces.
 
 Standalone equip has a separate scene contract from the optional equip prompt
 inside purchase. `0x2f883` calls `0x2e6b8` for the two-column party roster,

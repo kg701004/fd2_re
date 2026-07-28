@@ -538,6 +538,84 @@ func TestNativeShopShotStateIsStrictAndStableMenuOnly(t *testing.T) {
 	}
 }
 
+func TestNativeShopPurchaseShotStateIsStrictAndWindowBound(t *testing.T) {
+	for _, tc := range []struct {
+		spec      string
+		selection int
+		start     int
+		gold      int
+		ok        bool
+	}{
+		{spec: "0,0,0", selection: 0, start: 0, gold: 0, ok: true},
+		{spec: "7,2,99999999", selection: 7, start: 2, gold: 99999999, ok: true},
+		{spec: "-1,0,0"},
+		{spec: "0,-1,0"},
+		{spec: "0,1,0"},
+		{spec: "0,0,-1"},
+		{spec: "0,0,100000000"},
+		{spec: "0,0"},
+		{spec: "0,0,0,0"},
+		{spec: "x,0,0"},
+	} {
+		selection, start, gold, ok :=
+			parseNativeShopPurchaseShotState(tc.spec)
+		if ok != tc.ok || selection != tc.selection ||
+			start != tc.start || gold != tc.gold {
+			t.Fatalf(
+				"parseNativeShopPurchaseShotState(%q)=(%d,%d,%d,%v), want (%d,%d,%d,%v)",
+				tc.spec, selection, start, gold, ok,
+				tc.selection, tc.start, tc.gold, tc.ok,
+			)
+		}
+	}
+
+	c := &campaign.Campaign{
+		Start: "shop",
+		Nodes: map[string]*campaign.Node{
+			"shop": {
+				Type: "shop", NativeHubVariant: 1,
+				Goods: []campaign.Good{
+					{ID: 0x80}, {ID: 0x81}, {ID: 0x84}, {ID: 0xa5},
+				},
+			},
+		},
+	}
+	g := &Game{
+		camp: campaign.NewRunner(c),
+		nativeShopUI: &nativeShopUIAssets{
+			shops:     map[int]*campaign.NativeShopAssets{1: {}},
+			portraits: map[int]dato.Frame{1: {}},
+		},
+		nativeShopVariant: 1,
+		nativeShopMode:    "menu",
+		nativeShopUIJob:   &nativeClassUIJob{},
+	}
+	if !g.setNativeShopPurchaseShotState(2, 0, 456) {
+		t.Fatal("native purchase screenshot state rejected")
+	}
+	if g.nativeShopMode != "purchase" || g.shopSel != 2 ||
+		g.nativeShopItemStart != 0 || g.gold != 456 ||
+		g.nativeShopUIJob != nil {
+		t.Fatalf(
+			"purchase shot state=(mode %q selection %d start %d gold %d job %v)",
+			g.nativeShopMode, g.shopSel, g.nativeShopItemStart, g.gold,
+			g.nativeShopUIJob != nil,
+		)
+	}
+
+	g.nativeShopMode = "menu"
+	if g.setNativeShopPurchaseShotState(4, 0, 0) {
+		t.Fatal("out-of-range purchase selection accepted")
+	}
+	if g.setNativeShopPurchaseShotState(0, 2, 0) {
+		t.Fatal("non-normalized purchase window accepted")
+	}
+	g.nativeShopVariant = 3
+	if g.setNativeShopPurchaseShotState(0, 0, 0) {
+		t.Fatal("mismatched purchase shop variant accepted")
+	}
+}
+
 func TestNativeShopProductionOwnerFailsClosedForCustomVariant(t *testing.T) {
 	g := &Game{
 		camp: campaign.NewRunner(&campaign.Campaign{

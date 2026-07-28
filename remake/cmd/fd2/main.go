@@ -4710,6 +4710,17 @@ func (g *Game) Update() error {
 					)
 				}
 			}
+			if spec := os.Getenv("FD2_SHOT_SHOP_PURCHASE_STATE"); spec != "" {
+				selection, start, gold, ok :=
+					parseNativeShopPurchaseShotState(spec)
+				if !ok ||
+					!g.setNativeShopPurchaseShotState(selection, start, gold) {
+					return fmt.Errorf(
+						"FD2_SHOT_SHOP_PURCHASE_STATE expects selection,start-even,gold on a claimed native shop with a stable valid item window: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]

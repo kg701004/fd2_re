@@ -1621,3 +1621,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   stable service-menu的background、portrait、text、gold、icon layout與selected
   pulse gate已閉合；不能把此證據推廣成purchase/sell/equip/transfer child
   panel E2。下一個 precise gate 是service0 Enter後的purchase list。
+
+## 2026-07-28 ch02 weapon purchase-list E2 closure
+
+- 新增 screenshot-only
+  `FD2_SHOT_SHOP_PURCHASE_STATE=selection,start,gold`。它只接受目前已由
+  production claim 的 native shop menu，且goods selection合法、window start
+  為正規化偶數值；variant/resource/mode/window任一不一致即fail closed。正常
+  campaign/input不讀此hook。
+- 原版ch02 weapon variant1由service0 Enter進購買清單，四筆可見商品為
+  布衣50／旅行裝500／皮甲300／法師袍750，與editable campaign goods一致。
+  實送Right `0→1`、Down `1→3`、Left `3→2`，證實兩欄input mapping。
+- 最初短等待的original/remake比較只差screen `(175,90)/(176,90)` 兩像素；
+  延長取樣後先出現portrait animation差異，再進入持續全幀相同的stable state。
+  因此不能把opening/lifecycle transient當成steady renderer誤差。四個stable
+  raw RGB MD5為selection0
+  `1589cee3c068936f0beb6058cfd63991`、selection1
+  `7480dbb0284b033b4e9ad8c8c7a8b78e`、selection2
+  `48d6182e261ebce574b08c4778b8a072`、selection3
+  `3c0a2c935260b8ca80432b25b3600111`；每一對320×200 AE=0。
+- 新圖
+  [`shop-purchase-ch02-selections-original-vs-remake.png`](../figures/shop-purchase-ch02-selections-original-vs-remake.png)
+  上排原版、下排remake，順序0/1/3/2。這只關閉purchase list steady/input；
+  purchase confirm、recipient、success/failure與其他三個service仍須E2。
