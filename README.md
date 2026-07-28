@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、ch02 town variant0、ch02三種商店主選單與武器購買清單、教會多個服務、action/command/item overlay；另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town variant1/2、preparation、loadslots、ending與商店其餘child panels的DOSBox E2仍未閉合，不能稱原版視覺 parity |
 
-Worklist 目前是 **490 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **491 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -161,6 +161,11 @@ selection0／idle cycle1（索爾、悠妮、亞雷斯三列能力比較）亦�
 remake幀使用screenshot-only LOADCH typed-party bootstrap，並非正常campaign
 persistence或native FD2.SAV載入；這也不包含游標input／scroll。無合格收件者、購買成功／滿欄，以及
 sell/equip/transfer 仍待同狀態 E2。
+正常campaign另已修正JOIN→LOADCH的首次typed roster bootstrap：只有已有JOIN
+membership/order時才補尚不存在的persistent record，direct/debug LOADCH不會
+憑空建立隊伍；ch00真實scenario可把`[0,9,4,30]`送入ch02裝備收件者候選
+`[0,9,4]`。這是remake自有runtime regression，仍不是native FD2.SAV或完整
+campaign playthrough E2。
 town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
@@ -402,7 +407,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 
 - 地圖／游標／相機、flood-fill 移動、地形成本、基本戰鬥與部分 AI；
 - 可編輯對話／事件節點、部分 chapter pre/post handler、敗北／retreat 路線；
-- 商店／祕密商店、persistent party/save、preparation 與 church/class-change 的可操作切片；
+- 商店／祕密商店、remake 自有 JSON persistent party/save、preparation 與 church/class-change 的可操作切片；
 - 原版 input evidence 對應的 command overlay、對話文字與數張原版比對畫面。
 
 仍未達原版等價的主要範圍：

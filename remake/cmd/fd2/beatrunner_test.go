@@ -1053,6 +1053,82 @@ func TestApplyLoadCHDirectReplayUsesBindingPartyOrder(t *testing.T) {
 			t.Fatalf("direct LOADCH slot %d = fig%d at (%d,%d), want fig%d at (%d,%d)", slot, u.Fig, u.X, u.Y, want.id, want.x, want.y)
 		}
 	}
+	if len(g.partyRoster) != 0 {
+		t.Fatalf("direct LOADCH replay invented persistent party: %#v", g.partyRoster)
+	}
+}
+
+func TestApplyLoadCHSeedsJoinedPersistentPartyBeforeFirstBattleSync(t *testing.T) {
+	stats, err := campaign.LoadItemStats(assetPath("assets/data/item.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{
+		partyMembers: map[int]bool{
+			0: true, 9: true, 4: true, 30: true,
+		},
+		partyJoinOrder: []int{0, 9, 4, 30},
+		shopItemStats:  stats,
+	}
+	err = g.applyLoadCH(&campaign.LoadCHState{
+		Chapter:       0,
+		Map:           "assets/maps/map0",
+		Roster:        "assets/maps/map0/map0_units.json",
+		SlotCount:     30,
+		Script:        "assets/story/ch01.json",
+		PartyScenario: "assets/scenarios/ch01.json",
+		PartyOrder:    []int{0, 9, 4, 30},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(g.partyRoster) != 4 {
+		t.Fatalf("joined LOADCH roster=%#v, want four persistent records", g.partyRoster)
+	}
+	for _, id := range g.partyJoinOrder {
+		unit, ok := g.partyRoster[id]
+		if !ok || unit.Fig != id || !unit.HasNativeIdentity ||
+			len(unit.InventorySlots) != 8 ||
+			len(unit.NativeInventoryFlags) != 8 ||
+			!unit.EquipmentBaseSet {
+			t.Fatalf("joined LOADCH record %d lacks typed provenance: %#v", id, unit)
+		}
+	}
+	full, err := campaign.Load(assetPath("assets/scenarios/campaign_full.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.camp = campaign.NewRunner(full)
+	g.camp.Cur = "shop_ch02_weapon"
+	g.shopItemTypes, g.shopEquipTypes, err = campaign.LoadShopEligibility(
+		assetPath("assets/data/item.json"),
+		assetPath("assets/data/class_equip_types.json"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !g.setupNativeShopRecipients() ||
+		g.nativeShopMode != "recipient_equipment" ||
+		!reflect.DeepEqual(g.shopRecipients, []int{0, 9, 4}) {
+		t.Fatalf(
+			"normal campaign LOADCH roster did not reach equipment recipients: mode=%q ids=%v",
+			g.nativeShopMode, g.shopRecipients,
+		)
+	}
+
+	// The first post-battle sync must now find the persistent native identity
+	// instead of skipping every freshly joined player record.
+	sol := g.partyRoster[0]
+	current := cloneNativeShopUnit(sol)
+	current.HP, current.MaxHP, current.MP, current.MaxMP = 3, 40, 1, 8
+	current.OnField = true
+	g.st = &battle.State{Units: []*battle.Unit{&current}}
+	if err := g.syncPartyFromBattle(); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.partyRoster[0]; got.HP != 40 || got.MP != 8 {
+		t.Fatalf("first native-identity sync did not update seeded record: %#v", got)
+	}
 }
 
 func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testing.T) {

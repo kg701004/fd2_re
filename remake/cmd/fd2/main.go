@@ -1585,6 +1585,17 @@ func (g *Game) applyLoadCH(state *campaign.LoadCHState) error {
 			return fmt.Errorf("party scenario %q: %w", state.PartyScenario, err)
 		}
 		party = scenario.PartyUnits(roster.OwnDeploy)
+		// Native JOIN has already created persistent records before a normal
+		// campaign reaches this LOADCH. The remake JOIN beat records membership
+		// and chronology, so seed only records that are still absent from the
+		// typed roster. Direct/debug LOADCH replay has no JOIN history and must
+		// not silently manufacture persistent campaign state.
+		if len(g.partyJoinOrder) != 0 {
+			g.initializeEquipmentBases(&battle.State{Units: party})
+			if err := g.seedPersistentPartyFromLoadCH(partyOrder, party); err != nil {
+				return fmt.Errorf("party scenario %q persistence: %w", state.PartyScenario, err)
+			}
+		}
 		if len(g.partyRoster) != 0 {
 			g.applyPersistentParty(&battle.State{Units: party})
 		}
@@ -2099,6 +2110,39 @@ func (g *Game) initializeEquipmentBases(st *battle.State) {
 			campaign.InitializeEquipmentBase(u, g.shopItemStats)
 		}
 	}
+}
+
+// seedPersistentPartyFromLoadCH materializes the remake counterpart of the
+// persistent records already created by preceding native JOIN calls. Existing
+// records always win, preserving battle/shop/class-change progress. This is a
+// normal-campaign bridge, not FD2.SAV byte compatibility.
+func (g *Game) seedPersistentPartyFromLoadCH(
+	order []int,
+	units []*battle.Unit,
+) error {
+	if len(order) == 0 || len(units) != len(order) {
+		return fmt.Errorf(
+			"LOADCH party/order length mismatch: units=%d order=%d",
+			len(units), len(order),
+		)
+	}
+	if g.partyRoster == nil {
+		g.partyRoster = make(map[int]battle.Unit, len(order))
+	}
+	for i, id := range order {
+		unit := units[i]
+		if unit == nil || unit.Fig != id || !g.partyMembers[id] {
+			return fmt.Errorf(
+				"LOADCH party slot %d does not match joined identity %d",
+				i, id,
+			)
+		}
+		if _, exists := g.partyRoster[id]; exists {
+			continue
+		}
+		g.partyRoster[id] = cloneNativeShopUnit(*unit)
+	}
+	return nil
 }
 
 func applyPersistentStats(dst, src *battle.Unit) {

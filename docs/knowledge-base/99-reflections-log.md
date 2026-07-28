@@ -532,6 +532,17 @@ AP/DP右移3px及arrow Y anchor錯誤。最後以FDICON idle cycle1對齊原版�
 global animation phase與DOSBox同狀態像素缺一不可；任何單項綠燈都不能宣稱
 操作界面已還原。
 
+### JOIN chronology 不是 persistent record 本身（2026-07-28）
+
+recipient E2的screenshot bootstrap也暴露正常campaign的另一層缺口：JOIN beat
+只保存membership/order，而首次LOADCH只建cutscene/battle unit；之後
+`sync_party`遇到native identity時卻只接受既有typed roster match，因此可能
+把開局全隊skip。修正位置應在JOIN後的LOADCH record materialization，而不是
+放寬`sync_party`接受未知identity，也不是把screenshot hook接進production。
+新bridge只補缺少record、永不覆蓋既有進度，且direct/debug replay不建立
+persistence。這個案例說明：已證實的順序、typed record生命週期、以及畫面E2
+是三個不同證據層；文件若把其中一個寫成另外兩個，會直接導致錯誤引擎設計。
+
 這輪的工程教訓是把共享範圍切在「資料 mutation／原版 panel primitive」，
 而不是切在玩家語彙。購買後可選擇裝備與城鎮獨立裝備都會改 equipped flag，
 所以可共用 strict mutation；但兩者的 scene owner、input、framebuffer restore

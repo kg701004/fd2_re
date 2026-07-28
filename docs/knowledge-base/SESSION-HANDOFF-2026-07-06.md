@@ -1731,3 +1731,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`shop-equipment-recipient-ch02-original-vs-remake.png`](../figures/shop-equipment-recipient-ch02-original-vs-remake.png)。
 - 這只關閉stable selection0/cycle1，不證明recipient方向鍵／scroll、
   native FD2.SAV相容、no-recipient/full/success或交易debit。
+
+## 2026-07-28 normal campaign JOIN→LOADCH persistent-party bootstrap
+
+- recipient調查抓出正常流程斷鏈：JOIN只建立`partyMembers/partyJoinOrder`，
+  首次LOADCH未建立`partyRoster`；而帶native identity的`syncPartyFromBattle`
+  只匹配既有typed record，故開局成員可能全部被skip。
+- `applyLoadCH`現於已有JOIN chronology時，從同一typed party scenario只補
+  缺少的persistent records；既有battle/shop/class-change進度不覆蓋。
+  direct/debug LOADCH沒有JOIN history時維持無persistent state，未把
+  screenshot bootstrap偷接進production。
+- regression以ch00真實scenario/order `[0,9,4,30]`驗證raw inventory、
+  selector、identity與equipment base均保留，ch02布衣equipment recipients
+  為`[0,9,4]`，首次native-identity sync亦能命中既有record。
+- 這是remake typed runtime lifecycle修正，不證明native FD2.SAV相容或完整
+  title→ch00→battle→postbattle→town→shop input/E2 playthrough。

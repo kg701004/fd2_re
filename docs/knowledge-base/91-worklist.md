@@ -10,7 +10,8 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；town indexed production接線後，完整操作界面視覺還原估計40–45%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [~] **UI-VIS-TOWN**：`0x2cd16/0x2cf71/0x11eb0`已閉合3個FDOTHER背景variant、#10 label、FDTXT `0x1ef+selection`、FDICON `0,1,2,1` pulse、6組variant座標與312×192→VGA `(4,4)`；23個town保存raw `native_town_variant`。ch02 variant0 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都達原版／remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape返回selection5亦有input E2；共用 glyph shadow 與誤 reset pulse 已修。尚缺variant1/2。
-- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection、Yes/No、gold0不足金及gold1000裝備收件者selection0/cycle1也已全幀AE=0。下一gate是recipient input/scroll、no-recipient/full/success、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
+- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection、Yes/No、gold0不足金及gold1000裝備收件者selection0/cycle1也已全幀AE=0（後者E2僅screenshot-only typed-party bootstrap，不代表完整campaign/save trace）。下一gate是recipient input/scroll、no-recipient/full/success、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
+- [x] **CAMPAIGN-JOIN-LOADCH-PERSISTENT-PARTY-BOOTSTRAP**：修正正常ch00 JOIN只記`partyMembers/partyJoinOrder`、首次LOADCH未建`partyRoster`，導致帶native identity的第一個`sync_party`因找不到既有record而全數skip。`applyLoadCH`現只在已有JOIN chronology時依typed scenario補缺少record，既有進度優先，direct/debug replay不造persistent state。真實ch00 scenario/order `[0,9,4,30]` regression驗證ch02布衣候選為`[0,9,4]`且首次native-identity sync可命中；這是remake runtime bridge，不宣稱native FD2.SAV或完整campaign E2。
 - [x] **UI-SHOP-STANDALONE-EQUIP-PRODUCTION**：Docker Capstone重讀`0x2f883/0x1bffe/0x17e0b/0x1b9de`，撤回「獨立裝備沿用purchase商品／收件者widget」的假設。production現走service2→兩欄角色roster→11→0完整item/status panel；相容item經`0x1c1c3→0x1c142→0x1b750`原地更新flags/能力並重畫，incompatible無發明feedback，離開0→11 restore shop再回roster。`EquipNativeCompactSlot`驗證raw occupied order與compact inventory/equipped一致，保留ignored raw hole/stale byte，divergence原子拒絕。Docker/Xvfb production regression通過；DOSBox E2仍待。
 - [x] **UI-SHOP-TRANSFER-PRODUCTION**：`0x2f8ea`同時由shop service3與church raw1呼叫，不是任一場景專屬。shop production已接FDTXT512 source prompt→全party roster→FDTXT511 empty或`0x2dc55(mode1)` item list→FDTXT510→全party destination roster→FDTXT506 full或raw remove/append/recalc→512 loop。重核撤回「destination排除source」的高階假設：source本人保留為候選，未滿欄時self-transfer會把item以unequipped狀態移到尾端。`ValidateNativeInventoryProjection`與full raw-flag gate原子拒絕投影分歧；Docker/Xvfb production、empty/full/self regression通過。
 - [x] **RE/UI-TOWN-SECRET-GATE**：Docker Capstone閉合`0x2cd16→0x4e4b9`與`0x2cde0..0x2cef7`：每章0x1f-byte town record `+1`必須等於目前五項selection，`+2`必須等於BIOS Shift/Ctrl/Alt-F1..F10 scan，才把selection寫5。新證據撤回「chord立即進店」：hub先重畫selection5 icon/label，後續Enter才由`0x2d093→0x2d28c`進variant5 shop。23筆已資料化為editable `native_secret_gate`並接runtime；modified F2/F3/F5/F9不再誤觸remake全域shortcut。撤回`found_secret_*`永久顯示第六項等同原版的斷言；ch02 E2已由後續項目閉合，其餘town仍待逐章驗收。
@@ -20,7 +21,7 @@
 
 ## 文件狀態入口（更新至 2026-07-28）
 
-目前統計：`[x]=490`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
+目前統計：`[x]=491`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
