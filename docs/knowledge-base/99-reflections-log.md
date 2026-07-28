@@ -502,3 +502,24 @@ roster；裝備先過 compatibility，再用三列 AP/DP/HIT/EV 現值→候選�
 consumable compositor 拒絕 equipment type，再獨立閉合
 `0x2e8cf→0x2ebe0/0x2efb7`。這是資料 discriminator 應進入 renderer API、
 不能只留在上層選單文字的實例。
+
+### 入口叫「裝備」，不代表它是商店商品面板
+
+重讀 `0x2f883` 後，原先最自然的實作方向被推翻。這個入口只負責角色
+roster；真正 child 是 `0x1bffe`，它先由 `0x17e0b` 保存目前商店 VGA，
+再開啟戰場物品指令也共用的完整 item/status panel。它沒有商品價格、購買
+收件者、金錢 writer或成功對話。相容 item 由 `0x1c1c3` 判斷，成功才走
+`0x1c142→0x1b750` 並在同一 panel 原地重畫；不相容只回 selector。
+
+這輪的工程教訓是把共享範圍切在「資料 mutation／原版 panel primitive」，
+而不是切在玩家語彙。購買後可選擇裝備與城鎮獨立裝備都會改 equipped flag，
+所以可共用 strict mutation；但兩者的 scene owner、input、framebuffer restore
+與 feedback 完全不同。若只看最後副作用，會做出操作可用但畫面資訊架構錯誤
+的重製。
+
+另一個容易被高階模型遮蔽的缺口是 slot index。`0x1b9de` 顯示的是跳過
+raw ignored cells 後的 compact order，`0x1c142` 最終仍寫 raw cell；remake
+的 `EquipItem` 卻接受 compact ordinal。因此 production adapter 必須先證明
+raw occupied order、`Inventory`與`Equipped`三者一致，並保留 ignored cell
+可能存在的 stale item byte。這個 gate 比「item ID 看起來相同」更重要，
+因為 duplicate ID與internal hole都會讓錯誤 index 靜默裝到另一格。

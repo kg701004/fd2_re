@@ -91,6 +91,59 @@ func TestSellNativeSlotCompactsRawCellsAndCreditsAfterValidation(t *testing.T) {
 	}
 }
 
+func TestEquipNativeCompactSlotPreservesRawHoleMapping(t *testing.T) {
+	u := battle.Unit{
+		AP: 16, DP: 12, HIT: 97, EV: 2, MV: 4,
+		BaseAP: 6, BaseDP: 4, BaseHIT: 2, BaseEV: 2, BaseMV: 4,
+		EquipmentBaseSet: true,
+		Inventory:        []int{0, 1, 132},
+		Equipped:         []bool{true, false, true},
+		InventorySlots:   []int{0, 0x77, 1, 132, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{
+			0x40, 0x80, 0, 0x40, 0x80, 0x80, 0x80, 0x80,
+		},
+	}
+	stats := map[int]ItemStats{
+		0:   {Type: 1, AP: 10, HIT: 95},
+		1:   {Type: 1, AP: 20, HIT: 95},
+		132: {Type: 22, DP: 8},
+	}
+	if err := EquipNativeCompactSlot(&u, 1, stats); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(u.Equipped, []bool{false, true, true}) ||
+		!reflect.DeepEqual(
+			u.NativeInventoryFlags,
+			[]int{0, 0x80, 0x40, 0x40, 0x80, 0x80, 0x80, 0x80},
+		) ||
+		u.AP != 26 || u.DP != 12 {
+		t.Fatalf(
+			"native equip = equipped %#v flags %#v AP/DP %d/%d",
+			u.Equipped, u.NativeInventoryFlags, u.AP, u.DP,
+		)
+	}
+}
+
+func TestEquipNativeCompactSlotRejectsDivergentProjectionAtomically(t *testing.T) {
+	u := battle.Unit{
+		Inventory:            []int{0, 1},
+		Equipped:             []bool{true, false},
+		InventorySlots:       []int{0, 2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+	}
+	before := u
+	before.Inventory = append([]int(nil), u.Inventory...)
+	before.Equipped = append([]bool(nil), u.Equipped...)
+	before.InventorySlots = append([]int(nil), u.InventorySlots...)
+	before.NativeInventoryFlags = append([]int(nil), u.NativeInventoryFlags...)
+	if err := EquipNativeCompactSlot(&u, 1, map[int]ItemStats{1: {Type: 1}}); err == nil {
+		t.Fatal("divergent raw/compact projection was accepted")
+	}
+	if !reflect.DeepEqual(u, before) {
+		t.Fatalf("failed native equip mutated unit: %#v", u)
+	}
+}
+
 func TestLoadItemPricesFromRuntimeBundle(t *testing.T) {
 	prices, err := LoadItemPrices("../../assets/data/item.json")
 	if err != nil {

@@ -199,6 +199,8 @@ type Game struct {
 	nativeShopSellItemTop    int
 	nativeShopSellConfirmSel int
 	nativeShopSellItemIDs    []int
+	nativeShopEquipRosterTop int
+	nativeShopEquipUnitSel   int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -1901,6 +1903,9 @@ func (g *Game) enterNode() {
 		g.nativeShopMode = ""
 		g.nativeShopServiceSel = 0
 		g.nativeShopItemStart = 0
+		g.nativeShopEquipRosterTop = 0
+		g.nativeShopEquipUnitSel = 0
+		g.clearNativeItemPanel()
 		g.setupNativeShop()
 	case "ending":
 		g.dialog, g.st, g.sel = nil, nil, nil

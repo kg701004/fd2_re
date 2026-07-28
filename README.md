@@ -11,7 +11,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay；商店 purchase與sell均已有完整indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **45–50%**；town、商店equip/transfer、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
+| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay；商店 purchase、sell與獨立equip均已有indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **45–50%**；town、商店transfer、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
 
 Worklist 目前是 **475 個 `[x]`、97 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
@@ -158,7 +158,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 戰鬥演出比對 | ![battle restore](docs/figures/battle_restore.gif) |
 | action overlay | ![native action overlay](docs/figures/action-overlay-native-remake.png) |
 | action overlay 4-open / 4-close | ![native action overlay lifecycle](docs/figures/action-overlay-open-close-remake.png) |
-| 原版 indexed item panel（`0x17eef+0x17fc0+0x184c0`；Ebiten adapter oracle） | ![native item panel](docs/figures/item-panel-native-indexed.png) |
+| 原版 indexed item/status panel（`0x17eef+0x17fc0+0x184c0`；現亦由商店獨立equip production owner使用） | ![native item panel](docs/figures/item-panel-native-indexed.png) |
 | 原版 indexed status command/MP overlay（`0x17aed→0x1ceed`；原版資源 fixture，非 DOSBox 截圖） | ![native status command overlay](docs/figures/native-status-command-indexed.png) |
 | 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；原版資源 fixture，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | 原版 indexed 目的物品欄滿提示（`0x2f8ea`／FDTXT506＋FFFC 動態姓名；非 DOSBox 截圖） | ![native transfer full message](docs/figures/native-transfer-full-indexed.png) |

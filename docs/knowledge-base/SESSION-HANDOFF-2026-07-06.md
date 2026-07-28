@@ -1405,3 +1405,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   selected pulse。production regression會確認原版節點被native owner接管、
   custom節點不被誤接。尚未接confirmation→recipient→success→debit，
   其他三個service也仍fail-closed；不得把本切片描述成完整可交易商店。
+
+## 2026-07-28 standalone shop equip production closure
+
+- Docker Capstone重新閉合`0x2f883→0x1bffe`：service2不是purchase item
+  list或裝備收件者面板。`0x2f883`只以`0x2e6b8`選角色並關閉roster；
+  `0x1bffe`透過`0x17e0b`保存當前shop VGA、以11→0開完整
+  `0x17eef+0x184c0` item/status panel，循環`0x1b9de(actor,0)`。
+- Enter後`0x1c1c3`不相容直接回selector且沒有feedback owner；相容才走
+  `0x1c142` same-ID-category equip、`0x1b750`重算並原地重畫panel。Escape
+  或空inventory確認才以0→11關閉並restore shop，再回角色roster。
+- production已接service2→equip roster→native item panel→strict mutation→
+  in-place redraw→restore lifecycle。`EquipNativeCompactSlot`先證明raw
+  occupied cells與compact Inventory/Equipped同序，保留ignored raw hole與
+  stale item byte；不一致時原子fail-closed。
+- `TestNativeShopProductionOwner*`已用玩家原版FDOTHER/FDTXT/DATO與Docker/
+  Xvfb通過；`campaign`另有raw-hole與divergence atomic regression。這是E1/
+  production closure，不是DOSBox同save/tick E2。
+- 下一個shop高價值缺口是`0x2f8ea` inventory transfer production owner；
+  standalone equip不要再重用purchase price/recipient/success fields。

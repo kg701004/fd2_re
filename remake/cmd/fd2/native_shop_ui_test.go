@@ -1,8 +1,10 @@
 package main
 
 import (
+	"image/color"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -19,6 +21,7 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	}
 	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
 	t.Setenv("FD2_ORIGINAL_FDTXT", filepath.Join(base, "FDTXT.DAT"))
+	t.Setenv("FD2_ORIGINAL_DATO", filepath.Join(base, "DATO.DAT"))
 
 	shared, err := loadNativeClassUIAssets()
 	if err != nil {
@@ -44,7 +47,10 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 		camp:          campaign.NewRunner(c),
 		nativeClassUI: shared,
 		nativeShopUI:  shop,
-		gold:          1234,
+		nativeUIPalette: append(
+			color.Palette(nil), shared.palette...,
+		),
+		gold: 1234,
 	}
 	if !g.setupNativeShop() || g.nativeShopMode != "menu" ||
 		g.nativeShopUIJob == nil || len(g.nativeShopUIJob.frames) != 4 {
@@ -308,6 +314,61 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 		!g.beginNativeShopSellEmptyOpening() ||
 		len(g.nativeShopUIJob.frames) != 6 {
 		t.Fatal("native sell-empty feedback unexpectedly fell back")
+	}
+
+	equipper := cloneNativeShopUnit(unit)
+	equipper.ClassID = 1
+	equipper.Inventory = []int{0, 1}
+	equipper.Equipped = []bool{true, false}
+	equipper.InventorySlots = []int{0, 1, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	equipper.NativeInventoryFlags = []int{0x40, 0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+	equipper.BaseAP, equipper.BaseDP = 29, 25
+	equipper.EquipmentBaseSet = true
+	g.nativeShopUIJob = nil
+	g.partyRoster[0] = equipper
+	g.shopItemTypes[0], g.shopItemTypes[1] = 0, 0
+	g.shopEquipTypes[1] = []int{0, 2, 3, 4, 5, 6}
+	g.shopItemStats = map[int]campaign.ItemStats{
+		0: {Type: 0, AP: 1},
+		1: {Type: 0, AP: 3},
+	}
+	if !g.setupNativeShopEquipRoster() ||
+		!g.drawNativeShop(screen) ||
+		!g.beginNativeShopEquipRosterOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native standalone-equip roster unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	if !g.openNativeShopEquipPanel() {
+		t.Fatal("native standalone-equip item/status panel unexpectedly fell back")
+	}
+	g.itemAnimStep = 11
+	if !g.drawNativeShop(screen) {
+		t.Fatal("native standalone-equip panel did not render in production")
+	}
+	g.itemSel = 1
+	if !g.applyNativeShopEquipSelection() {
+		t.Fatal("native standalone-equip transaction failed")
+	}
+	equipped := g.partyRoster[0]
+	if !reflect.DeepEqual(equipped.Equipped, []bool{false, true}) ||
+		!reflect.DeepEqual(
+			equipped.NativeInventoryFlags,
+			[]int{0, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		) ||
+		equipped.AP != 32 {
+		t.Fatalf(
+			"native standalone equip = equipped %#v flags %#v AP=%d",
+			equipped.Equipped, equipped.NativeInventoryFlags, equipped.AP,
+		)
+	}
+	g.beginNativeShopEquipPanelClose()
+	for i := 0; i < 12; i++ {
+		g.stepNativeShopEquipPanelLifecycle()
+	}
+	if g.nativeShopMode != "equip_roster" || g.nativeShopUIJob == nil ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native standalone-equip panel did not restore roster lifecycle")
 	}
 }
 

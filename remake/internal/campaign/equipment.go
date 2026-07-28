@@ -179,3 +179,61 @@ func EquipItem(u *battle.Unit, slot int, stats map[int]ItemStats) error {
 	RecomputeEquipment(u, stats)
 	return nil
 }
+
+// EquipNativeCompactSlot applies 0x1c142 through the compact projection used
+// by the remake, but only after proving that projection still matches the
+// native eight raw cells consumed by 0x1b722/0x184c0. This prevents a raw slot
+// index from being passed accidentally to EquipItem when editable data
+// contains holes.
+func EquipNativeCompactSlot(
+	u *battle.Unit,
+	compactSlot int,
+	stats map[int]ItemStats,
+) error {
+	if u == nil || len(u.InventorySlots) != 8 ||
+		len(u.NativeInventoryFlags) != 8 ||
+		compactSlot < 0 || compactSlot >= len(u.Inventory) {
+		return fmt.Errorf("invalid native equipment state")
+	}
+	rawForCompact := make([]int, 0, 8)
+	for rawSlot, flag := range u.NativeInventoryFlags {
+		if flag&0x80 != 0 {
+			continue
+		}
+		compact := len(rawForCompact)
+		if compact >= len(u.Inventory) ||
+			u.InventorySlots[rawSlot] != u.Inventory[compact] ||
+			compact >= len(u.Equipped) ||
+			(flag&0x40 != 0) != u.Equipped[compact] {
+			return fmt.Errorf("native equipment projection diverges at raw slot %d", rawSlot)
+		}
+		rawForCompact = append(rawForCompact, rawSlot)
+	}
+	if len(rawForCompact) != len(u.Inventory) ||
+		len(u.Equipped) != len(u.Inventory) {
+		return fmt.Errorf("native equipment projection length diverges")
+	}
+
+	staged := *u
+	staged.Inventory = append([]int(nil), u.Inventory...)
+	staged.Equipped = append([]bool(nil), u.Equipped...)
+	staged.InventorySlots = append([]int(nil), u.InventorySlots...)
+	staged.NativeInventoryFlags = append([]int(nil), u.NativeInventoryFlags...)
+	if err := EquipItem(&staged, compactSlot, stats); err != nil {
+		return err
+	}
+	// EquipItem also supports normalized units and therefore rebuilds native
+	// flags when an eight-cell projection is present. Restore the original
+	// reserved cells first: 0x1c142 writes only occupied raw cells and must not
+	// erase an ignored cell's 0x80 marker merely because its stale item byte is
+	// non-0xff.
+	copy(staged.NativeInventoryFlags, u.NativeInventoryFlags)
+	for compact, rawSlot := range rawForCompact {
+		staged.NativeInventoryFlags[rawSlot] = 0
+		if staged.Equipped[compact] {
+			staged.NativeInventoryFlags[rawSlot] = 0x40
+		}
+	}
+	*u = staged
+	return nil
+}

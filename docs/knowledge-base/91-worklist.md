@@ -9,7 +9,8 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；目前完整操作界面視覺還原估計35–40%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [ ] **UI-VIS-TOWN**：以原版服務場景／menu resources建立320×200 indexed town owner，取代戰場map上的generic半透明清單；補DOSBox同章同輸入E2。
-- [~] **UI-VIS-SHOP**：stable scene／service icons見[`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)；四個callee已定案。`0x2e0bd` entry16 panel＋`0x2dc55(mode0)` purchase兩欄六項、icon/name/stat/full price見[`native-shop-purchase-list-indexed.png`](../figures/native-shop-purchase-list-indexed.png)，nonzero mode則精確為3⁄4。production仍是generic文字清單；下一 gate 是recipient/equip/feedback lifecycle、variant text、secret gate與DOSBox E2。
+- [~] **UI-VIS-SHOP**：stable scene／service icons見[`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)；四個callee已定案。purchase、sell與standalone equip皆已接production indexed owner；equip依`0x2f883→0x1bffe`切入既有完整item/status panel，而非價格清單。下一 gate 是transfer、variant E2、secret gate與DOSBox同狀態diff。
+- [x] **UI-SHOP-STANDALONE-EQUIP-PRODUCTION**：Docker Capstone重讀`0x2f883/0x1bffe/0x17e0b/0x1b9de`，撤回「獨立裝備沿用purchase商品／收件者widget」的假設。production現走service2→兩欄角色roster→11→0完整item/status panel；相容item經`0x1c1c3→0x1c142→0x1b750`原地更新flags/能力並重畫，incompatible無發明feedback，離開0→11 restore shop再回roster。`EquipNativeCompactSlot`驗證raw occupied order與compact inventory/equipped一致，保留ignored raw hole/stale byte，divergence原子拒絕。Docker/Xvfb production regression通過；DOSBox E2仍待。
 - [ ] **UI-VIS-PREPARATION**：接LMI1 #0x52 slide、MAP/TURN與YES/NO原生畫面；checkbox panel不得再宣稱原版整備UI。
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。

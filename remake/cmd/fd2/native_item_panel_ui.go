@@ -45,6 +45,10 @@ func nativeItemRawSlots(unit *battle.Unit) []int {
 }
 
 func (g *Game) prepareNativeItemPanel(unit *battle.Unit) bool {
+	return g.prepareNativeItemPanelMode(unit, false)
+}
+
+func (g *Game) prepareNativeItemPanelMode(unit *battle.Unit, allowEmpty bool) bool {
 	g.clearNativeItemPanel()
 	fdotherPath, fdtxtPath, datoPath := nativeFDOTHERPath(), nativeFDTXTPath(), nativeDATOPath()
 	if fdotherPath == "" || fdtxtPath == "" || datoPath == "" || len(g.nativeUIPalette) < 256 {
@@ -70,17 +74,31 @@ func (g *Game) prepareNativeItemPanel(unit *battle.Unit) bool {
 	g.nativeItemPanelRecord = record
 	g.nativeItemPanelAssets = &assets
 	g.nativeItemEffectRows = rows
-	return g.refreshNativeItemPanel(unit)
+	return g.refreshNativeItemPanelMode(unit, allowEmpty)
 }
 
 func (g *Game) refreshNativeItemPanel(unit *battle.Unit) bool {
+	return g.refreshNativeItemPanelMode(unit, false)
+}
+
+func (g *Game) refreshNativeItemPanelMode(unit *battle.Unit, allowEmpty bool) bool {
 	if len(g.nativeItemPanelBase) != 320*200 || len(g.nativeItemPanelRecord) != 80 ||
 		g.nativeItemPanelAssets == nil || len(g.nativeItemEffectRows) == 0 {
 		return false
 	}
 	rawSlots := nativeItemRawSlots(unit)
 	if len(rawSlots) == 0 {
-		return false
+		if !allowEmpty {
+			return false
+		}
+		pixels := append([]byte(nil), g.nativeItemPanelBase...)
+		if err := battle.RenderNativeItemPanelRows(
+			*g.nativeItemPanelAssets, g.nativeItemPanelRecord,
+			-1, g.nativeItemEffectRows, pixels,
+		); err != nil {
+			return false
+		}
+		return g.setNativeItemPanelPixels(pixels)
 	}
 	if g.itemSel < 0 {
 		g.itemSel = 0
@@ -95,12 +113,42 @@ func (g *Game) refreshNativeItemPanel(unit *battle.Unit) bool {
 	); err != nil {
 		return false
 	}
+	return g.setNativeItemPanelPixels(pixels)
+}
+
+func (g *Game) setNativeItemPanelPixels(pixels []byte) bool {
+	if len(pixels) != 320*200 || len(g.nativeUIPalette) < 256 {
+		return false
+	}
 	palette := append(color.Palette(nil), g.nativeUIPalette...)
 	palette[0] = color.NRGBA{A: 0xff}
 	frame := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
 	copy(frame.Pix, pixels)
 	g.nativeItemPanel = ebiten.NewImageFromImage(frame)
 	return true
+}
+
+// rebuildNativeItemPanelContents mirrors 0x1c084..0x1c0cc after a successful
+// standalone equip: rebuild the status/item buffers in place without replaying
+// the 12-frame opening.
+func (g *Game) rebuildNativeItemPanelContents(unit *battle.Unit, allowEmpty bool) bool {
+	fdotherPath, fdtxtPath, datoPath := nativeFDOTHERPath(), nativeFDTXTPath(), nativeDATOPath()
+	if fdotherPath == "" || fdtxtPath == "" || datoPath == "" {
+		return false
+	}
+	record, err := battle.NativeItemPanelRecordForUnit(unit)
+	if err != nil {
+		return false
+	}
+	pixels := make([]byte, 320*200)
+	if err := battle.RenderNativeItemPanelResources(
+		fdotherPath, fdtxtPath, datoPath, record, pixels,
+	); err != nil {
+		return false
+	}
+	g.nativeItemPanelRecord = record
+	g.nativeItemPanelBase = pixels
+	return g.refreshNativeItemPanelMode(unit, allowEmpty)
 }
 
 func (g *Game) clearNativeItemPanel() {
