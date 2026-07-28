@@ -495,6 +495,12 @@ func (g *Game) drawNativeShop(screen *ebiten.Image) bool {
 		frame, ok = g.composeNativeShopEquipRoster()
 	case "equip_panel":
 		frame, ok = g.composeNativeShopStable()
+	case "transfer_intro", "transfer_empty", "transfer_dest_prompt", "transfer_full":
+		frame, ok = g.composeNativeShopTransferMessage()
+	case "transfer_source", "transfer_dest":
+		frame, ok = g.composeNativeShopTransferRoster()
+	case "transfer_items":
+		frame, ok = g.composeNativeShopTransferItems()
 	}
 	if !ok {
 		return false
@@ -555,7 +561,7 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			return true
 		}
 		if enter {
-			if g.nativeShopServiceSel > 2 {
+			if g.nativeShopServiceSel > 3 {
 				g.msg = "此原版商店服務的 production owner 尚未接線"
 				return true
 			}
@@ -575,10 +581,17 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 					}
 					return
 				}
-				if !g.setupNativeShopEquipRoster() ||
-					!g.beginNativeShopEquipRosterOpening() {
+				if g.nativeShopServiceSel == 2 {
+					if !g.setupNativeShopEquipRoster() ||
+						!g.beginNativeShopEquipRosterOpening() {
+						g.nativeShopMode = ""
+						g.msg = "原版商店 equip roster 無法還原"
+					}
+					return
+				}
+				if !g.setupNativeShopTransfer() {
 					g.nativeShopMode = ""
-					g.msg = "原版商店 equip roster 無法還原"
+					g.msg = "原版商店 transfer owner 無法還原"
 				}
 			}
 			if !g.beginNativeShopServiceClosing(open) {
@@ -1076,6 +1089,183 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			g.msg = "原版商店 equip transaction 缺少 raw 對映"
 		}
 		return true
+	case "transfer_intro":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopTransferMessageClosing(
+				g.openNativeShopTransferSourceRoster,
+			) {
+				g.openNativeShopTransferSourceRoster()
+			}
+		}
+		return true
+	case "transfer_empty", "transfer_full":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			after := func() {
+				if !g.returnToNativeShopTransferLoop() {
+					g.nativeShopMode = ""
+					g.msg = "原版商店 transfer source prompt 無法還原"
+				}
+			}
+			if !g.beginNativeShopTransferMessageClosing(after) {
+				after()
+			}
+		}
+		return true
+	case "transfer_dest_prompt":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopTransferMessageClosing(
+				g.openNativeShopTransferDestinationRoster,
+			) {
+				g.openNativeShopTransferDestinationRoster()
+			}
+		}
+		return true
+	case "transfer_source", "transfer_dest":
+		count := len(g.nativeShopTransferIDs)
+		delta := 0
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+			delta = -1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+			delta = 1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+			delta = -2
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+			delta = 2
+		}
+		if delta != 0 {
+			g.nativeShopTransferSel = campaign.AdvanceNativeTwoColumnSelection(
+				g.nativeShopTransferSel, count, delta,
+			)
+			g.nativeShopTransferTop, _ = campaign.NativeTwoColumnWindow(
+				count, g.nativeShopTransferSel, g.nativeShopTransferTop,
+			)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if g.nativeShopMode == "transfer_source" {
+				openMenu := func() {
+					g.nativeShopMode = "menu"
+					g.nativeShopServiceSel = 3
+					g.beginNativeShopServiceOpening()
+				}
+				if !g.beginNativeShopTransferRosterClosing(openMenu) {
+					openMenu()
+				}
+			} else {
+				after := func() {
+					if !g.returnToNativeShopTransferLoop() {
+						g.nativeShopMode = ""
+					}
+				}
+				if !g.beginNativeShopTransferRosterClosing(after) {
+					after()
+				}
+			}
+			return true
+		}
+		if enter && count != 0 {
+			selectedID := g.nativeShopTransferIDs[g.nativeShopTransferSel]
+			if g.nativeShopMode == "transfer_source" {
+				afterSource := func() {
+					g.nativeShopTransferSource = selectedID
+					unit := g.partyRoster[selectedID]
+					items, ok := nativeShopTransferItemSlots(unit)
+					if !ok {
+						g.nativeShopMode = ""
+						g.msg = "原版 transfer source raw 對映不一致"
+						return
+					}
+					if len(items) == 0 {
+						g.nativeShopMode = "transfer_empty"
+						if !g.beginNativeShopTransferMessageOpening() {
+							g.nativeShopMode = ""
+						}
+						return
+					}
+					if !g.openNativeShopTransferItems() {
+						g.nativeShopMode = ""
+					}
+				}
+				if !g.beginNativeShopTransferRosterClosing(afterSource) {
+					afterSource()
+				}
+				return true
+			}
+			afterDestination := func() {
+				destination := g.partyRoster[selectedID]
+				count, err := battle.NativeInventoryAvailableCount(
+					destination.NativeInventoryFlags,
+				)
+				if err != nil {
+					g.nativeShopMode = ""
+					g.msg = "原版 transfer destination flags 無法驗證"
+					return
+				}
+				if count == 8 {
+					g.nativeShopTransferDest = selectedID
+					g.nativeShopMode = "transfer_full"
+					if !g.beginNativeShopTransferMessageOpening() {
+						g.nativeShopMode = ""
+					}
+					return
+				}
+				if !g.applyNativeShopTransfer(selectedID) ||
+					!g.returnToNativeShopTransferLoop() {
+					g.nativeShopMode = ""
+					g.msg = "原版 transfer transaction 無法還原"
+				}
+			}
+			if !g.beginNativeShopTransferRosterClosing(afterDestination) {
+				afterDestination()
+			}
+			return true
+		}
+	case "transfer_items":
+		count := len(g.nativeShopTransferItems)
+		delta := 0
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+			delta = -1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+			delta = 1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+			delta = -2
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+			delta = 2
+		}
+		if delta != 0 {
+			g.nativeShopTransferSel = campaign.AdvanceNativeTwoColumnSelection(
+				g.nativeShopTransferSel, count, delta,
+			)
+			g.nativeShopTransferTop, _ = campaign.NativeTwoColumnWindow(
+				count, g.nativeShopTransferSel, g.nativeShopTransferTop,
+			)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			after := func() {
+				if !g.returnToNativeShopTransferLoop() {
+					g.nativeShopMode = ""
+				}
+			}
+			if !g.beginNativeShopTransferItemsClosing(after) {
+				after()
+			}
+			return true
+		}
+		if enter && count != 0 {
+			compact := g.nativeShopTransferItems[g.nativeShopTransferSel]
+			openPrompt := func() {
+				g.nativeShopTransferItem = compact
+				g.nativeShopMode = "transfer_dest_prompt"
+				if !g.beginNativeShopTransferMessageOpening() {
+					g.nativeShopMode = ""
+				}
+			}
+			if !g.beginNativeShopTransferItemsClosing(openPrompt) {
+				openPrompt()
+			}
+			return true
+		}
 	}
 	return true
 }

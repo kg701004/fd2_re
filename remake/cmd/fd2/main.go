@@ -201,6 +201,13 @@ type Game struct {
 	nativeShopSellItemIDs    []int
 	nativeShopEquipRosterTop int
 	nativeShopEquipUnitSel   int
+	nativeShopTransferSource int
+	nativeShopTransferItem   int
+	nativeShopTransferItems  []int
+	nativeShopTransferDest   int
+	nativeShopTransferIDs    []int
+	nativeShopTransferSel    int
+	nativeShopTransferTop    int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int
@@ -1905,6 +1912,13 @@ func (g *Game) enterNode() {
 		g.nativeShopItemStart = 0
 		g.nativeShopEquipRosterTop = 0
 		g.nativeShopEquipUnitSel = 0
+		g.nativeShopTransferSource = -1
+		g.nativeShopTransferItem = -1
+		g.nativeShopTransferItems = nil
+		g.nativeShopTransferDest = -1
+		g.nativeShopTransferIDs = nil
+		g.nativeShopTransferSel = 0
+		g.nativeShopTransferTop = 0
 		g.clearNativeItemPanel()
 		g.setupNativeShop()
 	case "ending":
@@ -2502,13 +2516,11 @@ func (g *Game) churchTransferItemSlots(id int) []int {
 	return slots
 }
 
-func (g *Game) churchTransferDestinationIDs(source int) []int {
+func (g *Game) churchTransferDestinationIDs(_ int) []int {
 	ids := make([]int, 0, len(g.partyJoinOrder))
 	for _, id := range g.partyJoinOrder {
-		if id != source {
-			if _, ok := g.partyRoster[id]; ok {
-				ids = append(ids, id)
-			}
+		if _, ok := g.partyRoster[id]; ok {
+			ids = append(ids, id)
 		}
 	}
 	return ids
@@ -2935,9 +2947,26 @@ func (g *Game) campInput() bool {
 							}
 							return
 						}
-						if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
+						if destinationID == g.churchTransferSource {
+							if err := battle.TransferNativeInventoryItem(
+								&source, g.churchTransferItem, &source,
+							); err != nil {
+								g.msg = err.Error()
+							} else {
+								campaign.RecomputeEquipment(
+									&source, g.shopItemStats,
+								)
+								g.partyRoster[g.churchTransferSource] = source
+								g.msg = fmt.Sprintf(
+									"物品 %02Xh 已轉移", itemID,
+								)
+							}
+						} else if err := battle.TransferNativeInventoryItem(&source, g.churchTransferItem, &destination); err != nil {
 							g.msg = err.Error()
 						} else {
+							campaign.RecomputeEquipment(
+								&source, g.shopItemStats,
+							)
 							g.partyRoster[g.churchTransferSource] = source
 							g.partyRoster[destinationID] = destination
 							g.msg = fmt.Sprintf("物品 %02Xh 已轉移", itemID)

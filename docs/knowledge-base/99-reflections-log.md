@@ -523,3 +523,16 @@ raw ignored cells 後的 compact order，`0x1c142` 最終仍寫 raw cell；remak
 raw occupied order、`Inventory`與`Equipped`三者一致，並保留 ignored cell
 可能存在的 stale item byte。這個 gate 比「item ID 看起來相同」更重要，
 因為 duplicate ID與internal hole都會讓錯誤 index 靜默裝到另一格。
+
+### 共用 callee 不屬於單一設施；目的名冊也不一定排除來源
+
+`0x2f8ea` 的高階語意確實是物品轉交，但 direct caller 有兩個：
+shop `0x2e341` service3與church `0x3072f` raw1。只查其中一個 caller
+會做出「現有另一設施接錯」的錯誤勘誤；本輪用兩個 direct caller
+交叉裁決，保留共享 service body，僅替各自接正確 framebuffer owner。
+
+另一個高階便利假設是「目的角色不應是來源本人」。原版第二次
+`0x2e6b8` 仍使用完整 party，沒有刪除 source。若來源未滿八格，選自己會先
+`0x1b8e7` compact-remove，再由`0x1bb8c`插入第一個空格，因此 item移到尾端
+且清除 equipped bit；滿八格則在 remove前就顯示 FDTXT506。這個分支提醒我們：
+合理的現代 UX 篩選不能取代 raw candidate evidence，即使看起來只是多餘選項。

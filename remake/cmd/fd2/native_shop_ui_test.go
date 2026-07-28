@@ -370,6 +370,84 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 		len(g.nativeShopUIJob.frames) != 6 {
 		t.Fatal("native standalone-equip panel did not restore roster lifecycle")
 	}
+
+	g.nativeShopUIJob = nil
+	if !g.setupNativeShopTransfer() ||
+		g.nativeShopMode != "transfer_intro" ||
+		g.nativeShopUIJob == nil ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native shop transfer source prompt unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	g.openNativeShopTransferSourceRoster()
+	if g.nativeShopMode != "transfer_source" ||
+		len(g.nativeShopTransferIDs) != 1 ||
+		g.nativeShopTransferIDs[0] != 0 ||
+		!g.drawNativeShop(screen) {
+		t.Fatal("native shop transfer source roster unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopTransferSource = 0
+	if !g.openNativeShopTransferItems() ||
+		g.nativeShopMode != "transfer_items" ||
+		len(g.nativeShopTransferItems) != 2 ||
+		!g.drawNativeShop(screen) {
+		t.Fatal("native shop transfer item list unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopTransferItem = g.nativeShopTransferItems[0]
+	g.openNativeShopTransferDestinationRoster()
+	if len(g.nativeShopTransferIDs) != 1 ||
+		g.nativeShopTransferIDs[0] != 0 {
+		t.Fatal("native destination roster incorrectly removed the source actor")
+	}
+	if !g.applyNativeShopTransfer(0) {
+		t.Fatal("native self-transfer raw remove/append failed")
+	}
+	reordered := g.partyRoster[0]
+	if !reflect.DeepEqual(reordered.Inventory, []int{1, 0}) ||
+		!reflect.DeepEqual(reordered.Equipped, []bool{true, false}) ||
+		!reflect.DeepEqual(
+			reordered.NativeInventoryFlags,
+			[]int{0x40, 0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		) ||
+		reordered.AP != 32 {
+		t.Fatalf(
+			"native self-transfer = inventory %#v equipped %#v flags %#v AP=%d",
+			reordered.Inventory, reordered.Equipped,
+			reordered.NativeInventoryFlags, reordered.AP,
+		)
+	}
+
+	emptySource := cloneNativeShopUnit(reordered)
+	emptySource.Inventory = nil
+	emptySource.Equipped = nil
+	emptySource.InventorySlots = []int{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	emptySource.NativeInventoryFlags = []int{0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80}
+	g.partyRoster[0] = emptySource
+	g.nativeShopMode = "transfer_empty"
+	g.nativeShopTransferSource = 0
+	if !g.drawNativeShop(screen) ||
+		!g.beginNativeShopTransferMessageOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native shop transfer empty-source feedback fell back")
+	}
+
+	fullDestination := cloneNativeShopUnit(reordered)
+	fullDestination.NativeIdentity = 1
+	fullDestination.Inventory = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	fullDestination.Equipped = []bool{false, false, false, false, false, false, false, false}
+	fullDestination.InventorySlots = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	fullDestination.NativeInventoryFlags = []int{0, 0, 0, 0, 0, 0, 0, 0}
+	g.nativeShopUIJob = nil
+	g.partyRoster[1] = fullDestination
+	g.nativeShopMode = "transfer_full"
+	g.nativeShopTransferDest = 1
+	if !g.drawNativeShop(screen) ||
+		!g.beginNativeShopTransferMessageOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native shop transfer full-destination feedback fell back")
+	}
 }
 
 func TestNativeShopProductionOwnerFailsClosedForCustomVariant(t *testing.T) {

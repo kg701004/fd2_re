@@ -2,6 +2,36 @@ package battle
 
 import "fmt"
 
+// ValidateNativeInventoryProjection proves that the compact editable arrays
+// still represent exactly the occupied native cells in raw order. Ignored
+// cells may retain stale item bytes; their signed flag remains authoritative.
+func ValidateNativeInventoryProjection(unit *Unit) error {
+	if unit == nil || len(unit.InventorySlots) != nativeInventoryCells ||
+		len(unit.NativeInventoryFlags) != nativeInventoryCells ||
+		len(unit.Inventory) != len(unit.Equipped) {
+		return fmt.Errorf("native inventory projection is incomplete")
+	}
+	compact := 0
+	for rawSlot, flag := range unit.NativeInventoryFlags {
+		if flag&0x80 != 0 {
+			continue
+		}
+		if compact >= len(unit.Inventory) ||
+			unit.InventorySlots[rawSlot] != unit.Inventory[compact] ||
+			(flag&0x40 != 0) != unit.Equipped[compact] {
+			return fmt.Errorf(
+				"native inventory projection diverges at raw slot %d",
+				rawSlot,
+			)
+		}
+		compact++
+	}
+	if compact != len(unit.Inventory) {
+		return fmt.Errorf("native inventory projection length diverges")
+	}
+	return nil
+}
+
 // TransferNativeInventoryItem mirrors the mutation topology proven in the
 // 0x2f8ea -> 0x1b8e7 -> 0x1bb8c branch.  The source item is removed from its
 // compact inventory slot and inserted into the first empty destination cell;
@@ -14,8 +44,13 @@ func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Uni
 	if source == nil || destination == nil {
 		return fmt.Errorf("native inventory transfer: missing unit")
 	}
-	if source == destination {
-		return fmt.Errorf("native inventory transfer: source equals destination")
+	if err := ValidateNativeInventoryProjection(source); err != nil {
+		return err
+	}
+	if source != destination {
+		if err := ValidateNativeInventoryProjection(destination); err != nil {
+			return err
+		}
 	}
 	if sourceIndex < 0 || sourceIndex >= len(source.Inventory) {
 		return fmt.Errorf("native inventory transfer: source slot %d out of bounds", sourceIndex)
@@ -26,10 +61,9 @@ func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Uni
 	}
 	// Preflight both fixed-slot layouts before changing either unit.  A full
 	// destination is the native failure path and must not consume the source.
-	destination.normalizeInventorySlots()
 	free := false
-	for _, id := range destination.InventorySlots {
-		if id == 0xff {
+	for _, flag := range destination.NativeInventoryFlags {
+		if flag&0x80 != 0 {
 			free = true
 			break
 		}
@@ -47,14 +81,10 @@ func TransferNativeInventoryItem(source *Unit, sourceIndex int, destination *Uni
 	destinationEquipped := append([]bool(nil), destination.Equipped...)
 	destinationSlots := append([]int(nil), destination.InventorySlots...)
 	destinationFlags := append([]int(nil), destination.NativeInventoryFlags...)
-	destinationSlot := firstInventoryHole(destination.InventorySlots)
 	if !removeNativeCompactInventory(source, sourceIndex) || !destination.AddInventoryItem(itemID, false) {
 		source.Inventory, source.Equipped, source.InventorySlots, source.NativeInventoryFlags = sourceInventory, sourceEquipped, sourceSlots, sourceFlags
 		destination.Inventory, destination.Equipped, destination.InventorySlots, destination.NativeInventoryFlags = destinationInventory, destinationEquipped, destinationSlots, destinationFlags
 		return fmt.Errorf("native inventory transfer: mutation failed")
-	}
-	if len(destination.NativeInventoryFlags) == nativeInventoryCells && destinationSlot >= 0 {
-		destination.NativeInventoryFlags[destinationSlot] = 0
 	}
 	return nil
 }

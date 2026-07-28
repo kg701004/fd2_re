@@ -1424,3 +1424,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   production closure，不是DOSBox同save/tick E2。
 - 下一個shop高價值缺口是`0x2f8ea` inventory transfer production owner；
   standalone equip不要再重用purchase price/recipient/success fields。
+
+## 2026-07-28 shop transfer production closure
+
+- direct caller交叉重核：`0x2f8ea`同時由shop `0x2e341` service3與church
+  `0x3072f` raw1呼叫；不是任一設施專屬。subagent一度只看到shop caller而
+  建議刪church接線，已由`0x308a5..0x308b2`直接call證據否決，未採用。
+- exact loop為FDTXT512→source全party roster；空來源FDTXT511＋姓名，否則
+  `0x2e0bd/0x2df6b(mode1)` item list；選item後FDTXT510→destination全party
+  roster；滿八格走variant FDTXT506＋姓名，成功走
+  `0x1b722→0x1b8e7→0x1bb8c→0x1b750`，無gold/confirm。
+- destination roster不排除source本人。未滿八格的self-transfer會literal
+  remove→append，item移到尾端且清equipped；滿八格則remove前先走506。
+  remake已撤回排除source的高階假設，shop與church兩個caller都保存此行為。
+- shop production已接intro/empty/destination/full messages、source/item/
+  destination panels、所有cancel/success回512 loop及source-cancel回service
+  menu。`ValidateNativeInventoryProjection`要求raw signed cells與compact
+  Inventory/Equipped同序，目的full只看raw flags。
+- Docker/Xvfb玩家原版資源production regression與battle self/full/divergence
+  regression通過；仍缺DOSBox同save/tick E2。
