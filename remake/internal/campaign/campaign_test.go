@@ -391,6 +391,14 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 	}
 	townByChapter := map[int]string{}
 	goodsByChapterKind := map[string][]Good{}
+	secretGateByChapter := map[int][2]int{
+		2: {0, 0x54}, 3: {1, 0x5f}, 4: {2, 0x6a}, 5: {3, 0x57},
+		6: {4, 0x62}, 7: {0, 0x6d}, 8: {1, 0x5a}, 9: {2, 0x65},
+		10: {3, 0x70}, 11: {4, 0x5d}, 12: {0, 0x5e}, 13: {1, 0x69},
+		14: {2, 0x56}, 15: {3, 0x61}, 16: {4, 0x6c}, 17: {0, 0x58},
+		18: {1, 0x64}, 19: {2, 0x6f}, 20: {3, 0x5c}, 21: {4, 0x67},
+		22: {0, 0x68}, 26: {4, 0x58}, 27: {0, 0x63},
+	}
 	for _, shop := range source.Shops {
 		if previous, ok := townByChapter[shop.Chapter]; ok && previous != shop.Town {
 			t.Fatalf("chapter %d shop town names disagree: %q / %q", shop.Chapter, previous, shop.Town)
@@ -461,6 +469,18 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 			town := campaign.Nodes[townID]
 			if town == nil || town.Type != "town" || town.Town != townName {
 				t.Fatalf("%s = %#v, want town %q", townID, town, townName)
+			}
+			wantGate := secretGateByChapter[chapter]
+			if town.NativeSecretGate == nil ||
+				town.NativeSecretGate.Selection != wantGate[0] ||
+				town.NativeSecretGate.ScanCode != wantGate[1] ||
+				town.NativeSecretGate.To != fmt.Sprintf(
+					"shop_ch%02d_secret", chapter,
+				) {
+				t.Fatalf(
+					"%s native secret gate = %#v, want selection=%d scan=%#x",
+					townID, town.NativeSecretGate, wantGate[0], wantGate[1],
+				)
 			}
 			preparationID := fmt.Sprintf("preparation_ch%02d", chapter)
 			nextStory := fmt.Sprintf("story_ch%02d", chapter)
@@ -663,6 +683,32 @@ func TestRunnerTownUsesVisibleOptionOutcome(t *testing.T) {
 	runner := NewRunner(c)
 	if got := runner.Advance("opt1"); got != "road" || runner.Cur != "road" {
 		t.Fatalf("town opt1 transition = %q / current %q, want road", got, runner.Cur)
+	}
+}
+
+func TestRunnerNativeTownSecretGateRequiresSelectionAndScan(t *testing.T) {
+	c := &Campaign{
+		Start: "town",
+		Nodes: map[string]*Node{
+			"town": {
+				Type: "town",
+				NativeSecretGate: &NativeTownSecretGate{
+					Selection: 0, ScanCode: 0x54, To: "secret",
+				},
+			},
+			"secret": {Type: "shop", NativeHubVariant: 5},
+		},
+	}
+	for _, mismatch := range [][2]int{{1, 0x54}, {0, 0x55}} {
+		r := NewRunner(c)
+		if r.AdvanceNativeTownSecret(mismatch[0], mismatch[1]) ||
+			r.Cur != "town" {
+			t.Fatalf("mismatch %#v entered hidden shop", mismatch)
+		}
+	}
+	r := NewRunner(c)
+	if !r.AdvanceNativeTownSecret(0, 0x54) || r.Cur != "secret" {
+		t.Fatalf("exact native gate did not enter hidden shop: %#v", r)
 	}
 }
 

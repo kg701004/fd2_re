@@ -26,6 +26,15 @@ type Option struct {
 	If    string `json:"if,omitempty"`
 }
 
+// NativeTownSecretGate is the editable form of the 0x2cde0..0x2cef7
+// three-byte town-record gate. Hidden selection 5 is entered only when the
+// current visible selection and BIOS function-key scan both match.
+type NativeTownSecretGate struct {
+	Selection int    `json:"selection"`
+	ScanCode  int    `json:"scan_code"`
+	To        string `json:"to"`
+}
+
 // Good 商店商品(名稱/價格;id 對映 EXE item.json)。
 type Good struct {
 	ID    int    `json:"id"`
@@ -355,30 +364,31 @@ type Node struct {
 	FollowWalk     bool   `json:"follow_walk,omitempty"`     // story:走位期間鏡頭鎖定跟隨走位者(原版 13×8 格視野長廊運鏡,doc25 0x11eee)
 	CamMaxY        int    `json:"cam_max_y,omitempty"`       // story:鏡頭 Y 上限(px;0=不限)。王座廳=808 擋住 map32 底部草地段
 	// (原版第一幕畫面無草地,索爾從畫面外沿紅毯走入,使用者回饋 2026-07-04 #1)
-	BGM              string          `json:"bgm,omitempty"`
-	Next             string          `json:"next,omitempty"`             // story/event
-	OnWin            string          `json:"on_win,omitempty"`           // battle
-	OnLose           string          `json:"on_lose,omitempty"`          // battle(敗北路線;空=game over)
-	Protect          string          `json:"protect,omitempty"`          // battle:保護目標；空值沿用主角索爾
-	ItemID           *int            `json:"item_id,omitempty"`          // inventory_gate:原版 unsigned-byte item identity
-	IfPresent        string          `json:"if_present,omitempty"`       // inventory_gate:全隊任一角色持有 ItemID
-	IfMissing        string          `json:"if_missing,omitempty"`       // inventory_gate:全隊皆未持有 ItemID
-	ItemIDs          []int           `json:"item_ids,omitempty"`         // inventory_recipe:逐 item×runtime slot 計數／移除
-	SlotCount        int             `json:"slot_count,omitempty"`       // inventory_recipe:只掃前 N 個 runtime records
-	RequiredMatches  int             `json:"required_matches,omitempty"` // inventory_recipe:原版要求的精確命中組合數
-	RewardItemID     *int            `json:"reward_item_id,omitempty"`   // inventory_recipe:成功後 grant 的 item
-	IfCrafted        string          `json:"if_crafted,omitempty"`       // inventory_recipe:成功 arm
-	IfInsufficient   string          `json:"if_insufficient,omitempty"`  // inventory_recipe:命中數不符 arm
-	Prompt           string          `json:"prompt,omitempty"`           // choice/preparation
-	PartyLimit       int             `json:"party_limit,omitempty"`      // preparation: original 0x318ad selection cap (15, late route 19)
-	Town             string          `json:"town,omitempty"`             // town:原版戰後城鎮/營地名稱(可編輯、可存檔的整備 hub)
-	Options          []Option        `json:"options,omitempty"`          // choice
-	SetFlags         map[string]bool `json:"set_flags,omitempty"`
-	Text             string          `json:"text,omitempty"`               // ending:結語
-	Goods            []Good          `json:"goods,omitempty"`              // shop:商品
-	NativeHubVariant int             `json:"native_hub_variant,omitempty"` // shop:0=custom/generic; original owner uses 1 weapon, 3 item, 5 secret
-	Secret           []Good          `json:"secret,omitempty"`             // shop:祕密商店商品
-	SecretIf         string          `json:"secret_if,omitempty"`          // shop:旗標為真才開祕密商品(原版祕密商店機制)
+	BGM              string                `json:"bgm,omitempty"`
+	Next             string                `json:"next,omitempty"`               // story/event
+	OnWin            string                `json:"on_win,omitempty"`             // battle
+	OnLose           string                `json:"on_lose,omitempty"`            // battle(敗北路線;空=game over)
+	Protect          string                `json:"protect,omitempty"`            // battle:保護目標；空值沿用主角索爾
+	ItemID           *int                  `json:"item_id,omitempty"`            // inventory_gate:原版 unsigned-byte item identity
+	IfPresent        string                `json:"if_present,omitempty"`         // inventory_gate:全隊任一角色持有 ItemID
+	IfMissing        string                `json:"if_missing,omitempty"`         // inventory_gate:全隊皆未持有 ItemID
+	ItemIDs          []int                 `json:"item_ids,omitempty"`           // inventory_recipe:逐 item×runtime slot 計數／移除
+	SlotCount        int                   `json:"slot_count,omitempty"`         // inventory_recipe:只掃前 N 個 runtime records
+	RequiredMatches  int                   `json:"required_matches,omitempty"`   // inventory_recipe:原版要求的精確命中組合數
+	RewardItemID     *int                  `json:"reward_item_id,omitempty"`     // inventory_recipe:成功後 grant 的 item
+	IfCrafted        string                `json:"if_crafted,omitempty"`         // inventory_recipe:成功 arm
+	IfInsufficient   string                `json:"if_insufficient,omitempty"`    // inventory_recipe:命中數不符 arm
+	Prompt           string                `json:"prompt,omitempty"`             // choice/preparation
+	PartyLimit       int                   `json:"party_limit,omitempty"`        // preparation: original 0x318ad selection cap (15, late route 19)
+	Town             string                `json:"town,omitempty"`               // town:原版戰後城鎮/營地名稱(可編輯、可存檔的整備 hub)
+	NativeSecretGate *NativeTownSecretGate `json:"native_secret_gate,omitempty"` // town:selection+BIOS scan→hidden shop
+	Options          []Option              `json:"options,omitempty"`            // choice
+	SetFlags         map[string]bool       `json:"set_flags,omitempty"`
+	Text             string                `json:"text,omitempty"`               // ending:結語
+	Goods            []Good                `json:"goods,omitempty"`              // shop:商品
+	NativeHubVariant int                   `json:"native_hub_variant,omitempty"` // shop:0=custom/generic; original owner uses 1 weapon, 3 item, 5 secret
+	Secret           []Good                `json:"secret,omitempty"`             // shop:legacy authored conditional goods
+	SecretIf         string                `json:"secret_if,omitempty"`          // shop:legacy authored flag; not the proven native hidden-entry gate
 }
 
 // Campaign 整張節點圖。
@@ -449,6 +459,18 @@ func Load(path string) (*Campaign, error) {
 				id,
 			)
 		}
+		if n.NativeSecretGate != nil {
+			gate := n.NativeSecretGate
+			if n.Type != "town" || gate.Selection < 0 || gate.Selection > 4 ||
+				gate.ScanCode < 0x54 || gate.ScanCode > 0x71 ||
+				gate.To == "" ||
+				check(id, gate.To) != nil {
+				return nil, fmt.Errorf(
+					"town 節點 %q 的 native_secret_gate 無效",
+					id,
+				)
+			}
+		}
 		if (n.NativeMapView == nil) != (n.NativeMapHUD == nil) {
 			return nil, fmt.Errorf("battle 節點 %q 必須同時定義 native_map_view / native_map_hud", id)
 		}
@@ -515,7 +537,9 @@ func (r *Runner) Visible() []Option {
 	return out
 }
 
-// ShopGoods shop 節點的商品(祕密商店:SecretIf 旗標為真時加開 Secret 商品)。
+// ShopGoods returns editable goods and the legacy authored conditional list.
+// SecretIf is a remake schema feature; it does not prove the native hidden
+// selection-5 keyboard/modifier gate.
 func (r *Runner) ShopGoods() []Good {
 	n := r.Node()
 	out := append([]Good{}, n.Goods...)
@@ -523,6 +547,22 @@ func (r *Runner) ShopGoods() []Good {
 		out = append(out, n.Secret...)
 	}
 	return out
+}
+
+// AdvanceNativeTownSecret applies the hidden selection-5 gate without
+// materialising a sixth visible option or a persistent unlock flag.
+func (r *Runner) AdvanceNativeTownSecret(selection, scanCode int) bool {
+	n := r.Node()
+	if n == nil || n.Type != "town" || n.NativeSecretGate == nil {
+		return false
+	}
+	gate := n.NativeSecretGate
+	if selection != gate.Selection || scanCode != gate.ScanCode ||
+		r.C.Nodes[gate.To] == nil {
+		return false
+	}
+	r.Cur = gate.To
+	return true
 }
 
 // Advance 依結果離開目前節點:套用 set_flags,回傳下一節點 id(""=流程結束/game over)。

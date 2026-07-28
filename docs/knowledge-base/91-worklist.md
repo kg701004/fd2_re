@@ -9,9 +9,10 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；目前完整操作界面視覺還原估計35–40%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [ ] **UI-VIS-TOWN**：以原版服務場景／menu resources建立320×200 indexed town owner，取代戰場map上的generic半透明清單；補DOSBox同章同輸入E2。
-- [~] **UI-VIS-SHOP**：stable scene／service icons見[`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)；四個callee已定案，purchase、sell、standalone equip、transfer皆已接production indexed owner。下一 gate 是variant/secret gate與DOSBox同狀態diff。
+- [~] **UI-VIS-SHOP**：stable scene／service icons見[`native-shop-scene-indexed.png`](../figures/native-shop-scene-indexed.png)；四個callee與secret selection+BIOS-scan gate皆已接production。下一gate是variant1/3/5、secret chord與town restore的DOSBox同狀態diff。
 - [x] **UI-SHOP-STANDALONE-EQUIP-PRODUCTION**：Docker Capstone重讀`0x2f883/0x1bffe/0x17e0b/0x1b9de`，撤回「獨立裝備沿用purchase商品／收件者widget」的假設。production現走service2→兩欄角色roster→11→0完整item/status panel；相容item經`0x1c1c3→0x1c142→0x1b750`原地更新flags/能力並重畫，incompatible無發明feedback，離開0→11 restore shop再回roster。`EquipNativeCompactSlot`驗證raw occupied order與compact inventory/equipped一致，保留ignored raw hole/stale byte，divergence原子拒絕。Docker/Xvfb production regression通過；DOSBox E2仍待。
 - [x] **UI-SHOP-TRANSFER-PRODUCTION**：`0x2f8ea`同時由shop service3與church raw1呼叫，不是任一場景專屬。shop production已接FDTXT512 source prompt→全party roster→FDTXT511 empty或`0x2dc55(mode1)` item list→FDTXT510→全party destination roster→FDTXT506 full或raw remove/append/recalc→512 loop。重核撤回「destination排除source」的高階假設：source本人保留為候選，未滿欄時self-transfer會把item以unequipped狀態移到尾端。`ValidateNativeInventoryProjection`與full raw-flag gate原子拒絕投影分歧；Docker/Xvfb production、empty/full/self regression通過。
+- [x] **RE/UI-TOWN-SECRET-GATE**：Docker Capstone閉合`0x2cd16→0x4e4b9`與`0x2cde0..0x2cef7`：每章0x1f-byte town record `+1`必須等於目前五項selection，`+2`必須等於BIOS Shift/Ctrl/Alt-F1..F10 scan，才把selection寫5並由`0x2d28c`進variant5 shop。23筆已資料化為editable `native_secret_gate`並接runtime；modified F2/F3/F5/F9不再誤觸remake全域shortcut。撤回`found_secret_*`永久顯示第六項等同原版的斷言；DOSBox E2仍待。
 - [ ] **UI-VIS-PREPARATION**：接LMI1 #0x52 slide、MAP/TURN與YES/NO原生畫面；checkbox panel不得再宣稱原版整備UI。
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
@@ -380,12 +381,12 @@
       自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
       `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
       不得稱完整原版一致。
-- [~] **商店+祕密商店**: 69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner。purchase完整到optional-equip→10/9/14-tick success→debit；no-eligible亦已接。sell依`0x2f642`接兩欄source、空欄FDTXT509、3/4 item list、variant question、success→credit→`0x1b8e7` compact remove→recalc並回同一actor。display/commit price皆由raw row+0x13派生；高階Unit adapter會把native ignored stale tail item canonicalize為`0xff`，不得宣稱FD2.SAV byte parity。剩餘商店缺口是equip/transfer兩個service、祕密商店進入E0與DOSBox E2。
+- [~] **商店+祕密商店**: 69個shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner；四項service與23筆secret chord gate已接。`found_secret_ch*`／legacy `SecretIf`只保留editable擴充，不再當原版gate。sell高階adapter仍會canonicalize ignored stale tail，不宣稱FD2.SAV byte parity；剩餘為三種variant與secret chord同save/tick DOSBox E2。
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
 
 ## 第 9 輪 ✅(3-subagent 成本分工;haiku=資料/sonnet=RE·套件/旗艦=架構·驗收)
 > 策略(rulebook/45):簡單工作派便宜模型,旗艦只做架構與把關;每件交付先抽驗再 commit。
-- [x] **商店品項表**(haiku):docs/data/shops.json 69家/23祕密(含進入方式「酒店前Shift+F1」等);campaign 換真值
+- [x] **商店品項表**(haiku): `docs/data/shops.json`保存攻略來源的69家／23祕密商店品項與進入提示，campaign已資料化；這是外部攻略／editable authored資料，不是EXE gate真值。原版modifier/key→selection5仍列E0缺口。
 - [x] **SFX 破案**(sonnet):FDOTHER#31=14×8bit PCM+AIL 鏈 → doc36;WAV 導出(export_sfx.py,11025Hz 負向證據);
       **index0=游標音確認**(5處方向鍵分支);戰鬥音效=另一獨立池([0x5411f])待導出
 - [~] **法術 FIGANI 手勢邊界**：`0x28784` 不讀 spell id，沒有另一段 FIGANI 由 spell id 選擇（火花在角色幀）→ doc37；

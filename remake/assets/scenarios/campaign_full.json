@@ -4036,6 +4036,7 @@
    "type": "town",
    "town": "羅德鎮",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 84, "to": "shop_ch02_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4068,6 +4069,7 @@
    "type": "town",
    "town": "往塞拉村途中",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 1, "scan_code": 95, "to": "shop_ch03_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4100,6 +4102,7 @@
    "type": "town",
    "town": "塞拉村前",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 2, "scan_code": 106, "to": "shop_ch04_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4132,6 +4135,7 @@
    "type": "town",
    "town": "塞拉村",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 3, "scan_code": 87, "to": "shop_ch05_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4164,6 +4168,7 @@
    "type": "town",
    "town": "普里茲港",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 4, "scan_code": 98, "to": "shop_ch06_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4196,6 +4201,7 @@
    "type": "town",
    "town": "往王城的途中",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 109, "to": "shop_ch07_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4228,6 +4234,7 @@
    "type": "town",
    "town": "王城前的戰鬥",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 1, "scan_code": 90, "to": "shop_ch08_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4260,6 +4267,7 @@
    "type": "town",
    "town": "騎士的抉擇",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 2, "scan_code": 101, "to": "shop_ch09_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4292,6 +4300,7 @@
    "type": "town",
    "town": "洞窟中的激戰",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 3, "scan_code": 112, "to": "shop_ch10_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4324,6 +4333,7 @@
    "type": "town",
    "town": "幻之森林",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 4, "scan_code": 93, "to": "shop_ch11_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4356,6 +4366,7 @@
    "type": "town",
    "town": "北山道",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 94, "to": "shop_ch12_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4388,6 +4399,7 @@
    "type": "town",
    "town": "哈斯米爾之戰",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 1, "scan_code": 105, "to": "shop_ch13_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4420,6 +4432,7 @@
    "type": "town",
    "town": "平原的會戰",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 2, "scan_code": 86, "to": "shop_ch14_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4452,6 +4465,7 @@
    "type": "town",
    "town": "拉卡湖的激戰",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 3, "scan_code": 97, "to": "shop_ch15_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4484,6 +4498,7 @@
    "type": "town",
    "town": "冰原之戰",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 4, "scan_code": 108, "to": "shop_ch16_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4516,6 +4531,7 @@
    "type": "town",
    "town": "血與冰之刃",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 88, "to": "shop_ch17_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4548,6 +4564,7 @@
    "type": "town",
    "town": "遙遠的彼岸",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 1, "scan_code": 100, "to": "shop_ch18_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4580,6 +4597,7 @@
    "type": "town",
    "town": "黑暗中的狙擊",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 2, "scan_code": 111, "to": "shop_ch19_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4612,6 +4630,7 @@
    "type": "town",
    "town": "死亡般的沈寂",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 3, "scan_code": 92, "to": "shop_ch20_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4644,6 +4663,7 @@
    "type": "town",
    "town": "亞述森林",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 4, "scan_code": 103, "to": "shop_ch21_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4676,6 +4696,7 @@
    "type": "town",
    "town": "遠古呼喚",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 104, "to": "shop_ch22_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4708,6 +4729,7 @@
    "type": "town",
    "town": "未知的迴廊",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 4, "scan_code": 88, "to": "shop_ch26_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4740,6 +4762,7 @@
    "type": "town",
    "town": "命運的交會點",
    "bgm": "FDMUS_010",
+   "native_secret_gate": {"selection": 0, "scan_code": 99, "to": "shop_ch27_secret"},
    "options": [
     {
      "label": "酒店：打聽消息",

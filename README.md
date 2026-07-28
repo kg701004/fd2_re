@@ -64,6 +64,13 @@ contract，不代表原版各章節服務、BGM 或畫面 parity 已完成。
 `town_ch02 → shop_ch02_weapon → town_ch02`，包含 reserve/finalize 金幣邊界與
 Escape 離店；這是 remake campaign contract，不是 native shop service parity。
 
+2026-07-28 也撤回「先打聽後永久顯示第六個神秘商店選項」等同原版的說法。
+Docker Capstone 證實 town record `+1` 保存當前五項 selection、`+2` 保存 BIOS
+Shift/Ctrl/Alt-F1..F10 scan；兩者同時命中才在當次輸入把 selection 改成 5，
+再進 variant5/resource63 商店。23 個原版 town 已以 editable
+`native_secret_gate` 接回 runtime；legacy `found_secret_*`／`SecretIf`僅保留
+擴充相容。實機 chord 與 town→secret-shop DOSBox E2 仍待。
+
 2026-07-27 補上 native command 的 target state slice：command grid confirm 先通過
 `NativeCommandTargets`，再接入已有 raw executor 的 IDs `0,13–16,20–22,24–29,31`；
 未知 command、ID30 special cursor、缺 raw map flags 或缺 resistance/book 資料仍停在

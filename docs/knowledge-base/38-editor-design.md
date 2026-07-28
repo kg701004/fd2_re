@@ -147,7 +147,9 @@ flowchart TB
 對映 `campaign.go` 的 `Good{ID, Name, Price}`,`Node.Goods`/`Node.Secret`/`Node.SecretIf`:
 
 - 一般商品表格編輯(新增/刪除列,ID 對應 `docs/data/exe_tables/item.json` 或衍生創作自訂 ID)。
-- 祕密商店:勾選「此節點有祕密商店」→ 出現 `Secret[]` 品項表 + `SecretIf` 旗標下拉(選一個已定義的旗標名)。
+- legacy條件商品:勾選後顯示 `Secret[]` 品項表 + `SecretIf` 旗標下拉。這是
+  remake的editable schema，不是已證實的原版祕密商店按鍵gate；full campaign
+  使用條件town option進入獨立variant5節點。
   這是原版就有的機制(`e09c68c` 已在引擎接好),編輯器只是把它填表化。
 
 ## 4. 技術選型評估

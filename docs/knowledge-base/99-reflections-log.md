@@ -536,3 +536,19 @@ shop `0x2e341` service3與church `0x3072f` raw1。只查其中一個 caller
 `0x1b8e7` compact-remove，再由`0x1bb8c`插入第一個空格，因此 item移到尾端
 且清除 equipped bit；滿八格則在 remove前就顯示 FDTXT506。這個分支提醒我們：
 合理的現代 UX 篩選不能取代 raw candidate evidence，即使看起來只是多餘選項。
+
+### 攻略說明了按鍵，EXE 才說明 gate
+
+秘密商店攻略的「酒店前 Shift+F1」容易被重製成先看傳聞、寫永久 flag、再顯示
+第六個選項。這能玩，但不是原版 input topology。`0x2cde0..0x2cef7`證明攻略中
+的「前」其實是目前五項 selection；每章 town record 另存一個 BIOS function-key
+scan，只有兩者同時命中才把當次 selection 改為 hidden value5。
+
+因此外部資料適合提供可搜尋的按鍵提示與商品表，不能單獨決定 runtime state
+model。反組譯閉合後，schema應保存最小 raw contract
+`{selection,scan_code,to}`；persistent unlock flag只能標成擴充功能。
+
+這輪也再次證明生成器不是天然權威。現有`gen_campaign.py`雖能重產完整JSON，
+但它的拓撲落後於後續人工 handler integration；直接執行會大幅刪回新版節點。
+任何生成器都要先比較semantic diff，不能因命令成功與JSON合法就覆蓋較新的
+campaign。

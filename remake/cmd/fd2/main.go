@@ -2680,6 +2680,13 @@ func (g *Game) campInput() bool {
 		}
 		return true
 	case "choice", "town":
+		if n.Type == "town" {
+			if scanCode, ok := pressedNativeTownSecretScan(); ok &&
+				g.camp.AdvanceNativeTownSecret(g.campSel, scanCode) {
+				g.enterNode()
+				return true
+			}
+		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
 			g.stepCampaignMenu(campaign.MenuUp)
 		}
@@ -4548,10 +4555,10 @@ func (g *Game) Update() error {
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
 	g.stepNativeShopUILifecycle(time.Now())
-	if inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
+	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF3) { // 全域:開發除錯 HUD 開關
+	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF3) { // 全域:開發除錯 HUD 開關
 		g.debug = !g.debug
 	}
 	if g.bannerT > 0 {
@@ -4812,10 +4819,10 @@ func (g *Game) Update() error {
 			clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF5) { // 快速存檔(節點邊界語意:存 campaign 進度)
+	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF5) { // 快速存檔(節點邊界語意:存 campaign 進度)
 		g.saveGame()
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF9) { // 快速讀檔
+	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF9) { // 快速讀檔
 		g.loadGame()
 	}
 	if g.battleEvent != nil {

@@ -137,6 +137,18 @@ BGM_STORY = "FDMUS_010"   # 城鎮/劇情/商店(doc12:track 10,反組譯 0x2cd3
 
 TOTAL_CHAPTERS = 30  # battle_events.json 的 chapter 0..29(= 攻略 30 關)
 
+# FD2.EXE 0x6238d, 0x1f-byte town records, consumed at
+# 0x2cde0..0x2cef7. Keys are the player-facing next-battle chapter used by
+# shop_chNN; values are (visible selection, BIOS Shift/Ctrl/Alt-Fn scan).
+NATIVE_SECRET_GATES = {
+    2: (0, 0x54), 3: (1, 0x5F), 4: (2, 0x6A), 5: (3, 0x57),
+    6: (4, 0x62), 7: (0, 0x6D), 8: (1, 0x5A), 9: (2, 0x65),
+    10: (3, 0x70), 11: (4, 0x5D), 12: (0, 0x5E), 13: (1, 0x69),
+    14: (2, 0x56), 15: (3, 0x61), 16: (4, 0x6C), 17: (0, 0x58),
+    18: (1, 0x64), 19: (2, 0x6F), 20: (3, 0x5C), 21: (4, 0x67),
+    22: (0, 0x68), 26: (4, 0x58), 27: (0, 0x63),
+}
+
 # doc28 加入角色名單的用字與 characters.json 對不上的少數例外(核對後只有這一筆)。
 NAME_ALIASES = {"達可塞": "達克賽"}
 
@@ -701,6 +713,13 @@ def build_campaign(
                 "bgm": BGM_STORY,
                 "options": town_options,
             }
+            if secret_shop_id:
+                selection, scan_code = NATIVE_SECRET_GATES[int(intermission_cid)]
+                nodes[town_id]["native_secret_gate"] = {
+                    "selection": selection,
+                    "scan_code": scan_code,
+                    "to": secret_shop_id,
+                }
             after_battle_id = town_id
         else:
             after_battle_id = ending_id if is_last else preparation_id

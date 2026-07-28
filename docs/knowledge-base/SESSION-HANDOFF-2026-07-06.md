@@ -1443,3 +1443,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   Inventory/Equipped同序，目的full只看raw flags。
 - Docker/Xvfb玩家原版資源production regression與battle self/full/divergence
   regression通過；仍缺DOSBox同save/tick E2。
+
+## 2026-07-28 native secret-shop entry gate
+
+- Docker Capstone重讀`0x2cad7..0x2d301`。`0x4e4b9(chapter)`回傳
+  `0x6238d+(chapter-1)*0x1f`；town loop在`0x2cde0..0x2cef7`同時比較
+  record `+1`與目前selection、record `+2`與BIOS scan，完全命中才把
+  `[0x5412b]`寫5。`0x2d28c`的非0/2/3/4分支再呼`0x2e341`，即variant5。
+- scan `0x54..0x5d`、`0x5e..0x67`、`0x68..0x71`分別是
+  Shift/Ctrl/Alt-F1..F10。23筆有town的raw records對應玩家章2..22、26、27，
+  已資料化為`native_secret_gate {selection,scan_code,to}`。
+- runtime只有selection與chord完全命中才直接進secret shop；不要求也不寫
+  persistent unlock flag。modified F2/F3/F5/F9不再同時觸發remake全域快捷鍵。
+- 撤回「`found_secret_ch*`先解鎖並永久顯示第六項」與legacy
+  `SecretIf/ShopGoods()`等同原版gate的斷言；兩者只保留editable擴充相容。
+- `gen_campaign.py`目前會把已人工整合的`campaign_full.json`退回舊
+  `story_ch01`拓撲；本輪測出後已恢復權威檔，只保留23筆小型gate差異。
+  後續不可無審核直接以生成器輸出覆蓋campaign。
