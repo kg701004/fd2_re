@@ -18,7 +18,7 @@ oracle、目前 source rebuild 截圖、indexed fixture，以及外部原版畫�
 | full-screen battle presentation | 40–50% | FIGANI/AFM、部分 status frame與局部 pixel-equal slices可重播；command/spell/item完整 presentation、音效與 palette/timing sequence仍缺 |
 | postbattle/campaign transition | 25–35% | graph與部分 handler已接，但原版每章 postbattle→town／連戰／整備的可見轉場未逐章 E2 驗收 |
 | town hub | 5–15% | `town-hub-remake.png` 是戰場 map 上的現代半透明清單；不是原版服務場景／店員畫面，也沒有原版 indexed menu skin |
-| weapon/item shop | 50–55% | 69個原版shop節點已用variant 1/3/5明確啟用indexed owner；stable scene、四格service menu、purchase list及4/6/5-frame開關生命週期已接production。購買確認／不足金、兩種recipient、滿欄回饋及`0x2f4c6`三種success timeline已有E1 fixture，但尚未接production transaction；其餘三個service與DOSBox E2仍待閉合 |
+| weapon/item shop | 55–60% | 69個原版shop節點已用variant 1/3/5明確啟用indexed owner；stable scene、四格service menu、purchase list、Yes/No確認／取消與不足金等待均已接production及4/6/5-frame生命週期。`0x2f2a9`重核修正不足金framebuffer為choice-close最後一幀。兩種recipient、滿欄回饋及`0x2f4c6`三種success timeline仍只有E1 fixture；其餘三個service與DOSBox E2待閉合 |
 | church | 60–70%（已接 slices） | church main/status/transfer/revive/class 多數已有原始 FDOTHER/FDICON/FDTXT indexed畫面與 lifecycle；缺 DOSBox side-by-side、部分 fallback與完整 persistent/save parity |
 | preparation | 10–20% | selection/quota有 state trace；`preparation-current-remake.png` 是兩欄 checkbox 半透明框，原版 LMI1 #0x52 slide、MAP/TURN、YES/NO完整畫面未接 |
 | save/load | 20–30% | 四槽 input與 native save codec已有基礎；remake loadslots是現代框／字型，和 `load-empty-original-dosbox.png` 的四列原生框、cursor、metadata layout不同 |

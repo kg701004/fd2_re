@@ -90,8 +90,18 @@ func main() {
 		check(err)
 		writePNG(os.Args[6], confirmation, palette)
 		if len(os.Args) >= 8 {
+			question, err := campaign.ComposeNativeShopPurchaseMessage(
+				purchaseSource, dialogue, purchasePortraits[0], 0x80,
+				strings, font, campaign.NativeShopPurchaseQuestion,
+				1, 0, 50,
+			)
+			check(err)
+			closing, err := campaign.NativeClassConfirmationClosingFrames(
+				question, choices,
+			)
+			check(err)
 			insufficient, err := campaign.ComposeNativeShopPurchaseInsufficientGold(
-				confirmation, strings, font, 1,
+				closing[len(closing)-1], strings, font, 1,
 			)
 			check(err)
 			writePNG(os.Args[7], insufficient, palette)

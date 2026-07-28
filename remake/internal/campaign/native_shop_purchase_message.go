@@ -113,16 +113,17 @@ func ComposeNativeShopPurchaseMessage(
 	)
 }
 
-// ComposeNativeShopPurchaseInsufficientGold reproduces the 0x2f16f branch:
-// the question and 0x19953 choice cells remain open while FDTXT 504/438 is
-// appended at literal VGA 0xac44c, which is framebuffer offset (12,157).
+// ComposeNativeShopPurchaseInsufficientGold reproduces the 0x2f2d3 branch:
+// 0x197e5 has already presented all four choice-closing frames. FDTXT 504/438
+// is appended to that caller-owned final framebuffer at literal VGA 0xac44c,
+// which is framebuffer offset (12,157).
 func ComposeNativeShopPurchaseInsufficientGold(
-	confirmation []byte,
+	postChoiceClose []byte,
 	strings *fdtxt.Strings,
 	font *fdtxt.Font,
 	hubVariant int,
 ) ([]byte, error) {
-	if len(confirmation) != NativeShopWidth*NativeShopHeight ||
+	if len(postChoiceClose) != NativeShopWidth*NativeShopHeight ||
 		strings == nil || font == nil {
 		return nil, errors.New(
 			"campaign: native shop insufficient-gold state is invalid",
@@ -137,7 +138,7 @@ func ComposeNativeShopPurchaseInsufficientGold(
 		)
 	}
 	return ComposeNativeChurchTextAt(
-		confirmation, strings, font, textIndex, 157*NativeShopWidth+12,
+		postChoiceClose, strings, font, textIndex, 157*NativeShopWidth+12,
 	)
 }
 

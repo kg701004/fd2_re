@@ -87,6 +87,7 @@ func (g *Game) setupNativeShop() bool {
 	g.nativeShopMode = "menu"
 	g.nativeShopServiceSel = 0
 	g.nativeShopItemStart = 0
+	g.nativeShopConfirmSel = 0
 	g.shopSel = 0
 	g.resetNativeShopUIPulse()
 	return g.beginNativeShopServiceOpening()
@@ -162,6 +163,78 @@ func (g *Game) composeNativeShopPurchaseList() ([]byte, bool) {
 		stable, assets, g.nativeShopUI.itemAssets,
 		itemIDs, start, g.shopSel, g.nativeShopUI.effectRows,
 		battle.NativeFacilityFullPrice,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) nativeShopSelectedGood() (campaign.Good, bool) {
+	if g.camp == nil {
+		return campaign.Good{}, false
+	}
+	goods := g.camp.ShopGoods()
+	if g.shopSel < 0 || g.shopSel >= len(goods) {
+		return campaign.Good{}, false
+	}
+	return goods[g.shopSel], true
+}
+
+func (g *Game) composeNativeShopPurchaseQuestion() ([]byte, bool) {
+	good, goodOK := g.nativeShopSelectedGood()
+	_, portrait, portraitID, stateOK := g.nativeShopState()
+	stable, stableOK := g.composeNativeShopStable()
+	if !goodOK || !stateOK || !stableOK {
+		return nil, false
+	}
+	shared := g.nativeClassUI
+	frame, err := campaign.ComposeNativeShopPurchaseMessage(
+		stable, shared.dialogue, portrait, portraitID,
+		shared.strings, shared.font, campaign.NativeShopPurchaseQuestion,
+		g.nativeShopVariant, good.ID, good.Price,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativeShopPurchaseConfirmation() ([]byte, bool) {
+	if g.nativeShopMode != "confirm" ||
+		g.nativeShopConfirmSel < 0 || g.nativeShopConfirmSel > 1 {
+		return nil, false
+	}
+	question, ok := g.composeNativeShopPurchaseQuestion()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeConfirmationChoices(
+		question, g.nativeClassUI.choices,
+		g.nativeShopConfirmSel, g.nativeShopUIPulse/2,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) nativeShopPostChoiceCloseFrame() ([]byte, bool) {
+	question, ok := g.composeNativeShopPurchaseQuestion()
+	if !ok {
+		return nil, false
+	}
+	frames, err := campaign.NativeClassConfirmationClosingFrames(
+		question, g.nativeClassUI.choices,
+	)
+	if err != nil || len(frames) != 4 {
+		return nil, false
+	}
+	return frames[len(frames)-1], true
+}
+
+func (g *Game) composeNativeShopInsufficientGold() ([]byte, bool) {
+	if g.nativeShopMode != "insufficient" {
+		return nil, false
+	}
+	postChoiceClose, ok := g.nativeShopPostChoiceCloseFrame()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeShopPurchaseInsufficientGold(
+		postChoiceClose, g.nativeClassUI.strings, g.nativeClassUI.font,
+		g.nativeShopVariant,
 	)
 	return frame, err == nil
 }
@@ -245,6 +318,63 @@ func (g *Game) beginNativeShopPurchaseClosing(after func()) bool {
 	return true
 }
 
+func (g *Game) beginNativeShopConfirmationOpening() bool {
+	question, ok := g.composeNativeShopPurchaseQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassConfirmationOpeningFrames(
+		question, g.nativeClassUI.choices,
+	)
+	if err != nil || len(frames) != 4 {
+		return false
+	}
+	g.resetNativeShopUIPulse()
+	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativeShopConfirmationChoiceClosing(after func()) bool {
+	question, ok := g.composeNativeShopPurchaseQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassConfirmationClosingFrames(
+		question, g.nativeClassUI.choices,
+	)
+	if err != nil || len(frames) != 4 {
+		return false
+	}
+	g.nativeShopUIJob = &nativeChurchUIJob{frames: frames, after: after}
+	return true
+}
+
+func (g *Game) beginNativeShopDialogueClosing(
+	composed []byte,
+	after func(),
+) bool {
+	stable, ok := g.composeNativeShopStable()
+	if !ok || len(composed) != 320*200 {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(stable, composed)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeShopUIJob = &nativeChurchUIJob{
+		frames: frames, restore: stable, after: after,
+	}
+	return true
+}
+
+func (g *Game) returnToNativeShopPurchaseList() {
+	g.nativeShopMode = "purchase"
+	if !g.beginNativeShopPurchaseOpening() {
+		g.nativeShopMode = ""
+		g.msg = "原版商店商品清單無法還原"
+	}
+}
+
 func (g *Game) stepNativeShopUILifecycle(now time.Time) {
 	job := g.nativeShopUIJob
 	if job != nil && job.drawn {
@@ -263,7 +393,8 @@ func (g *Game) stepNativeShopUILifecycle(now time.Time) {
 			}
 		}
 	}
-	if g.nativeShopUIJob == nil && g.nativeShopMode == "menu" {
+	if g.nativeShopUIJob == nil &&
+		(g.nativeShopMode == "menu" || g.nativeShopMode == "confirm") {
 		g.stepNativeShopUIPulseTick(g.nativeShopUIClock.Sample(now))
 	}
 }
@@ -300,6 +431,10 @@ func (g *Game) drawNativeShop(screen *ebiten.Image) bool {
 		frame, ok = g.composeNativeShopServiceMenu()
 	case "purchase":
 		frame, ok = g.composeNativeShopPurchaseList()
+	case "confirm":
+		frame, ok = g.composeNativeShopPurchaseConfirmation()
+	case "insufficient":
+		frame, ok = g.composeNativeShopInsufficientGold()
 	}
 	if !ok {
 		return false
@@ -400,7 +535,79 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			return true
 		}
 		if enter && len(goods) != 0 {
-			g.msg = "原版購買 confirmation production transition 尚未接線"
+			openConfirm := func() {
+				g.nativeShopMode = "confirm"
+				g.nativeShopConfirmSel = 0
+				if !g.beginNativeShopConfirmationOpening() {
+					g.nativeShopMode = ""
+					g.msg = "原版購買確認視窗無法還原"
+				}
+			}
+			if !g.beginNativeShopPurchaseClosing(openConfirm) {
+				openConfirm()
+			}
+			return true
+		}
+	case "confirm":
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+			g.nativeShopConfirmSel = campaign.AdvanceNativeClassConfirmation(
+				g.nativeShopConfirmSel, -1,
+			)
+			g.resetNativeShopUIPulse()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+			g.nativeShopConfirmSel = campaign.AdvanceNativeClassConfirmation(
+				g.nativeShopConfirmSel, 1,
+			)
+			g.resetNativeShopUIPulse()
+		}
+		cancel := inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+			enter && g.nativeShopConfirmSel == 1
+		if cancel {
+			closeDialogue := func() {
+				postChoiceClose, ok := g.nativeShopPostChoiceCloseFrame()
+				if !ok || !g.beginNativeShopDialogueClosing(
+					postChoiceClose, g.returnToNativeShopPurchaseList,
+				) {
+					g.returnToNativeShopPurchaseList()
+				}
+			}
+			if !g.beginNativeShopConfirmationChoiceClosing(closeDialogue) {
+				closeDialogue()
+			}
+			return true
+		}
+		if enter {
+			good, ok := g.nativeShopSelectedGood()
+			if !ok {
+				return true
+			}
+			afterChoiceClose := func() {
+				if g.gold < good.Price {
+					g.nativeShopMode = "insufficient"
+					return
+				}
+				postChoiceClose, frameOK := g.nativeShopPostChoiceCloseFrame()
+				g.msg = "原版購買 recipient production transition 尚未接線"
+				if !frameOK || !g.beginNativeShopDialogueClosing(
+					postChoiceClose, g.returnToNativeShopPurchaseList,
+				) {
+					g.returnToNativeShopPurchaseList()
+				}
+			}
+			if !g.beginNativeShopConfirmationChoiceClosing(afterChoiceClose) {
+				afterChoiceClose()
+			}
+			return true
+		}
+	case "insufficient":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			frame, ok := g.composeNativeShopInsufficientGold()
+			if !ok || !g.beginNativeShopDialogueClosing(
+				frame, g.returnToNativeShopPurchaseList,
+			) {
+				g.returnToNativeShopPurchaseList()
+			}
 			return true
 		}
 	}

@@ -67,6 +67,36 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 		len(g.nativeShopUIJob.restore) != 320*200 {
 		t.Fatal("native shop purchase list did not use five close frames and stable restore")
 	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "confirm"
+	g.nativeShopConfirmSel = 0
+	if !g.drawNativeShop(screen) {
+		t.Fatal("native shop purchase confirmation unexpectedly fell back")
+	}
+	if !g.beginNativeShopConfirmationOpening() ||
+		len(g.nativeShopUIJob.frames) != 4 {
+		t.Fatal("native shop confirmation did not use four original opening frames")
+	}
+	g.nativeShopUIJob = nil
+	if !g.beginNativeShopConfirmationChoiceClosing(nil) ||
+		len(g.nativeShopUIJob.frames) != 4 {
+		t.Fatal("native shop confirmation did not use four original closing frames")
+	}
+	postChoiceClose := append(
+		[]byte(nil),
+		g.nativeShopUIJob.frames[len(g.nativeShopUIJob.frames)-1]...,
+	)
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "insufficient"
+	insufficient, ok := g.composeNativeShopInsufficientGold()
+	if !ok || string(insufficient) == string(postChoiceClose) {
+		t.Fatal("native shop insufficient-gold feedback did not append after choice close")
+	}
+	if !g.beginNativeShopDialogueClosing(insufficient, nil) ||
+		len(g.nativeShopUIJob.frames) != 5 ||
+		len(g.nativeShopUIJob.restore) != 320*200 {
+		t.Fatal("native shop insufficient-gold feedback did not use five dialogue close frames")
+	}
 }
 
 func TestNativeShopProductionOwnerFailsClosedForCustomVariant(t *testing.T) {

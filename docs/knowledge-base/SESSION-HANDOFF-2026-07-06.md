@@ -1328,12 +1328,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-28 native purchase confirmation E1：`0x2f0c5..0x2f0f4`
   的question／insufficient／no-recipient／equip四組六variant FDTXT表已原樣
   保存；question展開商品名／價格後接`0x19953` Yes/No。重要生命週期勘誤：
-  insufficient不是fresh overlay，而是保留open confirmation並於
-  `0xac44c=(12,157)`追加第三行；API已拆開並fail-closed。新增
+  insufficient不是fresh overlay。後續指令順序重核修正本條早先錯誤：
+  `0x2f2a9`先完成`0x197e5`四幀choice closing，`0x2f2d3`才在其最後
+  framebuffer的`0xac44c=(12,157)`追加第三行；並非保留steady choices。
+  API已改收post-choice-close frame並fail-closed。新增
   `native-shop-purchase-confirm-indexed.png`與
   `native-shop-purchase-insufficient-indexed.png`、真實資源regression。
   下一個精確gate是recipient selector／full-inventory feedback與
   optional-equip→success→debit lifecycle，尚未接production owner。
+- 2026-07-28 native purchase confirmation production：商品list關閉後接
+  原版四幀confirmation opening、bounded左右Yes/No與pulse；No/Escape先
+  choice-close四幀，再dialogue-close五幀並重開商品list。Yes且gold不足
+  依上述更正後framebuffer追加FDTXT504/438，等待Enter/Escape後同樣關框
+  返回。gold足夠時因recipient owner尚未接，只顯示fail-closed訊息並返回，
+  不插入物品、不扣款。成果圖`native-shop-purchase-insufficient-indexed.png`
+  已依更正後framebuffer重生。
 - 2026-07-28 purchase recipient E1：`0x2f30a`證實type≥`0x20`才走
   `0x2e6b8`兩欄六人；type<`0x20`走filtered `0x2e8cf→0x2ebe0`三列
   AP/DP/HIT/EV比較，故新增consumable-only compositor並拒絕裝備type。

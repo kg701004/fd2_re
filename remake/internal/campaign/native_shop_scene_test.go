@@ -209,18 +209,30 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 	if string(confirmation) == string(purchaseSource) {
 		t.Fatal("purchase confirmation did not change the source frame")
 	}
-	confirmationBefore := append([]byte(nil), confirmation...)
-	insufficient, err := ComposeNativeShopPurchaseInsufficientGold(
-		confirmation, strings, font, 1,
+	question, err := ComposeNativeShopPurchaseMessage(
+		purchaseSource, dialogue, purchasePortraits[0], 0x80,
+		strings, font, NativeShopPurchaseQuestion, 1, 0, 50,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(insufficient) == string(confirmationBefore) {
-		t.Fatal("insufficient-gold feedback did not append to confirmation")
+	closing, err := NativeClassConfirmationClosingFrames(question, choices)
+	if err != nil || len(closing) != 4 {
+		t.Fatalf("purchase confirmation closing: frames=%d err=%v", len(closing), err)
+	}
+	postChoiceClose := closing[len(closing)-1]
+	postChoiceCloseBefore := append([]byte(nil), postChoiceClose...)
+	insufficient, err := ComposeNativeShopPurchaseInsufficientGold(
+		postChoiceClose, strings, font, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(insufficient) == string(postChoiceCloseBefore) {
+		t.Fatal("insufficient-gold feedback did not append after choice closing")
 	}
 	if string(insufficient[:157*NativeShopWidth+12]) !=
-		string(confirmationBefore[:157*NativeShopWidth+12]) {
+		string(postChoiceCloseBefore[:157*NativeShopWidth+12]) {
 		t.Fatal("insufficient-gold feedback changed pixels before literal VGA target")
 	}
 	if _, err := ComposeNativeShopPurchaseMessage(

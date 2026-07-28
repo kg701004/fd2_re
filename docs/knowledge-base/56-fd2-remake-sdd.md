@@ -831,13 +831,17 @@ question `{1,502,1,439,1,439}`, insufficient gold
 `{1,507,1,507,1,507}`. The question expands `FFFC` with
 `FDTXT[itemID+181]`, expands `FFFA` with the decimal price, and then calls the
 native `0x19953` Yes/No owner. The insufficient-gold branch does **not**
-rebuild the dialogue overlay: it preserves that open confirmation and writes
-its feedback at literal VGA `0xac44c`, framebuffer coordinate `(12,157)`.
-The strict compositor therefore rejects insufficient gold as a fresh message
-and exposes a separate append-only transition. Deterministic indexed fixtures
-cover both states. Recipient selection, recipient-full feedback, successful
-insert/equip animation, debit timing, opening/closing, and production shop
-integration remain fail-closed.
+rebuild the dialogue overlay. Instruction-order revalidation corrects the
+earlier framebuffer assertion: `0x2f2a9` first calls `0x197e5` and presents
+all four choice-closing frames; only then does `0x2f2d3` append feedback at
+literal VGA `0xac44c`, framebuffer coordinate `(12,157)`, to that final
+post-choice-close framebuffer. The strict compositor therefore accepts the
+fourth closing frame rather than a steady confirmation or fresh dialogue.
+Deterministic indexed fixtures cover both states. Production now owns the
+product-list close, four-frame confirmation open/steady/close, bounded
+Yes/No input, cancel return, insufficient wait, five-frame dialogue close,
+and product-list reopen. Recipient selection, recipient-full feedback,
+successful insert/equip animation, and debit timing remain fail-closed.
 
 Recipient selection has two distinct native owners and must not be normalized
 into one roster widget. After the gold check, item type `>=0x20` sets the

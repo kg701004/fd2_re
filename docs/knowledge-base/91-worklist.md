@@ -378,7 +378,7 @@
       自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
       `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
       不得稱完整原版一致。
-- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime。69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner，stable、四格service menu、purchase list及原版4/6/5-frame開關生命週期已接；custom 0保留擴充用generic fallback。購買confirmation/recipient/success及其他三個service仍未接production transaction，祕密商店進入E0與DOSBox E2亦待驗證。
+- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime。69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner；stable、四格service menu、purchase list、購買Yes/No、取消及不足金等待均依原版4/6/5-frame生命週期接入。`0x2f2a9`重核亦刪除「不足金仍保留steady choices」錯誤斷言，現在從`0x197e5`最後一幀追加。custom 0保留擴充用generic fallback。recipient/success/debit及其他三個service仍未接production transaction，祕密商店進入E0與DOSBox E2亦待驗證。
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
 
 ## 第 9 輪 ✅(3-subagent 成本分工;haiku=資料/sonnet=RE·套件/旗艦=架構·驗收)
@@ -1325,10 +1325,12 @@
   覆蓋兩層cancel、重新進入、成功commit與grid/selector reset。
 - [x] **UI-SHOP-PURCHASE-CONFIRM-E1**：完整重讀`0x2f0b0`後保存四組
   六variant FDTXT表；購買問題展開`FFFC`商品名與`FFFA`十進位價格，
-  並接原版`0x19953` Yes/No selected pulse。金額不足不重開frame，而是
-  保留confirmation並於literal VGA`0xac44c`／`(12,157)`追加第三行；
-  generic fresh-message API對此狀態fail-closed。真實FDOTHER/FDTXT/DATO
-  regression與兩張indexed fixtures已補。下一步仍是recipient selector、
+  並接原版`0x19953` Yes/No selected pulse。2026-07-28再以指令順序重核
+  修正 framebuffer 斷言：`0x2f2a9`先完成`0x197e5`四幀choice closing，
+  `0x2f2d3`才在其最後一幀的literal VGA`0xac44c`／`(12,157)`追加第三行；
+  不再錯誤保留steady Yes/No cells。production已接list close→confirmation
+  open/steady/close→cancel或不足金wait→dialogue close→list reopen。
+  真實FDOTHER/FDTXT/DATO regression與更正後indexed fixture已補。下一步仍是recipient selector、
   inventory-full、optional-equip/success/debit lifecycle與production owner。
 - [x] **UI-SHOP-CONSUMABLE-RECIPIENT-E1**：`0x2f30a`分流已釘死：
   item type≥`0x20`走`0x2e6b8`兩欄六人名冊；type<`0x20`走相容性篩選後
