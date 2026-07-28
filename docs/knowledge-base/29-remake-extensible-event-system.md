@@ -1,15 +1,23 @@
 # 29 — remake 可擴展事件系統規劃(從封閉 handler 到開放 DSL + 事件控制碼)
 
-> **原版 FD2 事件其實是雙層(2026-06-29 更正)**:
-> ① **資料層 = FDFIELD.DAT 控制段 `turn_events[16]`**(每條 `turn u8 + 全域事件id u8 + 陣營 u8`):記「第幾回合、觸發哪個事件、增援是友(1)/敵(0)/特殊(2)」;增援單位在 roster 標 `group`(b21),座標在出場位置段(地圖角落)。
-> ② **判定層 = 編進 EXE 的每章 handler**(doc 25/26):只管勝負條件(`unit_state`/`roster_has`/回合)→ 設碼。
-> 即「**動作(增援/演出)在資料,判定在程式**」——這也是為何 doc26 發現 handler「無動作函式」。優點是增援可資料化,**缺點仍封閉**:事件 id 語意、進場演出、對話綁定都寫死在 EXE,玩家無從擴充。
+> **狀態：歷史設計草案，不是原版事件 ABI 或目前 runtime 完成度規格。**
+> 本文保留 DSL 方向供擴充設計參考；原版忠實模式必須以
+> [`56-fd2-remake-sdd.md`](56-fd2-remake-sdd.md)、
+> [`42-re-vs-remake-gap-audit.md`](42-re-vs-remake-gap-audit.md) 與
+> [`91-worklist.md`](91-worklist.md) 的最新 evidence gate 為準。
+> 早期「handler 只管勝負、動作全在 FDFIELD」已被逐章 post/pre handler 的
+> SPAWN/JOIN/PAN/ACT/dialogue/LOADCH call trace 推翻；不得再拿本草案替代
+> hard-coded handler 的逐章轉錄。
+>
+> 已證實的資料邊界只有：FDFIELD 控制段保存 bounded turn-event records，
+> roster/group 與出場位置；event id、camp byte及其 caller-specific 行為仍須
+> 配合 EXE handler 與 runtime context 解讀，不能由欄位外觀全域命名。
 > remake 目標:把整套機制**資料化 + 開放**,新增事件 = 寫資料(JSON + 文本內嵌**事件控制碼**),引擎不為任何一關寫死分支。
 > 承接:doc 19(腳本系統)· doc 25/26(原版事件)· doc 28(關卡目標)· doc 14(原版文本控制碼)。資料:`tools/parse_field.py` 解 turn_events/group。
 
 ## 1. 設計原則
 
-1. **原版可表達**:原版 30 關(doc 28)能用這套 DSL 完整描述 → 證明表達力足夠。
+1. **原版可表達（目標，尚未證明）**:逐章 handler 轉錄完成後，原版 30 關應能由資料化 DSL 描述；目前不能以攻略目標表或本文件的 schema 宣稱表達力已完整驗證。
 2. **開放擴充**:新增條件/動作/事件,只加資料或註冊一個 handler,**不改既有關卡、不改核心迴圈**。
 3. **三層解耦**:`觸發時機(trigger) → 條件(when) → 動作(do)`,各自可獨立擴充。
 4. **資料優先,腳本兜底**:90% 事件用宣告式 JSON;少數複雜邏輯掛腳本(Go 註冊函式 / 嵌入式 script)。
@@ -38,7 +46,7 @@
 
 | 條件 | 語意 | 來源 |
 |---|---|---|
-| `unit_alive(id)` / `unit_dead(id)` | 單位存活/陣亡(原版 `unit_state` bit0) | **原版** doc 26 |
+| `unit_alive(id)` / `unit_dead(id)` | remake 高階條件；原版 record `+5` bit 的意義依 caller、camp 與 lifecycle 而異，不能全域等同存活/死亡 | **remake projection；native 待逐 caller 驗證** |
 | `roster_has(id)` | 我方隊伍有某角色(原版 `0x33499`) | **原版** doc 26 |
 | `turn >= N` / `turn == N` | 回合數(原版 `[0x53bef]`) | **原版** doc 26 |
 | `units_in_range(a,b, camp)` | 某陣營某群單位狀態 | **原版** |
@@ -155,12 +163,18 @@ ScenarioRunner (campaign 流程,doc 19)
 | 分支/多結局 | 幾乎沒有(33 固定路線) | branch / flag 任意分支 |
 | 編輯門檻 | 工程師 | 資料/腳本,甚至玩家 |
 
-→ 原版 30 關用本 DSL 重現(忠實模式),同一引擎也能跑**完全自創的戰役**——這就是 remake 相對原版的核心增值,呼應 worklist「擺脫原版固定 33 路線」。
+→ 目標是讓原版 30 關在逐章 evidence closure 後由本 DSL 重現，同一引擎也能跑
+**完全自創的戰役**。目前只有部分可重播 campaign/event/beat primitives，
+不能把這個設計目標寫成已完成的忠實模式。
 
-## 11. 第1章「初試身手」完整 DSL 實例(原版 FDFIELD → remake,當實作藍本)
+## 11. 第1章「初試身手」早期 DSL 草案（非原版完整轉錄）
 
-原版 map0 的 `turn_events`(T3友/T4敵/T5敵/T6友)+ 青衫 ground truth,用本 DSL 完整表達。
-**主角隊(索爾/亞雷斯/妮雅/蓋亞)不在 FDFIELD roster → 由 `on_battle_start` 事件進場**;
+以下 JSONC 是 schema 示意，不是目前 `ch01.json`，也沒有覆蓋原版 ch00
+pre/post handler、acting、camera、dialogue 與 persistence 全序列。
+原版 map0 的 `turn_events`(T3友/T4敵/T5敵/T6友)可作為候選輸入之一；
+**主角隊應為索爾／亞雷斯／悠妮／蓋亞（不是妮雅）**。其進場 owner 與
+presentation 必須依 handler call trace，不得只因不在 FDFIELD roster 就推定為
+`on_battle_start/spawn_march`。
 哈諾/哈瓦特雖在 roster(group 3/7)但 T3 才登場;敵援軍/海盜頭目/警備隊按回合各從角落出。
 
 ```jsonc
@@ -173,7 +187,7 @@ ScenarioRunner (campaign 流程,doc 19)
   "events": [
     { "id":"opening", "trigger":"on_battle_start", "once":true, "do":[
         // 主角隊從戰場下緣行軍到部署格(進場演出)→ 對話
-        {"spawn_march": {"units":["sol","ares","nia","gaia"], "from":"edge_bottom", "to":"deploy"}},
+        {"spawn_march": {"units":["sol","ares","yuni","gaia"], "from":"edge_bottom", "to":"deploy"}},
         {"dialogue":"ch1_opening"}
     ]},
     { "id":"hano_join", "trigger":"on_turn_end", "when":{"turn==":3}, "once":true, "do":[

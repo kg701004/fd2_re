@@ -22,7 +22,7 @@
 
 ## 文件狀態入口（更新至 2026-07-28）
 
-目前統計：`[x]=491`、`[~]=99`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
+目前統計：`[x]=492`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -32,6 +32,7 @@
 - [x] 2026-07-27 stale dialogue-operand assertion cleanup：`09`、`01`、`18` 不再把控制碼第二 word 一律稱為固定肖像/DATO ID；依 `0x15f84→0x12c60` 分開 identity lookup、runtime unit `+7` 與 direct-DATO fallback，並將 `FFFA/FFFB` 統一修正為遞迴名稱／數值插入碼，不是特效。
 - [x] 2026-07-27 second-pass dialogue wording audit：`14` §4 的組合說明與 `-17/-18` 讀取步驟仍殘留「直接肖像 ID」舊斷言，已改成 identity lookup／record `+7`／direct-DATO fallback 三路 provenance；未修改任何未證實的 story operand。
 - [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 remake 自有 JSON projection，不冒稱 `FD2.SAV` byte identity。
+- [x] **DOC-EVENT-DSL-ASSERTION-AUDIT-20260728**：將`29-remake-extensible-event-system.md`明確降級為歷史設計草案；刪除「handler只管勝負／動作全在FDFIELD」「record +5 bit0全域等同存活」「第一章主角含妮雅」「示例已完整重現30關」等會污染忠實模式的斷言。同步將第3/6/7/8輪的「核心全完成／通用1:1／像素級收官／魔法SFX補完」標題限定為當時codec或fixture範圍；SDD視覺估計統一為doc57的40–45%，shop recipient production接線明列為E1而非DOSBox lifecycle parity，並刪除已被後續closure取代的ch29 cleanup重複待辦。
 - [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依 official IDA/Capstone 的 `0x2cad7/0x2d093` 與 `0x526b9` raw table，新增 `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、hub selector→raw callee mapping、invalid fail-closed。只保存 address-level route，不把 option 命名成酒店／商店／教會，也不直接呼叫 scene。
 - [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 resource與selector後續已完成callee dataflow：`0→0x2f0b0` purchase、`1→0x2f642` sell、`2→0x2f883` equip、`3→0x2f8ea` inventory transfer。命名依insert/remove/equip/gold writer與FDTXT，不依icon猜測；`ResolveNativeShopServiceRoute`現保存typed kind但仍不呼叫scene。
 - [x] **RE-TOWN-HOTEL-SERVICE-2FC85**：Docker Capstone 固定 `0x2fc85` raw resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute` raw plan/regression。只保存 address-level order，不命名服務、不執行 scene。
@@ -78,7 +79,7 @@
 - [x] **音樂解析**:確認 XMIDI,`tools/xmi2mid.py` 轉 15 首標準 MIDI(note 平衡、tempo 直通)→ `07-music-xmidi-format.md`
 - [x] **動畫機制結構**:AFM 容器 + FIGANI 幀封裝(幀數自描述 + offset 表)→ `06-animation-format.md`
 
-## 第 3 輪 ✅(核心全完成;2 零星項 2026-07-05 核實已完成補勾)
+## 第 3 輪（歷史素材／codec round；勾選不代表核心引擎或 AI 全完成）
 - [x] **文本解碼**:破解 FDTXT(uint16 glyph 索引 + 控制碼 + 0xFFFF)+ 找到自製字型(FDOTHER_004,16×16 1bpp,1824 字模),**還原可讀中文** → `08-text-and-font-format.md`、`tools/decode_text.py`
 - [x] **動畫逐幀拆解**:✅ **完整破解**!反組譯參數化解碼器 0x4F43D + 解出 13-byte 幀標頭(realW/H 在 +9/+11)+
       4 模式 RLE → `tools/decode_figani.py` 把 **264 動畫 2118 幀**全部解出(騎士揮劍動畫視覺驗證)← 使用者明確要求,完成
@@ -297,7 +298,7 @@
 - [~] 單位 0x50B 結構：`+5` raw bit0/bit7 predicates、`+8`角色ID、`+0/+1/+2/+6/+0x31` 已解；完整逐欄佈局 [阻]（remake 用自有 struct，不需）
 - [ ] (補)更新 doc 12:修正「main=0x10000」、補章節→BGM 表 0x51e63 精確曲號
 
-## 第 6 輪 ✅(戰鬥全螢幕演出畫面 1:1 還原 — 使用者逐項對照;①-④ 全完成 2026-07-05)
+## 第 6 輪（歷史單一戰鬥演出 fixture 對照；不代表通用戰鬥 renderer 1:1）
 > 目標:remake 戰鬥攻擊演出(orig_05)像素級對齊原版。方法=**密集網格疊圖 oracle**(見記憶 pixel-align)+ 反組譯確認機制,**無 dosbox debugger**(0.74 vanilla 不能 dump)。
 - [x] **完整 RE 戰鬥演出繪圖機制** → `35`:演出主函式 0x28a6c、blit 0x4e63d(無縮放/無翻轉,尺寸朝向燒進素材)、固定錨點(164,157)、phase [0x540ff]、BG 多層(0x52381=BG.DAT)、戰場→BG 表 0x52363
 - [x] **figure 幀/姿態**:我方亞雷斯=攻擊動作1 `FIGANI_013_f01`(組×3+1,人眼確認);幀序播放;守方不翻轉(FIGANI_288 原圖面右)
@@ -314,7 +315,7 @@
 - [x] **③ 狀態欄框/HP 用真素材** ✅(v25-26):破解 FDOTHER#5 LMI1 sub-sprite codec(反組譯 0x4e916:c≤0xC0 literal/c>0xC0 run,新 codec,`tools/decode_lmi.py`);框=#22(149×42 含bevel+標籤+槽)貼 panel.png、血條 cell=#27-30;修 HP靠左(槽 x21-123)/提亮/數字對位。doc35 §4.2.5。盜賊 y 軸對齊(276→296,頭頂偏上一排)
 - [x] **④ BG 草地延伸到 figure 腳下** ✅(2026-07-05 使用者確認 `docs/figures/battle_restore_grid.png` 網格對照:左原版/右 remake 兩邊草地都延伸到 figure 腳下、台座疊綠草非黑底,一致)
 
-## 第 7 輪 ✅(戰鬥演出資料驅動 + 像素級收官,2026-07-02)
+## 第 7 輪（歷史戰鬥演出資料化 round；「像素級」只限當時 fixture）
 > 從「手調對齊」進化到「原版資料驅動」;README 對外展示;全部 push(commit 至 a42ee4a+)。
 - [x] **[重大] FIGANI 幀標頭 +0/+2 = 每幀絕對螢幕座標 (dx,dy)@320**(修 doc06 錯誤標註「boundW/boundH」):
       f01=(141,3)/盜賊=(16,41) 與模板匹配 orig 落點完全一致 → 走位/伸擊/突刺全在資料,引擎照貼即可
@@ -331,7 +332,7 @@
 - [x] **FD2_SHOT_SERIES 逐幀截圖鉤子**(GIF/分鏡素材管線)
 - [x] 名字=TTF 28px+深藍描邊(~85%,既定決策:只有狀態欄數字用點陣素材,其他文字 TTF)
 
-## 第 8 輪 ✅(remake 玩法系統盤點與補完 — 魔法/SFX 已於第7-11輪補完,2026-07-05 核實補勾)
+## 第 8 輪（歷史玩法盤點 round；魔法／SFX／campaign 目前仍是 partial）
 > 使用者指示:檢視腳本系統一路到移動/觸發戰鬥/魔法,盤點缺口逐項補。
 - [x] 盤點完成(見下缺口清單)
 - [x] **腳本系統 campaign(M4 骨架)** ✅(74bf386):internal/campaign(節點圖 Runner:story/battle/
@@ -700,7 +701,6 @@
 - [x] **RE-22046-INDEXED-PASS-SEQUENCE**：Docker Capstone 重讀 `0x22046`，新增 `fdother.ApplyIndexedTransitionPass` 保存第一 radial LUT→`0x127a9` middle redraw→第二 radial LUT→centered rectangle LUT 的不可省略順序；三段 geometry 先完整 preflight，缺 redraw/invalid second pass 不修改 buffer。LUT bank、double-buffer與Ebiten presentation已由strict runtime adapter消費。
 - [x] **ch29 final 0x24618 arguments**：依 layout→focus 的 native scroll-offset writes，`0x25848` dynamic args 已定案為 tile `(6,6)`、radial radius `(10,step8)`，已寫入 binding/compiler regression並由runtime adapter消費；terminal handler仍因`0x2bce5`維持fail-closed。
 - [x] **0x24618 pass-range/runtime boundary**：`0x22046` 的固定最後兩參數是 row range `[start_y,end_y)=[0,0xc0)`，不是 source_y 或 blit width；clip `0x138×0xc0`、radial step、`0x53a6d` LUT bank、`0x219ad` row clip均已接入strict indexed adapter。
-- [~] **ch29 post persistent roster cleanup**：`0x25089` 已實作獨立 `reset_persistent_roster_state` compiler/runtime beat（清 transient、MaxHP/MaxMP 回填），避免誤併入 `sync_party`；需補 binding、測試並接到正確 town/shop/preparation 節點。
 - [~] **ch29 pre native unit presentation**：舊「6×(render+present+10ms)+2 ticks」結論已撤回。完整 `0x22253` trace 是前段 `0x22470` 11 次 LMI present/tick、中央 `0x22547` 6 次 10ms remap present+2 ticks、後段 `0x22656` 10 次 remap present/tick，合計 27 次 present；既有 `unit_present` metadata 不完整，維持 fail-closed。
 - [x] **`0x22253` machine-readable schedule boundary**：`fdother.NativeUnitPresentSchedule` 現嚴格保存三段 11+6+10 的 27 個 present：FDOTHER#6 entries `0x72..0x7c`（各1 tick）、FDOTHER#3 entries `5..0`（各10ms，最後才2 ticks）、#3 entries `0..9`（各1 tick）。regression 拒絕舊 six-frame shortcut 或把兩 ticks 移位；這仍不是 geometry/buffer/Ebiten renderer adapter。
 - [x] **`0x22470` first-phase destination ABI**：direct arithmetic 已保存為 `NativeUnitPresentByteOrigin(x,y,camX,camY)=0x8088+24*(x-camX)+24*456*(y-camY)+456`。它是 456-stride indexed work-buffer byte offset，最後 `+456` 不可漏；raw helper 保留 offscreen signed result，clip 仍屬 caller/renderer boundary。LMI decoder／unit-layer/present adapter 尚待組合。
@@ -1349,8 +1349,9 @@
   Yes/No cells或使用第四個inward frame。production已接list close→confirmation
   open/steady/close→cancel或不足金wait→dialogue close→list reopen。
   真實FDOTHER/FDTXT/DATO regression與更正後indexed fixture已補。recipient
-  selector與inventory-full後續已接production；下一步是
-  optional-equip/success/debit lifecycle。
+  selector與inventory-full後續已有E1 production實作；recipient input/scroll、
+  no-recipient/full/success仍無DOSBox E2，不能由production接線推論原版操作
+  驗收。下一步是optional-equip/success/debit lifecycle及同狀態E2。
 - [x] **UI-SHOP-CONSUMABLE-RECIPIENT-E1**：`0x2f30a`分流已釘死：
   item type≥`0x20`走`0x2e6b8`兩欄六人名冊；type<`0x20`走相容性篩選後
   的`0x2e8cf→0x2ebe0`三列能力比較面板。新增strict consumable wrapper，

@@ -95,12 +95,11 @@ ownership 與 command-30 caller contract 仍由各自 evidence gate 控制。
 2026-07-28 visual audit correction：codec／原資源 fixture 的完成度不得再
 寫成整體 UI parity。依 12 個主要界面逐項比較 repo DOSBox／錄影 oracle、
 source-rebuild screenshot 與外部原版畫面後，目前 asset/codec 可重現約
-75–85%、可操作 state flow 約50–55%，但玩家操作畫面的視覺還原只約
-35–40%。最大落差是 town、weapon/item shop、preparation、loadslots 與
-generic ending：它們仍由 `drawCampaignUI` 畫現代半透明框，和原版的
-320×200 indexed 場景、人物／店內背景、原生框與圖示選單不同。ch01 field
-與 church slices 最接近，但仍缺同一 save/roster/tick 的 DOSBox pixel diff。
-完整分項和證據分級以 doc57 為準；README 已撤回把 raw `title.png`／
+75–85%、可操作 state flow 約50–55%，但玩家操作畫面的視覺還原約
+40–45%。35–40%是同日較早、尚未計入ch02 town/shop indexed production
+與DOSBox E2的初估，已由doc57分項矩陣取代。最大落差仍包括preparation、
+loadslots、ending、town variant1/2與商店其餘child panels；不得因ch02已驗
+切片而外推成全章覆蓋。完整分項和證據分級以doc57為準；README 已撤回把 raw `title.png`／
 `dialogue.png` 稱為 remake runtime 對照的標示。
 
 `~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic` 為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
@@ -1095,14 +1094,17 @@ current→candidate fields. The shop-resource offset provenance maps the panel
 and labels to entries 16 and 18..22; six `0x1974c` opening frames and five
 `0x2d31b` closing frames reuse the proven band schedule. Original-resource
 regression and a deterministic indexed fixture cover the stable target.
-Production now owns the filtered three-row cursor and its six/five-frame
-lifecycle. A correctness gate was added during integration: the generic item
+Production has a runtime implementation of the filtered three-row cursor and
+six/five-frame jobs; recipient cursor input and opening/closing timing still
+have no DOSBox E2 evidence and must not be treated as lifecycle parity. A
+correctness gate was added during integration: the generic item
 panel record omitted native base AP/DP `+0x37/+0x39`, so equipment preview now
 uses `NativeShopEquipmentRecordForUnit`, which requires
 `EquipmentBaseSet` and writes those fields explicitly. Missing base/raw
 provenance fails closed rather than previewing zero. At this point the
-recipient targets and cancel/full branches are production-owned;
-success/debit order and DOSBox E2 are handled separately below.
+recipient targets and cancel/full branches have E1 production
+implementations; recipient input/scroll, no-recipient/full, success/debit and
+their DOSBox E2 remain separate gates below.
 
 The first same-state equipment-recipient trace now closes the stable ch02
 selection0 frame, but not cursor input or opening/closing timing. Direct

@@ -1771,3 +1771,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `FD2_SHOT_PARTY_BINDING`，DX `2/2/1/2`是可見HIT/EV與已知裝備列交叉約束，
   LOADCH PartyOrder則是已記錄provenance加compiler validation；三者都不是
   native FD2.SAV完整campaign trace或獨立raw欄位dump。
+
+## 2026-07-28 authority-document assertion audit
+
+- `29-remake-extensible-event-system.md`是早期擴充DSL構想，不是native event
+  ABI。已撤回「hard-coded handler只管勝負、動作都在FDFIELD」；目前逐章
+  evidence已直接看到SPAWN/JOIN/PAN/ACT/dialogue/LOADCH，忠實模式必須逐支
+  轉錄，不能由攻略或schema補完。
+- 同文件撤回`record +5 bit0=alive/dead`全域命名，改為caller-specific raw
+  predicate；第一章主角隊修正為索爾／亞雷斯／悠妮／蓋亞，示例中的妮雅改為
+  悠妮。`spawn_march`仍只留schema示意，不代表原版進場owner已證實。
+- worklist早期round標題曾把單一codec/fixture成果寫成「核心全完成／通用
+  1:1／像素級收官／魔法SFX補完」，已改成歷史scope標記；項目內較新的
+  partial/fail-closed敘述才是現況。
+- SDD整體UI視覺估計已統一到doc57的40–45%；shop recipient的filtered list、
+  open/close jobs與full/cancel branch只算E1 production implementation，
+  input/scroll、no-recipient/full/success及lifecycle timing仍需DOSBox E2。
+- ch29 `0x25089` cleanup已有binding/compiler/runtime regression；刪除同一
+  worklist後段仍稱「需補binding、測試、接town/shop/preparation」的過時重複項。
