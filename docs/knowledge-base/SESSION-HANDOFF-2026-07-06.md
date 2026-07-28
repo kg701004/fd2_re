@@ -1746,3 +1746,28 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   為`[0,9,4]`，首次native-identity sync亦能命中既有record。
 - 這是remake typed runtime lifecycle修正，不證明native FD2.SAV相容或完整
   title→ch00→battle→postbattle→town→shop input/E2 playthrough。
+
+## 2026-07-28 equipment-recipient selection1／暫停點
+
+- 原版由已閉合的裝備收件者selection0按Down可到selection1，按Up回selection0；
+  Left/Right不改selection。production目前也是bounded Up/Down、Left/Right no-op，
+  三列window由`campaign.NativeThreeRowWindow`提供，但還沒有直接覆蓋
+  `handleNativeShopInput`的input-level regression，不能只以renderer測試代替。
+- 目前selection1高頻取樣與同FDICON cycle的remake逐像素比較，只剩商店人物區
+  `(175,90)`、`(176,90)`兩點不同：原版兩點皆`(138,158,158)`，remake分別為
+  `(101,121,121)`／`(117,138,138)`，總計6個RGB bytes。recipient panel、
+  selected-yellow row、stats、sprites與window其餘像素一致。selection0的不同
+  原版採樣也曾在同兩點於兩種值間切換，因此這是尚未同步的原版環境／portrait
+  相位證據，不得遮罩，也不得把selection1寫成全幀AE=0。
+- `tools/docker/fd2-dosbox-screenshot.sh`新增
+  `waitpixel:x,y,r,g,b,delay_seconds,max_tries`，可在送下一個input前以原版畫面
+  像素簽章同步。已通過`bash -n`、Docker image重建、非法參數exit2、
+  未命中exit4與命中exit0；沒有改裝host Python或Capstone環境。
+- 下一輪先建立乾淨的disposable native save/game sandbox，再以`waitpixel`
+  同步上述環境相位後送Down，取得selection1與後續scroll E2。若相位在乾淨流程
+  仍不可達，應保留partial並追caller-owned portrait/palette presentation，
+  不能以固定sleep、忽略兩像素或猜測renderer語意閉合。
+- 文件稽核提醒：裝備收件者selection0 E2依賴screenshot-only
+  `FD2_SHOT_PARTY_BINDING`，DX `2/2/1/2`是可見HIT/EV與已知裝備列交叉約束，
+  LOADCH PartyOrder則是已記錄provenance加compiler validation；三者都不是
+  native FD2.SAV完整campaign trace或獨立raw欄位dump。

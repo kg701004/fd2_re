@@ -166,6 +166,10 @@ membership/order時才補尚不存在的persistent record，direct/debug LOADCH�
 憑空建立隊伍；ch00真實scenario可把`[0,9,4,30]`送入ch02裝備收件者候選
 `[0,9,4]`。這是remake自有runtime regression，仍不是native FD2.SAV或完整
 campaign playthrough E2。
+收件者selection1的原版input route已實測Down／Up與Left/Right no-op；目前同cycle
+逐像素比較只剩商店人物區兩點（6個RGB bytes）的環境相位差，收件者panel本身其餘
+像素一致。這一狀態仍列partial：不遮罩差異、不宣稱全幀AE=0；下輪將用已加入
+Docker DOSBox runner的exact-pixel同步再驗selection1／scroll。
 town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與

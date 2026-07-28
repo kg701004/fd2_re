@@ -142,6 +142,35 @@ for step in "${steps[@]}"; do
                 exit 3
             fi
             ;;
+        waitpixel)
+            IFS=',' read -r x y red green blue delay max_tries <<< "$arg"
+            if [[ ! "$x" =~ ^[0-9]+$ || ! "$y" =~ ^[0-9]+$ ||
+                  ! "$red" =~ ^[0-9]+$ || ! "$green" =~ ^[0-9]+$ ||
+                  ! "$blue" =~ ^[0-9]+$ ||
+                  ! "$delay" =~ ^[0-9]+([.][0-9]+)?$ ||
+                  ! "$max_tries" =~ ^[1-9][0-9]*$ ||
+                  "$red" -gt 255 || "$green" -gt 255 || "$blue" -gt 255 ]]; then
+                echo "waitpixel expects x,y,r,g,b,delay_seconds,max_tries: $step" >&2
+                exit 2
+            fi
+            expected="srgb(${red},${green},${blue})"
+            echo "[fd2-shot] waitpixel ($x,$y)=$expected every ${delay}s, max $max_tries"
+            found=false
+            for _ in $(seq 1 "$max_tries"); do
+                import -window root /tmp/fd2-pixel-probe.png
+                actual=$(convert /tmp/fd2-pixel-probe.png -format \
+                    "%[pixel:p{$x,$y}]" info:)
+                if [[ "$actual" == "$expected" ]]; then
+                    found=true
+                    break
+                fi
+                sleep "$delay"
+            done
+            if [[ "$found" != true ]]; then
+                echo "pixel signature not reached: expected=$expected actual=$actual" >&2
+                exit 4
+            fi
+            ;;
         type) echo "[fd2-shot] type $arg"; xdotool windowfocus "$window"; xdotool type --delay 80 "$arg" ;;
         shot) echo "[fd2-shot] shot $arg"; import -window root "/shots/${arg}.png" ;;
         *) echo "unknown timeline step: $step" >&2; exit 2 ;;
