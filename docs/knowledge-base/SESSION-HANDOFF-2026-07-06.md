@@ -1584,5 +1584,23 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 新圖
   [`secret-shop-ch02-original-vs-remake.png`](../figures/secret-shop-ch02-original-vs-remake.png)
   左為原版DOSBox、右為目前source-built remake selected phase。下一個 precise
-  gate 是原版Left/Right到service1–3與Escape closing→town restore；variant1/3
-  仍沒有同狀態DOSBox E2。
+  gate 原為service1–3與Escape return；下節已閉合。variant1/3仍沒有同狀態
+  DOSBox E2。
+
+## 2026-07-28 ch02 secret-shop four-service and return E2
+
+- 原版 stable menu 實送 Right `0→1→2→3→0`、Left `0→3`；六張畫面各自
+  與 `FD2_SHOT_SHOP_STATE=service,pulse,0` 某一phase的320×200全幀
+  AE=0。這同時驗證四項service icon anchors、wrap與input後pulse reset結果。
+- Escape後0.1/0.35/0.85秒為closing/fade，3.85秒已回ch02 town且仍顯示
+  hidden selection5；該幀與deterministic town selection5/pulse1全幀AE=0。
+- 這推翻production `leaveShop`已等價的斷言：`enterNode()`返回town時會把
+  `campSel`重設0。現在先保存native shop variant，只有next node確為town且
+  variant為1/3/5時恢復同值；custom/non-native shop仍為0。variant5有本輪
+  DOSBox直接證據，variant1/3沿用已閉合的town option→shop variant dispatch。
+  `TestNativeShopReturnRestoresDispatchingTownSelection`覆蓋1/3/5及custom0。
+- 新圖
+  [`secret-shop-ch02-services-return-original-vs-remake.png`](../figures/secret-shop-ch02-services-return-original-vs-remake.png)
+  上排原版、下排remake，從左到右service0/1/2/3與returned town selection5，
+  每一格全幀AE=0。下一gate改為ordinary shop variant1/3，以及四個service
+  child panel的DOSBox同狀態E2。

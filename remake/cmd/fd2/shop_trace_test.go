@@ -52,3 +52,48 @@ func TestCampaignTownShopPurchaseReturnTrace(t *testing.T) {
 		t.Fatalf("purchased inventory=%v", got)
 	}
 }
+
+func TestNativeShopReturnRestoresDispatchingTownSelection(t *testing.T) {
+	for _, variant := range []int{1, 3, 5} {
+		c := &campaign.Campaign{
+			Start: "shop",
+			Nodes: map[string]*campaign.Node{
+				"shop": {
+					Type: "shop", NativeHubVariant: variant, Next: "town",
+				},
+				"town": {Type: "town"},
+			},
+		}
+		g := &Game{
+			camp:              campaign.NewRunner(c),
+			campSel:           0,
+			nativeShopVariant: variant,
+		}
+		g.leaveShop()
+		if g.camp.NodeID() != "town" || g.campSel != variant {
+			t.Fatalf(
+				"variant%d return=(node %q selection %d), want town/%d",
+				variant, g.camp.NodeID(), g.campSel, variant,
+			)
+		}
+	}
+
+	c := &campaign.Campaign{
+		Start: "shop",
+		Nodes: map[string]*campaign.Node{
+			"shop": {Type: "shop", Next: "town"},
+			"town": {Type: "town"},
+		},
+	}
+	g := &Game{
+		camp:    campaign.NewRunner(c),
+		campSel: 4,
+	}
+	g.leaveShop()
+	if g.camp.NodeID() != "town" || g.campSel != 0 {
+		t.Fatalf(
+			"custom shop return=(node %q selection %d), want town/0",
+			g.camp.NodeID(), g.campSel,
+		)
+	}
+}

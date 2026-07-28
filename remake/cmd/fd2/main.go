@@ -3422,11 +3422,20 @@ func (g *Game) leaveShop() {
 	if g.camp == nil || g.camp.Node() == nil || g.camp.Node().Type != "shop" {
 		return
 	}
+	returnSelection := g.nativeShopVariant
 	g.nativeShopUIJob = nil
 	g.nativeShopMode = ""
 	g.nativeShopVariant = 0
 	g.camp.Advance("")
 	g.enterNode()
+	if n := g.camp.Node(); n != nil && n.Type == "town" &&
+		(returnSelection == 1 || returnSelection == 3 ||
+			returnSelection == 5) {
+		// 0x2e341 returns to the same town selector that dispatched the
+		// weapon/item/secret branch. In particular, DOSBox E2 confirms
+		// secret variant 5 restores the revealed hidden selection 5.
+		g.campSel = returnSelection
+	}
 }
 
 // applyHotelServiceSelection is deliberately raw: official 0x2fc85 proves

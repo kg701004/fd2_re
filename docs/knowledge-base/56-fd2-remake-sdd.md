@@ -143,8 +143,8 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
-| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 hidden reveal及selection5後Enter進secret shop亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2、secret shop返回town與逐章route E2 |
-| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 secret variant5 service0 phase0/2已達原版 DOSBox／production remake 同gold raw RGB整幀AE=0，並由E2抓出及修正service pulse double-`/2`；尚待service1–3、返回town與variant1/3 E2 |
+| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2與逐章route E2 |
+| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 secret variant5四個service、Right/Left wrap及Escape→town selection5已達原版DOSBox／production remake同gold raw RGB整幀AE=0；E2修正service pulse double-`/2`與返回selection0錯誤。尚待variant1/3及child panel E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector（slot 1 保留舊 `fd2_save.json`，slot 2–4 使用 `fd2_save_1..3.json`），且 `TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證 town 節點存檔後可恢復 persistent party/gold/items 並清除 transient scene；`postbattle_*` 未完成 handler 也由 `TestSaveRejectsUnboundPostbattleBoundary` 拒絕存檔；保存 [`save-town-boundary-ch02.json`](../data/ui-traces/save-town-boundary-ch02.json)。`remake/internal/fdsave` 已提供 raw rolling-XOR/checksum、slot bounds、verified metadata 與 opaque `WriteSlot` adapter；但 native `FD2.SAV` roster/opaque metadata 尚未接入自有 campaign save；4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）仍非相容實作 |
@@ -895,8 +895,26 @@ passed `nativeShopUIPulse/2`. The double division made phase2/3 permanently
 render the normal cell. The caller now passes the full phase and a production
 consumer regression requires phase0 and phase2 frames to differ. Confirmation
 widgets still receive their proven 0/1 cell variant; this correction is not
-generalized to unrelated compositors. Remaining shop E2 is service1–3 input,
-Escape/closing restore to town, and ordinary variants1/3.
+generalized to unrelated compositors.
+
+The next original input trace closes the complete variant5 menu boundary:
+Right reaches `0→1→2→3→0`, Left reaches `0→3`, and each of those six
+320×200 frames matches a deterministic remake service/pulse with absolute
+pixel error zero. Escape finishes the native closing lifecycle and restores
+the town with hidden selection5 still visible; that frame also matches the
+remake town selection5/pulse1 with zero error. The
+[`two-row sheet`](../figures/secret-shop-ch02-services-return-original-vs-remake.png)
+shows services0..3 and the restored town, original above remake.
+
+This return E2 disproved the production boundary behavior: `enterNode()` reset
+every town selector to0 after `leaveShop()`. `leaveShop()` now preserves the
+proven native dispatch variant before clearing shop state and, only when the
+editable next node is a town, restores variant1/3/5 as selection1/3/5.
+Variant5 is directly confirmed by this DOSBox trace; variant1/3 follow the
+already closed `0x2d093→0x2e341` dispatch mapping. Custom/non-native shops
+retain selection0. Remaining menu-level shop E2 is ordinary variants1/3;
+purchase/sell/equip/transfer child panels still require their own DOSBox
+state traces.
 
 Standalone equip has a separate scene contract from the optional equip prompt
 inside purchase. `0x2f883` calls `0x2e6b8` for the two-column party roster,
