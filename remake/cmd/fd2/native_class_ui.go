@@ -90,8 +90,8 @@ func loadNativeClassUIAssets() (*nativeClassUIAssets, error) {
 	if err != nil {
 		return nil, err
 	}
-	dialogue := make([]fdother.RawCell, 18)
-	for index := 1; index <= 17; index++ {
+	dialogue := make([]fdother.RawCell, 20)
+	for index := 1; index <= 19; index++ {
 		dialogue[index], err = fdother.ParseLMI1RawEntry(resource5, index)
 		if err != nil {
 			return nil, err

@@ -89,6 +89,24 @@ func parseNativeShopConfirmShotState(
 	return good, choice, pulse, gold, true
 }
 
+func parseNativeShopInsufficientShotState(
+	spec string,
+) (good, gold int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+	good, err := strconv.Atoi(parts[0])
+	if err != nil || good < 0 {
+		return 0, 0, false
+	}
+	gold, err = strconv.Atoi(parts[1])
+	if err != nil || gold < 0 || gold > 99999999 {
+		return 0, 0, false
+	}
+	return good, gold, true
+}
+
 // setNativeShopShotState is a screenshot-only oracle hook. It may select a
 // stable service-menu frame after setupNativeShop has claimed a proven native
 // shop node. Gold is an explicit visible-state input for the one captured
@@ -196,6 +214,49 @@ func (g *Game) setNativeShopConfirmShotState(
 	g.nativeShopUIHasTick = false
 	g.gold = gold
 	return true
+}
+
+// setNativeShopInsufficientShotState exposes only the stable feedback reached
+// after a real editable good fails the original affordability comparison.
+// It never debits gold or mutates a recipient.
+func (g *Game) setNativeShopInsufficientShotState(good, gold int) bool {
+	if good < 0 || gold < 0 || gold > 99999999 ||
+		g.camp == nil || g.nativeShopUI == nil ||
+		g.nativeClassUI == nil ||
+		len(g.nativeClassUI.choices) <= 52 ||
+		len(g.nativeClassUI.dialogue) <= 17 ||
+		g.nativeClassUI.strings == nil ||
+		g.nativeClassUI.font == nil ||
+		g.nativeShopMode != "menu" {
+		return false
+	}
+	n := g.camp.Node()
+	goods := g.camp.ShopGoods()
+	if n == nil || n.Type != "shop" ||
+		n.NativeHubVariant != g.nativeShopVariant ||
+		good >= len(goods) || gold >= goods[good].Price {
+		return false
+	}
+	if _, ok := g.nativeShopUI.shops[n.NativeHubVariant]; !ok {
+		return false
+	}
+	if _, ok := g.nativeShopUI.portraits[n.NativeHubVariant]; !ok {
+		return false
+	}
+	oldMode, oldSel, oldGold, oldJob :=
+		g.nativeShopMode, g.shopSel, g.gold, g.nativeShopUIJob
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "insufficient"
+	g.shopSel = good
+	g.gold = gold
+	_, ok := g.composeNativeShopInsufficientGold()
+	if !ok {
+		g.nativeShopMode = oldMode
+		g.shopSel = oldSel
+		g.gold = oldGold
+		g.nativeShopUIJob = oldJob
+	}
+	return ok
 }
 
 func loadNativeShopUIAssets(
@@ -400,7 +461,9 @@ func (g *Game) nativeShopPostChoiceCloseFrame() ([]byte, bool) {
 	if err != nil || len(frames) != 4 {
 		return nil, false
 	}
-	return frames[len(frames)-1], true
+	// 0x197e5 presents the four inward choice frames, then 0x19913 restores
+	// the saved 310x86 question region before returning to its caller.
+	return question, true
 }
 
 func (g *Game) composeNativeShopInsufficientGold() ([]byte, bool) {
@@ -415,7 +478,17 @@ func (g *Game) composeNativeShopInsufficientGold() ([]byte, bool) {
 		postChoiceClose, g.nativeClassUI.strings, g.nativeClassUI.font,
 		g.nativeShopVariant,
 	)
-	return frame, err == nil
+	if err != nil || len(g.nativeClassUI.dialogue) <= 18 {
+		return nil, false
+	}
+	// 0x16c57(mode=1) initially blits FDOTHER#5 cell18 as the wait marker.
+	// The ch02 variant1 DOSBox oracle fixes this caller-owned VGA anchor.
+	if err := g.nativeClassUI.dialogue[18].BlitOpaqueAtOffset(
+		frame, 320, 181*320+143,
+	); err != nil {
+		return nil, false
+	}
+	return frame, true
 }
 
 func (g *Game) beginNativeShopServiceOpening() bool {

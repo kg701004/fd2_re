@@ -10,7 +10,7 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；town indexed production接線後，完整操作界面視覺還原估計40–45%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [~] **UI-VIS-TOWN**：`0x2cd16/0x2cf71/0x11eb0`已閉合3個FDOTHER背景variant、#10 label、FDTXT `0x1ef+selection`、FDICON `0,1,2,1` pulse、6組variant座標與312×192→VGA `(4,4)`；23個town保存raw `native_town_variant`。ch02 variant0 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都達原版／remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape返回selection5亦有input E2；共用 glyph shadow 與誤 reset pulse 已修。尚缺variant1/2。
-- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection及Yes/No confirmation也已全幀AE=0。下一gate是purchase recipient/feedback、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
+- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection、Yes/No confirmation及gold0金額不足回饋也已全幀AE=0。下一gate是purchase recipient/no-recipient/full/success、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
 - [x] **UI-SHOP-STANDALONE-EQUIP-PRODUCTION**：Docker Capstone重讀`0x2f883/0x1bffe/0x17e0b/0x1b9de`，撤回「獨立裝備沿用purchase商品／收件者widget」的假設。production現走service2→兩欄角色roster→11→0完整item/status panel；相容item經`0x1c1c3→0x1c142→0x1b750`原地更新flags/能力並重畫，incompatible無發明feedback，離開0→11 restore shop再回roster。`EquipNativeCompactSlot`驗證raw occupied order與compact inventory/equipped一致，保留ignored raw hole/stale byte，divergence原子拒絕。Docker/Xvfb production regression通過；DOSBox E2仍待。
 - [x] **UI-SHOP-TRANSFER-PRODUCTION**：`0x2f8ea`同時由shop service3與church raw1呼叫，不是任一場景專屬。shop production已接FDTXT512 source prompt→全party roster→FDTXT511 empty或`0x2dc55(mode1)` item list→FDTXT510→全party destination roster→FDTXT506 full或raw remove/append/recalc→512 loop。重核撤回「destination排除source」的高階假設：source本人保留為候選，未滿欄時self-transfer會把item以unequipped狀態移到尾端。`ValidateNativeInventoryProjection`與full raw-flag gate原子拒絕投影分歧；Docker/Xvfb production、empty/full/self regression通過。
 - [x] **RE/UI-TOWN-SECRET-GATE**：Docker Capstone閉合`0x2cd16→0x4e4b9`與`0x2cde0..0x2cef7`：每章0x1f-byte town record `+1`必須等於目前五項selection，`+2`必須等於BIOS Shift/Ctrl/Alt-F1..F10 scan，才把selection寫5。新證據撤回「chord立即進店」：hub先重畫selection5 icon/label，後續Enter才由`0x2d093→0x2d28c`進variant5 shop。23筆已資料化為editable `native_secret_gate`並接runtime；modified F2/F3/F5/F9不再誤觸remake全域shortcut。撤回`found_secret_*`永久顯示第六項等同原版的斷言；ch02 E2已由後續項目閉合，其餘town仍待逐章驗收。
@@ -18,9 +18,9 @@
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 
-## 文件狀態入口（2026-07-27）
+## 文件狀態入口（更新至 2026-07-28）
 
-目前統計：`[x]=479`、`[~]=101`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=489`、`[~]=98`、`[ ]=68`；只計算實際 checklist 行，且僅代表工程項目數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -48,6 +48,7 @@
 - [x] **UI-09-CH02-SHOP-VARIANTS-1-3-5-E2**：由同一原版town分別以selection1進weapon variant1、selection3進item variant3；各取10個steady樣本，variant1全部、variant3除首張transition外九張均在phase0/2交替並與production全幀AE=0。selected phase raw RGB MD5為variant1 `69003be54f47c221916c1ed89cf1d26f`、variant3 `dd5d80bb761cc87980dff066773f6763`、variant5 `e5654e8ed03d1e4fd30b2c76106bb7a1`，原版/remake成對相同。新增[三變體對照圖](../figures/shop-variants-1-3-5-original-vs-remake.png)；主選單variant gate關閉，child panels仍待。
 - [x] **UI-09-CH02-WEAPON-PURCHASE-LIST-E2**：新增 strict screenshot-only `FD2_SHOT_SHOP_PURCHASE_STATE=selection,start,gold`，只接受production已claim的native purchase mode、合法goods selection與正規化偶數window start，其他狀態fail closed。原版service0 Enter後實測Right `0→1`、Down `1→3`、Left `3→2`；延長等待排除進場最初2像素與portrait animation transient後，四個stable 320×200幀均與production全幀AE=0。raw RGB MD5為selection0 `1589cee3c068936f0beb6058cfd63991`、1 `7480dbb0284b033b4e9ad8c8c7a8b78e`、2 `48d6182e261ebce574b08c4778b8a072`、3 `3c0a2c935260b8ca80432b25b3600111`；新增[兩列對照圖](../figures/shop-purchase-ch02-selections-original-vs-remake.png)。這只關閉購買清單steady/input，不推廣到確認、收件者或交易結果。
 - [x] **UI-09-CH02-WEAPON-PURCHASE-CONFIRM-E2**：新增 strict screenshot-only `FD2_SHOT_SHOP_CONFIRM_STATE=good,choice,pulse,gold`；只接受production已claim且shared assets完整的native shop、真實editable good、choice0/1、pulse0..3與合法gold，其他狀態fail closed。原版由good0 Enter開「布衣／50元／要不要啊？」、Right到No、Left回Yes；高頻取樣的可見selected Yes/No raw RGB MD5分別`7a07b1c064ca2c431bc97c798dcfd51e`／`56f6ffb003e87cbc63d7a915ac4b5dd0`，normal frame `b8cce25df13447e73e1750a8b2edaf0f`，三者均與production全幀AE=0。新增[兩列對照圖](../figures/shop-purchase-confirm-ch02-original-vs-remake.png)；只關閉confirmation steady/input，不推廣到recipient或transaction result。
+- [x] **UI-09-CH02-WEAPON-PURCHASE-INSUFFICIENT-E2**：新增 strict screenshot-only `FD2_SHOT_SHOP_INSUFFICIENT_STATE=good,gold`；只接受production已claim且shared assets完整的native shop、真實editable good及`gold<price`，不扣金、不改recipient，final compositor失敗即原子回復。原版gold0對good0選Yes後顯示「錢不夠！」及等待標記。最初誤用第四個inward choice frame造成整幀AE=563；Docker Capstone重核證實原版`0x197e5`四次present後由`0x19913..0x1994c`恢復310×86 question region，`0x16c57(1)`再以FDOTHER#5 cell18/19畫等待標記。remake目前以ch02限定的deterministic recomposition取得相同pixels，尚非generic saved-buffer restore owner；原版／production raw RGB MD5皆為`6babcedfe2017a7457924c4df65ba7dc`、整幀AE=0。新增[左右對照圖](../figures/shop-purchase-insufficient-ch02-original-vs-remake.png)。不外推到recipient/no-recipient/full/success。
 - [x] **UI-VERTICAL-CH02-TOWN-PREPARATION**：將 `Game.stepCampaignMenu` 接到 `campInput`，新增 `TestCampaignTownPreparationInputTrace`，以 `down,down,enter(opt2)` 驗證 `town_ch02→preparation_ch02→story_ch02_pre→battle_ch02`；保存可編輯 trace [`town-preparation-ch02.json`](../data/ui-traces/town-preparation-ch02.json) 與目前 source rebuild 的 [`preparation-current-remake.png`](../figures/preparation-current-remake.png)。這是第一個 campaign/UI state vertical closure，仍不等於逐章原版 parity。
 - [x] **UI-VERTICAL-CH02-TOWN-SHOP-RETURN**：新增 `Game.leaveShop` 與 `TestCampaignTownShopPurchaseReturnTrace`，驗證 `town_ch02→shop_ch02_weapon`、reserve 不先扣金、finalize 後回 town；保存 [`town-shop-ch02.json`](../data/ui-traces/town-shop-ch02.json) 與 source rebuild 的 [`shop-current-remake.png`](../figures/shop-current-remake.png)。這只閉合 remake shop/campaign boundary，不命名 native shop callee 或宣稱原版 parity。
 
@@ -1340,8 +1341,9 @@
   六variant FDTXT表；購買問題展開`FFFC`商品名與`FFFA`十進位價格，
   並接原版`0x19953` Yes/No selected pulse。2026-07-28再以指令順序重核
   修正 framebuffer 斷言：`0x2f2a9`先完成`0x197e5`四幀choice closing，
-  `0x2f2d3`才在其最後一幀的literal VGA`0xac44c`／`(12,157)`追加第三行；
-  不再錯誤保留steady Yes/No cells。production已接list close→confirmation
+  再由`0x19913..0x1994c`恢復保存的question region；`0x2f2d3`才在literal
+  VGA`0xac44c`／`(12,157)`追加第三行並等待。不再錯誤保留steady
+  Yes/No cells或使用第四個inward frame。production已接list close→confirmation
   open/steady/close→cancel或不足金wait→dialogue close→list reopen。
   真實FDOTHER/FDTXT/DATO regression與更正後indexed fixture已補。recipient
   selector與inventory-full後續已接production；下一步是

@@ -1329,9 +1329,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   的question／insufficient／no-recipient／equip四組六variant FDTXT表已原樣
   保存；question展開商品名／價格後接`0x19953` Yes/No。重要生命週期勘誤：
   insufficient不是fresh overlay。後續指令順序重核修正本條早先錯誤：
-  `0x2f2a9`先完成`0x197e5`四幀choice closing，`0x2f2d3`才在其最後
-  framebuffer的`0xac44c=(12,157)`追加第三行；並非保留steady choices。
-  API已改收post-choice-close frame並fail-closed。新增
+  `0x2f2a9`先完成`0x197e5`四幀choice closing，接著
+  `0x19913..0x1994c`恢復保存的question region；`0x2f2d3`才在
+  `0xac44c=(12,157)`追加第三行；並非保留steady choices，也不是第四個
+  inward frame。API目前以deterministic recomposition取得相同question pixels
+  並fail-closed，尚未實作generic saved-buffer restore owner。新增
   `native-shop-purchase-confirm-indexed.png`與
   `native-shop-purchase-insufficient-indexed.png`、真實資源regression。
   下一個精確gate是recipient selector／full-inventory feedback與
@@ -1678,6 +1680,27 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `b8cce25df13447e73e1750a8b2edaf0f`；每一對production 320×200全幀AE=0。
 - 新圖
   [`shop-purchase-confirm-ch02-original-vs-remake.png`](../figures/shop-purchase-confirm-ch02-original-vs-remake.png)
-  上排原版、下排remake，左Yes右No的可見selected pulse。下一個purchase gate
-  是recipient／no-recipient／insufficient／success等transaction結果，不得由
-  confirmation E2外推。
+  上排原版、下排remake，左Yes右No的可見selected pulse。當時下一個gate含
+  insufficient；該分支已由下節閉合。recipient／no-recipient／full／success
+  等其餘transaction結果仍不得由confirmation E2外推。
+
+## 2026-07-28 ch02 weapon insufficient-gold E2 closure
+
+- 新增 strict screenshot-only
+  `FD2_SHOT_SHOP_INSUFFICIENT_STATE=good,gold`。它只接受production已claim、
+  shared assets完整、good存在且`gold<editable price`的native shop；不扣金、
+  不改recipient，final compositor admission失敗會原子回復，正常input不讀hook。
+- 原版gold0由布衣good0確認Yes後顯示「錢不夠！」及mode-one等待標記。最初
+  production誤把`0x197e5`第四個inward choice frame當return framebuffer，
+  導致整幀AE=563與紅色重疊。Docker Capstone重核`0x197e5`證實四次present後
+  `0x19913..0x1994c`恢復保存的310×86 question region；`0x16c57(1)`先畫
+  FDOTHER#5 cell18，依BIOS delta在cell18/19間循環，最後以cell13清理。
+- remake以ch02限定的deterministic recomposition取得restore後question的相同
+  pixels，並在variant1 caller-owned `(143,181)` anchor畫cell18後，原版與
+  production 320×200 raw RGB MD5皆為
+  `6babcedfe2017a7457924c4df65ba7dc`，整幀AE=0。新增
+  [`shop-purchase-insufficient-ch02-original-vs-remake.png`](../figures/shop-purchase-insufficient-ch02-original-vs-remake.png)。
+- 原版gold1000已取得裝備收件者候選「索爾、悠妮、亞雷斯」與三列能力比較
+  畫面，但目前screenshot啟動路徑沒有同一份production persistent party raw
+  projection。不得硬編姓名或以fixture冒充runtime；recipient/no-recipient/
+  full/success仍是下一批E2 gate。

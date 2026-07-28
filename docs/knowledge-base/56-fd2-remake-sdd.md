@@ -144,7 +144,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2與逐章route E2 |
-| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return，以及weapon purchase-list四個selection均達原版DOSBox／production remake同狀態raw RGB整幀相同；E2修正pulse double-`/2`與返回selection0錯誤。尚待purchase後續、sell/equip/transfer與其他章節E2 |
+| UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No confirmation與gold0金額不足回饋均達原版DOSBox／production remake同狀態raw RGB整幀相同；E2修正pulse double-`/2`、返回selection0及choice-close後錯誤frame ownership。尚待recipient/no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector（slot 1 保留舊 `fd2_save.json`，slot 2–4 使用 `fd2_save_1..3.json`），且 `TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證 town 節點存檔後可恢復 persistent party/gold/items 並清除 transient scene；`postbattle_*` 未完成 handler 也由 `TestSaveRejectsUnboundPostbattleBoundary` 拒絕存檔；保存 [`save-town-boundary-ch02.json`](../data/ui-traces/save-town-boundary-ch02.json)。`remake/internal/fdsave` 已提供 raw rolling-XOR/checksum、slot bounds、verified metadata 與 opaque `WriteSlot` adapter；但 native `FD2.SAV` roster/opaque metadata 尚未接入自有 campaign save；4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）仍非相容實作 |
@@ -963,9 +963,26 @@ pulse. The selected Yes raw RGB MD5 is
 production 320×200 frame with absolute pixel error zero. The normal frame
 also matches at `b8cce25df13447e73e1750a8b2edaf0f`. The
 [`confirmation sheet`](../figures/shop-purchase-confirm-ch02-original-vs-remake.png)
-shows selected Yes/No with original above remake. Recipient selection,
-transaction result/feedback, sell, equip, and transfer still require their
-own same-state DOSBox traces.
+shows selected Yes/No with original above remake.
+
+The next gold0 trace closes the insufficient-gold stable feedback. After Yes,
+the original restores the saved question region, appends `錢不夠！`, and
+shows the mode-one wait marker. The strict screenshot-only
+`FD2_SHOT_SHOP_INSUFFICIENT_STATE=good,gold` adapter accepts only an admitted
+editable good whose price is greater than the supplied legal gold, performs
+no debit or recipient mutation, and requires the final native compositor.
+Docker Capstone revalidation found that `0x197e5` presents four inward choice
+frames and then `0x19913..0x1994c` restores the saved 310×86 question region;
+`0x16c57(1)` initially blits FDOTHER#5 cell18 and alternates cells18/19.
+Using the fourth inward frame produced 563 absolute RGB error. The current
+ch02 screenshot state deterministically recomposes the same question pixels
+and adds the caller-owned wait-marker anchor, producing whole-frame error
+zero. It does not yet implement a generic saved-buffer restore owner.
+Original and production raw RGB MD5 are both
+`6babcedfe2017a7457924c4df65ba7dc`; the
+[`insufficient-gold sheet`](../figures/shop-purchase-insufficient-ch02-original-vs-remake.png)
+places original left and remake right. Recipient/no-recipient/full/success,
+sell, equip, and transfer still require their own same-state DOSBox traces.
 
 Standalone equip has a separate scene contract from the optional equip prompt
 inside purchase. `0x2f883` calls `0x2e6b8` for the two-column party roster,
@@ -1028,12 +1045,17 @@ question `{1,502,1,439,1,439}`, insufficient gold
 `FDTXT[itemID+181]`, expands `FFFA` with the decimal price, and then calls the
 native `0x19953` Yes/No owner. The insufficient-gold branch does **not**
 rebuild the dialogue overlay. Instruction-order revalidation corrects the
-earlier framebuffer assertion: `0x2f2a9` first calls `0x197e5` and presents
-all four choice-closing frames; only then does `0x2f2d3` append feedback at
-literal VGA `0xac44c`, framebuffer coordinate `(12,157)`, to that final
-post-choice-close framebuffer. The strict compositor therefore accepts the
-fourth closing frame rather than a steady confirmation or fresh dialogue.
-Deterministic indexed fixtures cover both states. Production now owns the
+earlier framebuffer assertion: `0x2f2a9` first calls `0x197e5`, presents
+all four choice-closing frames, and `0x19913..0x1994c` restores the saved
+310×86 question region before return. Only then does `0x2f2d3` append
+feedback at literal VGA `0xac44c`, framebuffer coordinate `(12,157)`;
+`0x16c57(1)` adds the mode-one wait marker. The strict compositor therefore
+must receive pixels equivalent to the restored question, not the fourth
+inward frame, a steady confirmation, or a fresh dialogue. The current ch02
+screenshot path reaches that target by deterministic recomposition; this
+E2 does not prove generic saved-buffer ownership. Deterministic indexed
+fixtures cover both states, while the ch02 gold0 stable frame additionally
+has exact DOSBox E2. Production now owns the
 product-list close, four-frame confirmation open/steady/close, bounded
 Yes/No input, cancel return, insufficient wait, five-frame dialogue close,
 and product-list reopen. Both recipient selectors and recipient-full feedback

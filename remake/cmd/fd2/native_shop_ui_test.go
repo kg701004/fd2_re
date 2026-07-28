@@ -74,6 +74,13 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	if !g.drawNativeShop(screen) {
 		t.Fatal("native shop service menu unexpectedly fell back")
 	}
+	if !g.setNativeShopInsufficientShotState(0, 0) ||
+		g.nativeShopMode != "insufficient" ||
+		!g.drawNativeShop(screen) {
+		t.Fatal("strict insufficient screenshot state did not compose from real assets")
+	}
+	g.nativeShopMode = "menu"
+	g.gold = 1234
 	g.nativeShopMode = "purchase"
 	if !g.drawNativeShop(screen) {
 		t.Fatal("native shop purchase list unexpectedly fell back")
@@ -702,6 +709,79 @@ func TestNativeShopConfirmShotStateIsStrictAndGoodBound(t *testing.T) {
 	g.nativeClassUI.choices = nil
 	if g.setNativeShopConfirmShotState(0, 0, 0, 0) {
 		t.Fatal("confirmation accepted incomplete shared choice assets")
+	}
+}
+
+func TestNativeShopInsufficientShotStateRequiresRealFailedPrice(t *testing.T) {
+	for _, tc := range []struct {
+		spec       string
+		good, gold int
+		ok         bool
+	}{
+		{spec: "0,0", ok: true},
+		{spec: "7,99999999", good: 7, gold: 99999999, ok: true},
+		{spec: "-1,0"},
+		{spec: "0,-1"},
+		{spec: "0,100000000"},
+		{spec: "0"},
+		{spec: "0,0,0"},
+		{spec: "x,0"},
+	} {
+		good, gold, ok := parseNativeShopInsufficientShotState(tc.spec)
+		if ok != tc.ok || good != tc.good || gold != tc.gold {
+			t.Fatalf(
+				"parseNativeShopInsufficientShotState(%q)=(%d,%d,%v), want (%d,%d,%v)",
+				tc.spec, good, gold, ok, tc.good, tc.gold, tc.ok,
+			)
+		}
+	}
+
+	c := &campaign.Campaign{
+		Start: "shop",
+		Nodes: map[string]*campaign.Node{
+			"shop": {
+				Type: "shop", NativeHubVariant: 1,
+				Goods: []campaign.Good{{ID: 0x80, Price: 50}},
+			},
+		},
+	}
+	g := &Game{
+		camp: campaign.NewRunner(c),
+		nativeClassUI: &nativeClassUIAssets{
+			choices:  make([]fdother.RawCell, 53),
+			dialogue: make([]fdother.RawCell, 18),
+			strings:  &fdtxt.Strings{},
+			font:     &fdtxt.Font{},
+		},
+		nativeShopUI: &nativeShopUIAssets{
+			shops:     map[int]*campaign.NativeShopAssets{1: {}},
+			portraits: map[int]dato.Frame{1: {}},
+		},
+		nativeShopVariant: 1,
+		nativeShopMode:    "menu",
+	}
+	// The synthetic assets cannot compose a visible feedback frame, so the
+	// strict final compositor admission must reject them.
+	if g.setNativeShopInsufficientShotState(0, 0) {
+		t.Fatal("insufficient screenshot state accepted incomplete assets")
+	}
+	if g.nativeShopMode != "menu" {
+		t.Fatalf("final compositor rejection mutated mode=%q", g.nativeShopMode)
+	}
+
+	g.nativeShopUI = nil
+	if g.setNativeShopInsufficientShotState(0, 0) {
+		t.Fatal("insufficient screenshot state accepted missing shop assets")
+	}
+	g.nativeShopUI = &nativeShopUIAssets{
+		shops:     map[int]*campaign.NativeShopAssets{1: {}},
+		portraits: map[int]dato.Frame{1: {}},
+	}
+	if g.setNativeShopInsufficientShotState(0, 50) {
+		t.Fatal("insufficient screenshot state accepted affordable price")
+	}
+	if g.setNativeShopInsufficientShotState(1, 0) {
+		t.Fatal("insufficient screenshot state accepted out-of-range good")
 	}
 }
 

@@ -444,10 +444,11 @@ replacement，以及`0x2f8ea`的source→destination writer，才足以把四項
 購買流程再次說明「文字 index 與座標正確」仍不足以代表 GUI 正確。
 `0x2f0b0` 的金額不足分支不是呼叫 `0x1956b` 建立新對話。更完整的
 instruction-order audit 也推翻本段早先「保留 steady Yes/No cells」的說法：
-`0x2f2a9` 先呼叫 `0x197e5` 呈現四個 choice-closing frames，
-`0x2f2d3` 才把 FDTXT 504/438 寫到最後一幀的 literal VGA
-`0xac44c`（`(12,157)`）。若只抽象成 `showMessage(text)`，截圖仍可能看似
-合理，卻會遺失上一層 prompt 的實際 closing framebuffer 與返回狀態。
+`0x2f2a9` 先呼叫 `0x197e5` 呈現四個 choice-closing frames，接著
+`0x19913..0x1994c` 恢復保存的310×86 question region；`0x2f2d3` 才把
+FDTXT 504/438 寫到 literal VGA `0xac44c`（`(12,157)`），並由
+`0x16c57(1)`畫等待標記。若只抽象成 `showMessage(text)`，截圖仍可能看似
+合理，卻會遺失上一層 prompt 的restore ownership、等待動畫與返回狀態。
 
 因此 scene RE 除了 resource、offset、draw order，還必須記錄：
 
@@ -457,9 +458,10 @@ instruction-order audit 也推翻本段早先「保留 steady Yes/No cells」的
 4. 錯誤回饋後回到同一 prompt，還是重新進入 scene owner。
 
 本輪把 insufficient-gold API 從 generic fresh overlay 移出，並在再次
-核對 caller 後收緊為只能傳入 `0x197e5` 的 post-choice-close framebuffer；
-這種 fail-closed contract 比共用一個方便的 message renderer 更能防止
-後續 remake 悄悄偏離原版 lifecycle。
+核對 caller 後收緊為只能使用與`0x197e5` restore後question相同的pixels；
+目前ch02 screenshot path是deterministic recomposition，尚未成為generic
+saved-buffer restore owner。這種 fail-closed contract 比共用一個方便的
+message renderer 更能防止後續 remake 悄悄偏離原版 lifecycle。
 
 ## 經驗補記 — 同一個「裝備分類」可能有兩種原版 key（2026-07-28）
 

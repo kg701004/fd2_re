@@ -13,7 +13,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、ch02 town variant0、ch02三種商店主選單與武器購買清單、教會多個服務、action/command/item overlay；另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town variant1/2、preparation、loadslots、ending與商店其餘child panels的DOSBox E2仍未閉合，不能稱原版視覺 parity |
 
-Worklist 目前是 **489 個 `[x]`、101 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **489 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -128,8 +128,9 @@ mutation 未被猜測接入，未知 selector 維持 fail-closed。
 
 ### Round／畫面更新統計（Git audit，2026-07-27）
 
-目前文件可辨識的命名 round 是 **14 輪**（`91` worklist 與 `99` reflection log
-各有 14 個 round 段落）。Git 歷史共有 **1,025 個 commits**；其中 2026-07-25
+2026-07-27 audit 當時，文件可辨識的命名 round 是 **14 輪**（`91` worklist 與
+`99` reflection log 各有 14 個 round 段落），Git 歷史當時共有
+**1,025 個 commits**；其中 2026-07-25
 以後 499 個、2026-07-27 單日 130 個，這些 commits 不能直接當成玩家功能 round。
 早期 README 圖片確實集中在 6/28–7/2（格式、標題、對話、戰鬥）；7/25–7/26
 才補了原版 title/dialogue、action overlay、command grid、preparation 等少數
@@ -154,8 +155,9 @@ phase目前也都與原版全幀相同；shop剩餘主缺口已轉為四項servi
 清單也已閉合四個實際游標位置：原版 Right `0→1`、Down `1→3`、Left
 `3→2`，四張穩定幀均與 production runtime 全畫面逐像素相同。其後 Enter
 開啟的「布衣50元／要不要啊？」Yes/No確認框也已閉合：原版 Right選No、
-Left回Yes，兩個可見selected pulse均與production全幀AE=0。收件者、
-成功／失敗回饋，以及 sell/equip/transfer 仍待同狀態 E2。
+Left回Yes，兩個可見selected pulse均與production全幀AE=0。gold0 選Yes後的
+「錢不夠！」與等待標記也已達production全幀AE=0。收件者、無合格收件者、
+購買成功／滿欄，以及 sell/equip/transfer 仍待同狀態 E2。
 town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
@@ -205,13 +207,14 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 shop variants 1／3／5（左武器店、中道具店、右秘密商店；上原版、下remake，三格raw RGB hash各自相同） | ![shop variants original and remake](docs/figures/shop-variants-1-3-5-original-vs-remake.png) |
 | ch02 武器購買清單四個游標位置（上原版 DOSBox、下remake；順序0／1／3／2，每格320×200全幀AE=0） | ![shop purchase selections original and remake](docs/figures/shop-purchase-ch02-selections-original-vs-remake.png) |
 | ch02 武器購買 Yes／No 確認（上原版 DOSBox、下remake；左Yes、右No的可見selected pulse，兩格全幀AE=0） | ![shop purchase confirmation original and remake](docs/figures/shop-purchase-confirm-ch02-original-vs-remake.png) |
+| ch02 武器購買金額不足（左原版 DOSBox、右remake；gold0，整幀AE=0） | ![shop purchase insufficient original and remake](docs/figures/shop-purchase-insufficient-ch02-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
 | 原版資源 indexed 購買商品 child panel（`0x2e0bd→0x2dc55(mode0)`；item0–5／full-price fixture，非 DOSBox 截圖） | ![native indexed shop purchase list](docs/figures/native-shop-purchase-list-indexed.png) |
 | 原版資源 indexed 賣出商品 child panel（`0x2f642→0x2e0bd(mode1)→0x2dc55`；同item0–5／3⁄4-price fixture，非 DOSBox 截圖） | ![native indexed shop sell list](docs/figures/native-shop-sell-list-indexed.png) |
 | 原版資源 indexed 購買確認（`0x2f0b0→0x1956b→0x19953`；動態商品名／50元、Yes/No selected-pulse fixture，非 DOSBox 截圖） | ![native indexed shop purchase confirmation](docs/figures/native-shop-purchase-confirm-indexed.png) |
-| 原版資源 indexed 金額不足回饋（`0x197e5` choice-close最後一幀，再於 literal VGA `0xac44c`／`(12,157)` 追加第三行；非 DOSBox 截圖） | ![native indexed shop purchase insufficient](docs/figures/native-shop-purchase-insufficient-indexed.png) |
+| 原版資源 indexed 金額不足回饋（`0x197e5` 呈現四個choice-close frame後恢復question region，再於literal VGA `(12,157)`追加第三行並由`0x16c57(1)`畫等待標記；fixture，非DOSBox截圖） | ![native indexed shop purchase insufficient](docs/figures/native-shop-purchase-insufficient-indexed.png) |
 | 原版資源 indexed 消耗品收件者（type≥`0x20` 的 `0x2e6b8` 兩欄六人名冊；非裝備比較面板、非 DOSBox 截圖） | ![native indexed shop purchase recipient](docs/figures/native-shop-purchase-recipient-indexed.png) |
 | 原版資源 indexed 收件者滿欄回饋（`word_5265f`＋FFFC 動態姓名；非 DOSBox 截圖） | ![native indexed shop recipient full](docs/figures/native-shop-purchase-recipient-full-indexed.png) |
 | 原版資源 indexed 裝備收件者比較（type<`0x20` 的 `0x2e8cf→0x2ebe0/0x2efb7`；三列 AP/DP/HIT/EV 現值→候選值，非 DOSBox 截圖） | ![native indexed shop equipment recipient](docs/figures/native-shop-purchase-equipment-recipient-indexed.png) |

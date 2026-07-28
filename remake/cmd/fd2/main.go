@@ -4734,6 +4734,17 @@ func (g *Game) Update() error {
 					)
 				}
 			}
+			if spec := os.Getenv("FD2_SHOT_SHOP_INSUFFICIENT_STATE"); spec != "" {
+				good, gold, ok :=
+					parseNativeShopInsufficientShotState(spec)
+				if !ok ||
+					!g.setNativeShopInsufficientShotState(good, gold) {
+					return fmt.Errorf(
+						"FD2_SHOT_SHOP_INSUFFICIENT_STATE expects good,gold with gold below the editable price on a claimed native shop: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]
