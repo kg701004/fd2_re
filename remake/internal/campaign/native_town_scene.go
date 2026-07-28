@@ -1,0 +1,141 @@
+package campaign
+
+import (
+	"errors"
+	"path/filepath"
+
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
+)
+
+const (
+	NativeTownWidth        = 320
+	NativeTownHeight       = 200
+	nativeTownLabelX       = 244
+	nativeTownLabelY       = 162
+	nativeTownTextOffset   = 168*NativeTownWidth + 252
+	nativeTownViewportX    = 4
+	nativeTownViewportY    = 4
+	nativeTownViewportW    = 312
+	nativeTownViewportH    = 192
+	nativeTownTextBase     = 0x1ef
+	nativeTownVariantCount = 3
+)
+
+var nativeTownBackgroundResources = [...]int{11, 61, 62}
+
+var nativeTownSelectionX = [nativeTownVariantCount][6]int{
+	{29, 41, 59, 154, 182, 10},
+	{90, 33, 53, 148, 222, 196},
+	{59, 10, 59, 130, 242, 136},
+}
+
+var nativeTownSelectionY = [nativeTownVariantCount][6]int{
+	{46, 109, 163, 139, 65, 10},
+	{30, 105, 163, 139, 85, 8},
+	{26, 144, 163, 150, 31, 20},
+}
+
+// NativeTownAssets are the exact resources consumed by
+// 0x2cd46..0x2d05a: three full-screen backgrounds, FDOTHER#10's opaque
+// current-label panel, and FDICON's first three pulse sprites.
+type NativeTownAssets struct {
+	Backgrounds [nativeTownVariantCount][]byte
+	Label       fdother.LMI1Entry
+	Pulse       [3]fdicon.Sprite
+}
+
+func DecodeNativeTownAssets(
+	fdotherPath, fdiconPath string,
+) (*NativeTownAssets, error) {
+	if fdotherPath == "" || fdiconPath == "" {
+		return nil, errors.New("campaign: native town asset path is empty")
+	}
+	out := &NativeTownAssets{}
+	for variant, resourceID := range nativeTownBackgroundResources {
+		raw, err := fdother.ReadResource(fdotherPath, resourceID)
+		if err != nil {
+			return nil, err
+		}
+		frame, err := fdother.ParseSingleFrame(raw)
+		if err != nil || frame.Width != NativeTownWidth ||
+			frame.Height != NativeTownHeight {
+			return nil, errors.New(
+				"campaign: native town background is not 320x200",
+			)
+		}
+		background := make([]byte, NativeTownWidth*NativeTownHeight)
+		if err := frame.Blit(background, NativeTownWidth, -1); err != nil {
+			return nil, err
+		}
+		out.Backgrounds[variant] = background
+	}
+	labelRaw, err := fdother.ReadResource(fdotherPath, 10)
+	if err != nil {
+		return nil, err
+	}
+	out.Label, err = fdother.ParseOpaqueRunCell(labelRaw)
+	if err != nil || out.Label.Width != 62 || out.Label.Height != 26 {
+		return nil, errors.New(
+			"campaign: native town label panel is not 62x26",
+		)
+	}
+	bank, err := fdicon.DecodeFile(filepath.Clean(fdiconPath))
+	if err != nil || len(bank.Sprites) < len(out.Pulse) {
+		return nil, errors.New("campaign: native town FDICON pulse is incomplete")
+	}
+	copy(out.Pulse[:], bank.Sprites[:len(out.Pulse)])
+	return out, nil
+}
+
+// ComposeNativeTownFrame reproduces 0x2cf71's steady redraw. It starts from
+// the caller-selected FDOTHER background, redraws the current-label panel and
+// FDTXT_000 selection name, applies FDICON pulse sequence 0,1,2,1, then copies
+// the native 312x192 viewport to VGA (4,4).
+func ComposeNativeTownFrame(
+	assets *NativeTownAssets,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	variant, selection, pulse int,
+) ([]byte, error) {
+	if assets == nil || strings == nil || font == nil ||
+		variant < 0 || variant >= nativeTownVariantCount ||
+		selection < 0 || selection > 5 || pulse < 0 || pulse > 3 ||
+		len(assets.Backgrounds[variant]) != NativeTownWidth*NativeTownHeight {
+		return nil, errors.New("campaign: native town state is invalid")
+	}
+	scene := append([]byte(nil), assets.Backgrounds[variant]...)
+	if err := assets.Label.BlitOpaqueAt(
+		scene, NativeTownWidth, nativeTownLabelX, nativeTownLabelY, false,
+	); err != nil {
+		return nil, err
+	}
+	var err error
+	scene, err = ComposeNativeChurchTextAt(
+		scene, strings, font, nativeTownTextBase+selection,
+		nativeTownTextOffset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	frame := pulse
+	if frame == 3 {
+		frame = 1
+	}
+	if err := assets.Pulse[frame].BlitAt(
+		scene, NativeTownWidth,
+		nativeTownSelectionX[variant][selection],
+		nativeTownSelectionY[variant][selection],
+	); err != nil {
+		return nil, err
+	}
+	vga := make([]byte, NativeTownWidth*NativeTownHeight)
+	for row := 0; row < nativeTownViewportH; row++ {
+		copy(
+			vga[(nativeTownViewportY+row)*NativeTownWidth+nativeTownViewportX:],
+			scene[row*NativeTownWidth:row*NativeTownWidth+nativeTownViewportW],
+		)
+	}
+	return vga, nil
+}

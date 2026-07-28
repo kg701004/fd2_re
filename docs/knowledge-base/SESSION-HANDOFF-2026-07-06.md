@@ -1453,10 +1453,31 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - scan `0x54..0x5d`、`0x5e..0x67`、`0x68..0x71`分別是
   Shift/Ctrl/Alt-F1..F10。23筆有town的raw records對應玩家章2..22、26、27，
   已資料化為`native_secret_gate {selection,scan_code,to}`。
-- runtime只有selection與chord完全命中才直接進secret shop；不要求也不寫
-  persistent unlock flag。modified F2/F3/F5/F9不再同時觸發remake全域快捷鍵。
+- runtime只有selection與chord完全命中才把hub selector揭露為5；原版會先
+  重畫第六組icon/label，後續Enter才進secret shop，不要求也不寫persistent
+  unlock flag。modified F2/F3/F5/F9不再同時觸發remake全域快捷鍵。
 - 撤回「`found_secret_ch*`先解鎖並永久顯示第六項」與legacy
   `SecretIf/ShopGoods()`等同原版gate的斷言；兩者只保留editable擴充相容。
 - `gen_campaign.py`目前會把已人工整合的`campaign_full.json`退回舊
   `story_ch01`拓撲；本輪測出後已恢復權威檔，只保留23筆小型gate差異。
   後續不可無審核直接以生成器輸出覆蓋campaign。
+
+## 2026-07-28 native town indexed production owner
+
+- Docker Capstone閉合`0x2cd16/0x2cd46/0x2cf71/0x11eb0`：town record byte0
+  選FDOTHER#11/#61/#62；#10的62×26 label畫在scene `(244,162)`，
+  FDTXT `0x1ef+selection`從`(252,168)`開始，FDICON pulse依
+  `0,1,2,1`及`0x52635/0x52647`三組六項座標畫入；最後只把312×192
+  viewport貼到VGA `(4,4)`。
+- 23個town節點新增editable raw `native_town_variant` 0/1/2；
+  `gen_campaign.py`同步保存variant table，但生成器整體拓撲仍落後權威
+  `campaign_full.json`，不可直接覆蓋。
+- production `drawCampaignUI`在資源與schema完整時改走原版indexed owner；
+  右鍵selection遞減、左鍵遞增、0..4 wrap，selection5可重畫。pulse依signed
+  BIOS low-word delta≥4遞增。缺資源／非法資料仍fail closed回generic custom UI。
+- `AdvanceNativeTownSecret`的「chord立即dispatch」API與斷言已刪除，改成
+  `MatchNativeTownSecret`揭露、`ConfirmNativeTownSecret`確認兩階段，並以
+  production-owner、真實資源、hidden redraw與signed wrap regression覆蓋。
+- [`town-hub-remake.png`](../figures/town-hub-remake.png)已由目前source在
+  `fd2-go-test-local`＋Xvfb重拍，為ch02 variant0/selection0 runtime畫面；
+  不是DOSBox E2。下一gate是同章、同selection、同pulse tick的DOSBox pair/diff。

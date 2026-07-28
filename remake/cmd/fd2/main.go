@@ -173,6 +173,11 @@ type Game struct {
 	nativeClassUIPulse       int
 	nativeClassUILastTick    int
 	nativeClassUIHasTick     bool
+	nativeTownUI             *nativeTownUIAssets
+	nativeTownUIClock        nativeBIOSClock
+	nativeTownUIPulse        int
+	nativeTownUILastTick     int
+	nativeTownUIHasTick      bool
 	nativeChurchUIJob        *nativeChurchUIJob
 	nativeChurchUIClock      nativeBIOSClock
 	nativeChurchUIPulse      int
@@ -1881,6 +1886,9 @@ func (g *Game) enterNode() {
 	case "choice", "town":
 		g.dialog, g.st, g.sel = nil, nil, nil // 戰間 hub 不可殘留上一戰的單位或勝利對白
 		g.campSel = 0
+		if n.Type == "town" {
+			g.resetNativeTownUIPulse()
+		}
 	case "preparation", "church":
 		g.dialog, g.st, g.sel = nil, nil, nil
 		// 節點邊界 UI；preparation 可在此安全 F5 存檔，Enter 才進下一章 pre handler。
@@ -2680,12 +2688,41 @@ func (g *Game) campInput() bool {
 		}
 		return true
 	case "choice", "town":
-		if n.Type == "town" {
+		nativeTown := n.Type == "town" && n.NativeTownVariant != nil
+		if nativeTown {
 			if scanCode, ok := pressedNativeTownSecretScan(); ok &&
-				g.camp.AdvanceNativeTownSecret(g.campSel, scanCode) {
-				g.enterNode()
+				g.camp.MatchNativeTownSecret(g.campSel, scanCode) {
+				g.campSel = 5
+				g.resetNativeTownUIPulse()
 				return true
 			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				if selection, ok := nativeTownMoveSelection(
+					g.campSel, -1,
+				); ok {
+					g.campSel = selection
+				}
+				g.resetNativeTownUIPulse()
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				if selection, ok := nativeTownMoveSelection(
+					g.campSel, 1,
+				); ok {
+					g.campSel = selection
+				}
+				g.resetNativeTownUIPulse()
+			}
+			if enter {
+				if g.camp.ConfirmNativeTownSecret(g.campSel) {
+					g.enterNode()
+					return true
+				}
+				if g.campSel >= 0 && g.campSel < 5 {
+					g.camp.Advance(fmt.Sprintf("opt%d", g.campSel))
+					g.enterNode()
+				}
+			}
+			return true
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
 			g.stepCampaignMenu(campaign.MenuUp)
@@ -4555,6 +4592,7 @@ func (g *Game) Update() error {
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
 	g.stepNativeShopUILifecycle(time.Now())
+	g.stepNativeTownUILifecycle(g.nativeTownUIClock.Sample(time.Now()))
 	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -5721,6 +5759,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		g.font.Draw(screen, "GAME OVER", float64(logicalW)/2-90, float64(logicalH)/2-20, 2.0,
 			color.RGBA{0xff, 0x70, 0x70, 0xff})
 	case n.Type == "choice" || n.Type == "town":
+		if n.Type == "town" && g.drawNativeTown(screen) {
+			return
+		}
 		vis := g.camp.Visible()
 		h := 60 + float64(len(vis))*28
 		fillBox(160, 120, 320, h)
@@ -6490,6 +6531,9 @@ func loadGame() *Game {
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
 	if classUI, err := loadNativeClassUIAssets(); err == nil {
 		g.nativeClassUI = classUI
+		if townUI, townErr := loadNativeTownUIAssets(); townErr == nil {
+			g.nativeTownUI = townUI
+		}
 		if shopUI, shopErr := loadNativeShopUIAssets(classUI); shopErr == nil {
 			g.nativeShopUI = shopUI
 		}

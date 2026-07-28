@@ -552,3 +552,21 @@ model。反組譯閉合後，schema應保存最小 raw contract
 但它的拓撲落後於後續人工 handler integration；直接執行會大幅刪回新版節點。
 任何生成器都要先比較semantic diff，不能因命令成功與JSON合法就覆蓋較新的
 campaign。
+
+### GUI 排版不是一張背景；selector lifecycle 也不是一次 transition
+
+城鎮 hub 這輪把「已解出背景」與「完整 scene owner」的差異具體化。
+town record byte0只決定FDOTHER#11/#61/#62之一；真正畫面還需要#10 label、
+FDTXT `0x1ef+selection`、FDICON pulse、三個variant各六組X/Y座標，以及
+stride456 work scene裁成312×192後貼到VGA `(4,4)`。若只把背景換進現代
+清單，資源雖然正確，layout ownership仍完全錯。
+
+同一段input loop也推翻本輪稍早的API：secret chord命中後只把selection寫5，
+沒有立刻呼叫shop。hub先以第六組座標／文字重畫，玩家後續confirm才dispatch。
+因此`detect→reveal→redraw→confirm→dispatch`必須拆開測；把它壓成
+`AdvanceSecret()`會讓最終目的地正確，卻把玩家實際看見的中間狀態刪掉。
+
+最後，第一次Xvfb命令表面exit 0但截圖timestamp未變，畫面仍是舊檔。改用自行
+啟動Xvfb、等待socket、`exec` binary的可觀察runner後才真的產生新圖。GUI artifact
+驗證不能只信process exit：還要查mtime、尺寸並人工看圖，否則README很容易長期
+展示與source不一致的舊成果。

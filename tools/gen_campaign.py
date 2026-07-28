@@ -149,6 +149,15 @@ NATIVE_SECRET_GATES = {
     22: (0, 0x68), 26: (4, 0x58), 27: (0, 0x63),
 }
 
+# FD2.EXE 0x6238d record byte 0, consumed by 0x2cd16/0x2cd46 through
+# FDOTHER resource table {11,61,62}. Keep the raw 0/1/2 discriminator rather
+# than inventing semantic town-style names.
+NATIVE_TOWN_VARIANTS = {
+    2: 0, 3: 2, 4: 0, 5: 0, 6: 2, 7: 2, 8: 0, 9: 0,
+    10: 2, 11: 2, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1, 17: 1,
+    18: 1, 19: 2, 20: 1, 21: 1, 22: 1, 26: 0, 27: 0,
+}
+
 # doc28 加入角色名單的用字與 characters.json 對不上的少數例外(核對後只有這一筆)。
 NAME_ALIASES = {"達可塞": "達克賽"}
 
@@ -711,6 +720,7 @@ def build_campaign(
                 "type": "town",
                 "town": normal_rows[0]["town"],
                 "bgm": BGM_STORY,
+                "native_town_variant": NATIVE_TOWN_VARIANTS[int(intermission_cid)],
                 "options": town_options,
             }
             if secret_shop_id:

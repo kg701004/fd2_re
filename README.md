@@ -11,15 +11,15 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay；商店 purchase、sell、equip、transfer四條service均已有indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **45–50%**；town、preparation、loadslots、ending與商店DOSBox E2仍未閉合，不能稱原版視覺 parity |
+| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、原版 indexed town hub、教會多個服務、action/command/item overlay；商店 purchase、sell、equip、transfer四條service均已有indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town 的 DOSBox E2、preparation、loadslots、ending與商店DOSBox E2仍未閉合，不能稱原版視覺 parity |
 
-Worklist 目前是 **475 個 `[x]`、97 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **479 個 `[x]`、101 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
 視覺完成度必須另看 [`57` UI evidence matrix](docs/knowledge-base/57-ui-evidence-matrix.md)。
 目前工程估計為：原始 asset/codec 可重現約 75–85%，可操作 state flow 約
-50–55%，但完整玩家操作畫面的原版視覺還原只有約 35–40%。這些是依界面
+50–55%，但完整玩家操作畫面的原版視覺還原約 40–45%。這些是依界面
 證據分級的範圍，不是測試覆蓋率，也不能加總成遊戲完成百分比。
 
 這組數字不能換算成「原版完成了幾％」：`[x]` 可能只代表一個格式、函式或 raw adapter 已通過證據 gate，
@@ -67,7 +67,8 @@ Escape 離店；這是 remake campaign contract，不是 native shop service par
 2026-07-28 也撤回「先打聽後永久顯示第六個神秘商店選項」等同原版的說法。
 Docker Capstone 證實 town record `+1` 保存當前五項 selection、`+2` 保存 BIOS
 Shift/Ctrl/Alt-F1..F10 scan；兩者同時命中才在當次輸入把 selection 改成 5，
-再進 variant5/resource63 商店。23 個原版 town 已以 editable
+原 town owner 會先重畫第六組 icon／label，玩家再次 Enter 才進
+variant5/resource63 商店。23 個原版 town 已以 editable
 `native_secret_gate` 接回 runtime；legacy `found_secret_*`／`SecretIf`僅保留
 擴充相容。實機 chord 與 town→secret-shop DOSBox E2 仍待。
 
@@ -131,8 +132,11 @@ mutation 未被猜測接入，未知 selector 維持 fail-closed。
 以後 499 個、2026-07-27 單日 130 個，這些 commits 不能直接當成玩家功能 round。
 早期 README 圖片確實集中在 6/28–7/2（格式、標題、對話、戰鬥）；7/25–7/26
 才補了原版 title/dialogue、action overlay、command grid、preparation 等少數
-新 artifact。本次以目前 source 重建後新增 [`town-hub-remake.png`](docs/figures/town-hub-remake.png)，
-讓 GitHub README 不再只展示舊畫面；它仍是 remake screenshot，不是原版 parity 證據。
+新 artifact。2026-07-28 已再次用目前 source 重建
+[`town-hub-remake.png`](docs/figures/town-hub-remake.png)：畫面由原版
+FDOTHER#11/#61/#62 背景、#10 label、FDTXT 與 FDICON pulse 在 production
+runtime 合成，取代先前戰場 map 上的半透明清單。它仍是 remake runtime
+screenshot；沒有同章 DOSBox capture 前，不是 E2 parity 證據。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
@@ -170,7 +174,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；現由 shop/church 共用 production owner 使用，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | 原版 indexed 目的物品欄滿提示（`0x2f8ea`／FDTXT506＋FFFC 動態姓名；現已接 production lifecycle，非 DOSBox 截圖） | ![native transfer full message](docs/figures/native-transfer-full-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
-| 最新 campaign town hub（source rebuild, 2026-07-27） | ![town hub](docs/figures/town-hub-remake.png) |
+| 原版 indexed campaign town hub（production runtime，ch02 variant0／selection0／pulse0，2026-07-28；尚非 DOSBox E2） | ![town hub](docs/figures/town-hub-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |

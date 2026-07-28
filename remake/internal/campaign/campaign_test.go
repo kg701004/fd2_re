@@ -399,6 +399,11 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 		18: {1, 0x64}, 19: {2, 0x6f}, 20: {3, 0x5c}, 21: {4, 0x67},
 		22: {0, 0x68}, 26: {4, 0x58}, 27: {0, 0x63},
 	}
+	townVariantByChapter := map[int]int{
+		2: 0, 3: 2, 4: 0, 5: 0, 6: 2, 7: 2, 8: 0, 9: 0,
+		10: 2, 11: 2, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1, 17: 1,
+		18: 1, 19: 2, 20: 1, 21: 1, 22: 1, 26: 0, 27: 0,
+	}
 	for _, shop := range source.Shops {
 		if previous, ok := townByChapter[shop.Chapter]; ok && previous != shop.Town {
 			t.Fatalf("chapter %d shop town names disagree: %q / %q", shop.Chapter, previous, shop.Town)
@@ -469,6 +474,14 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 			town := campaign.Nodes[townID]
 			if town == nil || town.Type != "town" || town.Town != townName {
 				t.Fatalf("%s = %#v, want town %q", townID, town, townName)
+			}
+			if town.NativeTownVariant == nil ||
+				*town.NativeTownVariant != townVariantByChapter[chapter] {
+				t.Fatalf(
+					"%s native town variant = %v, want %d",
+					townID, town.NativeTownVariant,
+					townVariantByChapter[chapter],
+				)
 			}
 			wantGate := secretGateByChapter[chapter]
 			if town.NativeSecretGate == nil ||
@@ -686,7 +699,7 @@ func TestRunnerTownUsesVisibleOptionOutcome(t *testing.T) {
 	}
 }
 
-func TestRunnerNativeTownSecretGateRequiresSelectionAndScan(t *testing.T) {
+func TestRunnerNativeTownSecretGateRevealsThenConfirms(t *testing.T) {
 	c := &Campaign{
 		Start: "town",
 		Nodes: map[string]*Node{
@@ -701,14 +714,20 @@ func TestRunnerNativeTownSecretGateRequiresSelectionAndScan(t *testing.T) {
 	}
 	for _, mismatch := range [][2]int{{1, 0x54}, {0, 0x55}} {
 		r := NewRunner(c)
-		if r.AdvanceNativeTownSecret(mismatch[0], mismatch[1]) ||
+		if r.MatchNativeTownSecret(mismatch[0], mismatch[1]) ||
 			r.Cur != "town" {
-			t.Fatalf("mismatch %#v entered hidden shop", mismatch)
+			t.Fatalf("mismatch %#v revealed or entered hidden shop", mismatch)
 		}
 	}
 	r := NewRunner(c)
-	if !r.AdvanceNativeTownSecret(0, 0x54) || r.Cur != "secret" {
-		t.Fatalf("exact native gate did not enter hidden shop: %#v", r)
+	if !r.MatchNativeTownSecret(0, 0x54) || r.Cur != "town" {
+		t.Fatalf("exact native gate did not reveal in place: %#v", r)
+	}
+	if r.ConfirmNativeTownSecret(4) || r.Cur != "town" {
+		t.Fatalf("visible selection dispatched hidden shop: %#v", r)
+	}
+	if !r.ConfirmNativeTownSecret(5) || r.Cur != "secret" {
+		t.Fatalf("revealed native selection did not enter hidden shop: %#v", r)
 	}
 }
 
