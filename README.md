@@ -135,8 +135,11 @@ mutation 未被猜測接入，未知 selector 維持 fail-closed。
 新 artifact。2026-07-28 已再次用目前 source 重建
 [`town-hub-remake.png`](docs/figures/town-hub-remake.png)：畫面由原版
 FDOTHER#11/#61/#62 背景、#10 label、FDTXT 與 FDICON pulse 在 production
-runtime 合成，取代先前戰場 map 上的半透明清單。它仍是 remake runtime
-screenshot；沒有同章 DOSBox capture 前，不是 E2 parity 證據。
+runtime 合成，取代先前戰場 map 上的半透明清單。2026-07-28 已經由隔離
+DOSBox sandbox 走完 ch00 postbattle handler，取得同一 ch02 variant0／
+selection0 原版幀；並排與像素差圖顯示背景及框體相同，觀察到的差異只在
+尚未同步 BIOS tick 的角色與標籤 pulse。這是單一狀態 E2 slice，不代表其他
+variant、selection、輸入或 service 已完成 parity。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
 `0x20c6f` item type→raw callee routing 的證據分開；tracked types5–24
@@ -174,7 +177,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；現由 shop/church 共用 production owner 使用，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | 原版 indexed 目的物品欄滿提示（`0x2f8ea`／FDTXT506＋FFFC 動態姓名；現已接 production lifecycle，非 DOSBox 截圖） | ![native transfer full message](docs/figures/native-transfer-full-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
-| 原版 indexed campaign town hub（production runtime，ch02 variant0／selection0／pulse0，2026-07-28；尚非 DOSBox E2） | ![town hub](docs/figures/town-hub-remake.png) |
+| 原版 DOSBox／remake indexed town hub（ch02 variant0／selection0；左右並排，pulse tick 尚未同步） | ![original and remake town hub](docs/figures/town-hub-original-vs-remake.png) |
+| town hub 像素差圖（非黑差異只集中在角色與標籤 pulse） | ![town hub pixel difference](docs/figures/town-hub-pixel-diff.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |

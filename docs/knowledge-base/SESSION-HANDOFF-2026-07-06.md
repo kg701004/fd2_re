@@ -1480,4 +1480,27 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   production-owner、真實資源、hidden redraw與signed wrap regression覆蓋。
 - [`town-hub-remake.png`](../figures/town-hub-remake.png)已由目前source在
   `fd2-go-test-local`＋Xvfb重拍，為ch02 variant0/selection0 runtime畫面；
-  不是DOSBox E2。下一gate是同章、同selection、同pulse tick的DOSBox pair/diff。
+  當時尚無 DOSBox E2；下節已補同章／同selection pair/diff，剩餘 gate 是
+  同 pulse tick、其他 selection 與 variant。
+
+## 2026-07-28 ch02 town hub DOSBox E2 slice
+
+- `FD2.SAV` 的 current-runtime ch00 battle 以 `/tmp/fd2-town-e2f` 可寫副本執行；
+  原始遊戲目錄未掛入容器、未修改。sandbox 的 FD2.EXE 只 patch battle driver
+  `0x117f3→call 0x205be`、`0x117f8→jmp 0x1187a`，以及 victory helper
+  `0x205d5→jmp 0x206c3`，用途是略過人工打完整場；戰後 handler、campaign
+  gate、town renderer/resource 都仍走原版。不可把此 route patch 描述成原版
+  正常輸入或勝利語意。
+- title timeline 必須把四次 Escape 分散在 opening phases：
+  `wait2, Esc, wait4, Esc, wait4, Esc, wait4, Esc, wait6`；舊的連續 Escape
+  寫法會因按鍵落在錯誤 phase 而不穩定。CONTINUE 後共有20次戰後對話確認，
+  第21次確認後得到 ch02 variant0／selection0 原版 town hub。
+- 新增 DOSBox runner `repeat:count,key,delay_ms`，可重現長對話而不手寫大量
+  timeline steps；參數不合法即 exit 2。
+- 保存 [`town-hub-original-dosbox.png`](../figures/town-hub-original-dosbox.png)、
+  [`town-hub-original-vs-remake.png`](../figures/town-hub-original-vs-remake.png)
+  與 [`town-hub-pixel-diff.png`](../figures/town-hub-pixel-diff.png)。原版與
+  remake 無插值縮成320×200後，差異只出現在角色與標籤 pulse；遮蔽
+  `(30,45,32,35)`、`(245,162,70,35)` 後 raw RGB MD5 均為
+  `d34b124775795f816209e53db603840a`。因此背景／viewport／label frame 的
+  ch02 E2 slice 已閉合，same-tick pulse、variant1/2、selection1–5與輸入仍未閉合。
