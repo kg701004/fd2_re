@@ -840,17 +840,20 @@ fourth closing frame rather than a steady confirmation or fresh dialogue.
 Deterministic indexed fixtures cover both states. Production now owns the
 product-list close, four-frame confirmation open/steady/close, bounded
 Yes/No input, cancel return, insufficient wait, five-frame dialogue close,
-and product-list reopen. Recipient selection, recipient-full feedback,
-successful insert/equip animation, and debit timing remain fail-closed.
+and product-list reopen. Both recipient selectors and recipient-full feedback
+are now production-owned as described below; successful insert/equip
+animation and debit timing remain fail-closed.
 
 Recipient selection has two distinct native owners and must not be normalized
 into one roster widget. After the gold check, item type `>=0x20` sets the
 native party count and enters `0x2e6b8`, the proven two-column/six-visible
 roster. Item type `<0x20` instead passes the compatibility-filtered byte list
 to `0x2e8cf→0x2ebe0`, a three-visible equipment comparison panel. The remake
-now has a strict consumable-recipient compositor that accepts only
+now has a strict consumable-recipient compositor and production owner that accept only
 `itemType>=0x20`; attempting to draw equipment recipients through it fails
-closed. Its deterministic fixture uses the shop's own entry 16 panel,
+closed. Its stateful cursor preserves the proven two-column six-visible
+window, bounded `±1/±2` movement, six-frame open, five-frame close, and
+cancel-to-product-loop. Its deterministic fixture uses the shop's own entry 16 panel,
 FDICON map sprites, FDTXT identity names, and the recovered selected text
 color.
 
@@ -859,7 +862,9 @@ If the selected recipient has exactly eight occupied native cells,
 {1,506,1,506,506,506}` with `unit[+7]+1`, opens the dialogue, waits in mode
 one, and closes back to the product loop without inserting or debiting.
 The purchase-specific compositor now preserves that variant/name ABI and has
-an original-resource fixture.
+an original-resource fixture. Production checks the eight raw flag/item cells
+after selection, opens this message for a full recipient, waits for input,
+then closes and returns without insert or debit.
 
 The `<0x20` comparison renderer is now also executable. `0x2efb7` starts from
 raw base AP `+0x37`, DP `+0x39`, and shared DX `+0x3e`, adds candidate item
@@ -872,8 +877,14 @@ current→candidate fields. The shop-resource offset provenance maps the panel
 and labels to entries 16 and 18..22; six `0x1974c` opening frames and five
 `0x2d31b` closing frames reuse the proven band schedule. Original-resource
 regression and a deterministic indexed fixture cover the stable target.
-At this point the stable recipient targets are closed; success/debit order,
-production runtime ownership, and DOSBox E2 are handled separately below.
+Production now owns the filtered three-row cursor and its six/five-frame
+lifecycle. A correctness gate was added during integration: the generic item
+panel record omitted native base AP/DP `+0x37/+0x39`, so equipment preview now
+uses `NativeShopEquipmentRecordForUnit`, which requires
+`EquipmentBaseSet` and writes those fields explicitly. Missing base/raw
+provenance fails closed rather than previewing zero. At this point the
+recipient targets and cancel/full branches are production-owned;
+success/debit order and DOSBox E2 are handled separately below.
 
 The shared `0x2f4c6` success helper must likewise be split by the caller's
 raw hub variant. Shop variant 1/resource 12 applies entries 23..27 at
@@ -889,8 +900,9 @@ The caller order is also explicit: inventory insert occurs first; equipment
 types may ask and apply optional equip/recalculation; only then does
 `0x2f4c6` present success, after which `0x2d516(price)` debits gold and control
 returns to the product loop. Thus neither confirmation nor insertion alone
-authorizes an early debit. Production runtime ownership and DOSBox E2 remain
-open.
+authorizes an early debit. The recipient owner deliberately returns
+fail-closed without mutation on a non-full selection until this exact
+insert→optional-equip→success→debit timeline is wired. DOSBox E2 remains open.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

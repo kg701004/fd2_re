@@ -435,6 +435,10 @@ func (g *Game) drawNativeShop(screen *ebiten.Image) bool {
 		frame, ok = g.composeNativeShopPurchaseConfirmation()
 	case "insufficient":
 		frame, ok = g.composeNativeShopInsufficientGold()
+	case "recipient_consumable", "recipient_equipment":
+		frame, ok = g.composeNativeShopRecipient()
+	case "recipient_full":
+		frame, ok = g.composeNativeShopRecipientFull()
 	}
 	if !ok {
 		return false
@@ -588,11 +592,21 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 					return
 				}
 				postChoiceClose, frameOK := g.nativeShopPostChoiceCloseFrame()
-				g.msg = "原版購買 recipient production transition 尚未接線"
+				openRecipient := func() {
+					if !g.setupNativeShopRecipients() {
+						g.msg = "原版購買 recipient 缺少 raw 候選資料"
+						g.returnToNativeShopPurchaseList()
+						return
+					}
+					if !g.beginNativeShopRecipientOpening() {
+						g.msg = "原版購買 recipient 面板無法還原"
+						g.returnToNativeShopPurchaseList()
+					}
+				}
 				if !frameOK || !g.beginNativeShopDialogueClosing(
-					postChoiceClose, g.returnToNativeShopPurchaseList,
+					postChoiceClose, openRecipient,
 				) {
-					g.returnToNativeShopPurchaseList()
+					openRecipient()
 				}
 			}
 			if !g.beginNativeShopConfirmationChoiceClosing(afterChoiceClose) {
@@ -605,6 +619,81 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			frame, ok := g.composeNativeShopInsufficientGold()
 			if !ok || !g.beginNativeShopDialogueClosing(
 				frame, g.returnToNativeShopPurchaseList,
+			) {
+				g.returnToNativeShopPurchaseList()
+			}
+			return true
+		}
+	case "recipient_consumable", "recipient_equipment":
+		count := len(g.shopRecipients)
+		if g.nativeShopMode == "recipient_consumable" {
+			delta := 0
+			switch {
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+				delta = -1
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+				delta = 1
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+				delta = -2
+			case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+				delta = 2
+			}
+			if delta != 0 {
+				g.shopRecipientSel = campaign.AdvanceNativeTwoColumnSelection(
+					g.shopRecipientSel, count, delta,
+				)
+				g.nativeShopRecipientStart, _ = campaign.NativeTwoColumnWindow(
+					count, g.shopRecipientSel, g.nativeShopRecipientStart,
+				)
+			}
+		} else {
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) &&
+				g.shopRecipientSel > 0 {
+				g.shopRecipientSel--
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) &&
+				g.shopRecipientSel+1 < count {
+				g.shopRecipientSel++
+			}
+			g.nativeShopRecipientStart, _ = campaign.NativeThreeRowWindow(
+				count, g.shopRecipientSel, g.nativeShopRecipientStart,
+			)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopRecipientClosing(
+				g.returnToNativeShopPurchaseList,
+			) {
+				g.returnToNativeShopPurchaseList()
+			}
+			return true
+		}
+		if enter && count != 0 {
+			unit := g.partyRoster[g.shopRecipients[g.shopRecipientSel]]
+			if nativeShopInventoryFull(unit) {
+				openFull := func() {
+					g.nativeShopMode = "recipient_full"
+					if !g.beginNativeShopRecipientFullOpening() {
+						g.msg = "原版購買滿欄訊息無法還原"
+						g.returnToNativeShopPurchaseList()
+					}
+				}
+				if !g.beginNativeShopRecipientClosing(openFull) {
+					openFull()
+				}
+				return true
+			}
+			g.msg = "原版購買 insert/success/debit production 尚未接線"
+			if !g.beginNativeShopRecipientClosing(
+				g.returnToNativeShopPurchaseList,
+			) {
+				g.returnToNativeShopPurchaseList()
+			}
+			return true
+		}
+	case "recipient_full":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopRecipientFullClosing(
+				g.returnToNativeShopPurchaseList,
 			) {
 				g.returnToNativeShopPurchaseList()
 			}

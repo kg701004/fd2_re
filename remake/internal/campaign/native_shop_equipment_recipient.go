@@ -18,6 +18,27 @@ type NativeShopEquipmentRecipientRow struct {
 	Candidate     [4]int
 }
 
+// NativeShopEquipmentRecordForUnit materializes the exact 0x50-byte fields
+// consumed by 0x2efb7. The general item-panel adapter intentionally omits
+// base AP/DP at +0x37/+0x39, so equipment preview must require independently
+// initialized equipment-base provenance rather than silently previewing zero.
+func NativeShopEquipmentRecordForUnit(unit *battle.Unit) ([]byte, error) {
+	if unit == nil || !unit.EquipmentBaseSet ||
+		unit.BaseAP < -0x8000 || unit.BaseAP > 0x7fff ||
+		unit.BaseDP < -0x8000 || unit.BaseDP > 0x7fff {
+		return nil, errors.New(
+			"campaign: native shop equipment record lacks base AP/DP provenance",
+		)
+	}
+	record, err := battle.NativeItemPanelRecordForUnit(unit)
+	if err != nil {
+		return nil, err
+	}
+	binary.LittleEndian.PutUint16(record[0x37:], uint16(int16(unit.BaseAP)))
+	binary.LittleEndian.PutUint16(record[0x39:], uint16(int16(unit.BaseDP)))
+	return record, nil
+}
+
 // NativeShopEquipmentCandidateStats reproduces 0x2efb7. It previews replacing
 // the equipped item in the selected item's <=0x14 or >0x14 category while
 // retaining equipped contributions from the opposite category.

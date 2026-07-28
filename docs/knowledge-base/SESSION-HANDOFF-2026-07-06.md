@@ -1343,6 +1343,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   返回。gold足夠時因recipient owner尚未接，只顯示fail-closed訊息並返回，
   不插入物品、不扣款。成果圖`native-shop-purchase-insufficient-indexed.png`
   已依更正後framebuffer重生。
+- 2026-07-28 native purchase recipient production：gold足夠後先關dialogue，
+  type≥`0x20`進兩欄六人`0x2e6b8`，type<`0x20`依raw class whitelist進
+  三列`0x2e8cf→0x2ebe0` AP/DP/HIT/EV比較；兩者均有stateful bounded
+  cursor、6-open/5-close、Escape返回。選到八個raw inventory flags均occupied
+  的角色會關recipient、開FDTXT506＋`unit[+7]+1`姓名訊息，等待後關閉返回，
+  不insert/debit。integration時發現generic item-panel record未填
+  `+0x37/+0x39` base AP/DP；新增專用adapter要求`EquipmentBaseSet`後明確
+  填入，刪除把零值preview當正確的捷徑。非滿欄選擇目前仍fail-closed返回，
+  下一步才接insert→optional equip→success→debit。
 - 2026-07-28 purchase recipient E1：`0x2f30a`證實type≥`0x20`才走
   `0x2e6b8`兩欄六人；type<`0x20`走filtered `0x2e8cf→0x2ebe0`三列
   AP/DP/HIT/EV比較，故新增consumable-only compositor並拒絕裝備type。

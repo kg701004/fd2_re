@@ -190,6 +190,7 @@ type Game struct {
 	nativeShopServiceSel     int
 	nativeShopItemStart      int
 	nativeShopConfirmSel     int
+	nativeShopRecipientStart int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int

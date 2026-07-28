@@ -317,9 +317,9 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 	if err != nil || len(opening) != 6 {
 		t.Fatalf("equipment recipient opening=%d,%v", len(opening), err)
 	}
-	closing, err := NativeClassListClosingFrames(purchaseSource, equipment)
-	if err != nil || len(closing) != 5 {
-		t.Fatalf("equipment recipient closing=%d,%v", len(closing), err)
+	listClosing, err := NativeClassListClosingFrames(purchaseSource, equipment)
+	if err != nil || len(listClosing) != 5 {
+		t.Fatalf("equipment recipient closing=%d,%v", len(listClosing), err)
 	}
 }
 
@@ -440,6 +440,41 @@ func TestNativeShopPurchaseSuccessUsesOriginalVariantResources(t *testing.T) {
 				changed, assets.SuccessFrames[0].Width, assets.SuccessFrames[0].Height,
 			)
 		}
+	}
+}
+
+func TestNativeShopEquipmentRecordRequiresAndPreservesBaseStats(t *testing.T) {
+	unit := battle.Unit{
+		BattleFig: 2, NativeIdentity: 2, HasNativeIdentity: true,
+		NativeRecordByte6: 3, HasNativeRecordByte6: true,
+		NativeRecordRace: 1, HasNativeRecordRace: true,
+		NativeRecordClass: 4, HasNativeRecordClass: true,
+		Lv: 8, MV: 5, Exp: 20, DX: 17,
+		HP: 30, MaxHP: 35, MP: 5, MaxMP: 9,
+		AP: 41, DP: 32, HIT: 70, EV: 22,
+		InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		BaseAP:               29, BaseDP: 25,
+	}
+	if _, err := NativeShopEquipmentRecordForUnit(&unit); err == nil {
+		t.Fatal("equipment preview accepted unproven base AP/DP")
+	}
+	unit.EquipmentBaseSet = true
+	record, err := NativeShopEquipmentRecordForUnit(&unit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := int(int16(binary.LittleEndian.Uint16(record[0x37:]))); got != 29 {
+		t.Fatalf("base AP=%d, want 29", got)
+	}
+	if got := int(int16(binary.LittleEndian.Uint16(record[0x39:]))); got != 25 {
+		t.Fatalf("base DP=%d, want 25", got)
+	}
+	if got := int(int16(binary.LittleEndian.Uint16(record[0x3e:]))); got != 17 {
+		t.Fatalf("base DX=%d, want 17", got)
+	}
+	if got := int(int16(binary.LittleEndian.Uint16(record[0x48:]))); got != 41 {
+		t.Fatalf("current AP=%d, want 41", got)
 	}
 }
 
