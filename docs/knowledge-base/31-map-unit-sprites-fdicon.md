@@ -108,9 +108,10 @@ header 與 FDSHAP tileset 同骨架(尺寸+count+offset 表)，且兩者都可�
 > **刪除舊表的錯誤 offset/identity 對應**：它把另一份結構標記混入 runtime 0x50-byte
 > battle roster，並把觀察到的相等值升格為欄位 alias。今後僅以以上直接讀寫為準；未閉合欄位不另命名。
 
-## 7. sprite & face 統一角色系統(remake 加新人的基礎)
+## 7. sprite & face 統一 authoring 系統（remake 擴充設計，非原版 ABI）
 
-remake 把角色做成**單一資料表**(同一角色 id 對應 face 與 sprite,基本態恆等),加新人加一筆:
+remake 可把自創角色做成**單一資料表**，明確配置 face 與 sprite；這是便利的
+authoring schema，不表示原版 raw id、DATO、FDICON cache slot 數值恆等。加新人加一筆:
 
 ```jsonc
 // characters.json — 角色 id → 頭像 + 地圖 sprite + 數值

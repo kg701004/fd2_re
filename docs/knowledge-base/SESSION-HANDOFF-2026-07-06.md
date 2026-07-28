@@ -1644,3 +1644,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`shop-purchase-ch02-selections-original-vs-remake.png`](../figures/shop-purchase-ch02-selections-original-vs-remake.png)
   上排原版、下排remake，順序0/1/3/2。這只關閉purchase list steady/input；
   purchase confirm、recipient、success/failure與其他三個service仍須E2。
+
+## 2026-07-28 repo-wide Markdown assertion audit
+
+- 掃描66個Markdown後，已修正會直接誤導production的現行敘述：攻略目標不能
+  取代逐章battle/postbattle handler；`battle_events.json`與
+  `gen_campaign.py`只可作candidate/editable scaffold，不能直接當原版route
+  oracle；Beat DSL仍有unknown post handlers，不能稱33關機械完整抽取。
+- 撤回跨文件殘留的「character id＝DATO portrait＝FDICON sprite group」
+  全域恆等。現行ABI以doc31為準：`unit+2`是`0x11019` cache slot，
+  `unit+7`與persistent identity有各自writer；remake單一角色表只是extension
+  authoring schema，不是原版數值alias。
+- README、42、56、57、91已同步目前E2範圍：ch02 town variant0、三種shop
+  menu、secret return及weapon purchase list已有窄切片exact證據；不可外推到
+  23 towns／69 shops。歷史handoff/reflection保留，但current authority與
+  evidence tier優先。
+- 名稱稽核未發現衝突：角色正名仍為「悠妮」；`DATO_075`為商店店員NPC，
+  不得進party/JOIN。

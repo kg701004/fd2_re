@@ -1,7 +1,9 @@
 # 26 — 逐關戰場事件 handler 細節與腳本化對照(供 remake 去 hardcoding)
 
 > doc 25 證實 FD2 戰場事件是「每章一個編進 EXE 的 C handler 函式」(章節跳表 `0x51b19`)。
-> 本篇**逐關挖完 18 個特殊 handler 的「條件→動作」**,並設計成資料驅動腳本,讓 remake 不必照抄硬編碼。
+> 本篇匯出 30 章 battle-end predicate/result metadata；其中18個非default
+> handler有條件骨架。這**不是完整動作、turn-event、postbattle或campaign
+> route dump**，不得直接當成忠實runtime腳本。
 > 方法:`tools/event_handler_dump.py`(遞迴反組譯單一 handler + 標註事件原語);機器可讀結果在 [`docs/data/battle_events.json`](../data/battle_events.json)。
 > 標 **[驗]**(disasm 直證)/ **[推]**(語意推定)。
 
@@ -15,12 +17,12 @@
 |---|---|---|
 | `0x3453e(idx)` | **NativeRecordByte5Bit0(idx)**：取第 idx 單位(`[0x53a45] + idx*0x50 + 5`) 的 `byte[+5] & 1` | raw predicate [驗]；高階語意由各 caller branch 另證 |
 | 迴圈 `for idx in a..b: 0x3453e` | 查一段單位群的狀態旗標 | `units_in_range(a,b)` [驗] |
-| `0x33499(id)` | **roster_has(id)**:線性搜尋我方名冊 `[0x53bf7]`(32 槽×0x50B,計數 `[0x53bfb]`),找 `byte[+8]==id` | `roster_has(id)` [驗];byte[+8]=角色 ID [推] |
-| `cmp [0x53bef], N` | 比較回合/進度計數 | `turn >= N` [推] |
-| `mov [0x53ecc], 1` | 觸發中途事件(→ 戰役迴圈進世界地圖/中場) | `do: story_event` [驗] |
-| `mov [0x53ecc], 2` | 達成(特殊)勝利條件 | `do: victory` [驗] |
+| `0x33499(id)` | 線性搜尋我方名冊 `[0x53bf7]`(32 槽×0x50B,計數 `[0x53bfb]`)，比對 `byte[+8]` | `roster_has(raw_identity_key)` [驗]；高階角色名依caller |
+| `cmp [0x53bef], N` | 比較raw phase/turn counter | `counter >= N` [驗]；玩家層回合語意依caller |
+| `mov [0x53ecc], 1` | 寫 battle-result code 1 | `result_code: 1` [驗]；中途／勝敗語意依外層caller |
+| `mov [0x53ecc], 2` | 寫 battle-result code 2 | `result_code: 2` [驗]；中途／勝敗語意依外層caller |
 | `call 0x15f84(…,資源)` | 繪事件全螢幕畫面 | `do: show_scene(res)` [驗] |
-| default 尾段 `0x2067e` | 遍歷單位陣列做標準勝敗(殲滅即勝) | `default_win: annihilate` [驗] |
+| default 尾段 `0x2067e` | 共用 battle-end predicate／result path | raw default callee [驗]；「殲滅即勝」需另有caller/gameplay證據 |
 
 **`0x3453e` 全貌(已驗證)**:`idx*4 + idx = idx*5`,再 `<<4` = `idx*0x50`(單位結構大小)+ 基底 + 5 → 取 bit0。
 **raw byte 說明(2026-07-27)**：constructor `0x10eed` 寫 `byte[+5]=0`，HP 路徑 `0x1dc61/0x1dd4c` 與 `0x32975` 會寫入 `1`；這些是已觀察的 writer，不能單獨把 bit0 提升成所有 caller 共用的死亡／存活欄位。`0x3453e` 只回傳 `byte[+5] & 1`，bit7 writer 亦另行追蹤。每個 handler 的 `test/jcc` 必須按該 caller 的 raw predicate 解讀。
@@ -113,7 +115,8 @@
 
 ## 4. 提議的 remake 腳本 schema(取代硬編碼)
 
-把上表表達成 campaign 的每章事件規則(對映 doc 19 腳本系統 + ScenarioRunner):
+下例只示範可編輯的 **candidate DSL projection**；raw predicate/result code
+尚未逐caller閉合前，不得由 ScenarioRunner 自動視為原版語意：
 
 ```jsonc
 // campaign.chapters[17].battle_events
@@ -128,9 +131,12 @@
 - `when.unit_inactive:[…]` / `units_in_range:[a,b]` / `turn>=N` ← 對應原語
 - `do: story_event | victory | show_scene` ← 對應 `[0x53ecc]` 與 `0x15f84`
 - 11 個 default 章 → 直接 `{"default_win":"annihilate","events":[]}`,零工作量
-- 18 個特殊章 → 用上表填 `events`,**逐關資料化,無一行 hardcode**
+- 18 個非default章 → 可先填candidate `events`，但仍須逐caller/章驗證
 
-機器可讀骨架已生成:[`docs/data/battle_events.json`](../data/battle_events.json)(30 章,各含 handler/trigger_units/result_codes/draw_scene/action_fns),remake 可直接讀進 ScenarioRunner 當初始資料,再補劇情文字(FDTXT,doc 09)與場景資源。
+機器可讀骨架已生成:[`docs/data/battle_events.json`](../data/battle_events.json)
+(30章，各含handler/trigger_units/result_codes/draw_scene/action_fns)。它可供
+editor/audit作初始資料，但必須經typed adapter與逐章evidence gate，不能直接
+餵入production ScenarioRunner當原版真值。
 
 ## 5. 對重製流程的銜接
 
@@ -138,7 +144,9 @@
 2. + `maps_metadata.json`(doc 03)→ 單位 idx 對應實際角色/敵人 + 出場位置
 3. + 章節文本 FDTXT(doc 09)→ 事件觸發時播的對白
 4. + 章節跳表 `0x51d71`/`0x51de9`(doc 23)→ 戰前/戰後劇情
-→ 組成完整資料驅動 campaign,ScenarioRunner 解釋執行(doc 19/21),**事件邏輯全在資料,引擎不為任何一關寫死分支**。
+→ 這些來源可組成editable campaign scaffold；完整原版流程仍須補
+handler CFG、postbattle side effects、town/shop/preparation route與save/reload
+regression。資料驅動是目標架構，不是目前已證實所有事件語意都在資料內。
 
 ## 6. 受阻 / 待驗(誠實標註)
 

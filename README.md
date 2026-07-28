@@ -11,9 +11,9 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、原版 indexed town hub、教會多個服務、action/command/item overlay；商店 purchase、sell、equip、transfer四條service均已有indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town 的 DOSBox E2、preparation、loadslots、ending與商店DOSBox E2仍未閉合，不能稱原版視覺 parity |
+| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、ch02 town variant0、ch02三種商店主選單與武器購買清單、教會多個服務、action/command/item overlay；另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town variant1/2、preparation、loadslots、ending與商店其餘child panels的DOSBox E2仍未閉合，不能稱原版視覺 parity |
 
-Worklist 目前是 **479 個 `[x]`、101 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **488 個 `[x]`、101 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -70,7 +70,8 @@ Shift/Ctrl/Alt-F1..F10 scan；兩者同時命中才在當次輸入把 selection 
 原 town owner 會先重畫第六組 icon／label，玩家再次 Enter 才進
 variant5/resource63 商店。23 個原版 town 已以 editable
 `native_secret_gate` 接回 runtime；legacy `found_secret_*`／`SecretIf`僅保留
-擴充相容。實機 chord 與 town→secret-shop DOSBox E2 仍待。
+擴充相容。ch02 的實機 chord→selection5→Enter、variant5 四項service與
+Escape返回selection5已完成DOSBox／remake同狀態E2；其餘22個town仍待逐章驗收。
 
 2026-07-27 補上 native command 的 target state slice：command grid confirm 先通過
 `NativeCommandTargets`，再接入已有 raw executor 的 IDs `0,13–16,20–22,24–29,31`；
@@ -174,6 +175,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 摘要看 README 狀態表；證據 gate 與玩法差距看 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)／[`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md)；
 逐項追蹤看 [`91` worklist](docs/knowledge-base/91-worklist.md)。`00` 是路由索引；`01`–`55`、`99` 是專題證據與歷史記錄；`56` SDD 與 `57` UI evidence matrix 是現行 gate；`90`、`30` 是規劃/WBS 基線。
 專題文件中的「全破／完成」只限該段格式、資源或函式已驗證，不代表全遊戲 parity；若歷史筆記與三份權威文件衝突，以最新證據與 fail-closed 標註為準。
+歷史專題中的 DSL／JSON 範例若沒有 evidence tier、日期與 production consumer，
+只能當 candidate scaffold，禁止直接餵入 runtime 當原版真值。
 
 ### 已有成果圖片
 

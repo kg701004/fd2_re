@@ -17,15 +17,16 @@ oracle、目前 source rebuild 截圖、indexed fixture，以及外部原版畫�
 | story dialogue | 30–40% | 原版 oracle 固定左下 80×80 portrait、native frame/text/page marker；目前一般 runtime 仍有 RGBA/font/layout path，upper/right anchor、FFxx、scroll/clipping 未逐類驗收。README 的 `dialogue.png` 是文字解碼圖，不是 remake 對話 runtime screenshot |
 | full-screen battle presentation | 40–50% | FIGANI/AFM、部分 status frame與局部 pixel-equal slices可重播；command/spell/item完整 presentation、音效與 palette/timing sequence仍缺 |
 | postbattle/campaign transition | 25–35% | graph與部分 handler已接，但原版每章 postbattle→town／連戰／整備的可見轉場未逐章 E2 驗收 |
-| town hub | 85–90% | ch02 variant0 selection0–5 均取得原版 DOSBox E2，且各自能和 production remake 某個 pulse 的 320×200 raw RGB MD5 整幀相同；Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape返回selection5皆由原版 input trace 到達。仍缺variant1/2 E2 |
-| weapon/item/secret shop | 92–95% | 69個shop節點已用variant1/3/5啟用indexed owner；ch02三種variant的service0 selected phase均與原版全幀相同，variant5另閉合四service、wrap及Escape→town selection5；ch02武器purchase list四個selection與原版全幀相同。E2修正pulse雙重`/2`與返回selection0錯誤；仍缺purchase後續confirm/recipient/feedback、sell/equip/transfer child panel與其他章節E2 |
+| town hub | ch02 examined slice 85–90%；全章 partial | ch02 variant0 selection0–5 均取得原版 DOSBox E2，且各自能和 production remake 某個 pulse 的 320×200 raw RGB MD5 整幀相同；Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape返回selection5皆由原版 input trace 到達。23個town中只驗收ch02，仍缺variant1/2與其餘章E2；85–90%不可外推成全遊戲town覆蓋率 |
+| weapon/item/secret shop | ch02 examined slice 92–95%；全章 partial | 69個shop節點已用variant1/3/5啟用indexed owner，但DOSBox E2只覆蓋ch02：三種variant service menu、variant5 wrap/return及weapon purchase-list四個selection全幀相同。仍缺purchase後續confirm/recipient/feedback、sell/equip/transfer child panel與其他章節E2；92–95%不可外推成69店全覆蓋率 |
 | church | 60–70%（已接 slices） | church main/status/transfer/revive/class 多數已有原始 FDOTHER/FDICON/FDTXT indexed畫面與 lifecycle；transfer的`0x2f8ea`亦由shop service3共用，非church專屬；缺 DOSBox side-by-side、部分 fallback與完整 persistent/save parity |
 | preparation | 10–20% | selection/quota有 state trace；`preparation-current-remake.png` 是兩欄 checkbox 半透明框，原版 LMI1 #0x52 slide、MAP/TURN、YES/NO完整畫面未接 |
 | save/load | 20–30% | 四槽 input與 native save codec已有基礎；remake loadslots是現代框／字型，和 `load-empty-original-dosbox.png` 的四列原生框、cursor、metadata layout不同 |
 | ending | 20–30% | prefix已跑到 `0x2c548`，portrait compositor已閉合一段；campaign仍可落入 generic「結局」半透明文字頁，party montage、音訊與terminal route未完成 |
 
-商店 stable fixture 的加入尚不足以改變整體區間：十二個主要界面等權
-平均仍約 **40–45%**，因此現階段應對外寫成「操作界面
+上表百分比是各欄已檢視切片的工程估計；town/shop已明列為ch02 scoped，
+不能把它們當成23 town／69 shop的coverage denominator。綜合未驗收章節與
+缺失state後，整體仍估約 **40–45%**，因此現階段應對外寫成「操作界面
 視覺還原約 40–45%」，而不是「原版視覺 parity 已完成」。如果評的是
 原始圖檔／字型／動畫／indexed codec 可解碼程度，則可合理估為 75–85%；
 如果評的是可操作 state flow，約 50–55%；這三種指標不可互相替代。

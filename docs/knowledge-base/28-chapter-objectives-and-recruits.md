@@ -82,11 +82,18 @@
 - `recruit` ← 本表第 5 欄(「出現前勿滅完」= 需該角色已登場才可招募)
 - `events` ← 攻略「事件/說明」段的回合觸發(如 ch29 魔神連鎖、ch6 第七回合獸人出現)
 
-→ **remake 不需逐章反組譯 handler**:攻略已給玩法層完整目標,`battle_events.json`(機制層)+ 本表(目標層)互相佐證,直接資料化。
+→ 攻略與 `battle_events.json` 只能作 authored/normalized 起點，**不能取代逐章
+handler、postbattle、town/shop/preparation 與 persistent roster 的證據**。凡會改變
+勝敗分支、招募、獎勵、戰後流程或存檔邊界的章節仍須逐章閉合，未閉合者fail closed。
 
 ## 5. 對 handler 碼語意的最終說明(誠實)
 
-handler 的 `unit_state(idx)→ 碼1/碼2` 中,**`unit_state` = 護衛/目標單位存活**已由攻略確認;但「碼1=中途事件、碼2=特殊結束」與攻略「勝利/失敗」的**精確一對一映射**(哪個碼=勝、哪個=敗、哪個=續)尚未鎖死(碼經戰役迴圈 doc 24 §6 再分派)。
-**對重製無影響**:remake 以**攻略的勝利/失敗條件為準**實作(本表),handler 反組譯作為機制佐證即可。若日後要精確對映,屬考據完整性,非重製阻塞。
+handler 的 `0x3453e(idx)` 只直接證實讀取 runtime record
+`byte[+5]&1`；攻略可旁證某些caller涉及護衛／目標單位，但不能把這個raw
+predicate全域命名成「存活」。同樣地，result code 1/2 與玩家層中途／勝／敗／
+續的精確映射仍須由外層戰役迴圈與各caller閉合。
+這個映射**會影響重製**：攻略可協助命名玩家可見目標，但 handler return code、
+中途事件、招募與 postbattle side effects 才決定原版流程。尚未取得 E0/E2 證據的
+條件只能標為 authored approximation，不可當成原版等價規則。
 
 > 相關:doc 26(handler 條件→動作)· doc 25(事件系統)· doc 24(戰役迴圈碼分派)· doc 02(數值/公式)· doc 19(腳本系統)。資料:`docs/data/battle_events.json`、`references/text/fd2.md`(青衫攻略,本機)。

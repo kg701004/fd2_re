@@ -1,5 +1,10 @@
 # 45 — 敵/友單位「職業名」顯示錯位根因(worklist 第 8 輪修復)
 
+> **2026-07-28 更正**：本文早期把 FDFIELD byte1、DATO portrait 與 FDICON
+> group 視為同一 identity；此全域恆等已被 doc31 的 constructor/cache trace
+> 推翻。下列歷史修法只能視為 ch01 authored compatibility mapping，不能作為
+> 原版 runtime ABI 或其他章節身分推導規則。
+
 > 起因:實測回報「原版海盜 → remake 顯示劍士、原版士兵 → remake 顯示聖騎士」。與另一線(ch1-verify,
 > 用青衫攻略截圖 + 影片鐵證交叉核對)獨立得出同一根因,本檔記錄反組譯/資料面的完整證據鏈與修法,
 > 供之後補其他章節怪物 portrait 對照時參照。方法遵守 `rulebook/62`(靜態溯源、描述前先驗證)。
@@ -9,7 +14,8 @@
 FDFIELD 出場人物 26B 結構裡的 `(race,cls)` 是**戰鬥數值範本索引**(決定 HP/AP/DP/DX/MV 成長曲線、
 戰鬥動畫類型),**不是身分**。map0 裡海盜、哈瓦特、哈諾、T6 海防隊士兵四個完全不同的敘事角色,
 `(race,cls)` 全部是 `(1,1)`——同一組數值範本被至少四種不同身分共用,證明它天生就不可能拿來反推顯示名。
-真正的敘事身分綁定在 **portrait**(= DATO 角色 id)。`export_units.py` 舊版拿 `(race,cls)` 去查
+敘事身分不能只由 `(race,cls)` 推導；現有 ch01 authored mapping 曾以當時標成
+`portrait` 的 raw byte作查表 key。`export_units.py` 舊版拿 `(race,cls)` 去查
 `docs/data/exe_tables/unit.json` 的 `cls_name` 欄位(該欄本身是拿**玩家轉職職業表**
 `CLASS_NAMES=["龍","劍士","戰士",...,"聖騎士",...]` 填的),等於整批敵方/友方雜兵的顯示名被誤用
 「玩家轉職職業」代替,`cls=1→劍士`、`cls=11→聖騎士`,才會出現海盜/士兵都顯示「劍士」這種錯位。
@@ -24,9 +30,10 @@ FDFIELD 出場人物 26B 結構裡的 `(race,cls)` 是**戰鬥數值範本索引
 
 ### 2. map0 實測:四個不同角色共用 `(race,cls)=(1,1)`
 
-直接讀 `extracted/raw/FDFIELD` map0 控制段(資源 1)的出場人物原始 bytes(`camp,portrait,race,cls,lv`):
+直接讀 `extracted/raw/FDFIELD` map0 控制段(資源 1)的出場人物原始 bytes；
+表中的 `raw b1` 是舊工具曾命名為 portrait 的欄位，現不得直接等同 DATO：
 
-| camp | portrait | race,cls | lv | group | 實際身分(青衫攻略/影片) |
+| camp | raw b1 | race,cls | lv | group | 實際身分(青衫攻略/影片) |
 |---|---|---|---|---|---|
 | enemy | 96 | 1,1 | 2 | 1/2/4/5 | 盜賊(俗稱「海盜」) |
 | enemy | 97 | 1,1 | 3 | 5 | 盜賊頭目 |
@@ -41,18 +48,20 @@ FDFIELD 出場人物 26B 結構裡的 `(race,cls)` 是**戰鬥數值範本索引
 `CLASS_NAMES[cls=1]="劍士"` 填的(這張表驗證用途本來是給**玩家轉職**,26 筆對 modify2.md §7
 職業魔抗/暴擊率表逐一吻合,表本身沒錯,是被拿來做了不對的事),兩個誤用疊加,才會顯示「劍士」。
 
-### 3. 真身分綁在 portrait
+### 3. 舊版 authored identity mapping（已被後續 ABI 證據限縮）
 
-`docs/knowledge-base/31-map-unit-sprites-fdicon.md` §8「已定論」:**id = 肖像(FA)= sprite組(Z1)=
-角色,基本態恆等**;敵方/通用 `id>31` 已知 3 筆:`士兵68、盜賊96、頭目97`。
+doc31 後續 constructor trace 已證實：scripted FDFIELD `b0` 送入
+`0x11019` 後取得 `unit+2` FDICON cache slot，`b1→unit+7`；兩者都不能
+直接命名為 DATO portrait。數值68/96/97與士兵／盜賊／頭目的配對只保留為
+ch01 authored/visual mapping，不外推成全域 identity ABI。
 
 交叉驗證:`extracted/story/full_story_auto.md`(FDTXT_000 解碼字串,glyph_map 直接還原遊戲內嵌文字,
 非攻略轉述)行 41–101 有一份 54 筆的 NPC/怪物身分名清單,順序與 modify2.md §8「敵人」表幾乎逐字對上
 (士兵、精英戰士、鎧甲武士、傭兵、黑暗戰士、狂戰士、騎兵、突擊騎兵、地獄騎士、黑暗騎士、龍騎士、…、
 盜賊、盜賊頭目、影之忍者、黑暗殺手、…),證實這批名字是遊戲真的內嵌的敘事身分字串,不是攻略作者自訂。
-目前僅 68/96/97 三筆有 portrait↔名稱的確認對照(來自 doc31 的既有 RE 成果);把這 54 筆逐一配對到
-portrait id 需要額外反組譯(找 spawn/繪製 code 讀 portrait 查這張表的呼叫點),留待後續章節碰到新怪物
-再補,本輪不擴大範圍。
+目前68/96/97三筆只有ch01 authored/visual對照；把54筆名稱逐一綁到
+runtime identity、DATO與FDICON需要分別追 constructor、dialogue/resource
+caller與cache key，不能由任一數字欄位直接外推。
 
 ## 修法(已實作,`tools/export_units.py`)
 
@@ -64,7 +73,8 @@ PORTRAIT_CLS_NAME = {
 }
 ```
 
-`cls_name` 改成先查 `PORTRAIT_CLS_NAME[portrait]`,查不到才退回原本 `CLASS_NAMES[cls]` 行為
+`cls_name` 的歷史修法先查 `PORTRAIT_CLS_NAME[raw_identity]`，查不到才退回
+原本 `CLASS_NAMES[cls]` 行為
 (fallback 保留,避免其他尚未 RE portrait 對照的怪物顯示空字串)。**`(race,cls)` 驅動的
 `base_stats()` 沒有動**——HP/AP/DP/DX/MV 走的是數值範本這條路徑,青衫攻略與 growth.go 的轉職成長
 系統都靠這條,是對的機制,只是不該借去當顯示名。

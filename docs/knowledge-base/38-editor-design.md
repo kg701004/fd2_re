@@ -191,15 +191,17 @@ flowchart TB
 
 `tools/gen_campaign.py` 與編輯器是**互補、不互斥**的兩條路:
 
-- **`gen_campaign.py` 負責保真度**:一次性(或 RE 進度更新後可重跑)從已反組譯的原版資料(`doc28` 目標表、
-  `docs/data/shops.json`、`assets/maps/*`)自動算出忠實還原原版 30 章的 `campaign_full.json` + `chNN.json` scenario stub。
-  它的價值在「跟原版資料對得上」,精確度取決於 RE 進度(目前 `initial_groups`「全開」是已知的近似,見 `gen_campaign.py`
-  檔頭「RE 撞牆記錄」)。
+- **`gen_campaign.py` 產生可編輯 scaffold**：它從目前已抽取資料建立
+  `campaign_full.json` + `chNN.json` scenario stub，供擴充與稽核；不是原版
+  route oracle，也不保證30章忠實。每次生成後仍須通過逐章 transition matrix、
+  handler evidence、DOSBox route與save/reload review。
 - **編輯器負責創造性擴充**:人工在 `gen_campaign.py` 產出的檔案上加分支、新戰場、新商店,或直接複製一個 `chNN.json`
   當模板另存新章節。編輯器**能載入既有 campaign.json 當起點繼續編輯**,不是只能從空白開始——這樣使用者可以「先跑
-  一次 `gen_campaign.py` 拿到原版 30 章基底,再用編輯器疊加自創內容」,兩邊共用同一份 schema,不衝突。
-- 分工的另一層意義:`gen_campaign.py` 的近似值/RE 撞牆記錄(例如回合增援 group 分配)只影響「自動生成」路徑;
-  使用者若想要更精確的原版重現,可以在編輯器裡手動核對青衫攻略後修正,不需要等 RE 進度追上才能玩到位。
+  一次 `gen_campaign.py` 拿到可編輯30章scaffold，再用編輯器疊加自創內容」，
+  兩邊共用同一份schema，不衝突。
+- 攻略只可補玩家層驗收描述，不能人工補成raw handler、增援group或戰後route
+  真值。原版忠實路徑必須等RE／DOSBox evidence閉合；近似值只能留在明確標示的
+  extension/normalized mode。
 
 ## 6.5 編輯器與「已打包遊戲」的整合(AppImage / 桌面版)
 

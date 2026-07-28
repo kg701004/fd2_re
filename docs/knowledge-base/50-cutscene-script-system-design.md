@@ -1,4 +1,4 @@
-# 50 — 過場腳本系統:原版指令集 → remake Beat DSL(全 33 關通用)
+# 50 — 過場腳本系統：已知原語 → editable Beat DSL
 
 > 結論整理(2026-07-04,doc47/48/49 三線收束)。本篇提供可擴充的 handler Beat DSL；目前已觀察的
 > handler 共享一組原語子集，但不同 caller 仍可能有未閉合的 layout、branch、resource 或
@@ -9,13 +9,13 @@
 > 查「過場原語 / acting / 走位 / 面向 / 序章編排」**只讀本檔**;原始逐 beat 轉錄見 `doc47`(附錄性質)。
 > 其他檔提到過場機制**一律只引用本檔、不複製內容**。
 
-## 1. 原版過場機制最終結論(全部實證)
+## 1. 原版過場機制：已驗證範圍
 
 三層架構,各層職責與還原狀態:
 
 | 層 | 原版實體 | 還原狀態 |
 |---|---|---|
-| **編排** | EXE 每章 handler(跳表 0x51d71[章] 戰前 / 0x51de9[章] 戰後),線性呼叫原語 | 序章 0x3231b 已全轉錄(doc47);其餘章可機械抽取(§3) |
+| **編排** | EXE 每章 handler(跳表 0x51d71[章] 戰前 / 0x51de9[章] 戰後),線性呼叫原語 | 序章 0x3231b 已全轉錄(doc47)；其餘章只能抽取candidate beats，須逐handler閉合branch/layout/persistence (§3) |
 | **對白** | FDTXT 章文本,0x15f84(idx) 逐條播 | 35 檔全解+1533 句精校 |
 | **演出** | EXE acting 資源目錄 + direct-ID getter，0x1366a(id) 播放 | EXE 靜態 bank 106 entries；ACT99/100 已以 live unit diff 交叉驗證 |
 | **走位** | **引擎逐格步進單位**(step 家族、路徑走位 0x13488，及 acting 正常 frame；見 §1.1/§1.2)+ 鏡頭鎖定跟隨 | 機制閉環;remake storyWalks+FollowWalk/acting player 同構 ✓ |
