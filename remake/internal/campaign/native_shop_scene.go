@@ -26,6 +26,13 @@ var nativeFacilityPortraitOffsets = map[int]int{
 	0x84: 0x0e3c,
 }
 
+func nativeFacilityPortraitOffset(portraitID int) int {
+	if offset, ok := nativeFacilityPortraitOffsets[portraitID]; ok {
+		return offset
+	}
+	return 0x9017
+}
+
 // NativeShopAssets preserves the mixed-codec FDOTHER resource selected by
 // 0x2e341. Entry zero is the 0x16886 four-mode 320x200 background and entry
 // one is the 0x4e8af opaque decoration. Entries 3..10 are decoded separately
@@ -184,14 +191,9 @@ func ComposeNativeShopScene(
 		strings == nil || font == nil || gold < 0 || gold > 99_999_999 {
 		return nil, errors.New("campaign: native shop stable assets/state are invalid")
 	}
-	portraitOffset, ok := nativeFacilityPortraitOffsets[portraitID]
-	if !ok {
-		// 0x1956b uses 0x9017 for all other IDs. Keep that native fallback
-		// explicit rather than treating an unknown portrait as centered.
-		portraitOffset = 0x9017
-	}
 	frame, err := ComposeNativeChurchDialogueOverlayAt(
-		assets.Background, dialogueCells, portrait, portraitOffset,
+		assets.Background, dialogueCells, portrait,
+		nativeFacilityPortraitOffset(portraitID),
 	)
 	if err != nil {
 		return nil, err

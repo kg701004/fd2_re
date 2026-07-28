@@ -19,8 +19,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 5 && len(os.Args) != 6 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png]")
+	if len(os.Args) < 5 || len(os.Args) > 8 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png]]]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -54,7 +54,7 @@ func main() {
 	check(err)
 	palette[0] = color.NRGBA{A: 0xff}
 	writePNG(outputPath, frame, palette)
-	if len(os.Args) == 6 {
+	if len(os.Args) >= 6 {
 		itemAssets, err := battle.LoadNativeItemPanelDataAssets(fdotherPath, fdtxtPath)
 		check(err)
 		effectRows, err := battle.LoadNativeItemEffectRowPrefix(
@@ -67,6 +67,31 @@ func main() {
 		)
 		check(err)
 		writePNG(os.Args[5], purchase, palette)
+	}
+	if len(os.Args) >= 7 {
+		purchasePortraits, err := dato.DecodeResource(datoPath, 0x80)
+		check(err)
+		purchaseSource, err := campaign.ComposeNativeShopScene(
+			assets, dialogue, digits, purchasePortraits[0], 0x80,
+			strings, font, 12345678, 0x1f5,
+		)
+		check(err)
+		choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+		check(err)
+		confirmation, err := campaign.ComposeNativeShopPurchaseConfirmation(
+			purchaseSource, dialogue, purchasePortraits[0], 0x80,
+			strings, font, choices, campaign.NativeShopPurchaseQuestion,
+			1, 0, 50, 0, 1,
+		)
+		check(err)
+		writePNG(os.Args[6], confirmation, palette)
+		if len(os.Args) == 8 {
+			insufficient, err := campaign.ComposeNativeShopPurchaseInsufficientGold(
+				confirmation, strings, font, 1,
+			)
+			check(err)
+			writePNG(os.Args[7], insufficient, palette)
+		}
 	}
 }
 

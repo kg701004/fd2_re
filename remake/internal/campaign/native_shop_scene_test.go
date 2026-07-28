@@ -155,6 +155,90 @@ func TestComposeNativeShopSceneUsesOriginalStableResources(t *testing.T) {
 	if string(frame) != string(stableBefore) {
 		t.Fatal("child-panel compositor mutated the stable shop frame")
 	}
+	purchasePortraits, err := dato.DecodeResource(
+		filepath.Join(base, "DATO.DAT"), 0x80,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	purchaseSource, err := ComposeNativeShopScene(
+		assets, dialogue, digits, purchasePortraits[0], 0x80,
+		strings, font, 12345678, 0x1f5,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, message := range []NativeShopPurchaseMessage{
+		NativeShopPurchaseQuestion,
+		NativeShopPurchaseNoEligibleRecipient,
+		NativeShopPurchaseEquipQuestion,
+	} {
+		messageFrame, err := ComposeNativeShopPurchaseMessage(
+			purchaseSource, dialogue, purchasePortraits[0], 0x80,
+			strings, font, message, 1, 0, 50,
+		)
+		if err != nil {
+			t.Fatalf("purchase message %d: %v", message, err)
+		}
+		if len(messageFrame) != NativeShopWidth*NativeShopHeight {
+			t.Fatalf("purchase message %d bytes=%d", message, len(messageFrame))
+		}
+	}
+	confirmation, err := ComposeNativeShopPurchaseConfirmation(
+		purchaseSource, dialogue, purchasePortraits[0], 0x80,
+		strings, font, choices, NativeShopPurchaseQuestion,
+		1, 0, 50, 0, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(confirmation) == string(purchaseSource) {
+		t.Fatal("purchase confirmation did not change the source frame")
+	}
+	confirmationBefore := append([]byte(nil), confirmation...)
+	insufficient, err := ComposeNativeShopPurchaseInsufficientGold(
+		confirmation, strings, font, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(insufficient) == string(confirmationBefore) {
+		t.Fatal("insufficient-gold feedback did not append to confirmation")
+	}
+	if string(insufficient[:157*NativeShopWidth+12]) !=
+		string(confirmationBefore[:157*NativeShopWidth+12]) {
+		t.Fatal("insufficient-gold feedback changed pixels before literal VGA target")
+	}
+	if _, err := ComposeNativeShopPurchaseMessage(
+		purchaseSource, dialogue, purchasePortraits[0], 0x80,
+		strings, font, NativeShopPurchaseInsufficientGold, 1, 0, 50,
+	); err == nil {
+		t.Fatal("insufficient-gold feedback accepted a fresh dialogue source")
+	}
+}
+
+func TestNativeShopPurchaseTextTablesPreserveSixVariants(t *testing.T) {
+	want := [4][6]int{
+		{1, 502, 1, 439, 1, 439},
+		{1, 504, 1, 438, 1, 438},
+		{1, 505, 1, 437, 1, 437},
+		{1, 507, 1, 507, 1, 507},
+	}
+	for message := NativeShopPurchaseQuestion; message <= NativeShopPurchaseEquipQuestion; message++ {
+		for variant := 0; variant < 6; variant++ {
+			got, ok := NativeShopPurchaseTextIndex(message, variant)
+			if !ok || got != want[message][variant] {
+				t.Fatalf("message=%d variant=%d: %d,%v", message, variant, got, ok)
+			}
+		}
+	}
+	if _, ok := NativeShopPurchaseTextIndex(NativeShopPurchaseMessage(4), 0); ok {
+		t.Fatal("unknown purchase message was accepted")
+	}
 }
 
 func TestComposeNativeShopServiceMenuRejectsInvalidState(t *testing.T) {

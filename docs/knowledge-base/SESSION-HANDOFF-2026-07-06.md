@@ -1325,3 +1325,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`native-shop-purchase-list-indexed.png`](../figures/native-shop-purchase-list-indexed.png)
   （item0–5 deterministic fixture）。這閉合stable child target，不代表
   product stock table、opening/closing、recipient/equip prompt或production已完成。
+- 2026-07-28 native purchase confirmation E1：`0x2f0c5..0x2f0f4`
+  的question／insufficient／no-recipient／equip四組六variant FDTXT表已原樣
+  保存；question展開商品名／價格後接`0x19953` Yes/No。重要生命週期勘誤：
+  insufficient不是fresh overlay，而是保留open confirmation並於
+  `0xac44c=(12,157)`追加第三行；API已拆開並fail-closed。新增
+  `native-shop-purchase-confirm-indexed.png`與
+  `native-shop-purchase-insufficient-indexed.png`、真實資源regression。
+  下一個精確gate是recipient selector／full-inventory feedback與
+  optional-equip→success→debit lifecycle，尚未接production owner。

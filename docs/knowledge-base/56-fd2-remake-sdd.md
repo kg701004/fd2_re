@@ -823,6 +823,22 @@ full price and is used by purchase. Nonzero mode displays
 transfer wrapper remains mode-one compatibility; this does not yet close the
 parent panel opening/closing lifecycle.
 
+The purchase confirmation lifecycle is now separately closed at E1. The four
+six-variant FDTXT tables copied by `0x2f0c5..0x2f0f4` are:
+question `{1,502,1,439,1,439}`, insufficient gold
+`{1,504,1,438,1,438}`, no eligible recipient
+`{1,505,1,437,1,437}`, and optional equip
+`{1,507,1,507,1,507}`. The question expands `FFFC` with
+`FDTXT[itemID+181]`, expands `FFFA` with the decimal price, and then calls the
+native `0x19953` Yes/No owner. The insufficient-gold branch does **not**
+rebuild the dialogue overlay: it preserves that open confirmation and writes
+its feedback at literal VGA `0xac44c`, framebuffer coordinate `(12,157)`.
+The strict compositor therefore rejects insufficient gold as a fresh message
+and exposes a separate append-only transition. Deterministic indexed fixtures
+cover both states. Recipient selection, recipient-full feedback, successful
+insert/equip animation, debit timing, opening/closing, and production shop
+integration remain fail-closed.
+
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,
 then selector `0/1/2` maps to `0x2ffa5/0x30012/0x301f4`; selector `3` first

@@ -16,7 +16,7 @@
 
 ## 文件狀態入口（2026-07-27）
 
-目前統計：`[x]=441`、`[~]=96`、`[ ]=65`；僅代表 worklist 勾選項數，不是原版完成百分比。
+目前統計：`[x]=472`、`[~]=97`、`[ ]=69`；僅代表 worklist 勾選項數，不是原版完成百分比。
 
 - [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。
 - [x] `remake/README.md` 改為垂直切片與 fail-closed 差距說明；`00-index.md` 指定 README → `56` SDD → `42` gap audit → 本 worklist 的閱讀順序。
@@ -1323,3 +1323,10 @@
   type23 destination維持global selector1，只把literal code6傳給
   `0x115b6`，不再把兩個「6」混成同一狀態。focused Docker/Xvfb regression
   覆蓋兩層cancel、重新進入、成功commit與grid/selector reset。
+- [x] **UI-SHOP-PURCHASE-CONFIRM-E1**：完整重讀`0x2f0b0`後保存四組
+  六variant FDTXT表；購買問題展開`FFFC`商品名與`FFFA`十進位價格，
+  並接原版`0x19953` Yes/No selected pulse。金額不足不重開frame，而是
+  保留confirmation並於literal VGA`0xac44c`／`(12,157)`追加第三行；
+  generic fresh-message API對此狀態fail-closed。真實FDOTHER/FDTXT/DATO
+  regression與兩張indexed fixtures已補。下一步仍是recipient selector、
+  inventory-full、optional-equip/success/debit lifecycle與production owner。
