@@ -1661,3 +1661,23 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   evidence tier優先。
 - 名稱稽核未發現衝突：角色正名仍為「悠妮」；`DATO_075`為商店店員NPC，
   不得進party/JOIN。
+
+## 2026-07-28 ch02 weapon purchase-confirm E2 closure
+
+- 原版由已閉合的weapon purchase list selection0再送Return，經list close與
+  question/choice opening進入「布衣／50元／要不要啊？」；預設Yes，Right到No，
+  Left回Yes。這是真實input route，不是indexed fixture。
+- 新增 strict screenshot-only
+  `FD2_SHOT_SHOP_CONFIRM_STATE=good,choice,pulse,gold`。它只在production已
+  claim native shop、shared class/shop assets與variant一致且good確實存在時接受
+  choice0/1、pulse0..3、gold0..99999999；清除screenshot lifecycle job但不執行
+  交易，正常campaign/input不讀此hook。
+- 原版高頻sample證實normal與selected pulse交替。selected Yes raw RGB MD5
+  `7a07b1c064ca2c431bc97c798dcfd51e`，selected No
+  `56f6ffb003e87cbc63d7a915ac4b5dd0`，normal
+  `b8cce25df13447e73e1750a8b2edaf0f`；每一對production 320×200全幀AE=0。
+- 新圖
+  [`shop-purchase-confirm-ch02-original-vs-remake.png`](../figures/shop-purchase-confirm-ch02-original-vs-remake.png)
+  上排原版、下排remake，左Yes右No的可見selected pulse。下一個purchase gate
+  是recipient／no-recipient／insufficient／success等transaction結果，不得由
+  confirmation E2外推。

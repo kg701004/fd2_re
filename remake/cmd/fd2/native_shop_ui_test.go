@@ -12,6 +12,8 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
+	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
 func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T) {
@@ -613,6 +615,93 @@ func TestNativeShopPurchaseShotStateIsStrictAndWindowBound(t *testing.T) {
 	g.nativeShopVariant = 3
 	if g.setNativeShopPurchaseShotState(0, 0, 0) {
 		t.Fatal("mismatched purchase shop variant accepted")
+	}
+}
+
+func TestNativeShopConfirmShotStateIsStrictAndGoodBound(t *testing.T) {
+	for _, tc := range []struct {
+		spec                string
+		good, choice, pulse int
+		gold                int
+		ok                  bool
+	}{
+		{spec: "0,0,0,0", ok: true},
+		{spec: "7,1,3,99999999", good: 7, choice: 1, pulse: 3, gold: 99999999, ok: true},
+		{spec: "-1,0,0,0"},
+		{spec: "0,-1,0,0"},
+		{spec: "0,2,0,0"},
+		{spec: "0,0,-1,0"},
+		{spec: "0,0,4,0"},
+		{spec: "0,0,0,-1"},
+		{spec: "0,0,0,100000000"},
+		{spec: "0,0,0"},
+		{spec: "x,0,0,0"},
+	} {
+		good, choice, pulse, gold, ok :=
+			parseNativeShopConfirmShotState(tc.spec)
+		if ok != tc.ok || good != tc.good || choice != tc.choice ||
+			pulse != tc.pulse || gold != tc.gold {
+			t.Fatalf(
+				"parseNativeShopConfirmShotState(%q)=(%d,%d,%d,%d,%v), want (%d,%d,%d,%d,%v)",
+				tc.spec, good, choice, pulse, gold, ok,
+				tc.good, tc.choice, tc.pulse, tc.gold, tc.ok,
+			)
+		}
+	}
+
+	c := &campaign.Campaign{
+		Start: "shop",
+		Nodes: map[string]*campaign.Node{
+			"shop": {
+				Type: "shop", NativeHubVariant: 1,
+				Goods: []campaign.Good{{ID: 0x80}, {ID: 0x81}},
+			},
+		},
+	}
+	g := &Game{
+		camp: campaign.NewRunner(c),
+		nativeClassUI: &nativeClassUIAssets{
+			choices:  make([]fdother.RawCell, 53),
+			dialogue: make([]fdother.RawCell, 18),
+			strings:  &fdtxt.Strings{},
+			font:     &fdtxt.Font{},
+		},
+		nativeShopUI: &nativeShopUIAssets{
+			shops:     map[int]*campaign.NativeShopAssets{1: {}},
+			portraits: map[int]dato.Frame{1: {}},
+		},
+		nativeShopVariant:   1,
+		nativeShopMode:      "menu",
+		nativeShopUIJob:     &nativeClassUIJob{},
+		nativeShopUIHasTick: true,
+	}
+	if !g.setNativeShopConfirmShotState(1, 1, 2, 456) {
+		t.Fatal("native confirmation screenshot state rejected")
+	}
+	if g.nativeShopMode != "confirm" || g.shopSel != 1 ||
+		g.nativeShopConfirmSel != 1 || g.nativeShopUIPulse != 2 ||
+		g.gold != 456 || g.nativeShopUIJob != nil ||
+		g.nativeShopUIHasTick {
+		t.Fatalf(
+			"confirm shot state=(mode %q good %d choice %d pulse %d gold %d job %v tick %v)",
+			g.nativeShopMode, g.shopSel, g.nativeShopConfirmSel,
+			g.nativeShopUIPulse, g.gold, g.nativeShopUIJob != nil,
+			g.nativeShopUIHasTick,
+		)
+	}
+
+	g.nativeShopMode = "menu"
+	if g.setNativeShopConfirmShotState(2, 0, 0, 0) {
+		t.Fatal("out-of-range confirmation good accepted")
+	}
+	g.nativeShopVariant = 3
+	if g.setNativeShopConfirmShotState(0, 0, 0, 0) {
+		t.Fatal("mismatched confirmation shop variant accepted")
+	}
+	g.nativeShopVariant = 1
+	g.nativeClassUI.choices = nil
+	if g.setNativeShopConfirmShotState(0, 0, 0, 0) {
+		t.Fatal("confirmation accepted incomplete shared choice assets")
 	}
 }
 

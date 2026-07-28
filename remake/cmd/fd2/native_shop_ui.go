@@ -63,6 +63,32 @@ func parseNativeShopPurchaseShotState(
 	return selection, start, gold, true
 }
 
+func parseNativeShopConfirmShotState(
+	spec string,
+) (good, choice, pulse, gold int, ok bool) {
+	parts := strings.Split(spec, ",")
+	if len(parts) != 4 {
+		return 0, 0, 0, 0, false
+	}
+	good, err := strconv.Atoi(parts[0])
+	if err != nil || good < 0 {
+		return 0, 0, 0, 0, false
+	}
+	choice, err = strconv.Atoi(parts[1])
+	if err != nil || choice < 0 || choice > 1 {
+		return 0, 0, 0, 0, false
+	}
+	pulse, err = strconv.Atoi(parts[2])
+	if err != nil || pulse < 0 || pulse > 3 {
+		return 0, 0, 0, 0, false
+	}
+	gold, err = strconv.Atoi(parts[3])
+	if err != nil || gold < 0 || gold > 99999999 {
+		return 0, 0, 0, 0, false
+	}
+	return good, choice, pulse, gold, true
+}
+
 // setNativeShopShotState is a screenshot-only oracle hook. It may select a
 // stable service-menu frame after setupNativeShop has claimed a proven native
 // shop node. Gold is an explicit visible-state input for the one captured
@@ -128,6 +154,46 @@ func (g *Game) setNativeShopPurchaseShotState(
 	g.nativeShopMode = "purchase"
 	g.shopSel = selection
 	g.nativeShopItemStart = start
+	g.gold = gold
+	return true
+}
+
+// setNativeShopConfirmShotState is a screenshot-only stable-state adapter. It
+// selects a real editable good and original Yes/No pulse only after the
+// production native shop owner has admitted the node and its resources.
+func (g *Game) setNativeShopConfirmShotState(
+	good, choice, pulse, gold int,
+) bool {
+	if good < 0 || choice < 0 || choice > 1 ||
+		pulse < 0 || pulse > 3 ||
+		gold < 0 || gold > 99999999 ||
+		g.camp == nil || g.nativeShopUI == nil ||
+		g.nativeClassUI == nil ||
+		len(g.nativeClassUI.choices) <= 52 ||
+		len(g.nativeClassUI.dialogue) <= 17 ||
+		g.nativeClassUI.strings == nil ||
+		g.nativeClassUI.font == nil ||
+		g.nativeShopMode != "menu" {
+		return false
+	}
+	n := g.camp.Node()
+	if n == nil || n.Type != "shop" ||
+		n.NativeHubVariant != g.nativeShopVariant ||
+		good >= len(g.camp.ShopGoods()) {
+		return false
+	}
+	if _, ok := g.nativeShopUI.shops[n.NativeHubVariant]; !ok {
+		return false
+	}
+	if _, ok := g.nativeShopUI.portraits[n.NativeHubVariant]; !ok {
+		return false
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "confirm"
+	g.shopSel = good
+	g.nativeShopConfirmSel = choice
+	g.nativeShopUIPulse = pulse
+	g.nativeShopUIHasTick = false
 	g.gold = gold
 	return true
 }

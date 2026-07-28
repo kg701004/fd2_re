@@ -4721,6 +4721,19 @@ func (g *Game) Update() error {
 					)
 				}
 			}
+			if spec := os.Getenv("FD2_SHOT_SHOP_CONFIRM_STATE"); spec != "" {
+				good, choice, pulse, gold, ok :=
+					parseNativeShopConfirmShotState(spec)
+				if !ok ||
+					!g.setNativeShopConfirmShotState(
+						good, choice, pulse, gold,
+					) {
+					return fmt.Errorf(
+						"FD2_SHOT_SHOP_CONFIRM_STATE expects good,choice,pulse,gold on a claimed native shop with a valid editable good: %q",
+						spec,
+					)
+				}
+			}
 			if os.Getenv("FD2_SHOT_DISMISS_DIALOG") != "" {
 				for len(g.dialog) > 0 {
 					g.dialog = g.dialog[:len(g.dialog)-1]

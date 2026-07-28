@@ -944,8 +944,28 @@ pixel error zero against production. Their raw RGB MD5 values are
 `48d6182e261ebce574b08c4778b8a072` for selections 0, 1, 3, and 2.
 The [`purchase-list sheet`](../figures/shop-purchase-ch02-selections-original-vs-remake.png)
 places original above remake. This evidence covers only list steady rendering
-and cursor input; confirmation, recipient selection, result feedback, sell,
-equip, and transfer still require their own same-state DOSBox traces.
+and cursor input.
+
+The next normal-path trace closes the purchase confirmation steady state and
+its horizontal input. From ch02 weapon good0 the original closes the list and
+opens the literal `布衣 / 50元 / 要不要啊？` question with Yes selected;
+Right reaches No and Left returns to Yes. The screenshot-only
+`FD2_SHOT_SHOP_CONFIRM_STATE=good,choice,pulse,gold` adapter requires a
+production-claimed native shop, shared class assets, matching variant,
+admitted portrait/background and a real editable good. Choice must be0/1,
+pulse0..3 and gold0..99999999; invalid state fails closed and normal input
+never reads the hook.
+
+High-frequency original sampling separates the normal and visibly selected
+pulse. The selected Yes raw RGB MD5 is
+`7a07b1c064ca2c431bc97c798dcfd51e`; selected No is
+`56f6ffb003e87cbc63d7a915ac4b5dd0`; each matches the corresponding
+production 320×200 frame with absolute pixel error zero. The normal frame
+also matches at `b8cce25df13447e73e1750a8b2edaf0f`. The
+[`confirmation sheet`](../figures/shop-purchase-confirm-ch02-original-vs-remake.png)
+shows selected Yes/No with original above remake. Recipient selection,
+transaction result/feedback, sell, equip, and transfer still require their
+own same-state DOSBox traces.
 
 Standalone equip has a separate scene contract from the optional equip prompt
 inside purchase. `0x2f883` calls `0x2e6b8` for the two-column party roster,
@@ -997,7 +1017,9 @@ full price and is used by purchase. Nonzero mode displays
 transfer wrapper remains mode-one compatibility; this does not yet close the
 parent panel opening/closing lifecycle.
 
-The purchase confirmation lifecycle is now separately closed at E1. The four
+The purchase confirmation lifecycle is separately closed at E1; the preceding
+ch02 trace additionally closes its steady Yes/No pulse and horizontal input
+at E2, but not every opening/closing frame. The four
 six-variant FDTXT tables copied by `0x2f0c5..0x2f0f4` are:
 question `{1,502,1,439,1,439}`, insufficient gold
 `{1,504,1,438,1,438}`, no eligible recipient
