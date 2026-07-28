@@ -1106,6 +1106,17 @@ recipient targets and cancel/full branches have E1 production
 implementations; recipient input/scroll, no-recipient/full, success/debit and
 their DOSBox E2 remain separate gates below.
 
+The production input path no longer mutates the equipment-recipient cursor
+inline. `advanceNativeShopEquipmentRecipient` is the shared pure transition:
+Up/Down are bounded, horizontal input is a no-op, simultaneous Up then Down
+preserves the native update order, and `NativeThreeRowWindow` remains the sole
+stateful viewport owner. Direct regressions cover the observed
+selection0→Down→selection1→Up→selection0 trace, bounds, six-entry window
+movement, and helper-level invalid count/selection/start rejection. The
+production caller routes that rejection back to the purchase list before
+indexing a recipient. This is E1 input-contract coverage only;
+scrolling and lifecycle timing still require DOSBox E2.
+
 The first same-state equipment-recipient trace now closes the stable ch02
 selection0 frame, but not cursor input or opening/closing timing. Direct
 `FD2_CAMP_NODE=shop_ch02_weapon` previously had no persistent party at all.

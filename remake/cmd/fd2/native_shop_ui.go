@@ -21,6 +21,30 @@ type nativeShopUIAssets struct {
 	effectRows []byte
 }
 
+// advanceNativeShopEquipmentRecipient is the pure transition used by the
+// production equipment-recipient input path. Up and down are deliberately
+// bounded; horizontal input reaches this transition as up=false/down=false
+// and is therefore a no-op. NativeThreeRowWindow remains the sole owner of
+// the stateful three-row viewport.
+func advanceNativeShopEquipmentRecipient(
+	count, selected, start int, up, down bool,
+) (nextSelected, nextStart int, ok bool) {
+	if count <= 0 || selected < 0 || selected >= count || start < 0 {
+		return selected, start, false
+	}
+	if up && selected > 0 {
+		selected--
+	}
+	if down && selected+1 < count {
+		selected++
+	}
+	start, visible := campaign.NativeThreeRowWindow(count, selected, start)
+	if visible <= 0 {
+		return selected, start, false
+	}
+	return selected, start, true
+}
+
 func parseNativeShopShotState(spec string) (service, pulse, gold int, ok bool) {
 	parts := strings.Split(spec, ",")
 	if len(parts) != 3 {
@@ -1075,17 +1099,20 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 				)
 			}
 		} else {
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) &&
-				g.shopRecipientSel > 0 {
-				g.shopRecipientSel--
-			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) &&
-				g.shopRecipientSel+1 < count {
-				g.shopRecipientSel++
-			}
-			g.nativeShopRecipientStart, _ = campaign.NativeThreeRowWindow(
-				count, g.shopRecipientSel, g.nativeShopRecipientStart,
+			nextSelection, nextStart, ok := advanceNativeShopEquipmentRecipient(
+				count,
+				g.shopRecipientSel,
+				g.nativeShopRecipientStart,
+				inpututil.IsKeyJustPressed(ebiten.KeyArrowUp),
+				inpututil.IsKeyJustPressed(ebiten.KeyArrowDown),
 			)
+			if !ok {
+				g.msg = "原版購買 recipient 游標狀態無效"
+				g.returnToNativeShopPurchaseList()
+				return true
+			}
+			g.shopRecipientSel = nextSelection
+			g.nativeShopRecipientStart = nextStart
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			if !g.beginNativeShopRecipientClosing(

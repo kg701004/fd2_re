@@ -1812,3 +1812,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   只驗authored graph contract，不證明全戰役原版route或DOSBox E2。
 - `99`的「資產格式全解」已收窄成當時列舉base codecs/exports；mixed-resource
   entries、caller binding與scene composition仍以doc56/57為現況權威。
+
+## 2026-07-28 equipment-recipient production input contract
+
+- `handleNativeShopInput`的equipment recipient分支不再inline修改selection；
+  production與tests共用純`advanceNativeShopEquipmentRecipient`。它保存
+  bounded Up/Down、horizontal no-op、同tick Up後Down的原有更新順序，並只由
+  `campaign.NativeThreeRowWindow`擁有stateful三列viewport。
+- direct regression覆蓋原版已觀測trace
+  `selection0→Down→selection1→Up→selection0`、頂／底界線、六候選window
+  `start 0→1→2→2→1`與helper-level invalid count/selection/start拒絕。
+  production caller會在索引recipient前把拒絕路由回purchase list。
+- focused與完整`go test ./...`均在`fd2-go-test-local` Docker image及手動管理
+  Xvfb lifecycle下通過。先前直接使用`xvfb-run`時go test已退出但wrapper未
+  收掉Xvfb，故該次被明確中止，不算驗證結果。
+- 這只關閉E1 production input contract。selection1仍有商店人物區兩像素
+  ambient phase差，scroll／opening／closing timing也尚無DOSBox E2；不得升級
+  UI-09為完整recipient lifecycle parity。
