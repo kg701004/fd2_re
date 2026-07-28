@@ -194,6 +194,11 @@ type Game struct {
 	nativeShopEquipSel       int
 	nativeShopPendingUnit    battle.Unit
 	nativeShopHasPendingUnit bool
+	nativeShopPendingGold    int
+	nativeShopSellRosterTop  int
+	nativeShopSellItemTop    int
+	nativeShopSellConfirmSel int
+	nativeShopSellItemIDs    []int
 	nativeCommandLabels      map[int]string
 	nativeCommandOpen        bool
 	nativeCommandSel         int

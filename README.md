@@ -11,7 +11,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay；商店 purchase 已從原版indexed選單一路接到recipient、optional equip、success與debit，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **45%**；town、商店其餘三service、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
+| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、教會多個服務、action/command/item overlay；商店 purchase與sell均已有完整indexed production flow，另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **45–50%**；town、商店equip/transfer、preparation、loadslots、ending仍未完整取代現代半透明框，不能稱原版視覺 parity |
 
 Worklist 目前是 **475 個 `[x]`、97 個 `[~]`、69 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
@@ -168,8 +168,9 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
 | 原版資源 indexed 購買商品 child panel（`0x2e0bd→0x2dc55(mode0)`；item0–5／full-price fixture，非 DOSBox 截圖） | ![native indexed shop purchase list](docs/figures/native-shop-purchase-list-indexed.png) |
+| 原版資源 indexed 賣出商品 child panel（`0x2f642→0x2e0bd(mode1)→0x2dc55`；同item0–5／3⁄4-price fixture，非 DOSBox 截圖） | ![native indexed shop sell list](docs/figures/native-shop-sell-list-indexed.png) |
 | 原版資源 indexed 購買確認（`0x2f0b0→0x1956b→0x19953`；動態商品名／50元、Yes/No selected-pulse fixture，非 DOSBox 截圖） | ![native indexed shop purchase confirmation](docs/figures/native-shop-purchase-confirm-indexed.png) |
-| 原版資源 indexed 金額不足回饋（保留上述確認框，於 literal VGA `0xac44c`／`(12,157)` 追加第三行；非 DOSBox 截圖） | ![native indexed shop purchase insufficient](docs/figures/native-shop-purchase-insufficient-indexed.png) |
+| 原版資源 indexed 金額不足回饋（`0x197e5` choice-close最後一幀，再於 literal VGA `0xac44c`／`(12,157)` 追加第三行；非 DOSBox 截圖） | ![native indexed shop purchase insufficient](docs/figures/native-shop-purchase-insufficient-indexed.png) |
 | 原版資源 indexed 消耗品收件者（type≥`0x20` 的 `0x2e6b8` 兩欄六人名冊；非裝備比較面板、非 DOSBox 截圖） | ![native indexed shop purchase recipient](docs/figures/native-shop-purchase-recipient-indexed.png) |
 | 原版資源 indexed 收件者滿欄回饋（`word_5265f`＋FFFC 動態姓名；非 DOSBox 截圖） | ![native indexed shop recipient full](docs/figures/native-shop-purchase-recipient-full-indexed.png) |
 | 原版資源 indexed 裝備收件者比較（type<`0x20` 的 `0x2e8cf→0x2ebe0/0x2efb7`；三列 AP/DP/HIT/EV 現值→候選值，非 DOSBox 截圖） | ![native indexed shop equipment recipient](docs/figures/native-shop-purchase-equipment-recipient-indexed.png) |

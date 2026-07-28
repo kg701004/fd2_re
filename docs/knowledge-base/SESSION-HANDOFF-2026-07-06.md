@@ -1362,6 +1362,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   啟動前才publish，gold保持不變；final frame呈現後callback才debit並6幀
   重開product list。完整transaction regression鎖定insert-before-animation、
   debit-after-animation。剩餘purchase缺口縮為no-eligible message與E2。
+- 2026-07-28 native sell production：Docker Capstone完整重核
+  `0x2f642..0x2f87c`。source使用`0x2e6b8`兩欄 roster；empty顯示六variant
+  全為FDTXT509＋`unit[+7]+1`；item list用mode1顯示
+  `floor(3*row[+0x13]/4)`；question table為
+  `{508,508,508,659,508,508}`。Yes順序為dialogue close→variant success
+  →credit→`0x1b8e7` remove→recalc，No/Escape直接回source roster而非item list。
+  production已接完整loop並保留actor selection。新增`SellNativeSlot`，因舊
+  generic `SellSlot`在raw layout留hole，違反`0x1b8e7` shift。display與commit
+  price共用effect row；commit先在deep copy preflight、success完成後才publish。
+  注意高階Unit為可再次插入而把native ignored stale tail item canonicalize
+  成`0xff`，只保證語意與flag/shift，不宣稱FD2.SAV byte parity。
 - 2026-07-28 purchase recipient E1：`0x2f30a`證實type≥`0x20`才走
   `0x2e6b8`兩欄六人；type<`0x20`走filtered `0x2e8cf→0x2ebe0`三列
   AP/DP/HIT/EV比較，故新增consumable-only compositor並拒絕裝備type。

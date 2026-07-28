@@ -153,3 +153,31 @@ func SellSlot(gold int, receiver *battle.Unit, slot, listPrice int) (int, error)
 	receiver.RemoveInventoryIndex(slot)
 	return gold + listPrice*3/4, nil
 }
+
+// SellNativeSlot applies the proven 0x2d3ff→0x1b8e7→0x1b750 sell mutation
+// as one fail-closed high-level commit. The caller owns confirmation and
+// success presentation; listPrice is the original row+0x13 value.
+func SellNativeSlot(
+	gold int,
+	receiver *battle.Unit,
+	slot, listPrice int,
+	stats map[int]ItemStats,
+) (int, error) {
+	if receiver == nil || slot < 0 || slot >= len(receiver.Inventory) ||
+		listPrice < 0 {
+		return gold, fmt.Errorf("invalid native shop sell state")
+	}
+	staged := *receiver
+	staged.Inventory = append([]int(nil), receiver.Inventory...)
+	staged.Equipped = append([]bool(nil), receiver.Equipped...)
+	staged.InventorySlots = append([]int(nil), receiver.InventorySlots...)
+	staged.NativeInventoryFlags = append(
+		[]int(nil), receiver.NativeInventoryFlags...,
+	)
+	if err := battle.RemoveNativeCompactInventory(&staged, slot); err != nil {
+		return gold, err
+	}
+	RecomputeEquipment(&staged, stats)
+	*receiver = staged
+	return gold + (3*listPrice)/4, nil
+}

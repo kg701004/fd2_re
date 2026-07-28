@@ -230,6 +230,85 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 			g.gold, g.nativeShopMode, g.nativeShopUIJob != nil,
 		)
 	}
+	g.nativeShopUIJob = nil
+	g.shopItemTypes[0] = 0
+	g.shopEquipTypes[1] = []int{1, 2, 3, 4, 5, 6}
+	if !g.setupNativeShopRecipients() ||
+		g.nativeShopMode != "no_recipient" ||
+		!g.drawNativeShop(screen) {
+		t.Fatal("native no-eligible-recipient feedback unexpectedly fell back")
+	}
+	if !g.beginNativeShopNoEligibleRecipientOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native no-eligible-recipient feedback did not use six opening frames")
+	}
+	g.nativeShopUIJob = nil
+	if !g.beginNativeShopNoEligibleRecipientClosing(nil) ||
+		len(g.nativeShopUIJob.frames) != 5 ||
+		len(g.nativeShopUIJob.restore) != 320*200 {
+		t.Fatal("native no-eligible-recipient feedback did not use five close frames")
+	}
+	seller := cloneNativeShopUnit(empty)
+	seller.Inventory = []int{0}
+	seller.Equipped = []bool{false}
+	seller.InventorySlots[0] = 0
+	seller.NativeInventoryFlags[0] = 0
+	g.nativeShopUIJob = nil
+	g.partyRoster[0] = seller
+	g.shopItemStats = map[int]campaign.ItemStats{
+		0: {Type: 0, AP: 1},
+	}
+	g.gold = 100
+	if !g.setupNativeShopSellRoster() ||
+		!g.drawNativeShop(screen) ||
+		!g.beginNativeShopSellRosterOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native sell roster production owner unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	if !g.setupNativeShopSellItems() ||
+		!g.drawNativeShop(screen) ||
+		!g.beginNativeShopSellItemsOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native sell item selector unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "sell_confirm"
+	g.nativeShopSellConfirmSel = 0
+	if !g.drawNativeShop(screen) ||
+		!g.beginNativeShopSellConfirmationOpening() ||
+		len(g.nativeShopUIJob.frames) != 4 {
+		t.Fatal("native sell confirmation unexpectedly fell back")
+	}
+	g.nativeShopUIJob = nil
+	if !g.beginNativeShopSellSuccess() {
+		t.Fatal("native sell success timeline unexpectedly fell back")
+	}
+	if g.gold != 100 || len(g.partyRoster[0].Inventory) != 1 {
+		t.Fatalf(
+			"native sell mutated before success: gold=%d inventory=%#v",
+			g.gold, g.partyRoster[0].Inventory,
+		)
+	}
+	finishSell := g.nativeShopUIJob.after
+	g.nativeShopUIJob = nil
+	finishSell()
+	if g.gold != 137 || len(g.partyRoster[0].Inventory) != 0 ||
+		g.partyRoster[0].InventorySlots[0] != 0xff ||
+		g.nativeShopMode != "sell_roster" {
+		t.Fatalf(
+			"native sell completion = gold %d inventory=%#v slots=%#v mode=%q",
+			g.gold, g.partyRoster[0].Inventory,
+			g.partyRoster[0].InventorySlots, g.nativeShopMode,
+		)
+	}
+	g.nativeShopUIJob = nil
+	g.nativeShopMode = "sell_empty"
+	if !g.drawNativeShop(screen) ||
+		!g.beginNativeShopSellEmptyOpening() ||
+		len(g.nativeShopUIJob.frames) != 6 {
+		t.Fatal("native sell-empty feedback unexpectedly fell back")
+	}
 }
 
 func TestNativeShopProductionOwnerFailsClosedForCustomVariant(t *testing.T) {

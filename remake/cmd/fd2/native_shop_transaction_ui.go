@@ -141,20 +141,44 @@ func (g *Game) beginNativeShopPurchaseSuccess() bool {
 	if !g.nativeShopHasPendingUnit {
 		return false
 	}
+	timeline, ok := g.nativeShopSuccessTimeline()
+	if !ok {
+		return false
+	}
+	recipientID := g.shopEquipUnit
+	staged := cloneNativeShopUnit(g.nativeShopPendingUnit)
+	g.partyRoster[recipientID] = staged
+	g.nativeShopMode = "success"
+	g.nativeShopUIJob = &nativeClassUIJob{
+		timeline: timeline,
+		after: func() {
+			g.gold = campaign.FinalizeGood(g.gold, g.shopPending)
+			g.nativeShopHasPendingUnit = false
+			g.nativeShopPendingUnit = battle.Unit{}
+			g.returnToNativeShopPurchaseList()
+		},
+	}
+	return true
+}
+
+func (g *Game) nativeShopSuccessTimeline() (
+	[]nativeClassUITimelineStep,
+	bool,
+) {
 	stable, stableOK := g.composeNativeShopStable()
 	assets, portrait, portraitID, stateOK := g.nativeShopState()
 	if !stableOK || !stateOK {
-		return false
+		return nil, false
 	}
 	animation, final, err := campaign.ComposeNativeShopPurchaseSuccessFrames(
 		stable, assets, portrait, portraitID, g.nativeShopVariant,
 	)
 	if err != nil || len(animation) == 0 || len(final) != 320*200 {
-		return false
+		return nil, false
 	}
 	plan, err := campaign.PlanNativeShopPurchaseSuccess(g.nativeShopVariant)
 	if err != nil {
-		return false
+		return nil, false
 	}
 	timeline := make([]nativeClassUITimelineStep, 0, len(animation)+2)
 	if plan.PreDelayBIOSTicks != 0 {
@@ -177,18 +201,5 @@ func (g *Game) beginNativeShopPurchaseSuccess() bool {
 		frame: final, palette: g.nativeClassUI.palette,
 	})
 
-	recipientID := g.shopEquipUnit
-	staged := cloneNativeShopUnit(g.nativeShopPendingUnit)
-	g.partyRoster[recipientID] = staged
-	g.nativeShopMode = "success"
-	g.nativeShopUIJob = &nativeClassUIJob{
-		timeline: timeline,
-		after: func() {
-			g.gold = campaign.FinalizeGood(g.gold, g.shopPending)
-			g.nativeShopHasPendingUnit = false
-			g.nativeShopPendingUnit = battle.Unit{}
-			g.returnToNativeShopPurchaseList()
-		},
-	}
-	return true
+	return timeline, true
 }

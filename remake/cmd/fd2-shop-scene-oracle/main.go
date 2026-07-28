@@ -23,8 +23,9 @@ import (
 func main() {
 	if (len(os.Args) < 5 || len(os.Args) > 8) &&
 		len(os.Args) != 10 && len(os.Args) != 11 &&
-		len(os.Args) != 12 && len(os.Args) != 13 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png [purchase-success.png]]]]]]]")
+		len(os.Args) != 12 && len(os.Args) != 13 &&
+		len(os.Args) != 14 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png [purchase-success.png [sell-list.png]]]]]]]]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -71,6 +72,14 @@ func main() {
 		)
 		check(err)
 		writePNG(os.Args[5], purchase, palette)
+		if len(os.Args) >= 14 {
+			sale, err := campaign.ComposeNativeShopItemListFrame(
+				stable, assets, itemAssets, []int{0, 1, 2, 3, 4, 5},
+				0, 0, effectRows, battle.NativeFacilityThreeQuarterPrice,
+			)
+			check(err)
+			writePNG(os.Args[13], sale, palette)
+		}
 	}
 	if len(os.Args) >= 7 {
 		purchasePortraits, err := dato.DecodeResource(datoPath, 0x80)

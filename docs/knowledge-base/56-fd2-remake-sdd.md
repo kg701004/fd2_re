@@ -929,6 +929,37 @@ reads the raw preparation input through `0x19953` and then enters `0x197e5`.
 This preserves the observed two-call branch without naming the services or
 executing the scene.
 
+### Native shop sell production owner (E1/runtime, 2026-07-28)
+
+Instruction-level revalidation of `0x2f642..0x2f87c` fixes the complete sell
+state machine. It first enters the shared `0x2e6b8` two-column party roster.
+After a recipient is chosen, the caller compacts all raw cells whose flag does
+not have bit `0x80`; an empty source displays FDTXT509 with
+`unit[+7]+1`, waits in mode one, closes, and returns to the same roster.
+Non-empty sources enter `0x2e0bd(mode=1)→0x2df6b`: six visible items use the
+shared panel but display `floor(3*row[+0x13]/4)`.
+
+The two six-variant tables copied from `0x5272a/0x52736` are sell question
+`{508,508,508,659,508,508}` and empty-source
+`{509,509,509,509,509,509}`. The question expands selected item and sale
+price, then uses the same four-frame `0x19953/0x197e5` Yes/No lifecycle.
+No/Escape closes the dialogue and returns to the party roster, not the item
+list. Yes closes the dialogue, presents the same variant-specific `0x2f4c6`
+success timeline, then performs `0x2d3ff` credit,
+`0x1b8e7` removal, and `0x1b750` recomputation in that order.
+
+Production now owns this full roster→item→confirmation→success→commit loop.
+It derives both displayed and committed prices from the tracked native effect
+row rather than a second editable map. The commit is preflighted on a deep
+copy and published only after the success timeline: gold changes before the
+unit snapshot is published, matching the native writer order. The native
+removal shifts subsequent raw cells left and marks the tail flag `0x80`;
+the high-level `Unit` adapter canonicalizes the semantically ignored stale
+tail item byte to `0xff`, so this projection must not be described as a
+byte-identical FD2.SAV record dump. Missing eight-cell provenance fails
+closed. Roster selection remains at the previous actor after an empty/cancel/
+successful branch, matching the lack of a selector reset before `0x2f70a`.
+
 The `0x318ad` cap gate is now explicit in
 `fdother.NativePreparationPartyLimit`: raw global `[0x53c03] <= 0x1a` yields
 15, while values greater than `0x1a` yield 19. The adapter accepts a native

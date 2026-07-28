@@ -35,12 +35,16 @@ func (g *Game) setupNativeShopRecipients() bool {
 	g.shopRecipients = ids
 	g.shopRecipientSel = 0
 	g.nativeShopRecipientStart = 0
+	if len(ids) == 0 {
+		g.nativeShopMode = "no_recipient"
+		return true
+	}
 	if itemType < 0x20 {
 		g.nativeShopMode = "recipient_equipment"
 	} else {
 		g.nativeShopMode = "recipient_consumable"
 	}
-	return len(ids) != 0
+	return true
 }
 
 func (g *Game) nativeShopRecipientState() (
@@ -260,6 +264,61 @@ func (g *Game) beginNativeShopRecipientFullOpening() bool {
 
 func (g *Game) beginNativeShopRecipientFullClosing(after func()) bool {
 	final, ok := g.composeNativeShopRecipientFull()
+	if !ok {
+		return false
+	}
+	stable, ok := g.composeNativeShopStable()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListClosingFrames(stable, final)
+	if err != nil || len(frames) != 5 {
+		return false
+	}
+	g.nativeShopUIJob = &nativeClassUIJob{
+		frames: frames, restore: stable, after: after,
+	}
+	return true
+}
+
+func (g *Game) composeNativeShopNoEligibleRecipient() ([]byte, bool) {
+	if g.nativeShopMode != "no_recipient" {
+		return nil, false
+	}
+	good, goodOK := g.nativeShopSelectedGood()
+	stable, stableOK := g.composeNativeShopStable()
+	_, portrait, portraitID, stateOK := g.nativeShopState()
+	if !goodOK || !stableOK || !stateOK {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeShopPurchaseMessage(
+		stable, g.nativeClassUI.dialogue, portrait, portraitID,
+		g.nativeClassUI.strings, g.nativeClassUI.font,
+		campaign.NativeShopPurchaseNoEligibleRecipient,
+		g.nativeShopVariant, good.ID, good.Price,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) beginNativeShopNoEligibleRecipientOpening() bool {
+	final, ok := g.composeNativeShopNoEligibleRecipient()
+	if !ok {
+		return false
+	}
+	stable, ok := g.composeNativeShopStable()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativeClassListOpeningFrames(stable, final)
+	if err != nil || len(frames) != 6 {
+		return false
+	}
+	g.nativeShopUIJob = &nativeClassUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativeShopNoEligibleRecipientClosing(after func()) bool {
+	final, ok := g.composeNativeShopNoEligibleRecipient()
 	if !ok {
 		return false
 	}

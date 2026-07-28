@@ -101,3 +101,20 @@ func removeNativeCompactInventory(u *Unit, compactIndex int) bool {
 	}
 	return true
 }
+
+// RemoveNativeCompactInventory exposes the 0x1b8e7 compact-to-raw adapter to
+// facility transaction owners. Exact eight-cell provenance is mandatory;
+// unlike Unit.RemoveInventoryIndex this shifts later raw cells left.
+func RemoveNativeCompactInventory(u *Unit, compactIndex int) error {
+	if u == nil || len(u.InventorySlots) != nativeInventoryCells ||
+		len(u.NativeInventoryFlags) != nativeInventoryCells {
+		return fmt.Errorf("native inventory remove: missing eight-cell provenance")
+	}
+	if !removeNativeCompactInventory(u, compactIndex) {
+		return fmt.Errorf(
+			"native inventory remove: compact slot %d is invalid",
+			compactIndex,
+		)
+	}
+	return nil
+}

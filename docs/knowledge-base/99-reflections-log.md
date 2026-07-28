@@ -477,6 +477,23 @@ equipment recipient preview 的 `0x2efb7` 以 item row type `<=0x14` 判斷
 `InventorySlots` 映射回 raw slot；否則當前畫面看似正確，存檔、下一次
 preview與native item command卻會讀到另一套裝備狀態。
 
+## 經驗補記 — 高階語意 parity 不等於 stale byte parity（2026-07-28）
+
+`0x1b8e7` 移除物品時會把後續raw pairs左移，只把最後一格flag寫成
+`0x80`；最後item byte保留stale值。重製的`Unit.InventorySlots`同時也是
+後續`AddInventoryItem`尋找空位的高階adapter，因此目前把該ignored tail
+item canonicalize成`0xff`。這能保持「下一次插入找到尾格」的語意，但不能
+被文件寫成整個0x50 record byte-identical。
+
+遇到這類狀態必須分開聲明：
+
+1. writer順序／active flag／後續玩法語意是否一致；
+2. adapter是否正規化原版不再讀取的stale bytes；
+3. 是否真的能以FD2.SAV或memory dump逐byte比較。
+
+本輪因此把sell標成production gameplay parity，但明確保留save-byte E2/E3
+缺口，避免用綠色GUI regression支持一個它根本沒有覆蓋的斷言。
+
 ### 同名操作不一定共用 widget
 
 購買後的「選收件者」依 item type 分成兩個 owner。消耗品走兩欄六人

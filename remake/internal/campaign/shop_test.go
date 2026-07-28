@@ -53,6 +53,44 @@ func TestSellSlotTargetsDuplicateInventoryEntry(t *testing.T) {
 	}
 }
 
+func TestSellNativeSlotCompactsRawCellsAndCreditsAfterValidation(t *testing.T) {
+	u := battle.Unit{
+		AP: 16, DP: 12, HIT: 97, EV: 2, MV: 4,
+		BaseAP: 6, BaseDP: 4, BaseHIT: 2, BaseEV: 2, BaseMV: 4,
+		EquipmentBaseSet: true,
+		Inventory:        []int{0, 1, 132},
+		Equipped:         []bool{true, false, true},
+		InventorySlots:   []int{0, 1, 132, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{
+			0x40, 0, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80,
+		},
+	}
+	stats := map[int]ItemStats{
+		0:   {Type: 1, AP: 10, HIT: 95},
+		1:   {Type: 1, AP: 20, HIT: 95},
+		132: {Type: 22, DP: 8},
+	}
+	gold, err := SellNativeSlot(100, &u, 1, 200, stats)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gold != 250 ||
+		!reflect.DeepEqual(u.Inventory, []int{0, 132}) ||
+		!reflect.DeepEqual(
+			u.InventorySlots,
+			[]int{0, 132, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		) ||
+		!reflect.DeepEqual(
+			u.NativeInventoryFlags,
+			[]int{0x40, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		) {
+		t.Fatalf(
+			"native sell = gold %d inventory %#v slots %#v flags %#v",
+			gold, u.Inventory, u.InventorySlots, u.NativeInventoryFlags,
+		)
+	}
+}
+
 func TestLoadItemPricesFromRuntimeBundle(t *testing.T) {
 	prices, err := LoadItemPrices("../../assets/data/item.json")
 	if err != nil {

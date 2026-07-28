@@ -71,6 +71,28 @@ func ComposeNativeShopPurchaseMessage(
 	if !ok {
 		return nil, errors.New("campaign: native shop purchase message variant is invalid")
 	}
+	return composeNativeShopItemPriceMessage(
+		source, dialogueCells, portrait, portraitID, strings, font,
+		textIndex, itemID, price,
+	)
+}
+
+func composeNativeShopItemPriceMessage(
+	source []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	portraitID int,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	textIndex, itemID, price int,
+) ([]byte, error) {
+	if len(source) != NativeShopWidth*NativeShopHeight ||
+		len(dialogueCells) <= 17 || strings == nil || font == nil ||
+		textIndex < 0 || itemID < 0 || price < 0 {
+		return nil, errors.New(
+			"campaign: native shop item/price message state is invalid",
+		)
+	}
 	frame, err := ComposeNativeChurchDialogueOverlayAt(
 		source, dialogueCells, portrait,
 		nativeFacilityPortraitOffset(portraitID),

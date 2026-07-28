@@ -409,7 +409,8 @@ func (g *Game) stepNativeShopUILifecycle(now time.Time) {
 	}
 	if g.nativeShopUIJob == nil &&
 		(g.nativeShopMode == "menu" || g.nativeShopMode == "confirm" ||
-			g.nativeShopMode == "equip_confirm") {
+			g.nativeShopMode == "equip_confirm" ||
+			g.nativeShopMode == "sell_confirm") {
 		g.stepNativeShopUIPulseTick(g.nativeShopUIClock.Sample(now))
 	}
 }
@@ -475,8 +476,18 @@ func (g *Game) drawNativeShop(screen *ebiten.Image) bool {
 		frame, ok = g.composeNativeShopRecipient()
 	case "recipient_full":
 		frame, ok = g.composeNativeShopRecipientFull()
+	case "no_recipient":
+		frame, ok = g.composeNativeShopNoEligibleRecipient()
 	case "equip_confirm":
 		frame, ok = g.composeNativeShopEquipConfirmation()
+	case "sell_roster":
+		frame, ok = g.composeNativeShopSellRoster()
+	case "sell_items":
+		frame, ok = g.composeNativeShopSellItems()
+	case "sell_empty":
+		frame, ok = g.composeNativeShopSellEmpty()
+	case "sell_confirm":
+		frame, ok = g.composeNativeShopSellConfirmation()
 	}
 	if !ok {
 		return false
@@ -534,15 +545,23 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			return true
 		}
 		if enter {
-			if g.nativeShopServiceSel != 0 {
+			if g.nativeShopServiceSel > 1 {
 				g.msg = "此原版商店服務的 production owner 尚未接線"
 				return true
 			}
 			open := func() {
-				g.nativeShopMode = "purchase"
-				g.shopSel = 0
-				g.nativeShopItemStart = 0
-				g.beginNativeShopPurchaseOpening()
+				if g.nativeShopServiceSel == 0 {
+					g.nativeShopMode = "purchase"
+					g.shopSel = 0
+					g.nativeShopItemStart = 0
+					g.beginNativeShopPurchaseOpening()
+					return
+				}
+				if !g.setupNativeShopSellRoster() ||
+					!g.beginNativeShopSellRosterOpening() {
+					g.nativeShopMode = ""
+					g.msg = "原版商店 sell roster 無法還原"
+				}
 			}
 			if !g.beginNativeShopServiceClosing(open) {
 				open()
@@ -634,6 +653,13 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 					if !g.setupNativeShopRecipients() {
 						g.msg = "原版購買 recipient 缺少 raw 候選資料"
 						g.returnToNativeShopPurchaseList()
+						return
+					}
+					if g.nativeShopMode == "no_recipient" {
+						if !g.beginNativeShopNoEligibleRecipientOpening() {
+							g.msg = "原版購買無合適角色訊息無法還原"
+							g.returnToNativeShopPurchaseList()
+						}
 						return
 					}
 					if !g.beginNativeShopRecipientOpening() {
@@ -742,6 +768,15 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			}
 			return true
 		}
+	case "no_recipient":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopNoEligibleRecipientClosing(
+				g.returnToNativeShopPurchaseList,
+			) {
+				g.returnToNativeShopPurchaseList()
+			}
+			return true
+		}
 	case "equip_confirm":
 		if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
 			g.nativeShopEquipSel = campaign.AdvanceNativeClassConfirmation(
@@ -785,6 +820,157 @@ func (g *Game) handleNativeShopInput(enter bool) bool {
 			}
 			if !g.beginNativeShopEquipConfirmationClosing(afterPrompt) {
 				afterPrompt()
+			}
+			return true
+		}
+	case "sell_roster":
+		count := len(g.partyJoinOrder)
+		delta := 0
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+			delta = -1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+			delta = 1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+			delta = -2
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+			delta = 2
+		}
+		if delta != 0 {
+			g.shopSellUnitSel = campaign.AdvanceNativeTwoColumnSelection(
+				g.shopSellUnitSel, count, delta,
+			)
+			g.nativeShopSellRosterTop, _ = campaign.NativeTwoColumnWindow(
+				count, g.shopSellUnitSel, g.nativeShopSellRosterTop,
+			)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			openMenu := func() {
+				g.nativeShopMode = "menu"
+				g.nativeShopServiceSel = 1
+				g.beginNativeShopServiceOpening()
+			}
+			if !g.beginNativeShopSellRosterClosing(openMenu) {
+				openMenu()
+			}
+			return true
+		}
+		if enter && count != 0 {
+			_, unit, ok := g.nativeShopSellUnit()
+			items, rawOK := nativeShopActiveItemIDs(unit)
+			if !ok || !rawOK {
+				g.msg = "原版 sell inventory 缺少 raw 資料"
+				return true
+			}
+			openChild := func() {
+				if len(items) == 0 {
+					g.nativeShopMode = "sell_empty"
+					if !g.beginNativeShopSellEmptyOpening() {
+						g.msg = "原版 sell empty 訊息無法還原"
+						g.setupNativeShopSellRoster()
+					}
+					return
+				}
+				if !g.setupNativeShopSellItems() ||
+					!g.beginNativeShopSellItemsOpening() {
+					g.msg = "原版 sell item list 無法還原"
+					g.setupNativeShopSellRoster()
+				}
+			}
+			if !g.beginNativeShopSellRosterClosing(openChild) {
+				openChild()
+			}
+			return true
+		}
+	case "sell_empty":
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			returnRoster := func() {
+				g.returnToNativeShopSellRoster()
+			}
+			if !g.beginNativeShopSellEmptyClosing(returnRoster) {
+				returnRoster()
+			}
+			return true
+		}
+	case "sell_items":
+		count := len(g.nativeShopSellItemIDs)
+		delta := 0
+		switch {
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft):
+			delta = -1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowRight):
+			delta = 1
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowUp):
+			delta = -2
+		case inpututil.IsKeyJustPressed(ebiten.KeyArrowDown):
+			delta = 2
+		}
+		if delta != 0 {
+			g.shopSellSlotSel = campaign.AdvanceNativeTwoColumnSelection(
+				g.shopSellSlotSel, count, delta,
+			)
+			g.nativeShopSellItemTop, _ = campaign.NativeTwoColumnWindow(
+				count, g.shopSellSlotSel, g.nativeShopSellItemTop,
+			)
+		}
+		returnRoster := func() {
+			g.returnToNativeShopSellRoster()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			if !g.beginNativeShopSellItemsClosing(returnRoster) {
+				returnRoster()
+			}
+			return true
+		}
+		if enter && count != 0 {
+			openConfirm := func() {
+				g.nativeShopMode = "sell_confirm"
+				g.nativeShopSellConfirmSel = 0
+				if !g.beginNativeShopSellConfirmationOpening() {
+					g.msg = "原版 sell confirmation 無法還原"
+					returnRoster()
+				}
+			}
+			if !g.beginNativeShopSellItemsClosing(openConfirm) {
+				openConfirm()
+			}
+			return true
+		}
+	case "sell_confirm":
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+			g.nativeShopSellConfirmSel =
+				campaign.AdvanceNativeClassConfirmation(
+					g.nativeShopSellConfirmSel, -1,
+				)
+			g.resetNativeShopUIPulse()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+			g.nativeShopSellConfirmSel =
+				campaign.AdvanceNativeClassConfirmation(
+					g.nativeShopSellConfirmSel, 1,
+				)
+			g.resetNativeShopUIPulse()
+		}
+		cancel := inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+			enter && g.nativeShopSellConfirmSel == 1
+		if cancel {
+			returnRoster := func() {
+				g.returnToNativeShopSellRoster()
+			}
+			if !g.beginNativeShopSellConfirmationClosing(returnRoster) {
+				returnRoster()
+			}
+			return true
+		}
+		if enter {
+			afterConfirm := func() {
+				if !g.beginNativeShopSellSuccess() {
+					g.msg = "原版 sell transaction 無法還原"
+					g.returnToNativeShopSellRoster()
+				}
+			}
+			if !g.beginNativeShopSellConfirmationClosing(afterConfirm) {
+				afterConfirm()
 			}
 			return true
 		}

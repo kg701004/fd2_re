@@ -17,6 +17,25 @@ const (
 	NativeFacilityThreeQuarterPrice
 )
 
+func NativeFacilityItemListPrice(
+	effectRows []byte,
+	itemID int,
+	mode NativeFacilityPriceMode,
+) (int, error) {
+	offset := itemID * NativeItemEffectRowSize
+	if itemID < 0 || offset < 0 ||
+		offset+NativeItemEffectRowSize > len(effectRows) ||
+		(mode != NativeFacilityFullPrice &&
+			mode != NativeFacilityThreeQuarterPrice) {
+		return 0, errors.New("battle: native facility item price state is invalid")
+	}
+	price := int(binary.LittleEndian.Uint16(effectRows[offset+19:]))
+	if mode == NativeFacilityThreeQuarterPrice {
+		price = (3 * price) >> 2
+	}
+	return price, nil
+}
+
 // RenderNativeFacilityNumber exposes the already recovered 0x187d6 digit
 // primitive to facility scene owners. color is the native frame-bank base
 // (31 equal, 42 increased, 119 decreased in the equipment comparison caller).
@@ -139,9 +158,11 @@ func RenderNativeFacilityItemRows(
 		); err != nil {
 			return err
 		}
-		price := int(binary.LittleEndian.Uint16(row[19:21]))
-		if priceMode == NativeFacilityThreeQuarterPrice {
-			price = (3 * price) >> 2
+		price, err := NativeFacilityItemListPrice(
+			effectRows, itemID, priceMode,
+		)
+		if err != nil {
+			return err
 		}
 		if err := blitNativeItemPanelNumber(
 			assets.Frames, staged,

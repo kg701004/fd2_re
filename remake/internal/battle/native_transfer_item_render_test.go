@@ -77,3 +77,20 @@ func TestRenderNativeFacilityItemRowsModeZeroUsesFullPrice(t *testing.T) {
 		t.Fatalf("three-quarter hundreds digit=%d, want frame126", got)
 	}
 }
+
+func TestNativeFacilityItemListPriceMatchesRendererModes(t *testing.T) {
+	rows := make([]byte, NativeItemEffectRowSize)
+	binary.LittleEndian.PutUint16(rows[19:], 101)
+	full, err := NativeFacilityItemListPrice(
+		rows, 0, NativeFacilityFullPrice,
+	)
+	if err != nil || full != 101 {
+		t.Fatalf("full price=%d err=%v", full, err)
+	}
+	sale, err := NativeFacilityItemListPrice(
+		rows, 0, NativeFacilityThreeQuarterPrice,
+	)
+	if err != nil || sale != 75 {
+		t.Fatalf("sale price=%d err=%v", sale, err)
+	}
+}

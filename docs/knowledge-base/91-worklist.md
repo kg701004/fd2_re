@@ -378,7 +378,7 @@
       自己的組×3/×3+1(火花燒在 sprite 幀,`0x28784` 不讀 spell_id)。這僅閉合 FIGANI 手勢選擇；
       `0x2a6bd` command-specific presentation、SFX、命中與多段畫面仍待，現行角色攻擊動畫只是局部 adapter，
       不得稱完整原版一致。
-- [~] **商店+祕密商店**: campaign shop 節點與真實 EXE 品項/價格、收件者相容性、兩階段裝備詢問、賣出、裝備後 AP/DP/HIT/EV 重算與同類舊裝替換均已接 normalized runtime。69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner；stable、service/list/confirm/不足金、兩種recipient、滿欄、insert、optional equip、variant success與最後debit均已接。success以10/9/14 BIOS ticks播放，金額只在演出完成callback扣除；`0x1c142`重核確認item ID `<0x80`分類並同步compact/raw equipped flags。equipment preview要求`EquipmentBaseSet`與`+0x37/+0x39` provenance。custom 0保留generic fallback。剩餘商店缺口是sell/equip/transfer三個service、no-eligible訊息production、祕密商店進入E0與DOSBox E2。
+- [~] **商店+祕密商店**: 69個原版shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner。purchase完整到optional-equip→10/9/14-tick success→debit；no-eligible亦已接。sell依`0x2f642`接兩欄source、空欄FDTXT509、3/4 item list、variant question、success→credit→`0x1b8e7` compact remove→recalc並回同一actor。display/commit price皆由raw row+0x13派生；高階Unit adapter會把native ignored stale tail item canonicalize為`0xff`，不得宣稱FD2.SAV byte parity。剩餘商店缺口是equip/transfer兩個service、祕密商店進入E0與DOSBox E2。
 - [x] 存檔/讀檔 ✅(e09c68c):save.go 自有 JSON(節點/旗標/金幣/道具),F5/F9,節點邊界語意
 
 ## 第 9 輪 ✅(3-subagent 成本分工;haiku=資料/sonnet=RE·套件/旗艦=架構·驗收)
