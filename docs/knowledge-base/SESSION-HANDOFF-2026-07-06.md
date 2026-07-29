@@ -1878,7 +1878,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 更新原本錯誤的success fixture，並新增
   `shop-purchase-success-ch02-original-vs-remake.png`四幀上下對照。下一gate是
   caller-owned portrait saved-buffer phase與扣款phase E2，不是再猜instant debit。
-  此句的「扣款phase E2」已由下一節閉合；success portrait限制仍有效。
+  此句是當輪狀態；扣款由下一節閉合，success人物兩點則由本檔稍後的
+  「購買成功動畫兩像素」章節閉合，不再是現行限制。
 
 ## 2026-07-29 DOSBox internal-capture debit E2 and one-row correction
 
@@ -1898,9 +1899,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   atomic remake製造同樣tearing。
 - 新增`shop-purchase-debit-ch02-original-vs-remake.png`，選五個AE=0 phase
   作上原版／下remake對照；unit regression明確鎖定roll比stable高一列。
-  debit compositor可升E2。success effect仍是AE=2的caller-owned saved-buffer
-  portrait phase，且整條route仍使用三處verified battle-skip patch，不是正常
-  玩家playthrough gate。
+  debit compositor可升E2。當時success仍為AE=2；此差異已由稍後章節修正為
+  25個原子樣本整幀AE=0。整條route仍使用三處verified battle-skip patch，
+  不是正常玩家playthrough gate，這項限制仍有效。
 
 ## 2026-07-29 durable agent memory and Docker cleanup
 
@@ -1920,3 +1921,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - repo-wide斷言續審確認多數2026-07-28高風險句已收窄；補修
   `39-ani-afm-format.md`，不再把九個AFM resources直接稱為九段已完成、
   可獨立播放的開場流程。caller／章節／title sequence仍須逐一驗證。
+
+## 2026-07-29 購買成功動畫兩像素的畫面緩衝區沿革
+
+- 依新Docker鐵則，以單次`docker run --rm --network=none`及唯讀repo掛載，
+  在`fd2-cap-local`重讀購買呼叫者；命令結束後以`docker ps -a`確認沒有
+  FD2容器殘留。
+- `0x2f426 call 0x15f84`先建立選擇裝備的詢問與背景存底，
+  `0x2f455 call 0x16559(0)`才畫第0幀人物；Yes分支在
+  `0x2f4a1 call 0x2d31b`完成關框與恢復後，立刻
+  `0x2f4a6 call 0x2f4c6`播放購買成功動畫，輔助函式到`0x2f543`才再次
+  呼叫`0x16559(0)`。這固定了成功動畫前後的人物寫入順序。
+- `0x1956b`指令進一步證實它先配置三份`0xfa00`緩衝區，把當下VGA完整保存
+  到`[0x53c5f]`，再建立對話格與DATO基底；`0x2d31b`則以
+  `0x373c4(...,0xfa00)`完整恢復該存底，並非兩像素複製邊界。
+  FDOTHER商店背景的`(175,90)/(176,90)`本來就是190/190，DATO#128第0幀
+  才是96/191。`ComposeNativeShopBareScene`先前名為裸畫面卻提前覆蓋DATO
+  第0幀，等同把原版`0x2f543`的尾端人物恢復移到成功動畫之前。
+- 已移除該提前覆蓋，沒有寫死任何像素。真實資源回歸鎖定裸畫面190/190、
+  success首幀190/190及尾端恢復96/191。重生來源影格後，26張DOSBox內建
+  success抓圖中25張各有未遮罩整幀AE=0；第15張只在`0x16886`效果寫入途中
+  差`(184,47)/(184,49)`兩點，下一張同一來源影格即AE=0，故不列為原子畫面。
+  `shop-purchase-success-ch02-original-vs-remake.png`已改用四組AE=0影格。
+  成功動畫合成切片可升E2；正常未修改玩家路徑與其他商店子面板仍未閉合。

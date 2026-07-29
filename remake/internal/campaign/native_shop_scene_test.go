@@ -401,6 +401,19 @@ func TestNativeShopPurchaseSuccessUsesOriginalVariantResources(t *testing.T) {
 	if _, err := os.Stat(fdotherPath); err != nil {
 		t.Skip("player-provided original resources are absent")
 	}
+	resource5, err := fdother.ReadResource(fdotherPath, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digits := make([]fdother.Frame, 10)
+	for digit := range digits {
+		digits[digit], err = fdother.ParseLMI1FrameEntry(
+			resource5, 31+digit,
+		)
+		if err != nil {
+			t.Fatalf("digit%d: %v", digit, err)
+		}
+	}
 	tests := []struct {
 		variant, resourceID, portraitID int
 	}{
@@ -417,8 +430,12 @@ func TestNativeShopPurchaseSuccessUsesOriginalVariantResources(t *testing.T) {
 		if err != nil {
 			t.Fatalf("variant%d portrait: %v", test.variant, err)
 		}
+		bare, err := ComposeNativeShopBareScene(assets, digits, 1000)
+		if err != nil {
+			t.Fatalf("variant%d bare scene: %v", test.variant, err)
+		}
 		animation, final, err := ComposeNativeShopPurchaseSuccessFrames(
-			assets.Background, assets, portraits[0],
+			bare, assets, portraits[0],
 			test.portraitID, test.variant,
 		)
 		if err != nil {
@@ -439,6 +456,27 @@ func TestNativeShopPurchaseSuccessUsesOriginalVariantResources(t *testing.T) {
 				test.variant, len(animation), len(final),
 				changed, assets.SuccessFrames[0].Width, assets.SuccessFrames[0].Height,
 			)
+		}
+		if test.variant == 1 {
+			const first = 90*NativeShopWidth + 175
+			if bare[first] != 190 || bare[first+1] != 190 {
+				t.Fatalf(
+					"variant1 caller backing pixels=(%d,%d), want (190,190)",
+					bare[first], bare[first+1],
+				)
+			}
+			if animation[0][first] != 190 || animation[0][first+1] != 190 {
+				t.Fatalf(
+					"variant1 success started after portrait restore: (%d,%d)",
+					animation[0][first], animation[0][first+1],
+				)
+			}
+			if final[first] != 96 || final[first+1] != 191 {
+				t.Fatalf(
+					"variant1 final portrait pixels=(%d,%d), want (96,191)",
+					final[first], final[first+1],
+				)
+			}
 		}
 	}
 }

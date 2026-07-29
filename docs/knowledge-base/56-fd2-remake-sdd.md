@@ -1216,9 +1216,21 @@ physically presented. DOSBox internal framebuffer capture found 16 atomic
 debit samples across early/middle/final phases that each match the
 source-built frame at full-screen AE=0. Five other captures interrupted
 `0x2d620`'s row-by-row memmove and are partial writes, not atomic presentation
-oracles. Sampled success frames still differ by two caller-owned portrait
-pixels (AE=2 per frame), so the combined success/debit lifecycle remains
-partial even though the debit compositor slice is E2.
+oracles.
+
+2026-07-29 重新追查呼叫者緩衝區，已關閉原本固定AE=2的兩像素差異。
+`0x1956b`先配置三份64000-byte緩衝區，把當下VGA完整複製到`[0x53c5f]`，
+再由`0x168b6`建立對話格並以`0x4e8e1`加入DATO基底；`0x2d31b`最後用
+`0x373c4(...,0xfa00)`完整恢復`[0x53c5f]`。購買呼叫者則在
+`0x2f426`建立裝備詢問後才於`0x2f455`呼叫`0x16559(0)`，並在
+`0x2f4a1`關框恢復後立即由`0x2f4a6`播放購買成功動畫；直到
+`0x2f543`才再次覆蓋DATO第0幀。FDOTHER商店背景在
+`(175,90)/(176,90)`的索引色值是190/190，DATO#128第0幀則是96/191；
+現行`ComposeNativeShopBareScene`先前提前覆蓋DATO第0幀，正是兩點差異來源。
+移除提前覆蓋後，26張DOSBox成功動畫抓圖中25張各自對上來源影格整幀AE=0；
+唯一第15張只在效果區`(184,47)/(184,49)`差兩點，下一張同一來源影格即
+AE=0，符合熱鍵中斷`0x16886`寫入的非原子畫面。成功動畫與扣款合成切片
+均可升E2；正常未修改玩家路徑及其他商店子面板仍維持原有門檻。
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

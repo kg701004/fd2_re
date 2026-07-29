@@ -5,6 +5,16 @@ repository. Read it before changing code, reverse-engineering claims, tests, or
 documentation. `CLAUDE.md` records the project intent; this file is authoritative
 for day-to-day execution.
 
+## 語言鐵則
+
+- 面向使用者的回覆與專案文件預設使用繁體中文。
+- 避免不必要的中英混雜。必須使用英文技術名詞時，第一次出現應先寫中文，
+  再於括號內附英文，例如「證據閉合（evidence closure）」。
+- 程式識別字、命令、位址、檔名、API 名稱、工具及產品名稱若翻譯會降低
+  精確度，應保留原文。
+- 無法避免英文識別字時，仍應使用完整中文句型包覆，不要在同一句中反覆
+  切換中英文文法。
+
 ## Goal and scope
 
 - Reverse engineer the original *Flame Dragon 2* executable and data deeply
@@ -120,4 +130,3 @@ files above, correct or explicitly mark the stale statement.
 - Push successful substantial rounds to `origin/main`, then verify local HEAD
   equals `origin/main`. Update GitHub-facing README/screenshots when the result
   materially changes visible status.
-

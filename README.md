@@ -163,12 +163,13 @@ selection0／idle cycle1（索爾、悠妮、亞雷斯三列能力比較）亦�
 證實先前只差`(175,90)`、`(176,90)`兩點是相位而非renderer缺陷；
 remake幀使用screenshot-only LOADCH typed-party bootstrap，並非正常campaign
 persistence或native FD2.SAV載入。selection0↔1 input已閉合，但四人以上的
-三列scroll仍只有production regression、沒有原版E2。無合格收件者、購買成功／滿欄，以及
-sell/equip/transfer 仍待同狀態 E2。
+三列scroll仍只有production regression、沒有原版E2。無合格收件者／滿欄，以及
+sell/equip/transfer仍待同狀態E2。
 選定收件者後，原版還會詢問「要裝備上去嗎？」；確認後的成功動畫並不保留
 藍色問句框。這輪以DOSBox交易抓圖撤回舊fixture的錯誤底圖，production已改在
 bare shop framebuffer播放五幀效果。前四張原版採樣分別對上remake frame0–3，
-每張只剩人物區同兩點的caller-owned phase差（AE=2，未遮罩）。其後扣50元也
+重核`0x1956b→0x2f4c6→0x16559(0)`後，移除裸畫面中過早的DATO第0幀
+覆蓋，四組未遮罩整幀均達AE=0。其後扣50元也
 不再瞬間跳到950：直接重讀`0x2d516`後已接八位數向下滾動，`1000→950`共有
 45個10ms source phases；60Hz runtime依elapsed取樣，因此不宣稱每個10ms phase
 都會實體呈現。後續改用DOSBox內建Ctrl+F5連發80張320×200 framebuffer，
@@ -235,7 +236,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 武器購買金額不足（左原版 DOSBox、右remake；gold0，整幀AE=0） | ![shop purchase insufficient original and remake](docs/figures/shop-purchase-insufficient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者（左原版 DOSBox、右remake；screenshot-only typed-party bootstrap，selection0／idle cycle1，整幀AE=0） | ![shop equipment recipient original and remake](docs/figures/shop-equipment-recipient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者 selection1（原版由selection0按Down；左原版、右remake cycle1；exact-pixel相位同步後整幀AE=0） | ![shop equipment recipient selection1 original and remake](docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png) |
-| ch02 武器購買成功前四幀（上原版DOSBox、下remake；已修正為bare shop底圖，每格未遮罩AE=2，差異限人物區兩點） | ![shop purchase success original and remake](docs/figures/shop-purchase-success-ch02-original-vs-remake.png) |
+| ch02 武器購買成功前四幀（上原版DOSBox、下remake；裸商店存底不提前覆蓋DATO第0幀，每格未遮罩整幀AE=0） | ![shop purchase success original and remake](docs/figures/shop-purchase-success-ch02-original-vs-remake.png) |
 | ch02 購買扣款 `1000→950` 五個phase（上原版DOSBox內建capture、下remake；涵蓋roll早／中／末段，每格整幀AE=0） | ![shop purchase debit original and remake](docs/figures/shop-purchase-debit-ch02-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |

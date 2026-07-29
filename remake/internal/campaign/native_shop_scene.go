@@ -260,14 +260,14 @@ func ComposeNativeShopScene(
 }
 
 // ComposeNativeShopBareScene is the caller-owned framebuffer restored after
-// closing purchase/recipient dialogue. 0x2f4c6 draws its success effect onto
-// this scene before 0x2d516 animates the balance; it must not retain a blue
-// dialogue grid or greeting text.
+// closing purchase/recipient dialogue. The FDOTHER background already contains
+// the facility portrait base. 0x2f4c6 draws its success effect onto this scene;
+// only its tail 0x16559(0) overlays DATO frame zero. Drawing that frame here
+// would move the native portrait restore before the success presentation.
 func ComposeNativeShopBareScene(
 	assets *NativeShopAssets,
 	digitFrames []fdother.Frame,
-	portrait dato.Frame,
-	portraitID, gold int,
+	gold int,
 ) ([]byte, error) {
 	if assets == nil ||
 		len(assets.Background) != NativeShopWidth*NativeShopHeight ||
@@ -277,11 +277,6 @@ func ComposeNativeShopBareScene(
 		)
 	}
 	frame := append([]byte(nil), assets.Background...)
-	if err := portrait.BlitAtOffset(
-		frame, NativeShopWidth, nativeFacilityPortraitOffset(portraitID),
-	); err != nil {
-		return nil, err
-	}
 	if err := assets.Decoration.BlitOpaqueAt(
 		frame, NativeShopWidth,
 		NativeShopDecorationOffset%NativeShopWidth,

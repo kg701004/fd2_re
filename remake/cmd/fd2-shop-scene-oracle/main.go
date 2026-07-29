@@ -176,7 +176,7 @@ func main() {
 			}
 			if len(os.Args) >= 13 {
 				bare, err := campaign.ComposeNativeShopBareScene(
-					assets, digits, purchasePortraits[0], 0x80, 1000,
+					assets, digits, 1000,
 				)
 				check(err)
 				animation, final, err := campaign.ComposeNativeShopPurchaseSuccessFrames(
