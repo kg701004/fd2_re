@@ -28,7 +28,8 @@
 章: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29
 hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o  L  L  p  q
 ```
-- **D = default `0x205b4`**(11 章:0,2,3,4,5,6,7,8,10,13,23)——標準戰場,直接判勝利。
+- **D = default `0x205b4`**（11章：0,2,3,4,5,6,7,8,10,13,23）——
+  落入共用 raw 三值結果規則；玩家可見勝敗名稱須由逐關與外層路徑驗證。
 - 特殊 handler 18 個相異:a=0x206c5(章1)、b=0x20707(章9)、c=0x2073d、d=0x20765、e=0x20822、f=0x2084a、g=0x20872、h=0x208cf、i=0x20926、j=0x20957、k=0x20a51、**L=0x20a87(章21/26/27 共用)**、m=0x20aaf、n=0x20b14、o=0x20b3c、p=0x20b72、q=0x20bf5。
 
 ## 4. 事件原語(handler 共用的條件 / 動作函式)
@@ -38,7 +39,8 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | 原語 | linear | 次數 | 作用 | 狀態 |
 |---|---|---|---|---|
 | **查單位 raw bit** | `0x3453e` | 36 | `NativeRecordByte5Bit0(idx)`：`[0x53a45] + idx*0x50 + 5` 的 `&1`；高階語意必須由 caller branch 證明 | [驗] |
-| **handler prologue** | `0x205be` | 15 | 預設 `[0x53ecc]=2` → 清 `[0x53ecc]=0` → `call 0x1088d`（完整章節 loader：FDTXT + FDFIELD/roster/map） | [驗] |
+| **共用三值結果規則** | `0x205be` | 13 個直接 caller；default table 另可由 `0x205b4` 進入 | 先寫 code2；任一 `raw +6==0 && (+5&1)==0` 列存在則寫 code0；最後 `record0 +5 bit0` 可覆寫 code1 | [驗] |
+| **戰場重設／章節載入** | `0x205da` | 28 個直接 caller | 清 `[0x51a83]/[0x53ecc]`、呼 `0x1088d([0x53c03])`，再重設戰場全域 | [驗]；與 `0x205be` 是不同入口 |
 | **繪事件畫面** | `0x15f84` | 6 | 全螢幕圖繪製(過場 / 事件畫面) | [驗] |
 | 我方名冊查詢 | `0x33499(id)` | 1(章16) | `roster_has(id)`:查我方名冊 `[0x53bf7]`(32槽×0x50B)byte[+8]==id | [驗] |
 
@@ -56,7 +58,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 ## 5. 實例:章 1 handler `0x206c5` [驗]
 
 ```
-0x206d0  call 0x205be             ; prologue:進入完整章節 loader、設定預設碼
+0x206d0  call 0x205be             ; 共用 raw 三值結果規則；不載入章節
 0x206d5  edx = 5                   ; 迴圈單位 5..10
 0x206dd  cmp edx,0xb; jge 0x206fb
 0x206ed  eax=[0x53a45]            ; 單位陣列
@@ -80,7 +82,8 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
   ├ [0x53bef] 回合數(開始=1,回合切換 inc,inc 點 0x1a5b9);[0x53ec8] 累積計數 clamp 99
   ├ call [章節*4+0x51b19]           ; 章節戰場事件 handler(勝負判定,見上)
   └ call 0x1a813(camp_filter)       ; ★turn_events 消費點(見 §6.1),3 處呼叫點各帶 camp=1/0/2
-       └ default 0x205b4 → [0x53ecc]=2(敵滅→勝利)
+       └ default 0x205b4/0x205be → raw 三值結果：
+          camp0 活躍列存在→0；record0 bit0→1；其餘→2
               │
 戰役迴圈(doc 24 §6)讀 [0x53ecc]
   ├ ==1 → 世界地圖/中場 0x22e5c(章1專屬固定過場,非資料驅動,見 §6.1 修正) → 清0 → 續打
@@ -306,7 +309,9 @@ group 數字、單筆 vs 雙筆(T3 兩組)、觸發回合、camp 全部吻合。
 - 已抽出的raw原語可形成DSL候選，例如
   `when native_record_byte5_bit0(i)`／`when turn>=N`；前者必須保留
   per-handler caller與branch方向，不得縮寫成全域`unit[i].flag`語意。
-- default handler(11 章)= 最簡單的「殲滅即勝」,重製預設規則即可;18 個特殊 handler 是需要逐關重建的事件腳本。
+- default handler（11章）已閉合為 `0x205b4/0x205be` 的 raw
+  camp0／record0 三值規則；重製不可只用正規化「敵全滅」取代。18個特殊
+  handler 仍需逐關保存額外條件與結果覆寫。
 
 ## 7.5 戰場單位有兩個來源:FDFIELD roster vs 事件進場(2026-06-28 證實)
 
@@ -424,5 +429,9 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 - **[已解,範圍限定見 doc 26]** ~~18 battle-event skeleton 語意 + 動作函式~~ → `docs/data/battle_events.json` 目前匯出的 battle-event skeleton 未記錄 action_fns，故該資料集只保存條件→設碼/繪圖；這不能外推到含 dialog/acting/sync/JOIN 的 postbattle cutscene handlers。條件原語與 raw caller 仍以各 handler CFG 為準。
 - **[修正]** byte(+5) bit0 reader／writer 已分開：`0x3453e` 僅回傳 `&1`，constructor／HP writer／`0x32975` 是獨立 caller；不得把它們合併成全域死亡／存活欄位。舊說「bit0=存活、初始化=1」已撤回。回合數=`[0x53bef]`（非 `[0x53ec8]`，後者為累積計數）；team-completion 語意仍待 state-machine evidence。
 - **修正 doc 24**:§6 稱「事件腳本解譯器(大函式 0x205c9–0x20c64)」用詞不精確 → 實為**章節戰場事件 handler 表 0x51b19,各 handler 在 0x205b4–0x20bf5**(非單一解譯器,非 byte-code)。已於 doc 24 §6.3 附註。
+- **2026-07-29 函式邊界再勘誤**：`0x205be` 在 `0x205d5` 直接跳到
+  `0x2067e`，不會落入相鄰的 `0x205da`。因此舊「`0x205be` 先設2、再清0並
+  呼 `0x1088d`」是把兩個入口線性拼接的錯誤。直接指令與 callers 保存於
+  [`fd2_battle_result_205be_disasm.txt`](../data/fd2_battle_result_205be_disasm.txt)。
 
 > 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`。

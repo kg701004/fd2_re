@@ -1,0 +1,30 @@
+# IDA Pro 9.4 / Hex-Rays；來源 FD2.EXE；大小 357074 位元組
+# MD5 b97caf2239a27a896069d03549d96e1e
+# SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+# 合法 fd2-ida-authorized-local Docker 流程；原版與授權唯讀，資料庫僅在 /tmp。
+
+IDA 將查詢位址 0x205BE 歸入函式 0x205B4：
+
+int sub_205B4()
+{
+  int i;
+  int record;
+  int result;
+
+  sub_36CD7(4);
+  sub_36CD7(8);
+  dword_53ECC = 2;
+  for ( i = 0; i < dword_53BEB; ++i )
+  {
+    record = dword_53A45 + 80 * i;
+    if ( *(_BYTE *)(record + 6) == 0 && (*(_BYTE *)(record + 5) & 1) == 0 )
+      dword_53ECC = *(unsigned __int8 *)(record + 6);
+  }
+  result = dword_53A45;
+  if ( (*(_BYTE *)(dword_53A45 + 5) & 1) != 0 )
+    dword_53ECC = 1;
+  return result;
+}
+
+此輸出只交叉確認函式邊界與資料流；高階 camp／bit／result 語意仍由 caller
+與玩家路徑另行驗證。

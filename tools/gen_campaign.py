@@ -61,8 +61,8 @@ v4 新增(本輪,接續 v3 撞牆點):
 
 派工時以為 `docs/data/battle_events.json` 是「30 章回合事件 dump(條件→動作)」,可以
 直接轉成 chNN.json 的 `spawn_group` 事件。**核實後這個假設是錯的**:battle_events.json
-其實是 doc26 的 handler「勝負判定」metadata(is_default/result_codes/extra_conditions/
-trigger_units_flag),30 章裡只有 7 章有 `roster_has`/`unit_flag` 這種條件字串,**完全沒有
+其實是 doc26 的 handler raw result metadata(is_default/result_codes/extra_conditions/
+trigger_units_flag),少數章只有 `roster_has`/`raw_record_byte5_bit0` 這種條件字串,**完全沒有
 turn/group 欄位**——它跟「第幾回合誰增援」無關。
 
 真正的回合增援資料在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`:

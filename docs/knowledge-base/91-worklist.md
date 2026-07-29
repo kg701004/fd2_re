@@ -360,8 +360,9 @@
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **cutscene→戰場控制流勘誤**：`0x10010` 真 caller 仍是 `0x1a251/0x26130`，但展開 `0x25ebb` 證實 `0x26130` 只屬第三主選單分支；新遊戲與四槽讀檔各自跑 pre-handler 後從 `0x25ebb` 返回，main `0x25dce` 才呼叫 `0x117e7`。舊「handler ret 後在同 driver 線性落入 `0x10010`」已撤回；callgraph 工具排除 `0x1b051/0x26f30` 偽命中的成果仍有效 → `23`、`24`
-- [x] **[0x53ecc] 戰後/事件完整狀態機**:事件解譯器(0x205c9-0x20c64,28處設1/2)↔戰役迴圈(==1進世界圖/中場 0x22e5c、==2勝利→戰後跳表+結局判定+下一章)→ `24`§6
-- [x] **挖完事件指令集** → `25`:第三張章節跳表 0x51b19(戰場事件,30章/18 handler)、FD2 事件=每章 C handler 非 byte-code、事件原語(0x3453e 查單位/0x205be prologue/回合數=[0x53bef])
+- [x] **[0x53ecc] 戰後/事件狀態機**：章節 handler 的 raw code 由戰役迴圈消費；`0x205be` 另有直接閉合的 0/1/2 roster 規則。不得再把 `0x205c9–0x20c64` 寫成單一事件解譯器，或把所有 code1/2 writer 先統稱同一玩法語意 → `24`§6
+- [x] **挖完事件 handler 原語** → `25`：第三張章節跳表 `0x51b19`（30章／18個特殊 handler），FD2 事件是每章 C handler 而非 byte-code；`0x3453e` 查 raw bit，`0x205be` 是三值結果規則，`0x205da` 才是重設／章節載入入口。
+- [x] **RE-BATTLE-RESULT-205B4-BOUNDARY**：Docker Capstone 與合法 IDA 9.4 交叉確認完整函式起點 `0x205b4`、共享 direct-call 入口 `0x205be`，以及 code2→camp0 active code0→record0 bit0 code1 覆寫順序；`0x205d5→0x2067e` 跳過相鄰 `0x205da`。新增 `NativeBattleResultCode205B4`、map0 真實 roster 錨點與失敗即關閉測試；撤回舊「`0x205be` 清碼並呼 `0x1088d`」混線斷言。
 - [x] **逐關挖 18 特殊 handler** → `26` + `tools/event_handler_dump.py` + `docs/data/battle_events.json`(30章條件→動作,供 remake 去 hardcoding)
 - [x] **補完 battle-event raw predicates（2026-07-27 勘誤）**：`0x3453e(idx)` 只閉合為 `[0x53a45]+idx*0x50+5 & 1`；remake 的 `unit_inactive` 是 caller-specific projection，不是全域死亡／存活欄位。`0x33499`=roster_has（查 `[0x53bf7]` 我方名冊）。`battle_events.json` skeleton 未記錄 action_fns，不代表 postbattle/cutscene handler 無動作；舊 bit0 高階命名已撤回。
 - [~] **handler raw-byte5 runtime bridge**：`0x3453e` raw adapter、constructor、已知 damage/death writer、revive writer 與 `deactivate_unit` 已有 raw propagation/regression；完整 raw roster 時 `cmd/fd2` 的 `any_unit_inactive` 已 strict 讀 raw bit0，只有舊／混合 JSON 才使用 `OnField/Alive` 相容 projection。需補 zero-HP 初始 record／所有 LOADCH 分支並讓 strict binding 缺 raw 時 fail-closed，才可把 ch01/ch02 handler 全面升為 E0。

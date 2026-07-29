@@ -2383,3 +2383,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   八格中 bit7-clear cells，caller 才掃 slots `0..count-1`；函式不驗 compact，
   malformed hole 可能讓 stale item byte 進掃描。程式註解、SDD、worklist 與
   舊 handoff 條目均已更正。
+
+## 2026-07-29：`0x205B4/0x205BE` 三值結果規則與函式邊界勘誤
+
+- Docker Capstone 以參考 FD2.EXE 重新確認：`0x205B4` 的共享入口
+  `0x205BE` 先寫
+  `[0x53ECC]=2`，掃描 `[0x53A45]` 的 `[0x53BEB]` 筆 0x50-byte records；
+  任一 `raw +6==0 && (+5&1)==0` 寫 code0，最後 record0 `+5 bit0`
+  可覆寫 code1。新增 `NativeBattleResultCode205B4`，保存原始順序及數值，
+  不為 camp、bit 或 code 指派勝敗名稱；map0 真實 roster 錨點得到 code0。
+- 舊文件把 `0x205BE` 寫成「設2後清0、呼 `0x1088D` 載章」是函式邊界
+  混線。`0x205D5` 會直接跳至 `0x2067E`，不落入相鄰的 `0x205DA`；
+  `0x205DA` 有另外28個 direct callers，才是清全域、呼 loader 的入口。
+  直接指令與 caller 清單保存於
+  `docs/data/fd2_battle_result_205be_disasm.txt`。
+- 合法 IDA 9.4／Hex-Rays 另將查詢位址 `0x205BE` 歸入函式
+  `0x205B4`，輸出相同迴圈與覆寫順序；交叉證據保存於
+  `docs/data/ida/fd2_205b4_pseudocode.txt`。
+- 已同步修正 doc24／25／26／28、SDD 與 worklist：不得再把
+  `0x205C9..0x20C64` 稱為單一事件解譯器，也不得單靠 default handler
+  把 raw code0/1/2 直接命名成殲滅／勝利／失敗。正式 campaign transition
+  仍需逐章 handler 與外層 consumer／玩家路徑證據。

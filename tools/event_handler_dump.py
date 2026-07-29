@@ -7,11 +7,12 @@
 
 已知原語(doc 23/24/25):
   0x3453e(idx)         查單位 #idx 狀態 [0x53a45][idx+5]&1
-  0x205be / 0x205da    handler prologue(載該章 FDTXT 文本、預設結果碼)
+  0x205be              共用 raw 三值結果規則
+  0x205da              獨立的戰場重設／完整章節載入入口
   0x15f84              繪事件畫面(全螢幕圖)
   0x1088d              完整章節 loader（FDTXT + FDFIELD/roster/map）
-  [0x53ecc]=N          設結果碼(1=中途事件 / 2=勝利 / 0=續打)
-  [0x53ec8]            回合計數(clamp 99)
+  [0x53ecc]=N          設 raw pending/result code；高階語意依 caller
+  [0x53ec8]            raw 累積量(clamp 99)，不是回合數
   [0x53a45]            戰場單位陣列基底(每單位 0x50B)
   [0x53c03]            目前章節
 
@@ -24,11 +25,13 @@ sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from callgraph_le import CG, fixup_map
 
 PRIM = {
-    0x3453e: 'unit_inactive?(idx)', 0x205be: 'prologue(載章文本/預設碼)', 0x205da: 'prologue2',
+    0x3453e: 'raw_record_byte5_bit0(idx)',
+    0x205be: 'raw_result_code_0_1_2',
+    0x205da: 'reset_and_load_chapter',
     0x15f84: '繪畫面', 0x1088d: '完整章節載入', 0x111ba: '載資源', 0x25977: 'play_bgm/scene',
     0x25a96: 'play_sfx', 0x36cd7: '__STK', 0x2cad7: '結局判定?', 0x18890: '戰鬥行動',
 }
-VAR = {0x53ecc: '結果碼', 0x53ec8: '回合數', 0x53a45: '單位陣列', 0x53c03: '章節', 0x51a83: 'raw_overlay_selector'}
+VAR = {0x53ecc: 'raw_pending_result_code', 0x53ec8: 'raw_accumulator', 0x53a45: '單位陣列', 0x53c03: '章節', 0x51a83: 'raw_overlay_selector'}
 
 
 def annot(ins, fx):
@@ -94,7 +97,7 @@ def main(av):
         for t in uniq:
             end = min([u for u in uniq if u > t] + [t + 0x300])
             chs = by[t]
-            tag = '(default 殲滅即勝)' if t == 0x205b4 else ''
+            tag = '(default raw result rule)' if t == 0x205b4 else ''
             print(f'\n=== handler {hex(t)}  章節 {chs} {tag} ===')
             for ins in dump(cg, fx, t, end):
                 m, op = ins.mnemonic, ins.op_str
@@ -107,8 +110,8 @@ def main(av):
     if av[2] == 'json':
         import json
         SKIP = {0x36cd7, 0x205be, 0x205da, 0x1088d, 0x111ba, 0x375c0, 0x37416, 0x37244}
-        COND = {0x3453e: 'unit_inactive', 0x33499: 'roster_has'}  # 條件查詢原語(非動作)
-        # 0x3453e(idx) = ([0x53a45]+idx*0x50+5)&1；0=有效存活，1=死亡／隱藏／未啟用。
+        COND = {0x3453e: 'raw_record_byte5_bit0', 0x33499: 'roster_has'}  # 條件查詢原語(非動作)
+        # 0x3453e(idx) = ([0x53a45]+idx*0x50+5)&1；高階語意依 caller。
         hs = [(i, fx.get(0x51b19 + i * 4)) for i in range(30)]
         uniq = sorted(set(t for _, t in hs if t))
         cache = {}
@@ -142,7 +145,7 @@ def main(av):
                     'handler': hex(t),
                     'is_default': t == 0x205b4,
                     'trigger_units_flag': sorted(set(units)),  # 0x3453e 查的單位 idx(+5 bit0 狀態旗標)
-                    'result_codes': sorted(set(codes)),         # 1=中途事件 2=特殊勝利
+                    'result_codes': sorted(set(codes)),         # raw pending/result codes
                     'draw_scene': draw,                          # 是否繪事件畫面(0x15f84)
                     'extra_conditions': sorted(set(conds)),      # 其他條件查詢原語
                     'action_fns': sorted(set(acts)),             # 真動作函式(經修正後多為空)

@@ -7,7 +7,7 @@
 > 方法:`tools/event_handler_dump.py`(遞迴反組譯單一 handler + 標註事件原語);機器可讀結果在 [`docs/data/battle_events.json`](../data/battle_events.json)。
 > 標 **[驗]**(disasm 直證)/ **[推]**(語意推定)。
 
-> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的勝負判定 metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,30 章裡只有 7 章有 `roster_has`/`unit_flag` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json)。event_id→group 的消費鏈已由 `25` §6.1 閉合：`0x1a813` 依 turn/camp 篩選，呼叫 `0x51b91` 全域 90-entry 表中的 FDFIELD 子集合 0..57，再由 handler 呼叫 spawn 原語；58..89 另有玩家操作、格子互動與單位行動等通用 consumers，不能再稱整張表只有 58 項。`0x22e5c` 是章1專屬固定中場過場，與 turn_events 無關。`tools/gen_campaign.py` 舊「RE 撞牆」文字僅保留歷史 provenance，不得當成現況。
+> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的 raw result metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,少數章只有 `roster_has`/`raw_record_byte5_bit0` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json)。event_id→group 的消費鏈已由 `25` §6.1 閉合：`0x1a813` 依 turn/camp 篩選，呼叫 `0x51b91` 全域 90-entry 表中的 FDFIELD 子集合 0..57，再由 handler 呼叫 spawn 原語；58..89 另有玩家操作、格子互動與單位行動等通用 consumers，不能再稱整張表只有 58 項。`0x22e5c` 是章1專屬固定中場過場，與 turn_events 無關。`tools/gen_campaign.py` 舊「RE 撞牆」文字僅保留歷史 provenance，不得當成現況。
 
 ## 1. 事件原語(handler 的「指令集」)
 
@@ -75,11 +75,13 @@
 
 ## 2. 全 30 章 handler 對照表 [驗]
 
-`D` = default `0x205b4`(11 章共用,純殲滅即勝)。單位以全域 idx 標(十進位)。
+`D` = default `0x205b4`（11 章共用，落入 `0x205be` 的 raw 三值規則）。
+這個位元組規則常與殲滅玩法一致，但不可只靠函式名稱直接提升為「純殲滅」。
+單位以全域 idx 標（十進位）。
 
 | 章 | handler | 觸發條件 | 結果碼 | 繪圖 | 備註 |
 |---|---|---|---|---|---|
-| 0,2,3,4,5,6,7,8,10,13,23 | `0x205b4` **D** | 遍歷單位陣列雙方存活 | 標準(2 勝 / 0 續) | — | 一般殲滅戰 |
+| 0,2,3,4,5,6,7,8,10,13,23 | `0x205b4` **D** | 掃 `+6==0 && (+5&1)==0`；另查 record0 bit0 | raw code 0/1/2 | — | 玩家可見殲滅語意需逐關／外層驗證 |
 | 1 | `0x206c5` | 單位群 5–10 狀態 | 1 | — | |
 | 9 | `0x20707` | 單位 50、51 | 1 | — | |
 | 11 | `0x2073d` | 單位 14 | 1 | — | |

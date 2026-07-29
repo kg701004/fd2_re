@@ -1977,6 +1977,19 @@ consumer、input/state trace、regression與適當E2 oracle的語意才能接入
 
 Official Docker Capstone recheck of `0x1d80b` closes only its first loop's admission boundary: records are addressed as `[0x53a45] + unit*0x50`, bounded by `[0x53beb]`; a candidate must satisfy raw `+6 == 1`, `(+5 & 0x81) == 0`, and `+0x26 == 0`. The native caller then passes `(unitIndex, record+6)` to `0x13a9f`, which may set `[0x51a8f]` before the event and chapter function tables are called and `[0x53ecc]` is checked. `fdother.FindNativePhaseDispatchCandidates` preserves this as an offset-level, fail-closed planner. It intentionally does not invoke callbacks or assign event names; no campaign node may treat it as a completed phase/event renderer.
 
+The default chapter result boundary is now corrected at direct-instruction level. The
+`0x205b4` function, also entered directly at its shared `0x205be` inner entry, first
+writes `[0x53ecc]=2`, scans `[0x53a45]` for any record with raw `+6==0` and
+`(+5&1)==0` and writes 0 when found, then lets record zero's `+5 bit0` overwrite the
+result with 1. `battle.NativeBattleResultCode205B4` preserves that exact order and returns
+only the numeric code. It does not name camp0, bit0, code1, or code2 as a gameplay outcome.
+The adjacent `0x205da` is a separate reset/loader entry: `0x205d5` jumps directly to
+`0x2067e`, while `0x205da` has its own direct callers and is the routine that clears globals
+and calls `0x1088d`. Historical notes that described `0x205be` as clearing the result and
+loading a chapter are invalid. Official IDA 9.4 groups `0x205be` into function
+`0x205b4` and independently reproduces the same loop and overwrite order. A production victory/defeat transition still requires the
+chapter handler, outer `[0x53ecc]` consumer, editable campaign node, and player-path evidence.
+
 The same audit rechecked `0x1b8e7` because it is shared by class-change, item, and post-resolution callers. Official IDA 9.4 decompiles a uniform `sub_1B8E7(int unit, int slot)`: `memmove(record+0x0a+2*slot, record+0x0c+2*slot, 2*(7-slot))`, followed by `record+0x18=0x80`. `battle.RemoveNativeInventorySlot` now reproduces this byte-level removal, including the native stale item byte in the final cell. The previous claim about an unresolved third stack argument was incorrect and has been removed; higher-level callers still decide why a slot is removed.
 
 The shared upstream `0x13a9f` is bounded at its raw mode boundary: after `record+5 & 5 == 0`, it reads `mode=(record+0x34)&0x0f`, bytes `+0x35/+0x36`, and byte `+0x3d`. `fdother.PlanNativeUnitMode` records those values plus the caller's unit/second argument and performs no callee invocation. Mode branches remain evidence-only; no battle, town, shop, or event meaning is assigned from the mode number.

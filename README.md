@@ -18,7 +18,13 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；整備選人現有原版資源局部合成器，但 town variant1/2、整備狀態面板與實機差分、讀檔槽、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
 
-Worklist 目前是 **496 個 `[x]`、102 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+2026-07-29 戰場結果勘誤：`0x205B4`（共享入口 `0x205BE`）是
+camp0／record0 raw bit 產生 code0/1/2 的三值規則；相鄰的 `0x205DA`
+才是重設並載入章節的另一個入口。
+兩者不可再由線性反組譯拼成同一函式，數值也不得在缺少 caller／玩家路徑時
+直接命名為勝利或失敗。
+
+Worklist 目前是 **499 個 `[x]`、104 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
