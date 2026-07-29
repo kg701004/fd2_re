@@ -1986,6 +1986,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x14EF0` 候選分派及 `0x15AD8→0x15B77` 原始評分邊界。舊
   `0x15140/0x15356` 的逐落點、傷害門檻、擊殺加倍完整公式已刪除，不得接入
   runtime。下一步先閉合 `0x1548E` 與固定存檔動態 trace。
+- 後續同日已閉合 `0x14237..0x145CC`：它才是物理候選評分迴圈，保存
+  候選格×目標列舉、雙方 `+0x48/+0x4A` 地形修正、差值`<=2`拒絕、
+  嚴格超過target `+0x40`時分數×2/priority18、`0x1DEBE`／raw `+8`
+  調整及 priority→score→先出現者同分規則。新增
+  `ScoreNativePhysicalAttackCandidate` raw-only adapter/regression。
+- `0x1548E` 本身已更正為「選擇結果執行」：消費
+  `0x53C43/47/4B`，經 `0x14B78` 移動／呈現後依 `0x53AF9` 選地圖鏈或
+  `0x28A6C(actor,target)`，最後固定回1。它沒有呼叫 `0x4EE40/0x4F355`，
+  不得再稱 pathfinder。下一步改追 `0x146D1` 候選格順序與 `0x14B78`
+  最後一個參數。
 
 ## 2026-07-29 原版整備選人主畫面第一個生產切片
 

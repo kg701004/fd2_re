@@ -1,6 +1,9 @@
 {
   "imagebase": 0,
   "input_file": "FD2.EXE",
+  "input_size": 357074,
+  "input_md5": "b97caf2239a27a896069d03549d96e1e",
+  "input_sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
   "targets": [
     {
       "address": 65552,
@@ -759,6 +762,178 @@
             "start": 118768,
             "end": 120011,
             "name": "sub_1CFF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 82487,
+      "function": {
+        "start": 82487,
+        "end": 83405,
+        "name": "sub_14237"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 80735,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 81446,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 85771,
+          "from_function": {
+            "start": 85744,
+            "end": 86101,
+            "name": "sub_14EF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 84856,
+      "function": {
+        "start": 84856,
+        "end": 85744,
+        "name": "sub_14B78"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 80824,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 80894,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 81015,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 81227,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 81836,
+          "from_function": {
+            "start": 81564,
+            "end": 81876,
+            "name": "sub_13E9C"
+          }
+        },
+        {
+          "from": 82453,
+          "from_function": {
+            "start": 82209,
+            "end": 82487,
+            "name": "sub_14121"
+          }
+        },
+        {
+          "from": 87238,
+          "from_function": {
+            "start": 87182,
+            "end": 87678,
+            "name": "sub_1548E"
+          }
+        },
+        {
+          "from": 94483,
+          "from_function": {
+            "start": 94037,
+            "end": 94860,
+            "name": "sub_16F55"
+          }
+        }
+      ]
+    },
+    {
+      "address": 87182,
+      "function": {
+        "start": 87182,
+        "end": 87678,
+        "name": "sub_1548E"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 81465,
+          "from_function": {
+            "start": 80543,
+            "end": 81564,
+            "name": "sub_13A9F"
+          }
+        },
+        {
+          "from": 85915,
+          "from_function": {
+            "start": 85744,
+            "end": 86101,
+            "name": "sub_14EF0"
+          }
+        }
+      ]
+    },
+    {
+      "address": 122558,
+      "function": {
+        "start": 122558,
+        "end": 122712,
+        "name": "sub_1DEBE"
+      },
+      "segment": {
+        "start": 65536,
+        "end": 323584,
+        "name": "cseg01"
+      },
+      "code_xrefs_to": [
+        {
+          "from": 83094,
+          "from_function": {
+            "start": 82487,
+            "end": 83405,
+            "name": "sub_14237"
           }
         }
       ]

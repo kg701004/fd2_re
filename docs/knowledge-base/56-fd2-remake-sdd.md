@@ -48,10 +48,32 @@ Canonical Docker Capstone 目前可重現的上層順序是：`0x1A4EB`／`0x1A5
 setup 後進入 `0x1D80B`／`0x1D8BA` unit scans；每筆 `0x50`-byte record 經 raw `+6`、
 `+5`、`+0x26` gates 後進 `0x13A9F`。`0x13A9F` 讀 `record+0x34 & 0x0f`，再依 raw
 command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 內有
-`0x14237→0x1598A→0x1567E` candidate path，`0x15AD8→0x15B77` 負責 raw score/tie-break。
+`0x14237→0x1598A→0x1567E` candidate path，`0x15AD8→0x15B77` 負責法術
+raw score/tie-break。
 這取代舊文件把 `0x15140` 稱作 AI entry 的說法。SDD 只授權保存上述 raw call topology；
 `+6`／table selectors 的 camp/turn 語意、完整 target transaction、movement/effect/UI 與
 runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
+
+`0x14237..0x145CC` 現已閉合為物理候選評分迴圈，而不是未知的 generic candidate
+helper。它以 `0x146D1` 建立候選格、`0x14818` 建立各格目標陣列；actor 與 target
+的 raw `word +0x48/+0x4A` 會依各自 `0x12E38` 地形 control byte及
+`0x51A12/0x51A2A` 百分比表修正。單一候選先算
+`actor word48-target word4A`，`<=2` 拒絕；基本 priority=8，分數嚴格
+`> target word40` 時分數×2且 priority=`0x12`。`0x1DEBE` 回傳1時再加
+`actor word4A-target word48`；target raw `+8==0` 時以 signed toward-zero 規則×1.5。
+選擇先比 priority，再比 score，完全同分保留先枚舉者，寫
+`0x53C43/47/4B/4F`。`battle.ScoreNativePhysicalAttackCandidate` 保存 raw
+單候選規則，`SelectNativePhysicalAttackCandidate` 保存 priority→score→穩定同分
+選擇；`0x1DEBE`、raw `+8`、候選產生順序與完整執行仍未命名或接入 runtime。
+合法 IDA 9.4 的 address-only report 交叉確認 `0x14237..0x145CC` 邊界、
+三個 direct callers，以及 `0x1DEBE` 僅由該函式呼叫。
+
+`0x1548E..0x1567D` 則已更正為物理選擇結果執行邊界，不是路徑產生器：
+它把 `0x53C43/47`、actor 與 callerArg 交給 `0x14B78`，以 `0x53C4B`
+作 target，依 `0x53AF9` 選地圖呈現或 `0x28A6C(actor,target)` 戰鬥演出，
+完成收尾後固定回傳1。其唯一 callers 是 `0x13E39/0x14F9B`，全函式沒有呼叫
+舊筆記的 `0x4EE40/0x4F355`。`0x14B78` 最後一參數與路徑資料契約仍未知。
+合法 IDA 9.4 同樣確認 `0x1548E..0x1567D` 與兩個 direct callers。
 
 `0x1567E` 的 command enumerator 也已由 canonical Docker Capstone 重讀：它以 unit index
 算 `0x50`-byte record，先呼 `0x1B8A6` 取得 inventory prefix/count，再逐 item row 讀

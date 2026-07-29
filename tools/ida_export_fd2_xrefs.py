@@ -6,6 +6,7 @@ license material.  The report is intentionally address-oriented so it can be
 cross-checked against tools/disasm_le.py's LE linear addresses.
 """
 
+import hashlib
 import json
 import os
 
@@ -30,6 +31,13 @@ TARGETS = (
     0x10C50,
     0x11019,
     0x115B6,
+    # Native AI physical candidate scoring and selected-action execution.
+    # These addresses preserve call topology only; field semantics remain in
+    # docs/knowledge-base/11-enemy-ai.md under their evidence gates.
+    0x14237,
+    0x14B78,
+    0x1548E,
+    0x1DEBE,
     0x14818,
     0x149F8,
     0x1598A,
@@ -103,11 +111,17 @@ def segment_info(ea):
 
 def main():
     ida_auto.auto_wait()
+    input_path = idc.get_input_file_path()
+    with open(input_path, "rb") as source:
+        source_bytes = source.read()
     report = {
         "imagebase": idaapi.get_imagebase(),
         # Keep the checked-in report reproducible when the disposable analysis
         # directory changes; it must not record a host path.
-        "input_file": os.path.basename(idc.get_input_file_path()),
+        "input_file": os.path.basename(input_path),
+        "input_size": len(source_bytes),
+        "input_md5": hashlib.md5(source_bytes).hexdigest(),
+        "input_sha256": hashlib.sha256(source_bytes).hexdigest(),
         "targets": [
             {
                 "address": ea,

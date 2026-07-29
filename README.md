@@ -9,16 +9,16 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 [`docs/data/fd2-reference-files.json`](docs/data/fd2-reference-files.json)。
 雜湊不同時必須重新定位，不能直接套用文件中的位址。
 
-## 目前狀態（2026-07-28）
+## 目前狀態（2026-07-29）
 
 | 領域 | 已驗證成果 | 與原版的差距 |
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
-| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
+| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂；敵方物理候選評分已重新定位至 `0x14237`，並與 `0x1548E` 執行鏈分離 | AI 候選格順序、raw helper 語意及完整 runtime 尚未閉合；indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；整備選人現有原版資源局部合成器，但 town variant1/2、整備狀態面板與實機差分、讀檔槽、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
 
-Worklist 目前是 **491 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+Worklist 目前是 **496 個 `[x]`、102 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 
@@ -402,7 +402,7 @@ codec 與破解歷程見 [`06-animation-format.md`](docs/knowledge-base/06-anima
 - [`03` EXE 資料表與資料結構](docs/knowledge-base/03-exe-and-data-structures.md) — 數值表 offset、單位/物品/法術/地圖結構
 - [`09` 劇情與對話](docs/knowledge-base/09-story-and-dialogue.md) — 對話結構、說話者、抽取方法
 - [`10` Sprite 繪製:敵/我方與狀態](docs/knowledge-base/10-sprite-rendering-camp-and-state.md) — 陣營著色、解碼器變體、面向
-- [`11` 戰場 AI:敵人/NPC 行動決策](docs/knowledge-base/11-enemy-ai.md) — 目標評分、移動、地形評估
+- [`11` 戰鬥人工智慧專題](docs/knowledge-base/11-enemy-ai.md) — 已證實的物理／法術評分邊界、選擇結果執行鏈與剩餘未知
 - [`12` 音樂播放與場景切換](docs/knowledge-base/12-music-playback-and-scene.md) — Miles AIL、XMIDI 序列、換曲流程
 - [`13` 戰場選單與行動系統](docs/knowledge-base/13-battle-menu-system.md) — 行動狀態機、選單游標、Get_EasyMagic
 - [`14` 文本控制碼與對話框機制](docs/knowledge-base/14-text-control-codes.md) — 開框/頭像/換行/翻頁、文字渲染器

@@ -183,9 +183,10 @@ func (s *State) aiApproachPath(u, target *Unit) []Cell {
 	return s.Path(u, dstX, dstY)
 }
 
-// aiActUnit 一個 AI 單位的行動:挑最佳目標,移到攻擊範圍內可達格,能打就打(doc11 評分式簡化版)。
+// aiActUnit 是重製端既有的正規化近似，不代表原版 0x14237 的完整候選、
+// 地形、優先級與同分契約。
 func (s *State) aiActUnit(u *Unit) {
-	// 1. 找最佳攻擊目標；dmg≤2 略過，但保留最近敵人作為移動目標。
+	// 找重製端的近似攻擊目標；低傷害時仍保留最近單位作為移動目標。
 	best, moveTarget := s.aiTargets(u)
 	if moveTarget == nil {
 		return
@@ -354,8 +355,8 @@ func (s *State) AISpellCandidates(caster *Unit, spell Spell) []*Unit {
 	return out
 }
 
-// NextAIPlan 找下一個未行動的 AI 單位並產生行動計畫(不執行、不設 Acted);
-// 全部動完回 nil。決策邏輯同 aiActUnit(doc11 評分式)。
+// NextAIPlan 找下一個未行動的 AI 單位並產生重製端近似計畫
+// （不執行、不設 Acted）；它不是原版 0x14237/0x1548e 的替代實作。
 func (s *State) NextAIPlan() *AIPlan {
 	for _, u := range s.Units {
 		if !u.OnField || !u.Alive() || u.Camp == Own || u.Acted || u.Paralyzed {
