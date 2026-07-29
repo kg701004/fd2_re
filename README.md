@@ -171,7 +171,10 @@ bare shop framebuffer播放五幀效果。前四張原版採樣分別對上remak
 每張只剩人物區同兩點的caller-owned phase差（AE=2，未遮罩）。其後扣50元也
 不再瞬間跳到950：直接重讀`0x2d516`後已接八位數向下滾動，`1000→950`共有
 45個10ms source phases；60Hz runtime依elapsed取樣，因此不宣稱每個10ms phase
-都會實體呈現或完整debit E2。
+都會實體呈現。後續改用DOSBox內建Ctrl+F5連發80張320×200 framebuffer，
+抓出roll的literal VGA起點其實是`(16,98)`，比stable gold `(16,99)`高一列；
+修正後21張debit樣本中16張各自對到source phase整幀AE=0，其餘5張是在
+`0x2d620`逐列memmove期間捕捉的partial write，不當成atomic parity frame。
 正常campaign另已修正JOIN→LOADCH的首次typed roster bootstrap：只有已有JOIN
 membership/order時才補尚不存在的persistent record，direct/debug LOADCH不會
 憑空建立隊伍；ch00真實scenario可把`[0,9,4,30]`送入ch02裝備收件者候選
@@ -233,6 +236,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 布衣裝備收件者（左原版 DOSBox、右remake；screenshot-only typed-party bootstrap，selection0／idle cycle1，整幀AE=0） | ![shop equipment recipient original and remake](docs/figures/shop-equipment-recipient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者 selection1（原版由selection0按Down；左原版、右remake cycle1；exact-pixel相位同步後整幀AE=0） | ![shop equipment recipient selection1 original and remake](docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png) |
 | ch02 武器購買成功前四幀（上原版DOSBox、下remake；已修正為bare shop底圖，每格未遮罩AE=2，差異限人物區兩點） | ![shop purchase success original and remake](docs/figures/shop-purchase-success-ch02-original-vs-remake.png) |
+| ch02 購買扣款 `1000→950` 五個phase（上原版DOSBox內建capture、下remake；涵蓋roll早／中／末段，每格整幀AE=0） | ![shop purchase debit original and remake](docs/figures/shop-purchase-debit-ch02-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |

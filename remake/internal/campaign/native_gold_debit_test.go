@@ -31,30 +31,35 @@ func TestComposeNativeGoldDebitFramesPreservesOdometerSchedule(t *testing.T) {
 	}
 	// Hundreds and tens both roll on the first pass. The first phase begins
 	// at row digit*9+8; the ninth finishes at the stable digit row.
-	if got := frames[0][NativeShopGoldOffset+4*6]; got != 9 {
+	if got := frames[0][NativeShopGoldRollOffset+4*6]; got != 9 {
 		t.Fatalf("first hundreds roll row=%d, want strip row8 value9", got)
 	}
-	if got := frames[8][NativeShopGoldOffset+4*6]; got != 1 {
+	if got := frames[8][NativeShopGoldRollOffset+4*6]; got != 1 {
 		t.Fatalf("final hundreds row=%d, want strip row0 value1", got)
 	}
-	if got := frames[8][NativeShopGoldOffset+5*6]; got != 82 {
+	if got := frames[8][NativeShopGoldRollOffset+5*6]; got != 82 {
 		t.Fatalf("final tens row=%d, want strip row81 value82", got)
 	}
-	if got := frames[0][NativeShopGoldOffset+5*6]; got != 90 {
+	if got := frames[0][NativeShopGoldRollOffset+5*6]; got != 90 {
 		t.Fatalf("wrapped tens first row=%d, want strip row89 value90", got)
 	}
-	if got := frames[9][NativeShopGoldOffset+6*6]; got != 81 {
+	if got := frames[9][NativeShopGoldRollOffset+6*6]; got != 81 {
 		t.Fatalf("second roll first row=%d, want strip row80 value81", got)
 	}
 	// The units digit never differs and must preserve its background.
-	if got := frames[44][NativeShopGoldOffset+7*6]; got != 0 {
-		t.Fatalf("unchanged units pixel=%d, want preserved 0", got)
+	if got := frames[44][NativeShopGoldRollOffset+7*6]; got != 0 {
+		t.Fatalf("unchanged units roll pixel=%d, want preserved 0", got)
 	}
 	for index, got := range frames {
-		if got[NativeShopGoldOffset-1] != 0 ||
-			got[NativeShopGoldOffset+8*6] != 0 {
+		if got[NativeShopGoldRollOffset-1] != 0 ||
+			got[NativeShopGoldRollOffset+8*6] != 0 {
 			t.Fatalf("frame%d wrote outside eight digit windows", index)
 		}
+	}
+	// The animated strip starts one VGA row above the stable digit baseline:
+	// 0xa7a90 -> (16,98), while NativeShopGoldOffset is (16,99).
+	if NativeShopGoldOffset-NativeShopGoldRollOffset != NativeShopWidth {
+		t.Fatal("native stable/rolling gold offsets lost their one-row boundary")
 	}
 	cascade, next, err := ComposeNativeGoldDebitFrames(
 		base, nativeGoldTestStrip(), 10_000_000, 1,

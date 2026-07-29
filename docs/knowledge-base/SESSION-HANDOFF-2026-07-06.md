@@ -1878,3 +1878,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 更新原本錯誤的success fixture，並新增
   `shop-purchase-success-ch02-original-vs-remake.png`四幀上下對照。下一gate是
   caller-owned portrait saved-buffer phase與扣款phase E2，不是再猜instant debit。
+  此句的「扣款phase E2」已由下一節閉合；success portrait限制仍有效。
+
+## 2026-07-29 DOSBox internal-capture debit E2 and one-row correction
+
+- 外部ImageMagick `import`會擾動10ms roll；DOSBox 0.74內建Ctrl+Alt+F5在此
+  Debian build未產AVI，但Ctrl+F5可直接保存320×200 paletted framebuffer。
+  `xdotool key --repeat 80 --delay 10 ctrl+F5`在optional-equip Yes後得到80張，
+  無X11 crop／scale；0..25涵蓋success、26..46涵蓋debit、47後為product list。
+- 首次將debit oracle與80張逐一比對時，所有gold差異集中在y98..107。重核
+  `0x2d5f7 push 0x140; push 0xa7a90; call 0x2d620`：literal destination
+  `0xa7a90-0xa0000=0x7a90=(16,98)`，而stable digit compositor是`(16,99)`。
+  production此前錯用stable offset，整個roll低一列；新增獨立
+  `NativeShopGoldRollOffset=98*320+16`，保留stable `NativeShopGoldOffset`。
+- 修正後debit captures 26/27/28/31/32/33/34/35/37/38/39/40/41/44/45/46
+  分別找到source-built candidate，整幀`compare -metric AE=0`，覆蓋45-phase
+  odometer的早／中／末段。29/30/36/42/43為DOSBox hotkey中斷
+  `0x2d620→0x373c4`逐列memmove的partial writes（AE 24/9/6/9/8），不能要求
+  atomic remake製造同樣tearing。
+- 新增`shop-purchase-debit-ch02-original-vs-remake.png`，選五個AE=0 phase
+  作上原版／下remake對照；unit regression明確鎖定roll比stable高一列。
+  debit compositor可升E2。success effect仍是AE=2的caller-owned saved-buffer
+  portrait phase，且整條route仍使用三處verified battle-skip patch，不是正常
+  玩家playthrough gate。

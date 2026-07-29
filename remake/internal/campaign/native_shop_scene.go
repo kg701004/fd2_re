@@ -15,6 +15,7 @@ const (
 	NativeShopHeight           = 200
 	NativeShopDecorationOffset = 95*NativeShopWidth + 5
 	NativeShopGoldOffset       = 99*NativeShopWidth + 16
+	NativeShopGoldRollOffset   = 98*NativeShopWidth + 16
 	NativeShopTextOffset       = 119*NativeShopWidth + 12
 )
 

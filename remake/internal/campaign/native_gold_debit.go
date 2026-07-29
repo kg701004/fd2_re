@@ -63,7 +63,7 @@ func ComposeNativeGoldDebitFrames(
 				startRow := current[digit]*9 + 8 - phase
 				for row := 0; row < 9; row++ {
 					src := (startRow + row) * strip.Width
-					dst := NativeShopGoldOffset + digit*6 +
+					dst := NativeShopGoldRollOffset + digit*6 +
 						row*NativeShopWidth
 					copy(frame[dst:dst+6], strip.Pixels[src:src+6])
 				}

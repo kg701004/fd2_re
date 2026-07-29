@@ -1196,7 +1196,8 @@ The former instant `FinalizeGood` callback was not native. Direct
 amount from the balance, formats old/new values as eight digits, then animates
 every differing digit downward (0 wraps to 9). Each value step uses nine
 overlapping opaque 6x9 windows from current FDOTHER entry 2's 6x99 strip at
-the gold offset, followed by `0x375b2(10)`. Production now starts this
+literal VGA `0xA7A90 = (16,98)`, one row above the stable eight-digit baseline
+`(16,99)`, followed by `0x375b2(10)`. Production now starts this
 10ms-per-phase odometer only after success completes, commits the new balance
 before its first visible phase, and reopens the product list only after the
 roll. `1000→950` therefore has 45 source phases; `1234→1134` has nine.
@@ -1204,9 +1205,13 @@ Regression asserts the 10/9/14 BIOS-tick success schedules, debit phase
 geometry/direction/wrap, mutation boundary and product-loop return. The
 wall-clock renderer may sample over 10ms source phases at a 60Hz display, so
 it preserves elapsed timing but does not promise every source phase is
-physically presented. DOSBox comparison currently matches sampled success
-frames except two caller-owned portrait pixels (AE=2 per frame); full
-success/debit lifecycle E2 remains partial.
+physically presented. DOSBox internal framebuffer capture found 16 atomic
+debit samples across early/middle/final phases that each match the
+source-built frame at full-screen AE=0. Five other captures interrupted
+`0x2d620`'s row-by-row memmove and are partial writes, not atomic presentation
+oracles. Sampled success frames still differ by two caller-owned portrait
+pixels (AE=2 per frame), so the combined success/debit lifecycle remains
+partial even though the debit compositor slice is E2.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

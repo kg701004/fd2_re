@@ -1381,6 +1381,11 @@
   →product loop。Docker Capstone重讀`0x2d516..0x2d620`後，production已接
   先commit新balance、再用FDOTHER current resource entry2的6x99 strip做八位數
   downward odometer：每個不同digit同步減一、0→9、每值9個opaque 6x9 window、
-  每phase `0x375b2(10)`；`1000→950`為45 source phases，再回六幀product list。
+  每phase `0x375b2(10)`。DOSBox內建320×200 capture進一步抓出roll destination
+  是literal`0xa7a90=(16,98)`，不是stable gold的`(16,99)`；修正一列offset後，
+  `1000→950`的21張debit樣本有16張分別與45個source phases整幀AE=0，另5張
+  中斷在`0x2d620`逐列memmove的partial write。新增
+  [`shop-purchase-debit-ch02-original-vs-remake.png`](../figures/shop-purchase-debit-ch02-original-vs-remake.png)
+  五phase上下對照，再回六幀product list。
   wall-clock 60Hz會依elapsed取樣10ms phase，不保證每個source phase皆實體present；
-  debit逐幀E2與caller-owned portrait phase仍待，故維持partial。
+  debit atomic-phase E2已關閉，caller-owned success portrait phase仍待，故維持partial。
