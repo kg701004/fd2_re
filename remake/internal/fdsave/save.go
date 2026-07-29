@@ -23,6 +23,9 @@ const (
 	CurrentRuntimeRosterOffset    = 0x12a3
 	CurrentFieldControlOffset     = 0x0000
 	CurrentFieldControlSize       = 0x08a3
+	CurrentFieldControlUnitOffset = 0x0083
+	CurrentFieldControlUnitSize   = 0x001a
+	CurrentFieldControlUnitCap    = (CurrentFieldControlSize - CurrentFieldControlUnitOffset) / CurrentFieldControlUnitSize
 	CurrentNativeEventStateOffset = 0x30a3
 	CurrentNativeEventStateSize   = 0x20
 	CurrentRuntimeHeaderOffset    = 0x30c3
@@ -351,6 +354,141 @@ type CurrentSnapshot struct {
 	PersistentRecords  [RosterUnits]PersistentRecord
 	RuntimeRecords     []PersistentRecord
 	NativeEventState   [CurrentNativeEventStateSize]byte
+}
+
+// ContinueRuntimeContext is the external resource identity required to
+// validate a current-battle snapshot without guessing from the save alone.
+// SelectorGroupCount is the exact FDICON.B24 sprite count divided by twelve.
+type ContinueRuntimeContext struct {
+	Chapter            int
+	FieldWidth         int
+	FieldHeight        int
+	SelectorGroupCount int
+}
+
+// ContinueRuntimeRecord preserves one exact runtime record together with the
+// cache slot which 0x1036a..0x10395 rebuilds from record +7. The saved +2 byte
+// is deliberately not trusted: native CONTINUE overwrites it after the copy.
+type ContinueRuntimeRecord struct {
+	Raw          PersistentRecord
+	SelectorKey  byte
+	SelectorSlot byte
+}
+
+type ContinueRuntimeOwner string
+
+const (
+	ContinueOwnerRangeMode          ContinueRuntimeOwner = "range_mode"
+	ContinueOwnerHUDGateBAnchor     ContinueRuntimeOwner = "hud_gate_b_anchor"
+	ContinueOwnerMapTiming          ContinueRuntimeOwner = "map_timing"
+	ContinueOwnerFieldRuntimeBridge ContinueRuntimeOwner = "field_runtime_bridge"
+	ContinueOwnerBattleDriver       ContinueRuntimeOwner = "battle_driver"
+)
+
+// ContinueRuntimeInput is a deep-copied, read-only preflight result. It proves
+// the save/resource boundary and selector rebuild only; UnresolvedOwners keeps
+// the production CONTINUE gate closed until every remaining native owner has
+// independent evidence and a strict adapter.
+type ContinueRuntimeInput struct {
+	Context            ContinueRuntimeContext
+	Header             CurrentRuntimeHeader
+	NativeFieldControl [CurrentFieldControlSize]byte
+	PersistentRecords  [RosterUnits]PersistentRecord
+	RuntimeRecords     []ContinueRuntimeRecord
+	NativeEventState   [CurrentNativeEventStateSize]byte
+	UnresolvedOwners   []ContinueRuntimeOwner
+}
+
+func (i ContinueRuntimeInput) ReadyForContinue() bool {
+	return len(i.UnresolvedOwners) == 0
+}
+
+// BuildContinueRuntimeInput validates every current-snapshot field whose
+// resource-side contract is already closed. It performs no battle.State
+// mutation and does not invent the still-unresolved runtime owners.
+func BuildContinueRuntimeInput(
+	snapshot CurrentSnapshot,
+	context ContinueRuntimeContext,
+) (ContinueRuntimeInput, error) {
+	if context.Chapter < 0 || context.Chapter >= 30 ||
+		int(snapshot.Header.Chapter) != context.Chapter {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE chapter/resource mismatch")
+	}
+	if context.FieldWidth < 13 || context.FieldHeight < 8 ||
+		context.FieldWidth > 0x100 || context.FieldHeight > 0x100 {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE field dimensions are invalid")
+	}
+	if context.SelectorGroupCount <= 0 || context.SelectorGroupCount > 0x100 {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE FDICON group count is invalid")
+	}
+	runtimeCount := int(snapshot.Header.RuntimeCount)
+	if runtimeCount > RosterUnits*3 || len(snapshot.RuntimeRecords) != runtimeCount {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE runtime record count mismatch")
+	}
+	if int(snapshot.Header.PersistentCount) > RosterUnits {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE persistent record count exceeds capacity")
+	}
+	if int(snapshot.NativeFieldControl[2]) > CurrentFieldControlUnitCap {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE FDFIELD unit count exceeds control capacity")
+	}
+	header := snapshot.Header
+	if int(header.CameraX) > context.FieldWidth-13 ||
+		int(header.CameraY) > context.FieldHeight-8 ||
+		int(header.CursorX) >= context.FieldWidth ||
+		int(header.CursorY) >= context.FieldHeight ||
+		int(header.VisibleCursorX) != int(header.CursorX)-int(header.CameraX) ||
+		int(header.VisibleCursorY) != int(header.CursorY)-int(header.CameraY) {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE map view violates field bounds or cursor identity")
+	}
+
+	runtime := make([]ContinueRuntimeRecord, runtimeCount)
+	slots := make(map[byte]byte)
+	nextSlot := 0
+	for index, record := range snapshot.RuntimeRecords {
+		key := record.Raw[7]
+		if int(key) >= context.SelectorGroupCount {
+			return ContinueRuntimeInput{}, fmt.Errorf(
+				"fdsave: CONTINUE runtime record %d has invalid FDICON key %d",
+				index, key,
+			)
+		}
+		slot, ok := slots[key]
+		if !ok {
+			slot = byte(nextSlot)
+			slots[key] = slot
+			nextSlot++
+		}
+		if record.Raw[5]&1 == 0 {
+			if int(record.Raw[0]) >= context.FieldWidth ||
+				int(record.Raw[1]) >= context.FieldHeight ||
+				record.Raw[3] > 3 || record.Raw[4] > 6 {
+				return ContinueRuntimeInput{}, fmt.Errorf(
+					"fdsave: CONTINUE active runtime record %d has invalid map presentation",
+					index,
+				)
+			}
+		}
+		runtime[index] = ContinueRuntimeRecord{
+			Raw: record, SelectorKey: key, SelectorSlot: slot,
+		}
+	}
+
+	input := ContinueRuntimeInput{
+		Context:        context,
+		Header:         snapshot.Header,
+		RuntimeRecords: runtime,
+		UnresolvedOwners: []ContinueRuntimeOwner{
+			ContinueOwnerRangeMode,
+			ContinueOwnerHUDGateBAnchor,
+			ContinueOwnerMapTiming,
+			ContinueOwnerFieldRuntimeBridge,
+			ContinueOwnerBattleDriver,
+		},
+	}
+	copy(input.NativeFieldControl[:], snapshot.NativeFieldControl[:])
+	copy(input.PersistentRecords[:], snapshot.PersistentRecords[:])
+	copy(input.NativeEventState[:], snapshot.NativeEventState[:])
+	return input, nil
 }
 
 // InspectCurrentSnapshot decodes only the verified plaintext layout used by

@@ -1,0 +1,61 @@
+FD2 CONTINUE 的 runtime selector 重建（IDA Pro 9.4）
+===================================================
+
+證據範圍
+--------
+
+- `FD2.EXE` 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一順位：使用者合法 IDA Pro 9.4，僅在授權、無網路 Docker 執行。
+- 第二順位：`fd2-cap-local`／Capstone 5.0.3 覆核直接指令。
+
+CONTINUE 重建順序
+----------------
+
+`0x10010` 先依 header runtime count 配置 `[0x53A45]`，再於
+`0x102F3..0x10316` 從 `FD2.SAV+0x12A3` 複製
+`runtime_count*0x50` bytes。接著載入 `FDICON.B24`，清空 cache count：
+
+    0x10347  push "rb"
+    0x1034C  push "FDICON.B24"
+    0x10351  call fopen
+    0x1035C  mov  [0x53BDF],0
+
+`0x1036A..0x1039C` 依 runtime record 的現行順序逐筆執行：
+
+    record = [0x53A45] + index*0x50
+    key    = byte [record+7]
+    slot   = 0x11019(key, FDICON_file)
+    byte [record+2] = slot
+
+迴圈上界是 `[0x53BEB]`，也就是 current snapshot header `+1`。因此：
+
+- selector cache 的重建輸入順序是 **current runtime record order**；
+- raw key 來自每筆完整 record `+7`；
+- 存檔內原有 record `+2` 會被覆寫，不能拿它當 cache 真值或要求與重算值
+  一致；
+- 不需要把 CONTINUE 誤接成新章 loader 的
+  persistent-roster-first／FDFIELD-group construction order。
+
+`0x11019` 契約
+--------------
+
+IDA 將 `0x11019..0x111BA` 固定為單一函式。它只在全域 key table
+`[0x53B17]` 的 `0..[0x53BDF)` 逐筆比較 raw key；命中時回傳既有 slot，
+未命中時才從 caller 的 FDICON 檔案建立十二個 frame pointers、追加 key
+並增加 count。回傳值是 first-seen cache slot，不是角色、肖像或 archive
+index。
+
+重製邊界
+--------
+
+`fdsave.BuildContinueRuntimeInput` 現以相同 runtime order 與 raw `+7`
+重算 slots，保留原始 `+2` 只作 raw provenance。它另要求明確的章節、
+地圖尺寸與 FDICON group count，驗證 active record 的座標／pose／motion、
+camera-cursor identity 及 FDFIELD 控制段容量；所有結果深複製且不改
+`battle.State`。
+
+這只關閉 snapshot 與 selector preflight。range mode、HUD gate B／anchor、
+map timing、FDFIELD-to-runtime bridge 及 battle driver 仍列為 unresolved
+owners，所以 `ReadyForContinue()` 必須保持 false。

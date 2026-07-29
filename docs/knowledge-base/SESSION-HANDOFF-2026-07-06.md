@@ -2580,6 +2580,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   ch29 post 都輸出完整 `loadch`；刪除 compiler 對錯誤舊名
   `load_ch_text` 的相容降階。新 regression 要求舊名即使提供完整 binding
   也必須失敗，避免文字-only 斷言再度混入可執行路徑。
+- 2026-07-30 CONTINUE selector／preflight：合法 IDA Pro 9.4 重讀
+  `0x10010/0x11019`，Capstone 獨立覆核。`0x102f3..0x10316` 先複製
+  current runtime records，`0x1035c` 清 cache count，
+  `0x1036a..0x1039c` 再依 runtime list 順序取每筆 `+7` 呼叫
+  `0x11019`，並覆寫 `+2`。故撤回把新章 persistent→FDFIELD construction
+  order 套到 CONTINUE，以及要求存檔舊 `+2` 等於 slot 的錯誤模型。
+  新 `BuildContinueRuntimeInput` 原子驗證 resource context、counts、
+  FDFIELD 80-unit capacity、13×8 view identity、active raw presentation
+  與 first-seen slots；輸出深複製且明列 range mode、HUD gate B／anchor、
+  map timing、field-runtime bridge、battle driver 五個 unresolved owners。
+  `ReadyForContinue()` 目前必為 false，不接 production。證據：
+  `docs/data/fd2_continue_selector_rebuild_ida.txt`。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

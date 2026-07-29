@@ -3,6 +3,7 @@ package fdsave
 import (
 	"encoding/binary"
 	"errors"
+	"reflect"
 	"testing"
 )
 
@@ -275,5 +276,143 @@ func TestInspectCurrentSnapshotRejectsImpossibleCounts(t *testing.T) {
 	plain[CurrentRuntimeHeaderOffset+9] = RosterUnits + 1
 	if _, err := InspectCurrentSnapshot(plain); err == nil {
 		t.Fatal("oversized persistent count unexpectedly accepted")
+	}
+}
+
+func validContinueSnapshot() CurrentSnapshot {
+	snapshot := CurrentSnapshot{
+		Header: CurrentRuntimeHeader{
+			RuntimeCount: 3, Chapter: 1,
+			CameraX: 1, CameraY: 2,
+			CursorX: 8, CursorY: 7,
+			VisibleCursorX: 7, VisibleCursorY: 5,
+			PersistentCount: 2,
+		},
+		RuntimeRecords: make([]PersistentRecord, 3),
+	}
+	snapshot.NativeFieldControl[2] = 3
+	for i := range snapshot.RuntimeRecords {
+		snapshot.RuntimeRecords[i].Raw[0] = byte(3 + i)
+		snapshot.RuntimeRecords[i].Raw[1] = byte(4 + i)
+		snapshot.RuntimeRecords[i].Raw[3] = byte(i)
+		snapshot.RuntimeRecords[i].Raw[4] = byte(i + 1)
+	}
+	snapshot.RuntimeRecords[0].Raw[2] = 99
+	snapshot.RuntimeRecords[0].Raw[7] = 5
+	snapshot.RuntimeRecords[1].Raw[2] = 98
+	snapshot.RuntimeRecords[1].Raw[7] = 7
+	snapshot.RuntimeRecords[2].Raw[2] = 97
+	snapshot.RuntimeRecords[2].Raw[7] = 5
+	snapshot.PersistentRecords[0].Raw[8] = 9
+	snapshot.NativeEventState[12] = 1
+	return snapshot
+}
+
+func validContinueContext() ContinueRuntimeContext {
+	return ContinueRuntimeContext{
+		Chapter: 1, FieldWidth: 30, FieldHeight: 20,
+		SelectorGroupCount: 16,
+	}
+}
+
+func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testing.T) {
+	snapshot := validContinueSnapshot()
+	input, err := BuildContinueRuntimeInput(snapshot, validContinueContext())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := []byte{
+		input.RuntimeRecords[0].SelectorSlot,
+		input.RuntimeRecords[1].SelectorSlot,
+		input.RuntimeRecords[2].SelectorSlot,
+	}; !reflect.DeepEqual(got, []byte{0, 1, 0}) {
+		t.Fatalf("selector slots=%v, want [0 1 0]", got)
+	}
+	if input.RuntimeRecords[0].SelectorKey != 5 ||
+		input.RuntimeRecords[1].SelectorKey != 7 ||
+		input.RuntimeRecords[0].Raw.Raw[2] != 99 {
+		t.Fatalf("runtime input lost raw provenance: %#v", input.RuntimeRecords)
+	}
+	wantOwners := []ContinueRuntimeOwner{
+		ContinueOwnerRangeMode,
+		ContinueOwnerHUDGateBAnchor,
+		ContinueOwnerMapTiming,
+		ContinueOwnerFieldRuntimeBridge,
+		ContinueOwnerBattleDriver,
+	}
+	if input.ReadyForContinue() ||
+		!reflect.DeepEqual(input.UnresolvedOwners, wantOwners) {
+		t.Fatalf("CONTINUE readiness=%v owners=%v", input.ReadyForContinue(), input.UnresolvedOwners)
+	}
+
+	snapshot.RuntimeRecords[0].Raw[7] = 3
+	snapshot.NativeFieldControl[0] = 0xff
+	snapshot.NativeEventState[12] = 0
+	snapshot.PersistentRecords[0].Raw[8] = 0
+	if input.RuntimeRecords[0].SelectorKey != 5 ||
+		input.NativeFieldControl[0] != 0 ||
+		input.NativeEventState[12] != 1 ||
+		input.PersistentRecords[0].Raw[8] != 9 {
+		t.Fatal("CONTINUE runtime input aliases caller snapshot")
+	}
+}
+
+func TestBuildContinueRuntimeInputRejectsMalformedPreconditionsAtomically(t *testing.T) {
+	tests := map[string]func(*CurrentSnapshot, *ContinueRuntimeContext){
+		"chapter mismatch": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
+			context.Chapter = 2
+		},
+		"small field": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
+			context.FieldWidth = 12
+		},
+		"selector group count": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
+			context.SelectorGroupCount = 0
+		},
+		"runtime count": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.Header.RuntimeCount++
+		},
+		"persistent count": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.Header.PersistentCount = RosterUnits + 1
+		},
+		"field control count": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.NativeFieldControl[2] = CurrentFieldControlUnitCap + 1
+		},
+		"camera identity": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.Header.VisibleCursorX++
+		},
+		"FDICON key": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.RuntimeRecords[1].Raw[7] = 16
+		},
+		"active coordinate": func(snapshot *CurrentSnapshot, context *ContinueRuntimeContext) {
+			snapshot.RuntimeRecords[1].Raw[0] = byte(context.FieldWidth)
+		},
+		"active pose": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.RuntimeRecords[1].Raw[3] = 4
+		},
+		"active motion": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
+			snapshot.RuntimeRecords[1].Raw[4] = 7
+		},
+	}
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			snapshot, context := validContinueSnapshot(), validContinueContext()
+			mutate(&snapshot, &context)
+			got, err := BuildContinueRuntimeInput(snapshot, context)
+			if err == nil || got.RuntimeRecords != nil || got.UnresolvedOwners != nil {
+				t.Fatalf("malformed CONTINUE input=%#v err=%v", got, err)
+			}
+		})
+	}
+}
+
+func TestBuildContinueRuntimeInputAllowsInactivePresentationGarbage(t *testing.T) {
+	snapshot := validContinueSnapshot()
+	snapshot.RuntimeRecords[1].Raw[5] = 1
+	snapshot.RuntimeRecords[1].Raw[0] = 0xff
+	snapshot.RuntimeRecords[1].Raw[1] = 0xff
+	snapshot.RuntimeRecords[1].Raw[3] = 0xff
+	snapshot.RuntimeRecords[1].Raw[4] = 0xff
+	if _, err := BuildContinueRuntimeInput(snapshot, validContinueContext()); err != nil {
+		t.Fatalf("inactive record presentation should stay raw: %v", err)
 	}
 }

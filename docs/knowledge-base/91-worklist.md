@@ -1592,6 +1592,19 @@
   CONTINUE 仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`、`fd2_current_event_state_ida.txt`、
   `fd2_current_field_control_ida.txt`
+- [~] **NATIVE-CONTINUE-RUNTIME-PREFLIGHT**：合法 IDA Pro 9.4 與
+  Capstone 閉合 `0x1035c` 清 selector cache count，接著
+  `0x1036a..0x1039c` 依 current runtime record order 取每筆 `+7`
+  呼叫 `0x11019`，並覆寫該筆 `+2`。撤回「CONTINUE 必須重播新章
+  persistent→FDFIELD group construction order」與「存檔 `+2` 必須等於
+  cache slot」兩個錯誤模型。`BuildContinueRuntimeInput` 現以明確
+  chapter／field dimensions／FDICON group count 原子驗證 counts、
+  FDFIELD unit capacity、camera-cursor identity、active record
+  presentation 與 first-seen slots；所有 raw 區域深複製，不改
+  `battle.State`。range mode、HUD gate B／anchor、map timing、
+  field-runtime bridge、battle driver 仍列 unresolved owners，
+  `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
+  → `fd2_continue_selector_rebuild_ida.txt`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

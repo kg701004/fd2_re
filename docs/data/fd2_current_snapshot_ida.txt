@@ -117,6 +117,13 @@ FDSHAP，依 runtime record `+7` 建 selector，恢復 camera/cursor/options，
   header 章節欄位或 persistent record materializer。四槽 LOAD 仍是另一條
   `0x2CAD7→pre-handler` ABI，不可接到此解析器。
 
+後續 IDA 直接指令已閉合 runtime selector 重建：`0x1035C` 先清 cache
+count，再由 `0x1036A..0x1039C` 依 current runtime record order 取每筆
+`+7` 呼叫 `0x11019`，並覆寫該筆 `+2`。因此不再把新章 loader 的
+persistent／FDFIELD construction order 套到 CONTINUE，也不驗證存檔內
+舊 `+2`。完整證據見
+[`fd2_continue_selector_rebuild_ida.txt`](fd2_continue_selector_rebuild_ida.txt)。
+
 `[0x53AD5]` 指標與 current-save 對稱 copy 的勘誤／直接證據另見
 [`fd2_current_event_state_ida.txt`](fd2_current_event_state_ida.txt)。
 `0x0000` 控制映像的來源與 consumers 見

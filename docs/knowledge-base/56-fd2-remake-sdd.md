@@ -2497,6 +2497,31 @@ LOAD／CONTINUE 的正式失敗即關閉閘門。可選的
 checksum-valid 原版快照，依實際順序成功產生索爾、悠妮、亞雷斯、蓋亞；
 原版檔不進版控，缺 fixture 時測試明確略過。
 
+### 2026-07-30 — CONTINUE runtime input preflight
+
+合法 IDA Pro 9.4 與 Capstone 已閉合 `0x10010` 的 selector 重建：
+runtime records 完整複製後，`0x1035C` 清 cache count，
+`0x1036A..0x1039C` 依 current runtime record order 取 record `+7`
+呼叫 `0x11019`，再覆寫 record `+2`。故 CONTINUE 的正確 first-seen
+順序就是 current runtime list；存檔內舊 `+2` 不是可驗證真值，也不能
+錯套新章 loader 的 persistent→FDFIELD group construction order。
+
+`fdsave.BuildContinueRuntimeInput` 現接受 snapshot 與明確 resource
+context（chapter、field dimensions、FDICON group count），原子驗證：
+
+- chapter 與資源一致，runtime／persistent count 在固定容量內；
+- FDFIELD control 的 unit count 不超過 `0x83+80*0x1A=0x8A3`；
+- camera、cursor、visible cursor 符合 13×8 native viewport identity；
+- 每筆 `+7` key 可由 FDICON group count 接受，並按原版順序重算 slot；
+- active record 的 raw `+0/+1/+3/+4` 符合 field、pose 0..3、motion 0..6；
+- field control、兩份 roster、event state 與 header 都深複製。
+
+輸出仍明列五個 unresolved owners：range mode、HUD gate B／anchor、map
+timing、field-runtime bridge、battle driver。因此
+`ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
+沒有 production owner，也不改 `battle.State`。直接證據見
+[`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)。
+
 ### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
 
 合法 IDA Pro 9.4 將 `0x30012..0x301F4` 固定為章節槽 writer，且只有
