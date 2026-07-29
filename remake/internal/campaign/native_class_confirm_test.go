@@ -111,4 +111,40 @@ func TestComposeNativePreparationConfirmationUses31D3CAnchor(t *testing.T) {
 	if got := background[119*320+95]; got != 0 {
 		t.Fatalf("input background mutated: %d", got)
 	}
+	dialogueFrame, err := ComposeNativePreparationConfirmationDialogue(
+		background, dialogue, dato.Frame{Width: 1, Height: 1, Pixels: []byte{99}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	question, err := ComposeNativePreparationConfirmationQuestion(
+		background, dialogue,
+		dato.Frame{Width: 1, Height: 1, Pixels: []byte{99}},
+		nativeClassListStrings(t), nativeClassListFont(t),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	open, err := NativePreparationConfirmationOpeningFrames(
+		background, dialogueFrame, question, nativeClassConfirmCells(),
+	)
+	if err != nil || len(open) != 10 {
+		t.Fatalf("opening frames=%d err=%v", len(open), err)
+	}
+	closeFrames, err := NativePreparationConfirmationClosingFrames(
+		background, dialogueFrame, question, nativeClassConfirmCells(),
+	)
+	if err != nil || len(closeFrames) != 9 {
+		t.Fatalf("closing frames=%d err=%v", len(closeFrames), err)
+	}
+	if open[5][112*320+5] != dialogueFrame[112*320+5] {
+		t.Fatal("sixth dialogue opening frame did not reach stable target")
+	}
+	if open[6][168*320+244] != 16 || open[9][168*320+232] != 16 {
+		t.Fatal("choice opening did not follow the six dialogue frames")
+	}
+	if closeFrames[0][168*320+236] != 16 ||
+		closeFrames[3][168*320+248] != 17 {
+		t.Fatal("choice closing did not precede dialogue closing")
+	}
 }

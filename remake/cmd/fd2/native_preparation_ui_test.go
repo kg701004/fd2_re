@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
@@ -88,12 +89,30 @@ func TestComposeNativePreparationFrameUsesRawRosterSelectors(t *testing.T) {
 	}
 	g.prepSelecting = false
 	g.prepConfirm = true
+	if !g.beginNativePreparationConfirmationOpening() ||
+		g.nativeClassUIJob == nil || len(g.nativeClassUIJob.frames) != 10 {
+		t.Fatal("native preparation confirmation opening lifecycle unavailable")
+	}
+	g.nativeClassUIJob = nil
 	confirm, ok := g.composeNativePreparationConfirmationFrame()
 	if !ok || len(confirm) != 320*200 {
 		t.Fatalf("native preparation confirmation unavailable: ok=%v length=%d", ok, len(confirm))
 	}
 	if stringWords, err := status.Strings.Words(658); err != nil || len(stringWords) != 10 {
 		t.Fatalf("FDTXT index 0x292 mismatch: words=%d err=%v", len(stringWords), err)
+	}
+	closed := false
+	if !g.beginNativePreparationConfirmationClosing(func() { closed = true }) ||
+		g.nativeClassUIJob == nil || len(g.nativeClassUIJob.frames) != 9 ||
+		len(g.nativeClassUIJob.restore) != 320*200 || closed {
+		t.Fatal("native preparation confirmation closing lifecycle unavailable")
+	}
+	for g.nativeClassUIJob != nil {
+		g.nativeClassUIJob.drawn = true
+		g.stepNativeClassUILifecycle(time.Time{})
+	}
+	if !closed {
+		t.Fatal("preparation continuation ran before the restored source was presented")
 	}
 	g.prepConfirm = false
 	g.prepSelecting = true

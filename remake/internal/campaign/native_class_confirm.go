@@ -121,8 +121,8 @@ func ComposeNativePreparationConfirmationQuestion(
 	if len(background) != 320*200 || strings == nil || font == nil {
 		return nil, errors.New("campaign: native preparation confirmation assets are unavailable")
 	}
-	frame, err := ComposeNativeChurchDialogueOverlayAt(
-		background, dialogueCells, portrait, nativeFacilityPortraitOffset(0x4b),
+	frame, err := ComposeNativePreparationConfirmationDialogue(
+		background, dialogueCells, portrait,
 	)
 	if err != nil {
 		return nil, err
@@ -154,6 +154,18 @@ func ComposeNativePreparationConfirmationQuestion(
 	return frame, nil
 }
 
+// ComposeNativePreparationConfirmationDialogue returns 0x1956b(0x4b)'s
+// stable dialogue target before 0x15f84 writes FDTXT index 0x292.
+func ComposeNativePreparationConfirmationDialogue(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+) ([]byte, error) {
+	return ComposeNativeChurchDialogueOverlayAt(
+		background, dialogueCells, portrait, nativeFacilityPortraitOffset(0x4b),
+	)
+}
+
 // ComposeNativePreparationConfirmationFrame adds the stable 0x19953 choice
 // state to the caller-owned preparation screen. Opening/closing presentation
 // remains caller-owned and is not implied by this compositor.
@@ -173,6 +185,42 @@ func ComposeNativePreparationConfirmationFrame(
 		return nil, err
 	}
 	return ComposeNativeConfirmationChoices(question, cells, selected, pulse)
+}
+
+// NativePreparationConfirmationOpeningFrames preserves the caller sequence:
+// 0x1956b reveals the dialogue in six bands, then 0x19953 presents four
+// widening choice frames over the completed question.
+func NativePreparationConfirmationOpeningFrames(
+	source, dialogue, question []byte,
+	cells []fdother.RawCell,
+) ([][]byte, error) {
+	dialogueFrames, err := NativeClassListOpeningFrames(source, dialogue)
+	if err != nil {
+		return nil, err
+	}
+	choiceFrames, err := NativeClassConfirmationOpeningFrames(question, cells)
+	if err != nil {
+		return nil, err
+	}
+	return append(dialogueFrames, choiceFrames...), nil
+}
+
+// NativePreparationConfirmationClosingFrames preserves 0x197e5's four
+// choice frames followed by 0x2d31b's five dialogue bands. The caller still
+// owns the final untouched source presentation and continuation.
+func NativePreparationConfirmationClosingFrames(
+	source, dialogue, question []byte,
+	cells []fdother.RawCell,
+) ([][]byte, error) {
+	choiceFrames, err := NativeClassConfirmationClosingFrames(question, cells)
+	if err != nil {
+		return nil, err
+	}
+	dialogueFrames, err := NativeClassListClosingFrames(source, dialogue)
+	if err != nil {
+		return nil, err
+	}
+	return append(choiceFrames, dialogueFrames...), nil
 }
 
 // ComposeNativeReviveConfirmationQuestion reproduces FDTXT590 with the

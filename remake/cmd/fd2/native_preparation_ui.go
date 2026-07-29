@@ -148,7 +148,7 @@ func (g *Game) composeNativePreparationConfirmationFrame() ([]byte, bool) {
 		g.nativePreparationUI.status.Strings,
 		g.nativePreparationUI.status.Font,
 		g.prepConfirmSel,
-		0,
+		g.nativeClassUIPulse/2,
 	)
 	if err != nil {
 		return nil, false
@@ -156,7 +156,87 @@ func (g *Game) composeNativePreparationConfirmationFrame() ([]byte, bool) {
 	return frame, true
 }
 
+func (g *Game) composeNativePreparationConfirmationDialogue() ([]byte, bool) {
+	background, ok := g.composeNativePreparationFrame()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativePreparationConfirmationDialogue(
+		background,
+		g.nativePreparationUI.dialogue,
+		g.nativePreparationUI.portrait,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativePreparationConfirmationQuestion() ([]byte, bool) {
+	background, ok := g.composeNativePreparationFrame()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativePreparationConfirmationQuestion(
+		background,
+		g.nativePreparationUI.dialogue,
+		g.nativePreparationUI.portrait,
+		g.nativePreparationUI.status.Strings,
+		g.nativePreparationUI.status.Font,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) beginNativePreparationConfirmationOpening() bool {
+	source, ok := g.composeNativePreparationFrame()
+	if !ok {
+		return false
+	}
+	dialogue, ok := g.composeNativePreparationConfirmationDialogue()
+	if !ok {
+		return false
+	}
+	question, ok := g.composeNativePreparationConfirmationQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativePreparationConfirmationOpeningFrames(
+		source, dialogue, question, g.nativePreparationUI.choices,
+	)
+	if err != nil || len(frames) != 10 {
+		return false
+	}
+	g.resetNativeClassUIPulse()
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativePreparationConfirmationClosing(after func()) bool {
+	source, ok := g.composeNativePreparationFrame()
+	if !ok {
+		return false
+	}
+	dialogue, ok := g.composeNativePreparationConfirmationDialogue()
+	if !ok {
+		return false
+	}
+	question, ok := g.composeNativePreparationConfirmationQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativePreparationConfirmationClosingFrames(
+		source, dialogue, question, g.nativePreparationUI.choices,
+	)
+	if err != nil || len(frames) != 9 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{
+		frames: frames, restore: source, after: after,
+	}
+	return true
+}
+
 func (g *Game) drawNativePreparation(screen *ebiten.Image) bool {
+	if g.drawNativeClassUIJob(screen) {
+		return true
+	}
 	var (
 		frame []byte
 		ok    bool

@@ -2474,6 +2474,8 @@ func (g *Game) setupPreparation(n *campaign.Node) {
 	g.prepSelecting = false
 	g.prepConfirm = false
 	g.prepConfirmSel = 0
+	g.nativeClassUIJob = nil
+	g.resetNativeClassUIPulse()
 	g.prepLimit = 15
 	if n != nil && n.PartyLimit > 0 {
 		g.prepLimit = n.PartyLimit
@@ -2517,6 +2519,8 @@ func (g *Game) restartPreparationSelection() {
 	g.prepSelecting = true
 	g.prepConfirm = false
 	g.prepConfirmSel = 0
+	g.nativeClassUIJob = nil
+	g.resetNativeClassUIPulse()
 	g.partyDeploy = make(map[int]bool)
 }
 
@@ -2823,6 +2827,9 @@ func (g *Game) campInput() bool {
 		return true
 	case "preparation", "church":
 		if n.Type == "preparation" {
+			if g.nativeClassUIBlocksInput() {
+				return true
+			}
 			townBacked := n.Cancel != ""
 			leavePreparation := func(outcome string) {
 				if g.camp.Advance(outcome) != "" {
@@ -2830,23 +2837,29 @@ func (g *Game) campInput() bool {
 				}
 			}
 			if g.prepConfirm {
+				closeThen := func(after func()) {
+					if !g.beginNativePreparationConfirmationClosing(after) {
+						after()
+					}
+				}
 				if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) || inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
 					g.prepConfirmSel ^= 1
+					g.resetNativeClassUIPulse()
 				}
 				if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 					if townBacked {
-						leavePreparation("cancel")
+						closeThen(func() { leavePreparation("cancel") })
 					} else {
-						g.restartPreparationSelection()
+						closeThen(g.restartPreparationSelection)
 					}
 				}
 				if enter {
 					if g.prepConfirmSel == 0 {
-						leavePreparation("confirm")
+						closeThen(func() { leavePreparation("confirm") })
 					} else if townBacked {
-						leavePreparation("cancel")
+						closeThen(func() { leavePreparation("cancel") })
 					} else {
-						g.restartPreparationSelection()
+						closeThen(g.restartPreparationSelection)
 					}
 				}
 				return true
@@ -2905,6 +2918,7 @@ func (g *Game) campInput() bool {
 					g.prepSelecting = false
 					g.prepConfirm = true
 					g.prepConfirmSel = 0
+					g.beginNativePreparationConfirmationOpening()
 				}
 			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {

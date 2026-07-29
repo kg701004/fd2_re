@@ -2012,7 +2012,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   缺資源即退回。保存
   [`preparation-confirmation-compositor-partial.png`](../figures/preparation-confirmation-compositor-partial.png)，
   明確不是 DOSBox 截圖或正常玩家路徑。
-- 尚未完成：確認六幀開框、選項脈動、`0x197e5→0x2d31b` 關框、
-  跨戰場／城鎮的行程全域初始相位，以及合法晚期 `FD2.SAV` 的同狀態
-  原版／重製差分。`0x1f42d` 已更正為戰場進入演出，不再列為選人視窗
-  缺口。這些缺口使 UI-11 維持部分完成。
+- 最終確認生命週期已接正式路徑：`0x1956b` 六個對話框帶狀幀之後才跑
+  `0x19953` 四個選項展開幀；穩定態沿用兩個 BIOS tick 的二位元脈動。
+  確認、取消或 Escape 都先跑 `0x197e5` 四幀、`0x2d31b` 五幀與原畫面
+  還原，只有 Draw 確認還原幀後才轉場或重選。真實資源測試固定
+  10 個開啟幀、9 個關閉幀、還原幀與延後 continuation；保存
+  [`preparation-confirmation-lifecycle.png`](../figures/preparation-confirmation-lifecycle.png)。
+- 兩個 `0x318ad` 呼叫端已用 Docker Capstone 重讀：城鎮出發路徑
+  `0x2d16b..0x2d17c` 在回傳 0 時跳 `0x301ec`，退出本次出發；直接整備
+  `0x2ccd6..0x2cce7` 在回傳 0 時跳 `0x2cccc` 再次呼叫選人。因此正式路徑
+  保留「城鎮取消／直接整備重選」，不是依介面文案猜測結果。
+- 尚未完成：跨戰場／城鎮的行程全域初始相位，以及合法晚期 `FD2.SAV`
+  的同狀態原版／重製差分。`0x1f42d` 已更正為戰場進入演出，不再列為
+  選人視窗缺口。這些缺口使 UI-11 維持部分完成。

@@ -1005,9 +1005,12 @@
   DATO #75、FDTXT `0x292` 的 `(95,119)` 起筆、`0x16559(0)` 最後肖像覆蓋，
   再疊 `0x19953` 的 FDOTHER #2 Yes／No。保存
   [`preparation-confirmation-compositor-partial.png`](../figures/preparation-confirmation-compositor-partial.png)；
-  這是 E1 原始資源合成，不是原版實機。下一門檻是確認六幀開框、脈動、
-  `0x197e5→0x2d31b` 關框、跨畫面的行程全域初始相位，以及合法晚期存檔的
-  同狀態實機差分。
+  這是 E1 原始資源合成，不是原版實機。完整生命週期也已接正式路徑：
+  `0x1956b` 六幀開框、`0x19953` 四幀展開與兩 tick 脈動、
+  `0x197e5` 四幀關選項、`0x2d31b` 五幀關框，再呈現原畫面後才執行結果；
+  每一步只在 Draw 確認後前進。保存
+  [`preparation-confirmation-lifecycle.png`](../figures/preparation-confirmation-lifecycle.png)。
+  下一門檻是跨畫面的行程全域初始相位，以及合法晚期存檔的同狀態實機差分。
 - [~] **SDD-3 UI shell vertical slice**：已新增 `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary`，以 title confirm、story→battle、battle win→editable postbattle、town→shop→town 的同一 state trace 固定「戰後不可直跳下一戰」；既有 town/shop/preparation 截圖 artifact 與 Docker/Xvfb regression 可重跑。battle field/action/dialog 的同一條畫面 trace、原版 DOSBox pixel differential 仍待補齊。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [x] **RE-UNIT-STATIC-TABLES**：以 Docker 實際 FD2.EXE 產生/驗證 raw fixture：高 branch `b1-0x44 → 0x61af9` 68×10；lower branch `0x61da1` 32×24／`0x620a1` 68×11。constructor caller 的 level 公式與 `+0x42` join 已由 Capstone 固定；`export_units.py`／`sync_native_selector_fields.py` 將 raw provenance 輸出到 33 張 editable map asset。未被 table 覆蓋的 selector 與 HUD renderer consumer 仍維持 fail-closed；`0x619fd` 不屬於 constructor。

@@ -23,6 +23,7 @@ func main() {
 	scenario := flag.String("scenario", "", "editable scenario supplying one proven native party record")
 	out := flag.String("out", "preparation-roster-oracle.png", "output PNG")
 	confirm := flag.Bool("confirm", false, "overlay the evidence-closed stable 0x31d3c final confirmation state")
+	lifecycleOut := flag.String("lifecycle-out", "", "optional 7×3 contact sheet: 10 open, stable, 9 close, restore")
 	flag.Parse()
 	if *base == "" {
 		fmt.Fprintln(os.Stderr, "缺少 -base：請指定玩家持有的 FLAME2 目錄")
@@ -77,7 +78,9 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	if *confirm {
+	var lifecycleFrames [][]byte
+	if *confirm || *lifecycleOut != "" {
+		source := append([]byte(nil), frame...)
 		choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -124,12 +127,46 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
+		dialogueFrame, err := campaign.ComposeNativePreparationConfirmationDialogue(
+			source, dialogue, portraits[0],
+		)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		question, err := campaign.ComposeNativePreparationConfirmationQuestion(
+			source, dialogue, portraits[0], strings, font,
+		)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 		frame, err = campaign.ComposeNativePreparationConfirmationFrame(
 			frame, choices, dialogue, portraits[0], strings, font, 0, 0,
 		)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
+		}
+		if *lifecycleOut != "" {
+			open, err := campaign.NativePreparationConfirmationOpeningFrames(
+				source, dialogueFrame, question, choices,
+			)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			closeFrames, err := campaign.NativePreparationConfirmationClosingFrames(
+				source, dialogueFrame, question, choices,
+			)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			lifecycleFrames = append(lifecycleFrames, open...)
+			lifecycleFrames = append(lifecycleFrames, frame)
+			lifecycleFrames = append(lifecycleFrames, closeFrames...)
+			lifecycleFrames = append(lifecycleFrames, source)
 		}
 	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
@@ -159,5 +196,30 @@ func main() {
 	if err := png.Encode(file, scaled); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	if *lifecycleOut != "" {
+		const columns = 7
+		rows := (len(lifecycleFrames) + columns - 1) / columns
+		sheet := image.NewPaletted(
+			image.Rect(0, 0, columns*320, rows*200), palette,
+		)
+		for index, candidate := range lifecycleFrames {
+			x0 := (index % columns) * 320
+			y0 := (index / columns) * 200
+			for y := 0; y < 200; y++ {
+				dst := (y0+y)*sheet.Stride + x0
+				copy(sheet.Pix[dst:dst+320], candidate[y*320:(y+1)*320])
+			}
+		}
+		lifecycleFile, err := os.Create(*lifecycleOut)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		defer lifecycleFile.Close()
+		if err := png.Encode(lifecycleFile, sheet); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 }
