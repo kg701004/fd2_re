@@ -343,9 +343,10 @@ type atkAnim struct {
 	defHP0, defHP1   int // 守方攻擊前/後 HP(impact 抽乾動畫)
 	defMax           int
 	timer, total     int
-	fpt              int  // 播放速度(tick/幀;FD2_BATTLE_FPT 可調)
-	atkOwn           bool // 攻方是否我方(狀態欄按陣營:我方欄右上/敵方欄左下)
-	terrain          int  // 攻擊格地形索引(戰鬥背景 = 戰場地形,跟 FDFIELD 戰場資料有關)
+	fpt              int    // 播放速度(tick/幀;FD2_BATTLE_FPT 可調)
+	atkOwn           bool   // 攻方是否我方(狀態欄按陣營:我方欄右上/敵方欄左下)
+	terrain          int    // 攻擊格地形索引(戰鬥背景 = 戰場地形,跟 FDFIELD 戰場資料有關)
+	after            func() // 原版 action handler 完成後才進 selector1；不得在演出前提交
 }
 
 // storyWalkJob 場景走位動畫(doc46 §5.3):cutscene 固定路徑位移,非玩家可控,重用
@@ -4091,11 +4092,25 @@ func (g *Game) finishSelectedWait() {
 			g.msg = "物品欄已滿，寶物仍留在原處"
 		}
 	}
-	finish := func() {
-		u.Acted = true
+	g.finishSuccessfulUnitAction(u, func() {
 		g.sel, g.reach, g.moved = nil, nil, false
+	})
+}
+
+// finishSuccessfulUnitAction 對應 0x18890 外層在 action handler 成功返回後
+// 才呼叫 selector1 的共同提交點。呼叫者必須先完成實際 mutation；取消、目標
+// 不合法及 executor 錯誤不得抵達此處。after 保留各動作自己的介面清理。
+func (g *Game) finishSuccessfulUnitAction(actor *battle.Unit, after func()) {
+	if actor == nil {
+		return
 	}
-	if !g.beginNativeFieldEvent61(u, finish) {
+	finish := func() {
+		actor.Acted = true
+		if after != nil {
+			after()
+		}
+	}
+	if !g.beginNativeFieldEvent61(actor, finish) {
 		finish()
 	}
 }
@@ -4272,6 +4287,17 @@ func (g *Game) newAtkAnim(atkGroup, defGroup int, atkName, defName string,
 		atkHP: atkHP, atkMax: atkMax, atkLV: atkLV, atkMP: atkMP, defLV: defLV, defMP: defMP,
 		defHP0: defHP0, defHP1: defHP1, defMax: defMax, timer: total, total: total,
 		fpt: fpt, terrain: terrain, atkOwn: atkOwn}
+}
+
+func (g *Game) finishAttackPresentation() {
+	if g.atk == nil {
+		return
+	}
+	after := g.atk.after
+	g.atk = nil
+	if after != nil {
+		after()
+	}
 }
 
 // figaniIndex maps the battle FIGANI visual selector to its resource trio.
@@ -4604,9 +4630,14 @@ func (g *Game) confirm() {
 				g.sel.HP, g.sel.MaxHP, g.sel.Lv, g.sel.MP, tgt.Lv, tgt.MP,
 				tgt.HP+first.Amount, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), true)
 		}
-		g.sel.Acted = true
-		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
+		actor := g.sel
+		actor.SetMapPose(dirToward(actor.X, actor.Y, g.curX, g.curY))
 		g.castSp, g.sel, g.reach, g.moved = nil, nil, nil, false
+		if g.atk != nil {
+			g.atk.after = func() { g.finishSuccessfulUnitAction(actor, nil) }
+		} else {
+			g.finishSuccessfulUnitAction(actor, nil)
+		}
 		g.checkResult()
 		return
 	}
@@ -4719,11 +4750,14 @@ func (g *Game) confirm() {
 		for _, target := range damageTargets {
 			g.awardDeathReward(target, g.sel)
 		}
-		g.sel.SetMapPose(dirToward(g.sel.X, g.sel.Y, g.curX, g.curY))
+		actor := g.sel
+		actor.SetMapPose(dirToward(actor.X, actor.Y, g.curX, g.curY))
 		g.msg = message
-		g.resetNativeTargetField()
-		g.st.MaterializeNativeMapRangeMode(1)
-		g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
+		g.finishSuccessfulUnitAction(actor, func() {
+			g.resetNativeTargetField()
+			g.st.MaterializeNativeMapRangeMode(1)
+			g.nativeCommand0Targeting, g.nativeCommandTargetID, g.sel, g.reach, g.moved = false, 0, nil, nil, false
+		})
 		g.checkResult()
 		return
 	}
@@ -4762,9 +4796,13 @@ func (g *Game) confirm() {
 		dmg := g.st.Attack(g.sel, tgt)
 		g.awardDeathReward(tgt, g.sel)
 		g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
-		g.atk = g.newAtkAnim(g.sel.BattleFig, tgt.BattleFig, anm, nm,
-			g.sel.HP, g.sel.MaxHP, g.sel.Lv, g.sel.MP, tgt.Lv, tgt.MP,
+		actor := g.sel
+		g.atk = g.newAtkAnim(actor.BattleFig, tgt.BattleFig, anm, nm,
+			actor.HP, actor.MaxHP, actor.Lv, actor.MP, tgt.Lv, tgt.MP,
 			defHP0, tgt.HP, tgt.MaxHP, g.terrainAt(g.curX, g.curY), true) // 戰鬥背景 = 守方格地形
+		g.atk.after = func() {
+			g.finishSuccessfulUnitAction(actor, nil)
+		}
 		g.sel, g.reach, g.moved = nil, nil, false
 		g.checkResult()
 	} else if g.curX == g.sel.X && g.curY == g.sel.Y { // 原地待命
@@ -4883,7 +4921,10 @@ func (g *Game) Update() error {
 			g.playRaw(g.sfxDeath)
 		}
 		if g.atk.timer <= 0 {
-			g.atk = nil
+			g.finishAttackPresentation()
+			if g.nativeFieldEvent61 != nil || g.battleEvent != nil {
+				return nil
+			}
 		}
 	}
 	// 行軍動畫(spawn_march):進場位移緩動歸零,到位轉正面待機
@@ -7374,6 +7415,9 @@ func (g *Game) aiStep() {
 	}
 	u := plan.U
 	act := func() {
+		finish := func() {
+			g.finishSuccessfulUnitAction(u, nil)
+		}
 		if plan.Target != nil && plan.Target.Alive() {
 			tgt := plan.Target
 			u.SetMapPose(dirToward(u.X, u.Y, tgt.X, tgt.Y))
@@ -7391,9 +7435,11 @@ func (g *Game) aiStep() {
 			g.atk = g.newAtkAnim(u.BattleFig, tgt.BattleFig, anm, nm,
 				u.HP, u.MaxHP, u.Lv, u.MP, tgt.Lv, tgt.MP,
 				hp0, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), u.Camp == battle.Own)
+			g.atk.after = finish
 			g.checkResult()
+			return
 		}
-		u.Acted = true
+		finish()
 	}
 	if len(plan.Path) >= 2 {
 		if os.Getenv("FD2_SHOT_AI") != "" {

@@ -42,6 +42,7 @@ func nativeEvent61PlayerGame(t *testing.T, items ...int) (*Game, *battle.Unit) {
 		t.Fatalf("chapter26 pre-handler runtime view=%#v hud=%#v", view, hud)
 	}
 	trigger := g.st.Units[0]
+	trigger.Acted = false
 	trigger.NativeRecordWord42 = uint16(trigger.MaxHP)
 	trigger.HasNativeRecordWord42 = true
 	trigger.Inventory = append([]int(nil), items...)
@@ -81,6 +82,64 @@ func TestNativeEvent61MissingItemRunsOnlyEditableFDTXT2(t *testing.T) {
 	g.advanceBattleEvent()
 	if g.battleEvent != nil || g.sel != nil || !trigger.Acted {
 		t.Fatal("missing item path did not finish the successful wait action")
+	}
+}
+
+func TestNativeEvent61AttackWaitsForPresentationCompletion(t *testing.T) {
+	g, trigger := nativeEvent61PlayerGame(t, 0x20)
+	target := &battle.Unit{
+		Name: "測試敵兵", Camp: battle.Enemy, X: 2, Y: 46,
+		HP: 20, MaxHP: 20, OnField: true,
+	}
+	g.st.Units = append(g.st.Units, target)
+	g.curX, g.curY = target.X, target.Y
+	g.confirm()
+	if g.atk == nil || g.atk.after == nil {
+		t.Fatal("successful attack did not retain the deferred selector1 owner")
+	}
+	if g.battleEvent != nil {
+		t.Fatal("attack committed selector1 before the full-screen presentation")
+	}
+	g.finishAttackPresentation()
+	if g.atk != nil || g.battleEvent == nil || len(g.dialog) != 1 ||
+		g.dialog[0].Text != "那是什麼奇怪的東西?頭部還開著?" {
+		t.Fatalf(
+			"post-presentation event=%#v dialog=%#v acted=%v",
+			g.battleEvent, g.dialog, trigger.Acted,
+		)
+	}
+	g.dialog = nil
+	g.advanceBattleEvent()
+	if g.battleEvent != nil || !trigger.Acted {
+		t.Fatal("attack action did not finish after selector1 dialogue")
+	}
+}
+
+func TestNativeEvent61ImmediateItemRunsAfterSuccessfulMutation(t *testing.T) {
+	g, trigger := nativeEvent61PlayerGame(t, 198)
+	g.st.NativeTargetFlags = make([]byte, g.st.W*g.st.H)
+	var err error
+	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix(
+		"../../assets/data/native_item_effect_rows.json",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	applied, err := g.applyNativeImmediateItem(0, 198)
+	if err != nil || !applied {
+		t.Fatalf("immediate item applied=%v err=%v", applied, err)
+	}
+	if len(trigger.Inventory) != 0 ||
+		trigger.Acted || g.battleEvent == nil || len(g.dialog) != 1 {
+		t.Fatalf(
+			"post-item inventory=%v acted=%v event=%#v dialog=%#v",
+			trigger.Inventory, trigger.Acted, g.battleEvent, g.dialog,
+		)
+	}
+	g.dialog = nil
+	g.advanceBattleEvent()
+	if g.battleEvent != nil || !trigger.Acted || g.sel != nil {
+		t.Fatal("immediate item action did not finish after selector1 dialogue")
 	}
 }
 

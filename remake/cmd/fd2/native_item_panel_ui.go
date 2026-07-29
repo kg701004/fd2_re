@@ -251,12 +251,14 @@ func (g *Game) applyNativeImmediateItem(rawSlot, itemID int) (bool, error) {
 		}
 	}
 	// 0x1bbdc calls 0x13512 immediately after successful 0x20c6f.
-	g.sel.NativeRecordByte5 |= 0x80
-	g.sel.HasNativeRecordByte5 = true
-	g.sel.Acted = true
-	g.itemOpen, g.ring = false, false
-	g.clearNativeItemPanel()
-	g.sel, g.reach, g.moved = nil, nil, false
+	actor := g.sel
+	actor.NativeRecordByte5 |= 0x80
+	actor.HasNativeRecordByte5 = true
+	g.finishSuccessfulUnitAction(actor, func() {
+		g.itemOpen, g.ring = false, false
+		g.clearNativeItemPanel()
+		g.sel, g.reach, g.moved = nil, nil, false
+	})
 	return true, nil
 }
 
@@ -514,12 +516,14 @@ func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 		syncNativeItemRuntimeRecord(unit, records[index*80:(index+1)*80])
 	}
 	g.nativeRNGState = nextRNG
-	g.sel.NativeRecordByte5 |= 0x80
-	g.sel.HasNativeRecordByte5 = true
-	g.sel.Acted = true
-	g.nativeItemTargeting = false
-	g.nativeItemEffectRows = nil
-	g.sel, g.reach, g.moved = nil, nil, false
+	actor := g.sel
+	actor.NativeRecordByte5 |= 0x80
+	actor.HasNativeRecordByte5 = true
+	g.finishSuccessfulUnitAction(actor, func() {
+		g.nativeItemTargeting = false
+		g.nativeItemEffectRows = nil
+		g.sel, g.reach, g.moved = nil, nil, false
+	})
 	return true, nil
 }
 
@@ -604,15 +608,17 @@ func (g *Game) applyNativeRelocationDestination(x, y int) (bool, error) {
 	for index, unit := range g.st.Units {
 		syncNativeItemRuntimeRecord(unit, records[index*80:(index+1)*80])
 	}
-	g.sel.NativeRecordByte5 |= 0x80
-	g.sel.HasNativeRecordByte5 = true
-	g.sel.Acted = true
-	g.resetNativeTargetField()
-	g.st.MaterializeNativeMapRangeMode(1)
-	g.nativeItemRelocating = false
-	g.nativeMovementCostRows = nil
-	g.nativeItemEffectRows = nil
-	g.sel, g.reach, g.moved = nil, nil, false
+	actor := g.sel
+	actor.NativeRecordByte5 |= 0x80
+	actor.HasNativeRecordByte5 = true
+	g.finishSuccessfulUnitAction(actor, func() {
+		g.resetNativeTargetField()
+		g.st.MaterializeNativeMapRangeMode(1)
+		g.nativeItemRelocating = false
+		g.nativeMovementCostRows = nil
+		g.nativeItemEffectRows = nil
+		g.sel, g.reach, g.moved = nil, nil, false
+	})
 	return true, nil
 }
 

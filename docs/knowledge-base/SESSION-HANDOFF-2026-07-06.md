@@ -2242,3 +2242,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   HUD anchor 同時確定寫 `0xf2`。`battle_ch26` 已資料化初始 view/HUD；
   event61 真實資產 regression 不再手工 materialize。這是 production E1，
   尚缺同 roster/event/tick 的 DOSBox 像素比較，未升 E2。
+
+## 2026-07-29：selector1 全成功動作擁有權接線
+
+- Docker Capstone 固定玩家外層 `0x18890` 的 selector1 呼叫點為
+  `0x18AEF/0x18B0C/0x18B66`：它們都在 `0x18D8C` action handler 成功
+  返回後；返回 `-1` 的取消／復原臂不呼叫 selector1。AI 另在
+  `0x13E77` 的動作收尾呼叫相同 selector。
+- 重製端新增共同成功閘門 `finishSuccessfulUnitAction`，由待命、攻擊、
+  一般法術、原始指令、即時／指向／移位物品與 AI 共用。各 executor 必須
+  先成功完成 mutation；目標不合法、使用者取消及錯誤返回不會觸發。
+- 攻擊與攻擊型法術不能在結算資料寫入時立刻進事件，否則會遮蔽全螢幕
+  FIGANI。`atkAnim.after` 現保存 selector1 owner，演出結束後才啟動
+  event61；沒有全螢幕演出的成功動作則立即進閘門。
+- 真實 ch26／FDOTHER 資產回歸新增兩條玩家路徑：攻擊在演出結束前不得
+  出現 FDTXT2，結束後才出現；即時物品必須先成功消耗，再進 FDTXT2，
+  對話完成後才清理選取狀態。完整 Docker/Xvfb `go test ./...` 通過。
+- 這關閉重製端 selector1 的 E1 動作擁有權，不提升為 E2；仍須以未修改
+  原版、相同名冊／事件狀態／tick 的一般玩家路徑比較。
