@@ -70,10 +70,14 @@ helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選�
 三個 direct callers，以及 `0x1DEBE` 僅由該函式呼叫。
 
 `0x1548E..0x1567D` 則已更正為物理選擇結果執行邊界，不是路徑產生器：
-它把 `0x53C43/47`、actor 與 callerArg 交給 `0x14B78`，以 `0x53C4B`
+它把 `0x53C43/47`、actor 與原始分組選擇值交給 `0x14B78`，以 `0x53C4B`
 作 target，依 `0x53AF9` 選地圖呈現或 `0x28A6C(actor,target)` 戰鬥演出，
 完成收尾後固定回傳1。其唯一 callers 是 `0x13E39/0x14F9B`，全函式沒有呼叫
-舊筆記的 `0x4EE40/0x4F355`。`0x14B78` 最後一參數與路徑資料契約仍未知。
+舊筆記的 `0x4EE40/0x4F355`。實際尋路已定位為 `0x14B78→0x4E1A6`：
+方向碼 `0/1/2/3=下/左/上/右`，使用原版成本列、`0x40/0x80` gate，
+再以距離→XY 軸差→逐列先後選實際落點。無 action 時的一般 mode 0 備援是
+`0x14121` mode-2 blocked-cell 搜索，失敗後才到 `0x13E9C` Manhattan
+最近座標；舊 `0x15192` 假說撤回。上層 mode／selector 的完整遊戲命名仍未閉合。
 合法 IDA 9.4 同樣確認 `0x1548E..0x1567D` 與兩個 direct callers。
 
 `0x1567E` 的 command enumerator 也已由 canonical Docker Capstone 重讀：它以 unit index

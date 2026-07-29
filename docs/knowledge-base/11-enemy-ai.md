@@ -148,7 +148,8 @@ raw，不能把它們直接命名成「敵方回合開始／結束」。
 `0x1548E..0x1567D` 只有兩個直接呼叫點 `0x13E39` 與 `0x14F9B`。它不是
 路徑或目標評分入口，而是消費既有選擇結果：
 
-- 第一參數是 actor index；第二參數原樣轉交 `0x14B78`，語意仍未知。
+- 第一參數是 actor index；第二參數原樣轉交 `0x14B78`，作為零／非零
+  單位分組選擇值。
 - `0x154B5..0x154C6` 將
   `(0x53C43,0x53C47,actor,callerArg)` 傳給 `0x14B78`。
 - 之後以 `0x53C4B` 作為 target index，`0x1F04A` 寫 actor 面向；
@@ -160,6 +161,47 @@ raw，不能把它們直接命名成「敵方回合開始／結束」。
 全函式沒有呼叫舊筆記所稱的 `0x4EE40` 或 `0x4F355`。因此目前可證實的是
 「已選結果的移動／攻擊呈現與收尾」，不是「產生可達路徑」。
 合法 IDA 9.4 另確認其函式邊界與兩個 callers，結果與 Capstone 一致。
+
+### 實際尋路與無攻擊備援：`0x4E1A6`／`0x14B78`／`0x14121`／`0x13E9C`
+
+舊文件把 `0x15192` 當成「接近最近敵人」分支是錯誤斷言；該位址位於
+`0x15055` 的施法演出流程。2026-07-29 重新由 `0x13A9F` 的
+`0x14EF0` 失敗分支往下追，取得真正流程：
+
+1. `0x14B78(destinationX,destinationY,actor,selector)` 依 actor
+   `record+0x20` 選 `0x4E555` 成本列；`0x1F183` 成立時改用列 19，
+   actor `record+8==0x1C` 時改用列 1。
+2. 它先以 actor `record+0x3B` 為剩餘步數，呼叫
+   `0x4E1A6` mode 0 直接尋路。方向碼由 `0x13488` 的四個執行分支證實：
+   `0=下、1=左、2=上、3=右`；搜尋鄰居順序固定為右、左、下、上。
+3. `0x4E1A6` 與可達格使用同一個 FDFIELD tile 高位分組 →
+   FDSHAP `+1` 移動代碼 → 20-byte cost row。mode 0 只接受剩餘步數
+   嚴格改善的重訪；`0x40` 不可進入，`0x80` 進入後剩餘步數歸零。
+   到達目的地時保存方向陣列；較短路徑取代較長路徑。
+4. 直接尋路失敗時，`0x14B78` 以 budget 28、mode 1 再找一次。
+   mode 1 在剩餘步數相同時，只有方向連續段數更多才接受重訪。
+   若取得方向陣列，再沿該陣列選出 actor 原始移動 budget 內最後仍可達的格。
+5. 它重新列出所有合法落點，以 Manhattan 距離最小者優先；同距離時，
+   再選 `abs(abs(dx)-abs(dy))` 較小者，完全同分保留
+   `0x14B16` 逐列順序。最後再用 mode 0 產生正式方向陣列，交
+   `0x13488(actor,path,length)` 逐格執行。
+
+`0x13A9F` 的一般 mode 0 在 `0x14EF0` 沒有候選時，先呼 `0x14121`：
+它以 `0x145CD` 標出另一 selector 組的 `0x40` 中心格，再以 budget 28、
+`0x4E1A6` mode 2 搜索。mode 2 可以進入 `0x40` 格，記住其座標並繼續
+遍歷；後出現的合法 blocked 格會覆寫先前結果。找到座標後再交 `0x14B78`
+移向該單位。
+
+若 `0x14121` 仍失敗，才呼 `0x13E9C`。它掃 runtime record 順序，
+selector 0 選 `record+6!=0`，selector 非零選 `record+6==0`，以
+Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x14B78`。
+這段本身沒有 inactive/dead gate，因此不得把它擴張成「最近存活敵人」。
+
+重製端新增 `NativePathDirections`、`NativePathBlockedCoordinate`、
+`SelectNativeMovementDestination` 與
+`SelectNativeNearestOppositeCoordinate` 保存上述只接受原始資料的契約；
+尚未直接取代 `NextAIPlan`，避免在上層 mode／record 欄位未完整接線前冒稱
+整個敵方回合已與原版相同。
 
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
@@ -200,22 +242,22 @@ raw，不能把它們直接命名成「敵方回合開始／結束」。
    `0x14EF0`、`0x15AD8` 記錄單位索引、關鍵原始欄位與
    `0x53C23..0x53C3F`。比較只改一格位置或一個候選的兩個狀態。
 2. 追蹤 `0x14237` 的 `0x1B83D→0x1B722` command record 來源，
-   再以固定原版存檔動態比對已閉合的候選落點陣列與實際選定結果。
+   再以固定原版存檔動態比對已閉合的候選落點、方向陣列與實際選定結果。
 3. 先證實單位掃描順序、候選數與選定結果的資料來源，再命名剩餘 raw 欄位；
    不以現有重製人工智慧輸出補足原版未知值。
 
 ## 仍待確認
 
-- `0x14B78` 如何把選定落點轉為實際路徑、最後一個呼叫參數及完整資料契約；
-  `0x154D1` 只是 `0x1548E` 執行函式中段，不能當施法入口。
+- `0x154D1` 只是 `0x1548E` 執行函式中段，不能當施法入口。
 - `0x14818` 各 caller-specific mode 的完整幾何與是否另有視線判定。
 - `[ebx+0x40]` 擊殺門檻、`[ebx+8]` 狀態旗標的精確語意。
-- 無可攻擊目標時的「接近最近敵人」路徑選擇分支(0x15192 一帶)。
+- 上層 raw mode 0 以外各分支何時選 `0x14121`／`0x13E9C`，以及 selector
+  對敵方、友軍 NPC 與劇情行為的完整命名。
 
 ## 重製對應（fail-closed）
 
 目前只能把已釘死的 raw scoring branches 保存成 adapter；不可直接宣稱照搬這段摘要即可重現原版 AI。
-`0x1DEBE` 條件、raw `+8`、無攻擊目標時的移動分支，以及
+`0x1DEBE` 條件、raw `+8`、上層 mode／selector 語意，以及
 spell command inventory/MP/target transaction 尚未全部閉合。remake 的 normalized `aiActUnit`／`NextAIPlan`
 因此維持 approximation，只有具備完整 raw record、caller gate 與 target evidence 時才可新增 native AI slice；
 難度調整參數也不得被當成原版等價設定。

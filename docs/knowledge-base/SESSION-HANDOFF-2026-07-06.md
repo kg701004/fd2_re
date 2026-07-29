@@ -319,7 +319,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-28 class fixture identity correction：`FD2_CAMP_CLASS_FIXTURE` 舊值把 portrait9 標成索爾；依原始 ch01 unit/故事 identity9=悠妮，已改 party key/native identity/map key/fig 全為9並顯示悠妮。vertical trace 同步用 roster key9，避免錯名 oracle 再進 README。
 - 2026-07-20 battle progression slice：campaign `Node.Protect` 已資料化，`checkResult` 依 battle node 的 protect 欄位判定敗北，空值維持索爾相容預設；新增 campaign test。另修正升級：原版 DX 是 HIT/EV 共用 raw base，`GainExp` 在已有 equipment base 時同步更新 BaseHIT/BaseEV 與有效 HIT/EV，保留裝備加成並新增 regression test。
 - 2026-07-20 AI low-damage slice（歷史實作，已撤回）：早期曾依未核實的 `0x15140` 假說加入 `dmg≤2` 篩選；2026-07-27 canonical Docker recheck 已確認該地址不是可證實的 AI entry，因此這條規則與對應測試不再代表原版語意。normalized approximation 可保留作現況行為，但不得當作 native parity；後續以 `0x13A9F/0x14EF0/0x149F8/0x15B77` raw evidence 重建。
-- 2026-07-20 AI spell-entry audit：臨時 capstone 容器 direct disasm `0x15470..0x15618`，並查到呼叫點 `0x13E39`、`0x14F9B`。`0x1548E` 才是函式入口；`0x154D1` 位於其本體，實際流程可見 `0x14B78` 路徑／移動與 `0x12D7B` 演出狀態呼叫，沒有 `Cast` dispatch 證據。已撤回「0x154D1 是施法入口」舊註記；敵方 AI 施法仍待從法術函式反向找真正 callsite。
+- 2026-07-20 AI spell-entry audit（後續補證）：臨時 capstone 容器 direct disasm `0x15470..0x15618`，並查到呼叫點 `0x13E39`、`0x14F9B`。`0x1548E` 才是函式入口；`0x154D1` 位於其本體，實際流程可見 `0x14B78` 呼叫與 `0x12D7B` 演出狀態呼叫，沒有 `Cast` dispatch 證據。當時尚未閉合 `0x14B78`，不可僅以這句宣稱完整 path ABI；2026-07-29 才由 `0x14B78→0x4E1A6→0x13488` 直接證據補完。已撤回「0x154D1 是施法入口」舊註記。
 - 2026-07-20 AI spell dispatch proof（後續勘誤）：direct disasm `0x15688..0x15880` 與 `0x14F80..0x15220` 證實原版 AI 會枚舉並執行法術命令：`0x1579A–0x157B5` 將 `command>0x0F` 轉為 `spell_id=command-0x10` 呼叫 `0x149F8` 建立後續 target candidates；candidate 後續才交 `0x15B77` score branches。選中後 `0x150D3–0x150F1` 重算同一 spell，`0x15168→0x28784` 播放施法演出。`0x154D1` 仍只是移動函式中段。remake 尚未把完整 SpellID／command inventory 與攻擊、治療目標優先級接到 `NextAIPlan`。
 - 2026-07-20 AI spell data bridge：remake `battle.State` 新增可注入 `SpellBook`，`AIPlan.SpellID` 以 `-1` 明確表示目前物理／待命計畫不施法；`loadGame` 將已載入的 EXE spell table 複製進 state，並新增 regression test 防止物理 AI 偷生 spell command。刻意未加入猜測性的 spell ranking、治療目標或施法座標；這些要等 command inventory 對映與 `0x15880/0x15B77` 語意定案。
 - 2026-07-20 AI raw-score topology（後續勘誤）：direct disasm `0x15B77..0x15DA1` 證實 command IDs 走不同 raw scoring branches：0..12 讀候選 raw HP/`+0x08`，13..16 讀 `+0x40/+0x42/+0x34`，17..19 進另一 helper，20/21/26/27 讀 `+0x25/+0x26`，22 gate `+0x27` 後呼 `0x1C269`。早期「增益／狀態／毒麻」是未證實的 gameplay 命名，已撤回；現行欄位結論仍以 constructor trace 為準：magic raw=`unit+0x1a..+0x1d`，`+0x22..+0x24` 是 raw transient/modifier bytes。
@@ -2001,6 +2001,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   同組佔用格事後排除，最後按 Y/X row-major 枚舉。新增 fail-closed
   `NativeAIPhysicalDestinations` 與 regression。下一步追 `0x14B78`
   最後一個參數及無攻擊方案 fallback。
+- 後續已閉合 `0x14B78→0x4E1A6→0x13488`：方向碼
+  `0/1/2/3=下/左/上/右`，使用原版地形成本列與 `0x40/0x80` gate；
+  目的地不可直接到達時會用 budget 28/mode 1 取得引導路徑，再依
+  Manhattan 距離→XY 軸差→`0x14B16` 逐列先後選實際落點。第四參數是
+  `0x145CD/0x146D1` 的零／非零分組選擇值。
+- 舊「`0x15192` 是接近最近敵人」斷言已撤回；該位址屬於施法演出。
+  真正無 action 備援由 `0x13A9F` 證實：一般 mode 0 先呼 `0x14121`
+  以 `0x4E1A6` mode 2 搜尋另一組的 `0x40` blocked cell；仍失敗才呼
+  `0x13E9C`，依 runtime record 順序與 Manhattan 距離選另一組座標。
+  新增 `NativePathDirections`、`NativePathBlockedCoordinate`、
+  `SelectNativeMovementDestination`、
+  `SelectNativeNearestOppositeCoordinate` 與 regression；尚未猜接
+  `NextAIPlan`。
 
 ## 2026-07-29 原版整備選人主畫面第一個生產切片
 

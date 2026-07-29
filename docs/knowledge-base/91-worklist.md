@@ -124,7 +124,14 @@
   →0x13A9F→0x14EF0` 整理為可信拓撲，並分開 `0x14237` 物理評分與
   `0x15AD8→0x15B77` 法術評分。`0x1548E` 已更正為選擇結果執行，不是
   pathfinder；`0x145CD→0x4E040→0x146D1→0x14B16` 已閉合 raw 落點產生與
-  row-major 順序，下一步閉合 `0x14B78` 與固定存檔動態 trace。
+  row-major 順序，`0x14B78→0x4E1A6→0x13488` 已閉合路徑方向與實際落點
+  排序；無 action 的一般 mode 0 備援已定位到 `0x14121→0x13E9C`，舊
+  `0x15192` 假說撤回。下一步做固定存檔動態 trace 與上層 mode 命名。
+- [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`
+  mode 0/1/2、方向碼、成本與 `0x40/0x80` gate；`0x14B78` 依
+  Manhattan→軸差→逐列順序選落點，`0x13E9C` 才是最後的 Manhattan
+  最近 opposite-group 座標備援。新增 raw-only path／blocked-coordinate／
+  destination ranking／nearest-coordinate adapters 與決定性測試。
 - [x] **RE-AI-PHYSICAL-SCORE-14237**：Docker Capstone 閉合候選格×目標枚舉、
   actor/target `+0x48/+0x4A` 地形百分比修正、差值`<=2`拒絕、嚴格
   `score>target +0x40`時×2/priority18、`0x1DEBE`及raw `+8`調整，以及

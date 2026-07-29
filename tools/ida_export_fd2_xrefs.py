@@ -34,6 +34,9 @@ TARGETS = (
     # Native AI physical candidate scoring and selected-action execution.
     # These addresses preserve call topology only; field semantics remain in
     # docs/knowledge-base/11-enemy-ai.md under their evidence gates.
+    0x13488,
+    0x13E9C,
+    0x14121,
     0x14237,
     0x145CD,
     0x146D1,
@@ -72,6 +75,7 @@ TARGETS = (
     # actor-animation alias.
     0x24618,
     0x4E040,
+    0x4E1A6,
     0x4E4A2,
     0x4E4D1,
     0x4E516,
