@@ -129,7 +129,10 @@ def main(a):
                 if o2 in fx:
                     tgt = f'  ; ->{hex(fx[o2])}'
                     break
-            print(f'{insn.address:#08x}  {insn.mnemonic:<7} {insn.op_str}{tgt}')
+            print((
+                f'{insn.address:#08x}  {insn.mnemonic:<7} '
+                f'{insn.op_str}{tgt}'
+            ).rstrip())
             n += 1
             if n >= cnt:
                 break

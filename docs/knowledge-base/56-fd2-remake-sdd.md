@@ -51,8 +51,37 @@ command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 
 `0x14237→0x1598A→0x1567E` candidate path，`0x15AD8→0x15B77` 負責法術
 raw score/tie-break。
 這取代舊文件把 `0x15140` 稱作 AI entry 的說法。SDD 只授權保存上述 raw call topology；
-`+6`／table selectors 的 camp/turn 語意、完整 target transaction、movement/effect/UI 與
-runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
+`+6` 的 raw camp code 已由 constructor 與 `0x14818` consumer 固定為
+敵0／友1／己2；但完整 target transaction、movement/effect/UI 與 runtime
+AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
+
+上層掃描現已有可重現的完整指令產物
+[`phase setup`](../data/fd2_ai_phase_setup_disasm.txt)、
+[`unit scans`](../data/fd2_ai_unit_scan_disasm.txt) 與
+[`mode dispatch`](../data/fd2_ai_mode_dispatch_disasm.txt)。`0x1D80B`
+只處理 raw `+6==1` 並傳第二參數1。`0x1D8BA` 對 raw `+6==0` 先做
+預選掃描：`0x1598A(unit,0)→0x1567E(unit,0)` 後，只有 signed
+`[0x53C23]>=6` 或 `[0x53C33]>=6` 才呼叫 `0x13A9F(unit,0)`；隨後
+`0x1D988` 再對同一 raw gate 做無此前置分數門檻的第二遍
+`0x13A9F(unit,0)`。每筆 mode 收尾固定為
+`selector1→0x13512→0x134E4→redraw`，然後才依序執行可選的90-entry
+全域事件表、章節戰場事件 handler 表與 `[0x53ECC]` pending 碼檢查。
+第二掃描返回後
+`0x1A5B9` 才增加 `[0x53BEF]`。這些證據禁止把 `0x1D8BA` 簡化為單遍
+敵方行動迴圈；兩張表與 pending 碼的語意早已由事件／戰役控制流閉合。
+結合既有 raw camp writer／consumer，`0x1D80B` 是友軍 camp1 單遍，
+`0x1D8BA/0x1D988` 是敵軍 camp0 的預選＋第二遍；真正未知的是敵軍為何
+需要兩遍，以及兩個分數門檻的完整玩法語意。缺 raw provenance 時仍不可
+用 normalized Go `Camp` 猜補。
+
+`fdother.PlanNativePhaseUnitScans` 現把這三個 loop 保存成分離且有序的
+typed plan：selector1 單遍、selector0 預選、selector0 第二遍。預選要求
+caller 明示每個 native unit 的 signed `[0x53C23]/[0x53C33]` 結果，任一
+至少6才標記該遍會呼叫 `0x13A9F`；第二遍仍包含所有通過
+`+6/+5/+0x26` gates 的 selector0 記錄。API 刻意不攤平三遍，也不自行
+呼叫事件／章節 callback，讓 nonzero pending 碼的逐筆 early exit 保持
+caller-owned。這補上 deterministic E0 regression，不代表 production AI
+已切換至原版 planner。
 
 `0x14237..0x145CC` 現已閉合為物理候選評分迴圈，而不是未知的 generic candidate
 helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選格，

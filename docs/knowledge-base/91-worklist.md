@@ -126,7 +126,16 @@
   pathfinder；`0x145CD→0x4E040→0x146D1→0x14B16` 已閉合 raw 落點產生與
   row-major 順序，`0x14B78→0x4E1A6→0x13488` 已閉合路徑方向與實際落點
   排序；無 action 的一般 mode 0 備援已定位到 `0x14121→0x13E9C`，舊
-  `0x15192` 假說撤回。下一步做固定存檔動態 trace 與上層 mode 命名。
+  `0x15192` 假說撤回。2026-07-29 又固定 `0x1D80B` 的 raw `+6==1`
+  單遍，以及 `0x1D8BA` 對 raw `+6==0` 的「分數門檻預選＋無門檻第二遍」；
+  每筆均依序走已閉合的90-entry全域事件表、章節戰場事件 handler 表與
+  `[0x53ECC]` pending 碼，round counter 在第二掃描返回後才增加。既有
+  constructor＋`0x14818` 消費證據已固定 raw camp code 敵0／友1／己2，
+  故前者是友軍單遍、後者是敵軍兩遍；具型別
+  `PlanNativePhaseUnitScans` 已分開三遍、保留 signed threshold 與缺 score
+  fail-closed regression，但尚未接 production `NextAIPlan`。下一步做固定
+  存檔動態 trace，解釋敵軍兩遍與分數門檻；不得重複把陣營碼、兩張表或
+  pending 碼降回未知。
 - [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`
   mode 0/1/2、方向碼、成本與 `0x40/0x80` gate；`0x14B78` 依
   Manhattan→軸差→逐列順序選落點，`0x13E9C` 才是最後的 Manhattan

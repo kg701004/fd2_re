@@ -30,8 +30,8 @@
 
 | 階段 | 原版直接證據 | 目前結論 |
 |---|---|---|
-| 進入非玩家階段 | `0x1A4EB`／`0x1A58F` 兩條階段專用呼叫點 | 已證明有兩條不同原始選擇值的單位掃描流程；尚不能直接命名為敵方／友軍 |
-| 挑下一個單位 | `0x1D80B`／`0x1D8BA`／`0x1D988` 依執行期陣列順序掃描 | 會檢查 `+6`、`+5 & 0x81`、`+0x26` 等原始欄位；欄位語意尚未全閉合 |
+| 進入非玩家階段 | `0x1A4EB`／`0x1A58F` 兩條階段專用呼叫點 | constructor 與 target-code 消費端已固定 raw `+6` 陣營碼：友1先單遍，敵0再做預選＋第二遍；己2不在這兩個 AI 掃描內 |
+| 挑下一個單位 | `0x1D80B`／`0x1D8BA`／`0x1D988` 依執行期陣列順序掃描 | 除陣營碼外仍檢查 `+5 & 0x81`、`+0x26`；後兩欄只保留 raw gate |
 | 取得可用行動 | `0x13A9F→0x14EF0`，另含 `0x1598A`／`0x1567E` | 已證明依記錄命令與可用命令產生候選；不是單一「AI 主函式」 |
 | 枚舉物理落點 | `0x145CD→0x4E040→0x146D1→0x14B16` | 已閉合阻擋標記、原版移動成本、佔用格排除及 Y 優先／X 次之的固定順序 |
 | 每格枚舉目標 | `0x14237→0x14818` | 依該呼叫者專用幾何建立目標；不可把物品原始位元組通稱為武器射程 |
@@ -39,13 +39,54 @@
 | 法術評分 | `0x15AD8→0x15B77` | 已閉合數個原始分支；尚未完整接入重製執行期 |
 | 執行選中結果 | `0x1548E` 等執行鏈 | 消費已選落點／目標並播放移動與戰鬥；不是尋路器 |
 
+2026-07-29 再以 Docker Capstone 展開三個掃描入口後，可把上表第一、二列
+收緊如下；完整指令保存於
+[`phase setup`](../data/fd2_ai_phase_setup_disasm.txt)、
+[`unit scans`](../data/fd2_ai_unit_scan_disasm.txt) 與
+[`mode dispatch`](../data/fd2_ai_mode_dispatch_disasm.txt)，每份都內含來源
+大小、MD5 與 SHA-256：
+
+1. `0x1A4E6` 依序呼叫 `0x1A7BD→0x1D80B→0x1A7F1`。
+   `0x1D80B` 只讓 `record+6==1`、`(+5 & 0x81)==0`、`+0x26==0`
+   的記錄進 `0x13A9F(unit,1)`。
+2. 中間完成 `0x13536`、`0x1A813(0)`、`0x1A866(0)` 等收束後，
+   `0x1A58A` 依序呼叫 `0x1A7BD→0x1D8BA→0x1A7F1`；掃描返回後
+   `0x1A5B9` 才增加 `[0x53BEF]`。所以這個計數寫入不是第一掃描的
+   前置 gate，也不能單靠鄰近位址命名為任一陣營的回合開始。
+3. `0x1D8BA` 對 `record+6==0` 的合格記錄做兩次逐列掃描。第一遍先呼叫
+   `0x1598A(unit,0)` 與 `0x1567E(unit,0)`；只有 signed
+   `[0x53C23]>=6` 或 `[0x53C33]>=6` 才再呼叫 `0x13A9F(unit,0)`。
+   第二遍 `0x1D988` 對相同三個 raw gate 的記錄直接呼叫
+   `0x13A9F(unit,0)`。因此 `0x1D8BA` 不能降成單一「每個敵人行動一次」
+   迴圈。
+4. 三個逐單位路徑都在 mode dispatcher 後，先以 `[0x51A8F]`（非
+   `0xFF` 時）索引已閉合的 90-entry 全域事件表 `0x51B91`，再以章節
+   索引 `[0x53C03]` 呼叫章節戰場事件 handler 表 `0x51B19`；每筆最後
+   檢查已閉合的 pending 碼 `[0x53ECC]`，非零就離開掃描。這不是三個
+   未知 callback：前者消費 selector 產生的事件 ID，後者可寫中場碼1
+   或章節結束碼2。
+5. `0x13A9F` 的所有模式最後合流至 `0x13E77`：
+   `0x13A44(record.x,record.y,1)→0x13512(unit)→0x134E4→0x11CAC(0)`，
+   然後返回上述掃描迴圈。這直接固定 selector1、bit7 與重畫的先後，
+   但不替 mode 命名；`record+6` 已由獨立 writer／consumer 證據固定為
+   原始陣營碼，不再列為未知。
+
 因此目前對「電腦如何選攻擊目標」最精確的回答是：原版不是只找最近角色。
 物理路徑會按固定落點順序，對每個落點列出合法目標，套地形後計算攻防差，
 拒絕分數 `<=2` 的候選；能嚴格超過目標原始欄位 `+0x40` 的候選提高優先級並將
 分數加倍，另受 `0x1DEBE` 與目標原始欄位 `+8` 修正。先比較優先級，再比較
-分數；兩者完全相同時保留較早出現的候選。尚不能回答的是「完全沒有可攻擊
-方案時如何選擇接近路線」，以及上層 selector 對每一種敵方／友軍行為模式的
-名稱。
+分數；兩者完全相同時保留較早出現的候選。模式0沒有可用 action 時的
+`0x14121→0x13E9C` blocked-cell／最近相反分組座標備援已閉合，不能再寫成
+完全未知；真正尚不能回答的是敵軍為何需要預選與第二遍、兩個預選分數
+各自的完整玩法名稱，以及每種 mode 對玩家可見的完整玩法名稱。
+
+重製端新增 `fdother.PlanNativePhaseUnitScans`，以完整 `0x50` records 與
+caller-supplied signed `[0x53C23]/[0x53C33]` 分數，分別輸出
+selector1 單遍、selector0 預選與 selector0 第二遍。它保留原始逐列順序、
+三個 raw admission gates 與「任一分數至少6」條件；三個 pass 不會被攤平成
+一列，因為每筆後方的全域事件／章節 handler 可能寫 pending 碼而提早退出。
+缺少逐單位 score provenance 時整體失敗即關閉。這是 E0 phase contract，
+尚未授權正規化 `NextAIPlan` 冒充原版兩遍執行期。
 
 ## 單位行動模式的資料來源與分支（2026-07-29）
 
@@ -209,15 +250,17 @@ movement／portrait／score fallback；`0x0b` 分支直接呼叫 `0x1598a`，在
 `0x1d80b`、`0x1d8ba`、`0x1d988` 是目前確認的上層掃描 callers：三段都以
 `[0x3beb]` 遍歷 `0x50`-byte records，先檢查 raw `+6`、`+5 & 0x81`、`+0x26`，再分別
 呼叫 `0x13a9f` 或 `0x1598a→0x1567e→0x13a9f`。每筆之後依 `[0x51a8f]` function table
-與 `[0x53c03]` table dispatch，並受 `[0x53ecc]` loop flag 控制。這證明它們是
-unit-scan/action-loop 的 caller boundary；`+6` 的 camp/phase 名稱、table entry 的
-劇本語意仍不命名。
+與 `[0x53c03]` 章節戰場事件 handler dispatch，並受 `[0x53ecc]`
+pending 碼控制。這證明它們是 unit-scan/action-loop 的 caller boundary；
+`+6` 的 raw camp code 已由 constructor 與 target-code 消費端閉合；兩張
+表與 pending 碼也不得再標成未知語意。仍未知的是兩遍敵軍掃描的玩法理由。
 
 更高一層的 callsite 也已固定：`0x1a4eb` 在 `0x1a813(1) → 0x1a866(1)` 後呼叫
 `0x1a7bd → 0x1d80b → 0x1a7f1`；另一段 `0x1a58f` 在 `0x1a813(0) → 0x1a866(0)`
 後呼叫 `0x1a7bd → 0x1d8ba → 0x1a7f1`。這只證明兩個 phase-specific unit-scan
-callsites 位於同一場景流程；`0x1a813/0x1a866` 的 selector 與 campaign phase 仍保持
-raw，不能把它們直接命名成「敵方回合開始／結束」。
+callsites 位於同一場景流程。`0x1a813/0x1a866` 必須使用 raw provenance，
+不能用缺少 `NativeRecordByte6` 的 normalized `Camp` 代替；但 selector
+0／1 本身已可分別稱為原始敵軍／友軍陣營碼。
 
 ### 物理選擇結果執行：`0x1548E`
 

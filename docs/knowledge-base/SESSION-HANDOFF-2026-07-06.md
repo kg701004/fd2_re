@@ -2260,3 +2260,32 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   對話完成後才清理選取狀態。完整 Docker/Xvfb `go test ./...` 通過。
 - 這關閉重製端 selector1 的 E1 動作擁有權，不提升為 E2；仍須以未修改
   原版、相同名冊／事件狀態／tick 的一般玩家路徑比較。
+
+## 2026-07-29：AI 上層兩遍掃描控制流補證
+
+- 以 `fd2-cap-local`、無網路、一次性 Docker 容器重生三份內含 EXE
+  大小與 MD5/SHA-256 的完整指令產物：
+  `fd2_ai_phase_setup_disasm.txt`、`fd2_ai_unit_scan_disasm.txt`、
+  `fd2_ai_mode_dispatch_disasm.txt`。
+- `0x1D80B` 只處理 raw `record+6==1` 的合格記錄，呼叫
+  `0x13A9F(unit,1)`。`0x1D8BA` 對 raw `+6==0` 不是單遍：第一遍先跑
+  `0x1598A/0x1567E`，只有 `[0x53C23]` 或 `[0x53C33]` 的有號分數至少6
+  才進 `0x13A9F(unit,0)`；第二遍 `0x1D988` 對相同 raw gates 直接進
+  `0x13A9F(unit,0)`。
+- 每筆 mode 在 `0x13E77` 固定執行 selector1、`0x13512` bit7、
+  `0x134E4` 與重畫，再回掃描器；掃描器其後依序執行可選的90-entry
+  全域事件表、章節戰場事件 handler 表，並讀 `[0x53ECC]` pending 碼
+  決定是否離開。這三者先前已閉合，不是本輪新增的未知 callback。
+- `[0x53BEF]` 的增加在第二掃描返回後才發生。交叉核對既有
+  `FDFIELD b0→record+6` constructor writer 與 `0x14818` target-code
+  consumer，raw camp code 敵0／友1／己2 已閉合；因此 `0x1D80B` 是友軍
+  單遍，`0x1D8BA/0x1D988` 是敵軍預選＋第二遍。真正未閉合的是敵軍為何
+  需要兩遍及兩個分數的玩法語意，不再把 raw `+6` 列為未知。
+- `fdother.PlanNativePhaseUnitScans` 已將 selector1 單遍、selector0
+  分數預選與 selector0 第二遍分離輸出；預選只在 caller-supplied signed
+  `[0x53C23]` 或 `[0x53C33]` 至少6時標記 action。三遍不攤平，以保留
+  每筆 callback 後 pending 碼可能提早退出的邊界；缺 score provenance
+  會失敗即關閉。這仍是 E0 規則，不接 normalized `NextAIPlan`。
+- 同時撤回 AI 專題中「完全沒有攻擊方案時接近路線仍未知」的舊句：
+  mode0 的 `0x14121→0x13E9C` 備援已在較早證據閉合；未知的是其他 mode
+  的完整玩法命名與上層 raw phase。
