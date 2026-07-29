@@ -1,0 +1,92 @@
+# CONTINUE 地圖呈現狀態：IDA Pro 9.4 與 Capstone 交叉驗證
+
+## 版本與工具邊界
+
+- `FD2.EXE` 大小：`357074` 位元組
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一判讀：使用者合法授權的 IDA Pro 9.4，
+  `fd2-ida-authorized-local` 一次性、無網路 Docker 容器。
+- 獨立覆核：`fd2-cap-local` 內的 `tools/disasm_le.py`。
+- 原版執行檔唯讀；IDA 資料庫與報告只寫入 `/tmp`。
+
+## 已證實：標題 CONTINUE 的範圍模式
+
+IDA 將 `0x10010..0x10620` 辨識為單一函式；標題選單的 CONTINUE 分支
+在 `0x26130` 呼叫它。直接指令為：
+
+```text
+0x10483  mov [0x51A83], 0
+0x1048D  call 0x12263
+0x10492  push 1
+0x10494  call 0x11CAC
+...
+0x105EB  push 0
+0x105ED  call 0x11CAC
+...
+0x1060C  mov [0x51A83], 1
+0x10616  call 0x4E031
+```
+
+因此 `0` 是 CONTINUE 開場重繪的暫態值，`1` 是進入戰鬥驅動前的互動值。
+這兩個值不來自存檔，也不是待猜的 production owner。
+
+## 已證實：標題 CONTINUE 的 HUD gate B
+
+資料映像 `0x51AAB..0x51AAC` 的原始位元組為 `01 01`。IDA 對
+`[0x51AAC]` 的完整資料交叉參照只有：
+
+```text
+0x135B4/0x135D4
+0x170BA/0x17163/0x1726B/0x17277
+0x1AD1B
+0x25DDE/0x25DEA/0x25E0B/0x25E5E
+0x25F04/0x25F2E/0x260DE/0x26112
+```
+
+`0x1AD1B` 是 HUD reader；其餘 writer 均屬暫停重繪後恢復的流程。
+對標題 CONTINUE 的直接 caller chain，`0x25EBB` 在選單結果不是 START
+或 LOAD 時走 `0x26124..0x26130`，沿途不寫 `[0x51AAC]`，所以使用資料
+映像初值 `1` 進入 `0x10010`。
+
+這個結論只適用於標題選單 `0x26130` 的 CONTINUE。`0x10010` 另有
+`0x1A251` 的戰場內 caller；本證據不替該 caller 猜測 gate B。
+
+## 已證實：標題 CONTINUE 的 HUD anchor
+
+資料映像 `[0x51A0C]` 的初值是 dword `1`。完整資料交叉參照只有
+`0x1ACF3` 內三處：
+
+```text
+0x1AD2A  cmp [0x53ABD], 5
+0x1AD33  cmp [0x53AB9], 3
+0x1AD3C  mov [0x51A0C], 0xF2
+0x1AD48  cmp [0x53ABD], 5
+0x1AD51  cmp [0x53AB9], 9
+0x1AD5A  mov [0x51A0C], 1
+0x1AD6C  add ebp, [0x51A0C]
+```
+
+`0x103FF..0x10415` 先由 current-save header 恢復 absolute／visible
+cursor，`0x10494` 的首次地圖重繪才消費它。因此標題 CONTINUE 從 seed
+`1` 出發：
+
+- visible Y `>5` 且 visible X `<3`：anchor 為 `0xF2`；
+- visible Y `>5` 且 visible X `>9`：anchor 為 `1`；
+- 其他位置：保留 seed `1`。
+
+這不是「畫面半屏」的近似規則；邊界 `3`、`5`、`9` 必須照直接比較。
+
+## 重製契約與剩餘邊界
+
+`fdsave.BuildContinueRuntimeInput` 只為標題 CONTINUE 建立
+`ContinueMapPresentation`：
+
+- `OpeningRangeMode=0`
+- `InteractiveRangeMode=1`
+- `HUDGateB=1`
+- `HUDAnchorX` 由上述 seed 與已恢復 visible cursor 計算
+
+故 `range_mode` 與 `hud_gate_b_anchor` 不再列為未解擁有者。正式
+CONTINUE 仍因 map timing、field-runtime bridge 與 battle driver
+三項缺口維持失敗即關閉；本證據不授權接入戰場內 `0x1A251` caller。

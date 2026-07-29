@@ -2516,11 +2516,23 @@ context（chapter、field dimensions、FDICON group count），原子驗證：
 - active record 的 raw `+0/+1/+3/+4` 符合 field、pose 0..3、motion 0..6；
 - field control、兩份 roster、event state 與 header 都深複製。
 
-輸出仍明列五個 unresolved owners：range mode、HUD gate B／anchor、map
-timing、field-runtime bridge、battle driver。因此
+後續 IDA Pro 9.4 完整資料交叉參照與 Capstone 原始位元組覆核，又閉合
+標題 CONTINUE 的 map presentation。`0x10483` 在開場重繪前明確寫
+`[0x51A83]=0`，`0x1060C` 在 `0x10616→0x4E031` 前改寫為 `1`。
+資料映像的 gate B `[0x51AAC]` 與 anchor `[0x51A0C]` 初值均為 `1`；
+標題 caller `0x26124..0x26130` 沿路不改 gate B，anchor 則只由
+`0x1AD2A..0x1AD5F` 依已恢復的 visible cursor 寫 `0xF2`／`1` 或保留。
+因此 `ContinueMapPresentation` 現明確輸出開場／互動 range mode、
+gate B 與有效 anchor，不再把這四值列為未知。此契約只適用標題
+`0x26130` caller；不外推到戰場內 `0x1A251` caller。
+
+輸出仍明列三個 unresolved owners：map timing、field-runtime bridge、
+battle driver。因此
 `ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
 沒有 production owner，也不改 `battle.State`。直接證據見
-[`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)。
+[`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)
+與
+[`fd2_continue_map_presentation_ida.txt`](../data/fd2_continue_map_presentation_ida.txt)。
 
 ### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
 

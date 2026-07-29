@@ -56,6 +56,8 @@ index。
 camera-cursor identity 及 FDFIELD 控制段容量；所有結果深複製且不改
 `battle.State`。
 
-這只關閉 snapshot 與 selector preflight。range mode、HUD gate B／anchor、
-map timing、FDFIELD-to-runtime bridge 及 battle driver 仍列為 unresolved
-owners，所以 `ReadyForContinue()` 必須保持 false。
+這份報告只關閉 snapshot 與 selector preflight。其後
+`fd2_continue_map_presentation_ida.txt` 已另行閉合標題 CONTINUE 的
+range mode、HUD gate B 與 anchor；目前剩餘 map timing、
+FDFIELD-to-runtime bridge 及 battle driver 三個 unresolved owners，
+所以 `ReadyForContinue()` 仍必須保持 false。

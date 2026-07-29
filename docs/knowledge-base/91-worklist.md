@@ -934,7 +934,7 @@
 - [x] **native single-cell terrain compositor**：`Bank.BlitNativeTerrainCell` 組合 exact frame selector 與 FDFIELD `entry+3==0xff` raw／否則 LUT branch，regression 覆蓋兩支及 mode3 destination remap。camera-visible loop、LUT phase、foreground `0x129ec` 不在此 pure adapter 範圍。
 - [x] **native visible terrain pass**：`Bank.BlitNativeTerrainRegion` 以 raw FDFIELD cell、FDSHAP 4-byte control records、map origin／explicit LUT 做 `0x11eee` row-major visible region，bounds fail-closed、regression 覆蓋 raw/LUT cell order。正常 `0x11cac` ABI 已釘為 `(buffer+0x8088,456,13,8,camX,camY)`，其後 range→unit→foreground passes 仍分離。
 - [x] **native indexed viewport copy**：official IDA/Capstone 關閉 `0x11eb0` 為逐列 `memmove`；`0x11cac` 明確以 source `buffer+0x8088`／stride456、width312、height192 複製到 VGA `0xA0504`／stride320。regression 覆蓋 row stride、source/destination offset、4px border 與 fail-closed bounds；ch01 已接 Ebiten production presentation。
-- [~] **native terrain/unit map HUD (`0x1acf3`)**：它在 `0x11cac` 的 terrain/range/unit+foreground 後、viewport copy 前執行，且須 raw gates `0x51aab`、`0x51aac` 都非零。`BlitNativeMapHUD→ComposeNativeFrame→drawNativeMapFrame` 已把 panel、terrain、AP/DP、optional FDICON unit與HP依原順序接入ch01 production frame；#130、hex #0x83/#0x84、digit/overflow banks、persistent anchor與raw cycle均有resource/runtime regression。FDOTHER#5 full-screen #22只在native admission失敗時作playable fallback，不再代表ch01現況。此項仍為partial，因ch02+缺逐章view/gates/anchor來源、`0x12c0d` exact raw lookup predicate/order尚未閉合，且沒有原版DOSBox 320×200 HUD pixel oracle；高階global與resource artwork名稱仍不猜。
+- [~] **native terrain/unit map HUD (`0x1acf3`)**：它在 `0x11cac` 的 terrain/range/unit+foreground 後、viewport copy 前執行，且須 raw gates `0x51aab`、`0x51aac` 都非零。`BlitNativeMapHUD→ComposeNativeFrame→drawNativeMapFrame` 已把 panel、terrain、AP/DP、optional FDICON unit與HP依原順序接入ch01 production frame；#130、hex #0x83/#0x84、digit/overflow banks、persistent anchor與raw cycle均有resource/runtime regression。FDOTHER#5 full-screen #22只在native admission失敗時作playable fallback，不再代表ch01現況。ch26 event61 所需 view/HUD 已另達 E1；此項仍為partial，因其餘 ch02+ 缺逐章view/gates/anchor來源、`0x12c0d` exact raw lookup predicate/order尚未閉合，且沒有原版DOSBox 320×200 HUD pixel oracle；高階global與resource artwork名稱仍不猜。
   - [x] HUD runtime provenance：data初值anchor=1、gateA/gateB=1；
     load `0x10010`由plaintext `0x30d2`覆寫gateA。anchor只由visible
     cursor row/column `[0x53abd]/[0x53ab9]`兩條branch改0xf2/1；doc14
@@ -1601,10 +1601,14 @@
   chapter／field dimensions／FDICON group count 原子驗證 counts、
   FDFIELD unit capacity、camera-cursor identity、active record
   presentation 與 first-seen slots；所有 raw 區域深複製，不改
-  `battle.State`。range mode、HUD gate B／anchor、map timing、
-  field-runtime bridge、battle driver 仍列 unresolved owners，
+  `battle.State`。後續 IDA/Capstone 又證實標題 caller 的 range mode
+  為開場 `0`／進戰鬥驅動前 `1`，資料映像 gate B／anchor seed 均為
+  `1`，且 anchor 只依已恢復 visible cursor 精確推進；這些值已收入
+  `ContinueMapPresentation`。map timing、field-runtime bridge、
+  battle driver 仍列 unresolved owners，
   `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
-  → `fd2_continue_selector_rebuild_ida.txt`
+  → `fd2_continue_selector_rebuild_ida.txt`、
+  `fd2_continue_map_presentation_ida.txt`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

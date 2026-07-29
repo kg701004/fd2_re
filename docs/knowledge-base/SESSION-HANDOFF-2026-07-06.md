@@ -2588,10 +2588,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   order 套到 CONTINUE，以及要求存檔舊 `+2` 等於 slot 的錯誤模型。
   新 `BuildContinueRuntimeInput` 原子驗證 resource context、counts、
   FDFIELD 80-unit capacity、13×8 view identity、active raw presentation
-  與 first-seen slots；輸出深複製且明列 range mode、HUD gate B／anchor、
-  map timing、field-runtime bridge、battle driver 五個 unresolved owners。
+  與 first-seen slots；輸出深複製。後續 IDA 9.4 data xrefs 與 Capstone
+  又固定標題 caller：`0x10483` 設 opening range mode `0`，
+  `0x1060C` 在 battle driver 前設 interactive mode `1`；資料映像
+  gate B／anchor seed 均為 `1`，而 anchor 只依 restored visible cursor
+  的 `<3`／`>9`、Y `>5` 分支推進。`ContinueMapPresentation` 已保存
+  這些值；戰場內 `0x1A251` caller 不在此結論範圍。現只明列 map timing、
+  field-runtime bridge、battle driver 三個 unresolved owners。
   `ReadyForContinue()` 目前必為 false，不接 production。證據：
-  `docs/data/fd2_continue_selector_rebuild_ida.txt`。
+  `docs/data/fd2_continue_selector_rebuild_ida.txt`、
+  `docs/data/fd2_continue_map_presentation_ida.txt`。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

@@ -333,9 +333,12 @@ func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testi
 		input.RuntimeRecords[0].Raw.Raw[2] != 99 {
 		t.Fatalf("runtime input lost raw provenance: %#v", input.RuntimeRecords)
 	}
+	if got := input.MapPresentation; got.OpeningRangeMode != 0 ||
+		got.InteractiveRangeMode != 1 || got.HUDGateB != 1 ||
+		got.HUDAnchorX != 1 {
+		t.Fatalf("CONTINUE map presentation=%#v", got)
+	}
 	wantOwners := []ContinueRuntimeOwner{
-		ContinueOwnerRangeMode,
-		ContinueOwnerHUDGateBAnchor,
 		ContinueOwnerMapTiming,
 		ContinueOwnerFieldRuntimeBridge,
 		ContinueOwnerBattleDriver,
@@ -354,6 +357,40 @@ func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testi
 		input.NativeEventState[12] != 1 ||
 		input.PersistentRecords[0].Raw[8] != 9 {
 		t.Fatal("CONTINUE runtime input aliases caller snapshot")
+	}
+}
+
+func TestBuildContinueRuntimeInputAppliesTitleHUDAnchorBranches(t *testing.T) {
+	tests := []struct {
+		name               string
+		visibleX, visibleY byte
+		wantAnchor         int
+	}{
+		{name: "left lower region", visibleX: 2, visibleY: 6, wantAnchor: 0xf2},
+		{name: "left boundary retained", visibleX: 3, visibleY: 6, wantAnchor: 1},
+		{name: "middle lower region", visibleX: 7, visibleY: 6, wantAnchor: 1},
+		{name: "right boundary retained", visibleX: 9, visibleY: 6, wantAnchor: 1},
+		{name: "right lower region", visibleX: 10, visibleY: 6, wantAnchor: 1},
+		{name: "upper region", visibleX: 2, visibleY: 5, wantAnchor: 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			snapshot := validContinueSnapshot()
+			snapshot.Header.VisibleCursorX = tt.visibleX
+			snapshot.Header.VisibleCursorY = tt.visibleY
+			snapshot.Header.CursorX = snapshot.Header.CameraX + tt.visibleX
+			snapshot.Header.CursorY = snapshot.Header.CameraY + tt.visibleY
+			input, err := BuildContinueRuntimeInput(snapshot, validContinueContext())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if input.MapPresentation.HUDAnchorX != tt.wantAnchor {
+				t.Fatalf(
+					"HUD anchor=%#x, want %#x",
+					input.MapPresentation.HUDAnchorX, tt.wantAnchor,
+				)
+			}
+		})
 	}
 }
 

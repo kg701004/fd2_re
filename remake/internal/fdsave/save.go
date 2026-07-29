@@ -378,12 +378,23 @@ type ContinueRuntimeRecord struct {
 type ContinueRuntimeOwner string
 
 const (
-	ContinueOwnerRangeMode          ContinueRuntimeOwner = "range_mode"
-	ContinueOwnerHUDGateBAnchor     ContinueRuntimeOwner = "hud_gate_b_anchor"
 	ContinueOwnerMapTiming          ContinueRuntimeOwner = "map_timing"
 	ContinueOwnerFieldRuntimeBridge ContinueRuntimeOwner = "field_runtime_bridge"
 	ContinueOwnerBattleDriver       ContinueRuntimeOwner = "battle_driver"
 )
+
+// ContinueMapPresentation is the raw map-presentation state established by
+// the title-menu CONTINUE caller at 0x26130 and sub_10010 before 0x4e031.
+// OpeningRangeMode is used by the opening redraw; InteractiveRangeMode is the
+// value installed immediately before the battle driver. HUDAnchorX is the
+// persistent data-image seed after 0x1acf3 applies the restored visible cursor.
+// This contract does not describe the separate in-battle caller at 0x1a251.
+type ContinueMapPresentation struct {
+	OpeningRangeMode     int
+	InteractiveRangeMode int
+	HUDGateB             byte
+	HUDAnchorX           int
+}
 
 // ContinueRuntimeInput is a deep-copied, read-only preflight result. It proves
 // the save/resource boundary and selector rebuild only; UnresolvedOwners keeps
@@ -396,6 +407,7 @@ type ContinueRuntimeInput struct {
 	PersistentRecords  [RosterUnits]PersistentRecord
 	RuntimeRecords     []ContinueRuntimeRecord
 	NativeEventState   [CurrentNativeEventStateSize]byte
+	MapPresentation    ContinueMapPresentation
 	UnresolvedOwners   []ContinueRuntimeOwner
 }
 
@@ -477,9 +489,16 @@ func BuildContinueRuntimeInput(
 		Context:        context,
 		Header:         snapshot.Header,
 		RuntimeRecords: runtime,
+		MapPresentation: ContinueMapPresentation{
+			OpeningRangeMode:     0,
+			InteractiveRangeMode: 1,
+			HUDGateB:             1,
+			HUDAnchorX: continueTitleHUDAnchor(
+				int(snapshot.Header.VisibleCursorX),
+				int(snapshot.Header.VisibleCursorY),
+			),
+		},
 		UnresolvedOwners: []ContinueRuntimeOwner{
-			ContinueOwnerRangeMode,
-			ContinueOwnerHUDGateBAnchor,
 			ContinueOwnerMapTiming,
 			ContinueOwnerFieldRuntimeBridge,
 			ContinueOwnerBattleDriver,
@@ -489,6 +508,21 @@ func BuildContinueRuntimeInput(
 	copy(input.PersistentRecords[:], snapshot.PersistentRecords[:])
 	copy(input.NativeEventState[:], snapshot.NativeEventState[:])
 	return input, nil
+}
+
+// continueTitleHUDAnchor starts from the executable data-image value one and
+// applies the only two writes in 0x1acf3. The argument order follows the save
+// header (X, Y), while the native comparisons are [0x53abd] Y then [0x53ab9] X.
+func continueTitleHUDAnchor(visibleX, visibleY int) int {
+	if visibleY > 5 {
+		if visibleX < 3 {
+			return 0xf2
+		}
+		if visibleX > 9 {
+			return 1
+		}
+	}
+	return 1
 }
 
 // InspectCurrentSnapshot decodes only the verified plaintext layout used by
