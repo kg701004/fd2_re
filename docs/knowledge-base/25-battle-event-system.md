@@ -211,6 +211,28 @@ FDTXT_000 `0x1E0` 並返回，不改任何 opened state。仍有空格時，
 slots0..4 opened，滿欄則不改 inventory/opened。其他尚未 lower 的 event
 寶物仍保持失敗即關閉。
 
+### 6.4 map25 格子事件 59／60／61 [驗]
+
+FDFIELD 直接把 map25 三條格子規則固定如下；這項資料證據取代先前只看
+IDA 通用間接交叉參照而留下的「event61 沒有 map25-local caller」錯誤斷言：
+
+| event | selector | 格子 | handler 行為 |
+|---|---:|---|---|
+| 59 | 0 | y=36 全列 31 格 | 觸發單位 runtime `+6 != 0` 時，`0x3419C(39,44,0)` |
+| 60 | 0 | y=22 全列 31 格 | 同 gate，`0x3419C(23,24,0)` 與 `(53,56,0)` |
+| 61 | 1 | `(1,46)` | entry12 為零且觸發單位持有 item D0 時才進成功臂 |
+
+event59／60 的 `0x3419C` 保存高四位，只把指定單位範圍低四位設成 0。
+event61 成功臂移除觸發單位的 D0、播放 resource45 的 59-frame 演出、
+設 battle-local state entry12、spawn group1、JOIN character31，依序使用
+FDTXT indices 3/4；沒有 D0 時只使用 index2，不改 entry12。ch25 post
+再以 entry12 選擇後續文字分支。
+
+`native_field_event_rules.json` 綁定 FD2.EXE 雜湊並保存三條 editable rule；
+map25 資產只因實際引用而嵌入。重製仍未把 selector0/1 的完整原版動作時機
+與 event61 的 59-frame presentation 接進正式路徑，故目前是已解碼資料，
+不是已完成的玩家路徑。
+
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
 gen-campaign v4 report 留下 6 筆「`groups: [$reg_or_mem(eax)]`」——`spawn_group(eax)` 的 `eax` 來自暫存器計算,

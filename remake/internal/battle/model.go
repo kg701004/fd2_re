@@ -492,6 +492,7 @@ type State struct {
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
 	NativeFieldEventSlots    []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
 	NativeFieldEvents        []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
+	NativeFieldEventRules    []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
 	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
 	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
 	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
@@ -545,6 +546,25 @@ type NativeTreasureEventRule struct {
 type NativeFieldEvent struct {
 	EventID  byte `json:"event_id"`
 	Selector byte `json:"selector"`
+}
+
+type NativeFieldModeRange struct {
+	Start int  `json:"start"`
+	End   int  `json:"end"`
+	Mode  byte `json:"mode"`
+}
+
+// NativeFieldEventRule 保存已閉合 handler 的資料，不自行決定 selector 的呼叫時機。
+type NativeFieldEventRule struct {
+	EventID       int                    `json:"event_id"`
+	Selector      byte                   `json:"selector"`
+	TriggerGate   string                 `json:"trigger_gate,omitempty"`
+	SetModeRanges []NativeFieldModeRange `json:"set_mode_ranges,omitempty"`
+	OnceState     *int                   `json:"once_state_index,omitempty"`
+	RequiredItem  *int                   `json:"required_item,omitempty"`
+	ConsumeItem   bool                   `json:"consume_item,omitempty"`
+	SpawnGroup    *int                   `json:"spawn_group,omitempty"`
+	JoinCharacter *int                   `json:"join_character,omitempty"`
 }
 
 // TreasureAt 查詢尚未取得的寶物格。
@@ -842,7 +862,8 @@ func Load(path string) (*State, error) {
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
-	st.NativeFieldEventSlots, st.NativeFieldEvents = loadNativeFieldEvents(mapPath, f.W, f.H)
+	st.NativeFieldEventSlots, st.NativeFieldEvents, st.NativeFieldEventRules =
+		loadNativeFieldEvents(mapPath, f.W, f.H)
 	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
 	// 0x4dbfc is the runtime constructor for composition byte+3: it replaces
 	// every serialized value with 0xff before 0x14818/0x122dc mutate the grid.
@@ -856,17 +877,18 @@ func Load(path string) (*State, error) {
 
 // mapCostFile map.json 裡跟地形成本相關的欄位(其餘欄位 main.go 的 MapData 自己讀,這裡只挑 cost 用)。
 type mapCostFile struct {
-	W                     int                `json:"w"`
-	H                     int                `json:"h"`
-	Cost                  []int              `json:"cost"`
-	NativeTargetFlags     []byte             `json:"native_target_flags"`
-	NativeFieldEventSlots []int              `json:"native_field_event_slots"`
-	NativeFieldEvents     []NativeFieldEvent `json:"native_field_events"`
-	NativeTileBlitModes   []byte             `json:"native_tile_blit_modes"`
-	NativeTerrainControl  []byte             `json:"native_terrain_control"`
-	Tiles                 []int              `json:"tiles"`
-	TreasureSlots         []int              `json:"treasure_slots"`
-	TreasureHidden        []bool             `json:"treasure_hidden"`
+	W                     int                    `json:"w"`
+	H                     int                    `json:"h"`
+	Cost                  []int                  `json:"cost"`
+	NativeTargetFlags     []byte                 `json:"native_target_flags"`
+	NativeFieldEventSlots []int                  `json:"native_field_event_slots"`
+	NativeFieldEvents     []NativeFieldEvent     `json:"native_field_events"`
+	NativeFieldEventRules []NativeFieldEventRule `json:"native_field_event_rules"`
+	NativeTileBlitModes   []byte                 `json:"native_tile_blit_modes"`
+	NativeTerrainControl  []byte                 `json:"native_terrain_control"`
+	Tiles                 []int                  `json:"tiles"`
+	TreasureSlots         []int                  `json:"treasure_slots"`
+	TreasureHidden        []bool                 `json:"treasure_hidden"`
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -942,10 +964,10 @@ func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
 func loadNativeFieldEvents(
 	mapJSONPath string,
 	w, h int,
-) ([]int, []NativeFieldEvent) {
+) ([]int, []NativeFieldEvent, []NativeFieldEventRule) {
 	raw, err := os.ReadFile(mapJSONPath)
 	if err != nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	var m mapCostFile
 	if json.Unmarshal(raw, &m) != nil ||
@@ -953,15 +975,29 @@ func loadNativeFieldEvents(
 		m.H != h ||
 		len(m.NativeFieldEventSlots) != w*h ||
 		len(m.NativeFieldEvents) != 16 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	for _, slot := range m.NativeFieldEventSlots {
 		if slot < -1 || slot >= len(m.NativeFieldEvents) {
-			return nil, nil
+			return nil, nil, nil
+		}
+	}
+	seen := map[int]bool{}
+	for _, rule := range m.NativeFieldEventRules {
+		if rule.EventID < 0 || rule.EventID >= 90 || seen[rule.EventID] {
+			return nil, nil, nil
+		}
+		seen[rule.EventID] = true
+		for _, modeRange := range rule.SetModeRanges {
+			if modeRange.Start < 0 || modeRange.End < modeRange.Start ||
+				modeRange.Mode > 0x0F {
+				return nil, nil, nil
+			}
 		}
 	}
 	return append([]int(nil), m.NativeFieldEventSlots...),
-		append([]NativeFieldEvent(nil), m.NativeFieldEvents...)
+		append([]NativeFieldEvent(nil), m.NativeFieldEvents...),
+		append([]NativeFieldEventRule(nil), m.NativeFieldEventRules...)
 }
 
 // loadNativeTerrainRendererInputs accepts only a complete map export. It

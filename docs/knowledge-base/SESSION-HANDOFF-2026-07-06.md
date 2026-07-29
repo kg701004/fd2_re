@@ -576,7 +576,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 table entry12 writer closure（Docker Capstone `0x356bc..0x35821`）：entry12=0 時，handler 依 actor class 查 item `0xd0`；無 item 顯示 #2，成功則移除 item、跑 presentation、設 entry12=1、`spawn group1`、`JOIN31`、播 #4。這是 ch25 post `base+5/base+8` 的直接 state source；仍不可把 index12泛稱 treasure 或一般 roster flag，兩條 post 演出/布局未閉合前不接 campaign。
 - 2026-07-26 official IDA layout topology audit：授權 IDA 9.4 重建 `0x233c6` 為 `0x233c6..0x2345b`，並輸出 15 個 callers（含 `0x23c04` ch16 post、`0x24f11` ch25 post、`0x257b4` final post）。這交叉驗證它是共用 address-keyed layout primitive，不能把 ch16 的兩個 16-byte table 或其 special-slot/focus arguments generalize 成其他 caller ABI。SDD 明訂完整 materialized slots+camera 才可播放，缺欄維持 fail-closed。
 - 2026-07-26 ch17 initial group correction：ch16 pre direct CFG 證明 group1 僅在 char18 absent arm append，而 group3 首見於 post handler `0x23bde/0x23c55`。Scenario 的 `initial_groups` 修為只 group0，新增 data-driven `initial_groups_if_party_absent:{char18,group1}`；這只修正當前 roster-backed battle state 的 OnField 初始可見性，不把它誤稱 native slot append reconstruction。
-- 2026-07-26 entry12 dispatcher scope（official IDA 9.4 + isolated Capstone）：IDA 定義 `sub_356B7=0x356b7..0x35822`，只見八個 generic UI/event dispatcher control-flow xref（`0x117e7/0x16f55/0x190ac/0x1a813/0x1aa1d/0x1d80b/0x1d8ba`），未證實 map25-local caller。故 item `0xd0`→entry12→spawn1/JOIN31 是 raw command capability，不可接成 ch25 的固定寶箱、座標事件或 campaign 自動分支；post predicate 維持 fail-closed。
+- 2026-07-26 entry12 dispatcher scope（已於 2026-07-29 被直接資料勘誤）：當時 IDA 只見八個 generic indirect xrefs，故無法證實 map25 caller；現在 FDFIELD map25 field slot2 已直接固定 selector1、座標 `(1,46)` → event61/`0x356B7`。舊「未證實 map25-local caller」只保留為歷史過程，不再是現況。
 - 2026-07-26 ch27 transition/acting separation（official IDA 9.4 + isolated Capstone）：`sub_24618=0x24618..0x24754` 的 callers 包括 `0x33af1/0x33c9d` post handlers。它先以 13×8 terrain region 建 offscreen buffer，固定做九次 strip composite，最後 palette index 0..62 每步2、delay4ms 收束；四 args 是 tile/strip geometry 與 progression。撤回把 ch27 的 `0x24618` unknown 暗示為 acting 的可能，renderer 必須新增已驗證 transition adapter，否則 handler fail-closed。
 - 2026-07-26 `0x24618` ABI naming correction（isolated Capstone full stack-slot trace）：撤回 binding schema 的 `source_x/source_step`、`remap_scale/remap_scale_step`、`source_y/blit_width` 命名。`0x24618` 每 pass 將 third/fourth args 作 radial radius／radius step；`0x22046` 對兩次 `0x219ad` 固定傳 scale=16，最後用 `trunc(radius*1.6)` 作矩形 pass。其常數 row range 是 `[start_y,end_y)=[0,192)`，不是 image source 或 width。schema 改為 `radial_radius`、`radial_radius_step`、`start_y`、`end_y` 並有 compiler/binding regression；indexed adapter 仍 fail-closed。
 - 2026-07-26 ch26 sky-key gate closure（isolated Capstone `0x24b14/0x250cc`）：`0x24b14(item)` 固定掃 runtime slots 0..15，透過 `0x31860` 找 exact item、found 回 1／missing 回 -1，不篩 camp/activity。ch26 post 的 `0x24b14(0x64)` success arm 沒有 `0x1b8e7`，故天空之鑰不消耗；其後才 `sync_party→increment chapter→0x25089 cleanup`。missing arm 進 FDTXT_027 idx13–16/ending 演出，不能以成功流的 town/preparation 或 generic ending 取代。
@@ -2155,3 +2155,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 新 extractor 輸出含 FD2.EXE 雜湊與位址的 editable rule；map25 asset
   嵌入規則，runtime 以 typed data 執行並共同標記 slots0..4 opened。
   沒有規則的特殊 event treasure 仍失敗即關閉。
+
+## 2026-07-29：map25 field events 59／60／61 閉合
+
+- event59：selector0、y36 全列；觸發單位 runtime `+6 !=0` 時把單位
+  39..44 的低四位模式設0。
+- event60：selector0、y22 全列；同 gate，把 23..24、53..56 設 mode0。
+- event61：selector1、`(1,46)`；entry12 未設且觸發單位持有 D0 才移除
+  物品、播放 resource45×59 frames、設 entry12、spawn group1、JOIN31，
+  並使用 FDTXT 3/4；缺 D0 使用 FDTXT2 且不改狀態。
+- 新 `native_field_event_rules.json` 綁定 EXE 雜湊，map25 asset 嵌入三條
+  editable rules。selector0/1 的完整玩家／AI action timing 與 event61
+  presentation 尚未接 runtime，維持 fail-closed。
+- `ApplyNativeFieldModeEvent` 已執行 event59/60 的完整 provenance
+  preflight 與原子 mode-range 寫入；上層尚未證實 selector 時機，所以沒有
+  自動掛到任意 walk completion。event61 仍只載入 typed core rule。

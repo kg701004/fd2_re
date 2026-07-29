@@ -63,10 +63,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("raw")
     parser.add_argument("assets")
+    parser.add_argument(
+        "--rules",
+        default="docs/data/native_field_event_rules.json",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
     args = parser.parse_args()
+    with open(args.rules, encoding="utf-8") as source:
+        rules = json.load(source)["rules"]
 
     maps = sorted(
         glob.glob(os.path.join(args.assets, "map*", "map.json")),
@@ -79,6 +85,16 @@ def main():
         with open(path, encoding="utf-8") as source:
             data = json.load(source)
         slots, events = expected(args.raw, map_index, data)
+        event_ids = {
+            events[slot]["event_id"]
+            for slot in slots
+            if slot >= 0 and events[slot]["event_id"] != 0xFF
+        }
+        map_rules = [rule for rule in rules if rule["event_id"] in event_ids]
+        rules_mismatch = (
+            data.get("native_field_event_rules", []) != map_rules
+            or (not map_rules and "native_field_event_rules" in data)
+        )
         referenced_event_ids.update(
             events[slot]["event_id"]
             for slot in slots
@@ -87,12 +103,17 @@ def main():
         mismatch = (
             data.get("native_field_event_slots") != slots
             or data.get("native_field_events") != events
+            or rules_mismatch
         )
         if mismatch:
             changed += 1
             if args.write:
                 data["native_field_event_slots"] = slots
                 data["native_field_events"] = events
+                if map_rules:
+                    data["native_field_event_rules"] = map_rules
+                else:
+                    data.pop("native_field_event_rules", None)
                 with open(path, "w", encoding="utf-8") as output:
                     json.dump(data, output, ensure_ascii=False, separators=(",", ":"))
                     output.write("\n")
