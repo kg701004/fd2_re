@@ -1,6 +1,9 @@
 package battle
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 // NativeAIScoringRecords materializes the raw runtime fields consumed across
 // 0x1598a, 0x15b77 and their phase admission. It deliberately requires an
@@ -15,7 +18,9 @@ func NativeAIScoringRecords(units []*Unit) ([]byte, error) {
 			!unit.HasNativeRecordByte5 ||
 			!unit.HasNativeRecordByte34 ||
 			!unit.HasNativeRecordByte35 ||
-			!unit.HasNativeRecordByte36 {
+			!unit.HasNativeRecordByte36 ||
+			!unit.HasNativeRecordWord42 ||
+			!unit.HasNativeRecordWord46 {
 			return nil, fmt.Errorf("native AI record: unit %d lacks raw provenance", index)
 		}
 		record, err := NativeItemPanelRecordForUnit(unit)
@@ -31,6 +36,8 @@ func NativeAIScoringRecords(units []*Unit) ([]byte, error) {
 		record[0x34] = unit.NativeRecordByte34
 		record[0x35] = unit.NativeRecordByte35
 		record[0x36] = unit.NativeRecordByte36
+		binary.LittleEndian.PutUint16(record[0x42:0x44], unit.NativeRecordWord42)
+		binary.LittleEndian.PutUint16(record[0x46:0x48], unit.NativeRecordWord46)
 		records = append(records, record...)
 	}
 	return records, nil

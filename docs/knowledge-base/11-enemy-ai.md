@@ -399,6 +399,26 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 - spell id `17..19` 進入另一個 raw scoring helper；`20/21/26/27` 讀取 `+0x25/+0x26` flag bytes，ID22 先 gate `+0x27` 再呼 `0x1C269`。這些是 call/score topology，不足以命名成增益、毒麻或其他 gameplay status。
 - 依 spawn constructor `0x10f6b..0x10fa5` 的 direct trace，FDFIELD b13..b16 的 `initial_command_mask` 只複製到 runtime `unit+0x1a..+0x1d`，而 `unit+0x22..+0x27` 另由 constructor 清零。前者是 runtime 五位元組 command bitset 的初始四位元組；後者目前只能稱為 raw transient／modifier bytes。雖然 writer paths 會讀寫其中幾個欄位，derived-stat/property/status 名稱仍未由完整 equipment recompute、presentation 與 caller evidence 證實；不能把它們命名成 AP/DP/HIT 或 M1–M5 spell bitfield。AI 仍依 spell family 選目標，individual command ID 與後續 modifier writer 待另行接線。
 
+2026-07-29 地圖輸入勘誤與評分橋接：
+
+- 先前文件雖已證實 FDFIELD b13..b16 是命令遮罩來源，但 33 張重製地圖的
+  1887 個單位實際全都缺少 `initial_command_mask`。這不是只有文件漏寫，
+  而是正式資產管線未接。同步器現已補齊；263 筆非零遮罩中，有 261 筆同時
+  通過原始命令表與 MP 成本閘門。
+- `0x10d7f..0x1100c` 直接指令另證實建構器的最大 MP：高階分支是
+  `high[+4]*level`，低階分支是
+  `u16(lower[+5])+lower_aux[+8]*(level-1)`，並寫入 `+0x44/+0x46`。
+  1885 筆地圖單位已取得 `native_record_word46`；map32 的兩筆未覆蓋
+  selector 維持缺值。`NativeAIScoringRecords` 現要求 `word42/word46`
+  完整來源，不能以正規化 HP/MP 猜回原始記錄。
+- `ScoreNativeAIScoredCommandGroups` 已依 `0x15B77` 的完整命令 ID 家族，
+  將每個 `0x1598A` 目的地／目標群組送入既有攻擊、恢復、旗標或零分支。
+  map0 真實資產的 command0 在 `(23,14)` 命中四個友軍，各得24、合計96。
+  IDs10..12 缺呼叫者提供的 `0x1F183` 閘門時拒絕評分。
+- 尚未閉合的是零分候選時保存命令字的區域變數初值。`[0x53C23]` 的數值
+  最大值由零開始，因此可安全重現數值比較；但在確認該區域變數前，不能把
+  零分結果宣稱為原版選中的命令，也不能接入正式行動執行。
+
 ## 下一步最小驗證
 
 1. 在固定原版存檔與固定單位上，依序於 `0x1D80B`、`0x13A9F`、
@@ -419,8 +439,8 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 
 ## 重製對應（fail-closed）
 
-目前只能把已釘死的 raw scoring branches 保存成 adapter；不可直接宣稱照搬這段摘要即可重現原版 AI。
-`0x1DEBE` 條件、raw `+8`、上層 mode／selector 語意，以及
-spell command inventory/MP/target transaction 尚未全部閉合。remake 的 normalized `aiActUnit`／`NextAIPlan`
-因此維持 approximation，只有具備完整 raw record、caller gate 與 target evidence 時才可新增 native AI slice；
-難度調整參數也不得被當成原版等價設定。
+目前已能以完整原始記錄、命令遮罩、MP、候選幾何與各群組評分建立原始 AI
+切片；仍不可宣稱整回合已重現。`0x1DEBE` 條件、raw `+8`、上層
+mode／selector 語意、零分勝者與動態原版對照尚未全部閉合。重製端的正規化
+`aiActUnit`／`NextAIPlan` 因此仍是近似路徑；難度調整參數也不得當成原版
+等價設定。

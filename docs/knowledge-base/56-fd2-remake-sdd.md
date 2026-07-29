@@ -260,15 +260,17 @@ fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression，�
 handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 與 save boundary
 閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
 
-後續 producer trace 又閉合一層：constructor `0x10e7e..0x1100b` 在 `0x10fe9` 將同一個
-caller-supplied value 寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9`
-則以另一個輸入寫入 `+0x44`／`+0x46`，最後才呼 `0x1b750` 重算 derived fields。這是
-`+0x42` 的 raw producer／field-equality 證據；它不代表現有 normalized `hp` 欄位可被
-反推或覆寫。現在 `tools/export_units.py` 在取得實際 raw table fixture 時，依 constructor
-caller 的已證實公式導出獨立 `native_record_word42`；`sync_native_selector_fields.py`
-只補這個 provenance 欄位，不改 normalized HP/AP/DP。高 branch 是
-`u16(high[+2])*level`，lower branch 是 `u16(lower[+3])+lower_aux[+6]*(level-1)`；
-malformed 或 table 未覆蓋的 selector 不輸出，`native_record_word_gte` 仍 fail-closed。
+後續 producer trace 又閉合一層：constructor `0x10d7f..0x1100c` 在 `0x10fe9` 將生命值
+輸入寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9` 則將魔力輸入
+寫入 `+0x44`／`+0x46`，最後才呼 `0x1b750` 重算衍生欄位。高階分支的生命值公式是
+`u16(high[+2])*level`，魔力公式是 `high[+4]*level`；低階分支分別是
+`u16(lower[+3])+lower_aux[+6]*(level-1)` 與
+`u16(lower[+5])+lower_aux[+8]*(level-1)`。`tools/export_units.py` 因此在具備完整
+原始表來源時導出 `native_record_word42` 與 `native_record_word46`；
+`sync_native_selector_fields.py` 將兩者連同初始命令遮罩同步到 33 張地圖。載入器只在
+欄位具備來源時，以 `word42` 初始化 `HP/MaxHP`、以 `word46` 初始化 `MP/MaxMP`；
+舊式可編輯列缺欄位時仍沿用既有正規化數值，不從其反推原始欄位。表格不完整或 selector
+未覆蓋時不輸出，相關原始消費端維持失敗即關閉。
 
 sync boundary 也已補上 provenance 傳遞：`syncPartyFromBattle` 的 snapshot 會保留
 `NativeRecordWord42/HasNativeRecordWord42`，`applyPersistentStats` 在 LOADCH／戰場重建時
@@ -1724,7 +1726,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Native unit table export boundary (2026-07-26): `tools/extract_native_unit_tables.py` reads the LE object through `le_xref` and emits only raw records: `high_class` `0x61af9` (68×10, helper `0x4e4ff`, selector `FDFIELD b1-0x44`), `lower_class` `0x61da1` (32×24, helper `0x4e4e8`, selector `FDFIELD b1` in the lower branch), and `lower_aux` `0x620a1` (68×11, helper `0x4e4d1`, same selector). Docker extraction against the real FD2.EXE validates all 68/32/68 records. The JSON deliberately keeps selector provenance and `bytes_hex` without assigning gameplay names; it is an editable RE fixture, not permission to substitute portrait/class or to enable HUD optional unit/HP.
 
-   Editable unit boundary: `tools/export_units.py` accepts the optional raw-table JSON and can write `native_constructor:{branch,index,record,aux_record}` plus the independently derived `native_record_word42` when the constructor formula has complete provenance. To avoid duplicating full tables in every map row, `tools/sync_native_selector_fields.py --native-tables` now merges only consumed raw `native_record_race/class` bytes and `native_record_word42` into all 33 editable map assets, preserving manual normalized stats. `battle.NativeConstructorTable` remains a validated optional audit object; malformed records fail closed rather than falling back to portrait/class semantics.
+   可編輯單位邊界：`tools/export_units.py` 接受可選的原始表 JSON，在建構器公式來源完整時可寫出 `native_constructor:{branch,index,record,aux_record}`、`native_record_word42` 與 `native_record_word46`。為避免每列複製完整表格，`tools/sync_native_selector_fields.py --native-tables` 只將已被消費的 race/class 原始位元組、初始命令遮罩、`word42` 與 `word46` 合併到 33 張地圖，保留其餘人工校正欄位。`battle.NativeConstructorTable` 仍是經驗證的可選稽核物件；記錄格式錯誤時失敗即關閉，不退回以 portrait/class 猜測。
 
    HUD raw-state closure: `sub_11cac` calls `sub_1297d` immediately before the native map compositor. Its `[0x53c0b]` state advances `3→0` only when signed `rawTimerTick([0x46c])-rawLastTimerTick([0x53c0f])` is negative or greater than four, then stores the new last tick; all other calls preserve it. `[0x46c]` is the low 16-bit BIOS timer tick, not a VGA scanline: `0x17aa9` performs a tick busy-wait with explicit 0x10000 wrap correction, and `0x16d00` uses the same word as a two-tick update gate. `indexedmap.AdvanceNativeMapHUDState` preserves the pure ABI. The actual runtime caller still owns timer/call timing, so the Ebiten optional unit icon remains fail-closed until those globals are materialized.
 

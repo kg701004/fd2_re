@@ -112,6 +112,29 @@ def native_record_word42_for_portrait(tables, portrait, level):
     return base + aux[6] * (level - 1)
 
 
+def native_record_word46_for_portrait(tables, portrait, level):
+    """Compute the constructor input copied to runtime ``+0x44/+0x46``.
+
+    High selectors use table byte ``+4`` times level. Lower selectors use
+    lower-class word ``+5`` plus lower-aux byte ``+8`` times ``level - 1``.
+    """
+    if not tables or level <= 0:
+        return None
+    native = native_constructor_for_portrait(tables, portrait)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) <= 4:
+            return None
+        return record[4] * level
+    aux = native.get("aux_record")
+    if aux is None or len(record) < 7 or len(aux) <= 8:
+        return None
+    base = record[5] | (record[6] << 8)
+    return base + aux[8] * (level - 1)
+
+
 def crit_by_cls(resist_crit, cls):
     for e in resist_crit:
         if e.get("cls") == cls:
@@ -196,6 +219,9 @@ def main(argv):
             word42 = native_record_word42_for_portrait(native_tables, u["portrait"], u["lv"])
             if word42 is not None:
                 rec["native_record_word42"] = word42
+            word46 = native_record_word46_for_portrait(native_tables, u["portrait"], u["lv"])
+            if word46 is not None:
+                rec["native_record_word46"] = word46
         if u.get("inventory"):
             rec["inventory"] = u["inventory"]
         if u.get("inventory_slots"):

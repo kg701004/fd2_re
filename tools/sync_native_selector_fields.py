@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize only proven native visual-selector fields into map unit assets.
+"""Synchronize proven native constructor fields into map unit assets.
 
 The editable map assets contain manual corrections which a full export_units.py
 regeneration must not overwrite.  FDFIELD construction at 0x10d7f..0x10efc
@@ -8,16 +8,19 @@ does, however, close three fields for every scripted roster entry:
 * roster b0 -> 0x11019 raw key -> runtime unit+2 cache slot
 * roster b0 -> runtime unit+6
 * roster b1 -> runtime unit+7 / unit+8 FIGANI selector and identity
+* roster b13..b16 -> runtime unit+0x1a..+0x1d command-mask bytes
 * the bounded b1-selected constructor record -> runtime +0x1f/+0x20
+* constructor formulas -> runtime max HP +0x42 and max MP +0x46
 * roster b17/b18/b19 -> runtime +0x34/+0x35/+0x36
 
 This tool preserves every existing asset field and updates only
 the fields above. The optional native table input adds independently proven
-raw race/class bytes and runtime ``+0x42``; it deliberately does not duplicate
-whole constructor tables into every unit asset.
+raw race/class bytes and runtime ``+0x42/+0x46``; it deliberately does not
+duplicate whole constructor tables into every unit asset. The runtime loader
+uses those exact words as initial HP/MP when present.
 
-Optional constructor provenance can be synchronized without touching the
-normalized HP field:
+Optional constructor provenance can be synchronized without touching unrelated
+manual asset fields:
 
   python3 tools/sync_native_selector_fields.py extracted/raw remake/assets/maps \
     --native-tables docs/data/exe_tables/native_unit_tables.json --check
@@ -40,6 +43,7 @@ FIELDS = (
     "native_record_byte6",
     "battle_fig",
     "native_identity",
+    "initial_command_mask",
     "native_record_byte34",
     "native_record_byte35",
     "native_record_byte36",
@@ -54,6 +58,7 @@ def expected_units(raw, map_index, native_tables=None):
             "native_record_byte6": unit["native_record_byte6"],
             "battle_fig": unit["portrait"],
             "native_identity": unit["portrait"],
+            "initial_command_mask": unit["initial_command_mask"],
             "native_record_byte34": unit["native_record_byte34"],
             "native_record_byte35": unit["native_record_byte35"],
             "native_record_byte36": unit["native_record_byte36"],
@@ -72,6 +77,11 @@ def expected_units(raw, map_index, native_tables=None):
             # runtime loader therefore keeps native predicates fail-closed.
             if word42 is not None:
                 item["native_record_word42"] = word42
+            word46 = export_units.native_record_word46_for_portrait(
+                native_tables, unit["portrait"], unit["lv"]
+            )
+            if word46 is not None:
+                item["native_record_word46"] = word46
         expected.append(item)
     return expected
 
@@ -99,6 +109,8 @@ def sync_asset(raw, asset_path, write, native_tables=None):
             fields.extend(("native_record_race", "native_record_class"))
         if "native_record_word42" in native:
             fields.append("native_record_word42")
+        if "native_record_word46" in native:
+            fields.append("native_record_word46")
         for field in fields:
             current = unit.get(field)
             value = native[field]

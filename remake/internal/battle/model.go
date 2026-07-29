@@ -120,10 +120,14 @@ type Unit struct {
 	NativeRecordByte36    byte `json:"native_record_byte36,omitempty"`
 	HasNativeRecordByte36 bool `json:"has_native_record_byte36,omitempty"`
 	// NativeRecordWord42 is the optional raw u16 at runtime record +0x42.
-	// It is separate from MaxHP: ch15_post compares this word directly, and
-	// old editable units without provenance must fail closed.
+	// ch15_post compares this word directly. When present on a loaded scripted
+	// roster it is also the proven constructor source for initial HP/MaxHP.
 	NativeRecordWord42    uint16 `json:"native_record_word42,omitempty"`
 	HasNativeRecordWord42 bool   `json:"has_native_record_word42,omitempty"`
+	// NativeRecordWord46 is the optional constructor-produced max-MP word at
+	// runtime +0x46. It is not inferred from normalized MaxMP.
+	NativeRecordWord46    uint16 `json:"native_record_word46,omitempty"`
+	HasNativeRecordWord46 bool   `json:"has_native_record_word46,omitempty"`
 	Inventory             []int  // 角色物品欄 item IDs；原版 unit+0x0a 起 8×2B
 	Equipped              []bool // 與 Inventory 對齊；true 表示該欄位目前已裝備
 	InventorySlots        []int  // 原始 8 個 source bytes；0xff 保留空槽位置
@@ -746,6 +750,7 @@ type unitsFile struct {
 		NativeRecordByte35 *byte                   `json:"native_record_byte35,omitempty"`
 		NativeRecordByte36 *byte                   `json:"native_record_byte36,omitempty"`
 		NativeRecordWord42 *uint16                 `json:"native_record_word42,omitempty"`
+		NativeRecordWord46 *uint16                 `json:"native_record_word46,omitempty"`
 		Group              int                     `json:"group"`
 		NativeConstructor  *NativeConstructorTable `json:"native_constructor,omitempty"`
 		X                  int                     `json:"x"`
@@ -871,6 +876,11 @@ func Load(path string) (*State, error) {
 		}
 		if u.NativeRecordWord42 != nil {
 			nu.NativeRecordWord42, nu.HasNativeRecordWord42 = *u.NativeRecordWord42, true
+			nu.HP, nu.MaxHP = int(*u.NativeRecordWord42), int(*u.NativeRecordWord42)
+		}
+		if u.NativeRecordWord46 != nil {
+			nu.NativeRecordWord46, nu.HasNativeRecordWord46 = *u.NativeRecordWord46, true
+			nu.MP, nu.MaxMP = int(*u.NativeRecordWord46), int(*u.NativeRecordWord46)
 		}
 		if err := nu.SetInitialCommandMask(u.InitialCommandMask); err != nil {
 			return nil, fmt.Errorf("battle: unit %d initial_command_mask: %w", len(st.Units), err)

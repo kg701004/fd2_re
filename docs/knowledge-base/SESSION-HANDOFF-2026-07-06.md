@@ -643,7 +643,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 regression closure：使用 `fd2-go-test-local` 內建 Xvfb，完整 `GOMAXPROCS=1 GOFLAGS=-p=1 xvfb-run -a -s "-screen 0 1280x1024x24" go test ./...` 已全數通過（cmd/fd2、afm、battle、campaign、ending、fdicon、fdother、fdtxt、figani、indexedmap）。`assetPath` 增加 cwd ancestor lookup 解決 package-test 路徑；ch16 只在已 LOADCH 的 branch 內允許 SPAWN，ch14 line assertion 改為 FDTXT count-aligned continuation，不放寬 native 語意。
 - 2026-07-26 native unit table raw export：新增 `tools/extract_native_unit_tables.py`，Docker 對實際 FD2.EXE 驗證 `0x61af9` 68×10、`0x61da1` 32×24、`0x620a1` 68×11 records；IDA stack trace 進一步閉合 selector 為 FDFIELD roster b1/portrait（高 branch 先減 `0x44`）。輸出只含 selector/helper provenance 與 `bytes_hex`，不把 record byte 命名成 DATO/gameplay/class。此 fixture 尚未接 runtime unit/HUD admission，維持 fail-closed。
 - 2026-07-26 editable constructor raw field：`export_units.py` 可選讀 raw-table JSON，依已證實 portrait selector 輸出 `native_constructor` branch/index/record/aux_record；`battle.Load` 嚴格驗證 record 尺寸並保留舊 JSON 相容。Docker battle regression 通過；renderer/gameplay 尚未讀 raw bytes，避免過早解除 HUD gate。
-- 2026-07-27 constructor `+0x42` projection closure：Docker Capstone 重讀 `0x10db4..0x10e58`，確認 high=`u16(record+2)*level`、lower=`u16(record+3)+aux_byte6*(level-1)`，兩者都由 constructor `0x10fe9` 原樣寫入 runtime `+0x40/+0x42`。新增 `native_record_word42_for_portrait`、標準庫 regression 與 `native_unit_tables.json` raw fixture；`sync_native_selector_fields.py --native-tables` 只把這個 provenance 欄位合併到 33 張 map assets，不覆寫 normalized `hp`。table 未覆蓋的 selector 維持缺值，HUD/handler consumer 仍 fail-closed。
+- 2026-07-27 constructor `+0x42` projection closure：Docker Capstone 重讀 `0x10db4..0x10e58`，確認 high=`u16(record+2)*level`、lower=`u16(record+3)+aux_byte6*(level-1)`，兩者都由 constructor `0x10fe9` 原樣寫入 runtime `+0x40/+0x42`。新增 `native_record_word42_for_portrait`、標準庫 regression 與 `native_unit_tables.json` raw fixture。此段「只保存來源、不覆寫 hp」已被 2026-07-29 的完整 HP／MP 建構器證據取代；勿再當作現況。
 - 2026-07-26 HUD raw-state closure（2026-07-27 名稱更正）：Docker
   Capstone/IDA確認 `sub_11cac→sub_1297d` 在 `0x1acf3` 前更新
   `[0x53c0b]`；只有 `BIOS-tick-last`<0 或 >4 才3→0 advance並更新
@@ -2317,3 +2317,27 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   deterministic regression。map0 真實 roster＋command #0＋movement row0
   驗證 identity103 actor 在 `(23,14)` 命中 ally index。仍未接
   `0x15B77` score、best selection、presentation 或 production planner。
+
+## 2026-07-29：AI 地圖原始輸入與群組評分勘誤
+
+- 檢查實際資產後發現，33 張地圖共 1887 個單位原本全都沒有
+  `initial_command_mask`；先前「命令遮罩已在地圖資產」的理解是錯誤
+  斷言。`sync_native_selector_fields.py` 現由 FDFIELD b13..b16 同步五位元組
+  遮罩，重新檢查為 33 張圖、0 缺漏。263 筆非零遮罩中，261 筆在命令表與
+  原始 MP 成本閘門下至少有一個可用命令。
+- Docker Capstone 直接重讀 `0x10d7f..0x1100c`，閉合建構器的 MP 公式：
+  高階分支 `high[+4]*level`，低階分支
+  `u16(lower[+5])+lower_aux[+8]*(level-1)`；結果同寫 runtime
+  `+0x44/+0x46`。新增 `native_record_word46` 投影，1885 筆地圖單位具備
+  完整來源；map32 兩筆未覆蓋 selector 保持缺值與失敗即關閉。
+- 載入器對具備來源的 scripted roster，以 `word42` 初始化
+  `HP/MaxHP`、以 `word46` 初始化 `MP/MaxMP`。這修正原先只保存來源、
+  卻讓 AI 消費錯誤正規化數值的管線缺口；舊式編輯列缺欄位時仍沿用原值。
+  map19 unit55 固定 identity92、mask `[4,0,0,8,0]`、MP288、可用命令
+  `[2,27]`，其 detached runtime `+0x44/+0x46` 皆為288。
+- 新增 `ScoreNativeAIScoredCommandGroups`，依 `0x15B77` 的完整 ID 家族
+  分派攻擊、恢復、旗標與零分 scorer。map0 command0 的四個友軍目標各得24、
+  合計96；IDs10..12 缺 `0x1F183` caller gate 時拒絕執行。
+- `[0x53C23]` 數值最大值可由零開始比較，但函式區域命令字在全零分時的初值
+  尚未由 caller／prologue 證實。因此下一步可以接非負數值最大值與非零勝者，
+  不能猜測零分命令，也不能直接接正式 `NextAIPlan`。

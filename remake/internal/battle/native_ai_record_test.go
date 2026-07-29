@@ -30,6 +30,10 @@ func completeNativeAIScoringUnit() *Unit {
 		HasNativeRecordByte35:    true,
 		NativeRecordByte36:       14,
 		HasNativeRecordByte36:    true,
+		NativeRecordWord42:       234,
+		HasNativeRecordWord42:    true,
+		NativeRecordWord46:       18,
+		HasNativeRecordWord46:    true,
 		InventorySlots:           []int{1, 2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 		NativeInventoryFlags:     []int{0x40, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 		NativeCommandMask:        [5]byte{1, 2, 3, 4, 5},
@@ -64,6 +68,12 @@ func TestNativeAIScoringRecordsUsesRawPresentationAndAIBytes(t *testing.T) {
 	if got := binary.LittleEndian.Uint16(records[0x40:0x42]); got != 123 {
 		t.Fatalf("raw HP=%d want 123", got)
 	}
+	if got := binary.LittleEndian.Uint16(records[0x42:0x44]); got != 234 {
+		t.Fatalf("raw max HP=%d want 234", got)
+	}
+	if got := binary.LittleEndian.Uint16(records[0x46:0x48]); got != 18 {
+		t.Fatalf("raw max MP=%d want 18", got)
+	}
 	records[0] = 0
 	if unit.NativeMapPresentation.X != 7 {
 		t.Fatal("returned record aliases runtime unit")
@@ -81,6 +91,8 @@ func TestNativeAIScoringRecordsFailsClosedWithoutEveryProvenanceField(t *testing
 		{"byte34", func(u *Unit) { u.HasNativeRecordByte34 = false }},
 		{"byte35", func(u *Unit) { u.HasNativeRecordByte35 = false }},
 		{"byte36", func(u *Unit) { u.HasNativeRecordByte36 = false }},
+		{"word42", func(u *Unit) { u.HasNativeRecordWord42 = false }},
+		{"word46", func(u *Unit) { u.HasNativeRecordWord46 = false }},
 		{"identity", func(u *Unit) { u.HasNativeIdentity = false }},
 	}
 	for _, tc := range cases {
@@ -116,5 +128,43 @@ func TestMap0AssetsMaterializeNativeAIScoringRecords(t *testing.T) {
 		first[6] != 0 || first[0x34] != 0 ||
 		binary.LittleEndian.Uint16(first[0x40:0x42]) != 28 {
 		t.Fatalf("map0 first native AI record has wrong anchors: %x", first[:0x44])
+	}
+}
+
+func TestMap19AssetsCarryNativeAICommandMaskAndConstructorMP(t *testing.T) {
+	st, err := Load("../../assets/maps/map19/map19_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Units) <= 55 {
+		t.Fatalf("map19 roster len=%d", len(st.Units))
+	}
+	unit := st.Units[55]
+	if unit.NativeIdentity != 92 || !unit.HasNativeIdentity ||
+		unit.NativeCommandMask != ([5]byte{4, 0, 0, 8, 0}) ||
+		!unit.HasNativeRecordWord46 || unit.NativeRecordWord46 != 288 ||
+		unit.MP != 288 || unit.MaxMP != 288 {
+		t.Fatalf("map19 unit55 raw AI inputs=%+v", unit)
+	}
+	book, err := LoadNativeCommandRecords("../../assets/spells.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := NativeAvailableAIScoredCommandIDs(unit, book); len(got) != 2 ||
+		got[0] != 2 || got[1] != 27 {
+		t.Fatalf("map19 unit55 available commands=%v want [2 27]", got)
+	}
+	if err := unit.MaterializeNativeMapPresentation(); err != nil {
+		t.Fatal(err)
+	}
+	records, err := NativeAIScoringRecords([]*Unit{unit})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := binary.LittleEndian.Uint16(records[0x44:0x46]); got != 288 {
+		t.Fatalf("map19 unit55 current MP=%d want 288", got)
+	}
+	if got := binary.LittleEndian.Uint16(records[0x46:0x48]); got != 288 {
+		t.Fatalf("map19 unit55 max MP=%d want 288", got)
 	}
 }
