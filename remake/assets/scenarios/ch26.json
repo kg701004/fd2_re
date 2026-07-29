@@ -1,10 +1,10 @@
 {
   "chapter": 26,
+  "runtime_append_groups": true,
   "name": "未知的迴廊",
   "map": 25,
   "initial_groups": [
-    0,
-    1
+    0
   ],
   "party": [
     {

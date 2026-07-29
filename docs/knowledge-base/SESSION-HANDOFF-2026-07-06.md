@@ -2183,3 +2183,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - selector1 雖已定位到 `0x13A9F` 共用行動收尾與 `0x18890` 多個成功臂，
   仍不能簡化成 walk completion；event61 presentation 未完成前維持
   失敗即關閉。
+
+## 2026-07-29：FDTXT_026 計數與 event61 初始名冊勘誤
+
+- 舊「FDTXT_026 raw 61／authored 63」不是原始資料差異，而是
+  `count_logical_utterances()` 只計算以開引號 glyph 起始的對話。
+  string2／3 是 `0x15F84` 直接顯示的未加引號、無頭像訊息，應各計一次；
+  修正後全資源 63 個顯示單位與 `ch26.json` 63 lines 完全對齊。
+- event61 的 FDTXT string2／3／4 現可精確映射到 ch26 scene0 line10、
+  scene0 line11 與 scene1 lines0–9。2026-07-20／07-27 的舊 mismatch
+  敘述只保留歷史過程，以本節勘誤為準。
+- presentation 規則補齊為 `FDOTHER.DAT` resource45、59 frames、
+  destination offset48356、stride320、transparent -1、每幀 delay2。
+- `ch26.json` 已切換至 runtime append construction，initial group 只保留
+  group0；group1 的 char31 渥德留在 pending roster，等待 event61 成功臂。
+  測試固定事件前 active Wold=0、pending Wold=1。
+- 尚未完成的正式路徑仍是 selector1 成功收尾、59 幀畫面擁有權、D0 原始
+  inventory 原子移除、entry12、append group1 與永久 JOIN31；不得因文字
+  對齊與初始名冊修正就宣稱 event61 已可玩。

@@ -7,7 +7,7 @@ func TestLoadCountAlignedStoryIndexMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if index.MappingKind != "count_aligned_only" || len(index.Diagnostics) != 8 {
+	if index.MappingKind != "count_aligned_only" || len(index.Diagnostics) != 6 {
 		t.Fatalf("manifest identity = %#v", index)
 	}
 
@@ -47,6 +47,29 @@ func TestLoadCountAlignedStoryIndexMap(t *testing.T) {
 	}
 	if got := ch03Reinforce[0].Lines; len(got) != 7 || got[0] != 14 || got[6] != 20 {
 		t.Fatalf("ch03 turn3 #4 lines = %#v, want scene0 lines14..20", got)
+	}
+
+	ch26MissingItem, ok := index.Lookup("FDTXT_026", "ch26.json", 2)
+	if !ok || len(ch26MissingItem) != 1 ||
+		ch26MissingItem[0].SceneIndex != 0 ||
+		len(ch26MissingItem[0].Lines) != 1 ||
+		ch26MissingItem[0].Lines[0] != 10 {
+		t.Fatalf("ch26 event61 missing-item text #2 = %#v", ch26MissingItem)
+	}
+	ch26InsertItem, ok := index.Lookup("FDTXT_026", "ch26.json", 3)
+	if !ok || len(ch26InsertItem) != 1 ||
+		ch26InsertItem[0].SceneIndex != 0 ||
+		len(ch26InsertItem[0].Lines) != 1 ||
+		ch26InsertItem[0].Lines[0] != 11 {
+		t.Fatalf("ch26 event61 insertion text #3 = %#v", ch26InsertItem)
+	}
+	ch26Recruit, ok := index.Lookup("FDTXT_026", "ch26.json", 4)
+	if !ok || len(ch26Recruit) != 1 ||
+		ch26Recruit[0].SceneIndex != 1 ||
+		len(ch26Recruit[0].Lines) != 10 ||
+		ch26Recruit[0].Lines[0] != 0 ||
+		ch26Recruit[0].Lines[9] != 9 {
+		t.Fatalf("ch26 event61 recruitment text #4 = %#v", ch26Recruit)
 	}
 }
 

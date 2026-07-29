@@ -82,13 +82,18 @@ def parse_fdtxt_strings(path: Path) -> list[list[int]]:
 
 
 def count_logical_utterances(words: list[int]) -> int:
-    """Count dialogue starts, joining FFxx-wrapped visual rows into one line.
+    """Count displayed utterances, joining FFxx-wrapped visual rows.
 
     In a dialogue stream a new utterance starts at a non-control chunk whose
     second word is the opening quote glyph (557).  Subsequent chunks until the
     next such start are page/wrap fragments of that same utterance.  This is a
     structural count only; it intentionally does not attach a character name
     to the leading operand because some resources reuse that operand by scene.
+
+    A whole FDTXT string may instead be one unquoted, portrait-less message.
+    FDTXT_026 strings 2/3 are the direct event61 examples consumed by
+    0x15F84: they contain visible glyphs and wrapped rows but no opening quote.
+    Count such a string once.  A control-only/spacing-only string remains zero.
     """
 
     starts = 0
@@ -100,7 +105,14 @@ def count_logical_utterances(words: list[int]) -> int:
             chunk = []
         else:
             chunk.append(word)
-    return starts
+    if starts:
+        return starts
+    return int(
+        any(
+            word < CONTROL_MIN and word not in (0x00B5, OPEN_GLYPH)
+            for word in words
+        )
+    )
 
 
 def load_story(path: Path, story_root: Path) -> dict[str, Any]:

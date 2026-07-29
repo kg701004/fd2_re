@@ -52,9 +52,15 @@
         "final": 4
       },
       "presentation": {
+        "archive": "FDOTHER.DAT",
         "resource": 45,
         "frames": 59,
-        "helper": "0x2935b"
+        "helper": "0x2935b",
+        "destination_offset": 48356,
+        "stride": 320,
+        "transparent": -1,
+        "delay_helper": "0x17aa9",
+        "delay_ticks": 2
       }
     }
   ]

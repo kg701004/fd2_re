@@ -554,17 +554,37 @@ type NativeFieldModeRange struct {
 	Mode  byte `json:"mode"`
 }
 
+type NativeFieldTextIndices struct {
+	MissingItem int `json:"missing_item"`
+	Success     int `json:"success"`
+	Final       int `json:"final"`
+}
+
+type NativeFieldPresentation struct {
+	Archive           string `json:"archive"`
+	Resource          int    `json:"resource"`
+	Frames            int    `json:"frames"`
+	Helper            string `json:"helper"`
+	DestinationOffset int    `json:"destination_offset"`
+	Stride            int    `json:"stride"`
+	Transparent       int    `json:"transparent"`
+	DelayHelper       string `json:"delay_helper"`
+	DelayTicks        int    `json:"delay_ticks"`
+}
+
 // NativeFieldEventRule 保存已閉合 handler 的資料，不自行決定 selector 的呼叫時機。
 type NativeFieldEventRule struct {
-	EventID       int                    `json:"event_id"`
-	Selector      byte                   `json:"selector"`
-	TriggerGate   string                 `json:"trigger_gate,omitempty"`
-	SetModeRanges []NativeFieldModeRange `json:"set_mode_ranges,omitempty"`
-	OnceState     *int                   `json:"once_state_index,omitempty"`
-	RequiredItem  *int                   `json:"required_item,omitempty"`
-	ConsumeItem   bool                   `json:"consume_item,omitempty"`
-	SpawnGroup    *int                   `json:"spawn_group,omitempty"`
-	JoinCharacter *int                   `json:"join_character,omitempty"`
+	EventID       int                      `json:"event_id"`
+	Selector      byte                     `json:"selector"`
+	TriggerGate   string                   `json:"trigger_gate,omitempty"`
+	SetModeRanges []NativeFieldModeRange   `json:"set_mode_ranges,omitempty"`
+	OnceState     *int                     `json:"once_state_index,omitempty"`
+	RequiredItem  *int                     `json:"required_item,omitempty"`
+	ConsumeItem   bool                     `json:"consume_item,omitempty"`
+	SpawnGroup    *int                     `json:"spawn_group,omitempty"`
+	JoinCharacter *int                     `json:"join_character,omitempty"`
+	TextIndices   *NativeFieldTextIndices  `json:"text_indices,omitempty"`
+	Presentation  *NativeFieldPresentation `json:"presentation,omitempty"`
 }
 
 // TreasureAt 查詢尚未取得的寶物格。
