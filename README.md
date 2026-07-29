@@ -25,6 +25,41 @@
 [`fd2-reference-files.json`](docs/data/fd2-reference-files.json)；版本不同時
 必須重新定位，不能直接套用既有位址。
 
+## 專案核心
+
+這不只是素材瀏覽器，也不是把原版流程重新寫死一次。專案同時維護兩條互相
+驗證的主線：
+
+- **技術保存**：以原始位元組、IDA Pro 指令、呼叫關係與 DOSBox 實驗記錄
+  1995 年原版的資產格式、工具鏈、狀態機、介面、數值與遊戲規則。背景整理
+  見 [`15-how-fd2-was-made-1995.md`](docs/knowledge-base/15-how-fd2-was-made-1995.md)。
+- **潔淨室重製**：把寫死於 `FD2.EXE` 的對話、事件、戰後流程、城鎮、商店、
+  整備與隊伍狀態轉成具型別、可編輯的資料與規則。
+- **忠實模式與擴充模式共存**：原版戰役以證據還原；相同引擎日後可載入新
+  劇本、分支與戰役，不必修改原版執行檔。
+- **證據先於猜測**：未知處理器、存檔欄位或介面語意維持失敗即關閉，不用
+  看似合理的替代行為冒充原版。
+
+目前唯一持續整合的實作是 [`remake/`](remake/) 內的 Go／Ebiten 引擎。
+架構、資料邊界與完成條件以
+[`56-fd2-remake-sdd.md`](docs/knowledge-base/56-fd2-remake-sdd.md) 為準。
+
+## 已建立的主要貢獻
+
+| 貢獻 | 可重現成果 | 深入閱讀 |
+|---|---|---|
+| 原版資產保存工具鏈 | 統一解包 `.DAT`，解析 RLE 圖像、FDTXT、16×16 中文字型、地圖、XMIDI、AFM 與 FIGANI；產物可由玩家自備原版重生 | [`01` 容器與資產](docs/knowledge-base/01-container-and-asset-formats.md)、[`07` XMIDI](docs/knowledge-base/07-music-xmidi-format.md) |
+| 繁體中文文字系統還原 | 將原版字模索引、控制碼、對話框與動態文字整理為可讀、可編輯資料，不把它誤認為 Big5 文字檔 | [`08` 文字與字型](docs/knowledge-base/08-text-and-font-format.md)、[`14` 控制碼](docs/knowledge-base/14-text-control-codes.md) |
+| 動畫與戰鬥演出解碼 | 建立 AFM 增量繪圖虛擬機及 FIGANI 幀解碼器，保存原始座標、調色盤與時序資料 | [`39` AFM](docs/knowledge-base/39-ani-afm-format.md)、[`35` 戰鬥演出](docs/knowledge-base/35-battle-animation-rendering.md) |
+| 遊戲機制反向工程 | 以版本雜湊綁定戰鬥規則、物品、事件處理器、敵方 AI、章節狀態與戰後路徑；撤回缺少寫入端／消費端的舊斷言 | [`11` 敵方 AI](docs/knowledge-base/11-enemy-ai.md)、[`27` 戰鬥規則](docs/knowledge-base/27-combat-rules-and-validation-checklist.md) |
+| 原版介面逐狀態重建 | 城鎮、商店、讀檔及部分戰鬥介面以原版 indexed 資源重建；多個 ch02 狀態已有整幀 RGB 相同對照 | [`57` 介面證據矩陣](docs/knowledge-base/57-ui-evidence-matrix.md) |
+| 可編輯戰役與持續隊伍 | 對話、事件、章節節點、商店／教會／整備與 persistent party 逐步脫離硬編碼；原生 `FD2.SAV` 已有 checksum、槽位、目前快照及具型別名冊邊界 | [`29` 事件系統](docs/knowledge-base/29-remake-extensible-event-system.md)、[`23` 啟動與存檔流程](docs/knowledge-base/23-boot-title-and-scenario-flow.md) |
+
+這些貢獻各自代表已驗證的子系統，不代表完整 30 章已經可以從頭到尾等價
+遊玩。尚未閉合的玩家路徑、原生存檔還原與介面差距仍列在
+[`42-re-vs-remake-gap-audit.md`](docs/knowledge-base/42-re-vs-remake-gap-audit.md)
+與 [`91-worklist.md`](docs/knowledge-base/91-worklist.md)。
+
 ## 可驗證畫面
 
 以下圖片只代表其標示的狀態，不可外推為整套遊戲已完成。
