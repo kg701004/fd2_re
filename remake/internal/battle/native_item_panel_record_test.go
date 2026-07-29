@@ -8,6 +8,7 @@ import (
 func TestNativeItemPanelRecordForUnitUsesProvenRawSelectors(t *testing.T) {
 	unit := &Unit{
 		BattleFig: 9, NativeIdentity: 4, HasNativeIdentity: true,
+		NativeRecordByte8: 0x60, HasNativeRecordByte8: true,
 		NativeRecordByte6: 1, HasNativeRecordByte6: true,
 		NativeRecordRace: 7, HasNativeRecordRace: true,
 		NativeRecordClass: 8, HasNativeRecordClass: true,
@@ -22,7 +23,7 @@ func TestNativeItemPanelRecordForUnitUsesProvenRawSelectors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(record) != 80 || record[6] != 1 || record[7] != 9 || record[8] != 4 ||
+	if len(record) != 80 || record[6] != 1 || record[7] != 9 || record[8] != 0x60 ||
 		record[0x0a] != 0x40 || record[0x0b] != 0 || record[0x0d] != 79 ||
 		record[0x1f] != 7 || record[0x20] != 8 || record[0x21] != 12 ||
 		record[0x22] != 1 || record[0x27] != 6 || record[0x3b] != 5 ||

@@ -123,6 +123,24 @@ func TestLoadRejectsNativeIdentityOutsideByte(t *testing.T) {
 	}
 }
 
+func TestLoadKeepsScriptedRawByte8SeparateFromIdentity(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "units.json")
+	raw := `{"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"mp":0,"fig":7,"x":0,"y":0,"native_record_byte8":96}]}`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unit := st.Units[0]
+	if !unit.HasNativeRecordByte8 || unit.NativeRecordByte8 != 96 ||
+		unit.HasNativeIdentity {
+		t.Fatalf("scripted raw +8 was misclassified: %#v", unit)
+	}
+}
+
 func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 	units := []*Unit{
 		{MapSelectorKey: 2, HasMapSelectorKey: true},

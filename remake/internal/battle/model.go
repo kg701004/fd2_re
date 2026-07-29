@@ -76,6 +76,12 @@ type Unit struct {
 	// from Fig, BattleFig, portrait, or map-selector fields.
 	NativeIdentity    int
 	HasNativeIdentity bool
+	// NativeRecordByte8 preserves runtime/persistent record +8 without
+	// assigning a universal identity meaning. Player persistent records use
+	// this byte as NativeIdentity, while scripted runtime construction copies
+	// its visual selector into both +7 and +8.
+	NativeRecordByte8    byte
+	HasNativeRecordByte8 bool
 	// NativeRecordRace/Class are the independently proven raw bytes at
 	// persistent/runtime +0x1f/+0x20. They remain separate from normalized
 	// class labels and from the immutable constructor-table provenance because
@@ -506,20 +512,24 @@ type State struct {
 	// CONTINUE-rebuilt selector slots before a typed Unit projection exists.
 	// Units remains the normalized/gameplay array and is never guessed from
 	// these bytes by State itself.
-	NativeRuntimeRecords     []NativeRuntimeRecordState
-	NativeFieldEventSlots    []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
-	NativeFieldEvents        []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
-	NativeFieldEventRules    []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
-	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
-	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
-	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
-	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
-	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
-	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
-	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
-	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
-	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	NativeTreasureEventRules map[int]NativeTreasureEventRule
+	NativeRuntimeRecords []NativeRuntimeRecordState
+	// HasNativeRuntimeUnitProjection is set only after the complete saved
+	// runtime record array has been atomically projected to Units in original
+	// record order. It does not imply that timing or the battle driver is ready.
+	HasNativeRuntimeUnitProjection bool
+	NativeFieldEventSlots          []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
+	NativeFieldEvents              []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
+	NativeFieldEventRules          []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
+	NativeTileBlitModes            []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
+	NativeTerrainControl           []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
+	NativeTerrainMoveCodes         []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
+	SpellBook                      []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	NativeCommandBook              []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
+	NativeCommandResistances       map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
+	CommandLearn                   map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
+	AICommandSpell                 map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
+	Treasures                      map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	NativeTreasureEventRules       map[int]NativeTreasureEventRule
 	// OpenedTreasure is remake-owned state for editable treasure nodes.  It has
 	// no asserted native-global address: native [0x53ad5] is a pointer to a
 	// 0x20-byte battle-local state table (0x10322 copies it; 0x13d00 writes an
@@ -780,6 +790,7 @@ type unitsFile struct {
 		Fig                int                     `json:"fig"`
 		BattleFig          *int                    `json:"battle_fig,omitempty"`
 		NativeIdentity     *int                    `json:"native_identity,omitempty"`
+		NativeRecordByte8  *byte                   `json:"native_record_byte8,omitempty"`
 		NativeRecordRace   *byte                   `json:"native_record_race,omitempty"`
 		NativeRecordClass  *byte                   `json:"native_record_class,omitempty"`
 		MapSelectorSlot    *int                    `json:"map_selector_slot,omitempty"`
@@ -878,6 +889,14 @@ func Load(path string) (*State, error) {
 				return nil, fmt.Errorf("battle: unit %d native_identity %d outside byte range", len(st.Units), *u.NativeIdentity)
 			}
 			nu.NativeIdentity, nu.HasNativeIdentity = *u.NativeIdentity, true
+		}
+		if u.NativeRecordByte8 != nil {
+			nu.NativeRecordByte8, nu.HasNativeRecordByte8 = *u.NativeRecordByte8, true
+		} else if nu.HasNativeIdentity {
+			// Compatibility for verified player-persistent assets created
+			// before raw +8 was represented separately.
+			nu.NativeRecordByte8 = byte(nu.NativeIdentity)
+			nu.HasNativeRecordByte8 = true
 		}
 		if u.NativeRecordRace != nil {
 			nu.NativeRecordRace, nu.HasNativeRecordRace = *u.NativeRecordRace, true

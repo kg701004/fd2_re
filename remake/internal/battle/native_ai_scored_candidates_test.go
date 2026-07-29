@@ -124,7 +124,8 @@ func TestMap0AssetsBuildNativeAIScoredCommandCandidateGroups(t *testing.T) {
 	}
 	actor, target := -1, -1
 	for index, unit := range st.Units {
-		if actor < 0 && unit.NativeIdentity == 103 && unit.HasNativeIdentity {
+		if actor < 0 && unit.NativeRecordByte8 == 103 &&
+			unit.HasNativeRecordByte8 && !unit.HasNativeIdentity {
 			actor = index
 		}
 		if target < 0 && unit.NativeRecordByte6 == 1 && unit.HasNativeRecordByte6 {

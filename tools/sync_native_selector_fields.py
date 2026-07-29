@@ -7,7 +7,7 @@ does, however, close three fields for every scripted roster entry:
 
 * roster b0 -> 0x11019 raw key -> runtime unit+2 cache slot
 * roster b0 -> runtime unit+6
-* roster b1 -> runtime unit+7 / unit+8 FIGANI selector and identity
+* roster b1 -> runtime unit+7 / unit+8 raw visual selector bytes
 * roster b13..b16 -> runtime unit+0x1a..+0x1d command-mask bytes
 * the bounded b1-selected constructor record -> runtime +0x1f/+0x20
 * constructor formulas -> runtime max HP +0x42 and max MP +0x46
@@ -42,7 +42,7 @@ FIELDS = (
     "map_selector_key",
     "native_record_byte6",
     "battle_fig",
-    "native_identity",
+    "native_record_byte8",
     "initial_command_mask",
     "native_record_byte34",
     "native_record_byte35",
@@ -58,10 +58,9 @@ def expected_units(raw, map_index, native_tables=None):
             "map_selector_key": unit["native_map_selector_key"],
             "native_record_byte6": unit["native_record_byte6"],
             "battle_fig": raw_unit_key,
-            # Runtime +8 receives the same raw b1 byte. Keep the existing
-            # schema field for compatibility; this does not promote b1 to a
-            # universal character identity.
-            "native_identity": raw_unit_key,
+            # Runtime +8 receives the same raw b1 byte, but only player
+            # persistent records have the separate identity lookup contract.
+            "native_record_byte8": raw_unit_key,
             "initial_command_mask": unit["initial_command_mask"],
             "native_record_byte34": unit["native_record_byte34"],
             "native_record_byte35": unit["native_record_byte35"],
@@ -109,6 +108,17 @@ def sync_asset(raw, asset_path, write, native_tables=None):
         if not isinstance(unit, dict):
             raise ValueError(f"{asset_path}: unit {index} is not an object")
         fields = list(FIELDS)
+        legacy_identity = unit.get("native_identity")
+        if legacy_identity is not None:
+            if legacy_identity != native["native_record_byte8"]:
+                raise ValueError(
+                    f"{asset_path}: unit {index} legacy native_identity="
+                    f"{legacy_identity!r}, expected raw +8 "
+                    f"{native['native_record_byte8']!r}"
+                )
+            if write:
+                del unit["native_identity"]
+            changed += 1
         if "native_record_race" in native:
             fields.extend(("native_record_race", "native_record_class"))
         if "native_record_word42" in native:
@@ -154,10 +164,10 @@ def main(argv):
     for path in paths:
         map_index, count = sync_asset(args.raw, path, args.write, native_tables)
         changed += count
-        print(f"map{map_index}: {'updated' if args.write else 'verified'} ({count} missing selector fields)")
+        print(f"map{map_index}: {'updated' if args.write else 'verified'} ({count} pending native field migrations)")
     if args.check and changed:
-        raise ValueError(f"{changed} native selector fields are missing; run with --write")
-    print(f"{len(paths)} map assets {'updated' if args.write else 'verified'}; {changed} fields {'written' if args.write else 'missing'}")
+        raise ValueError(f"{changed} native field migrations are pending; run with --write")
+    print(f"{len(paths)} map assets {'updated' if args.write else 'verified'}; {changed} fields {'migrated' if args.write else 'pending'}")
     return 0
 
 

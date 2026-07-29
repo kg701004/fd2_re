@@ -16,6 +16,8 @@ func completeNativeAIScoringUnit() *Unit {
 		HasBattleFig:             true,
 		NativeIdentity:           10,
 		HasNativeIdentity:        true,
+		NativeRecordByte8:        0x60,
+		HasNativeRecordByte8:     true,
 		NativeRecordRace:         11,
 		HasNativeRecordRace:      true,
 		NativeRecordClass:        12,
@@ -61,7 +63,7 @@ func TestNativeAIScoringRecordsUsesRawPresentationAndAIBytes(t *testing.T) {
 		t.Fatalf("record len=%d want %d", len(records), nativeRecordSize)
 	}
 	if records[0] != 7 || records[1] != 8 || records[3] != 3 || records[4] != 4 ||
-		records[5] != 0x20 || records[6] != 1 ||
+		records[5] != 0x20 || records[6] != 1 || records[8] != 0x60 ||
 		records[0x34] != 0x81 || records[0x35] != 13 || records[0x36] != 14 {
 		t.Fatalf("raw AI fields were not preserved: %x", records[:0x37])
 	}
@@ -93,7 +95,10 @@ func TestNativeAIScoringRecordsFailsClosedWithoutEveryProvenanceField(t *testing
 		{"byte36", func(u *Unit) { u.HasNativeRecordByte36 = false }},
 		{"word42", func(u *Unit) { u.HasNativeRecordWord42 = false }},
 		{"word46", func(u *Unit) { u.HasNativeRecordWord46 = false }},
-		{"identity", func(u *Unit) { u.HasNativeIdentity = false }},
+		{"raw_byte8", func(u *Unit) {
+			u.HasNativeRecordByte8 = false
+			u.HasNativeIdentity = false
+		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -140,7 +145,8 @@ func TestMap19AssetsCarryNativeAICommandMaskAndConstructorMP(t *testing.T) {
 		t.Fatalf("map19 roster len=%d", len(st.Units))
 	}
 	unit := st.Units[55]
-	if unit.NativeIdentity != 92 || !unit.HasNativeIdentity ||
+	if unit.NativeRecordByte8 != 92 || !unit.HasNativeRecordByte8 ||
+		unit.HasNativeIdentity ||
 		unit.NativeCommandMask != ([5]byte{4, 0, 0, 8, 0}) ||
 		!unit.HasNativeRecordWord46 || unit.NativeRecordWord46 != 288 ||
 		unit.MP != 288 || unit.MaxMP != 288 {

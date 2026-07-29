@@ -58,8 +58,10 @@ func TestMap0AssetsProducePositiveNativeAI1598AScoreForCommand0(t *testing.T) {
 		t.Fatal(err)
 	}
 	actor := 23
-	if st.Units[actor].NativeIdentity != 103 {
-		t.Fatalf("map0 actor identity=%d want 103", st.Units[actor].NativeIdentity)
+	if st.Units[actor].NativeRecordByte8 != 103 ||
+		!st.Units[actor].HasNativeRecordByte8 ||
+		st.Units[actor].HasNativeIdentity {
+		t.Fatalf("map0 actor raw +8=%d want 103", st.Units[actor].NativeRecordByte8)
 	}
 	st.Units[actor].NativeCommandMask = [5]byte{1, 0, 0, 0, 0}
 	st.Units[actor].MP = 255

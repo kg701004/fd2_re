@@ -2526,8 +2526,8 @@ context（chapter、field dimensions、FDICON group count），原子驗證：
 gate B 與有效 anchor，不再把這四值列為未知。此契約只適用標題
 `0x26130` caller；不外推到戰場內 `0x1A251` caller。
 
-輸出仍明列四個 unresolved owners：map timing、runtime unit projection、
-future group constructor、battle driver。因此
+preflight 輸出仍明列四個尚待 caller 接管的 owners：map timing、
+runtime unit projection、future group constructor、battle driver。因此
 `ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
 沒有 production owner，也不改 `battle.State`。直接證據見
 [`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)
@@ -2587,6 +2587,38 @@ records，不啟動 timing，也不把 range mode 提前推成 interactive `1`�
 saved runtime-record materializer 與未來 `0x10C50` group append 阻擋。
 直接證據見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。
+
+`campaign.MaterializeNativeContinueRuntimeUnits` 現已關閉前者的
+lossless adapter。它要求上述 live field boundary 已安裝且逐筆 raw
+record、key、slot 仍與驗證輸入全同；接著先在 detached roster 完整驗證
+native camp `0/1/2`、class catalog、active presentation 與 first-seen
+selector cache，任一錯誤均不改 `State`。成功時才依 saved runtime list
+順序一次替換 `State.Units`，並保存：
+
+- exact `+0/+1/+3/+4` presentation，存檔 `+2` 一律不信任；
+- `+5/+6/+7/+8`、command mask、race/class、transient、
+  `+34..+36`、`+42/+46` 及完整八格 inventory raw provenance；
+- 所有已證實 signed stat words，及由 `+7` 在原順序重建的 selector slot。
+
+這裡特別撤回把所有 runtime `+8` 都稱為角色 identity 的錯誤模型：
+scripted constructor 會把 FDFIELD `b1` 同時寫入 runtime `+7/+8`；
+只有 native camp 2 的 player record 依 persistent copy／lookup 契約將
+`+8` 提升為 `NativeIdentity`。其餘單位只保存
+`NativeRecordByte8`，名稱使用 class 顯示投影，不冒充角色身分。
+`NativeItemPanelRecordForUnit` 也改優先消費這個 raw provenance；舊
+player-only assets 的 `NativeIdentity` fallback 僅為相容邊界。
+同一更正已套用到全部33份版本化 map unit assets：
+`tools/sync_native_selector_fields.py` 現由 FDFIELD `b1` 輸出
+`native_record_byte8`，並拒絕／移除舊 scripted `native_identity`；
+scenario party 的 persistent identity 欄位不受影響。AI fixture 與
+selector 測試也改以 raw +8 定位 scripted actor，不再靠錯誤語意名稱。
+
+使用者 checksum-valid 原版 `FD2.SAV` 已在 Docker 唯讀整合測試：
+chapter 0 的 12 筆 runtime records 全數依序 materialize，前四名 player
+為索爾、悠妮、亞雷斯、蓋亞；敵方 record `+8=96` 保持 raw 且沒有
+`HasNativeIdentity`。這個 adapter 不啟動 map timing、不建立未來 group、
+不切 interactive range mode，也不進 battle driver；正式 CONTINUE
+仍因其餘三個 owner 及 orchestration 維持失敗即關閉。
 
 ### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
 

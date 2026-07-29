@@ -95,13 +95,14 @@ func TestMap0AssetsScoreNativeAIScoredCommandGroup(t *testing.T) {
 	}
 	actor := -1
 	for index, unit := range st.Units {
-		if unit.NativeIdentity == 103 && unit.HasNativeIdentity {
+		if unit.NativeRecordByte8 == 103 &&
+			unit.HasNativeRecordByte8 && !unit.HasNativeIdentity {
 			actor = index
 			break
 		}
 	}
 	if actor < 0 {
-		t.Fatal("map0 identity 103 actor missing")
+		t.Fatal("map0 raw +8 value 103 actor missing")
 	}
 	groups, err := NativeAIScoredCommandCandidateGroups(
 		st.W, st.H, records, len(st.Units), actor, 0, book[0],

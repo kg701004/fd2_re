@@ -6,6 +6,31 @@
 > `42-re-vs-remake-gap-audit.md`、`91-worklist.md` 為準；具體 RE 證據回到各專題文件。
 > 保留本檔僅為提交與判讀 provenance，已被後續文件推翻的斷言須以後者為準。
 
+## 2026-07-30 CONTINUE saved runtime roster adapter
+
+新增 `campaign.MaterializeNativeContinueRuntimeUnits`，承接已驗證且已安裝
+live field boundary 的 saved `0x50` runtime records。整批先驗證 native
+camp、class、active raw presentation 與原順序 first-seen selector slots，
+成功後才原子替換 `State.Units`；失敗不改 roster／cache。完整保存 raw
+presentation、`+5/+6/+7/+8`、command/transient、inventory、race/class、
+`+34..+36`、`+42/+46` 與 stats，且不採信 saved `+2`。
+
+同時修正高風險命名：runtime `+8` 不是全域角色 identity。FDFIELD scripted
+constructor 會把 `b1` 寫入 `+7/+8`；只有 camp2 player record 依 persistent
+契約提升 `NativeIdentity`，其他 record 使用 `NativeRecordByte8` 保持 raw。
+`NativeItemPanelRecordForUnit` 優先使用 raw +8，舊 player-only identity
+fallback 僅作相容。使用者 checksum-valid 原版 chapter0 current snapshot
+已在唯讀 Docker 測試 materialize 12 筆 records；索爾、悠妮、亞雷斯、
+蓋亞與 enemy `+8=96` 分界正確。map timing、future group constructor、
+interactive range 與 battle driver 尚未接，正式 CONTINUE 保持
+失敗即關閉。
+
+版本化資料亦同步更正：33份 `map*_units.json` 的 scripted
+`native_identity` 全部遷移為 `native_record_byte8`，數值不變；
+`sync_native_selector_fields.py --check` 驗證零 pending。scenario party
+仍保留真正的 persistent `native_identity`。AI fixture 改讀 raw +8，
+避免測試本身把錯誤名稱重新固化。
+
 ## 2026-07-27 raw byte5 handler bridge
 
 `Scenario.PartyUnits`／`battle.Load` 對 HP>0 的 constructor materialization 保存 `NativeRecordByte5=0`；已知 damage/death

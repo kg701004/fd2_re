@@ -917,7 +917,7 @@
 
 - [x] **FDICON native selector primitive**：`Bank.SpriteFor(key,pose,cycle)` 嚴格表達已解析 B24 raw key 的 `key×12 + pose×3 + cycle` lookup（pose 0..3、cycle 0..2）並 regression；`0x127e0` 則先取 runtime `unit+2` cache slot 選對應 12-pointer block。它與 `0x287b5..0x2884c` 的 battle `unit+7 × 3` FIGANI selector 是不同 raw field；現有 exported visual id 的相等只在已驗證 roster 記錄成立，不能當 ABI alias。`NativeFrameIndex` 依 +4 movement offset 選 `0x3C0B/0x3C07`，將 global cycle 3 正規化為 1，`+0x26` 則強制 0；撤回「runtime +4 frame」說法，故沒有把它隱式接入 GUI。
   - [~] battle selector bridge：`battle_fig`→`Unit.BattleFig`→全螢幕 `newAtkAnim` 已可承載 split ABI，loader regression 固定它可與 legacy map `fig` 不同；constructor `0x10d7f..0x10efc` 已閉合 FDFIELD `b1→unit+7`，正式 exporter 已寫入該欄、舊 JSON 才 fallback。`fig` 不宣稱原版 field。
-  - [~] map selector provenance audit：`0x10c50→0x11019` 是 global raw-key FDICON cache path；完整 constructor 已釘 FDFIELD `b0`（亦寫 native camp `+6`）。`0x11019` 只比對全域 key table，僅新 key 使用 caller archive pointer 建 block；player `0x10a25` 與 scripted `0x10b69` 都開啟 `FDICON.B24`。parser/exporter 現輸出 raw `map_selector_key=b0`；map0 30筆實跑為 keys `[0,1,2]` 並逐筆等於 camp raw code。`tools/sync_native_selector_fields.py --check` 現驗證全部 33 份版本化 map assets 的 `map_selector_key`／`battle_fig`，且只更新這兩個閉合欄位，避免 full exporter 覆寫既有人工校正數值。Scenario 現在以 party-first／group-order batch materialize，battle draw 只在整場成功時 slot→key；malformed editable input 會保留 legacy append 並禁用全場 native selector。撤回把角色表/DATO/素材 index 的相等值當成全域 mapping。下一步是 native indexed buffer/palette/layer composition，不得把目前 PNG/Ebiten selector adapter 寫成完整原版 renderer。
+  - [~] map selector provenance audit：`0x10c50→0x11019` 是 global raw-key FDICON cache path；完整 constructor 已釘 FDFIELD `b0`（亦寫 native camp `+6`）。`0x11019` 只比對全域 key table，僅新 key 使用 caller archive pointer 建 block；player `0x10a25` 與 scripted `0x10b69` 都開啟 `FDICON.B24`。parser/exporter 現輸出 raw `map_selector_key=b0`；map0 30筆實跑為 keys `[0,1,2]` 並逐筆等於 camp raw code。`tools/sync_native_selector_fields.py --check` 現驗證全部 33 份版本化 map assets 的 `map_selector_key`／`battle_fig`／raw `native_record_byte8`；舊 scripted `native_identity` 已移除，避免把 FDFIELD `b1→runtime +8` 錯稱角色身分，且不覆寫其他人工校正數值。Scenario 現在以 party-first／group-order batch materialize，battle draw 只在整場成功時 slot→key；malformed editable input 會保留 legacy append 並禁用全場 native selector。撤回把角色表/DATO/素材 index 的相等值當成全域 mapping。下一步是 native indexed buffer/palette/layer composition，不得把目前 PNG/Ebiten selector adapter 寫成完整原版 renderer。
     - [x] player-party source split：`0x1088d→0x10a77` 先 copy persistent `[0x53bf7]` 0x50-byte record，再用 copied `+7` 作 `0x11019` key，回傳 slot 寫 `unit+2`。它不是 FDFIELD `b0` 路徑；slot allocation 順序必須保留這條 roster loop 的順序。
       Official IDA 9.4 address-only xref report再確認 `0x10a77` 屬於 `sub_1088d`，而 `sub_1088d` 的 callers 是 `0x205ff`、`0x25870`、`0x2c437`；不得將 selector initialization 當成只有一般 battle setup 才會做的步驟。
       `JOIN` constructor `0x112a5(join_id)` 直接寫 persistent `+7=join_id` 且 `+8=join_id`；`0x33499` 已閉合 `+8` character-ID lookup。因此 fresh player 的 map raw key=character ID，但只限這個 writer；不得回推 FDFIELD/NPC/general `fig` identity。另 `0x314a7..0x3157a` class-change flow 對 live roster `+7` 寫 UI-selected raw target，故 equality 不是 immutable；`0x11506` 的 full 0x50 runtime→persistent copy 會在任何 `sync_party` caller 保存它，唯 class-change 是否立即進這條 flow 待追。
@@ -1604,8 +1604,9 @@
   `battle.State`。後續 IDA/Capstone 又證實標題 caller 的 range mode
   為開場 `0`／進戰鬥驅動前 `1`，資料映像 gate B／anchor seed 均為
   `1`，且 anchor 只依已恢復 visible cursor 精確推進；這些值已收入
-  `ContinueMapPresentation`。map timing、runtime unit projection、
-  future group constructor、battle driver 仍列 unresolved owners，
+  `ContinueMapPresentation`。preflight 仍把 map timing、runtime unit
+  projection、future group constructor、battle driver 列為待 caller
+  接管的 owners，
   `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
   → `fd2_continue_selector_rebuild_ida.txt`、
   `fd2_continue_map_presentation_ida.txt`
@@ -1652,6 +1653,25 @@
     已關閉並拆成 `runtime_unit_projection` 與
     `future_group_constructor`；exact saved runtime records 與重建 slots
     已先保存在 State，但尚未猜成 `battle.Unit`。
+  - [x] **CONTINUE saved runtime unit projection**：
+    `MaterializeNativeContinueRuntimeUnits` 只接受已重驗 input 與逐筆相符的
+    live field boundary；先在 detached roster 驗證 raw camp 0/1/2、
+    class、active presentation 及 first-seen selector cache，再依 saved
+    runtime record 順序原子替換 `State.Units`。它完整保存
+    `+0/+1/+3/+4/+5/+6/+7/+8`、command mask、race/class、
+    transient、`+34..+36`、`+42/+46`、八格 inventory 與 signed stats；
+    saved `+2` 永不採信。撤回「所有 runtime +8 都是 identity」：只有
+    native camp2 player record 依 persistent 契約提升
+    `NativeIdentity`，其餘只保存 `NativeRecordByte8`。
+    checksum-valid 原版 chapter0 current snapshot 的12筆 records 已在
+    Docker 整合測試全數通過，前四名為索爾、悠妮、亞雷斯、蓋亞，
+    enemy `+8=96` 不具 identity。adapter 不設定 timing、不 append future
+    group、不切 interactive mode、不啟動 battle driver；正式 CONTINUE
+    仍失敗即關閉。
+    同輪同步遷移33份 map unit assets：scripted FDFIELD `b1` 現輸出
+    `native_record_byte8`，不再輸出 `native_identity`；同步工具
+    `--check` 全數零 pending，AI／item-panel raw record consumers 仍取得
+    相同位元，但不再攜帶錯誤角色語意。
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

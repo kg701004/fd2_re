@@ -201,7 +201,9 @@ func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
 		t.Fatal(err)
 	}
 	const actor = 55
-	if st.Units[actor].NativeIdentity != 92 ||
+	if st.Units[actor].NativeRecordByte8 != 92 ||
+		!st.Units[actor].HasNativeRecordByte8 ||
+		st.Units[actor].HasNativeIdentity ||
 		st.Units[actor].NativeCommandMask != [5]byte{4, 0, 0, 8, 0} ||
 		st.Units[actor].MP != 288 {
 		t.Fatalf("map19 actor55=%+v", st.Units[actor])

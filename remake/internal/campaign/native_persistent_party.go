@@ -148,6 +148,8 @@ func MaterializeNativePersistentPartyRecord(
 		MV:                   int(view.Movement),
 		NativeIdentity:       identity,
 		HasNativeIdentity:    true,
+		NativeRecordByte8:    view.RawIdentity,
+		HasNativeRecordByte8: true,
 		MapSelectorKey:       int(view.RawPresentationKey),
 		HasMapSelectorKey:    true,
 		NativeRecordRace:     view.Race,
