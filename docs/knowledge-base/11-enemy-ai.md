@@ -60,11 +60,13 @@
    `0x13A9F(unit,0)`。因此 `0x1D8BA` 不能降成單一「每個敵人行動一次」
    迴圈。
 4. 三個逐單位路徑都在 mode dispatcher 後，先以 `[0x51A8F]`（非
-   `0xFF` 時）索引已閉合的 90-entry 全域事件表 `0x51B91`，再以章節
-   索引 `[0x53C03]` 呼叫章節戰場事件 handler 表 `0x51B19`；每筆最後
-   檢查已閉合的 pending 碼 `[0x53ECC]`，非零就離開掃描。這不是三個
-   未知 callback：前者消費 selector 產生的事件 ID，後者可寫中場碼1
-   或章節結束碼2。
+   `0xFF` 時）索引 90 筆全域事件表 `0x51B91`，再重新讀取章節索引
+   `[0x53C03]`，無條件呼叫 30 筆章節戰場事件處理器表 `0x51B19`；
+   兩張表之後才檢查 raw pending 碼 `[0x53ECC]`，非零就離開掃描。
+   合法 IDA Pro 9.4 已證實兩張表的原始邊界及指標；其直接資料交叉參照中，
+   `0x13A44` 是 `[0x51A8F]` 唯一非重設寫入端。這些表不是未知位址，
+   但各 handler 的高階效果仍須逐筆閉合；raw pending 碼 1／2 也不可在
+   本層直接改名成「中場／勝利」。
 5. `0x13A9F` 的所有模式最後合流至 `0x13E77`：
    `0x13A44(record.x,record.y,1)→0x13512(unit)→0x134E4→0x11CAC(0)`，
    然後返回上述掃描迴圈。這直接固定 selector1、bit7 與重畫的先後，
@@ -80,13 +82,23 @@
 完全未知；真正尚不能回答的是敵軍為何需要預選與第二遍、兩個預選分數
 各自的完整玩法名稱，以及每種 mode 對玩家可見的完整玩法名稱。
 
-重製端新增 `fdother.PlanNativePhaseUnitScans`，以完整 `0x50` records 與
-caller-supplied signed `[0x53C23]/[0x53C33]` 分數，分別輸出
+重製端 `fdother.PlanNativePhaseUnitScans` 以完整 `0x50` records 與
+呼叫端提供的 signed `[0x53C23]/[0x53C33]` 分數，分別輸出
 selector1 單遍、selector0 預選與 selector0 第二遍。它保留原始逐列順序、
 三個 raw admission gates 與「任一分數至少6」條件；三個 pass 不會被攤平成
 一列，因為每筆後方的全域事件／章節 handler 可能寫 pending 碼而提早退出。
 缺少逐單位 score provenance 時整體失敗即關閉。這是 E0 phase contract，
 尚未授權正規化 `NextAIPlan` 冒充原版兩遍執行期。
+
+2026-07-29 的 IDA 優先複核再補上
+`fdother.ExecuteNativePhaseUnitScans`：它不是拿上述靜態 plan 直接執行，
+而是三遍都重新讀 raw record。這是必要條件，因為第一個 selector0 優先遍
+成功後會由 `0x13512` 設 `record+5 bit7`，第二遍必須重新 gate 才能排除
+已行動者。兩張表的尾段對每一筆 record 都會執行，即使該筆未通過 action
+gate；全域事件 handler 可能先設 pending，但章節 handler 仍會執行，之後
+才檢查是否退出。索引超出 90／30 筆或缺任一回呼時一律失敗即關閉。直接
+證據與表格指標見
+[`fd2_ai_phase_callback_tables_ida.txt`](../data/fd2_ai_phase_callback_tables_ida.txt)。
 
 兩個門檻現在可以按 producer 範圍命名，但不能擴張成特定技能：
 `0x1598A` 產生法術候選並把最佳分數寫到 `[0x53C23]`；
@@ -499,8 +511,9 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 ## 重製對應（fail-closed）
 
 目前已能以完整原始記錄、命令遮罩、MP、候選幾何、兩個單位級分數及三遍
-門檻建立原始 AI 診斷切片；仍不可宣稱整回合已重現。逐單位回呼與 pending
-code、`0x1DEBE` 條件、raw `+8`、上層 mode 語意、零分勝者與動態原版對照
-尚未全部閉合。重製端的正規化
+門檻建立原始 AI 診斷切片；另有逐筆回呼順序、動態 bit7 重判及 pending
+提前退出的 E0 執行契約，但尚未提供 `0x13A9F` 與各表 handler 的正式效果，
+不可宣稱整回合已重現。`0x1DEBE` 條件、raw `+8`、上層 mode 語意、
+零分勝者與動態原版對照仍未全部閉合。重製端的正規化
 `aiActUnit`／`NextAIPlan` 因此仍是近似路徑；難度調整參數也不得當成原版
 等價設定。

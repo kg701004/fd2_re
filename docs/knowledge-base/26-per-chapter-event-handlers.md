@@ -7,7 +7,7 @@
 > 方法:`tools/event_handler_dump.py`(遞迴反組譯單一 handler + 標註事件原語);機器可讀結果在 [`docs/data/battle_events.json`](../data/battle_events.json)。
 > 標 **[驗]**(disasm 直證)/ **[推]**(語意推定)。
 
-> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的 raw result metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,少數章只有 `roster_has`/`raw_record_byte5_bit0` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json)。event_id→group 的消費鏈已由 `25` §6.1 閉合：`0x1a813` 依 turn/camp 篩選，呼叫 `0x51b91` 全域 90-entry 表中的 FDFIELD 子集合 0..57，再由 handler 呼叫 spawn 原語；58..89 另有玩家操作、格子互動與單位行動等通用 consumers，不能再稱整張表只有 58 項。`0x22e5c` 是章1專屬固定中場過場，與 turn_events 無關。`tools/gen_campaign.py` 舊「RE 撞牆」文字僅保留歷史 provenance，不得當成現況。
+> ⚠ **澄清(2026-07,gen_campaign v3 誤用後補記,防後人再誤用)**:`battle_events.json` 是**本篇 handler 的 raw result metadata**(is_default/result_codes/trigger_units_flag/extra_conditions/action_fns),**不是「回合增援事件 dump」**——§1 已明講「handler 不含任何動作函式」,少數章只有 `roster_has`/`raw_record_byte5_bit0` 條件字串,完全沒有 turn/group 欄位。**真正的回合制增援資料**(第幾回合、敵/友/特殊、全域 event_id)在 **FDFIELD.DAT 控制段**(`tools/parse_field.py` 的 `turn_events`,doc 29 §11 記載),已 dump 成 [`docs/data/turn_events.json`](../data/turn_events.json)。event_id→group 的消費鏈已由 `25` §6.1 閉合：`0x1a813` 依 turn/camp 篩選，呼叫 `0x51b91` 全域 90-entry 表中的 FDFIELD 子集合 0..57，再由 handler 呼叫 spawn 原語；58..89 另有玩家操作、格子互動與單位行動等通用 consumers，不能再稱整張表只有 58 項。`0x22e5c` 是固定資源 #79 呈現路徑，與 turn_events 無關；「章1專屬中場」舊名稱因缺少章節讀取及原版執行期證據而撤回。`tools/gen_campaign.py` 舊「RE 撞牆」文字僅保留歷史 provenance，不得當成現況。
 
 ## 1. 事件原語(handler 的「指令集」)
 
@@ -100,8 +100,11 @@
 | 28 | `0x20b72` | 單位 → **2**;單位 40 → 1 | 1 / 2 | ✓ | 結局關 |
 | 29 | `0x20bf5` | 單位 20 → **2**;單位 → 1 | 1 / 2 | ✓ | 結局關 |
 
-**讀法**:特殊章的共通結構 =「查特定單位(或單位群)狀態 → 若成立則觸發劇情事件(碼 1,戰役迴圈帶你去世界地圖/中場播劇情)或判定特殊勝利(碼 2)」;未觸發則回落到標準殲滅判定。
-有 `碼 2` 的章(17/19/22/28/29)是**有特殊勝利/結束條件的關**：其直接 branch 會在指定 unit 的 raw byte+5 bit0 predicate 命中時設碼 2，不能把 predicate 命名成 inactive 或標準殲滅。確切玩法語意(護衛目標／主將／其他章節條件)仍須逐章配劇情理解，重製按 campaign 定義。
+**讀法**：特殊章的共同結構只證實「查特定單位或單位群的 raw 狀態，
+命中時寫 pending 碼 1／2；未命中時可回落到共用三值規則」。碼 1 的外層
+固定走資源 #79 呈現；碼 2 走章節索引戰後表與 `0x2CAD7` gate。不能只靠
+數值把各 branch 命名成劇情事件、特殊勝利或標準殲滅。確切玩法語意
+（護衛目標／主將／其他章節條件）仍須逐章配合原版一般玩家路徑驗證。
 
 ## 3. 範例:章 17 handler `0x208cf` 反組譯 [驗]
 

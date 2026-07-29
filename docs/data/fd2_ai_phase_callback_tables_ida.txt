@@ -1,0 +1,113 @@
+# AI 階段逐筆回呼表：IDA Pro 9.4 直接證據
+
+來源檔案：FD2.EXE
+大小：357074 位元組
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+
+工具：
+- 使用者合法提供的 IDA Pro 9.4
+- Docker 映像：fd2-ida-authorized-local:latest
+- 原版 FD2.EXE 與 /home/anr2/ida_94_official/dist 均以唯讀方式掛載
+- IDA 資料庫與報告只寫入 /tmp/fd2-ida-phase-callbacks
+- Capstone 指令交叉驗證見 fd2_ai_unit_scan_disasm.txt
+
+重現方式：
+1. 以 tools/ida_probe_functions.py 查詢
+   0x1D80B、0x1D8BA、0x13A44、0x205B4、0x205DA、0x22E5C、0x25BF4。
+2. 以 tools/ida_probe_data_xrefs.py 查詢
+   0x51A8F、0x53C03、0x53ECC、0x51B19、0x51B91。
+3. 以 tools/ida_dump_bytes.py 匯出
+   0x51B19:0x78 與 0x51B91:0x168。
+
+## 函式與逐筆順序
+
+- IDA 函式 `0x1D80B..0x1D8BA`，唯一直接呼叫點 `0x1A4EB`。
+- IDA 函式 `0x1D8BA..0x1DA16`，唯一直接呼叫點 `0x1A58F`。
+- `0x1D988` 位於第二個函式內，不是另一個函式入口。
+- 三個逐筆路徑都先把 `[0x51A8F]` 寫成 `0xFF`。
+- 單位通過 raw gate 時才可能呼叫 `0x13A9F`；未通過仍落到逐筆尾段。
+- `[0x51A8F] != 0xFF` 時才呼叫 `0x51B91[event*4]`。
+- 接著重新讀取 `[0x53C03]`，無條件呼叫 `0x51B19[chapter*4]`。
+- 兩張表的呼叫機會都結束後，才檢查 `[0x53ECC]`；非零便離開目前掃描。
+- 兩張表都以當前 native unit index 作唯一堆疊參數。
+
+關鍵直接指令：
+
+```
+0x1D87E cmp [0x51A8F],0xFF
+0x1D890 call [0x51B91+eax*4]
+0x1D89A mov eax,[0x53C03]
+0x1D8A0 call [0x51B19+eax*4]
+0x1D8AA cmp [0x53ECC],0
+
+0x1D94A cmp [0x51A8F],0xFF
+0x1D95C call [0x51B91+eax*4]
+0x1D966 mov eax,[0x53C03]
+0x1D96C call [0x51B19+eax*4]
+0x1D976 cmp [0x53ECC],0
+
+0x1D9DA cmp [0x51A8F],0xFF
+0x1D9EC call [0x51B91+eax*4]
+0x1D9F6 mov eax,[0x53C03]
+0x1D9FC call [0x51B19+eax*4]
+0x1DA06 cmp [0x53ECC],0
+```
+
+## `[0x51A8F]` 的寫入來源
+
+IDA 的完整資料交叉參照只找到一個非重設寫入：
+
+```
+0x13A95  mov [0x51A8F],edx
+```
+
+`0x13A44..0x13A9F` 先由 `0x12E38(x,y)` 取得格子控制資料；通過
+`var_4 & 0x60 == 0`、1-based slot 非零、控制列 event ID 非 `0xFF`，
+且控制列 selector 等於第三參數時，才把 event ID 寫入 `[0x51A8F]`。
+因此 `0x51A8F` 可稱為 raw 全域事件索引；不能從這個 writer 替每個
+event ID 命名玩家可見效果。
+
+## 兩張表的邊界
+
+`0x51B19` 到下一張表 `0x51B91` 正好是 `0x78` 位元組，即 30 個
+32-bit 指標。原始指標依章節索引 0..29 為：
+
+```
+205B4 206C5 205B4 205B4 205B4 205B4 205B4 205B4 205B4 20707
+205B4 2073D 20765 205B4 20822 2084A 20872 208CF 20926 20957
+20A51 20A87 20AAF 205B4 20B14 20B3C 20A87 20A87 20B72 20BF5
+```
+
+`0x51B91` 到下一個已知全域 `0x51CF9` 正好是 `0x168` 位元組，即
+90 個 32-bit 指標。首筆是 `0x341DB`，第 58 筆是 `0x35487`，
+第 62 筆是 `0x356B7`，第 83 筆是 `0x35F92`，末筆是 `0x360F8`。
+完整原始位元組可用上述固定範圍重現；高階效果仍須逐 handler 閉合。
+
+## `[0x53ECC]` 的可證實語意邊界
+
+- 所有觀察到的逐單位掃描只判斷「是否非零」，不在掃描內解譯數值。
+- `main 0x25BF4` 在 `0x25DD5` 比較碼 1，固定呼叫 `0x22E5C` 後清零。
+- `0x22E5C..0x22EF6` 載入 `FDOTHER.DAT` 資源 `0x4F`，做兩次
+  `0x2935B` 呈現及固定 tick；函式不讀 `[0x53C03]`。
+- `main` 在 `0x25E02` 比較碼 2，先呼叫章節索引的 `0x51DE9` 表，
+  再呼叫 `0x2CAD7`；只有該函式回傳零時，才呼叫章節索引的
+  `0x51D71` 表、選下一段 BGM 並恢復主迴圈。
+
+所以本層只把 `[0x53ECC]` 稱為 raw pending 碼。碼 1 的直接結果是固定
+資源 #79 呈現路徑；碼 2 的直接結果是章節索引戰後表與後續選單／結束
+控制流。沒有相同狀態的原版執行期證據前，不把所有 writer 的碼 1 統稱
+「世界地圖／中場」，也不把所有碼 2 統稱「勝利／直接下一章」。
+
+## 重製契約
+
+`fdother.ExecuteNativePhaseUnitScans` 只保存上述 E0 控制流：
+
+- 每一遍都重新讀取 raw record gate；
+- 第一遍動作若改寫 `record+5 bit7`，第二遍會重新判斷並排除；
+- 即使單位不合格，仍執行章節表與 pending 檢查；
+- 全域事件索引只接受 0..89 或 `0xFF`；
+- 章節表索引只接受 0..29；
+- pending 非零只保存 raw 數值及退出位置，不命名場景結果。
+
+這不是正式 AI runtime，也沒有為任何未知 handler 補上效果。

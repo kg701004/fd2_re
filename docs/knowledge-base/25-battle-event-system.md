@@ -1,7 +1,7 @@
 # 25 — 戰場事件系統:章節 handler 與事件原語(反組譯)
 
 > doc 24 §6.3 留的受阻項:`[0x53ecc]=1/2` 的 28 個寫入點(0x205c9–0x20c64)各對應哪種事件、整個「事件指令集」長怎樣。本篇挖完。
-> **核心結論(且修正 doc 24 用詞)**:FD2 的戰場事件**不是 byte-code opcode VM**,而是**「每章一個編譯進 EXE 的 C handler 函式」**,放進第三張章節跳表 `0x51b19`,由戰場迴圈在每場結束時 `call [章節*4+0x51b19]` 觸發,handler 檢查條件後設 `[0x53ecc]`(1=中途事件 / 2=勝利)。
+> **核心結論(且修正 doc 24 用詞)**:FD2 的戰場事件**不是 byte-code opcode VM**,而是**「每章一個編譯進 EXE 的 C handler 函式」**,放進第三張章節跳表 `0x51b19`。該表由戰場主迴圈及逐單位掃描路徑反覆呼叫；handler 檢查條件後可寫 `[0x53ecc]` raw pending 碼。碼 1／2 的玩家可見名稱必須由逐章 caller 與外層路徑另證。
 > 方法:call-graph(`callgraph_le.py`)+ fixup 跳表解析,全程比對既有結論(rulebook 62/63)。標 **[驗]/[推]/[阻]**。
 
 ## 1. 三張章節跳表(都以 `[0x53c03]` 章節索引)
@@ -10,7 +10,7 @@
 
 | 跳表 | linear | 用途 | dispatch 點(已驗證) |
 |---|---|---|---|
-| **戰場事件** | `0x51b19` | 每場戰鬥結束時呼叫,決定 `[0x53ecc]` | `0x1197b`(戰場迴圈 0x117e7 內):`mov eax,[0x53c03]; call [eax*4+0x51b19]` |
+| **戰場事件** | `0x51b19` | 多個戰場路徑呼叫，可改寫 `[0x53ecc]` | `0x1197b`，以及逐單位 `0x1d8a0/0x1d96c/0x1d9fc` |
 | 戰前/劇情 | `0x51d71` | 進章節前的 cutscene / 戰場設置 | 0x25f10、0x260f5、0x25e3a |
 | 戰後/勝利 | `0x51de9` | 戰鬥勝利後的劇情 | 0x25e23 |
 
@@ -53,7 +53,8 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 - **`[0x53a45]`** = 戰場單位陣列基底(每單位 0x50 byte;doc 23)。事件條件多半在查它。[驗]
 - **`[0x53bef]`** = **回合數**(戰場開始=1、`inc`、handler `cmp N`)→ 「第 N 回合觸發」類事件。[驗](doc 26)
 - **`[0x53ec8]`** = 累積計數(`add reg`+每 tick `clamp` 99,0x11959;非回合數)→ 語意待定。[推]
-- **`[0x53ecc]`** = 輸出碼(1=中途事件 / 2=勝利 / 0=續打),戰役迴圈據此分派(doc 24 §6)。[驗]
+- **`[0x53ecc]`** = raw pending 輸出碼；0 表示掃描繼續，1／2 由外層
+  不同分支消費，不在 handler 層命名中場或勝利。[驗]
 
 ## 5. 實例:章 1 handler `0x206c5` [驗]
 
@@ -86,16 +87,18 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
           camp0 活躍列存在→0；record0 bit0→1；其餘→2
               │
 戰役迴圈(doc 24 §6)讀 [0x53ecc]
-  ├ ==1 → 世界地圖/中場 0x22e5c(章1專屬固定過場,非資料驅動,見 §6.1 修正) → 清0 → 續打
-  └ ==2 → 戰後跳表 0x51de9[章節] → 結局判定 0x2cad7 → 下一章跳表 0x51d71[章節]
+  ├ ==1 → 固定 0x22e5c 資源 #79 呈現 → 清0
+  └ ==2 → 章節索引戰後表 0x51de9 → 0x2cad7 gate → 回傳0才走 0x51d71
 ```
 
 ## 6.1 turn_events.event_id → group 消費機制(已解,取代先前 [阻] 的 `0x22e5c` 猜測)
 
 > **修正**:§8 先前把 `0x22e5c` 列為「turn_events 消費點,待解」。call-graph 驗證(`callgraph_le.py callers 0x22e5c`)
-> 顯示它唯一 caller 是 `0x25de5`(戰役主迴圈:`[0x53ecc]==1` 時呼叫),且函式體內只操作固定的圖片/文字資源
-> (`0x51a4d`、`0x520ba` 等常數位址),不觸碰 FDFIELD 控制段——**它是「第1章專屬、寫死的中場過場演出」**,
-> 與 turn_events 資料無關。真正消費點在下面的 `0x1a813`。[驗]
+> 顯示它唯一 caller 是 `0x25de5`（戰役主迴圈在 `[0x53ecc]==1` 時呼叫），
+> 且函式體載入固定的 `FDOTHER.DAT` 資源 #79、做兩次呈現，不觸碰
+> FDFIELD 控制段或章節索引。這證明它與 turn_events 資料無關；但舊稱
+> 「第1章專屬中場」沒有同狀態執行期證據，已撤回。真正的 turn_events
+> 消費點是下面的 `0x1a813`。[驗]
 
 **呼叫鏈(3 處呼叫點,camp 過濾)**:
 
@@ -424,7 +427,8 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 - **[已解,見 §6.1]** ~~`turn_events.event_id → group` 對應機制(先前疑 `0x22e5c`,未解)~~ →
   真正消費點是 `0x1a813`(3 呼叫點 camp filter)+ 全域 `event_id` 跳表 `0x51b91`
   （全表 90 entries；FDFIELD 回合事件使用 0..57）+
-  spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 只是第1章專屬固定過場,與 turn_events 無關。
+  spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 是固定資源 #79 呈現路徑，
+  與 turn_events 無關；「第1章專屬中場」舊名稱已撤回。
   map0/章1 event→group mapping 4/4交叉吻合，`docs/data/turn_events.json` 已補 `groups` 欄；不代表完整章節handler已驗。
 - **[已解,範圍限定見 doc 26]** ~~18 battle-event skeleton 語意 + 動作函式~~ → `docs/data/battle_events.json` 目前匯出的 battle-event skeleton 未記錄 action_fns，故該資料集只保存條件→設碼/繪圖；這不能外推到含 dialog/acting/sync/JOIN 的 postbattle cutscene handlers。條件原語與 raw caller 仍以各 handler CFG 為準。
 - **[修正]** byte(+5) bit0 reader／writer 已分開：`0x3453e` 僅回傳 `&1`，constructor／HP writer／`0x32975` 是獨立 caller；不得把它們合併成全域死亡／存活欄位。舊說「bit0=存活、初始化=1」已撤回。回合數=`[0x53bef]`（非 `[0x53ec8]`，後者為累積計數）；team-completion 語意仍待 state-machine evidence。

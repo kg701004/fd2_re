@@ -786,7 +786,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 command-23 caller scope correction（Docker Capstone）：`0x250cc` chapter-ending/post handler 也在 `0x1c2da` 後呼叫 `0x22253`（unit=1、pre-render `0xff/0xff`、record raw `+0/+1`），接著才進 `0x25089` cleanup 與 `0x2bce5` ending renderer；因此 `0x22253` 不得命名為 command-23 專屬。raw writer 已閉合，但 ending layout/renderer 與 campaign semantics 仍 fail-closed。
 - 2026-07-26 `0x250cc` ending branch audit（Docker Capstone）：`0x25348` 依序呈現 FDOTHER `#0x0d/#0x0e/#0x0f`、呼 `0x1c2da`、共用 `0x22253` 寫 unit=1 raw `+0/+1`、再呈現 `#0x10`，最後 `0x25089→0x2bce5` self-loop。只保存 call order；`0x24b14` 回傳與 frame 語意未命名，不能拿此終局分支接一般戰後 town/shop。
 - 2026-07-26 raw inventory gate closure（2026-07-29 再勘誤）：`0x24b14(item)` 掃 unit `0..15`，`0x31860` 先取 `0x1b8a6` 的 bit7-clear count，再以 `0x1b722` 比對 raw slots `0..count-1`；不驗證 prefix compactness。`battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` 保存此 read-only count-sized scan。成功不移除 item，ch26 後續分支仍須獨立證據。
-- 2026-07-27 worklist assertion cleanup：移除歷史 WBS 中「`0x22e5c` 尚待反組譯、負責 event_id→group 增援」的現況暗示。`25` §6.1 已證實 `0x22e5c` 是章1專屬固定中場過場；真正增援鏈是 `0x1a813` 的 turn/camp filter → `0x51b91` handler table → spawn 原語。當時仍誤把全表寫成 58 entries；2026-07-29 已更正為全域 90 entries、FDFIELD 子集合 0..57。
+- 2026-07-27 worklist assertion cleanup：移除歷史 WBS 中「`0x22e5c` 尚待反組譯、負責 event_id→group 增援」的現況暗示。當時曾把它誤稱為「章1專屬固定中場」；2026-07-29 的 IDA 優先複核只保留固定 `FDOTHER.DAT` #79 呈現邊界。真正增援鏈是 `0x1a813` 的 turn/camp filter → `0x51b91` handler table → spawn 原語。當時仍誤把全表寫成 58 entries；2026-07-29 已更正為全域 90 entries、FDFIELD 子集合 0..57。
 - 2026-07-27 constructor inventory flags：官方 IDA `0x10c50` 釘死八格 flag 初始化與 `0x2f8ea` signed-byte gate；`0x40` equipped 與 `0x00` ordinary 都可進 caller list，只有 `0x80` reserved 排除。新增 raw flags adapter/regression，Load/PartyUnits 在有 `inventory_slots` 時保留 flags；撤回「church transfer 只接受未裝備物品」的錯誤斷言。
 - 2026-07-27 attack overlay predicate：官方 IDA `0x1b83d` 釘死 `flag&0x40`＋item `<0x80`/`>=0x80` 分支與 first-slot return；新增 `NativeEquippedInventorySlot`，overlay 有 raw constructor flags 時不再用 `Equipped` projection 冒充 attack precondition。
 - 2026-07-27 item availability gate：`0x1b8a6` 的八格 signed flag count 已接 `NativeInventoryAvailableCount`，action overlay 有 raw flags 時不再以 compact `len(Inventory)` 冒充 item availability；legacy 無 provenance 才 fallback。
@@ -2442,3 +2442,28 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x205C9..0x20C64` 稱為單一事件解譯器，也不得單靠 default handler
   把 raw code0/1/2 直接命名成殲滅／勝利／失敗。正式 campaign transition
   仍需逐章 handler 與外層 consumer／玩家路徑證據。
+
+## 2026-07-29：AI 逐筆回呼表與 pending 邊界的 IDA 優先閉合
+
+- 合法 IDA Pro 9.4 將 `0x1D80B..0x1D8BA` 與
+  `0x1D8BA..0x1DA16` 固定為兩個函式，`0x1D988` 只是後者內的第二遍。
+  Capstone 的既有逐指令產物再獨立覆核相同呼叫順序。
+- 原始資料表邊界已由相鄰位址及 raw pointer 固定：
+  `0x51B19..0x51B91` 是 30 筆章節 handler 表；
+  `0x51B91..0x51CF9` 是 90 筆全域事件表。在 IDA 直接資料交叉參照中，
+  `0x13A44` 是 `[0x51A8F]` 唯一非重設寫入端。
+- 三段掃描對每一筆 record 都先做可選全域事件呼叫，再重新讀
+  `[0x53C03]` 無條件呼叫章節 handler，最後才檢查 `[0x53ECC]`。
+  即使 record 未通過 action gate 也會走尾段；即使全域 handler 已設
+  pending，也不會跳過章節 handler。
+- 新增 `fdother.ExecuteNativePhaseUnitScans`，保存三遍逐筆動態重判、
+  第一遍 bit7 mutation 對第二遍 admission 的影響、90／30 表界與
+  pending 提前退出。缺任一回呼或索引越界即失敗關閉；handler 效果仍由
+  呼叫端提供，不代表正式 AI runtime 已完成。
+- 重新檢查 `main 0x25BF4` 與 `0x22E5C` 後，撤回把所有 raw code1
+  稱作「世界地圖／中場」及所有 code2 稱作「勝利／直接下一章」的斷言。
+  code1 只證實固定載入 `FDOTHER.DAT` #79 並呈現；code2 只證實先走
+  章節索引戰後表，再進 `0x2CAD7` gate，回傳零才走第二張章節表。
+- 可重現命令、函式表指標與位址證據保存於
+  `docs/data/fd2_ai_phase_callback_tables_ida.txt`；已同步修正 AI 專題、
+  SDD、doc23–26、差距稽核與工作清單。

@@ -128,12 +128,13 @@
   排序；無 action 的一般 mode 0 備援已定位到 `0x14121→0x13E9C`，舊
   `0x15192` 假說撤回。2026-07-29 又固定 `0x1D80B` 的 raw `+6==1`
   單遍，以及 `0x1D8BA` 對 raw `+6==0` 的「分數門檻預選＋無門檻第二遍」；
-  每筆均依序走已閉合的90-entry全域事件表、章節戰場事件 handler 表與
+  每筆均依序走結構已閉合的 90 筆全域事件表、30 筆章節戰場事件 handler 表與
   `[0x53ECC]` pending 碼，round counter 在第二掃描返回後才增加。既有
   constructor＋`0x14818` 消費證據已固定 raw camp code 敵0／友1／己2，
   故前者是友軍單遍、後者是敵軍兩遍；具型別
   `PlanNativePhaseUnitScans` 已分開三遍、保留 signed threshold 與缺 score
-  fail-closed regression；`0x1598A→53C23` 命令遮罩候選、`0x1567E→53C33`
+  fail-closed regression；`ExecuteNativePhaseUnitScans` 另保存每遍動態
+  重判、兩張表順序與 pending 提前退出。`0x1598A→53C23` 命令遮罩候選、`0x1567E→53C33`
   item-command 候選與 `0x13512` bit7 已串成「高價值優先遍後排除雙動」。
   尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中
   command／目標與畫面順序；不得重複把陣營碼、兩張表或 pending 碼降回未知。
@@ -156,6 +157,14 @@
   合法 IDA 9.4 已交叉確認函式邊界與兩個 callers。
 - [x] **RE-AI-UNIT-DISPATCH-13A9F**：Docker Capstone 閉合 `0x13A9F` 的 unit `0x50`-byte record、raw `+5 & 0x05` gate、`record+0x34 & 0x0f` command nibble 與 `0x14EF0/0x1598A/0x15311/0x1548E` 分支；保留 nibble 語意未命名。
 - [x] **RE-AI-UNIT-SCANS-1D80B**：Docker Capstone 閉合 `0x1D80B/0x1D8BA/0x1D988` 三段 `[0x3BEB]` record scans、raw `+6/+5/+0x26` gates、`0x13A9F`／`0x1598A→0x1567E` 呼叫與 `[0x51A8F]/[0x53C03]` table dispatch；保留 raw table/loop semantic 未命名。
+- [x] **RE-AI-PHASE-CALLBACK-ORDER**：合法 IDA Pro 9.4 優先確認
+  `0x51B91` 為 90 筆、`0x51B19` 為 30 筆，並固定逐筆順序為
+  可選全域事件→無條件章節 handler→pending 檢查；不合格 record 仍走尾段，
+  第二遍則重新讀取第一遍可能改寫的 `record+5 bit7`。
+  `fdother.ExecuteNativePhaseUnitScans` 保存動態重判、表界與提前退出的 E0
+  契約；未知 handler 效果仍由呼叫端提供，不接正式 `NextAIPlan`。
+  `[0x53ECC]` 碼 1 只證實固定 `0x22E5C` 資源 #79 呈現，碼 2 只證實
+  章節戰後表→`0x2CAD7` gate；舊「世界地圖／中場／勝利」通用名稱已撤回。
 - [x] **RE-AI-PHASE-CALLS-1A4EB**：Docker Capstone 固定 `0x1A4EB` 的 `0x1A813(1)→0x1A866(1)→0x1A7BD→0x1D80B→0x1A7F1` 與 `0x1A58F` 的 selector-0 對應鏈；只記 phase-specific raw callsites，不命名回合開始／結束。
 - [x] **RE-AI-COMMAND-ENUM-1567E**：Docker Capstone 閉合 `0x1567E` 的 `record+0x0B+2*slot` item ID→row `+0x10` command、`command<=0x0F→0x14818`、`command>0x0F→0x149F8(command-0x10)`、`0x15880` score 與 `0x53C33/37/3B/3F` best writes；`0x53C3F` 是 inventory slot，執行端再由 `0x1B722` 解 item。撤回混用 `0x15B77` 與 command-list 的說法。
 - [x] **RE-AI-SCORE-15880**：Docker Capstone 閉合 `0x15880` 的 item row `+0x0D/+0x0E` type/word 分支：type5/0x0D 的 current HP `<=max/3→8`、`<=max/2→3`、其餘0，raw `+0x34 bit7` ×3；type0x14/0x15 經 `0x4E516`、type0x18 直用 row word，target HP `<=threshold→0x12`、其餘8。`ScoreNativeAIItemCommandTargets` 已接並驗證邊界；不命名效果或 status。
@@ -598,9 +607,11 @@
       units.json 同目錄 map.json 接上(main.go 未改動)。全 33 圖 + 頂層 map0 重新匯出。
       新增 6 個測試(`move_test.go`)。**限制**:僅步行成本,騎兵/飛行差異(notes.md 另有數字)
       待 Unit 加兵種欄位才能接;地形 AP/DP 戰鬥加成本輪未接。
-- [x] **0x22e5c 語意更正**：已確認它是章1專屬固定中場過場，並非 `turn_events.event_id→group` 消費點；
+- [x] **0x22e5c 語意更正**：已確認它是固定載入 `FDOTHER.DAT` #79
+      並呈現的路徑，不讀章節索引，也不是 `turn_events.event_id→group` 消費點；
       真正增援消費鏈為 `0x1a813`（turn/camp filter）→`0x51b91`（全域 90-entry 表中的 FDFIELD 子集合 0..57）→spawn 原語。
-      舊「待反組譯 0x22e5c→接增援」條目已撤回，詳見 `25` §6.1；不得重開同一錯誤工作。
+      舊「待反組譯 0x22e5c→接增援」與「章1專屬中場」名稱已撤回，詳見
+      `25` §6.1；玩家可見場景名稱仍須原版執行期證據。
 - [ ] ch04-33 劇情文本精校(30 章,PNG 人眼轉錄;對白已可入庫)
 - [ ] 視窗縮放 filter 查證(可能 linear 暈染,tile-debug 提醒)
 

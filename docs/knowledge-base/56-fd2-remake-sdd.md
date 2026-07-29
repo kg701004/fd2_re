@@ -65,24 +65,34 @@ AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native
 `[0x53C23]>=6` 或 `[0x53C33]>=6` 才呼叫 `0x13A9F(unit,0)`；隨後
 `0x1D988` 再對同一 raw gate 做無此前置分數門檻的第二遍
 `0x13A9F(unit,0)`。每筆 mode 收尾固定為
-`selector1→0x13512→0x134E4→redraw`，然後才依序執行可選的90-entry
-全域事件表、章節戰場事件 handler 表與 `[0x53ECC]` pending 碼檢查。
+`selector1→0x13512→0x134E4→redraw`，然後才依序執行可選的 90 筆
+全域事件表、無條件的 30 筆章節戰場事件處理器表與 `[0x53ECC]`
+pending 碼檢查。合法 IDA Pro 9.4 已以相鄰邊界及原始指標確認兩張表的
+筆數；在 IDA 直接資料交叉參照中，`0x13A44` 是 `[0x51A8F]`
+唯一非重設寫入端。
 第二掃描返回後
 `0x1A5B9` 才增加 `[0x53BEF]`。這些證據禁止把 `0x1D8BA` 簡化為單遍
-敵方行動迴圈；兩張表與 pending 碼的語意早已由事件／戰役控制流閉合。
+敵方行動迴圈。兩張表的結構、索引與呼叫順序已閉合，不代表 90／30 個
+handler 的玩家可見效果全部閉合；pending 碼在本層也只保留 raw 數值。
 結合既有 raw camp writer／consumer，`0x1D80B` 是友軍 camp1 單遍，
 `0x1D8BA/0x1D988` 是敵軍 camp0 的預選＋第二遍；真正未知的是敵軍為何
 需要兩遍，以及兩個分數門檻的完整玩法語意。缺 raw provenance 時仍不可
 用 normalized Go `Camp` 猜補。
 
-`fdother.PlanNativePhaseUnitScans` 現把這三個 loop 保存成分離且有序的
-typed plan：selector1 單遍、selector0 預選、selector0 第二遍。預選要求
-caller 明示每個 native unit 的 signed `[0x53C23]/[0x53C33]` 結果，任一
+`fdother.PlanNativePhaseUnitScans` 把這三個 loop 保存成分離且有序的
+具型別診斷計畫：selector1 單遍、selector0 預選、selector0 第二遍。預選要求
+呼叫端明示每個 native unit 的 signed `[0x53C23]/[0x53C33]` 結果，任一
 至少6才標記該遍會呼叫 `0x13A9F`；第二遍仍包含所有通過
-`+6/+5/+0x26` gates 的 selector0 記錄。API 刻意不攤平三遍，也不自行
-呼叫事件／章節 callback，讓 nonzero pending 碼的逐筆 early exit 保持
-caller-owned。這補上 deterministic E0 regression，不代表 production AI
-已切換至原版 planner。
+`+6/+5/+0x26` gates 的 selector0 初始記錄。它只供無副作用診斷，不能
+拿來直接執行，因為第一遍成功動作會改寫 bit7，第二遍必須重新讀 record。
+
+`fdother.ExecuteNativePhaseUnitScans` 另保存逐筆 E0 執行契約：三遍均重新
+判斷 raw gate；不合格記錄仍執行章節表與 pending 檢查；全域表後會重新
+取得章節索引，且即使全域 handler 已設 pending，也要先完成章節 handler
+才檢查退出。全域／章節索引分別限制為 0..89／0..29，缺回呼或越界即
+失敗關閉。它仍只接受呼叫端提供的 action／handler 效果，不代表正式
+production AI 已切換至原版執行器。直接證據見
+[`fd2_ai_phase_callback_tables_ida.txt`](../data/fd2_ai_phase_callback_tables_ida.txt)。
 
 敵軍兩遍的直接目的亦已由 producer／consumer 串起：`0x1598A` 的法術
 候選最佳分數寫 `[0x53C23]`，`0x1567E` 的 item-command 候選最佳分數寫
@@ -1661,7 +1671,19 @@ effects/targets remain the separate UI-03 execution workstream.
 
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
-Official IDA pseudocode of `0x25de5` closes the outer ordering that the editable graph must preserve. After `sub_25ebb` returns the battle-driver result, the loop calls `sub_117e7`; when global phase `[0x53ecc]==1`, it calls the fixed chapter-1 interlude `0x22e5c`, clears the phase, and continues. When `[0x53ecc]==2`, it first stops BGM, calls the chapter-indexed post-handler table `funcs_25e23[dword_53c03]`, and only then calls `sub_2cad7()`. If `sub_2cad7()` returns nonzero, the loop exits through the terminal/return path; only when it returns zero does the loop call the second chapter-indexed table `funcs_25e3a[dword_53c03]`, select `byte_51e63[dword_53c03]` for the next battle BGM, clear the phase, and resume the driver. The exact table entries and `0x2cad7` visual/menu labels remain separate evidence work, but this call order is enough to reject any generic `battle → next battle` shortcut. A remake transition must retain an explicit post-handler/menu gate before a next-battle node, even when the high-level node is still opaque.
+IDA 對 `0x25DE5` 的直接控制流固定了可編輯戰役圖必須保存的外層順序。
+`sub_25EBB` 回傳戰場 driver 結果後，迴圈呼叫 `sub_117E7`；
+`[0x53ECC]==1` 時固定呼叫 `0x22E5C`，清除 pending 後繼續。
+`0x22E5C` 的函式體只證實它載入 `FDOTHER.DAT` 資源 #79，做兩次呈現與
+固定 tick；函式不讀章節索引。因此舊稱「第 1 章專屬世界地圖／中場」
+缺少直接證據，已撤回。`[0x53ECC]==2` 時先停止 BGM，呼叫章節索引的
+戰後處理器表 `funcs_25E23[dword_53C03]`，之後才呼叫 `sub_2CAD7()`。
+若 `sub_2CAD7()` 回傳非零，迴圈走終止／返回路徑；只有回傳零時才呼叫
+第二張章節索引表 `funcs_25E3A[dword_53C03]`，選擇
+`byte_51E63[dword_53C03]` 作為後續 BGM，清除 pending 並恢復 driver。
+表格各 entry 與 `0x2CAD7` 的玩家可見選單名稱仍是獨立證據工作，但此順序
+已足以拒絕任何泛化的 `battle → next battle` 捷徑。重製轉場必須在下一戰
+節點前保留明確的戰後處理器／選單 gate，即使高階節點名稱仍未閉合。
 
 ## 6. Reverse-engineering re-audit workstreams
 
@@ -2018,6 +2040,13 @@ consumer、input/state trace、regression與適當E2 oracle的語意才能接入
 ### 2026-07-26 — native phase dispatch raw boundary
 
 Official Docker Capstone recheck of `0x1d80b` closes only its first loop's admission boundary: records are addressed as `[0x53a45] + unit*0x50`, bounded by `[0x53beb]`; a candidate must satisfy raw `+6 == 1`, `(+5 & 0x81) == 0`, and `+0x26 == 0`. The native caller then passes `(unitIndex, record+6)` to `0x13a9f`, which may set `[0x51a8f]` before the event and chapter function tables are called and `[0x53ecc]` is checked. `fdother.FindNativePhaseDispatchCandidates` preserves this as an offset-level, fail-closed planner. It intentionally does not invoke callbacks or assign event names; no campaign node may treat it as a completed phase/event renderer.
+
+2026-07-29 的合法 IDA Pro 9.4 複核補正了這段歷史邊界：兩張表的尾段不是
+只跟在「候選」後方，而是每一筆 record 都會到達；第二遍也會重新讀取
+第一遍可能改寫的 `record+5 bit7`。因此靜態候選 plan 只能作診斷，
+`fdother.ExecuteNativePhaseUnitScans` 才保存逐筆重判、90／30 筆表界、
+固定回呼順序與 pending 提前退出的 E0 契約。各 handler 效果仍由呼叫端
+提供，尚未接入正式 AI runtime。
 
 The default chapter result boundary is now corrected at direct-instruction level. The
 `0x205b4` function, also entered directly at its shared `0x205be` inner entry, first
