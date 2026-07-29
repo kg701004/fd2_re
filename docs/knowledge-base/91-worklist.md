@@ -24,8 +24,13 @@
   確認，任一取消依可編輯 `cancel` 回城；另以 `0x2cad7` 分開無城鎮路徑的
   FDTXT `0x19a`「要記錄戰況嗎？」與可選存檔，拒絕時仍進選人。已刪除預先全選與小隊不足按Escape
   強行出發。正常序章→第1章哈諾加入→戰後同步五人→羅德鎮→整備回歸已通過，
-  並補上後加入角色的持久快照。尚須接選人畫面的原版資源／版面、LMI1 #0x52
-  slide 與實機差分；目前確認框外觀仍是重製殼層，不宣稱原版視覺一致。
+  並補上後加入角色的持久快照。2026-07-29 更新：選人主畫面、角色狀態、
+  待機週期及最終確認已接原版索引色正式路徑；`0x1f42d` 已更正為戰場進入
+  演出，不是選人 slide。城鎮 FDTXT `0x201` 提示現保存實際 town frame，
+  無城鎮 FDTXT `0x19a` 提示依 `0x2cc04` 使用黑色來源；兩者都接
+  6＋4＋兩 tick 脈動＋4＋5＋還原，肯定存檔／轉場只在還原幀呈現後執行。
+  保存 record 與 ch02 departure 生命週期證據圖。仍須晚期合法存檔、
+  跨畫面初始相位與 DOSBox 同狀態實機差分，故維持部分完成。
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 
@@ -108,6 +113,15 @@
 - [~] **敵人/NPC 戰場 AI** 反組譯文件：舊 `0x15140` 評分決策斷言已由 2026-07-27 canonical Docker recheck 撤回；`0x15140/0x15356` 無 direct caller，僅保留 `0x15AD8→0x15B77` raw lead，需重建真正 entry 與 caller context → `11-…`
 - [x] **RE-AI-CALLER-15AD8**：Docker Capstone 閉合 `0x15A1E..0x15B76` 的 bounded candidate→`0x14818` target builder→`0x15B77` score→best-score/tie-break/write globals 邊界；`0x15B77` 的 command `<0x0d`、recovery `0x0d..0x10`、raw flag `0x14..0x16` branches 已寫入 `11`，不把它升格成完整 AI turn。
 - [x] **RE-AI-DISPATCH-14EF0**：Docker Capstone 找到 `0x14EF0` 的六個 direct callers 與 `0x14237→0x1598A→0x1567E` 後續分派至 `0x1548E/0x15311/0x15055`；已記為 candidate dispatch boundary，不命名 turn/camp 或宣稱完整 AI parity。
+- [x] **RE-REFERENCE-FILE-HASHES**：固定目前反組譯版本的 `FD2.EXE` 大小
+  `357074`、MD5 `b97caf2239a27a896069d03549d96e1e` 與 SHA-256，另為
+  12 個實際解析資產建立可重算清單
+  [`fd2-reference-files.json`](../data/fd2-reference-files.json)；
+  `disasm_le.py` 每次執行會在標準錯誤輸出顯示來源指紋。不同雜湊不得沿用位址。
+- [~] **RE-BATTLE-AI-SPECIAL-TOPIC**：已把 `0x1A4EB/0x1A58F→0x1D80B/0x1D8BA
+  →0x13A9F→0x14EF0→0x15AD8→0x15B77` 整理為目前可信的原始拓撲，並刪除
+  舊 `0x15140/0x15356` 完整評分公式斷言。下一步先閉合 `0x1548E` 與固定
+  存檔動態 trace，尚不可宣稱敵方目標選擇已重製。
 - [x] **RE-AI-UNIT-DISPATCH-13A9F**：Docker Capstone 閉合 `0x13A9F` 的 unit `0x50`-byte record、raw `+5 & 0x05` gate、`record+0x34 & 0x0f` command nibble 與 `0x14EF0/0x1598A/0x15311/0x1548E` 分支；保留 nibble 語意未命名。
 - [x] **RE-AI-UNIT-SCANS-1D80B**：Docker Capstone 閉合 `0x1D80B/0x1D8BA/0x1D988` 三段 `[0x3BEB]` record scans、raw `+6/+5/+0x26` gates、`0x13A9F`／`0x1598A→0x1567E` 呼叫與 `[0x51A8F]/[0x53C03]` table dispatch；保留 raw table/loop semantic 未命名。
 - [x] **RE-AI-PHASE-CALLS-1A4EB**：Docker Capstone 固定 `0x1A4EB` 的 `0x1A813(1)→0x1A866(1)→0x1A7BD→0x1D80B→0x1A7F1` 與 `0x1A58F` 的 selector-0 對應鏈；只記 phase-specific raw callsites，不命名回合開始／結束。

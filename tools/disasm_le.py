@@ -15,6 +15,8 @@ linear ↔ file:obj1 first_page=1,page_size=0x1000,data_off=0x10e00。
   python3 disasm_le.py <FD2.EXE> refs <abs_hex>                找 code 中被 fixup 成 abs 的位置(資料 xref)
   python3 disasm_le.py <FD2.EXE> data <linear_hex> <length>   印出同一 LE object 的 raw bytes/ASCII
 """
+import hashlib
+import os
 import sys, struct
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from le_xref import parse_le
@@ -89,6 +91,13 @@ def main(a):
     if len(a) < 3:
         print(__doc__); return 1
     d = open(a[1], 'rb').read()
+    print(
+        "# 來源檔案 "
+        f"{os.path.basename(a[1])}；大小 {len(d)} 位元組；"
+        f"MD5 {hashlib.md5(d).hexdigest()}；"
+        f"SHA-256 {hashlib.sha256(d).hexdigest()}",
+        file=sys.stderr,
+    )
     meta = parse_le(d)
     code, base = load_code(d, meta)
     md = Cs(CS_ARCH_X86, CS_MODE_32)

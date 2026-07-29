@@ -1973,6 +1973,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `campaign_full.json` 已把23個 town-backed prompt 改成「要進入戰場嗎？」，
   其餘 preparation-only 節點保留記錄詢問，不再混成同一語意。
 
+## 2026-07-29 原版檔案版本基準與戰鬥人工智慧專題
+
+- 所有既有 `FD2.EXE` 位址現在明確綁定大小 `357074` 位元組、MD5
+  `b97caf2239a27a896069d03549d96e1e`、SHA-256
+  `222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+  `docs/data/fd2-reference-files.json` 另列目前解析器使用的 12 個資產檔；
+  `tools/hash_fd2_reference.py` 可對玩家自備原版唯讀重算。不同雜湊不可直接
+  沿用位址。存檔與暫存檔因內容可變，刻意排除。
+- `11-enemy-ai.md` 已升為戰鬥人工智慧專題入口。現有可信鏈是 phase-specific
+  scan `0x1A4EB/0x1A58F→0x1D80B/0x1D8BA→0x13A9F`，再到
+  `0x14EF0` 候選分派及 `0x15AD8→0x15B77` 原始評分邊界。舊
+  `0x15140/0x15356` 的逐落點、傷害門檻、擊殺加倍完整公式已刪除，不得接入
+  runtime。下一步先閉合 `0x1548E` 與固定存檔動態 trace。
+
 ## 2026-07-29 原版整備選人主畫面第一個生產切片
 
 - 只以 `fd2-cap-local`、唯讀掛載與無網路容器重讀
@@ -2022,6 +2036,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x2d16b..0x2d17c` 在回傳 0 時跳 `0x301ec`，退出本次出發；直接整備
   `0x2ccd6..0x2cce7` 在回傳 0 時跳 `0x2cccc` 再次呼叫選人。因此正式路徑
   保留「城鎮取消／直接整備重選」，不是依介面文案猜測結果。
+- 整備前置提示已接原版索引色生命週期。`0x2d0d1` 城鎮路徑以
+  `0x1956b(0x4b)` 開框、FDTXT `0x201` 寫至 `0xa951f=(95,119)`；
+  runtime 在離開 town 前保存該幀，關框最後還原同一畫面。`0x2cc04`
+  無城鎮路徑先把 64000-byte VGA 清為0，再於 `0xa9524=(100,119)` 寫
+  FDTXT `0x19a`；肯定結果只在 4＋5＋還原完成後呼叫既有存檔流程。
+  兩者都使用 DATO #75、FDOTHER #5／#2、十幀開啟、兩 tick 脈動及九幀
+  關閉。保存
+  [`preparation-record-prompt-lifecycle.png`](../figures/preparation-record-prompt-lifecycle.png)
+  與
+  [`preparation-departure-prompt-ch02-lifecycle.png`](../figures/preparation-departure-prompt-ch02-lifecycle.png)；
+  後者是 ch02 variant0／selection2 的 E1 原始資源合成，不是 DOSBox 擷取。
 - 尚未完成：跨戰場／城鎮的行程全域初始相位，以及合法晚期 `FD2.SAV`
   的同狀態原版／重製差分。`0x1f42d` 已更正為戰場進入演出，不再列為
   選人視窗缺口。這些缺口使 UI-11 維持部分完成。

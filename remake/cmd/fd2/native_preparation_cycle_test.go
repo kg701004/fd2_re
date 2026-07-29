@@ -93,8 +93,31 @@ func TestNativePreparationConfirmationUses19953PulseCadence(t *testing.T) {
 		t.Fatalf("two BIOS ticks left confirmation pulse at %d", g.nativeClassUIPulse)
 	}
 	g.prepConfirm = false
+	g.prepSelecting = true
 	g.stepNativeClassUILifecycle(start.Add(4 * nativeBIOSTickPeriod))
 	if g.nativeClassUIPulse != 1 {
 		t.Fatalf("inactive preparation confirmation advanced pulse to %d", g.nativeClassUIPulse)
+	}
+}
+
+func TestNativePreparationPromptUses19953PulseCadence(t *testing.T) {
+	g := &Game{
+		camp: campaign.NewRunner(&campaign.Campaign{
+			Start: "prep",
+			Nodes: map[string]*campaign.Node{
+				"prep": {Type: "preparation"},
+			},
+		}),
+	}
+	start := time.Unix(20, 0)
+	g.stepNativeClassUILifecycle(start)
+	g.stepNativeClassUILifecycle(start.Add(2 * nativeBIOSTickPeriod))
+	if g.nativeClassUIPulse != 1 {
+		t.Fatalf("preparation prompt pulse=%d want 1", g.nativeClassUIPulse)
+	}
+	g.prepSelecting = true
+	g.stepNativeClassUILifecycle(start.Add(4 * nativeBIOSTickPeriod))
+	if g.nativeClassUIPulse != 1 {
+		t.Fatalf("inactive prompt advanced pulse to %d", g.nativeClassUIPulse)
 	}
 }

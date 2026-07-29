@@ -65,3 +65,24 @@ func TestPreparationRecordPromptEntersZeroedSelectionOnlyAboveCap(t *testing.T) 
 		)
 	}
 }
+
+func TestPreparationPromptSourcePreservesTownAndClearsStandalone(t *testing.T) {
+	source := make([]byte, 320*200)
+	for i := range source {
+		source[i] = 7
+	}
+	g := &Game{
+		prepPromptSource: append([]byte(nil), source...),
+		partyRoster:      map[int]battle.Unit{},
+	}
+	g.setupPreparation(&campaign.Node{
+		Type: "preparation", Cancel: "town", PartyLimit: 15,
+	})
+	if len(g.prepPromptSource) != 320*200 || g.prepPromptSource[0] != 7 {
+		t.Fatal("town-backed preparation discarded its source frame")
+	}
+	g.setupPreparation(&campaign.Node{Type: "preparation", PartyLimit: 15})
+	if len(g.prepPromptSource) != 320*200 || g.prepPromptSource[0] != 0 {
+		t.Fatal("standalone preparation did not use 0x2cc04 black source")
+	}
+}

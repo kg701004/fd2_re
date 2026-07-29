@@ -23,6 +23,7 @@ func main() {
 	scenario := flag.String("scenario", "", "editable scenario supplying one proven native party record")
 	out := flag.String("out", "preparation-roster-oracle.png", "output PNG")
 	confirm := flag.Bool("confirm", false, "overlay the evidence-closed stable 0x31d3c final confirmation state")
+	prompt := flag.String("prompt", "", "optional native pre-selection prompt: record or departure-ch02")
 	lifecycleOut := flag.String("lifecycle-out", "", "optional 7×3 contact sheet: 10 open, stable, 9 close, restore")
 	flag.Parse()
 	if *base == "" {
@@ -79,8 +80,16 @@ func main() {
 		}
 	}
 	var lifecycleFrames [][]byte
-	if *confirm || *lifecycleOut != "" {
+	if *prompt != "" && *prompt != "record" && *prompt != "departure-ch02" {
+		fmt.Fprintln(os.Stderr, "-prompt 只接受 record 或 departure-ch02")
+		os.Exit(2)
+	}
+	if *confirm || *prompt != "" || *lifecycleOut != "" {
 		source := append([]byte(nil), frame...)
+		if *prompt == "record" {
+			// 0x2cc04 clears all 64000 VGA bytes before FDTXT 0x19a.
+			source = make([]byte, 320*200)
+		}
 		choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -105,6 +114,22 @@ func main() {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
+		}
+		if *prompt == "departure-ch02" {
+			townAssets, err := campaign.DecodeNativeTownAssets(
+				fdotherPath, filepath.Join(*base, "FDICON.B24"),
+			)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			source, err = campaign.ComposeNativeTownFrame(
+				townAssets, strings, font, 0, 2, 0,
+			)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
 		}
 		resource5, err := fdother.ReadResource(fdotherPath, 5)
 		if err != nil {
@@ -134,15 +159,27 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		question, err := campaign.ComposeNativePreparationConfirmationQuestion(
-			source, dialogue, portraits[0], strings, font,
-		)
+		var question []byte
+		switch *prompt {
+		case "record":
+			question, err = campaign.ComposeNativePreparationRecordQuestion(
+				source, dialogue, portraits[0], strings, font,
+			)
+		case "departure-ch02":
+			question, err = campaign.ComposeNativePreparationDepartureQuestion(
+				source, dialogue, portraits[0], strings, font,
+			)
+		default:
+			question, err = campaign.ComposeNativePreparationConfirmationQuestion(
+				source, dialogue, portraits[0], strings, font,
+			)
+		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		frame, err = campaign.ComposeNativePreparationConfirmationFrame(
-			frame, choices, dialogue, portraits[0], strings, font, 0, 0,
+		frame, err = campaign.ComposeNativeConfirmationChoices(
+			question, choices, 0, 0,
 		)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

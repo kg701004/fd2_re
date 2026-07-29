@@ -16,6 +16,10 @@ const (
 	nativePreparationQuestionIndex = 658
 	nativePreparationQuestionX     = 95
 	nativePreparationQuestionY     = 119
+	nativeDepartureQuestionIndex   = 513
+	nativeDepartureQuestionX       = 95
+	nativeRecordQuestionIndex      = 410
+	nativeRecordQuestionX          = 100
 )
 
 // NativeClassConfirmationOpeningFrames reproduces 0x19953's four opening
@@ -118,6 +122,50 @@ func ComposeNativePreparationConfirmationQuestion(
 	strings *fdtxt.Strings,
 	font *fdtxt.Font,
 ) ([]byte, error) {
+	return composeNativePreparationQuestion(
+		background, dialogueCells, portrait, strings, font,
+		nativePreparationQuestionIndex, nativePreparationQuestionX,
+	)
+}
+
+// ComposeNativePreparationDepartureQuestion reproduces 0x2d0d1's
+// town-backed FDTXT index 0x201 prompt at 0xa951f.
+func ComposeNativePreparationDepartureQuestion(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+) ([]byte, error) {
+	return composeNativePreparationQuestion(
+		background, dialogueCells, portrait, strings, font,
+		nativeDepartureQuestionIndex, nativeDepartureQuestionX,
+	)
+}
+
+// ComposeNativePreparationRecordQuestion reproduces 0x2cc29's standalone
+// FDTXT index 0x19a prompt at 0xa9524.
+func ComposeNativePreparationRecordQuestion(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+) ([]byte, error) {
+	return composeNativePreparationQuestion(
+		background, dialogueCells, portrait, strings, font,
+		nativeRecordQuestionIndex, nativeRecordQuestionX,
+	)
+}
+
+func composeNativePreparationQuestion(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	textIndex, textX int,
+) ([]byte, error) {
 	if len(background) != 320*200 || strings == nil || font == nil {
 		return nil, errors.New("campaign: native preparation confirmation assets are unavailable")
 	}
@@ -127,7 +175,7 @@ func ComposeNativePreparationConfirmationQuestion(
 	if err != nil {
 		return nil, err
 	}
-	question, err := strings.Words(nativePreparationQuestionIndex)
+	question, err := strings.Words(textIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +186,7 @@ func ComposeNativePreparationConfirmationQuestion(
 		}
 		if err := font.BlitNativeGlyph(
 			frame, 320,
-			nativePreparationQuestionY*320+nativePreparationQuestionX+i*fdtxt.GlyphWidth,
+			nativePreparationQuestionY*320+textX+i*fdtxt.GlyphWidth,
 			int(word), style,
 		); err != nil {
 			return nil, err

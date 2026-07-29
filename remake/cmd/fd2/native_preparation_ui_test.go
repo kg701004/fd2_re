@@ -83,6 +83,36 @@ func TestComposeNativePreparationFrameUsesRawRosterSelectors(t *testing.T) {
 		partyDeploy:   map[int]bool{ids[1]: true},
 		partyRoster:   roster,
 	}
+	g.prepSelecting = false
+	g.prepPromptSource = make([]byte, 320*200)
+	prompt, ok := g.composeNativePreparationPromptFrame()
+	if !ok || len(prompt) != 320*200 {
+		t.Fatalf("standalone native record prompt unavailable: ok=%v length=%d", ok, len(prompt))
+	}
+	if !g.beginNativePreparationPromptOpening() ||
+		g.nativeClassUIJob == nil || len(g.nativeClassUIJob.frames) != 10 {
+		t.Fatal("standalone native record prompt opening unavailable")
+	}
+	g.nativeClassUIJob = nil
+	g.camp.Node().Cancel = "town"
+	if prompt, ok = g.composeNativePreparationPromptFrame(); !ok || len(prompt) != 320*200 {
+		t.Fatalf("town native departure prompt unavailable: ok=%v length=%d", ok, len(prompt))
+	}
+	g.camp.Node().Cancel = ""
+	closedPrompt := false
+	if !g.beginNativePreparationPromptClosing(func() { closedPrompt = true }) ||
+		g.nativeClassUIJob == nil || len(g.nativeClassUIJob.frames) != 9 {
+		t.Fatal("native preparation prompt closing unavailable")
+	}
+	for g.nativeClassUIJob != nil {
+		g.nativeClassUIJob.drawn = true
+		g.stepNativeClassUILifecycle(time.Time{})
+	}
+	if !closedPrompt {
+		t.Fatal("prompt continuation ran before source restore")
+	}
+	g.prepSelecting = true
+	g.prepPromptSource = nil
 	frame, ok := g.composeNativePreparationFrame()
 	if !ok || len(frame) != 320*200 {
 		t.Fatalf("native preparation frame unavailable: ok=%v length=%d", ok, len(frame))

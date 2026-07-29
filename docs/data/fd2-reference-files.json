@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "scope": "FD2 反向工程所使用的執行檔與唯讀遊戲資產；不含可變動的 FD2.SAV、FD2.TMP",
+  "files": [
+    {
+      "file": "FD2.EXE",
+      "size": 357074,
+      "md5": "b97caf2239a27a896069d03549d96e1e",
+      "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    },
+    {
+      "file": "ANI.DAT",
+      "size": 2437547,
+      "md5": "81315bcbb78764361c5137ab0f714f7e",
+      "sha256": "be909c71d0f1121b6632ae931d978e990f6d54c830f4e0509cd6862187c4d963"
+    },
+    {
+      "file": "BG.DAT",
+      "size": 624564,
+      "md5": "4b5414c92b40ef25ba0ee10c80f9e149",
+      "sha256": "b9fc21d019d6256a4bb7e6da1cefcb0bfe331d8ff74a52a8201570afc98b56de"
+    },
+    {
+      "file": "DATO.DAT",
+      "size": 1979029,
+      "md5": "f15093e5bff4e5f3334a076ab2a7d130",
+      "sha256": "dff859783606ee95d9811e1e564bcb230ef53c4df9130e8b6d42ad37bc8c27bd"
+    },
+    {
+      "file": "FDFIELD.DAT",
+      "size": 243169,
+      "md5": "ecdb0436d26adfe5d107f2713fa7e9a2",
+      "sha256": "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513"
+    },
+    {
+      "file": "FDICON.B24",
+      "size": 624010,
+      "md5": "46f793540209a063ea73a5373ca14bf4",
+      "sha256": "7efb4448d05f19c1e17ebd53f3e3afead235f5c008d5167548d834c3686b1e44"
+    },
+    {
+      "file": "FDMUS.DAT",
+      "size": 80367,
+      "md5": "4dfa214125edcc4658acbba2e1201a28",
+      "sha256": "4105ebde543fe1c497e852728f6bc333bda80edeb7fb3671e487504bee74e998"
+    },
+    {
+      "file": "FDOTHER.DAT",
+      "size": 3382481,
+      "md5": "22f56e5027edc7c766ad34ca4e5aca93",
+      "sha256": "a81b13493725fb70e750c4d9e0dce4e1b57d0df312c4ad4157e6d45171b13bce"
+    },
+    {
+      "file": "FDSHAP.DAT",
+      "size": 3557794,
+      "md5": "9b0d356074f57cc27aebf3bb89aae247",
+      "sha256": "901b70ea82d5d977192759fad510921ffe16a0ab6af6ab7c32757de03e30aa3c"
+    },
+    {
+      "file": "FDTXT.DAT",
+      "size": 120502,
+      "md5": "fe5c487ce4313485f1da9d48d35b05f9",
+      "sha256": "a4555f8a0e61e884b4f504d56a8bdde11672583bbbbc6506281ae10dcdfb1f69"
+    },
+    {
+      "file": "FIGANI.DAT",
+      "size": 15279582,
+      "md5": "7da21ec0ad9917455459f1acb970bdf4",
+      "sha256": "e909314ce37b70701238fd24febc8f61603bbe8d81a9ecbf8f289c97a5b67a1f"
+    },
+    {
+      "file": "TAI.DAT",
+      "size": 94917,
+      "md5": "7cfe4b9ad2cbff44b2ebd7ab2f94e4aa",
+      "sha256": "d56fea9c43f8bb59aad89ad76698885d7e07f380d12a4547888a0b60ea5e0410"
+    },
+    {
+      "file": "TITLE.DAT",
+      "size": 23377,
+      "md5": "69bdd788a579d945ec754a4b12bfc7c0",
+      "sha256": "06120a4605e054f2ff1e08f882661b9b345b39978aabf5126ec137e1207815b3"
+    }
+  ]
+}

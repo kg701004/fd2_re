@@ -148,3 +148,34 @@ func TestComposeNativePreparationConfirmationUses31D3CAnchor(t *testing.T) {
 		t.Fatal("choice closing did not precede dialogue closing")
 	}
 }
+
+func TestComposeNativePreparationPromptsUseCallerSpecificFDTXTAnchors(t *testing.T) {
+	background := make([]byte, 320*200)
+	dialogue := make([]fdother.RawCell, 20)
+	for index := 1; index <= 19; index++ {
+		dialogue[index] = fdother.RawCell{
+			Width: 1, Height: 1, Pixels: []byte{byte(index)},
+		}
+	}
+	portrait := dato.Frame{Width: 1, Height: 1, Pixels: []byte{99}}
+	departure, err := ComposeNativePreparationDepartureQuestion(
+		background, dialogue, portrait,
+		nativeClassListStrings(t), nativeClassListFont(t),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := ComposeNativePreparationRecordQuestion(
+		background, dialogue, portrait,
+		nativeClassListStrings(t), nativeClassListFont(t),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if departure[119*320+95] != 205 {
+		t.Fatal("town departure question did not start at x=95")
+	}
+	if record[119*320+100] != 205 || record[119*320+95] == 205 {
+		t.Fatal("standalone record question did not start at x=100")
+	}
+}

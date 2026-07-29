@@ -97,6 +97,7 @@ type Game struct {
 	prepClock            nativeBIOSClock     // preparation 0x31e80→0x1297d 的 BIOS 低字來源
 	prepIdleCycle        int                 // 原版 [0x53c0b] 0..3；繪圖時 3 正規化為1
 	prepLastTick         int                 // 原版 [0x53c0f] 有號 BIOS 低字 latch
+	prepPromptSource     []byte              // 0x1956b 前的 town 畫面或 0x2cc04 黑色來源
 	churchSel            int                 // church service menu cursor (0..3)
 	churchMode           string              // menu / status_* / transfer_* / revive* / class / class_confirm
 	churchIDs            []int               // current church candidate ids
@@ -2491,6 +2492,16 @@ func (g *Game) setupPreparation(n *campaign.Node) {
 	// deployment and the remake save projection therefore cannot preselect
 	// this native selection pass.
 	g.partyDeploy = make(map[int]bool)
+	if n == nil || n.Cancel == "" {
+		// 0x2cc04 clears the complete VGA target before the standalone
+		// FDTXT 0x19a record prompt.
+		g.prepPromptSource = make([]byte, 320*200)
+	} else if len(g.prepPromptSource) != 320*200 {
+		// A town-backed prompt must retain its actual town frame; never
+		// substitute a black or modern background for missing provenance.
+		g.prepPromptSource = nil
+	}
+	g.beginNativePreparationPromptOpening()
 }
 
 func (g *Game) preparationSelected() int {
@@ -2521,6 +2532,7 @@ func (g *Game) restartPreparationSelection() {
 	g.prepConfirmSel = 0
 	g.nativeClassUIJob = nil
 	g.resetNativeClassUIPulse()
+	g.prepPromptSource = nil
 	g.partyDeploy = make(map[int]bool)
 }
 
@@ -2804,6 +2816,11 @@ func (g *Game) campInput() bool {
 					return true
 				}
 				if g.campSel >= 0 && g.campSel < 5 {
+					if source, ok := g.composeNativeTownFrame(); ok {
+						g.prepPromptSource = append([]byte(nil), source...)
+					} else {
+						g.prepPromptSource = nil
+					}
 					g.camp.Advance(fmt.Sprintf("opt%d", g.campSel))
 					g.enterNode()
 				}
@@ -2865,27 +2882,46 @@ func (g *Game) campInput() bool {
 				return true
 			}
 			if !g.prepSelecting {
+				closeThen := func(after func()) {
+					if !g.beginNativePreparationPromptClosing(after) {
+						after()
+					}
+				}
 				if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) || inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
 					g.prepConfirmSel ^= 1
+					g.resetNativeClassUIPulse()
 				}
 				if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 					if townBacked {
-						leavePreparation("cancel")
+						closeThen(func() {
+							g.prepPromptSource = nil
+							leavePreparation("cancel")
+						})
 					} else {
-						g.restartPreparationSelection()
+						closeThen(g.restartPreparationSelection)
 					}
 					return true
 				}
 				if enter {
 					if !townBacked {
-						if g.prepConfirmSel == 0 {
-							g.saveGame()
-						}
-						g.restartPreparationSelection()
+						closeThen(func() {
+							if g.prepConfirmSel == 0 {
+								g.saveGame()
+							}
+							g.restartPreparationSelection()
+						})
 					} else if g.prepConfirmSel != 0 {
-						leavePreparation("cancel")
-					} else if g.acceptTownDeparturePrompt() {
-						leavePreparation("confirm")
+						closeThen(func() {
+							g.prepPromptSource = nil
+							leavePreparation("cancel")
+						})
+					} else {
+						closeThen(func() {
+							if g.acceptTownDeparturePrompt() {
+								g.prepPromptSource = nil
+								leavePreparation("confirm")
+							}
+						})
 					}
 				}
 				return true

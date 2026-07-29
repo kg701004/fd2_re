@@ -138,14 +138,16 @@ func (g *Game) stepNativeClassUILifecycle(now time.Time) {
 		}
 	}
 	preparationConfirm := false
-	if g.camp != nil && g.prepConfirm {
+	preparationPrompt := false
+	if g.camp != nil {
 		if node := g.camp.Node(); node != nil && node.Type == "preparation" {
-			preparationConfirm = true
+			preparationConfirm = g.prepConfirm
+			preparationPrompt = !g.prepSelecting && !g.prepConfirm
 		}
 	}
 	if g.nativeClassUIJob == nil &&
 		(g.churchMode == "class_confirm" || g.churchMode == "revive_confirm" ||
-			preparationConfirm) {
+			preparationConfirm || preparationPrompt) {
 		g.stepNativeClassUIPulseTick(g.nativeClassUIClock.Sample(now))
 	}
 }

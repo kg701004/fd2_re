@@ -4,6 +4,11 @@
 明確的工作線：以合法原版檔案為 oracle 的反組譯／資料保存，以及不攜帶版權資產的
 Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已破解」宣稱成「遊戲已重製」。
 
+本庫所有 `FD2.EXE` 位址目前只適用於大小 `357074` 位元組、MD5
+`b97caf2239a27a896069d03549d96e1e` 的版本；SHA-256 與相關原版資產完整清單見
+[`docs/data/fd2-reference-files.json`](docs/data/fd2-reference-files.json)。
+雜湊不同時必須重新定位，不能直接套用文件中的位址。
+
 ## 目前狀態（2026-07-28）
 
 | 領域 | 已驗證成果 | 與原版的差距 |
@@ -227,6 +232,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源整備選人合成器（2026-07-29；20 個原始圖像索引＋ch01 索爾狀態記錄，**不是 DOSBox 截圖或正常晚期戰役存檔**；`0x1297d` 待機週期已接，進退動畫與實機差分仍缺） | ![preparation roster compositor partial](docs/figures/preparation-roster-compositor-partial.png) |
 | 原版資源整備最終確認穩定畫面（`0x31d3c`；DATO #75 商店店員、FDTXT `0x292`、FDOTHER #2 Yes／No；依 `0x16559(0)` 順序由肖像覆蓋文字左段，**是 E1 原始資源合成，不是 DOSBox 截圖或正常玩家路徑**） | ![preparation confirmation compositor partial](docs/figures/preparation-confirmation-compositor-partial.png) |
 | 整備最終確認完整幀序列（由左至右、由上至下：6 幀對話框開啟、4 幀選項展開、穩定態、4 幀選項關閉、5 幀對話框關閉、原畫面還原；正式路徑只在 Draw 確認呈現後前進，**仍是 E1，不是原版實機擷取**） | ![preparation confirmation lifecycle](docs/figures/preparation-confirmation-lifecycle.png) |
+| 無城鎮整備的「記錄戰況」提示（`0x2cc04..0x2cc87`；黑色來源、FDTXT `0x19a`、完整 6＋4＋穩定態＋4＋5＋還原，**E1 原始資源合成**） | ![preparation record prompt lifecycle](docs/figures/preparation-record-prompt-lifecycle.png) |
+| ch02 城鎮出發的「進入戰場」提示（`0x2d0d1..0x2d12a`；保留 variant0／selection2 城鎮來源、FDTXT `0x201`，最後還原同一城鎮畫面，**E1 原始資源合成**） | ![preparation departure prompt ch02 lifecycle](docs/figures/preparation-departure-prompt-ch02-lifecycle.png) |
 | 原版 DOSBox／remake indexed town hub（ch02 variant0／selection0／pulse2；左右整幀相同） | ![original and remake town hub](docs/figures/town-hub-original-vs-remake.png) |
 | Left 後 selection1／pulse2 原版與 remake（左右整幀相同） | ![original and remake town selection1](docs/figures/town-hub-selection1-original-vs-remake.png) |
 | town variant0 六個 selection（上排原版 DOSBox、下排 remake；0→5 由左至右，每格整幀 hash 相同） | ![town six selections](docs/figures/town-hub-six-selections-original-vs-remake.png) |

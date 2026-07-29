@@ -156,6 +156,120 @@ func (g *Game) composeNativePreparationConfirmationFrame() ([]byte, bool) {
 	return frame, true
 }
 
+func (g *Game) nativePreparationPromptActive() bool {
+	if g.camp == nil || g.prepSelecting || g.prepConfirm {
+		return false
+	}
+	node := g.camp.Node()
+	return node != nil && node.Type == "preparation"
+}
+
+func (g *Game) composeNativePreparationPromptDialogue() ([]byte, bool) {
+	if !g.nativePreparationPromptActive() ||
+		g.nativePreparationUI == nil || len(g.prepPromptSource) != 320*200 {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativePreparationConfirmationDialogue(
+		g.prepPromptSource,
+		g.nativePreparationUI.dialogue,
+		g.nativePreparationUI.portrait,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) composeNativePreparationPromptQuestion() ([]byte, bool) {
+	if !g.nativePreparationPromptActive() ||
+		g.nativePreparationUI == nil || len(g.prepPromptSource) != 320*200 {
+		return nil, false
+	}
+	node := g.camp.Node()
+	var (
+		frame []byte
+		err   error
+	)
+	if node.Cancel != "" {
+		frame, err = campaign.ComposeNativePreparationDepartureQuestion(
+			g.prepPromptSource,
+			g.nativePreparationUI.dialogue,
+			g.nativePreparationUI.portrait,
+			g.nativePreparationUI.status.Strings,
+			g.nativePreparationUI.status.Font,
+		)
+	} else {
+		frame, err = campaign.ComposeNativePreparationRecordQuestion(
+			g.prepPromptSource,
+			g.nativePreparationUI.dialogue,
+			g.nativePreparationUI.portrait,
+			g.nativePreparationUI.status.Strings,
+			g.nativePreparationUI.status.Font,
+		)
+	}
+	return frame, err == nil
+}
+
+func (g *Game) composeNativePreparationPromptFrame() ([]byte, bool) {
+	question, ok := g.composeNativePreparationPromptQuestion()
+	if !ok {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeConfirmationChoices(
+		question,
+		g.nativePreparationUI.choices,
+		g.prepConfirmSel,
+		g.nativeClassUIPulse/2,
+	)
+	return frame, err == nil
+}
+
+func (g *Game) beginNativePreparationPromptOpening() bool {
+	if len(g.prepPromptSource) != 320*200 {
+		return false
+	}
+	dialogue, ok := g.composeNativePreparationPromptDialogue()
+	if !ok {
+		return false
+	}
+	question, ok := g.composeNativePreparationPromptQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativePreparationConfirmationOpeningFrames(
+		g.prepPromptSource, dialogue, question, g.nativePreparationUI.choices,
+	)
+	if err != nil || len(frames) != 10 {
+		return false
+	}
+	g.resetNativeClassUIPulse()
+	g.nativeClassUIJob = &nativeClassUIJob{frames: frames}
+	return true
+}
+
+func (g *Game) beginNativePreparationPromptClosing(after func()) bool {
+	if len(g.prepPromptSource) != 320*200 {
+		return false
+	}
+	dialogue, ok := g.composeNativePreparationPromptDialogue()
+	if !ok {
+		return false
+	}
+	question, ok := g.composeNativePreparationPromptQuestion()
+	if !ok {
+		return false
+	}
+	frames, err := campaign.NativePreparationConfirmationClosingFrames(
+		g.prepPromptSource, dialogue, question, g.nativePreparationUI.choices,
+	)
+	if err != nil || len(frames) != 9 {
+		return false
+	}
+	g.nativeClassUIJob = &nativeClassUIJob{
+		frames:  frames,
+		restore: append([]byte(nil), g.prepPromptSource...),
+		after:   after,
+	}
+	return true
+}
+
 func (g *Game) composeNativePreparationConfirmationDialogue() ([]byte, bool) {
 	background, ok := g.composeNativePreparationFrame()
 	if !ok {
@@ -235,6 +349,14 @@ func (g *Game) beginNativePreparationConfirmationClosing(after func()) bool {
 
 func (g *Game) drawNativePreparation(screen *ebiten.Image) bool {
 	if g.drawNativeClassUIJob(screen) {
+		return true
+	}
+	if g.nativePreparationPromptActive() {
+		frame, ok := g.composeNativePreparationPromptFrame()
+		if !ok {
+			return false
+		}
+		g.presentNativeClassFrame(screen, frame)
 		return true
 	}
 	var (
