@@ -4000,11 +4000,15 @@ func (g *Game) nativeCommandTargetUnitsFor(id int) ([]*battle.Unit, error) {
 		return nil, fmt.Errorf("native command book incomplete")
 	}
 	record := g.st.NativeCommandBook[id]
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, err
+	}
 	return battle.NativeCommandTargets(
 		g.st.W, g.st.H,
 		battle.Cell{X: g.sel.X, Y: g.sel.Y},
 		record.SelectionMode, record.TargetCode,
-		g.st.NativeTargetFlags, g.st.Units,
+		flags, g.st.Units,
 	)
 }
 
@@ -4012,10 +4016,14 @@ func (g *Game) materializeNativeCommandTargetField(record battle.NativeCommandRe
 	if g == nil || g.st == nil || g.sel == nil {
 		return fmt.Errorf("native command target field context unavailable")
 	}
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return err
+	}
 	fieldBytes, err := battle.NativeCommandTargetFieldBytes(
 		g.st.W, g.st.H,
 		battle.Cell{X: g.sel.X, Y: g.sel.Y},
-		record.SelectionMode, 0, g.st.NativeTargetFlags,
+		record.SelectionMode, 0, flags,
 	)
 	if err != nil || len(g.st.NativeTileBlitModes) != len(fieldBytes) {
 		return fmt.Errorf("native command target field incomplete")

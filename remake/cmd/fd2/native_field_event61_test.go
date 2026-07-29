@@ -117,7 +117,7 @@ func TestNativeEvent61AttackWaitsForPresentationCompletion(t *testing.T) {
 
 func TestNativeEvent61ImmediateItemRunsAfterSuccessfulMutation(t *testing.T) {
 	g, trigger := nativeEvent61PlayerGame(t, 198)
-	g.st.NativeTargetFlags = make([]byte, g.st.W*g.st.H)
+	g.st.NativeCompositionEventBytes = make([]byte, g.st.W*g.st.H)
 	var err error
 	g.nativeItemEffectRows, err = battle.LoadNativeItemEffectRowPrefix(
 		"../../assets/data/native_item_effect_rows.json",

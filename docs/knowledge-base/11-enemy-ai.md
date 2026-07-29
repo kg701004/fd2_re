@@ -192,7 +192,8 @@ max HP `+0x42`，且 raw `+0x25/+0x26` 都為零時，寫入
    因此最後候選是穩定的逐列順序（row-major），而非 `0x4E0DC` 的遞迴順序。
 
 `battle.NativeAIPhysicalDestinations` 保存這四段只接受原始資料的契約，要求完整
-執行期記錄、caller-owned live `NativeTargetFlags`、`NativeTerrainMoveCodes` 與20位元組
+執行期記錄、呼叫者短生命週期的執行期旗標（live flags）、
+`NativeTerrainMoveCodes` 與20位元組
 成本列；任何輸入缺失或越界都拒絕，不回退到重製端 `Cost`／`Reachable`。
 選擇值的零／非零分組仍保持原始名稱，不猜成陣營或階段。
 
@@ -470,6 +471,10 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
   `0x40/0x80`。map19 有1600格、7格非零；真實 unit55（identity92、遮罩
   `[4,0,0,8,0]`、MP288）在完整原始輸入下兩個 producer 都得到零分，
   且不創造勝者。這是 E0 負向資產錨點，不是原版動態回合 trace。
+- 合法 IDA Pro 9.4 已確認 `0x1598A` 與 `0x1567E` 在每次目的格／目標候選
+  使用後呼叫 `0x4DBFC`，兩者都不呼叫 `0x145CD`。因此這兩個預選 producer
+  使用每次重建的低五位（low5）基底，不持有跨單位執行期旗標；直接指令見
+  [`fd2_ai_composition_flag_lifetime_disasm.txt`](../data/fd2_ai_composition_flag_lifetime_disasm.txt)。
 - 這個橋只涵蓋無副作用的分數與門檻，沒有呼叫 `0x13A9F`、逐單位事件／章節
   回呼或 `[0x53ECC]` 提早離開，因此不是正式敵方回合執行器。
 

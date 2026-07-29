@@ -1,0 +1,87 @@
+# FD2 AI／玩家命令構成格旗標生命週期證據
+#
+# 來源 FD2.EXE
+# 大小 357074 bytes
+# MD5 b97caf2239a27a896069d03549d96e1e
+# SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+#
+# 工具順序：
+# * 合法 IDA Pro 9.4 Docker 先確認函式邊界、呼叫者與交叉參照。
+# * Capstone Docker 再覆核下列直接指令。
+#
+# IDA Pro 9.4（2026-07-29）確認：
+# * 0x1D8BA..0x1DA16 是敵方兩段掃描；0x1D988 是同一函式內第二段，
+#   不是獨立函式。
+# * 0x1598A..0x15B77、0x1567E..0x15880 是兩個預選 producer。
+# * 0x1CFF0..0x1D4CB 是玩家命令 selector；0x1BBDC..0x1BFFE 是物品路徑。
+# * 上述 producer／selector 都直接呼叫 0x4DBFC 恢復構成格基底；
+#   它們沒有呼叫 0x145CD。
+#
+# 結論邊界：
+# * `0x4E031` 只複製 BIOS 鍵盤緩衝 word，與構成格旗標無關。
+# * `0x1598A` 每次 0x4E040 目的格搜尋後呼叫 0x4DBFC，再於每次
+#   0x14818 目標搜尋後再次呼叫 0x4DBFC。
+# * `0x1567E` 也在目的格／目標搜尋後各自呼叫 0x4DBFC。
+# * `0x1CFF0` 在玩家每一階段 0x14818／0x115B6 後呼叫 0x4DBFC。
+# * 因此這些命令的 baseline 是每次由 FDFIELD `+2 & 0x1F` 重建的短生命週期
+#   緩衝區；不可在重製 `State` 保存一份跨命令的 live flags。
+# * `0x145CD` 的 0x40／0x80 writer 只屬其直接呼叫者的移動／攻擊生命週期。
+
+# 敵方第一遍：兩個 producer 後才依分數門檻呼叫正式 dispatcher。
+0x01d918  push    edx
+0x01d919  push    esi
+0x01d91a  call    0x1598a
+0x01d91f  add     esp, 8
+0x01d922  push    0
+0x01d924  push    esi
+0x01d925  call    0x1567e
+0x01d92a  add     esp, 8
+0x01d92d  cmp     dword ptr [0x3c23], 6  ; ->0x53c23
+0x01d934  jge     0x1d93f
+0x01d936  cmp     dword ptr [0x3c33], 6  ; ->0x53c33
+0x01d93d  jl      0x1d94a
+0x01d93f  push    0
+0x01d941  push    esi
+0x01d942  call    0x13a9f
+
+# 0x1598A：目的格搜尋與每個目標搜尋各自恢復基底。
+0x015a60  call    0x4e040
+0x015a65  add     esp, 0x18
+0x015a68  push    dword ptr [esp + 0x44]
+0x015a6c  call    0x14b16
+0x015a71  add     esp, 4
+0x015a74  mov     dword ptr [esp + 0x40], eax
+0x015a78  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015a7e  call    0x4dbfc
+0x015a83  add     esp, 4
+0x015aaa  call    0x14818
+0x015aaf  mov     dword ptr [esp + 0x68], eax
+0x015ab3  add     esp, 0x18
+0x015ab6  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015abc  call    0x4dbfc
+
+# 0x1567E：物品命令的目的格搜尋後恢復基底。
+0x01575a  call    0x14818
+0x01575f  add     esp, 0x18
+0x015762  push    dword ptr [esp + 0x34]
+0x015766  call    0x14b16
+0x01576b  add     esp, 4
+0x01576e  mov     dword ptr [esp + 0x28], eax
+0x015772  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015778  call    0x4dbfc
+
+# 0x1CFF0：玩家第一、第二階段 selector 都在使用後恢復基底。
+0x01d1c9  call    0x14818
+0x01d1ce  add     esp, 0x18
+0x01d1d4  push    eax
+0x01d1d5  movzx   eax, byte ptr [esi + 6]
+0x01d1d9  push    eax
+0x01d1da  call    0x115b6
+0x01d1e4  mov     edi, eax
+0x01d1e6  push    dword ptr [0x3a51]  ; ->0x53a51
+0x01d1ec  call    0x4dbfc
+0x01d211  call    0x14818
+0x01d216  add     esp, 0x18
+0x01d219  mov     esi, eax
+0x01d21b  push    dword ptr [0x3a51]  ; ->0x53a51
+0x01d221  call    0x4dbfc

@@ -36,7 +36,11 @@ func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int
 		return nil, rngState, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	flags, err := s.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, rngState, err
+	}
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
 	if err != nil {
 		return nil, rngState, err
 	}

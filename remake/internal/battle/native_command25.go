@@ -21,7 +21,11 @@ func (s *State) ExecuteNativeCommand25(actor, confirmed *Unit) ([]NativeCommand2
 		return nil, fmt.Errorf("native command 25 record unavailable")
 	}
 	record := s.NativeCommandBook[commandID]
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	flags, err := s.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
 	if err != nil {
 		return nil, err
 	}

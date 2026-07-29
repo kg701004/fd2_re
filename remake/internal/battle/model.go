@@ -493,8 +493,7 @@ type State struct {
 	Flags                       map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
 	NativeEventState            [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
 	Cost                        []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
-	NativeCompositionEventBytes []byte                      // immutable FDFIELD composition cell +2 source; 0x4dbfc masks it before runtime writers
-	NativeTargetFlags           []byte                      // caller-owned live cell +2 flags after 0x4dbfc and any 0x145cd writer; never loaded from map JSON
+	NativeCompositionEventBytes []byte                      // immutable FDFIELD composition cell +2 source; each caller rebuilds its own mutable low5/live flags
 	NativeFieldEventSlots       []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
 	NativeFieldEvents           []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
 	NativeFieldEventRules       []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules

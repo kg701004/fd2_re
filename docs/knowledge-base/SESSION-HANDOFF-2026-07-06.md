@@ -2407,13 +2407,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   合法 IDA Pro 9.4 優先確認這些函式邊界及交叉參照，並補正
   `0x4E040` 是搜尋入口、`0x4E0DC` 是遞迴器、`0x4E16E` 才是
   `0x40/0x80` 直接消費端；Capstone 再逐指令覆核。
-  資產鍵已改成 `native_composition_event_bytes`，`NativeTargetFlags` 不再
-  由 JSON 自動填入。完整指令產物為
+  資產鍵已改成 `native_composition_event_bytes`，不再由 JSON 自動填入
+  一份假性的執行期旗標（live flags）。完整指令產物為
   `docs/data/fd2_field_composition_lifecycle_disasm.txt`。
 - map19 取得1600格 event bytes，其中7格非零；真實 unit55（identity92、遮罩
   `[4,0,0,8,0]`、MP288）直接執行兩個 producer 都得到零分，且不創造
   勝者。下一個證據門檻仍是固定原版動態 trace，以及逐單位回呼／pending
   code 的共同驗證；正式 `NextAIPlan` 維持未接。
+- 同輪續以合法 IDA Pro 9.4 優先重讀
+  `0x1D8BA/0x1598A/0x1567E/0x1CFF0/0x1BBDC`，再由 Capstone 覆核：
+  每個 `0x4E040/0x14818` 候選生命週期後都呼叫 `0x4DBFC`，這些呼叫端（caller）
+  都不呼叫 `0x145CD`。因此刪除 `State.NativeTargetFlags`；玩家命令與兩個
+  AI producer 每次從 `NativeCompositionEventBytes` 重建獨立低五位切片（low5 slice），
+  缺來源即失敗即關閉。跨呼叫 mutation 與命令家族回歸已加入，直接指令見
+  `docs/data/fd2_ai_composition_flag_lifetime_disasm.txt`。
 
 ## 2026-07-29：`0x205B4/0x205BE` 三值結果規則與函式邊界勘誤
 

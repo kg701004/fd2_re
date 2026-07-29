@@ -75,7 +75,11 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 		return nil, fmt.Errorf("native derived-strike record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	flags, err := s.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +118,11 @@ func (s *State) ExecuteNativeCommand30(actor *Unit, savedCursor, confirmedCursor
 	// The preceding 0x14818 -> 0x115B6 confirmation is still required. It
 	// proves the provided confirmed cursor is a valid target candidate before
 	// the special line selector is allowed to mutate MP or HP.
-	selection, err := NativeCommandTargets(s.W, s.H, Cell{X: actor.X, Y: actor.Y}, record.SelectionMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	flags, err := s.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, err
+	}
+	selection, err := NativeCommandTargets(s.W, s.H, Cell{X: actor.X, Y: actor.Y}, record.SelectionMode, record.TargetCode, flags, s.Units)
 	if err != nil {
 		return nil, err
 	}

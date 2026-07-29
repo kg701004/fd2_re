@@ -26,6 +26,19 @@ func NativeCompositionBaseFlags(w, h int, eventBytes []byte) ([]byte, error) {
 	return flags, nil
 }
 
+// NativeCommandBaseFlags reproduces the baseline seen by 0x14818 callers.
+// 0x1cff0, 0x1bbdc, 0x1598a and 0x1567e reset the mutable composition buffer
+// with 0x4dbfc after each candidate lifetime, so State must not retain a
+// caller-owned live flag slice between commands.
+func (s *State) NativeCommandBaseFlags() ([]byte, error) {
+	if s == nil {
+		return nil, fmt.Errorf("native command composition state unavailable")
+	}
+	return NativeCompositionBaseFlags(
+		s.W, s.H, s.NativeCompositionEventBytes,
+	)
+}
+
 // NativeCommandRuntimeFlags reproduces the verified 0x145cd→0x14625/
 // 0x146a7 writer on top of the 0x4dbfc base. selector zero marks active raw
 // +6!=0 records; any nonzero selector marks active raw +6==0 records. Each
@@ -214,7 +227,7 @@ func NativeCommandTargetMatches(code int, camp Camp) bool {
 
 // NativeCursorConfirmationAllowed preserves the non-relocation Enter/Space
 // gate in 0x115b6. fieldByte is the selected FDFIELD cell's fourth byte
-// ([0x53a51 + 4*cell + 7]), not NativeTargetFlags. targetCode 5 and a 0xff
+// ([0x53a51 + 4*cell + 7]), not composition cell +2 flags. targetCode 5 and a 0xff
 // cell reject before targetCode 4 accepts.
 //
 // For target codes 0..3 on a non-0xff cell, 0x115b6 derives a strict

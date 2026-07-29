@@ -142,9 +142,6 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	if got, want := st.NativeCompositionEventBytes, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
 		t.Errorf("NativeCompositionEventBytes=%v want %v", got, want)
 	}
-	if st.NativeTargetFlags != nil {
-		t.Errorf("NativeTargetFlags=%v want caller-owned nil", st.NativeTargetFlags)
-	}
 	if got, ok := NativeFieldEventIDAt(st, 1, 0, 1); !ok || got != 82 {
 		t.Fatalf("NativeFieldEventIDAt=(%d,%v), want (82,true)", got, ok)
 	}
@@ -170,9 +167,6 @@ func TestLoad_NoMapJSON_CostNil(t *testing.T) {
 	}
 	if st.Cost != nil {
 		t.Errorf("Cost = %v, want nil(無 map.json)", st.Cost)
-	}
-	if st.NativeTargetFlags != nil {
-		t.Errorf("NativeTargetFlags=%v want nil", st.NativeTargetFlags)
 	}
 	if st.NativeCompositionEventBytes != nil {
 		t.Errorf(

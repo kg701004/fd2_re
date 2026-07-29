@@ -40,7 +40,7 @@ func passingNativeApplicationRNG(t *testing.T) *rand.Rand {
 func TestExecuteNativeCommandApplicationUsesThreeRNGDrawsAndNativeDamage(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 26, passingNativeApplicationRNG(t))
 	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Damage != 9 || got[0].Duration < 2 || got[0].Duration > 5 {
@@ -54,7 +54,7 @@ func TestExecuteNativeCommandApplicationUsesThreeRNGDrawsAndNativeDamage(t *test
 func TestExecuteNativeCommandApplicationConsumesGateDamageMarkerDraws(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
 	source := &countingZeroSource{}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 22, rand.New(source))
@@ -69,7 +69,7 @@ func TestExecuteNativeCommandApplicationConsumesGateDamageMarkerDraws(t *testing
 func TestExecuteNativeCommandApplicationKeepsRawGateButConsumesSuccessfulCommand(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0, NativeTransient: [6]byte{0, 0, 0, 4}}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 26, rand.New(rand.NewSource(1)))
 	if err != nil || len(got) != 1 || got[0].Applied || target.HP != 20 || target.NativeTransient[3] != 4 || actor.MP != 3 || !actor.Acted {
@@ -80,7 +80,7 @@ func TestExecuteNativeCommandApplicationKeepsRawGateButConsumesSuccessfulCommand
 func TestExecuteNativeCommandApplicationSupportsRecoveredIDTwentyTwo(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(22)}
 
 	got, err := st.ExecuteNativeCommandApplication(actor, target, 22, passingNativeApplicationRNG(t))
 	if err != nil || len(got) != 1 || !got[0].Applied || got[0].Offset != 0x27 || target.NativeTransient[5] != got[0].Duration || target.HP != 11 {

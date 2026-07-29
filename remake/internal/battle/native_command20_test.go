@@ -18,7 +18,7 @@ func nativeCommandClearRestoreBook(id int) []NativeCommandRecord {
 func TestExecuteNativeCommandClearRestoreUsesRecordTenAndRawFlag(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 1, MaxHP: 100, X: 1, Y: 0, NativeTransient: [6]byte{0, 0, 0, 3}}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(20)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(20)}
 
 	got, err := st.ExecuteNativeCommandClearRestore(actor, target, 20, rand.New(rand.NewSource(2)))
 	if err != nil || len(got) != 1 || !got[0].Cleared || got[0].Offset != 0x25 || got[0].Restore.Rolled < 90 || got[0].Restore.Rolled > 99 {
@@ -32,7 +32,7 @@ func TestExecuteNativeCommandClearRestoreUsesRecordTenAndRawFlag(t *testing.T) {
 func TestExecuteNativeCommandClearRestoreConsumesCommandWhenFlagEmpty(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 10, MaxHP: 20, X: 1, Y: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(21)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(21)}
 
 	got, err := st.ExecuteNativeCommandClearRestore(actor, target, 21, rand.New(rand.NewSource(1)))
 	if err != nil || len(got) != 1 || got[0].Cleared || target.HP != 10 || actor.MP != 3 || !actor.Acted {

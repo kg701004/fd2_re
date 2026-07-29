@@ -723,7 +723,7 @@ E0 組合驗證，不是一般玩家 map0 動態狀態。
 這個 `+2` 陣列命名成完整 target flags 是錯誤斷言：`0x4DBFC` 載入後先
 執行 `+2 &= 0x1F`，`0x145CD→0x14625/0x146A7` 才依 caller selector 與
 執行期 roster 加上 `0x40/0x80`。地圖 JSON 只保存不可變來源；
-`State.NativeTargetFlags` 不再由資產自動填入。map19 真實資產現提供1600格
+重製 `State` 不再保存跨命令的執行期目標旗標（live target flags）。map19 真實資產現提供1600格
 event bytes（7格非零）；unit55 的 identity92、遮罩
 `[4,0,0,8,0]`、MP288 可直接通過兩個單位評分器，結果皆為零且不創造勝者。
 這是未修改分數輸入的 E0 負向錨點，仍不是完整 phase callback 或玩家路徑。
@@ -817,12 +817,17 @@ Provenance correction：`0x1088D` 以 `chapter*3` 呼叫 `0x111BA`，後者釋�
 因此 `battle.Load` 只把完整 `native_composition_event_bytes` 載入
 `State.NativeCompositionEventBytes`。`NativeCompositionBaseFlags` 保存
 `0x4DBFC` 的 `&0x1F`，`NativeCommandRuntimeFlags` 保存已驗證的 roster
-高位元 writer；`State.NativeTargetFlags` 是 caller-owned live slice，
-不再從 map JSON 猜成完整執行期狀態。正式 command cursor 尚未證實其 caller
-writer lifetime 時會保持 nil 並失敗即關閉。
+高位元 writer。合法 IDA Pro 9.4 再確認 `0x1598A`、`0x1567E`、
+`0x1CFF0` 與 `0x1BBDC` 都在每次 `0x4E040/0x14818` 候選生命週期後呼叫
+`0x4DBFC`，且它們不呼叫 `0x145CD`；因此 `State` 不得保存跨命令的執行期
+切片（live slice）。正式命令每次從不可變事件位元組（event bytes）重建
+低五位（low5）基底，缺來源時失敗即
+關閉；只有 `0x145CD` 的直接呼叫者才可在自己的短生命週期加入 `0x40/0x80`。
 上述函式邊界與交叉參照已由合法 IDA Pro 9.4 優先確認，再由 Capstone
 逐指令交叉驗證；loader、配置器、constructor、writer 與 consumer 指令保存於
 [`fd2_field_composition_lifecycle_disasm.txt`](../data/fd2_field_composition_lifecycle_disasm.txt)。
+命令／AI 呼叫端（caller）的重設順序另保存於
+[`fd2_ai_composition_flag_lifetime_disasm.txt`](../data/fd2_ai_composition_flag_lifetime_disasm.txt)。
 
 ### Native command MP transaction（E0 verified, UI unbound）
 

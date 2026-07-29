@@ -19,7 +19,7 @@ func nativeCommand24Book() []NativeCommandRecord {
 func TestExecuteNativeCommand24UsesDerivedStatsAndOneMPDebit(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 200}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommand24Book()}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommand24Book()}
 
 	got, err := st.ExecuteNativeCommand24(actor, target, rand.New(rand.NewSource(2)))
 	if err != nil || len(got) != 1 || got[0].Target != target || got[0].Amount != 130 || got[0].Damage < 117 || got[0].Damage > 129 {
@@ -35,7 +35,7 @@ func TestExecuteNativeCommand24RejectsInvalidBookBeforeMutation(t *testing.T) {
 	target := &Unit{Camp: Enemy, OnField: true, HP: 100}
 	book := nativeCommand24Book()
 	book[24].ID = 0
-	st := &State{W: 1, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: []byte{0}, NativeCommandBook: book}
+	st := &State{W: 1, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: []byte{0}, NativeCommandBook: book}
 	if _, err := st.ExecuteNativeCommand24(actor, target, rand.New(rand.NewSource(1))); err == nil || actor.MP != 30 || actor.Acted || target.HP != 100 {
 		t.Fatalf("invalid ID24 book mutated state actor=%#v target=%#v err=%v", actor, target, err)
 	}
@@ -46,7 +46,7 @@ func TestExecuteNativeCommandDerivedStrikeUsesRecoveredID28Multiplier(t *testing
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 300}
 	book := nativeCommand24Book()
 	book[28] = NativeCommandRecord{ID: 28, SelectionMode: 1, EffectMode: 0, MPCost: 22, TargetCode: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: book}
 
 	got, err := st.ExecuteNativeCommandDerivedStrike(actor, target, 28, rand.New(rand.NewSource(2)))
 	if err != nil || len(got) != 1 || got[0].Amount != 180 || got[0].Damage < 162 || got[0].Damage > 179 {
@@ -85,7 +85,7 @@ func TestExecuteNativeCommand30UsesSpecialLineAndOneMPDebit(t *testing.T) {
 	friendly := &Unit{Camp: Own, OnField: true, X: 3, Y: 0, DP: 20, HP: 300}
 	book := nativeCommand24Book()
 	book[30] = NativeCommandRecord{ID: 30, SelectionMode: 20, EffectMode: 0, MPCost: 24, TargetCode: 0}
-	st := &State{W: 5, H: 1, Units: []*Unit{actor, between, confirmed, friendly}, NativeTargetFlags: make([]byte, 5), NativeCommandBook: book}
+	st := &State{W: 5, H: 1, Units: []*Unit{actor, between, confirmed, friendly}, NativeCompositionEventBytes: make([]byte, 5), NativeCommandBook: book}
 
 	got, err := st.ExecuteNativeCommand30(actor, Cell{X: 0, Y: 0}, Cell{X: 4, Y: 0}, rand.New(rand.NewSource(2)))
 	if err != nil || len(got) != 2 || got[0].Target != between || got[1].Target != confirmed || got[0].Amount != 160 || got[1].Amount != 160 {
@@ -101,7 +101,7 @@ func TestExecuteNativeCommand30RejectsNonCandidateBeforeMP(t *testing.T) {
 	target := &Unit{Camp: Enemy, OnField: true, X: 4, Y: 0, DP: 20, HP: 300}
 	book := nativeCommand24Book()
 	book[30] = NativeCommandRecord{ID: 30, SelectionMode: 20, MPCost: 24, TargetCode: 0}
-	st := &State{W: 5, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 5), NativeCommandBook: book}
+	st := &State{W: 5, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 5), NativeCommandBook: book}
 	if _, err := st.ExecuteNativeCommand30(actor, Cell{X: 0, Y: 0}, Cell{X: 1, Y: 0}, rand.New(rand.NewSource(2))); err == nil || actor.MP != 30 || actor.Acted || target.HP != 300 {
 		t.Fatalf("invalid ID30 confirmation mutated state actor=%#v target=%#v err=%v", actor, target, err)
 	}

@@ -15,7 +15,7 @@ func TestExecuteNativeCommand25ClearsOnlyFinalActedTargets(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
 	confirmed := &Unit{Camp: Own, OnField: true, HP: 10, Acted: true, X: 1, Y: 0}
 	other := &Unit{Camp: Own, OnField: true, HP: 10, Acted: false, X: 2, Y: 0}
-	st := &State{W: 3, H: 1, Units: []*Unit{actor, confirmed, other}, NativeTargetFlags: make([]byte, 3), NativeCommandBook: nativeCommand25Book()}
+	st := &State{W: 3, H: 1, Units: []*Unit{actor, confirmed, other}, NativeCompositionEventBytes: make([]byte, 3), NativeCommandBook: nativeCommand25Book()}
 
 	got, err := st.ExecuteNativeCommand25(actor, confirmed)
 	if err != nil || len(got) != 1 || got[0].Target != confirmed || !got[0].Cleared {

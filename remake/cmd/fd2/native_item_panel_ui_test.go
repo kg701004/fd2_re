@@ -115,7 +115,7 @@ func TestApplyNativeImmediateItemUsesTwoStageSelfTargetAndEndsAction(t *testing.
 	g := &Game{
 		st: &battle.State{
 			W: 1, H: 1, Units: []*battle.Unit{unit},
-			NativeTargetFlags: []byte{0},
+			NativeCompositionEventBytes: []byte{0},
 		},
 		sel: unit, moved: true, itemOpen: true,
 		shopItemStats: map[int]campaign.ItemStats{0x20: {AP: 2}},
@@ -148,7 +148,7 @@ func TestApplyNativeImmediateCapacityItemKeepsCurrentHP(t *testing.T) {
 	g := &Game{
 		st: &battle.State{
 			W: 1, H: 1, Units: []*battle.Unit{unit},
-			NativeTargetFlags: []byte{0},
+			NativeCompositionEventBytes: []byte{0},
 		},
 		sel: unit, moved: true, itemOpen: true,
 	}
@@ -185,8 +185,8 @@ func TestNativeHPRestoreTargetTransactionUsesProcessRNGAndConsumesSource(t *test
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags:   make([]byte, 9),
-			NativeTileBlitModes: make([]byte, 9),
+			NativeCompositionEventBytes: make([]byte, 9),
+			NativeTileBlitModes:         make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -240,8 +240,8 @@ func TestNativeMarkerClearTargetTransactionSyncsTransientAndRNG(t *testing.T) {
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags:   make([]byte, 9),
-			NativeTileBlitModes: make([]byte, 9),
+			NativeCompositionEventBytes: make([]byte, 9),
+			NativeTileBlitModes:         make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -284,8 +284,8 @@ func TestNativeRetainedStatItemsSyncDerivedWordsAndMarkers(t *testing.T) {
 		g := &Game{
 			st: &battle.State{
 				W: 3, H: 3, Units: []*battle.Unit{unit},
-				NativeTargetFlags:   make([]byte, 9),
-				NativeTileBlitModes: make([]byte, 9),
+				NativeCompositionEventBytes: make([]byte, 9),
+				NativeTileBlitModes:         make([]byte, 9),
 			},
 			sel: unit, moved: true, itemOpen: true,
 		}
@@ -328,8 +328,8 @@ func TestNativeRetainedMarkerApplicationSyncsDamageAndThreeRNGSteps(t *testing.T
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags:   make([]byte, 9),
-			NativeTileBlitModes: make([]byte, 9),
+			NativeCompositionEventBytes: make([]byte, 9),
+			NativeTileBlitModes:         make([]byte, 9),
 		},
 		sel: actor, moved: true, itemOpen: true,
 	}
@@ -374,8 +374,8 @@ func TestNativeCommandDamageItemUsesSharedUint16RNGAndRetainsSource(t *testing.T
 	g := &Game{
 		st: &battle.State{
 			W: 2, H: 1, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags:   make([]byte, 2),
-			NativeTileBlitModes: make([]byte, 2),
+			NativeCompositionEventBytes: make([]byte, 2),
+			NativeTileBlitModes:         make([]byte, 2),
 		},
 		sel: actor, moved: true, itemOpen: true,
 		nativeCommandBook:        book,
@@ -424,9 +424,9 @@ func TestNativeRelocationUsesSeparateDestinationCursorAndMode6Legality(t *testin
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 3, Units: []*battle.Unit{actor, target},
-			NativeTargetFlags:      make([]byte, 9),
-			NativeTileBlitModes:    make([]byte, 9),
-			NativeTerrainMoveCodes: []byte{2, 2, 2, 2, 2, 2, 2, 2, 2},
+			NativeCompositionEventBytes: make([]byte, 9),
+			NativeTileBlitModes:         make([]byte, 9),
+			NativeTerrainMoveCodes:      []byte{2, 2, 2, 2, 2, 2, 2, 2, 2},
 		},
 		sel: actor, moved: true, itemOpen: true,
 		nativeCommandBook: book,

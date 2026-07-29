@@ -272,7 +272,15 @@
   證據保存於
   [`fd2_field_composition_lifecycle_disasm.txt`](../data/fd2_field_composition_lifecycle_disasm.txt)。
   map19 1600格中7格非零，真實 unit55 的兩個 producer 均為零分且不創造
-  勝者。正式 command caller 尚未提供 live flags 時維持失敗即關閉。
+  勝者。`0x145CD` 直接呼叫者的短生命週期執行期旗標（live flags）仍維持
+  明確傳入。
+- [x] **RE-COMMAND-FLAG-LIFETIME**：合法 IDA Pro 9.4 優先確認
+  `0x1598A/0x1567E/0x1CFF0/0x1BBDC` 的候選生命週期，Capstone 再覆核每次
+  `0x4E040/0x14818` 後都呼叫 `0x4DBFC`，且這些函式沒有呼叫 `0x145CD`。
+  `State.NativeTargetFlags` 已刪除；正式命令改由
+  `NativeCompositionEventBytes` 每次重建獨立低五位切片（low5 slice），測試鎖定跨呼叫
+  不共享 mutation，缺來源仍失敗即關閉。直接證據見
+  [`fd2_ai_composition_flag_lifetime_disasm.txt`](../data/fd2_ai_composition_flag_lifetime_disasm.txt)。
 - [x] **RE-AI-RAW-RECORD-1598A**：`NativeAIScoringRecords` 以完整來源建立分離的 `0x50` runtime 快照，補齊 presentation、`+5/+6/+34..+36/+42/+46` 並拒絕不完整 roster；map0 與 map19 真實資產錨點通過。
 - [x] **RE-AI-CANDIDATES-1598A**：`NativeAIScoredCommandCandidateGroups` 已以 command `+3/+4`、原版 cost row、exact grid flags 與 raw `+5/+6` 建立 row-major destination/target-index groups；selector target-code transform 與空 target skip 已保存，map0 identity103→ally `(23,14)` 真實資產 regression 通過。群組、單位級最大分數與三遍門檻均已接入唯讀診斷；下一步是原版同狀態動態 trace。
 - [x] **RE-AI-SCORE-GROUPS-15B77**：`ScoreNativeAIScoredCommandGroups` 已依完整 ID 家族分派攻擊、恢復、旗標與原始零分支；map0 command0 的四個友軍目標各得24、群組合計96。IDs10..12 缺 `0x1F183` caller gate 時拒絕執行。`[0x53C23]` 的數值最大值可由零開始比較，但零分時的命令字區域變數初值仍未知，尚不可聲稱已閉合勝者。
@@ -459,7 +467,7 @@
 - [x] **RE-ATTACK-EQUIPPED-PREDICATE-1B83D**：官方 IDA 9.4 閉合 `0x1b83d(unit,a2)`：八格依序檢查 `flag&0x40`，`a2==0` 僅接受 item `<0x80`，`a2!=0` 僅接受 item `>=0x80`，回第一個 raw slot／`-1`。新增 `battle.NativeEquippedInventorySlot` regression，action overlay 在 constructor raw flags 存在時採用此 predicate；target geometry、damage/effect、renderer 仍 partial。
 - [x] **RE-ITEM-AVAILABILITY-GATE-1B8A6**：`0x1b8a6` 的 raw occupied count 已有 record adapter；新增 Unit-facing `NativeInventoryAvailableCount`，overlay 在八格 constructor flags 存在時以 bit7-clear count 決定 item disabled，`len(Inventory)` 僅是 legacy fallback。
 
-- [x] **native command target flag/runtime-grid bridge**：`0x14818→0x4e040` 的 raw target resolver 已有純資料層與 runtime producer（camp predicates、cross、cardinal flood-fill）。修正舊斷言：bit40 block；bit80 是扣 terrain cost 後強制 remaining budget=0 的可達終點，不是 zero-cost chain。flags 是 FDFIELD composition event word low byte（entry+2）；command target entry現從actor／record+3建立byte+3 grid，cancel/success依`0x4dbfc`全填`0xff`。缺 exact flags/grid仍 fail-closed。
+- [x] **native command target flag/runtime-grid bridge**：`0x14818→0x4e040` 的 raw target resolver 已有純資料層與 runtime producer（camp predicates、cross、cardinal flood-fill）。修正舊斷言：bit40 block；bit80 是扣 terrain cost 後強制 remaining budget=0 的可達終點，不是 zero-cost chain。FDFIELD composition event word low byte（entry+2）只是不可變來源；每次 command caller 先取 low5 基底、使用 byte+3 grid，結束即依`0x4dbfc`重建。缺 exact event bytes/grid 仍 fail-closed。
 - [x] **native command MP transaction**：官方 IDA `0x21227→0x1CA89` 已證實 generic command 在 candidate array 建立後、逐 target effect 前以 record `byte+5` 從 actor runtime `+0x44` 扣 MP，前段 selector 已 gate `currentMP >= cost`。`SpendNativeCommandMP` 以 raw 0..255 cost 實作該成功交易並在 invalid/MP不足時不變更；刻意不接受 normalized `Spell`、不搶接 legacy cast/UI。
 - [x] **generic native command two-stage data contract**：`NativeCommandEffectTargets` 固定 `0x1cff0` generic path：actor/`record+3` candidate list → confirmed candidate → confirmed cell/`record+4` final-effect list；non-candidate confirmation 拒絕。它不涵蓋 `0x17/0x1e` special branches、MP/effect/renderer，且尚未接 UI。
 - [x] **native command record loader**：`NativeCommandRecord` 明確表示 verified IDs 0..35 的 raw `+3/+4/+5/+6` 為 selection/effect mode、MP cost、target code；從現有 physical `spells.json` 讀取時逐 row 重解 `raw` 七 bytes，欄位不符、缺洞或非 36 rows 均拒絕，避免 normalized Spell 名稱／效果編輯污染 native ABI。

@@ -1,6 +1,9 @@
 package battle
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestNativeCompositionBaseFlagsMasksArchiveHighBits(t *testing.T) {
 	got, err := NativeCompositionBaseFlags(
@@ -11,6 +14,37 @@ func TestNativeCompositionBaseFlagsMasksArchiveHighBits(t *testing.T) {
 	}
 	if got[0] != 0x1f || got[1] != 0 || got[2] != 5 {
 		t.Fatalf("composition base flags=%#v", got)
+	}
+}
+
+func TestStateNativeCommandBaseFlagsAreRebuiltPerCall(t *testing.T) {
+	st := &State{
+		W:                           2,
+		H:                           1,
+		NativeCompositionEventBytes: []byte{0xE5, 0x7F},
+	}
+	first, err := st.NativeCommandBaseFlags()
+	if err != nil {
+		t.Fatal(err)
+	}
+	first[0] = 0xFF
+	second, err := st.NativeCommandBaseFlags()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := second, []byte{0x05, 0x1F}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("rebuilt flags=%v want %v", got, want)
+	}
+}
+
+func TestStateNativeCommandBaseFlagsRejectMissingSource(t *testing.T) {
+	var missing *State
+	if _, err := missing.NativeCommandBaseFlags(); err == nil {
+		t.Fatal("expected nil state to fail closed")
+	}
+	st := &State{W: 1, H: 1}
+	if _, err := st.NativeCommandBaseFlags(); err == nil {
+		t.Fatal("expected missing composition event bytes to fail closed")
 	}
 }
 

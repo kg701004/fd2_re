@@ -24,7 +24,12 @@ camp0／record0 raw bit 產生 code0/1/2 的三值規則；相鄰的 `0x205DA`
 兩者不可再由線性反組譯拼成同一函式，數值也不得在缺少 caller／玩家路徑時
 直接命名為勝利或失敗。
 
-Worklist 目前是 **499 個 `[x]`、104 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
+同日以合法 IDA Pro 9.4 優先重查構成格旗標生命週期：玩家命令、物品目標與
+兩個 AI 預選函式都在每次候選使用後呼叫 `0x4DBFC` 恢復低五位基底，並不
+持有跨命令的執行期旗標。重製端已刪除假性的長壽命狀態欄位，正式命令與
+目標介面改由可編輯的 FDFIELD 事件位元組逐次重建；缺來源仍失敗即關閉。
+
+Worklist 目前是 **518 個 `[x]`、106 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
 與 [`42` gap audit](docs/knowledge-base/42-re-vs-remake-gap-audit.md) 為準。
 

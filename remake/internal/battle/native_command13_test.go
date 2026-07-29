@@ -17,7 +17,7 @@ func nativeCommandHealBook(id int) []NativeCommandRecord {
 func TestExecuteNativeCommandHealUsesSelectedRecordAndCapsHP(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 40, MaxHP: 100, X: 1, Y: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: nativeCommandHealBook(13)}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandHealBook(13)}
 
 	got, err := st.ExecuteNativeCommandHeal(actor, target, 13, rand.New(rand.NewSource(2)))
 	if err != nil || len(got) != 1 || got[0].Target != target || got[0].Restore.Rolled < 63 || got[0].Restore.Rolled > 69 {

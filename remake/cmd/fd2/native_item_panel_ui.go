@@ -216,9 +216,13 @@ func (g *Game) applyNativeImmediateItem(rawSlot, itemID int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return false, err
+	}
 	targets, err := battle.NativeItemEffectTargets(
 		g.st.W, g.st.H, g.sel, g.sel, plan,
-		g.st.NativeTargetFlags, g.st.Units,
+		flags, g.st.Units,
 	)
 	if err != nil {
 		return false, err
@@ -287,9 +291,13 @@ func (g *Game) beginNativeTargetItem(rawSlot, itemID int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return false, err
+	}
 	fieldBytes, err := battle.NativeCommandTargetFieldBytes(
 		g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y},
-		plan.SelectionMode, plan.SelectionInnerMark, g.st.NativeTargetFlags,
+		plan.SelectionMode, plan.SelectionInnerMark, flags,
 	)
 	if err != nil || len(g.st.NativeTileBlitModes) != len(fieldBytes) {
 		return false, fmt.Errorf("native item target field is unavailable")
@@ -327,10 +335,14 @@ func (g *Game) nativeItemSelectionTargets() []*battle.Unit {
 	if err != nil {
 		return nil
 	}
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return nil
+	}
 	targets, err := battle.NativeAttackCandidates(
 		g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y},
 		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode,
-		g.st.NativeTargetFlags, g.st.Units,
+		flags, g.st.Units,
 	)
 	if err != nil {
 		return nil
@@ -393,9 +405,13 @@ func (g *Game) applyNativeTargetItem(confirmed *battle.Unit) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	flags, err := g.st.NativeCommandBaseFlags()
+	if err != nil {
+		return false, err
+	}
 	targets, err := battle.NativeItemEffectTargets(
 		g.st.W, g.st.H, g.sel, confirmed, plan,
-		g.st.NativeTargetFlags, g.st.Units,
+		flags, g.st.Units,
 	)
 	if err != nil {
 		return false, nil

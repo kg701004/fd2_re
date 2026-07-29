@@ -60,7 +60,11 @@ func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, command
 		return nil, fmt.Errorf("native command clear/restore records unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, s.NativeTargetFlags, s.Units)
+	flags, err := s.NativeCommandBaseFlags()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
 	if err != nil {
 		return nil, err
 	}

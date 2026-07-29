@@ -6,7 +6,7 @@ func TestExecuteBoundNativeCommand0UsesTwoStageTargetsAndOneMPDebit(t *testing.T
 	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 20, MP: 3, OnField: true}
 	confirmed := &Unit{Camp: Enemy, ClassID: 5, X: 1, Y: 0, HP: 100, OnField: true}
 	other := &Unit{Camp: Enemy, ClassID: 5, X: 2, Y: 0, HP: 100, OnField: true}
-	st := &State{W: 3, H: 1, Units: []*Unit{actor, confirmed, other}, NativeTargetFlags: make([]byte, 3), NativeCommandBook: []NativeCommandRecord{{ID: 0}}}
+	st := &State{W: 3, H: 1, Units: []*Unit{actor, confirmed, other}, NativeCompositionEventBytes: make([]byte, 3), NativeCommandBook: []NativeCommandRecord{{ID: 0}}}
 	// The executor requires the complete verified book rather than an invented
 	// partial record; fill unused rows with exact sequential IDs for this unit
 	// test, which only dispatches ID 0.
@@ -32,7 +32,7 @@ func TestExecuteBoundNativeCommand0FailsBeforeMPOnMissingResistance(t *testing.T
 		book[id].ID = id
 	}
 	book[0] = NativeCommandRecord{ID: 0, Damage: 50, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 2, TargetCode: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: book}
 	if _, _, err := st.ExecuteBoundNativeCommand0(actor, target, 1); err == nil || actor.MP != 3 || actor.Acted || target.HP != 100 {
 		t.Fatalf("missing resistance mutated state: mp=%d acted=%v hp=%d err=%v", actor.MP, actor.Acted, target.HP, err)
 	}
@@ -46,7 +46,7 @@ func TestExecuteNativeCommandDamageAcceptsRecoveredIDOne(t *testing.T) {
 	book[1] = NativeCommandRecord{ID: 1, Damage: 120, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 1, TargetCode: 0}
 	actor := &Unit{Camp: Own, X: 0, MP: 2, HP: 1, OnField: true}
 	target := &Unit{Camp: Enemy, ClassID: 5, X: 1, HP: 200, OnField: true}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: book}
 	if got, _, err := st.ExecuteNativeCommandDamage(actor, target, 1, map[int]int{5: 10}, 1); err != nil || len(got) != 1 || actor.MP != 1 || !actor.Acted || target.HP >= 200 {
 		t.Fatalf("got=%+v err=%v", got, err)
 	}
@@ -60,7 +60,7 @@ func TestExecuteNativeCommandDamageAcceptsRecoveredCompositorIDTen(t *testing.T)
 		book[id] = NativeCommandRecord{ID: id}
 	}
 	book[10] = NativeCommandRecord{ID: 10, Damage: 100, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 1, TargetCode: 0}
-	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeTargetFlags: make([]byte, 2), NativeCommandBook: book}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: book}
 
 	if got, _, err := st.ExecuteNativeCommandDamage(actor, target, 10, map[int]int{5: 10}, 1); err != nil || len(got) != 1 || !got[0].Hit || actor.MP != 2 || !actor.Acted || target.HP >= 200 {
 		t.Fatalf("ID10 numeric route = %#v actor=%#v target=%#v err=%v", got, actor, target, err)

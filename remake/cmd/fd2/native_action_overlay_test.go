@@ -169,7 +169,7 @@ func TestNativeCommandTargetProjectionUsesSelectedRawCommandRecord(t *testing.T)
 	actor := &battle.Unit{Camp: battle.Own, OnField: true, HP: 10, X: 0, Y: 0}
 	target := &battle.Unit{Camp: battle.Enemy, OnField: true, HP: 10, X: 1, Y: 0}
 	g := &Game{
-		st:  &battle.State{W: 2, H: 1, Units: []*battle.Unit{actor, target}, NativeCommandBook: book, NativeTargetFlags: make([]byte, 2)},
+		st:  &battle.State{W: 2, H: 1, Units: []*battle.Unit{actor, target}, NativeCommandBook: book, NativeCompositionEventBytes: make([]byte, 2)},
 		sel: actor, nativeCommandTargetID: 13,
 	}
 	if _, err := g.nativeCommandTargetUnits(); err == nil {
@@ -182,8 +182,8 @@ func TestNativeCommandTargetFieldMaterializeAndReset(t *testing.T) {
 	g := &Game{
 		st: &battle.State{
 			W: 3, H: 1,
-			NativeTargetFlags:   make([]byte, 3),
-			NativeTileBlitModes: []byte{0xff, 0xff, 0xff},
+			NativeCompositionEventBytes: make([]byte, 3),
+			NativeTileBlitModes:         []byte{0xff, 0xff, 0xff},
 		},
 		sel: actor,
 	}
