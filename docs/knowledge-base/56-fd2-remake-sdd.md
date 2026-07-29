@@ -48,8 +48,9 @@ Canonical Docker Capstone 目前可重現的上層順序是：`0x1A4EB`／`0x1A5
 setup 後進入 `0x1D80B`／`0x1D8BA` unit scans；每筆 `0x50`-byte record 經 raw `+6`、
 `+5`、`+0x26` gates 後進 `0x13A9F`。`0x13A9F` 讀 `record+0x34 & 0x0f`，再依 raw
 command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 內有
-`0x14237→0x1598A→0x1567E` candidate path，`0x15AD8→0x15B77` 負責法術
-raw score/tie-break。
+依序執行的 `0x14237` 物理、`0x1598A` command-mask 與 `0x1567E`
+item-command 三個 producer。只有 `0x1598A` 內的 `0x15AD8→0x15B77`
+負責該 producer 的 raw score/tie-break；`0x1567E` 改呼 `0x15880`。
 這取代舊文件把 `0x15140` 稱作 AI entry 的說法。SDD 只授權保存上述 raw call topology；
 `+6` 的 raw camp code 已由 constructor 與 `0x14818` consumer 固定為
 敵0／友1／己2；但完整 target transaction、movement/effect/UI 與 runtime
@@ -117,21 +118,25 @@ helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選�
 合法 IDA 9.4 同樣確認 `0x1548E..0x1567D` 與兩個 direct callers。
 
 `0x1567E` 的 command enumerator 也已由 canonical Docker Capstone 重讀：它以 unit index
-算 `0x50`-byte record，先呼 `0x1B8A6` 取得 inventory prefix/count，再逐 item row 讀
-`+0x0B` 的 command-list bytes。每個 command record 取 `+0x10` command、`+0x11` auxiliary；
+算 `0x50`-byte record，先呼 `0x1B8A6` 取得 inventory 上界，再以
+`record+0x0B+2*slot` 讀 item ID，經 `0x4E56C(item)` 取 row；row `+0x0D==0`
+略過，`+0x10` 才是 command。
 `command <= 0x0F` 走 `0x14818` geometry/target builder，`command > 0x0F` 轉
-`spell_id=command-0x10` 後走 `0x149F8` candidate builder。通過 candidate 後呼
+`command-0x10` 後走 `0x149F8` candidate builder。通過 candidate 後呼
 `0x15880` score helper，最大值才寫 raw globals `0x53C33`（score）、`0x53C37/0x53C3B`
-（candidate coordinates）、`0x53C3F`（command-list index）。這是 command enumeration／
+（candidate coordinates）、`0x53C3F`（inventory slot index）。執行端
+`0x1507C→0x1B722(unit,slot)` 再解 item，`0x150C2` 才讀 row `+0x10`。這是 command enumeration／
 selection boundary，不證明 item row 欄位名稱、法術效果、MP transaction 或完整 AI turn；
 `battle.AIPlan.NativeScoredCommands` 仍只保存另一條 `0x1598A` 的 raw
 provenance，不可拿來代替本函式的 item-command 列表。
 
 `0x15880` score helper 的 raw ABI 也已閉合：它先以 `0x4E56C` 取得 item row，讀 row
 `+0x0D` type 與 `+0x0E` word。type `5`／`0x0D` 逐候選讀 target `+0x40/+0x42`，以
-`maxHP/3` 分支產生 raw score `8/3/0`；target record `+0x34 bit7` 會將該分數乘 3。
-type `0x14`／`0x15`／`0x18` 另走 item-word／target-HP threshold 分支，命中時累加 raw
-score `0x12`，否則 `8`；其他 type 回傳零。這些是 command selection 的數值分支，
+current HP `<=maxHP/3` 產生8、否則 `<=maxHP/2` 產生3、其餘0；target record
+`+0x34 bit7` 會將該分數乘3。type `0x14`／`0x15` 將 row word 交 `0x4E516`
+取得 command word，type `0x18` 直接使用 row word；target HP `<=threshold` 累加
+`0x12`，否則8，其他 type 回傳零。`ScoreNativeAIItemCommandTargets` 已保存這些
+原始分支與邊界檢查。這些是 command selection 的數值分支，
 不把 type 命名成治療、攻擊或 status，也不把 `+0x34 bit7` 命名成可見效果；item row
 producer、target transaction、UI 與 runtime executor 仍由各自 evidence gate 控制。
 

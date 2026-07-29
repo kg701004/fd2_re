@@ -42,7 +42,7 @@ hub→preparation/town 做成可重播 input trace；item effect、AI runtime �
 | 經驗值公式(攻擊/恢復/各系術) | doc02 §4.5 | 🟡 normalized approximation | legacy `growth.go`／`CastArea` 的獎勵不證明 native command 逐 ID 的 EXP route；IDs22/32–35 等仍缺原版 transaction/effect evidence | 高 |
 | 升級(每 100 經驗一級、成長亂數) | doc02 §2/§4.6/§7.2 | ✅已補(worklist 第 9 輪) | `growth.go GainExp`/`applyLevelUpGrowth`,門檻 100(doc03 0x43),可連續跨級;`growthTable` 為 doc02 §7.2 顯示值與 EXE 升級成長表(`docs/data/exe_tables/growth.json` 0x55EA1)交叉比對後的精確版(63 列全比對成功,見該檔案頭註解),非估計值。`Unit` 新增 `Exp`/`ExpPerLevel`/`DX` 欄;`ExpPerLevel`(攻擊經驗公式的「守方每級經驗」)來源 EXE 敵/友單位表,由 `export_units.py` 新增 `ex` 欄接上,34 份本機 `map*_units.json` 資產已重新匯出;查無成長資料的單位(如無名雜兵)等級仍照門檻演進但不套用屬性成長,誠實標記非靜默丟棄。**升級是否立即回滿新增 HP**doc 未明講,採較合理的 RPG 慣例並於 `growth.go` 註解誠實標記為假設 | — |
 | 敵方 AI：物理落點、尋路與目標評分 | doc11（2026-07-29 recheck） | 🟡 | `0x145CD→0x4E040→0x146D1→0x14B16` 已閉合可達落點；`0x14237` 已閉合逐落點／目標評分；`0x14B78→0x4E1A6→0x13488` 已閉合方向碼、地形成本、路徑與實際落點排序。FDFIELD `b17/b18/b19` → runtime `+0x34/+0x35/+0x36` 的來源、33 圖分布及保留高四位的範圍 writer 已資料化。mode 2 已修正為 `0x14EF0` 失敗後 `0x14237→0x13FD4`，不走最近座標；mode 11 的兩個 signed score gates 與唯一已知 runtime writer 亦已閉合。`0x13FD4` 是 raw `+0x25/+0x26` gate 的 `floor(maxHP/5)` 回復，已同步正式休息路徑。一般 mode 0 才會先走 `0x14121` blocked-cell 搜索，再以 `0x13E9C` Manhattan 最近 raw opposite group 備援；舊 `0x15192` 說法撤回。新增 raw-only destination／score／path／mode adapters；`0x1DEBE/+8`、完整 mode/selector/turn 語意與 production runtime 接線仍未閉合。現行 `aiTargets` 與 `aiApproachPath` 仍是重製近似，不等於上述原版鏈 | 高 |
-| 敵方 AI:**施法決策**(法師/僧侶主動用攻擊術/補血術) | direct disasm 已證實：`0x15688` 枚舉 command，`0x1579A–0x157B5` 對 `command>0x0F` 以 `spell_id=command-0x10` 評分；`0x150D3–0x150F1` 執行同一 spell command，`0x15168→0x28784` 播放施法演出；`0x15B77` 依 spell family 分流目標評分 | 🟡 | remake 已有 `AICommandSpell`、`AIAvailableSpells`、`AISpellCandidates` 與 `AIPlan.SpellID`，但 `NextAIPlan` 仍未把 spell score/target/execute 接完；不能再寫成「完全沒有保存 SpellID／恆為純物理」 | 高；補 native ranking、MP/command gate、runtime Cast |
+| 敵方 AI:**施法決策**(法師/僧侶主動用攻擊術/補血術) | direct disasm 證實兩條不同 producer：`0x1567E` 枚舉 inventory slot→item row command，候選交 `0x15880`；`0x1598A` 枚舉 unit command mask，候選交 `0x15B77`。前者 command>0x0F 會做 `command-0x10`，執行端可進施法演出；不可合併兩套 ranking | 🟡 | remake 已有 `AICommandSpell`、`AIAvailableSpells`、`AISpellCandidates` 與 `AIPlan.SpellID`，但 `NextAIPlan` 仍未把兩條原始 score/target/execute 接完；不能再寫成「完全沒有保存 SpellID／恆為純物理」 | 高；補 native ranking、MP/command gate、runtime Cast |
 | 敵方 AI:**使用道具** | doc11 未記錄此分支(doc11「仍待確認」清單也未提道具);doc02 未給 AI 道具規則 | ❌(RE 亦未記錄機制) | `aiActUnit` 無任何道具邏輯;RE doc11 本身也沒有「AI 用道具」的反組譯條目——這條是 RE 與 remake 雙缺,非「RE 有記 remake 沒做」 | 低(先確認原版是否真有此行為,再排 RE 工作) |
 | 移動地形成本(森林/沼澤耗 MV) | doc02 §3.1 | ✅ | `move.go MoveCost` 讀 `map.json` 的 `cost` 陣列(worklist 第8輪「地形屬性接線」) | — |
 | **地形攻防加成** | native `0x1acf3`、`0x51a12/0x51a2a` | ✅原版逐格資料 | 同上「物理攻擊:地形 AP/DP% 修正」條：完整 raw map 直接用 FDSHAP control byte+1；0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5)。這取代 doc02 對一般地面 DP-5 的舊摘要；Cost 僅是 legacy fallback。 | 低 |
@@ -66,7 +66,10 @@ hub→preparation/town 做成可重播 input trace；item effect、AI runtime �
 
 ## RE 側也需要補的缺口(非 remake 落差,附帶記錄)
 
-- **施法入口已找到**：`0x154D1` 仍不是入口；`0x15688/0x157B5` 的 AI command 評分、`0x15B77` 的 spell-family 目標分支與 `0x15055/0x150F1` 的 spell 執行 callsite 已定案。runtime `unit+0x1a..+0x1d` 是 magic raw，`+0x22..+0x24` 只保留 raw transient/modifier bytes，不是 M1–M5 bitfield，也不命名成 AP/DP/HIT/status。remake 缺口是 command inventory、SpellID、治療／攻擊目標優先級與 runtime execution 尚未接完。
+- **施法入口已找到，但 producer 必須分開**：`0x154D1` 仍不是入口；
+  `0x1567E→0x15880` 是 inventory item-command 預選，
+  `0x1598A→0x15B77` 是 unit command-mask 預選；`0x15055/0x150F1`
+  是執行消費端。兩者不能共用未證實的 ranking 或槽／command 身分。
 - **doc32 §4 三個 `[阻]` 項目(裝備加成精確公式、物品使用效果碼、轉職系統機制)本身就還沒反組譯完**,remake 的裝備/道具/轉職缺口有一部分要等 RE 補完才能對照實作,不能單純算「remake 沒做」。
 
 ## 已移除的歷史統計與排序

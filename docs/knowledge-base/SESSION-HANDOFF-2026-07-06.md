@@ -320,7 +320,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 battle progression slice：campaign `Node.Protect` 已資料化，`checkResult` 依 battle node 的 protect 欄位判定敗北，空值維持索爾相容預設；新增 campaign test。另修正升級：原版 DX 是 HIT/EV 共用 raw base，`GainExp` 在已有 equipment base 時同步更新 BaseHIT/BaseEV 與有效 HIT/EV，保留裝備加成並新增 regression test。
 - 2026-07-20 AI low-damage slice（歷史實作，已撤回）：早期曾依未核實的 `0x15140` 假說加入 `dmg≤2` 篩選；2026-07-27 canonical Docker recheck 已確認該地址不是可證實的 AI entry，因此這條規則與對應測試不再代表原版語意。normalized approximation 可保留作現況行為，但不得當作 native parity；後續以 `0x13A9F/0x14EF0/0x149F8/0x15B77` raw evidence 重建。
 - 2026-07-20 AI spell-entry audit（後續補證）：臨時 capstone 容器 direct disasm `0x15470..0x15618`，並查到呼叫點 `0x13E39`、`0x14F9B`。`0x1548E` 才是函式入口；`0x154D1` 位於其本體，實際流程可見 `0x14B78` 呼叫與 `0x12D7B` 演出狀態呼叫，沒有 `Cast` dispatch 證據。當時尚未閉合 `0x14B78`，不可僅以這句宣稱完整 path ABI；2026-07-29 才由 `0x14B78→0x4E1A6→0x13488` 直接證據補完。已撤回「0x154D1 是施法入口」舊註記。
-- 2026-07-20 AI spell dispatch proof（後續勘誤）：direct disasm `0x15688..0x15880` 與 `0x14F80..0x15220` 證實原版 AI 會枚舉並執行法術命令：`0x1579A–0x157B5` 將 `command>0x0F` 轉為 `spell_id=command-0x10` 呼叫 `0x149F8` 建立後續 target candidates；candidate 後續才交 `0x15B77` score branches。選中後 `0x150D3–0x150F1` 重算同一 spell，`0x15168→0x28784` 播放施法演出。`0x154D1` 仍只是移動函式中段。remake 尚未把完整 SpellID／command inventory 與攻擊、治療目標優先級接到 `NextAIPlan`。
+- 2026-07-20 AI spell dispatch proof（2026-07-29 再勘誤）：原版確會由
+  item-command 導向施法演出，但此段曾錯把 `0x1567E` 候選寫成送入
+  `0x15B77`。直接指令證實兩支候選都送 `0x15880`；`0x15B77` 屬另一條
+  `0x1598A` command-mask producer。`[0x53C3F]` 也不是 command，而是
+  inventory slot；`0x1507C→0x1B722` 先由槽解 item，`0x150C2` 才讀
+  row `+0x10` command。舊句不得再作現況依據。
 - 2026-07-20 AI spell data bridge：remake `battle.State` 新增可注入 `SpellBook`，`AIPlan.SpellID` 以 `-1` 明確表示目前物理／待命計畫不施法；`loadGame` 將已載入的 EXE spell table 複製進 state，並新增 regression test 防止物理 AI 偷生 spell command。刻意未加入猜測性的 spell ranking、治療目標或施法座標；這些要等 command inventory 對映與 `0x15880/0x15B77` 語意定案。
 - 2026-07-20 AI raw-score topology（後續勘誤）：direct disasm `0x15B77..0x15DA1` 證實 command IDs 走不同 raw scoring branches：0..12 讀候選 raw HP/`+0x08`，13..16 讀 `+0x40/+0x42/+0x34`，17..19 進另一 helper，20/21/26/27 讀 `+0x25/+0x26`，22 gate `+0x27` 後呼 `0x1C269`。早期「增益／狀態／毒麻」是未證實的 gameplay 命名，已撤回；現行欄位結論仍以 constructor trace 為準：magic raw=`unit+0x1a..+0x1d`，`+0x22..+0x24` 是 raw transient/modifier bytes。
 - 2026-07-20 class-change fidelity correction：使用者實測指出轉職結果與原版差距巨大；direct disasm `0x1E529` 尾端確認是 `add word [target], ax`，PTT 實測表亦吻合「舊能力 + 新職 growth row」而非絕對重設。已修正 `ApplyClassChange`：AP/DP/DX/MaxHP/MaxMP 改為累加、Lv 保留、EXP 清零、HP/MP 回滿；campaign/battle 測試通過。外部旁證：[PTT 實測表](https://www.ptt.cc/bbs/Dynasty/M.1185344950.A.91B.html)、[FD2 轉職攻略](https://jaceju-favorite-games.gitbooks.io/fd2/content/walkthrough/INDEX.html)。
@@ -2341,3 +2346,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `[0x53C23]` 數值最大值可由零開始比較，但函式區域命令字在全零分時的初值
   尚未由 caller／prologue 證實。因此下一步可以接非負數值最大值與非零勝者，
   不能猜測零分命令，也不能直接接正式 `NextAIPlan`。
+- 提交 `5e6a013` 已將上述地圖輸入、HP／MP 建構器、群組評分與文件勘誤推送
+  至 `origin/main`，完整 Docker／Xvfb `go test ./...`、Python exporter 測試及
+  33-map 同步檢查均通過。
+- 提交後的下一批新增 `ScoreNativeAI1598A`：逐一枚舉可用命令、建立候選群組、
+  評分並只保存大於零的 strict winner；actor mask／MP 與 detached record
+  不一致時失敗即關閉。map0 command0 得分96、目的地 `(23,14)`；全零分只回
+  `MaxScore=0`。這批目前只完成 targeted Docker battle regression，尚未形成
+  下一個重大提交。
+- 後續 `0x1567E` 稽核又撤回兩個錯誤斷言：此路徑候選交 `0x15880`，
+  不是 `0x15B77`；`[0x53C3F]` 保存 inventory slot，不是 command。
+  帶 FD2.EXE 雜湊的完整窗口已保存為
+  `docs/data/fd2_ai_item_preselection_disasm.txt`，並同步修正 SDD、AI 專題、
+  gap audit 與 worklist。
+- 新增 `ScoreNativeAIItemCommandTargets` 保存 `0x15880` 的 type5／0x0D
+  HP 三段分數、raw `+0x34 bit7` 倍率，以及 type0x14／0x15／0x18 的
+  threshold 分支；不為 raw type 指派效果名稱。targeted Docker battle
+  regression 已通過，尚待把 inventory slot 枚舉與 caller-specific geometry
+  接成完整 `[0x53C33]` producer。

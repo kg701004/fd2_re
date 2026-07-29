@@ -381,10 +381,26 @@ Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x
 
 先前把 `0x154D1` 誤當施法入口的判讀已撤回；真正的證據在 AI 命令枚舉與執行函式：
 
-- `0x15688` 開始的函式逐一掃描單位可用命令。`0x15735` 讀取命令描述子的 command byte；`command<=0x0F` 走物理攻擊，`command>0x0F` 在 `0x1579A–0x157B5` 做 `spell_id=command-0x10`，並呼叫 `0x149F8` 取得／建立後續 target-candidate 資料；candidate 之後才交給 `0x15B77` score branches，不能把 `0x149F8` 直接命名成傷害／命中評分。
-- 選中的命令由全域 `0x53C3F` 保存。`0x15055` 執行 AI 行動時於 `0x150C2` 讀回同一 command byte；`command>=0x10` 在 `0x150D3–0x150F1` 再次轉成 spell id 並呼叫 `0x149F8`，之後 `0x15168→0x28784` 播放施法者演出。
-- 因此「敵方 AI 施法」不是推測機制，而是已由 callsite 證實；尚待補的是 command inventory/可用法術條件、治療目標選擇，以及 `0x15880/0x15B77` 對不同法術效果的精確優先級。
+- `0x1567E` 開始的函式逐一掃描庫存槽。`record+0x0B+2*slot` 是 item ID，
+  `0x4E56C(item)+0x10` 才是 command byte；row `+0x0D==0` 直接略過。
+  `command<=0x0F` 走 `0x14818`，`command>0x0F` 在
+  `0x1579A–0x157B5` 做 `command-0x10` 並呼叫 `0x149F8` 建候選。
+  兩支都交給 `0x15880` 評分，並不進 `0x15B77`；後者只屬
+  `0x1598A` 的另一條命令遮罩路徑。
+- `[0x53C3F]` 保存勝出的庫存槽索引，不是 command byte。`0x1507C`
+  將它交給 `0x1B722(unit,slot)` 讀出 item，`0x150C2` 才從 item row
+  `+0x10` 取得 command；`command>=0x10` 再呼叫 `0x149F8`。
+- 因此原版確有可導向施法演出的 item-command 路徑，但不可將整條
+  `0x1567E` 統稱為施法決策，也不可與 `0x1598A→0x15B77` 的 ranking 合併。
+- `ScoreNativeAIItemCommandTargets` 已將 `0x15880` 保存成原始欄位 adapter：
+  type5／0x0D 依 current HP `<=max/3` 得8、否則 `<=max/2` 得3，
+  `+0x34 bit7` 再乘3；type0x14／0x15 由 row `+0x0E` 經 `0x4E516`
+  取 command word，type0x18 直接用 row word，target HP 小於等於門檻得
+  0x12，否則8。其他 type 回零；不為 type 或 bit 指派效果名稱。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
+
+上述勘誤的直接指令、執行端消費者與 inventory bound helper 已保存於
+`docs/data/fd2_ai_item_preselection_disasm.txt`，並綁定參考 FD2.EXE 雜湊。
 
 2026-07-29 availability 勘誤：`NativeAvailableAIScoredCommandIDs` 重用
 `0x1598A` 的 `unit+0x27==0` gate、40-bit command mask、36-entry
@@ -418,6 +434,11 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 - 尚未閉合的是零分候選時保存命令字的區域變數初值。`[0x53C23]` 的數值
   最大值由零開始，因此可安全重現數值比較；但在確認該區域變數前，不能把
   零分結果宣稱為原版選中的命令，也不能接入正式行動執行。
+- `ScoreNativeAI1598A` 現已把命令可用性、候選群組與群組評分收斂成單位級
+  數值結果；只在分數大於零時輸出可證實的勝者。它會交叉檢查 actor 的命令
+  遮罩及目前 MP 必須與 detached record 一致。map0 的實際 roster／地圖輸入
+  加入已證實 command0 後，固定得到 `(23,14)`、分數96；全零分 fixture
+  保留 `MaxScore=0` 且不創造命令。
 
 ## 下一步最小驗證
 
