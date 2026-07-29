@@ -1,8 +1,13 @@
 # 24 — Call-graph 逐步反組譯紀錄(釘死 doc 23 受阻項)
 
-> doc 23 §7 留了一個受阻項:cutscene `ret` → 進戰場 `0x10010` 的「精確呼叫鏈」用**線性 sweep**(disasm_le 的 `range`/`calls`、le_xref 的 raw-`0xe8` 掃描)釘不死——線性反組譯會在資料區/跳表漂移,產生偽指令與偽 caller。
-> 本篇改用**遞迴可達性反組譯**(`tools/callgraph_le.py`)逐步釘死,並**每一步與先前結論/記憶比對**,主動排除殘留的錯誤結論(rulebook 62/63)。
-> 結論先講:**進戰場鏈 = `main 0x25bf4 → driver 0x25ebb → 0x10010`,cutscene(章節跳表)與進戰場 call 同在 0x25ebb driver 內,線性串接,不經神秘相位機。**
+> 本篇原先用遞迴可達 call graph 找到 `0x10010` 的兩個真 caller，並正確
+> 排除了線性 sweep 的偽命中；但又錯把「同屬一個函式」推成「同一分支
+> 線性串接」。2026-07-29 直接展開 `0x25ec8..0x26151` 與 main
+> `0x25dbd..0x25dce` 後已撤回該結論。
+>
+> 正確結論：新遊戲與四槽讀檔分支各自執行章節 pre-handler，`0x25ebb`
+> 返回 0 後由 main 呼叫 `0x117e7`；第三主選單分支才在 `0x26130`
+> 呼叫 `0x10010`，由 FD2.SAV current-runtime snapshot 恢復續戰。
 
 ## 方法:為何遞迴可達 > 線性 sweep
 
@@ -19,7 +24,7 @@ $ callgraph_le.py FD2.EXE reach 0x25bf4
 ```
 從真 main(0x25bf4,doc 23 已驗證)出發,46782 條可達指令、4218 個直接 call 點。涵蓋面足以做全域 caller 分析。
 
-## 步驟 2 — 釘死 0x10010(進戰場)的真 caller
+## 步驟 2 — 釘死 0x10010（current-runtime snapshot loader）的真 caller
 
 ```
 $ callgraph_le.py FD2.EXE callers 0x10010
@@ -35,7 +40,8 @@ $ callgraph_le.py FD2.EXE callers 0x10010
 | doc 23 撰寫時某 agent 猜測 | 0x1b051 / 0x26f30 | ✗ **偽命中**(落在漂移/資料區,不可達) |
 | **callgraph(可達)** | **0x1a251、0x26130** | ✅ 採信(兩者皆在可達集內) |
 
-→ doc 23 §7 的受阻項,根因正是「線性工具的偽命中」;遞迴可達一步解決。
+→ caller 集合本身已閉合；它只證明 call-site 可達，不能證明不同條件分支
+會依原始碼位址順序彼此落下。
 
 ## 步驟 3 — 兩個 caller 的語境(disasm 佐證)
 
@@ -43,10 +49,11 @@ $ callgraph_le.py FD2.EXE callers 0x10010
 caller B 0x26130:                       caller A 0x1a251:
   0x26124 push 0; push -1               0x1a245 push 0; push -1
   0x26128 call 0x25977  ; play_bgm(-1)   0x1a249 call 0x25977 ; play_bgm(-1)
-  0x26130 call 0x10010  ; 進戰場          0x1a251 call 0x10010 ; 進戰場
+  0x26130 call 0x10010  ; 主選單續戰      0x1a251 call 0x10010 ; 戰內重載
   0x26135 play_bgm([0x53c03]→[0x51e63])  0x1a256 jmp 0x1a193  ; 回模組迴圈
 ```
-兩者同模式(先停曲再進戰場);B 之後放「該章 BGM」(章節曲表 0x51e63),A 之後跳回所屬模組迴圈。
+兩者都先停曲再由 FD2.SAV current-runtime header、runtime roster、event table
+及地圖 blobs 重建目前戰鬥；B 之後恢復該章 BGM，A 回到戰內模組。
 
 ## 步驟 4 — 反向追到 main + 函式歸屬
 
@@ -59,18 +66,21 @@ $ callgraph_le.py FD2.EXE funcof 0x26130   → 0x25ebb   (進戰場 call)
 $ callgraph_le.py FD2.EXE funcof 0x1a251   → 0x19df7   (讀檔/過場子模組)
 ```
 
-**判讀:**
-- **caller B(0x26130)在 driver `0x25ebb` 內**,與「呼叫章節跳表(cutscene)的 call」(0x25f10 新遊戲分支 / 0x260f5 讀檔分支,funcof 同為 0x25ebb)**同屬一個 driver 區段**。
-  → **cutscene 與進戰場是同一 driver 內的線性流程**:driver 先 `call [章節*4 + 0x51d71]`(章節 0 = cutscene 0x3231b),該 handler `ret` 後,driver 繼續走到 `0x26130 call 0x10010` 載入並進入戰場。中間**沒有玩家選擇點**,即「自動過場」。
-- **caller A(0x1a251)在子模組 `0x19df7`**(讀檔子選單 / 過場,doc 23 §1)——是另一條獨立的進戰場入口(讀檔續戰 / 過場後進場),非新遊戲開場路徑。
+**2026-07-29 直接分支判讀：**
+- `0x25f10` 是新遊戲分支的 pre-handler call，隨後設 BGM、清輸入並由
+  `0x25f3a→0x2614c` 返回 0。
+- `0x260f5` 是四槽讀檔分支的 pre-handler call，隨後由同函式返回。
+- `0x26124` 是 `eax!=0 && eax!=1` 的獨立第三分支，才呼叫 `0x10010`。
+- main 在 `0x25dbd` 呼叫 `0x25ebb`；回傳 0 時於 `0x25dce` 呼叫
+  `0x117e7`。所以新遊戲的正確自動鏈是：
 
-→ doc 23 的「新遊戲 cutscene → 自動進第一場戰場」鏈,至此**端到端釘死**:
 ```
 main 0x25bf4
   └ driver 0x25ebb
        ├ [0x53c03]=0                         ; 新遊戲歸零章節
        ├ call [0*4 + 0x51d71] = 0x3231b      ; 開場 cutscene(與前代主角對話)→ ret
-       └ call 0x10010                        ; 進戰場(地圖 = 章節*3+2)
+       └ return 0
+  └ call 0x117e7                             ; 戰鬥主迴圈
 ```
 
 ## 步驟 5 — 獨立驗證章節跳表(修了一個工具 bug)
@@ -132,11 +142,11 @@ doc 23 把 `[0x53ecc]` 標為「戰鬥結果碼(1 事件、2 勝利),戰後狀�
 
 | 項目 | 先前狀態 | 本輪裁決 |
 |---|---|---|
-| 進戰場 0x10010 caller | doc 23 §7 標 **[阻]**(線性工具釘不死) | ✅ **已解**:0x1a251、0x26130(可達驗證) |
+| `0x10010` caller | doc 23 §7 標 **[阻]**(線性工具釘不死) | ✅ **已解**：`0x1a251`、`0x26130`；2026-07-29 更正其語意為 current-runtime snapshot loader |
 | 0x1b051 / 0x26f30 是 caller | 某 agent 推測 | ❌ 偽命中,刪除 |
-| cutscene→戰場是否經相位機 | doc 23 用「相位機接手」描述 | 修正:**同 driver 0x25ebb 內線性串接**;相位變數 `[0x53ecc]` 是**戰後**分支用(1 事件/2 勝利),非 cutscene→戰場中介 |
+| cutscene→戰場是否經相位機 | doc 23 用「相位機接手」描述 | 不經相位機；pre-handler 由 `0x25ebb` 返回 0，main 再呼叫 `0x117e7`。舊「同 driver 線性落入 `0x10010`」也已撤回 |
 | 章節跳表 0x51d71/0x51de9 內容 | agent 給出 | ✅ 獨立驗證一致 |
-| main = 0x25bf4 | doc 23 已驗證 | ✅ rpath 再確認(0x10010 經 0x25ebb 上溯到 0x25bf4) |
+| main = 0x25bf4 | doc 23 已驗證 | ✅ main prologue 與 `0x25dbd→0x25dce` 控制流再確認 |
 | `[0x53ecc]` 語意 | 上輪記「只管戰後分支 1事件/2勝利」 | ◐ 精化:事件解譯器↔戰役迴圈的 pending 碼,==1=進世界地圖/中場,寫入點 28 處全在 0x205c9–0x20c64 |
 | 記憶層(fd2-* 記憶) | — | ✅ 無被推翻結論;本輪精化 [0x53ecc] 已回填 control-flow-anchors 記憶 |
 
@@ -149,7 +159,10 @@ doc 23 把 `[0x53ecc]` 標為「戰鬥結果碼(1 事件、2 勝利),戰後狀�
 
 ## 本輪受阻 / 待續(誠實標註)
 
-- **[阻]** `0x25ebb` 是個大 driver,內部「新遊戲分支 / 讀檔分支 / 戰役續打迴圈」的精確邊界與各分支條件未逐條展開(只確認三者匯流到 0x26130 進戰場)。`funcof` 用「最近 call target」近似函式宿主,對「非被 call、靠 fall-through 進入」的相鄰函式入口會歸併——描述以「driver 區段」為準,未強斷 C 函式邊界。
+- **[已解]** `0x25ebb` 的三個主選單回傳分支已逐條展開：新遊戲與四槽
+  讀檔各自執行 pre-handler 後返回；第三分支才呼叫 `0x10010`。這次勘誤
+  也確立方法限制：`funcof`／可達 caller 只能回答函式歸屬與可達性，不能
+  取代條件分支的直接指令檢查。
 - **狀態校正**：`[0x53ecc]==1` 的 caller 與 `0x22e5c` 已確認為章1專屬固定中場過場；回合增援不是由此函式消費，
   而是 `0x1a813`→`0x51b91`→spawn 原語。`[0x53ecc]==2` 的戰後跳表仍有各章 town/shop/preparation/ending 分支待逐列 E0/E2 核對，
   因此只撤回「0x22e5c 未解」斷言，不宣稱整個 campaign flow 已完成。

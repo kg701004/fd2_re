@@ -31,8 +31,17 @@ func nativeEvent61PlayerGame(t *testing.T, items ...int) (*Game, *battle.Unit) {
 	if g.st == nil || len(g.st.Units) == 0 {
 		t.Fatal("chapter26 battle state unavailable")
 	}
+	view := g.st.NativeMapViewState
+	hud := g.st.NativeMapHUDState
+	if !g.st.HasNativeMapViewState || !g.st.HasNativeMapHUDState ||
+		view.CameraX != 9 || view.CameraY != 39 ||
+		view.CursorX != 15 || view.CursorY != 46 ||
+		view.VisibleCursorX != 6 || view.VisibleCursorY != 7 ||
+		hud.DisplayGateA != 1 || hud.DisplayGateB != 1 ||
+		hud.AnchorX != 1 {
+		t.Fatalf("chapter26 pre-handler runtime view=%#v hud=%#v", view, hud)
+	}
 	trigger := g.st.Units[0]
-	trigger.X, trigger.Y = 1, 46
 	trigger.NativeRecordWord42 = uint16(trigger.MaxHP)
 	trigger.HasNativeRecordWord42 = true
 	trigger.Inventory = append([]int(nil), items...)
@@ -47,6 +56,10 @@ func nativeEvent61PlayerGame(t *testing.T, items ...int) (*Game, *battle.Unit) {
 		trigger.InventorySlots[i] = item
 		trigger.NativeInventoryFlags[i] = 0
 	}
+	if !g.positionScreenshotCursor(1, 46) {
+		t.Fatal("chapter26 native cursor could not reach event61")
+	}
+	trigger.X, trigger.Y = 1, 46
 	g.sel, g.curX, g.curY = trigger, 1, 46
 	g.selOrigX, g.selOrigY = 1, 46
 	g.moved = true
@@ -73,20 +86,14 @@ func TestNativeEvent61MissingItemRunsOnlyEditableFDTXT2(t *testing.T) {
 
 func TestNativeEvent61MaterializedRuntimePresentsCommitsAndPersistsWold(t *testing.T) {
 	g, trigger := nativeEvent61PlayerGame(t, 0xD0, 0x20)
-	// battle_ch26 does not yet carry a proven native_map_view/native_map_hud
-	// campaign boundary. Materialize the event-local state explicitly so this
-	// test covers the presentation/transaction adapter without upgrading the
-	// unmodified player path to E2.
-	if err := g.st.MaterializeNativeMapViewState(battle.NativeMapViewState{
-		CameraX: 0, CameraY: 39,
-		CursorX: 1, CursorY: 46,
-		VisibleCursorX: 1, VisibleCursorY: 7,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if !g.st.MaterializeNativeMapRangeMode(1) ||
-		!g.st.MaterializeNativeMapHUDState(1, 1, 1) {
-		t.Fatal("event61 explicit native runtime materialization rejected")
+	view := g.st.NativeMapViewState
+	hud := g.st.NativeMapHUDState
+	if !g.st.HasNativeMapViewState || !g.st.HasNativeMapHUDState ||
+		view.CameraX != 0 || view.CameraY != 39 ||
+		view.CursorX != 1 || view.CursorY != 46 ||
+		view.VisibleCursorX != 1 || view.VisibleCursorY != 7 ||
+		hud.AnchorX != 0xf2 {
+		t.Fatalf("event61 campaign runtime view=%#v hud=%#v", view, hud)
 	}
 	g.finishSelectedWait()
 	if g.battleEvent == nil || len(g.dialog) != 1 ||

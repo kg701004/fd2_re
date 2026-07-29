@@ -214,12 +214,16 @@ caller binding或scene composition已閉合；現況以doc56/57為準。
 
 **做了什麼**
 - 建 `tools/callgraph_le.py`(遞迴可達反組譯:reach/callers/rpath/funcof/jtab)。
-- 釘死進戰場鏈 `main 0x25bf4 → driver 0x25ebb → 0x10010`;獨立驗證章節跳表(修 data 段 fixup bug)。
+- 當時以 call graph 找到 `0x10010` 的兩個真 caller 並修復 data 段跳表；2026-07-29 進一步展開
+  `0x25ec8..0x26151` 後撤回「一般進戰場鏈」說法：`0x10010` 只在第三主選單分支與戰內重載分支
+  恢復 FD2.SAV current-runtime snapshot，一般 pre-handler 返回 main 後直接進 `0x117e7`。
 - 追完 `[0x53ecc]` 戰役迴圈狀態機(doc 24)。
 
 **學到 / 推翻**
 - **線性 sweep 會給偽 caller**(le_xref 回報 0、agent 猜 0x1b051/0x26f30 皆偽);**遞迴可達**才可靠。
-- ❌「相位機串接 cutscene→戰場」→ ✅ **同 driver 內線性串接**;`[0x53ecc]` 是戰後/事件碼非中介。
+- ❌「相位機串接 cutscene→戰場」仍不成立；但當時進一步稱「同 `0x25ebb` 內線性串接到
+  `0x10010`」也已於 2026-07-29 撤回。正確邊界是 pre-handler 從 `0x25ebb` 返回 main，
+  main 再呼叫 `0x117e7`；`[0x53ecc]` 是戰後/事件碼而非進場中介。
 - **方法**:定位具名全域變數所有讀寫,用 LE fixup refs + opcode 模式(繞線性漂移)。
 
 ## 第 10 輪 — 戰場事件系統 + 逐關 handler 資料化(2026-06-28)

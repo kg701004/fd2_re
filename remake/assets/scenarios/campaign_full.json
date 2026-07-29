@@ -3707,6 +3707,20 @@
    "map": "assets/maps/map25",
    "units": "assets/maps/map25/map25_units.json",
    "scenario": "assets/scenarios/ch26.json",
+   "native_map_view": {
+    "camera_x": 9,
+    "camera_y": 39,
+    "cursor_x": 15,
+    "cursor_y": 46,
+    "visible_cursor_x": 6,
+    "visible_cursor_y": 7,
+    "range_mode": 1
+   },
+   "native_map_hud": {
+    "display_gate_a": 1,
+    "display_gate_b": 1,
+    "anchor_x": 1
+   },
    "on_win": "postbattle_ch26_persist",
    "on_lose": "retreat_ch26"
   },

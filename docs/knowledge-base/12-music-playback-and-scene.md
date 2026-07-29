@@ -183,11 +183,12 @@ logo 落地那一瞬的短促起手曲,隨後畫面接續(角色/城堡等更多
 0x025e4f   （緊接 call [eax*4+0x51d71] 章節戰前/劇情跳表之後)同上 movzx [eax+0x1e63]
 0x025f26   （同上,另一分流路徑)
 0x02610a   （同上,第三條分流路徑,esi=call 0x2cad7 結果)
-0x026144   push -1;push 0;call 0x25977(停曲) → call 0x10010(戰場設置) → movzx [eax+0x1e63] → play_bgm
+0x026144   push -1;push 0;call 0x25977(停曲) → call 0x10010(current-runtime續戰恢復) → movzx [eax+0x1e63] → play_bgm
 ```
 
-五處**全部**走 `0x51e63`,**沒有一處走 `0x51e81`**——確認 `0x51e63` = 戰鬥 BGM 表,`0x026144` 這條
-(停曲 → 進戰場設置 0x10010 → 立刻重設曲號)是最直接的鐵證:曲號緊接在「進戰場」之後設定。
+五處**全部**走 `0x51e63`,**沒有一處走 `0x51e81`**——確認 `0x51e63` = 戰鬥 BGM 表。`0x026144` 這條
+是在第三個主選單分支以 `0x10010` 從 current-runtime snapshot 續戰後重設曲號；一般新章則由 pre-handler 返回
+`0x25ebb`、再由 main `0x25dce` 進 `0x117e7`。舊稱 `0x10010` 為所有章節共用「進戰場設置」已撤回。
 
 `0x51e63` 30 bytes(章節 0-29,dump 見 `extracted/exe_tables/bgm_chapter_tables.md`):
 

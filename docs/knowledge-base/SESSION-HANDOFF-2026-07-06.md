@@ -528,7 +528,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 foreground roster-gate correction（Docker Capstone）：撤回「每個 visible unit 都進 `0x129ec`」的過度簡化。loop 先以 `0x1f183(slot)` 過濾，後以 `0x3453e(slot)` inactive 過濾；`0x1f183` 的 raw predicate 是 **`unit+7==0x1c`** 放行，否則 class `0x13` 或 race `4/5` 回 true 而跳過。亦撤回剛才誤稱 `unit+7` 為 group 的說法：map sprite group 是 `unit+2`。`NativeForegroundRedrawEligible` 已 regression 固定兩 gate；數值暫不命名，runtime roster／GUI adapter 繼續 fail-closed。
 - 2026-07-26 scripted foreground caller closure（official IDA 9.4 ASM）：`0x129ec` 還有 `0x1366a` caller，故撤回它只屬於 `0x127a9` steady redraw 的隱含說法。`0x1366a` 在 step loop 的 base `0x11eee`、逐 slot `0x127e0` 後呼 `0x129ec`，之後才 `0x11eb0` 和 present/redraw；loop 會由 editable acting frame bytes 改寫 runtime `unit+3`。**更正**：106-entry step input 格式早已由 `export_acting_resources.py` 解出；未接的是其 native indexed presentation adapter，GUI 仍 fail-closed。
 - 2026-07-26 native viewport-copy closure（2026-07-28 correction）：`0x11eb0` 是 row-by-row `memmove`；重讀標準 `0x11cac` caller `0x11d12..0x11d36` 的 exact args 為 dst `0xA0504`／stride320、src `0x53a49+0x8088`／stride456、**width312**、height192。舊 width320 斷言已撤回；VGA placement 是 `(4,4)` 四邊4px。
-- 2026-07-26 map selected-unit HUD correction（Docker Capstone）：`0x1acf3` 在 normal redraw 的 `0x127a9` 後、`0x11eb0` 前，以 `0x12c0d(0x53ab1,0x53ab5)` 尋 active unit；兩 raw display gate `0x51aab/0x51aac` 皆需非零。它有獨立 resource/raw blit/digit pipeline，anchor 為 row157，並在 `0x53abd>5 && 0x53ab9<3` 加 `0xf2`。撤回 map HUD 等同 FDOTHER#5 full-screen battle-panel frame 的未證實說法；現行 GUI 保留 approximation，native resource/layout 待接。
+- 2026-07-26 map selected-unit HUD correction（Docker Capstone）：`0x1acf3` 在 normal redraw 的 `0x127a9` 後、`0x11eb0` 前，以 `0x12c0d(0x53ab1,0x53ab5)` 尋 active unit；兩 raw display gate `0x51aab/0x51aac` 皆需非零。它有獨立 resource/raw blit/digit pipeline，anchor 為 row157，並在 `0x53abd>5 && 0x53ab9<3` 加 `0xf2`。撤回 map HUD 等同 FDOTHER#5 full-screen battle-panel frame 的未證實說法；當時 GUI 尚保留 approximation，後續 ch01 strict indexed bridge 已取代這個歷史狀態。
 - 2026-07-26 map HUD first-frame closure：`0x1acf3` 對 FDOTHER#5 base 取 `base+0x20e`，即 LMI1 descriptor #130；以 player-provided `FDOTHER_005` decode 實測為 **69×34**。這與 battle panel #22 的149×42不同，直接證實 map HUD 不是復用 full-screen panel；後續 icon/digit descriptor 與 layout 仍待。
 - 2026-07-26 map HUD terrain resolver correction（Docker Capstone）：撤回將 `0x12e38` 暫稱為 unit visual resolver 的說法。它是 FDFIELD cursor-cell decoder：輸出 tile word `&0x3ff`、event byte `&0x1f` 和 selected FDSHAP 的四 control bytes；`0x1acf3` 先用此 terrain info，後才 `0x12c0d` optional lookup active unit。新增 `fdicon.NativeTerrainCursorInfoForCell` regression，完整 HUD icon/digit layout 仍待。
 - 2026-07-26 native terrain AP/DP closure：重新讀 `0x1acf3` 後撤回 `0x51a12/0x51a2a` 為 figure direction/pose 微調的錯誤斷言；它們由 `0x12e38` 輸出的 FDSHAP control byte+1 索引，值為 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5)。`battle.Load` 現只在完整 raw map export 驗證後導出逐格 `NativeTerrainMoveCodes`，`TerrainAPDPPct` 優先使用這個原版來源；`Cost` 僅保留給舊／不完整 map 的相容 fallback。回歸覆蓋全部六碼和 loader。
@@ -632,7 +632,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 HUD HP closure（Docker Capstone + real FDOTHER）：`0x1ae8e` 以 zero-extended unit `+0x40/+0x42` 送 `(dest,stride,current,max,mode3)` 到 `0x1875d`；它只在 current==max 選 glyph base #0x1f，否則 #0x2a，`0x187d6` 對 **current** `%0.3d`、6px advance。current>999 直接 blit base+10，真實 FDOTHER#5 #0x29/#0x34 都是18×8；兩 base digit 1為5×8、其餘6×8。新增 `indexedmap.BlitNativeMapHUDHP` atomic adapter，不把 unequal branch 或數值命名成未證實 gameplay 語意。
 - 2026-07-26 full map-HUD assembly closure（Docker Capstone）：重讀 `0x1ad72..0x1aea9`，順序精確為 panel→terrain→AP→DP→`0x12c0d` optional unit gate→icon→HP。新增 `BlitNativeMapHUD` raw `NativeMapHUDInput` transaction；`OptionalUnit=nil` 只能代表原版的任一 skip path，unit `+7/+0x1f/+6` gate 不以猜測性角色模型重演。closed display gates no-op；任何 subpass失敗不寫 destination。
 - 2026-07-26 HUD optional-unit gate closure（Docker Capstone）：`0x1ae2a..0x1ae47` 的兩條 skip 已固定為 raw `unit+7==0x79`，或（前者不成立時）`unit+0x1f==0x0a && unit+6==1`。新增 pure `NativeMapHUDOptionalUnitEligible` regression，讓 caller 對 `0x12c0d` result 建立 OptionalUnit／nil，未替三 byte 猜測語意。
-- 2026-07-26 strict indexed map-frame closure：新增 `ComposeNativeFrame`，直接把 verified Frame layers 和完整 `BlitNativeMapHUD` resources/input 綁定為 `NativeFrameInput`，不讓呼叫端以任意 callback 取代 `0x1acf3`。回歸確認 panel/terrain/unit/HP bytes 均進 456-stride work 並被 `0x11eb0` copy 到 VGA。現行 Ebiten 仍是 PNG-backed legacy path，尚未宣稱已接 native palette/asset bridge。
+- 2026-07-26 strict indexed map-frame closure：新增 `ComposeNativeFrame`，直接把 verified Frame layers 和完整 `BlitNativeMapHUD` resources/input 綁定為 `NativeFrameInput`，不讓呼叫端以任意 callback 取代 `0x1acf3`。回歸確認 panel/terrain/unit/HP bytes 均進 456-stride work 並被 `0x11eb0` copy 到 VGA。當時 Ebiten 仍是 PNG-backed legacy path；後續 ch01 已接 native indexed→Ebiten strict bridge，ch26 亦已資料化 event61 所需 view/HUD，但不可泛化為全章 E2。
 - 2026-07-26 FDSHAP archive bridge：新增 `fdother.DecodeSpriteBankResource`，用既有 LLLLLL loader 將指定 FDSHAP even image resource直接交 `fdicon.Parse`，player archive #0 實測/回歸為288個24×24 four-mode frames。控制表仍要求 caller 明確取相鄰 resource，避免 image/control 猜配。
 - 2026-07-26 FDSHAP map-pair closure：新增 `DecodeMapTerrainResources(N)`，固定讀 FDSHAP #`2N` image/#`2N+1` four-byte control table並做 capacity validation；原版 map0 regression為288/1200。runtime map binding必須明示 N，禁止由 tile count/cost猜配。
 - 2026-07-26 production native asset gate：`Game.loadMap` 現嘗試組合完整 native bundle（FDOTHER HUD frames、explicit FDSHAP pair、FDICON.B24、palette），只有全數成功才寫入 `nativeMapAssets`；PNG draw path 尚未切換，避免半套 indexed 資源改變可玩路徑。
@@ -2209,15 +2209,36 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   campaign owner 持久化。58 frames 與中途 inventory 變更回歸均固定為
   零部分寫入。這是核心層完成、UI job／永久 JOIN 尚未接線時的歷史狀態；
   現況見下一項。
-- 後續接線勘誤：UI job 與永久 JOIN31 adapter 已完成，但只在明示
+- 後續接線勘誤：UI job 與永久 JOIN31 adapter 已完成；當時只在明示
   materialized native runtime 測試中成立。job 依真實 FDOTHER.DAT 跑
   FDTXT3→59 frames×2 BIOS ticks→commit→persistent JOIN31→FDTXT4；
-  缺 D0 只播 FDTXT2。正式 `battle_ch26` 仍無已證實的動態
-  `native_map_view/native_map_hud`，所以 source-frame compose 在任何 D0
-  mutation 前失敗即關閉；不得把測試橋接冒稱一般玩家 E2。
+  缺 D0 只播 FDTXT2。這個限制已由下一項的 pre-handler/cursor 資料流
+  解除；仍不得把 production E1 冒稱同狀態畫面 E2。
 - 同輪發現 repository-wide UI 根因：只有 map0 的 map.json 保存
   `native_tile_blit_modes/native_terrain_control`，map1–32 均為空。
   新同步器先對 FDFIELD.DAT／FDSHAP.DAT 做 size+MD5+SHA-256 驗證，再
   只補 composition byte+3 與 terrain control。33 圖 check、loader
   regression 與完整 Docker/Xvfb Go suite 均通過。這只是全圖 E0
   renderer input completeness，ch02+ dynamic view/HUD 仍待逐章證據。
+
+## 2026-07-29：current-runtime loader 與 ch26 event61 production view 勘誤
+
+- 舊文件把 `main→0x25ebb→0x10010` 稱為一般 cutscene→戰場線性鏈是錯誤
+  斷言。直接展開 `0x25ec8..0x26151`：新遊戲與四槽讀檔分支各自呼叫
+  pre-handler 後返回；只有第三主選單分支在 `0x26130` 呼叫 `0x10010`。
+  main 於 `0x25dbd` 呼叫 `0x25ebb`，回傳0才在 `0x25dce` 進 `0x117e7`。
+- `0x10010` 開啟 FD2.SAV、驗 rolling-XOR/checksum，`esi=buffer+0x30c3`；
+  `+3..+8` 恢復 camera/cursor/visible cursor，`+15` 恢復 HUD gate A，
+  並載 runtime roster、field units、event table。因此它是 current-runtime
+  snapshot loader，不是一般章節 loader。兩個真 caller
+  `0x1a251/0x26130` 的 callgraph 結論仍有效，但不能推導跨分支 fallthrough。
+- 寫入端 `0x19f7a..0x1a136` 把相同 runtime blobs 與18-byte header逐欄
+  回寫 FD2.SAV。gate A 另由系統選單 `0x173ba` XOR 1，且保存於四槽
+  metadata `+6`；它是持久 raw option，不是 renderer hardcode。
+- 一般 ch26 view 改由 pre-handler 證據建立：ch25 pre 最後
+  `PAN(9,39)→FOCUS_UNIT(0)`，slot0 部署於 `(15,46)`，得到初始
+  camera `(9,39)`、cursor `(15,46)`、visible `(6,7)`。沿原版 cursor
+  state machine 到 event61 `(1,46)` 後為 camera `(0,39)`、visible `(1,7)`，
+  HUD anchor 同時確定寫 `0xf2`。`battle_ch26` 已資料化初始 view/HUD；
+  event61 真實資產 regression 不再手工 materialize。這是 production E1，
+  尚缺同 roster/event/tick 的 DOSBox 像素比較，未升 E2。

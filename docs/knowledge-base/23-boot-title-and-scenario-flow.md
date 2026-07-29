@@ -17,7 +17,7 @@
 
 | 舊假設 | 實際(已驗證) |
 |---|---|
-| `main = 0x10000` | **0x10000–0f 是 padding(int3/jmp/nop);0x10010 是「載入一關場景」子程式**(被 0x1a251、0x26130 呼叫),不是 main。 |
+| `main = 0x10000` | **0x10000–0f 是 padding(int3/jmp/nop);0x10010 是「從 FD2.SAV current-runtime header 恢復目前戰鬥」子程式**(被 0x1a251、0x26130 呼叫),不是一般新章載入器，也不是 main。 |
 | 程式主函式在 code 開頭 | **真正的 main = `0x25bf4`**:無任何 caller、開頭做一次性音效/檔案子系統 init(0x379ee/0x3a722/0x38d3b…),是 Watcom CRT 直接進入的 main。 |
 | 標題 logo = FDOTHER 資源 #0x65 | **#0x65 是 768B 調色盤(淡入用)**;FLAME DRAGON logo 在 **FDOTHER 資源 #7(巢狀 LLLLLL 容器)的 sub0**(320×200)。 |
 
@@ -281,7 +281,7 @@ python3 tools/decode_sprite.py 用 body=FDOTHER_069.bin[4:] / FDOTHER_070.bin[4:
 
 - 游標索引 = `ebp`,選單項由 0x1ff79 繪製/反白;項數與預設項來自設定結構 0x5204e。
 - **此主選單迴圈未見 ESC 分支**(只有移動 + 確認)[驗];ESC 取消是戰場/子選單的行為(見 doc 13),非主選單。
-- 回傳值分派(回 `0x25ebb`，2026-07-25 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀檔**（配置 save resource 後進 `0x30550` slot selector，再從選中記錄拷出 0xA00 bytes 至 runtime state）。`eax != 0 && eax != 1` 則跳到 `0x26124`，直接呼叫 battle setup `0x10010`；這是與 slot selector 分離的第三分支。其使用的持久資料／玩家可見名稱尚未閉合，故不得把它武斷命名為「靜默讀檔」或讓 remake 的四槽自有 JSON load 冒充等價行為。
+- 回傳值分派(回 `0x25ebb`，2026-07-29 Docker Capstone 重跑 `0x25ec8..0x26151`):**0 = 新遊戲**(→ §4)、**1 = 讀取四個章節存檔槽**（進 `0x30550`，把選中記錄的 roster/metadata 載入 globals，再跑 preparation 與章節 pre-handler）。`eax != 0 && eax != 1` 的第三分支才在 `0x26130` 呼叫 `0x10010`，由 FD2.SAV plaintext `0x30c3` 的 current-runtime header 與同檔 runtime blobs 恢復目前戰鬥。這是與四槽章節存檔分離的續戰入口；玩家可見選單標籤仍以原版畫面證據為準，不讓 remake 的自有 JSON load 冒充 native FD2.SAV compatibility。
 
 ### `0x30550` LOAD slot selector（2026-07-25，E0 partial）
 
@@ -352,8 +352,9 @@ Official IDA 9.4 further closes the write-side copy order in `0x30012`: after a 
 > remake 擺位機制:`campaign.Actor{Fig,X,Y,Dir}` + `Node.Actors`(story+Map 節點專用,純靜態展示,
 > 複用 `battle.Unit`/`drawUnitSprite` 畫法但不掛戰鬥邏輯),`story_ch01_palace` 已接 3 個 actor(國王/王后/索爾)。
         │
-driver 0x25ebb 內續行 → 進入戰場設置 0x10010(0x26130)
-   └ 戰場地圖編號 = [0x53c03]*3 + 2   (0x10b9e)       ;★ 不是寫死常數,由章節推導
+handler ret → 0x25ebb 返回 0 → main 0x25dce 呼叫戰鬥主迴圈 0x117e7
+   └ pre-handler 先以 0x1088d/0x205da 載入章節地圖；地圖編號 = [0x53c03]*3 + 2
+      (0x10b9e)                                      ;★ 不是寫死常數,由章節推導
         0x10b9e  mov edx,[0x53c03]                    ; 章節
         0x10ba6  shl eax,2; sub eax,edx; add eax,2    ; eax = 章節*3 + 2
         0x10bb5  push 0x1a59 (="FDFIELD.DAT"); call 0x111ba
@@ -364,8 +365,12 @@ driver 0x25ebb 內續行 → 進入戰場設置 0x10010(0x26130)
 - **完整章節 loader 0x1088d** 取 FDTXT 資源 `章節+1`，並建立對應 FDFIELD/map/roster state；新遊戲章節=0 → 資源 1 = 序章。[驗]
 - **FDFIELD 每張地圖佔 3 個資源**(構成 / 控制+寶箱 / 出場位置,見 doc 03/91);`章節*3+2` 取其一,第一場 = 章節0 對應資源組。[驗]
 - **「自動」的本質**:`[0x53c03]` 同時決定「播哪段對話 / 載哪張戰場 / 放哪首 BGM / 呼叫哪個章節腳本」。
-- **cutscene→戰場是同一 driver(0x25ebb)內的線性串接**(doc 24 用 call-graph 釘死):driver 先 `call [章節*4+0x51d71]`(章節0=cutscene 0x3231b),handler `ret` 後 driver 繼續走到 `0x26130 call 0x10010` 進戰場;**中間無玩家選擇點 = 自動過場**。這正是原版「33 段固定流程」的硬編碼版本。[驗]
-  > 修正:早先描述用「相位機接手」串接 cutscene→戰場,經 call-graph 反向追證實是**同 driver 內線性執行**;相位變數 `[0x53ecc]` 其實是**戰後**分支(1=事件、2=勝利→跳表 0x51de9),非 cutscene→戰場的中介。詳見 doc 24。
+- **cutscene→戰場仍是無玩家 choice 的自動串接，但函式邊界已於 2026-07-29 勘誤**：
+  `0x25ebb` 的新遊戲分支呼叫 `[章節*4+0x51d71]` 後返回 0；main
+  `0x25bf4` 在 `0x25dce` 依此回傳值直接呼叫 `0x117e7`。`0x26130→0x10010`
+  是第三主選單分支的 current-runtime snapshot 恢復，不在新遊戲 handler
+  返回後的落下路徑。相位變數 `[0x53ecc]` 仍是戰後／事件 pending code，
+  不是進場中介。[驗]
 
 ### 戰後流向 [部分驗]
 戰鬥結束(`[0x53ecc]==2`)→ 章節「戰後」跳表 `0x51de9[章節]`(ch0=0x22ef6:貼結束畫面 → `[0x53c03]=1`)→ 相位 `[0x53ecc]==1` 可進世界地圖/中場(0x22e5c)→ 下一章戰前跳表。完整勝/敗分歧未逐條追完。
@@ -384,7 +389,7 @@ driver 0x25ebb 內續行 → 進入戰場設置 0x10010(0x26130)
 | `0x3231b` | **章節0 = 開場序章 cutscene**(與前代主角對話) | [驗] |
 | `0x205da`/`0x1088d` | load_chapter:**同時**載 FDTXT 文本(資源=章節+1)**與** FDFIELD 地圖三資源(章節×3+{0,1,2});序幕暫借章節 32/31 藉此偷渡 map32 複合背景(見上方修正) | [驗] |
 | `0x1366a` | acting 播放器；normal frame 逐格移動、special frame 原地顯示（詳見 doc50 §1.2） | [驗] |
-| `0x10010` | 進入戰場/戰棋場景設置 | [驗] |
+| `0x10010` | 從 FD2.SAV current-runtime header／runtime blobs 恢復目前戰鬥 | [驗] |
 | `0x10b9e` | **戰場地圖編號 = [0x53c03]*3+2** | [驗] |
 | `0x117e7` | 戰場指令迴圈(逐單位行動) | [驗] |
 | `0x111ba` | 通用資源載入器 load(filename,oldbuf,index) | [驗] |
@@ -414,7 +419,11 @@ driver 0x25ebb 內續行 → 進入戰場設置 0x10010(0x26130)
 
 ## 7. 受阻 / 待補 與方法註記
 
-- **[已解]** ~~cutscene `ret` 到呼叫 0x10010 的「精確呼叫鏈」~~ → **doc 24 用 call-graph 遞迴反組譯釘死**:0x10010 真 caller = 0x1a251(讀檔/過場子模組 0x19df7)與 **0x26130(driver 0x25ebb,新遊戲開場走這條)**;反向路徑 `main 0x25bf4 → 0x25ebb → 0x10010`。先前線性工具回報的 0x1b051/0x26f30 是偽命中,已排除。
+- **[已解並勘誤]** `0x10010` 真 caller 是 `0x1a251` 與 `0x26130`，先前
+  `0x1b051/0x26f30` 是偽命中；但 caller 可達性不能證明分支線性相接。
+  直接展開 `0x25ec8..0x26151` 與 main `0x25dbd..0x25dce` 後，已證實
+  新遊戲／章節 pre-handler 返回 0，再由 main 呼叫 `0x117e7`；`0x10010`
+  只恢復 FD2.SAV current-runtime snapshot。
 - **[阻]** 主選單第 3+ 選項對應分支、選單設定結構 0x5204e 各欄、章節跳表各 handler 內容,未逐一展開。
 - **方法**:本篇控制流全靠**靜態反組譯**(規則 62:控制流非 runtime-only);標題畫面內容用**已破解解碼器解出輸出當 oracle**(規則 64)視覺驗證,**未動用 DOSBox**。若日後要對「捲動速度/淡入時序/BGM 對齊」做逐幀比對,DOSBox 截圖序列可當最後的時序 oracle,但機制本身已不需動態分析即可確定。
 
