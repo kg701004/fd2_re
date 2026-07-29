@@ -110,6 +110,15 @@ type Unit struct {
 	HasNativeRecordByte5 bool `json:"has_native_record_byte5,omitempty"`
 	NativeRecordByte6    byte `json:"native_record_byte6,omitempty"`
 	HasNativeRecordByte6 bool `json:"has_native_record_byte6,omitempty"`
+	// FDFIELD b17..b19 are copied verbatim by 0x10fb6..0x10fc5 to runtime
+	// +0x34..+0x36. Byte34's low nibble dispatches 0x13a9f, while its high
+	// bits have separate consumers; keep the complete bytes and provenance.
+	NativeRecordByte34    byte `json:"native_record_byte34,omitempty"`
+	HasNativeRecordByte34 bool `json:"has_native_record_byte34,omitempty"`
+	NativeRecordByte35    byte `json:"native_record_byte35,omitempty"`
+	HasNativeRecordByte35 bool `json:"has_native_record_byte35,omitempty"`
+	NativeRecordByte36    byte `json:"native_record_byte36,omitempty"`
+	HasNativeRecordByte36 bool `json:"has_native_record_byte36,omitempty"`
 	// NativeRecordWord42 is the optional raw u16 at runtime record +0x42.
 	// It is separate from MaxHP: ch15_post compares this word directly, and
 	// old editable units without provenance must fail closed.
@@ -643,6 +652,9 @@ type unitsFile struct {
 		MapSelectorKey     *int                    `json:"map_selector_key,omitempty"`
 		NativeRecordByte5  *byte                   `json:"native_record_byte5,omitempty"`
 		NativeRecordByte6  *byte                   `json:"native_record_byte6,omitempty"`
+		NativeRecordByte34 *byte                   `json:"native_record_byte34,omitempty"`
+		NativeRecordByte35 *byte                   `json:"native_record_byte35,omitempty"`
+		NativeRecordByte36 *byte                   `json:"native_record_byte36,omitempty"`
 		NativeRecordWord42 *uint16                 `json:"native_record_word42,omitempty"`
 		Group              int                     `json:"group"`
 		NativeConstructor  *NativeConstructorTable `json:"native_constructor,omitempty"`
@@ -746,6 +758,15 @@ func Load(path string) (*State, error) {
 		}
 		if u.NativeRecordByte6 != nil {
 			nu.NativeRecordByte6, nu.HasNativeRecordByte6 = *u.NativeRecordByte6, true
+		}
+		if u.NativeRecordByte34 != nil {
+			nu.NativeRecordByte34, nu.HasNativeRecordByte34 = *u.NativeRecordByte34, true
+		}
+		if u.NativeRecordByte35 != nil {
+			nu.NativeRecordByte35, nu.HasNativeRecordByte35 = *u.NativeRecordByte35, true
+		}
+		if u.NativeRecordByte36 != nil {
+			nu.NativeRecordByte36, nu.HasNativeRecordByte36 = *u.NativeRecordByte36, true
 		}
 		if u.NativeRecordWord42 != nil {
 			nu.NativeRecordWord42, nu.HasNativeRecordWord42 = *u.NativeRecordWord42, true

@@ -14,7 +14,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 領域 | 已驗證成果 | 與原版的差距 |
 |---|---|---|
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
-| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件處理器、戰鬥原始介面、存檔外層、物品類型 5–24 與操作證據持續收斂；敵方物理落點、評分、原版路徑方向及無可用行動時的備援鏈已分段閉合，並與 `0x1548E` 執行鏈分離 | AI 上層模式／分組選擇值、原始輔助欄位及完整回合執行期尚未閉合；現行執行期仍採最近敵對單位的正規化近似；索引效果繪製器、完整戰後／城鎮順序仍有 `[~]`／`[ ]` 項 |
+| 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件處理器、戰鬥原始介面、存檔外層、物品類型 5–24 與操作證據持續收斂；敵方物理落點、評分、原版路徑方向及無可用行動時的備援鏈已分段閉合。FDFIELD 的 `b17/b18/b19` 也已固定為執行期 `+0x34/+0x35/+0x36` 來源，33 張地圖的原始模式分布已資料化 | AI 各低四位模式的可觀察分支已有矩陣，但玩法名稱、部分分支語意與完整回合執行期仍未閉合；現行執行期仍採正規化近似。索引效果繪製器、完整戰後／城鎮順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
 | 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；整備選人現有原版資源局部合成器，但 town variant1/2、整備狀態面板與實機差分、讀檔槽、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
 

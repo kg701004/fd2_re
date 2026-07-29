@@ -222,4 +222,8 @@ presentation 必須依 handler call trace，不得只因不在 FDFIELD roster �
 → 它們只能作未來設計候選；原版進場／暴走與remake現行ch01仍須各自以
 handler、FDFIELD、runtime及DOSBox證據驗收。
 
+其中目前 `event.go` 的 `set_ai` 只留下可編輯事件標記，沒有任何人工智慧
+規劃器讀取；`berserk` 也不是已證實的原版 `record+0x34` 低四位名稱。
+因此現行 ch01 可以觸發對白，卻不能宣稱已改變哈瓦特的行動決策。
+
 > 相關:doc 19(腳本系統設計)· doc 25/26(原版事件)· doc 28(原版關卡目標)· doc 14(原版文本控制碼)· doc 21(Go/Ebiten 架構)。

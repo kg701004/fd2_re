@@ -282,7 +282,10 @@ func (sc *Scenario) ExecuteAction(st *State, a Action) (DialogLine, bool) {
 	case "set_flag":
 		st.Flags[a.Flag] = true
 	case "set_ai":
-		st.Flags["ai_"+a.Unit+"_"+a.Mode] = true // 簡化:旗標記錄,AI 層讀(doc 11)
+		// Editable scenario marker only. No planner currently consumes this
+		// string, and "berserk" has not been mapped to native record +0x34.
+		// Keep the inert marker visible instead of claiming an AI transition.
+		st.Flags["ai_"+a.Unit+"_"+a.Mode] = true
 	}
 	return DialogLine{}, false
 }

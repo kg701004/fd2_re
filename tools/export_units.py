@@ -205,6 +205,11 @@ def main(argv):
         # normalized into the remake's legacy `spells` list.
         if "initial_command_mask" in u:
             rec["initial_command_mask"] = u["initial_command_mask"]
+        # FDFIELD b17..b19 are copied verbatim by 0x10fb6..0x10fc5 to
+        # runtime +0x34..+0x36. Keep full bytes: +0x34 high bits have other
+        # consumers and must not be discarded as if the whole byte were mode.
+        for field in ("native_record_byte34", "native_record_byte35", "native_record_byte36"):
+            rec[field] = u[field]
         if u.get("death_effect") is not None:
             rec["death_effect"] = u["death_effect"]
             effect = u["death_effect"]

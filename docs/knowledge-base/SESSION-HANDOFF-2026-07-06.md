@@ -2078,3 +2078,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 尚未完成：跨戰場／城鎮的行程全域初始相位，以及合法晚期 `FD2.SAV`
   的同狀態原版／重製差分。`0x1f42d` 已更正為戰場進入演出，不再列為
   選人視窗缺口。這些缺口使 UI-11 維持部分完成。
+
+## 2026-07-29：敵方回合行動模式來源閉合
+
+- `0x10FB6` 證實 FDFIELD 名冊 `b17/b18/b19` 分別建立 runtime
+  `record+0x34/+0x35/+0x36`；`b2` 建立 `+0x3D`。
+- 同版 FDFIELD.DAT 的 33 張圖共 1887 筆名冊已重解析；低四位初始值只出現
+  0、1、2、3、4、5、7、8、9、10，完整分布保存於
+  `docs/data/fdfield_native_ai_modes.json`。高四位另有用途，不可把整 byte
+  稱為單一模式。
+- `0x3419C` 是保留高四位、替換低四位的 inclusive range writer；
+  `0x13D20` 與數個章節處理器另會整 byte 覆寫。重製新增對應的 raw writer、
+  provenance materializer、資料匯出與回歸測試。
+- doc11 已新增敵方回合專題矩陣：原版依 mode 選擇候選攻擊、指定座標／單位
+  移動或無候選備援，不是單純選最近角色。矩陣只記可觀察呼叫，不替
+  0/1/2/3/4/5/7/8/9/10/11 猜玩法名稱。
+- 重要缺口：`NextAIPlan` 尚未消費這些 raw mode；ch01 的
+  `set_ai:berserk` 只寫 inert 事件標記，沒有規劃器讀取。下輪應先閉合
+  mode 2/11 與章節 writer 的實際觸發，再接 production，不能猜值硬接。

@@ -134,6 +134,9 @@ flowchart TB
 | `when` | `turn`(int,0=不限) / `unit_dead`(角色名) | `unit_alive` / `roster_has` / `hp_below` / `flag` / `and`/`or`/`not` 條件樹 / `unit_in_region` 等 |
 | `do`(action type) | `spawn_party` / `spawn_group`(含 `groups`/`camp`/`act_immediately`) / `dialogue`(`speaker`/`text`) / `set_flag` / `set_ai`(`unit`/`mode`) | `spawn_march` / `show_scene` / `give_item` / `recruit` / `move_unit` / `transform` / `play_music` / `branch` / `call` / `win`/`lose` |
 
+> `set_ai` 目前只有事件標記與編輯格式，人工智慧規劃器尚未讀取；編輯器
+> 不得把它顯示成已生效的原版模式。原版低四位模式來源與未命名分支見 doc11。
+
 - 表單本身**動態讀取一份「能力清單」**(建議由編輯器維護一份小 JSON,手動同步 `event.go` 的 `Registry` 內容;
   長期可以在 Go 端加一個 `--dump-registry` 除錯指令直接吐出清單,避免兩邊手動同步漂移)。
 - 右欄詞彙不是「編輯器做不到」,是「**引擎還沒做**」——這些要先在 `event.go` 加 case、`When`/`Action` struct

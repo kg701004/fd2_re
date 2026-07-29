@@ -70,6 +70,12 @@ def parse_map(raw, m):
                       # these bits into spell IDs here: they are native command
                       # inventory and individual ID effects remain unresolved.
                       "initial_command_mask": list(b[13:17]),
+                      # Constructor 0x10fb6..0x10fc5 copies these exact source
+                      # bytes to runtime +0x34/+0x35/+0x36.  Only +0x34 low
+                      # nibble is the 0x13a9f dispatch mode; preserve all bits.
+                      "native_record_byte34": b[17],
+                      "native_record_byte35": b[18],
+                      "native_record_byte36": b[19],
                       "group": b[21],
                       # 0=item、1=gold 已由原攻略確認；2/3 是特殊死亡效果，
                       # 語意未全解前保留原值，不猜成一般掉落物。

@@ -2147,3 +2147,23 @@ not. `Load`/`PartyUnits` retain these flags when the eight `inventory_slots`
 source is present; legacy JSON remains a conservative projection. This fixes
 the former incorrect “un-equipped only” description and does not assign an
 item category or church service name.
+
+### 2026-07-29 — 敵方行動模式的來源與可編輯資料契約
+
+`0x10FB6..0x10FC8` 證實 FDFIELD 名冊列 `b17/b18/b19/b2` 依序建立
+執行期記錄 `+0x34/+0x35/+0x36/+0x3D`。其中只有
+`record+0x34 & 0x0F` 是 `0x13A9F` 的分派值；同一位元組的高四位及
+個別 bit 另有使用者，不得把整個 byte 序列化成有名稱的單一列舉。
+
+資料管線現在逐筆保存 `native_record_byte34/35/36`，`Unit` 以各自的
+`HasNativeRecordByte*` 記錄來源完整性；`NativeAIModeRecordForUnit`
+只有四個必要來源都存在時才建立原始記錄並交給
+`fdother.PlanNativeUnitMode`。`SetNativeAIModeRange` 對應 `0x3419C`
+的 inclusive range 與 `(old & 0xF0) | mode`，`SetNativeAIModeByte`
+則保存章節處理器與 mode-5 完成路徑的整個 byte overwrite。
+
+[`fdfield_native_ai_modes.json`](../data/fdfield_native_ai_modes.json)
+固定同一份 FDFIELD.DAT 的 33 圖、1887 筆分布；低四位只出現
+0、1、2、3、4、5、7、8、9、10。這項閉合只讓原始行為節點可編輯、
+可驗證；`NextAIPlan` 尚未讀取它們，模式名稱與 0x13A9F 各分支的完整
+遊戲語意仍採失敗即停止，不以 `set_ai:berserk` 或重製近似補猜。

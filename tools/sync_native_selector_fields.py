@@ -9,6 +9,7 @@ does, however, close three fields for every scripted roster entry:
 * roster b0 -> runtime unit+6
 * roster b1 -> runtime unit+7 / unit+8 FIGANI selector and identity
 * the bounded b1-selected constructor record -> runtime +0x1f/+0x20
+* roster b17/b18/b19 -> runtime +0x34/+0x35/+0x36
 
 This tool preserves every existing asset field and updates only
 the fields above. The optional native table input adds independently proven
@@ -34,7 +35,15 @@ import parse_field
 import export_units
 
 
-FIELDS = ("map_selector_key", "native_record_byte6", "battle_fig", "native_identity")
+FIELDS = (
+    "map_selector_key",
+    "native_record_byte6",
+    "battle_fig",
+    "native_identity",
+    "native_record_byte34",
+    "native_record_byte35",
+    "native_record_byte36",
+)
 
 
 def expected_units(raw, map_index, native_tables=None):
@@ -45,6 +54,9 @@ def expected_units(raw, map_index, native_tables=None):
             "native_record_byte6": unit["native_record_byte6"],
             "battle_fig": unit["portrait"],
             "native_identity": unit["portrait"],
+            "native_record_byte34": unit["native_record_byte34"],
+            "native_record_byte35": unit["native_record_byte35"],
+            "native_record_byte36": unit["native_record_byte36"],
         }
         if native_tables is not None:
             constructor = export_units.native_constructor_for_portrait(
