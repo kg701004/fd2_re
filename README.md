@@ -158,18 +158,21 @@ phase目前也都與原版全幀相同；shop剩餘主缺口已轉為四項servi
 Left回Yes，兩個可見selected pulse均與production全幀AE=0。gold0 選Yes後的
 「錢不夠！」與等待標記也已達production全幀AE=0。gold1000 的裝備收件者
 selection0／idle cycle1（索爾、悠妮、亞雷斯三列能力比較）亦已全幀AE=0；
+原版由selection0按Down到selection1的畫面也已用人物區exact-pixel gate同步
+動畫相位，五個高頻樣本中三張分別與remake cycle0／1／2取得整幀AE=0，
+證實先前只差`(175,90)`、`(176,90)`兩點是相位而非renderer缺陷；
 remake幀使用screenshot-only LOADCH typed-party bootstrap，並非正常campaign
-persistence或native FD2.SAV載入；這也不包含游標input／scroll。無合格收件者、購買成功／滿欄，以及
+persistence或native FD2.SAV載入。selection0↔1 input已閉合，但四人以上的
+三列scroll仍只有production regression、沒有原版E2。無合格收件者、購買成功／滿欄，以及
 sell/equip/transfer 仍待同狀態 E2。
 正常campaign另已修正JOIN→LOADCH的首次typed roster bootstrap：只有已有JOIN
 membership/order時才補尚不存在的persistent record，direct/debug LOADCH不會
 憑空建立隊伍；ch00真實scenario可把`[0,9,4,30]`送入ch02裝備收件者候選
 `[0,9,4]`。這是remake自有runtime regression，仍不是native FD2.SAV或完整
 campaign playthrough E2。
-收件者selection1的原版input route已實測Down／Up與Left/Right no-op；目前同cycle
-逐像素比較只剩商店人物區兩點（6個RGB bytes）的環境相位差，收件者panel本身其餘
-像素一致。這一狀態仍列partial：不遮罩差異、不宣稱全幀AE=0；下輪將用已加入
-Docker DOSBox runner的exact-pixel同步再驗selection1／scroll。
+收件者selection1的原版input route已實測Down／Up與Left/Right no-op；相位同步後
+selection1三個cycle均已有不遮罩的整幀AE=0。這仍只關閉selection0↔1，不能外推
+到scroll、交易提交或完整campaign/save lifecycle。
 town variant1/2仍待E2。
 
 本輪（2026-07-27）重新以合法 IDA 9.4 交叉檢查 item-row callers：已能把裝備合成、攻擊幾何與
@@ -221,6 +224,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 武器購買 Yes／No 確認（上原版 DOSBox、下remake；左Yes、右No的可見selected pulse，兩格全幀AE=0） | ![shop purchase confirmation original and remake](docs/figures/shop-purchase-confirm-ch02-original-vs-remake.png) |
 | ch02 武器購買金額不足（左原版 DOSBox、右remake；gold0，整幀AE=0） | ![shop purchase insufficient original and remake](docs/figures/shop-purchase-insufficient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者（左原版 DOSBox、右remake；screenshot-only typed-party bootstrap，selection0／idle cycle1，整幀AE=0） | ![shop equipment recipient original and remake](docs/figures/shop-equipment-recipient-ch02-original-vs-remake.png) |
+| ch02 布衣裝備收件者 selection1（原版由selection0按Down；左原版、右remake cycle1；exact-pixel相位同步後整幀AE=0） | ![shop equipment recipient selection1 original and remake](docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |

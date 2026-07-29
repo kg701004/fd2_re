@@ -1828,4 +1828,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   收掉Xvfb，故該次被明確中止，不算驗證結果。
 - 這只關閉E1 production input contract。selection1仍有商店人物區兩像素
   ambient phase差，scroll／opening／closing timing也尚無DOSBox E2；不得升級
-  UI-09為完整recipient lifecycle parity。
+  UI-09為完整recipient lifecycle parity。此句是當輪狀態，selection1兩像素
+  差異已由下一節的相位同步E2取代；scroll與完整lifecycle限制仍有效。
+
+## 2026-07-29 equipment-recipient selection1 phase-synchronized E2
+
+- 從`/tmp/fd2-town-e2d`取得未跑過的原始SAV/TMP基線，只覆蓋
+  `/tmp/fd2-town-e2g`的verified三處route-patched EXE，建立新的disposable
+  sandbox；原始FLAME2未掛載、未修改。SAV只在副本以既有`tools/fd2save.py`
+  decode/encode及native checksum設定current runtime raw gold為1000。
+- Docker DOSBox先以`waittown0`到ch02 town，再進weapon→purchase→good0→Yes。
+  在selection0送Down前以`waitpixel:175,90,101,121,121,0.05,400`同步商店人物
+  動畫／palette相位；五張selection1高頻原版crop與remake三個cycle逐一做
+  ImageMagick raw RGB `compare -metric AE`。
+- 結果不是兩像素renderer缺陷：0.05／0.20秒樣本對cycle1為AE=0，0.10／0.80秒
+  樣本對cycle2為AE=0，0.40秒樣本（timeline名`040`）對cycle0為AE=0。
+  比較全程未遮罩像素。新增
+  `docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png`
+  保存其中一組原版／remake 320×200左右對照。
+- selection0↔1 input與三cycle畫面可升為E2；四人以上三列window scroll、
+  opening/closing timing、交易提交與正常campaign/native save lifecycle仍未閉合，
+  不得把本結果外推成完整recipient或shop parity。
