@@ -150,3 +150,102 @@ func TestInspectChapterSlotFailsClosedForEmptyAndOversizedCount(t *testing.T) {
 		t.Fatal("oversized roster count unexpectedly accepted")
 	}
 }
+
+func TestPersistentRecordViewUsesProvenOffsetsAndSignedWords(t *testing.T) {
+	var record PersistentRecord
+	record.Raw[5] = 0x81
+	record.Raw[6] = 2
+	record.Raw[7] = 0x34
+	record.Raw[8] = 9
+	for slot := 0; slot < 8; slot++ {
+		record.Raw[0x0a+slot*2] = byte(0x40 + slot)
+		record.Raw[0x0b+slot*2] = byte(0x20 + slot)
+	}
+	copy(record.Raw[0x1a:0x1f], []byte{1, 2, 3, 4, 5})
+	record.Raw[0x1f] = 6
+	record.Raw[0x20] = 7
+	record.Raw[0x21] = 8
+	copy(record.Raw[0x22:0x28], []byte{9, 10, 11, 12, 13, 14})
+	record.Raw[0x3b] = 15
+	record.Raw[0x3c] = 16
+	for offset, value := range map[int]int16{
+		0x37: -17,
+		0x39: 18,
+		0x3e: -19,
+		0x40: 20,
+		0x42: 21,
+		0x44: 22,
+		0x46: 23,
+		0x48: 24,
+		0x4a: 25,
+		0x4c: -26,
+		0x4e: 27,
+	} {
+		binary.LittleEndian.PutUint16(record.Raw[offset:], uint16(value))
+	}
+
+	got := record.View()
+	if got.RawByte5 != 0x81 || got.RawCamp != 2 ||
+		got.RawPresentationKey != 0x34 || got.RawIdentity != 9 ||
+		got.Inventory[7] != (PersistentInventoryCell{Flags: 0x47, ItemID: 0x27}) ||
+		got.CommandMask != ([5]byte{1, 2, 3, 4, 5}) ||
+		got.Race != 6 || got.Class != 7 || got.Level != 8 ||
+		got.Transient != ([6]byte{9, 10, 11, 12, 13, 14}) ||
+		got.BaseAP != -17 || got.BaseDP != 18 ||
+		got.Movement != 15 || got.Experience != 16 ||
+		got.DX != -19 || got.HP != 20 || got.MaxHP != 21 ||
+		got.MP != 22 || got.MaxMP != 23 || got.AP != 24 ||
+		got.DP != 25 || got.HIT != -26 || got.EV != 27 {
+		t.Fatalf("persistent view=%#v", got)
+	}
+	if record.Raw[0x37] == 0 {
+		t.Fatal("view unexpectedly mutated the raw record")
+	}
+}
+
+func TestInspectCurrentSnapshotUsesIDA10010Offsets(t *testing.T) {
+	plain := make([]byte, FileSize)
+	header := plain[CurrentRuntimeHeaderOffset : CurrentRuntimeHeaderOffset+CurrentRuntimeHeaderSize]
+	copy(header, []byte{
+		3, 2, 7,
+		1, 13, 8, 17, 7, 4,
+		1,
+		0x78, 0x56, 0x34, 0x12,
+		0xaa, 1, 0xbb, 0xcc,
+	})
+	plain[CurrentPersistentRosterOffset+8] = 9
+	plain[CurrentRuntimeRosterOffset+8] = 4
+	plain[CurrentRuntimeRosterOffset+UnitSize+8] = 30
+
+	got, err := InspectCurrentSnapshot(plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Header.TurnCounter != 3 || got.Header.RuntimeCount != 2 ||
+		got.Header.PersistentCount != 1 || got.Header.Chapter != 7 ||
+		got.Header.Currency != 0x12345678 || got.Header.HUDGateA != 1 {
+		t.Fatalf("current header=%#v", got.Header)
+	}
+	if active := got.ActivePersistentRecords(); len(active) != 1 ||
+		active[0].View().RawIdentity != 9 {
+		t.Fatalf("current persistent records=%#v", active)
+	}
+	if len(got.RuntimeRecords) != 2 ||
+		got.RuntimeRecords[0].View().RawIdentity != 4 ||
+		got.RuntimeRecords[1].View().RawIdentity != 30 {
+		t.Fatalf("current runtime records=%#v", got.RuntimeRecords)
+	}
+}
+
+func TestInspectCurrentSnapshotRejectsImpossibleCounts(t *testing.T) {
+	plain := make([]byte, FileSize)
+	plain[CurrentRuntimeHeaderOffset+1] = RosterUnits*3 + 1
+	if _, err := InspectCurrentSnapshot(plain); err == nil {
+		t.Fatal("oversized runtime count unexpectedly accepted")
+	}
+	plain[CurrentRuntimeHeaderOffset+1] = 0
+	plain[CurrentRuntimeHeaderOffset+9] = RosterUnits + 1
+	if _, err := InspectCurrentSnapshot(plain); err == nil {
+		t.Fatal("oversized persistent count unexpectedly accepted")
+	}
+}

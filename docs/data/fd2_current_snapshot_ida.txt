@@ -1,0 +1,75 @@
+FD2.SAV current-runtime snapshot（IDA Pro 9.4）
+================================================
+
+證據範圍
+--------
+
+- `FD2.EXE`：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一順位工具：合法 IDA Pro 9.4，使用者提供於
+  `/home/anr2/ida_94_official/dist`，只在授權 Docker 映像執行。
+- 原版與授權檔唯讀；IDA 資料庫只寫入 `/tmp/fd2-ida-runtime-save`，
+  證據擷取後刪除。
+
+此文件描述的是 `FD2.SAV` 內「繼續目前戰鬥」快照，不是四個章節存檔槽。
+`FD2.SAV` 是可變檔案，不列入固定版本雜湊基準；下方實驗值只能作本次
+使用者原版快照的動態旁證。
+
+讀取端 `0x10010`
+----------------
+
+`0x10010` 驗證 checksum 後使用下列 plaintext 區域：
+
+| plaintext offset | 長度 | 直接指令與目的地 |
+|---|---:|---|
+| `0x08A3` | `0x0A00` | `0x1010F..0x10121` 固定複製至 persistent roster `[0x53BF7]` |
+| `0x12A3` | `header[1] * 0x50` | `0x10296..0x10311` 複製至 runtime roster `[0x53A45]` |
+| `0x30C3` | `0x12` | 逐欄恢復目前戰鬥的標頭 |
+
+18-byte header 的已證實映射：
+
+| header offset | 目的地 | 狹窄名稱 |
+|---|---|---|
+| `+0` | `[0x53BEF]` | turn counter |
+| `+1` | `[0x53BEB]` | runtime roster count |
+| `+2` | `[0x53C03]` | chapter |
+| `+3/+4` | camera globals | camera X／Y |
+| `+5/+6` | absolute cursor globals | absolute cursor X／Y |
+| `+7/+8` | visible cursor globals | visible cursor X／Y |
+| `+9` | `[0x53BFB]` | persistent roster count |
+| `+10..+13` | `[0x53BF3]` | currency dword |
+| `+14` | `[0x53AF9]` | raw option |
+| `+15` | `[0x51AAB]` | HUD gate A |
+| `+16/+17` | `[0x51E61]/[0x51E62]` | raw options |
+
+重要勘誤：舊版 `tools/fd2save.py` 曾把 `header[0]` 顯示為
+`persistent_count`。IDA 直接指令證實該欄是 `[0x53BEF]` turn counter；
+persistent count 在 `header[9]`，runtime count 在 `header[1]`。
+
+動態原版快照實驗
+----------------
+
+2026-07-29 以使用者目前未修改的
+`org_game/炎龍騎士團/FLAME2/FD2.SAV` 唯讀解碼：
+
+- checksum 通過，plaintext size `0x59CB`
+- header bytes：`01 0C 00 01 0D 08 11 07 04 04 00 00 00 00 00 01 01 01`
+- turn counter `1`
+- runtime count `12`
+- chapter `0`
+- persistent count `4`
+- persistent records 的 raw identity 順序：`[0, 9, 4, 30]`
+  （角色表對應索爾、悠妮、亞雷斯、蓋亞）
+- 四個章節槽皆以 `chapter=0xFF` 顯示為空槽；空槽其餘 metadata 是垃圾值，
+  不得作有效欄位解讀。
+
+重製端邊界
+----------
+
+- `fdsave.InspectCurrentSnapshot` 只解析上述固定區域與 header 欄位。
+- runtime count 超過 96、persistent count 超過 32 時拒絕整份快照。
+- persistent 與 runtime records 都保存原始 `0x50` bytes；高階角色名稱與
+  `battle.Unit` 轉換仍需獨立、嚴格的 identity／class catalog。
+- 此解析器不能讓四槽 LOAD 或 current-runtime CONTINUE 自動成功；在角色
+  正規化、章節節點與未知欄位消費端未閉合前，正式路徑維持失敗即關閉。

@@ -26,6 +26,8 @@ ROSTER_UNITS = ROSTER_SIZE // UNIT_SIZE
 # 0x10010 restores the active runtime header from these fixed plaintext
 # offsets before entering 0x11cac. Keep the still-opaque neighbours raw.
 CURRENT_RUNTIME_OFFSET = 0x30C3
+CURRENT_PERSISTENT_ROSTER_OFFSET = 0x08A3
+CURRENT_RUNTIME_ROSTER_OFFSET = 0x12A3
 
 
 def rol16(value: int, count: int) -> int:
@@ -86,12 +88,12 @@ def summarize(plain: bytes) -> str:
     runtime = plain[CURRENT_RUNTIME_OFFSET:CURRENT_RUNTIME_OFFSET + 18]
     lines.append(
         f"current_runtime={CURRENT_RUNTIME_OFFSET:#06x} "
-        f"persistent_count={runtime[0]:#04x} runtime_count={runtime[1]:#04x} "
+        f"turn_counter={runtime[0]:#04x} runtime_count={runtime[1]:#04x} "
         f"chapter={runtime[2]:#04x} "
         f"camera_xy={runtime[3]:#04x},{runtime[4]:#04x} "
         f"cursor_xy={runtime[5]:#04x},{runtime[6]:#04x} "
         f"visible_cursor_xy={runtime[7]:#04x},{runtime[8]:#04x} "
-        f"raw_30cc={runtime[9]:#04x} "
+        f"persistent_count={runtime[9]:#04x} "
         f"raw_53bf3={struct.unpack_from('<I', runtime, 10)[0]:#010x} "
         f"raw_53af9={runtime[14]:#04x} hud_gate_a={runtime[15]:#04x} "
         f"raw_51e61_51e62={runtime[16:18].hex()}"

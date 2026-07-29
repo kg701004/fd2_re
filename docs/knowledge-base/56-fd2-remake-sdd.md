@@ -257,6 +257,16 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、上限（15／19）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型與原版提示。城鎮路徑保留實際 town frame，使用 FDTXT `0x201` 於 `(95,119)`；無城鎮路徑依 `0x2cc04` 清成黑畫面，使用 FDTXT `0x19a` 於 `(100,119)`，肯定結果在完整關框後才存檔。兩者都使用 DATO #75、FDOTHER #5 對話框、FDOTHER #2 Yes／No 與 6＋4＋兩 tick 脈動＋4＋5＋還原生命週期。`0x318ad/0x31e80` 的三區背景、計數、10 欄角色格、游標、彩色／灰色繪法、四向輸入與 `0x17fc0` 狀態已接；`0x1297d` 的有號 BIOS 低字差值與可見 `0,1,2,1` 待機週期亦已接。`0x31d3c` 最終確認沿用相同生命週期，文字為 FDTXT `0x292`，呈現原畫面後才處理結果。呼叫端也已閉合：城鎮出發 `0x2d16b` 收到 0 會退出，直接整備 `0x2ccd6` 收到 0 則重選。缺任一原始記錄或資源即退回。README 所列整備圖均為 E1 原始資源合成，不是 DOSBox 截圖或正常晚期戰役存檔。跨畫面初始相位、有效晚期存檔及原版實機差分仍缺。`0x1f42d` 屬戰場進入演出，不再列為選人視窗動畫 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector。合法 IDA 9.4 另證實 LOAD 分支載入 FDOTHER #13，`0x30437` 以 entry16 310×86、FDTXT `0x225/0x202` 與原版字型/palette 畫四列；production 已接同一 indexed compositor。空槽與 `/tmp` 修改存檔 chapter1 有效槽畫面均和 DOSBox 全幀 RGB 相同，後者只證明排版。`TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證自有 JSON 可恢復 town boundary。`remake/internal/fdsave` 已有 raw rolling-XOR/checksum、slot bounds、verified metadata、opaque `WriteSlot`，以及依 `0x2602c..0x26098` 保存 32×`0x50` records／完整 metadata 的 `InspectChapterSlot`；空槽與 count 超容量皆失敗即關閉。`FD2_NATIVE_SAVE` 可讓 production title 從 checksum-valid 原生檔顯示四槽 metadata；空槽確認不退出，有效槽在 roster 尚未正規化前明示未支援，絕不誤轉 JSON loader。四槽讀檔先進 `0x2cad7`，不是 `0x10010` 續戰入口；但 native roster→normalized party、一般玩家有效槽成功 restore、刪除／覆寫仍未接入 |
 
+`0x50` persistent roster 的匯入邊界已開始由 raw snapshot 推進到具型別
+view。合法 IDA Pro 9.4 重核 `0x112A5` constructor、`0x1145A` equipment
+recompute 與 `0x17EEF→0x17FC0` status consumer，固定 `+5/+6/+7/+8`、
+八個 item cells、五個 command bytes、race/class/level、六個 transient
+bytes、base AP/DP、MV/EXP、DX、HP/MP 與 AP/DP/HIT/EV offsets。
+`fdsave.PersistentRecord.View` 只投影這些已證實欄位並保存 signed word；
+raw presentation key 與 identity 分開，尚未接名稱／class／sprite resolver
+或 normalized `battle.Unit`。直接證據見
+[`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。
+
 ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
 
 2026-07-27 zero-based post-handler audit 修正一個 campaign assertion：`postbattle_ch14_persist` 對應
@@ -2409,3 +2419,20 @@ slot；只有 FDSHAP 地形控制 byte0 的 `0x20/0x40` 皆未設置時才採此
 33 張可編輯 `map.json` 保存 `native_field_event_slots` 與
 `native_field_events`；`battle.NativeFieldEventIDAt` 僅執行已證實的
 slot、`0xFF` 與 selector gate，尚未猜測性 dispatch 未解 handler。
+
+### 2026-07-29 — current-runtime snapshot 的原生名冊邊界
+
+合法 IDA Pro 9.4 直接指令已閉合 `0x10010` 的三個 plaintext 輸入：
+`FD2.SAV+0x08A3` 固定 `0x0A00` bytes 是 persistent roster，
+`+0x12A3` 是由 header runtime count 限定的 runtime roster，
+`+0x30C3` 是 18-byte header。header `+0/+1/+9` 分別寫入
+`[0x53BEF]/[0x53BEB]/[0x53BFB]`，因此是 turn counter、runtime count、
+persistent count；舊工具把 `+0` 稱為 persistent count 的斷言已刪除。
+
+`fdsave.InspectCurrentSnapshot` 現保存兩份原始 `0x50`-byte 名冊，並對
+runtime count `<=96`、persistent count `<=32` 採失敗即關閉。使用者目前
+checksum-valid 的未修改快照實測得到 persistent identity
+`[0,9,4,30]`，依固定角色表是索爾、悠妮、亞雷斯、蓋亞。此動態快照不是
+固定版本 fixture，也不證明原生 LOAD／CONTINUE 已完成；identity/class
+catalog、章節節點與正式 party materialization 尚未閉合。逐指令證據見
+[`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt)。

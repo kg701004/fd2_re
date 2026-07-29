@@ -232,6 +232,12 @@
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
 - [x] `FDICON.B24`=1680個24×24地圖單位sprite(sprite-RLE,見 `31`);`TAI.DAT`=WxH圖像(sprite-RLE)
 - [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。metadata `+0`=chapter、`0xff`=empty marker 已由 renderer `0x30437` 關閉，`+2..+5`=currency 已由 `0x2d411/0x2d528` 加減／UI render 關閉。合法 IDA 9.4 與 Capstone 另閉合 `0x2602c..0x26098` 的 roster-first／metadata-second restore 順序，以及 `0x2cad7→chapter pre-handler` 分派；`fdsave.InspectChapterSlot` 已保存 32×`0x50` raw records、完整 metadata，空槽／count 超容量失敗即關閉。production `FD2_NATIVE_SAVE` 已能從 checksum-valid 原生檔顯示四槽 metadata；空槽不退出 selector，有效槽在 roster 未正規化前也不誤轉 JSON loader。四槽路徑不呼叫 `0x10010`；其餘 metadata、roster→normalized party 與一般玩家成功 restore 尚待閉合。不得再稱「強加密／無結構」；重製仍用自有格式。
+  `0x112A5→0x1145A→0x17FC0` 的 writer／consumer 已再由合法 IDA 固定
+  item cells、command mask、race/class/level、transient、base AP/DP、
+  MV/EXP、DX、HP/MP 與衍生 AP/DP/HIT/EV offsets；新增
+  `PersistentRecord.View` 唯讀投影及 signed-word regression。下一步是
+  證據化 name/class/resource resolver，再接 normalized party；不可直接
+  把 raw `+7/+8` 都當 portrait／character id。
 - [x] **RE-SAVE-ENVELOPE-ADAPTER**：新增 `remake/internal/fdsave` typed raw adapter，依 `0x4dbd8/0x4dbb9` 保存 rolling-XOR、u32 byte-sum、四槽 bounds 與已證實 metadata `chapter/roster_count/currency`；opaque roster/metadata bytes 不命名、不接 campaign save，Go Docker round-trip/tamper/bounds regression 通過。
 - [x] **RE-SAVE-WRITE-SLOT-30012**：官方 IDA 9.4 閉合 `0x30012` confirmed-slot write order：2560-byte roster→`record+0`、metadata `+0..+9` globals→record、checksum over `0x59c7` bytes、rolling-XOR、完整 `0x59cb` write。新增 `fdsave.WriteSlot` opaque replacement adapter/regression；仍不宣稱 native roster/opaque metadata 已接入 remake campaign。
 - [x] **音色合成評估+MT-32實證**(SoundFont/MT-32/版本切換,munt渲染15首)→ `16`
@@ -1561,3 +1567,12 @@
   `(184,47)/(184,49)`兩點，下一張同一來源影格即AE=0，不列為原子畫面。
   成功動畫與扣款合成切片可升E2；完整商店仍因其他子面板與正常campaign/save
   路徑未閉合而維持部分完成。
+- [~] **NATIVE-CURRENT-SNAPSHOT-ROSTER**：合法 IDA Pro 9.4 閉合
+  `0x10010` 的 plaintext `0x08a3` persistent roster、`0x12a3` runtime
+  roster 與 `0x30c3` 18-byte header。撤回 header `+0` 是 persistent
+  count 的錯誤工具斷言；正確為 `+0=turn counter`、`+1=runtime count`、
+  `+9=persistent count`。`fdsave.InspectCurrentSnapshot` 已保存兩份 raw
+  records、限制原生容量並有聚焦回歸；使用者 checksum-valid 原版快照
+  實測 persistent identities `[0,9,4,30]`。尚缺 strict identity/class
+  catalog、`battle.Unit` materialization、chapter node 與正式 CONTINUE
+  owner，故仍維持失敗即關閉 → `fd2_current_snapshot_ida.txt`

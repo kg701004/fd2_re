@@ -34,6 +34,20 @@ class FD2SaveTest(unittest.TestCase):
         self.assertIn("slot=0", report)
         self.assertIn("chapter=0xff empty=True", report)
 
+    def test_summary_uses_ida_verified_current_runtime_count_offsets(self):
+        plain = bytearray(fd2save.FILE_SIZE)
+        header = fd2save.CURRENT_RUNTIME_OFFSET
+        plain[header + 0] = 3
+        plain[header + 1] = 12
+        plain[header + 2] = 7
+        plain[header + 9] = 4
+        report = fd2save.summarize(bytes(plain))
+        self.assertIn("turn_counter=0x03", report)
+        self.assertIn("runtime_count=0x0c", report)
+        self.assertIn("chapter=0x07", report)
+        self.assertIn("persistent_count=0x04", report)
+        self.assertNotIn("persistent_count=0x03", report)
+
 
 if __name__ == "__main__":
     unittest.main()

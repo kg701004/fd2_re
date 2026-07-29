@@ -1132,10 +1132,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `drawNativeMapHUD`現在要求raw state及完整optional unit/HP provenance，
   移除舊true/true/1 partial path。
 - 2026-07-28 native save current-runtime map：`tools/fd2save.py`現在列出
-  plaintext `0x30c3..0x30d4`的persistent/runtime count、chapter、
+  plaintext `0x30c3..0x30d4`的turn counter、runtime count、
+  persistent count、chapter、
   camera XY、absolute cursor XY、visible cursor XY、raw globals與
   HUD gateA。player FD2.SAV真實decode/checksum驗證通過；這提供後續
   camera/HUD exporter的byte-level來源，不把slot垃圾資料當active state。
+  2026-07-29 IDA 勘誤：header `+0` 是 `[0x53bef]` turn counter，
+  `+1` 才是 `[0x53beb]` runtime count，`+9` 才是 `[0x53bfb]`
+  persistent count；舊工具把 `+0` 顯示成 persistent count 是錯誤斷言。
 - 2026-07-28 camera/cursor executable bridge：direct四個cursor helpers
   `0x11b48..0x11cac`已落成`NativeMapViewState`。它保存
   `visible=absolute-camera`，以原版上/左 `<2`、下 `>5`、右 `>10`
@@ -2236,8 +2240,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   pre-handler 後返回；只有第三主選單分支在 `0x26130` 呼叫 `0x10010`。
   main 於 `0x25dbd` 呼叫 `0x25ebb`，回傳0才在 `0x25dce` 進 `0x117e7`。
 - `0x10010` 開啟 FD2.SAV、驗 rolling-XOR/checksum，`esi=buffer+0x30c3`；
-  `+3..+8` 恢復 camera/cursor/visible cursor，`+15` 恢復 HUD gate A，
-  並載 runtime roster、field units、event table。因此它是 current-runtime
+  `+0/+1/+2/+9` 分別恢復 turn counter、runtime count、chapter、
+  persistent count；`+3..+8` 恢復 camera/cursor/visible cursor，
+  `+15` 恢復 HUD gate A。plaintext `0x08a3` 的固定 `0xa00` bytes
+  載入 persistent roster，`0x12a3` 則依 runtime count 載入 runtime
+  roster；其後另載 field units、event table。因此它是 current-runtime
   snapshot loader，不是一般章節 loader。兩個真 caller
   `0x1a251/0x26130` 的 callgraph 結論仍有效，但不能推導跨分支 fallthrough。
 - 寫入端 `0x19f7a..0x1a136` 把相同 runtime blobs 與18-byte header逐欄
@@ -2535,3 +2542,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   會留在 selector；確認有效 native 槽也會明示 roster restore 尚未完成，
   不會錯誤轉入自有 JSON loader。這是 metadata→UI／gate 垂直切片，不是
   successful native restore。
+- 合法 IDA Pro 9.4 再重核 persistent roster：`0x112A5` 是完整 record
+  constructor，`0x1145A` 由 base／equipped items 重算 `+48..+4E`，
+  `0x17EEF→0x17FC0` 直接顯示 level/EXP/MV/HP/MP/AP/DP/DX/HIT/EV 與
+  identity/race/class。新增 `fdsave.PersistentRecord.View` 保存已證實
+  offsets、signed words 與全部 raw key 分界；尚不解析名稱、class label、
+  sprite 或 normalized party。證據見
+  [`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。
