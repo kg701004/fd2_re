@@ -39,14 +39,14 @@ func TestFindNativeInventoryItemMissingAndBounds(t *testing.T) {
 	}
 }
 
-func TestFindNativeInventoryItemInUnitRespectsFreePrefixCount(t *testing.T) {
+func TestFindNativeInventoryItemInUnitRespectsZeroOccupiedCount(t *testing.T) {
 	records := make([]byte, nativeRecordSize)
 	base := 0
 	for slot := 0; slot < 8; slot++ {
 		records[base+0x0a+slot*2] = 0x80
 		records[base+0x0b+slot*2] = 0x64
 	}
-	// All flags occupied => 0x1b8a6 returns zero, so 0x31860 does not scan.
+	// All flags are reserved-empty => 0x1b8a6 returns zero, so 0x31860 does not scan.
 	got, err := FindNativeInventoryItemInUnit(records, 0, 0x64)
 	if err != nil || got != -1 {
 		t.Fatalf("got (%d,%v), want (-1,nil)", got, err)

@@ -4,9 +4,10 @@ import "fmt"
 
 // FindNativeInventoryItemInUnit reproduces the raw search used by 0x31860.
 // Native inventory cells are ordered as eight two-byte cells at record+0x0a;
-// 0x31860 first obtains the occupied/prefix count from 0x1b8a6 and then
-// compares only that prefix's item bytes at +0x0b. The flag/item bytes remain
-// opaque; this helper does not consume or mutate a cell.
+// 0x31860 first obtains the occupied count from 0x1b8a6 and then compares the
+// first count-sized raw slots' item bytes at +0x0b. 0x1b8a6 does not verify
+// prefix compactness. The flag/item bytes remain opaque; this helper does not
+// consume or mutate a cell.
 func FindNativeInventoryItemInUnit(records []byte, unitIndex int, item byte) (int, error) {
 	base := unitIndex * nativeRecordSize
 	if unitIndex < 0 || base < 0 || base+0x1a > len(records) {

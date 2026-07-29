@@ -148,6 +148,18 @@ byte buffer；完成後恢復 cursor globals 並回傳 count。這證明它是�
 damage、hit 或 spell-effect scorer；selector polarity、LOS／terrain semantics、buffer
 ownership 與 command-30 caller contract 仍由各自 evidence gate 控制。
 
+`0x1567E` 的 caller-specific 候選 ABI 現也已閉合。第一個 `0x14818` 從
+actor 座標建立目的地 field：row `+0x10` command 作 mode、
+`command>0x0F` 作 inner marker、target code 固定0；`0x14B16` 依
+row-major 匯出非 `0xFF` 座標。逐目的地時，低 command 再以 row `+0x12`
+作 effect mode，target code 在 selector 非零時保留 row `+0x11`，
+selector0 時轉成 `row+0x11==0 ? 1 : 0`。高 command 則呼
+`0x149F8(destination, actor, command-0x10, selector=0)`，固定只收 raw
+camp0。`ScoreNativeAI1567E` 依 slot→destination→target 的原版順序評分，
+strict `score>best` 才保存 `[0x53C33/37/3B/3F]` 對應值；零分不創造勝者。
+map0＋item79 交叉 fixture 固定 score8、`(19,15)`、slot0，屬靜態 E0，
+不是原版玩家路徑 E2。
+
 ## 2. 證據分級與反組譯規則
 
 每個進入 runtime 的常數、座標、幀數、資源索引和 handler 語意都必須附證據：
@@ -1881,7 +1893,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Raw action-bit helpers: official `0x13512(index)` sets `record[index*0x50+5] |= 0x80`, while `0x13536` clears that bit across the record count. `battle.SetNativeRecordBit7` and `ClearNativeRecordBit7All` now preserve these byte-level mutations with bounds checks; they do not force a higher-level turn interpretation.
 
-   Inventory-cell correction: official `0x1b8a6(unit)` scans exactly eight two-byte cells at `record+0x0a+2*i`; it increments the occupied/raw prefix count when each cell's flag byte bit7 is **clear**. Bit7 set is the reserved empty state consumed by `0x1bb8c`, so the former `free-slot count` assertion and `battle.NativeInventoryFreeSlotCount` name were wrong and are removed. `battle.NativeInventoryOccupiedCount` preserves the raw prefix rule and ignores item-byte values; it does not lower the result to a normalized inventory length or item semantic.
+   Inventory-cell correction: official `0x1b8a6(unit)` scans exactly eight two-byte cells at `record+0x0a+2*i`; it increments a count whenever the flag byte bit7 is **clear**. The helper itself does not verify compactness or return a prefix length. Its callers use that numeric count as the upper bound for raw slots `0..count-1`; a malformed hole can therefore expose a stale item byte in the scanned range. Bit7 set is the reserved empty state consumed by `0x1bb8c`, so the former `free-slot count` assertion and `battle.NativeInventoryFreeSlotCount` name were wrong and are removed. `battle.NativeInventoryOccupiedCount` preserves only the exact count and ignores item-byte values.
 
    Inventory reservation boundary: official `0x1bb8c(unit,item)` scans those same eight cells, takes the first flag-bit7 reserved cell, clears its flag, writes the supplied item byte, and returns native success/failure (`1/-1`). `battle.AssignNativeReservedItem` reproduces this atomic raw mutation; no item category or shop meaning is inferred.
 
@@ -2100,7 +2112,7 @@ Caller-scope correction (Docker Capstone, 2026-07-26): `0x22253` is shared by th
 
 The `0x25348` branch audit further fixes the ending-only order: FDOTHER frames `0x0d`, `0x0e`, `0x0f` are presented around `0x1c2da`; the shared `0x22253` write for unit `1` follows with raw `+0/+1`, frame `0x10` follows, and then `0x25089→0x2bce5` enters the terminal self-loop. This is call-order evidence only. The `0x24b14` return and frame IDs remain unnamed, and this branch must not be used as a generic battle→town/shop transition.
 
-The ch26 item gate is now closed as a raw read-only primitive. Docker Capstone shows `0x24b14(item)` scanning units `0..15`, while `0x31860(unit,item)` first calls `0x1b8a6` and then compares only the count-sized prefix of item bytes read by `0x1b722` at `record+0x0b+2*slot`. `battle.FindNativeInventoryItemInUnit` and `FindNativeInventoryItem` preserve that prefix/count behavior, return the first raw `(unit,slot)` for an editable gate, and never remove or mutate a cell. `battle.NativeInventoryRecords` now materializes only the proven `InventorySlots` + `NativeInventoryFlags` cells for a complete 16-unit runtime roster; campaign `partyHasItemID` uses this raw gate when provenance is complete and retains normalized inventory only as an explicit fallback. The native `0x24b14` success/failure result is therefore not a recipe, reward, camp filter, or item-consumption proof; ch26's later success/missing presentation remains a separate handler branch.
+The ch26 item gate is now closed as a raw read-only primitive. Docker Capstone shows `0x24b14(item)` scanning units `0..15`, while `0x31860(unit,item)` first calls `0x1b8a6` and then compares only raw slots `0..count-1` through `0x1b722` at `record+0x0b+2*slot`; it does not independently verify that those slots are occupied. `battle.FindNativeInventoryItemInUnit` and `FindNativeInventoryItem` preserve that count-sized scan, return the first raw `(unit,slot)` for an editable gate, and never remove or mutate a cell. `battle.NativeInventoryRecords` now materializes only the proven `InventorySlots` + `NativeInventoryFlags` cells for a complete 16-unit runtime roster; campaign `partyHasItemID` uses this raw gate when provenance is complete and retains normalized inventory only as an explicit fallback. The native `0x24b14` success/failure result is therefore not a recipe, reward, camp filter, or item-consumption proof; ch26's later success/missing presentation remains a separate handler branch.
 Portrait text correction (official IDA, 2026-07-26): the epilogue selector at `0x2c8f7..0x2c8f9` is controlled by the outer `edi` portrait-loop counter, not a bitwise `|45` expression. It is `unit[+8]+0x0c` while `edi < 0xdc`, then fixed current-FDTXT index `0x2d`. `Montage.PlanPortraitText` preserves this exact branch and rejects short unit records; no text renderer is inferred from the mapping.
 
 Persistent identity lookup is separately closed at `0x24bde`: Docker Capstone shows a caller-supplied count loop over the persistent `[0x53bf7]` array, stride `0x50`, comparing only the unsigned byte at record `+0x08`, with native boolean success/failure. `battle.FindNativePersistentIdentity` preserves the first raw index, explicit count/capacity validation, and read-only behavior. This is an identity-table primitive only; it does not rename `+8` as portrait, Fig, NPC, or a general character alias.

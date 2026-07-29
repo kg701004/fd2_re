@@ -280,7 +280,9 @@ geometry，仍未呼叫各分支 score、比較最佳 command，或執行／呈�
 `0x14237`、`0x1598a`、`0x1567e`，再依 raw score/global state 分派至 `0x1548e`、
 `0x15311` 或 `0x15055`。這足以取代舊 `0x15140` 作為下一輪追蹤起點，但目前仍只稱
 **candidate dispatch boundary**：六個 callers 的 turn/camp 語意、`0x14237` 與
-`0x1567e` 的完整資料契約尚未閉合。
+其後執行分支仍未閉合。`0x14237` 的物理 producer 與 `0x1567e` 的
+item-command producer 已由後述具型別解碼器分別閉合；不得再把靜態 producer
+缺口與尚缺的動態 phase／執行交易混為一談。
 
 更上游的 `0x13a9f` 是目前可重現的 unit-action dispatcher：它以 `unit index` 建立
 `0x50`-byte record，先檢查 raw `+5` 的 `0x05` bits，再取 `record+0x34 & 0x0f`。
@@ -397,10 +399,21 @@ Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x
   `+0x34 bit7` 再乘3；type0x14／0x15 由 row `+0x0E` 經 `0x4E516`
   取 command word，type0x18 直接用 row word，target HP 小於等於門檻得
   0x12，否則8。其他 type 回零；不為 type 或 bit 指派效果名稱。
+- `ScoreNativeAI1567E` 已閉合完整數值 producer。它以 `0x1B8A6` 的
+  bit7-clear count 掃 raw slots `0..count-1`，依 slot item row 建
+  row-major 目的地；低 command 以第二個 `0x14818` 產生 roster-ordered
+  targets，高 command 以 `0x149F8` 從 actor 朝目的地走
+  `command-0x10` 步且固定只收 raw camp0。每個候選交 `0x15880`，
+  只有分數嚴格大於目前最大值才保存 `(score,x,y,slot)`。
+- map0 真實 roster／target flags 與原始 item79 row 的交叉 fixture 固定
+  actor index23 得 score8、目的地 `(19,15)`、raw slot0。fixture 只替 actor
+  注入已追蹤 item79 以關閉 producer；不宣稱一般玩家 map0 原本持有該物品。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
 
 上述勘誤的直接指令、執行端消費者與 inventory bound helper 已保存於
-`docs/data/fd2_ai_item_preselection_disasm.txt`，並綁定參考 FD2.EXE 雜湊。
+`docs/data/fd2_ai_item_preselection_disasm.txt`；`0x14818/0x149F8/0x14B16`
+完整候選窗口另存 `docs/data/fd2_ai_item_candidate_disasm.txt`。兩者皆綁定
+參考 FD2.EXE 雜湊。
 
 2026-07-29 availability 勘誤：`NativeAvailableAIScoredCommandIDs` 重用
 `0x1598A` 的 `unit+0x27==0` gate、40-bit command mask、36-entry

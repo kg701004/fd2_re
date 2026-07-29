@@ -685,7 +685,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 D8 scope correction：官方 `0x1a30b` 重新確認沒有 `0x15f84` text call；raw record gate 為 `+6==2`、`+5&0x81==0`、`+0x25/+0x26==0`，`+0x40` 向 `+0x42` 每次加 `max/5` 並 clamp。新增 `NativeBattleEntryStep`；MAP/TURN labels 與 YES/NO input 不得由此函式或 resource #0x52 推導。
 - 2026-07-26 shared-caller audit：官方 xrefs 顯示 `0x1a30b` callers=`0x135c5/0x17154/0x17272`；後兩者與 FDTXT_000 `0x19c/0x1a4`、`0x1728c` selector interaction 同路徑。撤回任何 D8-only 命名，raw transition 保持共用 primitive。
 - 2026-07-26 raw action-bit closure：官方 Capstone `0x13512`/`0x13536` 確認 0x50-byte record 的 `+5 bit7` set/all-clear；新增 battle raw helpers/regression，保留 byte-level contract，不覆寫高階 turn 語意。
-- 2026-07-26 inventory cell correction：官方 Capstone `0x1b8a6` 重讀確認 bit7 **clear** 才計入 occupied/raw prefix count；bit7 set 是 `0x1bb8c` 使用的 reserved 空格。刪除錯誤的 free-slot 斷言與 `NativeInventoryFreeSlotCount` 命名，改為 `NativeInventoryOccupiedCount`，保留 item byte opaque。
+- 2026-07-26 inventory cell correction（2026-07-29 再勘誤）：官方 Capstone `0x1b8a6` 重讀確認 bit7 **clear** 只增加 occupied count；它不驗證 occupied prefix。caller 另以 count 掃 raw slots `0..count-1`，所以 hole 可暴露 stale item byte。刪除錯誤的 free-slot／prefix 斷言，`NativeInventoryOccupiedCount` 只保存 exact count。
 - 2026-07-26 inventory reservation writer closure：官方 Capstone `0x1bb8c` 確認第一個 reserved (flag bit7) cell 被清 flag 並寫 item byte，成功回1、無槽回-1；新增 `AssignNativeReservedItem` raw atomic helper/regression。
 - 2026-07-26 preparation shell screenshot：用 `fd2-go-test-local` Docker image build（`-buildvcs=false`）與 Xvfb 實跑 `FD2_CAMPAIGN=assets/scenarios/campaign_full.json FD2_CAMP_NODE=preparation_ch02 FD2_SHOT_FRAME=30`，新增 [`docs/figures/preparation-remake.png`](../figures/preparation-remake.png)。畫面可見地圖與「出戰整備」overlay；這是 remake artifact，不是原版 visual oracle，D8 MAP/TURN/YES-NO 仍 partial。
 - 2026-07-26 native phase-dispatch raw gate：worktree resume 時保持乾淨；`/tmp/fd2cap` 仍不存在，Capstone 只在 `fd2-cap-local` 執行。官方 Capstone 重讀 `0x1d80b`，新增 `fdother.FindNativePhaseDispatchCandidates`：0x50 stride、count `[0x53beb]`、只接受 `+6==1`、`+5&0x81==0`、`+0x26==0`，回傳 raw unit/selector。未呼叫 `0x13a9f`、event/chapter tables，未猜事件語意；caller-level integration 留待後續。
@@ -785,7 +785,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `>=0x10`」結論已由 2026-07-29 直接指令勘誤取代；不得再依此段接線。
 - 2026-07-26 command-23 caller scope correction（Docker Capstone）：`0x250cc` chapter-ending/post handler 也在 `0x1c2da` 後呼叫 `0x22253`（unit=1、pre-render `0xff/0xff`、record raw `+0/+1`），接著才進 `0x25089` cleanup 與 `0x2bce5` ending renderer；因此 `0x22253` 不得命名為 command-23 專屬。raw writer 已閉合，但 ending layout/renderer 與 campaign semantics 仍 fail-closed。
 - 2026-07-26 `0x250cc` ending branch audit（Docker Capstone）：`0x25348` 依序呈現 FDOTHER `#0x0d/#0x0e/#0x0f`、呼 `0x1c2da`、共用 `0x22253` 寫 unit=1 raw `+0/+1`、再呈現 `#0x10`，最後 `0x25089→0x2bce5` self-loop。只保存 call order；`0x24b14` 回傳與 frame 語意未命名，不能拿此終局分支接一般戰後 town/shop。
-- 2026-07-26 raw inventory gate closure（Docker Capstone）：`0x24b14(item)` 掃 unit `0..15`，`0x31860` 先取 `0x1b8a6` 的 occupied/prefix count（clear flag bit7），再以 `0x1b722` 比對 `record+0x0b+2*slot` 的 prefix item bytes；新增 `battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` read-only regression。成功不移除 item，`0x64` 的 ch26 branch 仍只作 gate，缺匙/演出/後續 campaign 不由此函式推論。更正 runtime 接線：`partyHasItemID` 只是不帶 raw flags 的 normalized compatibility projection，尚不能宣稱與 native 等價。
+- 2026-07-26 raw inventory gate closure（2026-07-29 再勘誤）：`0x24b14(item)` 掃 unit `0..15`，`0x31860` 先取 `0x1b8a6` 的 bit7-clear count，再以 `0x1b722` 比對 raw slots `0..count-1`；不驗證 prefix compactness。`battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` 保存此 read-only count-sized scan。成功不移除 item，ch26 後續分支仍須獨立證據。
 - 2026-07-27 worklist assertion cleanup：移除歷史 WBS 中「`0x22e5c` 尚待反組譯、負責 event_id→group 增援」的現況暗示。`25` §6.1 已證實 `0x22e5c` 是章1專屬固定中場過場；真正增援鏈是 `0x1a813` 的 turn/camp filter → `0x51b91` handler table → spawn 原語。當時仍誤把全表寫成 58 entries；2026-07-29 已更正為全域 90 entries、FDFIELD 子集合 0..57。
 - 2026-07-27 constructor inventory flags：官方 IDA `0x10c50` 釘死八格 flag 初始化與 `0x2f8ea` signed-byte gate；`0x40` equipped 與 `0x00` ordinary 都可進 caller list，只有 `0x80` reserved 排除。新增 raw flags adapter/regression，Load/PartyUnits 在有 `inventory_slots` 時保留 flags；撤回「church transfer 只接受未裝備物品」的錯誤斷言。
 - 2026-07-27 attack overlay predicate：官方 IDA `0x1b83d` 釘死 `flag&0x40`＋item `<0x80`/`>=0x80` 分支與 first-slot return；新增 `NativeEquippedInventorySlot`，overlay 有 raw constructor flags 時不再用 `Equipped` projection 冒充 attack precondition。
@@ -2364,3 +2364,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   threshold 分支；不為 raw type 指派效果名稱。targeted Docker battle
   regression 已通過，尚待把 inventory slot 枚舉與 caller-specific geometry
   接成完整 `[0x53C33]` producer。
+
+## 2026-07-29：`[0x53C33]` item-command producer 閉合
+
+- Docker Capstone 保存 `docs/data/fd2_ai_item_candidate_disasm.txt`，涵蓋
+  `0x14818..0x14B78` 並綁定參考 FD2.EXE 雜湊。第一個 `0x14818`
+  由 actor、row command 與 high-command marker 建目的地 field，
+  `0x14B16` 依 row-major 匯出座標。
+- 逐目的地時，低 command 以 row `+0x12` 與 selector-dependent
+  row `+0x11` target code 再呼 `0x14818`；高 command 的 `0x149F8`
+  從 actor 朝目的地走 `command-0x10` 步，此 caller 固定 selector0，
+  因而只收 raw camp0。兩條 target list 都交 `0x15880`。
+- 新增 `ScoreNativeAI1567E`，精確保存 `0x1B8A6` count-sized raw slot scan、
+  slot→row-major destination→roster target 順序與 strict `score>best`。
+  map0 roster／target flags 加 tracked item79 的 E0 fixture 固定
+  score8、`(19,15)`、slot0；不宣稱一般玩家 map0 原本持有 item79。
+- 同輪撤回 `0x1B8A6`「回傳 occupied prefix length」的過度斷言：它只數
+  八格中 bit7-clear cells，caller 才掃 slots `0..count-1`；函式不驗 compact，
+  malformed hole 可能讓 stale item byte 進掃描。程式註解、SDD、worklist 與
+  舊 handoff 條目均已更正。
