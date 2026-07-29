@@ -24,6 +24,18 @@ import struct
 import glob
 
 
+def native_reward_kind(native_type):
+    """只回傳 0x190ac 已證實的分支；其他型態保持事件。"""
+    return "item" if native_type == 0 else "gold" if native_type == 1 else "event"
+
+
+def native_death_effect(record):
+    """解碼 0x10fa8..0x10fb2 的三位元組來源，不把 b25 併入。"""
+    if len(record) < 26 or record[22] == 0xFF:
+        return None
+    return {"type": record[22], "value": record[23] | (record[24] << 8)}
+
+
 def parse_map(raw, m):
     fld = sorted(glob.glob(os.path.join(raw, "FDFIELD", "*.bin")))
     comp = open(fld[m * 3], "rb").read()
@@ -51,15 +63,19 @@ def parse_map(raw, m):
         if t != 0xFF and v != 0:
             # 地圖構成每格第二個 word 的低 5 bit 直接索引這個 slot。
             # slot 0 是合法值（map10 星之眼即 slot0），不可用 truthiness 丟掉。
-            info["chests"].append({"slot": i, "type": "gold" if t == 1 else "item", "value": v})
+            # 0x190ac: type0 走 item、type1 走 gold，其餘型態把 value
+            # 當作 0x51b91 全域事件 ID。未知型態不可再降成 item。
+            kind = native_reward_kind(t)
+            info["chests"].append(
+                {"slot": i, "type": kind, "native_type": t, "value": v}
+            )
     o += 16*3
     units = []
     for k in range(ctl[2]):
         b = ctl[o+k*26:o+(k+1)*26]
         if len(b) < 26:
             break
-        death_type = b[22]
-        death_value = b[23] | (b[24] << 8) | (b[25] << 16)
+        death_effect = native_death_effect(b)
         units.append({"camp": ["enemy", "ally", "own"][b[0]] if b[0] < 3 else b[0],
                       # 0x10ec1/0x10ef5 copy this raw byte to runtime +6,
                       # while 0x10ed6 passes it to 0x11019 before writing the
@@ -87,9 +103,10 @@ def parse_map(raw, m):
                       "group": b[21],
                       # 0=item、1=gold 已由原攻略確認；2/3 是特殊死亡效果，
                       # 語意未全解前保留原值，不猜成一般掉落物。
-                      "death_effect": None if death_type == 0xFF else {
-                          "type": death_type, "value": death_value,
-                      }})   # b21=出場波次 group;b22-25=死亡效果
+                      "death_effect": death_effect,
+                      "native_source_byte25": b[25]})
+                      # b21=出場波次 group；b22 + b23..24=runtime +0x31..33；
+                      # b25 目前只保存原始來源，不併入效果 payload。
     info["units"] = units
     n = struct.unpack_from("<H", spw, 0)[0]
     info["positions"] = [list(struct.unpack_from("<HHH", spw, 2+k*6)) for k in range(n)]

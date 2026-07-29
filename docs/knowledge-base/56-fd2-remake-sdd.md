@@ -472,7 +472,7 @@ FD2 native action gate 的證據，也不得覆蓋 raw mask 已存在時的 `uni
 拒絕非零 disabled word，避免「灰色 cell 仍可 Enter 執行」。攻擊 geometry 與 item selector/effect 仍未閉合，native
 overlay 維持 partial。
 
-同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。確切三個 byte 的遊戲語意尚未命名，維持 raw offsets。
+同樣地，`0x1b6b7` 不是 effect calculator：它掃 native runtime roster，只對符合 `+5/+0x31/+0x40` 後處理條件的 record 複製三 bytes（source `+0x31`）到 caller buffer；`0x1cff0` 再把此 buffer 交給 `0x1aa1d`。後者因此是 post-resolution 的訊息／掉落／互動處理層，不能拿來推回 command 0 的原始傷害或 status writer。三個 byte 現已閉合為 `{kind:u8,payload:u16le}`：kind 0/1 是物品／金錢、kind 2 dispatch 全域事件表、kind 3 走呈現分支。建構來源只含 FDFIELD `b22` 與 `b23..b24`；`b25` 不在 runtime `+0x31..+0x33`，舊 24-bit payload 解析已撤回。
 
 玩家 table 的 IDs0..12 numeric damage writer 已閉合到 `0x1c75e(target, commandID)→0x1c81f(target, amount)`：前者取
 `record.u16[+0] * resist_raw[unit+0x20] / 10` 為 base；constructor `0x10f7f/0x11399` 直接把 source
@@ -2183,6 +2183,18 @@ battle-local state entry `+0x10` 等於 4 時，`0x36078` 透過
 `0x51B91 + 82*4`，且合法 IDA 顯示多個通用 dispatcher 交叉參照；
 一般玩家觸發條件仍未閉合，33 張 FDFIELD 格子事件表也沒有 event 82，
 不得命名成踩格、章節或人物事件。
+
+事件 82 的資料來源稽核已再收窄：固定雜湊的 FDFIELD 全 33 圖中，
+turn-events、格子事件、特殊寶物列與單位後處理列都沒有 payload 82；
+四個 EXE 硬編碼 `0x1AA1D` 單列也只給 kind0 物品 D3、D5、0x65、0x0B。
+因此目前沒有已知 serialized producer；但 runtime `+0x31..+0x33` 的所有
+後續 writer 尚未閉合，SDD 仍將 event 82 標成未知可達性，而非 dead code。
+
+寶物資料邊界則已完整版本化：`tools/sync_native_treasures.py` 從
+FDFIELD composition/control 與 FDSHAP flags 重建全 33 圖
+`treasure_slots`、`treasure_hidden` 和 16 槽 reward 定義。
+type0/1 可執行物品／金錢；其他 type 保存為 `event` 與 `native_type`，
+`ClaimTreasure` 在 handler 尚未資料化時拒絕取得且不標記 opened。
 
 FDFIELD 控制段 `+0x33` 起的 32 bytes 已更正為 16 筆
 `(event_id, selector)` 格子事件列。地圖構成 event-word low5 是 1-based

@@ -173,6 +173,26 @@ handler 接到正式戰鬥流程；資料缺失、越界或不符時一律失敗
 event_id 為 59、60、61、62、65、69、75、80、84；另有 `0xFF` 空列，
 不可當作 handler。[驗]
 
+### 6.3 三位元組後處理列與特殊寶物事件 [驗]
+
+`0x1AA1D` 以 `base+3*i` 讀 `{kind:u8,payload:u16le}`。kind 0 是物品、
+kind 1 是金錢、kind 2 以 payload 索引 `0x51B91` 全域事件表；kind 3
+走另一條呈現分支。`0x190AC` 對 FDFIELD 寶物控制列採相同三位元組契約：
+type 0／1 分別給物品／金錢，其餘型態直接 dispatch payload，不能再把
+所有非 1 型態都解析成物品。
+
+`0x1B653/0x1B6B7` 只把符合 raw record gate 的 runtime `+0x31..+0x33`
+複製成這種列。建構器 `0x10FA8..0x10FB2` 的來源是 FDFIELD
+`b22` 與 `b23..b24` 的 16 位元 word；`b25` 未被這段複製。舊解析器把
+`b23..b25` 合成 24 位元 payload 的斷言已撤回。
+
+全 33 圖的靜態來源稽核目前找不到 event 82：turn-events、格子事件、
+特殊寶物列、單位 `b22..b24` 效果列均沒有 payload 82；四個已知
+handler 內硬編碼給 `0x1AA1D` 的單列亦全為 kind 0
+（`00 D3 00`、`00 D5 00`、`00 65 00`、`00 0B 00`）。
+這把 event 82 收窄成「目前無已知資料生產端」，但在所有 runtime writer
+閉合前仍不宣稱程式碼不可達。
+
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
 gen-campaign v4 report 留下 6 筆「`groups: [$reg_or_mem(eax)]`」——`spawn_group(eax)` 的 `eax` 來自暫存器計算,

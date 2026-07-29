@@ -136,7 +136,7 @@ type Unit struct {
 	BaseAP, BaseDP, BaseHIT, BaseEV, BaseMV int
 	BaseAtkMin, BaseAtkMax                  int
 	EquipmentBaseSet                        bool
-	DeathEffect                             *DeathEffect // FDFIELD b22..25；0=item、1=gold，2/3 特殊效果先原值保留
+	DeathEffect                             *DeathEffect // FDFIELD b22 + b23..24；0=item、1=gold，2/3 特殊效果先原值保留
 	DeathReward                             *DeathEffect // 可執行死亡獎勵；type2 已知 handler 由 exporter lower 成 item/gold
 	Dir                                     int          // 朝向:0下 1左 2上 3右(原版 Z2,FDICON 方向幀)
 	OffX                                    float64      // 行軍/移動的像素位移(顯示用;0=正在格上)
@@ -514,7 +514,7 @@ type State struct {
 // Cell 格子座標。
 type Cell struct{ X, Y int }
 
-// DeathEffect 原樣保存 FDFIELD 單位記錄 b22..25。Type 0/1 是死亡時掉物/金錢；
+// DeathEffect 原樣保存 FDFIELD 單位記錄 b22 與 b23..24 的 u16。Type 0/1 是死亡時掉物/金錢；
 // 2/3 的特殊事件語意尚未完全解明，runtime 在釘死前不得猜測執行。
 type DeathEffect struct {
 	Type  int `json:"type"`
@@ -524,10 +524,11 @@ type DeathEffect struct {
 // Treasure 是一個可編輯的戰場寶物節點。Slot 對應 composition word 低5bit與
 // control table 16筆 reward；Hidden 只控制視覺，取得規則相同。
 type Treasure struct {
-	Slot   int
-	Kind   string
-	Value  int
-	Hidden bool
+	Slot       int
+	Kind       string
+	NativeType byte
+	Value      int
+	Hidden     bool
 }
 
 // NativeFieldEvent 是 FDFIELD 控制段的原始兩位元組格子事件列。
@@ -623,9 +624,10 @@ type unitsFile struct {
 	// fabricate provenance for native round predicates.
 	NativeRoundCounter *int `json:"native_round_counter,omitempty"`
 	Chests             []struct {
-		Slot  int    `json:"slot"`
-		Kind  string `json:"type"`
-		Value int    `json:"value"`
+		Slot       int    `json:"slot"`
+		Kind       string `json:"type"`
+		NativeType byte   `json:"native_type"`
+		Value      int    `json:"value"`
 	} `json:"chests,omitempty"`
 	Units []struct {
 		Camp               string       `json:"camp"`
@@ -818,9 +820,10 @@ type mapCostFile struct {
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
-	Slot  int    `json:"slot"`
-	Kind  string `json:"type"`
-	Value int    `json:"value"`
+	Slot       int    `json:"slot"`
+	Kind       string `json:"type"`
+	NativeType byte   `json:"native_type"`
+	Value      int    `json:"value"`
 }) map[Cell]Treasure {
 	out := map[Cell]Treasure{}
 	raw, err := os.ReadFile(mapJSONPath)
@@ -833,8 +836,12 @@ func loadTreasures(mapJSONPath string, w, h int, chests []struct {
 	}
 	defs := make(map[int]Treasure, len(chests))
 	for _, c := range chests {
-		if c.Slot >= 0 && c.Slot < 32 && (c.Kind == "item" || c.Kind == "gold") && c.Value > 0 {
-			defs[c.Slot] = Treasure{Slot: c.Slot, Kind: c.Kind, Value: c.Value}
+		if c.Slot >= 0 && c.Slot < 16 &&
+			(c.Kind == "item" || c.Kind == "gold" || c.Kind == "event") &&
+			c.Value > 0 {
+			defs[c.Slot] = Treasure{
+				Slot: c.Slot, Kind: c.Kind, NativeType: c.NativeType, Value: c.Value,
+			}
 		}
 	}
 	for i, slot := range m.TreasureSlots {

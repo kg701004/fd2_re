@@ -86,6 +86,46 @@ func TestClaimTreasureUsesActiveUnitInventoryAndFailsAtomicallyWhenFull(t *testi
 	}
 }
 
+func TestNativeEventTreasureLoadsButFailsClosed(t *testing.T) {
+	dir := t.TempDir()
+	units := `{"map":25,"w":1,"h":1,"chests":[{"slot":0,"type":"event","native_type":2,"value":58}],"units":[]}`
+	mapJSON := `{"w":1,"h":1,"treasure_slots":[0],"treasure_hidden":[false]}`
+	if err := os.WriteFile(filepath.Join(dir, "units.json"), []byte(units), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "map.json"), []byte(mapJSON), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err := Load(filepath.Join(dir, "units.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, ok := st.TreasureAt(0, 0)
+	if !ok || got.Kind != "event" || got.NativeType != 2 || got.Value != 58 {
+		t.Fatalf("native event treasure = %#v, ok=%v", got, ok)
+	}
+	u := &Unit{HP: 1, MaxHP: 1, OnField: true}
+	if _, ok := st.ClaimTreasure(u, 0, 0); ok || st.OpenedTreasure[0] {
+		t.Fatal("unimplemented native event handler must remain unopened")
+	}
+}
+
+func TestMap25NativeEventTreasureRemainsEditableAndFailClosed(t *testing.T) {
+	st, err := Load("../../assets/maps/map25/map25_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, ok := st.TreasureAt(14, 3)
+	if !ok || got.Slot != 0 || got.Kind != "event" ||
+		got.NativeType != 2 || got.Value != 58 {
+		t.Fatalf("map25 event treasure = %#v, ok=%v", got, ok)
+	}
+	u := &Unit{HP: 1, MaxHP: 1, OnField: true, X: 14, Y: 3}
+	if _, ok := st.ClaimTreasure(u, 14, 3); ok || st.OpenedTreasure[0] {
+		t.Fatal("event 58 must not execute before its handler is editable")
+	}
+}
+
 func TestSkyKeyMaterialAssetsMatchOriginalSources(t *testing.T) {
 	for _, tc := range []struct {
 		mapID, x, y, slot, item int

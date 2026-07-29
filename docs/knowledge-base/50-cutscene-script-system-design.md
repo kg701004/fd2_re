@@ -610,8 +610,11 @@ JOIN24/JOIN23、sync_party、set_chapter(21)，最後都回 `town_ch22`，沒有
 composition 每格仍是 `(terrain_word,event_word)`；EXE `0x12E38` 使用
 `terrain=word0&0x3FF`、`slot=lowbyte(word1)&0x1F`。terrain control byte0 的 `0x20/0x40`
 分別是普通寶箱／隱藏物，reward 必須用 slot 關聯 control `+0x53+slot*3`，不能把已過濾的 chest
-清單依序 zip。匯出管線現保存 row-major `treasure_slots[]`（`-1` 才是無寶物；slot0 合法）、
-`treasure_hidden[]`、帶 slot 的 chests、unit inventory、raw death_effect 與 lowered death_reward。
+清單依序 zip。`0x190AC` 進一步證實控制列 type0 是物品、type1 是金錢，
+其餘 type 會把 16 位元 value 當作全域事件 ID；不得再降成一般物品。
+匯出管線現保存全 33 圖 row-major `treasure_slots[]`（`-1` 才是無寶物；slot0 合法）、
+`treasure_hidden[]`、帶 slot／native_type 的 chests、unit inventory、
+raw death_effect 與 lowered death_reward。未知特殊寶物 handler 尚未資料化時維持未開啟。
 
 取得手勢也由 caller 鎖定：`0x190AC` 唯一由行動選單第四項「下／休息」的 `0x1908B` 呼叫；
 不是踩格即取，也不是物品指令。未移動先回 MaxHP 20%，之後才檢查當格寶物。item 必須放入當前

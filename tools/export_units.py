@@ -41,7 +41,7 @@ EXE_RESIST_CRIT = os.path.join(os.path.dirname(__file__), "..", "docs", "data", 
 DEFAULT_HIT = 90
 DEFAULT_EV = 5
 
-# FDFIELD death_effect type=2 會以 value 索引 EXE 特殊死亡 handler 表。
+# FDFIELD death_effect type=2 會以 16-bit value 索引 EXE 特殊死亡 handler 表。
 # 0x34F74(id39) 把三位元組 00 D3 00 交給 reward dispatcher；
 # 0x34FF0(id41) 同理傳 00 D5 00。保留 raw effect，另把可執行 reward 資料化。
 SPECIAL_DEATH_REWARDS = {
@@ -217,6 +217,7 @@ def main(argv):
                 rec["death_reward"] = effect
             elif effect["type"] == 2 and effect["value"] in SPECIAL_DEATH_REWARDS:
                 rec["death_reward"] = SPECIAL_DEATH_REWARDS[effect["value"]]
+        rec["native_source_byte25"] = u["native_source_byte25"]
         if i < len(positions):                       # 固定出場座標(我方會被引擎改放部署格)
             rec["x"], rec["y"] = positions[i][0], positions[i][1]
         units.append(rec)

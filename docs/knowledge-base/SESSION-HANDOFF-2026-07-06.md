@@ -2127,3 +2127,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `native_field_events`，重製端只提供失敗即關閉的 selector 查詢，尚未
   dispatch 未解 handler。全圖沒有 event 82，這是排除「mode 11 writer
   由踩格觸發」的直接資料證據。
+
+## 2026-07-29：後處理列與全圖寶物資料更正
+
+- `0x1AA1D` 的列是 `{kind:u8,payload:u16le}`；kind0/1 給物品／金錢，
+  kind2 以 payload dispatch `0x51B91`，kind3 走另一呈現分支。
+- `0x10FA8..0x10FB2` 只把 FDFIELD b22 與 b23..24 複製到 runtime
+  `+0x31..+0x33`。舊解析器把 b23..25 合成 24-bit value 是錯誤斷言；
+  b25 在全 1887 筆皆零，但仍只作未命名來源 byte 保存。
+- `0x190AC` 的寶物控制列同樣是三位元組：type0=item、type1=gold，
+  其餘 type 以 value dispatch 全域 event。新增選擇性同步器，把 33 圖
+  寶物格、hidden flag、16 槽 type/value 寫入既有資產而不覆蓋人工單位校正。
+- map25 有 14 個普通箱圖塊，其中 slots0..4 是 type2/event58。重製端已能
+  看見這些 editable event treasure，但在 event58 handler 尚未 lower 前
+  取得會失敗且不設 opened，避免舊資料錯給 item58。
+- event82 仍未出現在 turn／field／treasure／unit effect 資料；四個 EXE
+  硬編碼 `0x1AA1D` 單列亦只有 kind0 的 D3、D5、0x65、0x0B。暫列
+  「無已知資料 producer」，仍待 runtime effect writer 稽核，不宣稱 dead code。
