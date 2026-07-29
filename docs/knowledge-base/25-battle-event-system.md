@@ -193,6 +193,24 @@ handler 內硬編碼給 `0x1AA1D` 的單列亦全為 kind 0
 這把 event 82 收窄成「目前無已知資料生產端」，但在所有 runtime writer
 閉合前仍不宣稱程式碼不可達。
 
+#### event 58：map25 五選一寶物 [驗]
+
+map25 的寶物 slots 0..4 都是 `{type:2,value:58}`。handler `0x354FE`
+先以 `0x1B8A6` 檢查行動單位的八格 raw inventory；等於 8 時只顯示
+FDTXT_000 `0x1E0` 並返回，不改任何 opened state。仍有空格時，
+`0x12E38` 取目前寶物 slot，以 slot 索引 EXE `0x5274E` 的五 bytes：
+
+`[0x1D,0x2B,0x33,0x3D,0x47]`
+
+接著 `0x1BB8C(unit,item)` 寫入物品，最後把 battle-local
+`[0x53AD5]+0..4` 全設為 1，而不是只關閉當前寶箱。因此五個位置只能
+選一個，取得哪件物品由位置 slot 決定。[驗]
+
+`native_treasure_event_rules.json` 以 FD2.EXE 雜湊、handler/table 位址保存
+這條規則；map25 editable asset 引用 event58 rule。重製成功取得後同步標記
+slots0..4 opened，滿欄則不改 inventory/opened。其他尚未 lower 的 event
+寶物仍保持失敗即關閉。
+
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
 gen-campaign v4 report 留下 6 筆「`groups: [$reg_or_mem(eax)]`」——`spawn_group(eax)` 的 `eax` 來自暫存器計算,

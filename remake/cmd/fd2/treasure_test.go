@@ -39,6 +39,27 @@ func TestFinishSelectedWaitAfterMoveDoesNotHealAndGoldUsesCampaignBank(t *testin
 	}
 }
 
+func TestFinishSelectedWaitExecutesEditableNativeTreasureEvent(t *testing.T) {
+	u := &battle.Unit{Camp: battle.Own, HP: 10, MaxHP: 10, OnField: true, X: 2, Y: 3}
+	g := &Game{
+		st: &battle.State{
+			Treasures: map[battle.Cell]battle.Treasure{
+				{X: 2, Y: 3}: {Slot: 0, Kind: "event", NativeType: 2, Value: 58},
+			},
+			OpenedTreasure: map[int]bool{},
+			NativeTreasureEventRules: map[int]battle.NativeTreasureEventRule{
+				58: {EventID: 58, ItemBySlot: []int{0x1D}, OpenSlots: []int{0}},
+			},
+		},
+		sel: u, selOrigX: 2, selOrigY: 3,
+	}
+	g.finishSelectedWait()
+	if len(u.Inventory) != 1 || u.Inventory[0] != 0x1D ||
+		!g.st.OpenedTreasure[0] || g.msg != "取得物品 1Dh" {
+		t.Fatalf("event58 wait inventory=%v opened=%v msg=%q", u.Inventory, g.st.OpenedTreasure, g.msg)
+	}
+}
+
 func TestFinishSelectedWaitHonorsNativeRecoveryGatesAndFloor(t *testing.T) {
 	for _, rawIndex := range []int{3, 4} {
 		u := &battle.Unit{Camp: battle.Own, HP: 40, MaxHP: 100, OnField: true, X: 2, Y: 3}

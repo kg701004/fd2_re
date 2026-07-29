@@ -1,0 +1,29 @@
+{
+  "source": {
+    "file": "FD2.EXE",
+    "size": 357074,
+    "md5": "b97caf2239a27a896069d03549d96e1e",
+    "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+  },
+  "rules": [
+    {
+      "event_id": 58,
+      "handler": "0x354fe",
+      "item_table_address": "0x5274e",
+      "item_by_slot": [
+        29,
+        43,
+        51,
+        61,
+        71
+      ],
+      "open_slots": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ]
+}

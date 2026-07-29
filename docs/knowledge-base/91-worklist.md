@@ -161,6 +161,7 @@
 - [x] **RE-POST-RESOLUTION-1AA1D**：閉合 `{kind:u8,payload:u16le}`，kind0/1 為物品／金錢、kind2 dispatch 全域事件、kind3 為另一呈現分支；建構器只採 FDFIELD b22+b23..24，撤回 b23..25 24-bit payload。
 - [x] **REMAKE-NATIVE-TREASURE-ASSETS**：33 圖 composition+FDSHAP 寶物格及 16 槽控制列已選擇性同步；type0/1 可執行，其他型態保存 event/native_type 並失敗即關閉，不再誤給一般物品。
 - [~] **RE-EVENT82-REACHABILITY**：turn、field、treasure、unit effect 與四個 EXE 硬編碼後處理列均無 payload82；目前無已知資料 producer。仍須稽核 runtime `+0x31..+0x33` 的其他 writer，未證實 dead code。
+- [x] **REMAKE-TREASURE-EVENT58**：閉合 map25 slots0..4 共用 event58；空欄時依 slot 給 `[1D,2B,33,3D,47]` 並共同關閉五槽，滿八格不改狀態。規則已綁定 EXE 雜湊、匯出成 editable JSON 並接正式 ClaimTreasure。
 - [x] **RE-PHASE-RESOURCE-1A7BD**：Docker Capstone 固定 `0x1A7BD` 是 `[0x53AF9]` gate 下的 `0x111BA(0x1A4D,0,0x40)` resource-handle setup，`0x1A7F1` 釋放 `[0x53B0F]`；已從 transient selector／campaign phase 語意中分離。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`

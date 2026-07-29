@@ -77,10 +77,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("raw")
     parser.add_argument("assets")
+    parser.add_argument(
+        "--rules",
+        default="docs/data/native_treasure_event_rules.json",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
     args = parser.parse_args()
+    with open(args.rules, encoding="utf-8") as source:
+        rules = json.load(source)["rules"]
 
     maps = sorted(
         glob.glob(os.path.join(args.assets, "map*", "map.json")),
@@ -96,10 +102,17 @@ def main():
         with open(units_path, encoding="utf-8") as source:
             units_data = json.load(source)
         slots, hidden, chests = expected(args.raw, map_index, map_data)
+        event_ids = {chest["value"] for chest in chests if chest["type"] == "event"}
+        map_rules = [rule for rule in rules if rule["event_id"] in event_ids]
+        rules_mismatch = (
+            units_data.get("native_treasure_event_rules", []) != map_rules
+            or (not map_rules and "native_treasure_event_rules" in units_data)
+        )
         mismatch = (
             map_data.get("treasure_slots") != slots
             or map_data.get("treasure_hidden") != hidden
             or units_data.get("chests") != chests
+            or rules_mismatch
         )
         if mismatch:
             changed += 1
@@ -107,6 +120,10 @@ def main():
                 map_data["treasure_slots"] = slots
                 map_data["treasure_hidden"] = hidden
                 units_data["chests"] = chests
+                if map_rules:
+                    units_data["native_treasure_event_rules"] = map_rules
+                else:
+                    units_data.pop("native_treasure_event_rules", None)
                 with open(map_path, "w", encoding="utf-8") as output:
                     json.dump(map_data, output, ensure_ascii=False, separators=(",", ":"))
                     output.write("\n")

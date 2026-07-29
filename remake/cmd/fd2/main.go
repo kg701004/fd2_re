@@ -4085,7 +4085,8 @@ func (g *Game) finishSelectedWait() {
 			} else {
 				g.msg = fmt.Sprintf("取得物品 %02Xh", got.Value)
 			}
-		} else if before.Kind == "item" && len(u.Inventory) >= 8 {
+		} else if (before.Kind == "item" || before.Kind == "event") &&
+			len(u.Inventory) >= 8 {
 			g.msg = "物品欄已滿，寶物仍留在原處"
 		}
 	}

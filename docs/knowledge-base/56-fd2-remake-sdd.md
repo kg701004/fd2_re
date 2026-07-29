@@ -2196,6 +2196,13 @@ FDFIELD composition/control 與 FDSHAP flags 重建全 33 圖
 type0/1 可執行物品／金錢；其他 type 保存為 `event` 與 `native_type`，
 `ClaimTreasure` 在 handler 尚未資料化時拒絕取得且不標記 opened。
 
+第一條特殊寶物 handler 已完成垂直切片。map25 slots0..4 共用 event58；
+`0x354FE` 依 slot 查 `0x5274E` 五物品
+`[0x1D,0x2B,0x33,0x3D,0x47]`，滿八格時不改狀態，成功則透過原始
+inventory reservation primitive 加入對應物品，並共同關閉 slots0..4。
+規則由 `extract_native_treasure_event_rules.py` 綁定 FD2.EXE 雜湊後輸出，
+再嵌入 map25 editable asset；runtime 不含 handler 位址捷徑。
+
 FDFIELD 控制段 `+0x33` 起的 32 bytes 已更正為 16 筆
 `(event_id, selector)` 格子事件列。地圖構成 event-word low5 是 1-based
 slot；只有 FDSHAP 地形控制 byte0 的 `0x20/0x40` 皆未設置時才採此解釋。

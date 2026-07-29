@@ -501,6 +501,7 @@ type State struct {
 	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
 	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
 	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	NativeTreasureEventRules map[int]NativeTreasureEventRule
 	// OpenedTreasure is remake-owned state for editable treasure nodes.  It has
 	// no asserted native-global address: native [0x53ad5] is a pointer to a
 	// 0x20-byte battle-local state table (0x10322 copies it; 0x13d00 writes an
@@ -529,6 +530,14 @@ type Treasure struct {
 	NativeType byte
 	Value      int
 	Hidden     bool
+}
+
+// NativeTreasureEventRule 是已由全域事件 handler 閉合的可編輯特殊寶物規則。
+// ItemBySlot 以原始 chest slot 索引；OpenSlots 保存同一事件成功後共同關閉的槽。
+type NativeTreasureEventRule struct {
+	EventID    int   `json:"event_id"`
+	ItemBySlot []int `json:"item_by_slot"`
+	OpenSlots  []int `json:"open_slots"`
 }
 
 // NativeFieldEvent 是 FDFIELD 控制段的原始兩位元組格子事件列。
@@ -568,10 +577,39 @@ func (s *State) ClaimTreasure(u *Unit, x, y int) (Treasure, bool) {
 		}
 	case "gold":
 		// Game owns the campaign bank; returning the reward lets it add atomically.
+	case "event":
+		return s.claimNativeTreasureEvent(u, t)
 	default:
 		return Treasure{}, false
 	}
 	s.OpenedTreasure[t.Slot] = true
+	return t, true
+}
+
+func (s *State) claimNativeTreasureEvent(u *Unit, t Treasure) (Treasure, bool) {
+	rule, ok := s.NativeTreasureEventRules[t.Value]
+	if !ok || t.Slot < 0 || t.Slot >= len(rule.ItemBySlot) || len(rule.OpenSlots) == 0 {
+		return Treasure{}, false
+	}
+	item := rule.ItemBySlot[t.Slot]
+	if item <= 0 || item > 0xFF || len(u.Inventory) >= 8 {
+		return Treasure{}, false
+	}
+	seen := map[int]bool{}
+	for _, slot := range rule.OpenSlots {
+		if slot < 0 || slot >= 16 || seen[slot] {
+			return Treasure{}, false
+		}
+		seen[slot] = true
+	}
+	if !u.AddInventoryItem(item, false) {
+		return Treasure{}, false
+	}
+	for slot := range seen {
+		s.OpenedTreasure[slot] = true
+	}
+	t.Kind = "item"
+	t.Value = item
 	return t, true
 }
 
@@ -629,7 +667,8 @@ type unitsFile struct {
 		NativeType byte   `json:"native_type"`
 		Value      int    `json:"value"`
 	} `json:"chests,omitempty"`
-	Units []struct {
+	NativeTreasureEventRules []NativeTreasureEventRule `json:"native_treasure_event_rules,omitempty"`
+	Units                    []struct {
 		Camp               string       `json:"camp"`
 		ClassID            int          `json:"cls"`
 		Name               string       `json:"name"`
@@ -696,7 +735,18 @@ func Load(path string) (*State, error) {
 		return nil, err
 	}
 	st := &State{W: f.W, H: f.H, OwnDeploy: f.OwnDeploy, Turn: 1, Flags: map[string]bool{},
-		Treasures: map[Cell]Treasure{}, OpenedTreasure: map[int]bool{}}
+		Treasures: map[Cell]Treasure{}, OpenedTreasure: map[int]bool{},
+		NativeTreasureEventRules: map[int]NativeTreasureEventRule{}}
+	for _, rule := range f.NativeTreasureEventRules {
+		if rule.EventID < 0 || rule.EventID >= 90 ||
+			len(rule.ItemBySlot) == 0 || len(rule.OpenSlots) == 0 {
+			return nil, fmt.Errorf("battle: invalid native treasure event rule %d", rule.EventID)
+		}
+		if _, exists := st.NativeTreasureEventRules[rule.EventID]; exists {
+			return nil, fmt.Errorf("battle: duplicate native treasure event rule %d", rule.EventID)
+		}
+		st.NativeTreasureEventRules[rule.EventID] = rule
+	}
 	if f.NativeRoundCounter != nil && *f.NativeRoundCounter > 0 {
 		st.NativeRoundCounter = *f.NativeRoundCounter
 	}

@@ -2144,3 +2144,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - event82 仍未出現在 turn／field／treasure／unit effect 資料；四個 EXE
   硬編碼 `0x1AA1D` 單列亦只有 kind0 的 D3、D5、0x65、0x0B。暫列
   「無已知資料 producer」，仍待 runtime effect writer 稽核，不宣稱 dead code。
+
+## 2026-07-29：map25 event58 五選一寶物閉合
+
+- `0x354FE` 先查行動單位八格 inventory；滿欄只顯示 FDTXT_000 `0x1E0`，
+  不改寶物狀態。
+- 有空欄時以 `0x12E38` 取得 slot0..4，查 EXE `0x5274E` 五 bytes
+  `[1D,2B,33,3D,47]`，由 `0x1BB8C` 寫入對應物品。
+- 成功後 `[0x53AD5]+0..4` 全設 1，因此五箱只能擇一，不是五箱各自可拿。
+- 新 extractor 輸出含 FD2.EXE 雜湊與位址的 editable rule；map25 asset
+  嵌入規則，runtime 以 typed data 執行並共同標記 slots0..4 opened。
+  沒有規則的特殊 event treasure 仍失敗即關閉。

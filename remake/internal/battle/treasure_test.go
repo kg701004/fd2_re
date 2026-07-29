@@ -110,7 +110,7 @@ func TestNativeEventTreasureLoadsButFailsClosed(t *testing.T) {
 	}
 }
 
-func TestMap25NativeEventTreasureRemainsEditableAndFailClosed(t *testing.T) {
+func TestMap25NativeEventTreasureUsesEditableEvent58Rule(t *testing.T) {
 	st, err := Load("../../assets/maps/map25/map25_units.json")
 	if err != nil {
 		t.Fatal(err)
@@ -121,8 +121,15 @@ func TestMap25NativeEventTreasureRemainsEditableAndFailClosed(t *testing.T) {
 		t.Fatalf("map25 event treasure = %#v, ok=%v", got, ok)
 	}
 	u := &Unit{HP: 1, MaxHP: 1, OnField: true, X: 14, Y: 3}
-	if _, ok := st.ClaimTreasure(u, 14, 3); ok || st.OpenedTreasure[0] {
-		t.Fatal("event 58 must not execute before its handler is editable")
+	reward, ok := st.ClaimTreasure(u, 14, 3)
+	if !ok || reward.Kind != "item" || reward.Value != 0x1D ||
+		!reflect.DeepEqual(u.Inventory, []int{0x1D}) {
+		t.Fatalf("event58 reward = %#v ok=%v inventory=%v", reward, ok, u.Inventory)
+	}
+	for slot := 0; slot < 5; slot++ {
+		if !st.OpenedTreasure[slot] {
+			t.Fatalf("event58 did not close shared slot %d", slot)
+		}
 	}
 }
 
