@@ -36,7 +36,9 @@
   對話框。production 已改走 FDTXT #0／原版字型／palette 的 indexed
   compositor；空槽 320×200 與 DOSBox oracle 全幀 RGB 相同，並新增目前
   source 的 [`load-empty-remake.png`](../figures/load-empty-remake.png)。
-  有效槽、成功 native restore、delete/overwrite 與 roster ABI 仍待 E2。
+  `/tmp` 修改存檔的 chapter1 有效槽與 production 也全幀 RGB 相同；這只
+  關閉有效槽排版，成功 native restore、delete/overwrite 與 roster ABI
+  仍待 E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 
 ## 文件狀態入口（更新至 2026-07-28）
@@ -1012,7 +1014,8 @@
   IDA 9.4 已固定四槽、slots `0..3`、↑↓ bounded（不 wrap）、
   Enter/Space confirm、Esc cancel；IDA 並固定 FDOTHER #13 entry16、
   FDTXT 索引、row/座標與 selected/normal 色碼。production 空槽已與
-  DOSBox 全幀 RGB 相同。native save boundary=`0x59cb`、
+  DOSBox 全幀 RGB 相同；修改存檔 chapter1 有效槽排版亦全幀相同。
+  native save boundary=`0x59cb`、
   record=`+0x312b+i*0xa28`（metadata=`0x28`、roster=`0xa00`）及
   rolling-XOR/checksum已有 adapter；JSON 仍是自有格式，尚未實作
   native 有效槽 restore／完整 roster 相容。

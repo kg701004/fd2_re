@@ -1292,6 +1292,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   README已撤回把`title.png`／`dialogue.png` raw decode稱作remake runtime
   對照；doc57加入12界面分數／證據、doc91新增UI-VIS-TOWN/SHOP/PREPARATION/
   LOAD/DIFF-HARNESS。此批是文件勘誤，尚未達單獨重大commit門檻。
+  其中「loadslots 仍是現代半透明框」已於 2026-07-29 由原版 indexed
+  compositor 取代；此歷史子句已失效，不可再當成現況。
 - 2026-07-28 native shop stable-scene vertical slice：Docker Capstone 重讀
   `0x2e341/0x1956b/0x4e8af/0x4e8e1/0x2d669`，確認 hub variant 選
   FDOTHER#12/#29/#63，`0x52659` 再選 DATO 128–132/0；`0x1956b`
@@ -2511,3 +2513,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 有效 native FD2.SAV restore、剩餘 metadata、roster ABI、刪除／覆寫
   尚未閉合，UI-VIS-LOAD 維持部分完成。詳細直接指令見
   [`fd2_load_slots_ui_ida.txt`](../data/fd2_load_slots_ui_ida.txt)。
+- 原始 FD2.SAV 四槽皆空。另在 `/tmp/fd2-load-valid` 複本只把 slot0
+  已證實 metadata 改為 chapter1／count1／currency1000，重新計算 native
+  checksum／rolling XOR；分段 Escape 後進 title→LOAD，但未確認槽位。
+  原版顯示「第二章／羅德鎮」，與 chapter1 JSON production 逐像素精確
+  2× 比較為零差異。新增 original/remake 圖與 regression；此項明確標成
+  修改路徑，不可當成成功 restore 或正常玩家存檔。

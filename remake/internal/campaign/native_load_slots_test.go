@@ -64,6 +64,38 @@ func TestComposeNativeLoadSlotsFrameMatchesEmptyDOSBoxOracle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertNativeLoadFrameMatchesOracle(
+		t, frame, "load-empty-original-dosbox.png",
+	)
+}
+
+func TestComposeNativeLoadSlotsFrameMatchesModifiedValidDOSBoxOracle(t *testing.T) {
+	dialogueBox, strings, font := loadNativeLoadSlotTestAssets(t)
+	frame, err := ComposeNativeLoadSlotsFrame(
+		make([]byte, NativeLoadSlotWidth*NativeLoadSlotHeight),
+		dialogueBox, strings, font,
+		[4]NativeLoadSlot{
+			{Chapter: 1},
+			{Empty: true},
+			{Empty: true},
+			{Empty: true},
+		},
+		0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNativeLoadFrameMatchesOracle(
+		t, frame, "load-valid-modified-original-dosbox.png",
+	)
+}
+
+func assertNativeLoadFrameMatchesOracle(
+	t *testing.T,
+	frame []byte,
+	filename string,
+) {
+	t.Helper()
 	base := filepath.Join("..", "..", "..")
 	paletteRaw, err := fdother.ReadResource(
 		filepath.Join(base, "org_game", "炎龍騎士團", "FLAME2", "FDOTHER.DAT"),
@@ -77,7 +109,7 @@ func TestComposeNativeLoadSlotsFrameMatchesEmptyDOSBoxOracle(t *testing.T) {
 		t.Fatal(err)
 	}
 	oracleFile, err := os.Open(filepath.Join(
-		base, "docs", "figures", "load-empty-original-dosbox.png",
+		base, "docs", "figures", filename,
 	))
 	if err != nil {
 		t.Fatal(err)

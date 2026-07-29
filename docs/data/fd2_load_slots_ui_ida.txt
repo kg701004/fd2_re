@@ -64,6 +64,14 @@ Enter／Space 確認、Escape 取消。
   無法映射的自有 JSON metadata 時失敗即關閉並保留舊 fallback。
 - `docs/figures/load-empty-remake.png` 是目前 source 在 Docker／Xvfb
   中輸出的 2× production 畫面，不是手工放大。
+- 原始 `FD2.SAV` 的四槽均為 `0xFF` empty。為驗證有效槽排版，另在
+  `/tmp` 複本只將 slot0 已證實 metadata 設為 raw chapter1、
+  roster_count1、currency1000，重新計算 checksum／rolling XOR；未按下
+  slot confirm。DOSBox 得到
+  `load-valid-modified-original-dosbox.png`，production 以章節1自有 JSON
+  得到 `load-valid-remake.png`；兩者按精確 2× 比較仍為全幀 RGB 相同。
+  此實驗明確屬修改路徑，只證明有效槽 renderer，不證明存檔內容合法或
+  restore 成功。
 
 有效 native FD2.SAV 的成功 restore、剩餘 metadata、roster ABI、刪除與覆寫
 仍未閉合；空槽 E2 不可外推到這些行為。
