@@ -11,7 +11,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼 | 版權資產不入庫；部分資源的 runtime compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件 handler、battle raw ABI、save envelope、item types5–24 與 UI input evidence 持續收斂 | indexed effect renderer、完整 postbattle/town 順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體 parity） | ch01 tactical/HUD、ch02 town variant0、ch02三種商店主選單與武器購買清單、教會多個服務、action/command/item overlay；另有部分戰鬥演出 fixture | 2026-07-28逐界面審計估計完整操作界面視覺還原約 **40–45%**；town variant1/2、preparation、loadslots、ending與商店其餘child panels的DOSBox E2仍未閉合，不能稱原版視覺 parity |
+| 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；整備選人現有原版資源局部合成器，但 town variant1/2、整備狀態面板與實機差分、讀檔槽、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
 
 Worklist 目前是 **491 個 `[x]`、98 個 `[~]`、68 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
@@ -224,6 +224,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；現由 shop/church 共用 production owner 使用，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | 原版 indexed 目的物品欄滿提示（`0x2f8ea`／FDTXT506＋FFFC 動態姓名；現已接 production lifecycle，非 DOSBox 截圖） | ![native transfer full message](docs/figures/native-transfer-full-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
+| 原版資源整備選人局部合成器（2026-07-29；20 個原始圖像索引測試，**不是 DOSBox 截圖或正常戰役存檔**；右上 `0x17fc0` 角色狀態仍缺） | ![preparation roster compositor partial](docs/figures/preparation-roster-compositor-partial.png) |
 | 原版 DOSBox／remake indexed town hub（ch02 variant0／selection0／pulse2；左右整幀相同） | ![original and remake town hub](docs/figures/town-hub-original-vs-remake.png) |
 | Left 後 selection1／pulse2 原版與 remake（左右整幀相同） | ![original and remake town selection1](docs/figures/town-hub-selection1-original-vs-remake.png) |
 | town variant0 六個 selection（上排原版 DOSBox、下排 remake；0→5 由左至右，每格整幀 hash 相同） | ![town six selections](docs/figures/town-hub-six-selections-original-vs-remake.png) |

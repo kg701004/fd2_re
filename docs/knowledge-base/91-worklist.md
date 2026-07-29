@@ -989,6 +989,15 @@
 - [x] **UI-11 preparation input ABI**：Docker Capstone 固定 `0x19953` 的 raw scancode branches：`E0/52/1C/39→1`、`01/53→-1`、`4B→cursor0`、`4D→cursor1`，其他輸入繼續等待；新增 `ApplyNativePreparationInput` 與 regression，不把 return 1/-1 猜成 YES/NO。
 - [x] **post-resolution raw command stream correction**：重新對照 FDTXT_000，確認 `0x1aa1d` 的 `0x1b0..0x1b3` 是掉落／互動訊息，不是 preparation UI；撤回 `UI-11 preparation command stream` 命名。保留 `0x1ac62` 的 `base+3*i` `{kind byte,payload word}` raw parser（kind 0/1/2/3 observed branches），改名 `ParseNativePostResolutionCommands`，不接 D8。
 - [x] **RE-PREPARATION-INPUT-32004**：Docker Capstone 重核 `0x32004` 的雙位元組輸入介面：`0xe0/0x52` 與 `[0x53a8d]==0x20` 都正規化為 `0x1c`；只有未走前述分支且 `[0x53a8e]==0x53` 時才回傳 `1`，其餘保留初始值 `0x10`。呼叫端 `0x31a29` 對 `1`／`0x1c` 的後續分支亦已記錄。先前「`0xe0/0x52` 原樣回傳」的錯誤已修正；`NormalizeNativePreparationKey` 只保存位元組介面，不替按鍵或畫面命名。
+- [~] **UI-11 原版整備選人主畫面**：Docker Capstone 重讀
+  `0x318ad..0x32004`，固定三區背景、兩組二位數、10 欄角色格、游標先畫、
+  已選角色上移三列且走 `0x4deda`、未選走 `0x4de56`，以及左右 ±1／
+  上下 ±10 的邊界。新增混合解碼資源包、原子合成器、原始 selector key
+  生產接線與真實 FDOTHER／FDICON 回歸；局部證據圖為
+  [`preparation-roster-compositor-partial.png`](../figures/preparation-roster-compositor-partial.png)。
+  此圖以原始圖像索引 0～19 建立，明確不是 DOSBox 截圖、正常戰役名冊或
+  `FD2.SAV` 證據。下一門檻是 `0x17fc0` 右上角色狀態、BIOS 待機週期、
+  `0x1f42d` 動畫、最終確認與合法晚期存檔的同狀態實機差分。
 - [~] **SDD-3 UI shell vertical slice**：已新增 `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary`，以 title confirm、story→battle、battle win→editable postbattle、town→shop→town 的同一 state trace 固定「戰後不可直跳下一戰」；既有 town/shop/preparation 截圖 artifact 與 Docker/Xvfb regression 可重跑。battle field/action/dialog 的同一條畫面 trace、原版 DOSBox pixel differential 仍待補齊。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [x] **RE-UNIT-STATIC-TABLES**：以 Docker 實際 FD2.EXE 產生/驗證 raw fixture：高 branch `b1-0x44 → 0x61af9` 68×10；lower branch `0x61da1` 32×24／`0x620a1` 68×11。constructor caller 的 level 公式與 `+0x42` join 已由 Capstone 固定；`export_units.py`／`sync_native_selector_fields.py` 將 raw provenance 輸出到 33 張 editable map asset。未被 table 覆蓋的 selector 與 HUD renderer consumer 仍維持 fail-closed；`0x619fd` 不屬於 constructor。

@@ -181,6 +181,7 @@ type Game struct {
 	nativeTownUIPulse        int
 	nativeTownUILastTick     int
 	nativeTownUIHasTick      bool
+	nativePreparationUI      *fdother.NativePreparationAssets
 	nativeChurchUIJob        *nativeChurchUIJob
 	nativeChurchUIClock      nativeBIOSClock
 	nativeChurchUIPulse      int
@@ -2873,11 +2874,24 @@ func (g *Game) campInput() bool {
 				}
 				return true
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.prepSel > 0 {
-				g.prepSel--
+			movePreparation := func(scanCode byte) {
+				if next, err := fdother.MoveNativePreparationRosterCursor(
+					g.prepSel, len(g.prepIDs), scanCode,
+				); err == nil {
+					g.prepSel = next
+				}
 			}
-			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) && g.prepSel+1 < len(g.prepIDs) {
-				g.prepSel++
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+				movePreparation(0x4b)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+				movePreparation(0x4d)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+				movePreparation(0x48)
+			}
+			if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+				movePreparation(0x50)
 			}
 			if enter && len(g.prepIDs) > 0 {
 				id := g.prepIDs[g.prepSel]
@@ -6081,6 +6095,9 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		g.font.Draw(screen, "↑↓ 選擇／Enter 記錄 raw route／ESC 返回", 176, 286, 0.85, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "preparation":
+		if g.drawNativePreparation(screen) {
+			return
+		}
 		h := 118 + float64((len(g.prepIDs)+1)/2)*24
 		if h < 170 {
 			h = 170
@@ -6767,6 +6784,9 @@ func loadGame() *Game {
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
 	if classUI, err := loadNativeClassUIAssets(); err == nil {
 		g.nativeClassUI = classUI
+		if preparationUI, preparationErr := loadNativePreparationUIAssets(); preparationErr == nil {
+			g.nativePreparationUI = preparationUI
+		}
 		if townUI, townErr := loadNativeTownUIAssets(); townErr == nil {
 			g.nativeTownUI = townUI
 		}

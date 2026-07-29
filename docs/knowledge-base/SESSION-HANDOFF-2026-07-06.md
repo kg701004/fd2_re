@@ -1972,3 +1972,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   兩者都進 `0x318ad`；選人取消則重新進全零選取流程。生成器與
   `campaign_full.json` 已把23個 town-backed prompt 改成「要進入戰場嗎？」，
   其餘 preparation-only 節點保留記錄詢問，不再混成同一語意。
+
+## 2026-07-29 原版整備選人主畫面第一個生產切片
+
+- 只以 `fd2-cap-local`、唯讀掛載與無網路容器重讀
+  `0x318ad..0x32004`。`0x31a7c..0x31b08` 證實輸入為左／右一格與
+  上／下一列十格，原先重製版「只有上下逐項移動」已撤回。
+- `0x3195f..0x319be` 建立 320×200 畫面：FDOTHER #5 第20項
+  223×86 放 `(92,7)`、第21項 310×99 放 `(5,94)`；第137項 86×86
+  經 `0x16886→0x4e63d` 放 `(5,7)`。第31～40項供
+  `0x187d6` 兩位數計數，位置為 `(61,35)` 與 `(61,73)`。
+- `0x31e80` 的角色格是 10 欄：`x=23+28*(i%10)`、
+  `y=100+30*(i/10)`。FDOTHER #1 descriptor0 游標先畫在 `y+4`；
+  已選 FDICON pose0/cycle 以 `0x4deda` 畫在 `y+3`，未選以
+  `0x4de56` 映到色盤 24～31 畫在原 y。原始 selector key 缺失時，
+  生產路徑退回既有介面，不用角色編號猜圖像。
+- 新增 `NativePreparationAssets`、原子合成器、四向游標規則與
+  `cmd/fd2-preparation-oracle`。真實原版資源回歸和遊戲層針對性測試已通過；
+  [`preparation-roster-compositor-partial.png`](../figures/preparation-roster-compositor-partial.png)
+  以原始圖像索引 0～19 顯示 20 格，只是資源／版面局部證據，不是原版
+  DOSBox、正常戰役名冊或晚期存檔。
+- 尚未完成：`0x17fc0` 右上角色狀態、`0x1297d` BIOS 待機週期、
+  `0x1f42d` 進退動畫、最終確認外觀，以及合法晚期 `FD2.SAV` 的同狀態
+  原版／重製差分。這些缺口使 UI-11 維持部分完成。
