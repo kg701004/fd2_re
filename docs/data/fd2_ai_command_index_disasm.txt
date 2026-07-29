@@ -1,0 +1,289 @@
+# 來源檔案 FD2.EXE；大小 357074 位元組；MD5 b97caf2239a27a896069d03549d96e1e；SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+0x01598a  push    0x84
+0x01598f  call    0x36cd7
+0x015994  push    ebx
+0x015995  push    esi
+0x015996  push    edi
+0x015997  push    ebp
+0x015998  sub     esp, 0x58
+0x01599b  mov     dword ptr [0x3c23], 0  ; ->0x53c23
+0x0159a5  push    0
+0x0159a7  call    0x4e555
+0x0159ac  add     esp, 4
+0x0159af  mov     dword ptr [esp + 0x3c], eax
+0x0159b3  mov     edx, dword ptr [esp + 0x6c]
+0x0159b7  mov     eax, edx
+0x0159b9  shl     eax, 2
+0x0159bc  add     eax, edx
+0x0159be  shl     eax, 4
+0x0159c1  mov     esi, dword ptr [0x3a45]  ; ->0x53a45
+0x0159c7  add     esi, eax
+0x0159c9  movzx   eax, byte ptr [esi]
+0x0159cc  mov     dword ptr [esp + 0x38], eax
+0x0159d0  movzx   eax, byte ptr [esi + 1]
+0x0159d4  mov     dword ptr [esp + 0x34], eax
+0x0159d8  push    0x190
+0x0159dd  call    0x36d16
+0x0159e2  add     esp, 4
+0x0159e5  mov     dword ptr [esp + 0x44], eax
+0x0159e9  movzx   eax, word ptr [esi + 0x44]
+0x0159ed  mov     dword ptr [esp + 0x2c], eax
+0x0159f1  lea     eax, [esp + 0x20]
+0x0159f5  push    eax
+0x0159f6  push    dword ptr [esp + 0x70]
+0x0159fa  call    0x1c269
+0x0159ff  add     esp, 8
+0x015a02  mov     dword ptr [esp + 0x30], eax
+0x015a06  test    eax, eax
+0x015a08  je      0x15b6d
+0x015a0e  movzx   eax, byte ptr [esi + 0x27]
+0x015a12  test    eax, eax
+0x015a14  jne     0x15b6d
+0x015a1a  xor     edi, edi
+0x015a1c  jmp     0x15a1f
+0x015a1e  inc     edi
+0x015a1f  cmp     edi, dword ptr [esp + 0x30]
+0x015a23  jge     0x15b61
+0x015a29  movzx   eax, byte ptr [esp + edi + 0x20]
+0x015a2e  push    eax
+0x015a2f  call    0x4e516
+0x015a34  add     esp, 4
+0x015a37  mov     esi, eax
+0x015a39  movzx   edx, byte ptr [eax + 5]
+0x015a3d  cmp     edx, dword ptr [esp + 0x2c]
+0x015a41  jg      0x15a1e
+0x015a43  push    dword ptr [0x3a69]  ; ->0x53a69
+0x015a49  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015a4f  movzx   eax, byte ptr [eax + 3]
+0x015a53  push    eax
+0x015a54  push    dword ptr [esp + 0x40]
+0x015a58  push    dword ptr [esp + 0x48]
+0x015a5c  push    dword ptr [esp + 0x50]
+0x015a60  call    0x4e040
+0x015a65  add     esp, 0x18
+0x015a68  push    dword ptr [esp + 0x44]
+0x015a6c  call    0x14b16
+0x015a71  add     esp, 4
+0x015a74  mov     dword ptr [esp + 0x40], eax
+0x015a78  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015a7e  call    0x4dbfc
+0x015a83  add     esp, 4
+0x015a86  xor     ebp, ebp
+0x015a88  jmp     0x15b1f
+0x015a8d  xor     eax, eax
+0x015a8f  jmp     0x15a95
+0x015a91  movzx   eax, byte ptr [esi + 6]
+0x015a95  push    eax
+0x015a96  push    0
+0x015a98  movzx   eax, byte ptr [esi + 4]
+0x015a9c  push    eax
+0x015a9d  lea     eax, [esp + 0xc]
+0x015aa1  push    eax
+0x015aa2  push    dword ptr [esp + 0x5c]
+0x015aa6  push    dword ptr [esp + 0x68]
+0x015aaa  call    0x14818
+0x015aaf  mov     dword ptr [esp + 0x68], eax
+0x015ab3  add     esp, 0x18
+0x015ab6  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015abc  call    0x4dbfc
+0x015ac1  add     esp, 4
+0x015ac4  cmp     dword ptr [esp + 0x50], 0
+0x015ac9  je      0x15b1e
+0x015acb  mov     eax, esp
+0x015acd  push    eax
+0x015ace  push    dword ptr [esp + 0x54]
+0x015ad2  movzx   eax, byte ptr [esp + edi + 0x28]
+0x015ad7  push    eax
+0x015ad8  call    0x15b77
+0x015add  add     esp, 0xc
+0x015ae0  mov     edx, eax
+0x015ae2  cmp     eax, dword ptr [0x3c23]  ; ->0x53c23
+0x015ae8  jg      0x15af5
+0x015aea  jne     0x15b1e
+0x015aec  movzx   eax, word ptr [esi]
+0x015aef  cmp     eax, dword ptr [esp + 0x48]
+0x015af3  jle     0x15b1e
+0x015af5  mov     dword ptr [0x3c23], edx  ; ->0x53c23
+0x015afb  mov     eax, dword ptr [esp + 0x54]
+0x015aff  mov     dword ptr [0x3c27], eax  ; ->0x53c27
+0x015b04  mov     eax, dword ptr [esp + 0x4c]
+0x015b08  mov     dword ptr [0x3c2b], eax  ; ->0x53c2b
+0x015b0d  movzx   eax, byte ptr [esp + edi + 0x20]
+0x015b12  mov     dword ptr [0x3c2f], eax  ; ->0x53c2f
+0x015b17  movzx   eax, word ptr [esi]
+0x015b1a  mov     dword ptr [esp + 0x48], eax
+0x015b1e  inc     ebp
+0x015b1f  cmp     ebp, dword ptr [esp + 0x40]
+0x015b23  jge     0x15a1e
+0x015b29  lea     eax, [ebp + ebp]
+0x015b2d  add     eax, dword ptr [esp + 0x44]
+0x015b31  movzx   edx, byte ptr [eax]
+0x015b34  mov     dword ptr [esp + 0x54], edx
+0x015b38  movzx   eax, byte ptr [eax + 1]
+0x015b3c  mov     dword ptr [esp + 0x4c], eax
+0x015b40  cmp     dword ptr [esp + 0x70], 0
+0x015b45  jne     0x15a91
+0x015b4b  movzx   eax, byte ptr [esi + 6]
+0x015b4f  test    eax, eax
+0x015b51  jne     0x15a8d
+0x015b57  mov     eax, 1
+0x015b5c  jmp     0x15a95
+0x015b61  push    dword ptr [esp + 0x44]
+0x015b65  call    0x37416
+0x015b6a  add     esp, 4
+0x015b6d  xor     eax, eax
+0x015b6f  add     esp, 0x58
+0x015b72  pop     ebp
+0x015b73  pop     edi
+0x015b74  pop     esi
+0x015b75  pop     ebx
+0x015b76  ret
+# 來源檔案 FD2.EXE；大小 357074 位元組；MD5 b97caf2239a27a896069d03549d96e1e；SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+0x01c269  push    0x18
+0x01c26e  call    0x36cd7
+0x01c273  push    ebx
+0x01c274  push    esi
+0x01c275  push    edi
+0x01c276  push    ebp
+0x01c277  sub     esp, 4
+0x01c27a  mov     esi, dword ptr [esp + 0x1c]
+0x01c27e  xor     ebx, ebx
+0x01c280  mov     edx, dword ptr [esp + 0x18]
+0x01c284  mov     eax, edx
+0x01c286  shl     eax, 2
+0x01c289  add     eax, edx
+0x01c28b  shl     eax, 4
+0x01c28e  mov     ebp, dword ptr [0x3a45]  ; ->0x53a45
+0x01c294  add     ebp, eax
+0x01c296  mov     dword ptr [esp], ebx
+0x01c299  jmp     0x1c29e
+0x01c29b  inc     dword ptr [esp]
+0x01c29e  cmp     dword ptr [esp], 5
+0x01c2a2  jge     0x1c2d3
+0x01c2a4  mov     edi, dword ptr [esp]
+0x01c2a7  movzx   edi, byte ptr [edi + ebp + 0x1a]
+0x01c2ac  xor     eax, eax
+0x01c2ae  jmp     0x1c2b1
+0x01c2b0  inc     eax
+0x01c2b1  cmp     eax, 8
+0x01c2b4  jge     0x1c29b
+0x01c2b6  mov     cl, al
+0x01c2b8  mov     edx, edi
+0x01c2ba  sar     edx, cl
+0x01c2bc  test    dl, 1
+0x01c2bf  je      0x1c2b0
+0x01c2c1  test    esi, esi
+0x01c2c3  je      0x1c2d0
+0x01c2c5  mov     cl, byte ptr [esp]
+0x01c2c8  shl     cl, 3
+0x01c2cb  add     cl, al
+0x01c2cd  mov     byte ptr [esi + ebx], cl
+0x01c2d0  inc     ebx
+0x01c2d1  jmp     0x1c2b0
+0x01c2d3  mov     eax, ebx
+0x01c2d5  jmp     0x22bbe
+# 來源檔案 FD2.EXE；大小 357074 位元組；MD5 b97caf2239a27a896069d03549d96e1e；SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+0x015311  push    0x58
+0x015316  call    0x36cd7
+0x01531b  push    ebx
+0x01531c  push    esi
+0x01531d  push    edi
+0x01531e  sub     esp, 0x30
+0x015321  push    dword ptr [0x3c2f]  ; ->0x53c2f
+0x015327  call    0x4e516
+0x01532c  add     esp, 4
+0x01532f  mov     esi, eax
+0x015331  cmp     dword ptr [esp + 0x44], 0
+0x015336  jne     0x1534b
+0x015338  movzx   eax, byte ptr [eax + 6]
+0x01533c  test    eax, eax
+0x01533e  jne     0x15347
+0x015340  mov     edi, 1
+0x015345  jmp     0x1534f
+0x015347  xor     edi, edi
+0x015349  jmp     0x1534f
+0x01534b  movzx   edi, byte ptr [eax + 6]
+0x01534f  cmp     dword ptr [0x3c23], 6  ; ->0x53c23
+0x015356  jl      0x15485
+0x01535c  push    dword ptr [esp + 0x40]
+0x015360  call    0x12d7b
+0x015365  add     esp, 4
+0x015368  push    edi
+0x015369  push    0
+0x01536b  movzx   eax, byte ptr [esi + 4]
+0x01536f  push    eax
+0x015370  lea     eax, [esp + 0xc]
+0x015374  push    eax
+0x015375  push    dword ptr [0x3c2b]  ; ->0x53c2b
+0x01537b  push    dword ptr [0x3c27]  ; ->0x53c27
+0x015381  call    0x14818
+0x015386  mov     edi, eax
+0x015388  add     esp, 0x18
+0x01538b  mov     dword ptr [esp + 0x2c], eax
+0x01538f  push    dword ptr [0x3a51]  ; ->0x53a51
+0x015395  call    0x4dbfc
+0x01539a  add     esp, 4
+0x01539d  push    0xc8
+0x0153a2  call    0x375b2
+0x0153a7  add     esp, 4
+0x0153aa  movzx   eax, byte ptr [esi + 4]
+0x0153ae  add     eax, 2
+0x0153b1  mov     dword ptr [0x1a83], eax  ; ->0x51a83
+0x0153b6  push    dword ptr [0x3c2b]  ; ->0x53c2b
+0x0153bc  push    dword ptr [0x3c27]  ; ->0x53c27
+0x0153c2  call    0x12cea
+0x0153c7  add     esp, 8
+0x0153ca  mov     dword ptr [0x1a83], 0  ; ->0x51a83
+0x0153d4  push    0
+0x0153d6  call    0x11cac
+0x0153db  add     esp, 4
+0x0153de  cmp     dword ptr [0x3c2f], 0xa  ; ->0x53c2f
+0x0153e5  jge     0x1540a
+0x0153e7  movzx   eax, byte ptr [0x3af9]  ; ->0x53af9
+0x0153ee  test    eax, eax
+0x0153f0  jne     0x1540a
+0x0153f2  mov     eax, esp
+0x0153f4  push    eax
+0x0153f5  push    edi
+0x0153f6  push    dword ptr [0x3c2f]  ; ->0x53c2f
+0x0153fc  push    dword ptr [esp + 0x4c]
+0x015400  call    0x2a6bd
+0x015405  add     esp, 0x10
+0x015408  jmp     0x1542e
+0x01540a  call    0x1d4cb
+0x01540f  mov     eax, dword ptr [0x3c2f]  ; ->0x53c2f
+0x015414  mov     esi, esp
+0x015416  push    esi
+0x015417  push    dword ptr [esp + 0x30]
+0x01541b  push    dword ptr [esp + 0x48]
+0x01541f  call    dword ptr [eax*4 + 0x1d01]  ; ->0x51d01
+0x015426  add     esp, 0xc
+0x015429  call    0x1d4f6
+0x01542e  lea     eax, [esp + 0x20]
+0x015432  push    eax
+0x015433  call    0x1b653
+0x015438  mov     esi, eax
+0x01543a  add     esp, 4
+0x01543d  push    0
+0x01543f  call    0x11cac
+0x015444  add     esp, 4
+0x015447  call    0x1db65
+0x01544c  lea     eax, [esp + 0x20]
+0x015450  push    eax
+0x015451  push    esi
+0x015452  push    dword ptr [0x3c4b]  ; ->0x53c4b
+0x015458  call    0x1aa1d
+0x01545d  add     esp, 0xc
+0x015460  push    0
+0x015462  call    0x11cac
+0x015467  add     esp, 4
+0x01546a  mov     dword ptr [0x3ec8], 0  ; ->0x53ec8
+0x015474  mov     dword ptr [0x1a83], 0  ; ->0x51a83
+0x01547e  mov     eax, 1
+0x015483  jmp     0x15487
+0x015485  xor     eax, eax
+0x015487  add     esp, 0x30
+0x01548a  pop     edi
+0x01548b  pop     esi
+0x01548c  pop     ebx
+0x01548d  ret

@@ -59,29 +59,25 @@ func TestNativeAvailableAICommandIDsAppliesRaw27Gate(t *testing.T) {
 	}
 }
 
-func TestNativeAvailableAISpellCommandIDsKeepsRawCommandIDs(t *testing.T) {
+func TestNativeAvailableAIScoredCommandIDsKeepsLowAndHighRawIndices(t *testing.T) {
 	book := make([]NativeCommandRecord, 36)
-	u := &Unit{MP: 4, NativeCommandMask: [5]byte{0, 0, 0, 0x81, 0}}
+	u := &Unit{MP: 4, NativeCommandMask: [5]byte{1 << 2, 0, 0, 1 << 4, 0}}
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}
-	got := NativeAvailableAISpellCommandIDs(u, book)
-	if len(got) != 2 || got[0] != 24 || got[1] != 31 {
-		t.Fatalf("raw AI spell commands = %#v, want [24 31]", got)
-	}
-	// The caller, not this raw adapter, owns command-0x10 conversion.
-	if got[0]-0x10 != 8 || got[1]-0x10 != 15 {
-		t.Fatalf("spell conversion check failed for %#v", got)
+	got := NativeAvailableAIScoredCommandIDs(u, book)
+	if len(got) != 2 || got[0] != 2 || got[1] != 28 {
+		t.Fatalf("raw AI scored commands = %#v, want [2 28]", got)
 	}
 }
 
-func TestNativeAvailableAISpellCommandIDsFailsClosedOnRaw27Gate(t *testing.T) {
+func TestNativeAvailableAIScoredCommandIDsFailsClosedOnRaw27Gate(t *testing.T) {
 	book := make([]NativeCommandRecord, 36)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}
 	u := &Unit{NativeTransient: [6]byte{0, 0, 0, 0, 0, 1}, NativeCommandMask: [5]byte{0xff, 0xff, 0xff, 0xff, 0xff}}
-	if got := NativeAvailableAISpellCommandIDs(u, book); got != nil {
-		t.Fatalf("raw +0x27 gate must reject AI spell commands: %#v", got)
+	if got := NativeAvailableAIScoredCommandIDs(u, book); got != nil {
+		t.Fatalf("raw +0x27 gate must reject AI scored commands: %#v", got)
 	}
 }

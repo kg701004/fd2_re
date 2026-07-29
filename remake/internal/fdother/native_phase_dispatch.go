@@ -12,11 +12,12 @@ type NativePhaseDispatchCandidate struct {
 }
 
 // NativePhasePreselectionScores are the two signed globals tested by
-// 0x1d92d..0x1d93f after 0x1598a and 0x1567e.  Their gameplay names remain
-// unproven, so the fields retain their address suffixes.
+// 0x1d92d..0x1d93f after the proven spell-candidate producer 0x1598a and
+// item/command-candidate producer 0x1567e.  The address suffixes prevent these
+// producer names from being mistaken for individual spell or item semantics.
 type NativePhasePreselectionScores struct {
-	Score53C23 int32
-	Score53C33 int32
+	SpellCandidateScore53C23 int32
+	ItemCommandScore53C33    int32
 }
 
 // NativePhaseZeroPreselection preserves one eligible +6==0 record in the
@@ -113,9 +114,10 @@ func PlanNativePhaseUnitScans(
 		plan.ZeroPreselection = append(
 			plan.ZeroPreselection,
 			NativePhaseZeroPreselection{
-				UnitIndex:     candidate.UnitIndex,
-				SelectorArg:   0,
-				RunUnitAction: score.Score53C23 >= 6 || score.Score53C33 >= 6,
+				UnitIndex:   candidate.UnitIndex,
+				SelectorArg: 0,
+				RunUnitAction: score.SpellCandidateScore53C23 >= 6 ||
+					score.ItemCommandScore53C33 >= 6,
 			},
 		)
 	}

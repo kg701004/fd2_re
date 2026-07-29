@@ -41,23 +41,10 @@ func NativeAvailableAICommandIDs(unit *Unit, book []NativeCommandRecord) []int {
 	return NativeAvailableCommandIDs(unit, book)
 }
 
-// NativeAvailableAISpellCommandIDs returns only the AI-visible command IDs
-// above the native physical-command boundary.  Native dispatch converts these
-// IDs to spell IDs by subtracting 0x10, but this adapter deliberately leaves
-// that conversion to its caller and does not claim an effect or target.
-func NativeAvailableAISpellCommandIDs(unit *Unit, book []NativeCommandRecord) []int {
-	ids := NativeAvailableAICommandIDs(unit, book)
-	if len(ids) == 0 {
-		return nil
-	}
-	spells := make([]int, 0, len(ids))
-	for _, id := range ids {
-		if id >= 0x10 {
-			spells = append(spells, id)
-		}
-	}
-	if len(spells) == 0 {
-		return nil
-	}
-	return spells
+// NativeAvailableAIScoredCommandIDs is the bounded command-index list consumed
+// directly by 0x1598a.  0x1c269 returns set-bit indices and 0x1598a passes each
+// index unchanged to both 0x4e516 and 0x15b77.  It must therefore retain IDs
+// below 0x10; command-0x10 belongs to the separate 0x1567e item-command path.
+func NativeAvailableAIScoredCommandIDs(unit *Unit, book []NativeCommandRecord) []int {
+	return NativeAvailableAICommandIDs(unit, book)
 }

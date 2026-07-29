@@ -88,6 +88,15 @@ selector1 單遍、selector0 預選與 selector0 第二遍。它保留原始逐�
 缺少逐單位 score provenance 時整體失敗即關閉。這是 E0 phase contract，
 尚未授權正規化 `NextAIPlan` 冒充原版兩遍執行期。
 
+兩個門檻現在可以按 producer 範圍命名，但不能擴張成特定技能：
+`0x1598A` 產生法術候選並把最佳分數寫到 `[0x53C23]`；
+`0x1567E` 枚舉物品內的 command 候選並把最佳分數寫到 `[0x53C33]`。
+第一遍只讓任一分數至少6的敵軍進 `0x13A9F`，其共用收尾
+`0x13512` 會設 `record+5 bit7`；第二遍 admission 使用
+`(+5 & 0x81)==0`，所以已在優先遍行動者不會再次行動。原版的兩遍因此
+是「高價值法術／物品命令優先遍，再處理其餘敵軍」，不是同一敵軍雙動。
+分數低於6仍可能在第二遍由完整 mode dispatcher 選擇行動。
+
 ## 單位行動模式的資料來源與分支（2026-07-29）
 
 原版建立 `0x50` 位元組戰場單位記錄時，`0x10FB6` 把 FDFIELD 名冊列
@@ -226,6 +235,15 @@ array，呼叫 `0x14818` 建立 target data，接著以 `(candidate, target, com
 `0x53c23/0x53c27/0x53c2b/0x53c2f`。這是目前唯一足夠的 AI-like score topology，不能把
 caller 自動命名為完整 enemy-turn dispatcher。
 
+2026-07-29 重新核對 `0x1C269` 與選中結果執行端 `0x15311` 後，撤回舊
+「`0x1598A` 只保留 command ID `>=0x10`，再由 caller 減 `0x10`」斷言。
+`0x1C269` 直接輸出 `unit+0x1A..+0x1E` 中每個 set bit 的 `0..39`
+索引；`0x1598A` 對每個索引直接呼叫 `0x4E516`，並把同一索引直接傳給
+`0x15B77`，沒有減法。`0x15311` 也直接以 `[0x53C2F]` 查 `0x4E516`
+及索引效果表。`command-0x10` 只屬於另一條 `0x1567E` 物品內 command
+路徑，兩者不可再混用。完整直接指令保存於
+[`fd2_ai_command_index_disasm.txt`](../data/fd2_ai_command_index_disasm.txt)。
+
 `0x15b77` 本身目前可確認：command `<0x0d` 逐目標讀 runtime record `+0x40`，基礎分數
 為 8，若 spell value 大於 record value 則為 `0x18`；record `+8==0` 時以 native
 FPU path 對分數乘 `1.5` 並轉回整數。command `0x0d..0x10` 走 recovery 分支，讀
@@ -344,9 +362,11 @@ Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x
 - 因此「敵方 AI 施法」不是推測機制，而是已由 callsite 證實；尚待補的是 command inventory/可用法術條件、治療目標選擇，以及 `0x15880/0x15B77` 對不同法術效果的精確優先級。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
 
-2026-07-27 raw availability slice：`NativeAvailableAISpellCommandIDs` 現重用 `0x1598a` 的 `unit+0x27==0` gate、
-40-bit command mask、36-entry command book 與 `record+5 <= unit+0x44` MP gate，只回傳 raw command IDs `>=0x10`。
-它不在 adapter 內轉換 `command-0x10`，也不接 target、score、Cast 或 effect；因此不會把 inventory bridge 誤宣稱成 AI 施法完成。
+2026-07-29 availability 勘誤：`NativeAvailableAIScoredCommandIDs` 重用
+`0x1598A` 的 `unit+0x27==0` gate、40-bit command mask、36-entry
+command book 與 `record+5 <= unit+0x44` MP gate，保留已知範圍
+`0..35` 的原始 set-bit 索引，包含低於 `0x10` 的值。它不接 target、
+score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略。
 
 `0x15B77` 的 spell-target 評分分支也已直接反組譯（呼叫點 `0x15AD8`）：
 

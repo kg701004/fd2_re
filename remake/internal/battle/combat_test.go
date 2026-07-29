@@ -253,8 +253,8 @@ func TestNextAIPlan_DefaultSpellCommandIsDisabled(t *testing.T) {
 	}
 }
 
-func TestNextAIPlanPreservesRawNativeSpellCommandsWithoutExecutingThem(t *testing.T) {
-	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MaxHP: 10, MP: 5, X: 0, Y: 0, NativeCommandMask: [5]byte{0, 0, 0, 1 << 4}}
+func TestNextAIPlanPreservesRawNativeScoredCommandsWithoutExecutingThem(t *testing.T) {
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MaxHP: 10, MP: 5, X: 0, Y: 0, NativeCommandMask: [5]byte{1 << 2, 0, 0, 1 << 4}}
 	target := &Unit{Camp: Own, OnField: true, HP: 10, MaxHP: 10, X: 1, Y: 0}
 	book := make([]NativeCommandRecord, 36)
 	for id := range book {
@@ -262,19 +262,20 @@ func TestNextAIPlanPreservesRawNativeSpellCommandsWithoutExecutingThem(t *testin
 	}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCommandBook: book}
 	plan := st.NextAIPlan()
-	if plan == nil || len(plan.NativeSpellCommands) != 1 || plan.NativeSpellCommands[0] != 28 {
-		t.Fatalf("native spell commands = %#v, want [28]", plan)
+	if plan == nil || len(plan.NativeScoredCommands) != 2 ||
+		plan.NativeScoredCommands[0] != 2 || plan.NativeScoredCommands[1] != 28 {
+		t.Fatalf("native scored commands = %#v, want [2 28]", plan)
 	}
 	if plan.SpellID != -1 {
 		t.Fatalf("raw command bridge must not execute or select spell: %#v", plan)
 	}
 }
 
-func TestNextAIPlanOmitsRawSpellCommandsWithoutVerifiedBook(t *testing.T) {
+func TestNextAIPlanOmitsRawScoredCommandsWithoutVerifiedBook(t *testing.T) {
 	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MaxHP: 10, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 10, MaxHP: 10, X: 1, Y: 0}
 	plan := (&State{W: 2, H: 1, Units: []*Unit{actor, target}}).NextAIPlan()
-	if plan == nil || plan.NativeSpellCommands != nil {
+	if plan == nil || plan.NativeScoredCommands != nil {
 		t.Fatalf("missing native book must fail closed: %#v", plan)
 	}
 }

@@ -41,8 +41,12 @@ func TestPlanNativePhaseUnitScansPreservesTwoZeroPassesAndSignedGate(t *testing.
 	raw[4*0x50+6] = 0
 	raw[4*0x50+0x26] = 1
 	scores := make([]NativePhasePreselectionScores, 5)
-	scores[1] = NativePhasePreselectionScores{Score53C23: 5, Score53C33: 6}
-	scores[2] = NativePhasePreselectionScores{Score53C23: -1, Score53C33: 5}
+	scores[1] = NativePhasePreselectionScores{
+		SpellCandidateScore53C23: 5, ItemCommandScore53C33: 6,
+	}
+	scores[2] = NativePhasePreselectionScores{
+		SpellCandidateScore53C23: -1, ItemCommandScore53C33: 5,
+	}
 
 	plan, err := PlanNativePhaseUnitScans(raw, 5, scores)
 	if err != nil {

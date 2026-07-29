@@ -83,6 +83,13 @@ caller 明示每個 native unit 的 signed `[0x53C23]/[0x53C33]` 結果，任一
 caller-owned。這補上 deterministic E0 regression，不代表 production AI
 已切換至原版 planner。
 
+敵軍兩遍的直接目的亦已由 producer／consumer 串起：`0x1598A` 的法術
+候選最佳分數寫 `[0x53C23]`，`0x1567E` 的 item-command 候選最佳分數寫
+`[0x53C33]`；優先遍任一 signed score `>=6` 才進 action dispatcher。
+成功收尾 `0x13512` 設 raw bit7，第二遍的 `+5 & 0x81` admission 隨即
+排除該記錄。因此這是高價值 command 優先，不是雙動。typed input 欄位
+保留地址後綴，避免把 producer 類別擴張成某個特定 spell/item 效果。
+
 `0x14237..0x145CC` 現已閉合為物理候選評分迴圈，而不是未知的 generic candidate
 helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選格，
 再以 `0x14818` 建立各格目標陣列；actor 與 target
@@ -117,7 +124,8 @@ helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選�
 `0x15880` score helper，最大值才寫 raw globals `0x53C33`（score）、`0x53C37/0x53C3B`
 （candidate coordinates）、`0x53C3F`（command-list index）。這是 command enumeration／
 selection boundary，不證明 item row 欄位名稱、法術效果、MP transaction 或完整 AI turn；
-`battle.AIPlan.NativeSpellCommands` 仍只保存 raw provenance。
+`battle.AIPlan.NativeScoredCommands` 仍只保存另一條 `0x1598A` 的 raw
+provenance，不可拿來代替本函式的 item-command 列表。
 
 `0x15880` score helper 的 raw ABI 也已閉合：它先以 `0x4E56C` 取得 item row，讀 row
 `+0x0D` type 與 `+0x0E` word。type `5`／`0x0D` 逐候選讀 target `+0x40/+0x42`，以
@@ -644,13 +652,20 @@ actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore 
 實作和測試必須以本表逐 ID 更新。不得因 record bytes、label 或 generic dispatch 可見，就把未知 ID 送進
 legacy `CastArea` 或宣稱整個 native command menu 已完成。
 
-AI boundary correction：在 `0x1598a` 的 spell-command path，`0x149F8` 目前只可稱為 target-candidate
+AI boundary correction：在 `0x1598a` 的 command-score path，`0x14818` 目前只可稱為 target-candidate
 builder；候選建立後才進 `0x15B77` 的 family-specific score branches。任何文件或 adapter 都不得把
-`0x149F8` 直接命名成傷害／命中評分，也不得把 `unit+0x22..+0x27` 的 raw bytes 直接命名成 AP/DP/HIT/status。
+target builder 直接命名成傷害／命中評分，也不得把 `unit+0x22..+0x27`
+的 raw bytes 直接命名成 AP/DP/HIT/status。
 
-Runtime bridge：`battle.AIPlan.NativeSpellCommands` 現只保存通過 raw `+0x27`、40-bit command mask、
-36-record 與 MP gates 的 command IDs `>=0x10`；它不填 `SpellID`、不選 target、不評分，也不執行 effect。
-缺少完整 `NativeCommandBook` 時回傳 nil，保持 legacy planner 與 native evidence 的邊界。
+Runtime bridge 勘誤：`0x1C269` 將 `unit+0x1A..+0x1E` 的 set-bit
+索引原樣交給 `0x1598A`；後者直接以同一索引呼叫 `0x4E516`、`0x15B77`，
+選中後 `0x15311` 也直接消費 `[0x53C2F]`。這條路徑沒有
+`command-0x10`；該轉換只存在於 `0x1567E` item-command 路徑。
+`battle.AIPlan.NativeScoredCommands` 因此保存通過 raw `+0x27`、command
+mask、36-record 與 MP gates 的已知原始索引 `0..35`，不再錯誤排除
+`0..15`。它仍不填 `SpellID`、不選 target、不評分，也不執行 effect；
+缺少完整 `NativeCommandBook` 時回傳 nil。直接指令見
+[`fd2_ai_command_index_disasm.txt`](../data/fd2_ai_command_index_disasm.txt)。
 
 IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target

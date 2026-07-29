@@ -133,9 +133,10 @@
   constructor＋`0x14818` 消費證據已固定 raw camp code 敵0／友1／己2，
   故前者是友軍單遍、後者是敵軍兩遍；具型別
   `PlanNativePhaseUnitScans` 已分開三遍、保留 signed threshold 與缺 score
-  fail-closed regression，但尚未接 production `NextAIPlan`。下一步做固定
-  存檔動態 trace，解釋敵軍兩遍與分數門檻；不得重複把陣營碼、兩張表或
-  pending 碼降回未知。
+  fail-closed regression；`0x1598A→53C23` 法術候選、`0x1567E→53C33`
+  item-command 候選與 `0x13512` bit7 已串成「高價值優先遍後排除雙動」。
+  尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中
+  command／目標與畫面順序；不得重複把陣營碼、兩張表或 pending 碼降回未知。
 - [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`
   mode 0/1/2、方向碼、成本與 `0x40/0x80` gate；`0x14B78` 依
   Manhattan→軸差→逐列順序選落點，`0x13E9C` 才是最後的 Manhattan
@@ -251,8 +252,8 @@
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
 - [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
-- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x149F8` 只證實 candidate-builder，raw `+0x22..+0x27` 不命名 AP/DP/HIT/status；`State.SpellBook`、`AIPlan.SpellID`、raw command inventory 與 `NativeAvailableAISpellCommandIDs` 仍是 fail-closed bridge。
-- [~] 敵方 AI spell bridge：`State.SpellBook`/`AIPlan.SpellID`、item raw K4 command inventory、`AIAvailableSpells`/`AISpellCandidates`、`NativeAvailableAISpellCommandIDs` 與 optional `AIPlan.NativeSpellCommands` 已保存 raw provenance；bridge 不選 target／score／effect，完整 AI runtime 仍未閉合。
+- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
+- [~] 敵方 AI command-score bridge：`0x1C269→0x1598A→0x15B77` 直接使用 set-bit 索引，沒有 `command-0x10`；`NativeAvailableAIScoredCommandIDs` 與 `AIPlan.NativeScoredCommands` 已改為保留已知 `0..35`，不再錯誤排除 `0..15`。bridge 不選 target／score／effect；完整 raw roster、候選幾何及動態原版 trace 仍待閉合。
 - [x] **RE-AI-SPELL-SCORE-15B77**：Docker Capstone/Hex-Rays 釘死 `0x15b77` 的 attack IDs0..12 score（HP `<` spell value→24，否則8；record `+0x08==0` 時乘 1.5 並 toward-zero）與 recovery IDs13..16 score（HP `<` max/3→8、否則 `<` max/2→3、否則0；`+0x34 bit0` 再×2）；新增 raw-only `ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`，ID10..12 嚴格要求 caller-supplied `0x1f183` gate。未接 AI runtime、command inventory、target UI 或效果名稱。
 - [x] **RE-AI-SPELL-FLAGS-15B77**：Hex-Rays 釘死 ID20/21→raw `+0x25/+0x26` nonzero flag score，每筆各加6；ID26/27→同兩 offsets zero flag score，每筆各加4；新增 `ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`，不清除、不命名 flag，也不接施法 runtime。
 - [x] **RE-AI-SPELL-MODIFIERS-15B77**：Hex-Rays 釘死 ID17/18/19→raw `+0x22/+0x23/+0x24` zero flag score，每筆各加3；`ScoreNativeAISpellZeroFlag` 保存該 raw helper，未命名 transient 欄位或接 AI runtime。

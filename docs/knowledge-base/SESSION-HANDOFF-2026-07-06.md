@@ -776,7 +776,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 Hex-Rays `0x15b77` score correction（合法 IDA Docker）：pseudocode 關閉先前三個 raw score 誤讀：recovery IDs13..16 是 `<max/3→8`、`<max/2→3`、否則0，再乘 `+0x34 bit0`；ID20/21 的 nonzero `+0x25/+0x26` 各加6；ID26/27 的 zero `+0x25/+0x26` 各加4；ID17/18/19 的 zero `+0x22/+0x23/+0x24` 各加3。新增 `ScoreNativeAISpellZeroFlag`，並修正既有 recovery/flag adapters 與 tests；仍不命名欄位、不接 AI runtime。
 - 2026-07-27 Hex-Rays `0x1598a` dispatcher closure（合法 IDA Docker）：pseudocode 固定 `unit+0x27==0`→`0x1c269` command list→command record `+5 <= unit+0x44`→`0x4e040`/`0x14818` target candidates→`0x15b77` score；最大 score 優先，平手比較 command record `+0`，再保存 raw `(x,y,command)`。新增 `battle.SelectNativeAISpellCandidate`，只接 score/tie-break，不接 MP、target resolver、UI 或施法執行。
 - 2026-07-27 native AI command gate adapter：新增 `battle.NativeAvailableAICommandIDs`，在既有 0..35 bounded command/MP scan 前保存 `0x1598a` 的 raw `+0x27==0` gate；第五 command byte 中的 36..39 仍被省略，避免未知 physical IDs 偽裝成 executable commands。
-- 2026-07-27 native AI planner bridge：`AIPlan.NativeSpellCommands` 現保存通過 raw `+0x27`、40-bit mask、36-record、MP gates 的 command IDs `>=0x10`；缺 `NativeCommandBook` 時 nil，且不轉 `SpellID`、不選 target／score／effect。這只是 raw inventory provenance，不能宣稱 AI spell runtime 已接通。
+- 2026-07-27 native AI planner bridge 的「只保存 command IDs
+  `>=0x10`」結論已由 2026-07-29 直接指令勘誤取代；不得再依此段接線。
 - 2026-07-26 command-23 caller scope correction（Docker Capstone）：`0x250cc` chapter-ending/post handler 也在 `0x1c2da` 後呼叫 `0x22253`（unit=1、pre-render `0xff/0xff`、record raw `+0/+1`），接著才進 `0x25089` cleanup 與 `0x2bce5` ending renderer；因此 `0x22253` 不得命名為 command-23 專屬。raw writer 已閉合，但 ending layout/renderer 與 campaign semantics 仍 fail-closed。
 - 2026-07-26 `0x250cc` ending branch audit（Docker Capstone）：`0x25348` 依序呈現 FDOTHER `#0x0d/#0x0e/#0x0f`、呼 `0x1c2da`、共用 `0x22253` 寫 unit=1 raw `+0/+1`、再呈現 `#0x10`，最後 `0x25089→0x2bce5` self-loop。只保存 call order；`0x24b14` 回傳與 frame 語意未命名，不能拿此終局分支接一般戰後 town/shop。
 - 2026-07-26 raw inventory gate closure（Docker Capstone）：`0x24b14(item)` 掃 unit `0..15`，`0x31860` 先取 `0x1b8a6` 的 occupied/prefix count（clear flag bit7），再以 `0x1b722` 比對 `record+0x0b+2*slot` 的 prefix item bytes；新增 `battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` read-only regression。成功不移除 item，`0x64` 的 ch26 branch 仍只作 gate，缺匙/演出/後續 campaign 不由此函式推論。更正 runtime 接線：`partyHasItemID` 只是不帶 raw flags 的 normalized compatibility projection，尚不能宣稱與 native 等價。
@@ -2289,3 +2290,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 同時撤回 AI 專題中「完全沒有攻擊方案時接近路線仍未知」的舊句：
   mode0 的 `0x14121→0x13E9C` 備援已在較早證據閉合；未知的是其他 mode
   的完整玩法命名與上層 raw phase。
+- 兩遍目的也已由既有 producer 證據閉合：`0x1598A` 的法術候選最佳分數
+  寫 `[0x53C23]`，`0x1567E` 的 item-command 候選最佳分數寫
+  `[0x53C33]`。優先遍任一 signed score 至少6才讓敵軍行動；收尾
+  `0x13512` 設 bit7，第二遍 `+5 & 0x81` 會排除它，所以不是雙動。
+  typed score 欄位已改用 producer＋地址名稱，仍不猜特定 spell/item。
+- 2026-07-29 AI command-index 勘誤：Docker Capstone 交叉核對
+  `0x1C269`、`0x1598A` 與 `0x15311`，證實 command mask 的 set-bit
+  索引直接交給 `0x4E516`、`0x15B77` 及選中結果執行端，這條路徑沒有
+  `command-0x10`。舊 `NativeAvailableAISpellCommandIDs` 將索引限制為
+  `>=0x10`，誤混入 `0x1567E` item-command 規則，已改為
+  `NativeAvailableAIScoredCommandIDs` 並保留已知 `0..35`；
+  `AIPlan.NativeScoredCommands` 仍只帶 evidence，不執行效果。完整帶
+  FD2.EXE 雜湊的三段指令保存於
+  `docs/data/fd2_ai_command_index_disasm.txt`。
