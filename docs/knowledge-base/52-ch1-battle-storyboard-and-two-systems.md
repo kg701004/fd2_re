@@ -11,7 +11,7 @@
 
 | 系統 | 跳表 | handler 例 | 時機 | 內容 | remake 對應 |
 |---|---|---|---|---|---|
-| **A. 戰前/戰後過場編排** | `0x51d71`(前)/`0x51de9`(後) | 序章 `0x3231b` | 戰鬥**之前**(一次性播完)/勝利**之後** | 王座廳→草地→密林→行軍→海島 的線性演出(pan/walk/dialog/act…) | cutscene 節點 + BeatRunner(doc50) |
+| **A. 戰前／phase-2 戰後過場編排** | `0x51d71`(前)/`0x51de9`(後) | 序章 `0x3231b` | 章節前處理／raw phase 2 後處理；逐章玩家可見結果另證 | 王座廳→草地→密林→行軍→海島 的線性演出(pan/walk/dialog/act…) | cutscene 節點 + BeatRunner(doc50) |
 | **B. 戰鬥中回合事件** | `0x51b19` | 各章 event handler(doc25/26) | 戰鬥**進行中**,每回合結束時評估 | 增援、觸發對話、AI 變更等,依「回合數/單位死亡」條件觸發 | `battle.Scenario.Events` + `Fire(on_turn_end/on_unit_death)`(event.go) |
 
 **關鍵界線**:系統 A 是「進戰場前一口氣播完的開場」;系統 B 是「邊打邊隨事件跳出來的對白」。

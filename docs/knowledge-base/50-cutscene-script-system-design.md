@@ -530,7 +530,7 @@ frontier 15 驗證 layout 的 slots0..6。campaign 現已接成
 **725 top-level beats / 93 unknown calls**；「已命名」不等於其他 14 個 layout caller 已猜好座標，未有各章證據的
 binding 仍會 fail closed。
 
-### 3.9 戰後不是直接下一戰：`0x2cad7` town / preparation 契約（2026-07-16）
+### 3.9 戰後不是直接下一戰：`0x2cad7` 戰間 raw gate 與 town／preparation 分流（2026-07-16）
 
 勝利 driver 的原版順序是 `0x25e1e` 取目前 `[0x53c03]`、`0x25e23` 呼叫
 `0x51de9[current]` post handler，接著 `0x25e2a call 0x2cad7`執行戰間流程，最後才在
@@ -546,7 +546,10 @@ FD2.EXE file offset `0x524b9` 的 30-byte 章表為：零起算 chapter **0..21 
 `docs/data/shops.json` 只有玩家章 **2..22、26、27** 完全一致；商店表的 chapter 是「下一場要進入的
 玩家章」，例如第2章羅德鎮位於 `battle_ch01` 戰後。舊 generator 把 `shop_chNN` 接在
 `battle_chNN` 後的 off-by-one 已修正。青衫攻略 `references/text/fd2.md:1196` 亦明言第22章開始
-連戰四場才再有商店，`:1472` 則記第27章是最後買賣處。
+連戰四場才再有商店，`:1472` 則記第27章是最後買賣處。這裡的
+town／preparation 是「raw table 分流＋hub 文字／callee」的組合命名，
+不是宣稱 `0x2CAD7` 單一函式本身就是城鎮，也不證明每一章的一般玩家路徑
+均已達 E2。
 
 town 路徑在 `0x2cd04` 以 `0x4e4b9(chapter)` 讀城鎮資料，並以 FDTXT_000
 `0x1ef..0x1f3` 顯示**酒店、武器店、出口、道具店、教會**（可讀轉錄見

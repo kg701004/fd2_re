@@ -56,7 +56,14 @@
   `fd2-go-test-local` containers，確認沒有FD2 container殘留，並刪除已被
   authorized workflow取代、repo無引用的3.6GB `fd2-ida-local` image；保留目前
   cap/go-test/dosbox/authorized-IDA各一份可重現image。
-- [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依 official IDA/Capstone 的 `0x2cad7/0x2d093` 與 `0x526b9` raw table，新增 `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、hub selector→raw callee mapping、invalid fail-closed。只保存 address-level route，不把 option 命名成酒店／商店／教會，也不直接呼叫 scene。
+- [x] **RE-POSTBATTLE-HUB-ROUTE-2D093**：依合法 IDA Pro 9.4／Capstone 的
+  `0x2CAD7/0x2D093` 與 `0x526B9` raw table，新增
+  `fdother.ResolveNativePostbattleRoute`；保存 preparation-first gate、
+  hub selector→raw callee mapping、invalid fail-closed。IDA 再閉合
+  `0x2CAD7` 回傳值：子流程 raw 0 會內部重複；直接整備／option2 的非零
+  結果使 gate 回傳0，其餘 option 的非零結果使 gate 回傳1。
+  `ResolveNativePostbattleOutcome` 只保存這個 raw 契約，不把 option 或
+  raw 1 自動命名成酒店／商店／教會／結局，也不直接呼叫 scene。
 - [x] **RE-TOWN-SHOP-SERVICE-2E341**：Docker Capstone 固定 resource與selector後續已完成callee dataflow：`0→0x2f0b0` purchase、`1→0x2f642` sell、`2→0x2f883` equip、`3→0x2f8ea` inventory transfer。命名依insert/remove/equip/gold writer與FDTXT，不依icon猜測；`ResolveNativeShopServiceRoute`現保存typed kind但仍不呼叫scene。
 - [x] **RE-TOWN-HOTEL-SERVICE-2FC85**：Docker Capstone 固定 `0x2fc85` raw resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute` raw plan/regression。只保存 address-level order，不命名服務、不執行 scene。
 - [x] **RE-PREPARATION-CAP-318AD**：Docker Capstone 重核 `0x318ad`：`[0x53c03] <= 0x1a` 時 cap=15，`>0x1a` 時 cap=19；新增 `fdother.NativePreparationPartyLimit` 與 boundary regression。明確以 native index 為輸入，不把 late cap 猜成顯示章號或直接改寫 JOIN roster。

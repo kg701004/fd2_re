@@ -1,0 +1,89 @@
+# 戰後 raw gate 與回傳值：IDA Pro 9.4 直接證據
+
+來源檔案：FD2.EXE
+大小：357074 位元組
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+
+工具與限制：
+- 使用者合法提供的 IDA Pro 9.4。
+- 只在 fd2-ida-authorized-local:latest 一次性 Docker 容器內執行。
+- 原版 FD2.EXE 與 /home/anr2/ida_94_official/dist 唯讀掛載。
+- IDA 資料庫與輸出只寫入 /tmp/fd2-ida-postbattle。
+- 本報告只命名 raw gate、selector、callee 與回傳值；設施名稱另由文字、
+  資源及 mutation writer 證據決定。
+
+重現查詢：
+
+```
+FD2_IDA_ADDRESSES='0x2cad7 0x2d093 0x318ad 0x2fc85 0x2e341 0x3072f'
+tools/ida_probe_functions.py
+```
+
+## 函式邊界與 callers
+
+- `0x2CAD7..0x2CF71`，直接 callers：`0x25E2A`、`0x260E5`。
+- `0x2D093..0x2D31B`，唯一直接 caller：`0x2CF34`。
+- `0x318AD..0x31DBE`，直接 callers：`0x2CCD6`、`0x2D16B`。
+- `0x2FC85..0x2FFA5`，唯一直接 caller：`0x2D2A2`。
+- `0x2E341..0x2E6B8`，唯一直接 caller：`0x2D2EB`。
+- `0x3072F` 的 caller 是 `0x2D2BF`。
+
+## `0x2CAD7` 的兩條入口路徑
+
+```
+0x2CBF2  mov eax,[0x53C03]
+0x2CBF7  cmp byte[0x526B9+eax],0
+0x2CBFE  jz  0x2CD04
+```
+
+gate byte 非零時走直接整備分支：
+
+```
+0x2CCD6  call 0x318AD
+0x2CCE5  test eax,eax
+0x2CCE7  jz   0x2CCCC      ; raw 0：重新顯示同一路徑
+0x2CCFD  xor  eax,eax      ; raw 非0：0x2CAD7 回傳0
+```
+
+gate byte 為零時建立可選 hub，selector 存在 `[0x5412B]`。確認後呼叫
+`0x2D093`：
+
+```
+0x2CF34  call 0x2D093
+0x2CF39  save al
+0x2CF3D  test eax,eax
+0x2CF44  jz   0x2CDB9      ; raw 0：重畫同一 hub
+0x2CF58  cmp  [0x5412B],2
+0x2CF5F  jz   0x2CCFD      ; selector2＋raw非0：回傳0
+0x2CF65  mov  eax,1        ; 其他 selector＋raw非0：回傳1
+```
+
+所以 `0x2CAD7` 的 raw 回傳契約是：
+
+| 路徑 | 子流程回傳 | `0x2CAD7` 結果 |
+|---|---:|---|
+| gate 非零→`0x318AD` | 0 | 內部重複 |
+| gate 非零→`0x318AD` | 非0 | 回傳0 |
+| gate 零、任一 hub selector | 0 | 內部重複 |
+| gate 零、selector 2 | 非0 | 回傳0 |
+| gate 零、selector 0／1／3／4 | 非0 | 回傳1 |
+
+這裡不能把 raw 1 自動命名成某個酒店、商店、教會或結局結果。外層
+`main 0x25BF4` 在 `0x25E2F` 保存 raw return；零時才繼續章節索引
+`0x51D71` 表，非零則離開目前外層循環。
+
+## `0x2D093` selector→callee
+
+直接指令固定：
+
+```
+selector 0   0x2D2A2 call 0x2FC85
+selector 4   0x2D2BF call 0x3072F
+selector 1/3 0x2D2EB call 0x2E341
+selector 2   0x2D0D1..0x2D18B 的確認／0x318AD 分支
+```
+
+`fdother.ResolveNativePostbattleRoute` 保存這張 address-level 路由；
+`ResolveNativePostbattleOutcome` 保存上述內部重複與 raw 0／1 回傳。
+兩者不執行場景，也不從 callee 位址猜高階服務名稱。

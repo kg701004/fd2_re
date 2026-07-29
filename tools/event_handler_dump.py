@@ -29,7 +29,7 @@ PRIM = {
     0x205be: 'raw_result_code_0_1_2',
     0x205da: 'reset_and_load_chapter',
     0x15f84: '繪畫面', 0x1088d: '完整章節載入', 0x111ba: '載資源', 0x25977: 'play_bgm/scene',
-    0x25a96: 'play_sfx', 0x36cd7: '__STK', 0x2cad7: '結局判定?', 0x18890: '戰鬥行動',
+    0x25a96: 'play_sfx', 0x36cd7: '__STK', 0x2cad7: '戰後raw_gate', 0x18890: '戰鬥行動',
 }
 VAR = {0x53ecc: 'raw_pending_result_code', 0x53ec8: 'raw_accumulator', 0x53a45: '單位陣列', 0x53c03: '章節', 0x51a83: 'raw_overlay_selector'}
 

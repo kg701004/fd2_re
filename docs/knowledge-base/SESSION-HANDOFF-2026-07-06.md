@@ -2467,3 +2467,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 可重現命令、函式表指標與位址證據保存於
   `docs/data/fd2_ai_phase_callback_tables_ida.txt`；已同步修正 AI 專題、
   SDD、doc23–26、差距稽核與工作清單。
+
+## 2026-07-29：`0x2CAD7` raw 回傳契約與舊名稱稽核
+
+- 重新盤點後確認 30-byte gate、`0x2D093` selector→callee、
+  `0x318AD` 整備及 town/shop/church UI 已有大量 E0／E1 工作，不再重複
+  反組譯既有範圍；本輪只補真正缺少的 `0x2CAD7` raw return。
+- 合法 IDA Pro 9.4 固定：直接整備 `0x318AD` 回傳0時在
+  `0x2CAD7` 內重複，非零時 gate 回傳0；selectable hub 的
+  `0x2D093` 回傳0也重複，option2 的非零結果使 gate 回傳0，
+  option0／1／3／4 的非零結果使 gate 回傳1。
+- 新增 `NativePostbattleRoute.DirectPreparation` 以區分 gate-table
+  直接整備與 hub option2，並以
+  `fdother.ResolveNativePostbattleOutcome` 保存內部重複及 raw 0／1。
+  偽造 callee／selector 組合一律失敗關閉。
+- 機械式文件稽核找到 `tools/event_handler_dump.py` 仍把 `0x2CAD7`
+  標成「結局判定?」，已改為戰後 raw gate。通用 `0x51DE9`
+  也由「戰後／勝利」降為「phase-2 戰後」；逐章玩家結果仍須 E0／E2。
+- SDD 已更正 `0x2D093` 不是外層戰役迴圈直接 callee，而是
+  `0x2CAD7` 的 selectable-hub 分支；酒店／商店／教會名稱雖有文字、
+  資源及 mutation writer 旁證，具型別路由仍以 raw option→address 為主。
+- 直接證據保存於
+  `docs/data/fd2_postbattle_gate_outcome_ida.txt`，並同步更新介面證據矩陣、
+  工作清單與戰役／腳本文件。

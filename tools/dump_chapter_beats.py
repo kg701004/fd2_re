@@ -3,7 +3,7 @@
 
 背景(doc47/48/49/50):序章 handler(0x3231b)已人工+機械雙重驗證出完整原語序列
 (doc47 §3/§7),原語指令集在全部章節共用,只是參數不同——本工具把這套抽取法
-套用到跳表 0x51d71(戰前/劇情)、0x51de9(戰後/勝利)全 30 章 entry,產出機器可讀
+套用到跳表 0x51d71(章節前)、0x51de9(phase-2 戰後)全 30 章 entry,產出機器可讀
 beats JSON,供轉換器接手做成 remake cutscene 節點(doc50 §3 管線第 1 步)。
 
 原語表(位址→(op 名, 參數個數)):參數個數 = 該 call 前「最近 N 個 push」,已用序章
@@ -22,7 +22,7 @@ sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from callgraph_le import CG, fixup_map
 
 TABLE_PRE = 0x51d71   # 戰前/劇情 handler 跳表(章節 0~29 索引)
-TABLE_POST = 0x51de9  # 戰後/勝利 handler 跳表
+TABLE_POST = 0x51de9  # phase-2 戰後 handler 跳表
 N_CHAPTERS = 30
 OBJ1_END = 0x4EBD9    # obj1(code)結尾,handler 範圍上限保底(見 le meta objs[0])
 

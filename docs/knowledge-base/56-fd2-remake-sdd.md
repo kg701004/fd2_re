@@ -984,7 +984,20 @@ preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 
 
 ### 5.3 Native postbattle hub gate（E0，IDA 9.4）
 
-`0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then calls `0x318ad` only when the selectable roster exceeds 15 before the late chapters or 19 afterwards; smaller rosters depart without opening that selector. The Hex-Rays bodies close the subscene boundary further: `0x2e341` selects raw resource `12`, `29`, or `63` for the ordinary/alternate/secret shop branches, dispatches its service choices to `0x2f0b0`, `0x2f642`, `0x2f883`, or `0x2f8ea`, and fades back to the hub; `0x2fc85` loops its hotel choices through `0x2ffa5`, `0x30012`, `0x301f4`, or the character/preparation path using `0x197e5`, then likewise fades back. These callee labels remain address-level names where their service semantics are not independently proven. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. Docker raw-table reading confirms `byte_526b9[22..24]` and `[27..29]` are `1`, while `[0..21]` and `[25..26]` are `0`; in `0x2cad7`, nonzero entries take the preparation-only path and zero entries enter the selectable town hub. Chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
+`0x2D093` 是 `0x2CAD7` 的 selectable-hub 分支所到達的 raw selector
+分派器，不是外層戰役迴圈的直接 callee。其 `[0x5412B]` option
+`0→0x2FC85`、`1/3→0x2E341`、`4→0x3072F`；option 2 走確認及
+`0x318AD` 整備路徑。酒店、武器／道具／神秘商店與教會等名稱具有
+FDTXT 文字、資源及 mutation writer 旁證，但 address-level 主契約仍以
+raw option→callee 為準。`0x2E341` 依 raw hub variant 選資源
+12／29／63，`0x2FC85` 及各設施完成後可回到 hub；外層
+`0x25DE5` 恢復前不會選下一戰 BGM。
+
+原始 30-byte table 已固定 `byte_526B9[22..24]` 與 `[27..29]` 為 1，
+`[0..21]` 與 `[25..26]` 為 0；`0x2CAD7` 中非零 entry 走
+preparation-only 路徑，零 entry 才建立 selectable hub。chapter index
+是原版下一戰索引，不是玩家畫面章號。每章文字、游標圖與 DOSBox 視覺
+時序仍待 E2；不得把已證實的 hub／prepare 分支壓成直接下一戰。
 
 `fdother.ResolveNativePostbattleRoute` now preserves this gate as editable
 address-level data: nonzero `0x526b9[index]` entries return the raw
@@ -992,6 +1005,15 @@ address-level data: nonzero `0x526b9[index]` entries return the raw
 options `0`, `1/3`, `2`, and `4` to `0x2fc85`, `0x2e341`, `0x318ad`, and
 `0x3072f` respectively. It performs no scene call and does not label the
 callees as hotel, shop, church, or leave; invalid index/option fails closed.
+
+合法 IDA Pro 9.4 再固定 `0x2CAD7` 的 raw return 契約：直接整備
+`0x318AD` 或 selectable hub 的子流程回傳 0 時，都在 `0x2CAD7` 內重複；
+直接整備或 option 2 回傳非零時，`0x2CAD7` 回傳 raw 0；option
+0／1／3／4 回傳非零時則回傳 raw 1。外層 `0x25DE5` 只在 raw 0 時繼續
+章節索引 `0x51D71` 表。`fdother.ResolveNativePostbattleOutcome`
+保存內部重複及 raw 0／1，不替 raw 1 命名某個設施、結局或離開原因。
+直接證據見
+[`fd2_postbattle_gate_outcome_ida.txt`](../data/fd2_postbattle_gate_outcome_ida.txt)。
 
 The shop-family subscene is represented by
 `fdother.ResolveNativeShopServiceRoute`: raw hub variants `3` and `5` select

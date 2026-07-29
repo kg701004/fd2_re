@@ -89,7 +89,7 @@ main 0x25bf4
 
 ```
 跳表 A 0x51d71(章節→戰前/劇情):  [0]0x3231b [1]0x32d18 [2]0x32e8c [3]0x32fb2 [4]0x33049 …
-跳表 B 0x51de9(章節→戰後/勝利):  [0]0x22ef6 [1]0x22f37 [2]0x230f2 [3]0x231bc [4]0x231f9 …
+跳表 B 0x51de9(章節→phase-2 戰後): [0]0x22ef6 [1]0x22f37 [2]0x230f2 [3]0x231bc [4]0x231f9 …
 驗 [0]:0x32326 mov [0x53c03],0x20 ; call 0x205da   → 確為 cutscene
 ```
 
@@ -117,7 +117,7 @@ doc 23 把 `[0x53ecc]` 標為「戰鬥結果碼(1 事件、2 勝利),戰後狀�
 0x25dce  │   call 0x117e7            ; 戰場指令迴圈(打,逐單位行動)
 0x25dd5  │   cmp [0x53ecc],1 ─ ==1 → call 0x22e5c(固定資源 #79 呈現)→ 清碼 → 0x25e74
 0x25e02  │   cmp [0x53ecc],2 ─ ==2 → 停曲; call [章節*4+0x51de9](章節索引戰後表);
-0x25e2a  │                          call 0x2cad7(raw 後續選單／終止 gate); test eax
+0x25e2a  │                          call 0x2cad7(raw gate); test eax
 0x25e3a  │                          ├ 回傳0: call [章節*4+0x51d71]+ play_bgm
 0x25e65  │                          └ [0x53ecc]=0; call 0x4e031(清鍵盤)
 0x25e74  │   test esi,esi; je 0x25dce   ; esi==0 → 續打同場
