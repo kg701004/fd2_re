@@ -4,6 +4,12 @@ import dump_exe_tables
 
 
 class NativeItemEffectRowsTest(unittest.TestCase):
+    def test_class_names_cover_native_text_indices_zero_through_twenty_eight(self):
+        self.assertEqual(len(dump_exe_tables.CLASS_NAMES), 29)
+        self.assertEqual(dump_exe_tables.CLASS_NAMES[26], "？？？")
+        self.assertEqual(dump_exe_tables.CLASS_NAMES[27], "　　")
+        self.assertEqual(dump_exe_tables.CLASS_NAMES[28], "？？？")
+
     def test_runtime_view_is_shifted_one_byte_from_normalized_rows(self):
         base = dump_exe_tables.ANCHORS["item"][0]
         stride = 0x17

@@ -1578,10 +1578,12 @@
   chapter node 與正式 CONTINUE owner，故仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`
 - [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
-  SHA-256 綁定的可編輯 32 人 identity／class 0–26 catalog，以及嚴格
+  SHA-256 綁定的可編輯 32 人 identity／class 0–28 catalog，以及嚴格
   `PersistentRecord→battle.Unit` 投影。保留 raw inventory flags、command
   mask、transient、race/class 與 base/effective stats；不由相同數值推導
-  portrait、Fig、map selector、座標或章節。class 27／28 的現有名稱來源
-  衝突，維持 fail-closed。`FD2_NATIVE_SAVE_FIXTURE` Docker 整合測試已
+  portrait、Fig、map selector、座標或章節。合法 IDA Pro 9.4 已證實
+  class 顯示直接使用 `150+raw class`；固定雜湊 FDTXT 的 class 27 是
+  兩個全形空格、class 28 是「？？？」，舊 `cls28`／`?`／「職業28」
+  占位已移除。`FD2_NATIVE_SAVE_FIXTURE` Docker 整合測試已
   唯讀走完 current snapshot 四筆 record，實得索爾、悠妮、亞雷斯、蓋亞。
   下一步是閉合章節節點與正式 owner；目前不接 CONTINUE。

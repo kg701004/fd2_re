@@ -11,7 +11,7 @@ import (
 
 const (
 	nativeCharacterIdentityCount = 32
-	nativeCharacterClassCount    = 27
+	nativeCharacterClassCount    = 29
 	nativeCharacterEXESHA256     = "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
 )
 

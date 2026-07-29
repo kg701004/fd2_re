@@ -9,7 +9,7 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
 
-var classNames = []string{"龍", "劍士", "戰士", "騎士", "弓兵", "法師", "僧侶", "盜賊", "武者", "劍聖", "聖戰士", "聖騎士", "狙擊手", "大法師", "祭師", "龍劍士", "鬥士", "英雄", "魔戰士", "龍騎士", "神射手", "召喚師", "聖者", "忍者", "武聖", "機兵", "？？？"}
+var classNames = []string{"龍", "劍士", "戰士", "騎士", "弓兵", "法師", "僧侶", "盜賊", "武者", "劍聖", "聖戰士", "聖騎士", "狙擊手", "大法師", "祭師", "龍劍士", "鬥士", "英雄", "魔戰士", "龍騎士", "神射手", "召喚師", "聖者", "忍者", "武聖", "機兵", "？？？", "　　", "？？？"}
 
 // AdvanceNativeChurchServiceSelection mirrors 0x2d7bd's four-entry service
 // cursor. The native selector reacts to left (raw scancode 75) and right

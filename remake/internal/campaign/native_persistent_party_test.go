@@ -65,6 +65,12 @@ func TestNativeCharacterCatalogAssetIsComplete(t *testing.T) {
 			t.Fatalf("identity %d=%q, want %q", identity, got, want)
 		}
 	}
+	if got := catalog.classNames[27]; got != "　　" {
+		t.Fatalf("class 27=%q, want two full-width spaces", got)
+	}
+	if got := catalog.classNames[28]; got != "？？？" {
+		t.Fatalf("class 28=%q, want %q", got, "？？？")
+	}
 }
 
 func TestMaterializeNativePersistentPartyRecordPreservesProvenFields(t *testing.T) {

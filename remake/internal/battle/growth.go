@@ -150,11 +150,7 @@ var growthTable = map[string]map[string]GrowthRow{
 		"武聖": {AP: StatRange{11, 13}, DP: StatRange{6, 7}, DX: StatRange{2, 3}, HP: StatRange{16, 19}, MP: StatRange{0, 0}},
 	},
 	"達克賽": {
-		// dump_exe_tables.py CLASS_NAMES 表無 idx 28(超出陣列範圍),characters.json 因而把
-		// 達克賽的職業印成佔位字串 "cls28";doc02 §7.2 核對後正式定名「？？？」。兩個 key 並存,
-		// 對應同一列 EXE 資料,等 CLASS_NAMES 補上 28 號再收斂成一個。
-		"？？？":   {AP: StatRange{12, 14}, DP: StatRange{8, 11}, DX: StatRange{2, 2}, HP: StatRange{15, 21}, MP: StatRange{4, 5}},
-		"cls28": {AP: StatRange{12, 14}, DP: StatRange{8, 11}, DX: StatRange{2, 2}, HP: StatRange{15, 21}, MP: StatRange{4, 5}},
+		"？？？": {AP: StatRange{12, 14}, DP: StatRange{8, 11}, DX: StatRange{2, 2}, HP: StatRange{15, 21}, MP: StatRange{4, 5}},
 	},
 	"米亞斯多德": {
 		"劍士":  {AP: StatRange{7, 10}, DP: StatRange{5, 7}, DX: StatRange{2, 2}, HP: StatRange{9, 12}, MP: StatRange{0, 0}},

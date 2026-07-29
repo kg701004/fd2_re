@@ -2260,9 +2260,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-30 native persistent party narrow bridge：新增綁定參考
   FD2.EXE SHA-256 的 `native_character_catalog.json` 與
   `MaterializeNativePersistentPartyRecord`。它只投影 record 已證實欄位；
-  portrait／sprite／map selector／座標／章節不猜接。現有資料對 class 28
-  名稱分別給 `cls28`、`?`、fallback「職業28」，因此 catalog 只接受
-  0–26，27／28 維持失敗即關閉。Docker 唯讀原版 `FD2.SAV` 的可選
+  portrait／sprite／map selector／座標／章節不猜接。後續合法
+  IDA Pro 9.4 重核證實 `0x30B07..0x30B17` 與
+  `0x310B5..0x310C9` 直接使用 `FDTXT[150+record.class]`；固定雜湊
+  FDTXT 的 class 27 是兩個全形空格、class 28 是「？？？」。因此 catalog
+  已擴至 0–28；原先 `cls28`、`?`、fallback「職業28」造成的「來源衝突」
+  是重製端錯誤斷言，不是原版不確定性。Docker 唯讀原版 `FD2.SAV` 的可選
   integration test 已由 current snapshot 實得索爾、悠妮、亞雷斯、蓋亞；
   此橋尚未成為正式 CONTINUE owner。
 

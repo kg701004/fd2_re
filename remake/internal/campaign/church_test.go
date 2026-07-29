@@ -8,6 +8,23 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
 
+func TestClassNameUsesNativeFDTXTClassRange(t *testing.T) {
+	tests := []struct {
+		class int
+		want  string
+	}{
+		{26, "？？？"},
+		{27, "　　"},
+		{28, "？？？"},
+		{29, "職業29"},
+	}
+	for _, tc := range tests {
+		if got := ClassName(tc.class); got != tc.want {
+			t.Fatalf("class %d name=%q want=%q", tc.class, got, tc.want)
+		}
+	}
+}
+
 func TestLoadReviveFeeRatesUsesExportedEXETable(t *testing.T) {
 	rates, err := LoadReviveFeeRates(filepath.Join("..", "..", "..", "docs", "data", "exe_tables", "revive_fee_rates.json"))
 	if err != nil {

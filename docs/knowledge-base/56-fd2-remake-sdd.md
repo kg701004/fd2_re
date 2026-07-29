@@ -2439,12 +2439,17 @@ catalog、章節節點與正式 party materialization 尚未閉合。逐指令�
 
 後續已新增綁定同一 FD2.EXE SHA-256 的
 `native_character_catalog.json`，只保存 32 筆 persistent identity 名稱與
-目前有明確文字證據的 class 0–26。`MaterializeNativePersistentPartyRecord`
+原版 class 0–28 文字。`MaterializeNativePersistentPartyRecord`
 可把單筆 record 的身份、職業、能力值、inventory flags/items、command mask
 與 transient bytes 投影成 `battle.Unit`；不填 portrait、sprite、座標、
-出場狀態、spells、attack range 或章節節點。class 27／28 的名稱來源仍互相
-衝突，故一律拒絕，不以 `cls28`、`?` 或「職業28」猜補。這只關閉 record
-materialization，不解除 LOAD／CONTINUE 的正式失敗即關閉閘門。可選的
+出場狀態、spells、attack range 或章節節點。合法 IDA Pro 9.4 已證實
+`0x30B07..0x30B17` 與 `0x310B5..0x310C9` 都直接以 record `+0x20`
+加 FDTXT 索引 150 顯示職業，沒有 0–26 上限；固定雜湊
+`FDTXT_000.bin` 的索引 176／177／178 分別是「？？？」、兩個全形空格、
+「？？？」。因此 class 27 必須保留原版空白文字，class 28 必須顯示
+「？？？」；舊 `cls28`、`?`、「職業28」與「27／28 衝突」均是重製端
+占位或錯誤斷言，已撤回。這只關閉 record materialization，不解除
+LOAD／CONTINUE 的正式失敗即關閉閘門。可選的
 `FD2_NATIVE_SAVE_FIXTURE` 整合測試已在 Docker 唯讀載入使用者
 checksum-valid 原版快照，依實際順序成功產生索爾、悠妮、亞雷斯、蓋亞；
 原版檔不進版控，缺 fixture 時測試明確略過。
