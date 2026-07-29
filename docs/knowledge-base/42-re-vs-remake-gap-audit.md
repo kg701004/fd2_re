@@ -62,7 +62,7 @@ hub→preparation/town 做成可重播 input trace；item effect、AI runtime �
 | 存檔/讀檔 | doc19、doc56 UI-12 | 🟡（自有格式，非 native FD2.SAV） | `save.go`保存campaign節點／旗標／金幣／道具／typed persistent party與deploy/order，四槽bounded selector已有regression；仍缺native roster/metadata相容、原版load UI E2與完整playthrough restore，不能標成原版機制✅ | 高 |
 | BGM 播放 | doc12 | ✅ | `audio.go playBGM`,同曲不重播/換曲釋放語意對齊 `0x26777` | — |
 | SFX(命中/陣亡/選單音) | doc36 | ✅(池對照為近似值,doc36 已註記真實 attack_id→sfx 池對照未 RE 完成) | `audio.go loadSFX/playSFX`,`main.go` 多處呼叫 | — |
-| 出場人數上限(前27章16人/末3章20人) | doc02 §4.6、native `0x318ad` | 🟡 | remake 已把 raw 勾選表的 selection cap 資料化為一般 `party_limit=15`、末路線 `party_limit=19`，並由 preparation UI/測試套用；這是 native 0-based cap 的目前證據，不把顯示人數 16/20 與內部上限混為同一欄。仍待完整 native deployment cursor／overflow 行為與實機 UI 對照 | 中 |
+| 出場人數上限(前27章16人/末3章20人) | doc02 §4.6、native `0x2d093→0x318ad` | 🟡 | remake 已把可選人數門檻資料化為一般 `party_limit=15`、末路線 `party_limit=19`；外層已證實小名冊完全略過選人，超過門檻才進全零勾選表。這是 native 0-based cap 的目前證據，不把持久記錄總數16/20與可選上限15/19混為同一欄。仍待完整 native deployment cursor／overflow 行為與實機 UI 對照 | 中 |
 
 ## RE 側也需要補的缺口(非 remake 落差,附帶記錄)
 

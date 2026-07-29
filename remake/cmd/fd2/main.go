@@ -91,6 +91,9 @@ type Game struct {
 	prepIDs              []int               // preparation UI 角色順序（JOIN chronology）
 	prepSel              int                 // preparation UI 游標
 	prepLimit            int                 // preparation UI 原版出擊上限（15，末段 19）
+	prepSelecting        bool                // 已通過前置確認，且流程要求進入原版選人階段
+	prepConfirm          bool                // 選滿或小隊確認後的最終出戰確認階段
+	prepConfirmSel       int                 // 0=肯定，1=取消
 	churchSel            int                 // church service menu cursor (0..3)
 	churchMode           string              // menu / status_* / transfer_* / revive* / class / class_confirm
 	churchIDs            []int               // current church candidate ids
@@ -2387,6 +2390,31 @@ func (g *Game) applyScenarioPartyJoins() {
 			g.partyMembers[id] = true
 			g.partyJoinOrder = append(g.partyJoinOrder, id)
 		}
+		if _, exists := g.partyRoster[id]; exists || g.st == nil {
+			continue
+		}
+		var joined *battle.Unit
+		for _, unit := range g.st.Units {
+			if unit != nil && unit.Fig == id && unit.Camp == battle.Own {
+				if joined != nil {
+					g.loadErr = fmt.Sprintf("scenario join_party:角色%d有多筆我方記錄", id)
+					joined = nil
+					break
+				}
+				joined = unit
+			}
+		}
+		if joined == nil {
+			if g.loadErr == "" {
+				g.loadErr = fmt.Sprintf("scenario join_party:找不到角色%d的我方記錄", id)
+			}
+			continue
+		}
+		g.initializeEquipmentBases(&battle.State{Units: []*battle.Unit{joined}})
+		if g.partyRoster == nil {
+			g.partyRoster = make(map[int]battle.Unit)
+		}
+		g.partyRoster[id] = cloneNativeShopUnit(*joined)
 	}
 }
 
@@ -2439,6 +2467,9 @@ func (g *Game) setupPreparation(n *campaign.Node) {
 		}
 	}
 	g.prepSel = 0
+	g.prepSelecting = false
+	g.prepConfirm = false
+	g.prepConfirmSel = 0
 	g.prepLimit = 15
 	if n != nil && n.PartyLimit > 0 {
 		g.prepLimit = n.PartyLimit
@@ -2450,15 +2481,10 @@ func (g *Game) setupPreparation(n *campaign.Node) {
 			g.prepLimit = 19
 		}
 	}
-	if len(g.partyDeploy) == 0 {
-		g.partyDeploy = make(map[int]bool)
-		for i, id := range g.prepIDs {
-			if i >= g.prepLimit {
-				break
-			}
-			g.partyDeploy[id] = true
-		}
-	}
+	// 0x318c7 calls memset(flags, 0, 30) on every entry. A previous battle's
+	// deployment and the remake save projection therefore cannot preselect
+	// this native selection pass.
+	g.partyDeploy = make(map[int]bool)
 }
 
 func (g *Game) preparationSelected() int {
@@ -2469,6 +2495,25 @@ func (g *Game) preparationSelected() int {
 		}
 	}
 	return n
+}
+
+// acceptTownDeparturePrompt reproduces the 0x2d13d..0x2d161 caller gate.
+// prepIDs models the selectable records (native [0x53bfb]-1), so at most cap
+// records skip 0x318ad and depart immediately. Larger rosters enter the
+// zero-initialized selection pass.
+func (g *Game) acceptTownDeparturePrompt() bool {
+	if len(g.prepIDs) <= g.prepLimit {
+		return true
+	}
+	g.restartPreparationSelection()
+	return false
+}
+
+func (g *Game) restartPreparationSelection() {
+	g.prepSelecting = true
+	g.prepConfirm = false
+	g.prepConfirmSel = 0
+	g.partyDeploy = make(map[int]bool)
 }
 
 func (g *Game) setupChurch() {
@@ -2774,6 +2819,60 @@ func (g *Game) campInput() bool {
 		return true
 	case "preparation", "church":
 		if n.Type == "preparation" {
+			townBacked := n.Cancel != ""
+			leavePreparation := func(outcome string) {
+				if g.camp.Advance(outcome) != "" {
+					g.enterNode()
+				}
+			}
+			if g.prepConfirm {
+				if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) || inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+					g.prepConfirmSel ^= 1
+				}
+				if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+					if townBacked {
+						leavePreparation("cancel")
+					} else {
+						g.restartPreparationSelection()
+					}
+				}
+				if enter {
+					if g.prepConfirmSel == 0 {
+						leavePreparation("confirm")
+					} else if townBacked {
+						leavePreparation("cancel")
+					} else {
+						g.restartPreparationSelection()
+					}
+				}
+				return true
+			}
+			if !g.prepSelecting {
+				if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) || inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+					g.prepConfirmSel ^= 1
+				}
+				if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+					if townBacked {
+						leavePreparation("cancel")
+					} else {
+						g.restartPreparationSelection()
+					}
+					return true
+				}
+				if enter {
+					if !townBacked {
+						if g.prepConfirmSel == 0 {
+							g.saveGame()
+						}
+						g.restartPreparationSelection()
+					} else if g.prepConfirmSel != 0 {
+						leavePreparation("cancel")
+					} else if g.acceptTownDeparturePrompt() {
+						leavePreparation("confirm")
+					}
+				}
+				return true
+			}
 			if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) && g.prepSel > 0 {
 				g.prepSel--
 			}
@@ -2783,21 +2882,20 @@ func (g *Game) campInput() bool {
 			if enter && len(g.prepIDs) > 0 {
 				id := g.prepIDs[g.prepSel]
 				g.partyDeploy[id] = !g.partyDeploy[id]
-				// 0x318ad automatically leaves once its 0x0f/0x13 quota is met.
-				target := g.prepLimit
-				if len(g.prepIDs) < target {
-					target = len(g.prepIDs)
-				}
-				if g.preparationSelected() >= target {
-					g.camp.Advance("")
-					g.enterNode()
+				// 0x31a68 exits the selection loop once its 0x0f/0x13 quota is
+				// met, but 0x31d3c..0x31db4 still presents final confirmation.
+				if g.preparationSelected() == g.prepLimit {
+					g.prepSelecting = false
+					g.prepConfirm = true
+					g.prepConfirmSel = 0
 				}
 			}
-			// Early campaigns can have fewer joined characters than the native
-			// quota; ESC is the lossless fallback to confirm that smaller roster.
-			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) && g.preparationSelected() > 0 {
-				g.camp.Advance("")
-				g.enterNode()
+			if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+				if townBacked {
+					leavePreparation("cancel")
+				} else {
+					g.restartPreparationSelection()
+				}
 			}
 			return true
 		}
@@ -5989,27 +6087,57 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		fillBox(64, 42, 512, h)
 		g.font.Draw(screen, "出戰整備", 84, 56, 1.2, color.RGBA{0xff, 0xe0, 0x90, 0xff})
-		g.font.Draw(screen, fmt.Sprintf("出擊 %d/%d（↑↓移動，Enter 選擇）", g.preparationSelected(), g.prepLimit), 84, 82, 1.0, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
-		for i, id := range g.prepIDs {
-			x := 88.0
-			if i%2 == 1 {
-				x = 320
+		if !g.prepSelecting && !g.prepConfirm {
+			prompt := n.Prompt
+			if prompt == "" {
+				prompt = "要記錄戰況嗎？"
 			}
-			y := 108 + float64(i/2)*24
-			prefix := "　"
-			c := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
-			if i == g.prepSel {
-				prefix, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
+			g.font.Draw(screen, prompt, 184, 120, 1.0, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+			yesColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			noColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			if g.prepConfirmSel == 0 {
+				yesColor = color.RGBA{0xff, 0xff, 0xff, 0xff}
+			} else {
+				noColor = color.RGBA{0xff, 0xff, 0xff, 0xff}
 			}
-			mark := "□"
-			if g.partyDeploy[id] {
-				mark = "■"
+			g.font.Draw(screen, "是", 240, 158, 0.95, yesColor)
+			g.font.Draw(screen, "否", 370, 158, 0.95, noColor)
+		} else {
+			g.font.Draw(screen, fmt.Sprintf("出擊 %d/%d（↑↓移動，Enter 選擇）", g.preparationSelected(), g.prepLimit), 84, 82, 1.0, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
+			for i, id := range g.prepIDs {
+				x := 88.0
+				if i%2 == 1 {
+					x = 320
+				}
+				y := 108 + float64(i/2)*24
+				prefix := "　"
+				c := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+				if i == g.prepSel {
+					prefix, c = "▶", color.RGBA{0xff, 0xff, 0xff, 0xff}
+				}
+				mark := "□"
+				if g.partyDeploy[id] {
+					mark = "■"
+				}
+				name := fmt.Sprintf("角色%d", id)
+				if u, ok := g.partyRoster[id]; ok && u.Name != "" {
+					name = u.Name
+				}
+				g.font.Draw(screen, fmt.Sprintf("%s%s %s", prefix, mark, name), x, y, 0.95, c)
 			}
-			name := fmt.Sprintf("角色%d", id)
-			if u, ok := g.partyRoster[id]; ok && u.Name != "" {
-				name = u.Name
+		}
+		if g.prepConfirm {
+			fillBox(154, 174, 332, 92)
+			g.font.Draw(screen, "決定以目前成員出戰？", 184, 190, 1.0, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+			yesColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			noColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
+			if g.prepConfirmSel == 0 {
+				yesColor = color.RGBA{0xff, 0xff, 0xff, 0xff}
+			} else {
+				noColor = color.RGBA{0xff, 0xff, 0xff, 0xff}
 			}
-			g.font.Draw(screen, fmt.Sprintf("%s%s %s", prefix, mark, name), x, y, 0.95, c)
+			g.font.Draw(screen, "確認出戰", 218, 222, 0.95, yesColor)
+			g.font.Draw(screen, "取消出發", 350, 222, 0.95, noColor)
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":

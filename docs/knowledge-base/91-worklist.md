@@ -16,7 +16,16 @@
 - [x] **UI-SHOP-TRANSFER-PRODUCTION**：`0x2f8ea`同時由shop service3與church raw1呼叫，不是任一場景專屬。shop production已接FDTXT512 source prompt→全party roster→FDTXT511 empty或`0x2dc55(mode1)` item list→FDTXT510→全party destination roster→FDTXT506 full或raw remove/append/recalc→512 loop。重核撤回「destination排除source」的高階假設：source本人保留為候選，未滿欄時self-transfer會把item以unequipped狀態移到尾端。`ValidateNativeInventoryProjection`與full raw-flag gate原子拒絕投影分歧；Docker/Xvfb production、empty/full/self regression通過。
 - [~] **UI-SHOP-RECIPIENT-INPUT-E2**：原版已實測裝備收件者由selection0按Down到selection1、再按Up回selection0，Left/Right不改selection。production共用純`advanceNativeShopEquipmentRecipient`：bounded Up/Down、horizontal no-op、同tick Up後Down順序與`NativeThreeRowWindow`stateful origin均有直接input regression；helper-level invalid count/selection/start rejection亦有測試，production caller會在索引recipient前fail closed回purchase list。以乾淨原始SAV/TMP加三處已驗route patch重跑，`waitpixel(175,90)=101,121,121`在Down前同步人物動畫相位；0.05／0.20／0.40秒原版樣本分別與remake cycle1／cycle1／cycle0取得整幀AE=0，另兩張對上cycle2，沒有遮罩。故selection0↔1 input/E2已關閉；項目仍為partial是因四人以上scroll尚無原版E2。
 - [x] **RE/UI-TOWN-SECRET-GATE**：Docker Capstone閉合`0x2cd16→0x4e4b9`與`0x2cde0..0x2cef7`：每章0x1f-byte town record `+1`必須等於目前五項selection，`+2`必須等於BIOS Shift/Ctrl/Alt-F1..F10 scan，才把selection寫5。新證據撤回「chord立即進店」：hub先重畫selection5 icon/label，後續Enter才由`0x2d093→0x2d28c`進variant5 shop。23筆已資料化為editable `native_secret_gate`並接runtime；modified F2/F3/F5/F9不再誤觸remake全域shortcut。撤回`found_secret_*`永久顯示第六項等同原版的斷言；ch02 E2已由後續項目閉合，其餘town仍待逐章驗收。
-- [ ] **UI-VIS-PREPARATION**：接LMI1 #0x52 slide、MAP/TURN與YES/NO原生畫面；checkbox panel不得再宣稱原版整備UI。
+- [~] **UI-VIS-PREPARATION**：`0x318ad..0x321c8` 已修正
+  `0x32004` 的輸入正規化，並證實選滿後先由 `0x320fc` 重排隊伍、再走
+  `0x31d3c..0x31db4` 最終確認。外層 `0x2d093` 另證實先顯示 FDTXT
+  `0x201`「要進入戰場嗎？」；可選記錄不超過15／19時完全略過 `0x318ad`，超過才進
+  30個全零選取旗標。城鎮重製流程已改為出發確認→按名冊門檻略過或選人→最終
+  確認，任一取消依可編輯 `cancel` 回城；另以 `0x2cad7` 分開無城鎮路徑的
+  FDTXT `0x19a`「要記錄戰況嗎？」與可選存檔，拒絕時仍進選人。已刪除預先全選與小隊不足按Escape
+  強行出發。正常序章→第1章哈諾加入→戰後同步五人→羅德鎮→整備回歸已通過，
+  並補上後加入角色的持久快照。尚須接選人畫面的原版資源／版面、LMI1 #0x52
+  slide 與實機差分；目前確認框外觀仍是重製殼層，不宣稱原版視覺一致。
 - [ ] **UI-VIS-LOAD**：用原版四槽frame/cursor/metadata畫面取代現代字型loadslots panel，並以native save sandbox做有效槽E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 
@@ -217,7 +226,7 @@
 - [ ] 工具:原版資料自動生成「線性 campaign.json」(parse_field + 劇情 + 商店)→ 原版模式
 - [ ] 引擎 ScenarioRunner 狀態機(節點/轉場/旗標),對齊 `19` + `campaign_sample.json`
 - [~] 商店節點：目前可編輯 `item.json`／shops fixture 保存 215 個 numeric item ID（0..214）與價格；較早「337 筆商品」說法無現行 fixture 支持，已撤回。祕密商店與 town 回返已接、`ClassID`／item type／class equip 白名單、指定收件者與兩階段裝備 prompt 已接；賣出 UI 已接成「Tab→角色→欄位」，`SellSlot` 鎖定原價 75 折並同步移除 equipped flag；`0x1145a/0x1c142` RE 已接入 base+flag 重算與 `<0x80`/`>=0x80` 同類替換；raw `inventory_slots` 保留 source 8 bytes，Load/PartyUnits 依 `0x10f06..0x10f31` materialize 成 runtime 8 slots，內部空槽不再錯移。runtime `0x602ad` item table 的完整邊界／215 rows 對應仍未閉合，故不把它當作 attack UI 的真相；`0x14237→0x14818` 僅鎖定 caller-specific geometry 用途；待：完整 item multiplier/效果碼與原版 UI 對照。
-- [~] 戰後 town/整備流程：campaign_full 的 postbattle→town、連戰 preparation 路線與 shop/rumor return 已盤點；`0x318ad` RE 已鎖定 30-byte 勾選表、一般 cap15／late cap19，remake 已接 `party_limit`、`partyDeploy`、save persistence 與可操作 preparation UI，永久 JOIN roster 不被改寫。church `0x3072f` 已證實四個 raw index→address dispatch（不是四個已命名服務）；`0x2d7bd` 只接受左右鍵並在四項循環。revive fee table、原子 `ReviveUnit`、church selector 與 class-change 候選→唯一 target→確認 mutation 已接；尚待 indexed renderer 與原版數值對照（無免費一般治療）。
+- [~] 戰後 town/整備流程：campaign_full 的 postbattle→town、連戰 preparation 路線與 shop/rumor return 已盤點；城鎮 `0x2d093` 是進戰場確認／小名冊略過選人／取消回城，無城鎮 `0x2cad7` 則是記錄詢問後必進選人；兩路共用 `0x318ad` 的30-byte全零勾選表、一般cap15／late cap19。重製已接分流及 `partyDeploy`，永久 JOIN roster 不被改寫；選人面板仍是重製殼層，尚非原版介面。church `0x3072f` 已證實四個 raw index→address dispatch（不是四個已命名服務）；`0x2d7bd` 只接受左右鍵並在四項循環。revive fee table、原子 `ReviveUnit`、church selector 與 class-change 候選→唯一 target→確認 mutation 已接；尚待 indexed renderer 與原版數值對照（無免費一般治療）。
 - [~] 戰後 town/整備流程：preparation 與 church selector UI 已接；`docs/figures/church-selector.png` 為 xvfb 實機畫面。revive 與 class-change 單一 target mutation 已可保存 roster/gold；尚待完整 xvfb 轉職操作，以及原版 `+0x22/+0x23/+0x24` DX/race/multiplier 欄位資料化。
 - [~] class-change church：已鎖定 `0x3151a..0x3152d` portrait→item gate、`0x31860` inventory 掃描、`0x1b8e7` item 移除與 `0x31571..0x3157a` class/portrait 寫回；`0x526a7` mapping、`0x2a2e8` 成長重算與 editable target resolution 已接，待 raw race/multiplier 欄位與實機回歸。
 - [~] class-change church：`class_change_targets.json` 已校正為兩層可編輯資料：current portrait 0..0x11→default target 與 optional/special override inputs（`0x526a7` 以 current portrait 索引，raw `0xff` 不啟用 optional override），以及 target portrait 0x20..0x41→class/mobility increment (`0x615fe`)；portrait 9 持 item 0x5a 時覆寫為 target 0x34。這些不是玩家同時可選的分支。
@@ -979,7 +988,7 @@
 - [x] **UI-11 preparation timer transition**：Docker Capstone 固定 `0x1a941` 對 0x50-byte record 的 selector/inactive gates、六個 `+0x22..+0x27` counter decrement，以及僅 1→0 才產生 `0x1e1+index` downstream source；新增 `TickNativePreparationTimers` in-place raw planner/regression，不命名狀態或效果。
 - [x] **UI-11 preparation input ABI**：Docker Capstone 固定 `0x19953` 的 raw scancode branches：`E0/52/1C/39→1`、`01/53→-1`、`4B→cursor0`、`4D→cursor1`，其他輸入繼續等待；新增 `ApplyNativePreparationInput` 與 regression，不把 return 1/-1 猜成 YES/NO。
 - [x] **post-resolution raw command stream correction**：重新對照 FDTXT_000，確認 `0x1aa1d` 的 `0x1b0..0x1b3` 是掉落／互動訊息，不是 preparation UI；撤回 `UI-11 preparation command stream` 命名。保留 `0x1ac62` 的 `base+3*i` `{kind byte,payload word}` raw parser（kind 0/1/2/3 observed branches），改名 `ParseNativePostResolutionCommands`，不接 D8。
-- [x] **RE-PREPARATION-INPUT-32004**：Docker Capstone 固定 `0x32004` 的雙 byte raw input contract：`0xe0/0x52` 原樣回傳、`[0x53a8d]==0x20`→`0x1c`、`[0x53a8e]==0x53`→`1`、其餘保留 seeded `0x10`；caller `0x31a29` 對 `1`／`0x1c` 的後續 branch 亦已記錄。新增 `NormalizeNativePreparationKey` regression；不命名按鍵、不接 roster mutation 或 renderer。
+- [x] **RE-PREPARATION-INPUT-32004**：Docker Capstone 重核 `0x32004` 的雙位元組輸入介面：`0xe0/0x52` 與 `[0x53a8d]==0x20` 都正規化為 `0x1c`；只有未走前述分支且 `[0x53a8e]==0x53` 時才回傳 `1`，其餘保留初始值 `0x10`。呼叫端 `0x31a29` 對 `1`／`0x1c` 的後續分支亦已記錄。先前「`0xe0/0x52` 原樣回傳」的錯誤已修正；`NormalizeNativePreparationKey` 只保存位元組介面，不替按鍵或畫面命名。
 - [~] **SDD-3 UI shell vertical slice**：已新增 `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary`，以 title confirm、story→battle、battle win→editable postbattle、town→shop→town 的同一 state trace 固定「戰後不可直跳下一戰」；既有 town/shop/preparation 截圖 artifact 與 Docker/Xvfb regression 可重跑。battle field/action/dialog 的同一條畫面 trace、原版 DOSBox pixel differential 仍待補齊。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [x] **RE-UNIT-STATIC-TABLES**：以 Docker 實際 FD2.EXE 產生/驗證 raw fixture：高 branch `b1-0x44 → 0x61af9` 68×10；lower branch `0x61da1` 32×24／`0x620a1` 68×11。constructor caller 的 level 公式與 `+0x42` join 已由 Capstone 固定；`export_units.py`／`sync_native_selector_fields.py` 將 raw provenance 輸出到 33 張 editable map asset。未被 table 覆蓋的 selector 與 HUD renderer consumer 仍維持 fail-closed；`0x619fd` 不屬於 constructor。

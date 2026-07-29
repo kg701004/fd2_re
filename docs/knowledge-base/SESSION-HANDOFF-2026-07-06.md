@@ -293,7 +293,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 materialization 修正：原始 `inventory_slots` 是 FDFIELD source bytes，不是 runtime 欄位。依 `0x10f06..0x10f31` 的分支，source[0] 為 `0xff` 時 source[1] 會壓入 runtime slot0；否則 source[0]/source[1] 分別進 runtime slot0/1，source[2..7] 保留原位。`Load` 與 `PartyUnits` 現在先 materialize 成 8 格 runtime slots，再建立 compact `Inventory` 與對齊的 `Equipped`；商店、寶箱、配方、死亡獎勵以 runtime slot 操作，避免內部空槽時錯移裝備。核心測試與 `go test -c ./cmd/fd2` 已通過。
 - 2026-07-20 town/preparation audit：`campaign_full.json` 的 ch01→town02、ch02..21→postbattle→town、ch22..24 的連戰 preparation、ch25→town26、ch26→town27、ch27→prep28、ch28→prep29、ch29→prep30、ch30→ending 串接均已盤點；town 的 shop/rumor/church 返回原 town。尚缺的是 `main.go` 的 preparation 編成與 church 行為仍為 placeholder（Enter/ESC 直接 Advance），下一輪需先建立可編輯的 party/deploy/equipment 整備節點與 persistent roster/gold 不丟失測試。
 - 2026-07-20 item range RE（2026-07-27 勘誤）：撤回把 `0x14237` 的 item `+0x0c` 命名為通用 `range_min`、把 `+0x0b/+0x0d` 命名成 `atk_rate/range_max` 的說法。官方 IDA/Capstone 目前只閉合 caller-specific raw geometry：`0x14237` 將 `+0x0b/+0x0c` 以 `a5/a4` 傳入 `0x14818`，`mode<0x10` 排除 inner marker、`mode>=0x10` 走 cross；不能與 normalized weapon range 一一對位。remake 繼續使用獨立驗證的 `weapon_range.json`，完整 item multiplier/effect 仍待 direct producer。
-- 2026-07-20 preparation slice：反組譯 `0x318ad` 證實整備畫面建立 30-byte 勾選表；一般章節 cap=`0x0f` (15)，late route cap=`0x13` (19)，方向鍵移動、Enter 切換角色，達 cap 後自動離開。remake 新增 `Node.party_limit`（ch28–30=19，其他 preparation 以 direct fallback=15）、`Game.partyDeploy` 暫時出擊名冊與 preparation UI；永久 `partyMembers` 不被改寫，下一場 battle 只以 `partyDeploy` filter，避免 JOIN/save roster 遺失。核心測試與 GUI compile 已通過。
+- 2026-07-20 preparation slice（歷史記錄，已由 2026-07-29 外層呼叫端勘誤）：當時只讀 `0x318ad`，尚未發現小名冊會由 `0x2d093` 完全略過選人，且「達 cap 後自動離開」漏了最終確認。30-byte 勾選表與 cap15/19 原始事實保留，其餘流程以文末 2026-07-29 結論為準。
 - 2026-07-20 church RE：`0x3072f` 讀教會服務選擇並分派 `0..3` 到 `0x2ffa5/0x2f8ea/0x30dc3/0x31385`；`0x30dc3` 的 `0x24c` 是「無須復活」訊息，存在死亡候選才用 `0x24d` 選人，確認費用後 `0x2d516` 扣款、清 `[unit+5]` 死亡 flag、把 `[unit+0x42]` 複製到 `[unit+0x40]` 恢復 HP。`0x31385` 的 `0x24f/0x250/0x252` 分別是無候選／選人／確認轉職。教會沒有免費一般治療分支；下一步先資料化 revive/class-change service nodes。
 - 2026-07-20 revive core slice：直接讀出 `0x52669 + class*2` 的 29 筆 u16 class fee table，新增 `docs/data/exe_tables/revive_fee_rates.json` 與 editable runtime copy `remake/assets/data/revive_fee_rates.json`。`campaign.ReviveUnit` 依已證實公式 `feeRate * level` 先驗金額，再原子寫回 HP=MaxHP、清除死亡投影 `OnField`；不足金或非死亡候選不改狀態。尚未把 church selector 接到 UI，也尚未追完 class-change 寫回能力表。
 - 2026-07-20 class-change candidate slice：`campaign.CanChangeClass`／`ClassChangeCandidates` 已接上 `0x31793` 的 exact filter：Lv>=20、portrait<0x12 且 portrait!=7，保留 JOIN order；尚未實作 `0x31860` 道具分支與 `0x2a2e8` class/portrait/能力寫回。
@@ -798,7 +798,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 hotel/preparation subscene raw plan：Docker Capstone 重核 `0x2fc85`，固定 FDOTHER resource `13`、selector `0/1/2→0x2ffa5/0x30012/0x301f4`，selector3→`0x19953→0x197e5`；新增 `fdother.ResolveNativeHotelServiceRoute`，只保存 raw order，不命名服務或接 runtime UI。
 - 2026-07-27 preparation cap correction：Docker Capstone 完整 body 固定 `0x318ad` 以 raw global `[0x53c03] <= 0x1a` 選 cap15、`>0x1a` 選 cap19；新增 `fdother.NativePreparationPartyLimit`，輸入保持 native index，避免把 late route 任意轉成人類章號。
 - 2026-07-27 preparation preview scope correction：Docker Capstone 完整 trace 固定 `0x31e80` 是 selection-table preview consumer：讀 30-byte flags、經 `0x320ce` 計數、依 flag 走 `0x4deda/0x4de56` indexed blit；未見 table/roster writer。撤回把此 body 當 Enter/toggle mutation 的風險，`partyDeploy` mutation 仍與 renderer 分離。
-- 2026-07-27 preparation input loop closure：Docker Capstone 固定 caller `0x31a29→0x32004` 與 raw return contract。`0x32004` 讀 `[0x53a8d/0x53a8e]` 雙 byte input record：`0xe0/0x52` 原樣回傳、`[0x53a8d]==0x20`→`0x1c`、`[0x53a8e]==0x53`→`1`、其餘保留 seeded `0x10`；caller 對 `1`／`0x1c` 才進後續 `0x320ce/0x320fc` branch。新增 `fdother.NormalizeNativePreparationKey` regression，只保存 byte ABI，不命名按鍵、toggle、roster 或 renderer 語意。
+- 2026-07-27 preparation input loop closure（已由 2026-07-29 勘誤）：當時誤記 `0xe0/0x52` 原樣回傳；其餘呼叫端與位元組邊界記錄保留。
 - 2026-07-27 progress-stagnation audit：重檢近期對話與 commit 後確認，反覆挖 offset 的主要原因不是工具 blocker，而是把 E0 raw slice／文件勘誤當成玩家進度；`main.go` 仍集中 scene/input/rules/Draw，UI 缺同一 input trace 的 state＋screenshot gate，30 章 postbattle graph 未逐章驗收。後續新增 RE 必須同輪指定 caller/data contract/runtime consumer/regression，UI 還要 E2 artifact；下一里程碑改為 title→dialog→battle→postbattle hub→preparation/town 垂直鏈，未達前停止無 consumer 的孤立 offset 擴張。
 - 2026-07-27 UI-01 title trace：將 `titleUpdate` 的三項主選單與 native `0x30550` 四槽 selector 抽成純 `TitleMenuState`／`TitleSlotState`，保留 wrap、24-tick confirm flash、load/cancel 與 bounded no-wrap 行為；Ebiten runtime 與 Docker/Xvfb regression 共用同一 transition。這只閉合 input/state trace，不宣稱原版逐幀畫面或 FD2.SAV 相容。
 - 2026-07-27 UI-07/08 campaign menu trace：新增 `campaign.MenuState`，把 `choice/town` hub 的 bounded cursor、空選項 fail-closed 與 confirm→`optN` transition 接到 `campInput`；internal/campaign 與 Docker/Xvfb focused regression 通過。這只閉合可重播 state contract，不命名 town service、不跳過 postbattle handler，逐章 route/E2 仍未完成。
@@ -1944,3 +1944,31 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   差`(184,47)/(184,49)`兩點，下一張同一來源影格即AE=0，故不列為原子畫面。
   `shop-purchase-success-ch02-original-vs-remake.png`已改用四組AE=0影格。
   成功動畫合成切片可升E2；正常未修改玩家路徑與其他商店子面板仍未閉合。
+- 2026-07-29 整備輸入與最終確認勘誤：Docker Capstone 重讀
+  `0x318ad..0x321c8`，確認 `0x32004` 的 `0xe0/0x52` 會直接改寫成
+  `0x1c`，`[0x53a8d]==0x20` 亦優先改寫成 `0x1c`；只有未走前述
+  分支且 `[0x53a8e]==0x53` 時才改寫為 `1`。同一呼叫端證實選取數量達上限時，
+  `0x31a68` 先令 `edi=1` 並由 `0x320fc` 依旗標重排 0x50-byte 隊伍
+  記錄，之後 `0x31d3c..0x31db4` 仍顯示最終確認；不是選滿即直接進
+  戰場。程式已修正位元組正規化；當時暫接的「小隊不足仍進確認」已由
+  下一段外層呼叫端證據撤回。確認框文字與外觀仍是重製介面，不宣稱原版視覺一致。
+- 2026-07-29 整備外層呼叫端勘誤（取代上一段「小隊不足仍進最終確認」）：
+  Docker Capstone 重讀 `0x2d093..0x2d190`，確認城鎮 option2 先顯示
+  FDTXT `0x201`「要進入戰場嗎？」；早期 `[0x53bfb] <= 0x10`、後期
+  `[0x53bfb] <= 0x14` 時完全不呼叫 `0x318ad`，直接離開城鎮。
+  `0x318ad` 又只處理 `[0x53bfb]-1` 筆可選記錄，故門檻正是15／19人。
+  真正進入選人時，`0x318c7` 會把30個旗標全清為零；舊重製的預先全選、
+  每章固定顯示勾選面板、以Escape讓不足上限的小隊出發，三者均已撤回。
+  23個城鎮整備節點新增可編輯 `cancel→town_chNN`；流程改為出發確認→
+  小名冊直接出發／大名冊全零選人→選滿後最終確認，任何取消回城。
+- 同一正常路徑回歸另抓到第1章第3回合哈諾 `join_party` 只更新 membership
+  與 chronology、未建立 `partyRoster`，導致戰後 native-identity sync
+  封閉略過。現改為只從同一戰場中唯一、已成我方且身分相符的真實記錄建立
+  持久快照；缺失或重複仍停止猜造。序章四人→哈諾加入→戰後五筆同步→
+  羅德鎮→整備的連續回歸已通過。`preparation-current-remake.png` 亦從目前
+  原始碼重建為第一階段出發詢問；它仍是重製成果圖，不是原版實機差分。
+- 同日再重讀 `0x2cad7..0x2cd04`，確認無城鎮 gate 才使用 FDTXT `0x19a`
+  「要記錄戰況嗎？」：肯定分支呼叫 `0x30012(0)`，否定分支略過存檔，
+  兩者都進 `0x318ad`；選人取消則重新進全零選取流程。生成器與
+  `campaign_full.json` 已把23個 town-backed prompt 改成「要進入戰場嗎？」，
+  其餘 preparation-only 節點保留記錄詢問，不再混成同一語意。

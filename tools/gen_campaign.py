@@ -681,6 +681,8 @@ def build_campaign(
                 }
             town_id = f"town_ch{intermission_cid}"
             tail_target = preparation_id
+            nodes[preparation_id]["cancel"] = town_id
+            nodes[preparation_id]["prompt"] = "要進入戰場嗎？"
             for sid in shop_node_ids:
                 nodes[sid]["next"] = town_id
             if secret_shop_id:

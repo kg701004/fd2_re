@@ -152,7 +152,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2與逐章route E2 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No、gold0不足金與gold1000裝備收件者selection0/cycle1均達原版DOSBox／production remake同狀態raw RGB整幀相同；recipient E2使用screenshot-only party bootstrap，DX為E2約束的projection而非直接raw dump。正常campaign JOIN→LOADCH首次typed roster已接runtime regression，但尚非完整playthrough E2或native FD2.SAV。另修正pulse double-`/2`、返回selection0、choice-close frame ownership與比較欄位geometry。尚待recipient input/scroll、no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
-| UI-11 | Preparation | JOIN chronology、deploy quota（15／19）、勾選／取消、預覽、F5 save、進戰場 | partial；資料與 quota 有 code，`preparation-current-remake.png` 與 town→preparation trace 已由目前 source 產生；原版 layout/操作未做差分；`0x1f42d` split-slide indexed cell primitive 已閉合 |
+| UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、quota（15／19）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型，早期五人城鎮路徑不再誤顯部署面板；`preparation-current-remake.png` 已由目前原始碼重建。記錄介面、部署畫面的原版版面／資源與實機差分仍缺；`0x1f42d` split-slide indexed cell primitive 已閉合 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector（slot 1 保留舊 `fd2_save.json`，slot 2–4 使用 `fd2_save_1..3.json`），且 `TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證 town 節點存檔後可恢復 persistent party/gold/items 並清除 transient scene；`postbattle_*` 未完成 handler 也由 `TestSaveRejectsUnboundPostbattleBoundary` 拒絕存檔；保存 [`save-town-boundary-ch02.json`](../data/ui-traces/save-town-boundary-ch02.json)。`remake/internal/fdsave` 已提供 raw rolling-XOR/checksum、slot bounds、verified metadata 與 opaque `WriteSlot` adapter；但 native `FD2.SAV` roster/opaque metadata 尚未接入自有 campaign save；4×logical records（`+0x312b+i*0xa28`，`0x28` metadata + roster `0xa00`）仍非相容實作 |
 
 ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
@@ -799,7 +799,7 @@ preparation、inventory gate 與 ending 都必須留在 graph。下一個 SDD-2 
 
 ### 5.3 Native postbattle hub gate（E0，IDA 9.4）
 
-`0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then admits the party to `0x318ad`, whose cap is 15 before the late chapters and 19 afterwards. The Hex-Rays bodies close the subscene boundary further: `0x2e341` selects raw resource `12`, `29`, or `63` for the ordinary/alternate/secret shop branches, dispatches its service choices to `0x2f0b0`, `0x2f642`, `0x2f883`, or `0x2f8ea`, and fades back to the hub; `0x2fc85` loops its hotel choices through `0x2ffa5`, `0x30012`, `0x301f4`, or the character/preparation path using `0x197e5`, then likewise fades back. These callee labels remain address-level names where their service semantics are not independently proven. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. Docker raw-table reading confirms `byte_526b9[22..24]` and `[27..29]` are `1`, while `[0..21]` and `[25..26]` are `0`; in `0x2cad7`, nonzero entries take the preparation-only path and zero entries enter the selectable town hub. Chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
+`0x2d093` is the concrete gate reached from the postbattle loop before the next-battle table. Its raw selection byte `[0x5412b]` dispatches to the recovered scene callers: option `0` calls `0x2fc85` (inn/hotel), options `1` and `3` call `0x2e341` (the weapon/item/secret-shop family), and option `4` calls `0x3072f` (church). Option `2` is the preparation/leave route: it presents the save/confirm text, then calls `0x318ad` only when the selectable roster exceeds 15 before the late chapters or 19 afterwards; smaller rosters depart without opening that selector. The Hex-Rays bodies close the subscene boundary further: `0x2e341` selects raw resource `12`, `29`, or `63` for the ordinary/alternate/secret shop branches, dispatches its service choices to `0x2f0b0`, `0x2f642`, `0x2f883`, or `0x2f8ea`, and fades back to the hub; `0x2fc85` loops its hotel choices through `0x2ffa5`, `0x30012`, `0x301f4`, or the character/preparation path using `0x197e5`, then likewise fades back. These callee labels remain address-level names where their service semantics are not independently proven. Each facility path returns through the hub and the caller restores track 10; the next-battle BGM table is not selected until the outer `0x25de5` loop resumes. Docker raw-table reading confirms `byte_526b9[22..24]` and `[27..29]` are `1`, while `[0..21]` and `[25..26]` are `0`; in `0x2cad7`, nonzero entries take the preparation-only path and zero entries enter the selectable town hub. Chapter indexing is the native next-battle index, not the human-facing battle number. Exact per-chapter text, cursor art, and DOSBox visual timing remain E2 work, but the graph must not collapse these proven hub/prepare branches into a direct next battle.
 
 `fdother.ResolveNativePostbattleRoute` now preserves this gate as editable
 address-level data: nonzero `0x526b9[index]` entries return the raw
@@ -1276,6 +1276,27 @@ The `0x318ad` cap gate is now explicit in
 index rather than a human-facing chapter number, preventing a chapter-label
 conversion from silently changing the original boundary.
 
+The outer owner at `0x2d093` is essential to that interpretation. Town option
+2 first presents FDTXT index `0x201` (“要進入戰場嗎？”); cancellation returns
+from the facility.
+After acceptance, native chapter indices below `0x1b` call `0x318ad` only when
+`[0x53bfb] > 0x10`, while later indices call it only when
+`[0x53bfb] > 0x14`. Because `0x318ad` renders `[0x53bfb]-1` selectable records,
+these are exactly the 15/19 selectable-member boundaries. Smaller rosters skip
+the deployment selector entirely. When selection is required, `0x318c7`
+zeroes all 30 flags; the old remake policy that preselected the first 15/19
+members was therefore wrong. A zero return from `0x318ad` cancels the facility;
+only its accepted final confirmation departs. The editable campaign node now
+stores an explicit cancellation target for town-backed preparation nodes.
+
+The preparation-only branch at `0x2cad7` is different and must not share the
+town prompt. A nonzero `0x526b9[index]` displays FDTXT index `0x19a`
+(“要記錄戰況嗎？”); accepting invokes `0x30012(0)`, while declining skips the
+save call. Both arms then enter `0x318ad`, and a zero return loops back into a
+fresh selection pass. The editable nodes therefore use the battle-entry prompt
+plus a town cancellation target only for town-backed routes; preparation-only
+routes retain the save prompt and no town target.
+
 The first full `0x31e80` trace narrows the neighboring UI contract: it reads
 the caller-owned 30-byte selection table (`[selection+slot]`), counts selected
 entries through `0x320ce`, and chooses the selected/unselected indexed blit
@@ -1288,8 +1309,9 @@ The preparation input wait loop is a separate raw boundary at `0x32004`,
 called by `0x31a29`. It polls `0x10620`; when the DOS key word changes it
 redraws through `0x31e80`, otherwise it reads the two-byte record at
 `0x53a8d/0x53a8e` via `0x36d98`. The verified return-byte branches are
-extended `0xe0/0x52` unchanged, `[0x53a8d]==0x20` to `0x1c`, and
-`[0x53a8e]==0x53` to `1`, with the helper's seeded default `0x10` otherwise.
+extended `0xe0/0x52` to `0x1c`, `[0x53a8d]==0x20` to `0x1c`, and—only
+when neither earlier branch applies—`[0x53a8e]==0x53` to `1`, with the
+helper's seeded default `0x10` otherwise.
 The caller treats return `1` and `0x1c` as raw branch values before invoking
 `0x320ce` and `0x320fc`; the remake captures only this byte contract in
 `NormalizeNativePreparationKey` and does not assign key names, roster

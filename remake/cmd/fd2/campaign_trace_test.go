@@ -127,3 +127,23 @@ func TestCampaignTownPreparationInputTrace(t *testing.T) {
 		t.Fatalf("pre handler→battle=%q", got)
 	}
 }
+
+func TestPreparationCancellationReturnsToEditableTownBoundary(t *testing.T) {
+	c := &campaign.Campaign{
+		Start: "preparation_ch02",
+		Flags: map[string]bool{},
+		Nodes: map[string]*campaign.Node{
+			"town_ch02":        {Type: "town"},
+			"preparation_ch02": {Type: "preparation", Next: "story_ch02_pre", Cancel: "town_ch02"},
+			"story_ch02_pre":   {Type: "cutscene"},
+		},
+	}
+	r := campaign.NewRunner(c)
+	if got := r.Advance("cancel"); got != "town_ch02" {
+		t.Fatalf("preparation cancel=%q, want town_ch02", got)
+	}
+	r.Cur = "preparation_ch02"
+	if got := r.Advance("confirm"); got != "story_ch02_pre" {
+		t.Fatalf("preparation confirm=%q, want story_ch02_pre", got)
+	}
+}

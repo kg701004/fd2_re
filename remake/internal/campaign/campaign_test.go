@@ -534,8 +534,12 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 				}
 			}
 			preparation := campaign.Nodes[preparationID]
-			if preparation == nil || preparation.Type != "preparation" || preparation.Next != nextStory {
+			if preparation == nil || preparation.Type != "preparation" ||
+				preparation.Next != nextStory || preparation.Cancel != townID {
 				t.Fatalf("%s = %#v, want preparation leading to %s", preparationID, preparation, nextStory)
+			}
+			if preparation.Prompt != "要進入戰場嗎？" {
+				t.Fatalf("%s prompt=%q, want town departure confirmation", preparationID, preparation.Prompt)
 			}
 			if story := campaign.Nodes[nextStory]; story == nil || (story.Type != "story" && story.Type != "cutscene") {
 				t.Fatalf("%s departure target = %#v, want next chapter story/cutscene", townID, story)
@@ -560,6 +564,9 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 			prep := campaign.Nodes[prepID]
 			if prep == nil || prep.Type != "preparation" {
 				t.Fatalf("%s = %#v, want non-shop preparation intermission", prepID, prep)
+			}
+			if prep.Prompt != "要記錄戰況嗎？" || prep.Cancel != "" {
+				t.Fatalf("%s prompt/cancel = %q/%q, want preparation-only save prompt", prepID, prep.Prompt, prep.Cancel)
 			}
 			if prep.Next != fmt.Sprintf("story_ch%02d", chapter) {
 				t.Fatalf("%s next = %q, want departure to chapter story", prepID, prep.Next)

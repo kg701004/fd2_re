@@ -1195,6 +1195,51 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 			t.Fatalf("adopted battle lost pending spawn group %d: %#v", group, g.st.PendingGroups)
 		}
 	}
+
+	// Continue through the real chapter-one join event, the compiled postbattle
+	// sync, town, and its editable exit. This is the normal campaign path that
+	// a direct FD2_CAMP_NODE jump deliberately does not reproduce.
+	g.st.Turn = 3
+	g.sc.Fire(g.st, "on_turn_end", "")
+	g.applyScenarioPartyJoins()
+	if !g.partyMembers[1] ||
+		!reflect.DeepEqual(g.partyJoinOrder, []int{0, 9, 4, 30, 1}) {
+		t.Fatalf("chapter-one join chronology=%v members=%#v", g.partyJoinOrder, g.partyMembers)
+	}
+	if got := g.camp.Advance("win"); got != "story_ch02" {
+		t.Fatalf("battle_ch01 win=%q, want story_ch02", got)
+	}
+	g.enterNode()
+	for frame := 0; frame < 10000 && g.camp.NodeID() != "town_ch02"; frame++ {
+		if len(g.dialog) > 0 {
+			g.dialog = nil
+			g.beatAdvance()
+		}
+		g.tick(1)
+		if g.loadErr != "" {
+			t.Fatalf("compiled ch00 post stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+		}
+	}
+	if g.camp.NodeID() != "town_ch02" {
+		t.Fatalf("postbattle did not reach town_ch02: node=%q beat=%d/%d", g.camp.NodeID(), g.beatIdx, len(g.beats))
+	}
+	if len(g.partyRoster) != 5 {
+		t.Fatalf("postbattle persistent roster=%#v, want five joined records", g.partyRoster)
+	}
+	if got := g.camp.Advance("opt2"); got != "preparation_ch02" {
+		t.Fatalf("town exit=%q, want preparation_ch02", got)
+	}
+	g.enterNode()
+	if !reflect.DeepEqual(g.prepIDs, []int{0, 9, 4, 30, 1}) ||
+		g.preparationSelected() != 0 || g.prepSelecting || g.prepConfirm {
+		t.Fatalf(
+			"normal preparation entry ids=%v selected=%d selecting=%v confirm=%v",
+			g.prepIDs, g.preparationSelected(), g.prepSelecting, g.prepConfirm,
+		)
+	}
+	if !g.acceptTownDeparturePrompt() {
+		t.Fatal("five-member early roster should skip 0x318ad after record confirmation")
+	}
 }
 
 func TestChapter1PreLoadCHUsesFiveMemberJoinOrderAndSpawnFrontiers(t *testing.T) {

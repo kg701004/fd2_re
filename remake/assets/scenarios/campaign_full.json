@@ -4816,107 +4816,128 @@
   },
   "preparation_ch02": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch02",
    "next": "story_ch02_pre"
   },
   "preparation_ch03": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch03",
    "next": "story_ch03"
   },
   "preparation_ch04": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch04",
    "next": "story_ch04"
   },
   "preparation_ch05": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch05",
    "next": "story_ch05"
   },
   "preparation_ch06": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch06",
    "next": "story_ch06"
   },
   "preparation_ch07": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch07",
    "next": "story_ch07"
   },
   "preparation_ch08": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch08",
    "next": "story_ch08"
   },
   "preparation_ch09": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch09",
    "next": "story_ch09"
   },
   "preparation_ch10": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch10",
    "next": "story_ch10"
   },
   "preparation_ch11": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch11",
    "next": "story_ch11"
   },
   "preparation_ch12": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch12",
    "next": "story_ch12"
   },
   "preparation_ch13": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch13",
    "next": "story_ch13"
   },
   "preparation_ch14": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch14",
    "next": "story_ch14"
   },
   "preparation_ch15": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch15",
    "next": "story_ch15"
   },
   "preparation_ch16": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch16",
    "next": "story_ch16"
   },
   "preparation_ch17": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch17",
    "next": "story_ch17"
   },
   "preparation_ch18": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch18",
    "next": "story_ch18"
   },
   "preparation_ch19": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch19",
    "next": "story_ch19"
   },
   "preparation_ch20": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch20",
    "next": "story_ch20"
   },
   "preparation_ch21": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch21",
    "next": "story_ch21"
   },
   "preparation_ch22": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch22",
    "next": "story_ch22"
   },
   "preparation_ch23": {
@@ -4936,12 +4957,14 @@
   },
   "preparation_ch26": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch26",
    "next": "story_ch26"
   },
   "preparation_ch27": {
    "type": "preparation",
-   "prompt": "要記錄戰況嗎？",
+   "prompt": "要進入戰場嗎？",
+   "cancel": "town_ch27",
    "next": "story_ch27"
   },
   "preparation_ch28": {

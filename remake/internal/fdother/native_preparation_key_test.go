@@ -9,10 +9,11 @@ func TestNormalizeNativePreparationKeyPreserves32004Branches(t *testing.T) {
 		raw53a8e byte
 		want     byte
 	}{
-		{"extended-e0", 0x20, 0xe0, 0xe0},
-		{"extended-52", 0x20, 0x52, 0x52},
+		{"extended-e0", 0x00, 0xe0, 0x1c},
+		{"extended-52", 0x00, 0x52, 0x1c},
 		{"space-record", 0x20, 0x10, 0x1c},
-		{"53-overrides-space", 0x20, 0x53, 1},
+		{"53-without-space", 0x00, 0x53, 1},
+		{"space-precedes-53", 0x20, 0x53, 0x1c},
 		{"seed-default", 0x00, 0x10, 0x10},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

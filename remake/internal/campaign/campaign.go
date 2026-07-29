@@ -380,6 +380,7 @@ type Node struct {
 	IfInsufficient    string                `json:"if_insufficient,omitempty"`     // inventory_recipe:命中數不符 arm
 	Prompt            string                `json:"prompt,omitempty"`              // choice/preparation
 	PartyLimit        int                   `json:"party_limit,omitempty"`         // preparation: original 0x318ad selection cap (15, late route 19)
+	Cancel            string                `json:"cancel,omitempty"`              // preparation: native confirmation/selection cancellation target
 	Town              string                `json:"town,omitempty"`                // town:原版戰後城鎮/營地名稱(可編輯、可存檔的整備 hub)
 	NativeTownVariant *int                  `json:"native_town_variant,omitempty"` // town:0/1/2→FDOTHER#11/#61/#62
 	NativeSecretGate  *NativeTownSecretGate `json:"native_secret_gate,omitempty"`  // town:selection+BIOS scan→reveal selection5
@@ -423,7 +424,7 @@ func Load(path string) (*Campaign, error) {
 		return nil
 	}
 	for id, n := range c.Nodes {
-		for _, to := range []string{n.Next, n.OnWin, n.OnLose, n.IfPresent, n.IfMissing, n.IfCrafted, n.IfInsufficient} {
+		for _, to := range []string{n.Next, n.Cancel, n.OnWin, n.OnLose, n.IfPresent, n.IfMissing, n.IfCrafted, n.IfInsufficient} {
 			if err := check(id, to); err != nil {
 				return nil, err
 			}
@@ -624,6 +625,12 @@ func (r *Runner) Advance(outcome string) string {
 			next = n.IfCrafted
 		} else if outcome == "insufficient" {
 			next = n.IfInsufficient
+		}
+	case "preparation":
+		if outcome == "cancel" {
+			next = n.Cancel
+		} else {
+			next = n.Next
 		}
 	case "ending":
 		next = ""

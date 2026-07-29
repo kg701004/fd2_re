@@ -238,7 +238,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 布衣裝備收件者 selection1（原版由selection0按Down；左原版、右remake cycle1；exact-pixel相位同步後整幀AE=0） | ![shop equipment recipient selection1 original and remake](docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png) |
 | ch02 武器購買成功前四幀（上原版DOSBox、下remake；裸商店存底不提前覆蓋DATO第0幀，每格未遮罩整幀AE=0） | ![shop purchase success original and remake](docs/figures/shop-purchase-success-ch02-original-vs-remake.png) |
 | ch02 購買扣款 `1000→950` 五個phase（上原版DOSBox內建capture、下remake；涵蓋roll早／中／末段，每格整幀AE=0） | ![shop purchase debit original and remake](docs/figures/shop-purchase-debit-ch02-original-vs-remake.png) |
-| 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
+| 最新城鎮出發第一階段（2026-07-29；已依 `0x2d093` 改為「要進入戰場嗎？」，非原版像素對照） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
 | 原版資源 indexed 購買商品 child panel（`0x2e0bd→0x2dc55(mode0)`；item0–5／full-price fixture，非 DOSBox 截圖） | ![native indexed shop purchase list](docs/figures/native-shop-purchase-list-indexed.png) |
