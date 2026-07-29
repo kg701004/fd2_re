@@ -490,6 +490,8 @@ type State struct {
 	NativeEventState         [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
 	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
 	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
+	NativeFieldEventSlots    []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
+	NativeFieldEvents        []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
 	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
 	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
 	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
@@ -526,6 +528,13 @@ type Treasure struct {
 	Kind   string
 	Value  int
 	Hidden bool
+}
+
+// NativeFieldEvent 是 FDFIELD 控制段的原始兩位元組格子事件列。
+// 0x13a44 只把 EventID 寫入全域 selector；高階玩法名稱仍由 handler 證據決定。
+type NativeFieldEvent struct {
+	EventID  byte `json:"event_id"`
+	Selector byte `json:"selector"`
 }
 
 // TreasureAt 查詢尚未取得的寶物格。
@@ -781,6 +790,7 @@ func Load(path string) (*State, error) {
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
+	st.NativeFieldEventSlots, st.NativeFieldEvents = loadNativeFieldEvents(mapPath, f.W, f.H)
 	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
 	// 0x4dbfc is the runtime constructor for composition byte+3: it replaces
 	// every serialized value with 0xff before 0x14818/0x122dc mutate the grid.
@@ -794,15 +804,17 @@ func Load(path string) (*State, error) {
 
 // mapCostFile map.json 裡跟地形成本相關的欄位(其餘欄位 main.go 的 MapData 自己讀,這裡只挑 cost 用)。
 type mapCostFile struct {
-	W                    int    `json:"w"`
-	H                    int    `json:"h"`
-	Cost                 []int  `json:"cost"`
-	NativeTargetFlags    []byte `json:"native_target_flags"`
-	NativeTileBlitModes  []byte `json:"native_tile_blit_modes"`
-	NativeTerrainControl []byte `json:"native_terrain_control"`
-	Tiles                []int  `json:"tiles"`
-	TreasureSlots        []int  `json:"treasure_slots"`
-	TreasureHidden       []bool `json:"treasure_hidden"`
+	W                     int                `json:"w"`
+	H                     int                `json:"h"`
+	Cost                  []int              `json:"cost"`
+	NativeTargetFlags     []byte             `json:"native_target_flags"`
+	NativeFieldEventSlots []int              `json:"native_field_event_slots"`
+	NativeFieldEvents     []NativeFieldEvent `json:"native_field_events"`
+	NativeTileBlitModes   []byte             `json:"native_tile_blit_modes"`
+	NativeTerrainControl  []byte             `json:"native_terrain_control"`
+	Tiles                 []int              `json:"tiles"`
+	TreasureSlots         []int              `json:"treasure_slots"`
+	TreasureHidden        []bool             `json:"treasure_hidden"`
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -868,6 +880,31 @@ func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
 		return nil
 	}
 	return append([]byte(nil), m.NativeTargetFlags...)
+}
+
+func loadNativeFieldEvents(
+	mapJSONPath string,
+	w, h int,
+) ([]int, []NativeFieldEvent) {
+	raw, err := os.ReadFile(mapJSONPath)
+	if err != nil {
+		return nil, nil
+	}
+	var m mapCostFile
+	if json.Unmarshal(raw, &m) != nil ||
+		m.W != w ||
+		m.H != h ||
+		len(m.NativeFieldEventSlots) != w*h ||
+		len(m.NativeFieldEvents) != 16 {
+		return nil, nil
+	}
+	for _, slot := range m.NativeFieldEventSlots {
+		if slot < -1 || slot >= len(m.NativeFieldEvents) {
+			return nil, nil
+		}
+	}
+	return append([]int(nil), m.NativeFieldEventSlots...),
+		append([]NativeFieldEvent(nil), m.NativeFieldEvents...)
 }
 
 // loadNativeTerrainRendererInputs accepts only a complete map export. It

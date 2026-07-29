@@ -2177,8 +2177,16 @@ item category or church service name.
 `min(currentHP+floor(maxHP/5),maxHP)`。玩家休息正式路徑也已刪除錯誤的
 「至少回復 1」近似，改讀 `NativeTransient[3:5]`。
 
-模式 11 的唯一已知 runtime source 是 `0x35F92`：
+模式 11 的唯一已知 runtime source 是全域事件 82 handler `0x35F92`：
 battle-local state entry `+0x10` 等於 4 時，`0x36078` 透過
-`0x3419C(20,20,11)` 只改單位索引 20 的低四位。它位於 30-entry
-函式表的 entry 22，且合法 IDA 顯示多個 generic dispatcher xrefs；
-函式表的高階名稱與一般玩家觸發條件仍未閉合，不得命名成章節或人物事件。
+`0x3419C(20,20,11)` 只改單位索引 20 的低四位。它位於
+`0x51B91 + 82*4`，且合法 IDA 顯示多個通用 dispatcher 交叉參照；
+一般玩家觸發條件仍未閉合，33 張 FDFIELD 格子事件表也沒有 event 82，
+不得命名成踩格、章節或人物事件。
+
+FDFIELD 控制段 `+0x33` 起的 32 bytes 已更正為 16 筆
+`(event_id, selector)` 格子事件列。地圖構成 event-word low5 是 1-based
+slot；只有 FDSHAP 地形控制 byte0 的 `0x20/0x40` 皆未設置時才採此解釋。
+33 張可編輯 `map.json` 保存 `native_field_event_slots` 與
+`native_field_events`；`battle.NativeFieldEventIDAt` 僅執行已證實的
+slot、`0xFF` 與 selector gate，尚未猜測性 dispatch 未解 handler。

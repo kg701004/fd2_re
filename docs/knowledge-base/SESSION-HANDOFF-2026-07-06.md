@@ -780,7 +780,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 command-23 caller scope correction（Docker Capstone）：`0x250cc` chapter-ending/post handler 也在 `0x1c2da` 後呼叫 `0x22253`（unit=1、pre-render `0xff/0xff`、record raw `+0/+1`），接著才進 `0x25089` cleanup 與 `0x2bce5` ending renderer；因此 `0x22253` 不得命名為 command-23 專屬。raw writer 已閉合，但 ending layout/renderer 與 campaign semantics 仍 fail-closed。
 - 2026-07-26 `0x250cc` ending branch audit（Docker Capstone）：`0x25348` 依序呈現 FDOTHER `#0x0d/#0x0e/#0x0f`、呼 `0x1c2da`、共用 `0x22253` 寫 unit=1 raw `+0/+1`、再呈現 `#0x10`，最後 `0x25089→0x2bce5` self-loop。只保存 call order；`0x24b14` 回傳與 frame 語意未命名，不能拿此終局分支接一般戰後 town/shop。
 - 2026-07-26 raw inventory gate closure（Docker Capstone）：`0x24b14(item)` 掃 unit `0..15`，`0x31860` 先取 `0x1b8a6` 的 occupied/prefix count（clear flag bit7），再以 `0x1b722` 比對 `record+0x0b+2*slot` 的 prefix item bytes；新增 `battle.FindNativeInventoryItemInUnit`／`FindNativeInventoryItem` read-only regression。成功不移除 item，`0x64` 的 ch26 branch 仍只作 gate，缺匙/演出/後續 campaign 不由此函式推論。更正 runtime 接線：`partyHasItemID` 只是不帶 raw flags 的 normalized compatibility projection，尚不能宣稱與 native 等價。
-- 2026-07-27 worklist assertion cleanup：移除歷史 WBS 中「`0x22e5c` 尚待反組譯、負責 event_id→group 增援」的現況暗示。`25` §6.1 已證實 `0x22e5c` 是章1專屬固定中場過場；真正增援鏈是 `0x1a813` 的 turn/camp filter → `0x51b91` 58-entry handler table → spawn 原語。worklist 改列為已更正，避免重複投入錯誤 RE 路徑。
+- 2026-07-27 worklist assertion cleanup：移除歷史 WBS 中「`0x22e5c` 尚待反組譯、負責 event_id→group 增援」的現況暗示。`25` §6.1 已證實 `0x22e5c` 是章1專屬固定中場過場；真正增援鏈是 `0x1a813` 的 turn/camp filter → `0x51b91` handler table → spawn 原語。當時仍誤把全表寫成 58 entries；2026-07-29 已更正為全域 90 entries、FDFIELD 子集合 0..57。
 - 2026-07-27 constructor inventory flags：官方 IDA `0x10c50` 釘死八格 flag 初始化與 `0x2f8ea` signed-byte gate；`0x40` equipped 與 `0x00` ordinary 都可進 caller list，只有 `0x80` reserved 排除。新增 raw flags adapter/regression，Load/PartyUnits 在有 `inventory_slots` 時保留 flags；撤回「church transfer 只接受未裝備物品」的錯誤斷言。
 - 2026-07-27 attack overlay predicate：官方 IDA `0x1b83d` 釘死 `flag&0x40`＋item `<0x80`/`>=0x80` 分支與 first-slot return；新增 `NativeEquippedInventorySlot`，overlay 有 raw constructor flags 時不再用 `Equipped` projection 冒充 attack precondition。
 - 2026-07-27 item availability gate：`0x1b8a6` 的八格 signed flag count 已接 `NativeInventoryAvailableCount`，action overlay 有 raw flags 時不再以 compact `len(Inventory)` 冒充 item availability；legacy 無 provenance 才 fallback。
@@ -2108,7 +2108,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `0x13FD4` 已閉合為 raw `+0x25/+0x26` 皆零時的 HP 回復：
   `min(currentHP+floor(maxHP/5),maxHP)`。新增 state-only adapter，
   玩家休息正式路徑也移除「至少回復 1」錯誤近似並接 raw transient gates。
-- 初始 FDFIELD 沒有 mode 11；唯一已知 writer 是 `0x35F92` 內
+- 初始 FDFIELD 沒有 mode 11；唯一已知 writer 是全域 event 82 handler
+  `0x35F92` 內
   `[0x53AD5]+0x10==4 → 0x3419C(20,20,11)`。IDA 確認函式邊界與 generic
-  dispatcher xrefs，但 30-entry table entry22 的高階名稱／一般玩家觸發
-  仍未知，禁止命名成特定人物、章節或狂暴。
+  dispatcher xrefs，但一般玩家觸發仍未知；33 張 FDFIELD 格子事件表沒有
+  event 82，禁止命名成踩格、特定人物、章節或狂暴。
+
+## 2026-07-29：全域事件表與格子事件更正
+
+- `0x51B91` 的重定位連續到 `0x51CF5`，是 event 0..89 共 90 entries；
+  先前依 FDFIELD turn-events 最大值截成 58 entries 的說法已撤回。
+- `0x35F92` 是 slot 82 指向的全域 event handler，不是另一張 30-entry
+  function table 的 entry 22。
+- `0x13A44` 證實 FDFIELD 控制段 `+0x33` 是 16×2
+  `(event_id,selector)` 格子事件表。地圖 event-word low5 是 1-based
+  slot，且 FDSHAP control byte0 的 `0x20/0x40` 皆零才走此路徑。
+- 33 張 `map.json` 已同步 `native_field_event_slots` 與
+  `native_field_events`，重製端只提供失敗即關閉的 selector 查詢，尚未
+  dispatch 未解 handler。全圖沒有 event 82，這是排除「mode 11 writer
+  由踩格觸發」的直接資料證據。

@@ -97,6 +97,7 @@ def main(argv):
         cost_arr = []
         treasure_slots = []
         treasure_hidden = []
+        native_field_event_slots = []
         for ti, event_word in zip(tilesidx, event_words):
             if 0 <= ti < len(costs):
                 cost_arr.append(costs[ti])
@@ -104,18 +105,25 @@ def main(argv):
                 if flags & 0x60:  # 0x20=普通寶箱、0x40=隱藏物品
                     treasure_slots.append(event_word & 0x1F)
                     treasure_hidden.append(bool(flags & 0x40))
+                    native_field_event_slots.append(-1)
                 else:
                     treasure_slots.append(-1)
                     treasure_hidden.append(False)
+                    raw_slot = event_word & 0x1F
+                    native_field_event_slots.append(raw_slot - 1 if raw_slot else -1)
             else:
                 cost_arr.append(1)
                 treasure_slots.append(-1)
                 treasure_hidden.append(False)
+                native_field_event_slots.append(-1)
                 oob += 1
         meta["cost"] = cost_arr
         # 與 tiles/cost 同為 row-major 陣列。slot0 合法，-1 才表示非寶箱格。
         meta["treasure_slots"] = treasure_slots
         meta["treasure_hidden"] = treasure_hidden
+        # 0x13a44 只在地形 control byte 不含 0x60 時，把 low5 視為
+        # 1-based 格子事件 slot；-1 明確表示該格不進入 native event table。
+        meta["native_field_event_slots"] = native_field_event_slots
         if oob:
             print(f"警告:{oob} 格 tile index 超出地形表範圍({len(costs)} 格),已回退 cost=1")
     json.dump(meta, open(os.path.join(out, "map.json"), "w"), separators=(",", ":"))

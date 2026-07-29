@@ -117,11 +117,20 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 0x01a852  jne next
 0x01a854  movzx eax, byte[eax+4]   ; eax = turn_events[i].event_id ★
 0x01a858  push 0
-0x01a85a  call [eax*4 + 0x51b91]   ; ★★★ event_id → handler 跳表(58 entry,id 0-57 全域)
+0x01a85a  call [eax*4 + 0x51b91]   ; ★★★ event_id → handler 跳表
 ```
 
 即:`turn==目前回合` 且 `camp==呼叫端 filter` 的記錄,取其 `event_id`,呼叫 `[event_id*4+0x51b91]`。
-`0x51b91` 是**與 §1 的 `0x51b19`(章節×30)不同的另一張跳表**——**全域 event_id×58**,`jtab` 解出全 58 entry(0x341db…0x354dd)。[驗]
+`0x51b91` 是**與 §1 的 `0x51b19`(章節×30)不同的另一張跳表**。
+舊版因 FDFIELD `turn_events.event_id` 只出現 0..57，誤把全表截成 58 項；
+重定位資料實際連續到 `0x51cf5`，共 **90 entries（event_id 0..89）**，
+下一筆 `0x51cf9` 已是其他資料。[驗]
+
+0..57 的 handler 為 `0x341db..0x354dd`，是目前 FDFIELD 回合事件使用的
+子集合；58..89 為 `0x354fe..0x360f8`，另有玩家操作、格子互動、單位行動
+等通用 dispatcher 參照同一張表。例：event 82 的 table slot 是
+`0x51b91 + 82*4 = 0x51cd9`，指向 `0x35f92`。因此「回合增援事件只用
+0..57」可以保留，但「全域跳表只有 58 項」是錯誤斷言。
 
 **event_id handler 內部(同 §2 結論:仍是硬編碼函式,非 byte-code)**:handler 呼叫兩個 spawn 原語:
 
@@ -135,10 +144,34 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 `event_id` 在連續多回合重複出現(如 map7/章8 的 event_id27 於 turn 2-7 各出現一次):每回合觸發同一 handler,
 但 group_id=當下回合數,達成「每回合多放一波、group 編號＝回合數」的遞增增援。[驗]
 
-**工具**:`tools/extract_event_id_groups.py` 走訪 58 個 handler 自身的 basic-block 鏈(call 過站不進入、遇 ret 停止,
+**工具**:`tools/extract_event_id_groups.py` 走訪 90 個 handler 自身的 basic-block 鏈(call 過站不進入、遇 ret 停止,
 避免線性 sweep 漂移),擷取 `push <group_id>; call spawn_group[_with_intro]`,輸出 `docs/data/event_id_groups.json`。
-58 個 handler 中 20 個解出字面 group、5 個解出動態(`$turn_counter`)、其餘 33 個掃描視窗內無 spawn 呼叫
-(推測為純對話/AI模式切換/目標判定類事件,無新單位進場)。[驗/推]
+輸出同時保存 FDFIELD 未直接引用的 58..89，避免再把全域事件表誤當成
+turn-events-only 表。無 spawn 呼叫只能證明該 handler 未呼叫兩個已知
+spawn 原語，不足以命名成純對話、人工智慧或目標判定。[驗]
+
+### 6.2 格子事件 selector：`0x13A44` 與控制段 16×2 表 [驗]
+
+`0x13A44(x,y,selector)` 先由 `0x12E38` 讀取該格的地圖構成資料。地圖格
+第二個 word 的低 5 位不是直接的 event_id，而是 **1-based 槽號**：
+零表示沒有槽，1..16 對應控制段 `+0x33` 起的 16 筆兩位元組列。
+每列第一 byte 是全域 event_id，第二 byte 必須等於呼叫端 selector；
+event_id `0xFF` 或 selector 不符時不寫入 `[0x51A8F]`。
+
+同一個低 5 位欄位也可表示寶箱，所以還有一層必要 gate：FDSHAP 對應 tile
+的地形控制 byte0 若含 `0x20` 或 `0x40`，便走寶箱／隱藏物品路徑；
+兩 bit 皆零才可當作格子事件槽。這也把 FDFIELD 控制段的舊
+「保留 16×2 bytes」斷言更正為可編輯的格子事件表。
+
+`tools/sync_native_field_events.py` 從固定雜湊的 FDFIELD／FDSHAP 原始資源
+重建 33 張地圖的 `native_field_event_slots` 與 `native_field_events`。
+`battle.NativeFieldEventIDAt` 保存邊界及 selector 比對，但尚未把未知
+handler 接到正式戰鬥流程；資料缺失、越界或不符時一律失敗即關閉。
+
+全圖掃描亦提供否定證據：event 82 沒有出現在任何格子事件列，因此
+`0x35F92` 的一般玩家觸發不能命名成踩格事件。格子實際引用的 58 以上
+event_id 為 59、60、61、62、65、69、75、80、84；另有 `0xFF` 空列，
+不可當作 handler。[驗]
 
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
@@ -314,7 +347,8 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 ## 8. 受阻 / 待續
 
 - **[已解,見 §6.1]** ~~`turn_events.event_id → group` 對應機制(先前疑 `0x22e5c`,未解)~~ →
-  真正消費點是 `0x1a813`(3 呼叫點 camp filter)+ 全域 `event_id` 跳表 `0x51b91`(58 entry)+
+  真正消費點是 `0x1a813`(3 呼叫點 camp filter)+ 全域 `event_id` 跳表 `0x51b91`
+  （全表 90 entries；FDFIELD 回合事件使用 0..57）+
   spawn 原語 `0x10b4e`/`0x32999`;`0x22e5c` 只是第1章專屬固定過場,與 turn_events 無關。
   map0/章1 event→group mapping 4/4交叉吻合，`docs/data/turn_events.json` 已補 `groups` 欄；不代表完整章節handler已驗。
 - **[已解,範圍限定見 doc 26]** ~~18 battle-event skeleton 語意 + 動作函式~~ → `docs/data/battle_events.json` 目前匯出的 battle-event skeleton 未記錄 action_fns，故該資料集只保存條件→設碼/繪圖；這不能外推到含 dialog/acting/sync/JOIN 的 postbattle cutscene handlers。條件原語與 raw caller 仍以各 handler CFG 為準。

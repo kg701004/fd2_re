@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""炎龍騎士團2 — turn_events.event_id → FDFIELD group 對應機制擷取。
+"""炎龍騎士團2 — 全域 event_id handler 與 FDFIELD group 對應擷取。
 
-`0x51b91`(58 entry,event_id 0-57 全域)是**真正消費 turn_events.event_id 的跳表**
+`0x51b91` 是 90-entry、event_id 0..89 的全域跳表。FDFIELD
+turn_events 目前只使用 0..57；58..89 仍可由玩家操作、格子互動、
+單位行動與其他 dispatcher 選中，不能因 FDFIELD 分布較窄就截斷跳表。
+它也是**真正消費 turn_events.event_id 的跳表**
 (不是 doc25 §6 早先猜測的 `0x22e5c`——那支只是章1專屬的單次過場演出,
 call graph 顯示唯一 caller 是 0x25de5,固定寫死,不讀 FDFIELD)。
 
@@ -166,7 +169,7 @@ def jtab(tab, count):
 
 
 if __name__ == '__main__':
-    handlers = jtab(0x51b91, 58)
+    handlers = jtab(0x51b91, 90)
     results = {}
     for eid, h in enumerate(handlers):
         spawns = walk_handler(h)

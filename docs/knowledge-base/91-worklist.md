@@ -154,8 +154,10 @@
 - [x] **RE-AI-MODE-WRITER-3419C**：閉合 `0x3419C` inclusive range writer 的保留高四位規則，以及 `0x13D20`／章節處理器的 whole-byte writes；新增 fail-closed materializer 與 writer regression。
 - [x] **RE-AI-MODE2/11-BRANCHES**：Docker Capstone 與合法 IDA 閉合 mode 2 為 `0x14EF0` 失敗後 `0x14237→0x13FD4`，不走 `0x13E9C`；mode 11 依 `[0x53C23]`／`[0x53C4F]` 兩個獨立 signed `>=6` gate，第一段後仍評估物理第二段。新增 raw call-plan regression。
 - [x] **RE-AI-IDLE-RECOVERY-13FD4**：`0x13FD4` 只在 currentHP≠maxHP 且 raw `+0x25/+0x26==0` 時回復 `floor(maxHP/5)` 並封頂；新增 state-only adapter，玩家休息正式路徑同步刪除錯誤的最少回復 1 並接 raw transient gates。
-- [x] **RE-AI-MODE11-WRITER-35F92**：`[0x53AD5]+0x10==4` 時，`0x36078→0x3419C(20,20,11)` 改寫單位 20 低四位；IDA 確認函式邊界與 generic dispatcher xrefs。30-entry table entry22 的高階名稱／一般玩家觸發尚未閉合，不猜章節或人物。
-- [~] **REMAKE-AI-MODE-RUNTIME**：模式 2/11 raw planner 與 `0x13FD4` mutation 已閉合，但其餘模式玩法名稱、函式表 entry22 觸發、完整回合 orchestration 及 `NextAIPlan` production 接線仍未完成。`set_ai:berserk` 仍只是 inert 事件標記。
+- [x] **RE-AI-MODE11-WRITER-35F92**：`[0x53AD5]+0x10==4` 時，`0x36078→0x3419C(20,20,11)` 改寫單位 20 低四位；它是全域 90-entry 表的 event 82，不是第二張 30-entry 表的 entry 22。一般玩家觸發尚未閉合，且 33 張格子事件表沒有 event 82，不猜章節或人物。
+- [~] **REMAKE-AI-MODE-RUNTIME**：模式 2/11 raw planner 與 `0x13FD4` mutation 已閉合，但其餘模式玩法名稱、event 82 觸發、完整回合 orchestration 及 `NextAIPlan` production 接線仍未完成。`set_ai:berserk` 仍只是 inert 事件標記。
+- [x] **RE-FIELD-EVENT-13A44**：閉合地圖 event-word low5 的 1-based slot、FDSHAP `0x20/0x40` 寶箱 gate、FDFIELD 控制段 16×2 `(event_id,selector)` 與 `0xFF` gate；33 張地圖已同步為可編輯資料並有失敗即關閉查詢。
+- [~] **REMAKE-GLOBAL-EVENT-DISPATCH**：全域 `0x51B91` 已由錯誤的 58 entries 更正為 90 entries；回合事件使用 0..57，格子事件只覆蓋另一子集合。58..89 handler 的高階語意與各 dispatcher 的 selector 生產路徑仍須逐一閉合，未知 handler 不接正式流程。
 - [x] **RE-PHASE-RESOURCE-1A7BD**：Docker Capstone 固定 `0x1A7BD` 是 `[0x53AF9]` gate 下的 `0x111BA(0x1A4D,0,0x40)` resource-handle setup，`0x1A7F1` 釋放 `[0x53B0F]`；已從 transient selector／campaign phase 語意中分離。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`
@@ -546,13 +548,13 @@
       新增 6 個測試(`move_test.go`)。**限制**:僅步行成本,騎兵/飛行差異(notes.md 另有數字)
       待 Unit 加兵種欄位才能接;地形 AP/DP 戰鬥加成本輪未接。
 - [x] **0x22e5c 語意更正**：已確認它是章1專屬固定中場過場，並非 `turn_events.event_id→group` 消費點；
-      真正增援消費鏈為 `0x1a813`（turn/camp filter）→`0x51b91`（58-entry event handler table）→spawn 原語。
+      真正增援消費鏈為 `0x1a813`（turn/camp filter）→`0x51b91`（全域 90-entry 表中的 FDFIELD 子集合 0..57）→spawn 原語。
       舊「待反組譯 0x22e5c→接增援」條目已撤回，詳見 `25` §6.1；不得重開同一錯誤工作。
 - [ ] ch04-33 劇情文本精校(30 章,PNG 人眼轉錄;對白已可入庫)
 - [ ] 視窗縮放 filter 查證(可能 linear 暈染,tile-debug 提醒)
 
 ## 第 13 輪 ✅(增援打通/地形/開場實機裁決/文本流水線)
-- [x] **回合增援機制全解**(sonnet):0x51b91 58-entry 跳表(0x22e5c 排除);map0 4/4 ground truth;
+- [x] **回合增援機制全解**(sonnet):0x51b91 全域 90-entry 跳表中的 FDFIELD 子集合 0..57(0x22e5c 排除);map0 4/4 ground truth;
       extract_event_id_groups.py;turn_events.json 補 groups
 - [x] **gen v4 增援疊入**(sonnet):18 章 35 筆 spawn_group(turn 精確比對=原版語意);
       \$turn_counter 展開(3 圖核對);6 筆 \$reg_or_mem 列冊待解;ch08 T0/T4 實跑增援登場 ✓

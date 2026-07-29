@@ -4,7 +4,8 @@
 FDFIELD.DAT 每 3 資源 = 一張戰場:
   資源 3N+0 構成: u16 W, u16 H, 每格 (u16 地形索引, u16 事件/寶箱)
   資源 3N+1 控制: u8 地圖編號, u8 己方可出場數, u8 敵友出場總數,
-                  回合事件[16]×3B(回合 u8, 全域事件id u8, 陣營 u8:0敵/1友/2特殊), 保留[16]×2B,
+                  回合事件[16]×3B(回合 u8, 全域事件id u8, 陣營 u8:0敵/1友/2特殊),
+                  格子事件[16]×2B(全域事件id u8, selector u8),
                   寶箱[16]×3B(型態u8:0物品/1金錢, 內容u16),
                   出場人物[敵友總數]×26B(陣營,肖像,種族,職業,等級,物品×8,
                   initial-command-mask×4,其餘未解 bytes×4,group(波次),drop×4)
@@ -36,7 +37,14 @@ def parse_map(raw, m):
     info["turn_events"] = [{"turn": ctl[o+i*3], "event_id": ctl[o+i*3+1],
                             "camp": ["enemy", "ally", "special"][ctl[o+i*3+2]] if ctl[o+i*3+2] < 3 else ctl[o+i*3+2]}
                            for i in range(16) if ctl[o+i*3] != 0xFF]
-    o += 16*3 + 16*2
+    o += 16*3
+    # 0x13a44 以地圖構成 event-word low5 的 1-based slot 查這張表；
+    # 第一 byte 寫入 [0x51a8f]，第二 byte 必須等於 caller selector。
+    info["field_events"] = [
+        {"slot": i, "event_id": ctl[o+i*2], "selector": ctl[o+i*2+1]}
+        for i in range(16)
+    ]
+    o += 16*2
     info["chests"] = []
     for i in range(16):
         t = ctl[o+i*3]; v = struct.unpack_from("<H", ctl, o+i*3+1)[0]
@@ -93,7 +101,10 @@ def main(argv):
         print(__doc__); return 1
     if argv[1] == "--all":
         raw, out = argv[2], argv[3]
-        fld = sorted(glob.glob(os.path.join(raw, "FDFIELD", "*.bin")))
+        fld = sorted(
+            glob.glob(os.path.join(raw, "FDFIELD", "*.bin")),
+            key=lambda p: int(os.path.basename(p).split("_")[1].split(".")[0]),
+        )
         maps = []
         for m in range(len(fld)//3):
             try:
