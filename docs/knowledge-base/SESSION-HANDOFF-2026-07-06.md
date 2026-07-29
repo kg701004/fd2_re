@@ -2519,3 +2519,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   原版顯示「第二章／羅德鎮」，與 chapter1 JSON production 逐像素精確
   2× 比較為零差異。新增 original/remake 圖與 regression；此項明確標成
   修改路徑，不可當成成功 restore 或正常玩家存檔。
+- 合法 IDA Pro 9.4 重核 `0x25ebb..0x26152`，Capstone 獨立核對
+  `0x25f81..0x26120`：選槽確認後 `0x2602c..0x26056` 先複製固定
+  `0xa00` roster，`0x2605e..0x26098` 再載 metadata `+0..+9`；
+  chapter `0xff` 回到 selector。非空槽關框後先呼 `0x2cad7`，只有
+  gate 回 0 才呼 chapter pre-handler。這條四槽路徑不呼 `0x10010`，
+  後者仍是第三個標題選項的目前戰鬥續戰入口。
+- 新增 `fdsave.InspectChapterSlot`：保留 32×`0x50` 完整 raw records、
+  全部 `0x28` metadata 與已證實 header，空槽／count > 32 失敗即關閉；
+  不把 opaque record 猜成 `battle.Unit`。專注 regression 通過；一般玩家
+  native restore 與 roster 正規化仍未完成。證據見
+  [`fd2_native_chapter_slot_restore_ida.txt`](../data/fd2_native_chapter_slot_restore_ida.txt)。
+- production title 新增唯讀 `FD2_NATIVE_SAVE` 來源：先驗 checksum，再用
+  已證實 metadata 呈現四槽；tamper regression 會拒絕整份檔案。確認空槽
+  會留在 selector；確認有效 native 槽也會明示 roster restore 尚未完成，
+  不會錯誤轉入自有 JSON loader。這是 metadata→UI／gate 垂直切片，不是
+  successful native restore。

@@ -17,8 +17,10 @@ const (
 	RosterSize   = 0xa00
 	UnitSize     = 0x50
 	RosterUnits  = RosterSize / UnitSize
-	metadataSize = SlotSize - RosterSize
+	MetadataSize = SlotSize - RosterSize
 )
+
+var ErrEmptyChapterSlot = errors.New("fdsave: native chapter slot is empty")
 
 // Slot is one native logical record. Roster and Metadata remain raw because
 // only a subset of metadata fields has proven meaning; callers must not
@@ -112,8 +114,8 @@ func WriteSlot(plain []byte, slot int, replacement Slot) ([]byte, error) {
 	if len(replacement.Roster) != RosterSize {
 		return nil, fmt.Errorf("fdsave: roster size=%#x, want %#x", len(replacement.Roster), RosterSize)
 	}
-	if len(replacement.Metadata) != metadataSize {
-		return nil, fmt.Errorf("fdsave: metadata size=%#x, want %#x", len(replacement.Metadata), metadataSize)
+	if len(replacement.Metadata) != MetadataSize {
+		return nil, fmt.Errorf("fdsave: metadata size=%#x, want %#x", len(replacement.Metadata), MetadataSize)
 	}
 	start, end, err := SlotBounds(slot)
 	if err != nil {
@@ -139,7 +141,7 @@ func ReadVerifiedMetadata(plain []byte, slot int) (VerifiedMetadata, error) {
 	if err != nil {
 		return VerifiedMetadata{}, err
 	}
-	if len(s.Metadata) != metadataSize {
+	if len(s.Metadata) != MetadataSize {
 		return VerifiedMetadata{}, errors.New("fdsave: invalid metadata size")
 	}
 	return VerifiedMetadata{
@@ -147,4 +149,71 @@ func ReadVerifiedMetadata(plain []byte, slot int) (VerifiedMetadata, error) {
 		RosterCount: s.Metadata[1],
 		Currency:    binary.LittleEndian.Uint32(s.Metadata[2:6]),
 	}, nil
+}
+
+// PersistentRecord preserves one exact native 0x50-byte roster record.
+//
+// Individual offsets must be decoded only after their writer and consumer are
+// proven. Keeping the complete record is required because native 0x2604a copies
+// all 32 records before loading the selected slot's metadata.
+type PersistentRecord struct {
+	Raw [UnitSize]byte
+}
+
+// ChapterSlotSnapshot is the safe import boundary for one native chapter slot.
+// It mirrors the selected record copied by 0x2602c..0x26098, while retaining
+// opaque bytes instead of guessing normalized campaign or battle semantics.
+//
+// The RosterCount capacity check is a remake safety invariant. The native load
+// path copies the fixed 0xa00-byte roster and does not establish that check.
+type ChapterSlotSnapshot struct {
+	Slot     int
+	Verified VerifiedMetadata
+	Metadata [MetadataSize]byte
+	Records  [RosterUnits]PersistentRecord
+}
+
+// InspectChapterSlot validates and copies a non-empty native chapter slot.
+// It does not convert persistent records to battle.Unit and therefore cannot
+// by itself be used to claim successful native campaign restore.
+func InspectChapterSlot(plain []byte, slot int) (ChapterSlotSnapshot, error) {
+	raw, err := ReadSlot(plain, slot)
+	if err != nil {
+		return ChapterSlotSnapshot{}, err
+	}
+	verified, err := ReadVerifiedMetadata(plain, slot)
+	if err != nil {
+		return ChapterSlotSnapshot{}, err
+	}
+	if verified.Chapter == 0xff {
+		return ChapterSlotSnapshot{}, ErrEmptyChapterSlot
+	}
+	if int(verified.RosterCount) > RosterUnits {
+		return ChapterSlotSnapshot{}, fmt.Errorf(
+			"fdsave: roster count %d exceeds native capacity %d",
+			verified.RosterCount, RosterUnits,
+		)
+	}
+	var snapshot ChapterSlotSnapshot
+	snapshot.Slot = slot
+	snapshot.Verified = verified
+	copy(snapshot.Metadata[:], raw.Metadata)
+	for index := range snapshot.Records {
+		start := index * UnitSize
+		copy(snapshot.Records[index].Raw[:], raw.Roster[start:start+UnitSize])
+	}
+	return snapshot, nil
+}
+
+// ActiveRecords returns a copy of the count-delimited prefix selected by the
+// native metadata. The remaining fixed-capacity records stay available in
+// Records for exact preservation and future evidence work.
+func (s ChapterSlotSnapshot) ActiveRecords() []PersistentRecord {
+	count := int(s.Verified.RosterCount)
+	if count < 0 || count > len(s.Records) {
+		return nil
+	}
+	out := make([]PersistentRecord, count)
+	copy(out, s.Records[:count])
+	return out
 }

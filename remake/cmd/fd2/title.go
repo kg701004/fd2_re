@@ -267,6 +267,17 @@ func (g *Game) titleUpdate() bool {
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			selected, confirm, _ := slots.Step(TitleSlotConfirm)
 			if confirm {
+				confirmable, native := nativeLoadSlotConfirmable(selected)
+				if !confirmable {
+					g.msg = "空的存檔槽"
+					return true
+				}
+				if native {
+					// The indexed selector can inspect native metadata, but the
+					// opaque 0x50-byte roster is not yet safe to normalize.
+					g.msg = "原版 FD2.SAV 的隊伍還原尚未完成"
+					return true
+				}
 				g.loadGameFromSlot(selected)
 			}
 			g.titlePhase = ""

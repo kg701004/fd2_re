@@ -2,6 +2,7 @@ package fdsave
 
 import (
 	"encoding/binary"
+	"errors"
 	"testing"
 )
 
@@ -63,7 +64,7 @@ func TestWriteSlotPreservesOtherSlotsAndUsesOpaqueRegions(t *testing.T) {
 	for i := range plain {
 		plain[i] = byte(i * 13)
 	}
-	replacement := Slot{Roster: make([]byte, RosterSize), Metadata: make([]byte, metadataSize)}
+	replacement := Slot{Roster: make([]byte, RosterSize), Metadata: make([]byte, MetadataSize)}
 	for i := range replacement.Roster {
 		replacement.Roster[i] = 0xa5
 	}
@@ -85,7 +86,67 @@ func TestWriteSlotPreservesOtherSlotsAndUsesOpaqueRegions(t *testing.T) {
 	if plain[start] == got[start] {
 		t.Fatal("write unexpectedly mutated caller image")
 	}
-	if _, err := WriteSlot(plain, 0, Slot{Roster: []byte{1}, Metadata: make([]byte, metadataSize)}); err == nil {
+	if _, err := WriteSlot(plain, 0, Slot{Roster: []byte{1}, Metadata: make([]byte, MetadataSize)}); err == nil {
 		t.Fatal("short roster unexpectedly accepted")
+	}
+}
+
+func TestInspectChapterSlotPreservesFixedRosterAndOpaqueMetadata(t *testing.T) {
+	plain := make([]byte, FileSize)
+	start, _, err := SlotBounds(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for record := 0; record < RosterUnits; record++ {
+		for offset := 0; offset < UnitSize; offset++ {
+			plain[start+record*UnitSize+offset] = byte(record*17 + offset)
+		}
+	}
+	metadata := start + RosterSize
+	plain[metadata] = 3
+	plain[metadata+1] = 2
+	binary.LittleEndian.PutUint32(plain[metadata+2:], 123456)
+	plain[metadata+6] = 0xa1
+	plain[metadata+MetadataSize-1] = 0xef
+
+	got, err := InspectChapterSlot(plain, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Slot != 1 ||
+		got.Verified != (VerifiedMetadata{Chapter: 3, RosterCount: 2, Currency: 123456}) {
+		t.Fatalf("snapshot header=%#v", got)
+	}
+	if got.Metadata[6] != 0xa1 || got.Metadata[MetadataSize-1] != 0xef {
+		t.Fatal("opaque metadata was not preserved")
+	}
+	if got.Records[31].Raw[49] != byte((31*17+49)%256) {
+		t.Fatal("fixed-capacity roster tail was not preserved")
+	}
+	active := got.ActiveRecords()
+	if len(active) != 2 || active[1].Raw[8] != byte(17+8) {
+		t.Fatalf("active records=%#v", active)
+	}
+	active[0].Raw[0] ^= 0xff
+	if active[0].Raw[0] == got.Records[0].Raw[0] {
+		t.Fatal("active records unexpectedly alias the snapshot")
+	}
+}
+
+func TestInspectChapterSlotFailsClosedForEmptyAndOversizedCount(t *testing.T) {
+	plain := make([]byte, FileSize)
+	start, _, err := SlotBounds(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := start + RosterSize
+	plain[metadata] = 0xff
+	if _, err := InspectChapterSlot(plain, 0); !errors.Is(err, ErrEmptyChapterSlot) {
+		t.Fatalf("empty slot error=%v", err)
+	}
+	plain[metadata] = 1
+	plain[metadata+1] = RosterUnits + 1
+	if _, err := InspectChapterSlot(plain, 0); err == nil {
+		t.Fatal("oversized roster count unexpectedly accepted")
 	}
 }

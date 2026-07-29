@@ -35,6 +35,9 @@ entry16 是 `(5,112)` 的 310×86 四槽框。重製 production 現以該資源�
 FDTXT #0、原版字型與 palette 呈現空槽；320×200 compositor 與 DOSBox
 oracle 全幀 RGB 相同。另以 `/tmp` 修改存檔建立 chapter1 有效槽，只比較
 選單畫面，也與 production 全幀 RGB 相同；這不證明 native restore。
+`FD2_NATIVE_SAVE` 現可唯讀檢查 checksum-valid 原生檔並把四槽 metadata
+送入同一 compositor；空槽與尚未支援還原的有效槽都會留在 selector，
+不會誤轉入自有 JSON loader。原生 roster 正規化與成功 restore 仍未完成。
 
 Worklist 目前是 **518 個 `[x]`、106 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)

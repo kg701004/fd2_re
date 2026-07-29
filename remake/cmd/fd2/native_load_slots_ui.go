@@ -12,6 +12,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdsave"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
@@ -78,6 +79,9 @@ func loadNativeLoadSlotsUIAssets() (*nativeLoadSlotsUIAssets, error) {
 }
 
 func nativeLoadSlotMetadata() ([4]campaign.NativeLoadSlot, bool) {
+	if nativeSavePath := os.Getenv("FD2_NATIVE_SAVE"); nativeSavePath != "" {
+		return nativeLoadSlotMetadataFromFD2SAV(nativeSavePath)
+	}
 	var slots [4]campaign.NativeLoadSlot
 	for slot := range slots {
 		raw, err := os.ReadFile(saveSlotPath(slot))
@@ -98,6 +102,43 @@ func nativeLoadSlotMetadata() ([4]campaign.NativeLoadSlot, bool) {
 		slots[slot].Chapter = byte(data.Chapter)
 	}
 	return slots, true
+}
+
+func nativeLoadSlotMetadataFromFD2SAV(
+	path string,
+) ([4]campaign.NativeLoadSlot, bool) {
+	var slots [4]campaign.NativeLoadSlot
+	stored, err := os.ReadFile(path)
+	if err != nil {
+		return slots, false
+	}
+	plain, err := fdsave.Decode(stored)
+	if err != nil {
+		return slots, false
+	}
+	for slot := range slots {
+		metadata, err := fdsave.ReadVerifiedMetadata(plain, slot)
+		if err != nil {
+			return [4]campaign.NativeLoadSlot{}, false
+		}
+		if metadata.Chapter == 0xff {
+			slots[slot].Empty = true
+			continue
+		}
+		slots[slot].Chapter = metadata.Chapter
+	}
+	return slots, true
+}
+
+func nativeLoadSlotConfirmable(slot int) (confirmable, native bool) {
+	if slot < 0 || slot >= fdsave.SlotCount {
+		return false, false
+	}
+	slots, ok := nativeLoadSlotMetadata()
+	if !ok || slots[slot].Empty {
+		return false, os.Getenv("FD2_NATIVE_SAVE") != ""
+	}
+	return true, os.Getenv("FD2_NATIVE_SAVE") != ""
 }
 
 func (g *Game) drawNativeLoadSlots(screen *ebiten.Image) bool {

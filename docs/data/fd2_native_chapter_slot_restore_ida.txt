@@ -1,0 +1,74 @@
+FD2 原生章節槽確認後資料流（IDA Pro 9.4）
+==============================================
+
+證據等級：已證實的直接指令與具型別 raw 邊界；成功進入完整章節仍未完成 E2。
+
+輸入版本
+--------
+
+- 檔案：`FD2.EXE`
+- 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 版本基準：`docs/data/fd2-reference-files.json`
+
+工具與隔離
+----------
+
+- 第一順位：使用者合法提供的 IDA Pro 9.4，
+  `/home/anr2/ida_94_official/dist` 所建 `fd2-ida-authorized-local`。
+- 獨立核對：`fd2-cap-local` 內的 Capstone 5.0.3 與
+  `tools/disasm_le.py`。
+- 原版目錄及授權檔唯讀掛載；一次性 IDA 資料庫與紀錄只寫入
+  `/tmp/fd2-ida-restore`，未加入版控。
+- 兩套工具均由 Docker `--network=none` 執行。
+
+`0x25EBB` 的章節槽載入分支
+--------------------------
+
+IDA 將 `0x25EBB..0x26152` 定為同一函式；`0x26019` 呼叫四槽 selector
+`0x30550`。確認後的直接指令如下：
+
+1. `0x2602C..0x26048` 以 `[0x53C57]` 計算
+   `save+0x312B+slot*0xA28`。
+2. `0x2604A..0x26056` 從 record 起點複製固定 `0xA00` bytes 到
+   `[0x53BF7]`。這是 32 筆、每筆 `0x50` bytes 的 persistent roster。
+3. `0x2605E` 將來源移至 record `+0xA00`，接著依序載入：
+   - `0x26064..0x26067`：metadata `+0` → `[0x53C03]`
+   - `0x2606C..0x26070`：metadata `+1` → `[0x53BFB]`
+   - `0x26075..0x26078`：metadata `+2..+5` → `[0x53BF3]`
+   - `0x2607D..0x26098`：metadata `+6/+7/+8/+9` →
+     `[0x51AAB]/[0x53AF9]/[0x51E61]/[0x51E62]`
+4. `0x2609D..0x260A9` 只以 chapter raw `0xFF` 將 selector 結果改為
+   未確認；`0x260AB` 關閉畫面後，結果為零便回到 `0x26016` 重選。
+5. 非空且 selector 回傳 1 時，`0x260DE` 先清 raw gate，
+   `0x260E5` 呼叫 `0x2CAD7`。只有 gate 回傳 0，才在
+   `0x260F0..0x260F5` 依 `[0x53C03]` 呼叫章節 pre-handler 跳表；
+   隨後 `0x260FC..0x2610A` 依章節表呼叫 `0x25977`。
+
+範圍限制
+--------
+
+- 這條四槽章節載入路徑不呼叫 `0x10010`。`0x26130→0x10010` 屬標題
+  選單第三分支的「目前戰鬥續戰」入口，兩者不可合併。
+- 原版在本段固定複製完整 roster，沒有看到對 metadata roster count
+  `+1` 的容量檢查。重製端拒絕 count > 32 是安全邊界，不宣稱為原版
+  行為。
+- 本段證實複製順序、raw globals 與後續分派；沒有證實所有 `0x50`
+  欄位到 normalized `battle.Unit` 的完整對應，也沒有一般玩家有效存檔
+  的成功還原實驗。
+
+重製對應
+--------
+
+- `remake/internal/fdsave.InspectChapterSlot` 保存相同的固定邊界：
+  32×`0x50` 完整 raw record、全部 `0x28` metadata，以及只含已證實
+  `chapter/roster_count/currency` 的 `VerifiedMetadata`。
+- 空槽與 count > 32 採失敗即關閉；未命名 metadata 與 roster bytes
+  原樣保留，不猜成戰役旗標、角色或戰鬥數值。
+- 設定 `FD2_NATIVE_SAVE` 時，production title compositor 會以
+  `fdsave.Decode→ReadVerifiedMetadata` 讀取四槽 chapter／empty 狀態；
+  checksum 錯誤會拒絕整份資料。空槽確認留在 selector，不再錯誤退出標題。
+- 有效 native 槽目前也會留在 selector 並明示 roster 還原尚未完成；不可
+  轉呼 JSON loader。此 API 已接原生 metadata 顯示與確認 gate，但尚未接
+  normalized campaign restore。
