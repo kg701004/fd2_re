@@ -55,7 +55,8 @@ raw score/tie-break。
 runtime AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
 
 `0x14237..0x145CC` 現已閉合為物理候選評分迴圈，而不是未知的 generic candidate
-helper。它以 `0x146D1` 建立候選格、`0x14818` 建立各格目標陣列；actor 與 target
+helper。它以 `0x145CD→0x4E040→0x146D1→0x14B16` 建立 row-major 候選格，
+再以 `0x14818` 建立各格目標陣列；actor 與 target
 的 raw `word +0x48/+0x4A` 會依各自 `0x12E38` 地形 control byte及
 `0x51A12/0x51A2A` 百分比表修正。單一候選先算
 `actor word48-target word4A`，`<=2` 拒絕；基本 priority=8，分數嚴格
@@ -655,7 +656,8 @@ stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。conf
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: ==1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
 直接來自 FDFIELD `b0` camp（敵=0、友=1、己=2），故四個 code 分別是 enemy/non-enemy/ally/own；
 `dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 flood-fill：起點 budget=`dist`，grid flag bit `0x40` 阻擋、
-bit `0x80` 使該步成本為零。雖然 callee 支援 terrain-cost row，command selector 固定呼叫 `0x4e555(0)`，而
+bit `0x80` 在正常扣除地形成本後把該格剩餘 budget 強制成零，使其成為可達終點，
+不是零成本路徑。雖然 callee 支援 terrain-cost row，command selector 固定呼叫 `0x4e555(0)`，而
 EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
 cardinal range（無阻擋時才等於 Manhattan）。
 

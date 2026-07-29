@@ -53,7 +53,7 @@ internal/
 | M1-3 | flood-fill 移動範圍 + 路徑 | doc 11 地形成本 | `battle/move.go` | 高亮可達格,扣地形成本 | → M1-1 |
 | M1-4 | 戰場選單狀態機(移/攻/休/道具/結束) | doc 13 | `ui/battlemenu.go` | 游標/Enter/ESC,對齊原版 | → M1-1 |
 | M1-5 | 攻擊結算(青衫公式) | doc 02 §4,27 | `battle/combat.go` | 物理/劍技/法術/命中/暴擊/經驗 | → M1-1 |
-| M1-6 | 敵方 AI 回合 | doc 11（舊 `0x15140` 地址已撤回；現以 `0x13A9F/0x14EF0/0x15B77` raw boundaries 追蹤） | `ai/decide.go` | normalized 評分與 raw evidence 對照 | → M1-3,5 |
+| M1-6 | 敵方 AI 回合 | doc 11（舊 `0x15140` 地址已撤回；現以 raw dispatcher／落點／評分邊界追蹤） | `internal/battle/combat.go`、`native_ai_*.go` | normalized runtime 與 raw evidence 分離驗證 | → M1-3,5 |
 | M1-7 | 回合推進(**無上限**)+ 勝敗 | doc 27§1,28 | `battle/turn.go` | 我方全動+敵AI→回合+1;殲滅/索爾死判定 | → M1-6 |
 | M1-8 | headless 確定性回歸 | — | `battle/*_test.go` | 固定種子打一場結果可重現 | → M1-7 |
 

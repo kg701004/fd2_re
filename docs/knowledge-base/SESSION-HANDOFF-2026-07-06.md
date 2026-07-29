@@ -1994,8 +1994,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `0x1548E` 本身已更正為「選擇結果執行」：消費
   `0x53C43/47/4B`，經 `0x14B78` 移動／呈現後依 `0x53AF9` 選地圖鏈或
   `0x28A6C(actor,target)`，最後固定回1。它沒有呼叫 `0x4EE40/0x4F355`，
-  不得再稱 pathfinder。下一步改追 `0x146D1` 候選格順序與 `0x14B78`
-  最後一個參數。
+  不得再稱 pathfinder。後續已閉合
+  `0x145CD→0x4E040→0x146D1→0x14B16`：另一 selector 組的中心格
+  `0x40` 阻擋、相鄰格 `0x80` 為扣成本後 budget 歸零的終點，移動成本由
+  FDFIELD tile 高位分組→FDSHAP `+1` move code→`0x4E555` cost row 取得；
+  同組佔用格事後排除，最後按 Y/X row-major 枚舉。新增 fail-closed
+  `NativeAIPhysicalDestinations` 與 regression。下一步追 `0x14B78`
+  最後一個參數及無攻擊方案 fallback。
 
 ## 2026-07-29 原版整備選人主畫面第一個生產切片
 

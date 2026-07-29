@@ -35,6 +35,9 @@ TARGETS = (
     # These addresses preserve call topology only; field semantics remain in
     # docs/knowledge-base/11-enemy-ai.md under their evidence gates.
     0x14237,
+    0x145CD,
+    0x146D1,
+    0x14B16,
     0x14B78,
     0x1548E,
     0x1DEBE,
