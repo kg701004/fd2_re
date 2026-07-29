@@ -111,6 +111,13 @@ repo 提供不含 license／遊戲資料的 `tools/docker/fd2-ida.Dockerfile` �
 `ida_xref.get_xref_type` API；export 現只保存 address/caller/function metadata，絕不提交 binary、database 或 license。
 這份 report 可作 call-graph E0 交叉驗證，但不自行證明遊戲語意；語意仍須由指令與資料流佐證。
 
+2026-07-29 起，repo 根目錄 `AGENTS.md` 是跨 session 的操作契約，
+`CLAUDE.md` 只保存專案意圖並指向它。Docker container 必須是有界生命週期：
+one-shot 一律 `docker run --rm`，Xvfb 等背景程序須由 trap 收回；每批 RE／測試／
+抓圖後都要檢查並停止、刪除不用的 FD2 container。toolchain rebuild 後另盤點
+FD2/dangling images，只保留每種仍使用工具鏈的一份可重現 image，不做會影響
+其他專案的 global prune。Capstone 仍只准使用 `fd2-cap-local`，不得建立 host venv。
+
 ## 3. 目標架構
 
 ```text

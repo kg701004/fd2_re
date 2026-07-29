@@ -161,8 +161,8 @@ logo,其「2」數字縮放進場動畫實際也是由 `ANI.DAT` 資源 #1(AFM V
 - 離線展開PNG可替代resource decode，**不能省略caller-owned schedule、
   incremental scroll、palette、input/skip與present cadence**。播放端若只逐張
   貼圖，仍須保存這些外層狀態與順序。
-- **9 個資源即 9 段可獨立播放的片段**,可對應到 remake 的 `cutscene` 系統做逐段觸發,
-  不需要一次性播完整 32 秒(如需要跳過/加速功能,原生的 `skippable` 參數已提供設計參考)。
+- **9 個資源可作為可編輯的 cutscene assets**；哪個 caller／章節觸發哪一段、是否屬於 title
+  sequence，仍須逐一以 call graph 與實機驗證，不能把它們直接當成 9 段已完成的獨立開場流程。
 
 ---
 

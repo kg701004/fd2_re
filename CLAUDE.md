@@ -1,4 +1,7 @@
-# 目標: 炎龍騎士團2 反組譯 與 重制
+# 目標：炎龍騎士團2 反組譯與重製
+
+> 所有 agent 開工前必須先讀 [`AGENTS.md`](AGENTS.md)。操作鐵則、證據分級、
+> Docker 清理、文件權威順序與 commit 政策只在該檔維護，避免兩份指示漂移。
 
 我希望把炎龍騎士團2 remake , 可以在網頁上還有 手機上真的重新玩一次 
 
@@ -8,10 +11,11 @@
 4. 預計用 兩種技術重製
   - sdl2 and c++ 參考 精訊勇者鬥惡龍三 @/home/anr2/dq3
   - golang Go / Ebiten 參考魔法大帝 @/home/anr2/master-of-maigc
-5. RE 前要擬定計畫 , RE要徹底, 沒有 dosbox debugger 支援
+5. RE 前要擬定計畫，RE 要徹底；以目前可用的 DOSBox capture、IDA、Ghidra
+   與 Docker Capstone 建立可重現證據
 6. 研究玩所有資料, 制定計畫  一步一步推進
 7. 參考近期的 lesson learning 
-8. 每一輪做完都要更新 github repo
+8. 每輪整理可 stage；累積成重大且已驗證的更新後才 commit + push GitHub
 9. README.md 要突顯貢獻, 圖文並茂
 
 # 炎龍騎士團2 位置

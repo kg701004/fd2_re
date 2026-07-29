@@ -1901,3 +1901,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   debit compositor可升E2。success effect仍是AE=2的caller-owned saved-buffer
   portrait phase，且整條route仍使用三處verified battle-skip patch，不是正常
   玩家playthrough gate。
+
+## 2026-07-29 durable agent memory and Docker cleanup
+
+- 新增repo根目錄`AGENTS.md`作跨session唯一操作契約：保存文件權威順序、
+  E0–E3、fail-closed、normal-player-path gate、已知人物／DATO更正、
+  Docker-only Capstone、重大更新才commit與Codex身份。`CLAUDE.md`保留專案
+  目標但明確指向`AGENTS.md`，避免兩份規則漂移；`~/.codex/AGENTS.md`另保存
+  不限FD2的Docker生命周期與image清理鐵則。
+- 稽核時發現四個`fd2-go-test-local` container已持續21小時。四個均已
+  `docker stop`，因原本是`--rm` container而停止後自動刪除；再次
+  `docker ps -a`確認無FD2 container。以後one-shot一律`--rm`、Xvfb用trap，
+  每批工具／測試後立即查running/stopped container。
+- image盤點刪除已由合法authorized workflow取代、repo無引用的
+  `fd2-ida-local`（3.6GB）。保留目前仍有明確用途的
+  `fd2-cap-local`、`fd2-go-test-local`、`fd2-dosbox-screenshot-local`與
+  `fd2-ida-authorized-local`各一份；不得global prune其他專案資源。
+- repo-wide斷言續審確認多數2026-07-28高風險句已收窄；補修
+  `39-ani-afm-format.md`，不再把九個AFM resources直接稱為九段已完成、
+  可獨立播放的開場流程。caller／章節／title sequence仍須逐一驗證。
