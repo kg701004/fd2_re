@@ -2304,3 +2304,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `AIPlan.NativeScoredCommands` 仍只帶 evidence，不執行效果。完整帶
   FD2.EXE 雜湊的三段指令保存於
   `docs/data/fd2_ai_command_index_disasm.txt`。
+- 同輪建立 `battle.NativeAIScoringRecords`：完整 roster 必須具備 native
+  map presentation、battle fig、identity、race/class、inventory、
+  `+5/+6/+34..+36` provenance，才會產生 detached `0x50` records；
+  缺一欄整批失敗即關閉。map0 真實匯出資產 regression 固定第一筆座標
+  `(1,3)`、`+5=0`、enemy code 0、mode byte 0 與 HP 28。這只是 E0
+  score input；尚未接候選建立、完整 score 或 production `NextAIPlan`。
+- 接續完成 `battle.NativeAIScoredCommandCandidateGroups`：command record
+  `+3` 經 `0x4E040→0x14B16` 建 row-major destinations，`+4` 經
+  raw `0x14818` target predicate 建 roster-ordered indices；selector0
+  的 target-code 轉換、`+5 bit0` inactive gate、空 target skip 皆有
+  deterministic regression。map0 真實 roster＋command #0＋movement row0
+  驗證 identity103 actor 在 `(23,14)` 命中 ally index。仍未接
+  `0x15B77` score、best selection、presentation 或 production planner。

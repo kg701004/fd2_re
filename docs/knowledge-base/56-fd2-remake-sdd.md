@@ -667,6 +667,22 @@ mask、36-record 與 MP gates 的已知原始索引 `0..35`，不再錯誤排除
 缺少完整 `NativeCommandBook` 時回傳 nil。直接指令見
 [`fd2_ai_command_index_disasm.txt`](../data/fd2_ai_command_index_disasm.txt)。
 
+`battle.NativeAIScoringRecords` 是下一層 fail-closed input boundary：
+以既有原始物品面板 record 為底，補入 native map presentation
+`+0/+1/+3/+4`、activity `+5` 與 AI mode bytes `+34..+36`；完整 roster
+任一筆缺 provenance 就不回傳部分結果。map0 真實匯出 roster regression
+已固定第一筆 `(1,3)`、enemy code 0、mode byte 0 與 HP 28。這仍是 E0
+快照，未授權 normalized planner 使用，也不能取代原版動態候選／畫面 trace。
+
+其後的 `battle.NativeAIScoredCommandCandidateGroups` 已保存
+`0x1598A` 的 exact geometry contract：command `+3` 是 destination
+budget，經原版 movement-cost row 與 caller-owned grid flags 產生
+row-major cells；每格再以 command `+4` 建 target field，套 selector
+導向的 raw target code 與 record `+5/+6` predicates，並保持 roster
+index order。沒有 targets 的 cell 不進 score。map0 assets 已以
+identity 103 actor、command #0、row 0 與 ally `(23,14)` anchor 通過。
+這一層仍不做 `0x15B77` score／tie-break，也不接 production AI。
+
 IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target
 `memset(+0x25, 0, 3)` 後傳固定 `0x320` 給 `0x211a4→0x1c916`；34 連續呼

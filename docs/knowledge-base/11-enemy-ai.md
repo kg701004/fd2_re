@@ -251,6 +251,30 @@ current/max HP 與 record `+0x34 bit0`；`0x14..0x16` 掃 raw `+0x25/+0x26/+0x27
 並呼叫 `0x1c269`。這些是 raw score branches，不足以替欄位命名成攻擊、治療或狀態，
 也尚未證明它就是完整 AI 回合入口。
 
+重製端新增 `battle.NativeAIScoringRecords`，只建立上述評分與 phase gate
+所需的 detached `0x50`-byte 原始快照。它要求每筆單位已有 native map
+presentation、`battle_fig`、`+5`、`+6`、`+34..+36`、identity、race/class
+與 inventory provenance；任何一欄缺失就拒絕整批，不以 normalized
+`X/Y`、`Acted`、`Camp` 或 status 補值。map0 真實匯出資產已通過
+`坐標(1,3)、+5=0、+6=0、+34=0、HP=28` anchor regression。這只關閉
+E0 runtime-record input，尚未建立 `0x4E040/0x14818` 候選、完整 score，
+也沒有接進 `NextAIPlan`。
+
+同一條輸入已再接至
+`battle.NativeAIScoredCommandCandidateGroups`：依 command record `+3`
+經 `0x4E040→0x14B16` 產生穩定逐列目的格，再依 `+4` 呼叫
+`0x14818` 的等價 raw target filter。selector 非零時沿用 command
+target code；selector 為零時，command code 0 改成1、其他值改成0，
+與 `0x15B40..0x15B5C` 分支一致。目標保持 runtime record index 順序，
+`+5 bit0` 排除 inactive，沒有目標的目的格不輸出。這個 caller 不自行
+執行物理路徑的 `0x145CD/0x146D1` roster blocker pass，而要求 caller
+提供當時的 exact grid flags。
+
+map0 真實匯出 roster、`spells.json` command #0、原版 movement-cost row 0
+及 map raw flags 的 Docker regression，已確認 identity 103 的 enemy actor
+能在目的格 `(23,14)` 產生 raw ally target index。這關閉 E0 candidate
+geometry，仍未呼叫各分支 score、比較最佳 command，或執行／呈現動作。
+
 同一輪 caller scan 找到一個較可信的 dispatch boundary：`0x14ef0` 有六個 direct callers
 （`0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`）。其 body 先呼叫
 `0x14237`、`0x1598a`、`0x1567e`，再依 raw score/global state 分派至 `0x1548e`、
