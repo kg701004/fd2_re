@@ -176,6 +176,7 @@ type Game struct {
 	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	nativeUIPalette          color.Palette
 	nativeClassUI            *nativeClassUIAssets
+	nativeLoadSlotsUI        *nativeLoadSlotsUIAssets
 	nativeClassUIJob         *nativeClassUIJob
 	nativeClassUIClock       nativeBIOSClock
 	nativeClassUIPulse       int
@@ -6918,6 +6919,9 @@ func loadGame() *Game {
 	g.figMeta = loadFigMeta()
 	g.nativeUIPalette = loadNativeUIPalette()
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
+	if loadSlotsUI, err := loadNativeLoadSlotsUIAssets(); err == nil {
+		g.nativeLoadSlotsUI = loadSlotsUI
+	}
 	if classUI, err := loadNativeClassUIAssets(); err == nil {
 		g.nativeClassUI = classUI
 		if preparationUI, preparationErr := loadNativePreparationUIAssets(); preparationErr == nil {
@@ -7058,6 +7062,15 @@ func loadGame() *Game {
 				g.scrollY = 535
 			}
 		}
+	}
+	if shotState := os.Getenv("FD2_SHOT_LOAD_STATE"); shotState != "" {
+		selection, ok := parseNativeLoadSlotShotState(shotState)
+		if !ok || g.shotPath == "" || g.nativeLoadSlotsUI == nil {
+			g.loadErr = "FD2_SHOT_LOAD_STATE expects selection 0..3 with native load-slot assets and FD2_SHOT"
+			return g
+		}
+		g.titlePhase = "loadslots"
+		g.titleSlotSel = selection
 	}
 	if cp := os.Getenv("FD2_CAMPAIGN"); cp != "" { // 劇本節點圖模式(doc 19;放最後,story 對白不被開場 Setup 蓋掉)
 		if cp == "1" {

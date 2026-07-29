@@ -359,6 +359,9 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 				color.RGBA{0xa0, 0xc0, 0xff, 0xff})
 		}
 	case "loadslots":
+		if g.drawNativeLoadSlots(screen) {
+			return
+		}
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(2, 2)
 		screen.DrawImage(ta.title, op)

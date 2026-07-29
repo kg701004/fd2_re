@@ -1,0 +1,69 @@
+# 讀檔四槽畫面：IDA Pro 9.4 直接證據
+
+來源檔案：FD2.EXE
+大小：357074 位元組
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+
+工具與限制：
+- 使用者合法提供於 `/home/anr2/ida_94_official/dist` 的 IDA Pro 9.4。
+- 僅在 `fd2-ida-authorized-local` 一次性、無網路 Docker 容器內執行。
+- 原版執行檔與授權檔唯讀掛載；IDA 資料庫與輸出只寫入
+  `/tmp/fd2-ida-loadslots`，完成後刪除。
+
+## 函式邊界與呼叫者
+
+- `0x30550..0x3072F`：四槽輸入迴圈；callers `0x26019`、`0x30097`、
+  `0x30274`。
+- `0x30437..0x30550`：四列穩定畫面 renderer；callers `0x305FD`、
+  `0x306CF`。
+- `0x4E8AF..0x4E8E1`：opaque LMI cell 解碼／blit。
+- `0x1974C..0x197E5`：以 caller snapshot 為底的垂直 reveal／present。
+
+## 資源來源勘誤
+
+LOAD 分支在 `0x25F48..0x25F5D` 執行：
+
+```
+0x25F48 push 0x0D
+0x25F4A push [0x54147]
+0x25F50 push "FDOTHER.DAT"
+0x25F55 call 0x111BA
+0x25F5D mov  [0x54147],eax
+```
+
+所以 `[0x54147]` 是 **FDOTHER #13**，不是共用對話框的 FDOTHER #5。
+`0x305CF..0x305E8` 取其目錄 `+0x46` 並以 `0x4E8AF` 畫到 indexed
+framebuffer offset `0x8C05=(5,112)`。對照 LMI1 目錄，該 cell 是 entry16，
+尺寸 `310×86`。
+
+以 FDOTHER #5 entry21（310×99）近似時，DOSBox oracle 有 1,544 個 RGB
+像素不符；改用 #13 entry16 後，320×200 全幀 RGB 完全相同。這是
+資源 provenance 的執行期／視覺雙重證據。
+
+## 四列文字與座標
+
+`0x30437` 對 row `0..3` 使用 `y=119+19*row`：
+
+- `FDTXT 0x225` 於 `x=10`；`FFFA` 代入 `row+1`，形成 `1)`…`4)`。
+- metadata `+0 == 0xFF`：`FDTXT 0x202` 於 `x=88`。
+- 有效槽：`FDTXT 0x202+chapter` 於 `x=40`，另以
+  `FDTXT 0x226+chapter` 於 `x=130`。
+- 選中列 foreground `0xC9`；其餘列 `0xCD`；shadow `0x4C`。
+
+`0x30550` 仍保存既有輸入契約：slot `0..3`、上下 bounded 不循環、
+Enter／Space 確認、Escape 取消。
+
+## 重製端驗證
+
+- `campaign.ComposeNativeLoadSlotsFrame` 使用 FDOTHER #13 entry16、
+  FDTXT #0、FDOTHER #4 原版字型及 FDOTHER #0 palette。
+- `TestComposeNativeLoadSlotsFrameMatchesEmptyDOSBoxOracle` 逐像素比較
+  `docs/figures/load-empty-original-dosbox.png`，320×200 RGB 全等。
+- production `titlePhase=="loadslots"` 走同一 compositor；缺原版資源或
+  無法映射的自有 JSON metadata 時失敗即關閉並保留舊 fallback。
+- `docs/figures/load-empty-remake.png` 是目前 source 在 Docker／Xvfb
+  中輸出的 2× production 畫面，不是手工放大。
+
+有效 native FD2.SAV 的成功 restore、剩餘 metadata、roster ABI、刪除與覆寫
+仍未閉合；空槽 E2 不可外推到這些行為。

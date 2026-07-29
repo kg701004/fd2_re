@@ -2490,3 +2490,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 直接證據保存於
   `docs/data/fd2_postbattle_gate_outcome_ida.txt`，並同步更新介面證據矩陣、
   工作清單與戰役／腳本文件。
+## 2026-07-29：讀檔空槽 production／E2 閉合
+
+- 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`
+  證實 LOAD 分支將 FDOTHER #13 載入 `[0x54147]`；舊的 FDOTHER #5
+  對話框類推不適用。`0x305CF..0x305E8` 使用 #13 entry16（310×86）
+  置於 indexed `(5,112)`。
+- `0x30437` 四列固定在 `y=119+19*row`：FDTXT `0x225`＋FFFA 槽號於
+  `x=10`；empty `0x202` 於 `x=88`；有效槽使用
+  `0x202+chapter`／`0x226+chapter`。selected foreground `0xC9`，
+  normal `0xCD`，shadow `0x4C`。
+- 新增 `campaign.ComposeNativeLoadSlotsFrame` 與 production
+  `drawNativeLoadSlots`。使用 FDOTHER #13、FDTXT #0、FDOTHER #4
+  點陣字型與 FDOTHER #0 palette；缺資源或不可映射 JSON metadata 時
+  失敗即關閉。
+- `TestComposeNativeLoadSlotsFrameMatchesEmptyDOSBoxOracle` 對
+  `load-empty-original-dosbox.png` 做 320×200 全幀 RGB 比較並通過；
+  `load-empty-remake.png` 是目前 source 以一次性 Docker/Xvfb 建置與
+  strict screenshot state 產生的 2× production artifact。
+- 有效 native FD2.SAV restore、剩餘 metadata、roster ABI、刪除／覆寫
+  尚未閉合，UI-VIS-LOAD 維持部分完成。詳細直接指令見
+  [`fd2_load_slots_ui_ida.txt`](../data/fd2_load_slots_ui_ida.txt)。

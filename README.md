@@ -16,7 +16,7 @@ Go/Ebiten 重製引擎。兩者的完成度分開計算，不能把「格式已�
 | 資產與格式 | DAT、FDTXT/字型、RLE、AFM/FIGANI、XMIDI、地圖資料可抽取／解碼；33 張地圖均已由雜湊吻合的 FDFIELD／FDSHAP 同步構成格事件位元組、原始 byte+3 與地形控制列 | 版權資產不入庫；FDFIELD `+2/+3` 載入後會被原版建構器改寫，部分 caller-specific 執行期 writer 與 compositor 尚未接到 Ebiten |
 | 反組譯與 SDD | FD2.EXE 的戰役狀態機、事件處理器、戰鬥原始介面、存檔外層、物品類型 5–24 與操作證據持續收斂；敵方物理落點、評分、原版路徑方向及無可用行動時的備援鏈已分段閉合。AI 上層也已固定為友軍 raw camp1 單遍，以及敵軍 raw camp0 的分數門檻預選＋無門檻第二遍；無副作用的診斷橋已依原序計算兩個預選分數並輸出分離三遍的具型別計畫。FDFIELD 的 `b17/b18/b19` 也已固定為執行期 `+0x34/+0x35/+0x36` 來源，33 張地圖的原始模式分布已資料化；模式 2／11 的精確分支與 `0x13FD4` 五分之一 HP 回復亦已閉合。全域事件表已由錯誤的 58 筆更正為 90 筆；格子事件與全部 33 圖寶物格／16 槽獎勵表均已接入可編輯資產，map25 的 event58 五選一寶物及 event59–61 格子規則也已解碼，event59/60 已依原版向左格步驟提交點接入。FDTXT_026 已更正為 63 個實際顯示單位，事件 61 的文字 2／3／4 可精確映射；第 26 章也不再讓渥德的 group 1 提前進場。另已發現先前只有 map0 帶原版索引呈現器輸入，現以固定雜湊的 FDFIELD／FDSHAP 補齊全部 33 圖 | AI 診斷橋不呼叫 action dispatcher、逐單位回呼或 pending early-exit，因此仍不是正式敵方回合；各低四位已有可觀察矩陣，但敵軍兩遍的玩法理由、事件 82 的一般玩家觸發與完整回合執行期仍未閉合。event61 的文字、59 幀轉接器、D0／entry12／JOIN31 交易，已接入待命、攻擊、法術、物品、原始指令與 AI 的共同成功收尾；攻擊與攻擊型法術會等全螢幕演出結束才進 selector1，取消或執行失敗不會觸發。map25 view 已由 ch25 pre-handler 的 PAN(9,39)→FOCUS_UNIT(0) 與游標狀態機推導，不再依賴測試注入，但尚缺同狀態 DOSBox 視覺比較，不能宣稱 E2。其餘特殊事件寶物、索引效果繪製器、完整戰後／城鎮順序仍有 `[~]`／`[ ]` 項 |
 | Go/Ebiten 引擎 | ch01 已能以原始 FDSHAP/FDICON/FDOTHER 組成 terrain→range→unit→foreground→HUD 的 320×200 indexed frame；steady selector 1 與 drawable target selectors 2–5 均使用原生 overlay；`0x24618` 9-pass transition已有strict runtime；獨立 ending oracle 可依原序跑完兩段對話、frame12..108、兩段 composite 與500-pass scroll | **尚非全 30 章原版等價可通關**；selector6 production owner、7+ target visual／游標 flash、`0x2c548` finale montage、campaign ending接線、音訊與跨平台 runtime 尚未閉合 |
-| 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；整備選人現有原版資源局部合成器，但 town variant1/2、整備狀態面板與實機差分、讀檔槽、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
+| 原版視覺切片（不是整體一致性） | ch01 戰術地圖／狀態欄、ch02 town variant0、ch02 三種商店主選單與武器購買清單、教會多個服務、指令／物品介面，以及四槽讀檔的空槽畫面；另有部分戰鬥演出測試資料 | 2026-07-28 逐介面審計估計完整操作介面視覺還原約 **40–45%**；讀檔空槽已達整幀 RGB 相同，但有效槽、成功 restore、town variant1/2、整備實機差分、結局及商店其餘子面板仍未閉合，不能稱原版視覺一致 |
 
 2026-07-29 戰場結果勘誤：`0x205B4`（共享入口 `0x205BE`）是
 camp0／record0 raw bit 產生 code0/1/2 的三值規則；相鄰的 `0x205DA`
@@ -28,6 +28,12 @@ camp0／record0 raw bit 產生 code0/1/2 的三值規則；相鄰的 `0x205DA`
 兩個 AI 預選函式都在每次候選使用後呼叫 `0x4DBFC` 恢復低五位基底，並不
 持有跨命令的執行期旗標。重製端已刪除假性的長壽命狀態欄位，正式命令與
 目標介面改由可編輯的 FDFIELD 事件位元組逐次重建；缺來源仍失敗即關閉。
+
+同日也以合法 IDA Pro 9.4 重查 `0x30550/0x30437`，修正讀檔框誤套
+FDOTHER #5 的資源斷言：LOAD 分支實際在 `0x25F48` 載入 FDOTHER #13，
+entry16 是 `(5,112)` 的 310×86 四槽框。重製 production 現以該資源、
+FDTXT #0、原版字型與 palette 呈現空槽；320×200 compositor 與 DOSBox
+oracle 全幀 RGB 相同。有效 native FD2.SAV restore 仍未完成。
 
 Worklist 目前是 **518 個 `[x]`、106 個 `[~]`、67 個 `[ ]`**；這些是工程項目數，不是遊戲完成百分比。
 可驗證的進度以 [`56` SDD](docs/knowledge-base/56-fd2-remake-sdd.md)、[`91` worklist](docs/knowledge-base/91-worklist.md)
@@ -282,7 +288,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源 indexed 復活成功演出（`0x2f4c6` case4 第5幀／DAC delta62；非 DOSBox 截圖） | ![native indexed revive success](docs/figures/native-revive-success-indexed.png) ![native indexed revive flash](docs/figures/native-revive-success-flash-indexed.png) |
 | 原版資源 indexed 教會主選單（`0x3072f+0x2d669+0x2d85f`；gold=1000 fixture，非 DOSBox 截圖） | ![native indexed church menu](docs/figures/native-church-menu-indexed.png) |
 | 原版 DOSBox 標題／對話 oracle；右側舊圖僅為 raw decode，尚無同狀態 remake runtime 對照 | ![original title](docs/figures/title-original-dosbox.png) ![raw title decode](docs/figures/title.png) ![original dialogue](docs/figures/ch01-dialogue-original-dosbox.png) ![dialogue decode sheet](docs/figures/dialogue.png) |
-| battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) ![load](docs/figures/load-empty-original-dosbox.png) |
+| battle command／load UI 切片 | ![command grid](docs/figures/native-command-grid-remake.png) |
+| 原版 DOSBox／目前 production 空槽讀檔畫面（320×200 oracle／2× runtime；compositor 全幀 RGB 相同） | ![original empty load](docs/figures/load-empty-original-dosbox.png) ![remake empty load](docs/figures/load-empty-remake.png) |
 
 為 1995 年的台灣遊戲留下可重現的技術紀錄；完整遊戲 parity 仍是進行中的工程，不作提前宣稱。
 
