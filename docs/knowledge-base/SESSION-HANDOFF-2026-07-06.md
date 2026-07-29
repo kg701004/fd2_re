@@ -2384,6 +2384,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   malformed hole 可能讓 stale item byte 進掃描。程式註解、SDD、worklist 與
   舊 handoff 條目均已更正。
 
+## 2026-07-29：AI 雙預選分數接入三遍掃描診斷
+
+- 新增 `battle.BuildNativeAIPhaseDiagnosticPlan`，依 `0x1D8BA` 的直接指令
+  順序，對每筆 raw `+6==0` 合格記錄先跑 `ScoreNativeAI1598A(unit,0)`，
+  再跑 `ScoreNativeAI1567E(unit,0)`，將兩個最大值轉成 signed dword 後
+  交給 `fdother.PlanNativePhaseUnitScans` 的 `>=6` 門檻。
+- 每筆合格單位都必須有唯一、呼叫者提供的移動成本列及可選
+  `0x1F183` 閘門；缺少、重複、越界或替不合格單位提供輸入都會在任何正式
+  動作前失敗即關閉。回傳只含兩個 producer 結果與三遍掃描計畫，不呼叫
+  `0x13A9F`、兩張回呼表或處理 `[0x53ECC]`，亦不修改戰鬥記錄。
+- map0 修改狀態的 E0 交叉夾具沿用真實名冊、目標旗標、地形、命令表、
+  物品列與成本列，排除其他 selector-zero 單位後，替 index23 注入
+  command0 與已追蹤 item79；結果固定為 `[0x53C23]=96`、
+  `[0x53C33]=8`，優先遍通過且第二遍仍保留。這不代表一般玩家 map0
+  原始狀態。
+- 全資產盤點顯示，目前只有 map0 帶完整 `native_target_flags`。map19
+  unit55 雖是具真實非零遮罩與 MP 的理想候選，仍因缺該圖完整目標旗標而
+  不能建立不猜測的同級夾具。下一個證據門檻仍是固定原版動態 trace，以及
+  逐單位回呼／pending code 的共同驗證；正式 `NextAIPlan` 維持未接。
+
 ## 2026-07-29：`0x205B4/0x205BE` 三值結果規則與函式邊界勘誤
 
 - Docker Capstone 以參考 FD2.EXE 重新確認：`0x205B4` 的共享入口

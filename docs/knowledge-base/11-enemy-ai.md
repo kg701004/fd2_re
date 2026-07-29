@@ -256,9 +256,9 @@ current/max HP 與 record `+0x34 bit0`；`0x14..0x16` 掃 raw `+0x25/+0x26/+0x27
 presentation、`battle_fig`、`+5`、`+6`、`+34..+36`、identity、race/class
 與 inventory provenance；任何一欄缺失就拒絕整批，不以 normalized
 `X/Y`、`Acted`、`Camp` 或 status 補值。map0 真實匯出資產已通過
-`坐標(1,3)、+5=0、+6=0、+34=0、HP=28` anchor regression。這只關閉
-E0 runtime-record input，尚未建立 `0x4E040/0x14818` 候選、完整 score，
-也沒有接進 `NextAIPlan`。
+`坐標(1,3)、+5=0、+6=0、+34=0、HP=28` anchor regression。後續候選、
+群組評分、單位最大分數與三遍門檻已由下述具型別切片接續；它仍沒有接進
+`NextAIPlan` 或執行交易。
 
 同一條輸入已再接至
 `battle.NativeAIScoredCommandCandidateGroups`：依 command record `+3`
@@ -272,8 +272,9 @@ target code；selector 為零時，command code 0 改成1、其他值改成0，
 
 map0 真實匯出 roster、`spells.json` command #0、原版 movement-cost row 0
 及 map raw flags 的 Docker regression，已確認 identity 103 的 enemy actor
-能在目的格 `(23,14)` 產生 raw ally target index。這關閉 E0 candidate
-geometry，仍未呼叫各分支 score、比較最佳 command，或執行／呈現動作。
+能在目的格 `(23,14)` 產生 raw ally target index。其後
+`ScoreNativeAIScoredCommandGroups` 與 `ScoreNativeAI1598A` 已呼叫各分支
+評分並保存正分最佳命令；仍不執行或呈現動作。
 
 同一輪 caller scan 找到一個較可信的 dispatch boundary：`0x14ef0` 有六個 direct callers
 （`0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`）。其 body 先呼叫
@@ -452,10 +453,21 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
   遮罩及目前 MP 必須與 detached record 一致。map0 的實際 roster／地圖輸入
   加入已證實 command0 後，固定得到 `(23,14)`、分數96；全零分 fixture
   保留 `MaxScore=0` 且不創造命令。
+- `BuildNativeAIPhaseDiagnosticPlan` 現依原版 `0x1D8BA` 順序，對每筆合格
+  selector-zero 記錄先執行 `ScoreNativeAI1598A`、再執行
+  `ScoreNativeAI1567E`，並將96／8這類數值分別送入 `[0x53C23]`／
+  `[0x53C33]` 的 signed `>=6` 三遍掃描計畫。輸入必須逐單位完整且唯一，
+  函式不改寫戰鬥狀態。
+- map0 測試是修改狀態的 E0 交叉夾具：沿用真實名冊、目標旗標、地形、命令
+  與物品資料，但排除其他 selector-zero 記錄，並替 index23 注入 command0
+  與 item79；它不能證明一般玩家 map0 的實際敵方決策。map19 unit55 雖有
+  真實非零命令遮罩與 MP，該圖目前缺完整 `native_target_flags`，不可猜補。
+- 這個橋只涵蓋無副作用的分數與門檻，沒有呼叫 `0x13A9F`、逐單位事件／章節
+  回呼或 `[0x53ECC]` 提早離開，因此不是正式敵方回合執行器。
 
 ## 下一步最小驗證
 
-1. 在固定原版存檔與固定單位上，依序於 `0x1D80B`、`0x13A9F`、
+1. 在固定原版存檔與固定單位上，依序於 `0x1D8BA`、`0x13A9F`、
    `0x14EF0`、`0x15AD8` 記錄單位索引、關鍵原始欄位與
    `0x53C23..0x53C3F`。比較只改一格位置或一個候選的兩個狀態。
 2. 追蹤 `0x14237` 的 `0x1B83D→0x1B722` command record 來源，
@@ -473,8 +485,9 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 
 ## 重製對應（fail-closed）
 
-目前已能以完整原始記錄、命令遮罩、MP、候選幾何與各群組評分建立原始 AI
-切片；仍不可宣稱整回合已重現。`0x1DEBE` 條件、raw `+8`、上層
-mode／selector 語意、零分勝者與動態原版對照尚未全部閉合。重製端的正規化
+目前已能以完整原始記錄、命令遮罩、MP、候選幾何、兩個單位級分數及三遍
+門檻建立原始 AI 診斷切片；仍不可宣稱整回合已重現。逐單位回呼與 pending
+code、`0x1DEBE` 條件、raw `+8`、上層 mode 語意、零分勝者與動態原版對照
+尚未全部閉合。重製端的正規化
 `aiActUnit`／`NextAIPlan` 因此仍是近似路徑；難度調整參數也不得當成原版
 等價設定。

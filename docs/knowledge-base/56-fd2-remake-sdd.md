@@ -702,6 +702,23 @@ index order。沒有 targets 的 cell 不進 score。map0 assets 已以
 identity 103 actor、command #0、row 0 與 ally `(23,14)` anchor 通過。
 這一層仍不做 `0x15B77` score／tie-break，也不接 production AI。
 
+`battle.BuildNativeAIPhaseDiagnosticPlan` 現將這段已證實、無副作用的資料流
+接到三遍掃描規則：每筆合格的 raw `+6==0` 記錄必須由呼叫者明確提供移動
+成本列與可選的 `0x1F183` 閘門，並依 `0x1D8BA` 原序先執行
+`ScoreNativeAI1598A(unit,0)`、再執行 `ScoreNativeAI1567E(unit,0)`；兩個
+最大分數分別轉成 signed dword 後，才交給
+`fdother.PlanNativePhaseUnitScans` 的 `>=6` 門檻。缺少、重複或不合格單位
+的輸入均失敗即關閉。回傳值只包含診斷結果與三遍掃描計畫，不會呼叫
+`0x13A9F`、兩張回呼表或處理 `[0x53ECC]` 的逐單位提早離開，因此不得接入
+正式 `NextAIPlan` 或宣稱敵方回合已重現。
+
+map0 交叉夾具使用真實名冊、目標旗標、地形、命令表、物品列及移動成本列，
+但會排除其他 selector-zero 單位，並替 index23 注入 command0 與已追蹤
+item79。它固定得到命令遮罩分數96、物品命令分數8及門檻通過，屬修改狀態的
+E0 組合驗證，不是一般玩家 map0 動態狀態。33 張圖目前只有 map0 具有完整
+`native_target_flags`；例如具真實非零遮罩與 MP 的 map19 unit55 尚不能在
+不補證據的情況下形成同級夾具。
+
 IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target
 `memset(+0x25, 0, 3)` 後傳固定 `0x320` 給 `0x211a4→0x1c916`；34 連續呼

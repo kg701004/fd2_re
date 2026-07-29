@@ -133,7 +133,7 @@
   constructor＋`0x14818` 消費證據已固定 raw camp code 敵0／友1／己2，
   故前者是友軍單遍、後者是敵軍兩遍；具型別
   `PlanNativePhaseUnitScans` 已分開三遍、保留 signed threshold 與缺 score
-  fail-closed regression；`0x1598A→53C23` 法術候選、`0x1567E→53C33`
+  fail-closed regression；`0x1598A→53C23` 命令遮罩候選、`0x1567E→53C33`
   item-command 候選與 `0x13512` bit7 已串成「高價值優先遍後排除雙動」。
   尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中
   command／目標與畫面順序；不得重複把陣營碼、兩張表或 pending 碼降回未知。
@@ -254,11 +254,18 @@
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
 - [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
 - [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
-- [~] 敵方 AI 雙預選 bridge：`0x1598A→0x15B77→[0x53C23]` 與 `0x1567E→0x15880→[0x53C33]` 的靜態 producer 都已具型別閉合，兩者保持不同 command 身分與 ranking。尚缺同一原版 runtime 狀態的動態 trace，以及 phase callback／pending code 共同驗證，因此仍不接正式 `NextAIPlan`。
+- [~] 敵方 AI 雙預選 bridge：`BuildNativeAIPhaseDiagnosticPlan` 已依
+  `0x1D8BA` 原序將 `0x1598A→0x15B77→[0x53C23]` 與
+  `0x1567E→0x15880→[0x53C33]` 兩個具型別 producer 接入
+  `PlanNativePhaseUnitScans` 的 signed `>=6` 門檻；每個合格 selector-zero
+  單位都要求明確成本列，缺漏／重複／額外輸入失敗即關閉。map0 修改狀態的
+  E0 交叉夾具固定96／8並保留第二遍，且驗證輸入記錄不變。它不執行
+  `0x13A9F`、回呼表或 pending code；尚缺同一原版 runtime 動態 trace，
+  map19 等圖也缺完整 `native_target_flags`，故仍不接正式 `NextAIPlan`。
 - [x] **RE-AI-RAW-RECORD-1598A**：`NativeAIScoringRecords` 以完整來源建立分離的 `0x50` runtime 快照，補齊 presentation、`+5/+6/+34..+36/+42/+46` 並拒絕不完整 roster；map0 與 map19 真實資產錨點通過。
-- [x] **RE-AI-CANDIDATES-1598A**：`NativeAIScoredCommandCandidateGroups` 已以 command `+3/+4`、原版 cost row、exact grid flags 與 raw `+5/+6` 建立 row-major destination/target-index groups；selector target-code transform 與空 target skip 已保存，map0 identity103→ally `(23,14)` 真實資產 regression 通過。群組已接 `0x15B77` family scorer；下一步是單位級 `[0x53C23]` 數值最大值與非零勝者保存。
+- [x] **RE-AI-CANDIDATES-1598A**：`NativeAIScoredCommandCandidateGroups` 已以 command `+3/+4`、原版 cost row、exact grid flags 與 raw `+5/+6` 建立 row-major destination/target-index groups；selector target-code transform 與空 target skip 已保存，map0 identity103→ally `(23,14)` 真實資產 regression 通過。群組、單位級最大分數與三遍門檻均已接入唯讀診斷；下一步是原版同狀態動態 trace。
 - [x] **RE-AI-SCORE-GROUPS-15B77**：`ScoreNativeAIScoredCommandGroups` 已依完整 ID 家族分派攻擊、恢復、旗標與原始零分支；map0 command0 的四個友軍目標各得24、群組合計96。IDs10..12 缺 `0x1F183` caller gate 時拒絕執行。`[0x53C23]` 的數值最大值可由零開始比較，但零分時的命令字區域變數初值仍未知，尚不可聲稱已閉合勝者。
-- [x] **RE-AI-UNIT-SCORE-1598A**：`ScoreNativeAI1598A` 已串接命令可用性→候選幾何→群組評分→正分 strict winner，並交叉驗證 actor mask／MP 與 runtime record；map0 command0 固定最大分96與 `(23,14)`，全零分不創造勝者。下一步是把這個純數值結果接到兩遍 phase planner 的 `[0x53C23]` 證據欄，不接正式動作執行。
+- [x] **RE-AI-UNIT-SCORE-1598A**：`ScoreNativeAI1598A` 已串接命令可用性→候選幾何→群組評分→正分 strict winner，並交叉驗證 actor mask／MP 與 runtime record；map0 command0 固定最大分96與 `(23,14)`，全零分不創造勝者。純數值結果已接到三遍 phase planner 的 `[0x53C23]` 證據欄；正式動作執行、逐單位回呼與 pending early-exit 仍未接。
 - [x] **RE-AI-MAP-ASSET-INPUTS**：撤回「地圖已有初始命令遮罩」的錯誤前提；同步前 33 張圖共 1887 個單位全數缺欄位。現在已由 FDFIELD b13..b16 補齊，並依 `0x10d7f..0x1100c` 同步 constructor `word42/word46`；1885 筆具有完整 MP 來源，map32 兩筆未覆蓋 selector 保持缺值。現有 263 筆非零遮罩中，261 筆通過原始 MP gate。
 - [x] **RE-AI-SPELL-SCORE-15B77**：Docker Capstone/Hex-Rays 釘死 `0x15b77` 的 attack IDs0..12 score（HP `<` spell value→24，否則8；record `+0x08==0` 時乘 1.5 並 toward-zero）與 recovery IDs13..16 score（HP `<` max/3→8、否則 `<` max/2→3、否則0；`+0x34 bit0` 再×2）；新增 raw-only `ScoreNativeAISpellAttack`／`ScoreNativeAISpellRecovery`，ID10..12 嚴格要求 caller-supplied `0x1f183` gate。未接 AI runtime、command inventory、target UI 或效果名稱。
 - [x] **RE-AI-SPELL-FLAGS-15B77**：Hex-Rays 釘死 ID20/21→raw `+0x25/+0x26` nonzero flag score，每筆各加6；ID26/27→同兩 offsets zero flag score，每筆各加4；新增 `ScoreNativeAISpellFlag`／`ScoreNativeAISpellZeroFlag`，不清除、不命名 flag，也不接施法 runtime。
