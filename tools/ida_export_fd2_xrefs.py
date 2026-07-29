@@ -31,10 +31,17 @@ TARGETS = (
     0x10C50,
     0x11019,
     0x115B6,
+    # Field-cell selector and the exact selector-0 movement boundary.
+    # 0x13488 dispatches path byte 1 to 0x1300D; the latter commits x-1
+    # before calling 0x13A44(..., 0).  0x18890 owns the separate
+    # selector-1 player-action completion paths.
+    0x12E38,
+    0x1300D,
     # Native AI physical candidate scoring and selected-action execution.
     # These addresses preserve call topology only; field semantics remain in
     # docs/knowledge-base/11-enemy-ai.md under their evidence gates.
     0x13488,
+    0x13A44,
     0x13A9F,
     0x13E9C,
     0x13FD4,
@@ -49,6 +56,7 @@ TARGETS = (
     0x14818,
     0x149F8,
     0x1598A,
+    0x18890,
     0x1A866,
     0x1B750,
     0x1B83D,

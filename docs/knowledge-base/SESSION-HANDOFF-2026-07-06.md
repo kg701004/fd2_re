@@ -2170,3 +2170,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `ApplyNativeFieldModeEvent` 已執行 event59/60 的完整 provenance
   preflight 與原子 mode-range 寫入；上層尚未證實 selector 時機，所以沒有
   自動掛到任意 walk completion。event61 仍只載入 typed core rule。
+
+## 2026-07-29：selector0 向左格步驟時機閉合
+
+- 合法 IDA 9.4 固定 `0x13488` 依路徑 byte 分派：只有 byte1 呼叫
+  `0x1300D`。後者七拍動畫提交 runtime `+0`／`[0x53AB1]` 的 `x-1`
+  後，才以新座標呼叫 `0x13A44(...,0)`。
+- `0x12E38` 以 `x + mapWidth*y` 定址，交叉確認第一參數是 x；所以
+  selector0 不是泛稱移動結束，而是每一個向左格步驟提交後。
+- `stepBattleWalk` 已在相同提交點執行 event59/60。map25 實檔測試固定
+  第1..6拍不改狀態、第7拍原子改 39..44，以及向右跨過同格不觸發。
+- selector1 雖已定位到 `0x13A9F` 共用行動收尾與 `0x18890` 多個成功臂，
+  仍不能簡化成 walk completion；event61 presentation 未完成前維持
+  失敗即關閉。

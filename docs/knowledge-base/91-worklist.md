@@ -359,7 +359,8 @@
 - [x] **state table entry12 writer closure**：`0x356bc..0x35821` 先 gate table[12]，成功臂以 actor class 查 item `0xd0`、`0x1b8e7` 消耗它、完成 presentation 後才設 table[12]=1，接 `spawn(1)→JOIN(31)→FDTXT #4`。因此 ch25 post 的 table[12] base+5/+8 有直接來源；尚未完成兩臂 runtime 資產，不能以 treasure／party condition 取代。
 - [x] **entry12 dispatch-scope audit（FDFIELD 勘誤）**：IDA 的八個 generic indirect xrefs 本身無法定位章節，但 map25 FDFIELD field slot2 已直接證實 selector1、座標 `(1,46)` → event61/`0x356B7`。舊「沒有 map25-local caller」斷言撤回；item D0、entry12、spawn1、JOIN31 與 text2/3/4 已資料化，59-frame presentation／selector timing 尚未正式接線。
 - [x] **RE-FIELD-EVENT59/60**：map25 y36/y22 selector0 邊界及 trigger record byte6 非零 gate 已閉合；分別把 ranges39..44、23..24+53..56 低四位模式設0，規則已嵌入 editable map asset。
-- [~] **REMAKE-FIELD-EVENT59/60/61-RUNTIME**：handler 規則已解碼；event59/60 已有完整 provenance preflight 後才原子寫 mode ranges 的 typed executor，但尚未猜測性接 selector0。selector0/1 在玩家移動、行動完成與 AI 路徑的完整時機仍須統一接線；event61 的 resource45×59-frame presentation 未還原前不得宣稱玩家路徑完成。
+- [x] **REMAKE-FIELD-EVENT59/60-SELECTOR0**：合法 IDA 9.4 與 Docker Capstone 固定 `0x13488` 只有 path byte1 進 `0x1300D`，七拍提交 `x-1` 後以新座標呼叫 selector0；重製已在每個向左格步驟相同提交點執行 event59/60，向右反例與第1..6拍不觸發測試通過。
+- [~] **REMAKE-FIELD-EVENT61-SELECTOR1**：event61 handler 已解碼並資料化；selector1 位於 `0x13A9F` 共用 unit-action 收尾及 `0x18890` 玩家操作多個成功臂，不可簡化成任意 walk completion。resource45×59-frame presentation 與各成功臂整合未完成前不得宣稱玩家路徑完成。
 - [x] **撤回 ch27 `0x24618`=acting 的暗示**：official IDA 定義 `sub_24618=0x24618..0x24754`（含 post-handler `0x33af1/0x33c9d` callers）；Docker Capstone 證實它是 13×8 offscreen terrain + 固定 9-pass strip composite + 0..62 palette 收束的地圖轉場。四個參數是 tile/strip geometry/progression，不能降成 actor `act`、pan 或任意 fade；strict indexed runtime adapter 已於 2026-07-28 接通。
 - [x] **全 30 關卡目標表(攻略 ground truth)** → `28`:每關勝利/失敗/加入條件;**失敗條件=護衛目標**證實 unit_state 機制;加入=roster_has;ch30 魔神連鎖=回合事件;remake 關卡規格直接可用
 - [x] **撤回章17 alive 誤讀**：依 caller-specific raw bit0 branch 重新解讀；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填

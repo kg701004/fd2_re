@@ -4176,6 +4176,12 @@ func (g *Game) stepBattleWalk() {
 	if !w.u.FinishNativeMapGridStep(pose, b.X, b.Y) {
 		w.u.SetMapPlacement(b.X, b.Y, pose)
 	}
+	// 原版 0x13488 只有 path byte 1 進 0x1300D；該函式在第七拍
+	// 提交 x-1 後，才以新座標呼叫 0x13A44(..., selector0)。
+	// 其餘方向及整條路徑完成都不得泛化成 selector0。
+	if b.X == a.X-1 && b.Y == a.Y {
+		battle.ApplyNativeFieldModeEvent(g.st, w.u, b.X, b.Y, 0)
+	}
 	w.seg++
 	w.tick = 0
 	if w.seg >= len(w.path)-1 {

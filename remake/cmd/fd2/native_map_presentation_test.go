@@ -40,6 +40,80 @@ func TestBattleWalkPreservesNativeSevenTickRecordLifecycle(t *testing.T) {
 	}
 }
 
+func TestBattleWalkAppliesMap25Selector0OnlyAfterLeftStepCommit(t *testing.T) {
+	st, err := battle.Load("../../assets/maps/map25/map25_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	trigger := st.Units[0]
+	trigger.NativeRecordByte6 = 1
+	trigger.HasNativeRecordByte6 = true
+	trigger.SetMapPlacement(11, 36, 1)
+	if err := trigger.MaterializeNativeMapPresentation(); err != nil {
+		t.Fatal(err)
+	}
+	for index := 39; index <= 44; index++ {
+		st.Units[index].NativeRecordByte34 = 0xA7
+		st.Units[index].HasNativeRecordByte34 = true
+	}
+	g := &Game{
+		m:  &MapData{TileW: 24, TileH: 24},
+		st: st,
+		walk: &walkAnim{
+			u:    trigger,
+			path: []battle.Cell{{X: 11, Y: 36}, {X: 10, Y: 36}},
+		},
+	}
+	for tick := 1; tick <= 6; tick++ {
+		g.stepBattleWalk()
+		for index := 39; index <= 44; index++ {
+			if got := st.Units[index].NativeRecordByte34; got != 0xA7 {
+				t.Fatalf("tick %d unit%d byte34=%#x, selector0 ran before commit", tick, index, got)
+			}
+		}
+	}
+	g.stepBattleWalk()
+	for index := 39; index <= 44; index++ {
+		if got := st.Units[index].NativeRecordByte34; got != 0xA0 {
+			t.Fatalf("unit%d byte34=%#x, want 0xa0 after left-step selector0", index, got)
+		}
+	}
+}
+
+func TestBattleWalkDoesNotGeneralizeSelector0ToRightStep(t *testing.T) {
+	st, err := battle.Load("../../assets/maps/map25/map25_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	trigger := st.Units[0]
+	trigger.NativeRecordByte6 = 1
+	trigger.HasNativeRecordByte6 = true
+	trigger.SetMapPlacement(9, 36, 3)
+	if err := trigger.MaterializeNativeMapPresentation(); err != nil {
+		t.Fatal(err)
+	}
+	for index := 39; index <= 44; index++ {
+		st.Units[index].NativeRecordByte34 = 0xA7
+		st.Units[index].HasNativeRecordByte34 = true
+	}
+	g := &Game{
+		m:  &MapData{TileW: 24, TileH: 24},
+		st: st,
+		walk: &walkAnim{
+			u:    trigger,
+			path: []battle.Cell{{X: 9, Y: 36}, {X: 10, Y: 36}},
+		},
+	}
+	for tick := 1; tick <= 7; tick++ {
+		g.stepBattleWalk()
+	}
+	for index := 39; index <= 44; index++ {
+		if got := st.Units[index].NativeRecordByte34; got != 0xA7 {
+			t.Fatalf("unit%d byte34=%#x, right step incorrectly ran selector0", index, got)
+		}
+	}
+}
+
 func TestOriginalActingUpdatesMaterializedRawPresentation(t *testing.T) {
 	slot := 0
 	u := &battle.Unit{X: 4, Y: 5}

@@ -810,8 +810,12 @@ Native battle-local event state is a separate editable boundary. `[0x53ad5]` poi
 `battle.ApplyNativeFieldModeEvent` 已提供 event59/60 的原始 mode-range
 執行器：先驗證 selector、trigger byte6 provenance、完整目標範圍與每筆
 byte34 provenance，全部成立後才原子式保留高四位並寫低四位 0。
-它不自行猜測何時呼叫 selector0，也拒絕 event61；因此 typed rule 可測，
-但尚未被誤接成任意移動完成事件。
+合法 IDA 9.4 固定 `0x13488→0x1300D→0x13A44`：path byte1 的七拍
+格步驟提交 runtime `x-1` 後才呼叫 selector0；`0x12E38` 以
+`x + mapWidth*y` 交叉確認座標順序。`stepBattleWalk` 因此只在向左格
+步驟提交後執行 event59/60，向右與其他方向不會泛化觸發。執行器仍拒絕
+event61；selector1 的多個成功收尾及其 59-frame presentation 未完整前
+保持失敗即關閉。
 
 Inventory gates are distinct from item-consuming event commands. Native `0x24b14(item)` scans only runtime slots `0..15` through `0x31860` and returns found/not-found; it neither filters camp/activity nor removes an item. In ch26 post, `0x24b14(0x64)` selects the sky-key success arm; that arm contains no `0x1b8e7` call and only later performs sync/chapter increment/persistent cleanup. The missing arm is a separate ending presentation path. Therefore an editable `inventory_gate` must preserve item `0x64`; it may not be lowered to a recipe, reward, or consume action.
 

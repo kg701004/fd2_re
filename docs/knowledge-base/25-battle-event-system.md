@@ -233,6 +233,16 @@ map25 資產只因實際引用而嵌入。重製仍未把 selector0/1 的完整�
 與 event61 的 59-frame presentation 接進正式路徑，故目前是已解碼資料，
 不是已完成的玩家路徑。
 
+2026-07-29 的合法 IDA 9.4 與 Docker Capstone 交叉檢查又閉合 selector0
+時機。`0x13488` 逐 byte 消費路徑，只有 path byte 1 呼叫
+`0x1300D`；後者在七拍動畫的提交拍把 runtime `+0` 與
+`[0x53AB1]` 各減一，再以新 `(x,y)` 呼叫 `0x13A44(...,0)`。
+`0x12E38` 的索引式 `x + mapWidth*y` 也獨立固定參數順序。因此 selector0
+精確代表「每個向左格步驟提交後」，不能泛化成四方向或整條路徑完成。
+重製 `stepBattleWalk` 已在相同提交點執行 event59/60；向右反例測試固定
+不得觸發。selector1 仍橫跨 `0x13A9F` 與 `0x18890` 的多個行動成功臂，
+event61 presentation 完成前不接線。
+
 ### 6.1.1 ch21/ch22 動態增援(event_id 47/49)eax 來源解密 [驗]
 
 gen-campaign v4 report 留下 6 筆「`groups: [$reg_or_mem(eax)]`」——`spawn_group(eax)` 的 `eax` 來自暫存器計算,
