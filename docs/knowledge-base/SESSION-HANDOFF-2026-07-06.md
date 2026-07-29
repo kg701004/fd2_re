@@ -2594,10 +2594,59 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   gate B／anchor seed 均為 `1`，而 anchor 只依 restored visible cursor
   的 `<3`／`>9`、Y `>5` 分支推進。`ContinueMapPresentation` 已保存
   這些值；戰場內 `0x1A251` caller 不在此結論範圍。現只明列 map timing、
-  field-runtime bridge、battle driver 三個 unresolved owners。
+  runtime-unit projection、future-group constructor、battle driver
+  四個 unresolved owners。
   `ReadyForContinue()` 目前必為 false，不接 production。證據：
   `docs/data/fd2_continue_selector_rebuild_ida.txt`、
   `docs/data/fd2_continue_map_presentation_ida.txt`。
+- 2026-07-30 CONTINUE map timing seed：IDA data xrefs 與 Capstone raw
+  data 證實 `[0x53C07]/[0x53C0B]/[0x53C1F]/[0x539F4]` 及
+  `[0x53A40]/[0x53A00]/[0x53A04]/[0x53A08]` 資料初值全零，
+  `[0x51A93]=-1`。唯 sprite last tick `[0x53C0F]` 由 main
+  `0x25D83..0x25D8B` 在標題入口擷取 signed BIOS low word；
+  它不在 FD2.SAV。`ContinueRuntimeContext.TitleTimerTick` 現明示此
+  外部狀態，`ContinueMapTimingSeed` 保存首次 redraw 前完整種子。
+  但 `0x10494`／`0x105ED` 的 redraw 及中間 delay 仍須 runtime clock
+  逐點推進，故 map timing owner 尚未解除。證據：
+  `docs/data/fd2_continue_map_timing_seed_ida.txt`。
+- 同輪 FDFIELD control typed boundary：`ContinueFieldControlView` 現依
+  `[0x53A55]` 固定 layout 唯讀拆出 raw header、16×3 turn events、
+  16×2 field events、16×3 chest controls 及 count-delimited 26-byte
+  unit rows；原始 `0x8A3` 仍完整深複製。勘誤：這不是 `[0x53A51]`
+  composition grid，CONTINUE 另載 resource `3N` 並以 `0x4DBFC`
+  初始化 live cell byte `+3`。typed decoder 已完成，但
+  `battle.State` atomic adapter 當時尚未完成；後續 field boundary
+  consumer 已補，但 runtime unit projection 與 future group constructor
+  仍維持 fail-closed。證據：`docs/data/fd2_current_field_control_ida.txt`。
+- 後續 unit-count 邊界覆核：合法 IDA Pro 9.4 的
+  `0x10BC7..0x10BF6` 與 Docker Capstone 都顯示
+  `cmp ebx,[0x53BE3]; jge` 發生在 row load 前，故 control raw `+2`
+  是排他的有效筆數。使用者 checksum-valid current snapshot 的 chapter0
+  控制前 937 bytes 與 FDFIELD resource1 全同，資源有 31 列空間但
+  `+2=30`；typed view 因而只輸出 30 列，第31列及固定容量尾端只保留
+  raw。已補 `count=30` 邊界回歸，未因檔案長度猜測額外 live unit。
+- 後續 live control 生命週期：IDA 完整 data xrefs 與 Capstone 覆核
+  `0x19357` 的 chest value writer、`0x34AB4/0x34AC5` 與多個 chapter
+  handler 的 turn-event writer。故 `[0x53A55]` 不是載入後不變的
+  FDFIELD resource 副本；current snapshot 的 `0x8A3` 映像是唯一 live
+  來源，原始資源／map JSON 不得覆寫。control rows 只用於後續
+  `0x10B4E→0x10C50` group append，現有單位必須採 saved runtime
+  record order。doc26 已撤回把 party 與 FDFIELD constructor 拼成單一路徑
+  及錯套 `+0/+1/+2/+6` 的舊表。證據：
+  `docs/data/fd2_current_field_control_mutations_ida.txt`。
+- 同輪 live field boundary consumer：新增
+  `campaign.MaterializeNativeContinueFieldBoundary`。它會從公開 input
+  重建 snapshot、重跑完整 preflight 並逐欄比對，不能只靠可沿用的 marker
+  接受建構後竄改；再要求 asset raw chapter、dimensions 與 field-event
+  topology 全相符，才一次安裝 exact control、
+  turn/field/chest/future-unit rows、event state、raw round、
+  camera/cursor、HUD 與 opening range mode0；拒絕前不改 State，輸出
+  深複製。它不動 saved runtime Units、timing、interactive mode1 或
+  battle driver。原本籠統的 `ContinueOwnerFieldRuntimeBridge` 已改拆成
+  `ContinueOwnerRuntimeUnitProjection` 與
+  `ContinueOwnerFutureGroupConstructor`；exact runtime records／rebuilt
+  slots 已深複製進 State，但尚未投影成 `battle.Unit`。聚焦
+  fdsave/battle/campaign Docker regression 通過。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

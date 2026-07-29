@@ -1,0 +1,85 @@
+FD2 current snapshot 的 FDFIELD 控制映像生命週期（IDA Pro 9.4）
+================================================================
+
+證據範圍
+--------
+
+- `FD2.EXE` 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一順位：使用者合法 IDA Pro 9.4，只在授權、無網路 Docker 流程執行。
+- 第二順位：`fd2-cap-local` 的 Capstone 5.0.3，覆核下列直接寫入。
+
+結論
+----
+
+`[0x53A55]` 不是載入後永遠等於 FDFIELD resource `3N+1` 的靜態
+buffer。原版在戰鬥中會直接改寫其中的回合事件與寶箱控制值；current-save
+writer 因而必須保存完整 live `0x8A3` 映像。CONTINUE bridge 不可用
+`map.json`、重新解包的原始控制資源或由欄位重建的近似資料覆寫存檔映像。
+
+使用者 2026-07-30 checksum-valid chapter0 snapshot 的有效前綴剛好與
+FDFIELD resource 1 全同，只能證明該次擷取尚未在這些 bytes 形成差異；
+不能外推為所有章節、回合與事件都永遠相同。
+
+直接 writer
+-------------
+
+### 寶箱控制值
+
+`0x190AC..0x1956B` 以三位元組索引讀取
+`[0x53A55]+0x53+slot*3`。交易成功後：
+
+```text
+0x19344  mov edx,[0x53A55]
+0x1934A  mov eax,slot
+0x1934C  shl eax,2
+0x1934F  sub eax,slot
+0x19351  add eax,edx
+0x19357  mov word [eax+0x54],dx
+```
+
+也就是 live chest `value` 會被直接改寫，不是唯讀資源欄位。
+
+### 回合事件 turn byte
+
+IDA 對 `[0x53A55]` 的完整 data xrefs 找到多個章節 handler 直接 writer。
+例如 `0x34A7A..0x34B5D`：
+
+```text
+0x34AA7  mov dl,[0x53BEF]
+0x34AAD  inc dl
+0x34AAF  mov eax,[0x53A55]
+0x34AB4  mov [eax+3],dl
+0x34AB7  mov dl,[0x53BEF]
+0x34ABD  add dl,2
+0x34AC0  mov eax,[0x53A55]
+0x34AC5  mov [eax+6],dl
+```
+
+其他直接 writer 包含：
+
+- `0x358B5`：寫 turn event 0 的 `+3`；
+- `0x359B0`：寫 turn event 0 的 `+3`；
+- `0x35A39`：寫 turn event 1 的 `+6`；
+- `0x35AED`：寫 turn event 2 的 `+9`；
+- `0x35C6C`：寫 turn event 0 的 `+3`；
+- `0x35D40/0x35D51`：寫 turn event 0／1 的 `+3/+6`；
+- `0x35D97/0x35DE6`：寫 turn event 1／2 的 `+6/+9`；
+- `0x35EFC`：寫 turn event 2 的 `+9`；
+- `0x35F89`：寫 turn event 0 的 `+3`。
+
+這些位址只證明 raw turn byte 的 live 更新；個別章節的高階事件名稱仍應由
+各 handler 的控制流程另行閉合。
+
+CONTINUE bridge 邊界
+--------------------
+
+- 存檔 `NativeFieldControl[0x8A3]` 是唯一 live 控制映像來源。
+- selected chapter 的 FDFIELD/FDSHAP 資產仍負責 composition、terrain 與
+  靜態規則；它們不能反向覆寫 live control。
+- 現有 runtime `0x50` records 是目前已出場單位的唯一 live 來源。
+- control `+0x83` 的 26-byte rows 只供 `0x10B4E→0x10C50` 之後的 group
+  append 使用；不可用它重建或重排已保存的 runtime records。
+- 尚未完整轉寫 `0x10C50` 前，未來 group spawn 與正式 CONTINUE battle
+  driver 必須維持失敗即關閉。

@@ -56,22 +56,38 @@
 
 → DSL 的 `turn>=N` 對應 `[0x53bef]`。
 
-### 單位 0x50B 結構(部分已解)
+### 單位 0x50B 結構（來源分流勘誤）
 
-戰場單位陣列每筆 0x50B(`memset 0` 初始化,再從 FDFIELD roster 26B + class/lv 數值展開,0x10a77 起):
+舊表把 persistent party constructor 與 FDFIELD group constructor 拼成
+單一路徑，並把若干來源 byte 直接當成 runtime offset；該模型已失效。
+目前直接指令固定兩條不同來源：
+
+- `0x1088D` 的 party loop 先複製完整 persistent `0x50` record，再由
+  position resource 覆寫座標及部分 transient；
+- `0x10B4E→0x10C50` 才由 FDFIELD 26-byte row、position resource 與
+  EXE constructor tables 建立新的 runtime record。
+
+目前可安全共用的 runtime 邊界如下：
 
 | 偏移 | 內容 | 狀態 |
 |---|---|---|
-| +0 | roster[0](種族/陣營相關) | [驗] |
-| +1 | roster[2] | [驗] |
-| +2 | 由 [+7] 複製 | [驗] |
+| +0/+1 | live map X/Y；constructor 來源是 position resource，不是 control row `b0/b2` | [驗] |
+| +2 | `0x11019` 依 raw key 建立的 process-global FDICON cache slot；CONTINUE 會依 saved runtime order 與 `+7` 重算 | [驗] |
+| +3/+4 | live pose/motion；新建 record 初值 0，之後由移動與演出 writer 改寫 | [驗] |
 | +5 | **raw mask byte**：已驗證 caller 讀取 `bit0`／`bit7(0x80)`；不得直接命名成死亡、存活或已行動 | [驗] |
-| +6 | 初始=2(推定面向/陣營預設) | [驗] |
-| +8 | **角色 ID**(roster 名冊 `roster_has` 也比 +8) | [驗 欄位 / 推 語意] |
-| +0x31 | 初始=0xFF | [驗] |
-| 其餘 | HP/MP/攻防/移動/座標等(由 class+lv 查 EXE 表 doc 03 填) | [阻] 未逐欄 |
+| +6 | party constructor 寫 literal 2；FDFIELD constructor 直接複製 row `b0`。只保留 raw selector，不把兩條來源概括成面向 | [驗] |
+| +7 | party 路徑保留 persistent raw key；FDFIELD 路徑複製 row `b1`。CONTINUE 以此重建 `+2`，不可稱為 `+2` 的直接複製 | [驗] |
+| +8 | FDFIELD constructor 同樣複製 row `b1`；persistent `roster_has` 另以此欄比對角色。跨兩種來源的統一高階語意尚未閉合 | [驗欄位／未知統一語意] |
+| +0x1F/+0x20 | raw race/class；由 constructor table 或 persistent record 提供 | [驗] |
+| +0x22..+0x27 | 六個獨立 live transient bytes；不可降成單一 buff 狀態 | [驗] |
+| +0x31..+0x33 | FDFIELD row `b22..b24` 直拷；party constructor 另將 `+0x31` 設為 `0xFF` | [驗] |
+| +0x34..+0x36 | FDFIELD row `b17..b19` 直拷；只有 `+0x34` low nibble 的 dispatch 已閉合 | [驗] |
+| +0x37..+0x4E | 基礎／有效能力、HP/MP 等 word 與 byte 欄位；目前 typed view 保留已證實 offsets | [部分驗] |
 
-> 完整逐欄佈局未解(0x50B 共 80 byte,量大);**重製無需照搬原版佈局**——自定義 Unit struct,只要對齊「有哪些屬性」即可。
+重製可以使用具型別 `Unit`，但 CONTINUE、存檔相容與原生 renderer 需要的
+raw 欄位仍必須逐一保存來源與 consumer；不能只對齊一份高階屬性清單就宣稱
+等價。現況權威見 SDD 的 current-runtime snapshot／CONTINUE 段落及
+[`fd2_current_field_control_ida.txt`](../data/fd2_current_field_control_ida.txt)。
 
 ## 2. 全 30 章 handler 對照表 [驗]
 

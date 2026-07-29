@@ -24,6 +24,18 @@ FD2 current snapshot 的 FDFIELD 控制映像（IDA Pro 9.4）
   `(event_id, selector)` 格子事件；
 - `+0x83` 起是 `0x10B4E` 以 26 bytes stride 掃描的 FDFIELD 單位列。
 
+`0x10BC7..0x10BF6` 也固定了 `+2` 的邊界語意。原版令索引 `ebx=0`，
+先以 `cmp ebx,[0x53BE3]; jge done` 判斷，再讀
+`[0x53A55]+0x83+ebx*0x1A`；因此 `+2` 是排他的有效筆數，不是最後索引。
+有效列嚴格是 `0..count-1`，控制資源或固定容量映像中 count 以後的 bytes
+只保留 raw，不得解碼成額外 live unit。
+
+使用者 2026-07-30 checksum-valid current snapshot 的動態旁證也符合此
+契約：raw chapter 0 的 header `+2=30`，其前 `937` bytes 與固定雜湊
+FDFIELD resource 1（`0x83+31*0x1A`）逐 byte 相同；但原版上述迴圈只
+消費前 30 列。第 31 列與固定 `0x8A3` 映像尾端仍保持未分類，不因檔案
+長度而提升為有效單位。這份存檔會變動，不列入固定版本基準。
+
 current-save writer `0x19DF7..0x1A30B` 將 `[0x53A55]` 起固定
 `0x8A3` bytes 寫到 plaintext `+0x0000`。CONTINUE loader `0x10010`
 在 `0x101C3..0x101D7` 對稱地把同一範圍複製回 `[0x53A55]`，隨後呼叫
@@ -38,7 +50,15 @@ current-save writer `0x19DF7..0x1A30B` 將 `[0x53A55]` 起固定
 --------
 
 `fdsave.CurrentSnapshot.NativeFieldControl` 以 `[0x8A3]byte` 原樣保存此
-映像；目前只提升整體來源與生命週期，不把尚未逐一閉合的尾端 bytes
-命名。CONTINUE 正式接入仍需把這份控制映像與 runtime records、selector
-cache、`battle.State` 及戰鬥驅動做嚴格一致性驗證；本次更名本身不代表
-CONTINUE 已可供玩家使用。
+映像。後續 `ContinueFieldControlView` 已依上述固定 layout 唯讀拆出
+raw map selector、own-deploy count、unit count、16 筆三位元組回合事件、
+16 筆二位元組格子事件、16 筆三位元組寶箱控制，以及 count-delimited
+26-byte 單位列；回歸明確固定 `count=30` 只產生 30 列，不暴露第 31 列
+padding。未解欄仍保留 raw bytes，不命名。
+
+這段控制資源不是 `[0x53A51]` 指向的地圖構成格陣。CONTINUE 會另行
+從 FDFIELD resource `3N` 載入 composition，並由 `0x4DBFC` 重設 live
+cell byte `+3`；不可拿控制映像或 `map.json` 的 serialized byte `+3`
+代替。CONTINUE 正式接入仍需把 typed control、runtime records、
+selector cache、`battle.State` 及戰鬥驅動做嚴格一致性驗證；唯讀解析
+本身不代表 CONTINUE 已可供玩家使用。

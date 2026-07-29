@@ -291,6 +291,18 @@ func validContinueSnapshot() CurrentSnapshot {
 		RuntimeRecords: make([]PersistentRecord, 3),
 	}
 	snapshot.NativeFieldControl[2] = 3
+	snapshot.NativeFieldControl[0] = 4
+	snapshot.NativeFieldControl[1] = 5
+	snapshot.NativeFieldControl[3] = 6
+	snapshot.NativeFieldControl[4] = 7
+	snapshot.NativeFieldControl[5] = 8
+	snapshot.NativeFieldControl[0x33] = 9
+	snapshot.NativeFieldControl[0x34] = 10
+	snapshot.NativeFieldControl[0x53] = 11
+	binary.LittleEndian.PutUint16(snapshot.NativeFieldControl[0x54:0x56], 0x1234)
+	snapshot.NativeFieldControl[CurrentFieldControlUnitOffset] = 12
+	snapshot.NativeFieldControl[CurrentFieldControlUnitOffset+2*CurrentFieldControlUnitSize+
+		CurrentFieldControlUnitSize-1] = 13
 	for i := range snapshot.RuntimeRecords {
 		snapshot.RuntimeRecords[i].Raw[0] = byte(3 + i)
 		snapshot.RuntimeRecords[i].Raw[1] = byte(4 + i)
@@ -311,7 +323,7 @@ func validContinueSnapshot() CurrentSnapshot {
 func validContinueContext() ContinueRuntimeContext {
 	return ContinueRuntimeContext{
 		Chapter: 1, FieldWidth: 30, FieldHeight: 20,
-		SelectorGroupCount: 16,
+		SelectorGroupCount: 16, TitleTimerTick: -123, HasTitleTimerTick: true,
 	}
 }
 
@@ -338,9 +350,24 @@ func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testi
 		got.HUDAnchorX != 1 {
 		t.Fatalf("CONTINUE map presentation=%#v", got)
 	}
+	if got := input.MapTimingSeed; got != (ContinueMapTimingSeed{
+		SpriteLastTimerTick: -123, TerrainPhaseOverride: -1,
+	}) {
+		t.Fatalf("CONTINUE map timing seed=%#v", got)
+	}
+	if got := input.FieldControl; got.RawMapSelector != 4 ||
+		got.RawOwnDeployCount != 5 || got.RawUnitCount != 3 ||
+		got.TurnEvents[0] != (ContinueTurnEventControl{Turn: 6, EventID: 7, RawCamp: 8}) ||
+		got.FieldEvents[0] != (ContinueFieldEventControl{EventID: 9, Selector: 10}) ||
+		got.Chests[0] != (ContinueChestControl{RawType: 11, Value: 0x1234}) ||
+		len(got.Units) != 3 || got.Units[0].Raw[0] != 12 ||
+		got.Units[2].Raw[CurrentFieldControlUnitSize-1] != 13 {
+		t.Fatalf("CONTINUE field control=%#v", got)
+	}
 	wantOwners := []ContinueRuntimeOwner{
 		ContinueOwnerMapTiming,
-		ContinueOwnerFieldRuntimeBridge,
+		ContinueOwnerRuntimeUnitProjection,
+		ContinueOwnerFutureGroupConstructor,
 		ContinueOwnerBattleDriver,
 	}
 	if input.ReadyForContinue() ||
@@ -353,7 +380,8 @@ func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testi
 	snapshot.NativeEventState[12] = 0
 	snapshot.PersistentRecords[0].Raw[8] = 0
 	if input.RuntimeRecords[0].SelectorKey != 5 ||
-		input.NativeFieldControl[0] != 0 ||
+		input.NativeFieldControl[0] != 4 ||
+		input.FieldControl.RawMapSelector != 4 ||
 		input.NativeEventState[12] != 1 ||
 		input.PersistentRecords[0].Raw[8] != 9 {
 		t.Fatal("CONTINUE runtime input aliases caller snapshot")
@@ -394,6 +422,28 @@ func TestBuildContinueRuntimeInputAppliesTitleHUDAnchorBranches(t *testing.T) {
 	}
 }
 
+func TestDecodeContinueFieldControlUsesExclusiveNativeCount(t *testing.T) {
+	var raw [CurrentFieldControlSize]byte
+	raw[2] = 30
+	lastLive := CurrentFieldControlUnitOffset + 29*CurrentFieldControlUnitSize
+	firstPadding := CurrentFieldControlUnitOffset + 30*CurrentFieldControlUnitSize
+	raw[lastLive] = 0x1d
+	raw[firstPadding] = 0xee
+
+	got := decodeContinueFieldControl(raw)
+	if got.RawUnitCount != 30 || len(got.Units) != 30 {
+		t.Fatalf("field control count=%d units=%d", got.RawUnitCount, len(got.Units))
+	}
+	if got.Units[29].Raw[0] != 0x1d {
+		t.Fatal("last live row was not decoded")
+	}
+	for _, unit := range got.Units {
+		if unit.Raw[0] == 0xee {
+			t.Fatal("resource padding was exposed as a live unit")
+		}
+	}
+}
+
 func TestBuildContinueRuntimeInputRejectsMalformedPreconditionsAtomically(t *testing.T) {
 	tests := map[string]func(*CurrentSnapshot, *ContinueRuntimeContext){
 		"chapter mismatch": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
@@ -404,6 +454,12 @@ func TestBuildContinueRuntimeInputRejectsMalformedPreconditionsAtomically(t *tes
 		},
 		"selector group count": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
 			context.SelectorGroupCount = 0
+		},
+		"missing title timer seed": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
+			context.HasTitleTimerTick = false
+		},
+		"invalid title timer seed": func(_ *CurrentSnapshot, context *ContinueRuntimeContext) {
+			context.TitleTimerTick = 0x8000
 		},
 		"runtime count": func(snapshot *CurrentSnapshot, _ *ContinueRuntimeContext) {
 			snapshot.Header.RuntimeCount++

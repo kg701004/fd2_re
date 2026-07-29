@@ -86,7 +86,13 @@ def parse_map(raw, m):
                       # runtime record +6. Preserve this raw provenance; it
                       # is not a normalized camp synonym.
                       "native_record_byte6": b[0],
-                      "portrait": b[1], "race": b[2], "cls": b[3], "lv": b[4],
+                      # b1 is copied to runtime +7/+8 and selects the native
+                      # constructor tables. Historical exporters called it
+                      # portrait, but a universal DATO/identity meaning has not
+                      # been closed for both FDFIELD and persistent sources.
+                      "raw_unit_key": b[1],
+                      "portrait": b[1],  # legacy output alias; not ABI evidence
+                      "race": b[2], "cls": b[3], "lv": b[4],
                       "inventory": [item for item in b[5:13] if item != 0xFF],
                       "inventory_slots": list(b[5:13]),
                       # Constructor 0x10f7f copies exactly b[13:17] to runtime

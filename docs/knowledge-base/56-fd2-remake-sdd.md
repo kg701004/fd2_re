@@ -2526,13 +2526,67 @@ context（chapter、field dimensions、FDICON group count），原子驗證：
 gate B 與有效 anchor，不再把這四值列為未知。此契約只適用標題
 `0x26130` caller；不外推到戰場內 `0x1A251` caller。
 
-輸出仍明列三個 unresolved owners：map timing、field-runtime bridge、
-battle driver。因此
+輸出仍明列四個 unresolved owners：map timing、runtime unit projection、
+future group constructor、battle driver。因此
 `ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
 沒有 production owner，也不改 `battle.State`。直接證據見
 [`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)
 與
 [`fd2_continue_map_presentation_ida.txt`](../data/fd2_continue_map_presentation_ida.txt)。
+
+同輪 timing data-xref 又把 `map_timing` 拆成「已閉合種子」與「未接
+執行期排程」。資料映像的 sprite cycles、terrain phase/latch、
+terrain flip/latch、unit pixel-shift/latch 都是零，terrain override
+`[0x51A93]` 是 `-1`；唯 sprite last tick `[0x53C0F]` 由 main
+`0x25D83..0x25D8B` 在標題入口擷取 signed BIOS low word。故
+`ContinueRuntimeContext` 必須明示 `TitleTimerTick`，
+`ContinueMapTimingSeed` 才能無猜測保存首次 `0x11CAC` 前的完整種子。
+但 `0x10494` 與 `0x105ED` 的 redraw 中間包含固定 delay，而
+`0x1297D`／`0x11EEE`／`0x127E0` 各在實際呼叫時讀 clock；進戰鬥驅動
+前的最終 phase/cycle 仍須 production scheduler 逐點取樣，因此
+`map_timing` owner 尚未解除。證據見
+[`fd2_continue_map_timing_seed_ida.txt`](../data/fd2_continue_map_timing_seed_ida.txt)。
+
+`NativeFieldControl` 也不再只以魔術偏移供後續程式直接索引。
+`ContinueFieldControlView` 依已證實的 FDFIELD control layout 唯讀拆出
+raw header、16 筆回合事件、16 筆格子事件、16 筆寶箱控制與
+count-delimited 26-byte 單位列，完整 raw 映像仍同時保留並深複製。
+IDA `0x10BCC` 的 `cmp index,[0x53BE3]; jge` 證實 raw `+2` 是排他的
+有效筆數。使用者 current snapshot 的 chapter 0 控制前綴也與
+FDFIELD resource 1 全同；雖該資源容納 31 列且 `+2=30`，第 31 列及
+固定映像尾端都只保留 raw，不可因資源長度而當成 live unit。
+後續完整 data-xref 與直接 writer 又證實這份 control 不是載入後的靜態
+資源副本：`0x19357` 會改寫 chest value，`0x34AB4/0x34AC5` 及多個
+chapter handler 會改寫 turn event bytes。因此 selected chapter 的
+原始 resource 只能驗證身份與靜態來源，不能覆寫 current snapshot 的
+live `NativeFieldControl`。同理，control rows 只供未來
+`0x10B4E→0x10C50` group append；現有單位必須以 saved runtime
+`0x50` records 及其原順序為準。
+這不是 map composition：CONTINUE 另載 FDFIELD `3N` 資源，
+`0x4DBFC` 才建立 live cell byte `+3`；舊 serialized map byte 不能
+覆寫 current runtime。typed view 只關閉 control decoder，尚未完成
+完整 runtime roster bridge。
+
+`campaign.MaterializeNativeContinueFieldBoundary` 現已成為第一個嚴格
+consumer。它不只檢查 `BuildContinueRuntimeInput` 的私有 marker，還會從
+目前公開欄位重建 snapshot、重跑完整 preflight 並逐欄比對，拒絕建構後被
+修改的 header、control、runtime record、selector 或 owner。外層另須先
+選定相同 raw chapter、dimensions 與完整 field-event asset。所有檢查通過
+後才一次安裝：
+
+- exact live `NativeFieldControlRaw`、16 筆 turn/field/chest rows 與
+  count-delimited 26-byte future-unit rows；
+- `NativeEventState` 與 raw `NativeRoundCounter`；
+- saved camera/cursor/visible cursor、HUD gates/anchor；
+- 第一張 opening redraw 使用的 range mode `0`。
+
+這個 adapter 不碰既有 `State.Units`，不重建 saved runtime `0x50`
+records，不啟動 timing，也不把 range mode 提前推成 interactive `1`。
+因此它已關閉原本籠統的 field boundary owner，但把剩餘責任精確拆成
+`runtime_unit_projection` 與 `future_group_constructor`；兩者仍分別由
+saved runtime-record materializer 與未來 `0x10C50` group append 阻擋。
+直接證據見
+[`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。
 
 ### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
 

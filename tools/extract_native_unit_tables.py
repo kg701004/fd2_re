@@ -20,9 +20,9 @@ TABLES = {
     "high_class": {"linear": 0x61AF9, "record_size": 10, "count": 68,
                    "helper": "0x4e4ff", "selector": "FDFIELD b1-0x44"},
     "lower_class": {"linear": 0x61DA1, "record_size": 24, "count": 32,
-                     "helper": "0x4e4e8", "selector": "FDFIELD b1 (portrait), lower branch"},
+                     "helper": "0x4e4e8", "selector": "FDFIELD b1, lower branch"},
     "lower_aux": {"linear": 0x620A1, "record_size": 11, "count": 68,
-                  "helper": "0x4e4d1", "selector": "FDFIELD b1 (portrait), lower branch"},
+                  "helper": "0x4e4d1", "selector": "FDFIELD b1, lower branch"},
 }
 
 

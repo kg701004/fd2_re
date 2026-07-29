@@ -53,32 +53,36 @@ FIELDS = (
 def expected_units(raw, map_index, native_tables=None):
     expected = []
     for unit in parse_field.parse_map(str(raw), map_index)["units"]:
+        raw_unit_key = unit["raw_unit_key"]
         item = {
             "map_selector_key": unit["native_map_selector_key"],
             "native_record_byte6": unit["native_record_byte6"],
-            "battle_fig": unit["portrait"],
-            "native_identity": unit["portrait"],
+            "battle_fig": raw_unit_key,
+            # Runtime +8 receives the same raw b1 byte. Keep the existing
+            # schema field for compatibility; this does not promote b1 to a
+            # universal character identity.
+            "native_identity": raw_unit_key,
             "initial_command_mask": unit["initial_command_mask"],
             "native_record_byte34": unit["native_record_byte34"],
             "native_record_byte35": unit["native_record_byte35"],
             "native_record_byte36": unit["native_record_byte36"],
         }
         if native_tables is not None:
-            constructor = export_units.native_constructor_for_portrait(
-                native_tables, unit["portrait"]
+            constructor = export_units.native_constructor_for_raw_unit_key(
+                native_tables, raw_unit_key
             )
             if constructor is not None:
                 item["native_record_race"] = constructor["record"][0]
                 item["native_record_class"] = constructor["record"][1]
-            word42 = export_units.native_record_word42_for_portrait(
-                native_tables, unit["portrait"], unit["lv"]
+            word42 = export_units.native_record_word42_for_raw_unit_key(
+                native_tables, raw_unit_key, unit["lv"]
             )
             # Unsupported selector/table provenance remains absent.  The
             # runtime loader therefore keeps native predicates fail-closed.
             if word42 is not None:
                 item["native_record_word42"] = word42
-            word46 = export_units.native_record_word46_for_portrait(
-                native_tables, unit["portrait"], unit["lv"]
+            word46 = export_units.native_record_word46_for_raw_unit_key(
+                native_tables, raw_unit_key, unit["lv"]
             )
             if word46 is not None:
                 item["native_record_word46"] = word46

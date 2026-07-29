@@ -489,24 +489,37 @@ type State struct {
 	Turn          int    // 回合數(無上限,doc 27;只由劇本事件限制)
 	// NativeRoundCounter preserves executable global [0x53bef], incremented at
 	// the native turn-advance boundary (0x1a5b9), apart from normalized Turn.
-	NativeRoundCounter          int                         `json:"native_round_counter,omitempty"`
-	Flags                       map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
-	NativeEventState            [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
-	Cost                        []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
-	NativeCompositionEventBytes []byte                      // immutable FDFIELD composition cell +2 source; each caller rebuilds its own mutable low5/live flags
-	NativeFieldEventSlots       []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
-	NativeFieldEvents           []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
-	NativeFieldEventRules       []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
-	NativeTileBlitModes         []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
-	NativeTerrainControl        []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
-	NativeTerrainMoveCodes      []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
-	SpellBook                   []Spell                     // scenario-injected spell table; AI command mapping remains data-only
-	NativeCommandBook           []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
-	NativeCommandResistances    map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
-	CommandLearn                map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
-	AICommandSpell              map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
-	Treasures                   map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	NativeTreasureEventRules    map[int]NativeTreasureEventRule
+	NativeRoundCounter          int             `json:"native_round_counter,omitempty"`
+	Flags                       map[string]bool // 事件旗標(跨事件/跨關劇情狀態,doc 29)
+	NativeEventState            [0x20]byte      // raw [0x53ad5] battle-local state table; unnamed indices
+	Cost                        []int           // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
+	NativeCompositionEventBytes []byte          // immutable FDFIELD composition cell +2 source; each caller rebuilds its own mutable low5/live flags
+	// NativeFieldControlRaw is the exact live current-save image rooted at
+	// [0x53a55]. It is distinct from composition and from the original chapter
+	// resource because battle handlers rewrite turn/chest bytes.
+	NativeFieldControlRaw      []byte
+	NativeTurnEventControls    [16]NativeTurnEventControl
+	NativeChestControls        [16]NativeChestControl
+	NativeFieldUnitControls    []NativeFieldUnitControl
+	HasNativeFieldControlState bool
+	// NativeRuntimeRecords preserves the exact saved current-unit array and
+	// CONTINUE-rebuilt selector slots before a typed Unit projection exists.
+	// Units remains the normalized/gameplay array and is never guessed from
+	// these bytes by State itself.
+	NativeRuntimeRecords     []NativeRuntimeRecordState
+	NativeFieldEventSlots    []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
+	NativeFieldEvents        []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
+	NativeFieldEventRules    []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
+	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
+	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
+	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
+	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
+	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
+	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
+	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
+	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	NativeTreasureEventRules map[int]NativeTreasureEventRule
 	// OpenedTreasure is remake-owned state for editable treasure nodes.  It has
 	// no asserted native-global address: native [0x53ad5] is a pointer to a
 	// 0x20-byte battle-local state table (0x10322 copies it; 0x13d00 writes an
@@ -550,6 +563,33 @@ type NativeTreasureEventRule struct {
 type NativeFieldEvent struct {
 	EventID  byte `json:"event_id"`
 	Selector byte `json:"selector"`
+}
+
+// NativeTurnEventControl preserves one live three-byte FDFIELD turn row.
+// RawCamp remains a selector byte; normalized battle.Camp is not inferred.
+type NativeTurnEventControl struct {
+	Turn, EventID, RawCamp byte
+}
+
+// NativeChestControl preserves one live three-byte FDFIELD chest row.
+type NativeChestControl struct {
+	RawType byte
+	Value   uint16
+}
+
+// NativeFieldUnitControl preserves one live 26-byte FDFIELD constructor row.
+// It is not a current runtime unit; 0x10b4e consumes matching rows only when a
+// future group is appended through 0x10c50.
+type NativeFieldUnitControl struct {
+	Raw [0x1a]byte
+}
+
+// NativeRuntimeRecordState is one exact saved 0x50-byte current-unit record
+// plus the selector result rebuilt from raw +7 in original list order.
+type NativeRuntimeRecordState struct {
+	Raw          [0x50]byte
+	SelectorKey  byte
+	SelectorSlot byte
 }
 
 type NativeFieldModeRange struct {

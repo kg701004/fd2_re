@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 const (
@@ -364,6 +365,11 @@ type ContinueRuntimeContext struct {
 	FieldWidth         int
 	FieldHeight        int
 	SelectorGroupCount int
+	// TitleTimerTick is the signed low BIOS timer word captured by native main
+	// at 0x25d83..0x25d8b before the title selector. It is not stored in
+	// FD2.SAV, so a title CONTINUE caller must supply it explicitly.
+	TitleTimerTick    int
+	HasTitleTimerTick bool
 }
 
 // ContinueRuntimeRecord preserves one exact runtime record together with the
@@ -375,12 +381,46 @@ type ContinueRuntimeRecord struct {
 	SelectorSlot byte
 }
 
+type ContinueTurnEventControl struct {
+	Turn, EventID, RawCamp byte
+}
+
+type ContinueFieldEventControl struct {
+	EventID, Selector byte
+}
+
+type ContinueChestControl struct {
+	RawType byte
+	Value   uint16
+}
+
+type ContinueUnitControl struct {
+	Raw [CurrentFieldControlUnitSize]byte
+}
+
+// ContinueFieldControlView exposes only the fixed FDFIELD control-resource
+// layout consumed by native code. RawUnitCount is an exclusive count:
+// 0x10bcc compares index >= [0x53be3] before reading a row. Resource padding
+// beyond that count remains available in NativeFieldControl but is not exposed
+// as a live unit. RawMapSelector and RawOwnDeployCount remain raw; individual
+// unit bytes remain in their exact 26-byte rows.
+type ContinueFieldControlView struct {
+	RawMapSelector    byte
+	RawOwnDeployCount byte
+	RawUnitCount      byte
+	TurnEvents        [16]ContinueTurnEventControl
+	FieldEvents       [16]ContinueFieldEventControl
+	Chests            [16]ContinueChestControl
+	Units             []ContinueUnitControl
+}
+
 type ContinueRuntimeOwner string
 
 const (
-	ContinueOwnerMapTiming          ContinueRuntimeOwner = "map_timing"
-	ContinueOwnerFieldRuntimeBridge ContinueRuntimeOwner = "field_runtime_bridge"
-	ContinueOwnerBattleDriver       ContinueRuntimeOwner = "battle_driver"
+	ContinueOwnerMapTiming              ContinueRuntimeOwner = "map_timing"
+	ContinueOwnerRuntimeUnitProjection  ContinueRuntimeOwner = "runtime_unit_projection"
+	ContinueOwnerFutureGroupConstructor ContinueRuntimeOwner = "future_group_constructor"
+	ContinueOwnerBattleDriver           ContinueRuntimeOwner = "battle_driver"
 )
 
 // ContinueMapPresentation is the raw map-presentation state established by
@@ -396,6 +436,24 @@ type ContinueMapPresentation struct {
 	HUDAnchorX           int
 }
 
+// ContinueMapTimingSeed preserves the process-global timing state immediately
+// before sub_10010's first 0x11cac redraw. All fields except
+// SpriteLastTimerTick come from the zeroed executable data image;
+// SpriteLastTimerTick comes from ContinueRuntimeContext.TitleTimerTick.
+// The subsequent redraw samples and delays remain a separate runtime owner.
+type ContinueMapTimingSeed struct {
+	SpriteIdleCycle             int
+	SpriteMovingCycle           int
+	SpriteLastTimerTick         int
+	TerrainPhase                int
+	TerrainPhaseLastTimerTick   int
+	TerrainPhaseOverride        int
+	TerrainFlip                 int
+	TerrainFlipLastTimerTick    int
+	UnitPixelShift              int
+	UnitPixelShiftLastTimerTick int
+}
+
 // ContinueRuntimeInput is a deep-copied, read-only preflight result. It proves
 // the save/resource boundary and selector rebuild only; UnresolvedOwners keeps
 // the production CONTINUE gate closed until every remaining native owner has
@@ -404,15 +462,41 @@ type ContinueRuntimeInput struct {
 	Context            ContinueRuntimeContext
 	Header             CurrentRuntimeHeader
 	NativeFieldControl [CurrentFieldControlSize]byte
+	FieldControl       ContinueFieldControlView
 	PersistentRecords  [RosterUnits]PersistentRecord
 	RuntimeRecords     []ContinueRuntimeRecord
 	NativeEventState   [CurrentNativeEventStateSize]byte
 	MapPresentation    ContinueMapPresentation
+	MapTimingSeed      ContinueMapTimingSeed
 	UnresolvedOwners   []ContinueRuntimeOwner
+	validated          bool
 }
 
 func (i ContinueRuntimeInput) ReadyForContinue() bool {
 	return len(i.UnresolvedOwners) == 0
+}
+
+// ValidatedForRuntimeBridge rejects both manually assembled values and public
+// fields modified after BuildContinueRuntimeInput returned. It reconstructs
+// the source snapshot, reruns the complete preflight, and requires an exact
+// typed result match. Downstream adapters still validate their own chapter
+// asset identity and topology.
+func (i ContinueRuntimeInput) ValidatedForRuntimeBridge() bool {
+	if !i.validated {
+		return false
+	}
+	snapshot := CurrentSnapshot{
+		NativeFieldControl: i.NativeFieldControl,
+		Header:             i.Header,
+		PersistentRecords:  i.PersistentRecords,
+		NativeEventState:   i.NativeEventState,
+		RuntimeRecords:     make([]PersistentRecord, len(i.RuntimeRecords)),
+	}
+	for index, record := range i.RuntimeRecords {
+		snapshot.RuntimeRecords[index] = record.Raw
+	}
+	rebuilt, err := BuildContinueRuntimeInput(snapshot, i.Context)
+	return err == nil && reflect.DeepEqual(rebuilt, i)
 }
 
 // BuildContinueRuntimeInput validates every current-snapshot field whose
@@ -432,6 +516,10 @@ func BuildContinueRuntimeInput(
 	}
 	if context.SelectorGroupCount <= 0 || context.SelectorGroupCount > 0x100 {
 		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE FDICON group count is invalid")
+	}
+	if !context.HasTitleTimerTick ||
+		context.TitleTimerTick < -0x8000 || context.TitleTimerTick > 0x7fff {
+		return ContinueRuntimeInput{}, errors.New("fdsave: CONTINUE title timer seed is invalid")
 	}
 	runtimeCount := int(snapshot.Header.RuntimeCount)
 	if runtimeCount > RosterUnits*3 || len(snapshot.RuntimeRecords) != runtimeCount {
@@ -489,6 +577,7 @@ func BuildContinueRuntimeInput(
 		Context:        context,
 		Header:         snapshot.Header,
 		RuntimeRecords: runtime,
+		FieldControl:   decodeContinueFieldControl(snapshot.NativeFieldControl),
 		MapPresentation: ContinueMapPresentation{
 			OpeningRangeMode:     0,
 			InteractiveRangeMode: 1,
@@ -498,16 +587,67 @@ func BuildContinueRuntimeInput(
 				int(snapshot.Header.VisibleCursorY),
 			),
 		},
+		MapTimingSeed: ContinueMapTimingSeed{
+			SpriteLastTimerTick:  context.TitleTimerTick,
+			TerrainPhaseOverride: -1,
+		},
 		UnresolvedOwners: []ContinueRuntimeOwner{
 			ContinueOwnerMapTiming,
-			ContinueOwnerFieldRuntimeBridge,
+			ContinueOwnerRuntimeUnitProjection,
+			ContinueOwnerFutureGroupConstructor,
 			ContinueOwnerBattleDriver,
 		},
+		validated: true,
 	}
 	copy(input.NativeFieldControl[:], snapshot.NativeFieldControl[:])
 	copy(input.PersistentRecords[:], snapshot.PersistentRecords[:])
 	copy(input.NativeEventState[:], snapshot.NativeEventState[:])
 	return input, nil
+}
+
+func decodeContinueFieldControl(
+	raw [CurrentFieldControlSize]byte,
+) ContinueFieldControlView {
+	view := ContinueFieldControlView{
+		RawMapSelector:    raw[0],
+		RawOwnDeployCount: raw[1],
+		RawUnitCount:      raw[2],
+		Units: make(
+			[]ContinueUnitControl,
+			int(raw[2]),
+		),
+	}
+	const turnOffset = 3
+	for index := range view.TurnEvents {
+		offset := turnOffset + index*3
+		view.TurnEvents[index] = ContinueTurnEventControl{
+			Turn: raw[offset], EventID: raw[offset+1], RawCamp: raw[offset+2],
+		}
+	}
+	const fieldOffset = turnOffset + 16*3
+	for index := range view.FieldEvents {
+		offset := fieldOffset + index*2
+		view.FieldEvents[index] = ContinueFieldEventControl{
+			EventID: raw[offset], Selector: raw[offset+1],
+		}
+	}
+	const chestOffset = fieldOffset + 16*2
+	for index := range view.Chests {
+		offset := chestOffset + index*3
+		view.Chests[index] = ContinueChestControl{
+			RawType: raw[offset],
+			Value:   binary.LittleEndian.Uint16(raw[offset+1 : offset+3]),
+		}
+	}
+	for index := range view.Units {
+		offset := CurrentFieldControlUnitOffset +
+			index*CurrentFieldControlUnitSize
+		copy(
+			view.Units[index].Raw[:],
+			raw[offset:offset+CurrentFieldControlUnitSize],
+		)
+	}
+	return view
 }
 
 // continueTitleHUDAnchor starts from the executable data-image value one and

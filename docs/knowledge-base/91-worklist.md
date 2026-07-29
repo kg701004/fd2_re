@@ -1604,11 +1604,54 @@
   `battle.State`。後續 IDA/Capstone 又證實標題 caller 的 range mode
   為開場 `0`／進戰鬥驅動前 `1`，資料映像 gate B／anchor seed 均為
   `1`，且 anchor 只依已恢復 visible cursor 精確推進；這些值已收入
-  `ContinueMapPresentation`。map timing、field-runtime bridge、
-  battle driver 仍列 unresolved owners，
+  `ContinueMapPresentation`。map timing、runtime unit projection、
+  future group constructor、battle driver 仍列 unresolved owners，
   `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
   → `fd2_continue_selector_rebuild_ida.txt`、
   `fd2_continue_map_presentation_ida.txt`
+  - [x] **CONTINUE map timing seed**：IDA 完整 data xrefs 與 Capstone
+    raw data 證實 cycles／terrain phase／兩組 binary latch 初值全零，
+    terrain override 為 `-1`；唯 `[0x53C0F]` 由 main
+    `0x25D83..0x25D8B` 擷取標題入口 signed BIOS low word。
+    `ContinueRuntimeContext.TitleTimerTick` 與 `ContinueMapTimingSeed`
+    現嚴格保存這個邊界。`0x10494`／`0x105ED` redraw 間仍有 delay，
+    最終 state 必須由 runtime clock 逐呼叫推進，所以
+    `ContinueOwnerMapTiming` 仍不得移除
+    → `fd2_continue_map_timing_seed_ida.txt`
+  - [x] **CONTINUE FDFIELD control typed view**：依 `0x53A55` 已證實
+    layout，`ContinueFieldControlView` 原子拆出 raw header、16 筆
+    turn events、16 筆 field events、16 筆 chest controls 與
+    count-delimited 26-byte unit rows，並驗證 caller mutation 不會別名
+    到輸出。IDA `0x10BCC` 的 exclusive compare 與 chapter0 current
+    snapshot／FDFIELD resource1 全同前綴，另固定 raw `+2=30` 只解出
+    30 列；資源第31列與容量尾端不冒充 live unit。控制資源不含
+    `[0x53A51]` composition live byte `+3`；
+    後者由資源 `3N` 另載並經 `0x4DBFC` 重設。下一步仍是把 typed
+    control、saved runtime roster 與 chapter asset bundle 一次映射到
+    `battle.State`；不可讓 `battle.Load` 的 serialized map provenance
+    冒充 current runtime
+    → `fd2_current_field_control_ida.txt`
+  - [x] **CONTINUE live control mutation boundary**：IDA 完整 data xrefs
+    與 Capstone 直接指令證實 `[0x53A55]` 會在戰鬥中被改寫：
+    `0x19357` 更新 chest value，`0x34AB4/0x34AC5` 及多個 chapter
+    handler 更新 turn event bytes。故 current snapshot 的
+    `NativeFieldControl` 是唯一 live control 來源，不可由原始 FDFIELD
+    resource 或 map JSON 覆寫；control rows 只供未來
+    `0x10B4E→0x10C50` group append，現有單位仍由 saved runtime
+    records 決定。同步刪除 doc26 把 party/FDFIELD constructors 拼成
+    單一路徑及把 row bytes 錯套 runtime offsets 的舊表
+    → `fd2_current_field_control_mutations_ida.txt`
+  - [x] **CONTINUE live field boundary adapter**：
+    `MaterializeNativeContinueFieldBoundary` 會從公開 input 重建 snapshot、
+    重跑完整 preflight 並逐欄比對，故 marker 存在但內容被竄改也會拒絕；
+    再配合相符的 chapter asset，檢查 dimensions／field-event topology 後
+    原子安裝 exact control、turn/field/chest/future-unit rows、event
+    state、raw round、view、HUD 與 opening range mode 0。輸入與輸出
+    均不別名；拒絕路徑不改 state。它明確不碰現有 Units、timing、
+    interactive mode 1 或 battle driver。原本籠統的 field-runtime owner
+    已關閉並拆成 `runtime_unit_projection` 與
+    `future_group_constructor`；exact saved runtime records 與重建 slots
+    已先保存在 State，但尚未猜成 `battle.Unit`。
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

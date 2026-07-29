@@ -1,0 +1,78 @@
+# CONTINUE 地圖時脈種子：IDA Pro 9.4 與 Capstone 交叉驗證
+
+## 版本與隔離
+
+- `FD2.EXE` 大小：`357074` 位元組
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- IDA Pro 9.4 使用 `fd2-ida-authorized-local` 一次性、無網路 Docker。
+- Capstone 使用 `fd2-cap-local` 與 `tools/disasm_le.py`。
+- 原版唯讀；IDA 資料庫只寫 `/tmp`。
+
+## 資料映像初值
+
+Capstone 原始資料擷取證實下列 dword 初值全為零：
+
+```text
+[0x53C07] moving sprite cycle
+[0x53C0B] idle sprite cycle
+[0x53C1F] terrain phase
+[0x539F4] terrain phase timer latch
+[0x53A40] terrain flip
+[0x53A00] terrain flip timer latch
+[0x53A04] unit pixel shift
+[0x53A08] unit pixel-shift timer latch
+```
+
+`[0x51A93]` 的 dword 初值是 `0xFFFFFFFF`，即 terrain phase 的
+BIOS-timed 分支 selector `-1`。
+
+## 標題入口覆寫
+
+IDA 對 `[0x53C0F]` 的完整資料交叉參照只有 `0x1297D` 的 reader/writer
+及 main 的一個 writer：
+
+```text
+0x25D83  mov eax, 0x46C
+0x25D88  movsx eax, word ptr [eax]
+0x25D8B  mov [0x53C0F], eax
+```
+
+因此 idle sprite 的 last-tick 不是固定零，也不在 `FD2.SAV`；它是 main
+在進標題選單前擷取的 signed BIOS low word。標題 CONTINUE 的
+`0x26124..0x26130` 沿路不改這些 timing globals。
+
+## 首次重繪如何消費種子
+
+`0x10010` 在 `0x10494` 首次呼叫 `0x11CAC(1)`。`0x11CAC` 的順序是：
+
+```text
+0x11CB7  call 0x1297D
+0x11CE8  call 0x11EEE
+0x11CF0  call 0x122DC
+0x11CF5  call 0x127A9
+0x11D0A  call 0x1ACF3
+```
+
+`0x1297D` 每次都令 moving cycle 加一；idle cycle 只有當目前 signed
+BIOS low word 減 `[0x53C0F]` 大於四或為負時才加一並更新 latch。
+`0x11EEE` 另以同一 BIOS word 推進 terrain phase 與 terrain flip；
+`0x127A9→0x127E0` 才可能推進 unit pixel shift。
+
+CONTINUE 開場其後還會執行多次固定 delay，並在 `0x105ED` 再呼叫
+`0x11CAC(0)`。因此資料種子可靜態閉合，但進入 `0x4E031` 時的最終
+phase/cycle 不能由存檔或常數算出；production bridge 必須以重製執行期
+的 signed BIOS-compatible clock 在每個已證實 redraw 時點取樣。
+
+## 重製邊界
+
+`ContinueRuntimeContext.TitleTimerTick` 現要求呼叫者明確提供標題入口
+擷取值，且限制在 signed 16-bit。`ContinueMapTimingSeed` 保存：
+
+- sprite idle/moving 初值 `0/0` 與 title tick latch；
+- terrain phase/latch `0/0` 與 override `-1`；
+- terrain flip/latch `0/0`；
+- unit pixel shift/latch `0/0`。
+
+這只關閉 timing seed，不代表開場 redraw/delay scheduler 已接入。
+`map_timing` 仍列為 unresolved owner，正式 CONTINUE 仍失敗即關閉。
