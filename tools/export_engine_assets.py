@@ -3,7 +3,7 @@
 
 輸出:
   <out>/tileset.png  該 tileset 全部 24×24 圖塊排成網格(cols 欄)
-  <out>/map.json     {"w","h","tileW","tileH","cols","tiles":[地形索引...],"cost":[移動成本...],"native_target_flags":[FDFIELD event low bytes...],"native_tile_blit_modes":[FDFIELD event high bytes...],"native_terrain_control":[raw FDSHAP control bytes...]}
+  <out>/map.json     {"w","h","tileW","tileH","cols","tiles":[地形索引...],"cost":[移動成本...],"native_composition_event_bytes":[FDFIELD event low bytes...],"native_tile_blit_modes":[FDFIELD event high bytes...],"native_terrain_control":[raw FDSHAP control bytes...]}
 
 引擎(remake/cmd/fd2)讀這兩個檔即可渲染地圖。資產屬遊戲著作權,只在本機,不入庫。
 
@@ -82,7 +82,7 @@ def main(argv):
     # 0x4e040 addresses each FDFIELD composition entry at +7: its [ebx-1]
     # flag is therefore entry+2, the low byte of this event word.  Preserve it
     # separately; it is not terrain-control byte0 or remake movement cost.
-    meta["native_target_flags"] = [word & 0xFF for word in event_words]
+    meta["native_composition_event_bytes"] = [word & 0xFF for word in event_words]
     # Native terrain renderer 0x11eee uses composition entry byte+3 (the
     # high byte of this event word) to choose raw 0x4deda versus LUT-aware
     # 0x4dcc6. Preserve it; alpha alone cannot represent the latter's mode-3

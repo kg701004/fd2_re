@@ -718,10 +718,13 @@ item79。它固定得到命令遮罩分數96、物品命令分數8及門檻通�
 E0 組合驗證，不是一般玩家 map0 動態狀態。
 
 `sync_native_map_renderer_inputs.py` 現從每張 FDFIELD 構成格 `+2` 同步
-`native_target_flags`，與 `+3` 的 `native_tile_blit_modes`、FDSHAP
-`native_terrain_control` 一起受到原始封存檔雜湊及 33 圖尺寸檢查。先前只有
-map0 帶 flags 是同步工具漏欄，不是其他地圖缺少原版來源。map19 真實資產
-現提供 1600 格 flags（7 格非零）；unit55 的 identity92、遮罩
+`native_composition_event_bytes`，與封存 `+3`、FDSHAP
+`native_terrain_control` 一起受到原始封存檔雜湊及 33 圖尺寸檢查。先前把
+這個 `+2` 陣列命名成完整 target flags 是錯誤斷言：`0x4DBFC` 載入後先
+執行 `+2 &= 0x1F`，`0x145CD→0x14625/0x146A7` 才依 caller selector 與
+執行期 roster 加上 `0x40/0x80`。地圖 JSON 只保存不可變來源；
+`State.NativeTargetFlags` 不再由資產自動填入。map19 真實資產現提供1600格
+event bytes（7格非零）；unit55 的 identity92、遮罩
 `[4,0,0,8,0]`、MP288 可直接通過兩個單位評分器，結果皆為零且不創造勝者。
 這是未修改分數輸入的 E0 負向錨點，仍不是完整 phase callback 或玩家路徑。
 
@@ -761,8 +764,9 @@ stack array；`0x115b6(mode=record[+6], count, array)` 作 cursor/confirm。conf
 使用十字線，半徑=`dist-0x10`（同 x 或同 y）。掃候選時必須在 grid geometry 內，並以 raw byte+5 active gate 及 target code 對 runtime
 `unit+6` 做精確 predicate：`0: ==0`、`1: !=0`、`2: ==1`、`3: ==2`。constructor `0x10c50` 證實 `unit+6`
 直接來自 FDFIELD `b0` camp（敵=0、友=1、己=2），故四個 code 分別是 enemy/non-enemy/ally/own；
-`dist<0x10` 的 mask 已閉合為 `0x4e040` 四方向 flood-fill：起點 budget=`dist`，grid flag bit `0x40` 阻擋、
-bit `0x80` 在正常扣除地形成本後把該格剩餘 budget 強制成零，使其成為可達終點，
+`dist<0x10` 的 mask 已閉合為 `0x4e040→0x4e0dc/0x4e16e` 四方向
+flood-fill：入口設定起點 budget=`dist`，遞迴器展開四鄰格，`0x4e16e`
+對 grid flag bit `0x40` 阻擋；bit `0x80` 在正常扣除地形成本後把該格剩餘 budget 強制成零，使其成為可達終點，
 不是零成本路徑。雖然 callee 支援 terrain-cost row，command selector 固定呼叫 `0x4e555(0)`，而
 EXE `word_61646` row 0 的 20 bytes 全為 `1`；因此這條 native command contract 不套地形加權，而是避障的
 cardinal range（無阻擋時才等於 Manhattan）。
@@ -801,14 +805,24 @@ Manhattan distance `< innerRadius` 的 marker cell；`mode>=0x10` 保留 native 
 inner-radius。這個 adapter 不把 `+0x0b/+0x0c` 命名成 range min/max，也不宣稱已完成 item-row producer、LOS、UI
 或 attack effect。
 
-Provenance closure：`0x4e040` 把 FDFIELD composition entry 的 `+3` 當 path budget，讀 `+2`（event word
-low byte）作 grid flags；bit `0x40` blocks，而 bit `0x80` 在扣除 terrain cost 後把 destination
-remaining-budget byte 強制歸零，使該格成為可達終點而非 zero-cost chain。它不是 terrain-control `byte0`。`export_engine_assets.py` 因此輸出
-`native_target_flags` raw array。
+Provenance correction：`0x1088D` 以 `chapter*3` 呼叫 `0x111BA`，後者釋放
+舊 `[0x53A51]`、依 FDFIELD.DAT offset table 配置精確資源大小並讀入可變
+緩衝區。`0x4DBFC` 隨即逐格執行 tile high byte `&=3`、cell `+2 &=0x1F`
+及 `+3=0xFF`。`0x4E040` 建立搜尋狀態、`0x4E0DC` 遞迴鄰格，而
+`0x4E16E` 才是把 `+3` 當 remaining budget 並讀 live `+2` 的
+`0x40/0x80` 消費端；這兩個高位元不是封存資料，而由
+`0x145CD→0x14625/0x146A7` 依 roster 暫時寫入。`0x40` 阻擋進入，
+`0x80` 在扣成本後把目的格 budget 強制歸零。
 
-`battle.Load` 現只在 map dimensions 與 array length 都精確吻合時載入 `State.NativeTargetFlags`；缺檔／舊 export／
-壞長度皆保持 nil。這使 engine data layer 與 command cursor 都可把 selected raw record 傳給
-`NativeCommandTargets`；未知 effect/renderer 仍不會搶走 legacy playable path。
+因此 `battle.Load` 只把完整 `native_composition_event_bytes` 載入
+`State.NativeCompositionEventBytes`。`NativeCompositionBaseFlags` 保存
+`0x4DBFC` 的 `&0x1F`，`NativeCommandRuntimeFlags` 保存已驗證的 roster
+高位元 writer；`State.NativeTargetFlags` 是 caller-owned live slice，
+不再從 map JSON 猜成完整執行期狀態。正式 command cursor 尚未證實其 caller
+writer lifetime 時會保持 nil 並失敗即關閉。
+上述函式邊界與交叉參照已由合法 IDA Pro 9.4 優先確認，再由 Capstone
+逐指令交叉驗證；loader、配置器、constructor、writer 與 consumer 指令保存於
+[`fd2_field_composition_lifecycle_disasm.txt`](../data/fd2_field_composition_lifecycle_disasm.txt)。
 
 ### Native command MP transaction（E0 verified, UI unbound）
 

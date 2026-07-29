@@ -489,24 +489,25 @@ type State struct {
 	Turn          int    // 回合數(無上限,doc 27;只由劇本事件限制)
 	// NativeRoundCounter preserves executable global [0x53bef], incremented at
 	// the native turn-advance boundary (0x1a5b9), apart from normalized Turn.
-	NativeRoundCounter       int                         `json:"native_round_counter,omitempty"`
-	Flags                    map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
-	NativeEventState         [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
-	Cost                     []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
-	NativeTargetFlags        []byte                      // FDFIELD composition event-word low bytes; nil unless exact exported map data exists
-	NativeFieldEventSlots    []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
-	NativeFieldEvents        []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
-	NativeFieldEventRules    []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
-	NativeTileBlitModes      []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
-	NativeTerrainControl     []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
-	NativeTerrainMoveCodes   []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
-	SpellBook                []Spell                     // scenario-injected spell table; AI command mapping remains data-only
-	NativeCommandBook        []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
-	NativeCommandResistances map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
-	CommandLearn             map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
-	AICommandSpell           map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
-	Treasures                map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
-	NativeTreasureEventRules map[int]NativeTreasureEventRule
+	NativeRoundCounter          int                         `json:"native_round_counter,omitempty"`
+	Flags                       map[string]bool             // 事件旗標(跨事件/跨關劇情狀態,doc 29)
+	NativeEventState            [0x20]byte                  // raw [0x53ad5] battle-local state table; unnamed indices
+	Cost                        []int                       // per-tile 移動成本(len==W*H;index=y*W+x;nil=尚無地形資料,MoveCost 全回 1)
+	NativeCompositionEventBytes []byte                      // immutable FDFIELD composition cell +2 source; 0x4dbfc masks it before runtime writers
+	NativeTargetFlags           []byte                      // caller-owned live cell +2 flags after 0x4dbfc and any 0x145cd writer; never loaded from map JSON
+	NativeFieldEventSlots       []int                       // row-major -1/0..15；0x13a44 的 1-based low5 已正規化
+	NativeFieldEvents           []NativeFieldEvent          // FDFIELD control 16×2 raw event-id/selector table
+	NativeFieldEventRules       []NativeFieldEventRule      // 已由 handler 閉合、仍保留 selector timing 的 editable rules
+	NativeTileBlitModes         []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
+	NativeTerrainControl        []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
+	NativeTerrainMoveCodes      []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
+	SpellBook                   []Spell                     // scenario-injected spell table; AI command mapping remains data-only
+	NativeCommandBook           []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
+	NativeCommandResistances    map[int]int                 // verified class raw multiplier; nil means native command effects stay closed
+	CommandLearn                map[int][]CommandLearnEntry // portrait/growth-row idx -> native level-up command pairs
+	AICommandSpell              map[int]int                 // editable item command byte -> spell id; AI ranking remains separate
+	Treasures                   map[Cell]Treasure           // FDFIELD composition 地形旗標+slot 與 control chest table 的 join
+	NativeTreasureEventRules    map[int]NativeTreasureEventRule
 	// OpenedTreasure is remake-owned state for editable treasure nodes.  It has
 	// no asserted native-global address: native [0x53ad5] is a pointer to a
 	// 0x20-byte battle-local state table (0x10322 copies it; 0x13d00 writes an
@@ -891,7 +892,7 @@ func Load(path string) (*State, error) {
 	}
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
-	st.NativeTargetFlags = loadNativeTargetFlags(mapPath, f.W, f.H)
+	st.NativeCompositionEventBytes = loadNativeCompositionEventBytes(mapPath, f.W, f.H)
 	st.NativeFieldEventSlots, st.NativeFieldEvents, st.NativeFieldEventRules =
 		loadNativeFieldEvents(mapPath, f.W, f.H)
 	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
@@ -907,18 +908,18 @@ func Load(path string) (*State, error) {
 
 // mapCostFile map.json 裡跟地形成本相關的欄位(其餘欄位 main.go 的 MapData 自己讀,這裡只挑 cost 用)。
 type mapCostFile struct {
-	W                     int                    `json:"w"`
-	H                     int                    `json:"h"`
-	Cost                  []int                  `json:"cost"`
-	NativeTargetFlags     []byte                 `json:"native_target_flags"`
-	NativeFieldEventSlots []int                  `json:"native_field_event_slots"`
-	NativeFieldEvents     []NativeFieldEvent     `json:"native_field_events"`
-	NativeFieldEventRules []NativeFieldEventRule `json:"native_field_event_rules"`
-	NativeTileBlitModes   []byte                 `json:"native_tile_blit_modes"`
-	NativeTerrainControl  []byte                 `json:"native_terrain_control"`
-	Tiles                 []int                  `json:"tiles"`
-	TreasureSlots         []int                  `json:"treasure_slots"`
-	TreasureHidden        []bool                 `json:"treasure_hidden"`
+	W                           int                    `json:"w"`
+	H                           int                    `json:"h"`
+	Cost                        []int                  `json:"cost"`
+	NativeCompositionEventBytes []byte                 `json:"native_composition_event_bytes"`
+	NativeFieldEventSlots       []int                  `json:"native_field_event_slots"`
+	NativeFieldEvents           []NativeFieldEvent     `json:"native_field_events"`
+	NativeFieldEventRules       []NativeFieldEventRule `json:"native_field_event_rules"`
+	NativeTileBlitModes         []byte                 `json:"native_tile_blit_modes"`
+	NativeTerrainControl        []byte                 `json:"native_terrain_control"`
+	Tiles                       []int                  `json:"tiles"`
+	TreasureSlots               []int                  `json:"treasure_slots"`
+	TreasureHidden              []bool                 `json:"treasure_hidden"`
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -976,19 +977,21 @@ func loadTerrainCost(mapJSONPath string, w, h int) []int {
 	return m.Cost
 }
 
-// loadNativeTargetFlags accepts only an exact FDFIELD composition export.
-// Missing or malformed fields remain nil so callers of the native resolver
-// fail closed rather than interpreting movement costs as original flags.
-func loadNativeTargetFlags(mapJSONPath string, w, h int) []byte {
+// loadNativeCompositionEventBytes accepts only an exact FDFIELD composition
+// export. These bytes are immutable source provenance, not the live +2 flags:
+// 0x4dbfc first masks each byte with 0x1f and caller-specific writers may then
+// add 0x40/0x80.
+func loadNativeCompositionEventBytes(mapJSONPath string, w, h int) []byte {
 	raw, err := os.ReadFile(mapJSONPath)
 	if err != nil {
 		return nil
 	}
 	var m mapCostFile
-	if json.Unmarshal(raw, &m) != nil || m.W != w || m.H != h || len(m.NativeTargetFlags) != w*h {
+	if json.Unmarshal(raw, &m) != nil || m.W != w || m.H != h ||
+		len(m.NativeCompositionEventBytes) != w*h {
 		return nil
 	}
-	return append([]byte(nil), m.NativeTargetFlags...)
+	return append([]byte(nil), m.NativeCompositionEventBytes...)
 }
 
 func loadNativeFieldEvents(

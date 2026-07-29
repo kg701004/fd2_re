@@ -98,8 +98,13 @@
 - Capstone 只可透過 `tools/docker/fd2-cap.Dockerfile` 與 `fd2-cap-local`
   在 Docker 中使用。禁止安裝到主機 Python、全域環境或主機虛擬環境；
   `/tmp/fd2cap` 不得存在。
-- IDA 是使用者合法提供於 `/home/anr2/ida_94_official/dist` 的工具，只可使用
-  維護中的授權 Docker 流程，不得散布其檔案。
+- 函式邊界、交叉參照、呼叫圖、跳躍表、資料流與高影響控制流程的反向工程，
+  優先使用使用者合法提供於 `/home/anr2/ida_94_official/dist` 的 IDA Pro 9.4
+  授權 Docker 流程。Capstone 作為第二套獨立指令驗證工具及可重生文字證據，
+  不可用單一線性反組譯取代 IDA Pro 的函式與交叉參照分析；兩者衝突時回到
+  原始位元組、直接指令及執行期實驗裁決。
+- IDA Pro 不可直接在主機執行，只可使用維護中的授權 Docker 流程；不得散布
+  `/home/anr2/ida_94_official/dist` 的任何檔案。
 - 原版遊戲、IDA 授權檔一律唯讀掛載；資料庫與分析產物只可寫入明確的儲存庫
   產物目錄或 `/tmp`，不得把授權檔、原版二進位或臨時資料庫加入版控。
 - 優先使用儲存庫內的 Dockerfile 與本機可重現映像檔；相依項目建好後，

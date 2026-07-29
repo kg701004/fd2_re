@@ -82,7 +82,8 @@ func TestMap0AssetsProducePositiveNativeAI1598AScoreForCommand0(t *testing.T) {
 	}
 	got, err := ScoreNativeAI1598A(
 		st.W, st.H, records, len(st.Units), actor, 0, st.Units[actor], book,
-		st.NativeTargetFlags, st.NativeTerrainMoveCodes, rows[0], nil,
+		nativeCompositionBaseFlagsForTest(t, st),
+		st.NativeTerrainMoveCodes, rows[0], nil,
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -105,7 +105,8 @@ func TestMap0AssetsScoreNativeAIScoredCommandGroup(t *testing.T) {
 	}
 	groups, err := NativeAIScoredCommandCandidateGroups(
 		st.W, st.H, records, len(st.Units), actor, 0, book[0],
-		st.NativeTargetFlags, st.NativeTerrainMoveCodes, rows[0],
+		nativeCompositionBaseFlagsForTest(t, st),
+		st.NativeTerrainMoveCodes, rows[0],
 	)
 	if err != nil {
 		t.Fatal(err)

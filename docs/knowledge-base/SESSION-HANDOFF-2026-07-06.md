@@ -2377,7 +2377,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   因而只收 raw camp0。兩條 target list 都交 `0x15880`。
 - 新增 `ScoreNativeAI1567E`，精確保存 `0x1B8A6` count-sized raw slot scan、
   slot→row-major destination→roster target 順序與 strict `score>best`。
-  map0 roster／target flags 加 tracked item79 的 E0 fixture 固定
+  map0 roster／constructor low5 基底加 tracked item79 的 E0 fixture 固定
   score8、`(19,15)`、slot0；不宣稱一般玩家 map0 原本持有 item79。
 - 同輪撤回 `0x1B8A6`「回傳 occupied prefix length」的過度斷言：它只數
   八格中 bit7-clear cells，caller 才掃 slots `0..count-1`；函式不驗 compact，
@@ -2394,17 +2394,23 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x1F183` 閘門；缺少、重複、越界或替不合格單位提供輸入都會在任何正式
   動作前失敗即關閉。回傳只含兩個 producer 結果與三遍掃描計畫，不呼叫
   `0x13A9F`、兩張回呼表或處理 `[0x53ECC]`，亦不修改戰鬥記錄。
-- map0 修改狀態的 E0 交叉夾具沿用真實名冊、目標旗標、地形、命令表、
+- map0 修改狀態的 E0 交叉夾具沿用真實名冊、構成格 low5 基底、地形、命令表、
   物品列與成本列，排除其他 selector-zero 單位後，替 index23 注入
   command0 與已追蹤 item79；結果固定為 `[0x53C23]=96`、
   `[0x53C33]=8`，優先遍通過且第二遍仍保留。這不代表一般玩家 map0
   原始狀態。
-- 同輪後續確認「只有 map0 帶完整 `native_target_flags`」不是原始資料
-  限制，而是同步工具漏欄。`sync_native_map_renderer_inputs.py` 現同時由
-  FDFIELD 構成格 `+2/+3` 同步 flags／blit modes，並以 FDFIELD.DAT、
-  FDSHAP.DAT 雜湊及33圖尺寸失敗即關閉。map1–32 已回填；再次 `--check`
-  為33圖、異動0。
-- map19 取得1600格 flags，其中7格非零；真實 unit55（identity92、遮罩
+- 同輪完整 `0x1088D→0x111BA→0x4DBFC` 重讀再撤回一層錯誤命名：
+  FDFIELD 構成格 `+2` 是封存 event low byte，不是完整 live target flags。
+  `0x111BA` 釋放舊指標、配置精確資源大小並讀入 `[0x53A51]`；`0x4DBFC`
+  隨即執行 `+2 &=0x1F`、`+3=0xFF` 與 tile high byte `&=3`。
+  `0x145CD→0x14625/0x146A7` 才依 selector／roster 加 `0x40/0x80`。
+  合法 IDA Pro 9.4 優先確認這些函式邊界及交叉參照，並補正
+  `0x4E040` 是搜尋入口、`0x4E0DC` 是遞迴器、`0x4E16E` 才是
+  `0x40/0x80` 直接消費端；Capstone 再逐指令覆核。
+  資產鍵已改成 `native_composition_event_bytes`，`NativeTargetFlags` 不再
+  由 JSON 自動填入。完整指令產物為
+  `docs/data/fd2_field_composition_lifecycle_disasm.txt`。
+- map19 取得1600格 event bytes，其中7格非零；真實 unit55（identity92、遮罩
   `[4,0,0,8,0]`、MP288）直接執行兩個 producer 都得到零分，且不創造
   勝者。下一個證據門檻仍是固定原版動態 trace，以及逐單位回呼／pending
   code 的共同驗證；正式 `NextAIPlan` 維持未接。

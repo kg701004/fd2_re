@@ -2,7 +2,7 @@
 """同步 33 張地圖的原版構成格輸入，不重寫其他可編輯欄位。
 
 來源：
-* FDFIELD composition entry byte+2 → native_target_flags
+* FDFIELD composition entry byte+2 → native_composition_event_bytes
 * FDFIELD composition entry byte+3 → native_tile_blit_modes
 * FDSHAP terrain/control resource → native_terrain_control
 
@@ -85,6 +85,30 @@ def expected_inputs(raw, map_index, data):
     return flags, modes, list(control)
 
 
+def sync_map(path, map_index, raw, write):
+    with open(path, encoding="utf-8") as source:
+        data = json.load(source)
+    flags, modes, control = expected_inputs(raw, map_index, data)
+    mismatch = (
+        data.get("native_composition_event_bytes") != flags
+        or "native_target_flags" in data
+        or data.get("native_tile_blit_modes") != modes
+        or data.get("native_terrain_control") != control
+    )
+    if mismatch and write:
+        data["native_composition_event_bytes"] = flags
+        data.pop("native_target_flags", None)
+        data["native_tile_blit_modes"] = modes
+        data["native_terrain_control"] = control
+        with open(path, "w", encoding="utf-8") as output:
+            json.dump(
+                data, output, ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            output.write("\n")
+    return mismatch
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("raw")
@@ -111,28 +135,22 @@ def main():
     changed = 0
     for path in maps:
         map_index = int(os.path.basename(os.path.dirname(path))[3:])
-        with open(path, encoding="utf-8") as source:
-            data = json.load(source)
-        flags, modes, control = expected_inputs(args.raw, map_index, data)
-        mismatch = (
-            data.get("native_target_flags") != flags
-            or data.get("native_tile_blit_modes") != modes
-            or data.get("native_terrain_control") != control
+        mismatch = sync_map(
+            path, map_index, args.raw, args.write,
         )
         if mismatch:
             changed += 1
-            if args.write:
-                data["native_target_flags"] = flags
-                data["native_tile_blit_modes"] = modes
-                data["native_terrain_control"] = control
-                with open(path, "w", encoding="utf-8") as output:
-                    json.dump(
-                        data, output, ensure_ascii=False,
-                        separators=(",", ":"),
-                    )
-                    output.write("\n")
         state = "更新" if mismatch and args.write else "缺少" if mismatch else "已驗證"
         print(f"map{map_index}: {state}")
+    root_map = os.path.join(os.path.dirname(args.assets), "map.json")
+    if os.path.exists(root_map):
+        mismatch = sync_map(
+            root_map, 0, args.raw, args.write,
+        )
+        if mismatch:
+            changed += 1
+        state = "更新" if mismatch and args.write else "缺少" if mismatch else "已驗證"
+        print(f"root-map0: {state}")
     if args.check and changed:
         raise SystemExit(f"{changed} 張 map.json 尚未同步原版構成格輸入")
     print(f"{len(maps)} 張地圖；異動 {changed}")

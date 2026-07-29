@@ -52,6 +52,12 @@ func BuildNativeAIPhaseDiagnosticPlan(
 	if err != nil {
 		return empty, nil, err
 	}
+	baseFlags, err := NativeCompositionBaseFlags(
+		st.W, st.H, st.NativeCompositionEventBytes,
+	)
+	if err != nil {
+		return empty, nil, err
+	}
 	count := len(st.Units)
 	zeroScores := make([]fdother.NativePhasePreselectionScores, count)
 	admission, err := fdother.PlanNativePhaseUnitScans(records, count, zeroScores)
@@ -89,7 +95,7 @@ func BuildNativeAIPhaseDiagnosticPlan(
 		}
 		commandMask, err := ScoreNativeAI1598A(
 			st.W, st.H, records, count, unitIndex, 0, st.Units[unitIndex],
-			book, st.NativeTargetFlags, st.NativeTerrainMoveCodes,
+			book, baseFlags, st.NativeTerrainMoveCodes,
 			input.CostRow, input.Skip,
 		)
 		if err != nil {
@@ -97,7 +103,7 @@ func BuildNativeAIPhaseDiagnosticPlan(
 		}
 		itemCommand, err := ScoreNativeAI1567E(
 			st.W, st.H, records, count, unitIndex, 0,
-			itemRows, book, st.NativeTargetFlags,
+			itemRows, book, baseFlags,
 		)
 		if err != nil {
 			return empty, nil, err

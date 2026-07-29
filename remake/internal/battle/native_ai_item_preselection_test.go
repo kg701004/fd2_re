@@ -128,7 +128,7 @@ func TestMap0AssetsAnchorNativeAI1567EWithTrackedItem79(t *testing.T) {
 	}
 	got, err := ScoreNativeAI1567E(
 		st.W, st.H, records, len(st.Units), actor, 0,
-		itemRows, book, st.NativeTargetFlags,
+		itemRows, book, nativeCompositionBaseFlagsForTest(t, st),
 	)
 	if err != nil {
 		t.Fatal(err)

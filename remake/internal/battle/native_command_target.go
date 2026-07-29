@@ -12,6 +12,70 @@ const (
 	NativeCommandGridZeroBudget byte = 0x80
 )
 
+// NativeCompositionBaseFlags reproduces the +2 part of 0x4dbfc. The exported
+// FDFIELD byte may carry archive bits outside low5, but the live composition
+// buffer clears them before any targeting writer runs.
+func NativeCompositionBaseFlags(w, h int, eventBytes []byte) ([]byte, error) {
+	if w <= 0 || h <= 0 || len(eventBytes) != w*h {
+		return nil, fmt.Errorf("invalid native composition event bytes")
+	}
+	flags := make([]byte, len(eventBytes))
+	for index, value := range eventBytes {
+		flags[index] = value & 0x1f
+	}
+	return flags, nil
+}
+
+// NativeCommandRuntimeFlags reproduces the verified 0x145cd→0x14625/
+// 0x146a7 writer on top of the 0x4dbfc base. selector zero marks active raw
+// +6!=0 records; any nonzero selector marks active raw +6==0 records. Each
+// selected unit sets 0x40 on its cell and 0x80 on its in-bounds cardinal
+// neighbours. It requires raw presentation and record provenance throughout.
+func NativeCommandRuntimeFlags(
+	w, h int,
+	eventBytes []byte,
+	units []*Unit,
+	selector byte,
+) ([]byte, error) {
+	flags, err := NativeCompositionBaseFlags(w, h, eventBytes)
+	if err != nil {
+		return nil, err
+	}
+	if len(units) == 0 {
+		return nil, fmt.Errorf("native command runtime flags require roster")
+	}
+	for index, unit := range units {
+		if unit == nil || !unit.HasNativeMapPresentation ||
+			!unit.HasNativeRecordByte5 || !unit.HasNativeRecordByte6 {
+			return nil, fmt.Errorf(
+				"native command runtime flags: unit %d lacks raw provenance",
+				index,
+			)
+		}
+		if unit.NativeRecordByte5&1 != 0 ||
+			(selector == 0) == (unit.NativeRecordByte6 == 0) {
+			continue
+		}
+		x := int(unit.NativeMapPresentation.X)
+		y := int(unit.NativeMapPresentation.Y)
+		if x < 0 || y < 0 || x >= w || y >= h {
+			return nil, fmt.Errorf(
+				"native command runtime flags: unit %d is out of bounds",
+				index,
+			)
+		}
+		flags[y*w+x] |= NativeCommandGridBlocked
+		for _, delta := range [][2]int{{-1, 0}, {0, -1}, {1, 0}, {0, 1}} {
+			nextX, nextY := x+delta[0], y+delta[1]
+			if nextX < 0 || nextY < 0 || nextX >= w || nextY >= h {
+				continue
+			}
+			flags[nextY*w+nextX] |= NativeCommandGridZeroBudget
+		}
+	}
+	return flags, nil
+}
+
 // NativeCommandTargetCells mirrors one 0x14818 geometry invocation before
 // roster filtering.  It intentionally accepts the raw fourth argument
 // (called mode in the original callsite), rather than declaring it a command
@@ -19,9 +83,9 @@ const (
 // cursor confirm a candidate, then calls it again with record+4 from that
 // cursor cell to build the effect list.  Callers must select the correct stage.
 //
-// flags is the original per-cell grid flag byte (+1 in its 4-byte grid entry),
-// not the remake map's exported movement cost.  Requiring it avoids silently
-// treating a modern approximation as original targeting data.
+// flags is the caller-owned live per-cell +2 byte after 0x4dbfc and any
+// caller-specific 0x145cd writer, not the immutable FDFIELD export or remake
+// movement cost.
 func NativeCommandTargetCells(w, h int, origin Cell, dist int, flags []byte) (map[Cell]bool, error) {
 	budgets, err := nativeCommandTargetBudgets(w, h, origin, dist, flags)
 	if err != nil {

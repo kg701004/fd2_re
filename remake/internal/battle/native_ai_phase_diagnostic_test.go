@@ -163,17 +163,17 @@ func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
 		t.Fatal(err)
 	}
 	nonzeroFlags := 0
-	for _, flag := range st.NativeTargetFlags {
+	for _, flag := range st.NativeCompositionEventBytes {
 		if flag != 0 {
 			nonzeroFlags++
 		}
 	}
-	if len(st.NativeTargetFlags) != 40*40 ||
+	if len(st.NativeCompositionEventBytes) != 40*40 ||
 		nonzeroFlags != 7 ||
-		st.NativeTargetFlags[122] != 5 ||
-		st.NativeTargetFlags[310] != 7 ||
-		st.NativeTargetFlags[711] != 6 {
-		t.Fatalf("map19 native target flags lack FDFIELD provenance")
+		st.NativeCompositionEventBytes[122] != 5 ||
+		st.NativeCompositionEventBytes[310] != 7 ||
+		st.NativeCompositionEventBytes[711] != 6 {
+		t.Fatalf("map19 composition event bytes lack FDFIELD provenance")
 	}
 	for _, unit := range st.Units {
 		if err := unit.MaterializeNativeMapPresentation(); err != nil {
@@ -208,7 +208,8 @@ func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
 	}
 	commandMask, err := ScoreNativeAI1598A(
 		st.W, st.H, records, len(st.Units), actor, 0, st.Units[actor],
-		book, st.NativeTargetFlags, st.NativeTerrainMoveCodes,
+		book, nativeCompositionBaseFlagsForTest(t, st),
+		st.NativeTerrainMoveCodes,
 		costRows[0], nil,
 	)
 	if err != nil {
@@ -216,7 +217,7 @@ func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
 	}
 	itemCommand, err := ScoreNativeAI1567E(
 		st.W, st.H, records, len(st.Units), actor, 0,
-		itemRows, book, st.NativeTargetFlags,
+		itemRows, book, nativeCompositionBaseFlagsForTest(t, st),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -228,6 +229,17 @@ func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
 			commandMask, itemCommand,
 		)
 	}
+}
+
+func nativeCompositionBaseFlagsForTest(t *testing.T, st *State) []byte {
+	t.Helper()
+	flags, err := NativeCompositionBaseFlags(
+		st.W, st.H, st.NativeCompositionEventBytes,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return flags
 }
 
 func nativeAIPhaseDiagnosticFixture(t *testing.T) *State {
@@ -251,8 +263,8 @@ func nativeAIPhaseDiagnosticFixture(t *testing.T) *State {
 	}
 	return &State{
 		W: 2, H: 1, Units: units,
-		NativeTargetFlags:      make([]byte, 2),
-		NativeTerrainMoveCodes: make([]byte, 2),
+		NativeCompositionEventBytes: make([]byte, 2),
+		NativeTerrainMoveCodes:      make([]byte, 2),
 	}
 }
 

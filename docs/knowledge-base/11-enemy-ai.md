@@ -175,23 +175,24 @@ max HP `+0x42`，且 raw `+0x25/+0x26` 都為零時，寫入
 
 ## 目前可重現的原始評分邊界（2026-07-29）
 
-### 物理移動落點：`0x145CD→0x4E040→0x146D1→0x14B16`
+### 物理移動落點：`0x145CD→0x4E040/0x4E16E→0x146D1→0x14B16`
 
 `0x14237` 在評分目標前，先建立所有可評分落點：
 
 1. `0x145CD` 掃描所有有效執行期記錄。依呼叫者的原始選擇值，
    把另一組單位的中心格設 `0x40`（不可進入），四個相鄰格設 `0x80`
    （可進入，但扣除地形成本後將剩餘步數強制成 0）。
-2. `0x4E040` 從行動單位 `(record+0/+1)` 與 `record+0x3B` 初始剩餘步數開始，
-   以右、左、下、上順序遞迴。每格從 FDFIELD 圖塊索引高位取得 `0..3`
+2. `0x4E040` 建立搜尋狀態，再由 `0x4E0DC` 以右、左、下、上順序遞迴；
+   `0x4E16E` 是實際檢查 `0x40/0x80` 與地形成本的鄰格消費端。每格從
+   FDFIELD 圖塊索引高位取得 `0..3`
    分組，查 FDSHAP 地形記錄 `+1` 的移動代碼，再以該代碼索引
    `0x4E555` 選出的 20 位元組成本列。只有新剩餘步數嚴格大於既有值才覆寫。
 3. `0x146D1` 排除同一原始選擇組、有效且非行動單位的佔用格。
 4. `0x14B16` 以 Y 外迴圈、X 內迴圈掃描所有不等於 `0xFF` 的剩餘步數格，
-   因此最後候選是穩定的逐列順序（row-major），而非 `0x4E040` 的遞迴順序。
+   因此最後候選是穩定的逐列順序（row-major），而非 `0x4E0DC` 的遞迴順序。
 
 `battle.NativeAIPhysicalDestinations` 保存這四段只接受原始資料的契約，要求完整
-執行期記錄、`NativeTargetFlags`、`NativeTerrainMoveCodes` 與 20 位元組
+執行期記錄、caller-owned live `NativeTargetFlags`、`NativeTerrainMoveCodes` 與20位元組
 成本列；任何輸入缺失或越界都拒絕，不回退到重製端 `Cost`／`Reachable`。
 選擇值的零／非零分組仍保持原始名稱，不猜成陣營或階段。
 
@@ -406,7 +407,7 @@ Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x
   targets，高 command 以 `0x149F8` 從 actor 朝目的地走
   `command-0x10` 步且固定只收 raw camp0。每個候選交 `0x15880`，
   只有分數嚴格大於目前最大值才保存 `(score,x,y,slot)`。
-- map0 真實 roster／target flags 與原始 item79 row 的交叉 fixture 固定
+- map0 真實 roster／constructor 後 `+2 & 0x1F` 基底與原始 item79 row 的交叉 fixture固定
   actor index23 得 score8、目的地 `(19,15)`、raw slot0。fixture 只替 actor
   注入已追蹤 item79 以關閉 producer；不宣稱一般玩家 map0 原本持有該物品。
 - remake 已先把 editable item 23-byte row 的 K4（raw byte `0x11`）資料化為 `AICommandSpell`（command `>=0x10` → `spell_id=command-0x10`）；這只建立 command inventory，不提前猜測 AI ranking、可用條件或治療目標。
@@ -458,12 +459,15 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
   `ScoreNativeAI1567E`，並將96／8這類數值分別送入 `[0x53C23]`／
   `[0x53C33]` 的 signed `>=6` 三遍掃描計畫。輸入必須逐單位完整且唯一，
   函式不改寫戰鬥狀態。
-- map0 測試是修改狀態的 E0 交叉夾具：沿用真實名冊、目標旗標、地形、命令
+- map0 測試是修改狀態的 E0 交叉夾具：沿用真實名冊、構成格基底、地形、命令
   與物品資料，但排除其他 selector-zero 記錄，並替 index23 注入 command0
   與 item79；它不能證明一般玩家 map0 的實際敵方決策。
-- 先前「只有 map0 有 `native_target_flags`」已確認是同步工具漏欄。
-  33 張 map 現均由雜湊吻合的 FDFIELD 構成格 `+2` 逐位元組同步並檢查。
-  map19 有1600格、7格非零；真實 unit55（identity92、遮罩
+- 先前把 FDFIELD 封存 `+2` 直接命名成 `native_target_flags` 是錯誤斷言。
+  33 張 map 現均逐位元組同步為 `native_composition_event_bytes`；原版
+  合法 IDA Pro 9.4 已先確認函式邊界、呼叫者與 writer／consumer，
+  Capstone 再逐指令交叉驗證：`0x4DBFC` 先遮成 low5，
+  caller-specific `0x145CD` 才依 roster 加
+  `0x40/0x80`。map19 有1600格、7格非零；真實 unit55（identity92、遮罩
   `[4,0,0,8,0]`、MP288）在完整原始輸入下兩個 producer 都得到零分，
   且不創造勝者。這是 E0 負向資產錨點，不是原版動態回合 trace。
 - 這個橋只涵蓋無副作用的分數與門檻，沒有呼叫 `0x13A9F`、逐單位事件／章節

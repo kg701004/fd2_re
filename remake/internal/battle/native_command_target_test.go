@@ -2,6 +2,79 @@ package battle
 
 import "testing"
 
+func TestNativeCompositionBaseFlagsMasksArchiveHighBits(t *testing.T) {
+	got, err := NativeCompositionBaseFlags(
+		3, 1, []byte{0xff, 0x40, 0x85},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0] != 0x1f || got[1] != 0 || got[2] != 5 {
+		t.Fatalf("composition base flags=%#v", got)
+	}
+}
+
+func TestNativeCommandRuntimeFlagsMatches145CDWriters(t *testing.T) {
+	unit := func(x, y int, selector byte, byte5 byte) *Unit {
+		return &Unit{
+			NativeMapPresentation: NativeMapPresentationState{
+				X: byte(x), Y: byte(y),
+			},
+			HasNativeMapPresentation: true,
+			NativeRecordByte5:        byte5,
+			HasNativeRecordByte5:     true,
+			NativeRecordByte6:        selector,
+			HasNativeRecordByte6:     true,
+		}
+	}
+	units := []*Unit{
+		unit(1, 1, 1, 0),
+		unit(0, 0, 0, 0),
+		unit(2, 2, 1, 1),
+	}
+	flags, err := NativeCommandRuntimeFlags(
+		3, 3,
+		[]byte{0xff, 0, 0, 0, 0, 0, 0, 0, 0},
+		units,
+		0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []byte{
+		0x1f, 0x80, 0,
+		0x80, 0x40, 0x80,
+		0, 0x80, 0,
+	}
+	for index := range want {
+		if flags[index] != want[index] {
+			t.Fatalf(
+				"selector0 flags[%d]=%#x want %#x; all=%#v",
+				index, flags[index], want[index], flags,
+			)
+		}
+	}
+
+	flags, err = NativeCommandRuntimeFlags(
+		3, 3, make([]byte, 9), units, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if flags[0] != 0x40 || flags[1] != 0x80 ||
+		flags[3] != 0x80 || flags[4] != 0 {
+		t.Fatalf("selector1 flags=%#v", flags)
+	}
+}
+
+func TestNativeCommandRuntimeFlagsFailsClosedWithoutRawProvenance(t *testing.T) {
+	if _, err := NativeCommandRuntimeFlags(
+		1, 1, []byte{0}, []*Unit{{}}, 0,
+	); err == nil {
+		t.Fatal("runtime flag writer accepted incomplete roster")
+	}
+}
+
 func TestNativeCommandTargetCellsFloodFillHonorsRawFlags(t *testing.T) {
 	flags := make([]byte, 5)
 	flags[1] = NativeCommandGridBlocked

@@ -262,11 +262,17 @@
   E0 交叉夾具固定96／8並保留第二遍，且驗證輸入記錄不變。它不執行
   `0x13A9F`、回呼表或 pending code；尚缺同一原版 runtime 動態 trace，
   故仍不接正式 `NextAIPlan`。
-- [x] **RE-AI-TARGET-FLAGS-ALL-MAPS**：修正同步工具只回填 FDFIELD
-  構成格 `+3`、漏掉已證實 `+2` flags 的管線缺口；33 張 map 現均由雜湊
-  吻合的 FDFIELD 逐位元組同步 `native_target_flags`，`--check` 驗證異動0。
+- [x] **RE-AI-COMPOSITION-EVENT-BYTES-ALL-MAPS**：修正同步工具漏掉
+  FDFIELD 構成格 `+2` 的管線缺口，同時撤回把它直接命名成完整 target
+  flags 的錯誤斷言。33 張 map 現均同步
+  `native_composition_event_bytes`；`0x4DBFC` 的 low5 基底與
+  `0x145CD→0x14625/0x146A7` 的 caller-specific `0x40/0x80` writer 已分層。
+  合法 IDA Pro 9.4 已優先確認函式邊界與交叉參照，Capstone 再覆核
+  直接指令；`0x4E040` 只建立搜尋狀態，實際旗標消費端是 `0x4E16E`。
+  證據保存於
+  [`fd2_field_composition_lifecycle_disasm.txt`](../data/fd2_field_composition_lifecycle_disasm.txt)。
   map19 1600格中7格非零，真實 unit55 的兩個 producer 均為零分且不創造
-  勝者。這只補齊原始輸入與 E0 負向錨點，不等於正式 AI 執行。
+  勝者。正式 command caller 尚未提供 live flags 時維持失敗即關閉。
 - [x] **RE-AI-RAW-RECORD-1598A**：`NativeAIScoringRecords` 以完整來源建立分離的 `0x50` runtime 快照，補齊 presentation、`+5/+6/+34..+36/+42/+46` 並拒絕不完整 roster；map0 與 map19 真實資產錨點通過。
 - [x] **RE-AI-CANDIDATES-1598A**：`NativeAIScoredCommandCandidateGroups` 已以 command `+3/+4`、原版 cost row、exact grid flags 與 raw `+5/+6` 建立 row-major destination/target-index groups；selector target-code transform 與空 target skip 已保存，map0 identity103→ally `(23,14)` 真實資產 regression 通過。群組、單位級最大分數與三遍門檻均已接入唯讀診斷；下一步是原版同狀態動態 trace。
 - [x] **RE-AI-SCORE-GROUPS-15B77**：`ScoreNativeAIScoredCommandGroups` 已依完整 ID 家族分派攻擊、恢復、旗標與原始零分支；map0 command0 的四個友軍目標各得24、群組合計96。IDs10..12 缺 `0x1F183` caller gate 時拒絕執行。`[0x53C23]` 的數值最大值可由零開始比較，但零分時的命令字區域變數初值仍未知，尚不可聲稱已閉合勝者。
@@ -1189,7 +1195,7 @@
   下一步是原版320×200 camera與HUD gate/anchor/clock runtime ownership，
   不是再做一個renderer primitive。
   - [x] 2026-07-28 production neutral-frame bridge：ch01 map JSON重新由
-    合法原版輸出576個blit modes、1200-byte control table與target flags；
+    合法原版輸出576個封存 byte+3、1200-byte control table與event low bytes；
     ch01改走已證實party-first、initial-groups-append constructor順序。
     玩家原始DAT integration test可完整通過`ComposeNativeFrame`並由Ebiten
     呈現，artifact為`docs/figures/native-map-ch01-remake.png`。raw range

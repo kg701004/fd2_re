@@ -111,7 +111,7 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	}
 	mapRaw, _ := json.Marshal(map[string]any{
 		"w": 2, "h": 2, "tileW": 24, "tileH": 24, "cols": 16,
-		"tiles": []int{0, 1, 0, 1}, "cost": []int{1, 2, 99, 1}, "native_target_flags": []byte{0, 0x40, 0x80, 0},
+		"tiles": []int{0, 1, 0, 1}, "cost": []int{1, 2, 99, 1}, "native_composition_event_bytes": []byte{0, 0x40, 0x80, 0},
 		"native_field_event_slots": []int{-1, 3, -1, -1},
 		"native_field_events": append(
 			make([]NativeFieldEvent, 3),
@@ -139,8 +139,11 @@ func TestLoad_ReadsCostFromMapJSON(t *testing.T) {
 	if got := st.MoveCost(0, 1); got != 99 {
 		t.Errorf("MoveCost(0,1) = %d, want 99", got)
 	}
-	if got, want := st.NativeTargetFlags, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
-		t.Errorf("NativeTargetFlags=%v want %v", got, want)
+	if got, want := st.NativeCompositionEventBytes, []byte{0, 0x40, 0x80, 0}; !reflect.DeepEqual(got, want) {
+		t.Errorf("NativeCompositionEventBytes=%v want %v", got, want)
+	}
+	if st.NativeTargetFlags != nil {
+		t.Errorf("NativeTargetFlags=%v want caller-owned nil", st.NativeTargetFlags)
 	}
 	if got, ok := NativeFieldEventIDAt(st, 1, 0, 1); !ok || got != 82 {
 		t.Fatalf("NativeFieldEventIDAt=(%d,%v), want (82,true)", got, ok)
@@ -170,6 +173,12 @@ func TestLoad_NoMapJSON_CostNil(t *testing.T) {
 	}
 	if st.NativeTargetFlags != nil {
 		t.Errorf("NativeTargetFlags=%v want nil", st.NativeTargetFlags)
+	}
+	if st.NativeCompositionEventBytes != nil {
+		t.Errorf(
+			"NativeCompositionEventBytes=%v want nil",
+			st.NativeCompositionEventBytes,
+		)
 	}
 	if st.NativeTerrainMoveCodes != nil {
 		t.Errorf("NativeTerrainMoveCodes=%v want nil", st.NativeTerrainMoveCodes)

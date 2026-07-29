@@ -1,0 +1,197 @@
+# FD2 FDFIELD composition 載入、建構與 live +2 writer 證據
+#
+# 來源 FD2.EXE
+# 大小 357074 bytes
+# MD5 b97caf2239a27a896069d03549d96e1e
+# SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+#
+# 工具順序：
+# * 合法 IDA Pro 9.4 Docker 先確認函式邊界、呼叫者與交叉參照。
+# * Capstone Docker 再產生下列可重生直接指令，作獨立覆核。
+#
+# IDA Pro 9.4（2026-07-29）確認：
+# * 0x1088D..0x10B4E，呼叫者 0x205FF、0x25870、0x2C437。
+# * 0x111BA..0x112A5。
+# * 0x4DBFC..0x4DC34。
+# * 0x145CD..0x14625、0x14625..0x146A7、0x146A7..0x146D1。
+# * 0x4E040..0x4E0DC 是搜尋入口；0x4E0DC..0x4E16E 是遞迴器；
+#   0x4E16E..0x4E1A6 才直接消費 0x40/0x80。
+#
+# Capstone 重生：
+# docker run --rm --network=none --entrypoint sh \
+#   -v /home/anr2/cht/fd2:/src:ro \
+#   -v /home/anr2/cht/fd2/org_game/炎龍騎士團/FLAME2:/src/org_game/炎龍騎士團/FLAME2:ro \
+#   -w /src fd2-cap-local -lc '
+# python3 tools/disasm_le.py org_game/炎龍騎士團/FLAME2/FD2.EXE dis 0x1088d 75
+# python3 tools/disasm_le.py org_game/炎龍騎士團/FLAME2/FD2.EXE dis 0x111ba 60
+# python3 tools/disasm_le.py org_game/炎龍騎士團/FLAME2/FD2.EXE dis 0x4dbfc 25
+# python3 tools/disasm_le.py org_game/炎龍騎士團/FLAME2/FD2.EXE dis 0x145cd 75
+# '
+#
+# 結論邊界：
+# * 0x1088D 以 chapter*3 載 FDFIELD resource 到 [0x53A51]。
+# * 0x111BA 先 free 舊指標，依 archive offsets 算精確大小、配置並讀入。
+# * 0x4DBFC 不是只重設 +3：它也把 cell +2 遮成 low5，並把 tile
+#   word 的高位元組遮成 low2。
+# * 0x145CD 依 selector 與 active raw roster 選另一組記錄；
+#   0x14625 對 unit cell OR 0x40，0x146A7 對四鄰格 OR 0x80。
+# * 0x4E16E 的 bit40 分支拒絕進格；bit80 分支把扣除成本後的 budget 清零。
+# * 因此 FDFIELD 封存 +2 不是完整 live target flags。
+
+0x0108c9  mov     edx, dword ptr [esp + 0x1c]
+0x0108cd  mov     ebx, edx
+0x0108cf  shl     ebx, 2
+0x0108d2  sub     ebx, edx
+0x01090c  push    ebx
+0x01090d  push    dword ptr [0x3a51]  ; ->0x53a51
+0x010913  push    0x1a59              ; ->0x51a59 "FDFIELD.DAT"
+0x010918  call    0x111ba
+0x01091d  add     esp, 0xc
+0x010920  mov     dword ptr [0x3a51], eax
+0x010925  movsx   edx, word ptr [eax]
+0x010928  mov     dword ptr [0x3ac1], edx
+0x01092e  movsx   eax, word ptr [eax + 2]
+0x010932  mov     dword ptr [0x3ac5], eax
+0x010974  push    dword ptr [0x3a51]
+0x01097a  call    0x4dbfc
+
+0x0111c7  mov     ebx, dword ptr [esp + 0x14]
+0x0111cb  test    ebx, ebx
+0x0111cd  je      0x111d8
+0x0111cf  push    ebx
+0x0111d0  call    0x37416              ; free old resource
+0x0111d8  push    0xde
+0x0111dd  push    dword ptr [esp + 0x14]
+0x0111e1  call    0x36fcc              ; open archive
+0x011205  push    8
+0x011207  call    0x36d16              ; allocate two offsets
+0x011211  push    0
+0x011213  mov     eax, dword ptr [esp + 0x1c]
+0x011217  shl     eax, 2
+0x01121a  add     eax, 6
+0x01121d  push    eax
+0x01121e  push    esi
+0x01121f  call    0x375f0              ; seek offset[index]
+0x011227  push    esi
+0x011228  push    8
+0x01122a  push    1
+0x01122c  push    ebx
+0x01122d  call    0x37072              ; read current/next offsets
+0x011235  mov     edi, dword ptr [ebx]
+0x011237  mov     eax, dword ptr [ebx + 4]
+0x01123a  sub     eax, edi
+0x01123c  mov     dword ptr [0x3bff], eax
+0x01124a  push    dword ptr [0x3bff]
+0x011250  call    0x36d16              ; allocate exact resource size
+0x011278  push    0
+0x01127a  push    edi
+0x01127b  push    esi
+0x01127c  call    0x375f0              ; seek resource start
+0x011284  push    esi
+0x011285  push    dword ptr [0x3bff]
+0x01128b  push    1
+0x01128d  push    ebx
+0x01128e  call    0x37072              ; read resource into allocation
+0x011296  push    esi
+0x011297  call    0x37244              ; close archive
+0x01129f  mov     eax, ebx
+
+0x04dbfc  push    ebp
+0x04dc02  mov     edi, dword ptr [ebp + 8]
+0x04dc05  xor     eax, eax
+0x04dc07  mov     al, byte ptr [edi]       ; width low byte
+0x04dc09  mov     ah, byte ptr [edi + 2]   ; height low byte
+0x04dc0c  mul     ah
+0x04dc0e  mov     ecx, eax
+0x04dc10  add     edi, 4
+0x04dc13  mov     al, 0xff
+0x04dc15  mov     byte ptr [edi + 3], al
+0x04dc18  mov     ah, byte ptr [edi + 2]
+0x04dc1b  and     ah, 0x1f
+0x04dc1e  mov     byte ptr [edi + 2], ah
+0x04dc21  mov     ah, byte ptr [edi + 1]
+0x04dc24  and     ah, 3
+0x04dc27  mov     byte ptr [edi + 1], ah
+0x04dc2a  add     edi, 4
+0x04dc2d  loop    0x4dc15
+
+0x0145fb  test    byte ptr [ebx + 5], 1
+0x0145ff  jne     0x145e8
+0x014601  test    edi, edi
+0x014603  jne     0x1460d
+0x014605  movzx   edx, byte ptr [ebx + 6]
+0x014609  test    edx, edx
+0x01460b  jne     0x14619              ; selector0 selects +6!=0
+0x01460d  test    edi, edi
+0x01460f  je      0x145e8
+0x014611  movzx   edx, byte ptr [ebx + 6]
+0x014615  test    edx, edx
+0x014617  jne     0x145e8              ; nonzero selector selects +6==0
+0x014619  push    ecx
+0x01461a  push    eax
+0x01461b  call    0x14625
+0x014639  test    ebx, ebx
+0x01463b  je      0x1464a
+0x01463d  push    esi
+0x01463e  lea     eax, [ebx - 1]
+0x014641  push    eax
+0x014642  call    0x146a7
+0x01464a  test    esi, esi
+0x01464c  je      0x1465b
+0x01464e  lea     eax, [esi - 1]
+0x014651  push    eax
+0x014652  push    ebx
+0x014653  call    0x146a7
+0x01465b  mov     eax, dword ptr [0x3ac1]
+0x014660  dec     eax
+0x014661  cmp     ebx, eax
+0x014663  jge     0x14672
+0x014665  push    esi
+0x014666  lea     eax, [ebx + 1]
+0x014669  push    eax
+0x01466a  call    0x146a7
+0x014672  mov     eax, dword ptr [0x3ac5]
+0x014677  dec     eax
+0x014678  cmp     esi, eax
+0x01467a  jge     0x14689
+0x01467c  lea     eax, [esi + 1]
+0x01467f  push    eax
+0x014680  push    ebx
+0x014681  call    0x146a7
+0x014689  imul    esi, dword ptr [0x3ac1]
+0x014690  lea     eax, [ebx + esi]
+0x014693  shl     eax, 2
+0x014696  mov     ebx, dword ptr [0x3a51]
+0x01469c  add     eax, ebx
+0x01469e  add     eax, 6
+0x0146a1  or      byte ptr [eax], 0x40
+0x0146b1  mov     edx, dword ptr [esp + 8]
+0x0146b5  imul    edx, dword ptr [0x3ac1]
+0x0146bc  add     edx, dword ptr [esp + 4]
+0x0146c0  shl     edx, 2
+0x0146c3  mov     eax, dword ptr [0x3a51]
+0x0146c8  add     eax, edx
+0x0146ca  add     eax, 6
+0x0146cd  or      byte ptr [eax], 0x80
+
+0x04e16e  xor     eax, eax
+0x04e170  mov     ax, word ptr [ebx - 3]
+0x04e174  and     ah, 3
+0x04e177  shl     ax, 2
+0x04e17b  add     eax, dword ptr [0x60060]
+0x04e181  inc     eax
+0x04e182  mov     ch, byte ptr [eax]
+0x04e184  xor     eax, eax
+0x04e186  mov     al, ch
+0x04e188  sub     cl, byte ptr [esi + eax]
+0x04e18b  jb      0x4e1a4
+0x04e18d  mov     ch, byte ptr [ebx]
+0x04e18f  cmp     cl, ch
+0x04e191  jle     0x4e1a4
+0x04e193  mov     al, byte ptr [ebx - 1]
+0x04e196  test    al, 0x40
+0x04e198  jne     0x4e1a4
+0x04e19a  test    al, 0x80
+0x04e19c  je      0x4e1a0
+0x04e19e  xor     cl, cl
+0x04e1a0  mov     byte ptr [ebx], cl
