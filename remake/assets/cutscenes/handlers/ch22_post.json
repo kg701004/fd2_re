@@ -326,7 +326,7 @@
       }
     },
     {
-      "op": "load_ch_bg",
+      "op": "prepare_chapter_aux_graphics",
       "args": [],
       "source": {
         "addr": "0x24a9a",

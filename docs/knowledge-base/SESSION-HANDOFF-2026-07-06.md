@@ -2271,13 +2271,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 
 - 2026-07-30 current snapshot owner／漏列 raw 區域勘誤：合法
   IDA Pro 9.4 重讀 `0x10010..0x10620`，Capstone 獨立核對，確認舊證據漏列
-  plaintext `0x0000..0x08A2`（複製後呼 `0x10652`）與
-  `0x30A3..0x30C2`（複製至 `[0x53AD5]`）。`InspectCurrentSnapshot`
+  plaintext `0x0000..0x08A2` FDFIELD 控制映像（複製後呼 `0x10652`）與
+  `0x30A3..0x30C2` battle-local event state（複製至 `[0x53AD5]`）。`InspectCurrentSnapshot`
   現原樣保存兩區，並測試不與呼叫端緩衝區共用底層資料。`0x10010` 自己載資源、
   建 runtime selector、恢復畫面，於 `0x10616` 呼叫戰鬥驅動 `0x4E031`；
   `0x1061B→0x22BBE` 是與該 prologue 配對的共享 epilogue。故撤回「尚缺
   原版 chapter node／CONTINUE owner」的錯誤說法；重製端真正缺的是兩個
-  raw 區域、runtime record/selector 與戰鬥驅動狀態的具型別正式執行
+  已辨識區域與 runtime record/selector、戰鬥驅動狀態的嚴格正式執行
   擁有者（production owner）。四槽 LOAD 的 `0x2CAD7→pre-handler`
   仍是另一條 ABI。
 
@@ -2566,6 +2566,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `battle.State` 及 battle driver 的嚴格一致性。
   直接證據保存於 `docs/data/fd2_current_event_state_ida.txt`。
   控制映像證據保存於 `docs/data/fd2_current_field_control_ida.txt`。
+- 2026-07-30 `0x10652` 勘誤：合法 IDA Pro 9.4 將函式固定為
+  `0x10652..0x1088d`，直接 callers 只有 `0x101d7/0x108a6/0x24a9a`；
+  Docker Capstone 獨立覆核。它先釋放 `[0x53aff]/[0x53b03]`，只對 raw
+  chapter `9/17/21–25/27–29` 準備特定 FDOTHER 輔助圖形，不是完整章節
+  背景 loader。exporter 與 ch22 post editable IR 已由 `load_ch_bg`
+  改為 `prepare_chapter_aux_graphics`，compiler regression 固定無
+  runtime lowering 時 fail-closed。全量重生曾將 ch14/ch16/ch25 已人工
+  閉合的 structured branches 降回暫存器形式，已撤回該批意外差異；
+  generator 補齊前不可全量覆寫 canonical handler assets。直接證據：
+  `docs/data/fd2_chapter_aux_graphics_10652_ida.txt`。
+- 同輪 exporter consistency：目前 `PRIM[0x1088D]` 與 canonical
+  ch29 post 都輸出完整 `loadch`；刪除 compiler 對錯誤舊名
+  `load_ch_text` 的相容降階。新 regression 要求舊名即使提供完整 binding
+  也必須失敗，避免文字-only 斷言再度混入可執行路徑。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

@@ -110,7 +110,8 @@ func TestCompileNativeTickWaitLowersToDelay(t *testing.T) {
 
 func TestCompileNativeChapterLoaderRequiresCompleteLoadCHBinding(t *testing.T) {
 	script := &HandlerScript{Beats: []HandlerBeat{{
-		Op: "load_ch_text", Source: HandlerSource{Addr: "0x25870", Target: "0x1088d"},
+		Op: "loadch", Chapter: intPtr(30),
+		Source: HandlerSource{Addr: "0x25870", Target: "0x1088d"},
 	}}}
 	state := LoadCHState{Chapter: 30, Map: "assets/maps/map29", Roster: "assets/maps/map29/map29_units.json", SlotCount: 70, Script: "assets/story/ch30.json", PartyScenario: "assets/scenarios/ch30.json"}
 	beats, issues := CompileHandlerScript(script, HandlerBindings{LoadCH: func(input HandlerBeat) (LoadCHState, bool) {
@@ -126,6 +127,41 @@ func TestCompileNativeChapterLoaderRequiresCompleteLoadCHBinding(t *testing.T) {
 	beats, issues = CompileHandlerScript(script, HandlerBindings{})
 	if len(beats) != 0 || len(issues) != 1 || issues[0].Source.Addr != "0x25870" {
 		t.Fatalf("unbound chapter loader must stay unresolved: beats=%#v issues=%#v", beats, issues)
+	}
+}
+
+func TestCompileRejectsObsoleteLoadChapterTextName(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op:     "load_ch_text",
+		Source: HandlerSource{Addr: "0x25870", Target: "0x1088d"},
+	}}}, HandlerBindings{LoadCH: func(HandlerBeat) (LoadCHState, bool) {
+		return LoadCHState{
+			Chapter: 30, Map: "assets/maps/map29",
+			Roster:    "assets/maps/map29/map29_units.json",
+			SlotCount: 70, Script: "assets/story/ch30.json",
+		}, true
+	}})
+	if len(beats) != 0 || len(issues) != 1 ||
+		issues[0].Op != "load_ch_text" ||
+		issues[0].Reason != "operation has no proven runtime lowering" {
+		t.Fatalf("obsolete load_ch_text lowering=%#v issues=%#v", beats, issues)
+	}
+}
+
+func TestCompileChapterAuxGraphicsRemainsFailClosed(t *testing.T) {
+	script := &HandlerScript{Beats: []HandlerBeat{{
+		Op: "prepare_chapter_aux_graphics",
+		Source: HandlerSource{
+			Addr:   "0x24a9a",
+			Target: "0x10652",
+		},
+	}}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(beats) != 0 || len(issues) != 1 ||
+		issues[0].Op != "prepare_chapter_aux_graphics" ||
+		issues[0].Source.Target != "0x10652" ||
+		issues[0].Reason != "operation has no proven runtime lowering" {
+		t.Fatalf("chapter auxiliary graphics lowering=%#v issues=%#v", beats, issues)
 	}
 }
 

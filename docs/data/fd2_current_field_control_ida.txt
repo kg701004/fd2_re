@@ -27,8 +27,12 @@ FD2 current snapshot 的 FDFIELD 控制映像（IDA Pro 9.4）
 current-save writer `0x19DF7..0x1A30B` 將 `[0x53A55]` 起固定
 `0x8A3` bytes 寫到 plaintext `+0x0000`。CONTINUE loader `0x10010`
 在 `0x101C3..0x101D7` 對稱地把同一範圍複製回 `[0x53A55]`，隨後呼叫
-`0x10652` 重建相關執行期狀態。因此 `FD2.SAV+0x0000..+0x08A2`
+`0x10652` 依 raw chapter 釋放或準備章節專用 FDOTHER 輔助圖形緩衝區。
+因此 `FD2.SAV+0x0000..+0x08A2`
 是 FDFIELD 控制段的固定容量執行期映像，不是語意未知的單一戰鬥區塊。
+`0x10652` 本身不載入 FDFIELD／FDSHAP／FDTXT；其狹窄行為與舊
+`load_ch_bg` 名稱勘誤見
+[`fd2_chapter_aux_graphics_10652_ida.txt`](fd2_chapter_aux_graphics_10652_ida.txt)。
 
 重製邊界
 --------

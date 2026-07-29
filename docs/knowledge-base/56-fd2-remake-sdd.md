@@ -2458,6 +2458,27 @@ heap table 做完全對稱的 `0x20`-byte copy；`0x190F1/0x19246` 等路徑
 這不替其餘 index 命名，也不接通 CONTINUE。直接證據見
 [`fd2_current_event_state_ida.txt`](../data/fd2_current_event_state_ida.txt)。
 
+### 2026-07-30 — `0x10652` 章節輔助圖形勘誤
+
+合法 IDA Pro 9.4 將 `0x10652..0x1088D` 固定為只有三個 caller 的函式：
+CONTINUE `0x101D7`、完整章節 loader `0x108A6`、ch22 post `0x24A9A`。
+它先釋放 `[0x53AFF]/[0x53B03]`，再只針對 raw chapter
+`9/17/21–25/27–29` 載入或展開特定 FDOTHER 資源；其他章節只留下
+已清空的緩衝區。FDFIELD、FDSHAP、FDTXT 與 roster 的完整載入仍由
+`0x1088D` 負責。
+
+因此 handler exporter 的舊 `load_ch_bg` 名稱已撤回，改為
+`prepare_chapter_aux_graphics`。這個可編輯節點仍無正式執行期降階；
+compiler 必須回報 issue，不能猜成背景切換、重繪或完整 LOADCH。
+ch22 post 對應的 indexed buffer owner 尚未完成前維持失敗即關閉。
+直接證據見
+[`fd2_chapter_aux_graphics_10652_ida.txt`](../data/fd2_chapter_aux_graphics_10652_ida.txt)。
+
+同次 canonical handler 重生把 ch29 post 的 `0x25870→0x1088D` 從舊
+`load_ch_text` 改回 `loadch`。compiler 已刪除舊名的相容降階；即使提供
+完整 binding，`load_ch_text` 也必須回報 unresolved，避免把完整 FDFIELD、
+FDSHAP、FDTXT、roster loader 再次縮窄成文字切換。
+
 後續已新增綁定同一 FD2.EXE SHA-256 的
 `native_character_catalog.json`，只保存 32 筆 persistent identity 名稱與
 原版 class 0–28 文字。`MaterializeNativePersistentPartyRecord`

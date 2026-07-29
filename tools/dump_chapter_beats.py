@@ -51,7 +51,10 @@ PRIM = {
     0x111ba: ('load_res', 0),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知,參數個數未逐一核對)
     0x25a96: ('play_sfx', 1),     # 播音效(event_handler_dump.py 已知,參數個數未逐一核對)
     0x1088d: ('loadch', 0),      # 完整章節 loader：FDTXT + FDFIELD/roster/map，不是文字-only
-    0x10652: ('load_ch_bg', 0),   # 載章節大圖(doc47 §5 已知)
+    # 先釋放兩個全域輔助圖形緩衝區，再只對 raw chapter
+    # 9/17/21–25/27–29 載入或展開章節專用 FDOTHER 資源。它不是完整
+    # FDFIELD/FDSHAP 背景 loader；未知 runtime lowering 必須繼續阻擋。
+    0x10652: ('prepare_chapter_aux_graphics', 0),
     0x11cac: ('redraw', 1),       # 主重繪函式,每幀呼叫(doc25 已知「每幀呼叫」)
 }
 # 非原語(編譯器插入的堆疊探測/輔助函式),線性掃描時直接跳過、清空 pushes 不記 beat:

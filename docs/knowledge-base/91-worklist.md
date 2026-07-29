@@ -1592,6 +1592,21 @@
   CONTINUE 仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`、`fd2_current_event_state_ida.txt`、
   `fd2_current_field_control_ida.txt`
+- [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
+  Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
+  ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw
+  chapter `9/17/21–25/27–29` 載入或展開特定 FDOTHER 輔助圖形；它不負責
+  FDFIELD/FDSHAP/FDTXT/roster 的完整章節載入。撤回 exporter 的
+  `load_ch_bg`，改為 `prepare_chapter_aux_graphics`，並以 compiler
+  regression 固定尚無 runtime lowering 時必須失敗即關閉。全量重生另
+  暴露 exporter 尚無法重建 ch14/ch16/ch25 後續人工閉合的 structured
+  branches；在 generator 補齊前不得用全量輸出覆蓋那些 canonical assets
+  → `fd2_chapter_aux_graphics_10652_ida.txt`
+- [x] **HANDLER-LOADCH-OBSOLETE-NAME-GATE**：全量機械重生確認
+  `0x25870→0x1088d` 現由 exporter 正確輸出 `loadch`，同步 ch29 raw／editable
+  artifact 與統計。刪除 compiler 對舊 `load_ch_text` 名稱的相容降階；
+  現在即使提供完整 binding 也會失敗即關閉，只有 `loadch` 可在 map、
+  roster、slot count、story context 完整時降階。
 - [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
   SHA-256 綁定的可編輯 32 人 identity／class 0–28 catalog，以及嚴格
   `PersistentRecord→battle.Unit` 投影。保留 raw inventory flags、command

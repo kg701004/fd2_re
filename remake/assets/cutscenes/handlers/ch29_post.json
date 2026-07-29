@@ -98,7 +98,7 @@
       }
     },
     {
-      "op": "load_ch_text",
+      "op": "loadch",
       "args": [],
       "source": {
         "addr": "0x25870",

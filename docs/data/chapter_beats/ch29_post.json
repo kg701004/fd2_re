@@ -79,7 +79,7 @@
    "args": []
   },
   {
-   "op": "load_ch_text",
+   "op": "loadch",
    "addr": "0x25870",
    "target": "0x1088d",
    "args": []

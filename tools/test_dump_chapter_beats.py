@@ -49,6 +49,12 @@ class DumpRangeTest(unittest.TestCase):
 
 
 class StructureControlFlowTest(unittest.TestCase):
+    def test_10652_is_not_exported_as_a_complete_chapter_background_load(self):
+        self.assertEqual(
+            beats.PRIM[0x10652],
+            ("prepare_chapter_aux_graphics", 0),
+        )
+
     def test_single_slot_unit_inactive_diamond_keeps_shared_merge_once(self):
         # Deliberately unrelated synthetic addresses: regression proves that the
         # recognizer is based on the original instruction shape, not ch02_post.

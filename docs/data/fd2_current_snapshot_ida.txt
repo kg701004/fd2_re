@@ -24,7 +24,7 @@ FD2.SAV current-runtime snapshot（IDA Pro 9.4）
 
 | plaintext offset | 長度 | 直接指令與目的地 |
 |---|---:|---|
-| `0x0000` | `0x08A3` | `0x101C3..0x101D7` 複製至 `[0x53A55]` 後呼叫 `0x10652` |
+| `0x0000` | `0x08A3` | `0x101C3..0x101D7` 複製至 `[0x53A55]` 後呼叫 `0x10652` 準備章節專用 FDOTHER 輔助圖形緩衝區 |
 | `0x08A3` | `0x0A00` | `0x1010F..0x10121` 固定複製至 persistent roster `[0x53BF7]` |
 | `0x12A3` | `header[1] * 0x50` | `0x10296..0x10311` 複製至 runtime roster `[0x53A45]` |
 | `0x30A3` | `0x20` | `0x10319..0x10328` 複製至 `[0x53AD5]` 指向的 heap table；writer `0x1A03D..0x1A04C` 對稱保存。這是未命名 index 的 battle-local event state |

@@ -656,7 +656,7 @@
     "increment_chapter": 1,
     "delay": 4,
     "load_res": 3,
-    "load_ch_bg": 1,
+    "prepare_chapter_aux_graphics": 1,
     "pan": 2
    }
   },
@@ -862,7 +862,7 @@
     "pan": 2,
     "unknown": 7,
     "increment_chapter": 1,
-    "load_ch_text": 1,
+    "loadch": 1,
     "redraw": 2,
     "delay": 1
    }

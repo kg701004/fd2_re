@@ -1,0 +1,52 @@
+FD2 `0x10652` 章節輔助圖形緩衝區（IDA Pro 9.4）
+==================================================
+
+證據範圍
+--------
+
+- `FD2.EXE` 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一順位：使用者合法 IDA Pro 9.4，僅在授權、無網路 Docker 執行。
+- 第二順位：`fd2-cap-local`／Capstone 5.0.3 獨立覆核函式範圍、
+  三個直接呼叫點及分支指令。
+
+函式邊界與呼叫者
+----------------
+
+IDA 將函式固定為 `0x10652..0x1088D`。只有三個直接呼叫點：
+
+- `0x101D7`：CONTINUE loader `0x10010` 恢復
+  `FD2.SAV+0x0000..+0x08A2` 後呼叫；
+- `0x108A6`：完整章節 loader `0x1088D` 的開頭呼叫；
+- `0x24A9A`：ch22 post handler 手動更換 FDFIELD／FDSHAP 資源後呼叫。
+
+直接行為
+--------
+
+函式先釋放並清零 `[0x53AFF]`、`[0x53B03]`。接著讀 raw chapter
+`[0x53C03]`：
+
+- chapter `9/24/25`：載入 FDOTHER #15 至 `[0x53AFF]`，另配置
+  `0xFA00` bytes 至 `[0x53B03]`；
+- chapter `17/21/22/27`：依章節選擇 FDOTHER #16/#35/#40/#46，
+  配置指定尺寸的 `[0x53AFF]`，將資源的兩個區段解碼至上下半部後釋放
+  暫存資源；
+- chapter `23`：配置 `0xEA00` bytes，載入並解碼 FDOTHER #42，
+  釋放資源後呼叫 `0x24D22(0)`；
+- chapter `28/29`：載入 FDOTHER #55 至 `[0x53AFF]`，另配置
+  `0xFA00` bytes 至 `[0x53B03]`；
+- 其他章節：釋放既有緩衝區後不載入替代資源。
+
+勘誤與重製邊界
+--------------
+
+舊 `tools/dump_chapter_beats.py` 將此函式輸出為 `load_ch_bg`，暗示它是完整
+章節背景 loader。直接指令否定該說法：FDFIELD、FDSHAP、FDTXT 與 roster
+的完整載入由 `0x1088D` 負責；`0x10652` 只管理少數章節的 FDOTHER
+輔助圖形緩衝區。因此可編輯 handler IR 改名為
+`prepare_chapter_aux_graphics`。
+
+目前編譯器仍對此 operation 回報「沒有已證實的執行期降階」，不會把它
+猜成背景切換、重繪或完整 LOADCH。ch22 post 在建立對應的 indexed
+renderer 與緩衝區 owner 前仍維持失敗即關閉。

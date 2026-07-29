@@ -293,7 +293,7 @@
    ]
   },
   {
-   "op": "load_ch_bg",
+   "op": "prepare_chapter_aux_graphics",
    "addr": "0x24a9a",
    "target": "0x10652",
    "args": []
