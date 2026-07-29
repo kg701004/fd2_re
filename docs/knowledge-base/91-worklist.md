@@ -1573,6 +1573,15 @@
   count 的錯誤工具斷言；正確為 `+0=turn counter`、`+1=runtime count`、
   `+9=persistent count`。`fdsave.InspectCurrentSnapshot` 已保存兩份 raw
   records、限制原生容量並有聚焦回歸；使用者 checksum-valid 原版快照
-  實測 persistent identities `[0,9,4,30]`。尚缺 strict identity/class
-  catalog、`battle.Unit` materialization、chapter node 與正式 CONTINUE
-  owner，故仍維持失敗即關閉 → `fd2_current_snapshot_ida.txt`
+  實測 persistent identities `[0,9,4,30]`。strict identity/class
+  catalog 與單筆 `battle.Unit` materialization 已由下一項閉合；尚缺
+  chapter node 與正式 CONTINUE owner，故仍維持失敗即關閉
+  → `fd2_current_snapshot_ida.txt`
+- [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
+  SHA-256 綁定的可編輯 32 人 identity／class 0–26 catalog，以及嚴格
+  `PersistentRecord→battle.Unit` 投影。保留 raw inventory flags、command
+  mask、transient、race/class 與 base/effective stats；不由相同數值推導
+  portrait、Fig、map selector、座標或章節。class 27／28 的現有名稱來源
+  衝突，維持 fail-closed。`FD2_NATIVE_SAVE_FIXTURE` Docker 整合測試已
+  唯讀走完 current snapshot 四筆 record，實得索爾、悠妮、亞雷斯、蓋亞。
+  下一步是閉合章節節點與正式 owner；目前不接 CONTINUE。

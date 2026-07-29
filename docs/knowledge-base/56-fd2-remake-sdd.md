@@ -2436,3 +2436,15 @@ checksum-valid 的未修改快照實測得到 persistent identity
 固定版本 fixture，也不證明原生 LOAD／CONTINUE 已完成；identity/class
 catalog、章節節點與正式 party materialization 尚未閉合。逐指令證據見
 [`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt)。
+
+後續已新增綁定同一 FD2.EXE SHA-256 的
+`native_character_catalog.json`，只保存 32 筆 persistent identity 名稱與
+目前有明確文字證據的 class 0–26。`MaterializeNativePersistentPartyRecord`
+可把單筆 record 的身份、職業、能力值、inventory flags/items、command mask
+與 transient bytes 投影成 `battle.Unit`；不填 portrait、sprite、座標、
+出場狀態、spells、attack range 或章節節點。class 27／28 的名稱來源仍互相
+衝突，故一律拒絕，不以 `cls28`、`?` 或「職業28」猜補。這只關閉 record
+materialization，不解除 LOAD／CONTINUE 的正式失敗即關閉閘門。可選的
+`FD2_NATIVE_SAVE_FIXTURE` 整合測試已在 Docker 唯讀載入使用者
+checksum-valid 原版快照，依實際順序成功產生索爾、悠妮、亞雷斯、蓋亞；
+原版檔不進版控，缺 fixture 時測試明確略過。
