@@ -715,9 +715,15 @@ identity 103 actor、command #0、row 0 與 ally `(23,14)` anchor 通過。
 map0 交叉夾具使用真實名冊、目標旗標、地形、命令表、物品列及移動成本列，
 但會排除其他 selector-zero 單位，並替 index23 注入 command0 與已追蹤
 item79。它固定得到命令遮罩分數96、物品命令分數8及門檻通過，屬修改狀態的
-E0 組合驗證，不是一般玩家 map0 動態狀態。33 張圖目前只有 map0 具有完整
-`native_target_flags`；例如具真實非零遮罩與 MP 的 map19 unit55 尚不能在
-不補證據的情況下形成同級夾具。
+E0 組合驗證，不是一般玩家 map0 動態狀態。
+
+`sync_native_map_renderer_inputs.py` 現從每張 FDFIELD 構成格 `+2` 同步
+`native_target_flags`，與 `+3` 的 `native_tile_blit_modes`、FDSHAP
+`native_terrain_control` 一起受到原始封存檔雜湊及 33 圖尺寸檢查。先前只有
+map0 帶 flags 是同步工具漏欄，不是其他地圖缺少原版來源。map19 真實資產
+現提供 1600 格 flags（7 格非零）；unit55 的 identity92、遮罩
+`[4,0,0,8,0]`、MP288 可直接通過兩個單位評分器，結果皆為零且不創造勝者。
+這是未修改分數輸入的 E0 負向錨點，仍不是完整 phase callback 或玩家路徑。
 
 IDs32..35 的 `0x27fc9` 是一個獨立 multi-effect presentation wrapper，不能因為各 helper 已在其他 command
 family 出現就直接重用既有 executor。direct static trace 已見：32 進 `0x2111a→0x1c75e`；33 對每個 final target

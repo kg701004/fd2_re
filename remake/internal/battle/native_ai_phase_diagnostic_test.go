@@ -157,6 +157,79 @@ func TestMap0CrossFixtureBuildsNativeAIPhaseDiagnosticGate(t *testing.T) {
 	}
 }
 
+func TestMap19RealAssetInputsProduceZeroAIScores(t *testing.T) {
+	st, err := Load("../../assets/maps/map19/map19_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	nonzeroFlags := 0
+	for _, flag := range st.NativeTargetFlags {
+		if flag != 0 {
+			nonzeroFlags++
+		}
+	}
+	if len(st.NativeTargetFlags) != 40*40 ||
+		nonzeroFlags != 7 ||
+		st.NativeTargetFlags[122] != 5 ||
+		st.NativeTargetFlags[310] != 7 ||
+		st.NativeTargetFlags[711] != 6 {
+		t.Fatalf("map19 native target flags lack FDFIELD provenance")
+	}
+	for _, unit := range st.Units {
+		if err := unit.MaterializeNativeMapPresentation(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	records, err := NativeAIScoringRecords(st.Units)
+	if err != nil {
+		t.Fatal(err)
+	}
+	book, err := LoadNativeCommandRecords("../../assets/spells.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemRows, err := LoadNativeItemEffectRowPrefix(
+		"../../assets/data/native_item_effect_rows.json",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	costRows, err := LoadNativeMovementCostRows(
+		"../../assets/data/native_movement_cost_rows.json",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const actor = 55
+	if st.Units[actor].NativeIdentity != 92 ||
+		st.Units[actor].NativeCommandMask != [5]byte{4, 0, 0, 8, 0} ||
+		st.Units[actor].MP != 288 {
+		t.Fatalf("map19 actor55=%+v", st.Units[actor])
+	}
+	commandMask, err := ScoreNativeAI1598A(
+		st.W, st.H, records, len(st.Units), actor, 0, st.Units[actor],
+		book, st.NativeTargetFlags, st.NativeTerrainMoveCodes,
+		costRows[0], nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemCommand, err := ScoreNativeAI1567E(
+		st.W, st.H, records, len(st.Units), actor, 0,
+		itemRows, book, st.NativeTargetFlags,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if commandMask.MaxScore != 0 || commandMask.HasPositiveWinner ||
+		itemCommand.MaxScore != 0 || itemCommand.HasPositiveWinner {
+		t.Fatalf(
+			"map19 real scores command-mask=%+v item-command=%+v",
+			commandMask, itemCommand,
+		)
+	}
+}
+
 func nativeAIPhaseDiagnosticFixture(t *testing.T) *State {
 	t.Helper()
 	units := []*Unit{

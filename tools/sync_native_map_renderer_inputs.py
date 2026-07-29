@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""同步 33 張地圖的原版索引 renderer 輸入，不重寫其他可編輯欄位。
+"""同步 33 張地圖的原版構成格輸入，不重寫其他可編輯欄位。
 
 來源：
+* FDFIELD composition entry byte+2 → native_target_flags
 * FDFIELD composition entry byte+3 → native_tile_blit_modes
 * FDSHAP terrain/control resource → native_terrain_control
 
@@ -56,8 +57,10 @@ def expected_inputs(raw, map_index, data):
     terrain_index = map_index * 2 + 1
     if field_index >= len(fields) or terrain_index >= len(shapes):
         raise ValueError(f"map{map_index}: extracted resource is absent")
-    composition = open(fields[field_index], "rb").read()
-    control = open(shapes[terrain_index], "rb").read()
+    with open(fields[field_index], "rb") as source:
+        composition = source.read()
+    with open(shapes[terrain_index], "rb") as source:
+        control = source.read()
     if len(composition) < 4 or len(control) == 0 or len(control) % 4:
         raise ValueError(f"map{map_index}: malformed renderer source")
     width, height = struct.unpack_from("<HH", composition, 0)
@@ -71,11 +74,15 @@ def expected_inputs(raw, map_index, data):
     max_tile = len(control) // 4
     if any(tile < 0 or tile >= max_tile for tile in data["tiles"]):
         raise ValueError(f"map{map_index}: tile exceeds terrain control table")
+    flags = [
+        composition[4 + cell * 4 + 2]
+        for cell in range(width * height)
+    ]
     modes = [
         composition[4 + cell * 4 + 3]
         for cell in range(width * height)
     ]
-    return modes, list(control)
+    return flags, modes, list(control)
 
 
 def main():
@@ -99,19 +106,23 @@ def main():
         glob.glob(os.path.join(args.assets, "map*", "map.json")),
         key=lambda path: int(os.path.basename(os.path.dirname(path))[3:]),
     )
+    if len(maps) != 33:
+        raise ValueError(f"expected 33 editable maps, found {len(maps)}")
     changed = 0
     for path in maps:
         map_index = int(os.path.basename(os.path.dirname(path))[3:])
         with open(path, encoding="utf-8") as source:
             data = json.load(source)
-        modes, control = expected_inputs(args.raw, map_index, data)
+        flags, modes, control = expected_inputs(args.raw, map_index, data)
         mismatch = (
-            data.get("native_tile_blit_modes") != modes
+            data.get("native_target_flags") != flags
+            or data.get("native_tile_blit_modes") != modes
             or data.get("native_terrain_control") != control
         )
         if mismatch:
             changed += 1
             if args.write:
+                data["native_target_flags"] = flags
                 data["native_tile_blit_modes"] = modes
                 data["native_terrain_control"] = control
                 with open(path, "w", encoding="utf-8") as output:
@@ -123,7 +134,7 @@ def main():
         state = "更新" if mismatch and args.write else "缺少" if mismatch else "已驗證"
         print(f"map{map_index}: {state}")
     if args.check and changed:
-        raise SystemExit(f"{changed} 張 map.json 尚未同步 renderer inputs")
+        raise SystemExit(f"{changed} 張 map.json 尚未同步原版構成格輸入")
     print(f"{len(maps)} 張地圖；異動 {changed}")
 
 

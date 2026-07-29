@@ -2399,10 +2399,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   command0 與已追蹤 item79；結果固定為 `[0x53C23]=96`、
   `[0x53C33]=8`，優先遍通過且第二遍仍保留。這不代表一般玩家 map0
   原始狀態。
-- 全資產盤點顯示，目前只有 map0 帶完整 `native_target_flags`。map19
-  unit55 雖是具真實非零遮罩與 MP 的理想候選，仍因缺該圖完整目標旗標而
-  不能建立不猜測的同級夾具。下一個證據門檻仍是固定原版動態 trace，以及
-  逐單位回呼／pending code 的共同驗證；正式 `NextAIPlan` 維持未接。
+- 同輪後續確認「只有 map0 帶完整 `native_target_flags`」不是原始資料
+  限制，而是同步工具漏欄。`sync_native_map_renderer_inputs.py` 現同時由
+  FDFIELD 構成格 `+2/+3` 同步 flags／blit modes，並以 FDFIELD.DAT、
+  FDSHAP.DAT 雜湊及33圖尺寸失敗即關閉。map1–32 已回填；再次 `--check`
+  為33圖、異動0。
+- map19 取得1600格 flags，其中7格非零；真實 unit55（identity92、遮罩
+  `[4,0,0,8,0]`、MP288）直接執行兩個 producer 都得到零分，且不創造
+  勝者。下一個證據門檻仍是固定原版動態 trace，以及逐單位回呼／pending
+  code 的共同驗證；正式 `NextAIPlan` 維持未接。
 
 ## 2026-07-29：`0x205B4/0x205BE` 三值結果規則與函式邊界勘誤
 
