@@ -2165,8 +2165,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   物品、播放 resource45×59 frames、設 entry12、spawn group1、JOIN31，
   並使用 FDTXT 3/4；缺 D0 使用 FDTXT2 且不改狀態。
 - 新 `native_field_event_rules.json` 綁定 EXE 雜湊，map25 asset 嵌入三條
-  editable rules。selector0/1 的完整玩家／AI action timing 與 event61
-  presentation 尚未接 runtime，維持 fail-closed。
+  editable rules。這是當時的資料化狀態；selector0/1 後續接線進度以本檔
+  較晚的段落為準。
 - `ApplyNativeFieldModeEvent` 已執行 event59/60 的完整 provenance
   preflight 與原子 mode-range 寫入；上層尚未證實 selector 時機，所以沒有
   自動掛到任意 walk completion。event61 仍只載入 typed core rule。
@@ -2181,8 +2181,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `stepBattleWalk` 已在相同提交點執行 event59/60。map25 實檔測試固定
   第1..6拍不改狀態、第7拍原子改 39..44，以及向右跨過同格不觸發。
 - selector1 雖已定位到 `0x13A9F` 共用行動收尾與 `0x18890` 多個成功臂，
-  仍不能簡化成 walk completion；event61 presentation 未完成前維持
-  失敗即關閉。
+  仍不能簡化成 walk completion。這是當時尚未接入呈現的狀態；後續
+  wait 成功臂接線與尚未達 E2 的限制見較晚段落。
 
 ## 2026-07-29：FDTXT_026 計數與 event61 初始名冊勘誤
 
@@ -2198,6 +2198,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `ch26.json` 已切換至 runtime append construction，initial group 只保留
   group0；group1 的 char31 渥德留在 pending roster，等待 event61 成功臂。
   測試固定事件前 active Wold=0、pending Wold=1。
-- 尚未完成的正式路徑仍是 selector1 成功收尾、59 幀畫面擁有權、D0 原始
-  inventory 原子移除、entry12、append group1 與永久 JOIN31；不得因文字
-  對齊與初始名冊修正就宣稱 event61 已可玩。
+- 當時尚未完成的正式路徑是 selector1 成功收尾、59 幀畫面擁有權、D0 原始
+  inventory 原子移除、entry12、append group1 與永久 JOIN31；後續接線
+  狀態與仍未達一般玩家 E2 的限制，以本節較晚的勘誤為準。
+- 同輪 battle core 新增 `PlanNativeFieldEvent61`／
+  `CommitNativeFieldEvent61`。前者無突變地預檢 selector1、typed rule、
+  entry12、八格原始 inventory projection 與 pending group1/char31；缺 D0
+  只回傳 FDTXT2。後者要求精確 59 frames，重驗 D0 後以 `0x1B8E7`
+  對應 adapter 移除、設 entry12、`AppendGroup(1)`，並回傳 char31 供
+  campaign owner 持久化。58 frames 與中途 inventory 變更回歸均固定為
+  零部分寫入。這是核心層完成、UI job／永久 JOIN 尚未接線時的歷史狀態；
+  現況見下一項。
+- 後續接線勘誤：UI job 與永久 JOIN31 adapter 已完成，但只在明示
+  materialized native runtime 測試中成立。job 依真實 FDOTHER.DAT 跑
+  FDTXT3→59 frames×2 BIOS ticks→commit→persistent JOIN31→FDTXT4；
+  缺 D0 只播 FDTXT2。正式 `battle_ch26` 仍無已證實的動態
+  `native_map_view/native_map_hud`，所以 source-frame compose 在任何 D0
+  mutation 前失敗即關閉；不得把測試橋接冒稱一般玩家 E2。
+- 同輪發現 repository-wide UI 根因：只有 map0 的 map.json 保存
+  `native_tile_blit_modes/native_terrain_control`，map1–32 均為空。
+  新同步器先對 FDFIELD.DAT／FDSHAP.DAT 做 size+MD5+SHA-256 驗證，再
+  只補 composition byte+3 與 terrain control。33 圖 check、loader
+  regression 與完整 Docker/Xvfb Go suite 均通過。這只是全圖 E0
+  renderer input completeness，ch02+ dynamic view/HUD 仍待逐章證據。

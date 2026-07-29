@@ -147,6 +147,7 @@ type Game struct {
 	fade                 *storyFade      // 場景淡出/淡入轉場(doc46 §5.2)
 	transitionReveal     *transitionRevealJob
 	indexedTransition    *nativeIndexedTransitionJob
+	nativeFieldEvent61   *nativeFieldEvent61Job
 	nativeEnding         *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
 	walk                 *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
 	camp                 *campaign.Runner     // 劇本節點圖(doc 19;FD2_CAMPAIGN 啟用)
@@ -4090,8 +4091,13 @@ func (g *Game) finishSelectedWait() {
 			g.msg = "物品欄已滿，寶物仍留在原處"
 		}
 	}
-	u.Acted = true
-	g.sel, g.reach, g.moved = nil, nil, false
+	finish := func() {
+		u.Acted = true
+		g.sel, g.reach, g.moved = nil, nil, false
+	}
+	if !g.beginNativeFieldEvent61(u, finish) {
+		finish()
+	}
 }
 
 // awardDeathReward 執行 exporter 已 lower 的可編輯 death_reward。原版特殊 handler
@@ -4850,6 +4856,15 @@ func (g *Game) Update() error {
 		return nil
 	}
 	g.advanceNativeMapClock(time.Now())
+	if g.nativeFieldEvent61 != nil {
+		g.stepNativeFieldEvent61Tick(
+			g.nativeFieldEvent61.clock.Sample(time.Now()),
+		)
+		if g.shotPath != "" && g.shotTaken {
+			return ebiten.Termination
+		}
+		return nil
+	}
 	// 攻擊演出推進(FIGANI 全身分鏡;演出期間鎖玩家輸入)
 	if g.atk != nil {
 		g.atk.timer--
@@ -5374,6 +5389,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.Fill(color.Black)
 		if !g.drawNativeIndexedTransition(screen) {
 			ebitenutil.DebugPrint(screen, "native 0x24618 transition unavailable")
+		}
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
+		}
+		return
+	}
+	if g.nativeFieldEvent61 != nil {
+		screen.Fill(color.Black)
+		if !g.drawNativeFieldEvent61(screen) {
+			ebitenutil.DebugPrint(screen, "native event61 presentation unavailable")
 		}
 		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
 			g.captureShot(screen)
