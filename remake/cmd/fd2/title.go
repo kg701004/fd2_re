@@ -273,12 +273,15 @@ func (g *Game) titleUpdate() bool {
 					return true
 				}
 				if native {
-					// 索引式選槽與具型別名冊解析器已閉合，但原生 LOAD 的
-					// 戰後閘門／戰前處理器擁有者尚未接入重製戰役圖。
-					g.msg = "原版 FD2.SAV 的戰後路由還原尚未完成"
-					return true
+					if err := g.loadNativeGameFromSlot(
+						os.Getenv("FD2_NATIVE_SAVE"), selected,
+					); err != nil {
+						g.msg = err.Error()
+						return true
+					}
+				} else {
+					g.loadGameFromSlot(selected)
 				}
-				g.loadGameFromSlot(selected)
 			}
 			g.titlePhase = ""
 		}

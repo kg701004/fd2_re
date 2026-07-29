@@ -53,8 +53,12 @@ func TestSlotBoundsAndVerifiedMetadata(t *testing.T) {
 	plain[start+RosterSize] = 0xff
 	plain[start+RosterSize+1] = 7
 	binary.LittleEndian.PutUint32(plain[start+RosterSize+2:], 0x12345678)
+	copy(plain[start+RosterSize+6:], []byte{0xa1, 0xa2, 0xa3, 0xa4})
 	meta, err := ReadVerifiedMetadata(plain, 2)
-	if err != nil || meta.Chapter != 0xff || meta.RosterCount != 7 || meta.Currency != 0x12345678 {
+	if err != nil || meta != (VerifiedMetadata{
+		Chapter: 0xff, RosterCount: 7, Currency: 0x12345678,
+		HUDGateA: 0xa1, Raw53AF9: 0xa2, Raw51E61: 0xa3, Raw51E62: 0xa4,
+	}) {
 		t.Fatalf("metadata=%#v err=%v", meta, err)
 	}
 }
@@ -106,7 +110,7 @@ func TestInspectChapterSlotPreservesFixedRosterAndOpaqueMetadata(t *testing.T) {
 	plain[metadata] = 3
 	plain[metadata+1] = 2
 	binary.LittleEndian.PutUint32(plain[metadata+2:], 123456)
-	plain[metadata+6] = 0xa1
+	copy(plain[metadata+6:], []byte{0xa1, 0xa2, 0xa3, 0xa4})
 	plain[metadata+MetadataSize-1] = 0xef
 
 	got, err := InspectChapterSlot(plain, 1)
@@ -114,7 +118,10 @@ func TestInspectChapterSlotPreservesFixedRosterAndOpaqueMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got.Slot != 1 ||
-		got.Verified != (VerifiedMetadata{Chapter: 3, RosterCount: 2, Currency: 123456}) {
+		got.Verified != (VerifiedMetadata{
+			Chapter: 3, RosterCount: 2, Currency: 123456,
+			HUDGateA: 0xa1, Raw53AF9: 0xa2, Raw51E61: 0xa3, Raw51E62: 0xa4,
+		}) {
 		t.Fatalf("snapshot header=%#v", got)
 	}
 	if got.Metadata[6] != 0xa1 || got.Metadata[MetadataSize-1] != 0xef {

@@ -1,7 +1,8 @@
 FD2 原生章節槽確認後資料流（IDA Pro 9.4）
 ==============================================
 
-證據等級：已證實的直接指令與具型別 raw 邊界；成功進入完整章節仍未完成 E2。
+證據等級：已證實的直接指令、writer／reader 與具型別 raw 邊界；
+重製端四槽 LOAD 已有 E1 還原擁有者，但尚無未修改一般玩家有效槽的 E2 實驗。
 
 輸入版本
 --------
@@ -46,6 +47,43 @@ IDA 將 `0x25EBB..0x26152` 定為同一函式；`0x26019` 呼叫四槽 selector
    `0x260F0..0x260F5` 依 `[0x53C03]` 呼叫章節 pre-handler 跳表；
    隨後 `0x260FC..0x2610A` 依章節表呼叫 `0x25977`。
 
+`0x30012` 的章節槽寫入端與合法恢復落點
+-----------------------------------------
+
+IDA 將 `0x30012..0x301F4` 定為同一函式；只有兩個直接呼叫者：
+
+- `0x2CCB6`：`0x2CAD7` 的直接整備分支；
+- `0x2FD93`：酒店／休息流程 `0x2FC85`。
+
+writer 在 `0x300C8..0x300D4` 先將 `[0x53BF7]` 的固定 `0xA00`
+bytes roster 寫入選定 record，再於 `0x300E2..0x30116` 依序寫：
+
+- metadata `+0` ← `[0x53C03]`
+- metadata `+1` ← `[0x53BFB]`
+- metadata `+2..+5` ← `[0x53BF3]`
+- metadata `+6` ← `[0x51AAB]`
+- metadata `+7` ← `[0x53AF9]`
+- metadata `+8` ← `[0x51E61]`
+- metadata `+9` ← `[0x51E62]`
+
+`0x3012D..0x30158` 重算 checksum、套用 rolling XOR 後寫回完整
+`0x59CB` bytes。writer、reader 與 `0x30437` renderer 都不生產或消費
+metadata `+10..+39`；這個結論只限上述三條已查路徑，不外推為全程未使用。
+
+兩個 writer caller 都位於戰間流程，而且 LOAD reader 載入後重新呼叫
+`0x2CAD7`。因此合法恢復點是 gate table 決定的城鎮／整備入口，而不是重播
+上一戰的 postbattle handler。`[0x53C03]` 是 zero-based raw chapter index，
+畫面章數與重製節點尾碼為 `raw+1`。原始 `0x526B9` 30-byte table只有
+raw index `22..24`、`27..29` 為1：
+
+- gate 0：`town_ch(raw+1)`；
+- gate 1：`preparation_ch(raw+1)`。
+
+這也表示 ch21 的物品合成與 ch27 的物品 gate 已在存檔前執行；LOAD 不得
+回到 `inventory_recipe_ch21_sky_key` 或
+`inventory_gate_ch27_sky_key`。raw chapter 0 在現行戰役圖沒有
+`town_ch01`，重製端會失敗即關閉，不自行創造第一章可存檔點。
+
 範圍限制
 --------
 
@@ -54,21 +92,27 @@ IDA 將 `0x25EBB..0x26152` 定為同一函式；`0x26019` 呼叫四槽 selector
 - 原版在本段固定複製完整 roster，沒有看到對 metadata roster count
   `+1` 的容量檢查。重製端拒絕 count > 32 是安全邊界，不宣稱為原版
   行為。
-- 本段證實複製順序、raw globals 與後續分派；沒有證實所有 `0x50`
-  欄位到 normalized `battle.Unit` 的完整對應，也沒有一般玩家有效存檔
-  的成功還原實驗。
+- 本段證實複製順序、raw globals、writer caller 與戰間分派；
+  `PersistentRecord→battle.Unit` 只投影已有 writer／consumer 的欄位，
+  不填 portrait、sprite、座標、spells 或 attack range。
+- 使用者目前未修改的四槽皆為空槽；因此 production restore 目前只有合成
+  checksum-valid fixture 的決定性 E1 測試，沒有一般玩家有效存檔的 E2
+  成功還原實驗。
 
 重製對應
 --------
 
 - `remake/internal/fdsave.InspectChapterSlot` 保存相同的固定邊界：
   32×`0x50` 完整 raw record、全部 `0x28` metadata，以及只含已證實
-  `chapter/roster_count/currency` 的 `VerifiedMetadata`。
-- 空槽與 count > 32 採失敗即關閉；未命名 metadata 與 roster bytes
-  原樣保留，不猜成戰役旗標、角色或戰鬥數值。
+  `chapter/roster_count/currency/HUDGateA/Raw53AF9/Raw51E61/Raw51E62`
+  的 `VerifiedMetadata`。
+- 空槽與 count > 32 採失敗即關閉；metadata `+10..+39` 與未投影 roster
+  bytes 原樣保留，不猜成戰役旗標、角色或戰鬥數值。
 - 設定 `FD2_NATIVE_SAVE` 時，production title compositor 會以
   `fdsave.Decode→ReadVerifiedMetadata` 讀取四槽 chapter／empty 狀態；
   checksum 錯誤會拒絕整份資料。空槽確認留在 selector，不再錯誤退出標題。
-- 有效 native 槽目前也會留在 selector 並明示 roster 還原尚未完成；不可
-  轉呼 JSON loader。此 API 已接原生 metadata 顯示與確認 gate，但尚未接
-  normalized campaign restore。
+- `native_intermission_gate.json` 保存版本雜湊與 `0x526B9` 30-byte 表。
+  `BuildNativeChapterSlotRestorePlan` 會先驗證 chapter、節點型別、完整
+  persistent party 與重複 identity，再由 production title 一次套用
+  campaign cursor、gold、party 與 raw metadata 保存值；任何錯誤都留在
+  selector，不轉呼 JSON loader，也不部分改寫現有遊戲狀態。

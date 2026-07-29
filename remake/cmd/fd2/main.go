@@ -332,6 +332,8 @@ type Game struct {
 	dim      *ebiten.Image                   // 全螢幕暗化/底板共用(回合橫幅、單位面板)
 	figMeta  map[int][][2]int                // FIGANI 每幀內嵌絕對螢幕座標 (dx,dy)@320(doc06;動畫走位全靠它)
 	font     *Font                           // 原版點陣中文字型(doc 08)
+
+	nativeChapterRestore *campaign.NativeChapterSlotRestorePlan // 四槽 LOAD 的已驗證戰間狀態；未知 raw bytes 僅保存、不猜接
 }
 
 // atkAnim 全螢幕戰鬥演出(對照原版 orig_05:守方左/攻方右土台/斬擊弧/血條/閃紅抽血)。

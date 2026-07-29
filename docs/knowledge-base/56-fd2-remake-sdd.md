@@ -255,7 +255,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No、gold0不足金與gold1000裝備收件者selection0/cycle1均達原版DOSBox／production remake同狀態raw RGB整幀相同；recipient E2使用screenshot-only party bootstrap，DX為E2約束的projection而非直接raw dump。正常campaign JOIN→LOADCH首次typed roster已接runtime regression，但尚非完整playthrough E2或native FD2.SAV。另修正pulse double-`/2`、返回selection0、choice-close frame ownership與比較欄位geometry。尚待recipient input/scroll、no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、上限（15／19）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型與原版提示。城鎮路徑保留實際 town frame，使用 FDTXT `0x201` 於 `(95,119)`；無城鎮路徑依 `0x2cc04` 清成黑畫面，使用 FDTXT `0x19a` 於 `(100,119)`，肯定結果在完整關框後才存檔。兩者都使用 DATO #75、FDOTHER #5 對話框、FDOTHER #2 Yes／No 與 6＋4＋兩 tick 脈動＋4＋5＋還原生命週期。`0x318ad/0x31e80` 的三區背景、計數、10 欄角色格、游標、彩色／灰色繪法、四向輸入與 `0x17fc0` 狀態已接；`0x1297d` 的有號 BIOS 低字差值與可見 `0,1,2,1` 待機週期亦已接。`0x31d3c` 最終確認沿用相同生命週期，文字為 FDTXT `0x292`，呈現原畫面後才處理結果。呼叫端也已閉合：城鎮出發 `0x2d16b` 收到 0 會退出，直接整備 `0x2ccd6` 收到 0 則重選。缺任一原始記錄或資源即退回。README 所列整備圖均為 E1 原始資源合成，不是 DOSBox 截圖或正常晚期戰役存檔。跨畫面初始相位、有效晚期存檔及原版實機差分仍缺。`0x1f42d` 屬戰場進入演出，不再列為選人視窗動畫 |
-| UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector。合法 IDA 9.4 另證實 LOAD 分支載入 FDOTHER #13，`0x30437` 以 entry16 310×86、FDTXT `0x225/0x202` 與原版字型/palette 畫四列；production 已接同一 indexed compositor。空槽與 `/tmp` 修改存檔 chapter1 有效槽畫面均和 DOSBox 全幀 RGB 相同，後者只證明排版。`TestCampaignSaveLoadRestoresTownBoundaryAndParty` 驗證自有 JSON 可恢復 town boundary。`remake/internal/fdsave` 已有 raw rolling-XOR/checksum、slot bounds、verified metadata、opaque `WriteSlot`，以及依 `0x2602c..0x26098` 保存 32×`0x50` records／完整 metadata 的 `InspectChapterSlot`；空槽與 count 超容量皆失敗即關閉。`FD2_NATIVE_SAVE` 可讓 production title 從 checksum-valid 原生檔顯示四槽 metadata；空槽確認不退出，有效槽則在 `0x2cad7→pre-handler` 的正式重製端 restore owner 尚未接入前明示未支援，絕不誤轉 JSON loader。persistent record→typed party 已有嚴格 materializer，不再稱為「roster 尚未正規化」。四槽 LOAD 仍缺逐章 postbattle route owner、一般玩家有效槽成功 restore、刪除／覆寫；它不是 `0x10010` CONTINUE ABI |
+| UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector 與原版 indexed compositor。合法 IDA 9.4 固定 reader `0x2602c..0x26098`、writer `0x30012` 及其僅有的 `0x2ccb6/0x2fd93` 戰間呼叫者；兩端只處理 metadata `+0..+9`。production 以綁定參考 EXE 雜湊與 `0x526b9` 的 editable gate table 將 raw chapter 1..29 還原到既有 town／preparation node，先完整驗證 persistent record→typed party、節點型別及重複 identity，再一次套用 campaign cursor、gold、party 與四個 raw option bytes；錯誤不部分 mutation、不誤轉 JSON loader。ch21／ch27 inventory postbattle gate 已在存檔前完成，LOAD 不重播。空槽及修改存檔 chapter1 有效槽畫面均與 DOSBox 全幀 RGB 相同；合成有效槽 restore 是 E1，仍缺未修改一般玩家有效槽 E2、CONTINUE current-battle、metadata `+10..+39` 其他可能 consumer、刪除／覆寫 |
 
 `0x50` persistent roster 的匯入邊界已開始由 raw snapshot 推進到具型別
 view。合法 IDA Pro 9.4 重核 `0x112A5` constructor、`0x1145A` equipment
@@ -2447,8 +2447,9 @@ runtime selector／record 與戰鬥驅動狀態尚未具型別化。合法 IDA P
 後續已新增綁定同一 FD2.EXE SHA-256 的
 `native_character_catalog.json`，只保存 32 筆 persistent identity 名稱與
 原版 class 0–28 文字。`MaterializeNativePersistentPartyRecord`
-可把單筆 record 的身份、職業、能力值、inventory flags/items、command mask
-與 transient bytes 投影成 `battle.Unit`；不填 portrait、sprite、座標、
+可把單筆 record 的身份、職業、能力值、inventory flags/items、command mask、
+transient bytes 與已證實傳給 `0x11019` 的 raw `+7` map selector key
+投影成 `battle.Unit`；不把該 key 猜成 portrait／Fig，也不填座標、
 出場狀態、spells、attack range 或章節節點。合法 IDA Pro 9.4 已證實
 `0x30B07..0x30B17` 與 `0x310B5..0x310C9` 都直接以 record `+0x20`
 加 FDTXT 索引 150 顯示職業，沒有 0–26 上限；固定雜湊
@@ -2460,3 +2461,31 @@ LOAD／CONTINUE 的正式失敗即關閉閘門。可選的
 `FD2_NATIVE_SAVE_FIXTURE` 整合測試已在 Docker 唯讀載入使用者
 checksum-valid 原版快照，依實際順序成功產生索爾、悠妮、亞雷斯、蓋亞；
 原版檔不進版控，缺 fixture 時測試明確略過。
+
+### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
+
+合法 IDA Pro 9.4 將 `0x30012..0x301F4` 固定為章節槽 writer，且只有
+`0x2CCB6`（`0x2CAD7` 直接整備）與 `0x2FD93`（酒店流程）兩個直接
+呼叫者。writer 與 `0x2602C..0x26098` reader 對稱處理固定
+`0xA00` roster 及 metadata `+0..+9`；`+10..+39` 不由這兩條路徑或
+`0x30437` renderer 生產／消費，但不外推成全程未使用。
+
+因為存檔發生在戰間流程內，選槽 LOAD 也會重新進 `0x2CAD7`，合法
+restore entry 是 raw `[0x53C03]` 對應的城鎮／整備，而不是上一戰
+postbattle handler。raw chapter 是 zero-based，顯示與節點章數為
+`raw+1`；`0x526B9` 只有 index `22..24`、`27..29` 非零，故這六筆
+直接進 `preparation_ch23..25/28..30`，其餘可存 raw `1..21/25..26`
+進 `town_ch02..22/26..27`。ch21 recipe 與 ch27 item gate 已在 writer
+之前執行，LOAD 不重播。raw0 沒有 `town_ch01`，現行 importer 失敗即
+關閉，不創造未證實的第一章存檔點。
+
+`native_intermission_gate.json` 以參考 EXE SHA-256 與位址綁定這30筆
+資料；`BuildNativeChapterSlotRestorePlan` 在任何 runtime mutation 前驗證
+完整 table、chapter、node type、catalog、active roster 與 identity
+唯一性。production title 成功後一次套用 fresh campaign flags、gold、
+party order／roster、空 deployment、raw chapter 與 metadata `+6..+9`
+保存值；後四者尚未全部接 gameplay consumer。合成 checksum-valid fixture
+已驗證成功與錯誤無部分 mutation，完整 `campaign_full` raw1..29 逐筆
+可達；使用者未修改原版四槽皆空，因此仍沒有一般玩家有效槽 E2。
+直接指令與範圍限制見
+[`fd2_native_chapter_slot_restore_ida.txt`](../data/fd2_native_chapter_slot_restore_ida.txt)。

@@ -121,6 +121,7 @@ func (g *Game) loadGameFromSlot(slot int) {
 	g.partyMembers, g.partyJoinOrder = d.PartyMembers, d.PartyJoinOrder
 	g.partyDeploy = d.PartyDeploy
 	g.partyRoster, g.handlerChapter = d.PartyRoster, d.Chapter
+	g.nativeChapterRestore = nil
 	g.enterNode()
 	g.msg = fmt.Sprintf("已讀檔(槽位%d：%s)", slot+1, d.Node)
 }

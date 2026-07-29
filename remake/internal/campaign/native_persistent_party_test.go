@@ -105,6 +105,7 @@ func TestMaterializeNativePersistentPartyRecordPreservesProvenFields(t *testing.
 	}
 	if unit.Name != "悠妮" || unit.ClsName != "法師" ||
 		unit.NativeIdentity != 9 || unit.ClassID != 5 ||
+		!unit.HasMapSelectorKey || unit.MapSelectorKey != 0x44 ||
 		unit.HP != 13 || unit.MaxHP != 14 || unit.AP != 17 ||
 		unit.BaseAP != 10 || unit.BaseHIT != 12 ||
 		unit.DX != 12 || unit.Exp != 42 ||
@@ -113,7 +114,7 @@ func TestMaterializeNativePersistentPartyRecordPreservesProvenFields(t *testing.
 		t.Fatalf("materialized unit=%#v", unit)
 	}
 	if unit.Portrait != 0 || unit.Fig != 0 || unit.OnField ||
-		unit.HasBattleFig || unit.HasMapSelectorKey {
+		unit.HasBattleFig {
 		t.Fatalf("unproven presentation fields were materialized: %#v", unit)
 	}
 }

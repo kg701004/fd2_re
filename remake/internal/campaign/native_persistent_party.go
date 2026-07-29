@@ -106,8 +106,10 @@ func (catalog *NativeCharacterCatalog) validate() error {
 }
 
 // MaterializeNativePersistentPartyRecord projects only proven record fields
-// into the existing party Unit. It does not assign a portrait, sprite,
-// position, deployment state, spells, attack range, or chapter node.
+// into the existing party Unit. Raw +7 is the player-persistent key passed to
+// 0x11019, so it is preserved as MapSelectorKey; it is not inferred to be a
+// portrait, Fig, or character identity. The projection does not assign those
+// fields, position, deployment state, spells, attack range, or chapter node.
 func MaterializeNativePersistentPartyRecord(
 	record fdsave.PersistentRecord,
 	catalog *NativeCharacterCatalog,
@@ -146,6 +148,8 @@ func MaterializeNativePersistentPartyRecord(
 		MV:                   int(view.Movement),
 		NativeIdentity:       identity,
 		HasNativeIdentity:    true,
+		MapSelectorKey:       int(view.RawPresentationKey),
+		HasMapSelectorKey:    true,
 		NativeRecordRace:     view.Race,
 		HasNativeRecordRace:  true,
 		NativeRecordClass:    view.Class,

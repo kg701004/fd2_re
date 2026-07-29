@@ -2522,6 +2522,27 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 直接證據保存於
   `docs/data/fd2_postbattle_gate_outcome_ida.txt`，並同步更新介面證據矩陣、
   工作清單與戰役／腳本文件。
+
+## 2026-07-30：原生四槽 LOAD 戰間還原擁有者
+
+- 合法 IDA Pro 9.4 固定 `0x30012..0x301F4` writer 只有
+  `0x2CCB6`（`0x2CAD7` 直接整備）與 `0x2FD93`（酒店）兩個直接
+  caller。writer 與 `0x2602C..0x26098` reader 對稱處理固定
+  `0xA00` roster 和 metadata `+0..+9`；`+10..+39` 只可稱為這三條
+  已查路徑未生產／消費，不宣稱全程 unused。
+- 由 writer caller 與 LOAD 再進 `0x2CAD7` 可知，選槽後應回到已完成
+  postbattle 特殊處理的戰間入口。raw `[0x53C03]` 為 zero-based，
+  `0x526B9[22..24,27..29]=1` 進 preparation，其餘可存 raw1..21、
+  25..26 進 town；ch21 recipe 與 ch27 item gate 不可重播。
+- 新增以參考 EXE SHA-256／`0x526B9` 綁定的
+  `native_intermission_gate.json`、`BuildNativeChapterSlotRestorePlan`
+  與 production title owner。完整驗證 chapter、node type、catalog、
+  active roster 及 identity 唯一性後，才一次套用 fresh flags、gold、
+  typed party、raw chapter 與 metadata `+6..+9` 保存值。
+- Docker regression 已覆蓋完整 `campaign_full` raw1..29、ch21/ch27
+  不重播、合成有效槽成功 restore，以及錯誤 route 不部分 mutation。
+  使用者未修改原版四槽目前皆空，因此仍只有 E1，尚無一般玩家有效槽 E2；
+  `0x10010` CONTINUE current battle 仍是另一條未接路徑。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

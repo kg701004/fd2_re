@@ -136,13 +136,18 @@ func WriteSlot(plain []byte, slot int, replacement Slot) ([]byte, error) {
 	return out, nil
 }
 
-// VerifiedMetadata exposes only fields whose address/dataflow is closed:
-// chapter (+0), roster count (+1), and currency dword (+2..+5). The remaining
-// metadata bytes are intentionally not surfaced with gameplay names.
+// VerifiedMetadata exposes only fields whose writer and reader are both
+// closed. Native 0x30012 writes and 0x2602c restores bytes +0..+9. The final
+// three bytes keep address-derived names until their gameplay consumers are
+// independently closed; metadata +10..+39 remains opaque.
 type VerifiedMetadata struct {
 	Chapter     byte
 	RosterCount byte
 	Currency    uint32
+	HUDGateA    byte
+	Raw53AF9    byte
+	Raw51E61    byte
+	Raw51E62    byte
 }
 
 func ReadVerifiedMetadata(plain []byte, slot int) (VerifiedMetadata, error) {
@@ -157,6 +162,10 @@ func ReadVerifiedMetadata(plain []byte, slot int) (VerifiedMetadata, error) {
 		Chapter:     s.Metadata[0],
 		RosterCount: s.Metadata[1],
 		Currency:    binary.LittleEndian.Uint32(s.Metadata[2:6]),
+		HUDGateA:    s.Metadata[6],
+		Raw53AF9:    s.Metadata[7],
+		Raw51E61:    s.Metadata[8],
+		Raw51E62:    s.Metadata[9],
 	}, nil
 }
 

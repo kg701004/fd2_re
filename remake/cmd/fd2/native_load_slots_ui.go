@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"os"
@@ -139,6 +140,74 @@ func nativeLoadSlotConfirmable(slot int) (confirmable, native bool) {
 		return false, os.Getenv("FD2_NATIVE_SAVE") != ""
 	}
 	return true, os.Getenv("FD2_NATIVE_SAVE") != ""
+}
+
+// loadNativeGameFromSlot owns the original four-slot LOAD transaction. It is
+// deliberately separate from title CONTINUE/current-snapshot restore.
+func (g *Game) loadNativeGameFromSlot(path string, slot int) error {
+	if g.camp == nil || g.camp.C == nil {
+		return errors.New("原版四槽讀檔：戰役圖尚未載入")
+	}
+	stored, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("原版四槽讀檔：%w", err)
+	}
+	plain, err := fdsave.Decode(stored)
+	if err != nil {
+		return fmt.Errorf("原版四槽讀檔：%w", err)
+	}
+	snapshot, err := fdsave.InspectChapterSlot(plain, slot)
+	if err != nil {
+		return fmt.Errorf("原版四槽讀檔：%w", err)
+	}
+	catalog, err := campaign.LoadNativeCharacterCatalog(
+		assetPath("assets/data/native_character_catalog.json"),
+	)
+	if err != nil {
+		return fmt.Errorf("原版四槽讀檔：%w", err)
+	}
+	gates, err := campaign.LoadNativeIntermissionGateTable(
+		assetPath("assets/data/native_intermission_gate.json"),
+	)
+	if err != nil {
+		return fmt.Errorf("原版四槽讀檔：%w", err)
+	}
+	plan, err := campaign.BuildNativeChapterSlotRestorePlan(
+		snapshot, catalog, gates, g.camp.C,
+	)
+	if err != nil {
+		return err
+	}
+	if uint64(plan.Currency) > uint64(^uint(0)>>1) {
+		return fmt.Errorf(
+			"原版四槽讀檔：金幣 %d 超出目前平台整數範圍",
+			plan.Currency,
+		)
+	}
+
+	// Every fallible decode/validation step has completed. Apply the complete
+	// transaction at once so malformed native data cannot leave mixed state.
+	runner := campaign.NewRunner(g.camp.C)
+	runner.Cur = plan.EntryNode
+	g.camp = runner
+	g.gold = int(plan.Currency)
+	g.items = nil
+	g.partyMembers = plan.PartyMembers
+	g.partyJoinOrder = plan.PartyJoinOrder
+	g.partyRoster = plan.PartyRoster
+	g.partyDeploy = map[int]bool{}
+	g.handlerChapter = plan.NativeChapterIndex
+	g.nativeChapterRestore = &plan
+	g.loadErr = ""
+	g.enterNode()
+	if g.loadErr != "" {
+		return fmt.Errorf("原版四槽讀檔：進入 %s 失敗：%s", plan.EntryNode, g.loadErr)
+	}
+	g.msg = fmt.Sprintf(
+		"已讀取原版槽位%d（第%d章：%s）",
+		slot+1, plan.DisplayChapter, plan.EntryNode,
+	)
+	return nil
 }
 
 func (g *Game) drawNativeLoadSlots(screen *ebiten.Image) bool {

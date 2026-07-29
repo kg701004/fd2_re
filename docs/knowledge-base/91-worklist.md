@@ -231,15 +231,16 @@
       (0-31 共 32 + 48/66/68/96/97 共 5 + 本輪新增 126=ASR-06);其餘約 97 組多為泛用怪物/路人,
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
 - [x] `FDICON.B24`=1680個24×24地圖單位sprite(sprite-RLE,見 `31`);`TAI.DAT`=WxH圖像(sprite-RLE)
-- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。metadata `+0`=chapter、`0xff`=empty marker 已由 renderer `0x30437` 關閉，`+2..+5`=currency 已由 `0x2d411/0x2d528` 加減／UI render 關閉。合法 IDA 9.4 與 Capstone 另閉合 `0x2602c..0x26098` 的 roster-first／metadata-second restore 順序，以及 `0x2cad7→chapter pre-handler` 分派；`fdsave.InspectChapterSlot` 已保存 32×`0x50` raw records、完整 metadata，空槽／count 超容量失敗即關閉，persistent record→typed party materializer 亦已存在。production `FD2_NATIVE_SAVE` 已能從 checksum-valid 原生檔顯示四槽 metadata；空槽不退出 selector，有效槽在正式 `0x2cad7→pre-handler` restore owner 未接入前不誤轉 JSON loader。四槽路徑不呼叫 `0x10010`；其餘 metadata、逐章 route owner 與一般玩家成功 restore 尚待閉合。不得再稱「強加密／無結構」；重製仍用自有格式。
+- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。合法 IDA 9.4 閉合 reader `0x2602c..0x26098`、writer `0x30012` 及兩個戰間 caller；兩端對稱處理 roster 與 metadata `+0..+9`。production `FD2_NATIVE_SAVE` 已從 indexed selector 正式接到 `BuildNativeChapterSlotRestorePlan`：依雜湊綁定的 `0x526b9` table，把 raw chapter 1..29 原子還原為 fresh campaign flags、gold、typed persistent party 與 town／preparation node；ch21/ch27 的 postbattle inventory gate 不重播，錯誤不部分套用或誤轉 JSON loader。四槽 LOAD 仍不是 `0x10010` CONTINUE；尚缺一般玩家有效槽 E2、metadata `+10..+39` 其他可能 consumer、delete/overwrite 及 current-battle restore。不得再稱「強加密／無結構」；重製自有存檔仍為另一格式。
   `0x112A5→0x1145A→0x17FC0` 的 writer／consumer 已再由合法 IDA 固定
   item cells、command mask、race/class/level、transient、base AP/DP、
   MV/EXP、DX、HP/MP 與衍生 AP/DP/HIT/EV offsets；新增
   `PersistentRecord.View` 唯讀投影及 signed-word regression。下一步是
   證據化 name/class/resource resolver，再接 normalized party；不可直接
   把 raw `+7/+8` 都當 portrait／character id。
-- [x] **RE-SAVE-ENVELOPE-ADAPTER**：新增 `remake/internal/fdsave` typed raw adapter，依 `0x4dbd8/0x4dbb9` 保存 rolling-XOR、u32 byte-sum、四槽 bounds 與已證實 metadata `chapter/roster_count/currency`；opaque roster/metadata bytes 不命名、不接 campaign save，Go Docker round-trip/tamper/bounds regression 通過。
+- [x] **RE-SAVE-ENVELOPE-ADAPTER**：新增 `remake/internal/fdsave` typed raw adapter，依 `0x4dbd8/0x4dbb9` 保存 rolling-XOR、u32 byte-sum、四槽 bounds 與 writer／reader 已證實的 metadata `+0..+9`；`+10..+39` 與未投影 roster bytes 保持 opaque，Go Docker round-trip/tamper/bounds regression 通過。
 - [x] **RE-SAVE-WRITE-SLOT-30012**：官方 IDA 9.4 閉合 `0x30012` confirmed-slot write order：2560-byte roster→`record+0`、metadata `+0..+9` globals→record、checksum over `0x59c7` bytes、rolling-XOR、完整 `0x59cb` write。新增 `fdsave.WriteSlot` opaque replacement adapter/regression；仍不宣稱 native roster/opaque metadata 已接入 remake campaign。
+- [x] **NATIVE-CHAPTER-SLOT-RESTORE**：官方 IDA 9.4 固定 `0x30012` 只由 `0x2ccb6/0x2fd93` 戰間流程呼叫；新增雜湊綁定的 `native_intermission_gate.json`、side-effect-free restore plan 與 production title owner。完整 `campaign_full` raw chapter 1..29 均驗證落到既有 town／preparation；合成有效槽驗證 typed party、gold、raw option bytes 保存及錯誤無部分 mutation。這是 E1，不取代一般玩家有效槽 E2，也不接 CONTINUE。
 - [x] **音色合成評估+MT-32實證**(SoundFont/MT-32/版本切換,munt渲染15首)→ `16`
 - [x] **擴充劇本/玩法可行性評估**(戰場/對話/商店/機制)→ `17`
 - [~] SoundFont/MT-32 → 見 `16`(MT-32 已渲染);SoundFont 試聽 + TIMB 配器對映待補
@@ -411,7 +412,7 @@
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
 - [x] **頂層狀態機反組譯**:真 main=0x25bf4(雙層迴圈),核心狀態變數 `[0x53c03]`=章節,兩張章節跳表(0x51d71 戰前劇情 / 0x51de9 戰後)→ `23`
 - [x] **標題序列**:角色立繪 5 幀(FDOTHER #0x45-0x49,320×147)垂直捲動(非旋轉)+ FLAME DRAGON logo(#7 sub0)+ 主選單;**解碼器當 oracle 解圖視覺驗證** → `23`
-- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` raw battle state、兩份 roster、`0x30a3` raw block 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽已可選擇自有 JSON 或唯讀 `FD2_NATIVE_SAVE` metadata 來源；persistent record materializer 已有，但四槽 postbattle route owner 與 CONTINUE current-battle runtime owner 都尚未接入，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
+- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` raw battle state、兩份 roster、`0x30a3` raw block 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽 LOAD 已接 checksum-valid selector→typed party→town/preparation production owner；真正未接的是未修改一般玩家有效槽 E2、delete/overwrite 與 CONTINUE current-battle runtime owner，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **cutscene→戰場控制流勘誤**：`0x10010` 真 caller 仍是 `0x1a251/0x26130`，但展開 `0x25ebb` 證實 `0x26130` 只屬第三主選單分支；新遊戲與四槽讀檔各自跑 pre-handler 後從 `0x25ebb` 返回，main `0x25dce` 才呼叫 `0x117e7`。舊「handler ret 後在同 driver 線性落入 `0x10010`」已撤回；callgraph 工具排除 `0x1b051/0x26f30` 偽命中的成果仍有效 → `23`、`24`
@@ -587,7 +588,8 @@
       掛 scenario(含修 ch01 campaign 模式沒主角隊的壞點);三層驗證+3 章實跑
       → **全 30 章一條龍可玩**(FD2_CAMPAIGN=assets/scenarios/campaign_full.json)
 - [x] **戰鬥命中音接真素材**(旗艦):battle 池共用揮擊音(#48 sub0)接命中幀;loadWav/playRaw
-- [x] **SFX index2 追蹤**(sonnet,部分解出誠實標記):真路徑=0x01cff0 [esp+計數+0xd0](填值待追);
+- [x] **SFX index2 追蹤**(sonnet,部分解出誠實標記):真路徑=0x01cff0
+      `[esp+計數+0xd0]`（填值待追）;
       **意外收穫:0x1c269 從 unit+0x1a 起掃描 5 bytes/40 bits 並輸出 byte index；欄位語意尚未定案**；`+0x22..+0x24` 是另一路 raw transient/modifier bytes;
       battle_sfx_map.json 骨架。依「夠用就停」:+0xd0 續追降低優先(共用音已可用)
 - [x] 聽辨清單(extracted/music_ogg/聽辨清單.md,待使用者逐曲填)
@@ -1586,11 +1588,12 @@
 - [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
   SHA-256 綁定的可編輯 32 人 identity／class 0–28 catalog，以及嚴格
   `PersistentRecord→battle.Unit` 投影。保留 raw inventory flags、command
-  mask、transient、race/class 與 base/effective stats；不由相同數值推導
-  portrait、Fig、map selector、座標或章節。合法 IDA Pro 9.4 已證實
+  mask、transient、race/class、base/effective stats，並依
+  `0x10a77→0x11019` 投影 record `+7` 為 `MapSelectorKey`；不把它推導成
+  portrait、Fig、identity、座標或章節。合法 IDA Pro 9.4 已證實
   class 顯示直接使用 `150+raw class`；固定雜湊 FDTXT 的 class 27 是
   兩個全形空格、class 28 是「？？？」，舊 `cls28`／`?`／「職業28」
   占位已移除。`FD2_NATIVE_SAVE_FIXTURE` Docker 整合測試已
   唯讀走完 current snapshot 四筆 record，實得索爾、悠妮、亞雷斯、蓋亞。
   下一步是閉合上述 current battle runtime；目前不接 CONTINUE。四槽 LOAD
-  則另缺 `0x2cad7→pre-handler` 的正式重製端 restore owner。
+  的 `0x2cad7` 戰間 restore owner 已由後續項目接入，尚缺一般玩家有效槽 E2。
