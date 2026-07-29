@@ -469,6 +469,17 @@ func (g *Game) composeNativeShopStable() ([]byte, bool) {
 	return frame, err == nil
 }
 
+func (g *Game) composeNativeShopBare() ([]byte, bool) {
+	assets, portrait, portraitID, ok := g.nativeShopState()
+	if !ok || g.nativeClassUI == nil {
+		return nil, false
+	}
+	frame, err := campaign.ComposeNativeShopBareScene(
+		assets, g.nativeClassUI.digits, portrait, portraitID, g.gold,
+	)
+	return frame, err == nil
+}
+
 func (g *Game) composeNativeShopServiceMenu() ([]byte, bool) {
 	assets, _, _, ok := g.nativeShopState()
 	stable, stableOK := g.composeNativeShopStable()

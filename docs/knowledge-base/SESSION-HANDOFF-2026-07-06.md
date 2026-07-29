@@ -1397,7 +1397,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   variant5/#63為7幀`(131,28)`且無restore。三variant原版資源regression
   與`native-shop-purchase-success-indexed.png` contact sheet已補。
   caller順序為insert→optional equip/recalc→success→debit→product loop；
-  production timeline owner與DOSBox E2仍待。
+  production timeline owner與DOSBox E2仍待。此為當輪狀態；production owner
+  與bare/debit修正已由本文件後續2026-07-29段落取代。
 - 2026-07-28 native shop production slice：campaign schema新增
   `native_hub_variant`，69個原版weapon/item/secret shop節點分別明確
   指定1/3/5；0保留自訂戰役generic fallback，其他值load時fail-closed。
@@ -1407,6 +1408,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   selected pulse。production regression會確認原版節點被native owner接管、
   custom節點不被誤接。尚未接confirmation→recipient→success→debit，
   其他三個service也仍fail-closed；不得把本切片描述成完整可交易商店。
+  「尚未接」同樣是歷史狀態，後續段落已接confirmation/recipient/success/debit；
+  完整E2限制仍有效。
 
 ## 2026-07-28 standalone shop equip production closure
 
@@ -1849,3 +1852,29 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - selection0↔1 input與三cycle畫面可升為E2；四人以上三列window scroll、
   opening/closing timing、交易提交與正常campaign/native save lifecycle仍未閉合，
   不得把本結果外推成完整recipient或shop parity。
+
+## 2026-07-29 purchase success bare framebuffer and gold odometer
+
+- 從同一乾淨route實際選recipient0後，原版先顯示「要裝備上去嗎？」；Yes關閉
+  confirmation/dialogue後才呼`0x2f4c6`。高頻抓圖證明success effect底下沒有
+  藍色問句框。舊production與`native-shop-purchase-success-indexed.png`把
+  greeting/question framebuffer帶入success，是錯誤斷言與renderer狀態。
+- production新增`ComposeNativeShopBareScene`，success timeline只在bare
+  background＋portrait＋decoration＋gold上套variant effect。修正後原版
+  0.03/0.08/0.16/0.26秒四張依序對source-built frame0/1/2/3；每張AE=2，
+  差異只在portrait `(175,90)/(176,90)`：原版`138,158,158`、deterministic
+  compositor `101,121,121`／`117,138,138`。未遮罩，故success E2仍partial。
+- Docker Capstone完整重讀`0x2d516..0x2d620`：先format舊八位數，在
+  `0x2d551`立即sub balance，再format新八位數；每個不同digit同步decrement，
+  `0→9`，設counter9。每phase以`9*digit+counter-1`索引current FDOTHER
+  resource entry2的6x99 strip，`0x2d620`逐9列opaque copy6到
+  `0xa7a90+6*position`、stride320，最後`0x375b2(10)`。重複直到新值。
+- `ComposeNativeGoldDebitFrames`與production兩段timeline已接上述contract：
+  success完成後才commit新gold並開始roll，roll完成才六幀重開product list。
+  `1000→950`=45 phases，`1234→1134`=9 phases；wrap、borrow cascade、bounds、
+  10ms per phase與mutation boundary均有regression。60Hz timeline依wall-clock
+  elapsed取樣，卡頓時可能略過中間10ms phase；這保留總時長而非「每phase必present」，
+  文件不得宣稱逐phase display E2。
+- 更新原本錯誤的success fixture，並新增
+  `shop-purchase-success-ch02-original-vs-remake.png`四幀上下對照。下一gate是
+  caller-owned portrait saved-buffer phase與扣款phase E2，不是再猜instant debit。

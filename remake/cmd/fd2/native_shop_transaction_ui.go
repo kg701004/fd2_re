@@ -145,17 +145,48 @@ func (g *Game) beginNativeShopPurchaseSuccess() bool {
 	if !ok {
 		return false
 	}
+	good, goodOK := g.nativeShopSelectedGood()
+	assets, _, _, stateOK := g.nativeShopState()
+	if !goodOK || !stateOK || len(timeline) == 0 {
+		return false
+	}
+	debitFrames, nextGold, err := campaign.ComposeNativeGoldDebitFrames(
+		timeline[len(timeline)-1].frame, assets.GoldRollStrip,
+		g.gold, good.Price,
+	)
+	if err != nil {
+		return false
+	}
+	debitTimeline := make([]nativeClassUITimelineStep, len(debitFrames))
+	for i, frame := range debitFrames {
+		debitTimeline[i] = nativeClassUITimelineStep{
+			frame: frame, palette: g.nativeClassUI.palette,
+			duration: campaign.NativeGoldRollDelayMilliseconds * time.Millisecond,
+		}
+	}
 	recipientID := g.shopEquipUnit
 	staged := cloneNativeShopUnit(g.nativeShopPendingUnit)
 	g.partyRoster[recipientID] = staged
 	g.nativeShopMode = "success"
+	finish := func() {
+		g.nativeShopHasPendingUnit = false
+		g.nativeShopPendingUnit = battle.Unit{}
+		g.returnToNativeShopPurchaseList()
+	}
 	g.nativeShopUIJob = &nativeClassUIJob{
 		timeline: timeline,
 		after: func() {
-			g.gold = campaign.FinalizeGood(g.gold, g.shopPending)
-			g.nativeShopHasPendingUnit = false
-			g.nativeShopPendingUnit = battle.Unit{}
-			g.returnToNativeShopPurchaseList()
+			// 0x2d516 subtracts the balance before its first 6x9 digit
+			// window, after 0x2f4c6's success presentation has completed.
+			g.gold = nextGold
+			if len(debitTimeline) == 0 {
+				finish()
+				return
+			}
+			g.nativeShopUIJob = &nativeClassUIJob{
+				timeline: debitTimeline,
+				after:    finish,
+			}
 		},
 	}
 	return true
@@ -165,7 +196,7 @@ func (g *Game) nativeShopSuccessTimeline() (
 	[]nativeClassUITimelineStep,
 	bool,
 ) {
-	stable, stableOK := g.composeNativeShopStable()
+	stable, stableOK := g.composeNativeShopBare()
 	assets, portrait, portraitID, stateOK := g.nativeShopState()
 	if !stableOK || !stateOK {
 		return nil, false

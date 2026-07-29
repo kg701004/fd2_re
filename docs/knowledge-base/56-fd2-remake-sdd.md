@@ -1182,15 +1182,31 @@ the new raw slot to exact `0x40`; the normalized adapter now synchronizes all
 eight raw flags with its compact equipped view.
 
 Only after the staged unit is valid does production publish it and start the
-variant-specific success timeline. Variant 1 presents five frames for two
+variant-specific success timeline on the caller's bare shop framebuffer:
+the purchase/equip dialogue has already closed, so retaining its blue grid or
+question text is a renderer defect. Variant 1 presents five frames for two
 BIOS ticks each plus a zero-duration portrait restore; variant 3 preserves
 one pre-tick, one effect frame for eight post-ticks, then portrait restore;
 variant 5 presents seven frames for two ticks each and has no portrait
-restore. The timeline completion callback alone calls `FinalizeGood`, so
-gold remains unchanged throughout insertion, optional equip, and animation,
-then is debited immediately before the six-frame product-list reopen.
-Regression asserts total durations of 10/9/14 BIOS ticks and this mutation
-ordering. DOSBox E2 remains open.
+restore. Gold remains unchanged throughout insertion, optional equip, and
+that success presentation.
+
+The former instant `FinalizeGood` callback was not native. Direct
+`0x2d516..0x2d620` disassembly shows that the callback first subtracts the
+amount from the balance, formats old/new values as eight digits, then animates
+every differing digit downward (0 wraps to 9). Each value step uses nine
+overlapping opaque 6x9 windows from current FDOTHER entry 2's 6x99 strip at
+the gold offset, followed by `0x375b2(10)`. Production now starts this
+10ms-per-phase odometer only after success completes, commits the new balance
+before its first visible phase, and reopens the product list only after the
+roll. `1000→950` therefore has 45 source phases; `1234→1134` has nine.
+Regression asserts the 10/9/14 BIOS-tick success schedules, debit phase
+geometry/direction/wrap, mutation boundary and product-loop return. The
+wall-clock renderer may sample over 10ms source phases at a 60Hz display, so
+it preserves elapsed timing but does not promise every source phase is
+physically presented. DOSBox comparison currently matches sampled success
+frames except two caller-owned portrait pixels (AE=2 per frame); full
+success/debit lifecycle E2 remains partial.
 
 The sibling hotel/preparation family is represented by
 `fdother.ResolveNativeHotelServiceRoute`: `0x2fc85` loads raw resource `13`,

@@ -10,7 +10,7 @@
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；town indexed production接線後，完整操作界面視覺還原估計40–45%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
 - [~] **UI-VIS-TOWN**：`0x2cd16/0x2cf71/0x11eb0`已閉合3個FDOTHER背景variant、#10 label、FDTXT `0x1ef+selection`、FDICON `0,1,2,1` pulse、6組variant座標與312×192→VGA `(4,4)`；23個town保存raw `native_town_variant`。ch02 variant0 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都達原版／remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape返回selection5亦有input E2；共用 glyph shadow 與誤 reset pulse 已修。尚缺variant1/2。
-- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection、Yes/No、gold0不足金及gold1000裝備收件者selection0/cycle1也已全幀AE=0；selection0按Down到selection1經exact-pixel相位同步後，remake三cycle亦各有整幀AE=0（recipient E2僅screenshot-only typed-party bootstrap，不代表完整campaign/save trace）。下一gate是四人以上recipient scroll、no-recipient/full/success、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
+- [~] **UI-VIS-SHOP**：四個callee與secret selection+BIOS-scan gate皆已接production；ch02 variant1/3/5的service0 selected phase均達原版／production raw RGB整幀相同，variant5另閉合四service、wrap及Escape→town selection5。ch02 weapon purchase list四個selection、Yes/No、gold0不足金及gold1000裝備收件者selection0/cycle1也已全幀AE=0；selection0按Down到selection1經exact-pixel相位同步後，remake三cycle亦各有整幀AE=0（recipient E2僅screenshot-only typed-party bootstrap，不代表完整campaign/save trace）。success已修正bare底圖、前四effect frames各AE=2；`0x2d516`扣款odometer已接但逐phase E2仍partial。下一gate是caller-owned portrait phase、debit phase、四人以上recipient scroll、no-recipient/full、sell/equip/transfer child panel DOSBox E2與其他章節狀態。
 - [x] **CAMPAIGN-JOIN-LOADCH-PERSISTENT-PARTY-BOOTSTRAP**：修正正常ch00 JOIN只記`partyMembers/partyJoinOrder`、首次LOADCH未建`partyRoster`，導致帶native identity的第一個`sync_party`因找不到既有record而全數skip。`applyLoadCH`現只在已有JOIN chronology時依typed scenario補缺少record，既有進度優先，direct/debug replay不造persistent state。真實ch00 scenario/order `[0,9,4,30]` regression驗證ch02布衣候選為`[0,9,4]`且首次native-identity sync可命中；這是remake runtime bridge，不宣稱native FD2.SAV或完整campaign E2。
 - [x] **UI-SHOP-STANDALONE-EQUIP-PRODUCTION**：Docker Capstone重讀`0x2f883/0x1bffe/0x17e0b/0x1b9de`，撤回「獨立裝備沿用purchase商品／收件者widget」的假設。production現走service2→兩欄角色roster→11→0完整item/status panel；相容item經`0x1c1c3→0x1c142→0x1b750`原地更新flags/能力並重畫，incompatible無發明feedback，離開0→11 restore shop再回roster。`EquipNativeCompactSlot`驗證raw occupied order與compact inventory/equipped一致，保留ignored raw hole/stale byte，divergence原子拒絕。Docker/Xvfb production regression通過；DOSBox E2仍待。
 - [x] **UI-SHOP-TRANSFER-PRODUCTION**：`0x2f8ea`同時由shop service3與church raw1呼叫，不是任一場景專屬。shop production已接FDTXT512 source prompt→全party roster→FDTXT511 empty或`0x2dc55(mode1)` item list→FDTXT510→全party destination roster→FDTXT506 full或raw remove/append/recalc→512 loop。重核撤回「destination排除source」的高階假設：source本人保留為候選，未滿欄時self-transfer會把item以unequipped狀態移到尾端。`ValidateNativeInventoryProjection`與full raw-flag gate原子拒絕投影分歧；Docker/Xvfb production、empty/full/self regression通過。
@@ -1368,11 +1368,19 @@
   三列geometry、6-open/5-close均已有strict compositor、真實資源regression
   與indexed fixture。下一gate縮為成功insert→optional equip→`0x2f4c6`
   →debit、production owner與E2。
-- [x] **UI-SHOP-PURCHASE-SUCCESS-E1**：`0x2f4c6`不可沿用church case4
+- [~] **UI-SHOP-PURCHASE-SUCCESS/DEBIT**：`0x2f4c6`不可沿用church case4
   當通用動畫。shop variant1/resource12為entries23..27、`(169,45)`、
   每幀2 ticks後portrait mode0 restore；variant3/resource29為entry23、
   `(148,39)`、pre1/post8 ticks後restore；variant5/resource63為
   entries23..29、`(131,28)`、每幀2 ticks且不restore。三條strict plan/
-  compositor與真實資源regression已補，variant1六格contact sheet已存。
+  compositor與真實資源regression已補。DOSBox交易抓圖撤回舊fixture保留
+  藍色問句框的錯誤：success必須從已關閉dialogue的bare shop framebuffer開始；
+  修正後variant1前四個採樣依序對上source-built frame0/1/2/3，各只剩caller-owned
+  portrait `(175,90)/(176,90)`兩像素（AE=2，未遮罩）。
   caller順序固定insert→optional equip/recalc→success→`0x2d516` debit
-  →product loop；下一gate是production timeline owner與E2。
+  →product loop。Docker Capstone重讀`0x2d516..0x2d620`後，production已接
+  先commit新balance、再用FDOTHER current resource entry2的6x99 strip做八位數
+  downward odometer：每個不同digit同步減一、0→9、每值9個opaque 6x9 window、
+  每phase `0x375b2(10)`；`1000→950`為45 source phases，再回六幀product list。
+  wall-clock 60Hz會依elapsed取樣10ms phase，不保證每個source phase皆實體present；
+  debit逐幀E2與caller-owned portrait phase仍待，故維持partial。

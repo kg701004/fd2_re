@@ -165,6 +165,13 @@ remake幀使用screenshot-only LOADCH typed-party bootstrap，並非正常campai
 persistence或native FD2.SAV載入。selection0↔1 input已閉合，但四人以上的
 三列scroll仍只有production regression、沒有原版E2。無合格收件者、購買成功／滿欄，以及
 sell/equip/transfer 仍待同狀態 E2。
+選定收件者後，原版還會詢問「要裝備上去嗎？」；確認後的成功動畫並不保留
+藍色問句框。這輪以DOSBox交易抓圖撤回舊fixture的錯誤底圖，production已改在
+bare shop framebuffer播放五幀效果。前四張原版採樣分別對上remake frame0–3，
+每張只剩人物區同兩點的caller-owned phase差（AE=2，未遮罩）。其後扣50元也
+不再瞬間跳到950：直接重讀`0x2d516`後已接八位數向下滾動，`1000→950`共有
+45個10ms source phases；60Hz runtime依elapsed取樣，因此不宣稱每個10ms phase
+都會實體呈現或完整debit E2。
 正常campaign另已修正JOIN→LOADCH的首次typed roster bootstrap：只有已有JOIN
 membership/order時才補尚不存在的persistent record，direct/debug LOADCH不會
 憑空建立隊伍；ch00真實scenario可把`[0,9,4,30]`送入ch02裝備收件者候選
@@ -225,6 +232,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | ch02 武器購買金額不足（左原版 DOSBox、右remake；gold0，整幀AE=0） | ![shop purchase insufficient original and remake](docs/figures/shop-purchase-insufficient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者（左原版 DOSBox、右remake；screenshot-only typed-party bootstrap，selection0／idle cycle1，整幀AE=0） | ![shop equipment recipient original and remake](docs/figures/shop-equipment-recipient-ch02-original-vs-remake.png) |
 | ch02 布衣裝備收件者 selection1（原版由selection0按Down；左原版、右remake cycle1；exact-pixel相位同步後整幀AE=0） | ![shop equipment recipient selection1 original and remake](docs/figures/shop-equipment-recipient-selection1-original-vs-remake.png) |
+| ch02 武器購買成功前四幀（上原版DOSBox、下remake；已修正為bare shop底圖，每格未遮罩AE=2，差異限人物區兩點） | ![shop purchase success original and remake](docs/figures/shop-purchase-success-ch02-original-vs-remake.png) |
 | 最新 campaign preparation（source rebuild, 2026-07-27） | ![preparation current](docs/figures/preparation-current-remake.png) |
 | 最新 campaign shop（source rebuild, 2026-07-27） | ![shop current](docs/figures/shop-current-remake.png) |
 | 原版資源 indexed 商店主選單（`0x2e341→0x1956b→0x2d669/0x2d9fe`；variant0、DATO#129、gold與selected-pulse fixture；非 DOSBox 截圖） | ![native indexed shop scene](docs/figures/native-shop-scene-indexed.png) |
@@ -235,7 +243,7 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版資源 indexed 消耗品收件者（type≥`0x20` 的 `0x2e6b8` 兩欄六人名冊；非裝備比較面板、非 DOSBox 截圖） | ![native indexed shop purchase recipient](docs/figures/native-shop-purchase-recipient-indexed.png) |
 | 原版資源 indexed 收件者滿欄回饋（`word_5265f`＋FFFC 動態姓名；非 DOSBox 截圖） | ![native indexed shop recipient full](docs/figures/native-shop-purchase-recipient-full-indexed.png) |
 | 原版資源 indexed 裝備收件者比較（type<`0x20` 的 `0x2e8cf→0x2ebe0/0x2efb7`；三列 AP/DP/HIT/EV 現值→候選值，非 DOSBox 截圖） | ![native indexed shop equipment recipient](docs/figures/native-shop-purchase-equipment-recipient-indexed.png) |
-| 原版資源 indexed 一般商店購買成功序列（`0x2f4c6` variant1，entries23..27 五幀＋portrait restore contact sheet；非 DOSBox 截圖） | ![native indexed shop purchase success](docs/figures/native-shop-purchase-success-indexed.png) |
+| 原版資源 indexed 一般商店購買成功序列（`0x2f4c6` variant1，bare shop底圖上的entries23..27五幀＋portrait restore；source-built fixture，非 DOSBox 截圖） | ![native indexed shop purchase success](docs/figures/native-shop-purchase-success-indexed.png) |
 | 最新 campaign church（source rebuild, 2026-07-27） | ![church current](docs/figures/church-current-remake.png) |
 | ch01 原版戰場 HUD（原版錄影 434.5 秒；camera/cursor 與下列 remake 對齊） | ![original map HUD](docs/figures/native-map-ch01-original-video.png) |
 | ch01 原始 indexed tactical frame（修正 `work+0x8088` HUD base, 2026-07-28） | ![native map ch01](docs/figures/native-map-ch01-remake.png) |

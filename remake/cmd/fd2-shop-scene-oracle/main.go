@@ -21,11 +21,8 @@ import (
 )
 
 func main() {
-	if (len(os.Args) < 5 || len(os.Args) > 8) &&
-		len(os.Args) != 10 && len(os.Args) != 11 &&
-		len(os.Args) != 12 && len(os.Args) != 13 &&
-		len(os.Args) != 14 {
-		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png [purchase-success.png [sell-list.png]]]]]]]]")
+	if len(os.Args) < 5 || len(os.Args) == 9 || len(os.Args) > 15 {
+		fmt.Fprintln(os.Stderr, "usage: fd2-shop-scene-oracle FDOTHER.DAT FDTXT.DAT DATO.DAT menu.png [purchase-list.png [purchase-confirm.png [purchase-insufficient.png [FDICON.B24 recipient.png [recipient-full.png [equipment-recipient.png [purchase-success.png [sell-list.png [gold-debit.png]]]]]]]]]")
 		os.Exit(2)
 	}
 	fdotherPath, fdtxtPath, datoPath, outputPath := os.Args[1], os.Args[2], os.Args[3], os.Args[4]
@@ -177,14 +174,30 @@ func main() {
 				check(err)
 				writePNG(os.Args[11], equipment, palette)
 			}
-			if len(os.Args) == 13 {
+			if len(os.Args) >= 13 {
+				bare, err := campaign.ComposeNativeShopBareScene(
+					assets, digits, purchasePortraits[0], 0x80, 1000,
+				)
+				check(err)
 				animation, final, err := campaign.ComposeNativeShopPurchaseSuccessFrames(
-					purchaseSource, assets, purchasePortraits[0], 0x80, 1,
+					bare, assets, purchasePortraits[0], 0x80, 1,
 				)
 				check(err)
 				writePNGFrames(
 					os.Args[12], append(animation, final), palette,
 				)
+				if len(os.Args) >= 15 {
+					debit, next, err := campaign.ComposeNativeGoldDebitFrames(
+						final, assets.GoldRollStrip, 1000, 50,
+					)
+					check(err)
+					if next != 950 || len(debit) != 45 {
+						check(fmt.Errorf(
+							"gold debit next=%d frames=%d", next, len(debit),
+						))
+					}
+					writePNGFrames(os.Args[14], debit, palette)
+				}
 			}
 		}
 	}

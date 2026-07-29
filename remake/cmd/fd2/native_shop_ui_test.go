@@ -212,6 +212,22 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 				tc.variant, total, tc.ticks,
 			)
 		}
+		bare, bareOK := g.composeNativeShopBare()
+		assets, portrait, portraitID, stateOK := g.nativeShopState()
+		animation, _, composeErr := campaign.ComposeNativeShopPurchaseSuccessFrames(
+			bare, assets, portrait, portraitID, tc.variant,
+		)
+		expectedFirst := animation[0]
+		if tc.variant == 3 {
+			expectedFirst = bare
+		}
+		if !bareOK || !stateOK || composeErr != nil ||
+			!reflect.DeepEqual(g.nativeShopUIJob.timeline[0].frame, expectedFirst) {
+			t.Fatalf(
+				"native shop variant %d success did not start from bare scene: bare=%v state=%v err=%v",
+				tc.variant, bareOK, stateOK, composeErr,
+			)
+		}
 		g.nativeShopUIJob = nil
 	}
 	g.nativeShopVariant = 1
@@ -249,11 +265,33 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	finish := g.nativeShopUIJob.after
 	g.nativeShopUIJob = nil
 	finish()
-	if g.gold != 1134 || g.nativeShopMode != "purchase" ||
-		g.nativeShopUIJob == nil {
+	if g.gold != 1134 || g.nativeShopMode != "success" ||
+		g.nativeShopUIJob == nil ||
+		len(g.nativeShopUIJob.timeline) != 9 {
 		t.Fatalf(
-			"native debit/product-loop completion = gold %d mode %q job=%v",
+			"native debit roll start = gold %d mode %q job=%v frames=%d",
 			g.gold, g.nativeShopMode, g.nativeShopUIJob != nil,
+			len(g.nativeShopUIJob.timeline),
+		)
+	}
+	debitTotal := time.Duration(0)
+	for _, step := range g.nativeShopUIJob.timeline {
+		if step.duration !=
+			campaign.NativeGoldRollDelayMilliseconds*time.Millisecond {
+			t.Fatalf("native debit phase duration=%v", step.duration)
+		}
+		debitTotal += step.duration
+	}
+	if debitTotal != 90*time.Millisecond {
+		t.Fatalf("native debit total=%v, want 90ms", debitTotal)
+	}
+	finish = g.nativeShopUIJob.after
+	g.nativeShopUIJob = nil
+	finish()
+	if g.nativeShopMode != "purchase" || g.nativeShopUIJob == nil {
+		t.Fatalf(
+			"native product-loop completion mode=%q job=%v",
+			g.nativeShopMode, g.nativeShopUIJob != nil,
 		)
 	}
 	g.nativeShopUIJob = nil

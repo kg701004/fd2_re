@@ -43,6 +43,7 @@ type NativeShopAssets struct {
 	Background    []byte
 	Decoration    fdother.LMI1Entry
 	RawEntries    [][]byte
+	GoldRollStrip fdother.RawCell
 	ServiceCells  [4][2]fdother.RawCell
 	PriceCell     fdother.RawCell
 	Panel         fdother.LMI1Entry
@@ -82,6 +83,12 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 		return nil, fmt.Errorf("campaign: native shop decoration: %w", err)
 	}
 	var serviceCells [4][2]fdother.RawCell
+	goldRollStrip, err := fdother.ParseRawCell(entries[2])
+	if err != nil || goldRollStrip.Width != 6 || goldRollStrip.Height != 99 {
+		return nil, errors.New(
+			"campaign: native shop gold roll strip is not 6x99",
+		)
+	}
 	for option := range serviceCells {
 		for variant := range serviceCells[option] {
 			entryIndex := 3 + option*2 + variant
@@ -133,6 +140,7 @@ func DecodeNativeShopAssets(datPath string, resourceID int) (*NativeShopAssets, 
 		Background:    background,
 		Decoration:    decoration,
 		RawEntries:    entries,
+		GoldRollStrip: goldRollStrip,
 		ServiceCells:  serviceCells,
 		PriceCell:     priceCell,
 		Panel:         panel,
@@ -248,4 +256,47 @@ func ComposeNativeShopScene(
 	return ComposeNativeChurchTextAt(
 		frame, strings, font, textIndex, NativeShopTextOffset,
 	)
+}
+
+// ComposeNativeShopBareScene is the caller-owned framebuffer restored after
+// closing purchase/recipient dialogue. 0x2f4c6 draws its success effect onto
+// this scene before 0x2d516 animates the balance; it must not retain a blue
+// dialogue grid or greeting text.
+func ComposeNativeShopBareScene(
+	assets *NativeShopAssets,
+	digitFrames []fdother.Frame,
+	portrait dato.Frame,
+	portraitID, gold int,
+) ([]byte, error) {
+	if assets == nil ||
+		len(assets.Background) != NativeShopWidth*NativeShopHeight ||
+		len(digitFrames) != 10 || gold < 0 || gold > 99_999_999 {
+		return nil, errors.New(
+			"campaign: native shop bare assets/state are invalid",
+		)
+	}
+	frame := append([]byte(nil), assets.Background...)
+	if err := portrait.BlitAtOffset(
+		frame, NativeShopWidth, nativeFacilityPortraitOffset(portraitID),
+	); err != nil {
+		return nil, err
+	}
+	if err := assets.Decoration.BlitOpaqueAt(
+		frame, NativeShopWidth,
+		NativeShopDecorationOffset%NativeShopWidth,
+		NativeShopDecorationOffset/NativeShopWidth,
+		false,
+	); err != nil {
+		return nil, err
+	}
+	digits := fmt.Sprintf("%08d", gold)
+	for i := range digits {
+		index := int(digits[i] - '0')
+		if err := digitFrames[index].BlitAt(
+			frame, NativeShopWidth, NativeShopGoldOffset+6*i, -1,
+		); err != nil {
+			return nil, err
+		}
+	}
+	return frame, nil
 }
