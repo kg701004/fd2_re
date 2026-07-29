@@ -181,7 +181,7 @@ type Game struct {
 	nativeTownUIPulse        int
 	nativeTownUILastTick     int
 	nativeTownUIHasTick      bool
-	nativePreparationUI      *fdother.NativePreparationAssets
+	nativePreparationUI      *nativePreparationUIAssets
 	nativeChurchUIJob        *nativeChurchUIJob
 	nativeChurchUIClock      nativeBIOSClock
 	nativeChurchUIPulse      int

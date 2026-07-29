@@ -11,11 +11,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
 func main() {
 	base := flag.String("base", "", "player-owned FLAME2 directory")
+	scenario := flag.String("scenario", "", "editable scenario supplying one proven native party record")
 	out := flag.String("out", "preparation-roster-oracle.png", "output PNG")
 	flag.Parse()
 	if *base == "" {
@@ -37,11 +39,39 @@ func main() {
 		selected[i] = i < 5
 	}
 	frame, err := fdother.ComposeNativePreparationFrame(
-		assets, keys, selected, 7, 0, 15,
+		assets, keys, selected, 0, 0, 15,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	if *scenario != "" {
+		dataAssets, err := battle.LoadNativeItemPanelDataAssets(
+			fdotherPath, filepath.Join(*base, "FDTXT.DAT"),
+		)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		battleScenario, err := battle.LoadScenario(*scenario)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		units := battleScenario.PartyUnits(nil)
+		if len(units) == 0 {
+			fmt.Fprintln(os.Stderr, "指定情境沒有可用的原始玩家角色記錄")
+			os.Exit(1)
+		}
+		record, err := battle.NativeItemPanelRecordForUnit(units[0])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		if err := battle.RenderNativeItemPanelData(dataAssets, record, frame); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 	paletteRaw, err := fdother.ReadResource(fdotherPath, 0)
 	if err != nil {

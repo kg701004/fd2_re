@@ -5,18 +5,34 @@ import (
 	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
-func loadNativePreparationUIAssets() (*fdother.NativePreparationAssets, error) {
+type nativePreparationUIAssets struct {
+	roster *fdother.NativePreparationAssets
+	status battle.NativeItemPanelDataAssets
+}
+
+func loadNativePreparationUIAssets() (*nativePreparationUIAssets, error) {
 	fdotherPath := nativeFDOTHERPath()
 	if fdotherPath == "" {
 		return nil, errors.New("native preparation UI: FDOTHER.DAT unavailable")
 	}
-	return fdother.DecodeNativePreparationAssets(
+	roster, err := fdother.DecodeNativePreparationAssets(
 		fdotherPath,
 		filepath.Join(filepath.Dir(fdotherPath), "FDICON.B24"),
 	)
+	if err != nil {
+		return nil, err
+	}
+	status, err := battle.LoadNativeItemPanelDataAssets(
+		fdotherPath, filepath.Join(filepath.Dir(fdotherPath), "FDTXT.DAT"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &nativePreparationUIAssets{roster: roster, status: status}, nil
 }
 
 func (g *Game) composeNativePreparationFrame() ([]byte, bool) {
@@ -42,10 +58,20 @@ func (g *Game) composeNativePreparationFrame() ([]byte, bool) {
 	// lifecycle is still open, so production deliberately presents the
 	// verified base state 0 rather than borrowing another screen's timer.
 	frame, err := fdother.ComposeNativePreparationFrame(
-		g.nativePreparationUI,
+		g.nativePreparationUI.roster,
 		keys, selected, g.prepSel, 0, g.prepLimit,
 	)
 	if err != nil {
+		return nil, false
+	}
+	unit := g.partyRoster[g.prepIDs[g.prepSel]]
+	record, err := battle.NativeItemPanelRecordForUnit(&unit)
+	if err != nil {
+		return nil, false
+	}
+	if err := battle.RenderNativeItemPanelData(
+		g.nativePreparationUI.status, record, frame,
+	); err != nil {
 		return nil, false
 	}
 	return frame, true

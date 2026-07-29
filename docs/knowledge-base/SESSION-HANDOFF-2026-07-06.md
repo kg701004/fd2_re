@@ -1992,6 +1992,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`preparation-roster-compositor-partial.png`](../figures/preparation-roster-compositor-partial.png)
   以原始圖像索引 0～19 顯示 20 格，只是資源／版面局部證據，不是原版
   DOSBox、正常戰役名冊或晚期存檔。
-- 尚未完成：`0x17fc0` 右上角色狀態、`0x1297d` BIOS 待機週期、
-  `0x1f42d` 進退動畫、最終確認外觀，以及合法晚期 `FD2.SAV` 的同狀態
-  原版／重製差分。這些缺口使 UI-11 維持部分完成。
+- 後續重讀 `0x17fc0..0x182ab`，確認它就是既有教會／物品面板使用的同一
+  個 0x50 位元組角色記錄合成器。整備生產路徑現先畫背景／名冊，再把游標
+  角色交給 `NativeItemPanelRecordForUnit→RenderNativeItemPanelData`，
+  重現姓名、種族、職業、HP／MP、等級、經驗、移動與能力值；缺任何原始
+  記錄欄位即整張退回，不從正規化名稱或角色編號補猜。成果圖以 ch01 索爾
+  的真實可編輯情境記錄填入右上狀態。
+- 尚未完成：`0x1297d` BIOS 待機週期、`0x1f42d` 進退動畫、最終確認外觀，
+  以及合法晚期 `FD2.SAV` 的同狀態原版／重製差分。這些缺口使 UI-11
+  維持部分完成。

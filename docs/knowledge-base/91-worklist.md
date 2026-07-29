@@ -996,8 +996,10 @@
   生產接線與真實 FDOTHER／FDICON 回歸；局部證據圖為
   [`preparation-roster-compositor-partial.png`](../figures/preparation-roster-compositor-partial.png)。
   此圖以原始圖像索引 0～19 建立，明確不是 DOSBox 截圖、正常戰役名冊或
-  `FD2.SAV` 證據。下一門檻是 `0x17fc0` 右上角色狀態、BIOS 待機週期、
-  `0x1f42d` 動畫、最終確認與合法晚期存檔的同狀態實機差分。
+  `FD2.SAV` 證據。游標角色的右上狀態已直接重用既有、真實資源驗證的
+  `0x17fc0` 合成器與完整 0x50 位元組記錄；缺原始欄位即整張退回。
+  下一門檻是 BIOS 待機週期、`0x1f42d` 動畫、最終確認與合法晚期存檔的
+  同狀態實機差分。
 - [~] **SDD-3 UI shell vertical slice**：已新增 `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary`，以 title confirm、story→battle、battle win→editable postbattle、town→shop→town 的同一 state trace 固定「戰後不可直跳下一戰」；既有 town/shop/preparation 截圖 artifact 與 Docker/Xvfb regression 可重跑。battle field/action/dialog 的同一條畫面 trace、原版 DOSBox pixel differential 仍待補齊。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。
 - [x] **RE-UNIT-STATIC-TABLES**：以 Docker 實際 FD2.EXE 產生/驗證 raw fixture：高 branch `b1-0x44 → 0x61af9` 68×10；lower branch `0x61da1` 32×24／`0x620a1` 68×11。constructor caller 的 level 公式與 `+0x42` join 已由 Capstone 固定；`export_units.py`／`sync_native_selector_fields.py` 將 raw provenance 輸出到 33 張 editable map asset。未被 table 覆蓋的 selector 與 HUD renderer consumer 仍維持 fail-closed；`0x619fd` 不屬於 constructor。
