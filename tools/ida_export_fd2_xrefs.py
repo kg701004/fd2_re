@@ -35,7 +35,9 @@ TARGETS = (
     # These addresses preserve call topology only; field semantics remain in
     # docs/knowledge-base/11-enemy-ai.md under their evidence gates.
     0x13488,
+    0x13A9F,
     0x13E9C,
+    0x13FD4,
     0x14121,
     0x14237,
     0x145CD,
@@ -62,7 +64,9 @@ TARGETS = (
     # ch29 staging wrapper and the whole-DAC pulse it invokes.  These remain
     # distinct from 0x22253 and generic story fades.
     0x33F78,
+    0x3419C,
     0x35E5A,
+    0x35F92,
     0x22D1B,
     # Event-state entry #12 writer.  Its dispatch provenance is required
     # before the item-0xd0 branch can become an editable scenario event.

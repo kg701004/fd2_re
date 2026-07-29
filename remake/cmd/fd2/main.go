@@ -3959,7 +3959,7 @@ func (g *Game) ringInput() bool {
 				g.prepareNativeItemPanel(g.sel)
 				g.msg = "物品：選擇欄位"
 			})
-		case 3: // 待機／格子互動(原版 0x13fd4→0x190ac)
+		case 3: // 休息回復／格子互動(原版 0x13fd4→0x190ac)
 			g.beginActionOverlayClose(g.finishSelectedWait)
 		}
 	}
@@ -4057,8 +4057,9 @@ func (g *Game) cancelNativeItemTargetModal() bool {
 	return true
 }
 
-// finishSelectedWait 對應原版行動選單第四項「下／休息」。0x19077 在未移動時
-// 先回復 MaxHP 20%，接著 0x1908b 無論是否移動都呼叫 0x190ac 檢查當格寶物；
+// finishSelectedWait 對應原版行動選單第四項「下／休息」。未移動時走
+// 0x13fd4：current HP != max HP 且 raw +0x25/+0x26 都為零才增加
+// floor(max HP/5)，不保證最少回復 1。其後 0x190ac 檢查當格寶物；
 // 不是踩上格子立即開箱，也不是道具指令。
 func (g *Game) finishSelectedWait() {
 	u := g.sel
@@ -4066,11 +4067,11 @@ func (g *Game) finishSelectedWait() {
 		return
 	}
 	g.ring = false
-	if u.X == g.selOrigX && u.Y == g.selOrigY && u.HP > 0 && u.HP < u.MaxHP {
+	if u.X == g.selOrigX && u.Y == g.selOrigY &&
+		u.HP != u.MaxHP &&
+		u.NativeTransient[3] == 0 &&
+		u.NativeTransient[4] == 0 {
 		heal := u.MaxHP / 5
-		if heal < 1 {
-			heal = 1
-		}
 		u.HP += heal
 		if u.HP > u.MaxHP {
 			u.HP = u.MaxHP

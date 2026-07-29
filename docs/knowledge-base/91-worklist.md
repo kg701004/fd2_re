@@ -152,7 +152,10 @@
 - [x] **RE-AI-CANDIDATE-149F8**：Docker Capstone 閉合 `0x149F8` 的 cardinal ±X/±Y cursor steps、map bounds、`0x12C0D` unit lookup、raw `+6` selector gate、supplied byte-buffer writes 與 cursor restore；明確標為 candidate scanner，不命名 damage/hit/LOS/spell effect。
 - [x] **RE-AI-MODE-SOURCE-10FB6**：Docker Capstone 閉合 FDFIELD 名冊 `b17/b18/b19` → runtime `+0x34/+0x35/+0x36`，33 圖 1887 筆低四位分布已保存為 `docs/data/fdfield_native_ai_modes.json`，資料管線與 `Unit` 保留原始來源；高四位不誤命名成 mode。
 - [x] **RE-AI-MODE-WRITER-3419C**：閉合 `0x3419C` inclusive range writer 的保留高四位規則，以及 `0x13D20`／章節處理器的 whole-byte writes；新增 fail-closed materializer 與 writer regression。
-- [~] **REMAKE-AI-MODE-RUNTIME**：`0x13A9F` 各低四位的可觀察呼叫與移動分支已列成矩陣，但玩法名稱、模式 2/11 完整語意、章節轉換條件及 `NextAIPlan` production 接線仍未閉合。`set_ai:berserk` 目前只是 inert 事件標記，不得當成原版模式已實作。
+- [x] **RE-AI-MODE2/11-BRANCHES**：Docker Capstone 與合法 IDA 閉合 mode 2 為 `0x14EF0` 失敗後 `0x14237→0x13FD4`，不走 `0x13E9C`；mode 11 依 `[0x53C23]`／`[0x53C4F]` 兩個獨立 signed `>=6` gate，第一段後仍評估物理第二段。新增 raw call-plan regression。
+- [x] **RE-AI-IDLE-RECOVERY-13FD4**：`0x13FD4` 只在 currentHP≠maxHP 且 raw `+0x25/+0x26==0` 時回復 `floor(maxHP/5)` 並封頂；新增 state-only adapter，玩家休息正式路徑同步刪除錯誤的最少回復 1 並接 raw transient gates。
+- [x] **RE-AI-MODE11-WRITER-35F92**：`[0x53AD5]+0x10==4` 時，`0x36078→0x3419C(20,20,11)` 改寫單位 20 低四位；IDA 確認函式邊界與 generic dispatcher xrefs。30-entry table entry22 的高階名稱／一般玩家觸發尚未閉合，不猜章節或人物。
+- [~] **REMAKE-AI-MODE-RUNTIME**：模式 2/11 raw planner 與 `0x13FD4` mutation 已閉合，但其餘模式玩法名稱、函式表 entry22 觸發、完整回合 orchestration 及 `NextAIPlan` production 接線仍未完成。`set_ai:berserk` 仍只是 inert 事件標記。
 - [x] **RE-PHASE-RESOURCE-1A7BD**：Docker Capstone 固定 `0x1A7BD` 是 `[0x53AF9]` gate 下的 `0x111BA(0x1A4D,0,0x40)` resource-handle setup，`0x1A7F1` 釋放 `[0x53B0F]`；已從 transient selector／campaign phase 語意中分離。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`

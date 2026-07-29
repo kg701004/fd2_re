@@ -39,6 +39,25 @@ func TestFinishSelectedWaitAfterMoveDoesNotHealAndGoldUsesCampaignBank(t *testin
 	}
 }
 
+func TestFinishSelectedWaitHonorsNativeRecoveryGatesAndFloor(t *testing.T) {
+	for _, rawIndex := range []int{3, 4} {
+		u := &battle.Unit{Camp: battle.Own, HP: 40, MaxHP: 100, OnField: true, X: 2, Y: 3}
+		u.NativeTransient[rawIndex] = 1
+		g := &Game{st: &battle.State{}, sel: u, selOrigX: 2, selOrigY: 3}
+		g.finishSelectedWait()
+		if u.HP != 40 {
+			t.Fatalf("raw +%#x gate healed to %d", 0x22+rawIndex, u.HP)
+		}
+	}
+
+	u := &battle.Unit{Camp: battle.Own, HP: 1, MaxHP: 4, OnField: true, X: 2, Y: 3}
+	g := &Game{st: &battle.State{}, sel: u, selOrigX: 2, selOrigY: 3}
+	g.finishSelectedWait()
+	if u.HP != 1 {
+		t.Fatalf("floor(maxHP/5) invented minimum heal: HP=%d", u.HP)
+	}
+}
+
 func TestSpecialDeathRewardPersistsThroughPostBattleSync(t *testing.T) {
 	killer := &battle.Unit{Camp: battle.Own, Fig: 0, HP: 50, MaxHP: 50, OnField: true, Inventory: []int{1}}
 	dead := &battle.Unit{Camp: battle.Enemy, Fig: 102, HP: 0, MaxHP: 100, OnField: true,

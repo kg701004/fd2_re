@@ -2167,3 +2167,18 @@ item category or church service name.
 0、1、2、3、4、5、7、8、9、10。這項閉合只讓原始行為節點可編輯、
 可驗證；`NextAIPlan` 尚未讀取它們，模式名稱與 0x13A9F 各分支的完整
 遊戲語意仍採失敗即停止，不以 `set_ai:berserk` 或重製近似補猜。
+
+模式 2／11 的控制流已有更窄的可執行契約：
+`fdother.PlanNativeUnitMode2` 固定 `0x14EF0` 失敗後為
+`0x14237→0x13FD4`，明確排除 `0x13E9C`；`PlanNativeUnitMode11`
+保存 `[0x53C23]` 與 `[0x53C4F]` 兩個獨立 signed `>=6` gate，以及
+第一段執行後仍會評估第二段的順序。`battle.ApplyNativeAIIdleRecovery`
+另保存 `0x13FD4` 的 raw `+0x25/+0x26` 零值 gate 與
+`min(currentHP+floor(maxHP/5),maxHP)`。玩家休息正式路徑也已刪除錯誤的
+「至少回復 1」近似，改讀 `NativeTransient[3:5]`。
+
+模式 11 的唯一已知 runtime source 是 `0x35F92`：
+battle-local state entry `+0x10` 等於 4 時，`0x36078` 透過
+`0x3419C(20,20,11)` 只改單位索引 20 的低四位。它位於 30-entry
+函式表的 entry 22，且合法 IDA 顯示多個 generic dispatcher xrefs；
+函式表的高階名稱與一般玩家觸發條件仍未閉合，不得命名成章節或人物事件。

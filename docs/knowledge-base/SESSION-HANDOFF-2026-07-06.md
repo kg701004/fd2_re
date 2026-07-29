@@ -2093,6 +2093,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - doc11 已新增敵方回合專題矩陣：原版依 mode 選擇候選攻擊、指定座標／單位
   移動或無候選備援，不是單純選最近角色。矩陣只記可觀察呼叫，不替
   0/1/2/3/4/5/7/8/9/10/11 猜玩法名稱。
-- 重要缺口：`NextAIPlan` 尚未消費這些 raw mode；ch01 的
-  `set_ai:berserk` 只寫 inert 事件標記，沒有規劃器讀取。下輪應先閉合
-  mode 2/11 與章節 writer 的實際觸發，再接 production，不能猜值硬接。
+- 當時的重要缺口：`NextAIPlan` 尚未消費這些 raw mode；ch01 的
+  `set_ai:berserk` 只寫 inert 事件標記，沒有規劃器讀取。模式 2／11
+  與已知 writer 已由下一節繼續閉合；其餘模式仍不能猜值硬接。
+
+## 2026-07-29：模式 2／11 與休息回復閉合
+
+- 修正 mode 2 控制流誤讀：`0x14EF0` 失敗後是
+  `0x14237→0x13FD4`；`0x14237` 在 `0x145C3` 固定回傳 0，因此不會走
+  `0x13E9C` 最近座標備援。
+- mode 11 有兩個獨立 signed `>=6` gate：`[0x53C23]` 控制
+  `0x15311`，但第一段後仍無條件跑 `0x14237`；`[0x53C4F]` 控制
+  `0x1548E`，不足才走 `0x14121→失敗時 0x13FD4`。
+- `0x13FD4` 已閉合為 raw `+0x25/+0x26` 皆零時的 HP 回復：
+  `min(currentHP+floor(maxHP/5),maxHP)`。新增 state-only adapter，
+  玩家休息正式路徑也移除「至少回復 1」錯誤近似並接 raw transient gates。
+- 初始 FDFIELD 沒有 mode 11；唯一已知 writer 是 `0x35F92` 內
+  `[0x53AD5]+0x10==4 → 0x3419C(20,20,11)`。IDA 確認函式邊界與 generic
+  dispatcher xrefs，但 30-entry table entry22 的高階名稱／一般玩家觸發
+  仍未知，禁止命名成特定人物、章節或狂暴。
