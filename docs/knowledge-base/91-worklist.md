@@ -982,7 +982,7 @@
 - [~] **UI-CHURCH-REVIVE-30DC3**：official IDA 閉合 `0x30dc3→0x309ff/0x30c22/0x30a47`。候選只看 roster record `+5 bit0`，不再以 `HP<=0` projection 猜測；費用為 `word_52669[raw class +0x20] × raw level +0x21`，不再自行把 Lv0 提升為1。remake 已接 stateful 三列名單（sprite/name/race/class/currency/五位數fee）、FDTXT590 的 FFFC名字／FFFA費用／FFFE換行、Yes/No，以及 list 6-open/5-close。第二次 IDA caller 重核刪除「確認一律choice4+dialogue5關閉」的錯誤斷言：原版 `0x197e5` 先只關choice四幀；不足金在仍開著的question第三行 `(12,157)` 寫FDTXT504、`0x16c57(1)`等待後才`0x2d31b`五幀關框；無候選則FDTXT588、`0x16c57(0)`。兩條 indexed message lifecycle已接。成功 `0x2f4c6` 因 hub selector固定4而只走case4：FDOTHER#14 entries23..31 sequential transparent blit到 `(147,32)`、每幀2 BIOS ticks，DAC 0→62/62→0每步4ms，`0x17aa9(10/5)`是相對前次latch而非額外hold；monotonic indexed timeline與原版資源 regression已接。再次指令級重核刪除「`sub_25977(17/11)`是PCM SFX」錯誤斷言：它是`play_bgm(track,loop_count)`，直接載FDMUS track17/11並各設loop count1；`playBGMCount`已依動畫前／後時序接入。仍需DOSBox E2視聽diff，故維持 `[~]`。
 - [x] **RE-INVENTORY-CONSTRUCTOR-FLAGS-10C50**：官方 IDA 9.4 閉合 constructor 八格 flag writes：cell0=`0x40`；source byte0=`0xff` 時 cell1=`0x80` 並將 source byte1 放入 cell0，否則 cell1=`0x40`；cell2..7 依 source `0xff` 為 `0x80` 否則 `0x00`。新增 `NativeInventoryFlagsFromSource`／signed gate regression，`Load`/`PartyUnits` 持有 raw flags；修正 `0x2f8ea`「只選未裝備」錯誤斷言，`0x40` equipped 亦是非負可選 cell。
 - [x] **RE-CHURCH-RAW-0-17AED**：官方 IDA 9.4 與 Docker 指令級重讀固定 `0x2ffa5→0x17aed(actor)` 是單 stack actor（Hex-Rays 第二參數為 artifact）：`0x17e0b(actor)` item/status staging→key wait→`0x1c269(actor,0)` gate→可選 `0x1ceed(actor,-1,...)` command/MP overlay→key wait→restore；body 無 persistent writer，因此撤回「能力服務」命名並定為唯讀角色資訊／狀態 presentation。remake 已接 `0x2e6b8/0x2ea90` 兩欄六人 roster、6-open/5-close+restore，以及 status 12-open、bottom 7-close/7-open、`0x1ceed` FDTXT441+ID/cell92/MP digits、12-close+restore後重開名冊；全部由 Draw acknowledgement 推進。保存 [`native-status-command-indexed.png`](../figures/native-status-command-indexed.png)。command effect/target 不屬此唯讀 service，仍由 UI-03 fail-closed。
-- [x] **UI-11 preparation split-slide primitive**：官方 IDA 確認 `0x1f42d/0x1f1cc` 使用 FDOTHER#5 LMI1 entry `0x52`，以 456-stride 在 `(85-offset,82)`／`(165+offset,81)` 執行 `100,75,50,25,0` 五步，每步 present 後 restore；新增 `NativeSplitSlideSteps`、edge-clipped cell blit 與 callback executor/regression。未命名 MAP/TURN，也未接未證實的行軍 input。
+- [x] **戰場進入分割滑動原語**：官方 IDA 確認 `0x1f42d/0x1f1cc` 使用 FDOTHER#5 LMI1 第 `0x52` 項，以 456 列距在 `(85-offset,82)`／`(165+offset,81)` 執行 `100,75,50,25,0` 五步，每步呈現後還原；新增 `NativeBattleEntrySplitSlideSteps`、邊緣裁切繪製、回呼執行器與回歸測試。2026-07-29 直接重讀呼叫者 `0x1a30b`，確認它處理戰場記錄與 456 列距戰場緩衝；撤回把這項列為 UI-11 選人視窗動畫的錯誤分類。未命名 MAP/TURN，也未接未證實的行軍輸入。
 - [x] **RE-RAW-1A866-FIRST-LOOP**：Docker Capstone 重新讀 `0x1a866` 的第一個 raw loop，固定 `+0x25!=0`、`+0x06==selector`、`+0x05 bit0==0` 三個 gate，以及 `+0x40 -= +0x42/10`、負值 clamp、global divisor write；新增 `ParseNativePreparationRecord`／`NativePreparationEligible`／`NativePreparationAdjustedWord40` 與 malformed/gate/clamp regression。此項只保存 address-level raw branch，不命名 preparation/UI/deployment；同函式第二段 `+0x22..+0x27` decrement 另由 transient lifecycle 條目追蹤。
 - [x] **UI-11 preparation dispatch table**：Docker Capstone 固定 `0x1a813` 的 `base+3*i`、16 slots、`+3/+5` gate 與 `+4` function-table index；新增 `FindNativePreparationDispatch`，保留重疊 3-byte raw layout、short-table fail-closed 與多重命中 regression，不執行未命名 callback。
 - [x] **UI-11 preparation timer transition**：Docker Capstone 固定 `0x1a941` 對 0x50-byte record 的 selector/inactive gates、六個 `+0x22..+0x27` counter decrement，以及僅 1→0 才產生 `0x1e1+index` downstream source；新增 `TickNativePreparationTimers` in-place raw planner/regression，不命名狀態或效果。
@@ -998,7 +998,15 @@
   此圖以原始圖像索引 0～19 建立，明確不是 DOSBox 截圖、正常戰役名冊或
   `FD2.SAV` 證據。游標角色的右上狀態已直接重用既有、真實資源驗證的
   `0x17fc0` 合成器與完整 0x50 位元組記錄；缺原始欄位即整張退回。
-  下一門檻是 BIOS 待機週期、`0x1f42d` 動畫、最終確認與合法晚期存檔的
+  `0x1297d` 待機週期已重用 `fdicon.AdvanceNativeMapSpriteCycles`：
+  有號 BIOS 低字差值 `>4` 或回繞才前進 raw state，繪圖再由
+  `NativeFrameIndex` 把 3 映成1；生產可見序列為 `0,1,2,1`。
+  `0x31d3c` 穩定最終確認亦已接：`0x1956b(0x4b)` 的 FDOTHER #5 對話框與
+  DATO #75、FDTXT `0x292` 的 `(95,119)` 起筆、`0x16559(0)` 最後肖像覆蓋，
+  再疊 `0x19953` 的 FDOTHER #2 Yes／No。保存
+  [`preparation-confirmation-compositor-partial.png`](../figures/preparation-confirmation-compositor-partial.png)；
+  這是 E1 原始資源合成，不是原版實機。下一門檻是確認六幀開框、脈動、
+  `0x197e5→0x2d31b` 關框、跨畫面的行程全域初始相位，以及合法晚期存檔的
   同狀態實機差分。
 - [~] **SDD-3 UI shell vertical slice**：已新增 `TestUIShellVerticalTraceKeepsPostbattleTownAndShopBoundary`，以 title confirm、story→battle、battle win→editable postbattle、town→shop→town 的同一 state trace 固定「戰後不可直跳下一戰」；既有 town/shop/preparation 截圖 artifact 與 Docker/Xvfb regression 可重跑。battle field/action/dialog 的同一條畫面 trace、原版 DOSBox pixel differential 仍待補齊。
 - [ ] **SDD-4 native renderer re-audit**：完成 resource provenance 與 indexed buffer contract 前，不得把 finale figure-fade／ending prefix 宣稱為完成。

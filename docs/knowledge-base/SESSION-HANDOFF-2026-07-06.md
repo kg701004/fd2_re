@@ -671,7 +671,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 worklist count audit：重算 `91-worklist.md` 勾選項後，README 與 worklist header 已由舊的 `366/92/66` 修正為 `[x]=372`、`[~]=93`、`[ ]=65`；數字只代表工程項目數，不宣稱遊戲完成百分比。
 - 2026-07-27 native map LUT bundle：`loadNativeMapAssets` 現以 `DecodeLUTResource(FDOTHER#3)` 要求 transition LUT entries 1..9；缺 bank 時整個 native bundle 拒絕暴露，避免把 partial map assets 接成 renderer。
 - 2026-07-26 FIGANI scheduler closure：官方 IDA `0x2b9a1` 確認 `arg4==0` 只清 subframe、不 render；非零路徑先 render 目前 frame，再以 descriptor `+6` delay 決定 subframe/frame rollover，frame count 到尾端 wrap。新增 `internal/figani.NativeScheduler.Step` 與 regression；保持 renderer/presentation 由 caller 提供，未猜測 ending 語意。
-- 2026-07-26 preparation split-slide closure：官方 IDA `0x1f42d/0x1f1cc` 確認 FDOTHER#5 LMI1 `#0x52` 的五步 `100,75,50,25,0`，左右 placement 為 `(85-offset,82)`／`(165+offset,81)`、stride456，並在每步 present 後 restore。新增 `fdother.NativeSplitSlideSteps`、clipped blit 與 callback executor；第一步負 x 的 edge clipping 已由 regression 固定。MAP/TURN 與行軍 input 仍未猜測接入。
+- 2026-07-26 戰場進入分割滑動閉合（2026-07-29 分類更正）：官方 IDA `0x1f42d/0x1f1cc` 確認 FDOTHER#5 LMI1 `#0x52` 的五步 `100,75,50,25,0`，左右位置為 `(85-offset,82)`／`(165+offset,81)`、列距456，並在每步呈現後還原。2026-07-29 直接重讀呼叫者 `0x1a30b`，確認其操作戰場記錄與 456 列距戰場緩衝，不是 `0x318ad` 選人視窗動畫。程式介面改名為 `fdother.NativeBattleEntrySplitSlideSteps`／`RunNativeBattleEntrySplitSlide`；第一步負 x 的邊緣裁切仍由回歸測試固定。MAP/TURN 與行軍輸入未猜測接入。
 - 2026-07-26 preparation record gate closure：Docker Capstone 重讀 `0x1a866`，確認 raw offsets `+0x25/+0x05/+0x06/+0x40/+0x42`、selector/bit gate 與 `+0x42/10` toward-zero integer division、`+0x40` clamp。新增 `fdother` raw record parser/gate/normalizer regression；保留欄位 offset，不宣稱角色生命／部署／座標語意。
 - 2026-07-26 preparation dispatch closure：Docker Capstone 重讀 `0x1a813`，確認 16 slots 的 `base+3*i` 重疊 layout、`+3/+5` gate、`+4` function-table index 與 zero-arg call；新增 `FindNativePreparationDispatch` raw planner/regression。只回傳 raw matches，不猜測 callback 的 MAP/TURN/事件名稱。
 - 2026-07-26 preparation timer closure：Docker Capstone 重讀 `0x1a941`，確認每個 0x50-byte record 的 `+6` selector、`+5 bit0` gate、六個 `+0x22..+0x27` counter，只有 1→0 觸發 `0x1e1+counterIndex` downstream source。新增 `TickNativePreparationTimers` 與 regression；不命名 counter 的 gameplay 語意。
@@ -1998,6 +1998,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   重現姓名、種族、職業、HP／MP、等級、經驗、移動與能力值；缺任何原始
   記錄欄位即整張退回，不從正規化名稱或角色編號補猜。成果圖以 ch01 索爾
   的真實可編輯情境記錄填入右上狀態。
-- 尚未完成：`0x1297d` BIOS 待機週期、`0x1f42d` 進退動畫、最終確認外觀，
-  以及合法晚期 `FD2.SAV` 的同狀態原版／重製差分。這些缺口使 UI-11
-  維持部分完成。
+- `0x1297d` 待機週期已接：整備活躍時由獨立 `nativeBIOSClock` 取有號低字，
+  重用 `fdicon.AdvanceNativeMapSpriteCycles` 的 `delta>4 || delta<0` gate，
+  再用 `NativeFrameIndex` 將 raw state3 正規化為圖幀1。邊界回歸固定
+  tick 0/4/5/10/15/20 的 raw `0/0/1/2/3/0` 與可見
+  `0/0/1/2/1/0`，另覆蓋 signed wrap；非整備或非選人狀態不消耗時鐘。
+- `0x31d3c` 穩定最終確認已接。Docker Capstone 固定呼叫順序為
+  `0x1956b(0x4b)`、FDTXT `0x292` 寫至 `0xa951f=(95,119)`、
+  `0x16559(0)`、`0x19953`；`0x1956b` 的非 `0x80..0x84` 分支把
+  DATO #75 放在偏移 `0x9017`，而最後 `0x16559(0)` 會以第0幀覆蓋文字
+  重疊區，因此 E1 穩定圖只露出右側「戰場嗎？」。正式路徑使用相同
+  FDOTHER #5 對話框、DATO #75 商店店員、FDTXT 與 FDOTHER #2 Yes／No；
+  缺資源即退回。保存
+  [`preparation-confirmation-compositor-partial.png`](../figures/preparation-confirmation-compositor-partial.png)，
+  明確不是 DOSBox 截圖或正常玩家路徑。
+- 尚未完成：確認六幀開框、選項脈動、`0x197e5→0x2d31b` 關框、
+  跨戰場／城鎮的行程全域初始相位，以及合法晚期 `FD2.SAV` 的同狀態
+  原版／重製差分。`0x1f42d` 已更正為戰場進入演出，不再列為選人視窗
+  缺口。這些缺口使 UI-11 維持部分完成。

@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
 const (
-	nativeConfirmBaseX = 248
-	nativeConfirmY     = 168
+	nativeConfirmBaseX             = 248
+	nativeConfirmY                 = 168
+	nativePreparationQuestionIndex = 658
+	nativePreparationQuestionX     = 95
+	nativePreparationQuestionY     = 119
 )
 
 // NativeClassConfirmationOpeningFrames reproduces 0x19953's four opening
@@ -102,6 +106,73 @@ func ComposeNativeConfirmationChoices(
 		}
 	}
 	return frame, nil
+}
+
+// ComposeNativePreparationConfirmationQuestion reproduces 0x31d3c's
+// 0x15f84 call: FDTXT index 0x292 is drawn at framebuffer address 0xa951f,
+// which is screen coordinate (95,119), before 0x19953 owns the two choices.
+func ComposeNativePreparationConfirmationQuestion(
+	background []byte,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+) ([]byte, error) {
+	if len(background) != 320*200 || strings == nil || font == nil {
+		return nil, errors.New("campaign: native preparation confirmation assets are unavailable")
+	}
+	frame, err := ComposeNativeChurchDialogueOverlayAt(
+		background, dialogueCells, portrait, nativeFacilityPortraitOffset(0x4b),
+	)
+	if err != nil {
+		return nil, err
+	}
+	question, err := strings.Words(nativePreparationQuestionIndex)
+	if err != nil {
+		return nil, err
+	}
+	style := fdtxt.NativeGlyphStyle{Foreground: 205, Shadow: 76}
+	for i, word := range question {
+		if word >= fdtxt.ControlMin {
+			return nil, fmt.Errorf("campaign: unsupported preparation confirmation control %#x", word)
+		}
+		if err := font.BlitNativeGlyph(
+			frame, 320,
+			nativePreparationQuestionY*320+nativePreparationQuestionX+i*fdtxt.GlyphWidth,
+			int(word), style,
+		); err != nil {
+			return nil, err
+		}
+	}
+	// 0x31d70 immediately calls 0x16559(0), so DATO frame zero is written
+	// once more after the text layout and owns every overlapping pixel.
+	if err := portrait.BlitAtOffset(
+		frame, 320, nativeFacilityPortraitOffset(0x4b),
+	); err != nil {
+		return nil, err
+	}
+	return frame, nil
+}
+
+// ComposeNativePreparationConfirmationFrame adds the stable 0x19953 choice
+// state to the caller-owned preparation screen. Opening/closing presentation
+// remains caller-owned and is not implied by this compositor.
+func ComposeNativePreparationConfirmationFrame(
+	background []byte,
+	cells []fdother.RawCell,
+	dialogueCells []fdother.RawCell,
+	portrait dato.Frame,
+	strings *fdtxt.Strings,
+	font *fdtxt.Font,
+	selected, pulse int,
+) ([]byte, error) {
+	question, err := ComposeNativePreparationConfirmationQuestion(
+		background, dialogueCells, portrait, strings, font,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ComposeNativeConfirmationChoices(question, cells, selected, pulse)
 }
 
 // ComposeNativeReviveConfirmationQuestion reproduces FDTXT590 with the

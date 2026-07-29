@@ -3,6 +3,7 @@ package campaign
 import (
 	"testing"
 
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
@@ -70,5 +71,44 @@ func TestComposeNativeClassConfirmationExpandsNameAndSelection(t *testing.T) {
 	}
 	if got := frame[168*320+264]; got != 52 {
 		t.Fatalf("selected option1 pulse cell=%d want 52", got)
+	}
+}
+
+func TestComposeNativePreparationConfirmationUses31D3CAnchor(t *testing.T) {
+	background := make([]byte, 320*200)
+	dialogue := make([]fdother.RawCell, 20)
+	for index := 1; index <= 19; index++ {
+		dialogue[index] = fdother.RawCell{Width: 1, Height: 1, Pixels: []byte{byte(index)}}
+	}
+	frame, err := ComposeNativePreparationConfirmationFrame(
+		background,
+		nativeClassConfirmCells(),
+		dialogue,
+		dato.Frame{Width: 1, Height: 1, Pixels: []byte{99}},
+		nativeClassListStrings(t),
+		nativeClassListFont(t),
+		1,
+		1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := frame[119*320+95]; got != 205 {
+		t.Fatalf("question foreground=%d want 205", got)
+	}
+	if got := frame[120*320+94]; got != 76 {
+		t.Fatalf("question shadow=%d want 76", got)
+	}
+	if got := frame[0x9017]; got != 99 {
+		t.Fatalf("DATO#75 default portrait anchor=%d want 99", got)
+	}
+	if got := frame[168*320+232]; got != 48 {
+		t.Fatalf("option0 cell=%d want 48", got)
+	}
+	if got := frame[168*320+264]; got != 52 {
+		t.Fatalf("selected option1 pulse cell=%d want 52", got)
+	}
+	if got := background[119*320+95]; got != 0 {
+		t.Fatalf("input background mutated: %d", got)
 	}
 }

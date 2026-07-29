@@ -13,7 +13,7 @@ import (
 
 func nativeClassListStrings(t *testing.T) *fdtxt.Strings {
 	t.Helper()
-	const count = 595
+	const count = 659
 	offsetsBytes := count * 2
 	raw := make([]byte, offsetsBytes)
 	payload := make([]byte, 0, count*4)
@@ -31,6 +31,8 @@ func nativeClassListStrings(t *testing.T) *fdtxt.Strings {
 			words = []uint16{4}
 		case 594:
 			words = []uint16{0xfffc, 4}
+		case 658:
+			words = []uint16{4}
 		}
 		for _, word := range words {
 			var pair [2]byte

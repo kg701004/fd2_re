@@ -12,13 +12,17 @@ import (
 	"path/filepath"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/fdtxt"
 )
 
 func main() {
 	base := flag.String("base", "", "player-owned FLAME2 directory")
 	scenario := flag.String("scenario", "", "editable scenario supplying one proven native party record")
 	out := flag.String("out", "preparation-roster-oracle.png", "output PNG")
+	confirm := flag.Bool("confirm", false, "overlay the evidence-closed stable 0x31d3c final confirmation state")
 	flag.Parse()
 	if *base == "" {
 		fmt.Fprintln(os.Stderr, "缺少 -base：請指定玩家持有的 FLAME2 目錄")
@@ -69,6 +73,61 @@ func main() {
 			os.Exit(1)
 		}
 		if err := battle.RenderNativeItemPanelData(dataAssets, record, frame); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+	if *confirm {
+		choices, err := fdother.DecodeRawCellResource(fdotherPath, 2)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		textRaw, err := fdother.ReadResource(filepath.Join(*base, "FDTXT.DAT"), 0)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		strings, err := fdtxt.Parse(textRaw)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fontRaw, err := fdother.ReadResource(fdotherPath, 4)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		font, err := fdtxt.ParseFont(fontRaw)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		resource5, err := fdother.ReadResource(fdotherPath, 5)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		dialogue := make([]fdother.RawCell, 20)
+		for index := 1; index <= 19; index++ {
+			dialogue[index], err = fdother.ParseLMI1RawEntry(resource5, index)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
+		portraits, err := dato.DecodeResource(filepath.Join(*base, "DATO.DAT"), 0x4b)
+		if err != nil || len(portraits) == 0 {
+			if err == nil {
+				err = fmt.Errorf("DATO#75 has no frames")
+			}
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		frame, err = campaign.ComposeNativePreparationConfirmationFrame(
+			frame, choices, dialogue, portraits[0], strings, font, 0, 0,
+		)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

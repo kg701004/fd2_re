@@ -94,6 +94,9 @@ type Game struct {
 	prepSelecting        bool                // 已通過前置確認，且流程要求進入原版選人階段
 	prepConfirm          bool                // 選滿或小隊確認後的最終出戰確認階段
 	prepConfirmSel       int                 // 0=肯定，1=取消
+	prepClock            nativeBIOSClock     // preparation 0x31e80→0x1297d 的 BIOS 低字來源
+	prepIdleCycle        int                 // 原版 [0x53c0b] 0..3；繪圖時 3 正規化為1
+	prepLastTick         int                 // 原版 [0x53c0f] 有號 BIOS 低字 latch
 	churchSel            int                 // church service menu cursor (0..3)
 	churchMode           string              // menu / status_* / transfer_* / revive* / class / class_confirm
 	churchIDs            []int               // current church candidate ids
@@ -4747,6 +4750,7 @@ func (g *Game) Update() error {
 	g.stepNativeChurchUILifecycle(time.Now())
 	g.stepNativeShopUILifecycle(time.Now())
 	g.stepNativeTownUILifecycle(g.nativeTownUIClock.Sample(time.Now()))
+	g.stepNativePreparationUILifecycle(time.Now())
 	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF2) { // 全域:切換音源(MT-32 / Sound Blaster)
 		g.cycleBGMSource()
 	}
@@ -6145,7 +6149,7 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 		}
 		if g.prepConfirm {
 			fillBox(154, 174, 332, 92)
-			g.font.Draw(screen, "決定以目前成員出戰？", 184, 190, 1.0, color.RGBA{0xff, 0xe0, 0x90, 0xff})
+			g.font.Draw(screen, "確定要進入戰場嗎？", 184, 190, 1.0, color.RGBA{0xff, 0xe0, 0x90, 0xff})
 			yesColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 			noColor := color.RGBA{0xd0, 0xd8, 0xe8, 0xff}
 			if g.prepConfirmSel == 0 {
@@ -6153,8 +6157,8 @@ func (g *Game) drawCampaignUI(screen *ebiten.Image) {
 			} else {
 				noColor = color.RGBA{0xff, 0xff, 0xff, 0xff}
 			}
-			g.font.Draw(screen, "確認出戰", 218, 222, 0.95, yesColor)
-			g.font.Draw(screen, "取消出發", 350, 222, 0.95, noColor)
+			g.font.Draw(screen, "是", 240, 222, 0.95, yesColor)
+			g.font.Draw(screen, "否", 370, 222, 0.95, noColor)
 		}
 		g.font.Draw(screen, "F5 保存戰況", 84, 88+h-24, 0.9, color.RGBA{0xd0, 0xd8, 0xe8, 0xff})
 	case n.Type == "church":

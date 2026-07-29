@@ -224,7 +224,8 @@ array，direct debug start仍保留部署狀態；完整同roster pixel diff待�
 | 原版 indexed 物品轉交列表（`0x2e0bd→0x2dc55(mode=1)`；現由 shop/church 共用 production owner 使用，非 DOSBox 截圖） | ![native transfer item list](docs/figures/native-transfer-item-indexed.png) |
 | 原版 indexed 目的物品欄滿提示（`0x2f8ea`／FDTXT506＋FFFC 動態姓名；現已接 production lifecycle，非 DOSBox 截圖） | ![native transfer full message](docs/figures/native-transfer-full-indexed.png) |
 | preparation / church | ![preparation](docs/figures/preparation-remake.png) ![church](docs/figures/church-selector.png) |
-| 原版資源整備選人合成器（2026-07-29；20 個原始圖像索引＋ch01 索爾狀態記錄，**不是 DOSBox 截圖或正常晚期戰役存檔**；待機週期、進退動畫與實機差分仍缺） | ![preparation roster compositor partial](docs/figures/preparation-roster-compositor-partial.png) |
+| 原版資源整備選人合成器（2026-07-29；20 個原始圖像索引＋ch01 索爾狀態記錄，**不是 DOSBox 截圖或正常晚期戰役存檔**；`0x1297d` 待機週期已接，進退動畫與實機差分仍缺） | ![preparation roster compositor partial](docs/figures/preparation-roster-compositor-partial.png) |
+| 原版資源整備最終確認穩定畫面（`0x31d3c`；DATO #75 商店店員、FDTXT `0x292`、FDOTHER #2 Yes／No；依 `0x16559(0)` 順序由肖像覆蓋文字左段，**是 E1 原始資源合成，不是 DOSBox 截圖或正常玩家路徑**） | ![preparation confirmation compositor partial](docs/figures/preparation-confirmation-compositor-partial.png) |
 | 原版 DOSBox／remake indexed town hub（ch02 variant0／selection0／pulse2；左右整幀相同） | ![original and remake town hub](docs/figures/town-hub-original-vs-remake.png) |
 | Left 後 selection1／pulse2 原版與 remake（左右整幀相同） | ![original and remake town selection1](docs/figures/town-hub-selection1-original-vs-remake.png) |
 | town variant0 六個 selection（上排原版 DOSBox、下排 remake；0→5 由左至右，每格整幀 hash 相同） | ![town six selections](docs/figures/town-hub-six-selections-original-vs-remake.png) |

@@ -1,9 +1,8 @@
-# FD2 reverse engineering and remake — durable agent rules
+# 《炎龍騎士團 2》反向工程與重製：持續協作規則
 
-This file is the persistent operating contract for every agent working in this
-repository. Read it before changing code, reverse-engineering claims, tests, or
-documentation. `CLAUDE.md` records the project intent; this file is authoritative
-for day-to-day execution.
+本檔是所有代理程式在本專案工作的唯一持續操作契約。修改程式、反向工程結論、
+測試或文件前都必須先讀本檔。`CLAUDE.md` 僅保留為相容入口，不另行維護重複
+規則；若兩者不一致，以本檔為準。
 
 ## 語言鐵則
 
@@ -16,118 +15,125 @@ for day-to-day execution.
 - 無法避免英文識別字時，仍應使用完整中文句型包覆，不要在同一句中反覆
   切換中英文文法。
 
-## Goal and scope
+## 專案目標與範圍
 
-- Reverse engineer the original *Flame Dragon 2* executable and data deeply
-  enough to build an editable, clean-room remake engine.
-- Recover hard-coded dialogue, acting, battle, postbattle, town, shop,
-  preparation, party, and save behavior as editable data and typed rules.
-- Preserve the original campaign as the fidelity mode, while allowing new
-  campaigns to extend the engine later.
-- A playable scaffold, debug route, decoded asset, or passing remake-only test is
-  not completion. The original executable remains the behavioral oracle.
+- 徹底反向工程原版《炎龍騎士團 2》的執行檔與資料，建立可編輯、無原始碼
+  污染的潔淨室重製引擎（clean-room remake engine）。
+- 將寫死在原版中的對話、演出、戰鬥、戰後、城鎮、商店、整備、隊伍與存檔
+  行為，還原成可編輯資料及具型別規則。
+- 原版戰役是忠實模式；引擎日後必須能擴充新戰役，延續《炎龍騎士團 2》。
+- 目前持續整合的實作主線是 Go／Ebiten，目標涵蓋桌面、網頁與手機。早期
+  SDL2／C++ 構想是技術參考，不得宣稱已有第二套可玩執行環境。
+- 可啟動的骨架、除錯捷徑、已解碼素材或只通過重製端測試都不代表完成；
+  原版執行檔仍是行為判定基準。
 
-## Sources of truth
+## 每次接手的恢復順序
 
-Read these in this order:
+1. 先讀本檔，再執行 `git status -sb`、`git diff --stat`、`git diff --check`
+   與最近提交紀錄。
+2. 將未提交變更視為上一輪或使用者的工作；先讀差異並確認一致性，不可覆蓋。
+3. 檢查是否仍有舊代理程式、測試程序或 FD2 容器在執行，避免重複寫檔與耗用
+   處理器。
+4. 依下列權威順序恢復目前進度，不以聊天摘要或單一舊交接段落取代實檔證據。
+5. 動手前選定一個能形成「原版證據到玩家可見結果」的垂直切片；不要只累積
+   無消費端的反組譯筆記。
 
-1. `README.md` — user-facing current status and verified screenshots.
-2. `docs/knowledge-base/56-fd2-remake-sdd.md` — current system design and
-   evidence policy.
-3. `docs/knowledge-base/57-ui-evidence-matrix.md` — UI coverage and open gates.
-4. `docs/knowledge-base/91-worklist.md` — current work queue.
-5. `docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md` — chronological evidence
-   log; later corrections supersede earlier entries.
+## 現況資料的權威順序
 
-Historical design/WBS/reflection documents are not current-state authorities.
-When they conflict with direct instructions, bytes, runtime captures, or the
-files above, correct or explicitly mark the stale statement.
+依序閱讀：
 
-## Evidence rules
+1. `README.md`：面向使用者的目前進度與已驗證截圖。
+2. `docs/knowledge-base/56-fd2-remake-sdd.md`：目前系統設計與證據政策。
+3. `docs/knowledge-base/57-ui-evidence-matrix.md`：介面覆蓋率與尚未關閉的關卡。
+4. `docs/knowledge-base/91-worklist.md`：目前工作佇列。
+5. `docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md`：時間序列證據紀錄；
+   較晚的勘誤優先於較早的內容。
 
-- Classify claims as proven, strong inference, hypothesis, or unknown.
-- A proven binary claim needs an address/byte range plus caller or consumer; a
-  proven visual claim needs an original runtime experiment or exact-state image
-  comparison.
-- Inspect direct instructions and raw jump-table words for high-impact control
-  flow. Decompiler output and names are navigation aids, not proof.
-- Do not promote raw bits, slots, globals, or return codes to semantic names
-  until their writer and caller-specific consumer are both established.
-- Keep unknown handler semantics fail-closed. Never wire guessed behavior into
-  production merely to make the campaign advance.
-- Walkthroughs are authored/player-visible corroboration, not an ABI or handler
-  oracle.
-- Clearly label debug-assisted, battle-skip, route-patched, screenshot-only, and
-  direct-start experiments. They do not prove a normal player path.
-- Original/remake screenshots must state whether they are exact-state,
-  nearby-state, or layout-only. Do not mask unexplained pixels when claiming
-  exact parity.
-- Search the repository for stale assertions after closing or correcting a
-  topic. Update SDD, evidence matrix, worklist, handoff, and README as relevant.
+歷史設計、工作分解及反思文件不是現況權威。若它們與直接指令、原始位元組、
+執行期擷取或上述檔案衝突，必須修正，或明確標示舊說法已失效。交接檔是
+時間序列證據紀錄，不是自動載入且永遠正確的「記憶」。
 
-## Known project constraints and corrections
+## 證據規則
 
-- Most battles lead to town/shop/preparation or another inter-battle segment,
-  not directly to the next battle. Campaign tests must preserve these editable
-  nodes and persistent party/save boundaries.
-- `DATO_075` is a shop clerk.
-- Do not invent a separate character “尤妮” from “悠妮”; verify glyphs, text
-  index, portrait, and scene context. Her first appearance includes lying
-  unconscious on the ground.
-- The original hard-coded dialogue and handler behavior must become editable
-  scripts/rules rather than permanent address-specific production hacks.
+- 結論必須分為已證實、強推論、假說或未知。
+- 已證實的二進位結論需要位址／位元組範圍及呼叫者或消費端；已證實的視覺
+  結論需要原版執行期實驗或相同狀態的影像比較。
+- 高影響控制流程必須檢查直接指令與原始跳躍表內容。反編譯輸出與自訂名稱
+  只能協助導航，不是證據。
+- 原始位元、欄位、全域變數或回傳碼，必須同時找到寫入端及特定呼叫者的
+  消費方式，才可提升為語意名稱。
+- 未知處理器語意一律採失敗即關閉（fail-closed）；不可為了讓戰役前進而把
+  猜測接入正式執行路徑。
+- 攻略只可作為作者整理或玩家可見行為的旁證，不能作為應用程式二進位介面
+  （ABI）或處理器語意的判定基準。
+- 必須標示由除錯、略過戰鬥、修改路徑、只看截圖或直接進場取得的實驗；這些
+  實驗不能證明一般玩家路徑可達。
+- 原版／重製截圖必須標示為相同狀態、相近狀態或只比較排版。宣稱逐像素一致
+  時不可遮蔽無法解釋的像素。
+- 涉及正式執行路徑、逐像素一致或一般玩家路徑的介面／戰役結論，必須依
+  系統設計文件的 E0／E1／E2 分級記錄，或連結至介面證據矩陣。測試資料、
+  截圖橋接、修改路徑及重製端測試不得自行提升為 E2。
+- 關閉或修正一個題目後，必須搜尋全專案的舊斷言，並視需要同步更新系統設計
+  文件、介面證據矩陣、工作清單、交接文件與 README。
 
-## Toolchain and host hygiene
+## 已知專案限制與勘誤
 
-- Keep pristine original game files immutable. Use a copied sandbox or writable
-  overlay for DOSBox experiments and save mutation.
-- Capstone is Docker-only via `tools/docker/fd2-cap.Dockerfile` and
-  `fd2-cap-local`. Never install it in host Python, a global environment, or a
-  host venv. `/tmp/fd2cap` must not exist.
-- IDA is legally supplied at `/home/anr2/ida_94_official/dist`; use the
-  maintained authorized Docker workflow. Do not redistribute IDA files.
-- Prefer repository Dockerfiles and local reproducible images. Network-disabled
-  runtime/test containers are preferred after dependencies are built.
+- 多數戰鬥結束後會進入城鎮、商店、整備或其他戰間段落，不是直接進下一戰。
+  戰役測試必須保留這些可編輯節點，以及持續隊伍／存檔的邊界。
+- `DATO_075` 是商店店員。
+- 不可把「尤妮」另創成與「悠妮」不同的角色；必須核對字形、文字索引、頭像
+  及場景脈絡。第一次見到悠妮時，她包含倒地昏迷的演出。
+- 原版寫死的對話與處理器行為必須轉成可編輯腳本／規則，不可永久保留為依賴
+  位址的正式執行捷徑。
 
-### Docker cleanup is a hard rule
+## 工具鏈與主機衛生
 
-- Every one-shot FD2 container must use `docker run --rm`.
-- Long commands must have a bounded lifecycle. Xvfb/background processes need a
-  trap, and the owning container must exit when the command finishes.
-- Immediately after each Docker RE, capture, build, or test batch, inspect
-  `docker ps`/`docker ps -a` for FD2 containers. Stop and remove any no-longer
-  needed container; never leave a test container consuming CPU between tasks.
-- Inspect FD2 and dangling images after toolchain changes. Remove superseded or
-  dangling images to avoid disk growth, but retain the single current
-  reproducible image for each actively used toolchain. Never run a global prune
-  that could delete another project's resources.
-- Before handing off, record or verify that no unintended FD2 container remains
-  running.
+- 原始遊戲檔保持不可變；DOSBox 實驗與存檔修改只能使用複本沙箱或可寫覆蓋層。
+- Capstone 只可透過 `tools/docker/fd2-cap.Dockerfile` 與 `fd2-cap-local`
+  在 Docker 中使用。禁止安裝到主機 Python、全域環境或主機虛擬環境；
+  `/tmp/fd2cap` 不得存在。
+- IDA 是使用者合法提供於 `/home/anr2/ida_94_official/dist` 的工具，只可使用
+  維護中的授權 Docker 流程，不得散布其檔案。
+- 原版遊戲、IDA 授權檔一律唯讀掛載；資料庫與分析產物只可寫入明確的儲存庫
+  產物目錄或 `/tmp`，不得把授權檔、原版二進位或臨時資料庫加入版控。
+- 優先使用儲存庫內的 Dockerfile 與本機可重現映像檔；相依項目建好後，
+  執行與測試容器應儘量停用網路。
 
-## Implementation and verification
+### Docker 清理鐵則
 
-- Prefer vertical slices: original bytes/state → typed decoder → rule → UI/save
-  integration → deterministic test → original/remake comparison.
-- A remake-only unit test proves internal consistency, not original fidelity.
-- Use the normal unpatched player path as the final gate for campaign
-  reachability, party persistence, shop/preparation, save/load, and ending.
-- Run Go tests only in the maintained Docker image. Use `--rm`, network isolation
-  where possible, manual bounded Xvfb lifecycle, and then verify container
-  cleanup.
-- Do not leave generated binaries or large temporary captures in the repository.
-  Add only curated evidence artifacts useful to reviewers.
+- 一次性 FD2 容器一律使用 `docker run --rm`。
+- 長時間命令必須有界；Xvfb 等背景程序需要結束陷阱（trap），工作完成時擁有
+  它的容器也必須退出。
+- 每批 Docker 反向工程、抓圖、建置或測試後，立即用 `docker ps`／
+  `docker ps -a` 檢查 FD2 容器。停止並刪除不再需要的容器，不可在工作間留下
+  持續耗用處理器的測試容器。
+- 工具鏈變更後檢查 FD2 與懸空映像檔；刪除已取代或懸空的版本，但每項使用中
+  工具鏈保留一個目前可重現版本。不可全域清理而傷及其他專案。
+- 交接前必須記錄或驗證沒有非預期的 FD2 容器仍在執行。
 
-## Collaboration and commits
+## 實作與驗證
 
-- Delegate bounded mechanical searches, tables, and assertion audits to a
-  lower-cost subagent when explicitly permitted; the primary agent must inspect
-  evidence, review diffs, and run final verification.
-- Preserve unrelated user changes and never overwrite a dirty worktree.
-- Staging is allowed during a round. Commit and push only after a substantial,
-  evidence-backed update, not for cosmetic churn.
-- Commit as `Codex <codex@openai.com>`.
-- Before commit: run the relevant real regression, validate curated images and
-  links, run `git diff --check`, inspect `git status` and the final diff.
-- Push successful substantial rounds to `origin/main`, then verify local HEAD
-  equals `origin/main`. Update GitHub-facing README/screenshots when the result
-  materially changes visible status.
+- 優先完成垂直切片：原版位元組／狀態 → 具型別解碼器 → 規則 →
+  介面／存檔整合 → 決定性測試 → 原版／重製比較。
+- 只在重製端通過的單元測試僅證明內部一致，不能證明忠於原版。
+- 戰役可達性、隊伍持續性、商店／整備、存檔／讀檔與結局，最終都必須以未
+  修改的一般玩家路徑驗收。
+- Go 測試只在維護中的 Docker 映像檔執行；使用 `--rm`、可行時隔離網路，
+  手動限制 Xvfb 生命週期，完成後檢查容器清理狀態。
+- 不在儲存庫留下產生的執行檔或大型臨時擷取；只加入對審查有用、經整理的
+  證據產物。
+
+## 協作與提交
+
+- 使用者明確允許時，將有界的機械式搜尋、表格與斷言稽核交給較低成本的子
+  代理程式；主代理程式仍須檢查證據、審閱差異並執行最終驗證。
+- 保留無關的使用者變更，不可覆蓋已有未提交內容的工作樹。
+- 每輪可以加入暫存區。只有下列至少一項成立且已有對應驗證時才可提交與推送：
+  新的可編輯垂直切片並通過真實回歸、完成原版比較／E2 玩家路徑，或修正
+  高風險錯誤斷言並同步系統設計文件、證據矩陣及工作清單。純格式整理、單一
+  猜測或零散反組譯筆記不構成重大更新。
+- 提交身分使用 `Codex <codex@openai.com>`。
+- 提交前執行相關真實回歸、檢查整理過的圖片與連結、執行
+  `git diff --check`，並審查 `git status` 與最終差異。
+- 重大且驗證成功的批次推送至 `origin/main`，再驗證本機 HEAD 與遠端相同。
+  玩家可見成果有實質改變時，同步更新 GitHub 的 README 與截圖。

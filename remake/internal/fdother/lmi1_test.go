@@ -123,7 +123,7 @@ func TestFDOTHER005LMI1UIContainer(t *testing.T) {
 	if len(entries) != 138 {
 		t.Fatalf("FDOTHER#5 LMI1 entry count=%d, want 138", len(entries))
 	}
-	// Native 0x1f42d selects LMI1 entry #0x52 for its pre-battle split slide.
+	// Native 0x1f42d selects LMI1 entry #0x52 for its battle-entry split slide.
 	if e := entries[0x52]; e.Width != 72 || e.Height != 14 || len(e.Pixels) != 72*14 {
 		t.Fatalf("FDOTHER#5 LMI1 entry#0x52=%dx%d pixels=%d, want 72x14", e.Width, e.Height, len(e.Pixels))
 	}

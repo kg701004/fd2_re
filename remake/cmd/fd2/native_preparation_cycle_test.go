@@ -1,0 +1,73 @@
+package main
+
+import (
+	"testing"
+	"time"
+
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
+	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
+)
+
+func TestNativePreparationCycleUses1297DBoundariesAndVisibleSequence(t *testing.T) {
+	g := &Game{}
+	tests := []struct {
+		tick, state, visible int
+	}{
+		{tick: 0, state: 0, visible: 0},
+		{tick: 4, state: 0, visible: 0},
+		{tick: 5, state: 1, visible: 1},
+		{tick: 9, state: 1, visible: 1},
+		{tick: 10, state: 2, visible: 2},
+		{tick: 15, state: 3, visible: 1},
+		{tick: 20, state: 0, visible: 0},
+	}
+	for _, test := range tests {
+		g.stepNativePreparationCycleTick(test.tick)
+		visible, err := fdicon.NativeFrameIndex(
+			0, false, g.prepIdleCycle, 0,
+		)
+		if err != nil || g.prepIdleCycle != test.state || visible != test.visible {
+			t.Fatalf(
+				"tick=%d state=%d visible=%d err=%v, want state=%d visible=%d",
+				test.tick, g.prepIdleCycle, visible, err, test.state, test.visible,
+			)
+		}
+	}
+}
+
+func TestNativePreparationCycleAdvancesOnSignedBIOSWrap(t *testing.T) {
+	g := &Game{prepIdleCycle: 2, prepLastTick: 0x7fff}
+	g.stepNativePreparationCycleTick(-0x8000)
+	if g.prepIdleCycle != 3 || g.prepLastTick != -0x8000 {
+		t.Fatalf("wrapped state=%d last=%d", g.prepIdleCycle, g.prepLastTick)
+	}
+}
+
+func TestNativePreparationLifecycleRunsOnlyForActiveSelection(t *testing.T) {
+	g := &Game{
+		camp: campaign.NewRunner(&campaign.Campaign{
+			Start: "prep",
+			Nodes: map[string]*campaign.Node{
+				"prep": {Type: "preparation"},
+			},
+		}),
+		nativePreparationUI: &nativePreparationUIAssets{},
+	}
+	start := time.Unix(1, 0)
+	g.stepNativePreparationUILifecycle(start)
+	g.stepNativePreparationUILifecycle(start.Add(5 * nativeBIOSTickPeriod))
+	if g.prepIdleCycle != 0 {
+		t.Fatalf("inactive preparation advanced to %d", g.prepIdleCycle)
+	}
+	g.prepSelecting = true
+	g.stepNativePreparationUILifecycle(start.Add(10 * nativeBIOSTickPeriod))
+	g.stepNativePreparationUILifecycle(start.Add(15 * nativeBIOSTickPeriod))
+	if g.prepIdleCycle != 1 || g.prepLastTick != 5 {
+		t.Fatalf("active preparation state=%d last=%d", g.prepIdleCycle, g.prepLastTick)
+	}
+	g.camp.Cur = "missing"
+	g.stepNativePreparationUILifecycle(start.Add(20 * nativeBIOSTickPeriod))
+	if g.prepIdleCycle != 1 {
+		t.Fatalf("non-preparation node advanced to %d", g.prepIdleCycle)
+	}
+}

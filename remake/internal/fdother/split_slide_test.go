@@ -2,8 +2,8 @@ package fdother
 
 import "testing"
 
-func TestNativeSplitSlideStepsMatchVerifiedABI(t *testing.T) {
-	steps := NativeSplitSlideSteps()
+func TestNativeBattleEntrySplitSlideStepsMatchVerifiedABI(t *testing.T) {
+	steps := NativeBattleEntrySplitSlideSteps()
 	if len(steps) != 5 {
 		t.Fatalf("steps=%d, want 5", len(steps))
 	}
@@ -16,11 +16,11 @@ func TestNativeSplitSlideStepsMatchVerifiedABI(t *testing.T) {
 	}
 }
 
-func TestRunNativeSplitSlidePreservesPresentRestoreOrder(t *testing.T) {
+func TestRunNativeBattleEntrySplitSlidePreservesPresentRestoreOrder(t *testing.T) {
 	cell := LMI1Entry{Width: 2, Height: 1, Pixels: []byte{7, 0}}
 	dst := make([]byte, 456*200)
 	var events []string
-	err := RunNativeSplitSlide(cell, dst, func() error { events = append(events, "present"); return nil }, func() error { events = append(events, "restore"); return nil })
+	err := RunNativeBattleEntrySplitSlide(cell, dst, func() error { events = append(events, "present"); return nil }, func() error { events = append(events, "restore"); return nil })
 	if err != nil {
 		t.Fatal(err)
 	}
