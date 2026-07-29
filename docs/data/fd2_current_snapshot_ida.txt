@@ -19,12 +19,15 @@ FD2.SAV current-runtime snapshot（IDA Pro 9.4）
 讀取端 `0x10010`
 ----------------
 
-`0x10010` 驗證 checksum 後使用下列 plaintext 區域：
+`0x10010` 驗證 checksum 後使用下列 plaintext 區域。早期文件只列出
+兩份 roster 與 header，漏掉兩個直接複製的 raw 區域；下表已更正：
 
 | plaintext offset | 長度 | 直接指令與目的地 |
 |---|---:|---|
+| `0x0000` | `0x08A3` | `0x101C3..0x101D7` 複製至 `[0x53A55]` 後呼叫 `0x10652` |
 | `0x08A3` | `0x0A00` | `0x1010F..0x10121` 固定複製至 persistent roster `[0x53BF7]` |
 | `0x12A3` | `header[1] * 0x50` | `0x10296..0x10311` 複製至 runtime roster `[0x53A45]` |
+| `0x30A3` | `0x20` | `0x10319..0x10328` 複製至 `[0x53AD5]`；高階欄位語意仍未知 |
 | `0x30C3` | `0x12` | 逐欄恢復目前戰鬥的標頭 |
 
 18-byte header 的已證實映射：
@@ -47,6 +50,34 @@ FD2.SAV current-runtime snapshot（IDA Pro 9.4）
 `persistent_count`。IDA 直接指令證實該欄是 `[0x53BEF]` turn counter；
 persistent count 在 `header[9]`，runtime count 在 `header[1]`。
 
+CONTINUE 擁有權
+---------------
+
+第三標題分支與 `0x10010` 尾端的直接指令為：
+
+    0x26124  push 0
+    0x26126  push -1
+    0x26128  call 0x25977
+    0x26130  call 0x10010
+    0x26135  push 0
+    0x26137  mov  eax,[0x53C03]
+    0x2613C  movzx eax,byte [eax+0x51E63]
+    0x26144  call 0x25977
+
+`0x10010` 不只複製資料；它依 header chapter 載入 FDFIELD／FDTXT／
+FDSHAP，依 runtime record `+7` 建 selector，恢復 camera/cursor/options，
+完成畫面演出後：
+
+    0x10602  mov dword [0x53AE9],0
+    0x1060C  mov dword [0x51A83],1
+    0x10616  call 0x4E031
+    0x1061B  jmp  0x22BBE
+
+`0x10010` 的 prologue 保存 `ebx/esi/edi/ebp` 並配置 4-byte local；
+`0x22BBE` 恰好執行 `add esp,4`、依反序恢復這四個暫存器再 `ret`。因此這是
+刻意共用的函式 epilogue；不能因 IDA 把 `0x22BBE` 歸入鄰近函式，就誤認
+為跳入另一個遊戲機制處理器（gameplay handler）。
+
 動態原版快照實驗
 ----------------
 
@@ -67,9 +98,17 @@ persistent count 在 `header[9]`，runtime count 在 `header[1]`。
 重製端邊界
 ----------
 
-- `fdsave.InspectCurrentSnapshot` 只解析上述固定區域與 header 欄位。
+- `fdsave.InspectCurrentSnapshot` 保存上述五個固定區域；兩個尚未閉合語意的
+  區域以 `RawBattleState`／`Raw30A3` 原樣保留。
 - runtime count 超過 96、persistent count 超過 32 時拒絕整份快照。
 - persistent 與 runtime records 都保存原始 `0x50` bytes；高階角色名稱與
   `battle.Unit` 轉換仍需獨立、嚴格的 identity／class catalog。
-- 此解析器不能讓四槽 LOAD 或 current-runtime CONTINUE 自動成功；在角色
-  正規化、章節節點與未知欄位消費端未閉合前，正式路徑維持失敗即關閉。
+- IDA Pro 9.4 與 Capstone 另證實 `0x10010` 自己載入章節資源、建立 runtime
+  selector、恢復畫面，並在 `0x10616` 呼叫戰鬥驅動 `0x4E031`；`0x1061B`
+  跳到 `0x22BBE` 是與其 prologue 配對的共享 epilogue，不是另一個未找到的
+  CONTINUE owner。呼叫返回 `0x26135` 後只再依 `[0x53C03]` 查
+  `0x51E63` 重設章節曲號。
+- 重製端尚未有等價 production owner，真正缺口是 `RawBattleState`、
+  `Raw30A3`、runtime record/selector 與戰鬥驅動狀態的具型別還原，不是
+  header 章節欄位或 persistent record materializer。四槽 LOAD 仍是另一條
+  `0x2CAD7→pre-handler` ABI，不可接到此解析器。

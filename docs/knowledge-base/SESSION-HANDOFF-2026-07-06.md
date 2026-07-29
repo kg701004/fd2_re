@@ -2269,6 +2269,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   integration test 已由 current snapshot 實得索爾、悠妮、亞雷斯、蓋亞；
   此橋尚未成為正式 CONTINUE owner。
 
+- 2026-07-30 current snapshot owner／漏列 raw 區域勘誤：合法
+  IDA Pro 9.4 重讀 `0x10010..0x10620`，Capstone 獨立核對，確認舊證據漏列
+  plaintext `0x0000..0x08A2`（複製後呼 `0x10652`）與
+  `0x30A3..0x30C2`（複製至 `[0x53AD5]`）。`InspectCurrentSnapshot`
+  現原樣保存兩區，並測試不與呼叫端緩衝區共用底層資料。`0x10010` 自己載資源、
+  建 runtime selector、恢復畫面，於 `0x10616` 呼叫戰鬥驅動 `0x4E031`；
+  `0x1061B→0x22BBE` 是與該 prologue 配對的共享 epilogue。故撤回「尚缺
+  原版 chapter node／CONTINUE owner」的錯誤說法；重製端真正缺的是兩個
+  raw 區域、runtime record/selector 與戰鬥驅動狀態的具型別正式執行
+  擁有者（production owner）。四槽 LOAD 的 `0x2CAD7→pre-handler`
+  仍是另一條 ABI。
+
 ## 2026-07-29：selector1 全成功動作擁有權接線
 
 - Docker Capstone 固定玩家外層 `0x18890` 的 selector1 呼叫點為

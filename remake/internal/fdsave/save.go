@@ -21,6 +21,10 @@ const (
 
 	CurrentPersistentRosterOffset = 0x08a3
 	CurrentRuntimeRosterOffset    = 0x12a3
+	CurrentRawBattleStateOffset   = 0x0000
+	CurrentRawBattleStateSize     = 0x08a3
+	CurrentRaw30A3Offset          = 0x30a3
+	CurrentRaw30A3Size            = 0x20
 	CurrentRuntimeHeaderOffset    = 0x30c3
 	CurrentRuntimeHeaderSize      = 18
 )
@@ -324,13 +328,17 @@ type CurrentRuntimeHeader struct {
 	Raw51E62        byte
 }
 
-// CurrentSnapshot preserves the two exact roster regions consumed by
-// 0x10010. RuntimeRecords is count-delimited; PersistentRecords retains the
-// full native capacity because the loader copies a fixed 0xa00 bytes.
+// CurrentSnapshot preserves every directly copied FD2.SAV source region
+// consumed by 0x10010. RuntimeRecords is count-delimited; PersistentRecords
+// retains the full native capacity because the loader copies a fixed 0xa00
+// bytes. RawBattleState and Raw30A3 remain opaque until their downstream
+// consumers are independently closed.
 type CurrentSnapshot struct {
+	RawBattleState    [CurrentRawBattleStateSize]byte
 	Header            CurrentRuntimeHeader
 	PersistentRecords [RosterUnits]PersistentRecord
 	RuntimeRecords    []PersistentRecord
+	Raw30A3           [CurrentRaw30A3Size]byte
 }
 
 // InspectCurrentSnapshot decodes only the verified plaintext layout used by
@@ -371,6 +379,10 @@ func InspectCurrentSnapshot(plain []byte) (CurrentSnapshot, error) {
 			Raw51E62:        header[17],
 		},
 	}
+	copy(
+		snapshot.RawBattleState[:],
+		plain[CurrentRawBattleStateOffset:CurrentRawBattleStateOffset+CurrentRawBattleStateSize],
+	)
 	for index := range snapshot.PersistentRecords {
 		start := CurrentPersistentRosterOffset + index*UnitSize
 		copy(
@@ -385,6 +397,10 @@ func InspectCurrentSnapshot(plain []byte) (CurrentSnapshot, error) {
 		start := CurrentRuntimeRosterOffset + index*UnitSize
 		copy(snapshot.RuntimeRecords[index].Raw[:], plain[start:start+UnitSize])
 	}
+	copy(
+		snapshot.Raw30A3[:],
+		plain[CurrentRaw30A3Offset:CurrentRaw30A3Offset+CurrentRaw30A3Size],
+	)
 	return snapshot, nil
 }
 

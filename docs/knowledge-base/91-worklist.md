@@ -231,7 +231,7 @@
       (0-31 共 32 + 48/66/68/96/97 共 5 + 本輪新增 126=ASR-06);其餘約 97 組多為泛用怪物/路人,
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
 - [x] `FDICON.B24`=1680個24×24地圖單位sprite(sprite-RLE,見 `31`);`TAI.DAT`=WxH圖像(sprite-RLE)
-- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。metadata `+0`=chapter、`0xff`=empty marker 已由 renderer `0x30437` 關閉，`+2..+5`=currency 已由 `0x2d411/0x2d528` 加減／UI render 關閉。合法 IDA 9.4 與 Capstone 另閉合 `0x2602c..0x26098` 的 roster-first／metadata-second restore 順序，以及 `0x2cad7→chapter pre-handler` 分派；`fdsave.InspectChapterSlot` 已保存 32×`0x50` raw records、完整 metadata，空槽／count 超容量失敗即關閉。production `FD2_NATIVE_SAVE` 已能從 checksum-valid 原生檔顯示四槽 metadata；空槽不退出 selector，有效槽在 roster 未正規化前也不誤轉 JSON loader。四槽路徑不呼叫 `0x10010`；其餘 metadata、roster→normalized party 與一般玩家成功 restore 尚待閉合。不得再稱「強加密／無結構」；重製仍用自有格式。
+- [~] `FD2.SAV` 存檔：Docker static trace 已固定 `rb/wb FD2.SAV`、全檔 `0x59cb`、四槽 record `+0x312b+i*0xa28`（`0x28` metadata + `0xa00` persistent roster）；真實 sandbox decode 與 `tools/fd2save.py` round-trip/tamper regression 已固定 `0x4dbd8` rolling-XOR、`0x4dbb9` byte-sum checksum。metadata `+0`=chapter、`0xff`=empty marker 已由 renderer `0x30437` 關閉，`+2..+5`=currency 已由 `0x2d411/0x2d528` 加減／UI render 關閉。合法 IDA 9.4 與 Capstone 另閉合 `0x2602c..0x26098` 的 roster-first／metadata-second restore 順序，以及 `0x2cad7→chapter pre-handler` 分派；`fdsave.InspectChapterSlot` 已保存 32×`0x50` raw records、完整 metadata，空槽／count 超容量失敗即關閉，persistent record→typed party materializer 亦已存在。production `FD2_NATIVE_SAVE` 已能從 checksum-valid 原生檔顯示四槽 metadata；空槽不退出 selector，有效槽在正式 `0x2cad7→pre-handler` restore owner 未接入前不誤轉 JSON loader。四槽路徑不呼叫 `0x10010`；其餘 metadata、逐章 route owner 與一般玩家成功 restore 尚待閉合。不得再稱「強加密／無結構」；重製仍用自有格式。
   `0x112A5→0x1145A→0x17FC0` 的 writer／consumer 已再由合法 IDA 固定
   item cells、command mask、race/class/level、transient、base AP/DP、
   MV/EXP、DX、HP/MP 與衍生 AP/DP/HIT/EV offsets；新增
@@ -411,7 +411,7 @@
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
 - [x] **頂層狀態機反組譯**:真 main=0x25bf4(雙層迴圈),核心狀態變數 `[0x53c03]`=章節,兩張章節跳表(0x51d71 戰前劇情 / 0x51de9 戰後)→ `23`
 - [x] **標題序列**:角色立繪 5 幀(FDOTHER #0x45-0x49,320×147)垂直捲動(非旋轉)+ FLAME DRAGON logo(#7 sub0)+ 主選單;**解碼器當 oracle 解圖視覺驗證** → `23`
-- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-29 已閉合後者從 FD2.SAV plaintext `0x30c3` current-runtime header 恢復 camera/cursor/visible cursor、gate A、runtime roster 與 event table；它不是一般新章 loader。remake 四槽已可選擇自有 JSON 或唯讀 `FD2_NATIVE_SAVE` metadata 來源；原生來源有效槽在 roster 尚未正規化前會失敗即關閉，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
+- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` raw battle state、兩份 roster、`0x30a3` raw block 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽已可選擇自有 JSON 或唯讀 `FD2_NATIVE_SAVE` metadata 來源；persistent record materializer 已有，但四槽 postbattle route owner 與 CONTINUE current-battle runtime owner 都尚未接入，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **cutscene→戰場控制流勘誤**：`0x10010` 真 caller 仍是 `0x1a251/0x26130`，但展開 `0x25ebb` 證實 `0x26130` 只屬第三主選單分支；新遊戲與四槽讀檔各自跑 pre-handler 後從 `0x25ebb` 返回，main `0x25dce` 才呼叫 `0x117e7`。舊「handler ret 後在同 driver 線性落入 `0x10010`」已撤回；callgraph 工具排除 `0x1b051/0x26f30` 偽命中的成果仍有效 → `23`、`24`
@@ -1568,14 +1568,20 @@
   成功動畫與扣款合成切片可升E2；完整商店仍因其他子面板與正常campaign/save
   路徑未閉合而維持部分完成。
 - [~] **NATIVE-CURRENT-SNAPSHOT-ROSTER**：合法 IDA Pro 9.4 閉合
-  `0x10010` 的 plaintext `0x08a3` persistent roster、`0x12a3` runtime
-  roster 與 `0x30c3` 18-byte header。撤回 header `+0` 是 persistent
+  `0x10010` 的 plaintext `0x0000` raw `0x8a3` battle state、
+  `0x08a3` persistent roster、`0x12a3` runtime roster、`0x30a3`
+  raw 32-byte block 與 `0x30c3` 18-byte header。撤回 header `+0` 是 persistent
   count 的錯誤工具斷言；正確為 `+0=turn counter`、`+1=runtime count`、
   `+9=persistent count`。`fdsave.InspectCurrentSnapshot` 已保存兩份 raw
-  records、限制原生容量並有聚焦回歸；使用者 checksum-valid 原版快照
+  records、兩個 raw 區域、限制原生容量並有聚焦回歸；使用者
+  checksum-valid 原版快照
   實測 persistent identities `[0,9,4,30]`。strict identity/class
-  catalog 與單筆 `battle.Unit` materialization 已由下一項閉合；尚缺
-  chapter node 與正式 CONTINUE owner，故仍維持失敗即關閉
+  catalog 與單筆 `battle.Unit` materialization 已由下一項閉合。IDA 與
+  Capstone 證實 `0x10010` 自己載資源、建 selector、恢復畫面，並在
+  `0x10616` 呼叫戰鬥驅動 `0x4e031` 後由共享 epilogue 返回；舊「尚缺
+  chapter node／原版 owner」說法已撤回。真正缺的是兩個 raw 區域、
+  runtime records/selectors 與戰鬥驅動的重製端具型別 owner，故正式
+  CONTINUE 仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`
 - [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
   SHA-256 綁定的可編輯 32 人 identity／class 0–28 catalog，以及嚴格
@@ -1586,4 +1592,5 @@
   兩個全形空格、class 28 是「？？？」，舊 `cls28`／`?`／「職業28」
   占位已移除。`FD2_NATIVE_SAVE_FIXTURE` Docker 整合測試已
   唯讀走完 current snapshot 四筆 record，實得索爾、悠妮、亞雷斯、蓋亞。
-  下一步是閉合章節節點與正式 owner；目前不接 CONTINUE。
+  下一步是閉合上述 current battle runtime；目前不接 CONTINUE。四槽 LOAD
+  則另缺 `0x2cad7→pre-handler` 的正式重製端 restore owner。

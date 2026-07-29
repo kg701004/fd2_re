@@ -273,9 +273,9 @@ func (g *Game) titleUpdate() bool {
 					return true
 				}
 				if native {
-					// The indexed selector can inspect native metadata, but the
-					// opaque 0x50-byte roster is not yet safe to normalize.
-					g.msg = "原版 FD2.SAV 的隊伍還原尚未完成"
+					// 索引式選槽與具型別名冊解析器已閉合，但原生 LOAD 的
+					// 戰後閘門／戰前處理器擁有者尚未接入重製戰役圖。
+					g.msg = "原版 FD2.SAV 的戰後路由還原尚未完成"
 					return true
 				}
 				g.loadGameFromSlot(selected)
