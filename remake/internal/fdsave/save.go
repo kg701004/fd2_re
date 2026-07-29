@@ -21,10 +21,10 @@ const (
 
 	CurrentPersistentRosterOffset = 0x08a3
 	CurrentRuntimeRosterOffset    = 0x12a3
-	CurrentRawBattleStateOffset   = 0x0000
-	CurrentRawBattleStateSize     = 0x08a3
-	CurrentRaw30A3Offset          = 0x30a3
-	CurrentRaw30A3Size            = 0x20
+	CurrentFieldControlOffset     = 0x0000
+	CurrentFieldControlSize       = 0x08a3
+	CurrentNativeEventStateOffset = 0x30a3
+	CurrentNativeEventStateSize   = 0x20
 	CurrentRuntimeHeaderOffset    = 0x30c3
 	CurrentRuntimeHeaderSize      = 18
 )
@@ -340,14 +340,17 @@ type CurrentRuntimeHeader struct {
 // CurrentSnapshot preserves every directly copied FD2.SAV source region
 // consumed by 0x10010. RuntimeRecords is count-delimited; PersistentRecords
 // retains the full native capacity because the loader copies a fixed 0xa00
-// bytes. RawBattleState and Raw30A3 remain opaque until their downstream
-// consumers are independently closed.
+// bytes. NativeEventState is the exact 32-byte battle-local table pointed to
+// by [0x53ad5]; individual indexes remain raw until their callers are closed.
+// NativeFieldControl is the fixed-capacity runtime image at [0x53a55]. The
+// chapter loader fills it from FDFIELD.DAT control resource 3N+1, while
+// current-save and CONTINUE copy all 0x8a3 bytes symmetrically.
 type CurrentSnapshot struct {
-	RawBattleState    [CurrentRawBattleStateSize]byte
-	Header            CurrentRuntimeHeader
-	PersistentRecords [RosterUnits]PersistentRecord
-	RuntimeRecords    []PersistentRecord
-	Raw30A3           [CurrentRaw30A3Size]byte
+	NativeFieldControl [CurrentFieldControlSize]byte
+	Header             CurrentRuntimeHeader
+	PersistentRecords  [RosterUnits]PersistentRecord
+	RuntimeRecords     []PersistentRecord
+	NativeEventState   [CurrentNativeEventStateSize]byte
 }
 
 // InspectCurrentSnapshot decodes only the verified plaintext layout used by
@@ -389,8 +392,8 @@ func InspectCurrentSnapshot(plain []byte) (CurrentSnapshot, error) {
 		},
 	}
 	copy(
-		snapshot.RawBattleState[:],
-		plain[CurrentRawBattleStateOffset:CurrentRawBattleStateOffset+CurrentRawBattleStateSize],
+		snapshot.NativeFieldControl[:],
+		plain[CurrentFieldControlOffset:CurrentFieldControlOffset+CurrentFieldControlSize],
 	)
 	for index := range snapshot.PersistentRecords {
 		start := CurrentPersistentRosterOffset + index*UnitSize
@@ -407,8 +410,8 @@ func InspectCurrentSnapshot(plain []byte) (CurrentSnapshot, error) {
 		copy(snapshot.RuntimeRecords[index].Raw[:], plain[start:start+UnitSize])
 	}
 	copy(
-		snapshot.Raw30A3[:],
-		plain[CurrentRaw30A3Offset:CurrentRaw30A3Offset+CurrentRaw30A3Size],
+		snapshot.NativeEventState[:],
+		plain[CurrentNativeEventStateOffset:CurrentNativeEventStateOffset+CurrentNativeEventStateSize],
 	)
 	return snapshot, nil
 }

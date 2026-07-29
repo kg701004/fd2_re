@@ -1,0 +1,40 @@
+FD2 current snapshot 的 FDFIELD 控制映像（IDA Pro 9.4）
+=========================================================
+
+證據範圍
+--------
+
+- `FD2.EXE` 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一順位：使用者合法 IDA Pro 9.4，只在授權、無網路 Docker 流程執行。
+- 第二順位：`fd2-cap-local` 的 Capstone 5.0.3，覆核下列直接複製邊界。
+
+來源與對稱保存
+--------------
+
+新章載入器 `0x1088D` 從 `FDFIELD.DAT` 載入資源 `chapter*3+1` 到
+`[0x53A55]`。這是每張戰場的控制資源，不是未分類的泛用 battle state：
+
+- `+0` 供 FDSHAP 資源選擇使用；
+- `+1` 寫入 `[0x53BE7]`，並參與建立執行期名冊數量；
+- `+2` 寫入 `[0x53BE3]`；
+- `+3` 起是 `0x1A813` 消費的 16 筆三位元組回合事件；
+- `+0x33` 起是 `0x13A44` 消費的 16 筆
+  `(event_id, selector)` 格子事件；
+- `+0x83` 起是 `0x10B4E` 以 26 bytes stride 掃描的 FDFIELD 單位列。
+
+current-save writer `0x19DF7..0x1A30B` 將 `[0x53A55]` 起固定
+`0x8A3` bytes 寫到 plaintext `+0x0000`。CONTINUE loader `0x10010`
+在 `0x101C3..0x101D7` 對稱地把同一範圍複製回 `[0x53A55]`，隨後呼叫
+`0x10652` 重建相關執行期狀態。因此 `FD2.SAV+0x0000..+0x08A2`
+是 FDFIELD 控制段的固定容量執行期映像，不是語意未知的單一戰鬥區塊。
+
+重製邊界
+--------
+
+`fdsave.CurrentSnapshot.NativeFieldControl` 以 `[0x8A3]byte` 原樣保存此
+映像；目前只提升整體來源與生命週期，不把尚未逐一閉合的尾端 bytes
+命名。CONTINUE 正式接入仍需把這份控制映像與 runtime records、selector
+cache、`battle.State` 及戰鬥驅動做嚴格一致性驗證；本次更名本身不代表
+CONTINUE 已可供玩家使用。

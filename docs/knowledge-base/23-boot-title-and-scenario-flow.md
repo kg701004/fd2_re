@@ -441,8 +441,9 @@ town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。
 - **[部分已解]** 第三主選單分支已完整展開：`0x26124` 停曲後呼叫
   `0x10010`；後者自行載入目前戰鬥資源、恢復 raw state／rosters／header、
   建立 selector，於 `0x10616` 呼叫 `0x4E031`，再由共享 epilogue 返回
-  `0x26135` 重設章節曲號。仍未閉合的是 `0x0000..0x08A2`、
-  `0x30A3..0x30C2` 與 runtime selector／戰鬥驅動的高階語意，不是第三
+  `0x26135` 重設章節曲號。`0x0000..0x08A2` 已閉合為 FDFIELD 控制映像，
+  `0x30A3..0x30C2` 已閉合為 battle-local event state；仍未閉合的是兩者
+  與 runtime selector／record、`battle.State`、戰鬥驅動的嚴格一致性，不是第三
   分支或 header 章節欄位本身。選單設定結構 0x5204e 的其他欄與各章 handler
   仍需逐一展開。
 - **方法**:本篇控制流全靠**靜態反組譯**(規則 62:控制流非 runtime-only);標題畫面內容用**已破解解碼器解出輸出當 oracle**(規則 64)視覺驗證,**未動用 DOSBox**。若日後要對「捲動速度/淡入時序/BGM 對齊」做逐幀比對,DOSBox 截圖序列可當最後的時序 oracle,但機制本身已不需動態分析即可確定。

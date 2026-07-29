@@ -1,0 +1,75 @@
+FD2 current snapshot 戰鬥本地事件狀態（IDA Pro 9.4）
+====================================================
+
+證據範圍
+--------
+
+- `FD2.EXE` 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 版本基準：`docs/data/fd2-reference-files.json`
+- 第一順位：使用者合法 IDA Pro 9.4，
+  `fd2-ida-authorized-local` 一次性無網路 Docker；
+  原版與授權檔唯讀，資料庫只寫 `/tmp/fd2-ida-continue30a3`。
+- 第二順位：`fd2-cap-local` 的 Capstone 5.0.3，獨立覆核下列直接指令。
+
+重要勘誤
+--------
+
+`[0x53AD5]` 是一個指標，不是32 bytes globals 的起點。main 於
+`0x25D33..0x25D3D` 配置精確 `0x20` bytes：
+
+    0x25D33  push 0x20
+    0x25D35  call malloc
+    0x25D3D  mov  [0x53AD5],eax
+
+因此對 `0x53AD9/0x53ADD/...` 的資料交叉參照屬相鄰 globals，不能當成
+這個 heap table 的欄位或 consumer。逐 byte 查這32個相鄰絕對位址的做法
+是錯誤的 xref 模型；正確模型必須追 `[0x53AD5]` 指標後的 indexed access。
+
+current snapshot writer／reader
+-------------------------------
+
+戰內存檔函式 `0x19DF7..0x1A30B` 在
+`0x1A03D..0x1A04C` 將 table 完整寫入 plaintext `+0x30A3`：
+
+    push 0x20
+    push dword [0x53AD5]
+    lea  eax,[save_buffer+0x30A3]
+    push eax
+    call memmove
+
+CONTINUE loader `0x10010` 在 `0x10319..0x10328` 做完全對稱的恢復：
+
+    push 0x20
+    lea  eax,[save_buffer+0x30A3]
+    push eax
+    push dword [0x53AD5]
+    call memmove
+
+因此這32 bytes 是 current snapshot 正式保存／恢復的 battle-local state，
+不是 padding，也不是四槽 metadata。
+
+已證實的 indexed consumers
+---------------------------
+
+- `0x190F1..0x190FC` 以 caller 算出的 `edi` 讀
+  `byte [[0x53AD5]+edi]`；非零時跳過後續互動。
+- 成功路徑 `0x19246..0x1924B` 對同一 index 寫1。
+- `0x13D00` 也以 event index 寫 table byte；其完整 dispatcher 證據另見
+  `fd2_ai_mode_dispatch_disasm.txt`。
+- ch25 post 的 `0x24F30/0x24FB1` 讀 index12 選文字分支；既有 E1
+  runtime 以 `battle.State.NativeEventState[12]` 保存同一 raw predicate。
+- ch06 post 讀 index17；AI event82 讀 index16 等於4。這些只固定個別
+  caller 的 raw predicate，不授權把整張表命名為 treasure、unit slots、
+  campaign flags 或任何單一高階機制。
+
+重製邊界
+--------
+
+`fdsave.CurrentSnapshot.NativeEventState` 現以 `[0x20]byte` 保存這張表，
+與既有 `battle.State.NativeEventState` 使用相同窄語意：戰鬥本地、
+未命名 index、raw byte value。解析器只複製，不執行事件，也不因此接通
+CONTINUE production owner。真正剩餘的大型缺口仍是 plaintext
+`0x0000..0x08A2` FDFIELD 控制映像與 runtime records／selector cache、
+戰鬥驅動狀態之間的嚴格還原。

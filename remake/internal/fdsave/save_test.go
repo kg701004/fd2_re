@@ -212,10 +212,10 @@ func TestPersistentRecordViewUsesProvenOffsetsAndSignedWords(t *testing.T) {
 
 func TestInspectCurrentSnapshotUsesIDA10010Offsets(t *testing.T) {
 	plain := make([]byte, FileSize)
-	plain[CurrentRawBattleStateOffset] = 0x11
-	plain[CurrentRawBattleStateOffset+CurrentRawBattleStateSize-1] = 0x22
-	plain[CurrentRaw30A3Offset] = 0x33
-	plain[CurrentRaw30A3Offset+CurrentRaw30A3Size-1] = 0x44
+	plain[CurrentFieldControlOffset] = 0x11
+	plain[CurrentFieldControlOffset+CurrentFieldControlSize-1] = 0x22
+	plain[CurrentNativeEventStateOffset] = 0x33
+	plain[CurrentNativeEventStateOffset+CurrentNativeEventStateSize-1] = 0x44
 	header := plain[CurrentRuntimeHeaderOffset : CurrentRuntimeHeaderOffset+CurrentRuntimeHeaderSize]
 	copy(header, []byte{
 		3, 2, 7,
@@ -246,21 +246,21 @@ func TestInspectCurrentSnapshotUsesIDA10010Offsets(t *testing.T) {
 		got.RuntimeRecords[1].View().RawIdentity != 30 {
 		t.Fatalf("current runtime records=%#v", got.RuntimeRecords)
 	}
-	if got.RawBattleState[0] != 0x11 ||
-		got.RawBattleState[len(got.RawBattleState)-1] != 0x22 ||
-		got.Raw30A3[0] != 0x33 ||
-		got.Raw30A3[len(got.Raw30A3)-1] != 0x44 {
+	if got.NativeFieldControl[0] != 0x11 ||
+		got.NativeFieldControl[len(got.NativeFieldControl)-1] != 0x22 ||
+		got.NativeEventState[0] != 0x33 ||
+		got.NativeEventState[len(got.NativeEventState)-1] != 0x44 {
 		t.Fatalf(
-			"current raw regions battle=%#x/%#x block30a3=%#x/%#x",
-			got.RawBattleState[0],
-			got.RawBattleState[len(got.RawBattleState)-1],
-			got.Raw30A3[0],
-			got.Raw30A3[len(got.Raw30A3)-1],
+			"current raw regions battle=%#x/%#x event-state=%#x/%#x",
+			got.NativeFieldControl[0],
+			got.NativeFieldControl[len(got.NativeFieldControl)-1],
+			got.NativeEventState[0],
+			got.NativeEventState[len(got.NativeEventState)-1],
 		)
 	}
-	plain[CurrentRawBattleStateOffset] = 0
-	plain[CurrentRaw30A3Offset] = 0
-	if got.RawBattleState[0] != 0x11 || got.Raw30A3[0] != 0x33 {
+	plain[CurrentFieldControlOffset] = 0
+	plain[CurrentNativeEventStateOffset] = 0
+	if got.NativeFieldControl[0] != 0x11 || got.NativeEventState[0] != 0x33 {
 		t.Fatal("current snapshot raw regions alias caller plaintext")
 	}
 }

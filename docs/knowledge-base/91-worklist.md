@@ -412,7 +412,7 @@
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
 - [x] **頂層狀態機反組譯**:真 main=0x25bf4(雙層迴圈),核心狀態變數 `[0x53c03]`=章節,兩張章節跳表(0x51d71 戰前劇情 / 0x51de9 戰後)→ `23`
 - [x] **標題序列**:角色立繪 5 幀(FDOTHER #0x45-0x49,320×147)垂直捲動(非旋轉)+ FLAME DRAGON logo(#7 sub0)+ 主選單;**解碼器當 oracle 解圖視覺驗證** → `23`
-- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` raw battle state、兩份 roster、`0x30a3` raw block 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽 LOAD 已接 checksum-valid selector→typed party→town/preparation production owner；真正未接的是未修改一般玩家有效槽 E2、delete/overwrite 與 CONTINUE current-battle runtime owner，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
+- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` FDFIELD 控制映像、兩份 roster、`0x30a3` battle-local event state 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽 LOAD 已接 checksum-valid selector→typed party→town/preparation production owner；真正未接的是未修改一般玩家有效槽 E2、delete/overwrite 與 CONTINUE current-battle runtime owner，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **cutscene→戰場控制流勘誤**：`0x10010` 真 caller 仍是 `0x1a251/0x26130`，但展開 `0x25ebb` 證實 `0x26130` 只屬第三主選單分支；新遊戲與四槽讀檔各自跑 pre-handler 後從 `0x25ebb` 返回，main `0x25dce` 才呼叫 `0x117e7`。舊「handler ret 後在同 driver 線性落入 `0x10010`」已撤回；callgraph 工具排除 `0x1b051/0x26f30` 偽命中的成果仍有效 → `23`、`24`
@@ -1570,21 +1570,28 @@
   成功動畫與扣款合成切片可升E2；完整商店仍因其他子面板與正常campaign/save
   路徑未閉合而維持部分完成。
 - [~] **NATIVE-CURRENT-SNAPSHOT-ROSTER**：合法 IDA Pro 9.4 閉合
-  `0x10010` 的 plaintext `0x0000` raw `0x8a3` battle state、
+  `0x10010` 的 plaintext `0x0000` `0x8a3` FDFIELD 控制映像、
   `0x08a3` persistent roster、`0x12a3` runtime roster、`0x30a3`
-  raw 32-byte block 與 `0x30c3` 18-byte header。撤回 header `+0` 是 persistent
+  32-byte battle-local event state 與 `0x30c3` 18-byte header。撤回 header `+0` 是 persistent
   count 的錯誤工具斷言；正確為 `+0=turn counter`、`+1=runtime count`、
   `+9=persistent count`。`fdsave.InspectCurrentSnapshot` 已保存兩份 raw
-  records、兩個 raw 區域、限制原生容量並有聚焦回歸；使用者
+  records、field control、battle-local event state，限制原生容量並有
+  聚焦回歸；使用者
   checksum-valid 原版快照
   實測 persistent identities `[0,9,4,30]`。strict identity/class
   catalog 與單筆 `battle.Unit` materialization 已由下一項閉合。IDA 與
   Capstone 證實 `0x10010` 自己載資源、建 selector、恢復畫面，並在
   `0x10616` 呼叫戰鬥驅動 `0x4e031` 後由共享 epilogue 返回；舊「尚缺
-  chapter node／原版 owner」說法已撤回。真正缺的是兩個 raw 區域、
-  runtime records/selectors 與戰鬥驅動的重製端具型別 owner，故正式
+  chapter node／原版 owner」說法已撤回。後續 IDA／Capstone 已證實
+  `[0x53ad5]` 是 `malloc(0x20)` pointer，writer／reader 對稱保存，
+  並由 indexed event paths 消費；`Raw30A3` 因而提升為
+  `NativeEventState[32]`。`0x0000..0x08a2` 也由 FDFIELD 資源來源、
+  對稱 copy 與 `0x1a813/0x13a44/0x10b4e` consumers 閉合為
+  `NativeFieldControl[0x8a3]`。真正缺的是控制映像與 runtime
+  records/selectors、`battle.State` 及戰鬥驅動的嚴格一致性，故正式
   CONTINUE 仍維持失敗即關閉
-  → `fd2_current_snapshot_ida.txt`
+  → `fd2_current_snapshot_ida.txt`、`fd2_current_event_state_ida.txt`、
+  `fd2_current_field_control_ida.txt`
 - [~] **NATIVE-PERSISTENT-PARTY-MATERIALIZATION**：新增與參考 EXE
   SHA-256 綁定的可編輯 32 人 identity／class 0–28 catalog，以及嚴格
   `PersistentRecord→battle.Unit` 投影。保留 raw inventory flags、command

@@ -2543,6 +2543,29 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   不重播、合成有效槽成功 restore，以及錯誤 route 不部分 mutation。
   使用者未修改原版四槽目前皆空，因此仍只有 E1，尚無一般玩家有效槽 E2；
   `0x10010` CONTINUE current battle 仍是另一條未接路徑。
+
+## 2026-07-30：CONTINUE `+0x30A3` event-state 邊界閉合
+
+- 合法 IDA Pro 9.4 的首次 xref 掃描暴露方法錯誤：`0x53AD9` 之後是
+  相鄰 globals，不是 `[0x53AD5]` table 欄位。main
+  `0x25D33..0x25D3D` 實際以 `malloc(0x20)` 建 buffer，再把 pointer
+  寫入 `[0x53AD5]`；因此必須追 pointer 後的 indexed access。
+- current-save writer `0x1A03D..0x1A04C` 把 pointer 指向的32 bytes
+  完整寫到 plaintext `+0x30A3`；CONTINUE `0x10319..0x10328` 對稱
+  讀回。Capstone 5.0.3 以相同 EXE 雜湊獨立覆核。
+- `0x190F1..0x190FC` 依 event index 測 table byte，
+  `0x19246..0x1924B` 成功時寫1；既有 runtime 另有 ch25 index12、
+  ch06 index17、AI index16 的 caller-specific raw predicates。因此
+  `CurrentSnapshot.Raw30A3` 已更名為 `NativeEventState[32]`，與
+  `battle.State.NativeEventState` 對齊但不替其他 index 命名。
+- CONTINUE 仍不接 production；plaintext `0x0000..0x08A2` 已由新章
+  FDFIELD 載入來源、對稱 current-save／CONTINUE copy，以及
+  `0x1A813/0x13A44/0x10B4E` consumers 閉合為固定容量
+  `NativeFieldControl[0x8A3]`，不再稱為泛用 raw battle state。
+  剩餘主缺口是這份控制映像與 runtime record／selector cache、
+  `battle.State` 及 battle driver 的嚴格一致性。
+  直接證據保存於 `docs/data/fd2_current_event_state_ida.txt`。
+  控制映像證據保存於 `docs/data/fd2_current_field_control_ida.txt`。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
 
 - 依 IDA Pro 第一順位規則重查 `0x30550/0x30437`。`0x25F48..0x25F5D`

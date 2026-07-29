@@ -27,7 +27,7 @@ FD2.SAV current-runtime snapshot（IDA Pro 9.4）
 | `0x0000` | `0x08A3` | `0x101C3..0x101D7` 複製至 `[0x53A55]` 後呼叫 `0x10652` |
 | `0x08A3` | `0x0A00` | `0x1010F..0x10121` 固定複製至 persistent roster `[0x53BF7]` |
 | `0x12A3` | `header[1] * 0x50` | `0x10296..0x10311` 複製至 runtime roster `[0x53A45]` |
-| `0x30A3` | `0x20` | `0x10319..0x10328` 複製至 `[0x53AD5]`；高階欄位語意仍未知 |
+| `0x30A3` | `0x20` | `0x10319..0x10328` 複製至 `[0x53AD5]` 指向的 heap table；writer `0x1A03D..0x1A04C` 對稱保存。這是未命名 index 的 battle-local event state |
 | `0x30C3` | `0x12` | 逐欄恢復目前戰鬥的標頭 |
 
 18-byte header 的已證實映射：
@@ -98,8 +98,11 @@ FDSHAP，依 runtime record `+7` 建 selector，恢復 camera/cursor/options，
 重製端邊界
 ----------
 
-- `fdsave.InspectCurrentSnapshot` 保存上述五個固定區域；兩個尚未閉合語意的
-  區域以 `RawBattleState`／`Raw30A3` 原樣保留。
+- `fdsave.InspectCurrentSnapshot` 保存上述五個固定區域；`0x0000` 已依
+  FDFIELD 載入來源、對稱 writer／reader 與欄位 consumers 提升為
+  `NativeFieldControl[0x8A3]`。`0x30A3` 已依 pointer allocation、對稱
+  writer／reader 與 indexed consumers 提升為 `NativeEventState[32]`；
+  各 index 的高階事件名稱仍不猜。
 - runtime count 超過 96、persistent count 超過 32 時拒絕整份快照。
 - persistent 與 runtime records 都保存原始 `0x50` bytes；高階角色名稱與
   `battle.Unit` 轉換仍需獨立、嚴格的 identity／class catalog。
@@ -108,7 +111,13 @@ FDSHAP，依 runtime record `+7` 建 selector，恢復 camera/cursor/options，
   跳到 `0x22BBE` 是與其 prologue 配對的共享 epilogue，不是另一個未找到的
   CONTINUE owner。呼叫返回 `0x26135` 後只再依 `[0x53C03]` 查
   `0x51E63` 重設章節曲號。
-- 重製端尚未有等價 production owner，真正缺口是 `RawBattleState`、
-  `Raw30A3`、runtime record/selector 與戰鬥驅動狀態的具型別還原，不是
+- 重製端尚未有等價 production owner，真正缺口是
+  `NativeFieldControl` 與 runtime record/selector、戰鬥規則狀態之間的
+  一致性還原，不是
   header 章節欄位或 persistent record materializer。四槽 LOAD 仍是另一條
   `0x2CAD7→pre-handler` ABI，不可接到此解析器。
+
+`[0x53AD5]` 指標與 current-save 對稱 copy 的勘誤／直接證據另見
+[`fd2_current_event_state_ida.txt`](fd2_current_event_state_ida.txt)。
+`0x0000` 控制映像的來源與 consumers 見
+[`fd2_current_field_control_ida.txt`](fd2_current_field_control_ida.txt)。

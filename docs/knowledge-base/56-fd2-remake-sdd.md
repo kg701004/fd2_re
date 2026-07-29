@@ -2423,26 +2423,40 @@ slot、`0xFF` 與 selector gate，尚未猜測性 dispatch 未解 handler。
 ### 2026-07-29 — current-runtime snapshot 的原生名冊邊界
 
 合法 IDA Pro 9.4 直接指令已閉合 `0x10010` 的五個 plaintext 區域：
-`FD2.SAV+0x0000` 的 `0x08A3` bytes 是尚未具型別化的 battle state，
+`FD2.SAV+0x0000` 的 `0x08A3` bytes 是 FDFIELD 控制段的執行期映像，
 `+0x08A3` 固定 `0x0A00` bytes 是 persistent roster，
 `+0x12A3` 是由 header runtime count 限定的 runtime roster，
-`+0x30A3` 是 32-byte raw block，`+0x30C3` 是 18-byte header。
+`+0x30A3` 是 32-byte battle-local event state，`+0x30C3` 是
+18-byte header。
 header `+0/+1/+9` 分別寫入
 `[0x53BEF]/[0x53BEB]/[0x53BFB]`，因此是 turn counter、runtime count、
 persistent count；舊工具把 `+0` 稱為 persistent count 的斷言已刪除。
 
 `fdsave.InspectCurrentSnapshot` 現保存兩份原始 `0x50`-byte 名冊、
-`0x0000..0x08A2` raw battle state、`0x30A3..0x30C2` raw block 與
+`0x0000..0x08A2` `NativeFieldControl`、`0x30A3..0x30C2` battle-local
+event state 與
 18-byte header，並對 runtime count `<=96`、persistent count `<=32`
 採失敗即關閉。使用者目前
 checksum-valid 的未修改快照實測得到 persistent identity
 `[0,9,4,30]`，依固定角色表是索爾、悠妮、亞雷斯、蓋亞。此動態快照不是
 固定版本 fixture，也不證明原生 LOAD／CONTINUE 已完成；identity/class
-catalog 與正式 party materialization 已由下一段閉合；但 raw battle state、
-runtime selector／record 與戰鬥驅動狀態尚未具型別化。合法 IDA Pro 9.4
+catalog 與正式 party materialization 已由下一段閉合；但控制映像與
+runtime selector／record、`battle.State` 及戰鬥驅動的嚴格一致性尚未閉合。合法 IDA Pro 9.4
 已證實 `0x10010` 本身在 `0x10616` 呼叫 `0x4E031`，再由共享 epilogue
 返回第三標題分支，因此不存在另一個待尋找的原版 CONTINUE owner。逐指令證據見
 [`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt)。
+FDFIELD 控制映像的來源、固定容量與 consumers 見
+[`fd2_current_field_control_ida.txt`](../data/fd2_current_field_control_ida.txt)。
+
+後續 IDA／Capstone 勘誤證實 `[0x53AD5]` 是 main 以 `malloc(0x20)`
+建立的 pointer，不是32 bytes相鄰 globals 的起點。current-save writer
+`0x1A03D..0x1A04C` 與 CONTINUE reader `0x10319..0x10328` 對這個
+heap table 做完全對稱的 `0x20`-byte copy；`0x190F1/0x19246` 等路徑
+再以 event index 讀／寫 byte。既有 `battle.State.NativeEventState`
+已保存 ch25 index12、ch06 index17、AI index16 等窄 raw predicates，
+因此 `CurrentSnapshot.Raw30A3` 已更名為 `NativeEventState[32]`。
+這不替其餘 index 命名，也不接通 CONTINUE。直接證據見
+[`fd2_current_event_state_ida.txt`](../data/fd2_current_event_state_ida.txt)。
 
 後續已新增綁定同一 FD2.EXE SHA-256 的
 `native_character_catalog.json`，只保存 32 筆 persistent identity 名稱與
