@@ -92,7 +92,14 @@ def parse_map(raw, m):
                       # been closed for both FDFIELD and persistent sources.
                       "raw_unit_key": b[1],
                       "portrait": b[1],  # legacy output alias; not ABI evidence
-                      "race": b[2], "cls": b[3], "lv": b[4],
+                      # Historical exporter labels kept only for normalized
+                      # compatibility. 0x10c50 does not use b2/b3 as runtime
+                      # +0x1f/+0x20: those bytes come from EXE tables. It
+                      # copies b2 separately to +0x3d and does not read b3.
+                      "race": b[2], "cls": b[3],
+                      "native_record_byte3d": b[2],
+                      "native_source_byte3": b[3],
+                      "lv": b[4],
                       "inventory": [item for item in b[5:13] if item != 0xFF],
                       "inventory_slots": list(b[5:13]),
                       # Constructor 0x10f7f copies exactly b[13:17] to runtime
@@ -106,10 +113,12 @@ def parse_map(raw, m):
                       "native_record_byte34": b[17],
                       "native_record_byte35": b[18],
                       "native_record_byte36": b[19],
+                      "native_source_byte20": b[20],
                       "group": b[21],
                       # 0=item、1=gold 已由原攻略確認；2/3 是特殊死亡效果，
                       # 語意未全解前保留原值，不猜成一般掉落物。
                       "death_effect": death_effect,
+                      "native_record_death_effect": list(b[22:25]),
                       "native_source_byte25": b[25]})
                       # b21=出場波次 group；b22 + b23..24=runtime +0x31..33；
                       # b25 目前只保存原始來源，不併入效果 payload。

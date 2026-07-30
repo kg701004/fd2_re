@@ -14,10 +14,10 @@ does, however, close three fields for every scripted roster entry:
 * roster b17/b18/b19 -> runtime +0x34/+0x35/+0x36
 
 This tool preserves every existing asset field and updates only
-the fields above. The optional native table input adds independently proven
-raw race/class bytes and runtime ``+0x42/+0x46``; it deliberately does not
-duplicate whole constructor tables into every unit asset. The runtime loader
-uses those exact words as initial HP/MP when present.
+the fields above. The optional native table input adds the exact b1-selected
+constructor record, independently proven raw race/class bytes and runtime
+``+0x42/+0x46``. Keeping the selected record beside each editable unit makes
+the constructor projection reproducible without consulting FD2.EXE at runtime.
 
 Optional constructor provenance can be synchronized without touching unrelated
 manual asset fields:
@@ -38,11 +38,20 @@ import parse_field
 import export_units
 
 
+REFERENCE_FILES = Path(__file__).resolve().parent.parent / "docs/data/fd2-reference-files.json"
+
+
 FIELDS = (
     "map_selector_key",
     "native_record_byte6",
     "battle_fig",
     "native_record_byte8",
+    "native_record_byte3d",
+    "native_record_death_effect",
+    "native_source_byte3",
+    "native_source_byte20",
+    "native_source_byte25",
+    "native_position_record",
     "initial_command_mask",
     "native_record_byte34",
     "native_record_byte35",
@@ -50,10 +59,41 @@ FIELDS = (
 )
 
 
+def validate_native_tables(native_tables, reference_files):
+    manifest = json.loads(reference_files.read_text(encoding="utf-8"))
+    reference = next(
+        (item for item in manifest.get("files", []) if item.get("file") == "FD2.EXE"),
+        None,
+    )
+    if reference is None:
+        raise ValueError(f"{reference_files}: missing FD2.EXE reference")
+    fields = (
+        ("source_size", "size"),
+        ("source_md5", "md5"),
+        ("source_sha256", "sha256"),
+    )
+    if native_tables.get("source") != "FD2.EXE":
+        raise ValueError("native constructor tables have an invalid source")
+    for table_field, reference_field in fields:
+        if native_tables.get(table_field) != reference.get(reference_field):
+            raise ValueError(
+                f"native constructor tables {table_field}="
+                f"{native_tables.get(table_field)!r}, expected "
+                f"{reference.get(reference_field)!r}"
+            )
+
+
 def expected_units(raw, map_index, native_tables=None):
     expected = []
-    for unit in parse_field.parse_map(str(raw), map_index)["units"]:
+    parsed = parse_field.parse_map(str(raw), map_index)
+    positions = parsed["positions"]
+    for index, unit in enumerate(parsed["units"]):
         raw_unit_key = unit["raw_unit_key"]
+        if index >= len(positions):
+            raise ValueError(
+                f"map{map_index}: unit {index} has no six-byte position record"
+            )
+        position = positions[index]
         item = {
             "map_selector_key": unit["native_map_selector_key"],
             "native_record_byte6": unit["native_record_byte6"],
@@ -61,6 +101,16 @@ def expected_units(raw, map_index, native_tables=None):
             # Runtime +8 receives the same raw b1 byte, but only player
             # persistent records have the separate identity lookup contract.
             "native_record_byte8": raw_unit_key,
+            "native_record_byte3d": unit["native_record_byte3d"],
+            "native_record_death_effect": unit["native_record_death_effect"],
+            "native_source_byte3": unit["native_source_byte3"],
+            "native_source_byte20": unit["native_source_byte20"],
+            "native_source_byte25": unit["native_source_byte25"],
+            "native_position_record": {
+                "x_word": position[0],
+                "y_word": position[1],
+                "raw_key": position[2],
+            },
             "initial_command_mask": unit["initial_command_mask"],
             "native_record_byte34": unit["native_record_byte34"],
             "native_record_byte35": unit["native_record_byte35"],
@@ -71,6 +121,7 @@ def expected_units(raw, map_index, native_tables=None):
                 native_tables, raw_unit_key
             )
             if constructor is not None:
+                item["native_constructor"] = constructor
                 item["native_record_race"] = constructor["record"][0]
                 item["native_record_class"] = constructor["record"][1]
             word42 = export_units.native_record_word42_for_raw_unit_key(
@@ -120,7 +171,11 @@ def sync_asset(raw, asset_path, write, native_tables=None):
                 del unit["native_identity"]
             changed += 1
         if "native_record_race" in native:
-            fields.extend(("native_record_race", "native_record_class"))
+            fields.extend((
+                "native_constructor",
+                "native_record_race",
+                "native_record_class",
+            ))
         if "native_record_word42" in native:
             fields.append("native_record_word42")
         if "native_record_word46" in native:
@@ -149,6 +204,12 @@ def main(argv):
     parser.add_argument("assets", type=Path)
     parser.add_argument("--native-tables", type=Path,
                         help="raw constructor tables from extract_native_unit_tables.py")
+    parser.add_argument(
+        "--reference-files",
+        type=Path,
+        default=REFERENCE_FILES,
+        help="hash manifest used to bind native tables to the supported FD2.EXE",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
@@ -160,6 +221,7 @@ def main(argv):
     native_tables = None
     if args.native_tables is not None:
         native_tables = json.loads(args.native_tables.read_text(encoding="utf-8"))
+        validate_native_tables(native_tables, args.reference_files)
     changed = 0
     for path in paths:
         map_index, count = sync_asset(args.raw, path, args.write, native_tables)

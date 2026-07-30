@@ -10,6 +10,7 @@ Usage (normally inside ``fd2-cap-local``):
   python3 tools/extract_native_unit_tables.py org_game/.../FD2.EXE /tmp/unit_tables.json
 """
 import json
+import hashlib
 import sys
 
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
@@ -36,7 +37,14 @@ def linear_file_offset(meta, linear):
 def extract(path):
     raw = open(path, "rb").read()
     meta = parse_le(raw)
-    result = {"schema_version": 1, "source": "FD2.EXE", "tables": {}}
+    result = {
+        "schema_version": 1,
+        "source": "FD2.EXE",
+        "source_size": len(raw),
+        "source_md5": hashlib.md5(raw).hexdigest(),
+        "source_sha256": hashlib.sha256(raw).hexdigest(),
+        "tables": {},
+    }
     for name, spec in TABLES.items():
         size = spec["record_size"] * spec["count"]
         off = linear_file_offset(meta, spec["linear"])

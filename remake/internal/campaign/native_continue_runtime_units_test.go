@@ -105,6 +105,8 @@ func continueRuntimeUnitsInput(
 	records[0].Raw[2] = 0xee
 	records[0].Raw[0x0a], records[0].Raw[0x0b] = 0x40, 0x12
 	copy(records[0].Raw[0x22:0x28], []byte{1, 2, 3, 4, 5, 6})
+	copy(records[0].Raw[0x31:0x34], []byte{2, 0x34, 0x12})
+	records[0].Raw[0x3d] = 7
 	records[1].Raw[5] = 1
 	records[1].Raw[0], records[1].Raw[1] = 0xff, 0xfe
 	records[1].Raw[3], records[1].Raw[4] = 0xfd, 0xfc
@@ -188,6 +190,9 @@ func TestMaterializeNativeContinueRuntimeUnitsPreservesRawRoster(t *testing.T) {
 		own.MapSelectorSlot == int(input.RuntimeRecords[0].Raw.Raw[2]) ||
 		own.NativeMapPresentation.Motion != 1 ||
 		own.NativeTransient != [6]byte{1, 2, 3, 4, 5, 6} ||
+		!own.HasNativeRecordDeathEffect ||
+		own.NativeRecordDeathEffect != [3]byte{2, 0x34, 0x12} ||
+		!own.HasNativeRecordByte3D || own.NativeRecordByte3D != 7 ||
 		own.NativeRecordWord42 != 14 || own.NativeRecordWord46 != 16 ||
 		len(own.Inventory) != 1 || own.Inventory[0] != 0x12 ||
 		!own.Equipped[0] {

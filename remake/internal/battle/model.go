@@ -82,6 +82,11 @@ type Unit struct {
 	// its visual selector into both +7 and +8.
 	NativeRecordByte8    byte
 	HasNativeRecordByte8 bool
+	// NativePositionRecord preserves the six-byte FDFIELD 3N+2 record paired
+	// with a scripted constructor row. The constructor reads XWord/YWord low
+	// bytes and may relocate them through its nearest-free-cell search.
+	NativePositionRecord    NativePositionRecord
+	HasNativePositionRecord bool
 	// NativeRecordRace/Class are the independently proven raw bytes at
 	// persistent/runtime +0x1f/+0x20. They remain separate from normalized
 	// class labels and from the immutable constructor-table provenance because
@@ -125,6 +130,17 @@ type Unit struct {
 	HasNativeRecordByte35 bool `json:"has_native_record_byte35,omitempty"`
 	NativeRecordByte36    byte `json:"native_record_byte36,omitempty"`
 	HasNativeRecordByte36 bool `json:"has_native_record_byte36,omitempty"`
+	// NativeRecordByte3D is copied from FDFIELD b2 by 0x10fc8. It is distinct
+	// from constructor-table race at runtime +0x1f.
+	NativeRecordByte3D    byte
+	HasNativeRecordByte3D bool
+	// NativeRecordDeathEffect is exact runtime +0x31..+0x33 from b22..b24.
+	NativeRecordDeathEffect    [3]byte
+	HasNativeRecordDeathEffect bool
+	// These source bytes are not read by 0x10c50; preserve them without names.
+	NativeFDFIELDSourceByte3  byte
+	NativeFDFIELDSourceByte20 byte
+	NativeFDFIELDSourceByte25 byte
 	// NativeRecordWord42 is the optional raw u16 at runtime record +0x42.
 	// ch15_post compares this word directly. When present on a loaded scripted
 	// roster it is also the proven constructor source for initial HP/MaxHP.
@@ -594,6 +610,11 @@ type NativeFieldUnitControl struct {
 	Raw [0x1a]byte
 }
 
+// NativePositionRecord is one exact FDFIELD 3N+2 six-byte record.
+type NativePositionRecord struct {
+	XWord, YWord, RawKey uint16
+}
+
 // NativeRuntimeRecordState is one exact saved 0x50-byte current-unit record
 // plus the selector result rebuilt from raw +7 in original list order.
 type NativeRuntimeRecordState struct {
@@ -786,26 +807,36 @@ type unitsFile struct {
 		AtkMax             int          `json:"atk_max"` // 攻擊距離上限(0=預設1)
 		Ex                 int          `json:"ex"`      // 每級經驗(doc02 §4.5「守方每級經驗」;export_units.py 新增欄,
 		// 舊版 units.json 沒有此欄時 json.Unmarshal 留 0,見 Unit.ExpPerLevel 註解)
-		Portrait           int                     `json:"portrait"`
-		Fig                int                     `json:"fig"`
-		BattleFig          *int                    `json:"battle_fig,omitempty"`
-		NativeIdentity     *int                    `json:"native_identity,omitempty"`
-		NativeRecordByte8  *byte                   `json:"native_record_byte8,omitempty"`
-		NativeRecordRace   *byte                   `json:"native_record_race,omitempty"`
-		NativeRecordClass  *byte                   `json:"native_record_class,omitempty"`
-		MapSelectorSlot    *int                    `json:"map_selector_slot,omitempty"`
-		MapSelectorKey     *int                    `json:"map_selector_key,omitempty"`
-		NativeRecordByte5  *byte                   `json:"native_record_byte5,omitempty"`
-		NativeRecordByte6  *byte                   `json:"native_record_byte6,omitempty"`
-		NativeRecordByte34 *byte                   `json:"native_record_byte34,omitempty"`
-		NativeRecordByte35 *byte                   `json:"native_record_byte35,omitempty"`
-		NativeRecordByte36 *byte                   `json:"native_record_byte36,omitempty"`
-		NativeRecordWord42 *uint16                 `json:"native_record_word42,omitempty"`
-		NativeRecordWord46 *uint16                 `json:"native_record_word46,omitempty"`
-		Group              int                     `json:"group"`
-		NativeConstructor  *NativeConstructorTable `json:"native_constructor,omitempty"`
-		X                  int                     `json:"x"`
-		Y                  int                     `json:"y"`
+		Portrait             int   `json:"portrait"`
+		Fig                  int   `json:"fig"`
+		BattleFig            *int  `json:"battle_fig,omitempty"`
+		NativeIdentity       *int  `json:"native_identity,omitempty"`
+		NativeRecordByte8    *byte `json:"native_record_byte8,omitempty"`
+		NativePositionRecord *struct {
+			XWord  uint16 `json:"x_word"`
+			YWord  uint16 `json:"y_word"`
+			RawKey uint16 `json:"raw_key"`
+		} `json:"native_position_record,omitempty"`
+		NativeRecordRace        *byte                   `json:"native_record_race,omitempty"`
+		NativeRecordClass       *byte                   `json:"native_record_class,omitempty"`
+		MapSelectorSlot         *int                    `json:"map_selector_slot,omitempty"`
+		MapSelectorKey          *int                    `json:"map_selector_key,omitempty"`
+		NativeRecordByte5       *byte                   `json:"native_record_byte5,omitempty"`
+		NativeRecordByte6       *byte                   `json:"native_record_byte6,omitempty"`
+		NativeRecordByte34      *byte                   `json:"native_record_byte34,omitempty"`
+		NativeRecordByte35      *byte                   `json:"native_record_byte35,omitempty"`
+		NativeRecordByte36      *byte                   `json:"native_record_byte36,omitempty"`
+		NativeRecordByte3D      *byte                   `json:"native_record_byte3d,omitempty"`
+		NativeRecordDeathEffect []byte                  `json:"native_record_death_effect,omitempty"`
+		NativeSourceByte3       *byte                   `json:"native_source_byte3,omitempty"`
+		NativeSourceByte20      *byte                   `json:"native_source_byte20,omitempty"`
+		NativeSourceByte25      *byte                   `json:"native_source_byte25,omitempty"`
+		NativeRecordWord42      *uint16                 `json:"native_record_word42,omitempty"`
+		NativeRecordWord46      *uint16                 `json:"native_record_word46,omitempty"`
+		Group                   int                     `json:"group"`
+		NativeConstructor       *NativeConstructorTable `json:"native_constructor,omitempty"`
+		X                       int                     `json:"x"`
+		Y                       int                     `json:"y"`
 	} `json:"units"`
 }
 
@@ -898,6 +929,14 @@ func Load(path string) (*State, error) {
 			nu.NativeRecordByte8 = byte(nu.NativeIdentity)
 			nu.HasNativeRecordByte8 = true
 		}
+		if u.NativePositionRecord != nil {
+			nu.NativePositionRecord = NativePositionRecord{
+				XWord:  u.NativePositionRecord.XWord,
+				YWord:  u.NativePositionRecord.YWord,
+				RawKey: u.NativePositionRecord.RawKey,
+			}
+			nu.HasNativePositionRecord = true
+		}
 		if u.NativeRecordRace != nil {
 			nu.NativeRecordRace, nu.HasNativeRecordRace = *u.NativeRecordRace, true
 		}
@@ -932,6 +971,28 @@ func Load(path string) (*State, error) {
 		}
 		if u.NativeRecordByte36 != nil {
 			nu.NativeRecordByte36, nu.HasNativeRecordByte36 = *u.NativeRecordByte36, true
+		}
+		if u.NativeRecordByte3D != nil {
+			nu.NativeRecordByte3D, nu.HasNativeRecordByte3D = *u.NativeRecordByte3D, true
+		}
+		if len(u.NativeRecordDeathEffect) != 0 {
+			if len(u.NativeRecordDeathEffect) != 3 {
+				return nil, fmt.Errorf(
+					"battle: unit %d native_record_death_effect needs 3 bytes",
+					len(st.Units),
+				)
+			}
+			copy(nu.NativeRecordDeathEffect[:], u.NativeRecordDeathEffect)
+			nu.HasNativeRecordDeathEffect = true
+		}
+		if u.NativeSourceByte3 != nil {
+			nu.NativeFDFIELDSourceByte3 = *u.NativeSourceByte3
+		}
+		if u.NativeSourceByte20 != nil {
+			nu.NativeFDFIELDSourceByte20 = *u.NativeSourceByte20
+		}
+		if u.NativeSourceByte25 != nil {
+			nu.NativeFDFIELDSourceByte25 = *u.NativeSourceByte25
 		}
 		if u.NativeRecordWord42 != nil {
 			nu.NativeRecordWord42, nu.HasNativeRecordWord42 = *u.NativeRecordWord42, true
@@ -1229,11 +1290,11 @@ func (s *State) NativeMapSpriteKey(u *Unit) (int, bool) {
 	return key, true
 }
 
-// AppendGroup implements the original 0x10b4e constructor: matching FDFIELD
-// records are removed from the source roster and appended to the canonical
-// runtime unit array in record order. It intentionally has no reinforcement
-// slide; post-battle handlers perform their own decoded ACT immediately after
-// SPAWN.
+// AppendGroup is the normalized compatibility append used by existing event
+// playback. It preserves FDFIELD row order and selector-cache order, but it
+// does not execute 0x10c50's table projection, [0x53afa] placement branch,
+// inventory initialization, or 0x1b750 recomputation. Callers must not cite
+// this helper as the native constructor.
 func (s *State) AppendGroup(group int) int {
 	if s == nil || len(s.Roster) == 0 {
 		return 0
@@ -1261,8 +1322,8 @@ func (s *State) AppendGroup(group int) int {
 	return len(batch)
 }
 
-// SpawnGroup 讓某 group 的待命單位登場(可改陣營;act=true 表示當回合可行動)。
-// 回傳登場數。對映原版 turn_events 觸發增援(doc 25/29)。多單位同座標時自動錯開到最近空格。
+// SpawnGroup 讓既有重製劇本的 group 登場，可另行覆寫陣營與本回合行動狀態。
+// 它保留舊的滑入與環狀錯位呈現，不等同原版 0x10b4e/0x10c50 constructor。
 func (s *State) SpawnGroup(group int, camp Camp, changeCamp, act bool) int {
 	n := 0
 	before := len(s.Units)
@@ -1301,7 +1362,8 @@ func (s *State) SpawnGroup(group int, camp Camp, changeCamp, act bool) int {
 	return n
 }
 
-// nearestFree 由 (x,y) 向外環狀搜尋最近的空格(無單位、在界內)。
+// nearestFree 是舊重製呈現使用的有界環狀搜尋；它不是原版
+// 0x10cc6..0x10d4c 的全圖 row-major Manhattan 規則。
 func (s *State) nearestFree(x, y int) (Cell, bool) {
 	for r := 1; r < 8; r++ {
 		for dy := -r; dy <= r; dy++ {

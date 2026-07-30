@@ -212,6 +212,12 @@ def main(argv):
             "map_selector_key": u["native_map_selector_key"],  # FDFIELD b0 -> 0x11019 -> unit+2 slot
             "native_record_byte6": u["native_record_byte6"],  # FDFIELD b0 -> runtime record +6
             "battle_fig": raw_unit_key,  # FDFIELD b1 -> native unit+7 raw selector
+            "native_record_byte8": raw_unit_key,  # FDFIELD b1 -> runtime +8; not universal identity
+            "native_record_byte3d": u["native_record_byte3d"],  # FDFIELD b2 -> runtime +0x3d
+            "native_source_byte3": u["native_source_byte3"],
+            "native_source_byte20": u["native_source_byte20"],
+            "native_source_byte25": u["native_source_byte25"],
+            "native_record_death_effect": u["native_record_death_effect"],
             # ex:每級經驗(doc02 §4.5「守方每級經驗」;worklist 第 9 輪經驗值系統補接線)。
             # 與 hp/mp/ap/dp/mv 用同一顆 base_stats() (race,cls) 查表——同一份已驗證 EXE
             # 資料(docs/data/exe_tables/unit.json),同一種「該表多筆同 (race,cls) 只取第一筆」
@@ -251,6 +257,11 @@ def main(argv):
         rec["native_source_byte25"] = u["native_source_byte25"]
         if i < len(positions):                       # 固定出場座標(我方會被引擎改放部署格)
             rec["x"], rec["y"] = positions[i][0], positions[i][1]
+            rec["native_position_record"] = {
+                "x_word": positions[i][0],
+                "y_word": positions[i][1],
+                "raw_key": positions[i][2],
+            }
         units.append(rec)
 
     res = {"map": m, "w": info["w"], "h": info["h"],

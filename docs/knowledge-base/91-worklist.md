@@ -40,6 +40,15 @@
   關閉有效槽排版，成功 native restore、delete/overwrite 與 roster ABI
   仍待 E2。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
+- [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
+  路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
+  戰役消費的網格、回合排程、事件虛擬機、索引色渲染、輸入、存檔介面與
+  跨平台層；FDFIELD／FD2.SAV、handler ABI、原版戰役、位址證據與
+  FD2 專屬相容規則留在本倉庫。驗收門檻為：第二個可編輯戰役不含
+  `fd2` product branch 即可啟動、遊玩、存讀檔及建置，兩倉 CI 均可由
+  Docker 重生。另需先決定引擎程式碼授權、貢獻規範與版本相依方式。
+  Donate 頁面只可說明贊助潔淨室引擎、研究工具與文件維護，不可暗示販售
+  漢堂原版資產或授權；正式上線前另做商標、著作權與金流平台條款稽核。
 
 ## 文件狀態入口（更新至 2026-07-28）
 
@@ -1672,6 +1681,24 @@
     `native_record_byte8`，不再輸出 `native_identity`；同步工具
     `--check` 全數零 pending，AI／item-panel raw record consumers 仍取得
     相同位元，但不再攜帶錯誤角色語意。
+  - [~] **CONTINUE future group constructor inputs**：完整 Docker
+    Capstone `0x10B4E..0x11018` 固定 group row order、6-byte position
+    record、`b2→runtime +0x3D`、`b13..16→+0x1A..1D`、
+    `b17..19→+0x34..36`、`b22..24→+0x31..33`；`b3/b20/b25`
+    在 constructor 內無 reader。撤回 `b2/b3` 是 runtime race/class 的
+    暗示，後者來自 b1-selected EXE tables。33份 map assets 已保存 exact
+    position record、raw +3D、death triple、未讀 source bytes 與
+    b1-selected constructor table record，loader 及 CONTINUE projection
+    也保留 runtime raw 欄。`NativeFutureGroupPlacement` 已精確轉寫
+    `0x145CD(0/1)` occupancy、raw `[0x53AFA]` gate、全圖 row-major
+    Manhattan 與同距離後者勝出；舊半徑環狀 `nearestFree` 已明確降為
+    legacy 呈現。`DecodeNativeFutureConstructorBase` 已轉寫兩條 table
+    分支，33圖1,885筆 record 的 race/class/HP/MP 交叉驗證通過。
+    table dump 已自帶 FD2.EXE size/MD5/SHA-256，sync 在使用前強制對照
+    reference manifest；Docker 重生檔與版本化 JSON 逐位元組相同。
+    `0x1B750` equipment recompute、per-call raw gate binding 與真正
+    group append 尚未實作，owner 維持 fail-closed
+    → `fd2_future_group_constructor_capstone.txt`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

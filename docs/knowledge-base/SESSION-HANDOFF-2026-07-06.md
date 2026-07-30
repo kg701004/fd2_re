@@ -31,6 +31,29 @@ interactive range 與 battle driver 尚未接，正式 CONTINUE 保持
 仍保留真正的 persistent `native_identity`。AI fixture 改讀 raw +8，
 避免測試本身把錯誤名稱重新固化。
 
+## 2026-07-30 future group constructor input preservation
+
+官方 IDA Docker 先行嘗試，但私有 home 本輪仍回報 EULA 未接受與
+IDAPython target 未啟用，故沒有產生新的 IDA pseudocode／database；
+沒有改跑 host IDA。改以 `fd2-cap-local` 完整覆核
+`0x10B4E..0x11018`，證實 group row order、6-byte position record、
+`b2→+0x3D`、`b13..16→+0x1A..1D`、`b17..19→+0x34..36`、
+`b22..24→+0x31..33`，且 b3/b20/b25 在 constructor 無 reader。
+
+33份 map assets 新增 exact position record、raw +3D、death triple、
+未讀 source bytes 與 b1-selected constructor record；loader 與
+CONTINUE runtime projection 保存對應欄位。直接反組譯 `0x145CD` 證實
+兩次呼叫合併標記所有 active runtime unit 所在格為 `0x40`，四鄰
+`0x80`；placement 只避開 `0x40`，不是地形通行判斷。
+`NativeFutureGroupPlacement` 已轉寫 raw gate、全圖 row-major Manhattan
+及同距離後者勝出；`DecodeNativeFutureConstructorBase` 已轉寫兩條 table
+分支，33圖1,885筆 race/class/HP/MP 投影驗證通過。table dump 現自帶
+FD2.EXE size/MD5/SHA-256，sync 會強制對照 reference
+manifest；Docker 重生檔與版本化 JSON 逐位元組相同。`0x1B750` equipment
+recompute、per-call gate binding 與 append transaction 尚未接，owner
+維持失敗即關閉。證據：
+`docs/data/fd2_future_group_constructor_capstone.txt`。
+
 ## 2026-07-27 raw byte5 handler bridge
 
 `Scenario.PartyUnits`／`battle.Load` 對 HP>0 的 constructor materialization 保存 `NativeRecordByte5=0`；已知 damage/death

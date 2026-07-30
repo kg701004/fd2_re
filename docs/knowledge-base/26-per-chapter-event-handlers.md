@@ -82,12 +82,35 @@
 | +0x22..+0x27 | 六個獨立 live transient bytes；不可降成單一 buff 狀態 | [驗] |
 | +0x31..+0x33 | FDFIELD row `b22..b24` 直拷；party constructor 另將 `+0x31` 設為 `0xFF` | [驗] |
 | +0x34..+0x36 | FDFIELD row `b17..b19` 直拷；只有 `+0x34` low nibble 的 dispatch 已閉合 | [驗] |
+| +0x3D | FDFIELD row `b2` 由 `0x10FC8` 直拷；它不是 constructor table 寫入 `+0x1F` 的 race | [驗] |
 | +0x37..+0x4E | 基礎／有效能力、HP/MP 等 word 與 byte 欄位；目前 typed view 保留已證實 offsets | [部分驗] |
 
 重製可以使用具型別 `Unit`，但 CONTINUE、存檔相容與原生 renderer 需要的
 raw 欄位仍必須逐一保存來源與 consumer；不能只對齊一份高階屬性清單就宣稱
 等價。現況權威見 SDD 的 current-runtime snapshot／CONTINUE 段落及
 [`fd2_current_field_control_ida.txt`](../data/fd2_current_field_control_ida.txt)。
+
+2026-07-30 的完整 `0x10B4E..0x11018` Capstone 重核再修正 source row：
+`b2→runtime +0x3D`；`b3`、`b20`、`b25` 在這個 constructor 內沒有 reader。
+因此 parser 的歷史 `race=b2`／`cls=b3` 只能保留為 normalized exporter
+相容標籤，不是 runtime `+0x1F/+0x20` 的 ABI 證據。後兩欄仍由 EXE
+constructor tables 寫入。
+
+position resource 的 row stride 是6；`0x10C85..0x10C9F` 以 unit row index
+取 `base+2+index*6`，只讀 X/Y word 的 low byte。`[0x53AFA]==0` 時，
+`0x10C50` 先依序呼叫 `0x145CD(0)` 與 `(1)`：兩次合起來把所有
+`unit+5 bit0==0` 的現行 runtime 單位格標成 `0x40`，四鄰標成
+`0x80`。後續只排除 `0x40`，再以 row-major 掃全圖，選 Manhattan
+距離最小格；`jg` 使同距離由後掃到的格覆蓋。這不是地形可通行判斷。
+`[0x53AFA]!=0` 才直接採原座標。因此 future group adapter 不能只拿
+目前 JSON `x/y` 當作無條件結果。33份 map assets 現另外保存 exact
+`native_position_record{x_word,y_word,raw_key}`、raw `b2`、三-byte death
+triple、未讀的 `b3/b20/b25`，以及 b1-selected constructor record。
+`NativeFutureGroupPlacement` 已轉寫 placement prefix；
+`DecodeNativeFutureConstructorBase` 已轉寫兩條 table 分支並以33圖
+1,885筆 unit record 核對 race/class/HP/MP。`0x1B750` effective-stat
+recompute 與正式 append transaction 仍未接。直接指令見
+[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)。
 
 ## 2. 全 30 章 handler 對照表 [驗]
 

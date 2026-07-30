@@ -126,7 +126,7 @@ func TestLoadRejectsNativeIdentityOutsideByte(t *testing.T) {
 func TestLoadKeepsScriptedRawByte8SeparateFromIdentity(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "units.json")
-	raw := `{"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"mp":0,"fig":7,"x":0,"y":0,"native_record_byte8":96}]}`
+	raw := `{"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"mp":0,"fig":7,"x":0,"y":0,"native_record_byte8":96,"native_record_byte3d":7,"native_record_death_effect":[2,52,18],"native_source_byte3":8,"native_source_byte20":9,"native_source_byte25":10,"native_position_record":{"x_word":257,"y_word":514,"raw_key":96}}]}`
 	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -136,8 +136,30 @@ func TestLoadKeepsScriptedRawByte8SeparateFromIdentity(t *testing.T) {
 	}
 	unit := st.Units[0]
 	if !unit.HasNativeRecordByte8 || unit.NativeRecordByte8 != 96 ||
-		unit.HasNativeIdentity {
+		unit.HasNativeIdentity ||
+		!unit.HasNativeRecordByte3D || unit.NativeRecordByte3D != 7 ||
+		!unit.HasNativeRecordDeathEffect ||
+		unit.NativeRecordDeathEffect != [3]byte{2, 52, 18} ||
+		unit.NativeFDFIELDSourceByte3 != 8 ||
+		unit.NativeFDFIELDSourceByte20 != 9 ||
+		unit.NativeFDFIELDSourceByte25 != 10 ||
+		!unit.HasNativePositionRecord ||
+		unit.NativePositionRecord != (NativePositionRecord{
+			XWord: 257, YWord: 514, RawKey: 96,
+		}) {
 		t.Fatalf("scripted raw +8 was misclassified: %#v", unit)
+	}
+}
+
+func TestLoadRejectsMalformedNativeDeathEffectTriple(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "units.json")
+	raw := `{"w":1,"h":1,"units":[{"camp":"enemy","hp":1,"native_record_death_effect":[1,2]}]}`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Fatal("two-byte native death effect was accepted")
 	}
 }
 

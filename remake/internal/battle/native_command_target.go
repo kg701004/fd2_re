@@ -54,13 +54,29 @@ func NativeCommandRuntimeFlags(
 	if err != nil {
 		return nil, err
 	}
-	if len(units) == 0 {
-		return nil, fmt.Errorf("native command runtime flags require roster")
+	if err := applyNativeRuntimeFlagWriter(w, h, flags, units, selector); err != nil {
+		return nil, err
+	}
+	return flags, nil
+}
+
+// applyNativeRuntimeFlagWriter mutates one caller-owned live composition
+// slice. Native code may call 0x145cd more than once before 0x4dbfc resets
+// the slice, so rebuilding the archive baseline inside this helper would lose
+// earlier writers.
+func applyNativeRuntimeFlagWriter(
+	w, h int,
+	flags []byte,
+	units []*Unit,
+	selector byte,
+) error {
+	if w <= 0 || h <= 0 || len(flags) != w*h {
+		return fmt.Errorf("invalid native runtime flag grid")
 	}
 	for index, unit := range units {
 		if unit == nil || !unit.HasNativeMapPresentation ||
 			!unit.HasNativeRecordByte5 || !unit.HasNativeRecordByte6 {
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"native command runtime flags: unit %d lacks raw provenance",
 				index,
 			)
@@ -72,7 +88,7 @@ func NativeCommandRuntimeFlags(
 		x := int(unit.NativeMapPresentation.X)
 		y := int(unit.NativeMapPresentation.Y)
 		if x < 0 || y < 0 || x >= w || y >= h {
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"native command runtime flags: unit %d is out of bounds",
 				index,
 			)
@@ -86,7 +102,68 @@ func NativeCommandRuntimeFlags(
 			flags[nextY*w+nextX] |= NativeCommandGridZeroBudget
 		}
 	}
-	return flags, nil
+	return nil
+}
+
+// NativeFutureGroupPlacement reproduces the placement prefix of
+// 0x10c50. rawGate is the exact byte read from [0x53afa]: zero runs
+// 0x145cd(0), then 0x145cd(1), and selects the unoccupied cell with the
+// smallest Manhattan distance from the low bytes of the paired six-byte
+// position row. The native jg branch replaces equal-distance candidates, so
+// the last cell in row-major order wins a tie. Any nonzero gate uses the
+// authored low-byte coordinate directly.
+//
+// The mutable 0x40/0x80 flags are caller-local. This function never writes
+// State.NativeCompositionEventBytes, which is immutable archive provenance.
+func NativeFutureGroupPlacement(
+	w, h int,
+	eventBytes []byte,
+	units []*Unit,
+	position NativePositionRecord,
+	rawGate byte,
+) (Cell, error) {
+	origin := Cell{X: int(byte(position.XWord)), Y: int(byte(position.YWord))}
+	flags, err := NativeCompositionBaseFlags(w, h, eventBytes)
+	if err != nil {
+		return Cell{}, err
+	}
+	if err := applyNativeRuntimeFlagWriter(w, h, flags, units, 0); err != nil {
+		return Cell{}, err
+	}
+	if err := applyNativeRuntimeFlagWriter(w, h, flags, units, 1); err != nil {
+		return Cell{}, err
+	}
+	if rawGate != 0 {
+		if origin.X < 0 || origin.Y < 0 || origin.X >= w || origin.Y >= h {
+			return Cell{}, fmt.Errorf(
+				"native future placement direct coordinate (%d,%d) outside %dx%d",
+				origin.X, origin.Y, w, h,
+			)
+		}
+		return origin, nil
+	}
+
+	bestDistance := 0xff
+	best := Cell{}
+	found := false
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if flags[y*w+x]&NativeCommandGridBlocked != 0 {
+				continue
+			}
+			distance := absInt(x-origin.X) + absInt(y-origin.Y)
+			if distance > bestDistance {
+				continue
+			}
+			bestDistance = distance
+			best = Cell{X: x, Y: y}
+			found = true
+		}
+	}
+	if !found {
+		return Cell{}, fmt.Errorf("native future placement has no unoccupied cell")
+	}
+	return best, nil
 }
 
 // NativeCommandTargetCells mirrors one 0x14818 geometry invocation before

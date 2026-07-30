@@ -2620,6 +2620,46 @@ chapter 0 的 12 筆 runtime records 全數依序 materialize，前四名 player
 不切 interactive range mode，也不進 battle driver；正式 CONTINUE
 仍因其餘三個 owner 及 orchestration 維持失敗即關閉。
 
+同輪開始縮小 `future_group_constructor`。完整 Docker Capstone
+`0x10B4E..0x11018` 直接指令固定：
+
+- caller 依 control `b21` 比對 group，按 control row 順序逐筆 append；
+- position resource 是6-byte records，constructor 以相同 row index 讀
+  X/Y word low bytes；`[0x53AFA]==0` 時會先以 `0x145CD(0/1)` 將所有
+  `+5 bit0==0` runtime 單位所在格標 `0x40`，再掃全圖取 Manhattan
+  最近的非占用格；同距離取 row-major 後者。非零才直接使用原座標；
+- `b2→runtime +0x3D`，而 `b3/b20/b25` 在此函式沒有 reader；
+- `b13..b16→+0x1A..+0x1D`、`b17..b19→+0x34..+0x36`、
+  `b22..b24→+0x31..+0x33`；
+- race/class 與 base words 來自 b1-selected EXE tables，不是 b2/b3。
+
+這撤回 parser 歷史 `race=b2`／`cls=b3` 作為 native ABI 的錯誤暗示；
+兩個欄位暫留只服務既有 normalized base-stat 近似。全部33張 map 現保存
+exact six-byte `native_position_record`、`native_record_byte3d`、
+三-byte `native_record_death_effect`、raw source `b3/b20/b25` 與
+b1-selected constructor table record；loader 與 CONTINUE runtime
+projection 亦保存對應 runtime raw 欄。
+
+`NativeFutureGroupPlacement` 現以短生命週期 composition slice 精確執行
+兩次 `0x145CD` writer、raw `[0x53AFA]` 分支、全圖 row-major Manhattan
+搜尋及後者勝出的 tie rule。它不改寫不可變的
+`NativeCompositionEventBytes`。舊 `nearestFree` 只是重製端半徑1..7
+環狀呈現，已撤回其對映原版 constructor 的斷言。
+`DecodeNativeFutureConstructorBase` 同時轉寫 high/lower table 兩分支的
+race/class、base AP/DP/DX、mobility、HP/MP 16-bit writes；同步工具已把
+1,885筆 selected records 寫入33張 map，並逐筆驗證 race/class/HP/MP。
+`native_unit_tables.json` 現直接攜帶原版大小、MD5 與 SHA-256；同步工具
+必須先與 `fd2-reference-files.json` 相符，且由原版重生的 JSON 已逐位元組
+等同版本化檔案。
+剩餘 owner 現縮窄為 `0x1B750` equipment recompute、per-call raw gate
+綁定及原子 group append；在三者完成前正式 handler 仍不改接。直接證據見
+[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)。
+
+本輪依規則先嘗試官方 IDA 9.4 Docker；合法 license 與私有 home 均隔離
+掛載，但 batch 回報 EULA 尚未接受且 IDAPython target 未啟用，沒有產生
+新 IDA database 或 pseudocode。既有 repo IDA 證據仍保留；上述新欄位只
+以完整直接指令與原始位元提升，不冒充新 IDA 結論。
+
 ### 2026-07-30 — 四槽 LOAD 的戰間還原擁有者
 
 合法 IDA Pro 9.4 將 `0x30012..0x301F4` 固定為章節槽 writer，且只有

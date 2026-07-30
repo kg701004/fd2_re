@@ -109,6 +109,98 @@ func TestNativeCommandRuntimeFlagsFailsClosedWithoutRawProvenance(t *testing.T) 
 	}
 }
 
+func TestNativeCommandRuntimeFlagsAllowsEmptyRuntimeArray(t *testing.T) {
+	got, err := NativeCommandRuntimeFlags(
+		2, 1, []byte{0xe5, 0x40}, nil, 0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []byte{5, 0}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("empty-runtime flags=%#v want %#v", got, want)
+	}
+}
+
+func TestNativeFutureGroupPlacementMatches10C50OccupancyAndTieOrder(t *testing.T) {
+	unit := func(x, y int, campSelector byte, byte5 byte) *Unit {
+		return &Unit{
+			NativeMapPresentation: NativeMapPresentationState{
+				X: byte(x), Y: byte(y),
+			},
+			HasNativeMapPresentation: true,
+			NativeRecordByte5:        byte5,
+			HasNativeRecordByte5:     true,
+			NativeRecordByte6:        campSelector,
+			HasNativeRecordByte6:     true,
+		}
+	}
+	// Both selector classes are marked because 0x10c50 calls 0x145cd with
+	// zero and one. The inactive record at (2,0) must not block its cell.
+	units := []*Unit{
+		unit(1, 1, 0, 0),
+		unit(2, 1, 2, 0),
+		unit(2, 0, 1, 1),
+	}
+	got, err := NativeFutureGroupPlacement(
+		3, 3, make([]byte, 9), units,
+		NativePositionRecord{XWord: 1, YWord: 1},
+		0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Four distance-one candidates surround the occupied origin. Row-major
+	// scanning replaces equal distances, so the last one, (1,2), wins.
+	if want := (Cell{X: 1, Y: 2}); got != want {
+		t.Fatalf("future placement=%v want %v", got, want)
+	}
+}
+
+func TestNativeFutureGroupPlacementUsesPositionLowBytesAndRawGate(t *testing.T) {
+	got, err := NativeFutureGroupPlacement(
+		4, 4, make([]byte, 16), nil,
+		NativePositionRecord{XWord: 0x1203, YWord: 0x3402},
+		7,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (Cell{X: 3, Y: 2}); got != want {
+		t.Fatalf("direct future placement=%v want %v", got, want)
+	}
+}
+
+func TestNativeFutureGroupPlacementFailsClosed(t *testing.T) {
+	if _, err := NativeFutureGroupPlacement(
+		1, 1, []byte{0}, []*Unit{{
+			NativeMapPresentation:    NativeMapPresentationState{},
+			HasNativeMapPresentation: true,
+			NativeRecordByte5:        0,
+			HasNativeRecordByte5:     true,
+			NativeRecordByte6:        2,
+			HasNativeRecordByte6:     true,
+		}},
+		NativePositionRecord{},
+		0,
+	); err == nil {
+		t.Fatal("future placement accepted a fully occupied map")
+	}
+	if _, err := NativeFutureGroupPlacement(
+		1, 1, []byte{0}, nil,
+		NativePositionRecord{XWord: 1},
+		1,
+	); err == nil {
+		t.Fatal("future placement accepted an out-of-bounds direct coordinate")
+	}
+	if _, err := NativeFutureGroupPlacement(
+		1, 1, []byte{0}, []*Unit{{}},
+		NativePositionRecord{},
+		0,
+	); err == nil {
+		t.Fatal("future placement accepted a roster without raw provenance")
+	}
+}
+
 func TestNativeCommandTargetCellsFloodFillHonorsRawFlags(t *testing.T) {
 	flags := make([]byte, 5)
 	flags[1] = NativeCommandGridBlocked
