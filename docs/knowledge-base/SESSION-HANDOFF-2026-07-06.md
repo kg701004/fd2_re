@@ -23,8 +23,9 @@ fallback 僅作相容。使用者 checksum-valid 原版 chapter0 current snapsho
 已在唯讀 Docker 測試 materialize 12 筆 records；索爾、悠妮、亞雷斯、
 蓋亞與 enemy `+8=96` 分界正確。**此處是 2026-07-30 當時狀態；較晚的
 2026-08-02 紀錄已閉合 map timing 與 future-group transaction。** 正式
-CONTINUE 現只因 chapter pending-group binding 與 `Game`／controller handoff
-尚未接而保持失敗即關閉。
+CONTINUE 後續已新增 chapter0 未改寫排程的 pending roster 適配器；但原版
+handler 會改寫 live turn byte，其他章節亦有動態 group formula。因此通用
+pending-group binding 與 `Game`／controller handoff 仍未接，保持失敗即關閉。
 
 版本化資料亦同步更正：33份 `map*_units.json` 的 scripted
 `native_identity` 全部遷移為 `native_record_byte8`，數值不變；
@@ -1552,7 +1553,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 ## 2026-07-28 ch02 town hub DOSBox E2 slice
 
 - `FD2.SAV` 的 current-runtime ch00 battle 以 `/tmp/fd2-town-e2f` 可寫副本執行；
-  原始遊戲目錄未掛入容器、未修改。sandbox 的 FD2.EXE 只 patch battle driver
+  原始遊戲目錄未掛入容器、未修改。sandbox 的 FD2.EXE 只 patch 共享玩家控制器
   `0x117f3→call 0x205be`、`0x117f8→jmp 0x1187a`，以及 victory helper
   `0x205d5→jmp 0x206c3`，用途是略過人工打完整場；戰後 handler、campaign
   gate、town renderer/resource 都仍走原版。不可把此 route patch 描述成原版
@@ -2613,8 +2614,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x1A813/0x13A44/0x10B4E` consumers 閉合為固定容量
   `NativeFieldControl[0x8A3]`，不再稱為泛用 raw battle state。
   **此為當時狀態；較晚的 2026-08-02 交易已閉合 control、runtime unit 與
-  timing 的具型別轉寫。** 現行剩餘主缺口是 chapter pending-group binding
-  與 `battle.State` 到正式 `Game`／controller handoff 的嚴格一致性。
+  timing 的具型別轉寫，未改寫 live turn/event 的 chapter0 排程也已有嚴格
+  pending-roster consumer。** 現行剩餘主缺口是 handler-mutated turn slots／
+  group formulas 的通用 pending-group binding，與 `battle.State` 到正式
+  `Game`／controller handoff 的嚴格一致性。
   直接證據保存於 `docs/data/fd2_current_event_state_ida.txt`。
   控制映像證據保存於 `docs/data/fd2_current_field_control_ida.txt`。
 - 2026-07-30 `0x10652` 勘誤：合法 IDA Pro 9.4 將函式固定為
@@ -2929,3 +2932,33 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   Python 31 項測試通過，Xvfb 下 `go test -count=1 ./...` 全部通過；原版
   `0x4E031`、`0x105ED..0x1061B`、`0x25DBD..0x25DCE` 範圍亦以 Capstone
   實際重生核對。
+
+## 2026-08-02：CONTINUE 目前回合與 chapter0 pending roster
+
+- 合法 IDA Pro 9.4 固定 `0x117E7` 的系統選單分支：`0x16F55` 在 raw
+  selector0 呼叫會寫 FD2.SAV 的 `0x19DF7` 後直接返回，沒有先執行
+  `0x1A30B`。玩家行動後的 `0x13565` 只有在無合格 raw camp2 列時才呼叫
+  `0x1A30B`；它以 selector1/0 掃描目前回合，接著才在 `0x1A5B9` 增加
+  `[0x53BEF]`，後段再掃 selector2。Capstone 以固定雜湊原版獨立重生。
+- 因此 current snapshot 的 saved turn 不能合併判定：selector1/0 尚未被
+  下一次 phase 收束掃描，selector2 已在上一輪增加回合後的尾端掃描。
+  pending roster 必須採 `turn > saved_turn`，或 saved turn 且 selector0/1；
+  不能無條件使用 `>=`。新增
+  [`fd2_continue_pending_schedule_ida.txt`](../data/fd2_continue_pending_schedule_ida.txt)
+  保存輸入雜湊、IDA 版本、原始位址、直接指令與推論等級。
+- `MaterializeNativeContinuePendingGroups` 只在 chapter/map/dimensions、
+  FDFIELD row count、native append provenance 及 live `(turn,event_id)` 全部
+  精確相符時，深複製目前與未來事件引用的 FDFIELD rows、PendingGroups 與
+  item row prefix。map25/event61 另要求 editable rule、地圖 slot、資產
+  selector1 與存檔 live event 相符，再由 once-state12 判斷 group1 是否待命；
+  失敗不修改 current Units、selector、live control 或 roster。
+- 未改寫 live schedule 的窄切片以 checksum-valid 原版 chapter0 FD2.SAV
+  於唯讀 Docker 完整跑過 field、
+  runtime unit 與 pending-group adapters：12筆 current runtime 保持原順序，
+  只綁 groups3..7 共15筆 future rows；groups1/2 已出場，10/11 未排程。
+  同時刪除測試內 map0=31×24 的錯誤註解，版本化 map0 資產為24×24。
+- 全章機械盤點顯示46個 `spawn_group` action，但只有 ch01/ch02/ch03/ch26
+  已宣告 native runtime append；event27/54/57 使用目前回合作 group，
+  event47/49 另有 formula，且多個 handler 會改寫 live turn byte。這些仍未
+  資料化，故 `pending_group_binding` owner 不移除；正式 CONTINUE 與 E2
+  仍維持失敗即關閉。

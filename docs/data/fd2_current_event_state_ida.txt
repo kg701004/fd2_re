@@ -71,6 +71,7 @@ CONTINUE loader `0x10010` 在 `0x10319..0x10328` 做完全對稱的恢復：
 與既有 `battle.State.NativeEventState` 使用相同窄語意：戰鬥本地、
 未命名 index、raw byte value。解析器只複製，不執行事件，也不因此接通
 CONTINUE production owner。後續 adapters 已分別閉合 FDFIELD control、
-runtime records／selector cache、timing 與 future-group constructor；真正
-剩餘缺口是 chapter pending-group binding，以及整組狀態到 `0x117E7`
-對應的正式 `Game` controller handoff。
+runtime records／selector cache、timing 與 future-group constructor；未改寫
+live turn/event 的 chapter0 排程也已有嚴格 pending-roster consumer。真正
+剩餘缺口是 handler-mutated turn slots／group formulas 的通用 pending-group
+binding，以及整組狀態到 `0x117E7` 對應的正式 `Game` controller handoff。

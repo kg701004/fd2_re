@@ -2452,8 +2452,10 @@ selector／record、timing 與 future-group constructor 的個別 adapters 已�
 [`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt) 與
 [`fd2_continue_controller_117e7_ida.txt`](../data/fd2_continue_controller_117e7_ida.txt)。
 下述具型別 adapters 現已分別閉合控制映像、runtime units、timing 與
-future-group constructor；尚未閉合的是 chapter pending-group binding，及把
-整組候選狀態一次發布到正式 `Game`／controller 的 handoff。
+future-group constructor；chapter0 的未改寫 live 排程也已有嚴格
+pending-group 綁定及原版快照測試。尚未閉合的是 handler 改寫 turn byte 後的
+通用 chapter pending-group binding，及把整組候選狀態一次發布到正式
+`Game`／controller 的 handoff。
 FDFIELD 控制映像的來源、固定容量與 consumers 見
 [`fd2_current_field_control_ida.txt`](../data/fd2_current_field_control_ida.txt)。
 
@@ -2536,9 +2538,11 @@ gate B 與有效 anchor，不再把這四值列為未知。此契約只適用標
 `0x26130` caller；不外推到戰場內 `0x1A251` caller。
 
 runtime unit projection、map timing seed adapter 與完整 future-group constructor
-transaction 現均已有嚴格 consumer。preflight 只保留兩個尚待 caller 接管的
-owners：chapter asset 的 pending-group binding，以及已知 `0x117E7` 對應的
-remake `Game` controller handoff。因此
+transaction 現均已有嚴格 consumer。未改寫 live turn/event 可由
+`MaterializeNativeContinuePendingGroups` 綁定，但原版存在多個 turn-byte
+writer，尚未全部資料化成 slot／公式。因此 preflight 仍保留兩個尚待 caller
+接管的 owners：通用 chapter pending-group binding，以及已知 `0x117E7`
+對應的 remake `Game` controller handoff。因此
 `ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
 沒有 production owner，也不改 `battle.State`。直接證據見
 [`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)
@@ -2597,8 +2601,9 @@ consumer。它不只檢查 `BuildContinueRuntimeInput` 的私有 marker，還會
 records，不啟動 timing，也不把 range mode 提前推成 interactive `1`。
 因此它已關閉原本籠統的 field boundary owner；saved runtime-record
 materializer 與 `0x10C50→0x1B750` constructor transaction 也已在後續閉合。
-目前真正剩餘的是把所選章節尚未登場的 rows／item table 綁到同一候選
-`State`，以及一次發布 `Game`／controller handoff。
+未改寫排程的 rows／item table 綁定已由後述適配器完成；目前真正剩餘的是
+把 handler 改寫的 live turn slots／group 公式資料化，使所有合法章節快照都
+可重建 pending roster，以及一次發布 `Game`／controller handoff。
 直接證據見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。
 
@@ -2633,12 +2638,53 @@ player-only assets 的 `NativeIdentity` fallback 僅為相容邊界。
 scenario party 的 persistent identity 欄位不受影響。AI fixture 與
 selector 測試也改以 raw +8 定位 scripted actor，不再靠錯誤語意名稱。
 
-使用者 checksum-valid 原版 `FD2.SAV` 已在 Docker 唯讀整合測試：
+未改寫 live schedule 的窄切片已使用 checksum-valid 原版 `FD2.SAV` 在
+Docker 唯讀整合測試：
 chapter 0 的 12 筆 runtime records 全數依序 materialize，前四名 player
 為索爾、悠妮、亞雷斯、蓋亞；敵方 record `+8=96` 保持 raw 且沒有
-`HasNativeIdentity`。這個 adapter 不啟動 map timing、不建立未來 group、
-不切 interactive range mode，也不發布 `Game` controller handoff；正式
-CONTINUE 仍因 pending-group binding 與原子 handoff 維持失敗即關閉。
+`HasNativeIdentity`。同一測試現再以 map0 的 24×24 資產綁定 groups 3..7
+共15筆 future rows；groups 1/2 已在 runtime，10/11 未排程，均不混入。
+舊測試註解把 map0 寫成31×24，已依版本化資產更正。這個 adapter 不啟動
+map timing、不切 interactive range mode，也不發布 `Game` controller handoff；
+正式 CONTINUE 仍因動態 pending-group binding 與原子 handoff 維持失敗即關閉。
+
+### 2026-08-02 — CONTINUE 目前回合與 pending-group 綁定邊界
+
+合法 IDA Pro 9.4 重新固定存檔與回合收束的直接順序。`0x117E7` 在未選中
+單位時呼叫系統選單 `0x16F55`；raw selector 0 於 `0x16FED` 直接呼叫
+會寫入 `FD2.SAV` 的 `0x19DF7`，隨即返回。這條存檔分支不呼叫
+`0x1A30B`。玩家行動路徑則在章節 handler 後呼叫 `0x13565`；只有已無
+合格 raw camp2 單位時才進 `0x1A30B`。後者依序以 selector 1、0 呼叫
+`0x1A813`，在 `0x1A5B9` 增加 `[0x53BEF]`，後段再以 selector 2 呼叫
+`0x1A813`。因此不能把三個 selector 合併成單一 `>=`：saved turn 的
+selector1/0 尚待下一次 phase 收束；selector2 已在上一輪增加到該回合後的
+尾端掃描。future roster 的門檻必須是 `turn > saved_turn`，或
+`turn == saved_turn && selector in {0,1}`。目前沒有 turn1/selector2 的
+可編輯 spawn；若將來出現，bootstrap 順序另證前失敗即關閉。
+直接證據與推論分級見
+[`fd2_continue_pending_schedule_ida.txt`](../data/fd2_continue_pending_schedule_ida.txt)。
+
+`campaign.MaterializeNativeContinuePendingGroups` 現以失敗原子方式：
+
+- 要求 raw chapter、scenario chapter/map、24×24 等實際資產尺寸、FDFIELD
+  row count、live field/runtime adapters 及 native append ownership 全相符；
+- 只接受可編輯 `on_turn_end`／once／turn／native event ID／逐呼叫
+  source/via/raw gate 完整，且 live `(turn,event_id)` 恰好一列的排程；
+- 只深複製上述尚未消費的 saved-turn selector0/1 與未來事件所引用的
+  FDFIELD groups，另私有複製 item
+  rows；已資料化格子事件的 spawn group 先要求 editable rule、地圖 slot、
+  資產 selector 與存檔 live event 相符，再以其 once-state raw byte 判斷是否
+  尚未消費。current Units、selector、live control、timing/view/HUD 均不變；
+- live turn 已被 handler 改寫、group 重複排程、資產缺 constructor provenance
+  或 source row 缺失時，在任何 `State` mutation 前拒絕。
+
+全章機械式盤點確認46個 `spawn_group` action 均有排程來源，但只有
+ch01/ch02/ch03/ch26 目前宣告 `runtime_append_groups`。event 27/54/57 以
+`[0x53BEF]` 動態取 group，event47/49 另有 group formula；ch03/event9
+還帶 runtime slot6 條件。另有 `0x34AA7`、`0x358B5` 等多個 live turn-byte
+writer。這些仍須增加固定 slot 與公式資料，不能因 chapter0 測試通過就移除
+`pending_group_binding` owner。現行適配器是可驗證的靜態排程垂直切片，
+不是所有合法原版存檔的通用 CONTINUE 完成宣稱。
 
 同輪開始縮小 `future_group_constructor`。完整 Docker Capstone
 `0x10B4E..0x11018` 直接指令固定：

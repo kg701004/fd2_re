@@ -1,0 +1,113 @@
+FD2 CONTINUE 目前回合與待增援排程邊界（IDA Pro 9.4）
+======================================================
+
+證據範圍
+--------
+
+- 輸入：FD2.EXE，大小 357074 bytes
+- MD5：b97caf2239a27a896069d03549d96e1e
+- SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+- 第一順位：使用者合法提供的 IDA Pro 9.4，映像
+  fd2-ida-authorized-local；原版唯讀，資料庫只在一次性、無網路 Docker
+  的 tmpfs 建立。
+- 第二順位：fd2-cap-local／Capstone 5.0.3 重跑相同線性位址範圍。
+- 本文位址皆為 IDA database linear address；保留原始 sub_ 名稱，不以
+  高階語意改名覆蓋。
+
+已證實：存檔分支不先推進回合
+------------------------------
+
+0x117E7 是 main 於 0x25DCE 反覆呼叫的共享玩家控制器。未選中單位時，
+0x118B3..0x118D9 呼叫 0x16F55 的系統選單：
+
+    0x118B3  call sub_12C0D
+    0x118BC  cmp  eax,-1
+    0x118C1  call sub_16F55
+    0x118D5  mov  eax,ebx
+    0x118D9  ret
+
+0x16F55 的 raw menu selector 0 分支於 0x16FE4..0x16FF2 直接呼叫
+0x19DF7，隨即走共同返回；0x19DF7 的 0x1A0E0..0x1A12D 以 wb 開啟
+FD2.SAV、寫入 0x59CB bytes 並關檔。因此這條分支可命名為存檔交易：
+
+    0x16FE4  cmp  [0x53C57],0
+    0x16FED  call sub_19DF7
+    0x16FF2  jmp  0x16FDD
+
+這條存檔分支本身不呼叫 0x1A30B，也不增加 [0x53BEF]。這是直接指令與
+寫檔 consumer 共同支持的「已證實」，不是由選單文字猜出的名稱。
+
+已證實：0x1A30B 只在玩家階段收束後掃目前回合
+--------------------------------------------------
+
+玩家單位完成行動後，0x117E7 先呼叫章節 handler，才於 0x11985 呼叫
+0x13565。IDA 對 0x13565 只找到 0x11985 一個 caller；它逐列檢查 raw
++5/+6/+0x26 gate，只有沒有合格 raw camp 2 列時才呼叫 0x1A30B：
+
+    0x13594  test byte [record+5],81h
+    0x1359A  movzx ebx,byte [record+6]
+    0x1359E  cmp  ebx,2
+    0x135A3  movzx eax,byte [record+26h]
+    0x135AF  cmp  ecx,1
+    0x135C5  call sub_1A30B
+
+0x1A30B 內的直接順序為：
+
+1. 0x1A4C5 push 1；0x1A4C7 call 0x1A813；
+2. 0x1A4EB call 0x1D80B；
+3. 0x1A552 push 0；0x1A554 call 0x1A813；
+4. 0x1A58F call 0x1D8BA；
+5. 0x1A5B9 inc [0x53BEF]；
+6. 後段 0x1A78B push 2；0x1A78D call 0x1A813。
+
+0x1A813 逐筆比較 live FDFIELD 控制列的 turn 與 [0x53BEF]，再比較 raw
+selector，吻合才以 event_id 呼叫 0x51B91 跳躍表：
+
+    0x1A840  movzx edx,byte [row+3]
+    0x1A844  cmp   edx,[0x53BEF]
+    0x1A84C  movzx edx,byte [row+5]
+    0x1A850  cmp   edx,esi
+    0x1A854  movzx eax,byte [row+4]
+    0x1A85A  call  [0x51B91+eax*4]
+
+可安全採用的重製規則
+--------------------
+
+【已證實】成功存檔交易發生在玩家互動控制器內；該分支不先執行
+0x1A30B。但三個 selector 不能合併判定：selector 1/0 在增加回合前掃描，
+所以 saved turn 的這兩類列仍待執行；selector 2 在增加回合後掃描，玩家拿到
+新回合控制權時，同一 saved turn 的 selector2 列已於上一輪尾端執行。
+因此 pending 條件是 `turn > saved_turn`，或
+`turn == saved_turn && raw_selector in {0,1}`，不是無條件 `>=`。
+
+【已證實】current snapshot 保存的是 live 0x8A3 FDFIELD 控制映像；handler
+會改寫 turn byte。資產端原始 FDFIELD 或靜態 scenario 不可覆寫它。
+
+【強推論／目前適配器門檻】當 live `(turn,event_id)` 與可編輯 scenario
+恰好一對一相符時，可以只把上述目前與未來事件引用的 group，依 FDFIELD
+來源列順序深複製到 Roster；已過回合、initial groups、未排程 groups 與
+group 255 不得混入。這個結論還需要逐章動態 turn-writer 資料化，才可升為
+涵蓋所有合法存檔的通用 CONTINUE 規則。
+
+【未知／失敗即關閉】若 live turn byte 已改寫而無法與目前 scenario 精確
+配對，不能用 event_id、原始 turn 或 group 名稱猜回。現行適配器拒絕該存檔，
+`pending_group_binding` owner 仍保留，直到每個 writer 的 slot 與公式資料化。
+
+重製驗證
+--------
+
+- `MaterializeNativeContinuePendingGroups` 只接受 chapter/map/dimensions、
+  FDFIELD unit count、live turn/event 與 native spawn provenance 全部一致。
+- saved turn 的 raw selector 0/1 仍納入，selector2 排除；目前所有可編輯
+  turn1 spawn 都不是 selector2。若未來出現該形狀，bootstrap 順序另證前拒絕。
+- 已資料化的格子事件若會生成 group，必須先證明 editable rule、地圖 slot、
+  資產 event selector 與存檔 live event 完全一致，再由其 battle-local
+  once-state raw byte 決定是否仍待命；目前 map25/event61 使用 selector1／
+  index12。缺任一 producer 或 live selector 不符即拒絕。
+- 成功後只提交深複製 Roster、PendingGroups、item row private copy 與
+  `HasNativePendingGroupBinding`；current Units、selector cache、live control、
+  timing/view/HUD 均保持不變。
+- 2026-08-02 使用 checksum-valid 原版 chapter0 FD2.SAV：12 筆 current
+  runtime records 保持原順序；待增援只綁 groups 3..7 共 15 筆。groups 1/2
+  已在 current runtime，groups 10/11 未排程，均不進 Roster。
+- map0 的可編輯資產是 24×24；舊測試註解的 31×24 已更正。

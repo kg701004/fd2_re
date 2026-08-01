@@ -82,5 +82,7 @@ CONTINUE bridge 邊界
 - control `+0x83` 的 26-byte rows 只供 `0x10B4E→0x10C50` 之後的 group
   append 使用；不可用它重建或重排已保存的 runtime records。
 - `0x10C50→0x1B750` 的 future-group constructor transaction 已由後續直接
-  證據與具型別 helper 閉合；正式 CONTINUE 仍因 chapter pending-group binding
-  與 `0x117E7` 對應的 `Game` controller handoff 未接而維持失敗即關閉。
+  證據與具型別 helper 閉合；未改寫 live turn/event 的 chapter0 排程也已有
+  嚴格 pending-roster consumer。正式 CONTINUE 仍因 handler-mutated turn
+  slots／group formulas 的通用 pending-group binding，與 `0x117E7` 對應的
+  `Game` controller handoff 未接而維持失敗即關閉。

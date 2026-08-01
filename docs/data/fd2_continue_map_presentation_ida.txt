@@ -91,6 +91,7 @@ cursor，`0x10494` 的首次地圖重繪才消費它。因此標題 CONTINUE 從
 
 故 `range_mode` 與 `hud_gate_b_anchor` 不再列為未解擁有者；其後 map timing、
 field-runtime bridge 與 future-group constructor 也已有嚴格 consumer。正式
-CONTINUE 仍因 chapter asset 的 pending-group binding，以及 `0x117E7` 對應的
-正式 `Game` controller handoff 兩項缺口維持失敗即關閉；本證據不授權接入
-戰場內 `0x1A251` caller。
+CONTINUE 的未改寫 chapter0 排程已有嚴格 pending-roster consumer，但仍因
+handler-mutated turn slots／group formulas 的通用 pending-group binding，以及
+`0x117E7` 對應的正式 `Game` controller handoff 兩項缺口維持失敗即關閉；
+本證據不授權接入戰場內 `0x1A251` caller。

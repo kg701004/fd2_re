@@ -1603,8 +1603,9 @@
   `NativeEventState[32]`。`0x0000..0x08a2` 也由 FDFIELD 資源來源、
   對稱 copy 與 `0x1a813/0x13a44/0x10b4e` consumers 閉合為
   `NativeFieldControl[0x8a3]`。控制映像、runtime records/selectors、timing
-  與 future-group constructor 已由下列具型別交易分別閉合；真正缺的是
-  chapter asset pending-group binding，以及整組 `battle.State` 到正式
+  與 future-group constructor 已由下列具型別交易分別閉合；chapter0 未改寫
+  live 排程已有嚴格 pending roster consumer 與原版快照測試。真正缺的是
+  動態 turn-writer／group-formula 的通用 pending-group binding，以及整組 `battle.State` 到正式
   `Game`／controller 的原子 handoff，故正式 CONTINUE 仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`、`fd2_current_event_state_ida.txt`、
   `fd2_current_field_control_ida.txt`
@@ -1621,11 +1622,27 @@
   為開場 `0`／返回 `0x117E7` 控制器前 `1`，資料映像 gate B／anchor seed 均為
   `1`，且 anchor 只依已恢復 visible cursor 精確推進；這些值已收入
   `ContinueMapPresentation`。runtime unit、map timing seed adapter 與完整
-  future-group constructor transaction 均已閉合；preflight 現只保留
-  pending-group binding 與 `battle_controller_handoff` 兩個待 caller 接管的 owners，
+  future-group constructor transaction 均已閉合；chapter0 靜態 live
+  turn/event 已能只綁 groups3..7 共15筆；saved turn 只保留尚未掃描的
+  selector0/1，已於上一輪尾端掃描的 selector2 不重綁。preflight
+  仍保留動態 pending-group binding 與 `battle_controller_handoff` 兩個
+  待 caller 接管的 owners，
   `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
   → `fd2_continue_selector_rebuild_ida.txt`、
-  `fd2_continue_map_presentation_ida.txt`
+  `fd2_continue_map_presentation_ida.txt`、
+  `fd2_continue_pending_schedule_ida.txt`
+  - [~] **CONTINUE pending groups 靜態排程切片**：IDA/Capstone 直接證實
+    `0x117E7→0x16F55→0x19DF7` 的存檔分支不先進 `0x1A30B`；後者只由
+    `0x13565` 玩家階段收束門檻進入，依 raw selector1/0 掃目前回合後才
+    `inc [0x53BEF]`，後段才掃 selector2；故 saved turn 只納入 selector0/1，
+    selector2 已消費。新增
+    `MaterializeNativeContinuePendingGroups`，只在 live `(turn,event_id)` 與
+    scenario 完全相符時深複製 future rows／item table；chapter0 原版快照
+    綁定 groups3..7 共15列，排除已出場1/2與未排程10/11。map0 舊31×24
+    測試註解已依資產更正為24×24；map25/event61 另以真實資產固定
+    selector1／slot／once-state12，live selector 不符即拒絕。動態
+    event27/54/57、event47/49 formula、
+    ch03 slot條件與多個 turn-byte writer 尚未資料化，故 owner 不移除
   - [x] **CONTINUE map timing seed**：IDA 完整 data xrefs 與 Capstone
     raw data 證實 cycles／terrain phase／兩組 binary latch 初值全零，
     terrain override 為 `-1`；唯 `[0x53C0F]` 由 main

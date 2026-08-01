@@ -58,6 +58,8 @@ camera-cursor identity 及 FDFIELD 控制段容量；所有結果深複製且不
 
 這份報告只關閉 snapshot 與 selector preflight。其後的具型別交易已另行閉合
 標題 CONTINUE 的 range mode、HUD gate B／anchor、map timing、live field
-boundary、saved runtime units 與 future-group constructor。目前只剩 chapter
-asset 的 pending-group binding，以及 `0x117E7` 對應的正式 `Game` controller
-handoff 兩個 unresolved owners，所以 `ReadyForContinue()` 仍必須保持 false。
+boundary、saved runtime units 與 future-group constructor。未改寫 live
+turn/event 的 chapter0 排程也已有嚴格 pending-roster consumer；目前仍缺
+handler-mutated turn slots／group formulas 的通用 pending-group binding，以及
+`0x117E7` 對應的正式 `Game` controller handoff，所以 `ReadyForContinue()`
+仍必須保持 false。

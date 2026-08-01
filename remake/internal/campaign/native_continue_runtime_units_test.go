@@ -31,9 +31,9 @@ func TestMaterializeNativeContinueRuntimeUnitsOriginalSnapshot(t *testing.T) {
 		snapshot,
 		fdsave.ContinueRuntimeContext{
 			Chapter: int(snapshot.Header.Chapter),
-			// The supplied reference snapshot is chapter 0, whose original
-			// field is 31×24. Resource identity remains explicit here.
-			FieldWidth: 31, FieldHeight: 24,
+			// The supplied reference snapshot is chapter 0. The selected
+			// map0_units.json asset is the authoritative 24×24 field source.
+			FieldWidth: 24, FieldHeight: 24,
 			SelectorGroupCount: 256,
 			TitleTimerTick:     0, HasTitleTimerTick: true,
 		},
@@ -41,10 +41,19 @@ func TestMaterializeNativeContinueRuntimeUnitsOriginalSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assetState, err := battle.Load("../../assets/maps/map0/map0_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 	state := &battle.State{
-		W: 31, H: 24,
-		NativeFieldEventSlots: make([]int, 31*24),
-		NativeFieldEvents:     make([]battle.NativeFieldEvent, 16),
+		W: assetState.W, H: assetState.H,
+		NativeCompositionEventBytes: append(
+			[]byte(nil), assetState.NativeCompositionEventBytes...,
+		),
+		NativeFieldEventSlots: append([]int(nil), assetState.NativeFieldEventSlots...),
+		NativeFieldEvents: append(
+			[]battle.NativeFieldEvent(nil), assetState.NativeFieldEvents...,
+		),
 	}
 	if err := MaterializeNativeContinueFieldBoundary(
 		state, input, int(snapshot.Header.Chapter),
@@ -72,6 +81,30 @@ func TestMaterializeNativeContinueRuntimeUnitsOriginalSnapshot(t *testing.T) {
 		state.Units[4].HasNativeIdentity ||
 		state.Units[4].NativeRecordByte8 != 96 {
 		t.Fatalf("enemy runtime +8 was misclassified: %#v", state.Units[4])
+	}
+	scenario, err := battle.LoadScenario("../../assets/scenarios/ch01.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(
+		"../../assets/data/native_item_effect_rows.json",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := MaterializeNativeContinuePendingGroups(
+		state, input, int(snapshot.Header.Chapter), assetState, scenario, itemRows,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Roster) != 15 || !reflect.DeepEqual(
+		state.PendingGroups,
+		map[int]bool{3: true, 4: true, 5: true, 6: true, 7: true},
+	) {
+		t.Fatalf(
+			"original pending roster=%d groups=%v",
+			len(state.Roster), state.PendingGroups,
+		)
 	}
 }
 

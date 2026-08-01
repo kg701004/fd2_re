@@ -417,8 +417,9 @@ type ContinueFieldControlView struct {
 type ContinueRuntimeOwner string
 
 const (
-	// The 0x10C50→0x1B750 constructor transaction is closed, but CONTINUE
-	// still needs a chapter-asset owner that binds its untouched future rows.
+	// The 0x10C50→0x1B750 constructor transaction and an exact static-schedule
+	// slice are closed. CONTINUE still needs an owner for handler-mutated turn
+	// slots and group formulas before every legal save can bind future rows.
 	ContinueOwnerPendingGroupBinding ContinueRuntimeOwner = "pending_group_binding"
 	// Original main enters 0x117E7 after sub_10010 returns. The remaining
 	// owner is the remake's atomic Game publication, not a missing EXE driver.
