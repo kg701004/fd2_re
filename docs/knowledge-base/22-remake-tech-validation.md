@@ -75,4 +75,4 @@ GOOS=js GOARCH=wasm go build -o web/fd2.wasm ./cmd/fd2   # 10.5 MB
    仍在反組譯與整合中；不能把目前工作簡化成「只剩組裝」。現況以 [`20`](20-first-principles-feasibility.md)、`42` gap audit、`56` SDD 為準。
 3. **歷史路線（已部分超前）**:原先由「能渲染地圖」推進到一場戰鬥的規劃已產生多個垂直切片；目前優先項改以 [`91-worklist`](91-worklist.md)、`42` gap audit 與 `56` SDD 的未完成項為準，尤其是 native UI/effect、campaign postbattle 與 renderer。
 
-> 相關:架構設計 [`21`](21-go-ebiten-remake-plan.md) · 可行性 [`20`](20-first-principles-feasibility.md) · 字型現代化 [`18`](18-font-modernization-plan.md) · 腳本系統 [`19`](19-scenario-script-system-design.md)
+> 相關:架構設計 [`21`](21-go-ebiten-remake-plan.md) · 可行性 [`20`](20-first-principles-feasibility.md) · 字型現代化 [`18`](18-font-modernization-utf8-ttf-plan.md) · 腳本系統 [`19`](19-scenario-script-system-design.md)

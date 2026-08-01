@@ -3078,3 +3078,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `sub_1145A` 裝備重算仍未閉合。本 materializer 故意不覆寫 AP／DP／DX 等
   scenario base，也不宣稱完成整個 0x50-byte record；下一 RE 切片是八物品格
   到 `+0x48/+0x4A/+0x4C/+0x4E` 的直接資料流與物品旗標消費端。
+
+## 2026-08-02：JOIN `0x112A5→0x1145A` 裝備交易接線勘誤
+
+- 上段「`sub_1145A` 尚未閉合」是過時斷言。更早已有
+  `battle.ApplyNativeEquipmentRecalc`、215 列 item row cross-check 與 raw
+  regression 證實八格 `flag&0x40`、row `+1/+5/+3/+7`、signed 16-bit
+  accumulation 及 `+0x48/+0x4A/+0x4C/+0x4E` writers；真正未完成的是 JOIN
+  production consumer。
+- `NativeJoinConstructorTable.MaterializePersistentUnit` 現以局部 0x50-byte
+  transaction record 精確寫入 `0x112A5` 已證實的 inventory、command、
+  race/class/level、base AP／DP／DX、HP／MP 欄位，再呼叫 raw `0x1145A`
+  helper。缺少任一 equipped item row 時不發布部分角色。
+- 凱麗 id12 fresh JOIN 現固定 base AP／DP／DX `80/69/10`，inventory
+  `0x3E/0xAC`，derived AP／DP／HIT／EV `100/79/110/15`；`+0x42=151` 不變。
+  這些是 fresh JOIN 的 E1 transaction regression，不是 ch27 一般玩家時點
+  或 DOSBox 同狀態 E2。
+- 同輪修正兩項 raw 邊界：native persistent restore 現保留原始
+  `+0x42/+0x46` provenance；商店 equipment recipient 的 current
+  `+0x48..+0x4E` 改依已證實 signed word 解碼，負值不再顯示成巨大正數。
+- Docker regression 已覆蓋 32 個 JOIN rows、凱麗 exact fixture、缺 item row
+  原子失敗、signed shop current stats 與 native save restore；
+  `go test ./... -count=1`、JOIN asset `--check` 及 247 個本地 Markdown
+  檔案／圖片連結均通過。

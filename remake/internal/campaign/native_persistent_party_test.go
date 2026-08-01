@@ -108,6 +108,8 @@ func TestMaterializeNativePersistentPartyRecordPreservesProvenFields(t *testing.
 		!unit.HasMapSelectorKey || unit.MapSelectorKey != 0x44 ||
 		unit.HP != 13 || unit.MaxHP != 14 || unit.AP != 17 ||
 		unit.BaseAP != 10 || unit.BaseHIT != 12 ||
+		!unit.HasNativeRecordWord42 || unit.NativeRecordWord42 != 14 ||
+		!unit.HasNativeRecordWord46 || unit.NativeRecordWord46 != 16 ||
 		unit.DX != 12 || unit.Exp != 42 ||
 		len(unit.Inventory) != 1 || unit.Inventory[0] != 0x12 ||
 		!unit.Equipped[0] {

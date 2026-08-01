@@ -33,9 +33,13 @@ func event63GameFixture(t *testing.T) *Game {
 	if err != nil {
 		t.Fatal(err)
 	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(assetPath("assets/data/native_item_effect_rows.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, unit := range scenario.PartyUnits(nil) {
 		if unit != nil && unit.Fig == 12 {
-			persistentKeli, err = joinTable.MaterializePersistentUnit(12, *unit)
+			persistentKeli, err = joinTable.MaterializePersistentUnit(12, *unit, itemRows)
 			if err != nil {
 				t.Fatal(err)
 			}

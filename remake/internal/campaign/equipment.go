@@ -116,8 +116,9 @@ func RecomputeAfterClassChange(u *battle.Unit, stats map[int]ItemStats) {
 
 // InitializeEquipmentBase converts an authored effective stat line into the
 // persistent base expected by 0x1145a by subtracting the source's equipped
-// first-two inventory slots once. Subsequent saves carry EquipmentBaseSet and
-// never repeat this conversion.
+// inventory contributions once. This is a normalized compatibility path, not
+// the raw eight-cell 0x1145a transaction. Subsequent saves carry
+// EquipmentBaseSet and never repeat this conversion.
 func InitializeEquipmentBase(u *battle.Unit, stats map[int]ItemStats) {
 	if u == nil || u.EquipmentBaseSet {
 		return

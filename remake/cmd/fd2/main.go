@@ -126,6 +126,7 @@ type Game struct {
 	classChangeGrowth          map[int]campaign.ClassChangeGrowth
 	nativeJoinConstructor      campaign.NativeJoinConstructorTable
 	hasNativeJoinConstructor   bool
+	nativeJoinItemEffectRows   []byte
 	handlerChapter             int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter
 	storyWalks                 []*storyWalkJob // 場景走位動畫佇列(doc46 §5.3);逐幀推進、完成後移除
 	storyAutoAdvance           int             // story 節點無對白時的自動轉場倒數幀(doc46 行軍蒙太奇,0=不自動)
@@ -2272,7 +2273,18 @@ func (g *Game) materializeNativeJoinPersistentUnit(id int, base battle.Unit) (ba
 		g.nativeJoinConstructor = table
 		g.hasNativeJoinConstructor = true
 	}
-	return g.nativeJoinConstructor.MaterializePersistentUnit(id, base)
+	if len(g.nativeJoinItemEffectRows) == 0 {
+		rows, err := battle.LoadNativeItemEffectRowPrefix(
+			assetPath("assets/data/native_item_effect_rows.json"),
+		)
+		if err != nil {
+			return battle.Unit{}, fmt.Errorf("native JOIN item effect rows: %w", err)
+		}
+		g.nativeJoinItemEffectRows = rows
+	}
+	return g.nativeJoinConstructor.MaterializePersistentUnit(
+		id, base, g.nativeJoinItemEffectRows,
+	)
 }
 
 func applyPersistentStats(dst, src *battle.Unit) {
@@ -7203,6 +7215,11 @@ func loadGame() *Game {
 	if table, e := campaign.LoadNativeJoinConstructorTable(joinPath); e == nil {
 		g.nativeJoinConstructor = table
 		g.hasNativeJoinConstructor = true
+	}
+	if rows, e := battle.LoadNativeItemEffectRowPrefix(
+		assetPath("assets/data/native_item_effect_rows.json"),
+	); e == nil {
+		g.nativeJoinItemEffectRows = rows
 	}
 	g.initializeEquipmentBases(g.st)
 	g.font = loadFont()

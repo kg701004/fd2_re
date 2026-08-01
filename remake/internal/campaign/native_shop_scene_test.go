@@ -516,6 +516,21 @@ func TestNativeShopEquipmentRecordRequiresAndPreservesBaseStats(t *testing.T) {
 	}
 }
 
+func TestNativeShopEquipmentCurrentStatsPreservesSignedWords(t *testing.T) {
+	record := make([]byte, 0x50)
+	for index, value := range [...]int16{-1, -32768, 32767, -23} {
+		offset := [...]int{0x48, 0x4a, 0x4c, 0x4e}[index]
+		binary.LittleEndian.PutUint16(record[offset:], uint16(value))
+	}
+	got, err := NativeShopEquipmentCurrentStats(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != [4]int{-1, -32768, 32767, -23} {
+		t.Fatalf("signed current stats=%v", got)
+	}
+}
+
 func TestNativeShopPurchaseTextTablesPreserveSixVariants(t *testing.T) {
 	want := [4][6]int{
 		{1, 502, 1, 439, 1, 439},

@@ -91,10 +91,10 @@ func NativeShopEquipmentCurrentStats(record []byte) ([4]int, error) {
 		)
 	}
 	return [4]int{
-		int(binary.LittleEndian.Uint16(record[0x48:])),
-		int(binary.LittleEndian.Uint16(record[0x4a:])),
-		int(binary.LittleEndian.Uint16(record[0x4c:])),
-		int(binary.LittleEndian.Uint16(record[0x4e:])),
+		int(int16(binary.LittleEndian.Uint16(record[0x48:]))),
+		int(int16(binary.LittleEndian.Uint16(record[0x4a:]))),
+		int(int16(binary.LittleEndian.Uint16(record[0x4c:]))),
+		int(int16(binary.LittleEndian.Uint16(record[0x4e:]))),
 	}, nil
 }
 

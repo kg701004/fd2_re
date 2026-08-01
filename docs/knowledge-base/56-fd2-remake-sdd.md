@@ -2906,6 +2906,11 @@ event64／66／68／70／72 的各自 phase／handler consumer。JOIN `0x112A5`
 `native_join_constructor.json` 與 `NativeJoinConstructorTable` 接入正常
 JOIN→LOADCH 及 `scenario join_party` 首次 persistent roster 建立路徑；凱麗
 id12 的 `+0x42=151` 不再由測試手填，章節產生器的近似 HP／MP 也不會被反推
-成 raw 欄位。尚未閉合的 `sub_1145A` 裝備重算不在這次投影範圍，AP／DP 等
-未證實覆寫仍保留可編輯 base。直接位址與指令見
-[`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。
+成 raw 欄位。既有已閉合的 `sub_1145A` raw transaction 現已接入同一
+materializer：先按 `0x112A5` 建八格 `[flag,item]`、base AP／DP／DX，再以
+版本化的 byte-exact 物品列前綴重算 signed `+0x48/+0x4A/+0x4C/+0x4E`，任何所需 item row
+缺失均不發布部分角色。凱麗 fresh JOIN 的 base AP／DP／DX 為 `80/69/10`，
+重算後 AP／DP／HIT／EV 為 `100/79/110/15`。這仍只保存已證實交易欄位，
+不宣稱完整保存 0x50-byte record 的未觸及 bytes。直接位址與指令見
+[`fd2_join_constructor_word42_ida.txt`](../data/fd2_join_constructor_word42_ida.txt)
+與 [`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。

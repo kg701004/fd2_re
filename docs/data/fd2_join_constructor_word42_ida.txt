@@ -27,6 +27,11 @@ FD2 JOIN 角色建構器 `0x112A5` 與 `+0x42/+0x46`（IDA Pro 9.4）
 
 - `0x112EE..0x1130A`：`maxHP = u16(D+3) + G[6] * (L-1)`。
 - `0x1130E..0x1131B`：`maxMP = u16(D+5) + G[8] * (L-1)`。
+- `0x11337..0x11395`：前兩格固定以 `flag=0x40` 裝備 `D[0x0C..0x0D]`；
+  後四格取 `D[0x0E..0x11]`，item `0xFF` 時 flag 為 `0x80`，否則為0；
+  最後兩格的 flag 固定為 `0x80`。
+- `0x11399..0x113CE`：複製 `D[8..11]` 到 command bytes `+0x1A..+0x1D`，
+  清 `+0x1E` 與六個 `+0x22..+0x27` bytes，並寫 `+0x31=0xFF`。
 - `0x113D5..0x113E8`：`baseAP = u16(D+0x12) + G[0] * L`。
 - `0x113EC..0x11400`：`baseDP = u16(D+0x14) + G[2] * L`。
 - `0x1140E..0x11422`：`baseDX = u16(D+0x16) + G[4] * L`。
@@ -56,8 +61,13 @@ FD2 JOIN 角色建構器 `0x112A5` 與 `+0x42/+0x46`（IDA Pro 9.4）
   每列保留原始 file offset、24/11-byte raw rows、FD2.EXE identity 與證據等級。
 - `campaign.NativeJoinConstructorTable` 驗證 32 列順序、offset、stride 與雜湊，
   正常 `JOIN→LOADCH` 及 `scenario join_party` 首次建檔共用同一 materializer。
-  它只覆寫已閉合的 identity/raw key、race/class、level/MV、command mask 與
-  `+0x42/+0x46`；不從 scenario HP/MP 反推。
-- `sub_1145A` 的八物品格裝備重算尚未閉合，因此 AP/DP/DX 及
-  `+0x48/+0x4A/+0x4C/+0x4E` 不在本次完成範圍：**已證實的剩餘缺口**。
+  它先在局部 0x50-byte transaction record 寫入已證實欄位，再呼叫既有
+  `battle.ApplyNativeEquipmentRecalc` 執行 `sub_1145A`。任何已裝備 item row
+  缺失時整筆失敗，不發布部分 `Unit`。
+- `sub_1145A` 的八物品格、`flag&0x40` gate、item row `+1/+5/+3/+7`、
+  signed 16-bit accumulation 與 `+0x48/+0x4A/+0x4C/+0x4E` writers：**已證實**。
+  凱麗 fresh JOIN 的 base AP／DP／DX 為 `80/69/10`；items `0x3E/0xAC`
+  重算後 AP／DP／HIT／EV 為 `100/79/110/15`。
+- 局部 transaction record 只承載 `0x112A5→0x1145A` 已寫入或已消費欄位；
+  不宣稱保存原版 0x50-byte record 中未觸及 bytes。
 - 直接跳章仍沒有先前升級／轉職／存檔歷史，不能冒充正常玩家路徑。

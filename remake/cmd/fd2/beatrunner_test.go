@@ -710,9 +710,13 @@ func TestScenarioJoinPersistsRecruitedAllyThroughPostBattleSync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(assetPath("assets/data/native_item_effect_rows.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	hanoRuntime, err := joinTable.MaterializePersistentUnit(1, battle.Unit{
 		Camp: battle.Ally, Fig: 1, Name: "哈諾", OnField: true,
-	})
+	}, itemRows)
 	if err != nil {
 		t.Fatal(err)
 	}
