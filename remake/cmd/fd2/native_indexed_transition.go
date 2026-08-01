@@ -66,6 +66,10 @@ func validateNativeIndexedTransitionSpec(s campaign.HandlerIndexedTransition) er
 }
 
 func (g *Game) buildNativeIndexedTransitionInput() (indexedmap.NativeTransitionFrameInput, error) {
+	return g.buildNativeIndexedTransitionInputForActors(g.storyActors)
+}
+
+func (g *Game) buildNativeIndexedTransitionInputForActors(actorsSource []battle.Unit) (indexedmap.NativeTransitionFrameInput, error) {
 	a, field := g.nativeMapAssets, g.m
 	if !nativeMapAssetsAvailable(a) || field == nil || field.TileW <= 0 || field.TileH <= 0 ||
 		field.W <= 0 || field.H <= 0 || len(field.Tiles) != field.W*field.H ||
@@ -80,10 +84,10 @@ func (g *Game) buildNativeIndexedTransitionInput() (indexedmap.NativeTransitionF
 	if err != nil {
 		return indexedmap.NativeTransitionFrameInput{}, fmt.Errorf("terrain cells: %w", err)
 	}
-	actors := make([]battle.Unit, len(g.storyActors))
+	actors := make([]battle.Unit, len(actorsSource))
 	units := make([]*battle.Unit, len(actors))
-	for i := range g.storyActors {
-		actors[i] = g.storyActors[i]
+	for i := range actorsSource {
+		actors[i] = actorsSource[i]
 		units[i] = &actors[i]
 	}
 	state := &battle.State{}

@@ -28,6 +28,10 @@ type nativeMapAssets struct {
 	// Native 0x11df2 effects require mutable raw components; color.Palette is
 	// presentation-only and must not be used as the effect state.
 	PaletteDAC []byte
+	// SpawnIntro is FDOTHER #9's exact twelve-entry LMI1 bank consumed by
+	// sub_32999. It is validated independently because steady map rendering
+	// does not require this caller-specific transition.
+	SpawnIntro []fdother.LMI1Entry
 }
 
 func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
@@ -71,11 +75,16 @@ func loadNativeMapAssets(mapDir string) (*nativeMapAssets, error) {
 	if err != nil {
 		return nil, err
 	}
+	// #9 is caller-specific.  Keep steady map rendering available when that
+	// bank is absent or malformed; the formal spawn-intro path validates it
+	// separately and fails closed before changing the roster.
+	spawnIntro, _ := fdother.DecodeNativeSpawnIntroFrames(fdotherPath)
 	return &nativeMapAssets{
 		MapIndex: mapIndex, Frames: frames,
 		Terrain: terrain, Range: rangeBank, Units: units,
 		Controls: controls, LUTs: luts, Palette: palette,
 		PaletteDAC: append([]byte(nil), paletteRaw...),
+		SpawnIntro: spawnIntro,
 	}, nil
 }
 
@@ -87,6 +96,18 @@ func nativeMapAssetsAvailable(a *nativeMapAssets) bool {
 	}
 	for i := 1; i <= 9; i++ {
 		if len(a.LUTs[i]) != 256 {
+			return false
+		}
+	}
+	return true
+}
+
+func nativeSpawnIntroAssetsAvailable(a *nativeMapAssets) bool {
+	if !nativeMapAssetsAvailable(a) || len(a.SpawnIntro) != fdother.NativeSpawnIntroPassCount {
+		return false
+	}
+	for _, entry := range a.SpawnIntro {
+		if entry.Width <= 0 || entry.Height <= 0 || len(entry.Pixels) != entry.Width*entry.Height {
 			return false
 		}
 	}

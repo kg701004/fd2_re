@@ -2819,8 +2819,28 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `event_id_groups.json`、scenario generator 與 Go `NativeSpawnCall` 現保存
   global event1/2 的 `following_acting` resource/source。loader 要求 intro
   呼叫具完整後續 provenance，普通 spawn 則拒絕夾帶它。
-- 正式 battle action 與原版來源的 handler `spawn_intro` 都在任何 roster
-  變更前失敗即關閉，直到真正的 indexed transition 及 caller acting adapter
-  接通。舊的12-tick 路徑只可留給無原版 provenance 的擴充內容相容模式。
+- **當時狀態，已由下方 2026-08-01 後續紀錄取代**：正式 battle action 與
+  原版來源的 handler `spawn_intro` 當時都在 roster 變更前失敗即關閉；舊的
+  12-tick 路徑只可留給無原版 provenance 的擴充內容相容模式。
 - 直接證據見 [`fd2_spawn_intro_32999_ida.md`](../data/fd2_spawn_intro_32999_ida.md)
   與 [`fd2_spawn_intro_32999_capstone.txt`](../data/fd2_spawn_intro_32999_capstone.txt)。
+
+## 2026-08-01：`0x32999` handler 的12次索引呈現接入正式路徑
+
+- `fdother.NativeSpawnIntroSchedule` 保存原始 pass 0..11、FDOTHER #9 項目索引、
+  pass1 的原始資源 #95，以及 pass6/7/8 的重建模式與 `-8/-5` 像素列位移；
+  原始 pass、資源號與指標位移皆保留，語意標籤只作附加。
+- `indexedmap.ComposeNativeSpawnIntroPass` 以 `0x25680`、stride `0x1C8` 的工作
+  畫面運作，先呈現312×192視窗，再按原順序更新下一張 snapshot。舊／新增
+  單位以 constructor 前的 unit count 分界；列位移只作用於 framebuffer base，
+  不改世界座標。任何驗證失敗都不修改 caller buffers。
+- handler runtime 先在私有 FDFIELD／roster 副本執行 placement 與12個 pass
+  預檢，全部成功後才發布新增群組。每個 pass 必須經 `Draw` 確認才前進；完成
+  後才執行 caller 的獨立 ACTING beat。缺 FDOTHER #9、#95、selector、原始位置
+  或 framebuffer 幾何時，在 roster 變更前失敗即關閉。
+- 真實 ch00 handler 回歸以使用者合法 `FDOTHER.DAT` 驗證兩次增援各呈現12幀，
+  並繼續到 `battle_ch01`、戰後同步、`town_ch02` 與 `preparation_ch02`。這是
+  重製端決定性路徑證據，不提升成與未修改 DOSBox 同狀態逐像素 E2。
+- 通用 `battle.Scenario.ExecuteActionChecked` 仍沒有畫面／音訊與 following
+  acting 擁有者，故全域 event1/2 繼續失敗即關閉；`0x10C50` 完整 table／
+  inventory projection 與 `0x1B750` equipment recompute 仍未閉合。

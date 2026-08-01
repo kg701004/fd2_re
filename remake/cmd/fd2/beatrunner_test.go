@@ -4,6 +4,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -54,6 +56,7 @@ func newBeatTestGame(t *testing.T, beats []campaign.Beat) *Game {
 // tick 手動跑一輪「Update 會做的 BeatRunner 相關步驟」,次數可控,方便測試逐幀推進。
 func (g *Game) tick(n int) {
 	for i := 0; i < n; i++ {
+		g.stepNativeSpawnIntro()
 		g.stepStoryWalks()
 		g.stepActJob()
 		g.stepFocusUnit()
@@ -1131,12 +1134,19 @@ func TestApplyLoadCHSeedsJoinedPersistentPartyBeforeFirstBattleSync(t *testing.T
 	}
 }
 
-func TestCh00CompiledHandlerFailsClosedAtUnimplementedNativeIntro(t *testing.T) {
+func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testing.T) {
+	const originalBase = "../../../org_game/炎龍騎士團/FLAME2"
+	fdotherPath := filepath.Join(originalBase, "FDOTHER.DAT")
+	if _, err := os.Stat(fdotherPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
+
 	c, err := campaign.Load(assetPath("assets/scenarios/campaign_full.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	g := &Game{camp: campaign.NewRunner(c)}
+	g := &Game{camp: campaign.NewRunner(c), sfxSpawnIntro: []byte{1}}
 	g.enterNode()
 	if g.loadErr != "" {
 		t.Fatalf("enter ch00 handler: %s", g.loadErr)
@@ -1146,34 +1156,29 @@ func TestCh00CompiledHandlerFailsClosedAtUnimplementedNativeIntro(t *testing.T) 
 	// dialog beat as campInput would.  The bound keeps this a regression test:
 	// an unresolved native op or a stalled handler must fail instead of being
 	// silently skipped.
+	spawnIntroFrames := 0
 	for frame := 0; frame < 100000 && g.camp.NodeID() != "battle_ch01"; frame++ {
 		if len(g.dialog) > 0 {
 			g.dialog = nil
 			g.beatAdvance()
 		}
-		beforeUnits := 0
-		beforeStoryActors := len(g.storyActors)
-		if g.st != nil {
-			beforeUnits = len(g.st.Units)
-		}
 		g.tick(1)
 		if g.loadErr != "" {
-			if g.beatIdx >= len(g.beats) || g.beats[g.beatIdx].Source != "0x3289b" {
-				t.Fatalf("compiled ch00 handler stopped at unexpected beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
-			}
-			if (g.st != nil && len(g.st.Units) != beforeUnits) || len(g.storyActors) != beforeStoryActors {
-				t.Fatalf(
-					"native intro failure changed roster: units before=%d after=%v actors before=%d after=%d",
-					beforeUnits, g.st, beforeStoryActors, len(g.storyActors),
-				)
-			}
-			return
+			t.Fatalf("compiled ch00 handler stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+		}
+		if g.spawnIntroTransition != nil {
+			spawnIntroFrames++
+			g.spawnIntroTransition.drawn = true
 		}
 	}
-	t.Fatal("尚未實作 0x32999 adapter 時，序章竟通過原版 intro")
-	/* 真正 indexed adapter 完成後，重新啟用下列端到端 handoff 驗證。
+	if g.camp.NodeID() != "battle_ch01" {
+		t.Fatalf("compiled ch00 handler did not reach battle_ch01: node=%q beat=%d/%d", g.camp.NodeID(), g.beatIdx, len(g.beats))
+	}
 	if g.st == nil || g.sc == nil {
 		t.Fatalf("battle handoff did not materialize state/scenario: st=%v sc=%v", g.st != nil, g.sc != nil)
+	}
+	if spawnIntroFrames != 24 {
+		t.Fatalf("two native spawn intros presented %d frames, want 2*12", spawnIntroFrames)
 	}
 	if len(g.st.Units) != 12 {
 		t.Fatalf("handler runtime frontier=%d, want 4 party + two four-record groups = 12", len(g.st.Units))
@@ -1253,7 +1258,6 @@ func TestCh00CompiledHandlerFailsClosedAtUnimplementedNativeIntro(t *testing.T) 
 	if !g.acceptTownDeparturePrompt() {
 		t.Fatal("five-member early roster should skip 0x318ad after record confirmation")
 	}
-	*/
 }
 
 func TestChapter1PreLoadCHUsesFiveMemberJoinOrderAndSpawnFrontiers(t *testing.T) {
@@ -1416,7 +1420,7 @@ func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
 	}
 }
 
-func TestBeatSpawnIntroFailsClosedBeforeNativeGroupAppend(t *testing.T) {
+func TestBeatSpawnIntroWithoutNativeAssetsFailsClosedBeforeGroupAppend(t *testing.T) {
 	gate := 0
 	g := newBeatTestGame(t, []campaign.Beat{{
 		Op: "spawn_intro", Group: 2, RawPlacementGate: &gate, Source: "0x3289b",
@@ -1447,7 +1451,7 @@ func TestBeatSpawnIntroFailsClosedBeforeNativeGroupAppend(t *testing.T) {
 	}
 	g.beatAdvance()
 	if g.loadErr == "" {
-		t.Fatal("尚未實作的原版 0x32999 轉場未採失敗即關閉")
+		t.Fatal("缺少原版 0x32999 視覺／音訊素材時未採失敗即關閉")
 	}
 	if len(g.st.Units) != 1 || g.st.Units[0] != active || g.beatDelay != 0 {
 		t.Fatalf("失敗前已變更狀態：units=%#v delay=%d", g.st.Units, g.beatDelay)

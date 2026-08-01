@@ -29,6 +29,14 @@ type nativeUnitBlit struct {
 // preflights every selected entry before modifying dst, so malformed editable
 // selector state cannot produce a partial indexed frame.
 func (b *Bank) BlitNativeUnitLayer(dst []byte, stride int, cache *NativeSelectorCache, units []NativeUnitLayerEntry, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift int) error {
+	return b.BlitNativeUnitLayerWithBaseShift(dst, stride, cache, units, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, 0)
+}
+
+// BlitNativeUnitLayerWithBaseShift preserves callers which temporarily adjust
+// the native [0x53A49] framebuffer pointer before invoking 0x127E0. BaseShift
+// is a signed byte offset applied after NativePlacementOffset; it does not
+// change unit coordinates, camera bounds, animation state, or selector slots.
+func (b *Bank) BlitNativeUnitLayerWithBaseShift(dst []byte, stride int, cache *NativeSelectorCache, units []NativeUnitLayerEntry, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, baseShift int) error {
 	if b == nil || cache == nil || stride != NativeMapStride || visibleXMax < 0 || visibleYMax < 0 {
 		return errors.New("fdicon: invalid native unit layer")
 	}
@@ -52,6 +60,7 @@ func (b *Bank) BlitNativeUnitLayer(dst []byte, stride int, cache *NativeSelector
 		if err != nil {
 			return err
 		}
+		offset += baseShift
 		if offset < 0 { // 0x127e0 skips a negative native pointer offset.
 			continue
 		}

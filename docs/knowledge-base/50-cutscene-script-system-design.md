@@ -35,7 +35,7 @@
 | `PALFADE` (0x1f525) | 整幕 palette 淡入 | beat op:fade |
 | `DELAY(ms)` (0x375b2) | 延遲 | beat op:delay |
 | `DEACTIVATE_UNIT(slot)`（legacy DSL alias, 0x32975） | `unit[slot]+5 = 1`；此 caller 用於劇情退場，但 raw writer 本身不命名 bit0 的全域語意 | beat op:deactivate_unit（raw writer） |
-| `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再用 FDOTHER #9 做固定 12 次索引合成／呈現；後續 ACTING 是 caller 的獨立動作 | beat op:spawn_intro（原版 adapter 未完成前失敗即關閉） |
+| `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再用 FDOTHER #9 做固定 12 次索引合成／呈現；後續 ACTING 是 caller 的獨立動作 | beat op:spawn_intro；原版 handler 走具型別12次呈現 adapter，缺證據／素材時失敗即關閉 |
 | `RESET_POSE` (0x134e4) | 所有 materialized units pose=0，再 delay 20ms | beat op:reset_pose |
 | `FOCUS_UNIT(slot)` (0x12d7b→0x12cea) | 讀 unit X/Y，先 X 後 Y 逐格移動游標；13×8 視窗在 X=2..10、Y=2..5 安全帶外才捲圖 | beat op:focus_unit；runtime 已照四個 step 函式 lower |
 | `SYNC_PARTY` (0x11506) | 戰後以角色 ID 將 runtime battle unit 回寫 persistent roster，清暫態並恢復 HP/MP（§3.2） | beat op:sync_party；`partyRoster` 跨 battle/save 保留 |
@@ -296,7 +296,10 @@ slots 0–4，完整保留 frame movement/special timing。
 `0x32999(group)` 已由完整函式本體重反組譯確認為同一個 append constructor 加固定 12 次
 索引合成／呈現；wrapper 本體沒有呼叫 `0x1366A`，後續 ACTING 由 caller 另行執行。
 舊 BeatRunner 只 materialize group 並等待 12 個重製端 tick，不能代表原版呈現；正式原版
-來源的 `spawn_intro` 現在會在變更 roster 前失敗即關閉，直到 indexed adapter 完成。`0x32975(slot)`
+來源的 `spawn_intro` 現已承接 FDOTHER #9 的12個項目、舊／新增槽位邊界與第6／7／8次
+快照重建；每次必須真正呈現後才前進，完整預檢成功才發布 roster。caller 後續 ACTING
+仍是下一個獨立 beat，不併入 wrapper。缺素材或原始欄位時會在 roster 變更前失敗即關閉。
+`0x32975(slot)`
 則明確 lower 成 `deactivate_unit`（raw writer）：它覆寫 byte+5 為 1，是劇情退場 caller，不是 camera reveal；不得由此泛化 bit0 語意。
 `JOIN` 已可 lower 原版 0–31 player charID 並保存 party membership；NPC portrait（例如商店店員 75）
 一律拒絕。

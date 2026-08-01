@@ -54,3 +54,22 @@ func TestBlitNativeUnitLayerFailsBeforePartialFrame(t *testing.T) {
 		t.Fatal("failed layer partially modified destination")
 	}
 }
+
+func TestBlitNativeUnitLayerWithBaseShiftMatches32999PointerLift(t *testing.T) {
+	cache := &NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	dst := make([]byte, NativeMapStride*100)
+	unit := NativeUnitLayerEntry{X: 0, Y: 0, Slot: 0, Pose: 0}
+	if err := nativeLayerBank().BlitNativeUnitLayerWithBaseShift(
+		dst, NativeMapStride, cache, []NativeUnitLayerEntry{unit},
+		0, 0, 12, 7, 0, 0, 0, -8*NativeMapStride,
+	); err != nil {
+		t.Fatal(err)
+	}
+	base, _ := NativePlacementOffset(0, 0, 0, 0, 0, 0, 0, false)
+	if dst[base] != 0 || dst[base-8*NativeMapStride] != 0x10 {
+		t.Fatalf("shifted unit wrote base=%#x lifted=%#x", dst[base], dst[base-8*NativeMapStride])
+	}
+}

@@ -8,13 +8,14 @@ FDOTHER.DAT 資源 #31 是巢狀 `LLLLLL` 容器(見 docs/knowledge-base/36-sfx-
 取樣率:反組譯未找到 AIL_set_sample_type/set_sample_playback_rate 立即數呼叫點
 (見 docs/knowledge-base/36 待辦),沿用文件既有推定值 11025Hz ── 1995 年 AIL 遊戲常見預設值。
 
-第 10 輪新增 `--battle` 模式:戰鬥音效走另一批動態載入的 FDOTHER.DAT 子資源
-(`#48/#49/#50/#51/#52/#53/#64/#78/#88`,見 docs/knowledge-base/36 「戰鬥音效池」節),
+第 10 輪新增 `--battle` 模式:戰鬥音效走另一批 FDOTHER.DAT 子資源；其中
+`#48/#49/#50/#51/#52/#53/#64/#78/#88` 是動態候選池，`#95` 是 0x32999
+第 1 次呈現直接使用的固定資源（見 docs/knowledge-base/36），
 用同一個巢狀 LLLLLL 解包邏輯,輸出到 remake/assets/sfx/battle_<資源號>_<子序>.wav。
 
 用法:
     python3 tools/export_sfx.py                # UI 音效池(資源 #31)→ sfx_NN.wav
-    python3 tools/export_sfx.py --battle        # 戰鬥音效候選池 → battle_NN_MM.wav
+    python3 tools/export_sfx.py --battle        # 戰鬥音效匯出集合 → battle_NN_MM.wav
     python3 tools/export_sfx.py --res <idx>      # 導出任意 FDOTHER.DAT 資源號(需為巢狀容器)
 """
 import os
@@ -33,7 +34,7 @@ SAMPLE_RATE = 11025  # 推定值,見 docs/knowledge-base/36-sfx-audio-data.md �
 
 # 戰鬥音效候選池:PCM 特徵(值集中 0x80 附近、std 窄)比對確認,見 doc36 第 10 輪。
 # 精確「哪個 index 對應哪招」仍是動態值(攻擊資料決定),此處先把整個候選家族導出。
-BATTLE_CANDIDATE_INDICES = [48, 49, 50, 51, 52, 53, 64, 78, 88]
+BATTLE_EXPORT_INDICES = [48, 49, 50, 51, 52, 53, 64, 78, 88, 95]
 
 
 def export_container(data: bytes, name_prefix: str, label: str):
@@ -79,7 +80,7 @@ def main():
             idx = int(argv[argv.index("--res") + 1])
             indices = [idx]
         else:
-            indices = BATTLE_CANDIDATE_INDICES
+            indices = BATTLE_EXPORT_INDICES
 
         written = []
         for idx in indices:

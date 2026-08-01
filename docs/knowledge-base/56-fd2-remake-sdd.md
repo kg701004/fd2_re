@@ -2688,8 +2688,13 @@ spawn schedule 或既有 action 綁定不同 event id 時直接拒絕合併。
 `spawn_group_with_intro` 現另保存 wrapper 返回後的確切 acting resource／
 call-site；全域 event1/2 分別是 `0x342E7→ACTING(3)` 與
 `0x3434F→ACTING(4)`。`0x32999` 本體不含 acting，而是用 FDOTHER #9 做固定
-12 次索引合成／呈現。正式 action 與 handler runner 在完整 adapter 接通前
-都於 roster 變更前失敗即關閉，不再用等待12個重製畫面 tick 冒充原版。
+12 次索引合成／呈現。原版來源的 handler runner 現已用具型別排程承接12次
+呈現：先以完整 FDFIELD 狀態在私有副本建構新增群組，再按舊／新槽位邊界合成
+FDOTHER #9；第6、7、8次各自重建快照，第1次另觸發 FDOTHER #95，全部預檢
+成功後才發布名冊。每次呈現都必須經過 `Draw` 確認，完成後才進入 caller 的
+獨立 ACTING beat。缺素材、欄位、selector 或 framebuffer 幾何時，仍在名冊
+變更前失敗即關閉。這條 handler 垂直切片不等於通用 battle action 已完成：
+`ExecuteActionChecked` 沒有渲染與後續 acting 擁有者，仍拒絕全域 event1/2。
 `0x10C50` 的完整 table projection、
 inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
 `future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。

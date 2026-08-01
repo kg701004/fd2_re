@@ -429,5 +429,9 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
 > **記憶修正（2026-07-25）**：本節舊版「40-bit 已知招式遮罩／已學會招式清單」措辭已作廢。`0x1c269` 目前只證實為 5-byte bit-scan 與輸出 ABI；其欄位不命名為 spell、move 或 learned-list，且不得把 `unit+0x22..+0x24` raw transient/modifier bytes 當成法術 bitfield。
 
 `tools/export_sfx.py --battle` 把上表 9 個候選資源解開巢狀容器,逐子樣本補 WAV 檔頭,輸出到
-`remake/assets/sfx/battle_<資源號>_<子序>.wav`(共 42 個,`wave` 模組開啟全數驗證合法)。
+`remake/assets/sfx/battle_<資源號>_<子序>.wav`。2026-08-01 另加入固定資源 #95：
+`0x32999` 的第1次呈現直接呼叫 `0x25A96(resource95,0,1)`；其容器有1個
+10444-byte 有效 raw PCM 與1個空哨兵，因此目前 `--battle` 共匯出43個 WAV。
+11025Hz 仍是工具鏈推定值，#95 的玩家可聽語意也仍未知；不能因 runtime 已接線
+就提升成已證實的音效名稱。
 `--res <idx>` 可導出任意單一 FDOTHER.DAT 資源號(供後續驗證其他候選用)。

@@ -23,7 +23,12 @@ python3 tools/export_engine_assets.py \
     extracted/raw/FDSHAP/FDSHAP_000.bin \
     extracted/raw/FDOTHER/FDOTHER_000.bin \
     remake/assets 16
+# 匯出戰鬥音效集合；包含 0x32999 固定使用的 FDOTHER #95
+python3 tools/export_sfx.py --battle
 ```
+
+以上是容器內命令，依根目錄 `AGENTS.md` 規則必須透過專案 Docker 工具鏈執行，
+不可在主機 Python 安裝相依套件或直接執行。
 
 ## 建置(Docker first,無需本機 Go)
 

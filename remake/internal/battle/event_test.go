@@ -254,7 +254,7 @@ func TestExecuteActionCheckedFailsClosedBeforeNativeIntroMutation(t *testing.T) 
 		RawPlacementGate: &gate, FollowingActing: acting,
 	}}}
 	if _, _, err := sc.ExecuteActionChecked(st, action); err == nil {
-		t.Fatal("尚未實作的 0x32999 轉場被當成一般增援執行")
+		t.Fatal("不具視覺／後續 acting adapter 的低階 action executor 把 0x32999 當成一般增援執行")
 	}
 	if len(st.Units) != 1 || st.Units[0] != active {
 		t.Fatalf("失敗前已改變 runtime roster：%#v", st.Units)

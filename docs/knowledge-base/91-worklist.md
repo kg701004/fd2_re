@@ -1710,11 +1710,14 @@
     group3 友軍採 gate=1 原始位置；錯誤不再呼叫回合完成回呼（continuation）。
     official IDA 9.4 已固定 `0x32999` 的四個 caller、本體不含 `0x1366A`、
     FDOTHER #9 固定12次 indexed compositing/presentation；global event1/2
-    的 editable call metadata 另保存後續 ACTING(3/4) 與 call-site。正式
-    scenario／handler runner 已在 roster 變更前 fail-closed，不再把12個
-    重製 tick 當成原版轉場。仍缺真正的 `0x32999` indexed adapter、caller
-    following acting 串接、`0x10C50` 完整 table/inventory projection 與
-    `0x1B750` equipment recompute，owner 維持 fail-closed
+    的 editable call metadata 另保存後續 ACTING(3/4) 與 call-site。handler
+    的 `0x32999` adapter 已接 FDOTHER #9 的12次呈現、舊／新增槽位邊界、
+    pass6/7/8 快照重建與 pass1 的 FDOTHER #95；完整預檢成功才發布 roster，
+    每次 Draw 確認後才前進，再由下一個 beat 執行 caller ACTING。ch00 真實
+    handler 回歸已驗證兩次各12幀後仍進入 battle_ch01、戰後、城鎮與整備。
+    通用 scenario action 仍缺渲染／following acting 擁有者；另缺 `0x10C50`
+    完整 table/inventory projection 與 `0x1B750` equipment recompute，相關
+    owner 維持 fail-closed
     → `fd2_future_group_constructor_capstone.txt`、
       `fd2_future_group_raw_gate_ida.txt`、`fd2_spawn_intro_32999_ida.md`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
