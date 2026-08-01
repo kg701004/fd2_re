@@ -46,7 +46,7 @@ handler 序列(反組譯,✅來源確定):
 | 蓋亞/悠妮位置 | (5,43)/(5,44) | FDFIELD map31 ✅ | 已用 | ✅ |
 | 索爾+亞雷斯走向悠妮蓋亞 | act 內走位(14格外) | handler+FDFIELD ✅ | walk beat | ✅機制 |
 | 蓋亞阻擋/悠妮昏迷 staging | act(0x5e-61)幀(11單位複合等) | acting_decoded ✅ | 未接 | ⚠須接 acting_decoded |
-| raw byte writer / spawn intro | 0x32975(slot)=整 byte覆寫1；0x32999(group)=spawn＋FDOTHER #9 固定12次索引呈現；呼叫端 acting 分離 | 完整 callee body與四個 caller ✅；constructor 0x10eed 寫0 | raw_byte5_write；handler spawn_intro 已接12次呈現與獨立後續 acting，缺素材／原始欄位時失敗即關閉 | ✅ handler／⚠ global action |
+| raw byte writer / spawn intro | 0x32975(slot)=整 byte覆寫1；0x32999(group)=spawn＋FDOTHER #9 固定12次索引呈現；呼叫端 acting 分離 | 完整 callee body與四個 caller ✅；constructor 0x10eed 寫0 | raw_byte5_write；handler 與 ch01 global event1/2 已接12次呈現及各自獨立 acting；缺素材／原始欄位時失敗即關閉 | ✅ E1 機制／⚠ 尚缺 DOSBox 同狀態 E2 |
 
 ## D. 開場 Part 3:入隊 + 海島 + 進戰場(handler 章節0)
 

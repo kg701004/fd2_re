@@ -70,10 +70,32 @@ func (g *Game) buildNativeIndexedTransitionInput() (indexedmap.NativeTransitionF
 }
 
 func (g *Game) buildNativeIndexedTransitionInputForActors(actorsSource []battle.Unit) (indexedmap.NativeTransitionFrameInput, error) {
+	if g.m == nil {
+		return indexedmap.NativeTransitionFrameInput{}, errors.New("native map unavailable")
+	}
+	state := &battle.State{W: g.m.W, H: g.m.H}
+	actors := make([]battle.Unit, len(actorsSource))
+	units := make([]*battle.Unit, len(actors))
+	for i := range actorsSource {
+		actors[i] = actorsSource[i]
+		units[i] = &actors[i]
+	}
+	if err := state.AppendNativeMapSelectorBatch(units); err != nil {
+		return indexedmap.NativeTransitionFrameInput{}, fmt.Errorf("selector roster: %w", err)
+	}
+	return g.buildNativeIndexedTransitionInputForState(state)
+}
+
+// buildNativeIndexedTransitionInputForState preserves the battle-session
+// selector cache and animation/timing globals.  Reconstructing those from a
+// flat unit slice would reset a turn-four transition to the chapter-opening
+// phase even when every unit record was otherwise correct.
+func (g *Game) buildNativeIndexedTransitionInputForState(state *battle.State) (indexedmap.NativeTransitionFrameInput, error) {
 	a, field := g.nativeMapAssets, g.m
 	if !nativeMapAssetsAvailable(a) || field == nil || field.TileW <= 0 || field.TileH <= 0 ||
 		field.W <= 0 || field.H <= 0 || len(field.Tiles) != field.W*field.H ||
-		!bytes.Equal(field.NativeTerrainControl, a.Controls) {
+		!bytes.Equal(field.NativeTerrainControl, a.Controls) || state == nil ||
+		state.W != field.W || state.H != field.H {
 		return indexedmap.NativeTransitionFrameInput{}, errors.New("native map assets/field unavailable")
 	}
 	if int(g.camX)%field.TileW != 0 || int(g.camY)%field.TileH != 0 ||
@@ -83,16 +105,6 @@ func (g *Game) buildNativeIndexedTransitionInputForActors(actorsSource []battle.
 	cells, err := indexedmap.BuildNativeTerrainCells(field.Tiles, field.NativeTileBlitModes)
 	if err != nil {
 		return indexedmap.NativeTransitionFrameInput{}, fmt.Errorf("terrain cells: %w", err)
-	}
-	actors := make([]battle.Unit, len(actorsSource))
-	units := make([]*battle.Unit, len(actors))
-	for i := range actorsSource {
-		actors[i] = actorsSource[i]
-		units[i] = &actors[i]
-	}
-	state := &battle.State{}
-	if err := state.AppendNativeMapSelectorBatch(units); err != nil {
-		return indexedmap.NativeTransitionFrameInput{}, fmt.Errorf("selector roster: %w", err)
 	}
 	roster, err := state.NativeMapFrameRoster()
 	if err != nil {

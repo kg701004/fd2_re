@@ -7406,6 +7406,17 @@ func (g *Game) advanceBattleEvent() {
 			g.battleEventDelay = frames
 			return
 		default:
+			call, isNativeIntro, introErr := nativeBattleIntroCall(action)
+			if introErr != nil {
+				g.finishBattleEventWithError(introErr.Error())
+				return
+			}
+			if isNativeIntro {
+				if err := g.startNativeBattleSpawnIntro(action, call, g.advanceBattleEvent); err != nil {
+					g.finishBattleEventWithError(err.Error())
+				}
+				return
+			}
 			dialogue, isDialogue, err := g.sc.ExecuteActionChecked(g.st, action)
 			if err != nil {
 				g.finishBattleEventWithError(err.Error())

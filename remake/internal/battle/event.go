@@ -13,16 +13,17 @@ import (
 
 // Scenario 一關的劇本(對映原版 FDFIELD turn_events + 青衫 ground truth)。
 type Scenario struct {
-	Chapter             int                  `json:"chapter"`
-	Name                string               `json:"name"`
-	Map                 int                  `json:"map"`
-	RuntimeAppendGroups bool                 `json:"runtime_append_groups,omitempty"`          // party first; FDFIELD groups append only when constructed
-	InitialGroups       []int                `json:"initial_groups"`                           // 開局即在場的 unit group;其餘待命
-	InitialGroupsAbsent []InitialGroupAbsent `json:"initial_groups_if_party_absent,omitempty"` // native pre-handler conditional FDFIELD group
-	Party               []PartyMember        `json:"party"`                                    // 主角隊(不在 FDFIELD roster,on_battle_start 進場)
-	DeployCells         [][2]int             `json:"deploy_cells"`                             // 主角隊進場目標格
-	Events              []Event              `json:"events"`
-	pendingJoins        []int
+	Chapter               int                  `json:"chapter"`
+	Name                  string               `json:"name"`
+	Map                   int                  `json:"map"`
+	RuntimeAppendGroups   bool                 `json:"runtime_append_groups,omitempty"`          // party first; FDFIELD groups append only when constructed
+	NativeActingResources string               `json:"native_acting_resources,omitempty"`        // asset-root-relative decoded 0x1366A resource set for native battle events
+	InitialGroups         []int                `json:"initial_groups"`                           // 開局即在場的 unit group;其餘待命
+	InitialGroupsAbsent   []InitialGroupAbsent `json:"initial_groups_if_party_absent,omitempty"` // native pre-handler conditional FDFIELD group
+	Party                 []PartyMember        `json:"party"`                                    // 主角隊(不在 FDFIELD roster,on_battle_start 進場)
+	DeployCells           [][2]int             `json:"deploy_cells"`                             // 主角隊進場目標格
+	Events                []Event              `json:"events"`
+	pendingJoins          []int
 }
 
 // InitialGroupAbsent is an evidence-backed pre-battle condition: materialize
@@ -176,9 +177,10 @@ func LoadScenario(path string) (*Scenario, error) {
 				}
 				if call.Via == "spawn_group_with_intro" {
 					if call.FollowingActing == nil || call.FollowingActing.Resource < 0 ||
-						call.FollowingActing.Resource >= 106 || call.FollowingActing.Source == "" {
+						call.FollowingActing.Resource >= 106 || call.FollowingActing.Source == "" ||
+						sc.NativeActingResources == "" {
 						return nil, fmt.Errorf(
-							"scenario event %d action %d native intro spawn %d lacks following acting provenance",
+							"scenario event %d action %d native intro spawn %d lacks following acting provenance/resources",
 							eventIndex, actionIndex, i,
 						)
 					}

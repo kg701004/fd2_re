@@ -2841,6 +2841,29 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 真實 ch00 handler 回歸以使用者合法 `FDOTHER.DAT` 驗證兩次增援各呈現12幀，
   並繼續到 `battle_ch01`、戰後同步、`town_ch02` 與 `preparation_ch02`。這是
   重製端決定性路徑證據，不提升成與未修改 DOSBox 同狀態逐像素 E2。
-- 通用 `battle.Scenario.ExecuteActionChecked` 仍沒有畫面／音訊與 following
-  acting 擁有者，故全域 event1/2 繼續失敗即關閉；`0x10C50` 完整 table／
-  inventory projection 與 `0x1B750` equipment recompute 仍未閉合。
+- **當時狀態，已由下方 2026-08-02 紀錄取代**：低階
+  `battle.Scenario.ExecuteActionChecked` 沒有畫面／音訊與 following acting
+  擁有者，因此 event1/2 當時仍失敗即關閉。
+
+## 2026-08-02：ch01 global event1/2 接通12次呈現與 ACTING(3/4)
+
+- 非同步 owner 固定在 `Game.advanceBattleEvent`：它在呼叫低階 action executor
+  前，只辨識 `0x342CE→0x342E7/ACTING(3)` 與
+  `0x34336→0x3434F/ACTING(4)` 兩個已證實 caller。低階
+  `ExecuteActionChecked` 仍拒絕 intro，避免沒有 `Draw`／音訊／continuation 的
+  同步呼叫繞過畫面責任。
+- `Scenario.native_acting_resources` 明示可編輯的
+  `assets/cutscenes/acting/map32.json`；runtime 在任何 constructor commit 前驗證
+  resource3／4 的 frame timing、pose、slot frontier 與重複 slot。原始
+  source address／resource id 保留，語意只是附加。
+- battle candidate 由目前 State 的 units／roster、selector cache、terrain／unit
+  animation phase 與原始 composition bytes 私有複製；因此 turn4／5 不會被錯誤
+  重設成章節開場動畫相位。group4／5 placement、12個 pass 與 following acting
+  全部預檢後，才一次發布新增 units、剩餘 roster 與 selector cache。
+- 真實資產回歸先跑 ch01 turn3 建立14槽 frontier；turn4 event1 發布 slots14–17，
+  各12次 Draw 後 ACTING(3) 才移動；turn5 event2 發布 slots18–22，各12次 Draw
+  後 ACTING(4) 才移動，speaker71 對話最後才出現。缺 acting resource 的反例
+  驗證 units／roster／selector cache／turn continuation 全不變。
+- 這是重製端 E1 決定性機制證據；尚未取得同 camera／roster／pass 的 DOSBox
+  event1/2 逐幀比較，因此不提升為 E2。`0x10C50` 完整 table／inventory
+  projection 與 `0x1B750` equipment recompute 仍未閉合。

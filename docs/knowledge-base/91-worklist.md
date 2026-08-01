@@ -1715,9 +1715,12 @@
     pass6/7/8 快照重建與 pass1 的 FDOTHER #95；完整預檢成功才發布 roster，
     每次 Draw 確認後才前進，再由下一個 beat 執行 caller ACTING。ch00 真實
     handler 回歸已驗證兩次各12幀後仍進入 battle_ch01、戰後、城鎮與整備。
-    通用 scenario action 仍缺渲染／following acting 擁有者；另缺 `0x10C50`
-    完整 table/inventory projection 與 `0x1B750` equipment recompute，相關
-    owner 維持 fail-closed
+    ch01 global event1/2 亦已由 battle-event runner 承接：turn3 建立14槽 frontier，
+    turn4／5 分別 preflight group4／5、各12次呈現、ACTING(3／4)，event2 對話只在
+    acting 完成後出現。缺 acting 資源的回歸固定 units／roster／selector cache／
+    turn continuation 均不變；低階 `ExecuteActionChecked` 繼續拒絕無畫面擁有者的
+    直接呼叫。仍缺 `0x10C50` 完整 table/inventory projection 與 `0x1B750`
+    equipment recompute，相關 owner 維持 fail-closed
     → `fd2_future_group_constructor_capstone.txt`、
       `fd2_future_group_raw_gate_ida.txt`、`fd2_spawn_intro_32999_ida.md`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker

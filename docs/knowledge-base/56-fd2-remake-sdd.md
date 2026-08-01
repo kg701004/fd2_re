@@ -2693,8 +2693,13 @@ call-site；全域 event1/2 分別是 `0x342E7→ACTING(3)` 與
 FDOTHER #9；第6、7、8次各自重建快照，第1次另觸發 FDOTHER #95，全部預檢
 成功後才發布名冊。每次呈現都必須經過 `Draw` 確認，完成後才進入 caller 的
 獨立 ACTING beat。缺素材、欄位、selector 或 framebuffer 幾何時，仍在名冊
-變更前失敗即關閉。這條 handler 垂直切片不等於通用 battle action 已完成：
-`ExecuteActionChecked` 沒有渲染與後續 acting 擁有者，仍拒絕全域 event1/2。
+變更前失敗即關閉。全域 event1/2 現由 `Game.advanceBattleEvent` 在低階 action
+executor 之前辨識兩個已證實 caller；它以保留當下 selector cache 與動畫週期的
+私有 battle state 預演 group4／5、12次呈現與 ACTING(3／4) slot frontier，成功
+後才發布 units／roster／cache。scenario 以 `native_acting_resources` 明示可編輯
+的 `map32.json` 轉錄來源。`ExecuteActionChecked` 本身仍刻意拒絕 intro call，因為
+它沒有 `Draw`／音訊／非同步 continuation；所有其他來源、混合 call 或缺資源
+情況仍失敗即關閉。
 `0x10C50` 的完整 table projection、
 inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
 `future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。

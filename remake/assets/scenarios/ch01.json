@@ -1,5 +1,6 @@
 {
   "runtime_append_groups": true,
+  "native_acting_resources": "assets/cutscenes/acting/map32.json",
   "chapter": 1,
   "name": "初試身手",
   "map": 0,

@@ -127,6 +127,20 @@ func TestLoadScenarioRequiresFollowingActingForNativeIntroSpawn(t *testing.T) {
 	if _, err := LoadScenario(path); err == nil {
 		t.Fatal("缺少呼叫端 following_acting 的原版 intro spawn 被接受")
 	}
+	data = []byte(`{"events":[{"trigger":"on_turn_end","do":[{"type":"spawn_group","groups":[4],"native_event_id":1,"native_spawns":[{"group":4,"via":"spawn_group_with_intro","source":"0x342ce","raw_placement_gate":0,"following_acting":{"resource":3,"source":"0x342e7"}}]}]}]}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("缺少 native_acting_resources 的原版 intro spawn 被接受")
+	}
+	data = []byte(`{"native_acting_resources":"assets/cutscenes/acting/map32.json","events":[{"trigger":"on_turn_end","do":[{"type":"spawn_group","groups":[4],"native_event_id":1,"native_spawns":[{"group":4,"via":"spawn_group_with_intro","source":"0x342ce","raw_placement_gate":0,"following_acting":{"resource":3,"source":"0x342e7"}}]}]}]}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err != nil {
+		t.Fatalf("完整 native intro provenance/resources 被拒絕：%v", err)
+	}
 }
 
 func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {

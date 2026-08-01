@@ -30,6 +30,26 @@ type NativeSelectorCache struct {
 	next  int
 }
 
+// Clone returns an independent copy of the native key-to-slot allocation.
+// Transactional constructors use it to preflight a future batch without
+// changing the battle-session cache observed by the renderer.
+func (c *NativeSelectorCache) Clone() *NativeSelectorCache {
+	if c == nil {
+		return nil
+	}
+	clone := &NativeSelectorCache{
+		keys: append([]byte(nil), c.keys...),
+		next: c.next,
+	}
+	if c.slots != nil {
+		clone.slots = make(map[byte]int, len(c.slots))
+		for key, slot := range c.slots {
+			clone.slots[key] = slot
+		}
+	}
+	return clone
+}
+
 // SlotFor returns the stable first-seen slot for a raw FDICON key.
 func (c *NativeSelectorCache) SlotFor(key int) (int, error) {
 	if key < 0 || key > 0xff {

@@ -105,6 +105,11 @@ class NativeSpawnMergeTest(unittest.TestCase):
         for path in sorted(scenario_root.glob("ch*.json")):
             chapter = int(path.stem[2:])
             scenario = json.loads(path.read_text())
+            if chapter == 1:
+                self.assertEqual(
+                    scenario.get("native_acting_resources"),
+                    "assets/cutscenes/acting/map32.json",
+                )
             for event in scenario.get("events", []):
                 if event.get("trigger") != "on_turn_end":
                     continue

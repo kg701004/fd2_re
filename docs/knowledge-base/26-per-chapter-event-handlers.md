@@ -115,8 +115,10 @@ recompute 與完整 constructor transaction 仍未接；但 handler path 已以
 前綴。global turn-event 的45筆可解析 schedule 也已降階為46個 editable
 actions，保存 `native_event_id` 與逐 call source/via/gate；只有具完整 runtime
 roster 的 `runtime_append_groups` 情境走相同精確配置，缺資料即失敗即關閉。
-未遷移情境的正規化分支以及 `spawn_group_with_intro` 尚缺的 acting/reveal/
-present 都不得提升為原版等價。直接指令見
+ch01 的 event1/2 現由 UI battle-event runner 承接 `spawn_group_with_intro`：
+分別保存 group4／5、12次 FDOTHER #9 呈現與 caller ACTING(3／4)，並以 scenario
+欄位指向可編輯 acting resource set。未遷移情境的正規化分支、其他未知 intro
+caller，以及尚無同狀態 DOSBox 比較的畫面仍不得提升為原版等價。直接指令見
 [`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
 與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
 

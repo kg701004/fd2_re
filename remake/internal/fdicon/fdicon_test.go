@@ -135,6 +135,23 @@ func TestNativeSelectorCacheMatches11019FirstSeenSlots(t *testing.T) {
 	}
 }
 
+func TestNativeSelectorCacheCloneDoesNotPublishPreflightSlots(t *testing.T) {
+	var cache NativeSelectorCache
+	if _, err := cache.SlotFor(2); err != nil {
+		t.Fatal(err)
+	}
+	clone := cache.Clone()
+	if got, err := clone.SlotFor(7); err != nil || got != 1 {
+		t.Fatalf("clone slot=%d err=%v", got, err)
+	}
+	if _, err := cache.KeyForSlot(1); err == nil {
+		t.Fatal("clone allocation leaked into source cache")
+	}
+	if key, err := clone.KeyForSlot(0); err != nil || key != 2 {
+		t.Fatalf("clone lost existing slot: key=%d err=%v", key, err)
+	}
+}
+
 func TestSpriteForNativeSlotResolvesCacheKeyBeforeB24Selector(t *testing.T) {
 	bank := &Bank{Sprites: make([]Sprite, 3*12)}
 	bank.Sprites[2*12+3] = Sprite{Pixels: make([]byte, NativeSize*NativeSize), Mask: make([]byte, NativeSize*NativeSize)}

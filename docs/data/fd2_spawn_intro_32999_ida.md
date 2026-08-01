@@ -45,7 +45,8 @@ IDA 的直接交叉參照只有四個：`0x3289B`、`0x328BB`、`0x342CE`、
   「等待 12 個畫面」並宣稱等價。
 - **未知**：資源 95 的玩家可聽語意，仍需同狀態執行期實驗閉合。
 
-重製端 handler 現已承接「12 次呈現＋呼叫端獨立 acting」；缺素材、原始欄位或
-合成條件時仍在名冊變更前失敗即關閉（fail-closed）。通用 battle action executor
-尚沒有渲染與 acting 擁有者，因此仍拒絕這類 action。所有原始位址、資源編號與
-推論等級保持不變，runtime 接線不會反向改寫 IDA 證據。
+重製端 handler 與 ch01 battle-event runner 現已承接「12 次呈現＋呼叫端獨立
+acting」；後者只接受原始 event1／2 caller，其他 provenance 仍拒絕。缺素材、
+原始欄位或合成條件時，在名冊變更前失敗即關閉（fail-closed）。低階 battle
+action executor 沒有渲染／continuation 擁有者，仍刻意拒絕直接呼叫。所有原始
+位址、資源編號與推論等級保持不變，runtime 接線不會反向改寫 IDA 證據。
