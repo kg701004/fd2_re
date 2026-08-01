@@ -150,8 +150,18 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 `event_id` 在連續多回合重複出現(如 map7/章8 的 event_id27 於 turn 2-7 各出現一次):每回合觸發同一 handler,
 但 group_id=當下回合數,達成「每回合多放一波、group 編號＝回合數」的遞增增援。[驗]
 
+`[0x53bef]` 的新戰鬥初始寫入端是共用初始化函式 `sub_205DA` 內的
+`0x2066e: mov dword [0x53bef],1`；29個章節開場呼叫者共用它，Capstone 亦獨立
+重生出相同指令。CONTINUE 另從目前快照恢復即時值，不可重設為1。完整輸入雜湊、
+位址空間與證據等級見
+[`fd2_battle_round_seed_ida.txt`](../data/fd2_battle_round_seed_ida.txt)。[驗]
+
 **工具**:`tools/extract_event_id_groups.py` 走訪 90 個 handler 自身的 basic-block 鏈(call 過站不進入、遇 ret 停止,
-避免線性 sweep 漂移),擷取 `push <group_id>; call spawn_group[_with_intro]`,輸出 `docs/data/event_id_groups.json`。
+避免線性 sweep 漂移），擷取 `push <group_id>; call spawn_group[_with_intro]`；
+2026-08-02 起也辨識 `0x35822` 的來源 `PUSH (group,y,x)` 與 event63 的共用
+tail-call。staging metadata 保留 helper／spawn source／座標，不能在 palette、
+redraw 與 phase owner 尚未接通時降成一般 `spawn_group`。輸出
+`docs/data/event_id_groups.json` 並附固定 FD2.EXE 雜湊與位址空間。
 輸出同時保存 FDFIELD 未直接引用的 58..89，避免再把全域事件表誤當成
 turn-events-only 表。無 spawn 呼叫只能證明該 handler 未呼叫兩個已知
 spawn 原語，不足以命名成純對話、人工智慧或目標判定。[驗]

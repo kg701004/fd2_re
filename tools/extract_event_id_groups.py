@@ -20,13 +20,16 @@ call graph 顯示唯一 caller 是 0x25de5,固定寫死,不讀 FDFIELD)。
     是動態值 `[0x53bef]`(=用當下回合數當 group 編號,對應同一 event_id 逐回合重觸發)。
 
 本工具:從每個 event_id handler(0x51b91 jump table)擷取其自身函式體內的
-`push <imm>; call 0x10b4e` / `push <imm>; call 0x32999`(spawn_group 呼叫),
+`push <imm>; call 0x10b4e` / `push <imm>; call 0x32999`，以及三個來源
+`PUSH (group,y,x)` 後呼叫 `0x35822` 的 staging 增援；後者保留座標與 helper
+provenance，不降成一般 spawn_group，
 只走 handler 自己的 basic-block 鏈(call 視為過站不進入被呼叫者本體,
 遇 ret 停止),避免線性 sweep 漂移進共用子函式或下一個 handler。
 
 用法(docker fd2-cap):
     python3 tools/extract_event_id_groups.py [out.json]
 """
+import hashlib
 import sys, struct, json
 sys.path.insert(0, "/work/tools")
 from le_xref import parse_le
@@ -34,6 +37,9 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 EXE = "org_game/炎龍騎士團/FLAME2/FD2.EXE"
 CODE_BASE = 0x10000
+EXPECTED_SIZE = 357074
+EXPECTED_MD5 = "b97caf2239a27a896069d03549d96e1e"
+EXPECTED_SHA256 = "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
 
 
 def load_code(d, meta):
@@ -77,6 +83,9 @@ def fixup_map(d, meta):
 
 
 d = open(EXE, 'rb').read()
+if (len(d) != EXPECTED_SIZE or hashlib.md5(d).hexdigest() != EXPECTED_MD5 or
+        hashlib.sha256(d).hexdigest() != EXPECTED_SHA256):
+    raise RuntimeError("FD2.EXE 與固定參考版本不符；禁止沿用 event handler 位址")
 meta = parse_le(d)
 code, base, vsize = load_code(d, meta)
 md = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -94,6 +103,8 @@ def insn_at(addr):
 
 SPAWN_FNS = {0x10b4e: 'spawn_group', 0x32999: 'spawn_group_with_intro'}
 ACTING_FN = 0x1366a
+STAGING_HELPER = 0x35822
+STAGING_SHARED_TAIL = 0x35318
 
 # Complete [0x53AFA] writer set for global event handlers.  Official IDA Pro
 # 9.4 finds the single reader in 0x10C50 and all paired 1/0 writers; Docker
@@ -103,6 +114,27 @@ RAW_PLACEMENT_GATE_ONE_CALLS = {
     0x34397, 0x3444C, 0x3464B, 0x34945,
     0x34C95, 0x34D12, 0x34D45, 0x34D91,
 }
+
+
+def staging_spawn(pushes, invoker):
+    """把 0x35822 的來源 PUSH (group,y,x) 保留成不可直接降階的 staging call。"""
+    if len(pushes) < 3:
+        return None
+    group, y, x = pushes[-3:]
+    if not all(isinstance(value, int) and value >= 0 for value in (group, y, x)):
+        return None
+    return {
+        'group': group,
+        'via': 'staging_helper_0x35822',
+        'source': hex(invoker),
+        'raw_placement_gate': 0,
+        'staging': {
+            'helper': '0x35822',
+            'spawn_source': '0x35842',
+            'x': x,
+            'y': y,
+        },
+    }
 
 
 def walk_handler(start, max_insns=4000):
@@ -115,7 +147,7 @@ def walk_handler(start, max_insns=4000):
     n = 0
     while stack and n < max_insns:
         a = stack.pop()
-        pending_push = None
+        pending_pushes = []
         awaiting_intro = None
         while a is not None and a not in visited:
             if not (start <= a < start + 0x1000):
@@ -130,18 +162,19 @@ def walk_handler(start, max_insns=4000):
             if m == 'push':
                 if op.startswith('0x') or op.lstrip('-').isdigit():
                     try:
-                        pending_push = int(op, 0)
+                        pending_pushes.append(int(op, 0))
                     except ValueError:
-                        pending_push = None
+                        pending_pushes = []
                 elif '0x3bef' in op:
-                    pending_push = '$turn_counter[0x53bef]'
+                    pending_pushes.append('$turn_counter[0x53bef]')
                 elif '0x3ae1' in op:
-                    pending_push = '$0x53ae1'
+                    pending_pushes.append('$0x53ae1')
                 else:
-                    pending_push = f'$reg_or_mem({op})'
+                    pending_pushes.append(f'$reg_or_mem({op})')
             elif m == 'call':
                 if op.startswith('0x'):
                     t = int(op, 16)
+                    pending_push = pending_pushes[-1] if pending_pushes else None
                     if t in SPAWN_FNS and pending_push is not None:
                         spawn = {
                             'group': pending_push,
@@ -153,19 +186,31 @@ def walk_handler(start, max_insns=4000):
                         }
                         spawns.append(spawn)
                         awaiting_intro = spawn if t == 0x32999 else None
+                    elif t == STAGING_HELPER:
+                        spawn = staging_spawn(pending_pushes, ins.address)
+                        if spawn is not None:
+                            spawns.append(spawn)
                     elif t == ACTING_FN and pending_push is not None and awaiting_intro is not None:
                         awaiting_intro['following_acting'] = {
                             'resource': pending_push,
                             'source': hex(ins.address),
                         }
                         awaiting_intro = None
-                pending_push = None
+                pending_pushes = []
                 a = nxt
                 continue
             elif m == 'jmp':
                 awaiting_intro = None
                 if op.startswith('0x'):
                     t = int(op, 16)
+                    if t == STAGING_SHARED_TAIL:
+                        target = insn_at(t)
+                        if target is not None and target.mnemonic == 'call' and target.op_str == hex(STAGING_HELPER):
+                            spawn = staging_spawn(pending_pushes, ins.address)
+                            if spawn is not None:
+                                spawns.append(spawn)
+                        a = None
+                        continue
                     a = t
                     continue
                 a = None
@@ -177,14 +222,14 @@ def walk_handler(start, max_insns=4000):
                     if t not in visited:
                         stack.append(t)
                 a = nxt
-                pending_push = None
+                pending_pushes = []
                 continue
             elif m in ('ret', 'retn'):
                 awaiting_intro = None
                 a = None
                 break
             else:
-                pending_push = None
+                pending_pushes = []
             a = nxt
     return spawns
 
@@ -201,10 +246,27 @@ def jtab(tab, count):
 
 if __name__ == '__main__':
     handlers = jtab(0x51b91, 90)
-    results = {}
+    results = {
+        '_source': {
+            'file': 'FD2.EXE',
+            'size': EXPECTED_SIZE,
+            'md5': EXPECTED_MD5,
+            'sha256': EXPECTED_SHA256,
+            'tool': 'Capstone 5.0.3',
+            'address_space': 'LE linear address',
+        },
+    }
     for eid, h in enumerate(handlers):
         spawns = walk_handler(h)
         results[eid] = {'handler': hex(h), 'spawns': spawns}
     out = sys.argv[1] if len(sys.argv) > 1 else 'docs/data/event_id_groups.json'
-    json.dump(results, open(out, 'w'), indent=1, ensure_ascii=False)
-    print(json.dumps(results, indent=1))
+    with open(out, 'w', encoding='utf-8') as output:
+        json.dump(results, output, indent=1, ensure_ascii=False)
+        output.write('\n')
+    staging_calls = sum(
+        call.get('via') == 'staging_helper_0x35822'
+        for metadata in results.values()
+        if isinstance(metadata, dict)
+        for call in metadata.get('spawns', [])
+    )
+    print(f"90 個 event handlers -> {out}；staging calls={staging_calls}")

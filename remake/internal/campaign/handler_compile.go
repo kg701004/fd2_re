@@ -644,17 +644,19 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, pan)
 				continue
 			}
-			// 0x35822(x,y,group) is the late-game staging helper used by
-			// ch27/ch28 handlers.  Capstone disassembly shows a camera pan to
+			// 0x35822 is the late-game staging helper used by ch27/ch28 handlers.
+			// Handler exports preserve the source PUSH order (group,y,x), while
+			// the callee passes (x,y) to 0x135dd and group to 0x10b4e.  Capstone
+			// disassembly shows a camera pan to
 			// (x,y), direct spawn of group, 300ms wait, two no-op palette uploads
 			// separated by 200ms, then a redraw.  Preserve that choreography as
 			// ordinary editable beats instead of leaving the whole handler opaque.
 			if input.NativeTarget == "0x35822" {
-				x, okX := immediateHandlerInt(input.RawArgs, 0)
+				group, okGroup := immediateHandlerInt(input.RawArgs, 0)
 				y, okY := immediateHandlerInt(input.RawArgs, 1)
-				group, okGroup := immediateHandlerInt(input.RawArgs, 2)
+				x, okX := immediateHandlerInt(input.RawArgs, 2)
 				if !okX || !okY || !okGroup || x < 0 || y < 0 || group < 0 || group > 255 {
-					issue(i, input, "0x35822 staging helper requires immediate non-negative x/y/group")
+					issue(i, input, "0x35822 staging helper requires immediate source PUSH order group/y/x")
 					continue
 				}
 				pan := runtime(input, "pan")

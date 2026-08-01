@@ -36,6 +36,33 @@ def native_death_effect(record):
     return {"type": record[22], "value": record[23] | (record[24] << 8)}
 
 
+def native_turn_event_controls(control):
+    """保留完整 16 列；turn=0xff 是原始休眠值，不是第 255 回合。"""
+    return [
+        {
+            "turn": control[3 + slot * 3],
+            "event_id": control[3 + slot * 3 + 1],
+            "raw_camp": control[3 + slot * 3 + 2],
+        }
+        for slot in range(16)
+    ]
+
+
+def enabled_turn_events(controls):
+    """舊版可執行摘要；休眠列只留在 turn_event_controls。"""
+    return [
+        {
+            "turn": row["turn"],
+            "event_id": row["event_id"],
+            "camp": ["enemy", "ally", "special"][row["raw_camp"]]
+            if row["raw_camp"] < 3
+            else row["raw_camp"],
+        }
+        for row in controls
+        if row["turn"] != 0xFF
+    ]
+
+
 def parse_map(raw, m):
     fld = sorted(glob.glob(os.path.join(raw, "FDFIELD", "*.bin")))
     comp = open(fld[m * 3], "rb").read()
@@ -44,11 +71,12 @@ def parse_map(raw, m):
     w, h = struct.unpack_from("<HH", comp, 0)
     info = {"map": m, "w": w, "h": h,
             "own_deploy": ctl[1], "enemy_ally_total": ctl[2]}
-    # 回合事件:(turn, 全域事件id, 陣營 0敵/1友/2特殊)
+    # 回合事件：完整 raw 列與啟用摘要分開，避免丟掉 handler 後續會改寫的
+    # 0xff 休眠列，也避免把它錯當第 255 回合。
+    controls = native_turn_event_controls(ctl)
+    info["turn_event_controls"] = controls
+    info["turn_events"] = enabled_turn_events(controls)
     o = 3
-    info["turn_events"] = [{"turn": ctl[o+i*3], "event_id": ctl[o+i*3+1],
-                            "camp": ["enemy", "ally", "special"][ctl[o+i*3+2]] if ctl[o+i*3+2] < 3 else ctl[o+i*3+2]}
-                           for i in range(16) if ctl[o+i*3] != 0xFF]
     o += 16*3
     # 0x13a44 以地圖構成 event-word low5 的 1-based slot 查這張表；
     # 第一 byte 寫入 [0x51a8f]，第二 byte 必須等於 caller selector。

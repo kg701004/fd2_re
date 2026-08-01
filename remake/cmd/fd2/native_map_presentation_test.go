@@ -114,6 +114,53 @@ func TestBattleWalkDoesNotGeneralizeSelector0ToRightStep(t *testing.T) {
 	}
 }
 
+func TestBattleWalkActivatesMap26Event63OnlyAfterLeftStepCommit(t *testing.T) {
+	st, err := battle.Load("../../assets/maps/map26/map26_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, y := -1, -1
+	for cell, slot := range st.NativeFieldEventSlots {
+		if slot < 0 || slot >= len(st.NativeFieldEvents) {
+			continue
+		}
+		event := st.NativeFieldEvents[slot]
+		if event.EventID == 62 && event.Selector == 0 && cell%st.W > 0 {
+			x, y = cell%st.W, cell/st.W
+			break
+		}
+	}
+	if x < 0 {
+		t.Fatal("map26 has no event62 selector0 cell reachable by a left step")
+	}
+	trigger := st.Units[0]
+	trigger.SetMapPlacement(x+1, y, 1)
+	if err := trigger.MaterializeNativeMapPresentation(); err != nil {
+		t.Fatal(err)
+	}
+	st.NativeRoundCounter = 8
+	g := &Game{
+		m:  &MapData{TileW: 24, TileH: 24},
+		st: st,
+		walk: &walkAnim{
+			u:    trigger,
+			path: []battle.Cell{{X: x + 1, Y: y}, {X: x, Y: y}},
+		},
+	}
+	for tick := 1; tick <= 6; tick++ {
+		g.stepBattleWalk()
+		if st.NativeTurnEventControls[0].Turn != 0xff || st.NativeEventState[17] != 0 {
+			t.Fatalf("tick %d activated event63 before selector0 commit", tick)
+		}
+	}
+	g.stepBattleWalk()
+	if g.loadErr != "" || g.walk != nil ||
+		st.NativeTurnEventControls[0] != (battle.NativeTurnEventControl{Turn: 9, EventID: 63, RawCamp: 0}) ||
+		st.NativeEventState[17] != 1 {
+		t.Fatalf("event62 player path err=%q walk=%v row=%#v state17=%d", g.loadErr, g.walk, st.NativeTurnEventControls[0], st.NativeEventState[17])
+	}
+}
+
 func TestOriginalActingUpdatesMaterializedRawPresentation(t *testing.T) {
 	slot := 0
 	u := &battle.Unit{X: 4, Y: 5}

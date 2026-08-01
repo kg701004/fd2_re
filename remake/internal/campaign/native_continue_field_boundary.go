@@ -73,6 +73,7 @@ func MaterializeNativeContinueFieldBoundary(
 			Turn: event.Turn, EventID: event.EventID, RawCamp: event.RawCamp,
 		}
 	}
+	candidate.HasNativeTurnEventControlState = true
 	for index, event := range input.FieldControl.FieldEvents {
 		candidate.NativeFieldEvents[index] = battle.NativeFieldEvent{
 			EventID: event.EventID, Selector: event.Selector,

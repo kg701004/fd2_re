@@ -1,0 +1,2892 @@
+{
+  "schema_version": 1,
+  "source": {
+    "file": "FDFIELD.DAT",
+    "size": 243169,
+    "md5": "ecdb0436d26adfe5d107f2713fa7e9a2",
+    "sha256": "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513"
+  },
+  "round_seed": {
+    "value": 1,
+    "writer": "0x2066e",
+    "source": {
+      "file": "FD2.EXE",
+      "size": 357074,
+      "md5": "b97caf2239a27a896069d03549d96e1e",
+      "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    }
+  },
+  "maps": [
+    {
+      "map": 0,
+      "control_resource": "FDFIELD_001.bin",
+      "control_sha256": "6450d1136f8047605db06dc292f833ced8b923639a2f1a92553ce17216e659f3",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 0,
+          "raw_camp": 1
+        },
+        {
+          "turn": 4,
+          "event_id": 1,
+          "raw_camp": 0
+        },
+        {
+          "turn": 5,
+          "event_id": 2,
+          "raw_camp": 0
+        },
+        {
+          "turn": 6,
+          "event_id": 3,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 1,
+      "control_resource": "FDFIELD_004.bin",
+      "control_sha256": "4af32142dd1435104447e6f0707354842e9a2cbd4eab8af020525af2591dca26",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 6,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 2,
+      "control_resource": "FDFIELD_007.bin",
+      "control_sha256": "dcf9e6b8083516398365b7a9978589a2e469ff8f2e718fbbe1ef47b4543cb51e",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 9,
+          "raw_camp": 2
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 3,
+      "control_resource": "FDFIELD_010.bin",
+      "control_sha256": "8eaeb8652ed269ddfa6d035e933dee680e0e3f4818a5e9fd1339bb97be53be80",
+      "controls": [
+        {
+          "turn": 4,
+          "event_id": 11,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 4,
+      "control_resource": "FDFIELD_013.bin",
+      "control_sha256": "cb2c81f6d88a870d64cc5c43c9d7966d6f503c5e9421e7f34d086c214db7d567",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 14,
+          "raw_camp": 0
+        },
+        {
+          "turn": 4,
+          "event_id": 15,
+          "raw_camp": 1
+        },
+        {
+          "turn": 7,
+          "event_id": 16,
+          "raw_camp": 0
+        },
+        {
+          "turn": 8,
+          "event_id": 17,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 5,
+      "control_resource": "FDFIELD_016.bin",
+      "control_sha256": "1071888a12ff877adcc5735f96a8de8a932513b0a546ee453cc754cdd5882b51",
+      "controls": [
+        {
+          "turn": 5,
+          "event_id": 20,
+          "raw_camp": 2
+        },
+        {
+          "turn": 10,
+          "event_id": 21,
+          "raw_camp": 2
+        },
+        {
+          "turn": 15,
+          "event_id": 22,
+          "raw_camp": 2
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 6,
+      "control_resource": "FDFIELD_019.bin",
+      "control_sha256": "e6ad1e7cf9980265d8aee7bf61e8ae76831d068e1231ca84615fd6dcec635e46",
+      "controls": [
+        {
+          "turn": 10,
+          "event_id": 25,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 7,
+      "control_resource": "FDFIELD_022.bin",
+      "control_sha256": "b23f4e1f65e4c7dfba25b2a942f41443d455aca716481164c9107d1c9d634d55",
+      "controls": [
+        {
+          "turn": 2,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 3,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 4,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 5,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 6,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 7,
+          "event_id": 27,
+          "raw_camp": 0
+        },
+        {
+          "turn": 15,
+          "event_id": 28,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 8,
+      "control_resource": "FDFIELD_025.bin",
+      "control_sha256": "418a7de54d0a9f37dca386d2747e946729230c0742636cb966b912f45d87c2e0",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 31,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 31,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 9,
+      "control_resource": "FDFIELD_028.bin",
+      "control_sha256": "cee74ec8021c67f5197683657ec5f99b453529c46616d4c600513ce208eaf556",
+      "controls": [
+        {
+          "turn": 5,
+          "event_id": 32,
+          "raw_camp": 1
+        },
+        {
+          "turn": 20,
+          "event_id": 33,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 10,
+      "control_resource": "FDFIELD_031.bin",
+      "control_sha256": "5daf4d645211ae870b51713bdb730a2098d45ca1cd31e3f4ae02c4684b44bc8e",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 11,
+      "control_resource": "FDFIELD_034.bin",
+      "control_sha256": "56b8dc754be4b11aebba5a7951cf1909547266cb47c4e53fb63d134d292464cb",
+      "controls": [
+        {
+          "turn": 1,
+          "event_id": 35,
+          "raw_camp": 0
+        },
+        {
+          "turn": 5,
+          "event_id": 36,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 12,
+      "control_resource": "FDFIELD_037.bin",
+      "control_sha256": "8791204bb8311c20de164fe7d42c8c8255b6fd200c98dfbb735b93ab19d3e597",
+      "controls": [
+        {
+          "turn": 4,
+          "event_id": 5,
+          "raw_camp": 1
+        },
+        {
+          "turn": 9,
+          "event_id": 7,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 13,
+      "control_resource": "FDFIELD_040.bin",
+      "control_sha256": "9312f7eb0313a919fd7c13f461cf09d4ee4afe295e7f8f1121a65e4c44bbad00",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 14,
+      "control_resource": "FDFIELD_043.bin",
+      "control_sha256": "7eb442236eabdef2176ab82151f97a1270ce2b2f26292f3fb89dbd7bea468b24",
+      "controls": [
+        {
+          "turn": 4,
+          "event_id": 13,
+          "raw_camp": 1
+        },
+        {
+          "turn": 9,
+          "event_id": 18,
+          "raw_camp": 0
+        },
+        {
+          "turn": 7,
+          "event_id": 38,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 15,
+      "control_resource": "FDFIELD_046.bin",
+      "control_sha256": "534849a460854e3706607f0c3e2159adf6f19a1f8ae54226505086719790162e",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 16,
+      "control_resource": "FDFIELD_049.bin",
+      "control_sha256": "62e6972110ae3baf0afbf89ee2c99e71b1722f00c690a584f7491185f1c1589e",
+      "controls": [
+        {
+          "turn": 4,
+          "event_id": 40,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 17,
+      "control_resource": "FDFIELD_052.bin",
+      "control_sha256": "5ed30b29c0bc5236003a07d48643e1256268a154e99fa46a2099af5bd0b71c5d",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 43,
+          "raw_camp": 0
+        },
+        {
+          "turn": 8,
+          "event_id": 42,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 18,
+      "control_resource": "FDFIELD_055.bin",
+      "control_sha256": "c8f94b9e27fad1ad661dfb1bd0be4a4a8deca69ca4d5617cec43280b3da41646",
+      "controls": [
+        {
+          "turn": 4,
+          "event_id": 44,
+          "raw_camp": 2
+        },
+        {
+          "turn": 6,
+          "event_id": 46,
+          "raw_camp": 1
+        },
+        {
+          "turn": 10,
+          "event_id": 45,
+          "raw_camp": 2
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 19,
+      "control_resource": "FDFIELD_058.bin",
+      "control_sha256": "b094f00f04d9e4d4ccff18d3a5e7f960113067c39b0ca2c8afa6bbce8068503f",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 20,
+      "control_resource": "FDFIELD_061.bin",
+      "control_sha256": "3cc6167f0904e7cb81e9a60090df168d716959ead1381142a3be343a14489d28",
+      "controls": [
+        {
+          "turn": 2,
+          "event_id": 47,
+          "raw_camp": 0
+        },
+        {
+          "turn": 3,
+          "event_id": 48,
+          "raw_camp": 0
+        },
+        {
+          "turn": 4,
+          "event_id": 47,
+          "raw_camp": 0
+        },
+        {
+          "turn": 6,
+          "event_id": 47,
+          "raw_camp": 0
+        },
+        {
+          "turn": 8,
+          "event_id": 47,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 21,
+      "control_resource": "FDFIELD_064.bin",
+      "control_sha256": "2338bf283917ae5f7e3155c1d57a6895d41862438b64ce46b720662708ab9241",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 49,
+          "raw_camp": 0
+        },
+        {
+          "turn": 5,
+          "event_id": 50,
+          "raw_camp": 2
+        },
+        {
+          "turn": 7,
+          "event_id": 49,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 22,
+      "control_resource": "FDFIELD_067.bin",
+      "control_sha256": "38b7fff5f5473d40c5dff1336d67b8e599ad1ad4bafdafc7a57177b05f954b53",
+      "controls": [
+        {
+          "turn": 13,
+          "event_id": 52,
+          "raw_camp": 0
+        },
+        {
+          "turn": 15,
+          "event_id": 52,
+          "raw_camp": 0
+        },
+        {
+          "turn": 18,
+          "event_id": 52,
+          "raw_camp": 0
+        },
+        {
+          "turn": 22,
+          "event_id": 52,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 23,
+      "control_resource": "FDFIELD_070.bin",
+      "control_sha256": "82190a1f5399644bdc5ec32dc1a13a9b34530e5f43d872cb07fb938afc10828a",
+      "controls": [
+        {
+          "turn": 2,
+          "event_id": 54,
+          "raw_camp": 0
+        },
+        {
+          "turn": 4,
+          "event_id": 54,
+          "raw_camp": 0
+        },
+        {
+          "turn": 7,
+          "event_id": 54,
+          "raw_camp": 0
+        },
+        {
+          "turn": 10,
+          "event_id": 54,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 24,
+      "control_resource": "FDFIELD_073.bin",
+      "control_sha256": "433bc1a2146c22598b42a53b1fbd901bce54bc4328147613128f69ad483b177b",
+      "controls": [
+        {
+          "turn": 6,
+          "event_id": 56,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 25,
+      "control_resource": "FDFIELD_076.bin",
+      "control_sha256": "6f8180b0fafbb978fc0e4e9d7a24ba035449bdae201466b6ae0a314250ca90c3",
+      "controls": [
+        {
+          "turn": 2,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 4,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 6,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 8,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 10,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 12,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 15,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 16,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 17,
+          "event_id": 57,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 26,
+      "control_resource": "FDFIELD_079.bin",
+      "control_sha256": "57e149759bc0e538bf62e9fcf158ccb8e753c40c7d9773466369a91dae52def4",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 63,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 65,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 27,
+      "control_resource": "FDFIELD_082.bin",
+      "control_sha256": "f843ec34677364c99050ee955ef447148fc71e29758276a48028290df0ef2395",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 66,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 68,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 70,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 28,
+      "control_resource": "FDFIELD_085.bin",
+      "control_sha256": "a01c382cc898063359afad816430f81629d4978feca2df93a7741f9aa13252fd",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 74,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 76,
+          "raw_camp": 2
+        },
+        {
+          "turn": 255,
+          "event_id": 79,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 29,
+      "control_resource": "FDFIELD_088.bin",
+      "control_sha256": "65ff721f680c9193511864c88aac5613c2fc204cd2459f219ce7b68c457d9093",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 82,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 30,
+      "control_resource": "FDFIELD_091.bin",
+      "control_sha256": "c17581097e0beb63ff892ea6acf0b50a9ab5e62aa94ceab560c46a6f2ede625a",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 31,
+      "control_resource": "FDFIELD_094.bin",
+      "control_sha256": "ac8fa7aa99fbe39aecad990e56d7cc5465ea43f575adfd7c73b74d7668d0bbff",
+      "controls": [
+        {
+          "turn": 3,
+          "event_id": 0,
+          "raw_camp": 1
+        },
+        {
+          "turn": 4,
+          "event_id": 1,
+          "raw_camp": 0
+        },
+        {
+          "turn": 5,
+          "event_id": 2,
+          "raw_camp": 0
+        },
+        {
+          "turn": 6,
+          "event_id": 3,
+          "raw_camp": 1
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    },
+    {
+      "map": 32,
+      "control_resource": "FDFIELD_097.bin",
+      "control_sha256": "71867fb896064dbadf126517aa38dac90cbc64085c831a1e15a4a2faa540260d",
+      "controls": [
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        },
+        {
+          "turn": 255,
+          "event_id": 255,
+          "raw_camp": 0
+        }
+      ]
+    }
+  ]
+}

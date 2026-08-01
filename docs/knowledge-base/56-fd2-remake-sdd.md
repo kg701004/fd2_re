@@ -2681,8 +2681,10 @@ selector1/0 尚待下一次 phase 收束；selector2 已在上一輪增加到該
 全章機械式盤點確認46個 `spawn_group` action 均有排程來源，但只有
 ch01/ch02/ch03/ch26 目前宣告 `runtime_append_groups`。event 27/54/57 以
 `[0x53BEF]` 動態取 group，event47/49 另有 group formula；ch03/event9
-還帶 runtime slot6 條件。另有 `0x34AA7`、`0x358B5` 等多個 live turn-byte
-writer。這些仍須增加固定 slot 與公式資料，不能因 chapter0 測試通過就移除
+還帶 runtime slot6 條件。另有 `0x34AB4/0x34AC5`、`0x358BA` 等多個
+live turn-byte writer；先前列出的 `0x34AA7` 與 `0x358B5` 分別只是
+round-counter load 與 `inc dl`，不是 store 指令。這些仍須增加固定 slot 與
+公式資料，不能因 chapter0 測試通過就移除
 `pending_group_binding` owner。現行適配器是可驗證的靜態排程垂直切片，
 不是所有合法原版存檔的通用 CONTINUE 完成宣稱。
 
@@ -2818,3 +2820,52 @@ party order／roster、空 deployment、raw chapter 與 metadata `+6..+9`
 可達；使用者未修改原版四槽皆空，因此仍沒有一般玩家有效槽 E2。
 直接指令與範圍限制見
 [`fd2_native_chapter_slot_restore_ida.txt`](../data/fd2_native_chapter_slot_restore_ida.txt)。
+
+### 2026-08-02 — event62 動態回合列與 `0x35822` 參數勘誤
+
+**已證實**：固定雜湊的 map26 control resource `FDFIELD_079.bin` row0/row1
+依序是 `ff 3f 00` 與 `ff 41 00`。它們是完整 control table 的原始列；舊
+`parse_field.py` 因 `turn == 0xff` 直接略過，使 event63／65 的 producer
+provenance 從可編輯資產消失。現在 `native_turn_event_controls.json` 保存全部
+33張地圖各16列，`turn_events.json` 繼續只承載已啟用且已補 handler/group 的
+策展排程；兩者不可互相覆寫，也不可把 `0xff` 當成第255回合。
+
+**已證實**：event62 handler `0x35898..0x358C6` 在 state byte17 為零時，
+由 `0x358BA` 把 `[0x53BEF]+1` 寫入 live row0 的 turn byte，再把 state17
+設為1。`NativeTurnActivation` 因而明示 slot0、event63、raw camp0、delta1；
+`ApplyNativeFieldTurnActivationEvent` 只有在地圖 selector、可編輯規則、完整
+原始列、once-state 與可選的 CONTINUE raw image 全部一致時才原子提交。
+缺列、重複目錄項、raw/typed 不一致與重複觸發都失敗即關閉。
+正式 `Game.stepBattleWalk` 現在只在原版已證實的向左一步第七拍座標提交後，
+由 selector0 辨識 event62 並呼叫這個 transaction；其他方向不泛化，規則錯誤
+則寫入既有 `loadErr` 並停止動作。Xvfb 回歸證實前六拍不改 row/state，第七拍
+才把 round8 的 row0 改成 turn9。這是重製端 E1 玩家操作路徑，不是 DOSBox E2。
+
+**已證實**：合法 IDA Pro 9.4 將戰鬥初始化函式固定為
+`sub_205DA`（`0x205DA..0x2067D`），29個章節開場呼叫者共用 `0x2066E`
+的 `mov dword [0x53BEF],1`；Docker Capstone 對相同範圍得到相同指令。
+因此固定雜湊地圖的新戰鬥載入會從版本化目錄安裝原生回合初始值1，CONTINUE
+仍以快照的即時回合值覆蓋；手工狀態或缺少完整目錄時保持0並失敗即關閉。
+載入器另鎖定整份目錄的 SHA-256，並要求 map 0–32 各自唯一且資源名、控制列
+數量完整；竄改單列、寫入端、摘要字串或地圖身分都在安裝狀態前拒絕。
+這只閉合 event62 所需的回合來源，不提升事件63階段或畫面到 E2。直接證據見
+[`fd2_battle_round_seed_ida.txt`](../data/fd2_battle_round_seed_ida.txt)。
+
+**已證實的勘誤**：`0x35822` 的 handler export 保存來源 `PUSH` 順序
+`(group,y,x)`，不是舊文件與 compiler 使用的 `(x,y,group)`。helper 內才以
+`0x35834` 呼叫 `0x135DD(x,y)`，並以 `0x35842` 呼叫 `0x10B4E(group)`。
+ch27 的 `[6,16,0]` 現正確成為 group6／座標(0,16)，ch28 的 `[8,19,9]`
+成為 group8／座標(9,19)；非對稱整合回歸防止 group/x 再被對調。
+`event_id_groups.json` 也不再把 event63 記成空動作；它以
+`staging_helper_0x35822` 保存兩個 group、座標、outer call-site 與內層
+spawn source，並故意不讓現有一般 `spawn_group` consumer 接受這個 via。
+同一個固定雜湊 extractor 也補出 event64／66／68／70／72 的 staging calls；
+這只提升其 group／座標／call-site 為可重生 E0 資料，不代表各事件的觸發條件、
+畫面 phase 或一般玩家可達性已完成。
+
+**尚未完成**：event63 的兩次 staging 呼叫、兩段 palette upload、redraw 與
+raw camp0 的精確 phase owner 雖已有直接指令，尚未與新啟用 row 的正式 battle
+runner 串成一般玩家路徑。因此本輪只關閉「原始休眠列→event62 原子啟用」及
+既有 ch27/ch28 handler compiler 的參數錯誤，不宣稱 event63 E2 或完整動態
+CONTINUE 排程已完成。直接位址與指令見
+[`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。

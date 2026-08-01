@@ -1,8 +1,10 @@
 package battle
 
 import (
+	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -48,13 +50,56 @@ func TestAllEditableMapsCarryNativeRendererInputs(t *testing.T) {
 		}
 		if len(st.NativeTileBlitModes) != st.W*st.H ||
 			len(st.NativeTerrainControl) == 0 ||
-			len(st.NativeTerrainControl)%4 != 0 {
+			len(st.NativeTerrainControl)%4 != 0 ||
+			!st.HasNativeTurnEventControlState {
 			t.Fatalf(
-				"%s: renderer modes=%d cells=%d controls=%d",
+				"%s: renderer modes=%d cells=%d controls=%d turn-controls=%v",
 				path, len(st.NativeTileBlitModes), st.W*st.H,
-				len(st.NativeTerrainControl),
+				len(st.NativeTerrainControl), st.HasNativeTurnEventControlState,
 			)
 		}
+		if st.NativeRoundCounter != 1 {
+			t.Fatalf("%s: native round seed=%d, want 1", path, st.NativeRoundCounter)
+		}
+	}
+}
+
+func TestNativeTurnEventCatalogRejectsTampering(t *testing.T) {
+	raw, err := os.ReadFile("../../assets/maps/native_turn_event_controls.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name string
+		old  string
+		new  string
+	}{
+		{"round writer", `"writer": "0x2066e"`, `"writer": "0x2066f"`},
+		{"control row", `"turn": 255`, `"turn": 254`},
+		{"map identity", `"map": 0`, `"map": 1`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			corrupt := strings.Replace(string(raw), tt.old, tt.new, 1)
+			if corrupt == string(raw) {
+				t.Fatalf("%q was not found in the catalog fixture", tt.old)
+			}
+			mapDir := filepath.Join(t.TempDir(), "maps", "map26")
+			if err := os.MkdirAll(mapDir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(
+				filepath.Join(filepath.Dir(mapDir), "native_turn_event_controls.json"),
+				[]byte(corrupt),
+				0o644,
+			); err != nil {
+				t.Fatal(err)
+			}
+			controls, seed, ok := loadNativeTurnEventControls(filepath.Join(mapDir, "map.json"), 29, 20)
+			if ok || seed != 0 || controls != ([16]NativeTurnEventControl{}) {
+				t.Fatalf("tampered catalog accepted: ok=%v seed=%d controls=%#v", ok, seed, controls)
+			}
+		})
 	}
 }
 
@@ -86,6 +131,74 @@ func TestMap25LoadsEditableNativeFieldEventRules(t *testing.T) {
 			Transparent: -1, DelayHelper: "0x17aa9", DelayTicks: 2,
 		}) {
 		t.Fatalf("event61 rule=%#v", got61)
+	}
+}
+
+func map26Event62Cell(t *testing.T, st *State) (int, int) {
+	t.Helper()
+	for cell, slot := range st.NativeFieldEventSlots {
+		if slot < 0 || slot >= len(st.NativeFieldEvents) {
+			continue
+		}
+		event := st.NativeFieldEvents[slot]
+		if event.EventID == 62 && event.Selector == 0 {
+			return cell % st.W, cell / st.W
+		}
+	}
+	t.Fatal("map26 has no event62 selector0 cell")
+	return 0, 0
+}
+
+func TestMap26LoadsDormantTurnRowsAndActivatesEvent63(t *testing.T) {
+	st, err := Load("../../assets/maps/map26/map26_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !st.HasNativeTurnEventControlState {
+		t.Fatal("complete native turn controls were not loaded")
+	}
+	if got := st.NativeTurnEventControls[0]; got != (NativeTurnEventControl{Turn: 0xff, EventID: 63, RawCamp: 0}) {
+		t.Fatalf("map26 dormant row0=%#v", got)
+	}
+	if got := st.NativeTurnEventControls[1]; got != (NativeTurnEventControl{Turn: 0xff, EventID: 65, RawCamp: 0}) {
+		t.Fatalf("map26 dormant row1=%#v", got)
+	}
+	if len(st.NativeFieldEventRules) != 1 || st.NativeFieldEventRules[0].TurnActivation == nil {
+		t.Fatalf("map26 event rules=%#v", st.NativeFieldEventRules)
+	}
+	x, y := map26Event62Cell(t, st)
+	st.NativeRoundCounter = 8
+	eventID, err := ApplyNativeFieldTurnActivationEvent(st, x, y, 0)
+	if err != nil || eventID != 62 {
+		t.Fatalf("event62 activation=(%d,%v)", eventID, err)
+	}
+	if got := st.NativeTurnEventControls[0]; got != (NativeTurnEventControl{Turn: 9, EventID: 63, RawCamp: 0}) || st.NativeEventState[17] != 1 {
+		t.Fatalf("activated row=%#v state17=%d", got, st.NativeEventState[17])
+	}
+	before := st.NativeTurnEventControls
+	if _, err := ApplyNativeFieldTurnActivationEvent(st, x, y, 0); err == nil || st.NativeTurnEventControls != before {
+		t.Fatalf("repeated event62 must fail without mutation: err=%v rows=%#v", err, st.NativeTurnEventControls)
+	}
+}
+
+func TestEvent62RawDisagreementFailsAtomically(t *testing.T) {
+	st, err := Load("../../assets/maps/map26/map26_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, y := map26Event62Cell(t, st)
+	st.NativeRoundCounter = 3
+	st.HasNativeFieldControlState = true
+	st.NativeFieldControlRaw = make([]byte, 6)
+	st.NativeFieldControlRaw[3] = 0 // typed row says 0xff
+	st.NativeFieldControlRaw[4] = 63
+	beforeRows := st.NativeTurnEventControls
+	beforeRaw := append([]byte(nil), st.NativeFieldControlRaw...)
+	if _, err := ApplyNativeFieldTurnActivationEvent(st, x, y, 0); err == nil {
+		t.Fatal("disagreeing raw row unexpectedly activated")
+	}
+	if st.NativeTurnEventControls != beforeRows || !reflect.DeepEqual(st.NativeFieldControlRaw, beforeRaw) || st.NativeEventState[17] != 0 {
+		t.Fatal("failed event62 activation partially mutated state")
 	}
 }
 

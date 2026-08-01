@@ -4250,7 +4250,15 @@ func (g *Game) stepBattleWalk() {
 	// 提交 x-1 後，才以新座標呼叫 0x13A44(..., selector0)。
 	// 其餘方向及整條路徑完成都不得泛化成 selector0。
 	if b.X == a.X-1 && b.Y == a.Y {
-		battle.ApplyNativeFieldModeEvent(g.st, w.u, b.X, b.Y, 0)
+		if eventID, ok := battle.NativeFieldEventIDAt(g.st, b.X, b.Y, 0); ok && eventID == 62 {
+			if _, err := battle.ApplyNativeFieldTurnActivationEvent(g.st, b.X, b.Y, 0); err != nil {
+				g.loadErr = "battle field event62: " + err.Error()
+				g.walk = nil
+				return
+			}
+		} else {
+			battle.ApplyNativeFieldModeEvent(g.st, w.u, b.X, b.Y, 0)
+		}
 	}
 	w.seg++
 	w.tick = 0

@@ -5,6 +5,7 @@
 package battle
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
+
+const nativeTurnEventCatalogSHA256 = "127c894c523f74905048524d02fdaf142c24610fdb3534694d1ccdfef8dfcd34"
 
 // Camp 陣營。
 type Camp int
@@ -523,11 +526,15 @@ type State struct {
 	// NativeFieldControlRaw is the exact live current-save image rooted at
 	// [0x53a55]. It is distinct from composition and from the original chapter
 	// resource because battle handlers rewrite turn/chest bytes.
-	NativeFieldControlRaw      []byte
-	NativeTurnEventControls    [16]NativeTurnEventControl
-	NativeChestControls        [16]NativeChestControl
-	NativeFieldUnitControls    []NativeFieldUnitControl
-	HasNativeFieldControlState bool
+	NativeFieldControlRaw   []byte
+	NativeTurnEventControls [16]NativeTurnEventControl
+	// HasNativeTurnEventControlState 只有從精確 map provenance 或 CONTINUE
+	// snapshot 載入全部16筆 raw row 時為真；不代表每筆休眠列都已有 runtime
+	// scenario consumer。
+	HasNativeTurnEventControlState bool
+	NativeChestControls            [16]NativeChestControl
+	NativeFieldUnitControls        []NativeFieldUnitControl
+	HasNativeFieldControlState     bool
 	// NativeRuntimeRecords preserves the exact saved current-unit array and
 	// CONTINUE-rebuilt selector slots before a typed Unit projection exists.
 	// Units remains the normalized/gameplay array and is never guessed from
@@ -611,10 +618,13 @@ type NativeFieldEvent struct {
 	Selector byte `json:"selector"`
 }
 
-// NativeTurnEventControl preserves one live three-byte FDFIELD turn row.
-// RawCamp remains a selector byte; normalized battle.Camp is not inferred.
+// NativeTurnEventControl 保存一筆三位元組 FDFIELD live 回合列。
+// Turn 0xff 保留為原始休眠證據，不解讀成第255回合；RawCamp 仍是 selector
+// byte，不推成正規化 battle.Camp。
 type NativeTurnEventControl struct {
-	Turn, EventID, RawCamp byte
+	Turn    byte `json:"turn"`
+	EventID byte `json:"event_id"`
+	RawCamp byte `json:"raw_camp"`
 }
 
 // NativeChestControl preserves one live three-byte FDFIELD chest row.
@@ -667,19 +677,30 @@ type NativeFieldPresentation struct {
 	DelayTicks        int    `json:"delay_ticks"`
 }
 
+// NativeTurnActivation 描述一個已證實的格子 handler 對 live FDFIELD 回合列
+// 的改寫。它辨識改寫前的原始列，不是正規化 scenario 排程，也不把 RawCamp
+// 解讀成 battle.Camp。
+type NativeTurnActivation struct {
+	Slot      int  `json:"slot"`
+	EventID   int  `json:"event_id"`
+	RawCamp   byte `json:"raw_camp"`
+	TurnDelta int  `json:"turn_delta"`
+}
+
 // NativeFieldEventRule 保存已閉合 handler 的資料，不自行決定 selector 的呼叫時機。
 type NativeFieldEventRule struct {
-	EventID       int                      `json:"event_id"`
-	Selector      byte                     `json:"selector"`
-	TriggerGate   string                   `json:"trigger_gate,omitempty"`
-	SetModeRanges []NativeFieldModeRange   `json:"set_mode_ranges,omitempty"`
-	OnceState     *int                     `json:"once_state_index,omitempty"`
-	RequiredItem  *int                     `json:"required_item,omitempty"`
-	ConsumeItem   bool                     `json:"consume_item,omitempty"`
-	SpawnGroup    *int                     `json:"spawn_group,omitempty"`
-	JoinCharacter *int                     `json:"join_character,omitempty"`
-	TextIndices   *NativeFieldTextIndices  `json:"text_indices,omitempty"`
-	Presentation  *NativeFieldPresentation `json:"presentation,omitempty"`
+	EventID        int                      `json:"event_id"`
+	Selector       byte                     `json:"selector"`
+	TriggerGate    string                   `json:"trigger_gate,omitempty"`
+	SetModeRanges  []NativeFieldModeRange   `json:"set_mode_ranges,omitempty"`
+	OnceState      *int                     `json:"once_state_index,omitempty"`
+	RequiredItem   *int                     `json:"required_item,omitempty"`
+	ConsumeItem    bool                     `json:"consume_item,omitempty"`
+	SpawnGroup     *int                     `json:"spawn_group,omitempty"`
+	JoinCharacter  *int                     `json:"join_character,omitempty"`
+	TextIndices    *NativeFieldTextIndices  `json:"text_indices,omitempty"`
+	Presentation   *NativeFieldPresentation `json:"presentation,omitempty"`
+	TurnActivation *NativeTurnActivation    `json:"turn_activation,omitempty"`
 }
 
 // TreasureAt 查詢尚未取得的寶物格。
@@ -1032,6 +1053,12 @@ func Load(path string) (*State, error) {
 	mapPath := filepath.Join(filepath.Dir(path), "map.json")
 	st.Cost = loadTerrainCost(mapPath, f.W, f.H)
 	st.NativeCompositionEventBytes = loadNativeCompositionEventBytes(mapPath, f.W, f.H)
+	var nativeRoundSeed int
+	st.NativeTurnEventControls, nativeRoundSeed, st.HasNativeTurnEventControlState =
+		loadNativeTurnEventControls(mapPath, f.W, f.H)
+	if st.HasNativeTurnEventControlState && st.NativeRoundCounter == 0 {
+		st.NativeRoundCounter = nativeRoundSeed
+	}
 	st.NativeFieldEventSlots, st.NativeFieldEvents, st.NativeFieldEventRules =
 		loadNativeFieldEvents(mapPath, f.W, f.H)
 	st.NativeTileBlitModes, st.NativeTerrainControl, st.NativeTerrainMoveCodes = loadNativeTerrainRendererInputs(mapPath, f.W, f.H)
@@ -1059,6 +1086,85 @@ type mapCostFile struct {
 	Tiles                       []int                  `json:"tiles"`
 	TreasureSlots               []int                  `json:"treasure_slots"`
 	TreasureHidden              []bool                 `json:"treasure_hidden"`
+}
+
+// loadNativeTurnEventControls 只接受完整16筆 raw table；0xff 列保持可見，
+// 不提升成第255回合的 scenario event。
+func loadNativeTurnEventControls(
+	mapJSONPath string,
+	w, h int,
+) ([16]NativeTurnEventControl, int, bool) {
+	var out [16]NativeTurnEventControl
+	if w <= 0 || h <= 0 {
+		return out, 0, false
+	}
+	var mapIndex int
+	if n, err := fmt.Sscanf(filepath.Base(filepath.Dir(mapJSONPath)), "map%d", &mapIndex); err != nil || n != 1 || mapIndex < 0 {
+		return out, 0, false
+	}
+	catalogPath := filepath.Join(filepath.Dir(filepath.Dir(mapJSONPath)), "native_turn_event_controls.json")
+	raw, err := os.ReadFile(catalogPath)
+	if err != nil {
+		return out, 0, false
+	}
+	if fmt.Sprintf("%x", sha256.Sum256(raw)) != nativeTurnEventCatalogSHA256 {
+		return out, 0, false
+	}
+	var catalog struct {
+		SchemaVersion int `json:"schema_version"`
+		Source        struct {
+			File   string `json:"file"`
+			Size   int    `json:"size"`
+			MD5    string `json:"md5"`
+			SHA256 string `json:"sha256"`
+		} `json:"source"`
+		RoundSeed struct {
+			Value  int    `json:"value"`
+			Writer string `json:"writer"`
+			Source struct {
+				File   string `json:"file"`
+				Size   int    `json:"size"`
+				MD5    string `json:"md5"`
+				SHA256 string `json:"sha256"`
+			} `json:"source"`
+		} `json:"round_seed"`
+		Maps []struct {
+			Map             int                      `json:"map"`
+			ControlResource string                   `json:"control_resource"`
+			ControlSHA256   string                   `json:"control_sha256"`
+			Controls        []NativeTurnEventControl `json:"controls"`
+		} `json:"maps"`
+	}
+	if json.Unmarshal(raw, &catalog) != nil || catalog.SchemaVersion != 1 ||
+		catalog.Source.File != "FDFIELD.DAT" || catalog.Source.Size != 243169 ||
+		catalog.Source.MD5 != "ecdb0436d26adfe5d107f2713fa7e9a2" ||
+		catalog.Source.SHA256 != "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513" ||
+		catalog.RoundSeed.Value != 1 || catalog.RoundSeed.Writer != "0x2066e" ||
+		catalog.RoundSeed.Source.File != "FD2.EXE" || catalog.RoundSeed.Source.Size != 357074 ||
+		catalog.RoundSeed.Source.MD5 != "b97caf2239a27a896069d03549d96e1e" ||
+		catalog.RoundSeed.Source.SHA256 != "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f" ||
+		len(catalog.Maps) != 33 {
+		return out, 0, false
+	}
+	seen := [33]bool{}
+	for _, entry := range catalog.Maps {
+		if entry.Map < 0 || entry.Map >= len(seen) || seen[entry.Map] ||
+			entry.ControlResource != fmt.Sprintf("FDFIELD_%03d.bin", entry.Map*3+1) ||
+			len(entry.ControlSHA256) != 64 || len(entry.Controls) != len(out) {
+			return out, 0, false
+		}
+		seen[entry.Map] = true
+	}
+	if !seen[mapIndex] {
+		return out, 0, false
+	}
+	for _, entry := range catalog.Maps {
+		if entry.Map == mapIndex {
+			copy(out[:], entry.Controls)
+			return out, catalog.RoundSeed.Value, true
+		}
+	}
+	return out, 0, false
 }
 
 func loadTreasures(mapJSONPath string, w, h int, chests []struct {
@@ -1157,6 +1263,15 @@ func loadNativeFieldEvents(
 	seen := map[int]bool{}
 	for _, rule := range m.NativeFieldEventRules {
 		if rule.EventID < 0 || rule.EventID >= 90 || seen[rule.EventID] {
+			return nil, nil, nil
+		}
+		if rule.OnceState != nil && (*rule.OnceState < 0 || *rule.OnceState >= 0x20) {
+			return nil, nil, nil
+		}
+		if rule.TurnActivation != nil &&
+			(rule.TurnActivation.Slot < 0 || rule.TurnActivation.Slot >= 16 ||
+				rule.TurnActivation.EventID < 0 || rule.TurnActivation.EventID >= 90 ||
+				rule.TurnActivation.TurnDelta < 0 || rule.TurnActivation.TurnDelta > 0xff) {
 			return nil, nil, nil
 		}
 		seen[rule.EventID] = true

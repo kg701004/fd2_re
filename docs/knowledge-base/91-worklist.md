@@ -843,7 +843,7 @@
 - [~] **ch25/ch26 pre-handler**：FDTXT_026 string0 已以 direct scene0 12-line mapping 接 binding（map25/70-slot、pan、acting76），`story_ch26` 已接回 handler。2026-07-29 已修正未加引號訊息計數，FDTXT_026 全量 63/63 count-aligned；這只關閉文字索引，不自動證明每個條件分支或 event61 玩家路徑。
 - [~] **ch26/ch27 pre-handler**：FDTXT_027 idx0/3/4/5/6/7 已高信心對到 ch27 scene0 全部 21 句，新增六組 editable direct overrides 並接 `story_ch27`；共用 `0x24618` renderer 已完成，但這些 handler 的 exact binding/runtime context 與 `0x24b14` item `0x64` branch 尚未完整接入，不能視為完整章節流程完成。
 - [x] **ch27 post/ch28 flow**：FDTXT_028 string7 已精確對到 ch28 scene1 lines 11–15，新增 post-handler binding 並接 `story_ch28`；sync_party/set_chapter 保留，下一節仍進可編輯 preparation_ch28。
-- [x] **ch28/ch29 pre-handler**：Docker 隔離 Capstone 實際解析 `0x35822(x,y,group)` 的 pan→spawn→300ms→兩次 palette no-op／200ms→redraw choreography；compiler 已 lower，FDTXT_029 idx7/idx8、map27/pan/acting86 binding 通過 regression，`story_ch28` 已接回 editable handler。
+- [x] **ch28/ch29 pre-handler**：Docker 隔離 Capstone 實際解析 `0x35822` 的 pan→spawn→300ms→兩次 palette no-op／200ms→redraw 演出；2026-08-02 更正來源 `PUSH` 順序為 `(group,y,x)`，並以非對稱 ch27/ch28 呼叫回歸鎖定 group 與 x。FDTXT_029 idx7/idx8、map27/pan/acting86 binding 通過回歸，`story_ch28` 已接回可編輯 handler。
 - [~] **ch26 post item-gate branch**：`0x25186→0x24b14(0x64)` 是前 16 個 runtime slots 的 exact inventory search，無 camp/activity filter；成功臂無 `0x1b8e7`，天空之鑰不消耗，之後才 sync→chapter increment→persistent cleanup。FDTXT_027 idx8–12 / idx13–16 對應兩臂；仍需把 visual/effect calls 與缺匙 editable branch 資料化，不能只保留 generic ending。
 - [x] **ch26 success palette-ramp lowering**：Docker Capstone 定義 `0x25052(start,delay)` 為 inclusive `delta=start..0` 的 `0x11df2(0,255,delta)`＋每步 delay；compiler 已 lower immediate start 0..63。synthetic descending/zero/invalid 與真實 `ch26_post.json` 六個 5/4/3/2、80ms calls 均有 regression。這是 palette ramp，不是 generic fade；`0x24618` 已有專用 adapter，其餘 renderer effects仍各自 fail-closed。
 - [x] **撤回 `0x1f882`=vsync/sync helper**：Docker Capstone 展開 `ebx=0..63`、每次 `0x11d40(0,255,ebx)`＋2ms wait，故是 64-step native palette fade-out。compiler 現保留 exact `native_palette_fade_out(0..63,2ms)` payload；它與 `0x25052/0x11df2` 的 delta ramp 不同，runtime 在 indexed DAC adapter 未完成前有 regression-protected fail-closed。
@@ -1781,3 +1781,21 @@
   唯讀走完 current snapshot 四筆 record，實得索爾、悠妮、亞雷斯、蓋亞。
   下一步是閉合上述 current battle runtime；目前不接 CONTINUE。四槽 LOAD
   的 `0x2cad7` 戰間 restore owner 已由後續項目接入，尚缺一般玩家有效槽 E2。
+- [x] **MAP26-EVENT62-DORMANT-TURN-ACTIVATION**：完整33圖×16列
+  `native_turn_event_controls.json` 已由 FDFIELD raw resource 決定性重生；
+  目錄同時保存固定 FD2.EXE 雜湊與 `0x2066E` 已證實的戰鬥回合初始值1，
+  新戰鬥由此取得 event62 所需回合來源，CONTINUE 則保留快照即時值；
+  執行期鎖定完整目錄 SHA-256 與 map 0–32 唯一集合，竄改控制列／寫入端／
+  地圖身分的負向回歸均失敗即關閉；
+  `0xff` 休眠列不再被 parser 丟棄，也不會進入第255回合排程。event62 的
+  selector0／state17／slot0 event63 raw-camp0／native-round+1 已成可編輯規則，
+  並接到向左一步第七拍的正式 selector0 owner；raw/typed 不一致與重複觸發
+  在 mutation 前拒絕。同步更正 `0x35822` 來源
+  `PUSH` 順序為 `(group,y,x)`，以 ch27 `[6,16,0]` 及 ch28 `[8,19,9]`
+  非對稱回歸鎖定；event63 兩個 staging calls 已進固定雜湊的
+  `event_id_groups.json`；同一擷取器亦保存 event64／66／68／70／72 的
+  staging calls，但都仍不冒充一般 spawn。
+- [ ] **MAP26-EVENT63-DYNAMIC-RUNNER**：把已啟用的 live row0 精確交給
+  raw camp0 phase owner，依 `0x358C7..0x358E5` 執行 group1@(3,27)、
+  group2@(15,27) 的 staging、delay、palette 與 redraw。必須先閉合正式
+  battle phase／continuation，再接一般玩家路徑；不得只做 spawn 就宣稱完成。

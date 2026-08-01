@@ -90,6 +90,27 @@ func TestCompileNativeFocusLowersToTileStepPan(t *testing.T) {
 	}
 }
 
+func TestCompileNativeStagingHelperPreservesSourcePushOrder(t *testing.T) {
+	// 0x33d95 pushes group=6, y=16, x=0 before calling 0x35822.  Keep this
+	// tuple asymmetric so a group/x reversal cannot hide behind equal values.
+	script := &HandlerScript{Beats: []HandlerBeat{{
+		Op: "unknown", NativeTarget: "0x35822", RawArgs: []any{6, 16, 0}, Source: HandlerSource{Addr: "0x33d95"},
+	}}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 7 {
+		t.Fatalf("staging helper beats=%#v issues=%#v", beats, issues)
+	}
+	if beats[0].Op != "pan" || beats[0].X != 0 || beats[0].Y != 384 || beats[0].Frames != 30 || !beats[0].TileStep {
+		t.Fatalf("staging pan=%#v", beats[0])
+	}
+	if beats[1].Op != "spawn" || beats[1].Group != 6 {
+		t.Fatalf("staging spawn=%#v", beats[1])
+	}
+	if beats[2].Op != "delay" || beats[2].Ms != 300 || beats[3].Op != "palette_update" || beats[4].Ms != 200 || beats[5].Op != "palette_update" || beats[6].Op != "redraw" {
+		t.Fatalf("staging choreography=%#v", beats[2:])
+	}
+}
+
 func TestCompilePersistentRosterCleanupIsEditable(t *testing.T) {
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
 		Op: "unknown", NativeTarget: "0x25089", Source: HandlerSource{Addr: "0x25089"},
@@ -1878,6 +1899,38 @@ func TestCompileChapter27PostMapsFDTXT028StringSeven(t *testing.T) {
 	}
 }
 
+func TestCompileChapter27PreUsesNativeStagingPushOrder(t *testing.T) {
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch27_pre.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	for _, issue := range issues {
+		if issue.Source.Addr == "0x33d95" || issue.Source.Addr == "0x33da3" {
+			t.Fatalf("ch27_pre staging remained unresolved: %#v", issue)
+		}
+	}
+	want := map[string]struct {
+		x, y, group int
+	}{
+		"0x33d95": {x: 0, y: 384, group: 6},
+		"0x33da3": {x: 168, y: 384, group: 7},
+	}
+	for source, expected := range want {
+		var staging []Beat
+		for _, beat := range beats {
+			if beat.Source == source {
+				staging = append(staging, beat)
+			}
+		}
+		if len(staging) != 7 || staging[0].Op != "pan" ||
+			staging[0].X != expected.x || staging[0].Y != expected.y ||
+			staging[1].Op != "spawn" || staging[1].Group != expected.group {
+			t.Fatalf("ch27_pre %s staging=%#v", source, staging)
+		}
+	}
+}
+
 func TestCompileChapter28PreLowersStagingHelper(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch28_pre.json")
 	if err != nil {
@@ -1895,7 +1948,8 @@ func TestCompileChapter28PreLowersStagingHelper(t *testing.T) {
 	if len(staging) != 7 {
 		t.Fatalf("ch28_pre staging beats=%d want pan/spawn/delay/palette/delay/palette/redraw", len(staging))
 	}
-	if staging[0].Op != "pan" || staging[0].X != 192 || staging[0].Y != 456 || staging[1].Op != "spawn" || staging[1].Group != 9 {
+	// Source PUSH order at 0x33e16 is group=8,y=19,x=9.
+	if staging[0].Op != "pan" || staging[0].X != 216 || staging[0].Y != 456 || staging[1].Op != "spawn" || staging[1].Group != 8 {
 		t.Fatalf("ch28_pre staging front=%#v", staging[:2])
 	}
 	if staging[2].Op != "delay" || staging[2].Ms != 300 || staging[3].Op != "palette_update" || staging[4].Op != "delay" || staging[4].Ms != 200 || staging[5].Op != "palette_update" || staging[6].Op != "redraw" {

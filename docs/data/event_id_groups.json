@@ -1,4 +1,12 @@
 {
+ "_source": {
+  "file": "FD2.EXE",
+  "size": 357074,
+  "md5": "b97caf2239a27a896069d03549d96e1e",
+  "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+  "tool": "Capstone 5.0.3",
+  "address_space": "LE linear address"
+ },
  "0": {
   "handler": "0x341db",
   "spawns": [
@@ -483,11 +491,73 @@
  },
  "63": {
   "handler": "0x358c7",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 1,
+    "via": "staging_helper_0x35822",
+    "source": "0x358d7",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 3,
+     "y": 27
+    }
+   },
+   {
+    "group": 2,
+    "via": "staging_helper_0x35822",
+    "source": "0x358e5",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 15,
+     "y": 27
+    }
+   }
+  ]
  },
  "64": {
   "handler": "0x358ea",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 3,
+    "via": "staging_helper_0x35822",
+    "source": "0x3592d",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 9,
+     "y": 44
+    }
+   },
+   {
+    "group": 4,
+    "via": "staging_helper_0x35822",
+    "source": "0x3593b",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 0,
+     "y": 9
+    }
+   },
+   {
+    "group": 5,
+    "via": "staging_helper_0x35822",
+    "source": "0x35949",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 17,
+     "y": 9
+    }
+   }
+  ]
  },
  "65": {
   "handler": "0x3599b",
@@ -495,7 +565,20 @@
  },
  "66": {
   "handler": "0x359c8",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 1,
+    "via": "staging_helper_0x35822",
+    "source": "0x359ff",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 17,
+     "y": 18
+    }
+   }
+  ]
  },
  "67": {
   "handler": "0x35a2f",
@@ -503,7 +586,20 @@
  },
  "68": {
   "handler": "0x35a48",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 2,
+    "via": "staging_helper_0x35822",
+    "source": "0x35a7f",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 14,
+     "y": 7
+    }
+   }
+  ]
  },
  "69": {
   "handler": "0x35ab8",
@@ -511,7 +607,32 @@
  },
  "70": {
   "handler": "0x35b05",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 3,
+    "via": "staging_helper_0x35822",
+    "source": "0x35b4a",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 8,
+     "y": 7
+    }
+   },
+   {
+    "group": 4,
+    "via": "staging_helper_0x35822",
+    "source": "0x35b58",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 4,
+     "y": 7
+    }
+   }
+  ]
  },
  "71": {
   "handler": "0x35b6b",
@@ -519,7 +640,32 @@
  },
  "72": {
   "handler": "0x35bf2",
-  "spawns": []
+  "spawns": [
+   {
+    "group": 2,
+    "via": "staging_helper_0x35822",
+    "source": "0x35c02",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 4,
+     "y": 35
+    }
+   },
+   {
+    "group": 3,
+    "via": "staging_helper_0x35822",
+    "source": "0x35c10",
+    "raw_placement_gate": 0,
+    "staging": {
+     "helper": "0x35822",
+     "spawn_source": "0x35842",
+     "x": 14,
+     "y": 35
+    }
+   }
+  ]
  },
  "73": {
   "handler": "0x35c23",

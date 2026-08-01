@@ -7,6 +7,7 @@ FD2 current snapshot 的 FDFIELD 控制映像生命週期（IDA Pro 9.4）
 - `FD2.EXE` 大小：357074 bytes
 - MD5：`b97caf2239a27a896069d03549d96e1e`
 - SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 下列 `0x...` 是 IDA database 線性位址（EA），不是未標示的檔案偏移。
 - 第一順位：使用者合法 IDA Pro 9.4，只在授權、無網路 Docker 流程執行。
 - 第二順位：`fd2-cap-local` 的 Capstone 5.0.3，覆核下列直接寫入。
 
@@ -59,18 +60,62 @@ IDA 對 `[0x53A55]` 的完整 data xrefs 找到多個章節 handler 直接 write
 
 其他直接 writer 包含：
 
-- `0x358B5`：寫 turn event 0 的 `+3`；
-- `0x359B0`：寫 turn event 0 的 `+3`；
-- `0x35A39`：寫 turn event 1 的 `+6`；
-- `0x35AED`：寫 turn event 2 的 `+9`；
-- `0x35C6C`：寫 turn event 0 的 `+3`；
-- `0x35D40/0x35D51`：寫 turn event 0／1 的 `+3/+6`；
-- `0x35D97/0x35DE6`：寫 turn event 1／2 的 `+6/+9`；
-- `0x35EFC`：寫 turn event 2 的 `+9`；
-- `0x35F89`：寫 turn event 0 的 `+3`。
+- `0x358BA`：寫 turn event 0 的 `+3`；
+- `0x359BB`：寫 turn event 0 的 `+3`；
+- `0x35A44`：寫 turn event 1 的 `+6`；
+- `0x35AF8`：寫 turn event 2 的 `+9`；
+- `0x35C71`：寫 turn event 0 的 `+3`；
+- `0x35D45/0x35D5C`：分別寫 turn event 1／0 的 `+6/+3`；
+- `0x35D9D/0x35DF1`：寫 turn event 1／2 的 `+6/+9`；
+- `0x35F02`：寫 turn event 2 的 `+9`；
+- `0x35F8E`：寫 turn event 0 的 `+3`。
 
 這些位址只證明 raw turn byte 的 live 更新；個別章節的高階事件名稱仍應由
 各 handler 的控制流程另行閉合。
+
+### event62 產生端與 event63 消費端
+
+**已證實**：map26 原始 control row0 是 `ff 3f 00`，即尚未排入回合的
+event63/raw camp0。event62 handler `0x35898..0x358C6` 在 battle-local
+state byte17 為零時，以 `0x358BA mov [eax+3],dl` 寫入
+`[0x53BEF]+1`，再於 `0x358C2` 將 state byte17 設為1。這閉合了休眠列的
+寫入端；`0xff` 不可再因解析器只輸出已啟用回合而被丟棄，也不可解讀為第255回合。
+
+```text
+0x358A2  mov eax,[0x53AD5]
+0x358A7  cmp byte [eax+0x11],0
+0x358AB  jnz 0x358C6
+0x358AD  mov dl,[0x53BEF]
+0x358B3  inc dl
+0x358B5  mov eax,[0x53A55]
+0x358BA  mov [eax+3],dl
+0x358BD  mov eax,[0x53AD5]
+0x358C2  mov byte [eax+0x11],1
+```
+
+**已證實**：event63 handler `0x358C7..0x358E5` 先後呼叫 staging helper
+`0x35822` 兩次。來源 `PUSH` 順序是 `(group,y,x)`：第一組
+`(1,27,3)`，第二組 `(2,27,15)`；helper 內 `0x35834` 呼叫
+`0x135DD(x,y)`，`0x35842` 呼叫 `0x10B4E(group)`。因此來源參數不可標成
+`0x35822(x,y,group)`，也不可依原陣列索引把 group 與 x 對調。
+
+```text
+0x358D1  push 1
+0x358D3  push 0x1B
+0x358D5  push 3
+0x358D7  call 0x35822
+0x358DF  push 2
+0x358E1  push 0x1B
+0x358E3  push 0x0F
+0x358E5  jmp 0x35318       ; shared call 0x35822 tail
+
+0x3582C  push dword [esp+8]
+0x35830  push dword [esp+8]
+0x35834  call 0x135DD      ; x,y
+0x3583C  movzx eax,byte [esp+0xC]
+0x35841  push eax
+0x35842  call 0x10B4E      ; group
+```
 
 CONTINUE bridge 邊界
 --------------------

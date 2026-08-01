@@ -416,10 +416,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 ch25_pre slice：FDTXT_026 全章因後續分支／raw utterance 與 authored line 數不一致，未宣稱全量 count-aligned；但 handler 實際呼叫的 string0 可直接對到 `ch26.json` scene0 12 lines。已新增 ch25_pre binding（map25/70-slot、pan 9,39、acting76、dialog line0/count12/scene0）並將 `story_ch26` 接回 editable handler；後續 FDTXT_026 分支仍待條件控制流 mapping。
 - 2026-07-20 ch26_pre slice：逐字解析 FDTXT_027 證實 handler 的 idx0/3/4/5/6/7 分別對到 `ch27.json` scene0 的 lines 0–3、4、5–6、7、8–12、13–21；新增 `bindings/ch26_pre.json` 與六組 direct line/count overrides，`story_ch27` 接回 editable pre-handler。`0x24b14(100)` 依既有 LE disasm 是天空之鑰 item `0x64` 的 16-slot inventory gate，仍保留 unresolved branch/effect，不把 gate 猜成自動跳轉。
 - 2026-07-20 ch27_post slice：`FDTXT_028` 已 count-aligned，handler idx7 (`0x231e5`) 精確對到 `ch28.json` scene1 lines 11–15；新增 `bindings/ch27_post.json`，掛在天空之鑰 present branch 後、進 preparation_ch28 前。sync_party/set_chapter 原語保留原順序。
-- 2026-07-20 ch28_pre audit→resolved：FDTXT_029 idx7/idx8 分別精確對到 `ch29.json` scene1 lines 5–12（8句）與 scene2 lines 0–5（6句），pan(9,56)→(216,1344)、acting86 已建 binding。Capstone direct disasm 證實 `0x35822(x,y,group)` 為 pan→spawn→delay300→palette(0,255,0)→delay200→palette(0,255,0)→redraw；compiler 已 lower 且 `story_ch28` 已接回 handler，無 unresolved issues。
+- 2026-07-20 ch28_pre audit→resolved：FDTXT_029 idx7/idx8 分別精確對到 `ch29.json` scene1 lines 5–12（8句）與 scene2 lines 0–5（6句），pan(9,56)→(216,1344)、acting86 已建 binding。Capstone direct disasm 證實 `0x35822` 為 pan→spawn→delay300→palette(0,255,0)→delay200→palette(0,255,0)→redraw；2026-08-02 勘誤其來源 `PUSH` 順序是 `(group,y,x)`，不是舊記的 `(x,y,group)`。compiler 已 lower 且 `story_ch28` 已接回 handler，無 unresolved issues。
 - 2026-07-20 ch26_post gate audit：`0x25186` 後 `cmp eax,-1 / JE 0x25348` 證實 item `0x64` 缺失會進 FDTXT_027 idx13–16 離別支線，命中才繼續 idx9–12 正線並 `sync_party/set_chapter(27)`；campaign gate 現已承載缺匙對話 scene→ending，ch26_post 的大量 visual/effect unknown 仍待拆解。
 - 2026-07-20 missing-key branch slice：新增 `ch27.json` 可編輯場景「缺少天空之鑰的離別(分支)」，收錄 FDTXT_027 idx13–16 的 17 句離別對話；`inventory_gate_ch27_sky_key.if_missing` 現在先進該 scene，再接 `ending_ch27_no_sky_key`，不再用 generic ending 吞掉原版對白。`0x25052/0x24618/0x1c2da` 視覺／系統效果與 `0x22253` 的 runtime adapter 仍刻意保留為待辦。
-- 2026-07-20 isolated RE toolchain：新增 `tools/docker/fd2-cap.Dockerfile`，建立本機 `fd2-cap-local` image（Python 3.12 + capstone 5.0.3）；所有後續 `disasm_le.py` 以 repo read-only mount 執行，不污染 host Python。實際 Capstone disasm 確認 `0x35822(x,y,group)` 是 pan→spawn→delay300→palette(0,255,0)→delay200→palette(0,255,0)→redraw；compiler 已 lower，ch28_pre binding 無 unresolved issues，`story_ch28` 已接回 editable handler。
+- 2026-07-20 isolated RE toolchain：新增 `tools/docker/fd2-cap.Dockerfile`，建立本機 `fd2-cap-local` image（Python 3.12 + capstone 5.0.3）；所有後續 `disasm_le.py` 以 repo read-only mount 執行，不污染 host Python。實際 Capstone disasm 確認 `0x35822` 的演出序列；2026-08-02 由 IDA／Capstone 直接指令更正來源 `PUSH` 順序為 `(group,y,x)`。compiler 已 lower，ch28_pre binding 無 unresolved issues，`story_ch28` 已接回 editable handler。
 - 2026-07-20 dialogue pagination slice：對話長句翻頁現在以 10 幀可編輯平滑上捲呈現（舊頁上移、新頁由底部進入，框內 clip），動畫期間 Enter 不會跳過頁面；新增 `dlg_test.go` 狀態 regression。核心 campaign/battle 測試通過；GUI package 實測仍受容器缺 ALSA/X11 headers 限制，待圖形依賴容器重跑。
 - 2026-07-20 ch29_post audit：Capstone 直接確認 `0x12cea` 是 X-first/Y-second focus(22,23)；`0x24618` 是 palette_delta=10、step=8 的 9-frame alternating-buffer transition；`0x25089` 是 persistent roster cleanup（清 transient、回填 HP/MP），`0x11df2` 是 dynamic 0x3e→0、delta0 palette loop，`0x17aa9` 是 tick busy-wait，`0x2bce5` 是專用 ending renderer。新增 staged `bindings/ch29_post.json` 與四組精確對白 mapping（FDTXT_029→ch29 scene2 lines6–7；FDTXT_030→ch30 scene0 lines0–14），但因 layout/load-text/focus/transition/ending native ops 尚未全部 lower，暫不接 campaign runtime。
 - 2026-07-20 focus lowering slice：`0x12cea(x,y)` 的 direct Capstone 證據已接入 compiler，保留 X-first/Y-second 語意並 lower 成 tile-step pan；新增 regression，ch29_post staged binding 的 focus unknown 已可解析，其餘 transition/roster/ending native ops 仍 fail-closed。
@@ -2962,3 +2962,42 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   event47/49 另有 formula，且多個 handler 會改寫 live turn byte。這些仍未
   資料化，故 `pending_group_binding` owner 不移除；正式 CONTINUE 與 E2
   仍維持失敗即關閉。
+
+## 2026-08-02：map26 event62 休眠列與 staging helper 勘誤
+
+- 合法 IDA Pro 9.4 與 Docker Capstone 直接指令共同固定：event62
+  `0x35898..0x358C6` 由 `0x358BA` 寫 live row0 turn=`[0x53BEF]+1`，並以
+  state byte17 防止重複；map26 原始 row0 是 `ff 3f 00`。舊證據表把
+  `inc dl` 的 `0x358B5` 誤列成 store，同批其他 writer 也多數停在 pointer
+  load／算術指令，已逐一更正為實際 `mov [memory],...` 位址。
+- 原 parser 只輸出 `turn != 0xff`，使 handler 後續會啟用的 row0/event63 與
+  row1/event65 消失。新增全33圖×16列的
+  `remake/assets/maps/native_turn_event_controls.json`；策展過的
+  `docs/data/turn_events.json` 保持獨立，禁止用純 raw exporter 覆寫。
+- IDA Pro 9.4 把共用戰鬥初始化固定在 `sub_205DA`，29個章節開場呼叫者
+  在 `0x2066E` 將 `[0x53BEF]` 寫成1；Docker Capstone 獨立確認相同指令。
+  完整回合目錄現同時鎖定 FD2.EXE 雜湊、寫入端與初始值，新戰鬥載入值1；
+  CONTINUE 快照仍優先恢復即時值，缺出處的手工狀態維持0。載入器並鎖定
+  目錄 SHA-256 與 map 0–32 唯一集合；控制列、寫入端或地圖身分遭竄改即拒絕。
+- `NativeTurnActivation` 與 `ApplyNativeFieldTurnActivationEvent` 現只接受
+  map26 selector0、event62、once-state17、slot0/event63/raw-camp0/delta1；
+  完整列或 CONTINUE raw image 不一致時不作部分 mutation。Go battle/campaign
+  與 Python parser/sync 回歸均涵蓋休眠列、原子失敗及重複觸發。
+- 正式 `Game.stepBattleWalk` 已在原版限定的向左一步第七拍提交後 dispatch
+  event62；前六拍 row/state 不動，第七拍才以 native round+1 啟用 row0。
+  其他方向不泛化，malformed rule 走 `loadErr` 停止。Xvfb Docker 測試通過，
+  但尚無同狀態 DOSBox 玩家實驗，因此只列 E1。
+- 更正 `0x35822` 的來源參數：export 的 raw args 是 `PUSH`
+  `(group,y,x)`，callee 才分派 pan `(x,y)` 與 spawn `group`。因此 ch27
+  `[6,16,0]` 是 group6@(0,16)，ch28 `[8,19,9]` 是 group8@(9,19)；舊
+  `(x,y,group)` 文件、compiler 與整合測試已同步修正。
+- `extract_event_id_groups.py` 現先驗證 FD2.EXE size／MD5／SHA-256，再辨識
+  direct call 與 event63 的 `0x35318` 共用 tail。版本化 event63 不再是
+  `spawns: []`，而以 `staging_helper_0x35822` 保存 group1@(3,27) 與
+  group2@(15,27)；這個 via 未被一般 spawn consumer 接受，因此尚未閉合畫面
+  owner 時仍保持失敗即關閉。同輪也機械閉合 event64／66／68／70／72 的
+  group、座標與 call-site；只列為固定原始 E0 資料，不提升觸發條件或 E2。
+- 尚未把 event63 的兩次 staging、palette/redraw 及 raw camp0 phase owner
+  串入正式 battle runner；此缺口仍失敗即關閉，不宣稱 E2 或完整動態
+  CONTINUE 排程。下一個垂直切片是
+  `MAP26-EVENT63-DYNAMIC-RUNNER`。

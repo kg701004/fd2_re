@@ -29,6 +29,19 @@ class NativePostResolutionSourceTest(unittest.TestCase):
         record[22] = 0xFF
         self.assertIsNone(parse_field.native_death_effect(record))
 
+    def test_dormant_turn_rows_are_preserved_but_not_enabled(self):
+        control = bytearray(3 + 16 * 3)
+        for slot in range(16):
+            control[3 + slot * 3:6 + slot * 3] = bytes((0xFF, 0xFF, 0xFF))
+        control[3:9] = bytes((0xFF, 63, 0, 4, 12, 2))
+        rows = parse_field.native_turn_event_controls(control)
+        self.assertEqual(rows[0], {"turn": 0xFF, "event_id": 63, "raw_camp": 0})
+        self.assertEqual(rows[1], {"turn": 4, "event_id": 12, "raw_camp": 2})
+        self.assertEqual(
+            parse_field.enabled_turn_events(rows),
+            [{"turn": 4, "event_id": 12, "camp": "special"}],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

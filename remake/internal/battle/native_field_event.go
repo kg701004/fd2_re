@@ -77,6 +77,69 @@ func ApplyNativeFieldModeEvent(
 	return eventID, true
 }
 
+// ApplyNativeFieldTurnActivationEvent 執行已閉合的 event62 mutation：selector0
+// 對到 event62 時，把休眠 row0（event63/raw camp0）排到 native round+1，並
+// 設定 battle-local state byte17。editable rule 與完整 raw row 必須先一致，
+// 才能改動任一值。
+func ApplyNativeFieldTurnActivationEvent(
+	st *State,
+	x, y int,
+	selector byte,
+) (byte, error) {
+	if st == nil || !st.HasNativeTurnEventControlState {
+		return 0, fmt.Errorf("turn activation: complete native turn controls are absent")
+	}
+	eventID, ok := NativeFieldEventIDAt(st, x, y, selector)
+	if !ok || eventID != 62 || selector != 0 {
+		return 0, fmt.Errorf("turn activation: event62 selector0 binding is absent")
+	}
+	var rule *NativeFieldEventRule
+	for i := range st.NativeFieldEventRules {
+		if st.NativeFieldEventRules[i].EventID == int(eventID) &&
+			st.NativeFieldEventRules[i].Selector == selector {
+			rule = &st.NativeFieldEventRules[i]
+			break
+		}
+	}
+	if rule == nil || rule.OnceState == nil || *rule.OnceState != 17 ||
+		rule.TurnActivation == nil ||
+		*rule.TurnActivation != (NativeTurnActivation{
+			Slot: 0, EventID: 63, RawCamp: 0, TurnDelta: 1,
+		}) {
+		return 0, fmt.Errorf("turn activation: editable event62 rule is incomplete")
+	}
+	if st.NativeEventState[*rule.OnceState] != 0 ||
+		st.NativeRoundCounter <= 0 || st.NativeRoundCounter > 0xfe {
+		return 0, fmt.Errorf("turn activation: state or native round is not activatable")
+	}
+	activation := *rule.TurnActivation
+	if activation.Slot < 0 || activation.Slot >= len(st.NativeTurnEventControls) {
+		return 0, fmt.Errorf("turn activation: row slot is out of range")
+	}
+	row := st.NativeTurnEventControls[activation.Slot]
+	if row != (NativeTurnEventControl{
+		Turn: 0xff, EventID: byte(activation.EventID), RawCamp: activation.RawCamp,
+	}) {
+		return 0, fmt.Errorf("turn activation: dormant row identity mismatch")
+	}
+	rawOffset := 3 + activation.Slot*3
+	if st.HasNativeFieldControlState {
+		if len(st.NativeFieldControlRaw) <= rawOffset+2 ||
+			st.NativeFieldControlRaw[rawOffset] != row.Turn ||
+			st.NativeFieldControlRaw[rawOffset+1] != row.EventID ||
+			st.NativeFieldControlRaw[rawOffset+2] != row.RawCamp {
+			return 0, fmt.Errorf("turn activation: live raw row disagrees with typed controls")
+		}
+	}
+	turn := byte(st.NativeRoundCounter + activation.TurnDelta)
+	st.NativeTurnEventControls[activation.Slot].Turn = turn
+	if st.HasNativeFieldControlState {
+		st.NativeFieldControlRaw[rawOffset] = turn
+	}
+	st.NativeEventState[*rule.OnceState] = 1
+	return eventID, nil
+}
+
 type NativeFieldEvent61Plan struct {
 	EventID       byte
 	MissingItem   bool
