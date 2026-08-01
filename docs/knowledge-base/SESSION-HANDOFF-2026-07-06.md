@@ -2745,3 +2745,32 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   offsets、signed words 與全部 raw key 分界；尚不解析名稱、class label、
   sprite 或 normalized party。證據見
   [`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。
+
+## 2026-08-01：`0x53AFA` 逐呼叫配置旗標接入 handler
+
+- official IDA Pro 9.4 完整資料交叉參照固定 `[0x53AFA]` 只有
+  `0x10CB7` 一個 reader，以及11組成對的 literal-one／literal-zero
+  writer；Docker Capstone 從每個正確指令邊界獨立重生
+  `set1 → push group → call 0x10B4E → reset0`。三組是章節 handler，
+  八組是 global event call；`0x32999` wrapper 及 caller 無 writer，
+  故其內部 call 明確讀零。版本與完整表見
+  [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
+- `dump_chapter_beats.py`、`export_handler_scripts.py` 與
+  `extract_event_id_groups.py` 現按 source call-site 產生
+  `raw_placement_gate`，不從 group/camp 推論。版本化資料共25筆 handler
+  spawn（3筆為1）及34筆 global event call（8筆為1）；generator 測試與
+  全表 assertion 已在 `fd2-cap-local` 通過。
+- handler compiler 對原版 `spawn`／`spawn_intro` 要求 explicit byte；缺失
+  即 compile issue。runtime Beat 將欄位送入
+  `AppendGroupWithNativePlacement`，完整 batch 先預演 position row、兩次
+  occupancy writer 與逐列新占用，錯誤時不改 roster／units；成功才依原
+  FDFIELD row order append。campaign/battle Go regression 與 `cmd/fd2`
+  Xvfb regression 通過。
+- 本輪只接 handler path。global turn-event scenario action 尚未攜帶
+  source/via/gate，完整 `0x10C50` table/inventory projection 與
+  `0x1B750` recompute 也仍未完成；`future_group_constructor` 與正式
+  CONTINUE 保持失敗即關閉。
+- 發現既有 `docs/data/event_id_groups.json` 是 root-owned；只針對該檔
+  替換後修回目前 UID/GID。專案與 `~/.codex/AGENTS.md` 已新增規則：可寫
+  容器須明示目前 UID/GID、寫前檢查目標 ownership，歷史 root-owned 只能
+  狹義修復，禁止對 repository／HOME 做遞迴 `chown`。

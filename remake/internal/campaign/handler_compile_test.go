@@ -18,7 +18,7 @@ func TestCompileHandlerScriptUsesOnlyExplicitBindings(t *testing.T) {
 		{Op: "pan", GridX: intPtr(3), GridY: intPtr(34), Source: HandlerSource{Addr: "0x32339"}},
 		{Op: "dialog", TextTable: "FDTXT_033", TextIndex: float64(0), Source: HandlerSource{Addr: "0x32382"}},
 		{Op: "act", ActingID: intPtr(99), Source: HandlerSource{Addr: "0x32343"}},
-		{Op: "spawn", Group: intPtr(3)},
+		{Op: "spawn", Group: intPtr(3), RawPlacementGate: intPtr(0)},
 		{Op: "join", CharID: intPtr(12)},
 		{Op: "unknown", Source: HandlerSource{Addr: "0xdead"}},
 	}}
@@ -60,7 +60,7 @@ func TestCompileHandlerScriptUsesOnlyExplicitBindings(t *testing.T) {
 	if beats[1].Op != "delay" || beats[1].Ms != 200 {
 		t.Fatalf("delay lowering = %#v", beats[1])
 	}
-	if beats[4].Source != "0x32339" || beats[5].Source != "0x32382" || beats[6].Source != "0x32343" || beats[7].Op != "spawn" || beats[7].Group != 3 || beats[8].Op != "join" || beats[8].CharID != 12 {
+	if beats[4].Source != "0x32339" || beats[5].Source != "0x32382" || beats[6].Source != "0x32343" || beats[7].Op != "spawn" || beats[7].Group != 3 || beats[7].RawPlacementGate == nil || *beats[7].RawPlacementGate != 0 || beats[8].Op != "join" || beats[8].CharID != 12 {
 		t.Fatalf("compiled source chain lost: %#v", beats[4:])
 	}
 	if beats[2].Track != "FDMUS_011" || beats[3].Op != "bgm_stop" {
@@ -416,10 +416,25 @@ func TestCompileHandlerScriptDoesNotGuessMissingMappings(t *testing.T) {
 
 func TestCompileHandlerSpawnRequiresLoadedRoster(t *testing.T) {
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{
-		{Op: "spawn", Group: intPtr(1), Source: HandlerSource{Addr: "0x100"}},
+		{Op: "spawn", Group: intPtr(1), RawPlacementGate: intPtr(0), Source: HandlerSource{Addr: "0x100"}},
 	}}, HandlerBindings{})
 	if len(beats) != 0 || len(issues) != 1 || issues[0].Op != "spawn" || issues[0].Reason != "spawn requires a preceding complete loadch roster" {
 		t.Fatalf("spawn without loadch must fail closed: beats=%#v issues=%#v", beats, issues)
+	}
+}
+
+func TestCompileHandlerSpawnRequiresExplicitRawPlacementGate(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{
+		{Op: "loadch", Chapter: intPtr(1), Source: HandlerSource{Addr: "0x90"}},
+		{Op: "spawn", Group: intPtr(2), Source: HandlerSource{Addr: "0x100"}},
+	}}, HandlerBindings{LoadCH: func(HandlerBeat) (LoadCHState, bool) {
+		return LoadCHState{
+			Chapter: 1, Map: "assets/maps/map1", Roster: "assets/maps/map1/map1_units.json",
+			SlotCount: 20, Script: "assets/story/ch01.json",
+		}, true
+	}})
+	if len(beats) != 1 || len(issues) != 1 || issues[0].Reason != "spawn requires an explicit raw_placement_gate byte" {
+		t.Fatalf("missing raw gate must fail closed: beats=%#v issues=%#v", beats, issues)
 	}
 }
 
@@ -695,9 +710,10 @@ func TestCompileCompleteChapter1PostBinding(t *testing.T) {
 func TestCompileRuntimeContextSpawnExpandsActingSlotFrontier(t *testing.T) {
 	slot27 := 27
 	group4 := 4
+	rawGate := 0
 	actingID := 14
 	script := &HandlerScript{Beats: []HandlerBeat{
-		{Op: "spawn", Group: &group4},
+		{Op: "spawn", Group: &group4, RawPlacementGate: &rawGate},
 		{Op: "act", ActingID: &actingID},
 	}}
 	bindings := HandlerBindings{

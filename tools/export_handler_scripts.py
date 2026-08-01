@@ -81,7 +81,10 @@ def normalize(beats, chapter=None):
         elif op == "act":
             item = {"op": "act", "acting_id": args[0], "source": src}
         elif op == "spawn":
-            item = {"op": "spawn", "group": args[0], "source": src}
+            item = {
+                "op": "spawn", "group": args[0],
+                "raw_placement_gate": beat["raw_placement_gate"], "source": src,
+            }
         elif op == "join":
             item = {"op": "join", "char_id": args[0], "source": src}
         elif op == "bgm":
@@ -104,7 +107,10 @@ def normalize(beats, chapter=None):
             else:
                 item["unit_slot_expr"] = args[0]
         elif op == "spawn_intro":
-            item = {"op": "spawn_intro", "group": args[0], "source": src}
+            item = {
+                "op": "spawn_intro", "group": args[0],
+                "raw_placement_gate": beat["raw_placement_gate"], "source": src,
+            }
         elif op == "layout_units":
             # 0x233c6 reads call-site-specific X/Y/pose arrays through
             # registers. Preserve the native call as a named operation; an

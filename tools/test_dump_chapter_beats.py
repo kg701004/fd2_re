@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(__file__))
 import dump_chapter_beats as beats
+import export_handler_scripts as handler_scripts
 
 
 class Insn:
@@ -49,6 +50,26 @@ class DumpRangeTest(unittest.TestCase):
 
 
 class StructureControlFlowTest(unittest.TestCase):
+    def test_spawn_exports_exact_call_site_raw_placement_gate(self):
+        insns = [
+            Insn(0x32E4F, "push", "2"),
+            Insn(0x32E50, "call", "0x10b4e"),
+            Insn(0x32E60, "push", "3"),
+            Insn(0x32E61, "call", "0x10b4e"),
+            Insn(0x32E70, "push", "1"),
+            Insn(0x32E71, "call", "0x32999"),
+        ]
+        raw_beats = beats.extract_beats(insns)
+        self.assertEqual(
+            [beat["raw_placement_gate"] for beat in raw_beats],
+            [1, 0, 0],
+        )
+        authored = handler_scripts.normalize(raw_beats)
+        self.assertEqual(
+            [beat["raw_placement_gate"] for beat in authored],
+            [1, 0, 0],
+        )
+
     def test_10652_is_not_exported_as_a_complete_chapter_background_load(self):
         self.assertEqual(
             beats.PRIM[0x10652],

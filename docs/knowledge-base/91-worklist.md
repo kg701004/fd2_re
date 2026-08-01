@@ -1694,9 +1694,16 @@
     分支，33圖1,885筆 record 的 race/class/HP/MP 交叉驗證通過。
     table dump 已自帶 FD2.EXE size/MD5/SHA-256，sync 在使用前強制對照
     reference manifest；Docker 重生檔與版本化 JSON 逐位元組相同。
-    `0x1B750` equipment recompute、per-call raw gate binding 與真正
-    group append 尚未實作，owner 維持 fail-closed
-    → `fd2_future_group_constructor_capstone.txt`
+    official IDA 9.4 已將 `[0x53AFA]` 完整關閉為唯一 reader＋11組
+    set1/call/reset0；25筆 handler spawn 與34筆 global event call 現保存
+    source/via/`raw_placement_gate`，缺欄位的原版 handler fail-closed。
+    `AppendGroupWithNativePlacement` 已把 handler Beat 接到 exact gate、position
+    row、逐列 occupancy 與 group append，且 batch preflight 失敗不改 roster／
+    units；runtime Xvfb regression 通過。仍缺 global turn-event action lowering、
+    `0x10C50` 完整 table/inventory projection 與 `0x1B750` equipment recompute，
+    owner 維持 fail-closed
+    → `fd2_future_group_constructor_capstone.txt`、
+      `fd2_future_group_raw_gate_ida.txt`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

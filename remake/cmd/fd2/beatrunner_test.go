@@ -1364,6 +1364,82 @@ func TestBeatSpawnActivatesOnlyItsRosterGroup(t *testing.T) {
 	}
 }
 
+func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
+	gate := 1
+	g := newBeatTestGame(t, []campaign.Beat{{
+		Op: "spawn", Group: 6, RawPlacementGate: &gate, Source: "0x34397",
+	}})
+	active := &battle.Unit{
+		X: 1, Y: 1,
+		NativeMapPresentation:    battle.NativeMapPresentationState{X: 1, Y: 1},
+		HasNativeMapPresentation: true,
+		NativeRecordByte5:        0,
+		HasNativeRecordByte5:     true,
+		NativeRecordByte6:        2,
+		HasNativeRecordByte6:     true,
+	}
+	pending := &battle.Unit{
+		Group: 6, Dir: 0,
+		MapSelectorKey:          3,
+		HasMapSelectorKey:       true,
+		NativeRecordByte5:       0,
+		HasNativeRecordByte5:    true,
+		NativeRecordByte6:       3,
+		HasNativeRecordByte6:    true,
+		NativePositionRecord:    battle.NativePositionRecord{XWord: 1, YWord: 1},
+		HasNativePositionRecord: true,
+	}
+	g.st = &battle.State{
+		W: 3, H: 3, Units: []*battle.Unit{active}, Roster: []*battle.Unit{pending},
+		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	g.beatAdvance()
+	if g.loadErr != "" {
+		t.Fatalf("native gate spawn failed: %s", g.loadErr)
+	}
+	if len(g.st.Units) != 2 || g.st.Units[1].X != 1 || g.st.Units[1].Y != 1 {
+		t.Fatalf("gate=1 runtime placement=%#v", g.st.Units)
+	}
+}
+
+func TestBeatSpawnIntroCarriesZeroRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
+	gate := 0
+	g := newBeatTestGame(t, []campaign.Beat{{
+		Op: "spawn_intro", Group: 2, RawPlacementGate: &gate, Source: "0x3289b", Frames: 12,
+	}})
+	active := &battle.Unit{
+		X: 1, Y: 1,
+		NativeMapPresentation:    battle.NativeMapPresentationState{X: 1, Y: 1},
+		HasNativeMapPresentation: true,
+		NativeRecordByte5:        0,
+		HasNativeRecordByte5:     true,
+		NativeRecordByte6:        2,
+		HasNativeRecordByte6:     true,
+	}
+	pending := &battle.Unit{
+		Group: 2, Dir: 0,
+		MapSelectorKey:          4,
+		HasMapSelectorKey:       true,
+		NativeRecordByte5:       0,
+		HasNativeRecordByte5:    true,
+		NativeRecordByte6:       4,
+		HasNativeRecordByte6:    true,
+		NativePositionRecord:    battle.NativePositionRecord{XWord: 1, YWord: 1},
+		HasNativePositionRecord: true,
+	}
+	g.st = &battle.State{
+		W: 3, H: 3, Units: []*battle.Unit{active}, Roster: []*battle.Unit{pending},
+		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	g.beatAdvance()
+	if g.loadErr != "" {
+		t.Fatalf("native intro spawn failed: %s", g.loadErr)
+	}
+	if len(g.st.Units) != 2 || g.st.Units[1].X != 1 || g.st.Units[1].Y != 2 || g.beatDelay != 12 {
+		t.Fatalf("gate=0 intro state units=%#v delay=%d", g.st.Units, g.beatDelay)
+	}
+}
+
 func TestBeatSpawnAppendsFDFIELDGroupInOriginalOrder(t *testing.T) {
 	// Original 0x10b4e does not reveal preallocated units: it constructs every
 	// matching FDFIELD record at unit_count, so the runtime slot identity is

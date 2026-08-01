@@ -453,8 +453,13 @@ slot22。這不只是畫面差異：存活 diamond 的 slots5..10 會混入敵�
 ch02 現改用 `runtime_append_groups` constructor 模式：FDFIELD records 留在 source roster，canonical
 runtime array 依事件實際 materialize：party slots0..4、group1 村民 slots5..10、group2 slots11..20；
 turn3 的 SPAWN3 才 append slots21..26，戰後 SPAWN4 才 append 希莉亞為 **slot27**。group255 padding
-不再污染 runtime slots，也不計入尚待出場敵軍。`State.AppendGroup` 是無進場滑動的原版 `0x10b4e`
-投影；戰鬥增援 `SpawnGroup` 在同一 append 後另加既有動畫。
+不再污染 runtime slots，也不計入尚待出場敵軍。勘誤：`State.AppendGroup`
+只是保留 row order／selector order 的 normalized compatibility append，
+並不執行 `[0x53AFA]` placement、table projection、inventory 或 `0x1B750`，
+不可再稱為原版 `0x10B4E` 投影。帶有逐 call-site
+`raw_placement_gate` 的 handler 改走 `AppendGroupWithNativePlacement`，
+目前只精確補上 position row、occupancy 與配置前綴；戰鬥增援舊
+`SpawnGroup` 的滑入／環狀錯位仍是非原版相容呈現。
 
 post handler binding 新增明確 `runtime_context`：進入時必須已有 27 slots，group4 cardinality=1，並
 切到原版 13×8 的 story viewport；compiler 由這個 count 驗證 branch/ACT，在 SPAWN4 後把可用 slot

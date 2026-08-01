@@ -109,8 +109,12 @@ triple、未讀的 `b3/b20/b25`，以及 b1-selected constructor record。
 `NativeFutureGroupPlacement` 已轉寫 placement prefix；
 `DecodeNativeFutureConstructorBase` 已轉寫兩條 table 分支並以33圖
 1,885筆 unit record 核對 race/class/HP/MP。`0x1B750` effective-stat
-recompute 與正式 append transaction 仍未接。直接指令見
-[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)。
+recompute 與完整 constructor transaction 仍未接；但 handler path 已以
+`raw_placement_gate` 保存逐 call-site byte，並用
+`AppendGroupWithNativePlacement` 接上 position／occupancy／row-order append
+前綴。global turn-event action lowering 尚未接。直接指令見
+[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
+與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
 
 ## 2. 全 30 章 handler 對照表 [驗]
 

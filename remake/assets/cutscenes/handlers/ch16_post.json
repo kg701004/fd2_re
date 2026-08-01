@@ -45,7 +45,8 @@
       "source": {
         "addr": "0x23bde",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "layout_units",
@@ -86,7 +87,8 @@
       "source": {
         "addr": "0x23c55",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "act",

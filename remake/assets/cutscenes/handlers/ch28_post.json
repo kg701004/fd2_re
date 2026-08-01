@@ -39,7 +39,8 @@
       "source": {
         "addr": "0x25505",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "pan",

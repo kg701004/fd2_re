@@ -449,11 +449,14 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat.Follow = true
 			beats = append(beats, beat)
 		case "spawn":
-			// SPAWN is data-driven once the preceding LOADCH supplied a slot-stable
-			// roster: its immediate is the original FDFIELD group number, not an
-			// address that needs a chapter-specific interpretation.
+			// The group immediate selects FDFIELD rows, but placement additionally
+			// depends on the exact call-site byte [0x53AFA]. Both are required.
 			if input.Group == nil {
 				issue(i, input, "spawn lacks an original FDFIELD group")
+				continue
+			}
+			if input.RawPlacementGate == nil || *input.RawPlacementGate < 0 || *input.RawPlacementGate > 0xff {
+				issue(i, input, "spawn requires an explicit raw_placement_gate byte")
 				continue
 			}
 			if activeSlotCount <= 0 {
@@ -470,6 +473,8 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			}
 			beat := runtime(input, "spawn")
 			beat.Group = *input.Group
+			gate := *input.RawPlacementGate
+			beat.RawPlacementGate = &gate
 			beats = append(beats, beat)
 		case "spawn_intro":
 			// 0x32999(group) calls the same 0x10b4e constructor as SPAWN,
@@ -478,12 +483,18 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				issue(i, input, "spawn_intro lacks an original FDFIELD group")
 				continue
 			}
+			if input.RawPlacementGate == nil || *input.RawPlacementGate < 0 || *input.RawPlacementGate > 0xff {
+				issue(i, input, "spawn_intro requires an explicit raw_placement_gate byte")
+				continue
+			}
 			if activeSlotCount <= 0 {
 				issue(i, input, "spawn_intro requires a preceding complete loadch roster")
 				continue
 			}
 			beat := runtime(input, "spawn_intro")
 			beat.Group = *input.Group
+			gate := *input.RawPlacementGate
+			beat.RawPlacementGate = &gate
 			beat.Frames = 12
 			beats = append(beats, beat)
 		case "deactivate_unit":

@@ -27,7 +27,8 @@
       "source": {
         "addr": "0x331b2",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 1
     },
     {
       "op": "pan",

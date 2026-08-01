@@ -158,7 +158,8 @@
       "source": {
         "addr": "0x33820",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "delay",

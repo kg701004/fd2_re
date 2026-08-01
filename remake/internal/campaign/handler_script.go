@@ -52,18 +52,22 @@ type HandlerRepeatHint struct {
 // handler.  Fields are intentionally sparse: each Op uses only its matching
 // fields, and RawArgs keeps unclassified native calls visible to editors.
 type HandlerBeat struct {
-	Op                string                    `json:"op"`
-	Source            HandlerSource             `json:"source,omitempty"`
-	Chapter           *int                      `json:"chapter,omitempty"`
-	ChapterExpr       any                       `json:"chapter_expr,omitempty"`
-	GridX             *int                      `json:"grid_x,omitempty"`
-	GridY             *int                      `json:"grid_y,omitempty"`
-	TextIndex         any                       `json:"text_index,omitempty"`
-	TextTable         string                    `json:"text_table,omitempty"`
-	ActingID          *int                      `json:"acting_id,omitempty"`
-	UnitSlot          *int                      `json:"unit_slot,omitempty"`
-	UnitSlotExpr      any                       `json:"unit_slot_expr,omitempty"`
-	Group             *int                      `json:"group,omitempty"`
+	Op           string        `json:"op"`
+	Source       HandlerSource `json:"source,omitempty"`
+	Chapter      *int          `json:"chapter,omitempty"`
+	ChapterExpr  any           `json:"chapter_expr,omitempty"`
+	GridX        *int          `json:"grid_x,omitempty"`
+	GridY        *int          `json:"grid_y,omitempty"`
+	TextIndex    any           `json:"text_index,omitempty"`
+	TextTable    string        `json:"text_table,omitempty"`
+	ActingID     *int          `json:"acting_id,omitempty"`
+	UnitSlot     *int          `json:"unit_slot,omitempty"`
+	UnitSlotExpr any           `json:"unit_slot_expr,omitempty"`
+	Group        *int          `json:"group,omitempty"`
+	// RawPlacementGate is the exact byte observed by 0x10C50 at [0x53AFA].
+	// Pointer form preserves an explicit zero and lets the compiler reject a
+	// lossy original-handler export instead of guessing from the group number.
+	RawPlacementGate  *int                      `json:"raw_placement_gate,omitempty"`
 	CharID            *int                      `json:"char_id,omitempty"`
 	ItemID            *int                      `json:"item_id,omitempty"`
 	ResourceID        *int                      `json:"resource_id,omitempty"`

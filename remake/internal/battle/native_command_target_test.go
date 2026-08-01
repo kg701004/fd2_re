@@ -170,6 +170,67 @@ func TestNativeFutureGroupPlacementUsesPositionLowBytesAndRawGate(t *testing.T) 
 	}
 }
 
+func TestAppendGroupWithNativePlacementConsumesPerCallGate(t *testing.T) {
+	active := &Unit{
+		X: 1, Y: 1,
+		NativeMapPresentation:    NativeMapPresentationState{X: 1, Y: 1},
+		HasNativeMapPresentation: true,
+		NativeRecordByte5:        0,
+		HasNativeRecordByte5:     true,
+		NativeRecordByte6:        2,
+		HasNativeRecordByte6:     true,
+	}
+	pending := func() *Unit {
+		return &Unit{
+			Group: 6, Dir: 0,
+			MapSelectorKey:          3,
+			HasMapSelectorKey:       true,
+			NativeRecordByte5:       0,
+			HasNativeRecordByte5:    true,
+			NativeRecordByte6:       3,
+			HasNativeRecordByte6:    true,
+			NativePositionRecord:    NativePositionRecord{XWord: 1, YWord: 1},
+			HasNativePositionRecord: true,
+		}
+	}
+
+	search := &State{
+		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending()},
+		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	if n, err := search.AppendGroupWithNativePlacement(6, 0); err != nil || n != 1 {
+		t.Fatalf("search append n=%d err=%v", n, err)
+	}
+	if got, want := (Cell{X: search.Units[1].X, Y: search.Units[1].Y}), (Cell{X: 1, Y: 2}); got != want {
+		t.Fatalf("gate=0 placement=%v want %v", got, want)
+	}
+
+	direct := &State{
+		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending()},
+		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	if n, err := direct.AppendGroupWithNativePlacement(6, 1); err != nil || n != 1 {
+		t.Fatalf("direct append n=%d err=%v", n, err)
+	}
+	if got, want := (Cell{X: direct.Units[1].X, Y: direct.Units[1].Y}), (Cell{X: 1, Y: 1}); got != want {
+		t.Fatalf("gate=1 placement=%v want %v", got, want)
+	}
+}
+
+func TestAppendGroupWithNativePlacementFailsBeforeRosterMutation(t *testing.T) {
+	pending := &Unit{Group: 2, MapSelectorKey: 1, HasMapSelectorKey: true}
+	st := &State{
+		W: 1, H: 1, Roster: []*Unit{pending},
+		NativeCompositionEventBytes: []byte{0},
+	}
+	if _, err := st.AppendGroupWithNativePlacement(2, 0); err == nil {
+		t.Fatal("native append accepted a row without its six-byte position record")
+	}
+	if len(st.Units) != 0 || len(st.Roster) != 1 || st.Roster[0] != pending {
+		t.Fatalf("failed append mutated state: units=%d roster=%#v", len(st.Units), st.Roster)
+	}
+}
+
 func TestNativeFutureGroupPlacementFailsClosed(t *testing.T) {
 	if _, err := NativeFutureGroupPlacement(
 		1, 1, []byte{0}, []*Unit{{

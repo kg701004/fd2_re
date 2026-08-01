@@ -14,11 +14,25 @@
     },
     {
       "op": "if",
-      "source": { "addr": "0x335bb", "target": "0x33499" },
-      "condition": { "op": "roster_has", "char_id": 18 },
+      "source": {
+        "addr": "0x335bb",
+        "target": "0x33499"
+      },
+      "condition": {
+        "op": "roster_has",
+        "char_id": 18
+      },
       "then": [],
       "else": [
-        { "op": "spawn", "group": 1, "source": { "addr": "0x335cd", "target": "0x10b4e" } }
+        {
+          "op": "spawn",
+          "group": 1,
+          "source": {
+            "addr": "0x335cd",
+            "target": "0x10b4e"
+          },
+          "raw_placement_gate": 0
+        }
       ]
     },
     {

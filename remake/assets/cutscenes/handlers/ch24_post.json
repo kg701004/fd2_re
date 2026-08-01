@@ -28,7 +28,8 @@
       "source": {
         "addr": "0x24e31",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "act",

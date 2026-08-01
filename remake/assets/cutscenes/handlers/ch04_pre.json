@@ -44,7 +44,8 @@
       "source": {
         "addr": "0x330a4",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "redraw",

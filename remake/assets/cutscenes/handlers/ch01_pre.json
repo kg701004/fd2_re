@@ -93,7 +93,8 @@
       "source": {
         "addr": "0x32ddc",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 0
     },
     {
       "op": "redraw",
@@ -152,7 +153,8 @@
       "source": {
         "addr": "0x32e50",
         "target": "0x10b4e"
-      }
+      },
+      "raw_placement_gate": 1
     },
     {
       "op": "act",

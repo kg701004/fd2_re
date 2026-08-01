@@ -2651,9 +2651,31 @@ race/class、base AP/DP/DX、mobility、HP/MP 16-bit writes；同步工具已把
 `native_unit_tables.json` 現直接攜帶原版大小、MD5 與 SHA-256；同步工具
 必須先與 `fd2-reference-files.json` 相符，且由原版重生的 JSON 已逐位元組
 等同版本化檔案。
-剩餘 owner 現縮窄為 `0x1B750` equipment recompute、per-call raw gate
-綁定及原子 group append；在三者完成前正式 handler 仍不改接。直接證據見
-[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)。
+後續 official IDA Pro 9.4 對 `[0x53AFA]` 完整資料交叉參照，並由 Docker
+Capstone 逐組重生直接指令：唯一 reader 是 `0x10CB7`；22 個 writer 恰為
+11 組 `set 1 → push group → call 0x10B4E → reset 0`，沒有其他非零值或
+未配對 writer。三組屬章節 handler（`0x32E50`、`0x331B2`、`0x33419`），
+八組屬 global event call（event 3/6/7/15/25/35，以及 event 37 的兩次
+call）。`0x32999` wrapper 本體與 caller 都沒有 writer，故其內部 call
+明確讀零，而不是未知。
+
+`HandlerBeat → Beat` 現以指標欄位 `raw_placement_gate` 保存逐 call-site
+byte；原版 handler 缺欄位或超出 byte 範圍就產生 compile issue，不再以
+group/camp 猜值。25 筆版本化 handler spawn 全數保存欄位，只有上述三筆為
+1；`event_id_groups.json` 的34筆 call 也保存 source/via/gate，八筆為1。
+`cmd/fd2` 遇到有此欄位的 handler beat 會呼叫
+`AppendGroupWithNativePlacement`：先對完整 batch 預演 position row、兩次
+occupancy writer 與逐列 append 後的新占用，再一次 materialize group，
+失敗時 roster／units 不變。沒有 raw 欄位的擴充戰役 authored beat 才保留
+明示的 normalized compatibility path。
+
+這只關閉 handler 的 gate 選擇、配置前綴與可編輯資料傳遞；global turn-event
+scenario 尚未把 metadata 降階至 production action，`0x10C50` 的完整 table
+projection、inventory 初始化及 `0x1B750` equipment recompute 也未完成。
+因此 `future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。
+直接證據見
+[`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
+與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
 
 本輪依規則先嘗試官方 IDA 9.4 Docker；合法 license 與私有 home 均隔離
 掛載，但 batch 回報 EULA 尚未接受且 IDAPython target 未啟用，沒有產生

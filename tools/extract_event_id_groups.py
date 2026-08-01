@@ -92,6 +92,15 @@ def insn_at(addr):
 
 SPAWN_FNS = {0x10b4e: 'spawn_group', 0x32999: 'spawn_group_with_intro'}
 
+# Complete [0x53AFA] writer set for global event handlers.  Official IDA Pro
+# 9.4 finds the single reader in 0x10C50 and all paired 1/0 writers; Docker
+# Capstone independently verifies each direct call sequence.  Calls not in
+# this set read zero, including the 0x32999 wrapper's internal 0x10B4E call.
+RAW_PLACEMENT_GATE_ONE_CALLS = {
+    0x34397, 0x3444C, 0x3464B, 0x34945,
+    0x34C95, 0x34D12, 0x34D45, 0x34D91,
+}
+
 
 def walk_handler(start, max_insns=4000):
     """只走這個 handler 自己的鏈:call 過站不進入,遇 ret 停止,
@@ -130,7 +139,14 @@ def walk_handler(start, max_insns=4000):
                 if op.startswith('0x'):
                     t = int(op, 16)
                     if t in SPAWN_FNS and pending_push is not None:
-                        spawns.append({'group': pending_push, 'via': SPAWN_FNS[t]})
+                        spawns.append({
+                            'group': pending_push,
+                            'via': SPAWN_FNS[t],
+                            'source': hex(ins.address),
+                            'raw_placement_gate': (
+                                1 if ins.address in RAW_PLACEMENT_GATE_ONE_CALLS else 0
+                            ),
+                        })
                 pending_push = None
                 a = nxt
                 continue

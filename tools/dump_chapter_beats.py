@@ -60,6 +60,13 @@ PRIM = {
 # 非原語(編譯器插入的堆疊探測/輔助函式),線性掃描時直接跳過、清空 pushes 不記 beat:
 SKIP = {0x36cd7, 0x375c0}  # 0x375c0 本輪核對過等同 event_handler_dump.py 的 SKIP 清單
 
+# Official IDA Pro 9.4 data xrefs plus Docker Capstone direct-instruction
+# validation close every writer of [0x53AFA].  These three chapter-handler
+# calls are wrapped by set byte=1 / reset byte=0; every other chapter-handler
+# 0x10B4E call reads zero.  Keep this call-site fact in the reproducible raw
+# export instead of inferring it from the group number.
+RAW_PLACEMENT_GATE_ONE_CALLS = {0x32E50, 0x331B2, 0x33419}
+
 
 def _direct_target(ins):
     if ins.mnemonic == 'jmp' or ins.mnemonic.startswith('j'):
@@ -199,6 +206,10 @@ def extract_beats(insns):
                 args = pushes[-nargs:] if nargs > 0 else []
                 args = list(reversed(args))  # cdecl push 順序反過來才是函式簽名順序
                 beat = {'op': name, 'addr': hex(ins.address), 'target': hex(t), 'args': args}
+                if name in ('spawn', 'spawn_intro'):
+                    beat['raw_placement_gate'] = (
+                        1 if ins.address in RAW_PLACEMENT_GATE_ONE_CALLS else 0
+                    )
             else:
                 beat = {'op': 'unknown', 'addr': hex(ins.address), 'target': hex(t), 'args': list(pushes)}
             hint = find_loop_hint(insns, i, ins.address)

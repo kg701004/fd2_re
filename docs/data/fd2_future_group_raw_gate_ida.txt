@@ -1,0 +1,71 @@
+FD2 future-group raw placement gate [0x53AFA]
+================================================
+
+Evidence class: proven direct instructions + complete data-xref audit
+Input: FD2.EXE, size 357074 bytes
+MD5: b97caf2239a27a896069d03549d96e1e
+SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+Tools: official IDA Pro 9.4 licensed Docker workflow; Docker Capstone via
+       tools/disasm_le.py and fd2-cap-local
+
+Question
+--------
+Which 0x10B4E call sites present a nonzero byte to 0x10C50's placement
+branch, and can the remake infer that byte from the FDFIELD group number?
+
+Reader and xref closure
+-----------------------
+Official IDA Pro 9.4 reports one reader at 0x10CB7 inside function
+0x10C50..0x11019 and 22 writers.  The writers form eleven complete pairs:
+literal 1 before a direct 0x10B4E call and literal 0 immediately after the
+call.  There are no other nonzero values or unmatched writers.
+
+Capstone reproducer:
+
+  python3 tools/disasm_le.py FD2.EXE refs 0x53afa
+  python3 tools/disasm_le.py FD2.EXE dis <set-address> 5
+
+The reader sequence is:
+
+  0x010caf  call    0x145cd
+  0x010cb4  add     esp, 4
+  0x010cb7  movzx   eax, byte ptr [0x3afa]  ; ->0x53afa
+  0x010cbe  test    eax, eax
+
+Complete literal-one call-site table
+------------------------------------
+
+  set       group  call       reset      editable owner
+  0x032e47      2  0x032e50  0x032e58   ch01_pre
+  0x0331a9      1  0x0331b2  0x0331ba   ch06_pre
+  0x033410      1  0x033419  0x033421   ch11_pre
+  0x03438e      6  0x034397  0x03439f   global event 3
+  0x034443      3  0x03444c  0x034454   global event 6
+  0x034642      2  0x03464b  0x034653   global event 15
+  0x03493c      2  0x034945  0x03494d   global event 25
+  0x034c8c      2  0x034c95  0x034c9d   global event 35
+  0x034d09      3  0x034d12  0x034d1a   global event 37, first call
+  0x034d3c      4  0x034d45  0x034d4d   global event 37, second call
+  0x034d88      2  0x034d91  0x034d99   global event 7
+
+Every row decodes to the same instruction shape:
+
+  mov byte ptr [0x3afa], 1
+  push <group>
+  call 0x10b4e
+  add esp, 4
+  mov byte ptr [0x3afa], 0
+
+The 0x32999 spawn-with-intro wrapper calls 0x10B4E at 0x32A02.  Neither the
+wrapper nor its known callers write [0x53AFA], so its evidenced byte is zero.
+All other direct 0x10B4E call sites likewise read zero; group/camp cannot be
+used to infer the value.
+
+Remake boundary
+---------------
+HandlerScript and global event metadata must preserve the exact per-call byte
+as raw_placement_gate.  Missing handler metadata fails closed.  A nonzero byte
+uses the paired six-byte position record directly; zero runs both 0x145CD
+occupancy writers and the row-major Manhattan search.  This evidence closes
+the gate selection and placement prefix, not the remainder of 0x10C50's
+constructor (table projection, inventory, or 0x1B750 equipment recompute).

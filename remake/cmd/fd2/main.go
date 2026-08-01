@@ -1186,7 +1186,14 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// already slot-stable full roster.  Keep the legacy activation fallback
 		// for authored scene beats that have no LOADCH roster.
 		if g.st != nil {
-			if g.st.AppendGroup(b.Group) == 0 {
+			if b.RawPlacementGate != nil {
+				if _, err := g.st.AppendGroupWithNativePlacement(
+					b.Group, byte(*b.RawPlacementGate),
+				); err != nil {
+					g.loadErr = fmt.Sprintf("beat spawn %s: %v", b.Source, err)
+					return
+				}
+			} else if g.st.AppendGroup(b.Group) == 0 {
 				g.loadErr = fmt.Sprintf("beat spawn %s: group %d unavailable in runtime roster", b.Source, b.Group)
 				return
 			}
@@ -1195,7 +1202,16 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		g.beatAdvance()
 	case "spawn_intro":
-		g.materializeStoryGroup(b.Group)
+		if g.st != nil && b.RawPlacementGate != nil {
+			if _, err := g.st.AppendGroupWithNativePlacement(
+				b.Group, byte(*b.RawPlacementGate),
+			); err != nil {
+				g.loadErr = fmt.Sprintf("beat spawn_intro %s: %v", b.Source, err)
+				return
+			}
+		} else {
+			g.materializeStoryGroup(b.Group)
+		}
 		frames := b.Frames
 		if frames <= 0 {
 			frames = 12

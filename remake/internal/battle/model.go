@@ -1322,6 +1322,75 @@ func (s *State) AppendGroup(group int) int {
 	return len(batch)
 }
 
+// AppendGroupWithNativePlacement applies the proven 0x10B4E→0x10C50 group
+// order and per-call [0x53AFA] placement branch before using the existing
+// selector/table compatibility constructor. Placement is fully preflighted:
+// a missing six-byte position row, composition grid, or raw runtime record
+// leaves Roster and Units unchanged.
+//
+// This closes the native placement prefix only. AppendGroup still documents
+// the constructor fields which have not yet been projected by the remake.
+func (s *State) AppendGroupWithNativePlacement(group int, rawGate byte) (int, error) {
+	if s == nil || len(s.Roster) == 0 {
+		return 0, fmt.Errorf("native future group %d: runtime roster unavailable", group)
+	}
+	batch := make([]*Unit, 0)
+	for _, unit := range s.Roster {
+		if unit != nil && unit.Group == group {
+			batch = append(batch, unit)
+		}
+	}
+	if len(batch) == 0 {
+		return 0, fmt.Errorf("native future group %d: no matching FDFIELD rows", group)
+	}
+
+	prospective := append([]*Unit(nil), s.Units...)
+	placements := make([]Cell, len(batch))
+	for i, unit := range batch {
+		if !unit.HasNativePositionRecord {
+			return 0, fmt.Errorf(
+				"native future group %d row %d: six-byte position record unavailable",
+				group, i,
+			)
+		}
+		cell, err := NativeFutureGroupPlacement(
+			s.W, s.H, s.NativeCompositionEventBytes, prospective,
+			unit.NativePositionRecord, rawGate,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("native future group %d row %d: %w", group, i, err)
+		}
+		placements[i] = cell
+		shadow := *unit
+		if !shadow.SetMapPlacement(cell.X, cell.Y, unit.Dir) {
+			return 0, fmt.Errorf("native future group %d row %d: invalid placement", group, i)
+		}
+		// The next row observes this just-constructed runtime record through
+		// 0x145CD. Materialize only the local shadow during preflight; the real
+		// unit remains untouched until the whole batch succeeds.
+		if err := shadow.MaterializeNativeMapPresentation(); err != nil {
+			return 0, fmt.Errorf("native future group %d row %d: %w", group, i, err)
+		}
+		prospective = append(prospective, &shadow)
+	}
+
+	appended := s.AppendGroup(group)
+	if appended != len(batch) {
+		return 0, fmt.Errorf(
+			"native future group %d: appended %d rows after preflighting %d",
+			group, appended, len(batch),
+		)
+	}
+	start := len(s.Units) - appended
+	for i, cell := range placements {
+		unit := s.Units[start+i]
+		if !unit.SetMapPlacement(cell.X, cell.Y, unit.Dir) {
+			return 0, fmt.Errorf("native future group %d row %d: placement commit failed", group, i)
+		}
+	}
+	return appended, nil
+}
+
 // SpawnGroup 讓既有重製劇本的 group 登場，可另行覆寫陣營與本回合行動狀態。
 // 它保留舊的滑入與環狀錯位呈現，不等同原版 0x10b4e/0x10c50 constructor。
 func (s *State) SpawnGroup(group int, camp Camp, changeCamp, act bool) int {
