@@ -187,6 +187,7 @@ func (g *Game) loadNativeGameFromSlot(path string, slot int) error {
 
 	// Every fallible decode/validation step has completed. Apply the complete
 	// transaction at once so malformed native data cannot leave mixed state.
+	g.captureNativeMapHUDPersistence()
 	runner := campaign.NewRunner(g.camp.C)
 	runner.Cur = plan.EntryNode
 	g.camp = runner
@@ -197,6 +198,11 @@ func (g *Game) loadNativeGameFromSlot(path string, slot int) error {
 	g.partyRoster = plan.PartyRoster
 	g.partyDeploy = map[int]bool{}
 	g.handlerChapter = plan.NativeChapterIndex
+	g.restoreNativeMapHUDGateA(plan.HUDGateA)
+	// Native chapter slots restore persistent records and metadata, not the
+	// previous battle array. Drop it before enterNode so its old gate A cannot
+	// overwrite the slot byte through the cross-node capture hook.
+	g.dialog, g.st, g.sel = nil, nil, nil
 	g.nativeChapterRestore = &plan
 	g.loadErr = ""
 	g.enterNode()

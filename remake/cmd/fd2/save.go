@@ -62,6 +62,7 @@ type saveData struct {
 	PartyDeploy    map[int]bool        `json:"party_deploy,omitempty"`
 	PartyRoster    map[int]battle.Unit `json:"party_roster,omitempty"`
 	Chapter        int                 `json:"chapter,omitempty"`
+	NativeHUDGateA *int                `json:"native_hud_gate_a,omitempty"`
 }
 
 func (g *Game) saveGame() { g.saveGameToSlot(0) }
@@ -81,11 +82,16 @@ func (g *Game) saveGameToSlot(slot int) {
 		g.msg = "戰後演出進行中，請在下一個節點存檔"
 		return
 	}
+	g.captureNativeMapHUDPersistence()
 	d := saveData{
 		Node: g.camp.Cur, Flags: g.camp.Flags, Gold: g.gold, Items: g.items,
 		PartyMembers: g.partyMembers, PartyJoinOrder: g.partyJoinOrder,
 		PartyDeploy: g.partyDeploy,
 		PartyRoster: g.partyRoster, Chapter: g.handlerChapter,
+	}
+	if g.nativeMapHUDPersistent.HasDisplayGateA {
+		gateA := int(g.nativeMapHUDPersistent.DisplayGateA)
+		d.NativeHUDGateA = &gateA
 	}
 	raw, err := json.MarshalIndent(d, "", " ")
 	if err != nil {
@@ -115,13 +121,32 @@ func (g *Game) loadGameFromSlot(slot int) {
 		g.msg = "存檔節點不存在:" + d.Node
 		return
 	}
+	if d.NativeHUDGateA != nil && (*d.NativeHUDGateA < 0 || *d.NativeHUDGateA > 0xff) {
+		g.msg = "存檔 native HUD gate A 超出原始 byte 範圍"
+		return
+	}
+	g.captureNativeMapHUDPersistence()
 	g.camp.Cur = d.Node
 	g.camp.Flags = d.Flags
 	g.gold, g.items = d.Gold, d.Items
 	g.partyMembers, g.partyJoinOrder = d.PartyMembers, d.PartyJoinOrder
 	g.partyDeploy = d.PartyDeploy
 	g.partyRoster, g.handlerChapter = d.PartyRoster, d.Chapter
+	if d.NativeHUDGateA != nil {
+		g.restoreNativeMapHUDGateA(byte(*d.NativeHUDGateA))
+	}
+	// Node-boundary saves never retain the old battle array. Clearing it also
+	// prevents enterNode from re-capturing the pre-load gate A over the restored
+	// save byte.
+	g.dialog, g.st, g.sel = nil, nil, nil
 	g.nativeChapterRestore = nil
 	g.enterNode()
 	g.msg = fmt.Sprintf("已讀檔(槽位%d：%s)", slot+1, d.Node)
+}
+
+func (g *Game) restoreNativeMapHUDGateA(gateA byte) {
+	if !g.nativeMapHUDPersistent.HasAnchorX {
+		g.nativeMapHUDPersistent = battle.InitialNativeMapHUDPersistentState()
+	}
+	g.nativeMapHUDPersistent.RestoreSavedGateA(gateA)
 }

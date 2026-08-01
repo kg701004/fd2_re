@@ -309,9 +309,12 @@ handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 
 舊式可編輯列缺欄位時仍沿用既有正規化數值，不從其反推原始欄位。表格不完整或 selector
 未覆蓋時不輸出，相關原始消費端維持失敗即關閉。
 
-sync boundary 也已補上 provenance 傳遞：`syncPartyFromBattle` 的 snapshot 會保留
-`NativeRecordWord42/HasNativeRecordWord42`，`applyPersistentStats` 在 LOADCH／戰場重建時
-再把該 raw word 複製回 runtime；它不會由 `HP`／`MaxHP` 推導。此修補只關閉資料遺失邊界，
+sync boundary 也已補上來源傳遞：`syncPartyFromBattle` 的 snapshot 會保留
+`NativeRecordWord42/HasNativeRecordWord42` 與
+`NativeRecordWord46/HasNativeRecordWord46`；`applyPersistentStats` 在 LOADCH／戰場重建時
+再把兩個 raw word 複製回 runtime，且不會由 `HP`／`MaxHP` 或 `MP`／`MaxMP` 反推。
+`MapSelectorSlot` 則是每場戰鬥由 `0x11019` cache 重建的 runtime `unit+2`，不可跟著
+persistent overlay 跨戰複製；只有其 raw `+7` key 可持續。此修補只關閉資料遺失邊界，
 不代表目前所有 units JSON 都具備 constructor input，也不解除 ch15 handler 的 binding gate。
 
 為保留 ch15 的實際 OR 控制流，條件模型另新增受限的 `native_any_of`：compiler 只允許
@@ -1909,7 +1912,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    Campaign flow correction: `postbattle_ch29_persist` now points to the recovered editable `ch29_post` binding before `preparation_ch30`; it no longer replaces that handler with synthetic `sync_party → set_chapter` beats. The native handler's proven LOADCH/persistent-roster reconstruction is the persistence boundary, while unresolved `0x2bce5` remains the sole tolerated fail-closed renderer issue. Campaign regression explicitly allows this native persistence exception and still forbids a direct battle→preparation edge.
 
-   Presentation bridge (strict gate): `drawNativeMapHUD` converts the verified 456-stride indexed buffer to a 320×200 paletted Ebiten image only when `NativeMapHUDRuntimeState`, selector cache/cycle and every selected-unit raw admission byte are present. It now draws panel/terrain/AP/DP plus the proven unit icon and `+0x40/+0x42` HP path together. The former hardcoded `DisplayGateA=true, DisplayGateB=true, AnchorX=1` partial path has been removed because native load can overwrite gate A. Missing provenance falls back before any native drawing. `battle_ch01` now materializes the exact player-save view `(camera 1,13; cursor 8,17; visible 7,4)` and HUD raw bytes `(1,1,1)` through editable campaign fields. ch26 additionally materializes its independently derived pre-handler final state; the remaining chapters stay unmaterialized pending chapter-specific evidence, so this does not claim whole-campaign visual parity.
+   Presentation bridge (strict gate): `drawNativeMapHUD` converts the verified 456-stride indexed buffer to a 320×200 paletted Ebiten image only when `NativeMapHUDRuntimeState`, selector cache/cycle and every selected-unit raw admission byte are present. It now draws panel/terrain/AP/DP plus the proven unit icon and `+0x40/+0x42` HP path together. The former hardcoded `DisplayGateA=true, DisplayGateB=true, AnchorX=1` partial path has been removed because native load can overwrite gate A. Missing provenance falls back before any native drawing. `NativeMapHUDPersistentState` now separates save-persistent gate A、process-persistent anchor 與 controller-owned gate B；custom save and native chapter restore preserve gate A, while battle entry materializes gate B only from the proven value 1. `battle_ch01`、`battle_ch26` and `battle_ch27` use editable `native_map_hud_inherited` together with their evidenced views. Exact fixed HUD bytes remain available only for explicit fixtures/snapshots; this inherited owner closes E1 state flow, not whole-campaign visual parity.
 
    HUD pointer-base correction (2026-07-28): direct Capstone at
    `0x11cfa..0x11d0a` proves the caller pushes stride `0x1c8` and
@@ -2024,7 +2027,7 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    The editable boundary now also carries optional `map_selector_key` (`MapSelectorKey` plus presence flag), the raw byte supplied to `0x11019` before slot allocation. `battle.MaterializeNativeMapSelectorSlots` accepts only an explicitly ordered construction batch and a process-global `fdicon.NativeSelectorCache`; it validates every key before allocating first-seen slots, then writes `MapSelectorSlot`. Missing/invalid keys leave both unit slots and cache untouched. Loader and renderer do not call it implicitly: the caller must first preserve the player-persistent then scripted-spawn order.
 
-   `State.AppendNativeMapSelectorBatch` now supplies the atomic state seam for that proven order. It owns one process-global cache and appends only a fully valid batch; party `[9,4]` followed by scripted `[0,2,0]` produces slots `[0,1,2,3,2]`, while a missing-key batch changes neither runtime unit order nor cache. All 33 versioned map assets now carry the explicitly sourced scripted fields through `tools/sync_native_selector_fields.py --check`; existing scenario append nevertheless remains deliberately legacy until its mixed player/scripted construction order is explicitly connected, so no UI path is falsely upgraded to native rendering.
+   `State.AppendNativeMapSelectorBatch` now supplies the atomic state seam for that proven order. It owns one process-global cache and appends only a fully valid batch; party `[9,4]` followed by scripted `[0,2,0]` produces slots `[0,1,2,3,2]`, while a missing-key batch changes neither runtime unit order nor cache. All 33 versioned map assets now carry the explicitly sourced scripted fields through `tools/sync_native_selector_fields.py --check`. The battle scenario path is connected: `spawn_party` materializes the party first, and every later `AppendGroup` uses the same cache for scripted groups. A malformed or provenance-free batch may retain legacy unit append for compatibility, but records `NativeMapSelectorError` and disables native selector resolution for the whole battle; story actors and direct-start/retry paths remain outside this E1 claim.
 
    Player-party construction is a separate proven source path: `0x1088d` copies each persistent 0x50-byte roster record from `[0x53bf7]` into the battle roster at `0x10a77`, then passes the copied record's `+7` byte and the chapter FDICON resource to `0x11019`; only its returned slot is written to runtime `unit+2` at `0x10aa2`. Map-script construction instead reaches `0x10c50` and supplies FDFIELD `b0`. These are distinct inputs to the same cache ABI. The remake must preserve explicit source provenance/order before it materializes slots, and must not derive either path from legacy `Fig`.
 
@@ -2880,18 +2883,25 @@ restore → redraw 的順序執行兩次，完成後才啟動 AI。完整 native
 view/HUD provenance 存在時使用 indexed DAC。後續 IDA Pro／Capstone 已把
 ch26_pre 返回 battle_ch27 時的 camera `(9,49)`、absolute cursor `(14,54)`、
 visible cursor `(5,5)` 與 selector 0 閉合，並以 view-only 設定接入正式節點。
-HUD 仍不完整：main 返回後的 gate B 是1，但 gate A 是可由存檔延續的選項，
-anchor 又在 visible row 不大於5時保留既值，兩者都不能猜成章節常數。因此
-一般路徑仍使用既有 RGB 戰場呈現，全範圍白閃則因所有 DAC 色都飽和而可精確
-覆蓋。這一限制必須保留，不能把本輪稱為同狀態像素 E2。直接證據見
-[`fd2_ch27_pre_view_ida.txt`](../data/fd2_ch27_pre_view_ida.txt)。
+HUD 的持續擁有者已在 E1 閉合：main 返回後的 gate B 由 controller 以1進場；
+gate A 由 custom save 與 native chapter slot restore 保存；anchor 是程序內狀態，
+只有 `0x1ACF3` 在已證實的左右邊界條件下改寫，其他情況保留舊值。因此三者不能
+猜成章節常數，但 `battle_ch27.native_map_hud_inherited` 可以從 `Game` 持續狀態
+原子物化。event63 production regression 使用明確帶有 persistent raw `+0x42`
+來源的凱麗 fixture 走 indexed path；它不把 ch27 可編輯 `hp=90` 反推成原始欄位。
+這仍不是未修改一般玩家路徑的同狀態像素 E2。直接證據見
+[`fd2_ch27_pre_view_ida.txt`](../data/fd2_ch27_pre_view_ida.txt)、
+[`fd2_hud_persistence_ida.txt`](../data/fd2_hud_persistence_ida.txt) 與
+[`fd2_join_constructor_word42_ida.txt`](../data/fd2_join_constructor_word42_ida.txt)。
 
 campaign schema 因此不再強迫 `native_map_view` 與 `native_map_hud` 成對：
 已證實的 view 可獨立存在，HUD 不可脫離 view；節點入口只接受已有直接證據的
 selector 0／1。執行期先在私人候選狀態驗證 view、selector 與可選 HUD，再
 一次發布，避免 HUD 失敗留下半套 view。
 
-**尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、ch27 persistent
-gate A／anchor 的跨節點與存檔擁有者、CONTINUE 進入 event63 前後的玩家
-路徑，以及 event64／66／68／70／72 的各自 phase／handler consumer。直接位址與指令見
+**尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、CONTINUE 進入
+event63 前後的一般玩家路徑、該時點凱麗 runtime `+0x42` 的實際值，以及
+event64／66／68／70／72 的各自 phase／handler consumer。JOIN `0x112A5`
+的精確 fresh-record 公式已知（凱麗 id12 初始 `+0x42=151`），但現行章節產生器
+仍是近似成長資料，不能拿來偽造 persistent raw record。直接位址與指令見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。

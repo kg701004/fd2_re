@@ -23,6 +23,68 @@ type NativeMapHUDRuntimeState struct {
 	AnchorX                    int
 }
 
+// NativeMapHUDPersistentState separates the two values whose lifetimes cross
+// battle nodes. DisplayGateA is also present in native chapter saves and the
+// current-battle snapshot; AnchorX is process-local and is never serialized by
+// the original. The provenance bits prevent a default Go zero from becoming a
+// fabricated raw value.
+type NativeMapHUDPersistentState struct {
+	DisplayGateA    byte
+	AnchorX         int
+	HasDisplayGateA bool
+	HasAnchorX      bool
+}
+
+// InitialNativeMapHUDPersistentState returns the two data-image seeds at
+// [0x51AAB] and [0x51A0C]. Gate B is deliberately absent: it is a transient
+// redraw gate with its own controller writers.
+func InitialNativeMapHUDPersistentState() NativeMapHUDPersistentState {
+	return NativeMapHUDPersistentState{
+		DisplayGateA: 1, AnchorX: 1, HasDisplayGateA: true, HasAnchorX: true,
+	}
+}
+
+// CaptureNativeMapHUD records only the two cross-node values from a complete
+// runtime HUD state. It never carries the transient display gate B forward.
+func (p *NativeMapHUDPersistentState) CaptureNativeMapHUD(runtime NativeMapHUDRuntimeState) bool {
+	if p == nil {
+		return false
+	}
+	if _, err := fdicon.NativeMapHUDLayoutFor(runtime.AnchorX, fdicon.NativeMapStride); err != nil {
+		return false
+	}
+	p.DisplayGateA = runtime.DisplayGateA
+	p.AnchorX = runtime.AnchorX
+	p.HasDisplayGateA = true
+	p.HasAnchorX = true
+	return true
+}
+
+// RestoreSavedGateA applies the only HUD byte stored by both native save
+// formats. AnchorX intentionally remains process-local.
+func (p *NativeMapHUDPersistentState) RestoreSavedGateA(gateA byte) bool {
+	if p == nil {
+		return false
+	}
+	p.DisplayGateA = gateA
+	p.HasDisplayGateA = true
+	return true
+}
+
+// MaterializeRuntime combines the persistent pair with an explicitly sourced
+// controller gate B. Missing provenance fails closed.
+func (p NativeMapHUDPersistentState) MaterializeRuntime(gateB byte) (NativeMapHUDRuntimeState, bool) {
+	if !p.HasDisplayGateA || !p.HasAnchorX {
+		return NativeMapHUDRuntimeState{}, false
+	}
+	if _, err := fdicon.NativeMapHUDLayoutFor(p.AnchorX, fdicon.NativeMapStride); err != nil {
+		return NativeMapHUDRuntimeState{}, false
+	}
+	return NativeMapHUDRuntimeState{
+		DisplayGateA: p.DisplayGateA, DisplayGateB: gateB, AnchorX: p.AnchorX,
+	}, true
+}
+
 func (s *State) MaterializeNativeMapHUDState(gateA, gateB byte, anchorX int) bool {
 	if s == nil {
 		return false

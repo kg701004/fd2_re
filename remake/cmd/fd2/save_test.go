@@ -12,6 +12,7 @@ import (
 )
 
 func TestSaveDataRoundTripsPersistentParty(t *testing.T) {
+	gateA := 0
 	want := saveData{
 		Node: "story_ch02", Flags: map[string]bool{"won_ch01": true}, Gold: 321,
 		PartyMembers: map[int]bool{0: true, 9: true}, PartyJoinOrder: []int{0, 9},
@@ -19,7 +20,8 @@ func TestSaveDataRoundTripsPersistentParty(t *testing.T) {
 		PartyRoster: map[int]battle.Unit{
 			9: {Fig: 9, Name: "悠妮", Lv: 4, HP: 23, MaxHP: 37, MP: 18, MaxMP: 24, Exp: 67.5, Spells: []int{0, 4, 13}, Inventory: []int{0xc6, 0x64}},
 		},
-		Chapter: 1,
+		Chapter:        1,
+		NativeHUDGateA: &gateA,
 	}
 	raw, err := json.Marshal(want)
 	if err != nil {
@@ -30,7 +32,7 @@ func TestSaveDataRoundTripsPersistentParty(t *testing.T) {
 		t.Fatal(err)
 	}
 	yuni, ok := got.PartyRoster[9]
-	if !ok || got.Node != want.Node || got.Chapter != 1 || !got.PartyMembers[0] || len(got.PartyJoinOrder) != 2 || !got.PartyDeploy[0] || got.PartyDeploy[9] {
+	if !ok || got.Node != want.Node || got.Chapter != 1 || got.NativeHUDGateA == nil || *got.NativeHUDGateA != 0 || !got.PartyMembers[0] || len(got.PartyJoinOrder) != 2 || !got.PartyDeploy[0] || got.PartyDeploy[9] {
 		t.Fatalf("campaign progress did not round-trip: %#v", got)
 	}
 	if yuni.Fig != 9 || yuni.Lv != 4 || yuni.HP != 23 || yuni.MaxHP != 37 || yuni.MP != 18 || yuni.MaxMP != 24 || yuni.Exp != 67.5 || len(yuni.Spells) != 3 || len(yuni.Inventory) != 2 || yuni.Inventory[0] != 0xc6 || yuni.Inventory[1] != 0x64 {
@@ -112,6 +114,10 @@ func TestCampaignSaveLoadRestoresTownBoundaryAndParty(t *testing.T) {
 		camp: cRunner(c), gold: 279, items: []string{"sky-key"}, handlerChapter: 2,
 		partyMembers: map[int]bool{0: true}, partyJoinOrder: []int{0},
 		partyDeploy: map[int]bool{0: true}, partyRoster: map[int]battle.Unit{0: u},
+		nativeMapHUDPersistent: battle.NativeMapHUDPersistentState{
+			DisplayGateA: 0, AnchorX: 0xf2,
+			HasDisplayGateA: true, HasAnchorX: true,
+		},
 	}
 	g.saveGameToSlot(2)
 	if g.msg != "已存檔(槽位3：town_ch02)" {
@@ -120,6 +126,7 @@ func TestCampaignSaveLoadRestoresTownBoundaryAndParty(t *testing.T) {
 	g.camp.Cur, g.gold, g.items = "church_ch02", 1, nil
 	g.partyMembers, g.partyJoinOrder = nil, nil
 	g.partyDeploy, g.partyRoster = nil, nil
+	g.nativeMapHUDPersistent = battle.InitialNativeMapHUDPersistentState()
 	g.loadGameFromSlot(2)
 	if g.camp.NodeID() != "town_ch02" || g.gold != 279 || len(g.items) != 1 || g.items[0] != "sky-key" {
 		t.Fatalf("campaign boundary did not restore: node=%q gold=%d items=%#v", g.camp.NodeID(), g.gold, g.items)
@@ -128,8 +135,41 @@ func TestCampaignSaveLoadRestoresTownBoundaryAndParty(t *testing.T) {
 	if !ok || got.Portrait != 0x34 || got.ClassID != 21 || got.MV != 7 || got.HP != 44 || len(g.partyJoinOrder) != 1 || !g.partyDeploy[0] {
 		t.Fatalf("persistent party did not restore: roster=%#v join=%#v deploy=%#v", g.partyRoster, g.partyJoinOrder, g.partyDeploy)
 	}
+	if !g.nativeMapHUDPersistent.HasDisplayGateA || g.nativeMapHUDPersistent.DisplayGateA != 0 ||
+		!g.nativeMapHUDPersistent.HasAnchorX || g.nativeMapHUDPersistent.AnchorX != 1 {
+		t.Fatalf("save HUD persistence=%+v", g.nativeMapHUDPersistent)
+	}
 	if g.st != nil || g.sel != nil || g.shopMode != "" || g.churchMode != "" {
 		t.Fatalf("town boundary retained transient scene state: st=%v sel=%v shop=%q church=%q", g.st, g.sel, g.shopMode, g.churchMode)
+	}
+}
+
+func TestCampaignLoadRejectsOutOfRangeNativeHUDGateWithoutMutation(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	userDataDirCached = ""
+	c := &campaign.Campaign{Start: "town", Nodes: map[string]*campaign.Node{
+		"town": {Type: "town"},
+	}}
+	invalid := 256
+	raw, err := json.Marshal(saveData{Node: "town", Gold: 99, NativeHUDGateA: &invalid})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(saveSlotPath(0)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(saveSlotPath(0), raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{
+		camp: campaign.NewRunner(c), gold: 7,
+		nativeMapHUDPersistent: battle.InitialNativeMapHUDPersistentState(),
+	}
+	g.loadGameFromSlot(0)
+	if g.gold != 7 || g.nativeMapHUDPersistent.DisplayGateA != 1 ||
+		g.msg != "存檔 native HUD gate A 超出原始 byte 範圍" {
+		t.Fatalf("invalid HUD save mutated game: gold=%d HUD=%+v msg=%q",
+			g.gold, g.nativeMapHUDPersistent, g.msg)
 	}
 }
 

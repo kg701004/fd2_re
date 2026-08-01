@@ -615,10 +615,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 official IDA bootstrap topology：授權 IDA 9.4 的 address-only report 定義 `sub_10010=0x10010..0x10620`（callers `0x1a251`、`0x26130`）與 `sub_1088d=0x1088d..0x10b4e`（callers `0x205ff`、`0x25870`、`0x2c437`）；`0x10a77` 正在後者內。這交叉驗證 save/battle/finale 的 roster bootstrap 共用同一 selector-initialization routine，但不增加 `record+7` 的未證實高階名稱。
 - 2026-07-26 player map-key writer closure（Docker Capstone）：`JOIN` constructor `0x112a5(join_id)` 建 persistent `[0x53bf7]+count*0x50` 時，依序寫 `+7=join_id`、`+8=join_id`；`0x33499` 已以 `+8` 做 character-ID roster lookup。再接 `0x10a77` 的 copied `+7→0x11019`，可證 fresh joined player 的 raw FDICON key 等於其 character ID。範圍僅限這個 writer；絕不可倒推 FDFIELD、NPC、portrait 或 general `fig` 的 identity。
 - 2026-07-26 player map-key mutation audit（Docker Capstone）：撤回「JOIN equality 後續未見 mutation」的隱含說法。class-change UI 在 `0x314a7` 以 selected slot 算 `0x53a45+slot*0x50`，`0x31576..0x3157a` 將 UI-selected raw target 寫到該 live record `+7`（同段重算／寫 `+0x20`）。故 fresh player 的 `+7=+8=join_id` 只是初始化；target 的高階名稱仍保持 raw。persistence ABI 則已閉合：24 個 post caller 的 `0x11506` 以 `+8` 配對並完整 copy 0x50 bytes runtime→persistent，所以經 `sync_party` 的 `+7` mutation 必保存；class-change 是否在當下立即走該 flow 待追。
-- 2026-07-26 explicit map-key materialization bridge：`battle.Unit` 新增 optional `MapSelectorKey`／JSON `map_selector_key`，與 slot 分離；`MaterializeNativeMapSelectorSlots` 只接受 caller 給定的同 resource、native source order，先全批 preflight 0..255 raw keys，再以 `fdicon.NativeSelectorCache` first-seen 規則寫 slots。缺 key／invalid key 拒絕且不污染 cache 或 units，永不由 `Fig`／portrait 推導。Docker battle+fdicon regression 通過；player/scripted caller 接線刻意仍封閉。
+- 2026-07-26 explicit map-key materialization bridge（歷史狀態；caller 尚未接線的末句已由同日較晚的 runtime selector-order bridge 取代）：`battle.Unit` 新增 optional `MapSelectorKey`／JSON `map_selector_key`，與 slot 分離；`MaterializeNativeMapSelectorSlots` 只接受 caller 給定的同 resource、native source order，先全批 preflight 0..255 raw keys，再以 `fdicon.NativeSelectorCache` first-seen 規則寫 slots。缺 key／invalid key 拒絕且不污染 cache 或 units，永不由 `Fig`／portrait 推導。Docker battle+fdicon regression 通過；此時 player/scripted caller 接線刻意仍封閉。
 - 2026-07-26 player selector persistence repair（2026-07-28 用詞校正）：現行 remake 的 stable `Fig` 是 JOIN/+8 identity，不能再把它一般化為 mutable map/battle selector。fresh PartyMember 僅因 native JOIN writer 而以 Fig 初始化 `BattleFig`／raw key；church `ApplyClassChange` 對應 `0x3157a` 改 `0x31793` resolved target 的 `BattleFig`／raw key、清舊 cache slot、不動 Fig；persistent overlay 亦保留這些 split fields。Docker `battle`／`campaign`／`cmd/fd2` regression 通過；indexed renderer 仍 fail-closed。
 - 2026-07-26 scripted map-key export closure（Docker Capstone + real export）：完整 `0x10d7f..0x10efc` trace 確認 FDFIELD record `b0` 先作 `0x11019` raw key、回傳 slot→`unit+2`，再同值寫 `unit+6` camp；`b1` 才寫 `+7/+8` battle selector。`parse_field.py` 保留 `native_map_selector_key=b0`，`export_units.py` 輸出 `map_selector_key`，map0 實跑30筆 keys `[0,1,2]` 逐筆等於 camp raw code。這撤回「scripted map key source 未拆出」的舊說法；尚待的是 player-first + scripted group 的共用 slot allocation order，不是角色 identity mapping。
-- 2026-07-26 state selector-order bridge：新增 `State.AppendNativeMapSelectorBatch`，一個 State 持一個 per-resource `NativeSelectorCache`，只有 full raw-key preflight 成功才 allocation+append。regression 以 native order party `[9,4]`→scripted `[0,2,0]` 固定 slots `[0,1,2,3,2]`，missing-key batch 不改 state/cache。Scenario 尚不自動接，等待所有 versioned map assets 含 raw keys 後才啟用，避免舊 JSON 被 Fig fallback 污染。
+- 2026-07-26 state selector-order bridge（歷史狀態；Scenario 尚未接線已由同日較晚紀錄取代）：新增 `State.AppendNativeMapSelectorBatch`，一個 State 持一個 per-resource `NativeSelectorCache`，只有 full raw-key preflight 成功才 allocation+append。regression 以 native order party `[9,4]`→scripted `[0,2,0]` 固定 slots `[0,1,2,3,2]`，missing-key batch 不改 state/cache。此時 Scenario 尚不自動接，等待所有 versioned map assets 含 raw keys 後才啟用，避免舊 JSON 被 Fig fallback 污染。
 - 2026-07-26 versioned scripted-selector data closure：全量 `export_units.py` 比對證實會覆寫既有人工校正數值／掉落，故未採用。新增 `tools/sync_native_selector_fields.py`，它只從 FDFIELD roster 同步已閉合的 `b0→map_selector_key` 與 `b1→battle_fig`，並拒絕 roster count 或既存值衝突。已對 33 份 `remake/assets/maps/map*/map*_units.json` 寫入 3774 欄位，`--check` 全數通過；其餘 asset 欄位未由本步重產。Scenario 仍不自動 materialize native slots：尚待 mixed player/scripted order 與 resource identity 的直接接線。
 - 2026-07-26 selector cache scope correction（Docker Capstone）：撤回「`0x11019` per-resource／resource-aware lookup」斷言。完整 tail 顯示它只在全域 `0x53b17[slot]` 比較 raw key、以 `0x53bdf` 計數；archive pointer 僅在新 key 時複製十二 pointers。`0x10a25`（player）及 `0x10b69`（scripted）都以 `rb` 開啟同一 `FDICON.B24`。因此 cache 是 battle construction session 的 global raw-key cache，非 `(key,resource)` cache；SDD/worklist/code comment 已改正。尚待的是將已證實 party-first→scripted order 接到 GUI indexed renderer，不是 resource identity。
 - 2026-07-26 runtime selector-order bridge：`spawn_party` 現以 `AppendNativeMapSelectorBatchOrLegacy` materialize fresh-player keys；`AppendGroup` 在 cache 已啟用時以同一 batch API materialize FDFIELD groups，故 party-first→initial/reinforcement group 的 first-seen slot order 被實際保留。若可編輯來源缺 key，State 保留 legacy unit append 並記錄 `NativeMapSelectorError`，全場 native key lookup fail-closed。戰場 PNG/Ebiten draw 可由 validated `slot→key` 選 FDICON group；story actors 保持 legacy Fig。這只閉合 selector adapter，並未接 native indexed buffer/palette/layer/HUD。
@@ -3005,9 +3005,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   呼叫執行 pan→native append→300ms→delta255 全白→200ms→delta0 restore→
   redraw；全部完成才啟動 AI。兩批 constructor 先在 private state 預演，
   第二批錯誤時第一批不會部分發布；未知同回合 row 亦在 AI 前失敗即關閉。
-- event63 目前是重製端 E1，不是 E2：下方較晚勘誤已閉合並接線 ch27 精確
-  native view 與 selector0；未閉合的只有 persistent HUD gate A／anchor，
-  所以不建立 `native_map_hud`。缺完整 HUD 時 indexed DAC 失敗即關閉，
+- event63 目前是重製端 E1，不是 E2（本段 HUD 缺口已由檔末較晚勘誤取代）：
+  下方較晚勘誤已閉合並接線 ch27 精確 native view 與 selector0；當時尚未閉合
+  persistent HUD gate A／anchor，所以不建立 `native_map_hud`。缺完整 HUD 時
+  indexed DAC 失敗即關閉，
   一般路徑保留既有 RGB 戰場的數學等價全白覆蓋。下一個切片是
   `MAP26-EVENT63-E2-PLAYER-PATH`：未修改 DOSBox 的 event62→跨回合→event63
   同狀態逐幀比較，以及 CONTINUE 邊界。
@@ -3022,9 +3023,36 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `battle_ch27.native_map_view` 已資料化並由正式 runtime 原子載入；schema
   現允許具直接證據的 view 在 HUD 未閉合時獨立存在，節點入口只接受已證實的
   selector 0／1。HUD 仍不可脫離 view 單獨宣告。
-- 不建立 ch27 `native_map_hud`：main 返回後 gate B 已知為1，但 gate A 可由
+- 不建立 ch27 `native_map_hud`（歷史狀態；已由檔末「HUD 持續擁有者閉合」
+  取代）：main 返回後 gate B 已知為1，但 gate A 可由
   選項與存檔延續，anchor 在本處理器 visible row 最大為5時也保留既值。兩者
   尚缺跨節點／存檔擁有者，猜成1會製造錯誤原版斷言。
 - 此垂直切片是 E1，不是 E2；event63 的 indexed DAC 仍要求完整 HUD，缺值時
   走既有 RGB 戰場的數學等價全白覆蓋。下一門檻仍是未修改 DOSBox 同狀態逐幀
   比較、persistent HUD state owner 與 CONTINUE 邊界。
+
+## 2026-08-02：HUD 持續擁有者閉合與 JOIN raw record 勘誤
+
+- IDA Pro 9.4 主判讀與 Docker Capstone 覆核已把 HUD 三個來源分開：gate A
+  `0x51AAB` 由 custom save 與 native chapter slot metadata `+6` 保存／恢復；
+  anchor `0x51A0C` 是程序內持續狀態，只由 `0x1ACF3` 的兩條已證實邊界分支
+  改寫；gate B `0x51AAC` 是 controller-owned 暫態值，戰鬥入口只採已證實的1，
+  不寫入上述持續欄位。位址、雜湊與推論分級見
+  [`fd2_hud_persistence_ida.txt`](../data/fd2_hud_persistence_ida.txt)。
+- `NativeMapHUDPersistentState` 已成為 `Game` 擁有者；custom save 與 native
+  chapter restore 保存 gate A，anchor 跨節點保留，`battle_ch01`、ch26、ch27
+  以 `native_map_hud_inherited` 原子物化完整 runtime HUD。固定 `(1,1,1)` 只
+  保留在明確 snapshot fixture，不再當章節常數。
+- persistent roster overlay 現同時保存 raw `+0x42` 與 `+0x46`，不由正規化
+  HP／MP 反推；並修正 `MapSelectorSlot` 被跨戰複製的錯誤。該 slot 是
+  `0x11019` 每場戰鬥重建的 `unit+2` cache result，持續層只能保存其 raw `+7`
+  key。
+- event63 production regression 現使用明確帶有 persistent raw `+0x42` 的
+  凱麗 fixture，能走 inherited HUD 與 indexed DAC；它不以 ch27 近似 `hp=90`
+  冒充原版欄位。`JOIN 0x112A5` 的精確表格公式另證實凱麗 id12 fresh record
+  `+0x42=151`。此值只證明 fresh JOIN，不代表 ch27 一般玩家時點的 current
+  raw record；完整公式與限制見
+  [`fd2_join_constructor_word42_ida.txt`](../data/fd2_join_constructor_word42_ida.txt)。
+- 本切片仍是 E1。下一門檻是把 JOIN default/growth table 轉為具型別 asset，
+  走正常 JOIN→LOADCH→sync/save 建立 raw record，並取得未修改 DOSBox
+  event62→event63／CONTINUE 的同狀態逐幀 oracle；完成前不得提升為 E2。

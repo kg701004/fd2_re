@@ -1,0 +1,82 @@
+FD2 戰術地圖 HUD 持續狀態邊界（IDA Pro 9.4）
+==================================================
+
+輸入與位址空間
+----------------
+
+- 輸入：`FD2.EXE`，357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 基準：`docs/data/fd2-reference-files.json`
+- 本文位址皆為 IDA 資料庫線性位址；原始名稱、位址及運算元保留，
+  下列語意只是附加註記。
+
+工具與隔離
+----------
+
+- 第一順位：使用者合法提供的 IDA Pro 9.4，在
+  `fd2-ida-authorized-local` 一次性、無網路 Docker 容器內分析。
+- 第二順位：`fd2-cap-local` 內的 Capstone，重生指定線性位址指令。
+- 原版執行檔唯讀；IDA 資料庫只寫容器 `/tmp`，輸出只保留本文所列
+  的位址與指令結論。
+
+已證實：gate A `[0x51AAB]`
+------------------------------
+
+- `0x173BA` 是交互 writer：對該 byte 執行 XOR 1。
+- current-runtime snapshot writer `0x1A0C5` 將它寫至
+  `0x30C3+15 = 0x30D2`；loader `0x10436` 從同一 byte 讀回。
+- 四槽 chapter metadata writer `0x300F9` 將它寫至每槽 `+6`；
+  `0x26080` 與 `0x3032F` 的讀檔路徑從 `+6` 恢復。
+- `0x1ACF3` 在 `0x1AD0C` 讀取 gate A；它與 gate B 皆非零時才繼續 HUD。
+
+結論：**已證實** gate A 是玩家可切換、並由 current-runtime snapshot
+與四槽存檔保存的持續 byte；它不是章節常數。
+
+已證實：gate B `[0x51AAC]`
+------------------------------
+
+- `0x1ACF3` 讀取 gate B。
+- ch27 戰前處理器在 `0x25E0B` 寫 0，返回前在 `0x25E5E` 恢復 1。
+- 其他直接 writer 也位於暫停／重繪控制流程。未見 gate B 位於
+  current-runtime 18-byte header 或四槽 metadata 的讀寫。
+
+結論：**已證實** gate B 是目前控制流程的暫態顯示 byte；
+**未知**是否還有未由直接交叉參照覆蓋的間接保存路徑。
+
+已證實：anchor `[0x51A0C]`
+--------------------------------
+
+- 資料映像初值是 1。
+- 唯二已知 writer 都在 `0x1ACF3`：
+  - visible Y `>5` 且 visible X `<3`：`0x1AD3C` 寫 `0xF2`；
+  - visible Y `>5` 且 visible X `>9`：`0x1AD5A` 寫 1。
+- `0x1AD6C` 使用該值；其餘座標不寫，因此保留先前值。
+- 未見 anchor 直接寫入 current-runtime header 或四槽 metadata。
+
+結論：**已證實** anchor 是程序內持續狀態；**未知**它是否以
+其他間接形式寫入 `FD2.SAV`。不得把 ch27 visible `(5,5)` 反推為
+anchor=1，因為該座標不觸發任一 writer。
+
+重製對應與不變式
+------------------
+
+- `NativeMapHUDPersistentState` 只持有 gate A 與 anchor；gate B 由目前
+  controller 入口提供。
+- 存檔只保存 gate A，載入時保留程序內 anchor，不虛構 gate B。
+- campaign 的 `native_map_hud_inherited` 只能搭配已證實入口 gate B=1；
+  gate A／anchor 繼承程序狀態。部分來源缺失時失敗即關閉。
+- `MapSelectorSlot` 是每次戰場依 `0x11019` 重建的快取，不屬於
+  persistent party overlay；跨關持續的是 raw `+7` key。
+- ch27 event63 的決定性回歸使用明確帶 raw `+0x42` 來源的
+  persistent party fixture，才允許索引式 DAC 路徑。直接跳章的近似 HP
+  不會被提升成原始記錄。
+
+證據等級
+--------
+
+- 上述直接 writer、reader、snapshot/slot byte 位置與重製生命週期邊界：
+  **已證實**。
+- gate B 與 anchor 沒有任何間接存檔路徑：**未知**；目前只能說
+  直接交叉參照未顯示該路徑。
+- ch27 同狀態 DOSBox 像素一致與未修改一般玩家路徑：**未知／尚未 E2**。

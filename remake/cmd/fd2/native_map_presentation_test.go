@@ -289,7 +289,7 @@ func TestGameMaterializesSourcedViewWithoutInventingHUD(t *testing.T) {
 	}
 }
 
-func TestBattleCh27MaterializesVerifiedPreHandlerViewWithoutHUD(t *testing.T) {
+func TestBattleCh27MaterializesVerifiedViewWithPersistentHUD(t *testing.T) {
 	t.Setenv("FD2_MUTE", "1")
 	t.Setenv("FD2_CAMPAIGN", "assets/scenarios/campaign_full.json")
 	t.Setenv("FD2_CAMP_NODE", "battle_ch27")
@@ -299,8 +299,12 @@ func TestBattleCh27MaterializesVerifiedPreHandlerViewWithoutHUD(t *testing.T) {
 	}
 	if g.st == nil || !g.st.HasNativeMapViewState ||
 		!g.st.HasNativeMapRangeModeState || g.st.NativeMapRangeMode != 0 ||
-		g.st.HasNativeMapHUDState {
+		!g.st.HasNativeMapHUDState {
 		t.Fatalf("chapter27 native state=%#v", g.st)
+	}
+	if hud := g.st.NativeMapHUDState; hud.DisplayGateA != 1 ||
+		hud.DisplayGateB != 1 || hud.AnchorX != 1 {
+		t.Fatalf("chapter27 inherited HUD=%+v", hud)
 	}
 	view := g.st.NativeMapViewState
 	if view.CameraX != 9 || view.CameraY != 49 ||
@@ -310,6 +314,32 @@ func TestBattleCh27MaterializesVerifiedPreHandlerViewWithoutHUD(t *testing.T) {
 		g.camX != 9*24 || g.camY != 49*24 {
 		t.Fatalf("chapter27 view=%+v camera=(%v,%v) cursor=(%d,%d)",
 			view, g.camX, g.camY, g.curX, g.curY)
+	}
+}
+
+func TestGameMaterializesInheritedHUDWithoutOverwritingSavedGateOrAnchor(t *testing.T) {
+	rangeMode := 0
+	g := &Game{
+		m:  &MapData{W: 31, H: 57, TileW: 24, TileH: 24},
+		st: &battle.State{W: 31, H: 57},
+		nativeMapHUDPersistent: battle.NativeMapHUDPersistentState{
+			DisplayGateA: 0, AnchorX: 0xf2,
+			HasDisplayGateA: true, HasAnchorX: true,
+		},
+	}
+	n := &campaign.Node{
+		NativeMapView: &campaign.NativeMapViewConfig{
+			CameraX: 9, CameraY: 49, CursorX: 14, CursorY: 54,
+			VisibleCursorX: 5, VisibleCursorY: 5, RangeMode: &rangeMode,
+		},
+		NativeMapHUDInherited: &campaign.NativeMapHUDInheritedConfig{DisplayGateB: 1},
+	}
+	if !g.materializeNativeMapRuntime(n) {
+		t.Fatal(g.loadErr)
+	}
+	if hud := g.st.NativeMapHUDState; !g.st.HasNativeMapHUDState ||
+		hud.DisplayGateA != 0 || hud.DisplayGateB != 1 || hud.AnchorX != 0xf2 {
+		t.Fatalf("inherited runtime HUD=%+v valid=%v", hud, g.st.HasNativeMapHUDState)
 	}
 }
 

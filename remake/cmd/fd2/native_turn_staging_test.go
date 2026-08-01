@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
 
 func event63GameFixture(t *testing.T) *Game {
@@ -20,13 +21,42 @@ func event63GameFixture(t *testing.T) *Game {
 		t.Skip("使用者持有的原版 FDOTHER.DAT 不在測試掛載中")
 	}
 	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
-	g := &Game{}
+	// Direct chapter starts have no preceding JOIN/save history.  event63's
+	// indexed HUD test instead supplies one explicit process-persistent record,
+	// matching the production ingress without claiming that ch27.json's
+	// approximate HP is native +0x42 provenance.
+	scenario, err := battle.LoadScenario(assetPath("assets/scenarios/ch27.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persistentKeli battle.Unit
+	for _, unit := range scenario.PartyUnits(nil) {
+		if unit != nil && unit.Fig == 12 {
+			persistentKeli = *unit
+			persistentKeli.HP = 0x123
+			persistentKeli.MaxHP = 0x123
+			persistentKeli.NativeRecordWord42 = 0x123
+			persistentKeli.HasNativeRecordWord42 = true
+			break
+		}
+	}
+	if !persistentKeli.HasNativeRecordWord42 {
+		t.Fatal("chapter27 fixture has no Keli party member")
+	}
+	g := &Game{partyRoster: map[int]battle.Unit{12: persistentKeli}}
 	if err := g.loadMap(assetPath("assets/maps/map26")); err != nil {
 		t.Fatal(err)
 	}
 	g.resetBattle("assets/maps/map26/map26_units.json", "assets/scenarios/ch27.json")
 	if g.loadErr != "" || g.st == nil || g.sc == nil {
 		t.Fatalf("chapter27 fixture err=%q state=%v scenario=%v", g.loadErr, g.st != nil, g.sc != nil)
+	}
+	c, err := campaign.Load(assetPath("assets/scenarios/campaign_full.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !g.materializeNativeMapRuntime(c.Nodes["battle_ch27"]) {
+		t.Fatalf("chapter27 native runtime: %s", g.loadErr)
 	}
 	g.st.NativeTurnEventControls[0] = battle.NativeTurnEventControl{
 		Turn: byte(g.st.NativeRoundCounter), EventID: 63, RawCamp: 0,
@@ -95,6 +125,10 @@ func advanceNativeTurnStagingFlash(t *testing.T, g *Game, screen *ebiten.Image) 
 
 func TestEvent63RunsBeforeEnemyAIWithTwoAtomicStagingCalls(t *testing.T) {
 	g := event63GameFixture(t)
+	if _, ok := g.nativeMapHUDInput(); !ok {
+		u := g.st.UnitAt(g.curX, g.curY)
+		t.Fatalf("chapter27 HUD input unavailable at (%d,%d): unit=%+v", g.curX, g.curY, u)
+	}
 	beforeUnits := len(g.st.Units)
 	beforeRoster := len(g.st.Roster)
 	if countActiveGroup(g.st, 1) != 0 || countActiveGroup(g.st, 2) != 0 {
@@ -103,6 +137,9 @@ func TestEvent63RunsBeforeEnemyAIWithTwoAtomicStagingCalls(t *testing.T) {
 	g.endTurn()
 	if g.nativeTurnStaging == nil || g.loadErr != "" {
 		t.Fatalf("end-turn event63 job=%v err=%q", g.nativeTurnStaging, g.loadErr)
+	}
+	if !g.nativeTurnStaging.indexed {
+		t.Fatal("production ch27 HUD provenance did not admit event63 indexed DAC")
 	}
 	if g.aiBusy || len(g.st.Units) != beforeUnits || len(g.st.Roster) != beforeRoster {
 		t.Fatal("event63 changed roster or started AI before the first pan completed")

@@ -69,10 +69,11 @@ type MapData struct {
 
 type Game struct {
 	m                          *MapData
-	nativeMapAssets            *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
-	nativeMapWork              []byte           // persistent 456-stride original tactical framebuffer
-	nativeMapVGA               []byte           // persistent 320x200 indexed VGA surface
-	nativeFullDACWhite         bool             // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
+	nativeMapAssets            *nativeMapAssets                   // all original map HUD resources, nil on any missing/malformed asset
+	nativeMapWork              []byte                             // persistent 456-stride original tactical framebuffer
+	nativeMapVGA               []byte                             // persistent 320x200 indexed VGA surface
+	nativeFullDACWhite         bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
+	nativeMapHUDPersistent     battle.NativeMapHUDPersistentState // gate A save-persistent；anchor process-persistent
 	tileset                    *ebiten.Image
 	tiles                      []*ebiten.Image     // 切好的圖塊
 	st                         *battle.State       // 戰鬥狀態(單位)
@@ -1815,6 +1816,7 @@ func (g *Game) enterNode() {
 	if g.camp == nil {
 		return
 	}
+	g.captureNativeMapHUDPersistence()
 	g.resetActionOverlayLifecycle()
 	n := g.camp.Node()
 	if n == nil {
@@ -2002,7 +2004,7 @@ func (g *Game) enterNode() {
 }
 
 func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
-	if n == nil || (n.NativeMapView == nil && n.NativeMapHUD == nil) {
+	if n == nil || (n.NativeMapView == nil && n.NativeMapHUD == nil && n.NativeMapHUDInherited == nil) {
 		return true
 	}
 	if g.st == nil {
@@ -2039,6 +2041,25 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 			g.loadErr = "native map runtime HUD is outside raw bounds"
 			return false
 		}
+	} else if inherited := n.NativeMapHUDInherited; inherited != nil {
+		persistentSource := g.nativeMapHUDPersistent
+		// A wholly uninitialized Game still represents a fresh original process,
+		// whose data image seeds gate A and anchor to 1. A partial state is not a
+		// fresh process and remains rejected rather than filling one missing field.
+		if !persistentSource.HasDisplayGateA && !persistentSource.HasAnchorX {
+			persistentSource = battle.InitialNativeMapHUDPersistentState()
+		}
+		hud, ok := persistentSource.MaterializeRuntime(byte(inherited.DisplayGateB))
+		if !ok || !candidate.MaterializeNativeMapHUDState(hud.DisplayGateA, hud.DisplayGateB, hud.AnchorX) {
+			g.loadErr = "native map runtime HUD persistent state is incomplete"
+			return false
+		}
+	}
+	persistentCandidate := g.nativeMapHUDPersistent
+	if candidate.HasNativeMapHUDState &&
+		!persistentCandidate.CaptureNativeMapHUD(candidate.NativeMapHUDState) {
+		g.loadErr = "native map runtime HUD persistent capture failed"
+		return false
 	}
 	g.st.NativeMapViewState = candidate.NativeMapViewState
 	g.st.HasNativeMapViewState = true
@@ -2046,8 +2067,19 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 	g.st.HasNativeMapRangeModeState = true
 	g.st.NativeMapHUDState = candidate.NativeMapHUDState
 	g.st.HasNativeMapHUDState = candidate.HasNativeMapHUDState
+	g.nativeMapHUDPersistent = persistentCandidate
 	g.syncNativeMapView()
 	return true
+}
+
+// captureNativeMapHUDPersistence runs before a campaign node can clear or
+// replace the previous battle state. The original carries gate A and anchor
+// across nodes, but not the transient gate B.
+func (g *Game) captureNativeMapHUDPersistence() {
+	if g == nil || g.st == nil || !g.st.HasNativeMapHUDState {
+		return
+	}
+	g.nativeMapHUDPersistent.CaptureNativeMapHUD(g.st.NativeMapHUDState)
 }
 
 // resetBattle 重開一場戰鬥(campaign battle 節點;敗北重試也走這裡)。
@@ -2235,7 +2267,6 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	dst.BaseAtkMin, dst.BaseAtkMax, dst.EquipmentBaseSet = src.BaseAtkMin, src.BaseAtkMax, src.EquipmentBaseSet
 	dst.Portrait, dst.Fig, dst.BattleFig = src.Portrait, src.Fig, src.BattleFig
 	dst.MapSelectorKey, dst.HasMapSelectorKey = src.MapSelectorKey, src.HasMapSelectorKey
-	dst.MapSelectorSlot, dst.HasMapSelectorSlot = src.MapSelectorSlot, src.HasMapSelectorSlot
 	dst.Exp, dst.ExpPerLevel = src.Exp, src.ExpPerLevel
 	dst.Spells = append(dst.Spells[:0], src.Spells...)
 	dst.NativeCommandMask = src.NativeCommandMask
@@ -2248,6 +2279,7 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	// +0x42 is a raw persistent word used by ch15_post; preserve it only when
 	// the source carries explicit provenance, never derive it from normalized HP.
 	dst.NativeRecordWord42, dst.HasNativeRecordWord42 = src.NativeRecordWord42, src.HasNativeRecordWord42
+	dst.NativeRecordWord46, dst.HasNativeRecordWord46 = src.NativeRecordWord46, src.HasNativeRecordWord46
 	dst.Inventory = append(dst.Inventory[:0], src.Inventory...)
 	dst.Equipped = append(dst.Equipped[:0], src.Equipped...)
 	dst.InventorySlots = append(dst.InventorySlots[:0], src.InventorySlots...)
@@ -6965,7 +6997,10 @@ func loadNativeCommandLabels() map[int]string {
 }
 
 func loadGame() *Game {
-	g := &Game{shotFrame: 20}
+	g := &Game{
+		shotFrame:              20,
+		nativeMapHUDPersistent: battle.InitialNativeMapHUDPersistentState(),
+	}
 	g.bgmSource = loadSettings().BGMSource // 音源設定(預設 fm=Sound Blaster)
 	if v := os.Getenv("FD2_BGM_SOURCE"); v != "" && bgmSourceName[v] != "" {
 		g.bgmSource = v // 覆寫(截圖/測試用)

@@ -6,6 +6,42 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 )
 
+func TestNativeMapHUDPersistentStateSeparatesSaveAndProcessLifetime(t *testing.T) {
+	persistent := InitialNativeMapHUDPersistentState()
+	if persistent.DisplayGateA != 1 || persistent.AnchorX != 1 ||
+		!persistent.HasDisplayGateA || !persistent.HasAnchorX {
+		t.Fatalf("initial HUD persistent state=%+v", persistent)
+	}
+	if !persistent.CaptureNativeMapHUD(NativeMapHUDRuntimeState{
+		DisplayGateA: 0, DisplayGateB: 7, AnchorX: 0xf2,
+	}) {
+		t.Fatal("complete runtime HUD state was not captured")
+	}
+	if persistent.DisplayGateA != 0 || persistent.AnchorX != 0xf2 {
+		t.Fatalf("captured persistent state=%+v", persistent)
+	}
+	if !persistent.RestoreSavedGateA(3) || persistent.AnchorX != 0xf2 {
+		t.Fatalf("saved gate A overwrote process-local anchor: %+v", persistent)
+	}
+	runtime, ok := persistent.MaterializeRuntime(1)
+	if !ok || runtime != (NativeMapHUDRuntimeState{
+		DisplayGateA: 3, DisplayGateB: 1, AnchorX: 0xf2,
+	}) {
+		t.Fatalf("materialized runtime=%+v ok=%v", runtime, ok)
+	}
+}
+
+func TestNativeMapHUDPersistentStateRequiresBothProvenanceBits(t *testing.T) {
+	for _, persistent := range []NativeMapHUDPersistentState{
+		{DisplayGateA: 1, HasDisplayGateA: true},
+		{AnchorX: 1, HasAnchorX: true},
+	} {
+		if _, ok := persistent.MaterializeRuntime(1); ok {
+			t.Fatalf("incomplete persistent state accepted: %+v", persistent)
+		}
+	}
+}
+
 func TestNativeMapPresentationPreservesSevenTickGridLifecycle(t *testing.T) {
 	u := &Unit{X: 4, Y: 5, Dir: 3, OffX: 7, OffY: 8}
 	if err := u.MaterializeNativeMapPresentation(); err != nil {

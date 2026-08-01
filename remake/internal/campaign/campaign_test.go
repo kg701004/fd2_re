@@ -99,10 +99,13 @@ func TestLoadValidation(t *testing.T) {
 
 func TestNativeMapRuntimeRejectsUnsupportedOrUnanchoredState(t *testing.T) {
 	for name, raw := range map[string]string{
-		"hud only":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
-		"bad gate":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
-		"missing range mode": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
-		"runtime selector":   `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":11},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"hud only":              `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"inherited HUD only":    `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud_inherited":{"display_gate_b":1}}}}`,
+		"fixed and inherited":   `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1},"native_map_hud_inherited":{"display_gate_b":1}}}}`,
+		"unsupported inherited": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud_inherited":{"display_gate_b":0}}}}`,
+		"bad gate":              `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
+		"missing range mode":    `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"runtime selector":      `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":11},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "invalid-native-map.json")
@@ -139,8 +142,8 @@ func TestFullCampaignCarriesVerifiedChapterOneNativeMapRuntime(t *testing.T) {
 		t.Fatal(err)
 	}
 	n := c.Nodes["battle_ch01"]
-	if n == nil || n.NativeMapView == nil || n.NativeMapHUD == nil {
-		t.Fatal("battle_ch01 must carry the verified native map view and HUD state")
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD != nil || n.NativeMapHUDInherited == nil {
+		t.Fatal("battle_ch01 must carry the verified native map view and inherited HUD owner")
 	}
 	view := *n.NativeMapView
 	if view.CameraX != 1 || view.CameraY != 13 ||
@@ -149,18 +152,18 @@ func TestFullCampaignCarriesVerifiedChapterOneNativeMapRuntime(t *testing.T) {
 		view.RangeMode == nil || *view.RangeMode != 1 {
 		t.Fatalf("battle_ch01 native map view=%+v", view)
 	}
-	if hud := *n.NativeMapHUD; hud.DisplayGateA != 1 || hud.DisplayGateB != 1 || hud.AnchorX != 1 {
-		t.Fatalf("battle_ch01 native map HUD=%+v", hud)
+	if inherited := *n.NativeMapHUDInherited; inherited.DisplayGateB != 1 {
+		t.Fatalf("battle_ch01 inherited native map HUD=%+v", inherited)
 	}
 }
 
-func TestFullCampaignCarriesVerifiedChapter27ViewWithoutInventedHUD(t *testing.T) {
+func TestFullCampaignCarriesVerifiedChapter27ViewAndInheritedHUD(t *testing.T) {
 	c, err := Load("../../assets/scenarios/campaign_full.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	n := c.Nodes["battle_ch27"]
-	if n == nil || n.NativeMapView == nil || n.NativeMapHUD != nil {
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD != nil || n.NativeMapHUDInherited == nil {
 		t.Fatalf("battle_ch27 native map state=%#v", n)
 	}
 	view := *n.NativeMapView
@@ -169,6 +172,9 @@ func TestFullCampaignCarriesVerifiedChapter27ViewWithoutInventedHUD(t *testing.T
 		view.VisibleCursorX != 5 || view.VisibleCursorY != 5 ||
 		view.RangeMode == nil || *view.RangeMode != 0 {
 		t.Fatalf("battle_ch27 native map view=%+v", view)
+	}
+	if n.NativeMapHUDInherited.DisplayGateB != 1 {
+		t.Fatalf("battle_ch27 inherited HUD=%+v", n.NativeMapHUDInherited)
 	}
 }
 

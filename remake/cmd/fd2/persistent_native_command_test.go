@@ -7,7 +7,10 @@ import (
 )
 
 func TestApplyPersistentStatsPreservesDynamicNativeCommandMask(t *testing.T) {
-	dst := &battle.Unit{NativeCommandMask: [5]byte{1, 2, 3, 4, 5}}
+	dst := &battle.Unit{
+		NativeCommandMask: [5]byte{1, 2, 3, 4, 5},
+		MapSelectorSlot:   7, HasMapSelectorSlot: true,
+	}
 	src := &battle.Unit{
 		NativeCommandMask: [5]byte{0x81, 0x01, 0, 0x80, 0x11},
 		NativeIdentity:    9, HasNativeIdentity: true,
@@ -17,6 +20,7 @@ func TestApplyPersistentStatsPreservesDynamicNativeCommandMask(t *testing.T) {
 		NativeRecordByte5: 1, HasNativeRecordByte5: true,
 		NativeRecordByte6: 7, HasNativeRecordByte6: true,
 		NativeRecordWord42: 0x140, HasNativeRecordWord42: true,
+		NativeRecordWord46: 0x24, HasNativeRecordWord46: true,
 		NativeInventoryFlags: []int{0x40, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 	}
 	applyPersistentStats(dst, src)
@@ -28,6 +32,12 @@ func TestApplyPersistentStatsPreservesDynamicNativeCommandMask(t *testing.T) {
 	}
 	if dst.NativeRecordWord42 != 0x140 || !dst.HasNativeRecordWord42 {
 		t.Fatalf("persistent raw +0x42 not preserved: word=%#x/%v", dst.NativeRecordWord42, dst.HasNativeRecordWord42)
+	}
+	if dst.NativeRecordWord46 != 0x24 || !dst.HasNativeRecordWord46 {
+		t.Fatalf("persistent raw +0x46 not preserved: word=%#x/%v", dst.NativeRecordWord46, dst.HasNativeRecordWord46)
+	}
+	if dst.MapSelectorSlot != 7 || !dst.HasMapSelectorSlot {
+		t.Fatalf("battle-local selector slot was overwritten by persistent state: slot=%d/%v", dst.MapSelectorSlot, dst.HasMapSelectorSlot)
 	}
 	if dst.NativeIdentity != 9 || !dst.HasNativeIdentity ||
 		dst.NativeRecordRace != 1 || !dst.HasNativeRecordRace ||

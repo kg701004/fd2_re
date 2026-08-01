@@ -35,10 +35,8 @@
         "visible_cursor_y": 4,
         "range_mode": 1
       },
-      "native_map_hud": {
-        "display_gate_a": 1,
-        "display_gate_b": 1,
-        "anchor_x": 1
+      "native_map_hud_inherited": {
+        "display_gate_b": 1
       },
       "on_win": "victory",
       "on_lose": "retreat"

@@ -31,7 +31,7 @@ func writeNativeRestoreFixture(
 	metadata := start + fdsave.RosterSize
 	plain[metadata], plain[metadata+1] = rawChapter, 1
 	binary.LittleEndian.PutUint32(plain[metadata+2:], 789)
-	copy(plain[metadata+6:], []byte{1, 2, 3, 4})
+	copy(plain[metadata+6:], []byte{0, 2, 3, 4})
 	stored, err := fdsave.Encode(plain)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +69,10 @@ func TestLoadNativeGameFromSlotRestoresTownAndTypedParty(t *testing.T) {
 		len(g.partyJoinOrder) != 1 || g.partyJoinOrder[0] != 9 ||
 		!g.partyMembers[9] || len(g.partyDeploy) != 0 ||
 		g.handlerChapter != 1 || g.nativeChapterRestore == nil ||
-		g.nativeChapterRestore.Raw51E62 != 4 {
+		g.nativeChapterRestore.Raw51E62 != 4 ||
+		!g.nativeMapHUDPersistent.HasDisplayGateA ||
+		g.nativeMapHUDPersistent.DisplayGateA != 0 ||
+		!g.nativeMapHUDPersistent.HasAnchorX || g.nativeMapHUDPersistent.AnchorX != 1 {
 		t.Fatalf("native restore state=%#v game=%#v", g.nativeChapterRestore, g)
 	}
 }

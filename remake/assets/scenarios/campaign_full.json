@@ -528,10 +528,8 @@
     "visible_cursor_y": 4,
     "range_mode": 1
    },
-   "native_map_hud": {
-    "display_gate_a": 1,
-    "display_gate_b": 1,
-    "anchor_x": 1
+   "native_map_hud_inherited": {
+    "display_gate_b": 1
    },
    "on_win": "story_ch02",
    "on_lose": "retreat_ch01"
@@ -3716,10 +3714,8 @@
     "visible_cursor_y": 7,
     "range_mode": 1
    },
-   "native_map_hud": {
-    "display_gate_a": 1,
-    "display_gate_b": 1,
-    "anchor_x": 1
+   "native_map_hud_inherited": {
+    "display_gate_b": 1
    },
    "on_win": "postbattle_ch26_persist",
    "on_lose": "retreat_ch26"
@@ -3876,6 +3872,9 @@
     "visible_cursor_x": 5,
     "visible_cursor_y": 5,
     "range_mode": 0
+   },
+   "native_map_hud_inherited": {
+    "display_gate_b": 1
    },
    "on_win": "inventory_gate_ch27_sky_key",
    "on_lose": "retreat_ch27"
