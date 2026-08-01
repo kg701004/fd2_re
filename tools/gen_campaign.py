@@ -452,12 +452,17 @@ def merge_native_spawn_metadata(scenario: dict, records: list[dict], source: str
             raise ValueError(
                 f"{source}: event {record['event_id']} group/native call count mismatch"
             )
-        calls = [{
-            "group": group,
-            "via": native["via"],
-            "source": native["source"],
-            "raw_placement_gate": native["raw_placement_gate"],
-        } for group, native in zip(resolved, metadata)]
+        calls = []
+        for group, native in zip(resolved, metadata):
+            call = {
+                "group": group,
+                "via": native["via"],
+                "source": native["source"],
+                "raw_placement_gate": native["raw_placement_gate"],
+            }
+            if "following_acting" in native:
+                call["following_acting"] = native["following_acting"]
+            calls.append(call)
 
         actions = []
         for event in scenario.get("events", []):
@@ -542,12 +547,26 @@ def apply_reinforcements(
                     not isinstance(gate, int) or not 0 <= gate <= 0xff):
                 calls = []
                 break
-            calls.append({
+            call = {
                 "group": group,
                 "via": source["via"],
                 "source": source["source"],
                 "raw_placement_gate": gate,
-            })
+            }
+            following = source.get("following_acting")
+            if source["via"] == "spawn_group_with_intro":
+                if (not isinstance(following, dict) or
+                        not isinstance(following.get("resource"), int) or
+                        not 0 <= following["resource"] < 106 or
+                        not isinstance(following.get("source"), str) or
+                        not following["source"]):
+                    calls = []
+                    break
+                call["following_acting"] = following
+            elif following is not None:
+                calls = []
+                break
+            calls.append(call)
         if len(calls) != len(resolved):
             skipped.append(
                 f"ch{cid}:event{event_id}@T{turn} native spawn metadata 不完整，整筆退回列冊"

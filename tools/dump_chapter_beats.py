@@ -38,7 +38,7 @@ PRIM = {
     0x1f525: ('palfade', 1),   # 整幕 palette 淡入(本輪未捕捉到章節 handler 內的呼叫實例,參數個數未核對,標記待驗證)
     0x375b2: ('delay', 1),     # (ms) — doc47 "0x375b2(200ms)" ✓
     0x32975: ('deactivate_unit', 1), # (unit_idx)直接設 unit[+5]=1；原版是死亡／隱藏／未啟用
-    0x32999: ('spawn_intro', 1),   # (group)內部 call 0x10b4e 後做 12-frame reveal/present
+    0x32999: ('spawn_intro', 1),   # (group)內部 call 0x10b4e 後做 FDOTHER #9 的 12-pass 轉場；acting 由 caller 另行呼叫
     0x134e4: ('reset_pose', 0),    # 所有 materialized units pose=down，然後 delay(20ms)
     0x12d7b: ('focus_unit', 1),    # (unit_idx)讀 unit X/Y，呼叫 0x12cea 捲到該格
     0x11506: ('sync_party', 0),    # 戰後 runtime unit→persistent roster，同 charID copy/清暫態/恢復資源

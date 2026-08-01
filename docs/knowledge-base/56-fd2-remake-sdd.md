@@ -2685,8 +2685,12 @@ spawn schedule 或既有 action 綁定不同 event id 時直接拒絕合併。
 採 gate=1 的六筆原始位置列（position row）；錯誤路徑不呼叫回合完成回呼
 （continuation），
 因此不會在漏生增援後仍偷偷前進回合。
-`spawn_group_with_intro` 目前只復用精確配置，尚未在這條 action 路徑重現
-wrapper 的 acting／reveal／present。`0x10C50` 的完整 table projection、
+`spawn_group_with_intro` 現另保存 wrapper 返回後的確切 acting resource／
+call-site；全域 event1/2 分別是 `0x342E7→ACTING(3)` 與
+`0x3434F→ACTING(4)`。`0x32999` 本體不含 acting，而是用 FDOTHER #9 做固定
+12 次索引合成／呈現。正式 action 與 handler runner 在完整 adapter 接通前
+都於 roster 變更前失敗即關閉，不再用等待12個重製畫面 tick 冒充原版。
+`0x10C50` 的完整 table projection、
 inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
 `future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。
 

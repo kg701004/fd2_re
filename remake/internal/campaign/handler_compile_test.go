@@ -624,7 +624,7 @@ func TestCompileCompleteChapter0Binding(t *testing.T) {
 		if group, ok := map31Spawns[beat.Source]; ok && beat.Op == "spawn" && beat.Group == group {
 			delete(map31Spawns, beat.Source)
 		}
-		if group, ok := spawnIntros[beat.Source]; ok && beat.Op == "spawn_intro" && beat.Group == group && beat.Frames == 12 {
+		if group, ok := spawnIntros[beat.Source]; ok && beat.Op == "spawn_intro" && beat.Group == group && beat.Frames == 0 {
 			delete(spawnIntros, beat.Source)
 		}
 		if slot, ok := activateSlots[beat.Source]; ok && beat.Op == "deactivate_unit" && beat.Slot != nil && *beat.Slot == slot {

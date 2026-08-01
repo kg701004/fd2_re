@@ -321,7 +321,7 @@ normalized `battle.Unit`。可重現證據見
    │      └ 對白走文本渲染器 0x16D00 區;控制碼 0xFFEF 依說話者 ID 從 DATO.DAT 載入頭像(doc 14)
    ├ call 0x10b4e (載入登場單位 roster,push1/3/5/2 = 各場次登場 NPC 組:王座父王母后/悠妮蓋亞等)
    ├ [0x53c03]=0                                      ;★ 還原真章節 0(0x327eb)→ call 0x205da 重載「真」FDTXT#1+FDFIELD組0(map0=小島)
-   ├ push 0x5a..0x62; call 0x1366a + 0x32999 平移(逐段)  ; 遇海盜場次演出,疊在「真」戰場地圖 map0 上(非虛構背景)
+   ├ push 0x5a..0x62; call 0x1366a + 0x32999 增援索引轉場  ; 遇海盜場次演出,疊在「真」戰場地圖 map0 上(非虛構背景)
    └ ret                                              ; cutscene 結束 → 回 driver 0x25ebb 內續行(非相位機,見 doc 24)
 
 > **修正(2026-07,團隊二輪 RE,背景圖 bug 排查後補正)**:早先誤記「[0x53c03]=0x20 切到 FDTXT 序幕『影像』資源」——
@@ -344,7 +344,7 @@ normalized `battle.Unit`。可重現證據見
 > - `0x112a5(0/9/4/0x1e)`=索爾/悠妮/亞雷斯/蓋亞**入隊**(時點=密林幕後、海島幕前)。
 > - 完整 beat 序列與 remake 修正指示 → **doc47**。
 > 序幕最後 `[0x53c03]=0` 還原真章節後**再呼叫一次 0x205da**,重載真正的 FDTXT#1 + FDFIELD 組0(= map0,小島),
-> 「遇海盜」對白(`push 0x5a..0x62; call 0x1366a` + `0x32999` 平移)疊在**真戰場地圖 map0** 上,並非另一張複合圖——
+> 「遇海盜」對白（`push 0x5a..0x62; call 0x1366a` 加上 `0x32999` 增援索引轉場）疊在**真戰場地圖 map0** 上,並非另一張複合圖——
 > 與後續 `battle_ch01` 進的是同一張地圖。remake 對應實作見 `remake/internal/campaign/campaign.go`(Node.Map/CamX/CamY,
 > story 節點可指定固定鏡頭背景圖)與 `remake/cmd/fd2/main.go`(`storyBG` 模式);`campaign_full.json` 的
 > `story_ch01_palace`/`story_ch01_meadow` 指到 `assets/maps/map32`(cam_y=0/824),`story_ch01` 指到 `assets/maps/map0`。

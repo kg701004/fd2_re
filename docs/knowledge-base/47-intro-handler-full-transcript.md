@@ -35,7 +35,7 @@
 | `0x1f525` | palette fade-in | doc23 已知 | — |
 | `0x375b2(ms)` | 延遲(序章用 0xc8=200ms) | — | — |
 | `0x32975(slot)` | 直接覆寫 `unit[slot]+5=1`（raw byte writer） | 0x32975..0x32998 完整 body；constructor 0x10eed 寫0 | — |
-| `0x32999(group)` | 內呼叫 0x10b4e spawn，再做 12-step reveal/present（spawn_intro） | 0x32999..0x32ced 完整 body | — |
+| `0x32999(group)` | 內呼叫 0x10b4e spawn，再以 FDOTHER #9 做固定 12 次索引合成／呈現；不含 acting | 0x32999..0x32d18 完整 body | 呼叫端返回後另呼叫 0x1366a |
 | `[0x53afb]` | 演出期間旗標(部分 0x1366a 呼叫前置 1 後清 0);疑=嘴型/不可跳過,**待證** | — | — |
 
 ## 3. 序章 handler 0x3231b 逐 beat 轉錄

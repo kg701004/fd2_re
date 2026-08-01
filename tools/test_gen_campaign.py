@@ -87,12 +87,15 @@ class NativeSpawnMergeTest(unittest.TestCase):
                 self.assertEqual(len(groups), len(sources))
                 calls = []
                 for group, source in zip(groups, sources):
-                    calls.append({
+                    call = {
                         "group": group,
                         "via": source["via"],
                         "source": source["source"],
                         "raw_placement_gate": source["raw_placement_gate"],
-                    })
+                    }
+                    if "following_acting" in source:
+                        call["following_acting"] = source["following_acting"]
+                    calls.append(call)
                 key = (scenario_chapter, record["turn"], record["event_id"])
                 self.assertNotIn(key, expected)
                 expected[key] = calls
@@ -113,6 +116,14 @@ class NativeSpawnMergeTest(unittest.TestCase):
                     actual.setdefault(key, []).extend(action["native_spawns"])
 
         self.assertEqual(actual, expected)
+        self.assertEqual(
+            expected[(1, 4, 1)][0]["following_acting"],
+            {"resource": 3, "source": "0x342e7"},
+        )
+        self.assertEqual(
+            expected[(1, 5, 2)][0]["following_acting"],
+            {"resource": 4, "source": "0x3434f"},
+        )
 
 
 if __name__ == "__main__":

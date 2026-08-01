@@ -477,8 +477,10 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat.RawPlacementGate = &gate
 			beats = append(beats, beat)
 		case "spawn_intro":
-			// 0x32999(group) calls the same 0x10b4e constructor as SPAWN,
-			// then performs a 12-step visible reveal/present loop.
+			// 0x32999(group) calls the same 0x10b4e constructor as SPAWN, then
+			// performs 12 indexed presentation passes from FDOTHER #9. The caller's
+			// following 0x1366a ACTING is a separate operation. Frames deliberately
+			// remains zero: 12 renderer ticks are not an equivalent implementation.
 			if input.Group == nil {
 				issue(i, input, "spawn_intro lacks an original FDFIELD group")
 				continue
@@ -495,7 +497,6 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat.Group = *input.Group
 			gate := *input.RawPlacementGate
 			beat.RawPlacementGate = &gate
-			beat.Frames = 12
 			beats = append(beats, beat)
 		case "deactivate_unit":
 			// 0x32975(unit_idx) writes unit[idx].flags=1. Constructor and

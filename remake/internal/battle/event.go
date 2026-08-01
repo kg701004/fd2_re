@@ -106,10 +106,18 @@ type Action struct {
 // NativeSpawnCall 保存全域事件處理器的一個確切呼叫點。Group 是該排程回合
 // 解析出的值；Source、Via 與 RawPlacementGate 直接來自 EXE，不從陣營或群組推測。
 type NativeSpawnCall struct {
-	Group            int    `json:"group"`
-	Via              string `json:"via"`
-	Source           string `json:"source"`
-	RawPlacementGate *int   `json:"raw_placement_gate"`
+	Group            int                    `json:"group"`
+	Via              string                 `json:"via"`
+	Source           string                 `json:"source"`
+	RawPlacementGate *int                   `json:"raw_placement_gate"`
+	FollowingActing  *NativeFollowingActing `json:"following_acting,omitempty"`
+}
+
+// NativeFollowingActing 保存 wrapper 返回後、由同一呼叫端明確執行的 ACTING。
+// 它不是由 group 推導的，也不是 0x32999 函式本體的一部分。
+type NativeFollowingActing struct {
+	Resource int    `json:"resource"`
+	Source   string `json:"source"`
 }
 
 // DialogLine 一句對話(說話者肖像 + 文本),供 UI 畫頭像+嘴型+文字。
@@ -163,6 +171,20 @@ func LoadScenario(path string) (*Scenario, error) {
 					call.RawPlacementGate == nil || *call.RawPlacementGate < 0 || *call.RawPlacementGate > 0xff {
 					return nil, fmt.Errorf(
 						"scenario event %d action %d native spawn %d is invalid",
+						eventIndex, actionIndex, i,
+					)
+				}
+				if call.Via == "spawn_group_with_intro" {
+					if call.FollowingActing == nil || call.FollowingActing.Resource < 0 ||
+						call.FollowingActing.Resource >= 106 || call.FollowingActing.Source == "" {
+						return nil, fmt.Errorf(
+							"scenario event %d action %d native intro spawn %d lacks following acting provenance",
+							eventIndex, actionIndex, i,
+						)
+					}
+				} else if call.FollowingActing != nil {
+					return nil, fmt.Errorf(
+						"scenario event %d action %d ordinary native spawn %d carries intro acting",
 						eventIndex, actionIndex, i,
 					)
 				}
@@ -322,6 +344,17 @@ func (sc *Scenario) ExecuteActionChecked(st *State, a Action) (DialogLine, bool,
 		if len(a.NativeSpawns) > 0 && sc.RuntimeAppendGroups {
 			if st == nil || len(st.Roster) == 0 {
 				return DialogLine{}, false, fmt.Errorf("native spawn requires a runtime roster")
+			}
+			// 0x32999 不只是建構單位：它含 FDOTHER #9 的 12 次索引呈現，
+			// wrapper 返回後呼叫端還會執行另一個 ACTING。兩段尚未由正式介面
+			// 執行器承接前，必須在任何 roster 變更之前停止。
+			for _, call := range a.NativeSpawns {
+				if call.Via == "spawn_group_with_intro" {
+					return DialogLine{}, false, fmt.Errorf(
+						"native intro spawn %s requires the 0x32999 transition and following acting adapter",
+						call.Source,
+					)
+				}
 			}
 			for _, call := range a.NativeSpawns {
 				if call.RawPlacementGate == nil {

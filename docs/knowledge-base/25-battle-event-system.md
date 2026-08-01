@@ -143,7 +143,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | 原語 | linear | 作用 |
 |---|---|---|
 | `spawn_group(group_id)` | `0x10b4e` | 掃 FDFIELD 控制段 units 陣列(`[0x53a55]+0x83 + k*0x1a`,stride 26B=FDFIELD 單位記錄大小,欄位 `+0x15`=b21=group)找 `unit.group==group_id` 者啟用(offset `0x83`=3+48+32+48,正好是 header+turn_events+保留+chests,對齊 `parse_field.py` 的 units 起點)。[驗] |
-| `spawn_group_with_intro(group_id)` | `0x32999` | 先以 `0x111BA` 準備頭像並呼叫 `0x1366A` 播 acting（不是已證實的對話文字），再內部呼叫 `0x10B4E(group_id)`；最後依攝影機視窗逐一 reveal 新單位並 `0x11EB0` present。[驗] |
+| `spawn_group_with_intro(group_id)` | `0x32999` | 載入 FDOTHER #95/#9，保存工作畫面與舊單位數，內部呼叫 `0x10B4E(group_id)`，再以 #9 的 12 個 `LMI1` 項目做固定 12 次索引合成／呈現。`0x1366A` 是 wrapper 返回後由四個呼叫端另行執行，不在本函式內。[驗] |
 
 `group_id` 引數**通常是 handler 裡的字面常數**(如 event_id0 呼叫 `push 3;call 0x10b4e` 和 `push 7;call 0x10b4e` → 兩個 group);
 少數 handler(event_id 27/54/57)用**動態值 `[0x53bef]`(目前回合數本身)當 group_id**——對應 `turn_events.json` 中同一
@@ -377,7 +377,7 @@ playtest 反饋 #3 指出「序章劇本 staging 機制沒 RE 完整」,且使�
 |---|---|---|
 | `0x10b4e(group_id)` | **直接 spawn**(第1章序章內見於 group 1/3/5 等) | 無逐幀移動；但座標不一定原樣照抄。`[0x53AFA]` 非零才直接採 paired 6-byte position row 的 X/Y low bytes；零值會先標記現有單位占用，再以全圖 row-major Manhattan 規則選最近空格。這是建構時重新配置，不是進場動畫。 |
 | `0x13185(unit_idx)`(序章開場呼叫 2 次迴圈,共 15+13=28 次) | **攝影機平移**(讀寫 `[0x53aa9]`/`[0x53aad]` camX/camY,doc 25 §7.6 同一對變數) | 無——單位不動,是**鏡頭**在移動;每次呼叫只把攝影機原點挪一格,配合後續 `0x15f84` 逐 frame 重繪 |
-| `0x32999(group_id)`(序章呼叫 2 次,group 1/2)`spawn_group_with_intro` | 先用 `0x111ba` 載頭像+`0x1366a` 播演出（非對白；acting 機制見 doc50 §1.2）,內部再呼叫 `0x10b4e` spawn,**接著逐一掃描新 spawn 的單位**,若座標落在目前攝影機視窗([0x53aa9]/[0x53aad] ± [0x51a87]/[0x51a8b])內就用 `0x4e85b` blit 出來,最後 `0x11eb0` present | 無逐幀位置插值；wrapper 與已知 caller 都不寫 `[0x53AFA]`，因此內部 `0x10B4E` 走零值的最近空格配置，再由 reveal/present 決定哪些已建構單位畫入目前視窗。 |
+| `0x32999(group_id)`（序章 group 1/2；全域事件 group 4/5）`spawn_group_with_intro` | `0x111BA` 載入 FDOTHER #95/#9，內部呼叫 `0x10B4E`，再固定掃描 #9 的 12 個 `LMI1` 項目；每次只對新增且位於攝影機視窗內的單位做 `0x4E85B` 索引合成與 `0x11EB0` 呈現。呼叫端返回後才各自呼叫 `0x1366A(1/2/3/4)`。 | 無逐幀位置插值；wrapper 與已知 caller 都不寫 `[0x53AFA]`，因此內部 `0x10B4E` 讀零值配置旗標。12 次原版 pass 不等同重製端等待 12 個畫面 tick。 |
 
 **三者共通點:全程沒有任何「單位座標逐幀 +1/路徑插值」的迴圈。** 移動的是攝影機,不是單位精靈——這與
 doc 35 攻擊演出「無 runtime 縮放/無翻轉,景深燒在素材」的結論同源:**原版能省的動畫運算一律省,

@@ -14,7 +14,9 @@ call graph 顯示唯一 caller 是 0x25de5,固定寫死,不讀 FDFIELD)。
   → 該 event_id 專屬 handler(硬編碼 C 函式,非資料驅動)
   → handler 內 `push <group_id>; call 0x10b4e`(spawn_group,依 FDFIELD b21 啟用該
     group 的單位)或 `call 0x32999`(spawn_group_with_intro,內部一樣呼叫 0x10b4e,
-    多繪 portrait+對話)。group_id 通常是 handler 裡的字面常數,少數(如 event27/54/57)
+    另做 FDOTHER #9 的12-pass indexed transition)。全域 event 1/2 在 wrapper
+    返回後另呼叫 `0x1366a(3/4)`；acting 不在 `0x32999` 內。
+    group_id 通常是 handler 裡的字面常數,少數(如 event27/54/57)
     是動態值 `[0x53bef]`(=用當下回合數當 group 編號,對應同一 event_id 逐回合重觸發)。
 
 本工具:從每個 event_id handler(0x51b91 jump table)擷取其自身函式體內的
@@ -91,6 +93,7 @@ def insn_at(addr):
 
 
 SPAWN_FNS = {0x10b4e: 'spawn_group', 0x32999: 'spawn_group_with_intro'}
+ACTING_FN = 0x1366a
 
 # Complete [0x53AFA] writer set for global event handlers.  Official IDA Pro
 # 9.4 finds the single reader in 0x10C50 and all paired 1/0 writers; Docker
@@ -113,6 +116,7 @@ def walk_handler(start, max_insns=4000):
     while stack and n < max_insns:
         a = stack.pop()
         pending_push = None
+        awaiting_intro = None
         while a is not None and a not in visited:
             if not (start <= a < start + 0x1000):
                 break
@@ -139,18 +143,27 @@ def walk_handler(start, max_insns=4000):
                 if op.startswith('0x'):
                     t = int(op, 16)
                     if t in SPAWN_FNS and pending_push is not None:
-                        spawns.append({
+                        spawn = {
                             'group': pending_push,
                             'via': SPAWN_FNS[t],
                             'source': hex(ins.address),
                             'raw_placement_gate': (
                                 1 if ins.address in RAW_PLACEMENT_GATE_ONE_CALLS else 0
                             ),
-                        })
+                        }
+                        spawns.append(spawn)
+                        awaiting_intro = spawn if t == 0x32999 else None
+                    elif t == ACTING_FN and pending_push is not None and awaiting_intro is not None:
+                        awaiting_intro['following_acting'] = {
+                            'resource': pending_push,
+                            'source': hex(ins.address),
+                        }
+                        awaiting_intro = None
                 pending_push = None
                 a = nxt
                 continue
             elif m == 'jmp':
+                awaiting_intro = None
                 if op.startswith('0x'):
                     t = int(op, 16)
                     a = t
@@ -158,6 +171,7 @@ def walk_handler(start, max_insns=4000):
                 a = None
                 break
             elif m.startswith('j'):
+                awaiting_intro = None
                 if op.startswith('0x'):
                     t = int(op, 16)
                     if t not in visited:
@@ -166,6 +180,7 @@ def walk_handler(start, max_insns=4000):
                 pending_push = None
                 continue
             elif m in ('ret', 'retn'):
+                awaiting_intro = None
                 a = None
                 break
             else:

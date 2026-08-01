@@ -118,6 +118,17 @@ func TestLoadScenarioRejectsNativeEventOutsideGlobalTable(t *testing.T) {
 	}
 }
 
+func TestLoadScenarioRequiresFollowingActingForNativeIntroSpawn(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad-native-intro.json")
+	data := []byte(`{"events":[{"trigger":"on_turn_end","do":[{"type":"spawn_group","groups":[4],"native_event_id":1,"native_spawns":[{"group":4,"via":"spawn_group_with_intro","source":"0x342ce","raw_placement_gate":0}]}]}]}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("缺少呼叫端 following_acting 的原版 intro spawn 被接受")
+	}
+}
+
 func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {
 	paths, err := filepath.Glob("../../assets/scenarios/ch*.json")
 	if err != nil {
@@ -125,6 +136,7 @@ func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {
 	}
 	var calls, actions int
 	var gateOne []string
+	var intro []string
 	for _, path := range paths {
 		sc, err := LoadScenario(path)
 		if err != nil {
@@ -144,6 +156,11 @@ func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {
 				}
 				for _, call := range action.NativeSpawns {
 					calls++
+					if call.Via == "spawn_group_with_intro" {
+						intro = append(intro, fmt.Sprintf(
+							"%d:%d:%s", call.Group, call.FollowingActing.Resource, call.FollowingActing.Source,
+						))
+					}
 					if *call.RawPlacementGate == 1 {
 						gateOne = append(gateOne, fmt.Sprintf("%s:%d:%s", filepath.Base(path), call.Group, call.Source))
 					}
@@ -153,6 +170,11 @@ func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {
 	}
 	if actions != 46 || calls != 46 {
 		t.Fatalf("產生的增援覆蓋 actions/calls=%d/%d，預期 46/46", actions, calls)
+	}
+	sort.Strings(intro)
+	wantIntro := []string{"4:3:0x342e7", "5:4:0x3434f"}
+	if fmt.Sprint(intro) != fmt.Sprint(wantIntro) {
+		t.Fatalf("intro 後續 acting=%v，預期 %v", intro, wantIntro)
 	}
 	sort.Strings(gateOne)
 	want := []string{
@@ -217,6 +239,25 @@ func TestExecuteActionCheckedFailsClosedWithoutRuntimeRoster(t *testing.T) {
 	}}}
 	if _, _, err := sc.ExecuteActionChecked(&State{}, action); err == nil {
 		t.Fatal("需要原版名冊的增援在名冊缺失時未採失敗即關閉")
+	}
+}
+
+func TestExecuteActionCheckedFailsClosedBeforeNativeIntroMutation(t *testing.T) {
+	gate, eventID := 0, 1
+	acting := &NativeFollowingActing{Resource: 3, Source: "0x342e7"}
+	active := &Unit{Name: "active"}
+	pending := &Unit{Name: "pending", Group: 4}
+	st := &State{Units: []*Unit{active}, Roster: []*Unit{pending}}
+	sc := &Scenario{RuntimeAppendGroups: true}
+	action := Action{Type: "spawn_group", Groups: []int{4}, NativeEventID: &eventID, NativeSpawns: []NativeSpawnCall{{
+		Group: 4, Via: "spawn_group_with_intro", Source: "0x342ce",
+		RawPlacementGate: &gate, FollowingActing: acting,
+	}}}
+	if _, _, err := sc.ExecuteActionChecked(st, action); err == nil {
+		t.Fatal("尚未實作的 0x32999 轉場被當成一般增援執行")
+	}
+	if len(st.Units) != 1 || st.Units[0] != active {
+		t.Fatalf("失敗前已改變 runtime roster：%#v", st.Units)
 	}
 }
 

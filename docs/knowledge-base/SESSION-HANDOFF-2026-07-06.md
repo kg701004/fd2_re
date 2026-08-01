@@ -2795,8 +2795,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   原始位置列（position row）；錯誤時不呼叫回合完成回呼（continuation），
   不會漏生後仍前進。尚未遷移情境維持明示的正規化相容路徑
   （normalized compatibility path）；
-  `spawn_group_with_intro` 的 acting/reveal/present、完整 table/inventory
-  projection 與 equipment recompute 仍未接，不能宣稱 constructor 完成。
+  當時 `spawn_group_with_intro` 的 acting/reveal/present、完整 table/inventory
+  projection 與 equipment recompute 仍未接；下節已進一步勘誤 wrapper 與
+  caller 的責任邊界，不能宣稱 constructor 完成。
 - 再次實測 `gen_campaign.py` 預設總表輸出會把權威 `campaign_full.json`
   由299節點降回293並遺失已整合欄位。本輪已精準恢復權威檔；新增
   `--scenarios-only`，回歸以相同 git blob hash 證明重生逐章資料不改總表。
@@ -2804,3 +2805,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   非破壞性註記規則：原始名稱／位址／偏移必須保留，語意只能附加，且每項
   語意都要帶已證實／強推論／假說／未知與來源；工具內改名不能取代 raw
   bytes、xref 及讀寫端證據。
+
+## 2026-08-01：`0x32999` wrapper 與呼叫端 acting 責任閉合
+
+- 合法 IDA Pro 9.4 固定 `sub_32999` 範圍 `0x32999..0x32D18`，直接 caller
+  只有 `0x3289B`、`0x328BB`、`0x342CE`、`0x34336`。本體沒有
+  `0x1366A`；四個 caller 返回後分別於 `0x328A5/0x328C5/0x342E7/0x3434F`
+  執行 ACTING(1/2/3/4)。先前把 acting 寫成 wrapper 內部行為的斷言已撤回。
+- wrapper 載入 FDOTHER #95/#9、保存 `0x25680` 位元組工作畫面與舊單位數，
+  呼叫 `0x10B4E(group)` 後固定走 #9 的12個 `LMI1` 項目。每個 pass 只合成
+  新增且在攝影機視窗內的單位，再呈現312×192區域；第6、7、8次另有不同
+  背景／前景重建順序。這是12次索引合成／呈現，不等於等待12個重製畫面。
+- `event_id_groups.json`、scenario generator 與 Go `NativeSpawnCall` 現保存
+  global event1/2 的 `following_acting` resource/source。loader 要求 intro
+  呼叫具完整後續 provenance，普通 spawn 則拒絕夾帶它。
+- 正式 battle action 與原版來源的 handler `spawn_intro` 都在任何 roster
+  變更前失敗即關閉，直到真正的 indexed transition 及 caller acting adapter
+  接通。舊的12-tick 路徑只可留給無原版 provenance 的擴充內容相容模式。
+- 直接證據見 [`fd2_spawn_intro_32999_ida.md`](../data/fd2_spawn_intro_32999_ida.md)
+  與 [`fd2_spawn_intro_32999_capstone.txt`](../data/fd2_spawn_intro_32999_capstone.txt)。

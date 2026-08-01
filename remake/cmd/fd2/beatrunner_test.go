@@ -1131,7 +1131,7 @@ func TestApplyLoadCHSeedsJoinedPersistentPartyBeforeFirstBattleSync(t *testing.T
 	}
 }
 
-func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testing.T) {
+func TestCh00CompiledHandlerFailsClosedAtUnimplementedNativeIntro(t *testing.T) {
 	c, err := campaign.Load(assetPath("assets/scenarios/campaign_full.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -1151,14 +1151,27 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 			g.dialog = nil
 			g.beatAdvance()
 		}
+		beforeUnits := 0
+		beforeStoryActors := len(g.storyActors)
+		if g.st != nil {
+			beforeUnits = len(g.st.Units)
+		}
 		g.tick(1)
 		if g.loadErr != "" {
-			t.Fatalf("compiled ch00 handler stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+			if g.beatIdx >= len(g.beats) || g.beats[g.beatIdx].Source != "0x3289b" {
+				t.Fatalf("compiled ch00 handler stopped at unexpected beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+			}
+			if (g.st != nil && len(g.st.Units) != beforeUnits) || len(g.storyActors) != beforeStoryActors {
+				t.Fatalf(
+					"native intro failure changed roster: units before=%d after=%v actors before=%d after=%d",
+					beforeUnits, g.st, beforeStoryActors, len(g.storyActors),
+				)
+			}
+			return
 		}
 	}
-	if g.camp.NodeID() != "battle_ch01" {
-		t.Fatalf("compiled ch00 handler did not reach battle_ch01: node=%q beat=%d/%d", g.camp.NodeID(), g.beatIdx, len(g.beats))
-	}
+	t.Fatal("尚未實作 0x32999 adapter 時，序章竟通過原版 intro")
+	/* 真正 indexed adapter 完成後，重新啟用下列端到端 handoff 驗證。
 	if g.st == nil || g.sc == nil {
 		t.Fatalf("battle handoff did not materialize state/scenario: st=%v sc=%v", g.st != nil, g.sc != nil)
 	}
@@ -1240,6 +1253,7 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 	if !g.acceptTownDeparturePrompt() {
 		t.Fatal("five-member early roster should skip 0x318ad after record confirmation")
 	}
+	*/
 }
 
 func TestChapter1PreLoadCHUsesFiveMemberJoinOrderAndSpawnFrontiers(t *testing.T) {
@@ -1402,10 +1416,10 @@ func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
 	}
 }
 
-func TestBeatSpawnIntroCarriesZeroRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
+func TestBeatSpawnIntroFailsClosedBeforeNativeGroupAppend(t *testing.T) {
 	gate := 0
 	g := newBeatTestGame(t, []campaign.Beat{{
-		Op: "spawn_intro", Group: 2, RawPlacementGate: &gate, Source: "0x3289b", Frames: 12,
+		Op: "spawn_intro", Group: 2, RawPlacementGate: &gate, Source: "0x3289b",
 	}})
 	active := &battle.Unit{
 		X: 1, Y: 1,
@@ -1432,11 +1446,11 @@ func TestBeatSpawnIntroCarriesZeroRawPlacementGateIntoNativeGroupAppend(t *testi
 		NativeCompositionEventBytes: make([]byte, 9),
 	}
 	g.beatAdvance()
-	if g.loadErr != "" {
-		t.Fatalf("native intro spawn failed: %s", g.loadErr)
+	if g.loadErr == "" {
+		t.Fatal("尚未實作的原版 0x32999 轉場未採失敗即關閉")
 	}
-	if len(g.st.Units) != 2 || g.st.Units[1].X != 1 || g.st.Units[1].Y != 2 || g.beatDelay != 12 {
-		t.Fatalf("gate=0 intro state units=%#v delay=%d", g.st.Units, g.beatDelay)
+	if len(g.st.Units) != 1 || g.st.Units[0] != active || g.beatDelay != 0 {
+		t.Fatalf("失敗前已變更狀態：units=%#v delay=%d", g.st.Units, g.beatDelay)
 	}
 }
 
@@ -1557,7 +1571,7 @@ func TestMap0ActingUsesPartyThenSpawnedRuntimeSlots(t *testing.T) {
 	}
 	g.storySpawned = map[int]bool{0: true}
 	g.beatAdvance()
-	g.tick(168) // ACTs=144 ticks plus two original 12-step spawn-intro loops.
+	g.tick(168) // legacy authored approximation: ACTs=144 ticks plus two 12-tick intro waits.
 	if g.loadErr != "" || len(g.storyActors) != 12 {
 		t.Fatalf("map0 acting sequence failed: err=%q actors=%d", g.loadErr, len(g.storyActors))
 	}
