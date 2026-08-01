@@ -2,7 +2,8 @@
 
 本專案以合法原版《炎龍騎士團 2：黃金城傳說》作為行為基準，保存 DOS
 程式的資料格式、介面與遊戲機制，並以 Go／Ebiten 建立可編輯、可擴充的
-潔淨室重製引擎。
+潔淨室重製引擎。《炎龍騎士團 2》是 1990 年代華文單機戰略角色扮演遊戲
+（SRPG）的代表作之一；本專案也希望為 1995 年的台灣遊戲留下可重現的技術紀錄。
 
 目前已有多個可操作、可比較的垂直切片，但**尚未達成 30 章原版等價通關**。
 原版程式與美術、文字、音樂等受著作權保護的資產不包含在本倉庫中；使用者
@@ -44,14 +45,79 @@
 架構、資料邊界與完成條件以
 [`56-fd2-remake-sdd.md`](docs/knowledge-base/56-fd2-remake-sdd.md) 為準。
 
+### 為台灣留一份技術紀念
+
+> **AFM — Animation File Manager Version 1.00　Copyright (C) 1993 Lo Yuan Tsung**
+
+這行留在原版動畫資料裡的署名，記錄了漢堂程式設計師自製工具的一角。本專案
+不只要讓遊戲重新運作，也要把破解出的每一項技術整理成保存品質的文件，記錄
+1995 年台灣團隊如何在 DOS 的限制下完成一款大型戰棋角色扮演遊戲：
+[`04` 原版工具鏈](docs/knowledge-base/04-original-toolchain.md)、
+[`05` 圖像壓縮](docs/knowledge-base/05-image-compression-format.md)、
+[`06` 動畫格式](docs/knowledge-base/06-animation-format.md)、
+[`07` XMIDI 音樂](docs/knowledge-base/07-music-xmidi-format.md)。
+
+## 1995 年怎麼做出這款遊戲
+
+[`15-how-fd2-was-made-1995.md`](docs/knowledge-base/15-how-fd2-was-made-1995.md)
+把原版工具鏈、資料架構、畫面、動畫、音樂、中文、戰鬥規則與敵方人工智慧
+（AI）串成一份完整紀錄：一支台灣團隊如何在 DOS、記憶體與音效卡各有限制的
+年代，做出《炎龍騎士團 2》。
+
+### DOS 上的中文是怎麼做出來的
+
+DOS 原生不能直接顯示中文。漢堂隨遊戲攜帶點陣字型，文字則以內部字模索引
+儲存：`FDTXT` 不是 Big5 文字檔，而是 `uint16` 字模索引序列，共 1016 條字串、
+約 5.8 萬字；`FDOTHER` 資源 #4 收錄 1824 個 16×16、1 位元平面（1bpp）字模，
+索引 0–35 是數字與英文字母，其後才是漢字。格式、控制碼與解碼證據見
+[`08` 文字與字型](docs/knowledge-base/08-text-and-font-format.md)及
+[`14` 文字控制碼](docs/knowledge-base/14-text-control-codes.md)。
+
+| 文字／字型解碼研究圖（非重製執行期截圖） | 原版自製字型的解碼字模表 |
+|---|---|
+| ![文字與字型解碼研究圖；非重製執行期截圖](docs/figures/dialogue.png) | ![原版自製字型的解碼字模表](docs/figures/font_atlas.png) |
+
+### 開場動畫：一個 1993 年的繪圖位元組碼虛擬機
+
+原版開場過場不是逐幀點陣圖。AFM 是一台只有 10 個運算碼的增量繪圖虛擬機：
+每幀只保存一小段位元組碼，在前一幀殘留畫面上更新調色盤或 VGA 像素，不清空
+整個畫面重畫。96 幀的金鎖動畫因此只需約 1 MB，而不是 96 個 64000 位元組的
+完整畫格陣列。
+
+```text
+每幀：[compSize u16][cmdCount u16][保留欄位 × 2]，後接 cmdCount 條指令
+運算碼 0–3：調色盤操作
+運算碼 4–9：VGA 畫面寫入
+```
+
+原版派發器位於 `0x36c9e`、跳躍表位於 `0x5276a`；播放器介面為
+`0x020421(index, delayMs, skippable)`。`0x3dc9f` 以忙等測速校準動畫延遲；目前
+尚未找到它的直接呼叫端，因此不把執行時機提升為已證實。這仍反映當年必須
+適應不同電腦速度的做法。重製端的純 Go 解碼器位於
+[`remake/internal/afm/`](remake/internal/afm/)，但不夾帶任何受著作權保護的原版
+畫格；格式證據見 [`39-ani-afm-format.md`](docs/knowledge-base/39-ani-afm-format.md)。
+
+### 音樂：兩種音源、兩種玩家記憶
+
+同一首 XMIDI 曲目在 Roland MT-32 與 Sound Blaster／AdLib 上會呈現不同音色。
+場景曲號不是靠聽曲風猜測，而是從 `play_bgm`（`0x25977`）的 32 處呼叫逐一追查；
+這項方法也推翻過兩個早期的曲目推定。Sound Blaster／AdLib 路線使用遊戲自帶的
+`SAMPLE.AD` 音色庫，也是原版預設音效卡與許多玩家記憶中的聲音；MT-32 則走
+另一套合成路線。兩者都由玩家自備合法原版檔案與所需 ROM 在本機渲染，本倉庫
+不散布音色庫或 ROM。詳見
+[`12` 音樂播放與場景](docs/knowledge-base/12-music-playback-and-scene.md)及
+[`16` 音訊合成](docs/knowledge-base/16-audio-synthesis-soundfont-mt32.md)；
+`SAMPLE.AD` 的檔案角色與限制另見
+[`36` 音效資料](docs/knowledge-base/36-sfx-audio-data.md)。
+
 ## 已建立的主要貢獻
 
 | 貢獻 | 可重現成果 | 深入閱讀 |
 |---|---|---|
 | 原版資產保存工具鏈 | 統一解包 `.DAT`，解析 RLE 圖像、FDTXT、16×16 中文字型、地圖、XMIDI、AFM 與 FIGANI；產物可由玩家自備原版重生 | [`01` 容器與資產](docs/knowledge-base/01-container-and-asset-formats.md)、[`07` XMIDI](docs/knowledge-base/07-music-xmidi-format.md) |
-| 繁體中文文字系統還原 | 將原版字模索引、控制碼、對話框與動態文字整理為可讀、可編輯資料，不把它誤認為 Big5 文字檔 | [`08` 文字與字型](docs/knowledge-base/08-text-and-font-format.md)、[`14` 控制碼](docs/knowledge-base/14-text-control-codes.md) |
+| 繁體中文文字系統還原 | 將原版字模索引、控制碼、對話框與動態文字整理為資料層中可讀、可編輯的內容，不把它誤認為 Big5 文字檔 | [`08` 文字與字型](docs/knowledge-base/08-text-and-font-format.md)、[`14` 控制碼](docs/knowledge-base/14-text-control-codes.md) |
 | 動畫與戰鬥演出解碼 | 建立 AFM 增量繪圖虛擬機及 FIGANI 幀解碼器，保存原始座標、調色盤與時序資料 | [`39` AFM](docs/knowledge-base/39-ani-afm-format.md)、[`35` 戰鬥演出](docs/knowledge-base/35-battle-animation-rendering.md) |
-| 遊戲機制反向工程 | 以版本雜湊綁定戰鬥規則、物品、事件處理器、敵方 AI、章節狀態與戰後路徑；撤回缺少寫入端／消費端的舊斷言 | [`11` 敵方 AI](docs/knowledge-base/11-enemy-ai.md)、[`27` 戰鬥規則](docs/knowledge-base/27-combat-rules-and-validation-checklist.md) |
+| 遊戲機制反向工程 | 以版本雜湊綁定已閉合的戰鬥規則切片、物品、事件處理器、敵方 AI、章節狀態與戰後路徑；撤回缺少寫入端／消費端的舊斷言 | [`11` 敵方 AI](docs/knowledge-base/11-enemy-ai.md)、[`27` 戰鬥規則](docs/knowledge-base/27-combat-rules-and-validation-checklist.md) |
 | 原版介面逐狀態重建 | 城鎮、商店、讀檔及部分戰鬥介面以原版 indexed 資源重建；多個 ch02 狀態已有整幀 RGB 相同對照 | [`57` 介面證據矩陣](docs/knowledge-base/57-ui-evidence-matrix.md) |
 | 可編輯戰役與持續隊伍 | 對話、事件、章節節點、商店／教會／整備與持續隊伍逐步脫離硬編碼；原生 `FD2.SAV` 四槽 LOAD 已能還原到具型別隊伍及城鎮／整備邊界，CONTINUE 目前戰鬥仍未接入 | [`29` 事件系統](docs/knowledge-base/29-remake-extensible-event-system.md)、[`23` 啟動與存檔流程](docs/knowledge-base/23-boot-title-and-scenario-flow.md) |
 
@@ -119,9 +185,13 @@ ch01 戰場目前已能由原始地圖、單位、前景與 HUD 資產合成。�
 Go／Ebiten 是目前唯一持續整合的重製引擎：
 
 ```bash
-docker run --rm --network none --memory 2g --cpus 2 --pids-limit 256 \
-  -v "$PWD/remake:/src" -w /src fd2-go-test-local \
-  go test ./...
+docker run --rm --network none --memory 3g --cpus 2 --pids-limit 384 \
+  --user "$(id -u):$(id -g)" -e HOME=/tmp -e GOCACHE=/tmp/go-cache \
+  -e GOMAXPROCS=1 -e GOFLAGS=-p=1 \
+  -v "$PWD:/src:ro" -w /src/remake fd2-go-test-local \
+  sh -c 'set -eu; trap "pkill -TERM Xvfb 2>/dev/null || true" EXIT INT TERM; \
+    timeout 900s xvfb-run -a -s "-screen 0 1280x1024x24" \
+    go test ./... -count=1'
 ```
 
 本機映像檔的建立方式與 Web、Linux、Windows 打包入口請看
@@ -130,7 +200,9 @@ docker run --rm --network none --memory 2g --cpus 2 --pids-limit 256 \
 
 ## 文件導航
 
-建議依下列順序閱讀：
+### 現況與工程入口
+
+建議先依下列順序閱讀：
 
 1. [`56-fd2-remake-sdd.md`](docs/knowledge-base/56-fd2-remake-sdd.md)：
    系統設計、證據分級、原版與重製的責任邊界。
@@ -147,6 +219,35 @@ docker run --rm --network none --memory 2g --cpus 2 --pids-limit 256 \
 
 早期設計、歷史反思或專題筆記若與原始位元組、執行期實驗或上述現況文件
 衝突，以較新的直接證據與勘誤為準。未知語意不會為了讓流程前進而猜測接入。
+
+### 技術保存專題
+
+知識庫不只是工程工作清單；其中 `04`–`11` 等文件也在保存「1995 年台灣怎麼
+做遊戲」的技術紀錄。完整目錄見 [`00-index.md`](docs/knowledge-base/00-index.md)，
+以下是依問題分類的入口：
+
+- **原版工具與資產格式**：[`01` 容器與資產](docs/knowledge-base/01-container-and-asset-formats.md)、
+  [`04` 原版工具鏈](docs/knowledge-base/04-original-toolchain.md)、
+  [`05` 圖像壓縮](docs/knowledge-base/05-image-compression-format.md)、
+  [`06` 動畫](docs/knowledge-base/06-animation-format.md)、
+  [`07` XMIDI](docs/knowledge-base/07-music-xmidi-format.md)、
+  [`08` 文字與字型](docs/knowledge-base/08-text-and-font-format.md)、
+  [`39` AFM](docs/knowledge-base/39-ani-afm-format.md)。
+- **遊戲邏輯與機制**：[`03` 執行檔與資料結構](docs/knowledge-base/03-exe-and-data-structures.md)、
+  [`09` 劇情與對話](docs/knowledge-base/09-story-and-dialogue.md)、
+  [`10` 精靈繪製與狀態](docs/knowledge-base/10-sprite-rendering-camp-and-state.md)、
+  [`11` 敵方 AI](docs/knowledge-base/11-enemy-ai.md)、
+  [`13` 戰鬥選單](docs/knowledge-base/13-battle-menu-system.md)、
+  [`14` 文字控制碼](docs/knowledge-base/14-text-control-codes.md)、
+  [`27` 戰鬥規則](docs/knowledge-base/27-combat-rules-and-validation-checklist.md)。
+- **引擎控制流與介面**：[`23` 啟動、標題與存檔](docs/knowledge-base/23-boot-title-and-scenario-flow.md)、
+  [`24` 呼叫圖分析](docs/knowledge-base/24-callgraph-analysis-log.md)、
+  [`35` 戰鬥演出](docs/knowledge-base/35-battle-animation-rendering.md)、
+  [`50` 過場腳本設計](docs/knowledge-base/50-cutscene-script-system-design.md)。
+- **重製設計與驗證**：[`29` 可擴充事件系統](docs/knowledge-base/29-remake-extensible-event-system.md)、
+  [`42` 差距稽核](docs/knowledge-base/42-re-vs-remake-gap-audit.md)、
+  [`56` 系統設計](docs/knowledge-base/56-fd2-remake-sdd.md)、
+  [`57` 介面證據矩陣](docs/knowledge-base/57-ui-evidence-matrix.md)。
 
 ## 倉庫結構
 
