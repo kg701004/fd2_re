@@ -76,3 +76,25 @@ func TestChapter3Turn3BattleEventBlocksTurnUntilOriginalSequenceCompletes(t *tes
 		t.Fatalf("sequence completion = run=%#v turn=%d poison=%d, want nil/4/1", g.battleEvent, st.Turn, st.Units[0].PoisonTurns)
 	}
 }
+
+func TestBattleEventNativeSpawnFailureDoesNotAdvanceTurnContinuation(t *testing.T) {
+	gate, eventID := 1, 3
+	st := &battle.State{Turn: 6}
+	sc := &battle.Scenario{RuntimeAppendGroups: true}
+	action := battle.Action{
+		Type: "spawn_group", Groups: []int{6}, NativeEventID: &eventID,
+		NativeSpawns: []battle.NativeSpawnCall{{
+			Group: 6, Via: "spawn_group", Source: "0x34397", RawPlacementGate: &gate,
+		}},
+	}
+	continued := false
+	g := &Game{st: st, sc: sc}
+	g.startBattleEvent([]battle.Action{action}, func() { continued = true })
+
+	if g.loadErr == "" || continued || st.Turn != 6 || g.battleEvent != nil {
+		t.Fatalf(
+			"失敗事件仍前進：err=%q continued=%v turn=%d run=%#v",
+			g.loadErr, continued, st.Turn, g.battleEvent,
+		)
+	}
+}

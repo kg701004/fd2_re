@@ -87,18 +87,29 @@ type When struct {
 
 // Action 動作(可擴充:加 type + execAction 加 case)。
 type Action struct {
-	Type           string  `json:"type"`
-	Groups         []int   `json:"groups,omitempty"`          // spawn_group 的波次
-	Camp           string  `json:"camp,omitempty"`            // 增援陣營(改為)
-	ActImmediately bool    `json:"act_immediately,omitempty"` // 增援當回合可動(青衫「立即行動」)
-	Speaker        int     `json:"speaker"`                   // dialogue 說話者(DATO 肖像 id;-1=旁白)
-	Text           string  `json:"text,omitempty"`            // dialogue 文本
-	Flag           string  `json:"flag,omitempty"`            // set_flag
-	Unit           string  `json:"unit,omitempty"`            // set_ai 目標
-	Mode           string  `json:"mode,omitempty"`            // set_ai 模式(berserk…)
-	CharID         int     `json:"char_id,omitempty"`         // join_party: permanent player identity
-	Grid           *[2]int `json:"grid,omitempty"`            // pan:原版 camera grid(col,row)，runtime 依地圖 tile 尺寸換 pixel
-	Ms             int     `json:"ms,omitempty"`              // delay:原版毫秒數
+	Type           string            `json:"type"`
+	Groups         []int             `json:"groups,omitempty"`          // spawn_group 的波次
+	NativeEventID  *int              `json:"native_event_id,omitempty"` // turn_events 的原版事件編號
+	NativeSpawns   []NativeSpawnCall `json:"native_spawns,omitempty"`   // 原版逐呼叫配置資料
+	Camp           string            `json:"camp,omitempty"`            // 增援陣營(改為)
+	ActImmediately bool              `json:"act_immediately,omitempty"` // 增援當回合可動(青衫「立即行動」)
+	Speaker        int               `json:"speaker"`                   // dialogue 說話者(DATO 肖像 id;-1=旁白)
+	Text           string            `json:"text,omitempty"`            // dialogue 文本
+	Flag           string            `json:"flag,omitempty"`            // set_flag
+	Unit           string            `json:"unit,omitempty"`            // set_ai 目標
+	Mode           string            `json:"mode,omitempty"`            // set_ai 模式(berserk…)
+	CharID         int               `json:"char_id,omitempty"`         // join_party: permanent player identity
+	Grid           *[2]int           `json:"grid,omitempty"`            // pan:原版 camera grid(col,row)，runtime 依地圖 tile 尺寸換 pixel
+	Ms             int               `json:"ms,omitempty"`              // delay:原版毫秒數
+}
+
+// NativeSpawnCall 保存全域事件處理器的一個確切呼叫點。Group 是該排程回合
+// 解析出的值；Source、Via 與 RawPlacementGate 直接來自 EXE，不從陣營或群組推測。
+type NativeSpawnCall struct {
+	Group            int    `json:"group"`
+	Via              string `json:"via"`
+	Source           string `json:"source"`
+	RawPlacementGate *int   `json:"raw_placement_gate"`
 }
 
 // DialogLine 一句對話(說話者肖像 + 文本),供 UI 畫頭像+嘴型+文字。
@@ -127,6 +138,35 @@ func LoadScenario(path string) (*Scenario, error) {
 		}
 		if member.NativeIdentity != nil && (*member.NativeIdentity < 0 || *member.NativeIdentity > 0xff) {
 			return nil, fmt.Errorf("scenario party member %d (%s) native_identity %d out of byte range", i, member.Name, *member.NativeIdentity)
+		}
+	}
+	for eventIndex, event := range sc.Events {
+		for actionIndex, action := range event.Do {
+			if len(action.NativeSpawns) == 0 {
+				continue
+			}
+			if action.Type != "spawn_group" || len(action.NativeSpawns) != len(action.Groups) {
+				return nil, fmt.Errorf(
+					"scenario event %d action %d has inconsistent native spawn calls",
+					eventIndex, actionIndex,
+				)
+			}
+			if action.NativeEventID == nil || *action.NativeEventID < 0 || *action.NativeEventID >= 90 {
+				return nil, fmt.Errorf(
+					"scenario event %d action %d lacks native event provenance",
+					eventIndex, actionIndex,
+				)
+			}
+			for i, call := range action.NativeSpawns {
+				if call.Group != action.Groups[i] || call.Source == "" ||
+					(call.Via != "spawn_group" && call.Via != "spawn_group_with_intro") ||
+					call.RawPlacementGate == nil || *call.RawPlacementGate < 0 || *call.RawPlacementGate > 0xff {
+					return nil, fmt.Errorf(
+						"scenario event %d action %d native spawn %d is invalid",
+						eventIndex, actionIndex, i,
+					)
+				}
+			}
 		}
 	}
 	return &sc, nil
@@ -263,6 +303,13 @@ func (w *When) match(st *State, ctxUnit string) bool {
 // ExecuteAction 執行單一狀態動作。pan/delay 由 UI runner 阻塞處理；
 // 回傳 (對話, true) 表示 runner 應停下並播放這句。
 func (sc *Scenario) ExecuteAction(st *State, a Action) (DialogLine, bool) {
+	dialogue, isDialogue, _ := sc.ExecuteActionChecked(st, a)
+	return dialogue, isDialogue
+}
+
+// ExecuteActionChecked 是正式執行路徑的錯誤回報邊界。上方相容包裝保留給舊的
+// 同步呼叫者；介面執行器使用本函式，避免原版增援資料錯誤被靜默忽略。
+func (sc *Scenario) ExecuteActionChecked(st *State, a Action) (DialogLine, bool, error) {
 	switch a.Type {
 	case "spawn_party": // 主角隊從隊伍名冊進場到部署格(doc 25 雙來源)
 		// The party constructor itself places members directly on the deployment
@@ -272,13 +319,38 @@ func (sc *Scenario) ExecuteAction(st *State, a Action) (DialogLine, bool) {
 		st.AppendNativeMapSelectorBatchOrLegacy(sc.PartyUnits(st.OwnDeploy))
 	case "spawn_group": // 增援登場(原版 turn_events;doc 25)
 		camp := campFrom(a.Camp)
-		for _, g := range a.Groups {
-			st.SpawnGroup(g, camp, a.Camp != "", a.ActImmediately)
+		if len(a.NativeSpawns) > 0 && sc.RuntimeAppendGroups {
+			if st == nil || len(st.Roster) == 0 {
+				return DialogLine{}, false, fmt.Errorf("native spawn requires a runtime roster")
+			}
+			for _, call := range a.NativeSpawns {
+				if call.RawPlacementGate == nil {
+					return DialogLine{}, false, fmt.Errorf("native spawn %s lacks raw placement gate", call.Source)
+				}
+				before := len(st.Units)
+				if _, err := st.AppendGroupWithNativePlacement(
+					call.Group, byte(*call.RawPlacementGate),
+				); err != nil {
+					return DialogLine{}, false, fmt.Errorf("native spawn %s: %w", call.Source, err)
+				}
+				for _, unit := range st.Units[before:] {
+					if a.Camp != "" {
+						unit.Camp = camp
+					}
+					unit.Acted = !a.ActImmediately
+				}
+			}
+		} else {
+			// 尚未遷移到 runtime_append_groups 的情境仍走明確標示的正規化
+			// 相容路徑。資料即使已帶原版欄位，本分支也不能作為忠實度證據。
+			for _, group := range a.Groups {
+				st.SpawnGroup(group, camp, a.Camp != "", a.ActImmediately)
+			}
 		}
 	case "join_party":
 		sc.pendingJoins = append(sc.pendingJoins, a.CharID)
 	case "dialogue":
-		return DialogLine{Speaker: a.Speaker, Text: a.Text}, true
+		return DialogLine{Speaker: a.Speaker, Text: a.Text}, true, nil
 	case "set_flag":
 		st.Flags[a.Flag] = true
 	case "set_ai":
@@ -287,7 +359,7 @@ func (sc *Scenario) ExecuteAction(st *State, a Action) (DialogLine, bool) {
 		// Keep the inert marker visible instead of claiming an AI transition.
 		st.Flags["ai_"+a.Unit+"_"+a.Mode] = true
 	}
-	return DialogLine{}, false
+	return DialogLine{}, false, nil
 }
 
 // TakePartyJoins transfers JOIN effects from battle-script execution to the

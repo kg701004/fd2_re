@@ -625,7 +625,16 @@
           "groups": [
             1
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 1,
+              "via": "spawn_group",
+              "source": "0x34f4e",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 38
         }
       ]
     }

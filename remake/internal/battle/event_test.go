@@ -1,8 +1,10 @@
 package battle
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 )
 
@@ -91,6 +93,130 @@ func TestLoadScenarioRejectsNativeIdentityOutsideByte(t *testing.T) {
 	}
 	if _, err := LoadScenario(path); err == nil {
 		t.Fatal("out-of-range native identity accepted")
+	}
+}
+
+func TestLoadScenarioRejectsIncompleteNativeSpawnCall(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad-native-spawn.json")
+	data := []byte(`{"events":[{"trigger":"on_turn_end","do":[{"type":"spawn_group","groups":[2],"native_event_id":15,"native_spawns":[{"group":2,"via":"spawn_group","source":"0x3464b"}]}]}]}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("缺少 raw_placement_gate 的原版增援呼叫被接受")
+	}
+}
+
+func TestLoadScenarioRejectsNativeEventOutsideGlobalTable(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bad-native-event.json")
+	data := []byte(`{"events":[{"trigger":"on_turn_end","do":[{"type":"spawn_group","groups":[2],"native_event_id":90,"native_spawns":[{"group":2,"via":"spawn_group","source":"0x3464b","raw_placement_gate":1}]}]}]}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("超出90項全域表的 native_event_id 被接受")
+	}
+}
+
+func TestGeneratedTurnSpawnsCarryExactNativeCallMetadata(t *testing.T) {
+	paths, err := filepath.Glob("../../assets/scenarios/ch*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var calls, actions int
+	var gateOne []string
+	for _, path := range paths {
+		sc, err := LoadScenario(path)
+		if err != nil {
+			t.Fatalf("%s: %v", path, err)
+		}
+		for _, event := range sc.Events {
+			for _, action := range event.Do {
+				if action.Type != "spawn_group" {
+					continue
+				}
+				actions++
+				if len(action.NativeSpawns) != len(action.Groups) {
+					t.Fatalf("%s/%s: groups=%v native=%v", filepath.Base(path), event.ID, action.Groups, action.NativeSpawns)
+				}
+				if action.NativeEventID == nil {
+					t.Fatalf("%s/%s: 缺少 native_event_id", filepath.Base(path), event.ID)
+				}
+				for _, call := range action.NativeSpawns {
+					calls++
+					if *call.RawPlacementGate == 1 {
+						gateOne = append(gateOne, fmt.Sprintf("%s:%d:%s", filepath.Base(path), call.Group, call.Source))
+					}
+				}
+			}
+		}
+	}
+	if actions != 46 || calls != 46 {
+		t.Fatalf("產生的增援覆蓋 actions/calls=%d/%d，預期 46/46", actions, calls)
+	}
+	sort.Strings(gateOne)
+	want := []string{
+		"ch01.json:6:0x34397",
+		"ch02.json:3:0x3444c",
+		"ch05.json:2:0x3464b",
+		"ch07.json:2:0x34945",
+		"ch12.json:2:0x34c95",
+		"ch13.json:2:0x34d91",
+	}
+	sort.Strings(want)
+	if fmt.Sprint(gateOne) != fmt.Sprint(want) {
+		t.Fatalf("gate=1 呼叫=%v，預期 %v", gateOne, want)
+	}
+}
+
+func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
+	gate := 1
+	active := &Unit{
+		X: 1, Y: 1,
+		NativeMapPresentation:    NativeMapPresentationState{X: 1, Y: 1},
+		HasNativeMapPresentation: true,
+		NativeRecordByte5:        0,
+		HasNativeRecordByte5:     true,
+		NativeRecordByte6:        2,
+		HasNativeRecordByte6:     true,
+	}
+	pending := &Unit{
+		Group:                   6,
+		MapSelectorKey:          3,
+		HasMapSelectorKey:       true,
+		NativeRecordByte5:       0,
+		HasNativeRecordByte5:    true,
+		NativeRecordByte6:       3,
+		HasNativeRecordByte6:    true,
+		NativePositionRecord:    NativePositionRecord{XWord: 1, YWord: 1},
+		HasNativePositionRecord: true,
+	}
+	st := &State{
+		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending},
+		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	sc := &Scenario{RuntimeAppendGroups: true}
+	eventID := 3
+	action := Action{Type: "spawn_group", Groups: []int{6}, NativeEventID: &eventID, NativeSpawns: []NativeSpawnCall{{
+		Group: 6, Via: "spawn_group", Source: "0x34397", RawPlacementGate: &gate,
+	}}}
+	if _, _, err := sc.ExecuteActionChecked(st, action); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Units) != 2 || st.Units[1] != pending || pending.X != 1 || pending.Y != 1 {
+		t.Fatalf("原版 gate=1 增援沒有落在直接座標：units=%#v", st.Units)
+	}
+}
+
+func TestExecuteActionCheckedFailsClosedWithoutRuntimeRoster(t *testing.T) {
+	gate := 1
+	sc := &Scenario{RuntimeAppendGroups: true}
+	eventID := 3
+	action := Action{Type: "spawn_group", Groups: []int{6}, NativeEventID: &eventID, NativeSpawns: []NativeSpawnCall{{
+		Group: 6, Via: "spawn_group", Source: "0x34397", RawPlacementGate: &gate,
+	}}}
+	if _, _, err := sc.ExecuteActionChecked(&State{}, action); err == nil {
+		t.Fatal("需要原版名冊的增援在名冊缺失時未採失敗即關閉")
 	}
 }
 
@@ -197,8 +323,25 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 	if got := st.PendingCount(Enemy); got != 6 {
 		t.Fatalf("pending enemies=%d, want scheduled group3 only", got)
 	}
-	if got := st.SpawnGroup(3, Ally, true, false); got != 6 || len(st.Units) != 27 {
-		t.Fatalf("turn3 spawn=%d runtime units=%d, want 6/27", got, len(st.Units))
+	st.Turn = 3
+	actions := sc.TriggerActions(st, "on_turn_end", "")
+	if len(actions) != 1 || actions[0].NativeEventID == nil || *actions[0].NativeEventID != 6 {
+		t.Fatalf("turn3 actions=%#v, want exact event6", actions)
+	}
+	if _, _, err := sc.ExecuteActionChecked(st, actions[0]); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Units) != 27 {
+		t.Fatalf("turn3 exact event6 runtime units=%d, want 27", len(st.Units))
+	}
+	for _, unit := range st.Units[21:] {
+		if unit.Group != 3 || unit.Camp != Ally || !unit.Acted {
+			t.Fatalf("turn3 exact event6 unit=%#v", unit)
+		}
+		if unit.X != int(byte(unit.NativePositionRecord.XWord)) ||
+			unit.Y != int(byte(unit.NativePositionRecord.YWord)) {
+			t.Fatalf("turn3 gate=1 未採原始 position row：unit=%#v", unit)
+		}
 	}
 	for slot, u := range st.Units {
 		if _, ok := st.NativeMapSpriteKey(u); !ok {

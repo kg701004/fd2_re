@@ -507,7 +507,16 @@
           "groups": [
             1
           ],
-          "camp": "ally"
+          "camp": "ally",
+          "native_spawns": [
+            {
+              "group": 1,
+              "via": "spawn_group",
+              "source": "0x34bee",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 32
         }
       ]
     }

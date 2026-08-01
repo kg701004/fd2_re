@@ -107,6 +107,7 @@ scenario stub(chNN.json,ch2-30 本輪新生成,見 build_scenario_stub()):
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -120,6 +121,7 @@ CHARACTERS_JSON = os.path.join(ROOT, "docs", "data", "exe_tables", "characters.j
 CHARACTER_DEFAULTS_JSON = os.path.join(ROOT, "docs", "data", "exe_tables", "character_defaults.json")
 GROWTH_JSON = os.path.join(ROOT, "docs", "data", "exe_tables", "growth.json")
 TURN_EVENTS_JSON = os.path.join(ROOT, "docs", "data", "turn_events.json")
+EVENT_ID_GROUPS_JSON = os.path.join(ROOT, "docs", "data", "event_id_groups.json")
 OUT_PATH = os.path.join(REMAKE, "assets", "scenarios", "campaign_full.json")
 
 # 戰鬥 BGM = 每章查表(反組譯 0x51e63,doc12 §戰鬥/商店 BGM;bgm-battle-shop 第15輪)。
@@ -411,10 +413,75 @@ def pick_deploy_cells(
 
 
 def load_turn_events(path: str) -> dict[int, list[dict]]:
-    """讀 turn_events.json,回傳 chapter -> turn_events[] (見 doc25 §6.1)。"""
+    """讀 turn schedule，並以 event handler 表補上逐 call-site spawn ABI。"""
     with open(path, encoding="utf-8") as f:
         rows = json.load(f)
+    with open(EVENT_ID_GROUPS_JSON, encoding="utf-8") as f:
+        event_handlers = json.load(f)
+    for row in rows:
+        for record in row["turn_events"]:
+            metadata = event_handlers.get(str(record["event_id"]))
+            if metadata is None:
+                raise ValueError(f"event {record['event_id']} missing handler metadata")
+            record["native_spawns"] = metadata["spawns"]
     return {row["chapter"]: row["turn_events"] for row in rows}
+
+
+def merge_native_spawn_metadata(scenario: dict, records: list[dict], source: str) -> None:
+    """把 schedule 對到 authored action；只補 ABI，不覆寫人工劇情內容。"""
+    spawn_turns: dict[int, list[int]] = {}
+    for record in records:
+        if record.get("groups"):
+            spawn_turns.setdefault(record["turn"], []).append(record["event_id"])
+    ambiguous = {turn: ids for turn, ids in spawn_turns.items() if len(ids) > 1}
+    if ambiguous:
+        raise ValueError(f"{source}: 同回合多個 spawn schedule 無法安全合併: {ambiguous}")
+
+    for record in records:
+        groups = record.get("groups", [])
+        if not groups:
+            continue
+        if groups == ["$turn_counter[0x53bef]"]:
+            resolved = [record["turn"]]
+        elif all(isinstance(group, int) for group in groups):
+            resolved = list(groups)
+        else:
+            continue
+        metadata = record.get("native_spawns", [])
+        if len(metadata) != len(resolved):
+            raise ValueError(
+                f"{source}: event {record['event_id']} group/native call count mismatch"
+            )
+        calls = [{
+            "group": group,
+            "via": native["via"],
+            "source": native["source"],
+            "raw_placement_gate": native["raw_placement_gate"],
+        } for group, native in zip(resolved, metadata)]
+
+        actions = []
+        for event in scenario.get("events", []):
+            if event.get("trigger") != "on_turn_end" or event.get("when", {}).get("turn") != record["turn"]:
+                continue
+            actions.extend(action for action in event.get("do", []) if action.get("type") == "spawn_group")
+        offset = 0
+        for action in actions:
+            count = len(action.get("groups", []))
+            expected = calls[offset:offset + count]
+            if [call["group"] for call in expected] != action.get("groups", []):
+                continue
+            prior = action.get("native_event_id")
+            if prior is not None and prior != record["event_id"]:
+                raise ValueError(
+                    f"{source}: action 已綁 event {prior}，不可改綁 {record['event_id']}"
+                )
+            action["native_event_id"] = record["event_id"]
+            action["native_spawns"] = expected
+            offset += count
+        if offset != len(calls):
+            raise ValueError(
+                f"{source}: event {record['event_id']}@T{record['turn']} authored spawn order drift"
+            )
 
 
 def apply_reinforcements(
@@ -439,7 +506,7 @@ def apply_reinforcements(
       - 全部有效記錄套用後 initial_groups 會變空 → 整章退回列冊(維持 v2 全開安全預設)。
     """
     skipped: list[str] = []
-    candidates: list[tuple[int, int, str, list[int]]] = []  # turn, event_id, camp, groups
+    candidates: list[tuple[int, int, str, list[dict]]] = []
 
     for rec in records:
         groups_raw = rec["groups"]
@@ -460,12 +527,38 @@ def apply_reinforcements(
                 f"ch{cid}:event{event_id}@T{turn} groups={resolved}(含 map 不存在的 group{missing},整筆退回列冊)"
             )
             continue
-        candidates.append((turn, event_id, camp, resolved))
+        native_spawns = rec.get("native_spawns", [])
+        if len(native_spawns) != len(resolved):
+            skipped.append(
+                f"ch{cid}:event{event_id}@T{turn} groups={resolved} 與 native call 數"
+                f" {len(native_spawns)} 不符，整筆退回列冊"
+            )
+            continue
+        calls = []
+        for group, source in zip(resolved, native_spawns):
+            gate = source.get("raw_placement_gate")
+            if (source.get("via") not in ("spawn_group", "spawn_group_with_intro") or
+                    not isinstance(source.get("source"), str) or
+                    not isinstance(gate, int) or not 0 <= gate <= 0xff):
+                calls = []
+                break
+            calls.append({
+                "group": group,
+                "via": source["via"],
+                "source": source["source"],
+                "raw_placement_gate": gate,
+            })
+        if len(calls) != len(resolved):
+            skipped.append(
+                f"ch{cid}:event{event_id}@T{turn} native spawn metadata 不完整，整筆退回列冊"
+            )
+            continue
+        candidates.append((turn, event_id, camp, calls))
 
     if not candidates:
         return 0, skipped
 
-    reinforce_groups = {g for _, _, _, gs in candidates for g in gs}
+    reinforce_groups = {call["group"] for _, _, _, calls in candidates for call in calls}
     remaining_initial = [g for g in scenario["initial_groups"] if g not in reinforce_groups]
     if scenario["initial_groups"] and not remaining_initial:
         skipped.append(
@@ -475,14 +568,20 @@ def apply_reinforcements(
         return 0, skipped
 
     scenario["initial_groups"] = remaining_initial
-    for turn, event_id, camp, gs in candidates:
+    for turn, event_id, camp, calls in candidates:
         scenario["events"].append(
             {
                 "id": f"reinforce_ch{cid}_e{event_id}_t{turn}",
                 "trigger": "on_turn_end",
                 "when": {"turn": turn},
                 "once": True,
-                "do": [{"type": "spawn_group", "groups": sorted(gs), "camp": camp}],
+                "do": [{
+                    "type": "spawn_group",
+                    "groups": [call["group"] for call in calls],
+                    "native_event_id": event_id,
+                    "native_spawns": calls,
+                    "camp": camp,
+                }],
             }
         )
     return len(candidates), skipped
@@ -578,6 +677,7 @@ def build_campaign(
                 for field in ("inventory", "inventory_slots"):
                     if field not in member and field in generated:
                         member[field] = generated[field]
+            merge_native_spawn_metadata(authored, turn_events_by_ch.get(c, []), ch01_path)
             with open(ch01_path, "w", encoding="utf-8") as f:
                 json.dump(authored, f, ensure_ascii=False, indent=2)
                 f.write("\n")
@@ -609,6 +709,7 @@ def build_campaign(
                         if field not in member and field in generated:
                             member[field] = generated[field]
                 scenario = authored
+            merge_native_spawn_metadata(scenario, turn_events_by_ch.get(c, []), out_scn)
             with open(out_scn, "w", encoding="utf-8") as f:
                 json.dump(scenario, f, ensure_ascii=False, indent=2)
                 f.write("\n")
@@ -987,6 +1088,13 @@ def validate(campaign: dict) -> list[str]:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="重生 FD2 戰役候選骨架與逐章情境資料")
+    parser.add_argument(
+        "--scenarios-only",
+        action="store_true",
+        help="只更新逐章情境；保留已人工整合且較新版本的 campaign_full.json",
+    )
+    args = parser.parse_args()
     rows = parse_doc28(DOC28)
     shops_by_ch = load_shops_by_chapter(SHOPS_JSON)
     characters_by_name = load_characters(CHARACTERS_JSON, CHARACTER_DEFAULTS_JSON)
@@ -996,10 +1104,15 @@ def main():
         rows, shops_by_ch, characters_by_name, growth_by_idx, turn_events_by_ch
     )
 
-    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(campaign, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    if not args.scenarios_only:
+        os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
+        with open(OUT_PATH, "w", encoding="utf-8") as f:
+            # 首頁節點圖歷史上使用一格縮排；維持穩定格式，避免每次重生都產生
+            # 與資料內容無關的萬行差異。
+            json.dump(campaign, f, ensure_ascii=False, indent=1)
+            f.write("\n")
+    else:
+        print(f"保留 {OUT_PATH}（--scenarios-only）")
 
     n_nodes = len(campaign["nodes"])
     n_battle = sum(1 for n in campaign["nodes"].values() if n["type"] == "battle")

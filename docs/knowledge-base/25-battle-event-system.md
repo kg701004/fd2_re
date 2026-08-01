@@ -143,7 +143,7 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | 原語 | linear | 作用 |
 |---|---|---|
 | `spawn_group(group_id)` | `0x10b4e` | 掃 FDFIELD 控制段 units 陣列(`[0x53a55]+0x83 + k*0x1a`,stride 26B=FDFIELD 單位記錄大小,欄位 `+0x15`=b21=group)找 `unit.group==group_id` 者啟用(offset `0x83`=3+48+32+48,正好是 header+turn_events+保留+chests,對齊 `parse_field.py` 的 units 起點)。[驗] |
-| `spawn_group_with_intro(group_id)` | `0x32999` | 先繪 portrait(`0x51a4d`)+ 對話文字,再內部呼叫 `0x10b4e(group_id)`。用於敵方頭目類「先喊話再出場」。[驗] |
+| `spawn_group_with_intro(group_id)` | `0x32999` | 先以 `0x111BA` 準備頭像並呼叫 `0x1366A` 播 acting（不是已證實的對話文字），再內部呼叫 `0x10B4E(group_id)`；最後依攝影機視窗逐一 reveal 新單位並 `0x11EB0` present。[驗] |
 
 `group_id` 引數**通常是 handler 裡的字面常數**(如 event_id0 呼叫 `push 3;call 0x10b4e` 和 `push 7;call 0x10b4e` → 兩個 group);
 少數 handler(event_id 27/54/57)用**動態值 `[0x53bef]`(目前回合數本身)當 group_id**——對應 `turn_events.json` 中同一
@@ -155,6 +155,13 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 輸出同時保存 FDFIELD 未直接引用的 58..89，避免再把全域事件表誤當成
 turn-events-only 表。無 spawn 呼叫只能證明該 handler 未呼叫兩個已知
 spawn 原語，不足以命名成純對話、人工智慧或目標判定。[驗]
+
+2026-08-01 的 runtime bridge 將45筆可解析 schedule 降階為46個可編輯
+`spawn_group` action（event 0 的兩次 call 分開保留），每個 action 都帶
+`native_event_id`，每次 call 都帶 source、via 與 `raw_placement_gate`。
+這關閉的是事件來源與配置前綴；`spawn_group_with_intro` 的 acting／reveal／
+present 尚未接入 turn-event action runner，不能只因單位已出現在正確座標就
+宣稱整個 wrapper 已還原。[部分驗]
 
 ### 6.2 格子事件 selector：`0x13A44` 與控制段 16×2 表 [驗]
 

@@ -2669,10 +2669,31 @@ occupancy writer 與逐列 append 後的新占用，再一次 materialize group�
 失敗時 roster／units 不變。沒有 raw 欄位的擴充戰役 authored beat 才保留
 明示的 normalized compatibility path。
 
-這只關閉 handler 的 gate 選擇、配置前綴與可編輯資料傳遞；global turn-event
-scenario 尚未把 metadata 降階至 production action，`0x10C50` 的完整 table
-projection、inventory 初始化及 `0x1B750` equipment recompute 也未完成。
-因此 `future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。
+global turn-event 現也完成可編輯資料與正式執行端的第一段接線：45 筆可解析
+schedule 產生46個 `spawn_group` action（event 0 的 groups 3、7 因人工演出拆成
+兩個 action），全部保存 `native_event_id`，並逐 call 保存 source、via 與
+`raw_placement_gate`。排程可達的六筆 gate=1 精確為 ch01/event3、ch02/event6、
+ch05/event15、ch07/event25、ch12/event35、ch13/event7；event37 的兩筆 gate=1
+不在 `turn_events.json`，因此不能假造進任一關卡。產生器遇到同章同回合多個
+spawn schedule 或既有 action 綁定不同 event id 時直接拒絕合併。
+
+正式介面執行器改用有錯誤回傳的 `ExecuteActionChecked`。只有
+`runtime_append_groups` 情境且具有完整 runtime roster 時，才逐 call 呼叫
+`AppendGroupWithNativePlacement`；缺 roster 會失敗即關閉。尚未遷移的情境仍走
+明示的正規化相容路徑（normalized compatibility path），不能算原版忠實度證據。
+版本化 ch02 的 turn3/event6 已由真實 scenario action 驗證六名 group3 友軍
+採 gate=1 的六筆原始位置列（position row）；錯誤路徑不呼叫回合完成回呼
+（continuation），
+因此不會在漏生增援後仍偷偷前進回合。
+`spawn_group_with_intro` 目前只復用精確配置，尚未在這條 action 路徑重現
+wrapper 的 acting／reveal／present。`0x10C50` 的完整 table projection、
+inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
+`future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。
+
+`gen_campaign.py` 的總戰役拓撲仍落後人工閉合的權威
+`campaign_full.json`；本輪實測直接重生會把299節點降成293並遺失 handler／
+介面／戰後路徑欄位。新增 `--scenarios-only` 供安全重生逐章情境，且以內容雜湊
+回歸證明不改寫總表；未完成拓撲保真合併前，不可用預設模式覆蓋權威總表。
 直接證據見
 [`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
 與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。

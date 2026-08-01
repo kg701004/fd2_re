@@ -236,7 +236,16 @@
           "groups": [
             3
           ],
-          "camp": "ally"
+          "camp": "ally",
+          "native_spawns": [
+            {
+              "group": 3,
+              "via": "spawn_group",
+              "source": "0x3444c",
+              "raw_placement_gate": 1
+            }
+          ],
+          "native_event_id": 6
         }
       ]
     }

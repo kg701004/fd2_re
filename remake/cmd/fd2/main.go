@@ -7337,11 +7337,7 @@ func (g *Game) startBattleEvent(actions []battle.Action, then func()) {
 
 func (g *Game) finishBattleEventWithError(message string) {
 	g.loadErr = "battle event: " + message
-	run := g.battleEvent
 	g.battleEvent, g.battleEventDelay, g.camPan = nil, 0, nil
-	if run != nil && run.then != nil {
-		run.then()
-	}
 }
 
 func (g *Game) advanceBattleEvent() {
@@ -7380,7 +7376,11 @@ func (g *Game) advanceBattleEvent() {
 			g.battleEventDelay = frames
 			return
 		default:
-			dialogue, isDialogue := g.sc.ExecuteAction(g.st, action)
+			dialogue, isDialogue, err := g.sc.ExecuteActionChecked(g.st, action)
+			if err != nil {
+				g.finishBattleEventWithError(err.Error())
+				return
+			}
 			g.applyScenarioPartyJoins()
 			if isDialogue {
 				g.dialog = []battle.DialogLine{dialogue}

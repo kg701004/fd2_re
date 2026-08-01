@@ -2766,11 +2766,41 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   occupancy writer 與逐列新占用，錯誤時不改 roster／units；成功才依原
   FDFIELD row order append。campaign/battle Go regression 與 `cmd/fd2`
   Xvfb regression 通過。
-- 本輪只接 handler path。global turn-event scenario action 尚未攜帶
-  source/via/gate，完整 `0x10C50` table/inventory projection 與
-  `0x1B750` recompute 也仍未完成；`future_group_constructor` 與正式
+- 此提交當時只接 handler path；global turn-event scenario action 在下方
+  「global turn-event 配置來源接入 production action」批次才補上
+  source/via/gate。完整 `0x10C50` table/inventory projection 與
+  `0x1B750` recompute 仍未完成；`future_group_constructor` 與正式
   CONTINUE 保持失敗即關閉。
 - 發現既有 `docs/data/event_id_groups.json` 是 root-owned；只針對該檔
   替換後修回目前 UID/GID。專案與 `~/.codex/AGENTS.md` 已新增規則：可寫
   容器須明示目前 UID/GID、寫前檢查目標 ownership，歷史 root-owned 只能
   狹義修復，禁止對 repository／HOME 做遞迴 `chown`。
+
+## 2026-08-01：global turn-event 配置來源接入 production action
+
+- `gen_campaign.py` 現把45筆可解析 schedule 合併為46個 editable
+  `spawn_group` action；ch01/event0 的 group 3、7 因人工演出拆成兩個 action，
+  仍保留同一 `native_event_id=0` 與原 call order。46/46 action 都有 event id，
+  46/46 call 都有 source/via/`raw_placement_gate`。排程可達的 gate=1 只有
+  ch01/e3、ch02/e6、ch05/e15、ch07/e25、ch12/e35、ch13/e7；event37 未在
+  turn schedule，沒有猜測性塞入關卡。
+- 人工 scenario 合併遇同一回合多個 spawn schedule 或既有 action 已綁不同
+  event id 時失敗即關閉。新增 Python 回歸固定 ch01 split order、歧義拒絕與
+  禁止改綁；Go loader 要求完整 event provenance，並固定46 actions／六筆
+  gate=1 集合。
+- `cmd/fd2` battle-event runner 改用 `ExecuteActionChecked`。具
+  `runtime_append_groups` 與完整 roster 時逐 call 執行
+  `AppendGroupWithNativePlacement`；缺 roster 直接回報錯誤，不靜默退回。
+  ch02 turn3/event6 的版本化 action 已驗證六名 group3 友軍逐筆採 gate=1
+  原始位置列（position row）；錯誤時不呼叫回合完成回呼（continuation），
+  不會漏生後仍前進。尚未遷移情境維持明示的正規化相容路徑
+  （normalized compatibility path）；
+  `spawn_group_with_intro` 的 acting/reveal/present、完整 table/inventory
+  projection 與 equipment recompute 仍未接，不能宣稱 constructor 完成。
+- 再次實測 `gen_campaign.py` 預設總表輸出會把權威 `campaign_full.json`
+  由299節點降回293並遺失已整合欄位。本輪已精準恢復權威檔；新增
+  `--scenarios-only`，回歸以相同 git blob hash 證明重生逐章資料不改總表。
+- 依使用者指定的另一專案經驗，專案與 `~/.codex/AGENTS.md` 新增 IDA
+  非破壞性註記規則：原始名稱／位址／偏移必須保留，語意只能附加，且每項
+  語意都要帶已證實／強推論／假說／未知與來源；工具內改名不能取代 raw
+  bytes、xref 及讀寫端證據。

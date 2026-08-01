@@ -433,7 +433,16 @@
           "groups": [
             2
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 2,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     },
@@ -450,7 +459,16 @@
           "groups": [
             3
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 3,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     },
@@ -467,7 +485,16 @@
           "groups": [
             4
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 4,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     },
@@ -484,7 +511,16 @@
           "groups": [
             5
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 5,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     },
@@ -501,7 +537,16 @@
           "groups": [
             6
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 6,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     },
@@ -518,7 +563,16 @@
           "groups": [
             7
           ],
-          "camp": "enemy"
+          "camp": "enemy",
+          "native_spawns": [
+            {
+              "group": 7,
+              "via": "spawn_group",
+              "source": "0x349ff",
+              "raw_placement_gate": 0
+            }
+          ],
+          "native_event_id": 27
         }
       ]
     }

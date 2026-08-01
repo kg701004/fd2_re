@@ -112,7 +112,11 @@ triple、未讀的 `b3/b20/b25`，以及 b1-selected constructor record。
 recompute 與完整 constructor transaction 仍未接；但 handler path 已以
 `raw_placement_gate` 保存逐 call-site byte，並用
 `AppendGroupWithNativePlacement` 接上 position／occupancy／row-order append
-前綴。global turn-event action lowering 尚未接。直接指令見
+前綴。global turn-event 的45筆可解析 schedule 也已降階為46個 editable
+actions，保存 `native_event_id` 與逐 call source/via/gate；只有具完整 runtime
+roster 的 `runtime_append_groups` 情境走相同精確配置，缺資料即失敗即關閉。
+未遷移情境的正規化分支以及 `spawn_group_with_intro` 尚缺的 acting/reveal/
+present 都不得提升為原版等價。直接指令見
 [`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
 與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
 

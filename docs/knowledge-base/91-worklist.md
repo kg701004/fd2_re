@@ -1699,9 +1699,18 @@
     source/via/`raw_placement_gate`，缺欄位的原版 handler fail-closed。
     `AppendGroupWithNativePlacement` 已把 handler Beat 接到 exact gate、position
     row、逐列 occupancy 與 group append，且 batch preflight 失敗不改 roster／
-    units；runtime Xvfb regression 通過。仍缺 global turn-event action lowering、
-    `0x10C50` 完整 table/inventory projection 與 `0x1B750` equipment recompute，
-    owner 維持 fail-closed
+    units；runtime Xvfb regression 通過。global turn-event 的45筆 schedule 現
+    產生46個 editable actions，全部保存 `native_event_id` 與逐 call
+    source/via/gate；排程內六筆 gate=1 固定。正式 runner 對
+    `runtime_append_groups` 逐 call 走 exact placement，缺 roster 失敗即關閉；
+    未遷移情境仍是正規化相容（normalized compatibility），不是忠實度證據。
+    產生器對同回合
+    多 schedule／event 改綁拒絕合併，`--scenarios-only` 可避免舊生成拓撲覆蓋
+    權威 `campaign_full.json`。ch02 turn3/event6 的版本化 action 已驗證六名
+    group3 友軍採 gate=1 原始位置；錯誤不再呼叫回合完成回呼（continuation）。
+    仍缺 `spawn_group_with_intro` 的 acting/reveal/
+    present、`0x10C50` 完整 table/inventory projection 與 `0x1B750` equipment
+    recompute，owner 維持 fail-closed
     → `fd2_future_group_constructor_capstone.txt`、
       `fd2_future_group_raw_gate_ida.txt`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
