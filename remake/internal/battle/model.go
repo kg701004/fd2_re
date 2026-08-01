@@ -507,8 +507,12 @@ type State struct {
 	// SPAWN calls append their group without reserving slots ahead of time.
 	Roster        []*Unit
 	PendingGroups map[int]bool
-	OwnDeploy     []Cell // 我方可部署格
-	Turn          int    // 回合數(無上限,doc 27;只由劇本事件限制)
+	// nativeFutureItemRows is the immutable, explicitly bounded 0x4e56c row
+	// prefix used by 0x10c50→0x1b750. It is bound by the application layer and
+	// never inferred from normalized item statistics.
+	nativeFutureItemRows []byte
+	OwnDeploy            []Cell // 我方可部署格
+	Turn                 int    // 回合數(無上限,doc 27;只由劇本事件限制)
 	// NativeRoundCounter preserves executable global [0x53bef], incremented at
 	// the native turn-advance boundary (0x1a5b9), apart from normalized Turn.
 	NativeRoundCounter          int             `json:"native_round_counter,omitempty"`
@@ -554,6 +558,18 @@ type State struct {
 	OpenedTreasure map[int]bool
 	// 來源:tools/export_engine_assets.py 依地形控制表(doc01 §5)換算,由 Load 讀同目錄
 	// map.json 的 "cost" 陣列自動接上(worklist 第 8 輪「地形屬性接線」)。
+}
+
+// BindNativeFutureItemRows supplies the raw item-effect row prefix required
+// by future-group construction. A private copy prevents UI lifecycle buffers
+// or callers from changing an in-progress constructor transaction.
+func (s *State) BindNativeFutureItemRows(rows []byte) error {
+	if s == nil || len(rows) == 0 || len(rows)%NativeItemEffectRowSize != 0 ||
+		len(rows)/NativeItemEffectRowSize > 0x100 {
+		return fmt.Errorf("native future item rows: invalid byte length %d", len(rows))
+	}
+	s.nativeFutureItemRows = append([]byte(nil), rows...)
+	return nil
 }
 
 // Cell 格子座標。
@@ -1322,22 +1338,29 @@ func (s *State) AppendGroup(group int) int {
 	return len(batch)
 }
 
-// AppendGroupWithNativePlacement applies the proven 0x10B4E→0x10C50 group
-// order and per-call [0x53AFA] placement branch before using the existing
-// selector/table compatibility constructor. Placement is fully preflighted:
-// a missing six-byte position row, composition grid, or raw runtime record
-// leaves Roster and Units unchanged.
-//
-// This closes the native placement prefix only. AppendGroup still documents
-// the constructor fields which have not yet been projected by the remake.
+// AppendGroupWithNativePlacement atomically applies the proven
+// 0x10B4E→0x10C50 transaction represented by the typed remake: row order,
+// per-call [0x53AFA] placement, table-derived base fields, constructor
+// inventory cells, 0x1B750 effective-stat recomputation and 0x11019 selector
+// allocation. Fields without a typed consumer remain raw provenance; this is
+// not a claim of byte-identical 0x50-byte record storage.
 func (s *State) AppendGroupWithNativePlacement(group int, rawGate byte) (int, error) {
 	if s == nil || len(s.Roster) == 0 {
 		return 0, fmt.Errorf("native future group %d: runtime roster unavailable", group)
 	}
+	if len(s.nativeFutureItemRows) == 0 {
+		return 0, fmt.Errorf("native future group %d: item effect rows unavailable", group)
+	}
+	if s.NativeMapSelectorError != nil || (len(s.Units) != 0 && s.NativeMapSelectorCache == nil) {
+		return 0, fmt.Errorf("native future group %d: selector state unavailable", group)
+	}
 	batch := make([]*Unit, 0)
+	remaining := make([]*Unit, 0, len(s.Roster))
 	for _, unit := range s.Roster {
 		if unit != nil && unit.Group == group {
 			batch = append(batch, unit)
+		} else {
+			remaining = append(remaining, unit)
 		}
 	}
 	if len(batch) == 0 {
@@ -1345,7 +1368,7 @@ func (s *State) AppendGroupWithNativePlacement(group int, rawGate byte) (int, er
 	}
 
 	prospective := append([]*Unit(nil), s.Units...)
-	placements := make([]Cell, len(batch))
+	prepared := make([]*Unit, 0, len(batch))
 	for i, unit := range batch {
 		if !unit.HasNativePositionRecord {
 			return 0, fmt.Errorf(
@@ -1360,9 +1383,16 @@ func (s *State) AppendGroupWithNativePlacement(group int, rawGate byte) (int, er
 		if err != nil {
 			return 0, fmt.Errorf("native future group %d row %d: %w", group, i, err)
 		}
-		placements[i] = cell
 		shadow := *unit
-		if !shadow.SetMapPlacement(cell.X, cell.Y, unit.Dir) {
+		shadow.Inventory = append([]int(nil), unit.Inventory...)
+		shadow.Equipped = append([]bool(nil), unit.Equipped...)
+		shadow.InventorySlots = append([]int(nil), unit.InventorySlots...)
+		shadow.NativeInventoryFlags = append([]int(nil), unit.NativeInventoryFlags...)
+		shadow.Spells = append([]int(nil), unit.Spells...)
+		if err := MaterializeNativeFutureConstructor(&shadow, s.nativeFutureItemRows); err != nil {
+			return 0, fmt.Errorf("native future group %d row %d: %w", group, i, err)
+		}
+		if !shadow.SetMapPlacement(cell.X, cell.Y, 0) {
 			return 0, fmt.Errorf("native future group %d row %d: invalid placement", group, i)
 		}
 		// The next row observes this just-constructed runtime record through
@@ -1371,24 +1401,33 @@ func (s *State) AppendGroupWithNativePlacement(group int, rawGate byte) (int, er
 		if err := shadow.MaterializeNativeMapPresentation(); err != nil {
 			return 0, fmt.Errorf("native future group %d row %d: %w", group, i, err)
 		}
+		shadow.OnField = true
+		prepared = append(prepared, &shadow)
 		prospective = append(prospective, &shadow)
 	}
 
-	appended := s.AppendGroup(group)
-	if appended != len(batch) {
-		return 0, fmt.Errorf(
-			"native future group %d: appended %d rows after preflighting %d",
-			group, appended, len(batch),
-		)
+	candidate := *s
+	candidate.Units = append([]*Unit(nil), s.Units...)
+	candidate.Roster = remaining
+	if s.NativeMapSelectorCache != nil {
+		candidate.NativeMapSelectorCache = s.NativeMapSelectorCache.Clone()
 	}
-	start := len(s.Units) - appended
-	for i, cell := range placements {
-		unit := s.Units[start+i]
-		if !unit.SetMapPlacement(cell.X, cell.Y, unit.Dir) {
-			return 0, fmt.Errorf("native future group %d row %d: placement commit failed", group, i)
-		}
+	if err := candidate.AppendNativeMapSelectorBatch(prepared); err != nil {
+		return 0, fmt.Errorf("native future group %d selector commit: %w", group, err)
 	}
-	return appended, nil
+
+	s.Units = candidate.Units
+	s.Roster = candidate.Roster
+	s.NativeMapSelectorCache = candidate.NativeMapSelectorCache
+	s.NativeMapSelectorError = nil
+	s.NativeMapCycleState = candidate.NativeMapCycleState
+	s.HasNativeMapCycleState = candidate.HasNativeMapCycleState
+	s.NativeTerrainPhaseState = candidate.NativeTerrainPhaseState
+	s.HasNativeTerrainPhaseState = candidate.HasNativeTerrainPhaseState
+	s.NativeTerrainFlipState = candidate.NativeTerrainFlipState
+	s.NativeUnitPixelShiftState = candidate.NativeUnitPixelShiftState
+	s.HasNativeMapBinaryTimingState = candidate.HasNativeMapBinaryTimingState
+	return len(prepared), nil
 }
 
 // SpawnGroup 讓既有重製劇本的 group 登場，可另行覆寫陣營與本回合行動狀態。

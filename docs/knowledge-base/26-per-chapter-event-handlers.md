@@ -108,8 +108,10 @@ position resource 的 row stride 是6；`0x10C85..0x10C9F` 以 unit row index
 triple、未讀的 `b3/b20/b25`，以及 b1-selected constructor record。
 `NativeFutureGroupPlacement` 已轉寫 placement prefix；
 `DecodeNativeFutureConstructorBase` 已轉寫兩條 table 分支並以33圖
-1,885筆 unit record 核對 race/class/HP/MP。`0x1B750` effective-stat
-recompute 與完整 constructor transaction 仍未接；但 handler path 已以
+1,885筆 unit record 核對 race/class/HP/MP。合法 IDA 與 Capstone 進一步閉合
+`0x1B750` 的八格裝備、`+0x22/+0x23/+0x24` modifier、binary64 1.15 與 x87
+朝零捨入；`MaterializeNativeFutureConstructor` 現已把 table、inventory 與
+effective-stat 重算原子接進 future-group append。handler path 另以
 `raw_placement_gate` 保存逐 call-site byte，並用
 `AppendGroupWithNativePlacement` 接上 position／occupancy／row-order append
 前綴。global turn-event 的45筆可解析 schedule 也已降階為46個 editable

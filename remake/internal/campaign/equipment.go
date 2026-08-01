@@ -44,10 +44,10 @@ func LoadItemStats(path string) (map[int]ItemStats, error) {
 	return out, nil
 }
 
-// RecomputeEquipment mirrors EXE 0x1b750/0x1145a: start at the persistent
-// base values and add only slots whose first byte has the equipped bit. The
-// current scenario JSON already contains effective values, so those are
-// intentionally captured as Base* when PartyUnits is materialized.
+// RecomputeEquipment is the editable/normalized equipment projection. It is
+// not byte-equivalent to 0x1b750 or 0x1145a: it also owns MV and attack range,
+// accepts a typed map, and skips missing rows. Raw native transactions use
+// battle.ApplyNativeRuntimeEquipmentRecalc or ApplyNativeEquipmentRecalc.
 func RecomputeEquipment(u *battle.Unit, stats map[int]ItemStats) {
 	if u == nil {
 		return
@@ -80,11 +80,10 @@ func RecomputeEquipment(u *battle.Unit, stats map[int]ItemStats) {
 	}
 }
 
-// RecomputeAfterClassChange mirrors the proven 0x31602 -> 0x1b750 handoff.
-// The native routine reads raw AP/DP/DX, adds equipped item contributions and
-// writes the derived AP/DP/HIT/EV words.  ApplyClassChange updates the public
-// values first; when an equipment base already exists, remove the old item
-// contribution before rebuilding it so the same gear is not counted twice.
+// RecomputeAfterClassChange is the normalized counterpart of the proven
+// 0x31602 -> 0x1b750 handoff. It preserves editable campaign fields and avoids
+// double-counting gear, but it is not evidence for the raw transient modifiers
+// or the x87 rounding performed by 0x1b750.
 func RecomputeAfterClassChange(u *battle.Unit, stats map[int]ItemStats) {
 	if u == nil {
 		return

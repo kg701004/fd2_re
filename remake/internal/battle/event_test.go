@@ -8,6 +8,17 @@ import (
 	"testing"
 )
 
+func bindNativeFutureItemRowsForTest(t *testing.T, st *State) {
+	t.Helper()
+	rows, err := LoadNativeItemEffectRowPrefix("../../assets/data/native_item_effect_rows.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.BindNativeFutureItemRows(rows); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestScenarioPartyUnitsPreserveRuntimeOrderAndDeployment(t *testing.T) {
 	sc := &Scenario{
 		Party: []PartyMember{
@@ -209,6 +220,8 @@ func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
 	gate := 1
 	active := &Unit{
 		X: 1, Y: 1,
+		MapSelectorKey:           2,
+		HasMapSelectorKey:        true,
 		NativeMapPresentation:    NativeMapPresentationState{X: 1, Y: 1},
 		HasNativeMapPresentation: true,
 		NativeRecordByte5:        0,
@@ -218,18 +231,31 @@ func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
 	}
 	pending := &Unit{
 		Group:                   6,
+		Lv:                      2,
 		MapSelectorKey:          3,
 		HasMapSelectorKey:       true,
 		NativeRecordByte5:       0,
 		HasNativeRecordByte5:    true,
-		NativeRecordByte6:       3,
+		NativeRecordByte6:       1,
 		HasNativeRecordByte6:    true,
 		NativePositionRecord:    NativePositionRecord{XWord: 1, YWord: 1},
 		HasNativePositionRecord: true,
+		NativeConstructor: &NativeConstructorTable{
+			Branch: "high_class", Index: 0,
+			Record: []byte{4, 5, 10, 0, 3, 6, 7, 8, 9, 0},
+		},
+		Inventory:            []int{0},
+		Equipped:             []bool{true},
+		InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 	}
 	st := &State{
-		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending},
+		W: 3, H: 3, Roster: []*Unit{pending},
 		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	bindNativeFutureItemRowsForTest(t, st)
+	if err := st.AppendNativeMapSelectorBatch([]*Unit{active}); err != nil {
+		t.Fatal(err)
 	}
 	sc := &Scenario{RuntimeAppendGroups: true}
 	eventID := 3
@@ -239,8 +265,11 @@ func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
 	if _, _, err := sc.ExecuteActionChecked(st, action); err != nil {
 		t.Fatal(err)
 	}
-	if len(st.Units) != 2 || st.Units[1] != pending || pending.X != 1 || pending.Y != 1 {
+	if len(st.Units) != 2 || st.Units[1] == pending || st.Units[1].X != 1 || st.Units[1].Y != 1 {
 		t.Fatalf("原版 gate=1 增援沒有落在直接座標：units=%#v", st.Units)
+	}
+	if pending.AP != 0 || pending.HasNativeRecordRace {
+		t.Fatal("原子預檢改寫了尚未提交的來源名冊記錄")
 	}
 }
 
@@ -342,6 +371,7 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	bindNativeFutureItemRowsForTest(t, st)
 	sc, err := LoadScenario("../../assets/scenarios/ch02.json")
 	if err != nil {
 		t.Fatal(err)
@@ -444,6 +474,7 @@ func TestChapter1Turn3JoinsHanoBeforeSpawningHisGroup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	bindNativeFutureItemRowsForTest(t, st)
 	sc, err := LoadScenario("../../assets/scenarios/ch01.json")
 	if err != nil {
 		t.Fatal(err)
@@ -515,6 +546,7 @@ func TestChapter3Turn3ReinforcementRequiresLivingTinoInRuntimeSlot6(t *testing.T
 		if err != nil {
 			t.Fatal(err)
 		}
+		bindNativeFutureItemRowsForTest(t, st)
 		sc, err := LoadScenario("../../assets/scenarios/ch03.json")
 		if err != nil {
 			t.Fatal(err)

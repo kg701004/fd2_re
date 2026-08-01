@@ -62,6 +62,19 @@ func cloneNativeBattleSpawnState(source *battle.State) (*battle.State, error) {
 	return &candidate, nil
 }
 
+func (g *Game) bindNativeFutureItemRows(state *battle.State) error {
+	if state == nil {
+		return errors.New("native future constructor state unavailable")
+	}
+	rows, err := battle.LoadNativeItemEffectRowPrefix(
+		assetPath("assets/data/native_item_effect_rows.json"),
+	)
+	if err != nil {
+		return err
+	}
+	return state.BindNativeFutureItemRows(rows)
+}
+
 // prepareNativeStorySpawn executes the proven future-group placement against
 // private clones. The caller commits the returned values only after every
 // visual pass has preflighted successfully.
@@ -75,6 +88,9 @@ func (g *Game) prepareNativeStorySpawn(group int, rawGate byte) ([]battle.Unit, 
 	state := &battle.State{
 		W: g.m.W, H: g.m.H, Roster: roster,
 		NativeCompositionEventBytes: append([]byte(nil), g.storyCompositionEventBytes...),
+	}
+	if err := g.bindNativeFutureItemRows(state); err != nil {
+		return nil, nil, fmt.Errorf("native story spawn item rows: %w", err)
 	}
 	if err := state.AppendNativeMapSelectorBatch(active); err != nil {
 		return nil, nil, fmt.Errorf("native story spawn existing roster: %w", err)

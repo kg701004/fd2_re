@@ -674,7 +674,7 @@ actor raw completion writer。它與 ID20/21「借 record10」的 clear/restore 
 | 0–8 | `0x2A6BD→2B659/1C75E`，two-stage final targets、MP event、numeric hit/HP | `ExecuteNativeCommandDamage`；ID0 有 target slice | 僅 ID0 grid target；compositor/SFX/post-resolution 未接 |
 | 9–12 | direct/`0x21548` tail → `1CA89→1C75E` | `ExecuteNativeCommandDamage` | 未接；numeric 共用不代表演出共用 |
 | 13–16 | `0x21AD9…0x22153→21B18→1C8ED/1C916` | `ExecuteNativeCommandHeal` | 專用 animation/SFX/grid confirm 未接 |
-| 17–19 | `0x226EA/2282F/22960` modifier writers、`+0x22..+0x24` duration；`__CHP` toward-zero 已釘死 | `ApplyNativeCommandModifier` 僅 dispatch 到已閉合 raw word/pair branches；derived-base/equipment recompute、transaction 仍未接 | 未接 |
+| 17–19 | `0x226EA/2282F/22960` modifier writers、`+0x22..+0x24` duration；`__CHP` toward-zero 已釘死 | `ApplyNativeCommandModifier` 已接 raw writer；`ApplyNativeRuntimeEquipmentRecalc` 已保存 `0x1B750` 的 exact 1.15／朝零及HIT/EV+15。command transaction與phase-expiry caller仍未接 | 未接 |
 | 20–21 | `0x22A85/22BC6→22AF6`，clear `+0x25/+0x26` 並借 record10 restore | `ExecuteNativeCommandClearRestore` | 未接 |
 | 22 | `0x22BE1→22D1B`，class/RNG gate、base10 經第二 RNG 實際9 HP、第三 RNG write `+0x27` | `ExecuteNativeCommandApplication` | 未接 |
 | 23 | `0x2218A→22253` special relocation selector | 已接 first target → mode-6 destination cursor；27-present indexed renderer 未接 | 已接 raw MP/座標 transaction |
@@ -2700,9 +2700,14 @@ executor 之前辨識兩個已證實 caller；它以保留當下 selector cache 
 的 `map32.json` 轉錄來源。`ExecuteActionChecked` 本身仍刻意拒絕 intro call，因為
 它沒有 `Draw`／音訊／非同步 continuation；所有其他來源、混合 call 或缺資源
 情況仍失敗即關閉。
-`0x10C50` 的完整 table projection、
-inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
-`future_group_constructor` owner 仍未解除，正式 CONTINUE 仍失敗即關閉。
+`0x10C50` 的 table-base projection、八格 inventory 初始化與 `0x1B750`
+即時裝備／衍生能力重算，現已合成 `MaterializeNativeFutureConstructor`，並由
+`AppendGroupWithNativePlacement` 在私有候選名冊完成全部建構、位置及 selector
+預檢後才原子發布。`0x1B750` 另已由合法 IDA 與 Capstone 證實包含
+`+0x22/+0x23/+0x24` modifier；它不等同於沒有這三條分支的 persistent
+`0x1145A`。這只解除 future-group constructor 的具型別 transaction 缺口；
+完整 0x50-byte 逐位元組一致、其他 caller 與正式 CONTINUE 的其餘 owner 仍維持
+失敗即關閉。
 
 `gen_campaign.py` 的總戰役拓撲仍落後人工閉合的權威
 `campaign_full.json`；本輪實測直接重生會把299節點降成293並遺失 handler／
@@ -2711,6 +2716,8 @@ inventory 初始化及 `0x1B750` equipment recompute 也未完成。因此
 直接證據見
 [`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
 與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
+`0x1B750` 的函式、呼叫者、binary64 1.15 與 x87 朝零捨入證據見
+[`fd2_runtime_equipment_recalc_1b750_ida.txt`](../data/fd2_runtime_equipment_recalc_1b750_ida.txt)。
 
 本輪依規則先嘗試官方 IDA 9.4 Docker；合法 license 與私有 home 均隔離
 掛載，但 batch 回報 EULA 尚未接受且 IDAPython target 未啟用，沒有產生

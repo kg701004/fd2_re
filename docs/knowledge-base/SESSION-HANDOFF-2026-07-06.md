@@ -2867,3 +2867,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 這是重製端 E1 決定性機制證據；尚未取得同 camera／roster／pass 的 DOSBox
   event1/2 逐幀比較，因此不提升為 E2。`0x10C50` 完整 table／inventory
   projection 與 `0x1B750` equipment recompute 仍未閉合。
+
+## 2026-08-02：`0x10C50→0x1B750` future-group 建構交易閉合
+
+- 合法 IDA Pro 9.4 固定 `sub_1B750` 範圍 `0x1B750..0x1B83D` 與12個直接
+  caller；Capstone 再核原始指令。它讀即時名冊 `[0x53A45]+index*0x50`，以
+  signed `+0x37/+0x39/+0x3E` 為基礎，掃八格 `0x40` 裝備，讀 item row
+  `+1/+5/+3/+7` 後寫 `+0x48/+0x4A/+0x4C/+0x4E`。
+- `+0x22/+0x23` 非零時，AP／DP 乘 0x5018D 的 binary64 1.15，再由
+  `0x377A4` 設 x87 朝零捨入；因此 20→22、100→114。`+0x24` 非零時 HIT／EV
+  各加15。這證明 `0x1B750` 不等同於沒有 transient modifier 的 persistent
+  `0x1145A`；只有 `0x10C50` 先清 `+0x22..+0x27` 的 caller 可化約為共同核心。
+- 新增 `ApplyNativeRuntimeEquipmentRecalc` 的 exact ratio／朝零與 atomic bounds
+  regression；`campaign.RecomputeEquipment` 降回明確的正規化投影，不再冒充
+  `0x1B750/0x1145A` byte-equivalent transaction。
+- `MaterializeNativeFutureConstructor` 把 table base、原始八格 inventory 與
+  effective-stat 重算套在私有候選。`AppendGroupWithNativePlacement` 只有在所有
+  candidate 的 constructor、位置、selector 與 presentation 預檢成功後，才發布
+  units／roster／cache；失敗不修改來源名冊。ch01/ch02/ch03 與 battle-event／beat
+  runner 回歸均改用完整 item rows 與 selector state。
+- 這關閉 future-group append 的具型別交易，不宣稱完整 0x50-byte 逐位元組一致，
+  也不把其他 `0x1B750` caller、transient expiry、轉職、商店、戰後 persistent
+  sync 或 DOSBox E2 自動標成完成。直接證據見
+  [`fd2_runtime_equipment_recalc_1b750_ida.txt`](../data/fd2_runtime_equipment_recalc_1b750_ida.txt)。

@@ -173,6 +173,8 @@ func TestNativeFutureGroupPlacementUsesPositionLowBytesAndRawGate(t *testing.T) 
 func TestAppendGroupWithNativePlacementConsumesPerCallGate(t *testing.T) {
 	active := &Unit{
 		X: 1, Y: 1,
+		MapSelectorKey:           2,
+		HasMapSelectorKey:        true,
 		NativeMapPresentation:    NativeMapPresentationState{X: 1, Y: 1},
 		HasNativeMapPresentation: true,
 		NativeRecordByte5:        0,
@@ -182,22 +184,39 @@ func TestAppendGroupWithNativePlacementConsumesPerCallGate(t *testing.T) {
 	}
 	pending := func() *Unit {
 		return &Unit{
-			Group: 6, Dir: 0,
-			MapSelectorKey:          3,
+			Group: 6, Dir: 0, Lv: 2,
+			MapSelectorKey:          1,
 			HasMapSelectorKey:       true,
 			NativeRecordByte5:       0,
 			HasNativeRecordByte5:    true,
-			NativeRecordByte6:       3,
+			NativeRecordByte6:       1,
 			HasNativeRecordByte6:    true,
 			NativePositionRecord:    NativePositionRecord{XWord: 1, YWord: 1},
 			HasNativePositionRecord: true,
+			NativeConstructor: &NativeConstructorTable{
+				Branch: "high_class", Index: 0,
+				Record: []byte{4, 5, 10, 0, 3, 6, 7, 8, 9, 0},
+			},
+			Inventory: []int{0}, Equipped: []bool{true},
+			InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+			NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 		}
 	}
-
-	search := &State{
-		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending()},
-		NativeCompositionEventBytes: make([]byte, 9),
+	newState := func(unit *Unit) *State {
+		st := &State{
+			W: 3, H: 3, Roster: []*Unit{unit},
+			NativeCompositionEventBytes: make([]byte, 9),
+		}
+		if err := st.BindNativeFutureItemRows(make([]byte, NativeItemEffectRowSize)); err != nil {
+			t.Fatal(err)
+		}
+		if err := st.AppendNativeMapSelectorBatch([]*Unit{active}); err != nil {
+			t.Fatal(err)
+		}
+		return st
 	}
+
+	search := newState(pending())
 	if n, err := search.AppendGroupWithNativePlacement(6, 0); err != nil || n != 1 {
 		t.Fatalf("search append n=%d err=%v", n, err)
 	}
@@ -205,15 +224,22 @@ func TestAppendGroupWithNativePlacementConsumesPerCallGate(t *testing.T) {
 		t.Fatalf("gate=0 placement=%v want %v", got, want)
 	}
 
-	direct := &State{
-		W: 3, H: 3, Units: []*Unit{active}, Roster: []*Unit{pending()},
-		NativeCompositionEventBytes: make([]byte, 9),
-	}
+	directPending := pending()
+	direct := newState(directPending)
 	if n, err := direct.AppendGroupWithNativePlacement(6, 1); err != nil || n != 1 {
 		t.Fatalf("direct append n=%d err=%v", n, err)
 	}
 	if got, want := (Cell{X: direct.Units[1].X, Y: direct.Units[1].Y}), (Cell{X: 1, Y: 1}); got != want {
 		t.Fatalf("gate=1 placement=%v want %v", got, want)
+	}
+	spawned := direct.Units[1]
+	if spawned.AP != 12 || spawned.DP != 14 || spawned.HIT != 16 || spawned.EV != 16 ||
+		spawned.HP != 20 || spawned.MP != 6 || spawned.MV != 9 ||
+		spawned.NativeRecordRace != 4 || spawned.NativeRecordClass != 5 {
+		t.Fatalf("constructor projection=%#v", spawned)
+	}
+	if directPending.AP != 0 || directPending.HasNativeRecordRace {
+		t.Fatal("preflight mutated the source roster record")
 	}
 }
 

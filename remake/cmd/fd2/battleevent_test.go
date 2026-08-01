@@ -76,6 +76,9 @@ func TestChapter1GlobalIntroEventsPresentThenRunExactFollowingActing(t *testing.
 	}
 	sc.Setup(st)
 	g := &Game{st: st, sc: sc, sfxSpawnIntro: []byte{1}}
+	if err := g.bindNativeFutureItemRows(st); err != nil {
+		t.Fatal(err)
+	}
 	if err := g.loadMap("assets/maps/map0"); err != nil {
 		t.Fatal(err)
 	}
@@ -194,6 +197,9 @@ func TestChapter3Turn3BattleEventBlocksTurnUntilOriginalSequenceCompletes(t *tes
 	st.Units[0].Poisoned, st.Units[0].PoisonTurns = true, 2
 
 	g := &Game{m: &MapData{W: 40, H: 40, TileW: 24, TileH: 24}, st: st, sc: sc}
+	if err := g.bindNativeFutureItemRows(st); err != nil {
+		t.Fatal(err)
+	}
 	g.finishTurn()
 	if len(st.Units) != 27 || g.battleEvent == nil || g.camPan == nil {
 		t.Fatalf("event did not execute SPAWN then block on first PAN: units=%d run=%#v pan=%#v", len(st.Units), g.battleEvent, g.camPan)

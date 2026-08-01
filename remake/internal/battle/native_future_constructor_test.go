@@ -1,7 +1,9 @@
 package battle
 
 import (
+	"encoding/binary"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -101,6 +103,64 @@ func TestAllMapUnitsMatchNativeFutureConstructorProjection(t *testing.T) {
 	}
 	if matches == 0 {
 		t.Fatal("no map unit carried native constructor provenance")
+	}
+}
+
+func TestMaterializeNativeFutureConstructorClearsTransientsAndRecomputes(t *testing.T) {
+	unit := &Unit{
+		Lv:                2,
+		NativeRecordByte6: 1, HasNativeRecordByte6: true,
+		NativeConstructor: &NativeConstructorTable{
+			Branch: "high_class", Index: 0,
+			Record: []byte{4, 5, 10, 0, 3, 6, 7, 8, 9, 0},
+		},
+		Inventory: []int{0}, Equipped: []bool{true},
+		InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		NativeTransient:      [6]byte{1, 2, 3, 4, 5, 6},
+		AP:                   999, DP: 999, HIT: 999, EV: 999,
+	}
+	rows := make([]byte, NativeItemEffectRowSize)
+	binary.LittleEndian.PutUint16(rows[1:], 3)
+	binary.LittleEndian.PutUint16(rows[5:], 4)
+	binary.LittleEndian.PutUint16(rows[3:], 5)
+	binary.LittleEndian.PutUint16(rows[7:], 6)
+	if err := MaterializeNativeFutureConstructor(unit, rows); err != nil {
+		t.Fatal(err)
+	}
+	if unit.AP != 15 || unit.DP != 18 || unit.HIT != 21 || unit.EV != 22 ||
+		unit.HP != 20 || unit.MaxHP != 20 || unit.MP != 6 || unit.MaxMP != 6 ||
+		unit.MV != 9 || unit.DX != 16 || unit.Exp != 0xff ||
+		unit.NativeRecordRace != 4 || unit.NativeRecordClass != 5 ||
+		unit.NativeTransient != ([6]byte{}) || unit.NativeRecordByte5 != 0 ||
+		!unit.EquipmentBaseSet {
+		t.Fatalf("materialized constructor=%#v", unit)
+	}
+}
+
+func TestMaterializeNativeFutureConstructorFailsAtomically(t *testing.T) {
+	unit := &Unit{
+		Lv:                1,
+		NativeRecordByte6: 2, HasNativeRecordByte6: true,
+		NativeConstructor: &NativeConstructorTable{
+			Branch: "high_class", Index: 0,
+			Record: []byte{1, 2, 1, 0, 1, 1, 1, 1, 1, 0},
+		},
+		Inventory: []int{2}, Equipped: []bool{true},
+		InventorySlots:       []int{2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
+		AP:                   77,
+	}
+	before := *unit
+	before.Inventory = append([]int(nil), unit.Inventory...)
+	before.Equipped = append([]bool(nil), unit.Equipped...)
+	before.InventorySlots = append([]int(nil), unit.InventorySlots...)
+	before.NativeInventoryFlags = append([]int(nil), unit.NativeInventoryFlags...)
+	if err := MaterializeNativeFutureConstructor(unit, make([]byte, NativeItemEffectRowSize)); err == nil {
+		t.Fatal("missing selected item row accepted")
+	}
+	if !reflect.DeepEqual(*unit, before) {
+		t.Fatalf("failed constructor mutated unit: got=%#v want=%#v", *unit, before)
 	}
 }
 

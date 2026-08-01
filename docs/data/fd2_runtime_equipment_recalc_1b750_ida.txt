@@ -1,0 +1,78 @@
+《炎龍騎士團 2》即時名冊裝備／衍生能力重算證據：0x1B750
+================================================================
+
+證據等級：已證實（函式邊界、直接呼叫者、欄位讀寫、常數與捨入路徑）
+
+輸入版本
+--------
+
+- 檔案：FD2.EXE
+- 大小：357074 bytes
+- MD5：b97caf2239a27a896069d03549d96e1e
+- SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+- 基準清單：docs/data/fd2-reference-files.json
+
+工具與非破壞性註記
+--------------------
+
+- 第一工具：使用者合法提供的 IDA Pro 9.4，於授權 Docker 流程執行。
+- 第二工具：fd2-cap-local Docker image 內的 Capstone，重核直接指令與原始位元組。
+- 本文保留 IDA 原始名稱 sub_1B750、線性位址及欄位偏移；AP／DP／HIT／EV
+  是附加語意。語意由 item.json 215 列交叉核對及既有欄位消費端支持，不取代
+  原始定位。
+
+函式邊界與呼叫者
+----------------
+
+- sub_1B750：0x1B750..0x1B83D。
+- 直接呼叫位址：0x10AC6、0x11003、0x1AA10、0x1BFB2、0x1BFEC、
+  0x1C07C、0x1E3E2、0x21100、0x2F499、0x2F86F、0x2FB92、0x31765。
+- 0x11003 是 sub_10C50 建構新戰場單位的尾端呼叫。
+
+已證實的資料流
+--------------
+
+1. 以 `[0x53A45] + index*0x50` 選取即時戰場名冊記錄。
+2. signed word `+0x37`、`+0x39`、`+0x3E` 分別作三個基礎累加器；第三個
+   同時供 HIT 與 EV 起始值。
+3. 若 byte `+0x24 != 0`，HIT 與 EV 的共用基礎先各加 15。
+4. 依原始順序掃八個 `[flag,item]` cell（由 `+0x0A` 起）；只有
+   `flag & 0x40 != 0` 才讓 item 索引 `0x4E56C + item*0x17`。
+5. item row word `+1/+5/+3/+7` 依序累加到 AP／DP／HIT／EV。
+6. 若 byte `+0x22 != 0`，AP 總值乘位於 0x5018D 的 binary64 常數；若
+   byte `+0x23 != 0`，DP 走相同路徑。
+7. 結果寫入 word `+0x48/+0x4A/+0x4C`，再跳到共用尾端 0x114FB 寫
+   word `+0x4E` 並返回。
+
+15% 常數與捨入
+--------------
+
+- 0x5018D 原始 bytes：`66 66 66 66 66 66 F2 3F`。
+- 這是 binary64 的 1.15，精確比值為
+  `2589569785738035 / 2251799813685248`，略小於十進位 1.15。
+- 0x377A4 暫存 x87 control word，將捨入控制設為朝零（toward zero），執行
+  `frndint` 後復原。因此邊界例為 `20→22`、`100→114`、`-20→-22`、
+  `-100→-114`；不可用一般四捨五入或十進位 `*115/100` 取代。
+
+與 0x1145A 的關係勘誤
+---------------------
+
+- 0x1145A 以 `[0x53BF7]` 選 persistent roster，採相同八格裝備與四個 item
+  word 累加，但沒有 `+0x22/+0x23/+0x24` 的即時 modifier 分支。
+- 因此「0x1B750 等同 0x1145A」是錯誤斷言；兩者只能共用無 modifier 的
+  裝備累加核心。
+- sub_10C50 在 0x10F6B..0x10F7C 先清零 `+0x22..+0x27`，再於 0x11003
+  呼叫 0x1B750。只有這個建構器呼叫點可化約為無 modifier 的裝備算術。
+
+重製接線與剩餘邊界
+------------------
+
+- `ApplyNativeRuntimeEquipmentRecalc` 轉寫上述 0x1B750 的 raw 算術與精確
+  朝零捨入；`ApplyNativeEquipmentRecalc` 保留 0x1145A 的 persistent 版本。
+- `MaterializeNativeFutureConstructor` 將 sub_10C50 已證實的 table base、八格
+  inventory 與 0x1B750 重算合成一個具型別候選單位。
+- `AppendGroupWithNativePlacement` 只在全部候選的建構、位置、selector 與呈現
+  預檢成功後發布 units／roster／cache；失敗不改來源名冊。
+- 這只關閉 future-group append 的具型別 transaction，不宣稱完整 0x50-byte
+  記錄逐位元組一致，也不自動證明 transient expiry、轉職、商店或戰後 persistent
+  sync 的每一個呼叫者已接入。

@@ -6,6 +6,13 @@
 
 ## Visual parity correction（2026-07-28）
 
+- [x] **RE/FUTURE-GROUP-CONSTRUCTOR-10C50-1B750**：合法 IDA Pro 9.4 固定
+  `0x1B750..0x1B83D`、12個直接 caller、即時名冊base與四個raw destination；
+  Capstone重核八格`0x40`裝備、`+0x22/+0x23` binary64 1.15＋x87朝零及
+  `+0x24` HIT/EV各加15。撤回「`0x1B750`等同`0x1145A`」斷言。production
+  現將table base、inventory、exact重算、placement及selector全數在私有candidate
+  預檢後原子發布，來源roster失敗不改。三套件Docker回歸通過；完整0x50-byte
+  identity、其他caller、phase expiry與DOSBox E2仍待。
 - [x] **DOC-ASSERTION-GOVERNANCE-20260728**：repo-wide掃描66個Markdown，撤回會污染remake的現行斷言：攻略不能取代逐章handler/postbattle route；`battle_events.json`與`gen_campaign.py`只是candidate scaffold；DATO／FDICON cache slot／runtime identity不全域恆等；cutscene DSL不是33關完整oracle；historical decision freeze已標superseded。同步修正README、42/56/57目前town/shop E2範圍，並保留「悠妮」與`DATO_075=商店店員`的已核實對應。
 - [x] 逐項重審 title、field/HUD、action/target、dialogue、battle、postbattle、town、shop、church、preparation、save/load、ending；town indexed production接線後，完整操作界面視覺還原估計40–45%，不能以75–85%的asset/codec完成度代替。
 - [x] README撤回將 `docs/figures/title.png`／`dialogue.png` 標成 remake runtime對照；兩張是raw decode／字型研究圖。
@@ -1719,10 +1726,13 @@
     turn4／5 分別 preflight group4／5、各12次呈現、ACTING(3／4)，event2 對話只在
     acting 完成後出現。缺 acting 資源的回歸固定 units／roster／selector cache／
     turn continuation 均不變；低階 `ExecuteActionChecked` 繼續拒絕無畫面擁有者的
-    直接呼叫。仍缺 `0x10C50` 完整 table/inventory projection 與 `0x1B750`
-    equipment recompute，相關 owner 維持 fail-closed
+    直接呼叫。`0x10C50` 的 table-base、八格 inventory 與 `0x1B750` 即時
+    equipment／modifier 重算現已由合法 IDA＋Capstone 閉合，並原子接入
+    future-group append；來源 roster 在失敗時不被改寫。正式 CONTINUE 的其他
+    owner、完整 0x50-byte identity 與 DOSBox E2 仍維持 fail-closed
     → `fd2_future_group_constructor_capstone.txt`、
-      `fd2_future_group_raw_gate_ida.txt`、`fd2_spawn_intro_32999_ida.md`
+      `fd2_future_group_raw_gate_ida.txt`、
+      `fd2_runtime_equipment_recalc_1b750_ida.txt`、`fd2_spawn_intro_32999_ida.md`
 - [x] **RE-CHAPTER-AUX-GRAPHICS-10652**：合法 IDA Pro 9.4 與 Docker
   Capstone 固定 `0x10652..0x1088d` 只有 CONTINUE、完整章節 loader、
   ch22 post 三個 caller。函式先釋放 `[0x53aff]/[0x53b03]`，再只對 raw

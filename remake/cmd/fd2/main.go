@@ -2048,6 +2048,10 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.storyRosterPath, g.storyPartyScenario = "", ""
 	if st, err := battle.Load(assetPath(unitsPath)); err == nil {
 		g.st = st
+		if err := g.bindNativeFutureItemRows(st); err != nil {
+			g.loadErr = "native future constructor item rows: " + err.Error()
+			return
+		}
 		g.bindCommandLearn(st)
 		g.bindNativeCommandBook(st)
 		g.bindNativeCommandResistances(st)

@@ -1389,6 +1389,8 @@ func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
 	}})
 	active := &battle.Unit{
 		X: 1, Y: 1,
+		MapSelectorKey:           2,
+		HasMapSelectorKey:        true,
 		NativeMapPresentation:    battle.NativeMapPresentationState{X: 1, Y: 1},
 		HasNativeMapPresentation: true,
 		NativeRecordByte5:        0,
@@ -1397,19 +1399,33 @@ func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
 		HasNativeRecordByte6:     true,
 	}
 	pending := &battle.Unit{
-		Group: 6, Dir: 0,
+		Group: 6, Dir: 0, Lv: 2,
 		MapSelectorKey:          3,
 		HasMapSelectorKey:       true,
 		NativeRecordByte5:       0,
 		HasNativeRecordByte5:    true,
-		NativeRecordByte6:       3,
+		NativeRecordByte6:       1,
 		HasNativeRecordByte6:    true,
 		NativePositionRecord:    battle.NativePositionRecord{XWord: 1, YWord: 1},
 		HasNativePositionRecord: true,
+		NativeConstructor: &battle.NativeConstructorTable{
+			Branch: "high_class", Index: 0,
+			Record: []byte{4, 5, 10, 0, 3, 6, 7, 8, 9, 0},
+		},
+		Inventory:            []int{0},
+		Equipped:             []bool{true},
+		InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 	}
 	g.st = &battle.State{
-		W: 3, H: 3, Units: []*battle.Unit{active}, Roster: []*battle.Unit{pending},
+		W: 3, H: 3, Roster: []*battle.Unit{pending},
 		NativeCompositionEventBytes: make([]byte, 9),
+	}
+	if err := g.st.BindNativeFutureItemRows(make([]byte, battle.NativeItemEffectRowSize)); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.st.AppendNativeMapSelectorBatch([]*battle.Unit{active}); err != nil {
+		t.Fatal(err)
 	}
 	g.beatAdvance()
 	if g.loadErr != "" {
