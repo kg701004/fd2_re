@@ -21,29 +21,35 @@ func event63GameFixture(t *testing.T) *Game {
 		t.Skip("使用者持有的原版 FDOTHER.DAT 不在測試掛載中")
 	}
 	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
-	// Direct chapter starts have no preceding JOIN/save history.  event63's
-	// indexed HUD test instead supplies one explicit process-persistent record,
-	// matching the production ingress without claiming that ch27.json's
-	// approximate HP is native +0x42 provenance.
+	// Direct chapter starts have no preceding JOIN/save history. Build Keli's
+	// persistent record through the same hash-bound sub_112A5 table used by a
+	// normal JOIN; ch27.json's approximate HP must not become raw provenance.
 	scenario, err := battle.LoadScenario(assetPath("assets/scenarios/ch27.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var persistentKeli battle.Unit
+	joinTable, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, unit := range scenario.PartyUnits(nil) {
 		if unit != nil && unit.Fig == 12 {
-			persistentKeli = *unit
-			persistentKeli.HP = 0x123
-			persistentKeli.MaxHP = 0x123
-			persistentKeli.NativeRecordWord42 = 0x123
-			persistentKeli.HasNativeRecordWord42 = true
+			persistentKeli, err = joinTable.MaterializePersistentUnit(12, *unit)
+			if err != nil {
+				t.Fatal(err)
+			}
 			break
 		}
 	}
-	if !persistentKeli.HasNativeRecordWord42 {
+	if !persistentKeli.HasNativeRecordWord42 || persistentKeli.NativeRecordWord42 != 151 {
 		t.Fatal("chapter27 fixture has no Keli party member")
 	}
-	g := &Game{partyRoster: map[int]battle.Unit{12: persistentKeli}}
+	g := &Game{
+		partyRoster:              map[int]battle.Unit{12: persistentKeli},
+		nativeJoinConstructor:    joinTable,
+		hasNativeJoinConstructor: true,
+	}
 	if err := g.loadMap(assetPath("assets/maps/map26")); err != nil {
 		t.Fatal(err)
 	}

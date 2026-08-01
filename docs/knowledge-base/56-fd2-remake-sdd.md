@@ -2902,6 +2902,10 @@ selector 0／1。執行期先在私人候選狀態驗證 view、selector 與可�
 **尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、CONTINUE 進入
 event63 前後的一般玩家路徑、該時點凱麗 runtime `+0x42` 的實際值，以及
 event64／66／68／70／72 的各自 phase／handler consumer。JOIN `0x112A5`
-的精確 fresh-record 公式已知（凱麗 id12 初始 `+0x42=151`），但現行章節產生器
-仍是近似成長資料，不能拿來偽造 persistent raw record。直接位址與指令見
+的精確 fresh-record 公式現已由雜湊綁定的
+`native_join_constructor.json` 與 `NativeJoinConstructorTable` 接入正常
+JOIN→LOADCH 及 `scenario join_party` 首次 persistent roster 建立路徑；凱麗
+id12 的 `+0x42=151` 不再由測試手填，章節產生器的近似 HP／MP 也不會被反推
+成 raw 欄位。尚未閉合的 `sub_1145A` 裝備重算不在這次投影範圍，AP／DP 等
+未證實覆寫仍保留可編輯 base。直接位址與指令見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。

@@ -3056,3 +3056,25 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 本切片仍是 E1。下一門檻是把 JOIN default/growth table 轉為具型別 asset，
   走正常 JOIN→LOADCH→sync/save 建立 raw record，並取得未修改 DOSBox
   event62→event63／CONTINUE 的同狀態逐幀 oracle；完成前不得提升為 E2。
+
+## 2026-08-02：JOIN `0x112A5` raw record 正式接線
+
+- 上段所列具型別資產缺口已完成：`tools/sync_native_join_constructor.py`
+  從 32×0x18 character defaults、32×0x0B growth 與 reference manifest
+  產生 `native_join_constructor.json`，保留每列 file offset、raw bytes、
+  FD2.EXE size／MD5／SHA-256 與「已證實」等級。
+- `campaign.NativeJoinConstructorTable` 逐列驗證 row order、`0x55BA1+id*0x18`、
+  `0x55EA1+id*0x0B`、stride 與 EXE identity；錯誤版本或缺列失敗即關閉。
+- 正常 beat JOIN 仍先保存 membership／chronology，第一次 LOADCH 建 persistent
+  roster 時才以 scenario unit 提供姓名等顯示 base，再由 raw table 覆寫已閉合的
+  identity/key、race/class、level/MV、command mask 與 `+0x42/+0x46`。場內
+  `scenario join_party` 使用相同 materializer，不再有兩套首次建檔公式。
+- 修正舊 camp gate：永久 JOIN 不依賴角色當下已是 Own；許多招募角色仍是 Ally。
+  既有實作因只搜尋 Own 而未在 JOIN 當下建檔，過去由 legacy Fig sync 偶然補回。
+  現保留角色唯一性檢查，但不以陣營顏色拒絕 persistent record。
+- 凱麗 event63 regression 現由同一 table 得到 fresh `+0x42=151`，不再手填
+  `0x123`，亦不採 ch27 approximate `hp=90`。這仍只證 fresh JOIN；ch27 真實
+  玩家時點可因升級／轉職而不同。
+- `sub_1145A` 裝備重算仍未閉合。本 materializer 故意不覆寫 AP／DP／DX 等
+  scenario base，也不宣稱完成整個 0x50-byte record；下一 RE 切片是八物品格
+  到 `+0x48/+0x4A/+0x4C/+0x4E` 的直接資料流與物品旗標消費端。

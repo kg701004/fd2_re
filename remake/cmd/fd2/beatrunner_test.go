@@ -706,13 +706,26 @@ func TestCampaignPersistenceStubKeepsInventoryAfterBattleStateClears(t *testing.
 }
 
 func TestScenarioJoinPersistsRecruitedAllyThroughPostBattleSync(t *testing.T) {
+	joinTable, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hanoRuntime, err := joinTable.MaterializePersistentUnit(1, battle.Unit{
+		Camp: battle.Ally, Fig: 1, Name: "哈諾", OnField: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hanoRuntime.Camp = battle.Ally
 	g := &Game{
-		partyMembers:   map[int]bool{0: true},
-		partyJoinOrder: []int{0},
-		sc:             &battle.Scenario{},
+		partyMembers:             map[int]bool{0: true},
+		partyJoinOrder:           []int{0},
+		nativeJoinConstructor:    joinTable,
+		hasNativeJoinConstructor: true,
+		sc:                       &battle.Scenario{},
 		st: &battle.State{Units: []*battle.Unit{
 			{Camp: battle.Own, Fig: 0, HP: 10, MaxHP: 10, OnField: true},
-			{Camp: battle.Ally, Fig: 1, Name: "哈諾", Lv: 3, HP: 17, MaxHP: 36, OnField: true},
+			&hanoRuntime,
 		}},
 	}
 	// Model the scenario-owned JOIN effect separately from the spawned unit's
@@ -726,7 +739,7 @@ func TestScenarioJoinPersistsRecruitedAllyThroughPostBattleSync(t *testing.T) {
 	if err := g.syncPartyFromBattle(); err != nil {
 		t.Fatal(err)
 	}
-	if hano, ok := g.partyRoster[1]; !ok || hano.HP != 36 || hano.Lv != 3 {
+	if hano, ok := g.partyRoster[1]; !ok || hano.HP != 56 || hano.NativeRecordWord42 != 56 || !hano.HasNativeRecordWord42 || hano.Lv != 3 {
 		t.Fatalf("recruited allied Hano was not persisted: %#v", g.partyRoster)
 	}
 }
@@ -1090,12 +1103,18 @@ func TestApplyLoadCHSeedsJoinedPersistentPartyBeforeFirstBattleSync(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
+	joinTable, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	g := &Game{
 		partyMembers: map[int]bool{
 			0: true, 9: true, 4: true, 30: true,
 		},
-		partyJoinOrder: []int{0, 9, 4, 30},
-		shopItemStats:  stats,
+		partyJoinOrder:           []int{0, 9, 4, 30},
+		shopItemStats:            stats,
+		nativeJoinConstructor:    joinTable,
+		hasNativeJoinConstructor: true,
 	}
 	err = g.applyLoadCH(&campaign.LoadCHState{
 		Chapter:       0,
@@ -1115,6 +1134,7 @@ func TestApplyLoadCHSeedsJoinedPersistentPartyBeforeFirstBattleSync(t *testing.T
 	for _, id := range g.partyJoinOrder {
 		unit, ok := g.partyRoster[id]
 		if !ok || unit.Fig != id || !unit.HasNativeIdentity ||
+			!unit.HasNativeRecordWord42 || !unit.HasNativeRecordWord46 ||
 			len(unit.InventorySlots) != 8 ||
 			len(unit.NativeInventoryFlags) != 8 ||
 			!unit.EquipmentBaseSet {

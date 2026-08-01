@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "source": {
+    "reference_file": "docs/data/fd2-reference-files.json",
+    "exe_size": 357074,
+    "exe_md5": "b97caf2239a27a896069d03549d96e1e",
+    "exe_sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+    "ida_default_table": "0x61da1",
+    "ida_growth_table": "0x620a1",
+    "constructor": "0x112a5"
+  },
+  "evidence_level": "已證實",
+  "rows": [
+    {
+      "id": 0,
+      "default_file_offset": "0x55ba1",
+      "growth_file_offset": "0x55ea1",
+      "default_raw": "0101012a00000004000000000084c0ffffff000000000000",
+      "growth_raw": "060804060203080c0000ff"
+    },
+    {
+      "id": 1,
+      "default_file_offset": "0x55bb9",
+      "growth_file_offset": "0x55eac",
+      "default_raw": "0102032400000004000000000080ffffffff000000000000",
+      "growth_raw": "070a040601030a0f0000ff"
+    },
+    {
+      "id": 2,
+      "default_file_offset": "0x55bd1",
+      "growth_file_offset": "0x55eb7",
+      "default_raw": "0101042800000004000000000080ffffffff000000000000",
+      "growth_raw": "060904060203070c0000ff"
+    },
+    {
+      "id": 3,
+      "default_file_offset": "0x55be9",
+      "growth_file_offset": "0x55ec2",
+      "default_raw": "0102171e00000004000000002493ffffffff0c0000000800",
+      "growth_raw": "0608050701010c100000ff"
+    },
+    {
+      "id": 4,
+      "default_file_offset": "0x55c01",
+      "growth_file_offset": "0x55ecd",
+      "default_raw": "0103013000000007000000001480ffffffff000000000000",
+      "growth_raw": "060904050202080b0000ff"
+    },
+    {
+      "id": 5,
+      "default_file_offset": "0x55c19",
+      "growth_file_offset": "0x55ed8",
+      "default_raw": "0103084800000007000000000081ffffffff000000000000",
+      "growth_raw": "06080507020306080000ff"
+    },
+    {
+      "id": 6,
+      "default_file_offset": "0x55c31",
+      "growth_file_offset": "0x55ee3",
+      "default_raw": "0103124600000006000000001787ffffffff000000000000",
+      "growth_raw": "070a050802030a0d0000ff"
+    },
+    {
+      "id": 7,
+      "default_file_offset": "0x55c49",
+      "growth_file_offset": "0x55eee",
+      "default_raw": "010b041901000008000000001e96ffffffffb9006e003000",
+      "growth_raw": "0d11090c03050d120000ff"
+    },
+    {
+      "id": 8,
+      "default_file_offset": "0x55c61",
+      "growth_file_offset": "0x55ef9",
+      "default_raw": "0104032000000004000000002c81ffffffff000000000000",
+      "growth_raw": "05080204020306090000ff"
+    },
+    {
+      "id": 9,
+      "default_file_offset": "0x55c79",
+      "growth_file_offset": "0x55f04",
+      "default_raw": "0105011c000800040100000034a4ffffffff000000000000",
+      "growth_raw": "0306020501030509040800"
+    },
+    {
+      "id": 10,
+      "default_file_offset": "0x55c91",
+      "growth_file_offset": "0x55f0f",
+      "default_raw": "01060826000c0003000000000081ffffffff000000000000",
+      "growth_raw": "0305020601020408040701"
+    },
+    {
+      "id": 11,
+      "default_file_offset": "0x55ca9",
+      "growth_file_offset": "0x55f1a",
+      "default_raw": "0106101e001800030040400036a7d1ffffff000000000000",
+      "growth_raw": "0204030701020609030602"
+    },
+    {
+      "id": 12,
+      "default_file_offset": "0x55cc1",
+      "growth_file_offset": "0x55f25",
+      "default_raw": "01080a3400000005000000003eacffffffff000013000000",
+      "growth_raw": "080a050601040b0e0000ff"
+    },
+    {
+      "id": 13,
+      "default_file_offset": "0x55cd9",
+      "growth_file_offset": "0x55f30",
+      "default_raw": "0204082800000004000000000081ffffffff000000000000",
+      "growth_raw": "05070304020306090000ff"
+    },
+    {
+      "id": 14,
+      "default_file_offset": "0x55cf1",
+      "growth_file_offset": "0x55f3b",
+      "default_raw": "02051042002800043200000037a8ffffffff000000000000",
+      "growth_raw": "0305020301030608040803"
+    },
+    {
+      "id": 15,
+      "default_file_offset": "0x55d09",
+      "growth_file_offset": "0x55f46",
+      "default_raw": "0308176400000005000000003faeffffffff280028000a00",
+      "growth_raw": "080c040601030a0c0000ff"
+    },
+    {
+      "id": 16,
+      "default_file_offset": "0x55d21",
+      "growth_file_offset": "0x55f51",
+      "default_raw": "040f024a0100000700000000108affffffffd200a0002800",
+      "growth_raw": "0a0f080d02040d110000ff"
+    },
+    {
+      "id": 17,
+      "default_file_offset": "0x55d39",
+      "growth_file_offset": "0x55f5c",
+      "default_raw": "0401154100000006000000000488ffffffff000000000e00",
+      "growth_raw": "070b05080203090d0000ff"
+    },
+    {
+      "id": 18,
+      "default_file_offset": "0x55d51",
+      "growth_file_offset": "0x55f67",
+      "default_raw": "010901180108000500000000078affffffffaa0082002d00",
+      "growth_raw": "090f070b02040c10060805"
+    },
+    {
+      "id": 19,
+      "default_file_offset": "0x55d69",
+      "growth_file_offset": "0x55f72",
+      "default_raw": "01090a1001000005000000000081ffffffffa0006e002800",
+      "growth_raw": "0a0f070a02030c100608ff"
+    },
+    {
+      "id": 20,
+      "default_file_offset": "0x55d81",
+      "growth_file_offset": "0x55f7d",
+      "default_raw": "0113082201000009000000000081ffffffffb4006e002d00",
+      "growth_raw": "090f050702030b110000ff"
+    },
+    {
+      "id": 21,
+      "default_file_offset": "0x55d99",
+      "growth_file_offset": "0x55f88",
+      "default_raw": "011605dc008c000400c17c0039a9ffffffff50004d002300",
+      "growth_raw": "080c070b02030a0c0c0fff"
+    },
+    {
+      "id": 22,
+      "default_file_offset": "0x55db1",
+      "growth_file_offset": "0x55f93",
+      "default_raw": "01180c3c01000005000000000081ffffffffc8008c003c00",
+      "growth_raw": "0b0e0608020410140000ff"
+    },
+    {
+      "id": 23,
+      "default_file_offset": "0x55dc9",
+      "growth_file_offset": "0x55f9e",
+      "default_raw": "021405eb00000005000000000081ffffffffaa0046003700",
+      "growth_raw": "090e04070205080c0000ff"
+    },
+    {
+      "id": 24,
+      "default_file_offset": "0x55de1",
+      "growth_file_offset": "0x55fa9",
+      "default_raw": "020e08be00960004000000000081ffffffff32003c002400",
+      "growth_raw": "060804070205090b1218ff"
+    },
+    {
+      "id": 25,
+      "default_file_offset": "0x55df9",
+      "growth_file_offset": "0x55fb4",
+      "default_raw": "0317057c01140007000000000081ffffffffb4006e003200",
+      "growth_raw": "0a0d060903060c0f0407ff"
+    },
+    {
+      "id": 26,
+      "default_file_offset": "0x55e11",
+      "growth_file_offset": "0x55fbf",
+      "default_raw": "040f0f2601000007000000000081ffffffff72007a003c00",
+      "growth_raw": "0c110a0c020412190000ff"
+    },
+    {
+      "id": 27,
+      "default_file_offset": "0x55e29",
+      "growth_file_offset": "0x55fca",
+      "default_raw": "040f052c0100000700000000118bffffffffd20082002d00",
+      "growth_raw": "0a0f090d02040e120000ff"
+    },
+    {
+      "id": 28,
+      "default_file_offset": "0x55e41",
+      "growth_file_offset": "0x55fd5",
+      "default_raw": "051c0a2c010a00050040020441b0ffffffff870064002a00",
+      "growth_raw": "0c0f080c02030f16040611"
+    },
+    {
+      "id": 29,
+      "default_file_offset": "0x55e59",
+      "growth_file_offset": "0x55fe0",
+      "default_raw": "050d1496003c0006001c020c3baaffffffff640046000000",
+      "growth_raw": "080e080c03060e160c1008"
+    },
+    {
+      "id": 30,
+      "default_file_offset": "0x55e71",
+      "growth_file_offset": "0x55feb",
+      "default_raw": "06190132000000040000000048b2ffffffff000000000000",
+      "growth_raw": "070e060d0204080f0000ff"
+    },
+    {
+      "id": 31,
+      "default_file_offset": "0x55e89",
+      "growth_file_offset": "0x55ff6",
+      "default_raw": "0619190c00000004000000000081ffffffff000000000000",
+      "growth_raw": "080e070e02040c0f0000ff"
+    }
+  ]
+}

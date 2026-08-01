@@ -51,7 +51,13 @@ FD2 JOIN 角色建構器 `0x112A5` 與 `+0x42/+0x46`（IDA Pro 9.4）
 - 上述表位址、JOIN 公式、writer 與凱麗新 JOIN 的 151：**已證實**。
 - ch27 一般玩家路徑當下的凱麗 `+0x42`：**未知**；它受先前戰鬥升級、
   轉職與存檔狀態影響，不能由章節號或目前情境 HP 猜出。
-- 目前正常 campaign `JOIN→LOADCH` 只記會員與順序，第一次建立
-  typed roster 時仍來自近似 scenario stats：**已證實的重製缺口**。
-- 後續應將本 JOIN 建構器降成可編輯、雜湊綁定的角色初始化規則，
-  並在 JOIN 當下建立 persistent record；完成前不將直接跳章模式當成正常玩家路徑。
+- `tools/sync_native_join_constructor.py` 現把兩份 raw 表與
+  `fd2-reference-files.json` 轉成 `remake/assets/data/native_join_constructor.json`；
+  每列保留原始 file offset、24/11-byte raw rows、FD2.EXE identity 與證據等級。
+- `campaign.NativeJoinConstructorTable` 驗證 32 列順序、offset、stride 與雜湊，
+  正常 `JOIN→LOADCH` 及 `scenario join_party` 首次建檔共用同一 materializer。
+  它只覆寫已閉合的 identity/raw key、race/class、level/MV、command mask 與
+  `+0x42/+0x46`；不從 scenario HP/MP 反推。
+- `sub_1145A` 的八物品格裝備重算尚未閉合，因此 AP/DP/DX 及
+  `+0x48/+0x4A/+0x4C/+0x4E` 不在本次完成範圍：**已證實的剩餘缺口**。
+- 直接跳章仍沒有先前升級／轉職／存檔歷史，不能冒充正常玩家路徑。

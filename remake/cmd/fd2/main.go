@@ -124,6 +124,8 @@ type Game struct {
 	titleSlotSel               int // title LOAD selector: native 0x30550 slots 0..3
 	classChangeTable           campaign.ClassChangeTable
 	classChangeGrowth          map[int]campaign.ClassChangeGrowth
+	nativeJoinConstructor      campaign.NativeJoinConstructorTable
+	hasNativeJoinConstructor   bool
 	handlerChapter             int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter
 	storyWalks                 []*storyWalkJob // 場景走位動畫佇列(doc46 §5.3);逐幀推進、完成後移除
 	storyAutoAdvance           int             // story 節點無對白時的自動轉場倒數幀(doc46 行軍蒙太奇,0=不自動)
@@ -2249,9 +2251,28 @@ func (g *Game) seedPersistentPartyFromLoadCH(
 		if _, exists := g.partyRoster[id]; exists {
 			continue
 		}
-		g.partyRoster[id] = cloneNativeShopUnit(*unit)
+		materialized, err := g.materializeNativeJoinPersistentUnit(id, *unit)
+		if err != nil {
+			return err
+		}
+		g.partyRoster[id] = cloneNativeShopUnit(materialized)
 	}
 	return nil
+}
+
+func (g *Game) materializeNativeJoinPersistentUnit(id int, base battle.Unit) (battle.Unit, error) {
+	if g == nil {
+		return battle.Unit{}, fmt.Errorf("native JOIN constructor owner is unavailable")
+	}
+	if !g.hasNativeJoinConstructor {
+		table, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
+		if err != nil {
+			return battle.Unit{}, fmt.Errorf("native JOIN constructor table: %w", err)
+		}
+		g.nativeJoinConstructor = table
+		g.hasNativeJoinConstructor = true
+	}
+	return g.nativeJoinConstructor.MaterializePersistentUnit(id, base)
 }
 
 func applyPersistentStats(dst, src *battle.Unit) {
@@ -2501,9 +2522,11 @@ func (g *Game) applyScenarioPartyJoins() {
 		}
 		var joined *battle.Unit
 		for _, unit := range g.st.Units {
-			if unit != nil && unit.Fig == id && unit.Camp == battle.Own {
+			// Native JOIN establishes permanent membership independently of the
+			// actor's current camp colour. Many recruits are still Ally here.
+			if unit != nil && unit.Fig == id {
 				if joined != nil {
-					g.loadErr = fmt.Sprintf("scenario join_party:角色%d有多筆我方記錄", id)
+					g.loadErr = fmt.Sprintf("scenario join_party:角色%d有多筆場上記錄", id)
 					joined = nil
 					break
 				}
@@ -2520,7 +2543,12 @@ func (g *Game) applyScenarioPartyJoins() {
 		if g.partyRoster == nil {
 			g.partyRoster = make(map[int]battle.Unit)
 		}
-		g.partyRoster[id] = cloneNativeShopUnit(*joined)
+		materialized, err := g.materializeNativeJoinPersistentUnit(id, *joined)
+		if err != nil {
+			g.loadErr = fmt.Sprintf("scenario join_party:角色%d persistent record: %v", id, err)
+			continue
+		}
+		g.partyRoster[id] = cloneNativeShopUnit(materialized)
 	}
 }
 
@@ -7170,6 +7198,11 @@ func loadGame() *Game {
 	}
 	if growth, e := campaign.LoadClassChangeGrowth(growthPath); e == nil {
 		g.classChangeGrowth = growth
+	}
+	joinPath := assetPath("assets/data/native_join_constructor.json")
+	if table, e := campaign.LoadNativeJoinConstructorTable(joinPath); e == nil {
+		g.nativeJoinConstructor = table
+		g.hasNativeJoinConstructor = true
 	}
 	g.initializeEquipmentBases(g.st)
 	g.font = loadFont()
