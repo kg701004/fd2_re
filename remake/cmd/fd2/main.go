@@ -2002,15 +2002,24 @@ func (g *Game) enterNode() {
 }
 
 func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
-	if n == nil || n.NativeMapView == nil || n.NativeMapHUD == nil {
+	if n == nil || (n.NativeMapView == nil && n.NativeMapHUD == nil) {
 		return true
 	}
 	if g.st == nil {
 		g.loadErr = "native map runtime: battle state is unavailable"
 		return false
 	}
+	if n.NativeMapView == nil {
+		g.loadErr = "native map runtime: HUD lacks a sourced view"
+		return false
+	}
+	// Preflight into a narrow candidate so an invalid optional HUD cannot leave
+	// a published view/range half-state. A sourced view may stand alone: ch27's
+	// handler closes the six view globals, while gate A remains inherited from
+	// a separate persistent option and must not be fabricated.
+	candidate := &battle.State{W: g.st.W, H: g.st.H}
 	view := n.NativeMapView
-	if err := g.st.MaterializeNativeMapViewState(battle.NativeMapViewState{
+	if err := candidate.MaterializeNativeMapViewState(battle.NativeMapViewState{
 		CameraX: view.CameraX, CameraY: view.CameraY,
 		CursorX: view.CursorX, CursorY: view.CursorY,
 		VisibleCursorX: view.VisibleCursorX, VisibleCursorY: view.VisibleCursorY,
@@ -2018,20 +2027,25 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 		g.loadErr = "native map runtime view: " + err.Error()
 		return false
 	}
-	if view.RangeMode == nil || *view.RangeMode != 1 ||
-		!g.st.MaterializeNativeMapRangeMode(*view.RangeMode) {
-		g.loadErr = "native map campaign selector is not the verified interactive one"
-		g.st.HasNativeMapViewState = false
+	if view.RangeMode == nil || (*view.RangeMode != 0 && *view.RangeMode != 1) ||
+		!candidate.MaterializeNativeMapRangeMode(*view.RangeMode) {
+		g.loadErr = "native map campaign selector is not a verified entry value"
 		return false
 	}
-	hud := n.NativeMapHUD
-	if hud.DisplayGateA < 0 || hud.DisplayGateA > 0xff ||
-		hud.DisplayGateB < 0 || hud.DisplayGateB > 0xff ||
-		!g.st.MaterializeNativeMapHUDState(byte(hud.DisplayGateA), byte(hud.DisplayGateB), hud.AnchorX) {
-		g.loadErr = "native map runtime HUD is outside raw bounds"
-		g.st.HasNativeMapViewState = false
-		return false
+	if hud := n.NativeMapHUD; hud != nil {
+		if hud.DisplayGateA < 0 || hud.DisplayGateA > 0xff ||
+			hud.DisplayGateB < 0 || hud.DisplayGateB > 0xff ||
+			!candidate.MaterializeNativeMapHUDState(byte(hud.DisplayGateA), byte(hud.DisplayGateB), hud.AnchorX) {
+			g.loadErr = "native map runtime HUD is outside raw bounds"
+			return false
+		}
 	}
+	g.st.NativeMapViewState = candidate.NativeMapViewState
+	g.st.HasNativeMapViewState = true
+	g.st.NativeMapRangeMode = candidate.NativeMapRangeMode
+	g.st.HasNativeMapRangeModeState = true
+	g.st.NativeMapHUDState = candidate.NativeMapHUDState
+	g.st.HasNativeMapHUDState = candidate.HasNativeMapHUDState
 	g.syncNativeMapView()
 	return true
 }

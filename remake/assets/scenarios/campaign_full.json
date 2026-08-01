@@ -3868,6 +3868,15 @@
    "map": "assets/maps/map26",
    "units": "assets/maps/map26/map26_units.json",
    "scenario": "assets/scenarios/ch27.json",
+   "native_map_view": {
+    "camera_x": 9,
+    "camera_y": 49,
+    "cursor_x": 14,
+    "cursor_y": 54,
+    "visible_cursor_x": 5,
+    "visible_cursor_y": 5,
+    "range_mode": 0
+   },
    "on_win": "inventory_gate_ch27_sky_key",
    "on_lose": "retreat_ch27"
   },

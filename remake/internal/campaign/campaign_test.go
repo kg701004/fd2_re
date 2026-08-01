@@ -97,14 +97,12 @@ func TestLoadValidation(t *testing.T) {
 	}
 }
 
-func TestNativeMapRuntimeRequiresCompleteRawState(t *testing.T) {
+func TestNativeMapRuntimeRejectsUnsupportedOrUnanchoredState(t *testing.T) {
 	for name, raw := range map[string]string{
-		"view only":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4}}}}`,
-		"hud only":            `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
-		"bad gate":            `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
-		"transient bootstrap": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":0},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
-		"missing range mode":  `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
-		"runtime selector":    `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":11},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"hud only":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"bad gate":           `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":1},"native_map_hud":{"display_gate_a":256,"display_gate_b":1,"anchor_x":1}}}}`,
+		"missing range mode": `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
+		"runtime selector":   `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":1,"camera_y":13,"cursor_x":8,"cursor_y":17,"visible_cursor_x":7,"visible_cursor_y":4,"range_mode":11},"native_map_hud":{"display_gate_a":1,"display_gate_b":1,"anchor_x":1}}}}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "invalid-native-map.json")
@@ -112,9 +110,26 @@ func TestNativeMapRuntimeRequiresCompleteRawState(t *testing.T) {
 				t.Fatal(err)
 			}
 			if _, err := Load(path); err == nil {
-				t.Fatal("incomplete or out-of-range native map state must fail closed")
+				t.Fatal("unsupported or unanchored native map state must fail closed")
 			}
 		})
+	}
+}
+
+func TestNativeMapRuntimeAllowsProvenViewWithoutUnsourcedHUD(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "view-only.json")
+	raw := `{"start":"b","nodes":{"b":{"type":"battle","native_map_view":{"camera_x":9,"camera_y":49,"cursor_x":14,"cursor_y":54,"visible_cursor_x":5,"visible_cursor_y":5,"range_mode":0}}}}`
+	if err := os.WriteFile(path, []byte(raw), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := c.Nodes["b"]
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD != nil ||
+		n.NativeMapView.RangeMode == nil || *n.NativeMapView.RangeMode != 0 {
+		t.Fatalf("view-only native state=%#v", n)
 	}
 }
 
@@ -136,6 +151,24 @@ func TestFullCampaignCarriesVerifiedChapterOneNativeMapRuntime(t *testing.T) {
 	}
 	if hud := *n.NativeMapHUD; hud.DisplayGateA != 1 || hud.DisplayGateB != 1 || hud.AnchorX != 1 {
 		t.Fatalf("battle_ch01 native map HUD=%+v", hud)
+	}
+}
+
+func TestFullCampaignCarriesVerifiedChapter27ViewWithoutInventedHUD(t *testing.T) {
+	c, err := Load("../../assets/scenarios/campaign_full.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := c.Nodes["battle_ch27"]
+	if n == nil || n.NativeMapView == nil || n.NativeMapHUD != nil {
+		t.Fatalf("battle_ch27 native map state=%#v", n)
+	}
+	view := *n.NativeMapView
+	if view.CameraX != 9 || view.CameraY != 49 ||
+		view.CursorX != 14 || view.CursorY != 54 ||
+		view.VisibleCursorX != 5 || view.VisibleCursorY != 5 ||
+		view.RangeMode == nil || *view.RangeMode != 0 {
+		t.Fatalf("battle_ch27 native map view=%+v", view)
 	}
 }
 

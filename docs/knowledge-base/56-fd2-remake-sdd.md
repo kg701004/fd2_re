@@ -2877,11 +2877,21 @@ baseline 的所有六位元 DAC 分量飽和為63；200ms 後
 `0x11DF2(0,255,0)` 恢復 baseline，再由 `0x11CAC(0)` 重畫。正式 runner
 依 camera pan → group append → 300ms → 全白呈現 → 200ms → baseline
 restore → redraw 的順序執行兩次，完成後才啟動 AI。完整 native
-view/HUD provenance 存在時使用 indexed DAC；ch27 目前缺戰鬥節點的精確
-view/HUD 初值，因此一般路徑仍使用既有 RGB 戰場呈現，但全範圍白閃因所有
-DAC 色都飽和而可精確覆蓋。這一限制必須保留，不能把本輪稱為同狀態像素 E2。
+view/HUD provenance 存在時使用 indexed DAC。後續 IDA Pro／Capstone 已把
+ch26_pre 返回 battle_ch27 時的 camera `(9,49)`、absolute cursor `(14,54)`、
+visible cursor `(5,5)` 與 selector 0 閉合，並以 view-only 設定接入正式節點。
+HUD 仍不完整：main 返回後的 gate B 是1，但 gate A 是可由存檔延續的選項，
+anchor 又在 visible row 不大於5時保留既值，兩者都不能猜成章節常數。因此
+一般路徑仍使用既有 RGB 戰場呈現，全範圍白閃則因所有 DAC 色都飽和而可精確
+覆蓋。這一限制必須保留，不能把本輪稱為同狀態像素 E2。直接證據見
+[`fd2_ch27_pre_view_ida.txt`](../data/fd2_ch27_pre_view_ida.txt)。
 
-**尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、ch27 精確 native
-view/HUD 初值、CONTINUE 進入 event63 前後的玩家路徑，以及 event64／66／
-68／70／72 的各自 phase／handler consumer。直接位址與指令見
+campaign schema 因此不再強迫 `native_map_view` 與 `native_map_hud` 成對：
+已證實的 view 可獨立存在，HUD 不可脫離 view；節點入口只接受已有直接證據的
+selector 0／1。執行期先在私人候選狀態驗證 view、selector 與可選 HUD，再
+一次發布，避免 HUD 失敗留下半套 view。
+
+**尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、ch27 persistent
+gate A／anchor 的跨節點與存檔擁有者、CONTINUE 進入 event63 前後的玩家
+路徑，以及 event64／66／68／70／72 的各自 phase／handler consumer。直接位址與指令見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。

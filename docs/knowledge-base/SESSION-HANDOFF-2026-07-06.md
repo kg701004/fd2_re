@@ -3005,8 +3005,26 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   呼叫執行 pan→native append→300ms→delta255 全白→200ms→delta0 restore→
   redraw；全部完成才啟動 AI。兩批 constructor 先在 private state 預演，
   第二批錯誤時第一批不會部分發布；未知同回合 row 亦在 AI 前失敗即關閉。
-- event63 目前是重製端 E1，不是 E2：ch27 戰鬥節點尚缺精確 native
-  view/HUD 初值，因此一般路徑使用既有 RGB 戰場加數學等價的全白覆蓋；有
-  完整 native view/HUD provenance 時才走 indexed DAC。下一個切片是
+- event63 目前是重製端 E1，不是 E2：下方較晚勘誤已閉合並接線 ch27 精確
+  native view 與 selector0；未閉合的只有 persistent HUD gate A／anchor，
+  所以不建立 `native_map_hud`。缺完整 HUD 時 indexed DAC 失敗即關閉，
+  一般路徑保留既有 RGB 戰場的數學等價全白覆蓋。下一個切片是
   `MAP26-EVENT63-E2-PLAYER-PATH`：未修改 DOSBox 的 event62→跨回合→event63
   同狀態逐幀比較，以及 CONTINUE 邊界。
+
+## 2026-08-02：ch27 戰前 view 與 HUD 持續邊界
+
+- 綁定參考 `FD2.EXE` 雜湊的 IDA Pro 9.4 主判讀與 Docker Capstone 覆核，
+  已閉合 ch26_pre 返回 battle_ch27 時的 camera `(9,49)`、absolute cursor
+  `(14,54)`、visible cursor `(5,5)` 與 selector 0。原始位址、acting 位元組
+  與推論等級保存在
+  [`fd2_ch27_pre_view_ida.txt`](../data/fd2_ch27_pre_view_ida.txt)。
+- `battle_ch27.native_map_view` 已資料化並由正式 runtime 原子載入；schema
+  現允許具直接證據的 view 在 HUD 未閉合時獨立存在，節點入口只接受已證實的
+  selector 0／1。HUD 仍不可脫離 view 單獨宣告。
+- 不建立 ch27 `native_map_hud`：main 返回後 gate B 已知為1，但 gate A 可由
+  選項與存檔延續，anchor 在本處理器 visible row 最大為5時也保留既值。兩者
+  尚缺跨節點／存檔擁有者，猜成1會製造錯誤原版斷言。
+- 此垂直切片是 E1，不是 E2；event63 的 indexed DAC 仍要求完整 HUD，缺值時
+  走既有 RGB 戰場的數學等價全白覆蓋。下一門檻仍是未修改 DOSBox 同狀態逐幀
+  比較、persistent HUD state owner 與 CONTINUE 邊界。

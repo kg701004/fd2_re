@@ -1,0 +1,101 @@
+# 第 27 關戰前處理器的原生視窗狀態
+
+## 版本、工具與位址基準
+
+- 輸入：`FD2.EXE`，357074 位元組
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 第一判讀：IDA Pro 9.4，`fd2-ida-authorized-local`、無網路、一次性 Docker
+  容器；以下程式位址皆為 IDA 的 LE 線性位址。
+- 獨立覆核：`fd2-cap-local` 內的 `tools/disasm_le.py`；acting 靜態資料另由
+  `tools/export_acting_resources.py --check` 對同一雜湊輸入重生。
+- 原版執行檔只讀；IDA 資料庫與探測輸出只寫入 `/tmp/fd2-ch27-ida`。
+
+## 問題與舊邊界
+
+`battle_ch27` 原先沒有 `native_map_view` 或 `native_map_hud`。因此 event63
+即使已接通敵軍 AI 前的兩批增援，仍不能證明原版索引合成器使用的鏡頭、游標
+與 HUD 原始狀態。舊 schema 又要求 view 與 HUD 必須成對，且只接受
+`range_mode=1`；這會迫使未知 HUD 值被猜成常數，也無法表達戰前處理器實際
+留下的 selector 0。
+
+## 已證實：六個視窗全域
+
+`sub_205DA`（`0x205DA..0x2067D`）在載入 map26 後直接把六個全域清零：
+
+```text
+0x20619 [0x53AA9] = 0    camera X
+0x20623 [0x53AAD] = 0    camera Y
+0x2062D [0x53AB1] = 0    absolute cursor X
+0x20637 [0x53AB5] = 0    absolute cursor Y
+0x20641 [0x53AB9] = 0    visible cursor X
+0x2064B [0x53ABD] = 0    visible cursor Y
+```
+
+第 27 關戰前處理器是 `sub_33AF1`（`0x33AF1..0x33C9D`）。它在
+`0x33B04` 與 `0x33B9E` 都以 `(9,49)` 呼叫 `sub_135DD`。該 helper
+逐格把 camera 與 absolute cursor 一起增減，沒有改 visible cursor；因此
+第二次呼叫返回時狀態仍是 camera `(9,49)`、absolute cursor `(9,49)`、
+visible cursor `(0,0)`。
+
+`0x33B0E` 播放 acting 76。其目錄項在 `FD2.EXE` file+`0x56708`，payload
+為 file+`0x56F78..0x56FE3`；前四個正常 frame 對 slot 0 的動作依序是
+`pose 2`、`pose 2`、`pose 1`、未列出，第五個 frame 的 `0x84` 高位表示
+special，只原地顯示。原版方向碼 2 是上、1 是左。map26 的雜湊綁定部署資料
+把 party slot 0 放在 `(15,56)`，所以 acting 76 後為 `(14,54)`。
+`0x33C24` 的 acting 81 位於 file+`0x57009..0x5700E`，內容
+`01 8f 01 00 03`；`0x8F` 是 15-beat special，slot 0 只原地面右。
+
+三次 `0x24618` 只讀 `[0x53AA9]/[0x53AAD]` 作地形 staging，沒有寫入六個
+視窗全域。`0x134E4` 也只把每筆 runtime unit `+3` 姿態清零。共同尾端最後
+執行 `0x33140 push 0; 0x33142 call sub_12D7B`：`sub_12D7B(0)` 讀 slot 0
+的 `(14,54)`，再呼叫 `sub_12CEA`。後者先移 X、再移 Y；從 visible `(0,0)`
+各正向走五格尚未超過 X `>10`／Y `>5` 的捲圖條件，所以 camera 不再移動，
+最後得到：
+
+```text
+camera          = (9,49)
+absolute cursor = (14,54)
+visible cursor  = (5,5)
+```
+
+這六個值是**已證實**：具備初始化寫入端、處理器直接呼叫、acting 原始資料、
+slot 0 消費端及第二套反組譯覆核。
+
+## 已證實：進入戰鬥時 selector 為 0
+
+`sub_205DA` 曾在 `0x2065F` 寫 `[0x51A83]=1`，但後續兩次
+`sub_135DD` 都在入口 `0x135F2` 改寫為 0。`sub_33AF1` 後段與共同
+`0x3312D..0x3314A` 尾端沒有其他 `[0x51A83]` writer；`0x24618`、
+`sub_134E4` 與 `sub_12D7B/sub_12CEA` 也不會把 0 改回 1。因此 handler
+返回時的原始 selector 是 **0**，不是舊 schema 所稱的通用 interactive 1。
+
+這項結論只描述 ch26_pre → battle_ch27 的入口狀態。其後 command、item 與
+field-event writers 仍可改寫 selector，不能把 0 泛化成整場戰鬥常數。
+
+## 已證實：HUD 不能由本處理器固定
+
+- main 在 `0x25E0B` 進入戰前流程前寫 gate B `[0x51AAC]=0`，處理器返回後
+  於 `0x25E5E` 明確恢復為 1；所以 battle controller 入口的 gate B 是 1。
+- gate A `[0x51AAB]` 沒有章節初始化 writer。`0x173BA` 可將它 XOR 1，
+  `0x1A0C5/0x300F9` 會保存，LOAD／CONTINUE 又可從存檔恢復；它是繼承的
+  persistent option，不是 ch27 常數。
+- anchor `[0x51A0C]` 只有 `0x1ACF3` 的兩個 writer：visible Y `>5` 且
+  X `<3` 寫 `0xF2`，同列 X `>9` 寫 1，其餘狀態保留舊值。ch27 處理器的
+  visible Y 最多到 5，故不會替上一場留下的 anchor 選出新常數。
+
+因此 gate B 雖已知，完整 `native_map_hud` 仍缺 gate A 與 anchor 的跨節點
+持續擁有者。重製端只資料化 ch27 的 view/range，不填 HUD；索引 frame 與
+event63 的 indexed DAC 路徑仍要求完整 HUD provenance，缺值時保持失敗即關閉。
+
+## 重製映射與驗證等級
+
+- `campaign_full.json:battle_ch27.native_map_view` 保存
+  `(9,49)/(14,54)/(5,5)` 與 `range_mode=0`。
+- campaign schema 允許已證實的 view 在未知 HUD 時獨立存在，只接受入口
+  selector 0 或 1；HUD 仍不可脫離 view 單獨宣告。
+- `materializeNativeMapRuntime` 先在私人 candidate 驗證 view、selector 及可選
+  HUD，再一次發布；view-only 狀態會驅動重製鏡頭與游標，但不會製造 HUD。
+- 本切片為 **E1**：原版位元組、資料流、可編輯設定與重製端玩家可見鏡頭已有
+  回歸；尚缺未修改 DOSBox 的同一 roster／event／tick 逐幀比較，且 persistent
+  gate A／anchor 尚未接入自有存檔與跨戰場流程，所以不是 E2。

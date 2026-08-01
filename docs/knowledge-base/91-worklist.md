@@ -841,7 +841,7 @@
 - [~] **ch23 post mapping boundary**：Docker Capstone 補齊初始 dialog `0x24c4c`→FDTXT_024 index2（scene0 line14、scene1 lines0–1），並固定 `0x24d22` latch/copy loop 的 raw 邊界；generated binding 已 mapping-complete，但 `0x11d40` palette、`0x24d22` indexed copy 與其他 renderer calls 仍 fail-closed，未接 `postbattle_ch23_persist`。
 - [~] **ch24/ch25 pre-handler**：`0x24b4d` 四段 transition count 已 lower 為 `transition_reveal`（20/20/20/60、20ms/frame），FDOTHER#88 sub1 四次 SFX、index=-1 stop、handle release 已接，FDTXT_025 跨 scene 對白已接 `story_ch25`；尚待 indexed double-buffer visual adapter。
 - [~] **ch25/ch26 pre-handler**：FDTXT_026 string0 已以 direct scene0 12-line mapping 接 binding（map25/70-slot、pan、acting76），`story_ch26` 已接回 handler。2026-07-29 已修正未加引號訊息計數，FDTXT_026 全量 63/63 count-aligned；這只關閉文字索引，不自動證明每個條件分支或 event61 玩家路徑。
-- [~] **ch26/ch27 pre-handler**：FDTXT_027 idx0/3/4/5/6/7 已高信心對到 ch27 scene0 全部 21 句，新增六組 editable direct overrides 並接 `story_ch27`；共用 `0x24618` renderer 已完成，但這些 handler 的 exact binding/runtime context 與 `0x24b14` item `0x64` branch 尚未完整接入，不能視為完整章節流程完成。
+- [~] **ch26/ch27 pre-handler**：FDTXT_027 idx0/3/4/5/6/7 已高信心對到 ch27 scene0 全部 21 句，新增六組 editable direct overrides 並接 `story_ch27`；共用 `0x24618` renderer 已完成。IDA／Capstone 又閉合 ch26_pre 返回時的 view `(camera 9,49; cursor 14,54; visible 5,5)` 與 selector0，`battle_ch27` 已資料化並由正式 runtime 消費。HUD gate B 已知為1，但 gate A／anchor 是跨節點持續狀態，仍不可猜成章節常數；`0x24b14` item `0x64` branch 的其餘視覺行為也尚未完整接入，故不能視為完整章節流程完成。
 - [x] **ch27 post/ch28 flow**：FDTXT_028 string7 已精確對到 ch28 scene1 lines 11–15，新增 post-handler binding 並接 `story_ch28`；sync_party/set_chapter 保留，下一節仍進可編輯 preparation_ch28。
 - [x] **ch28/ch29 pre-handler**：Docker 隔離 Capstone 與 IDA Pro 9.4 證實 `0x35822` 的 pan→spawn→300ms→`0x11DF2(0,255,255)` 全白→200ms→`0x11DF2(0,255,0)` 基準恢復（baseline restore）→redraw；舊稱「兩次無作用（no-op）調色盤更新」已撤回。2026-08-02 更正來源 `PUSH` 順序為 `(group,y,x)`，並以非對稱 ch27/ch28 呼叫回歸鎖定 group 與 x。FDTXT_029 idx7/idx8、map27/pan/acting86 binding 通過回歸，`story_ch28` 已接回可編輯 handler。
 - [~] **ch26 post item-gate branch**：`0x25186→0x24b14(0x64)` 是前 16 個 runtime slots 的 exact inventory search，無 camp/activity filter；成功臂無 `0x1b8e7`，天空之鑰不消耗，之後才 sync→chapter increment→persistent cleanup。FDTXT_027 idx8–12 / idx13–16 對應兩臂；仍需把 visual/effect calls 與缺匙 editable branch 資料化，不能只保留 generic ending。
@@ -898,7 +898,7 @@
   regression接受0為exact no-op；pure modes1..5 placement API仍拒絕0，
   mode6仍只走獨立field mutation。
 - [x] **`0x122dc` mode6 raw-field／scheduler closure**：`0x108f0..0x10932` 載 FDFIELD composition 至 `0x53a51`、讀 signed `u16 width/height`；`0x4dbfc` 由 header 後的 4-byte cells 逐筆將 byte+3 初始化為`0xff`，再對 byte+2 mask `0x1f`。所以 mode6 的 `4*(x+y*width)+7` 正是 selected cell byte+3（event-high／raw blit-mode byte），不是 overlay sprite或抽象grid。`ComposeFrame`現按原順序在terrain後清selected cell、再畫unit/foreground，且只有full-frame成功才commit caller field；bounds/HUD failure regression保證atomic。這只閉合compositor primitive，尚未把未證實的global-selector6 owner接進production。
-- [x] **`[0x51a83]` full-domain correction**：合法 IDA 9.4 完整 data xrefs 已保存於 [`fd2_51a83_xrefs.txt`](../data/ida/fd2_51a83_xrefs.txt)。撤回把它限制為`0..5`或稱「戰鬥訊息索引」：`0x15140/0x153b1/0x1bd14/0x1d188` 都是 zero-extended record byte `+2`；原 spell table 的 range 5/7/9 會產生7/9/11。`0x122dc`對>6不畫圖，但`0x115b6`仍以selector-1進`0x14742` target legality。battle raw state現保留writer可達的`0..0x101`；campaign JSON只允許`0x1060c`已證實的persistent interactive selector 1，避免靜態資料冒充互動writer。
+- [x] **`[0x51a83]` full-domain correction**：合法 IDA 9.4 完整 data xrefs 已保存於 [`fd2_51a83_xrefs.txt`](../data/ida/fd2_51a83_xrefs.txt)。撤回把它限制為`0..5`或稱「戰鬥訊息索引」：`0x15140/0x153b1/0x1bd14/0x1d188` 都是 zero-extended record byte `+2`；原 spell table 的 range 5/7/9 會產生7/9/11。`0x122dc`對>6不畫圖，但`0x115b6`仍以selector-1進`0x14742` target legality。battle raw state現保留writer可達的`0..0x101`；campaign JSON只允許有直接入口證據的 selector 0／1：ch26_pre 返回 battle_ch27 時為0，CONTINUE／post-bootstrap `0x1060c` 為1，避免靜態資料冒充其他互動writer。
 - [x] **RE-INTERACTIVE-SELECTOR-LIFECYCLE**：Docker Capstone固定setup `0x10483=0→0x11cac(1)→0x105eb:0x11cac(0)→0x1060c=1`，並固定`0x1cff0` target entry寫`record+4+2`、cancel/effect期間暫寫0、exit恢復1。remake campaign/production frame現以selector1和FDOTHER#1 descriptor0呈現原生steady cursor，移除白框 approximation；target modal亦直接呈現完整call-table已閉合的selectors2–5，regression要求每一 selector 實際改變indexed VGA frame。selector6 mutation、7+ no-draw target visual、flash與indexed effect仍維持partial。
 - [x] **`0x115b6→0x14742` cursor-confirm closure**：Capstone證實`0x14742`唯一caller為`0x1175f`。code5先拒絕；cell byte+3=`0xff`也在code4前拒絕；非`0xff`的code4接受；codes0..3以`[0x51a83]`（>1才減1）作strict Manhattan `< radius` roster count，count非零才確認。code6維持獨立relocation branch。新增`NativeCursorConfirmationAllowed` fail-closed raw-roster regression。同步撤回target code2=`camp!=1`舊斷言；direct branches是`camp==1`，即只選友軍。
 - [x] **steady native indexed map-frame scheduler**：新增 `internal/indexedmap.ComposeFrame`，強制順序 `0x11eee terrain → 0x122dc range → 0x127a9 unit → 0x129ec foreground → HUD callback → 0x11eb0`。**更正舊 320×192 斷言**：direct `0x11d12..0x11d36` 是 width312、height192、dst `A0504`／stride320，即 VGA `(4,4)` 四邊留4px；compositor/regression已照此修正。HUD callback 缺失即拒絕，private work clone 讓任一 layer/HUD 失敗不污染 caller 的 work/VGA。
@@ -962,8 +962,9 @@
     並拒絕broken identity或diagonal raw move。
   - [x] chapter-1 editable vertical slice：`battle_ch01` campaign節點保存
     真實FD2.SAV的camera `(1,13)`、cursor `(8,17)`、visible `(7,4)`及
-    HUD `(gateA=1,gateB=1,anchor=1)`；loader要求view/HUD成對且raw
-    bounds合法，runtime錯誤fail-closed。其餘章節不套用這組值。
+    HUD `(gateA=1,gateB=1,anchor=1)`；loader要求 HUD 必須有 view，已證實但
+    HUD 未閉合的 view 可獨立存在，且 raw bounds 合法；runtime錯誤
+    fail-closed。其餘章節不套用這組值。
   - [x] codec boundary：#130／hex #0x83／#0x84 不走 `ParseLMI1` 的 `0x4e916` cell codec；native `0x1aeb1` 有 literal `mov ebx,0x83/0x84`，明確走 four-mode `0x4e63d`。`ParseLMI1FrameEntry`／`DecodeLMI1FrameResource` regression 驗證 geometry 69×34、6×7、6×5 及 transparent decode。撤回剛才將 hex immediate 誤改成 decimal #83/#84（44×12／45×12）的錯誤斷言。
   - [x] optional unit selector：`0x1ae4d` 以 raw `unit+2*12 + state` 選 FDICON，state=3 alias 1，並在 panel `stride*5+6` raw blit；HP `+0x40/+0x42` 經 `0x1875d` 畫至 `stride*21+9`（mode3）。`NativeMapHUDUnitFrameIndex` regression 保留 selector，不替 state 命名。
   - [x] strict compositor layout／production bridge：`NativeMapHUDLayoutFor(anchor,456)` 固定 frame／terrain／AP／DP／unit／HP 的六個 byte destinations，拒絕非 native stride 與 69-pixel frame 出 320-pixel viewport 的 anchor；`BlitNativeMapHUD`已由`ComposeNativeFrame`接入Ebiten production full frame。此項不證明其他章節的raw runtime來源或DOSBox visual parity。
@@ -1802,9 +1803,10 @@
   `0x358C7..0x358E5` 執行 group1@(3,27)、group2@(15,27) 的 pan、native
   constructor、300ms、全 DAC 白閃、200ms、baseline restore、redraw，完成後
   才啟動 AI；兩批先在私人 state 完整預演，錯誤第二批不會部分發布第一批。
-  indexed view/HUD provenance 可用時走 raw DAC，否則只對既有 RGB 戰場使用
+  完整 HUD provenance 可用時走 raw DAC，否則只對既有 RGB 戰場使用
   數學上等價的全白覆蓋，不宣稱一般 RGB palette adapter。
 - [ ] **MAP26-EVENT63-E2-PLAYER-PATH**：從未修改 ch27 一般玩家路徑完成
   event62 向左一步、跨到下一 native round、觸發 event63，再以 DOSBox 同
-  camera/roster/tick 逐幀比對兩次白閃與增援；同時補 ch27 戰鬥節點精確
-  native view/HUD 初值及 CONTINUE 邊界。完成前 event63 仍不可標成 E2。
+  camera/roster/tick 逐幀比對兩次白閃與增援。ch27 戰前 view／selector0 已
+  閉合並接線；本項剩餘 persistent HUD gate A／anchor 的跨節點與存檔擁有者，
+  以及 CONTINUE 邊界。完成前 event63 仍不可標成 E2。

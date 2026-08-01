@@ -485,16 +485,17 @@ func Load(path string) (*Campaign, error) {
 				id,
 			)
 		}
-		if (n.NativeMapView == nil) != (n.NativeMapHUD == nil) {
-			return nil, fmt.Errorf("battle 節點 %q 必須同時定義 native_map_view / native_map_hud", id)
+		if n.NativeMapHUD != nil && n.NativeMapView == nil {
+			return nil, fmt.Errorf("battle 節點 %q 不可在缺少 native_map_view 時單獨定義 native_map_hud", id)
 		}
 		if n.NativeMapView != nil {
 			mode := n.NativeMapView.RangeMode
-			// Campaign JSON owns only the verified post-bootstrap interactive
-			// state at 0x1060c. Runtime command/item writers subsequently own
-			// every selector transition away from and back to steady-state 1.
-			if mode == nil || *mode != 1 {
-				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 目前只允許已證實的 interactive selector 1", id)
+			// Campaign JSON currently owns two directly proven entry states:
+			// 0 is the no-overlay state retained by ch26_pre on return, while 1
+			// is the CONTINUE/post-bootstrap state at 0x1060c. Runtime command
+			// and item writers own every other selector transition.
+			if mode == nil || (*mode != 0 && *mode != 1) {
+				return nil, fmt.Errorf("battle 節點 %q 的 native_map_view.range_mode 目前只允許已證實的 entry selector 0/1", id)
 			}
 		}
 		if n.NativeMapHUD != nil {
