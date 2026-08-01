@@ -23,7 +23,45 @@ type Scenario struct {
 	Party                 []PartyMember        `json:"party"`                                    // 主角隊(不在 FDFIELD roster,on_battle_start 進場)
 	DeployCells           [][2]int             `json:"deploy_cells"`                             // 主角隊進場目標格
 	Events                []Event              `json:"events"`
+	NativeTurnEvents      []NativeTurnEvent    `json:"native_turn_events,omitempty"`
 	pendingJoins          []int
+}
+
+// NativeTurnEvent preserves one live FDFIELD three-byte row consumer without
+// forcing it into the normalized on_turn_end trigger. RawCamp is deliberately
+// not renamed to a faction: sub_1A813 compares the byte at row+5, and each
+// caller owns a different phase boundary.
+type NativeTurnEvent struct {
+	EventID int               `json:"event_id"`
+	RawCamp int               `json:"raw_camp"`
+	Handler string            `json:"handler"`
+	Staging NativeTurnStaging `json:"staging"`
+}
+
+// NativeTurnStaging is the editable form of the recovered 0x35822 helper.
+// Helper addresses remain provenance, not runtime dispatch keys: the UI
+// adapter validates the complete known signature before executing it.
+type NativeTurnStaging struct {
+	Helper             string                  `json:"helper"`
+	PanHelper          string                  `json:"pan_helper"`
+	SpawnHelper        string                  `json:"spawn_helper"`
+	DelayBeforeFlashMS int                     `json:"delay_before_flash_ms"`
+	PaletteHelper      string                  `json:"palette_helper"`
+	PaletteStart       int                     `json:"palette_start"`
+	PaletteEnd         int                     `json:"palette_end"`
+	FlashDelta         int                     `json:"flash_delta"`
+	FlashHoldMS        int                     `json:"flash_hold_ms"`
+	RestoreDelta       int                     `json:"restore_delta"`
+	RedrawHelper       string                  `json:"redraw_helper"`
+	RawPlacementGate   int                     `json:"raw_placement_gate"`
+	Calls              []NativeTurnStagingCall `json:"calls"`
+}
+
+type NativeTurnStagingCall struct {
+	Group  int    `json:"group"`
+	X      int    `json:"x"`
+	Y      int    `json:"y"`
+	Source string `json:"source"`
 }
 
 // InitialGroupAbsent is an evidence-backed pre-battle condition: materialize
@@ -193,6 +231,35 @@ func LoadScenario(path string) (*Scenario, error) {
 			}
 		}
 	}
+	seenNativeTurn := map[[2]int]bool{}
+	initialGroups := map[int]bool{}
+	for _, group := range sc.InitialGroups {
+		initialGroups[group] = true
+	}
+	for eventIndex, event := range sc.NativeTurnEvents {
+		key := [2]int{event.EventID, event.RawCamp}
+		staging := event.Staging
+		if !sc.RuntimeAppendGroups || event.EventID < 0 || event.EventID >= 90 ||
+			event.RawCamp < 0 || event.RawCamp > 0xff || event.Handler == "" ||
+			seenNativeTurn[key] || staging.Helper == "" || staging.PanHelper == "" ||
+			staging.SpawnHelper == "" || staging.PaletteHelper == "" || staging.RedrawHelper == "" ||
+			staging.DelayBeforeFlashMS < 0 || staging.FlashHoldMS < 0 ||
+			staging.PaletteStart < 0 || staging.PaletteEnd < staging.PaletteStart || staging.PaletteEnd > 255 ||
+			staging.FlashDelta < 0 || staging.FlashDelta > 255 ||
+			staging.RestoreDelta < 0 || staging.RestoreDelta > 255 ||
+			staging.RawPlacementGate < 0 || staging.RawPlacementGate > 0xff || len(staging.Calls) == 0 {
+			return nil, fmt.Errorf("scenario native turn event %d is invalid", eventIndex)
+		}
+		seenNativeTurn[key] = true
+		seenGroups := map[int]bool{}
+		for callIndex, call := range staging.Calls {
+			if call.Group < 0 || call.Group > 0xff || call.X < 0 || call.Y < 0 ||
+				call.Source == "" || seenGroups[call.Group] || initialGroups[call.Group] {
+				return nil, fmt.Errorf("scenario native turn event %d staging call %d is invalid", eventIndex, callIndex)
+			}
+			seenGroups[call.Group] = true
+		}
+	}
 	return &sc, nil
 }
 
@@ -246,6 +313,43 @@ func (sc *Scenario) materializePendingGroups(st *State) {
 			}
 		}
 	}
+	for _, event := range sc.NativeTurnEvents {
+		for _, call := range event.Staging.Calls {
+			st.PendingGroups[call.Group] = true
+		}
+	}
+}
+
+// NativeTurnEventsAt returns the editable handlers selected by sub_1A813's
+// exact live-row predicate, preserving the sixteen-row order. A live row with
+// no unique editable consumer is an error rather than a skipped event.
+func (sc *Scenario) NativeTurnEventsAt(st *State, rawCamp byte) ([]NativeTurnEvent, error) {
+	if sc == nil || st == nil || !st.HasNativeTurnEventControlState ||
+		st.NativeRoundCounter <= 0 || st.NativeRoundCounter > 0xfe {
+		return nil, fmt.Errorf("native turn event: live control state unavailable")
+	}
+	var out []NativeTurnEvent
+	for slot, row := range st.NativeTurnEventControls {
+		if int(row.Turn) != st.NativeRoundCounter || row.RawCamp != rawCamp {
+			continue
+		}
+		matches := 0
+		var matched NativeTurnEvent
+		for _, event := range sc.NativeTurnEvents {
+			if event.EventID == int(row.EventID) && event.RawCamp == int(rawCamp) {
+				matched = event
+				matches++
+			}
+		}
+		if matches != 1 {
+			return nil, fmt.Errorf(
+				"native turn event: slot %d event %d raw camp %d has %d editable consumers",
+				slot, row.EventID, rawCamp, matches,
+			)
+		}
+		out = append(out, matched)
+	}
+	return out, nil
 }
 
 // AdoptHandlerBattleState attaches turn/death events to a runtime roster that

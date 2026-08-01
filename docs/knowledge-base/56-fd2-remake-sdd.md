@@ -2821,7 +2821,7 @@ party order／roster、空 deployment、raw chapter 與 metadata `+6..+9`
 直接指令與範圍限制見
 [`fd2_native_chapter_slot_restore_ida.txt`](../data/fd2_native_chapter_slot_restore_ida.txt)。
 
-### 2026-08-02 — event62 動態回合列與 `0x35822` 參數勘誤
+### 2026-08-02 — event62／event63 動態回合列與敵軍 AI 前增援
 
 **已證實**：固定雜湊的 map26 control resource `FDFIELD_079.bin` row0/row1
 依序是 `ff 3f 00` 與 `ff 41 00`。它們是完整 control table 的原始列；舊
@@ -2848,7 +2848,7 @@ provenance 從可編輯資產消失。現在 `native_turn_event_controls.json` �
 仍以快照的即時回合值覆蓋；手工狀態或缺少完整目錄時保持0並失敗即關閉。
 載入器另鎖定整份目錄的 SHA-256，並要求 map 0–32 各自唯一且資源名、控制列
 數量完整；竄改單列、寫入端、摘要字串或地圖身分都在安裝狀態前拒絕。
-這只閉合 event62 所需的回合來源，不提升事件63階段或畫面到 E2。直接證據見
+這只閉合 event62 所需的回合來源，不單獨提升事件63畫面到 E2。直接證據見
 [`fd2_battle_round_seed_ida.txt`](../data/fd2_battle_round_seed_ida.txt)。
 
 **已證實的勘誤**：`0x35822` 的 handler export 保存來源 `PUSH` 順序
@@ -2863,9 +2863,25 @@ spawn source，並故意不讓現有一般 `spawn_group` consumer 接受這個 v
 這只提升其 group／座標／call-site 為可重生 E0 資料，不代表各事件的觸發條件、
 畫面 phase 或一般玩家可達性已完成。
 
-**尚未完成**：event63 的兩次 staging 呼叫、兩段 palette upload、redraw 與
-raw camp0 的精確 phase owner 雖已有直接指令，尚未與新啟用 row 的正式 battle
-runner 串成一般玩家路徑。因此本輪只關閉「原始休眠列→event62 原子啟用」及
-既有 ch27/ch28 handler compiler 的參數錯誤，不宣稱 event63 E2 或完整動態
-CONTINUE 排程已完成。直接位址與指令見
+**已證實並接線**：`sub_1A813(0)` 在 `0x1A554` 掃 raw camp0，接著才於
+`0x1A58F` 呼叫敵軍 AI，`[0x53BEF]` 又到 `0x1A5B9` 才增加。因此 event63
+不再借用 AI 返回後的通用 `on_turn_end`。ch27 以獨立
+`native_turn_events` 保存 event63／raw camp0／handler `0x358C7`，並把
+group1、group2 從開局 `initial_groups` 移到待增援 roster。正式 runner 先在
+私人 state 依序預演兩次 `0x10B4E` constructor；第二組或 renderer input
+不完整時，不發布第一組，也不啟動敵軍 AI。
+
+**已證實的調色盤勘誤**：`0x35857..0x35863` 是
+`0x11DF2(0,255,255)`，不是舊文件所稱的 delta0/no-op。它把 immutable
+baseline 的所有六位元 DAC 分量飽和為63；200ms 後
+`0x11DF2(0,255,0)` 恢復 baseline，再由 `0x11CAC(0)` 重畫。正式 runner
+依 camera pan → group append → 300ms → 全白呈現 → 200ms → baseline
+restore → redraw 的順序執行兩次，完成後才啟動 AI。完整 native
+view/HUD provenance 存在時使用 indexed DAC；ch27 目前缺戰鬥節點的精確
+view/HUD 初值，因此一般路徑仍使用既有 RGB 戰場呈現，但全範圍白閃因所有
+DAC 色都飽和而可精確覆蓋。這一限制必須保留，不能把本輪稱為同狀態像素 E2。
+
+**尚未完成**：event63 的未修改 DOSBox 同回合逐幀比較、ch27 精確 native
+view/HUD 初值、CONTINUE 進入 event63 前後的玩家路徑，以及 event64／66／
+68／70／72 的各自 phase／handler consumer。直接位址與指令見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。

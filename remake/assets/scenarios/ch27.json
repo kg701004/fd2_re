@@ -2,10 +2,9 @@
   "chapter": 27,
   "name": "命運的交會點",
   "map": 26,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
-    1,
-    2,
     3,
     4,
     5
@@ -1201,6 +1200,41 @@
           "type": "spawn_party"
         }
       ]
+    }
+  ],
+  "native_turn_events": [
+    {
+      "event_id": 63,
+      "raw_camp": 0,
+      "handler": "0x358c7",
+      "staging": {
+        "helper": "0x35822",
+        "pan_helper": "0x135dd",
+        "spawn_helper": "0x10b4e",
+        "delay_before_flash_ms": 300,
+        "palette_helper": "0x11df2",
+        "palette_start": 0,
+        "palette_end": 255,
+        "flash_delta": 255,
+        "flash_hold_ms": 200,
+        "restore_delta": 0,
+        "redraw_helper": "0x11cac",
+        "raw_placement_gate": 0,
+        "calls": [
+          {
+            "group": 1,
+            "x": 3,
+            "y": 27,
+            "source": "0x358d7"
+          },
+          {
+            "group": 2,
+            "x": 15,
+            "y": 27,
+            "source": "0x358e5"
+          }
+        ]
+      }
     }
   ]
 }

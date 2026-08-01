@@ -73,3 +73,24 @@ func TestApplyVGAPaletteDeltaUsesImmutableBaselineInclusiveAndAtomic(t *testing.
 		t.Fatal("rejected delta mutated DAC")
 	}
 }
+
+func TestApplyVGAPaletteDeltaPreservesByteSizedWhiteFlash(t *testing.T) {
+	baseline := make([]byte, 256*3)
+	baseline[0], baseline[1], baseline[2] = 0, 1, 63
+	dac := bytes.Repeat([]byte{7}, 256*3)
+	if err := ApplyVGAPaletteDelta(dac, baseline, 0, 255, 255); err != nil {
+		t.Fatal(err)
+	}
+	for i, component := range dac {
+		if component != 63 {
+			t.Fatalf("white flash component %d=%d", i, component)
+		}
+	}
+	before := append([]byte(nil), dac...)
+	if err := ApplyVGAPaletteDelta(dac, baseline, 0, 255, 256); err == nil {
+		t.Fatal("delta wider than the recovered byte argument was accepted")
+	}
+	if !bytes.Equal(dac, before) {
+		t.Fatal("rejected byte-sized delta boundary mutated DAC")
+	}
+}

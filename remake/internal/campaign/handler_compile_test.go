@@ -109,6 +109,10 @@ func TestCompileNativeStagingHelperPreservesSourcePushOrder(t *testing.T) {
 	if beats[2].Op != "delay" || beats[2].Ms != 300 || beats[3].Op != "palette_update" || beats[4].Ms != 200 || beats[5].Op != "palette_update" || beats[6].Op != "redraw" {
 		t.Fatalf("staging choreography=%#v", beats[2:])
 	}
+	if beats[3].PaletteStart != 0 || beats[3].PaletteEnd != 255 || beats[3].PaletteDelta != 255 ||
+		beats[5].PaletteStart != 0 || beats[5].PaletteEnd != 255 || beats[5].PaletteDelta != 0 {
+		t.Fatalf("staging palette flash/restore=%#v/%#v", beats[3], beats[5])
+	}
 }
 
 func TestCompilePersistentRosterCleanupIsEditable(t *testing.T) {
@@ -1954,6 +1958,10 @@ func TestCompileChapter28PreLowersStagingHelper(t *testing.T) {
 	}
 	if staging[2].Op != "delay" || staging[2].Ms != 300 || staging[3].Op != "palette_update" || staging[4].Op != "delay" || staging[4].Ms != 200 || staging[5].Op != "palette_update" || staging[6].Op != "redraw" {
 		t.Fatalf("ch28_pre staging timing=%#v", staging)
+	}
+	if staging[3].PaletteStart != 0 || staging[3].PaletteEnd != 255 || staging[3].PaletteDelta != 255 ||
+		staging[5].PaletteStart != 0 || staging[5].PaletteEnd != 255 || staging[5].PaletteDelta != 0 {
+		t.Fatalf("ch28_pre staging palette=%#v/%#v", staging[3], staging[5])
 	}
 }
 

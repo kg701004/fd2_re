@@ -71,6 +71,30 @@ func (g *Game) tick(n int) {
 	}
 }
 
+func TestBeatPaletteUpdatePresentsRecoveredFullDACWhiteFlash(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{
+		{Op: "palette_update", PaletteStart: 0, PaletteEnd: 255, PaletteDelta: 255},
+		{Op: "delay", Ms: 200},
+		{Op: "palette_update", PaletteStart: 0, PaletteEnd: 255, PaletteDelta: 0},
+	})
+	g.beatAdvance()
+	if !g.nativeFullDACWhite || g.beatDelay != 12 || g.loadErr != "" {
+		t.Fatalf("white flash start white=%v delay=%d err=%q", g.nativeFullDACWhite, g.beatDelay, g.loadErr)
+	}
+	g.tick(12)
+	if g.nativeFullDACWhite || g.loadErr != "" {
+		t.Fatalf("white flash restore white=%v err=%q", g.nativeFullDACWhite, g.loadErr)
+	}
+
+	rejected := newBeatTestGame(t, []campaign.Beat{{
+		Op: "palette_update", PaletteStart: 1, PaletteEnd: 255, PaletteDelta: 255,
+	}})
+	rejected.beatAdvance()
+	if rejected.loadErr == "" || rejected.nativeFullDACWhite {
+		t.Fatalf("partial non-indexed update err=%q white=%v", rejected.loadErr, rejected.nativeFullDACWhite)
+	}
+}
+
 func TestBeatPanMovesCamera(t *testing.T) {
 	g := newBeatTestGame(t, []campaign.Beat{
 		{Op: "pan", X: 100, Y: 200, Frames: 10},

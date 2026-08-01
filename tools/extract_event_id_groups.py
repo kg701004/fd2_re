@@ -5,10 +5,11 @@
 turn_events 目前只使用 0..57；58..89 仍可由玩家操作、格子互動、
 單位行動與其他 dispatcher 選中，不能因 FDFIELD 分布較窄就截斷跳表。
 它也是**真正消費 turn_events.event_id 的跳表**
-(不是 doc25 §6 早先猜測的 `0x22e5c`——那支只是章1專屬的單次過場演出,
-call graph 顯示唯一 caller 是 0x25de5,固定寫死,不讀 FDFIELD)。
+(不是 doc25 §6 早先猜測的 `0x22e5c`——該函式由 0x25de5 唯一呼叫、
+固定載入 FDOTHER #79 且不讀 FDFIELD；章節專屬語意仍未知)。
 
-真實鏈路(0x1a813,3 處呼叫點:camp=1/0/2 分別在 ally/enemy/special 回合結束後):
+真實鏈路(0x1a813 的三個 raw camp 1/0/2 呼叫點；其中 camp0 已證實在敵軍 AI 前，
+不可把 raw byte 直接改名成 ally/enemy/special 陣營或一概稱為回合結束後):
   迴圈 FDFIELD 控制段 turn_events[16](base=[0x53a55],3B/筆:turn,event_id,camp)
   → turn==[0x53bef](回合數) && camp==filter → call [event_id*4 + 0x51b91]
   → 該 event_id 專屬 handler(硬編碼 C 函式,非資料驅動)

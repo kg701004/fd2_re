@@ -117,6 +117,54 @@ state byte17 為零時，以 `0x358BA mov [eax+3],dl` 寫入
 0x35842  call 0x10B4E      ; group
 ```
 
+**已證實**：event63 的 raw camp0 phase owner 不是敵軍回合結束後的通用
+`on_turn_end`。IDA Pro 9.4 的函式邊界與交叉參照、以及 Docker 內
+Capstone 5.0.3 對相同位址的獨立解碼，都顯示 `sub_1A813(0)` 在敵軍 AI
+`0x1D8BA` 之前執行；回合計數 `[0x53BEF]` 又在 AI 返回後才增加：
+
+```text
+0x1A552  push 0
+0x1A554  call 0x1A813      ; 掃 live row 的 raw camp0
+0x1A55E  call 0x1A866      ; 同一 raw camp0 的另一個 phase consumer
+0x1A58F  call 0x1D8BA      ; 敵軍 AI
+0x1A5B9  inc  [0x53BEF]    ; AI 返回後才增加 native round
+```
+
+`0x35822` 的調色盤效果也不是舊文件所稱的兩次無作用上傳。來源採
+Borland 呼叫端由右至左取參數；已由 `0x25052` 的已知 caller／consumer
+交叉驗證 `0x11DF2(start,end,delta)`。第一組壓棧因此是
+`0x11DF2(0,255,255)`：以 immutable baseline 加255後將所有六位元 DAC
+分量上限夾為63，形成全畫面白閃；200ms 後
+`0x11DF2(0,255,0)` 才恢復 baseline，最後 `0x11CAC(0)` 重畫。
+
+```text
+0x3584A  push 0x12C        ; delay 300ms
+0x35857  push 0xFF         ; delta=255
+0x3585C  push 0xFF         ; end=255
+0x35861  push 0            ; start=0
+0x35863  call 0x11DF2
+0x3586B  push 0xC8         ; hold 200ms
+0x35878  push 0            ; delta=0
+0x3587A  push 0xFF         ; end=255
+0x3587F  push 0            ; start=0
+0x35881  call 0x11DF2
+0x3588B  call 0x11CAC
+```
+
+Capstone 覆核命令使用唯讀 repo 掛載與 `fd2-cap-local`：
+
+```text
+python3 tools/disasm_le.py FD2.EXE range 1a4b0 1a5c4
+python3 tools/disasm_le.py FD2.EXE range 1a813 1a866
+python3 tools/disasm_le.py FD2.EXE range 35822 35899
+python3 tools/disasm_le.py FD2.EXE range 358c7 358eb
+```
+
+上述重製映射採 raw camp0 的敵軍 AI 前 owner；`raw_camp` 不提升成陣營名。
+兩次 staging 先在私人 roster／selector 狀態完整預演，才依 camera pan →
+group append → 300ms → 白閃 → 200ms → baseline restore → redraw 的順序
+發布。缺 live row、可編輯規則或第二組 constructor 證據時，敵軍 AI 不啟動。
+
 CONTINUE bridge 邊界
 --------------------
 

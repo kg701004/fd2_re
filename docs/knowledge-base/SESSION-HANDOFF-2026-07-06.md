@@ -416,7 +416,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-20 ch25_pre slice：FDTXT_026 全章因後續分支／raw utterance 與 authored line 數不一致，未宣稱全量 count-aligned；但 handler 實際呼叫的 string0 可直接對到 `ch26.json` scene0 12 lines。已新增 ch25_pre binding（map25/70-slot、pan 9,39、acting76、dialog line0/count12/scene0）並將 `story_ch26` 接回 editable handler；後續 FDTXT_026 分支仍待條件控制流 mapping。
 - 2026-07-20 ch26_pre slice：逐字解析 FDTXT_027 證實 handler 的 idx0/3/4/5/6/7 分別對到 `ch27.json` scene0 的 lines 0–3、4、5–6、7、8–12、13–21；新增 `bindings/ch26_pre.json` 與六組 direct line/count overrides，`story_ch27` 接回 editable pre-handler。`0x24b14(100)` 依既有 LE disasm 是天空之鑰 item `0x64` 的 16-slot inventory gate，仍保留 unresolved branch/effect，不把 gate 猜成自動跳轉。
 - 2026-07-20 ch27_post slice：`FDTXT_028` 已 count-aligned，handler idx7 (`0x231e5`) 精確對到 `ch28.json` scene1 lines 11–15；新增 `bindings/ch27_post.json`，掛在天空之鑰 present branch 後、進 preparation_ch28 前。sync_party/set_chapter 原語保留原順序。
-- 2026-07-20 ch28_pre audit→resolved：FDTXT_029 idx7/idx8 分別精確對到 `ch29.json` scene1 lines 5–12（8句）與 scene2 lines 0–5（6句），pan(9,56)→(216,1344)、acting86 已建 binding。Capstone direct disasm 證實 `0x35822` 為 pan→spawn→delay300→palette(0,255,0)→delay200→palette(0,255,0)→redraw；2026-08-02 勘誤其來源 `PUSH` 順序是 `(group,y,x)`，不是舊記的 `(x,y,group)`。compiler 已 lower 且 `story_ch28` 已接回 handler，無 unresolved issues。
+- 2026-07-20 ch28_pre audit→resolved：FDTXT_029 idx7/idx8 分別精確對到 `ch29.json` scene1 lines 5–12（8句）與 scene2 lines 0–5（6句），pan(9,56)→(216,1344)、acting86 已建 binding。2026-08-02 重新以 IDA／Capstone 直接指令勘誤：`0x35822` 是 pan→spawn→delay300→`palette(0,255,255)` 全白→delay200→`palette(0,255,0)` 基準恢復（baseline restore）→redraw；舊記的兩次 delta0／無作用（no-op）已撤回。來源 `PUSH` 順序是 `(group,y,x)`，不是更早的 `(x,y,group)`。compiler 已 lower 且 `story_ch28` 已接回 handler，無 unresolved issues。
 - 2026-07-20 ch26_post gate audit：`0x25186` 後 `cmp eax,-1 / JE 0x25348` 證實 item `0x64` 缺失會進 FDTXT_027 idx13–16 離別支線，命中才繼續 idx9–12 正線並 `sync_party/set_chapter(27)`；campaign gate 現已承載缺匙對話 scene→ending，ch26_post 的大量 visual/effect unknown 仍待拆解。
 - 2026-07-20 missing-key branch slice：新增 `ch27.json` 可編輯場景「缺少天空之鑰的離別(分支)」，收錄 FDTXT_027 idx13–16 的 17 句離別對話；`inventory_gate_ch27_sky_key.if_missing` 現在先進該 scene，再接 `ending_ch27_no_sky_key`，不再用 generic ending 吞掉原版對白。`0x25052/0x24618/0x1c2da` 視覺／系統效果與 `0x22253` 的 runtime adapter 仍刻意保留為待辦。
 - 2026-07-20 isolated RE toolchain：新增 `tools/docker/fd2-cap.Dockerfile`，建立本機 `fd2-cap-local` image（Python 3.12 + capstone 5.0.3）；所有後續 `disasm_le.py` 以 repo read-only mount 執行，不污染 host Python。實際 Capstone disasm 確認 `0x35822` 的演出序列；2026-08-02 由 IDA／Capstone 直接指令更正來源 `PUSH` 順序為 `(group,y,x)`。compiler 已 lower，ch28_pre binding 無 unresolved issues，`story_ch28` 已接回 editable handler。
@@ -2997,7 +2997,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   group2@(15,27)；這個 via 未被一般 spawn consumer 接受，因此尚未閉合畫面
   owner 時仍保持失敗即關閉。同輪也機械閉合 event64／66／68／70／72 的
   group、座標與 call-site；只列為固定原始 E0 資料，不提升觸發條件或 E2。
-- 尚未把 event63 的兩次 staging、palette/redraw 及 raw camp0 phase owner
-  串入正式 battle runner；此缺口仍失敗即關閉，不宣稱 E2 或完整動態
-  CONTINUE 排程。下一個垂直切片是
-  `MAP26-EVENT63-DYNAMIC-RUNNER`。
+- 2026-08-02 event63 dynamic runner：IDA Pro 9.4 與 Docker Capstone 5.0.3
+  共同證實 `0x1A554→sub_1A813(0)` 位於 `0x1A58F→0x1D8BA` 敵軍 AI
+  前，`0x1A5B9` 才增加 native round；raw camp0 不再錯稱敵軍回合結束後。
+  ch27 新增可編輯 `native_turn_events`，group1／2 從 initial groups 移到
+  pending roster。正式 `Game.endTurn` 先匹配 live row，再依兩個 `0x35822`
+  呼叫執行 pan→native append→300ms→delta255 全白→200ms→delta0 restore→
+  redraw；全部完成才啟動 AI。兩批 constructor 先在 private state 預演，
+  第二批錯誤時第一批不會部分發布；未知同回合 row 亦在 AI 前失敗即關閉。
+- event63 目前是重製端 E1，不是 E2：ch27 戰鬥節點尚缺精確 native
+  view/HUD 初值，因此一般路徑使用既有 RGB 戰場加數學等價的全白覆蓋；有
+  完整 native view/HUD provenance 時才走 indexed DAC。下一個切片是
+  `MAP26-EVENT63-E2-PLAYER-PATH`：未修改 DOSBox 的 event62→跨回合→event63
+  同狀態逐幀比較，以及 CONTINUE 邊界。

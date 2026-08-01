@@ -318,8 +318,10 @@ pending 碼控制。這證明它們是 unit-scan/action-loop 的 caller boundary
 `0x1a7bd → 0x1d80b → 0x1a7f1`；另一段 `0x1a58f` 在 `0x1a813(0) → 0x1a866(0)`
 後呼叫 `0x1a7bd → 0x1d8ba → 0x1a7f1`。這只證明兩個 phase-specific unit-scan
 callsites 位於同一場景流程。`0x1a813/0x1a866` 必須使用 raw provenance，
-不能用缺少 `NativeRecordByte6` 的 normalized `Camp` 代替；但 selector
-0／1 本身已可分別稱為原始敵軍／友軍陣營碼。
+不能用缺少 `NativeRecordByte6` 的 normalized `Camp` 代替；selector 0／1
+在這裡只證實是 `sub_1A813/sub_1A866` 的 raw camp filter。尤其 raw camp0
+handler 在 `0x1A58F` 敵軍 AI 前執行，不能僅憑數值把兩者改名成敵軍／友軍
+陣營碼；舊稱已撤回。
 
 ### 物理選擇結果執行：`0x1548E`
 

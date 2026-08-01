@@ -647,9 +647,10 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			// 0x35822 is the late-game staging helper used by ch27/ch28 handlers.
 			// Handler exports preserve the source PUSH order (group,y,x), while
 			// the callee passes (x,y) to 0x135dd and group to 0x10b4e.  Capstone
-			// disassembly shows a camera pan to
-			// (x,y), direct spawn of group, 300ms wait, two no-op palette uploads
-			// separated by 200ms, then a redraw.  Preserve that choreography as
+			// disassembly shows a camera pan to (x,y), direct spawn of group,
+			// 300ms wait, a full-DAC delta=255 saturation to white, 200ms hold,
+			// baseline restore with delta=0, then a redraw. Preserve the raw 255
+			// argument and choreography as
 			// ordinary editable beats instead of leaving the whole handler opaque.
 			if input.NativeTarget == "0x35822" {
 				group, okGroup := immediateHandlerInt(input.RawArgs, 0)
@@ -669,7 +670,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				wait.Ms = 300
 				beats = append(beats, wait)
 				palette := runtime(input, "palette_update")
-				palette.PaletteStart, palette.PaletteEnd, palette.PaletteDelta = 0, 255, 0
+				palette.PaletteStart, palette.PaletteEnd, palette.PaletteDelta = 0, 255, 255
 				beats = append(beats, palette)
 				delay := runtime(input, "delay")
 				delay.Ms = 200
@@ -720,7 +721,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				start, okStart := immediateHandlerInt(input.RawArgs, 0)
 				end, okEnd := immediateHandlerInt(input.RawArgs, 1)
 				delta, okDelta := immediateHandlerInt(input.RawArgs, 2)
-				if !okStart || !okEnd || !okDelta || start < 0 || end < start || end > 255 || delta < -63 || delta > 63 {
+				if !okStart || !okEnd || !okDelta || start < 0 || end < start || end > 255 || delta < -63 || delta > 255 {
 					issue(i, input, "0x11df2 palette_update requires immediate start/end/delta within VGA range")
 					continue
 				}

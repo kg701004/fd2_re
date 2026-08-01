@@ -104,9 +104,9 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 
 | 呼叫點 | camp 參數 | 時機 |
 |---|---|---|
-| `0x1a4c7` | 1(ally) | 玩家(ally)回合結束後 |
-| `0x1a554` | 0(enemy) | 敵方(AI)回合結束後 |
-| `0x1a78d` | 2(special) | 同一世界地圖/戰場迴圈的另一檢查點 |
+| `0x1a4c7` | raw camp1 | 玩家控制段之前的 camp1 檢查點 |
+| `0x1a554` | raw camp0 | 敵軍 AI `0x1a58f→0x1d8ba` 之前 |
+| `0x1a78d` | raw camp2 | 同一世界地圖／戰場迴圈的另一檢查點 |
 
 **`0x1a813(camp_filter)`**(turn_events 掃描迴圈):
 
@@ -145,6 +145,10 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 | `spawn_group(group_id)` | `0x10b4e` | 掃 FDFIELD 控制段 units 陣列(`[0x53a55]+0x83 + k*0x1a`,stride 26B=FDFIELD 單位記錄大小,欄位 `+0x15`=b21=group)找 `unit.group==group_id` 者啟用(offset `0x83`=3+48+32+48,正好是 header+turn_events+保留+chests,對齊 `parse_field.py` 的 units 起點)。[驗] |
 | `spawn_group_with_intro(group_id)` | `0x32999` | 載入 FDOTHER #95/#9，保存工作畫面與舊單位數，內部呼叫 `0x10B4E(group_id)`，再以 #9 的 12 個 `LMI1` 項目做固定 12 次索引合成／呈現。`0x1366A` 是 wrapper 返回後由四個呼叫端另行執行，不在本函式內。[驗] |
 
+`row+5` 在直接指令中只證實是供三個 caller 比對的 raw camp byte；不能僅依
+0／1／2 把它提升成 enemy／ally／special 陣營名稱。尤其 `0x1A554` 明確在
+敵軍 AI 前，舊稱「敵方 AI 回合結束後」已撤回。
+
 `group_id` 引數**通常是 handler 裡的字面常數**(如 event_id0 呼叫 `push 3;call 0x10b4e` 和 `push 7;call 0x10b4e` → 兩個 group);
 少數 handler(event_id 27/54/57)用**動態值 `[0x53bef]`(目前回合數本身)當 group_id**——對應 `turn_events.json` 中同一
 `event_id` 在連續多回合重複出現(如 map7/章8 的 event_id27 於 turn 2-7 各出現一次):每回合觸發同一 handler,
@@ -159,8 +163,9 @@ hdl:D  a  D  D  D  D  D  D  D  b  D  c  d  D  e  f  g  h  i  j  k  L  m  D  n  o
 **工具**:`tools/extract_event_id_groups.py` 走訪 90 個 handler 自身的 basic-block 鏈(call 過站不進入、遇 ret 停止,
 避免線性 sweep 漂移），擷取 `push <group_id>; call spawn_group[_with_intro]`；
 2026-08-02 起也辨識 `0x35822` 的來源 `PUSH (group,y,x)` 與 event63 的共用
-tail-call。staging metadata 保留 helper／spawn source／座標，不能在 palette、
-redraw 與 phase owner 尚未接通時降成一般 `spawn_group`。輸出
+tail-call。staging metadata 保留 helper／spawn source／座標；event63 已由
+獨立 raw camp0／敵軍 AI 前 runner 消費，其他 staging event 在各自 phase、
+palette 與 redraw owner 閉合前仍不能降成一般 `spawn_group`。輸出
 `docs/data/event_id_groups.json` 並附固定 FD2.EXE 雜湊與位址空間。
 輸出同時保存 FDFIELD 未直接引用的 58..89，避免再把全域事件表誤當成
 turn-events-only 表。無 spawn 呼叫只能證明該 handler 未呼叫兩個已知

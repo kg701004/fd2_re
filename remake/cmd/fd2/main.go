@@ -72,6 +72,7 @@ type Game struct {
 	nativeMapAssets            *nativeMapAssets // all original map HUD resources, nil on any missing/malformed asset
 	nativeMapWork              []byte           // persistent 456-stride original tactical framebuffer
 	nativeMapVGA               []byte           // persistent 320x200 indexed VGA surface
+	nativeFullDACWhite         bool             // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
 	tileset                    *ebiten.Image
 	tiles                      []*ebiten.Image     // 切好的圖塊
 	st                         *battle.State       // 戰鬥狀態(單位)
@@ -149,6 +150,7 @@ type Game struct {
 	transitionReveal           *transitionRevealJob
 	indexedTransition          *nativeIndexedTransitionJob
 	spawnIntroTransition       *nativeSpawnIntroJob
+	nativeTurnStaging          *nativeTurnStagingJob
 	nativeFieldEvent61         *nativeFieldEvent61Job
 	nativeEnding               *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
 	walk                       *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
@@ -1371,13 +1373,20 @@ func (g *Game) beatStart(b campaign.Beat) {
 		g.handlerResource = 0
 		g.beatAdvance()
 	case "palette_update":
-		// The current renderer stores RGB PNGs instead of the original VGA
-		// indexed surface. ch22's recovered calls all use delta=0, so their
-		// observable effect is a DAC refresh and the exact timing is preserved
-		// without inventing a black-overlay fade. Non-zero updates stay
-		// fail-closed until indexed palette rendering is available.
-		if b.PaletteDelta != 0 {
-			g.loadErr = fmt.Sprintf("beat palette_update: non-zero delta %d requires indexed palette renderer", b.PaletteDelta)
+		// Full range delta=255 is independent of source RGB: every six-bit
+		// component saturates to white. This exact operation can cover legacy
+		// scene presentation without inventing a general RGB approximation.
+		// Delta=0 restores baseline; every other non-zero shape stays closed.
+		switch {
+		case b.PaletteStart == 0 && b.PaletteEnd == 255 && b.PaletteDelta == 255:
+			g.nativeFullDACWhite = true
+		case b.PaletteDelta == 0:
+			g.nativeFullDACWhite = false
+		default:
+			g.loadErr = fmt.Sprintf(
+				"beat palette_update: range %d..%d delta %d requires indexed palette renderer",
+				b.PaletteStart, b.PaletteEnd, b.PaletteDelta,
+			)
 			return
 		}
 		g.beatAdvance()
@@ -1820,6 +1829,8 @@ func (g *Game) enterNode() {
 	g.transitionReveal = nil
 	g.indexedTransition = nil
 	g.spawnIntroTransition = nil
+	g.nativeTurnStaging = nil
+	g.nativeFullDACWhite = false
 	g.handlerResource = 0
 	g.battleEvent, g.battleEventDelay = nil, 0
 	g.dlgShown, g.dlgPhase, g.dlgT = dlgNone, 0, 0
@@ -2030,6 +2041,8 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.resetActionOverlayLifecycle()
 	g.indexedTransition = nil
 	g.spawnIntroTransition = nil
+	g.nativeTurnStaging = nil
+	g.nativeFullDACWhite = false
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	if unitsPath == "" {
@@ -5206,6 +5219,7 @@ func (g *Game) Update() error {
 	g.stepTransitionReveal()                     // native 0x24b4d alternating present loop
 	g.stepNativeIndexedTransition()              // native 0x24618 indexed map/palette transition
 	g.stepNativeSpawnIntro()                     // native 0x32999 twelve-pass indexed spawn transition
+	g.stepNativeTurnStaging()                    // event63 raw-camp0 pre-AI staging helper
 	if g.camp != nil && g.storyAutoAdvance > 0 { // 無對白節點自動轉場倒數(行軍蒙太奇)
 		g.storyAutoAdvance--
 		if g.storyAutoAdvance == 0 {
@@ -5244,7 +5258,7 @@ func (g *Game) Update() error {
 				g.camY = g.camMaxY
 			}
 		}
-	} else if g.battleEvent == nil {
+	} else if g.battleEvent == nil && g.nativeTurnStaging == nil {
 		if !g.syncNativeMapView() {
 			g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
 			g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
@@ -5258,7 +5272,7 @@ func (g *Game) Update() error {
 	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF9) { // 快速讀檔
 		g.loadGame()
 	}
-	if g.battleEvent != nil {
+	if g.battleEvent != nil || g.nativeTurnStaging != nil {
 		if len(g.dialog) > 0 && (inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)) {
 			if g.dlgAdvance() && len(g.dialog) == 0 {
 				g.advanceBattleEvent()
@@ -5465,6 +5479,18 @@ func clamp(v *float64, lo, hi float64) {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// The exact full-DAC saturation covers the complete mode-13h surface,
+	// including HUD and dialogue. Defer preserves that hardware ordering across
+	// every early-return presentation branch.
+	defer func() {
+		if g.nativeFullDACWhite {
+			screen.Fill(color.White)
+		}
+		if g.nativeTurnStaging != nil && !g.nativeTurnStaging.indexed &&
+			g.nativeTurnStaging.phase == nativeTurnStagingFlash {
+			g.nativeTurnStaging.drawn = true
+		}
+	}()
 	if g.titlePhase != "" {
 		g.drawTitle(screen)
 		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
@@ -5497,6 +5523,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.Fill(color.Black)
 		if !g.drawNativeSpawnIntro(screen) {
 			ebitenutil.DebugPrint(screen, "native 0x32999 spawn-intro unavailable")
+		}
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
+		}
+		return
+	}
+	if g.nativeTurnStaging != nil && g.nativeTurnStaging.indexed {
+		screen.Fill(color.Black)
+		if !g.drawNativeTurnStaging(screen) {
+			ebitenutil.DebugPrint(screen, "native event63 staging unavailable")
 		}
 		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
 			g.captureShot(screen)
@@ -7372,9 +7408,21 @@ func (g *Game) composeNativeMapFrameAt(now time.Time) error {
 }
 
 func (g *Game) endTurn() {
-	if g.st == nil || g.result != "" || g.aiBusy {
+	if g.st == nil || g.result != "" || g.aiBusy || g.nativeTurnStaging != nil {
 		return
 	}
+	started, err := g.startNativeRawCamp0TurnEvents()
+	if err != nil {
+		g.loadErr = "native raw camp0 phase: " + err.Error()
+		return
+	}
+	if started {
+		return
+	}
+	g.beginEnemyPhase()
+}
+
+func (g *Game) beginEnemyPhase() {
 	if g.shotPath == "" || os.Getenv("FD2_SHOT_AI") != "" { // 截圖模式預設跳 AI;FD2_SHOT_AI=1 強制驗證 AI 行走
 		g.aiBusy = true // AI 階段:逐單位行走動畫(Update 內 aiStep 驅動),播完 finishTurn
 		g.showBanner("ENEMY PHASE")

@@ -36,11 +36,13 @@ func VGAPaletteFromDAC(dac []byte) (color.Palette, error) {
 // immutable palette at [0x53a65], delta is added, and the result is clamped at
 // the upper six-bit bound before being written to the caller-owned DAC. It is
 // therefore a baseline-derived range write, not an addition to current DAC.
-// All recovered callers use non-negative deltas; unsupported signed variants
-// fail closed rather than inventing the port-write truncation semantics.
+// Recovered callers use non-negative byte-sized deltas. In particular,
+// 0x35822 passes 255, which saturates every baseline component to white; the
+// raw argument must not be normalized to 63 because it is part of the handler
+// evidence. Unsupported signed or wider variants fail closed.
 func ApplyVGAPaletteDelta(dac, baseline []byte, start, end, delta int) error {
 	if len(dac) != 256*3 || len(baseline) != 256*3 ||
-		start < 0 || end < start || end > 255 || delta < 0 || delta > 63 {
+		start < 0 || end < start || end > 255 || delta < 0 || delta > 255 {
 		return errors.New("fdother: invalid VGA palette delta input")
 	}
 	next := append([]byte(nil), dac...)
