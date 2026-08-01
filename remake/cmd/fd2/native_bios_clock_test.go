@@ -39,6 +39,24 @@ func TestNativeBIOSClockUsesMonotonicBattleLocalLowWord(t *testing.T) {
 	}
 }
 
+func TestNativeBIOSClockSeedsCapturedSignedLowWord(t *testing.T) {
+	var clock nativeBIOSClock
+	start := time.Unix(150, 0)
+	if !clock.Seed(-123, start) {
+		t.Fatal("valid signed title tick was rejected")
+	}
+	if got := clock.Sample(start); got != -123 {
+		t.Fatalf("seed sample=%d", got)
+	}
+	if got := clock.Sample(start.Add(5 * nativeBIOSTickPeriod)); got != -118 {
+		t.Fatalf("elapsed seeded sample=%d", got)
+	}
+	before := clock
+	if clock.Seed(0x8000, start) || clock != before {
+		t.Fatal("invalid seed changed clock")
+	}
+}
+
 func TestGameAdvancesAllNativeMapFrameTimingFromOneBIOSSample(t *testing.T) {
 	g := materializedNativeClockGame(t)
 	start := time.Unix(200, 0)

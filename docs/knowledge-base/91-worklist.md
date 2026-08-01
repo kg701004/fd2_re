@@ -426,7 +426,7 @@
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
 - [x] **頂層狀態機反組譯**:真 main=0x25bf4(雙層迴圈),核心狀態變數 `[0x53c03]`=章節,兩張章節跳表(0x51d71 戰前劇情 / 0x51de9 戰後)→ `23`
 - [x] **標題序列**:角色立繪 5 幀(FDOTHER #0x45-0x49,320×147)垂直捲動(非旋轉)+ FLAME DRAGON logo(#7 sub0)+ 主選單;**解碼器當 oracle 解圖視覺驗證** → `23`
-- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-07-30 已補齊後者從 FD2.SAV plaintext `0x0000` FDFIELD 控制映像、兩份 roster、`0x30a3` battle-local event state 與 `0x30c3` header 的來源，並證實它自行載資源、建 selector、恢復畫面及呼叫 `0x4e031` 戰鬥驅動；它不是一般新章 loader。remake 四槽 LOAD 已接 checksum-valid selector→typed party→town/preparation production owner；真正未接的是未修改一般玩家有效槽 E2、delete/overwrite 與 CONTINUE current-battle runtime owner，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`57`
+- [~] **主選單機制**:輸入迴圈/scancode dispatch(↑0x48/↓0x50/Enter/Space)/游標 wrap、return `0=新遊戲`、`1=0x30550` 四槽 selector 已由 Docker Capstone 重跑；第三 return branch 直進 `0x10010`。2026-08-02 合法 IDA 重核已撤回「`0x4E031` 是戰鬥驅動器」：它只複製 BIOS 鍵盤緩衝 word；第三分支返回0後由 main `0x25DCE` 呼叫並循環重入真正的共享控制器 `0x117E7`。remake 也已刪除 selection2 誤讀 JSON slot0 的高風險行為，正式 native transaction 完成前留在 title。四槽 LOAD 已接 checksum-valid selector→typed party→town/preparation production owner；真正未接的是未修改一般玩家有效槽 E2、delete/overwrite 與 CONTINUE 的 pending-group／`Game` handoff，故仍不能稱完整 native LOAD/CONTINUE 相容 → `23`、`56`、`57`
 - [x] **新遊戲→開場對話→自動進戰場**:[0x53c03] 章節驅動,cutscene 0x3231b(與前代主角對話)→ 戰場地圖=章節*3+2(自動串接)→ `23`
 - [x] **call-graph 遞迴反組譯工具** `tools/callgraph_le.py`(可達集/callers/rpath/funcof/jtab)→ `24`
 - [x] **cutscene→戰場控制流勘誤**：`0x10010` 真 caller 仍是 `0x1a251/0x26130`，但展開 `0x25ebb` 證實 `0x26130` 只屬第三主選單分支；新遊戲與四槽讀檔各自跑 pre-handler 後從 `0x25ebb` 返回，main `0x25dce` 才呼叫 `0x117e7`。舊「handler ret 後在同 driver 線性落入 `0x10010`」已撤回；callgraph 工具排除 `0x1b051/0x26f30` 偽命中的成果仍有效 → `23`、`24`
@@ -1594,16 +1594,18 @@
   checksum-valid 原版快照
   實測 persistent identities `[0,9,4,30]`。strict identity/class
   catalog 與單筆 `battle.Unit` materialization 已由下一項閉合。IDA 與
-  Capstone 證實 `0x10010` 自己載資源、建 selector、恢復畫面，並在
-  `0x10616` 呼叫戰鬥驅動 `0x4e031` 後由共享 epilogue 返回；舊「尚缺
-  chapter node／原版 owner」說法已撤回。後續 IDA／Capstone 已證實
+  Capstone 證實 `0x10010` 自己載資源、建 selector、恢復畫面；但
+  `0x10616→0x4E031` 只複製 absolute `0x41A` word 到 `0x41C`。共享
+  epilogue 返回後，main `0x25DCE` 才呼叫 `0x117E7` 控制器；舊「`0x4E031`
+  是戰鬥驅動」及「不存在另一個 CONTINUE owner」說法已撤回。後續 IDA／Capstone 已證實
   `[0x53ad5]` 是 `malloc(0x20)` pointer，writer／reader 對稱保存，
   並由 indexed event paths 消費；`Raw30A3` 因而提升為
   `NativeEventState[32]`。`0x0000..0x08a2` 也由 FDFIELD 資源來源、
   對稱 copy 與 `0x1a813/0x13a44/0x10b4e` consumers 閉合為
-  `NativeFieldControl[0x8a3]`。真正缺的是控制映像與 runtime
-  records/selectors、`battle.State` 及戰鬥驅動的嚴格一致性，故正式
-  CONTINUE 仍維持失敗即關閉
+  `NativeFieldControl[0x8a3]`。控制映像、runtime records/selectors、timing
+  與 future-group constructor 已由下列具型別交易分別閉合；真正缺的是
+  chapter asset pending-group binding，以及整組 `battle.State` 到正式
+  `Game`／controller 的原子 handoff，故正式 CONTINUE 仍維持失敗即關閉
   → `fd2_current_snapshot_ida.txt`、`fd2_current_event_state_ida.txt`、
   `fd2_current_field_control_ida.txt`
 - [~] **NATIVE-CONTINUE-RUNTIME-PREFLIGHT**：合法 IDA Pro 9.4 與
@@ -1616,11 +1618,11 @@
   FDFIELD unit capacity、camera-cursor identity、active record
   presentation 與 first-seen slots；所有 raw 區域深複製，不改
   `battle.State`。後續 IDA/Capstone 又證實標題 caller 的 range mode
-  為開場 `0`／進戰鬥驅動前 `1`，資料映像 gate B／anchor seed 均為
+  為開場 `0`／返回 `0x117E7` 控制器前 `1`，資料映像 gate B／anchor seed 均為
   `1`，且 anchor 只依已恢復 visible cursor 精確推進；這些值已收入
-  `ContinueMapPresentation`。preflight 仍把 map timing、runtime unit
-  projection、future group constructor、battle driver 列為待 caller
-  接管的 owners，
+  `ContinueMapPresentation`。runtime unit、map timing seed adapter 與完整
+  future-group constructor transaction 均已閉合；preflight 現只保留
+  pending-group binding 與 `battle_controller_handoff` 兩個待 caller 接管的 owners，
   `ReadyForContinue=false`，故正式 CONTINUE 仍失敗即關閉
   → `fd2_continue_selector_rebuild_ida.txt`、
   `fd2_continue_map_presentation_ida.txt`
@@ -1629,9 +1631,11 @@
     terrain override 為 `-1`；唯 `[0x53C0F]` 由 main
     `0x25D83..0x25D8B` 擷取標題入口 signed BIOS low word。
     `ContinueRuntimeContext.TitleTimerTick` 與 `ContinueMapTimingSeed`
-    現嚴格保存這個邊界。`0x10494`／`0x105ED` redraw 間仍有 delay，
-    最終 state 必須由 runtime clock 逐呼叫推進，所以
-    `ContinueOwnerMapTiming` 仍不得移除
+    現嚴格保存這個邊界；`MaterializeNativeContinueMapTiming` 原子安裝
+    seed，map compositor 只在實際成功合成時取樣並同時發布 timing/pixels，
+    已撤回每次 `Game.Update` 推進的錯誤排程。`0x10494`／`0x105ED`
+    redraw 間的固定演出／delay 仍由正式 handoff 排程，但不再列為未知
+    `map_timing` owner
     → `fd2_continue_map_timing_seed_ida.txt`
   - [x] **CONTINUE FDFIELD control typed view**：依 `0x53A55` 已證實
     layout，`ContinueFieldControlView` 原子拆出 raw header、16 筆
@@ -1663,10 +1667,10 @@
     原子安裝 exact control、turn/field/chest/future-unit rows、event
     state、raw round、view、HUD 與 opening range mode 0。輸入與輸出
     均不別名；拒絕路徑不改 state。它明確不碰現有 Units、timing、
-    interactive mode 1 或 battle driver。原本籠統的 field-runtime owner
-    已關閉並拆成 `runtime_unit_projection` 與
-    `future_group_constructor`；exact saved runtime records 與重建 slots
-    已先保存在 State，但尚未猜成 `battle.Unit`。
+    interactive mode 1 或正式 `Game`／`0x117E7` 控制器轉接。原本籠統的
+    field-runtime owner 已由後續的 runtime-unit、map-timing 與
+    future-group 具型別交易逐項關閉；目前只剩 chapter asset 的 pending-group
+    binding，以及正式 `Game`／controller handoff 兩個 caller-owned 邊界。
   - [x] **CONTINUE saved runtime unit projection**：
     `MaterializeNativeContinueRuntimeUnits` 只接受已重驗 input 與逐筆相符的
     live field boundary；先在 detached roster 驗證 raw camp 0/1/2、
@@ -1680,8 +1684,8 @@
     checksum-valid 原版 chapter0 current snapshot 的12筆 records 已在
     Docker 整合測試全數通過，前四名為索爾、悠妮、亞雷斯、蓋亞，
     enemy `+8=96` 不具 identity。adapter 不設定 timing、不 append future
-    group、不切 interactive mode、不啟動 battle driver；正式 CONTINUE
-    仍失敗即關閉。
+    group、不切 interactive mode、不發布正式 `Game`／controller handoff；
+    正式 CONTINUE 仍失敗即關閉。
     同輪同步遷移33份 map unit assets：scripted FDFIELD `b1` 現輸出
     `native_record_byte8`，不再輸出 `native_identity`；同步工具
     `--check` 全數零 pending，AI／item-panel raw record consumers 仍取得

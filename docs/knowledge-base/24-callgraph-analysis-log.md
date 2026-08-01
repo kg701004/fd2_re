@@ -119,7 +119,7 @@ doc 23 把 `[0x53ecc]` 標為「戰鬥結果碼(1 事件、2 勝利),戰後狀�
 0x25e02  │   cmp [0x53ecc],2 ─ ==2 → 停曲; call [章節*4+0x51de9](章節索引戰後表);
 0x25e2a  │                          call 0x2cad7(raw gate); test eax
 0x25e3a  │                          ├ 回傳0: call [章節*4+0x51d71]+ play_bgm
-0x25e65  │                          └ [0x53ecc]=0; call 0x4e031(清鍵盤)
+0x25e65  │                          └ [0x53ecc]=0; call 0x4e031(BIOS 鍵盤緩衝 word copy；清除效果為強推論)
 0x25e74  │   test esi,esi; je 0x25dce   ; esi==0 → 續打同場
 0x25e8f  └─ test edi,edi; je 0x25db1    ; edi==0 → 下一場;否則 0x25e97 cleanup→quit
 ```

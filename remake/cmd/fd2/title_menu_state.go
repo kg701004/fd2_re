@@ -9,7 +9,7 @@ const (
 	TitleMenuNoAction TitleMenuAction = iota
 	TitleMenuStart
 	TitleMenuLoadSlots
-	TitleMenuLoadSlot
+	TitleMenuContinue
 )
 
 type TitleMenuEvent uint8
@@ -45,7 +45,7 @@ func (s *TitleMenuState) Step(event TitleMenuEvent) TitleMenuAction {
 					return TitleMenuLoadSlots
 				}
 				if s.Selection == 2 {
-					return TitleMenuLoadSlot
+					return TitleMenuContinue
 				}
 				return TitleMenuStart
 			}

@@ -21,9 +21,10 @@ constructor 會把 `b1` 寫入 `+7/+8`；只有 camp2 player record 依 persiste
 `NativeItemPanelRecordForUnit` 優先使用 raw +8，舊 player-only identity
 fallback 僅作相容。使用者 checksum-valid 原版 chapter0 current snapshot
 已在唯讀 Docker 測試 materialize 12 筆 records；索爾、悠妮、亞雷斯、
-蓋亞與 enemy `+8=96` 分界正確。map timing、future group constructor、
-interactive range 與 battle driver 尚未接，正式 CONTINUE 保持
-失敗即關閉。
+蓋亞與 enemy `+8=96` 分界正確。**此處是 2026-07-30 當時狀態；較晚的
+2026-08-02 紀錄已閉合 map timing 與 future-group transaction。** 正式
+CONTINUE 現只因 chapter pending-group binding 與 `Game`／controller handoff
+尚未接而保持失敗即關閉。
 
 版本化資料亦同步更正：33份 `map*_units.json` 的 scripted
 `native_identity` 全部遷移為 `native_record_byte8`，數值不變；
@@ -2322,11 +2323,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   plaintext `0x0000..0x08A2` FDFIELD 控制映像（複製後呼 `0x10652`）與
   `0x30A3..0x30C2` battle-local event state（複製至 `[0x53AD5]`）。`InspectCurrentSnapshot`
   現原樣保存兩區，並測試不與呼叫端緩衝區共用底層資料。`0x10010` 自己載資源、
-  建 runtime selector、恢復畫面，於 `0x10616` 呼叫戰鬥驅動 `0x4E031`；
-  `0x1061B→0x22BBE` 是與該 prologue 配對的共享 epilogue。故撤回「尚缺
-  原版 chapter node／CONTINUE owner」的錯誤說法；重製端真正缺的是兩個
-  已辨識區域與 runtime record/selector、戰鬥驅動狀態的嚴格正式執行
-  擁有者（production owner）。四槽 LOAD 的 `0x2CAD7→pre-handler`
+  建 runtime selector、恢復畫面。**2026-08-02 勘誤**：`0x10616` 呼叫的
+  `0x4E031` 只複製 BIOS 鍵盤緩衝 word，不是戰鬥驅動；
+  `0x1061B→0x22BBE` 經共享 epilogue 返回 main 後，才由 `0x25DCE` 呼叫
+  `0x117E7` 共享戰鬥控制器。重製端真正缺的是已知 current-runtime 狀態與
+  chapter pending groups 的嚴格綁定，以及正式 `Game`／controller handoff。
+  四槽 LOAD 的 `0x2CAD7→pre-handler`
   仍是另一條 ABI。
 
 ## 2026-07-29：selector1 全成功動作擁有權接線
@@ -2610,8 +2612,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   FDFIELD 載入來源、對稱 current-save／CONTINUE copy，以及
   `0x1A813/0x13A44/0x10B4E` consumers 閉合為固定容量
   `NativeFieldControl[0x8A3]`，不再稱為泛用 raw battle state。
-  剩餘主缺口是這份控制映像與 runtime record／selector cache、
-  `battle.State` 及 battle driver 的嚴格一致性。
+  **此為當時狀態；較晚的 2026-08-02 交易已閉合 control、runtime unit 與
+  timing 的具型別轉寫。** 現行剩餘主缺口是 chapter pending-group binding
+  與 `battle.State` 到正式 `Game`／controller handoff 的嚴格一致性。
   直接證據保存於 `docs/data/fd2_current_event_state_ida.txt`。
   控制映像證據保存於 `docs/data/fd2_current_field_control_ida.txt`。
 - 2026-07-30 `0x10652` 勘誤：合法 IDA Pro 9.4 將函式固定為
@@ -2638,12 +2641,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   FDFIELD 80-unit capacity、13×8 view identity、active raw presentation
   與 first-seen slots；輸出深複製。後續 IDA 9.4 data xrefs 與 Capstone
   又固定標題 caller：`0x10483` 設 opening range mode `0`，
-  `0x1060C` 在 battle driver 前設 interactive mode `1`；資料映像
+  `0x1060C` 在返回 main 的共享控制器 `0x117E7` 前設 interactive mode `1`；資料映像
   gate B／anchor seed 均為 `1`，而 anchor 只依 restored visible cursor
   的 `<3`／`>9`、Y `>5` 分支推進。`ContinueMapPresentation` 已保存
-  這些值；戰場內 `0x1A251` caller 不在此結論範圍。現只明列 map timing、
-  runtime-unit projection、future-group constructor、battle driver
-  四個 unresolved owners。
+  這些值；戰場內 `0x1A251` caller 不在此結論範圍。**當時**明列 map timing、
+  runtime-unit projection、future-group constructor、battle driver 四個
+  unresolved owners；較晚的 2026-08-02 證據已將它們縮為 pending-group
+  binding 與 `battle_controller_handoff` 兩項。
   `ReadyForContinue()` 目前必為 false，不接 production。證據：
   `docs/data/fd2_continue_selector_rebuild_ida.txt`、
   `docs/data/fd2_continue_map_presentation_ida.txt`。
@@ -2682,17 +2686,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   record order。doc26 已撤回把 party 與 FDFIELD constructor 拼成單一路徑
   及錯套 `+0/+1/+2/+6` 的舊表。證據：
   `docs/data/fd2_current_field_control_mutations_ida.txt`。
-- 同輪 live field boundary consumer：新增
+- **當時狀態，已由 2026-08-02 的 runtime-unit、map-timing 與
+  future-group transaction 紀錄取代**。同輪 live field boundary consumer：新增
   `campaign.MaterializeNativeContinueFieldBoundary`。它會從公開 input
   重建 snapshot、重跑完整 preflight 並逐欄比對，不能只靠可沿用的 marker
   接受建構後竄改；再要求 asset raw chapter、dimensions 與 field-event
   topology 全相符，才一次安裝 exact control、
   turn/field/chest/future-unit rows、event state、raw round、
   camera/cursor、HUD 與 opening range mode0；拒絕前不改 State，輸出
-  深複製。它不動 saved runtime Units、timing、interactive mode1 或
-  battle driver。原本籠統的 `ContinueOwnerFieldRuntimeBridge` 已改拆成
+  深複製。它不動 saved runtime Units、timing、interactive mode1 或當時尚未
+  辨識的 battle-controller handoff。原本籠統的
+  `ContinueOwnerFieldRuntimeBridge` 當時改拆成
   `ContinueOwnerRuntimeUnitProjection` 與
-  `ContinueOwnerFutureGroupConstructor`；exact runtime records／rebuilt
+  `ContinueOwnerFutureGroupConstructor`；這些是歷史 owner 名稱，後續嚴格
+  consumer 完成後已撤出未解清單。exact runtime records／rebuilt
   slots 已深複製進 State，但尚未投影成 `battle.Unit`。聚焦
   fdsave/battle/campaign Docker regression 通過。
 ## 2026-07-29：讀檔空槽 production／E2 閉合
@@ -2766,11 +2773,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   occupancy writer 與逐列新占用，錯誤時不改 roster／units；成功才依原
   FDFIELD row order append。campaign/battle Go regression 與 `cmd/fd2`
   Xvfb regression 通過。
-- 此提交當時只接 handler path；global turn-event scenario action 在下方
+- **當時狀態，已由 2026-08-02 的 future-group 建構交易紀錄取代**。
+  此提交當時只接 handler path；global turn-event scenario action 在下方
   「global turn-event 配置來源接入 production action」批次才補上
-  source/via/gate。完整 `0x10C50` table/inventory projection 與
-  `0x1B750` recompute 仍未完成；`future_group_constructor` 與正式
-  CONTINUE 保持失敗即關閉。
+  source/via/gate。在此時間點，完整 `0x10C50` table/inventory projection
+  與 `0x1B750` recompute 尚未完成；下一個 2026-08-02 建構交易紀錄已將
+  此缺口閉合，正式 CONTINUE 則仍維持失敗即關閉。
 - 發現既有 `docs/data/event_id_groups.json` 是 root-owned；只針對該檔
   替換後修回目前 UID/GID。專案與 `~/.codex/AGENTS.md` 已新增規則：可寫
   容器須明示目前 UID/GID、寫前檢查目標 ownership，歷史 root-owned 只能
@@ -2865,8 +2873,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   後 ACTING(4) 才移動，speaker71 對話最後才出現。缺 acting resource 的反例
   驗證 units／roster／selector cache／turn continuation 全不變。
 - 這是重製端 E1 決定性機制證據；尚未取得同 camera／roster／pass 的 DOSBox
-  event1/2 逐幀比較，因此不提升為 E2。`0x10C50` 完整 table／inventory
-  projection 與 `0x1B750` equipment recompute 仍未閉合。
+  event1/2 逐幀比較，因此不提升為 E2。本節記錄的當時狀態是
+  `0x10C50` table／inventory projection 與 `0x1B750` equipment recompute
+  尚未閉合；緊接的下一節已以合法 IDA 與 Capstone 將該交易閉合。
 
 ## 2026-08-02：`0x10C50→0x1B750` future-group 建構交易閉合
 
@@ -2890,3 +2899,33 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   也不把其他 `0x1B750` caller、transient expiry、轉職、商店、戰後 persistent
   sync 或 DOSBox E2 自動標成完成。直接證據見
   [`fd2_runtime_equipment_recalc_1b750_ida.txt`](../data/fd2_runtime_equipment_recalc_1b750_ida.txt)。
+
+## 2026-08-02：CONTINUE 返回控制器與地圖計時勘誤
+
+- 合法 IDA Pro 9.4 以唯讀 IDC 稽核固定 `sub_4E031` 僅有
+  `0x41A→0x41C` word copy；它沒有單位、回合或事件 dispatch。依 BIOS
+  data-area ABI 推論此操作會丟棄待處理輸入，但直接證據只提升到 word copy。
+  `0x10010` 經 `0x1061B→0x22BBE` epilogue 返回後，main 才於
+  `0x25DCE` 呼叫並循環重入 `0x117E7` 共享戰鬥控制器。Capstone 以相同
+  FD2.EXE（357074 bytes；MD5 `b97caf2239a27a896069d03549d96e1e`；
+  SHA-256 `222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`）
+  獨立重生三段直接指令。證據與可重跑腳本為
+  [`fd2_continue_controller_117e7_ida.txt`](../data/fd2_continue_controller_117e7_ida.txt)
+  及 `tools/ida_probe_continue.idc`。
+- 標題第三選項不再錯讀重製 JSON slot 0；它現在明確產生 native CONTINUE
+  action，完整原生交易接通前留在標題並失敗即關閉。四槽 LOAD 的
+  `FD2_NATIVE_SAVE` 路徑保持獨立，不受此勘誤改寫。
+- `MaterializeNativeContinueMapTiming` 現要求 field boundary 與 runtime-unit
+  projection 都已成功，才原子安裝原版 timing seed。地圖週期不再於每次
+  `Game.Update` 無條件推進，而是由一次成功的 `0x11CAC` 等價 compositor
+  transaction 取樣並同時發布 timing／pixels；失敗不改 timing、clock 或 VGA。
+- `BuildContinueRuntimeInput` 的未解 owner 已縮為兩項：chapter asset 的
+  `pending_group_binding`，以及已知 `0x117E7` 對應的
+  `battle_controller_handoff`。runtime-unit、map-timing 與 future-group
+  constructor 不再冒充未解 owner；正式 CONTINUE 仍未接 production，不能
+  宣稱一般玩家原生續戰或 E2 已完成。
+- 同輪全庫斷言稽核同步修正 SDD、介面證據矩陣、工作清單、控制流與 data
+  evidence；歷史段落保留時間序列，但明示已被較晚結論取代。Docker 驗證結果：
+  Python 31 項測試通過，Xvfb 下 `go test -count=1 ./...` 全部通過；原版
+  `0x4E031`、`0x105ED..0x1061B`、`0x25DBD..0x25DCE` 範圍亦以 Capstone
+  實際重生核對。

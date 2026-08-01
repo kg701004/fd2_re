@@ -28,6 +28,19 @@ func TestTitleMenuTraceWrapsAndConfirmsAfterFlash(t *testing.T) {
 	}
 }
 
+func TestTitleMenuThirdSelectionIsNativeContinue(t *testing.T) {
+	s := TitleMenuState{Selection: 2}
+	s.Step(TitleMenuConfirm)
+	for i := 0; i < 23; i++ {
+		if got := s.Step(TitleMenuTick); got != TitleMenuNoAction {
+			t.Fatalf("action fired early at tick %d: %d", i, got)
+		}
+	}
+	if got := s.Step(TitleMenuTick); got != TitleMenuContinue {
+		t.Fatalf("third selection action=%d, want native CONTINUE", got)
+	}
+}
+
 func TestTitleSlotTraceIsBoundedAndCancelable(t *testing.T) {
 	s := TitleSlotState{Selection: 3}
 	if got, _, _ := s.Step(TitleSlotDown); got != 3 {

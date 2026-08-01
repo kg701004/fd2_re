@@ -70,6 +70,7 @@ CONTINUE loader `0x10010` 在 `0x10319..0x10328` 做完全對稱的恢復：
 `fdsave.CurrentSnapshot.NativeEventState` 現以 `[0x20]byte` 保存這張表，
 與既有 `battle.State.NativeEventState` 使用相同窄語意：戰鬥本地、
 未命名 index、raw byte value。解析器只複製，不執行事件，也不因此接通
-CONTINUE production owner。真正剩餘的大型缺口仍是 plaintext
-`0x0000..0x08A2` FDFIELD 控制映像與 runtime records／selector cache、
-戰鬥驅動狀態之間的嚴格還原。
+CONTINUE production owner。後續 adapters 已分別閉合 FDFIELD control、
+runtime records／selector cache、timing 與 future-group constructor；真正
+剩餘缺口是 chapter pending-group binding，以及整組狀態到 `0x117E7`
+對應的正式 `Game` controller handoff。

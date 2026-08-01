@@ -105,16 +105,18 @@ FDSHAP，依 runtime record `+7` 建 selector，恢復 camera/cursor/options，
   各 index 的高階事件名稱仍不猜。
 - runtime count 超過 96、persistent count 超過 32 時拒絕整份快照。
 - persistent 與 runtime records 都保存原始 `0x50` bytes；高階角色名稱與
-  `battle.Unit` 轉換仍需獨立、嚴格的 identity／class catalog。
+  `battle.Unit` 轉換不由本報告推導，後續已由獨立、嚴格的
+  identity／class catalog 與 runtime-unit adapter 閉合。
 - IDA Pro 9.4 與 Capstone 另證實 `0x10010` 自己載入章節資源、建立 runtime
-  selector、恢復畫面，並在 `0x10616` 呼叫戰鬥驅動 `0x4E031`；`0x1061B`
-  跳到 `0x22BBE` 是與其 prologue 配對的共享 epilogue，不是另一個未找到的
-  CONTINUE owner。呼叫返回 `0x26135` 後只再依 `[0x53C03]` 查
-  `0x51E63` 重設章節曲號。
-- 重製端尚未有等價 production owner，真正缺口是
-  `NativeFieldControl` 與 runtime record/selector、戰鬥規則狀態之間的
-  一致性還原，不是
-  header 章節欄位或 persistent record materializer。四槽 LOAD 仍是另一條
+  selector 並恢復畫面。`0x10616→0x4E031` 只把 absolute `0x41A` 的 word
+  複製到 `0x41C`，不是戰鬥驅動；`0x1061B→0x22BBE` 是與 prologue 配對
+  的共享 epilogue。第三分支返回 0 後，main 才在 `0x25DCE` 呼叫並循環
+  重入真正的共享控制器 `0x117E7`。完整勘誤見
+  `fd2_continue_controller_117e7_ida.txt`。
+- 重製端尚未有等價 production owner。field boundary、runtime units、timing
+  與 future-group constructor 已由後續具型別交易閉合；真正缺口是 chapter
+  pending-group binding，以及整組候選狀態到正式 `Game`／controller 的原子
+  handoff，不是 header 章節欄位或 persistent record materializer。四槽 LOAD 仍是另一條
   `0x2CAD7→pre-handler` ABI，不可接到此解析器。
 
 後續 IDA 直接指令已閉合 runtime selector 重建：`0x1035C` 先清 cache

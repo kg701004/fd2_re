@@ -365,10 +365,8 @@ func TestBuildContinueRuntimeInputRebuildsSelectorSlotsFromRuntimeOrder(t *testi
 		t.Fatalf("CONTINUE field control=%#v", got)
 	}
 	wantOwners := []ContinueRuntimeOwner{
-		ContinueOwnerMapTiming,
-		ContinueOwnerRuntimeUnitProjection,
-		ContinueOwnerFutureGroupConstructor,
-		ContinueOwnerBattleDriver,
+		ContinueOwnerPendingGroupBinding,
+		ContinueOwnerBattleControllerHandoff,
 	}
 	if input.ReadyForContinue() ||
 		!reflect.DeepEqual(input.UnresolvedOwners, wantOwners) {

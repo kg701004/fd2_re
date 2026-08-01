@@ -4942,7 +4942,6 @@ func (g *Game) Update() error {
 		}
 		return nil
 	}
-	g.advanceNativeMapClock(time.Now())
 	if g.nativeFieldEvent61 != nil {
 		g.stepNativeFieldEvent61Tick(
 			g.nativeFieldEvent61.clock.Sample(time.Now()),
@@ -7323,13 +7322,30 @@ func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 }
 
 func (g *Game) composeNativeMapFrame() error {
+	return g.composeNativeMapFrameAt(time.Now())
+}
+
+// composeNativeMapFrameAt owns one complete 0x11CAC-style transaction:
+// sample the BIOS low word, advance all frame-local timing state, build the
+// indexed frame, and publish both timing and pixels only after every preflight
+// succeeds. The explicit time argument keeps CONTINUE redraw tests
+// deterministic.
+func (g *Game) composeNativeMapFrameAt(now time.Time) error {
 	a := g.nativeMapAssets
 	hud, ok := g.nativeMapHUDInput()
 	if !ok || g.st == nil || !g.st.HasNativeMapRangeModeState ||
-		g.st.NativeMapRangeMode < 1 || g.st.NativeMapRangeMode > 5 {
+		g.st.NativeMapRangeMode < 0 || g.st.NativeMapRangeMode > 5 {
 		return errors.New("native map frame: HUD or drawable selector state unavailable")
 	}
-	in, err := buildNativeMapFrameInput(a, g.m, g.st, nativeMapFrameRuntime{HUD: hud})
+	candidateState := *g.st
+	candidateClock := g.nativeMapClock
+	candidateGame := Game{st: &candidateState, nativeMapClock: candidateClock}
+	if !candidateGame.advanceNativeMapClock(now) {
+		return errors.New("native map frame: timing state unavailable")
+	}
+	in, err := buildNativeMapFrameInput(
+		a, g.m, &candidateState, nativeMapFrameRuntime{HUD: hud},
+	)
 	if err != nil {
 		return err
 	}
@@ -7342,6 +7358,8 @@ func (g *Game) composeNativeMapFrame() error {
 	if err := indexedmap.ComposeNativeFrame(g.nativeMapWork, g.nativeMapVGA, in); err != nil {
 		return err
 	}
+	*g.st = candidateState
+	g.nativeMapClock = candidateGame.nativeMapClock
 	return nil
 }
 

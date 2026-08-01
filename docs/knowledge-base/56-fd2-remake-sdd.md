@@ -1704,7 +1704,8 @@ effects/targets remain the separate UI-03 execution workstream.
 ### 5.2 Native campaign loop ordering（E0，IDA 9.4）
 
 IDA 對 `0x25DE5` 的直接控制流固定了可編輯戰役圖必須保存的外層順序。
-`sub_25EBB` 回傳戰場 driver 結果後，迴圈呼叫 `sub_117E7`；
+`sub_25EBB` 完成標題／章節前置流程並回傳 0 後，main 才呼叫
+`sub_117E7` 共享戰鬥控制器；
 `[0x53ECC]==1` 時固定呼叫 `0x22E5C`，清除 pending 後繼續。
 `0x22E5C` 的函式體只證實它載入 `FDOTHER.DAT` 資源 #79，做兩次呈現與
 固定 tick；函式不讀章節索引。因此舊稱「第 1 章專屬世界地圖／中場」
@@ -2440,11 +2441,19 @@ event state 與
 checksum-valid 的未修改快照實測得到 persistent identity
 `[0,9,4,30]`，依固定角色表是索爾、悠妮、亞雷斯、蓋亞。此動態快照不是
 固定版本 fixture，也不證明原生 LOAD／CONTINUE 已完成；identity/class
-catalog 與正式 party materialization 已由下一段閉合；但控制映像與
-runtime selector／record、`battle.State` 及戰鬥驅動的嚴格一致性尚未閉合。合法 IDA Pro 9.4
-已證實 `0x10010` 本身在 `0x10616` 呼叫 `0x4E031`，再由共享 epilogue
-返回第三標題分支，因此不存在另一個待尋找的原版 CONTINUE owner。逐指令證據見
-[`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt)。
+catalog 與正式 party materialization 已由下一段閉合。控制映像、runtime
+selector／record、timing 與 future-group constructor 的個別 adapters 已由
+下文閉合；整組 `battle.State` 到正式控制器的原子交接仍未閉合。
+2026-08-02 以合法 IDA Pro 9.4 重查後撤回「`0x4E031` 是戰鬥驅動器」：
+該函式只把 absolute `0x41A` 的 word 複製到 `0x41C`；清除待處理鍵盤輸入
+是依 BIOS ABI 得到的強推論，不是函式本體的直接語意。第三分支返回 0
+後，main 才在 `0x25DCE` 呼叫並循環重入共享戰鬥控制器 `0x117E7`。
+逐指令證據見
+[`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt) 與
+[`fd2_continue_controller_117e7_ida.txt`](../data/fd2_continue_controller_117e7_ida.txt)。
+下述具型別 adapters 現已分別閉合控制映像、runtime units、timing 與
+future-group constructor；尚未閉合的是 chapter pending-group binding，及把
+整組候選狀態一次發布到正式 `Game`／controller 的 handoff。
 FDFIELD 控制映像的來源、固定容量與 consumers 見
 [`fd2_current_field_control_ida.txt`](../data/fd2_current_field_control_ida.txt)。
 
@@ -2526,8 +2535,10 @@ context（chapter、field dimensions、FDICON group count），原子驗證：
 gate B 與有效 anchor，不再把這四值列為未知。此契約只適用標題
 `0x26130` caller；不外推到戰場內 `0x1A251` caller。
 
-preflight 輸出仍明列四個尚待 caller 接管的 owners：map timing、
-runtime unit projection、future group constructor、battle driver。因此
+runtime unit projection、map timing seed adapter 與完整 future-group constructor
+transaction 現均已有嚴格 consumer。preflight 只保留兩個尚待 caller 接管的
+owners：chapter asset 的 pending-group binding，以及已知 `0x117E7` 對應的
+remake `Game` controller handoff。因此
 `ReadyForContinue()` 固定由 owner 清單決定，目前為 false；此 preflight
 沒有 production owner，也不改 `battle.State`。直接證據見
 [`fd2_continue_selector_rebuild_ida.txt`](../data/fd2_continue_selector_rebuild_ida.txt)
@@ -2541,10 +2552,12 @@ terrain flip/latch、unit pixel-shift/latch 都是零，terrain override
 `0x25D83..0x25D8B` 在標題入口擷取 signed BIOS low word。故
 `ContinueRuntimeContext` 必須明示 `TitleTimerTick`，
 `ContinueMapTimingSeed` 才能無猜測保存首次 `0x11CAC` 前的完整種子。
-但 `0x10494` 與 `0x105ED` 的 redraw 中間包含固定 delay，而
-`0x1297D`／`0x11EEE`／`0x127E0` 各在實際呼叫時讀 clock；進戰鬥驅動
-前的最終 phase/cycle 仍須 production scheduler 逐點取樣，因此
-`map_timing` owner 尚未解除。證據見
+`campaign.MaterializeNativeContinueMapTiming` 現已原子安裝這份 seed；
+地圖合成器也把 `0x1297D` 與兩組 binary latch 的取樣移到每次實際
+`0x11CAC` 等價合成交易，只有完整 frame 成功才同時發布 timing 與 pixels。
+舊的每次 `Game.Update` 無條件推進已撤回。`0x10494` 與 `0x105ED` 中間的
+固定演出／delay 排程仍由正式 CONTINUE handoff 負責，但不再是未知
+`map_timing` 資料 owner。證據見
 [`fd2_continue_map_timing_seed_ida.txt`](../data/fd2_continue_map_timing_seed_ida.txt)。
 
 `NativeFieldControl` 也不再只以魔術偏移供後續程式直接索引。
@@ -2582,9 +2595,10 @@ consumer。它不只檢查 `BuildContinueRuntimeInput` 的私有 marker，還會
 
 這個 adapter 不碰既有 `State.Units`，不重建 saved runtime `0x50`
 records，不啟動 timing，也不把 range mode 提前推成 interactive `1`。
-因此它已關閉原本籠統的 field boundary owner，但把剩餘責任精確拆成
-`runtime_unit_projection` 與 `future_group_constructor`；兩者仍分別由
-saved runtime-record materializer 與未來 `0x10C50` group append 阻擋。
+因此它已關閉原本籠統的 field boundary owner；saved runtime-record
+materializer 與 `0x10C50→0x1B750` constructor transaction 也已在後續閉合。
+目前真正剩餘的是把所選章節尚未登場的 rows／item table 綁到同一候選
+`State`，以及一次發布 `Game`／controller handoff。
 直接證據見
 [`fd2_current_field_control_mutations_ida.txt`](../data/fd2_current_field_control_mutations_ida.txt)。
 
@@ -2599,6 +2613,12 @@ selector cache，任一錯誤均不改 `State`。成功時才依 saved runtime l
 - `+5/+6/+7/+8`、command mask、race/class、transient、
   `+34..+36`、`+42/+46` 及完整八格 inventory raw provenance；
 - 所有已證實 signed stat words，及由 `+7` 在原順序重建的 selector slot。
+
+2026-08-02 重讀 `0x117E7` 又補上高階投影邊界：玩家單位掃描以
+`record+5 & 0x85` 作 admission，直接點選路徑另測 bit7；成功動作由
+`0x13512` 設 bit7，回合相位由 `0x13536` 清除。因此
+`Unit.Acted=(raw+5 bit7)` 可作這個控制器的行動准入投影；這不把整個
+byte `+5` 命名為 acted，也不替 bit0、bit2 或完整換邊條件補語意。
 
 這裡特別撤回把所有 runtime `+8` 都稱為角色 identity 的錯誤模型：
 scripted constructor 會把 FDFIELD `b1` 同時寫入 runtime `+7/+8`；
@@ -2617,8 +2637,8 @@ selector 測試也改以 raw +8 定位 scripted actor，不再靠錯誤語意名
 chapter 0 的 12 筆 runtime records 全數依序 materialize，前四名 player
 為索爾、悠妮、亞雷斯、蓋亞；敵方 record `+8=96` 保持 raw 且沒有
 `HasNativeIdentity`。這個 adapter 不啟動 map timing、不建立未來 group、
-不切 interactive range mode，也不進 battle driver；正式 CONTINUE
-仍因其餘三個 owner 及 orchestration 維持失敗即關閉。
+不切 interactive range mode，也不發布 `Game` controller handoff；正式
+CONTINUE 仍因 pending-group binding 與原子 handoff 維持失敗即關閉。
 
 同輪開始縮小 `future_group_constructor`。完整 Docker Capstone
 `0x10B4E..0x11018` 直接指令固定：
@@ -2705,9 +2725,10 @@ executor 之前辨識兩個已證實 caller；它以保留當下 selector cache 
 `AppendGroupWithNativePlacement` 在私有候選名冊完成全部建構、位置及 selector
 預檢後才原子發布。`0x1B750` 另已由合法 IDA 與 Capstone 證實包含
 `+0x22/+0x23/+0x24` modifier；它不等同於沒有這三條分支的 persistent
-`0x1145A`。這只解除 future-group constructor 的具型別 transaction 缺口；
-完整 0x50-byte 逐位元組一致、其他 caller 與正式 CONTINUE 的其餘 owner 仍維持
-失敗即關閉。
+`0x1145A`。這解除 future-group constructor 的具型別 transaction 缺口；
+CONTINUE 剩餘的是將所選章節的未登場 rows 與 item table 綁入同一候選
+`State`，不能再把它記成「constructor 尚未反組譯」。完整 0x50-byte
+逐位元組一致、其他 caller 與正式 CONTINUE handoff 仍維持失敗即關閉。
 
 `gen_campaign.py` 的總戰役拓撲仍落後人工閉合的權威
 `campaign_full.json`；本輪實測直接重生會把299節點降成293並遺失 handler／

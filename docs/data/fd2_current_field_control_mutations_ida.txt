@@ -81,5 +81,6 @@ CONTINUE bridge 邊界
 - 現有 runtime `0x50` records 是目前已出場單位的唯一 live 來源。
 - control `+0x83` 的 26-byte rows 只供 `0x10B4E→0x10C50` 之後的 group
   append 使用；不可用它重建或重排已保存的 runtime records。
-- 尚未完整轉寫 `0x10C50` 前，未來 group spawn 與正式 CONTINUE battle
-  driver 必須維持失敗即關閉。
+- `0x10C50→0x1B750` 的 future-group constructor transaction 已由後續直接
+  證據與具型別 helper 閉合；正式 CONTINUE 仍因 chapter pending-group binding
+  與 `0x117E7` 對應的 `Game` controller handoff 未接而維持失敗即關閉。

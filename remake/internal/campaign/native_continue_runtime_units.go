@@ -9,14 +9,16 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdsave"
 )
 
-// MaterializeNativeContinueRuntimeUnits projects the complete saved 0x50-byte
-// runtime roster into battle.Units without consulting FDFIELD constructor
+// MaterializeNativeContinueRuntimeUnits projects the saved 0x50-byte runtime
+// roster fields needed by the current battle into battle.Units without
+// consulting FDFIELD constructor
 // rows. The saved list order is authoritative. Raw +7 is consumed separately
 // as the battle-figure selector and as the CONTINUE selector-cache rebuild key;
 // raw +8 is promoted to persistent identity only for native camp 2.
 //
 // This adapter deliberately does not seed map timing, switch to interactive
-// range mode, construct future FDFIELD groups, or start the battle driver.
+// range mode, bind future FDFIELD groups, or publish the Game/controller
+// handoff.
 func MaterializeNativeContinueRuntimeUnits(
 	state *battle.State,
 	input fdsave.ContinueRuntimeInput,
@@ -117,23 +119,26 @@ func materializeNativeContinueRuntimeUnit(
 	}
 
 	unit := &battle.Unit{
-		Camp:                  camp,
-		Name:                  catalog.classNames[view.Class],
-		ClsName:               catalog.classNames[view.Class],
-		ClassID:               int(view.Class),
-		Lv:                    int(view.Level),
-		HP:                    int(view.HP),
-		MaxHP:                 int(view.MaxHP),
-		MP:                    int(view.MP),
-		MaxMP:                 int(view.MaxMP),
-		AP:                    int(view.AP),
-		DP:                    int(view.DP),
-		HIT:                   int(view.HIT),
-		EV:                    int(view.EV),
-		MV:                    int(view.Movement),
-		X:                     int(raw[0]),
-		Y:                     int(raw[1]),
-		Dir:                   int(raw[3]),
+		Camp:    camp,
+		Name:    catalog.classNames[view.Class],
+		ClsName: catalog.classNames[view.Class],
+		ClassID: int(view.Class),
+		Lv:      int(view.Level),
+		HP:      int(view.HP),
+		MaxHP:   int(view.MaxHP),
+		MP:      int(view.MP),
+		MaxMP:   int(view.MaxMP),
+		AP:      int(view.AP),
+		DP:      int(view.DP),
+		HIT:     int(view.HIT),
+		EV:      int(view.EV),
+		MV:      int(view.Movement),
+		X:       int(raw[0]),
+		Y:       int(raw[1]),
+		Dir:     int(raw[3]),
+		// 0x117E7 tests bit7 before admitting a player unit, while successful
+		// action paths set it through 0x13512. Acted is only that controller
+		// projection; the rest of raw +5 retains caller-specific semantics.
 		Acted:                 raw[5]&0x80 != 0,
 		OnField:               active,
 		MapSelectorKey:        int(record.SelectorKey),

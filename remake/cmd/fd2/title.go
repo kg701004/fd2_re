@@ -240,8 +240,13 @@ func (g *Game) titleUpdate() bool {
 				g.titleSlotSel = 0
 				g.titlePhase = "loadslots"
 				return true
-			case TitleMenuLoadSlot:
-				g.loadGameFromSlot(0)
+			case TitleMenuContinue:
+				// Original selection 2 restores FD2.SAV's current-runtime
+				// snapshot through 0x10010; it is not remake JSON slot 0.
+				// Keep the title active until the native transaction can publish
+				// its pending-group and 0x117E7-controller handoff atomically.
+				g.msg = "原版目前戰鬥續戰尚未完成接線"
+				return true
 			}
 			g.titlePhase = "" // START 或讀檔後 → 進遊戲
 		}

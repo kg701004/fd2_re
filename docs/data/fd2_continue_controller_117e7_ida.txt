@@ -1,0 +1,129 @@
+# FD2 標題 CONTINUE 返回鏈與共享戰鬥控制器
+
+輸入檔：FD2.EXE
+大小：357074 bytes
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+
+工具與位址空間：
+
+- 第一順位：IDA Pro 9.4，IDA database linear address；使用
+  `tools/ida_probe_continue.idc` 唯讀匯出 `.i64` 的函式邊界、xref 與指令。
+- 第二順位：`fd2-cap-local` 內的 Capstone，LE object 1 linear address；
+  `tools/disasm_le.py` 對下列相同範圍獨立覆核。
+- 兩者的下列數值都是同一個 LE 線性位址，不是檔案偏移。
+
+## 已證實：`0x4E031` 不是戰鬥驅動器
+
+IDA 將函式固定為 `sub_4E031 0x4E031..0x4E040`。直接指令為：
+
+```text
+0x4E031  push esi
+0x4E032  mov  esi, 0x41A
+0x4E037  mov  ax, [esi]
+0x4E03A  mov  [esi+2], ax
+0x4E03E  pop  esi
+0x4E03F  ret
+```
+
+它只把 absolute `0x41A` 的 word 複製到 `0x41C` 後返回，沒有輸入迴圈、
+單位 dispatch、回合或事件控制。依 DOS BIOS data-area 的 head/tail ABI，
+「清空鍵盤環形緩衝」是強推論；「它不是戰鬥驅動器」則由函式本體直接證實。
+
+`0x10010` 尾端的真實順序是：
+
+```text
+0x105ED  call 0x11CAC       ; arg 0，第二次完整重繪
+0x105F5  push 0xC8
+0x105FA  call 0x375B2       ; 固定延遲
+0x10602  mov  [0x53AE9], 0
+0x1060C  mov  [0x51A83], 1  ; 互動 selector
+0x10616  call 0x4E031       ; 上述短小緩衝操作
+0x1061B  jmp  0x22BBE       ; add esp,4 + pop ebp/edi/esi/ebx + ret
+```
+
+`0x1061B→0x22BBE` 是與 `0x10010` prologue 配對的共用函式 epilogue，
+不是跳進 `0x22AF6` 的玩法邏輯。
+
+## 已證實：真正的返回後控制器是 `0x117E7`
+
+IDA 的函式與 caller 關係：
+
+```text
+main                 0x25BF4..0x25EBB
+title/menu dispatcher 0x25EBB..0x26152
+current restore       0x10010..0x10620
+shared controller     0x117E7..0x11AA8
+```
+
+第三標題分支：
+
+```text
+0x26124  push 0
+0x26126  push -1
+0x26128  call 0x25977
+0x26130  call 0x10010
+0x26135  ...恢復章節 BGM...
+0x2614C  xor eax,eax
+0x26151  ret
+```
+
+main 的消費端：
+
+```text
+0x25DBD  call 0x25EBB
+0x25DC6  test eax,eax
+0x25DC8  jnz  0x25E88
+0x25DCE  call 0x117E7
+...
+0x25E74  test esi,esi
+0x25E76  jz   0x25DCE
+```
+
+所以第三分支先完成 `0x10010` current snapshot restore，再以回傳值 0 進入
+main 共用的 `0x117E7` 控制器；`0x117E7` 回傳 0 時 main 會再次呼叫它。
+舊「`0x10010` 在 `0x10616` 直接呼叫戰鬥驅動 `0x4E031`」斷言錯誤，
+也不能再據此宣稱不存在另一個原版 CONTINUE owner。
+
+## 已證實：重繪取樣點不是一般更新節拍
+
+`0x10010` 在 `0x10483` 寫 selector 0，於 `0x10494` 呼叫
+`0x11CAC(1)`；中間完成固定畫面／延遲序列，再於 `0x105ED` 呼叫
+`0x11CAC(0)`，延遲 `0xC8` 後才寫 selector 1。
+
+`0x11CAC 0x11CAC..0x11D40` 的函式首段固定為：
+
+```text
+0x11CB7  call 0x1297D
+0x11CBC  cmp  arg_0,0
+0x11CC3  call 0x4DFCC       ; 僅 arg_0==0
+0x11CC8  ...terrain...
+0x11CF0  call 0x122DC       ; raw selector 0 是 no-op overlay
+0x11CF5  call 0x127A9
+0x11D0A  call 0x1ACF3
+0x11D36  call 0x11EB0
+```
+
+因此 `0x1297D` 的 moving cycle 每次「合成器呼叫」遞增，不是每次主迴圈
+更新都遞增。重製必須把 clock 取樣綁在成功的 frame-compositor transaction；
+失敗的合成不可發布半套 timing state。
+
+## 強推論：raw `+5 bit7` 的重製投影邊界
+
+`0x117E7` 的玩家單位掃描在 `0x11832` 測試 `record+5 & 0x85`，只讓
+raw camp 2 且該 mask 為零的單位進 `0x12D7B`；直接點選分支又在
+`0x11917` 測試 `record+5 & 0x80`，設置時拒絕進玩家 action handler。
+既有直接證據另證實成功動作以 `0x13512` 設 bit7，回合相位以
+`0x13536` 清 bit7。
+
+因此 `battle.Unit.Acted = (raw[5]&0x80 != 0)` 可作 `0x117E7` 玩家控制器的
+行動准入投影。這不把整個 byte `+5` 命名為 acted，也不表示 bit0、bit2 或
+所有 handler 已有共同高階語意；完整換邊條件仍需各 caller 證據。
+
+## 重製影響
+
+- title selection 2 不得讀重製 JSON slot 0；缺完整 transaction 時應留在標題。
+- `ContinueOwnerBattleDriver` 必須撤回。剩餘工作是已知 `0x117E7` 等價的
+  `Game` 狀態原子發布／控制器交接，不是再找一個未知 EXE driver。
+- runtime unit typed adapter 與 map timing seed adapter 已存在；尚未閉合的原生
+  邊界是 future FDFIELD rows 的 chapter-asset 綁定，以及正式 `Game` handoff。

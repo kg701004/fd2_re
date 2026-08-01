@@ -59,6 +59,7 @@ padding。未解欄仍保留 raw bytes，不命名。
 這段控制資源不是 `[0x53A51]` 指向的地圖構成格陣。CONTINUE 會另行
 從 FDFIELD resource `3N` 載入 composition，並由 `0x4DBFC` 重設 live
 cell byte `+3`；不可拿控制映像或 `map.json` 的 serialized byte `+3`
-代替。CONTINUE 正式接入仍需把 typed control、runtime records、
-selector cache、`battle.State` 及戰鬥驅動做嚴格一致性驗證；唯讀解析
-本身不代表 CONTINUE 已可供玩家使用。
+代替。typed control、runtime records／selector cache、timing 與
+future-group constructor 已由後續具型別交易閉合；CONTINUE 正式接入仍需
+chapter pending-group binding，並把完整 `battle.State` 原子交給 `0x117E7`
+對應的 `Game` controller。唯讀解析本身不代表 CONTINUE 已可供玩家使用。

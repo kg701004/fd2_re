@@ -21,6 +21,20 @@ func (c *nativeBIOSClock) Reset() {
 	*c = nativeBIOSClock{}
 }
 
+// Seed installs a captured signed BIOS low word at an explicit host-time
+// boundary. Title CONTINUE uses this to preserve main's 0x25D83 sample while
+// allowing later 0x11CAC redraws to observe elapsed ticks.
+func (c *nativeBIOSClock) Seed(rawTick int, now time.Time) bool {
+	if c == nil || now.IsZero() || rawTick < -0x8000 || rawTick > 0x7fff {
+		return false
+	}
+	*c = nativeBIOSClock{
+		last:         now,
+		elapsedTicks: uint64(uint16(int16(rawTick))),
+	}
+	return true
+}
+
 func (c *nativeBIOSClock) Sample(now time.Time) int {
 	if c.last.IsZero() {
 		c.last = now
@@ -39,10 +53,11 @@ func (c *nativeBIOSClock) Sample(now time.Time) int {
 	return int(int16(uint16(c.elapsedTicks)))
 }
 
-// advanceNativeMapClock reproduces the one 0x1297d call at the head of each
+// advanceNativeMapClock reproduces the one 0x1297d call at the head of one
 // 0x11cac redraw, followed by the independent terrain/unit BIOS-word latches
-// consumed by that same frame. A legacy or partially materialized State is
-// left untouched.
+// consumed by that same frame. Callers must invoke it from the compositor
+// transaction, never from the generic Update cadence. A legacy or partially
+// materialized State is left untouched.
 func (g *Game) advanceNativeMapClock(now time.Time) bool {
 	if g == nil || g.st == nil ||
 		!g.st.HasNativeMapCycleState ||

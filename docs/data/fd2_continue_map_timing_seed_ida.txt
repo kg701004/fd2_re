@@ -60,8 +60,8 @@ BIOS low word 減 `[0x53C0F]` 大於四或為負時才加一並更新 latch。
 `0x127A9→0x127E0` 才可能推進 unit pixel shift。
 
 CONTINUE 開場其後還會執行多次固定 delay，並在 `0x105ED` 再呼叫
-`0x11CAC(0)`。因此資料種子可靜態閉合，但進入 `0x4E031` 時的最終
-phase/cycle 不能由存檔或常數算出；production bridge 必須以重製執行期
+`0x11CAC(0)`。因此資料種子可靜態閉合，但尾端鍵盤緩衝操作
+`0x4E031` 前的最終 phase/cycle 不能由存檔或常數算出；正式轉接必須以重製執行期
 的 signed BIOS-compatible clock 在每個已證實 redraw 時點取樣。
 
 ## 重製邊界
@@ -74,5 +74,7 @@ phase/cycle 不能由存檔或常數算出；production bridge 必須以重製�
 - terrain flip/latch `0/0`；
 - unit pixel shift/latch `0/0`。
 
-這只關閉 timing seed，不代表開場 redraw/delay scheduler 已接入。
-`map_timing` 仍列為 unresolved owner，正式 CONTINUE 仍失敗即關閉。
+`MaterializeNativeContinueMapTiming` 現已嚴格安裝這份 seed，地圖合成器也
+只在一次成功的 `0x11CAC` 等價交易中取樣並原子發布 timing；一般
+`Game.Update` 不再錯誤推進動畫。完整開場 redraw/delay 排程及正式
+CONTINUE 狀態發布仍未接入，因此玩家路徑繼續失敗即關閉。

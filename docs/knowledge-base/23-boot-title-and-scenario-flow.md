@@ -79,7 +79,9 @@ DOS/4GW entry 0x3c964 ──► Watcom CRT ──► main 0x25bf4
    0x1fabb  call 0x11eb0 ; 複製 320×200 視窗 → 0xa0000
    0x1fc59  call 0x10620 ; 偵測按鍵(讀 BIOS kbd head[0x41a]/tail[0x41c])→ 可跳過
    ```
-   配合 palette fade-in(0x1f525)做淡入。任意按鍵可跳過(0x10620 偵測、0x4e031 清鍵盤緩衝)。
+   配合 palette fade-in(0x1f525)做淡入。任意按鍵可跳過（`0x10620` 偵測；
+   `0x4e031` 已證實複製 BIOS 鍵盤緩衝 head word 至 tail word，清除待處理輸入
+   是依 BIOS ABI 得到的強推論）。
 
 ### 2.2 視覺驗證(規則 64:解碼器當 oracle)[驗]
 
@@ -408,7 +410,7 @@ town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。
 | `0x117e7` | 戰場指令迴圈(逐單位行動) | [驗] |
 | `0x111ba` | 通用資源載入器 load(filename,oldbuf,index) | [驗] |
 | `0x4e63d` / `0x11eb0` | sprite blit / 矩形複製 blit | [驗] |
-| `0x10620` / `0x4e031` | kbhit(BIOS 0x41a/0x41c) / 清鍵盤緩衝 | [驗] |
+| `0x10620` / `0x4e031` | kbhit（BIOS `0x41a/0x41c`）／鍵盤緩衝 head→tail word copy；清除效果為強推論 | [驗＋強推論] |
 | `0x25977` | play_bgm(track)([0x51a11]=當前曲) | [驗] |
 | `0x51e63` | 章節→BGM 曲號表(每章 1B;dump 開頭 `13 13 13 13 03…`) | [驗] |
 | `0x16f04`/`0x16f55` | 標題/選單模組入口 / 選單迴圈 | [驗] |
@@ -440,10 +442,12 @@ town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。
   只恢復 FD2.SAV current-runtime snapshot。
 - **[部分已解]** 第三主選單分支已完整展開：`0x26124` 停曲後呼叫
   `0x10010`；後者自行載入目前戰鬥資源、恢復 raw state／rosters／header、
-  建立 selector，於 `0x10616` 呼叫 `0x4E031`，再由共享 epilogue 返回
-  `0x26135` 重設章節曲號。`0x0000..0x08A2` 已閉合為 FDFIELD 控制映像，
+  建立 selector，於 `0x10616` 呼叫只複製 BIOS 鍵盤緩衝 word 的
+  `0x4E031`，再由共享 epilogue 返回 `0x26135` 重設章節曲號並回傳 0。
+  main 接著才在 `0x25DCE` 呼叫及循環重入共享戰鬥控制器 `0x117E7`；舊把
+  `0x4E031` 稱為戰鬥驅動器的斷言已撤回。`0x0000..0x08A2` 已閉合為 FDFIELD 控制映像，
   `0x30A3..0x30C2` 已閉合為 battle-local event state；仍未閉合的是兩者
-  與 runtime selector／record、`battle.State`、戰鬥驅動的嚴格一致性，不是第三
+  與 pending groups、`battle.State`、正式 `Game` controller handoff 的嚴格一致性，不是第三
   分支或 header 章節欄位本身。選單設定結構 0x5204e 的其他欄與各章 handler
   仍需逐一展開。
 - **方法**:本篇控制流全靠**靜態反組譯**(規則 62:控制流非 runtime-only);標題畫面內容用**已破解解碼器解出輸出當 oracle**(規則 64)視覺驗證,**未動用 DOSBox**。若日後要對「捲動速度/淡入時序/BGM 對齊」做逐幀比對,DOSBox 截圖序列可當最後的時序 oracle,但機制本身已不需動態分析即可確定。

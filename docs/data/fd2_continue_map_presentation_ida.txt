@@ -28,7 +28,9 @@ IDA 將 `0x10010..0x10620` 辨識為單一函式；標題選單的 CONTINUE 分�
 0x10616  call 0x4E031
 ```
 
-因此 `0` 是 CONTINUE 開場重繪的暫態值，`1` 是進入戰鬥驅動前的互動值。
+因此 `0` 是 CONTINUE 開場重繪的暫態值，`1` 是返回 main 的
+`0x117E7` 共享戰鬥控制器前的互動值。`0x4E031` 只做鍵盤緩衝操作，
+不是戰鬥驅動器；勘誤見 `fd2_continue_controller_117e7_ida.txt`。
 這兩個值不來自存檔，也不是待猜的 production owner。
 
 ## 已證實：標題 CONTINUE 的 HUD gate B
@@ -87,6 +89,8 @@ cursor，`0x10494` 的首次地圖重繪才消費它。因此標題 CONTINUE 從
 - `HUDGateB=1`
 - `HUDAnchorX` 由上述 seed 與已恢復 visible cursor 計算
 
-故 `range_mode` 與 `hud_gate_b_anchor` 不再列為未解擁有者。正式
-CONTINUE 仍因 map timing、field-runtime bridge 與 battle driver
-三項缺口維持失敗即關閉；本證據不授權接入戰場內 `0x1A251` caller。
+故 `range_mode` 與 `hud_gate_b_anchor` 不再列為未解擁有者；其後 map timing、
+field-runtime bridge 與 future-group constructor 也已有嚴格 consumer。正式
+CONTINUE 仍因 chapter asset 的 pending-group binding，以及 `0x117E7` 對應的
+正式 `Game` controller handoff 兩項缺口維持失敗即關閉；本證據不授權接入
+戰場內 `0x1A251` caller。

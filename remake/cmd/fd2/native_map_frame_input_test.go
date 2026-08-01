@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
@@ -136,7 +137,7 @@ func TestDrawNativeMapFramePresentsCorrectedVGABorder(t *testing.T) {
 	}
 }
 
-func TestComposeNativeMapFrameAdmitsOnlyDrawableInteractiveSelectors(t *testing.T) {
+func TestComposeNativeMapFrameAdmitsOpeningAndInteractiveSelectors(t *testing.T) {
 	assets, field, state := completeNativeMapFrameFixture(t)
 	for i := range assets.Range.Sprites {
 		assets.Range.Sprites[i] = nativeFrameTestSprite(byte(0x20 + i))
@@ -165,13 +166,59 @@ func TestComposeNativeMapFrameAdmitsOnlyDrawableInteractiveSelectors(t *testing.
 			t.Fatalf("dynamic selector %d did not change the indexed frame", mode)
 		}
 	}
-	for _, mode := range []int{0, 6, 11} {
+	if !state.MaterializeNativeMapRangeMode(0) {
+		t.Fatal("opening selector 0 rejected by raw state")
+	}
+	if err := g.composeNativeMapFrame(); err != nil {
+		t.Fatalf("opening selector 0: %v", err)
+	}
+	for _, mode := range []int{6, 11} {
 		if !state.MaterializeNativeMapRangeMode(mode) {
 			t.Fatalf("selector %d rejected by raw state", mode)
 		}
 		if err := g.composeNativeMapFrame(); err == nil {
 			t.Fatalf("non-drawable production selector %d was admitted", mode)
 		}
+	}
+}
+
+func TestComposeNativeMapFrameAdvancesTimingOnceAndFailsAtomically(t *testing.T) {
+	assets, field, state := completeNativeMapFrameFixture(t)
+	g := &Game{nativeMapAssets: assets, m: field, st: state}
+	start := time.Unix(500, 0)
+	if err := g.composeNativeMapFrameAt(start); err != nil {
+		t.Fatal(err)
+	}
+	if got := state.NativeMapCycleState; got.Idle != 0 || got.Moving != 1 ||
+		got.LastTimerTick != 0 {
+		t.Fatalf("first compositor timing=%+v", got)
+	}
+	if err := g.composeNativeMapFrameAt(start.Add(5 * nativeBIOSTickPeriod)); err != nil {
+		t.Fatal(err)
+	}
+	if got := state.NativeMapCycleState; got.Idle != 1 || got.Moving != 2 ||
+		got.LastTimerTick != 5 {
+		t.Fatalf("second compositor timing=%+v", got)
+	}
+
+	if !state.MaterializeNativeMapRangeMode(6) {
+		t.Fatal("raw selector 6 rejected by State")
+	}
+	beforeCycles := state.NativeMapCycleState
+	beforeTerrain := state.NativeTerrainPhaseState
+	beforeFlip := state.NativeTerrainFlipState
+	beforeShift := state.NativeUnitPixelShiftState
+	beforeClock := g.nativeMapClock
+	beforeVGA := append([]byte(nil), g.nativeMapVGA...)
+	if err := g.composeNativeMapFrameAt(start.Add(10 * nativeBIOSTickPeriod)); err == nil {
+		t.Fatal("non-drawable selector was accepted")
+	}
+	if state.NativeMapCycleState != beforeCycles ||
+		state.NativeTerrainPhaseState != beforeTerrain ||
+		state.NativeTerrainFlipState != beforeFlip ||
+		state.NativeUnitPixelShiftState != beforeShift ||
+		g.nativeMapClock != beforeClock || !bytes.Equal(g.nativeMapVGA, beforeVGA) {
+		t.Fatal("failed compositor transaction changed timing or pixels")
 	}
 }
 

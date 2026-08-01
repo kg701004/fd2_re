@@ -417,16 +417,22 @@ type ContinueFieldControlView struct {
 type ContinueRuntimeOwner string
 
 const (
-	ContinueOwnerMapTiming              ContinueRuntimeOwner = "map_timing"
-	ContinueOwnerRuntimeUnitProjection  ContinueRuntimeOwner = "runtime_unit_projection"
-	ContinueOwnerFutureGroupConstructor ContinueRuntimeOwner = "future_group_constructor"
-	ContinueOwnerBattleDriver           ContinueRuntimeOwner = "battle_driver"
+	// The 0x10C50→0x1B750 constructor transaction is closed, but CONTINUE
+	// still needs a chapter-asset owner that binds its untouched future rows.
+	ContinueOwnerPendingGroupBinding ContinueRuntimeOwner = "pending_group_binding"
+	// Original main enters 0x117E7 after sub_10010 returns. The remaining
+	// owner is the remake's atomic Game publication, not a missing EXE driver.
+	ContinueOwnerBattleControllerHandoff ContinueRuntimeOwner = "battle_controller_handoff"
 )
 
 // ContinueMapPresentation is the raw map-presentation state established by
-// the title-menu CONTINUE caller at 0x26130 and sub_10010 before 0x4e031.
+// the title-menu CONTINUE caller at 0x26130 and sub_10010 before its final
+// 0x4e031 BIOS keyboard-buffer word copy. Copying the head word at 0x41a to
+// the tail word at 0x41c strongly implies pending-input discard, but the
+// direct instructions prove only the word copy.
 // OpeningRangeMode is used by the opening redraw; InteractiveRangeMode is the
-// value installed immediately before the battle driver. HUDAnchorX is the
+// value installed before returning to main's 0x117e7 battle controller.
+// HUDAnchorX is the
 // persistent data-image seed after 0x1acf3 applies the restored visible cursor.
 // This contract does not describe the separate in-battle caller at 0x1a251.
 type ContinueMapPresentation struct {
@@ -592,10 +598,8 @@ func BuildContinueRuntimeInput(
 			TerrainPhaseOverride: -1,
 		},
 		UnresolvedOwners: []ContinueRuntimeOwner{
-			ContinueOwnerMapTiming,
-			ContinueOwnerRuntimeUnitProjection,
-			ContinueOwnerFutureGroupConstructor,
-			ContinueOwnerBattleDriver,
+			ContinueOwnerPendingGroupBinding,
+			ContinueOwnerBattleControllerHandoff,
 		},
 		validated: true,
 	}
