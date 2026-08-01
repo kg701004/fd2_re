@@ -277,10 +277,10 @@ regression；`postbattle_ch15_persist` 不得重用 `ch14_post`，因其原生 `
 
 同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫
 special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49 操作 slot65；之後掃
-slots66..73；inactive 計數大於4、raw global `[0x53bef] > 18`，或 record word `+0x42 >= 0x140`
-會分別影響後續 dialog/acting/join branch。現有條件模型沒有 count/比較運算，也沒有這些 raw
-來源的 runtime contract，不能把它降成 any／roster_has，因此這段仍保持 raw handler evidence，
-不接入 campaign runtime。
+slots66..73。IDA Pro 9.4 已確認 `sub_3453E` 以參數乘 `0x50` 後讀 runtime record `+5 & 1`，
+所以 `0x42..0x49` 確為 slots66..73，不是角色或事件編號。inactive 計數、raw global
+`[0x53bef] > 18` 與 record word `+0x42 >= 0x140` 已有受限條件原語；但一般玩家原版 runtime
+shape 尚未擷取，故不接入 campaign runtime。
 
 條件模型現新增 `native_inactive_count_gt`：它只接受 address-independent 的明確 slot list 與
 threshold，逐 slot 要求 native record byte5 provenance，再以 bit0 inactive count 做嚴格 `>` 比較；
@@ -293,9 +293,9 @@ handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 imp
 `State.NativeRoundCounter`（只在有 raw provenance 的載入狀態初始化／遞增）及
 `Unit.NativeRecordWord42`／`HasNativeRecordWord42` 保存兩個來源；compiler/runtime 新增
 `native_round_gt` 與 `native_record_word_gte`，缺 provenance 或 offset 不是 `0x42` 一律
-fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression，但尚未把 ch15
-handler 接成完整的 OR／else CFG，也未把 `[0x53a45]` 的 slot producer 與 save boundary
-閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
+fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression；ch15 已有可編譯的
+OR／else CFG，但 `[0x53a45]` 的一般玩家 runtime shape、JOIN-time persistent record 與 save
+boundary 尚未全部閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
 
 後續 producer trace 又閉合一層：constructor `0x10d7f..0x1100c` 在 `0x10fe9` 將生命值
 輸入寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9` 則將魔力輸入
@@ -320,17 +320,21 @@ persistent overlay 跨戰複製；只有其 raw `+7` key 可持續。此修補�
 為保留 ch15 的實際 OR 控制流，條件模型另新增受限的 `native_any_of`：compiler 只允許
 已閉合的 `native_round_gt` 與 `native_inactive_count_gt` 子條件；runtime 在任一 raw 子條件
 已證實為真時才回 true，所有子條件都無法取得 provenance 時仍回 error。這是 compound gate
-primitive，不是開放式腳本 expression language。ch15 handler JSON 尚未改寫／綁定，因目前
-該檔案的 filesystem owner 不允許寫入，且 `[0x53a45]` persistent slot boundary 尚未閉合；
-因此現行 campaign 仍不會執行這個 branch。
+primitive，不是開放式腳本 expression language。ch15 candidate 已可編輯且可編譯；現行
+campaign 不執行它的原因是 runtime／persistent／save 證據門檻，而非檔案擁有者問題。
 
 另新增 [`ch15_post_cfg.json`](../../remake/assets/cutscenes/handlers/candidates/ch15_post_cfg.json) 作為
 address-preserving candidate：它把 `0x23a9a` 的 `round>18 OR inactive_count>4` 與
 `0x23aad` 的 `else +0x42>=0x140` 寫成 nested editable CFG，並保留 dialog/acting/JOIN/
-set-chapter source addresses。binding 的 fixed `runtime_context.slot_count=80` 現已足以讓
-compiler 驗證 branch 內 acting；未提供固定 context 的 branch 仍 fail-closed。camera raw
-`(22,25)`、persistent slot producer 與 campaign consumer 尚未閉合前，原始 `ch15_post.json`
-與 campaign node 都維持 fail-closed。
+set-chapter source addresses。2026-08-02 的 IDA 直接指令重核修正一個高風險錯置：
+`0x23b1f` 會跳過 JOIN18，故 JOIN18 只在 `+0x42>=0x140` arm，不能放在共同尾端。
+candidate 暫以 16 筆 persistent 加 58 筆 group0 推導最小74；turn7 的4筆 group1 若已觸發
+則為78，binding 因此把 `[74,78]` 保存成假說，撤回缺乏 producer 證據的固定80。map14 group0
+同時已有一筆 `fig=15` ally，而且準備介面最多選15名；原版究竟建立第二筆 persistent record、
+提升既有 map record，或保留未出戰 record 為空場狀態仍未知。production ch15 scenario 不套用
+這個假說；一般玩家原版 runtime capture、JOIN-time persistent record 與 campaign consumer
+尚未閉合前，原始 `ch15_post.json` 與 campaign node 都維持 fail-closed。
+直接證據見 [`fd2_ch15_post_ida.txt`](../data/fd2_ch15_post_ida.txt)。
 
 ### UI restoration execution plan（2026-07-27）
 

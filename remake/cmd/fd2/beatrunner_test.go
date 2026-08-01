@@ -1375,13 +1375,14 @@ func TestChapter2PreLoadCHUsesSixMemberJoinOrderAndGroupOneFrontier(t *testing.T
 	}
 }
 
-func TestCh15CandidateBindingCompilesWithFixedContextButRemainsDataOnly(t *testing.T) {
+func TestCh15CandidateBindingCompilesWithHypothesizedRuntimeShapesButRemainsDataOnly(t *testing.T) {
 	bindingPath := assetPath("assets/cutscenes/bindings/ch15_post_candidate.json")
 	beats, issues, err := campaign.CompileHandlerBinding(bindingPath)
 	if err != nil || len(issues) != 0 {
 		t.Fatalf("ch15 candidate fixed-context compile err=%v issues=%#v", err, issues)
 	}
-	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 80 {
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
+		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{74, 78}) {
 		t.Fatalf("candidate runtime context=%#v", beats)
 	}
 	var branch *campaign.Beat
@@ -1393,6 +1394,16 @@ func TestCh15CandidateBindingCompilesWithFixedContextButRemainsDataOnly(t *testi
 	}
 	if branch == nil || branch.Condition == nil || branch.Condition.Op != "native_any_of" || len(branch.Condition.Any) != 2 || len(branch.Else) != 1 || branch.Else[0].Condition == nil || branch.Else[0].Condition.Op != "native_record_word_gte" {
 		t.Fatalf("candidate raw CFG=%#v", beats)
+	}
+	nestedThen := branch.Else[0].Then
+	if len(nestedThen) < 2 || nestedThen[0].Op != "dialog" ||
+		nestedThen[len(nestedThen)-1].Op != "join" || nestedThen[len(nestedThen)-1].CharID != 18 {
+		t.Fatalf("0x23b21 branch must own dialog4 and conditional JOIN18: %#v", branch.Else[0].Then)
+	}
+	for _, beat := range beats {
+		if beat.Op == "join" {
+			t.Fatalf("JOIN18 must not remain on the unconditional 0x23b52 tail: %#v", beats)
+		}
 	}
 }
 

@@ -59,15 +59,15 @@
               "text_index": 4,
               "source": { "addr": "0x23b40", "target": "0x15f84" },
               "text_table": "dword ptr [0x3a79]"
+            },
+            {
+              "op": "join",
+              "char_id": 18,
+              "source": { "addr": "0x23b4a", "target": "0x112a5" }
             }
           ]
         }
       ]
-    },
-    {
-      "op": "join",
-      "char_id": 18,
-      "source": { "addr": "0x23b4a", "target": "0x112a5" }
     },
     {
       "op": "set_chapter",

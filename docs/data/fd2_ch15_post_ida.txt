@@ -1,0 +1,68 @@
+《炎龍騎士團 2》ch15 post：IDA Pro 9.4 直接指令證據
+====================================================
+
+參考版本
+--------
+FD2.EXE
+size: 357074
+MD5: b97caf2239a27a896069d03549d96e1e
+SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+
+工具與標記政策
+--------------
+- 使用使用者合法提供的 IDA Pro 9.4，在無網路的一次性 Docker 容器內分析。
+- 以下保留 IDA 原始名稱、位址與運算元；語意只作附加註記。
+- 本檔不包含原版二進位、IDA 資料庫、授權檔或反編譯器輸出。
+
+已證實：sub_23A0A 控制流程
+-------------------------
+- 函式範圍：0x23a0a..0x23b5f；dispatch call site：0x25e23。
+- 0x23a5e 呼叫 sub_233C6；0x23a95 呼叫 sub_11506。
+- 0x23a66..0x23a84 將 0x42..0x49 依序傳給 sub_3453E，計算回傳非零的筆數。
+- 0x23a9a 比較 dword_53BEF > 0x12；成立時跳到 0x23abd。
+- inactive 計數 > 4 時也在 0x23aa3..0x23aab 跳到 0x23abd。
+- 兩者皆不成立時，0x23aad..0x23abb 讀取 `[dword_53A45 + 0x42]`
+  的 u16，並與 0x140 比較。
+- `< 0x140` 會落入 0x23abd：dialog index 2 → ACTING 49 → dialog index 3；
+  0x23b1f 直接跳到 0x23b52，因此不執行 JOIN18。
+- `>= 0x140` 會跳到 0x23b21：dialog index 4 → 0x23b4a 的
+  sub_112A5(0x12)；接著才到 0x23b52 增加章節。
+- 所以 JOIN18 只屬於 `NOT(round > 18 OR inactive_count > 4) AND
+  slot0.word42 >= 0x140` 分支，絕非共同尾端。
+
+已證實：sub_3453E 是 0x50-byte runtime record 索引
+---------------------------------------------------
+- 函式範圍：0x3453e..0x34565。
+- 0x34548 讀取參數；0x3454c..0x34553 計算 `index * 0x50`。
+- 0x34556 讀 dword_53A45；0x3455b 讀取該 record 的 byte `+5`；
+  0x3455f 套用 `& 1` 後回傳。
+- 因此 ch15 傳入的 0x42..0x49 是 runtime record slots 66..73，
+  不是角色編號或事件索引。對 bit0 的高階名稱仍維持未知。
+
+已證實：sub_233C6 的 layout 寫入
+---------------------------------
+- 函式範圍：0x233c6..0x234bb。
+- 0x233ea..0x23429 逐筆寫 runtime record `+0/+1/+3`。
+- 0x2342b..0x23458 可另外寫一個 special slot。
+- ch15 call site 的直接參數固定 slots 0..15、special slot 65
+  `(28,30,pose2)`，camera 原始 scalar `(22,25)`。
+
+假說：ch15 可接受的 runtime shape
+----------------------------------
+- ch14 post 已執行 JOIN15；ch15 layout 明確覆寫 slots 0..15，因此可能有
+  16 筆 persistent records。
+- map14 的可重生 FDFIELD export 有 58 筆 group0；若先建 16 名我方再 append
+  group0，會得到 74 筆，恰好涵蓋 slot73。
+- ch15 的 turn7 group1 有 4 筆；若已觸發，戰後 shape 為 78 筆。
+- 反證是 map14 group0 已有一筆 `fig=15` ally，而準備介面最多選15名；目前
+  無法判定原版會建立第二筆 persistent record、提升既有 map record，或保留
+  未出戰 persistent record 為空場狀態。74／78 因此只是 candidate binding 的
+  明示假說，不得提升為強推論、已證實或 E2。
+
+目前實作門檻
+------------
+- editable candidate 已改成上述巢狀分支，JOIN18 留在 0x23b21 arm。
+- production ch15 scenario 未套用上述未證實的建構方式；candidate binding 暫把
+  74／78 保存成可審查假說，不作正式執行依據。
+- campaign node 仍未綁定 candidate。必須先完成 JOIN-time persistent record、
+  四條分支執行回歸及 town_ch16／save 邊界，才可解除失敗即關閉。
