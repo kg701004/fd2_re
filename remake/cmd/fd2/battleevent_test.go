@@ -744,3 +744,152 @@ func TestChapter10PostRuntimeFrontiersTrackConditionalKailey(t *testing.T) {
 		})
 	}
 }
+
+func TestChapter20PreparationBuildsFixedLeaderPlusFifteenSlotFrontier(t *testing.T) {
+	// Every ID below exists in the authored chapter-20 scenario. The seventeenth
+	// persistent member forces 0x318AD; record zero remains fixed while the next
+	// fifteen are selected and the final member stays in reserve.
+	order := []int{0, 9, 4, 30, 1, 8, 2, 10, 13, 12, 5, 6, 11, 14, 17, 15, 18}
+	g := &Game{
+		partyMembers:   make(map[int]bool, len(order)),
+		partyJoinOrder: append([]int(nil), order...),
+		partyRoster:    make(map[int]battle.Unit, len(order)),
+	}
+	for _, id := range order {
+		g.partyMembers[id] = true
+		g.partyRoster[id] = battle.Unit{Fig: id}
+	}
+	g.setupPreparation(&campaign.Node{Type: "preparation", PartyLimit: 15})
+	if len(g.prepIDs) != 16 || g.acceptTownDeparturePrompt() {
+		t.Fatalf("chapter20 preparation selectable=%v selecting=%v", g.prepIDs, g.prepSelecting)
+	}
+	for _, id := range g.prepIDs[:15] {
+		g.partyDeploy[id] = true
+	}
+	if got := g.battlePartyMembers(); len(got) != 16 || !got[0] || got[18] {
+		t.Fatalf("chapter20 fixed+selected roster=%#v", got)
+	}
+	if err := g.loadMap("assets/maps/map19"); err != nil {
+		t.Fatal(err)
+	}
+	g.resetBattle("assets/maps/map19/map19_units.json", "assets/scenarios/ch20.json")
+	if g.loadErr != "" || g.st == nil || g.sc == nil || len(g.st.Units) != 83 || len(g.sc.Party) != 16 {
+		units, party := 0, 0
+		if g.st != nil {
+			units = len(g.st.Units)
+		}
+		if g.sc != nil {
+			party = len(g.sc.Party)
+		}
+		t.Fatalf("chapter20 post frontier err=%q units=%d party=%d", g.loadErr, units, party)
+	}
+	for i, id := range append([]int{0}, g.prepIDs[:15]...) {
+		if g.st.Units[i] == nil || g.st.Units[i].Fig != id {
+			t.Fatalf("chapter20 runtime slot%d fig=%v, want %d", i, g.st.Units[i], id)
+		}
+	}
+}
+
+func TestChapter20PostRoundGateControlsReinforcementAndJoinBeforeTown21(t *testing.T) {
+	originalBase := "../../../org_game/炎龍騎士團/FLAME2"
+	fdotherPath := filepath.Join(originalBase, "FDOTHER.DAT")
+	if _, err := os.Stat(fdotherPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	t.Setenv("FD2_ORIGINAL_FDOTHER", fdotherPath)
+	order := []int{0, 9, 4, 30, 1, 8, 2, 10, 13, 12, 5, 6, 11, 14, 17, 15, 18}
+	for _, test := range []struct {
+		name       string
+		round      int
+		wantJoin28 bool
+		wantSlots  int
+	}{
+		{name: "round15_runs_optional_arm", round: 15, wantJoin28: true, wantSlots: 84},
+		{name: "round16_skips_optional_arm", round: 16, wantJoin28: false, wantSlots: 83},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			g := &Game{
+				partyMembers:   make(map[int]bool, len(order)),
+				partyJoinOrder: append([]int(nil), order...),
+				partyDeploy:    make(map[int]bool, 15),
+			}
+			for _, id := range order {
+				g.partyMembers[id] = true
+			}
+			for _, id := range order[1:16] {
+				g.partyDeploy[id] = true
+			}
+			if err := g.loadMap("assets/maps/map19"); err != nil {
+				t.Fatal(err)
+			}
+			g.resetBattle("assets/maps/map19/map19_units.json", "assets/scenarios/ch20.json")
+			if g.loadErr != "" || g.st == nil || g.sc == nil || len(g.st.Units) != 83 {
+				t.Fatalf("chapter20 setup err=%q units=%d", g.loadErr, len(g.st.Units))
+			}
+			deployed := append([]int{order[0]}, order[1:16]...)
+			if err := g.seedPersistentPartyFromLoadCH(deployed, g.st.Units[:len(deployed)]); err != nil {
+				t.Fatal(err)
+			}
+			g.st.NativeRoundCounter = test.round
+			emptyX, emptyY, foundEmpty := 0, 0, false
+			for y := 0; y < g.st.H && !foundEmpty; y++ {
+				for x := 0; x < g.st.W; x++ {
+					if g.st.UnitAt(x, y) == nil {
+						emptyX, emptyY, foundEmpty = x, y, true
+						break
+					}
+				}
+			}
+			if !foundEmpty {
+				t.Fatal("chapter20 map has no empty HUD cursor cell")
+			}
+			g.curX, g.curY = emptyX, emptyY
+			if err := g.st.MaterializeNativeMapViewState(battle.NativeMapViewState{
+				CursorX: emptyX, CursorY: emptyY, VisibleCursorX: emptyX, VisibleCursorY: emptyY,
+			}); err != nil || !g.st.MaterializeNativeMapHUDState(1, 1, 1) ||
+				!g.st.MaterializeNativeMapRangeMode(1) {
+				t.Fatalf("chapter20 native view setup err=%v", err)
+			}
+			if _, ok := g.nativeMapHUDInput(); !ok {
+				t.Fatal("chapter20 native map input unavailable")
+			}
+			if err := g.composeNativeMapFrame(); err != nil {
+				t.Fatal(err)
+			}
+			beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch19_post.json"))
+			if err != nil || len(issues) != 0 {
+				t.Fatalf("ch19_post compile err=%v issues=%#v", err, issues)
+			}
+			g.camp = campaign.NewRunner(&campaign.Campaign{
+				Start: "postbattle_ch20_persist",
+				Nodes: map[string]*campaign.Node{
+					"postbattle_ch20_persist": {Type: "cutscene", Next: "town_ch21"},
+					"town_ch21":               {Type: "town"},
+				},
+			})
+			g.beats, g.beatIdx, g.storyBG = beats, -1, true
+			g.beatAdvance()
+			maxSlots := len(g.st.Units)
+			for frame := 0; frame < 12000 && g.camp.NodeID() != "town_ch21"; frame++ {
+				if g.nativePaletteRamp != nil {
+					g.nativePaletteRamp.drawn = true
+				}
+				if len(g.dialog) != 0 {
+					g.dialog = nil
+					g.beatAdvance()
+				}
+				g.tick(1)
+				if g.st != nil && len(g.st.Units) > maxSlots {
+					maxSlots = len(g.st.Units)
+				}
+				if g.loadErr != "" {
+					t.Fatalf("ch19_post stopped at %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+				}
+			}
+			if g.camp.NodeID() != "town_ch21" || g.handlerChapter != 20 || !g.partyMembers[25] ||
+				g.partyMembers[28] != test.wantJoin28 || maxSlots != test.wantSlots {
+				t.Fatalf("round%d node=%q chapter=%d join25=%v join28=%v maxSlots=%d", test.round, g.camp.NodeID(), g.handlerChapter, g.partyMembers[25], g.partyMembers[28], maxSlots)
+			}
+		})
+	}
+}

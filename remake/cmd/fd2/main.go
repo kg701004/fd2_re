@@ -1077,7 +1077,7 @@ func (g *Game) beatStart(b campaign.Beat) {
 		g.camX, g.camY = float64(b.Layout.CamX), float64(b.Layout.CamY)
 		g.beatAdvance()
 	case "direct_record_patch":
-		if b.Source != "0x2362d" || b.DirectRecordPatch == nil {
+		if (b.Source != "0x2362d" && b.Source != "0x23ec4") || b.DirectRecordPatch == nil {
 			g.loadErr = "beat direct_record_patch:缺少原版來源或 sparse payload"
 			return
 		}
@@ -1305,9 +1305,9 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		g.beatDelay = 1 // original 20ms at a 60Hz remake clock
 	case "redraw":
-		if b.Source == "0x236ee" {
+		if b.Source == "0x236ee" || b.Source == "0x23f69" {
 			if err := g.composeNativeMapFrame(); err != nil {
-				g.loadErr = "beat redraw: native 0x236ee: " + err.Error()
+				g.loadErr = "beat redraw: native " + b.Source + ": " + err.Error()
 				return
 			}
 		}
@@ -2710,14 +2710,36 @@ func filterScenarioParty(sc *battle.Scenario, members map[int]bool) {
 // starts and campaigns that have not reached a preparation node yet.
 func (g *Game) battlePartyMembers() map[int]bool {
 	if len(g.partyDeploy) != 0 {
-		return g.partyDeploy
+		// sub_320FC keeps persistent record zero fixed and reorders only
+		// selection-table entry i -> persistent record i+1. partyDeploy stores
+		// those selectable flags, so add the fixed record without mutating the
+		// editable selection set itself.
+		members := make(map[int]bool, len(g.partyDeploy)+1)
+		for id, selected := range g.partyDeploy {
+			if selected {
+				members[id] = true
+			}
+		}
+		if len(g.partyJoinOrder) != 0 {
+			members[g.partyJoinOrder[0]] = true
+		}
+		return members
 	}
 	return g.partyMembers
 }
 
 func (g *Game) setupPreparation(n *campaign.Node) {
-	g.prepIDs = append(g.prepIDs[:0], g.partyJoinOrder...)
+	// 0x318AD exposes [0x53BFB]-1 flags. sub_320FC maps flag i to
+	// persistent record i+1 and always leaves record zero in slot zero.
+	// The fixed leader therefore must not consume one of the 15/19 choices.
+	g.prepIDs = g.prepIDs[:0]
+	if len(g.partyJoinOrder) > 1 {
+		g.prepIDs = append(g.prepIDs, g.partyJoinOrder[1:]...)
+	}
 	seen := make(map[int]bool, len(g.prepIDs))
+	if len(g.partyJoinOrder) != 0 {
+		seen[g.partyJoinOrder[0]] = true
+	}
 	for _, id := range g.prepIDs {
 		seen[id] = true
 	}
@@ -2771,9 +2793,10 @@ func (g *Game) preparationSelected() int {
 }
 
 // acceptTownDeparturePrompt reproduces the 0x2d13d..0x2d161 caller gate.
-// prepIDs models the selectable records (native [0x53bfb]-1), so at most cap
-// records skip 0x318ad and depart immediately. Larger rosters enter the
-// zero-initialized selection pass.
+// prepIDs models the selectable records (native [0x53bfb]-1); persistent
+// record zero is fixed outside this list. At most cap selectable records skip
+// 0x318ad and depart immediately. Larger rosters enter the zero-initialized
+// selection pass.
 func (g *Game) acceptTownDeparturePrompt() bool {
 	if len(g.prepIDs) <= g.prepLimit {
 		return true

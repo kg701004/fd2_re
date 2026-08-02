@@ -2,9 +2,9 @@
   "chapter": 20,
   "name": "死亡般的沈寂",
   "map": 19,
+  "runtime_append_groups": true,
   "initial_groups": [
-    0,
-    1
+    0
   ],
   "party": [
     {

@@ -250,11 +250,11 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-04 | Target/range/item selector | 武器 min/max reach、法術 range/AOE、item兩欄四列、不可用目標灰化、確認／取消 | partial；command/item targets與 observed item effects已閉合。`0x1b9de/0x184c0` 固定 compact prefix、input、layout與raw icon IDs；`0x18409` 的12-frame open11→0/close0→11及left/upper/bottom clipped rectangles已有Ebiten adapter。tracked item Enter transaction已接，但indexed effect presentation、完整weapon/AOE/LOS與DOSBox visual diff仍fail-closed |
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
-| UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace。標準 postbattle 現有玩家 ch04/05/06/09/11/12/13/14/15/19/25/26/28 共13個節點接入零起算 owner 的 authored binding，另11個維持 blocked。IDA Pro 9.4 直接確認 raw ch12 的 table interior entry `0x2389f` 屬玩家第13戰，FDTXT_013 index9 依序展開 scene3／4各6句，再走 sync→JOIN3→chapter13，現接 `postbattle_ch13→town_ch14`；raw ch05／ch25／ch27則分別屬玩家第6／26／28戰。七個未綁定節點原有的泛用 `sync_party→set_chapter` 會繞過 runtime guard，現已移除；所有未綁定標準節點均以空 beats 失敗即關閉。這批只達 E1，逐關戰間畫面與一般玩家路徑仍不足；直接位址證據見 [`fd2_ch12_post_dispatch_ida.txt`](../data/fd2_ch12_post_dispatch_ida.txt)、[`fd2_ch05_post_dispatch_ida.txt`](../data/fd2_ch05_post_dispatch_ida.txt) 與 [`fd2_post26_28_dispatch_ida.txt`](../data/fd2_post26_28_dispatch_ida.txt) |
+| UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace。標準 postbattle 現有17個節點接入零起算 owner 的 authored binding，另7個維持 blocked；玩家第20戰已依 raw ch19 的直接控制流程接入83-slot入口、round15／16分支與 `town_ch21`。七個未綁定節點原有的泛用 `sync_party→set_chapter` 會繞過 runtime guard，現已移除；所有未綁定標準節點均以空 beats 失敗即關閉。這批只達 E1，逐關戰間畫面與一般玩家路徑仍不足；直接位址證據見 [`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt)、[`fd2_ch12_post_dispatch_ida.txt`](../data/fd2_ch12_post_dispatch_ida.txt)、[`fd2_ch05_post_dispatch_ida.txt`](../data/fd2_ch05_post_dispatch_ida.txt) 與 [`fd2_post26_28_dispatch_ida.txt`](../data/fd2_post26_28_dispatch_ida.txt) |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2與逐章route E2 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No、gold0不足金與gold1000裝備收件者selection0/cycle1均達原版DOSBox／production remake同狀態raw RGB整幀相同；recipient E2使用screenshot-only party bootstrap，DX為E2約束的projection而非直接raw dump。正常campaign JOIN→LOADCH首次typed roster已接runtime regression，但尚非完整playthrough E2或native FD2.SAV。另修正pulse double-`/2`、返回selection0、choice-close frame ownership與比較欄位geometry。尚待recipient input/scroll、no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
-| UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、上限（15／19）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型與原版提示。城鎮路徑保留實際 town frame，使用 FDTXT `0x201` 於 `(95,119)`；無城鎮路徑依 `0x2cc04` 清成黑畫面，使用 FDTXT `0x19a` 於 `(100,119)`，肯定結果在完整關框後才存檔。兩者都使用 DATO #75、FDOTHER #5 對話框、FDOTHER #2 Yes／No 與 6＋4＋兩 tick 脈動＋4＋5＋還原生命週期。`0x318ad/0x31e80` 的三區背景、計數、10 欄角色格、游標、彩色／灰色繪法、四向輸入與 `0x17fc0` 狀態已接；`0x1297d` 的有號 BIOS 低字差值與可見 `0,1,2,1` 待機週期亦已接。`0x31d3c` 最終確認沿用相同生命週期，文字為 FDTXT `0x292`，呈現原畫面後才處理結果。呼叫端也已閉合：城鎮出發 `0x2d16b` 收到 0 會退出，直接整備 `0x2ccd6` 收到 0 則重選。缺任一原始記錄或資源即退回。README 所列整備圖均為 E1 原始資源合成，不是 DOSBox 截圖或正常晚期戰役存檔。跨畫面初始相位、有效晚期存檔及原版實機差分仍缺。`0x1f42d` 屬戰場進入演出，不再列為選人視窗動畫 |
+| UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、可選15／19筆另加固定 record0（總上場16／20）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型與原版提示。城鎮路徑保留實際 town frame，使用 FDTXT `0x201` 於 `(95,119)`；無城鎮路徑依 `0x2cc04` 清成黑畫面，使用 FDTXT `0x19a` 於 `(100,119)`，肯定結果在完整關框後才存檔。兩者都使用 DATO #75、FDOTHER #5 對話框、FDOTHER #2 Yes／No 與 6＋4＋兩 tick 脈動＋4＋5＋還原生命週期。`0x318ad/0x31e80` 的三區背景、計數、10 欄角色格、游標、彩色／灰色繪法、四向輸入與 `0x17fc0` 狀態已接；`0x320fc` 證實 selection byte i只重排 persistent record i+1，record0固定且不消耗quota。`0x1297d` 的有號 BIOS 低字差值與可見 `0,1,2,1` 待機週期亦已接。`0x31d3c` 最終確認沿用相同生命週期，文字為 FDTXT `0x292`，呈現原畫面後才處理結果。呼叫端也已閉合：城鎮出發 `0x2d16b` 收到 0 會退出，直接整備 `0x2ccd6` 收到 0 則重選。缺任一原始記錄或資源即退回。README 所列整備圖均為 E1 原始資源合成，不是 DOSBox 截圖或正常晚期戰役存檔。跨畫面初始相位、有效晚期存檔及原版實機差分仍缺。`0x1f42d` 屬戰場進入演出，不再列為選人視窗動畫 |
 | UI-12 | Save/load | scene-safe boundary、campaign cursor、flags、party/inventory/equipment、version/checksum、四槽 selector | partial；remake title LOAD 已還原四槽 bounded selector 與原版 indexed compositor。合法 IDA 9.4 固定 reader `0x2602c..0x26098`、writer `0x30012` 及其僅有的 `0x2ccb6/0x2fd93` 戰間呼叫者；兩端只處理 metadata `+0..+9`。production 以綁定參考 EXE 雜湊與 `0x526b9` 的 editable gate table 將 raw chapter 1..29 還原到既有 town／preparation node，先完整驗證 persistent record→typed party、節點型別及重複 identity，再一次套用 campaign cursor、gold、party 與四個 raw option bytes；錯誤不部分 mutation、不誤轉 JSON loader。ch21／ch27 inventory postbattle gate 已在存檔前完成，LOAD 不重播。空槽及修改存檔 chapter1 有效槽畫面均與 DOSBox 全幀 RGB 相同；合成有效槽 restore 是 E1，仍缺未修改一般玩家有效槽 E2、CONTINUE current-battle、metadata `+10..+39` 其他可能 consumer、刪除／覆寫 |
 
 `0x50` persistent roster 的匯入邊界已開始由 raw snapshot 推進到具型別
@@ -1043,7 +1043,18 @@ Draw acknowledgement 才前進。60Hz host 無法呈現 DOS 的2ms wall-clock ca
 所以這只證明寫入序列與端點，不宣稱時序 E2。ch00 `0x3241f` 因 raw FDICON key
 尚未閉合，仍是唯一明示的 RGBA E1 近似；其他 call site 不得沿用該 fallback。
 
-ch19 post 的 Docker acting exporter 已解出 resource 59/60/61/62；其中 resource 59 直接引用 slots 53–60，resource 60 是 slot83，resource 61/62 是 slot1。這些 bytes 本身已可保存為 editable frames，但 handler 同時有 `spawn(group 1)`；目前 `map18_units.json` 的 group 1 只出現一筆，不能把它猜成 slots 53–60 的八筆 runtime frontier。因此 ch19 不因「resource 已解碼」而啟用，仍需 FDFIELD group cardinality／slot identity 證據與完整 runtime context。
+raw ch19 post（玩家第20戰）已由 IDA Pro 9.4 與 Capstone 重新閉合。入口先以
+四張 byte table 對 slots `0..15`、`52..60` 寫 `record+0/+1/+3`，並設定
+camera／cursor `(26,31)`；resource59 使用 slots53–60，resource60在
+`spawn(group1)` 後直接使用slot83。map19 group0為67筆，整備固定record0再選15筆，
+故正常玩家區16筆、入口frontier83，group1一筆後為84。更重要的勘誤是
+`0x23FFE/0x24005`：`round > 15` 會跳過整段group1、ACTING60–62、
+FDTXT index14–16與JOIN28；只有`round <= 15`執行，JOIN25則在共同路徑。
+正式binding已接`postbattle_ch20_persist→town_ch21`，決定性回歸覆蓋15／16邊界；
+`ch20.json`亦撤回預載全部70筆FDFIELD records的舊拓撲，改由
+`runtime_append_groups`只在開場追加group0，group1留給戰後條件分支；
+證據仍為E1，未宣稱一般玩家DOSBox E2。詳見
+[`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt)。
 
 ### 5.1 目前 editable graph audit（E1，不等同原版 E0）
 
@@ -1579,6 +1590,14 @@ zeroes all 30 flags; the old remake policy that preselected the first 15/19
 members was therefore wrong. A zero return from `0x318ad` cancels the facility;
 only its accepted final confirmation departs. The editable campaign node now
 stores an explicit cancellation target for town-backed preparation nodes.
+
+IDA 在 `sub_320FC` 的直接指令進一步修正部署模型：目的索引從1開始，selection
+byte `i` 讀取 persistent record `i+1`，目的 record0 從未被覆寫。因此 quota
+不包含固定 record0：一般戰鬥上場 `1+15=16` 人，後期路徑則為 `1+19=20` 人。
+舊重製錯把 record0 放入 `prepIDs`，消耗一個 quota，最多只能建立15／19筆戰場
+玩家記錄。現在 `partyDeploy` 只保存可選 records，建立戰鬥時再由
+`battlePartyMembers` 加入固定的 `partyJoinOrder[0]`。證據見
+[`fd2_preparation_fixed_record_ida.txt`](../data/ida/fd2_preparation_fixed_record_ida.txt)。
 
 The preparation-only branch at `0x2cad7` is different and must not share the
 town prompt. A nonzero `0x526b9[index]` displays FDTXT index `0x19a`

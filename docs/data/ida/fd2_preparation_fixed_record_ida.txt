@@ -1,0 +1,45 @@
+《炎龍騎士團 2》整備固定 record 0 與15／19筆選取：IDA Pro 9.4 直接指令證據
+================================================================================
+
+參考版本與工具
+--------------
+
+- `FD2.EXE`，357074 位元組
+- MD5 `b97caf2239a27a896069d03549d96e1e`
+- SHA-256 `222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- IDA Pro 9.4：`sub_318AD=0x318AD..0x31DBE`、
+  `sub_320FC=0x320FC..0x321C8`。
+- Capstone 5.0.3 於 `fd2-cap-local` 對 `0x318BE..0x31A7C` 與
+  `0x320FC..0x321C8` 獨立重讀，指令與分支一致。
+- 所有位址均為 LE 線性位址；原始名稱與運算元保留，語意為附加註記。
+
+已證實：選取數量
+----------------
+
+- `0x318BE` 先設 quota `15`；`[0x53C03] > 0x1A` 時，`0x318E0` 改為 `19`。
+- `0x318C7` 將30-byte selection table 全部清零。
+- `0x31A54` 只切換目前 selection byte；`0x31A60→sub_320CE` 計數。
+- 只有計數等於 quota 時，`0x31A6C` 才標記成功並呼叫 `sub_320FC(table)`。
+
+已證實：persistent record 0 固定、不在 selection table
+-------------------------------------------------------
+
+- `sub_320FC` 先完整複製 `0xA00` bytes 的 persistent array 到暫存區。
+- `0x3210E` 將目的 index `esi` 初始化為 `1`，不是 `0`。
+- 兩輪來源 index `ebx` 都掃 `0..[0x53BFB]-2`；來源位址使用
+  `(ebx+1)*0x50`，所以 selection byte `i` 對應 persistent record `i+1`。
+- 第一輪把已選 records 依序寫到目的 records `1..`；第二輪接著寫未選 records。
+  整個函式沒有寫目的 record0，故 persistent record0保持固定。
+- 這也解釋 `sub_318AD` 的游標上界為 `[0x53BFB]-1` 筆：表只描述 records
+  `1..count-1`，不是完整 persistent roster。
+
+已證實的重製勘誤
+----------------
+
+- 舊重製把 `partyJoinOrder` 全部角色放入 `prepIDs`，使固定 record0錯誤消耗
+  一個 selection quota；17人以前最多只建立15名戰場玩家。
+- 正確資料模型是：`prepIDs = partyJoinOrder[1:]`；`partyDeploy` 只保存可選
+  records的旗標；建立戰場 membership 時再加入固定 `partyJoinOrder[0]`。
+- 一般 quota15因此產生 `1+15=16` 名玩家，後期 quota19產生 `1+19=20` 名。
+  名冊總數不超過16／20時可略過 selector，與既有 `0x2D093` 外層門檻一致。
+- 這是原版資料重排與戰場建構契約，不代表整備畫面已完成一般玩家 E2像素驗收。

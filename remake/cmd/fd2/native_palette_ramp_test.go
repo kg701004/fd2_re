@@ -148,6 +148,55 @@ func TestChapter9PostDirectRecordPatchRejectsLateInvalidByteAtomically(t *testin
 	}
 }
 
+func TestChapter19PostDirectRecordPatchPreservesExactNativeTables(t *testing.T) {
+	beats, issues, err := campaign.CompileHandlerBinding("../../assets/cutscenes/bindings/ch19_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch19_post err=%v issues=%#v", err, issues)
+	}
+	var patch *campaign.HandlerDirectRecordPatch
+	for _, beat := range beats {
+		if beat.Op == "direct_record_patch" {
+			patch = beat.DirectRecordPatch
+		}
+	}
+	if patch == nil {
+		t.Fatal("ch19_post direct record patch missing")
+	}
+	units := make([]*battle.Unit, 83)
+	for i := range units {
+		units[i] = &battle.Unit{
+			X: 7, Y: 8, Dir: 2,
+			NativeMapPresentation:    battle.NativeMapPresentationState{X: 7, Y: 8, Pose: 2, Motion: 9},
+			HasNativeMapPresentation: true,
+		}
+	}
+	g := &Game{m: &MapData{W: 50, H: 50, TileW: 24, TileH: 24}, st: &battle.State{W: 50, H: 50, Units: units}}
+	if err := g.applyHandlerDirectRecordPatch(patch); err != nil {
+		t.Fatal(err)
+	}
+	want := map[int][3]int{
+		0: {33, 35, 1}, 10: {35, 37, 1}, 15: {36, 37, 1},
+		52: {30, 35, 3}, 57: {28, 33, 3}, 60: {29, 34, 3},
+	}
+	for slot, expected := range want {
+		u := units[slot]
+		if u.X != expected[0] || u.Y != expected[1] || u.Dir != expected[2] || u.NativeMapPresentation.Motion != 9 {
+			t.Fatalf("slot%d=(%d,%d,pose%d,motion%d), want (%d,%d,pose%d,motion9)", slot, u.X, u.Y, u.Dir, u.NativeMapPresentation.Motion, expected[0], expected[1], expected[2])
+		}
+	}
+	for _, slot := range []int{16, 51, 61, 82} {
+		if units[slot].X != 7 || units[slot].Y != 8 || units[slot].Dir != 2 {
+			t.Fatalf("unwritten slot%d changed: %#v", slot, units[slot])
+		}
+	}
+	view := g.st.NativeMapViewState
+	if !g.st.HasNativeMapViewState || view.CameraX != 26 || view.CameraY != 31 ||
+		view.CursorX != 26 || view.CursorY != 31 || view.VisibleCursorX != 0 ||
+		view.VisibleCursorY != 0 || g.camX != 624 || g.camY != 744 {
+		t.Fatalf("ch19 native view=%#v cam=(%v,%v)", view, g.camX, g.camY)
+	}
+}
+
 func TestNativePaletteRampUsesBaselineSubtraction(t *testing.T) {
 	baseline := bytes.Repeat([]byte{63}, 256*3)
 	dac := append([]byte(nil), baseline...)

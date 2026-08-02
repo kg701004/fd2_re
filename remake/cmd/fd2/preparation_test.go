@@ -39,9 +39,9 @@ func TestPreparationStartsAtRecordPromptAndDoesNotPreselectRoster(t *testing.T) 
 
 func TestPreparationRecordPromptEntersZeroedSelectionOnlyAboveCap(t *testing.T) {
 	g := &Game{
-		partyJoinOrder: make([]int, 16),
-		partyRoster:    make(map[int]battle.Unit, 16),
-		partyMembers:   make(map[int]bool, 16),
+		partyJoinOrder: make([]int, 17),
+		partyRoster:    make(map[int]battle.Unit, 17),
+		partyMembers:   make(map[int]bool, 17),
 	}
 	for id := range g.partyJoinOrder {
 		g.partyJoinOrder[id] = id
@@ -55,7 +55,7 @@ func TestPreparationRecordPromptEntersZeroedSelectionOnlyAboveCap(t *testing.T) 
 	if g.preparationSelected() != 0 || len(g.partyDeploy) != 0 {
 		t.Fatalf("selection did not start zeroed: %#v", g.partyDeploy)
 	}
-	g.partyDeploy[0] = true
+	g.partyDeploy[1] = true
 	g.prepConfirm = true
 	g.restartPreparationSelection()
 	if !g.prepSelecting || g.prepConfirm || len(g.partyDeploy) != 0 {
@@ -63,6 +63,31 @@ func TestPreparationRecordPromptEntersZeroedSelectionOnlyAboveCap(t *testing.T) 
 			"preparation-only retry did not restart zeroed: selecting=%v confirm=%v deploy=%#v",
 			g.prepSelecting, g.prepConfirm, g.partyDeploy,
 		)
+	}
+}
+
+func TestPreparationKeepsPersistentRecordZeroOutsideSelectionQuota(t *testing.T) {
+	g := &Game{
+		partyJoinOrder: make([]int, 16),
+		partyRoster:    make(map[int]battle.Unit, 16),
+		partyMembers:   make(map[int]bool, 16),
+	}
+	for id := range g.partyJoinOrder {
+		g.partyJoinOrder[id] = id
+		g.partyRoster[id] = battle.Unit{Fig: id}
+		g.partyMembers[id] = true
+	}
+	g.setupPreparation(&campaign.Node{Type: "preparation", PartyLimit: 15})
+	if len(g.prepIDs) != 15 || g.prepIDs[0] != 1 || g.prepIDs[14] != 15 {
+		t.Fatalf("native selectable records=%v, want persistent records 1..15", g.prepIDs)
+	}
+	if !g.acceptTownDeparturePrompt() {
+		t.Fatal("fixed record zero plus 15 selectable records must bypass 0x318ad")
+	}
+	g.partyDeploy = map[int]bool{1: true, 2: true}
+	members := g.battlePartyMembers()
+	if len(members) != 3 || !members[0] || !members[1] || !members[2] {
+		t.Fatalf("battle deployment did not restore fixed persistent record zero: %#v", members)
 	}
 }
 

@@ -1,0 +1,100 @@
+《炎龍騎士團 2》raw ch19_post（玩家第20戰戰後）：IDA Pro 9.4 直接指令證據
+================================================================================
+
+參考版本
+--------
+
+- `FD2.EXE`，357074 位元組
+- MD5 `b97caf2239a27a896069d03549d96e1e`
+- SHA-256 `222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 版本清單：`docs/data/fd2-reference-files.json`
+
+工具、位址空間與註記政策
+------------------------
+
+- 第一順位：使用者合法提供的 IDA Pro 9.4，於
+  `fd2-ida-authorized-local` 無網路一次性 Docker 容器執行。
+- 第二順位：`fd2-cap-local`／Capstone 5.0.3，重讀相同 LE 線性位址與原始資料。
+- 本檔保留 IDA 原始名稱、線性位址及運算元；語意僅以分級文字附加，不以改名
+  覆蓋原始定位。未保存或散布 IDA 資料庫、原版二進位或授權檔。
+
+已證實：函式與分派
+------------------
+
+- IDA 函式 `sub_23E74` 範圍為 `0x23E74..0x240FA`。
+- `0x25E23` 透過 `funcs_25E23[eax*4]` 呼叫本函式。原版以零起算 raw handler
+  分派，故這是玩家第20戰使用的 `ch19_post`，不是玩家第19戰。
+- IDA 與 Capstone 對 `0x23E74..0x240FA` 的直接指令及分支目標一致。
+
+已證實：直接角色記錄與視角寫入
+--------------------------------
+
+`0x23E84..0x23EB9` 先把四張原始 byte table 複製到 stack：
+
+| 線性位址 | 長度 | 原始值 |
+|---|---:|---|
+| `0x521F6` | 16 | `21 21 21 22 22 22 23 23 23 23 23 24 24 24 24 24` |
+| `0x52206` | 16 | `23 24 22 22 23 24 21 22 23 24 25 21 22 23 24 25` |
+| `0x52216` | 9 | `1E 1C 1C 1C 1C 1C 1D 1D 1D` |
+| `0x5221F` | 9 | `23 25 24 23 22 21 24 23 22` |
+
+- `0x23EC8..0x23EEF` 對 runtime slots `0..15` 寫 `record+0/+1`，並把
+  `record+3` 寫為 `1`。
+- `0x23EF5..0x23F1F` 對 runtime slots `52..60` 寫第二組 `record+0/+1`，
+  並把 `record+3` 寫為 `3`。
+- `0x23F2B..0x23F5D` 寫 camera `(26,31)`、absolute cursor `(26,31)`、
+  visible cursor `(0,0)`。
+- 這些是稀疏直接寫入；未列出的 `0x50`-byte record 欄位保持原值。重製以
+  `direct_record_patch` 表達，來源固定為直接寫入起點 `0x23EC4`。
+
+已證實：共同演出與條件分支
+----------------------------
+
+- `0x23EBA→0x1F882`：原版完整 DAC 淡出 helper；已由獨立 helper 證據固定為
+  delta `0..63`、每步 2ms。
+- `0x23EBF→0x13536`：掃描所有 materialized runtime records，只清
+  `record+5 bit7`。
+- `0x23F69→0x11CAC(1)` 後，`0x23F71→0x1F525`；後者是 delta `64..0`
+  共65步、每步2ms的完整 DAC 淡入，不是通用 RGBA 淡幕。
+- `0x23FA2` 顯示 FDTXT_020 index11，`0x23FB6` 播放 ACTING59，
+  `0x23FDD` 顯示 index12，接著 `0x23FF1→sub_112A5(25)`，所以 JOIN25
+  位於共同路徑。
+- `0x23FFE` 比較已證實的 turn counter `[0x53BEF]` 與 `15`；
+  `0x24005 jg 0x240C6`。因此 `round > 15` 會略過下列整段：
+  `spawn group1 → ACTING60 → index14 → ACTING61 → index15 → ACTING62 →
+  index16 → JOIN28`。
+- `round <= 15` 才執行上述可選分支。兩條路徑在 `0x240C6` 合流，顯示
+  FDTXT_020 index13，再於 `0x240ED` 增加 raw chapter。
+- 舊的線性 `ch19_post` JSON 會在所有回合無條件 JOIN28，與直接跳躍相反；
+  正式 handler 已改為 `native_round_gt(15)` 的結構化分支。
+
+強推論：runtime frontier 83（靜態閉合，非 E2）
+---------------------------------------------
+
+- `FDFIELD.DAT` 為243169位元組，MD5
+  `ecdb0436d26adfe5d107f2713fa7e9a2`，SHA-256
+  `b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513`。
+  map19 control資源058有70筆：group0為67筆、group1為1筆、group255為2筆。
+  position資源059的header 86是70筆單位座標加16格部署座標，不是86個runtime
+  slots。
+- 原版整備與 `sub_320FC` 證實 record0 固定，一般上限另外選15筆，故玩家固定
+  區為16筆。
+- `16 + 67 = 83`；本 handler 的直接寫入涵蓋 player slots `0..15`，與此形狀一致。
+- `0x2400D→sub_10B4E(1)` 的 map19 group1 只有一筆；ACTING60 的第一筆目標
+  是 slot83。因此入口83、低回合 spawn 後84具有互相獨立的資料與 consumer
+  支持，但尚缺未修改一般玩家 DOSBox 戰後擷取，證據等級維持 E1／強推論。
+
+重製對應與驗證邊界
+------------------
+
+- `postbattle_ch20_persist` 使用 `assets/cutscenes/bindings/ch19_post.json`，完成後
+  仍進入 `town_ch21`；不能直接跳到下一戰。
+- 舊 `ch20.json` 未啟用 runtime append，會先保留全部70筆FDFIELD records再加入
+  16名玩家，錯誤得到86 slots。正式scenario現以`runtime_append_groups=true`與
+  `initial_groups=[0]`建立玩家16筆＋group0的67筆；group1保留到handler分支。
+- handler 僅接受精確來源 `0x23EC4` 的 sparse patch、精確回合 predicate、
+  slot frontier83及 group1 cardinality1；其他來源或缺少原始記錄 provenance
+  一律失敗即關閉。
+- 決定性回歸覆蓋 round15／round16 邊界、JOIN25共同路徑、JOIN28條件路徑、
+  83→84 frontier、chapter20與 `town_ch21`。
+- 本證據沒有宣稱一般玩家路徑 E2、逐像素一致或全部第20戰玩法完成。

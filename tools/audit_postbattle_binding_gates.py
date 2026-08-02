@@ -34,12 +34,22 @@ def has_proven_native_semantics(beat: dict) -> bool:
     register-driven and partial-range callers whose semantics remain blocked.
     """
     source = beat.get("source") or {}
-    return (
-        beat.get("native_target") == "0x11d40"
-        and source.get("addr") == "0x23599"
-        and source.get("target") == "0x11d40"
-        and beat.get("raw_args") == [64, 255, 0]
-    )
+    key = (source.get("addr"), source.get("target"), beat.get("native_target"))
+    if key == ("0x23599", "0x11d40", "0x11d40"):
+        return beat.get("raw_args") == [64, 255, 0]
+    if key in {
+        ("0x23623", "0x1f882", "0x1f882"),
+        ("0x23eba", "0x1f882", "0x1f882"),
+    }:
+        # The exporter preserves the no-argument helper's caller register
+        # snapshot as provenance; it is not an argument list.
+        return beat.get("raw_args") in ([], ["ebx", "esi", "edi"])
+    if key in {
+        ("0x23628", "0x13536", "0x13536"),
+        ("0x23ebf", "0x13536", "0x13536"),
+    }:
+        return beat.get("raw_args") == []
+    return False
 
 
 def walk(beats):

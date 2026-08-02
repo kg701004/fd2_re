@@ -91,7 +91,7 @@ func TestLoadNativeGameFromSlotRestoresDirectPreparation(t *testing.T) {
 		t.Fatal(err)
 	}
 	if g.camp.NodeID() != "preparation_ch23" ||
-		len(g.prepIDs) != 1 || g.prepIDs[0] != 9 ||
+		len(g.prepIDs) != 0 || !g.battlePartyMembers()[9] ||
 		!g.partyRoster[9].HasMapSelectorKey ||
 		g.partyRoster[9].MapSelectorKey != 0x44 ||
 		g.prepPromptSource == nil {

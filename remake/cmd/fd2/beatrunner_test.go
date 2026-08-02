@@ -1372,7 +1372,7 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 		t.Fatalf("town exit=%q, want preparation_ch02", got)
 	}
 	g.enterNode()
-	if !reflect.DeepEqual(g.prepIDs, []int{0, 9, 4, 30, 1}) ||
+	if !reflect.DeepEqual(g.prepIDs, []int{9, 4, 30, 1}) ||
 		g.preparationSelected() != 0 || g.prepSelecting || g.prepConfirm {
 		t.Fatalf(
 			"normal preparation entry ids=%v selected=%d selecting=%v confirm=%v",
@@ -1380,7 +1380,7 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 		)
 	}
 	if !g.acceptTownDeparturePrompt() {
-		t.Fatal("five-member early roster should skip 0x318ad after record confirmation")
+		t.Fatal("fixed record0 plus four selectable records should skip 0x318ad after record confirmation")
 	}
 }
 

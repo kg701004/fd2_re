@@ -426,7 +426,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch17_persist": "",
 		"postbattle_ch18_persist": "",
 		"postbattle_ch19_persist": "assets/cutscenes/bindings/ch18_post.json",
-		"postbattle_ch20_persist": "",
+		"postbattle_ch20_persist": "assets/cutscenes/bindings/ch19_post.json",
 		"postbattle_ch22_persist": "",
 		"postbattle_ch23_persist": "",
 		"postbattle_ch24_persist": "",
@@ -850,7 +850,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 46 || fallback != 66 || retreat != 30 || rumor != 23 || postbattle != 8 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 47 || fallback != 65 || retreat != 30 || rumor != 23 || postbattle != 7 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
@@ -1125,17 +1125,41 @@ func TestCh19PostBindingPreservesRawSlotFrontier(t *testing.T) {
 	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 83 {
 		t.Fatalf("ch19 runtime context=%#v", beats[:min(len(beats), 1)])
 	}
-	spawn := -1
-	for i, beat := range beats {
-		if beat.Op == "spawn" {
-			spawn = i
-			break
+	var patch, branch *Beat
+	for i := range beats {
+		switch beats[i].Op {
+		case "direct_record_patch":
+			patch = &beats[i]
+		case "if":
+			if beats[i].Source == "0x23ffe" {
+				branch = &beats[i]
+			}
 		}
 	}
-	if spawn < 0 || beats[spawn].Group != 1 {
-		t.Fatalf("ch19 spawn group missing: %#v", beats)
+	if patch == nil || patch.Source != "0x23ec4" || patch.DirectRecordPatch == nil ||
+		len(patch.DirectRecordPatch.Units) != 25 || patch.DirectRecordPatch.View == nil ||
+		patch.DirectRecordPatch.View.CameraX != 26 || patch.DirectRecordPatch.View.CameraY != 31 {
+		t.Fatalf("ch19 direct record patch=%#v", patch)
 	}
-	if spawn+1 >= len(beats) || beats[spawn+1].Op != "act" || len(beats[spawn+1].Acting) != 1 || beats[spawn+1].Acting[0].Units[0].Slot == nil || *beats[spawn+1].Acting[0].Units[0].Slot != 83 {
-		t.Fatalf("ch19 post-spawn acting slot=%#v", beats[spawn+1])
+	if branch == nil || branch.Condition == nil || branch.Condition.Op != "native_round_gt" ||
+		branch.Condition.NativeRound == nil || *branch.Condition.NativeRound != 15 || len(branch.Then) != 0 {
+		t.Fatalf("ch19 round branch=%#v", branch)
+	}
+	spawned, acted83, joined28 := false, false, false
+	for i := range branch.Else {
+		beat := &branch.Else[i]
+		if beat.Op == "spawn" && beat.Group == 1 {
+			spawned = true
+		}
+		if beat.Op == "act" && len(beat.Acting) == 1 && len(beat.Acting[0].Units) != 0 &&
+			beat.Acting[0].Units[0].Slot != nil && *beat.Acting[0].Units[0].Slot == 83 {
+			acted83 = true
+		}
+		if beat.Op == "join" && beat.CharID == 28 {
+			joined28 = true
+		}
+	}
+	if !spawned || !acted83 || !joined28 {
+		t.Fatalf("ch19 low-round arm=%#v", branch.Else)
 	}
 }

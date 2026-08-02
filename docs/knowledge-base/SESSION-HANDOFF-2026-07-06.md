@@ -3195,3 +3195,37 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   的本地連結與圖片無缺漏，且 `go test ./... -count=1` 全數通過。Ebiten 測試
   另實際呼叫 indexed palette Draw path，確認六位元 DAC palette 與呈現
   acknowledgement；不使用遊戲迴圈外不合法的 GPU pixel readback。
+
+## 2026-08-02：玩家第20戰 raw ch19 戰後與整備 record0 勘誤
+
+- IDA Pro 9.4 主判讀與 Docker Capstone 覆核已固定 `sub_23E74`
+  （`0x23E74..0x240FA`）的直接寫入與控制流程。四張原始 byte table 對 runtime
+  slots `0..15`、`52..60` 寫座標與 pose，並把 camera／cursor 設為 `(26,31)`；
+  重製只允許來源 `0x23EC4` 的 `direct_record_patch`，未列欄位保持原值。
+- `0x23FFE` 比較 round counter 與15，`0x24005 jg 0x240C6` 證實
+  `round > 15` 會略過 group1、ACTING60–62、FDTXT index14–16與JOIN28；
+  JOIN25及index13位於共同路徑。舊 handler 無條件執行 JOIN28 的線性圖已撤回，
+  改為可編輯的 `native_round_gt(15)` 分支。
+- `sub_320FC` 另證實整備 selection table 只描述 persistent records
+  `1..count-1`：目的 index 從1開始，record0固定且不消耗 quota。舊重製把
+  record0放入 `prepIDs`，使一般／後期最多只上場15／19人；現修正為固定
+  record0加選15／19人，總數16／20。
+- 玩家第20戰的16筆玩家區加 map19 group0的67筆，形成83-slot入口；低回合
+  group1一筆後為84，且ACTING60直接消費slot83。這項frontier有靜態 producer／
+  consumer交叉支持，仍維持E1／強推論，尚未宣稱未修改一般玩家DOSBox E2。
+- 完整回歸曾揭露舊 `ch20.json` 缺少 runtime append，會把全部70筆FDFIELD
+  records與16名玩家同時保留，錯誤形成86 slots。原始position資源059的header
+  86其實是70筆單位座標加16格部署座標，不是runtime count；scenario現只在
+  開場追加group0的67筆，group1留給戰後分支。
+- 本段同時勘誤較早把 `ch19_post` 配到 `map18` 的記錄：玩家第20戰的 raw
+  owner與戰場分別是 `ch19_post`／map19；較早的 `16 active／8 blocked` 統計
+  也已由本輪實際稽核的17 active／7 blocked取代。
+- 正式 `postbattle_ch20_persist` 已綁定 raw `ch19_post`，兩條回合路徑都保留
+  chapter20並進入 `town_ch21`，不直接跳下一戰。決定性回歸覆蓋整備固定筆、
+  83→84 frontier、round15／16、JOIN25／28及城鎮邊界。
+- 非破壞性位址、原始位元組、雜湊與推論等級見
+  [`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt) 與
+  [`fd2_preparation_fixed_record_ida.txt`](../data/ida/fd2_preparation_fixed_record_ida.txt)。
+  Docker驗證已通過882個JSON解析、17 active／7 blocked戰後稽核、故事覆蓋
+  稽核、235個本地文件／圖片目標與`go test ./... -count=1`完整回歸；舊
+  `map18`及16／8統計只保留在時間序列歷史段，並由本段明確勘誤。

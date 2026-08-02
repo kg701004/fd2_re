@@ -929,7 +929,8 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			issue(i, input, "unit_present is blocked: native 0x22253 full 11+6+10 choreography is not represented")
 		case "direct_record_patch":
 			patch := input.DirectRecordPatch
-			if input.Source.Addr != "0x2362d" || input.Source.Target != "" ||
+			provenSource := input.Source.Addr == "0x2362d" || input.Source.Addr == "0x23ec4"
+			if !provenSource || input.Source.Target != "" ||
 				patch == nil || len(patch.Units) == 0 || activeSlotCount <= 0 {
 				issue(i, input, "direct_record_patch requires an active runtime frontier and unit writes")
 				continue
