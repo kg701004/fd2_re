@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -34,7 +35,8 @@ def audit(path: Path) -> dict:
             role = "generic_story_fallback"
         generated_binding = ""
         if node_id.startswith("postbattle_"):
-            handler_name = node_id.removeprefix("postbattle_").removesuffix("_persist") + "_post.json"
+            match = re.fullmatch(r"postbattle_ch(\d+)_persist", node_id)
+            handler_name = f"ch{int(match.group(1)) - 1:02d}_post.json" if match else ""
             candidate = generated_dir / handler_name
             if candidate.exists():
                 generated_binding = str(candidate)

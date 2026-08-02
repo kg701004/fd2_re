@@ -279,8 +279,12 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		t.Fatalf("chapter 17 must execute the recovered conditional ch16 pre-handler: %#v", ch17)
 	}
 	post15 := c.Nodes["postbattle_ch15_persist"]
-	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
-		t.Fatalf("chapter 15 must keep its unresolved post-handler fail-closed before town: %#v", post15)
+	if post15 == nil || post15.Type != "cutscene" || post15.HandlerBinding != "assets/cutscenes/bindings/ch14_post.json" || post15.Next != "town_ch16" || len(post15.Beats) != 0 {
+		t.Fatalf("chapter 15 must execute zero-based ch14_post before town: %#v", post15)
+	}
+	post14 := c.Nodes["postbattle_ch14_persist"]
+	if post14 == nil || post14.HandlerBinding != "assets/cutscenes/bindings/ch13_post.json" || post14.Next != "town_ch15" {
+		t.Fatalf("chapter 14 must execute zero-based ch13_post before town: %#v", post14)
 	}
 	battle2, post2 := c.Nodes["battle_ch02"], c.Nodes["story_ch02_post"]
 	if battle2 == nil || battle2.OnWin != "story_ch02_post" || post2 == nil || post2.Type != "cutscene" || post2.HandlerBinding != "assets/cutscenes/bindings/ch01_post.json" || post2.Next != "town_ch03" {
@@ -317,12 +321,7 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 				wantBinding = "assets/cutscenes/bindings/ch13_post.json"
 			}
 			if tc.chapter == 15 {
-				// ch15_post has raw calls but no complete editable binding;
-				// preserving an empty binding is intentional fail-closed behavior.
-				if post.HandlerBinding != "" || len(post.Beats) != 0 {
-					t.Fatalf("chapter15 unresolved post handler was guessed: %#v", post)
-				}
-				continue
+				wantBinding = "assets/cutscenes/bindings/ch14_post.json"
 			}
 			if post.HandlerBinding != wantBinding || len(post.Beats) != 0 {
 				t.Fatalf("chapter%d must preserve dynamic post handler: %#v", tc.chapter, post)
@@ -700,11 +699,6 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 						// part of its proven LOADCH path; no synthetic sync beat.
 						wantSyncs = 0
 					}
-					if chapter == 15 {
-						// ch15_post has proven raw calls but no complete editable
-						// binding yet; do not synthesize sync_party into its graph node.
-						wantSyncs = 0
-					}
 					if syncs != wantSyncs {
 						t.Fatalf("%s sync_party count before %s=%d, want %d", battleID, current, syncs, wantSyncs)
 					}
@@ -820,7 +814,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 45 || fallback != 67 || retreat != 30 || rumor != 23 || postbattle != 10 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 46 || fallback != 66 || retreat != 30 || rumor != 23 || postbattle != 9 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }

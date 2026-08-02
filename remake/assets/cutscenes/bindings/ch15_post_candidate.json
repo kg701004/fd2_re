@@ -8,7 +8,7 @@
     "0x23b17": { "source_dat": "FDTXT_016", "script": "ch16.json" },
     "0x23b40": { "source_dat": "FDTXT_016", "script": "ch16.json" }
   },
-  "runtime_context": { "slot_counts": [74, 78] },
+  "runtime_context": { "slot_count": 76 },
   "overrides": {
     "0x23a5e": {
       "layout": {

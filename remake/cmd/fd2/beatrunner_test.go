@@ -1375,14 +1375,14 @@ func TestChapter2PreLoadCHUsesSixMemberJoinOrderAndGroupOneFrontier(t *testing.T
 	}
 }
 
-func TestCh15CandidateBindingCompilesWithHypothesizedRuntimeShapesButRemainsDataOnly(t *testing.T) {
+func TestCh15CandidateBindingCompilesForChapter16RuntimeButRemainsDataOnly(t *testing.T) {
 	bindingPath := assetPath("assets/cutscenes/bindings/ch15_post_candidate.json")
 	beats, issues, err := campaign.CompileHandlerBinding(bindingPath)
 	if err != nil || len(issues) != 0 {
 		t.Fatalf("ch15 candidate fixed-context compile err=%v issues=%#v", err, issues)
 	}
 	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
-		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{74, 78}) {
+		beats[0].RuntimeContext.SlotCount != 76 {
 		t.Fatalf("candidate runtime context=%#v", beats)
 	}
 	var branch *campaign.Beat

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Report evidence gates for unbound postbattle handler bindings.
 
-This is deliberately read-only: it never promotes a generated skeleton and
-never infers a runtime meaning from a chapter number.  It compares each
-handler beat's original call-site address with the address-keyed fields in the
-generated binding, so the remaining work is explicit and reviewable.
+This is deliberately read-only: it never promotes a generated skeleton.  The
+native main loop proves that player battle N dispatches raw ch(N-1)_post, so
+the audit also rejects an active binding whose raw handler index does not
+match that relation.  It compares each handler beat's original call-site
+address with the address-keyed fields in the generated binding, so the
+remaining work is explicit and reviewable.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -39,9 +42,13 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
     for node_id, node in sorted(campaign.get("nodes", {}).items()):
         if node.get("type") != "cutscene" or not node_id.startswith("postbattle_"):
             continue
-        stem = node_id.removeprefix("postbattle_").removesuffix("_persist")
+        match = re.fullmatch(r"postbattle_ch(\d+)_persist", node_id)
+        if not match:
+            continue
+        stem = f"ch{int(match.group(1)) - 1:02d}"
         handler_path = handlers_dir / f"{stem}_post.json"
         binding_path = generated_dir / f"{stem}_post.json"
+        expected_active_binding = f"assets/cutscenes/bindings/{stem}_post.json"
         handler = json.loads(handler_path.read_text(encoding="utf-8")) if handler_path.exists() else {}
         binding = json.loads(binding_path.read_text(encoding="utf-8")) if binding_path.exists() else {}
         overrides = binding.get("overrides", {})
@@ -69,7 +76,10 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
                 covered = isinstance(override, dict) and field in override
             if not covered:
                 gaps.append({"op": op, "source_addr": addr, "required": field})
-        if node.get("handler_binding"):
+        active_binding = node.get("handler_binding", "")
+        if active_binding and active_binding != expected_active_binding:
+            status = "active_index_mismatch"
+        elif active_binding:
             status = "active"
         elif not handler_path.exists() or not binding_path.exists():
             status = "blocked"
@@ -83,7 +93,8 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             "node": node_id,
             "handler": str(handler_path),
             "generated_binding": str(binding_path) if binding_path.exists() else "",
-            "active_handler_binding": node.get("handler_binding", ""),
+            "expected_handler_binding": expected_active_binding,
+            "active_handler_binding": active_binding,
             "operation_counts": dict(sorted(ops.items())),
             "mapping_gaps": gaps,
             "status": status,

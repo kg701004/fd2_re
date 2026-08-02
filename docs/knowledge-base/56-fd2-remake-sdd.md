@@ -269,11 +269,15 @@ raw presentation key 與 identity 分開，尚未接名稱／class／sprite reso
 
 ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
 
-2026-07-27 zero-based post-handler audit 修正一個 campaign assertion：`postbattle_ch14_persist` 對應
-`ch14_post`（native `0x239bd`，條件對話→sync→JOIN15→set_chapter15），已接回並通過 compiler
-regression；`postbattle_ch15_persist` 不得重用 `ch14_post`，因其原生 `ch15_post` 的 layout／acting／
-文字 binding 尚未完成，現維持 unbound fail-closed。這保留原版 chapter index 與玩家章節之間的 offset，
-也避免第15戰重播錯誤的第14戰招募事件。
+2026-08-02 重新核對主迴圈後，撤回 2026-07-27 的錯誤同號索引斷言。
+`0x25e23` 以目前 raw chapter 選 post-handler，handler 自己才增加章節；因此玩家第N戰必須執行
+`ch(N-1)_post`。`postbattle_ch14_persist` 現改接 `ch13_post`，`postbattle_ch15_persist`
+改接 `ch14_post`（native `0x239bd`，條件對話→sync→JOIN15→set_chapter15）。raw
+`ch15_post` 實際屬於第16戰戰後，正式 owner 是仍保持 unbound 的 `postbattle_ch16_persist`。
+稽核工具不再把非空 binding 視為正確，而會比對這個已證實的零基索引關係；截至本輪，
+`postbattle_ch04/05/08/09/10/11/12/13/18/19/24/25/29` 共13個既有同號 binding 會報
+`active_index_mismatch`。這些節點不是忠實度完成項；必須逐章驗證正確的前一號 raw binding，
+未達證據 gate 者應撤回並失敗即關閉，不能只為維持可達性而批次平移。
 
 同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫
 special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49 操作 slot65；之後掃
@@ -295,7 +299,7 @@ handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 imp
 `native_round_gt` 與 `native_record_word_gte`，缺 provenance 或 offset 不是 `0x42` 一律
 fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression；ch15 已有可編譯的
 OR／else CFG，但 `[0x53a45]` 的一般玩家 runtime shape、JOIN-time persistent record 與 save
-boundary 尚未全部閉合，因此 `postbattle_ch15_persist` 仍維持 unbound，不宣稱已還原。
+boundary 尚未全部閉合，因此 `postbattle_ch16_persist` 仍維持 unbound，不宣稱已還原。
 
 後續 producer trace 又閉合一層：constructor `0x10d7f..0x1100c` 在 `0x10fe9` 將生命值
 輸入寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9` 則將魔力輸入
@@ -328,12 +332,13 @@ address-preserving candidate：它把 `0x23a9a` 的 `round>18 OR inactive_count>
 `0x23aad` 的 `else +0x42>=0x140` 寫成 nested editable CFG，並保留 dialog/acting/JOIN/
 set-chapter source addresses。2026-08-02 的 IDA 直接指令重核修正一個高風險錯置：
 `0x23b1f` 會跳過 JOIN18，故 JOIN18 只在 `+0x42>=0x140` arm，不能放在共同尾端。
-candidate 暫以 16 筆 persistent 加 58 筆 group0 推導最小74；turn7 的4筆 group1 若已觸發
-則為78，binding 因此把 `[74,78]` 保存成假說，撤回缺乏 producer 證據的固定80。map14 group0
-同時已有一筆 `fig=15` ally，而且準備介面最多選15名；原版究竟建立第二筆 persistent record、
-提升既有 map record，或保留未出戰 record 為空場狀態仍未知。production ch15 scenario 不套用
-這個假說；一般玩家原版 runtime capture、JOIN-time persistent record 與 campaign consumer
-尚未閉合前，原始 `ch15_post.json` 與 campaign node 都維持 fail-closed。
+IDA 直接指令另閉合入口 producer：`sub_320FC` 只重排、不刪除 persistent records；
+`sub_1088D` 依 FDFIELD header 建立固定 party slots，先完整複製 persistent records，不足才補
+byte+5=1 的空 record，最後 `sub_10B4E(0)` 無條件 append 所有 group0 rows。raw ch15 對應
+第16戰 map15：16個 party slots 加60筆 group0，故 candidate context 固定76。這是雜湊綁定
+資料與直接指令的靜態閉合，尚非一般玩家 E2；JOIN-time persistent record、branch trace 與
+campaign consumer 尚未閉合前，原始 `ch15_post.json` 與 `postbattle_ch16_persist` 都維持
+fail-closed。
 直接證據見 [`fd2_ch15_post_ida.txt`](../data/fd2_ch15_post_ida.txt)。
 
 ### UI restoration execution plan（2026-07-27）

@@ -1,5 +1,5 @@
-《炎龍騎士團 2》ch15 post：IDA Pro 9.4 直接指令證據
-====================================================
+《炎龍騎士團 2》ch15 post（第16戰戰後）：IDA Pro 9.4 直接指令證據
+==================================================================
 
 參考版本
 --------
@@ -47,22 +47,28 @@ SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
 - ch15 call site 的直接參數固定 slots 0..15、special slot 65
   `(28,30,pose2)`，camera 原始 scalar `(22,25)`。
 
-假說：ch15 可接受的 runtime shape
-----------------------------------
-- ch14 post 已執行 JOIN15；ch15 layout 明確覆寫 slots 0..15，因此可能有
-  16 筆 persistent records。
-- map14 的可重生 FDFIELD export 有 58 筆 group0；若先建 16 名我方再 append
-  group0，會得到 74 筆，恰好涵蓋 slot73。
-- ch15 的 turn7 group1 有 4 筆；若已觸發，戰後 shape 為 78 筆。
-- 反證是 map14 group0 已有一筆 `fig=15` ally，而準備介面最多選15名；目前
-  無法判定原版會建立第二筆 persistent record、提升既有 map record，或保留
-  未出戰 persistent record 為空場狀態。74／78 因此只是 candidate binding 的
-  明示假說，不得提升為強推論、已證實或 E2。
+已證實：零起算 handler 與 persistent-first 建構
+-------------------------------------------------
+- 主迴圈 `0x25e23` 以目前 `[0x53c03]` 選 post-handler；handler 自己才把
+  章節加一。因此 raw `ch15_post` 是第16戰戰後，不是第15戰戰後。
+- `sub_320FC`（0x320fc..0x321c8）先保存完整 `0xA00` persistent array，再把
+  已選的 `0x50` records 排到前面、未選 records 排到後面；`[0x53BFB]` 總數不變。
+- `sub_1088D` 在 0x10987..0x1099a 以 FDFIELD header byte1 初始化 runtime count；
+  0x10a77..0x10aad 依 persistent array 順序完整複製，名冊不足固定槽數時才在
+  0x10b06..0x10b13 寫零 record 並把 byte+5 設為1。
+- 複製完 fixed party slots 後，0x10b3e 才呼叫 `sub_10B4E(0)`；後者
+  （0x10b4e..0x10c4f）掃描
+  全部 FDFIELD rows，group byte+0x15 等於0就無條件呼叫 `sub_10C50` append，
+  未見針對 `fig=15` 的 skip／replace gate。
+- 第16戰 map15 的 FDFIELD header 固定16個 party slots，group0有60筆，故
+  post-handler 入口為 `16+60=76` records。這是雜湊綁定原始資料與直接指令的
+  靜態閉合；尚未提升為一般玩家路徑 E2。
 
 目前實作門檻
 ------------
 - editable candidate 已改成上述巢狀分支，JOIN18 留在 0x23b21 arm。
-- production ch15 scenario 未套用上述未證實的建構方式；candidate binding 暫把
-  74／78 保存成可審查假說，不作正式執行依據。
-- campaign node 仍未綁定 candidate。必須先完成 JOIN-time persistent record、
-  四條分支執行回歸及 town_ch16／save 邊界，才可解除失敗即關閉。
+- candidate binding 現固定76，並仍保持 data-only。
+- 第15戰 `postbattle_ch15_persist` 應執行 raw `ch14_post`；第16戰的
+  `postbattle_ch16_persist` 才是本 candidate 的正式 owner。
+- campaign 尚未綁定本 candidate。必須先完成 JOIN18 當下的 persistent record、
+  四條分支執行回歸及 town_ch17／save 邊界，才可解除失敗即關閉。
