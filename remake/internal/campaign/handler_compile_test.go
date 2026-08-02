@@ -3,6 +3,7 @@ package campaign
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -2088,5 +2089,59 @@ func TestCompileUnitPresentFailsClosedOutsideProvenShape(t *testing.T) {
 				t.Fatalf("beats=%#v issues=%#v", beats, issues)
 			}
 		})
+	}
+}
+
+func TestCompileChapter7PostUsesEvent25RefinedSlotFrontier(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch06_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 0 {
+		t.Fatalf("ch06_post compile issues=%#v", issues)
+	}
+	if len(beats) != 4 || beats[0].Op != "runtime_context" ||
+		beats[0].RuntimeContext == nil ||
+		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{34, 44}) ||
+		beats[1].Op != "sync_party" || beats[2].Op != "if" ||
+		beats[3].Op != "set_chapter" {
+		t.Fatalf("ch06_post beats=%#v", beats)
+	}
+	outer := beats[2]
+	if outer.Condition == nil || outer.Condition.Op != "native_event_state_eq" ||
+		outer.Condition.EventStateIndex == nil || *outer.Condition.EventStateIndex != 17 ||
+		outer.Condition.EventStateValue == nil || *outer.Condition.EventStateValue != 1 ||
+		outer.Condition.RequiredSlotCount == nil || *outer.Condition.RequiredSlotCount != 44 ||
+		len(outer.Then) != 1 || len(outer.Else) != 4 {
+		t.Fatalf("ch06_post outer branch=%#v", outer)
+	}
+	inner := outer.Then[0]
+	if inner.Op != "if" || inner.Condition == nil ||
+		inner.Condition.Op != "any_unit_inactive" ||
+		!reflect.DeepEqual(inner.Condition.UnitSlots, []int{43}) ||
+		len(inner.Then) != 4 || inner.Then[0].Op != "dialog" ||
+		len(inner.Else) != 13 || inner.Else[0].Op != "layout_units" ||
+		inner.Else[0].Layout == nil || len(inner.Else[0].Layout.Units) != 10 ||
+		inner.Else[0].Layout.Units[9] != (HandlerUnitLayout{Slot: 43, X: 12, Y: 7, Pose: 2}) ||
+		inner.Else[len(inner.Else)-1].Op != "join" || inner.Else[len(inner.Else)-1].CharID != 12 ||
+		len(outer.Else) != 4 || outer.Else[0].Op != "dialog" {
+		t.Fatalf("ch06_post inner branch=%#v", inner)
+	}
+}
+
+func TestNativeEventStateEqualsRejectsFrontierAbsentFromBinding(t *testing.T) {
+	index, value, required := 17, 1, 44
+	script := &HandlerScript{Beats: []HandlerBeat{{
+		Op: "if",
+		Condition: &HandlerCondition{
+			Op: "native_event_state_eq", EventStateIndex: &index,
+			EventStateValue: &value, RequiredSlotCount: &required,
+		},
+	}}}
+	_, issues := CompileHandlerScript(script, HandlerBindings{
+		RuntimeContext: &HandlerRuntimeContext{SlotCounts: []int{34}},
+	})
+	if len(issues) != 1 {
+		t.Fatalf("unlisted refined frontier issues=%#v", issues)
 	}
 }

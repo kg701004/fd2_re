@@ -30,7 +30,7 @@ func NativeFieldEventIDAt(
 	return event.EventID, true
 }
 
-// ApplyNativeFieldModeEvent 執行目前已閉合的 event59/60 mode-range 規則。
+// ApplyNativeFieldModeEvent 執行目前已閉合的 mode-range 規則。
 // selector 的呼叫時機仍由上層保存；非 mode 規則（包含 event61）不在此猜測執行。
 func ApplyNativeFieldModeEvent(
 	st *State,
@@ -53,6 +53,12 @@ func ApplyNativeFieldModeEvent(
 	if rule == nil || len(rule.SetModeRanges) == 0 {
 		return 0, false
 	}
+	if (rule.SetStateIndex == nil) != (rule.SetStateValue == nil) ||
+		(rule.SetStateIndex != nil &&
+			(*rule.SetStateIndex < 0 || *rule.SetStateIndex >= len(st.NativeEventState) ||
+				*rule.SetStateValue < 0 || *rule.SetStateValue > 0xff)) {
+		return 0, false
+	}
 	if rule.TriggerGate != "record_byte6_nonzero" ||
 		!trigger.HasNativeRecordByte6 ||
 		trigger.NativeRecordByte6 == 0 {
@@ -73,6 +79,9 @@ func ApplyNativeFieldModeEvent(
 			u := st.Units[index]
 			u.NativeRecordByte34 = (u.NativeRecordByte34 & 0xF0) | modeRange.Mode
 		}
+	}
+	if rule.SetStateIndex != nil {
+		st.NativeEventState[*rule.SetStateIndex] = byte(*rule.SetStateValue)
 	}
 	return eventID, true
 }

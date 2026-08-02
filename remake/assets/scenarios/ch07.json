@@ -2,6 +2,8 @@
   "chapter": 7,
   "name": "往王城途中",
   "map": 6,
+  "runtime_append_groups": true,
+  "native_acting_resources": "assets/cutscenes/acting/map32.json",
   "initial_groups": [
     1
   ],
@@ -381,7 +383,9 @@
       "id": "reinforce_ch07_e25_t10",
       "trigger": "on_turn_end",
       "when": {
-        "turn": 10
+        "turn": 10,
+        "native_event_state_index": 16,
+        "native_event_state_value": 1
       },
       "once": true,
       "do": [
@@ -390,7 +394,6 @@
           "groups": [
             2
           ],
-          "camp": "enemy",
           "native_spawns": [
             {
               "group": 2,
@@ -400,6 +403,92 @@
             }
           ],
           "native_event_id": 25
+        },
+        {
+          "type": "pan",
+          "grid": [
+            16,
+            10
+          ],
+          "native_source": "0x34958"
+        },
+        {
+          "type": "native_acting",
+          "native_event_id": 25,
+          "native_acting": {
+            "resource": 30,
+            "source": "0x34962"
+          }
+        },
+        {
+          "type": "dialogue",
+          "speaker": 12,
+          "text": "哎呀!一大群男人追殺一個小姑娘,不覺得丟臉嗎?",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": -1,
+          "text": "妳的一拳讓我的部下得療養三個月,無故毆打王國駐軍可是重罪,乖乖的跟我回去說個明白吧!",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 12,
+          "text": "誰教他對我亂瞄!你們王國軍都是這個樣子的嗎?",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": -1,
+          "text": "哼....不和妳吵了,給我抓起來!",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 1,
+          "text": "咦!那邊有王國軍在圍攻一個小女孩,這是怎麼一回事?",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 13,
+          "text": "喂,我們自己都顧不了了,不要再去湊熱鬧...",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 0,
+          "text": "什麼!你能眼睜睜的看著一群王國軍欺負一個小女孩?我自己去收拾他們好了。",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 4,
+          "text": "好啦好啦,我陪你去就是了,反正不差這幾個...",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": 13,
+          "text": "好吧,那就上吧!",
+          "native_source": "0x34989",
+          "native_text_index": 2
+        },
+        {
+          "type": "set_native_event_state",
+          "native_event_id": 25,
+          "event_state_index": 17,
+          "event_state_value": 1,
+          "native_source": "0x34996"
         }
       ]
     }

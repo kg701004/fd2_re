@@ -634,6 +634,21 @@ func TestBeatJoinPersistsOnlyPlayerCharacterIDs(t *testing.T) {
 	}
 }
 
+func TestBeatJoinRejectsDuplicateNativeIdentityRecords(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "join", CharID: 12, Source: "0x23389"}})
+	g.st = &battle.State{Units: []*battle.Unit{
+		{NativeRecordByte8: 12, HasNativeRecordByte8: true},
+		{NativeRecordByte8: 12, HasNativeRecordByte8: true},
+	}}
+	g.beatAdvance()
+	if g.loadErr == "" || len(g.partyMembers) != 0 || len(g.partyRoster) != 0 {
+		t.Fatalf(
+			"duplicate native identity joined: err=%q members=%#v roster=%#v",
+			g.loadErr, g.partyMembers, g.partyRoster,
+		)
+	}
+}
+
 func TestBeatSyncPartyPersistsProgressAndClearsBattleState(t *testing.T) {
 	chapter := 1
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "sync_party"}, {Op: "set_chapter", Chapter: &chapter}})
@@ -956,6 +971,28 @@ func TestBeatNativeEventStateConditionSelectsOnlyProvenIndex(t *testing.T) {
 	g.beatAdvance()
 	if g.loadErr == "" {
 		t.Fatal("out-of-range native event state index did not fail closed")
+	}
+}
+
+func TestBeatNativeEventStateEqualsRefinesExactRuntimeFrontier(t *testing.T) {
+	index, value, slots := 17, 1, 44
+	condition := &campaign.BeatCondition{
+		Op: "native_event_state_eq", EventStateIndex: &index,
+		EventStateValue: &value, RequiredSlotCount: &slots,
+	}
+	g := &Game{st: &battle.State{Units: make([]*battle.Unit, 34)}}
+	matched, err := g.evalBeatCondition(condition)
+	if err != nil || matched {
+		t.Fatalf("clear state matched=%v err=%v", matched, err)
+	}
+	g.st.NativeEventState[17] = 1
+	if _, err := g.evalBeatCondition(condition); err == nil {
+		t.Fatal("matched event state accepted a 34-slot runtime")
+	}
+	g.st.Units = make([]*battle.Unit, 44)
+	matched, err = g.evalBeatCondition(condition)
+	if err != nil || !matched {
+		t.Fatalf("exact event25 frontier matched=%v err=%v", matched, err)
 	}
 }
 

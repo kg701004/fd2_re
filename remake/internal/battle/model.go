@@ -693,6 +693,8 @@ type NativeFieldEventRule struct {
 	Selector       byte                     `json:"selector"`
 	TriggerGate    string                   `json:"trigger_gate,omitempty"`
 	SetModeRanges  []NativeFieldModeRange   `json:"set_mode_ranges,omitempty"`
+	SetStateIndex  *int                     `json:"set_state_index,omitempty"`
+	SetStateValue  *int                     `json:"set_state_value,omitempty"`
 	OnceState      *int                     `json:"once_state_index,omitempty"`
 	RequiredItem   *int                     `json:"required_item,omitempty"`
 	ConsumeItem    bool                     `json:"consume_item,omitempty"`
@@ -1263,6 +1265,12 @@ func loadNativeFieldEvents(
 	seen := map[int]bool{}
 	for _, rule := range m.NativeFieldEventRules {
 		if rule.EventID < 0 || rule.EventID >= 90 || seen[rule.EventID] {
+			return nil, nil, nil
+		}
+		if (rule.SetStateIndex == nil) != (rule.SetStateValue == nil) ||
+			(rule.SetStateIndex != nil &&
+				(*rule.SetStateIndex < 0 || *rule.SetStateIndex >= 0x20 ||
+					*rule.SetStateValue < 0 || *rule.SetStateValue > 0xff)) {
 			return nil, nil, nil
 		}
 		if rule.OnceState != nil && (*rule.OnceState < 0 || *rule.OnceState >= 0x20) {

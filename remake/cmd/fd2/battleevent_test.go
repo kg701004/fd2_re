@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
+	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
 
 func driveNativeBattleIntro(t *testing.T, g *Game) int {
@@ -276,5 +277,261 @@ func TestBattleEventNativeSpawnFailureDoesNotAdvanceTurnContinuation(t *testing.
 			"失敗事件仍前進：err=%q continued=%v turn=%d run=%#v",
 			g.loadErr, continued, st.Turn, g.battleEvent,
 		)
+	}
+}
+
+func triggerChapter7Event26(t *testing.T, g *Game) {
+	t.Helper()
+	if g == nil || g.st == nil || len(g.st.Units) <= 27 {
+		t.Fatal("chapter7 event26 runtime frontier is absent")
+	}
+	trigger := g.st.Units[0]
+	if trigger == nil || !trigger.HasNativeRecordByte6 || trigger.NativeRecordByte6 == 0 {
+		t.Fatalf("chapter7 event26 trigger=%#v", trigger)
+	}
+	trigger.SetMapPlacement(10, 13, 0)
+	done := false
+	g.walk = &walkAnim{
+		u: trigger,
+		path: []battle.Cell{
+			{X: 10, Y: 13},
+			{X: 9, Y: 13},
+		},
+		then: func() { done = true },
+	}
+	for steps := 0; g.walk != nil && steps < 8; steps++ {
+		g.stepBattleWalk()
+	}
+	if !done || g.walk != nil || g.loadErr != "" || g.st.NativeEventState[16] != 1 {
+		t.Fatalf(
+			"event26 done=%v walk=%v err=%q state16=%d",
+			done, g.walk != nil, g.loadErr, g.st.NativeEventState[16],
+		)
+	}
+	for index := 9; index <= 27; index++ {
+		unit := g.st.Units[index]
+		if unit == nil || !unit.HasNativeRecordByte34 || unit.NativeRecordByte34&0x0f != 0 {
+			t.Fatalf("event26 unit%d=%#v", index, unit)
+		}
+	}
+}
+
+func TestChapter7Event26RejectsWrongTriggerProvenance(t *testing.T) {
+	tests := []struct {
+		name        string
+		triggerSlot int
+		from        battle.Cell
+		to          battle.Cell
+	}{
+		{
+			name:        "raw_byte6_zero",
+			triggerSlot: 9,
+			from:        battle.Cell{X: 10, Y: 13},
+			to:          battle.Cell{X: 9, Y: 13},
+		},
+		{
+			name:        "outside_event_cells",
+			triggerSlot: 0,
+			from:        battle.Cell{X: 8, Y: 13},
+			to:          battle.Cell{X: 7, Y: 13},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := &Game{}
+			if err := g.loadMap("assets/maps/map6"); err != nil {
+				t.Fatal(err)
+			}
+			g.resetBattle("assets/maps/map6/map6_units.json", "assets/scenarios/ch07.json")
+			if g.loadErr != "" || len(g.st.Units) != 34 {
+				t.Fatalf("chapter7 setup err=%q units=%d", g.loadErr, len(g.st.Units))
+			}
+			trigger := g.st.Units[tc.triggerSlot]
+			if trigger == nil || !trigger.HasNativeRecordByte6 {
+				t.Fatalf("trigger slot%d=%#v", tc.triggerSlot, trigger)
+			}
+			if tc.name == "raw_byte6_zero" && trigger.NativeRecordByte6 != 0 {
+				t.Fatalf("slot%d raw +6=%d, want zero fixture", tc.triggerSlot, trigger.NativeRecordByte6)
+			}
+			before := make([]byte, 19)
+			for index := 9; index <= 27; index++ {
+				unit := g.st.Units[index]
+				if unit == nil || !unit.HasNativeRecordByte34 {
+					t.Fatalf("slot%d lacks raw +0x34 provenance", index)
+				}
+				before[index-9] = unit.NativeRecordByte34
+			}
+			trigger.SetMapPlacement(tc.from.X, tc.from.Y, 0)
+			g.walk = &walkAnim{
+				u:    trigger,
+				path: []battle.Cell{tc.from, tc.to},
+			}
+			for steps := 0; g.walk != nil && steps < 8; steps++ {
+				g.stepBattleWalk()
+			}
+			if g.walk != nil || g.loadErr != "" || g.st.NativeEventState[16] != 0 {
+				t.Fatalf("rejected event26 walk=%v err=%q state16=%d", g.walk != nil, g.loadErr, g.st.NativeEventState[16])
+			}
+			for index := 9; index <= 27; index++ {
+				if got := g.st.Units[index].NativeRecordByte34; got != before[index-9] {
+					t.Fatalf("rejected event26 mutated slot%d raw +0x34=%#x, want %#x", index, got, before[index-9])
+				}
+			}
+		})
+	}
+}
+
+func TestChapter7Event25FailsClosedWithoutFieldEvent26(t *testing.T) {
+	g := &Game{}
+	if err := g.loadMap("assets/maps/map6"); err != nil {
+		t.Fatal(err)
+	}
+	g.resetBattle("assets/maps/map6/map6_units.json", "assets/scenarios/ch07.json")
+	if g.loadErr != "" || len(g.st.Units) != 34 {
+		t.Fatalf("chapter7 setup err=%q units=%d", g.loadErr, len(g.st.Units))
+	}
+	g.st.Turn = 10
+	g.finishTurn()
+	if g.battleEvent != nil || len(g.st.Units) != 34 ||
+		g.st.NativeEventState[16] != 0 || g.st.NativeEventState[17] != 0 || g.st.Turn != 11 {
+		t.Fatalf(
+			"ungated event25 run=%v units=%d state16=%d state17=%d turn=%d",
+			g.battleEvent != nil, len(g.st.Units), g.st.NativeEventState[16],
+			g.st.NativeEventState[17], g.st.Turn,
+		)
+	}
+}
+
+func TestChapter7Event25BuildsSlot43ThenCommitsState17(t *testing.T) {
+	g := &Game{}
+	if err := g.loadMap("assets/maps/map6"); err != nil {
+		t.Fatal(err)
+	}
+	g.resetBattle("assets/maps/map6/map6_units.json", "assets/scenarios/ch07.json")
+	if g.loadErr != "" || g.st == nil || g.sc == nil {
+		t.Fatalf("chapter7 setup err=%q state=%v scenario=%v", g.loadErr, g.st != nil, g.sc != nil)
+	}
+	if !g.sc.RuntimeAppendGroups || len(g.st.Units) != 34 || !g.st.PendingGroups[2] {
+		t.Fatalf("chapter7 opening units=%d pending=%v runtime_append=%v", len(g.st.Units), g.st.PendingGroups, g.sc.RuntimeAppendGroups)
+	}
+	triggerChapter7Event26(t, g)
+	g.st.Turn = 10
+	g.finishTurn()
+	if len(g.st.Units) != 44 || g.camPan == nil || g.st.NativeEventState[17] != 0 {
+		t.Fatalf("event25 spawn units=%d pan=%v state17=%d", len(g.st.Units), g.camPan != nil, g.st.NativeEventState[17])
+	}
+	if slot43 := g.st.Units[43]; slot43 == nil || slot43.Group != 2 || slot43.Camp != battle.Ally || slot43.Fig != 12 ||
+		!slot43.HasNativeRecordByte5 || slot43.NativeRecordByte5&1 != 0 {
+		t.Fatalf("event25 slot43=%#v", slot43)
+	}
+	for steps := 0; g.camPan != nil && steps < 100; steps++ {
+		g.stepCamPan()
+	}
+	if g.camPan != nil || g.actJob == nil || g.camX != 16*24 || g.camY != 10*24 {
+		t.Fatalf("event25 pan/acting pan=%v acting=%v cam=(%v,%v)", g.camPan != nil, g.actJob != nil, g.camX, g.camY)
+	}
+	driveNativeBattleActing(t, g)
+	wantSpeakers := []int{12, -1, 12, -1, 1, 13, 0, 4, 13}
+	for i, speaker := range wantSpeakers {
+		if len(g.dialog) != 1 || g.dialog[0].Speaker != speaker {
+			t.Fatalf("event25 dialogue %d=%#v, want speaker %d", i, g.dialog, speaker)
+		}
+		if g.st.NativeEventState[17] != 0 {
+			t.Fatalf("event25 state17 committed before dialogue %d completed", i)
+		}
+		g.dialog = nil
+		g.advanceBattleEvent()
+	}
+	if g.battleEvent != nil || g.st.NativeEventState[17] != 1 || g.st.Turn != 11 {
+		t.Fatalf("event25 completion run=%v state17=%d turn=%d", g.battleEvent != nil, g.st.NativeEventState[17], g.st.Turn)
+	}
+}
+
+func TestChapter7PostBranchesOnKeliRawInactiveStateThenEntersTown8(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		rawByte5   byte
+		wantJoined bool
+	}{
+		{name: "active_joins", rawByte5: 0, wantJoined: true},
+		{name: "inactive_does_not_join", rawByte5: 1, wantJoined: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := &Game{}
+			if err := g.loadMap("assets/maps/map6"); err != nil {
+				t.Fatal(err)
+			}
+			g.resetBattle("assets/maps/map6/map6_units.json", "assets/scenarios/ch07.json")
+			if g.loadErr != "" || len(g.st.Units) != 34 {
+				t.Fatalf("chapter7 setup err=%q units=%d", g.loadErr, len(g.st.Units))
+			}
+			triggerChapter7Event26(t, g)
+			g.st.Turn = 10
+			g.finishTurn()
+			for steps := 0; g.camPan != nil && steps < 100; steps++ {
+				g.stepCamPan()
+			}
+			driveNativeBattleActing(t, g)
+			for g.battleEvent != nil {
+				if len(g.dialog) != 0 {
+					g.dialog = nil
+					g.advanceBattleEvent()
+					continue
+				}
+				g.advanceBattleEvent()
+			}
+			if g.st.NativeEventState[17] != 1 || len(g.st.Units) != 44 {
+				t.Fatalf("event25 boundary state17=%d units=%d", g.st.NativeEventState[17], len(g.st.Units))
+			}
+			g.st.Units[43].NativeRecordByte5 = tc.rawByte5
+
+			order := []int{0, 4, 9, 30, 1, 8, 2, 10, 13}
+			g.partyMembers = make(map[int]bool, len(order))
+			for _, id := range order {
+				g.partyMembers[id] = true
+			}
+			g.partyJoinOrder = append([]int(nil), order...)
+			if err := g.seedPersistentPartyFromLoadCH(order, g.st.Units[:len(order)]); err != nil {
+				t.Fatal(err)
+			}
+			beats, issues, err := campaign.CompileHandlerBinding(
+				assetPath("assets/cutscenes/bindings/ch06_post.json"),
+			)
+			if err != nil || len(issues) != 0 {
+				t.Fatalf("ch06_post compile err=%v issues=%#v", err, issues)
+			}
+			c := &campaign.Campaign{
+				Start: "postbattle_ch07_persist",
+				Nodes: map[string]*campaign.Node{
+					"postbattle_ch07_persist": {Type: "cutscene", Next: "town_ch08"},
+					"town_ch08":               {Type: "town"},
+				},
+			}
+			g.camp = campaign.NewRunner(c)
+			g.beats, g.beatIdx, g.storyBG = beats, -1, true
+			g.beatAdvance()
+			for frame := 0; frame < 10000 && g.camp.NodeID() != "town_ch08"; frame++ {
+				if len(g.dialog) != 0 {
+					g.dialog = nil
+					g.beatAdvance()
+				}
+				g.tick(1)
+				if g.loadErr != "" {
+					t.Fatalf("ch06_post stopped at %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+				}
+			}
+			if g.camp.NodeID() != "town_ch08" || g.partyMembers[12] != tc.wantJoined {
+				t.Fatalf("ch06_post node=%q members=%v wantJoined=%v", g.camp.NodeID(), g.partyMembers, tc.wantJoined)
+			}
+			joined, ok := g.partyRoster[12]
+			if tc.wantJoined {
+				if !ok || !joined.HasNativeIdentity || joined.NativeIdentity != 12 ||
+					!joined.HasNativeRecordByte5 || joined.NativeRecordByte5 != 0 {
+					t.Fatalf("Keli persistent record=%#v", joined)
+				}
+			} else if ok {
+				t.Fatalf("inactive Keli unexpectedly persisted=%#v", joined)
+			}
+		})
 	}
 }

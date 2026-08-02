@@ -123,6 +123,8 @@ type BeatCondition struct {
 	Any                    []BeatCondition `json:"any,omitempty"`
 	CharID                 *int            `json:"char_id,omitempty"`
 	EventStateIndex        *int            `json:"event_state_index,omitempty"`
+	EventStateValue        *int            `json:"event_state_value,omitempty"`
+	RequiredSlotCount      *int            `json:"required_slot_count,omitempty"`
 }
 
 // HandlerUnitLayout is one absolute runtime-slot placement recovered from a

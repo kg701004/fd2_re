@@ -19,6 +19,34 @@ func bindNativeFutureItemRowsForTest(t *testing.T, st *State) {
 	}
 }
 
+func TestNativeEventStateScenarioConditionFailsClosedWhenIncomplete(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "scenario.json")
+	if err := os.WriteFile(path, []byte(`{
+		"events":[{
+			"trigger":"on_turn_end",
+			"when":{"native_event_state_index":16},
+			"do":[]
+		}]
+	}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadScenario(path); err == nil {
+		t.Fatal("partial native event-state condition unexpectedly loaded")
+	}
+	index := 16
+	if (&When{NativeEventStateIndex: &index}).match(&State{}, "") {
+		t.Fatal("partial direct native event-state condition unexpectedly matched")
+	}
+	value, eventID := 1, 90
+	_, _, err := (&Scenario{}).ExecuteActionChecked(&State{}, Action{
+		Type: "set_native_event_state", NativeEventID: &eventID,
+		EventStateIndex: &index, EventStateValue: &value, NativeSource: "0x34996",
+	})
+	if err == nil {
+		t.Fatal("out-of-range native event provenance unexpectedly executed")
+	}
+}
+
 func TestScenarioPartyUnitsPreserveRuntimeOrderAndDeployment(t *testing.T) {
 	sc := &Scenario{
 		Party: []PartyMember{

@@ -1,0 +1,92 @@
+FD2 ch06_post／event25／runtime slot43 非破壞性 IDA 證據
+==========================================================
+
+參考檔案
+--------
+
+- FD2.EXE：size 357074；MD5 b97caf2239a27a896069d03549d96e1e；
+  SHA-256 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f。
+- FDFIELD.DAT：size 243169；MD5 ecdb0436d26adfe5d107f2713fa7e9a2；
+  SHA-256 b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513。
+- 工具：使用者合法提供的 IDA Pro 9.4，僅在 `fd2-ida-authorized-local`
+  Docker 內分析；Capstone Docker 作第二套直接指令覆核。
+
+註記政策
+--------
+
+原始位址、函式名、立即數與運算元（operand）均原樣保留。`event26`、
+`event25`、`state16`、`state17`、`slot43` 是窄範圍索引名稱；「前置格子事件
+已執行」與「增援已執行」只適用於 map6 的這兩組產生端／消費端，不是整張
+32-byte table 的通用欄位名稱。
+
+已證實：post-handler 控制流程
+-----------------------------
+
+- raw post table index 6 指向 `0x232E8`；依已閉合的 N→raw(N-1) 規則，owner
+  是玩家第 7 戰 `battle_ch07`。
+- `0x23319 call 0x11506` 無條件先同步永久隊伍。
+- `0x2331E..0x2332A` 只在 `byte [[0x53AD5]+0x11] == 1` 時繼續；否則跳
+  `0x23393` 播 FDTXT_007 index 5。
+- `0x2332C..0x23338` 呼叫 `0x3453E(43)`；非零同樣跳 index 5。`0x3453E`
+  只計算 `[0x53A45]+43*0x50+5` 的 bit0，不授權把它普遍命名為死亡或存活。
+- 兩個 raw predicate 都通過時，`0x23358` 呼叫 `0x233C6`，接著
+  `0x2337F` 播 index 4、`0x23389` 執行 JOIN12；共同尾端
+  `0x233BA` 增加 raw chapter。
+
+已證實：state16 產生端與 event25 前置條件
+-----------------------------------------
+
+- FDFIELD map6 的 field-event slot0 是 event id26／selector0；row-major
+  event map 只在 `(9,13)`、`(10,14)`、`(11,14)`、`(12,15)`、
+  `(13,15)`、`(14,15)` 六格引用這一列。
+- IDA 將 event26 固定為 `0x3499B..0x349D9`。函式參數是觸發單位的 runtime
+  slot；`0x349A5..0x349BF` 先讀該 record `+6`，值為零立即返回。
+- gate 通過後，`0x349C1..0x349CC` 呼叫 `0x3419C(9,27,0)`；該 helper 的
+  `0x341B6..0x341D3` 逐一保留 runtime records 9..27 的 `+0x34` 高四位，
+  將低四位寫成 0。最後 `0x349CF..0x349D4` 才寫
+  `byte [[0x53AD5]+0x10] = 1`。
+- 既有合法 IDA 證據已固定 `0x13488→0x1300D→0x13A44`：path byte1 的
+  向左格步驟在第七拍提交新座標後呼叫 selector0。因此一般玩家必須先以
+  raw `+6 != 0` 的單位向左踏入上述六格之一，event25 的 state16 gate 才會
+  成立；「第10回合必定出現增援」是錯誤簡化。
+
+已證實：state17 寫入端與 slot43 產生端
+-----------------------------------------
+
+- IDA data xref 顯示 `0x34924..0x3499A` 是 map6 state17 的直接寫入函式。
+  它先要求 state16 等於 1，再依序執行 `0x10B4E(2)`、pan `(16,10)`、
+  ACTING resource 30、FDTXT_007 index 2，最後在 `0x34991..0x34996` 寫
+  `byte [[0x53AD5]+0x11] = 1`。
+- FDFIELD map6 的 live turn row 是 turn 10／event id 25／raw camp enemy，
+  event dispatch table的 id25 指向 `0x34924`。因此在這個 caller 中，
+  state17==1 表示 event25 已完成到對話尾端；不能提升成跨關 campaign flag。
+- map6 FDFIELD roster 共有 40 筆 constructor rows：group1 25 筆、group2
+  10 筆、group255 5 筆。`ch07.json` 的永久隊伍有 9 人。原版及既有
+  runtime-append constructor 都採 party first，再 append initial group1，
+  event25 才 append group2：`9 + 25 = 34`，再加 10 筆得到 slots 34..43。
+- ACTING resource 30 的八幀直接引用 slots 34..43，且 special 尾幀只操作
+  slot43。map6 group2 的最後一筆是 raw +8=`12`、Ally 的凱麗 constructor；
+  因此 post-handler 的 slot43 是 event25 增援最後一員，不是 96-slot buffer
+  中未初始化的「空白第44槽」。
+
+已撤回的斷言
+------------
+
+`0x1088D` 配置的 `0x1E00 / 0x50 = 96` 是容量上限；它不能取代 active
+constructor count。先前「map6 只有 40 runtime units，所以 slot43 必須由
+explicit 96-slot empty-record frontier 提供」的說法錯把 FDFIELD source-row
+count 當成 party-first runtime count，現已撤回。
+
+重製邊界與等級
+--------------
+
+- 已資料化 event26 的六格 selector0 綁定、raw `+6` gate、slots9..27
+  `+0x34` 低四位寫入與 state16=1；event25 只有在第10回合且 state16==1
+  時才執行。
+- 已資料化 runtime frontiers 34／44、event25 的 spawn→pan→ACTING30→九句
+  對話→state17 寫入，以及 post 的雙層 raw 分支、layout、JOIN12。
+- `native_event_state_eq` 只有在 state17==1 且 runtime slots 精確等於44時
+  才開放 slot43 分支；缺 producer 或 slot frontier 時失敗即關閉。
+- 本切片為 E1：決定性執行期回歸已覆蓋 event26 未觸發反例、向左踏格、
+  event25 與戰後 town8，但尚未取得未修改 DOSBox 的一般玩家同狀態錄影／
+  逐幀比較，故不是 E2。

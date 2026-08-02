@@ -3109,3 +3109,33 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   原子失敗、signed shop current stats 與 native save restore；
   `go test ./... -count=1`、JOIN asset `--check` 及 247 個本地 Markdown
   檔案／圖片連結均通過。
+
+## 2026-08-02：玩家第7戰 event25／戰後 JOIN12 垂直切片
+
+- IDA Pro 9.4 找到 map6 state17 的直接 writer `0x34924`：enemy turn10 的
+  event25 依序執行 spawn group2、pan `(16,10)`、ACTING30、FDTXT_007
+  index2，最後 `0x34996` 才寫 state17=1。原始位址與推論等級見
+  [`fd2_ch06_post_event25_ida.txt`](../data/ida/fd2_ch06_post_event25_ida.txt)。
+- 後續勘誤：event25 不是「第10回合必定執行」。IDA Pro 9.4 固定 map6
+  field-event slot0＝event26／selector0，六個格子座標為 `(9,13)`、
+  `(10,14)`、`(11,14)`、`(12,15)`、`(13,15)`、`(14,15)`；
+  `0x3499B` 只在觸發單位 raw `+6 != 0` 時呼叫 `0x3419C(9,27,0)`，
+  再寫 state16=1。event25 `0x34924` 先要求 state16==1，否則直接返回。
+  重製已接既有向左一步第七拍 selector0 owner，並以未踏格反例回歸防止
+  第10回合錯誤增援。
+- 撤回 2026-07-27「slot43 需要96-slot空白 frontier」的錯誤斷言。40 是
+  FDFIELD constructor row 數，不是 active runtime count；正確順序是 party9、
+  group1共25（34 slots），event25再 append group2共10（slots34..43）。
+  ACTING30 的直接 targets 也正是34..43，slot43為group2最後一筆凱麗。
+- `ch07.json` 已改用 runtime-append，完整資料化 event26 gate 與 event25 的
+  spawn→pan→ACTING→九句對話→raw state write；不再把 Ally 凱麗隨整批
+  覆寫成 Enemy。
+- raw ch06 post 已用結構化雙層 CFG 接正確 owner
+  `postbattle_ch07_persist`：只有 state17==1且runtime精確44 slots才讀
+  slot43 byte5 bit0；active arm執行layout→index4→JOIN12，其他路徑播index5。
+  `JOIN 0x112A5` 現在於 beat 當下建立 persistent record，不再延遲到下一次
+  LOADCH，故 town8／save 邊界可立即看見凱麗。
+- 決定性回歸已覆蓋 event26 踏格／未踏格反例、event25 state commit timing、
+  ACTING30、34／44 frontier、
+  post雙分支、JOIN12 persistent record與 `town_ch08`。目前仍是E1；未修改
+  DOSBox第10回合至戰後城鎮的一般玩家錄影／逐幀比較仍待完成。

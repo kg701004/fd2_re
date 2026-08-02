@@ -267,7 +267,25 @@ raw presentation key 與 identity 分開，尚未接名稱／class／sprite reso
 或 normalized `battle.Unit`。直接證據見
 [`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。
 
-ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼 `unit_inactive(43)`；inactive 時走 dialog index5，active 時才執行 `0x233c6` 9-slot layout、dialog index4、JOIN12。layout arrays 為 X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`，special slot43=`(12,7,pose2)`，camera scalar=`(6,2)`（callee globals 的 raw `cam_x=6,cam_y=2`）。目前 remake map6 只 materialize 40 battle units，而 native predicate 讀 slot43／96-slot runtime buffer；在建立 explicit 96-slot empty-record model 前，ch06 post 維持 fail-closed，不把 `unit_inactive` 扁平成無條件 layout。
+raw ch06 post（玩家第 7 戰）的分支已由 IDA Pro 9.4 主判讀與 Docker
+Capstone 覆核：先 `sync_party`，只有 `[0x53ad5]+0x11 == 1` 才呼
+`unit_inactive(43)`；inactive 走 dialog index5，active 才執行 `0x233c6`
+layout、dialog index4、JOIN12。layout arrays 為
+X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、
+pose=`[0,0,0,3,1,3,1,3,1]`，另有 special slot43=`(12,7,pose2)`，
+camera raw `(6,2)`。先前把 slot43 解讀成 96-slot 容量中的空白 record 是
+錯誤斷言：map6 正確 runtime 順序是 party 9 人→group1 25 人（34 slots）→
+event25 group2 10 人（slots34..43）。更早的 map6 event26 只在六個原始格子
+的 selector0 路徑執行：觸發單位 raw `+6 != 0` 時，以 `0x3419C(9,27,0)`
+保留 slots9..27 的 `+0x34` 高四位並清低四位，才寫 state16=1。`0x34924`
+在 enemy turn10 先要求 state16==1，通過後依序 spawn2、pan `(16,10)`、
+ACTING30、FDTXT index2，最後才寫 state17=1；ACTING30 本身直接引用
+slots34..43。重製現於向左一步第七拍的既有 selector0 owner 執行 event26，
+event25 同時要求 turn10／state16==1；未踏格反例不增援。戰後再以精確
+34／44 frontier、state17==1 的 44-slot 細化與 raw byte5 bit0 接通
+`postbattle_ch07_persist→town_ch08`，缺任一產生端即失敗關閉。直接證據見
+[`fd2_ch06_post_event25_ida.txt`](../data/ida/fd2_ch06_post_event25_ida.txt)；
+目前為 E1，尚缺未修改一般玩家路徑的 DOSBox E2。
 
 2026-08-02 重新核對主迴圈後，撤回 2026-07-27 的錯誤同號索引斷言。
 `0x25e23` 以目前 raw chapter 選 post-handler，handler 自己才增加章節；因此玩家第N戰必須執行

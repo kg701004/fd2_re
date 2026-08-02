@@ -119,9 +119,11 @@ type Event struct {
 
 // When 條件(可擴充:加欄位 + Match 加判斷)。
 type When struct {
-	Turn           int    `json:"turn,omitempty"`             // turn == N(0=不限)
-	UnitDead       string `json:"unit_dead,omitempty"`        // 某角色陣亡
-	UnitSlotActive *int   `json:"unit_slot_active,omitempty"` // 原版 runtime slot 已登場且存活
+	Turn                  int    `json:"turn,omitempty"`                     // turn == N(0=不限)
+	UnitDead              string `json:"unit_dead,omitempty"`                // 某角色陣亡
+	UnitSlotActive        *int   `json:"unit_slot_active,omitempty"`         // 原版 runtime slot 已登場且存活
+	NativeEventStateIndex *int   `json:"native_event_state_index,omitempty"` // battle-local raw byte index
+	NativeEventStateValue *int   `json:"native_event_state_value,omitempty"` // exact raw byte value
 }
 
 // Action 動作(可擴充:加 type + execAction 加 case)。
@@ -140,6 +142,17 @@ type Action struct {
 	CharID         int               `json:"char_id,omitempty"`         // join_party: permanent player identity
 	Grid           *[2]int           `json:"grid,omitempty"`            // pan:原版 camera grid(col,row)，runtime 依地圖 tile 尺寸換 pixel
 	Ms             int               `json:"ms,omitempty"`              // delay:原版毫秒數
+	// NativeActing 保存戰鬥事件呼叫 0x1366A 的資源與原始呼叫點。
+	// 它只描述已解碼的行為，不以位址作為重製端執行鍵。
+	NativeActing *NativeFollowingActing `json:"native_acting,omitempty"`
+	// NativeSource 保留無獨立結構可承載的原始寫入／對話呼叫點。
+	NativeSource string `json:"native_source,omitempty"`
+	// NativeTextIndex 是一次原版 0x15F84 呼叫的 FDTXT 索引；多句
+	// editable dialogue 可共用同一索引，但不能由文字內容反推。
+	NativeTextIndex *int `json:"native_text_index,omitempty"`
+	// EventStateIndex/Value 僅供已證實的 battle-local raw byte 寫入。
+	EventStateIndex *int `json:"event_state_index,omitempty"`
+	EventStateValue *int `json:"event_state_value,omitempty"`
 }
 
 // NativeSpawnCall 保存全域事件處理器的一個確切呼叫點。Group 是該排程回合
@@ -188,7 +201,37 @@ func LoadScenario(path string) (*Scenario, error) {
 		}
 	}
 	for eventIndex, event := range sc.Events {
+		if event.When != nil &&
+			((event.When.NativeEventStateIndex == nil) != (event.When.NativeEventStateValue == nil) ||
+				(event.When.NativeEventStateIndex != nil &&
+					(*event.When.NativeEventStateIndex < 0 || *event.When.NativeEventStateIndex >= 0x20 ||
+						*event.When.NativeEventStateValue < 0 || *event.When.NativeEventStateValue > 0xff))) {
+			return nil, fmt.Errorf("scenario event %d has invalid native event-state condition", eventIndex)
+		}
 		for actionIndex, action := range event.Do {
+			if action.Type == "native_acting" {
+				if action.NativeActing == nil || action.NativeActing.Resource < 0 ||
+					action.NativeActing.Resource >= 106 || action.NativeActing.Source == "" ||
+					action.NativeEventID == nil || *action.NativeEventID < 0 ||
+					*action.NativeEventID >= 90 || sc.NativeActingResources == "" {
+					return nil, fmt.Errorf(
+						"scenario event %d action %d has invalid native acting provenance",
+						eventIndex, actionIndex,
+					)
+				}
+			}
+			if action.Type == "set_native_event_state" {
+				if action.EventStateIndex == nil || *action.EventStateIndex < 0 ||
+					*action.EventStateIndex >= 0x20 || action.EventStateValue == nil ||
+					*action.EventStateValue < 0 || *action.EventStateValue > 0xff ||
+					action.NativeSource == "" || action.NativeEventID == nil ||
+					*action.NativeEventID < 0 || *action.NativeEventID >= 90 {
+					return nil, fmt.Errorf(
+						"scenario event %d action %d has invalid native event-state write",
+						eventIndex, actionIndex,
+					)
+				}
+			}
 			if len(action.NativeSpawns) == 0 {
 				continue
 			}
@@ -425,6 +468,16 @@ func (w *When) match(st *State, ctxUnit string) bool {
 			return false
 		}
 	}
+	if w.NativeEventStateIndex != nil || w.NativeEventStateValue != nil {
+		if w.NativeEventStateIndex == nil || w.NativeEventStateValue == nil {
+			return false
+		}
+		index := *w.NativeEventStateIndex
+		if st == nil || index < 0 || index >= len(st.NativeEventState) ||
+			int(st.NativeEventState[index]) != *w.NativeEventStateValue {
+			return false
+		}
+	}
 	return true
 }
 
@@ -490,6 +543,14 @@ func (sc *Scenario) ExecuteActionChecked(st *State, a Action) (DialogLine, bool,
 		sc.pendingJoins = append(sc.pendingJoins, a.CharID)
 	case "dialogue":
 		return DialogLine{Speaker: a.Speaker, Text: a.Text}, true, nil
+	case "set_native_event_state":
+		if st == nil || a.EventStateIndex == nil || *a.EventStateIndex < 0 ||
+			*a.EventStateIndex >= len(st.NativeEventState) || a.EventStateValue == nil ||
+			*a.EventStateValue < 0 || *a.EventStateValue > 0xff || a.NativeSource == "" ||
+			a.NativeEventID == nil || *a.NativeEventID < 0 || *a.NativeEventID >= 90 {
+			return DialogLine{}, false, fmt.Errorf("native event-state write lacks proven raw provenance")
+		}
+		st.NativeEventState[*a.EventStateIndex] = byte(*a.EventStateValue)
 	case "set_flag":
 		st.Flags[a.Flag] = true
 	case "set_ai":

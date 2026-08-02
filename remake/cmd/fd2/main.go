@@ -1277,6 +1277,49 @@ func (g *Game) beatStart(b campaign.Beat) {
 			g.loadErr = fmt.Sprintf("beat join:非法 player char_id=%d", b.CharID)
 			return
 		}
+		if _, exists := g.partyRoster[b.CharID]; b.Source != "" && !exists {
+			var base *battle.Unit
+			if g.st != nil {
+				matches := 0
+				for _, unit := range g.st.Units {
+					if unit != nil && unit.HasNativeRecordByte8 && int(unit.NativeRecordByte8) == b.CharID {
+						base = unit
+						matches++
+					}
+				}
+				if matches > 1 {
+					g.loadErr = fmt.Sprintf("beat join:char_id=%d 有 %d 筆 raw +8 runtime records", b.CharID, matches)
+					return
+				}
+			}
+			if base == nil {
+				matches := 0
+				for i := range g.storyActors {
+					unit := &g.storyActors[i]
+					if unit.HasNativeRecordByte8 && int(unit.NativeRecordByte8) == b.CharID {
+						base = unit
+						matches++
+					}
+				}
+				if matches > 1 {
+					g.loadErr = fmt.Sprintf("beat join:char_id=%d 有 %d 筆 raw +8 story records", b.CharID, matches)
+					return
+				}
+			}
+			if base == nil {
+				g.loadErr = fmt.Sprintf("beat join:char_id=%d 缺少 raw +8 runtime record", b.CharID)
+				return
+			}
+			materialized, err := g.materializeNativeJoinPersistentUnit(b.CharID, *base)
+			if err != nil {
+				g.loadErr = "beat join: " + err.Error()
+				return
+			}
+			if g.partyRoster == nil {
+				g.partyRoster = make(map[int]battle.Unit)
+			}
+			g.partyRoster[b.CharID] = cloneNativeShopUnit(materialized)
+		}
 		if g.partyMembers == nil {
 			g.partyMembers = make(map[int]bool)
 		}
@@ -1444,6 +1487,20 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			return false, fmt.Errorf("缺少有效 native_event_state condition")
 		}
 		return g.st.NativeEventState[*condition.EventStateIndex] != 0, nil
+	case "native_event_state_eq":
+		if g.st == nil || condition.EventStateIndex == nil || *condition.EventStateIndex < 0 || *condition.EventStateIndex >= len(g.st.NativeEventState) ||
+			condition.EventStateValue == nil || *condition.EventStateValue < 0 || *condition.EventStateValue > 0xff ||
+			condition.RequiredSlotCount == nil || *condition.RequiredSlotCount <= 0 {
+			return false, fmt.Errorf("缺少有效 native_event_state_eq condition")
+		}
+		matched := g.st.NativeEventState[*condition.EventStateIndex] == byte(*condition.EventStateValue)
+		if matched && len(g.st.Units) != *condition.RequiredSlotCount {
+			return false, fmt.Errorf(
+				"native_event_state_eq matched but runtime slots=%d, want exact %d",
+				len(g.st.Units), *condition.RequiredSlotCount,
+			)
+		}
+		return matched, nil
 	case "roster_has":
 		if condition.CharID == nil || !campaign.JoinableCharacterID(*condition.CharID) {
 			return false, fmt.Errorf("缺少有效 roster_has char_id")
@@ -7581,6 +7638,20 @@ func (g *Game) advanceBattleEvent() {
 				frames = 1
 			}
 			g.battleEventDelay = frames
+			return
+		case "native_acting":
+			if g.st == nil {
+				g.finishBattleEventWithError("native acting 缺少 runtime battle state")
+				return
+			}
+			frames, err := g.loadNativeBattleFollowingActing(
+				action.NativeActing, len(g.st.Units),
+			)
+			if err != nil {
+				g.finishBattleEventWithError(err.Error())
+				return
+			}
+			g.startNativeBattleFollowingActing(frames, g.advanceBattleEvent)
 			return
 		default:
 			call, isNativeIntro, introErr := nativeBattleIntroCall(action)

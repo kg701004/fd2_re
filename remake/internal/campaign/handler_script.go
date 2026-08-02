@@ -39,6 +39,10 @@ type HandlerCondition struct {
 	// It is meaningful only for roster_has, never a portrait/NPC identifier.
 	CharID          *int `json:"char_id,omitempty"`
 	EventStateIndex *int `json:"event_state_index,omitempty"`
+	EventStateValue *int `json:"event_state_value,omitempty"`
+	// RequiredSlotCount 是此條件成立時由同一原生 producer 證實的精確
+	// runtime frontier。它讓分支內 slot 操作可驗證，但不會擴張外層 frontier。
+	RequiredSlotCount *int `json:"required_slot_count,omitempty"`
 }
 
 // HandlerRepeatHint records a directly recovered fixed-count loop around one

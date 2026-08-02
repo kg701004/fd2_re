@@ -160,6 +160,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				continue
 			}
 			condition := &BeatCondition{Op: input.Condition.Op}
+			thenSlotCount := activeSlotCount
 			switch input.Condition.Op {
 			case "any_unit_inactive":
 				if len(input.Condition.UnitSlots) == 0 {
@@ -279,6 +280,21 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				}
 				index := *input.Condition.EventStateIndex
 				condition.EventStateIndex = &index
+			case "native_event_state_eq":
+				if input.Condition.EventStateIndex == nil || *input.Condition.EventStateIndex < 0 || *input.Condition.EventStateIndex >= 0x20 ||
+					input.Condition.EventStateValue == nil || *input.Condition.EventStateValue < 0 || *input.Condition.EventStateValue > 0xff ||
+					input.Condition.RequiredSlotCount == nil || *input.Condition.RequiredSlotCount <= 0 ||
+					(activeSlotCount > 0 && *input.Condition.RequiredSlotCount < activeSlotCount) ||
+					bindings.RuntimeContext == nil ||
+					!bindings.RuntimeContext.AcceptsSlotCount(*input.Condition.RequiredSlotCount) {
+					issue(i, input, "native_event_state_eq requires a raw index/value and a runtime frontier listed by the binding")
+					continue
+				}
+				index, value, required := *input.Condition.EventStateIndex, *input.Condition.EventStateValue, *input.Condition.RequiredSlotCount
+				condition.EventStateIndex = &index
+				condition.EventStateValue = &value
+				condition.RequiredSlotCount = &required
+				thenSlotCount = required
 			default:
 				issue(i, input, "if requires a proven condition")
 				continue
@@ -295,7 +311,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				issue(i, input, "if arms cannot use active-slot operations before branch compiler context is modeled")
 				continue
 			}
-			thenBeats, thenIssues := compileHandlerScript(&HandlerScript{Beats: input.Then}, bindings, activeSlotCount)
+			thenBeats, thenIssues := compileHandlerScript(&HandlerScript{Beats: input.Then}, bindings, thenSlotCount)
 			elseBeats, elseIssues := compileHandlerScript(&HandlerScript{Beats: input.Else}, bindings, activeSlotCount)
 			if len(thenIssues) > 0 || len(elseIssues) > 0 {
 				for _, branchIssue := range thenIssues {

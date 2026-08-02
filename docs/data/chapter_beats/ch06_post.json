@@ -1,55 +1,73 @@
 {
- "handler": "0x232e8",
- "beats": [
-  {
-   "op": "sync_party",
-   "addr": "0x23319",
-   "target": "0x11506",
-   "args": []
-  },
-  {
-   "op": "unit_inactive",
-   "addr": "0x2332e",
-   "target": "0x3453e",
-   "args": [
-    43
-   ]
-  },
-  {
-   "op": "layout_units",
-   "addr": "0x23358",
-   "target": "0x233c6",
-   "args": []
-  },
-  {
-   "op": "dialog",
-   "addr": "0x2337f",
-   "target": "0x15f84",
-   "args": [
-    "dword ptr [0x3a79]",
-    4
-   ]
-  },
-  {
-   "op": "join",
-   "addr": "0x23389",
-   "target": "0x112a5",
-   "args": [
-    12
-   ]
-  },
-  {
-   "op": "dialog",
-   "addr": "0x233b2",
-   "target": "0x15f84",
-   "args": [
-    "dword ptr [0x3a79]",
-    5
-   ]
-  },
-  {
-   "op": "increment_chapter",
-   "addr": "0x233ba"
+  "schema_version": 1,
+  "chapter": 6,
+  "phase": "post",
+  "handler": "0x232e8",
+  "beats": [
+    {
+      "op": "sync_party",
+      "source": { "addr": "0x23319", "target": "0x11506" }
+    },
+    {
+      "op": "if",
+      "condition": {
+        "op": "native_event_state_eq",
+        "event_state_index": 17,
+        "event_state_value": 1,
+        "required_slot_count": 44
+      },
+      "source": { "addr": "0x2331e" },
+      "then": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "any_unit_inactive",
+            "unit_slots": [43]
+          },
+          "source": { "addr": "0x2332e", "target": "0x3453e" },
+          "then": [
+            {
+              "op": "dialog",
+              "text_index": 5,
+              "source": { "addr": "0x233b2", "target": "0x15f84" },
+              "text_table": "dword ptr [0x3a79]"
+            }
+          ],
+          "else": [
+            {
+              "op": "layout_units",
+              "source": { "addr": "0x23358", "target": "0x233c6" }
+            },
+            {
+              "op": "dialog",
+              "text_index": 4,
+              "source": { "addr": "0x2337f", "target": "0x15f84" },
+              "text_table": "dword ptr [0x3a79]"
+            },
+            {
+              "op": "join",
+              "char_id": 12,
+              "source": { "addr": "0x23389", "target": "0x112a5" }
+            }
+          ]
+        }
+      ],
+      "else": [
+        {
+          "op": "dialog",
+          "text_index": 5,
+          "source": { "addr": "0x233b2", "target": "0x15f84" },
+          "text_table": "dword ptr [0x3a79]"
+        }
+      ]
+    },
+    {
+      "op": "set_chapter",
+      "chapter": 7,
+      "source": { "addr": "0x233ba" }
+    }
+  ],
+  "diagnostics": {
+    "unknown_ops": 0
   }
- ]
 }
