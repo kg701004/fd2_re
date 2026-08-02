@@ -412,7 +412,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 	want := map[string]string{
 		"postbattle_ch04_persist": "assets/cutscenes/bindings/ch03_post.json",
 		"postbattle_ch05_persist": "assets/cutscenes/bindings/ch04_post.json",
-		"postbattle_ch06_persist": "",
+		"postbattle_ch06_persist": "assets/cutscenes/bindings/ch05_post.json",
 		"postbattle_ch07_persist": "",
 		"postbattle_ch08_persist": "",
 		"postbattle_ch09_persist": "assets/cutscenes/bindings/ch08_post.json",
@@ -850,7 +850,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 41 || fallback != 71 || retreat != 30 || rumor != 23 || postbattle != 13 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 42 || fallback != 70 || retreat != 30 || rumor != 23 || postbattle != 12 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
@@ -1012,18 +1012,40 @@ func TestCh05PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
 	}
 	var pan, act *Beat
 	var dialogs []*Beat
+	var join, spawn, sync, chapter int
+	var joinAt, spawnAt, panAt, actAt, dialogAt, syncAt, chapterAt = -1, -1, -1, -1, -1, -1, -1
 	for i := range beats {
 		switch beats[i].Op {
+		case "join":
+			join, joinAt = beats[i].CharID, i
+		case "spawn":
+			spawn, spawnAt = beats[i].Group, i
 		case "pan":
 			pan = &beats[i]
+			panAt = i
 		case "act":
 			act = &beats[i]
+			actAt = i
 		case "dialog":
+			if dialogAt < 0 {
+				dialogAt = i
+			}
 			dialogs = append(dialogs, &beats[i])
+		case "sync_party":
+			sync++
+			syncAt = i
+		case "set_chapter":
+			chapterAt = i
+			if beats[i].Chapter != nil {
+				chapter = *beats[i].Chapter
+			}
 		}
 	}
 	if pan == nil || pan.X != 120 || pan.Y != 336 || !pan.TileStep || act == nil || len(act.Acting) != 1 || act.Acting[0].Units[0].Slot == nil || *act.Acting[0].Units[0].Slot != 34 || len(dialogs) != 19 || dialogs[0].SceneIndex == nil || *dialogs[0].SceneIndex != 6 || dialogs[18].Line != 18 {
 		t.Fatalf("ch05 pan=%#v act=%#v dialogs=%#v", pan, act, dialogs)
+	}
+	if join != 13 || spawn != 3 || sync != 1 || chapter != 6 || !(joinAt < spawnAt && spawnAt < panAt && panAt < actAt && actAt < dialogAt && dialogAt < syncAt && syncAt < chapterAt) {
+		t.Fatalf("ch05 ordered tail join=%d@%d spawn=%d@%d pan@%d act@%d dialog@%d sync=%d@%d chapter=%d@%d", join, joinAt, spawn, spawnAt, panAt, actAt, dialogAt, sync, syncAt, chapter, chapterAt)
 	}
 }
 

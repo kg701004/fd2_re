@@ -1,0 +1,54 @@
+《炎龍騎士團 2》raw ch05 戰後處理器：IDA Pro 9.4 直接指令證據
+=================================================================
+
+參考版本
+--------
+輸入：FD2.EXE
+大小：357074 bytes
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+工具：IDA Pro 9.4.0.260610（使用者授權 Docker 流程）
+交叉驗證：Capstone（fd2-cap-local）
+位址空間：IDA database linear address
+
+問題
+----
+1. raw ch05 post 的入口與玩家面向 owner 是否確實為第6戰？
+2. `0x232e3` 跳往較低位址後，對話、隊伍同步與章節推進的順序為何？
+3. 既有 authored binding 是否涵蓋完整控制流，而非只填入畫面資料？
+
+已證實：dispatch 與函式範圍
+--------------------------
+- raw post-handler table 起點為 `0x51de9`；index5 的原始 little-endian word
+  是 `96 32 01 00`，即入口 `0x23296`。主迴圈 `0x25e23` 是 IDA 所列的
+  唯一直接呼叫者，透過目前 raw chapter 索引此表。
+- 玩家第6戰使用 raw map/chapter index5，因此正確 consumer 是
+  `postbattle_ch06_persist`，不是舊同號接法 `postbattle_ch05_persist`。
+- IDA 將入口固定為 `sub_23296`，範圍 `0x23296..0x232e8`；Capstone 對
+  同一範圍的直接指令與位元組解碼一致。
+
+已證實：完整操作順序
+--------------------
+- `0x232a0 push 0x0d`，`0x232a2 call 0x112a5`：JOIN character13。
+- `0x232aa push 3`，`0x232ac call 0x10b4e`：載入／追加 raw group3。
+- `0x232b4 push 0x0e`、`0x232b6 push 5`，`0x232b8 call 0x135dd`：
+  既有 tile ABI 下的 raw pan `(5,14)`。
+- `0x232c0 push 0x1b`，`0x232c2 call 0x1366a`：acting resource27。
+- `0x232e1 push 6` 後，`0x232e3 jmp 0x231df`。這不是遺失 return 或匯出
+  污染，而是進入真實共享尾段。
+- 共享尾段依序為 `0x231df push [0x53a79]`、`0x231e5 call 0x15f84`
+  （FDTXT index6）、`0x231ed call 0x11506`（同步 persistent roster）、
+  `0x231f2 inc [0x53c03]`、`0x231f8 return`。
+- 此入口沒有條件跳躍或未知分支。既有 `ch05_post.json` authored binding 已
+  保存 slot_count40、group3 cardinality1、pan、acting27、FDTXT_006 index6、
+  JOIN13、同步與 chapter6 尾段，可作玩家第6戰的 E1 consumer。
+
+證據等級與剩餘邊界
+------------------
+- 上述位址、參數、跳轉、操作順序與 owner：已證實。
+- `pan (5,14)→(120,336)`、group3 cardinality1、acting resource27 的 frame
+  內容與 FDTXT_006 index6→ch06 scene6 lines0..18：由既有獨立資料解析及
+  authored binding 回歸支持，屬本專案既有 E1 證據。
+- `0x36cd7(0x28)` 的高階語意未在本題重新命名；原始指令仍保留。
+- handler 返回後的 `0x2cad7` 戰間 outcome、town07 的原版輸入路徑與同狀態
+  DOSBox 畫面尚未達 E2。接入 authored binding 不代表整個戰後城鎮流程完成。
