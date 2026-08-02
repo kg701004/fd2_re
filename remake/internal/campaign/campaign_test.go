@@ -307,7 +307,6 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		town    string
 	}{
 		{11, "town_ch12"}, {15, "town_ch16"},
-		{17, "town_ch18"}, {20, "town_ch21"},
 	} {
 		battleID := fmt.Sprintf("battle_ch%02d", tc.chapter)
 		postID := fmt.Sprintf("postbattle_ch%02d_persist", tc.chapter)
@@ -336,8 +335,8 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 	if battle27 == nil || battle27.OnWin != "inventory_gate_ch27_sky_key" || gate == nil || gate.Type != "inventory_gate" || gate.ItemID == nil || *gate.ItemID != 0x64 || gate.IfPresent != "story_ch27_post_sky_key_success" || gate.IfMissing != "story_ch27_post_sky_key_missing" {
 		t.Fatalf("chapter27 must preserve original sky-key inventory branch: battle=%#v gate=%#v", battle27, gate)
 	}
-	if success == nil || success.Type != "cutscene" || success.HandlerBinding != "assets/cutscenes/bindings/ch27_post.json" || success.Next != "preparation_ch28" || len(success.Beats) != 0 {
-		t.Fatalf("sky-key success must sync persistent party before chapter28 preparation: %#v", success)
+	if success == nil || success.Type != "cutscene" || success.HandlerBinding != "" || success.Next != "preparation_ch28" || len(success.Beats) != 2 || success.Beats[0].Op != "sync_party" || success.Beats[1].Op != "set_chapter" || success.Beats[1].Chapter == nil || *success.Beats[1].Chapter != 27 {
+		t.Fatalf("sky-key success must preserve the proven ch26_post success tail without reusing ch27_post: %#v", success)
 	}
 	post29 := c.Nodes["postbattle_ch29_persist"]
 	if post29 == nil || post29.Type != "cutscene" || post29.HandlerBinding != "" || post29.Next != "preparation_ch30" || len(post29.Beats) != 0 {
@@ -432,8 +431,8 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch23_persist": "",
 		"postbattle_ch24_persist": "",
 		"postbattle_ch25_persist": "assets/cutscenes/bindings/ch24_post.json",
-		"postbattle_ch26_persist": "",
-		"postbattle_ch28_persist": "",
+		"postbattle_ch26_persist": "assets/cutscenes/bindings/ch25_post.json",
+		"postbattle_ch28_persist": "assets/cutscenes/bindings/ch27_post.json",
 		"postbattle_ch29_persist": "",
 	}
 	for nodeID, wantBinding := range want {
@@ -444,6 +443,9 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		}
 		if n.HandlerBinding != wantBinding {
 			t.Errorf("%s binding=%q, want %q", nodeID, n.HandlerBinding, wantBinding)
+		}
+		if wantBinding == "" && len(n.Beats) != 0 {
+			t.Errorf("%s unbound node retained %d inline beats and can bypass the runtime guard", nodeID, len(n.Beats))
 		}
 	}
 }
@@ -848,7 +850,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 40 || fallback != 72 || retreat != 30 || rumor != 23 || postbattle != 15 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 41 || fallback != 71 || retreat != 30 || rumor != 23 || postbattle != 13 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
@@ -878,8 +880,8 @@ func TestCh24PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
 	}
 }
 
-func TestCh25PostEvidenceResolvesBranchDialogueByTextIndex(t *testing.T) {
-	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch25_post.json")
+func TestCh25PostBindingResolvesEventBranchesAndPersistentTail(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch25_post.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -888,6 +890,9 @@ func TestCh25PostEvidenceResolvesBranchDialogueByTextIndex(t *testing.T) {
 	}
 	var layout *Beat
 	acts := map[int]bool{}
+	var branches []*Beat
+	var syncs int
+	var chapter *int
 	for i := range beats {
 		switch beats[i].Op {
 		case "layout_units":
@@ -900,10 +905,25 @@ func TestCh25PostEvidenceResolvesBranchDialogueByTextIndex(t *testing.T) {
 					}
 				}
 			}
+		case "if":
+			branches = append(branches, &beats[i])
+		case "sync_party":
+			syncs++
+		case "set_chapter":
+			chapter = beats[i].Chapter
 		}
 	}
 	if layout == nil || layout.Layout == nil || len(layout.Layout.Units) != 16 || layout.Layout.CamX != 216 || layout.Layout.CamY != 120 || !acts[0] || !acts[1] || !acts[2] {
 		t.Fatalf("ch25 evidence layout=%#v acting slots=%v", layout, acts)
+	}
+	if len(branches) != 2 || branches[0].Condition == nil || branches[0].Condition.EventStateIndex == nil || *branches[0].Condition.EventStateIndex != 12 || branches[1].Condition == nil || branches[1].Condition.EventStateIndex == nil || *branches[1].Condition.EventStateIndex != 12 {
+		t.Fatalf("ch25 event-state branches=%#v", branches)
+	}
+	if len(branches[0].Then) != 5 || len(branches[0].Else) != 4 || len(branches[1].Then) != 18 || len(branches[1].Else) != 4 {
+		t.Fatalf("ch25 branch dialogue sizes=%d/%d %d/%d", len(branches[0].Then), len(branches[0].Else), len(branches[1].Then), len(branches[1].Else))
+	}
+	if syncs != 1 || chapter == nil || *chapter != 26 {
+		t.Fatalf("ch25 persistent tail syncs=%d chapter=%v", syncs, chapter)
 	}
 }
 

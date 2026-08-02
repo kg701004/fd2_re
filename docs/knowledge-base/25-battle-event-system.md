@@ -257,9 +257,11 @@ FDTXT indices 3/4；沒有 D0 時只使用 index2，不改 entry12。ch25 post
 再以 entry12 選擇後續文字分支。
 
 `native_field_event_rules.json` 綁定 FD2.EXE 雜湊並保存三條 editable rule；
-map25 資產只因實際引用而嵌入。重製仍未把 selector0/1 的完整原版動作時機
-與 event61 的 59-frame presentation 接進正式路徑，故目前是已解碼資料，
-不是已完成的玩家路徑。
+map25 資產只因實際引用而嵌入。後續實作已把 selector0 的 event59/60 與
+selector1 的 event61 接入正式戰鬥路徑：event61 會在成功行動後播放 resource45
+的59幀演出，完成後才提交移除 D0、寫 entry12、spawn group1 與 JOIN31，並將新角色
+寫回持續隊伍。這是重製端決定性 E1 路徑；仍缺相同狀態的原版 DOSBox 一般玩家
+逐幀比較，不能提升為 E2 或宣稱整個第26戰已完成。
 
 2026-07-29 的合法 IDA 9.4 與 Docker Capstone 交叉檢查又閉合 selector0
 時機。`0x13488` 逐 byte 消費路徑，只有 path byte 1 呼叫

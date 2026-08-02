@@ -939,18 +939,14 @@ def build_campaign(
             }
             after_battle_id = intro_id
 
-        # 尚未逐章 lower 完原版 post handler 的關卡，也必須先有一個可編輯的
-        # persistence 節點：戰後 snapshot inventory/能力、推進 chapter，再進原本的
-        # town/preparation。不能讓 battle 直接跳 town，否則下一章 LOADCH 會用舊 roster
-        # 覆蓋剛取得的寶物。ch21/ch27 已在各自的精確分支尾執行同一組操作。
+        # 尚未逐章 lower 完原版 post handler 的關卡，只建立空的可編輯節點。
+        # 不可用泛用 sync_party/set_chapter 猜測性略過原版 handler；runtime 會對
+        # 沒有 authored binding／beats 的 postbattle 節點失敗即關閉。ch21/ch27
+        # 只有因為各自的原版分支尾已獨立閉合，才保留精確的持續化操作。
         if c not in (21, 27):
             post_id = f"postbattle_ch{cid}_persist"
             nodes[post_id] = {
                 "type": "cutscene",
-                "beats": [
-                    {"op": "sync_party"},
-                    {"op": "set_chapter", "chapter": c},
-                ],
                 "next": after_battle_id,
             }
             after_battle_id = post_id

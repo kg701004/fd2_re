@@ -50,6 +50,7 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
         binding_path = generated_dir / f"{stem}_post.json"
         expected_active_binding = f"assets/cutscenes/bindings/{stem}_post.json"
         active_binding = node.get("handler_binding", "")
+        inline_beat_count = len(node.get("beats", []))
         active_path = campaign_path.parent.parent.parent / active_binding if active_binding else None
         evidence_binding_path = (
             active_path
@@ -91,6 +92,10 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             status = "active_index_mismatch"
         elif active_binding:
             status = "active"
+        elif inline_beat_count:
+            # An unbound postbattle with inline beats bypasses the runtime's
+            # empty-node guard and can silently skip the native handler.
+            status = "unbound_inline_beats"
         elif not handler_path.exists() or not binding_path.exists():
             status = "blocked"
         elif gaps:
@@ -106,6 +111,7 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             "evidence_binding": str(evidence_binding_path) if evidence_binding_path.exists() else "",
             "expected_handler_binding": expected_active_binding,
             "active_handler_binding": active_binding,
+            "inline_beat_count": inline_beat_count,
             "operation_counts": dict(sorted(ops.items())),
             "mapping_gaps": gaps,
             "status": status,

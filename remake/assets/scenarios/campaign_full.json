@@ -1081,15 +1081,6 @@
   },
   "postbattle_ch06_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 6
-    }
-   ],
    "next": "town_ch07"
   },
   "retreat_ch06": {
@@ -1233,15 +1224,6 @@
   },
   "postbattle_ch07_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 7
-    }
-   ],
    "next": "town_ch08"
   },
   "retreat_ch07": {
@@ -2397,15 +2379,6 @@
   },
   "postbattle_ch16_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 16
-    }
-   ],
    "next": "town_ch17"
   },
   "retreat_ch16": {
@@ -2539,15 +2512,6 @@
   },
   "postbattle_ch17_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 17
-    }
-   ],
    "next": "town_ch18"
   },
   "retreat_ch17": {
@@ -3000,15 +2964,6 @@
   },
   "postbattle_ch20_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 20
-    }
-   ],
    "next": "town_ch21"
   },
   "retreat_ch20": {
@@ -3411,15 +3366,6 @@
   },
   "postbattle_ch22_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 22
-    }
-   ],
    "next": "preparation_ch23"
   },
   "retreat_ch22": {
@@ -3462,15 +3408,6 @@
   },
   "postbattle_ch23_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 23
-    }
-   ],
    "next": "preparation_ch24"
   },
   "retreat_ch23": {
@@ -3718,15 +3655,7 @@
   },
   "postbattle_ch26_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 26
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch25_post.json",
    "next": "town_ch27"
   },
   "retreat_ch26": {
@@ -3903,8 +3832,14 @@
   },
   "story_ch27_post_sky_key_success": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch27_post.json",
    "beats": [
+    {
+     "op": "sync_party"
+    },
+    {
+     "op": "set_chapter",
+     "chapter": 27
+    }
    ],
    "next": "preparation_ch28"
   },
@@ -3939,15 +3874,7 @@
   },
   "postbattle_ch28_persist": {
    "type": "cutscene",
-   "beats": [
-    {
-     "op": "sync_party"
-    },
-    {
-     "op": "set_chapter",
-     "chapter": 28
-    }
-   ],
+   "handler_binding": "assets/cutscenes/bindings/ch27_post.json",
    "next": "preparation_ch29"
   },
   "retreat_ch28": {

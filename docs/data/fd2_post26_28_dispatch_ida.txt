@@ -1,0 +1,69 @@
+《炎龍騎士團 2》第26／28戰戰後 dispatch：IDA Pro 9.4 直接指令證據
+=======================================================================
+
+參考版本
+--------
+輸入：FD2.EXE
+大小：357074 bytes
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+工具：IDA Pro 9.4.0.260610（使用者授權 Docker 流程）
+位址空間：IDA database linear address
+
+問題
+----
+1. `postbattle_ch26_persist` 是否可執行 raw `ch25_post`？
+2. raw `ch27_post` 的 `0x231e5/0x231ed/0x231f2` 是否為錯誤匯出？
+3. `ch27_post` 應屬玩家第27戰還是第28戰？
+
+已證實：dispatch owner
+----------------------
+- `0x25e1e` 讀取 `[0x53c03]`，`0x25e23` 以該值索引位於 `0x51de9`
+  的 32-bit post-handler 跳表。
+- 原始跳表直接解碼：index25=`0x24e80`、index26=`0x250cc`、
+  index27=`0x25464`、index28=`0x2548c`、index29=`0x25757`。
+- campaign scenario `chNN.json` 載入 raw map `NN-1`；玩家第26戰結束時 raw
+  chapter index是25，第28戰結束時是27。因此兩個 owner 分別是
+  `postbattle_ch26→0x24e80` 與 `postbattle_ch28→0x25464`。
+
+已證實：raw ch25_post（0x24e80..0x25052）
+---------------------------------------------
+- `0x24e80..0x24ef0` 先掃 runtime slots16..count-1；record `+7==0x1f`
+  時寫 raw `+0=0x10/+1=0x06`。欄位高階語意仍未知。
+- `0x24f11` 呼叫 layout helper；`0x24f30..0x24f43` 依 event-state byte
+  `+0x0c` 選 FDTXT index5/6，`0x24fb1..0x24fc4` 選 index8/9。
+- `0x24f57/0x24f92/0x24fd8/0x25013` 依序呼叫 acting 77/78/79/80；
+  固定對話 index7/10/11 仍在原順序中。
+- `0x25042` 呼叫 `0x11506` 同步 persistent roster；`0x25047` 對
+  `[0x53c03]` 執行 `inc`。函式沒有未知控制流，authored ch25 binding 可作
+  玩家第26戰的 E1 consumer；這不代表畫面已達 E2。
+
+已證實：raw ch27_post（0x25464..0x2548c）與共享尾端
+--------------------------------------------------------
+- `0x25464` 先建立對話框參數並 push FDTXT index7；`0x25487` 不是 return，
+  而是直接 `jmp 0x231df`。
+- `0x231df` push `[0x53a79]`，`0x231e5` 呼叫 dialog helper `0x15f84`，
+  `0x231ed` 呼叫 persistent sync `0x11506`，`0x231f2` 對 chapter 執行
+  `inc`，`0x231f8` return。
+- 因此 `ch27_post.json` 中較低的 source addresses 是真實共享尾端，不是
+  匯出器污染；語意以附加註記保存，原始位址不可改寫成 `0x254xx` 假位址。
+- 這個 handler 是跳表 index27，只能由玩家第28戰的 postbattle owner 消費。
+  先前將它掛在第27戰天空之鑰成功分支是錯接。
+
+第27戰天空之鑰邊界
+------------------
+- raw index26 handler `0x250cc..0x25464` 才是玩家第27戰戰後流程。其成功臂
+  已直接包含 `0x25333→0x11506` 與 `0x25338 inc [0x53c03]`；missing arm
+  走 `0x2545d→0x2bce5`。
+- remake 目前以 typed inventory gate 保存 item100 present/missing 分支；成功節點
+  只保留已證實的 `sync_party→set_chapter27`，不得重用 raw ch27 binding。
+- raw ch26 handler 的其餘演出尚未全部 materialize；此 typed gate 是受限 E1
+  projection，不是完整 raw handler 或一般玩家 E2 的完成宣告。
+
+驗證與剩餘不確定性
+------------------
+- IDA 指令與 Capstone 對 `0x25e1e..0x25e2a`、跳表 `0x51de9` 的 raw words
+  交叉一致。
+- remake 必須以 campaign regression 固定 ch26/ch28 owner，並驗證 ch25 的
+  event-state12兩臂、共同 acting/sync/chapter tail。
+- `0x2cad7` 的戰間 outcome、raw ch26 的完整演出與同狀態 DOSBox 畫面仍未達 E2。
