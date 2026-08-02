@@ -176,6 +176,20 @@ func (u *Unit) SetMapPlacement(x, y, pose int) bool {
 	return true
 }
 
+// SetNativeMapCoordinatesRaw mirrors a direct write to runtime bytes +0/+1.
+// Unlike SetMapPlacement it deliberately preserves +3 pose and +4 motion:
+// hard-coded handlers may update only the two coordinate bytes, and clearing
+// adjacent presentation state would invent a write that is absent in the EXE.
+func (u *Unit) SetNativeMapCoordinatesRaw(x, y int) bool {
+	if u == nil || !u.HasNativeMapPresentation || x < 0 || x > 0xff || y < 0 || y > 0xff {
+		return false
+	}
+	u.X, u.Y = x, y
+	u.NativeMapPresentation.X = byte(x)
+	u.NativeMapPresentation.Y = byte(y)
+	return true
+}
+
 // SetNativeMapGridMotion writes one native in-cell step. X/Y deliberately
 // remain on the source cell. motion is the exact unit+4 range 1..6.
 func (u *Unit) SetNativeMapGridMotion(pose, motion int) bool {

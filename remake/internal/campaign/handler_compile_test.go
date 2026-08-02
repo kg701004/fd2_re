@@ -231,12 +231,24 @@ func TestCompileHandlerJoinRejectsScenePortrait(t *testing.T) {
 	}
 }
 
-func TestCompileHandlerPaletteFadeIsFadeIn(t *testing.T) {
+func TestCompileHandlerPaletteFadePreservesNative65StepSchedule(t *testing.T) {
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
-		Op: "palette_fade", Source: HandlerSource{Addr: "0x1f525"},
+		Op: "palette_fade", Source: HandlerSource{Addr: "0x236f6", Target: "0x1f525"},
 	}}}, HandlerBindings{})
-	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "fade" || beats[0].Out || beats[0].Source != "0x1f525" {
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_palette_fade_in" ||
+		beats[0].NativePaletteFadeIn == nil || beats[0].NativePaletteFadeIn.Start != 64 ||
+		beats[0].NativePaletteFadeIn.End != 0 || beats[0].NativePaletteFadeIn.DelayMs != 2 ||
+		beats[0].Source != "0x236f6" {
 		t.Fatalf("palette fade lowering = %#v issues=%#v", beats, issues)
+	}
+}
+
+func TestCompileHandlerChapterZeroPaletteApproximationIsSourceBound(t *testing.T) {
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "palette_fade", Source: HandlerSource{Addr: "0x3241f", Target: "0x1f525"},
+	}}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "fade" || beats[0].Out || beats[0].Source != "0x3241f" {
+		t.Fatalf("chapter-zero bounded approximation = %#v issues=%#v", beats, issues)
 	}
 }
 

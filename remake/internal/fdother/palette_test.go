@@ -94,3 +94,28 @@ func TestApplyVGAPaletteDeltaPreservesByteSizedWhiteFlash(t *testing.T) {
 		t.Fatal("rejected byte-sized delta boundary mutated DAC")
 	}
 }
+
+func TestApplyVGAPaletteSubtractionUsesImmutableBaselineInclusiveAndAtomic(t *testing.T) {
+	baseline := make([]byte, 256*3)
+	baseline[3], baseline[4], baseline[5] = 1, 62, 63
+	dac := bytes.Repeat([]byte{9}, 256*3)
+	if err := ApplyVGAPaletteSubtraction(dac, baseline, 1, 1, 4); err != nil {
+		t.Fatal(err)
+	}
+	if got := dac[3:9]; !bytes.Equal(got, []byte{0, 58, 59, 9, 9, 9}) {
+		t.Fatalf("first subtraction=%v", got)
+	}
+	if err := ApplyVGAPaletteSubtraction(dac, baseline, 1, 1, 2); err != nil {
+		t.Fatal(err)
+	}
+	if got := dac[3:9]; !bytes.Equal(got, []byte{0, 60, 61, 9, 9, 9}) {
+		t.Fatalf("baseline-derived second subtraction=%v", got)
+	}
+	before := append([]byte(nil), dac...)
+	if err := ApplyVGAPaletteSubtraction(dac, baseline, 2, 1, 1); err == nil {
+		t.Fatal("invalid subtraction range accepted")
+	}
+	if !bytes.Equal(dac, before) {
+		t.Fatal("rejected subtraction mutated DAC")
+	}
+}

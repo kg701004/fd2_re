@@ -1,0 +1,88 @@
+FD2 第 10 戰戰後（raw ch09_post）IDA／Capstone 證據
+=====================================================
+
+參考檔案
+--------
+
+- 檔名：FD2.EXE
+- 大小：357074 bytes
+- MD5：b97caf2239a27a896069d03549d96e1e
+- SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+- 工具：使用者合法 IDA Pro 9.4 Docker（主分析）與 fd2-cap-local
+  Capstone Docker（獨立指令核對）
+- 證據等級：下列直接指令、常數、呼叫順序與原始欄位寫入皆為已證實；
+  60／61 runtime frontier 是由可選凱麗一席與 turn-5 group1 八筆 append
+  推得的強推論，尚未升為未修改 DOSBox 一般玩家路徑 E2。
+
+非破壞性命名原則
+----------------
+
+IDA 原始函式名與位址保留為 `sub_235F9`、`sub_1F882`、`sub_1F525`、
+`sub_13536`。本文的「淡出／淡入」是附加語意，且由完整 DAC 迴圈支持；
+`unit+5`、`unit+0x26` 仍保留原始 offset，不從局部清零寫入推導狀態名稱。
+
+sub_235F9（0x235F9..0x23790）
+--------------------------------
+
+IDA xref：`0x25E23` 的 post-handler table dispatch。
+
+已證實順序：
+
+1. `0x23609..0x23622` 從 `0x52113`、`0x5211E` 各複製 11 bytes。
+2. `0x23623` 呼叫 `sub_1F882`；`0x23628` 呼叫 `sub_13536`。
+3. `0x2362D..0x23657` 以 0x50 stride 寫 slots 0..10：
+   `+0/+1` 來自兩個 11-byte 表，`+3=2`。
+4. `0x23659..0x236A2` 是不經 helper 的 sparse direct writes：
+   - slot50（base+0xFA0）：`+0=15`、`+1=35`、`+0x26=0`
+   - slot51（base+0xFF0）：`+0=14`、`+1=35`、`+0x26=0`
+   - slot52（base+0x1040）：`+0=16`、`+1=35`、`+5=0`
+   - slot5（base+0x190）：`+5=0`
+5. `0x236B0..0x236E2` 寫 camera `(9,34)`、cursor `(9,34)`、visible
+   cursor `(0,0)`；`0x236EE` 呼叫 `sub_11CAC(1)`。
+6. `0x236F6` 呼叫 `sub_1F525`，之後 delay 200ms。
+7. FDTXT_010 index4 → acting resource37 → FDTXT_010 index5。
+8. `0x2376A` 呼叫 `sub_11506`，再以 ID11、ID6 呼叫 `sub_112A5`，
+   最後遞增 `[0x53C03]`。
+
+兩個原始位置表（Capstone raw data）為：
+
+- X：`[14,15,16,13,14,15,16,17,14,15,16]`
+- Y：`[38,39,38,38,39,38,39,39,40,40,40]`
+
+sub_13536（0x13536..0x13565）
+--------------------------------
+
+`0x13545..0x13561` 以 `[0x53BEB]` 為筆數、0x50 為 stride，對每一筆執行
+`record[5] &= 0x7F`。這只證明清除 `+5 bit7`，不等同清除整個 byte，也不
+等同重製端 `Acted=false`。
+
+sub_1F882（0x1F882..0x1F894）
+--------------------------------
+
+`xor ebx,ebx` 後跳入共享迴圈 `0x1F51E`。Capstone 從正確指令邊界核對：
+共享迴圈以 delta 0..63（含兩端，共 64 次）呼叫
+`sub_11D40(0,255,delta)`，每次再 delay 2ms。附加語意為全 DAC 淡出。
+
+sub_1F525（0x1F525..0x1F558）
+--------------------------------
+
+IDA 直接指令：
+
+- `0x1F530 mov ebx,40h`
+- `0x1F537..0x1F53F` 呼叫 `sub_11D40(0,255,ebx)`
+- `0x1F547..0x1F549` delay 2ms
+- `0x1F551 dec ebx`
+- `0x1F552..0x1F554` 在 `ebx>=0` 時回圈
+
+因此 delta 是 64..0（含兩端，共 65 次），不是通用 36 幀 RGBA 淡幕。
+附加語意為全 DAC 淡入。`ch00` 的 map32 runtime roster 尚缺原始 FDICON key，
+目前只在 `0x3241F` 保留明確標示的舊 RGBA 可玩近似；它不構成原版 parity。
+
+重製消費端
+----------
+
+- `direct_record_patch` 只寫 JSON 明列的 `+0/+1/+3/+5/+0x26`；未列欄位
+  原樣保留，且短於 runtime frontier 時原子失敗。
+- `native_palette_fade_out` 與 `native_palette_fade_in` 使用六位元 DAC 基準
+  做 baseline-minus-delta；每一步需先呈現才可前進。
+- `postbattle_ch10_persist` 完成後仍進入 `town_ch11`，不直接跳下一戰。

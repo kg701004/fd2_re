@@ -986,6 +986,27 @@ slots 0..9 與 slot 28 的佈位、ACTING 33／34、FDTXT_008 index 3／4，最�
 [`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。尚缺未修改 DOSBox
 一般玩家同狀態比較，不能提升為 E2 或逐像素一致。
 
+玩家第 10 戰的 raw ch09 post 是另一個完整 E1 垂直切片。IDA Pro 9.4 主判讀與
+Docker Capstone 覆核固定 `sub_235F9`（`0x235F9..0x23790`）：先執行
+`0x1F882` 的 delta 0→63 共64次六位元 DAC 淡出，再由 `0x13536` 對全部
+runtime records 執行 raw `+5 &= 0x7F`。後續不經 helper 的
+`0x2362D..0x236E2` 直接寫入已轉成 address-keyed `direct_record_patch`：只改
+slots 0..10 的 `+0/+1/+3`、slots 50／51 的 `+0/+1/+0x26`、slot52 與 slot5
+的 `+5`，以及 camera／cursor／visible cursor；未列欄位保持不變。原始 offset
+不從單一清零寫入提升為 gameplay 名稱，執行期也會在任何值域、provenance 或
+frontier 錯誤時於寫入前原子拒絕。
+
+第10戰戰前固定 group0 四十二筆，回合5的 event32 再 append group1 八筆；永久
+隊伍是否包含凱麗 id12 使戰後 runtime frontier 成為60或61。這兩個數量由可編輯
+roster producer 與回歸交叉支持，仍標強推論，不冒充未修改 DOSBox E2。
+`0x236EE` 重繪後，`0x1F525` 依 delta 64→0 共65次恢復原始 DAC，接著播放
+FDTXT_010 index4、ACTING37、index5，執行 sync、JOIN11、JOIN6、chapter10，
+最後保留正式 `town_ch11`，不直接跳下一戰。`syncPartyFromBattle` 現在會在 typed
+identity 尚未物化時讀 raw `+8`，並把該 identity 保存到 persistent snapshot，
+避免 JOIN 後的原始身分被 legacy `Fig` 覆寫。完整非破壞性位址證據見
+[`fd2_ch09_post_ida.txt`](../data/ida/fd2_ch09_post_ida.txt)；尚缺一般玩家同狀態
+DOSBox 逐幀比較，因此不能宣稱 E2 或原版時序一致。
+
 `0x24618..0x24754` is a separate map-transition compositor, not an actor `acting` decoder. Its callers include post-handler functions `0x33af1`/`0x33c9d`; it renders a 13×8 terrain region to an offscreen buffer, performs exactly nine strip-composite passes with a caller-supplied progression, then performs palette updates from 0 through 62 in steps of 2 (4 ms each). Its first two arguments feed tile geometry (`arg1*24+12`, `arg2*24+16`); the third starts a radial radius and the fourth increments that radius per pass. `0x22046` supplies a fixed scale of 16 to its two `0x219ad` radial LUT passes and derives its final rectangular radius as `trunc(radius*1.6)`. Its remaining constants are a pass row range `[start_y,end_y)=[0,192)`, not a source coordinate or blit width; the editable fields retain those names. A playable binding must either supply a verified transition adapter or fail closed—never lower it to `act`, `pan`, or an arbitrary fade.
 The `0x22046` inner order is executable as a raw primitive: `fdother.BuildNativeIndexedTransitionPass` preserves its scale-16, second-radial start row, and final-rectangle `a2` alias; `fdother.ApplyIndexedTransitionPass` validates both radial specs and the final centered rectangle before applying the first LUT remap, requiring the caller-owned `0x127a9` redraw callback, then applying the second remap and rectangle LUT. `indexedmap.BuildNativeTerrainCells` materializes the exporter’s raw FDFIELD tile/high-byte arrays, and `indexedmap.ComposeNativeTransitionFrame` supplies the verified terrain→unit/foreground→pass→312×192 viewport composition with atomic work/VGA commit when all raw banks and controls are supplied. `loadNativeMapAssets` requires FDOTHER#3 LUT entries 1..9 and the exact 768-byte FDOTHER#0 six-bit DAC before exposing the all-or-nothing native map bundle. `fdother.BuildNativeIndexedTransitionSchedule` preserves the outer nine-pass FDOTHER#3 LUT index order `9..1`, caller radius progression, 5ms pass delay, 500ms tail hold, and `0x11df2` palette deltas `0..62` step 2 at 4ms; `NativeIndexedTransitionLUT` resolves those raw indices only against the 256-byte bank entries. Docker Capstone recheck of `0x11df2` ([saved disassembly](../data/fd2_11df2_palette_disasm.txt)) proves that every RGB component is reread from immutable `[0x53a65]`, then receives delta and an upper clamp at 63 before DAC output. These steps are baseline-derived range writes, not cumulative additions to the current DAC.
 
@@ -1012,7 +1033,15 @@ Inventory gates are distinct from item-consuming event commands. Native `0x24b14
 
 `0x25052(start,delay_ms)` is an independently editable palette-ramp primitive: it emits inclusive descending `0x11df2(0,255,start..0)` baseline-derived updates, waiting after each update. The ch26 success arm calls `(5,80)`, `(4,80)`, `(3,80)`, then `(2,80)`, `(2,80)`, `(2,80)` interleaved with native waits. This is not a black fade and must preserve every delta including zero; compiler input is restricted to immediate `start∈[0,63]` and non-negative delay.
 
-`0x1f882` is a separate native palette fade-out, not a timing/vsync helper: it initializes `ebx=0`, then emits 64 inclusive `0x11d40(0,255,ebx)` steps with a 2 ms wait after each. Unlike `0x25052`, `0x11d40` applies the native darkening path rather than `0x11df2`'s baseline-derived brightening write. The handler compiler preserves this as `native_palette_fade_out{start:0,end:63,delay_ms:2}`; until the indexed DAC adapter exists runtime explicitly fails closed, and it must not silently become a generic story fade.
+`0x1f882` 是獨立的原生 palette 淡出，不是 timing／vsync helper：它以
+`ebx=0` 起始，對 delta 0..63（含兩端）各呼叫一次
+`0x11d40(0,255,ebx)`，每次等待2ms。`0x1f525` 則由64遞減到0，共65次相同
+baseline-minus-delta 寫入。handler compiler 分別保存為
+`native_palette_fade_out{0→63,2ms}` 與 `native_palette_fade_in{64→0,2ms}`；
+runtime 已用目前六位元 DAC baseline 與索引 framebuffer 執行，每一步都必須經
+Draw acknowledgement 才前進。60Hz host 無法呈現 DOS 的2ms wall-clock cadence，
+所以這只證明寫入序列與端點，不宣稱時序 E2。ch00 `0x3241f` 因 raw FDICON key
+尚未閉合，仍是唯一明示的 RGBA E1 近似；其他 call site 不得沿用該 fallback。
 
 ch19 post 的 Docker acting exporter 已解出 resource 59/60/61/62；其中 resource 59 直接引用 slots 53–60，resource 60 是 slot83，resource 61/62 是 slot1。這些 bytes 本身已可保存為 editable frames，但 handler 同時有 `spawn(group 1)`；目前 `map18_units.json` 的 group 1 只出現一筆，不能把它猜成 slots 53–60 的八筆 runtime frontier。因此 ch19 不因「resource 已解碼」而啟用，仍需 FDFIELD group cardinality／slot identity 證據與完整 runtime context。
 

@@ -35,7 +35,7 @@ PRIM = {
     0x112a5: ('join', 1),      # (char_id) — 序章尾 0/9/4/0x1e 四連呼 ✓
     0x25977: ('bgm', 2),       # (track,loop?) — push(0,-1)->reversed(-1,0)=doc47 "(-1,0)=停止" ✓
     0x13185: ('scroll_step', 1), # (unit_idx)往上逐格走並視需要跟焦；完整 body 0x13185..0x13314
-    0x1f525: ('palfade', 1),   # 整幕 palette 淡入(本輪未捕捉到章節 handler 內的呼叫實例,參數個數未核對,標記待驗證)
+    0x1f525: ('palfade', 0),   # 無參數；delta 64→0 共65次 0x11d40(0,255,delta)，每次 delay 2ms
     0x375b2: ('delay', 1),     # (ms) — doc47 "0x375b2(200ms)" ✓
     0x32975: ('deactivate_unit', 1), # (unit_idx)直接設 unit[+5]=1；原版是死亡／隱藏／未啟用
     0x32999: ('spawn_intro', 1),   # (group)內部 call 0x10b4e 後做 FDOTHER #9 的 12-pass 轉場；acting 由 caller 另行呼叫

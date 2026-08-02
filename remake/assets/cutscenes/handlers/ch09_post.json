@@ -27,6 +27,38 @@
       }
     },
     {
+      "op": "direct_record_patch",
+      "direct_record_patch": {
+        "units": [
+          { "slot": 0, "x": 14, "y": 38, "pose": 2 },
+          { "slot": 1, "x": 15, "y": 39, "pose": 2 },
+          { "slot": 2, "x": 16, "y": 38, "pose": 2 },
+          { "slot": 3, "x": 13, "y": 38, "pose": 2 },
+          { "slot": 4, "x": 14, "y": 39, "pose": 2 },
+          { "slot": 5, "x": 15, "y": 38, "pose": 2, "raw_bytes": [{ "offset": 5, "value": 0 }] },
+          { "slot": 6, "x": 16, "y": 39, "pose": 2 },
+          { "slot": 7, "x": 17, "y": 39, "pose": 2 },
+          { "slot": 8, "x": 14, "y": 40, "pose": 2 },
+          { "slot": 9, "x": 15, "y": 40, "pose": 2 },
+          { "slot": 10, "x": 16, "y": 40, "pose": 2 },
+          { "slot": 50, "x": 15, "y": 35, "raw_bytes": [{ "offset": 38, "value": 0 }] },
+          { "slot": 51, "x": 14, "y": 35, "raw_bytes": [{ "offset": 38, "value": 0 }] },
+          { "slot": 52, "x": 16, "y": 35, "raw_bytes": [{ "offset": 5, "value": 0 }] }
+        ],
+        "view": {
+          "camera_x": 9,
+          "camera_y": 34,
+          "cursor_x": 9,
+          "cursor_y": 34,
+          "visible_cursor_x": 0,
+          "visible_cursor_y": 0
+        }
+      },
+      "source": {
+        "addr": "0x2362d"
+      }
+    },
+    {
       "op": "redraw",
       "args": [
         1

@@ -1,7 +1,8 @@
 // title.go — 開頭動畫 + 主選單(忠實 doc23 反組譯):
 // ① 魔王立繪 320×735(FDOTHER #0x45-0x49 五幀直疊)由下往上垂直捲動(視窗 200 高,
 //
-//	src y=535→0,原版 0x1fa85;任意鍵跳過)+ 淡入(0x1f525 palette fade 對映 ColorScale)。
+//	src y=535→0,原版 0x1fa85;任意鍵跳過)。淡入目前仍用 ColorScale 作 E1
+//	可玩近似；原版 0x1f525 是65次六位元 DAC 寫入，尚未接到 title indexed path。
 //
 // ② 抹除轉場 → 標題畫面(FDOTHER #7 sub0,FLAME DRAGON logo,palette=FDOTHER #8)
 //   - 三選單項 START/LOAD/CONTINUE(#7 sub1-6 未選/選中素材)。
@@ -325,7 +326,8 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(2, 2)
 		op.GeoM.Translate(0, -g.scrollY*2) // 視窗=大圖的 y=scrollY 起 200 列
-		// 淡入:捲動前 60 tick 從黑亮起(對映原版 palette fade-in 0x1f525)
+		// 淡入：捲動前60 tick從黑亮起。這是 E1 RGBA 可玩近似，不等同
+		// 原版 0x1f525 的 delta 64→0 共65次六位元 DAC 寫入。
 		if fade := (535 - g.scrollY) / 60; fade < 1 {
 			op.ColorScale.Scale(float32(fade), float32(fade), float32(fade), 1)
 		}

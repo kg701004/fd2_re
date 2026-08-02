@@ -57,6 +57,26 @@ func ApplyVGAPaletteDelta(dac, baseline []byte, start, end, delta int) error {
 	return nil
 }
 
+// ApplyVGAPaletteSubtraction reproduces 0x11d40. Each selected component is
+// read from the immutable baseline, subtracts the byte-sized delta, and clamps
+// at zero. The update is atomic on invalid input.
+func ApplyVGAPaletteSubtraction(dac, baseline []byte, start, end, delta int) error {
+	if len(dac) != 256*3 || len(baseline) != 256*3 ||
+		start < 0 || end < start || end > 255 || delta < 0 || delta > 255 {
+		return errors.New("fdother: invalid VGA palette subtraction input")
+	}
+	next := append([]byte(nil), dac...)
+	for i := start * 3; i <= end*3+2; i++ {
+		v := int(baseline[i]) - delta
+		if v < 0 {
+			v = 0
+		}
+		next[i] = byte(v)
+	}
+	copy(dac, next)
+	return nil
+}
+
 // Paletted returns an image form of a direct-indexed raw cell. Its zero index
 // remains transparent, matching the native 0x4e9e4 destination-preserving
 // blitter rather than turning transparent pixels into opaque black.

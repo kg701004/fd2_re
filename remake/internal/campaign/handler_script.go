@@ -82,6 +82,7 @@ type HandlerBeat struct {
 	Repeat            *int                      `json:"repeat,omitempty"`
 	RepeatHint        *HandlerRepeatHint        `json:"repeat_hint,omitempty"`
 	UnitPresent       *HandlerUnitPresent       `json:"unit_present,omitempty"`
+	DirectRecordPatch *HandlerDirectRecordPatch `json:"direct_record_patch,omitempty"`
 	IndexedTransition *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
 	Ms                *int                      `json:"ms,omitempty"`
 	Variant           string                    `json:"variant,omitempty"`

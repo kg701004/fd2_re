@@ -211,6 +211,43 @@ type NativePaletteFadeOut struct {
 	DelayMs int `json:"delay_ms"`
 }
 
+// NativePaletteFadeIn is the exact 0x1f525 whole-DAC schedule. The helper
+// writes baseline-minus-delta for inclusive deltas 64..0, waiting 2ms after
+// every write. It is not the remake's generic RGBA story fade.
+type NativePaletteFadeIn struct {
+	Start   int `json:"start"`
+	End     int `json:"end"`
+	DelayMs int `json:"delay_ms"`
+}
+
+// HandlerRawUnitBytePatch keeps an original record offset visible instead of
+// assigning a gameplay name from one handler write. Runtime currently accepts
+// only offsets with an independently preserved typed storage location.
+type HandlerRawUnitBytePatch struct {
+	Offset int `json:"offset"`
+	Value  int `json:"value"`
+}
+
+// HandlerUnitRecordPatch is a sparse direct-write transcription. Pointer
+// fields distinguish an explicit zero from an omitted write; untouched record
+// bytes remain untouched.
+type HandlerUnitRecordPatch struct {
+	Slot     int                       `json:"slot"`
+	X        *int                      `json:"x,omitempty"`
+	Y        *int                      `json:"y,omitempty"`
+	Pose     *int                      `json:"pose,omitempty"`
+	RawBytes []HandlerRawUnitBytePatch `json:"raw_bytes,omitempty"`
+}
+
+// HandlerDirectRecordPatch represents hard-coded writes that occur between
+// calls and were therefore invisible to the call-only handler exporter. View
+// uses the already recovered raw camera/cursor globals; values stay additive
+// evidence tied to the source address in Beat.Source.
+type HandlerDirectRecordPatch struct {
+	Units []HandlerUnitRecordPatch `json:"units"`
+	View  *NativeMapViewConfig     `json:"view,omitempty"`
+}
+
 // NativePalettePulse is the exact whole-DAC pulse performed by 0x35e5a.
 // It is deliberately not represented as a generic fade: the first and
 // second ramps have different inclusive bounds and are separated by a hold.
@@ -277,10 +314,12 @@ type Beat struct {
 	Layout                *HandlerLayout            `json:"layout,omitempty"`
 	IndexedTransition     *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
 	NativePaletteFade     *NativePaletteFadeOut     `json:"native_palette_fade_out,omitempty"`
+	NativePaletteFadeIn   *NativePaletteFadeIn      `json:"native_palette_fade_in,omitempty"`
 	NativePalettePulse    *NativePalettePulse       `json:"native_palette_pulse,omitempty"`
 	NativePaletteBlackout *NativePaletteBlackout    `json:"native_palette_blackout,omitempty"`
 	NativeStagingPresent  *NativeStagingPresent     `json:"native_staging_present,omitempty"`
 	UnitPresent           *HandlerUnitPresent       `json:"unit_present,omitempty"`
+	DirectRecordPatch     *HandlerDirectRecordPatch `json:"direct_record_patch,omitempty"`
 
 	// loadch: atomically replace the active map, FDFIELD roster and FDTXT
 	// story context.  It is deliberately a nested required state object so a

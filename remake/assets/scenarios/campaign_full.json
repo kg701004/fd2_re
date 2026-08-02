@@ -1613,6 +1613,7 @@
   },
   "postbattle_ch10_persist": {
    "type": "cutscene",
+   "handler_binding": "assets/cutscenes/bindings/ch09_post.json",
    "beats": [],
    "next": "town_ch11"
   },

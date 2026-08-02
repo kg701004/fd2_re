@@ -3165,3 +3165,33 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   負向拒絕、洛娜 persistent record與進城；目前是E1，不是DOSBox E2。
 - 完整非破壞性位址證據見
   [`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。
+
+## 2026-08-02：玩家第10戰 raw ch09 戰後與精確 DAC 淡入勘誤
+
+- IDA Pro 9.4 主判讀與 Docker Capstone 覆核固定 `sub_235F9`
+  （`0x235F9..0x23790`）。`0x1F882` 是 delta 0→63 共64次
+  `0x11D40(0,255,delta)` 淡出；`0x1F525` 是 delta 64→0 共65次淡入，
+  兩者每次都等待2ms。較早將後者 lower 成通用36幀 RGBA `fade` 的說法已撤回。
+- `0x2362D..0x236E2` 不經 helper 的位置、pose、raw `+5/+0x26` 與 view
+  寫入已轉成 address-keyed `direct_record_patch`。執行期先驗證全部 slot、
+  值域、原始欄位 provenance、重複 offset 與 view，再一次提交；後段非法值
+  或短 frontier 不會留下前段部分修改。raw offset 不從局部清零推導 gameplay
+  名稱。
+- 第10戰正常 group0 四十二筆，回合5 event32 再 append group1 八筆；永久隊伍
+  是否含凱麗 id12，形成60／61兩種戰後 frontier。兩者已有 deterministic
+  regression，但仍是 producer 交叉支持的強推論，尚非未修改 DOSBox E2。
+- 正式 `postbattle_ch10_persist` 現依序執行淡出、`+5 bit7` 清除、sparse
+  patch、重繪、淡入、FDTXT_010 index4、ACTING37、index5、sync、JOIN11、
+  JOIN6、chapter10，之後保留 `town_ch11`，不直接跳下一戰。
+- `syncPartyFromBattle` 會在 typed identity 尚未物化時消費 raw `+8`，並保留
+  到 persistent snapshot，修正 JOIN 後被 legacy `Fig` 覆寫的身分缺口。
+- ch00 `0x3241F` 因 map32 runtime roster 尚缺 raw FDICON key，只保留 exact
+  call-site 的 RGBA E1 近似；它不是 `0x1F525` parity 或其他 handler fallback。
+- 非破壞性位址、位元組、hash 與推論等級見
+  [`fd2_ch09_post_ida.txt`](../data/ida/fd2_ch09_post_ida.txt)。postbattle 稽核
+  現為16 active／8 blocked；本切片仍缺一般玩家同狀態 DOSBox 逐幀比較。
+- Docker 驗證通過：583個 JSON 可解析、handler extractor 重新讀得
+  `0x236F6→0x1F525` 零參數、postbattle／story coverage 稽核一致、變更文件
+  的本地連結與圖片無缺漏，且 `go test ./... -count=1` 全數通過。Ebiten 測試
+  另實際呼叫 indexed palette Draw path，確認六位元 DAC palette 與呈現
+  acknowledgement；不使用遊戲迴圈外不合法的 GPU pixel readback。

@@ -32,7 +32,7 @@
 | `JOIN(char)` (0x112a5) | 角色入隊伍名冊 | beat op:join |
 | `BGM(track)` (0x25977) | 配樂切換/停止 | beat op:bgm |
 | **走位 STEP/路徑** (step家族 + 0x13488) | 引擎逐格步進單位(方向陣列 0下1左2上3右);詳見 §1.1 | beat op:walk |
-| `PALFADE` (0x1f525) | 整幕 palette 淡入 | beat op:fade |
+| `PALFADE` (0x1f525) | 六位元 DAC 基準減量淡入：delta 64→0（含兩端，共65次），每次等待2ms | beat op:native_palette_fade_in；只有 ch00 `0x3241f` 因 raw FDICON key 尚缺而保留明示的 RGBA E1 近似 |
 | `DELAY(ms)` (0x375b2) | 延遲 | beat op:delay |
 | `DEACTIVATE_UNIT(slot)`（legacy DSL alias, 0x32975） | `unit[slot]+5 = 1`；此 caller 用於劇情退場，但 raw writer 本身不命名 bit0 的全域語意 | beat op:deactivate_unit（raw writer） |
 | `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再用 FDOTHER #9 做固定 12 次索引合成／呈現；後續 ACTING 是 caller 的獨立動作 | beat op:spawn_intro；原版 handler 走具型別12次呈現 adapter，缺證據／素材時失敗即關閉 |
@@ -283,7 +283,10 @@ runtime 位址」與錯 context table dump，不是 entry breakpoint 本身。
 　　`pan/dialog/act` 一律要求**以 `source.addr` 鍵控的**
 　　顯式 mapper，分別避免猜 grid→pixel、FDTXT idx→譯文行、acting id→角色。`spawn`
 　　現已由 loadch roster 的 FDFIELD group 直接 lower；`join` 只接受原版 0–31 的我方名冊
-　　charID，並保存成跨關 membership；`palette_fade` lower 為 `fade(out:false)`；`scroll_step`
+　　charID，並保存成跨關 membership；`palette_fade` 僅在來源為無參數
+　　`0x1f525` 時 lower 為精確 `native_palette_fade_in{64→0,2ms}`。ch00
+　　`0x3241f` 是唯一具位址限制的 RGBA 可玩近似，不能當成原版一致或其他 handler
+　　的 fallback；`scroll_step`
 　　保留 slot/repeat/每格七 ticks，`focus_unit` 保留原版逐格游標安全帶。真正未知或動態參數仍產生
 　　帶 source address 的 compile issue，不能假裝成可執行效果。
 

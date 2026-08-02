@@ -61,6 +61,7 @@ func (g *Game) tick(n int) {
 		g.stepActJob()
 		g.stepFocusUnit()
 		g.stepFade()
+		g.stepNativePaletteRamp()
 		g.stepCamPan()
 		if g.beatDelay > 0 {
 			g.beatDelay--
@@ -349,12 +350,12 @@ func TestBeatActingZeroSpecialPreservesOriginalThreeTickTransition(t *testing.T)
 	}
 }
 
-func TestBeatNativePaletteFadeOutFailsClosedWithoutIndexedDACAdapter(t *testing.T) {
+func TestBeatNativePaletteFadeOutFailsClosedWithoutIndexedInput(t *testing.T) {
 	g := newBeatTestGame(t, []campaign.Beat{{
 		Op: "native_palette_fade_out", NativePaletteFade: &campaign.NativePaletteFadeOut{Start: 0, End: 63, DelayMs: 2},
 	}})
 	g.beatAdvance()
-	if g.loadErr != "beat native_palette_fade_out: native indexed DAC adapter未完成" {
+	if g.loadErr != "beat native_palette_fade_out: native indexed framebuffer or DAC baseline unavailable" {
 		t.Fatalf("native palette fade error=%q", g.loadErr)
 	}
 }

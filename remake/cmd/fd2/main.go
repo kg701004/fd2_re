@@ -72,6 +72,8 @@ type Game struct {
 	nativeMapAssets            *nativeMapAssets                   // all original map HUD resources, nil on any missing/malformed asset
 	nativeMapWork              []byte                             // persistent 456-stride original tactical framebuffer
 	nativeMapVGA               []byte                             // persistent 320x200 indexed VGA surface
+	nativeMapDAC               []byte                             // current 256xRGB six-bit DAC state for handler palette ramps
+	nativePaletteRamp          *nativePaletteRampJob              // exact 0x1f882/0x1f525 indexed DAC presentation
 	nativeFullDACWhite         bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
 	nativeFullDACBlack         bool                               // exact ch07 post 0x11D40(0,255,64)+mode-13h clear
 	nativeMapHUDPersistent     battle.NativeMapHUDPersistentState // gate A save-persistent；anchor process-persistent
@@ -1001,9 +1003,18 @@ func (g *Game) beatStart(b campaign.Beat) {
 			g.loadErr = "beat native_palette_fade_out:缺少原版 64-step DAC payload"
 			return
 		}
-		// 0x1f882 uses 0x11d40's indexed DAC darkening path. Do not replace it
-		// with the RGBA story fade or 0x11df2 palette-update approximation.
-		g.loadErr = "beat native_palette_fade_out: native indexed DAC adapter未完成"
+		if err := g.startNativePaletteRamp(0, 63, 2, g.beatAdvance); err != nil {
+			g.loadErr = "beat native_palette_fade_out: " + err.Error()
+		}
+		return
+	case "native_palette_fade_in":
+		if b.NativePaletteFadeIn == nil || b.NativePaletteFadeIn.Start != 64 || b.NativePaletteFadeIn.End != 0 || b.NativePaletteFadeIn.DelayMs != 2 {
+			g.loadErr = "beat native_palette_fade_in:缺少原版 65-step DAC payload"
+			return
+		}
+		if err := g.startNativePaletteRamp(64, 0, 2, g.beatAdvance); err != nil {
+			g.loadErr = "beat native_palette_fade_in: " + err.Error()
+		}
 		return
 	case "native_palette_pulse":
 		pulse := b.NativePalettePulse
@@ -1064,6 +1075,16 @@ func (g *Game) beatStart(b campaign.Beat) {
 			unit.SetMapPlacement(placement.X, placement.Y, placement.Pose)
 		}
 		g.camX, g.camY = float64(b.Layout.CamX), float64(b.Layout.CamY)
+		g.beatAdvance()
+	case "direct_record_patch":
+		if b.Source != "0x2362d" || b.DirectRecordPatch == nil {
+			g.loadErr = "beat direct_record_patch:缺少原版來源或 sparse payload"
+			return
+		}
+		if err := g.applyHandlerDirectRecordPatch(b.DirectRecordPatch); err != nil {
+			g.loadErr = "beat direct_record_patch: " + err.Error()
+			return
+		}
 		g.beatAdvance()
 	case "if":
 		matched, err := g.evalBeatCondition(b.Condition)
@@ -1284,6 +1305,12 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		g.beatDelay = 1 // original 20ms at a 60Hz remake clock
 	case "redraw":
+		if b.Source == "0x236ee" {
+			if err := g.composeNativeMapFrame(); err != nil {
+				g.loadErr = "beat redraw: native 0x236ee: " + err.Error()
+				return
+			}
+		}
 		// Ebiten presents the current state once after this Update.  Blocking
 		// one frame preserves the standalone original 0x11cac(0) boundary.
 		g.beatDelay = 1
@@ -2528,10 +2555,14 @@ func (g *Game) syncPartyFromBattle() error {
 			continue
 		}
 		id := current.Fig
-		if current.HasNativeIdentity {
+		rawIdentity, hasRawIdentity := current.NativeIdentity, current.HasNativeIdentity
+		if !hasRawIdentity && current.HasNativeRecordByte8 {
+			rawIdentity, hasRawIdentity = int(current.NativeRecordByte8), true
+		}
+		if hasRawIdentity {
 			matched := false
 			for rosterID, roster := range g.partyRoster {
-				if roster.HasNativeIdentity && roster.NativeIdentity == current.NativeIdentity {
+				if roster.HasNativeIdentity && roster.NativeIdentity == rawIdentity {
 					id, matched = rosterID, true
 					break
 				}
@@ -2548,6 +2579,9 @@ func (g *Game) syncPartyFromBattle() error {
 			continue
 		}
 		snapshot := *current
+		if hasRawIdentity {
+			snapshot.NativeIdentity, snapshot.HasNativeIdentity = rawIdentity, true
+		}
 		snapshot.Spells = append([]int(nil), current.Spells...)
 		snapshot.Inventory = append([]int(nil), current.Inventory...)
 		snapshot.Equipped = append([]bool(nil), current.Equipped...)
@@ -4495,8 +4529,11 @@ func (g *Game) loadMap(dir string) error {
 	// an all-or-nothing bundle. The indexed presentation bridge consumes this
 	// field later; no partial resource is allowed to affect gameplay.
 	g.nativeMapAssets = nil
+	g.nativeMapDAC = nil
+	g.nativePaletteRamp = nil
 	if native, nativeErr := loadNativeMapAssets(dir); nativeErr == nil && nativeMapAssetsAvailable(native) {
 		g.nativeMapAssets = native
+		g.nativeMapDAC = append(g.nativeMapDAC[:0], native.PaletteDAC...)
 	}
 	return nil
 }
@@ -5385,6 +5422,7 @@ func (g *Game) Update() error {
 	g.stepFade()                                 // 場景淡出/淡入轉場(doc46 §5.2;beat「fade」兩個方向都靠 then 接回下一拍)
 	g.stepTransitionReveal()                     // native 0x24b4d alternating present loop
 	g.stepNativeIndexedTransition()              // native 0x24618 indexed map/palette transition
+	g.stepNativePaletteRamp()                    // native 0x1f882/0x1f525 whole-DAC ramps
 	g.stepNativeSpawnIntro()                     // native 0x32999 twelve-pass indexed spawn transition
 	g.stepNativeTurnStaging()                    // event63 raw-camp0 pre-AI staging helper
 	if g.camp != nil && g.storyAutoAdvance > 0 { // 無對白節點自動轉場倒數(行軍蒙太奇)
@@ -5656,6 +5694,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if g.nativeFullDACBlack {
 			screen.Fill(color.Black)
 		}
+		if g.nativePaletteRamp == nil && nativeDACIsBlack(g.nativeMapDAC) {
+			screen.Fill(color.Black)
+		}
 		if g.nativeTurnStaging != nil && !g.nativeTurnStaging.indexed &&
 			g.nativeTurnStaging.phase == nativeTurnStagingFlash {
 			g.nativeTurnStaging.drawn = true
@@ -5683,6 +5724,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.Fill(color.Black)
 		if !g.drawNativeIndexedTransition(screen) {
 			ebitenutil.DebugPrint(screen, "native 0x24618 transition unavailable")
+		}
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
+		}
+		return
+	}
+	if g.nativePaletteRamp != nil {
+		screen.Fill(color.Black)
+		if !g.drawNativePaletteRamp(screen) {
+			ebitenutil.DebugPrint(screen, "native palette ramp unavailable")
 		}
 		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
 			g.captureShot(screen)
@@ -7540,7 +7591,13 @@ func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 		return false
 	}
 	a := g.nativeMapAssets
-	img := image.NewPaletted(image.Rect(0, 0, 320, 200), a.Palette)
+	palette := a.Palette
+	if len(g.nativeMapDAC) == 256*3 {
+		if current, err := fdother.VGAPaletteFromDAC(g.nativeMapDAC); err == nil {
+			palette = current
+		}
+	}
+	img := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
 	copy(img.Pix, g.nativeMapVGA)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(2, 2)

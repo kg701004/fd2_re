@@ -634,11 +634,26 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			}
 			beats = append(beats, beat)
 		case "palette_fade":
-			// Original 0x1f525 is the whole-screen palette fade-in.  It has no
-			// chapter-local argument, so the generic runtime representation is
-			// safe: fade.Out=false means fade from black into the loaded scene.
-			beat := runtime(input, "fade")
-			beat.Out = false
+			// 0x1f525 performs baseline-minus-delta writes for inclusive deltas
+			// 64..0 and waits 2ms after every write. Keep it separate from the
+			// remake's generic RGBA story fade and reject exporter drift.
+			if input.Source.Target != "0x1f525" || len(input.RawArgs) != 0 || len(input.Args) != 0 {
+				issue(i, input, "palette_fade requires exact no-argument 0x1f525 source")
+				continue
+			}
+			if input.Source.Addr == "0x3241f" {
+				// ch00 map32_runtime predates raw FDICON-key provenance, so its
+				// indexed scene cannot yet be composed without guessing Fig==key.
+				// Retain the established playable RGBA approximation only at this
+				// exact call site; it is not evidence for 0x1f525 parity and must
+				// not become a generic fallback for ch09/ch19 post-battle handlers.
+				beat := runtime(input, "fade")
+				beat.Out = false
+				beats = append(beats, beat)
+				continue
+			}
+			beat := runtime(input, "native_palette_fade_in")
+			beat.NativePaletteFadeIn = &NativePaletteFadeIn{Start: 64, End: 0, DelayMs: 2}
 			beats = append(beats, beat)
 		case "unknown":
 			// ch07 post-battle has one fully immediate use of 0x11d40 followed
@@ -912,6 +927,66 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				continue
 			}
 			issue(i, input, "unit_present is blocked: native 0x22253 full 11+6+10 choreography is not represented")
+		case "direct_record_patch":
+			patch := input.DirectRecordPatch
+			if input.Source.Addr != "0x2362d" || input.Source.Target != "" ||
+				patch == nil || len(patch.Units) == 0 || activeSlotCount <= 0 {
+				issue(i, input, "direct_record_patch requires an active runtime frontier and unit writes")
+				continue
+			}
+			seenSlots := make(map[int]bool, len(patch.Units))
+			valid := true
+			for _, unit := range patch.Units {
+				if unit.Slot < 0 || unit.Slot >= activeSlotCount || seenSlots[unit.Slot] ||
+					(unit.X == nil) != (unit.Y == nil) ||
+					(unit.X == nil && unit.Pose == nil && len(unit.RawBytes) == 0) {
+					valid = false
+					break
+				}
+				seenSlots[unit.Slot] = true
+				if unit.X != nil && (*unit.X < 0 || *unit.X > 0xff || *unit.Y < 0 || *unit.Y > 0xff) {
+					valid = false
+					break
+				}
+				if unit.Pose != nil && (*unit.Pose < 0 || *unit.Pose > 3) {
+					valid = false
+					break
+				}
+				seenOffsets := map[int]bool{}
+				for _, raw := range unit.RawBytes {
+					if (raw.Offset != 5 && (raw.Offset < 0x22 || raw.Offset > 0x27)) ||
+						raw.Value < 0 || raw.Value > 0xff || seenOffsets[raw.Offset] {
+						valid = false
+						break
+					}
+					seenOffsets[raw.Offset] = true
+				}
+				if !valid {
+					break
+				}
+			}
+			if patch.View != nil && (patch.View.CameraX < 0 || patch.View.CameraY < 0 ||
+				patch.View.CursorX < 0 || patch.View.CursorY < 0 ||
+				patch.View.VisibleCursorX != patch.View.CursorX-patch.View.CameraX ||
+				patch.View.VisibleCursorY != patch.View.CursorY-patch.View.CameraY) {
+				valid = false
+			}
+			if !valid {
+				issue(i, input, "direct_record_patch contains an invalid slot, sparse field, raw offset, or view")
+				continue
+			}
+			copyPatch := *patch
+			copyPatch.Units = append([]HandlerUnitRecordPatch(nil), patch.Units...)
+			if patch.View != nil {
+				view := *patch.View
+				copyPatch.View = &view
+			}
+			for index := range copyPatch.Units {
+				copyPatch.Units[index].RawBytes = append([]HandlerRawUnitBytePatch(nil), patch.Units[index].RawBytes...)
+			}
+			beat := runtime(input, "direct_record_patch")
+			beat.DirectRecordPatch = &copyPatch
+			beats = append(beats, beat)
 		case "layout_units":
 			if bindings.Layout == nil {
 				issue(i, input, "layout_units requires an explicit runtime-slot layout mapping")
