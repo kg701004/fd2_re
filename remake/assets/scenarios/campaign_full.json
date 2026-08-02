@@ -833,7 +833,7 @@
   },
   "postbattle_ch04_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch04_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch03_post.json",
    "next": "town_ch05"
   },
   "retreat_ch04": {
@@ -942,7 +942,7 @@
   },
   "postbattle_ch05_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch05_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch04_post.json",
    "next": "town_ch06"
   },
   "retreat_ch05": {
@@ -1375,7 +1375,6 @@
   },
   "postbattle_ch08_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch08_post.json",
    "next": "town_ch09"
   },
   "retreat_ch08": {
@@ -1499,7 +1498,7 @@
   },
   "postbattle_ch09_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch09_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch08_post.json",
    "beats": [],
    "next": "town_ch10"
   },
@@ -1629,7 +1628,6 @@
   },
   "postbattle_ch10_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch10_post.json",
    "beats": [],
    "next": "town_ch11"
   },
@@ -1754,7 +1752,7 @@
   },
   "postbattle_ch11_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch11_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch10_post.json",
    "next": "town_ch12"
   },
   "retreat_ch11": {
@@ -1878,7 +1876,7 @@
   },
   "postbattle_ch12_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch12_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch11_post.json",
    "beats": [],
    "next": "town_ch13"
   },
@@ -2013,7 +2011,6 @@
   },
   "postbattle_ch13_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch13_post.json",
    "next": "town_ch14"
   },
   "retreat_ch13": {
@@ -2699,7 +2696,6 @@
   },
   "postbattle_ch18_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch18_post.json",
    "beats": [],
    "next": "town_ch19"
   },
@@ -2849,7 +2845,7 @@
   },
   "postbattle_ch19_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch19_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch18_post.json",
    "beats": [],
    "next": "town_ch20"
   },
@@ -3518,7 +3514,6 @@
   },
   "postbattle_ch24_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch24_post.json",
    "next": "preparation_ch25"
   },
   "retreat_ch24": {
@@ -3562,7 +3557,7 @@
   },
   "postbattle_ch25_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch25_post.json",
+   "handler_binding": "assets/cutscenes/bindings/ch24_post.json",
    "next": "town_ch26"
   },
   "retreat_ch25": {
@@ -3995,7 +3990,6 @@
   },
   "postbattle_ch29_persist": {
    "type": "cutscene",
-   "handler_binding": "assets/cutscenes/bindings/ch29_post.json",
    "beats": [],
    "next": "preparation_ch30"
   },

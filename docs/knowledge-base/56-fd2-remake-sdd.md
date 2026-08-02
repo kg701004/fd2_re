@@ -250,7 +250,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-04 | Target/range/item selector | 武器 min/max reach、法術 range/AOE、item兩欄四列、不可用目標灰化、確認／取消 | partial；command/item targets與 observed item effects已閉合。`0x1b9de/0x184c0` 固定 compact prefix、input、layout與raw icon IDs；`0x18409` 的12-frame open11→0/close0→11及left/upper/bottom clipped rectangles已有Ebiten adapter。tracked item Enter transaction已接，但indexed effect presentation、完整weapon/AOE/LOS與DOSBox visual diff仍fail-closed |
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
-| UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；ch04/ch05/ch08/ch09/ch10/ch11/ch12/ch13/ch18/ch19/ch24/ch25 post handler 已通過 Docker compiler regression 並接入 authored binding。ch25 以 address+text-index dialogue override 保存 FDTXT_026 string5–11→ch26 scene2/3/4 branch，另保存 16-slot layout、camera raw `(9,5)`→`(216,120)`、map25 frontier70、acting resources77–80；其餘 unbound `postbattle_*` 不會空 beats 直跳 town，逐關 branch 證據仍不足 |
+| UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace；標準 postbattle 目前只有玩家 ch04/05/09/11/12/14/15/19/25 接入零起算 owner 的 authored binding。raw ch25 雖已有 address+text-index dialogue override、16-slot layout、map25 frontier70與acting77–80，其正確 owner `postbattle_ch26` 尚未獲准啟用；其餘 unbound `postbattle_*` 由 runtime guard 停住，不會空 beats 直跳 town，逐關 branch 證據仍不足 |
 | UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同，Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1/2與逐章route E2 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No、gold0不足金與gold1000裝備收件者selection0/cycle1均達原版DOSBox／production remake同狀態raw RGB整幀相同；recipient E2使用screenshot-only party bootstrap，DX為E2約束的projection而非直接raw dump。正常campaign JOIN→LOADCH首次typed roster已接runtime regression，但尚非完整playthrough E2或native FD2.SAV。另修正pulse double-`/2`、返回selection0、choice-close frame ownership與比較欄位geometry。尚待recipient input/scroll、no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
@@ -276,8 +276,9 @@ ch06 post 的 branch 已由 Docker Capstone 釘死：先 `sync_party`，只有 `
 `ch15_post` 實際屬於第16戰戰後，正式 owner 是仍保持 unbound 的 `postbattle_ch16_persist`。
 稽核工具不再把非空 binding 視為正確，而會比對這個已證實的零基索引關係；截至本輪，
 `postbattle_ch04/05/08/09/10/11/12/13/18/19/24/25/29` 共13個既有同號 binding 會報
-`active_index_mismatch`。這些節點不是忠實度完成項；必須逐章驗證正確的前一號 raw binding，
-未達證據 gate 者應撤回並失敗即關閉，不能只為維持可達性而批次平移。
+`active_index_mismatch`。逐章複核後，ch04/05/09/11/12/19/25 已安全移接至前一號 raw
+binding；ch08/10/13/18/24/29 因未知呼叫、缺 mapping 或來源位址可疑而撤回錯接並失敗即關閉。
+稽核現為9個 active、13個 blocked、2個 mapping complete 但尚未啟用，且沒有 index mismatch。
 
 同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫
 special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49 操作 slot65；之後掃
@@ -1919,7 +1920,12 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    camera lifecycle, HUD gate/anchor persistence and monotonic BIOS-clock
    caller still must be connected before replacing the visible map renderer.
 
-   Campaign flow correction: `postbattle_ch29_persist` now points to the recovered editable `ch29_post` binding before `preparation_ch30`; it no longer replaces that handler with synthetic `sync_party → set_chapter` beats. The native handler's proven LOADCH/persistent-roster reconstruction is the persistence boundary, while unresolved `0x2bce5` remains the sole tolerated fail-closed renderer issue. Campaign regression explicitly allows this native persistence exception and still forbids a direct battle→preparation edge.
+   Campaign flow correction（2026-08-02 勘誤）：較早把 `ch29_post` 接到
+   `postbattle_ch29_persist` 的說法已撤回。scenario `ch29` 載入 raw map28；依主迴圈的
+   零起算 dispatch，第29戰應使用 raw `ch28_post`。該 binding 尚未獲准啟用，因此
+   `postbattle_ch29_persist` 現保持未綁定並由 runtime guard 停在 `preparation_ch30` 前。
+   raw `ch29_post` 的 LOADCH／persistent-roster 與 `0x2bce5` 證據仍保留，但其正確 owner
+   必須和第30戰結局流程另行閉合，不能用已恢復函式本身推定 campaign 接點。
 
    Presentation bridge (strict gate): `drawNativeMapHUD` converts the verified 456-stride indexed buffer to a 320×200 paletted Ebiten image only when `NativeMapHUDRuntimeState`, selector cache/cycle and every selected-unit raw admission byte are present. It now draws panel/terrain/AP/DP plus the proven unit icon and `+0x40/+0x42` HP path together. The former hardcoded `DisplayGateA=true, DisplayGateB=true, AnchorX=1` partial path has been removed because native load can overwrite gate A. Missing provenance falls back before any native drawing. `NativeMapHUDPersistentState` now separates save-persistent gate A、process-persistent anchor 與 controller-owned gate B；custom save and native chapter restore preserve gate A, while battle entry materializes gate B only from the proven value 1. `battle_ch01`、`battle_ch26` and `battle_ch27` use editable `native_map_hud_inherited` together with their evidenced views. Exact fixed HUD bytes remain available only for explicit fixtures/snapshots; this inherited owner closes E1 state flow, not whole-campaign visual parity.
 

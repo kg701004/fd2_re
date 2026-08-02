@@ -49,8 +49,15 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
         handler_path = handlers_dir / f"{stem}_post.json"
         binding_path = generated_dir / f"{stem}_post.json"
         expected_active_binding = f"assets/cutscenes/bindings/{stem}_post.json"
+        active_binding = node.get("handler_binding", "")
+        active_path = campaign_path.parent.parent.parent / active_binding if active_binding else None
+        evidence_binding_path = (
+            active_path
+            if active_binding == expected_active_binding and active_path is not None and active_path.exists()
+            else binding_path
+        )
         handler = json.loads(handler_path.read_text(encoding="utf-8")) if handler_path.exists() else {}
-        binding = json.loads(binding_path.read_text(encoding="utf-8")) if binding_path.exists() else {}
+        binding = json.loads(evidence_binding_path.read_text(encoding="utf-8")) if evidence_binding_path.exists() else {}
         overrides = binding.get("overrides", {})
         dialogue_overrides = binding.get("dialogue_overrides", {})
         contexts = binding.get("dialogue_contexts", {})
@@ -59,6 +66,10 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
         for beat in walk(handler.get("beats", [])):
             op = beat.get("op")
             ops[op] += 1
+            if op == "unknown":
+                source = beat.get("source") or {}
+                gaps.append({"op": op, "source_addr": source.get("addr"), "required": "native_semantics"})
+                continue
             field = REQUIRED_FIELDS.get(op)
             if not field:
                 continue
@@ -76,7 +87,6 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
                 covered = isinstance(override, dict) and field in override
             if not covered:
                 gaps.append({"op": op, "source_addr": addr, "required": field})
-        active_binding = node.get("handler_binding", "")
         if active_binding and active_binding != expected_active_binding:
             status = "active_index_mismatch"
         elif active_binding:
@@ -93,6 +103,7 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             "node": node_id,
             "handler": str(handler_path),
             "generated_binding": str(binding_path) if binding_path.exists() else "",
+            "evidence_binding": str(evidence_binding_path) if evidence_binding_path.exists() else "",
             "expected_handler_binding": expected_active_binding,
             "active_handler_binding": active_binding,
             "operation_counts": dict(sorted(ops.items())),

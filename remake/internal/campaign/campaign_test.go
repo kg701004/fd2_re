@@ -306,7 +306,7 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		chapter int
 		town    string
 	}{
-		{11, "town_ch12"}, {13, "town_ch14"}, {15, "town_ch16"},
+		{11, "town_ch12"}, {15, "town_ch16"},
 		{17, "town_ch18"}, {20, "town_ch21"},
 	} {
 		battleID := fmt.Sprintf("battle_ch%02d", tc.chapter)
@@ -315,11 +315,8 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		if battleNode == nil || battleNode.OnWin != postID || post == nil || post.Type != "cutscene" || post.Next != tc.town {
 			t.Fatalf("chapter%d material acquisition must sync before %s: battle=%#v post=%#v", tc.chapter, tc.town, battleNode, post)
 		}
-		if tc.chapter == 11 || tc.chapter == 13 || tc.chapter == 15 {
-			wantBinding := "assets/cutscenes/bindings/ch11_post.json"
-			if tc.chapter == 13 {
-				wantBinding = "assets/cutscenes/bindings/ch13_post.json"
-			}
+		if tc.chapter == 11 || tc.chapter == 15 {
+			wantBinding := "assets/cutscenes/bindings/ch10_post.json"
 			if tc.chapter == 15 {
 				wantBinding = "assets/cutscenes/bindings/ch14_post.json"
 			}
@@ -343,8 +340,8 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		t.Fatalf("sky-key success must sync persistent party before chapter28 preparation: %#v", success)
 	}
 	post29 := c.Nodes["postbattle_ch29_persist"]
-	if post29 == nil || post29.Type != "cutscene" || post29.HandlerBinding != "assets/cutscenes/bindings/ch29_post.json" || post29.Next != "preparation_ch30" || len(post29.Beats) != 0 {
-		t.Fatalf("chapter29 must preserve its recovered post-handler before preparation: %#v", post29)
+	if post29 == nil || post29.Type != "cutscene" || post29.HandlerBinding != "" || post29.Next != "preparation_ch30" || len(post29.Beats) != 0 {
+		t.Fatalf("chapter29 must keep the mismatched ch29 raw handler disconnected: %#v", post29)
 	}
 	missing := c.Nodes["story_ch27_post_sky_key_missing"]
 	if missing == nil || missing.Type != "story" || missing.Script != "assets/story/ch27.json" || missing.Scene != "缺少天空之鑰的離別(分支)" || missing.Next != "ending_ch27_no_sky_key" {
@@ -404,6 +401,49 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 		tail := node.Beats[len(node.Beats)-4:]
 		if tail[0].Op != "join" || tail[0].CharID != 24 || tail[1].Op != "join" || tail[1].CharID != 23 || tail[2].Op != "sync_party" || tail[3].Op != "set_chapter" || tail[3].Chapter == nil || *tail[3].Chapter != 21 {
 			t.Fatalf("chapter21 %s common JOIN/sync/chapter tail = %#v", id, tail)
+		}
+	}
+}
+
+func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
+	c, err := Load("../../assets/scenarios/campaign_full.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{
+		"postbattle_ch04_persist": "assets/cutscenes/bindings/ch03_post.json",
+		"postbattle_ch05_persist": "assets/cutscenes/bindings/ch04_post.json",
+		"postbattle_ch06_persist": "",
+		"postbattle_ch07_persist": "",
+		"postbattle_ch08_persist": "",
+		"postbattle_ch09_persist": "assets/cutscenes/bindings/ch08_post.json",
+		"postbattle_ch10_persist": "",
+		"postbattle_ch11_persist": "assets/cutscenes/bindings/ch10_post.json",
+		"postbattle_ch12_persist": "assets/cutscenes/bindings/ch11_post.json",
+		"postbattle_ch13_persist": "",
+		"postbattle_ch14_persist": "assets/cutscenes/bindings/ch13_post.json",
+		"postbattle_ch15_persist": "assets/cutscenes/bindings/ch14_post.json",
+		"postbattle_ch16_persist": "",
+		"postbattle_ch17_persist": "",
+		"postbattle_ch18_persist": "",
+		"postbattle_ch19_persist": "assets/cutscenes/bindings/ch18_post.json",
+		"postbattle_ch20_persist": "",
+		"postbattle_ch22_persist": "",
+		"postbattle_ch23_persist": "",
+		"postbattle_ch24_persist": "",
+		"postbattle_ch25_persist": "assets/cutscenes/bindings/ch24_post.json",
+		"postbattle_ch26_persist": "",
+		"postbattle_ch28_persist": "",
+		"postbattle_ch29_persist": "",
+	}
+	for nodeID, wantBinding := range want {
+		n := c.Nodes[nodeID]
+		if n == nil {
+			t.Errorf("missing node %s", nodeID)
+			continue
+		}
+		if n.HandlerBinding != wantBinding {
+			t.Errorf("%s binding=%q, want %q", nodeID, n.HandlerBinding, wantBinding)
 		}
 	}
 }
@@ -644,13 +684,6 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 		if n.HandlerBinding != "" {
 			var issues []HandlerCompileIssue
 			beats, issues, err = CompileHandlerBinding(filepath.Join("../..", n.HandlerBinding))
-			// ch29's recovered native handler owns persistence through its
-			// LOADCH/persistent-roster reconstruction; it has no synthetic
-			// sync_party beat. Its final 0x2bce5 renderer is intentionally still
-			// unresolved, so only that known fail-closed issue is tolerated here.
-			if nodeID == "postbattle_ch29_persist" && err == nil && len(issues) == 1 && issues[0].Source.Target == "0x2bce5" {
-				return 0
-			}
 			if err != nil || len(issues) != 0 {
 				t.Fatalf("%s handler compile err=%v issues=%#v", nodeID, err, issues)
 			}
@@ -687,6 +720,12 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 				if n == nil {
 					t.Fatalf("%s path reaches missing node %q", battleID, current)
 				}
+				if strings.HasPrefix(current, "postbattle_") && n.HandlerBinding == "" && len(n.Beats) == 0 {
+					if n.Next != wantIntermission[chapter] {
+						t.Fatalf("%s unresolved postbattle next=%s, want %s", battleID, n.Next, wantIntermission[chapter])
+					}
+					return // runtime guard keeps this fail-closed before the intermission
+				}
 				syncs += countSync(current, n)
 				switch n.Type {
 				case "town", "preparation":
@@ -694,11 +733,6 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 						t.Fatalf("%s first intermission=%s, want %s", battleID, current, wantIntermission[chapter])
 					}
 					wantSyncs := 1
-					if chapter == 29 {
-						// Native ch29 post handler copies persistent roster records as
-						// part of its proven LOADCH path; no synthetic sync beat.
-						wantSyncs = 0
-					}
 					if syncs != wantSyncs {
 						t.Fatalf("%s sync_party count before %s=%d, want %d", battleID, current, syncs, wantSyncs)
 					}
@@ -814,7 +848,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 46 || fallback != 66 || retreat != 30 || rumor != 23 || postbattle != 9 || generic != 4 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 40 || fallback != 72 || retreat != 30 || rumor != 23 || postbattle != 15 || generic != 4 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
