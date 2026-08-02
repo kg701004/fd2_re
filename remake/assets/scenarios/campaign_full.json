@@ -1994,6 +1994,7 @@
   },
   "postbattle_ch13_persist": {
    "type": "cutscene",
+   "handler_binding": "assets/cutscenes/bindings/ch12_post.json",
    "next": "town_ch14"
   },
   "retreat_ch13": {

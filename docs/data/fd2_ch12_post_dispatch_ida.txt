@@ -1,0 +1,59 @@
+《炎龍騎士團 2》raw ch12 戰後處理器：IDA Pro 9.4 直接指令證據
+=================================================================
+
+參考版本
+--------
+輸入：FD2.EXE
+大小：357074 bytes
+MD5：b97caf2239a27a896069d03549d96e1e
+SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+工具：IDA Pro 9.4.0.260610（使用者授權 Docker 流程）
+交叉驗證：Capstone（fd2-cap-local）
+位址空間：IDA database linear address
+
+問題
+----
+1. post-handler table 的 raw index12 是否確實進入 `0x2389f`？
+2. 較低的 `0x237c8` JOIN 與 `0x231f2` chapter 尾段是否為真實共享程式碼？
+3. FDTXT_013 index9 橫跨兩個 editable scene 時，是否能保留原始播放順序？
+
+已證實：dispatch owner 與 IDA 函式邊界
+------------------------------------
+- post-handler table `0x51de9` 的 index12 位於 `0x51e19`；原始 bytes
+  `9f 38 01 00` 直接解碼為入口 `0x2389f`。
+- 玩家第13戰使用 raw map/chapter index12，所以正確 consumer 是
+  `postbattle_ch13_persist`，不是舊同號接法 `postbattle_ch12_persist`。
+- IDA 將 `0x2389f` 歸在較大的 `sub_237D5` 範圍 `0x237d5..0x239bd`；
+  這個導覽用函式邊界不能覆蓋 table 保存的真實 interior entry。證據與 binding
+  均保留原始入口 `0x2389f`，不以自訂函式名取代。
+
+已證實：直接控制流與持續隊伍尾段
+----------------------------------
+- `0x238c0 push 9`、`0x238c2 push [0x53a79]`、`0x238c8 call 0x15f84`：
+  使用目前 FDTXT table 的 raw index9。
+- `0x238d0 call 0x11506`：對話完成後同步 persistent roster。
+- `0x238d5 push 3`、`0x238d7 jmp 0x237c8`；`0x237c8 call 0x112a5`
+  因而執行 JOIN character3。這是實際跳轉，不是匯出器污染。
+- `0x237d0 jmp 0x231f2`；`0x231f2 inc [0x53c03]`，`0x231f8 return`。
+  handler 的可見順序因此是 dialog→sync_party→JOIN3→chapter13。
+- `0x2389f..0x238dc` 沒有條件分支或未知 call target；IDA 與 Capstone 對上述
+  指令、參數及跳轉目標一致。
+
+已證實：跨場景文字映射
+----------------------
+- FDTXT_013 index9 含12句，`count-aligned.json` 依原始 utterance 順序精確對到
+  `ch13.json` scene3 lines0..5，接著 scene4 lines0..5；不能扁平成單一 scene。
+- `ch12_post.json` authored binding 以 call-site `0x238c8` 綁定
+  `FDTXT_013/ch13.json`。現行 compiler 會把多個 target 自動 lower 成依序的
+  `segments`，不需重抄一份容易漂移的 dialogue override。
+- 永久回歸固定12個 beats 的 source、scene index、line order，並固定其後
+  sync→JOIN3→chapter13；缺 mapping 時仍由 compiler 失敗即關閉。
+
+證據等級與剩餘邊界
+------------------
+- table owner、入口、直接指令、共享尾段與操作順序：已證實。
+- FDTXT_013 index9 的12句跨 scene3／4 mapping：已由 raw utterance count 與
+  editable story line count 對齊，屬 E1 內容映射。
+- `0x36cd7(0x28)` 的高階語意未在本題命名；原始位址與參數保留。
+- handler 返回後的 `0x2cad7` 戰間 outcome、town14 原版輸入路徑及同狀態
+  DOSBox 畫面仍未達 E2；接入 handler 不代表整個戰後城鎮流程完成。

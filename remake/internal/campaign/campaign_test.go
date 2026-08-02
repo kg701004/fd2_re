@@ -419,7 +419,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch10_persist": "",
 		"postbattle_ch11_persist": "assets/cutscenes/bindings/ch10_post.json",
 		"postbattle_ch12_persist": "assets/cutscenes/bindings/ch11_post.json",
-		"postbattle_ch13_persist": "",
+		"postbattle_ch13_persist": "assets/cutscenes/bindings/ch12_post.json",
 		"postbattle_ch14_persist": "assets/cutscenes/bindings/ch13_post.json",
 		"postbattle_ch15_persist": "assets/cutscenes/bindings/ch14_post.json",
 		"postbattle_ch16_persist": "",
@@ -850,7 +850,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 42 || fallback != 70 || retreat != 30 || rumor != 23 || postbattle != 12 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 43 || fallback != 69 || retreat != 30 || rumor != 23 || postbattle != 11 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
@@ -1046,6 +1046,48 @@ func TestCh05PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
 	}
 	if join != 13 || spawn != 3 || sync != 1 || chapter != 6 || !(joinAt < spawnAt && spawnAt < panAt && panAt < actAt && actAt < dialogAt && dialogAt < syncAt && syncAt < chapterAt) {
 		t.Fatalf("ch05 ordered tail join=%d@%d spawn=%d@%d pan@%d act@%d dialog@%d sync=%d@%d chapter=%d@%d", join, joinAt, spawn, spawnAt, panAt, actAt, dialogAt, sync, syncAt, chapter, chapterAt)
+	}
+}
+
+func TestCh12PostBindingPreservesCrossSceneIndex9AndTail(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch12_post.json")
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch12 post compile err=%v issues=%#v", err, issues)
+	}
+	var dialogs []*Beat
+	var syncAt, joinAt, chapterAt = -1, -1, -1
+	for i := range beats {
+		switch beats[i].Op {
+		case "dialog":
+			dialogs = append(dialogs, &beats[i])
+		case "sync_party":
+			if beats[i].Source == "0x238d0" {
+				syncAt = i
+			}
+		case "join":
+			if beats[i].Source == "0x237c8" && beats[i].CharID == 3 {
+				joinAt = i
+			}
+		case "set_chapter":
+			if beats[i].Source == "0x231f2" && beats[i].Chapter != nil && *beats[i].Chapter == 13 {
+				chapterAt = i
+			}
+		}
+	}
+	if len(dialogs) != 12 {
+		t.Fatalf("ch12 post dialogs=%d, want FDTXT_013 index9 twelve utterances", len(dialogs))
+	}
+	for i, dialog := range dialogs {
+		wantScene, wantLine := 3, i
+		if i >= 6 {
+			wantScene, wantLine = 4, i-6
+		}
+		if dialog.Source != "0x238c8" || dialog.Script != "ch13.json" || dialog.SceneIndex == nil || *dialog.SceneIndex != wantScene || dialog.Line != wantLine {
+			t.Fatalf("ch12 post dialog[%d]=%#v, want source 0x238c8 scene%d line%d", i, dialog, wantScene, wantLine)
+		}
+	}
+	if !(syncAt > 0 && dialogs[len(dialogs)-1] == &beats[syncAt-1] && syncAt < joinAt && joinAt < chapterAt) {
+		t.Fatalf("ch12 post tail order dialogs_end=%d sync=%d join3=%d chapter13=%d", len(dialogs)-1, syncAt, joinAt, chapterAt)
 	}
 }
 
