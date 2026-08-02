@@ -973,6 +973,19 @@ ch14 pre-handler (`0x334d9`) 是已閉合的動態文字例：`0x33499(12)` 的�
 
 `layout_units` 是另一個必須 address-keyed 的 handler primitive。Official IDA 9.4 定義 `0x233c6..0x2345b`，並確認它被 15 個不同 post-handler caller 共用；其 call-site supplies X/Y byte arrays、slot range、pose source、optional special-slot placement，以及 focus/camera inputs。每個可播放 binding 必須保存完整 materialized `(slot,x,y,pose)` 與 camera 值；不得把任一 caller 的 table 位址、長度或 special-slot rule 泛化給其他關。缺少任一欄位的 layout 保持 compile issue／runtime fail-closed。
 
+玩家第 8 戰的 raw ch07 post 是這項契約的完整 E1 切片。IDA Pro 9.4 與
+Docker Capstone 共同固定 `0x234BB..0x235BC`：入口 runtime 不是舊情境所列的
+groups 0／1／8／9／10，而是十名 party 後只附加 group 0 的十九筆 records，
+因此最小 frontier 為 29，slot 28 才能保持 raw `+8==5`。event27 在回合 2..7
+逐組附加兩筆，故戰後只接受 `29,31,33,35,37,39,41`。處理器依位址綁定
+slots 0..9 與 slot 28 的佈位、ACTING 33／34、FDTXT_008 index 3／4，最後
+執行 `JOIN5→sync_party→chapter 8` 並進 `town_ch09`。`0x23599` 的
+`0x11D40(0,255,64)` 會把全部六位元 DAC 分量夾為 0，呼叫者再
+`memset(0xA0000,0,0xFA00)`；因此只有這個 exact call site 可降低為完整黑色
+覆蓋，其他 `0x11D40` 使用仍失敗即關閉。原始位址、資料表與限制見
+[`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。尚缺未修改 DOSBox
+一般玩家同狀態比較，不能提升為 E2 或逐像素一致。
+
 `0x24618..0x24754` is a separate map-transition compositor, not an actor `acting` decoder. Its callers include post-handler functions `0x33af1`/`0x33c9d`; it renders a 13×8 terrain region to an offscreen buffer, performs exactly nine strip-composite passes with a caller-supplied progression, then performs palette updates from 0 through 62 in steps of 2 (4 ms each). Its first two arguments feed tile geometry (`arg1*24+12`, `arg2*24+16`); the third starts a radial radius and the fourth increments that radius per pass. `0x22046` supplies a fixed scale of 16 to its two `0x219ad` radial LUT passes and derives its final rectangular radius as `trunc(radius*1.6)`. Its remaining constants are a pass row range `[start_y,end_y)=[0,192)`, not a source coordinate or blit width; the editable fields retain those names. A playable binding must either supply a verified transition adapter or fail closed—never lower it to `act`, `pan`, or an arbitrary fade.
 The `0x22046` inner order is executable as a raw primitive: `fdother.BuildNativeIndexedTransitionPass` preserves its scale-16, second-radial start row, and final-rectangle `a2` alias; `fdother.ApplyIndexedTransitionPass` validates both radial specs and the final centered rectangle before applying the first LUT remap, requiring the caller-owned `0x127a9` redraw callback, then applying the second remap and rectangle LUT. `indexedmap.BuildNativeTerrainCells` materializes the exporter’s raw FDFIELD tile/high-byte arrays, and `indexedmap.ComposeNativeTransitionFrame` supplies the verified terrain→unit/foreground→pass→312×192 viewport composition with atomic work/VGA commit when all raw banks and controls are supplied. `loadNativeMapAssets` requires FDOTHER#3 LUT entries 1..9 and the exact 768-byte FDOTHER#0 six-bit DAC before exposing the all-or-nothing native map bundle. `fdother.BuildNativeIndexedTransitionSchedule` preserves the outer nine-pass FDOTHER#3 LUT index order `9..1`, caller radius progression, 5ms pass delay, 500ms tail hold, and `0x11df2` palette deltas `0..62` step 2 at 4ms; `NativeIndexedTransitionLUT` resolves those raw indices only against the 256-byte bank entries. Docker Capstone recheck of `0x11df2` ([saved disassembly](../data/fd2_11df2_palette_disasm.txt)) proves that every RGB component is reread from immutable `[0x53a65]`, then receives delta and an upper clamp at 63 before DAC output. These steps are baseline-derived range writes, not cumulative additions to the current DAC.
 

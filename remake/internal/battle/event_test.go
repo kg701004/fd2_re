@@ -384,6 +384,63 @@ func TestAdoptHandlerBattleStateSkipsRepeatedOpeningAndKeepsTurnGroups(t *testin
 	}
 }
 
+func TestChapter8UsesNativePartyThenGroup0RuntimeOrder(t *testing.T) {
+	st, err := Load("../../assets/maps/map7/map7_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bindNativeFutureItemRowsForTest(t, st)
+	sc, err := LoadScenario("../../assets/scenarios/ch08.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sc.RuntimeAppendGroups || len(sc.InitialGroups) != 1 || sc.InitialGroups[0] != 0 {
+		t.Fatalf("chapter8 constructor policy runtime=%v initial=%v", sc.RuntimeAppendGroups, sc.InitialGroups)
+	}
+	sc.Setup(st)
+	if len(st.Units) != 29 || len(st.Roster) == 0 {
+		t.Fatalf("chapter8 opening units=%d roster=%d", len(st.Units), len(st.Roster))
+	}
+	for slot := 0; slot < 10; slot++ {
+		if st.Units[slot] == nil || st.Units[slot].Camp != Own || !st.Units[slot].HasNativeIdentity {
+			t.Fatalf("chapter8 party slot%d=%#v", slot, st.Units[slot])
+		}
+	}
+	for slot := 10; slot < 29; slot++ {
+		if st.Units[slot] == nil || st.Units[slot].Group != 0 {
+			t.Fatalf("chapter8 group0 slot%d=%#v", slot, st.Units[slot])
+		}
+	}
+	for group := 2; group <= 7; group++ {
+		if !st.PendingGroups[group] {
+			t.Fatalf("chapter8 reinforcement group%d missing from pending=%v", group, st.PendingGroups)
+		}
+	}
+	for _, group := range []int{1, 8, 9, 10} {
+		if st.PendingGroups[group] {
+			t.Fatalf("chapter8 group%d has no proven producer but is pending=%v", group, st.PendingGroups)
+		}
+		for _, unit := range st.Units {
+			if unit != nil && unit.Group == group {
+				t.Fatalf("chapter8 group%d was materialized without a producer: %#v", group, unit)
+			}
+		}
+	}
+
+	st.Turn = 2
+	actions := sc.TriggerActions(st, "on_turn_end", "")
+	if len(actions) != 1 {
+		t.Fatalf("chapter8 turn2 actions=%#v", actions)
+	}
+	if _, _, err := sc.ExecuteActionChecked(st, actions[0]); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Units) != 31 || st.Units[29] == nil || st.Units[29].Group != 2 ||
+		st.Units[30] == nil || st.Units[30].Group != 2 {
+		t.Fatalf("chapter8 event27 group2 frontier=%#v", st.Units)
+	}
+}
+
 func TestLoadScenarioRejectsMalformedPartyCommandMask(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "bad-mask.json")
 	if err := os.WriteFile(path, []byte(`{"party":[{"name":"bad","initial_command_mask":[1,2,3]}]}`), 0o600); err != nil {

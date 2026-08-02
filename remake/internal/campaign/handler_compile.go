@@ -641,6 +641,30 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat.Out = false
 			beats = append(beats, beat)
 		case "unknown":
+			// ch07 post-battle has one fully immediate use of 0x11d40 followed
+			// directly by memset(0xA0000,0,0xFA00).  VGA DAC components are
+			// six-bit values (0..63), so subtracting 64 over entries 0..255
+			// deterministically clamps the complete display to black.  Key the
+			// lowering to the original call site and exact source PUSH order;
+			// other 0x11d40 callers remain closed because many use registers or
+			// only partial palette ranges.
+			if input.NativeTarget == "0x11d40" && input.Source.Addr == "0x23599" &&
+				input.Source.Target == "0x11d40" {
+				delta, okDelta := immediateHandlerInt(input.RawArgs, 0)
+				end, okEnd := immediateHandlerInt(input.RawArgs, 1)
+				start, okStart := immediateHandlerInt(input.RawArgs, 2)
+				if len(input.RawArgs) != 3 || !okStart || !okEnd || !okDelta ||
+					start != 0 || end != 255 || delta != 64 {
+					issue(i, input, "0x23599 blackout requires exact source PUSH order 64/255/0")
+					continue
+				}
+				beat := runtime(input, "native_palette_blackout")
+				beat.NativePaletteBlackout = &NativePaletteBlackout{
+					Start: start, End: end, Delta: delta, ClearBytes: 0xFA00,
+				}
+				beats = append(beats, beat)
+				continue
+			}
 			// 0x12cea(x,y) is the native X-first/Y-second camera focus loop.
 			// Handler exports preserve the source PUSH order (y,x), so reverse the
 			// two immediate arguments before lowering to the tile-step camera pan.

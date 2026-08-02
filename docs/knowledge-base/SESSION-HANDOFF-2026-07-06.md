@@ -3139,3 +3139,29 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   ACTING30、34／44 frontier、
   post雙分支、JOIN12 persistent record與 `town_ch08`。目前仍是E1；未修改
   DOSBox第10回合至戰後城鎮的一般玩家錄影／逐幀比較仍待完成。
+
+## 2026-08-02：玩家第8戰 raw ch07 戰後與初始 roster 勘誤
+
+- 較早把 raw `ch08_post` 稱為「ch08 postbattle closure」的說法已失效：
+  玩家戰鬥 N 使用 raw `ch(N-1)_post`，所以玩家第8戰的正確 owner 是
+  `ch07_post`／`0x234BB`；raw `ch08_post` 屬玩家第9戰。
+- IDA Pro 9.4 與 Docker Capstone 共同固定開場 constructor：`0x1088D`
+  只呼叫 `0x10B4E(0)`，raw ch07 pre `0x33219` 也沒有其他 spawn。
+  因此正常 runtime 是 party10＋group0十九筆，共29 slots。舊
+  `ch08.json initial_groups=[0,1,8,9,10]` 讓沒有 producer 的四組提前出場，
+  並破壞 slot28 的 raw `+8==5` 身分，現已撤回為 runtime append＋group0 only。
+- event27 `0x349D9` 在回合2..7才依目前 group 追加 groups2..7，每組兩筆；
+  所以戰後 handler 合法 frontiers 是29、31、33、35、37、39、41。
+  event28 `0x34A0E` 只對 slots10..27 執行 raw `+0x34 &= 0x80`，不是生怪；
+  其正式回合接線仍列後續工作。
+- `0x234BB` 的 X/Y tables、slot28 special placement、ACTING33／34 與
+  FDTXT_008 index3／4 已做 address-keyed binding。`0x23599` 的
+  `0x11D40(0,255,64)` 會將全部六位元 DAC 分量夾成0，且呼叫者緊接
+  `memset(0xA0000,0,0xFA00)`；因此只對此 call site 實作精確全黑，其他
+  `0x11D40` 使用仍失敗即關閉，亦不再誤稱 HP 條。
+- 正式 `postbattle_ch08_persist` 現執行 layout→對話／acting→全黑→
+  `JOIN5→sync_party→chapter8`，之後保留原有 `town_ch09` 節點。決定性測試
+  覆蓋29-slot開場、event27 29→31、錯誤初始 groups 缺席、call-site／參數
+  負向拒絕、洛娜 persistent record與進城；目前是E1，不是DOSBox E2。
+- 完整非破壞性位址證據見
+  [`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。

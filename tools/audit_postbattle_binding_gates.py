@@ -27,6 +27,21 @@ REQUIRED_FIELDS = {
 }
 
 
+def has_proven_native_semantics(beat: dict) -> bool:
+    """Mirror only exact, source-keyed native lowerings accepted by runtime.
+
+    This list must stay narrower than generic native targets: 0x11d40 has many
+    register-driven and partial-range callers whose semantics remain blocked.
+    """
+    source = beat.get("source") or {}
+    return (
+        beat.get("native_target") == "0x11d40"
+        and source.get("addr") == "0x23599"
+        and source.get("target") == "0x11d40"
+        and beat.get("raw_args") == [64, 255, 0]
+    )
+
+
 def walk(beats):
     for beat in beats:
         if not isinstance(beat, dict):
@@ -68,6 +83,8 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             op = beat.get("op")
             ops[op] += 1
             if op == "unknown":
+                if has_proven_native_semantics(beat):
+                    continue
                 source = beat.get("source") or {}
                 gaps.append({"op": op, "source_addr": source.get("addr"), "required": "native_semantics"})
                 continue

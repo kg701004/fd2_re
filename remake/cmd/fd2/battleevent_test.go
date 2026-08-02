@@ -535,3 +535,72 @@ func TestChapter7PostBranchesOnKeliRawInactiveStateThenEntersTown8(t *testing.T)
 		})
 	}
 }
+
+func TestChapter8PostJoinsLornaPersistsPartyAndEntersTown9(t *testing.T) {
+	g := &Game{}
+	if err := g.loadMap("assets/maps/map7"); err != nil {
+		t.Fatal(err)
+	}
+	g.resetBattle("assets/maps/map7/map7_units.json", "assets/scenarios/ch08.json")
+	if g.loadErr != "" || g.st == nil || g.sc == nil || !g.sc.RuntimeAppendGroups || len(g.st.Units) != 29 {
+		t.Fatalf("chapter8 setup err=%q units=%d runtime_append=%v", g.loadErr, len(g.st.Units), g.sc != nil && g.sc.RuntimeAppendGroups)
+	}
+	if slot28 := g.st.Units[28]; slot28 == nil || !slot28.HasNativeRecordByte8 || slot28.NativeRecordByte8 != 5 {
+		t.Fatalf("chapter8 slot28 must retain raw JOIN5 identity: %#v", slot28)
+	}
+	order := make([]int, 0, 10)
+	g.partyMembers = make(map[int]bool, 10)
+	for slot := 0; slot < 10; slot++ {
+		unit := g.st.Units[slot]
+		if unit == nil || !unit.HasNativeIdentity {
+			t.Fatalf("chapter8 party slot%d lacks raw identity: %#v", slot, unit)
+		}
+		id := unit.NativeIdentity
+		order = append(order, id)
+		g.partyMembers[id] = true
+	}
+	g.partyJoinOrder = append([]int(nil), order...)
+	if err := g.seedPersistentPartyFromLoadCH(order, g.st.Units[:10]); err != nil {
+		t.Fatal(err)
+	}
+	beats, issues, err := campaign.CompileHandlerBinding(
+		assetPath("assets/cutscenes/bindings/ch07_post.json"),
+	)
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch07_post compile err=%v issues=%#v", err, issues)
+	}
+	c := &campaign.Campaign{
+		Start: "postbattle_ch08_persist",
+		Nodes: map[string]*campaign.Node{
+			"postbattle_ch08_persist": {Type: "cutscene", Next: "town_ch09"},
+			"town_ch09":               {Type: "town"},
+		},
+	}
+	g.camp = campaign.NewRunner(c)
+	g.beats, g.beatIdx, g.storyBG = beats, -1, true
+	g.beatAdvance()
+	if g.camX != 192 || g.camY != 336 || g.st.Units[28].X != 14 || g.st.Units[28].Y != 16 {
+		t.Fatalf("ch07_post layout cam=(%v,%v) slot28=(%d,%d)", g.camX, g.camY, g.st.Units[28].X, g.st.Units[28].Y)
+	}
+	for frame := 0; frame < 10000 && g.camp.NodeID() != "town_ch09"; frame++ {
+		if len(g.dialog) != 0 {
+			g.dialog = nil
+			g.beatAdvance()
+		}
+		g.tick(1)
+		if g.loadErr != "" {
+			t.Fatalf("ch07_post stopped at %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+		}
+	}
+	if g.camp.NodeID() != "town_ch09" || !g.partyMembers[5] || g.handlerChapter != 8 {
+		t.Fatalf("ch07_post node=%q members=%v chapter=%d", g.camp.NodeID(), g.partyMembers, g.handlerChapter)
+	}
+	joined, ok := g.partyRoster[5]
+	if !ok || !joined.HasNativeIdentity || joined.NativeIdentity != 5 ||
+		!joined.HasNativeRecordByte8 || joined.NativeRecordByte8 != 5 {
+		t.Fatalf("洛娜 persistent record=%#v", joined)
+	}
+	if g.nativeFullDACBlack {
+		t.Fatal("town_ch09 must clear the terminal post-battle blackout")
+	}
+}

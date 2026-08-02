@@ -2,12 +2,9 @@
   "chapter": 8,
   "name": "王城前的戰鬥",
   "map": 7,
+  "runtime_append_groups": true,
   "initial_groups": [
-    0,
-    1,
-    8,
-    9,
-    10
+    0
   ],
   "party": [
     {

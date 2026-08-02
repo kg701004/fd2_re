@@ -2129,6 +2129,81 @@ func TestCompileChapter7PostUsesEvent25RefinedSlotFrontier(t *testing.T) {
 	}
 }
 
+func TestCompileChapter8PostBindingPreservesRawCh07Sequence(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch07_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 0 {
+		t.Fatalf("ch07_post compile issues=%#v", issues)
+	}
+	if len(beats) != 19 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
+		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{29, 31, 33, 35, 37, 39, 41}) ||
+		!beats[0].RuntimeContext.StoryViewport {
+		t.Fatalf("ch07_post beats/context=%#v", beats)
+	}
+	bySource := map[string][]Beat{}
+	for _, beat := range beats {
+		bySource[beat.Source] = append(bySource[beat.Source], beat)
+	}
+	var layout Beat
+	for _, beat := range bySource["0x234fe"] {
+		if beat.Op == "layout_units" {
+			layout = beat
+		}
+	}
+	if layout.Layout == nil || len(layout.Layout.Units) != 11 ||
+		layout.Layout.CamX != 192 || layout.Layout.CamY != 336 ||
+		layout.Layout.Units[10] != (HandlerUnitLayout{Slot: 28, X: 14, Y: 16, Pose: 0}) {
+		t.Fatalf("ch07_post layout=%#v", bySource["0x234fe"])
+	}
+	if acting := bySource["0x23539"]; len(acting) != 1 || acting[0].Op != "act" || len(acting[0].Acting) != 4 ||
+		acting[0].Acting[0].Units[1].Slot == nil || *acting[0].Acting[0].Units[1].Slot != 28 {
+		t.Fatalf("ch07_post ACT33=%#v", acting)
+	}
+	if acting := bySource["0x2357e"]; len(acting) != 1 || acting[0].Op != "act" || len(acting[0].Acting) != 1 {
+		t.Fatalf("ch07_post ACT34=%#v", acting)
+	}
+	blackout := bySource["0x23599"]
+	if len(blackout) != 1 || blackout[0].Op != "native_palette_blackout" ||
+		blackout[0].NativePaletteBlackout == nil || blackout[0].NativePaletteBlackout.Start != 0 ||
+		blackout[0].NativePaletteBlackout.End != 255 || blackout[0].NativePaletteBlackout.Delta != 64 ||
+		blackout[0].NativePaletteBlackout.ClearBytes != 0xFA00 {
+		t.Fatalf("ch07_post blackout=%#v", blackout)
+	}
+	if tail := beats[len(beats)-3:]; tail[0].Op != "join" || tail[0].CharID != 5 ||
+		tail[1].Op != "sync_party" || tail[2].Op != "set_chapter" || tail[2].Chapter == nil || *tail[2].Chapter != 8 {
+		t.Fatalf("ch07_post tail=%#v", tail)
+	}
+}
+
+func TestCompileCh07PostBlackoutRequiresExactCallSiteAndArguments(t *testing.T) {
+	exact := HandlerBeat{
+		Op: "unknown", NativeTarget: "0x11d40", RawArgs: []any{float64(64), float64(255), float64(0)},
+		Source: HandlerSource{Addr: "0x23599", Target: "0x11d40"},
+	}
+	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{exact}}, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_palette_blackout" {
+		t.Fatalf("exact blackout beats=%#v issues=%#v", beats, issues)
+	}
+	for name, mutate := range map[string]func(*HandlerBeat){
+		"different source": func(beat *HandlerBeat) { beat.Source.Addr = "0x23598" },
+		"different target": func(beat *HandlerBeat) { beat.Source.Target = "0x11df2" },
+		"different delta":  func(beat *HandlerBeat) { beat.RawArgs[0] = float64(63) },
+		"partial range":    func(beat *HandlerBeat) { beat.RawArgs[1] = float64(254) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			candidate := exact
+			candidate.RawArgs = append([]any(nil), exact.RawArgs...)
+			mutate(&candidate)
+			beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{candidate}}, HandlerBindings{})
+			if len(beats) != 0 || len(issues) != 1 {
+				t.Fatalf("beats=%#v issues=%#v", beats, issues)
+			}
+		})
+	}
+}
+
 func TestNativeEventStateEqualsRejectsFrontierAbsentFromBinding(t *testing.T) {
 	index, value, required := 17, 1, 44
 	script := &HandlerScript{Beats: []HandlerBeat{{

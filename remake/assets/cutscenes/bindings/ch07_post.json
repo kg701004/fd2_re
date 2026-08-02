@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "handler_script": "../handlers/ch07_post.json",
+  "acting_resources": "../acting/map32.json",
+  "story_index_map": "../dialogue-index/count-aligned.json",
+  "runtime_context": {
+    "slot_counts": [29, 31, 33, 35, 37, 39, 41],
+    "story_viewport": true
+  },
+  "dialogue_contexts": {
+    "0x23525": {
+      "source_dat": "FDTXT_008",
+      "script": "ch08.json"
+    },
+    "0x23560": {
+      "source_dat": "FDTXT_008",
+      "script": "ch08.json"
+    }
+  },
+  "overrides": {
+    "0x234fe": {
+      "layout": {
+        "units": [
+          { "slot": 0, "x": 14, "y": 20, "pose": 2 },
+          { "slot": 1, "x": 13, "y": 20, "pose": 2 },
+          { "slot": 2, "x": 15, "y": 20, "pose": 2 },
+          { "slot": 3, "x": 12, "y": 19, "pose": 2 },
+          { "slot": 4, "x": 13, "y": 19, "pose": 2 },
+          { "slot": 5, "x": 14, "y": 18, "pose": 2 },
+          { "slot": 6, "x": 16, "y": 19, "pose": 2 },
+          { "slot": 7, "x": 11, "y": 18, "pose": 2 },
+          { "slot": 8, "x": 15, "y": 19, "pose": 2 },
+          { "slot": 9, "x": 17, "y": 18, "pose": 2 },
+          { "slot": 28, "x": 14, "y": 16, "pose": 0 }
+        ],
+        "cam_x": 192,
+        "cam_y": 336
+      }
+    },
+    "0x23539": { "act": { "resource": 33 } },
+    "0x2357e": { "act": { "resource": 34 } }
+  }
+}

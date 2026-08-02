@@ -73,6 +73,7 @@ type Game struct {
 	nativeMapWork              []byte                             // persistent 456-stride original tactical framebuffer
 	nativeMapVGA               []byte                             // persistent 320x200 indexed VGA surface
 	nativeFullDACWhite         bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
+	nativeFullDACBlack         bool                               // exact ch07 post 0x11D40(0,255,64)+mode-13h clear
 	nativeMapHUDPersistent     battle.NativeMapHUDPersistentState // gate A save-persistent；anchor process-persistent
 	tileset                    *ebiten.Image
 	tiles                      []*ebiten.Image     // 切好的圖塊
@@ -1015,6 +1016,27 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// this visible pulse with an RGBA fade or a delay-only approximation.
 		g.loadErr = "beat native_palette_pulse: native indexed DAC adapter未完成"
 		return
+	case "native_palette_blackout":
+		blackout := b.NativePaletteBlackout
+		if blackout == nil || blackout.Start != 0 || blackout.End != 255 ||
+			blackout.Delta != 64 || blackout.ClearBytes != 0xFA00 || b.Source != "0x23599" {
+			g.loadErr = "beat native_palette_blackout:缺少原版全色盤與畫面清除 payload"
+			return
+		}
+		// Every baseline DAC component is at most 63, so the exact native
+		// subtraction clamps all 256 entries to zero.  The adjacent memset
+		// clears the complete 320x200 framebuffer.  A full-surface black cover
+		// is therefore exact for this one call site without inventing an
+		// indexed-palette approximation for other 0x11d40 callers.
+		if len(g.nativeMapVGA) != 0 {
+			if len(g.nativeMapVGA) < blackout.ClearBytes {
+				g.loadErr = fmt.Sprintf("beat native_palette_blackout: indexed framebuffer=%d, want at least %d", len(g.nativeMapVGA), blackout.ClearBytes)
+				return
+			}
+			clear(g.nativeMapVGA[:blackout.ClearBytes])
+		}
+		g.nativeFullDACBlack = true
+		g.beatAdvance()
 	case "native_staging_present":
 		present := b.NativeStagingPresent
 		if present == nil || present.Slot < 0 || present.X < 0 || present.Y < 0 || present.FocusX != present.Slot || present.FocusY != present.X {
@@ -1893,6 +1915,7 @@ func (g *Game) enterNode() {
 	g.spawnIntroTransition = nil
 	g.nativeTurnStaging = nil
 	g.nativeFullDACWhite = false
+	g.nativeFullDACBlack = false
 	g.handlerResource = 0
 	g.battleEvent, g.battleEventDelay = nil, 0
 	g.dlgShown, g.dlgPhase, g.dlgT = dlgNone, 0, 0
@@ -2149,6 +2172,7 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.spawnIntroTransition = nil
 	g.nativeTurnStaging = nil
 	g.nativeFullDACWhite = false
+	g.nativeFullDACBlack = false
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	if unitsPath == "" {
@@ -5628,6 +5652,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	defer func() {
 		if g.nativeFullDACWhite {
 			screen.Fill(color.White)
+		}
+		if g.nativeFullDACBlack {
+			screen.Fill(color.Black)
 		}
 		if g.nativeTurnStaging != nil && !g.nativeTurnStaging.indexed &&
 			g.nativeTurnStaging.phase == nativeTurnStagingFlash {

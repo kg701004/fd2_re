@@ -371,6 +371,44 @@ func TestBeatNativePalettePulseFailsClosedWithoutIndexedDACAdapter(t *testing.T)
 	}
 }
 
+func TestBeatCh07PostBlackoutCoversWholeSurfaceAndRejectsOtherShapes(t *testing.T) {
+	payload := &campaign.NativePaletteBlackout{Start: 0, End: 255, Delta: 64, ClearBytes: 0xFA00}
+	g := newBeatTestGame(t, []campaign.Beat{
+		{Op: "native_palette_blackout", Source: "0x23599", NativePaletteBlackout: payload},
+		{Op: "delay", Frames: 1},
+	})
+	g.nativeMapVGA = make([]byte, 0xFA00)
+	for i := range g.nativeMapVGA {
+		g.nativeMapVGA[i] = 0x7f
+	}
+	g.beatAdvance()
+	if !g.nativeFullDACBlack || g.beatDelay != 1 || g.loadErr != "" {
+		t.Fatalf("blackout black=%v delay=%d err=%q", g.nativeFullDACBlack, g.beatDelay, g.loadErr)
+	}
+	for i, value := range g.nativeMapVGA {
+		if value != 0 {
+			t.Fatalf("blackout framebuffer[%d]=%d", i, value)
+		}
+	}
+
+	rejected := newBeatTestGame(t, []campaign.Beat{{
+		Op: "native_palette_blackout", Source: "0x23598", NativePaletteBlackout: payload,
+	}})
+	rejected.beatAdvance()
+	if rejected.loadErr == "" || rejected.nativeFullDACBlack {
+		t.Fatalf("non-proven blackout err=%q black=%v", rejected.loadErr, rejected.nativeFullDACBlack)
+	}
+
+	short := newBeatTestGame(t, []campaign.Beat{{
+		Op: "native_palette_blackout", Source: "0x23599", NativePaletteBlackout: payload,
+	}})
+	short.nativeMapVGA = make([]byte, 0xF9FF)
+	short.beatAdvance()
+	if short.loadErr == "" || short.nativeFullDACBlack {
+		t.Fatalf("short framebuffer err=%q black=%v", short.loadErr, short.nativeFullDACBlack)
+	}
+}
+
 func TestBeatClearNativeRecordBit7PreservesOtherBits(t *testing.T) {
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "clear_native_record_bit7"}})
 	g.st = &battle.State{Units: []*battle.Unit{

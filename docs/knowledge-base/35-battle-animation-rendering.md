@@ -139,7 +139,9 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 
 - 演出進場前,BG.DAT 由 **0x22d1b** 載入(既有錨點;0x2866x 區三次 `0x22d1b` 以 index 對載地形圖,在前置函式內)。
 - 演出函式內,BG 分**多層**經 0x111ba(descriptor = **0x52381**,該位址本身就是字串 `"BG.DAT\0"` → 0x111ba 是「開 .DAT 取 entry[index]」)解出:
-  - [0x54107](0x28cd4,index = 章節表算出的變動值)、[0x54103](0x28daa, idx 0)、[0x5410b](0x28dc4, idx 0)、[0x5410f](0x28dde, idx 1)、[0x54113](0x28df8, idx 2)。
+  - `0x54107`（`0x28CD4`，index＝章節表算出的變動值）、`0x54103`
+    （`0x28DAA`，index 0）、`0x5410B`（`0x28DC4`，index 0）、`0x5410F`
+    （`0x28DDE`，index 1）、`0x54113`（`0x28DF8`，index 2）。
   - → BG.DAT 至少 **3–5 個 entry**(idx 0/1/2 + 章節索引層),遠景 / 近景 / 土台分層。
 - **BG blit 座標**:`0x4e63d(BGsrc, X=0, Y=0x32=50, dst, stride, -1)`:
   - 0x28d42(`[0x54107]`)、0x28e27(`[0x54103]`),stride 0x140=320;slide 合成 `0x29c90`/`0x29ded` 再把 `[0x5410b/0f/13]`(idx 0/1/2)循環貼於 (0,50)。
@@ -312,7 +314,9 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 放大 orig_05 攻 / 守欄(`_orig_atkbar` / `_orig_defbar`):
 - **底框**:深藍底 + **左上亮白、右下暗的 raised bevel 立體邊**(光源左上);半屏寬(160×40@320,攻右上 / 守左下)。
 - **內容**:名(白字深描邊,左上)、`LV‧NN`(白字右上)、`HP`/`MP`(淺藍標籤)、HP **亮黃**長條 / MP **暗紅**長條(幾乎佔欄寬)、數值(白字右對齊)。空槽 = 該條色的暗版(暗黃 / 暗紅),非統一黑。
-- **⚠ 框 bevel 來源未 RE 確認**:§4 反組譯到「狀態條 = 色盤、name/LV/HP/MP = 預渲染圖塊」,但**底框 + bevel 是預渲染素材圖塊還是程式畫,尚未追**。
+- **⚠ 框 bevel 來源未 RE 確認**：§4 已證實名字走 glyph、數值走 digit cell、
+  HP／MP 條由 `0x18795→0x17d6f` 程式逐欄繪製；但**底框＋bevel 是預渲染
+  素材圖塊還是程式畫，尚未追**。
   remake 暫用程式 bevel(`drawBattlePanel`:深藍底 + 左上亮 / 右下暗 2px 邊 + 暗槽=色暗版)近似 orig 視覺;bevel 規則純色非紋理,屬合理近似,**確認是素材後再換素材**。
 
 ---
@@ -380,7 +384,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | 0x10fe9 / 0x1142a / 0x250b1 | unit 格座標寫入 / 布陣 / 演出後復位(+0x42→+0x40) |
 | 0x4e63d | blit 原語(原生尺寸 RLE,dst+Y*stride+X) |
 | 0x11eb0 | 矩形 present(逐列 memcpy,work↔VGA) |
-| 0x11d40 | VGA DAC 色盤寫(閃紅 / HP 條 / fade,埠 0x3c8/0x3c9) |
+| 0x11d40 | VGA DAC 色盤寫（閃紅／figure 淡入／fade，ports `0x3c8/0x3c9`）；HP／MP 條不走此路徑 |
 | 0x111ba | 資源解碼器:`(descriptor, prevSlot, index)` → 解 entry[index],釋放 prevSlot,回新 buffer |
 | 0x22d1b | BG.DAT 載入(前置) |
 | 0x4e893 | 動畫進度來源(被 idiv 100) |

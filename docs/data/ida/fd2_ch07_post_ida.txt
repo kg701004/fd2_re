@@ -1,0 +1,79 @@
+FD2.EXE：raw ch07 post／玩家第 8 戰戰後處理器證據
+====================================================
+
+輸入基準
+--------
+
+- 檔名：FD2.EXE
+- 大小：357074 bytes
+- MD5：b97caf2239a27a896069d03549d96e1e
+- SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+- 第一順位工具：IDA Pro 9.4，資料庫線性位址
+- 第二順位驗證：Capstone 5 Docker，`tools/disasm_le.py` 線性位址
+- 註記方式：保留 IDA 原始名稱與位址；以下語意均為附加註記。
+
+結論與推論等級
+----------------
+
+### 已證實：第 8 戰開場 runtime 只有 party＋group 0
+
+- `0x205DA` 呼叫 `0x1088D(chapter)`。
+- `0x1088D` 在 `0x10B3C..0x10B43` 只呼叫一次 `0x10B4E(0)`。
+- raw ch07 pre `0x33219..0x3327D` 在 `0x33223` 呼叫 `0x205DA`，其後只有
+  `PAN(7,32)`、`ACTING31`、FDTXT index 0、`PAN(7,23)`、`ACTING32`；沒有
+  另一個 `0x10B4E` 產生端。
+- `map7` 的 party 為 10 人，FDFIELD group 0 為 19 筆，因此正常開場 runtime
+  是 slots `0..28`，總數 29。slot 28 是 group 0 最後一筆，raw `+8 == 5`。
+- event27 `0x349D9..0x34A0E` 才在 `0x349FF` 以目前 group 全域值呼叫
+  `0x10B4E`。目前情境資料對應回合 2..7 的 groups 2..7，每組兩筆，因此合法
+  戰後 frontiers 是 29、31、33、35、37、39、41。
+- 在上述 pre-handler 與 event27 路徑中找不到 groups 1、8、9、10 的產生端；
+  不可把它們列為 `initial_groups`。
+
+### 已證實：`0x234BB` 的戰後佈位與演出順序
+
+IDA 函式範圍：`0x234BB..0x235BC`。
+
+- `0x520FF..0x52108` 的十個 X：
+  `14,13,15,12,13,14,16,11,15,17`
+- `0x52109..0x52112` 的十個 Y：
+  `20,20,20,19,19,18,19,18,19,18`
+- `0x234FE → 0x233C6`：slots 0..9 使用上述座標、pose 2；另將 slot 28
+  設為 `(14,16,pose 0)`；原始鏡頭 `(8,14)` 對應既有精確像素映射
+  `(192,336)`。
+- `0x23525`：FDTXT_008 index 3。
+- `0x23539`：ACTING resource 33。
+- `0x23560`：FDTXT_008 index 4。
+- `0x2357E`：ACTING resource 34。
+- `0x23599`：呼叫 `0x11D40(0,255,64)`；匯出檔保留 source PUSH 順序
+  `[64,255,0]`。
+- `0x235A1..0x235AD`：緊接著 `memset(0xA0000,0,0xFA00)`，清除完整
+  320×200 mode-13h framebuffer。
+- `0x235B5..0x235B7`：把 5 傳入共同尾端 `0x2327D`。
+- 共同尾端：`JOIN5 → 0x11506 sync_party → chapter++`，結果章號為 8。
+
+### 已證實：這個 `0x11D40` 呼叫是立即全黑，不是 HP 條
+
+`0x11D40(start,end,delta)` 在 `0x11D72..0x11DED` 逐一選取 VGA DAC index，
+從 `0x53A65` 基準 RGB 三元組各減去 `delta`，負值夾到 0，再寫入
+ports `0x3C8/0x3C9`。VGA DAC 基準分量最大為 63；因此本呼叫的
+`start=0,end=255,delta=64` 會把全部 256 個 RGB 三元組精確夾為 0。
+呼叫者隨後又把完整 framebuffer 清為 0，所以重製端可以用完整黑色覆蓋精確
+呈現這一個 call site；這項結論不可泛化至其他使用暫存器或局部範圍的
+`0x11D40` 呼叫。
+
+### 已證實：acting 33／34 的可編輯轉錄
+
+`remake/assets/cutscenes/acting/map32.json` 已保留解碼後的行為：
+
+- resource 33：slot 5 與 slot 28 的四段移動／姿態序列，beats 為 1、1、1、5。
+- resource 34：slots 0、1、2、3、4、6、7、8、9 皆 pose 2，beats 7。
+
+限制
+----
+
+- 本證據為 E1：IDA／Capstone 直接指令、原始資料表與重製端決定性測試閉合。
+- 尚未以未修改 DOSBox 一般玩家路徑取得同狀態原版／重製截圖，因此不是 E2，
+  也不宣稱逐像素一致。
+- event28 `0x34A0E` 已證實只處理 runtime slots 10..27 的 raw `+0x34`：
+  `byte &= 0x80`。本切片沒有把它猜成生怪或戰後條件；其正式回合接線仍是後續工作。
