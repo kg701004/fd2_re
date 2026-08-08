@@ -3229,3 +3229,43 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   Docker驗證已通過882個JSON解析、17 active／7 blocked戰後稽核、故事覆蓋
   稽核、235個本地文件／圖片目標與`go test ./... -count=1`完整回歸；舊
   `map18`及16／8統計只保留在時間序列歷史段，並由本段明確勘誤。
+
+## 2026-08-02：本週暫停點與下輪恢復順序（歷史；2026-08-09 勘誤見下節）
+
+- 已推送基線為`030f1d2`（`feat: 閉合第20戰戰後與整備名冊`），本機HEAD與
+  `origin/main`相同；本節寫入前工作樹乾淨。第20戰切片的完整回歸與文件稽核
+  結果以上一節為準。
+- （歷史，2026-08-02）可稽核現況為24個標準戰後節點中17 active／7 blocked；
+  第16戰當時仍 blocked。2026-08-09 已以 production E1 回歸解除第16戰，
+  現況為18 active／6 blocked；現仍 blocked 的是玩家第17、18、22、23、24、29戰。
+- story/cutscene覆蓋稽核為121節點、9個獨立script、48個handler binding、
+  64個inline／generic fallback。後一數字包含retreat、rumor與generic節點，
+  不能直接換算為「65段原版劇情遺失」，但也不能當成已具原版handler證據。
+- 第16戰 raw `ch15_post` 已完成本輪切片：四條分支、76-slot runtime provenance、
+  四條 raw 分支均已通過 Docker/Xvfb E1 回歸，包含 JOIN18 arm。
+  正式 campaign 已接入 production binding，不再維持舊 candidate-only gate。
+  詳細位址證據仍見 `fd2_ch15_post_ida.txt`；76-slot runtime provenance、JOIN18
+  persistent record、`town_ch17` 與 save/load 均已驗證；未修改一般玩家 DOSBox E2
+  仍是獨立 gate，下一順位為玩家第17、18、22、23、24、29戰。
+- UI-01至UI-12仍全部是partial，只有城鎮／商店的部分ch02狀態達E2。完整目標
+  仍包括同狀態逐幀比較、剩餘硬編碼對話／演出資料化、敵方AI與戰鬥機制、
+  以及無debug的30章一般玩家可破關鏈；目前不能宣稱重製接近完成。
+- 當時只確認本輪自己啟動的一次性容器與暫存資料已清理；不可把這句當成後續
+  交接時的即時容器狀態。最新狀態以本節後段的 `docker ps` 檢查為準。
+
+## 2026-08-09：第16戰 raw ch15 post production E1 勘誤
+
+- 正式接入 `postbattle_ch16_persist`：`ch15_post.json`、binding 與 `ch16.json`
+  的 `runtime_append_groups=true` 均已加入；16 個 persistent party records
+  先於 map15 group0 的60筆，入口固定76 slots。
+- Docker/Xvfb 真實測試通過四條 raw branch：round>18、inactive count>4、
+  slot0 word+0x42<0x140、以及唯一 raw +8=18 的 JOIN18 arm。四路都進
+  `town_ch17`，JOIN18 路徑另通過 town boundary save/load。
+- 現況稽核：24 個標準 postbattle 節點為18 active／6 blocked；story/cutscene
+  為121節點、9個獨立 script、48個 handler binding、64個 fallback。剩餘
+  blocked 為玩家第17、18、22、23、24、29戰；未修改一般玩家 DOSBox E2 仍未完成。
+- 本輪實際驗證：`go test ./... -count=1` 與 `go test ./internal/campaign` 相關
+  binding／coverage 測試均在 `fd2-go-test-local`＋Xvfb 通過，包含
+  `TestChapter15PostFourRawBranchesJoin18Town17AndSaveBoundary`。本輪一次性
+  測試／稽核容器均使用 `--rm`；交接檢查時另有其他代理持有的 FD2 抓圖與 IDA
+  容器，未予停止；`/tmp/fd2cap` 不存在。

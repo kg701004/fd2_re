@@ -64,11 +64,12 @@ SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
   post-handler 入口為 `16+60=76` records。這是雜湊綁定原始資料與直接指令的
   靜態閉合；尚未提升為一般玩家路徑 E2。
 
-目前實作門檻
-------------
-- editable candidate 已改成上述巢狀分支，JOIN18 留在 0x23b21 arm。
-- candidate binding 現固定76，並仍保持 data-only。
-- 第15戰 `postbattle_ch15_persist` 應執行 raw `ch14_post`；第16戰的
-  `postbattle_ch16_persist` 才是本 candidate 的正式 owner。
-- campaign 尚未綁定本 candidate。必須先完成 JOIN18 當下的 persistent record、
-  四條分支執行回歸及 town_ch17／save 邊界，才可解除失敗即關閉。
+目前實作狀態（2026-08-09 更新）
+------------------------------
+- editable handler 已改成上述巢狀分支，JOIN18 留在 0x23b21 arm；原始位址與
+  operand 均未被語意名稱取代。
+- production binding 固定 76-slot persistent-first context；第16戰
+  `postbattle_ch16_persist` 已正式消費本 handler，第15戰仍由 raw `ch14_post`
+  負責。
+- Docker/Xvfb E1 回歸已驗證四條 branch、唯一 raw +8=18 的 persistent JOIN、
+  `town_ch17` 與 save/load。未修改一般玩家 DOSBox E2 仍未完成，未知資料仍失敗即關閉。

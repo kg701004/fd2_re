@@ -291,7 +291,8 @@ event25 同時要求 turn10／state16==1；未踏格反例不增援。戰後再�
 `0x25e23` 以目前 raw chapter 選 post-handler，handler 自己才增加章節；因此玩家第N戰必須執行
 `ch(N-1)_post`。`postbattle_ch14_persist` 現改接 `ch13_post`，`postbattle_ch15_persist`
 改接 `ch14_post`（native `0x239bd`，條件對話→sync→JOIN15→set_chapter15）。raw
-`ch15_post` 實際屬於第16戰戰後，正式 owner 是仍保持 unbound 的 `postbattle_ch16_persist`。
+`ch15_post` 實際屬於第16戰戰後；「`postbattle_ch16_persist` 仍 unbound」僅是
+2026-08-02 的歷史狀態，已由 2026-08-09 的 E1 production 接線勘誤取代。
 稽核工具不再把非空 binding 視為正確，而會比對這個已證實的零基索引關係；截至本輪，
 `postbattle_ch04/05/08/09/10/11/12/13/18/19/24/25/29` 共13個既有同號 binding 會報
 `active_index_mismatch`。逐章複核後，ch04/05/09/11/12/19/25 已安全移接至前一號 raw
@@ -304,12 +305,14 @@ special raw slot65=`(28,30,pose2)`、camera `(22,25)`，並由 acting resource49
 slots66..73。IDA Pro 9.4 已確認 `sub_3453E` 以參數乘 `0x50` 後讀 runtime record `+5 & 1`，
 所以 `0x42..0x49` 確為 slots66..73，不是角色或事件編號。inactive 計數、raw global
 `[0x53bef] > 18` 與 record word `+0x42 >= 0x140` 已有受限條件原語；但一般玩家原版 runtime
-shape 尚未擷取，故不接入 campaign runtime。
+shape 尚未擷取，故當時不接入 campaign runtime；此歷史 gate 已由 2026-08-09
+四分支 E1 回歸解除，仍不代表一般玩家 E2。
 
 條件模型現新增 `native_inactive_count_gt`：它只接受 address-independent 的明確 slot list 與
 threshold，逐 slot 要求 native record byte5 provenance，再以 bit0 inactive count 做嚴格 `>` 比較；
 缺 slot 或缺 raw byte5 不得退回 HP/OnField。這可表達 ch15 的第一個 predicate，但不替代同一
-handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 implementation gate。
+handler 的 raw global/record-word comparisons，因此當時 ch15 仍不可解除 implementation gate；
+後續已由 production handler 與真實回歸補齊。
 
 本輪再以 Docker Capstone 重讀 ch15 `0x23a0a..0x23b52`：`0x1a5b9` 明確對全域
 `[0x53bef]` 做 `inc`，而 handler 在 `0x23a9a` 直接比較 `>0x12`；`0x23aad..0x23abb`
@@ -319,7 +322,8 @@ handler 的 raw global/record-word comparisons，因此 ch15 仍不可解除 imp
 `native_round_gt` 與 `native_record_word_gte`，缺 provenance 或 offset 不是 `0x42` 一律
 fail-closed。這兩個 primitive 有獨立 compiler／BeatRunner regression；ch15 已有可編譯的
 OR／else CFG，但 `[0x53a45]` 的一般玩家 runtime shape、JOIN-time persistent record 與 save
-boundary 尚未全部閉合，因此 `postbattle_ch16_persist` 仍維持 unbound，不宣稱已還原。
+boundary 尚未全部閉合，因此當時 `postbattle_ch16_persist` 仍維持 unbound；此歷史語句已由
+2026-08-09 的 production E1 勘誤取代，不宣稱已達 E2。
 
 後續 producer trace 又閉合一層：constructor `0x10d7f..0x1100c` 在 `0x10fe9` 將生命值
 輸入寫入新 runtime record 的 `+0x40` 與 `+0x42`，`0x10ff1`／`0x10ff9` 則將魔力輸入
@@ -358,7 +362,7 @@ byte+5=1 的空 record，最後 `sub_10B4E(0)` 無條件 append 所有 group0 ro
 第16戰 map15：16個 party slots 加60筆 group0，故 candidate context 固定76。這是雜湊綁定
 資料與直接指令的靜態閉合，尚非一般玩家 E2；JOIN-time persistent record、branch trace 與
 campaign consumer 尚未閉合前，原始 `ch15_post.json` 與 `postbattle_ch16_persist` 都維持
-fail-closed。
+fail-closed；這是歷史 gate，已由 2026-08-09 勘誤解除至 E1。
 直接證據見 [`fd2_ch15_post_ida.txt`](../data/fd2_ch15_post_ida.txt)。
 
 ### UI restoration execution plan（2026-07-27）
@@ -3009,3 +3013,29 @@ materializer：先按 `0x112A5` 建八格 `[flag,item]`、base AP／DP／DX，�
 不宣稱完整保存 0x50-byte record 的未觸及 bytes。直接位址與指令見
 [`fd2_join_constructor_word42_ida.txt`](../data/fd2_join_constructor_word42_ida.txt)
 與 [`fd2_persistent_roster_ida.txt`](../data/fd2_persistent_roster_ida.txt)。
+
+## 2026-08-09 勘誤：raw ch15 post 已解除 production gate（E1）
+
+前文「`postbattle_ch16_persist` 維持 unbound」是本輪之前的歷史狀態，現由
+直接驗證取代，不刪除原段落以保留推翻原因。正式 handler
+[`ch15_post.json`](../../remake/assets/cutscenes/handlers/ch15_post.json) 與 binding
+[`ch15_post.json`](../../remake/assets/cutscenes/bindings/ch15_post.json) 已接入
+`postbattle_ch16_persist`；原始位址仍保留在每個 beat，證據等級為「已證實」的
+IDA 控制流轉錄，尚非未修改一般玩家 E2。
+
+- `ch16.json` 現明確使用 `runtime_append_groups=true`、`initial_groups=[0]`，
+  讓 LOADCH 的 16 個 persistent party records 先於 map15 group0 的 60 筆
+  FDFIELD records，形成原版 `16+60=76` runtime slots；未使用 position resource
+  的 86 作為 runtime count。
+- Docker/Xvfb 真實回歸涵蓋四條互斥路徑：`round>18`、slots66..73 的
+  raw `+5 bit0` inactive count `>4`、slot0 raw `+0x42<0x140`，以及
+  `+0x42>=0x140` 的 dialog4→唯一 raw `+8=18`→JOIN18。前兩類與低 word42
+  路徑不建立 JOIN18；成功路徑才建立 typed persistent roster record。
+- 四路徑都在 handler 完成後進入 `town_ch17`，`handlerChapter=16` 且清除戰鬥
+  暫態；JOIN18 路徑另在 town 邊界完成 save/load，確認隊伍順序與持久名冊恢復。
+  失去 raw byte5、round、word42 或唯一 raw identity 時，既有執行器仍失敗即關閉。
+
+本切片目前是 E1（原始位址、可編輯資料、重製端決定性垂直回歸）；尚缺未修改
+一般玩家 DOSBox 的同狀態逐幀比較、完整第16戰輸入路徑及 `town_ch17` 的實機
+E2。其餘 blocked postbattle 為玩家第17、18、22、23、24、29戰，不得因本切片
+而宣稱整個戰役完成。
