@@ -3390,3 +3390,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   normalized inventory 或角色名稱替代。
 - 這是 E1 控制流資料化，不是畫面或一般玩家 E2；`postbattle_ch22_persist`、
   indexed renderer 與戰後 town／shop／整備／save 邊界仍保持 blocked。
+- 同步清理 SDD 中一條過時的「active ch29-post binding 可執行
+  `0x24618`」句子：目前 transition adapter 只可在完整候選資料下隔離執行，
+  `postbattle_ch29_persist` 沒有正式 campaign binding，仍等待 `0x2bce5`
+  terminal renderer 與正確 owner index；這避免把候選 adapter 誤讀成戰役已接通。
