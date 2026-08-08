@@ -802,8 +802,11 @@
       +⑥滿月浮空城(#75+pal#76,esi=0x0a,dosbox frame168-173 逐像素吻合);機制 memset黑→
       載調色盤→blit→淡入→BIOS tick 忙等(修正原 KB「BGM/SFX」誤判);⑨惡魔臉排除是 0x1f73f(待下輪)
 - [x] **開場過場插 2 靜態幕**(旗艦):cutScript AFM+static 交錯腳本;frame165 守護者/frame645 浮空城驗證
-- [x] **全 33 章劇情文本完成**(sonnet 流水線 6 批):ch01-33 共 1452 句;
-      speaker 場景本地表現象文獻化;身世真相(悠妮=ASR-07/大魔王=ASR-06)
+- [x] **歷史文本轉錄快照（非可玩覆蓋）**(sonnet 流水線 6 批):當時記錄
+      ch01-33 共 1452 句與 speaker 場景本地表現象；這只代表文字資產曾被轉錄，
+      不代表 33 章 handler、對話索引、一般玩家路徑或重製已完成。現況以本檔頂端
+      121 個 story/cutscene、9 個獨立 script、50 個 handler binding、62 個
+      fallback 稽核為準；未證實的身世標籤不作為 runtime 語意。
 - [x] **speaker→頭像機制 RE**(sonnet):0xFFEF operand→0x12C60 查[0x53A45]/[0x53BF7] byte[+7]=DATO;
       三推論裁決(①部分成立=陣列重填+雙定址②怪物表不成立③字母碼是 render_story.py operand 洩漏 bug);
       **story JSON 零修改**(現行最忠實);修 render_story.py operand-skip;doc14 修正
