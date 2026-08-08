@@ -2370,7 +2370,8 @@ case-23 branch passes `0x53aff`, row stride `0x138`, and `0xc0` rows to
 `[0x53b03]`；`0x1083b` 呼叫 `0x24d22(0)`。這證明 raw ch23 staging
 配置與清理邊界；IDA 的同函式資料表已將該載入值對到 `FDOTHER.DAT` archive
 entry #42（輸入檔雜湊見 [`fd2-reference-files.json`](../data/fd2-reference-files.json)），
-但不證明 #42 的圖形用途。完整 present 目的地生命週期與
+但不證明 #42 的圖形用途。`0x11EB0` 的共用尾端已證實將 312×192
+複製到固定線性目的地 `0xA0504`；仍未知的是 ch23 中間目的地偏移與
 固定版二進位的 `byte_51A10` raw seed 已由 IDA／Capstone 交叉讀出為
 `0x01`；但 `0x24c1e` 會在迴圈間寫入 stage 2..14，因此 handler 入口的
 執行期 latch 值與第一個 zero-argument `0x24d22(0)` 時序仍未知。IDA 現在
@@ -2378,7 +2379,8 @@ proves the shared indexed consumer chain inside `0x11cac` (`0x11eee` →
 `0x122dc` → `0x127a9` → `0x1acf3` → `0x11eb0`), including ch23 call-sites
 `0x24c63` and `0x24cd3`; this is static consumer evidence, not a claim that
 the remake has a runnable adapter. Runtime entry latch state, `dword_53C03` lifetime,
-full `0x53aff` present-destination mapping, raw state mapping, and
+the `0x53AED`／`0x53AF5`／`0x53AF1` runtime offset lifetime, full
+`0x53aff` staging lifetime, raw state mapping, and
 normal-player E2 still lack proof, so
 `postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).

@@ -21,6 +21,10 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `tools/disasm_le.py FD2.EXE range 0x24c1e 0x24df2` 與
   `tools/disasm_le.py FD2.EXE range 0x11eee 0x122f0`；輸入仍綁定上述
   MD5／SHA-256，位址基準仍為 Capstone 線性位址。
+- 本輪新增 IDA Pro 9.4 Docker 偽代碼範圍：
+  `tools/ida_dump_pseudocode.py` 對 `0x11EB0`、`0x11CAC`、`0x11EEE`；
+  以下只轉錄與 ch23 目的地／複製 ABI 直接相關的原始參數與位址，未以
+  Hex-Rays 自訂名稱取代原始函式名。
 
 已證實：`0x24c1e` 的兩段計數流程
 ----------------------------------
@@ -108,7 +112,8 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - `0x1083b→0x10842` 呼叫 `0x24d22(0)`；這是 loader 完成後的 zero-argument
   raw latch/copy 分支入口。此呼叫本身不能證明 handler 入口的執行期值；
   固定版檔案映像的 raw seed 已證實為 `0x01`，但入口 latch 的執行期值、
-  後續 present 目的地生命週期及一般玩家 E2 仍未知。
+  中間 staging 偏移全域的生命週期及一般玩家 E2 仍未知；共用尾端固定目的地
+  `0xA0504` 的位址／複製 ABI 另見下節。
 - `0x1088d` 在 `0x108a6` 呼叫 `0x10652`，只證明此 loader 位於共用 chapter
   setup 的 caller 內；沒有證據把它接成 `postbattle_ch23_persist` 的正式
   renderer。重製端維持 fail-closed，不建立資源語意或畫面 adapter。
@@ -154,12 +159,13 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - 同一分支在 `0x120c6..0x120fe` 將 `0x53aff` staging、`0x138` raw
   row stride 與 `0xc0` rows 傳入 `0x11eb0`。配合 `0x10652` 的
   `0x107dd→0x107ea` 配置證據，現在已知 raw ch23 loader 是
-  `[0x53aff]` 這個 staging owner pointer 的建立端；但完整呈現目的地的
-  位址生命週期與入口 latch 的執行期值仍未知，不能由 `nativeMapWork` 或 PNG
-  framebuffer 代替。
+  `[0x53aff]` 這個 staging owner pointer 的建立端；ch23 中間目的地公式與
+  共用尾端固定目的地 `0xA0504` 已由 `0x11EB0` 參數閉合，但
+  `0x53AED`／`0x53AF5`／`0x53AF1` 的執行期生命週期與入口 latch 的執行期值
+  仍未知，不能由 `nativeMapWork` 或 PNG framebuffer 代替。
 - IDA Pro 9.4 的 `0x11cac` 函式本體也固定了 indexed 消費鏈：
   `0x11eee` 後依序呼叫 `0x122dc`、`0x127a9`、`0x1acf3`，再由
-  `0x11eb0` 以 `312×192`、stride `456` 複製到 VGA；所有 caller 的
+  `0x11eb0` 以 `312×192`、來源 stride `456` 複製到固定線性目的地；所有 caller 的
  直接交叉參照包含 ch23 的 `0x24c63` 與 `0x24cd3`。因此本檔不再把
   indexed frame／重繪消費鏈標記為未知；但這只證明靜態共用消費鏈，
   不代表重製執行器已具備其 raw state／latch adapter。
@@ -170,9 +176,30 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   stage 值的 `native_ch23_loop` 候選 beats；共用 indexed 消費鏈已由 IDA
   靜態閉合；固定版檔案映像的 raw seed 為 `0x01`，但 handler 入口的執行期
   latch、`dword_53C03` 生命週期、
-  `0x53aff` staging 擁有者／呈現目的地、raw state adapter 與一般玩家 E2
+  `0x53aff` staging 擁有者／中間偏移生命週期、raw state adapter 與一般玩家 E2
   仍未閉合，故仍不建立
   production binding。
+
+已證實：`0x11eb0` 的逐列複製 ABI 與 ch23 的實際目的地
+---------------------------------------------------------
+
+- 合法 IDA Pro 9.4 偽代碼與 Capstone 直接指令共同固定
+  `sub_11EB0(a1,a2,a3,a4,a5,a6)`：逐列執行
+  `memmove(a1,a3,a5)`，每列將目的端加 `a2`、來源端加 `a4`，共 `a6` 列。
+  這裡只保留原始參數位置，不把 `a1..a6` 改名成高階 framebuffer 欄位。
+- `sub_11CAC` 的固定尾端呼叫是
+  `sub_11EB0(0xA0504,0x140,dword_53A49+0x8088,0x1C8,0x138,0xC0)`；
+  因此共用 indexed 消費鏈的最後一段，已證實將 312×192 bytes、來源 stride
+  `0x1C8` 的 work buffer 複製到固定線性目的地 `0xA0504`，目的 stride 為
+  `0x140`。這是位址／複製 ABI 證據，不把 `0xA0504` 直接改名成現代
+  framebuffer 物件。
+- `sub_11EEE` 的 raw chapter 23 case 會先呼叫
+  `sub_11EB0(dword_53AED+a1+dword_53AF5+0x1C8*dword_53AF1,
+  a2,dword_53AFF,0x138,0x138,0xC0)`；因此 ch23 的中間 staging 目的地公式、
+  `[0x53AFF]` source、312-byte stride／寬度與 192 列均已證實。仍未知的不是
+  固定尾端 `0xA0504` 位址，而是 `0x53AED`／`0x53AF5`／`0x53AF1` 的
+  執行期生命週期、indexed mutation 與 raw latch adapter；重製端仍不接
+  `postbattle_ch23_persist`。
 
 限制與目前判定
 --------------
