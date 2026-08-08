@@ -3111,8 +3111,9 @@ frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊�
 
 這提升了 runtime 拓撲證據，但不等於畫面或 handler 語意已閉合：各 frontier
 的 record 內容、acting 65/66 的同一資源消費端仍缺一般玩家 trace。`0x24618`
-所消費的 raw cursor globals 與 Y+3 變換已由 IDA 固定，但重製端尚未建立帶
-provenance 的動態欄位橋接與 indexed 畫面狀態。`postbattle_ch22_persist`
+所消費的 raw 相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA
+固定；重製端已建立帶 provenance、只接受 `native_relative_cursor` 與 Y+3
+的 fail-closed 動態欄位橋接，但仍未閉合 indexed 畫面狀態。`postbattle_ch22_persist`
 目前沒有正式 binding，故不得由 layout 表或 generated binding 猜接
 `town_ch23`；缺證據時維持失敗即關閉。本節不宣稱 renderer parity 或一般玩家
 E2。

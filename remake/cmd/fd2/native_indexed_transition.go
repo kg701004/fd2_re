@@ -65,6 +65,29 @@ func validateNativeIndexedTransitionSpec(s campaign.HandlerIndexedTransition) er
 	return nil
 }
 
+// resolveNativeIndexedTransitionSpec keeps the dynamic first two arguments
+// of 0x24618 distinct from static authored geometry.  Native ch21 pushes the
+// relative cursor globals [0x53ab9] and [0x53abd]+3; no absolute cursor or
+// camera fallback is allowed when that source is requested.
+func (g *Game) resolveNativeIndexedTransitionSpec(spec campaign.HandlerIndexedTransition) (campaign.HandlerIndexedTransition, error) {
+	if spec.CursorSource == "" {
+		return spec, nil
+	}
+	if spec.CursorSource != "native_relative_cursor" || spec.CursorYOffset != 3 {
+		return campaign.HandlerIndexedTransition{}, errors.New("native 0x24618 cursor source must be native_relative_cursor with y offset 3")
+	}
+	if g == nil || g.st == nil || !g.st.HasNativeMapViewState {
+		return campaign.HandlerIndexedTransition{}, errors.New("native 0x24618 relative cursor provenance unavailable")
+	}
+	view := g.st.NativeMapViewState
+	x, y := view.VisibleCursorX, view.VisibleCursorY+spec.CursorYOffset
+	if x < 0 || x >= fdother.NativeTransitionStageWidth || y < 0 || y >= fdother.NativeTransitionStageHeight {
+		return campaign.HandlerIndexedTransition{}, errors.New("native 0x24618 relative cursor is outside indexed stage")
+	}
+	spec.TileX, spec.TileY = x, y
+	return spec, nil
+}
+
 func (g *Game) buildNativeIndexedTransitionInput() (indexedmap.NativeTransitionFrameInput, error) {
 	return g.buildNativeIndexedTransitionInputForActors(g.storyActors)
 }
@@ -130,6 +153,11 @@ func (g *Game) startNativeIndexedTransition(spec campaign.HandlerIndexedTransiti
 	if g.indexedTransition != nil {
 		return errors.New("native 0x24618 transition already active")
 	}
+	resolvedSpec, err := g.resolveNativeIndexedTransitionSpec(spec)
+	if err != nil {
+		return err
+	}
+	spec = resolvedSpec
 	if err := validateNativeIndexedTransitionSpec(spec); err != nil {
 		return err
 	}

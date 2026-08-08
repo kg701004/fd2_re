@@ -19,6 +19,57 @@ func nativeIndexedTransitionSpecForTest() campaign.HandlerIndexedTransition {
 	}
 }
 
+func TestResolveNativeIndexedTransitionUsesProvenRelativeCursor(t *testing.T) {
+	state := &battle.State{W: 20, H: 20}
+	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CameraX: 4, CameraY: 5, CursorX: 15, CursorY: 11,
+		VisibleCursorX: 11, VisibleCursorY: 6,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{st: state}
+	spec := nativeIndexedTransitionSpecForTest()
+	spec.CursorSource = "native_relative_cursor"
+	spec.CursorYOffset = 3
+	resolved, err := g.resolveNativeIndexedTransitionSpec(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.TileX != 11 || resolved.TileY != 9 {
+		t.Fatalf("resolved relative cursor=(%d,%d), want (11,9)", resolved.TileX, resolved.TileY)
+	}
+	if resolved.CursorSource != spec.CursorSource || resolved.CursorYOffset != 3 {
+		t.Fatalf("cursor provenance was lost: %#v", resolved)
+	}
+}
+
+func TestResolveNativeIndexedTransitionRejectsMissingOrUnprovenCursor(t *testing.T) {
+	spec := nativeIndexedTransitionSpecForTest()
+	spec.CursorSource = "native_relative_cursor"
+	spec.CursorYOffset = 3
+	if _, err := (&Game{}).resolveNativeIndexedTransitionSpec(spec); err == nil {
+		t.Fatal("missing native relative cursor provenance was accepted")
+	}
+	state := &battle.State{W: 20, H: 20}
+	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{
+		CameraX: 4, CameraY: 5, CursorX: 15, CursorY: 11,
+		VisibleCursorX: 11, VisibleCursorY: 6,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	g := &Game{st: state}
+	badSource := spec
+	badSource.CursorSource = "absolute_cursor"
+	if _, err := g.resolveNativeIndexedTransitionSpec(badSource); err == nil {
+		t.Fatal("unproven cursor source was accepted")
+	}
+	badOffset := spec
+	badOffset.CursorYOffset = 2
+	if _, err := g.resolveNativeIndexedTransitionSpec(badOffset); err == nil {
+		t.Fatal("unproven cursor y offset was accepted")
+	}
+}
+
 func TestNativeIndexedTransitionRequiresEveryDrawBeforeContinuation(t *testing.T) {
 	assets, field, state := completeNativeMapFrameFixture(t)
 	for i := range assets.LUTs {

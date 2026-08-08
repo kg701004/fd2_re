@@ -177,6 +177,12 @@ type NativeMapHUDInheritedConfig struct {
 type HandlerIndexedTransition struct {
 	TileX int `json:"tile_x"`
 	TileY int `json:"tile_y"`
+	// CursorSource optionally resolves the first two native 0x24618 arguments
+	// from the battle's raw relative cursor globals.  The only accepted source
+	// is native_relative_cursor, which preserves [0x53ab9]/[0x53abd] rather than
+	// replacing them with a guessed absolute map coordinate.
+	CursorSource  string `json:"cursor_source,omitempty"`
+	CursorYOffset int    `json:"cursor_y_offset,omitempty"`
 	// RadialRadius and RadialRadiusStep are the third/fourth native arguments.
 	// 0x24618 advances the radius on every pass; 0x22046 passes it to the two
 	// 0x219ad radial LUT-remap calls and derives its final rect radius from it.

@@ -80,21 +80,24 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   **66→72→73→79**。這是**強推論**，不是一般玩家 runtime trace；
   positions 的 86 是 70 筆控制列位置加16部署格，不能解讀成86個 runtime unit。
 
-## `0x24618` 動態游標來源（原始來源已證實；重製橋接仍未知）
+## `0x24618` 動態游標來源（原始來源與重製橋接已分別固定）
 
 - `sub_10010` 的 IDA 直接資料流將存檔 buffer `+12490/+12491` 寫入
   `dword_53AB9`／`dword_53ABD`；`sub_11BFA`、`sub_11B48`、`sub_11B9B`、
   `sub_11C59` 的方向輸入路徑也直接遞增／遞減這兩個 raw globals，並同步
-  更新 `dword_53AB1`／`dword_53AB5` 的畫面內位置。這證實它們是戰場游標
-  的原始座標來源（語意等級：強推論，保留所有原始位址）。
+  更新 `dword_53AB1`／`dword_53AB5`。依左右邊界分支，`53AB1/53AB5` 是
+  絕對游標，`53AB9/53ABD` 是畫面內的相對游標；這是保留原始位址的強推論，
+  不以自訂名稱取代 raw 欄位。
 - 第22戰 `0x245ce` 將 `[0x53ab9]` 與 `[0x53abd]+3` 作為
   `sub_24618` 的前兩個 raw arguments，後兩個為 `10`、`8`；因此
-  `0x24618` 的 radial center 是動態戰場游標來源加上原始 Y 偏移，不能
+  `0x24618` 的 radial center 是**畫面內相對游標**加上原始 Y 偏移，不能
   用 PAN 結束位置 `(16,14)` 或任意固定 `tile_x/tile_y` 代替。
-- 目前 `HandlerIndexedTransition` 仍只保存靜態 `tile_x/tile_y`，尚無帶
-  raw provenance 的動態游標欄位；因此這項證據尚未轉成 production binding，
-  仍失敗即關閉。下一步必須先把 battle runtime 的 raw cursor、Y+3 變換與
-  indexed frame input 綁成同一可編輯描述，再做一般玩家狀態回歸。
+- 重製端 `HandlerIndexedTransition` 現已附加
+  `cursor_source=native_relative_cursor` 與固定 `cursor_y_offset=3`，並以
+  fail-closed resolver 將 `NativeMapViewState.VisibleCursorX/Y` 橋接到
+  `tile_x/tile_y`；測試保留 raw provenance。這只閉合可重用的輸入橋接，尚未
+  轉成 `postbattle_ch22_persist` 的 production binding，仍失敗即關閉；
+  indexed frame input 與一般玩家狀態回歸仍待補足。
 
 ## 現況判定
 
@@ -105,7 +108,7 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   group 分布及事件追加順序對齊，故 **66／72／73／79** 是可追溯的候選
   materialized frontiers（強推論），不再把槽位數寫成完全未知。仍需要
   原版一般玩家戰後 runtime trace 證實各 frontier 的 record 內容、acting
-  65/66 的同一資源消費端，以及重製端尚未保存 raw cursor／Y+3 變換的
-  indexed 畫面狀態，才可建立 production binding。
+  65/66 的同一資源消費端，以及重製端 indexed 畫面狀態，才可建立
+  production binding；raw cursor／Y+3 的可重用橋接已由上述測試固定。
 - 本檔不是 renderer parity 或一般玩家 E2 證據；任何只依三組表、map 項目數
   或舊 generated binding 建立的 `town_ch23` 接線都應視為未證實。

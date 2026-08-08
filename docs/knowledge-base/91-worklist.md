@@ -60,9 +60,11 @@
   不再把槽位數寫成完全未知。證據見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。仍缺各 frontier
   的一般玩家 runtime record、acting 65/66 的同一資源消費端。`0x24618` 的
-  raw cursor globals 與 Y+3 變換已由 IDA 證實，但重製端尚無帶 provenance 的
-  動態欄位橋接，因此不建立 production binding、不接 `town_ch23`，維持失敗
-  即關閉。
+  raw 相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端
+  已有帶 provenance 且只接受 `native_relative_cursor`／Y+3 的 fail-closed
+  動態欄位橋接。各 frontier 的 runtime record、indexed 畫面狀態與正式
+  `postbattle_ch22_persist` binding 仍未閉合，因此不接 `town_ch23`，維持
+  失敗即關閉。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章
   一般玩家可破關鏈。不要以asset／codec、文件行數或通過的重製端單元測試代替。
