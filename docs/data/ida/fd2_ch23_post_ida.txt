@@ -68,6 +68,22 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   沒有可直接命名的外部消費端；因此保留 raw global，不把它命名為
   latch、frame、palette 或畫面狀態。
 
+已證實：`0x11cac` 的實際 indexed 消費鏈不讀 `0x51a10`
+--------------------------------------------------------
+
+- IDA Pro 9.4 的 `0x11cac(a1)` 先更新 native tick/pose 狀態，只有
+  `a1==0` 額外呼叫 `0x4dfcc`；兩個參數值之後都進同一條 indexed 路徑：
+  `0x11eee(dword_53a49+32904,456,13,8,dword_53aa9,dword_53aad)`、
+  `0x122dc`、`0x127a9`、`0x1acf3`，最後由 `0x11eb0` 把
+  `312×192` bytes、stride `456` 的 staging copy 到 VGA。
+- `0x11cac` 的 IDA 反編譯與 `0x51a10` 的 IDA data-xref 均未顯示
+  `0x11cac` 直接讀取該 raw global；因此不能把 `0x24d22` 的 stage setter
+  直接命名為畫面幀、palette index 或 `0x11cac` 的輸入欄位。
+- 這也固定了兩段 ch23 loop 的差異：第一段使用 `0x11cac(1)`，第二段
+  使用 `0x11cac(0)` 並額外觸發 `0x4dfcc`；兩者不可在可編輯腳本中折疊
+  成同一個 generic redraw。上述 staging／cursor 消費鏈仍未被重製端以
+  相同 456-stride indexed 工作緩衝與 12 次時序接通。
+
 限制與目前判定
 --------------
 

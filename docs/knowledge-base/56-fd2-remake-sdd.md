@@ -2345,7 +2345,11 @@ returning; `arg==0` instead allocates `latch*0x138` bytes, copies from
 stages 2..14. The setter and copy branch are separate contracts: IDA data
 xrefs expose no external direct consumer for `0x51a10`, so no name is assigned
 to that raw global and the copy loop is not lowered as a generic fade or
-presentation effect. The same ch23 audit now fixes `0x17aa9(1)` as a DOS BIOS
+presentation effect. IDA also shows `0x11cac(1)` and `0x11cac(0)` share an
+indexed chain through `0x11eee`／`0x122dc`／`0x127a9`／`0x1acf3` and a
+456-stride `0x11eb0` copy, with only the zero argument calling `0x4dfcc`;
+that chain has no direct `0x51a10` data read. The same ch23 audit now fixes
+`0x17aa9(1)` as a DOS BIOS
 tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 (`ESI=0..11`); their 12-step redraw/latch ordering still lacks a single
 indexed presentation consumer, so `postbattle_ch23_persist` remains
