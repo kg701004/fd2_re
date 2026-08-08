@@ -2342,17 +2342,20 @@ returning; `arg==0` instead allocates `latch*0x138` bytes, copies from
 `0x53aff + (0xc0-latch)*0x138`, then copies rows in descending order
 (`0xbf-latch` down through `0`) before a final `0x138`-byte copy and
 `0x37416` free. The ch23 caller only takes the non-zero setter branch for
-stages 2..14. The setter and copy branch are separate contracts: IDA data
-xrefs expose no external direct consumer for `0x51a10`, so no name is assigned
-to that raw global and the copy loop is not lowered as a generic fade or
-presentation effect. IDA also shows `0x11cac(1)` and `0x11cac(0)` share an
-indexed chain through `0x11eee`／`0x122dc`／`0x127a9`／`0x1acf3` and a
-456-stride `0x11eb0` copy, with only the zero argument calling `0x4dfcc`;
-that chain has no direct `0x51a10` data read. The same ch23 audit now fixes
-`0x17aa9(1)` as a DOS BIOS
+stages 2..14. Direct data xrefs for `0x51a10` remain local to the helper, but
+the `dword_53C03==23` branch of `0x11eee`, reached by `0x11cac`, calls
+`0x24d22(0)` after a BIOS-tick change. This proves an indirect consumer and
+supports the bounded annotation “312-byte staging row-rotation raw latch”;
+it does not justify a generic frame, palette, or UI name. IDA also shows
+`0x11cac(1)` and `0x11cac(0)` share an indexed chain through
+`0x11eee`／`0x122dc`／`0x127a9`／`0x1acf3` and a 456-stride `0x11eb0` copy,
+with only the zero argument calling `0x4dfcc`; the direct caller still does
+not read `0x51a10`. The same ch23 audit fixes `0x17aa9(1)` as a DOS BIOS
 tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
-(`ESI=0..11`); their 12-step redraw/latch ordering still lacks a single
-indexed presentation consumer, so `postbattle_ch23_persist` remains
+(`ESI=0..11`). The remake now has raw `RotateNativeCh23Rows` and
+`ApplyNativeCh23PaletteCycle` primitives, but initial latch state,
+`dword_53C03` lifetime, tick gating, and the complete 12-step presentation
+job still lack proven runtime provenance, so `postbattle_ch23_persist` remains
 fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 

@@ -11,7 +11,7 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - 第一順位工具：IDA Pro 9.4，資料庫線性位址
 - 第二順位驗證：Capstone 5 Docker，`tools/disasm_le.py` 線性位址
 - 本批 IDA 函式：`0x24c1e..0x24d22`、`0x24d22..0x24df2`、
-  `0x17aa9`、`0x11d40..0x11df2`
+  `0x17aa9`、`0x11d40..0x11df2`、`0x11eee`、`0x4dfcc`
 - 註記方式：保留 IDA 原始名稱、線性位址與 raw operand；以下語意均為
   附加註記並標示推論等級。
 
@@ -54,9 +54,13 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `0x24d22(EDI)` 的相鄰時序；重製端目前沒有把這 12 組 register-bound
   palette、重繪與 latch setter 以同一可編輯呈現工作消費，因此不建立
   `postbattle_ch23_persist` binding。
+- `0x4dfcc` 讀取線性位址 `0x60003` 的 31 組 RGB 三元組；其
+  `byte_60002=0..15` 以 `3*phase` 為起點，將連續 16 組寫入 DAC
+  `0x20..0x2f`。重製端 `ApplyNativeCh23PaletteCycle` 保留這個固定視窗
+  與原始位址來源；它是 raw palette 原語，不代表完整 palette 時序已接通。
 
-已證實但不命名：`0x24d22` 的兩個分支
---------------------------------------
+已證實：保留原始名稱的 `0x24d22` raw staging 分支
+--------------------------------------------------
 
 - `0x24d22..0x24df2` 在 `arg != 0` 時只將低位元組寫入 `byte_51A10` 後返回；
   ch23 只傳入非零 stage 2..14，因此本 handler 不會走 `arg == 0` 分支。
@@ -64,34 +68,41 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `0x53aff + (0xc0-latch)*0x138` 複製，再由 `0xbf-latch` 向 0 倒序複製
   0x138-byte rows，最後釋放暫存區。這是獨立的 copy branch，不能泛稱
   淡入淡出或 indexed renderer。
-- IDA 對 `0x51a10` 的資料交叉參照只見 `0x24d22` 函式內的寫入／讀取，
-  沒有可直接命名的外部消費端；因此保留 raw global，不把它命名為
-  latch、frame、palette 或畫面狀態。
+- IDA 的直接資料交叉參照仍只在 `0x24d22` 內顯示寫入／讀取；但沿著
+  `0x11cac→0x11eee` 的控制流程追查可見 `dword_53C03==23` 分支在 BIOS
+  tick 改變時呼叫 `0x24d22(0)`。因此已證實存在間接消費端，`0x51a10`
+  可附加註記為「312-byte staging 的列旋轉 raw latch 值」（已證實），
+  但仍不可命名為 frame、palette 或一般畫面狀態。
 
-已證實：`0x11cac` 的實際 indexed 消費鏈不讀 `0x51a10`
---------------------------------------------------------
+已證實：`0x11cac→0x11eee` 透過 case 23 間接消費 raw latch
+---------------------------------------------------------------
 
 - IDA Pro 9.4 的 `0x11cac(a1)` 先更新 native tick/pose 狀態，只有
   `a1==0` 額外呼叫 `0x4dfcc`；兩個參數值之後都進同一條 indexed 路徑：
   `0x11eee(dword_53a49+32904,456,13,8,dword_53aa9,dword_53aad)`、
   `0x122dc`、`0x127a9`、`0x1acf3`，最後由 `0x11eb0` 把
   `312×192` bytes、stride `456` 的 staging copy 到 VGA。
-- `0x11cac` 的 IDA 反編譯與 `0x51a10` 的 IDA data-xref 均未顯示
-  `0x11cac` 直接讀取該 raw global；因此不能把 `0x24d22` 的 stage setter
-  直接命名為畫面幀、palette index 或 `0x11cac` 的輸入欄位。
+- `0x11cac` 本身沒有直接讀取 `0x51a10`；然而它呼叫的 `0x11eee` 在
+  `dword_53C03==23` 且 BIOS tick 改變時呼叫 `0x24d22(0)`，該分支以
+  `0x138`（312）byte rows 對 `0x53aff` staging buffer 做列旋轉。因此
+  `0x24d22` 的 setter／copy branch 是同一個 raw staging contract 的兩個
+  入口，仍不可把它提升成泛用畫面幀或 palette index。
 - 這也固定了兩段 ch23 loop 的差異：第一段使用 `0x11cac(1)`，第二段
   使用 `0x11cac(0)` 並額外觸發 `0x4dfcc`；兩者不可在可編輯腳本中折疊
-  成同一個 generic redraw。上述 staging／cursor 消費鏈仍未被重製端以
-  相同 456-stride indexed 工作緩衝與 12 次時序接通。
+  成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows` 與
+  `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，並保留 312-byte row、原始
+  palette table 與位址來源；但尚未證明 handler 入口的初始 latch、
+  `dword_53C03` 生命週期、BIOS tick gate 與完整 12 次呈現工作，故仍不
+  建立 production binding。
 
 限制與目前判定
 --------------
 
 - 本檔是 E1 靜態證據；尚無未修改一般玩家 DOSBox 戰後→整備／存檔的 E2
-  路徑，也未證明 `0x11cac` 如何消費 `0x51a10` 所代表的狀態。
+  路徑，也尚未閉合一般玩家入口的 latch／tick 狀態生命週期。
 - `postbattle_ch23_persist → preparation_ch24 → story_ch24` 的 campaign
   邊界保留；沒有以 generic town、靜態 palette 或猜測性 `indexed copy`
   取代原版流程。
-- 目前仍 fail-closed。下一步必須先建立帶原始位址與 12 次 loop 順序的
-  可編輯呈現描述，並以 indexed frame／重繪消費端及一般玩家路徑驗證後，
-  才能評估 production binding。
+- 目前仍 fail-closed。下一步必須以帶原始位址與 12 次 loop 順序的可編輯
+  呈現描述，補上 raw latch／tick provenance，再用 indexed frame／重繪
+  消費端及一般玩家路徑驗證後，才可評估 production binding。
