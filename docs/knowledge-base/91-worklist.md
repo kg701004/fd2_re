@@ -726,7 +726,8 @@
 - [x] **ch2-30 scenario stub**(sonnet):29 個 chNN.json(party 4 人/deploy=own_deploy 真資料
       (9 章資源瑕疵 spiral fallback)/groups 全開排除 group==255 padding);campaign_full 30/30
       掛 scenario(含修 ch01 campaign 模式沒主角隊的壞點);三層驗證+3 章實跑
-      → **全 30 章一條龍可玩**(FD2_CAMPAIGN=assets/scenarios/campaign_full.json)
+      → 產生全 30 章 authored campaign 節點；當時把它寫成「一條龍可玩」的句子已撤回，
+      因為節點圖與實際劇情、戰後城鎮／整備、持續隊伍、存檔及介面驗收不是同一件事。
 - [x] **戰鬥命中音接真素材**(旗艦):battle 池共用揮擊音(#48 sub0)接命中幀;loadWav/playRaw
 - [x] **SFX index2 追蹤**(sonnet,部分解出誠實標記):真路徑=0x01cff0
       `[esp+計數+0xd0]`（填值待追）;

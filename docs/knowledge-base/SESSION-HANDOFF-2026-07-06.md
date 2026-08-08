@@ -3394,3 +3394,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x24618`」句子：目前 transition adapter 只可在完整候選資料下隔離執行，
   `postbattle_ch29_persist` 沒有正式 campaign binding，仍等待 `0x2bce5`
   terminal renderer 與正確 owner index；這避免把候選 adapter 誤讀成戰役已接通。
+
+## 2026-08-09：Markdown 斷言清理與現況入口校正
+
+- `99-reflections-log.md` 第 7 輪的「9 項必要能力全具備／重製只剩工程整合」及
+  `91-worklist.md` 第 11 輪的「全 30 章一條龍可玩」都是當時的規劃或 authored
+  快照，已改成明確的歷史限定語；沒有刪除資產、raw 對映或方法證據。
+- `26-per-chapter-event-handlers.md` 的標題改為「原版 handler 對照（raw 對映已驗；
+  不等於重製流程完成）」；`56` 頂端日期與現況同步到 2026-08-09，列出 20 active／4
+  blocked 及玩家第 22、23、24、29 戰的失敗即關閉狀態。
+- 這次只修正會污染記憶的完成度句子，沒有把任何未證實 renderer、handler 或戰後
+  town／shop／整備／存檔語意接入正式 campaign。

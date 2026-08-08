@@ -124,7 +124,7 @@ caller，以及尚無同狀態 DOSBox 比較的畫面仍不得提升為原版等
 [`fd2_future_group_constructor_capstone.txt`](../data/fd2_future_group_constructor_capstone.txt)
 與 [`fd2_future_group_raw_gate_ida.txt`](../data/fd2_future_group_raw_gate_ida.txt)。
 
-## 2. 全 30 章 handler 對照表 [驗]
+## 2. 全 30 章原版 handler 對照表（raw 對映已驗；不等於重製流程完成）
 
 `D` = default `0x205b4`（11 章共用，落入 `0x205be` 的 raw 三值規則）。
 這個位元組規則常與殲滅玩法一致，但不可只靠函式名稱直接提升為「純殲滅」。
