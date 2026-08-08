@@ -424,7 +424,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch15_persist": "assets/cutscenes/bindings/ch14_post.json",
 		"postbattle_ch16_persist": "assets/cutscenes/bindings/ch15_post.json",
 		"postbattle_ch17_persist": "",
-		"postbattle_ch18_persist": "",
+		"postbattle_ch18_persist": "assets/cutscenes/bindings/ch17_post.json",
 		"postbattle_ch19_persist": "assets/cutscenes/bindings/ch18_post.json",
 		"postbattle_ch20_persist": "assets/cutscenes/bindings/ch19_post.json",
 		"postbattle_ch22_persist": "",
@@ -850,7 +850,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 48 || fallback != 64 || retreat != 30 || rumor != 23 || postbattle != 6 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 49 || fallback != 63 || retreat != 30 || rumor != 23 || postbattle != 5 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "handler_script": "../handlers/ch17_post.json",
+  "acting_resources": "../acting/ch17_post.json",
+  "story_index_map": "../dialogue-index/count-aligned.json",
+  "runtime_context": {
+    "slot_count": 55,
+    "story_viewport": true
+  },
+  "dialogue_contexts": {
+    "0x23d60": {
+      "source_dat": "FDTXT_018",
+      "script": "ch18.json"
+    },
+    "0x23d9b": {
+      "source_dat": "FDTXT_018",
+      "script": "ch18.json"
+    },
+    "0x23dd6": {
+      "source_dat": "FDTXT_018",
+      "script": "ch18.json"
+    }
+  },
+  "dialogue_overrides": {
+    "0x23e11#10": {
+      "segments": [
+        {
+          "script": "ch18.json",
+          "scene": "約拿引見,查問悠妮身世",
+          "scene_index": 3,
+          "lines": [{ "line": 9 }]
+        },
+        {
+          "script": "ch18.json",
+          "scene": "索爾抉擇,繼續同行",
+          "scene_index": 4,
+          "lines": [
+            { "line": 0 },
+            { "line": 1 },
+            { "line": 2 },
+            { "line": 3 },
+            { "line": 4 },
+            { "line": 5 },
+            { "line": 6 },
+            { "line": 7 },
+            { "line": 8 },
+            { "line": 9 },
+            { "line": 10 }
+          ]
+        }
+      ]
+    }
+  },
+  "overrides": {
+    "0x23d39": {
+      "layout": {
+        "units": [
+          { "slot": 0, "x": 16, "y": 7, "pose": 3 },
+          { "slot": 1, "x": 16, "y": 8, "pose": 3 },
+          { "slot": 2, "x": 15, "y": 6, "pose": 3 },
+          { "slot": 3, "x": 15, "y": 7, "pose": 3 },
+          { "slot": 4, "x": 15, "y": 8, "pose": 3 },
+          { "slot": 5, "x": 15, "y": 9, "pose": 3 },
+          { "slot": 6, "x": 14, "y": 6, "pose": 3 },
+          { "slot": 7, "x": 14, "y": 7, "pose": 3 },
+          { "slot": 8, "x": 14, "y": 8, "pose": 3 },
+          { "slot": 9, "x": 14, "y": 9, "pose": 3 },
+          { "slot": 10, "x": 16, "y": 5, "pose": 0 },
+          { "slot": 11, "x": 17, "y": 5, "pose": 0 },
+          { "slot": 12, "x": 18, "y": 5, "pose": 0 },
+          { "slot": 13, "x": 16, "y": 10, "pose": 2 },
+          { "slot": 14, "x": 17, "y": 10, "pose": 2 },
+          { "slot": 15, "x": 18, "y": 10, "pose": 2 },
+          { "slot": 16, "x": 19, "y": 7, "pose": 1 },
+          { "slot": 17, "x": 25, "y": 8, "pose": 1 }
+        ],
+        "cam_x": 432,
+        "cam_y": 96
+      }
+    },
+    "0x23d74": { "act": { "resource": 56 } },
+    "0x23daf": { "act": { "resource": 57 } },
+    "0x23dea": { "act": { "resource": 58 } }
+  }
+}

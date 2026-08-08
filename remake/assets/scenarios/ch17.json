@@ -2,6 +2,7 @@
   "chapter": 17,
   "name": "血與冰之刃",
   "map": 16,
+  "runtime_append_groups": true,
   "initial_groups": [
     0
   ],

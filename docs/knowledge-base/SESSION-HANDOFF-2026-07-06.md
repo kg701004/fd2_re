@@ -3236,8 +3236,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `origin/main`相同；本節寫入前工作樹乾淨。第20戰切片的完整回歸與文件稽核
   結果以上一節為準。
 - （歷史，2026-08-02）可稽核現況為24個標準戰後節點中17 active／7 blocked；
-  第16戰當時仍 blocked。2026-08-09 已以 production E1 回歸解除第16戰，
-  現況為18 active／6 blocked；現仍 blocked 的是玩家第17、18、22、23、24、29戰。
+  第16戰當時仍 blocked。後續的第16戰與第18戰 production E1 勘誤已取代這組
+  統計；目前數字只以本檔最末的 2026-08-09 最新節為準。
 - story/cutscene覆蓋稽核為121節點、9個獨立script、48個handler binding、
   64個inline／generic fallback。後一數字包含retreat、rumor與generic節點，
   不能直接換算為「65段原版劇情遺失」，但也不能當成已具原版handler證據。
@@ -3253,7 +3253,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 當時只確認本輪自己啟動的一次性容器與暫存資料已清理；不可把這句當成後續
   交接時的即時容器狀態。最新狀態以本節後段的 `docker ps` 檢查為準。
 
-## 2026-08-09：第16戰 raw ch15 post production E1 勘誤
+## 2026-08-09：第16戰 raw ch15 post production E1 勘誤（歷史；下節已更新現況）
 
 - 正式接入 `postbattle_ch16_persist`：`ch15_post.json`、binding 與 `ch16.json`
   的 `runtime_append_groups=true` 均已加入；16 個 persistent party records
@@ -3261,11 +3261,35 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - Docker/Xvfb 真實測試通過四條 raw branch：round>18、inactive count>4、
   slot0 word+0x42<0x140、以及唯一 raw +8=18 的 JOIN18 arm。四路都進
   `town_ch17`，JOIN18 路徑另通過 town boundary save/load。
-- 現況稽核：24 個標準 postbattle 節點為18 active／6 blocked；story/cutscene
-  為121節點、9個獨立 script、48個 handler binding、64個 fallback。剩餘
-  blocked 為玩家第17、18、22、23、24、29戰；未修改一般玩家 DOSBox E2 仍未完成。
+- 當時稽核：24 個標準 postbattle 節點為18 active／6 blocked；這組數字與
+  玩家第18戰的 raw `ch17_post` 尚未納入，已由下節最新稽核取代。未修改一般
+  玩家 DOSBox E2 仍未完成。
 - 本輪實際驗證：`go test ./... -count=1` 與 `go test ./internal/campaign` 相關
   binding／coverage 測試均在 `fd2-go-test-local`＋Xvfb 通過，包含
   `TestChapter15PostFourRawBranchesJoin18Town17AndSaveBoundary`。本輪一次性
   測試／稽核容器均使用 `--rm`；交接檢查時另有其他代理持有的 FD2 抓圖與 IDA
   容器，未予停止；`/tmp/fd2cap` 不存在。
+
+## 2026-08-09：raw ch17 post 接入玩家第18戰（勘誤後最新）
+
+- 初始候選曾把 `ch17_post` 接到 `postbattle_ch17_persist`；真實
+  `audit_postbattle_binding_gates.py` 回報 `active_index_mismatch`。直接比對
+  `battle_chNN→raw ch(N-1)_post` 後已撤回：玩家第17戰仍 blocked、raw ch17
+  正確 owner 是玩家第18戰的 `postbattle_ch18_persist`。
+- IDA Pro 9.4 Docker 直接證據已保存於 [`fd2_ch17_post_ida.txt`](../data/fd2_ch17_post_ida.txt)：
+  `sub_23CD5`、sub_233C6 的 slots 0..16＋special slot17、camera `(432,96)`、
+  FDTXT_018 index7/8/9/10 與 acting 56/57/58 的原始位址、檔案偏移及固定
+  FD2.EXE 雜湊均保留；可編輯演出稿為
+  [`ch17_post.json`](../../remake/assets/cutscenes/acting/ch17_post.json)。
+- FDTXT index10 以兩段 scene mapping 保存 scene3 line9 與 scene4 lines0..10，
+  不再把跨場景字串誤當一段。map17 group0 37筆＋18個 persistent party records
+  形成55-slot runtime；JOIN21／7 改由明示的強推論
+  [`native_join_base_units.json`](../../remake/assets/data/native_join_base_units.json)
+  提供 map17 raw +8 base，未知角色仍 fail-closed。
+- Docker/Xvfb 真實回歸通過 `battle_ch18→postbattle_ch18→town_ch19`、演出、
+  JOIN21／7、town save/load，以及 `TestNativeJoinBaseTable*`。postbattle 稽核
+  現為24節點19 active／5 blocked；story 稽核為121節點、49個 handler binding、
+  63個 fallback。未修改一般玩家 DOSBox E2 仍未完成。
+- 本輪所有測試、IDA、Capstone、JSON／Markdown 稽核均在一次性 Docker 容器內；
+  `/tmp/fd2cap` 不存在。工作結束時不得留下本輪 FD2 容器；其他專案的既有
+  `modest_hermann` IDA 容器不屬本輪，未予停止。

@@ -21,6 +21,13 @@
 工作清單中的完成項代表已驗證的函式、格式或切片，**不是遊戲完成百分比**。
 資產解碼完成也不等於玩法、介面或戰役流程已完成。
 
+最新可驗證戰役切片：玩家第16戰戰後（raw `ch15_post`）已進入
+`town_ch17`；玩家第18戰戰後（raw `ch17_post`）已進入 `town_ch19`，並驗證
+JOIN、持久隊伍與存檔邊界。玩家第17、22、23、24、29戰仍維持失敗即關閉；
+詳細位址、分支與證據等級見[工作清單](docs/knowledge-base/91-worklist.md)、
+[介面證據矩陣](docs/knowledge-base/57-ui-evidence-matrix.md)與
+[最新交接勘誤](docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md)。
+
 所有文件中的 `FD2.EXE` 位址目前只適用於大小 `357074` 位元組、MD5
 `b97caf2239a27a896069d03549d96e1e` 的版本。SHA-256 與相關檔案雜湊見
 [`fd2-reference-files.json`](docs/data/fd2-reference-files.json)；版本不同時

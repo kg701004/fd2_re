@@ -6,13 +6,20 @@
 
 ## 目前驗收（2026-08-09）
 
+- [x] **玩家第18戰／raw ch17 post 垂直切片**：已修正 raw handler 與玩家戰鬥
+  編號的偏移，`ch17_post` 是玩家第18戰戰後，不是第17戰。IDA 直接指令閉合
+  `0x23cd5`、sub_233C6 版面、演出56–58與 FDTXT_018 index10 跨場景分段；
+  55-slot map17 runtime、JOIN21／7、`town_ch19` 及 town save/load 已在
+  Docker/Xvfb E1 回歸通過。角色 7／21 的 map17 ally base 只以明示的
+  `native_join_base_units.json` 強推論索引提供，未知 JOIN 仍失敗即關閉。證據見
+  [`fd2_ch17_post_ida.txt`](../data/fd2_ch17_post_ida.txt)。
 - [x] **玩家第16戰戰後垂直切片**：raw `ch15_post` 已正式綁定
   `postbattle_ch16_persist`。76-slot persistent-first topology、四條 raw 分支、
   JOIN18、`town_ch17` 與 town save/load 均以 Docker/Xvfb 真實回歸通過（E1）。
-- [x] **本輪稽核基線**：24 個標準戰後節點為 18 active／6 blocked；
-  story/cutscene 為 121 節點、9 個獨立 script、48 個 handler binding、64 個
+- [x] **本輪稽核基線**：24 個標準戰後節點為 19 active／5 blocked；
+  story/cutscene 為 121 節點、9 個獨立 script、49 個 handler binding、63 個
   fallback。這些是覆蓋統計，不是原版完成百分比。
-- [ ] **下一個戰後切片**：玩家第17、18、22、23、24、29戰；每關都必須保留
+- [ ] **下一個戰後切片**：玩家第17、22、23、24、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。
 - [ ] **E2 與完整戰役**：取得未修改一般玩家路徑的 DOSBox 同狀態逐幀證據，
   並完成剩餘 UI、戰鬥 AI、對話資料化與 30 章無除錯破關鏈；目前仍不可宣稱
@@ -34,7 +41,8 @@
   round／byte+5／word+0x42、JOIN18、`town_ch17` 與 town save/load 均有
   Docker/Xvfb E1 回歸。未修改一般玩家 DOSBox E2 仍另列於 UI-07，不把本切片
   說成完整 parity。
-- [ ] **其餘標準戰後節點**：玩家第17、18、22、23、24、29戰仍blocked；完成
+- [ ] **其餘標準戰後節點**：玩家第17、22、23、24、29戰仍 blocked；第18戰已由
+  本文件上方的 raw `ch17_post` 切片解除。完成
   handler後仍需逐關驗證城鎮／商店／整備／存檔邊界，不可只接下一場戰鬥。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章
@@ -419,7 +427,7 @@
 - [x] ch13/ch14 pre-handler：FDTXT_014 index0（4句）與 map13/70-slot、pan 20,20 已接 binding，`story_ch14` 已接回 editable handler。
 - [~] ch14/ch15 handler：Docker Capstone 已證實 pre `0x334f3..0x334f7` 的 `roster_has(12)`→FDTXT_015「有 12：0/1/2；無：3/4/5」，以及 raw `ch14_post` `0x239d1..0x239d3` 的「有：12；無：13」。主迴圈與前三戰既有測試證實玩家戰鬥 N 對應 raw `ch(N-1)_post`；因此 `postbattle_ch14_persist` 應使用 `ch13_post`，`postbattle_ch15_persist` 才使用 `ch14_post`（JOIN15→set_chapter15→town_ch16）。pre binding 含 map14/80-slot、pan、acting48；runtime 只讀 permanent party roster，缺此資料 fail-closed。
 - [x] **ch14/ch15 postbattle campaign index correction**：撤回「同號 postbattle node 對同號 raw post handler」的錯誤斷言；目前已驗證並回歸 `postbattle_ch14_persist→ch13_post→town_ch15`、`postbattle_ch15_persist→ch14_post→town_ch16`。其他仍採同號 binding 的章節必須逐一用直接指令複核，不能機械式整批平移。
-- [x] **既有 postbattle 索引錯接稽核**：稽核工具現將 active binding 與已證實的 `battle N→raw ch(N-1)_post` 關係逐筆比較，不再把「欄位非空」當成 active 正確。原有13個同號錯接已清除；IDA 直接指令再閉合 raw ch25→玩家ch26、raw ch27→玩家ch28、raw ch05→玩家ch06、raw ch06→玩家ch07、raw ch07→玩家ch08、raw ch09→玩家ch10、raw ch12→玩家ch13與raw ch19→玩家ch20。目前稽核為18 active／6 blocked，沒有 `active_index_mismatch`、`unbound_mapping_complete` 或 `unbound_inline_beats`。
+- [x] **既有 postbattle 索引錯接稽核**：稽核工具現將 active binding 與已證實的 `battle N→raw ch(N-1)_post` 關係逐筆比較，不再把「欄位非空」當成 active 正確。原有13個同號錯接已清除；IDA 直接指令再閉合 raw ch25→玩家ch26、raw ch27→玩家ch28、raw ch05→玩家ch06、raw ch06→玩家ch07、raw ch07→玩家ch08、raw ch09→玩家ch10、raw ch12→玩家ch13、raw ch17→玩家ch18與raw ch19→玩家ch20。目前稽核為19 active／5 blocked，沒有 `active_index_mismatch`、`unbound_mapping_complete` 或 `unbound_inline_beats`。
 - [x] **玩家第 8 戰 raw ch07 post 垂直切片（E1）**：撤回 `ch08.json` 把 groups 1／8／9／10 預先 materialize 的舊設定。`0x1088D` 只建立 party＋group0（10＋19＝29 slots），event27 回合2..7才逐組追加兩筆，合法戰後 frontiers為29..41的奇數。address-keyed binding 已接 slot28 raw JOIN5身分、layout、ACTING33／34、FDTXT_008 index3／4、精確全黑與 framebuffer clear，再走JOIN5／sync／chapter8進 `town_ch09`；負向測試拒絕其他 `0x11D40` call site／參數。event28 slots10..27 raw `+0x34 &= 0x80` 的正式回合接線及 DOSBox E2仍待完成。證據見 [`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。
 - [x] **玩家第 10 戰 raw ch09 post 垂直切片（E1）**：IDA Pro 9.4 與 Docker Capstone 固定 `0x235F9..0x23790`。正式 binding 保留有／無凱麗造成的60／61兩種強推論 frontier，依位址執行 delta 0→63 共64次 DAC 淡出、只寫明列 offset 的 sparse record/view patch、delta 64→0 共65次 DAC 淡入、FDTXT_010 index4／5、ACTING37、JOIN11／6、sync與chapter10，最後進 `town_ch11`。執行期對非法值、缺 raw provenance 或 frontier 不足會在任何寫入前原子拒絕；尚缺未修改 DOSBox 一般玩家逐幀 E2。證據見 [`fd2_ch09_post_ida.txt`](../data/ida/fd2_ch09_post_ida.txt)。
 - [ ] **ch00 `0x3241f` 原生淡入閉合**：追查 map32 runtime roster 的 raw FDICON key producer，讓 title/story indexed compositor 不再依賴 `Fig==key` 假設；完成前只保留此 exact call site 明示的 RGBA E1 可玩近似，不得泛化為 `0x1F525` fallback。
@@ -433,11 +441,12 @@
 - [x] **ch15 candidate／production editable CFG**：保留 `handlers/candidates/ch15_post_cfg.json` 的 raw source addresses 與 nested OR/else branch；2026-08-02 IDA 重核修正 JOIN18 錯置：`0x23b1f` 跳到章節尾端，JOIN18 只屬於 `else word42>=0x140` arm。正式 `handlers/ch15_post.json`／binding 已依同一證據接入 production，candidate 僅作研究對照，不是另一套執行入口。
 - [x] 執行 raw ch15 四條 branch trace，補 JOIN18 當下的 typed persistent record、`battle_ch16→postbattle_ch16→town_ch17` 與 save regression；四條路徑已通過 Docker/Xvfb E1，一般玩家原版 runtime capture 仍是獨立 E2 gate。
 - [x] ch16/ch17 pre-handler：`0x335bb` 的 `roster_has(18)` 接 `test/jne 0x3344d`；有角色18直接進 shared tail，沒有才 `spawn(group 1)`。已轉為 editable `if roster_has`，map16/60-slot/FDTXT_017 binding 接入 `story_ch17`。compiler branch 現繼承前置 LOADCH slot frontier，但 merge 後不假設分支新增 slots。
-- [x] ch17 battle initial-group correction：原版 ch16 pre 只在 char18 缺席時 append group1，group3 是 ch16 post 才 spawn；`ch17.json` 不再把 1/3 固定 initial。Scenario 加入可編輯 `initial_groups_if_party_absent`，只控制戰前 `OnField` visibility；它不宣稱已還原 native append-slot identity，post handler 仍 fail-closed。
+- [x] ch17 battle initial-group correction：原版 ch16 pre 只在 char18 缺席時 append group1，group3 是 ch16 post 才 spawn；`ch17.json` 不再把 1/3 固定 initial。Scenario 加入可編輯 `initial_groups_if_party_absent`，只控制戰前 `OnField` visibility；它不宣稱已還原 native append-slot identity。玩家第17戰的 raw ch16 post 仍待正式綁定，不能把 `ch17_post` 錯接到第17戰。
 - [x] ch17/ch18 pre-handler：FDTXT_018 index0/1/2（7+4+13句）與 map17/70-slot、acting54/55 已接 binding，`story_ch18` 已接回 editable handler。
+- [x] **raw ch17 post／玩家第18戰 E1**：`0x23cd5` 的 layout、ACTING56/57/58、FDTXT_018 index7/8/9/10（index10 以兩段 scene mapping）與 JOIN21/7 已轉為可編輯 binding；map17 55-slot runtime、`town_ch19`、save/load 均通過 Docker/Xvfb。`native_join_base_units.json` 只列出 map17 的 raw +8=7/21 base，證據等級為強推論；不存在明示 base 的 JOIN 不得自動猜測。證據見 [`fd2_ch17_post_ida.txt`](../data/fd2_ch17_post_ida.txt)。
 - [x] ch18/ch19 pre-handler：`ch18_pre` 實際 index0（8句）與 map18/70-slot 已接 binding，`story_ch19` 已接回 editable handler；未把未呼叫的 FDTXT_019 其他 strings 硬播。
 - [x] ch19/ch20 pre-handler：FDTXT_020 index0（17句）與 map19/70-slot 已接 binding，`story_ch20` 已接回 editable handler。
-- [x] **玩家第20戰 raw ch19 post 垂直切片（E1）**：IDA Pro 9.4與Docker Capstone固定`0x23E74..0x240FA`；四張table精確寫slots0..15、52..60與view `(26,31)`。固定record0＋選15人、map19 group0共67筆，形成83-slot入口；round15執行group1→84、ACTING60–62、index14–16與JOIN28，round16依`0x24005 jg`全部略過；JOIN25、index13、chapter20為共同路徑。舊scenario預載70筆再加16人的86-slot拓撲已撤回，改用runtime append只建立group0。正式binding已接`postbattle_ch20_persist→town_ch21`，兩條分支、persistent JOIN與城鎮銜接回歸通過。稽核現為17 active／7 blocked；尚缺未修改一般玩家DOSBox E2。證據見[`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt)。
+- [x] **玩家第20戰 raw ch19 post 垂直切片（E1）**：IDA Pro 9.4與Docker Capstone固定`0x23E74..0x240FA`；四張table精確寫slots0..15、52..60與view `(26,31)`。固定record0＋選15人、map19 group0共67筆，形成83-slot入口；round15執行group1→84、ACTING60–62、index14–16與JOIN28，round16依`0x24005 jg`全部略過；JOIN25、index13、chapter20為共同路徑。舊scenario預載70筆再加16人的86-slot拓撲已撤回，改用runtime append只建立group0。正式binding已接`postbattle_ch20_persist→town_ch21`，兩條分支、persistent JOIN與城鎮銜接回歸通過；尚缺未修改一般玩家DOSBox E2。現況稽核統計以本文件頂端為準。證據見[`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt)。
 - [x] ch20/ch21 pre-handler：FDTXT_021 index0（17句）與 map20/80-slot 已接 binding，`story_ch21` 已接回 editable handler。
 - [~] class-change data/UI bridge：`LoadClassChangeTable`、`NativeClassChangeTarget`、`LoadClassChangeGrowth` 已接；church 先在三列視窗選角色，再依 special>optional>default 自動解析唯一 target，最後以左右 Yes/No confirmation 決定 mutation。`0x31019` row、FDOTHER#14 entry16 panel、`0x1974c` 六幀 opening，以及 `0x19953/0x197e5` 動態名字＋FDOTHER#2 Yes/No normal/pulse＋四幀 choice open/close 均已成 fail-closed indexed compositor。official IDA 重核補正完整順序：候選清單先以 `0x2d31b` 五幀關閉＋source restore；確認結束再跑 choice close 4 幀、dialogue close 5 幀＋source restore，才執行 mutation／返回。每幀都由 Draw acknowledgement 推進。`0x19953` BIOS delta>=2 時 counter mod4 前進、選中 variant=counter/2。已重生 [`native-class-list-indexed.png`](../figures/native-class-list-indexed.png)／[`native-class-confirm-indexed.png`](../figures/native-class-confirm-indexed.png)，兩者現在包含原版教會 scene source；raw service0 status/command renderer、HIT/EV/DX 實機數值差分仍待。
 - [~] class-change synthesis：`0x31602` 五組 `0x1e529` 先把新職成長加到 raw AP/DP/DX/MaxHP/MaxMP，隨後呼叫 `0x1b750`；該 routine 讀 raw `+0x37/+0x39/+0x3e`、item table 23-byte row 的 `+1/+3/+5/+7`，寫 derived AP/DP/HIT/EV `+0x48/+0x4a/+0x4c/+0x4e`。`RecomputeAfterClassChange` 已恢復並防止既有裝備重複計算；`+0x22/+0x23/+0x24` 是 constructor 清零後由其他 transient/effect writer 使用的旗標，class path 本身不寫入，不能臆測成 class modifiers。

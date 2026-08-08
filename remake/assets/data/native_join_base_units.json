@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "source": {
+    "reference_file": "docs/data/fd2-reference-files.json",
+    "exe_sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+  },
+  "evidence_level": "強推論",
+  "notes": "sub_112A5 直接從角色資料表建構 persistent record；這些 map17 ally records 只提供可見／裝備 base 欄位，不取代 native_join_constructor 的原始表格。",
+  "rows": [
+    {
+      "id": 7,
+      "roster": "../maps/map17/map17_units.json",
+      "unit_index": 1,
+      "raw_byte8": 7
+    },
+    {
+      "id": 21,
+      "roster": "../maps/map17/map17_units.json",
+      "unit_index": 0,
+      "raw_byte8": 21
+    }
+  ]
+}

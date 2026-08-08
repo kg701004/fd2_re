@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "resources": {
+    "56": [
+      {
+        "beats": 1,
+        "units": [{ "slot": 1, "pose": 3 }]
+      },
+      {
+        "beats": 1,
+        "units": [{ "slot": 1, "pose": 2 }]
+      },
+      {
+        "beats": 4,
+        "special": true,
+        "units": [{ "slot": 1, "pose": 3 }]
+      }
+    ],
+    "57": [
+      {
+        "beats": 8,
+        "special": true,
+        "units": [{ "slot": 16, "pose": 3 }]
+      }
+    ],
+    "58": [
+      {
+        "beats": 8,
+        "special": true,
+        "units": [{ "slot": 16, "pose": 1 }]
+      }
+    ]
+  }
+}

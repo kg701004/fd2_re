@@ -3037,5 +3037,35 @@ IDA 控制流轉錄，尚非未修改一般玩家 E2。
 
 本切片目前是 E1（原始位址、可編輯資料、重製端決定性垂直回歸）；尚缺未修改
 一般玩家 DOSBox 的同狀態逐幀比較、完整第16戰輸入路徑及 `town_ch17` 的實機
-E2。其餘 blocked postbattle 為玩家第17、18、22、23、24、29戰，不得因本切片
-而宣稱整個戰役完成。
+E2。當時其餘 blocked postbattle 包含玩家第17、18、22、23、24、29戰；後續
+第18戰已由下一節切片解除，現況以本文件最末稽核為準，不得因單一切片宣稱
+整個戰役完成。
+
+## 2026-08-09 勘誤：raw ch17 post 是玩家第18戰（E1）
+
+前一節把「剩餘 blocked」列為玩家第17、18戰，是第17戰切片尚未完成時的
+歷史狀態；本節以索引稽核與直接位址證據取代，不刪除前文以保留推翻原因。
+`battle_ch18` 的 map17 才由 raw `ch17_post`（handler `0x23cd5`）消費；
+`battle_ch17` 仍等待 raw `ch16_post` 的正式 binding。把 `ch17_post` 接到
+`postbattle_ch17_persist` 會被稽核判定為 `active_index_mismatch`，已撤回。
+
+- `sub_23CD5` 的 `0x23d39→sub_233C6` 直接參數閉合 slots 0..16 及 special
+  slot17 `(25,8,pose1)`，相機為 `(432,96)`；IDA 原始位址、三組 0x11 位元組
+  與 FD2.EXE 雜湊見 [`fd2_ch17_post_ida.txt`](../data/fd2_ch17_post_ida.txt)。
+- acting directory 的資源56、57、58已由固定版本原版直接解碼，編輯稿位於
+  [`ch17_post.json`](../../remake/assets/cutscenes/acting/ch17_post.json)，不
+  保存指標或原始執行檔位元組。
+- FDTXT_018 index10 明確跨越 `ch18.json` scene3 line9 與 scene4 lines0..10；
+  binding 使用 `dialogue_overrides.segments`，禁止把跨場景字串壓成單一場景。
+- map17 的 group0 37筆加 18個 persistent party records 形成55-slot runtime；
+  JOIN21／7 的 current runtime array 沒有 raw +8 記錄，原版 sub_112A5 直接從
+  角色資料表建構 persistent record。重製因此只接受已標示「強推論」的
+  `native_join_base_units.json` 明示 map17 base，未知角色仍失敗即關閉，不能
+  用 `Fig==char_id` 泛化。
+- Docker/Xvfb E1 已驗證 `battle_ch18→postbattle_ch18→town_ch19`、演出、
+  JOIN21／7、持久隊伍與 save/load。這不等於未修改一般玩家 DOSBox E2，也不
+  解除玩家第17、22、23、24、29戰的 blocked 狀態。
+
+本次索引修正後，24 個標準 postbattle 節點為 19 active／5 blocked；
+story/cutscene 稽核為 121 節點、9 個獨立 script、49 個 handler binding、
+63 個 fallback。這些是覆蓋統計，不是完成百分比。

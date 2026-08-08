@@ -129,6 +129,8 @@ type Game struct {
 	classChangeGrowth          map[int]campaign.ClassChangeGrowth
 	nativeJoinConstructor      campaign.NativeJoinConstructorTable
 	hasNativeJoinConstructor   bool
+	nativeJoinBases            campaign.NativeJoinBaseTable
+	hasNativeJoinBases         bool
 	nativeJoinItemEffectRows   []byte
 	handlerChapter             int             // 原版 [0x53c03]；set_chapter 與無立即數 LOADCH 的 resource chapter
 	storyWalks                 []*storyWalkJob // 場景走位動畫佇列(doc46 §5.3);逐幀推進、完成後移除
@@ -1356,8 +1358,26 @@ func (g *Game) beatStart(b campaign.Beat) {
 				}
 			}
 			if base == nil {
-				g.loadErr = fmt.Sprintf("beat join:char_id=%d 缺少 raw +8 runtime record", b.CharID)
-				return
+				// Native sub_112A5 appends a new persistent record from its
+				// character-data helpers; it does not require the character to
+				// already occupy the current field array.  Only an explicit,
+				// evidence-labelled base roster may bridge that boundary.
+				if !g.hasNativeJoinBases {
+					joinPath := assetPath("assets/data/native_join_base_units.json")
+					table, err := campaign.LoadNativeJoinBaseTable(joinPath)
+					if err != nil {
+						g.loadErr = fmt.Sprintf("beat join:char_id=%d 缺少 raw +8 runtime record 且 base table 無法載入: %v", b.CharID, err)
+						return
+					}
+					g.nativeJoinBases = table
+					g.hasNativeJoinBases = true
+				}
+				fallback, err := g.nativeJoinBases.LoadBaseUnit(b.CharID)
+				if err != nil {
+					g.loadErr = "beat join: " + err.Error()
+					return
+				}
+				base = &fallback
 			}
 			materialized, err := g.materializeNativeJoinPersistentUnit(b.CharID, *base)
 			if err != nil {
@@ -7373,6 +7393,10 @@ func loadGame() *Game {
 	if table, e := campaign.LoadNativeJoinConstructorTable(joinPath); e == nil {
 		g.nativeJoinConstructor = table
 		g.hasNativeJoinConstructor = true
+	}
+	if table, e := campaign.LoadNativeJoinBaseTable(assetPath("assets/data/native_join_base_units.json")); e == nil {
+		g.nativeJoinBases = table
+		g.hasNativeJoinBases = true
 	}
 	if rows, e := battle.LoadNativeItemEffectRowPrefix(
 		assetPath("assets/data/native_item_effect_rows.json"),

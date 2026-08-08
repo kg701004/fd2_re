@@ -1016,3 +1016,83 @@ func TestChapter15PostFourRawBranchesJoin18Town17AndSaveBoundary(t *testing.T) {
 		})
 	}
 }
+
+func TestChapter18PostJoins21And7Town19SaveBoundary(t *testing.T) {
+	order := []int{0, 4, 9, 30, 1, 8, 2, 10, 13, 12, 5, 6, 11, 14, 17, 15, 18, 16}
+	g := &Game{
+		partyMembers:   make(map[int]bool, len(order)),
+		partyJoinOrder: append([]int(nil), order...),
+		partyDeploy:    make(map[int]bool, len(order)-1),
+	}
+	for _, id := range order {
+		g.partyMembers[id] = true
+	}
+	for _, id := range order[1:] {
+		g.partyDeploy[id] = true
+	}
+	pre, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch17_pre.json"))
+	if err != nil || len(issues) != 0 || len(pre) == 0 || pre[0].LoadCH == nil {
+		t.Fatalf("ch17_pre compile err=%v issues=%#v beats=%#v", err, issues, pre)
+	}
+	if err := g.applyLoadCH(pre[0].LoadCH); err != nil {
+		t.Fatal(err)
+	}
+	g.resetBattle("assets/maps/map17/map17_units.json", "assets/scenarios/ch18.json")
+	if g.loadErr != "" || g.st == nil || g.sc == nil || !g.sc.RuntimeAppendGroups || len(g.st.Units) != 55 {
+		t.Fatalf("ch18 handoff err=%q units=%d runtime_append=%v", g.loadErr, len(g.st.Units), g.sc != nil && g.sc.RuntimeAppendGroups)
+	}
+	for i, id := range order {
+		if g.st.Units[i] == nil || g.st.Units[i].Fig != id {
+			t.Fatalf("ch18 persistent-first slot%d=%#v, want fig%d", i, g.st.Units[i], id)
+		}
+	}
+	beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch17_post.json"))
+	if err != nil || len(issues) != 0 {
+		t.Fatalf("ch17_post compile err=%v issues=%#v", err, issues)
+	}
+	g.camp = campaign.NewRunner(&campaign.Campaign{
+		Start: "postbattle_ch18_persist",
+		Nodes: map[string]*campaign.Node{
+			"postbattle_ch18_persist": {Type: "cutscene", Next: "town_ch19"},
+			"town_ch19":               {Type: "town"},
+		},
+	})
+	g.beats, g.beatIdx, g.storyBG = beats, -1, true
+	g.beatAdvance()
+	for frame := 0; frame < 12000 && g.camp.NodeID() != "town_ch19"; frame++ {
+		if len(g.dialog) != 0 {
+			g.dialog = nil
+			g.beatAdvance()
+		}
+		g.tick(1)
+		if g.loadErr != "" {
+			t.Fatalf("ch17_post stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+		}
+	}
+	if g.camp.NodeID() != "town_ch19" || g.handlerChapter != 18 || g.st != nil {
+		t.Fatalf("ch17_post boundary node=%q chapter=%d st=%v", g.camp.NodeID(), g.handlerChapter, g.st != nil)
+	}
+	for _, id := range []int{21, 7} {
+		if !g.partyMembers[id] {
+			t.Fatalf("JOIN%d membership missing: %v", id, g.partyMembers)
+		}
+		joined, ok := g.partyRoster[id]
+		if !ok || !joined.HasNativeIdentity || joined.NativeIdentity != id ||
+			!joined.HasNativeRecordByte8 || int(joined.NativeRecordByte8) != id {
+			t.Fatalf("JOIN%d persistent record=%#v", id, joined)
+		}
+	}
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	userDataDirCached = ""
+	g.saveGameToSlot(2)
+	if g.msg != "已存檔(槽位3：town_ch19)" {
+		t.Fatalf("town19 save message=%q", g.msg)
+	}
+	g.camp.Cur = "postbattle_ch18_persist"
+	g.partyMembers, g.partyJoinOrder = nil, nil
+	g.partyDeploy, g.partyRoster = nil, nil
+	g.loadGameFromSlot(2)
+	if g.camp.NodeID() != "town_ch19" || !g.partyMembers[21] || !g.partyMembers[7] || len(g.partyJoinOrder) != len(order)+2 {
+		t.Fatalf("town19 save/load node=%q members=%v order=%v roster=%v", g.camp.NodeID(), g.partyMembers, g.partyJoinOrder, g.partyRoster)
+	}
+}
