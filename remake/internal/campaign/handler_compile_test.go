@@ -2126,6 +2126,55 @@ func TestCompileChapter21PostCandidatePreservesRecoveredLayoutActingAndTransitio
 	}
 }
 
+func TestCompileChapter23PostCandidatePreservesRawLoopSchedule(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch23_post_candidate.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 0 {
+		t.Fatalf("ch23_post candidate issues=%#v", issues)
+	}
+	var loops []Beat
+	for _, beat := range beats {
+		if beat.Op == "native_ch23_loop" {
+			loops = append(loops, beat)
+		}
+	}
+	if len(loops) != 2 || loops[0].Source != "0x24c61" || loops[1].Source != "0x24cc1" {
+		t.Fatalf("ch23_post raw loops=%#v", loops)
+	}
+	initial := loops[0].NativeCh23Loop
+	if initial == nil || initial.Phase != "initial" || initial.Repeat != 30 ||
+		!nativeStageValues(initial.StageValues, 2, 9) || initial.Palette != nil ||
+		!nativeCallMatches(&initial.Draw, "0x24c61", "0x11cac", []any{1}) ||
+		!nativeCallMatches(&initial.Tick, "0x24c6b", "0x17aa9", []any{1}) {
+		t.Fatalf("ch23_post initial loop=%#v", initial)
+	}
+	palette := loops[1].NativeCh23Loop
+	if palette == nil || palette.Phase != "palette" || palette.Repeat != 12 ||
+		!nativeStageValues(palette.StageValues, 10, 14) || palette.PaletteTableSource != "0x60003" ||
+		!nativeCallMatches(palette.Palette, "0x24cc1", "0x11d40", []any{"esi", 255, 0}) ||
+		!nativeCallMatches(&palette.Draw, "0x24cd3", "0x11cac", []any{0}) ||
+		!nativeCallMatches(&palette.Tick, "0x24cdd", "0x17aa9", []any{1}) {
+		t.Fatalf("ch23_post palette loop=%#v", palette)
+	}
+	if got := loops[0].NativeCh23Loop.Stage.Source.Addr; got != "0x24c81" {
+		t.Fatalf("ch23 initial stage source=%s", got)
+	}
+	if got := loops[1].NativeCh23Loop.Stage.Source.Addr; got != "0x24cf2" {
+		t.Fatalf("ch23 palette stage source=%s", got)
+	}
+	bad := *initial
+	bad.StageValues = append([]int(nil), initial.StageValues...)
+	bad.StageValues[0]++
+	_, badIssues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "native_ch23_loop", Source: HandlerSource{Addr: "0x24c61", Target: "0x11cac"}, NativeCh23Loop: &bad,
+	}}}, HandlerBindings{})
+	if len(badIssues) != 1 {
+		t.Fatalf("mutated ch23 loop must fail closed: %#v", badIssues)
+	}
+}
+
 func TestCompileUnitPresentRejectsFormerlyAcceptedBinding(t *testing.T) {
 	p := HandlerUnitPresent{Slot: 18, X: 22, Y: 24, Frames: 6, FrameDelayMs: 10, TailTicks: 2}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{

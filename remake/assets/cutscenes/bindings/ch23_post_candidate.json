@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "handler_script": "../handlers/ch23_post.json",
+  "story_index_map": "../dialogue-index/count-aligned.json",
+  "dialogue_contexts": {
+    "0x24c4c": { "source_dat": "FDTXT_024", "script": "ch24.json" },
+    "0x24cad": { "source_dat": "FDTXT_024", "script": "ch24.json" }
+  }
+}

@@ -13,6 +13,30 @@ type HandlerSource struct {
 	Target string `json:"target,omitempty"`
 }
 
+// HandlerNativeCall preserves one nested raw call site inside a composite
+// handler primitive.  It is evidence metadata, not a generic runtime call.
+type HandlerNativeCall struct {
+	Source  HandlerSource `json:"source"`
+	RawArgs []any         `json:"raw_args,omitempty"`
+}
+
+// NativeCh23Loop is the two-loop presentation schedule recovered from raw
+// ch23 post.  The renderer deliberately consumes this as fail-closed evidence:
+// all native call sites, register-shaped arguments, stage values, and external
+// raw sources remain visible until an indexed adapter is proven.
+type NativeCh23Loop struct {
+	Phase              string             `json:"phase"`
+	Repeat             int                `json:"repeat"`
+	Draw               HandlerNativeCall  `json:"draw"`
+	Tick               HandlerNativeCall  `json:"tick"`
+	Palette            *HandlerNativeCall `json:"palette,omitempty"`
+	Stage              HandlerNativeCall  `json:"stage"`
+	StageValues        []int              `json:"stage_values"`
+	StageLatchSource   string             `json:"stage_latch_source"`
+	TickCounterSource  string             `json:"tick_counter_source"`
+	PaletteTableSource string             `json:"palette_table_source,omitempty"`
+}
+
 // HandlerCondition is the editable, evidence-level predicate attached to a
 // structured handler branch.  Each predicate is a direct transcription of a
 // native helper; this is deliberately not a generic expression language.
@@ -84,6 +108,7 @@ type HandlerBeat struct {
 	UnitPresent       *HandlerUnitPresent       `json:"unit_present,omitempty"`
 	DirectRecordPatch *HandlerDirectRecordPatch `json:"direct_record_patch,omitempty"`
 	IndexedTransition *HandlerIndexedTransition `json:"indexed_transition,omitempty"`
+	NativeCh23Loop    *NativeCh23Loop           `json:"native_ch23_loop,omitempty"`
 	Ms                *int                      `json:"ms,omitempty"`
 	Variant           string                    `json:"variant,omitempty"`
 	Value             any                       `json:"value,omitempty"`

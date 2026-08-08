@@ -430,6 +430,14 @@ func TestBeatNativeStagingPresentFailsClosedWithoutRendererAdapter(t *testing.T)
 	}
 }
 
+func TestBeatNativeCh23LoopFailsClosedWithoutIndexedLatchAdapter(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{{Op: "native_ch23_loop", NativeCh23Loop: &campaign.NativeCh23Loop{Phase: "initial"}}})
+	g.beatAdvance()
+	if g.loadErr != "beat native_ch23_loop: native ch23 indexed/latch renderer adapter未完成" {
+		t.Fatalf("native ch23 loop error=%q", g.loadErr)
+	}
+}
+
 func TestBeatActingDecodedNormalSlotMovement(t *testing.T) {
 	// Direct resource102 at ch00 source 0x32461: slot4 left×2, up×1,
 	// left×1. A duplicate Fig at slot0 must remain untouched.

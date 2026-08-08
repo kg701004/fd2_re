@@ -2353,10 +2353,13 @@ with only the zero argument calling `0x4dfcc`; the direct caller still does
 not read `0x51a10`. The same ch23 audit fixes `0x17aa9(1)` as a DOS BIOS
 tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 (`ESI=0..11`). The remake now has raw `RotateNativeCh23Rows` and
-`ApplyNativeCh23PaletteCycle` primitives, but initial latch state,
-`dword_53C03` lifetime, tick gating, and the complete 12-step presentation
-job still lack proven runtime provenance, so `postbattle_ch23_persist` remains
-fail-closed. Detailed evidence is in
+`ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated
+`native_ch23_loop` candidate beats that preserve every loop call site, the
+30/12 repetition counts, register-shaped arguments, and stage values 2..14.
+The runner fails closed while the indexed/latch adapter is absent. Initial latch
+state, `dword_53C03` lifetime, tick gating, the complete indexed presentation
+consumer, and normal-player E2 still lack proof, so `postbattle_ch23_persist`
+remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 
 The adjacent `0x24e80` handler contains one independent raw mutation loop: for runtime indices `0x10 <= i < caller_count`, records with byte `+0x07 == 0x1f` receive `+0=0x10` and `+1=0x06`. `battle.RewriteNativeMarker1F` preserves the explicit start/count, matching-marker-only writes, and bounds validation. The bytes remain unnamed and are not treated as roster identity or renderer state.

@@ -324,6 +324,7 @@ type Beat struct {
 	NativePalettePulse    *NativePalettePulse       `json:"native_palette_pulse,omitempty"`
 	NativePaletteBlackout *NativePaletteBlackout    `json:"native_palette_blackout,omitempty"`
 	NativeStagingPresent  *NativeStagingPresent     `json:"native_staging_present,omitempty"`
+	NativeCh23Loop        *NativeCh23Loop           `json:"native_ch23_loop,omitempty"`
 	UnitPresent           *HandlerUnitPresent       `json:"unit_present,omitempty"`
 	DirectRecordPatch     *HandlerDirectRecordPatch `json:"direct_record_patch,omitempty"`
 

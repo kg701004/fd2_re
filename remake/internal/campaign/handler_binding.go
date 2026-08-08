@@ -14,8 +14,13 @@ import (
 // Overrides are keyed by HandlerBeat.Source.Addr, never by a reused resource
 // id, so a later loadch segment cannot accidentally inherit an earlier scene.
 type HandlerBinding struct {
-	SchemaVersion    int                               `json:"schema_version"`
-	HandlerScript    string                            `json:"handler_script"`
+	SchemaVersion int    `json:"schema_version"`
+	HandlerScript string `json:"handler_script"`
+	// EvidenceOnly keeps generated/raw research bindings out of runnable
+	// campaign playback even when every nested raw operation is typed. A
+	// candidate authored for compiler regression may omit this flag; campaign
+	// nodes must never point at evidence-only bindings.
+	EvidenceOnly     bool                              `json:"evidence_only,omitempty"`
 	ActingResources  string                            `json:"acting_resources,omitempty"`
 	StoryIndexMap    string                            `json:"story_index_map,omitempty"`
 	DialogueContexts map[string]HandlerDialogueContext `json:"dialogue_contexts,omitempty"`
@@ -193,6 +198,13 @@ func CompileHandlerBinding(path string) ([]Beat, []HandlerCompileIssue, error) {
 		return nil, nil, fmt.Errorf("handler binding %q handler_script: %w", path, err)
 	}
 	beats, issues := CompileHandlerScript(script, binding.CompilerBindings())
+	if binding.EvidenceOnly && len(script.Beats) > 0 {
+		issues = append(issues, HandlerCompileIssue{
+			Beat: -1, Op: "evidence_only",
+			Source: HandlerSource{Addr: "binding"},
+			Reason: "binding is marked evidence_only and cannot enter runnable playback",
+		})
+	}
 	if len(issues) == 0 && binding.RuntimeContext != nil {
 		context := *binding.RuntimeContext
 		context.SpawnGroups = cloneIntMap(context.SpawnGroups)

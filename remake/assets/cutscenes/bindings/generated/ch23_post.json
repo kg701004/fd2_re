@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "handler_script": "../../handlers/ch23_post.json",
+  "evidence_only": true,
   "story_index_map": "../../dialogue-index/count-aligned.json",
   "dialogue_contexts": {
     "0x24c4c": {

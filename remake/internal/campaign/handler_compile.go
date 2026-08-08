@@ -575,6 +575,29 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat := runtime(input, "redraw")
 			beat.Frames = 1
 			beats = append(beats, beat)
+		case "native_ch23_loop":
+			loop := input.NativeCh23Loop
+			if loop == nil {
+				issue(i, input, "native_ch23_loop requires an explicit raw loop payload")
+				continue
+			}
+			if err := validateNativeCh23Loop(input, *loop); err != nil {
+				issue(i, input, err.Error())
+				continue
+			}
+			copyLoop := *loop
+			copyLoop.StageValues = append([]int(nil), loop.StageValues...)
+			copyLoop.Draw.RawArgs = append([]any(nil), loop.Draw.RawArgs...)
+			copyLoop.Tick.RawArgs = append([]any(nil), loop.Tick.RawArgs...)
+			copyLoop.Stage.RawArgs = append([]any(nil), loop.Stage.RawArgs...)
+			if loop.Palette != nil {
+				palette := *loop.Palette
+				palette.RawArgs = append([]any(nil), loop.Palette.RawArgs...)
+				copyLoop.Palette = &palette
+			}
+			beat := runtime(input, "native_ch23_loop")
+			beat.NativeCh23Loop = &copyLoop
+			beats = append(beats, beat)
 		case "focus_unit":
 			// 0x12d7b reads the selected unit X/Y and delegates to 0x12cea,
 			// which walks the cursor there X-first/Y-second and scrolls only at
@@ -1063,6 +1086,72 @@ func immediateHandlerInt(args []any, index int) (int, bool) {
 	default:
 		return 0, false
 	}
+}
+
+func validateNativeCh23Loop(input HandlerBeat, loop NativeCh23Loop) error {
+	if loop.StageLatchSource != "byte_0x51a10" || loop.TickCounterSource != "[0x46c]" {
+		return fmt.Errorf("native_ch23_loop requires raw latch byte_0x51a10 and tick source [0x46c]")
+	}
+	switch loop.Phase {
+	case "initial":
+		if input.Source.Addr != "0x24c61" || input.Source.Target != "0x11cac" || loop.Repeat != 30 ||
+			!nativeCallMatches(&loop.Draw, "0x24c61", "0x11cac", []any{1}) ||
+			!nativeCallMatches(&loop.Tick, "0x24c6b", "0x17aa9", []any{1}) || loop.Palette != nil ||
+			!nativeCallMatches(&loop.Stage, "0x24c81", "0x24d22", []any{"edi"}) ||
+			!nativeStageValues(loop.StageValues, 2, 9) {
+			return fmt.Errorf("native_ch23_loop initial phase does not match 0x24c61..0x24c81 raw schedule")
+		}
+	case "palette":
+		if input.Source.Addr != "0x24cc1" || input.Source.Target != "0x11d40" || loop.Repeat != 12 ||
+			!nativeCallMatches(loop.Palette, "0x24cc1", "0x11d40", []any{"esi", 255, 0}) ||
+			!nativeCallMatches(&loop.Draw, "0x24cd3", "0x11cac", []any{0}) ||
+			!nativeCallMatches(&loop.Tick, "0x24cdd", "0x17aa9", []any{1}) ||
+			!nativeCallMatches(&loop.Stage, "0x24cf2", "0x24d22", []any{"edi"}) ||
+			!nativeStageValues(loop.StageValues, 10, 14) || loop.PaletteTableSource != "0x60003" {
+			return fmt.Errorf("native_ch23_loop palette phase does not match 0x24cc1..0x24cf2 raw schedule")
+		}
+	default:
+		return fmt.Errorf("native_ch23_loop has unknown phase %q", loop.Phase)
+	}
+	return nil
+}
+
+func nativeCallMatches(call *HandlerNativeCall, addr, target string, want []any) bool {
+	if call == nil {
+		return false
+	}
+	if call.Source.Addr != addr || call.Source.Target != target || len(call.RawArgs) != len(want) {
+		return false
+	}
+	for index, expected := range want {
+		switch value := expected.(type) {
+		case string:
+			got, ok := call.RawArgs[index].(string)
+			if !ok || got != value {
+				return false
+			}
+		case int:
+			got, ok := immediateHandlerInt(call.RawArgs, index)
+			if !ok || got != value {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func nativeStageValues(values []int, start, end int) bool {
+	if len(values) != end-start+1 {
+		return false
+	}
+	for index, value := range values {
+		if value != start+index {
+			return false
+		}
+	}
+	return true
 }
 
 func nativePaletteFadeRegisterSnapshot(args []any) bool {

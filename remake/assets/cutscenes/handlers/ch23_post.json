@@ -14,35 +14,29 @@
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "redraw",
-      "args": [
-        1
-      ],
+      "op": "native_ch23_loop",
       "source": {
-        "addr": "0x24c63",
+        "addr": "0x24c61",
         "target": "0x11cac"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x17aa9",
-      "raw_args": [
-        1
-      ],
-      "source": {
-        "addr": "0x24c6d",
-        "target": "0x17aa9"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x24d22",
-      "raw_args": [
-        "edi"
-      ],
-      "source": {
-        "addr": "0x24c82",
-        "target": "0x24d22"
+      },
+      "native_ch23_loop": {
+        "phase": "initial",
+        "repeat": 30,
+        "draw": {
+          "source": { "addr": "0x24c61", "target": "0x11cac" },
+          "raw_args": [1]
+        },
+        "tick": {
+          "source": { "addr": "0x24c6b", "target": "0x17aa9" },
+          "raw_args": [1]
+        },
+        "stage": {
+          "source": { "addr": "0x24c81", "target": "0x24d22" },
+          "raw_args": ["edi"]
+        },
+        "stage_values": [2, 3, 4, 5, 6, 7, 8, 9],
+        "stage_latch_source": "byte_0x51a10",
+        "tick_counter_source": "[0x46c]"
       }
     },
     {
@@ -55,48 +49,34 @@
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "unknown",
-      "native_target": "0x11d40",
-      "raw_args": [
-        "esi",
-        255,
-        0
-      ],
+      "op": "native_ch23_loop",
       "source": {
-        "addr": "0x24cc9",
+        "addr": "0x24cc1",
         "target": "0x11d40"
-      }
-    },
-    {
-      "op": "redraw",
-      "args": [
-        0
-      ],
-      "source": {
-        "addr": "0x24cd3",
-        "target": "0x11cac"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x17aa9",
-      "raw_args": [
-        1
-      ],
-      "source": {
-        "addr": "0x24cdd",
-        "target": "0x17aa9"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x24d22",
-      "raw_args": [
-        "edi"
-      ],
-      "source": {
-        "addr": "0x24cf3",
-        "target": "0x24d22"
+      },
+      "native_ch23_loop": {
+        "phase": "palette",
+        "repeat": 12,
+        "palette": {
+          "source": { "addr": "0x24cc1", "target": "0x11d40" },
+          "raw_args": ["esi", 255, 0]
+        },
+        "draw": {
+          "source": { "addr": "0x24cd3", "target": "0x11cac" },
+          "raw_args": [0]
+        },
+        "tick": {
+          "source": { "addr": "0x24cdd", "target": "0x17aa9" },
+          "raw_args": [1]
+        },
+        "stage": {
+          "source": { "addr": "0x24cf2", "target": "0x24d22" },
+          "raw_args": ["edi"]
+        },
+        "stage_values": [10, 11, 12, 13, 14],
+        "stage_latch_source": "byte_0x51a10",
+        "tick_counter_source": "[0x46c]",
+        "palette_table_source": "0x60003"
       }
     },
     {
@@ -115,6 +95,6 @@
     }
   ],
   "diagnostics": {
-    "unknown_ops": 5
+    "unknown_ops": 0
   }
 }

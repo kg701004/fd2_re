@@ -51,9 +51,10 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   參數是 `(0,255,ESI)`，而不是 raw PUSH 順序看似的 `(ESI,255,0)`。
   `ESI=0..11` 是由同一個 12 次迴圈直接遞增所得（已證實）。
 - 每次 palette 更新後仍有 `0x11cac(0)`、`0x17aa9(1)` 與
-  `0x24d22(EDI)` 的相鄰時序；重製端目前沒有把這 12 組 register-bound
-  palette、重繪與 latch setter 以同一可編輯呈現工作消費，因此不建立
-  `postbattle_ch23_persist` binding。
+  `0x24d22(EDI)` 的相鄰時序；重製端現以兩個嚴格驗證的
+  `native_ch23_loop` 可編輯 beats 保留這 12 組 register-bound palette、
+  重繪、tick 與 latch setter 的原始位址。執行器在沒有 indexed／latch
+  adapter 時明確失敗即關閉，因此仍不建立 `postbattle_ch23_persist` binding。
 - `0x4dfcc` 讀取線性位址 `0x60003` 的 31 組 RGB 三元組；其
   `byte_60002=0..15` 以 `3*phase` 為起點，將連續 16 組寫入 DAC
   `0x20..0x2f`。重製端 `ApplyNativeCh23PaletteCycle` 保留這個固定視窗
@@ -89,11 +90,11 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   入口，仍不可把它提升成泛用畫面幀或 palette index。
 - 這也固定了兩段 ch23 loop 的差異：第一段使用 `0x11cac(1)`，第二段
   使用 `0x11cac(0)` 並額外觸發 `0x4dfcc`；兩者不可在可編輯腳本中折疊
-  成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows` 與
-  `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，並保留 312-byte row、原始
-  palette table 與位址來源；但尚未證明 handler 入口的初始 latch、
-  `dword_53C03` 生命週期、BIOS tick gate 與完整 12 次呈現工作，故仍不
-  建立 production binding。
+  成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows`、
+  `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，以及保留完整 call-site／
+  stage 值的 `native_ch23_loop` 候選 beats；但尚未證明 handler 入口的初始
+  latch、`dword_53C03` 生命週期、BIOS tick gate 與完整 12 次呈現工作的
+  indexed 消費，故仍不建立 production binding。
 
 限制與目前判定
 --------------
@@ -103,6 +104,8 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - `postbattle_ch23_persist → preparation_ch24 → story_ch24` 的 campaign
   邊界保留；沒有以 generic town、靜態 palette 或猜測性 `indexed copy`
   取代原版流程。
-- 目前仍 fail-closed。下一步必須以帶原始位址與 12 次 loop 順序的可編輯
-  呈現描述，補上 raw latch／tick provenance，再用 indexed frame／重繪
+- 目前仍 fail-closed。帶原始位址、12 次 loop 順序與 raw latch／tick
+  provenance 的候選已保存於
+  [`ch23_post_candidate.json`](../../../remake/assets/cutscenes/bindings/ch23_post_candidate.json)
+  並有 compiler／runner regression；下一步必須補上 indexed frame／重繪
   消費端及一般玩家路徑驗證後，才可評估 production binding。

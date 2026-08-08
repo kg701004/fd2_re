@@ -1060,6 +1060,16 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// choreography is not a spawn, position change, or ordinary camera pan.
 		g.loadErr = "beat native_staging_present: native 0x22253 renderer adapter未完成"
 		return
+	case "native_ch23_loop":
+		if b.NativeCh23Loop == nil {
+			g.loadErr = "beat native_ch23_loop:缺少原始兩段 loop payload"
+			return
+		}
+		// The payload preserves the exact 0x24c1e loop schedule, but the PNG
+		// renderer has no indexed 0x51a10/0x53aff latch adapter.  Do not turn
+		// the raw row rotation or DAC writes into a generic fade/redraw.
+		g.loadErr = "beat native_ch23_loop: native ch23 indexed/latch renderer adapter未完成"
+		return
 	case "layout_units":
 		if b.Layout == nil || len(b.Layout.Units) == 0 {
 			g.loadErr = "beat layout_units:缺少可編輯的 runtime layout"

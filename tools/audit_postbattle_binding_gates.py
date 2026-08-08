@@ -125,6 +125,8 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
                 gaps.append({"op": op, "source_addr": addr, "required": field})
         if active_binding and active_binding != expected_active_binding:
             status = "active_index_mismatch"
+        elif active_binding and binding.get("evidence_only"):
+            status = "active_evidence_only"
         elif active_binding:
             status = "active"
         elif inline_beat_count:
@@ -132,6 +134,12 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             # empty-node guard and can silently skip the native handler.
             status = "unbound_inline_beats"
         elif not handler_path.exists() or not binding_path.exists():
+            status = "blocked"
+        elif binding.get("evidence_only"):
+            # Typed raw operations may have no compiler gap while their
+            # indexed renderer is still absent.  An evidence-only binding is
+            # never a complete campaign mapping; keep the node blocked until
+            # an authored, runnable binding replaces it.
             status = "blocked"
         elif gaps:
             status = "blocked"
