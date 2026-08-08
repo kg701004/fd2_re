@@ -3413,8 +3413,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x120af→0x24d22(0)` 旋轉 staging，並在 `0x120b9` 更新 last tick。
   「tick gate 完全未知」已撤回；它是 BIOS tick 變化閘門，不是固定影格率。
 - 同一分支的 `0x120c6..0x120fe` 保留 `0x53aff`、`0x138` row stride、
-  `0xc0` rows 與 `0x11eb0` present 呼叫形狀。這仍未證明 staging 的建立／擁有者、
-  完整呈現目的地或 handler 入口 latch 初值，因此 `postbattle_ch23_persist` 仍
+  `0xc0` rows 與 `0x11eb0` present 呼叫形狀。後續 `0x10652` 載入器證據已
+  證實 raw staging 的建立／擁有者；完整呈現目的地或 handler 入口 latch 初值仍
+  未知，因此 `postbattle_ch23_persist` 仍
   fail-closed，沒有把 `nativeMapWork`／PNG framebuffer 猜成原版 staging。
 - SDD、worklist 與 `fd2_ch23_post_ida.txt` 已同步；這是 E1 反組譯證據收窄，
   不是 production renderer 或一般玩家 E2 完成。
@@ -3430,9 +3431,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   call 0x111ba` 的原始參數形狀；`0x10809..0x10820` 保留
   `push -1; push 0x138; push [0x53aff]; push 0; push 0; push eax;
   call 0x4e63d`；`0x10823..0x10831` 呼叫 `0x37416` 後清零 `[0x53b03]`；
-  `0x1083b→0x10842` 最後呼叫 `0x24d22(0)`。這收窄 loader 的 raw
-  decode／handle cleanup 邊界，但不把 `0x1a4d`、`0x2a` 或 `0x4e63d` 命名成
-  圖片、解壓縮或 palette 語意。
+  `0x1083b→0x10842` 最後呼叫 `0x24d22(0)`。同函式 IDA 資料表已將這個
+  分支對到 `FDOTHER.DAT` #42；這收窄 loader 的 raw decode／handle cleanup
+  邊界，但不把 #42 命名成背景、轉場或 UI。
+- 重製端新增 `fdother.DecodeNativeCh23Stage`／`BlitNativeCh23Stage`，以真實
+  `FDOTHER.DAT` #42 regression 固定 312×192、`0x138` stride、`0xea00`
+  staging surface 與透明 `0x4e63d` blit。這是可執行的 E1 原語，不是完整
+  indexed state/latch renderer；`native_ch23_loop` 仍保持失敗即關閉。
 - 既有「staging 建立／擁有者未知」已修正為「raw loader owner 已知；完整
   present 目的地生命週期、入口 latch 初值與 raw state adapter 仍未知」。
   沒有因此新增 renderer、campaign 或 `postbattle_ch23_persist` binding；

@@ -26,10 +26,12 @@
 - [x] **ch23 post 原始 staging 原語（E1）**：IDA／Capstone 已證實
   `0x11eee` case 23 會在 tick 變化時間接呼叫 `0x24d22(0)`；重製端新增
   `RotateNativeCh23Rows` 與 `ApplyNativeCh23PaletteCycle`，保留 312-byte
-  列旋轉、`0x60003` palette table 與位址來源；另以兩個嚴格驗證的
+  列旋轉、`0x60003` palette table 與位址來源；`0x10652` 分支另已固定
+  `FDOTHER.DAT` #42→312×192 單幀、`0xea00` staging 配置與透明 blit，重製端以
+  `DecodeNativeCh23Stage`／`BlitNativeCh23Stage` 保存此窄原語；另以兩個嚴格驗證的
   `native_ch23_loop` beats 保留第一段 30 次、第二段 12 次的完整 call-site、
   stage 值與 register-shaped arguments。執行器在 indexed／latch adapter 未完成
-  時失敗即關閉，故初始 latch、`0x53aff` staging 擁有者／呈現目的地、一般玩家畫面與
+  時失敗即關閉，故初始 latch、完整 `0x53aff` present 目的地、一般玩家畫面與
   `postbattle_ch23_persist` 仍未閉合。證據見
   [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
 - [x] **ch21 post 證據勘誤**：補明 `0x1f882` 是 0–63、每步 2 ms 的原生

@@ -2368,7 +2368,9 @@ case-23 branch passes `0x53aff`, row stride `0x138`, and `0xc0` rows to
 `0x2a` 與傳給 `0x111ba` 的既有 `[0x53b03]` handle；`0x10809..0x10820`
 保留 `0x4e63d` 的原始堆疊形狀，接著 `0x10823..0x10831` 釋放並清零
 `[0x53b03]`；`0x1083b` 呼叫 `0x24d22(0)`。這證明 raw ch23 staging
-配置與清理邊界，不證明資源的語意類型。完整 present 目的地生命週期與
+配置與清理邊界；IDA 的同函式資料表已將該載入值對到 `FDOTHER.DAT` archive
+entry #42（輸入檔雜湊見 [`fd2-reference-files.json`](../data/fd2-reference-files.json)），
+但不證明 #42 的圖形用途。完整 present 目的地生命週期與
 入口 latch 初值仍未知。IDA 現在
 proves the shared indexed consumer chain inside `0x11cac` (`0x11eee` →
 `0x122dc` → `0x127a9` → `0x1acf3` → `0x11eb0`), including ch23 call-sites
@@ -2378,6 +2380,12 @@ full `0x53aff` present-destination mapping, raw state mapping, and
 normal-player E2 still lack proof, so
 `postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
+
+The narrow executable boundary is now represented by
+`fdother.DecodeNativeCh23Stage`／`BlitNativeCh23Stage`: they require archive
+entry #42, exact 312×192 geometry, a `0x138`-stride `0xea00` staging surface,
+and transparent `0x4e63d` blitting, while leaving the indexed state/latch
+adapter outside the production handler.
 
 The adjacent `0x24e80` handler contains one independent raw mutation loop: for runtime indices `0x10 <= i < caller_count`, records with byte `+0x07 == 0x1f` receive `+0=0x10` and `+1=0x06`. `battle.RewriteNativeMarker1F` preserves the explicit start/count, matching-marker-only writes, and bounds validation. The bytes remain unnamed and are not treated as roster identity or renderer state.
 

@@ -1,6 +1,48 @@
 package fdother
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
+
+func TestDecodeAndBlitNativeCh23StageFromPlayerArchive(t *testing.T) {
+	const datPath = "../../../org_game/炎龍騎士團/FLAME2/FDOTHER.DAT"
+	if _, err := os.Stat(datPath); err != nil {
+		t.Skip("player-provided FDOTHER.DAT is absent")
+	}
+	frame, err := DecodeNativeCh23Stage(datPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
+	if err := BlitNativeCh23Stage(frame, staging); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBlitNativeCh23StageRejectsWrongSurfaceWithoutMutation(t *testing.T) {
+	frame := Frame{Width: NativeCh23StageWidth, Height: NativeCh23StageHeight, Pixels: []byte{0, 0, 0, 0}}
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight-1)
+	staging[0] = 7
+	if err := BlitNativeCh23Stage(frame, staging); err == nil {
+		t.Fatal("wrong staging surface accepted")
+	}
+	if staging[0] != 7 {
+		t.Fatalf("rejected staging surface mutated: %d", staging[0])
+	}
+}
+
+func TestBlitNativeCh23StageRejectsMalformedRLEWithoutMutation(t *testing.T) {
+	frame := Frame{Width: NativeCh23StageWidth, Height: NativeCh23StageHeight, Pixels: []byte{0, 0, 0, 0}}
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
+	staging[0], staging[len(staging)-1] = 13, 17
+	if err := BlitNativeCh23Stage(frame, staging); err == nil {
+		t.Fatal("malformed ch23 RLE accepted")
+	}
+	if staging[0] != 13 || staging[len(staging)-1] != 17 {
+		t.Fatalf("malformed RLE partially mutated staging: %d/%d", staging[0], staging[len(staging)-1])
+	}
+}
 
 func TestRotateNativeCh23RowsWrapsBottomRowsToTop(t *testing.T) {
 	buf := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
