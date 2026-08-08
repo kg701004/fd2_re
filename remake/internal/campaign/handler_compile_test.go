@@ -2349,3 +2349,37 @@ func TestNativeEventStateEqualsRejectsFrontierAbsentFromBinding(t *testing.T) {
 		t.Fatalf("unlisted refined frontier issues=%#v", issues)
 	}
 }
+
+func TestCompileChapter22PreCandidatePreservesMap22TransitionAndDialogueContext(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch22_pre_candidate.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 0 {
+		t.Fatalf("ch22_pre candidate compile issues=%#v", issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
+		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{70}) || !beats[0].RuntimeContext.StoryViewport {
+		t.Fatalf("ch22_pre runtime context=%#v", beats)
+	}
+	var transition Beat
+	var acts int
+	dialogSources := map[string]bool{}
+	for _, beat := range beats {
+		switch beat.Op {
+		case "indexed_transition":
+			transition = beat
+		case "act":
+			acts++
+		case "dialog":
+			dialogSources[beat.Source] = true
+		}
+	}
+	if acts != 3 || len(dialogSources) != 5 || transition.IndexedTransition == nil ||
+		transition.IndexedTransition.CursorSource != "native_relative_cursor" ||
+		transition.IndexedTransition.CursorYOffset != 5 || transition.IndexedTransition.RadialRadius != 10 ||
+		transition.IndexedTransition.RadialRadiusStep != 8 || transition.IndexedTransition.Frames != 9 ||
+		transition.IndexedTransition.TailDelayMs != 500 {
+		t.Fatalf("ch22_pre transition/consumers acts=%d dialog_sources=%d transition=%#v", acts, len(dialogSources), transition)
+	}
+}

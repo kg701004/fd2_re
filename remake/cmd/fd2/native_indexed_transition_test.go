@@ -31,7 +31,7 @@ func TestResolveNativeIndexedTransitionUsesProvenRelativeCursor(t *testing.T) {
 	spec := nativeIndexedTransitionSpecForTest()
 	spec.CursorSource = "native_relative_cursor"
 	spec.CursorYOffset = 3
-	resolved, err := g.resolveNativeIndexedTransitionSpec(spec)
+	resolved, err := g.resolveNativeIndexedTransitionSpec(spec, "0x245ce")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestResolveNativeIndexedTransitionRejectsMissingOrUnprovenCursor(t *testing
 	spec := nativeIndexedTransitionSpecForTest()
 	spec.CursorSource = "native_relative_cursor"
 	spec.CursorYOffset = 3
-	if _, err := (&Game{}).resolveNativeIndexedTransitionSpec(spec); err == nil {
+	if _, err := (&Game{}).resolveNativeIndexedTransitionSpec(spec, "0x245ce"); err == nil {
 		t.Fatal("missing native relative cursor provenance was accepted")
 	}
 	state := &battle.State{W: 20, H: 20}
@@ -60,13 +60,21 @@ func TestResolveNativeIndexedTransitionRejectsMissingOrUnprovenCursor(t *testing
 	g := &Game{st: state}
 	badSource := spec
 	badSource.CursorSource = "absolute_cursor"
-	if _, err := g.resolveNativeIndexedTransitionSpec(badSource); err == nil {
+	if _, err := g.resolveNativeIndexedTransitionSpec(badSource, "0x245ce"); err == nil {
 		t.Fatal("unproven cursor source was accepted")
 	}
 	badOffset := spec
 	badOffset.CursorYOffset = 2
-	if _, err := g.resolveNativeIndexedTransitionSpec(badOffset); err == nil {
+	if _, err := g.resolveNativeIndexedTransitionSpec(badOffset, "0x245ce"); err == nil {
 		t.Fatal("unproven cursor y offset was accepted")
+	}
+	ch22 := spec
+	ch22.CursorYOffset = 5
+	if _, err := g.resolveNativeIndexedTransitionSpec(ch22, "0x336e5"); err != nil {
+		t.Fatalf("proven ch22 cursor offset rejected: %v", err)
+	}
+	if _, err := g.resolveNativeIndexedTransitionSpec(ch22, "0x245ce"); err == nil {
+		t.Fatal("ch22 cursor offset was accepted at ch21 call-site")
 	}
 }
 
@@ -84,7 +92,7 @@ func TestNativeIndexedTransitionRequiresEveryDrawBeforeContinuation(t *testing.T
 		storyActors: []battle.Unit{actor},
 	}
 	continued := 0
-	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), func() { continued++ }); err != nil {
+	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), "", func() { continued++ }); err != nil {
 		t.Fatal(err)
 	}
 	if g.indexedTransition == nil || g.indexedTransition.frame != 0 {
@@ -133,7 +141,7 @@ func TestNativeIndexedTransitionRequiresEveryDrawBeforeContinuation(t *testing.T
 func TestNativeIndexedTransitionStartFailsClosedOnMissingRawAssets(t *testing.T) {
 	g := &Game{nativeMapWork: []byte{7}, nativeMapVGA: []byte{8}}
 	beforeWork, beforeVGA := append([]byte(nil), g.nativeMapWork...), append([]byte(nil), g.nativeMapVGA...)
-	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), nil); err == nil {
+	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), "", nil); err == nil {
 		t.Fatal("missing native source was accepted")
 	}
 	if g.indexedTransition != nil || !bytes.Equal(g.nativeMapWork, beforeWork) || !bytes.Equal(g.nativeMapVGA, beforeVGA) {
@@ -151,7 +159,7 @@ func TestNativeIndexedTransitionPreflightsAllNineLUTsBeforePublish(t *testing.T)
 		nativeMapWork: []byte{7}, nativeMapVGA: []byte{8},
 	}
 	beforeWork, beforeVGA := append([]byte(nil), g.nativeMapWork...), append([]byte(nil), g.nativeMapVGA...)
-	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), nil); err == nil {
+	if err := g.startNativeIndexedTransition(nativeIndexedTransitionSpecForTest(), "", nil); err == nil {
 		t.Fatal("malformed second-to-last LUT was accepted")
 	}
 	if g.indexedTransition != nil || !bytes.Equal(g.nativeMapWork, beforeWork) || !bytes.Equal(g.nativeMapVGA, beforeVGA) {

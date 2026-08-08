@@ -3145,8 +3145,28 @@ frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊�
 及 [`ch21_post.json`](../../remake/assets/cutscenes/acting/ch21_post.json)，屬 E1
 資料消費閉合，不是一般玩家畫面證據。各 frontier 的 record 內容、原版 runtime
 trace 與 indexed 畫面狀態仍未閉合。`0x24618` 所消費的 raw 相對游標 globals
-（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 固定；重製端已建立帶 provenance、
-只接受 `native_relative_cursor` 與 Y+3 的 fail-closed 動態欄位橋接，但仍未
-建立正式 binding。`postbattle_ch22_persist` 仍不得由 layout 表或 generated
-binding 猜接 `town_ch23`；缺證據時維持失敗即關閉。本節不宣稱 renderer parity
-或一般玩家 E2。
+（`0x53ab9/0x53abd`）與第 21 戰呼叫點 `0x245ce` 的 Y+3 變換已由 IDA 固定；
+重製端以呼叫位址核對這個來源專屬橋接（source-specific bridge），未證實來源或偏移會失敗即
+關閉。仍未建立正式 binding。`postbattle_ch22_persist` 仍不得由 layout 表或
+generated binding 猜接 `town_ch23`；缺證據時維持失敗即關閉。本節不宣稱
+renderer parity 或一般玩家 E2。
+
+## 2026-08-09 raw ch22 pre 靜態候選（玩家第23戰戰前；尚未接入）
+
+合法 IDA Pro 9.4 與 Docker Capstone 以固定雜湊的 `FD2.EXE` 重讀
+`0x336a0..0x338c0`。已證實 `0x336ab→0x205da` 載入 context、
+`0x336b5→0x32975` 的 16 次 `EBX=0..15` loop、三個 PAN
+`(14,32)/(14,29)/(14,13)`、`0x336e5→0x24618` 的 raw push
+`[0x53abd]+5`／`[0x53ab9]+6`／`10`／`8`，以及 redraw、palette、
+FDTXT_023 0..4、ACTING 68..70、group1 spawn 與 focus/reset 順序。完整
+位址、工具、雜湊與證據等級見 [`fd2_ch22_pre_ida.txt`](../data/ida/fd2_ch22_pre_ida.txt)。
+
+重製端已建立可編輯 handler 與研究 candidate binding：
+[`ch22_pre.json`](../../remake/assets/cutscenes/handlers/ch22_pre.json) 與
+[`ch22_pre_candidate.json`](../../remake/assets/cutscenes/bindings/ch22_pre_candidate.json)。
+候選 compiler regression 保留 map22／70 slots／group1 24 rows、五個
+FDTXT source、ACTING 68..70 與所有 raw call-site；`0x24618` runtime bridge
+只接受來源 `0x336e5` 的 Y+5，並與第 21 戰 `0x245ce` 的 Y+3 明確分開。
+這是 E1 的資料消費候選，不是正式 campaign binding；`story_ch23`、
+`postbattle_ch22_persist→town_ch23`、indexed renderer、一般玩家 DOSBox E2
+與戰後城鎮／商店／整備存檔流程仍保持失敗即關閉。

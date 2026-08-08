@@ -18,7 +18,11 @@
         "addr": "0x336b5",
         "target": "0x32975"
       },
-      "unit_slot_expr": "ebx"
+      "unit_slot_expr": "ebx",
+      "repeat_hint": {
+        "loop_back_to": "0x336b4",
+        "limit": 16
+      }
     },
     {
       "op": "pan",

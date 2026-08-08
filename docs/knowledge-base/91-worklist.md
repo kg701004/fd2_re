@@ -44,6 +44,16 @@
   indexed 畫面與 E2 仍待補足。詳見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)、
   [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)。
+- [x] **玩家第23戰／raw ch22 pre 可編輯候選（E1）**：IDA／Capstone 已固定
+  `0x336a0..0x338c0` 的 16 次停用迴圈、三段 PAN、`0x336e5→0x24618` 的
+  raw push、FDTXT_023 0..4、ACTING 68..70、group1 spawn 與 focus/reset 順序。
+  候選保留 map22 的 70 slots 與 group1 24 rows，並以來源位址區分
+  `0x336e5` 的 Y+5 與 ch21 `0x245ce` 的 Y+3；compiler/runtime fail-closed
+  回歸已通過。這仍是資料消費候選，不是 `story_ch23` 或
+  `postbattle_ch22_persist→town_ch23` 正式 binding；indexed renderer、一般玩家
+  DOSBox E2 與戰後城鎮／商店／整備／存檔流程仍待。證據見
+  [`fd2_ch22_pre_ida.txt`](../data/ida/fd2_ch22_pre_ida.txt) 與
+  [`ch22_pre_candidate.json`](../../remake/assets/cutscenes/bindings/ch22_pre_candidate.json)。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
   fallback。這些是覆蓋統計，不是原版完成百分比。
@@ -83,8 +93,8 @@
   slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選與 compiler regression；仍缺
   各 frontier 的一般玩家 runtime record、indexed 畫面狀態與正式
   `postbattle_ch22_persist` binding。`0x24618` 的 raw 相對游標 globals
-  （`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端已有帶 provenance
-  且只接受 `native_relative_cursor`／Y+3 的 fail-closed 動態欄位橋接，因此
+  （`0x53ab9/0x53abd`）與 ch21 呼叫點 `0x245ce` 的 Y+3 變換已由 IDA 證實；
+  重製端已有帶 provenance 且依呼叫位址白名單核對偏移的 fail-closed 動態欄位橋接，因此
   不接 `town_ch23`，維持失敗即關閉。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章

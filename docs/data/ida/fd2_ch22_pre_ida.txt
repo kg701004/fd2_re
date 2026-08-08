@@ -1,0 +1,59 @@
+FD2 ch22 pre-handler evidence (player battle 23, candidate only)
+==================================================================
+
+輸入與工具
+----------
+
+- 輸入：`FD2.EXE`，固定版本大小 357074 bytes。
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- IDA：合法 IDA Pro 9.4 Docker image `fd2-ida-authorized-local`；資料庫與
+  匯出產物均為一次性容器內的複本。
+- Capstone：Docker image `fd2-cap-local`；本文件中的線性指令範圍是
+  Capstone 輸出，位址基準為 FD2.EXE 線性位址，不是檔案偏移。
+
+控制流（已證實）
+----------------
+
+- handler 入口 `0x336a0`，`0x336ab` 呼叫 `0x205da` 載入 chapter/map context。
+- `0x336b5` 呼叫 `0x32975`，`EBX=0..15`，回跳 `0x336b4`，固定 16 次；
+  可編輯稿以 `repeat_hint` 保留回跳位址與上限，不把它改寫成單次
+  `deactivate_unit`。
+- `0x336c7`、`0x3376d`、`0x33816` 分別呼叫 `0x135dd`，原始 grid 參數為
+  `(14,32)`、`(14,29)`、`(14,13)`。這些參數仍保留在 handler；像素座標
+  轉換只由具證據的 binding override 提供。
+- `0x336e5` 呼叫 `0x24618`。原始 push 表達式保留為
+  `[0x53abd]+5`、`[0x53ab9]+6`、`10`、`8`；不能把它套用第 21 戰的
+  `[0x53abd]+3`。重製端只在來源位址 `0x336e5` 且
+  `cursor_y_offset=5` 時解析相對游標，其他來源／偏移失敗即關閉。
+- `0x3371c`、`0x33855` 是 redraw；`0x3372d`、`0x33841`、`0x33866` 是
+  原始 palette 呼叫，raw RGB 參數分別保存為 `(0,255,0)`、`(255,255,0)`、
+  `(0,255,0)`。目前仍未把未知 callee 宣稱成完整 palette renderer。
+- 對話呼叫 `0x15f84` 位於 `0x33761`、`0x3379e`、`0x337cf`、`0x33800`、
+  `0x338b2`，編號為 FDTXT_023 的 0..4；ACTING 呼叫 `0x1366a` 位於
+  `0x33777`／`0x337a8`／`0x337d9`，資源為 68／69／70。
+- `0x33820` 呼叫 `0x10b4e` 追加 raw group 1，placement gate 的原始 byte
+  為 0；之後是 200 ms、palette `(255,255,0)`、100 ms、redraw、palette
+  `(0,255,0)`、500 ms、對話4、`0x134e4` reset pose，最後
+  `0x33596→0x12d7b` focus slot 0。
+
+可編輯候選與邊界
+----------------
+
+- handler 轉錄：`remake/assets/cutscenes/handlers/ch22_pre.json`。
+- candidate binding：`remake/assets/cutscenes/bindings/ch22_pre_candidate.json`。
+  該檔是被強制加入版控的研究候選，沒有接到正式 campaign node。
+- 候選以 map22、70 筆 runtime slot、group 1 的 24 筆 raw row、FDTXT_023、
+  ACTING 68..70 與三段 PAN 建立 compiler regression；所有內容保留原始
+  source address。
+- `story_ch23`／`postbattle_ch22_persist` 尚未建立正式 binding，也沒有
+  宣稱 `battle_ch22→town_ch23` 的一般玩家 E2。缺 raw cursor、map view、
+  palette／indexed buffer 或未證實 callee 時，執行器必須停止。
+
+證據等級
+--------
+
+本文件的指令、push 表達式、call-site 與迴圈上限是「已證實」的靜態證據；
+map22 runtime 拓撲與 FDTXT／ACTING 對位是「強推論／資料消費候選」，因為尚
+未有未修改一般玩家路徑的 DOSBox 同狀態擷取。候選編譯測試通過只證明 IR
+可消費，不提升為 renderer parity、戰後城鎮流程或完整重製完成。

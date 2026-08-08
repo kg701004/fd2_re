@@ -996,7 +996,7 @@ func (g *Game) beatStart(b campaign.Beat) {
 			g.loadErr = "beat indexed_transition:缺少 transition payload"
 			return
 		}
-		if err := g.startNativeIndexedTransition(*b.IndexedTransition, g.beatAdvance); err != nil {
+		if err := g.startNativeIndexedTransition(*b.IndexedTransition, b.Source, g.beatAdvance); err != nil {
 			g.loadErr = "beat indexed_transition: " + err.Error()
 		}
 		return

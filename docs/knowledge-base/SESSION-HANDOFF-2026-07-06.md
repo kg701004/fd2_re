@@ -3331,7 +3331,29 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   special slot72、raw camera 與 acting 65/66 已由 IDA／Docker exporter 轉成
   E1 可編輯候選，並有 compiler regression；各 frontier 的同狀態 raw record、
   一般玩家 runtime trace 與 indexed 畫面狀態仍未閉合。`0x24618` 的 raw
-  相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端
-  已補上帶 provenance、只接受 `native_relative_cursor`／Y+3 的 fail-closed
+  相對游標 globals（`0x53ab9/0x53abd`）與 ch21 呼叫點 `0x245ce` 的 Y+3
+  變換已由 IDA 證實；重製端已補上依呼叫位址核對、帶 provenance 的 fail-closed
   動態欄位橋接，但正式 binding 仍未建立。不得只因 frontier 已可估算就建立
   production binding 或接 `town_ch23`；城鎮／整備邊界仍保留在 campaign graph。
+
+## 2026-08-09：raw ch22 pre 可編輯候選（玩家第23戰戰前；尚未接入）
+
+- 合法 IDA Pro 9.4 與 Docker Capstone 以固定雜湊的 `FD2.EXE` 重讀
+  `0x336a0..0x338c0`。已證實 `0x336ab→0x205da` 載入 context、
+  `0x336b5→0x32975` 的 `EBX=0..15` 16 次迴圈、PAN `(14,32)`、
+  `(14,29)`、`(14,13)`、`0x336e5→0x24618` 的 raw push
+  `[0x53abd]+5`／`[0x53ab9]+6`／`10`／`8`，以及 redraw、palette、
+  FDTXT_023 0..4、ACTING 68..70、group1 spawn、reset/focus 順序。完整輸入
+  雜湊、工具版本與位址基準見 [`fd2_ch22_pre_ida.txt`](../data/ida/fd2_ch22_pre_ida.txt)。
+- 新增可編輯 handler 與研究 binding：
+  [`ch22_pre.json`](../../remake/assets/cutscenes/handlers/ch22_pre.json) 及
+  [`ch22_pre_candidate.json`](../../remake/assets/cutscenes/bindings/ch22_pre_candidate.json)。
+  compiler regression 通過 map22／70 slots／group1 24 rows、五個 FDTXT source、
+  ACTING 68..70 與原始 call-site 保留；candidate 不會被正式 campaign 自動載入。
+- `0x24618` runtime bridge 現依呼叫位址核對 raw cursor：ch21 `0x245ce` 只接受
+  Y+3，ch22 pre `0x336e5` 只接受 Y+5；未知來源或偏移失敗即關閉。這修正了
+  不能把所有 handler 都套用 Y+3 的過度概括，但不宣稱兩者已完成 indexed renderer。
+- `story_ch23`、`postbattle_ch22_persist→town_ch23`、一般玩家 DOSBox E2、
+  戰後城鎮／商店／整備／存檔與完整戰役鏈仍保持 blocked；本批只達 E1 的
+  靜態證據與資料消費候選。未來接入前仍需 raw runtime trace、同狀態畫面及
+  town boundary 回歸。
