@@ -3097,3 +3097,17 @@ ACTING53、index8、JOIN16、chapter17。共享 call site 的 ACTING immediate
 本次稽核後，24 個標準 postbattle 節點為 **20 active／4 blocked**；story/cutscene
 為 121 節點、9 個獨立 script、50 個 handler binding、62 個 fallback。剩餘
 blocked 為玩家第22、23、24、29戰；這些統計是覆蓋範圍，不是重製完成百分比。
+
+## 2026-08-09 raw ch21 post 靜態證據（玩家第22戰；尚未接入）
+
+授權 IDA Pro 9.4 已以固定雜湊的 `FD2.EXE` 重建一次性資料庫，閉合
+`0x244b6` 的直接呼叫序列、`0x24512→sub_233C6` 的三組 16-byte raw layout
+表、FDTXT_022 索引4/5/6、ACTING raw immediate 65/66、兩個 PAN、
+`0x245ce→0x24618` 及 `0x1f882→sync→chapter22`。完整位址、輸入雜湊、
+工具與原始表見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
+
+這只提升原始靜態證據，不提升 runtime 或畫面語意：map21 的 70 筆 authored
+資料不能單獨證明戰後 materialized slot count，亦不能證明 acting 65/66 的
+同一資源消費端。`postbattle_ch22_persist` 目前沒有正式 binding，缺少上述
+證據時必須保持失敗即關閉；不得由 layout 表或 generated binding 猜接
+`town_ch23`。本節不宣稱 renderer parity 或一般玩家 E2。

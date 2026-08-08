@@ -51,6 +51,13 @@
 - [ ] **其餘標準戰後節點**：玩家第22、23、24、29戰仍 blocked；第17、18戰已由
   本文件上方的 raw `ch17_post` 切片解除。完成
   handler後仍需逐關驗證城鎮／商店／整備／存檔邊界，不可只接下一場戰鬥。
+- [~] **玩家第22戰／raw ch21 post 靜態證據**：授權 IDA Pro 9.4 已固定
+  `0x244b6`、`0x24512→0x233c6`、文字索引4/5/6、ACTING raw 65/66、
+  PAN raw `(16,16)`／`(16,14)`、`0x245ce→0x24618` 與尾端
+  `0x1f882→sync→chapter22`；三組 16-byte layout 表已匯出。證據見
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。目前仍缺
+  戰後 materialized slot frontier、acting 同一資源消費端與 indexed renderer
+  狀態，因此不建立 production binding、不接 `town_ch23`，維持失敗即關閉。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章
   一般玩家可破關鏈。不要以asset／codec、文件行數或通過的重製端單元測試代替。
@@ -779,7 +786,7 @@
 - [x] **raw ch08 post binding（玩家第9戰）**：Docker acting exporter 解碼 resource36 為 5 beats、slot47/pose0；raw map8 `enemy_ally_total=60` 且 group4 僅一筆，handler `0x10b4e(4)` 保存 `spawn_groups[4]=1`。`0x235d8` pan `(6,1)` materialize `(144,24)`，FDTXT_009 index4 對 ch09 scene4 lines0–4；authored binding 現接 `postbattle_ch09_persist→town_ch10`，未宣稱 renderer parity。
 - [x] **raw ch11 post binding（玩家第12戰）**：Docker Capstone 證實三個 14-byte arrays、slots0–13，special slot2 最終覆寫 `(10,4,pose0)`，camera raw `(14,0)`→`(336,0)`；map11 60-slot frontier。Docker acting exporter 解碼 resource45 的 slot8 special frames（0 與 6 beats），FDTXT_012 index3/4 對 ch12 scene3 lines0–2、scene3 lines3–9；authored binding 現接 `postbattle_ch12_persist→town_ch13`，未宣稱 renderer parity。
 - [x] **raw ch13 post binding（玩家第14戰）**：Docker Capstone 證實三個 16-byte arrays、slots0–15，special slot0 最終覆寫 `(0,0,pose0)`，camera raw `(12,10)`→`(288,240)`；map13 70-slot frontier、group1 僅一筆。Docker acting exporter 解碼 resource47 為 4 beats、slot67/pose2，FDTXT_014 index2/3 對 ch14 scene0 lines8–17、scene1 lines0–6；authored binding 現接 `postbattle_ch14_persist→town_ch15`，未宣稱 renderer parity。
-- [x] **raw ch24 post binding（玩家第25戰）**：Docker Capstone 證實 handler `0x24df2` 的 FDTXT_025 index6/7、PAN raw `(4,16)`→`(96,384)`、spawn group2=1、ACT resource75；Docker acting exporter 解碼為 4 beats、slot70/pose2，map24 raw frontier=70。FDTXT_025 index6/7 對應 scene2 lines0–17；authored binding 現接 `postbattle_ch25_persist→town_ch26`，未宣稱 renderer parity。
+- [~] **raw ch24 post evidence（玩家第25戰；owner 勘誤）**：Docker Capstone 證實 handler `0x24df2` 的 FDTXT_025 index6/7、PAN raw `(4,16)`→`(96,384)`、spawn group2=1、ACT resource75；Docker acting exporter 解碼為 4 beats、slot70/pose2，map24 raw frontier=70。這筆 raw handler 曾被錯誤記成 `postbattle_ch24_persist→town_ch25`，現已撤回；正確 owner 是玩家第25戰 `postbattle_ch25_persist→town_ch26`。`postbattle_ch24_persist` 仍 blocked，故本項只保留證據與勘誤，不計入 active。
 - [x] **raw ch25 post binding（玩家第26戰，E1）**：Docker Capstone 證實 `0x24e80` 的 `0x233c6` caller 以16 slots、camera raw `(9,5)`→`(216,120)` 寫入 map25；Docker acting exporter 解碼 resource77(slot1/pose2)、78(slot2 pose2→1→special pose0)、79(slot0/special pose2)、80(slot0 pose3→2→slot2 pose2)。FDTXT_026 string5–11 已由 raw glyph/control stream 對到 ch26 scene2 lines0–14、scene3 lines0–17、scene4 lines0–7；IDA Pro 9.4 又固定主表 index25=`0x24e80`、event state entry12 的兩個分支及共同 sync/chapter26 尾段。authored binding 已接正確 owner `postbattle_ch26_persist→town_ch27` 並有編譯與 campaign regression；2026-07-29 的63/63 count-aligned勘誤仍有效，未宣稱 renderer parity或一般玩家 E2。
 - [x] **raw ch06 event26→event25→post conditional frontier（玩家第7戰，E1）**：IDA Pro 9.4 固定 map6 六格 selector0 event26=`0x3499B`：觸發單位 raw `+6 != 0` 才以 `0x3419C(9,27,0)` 清 slots9..27 的 `+0x34` 低四位並寫 state16=1。enemy turn10 event25=`0x34924` 先要求 state16==1，才依序 spawn group2→pan `(16,10)`→ACTING30→FDTXT_007 index2→寫 state17=1；未踏格反例不增援。ACTING30 直接引用 slots34..43。先前「slot43 是96-slot空白 record」已撤回：runtime 是 party9＋group1 25=34，再 append group2 10=44。authored scenario 現保存完整 gate／事件順序，已追蹤的 ch06 post handler 亦由錯誤線性稿修成雙層 CFG：state17==1 精確細化為44 slots，再讀 slot43 raw byte5 bit0；active 才 layout→index4→JOIN12，否則 index5。`postbattle_ch07_persist` 已接 binding 並回歸至 `town_ch08`，JOIN12 同拍建立唯一 persistent raw record；尚缺一般玩家 DOSBox E2。證據見 [`fd2_ch06_post_event25_ida.txt`](../data/ida/fd2_ch06_post_event25_ida.txt)。
 - [x] ch01 開場三幕(王城父子/草地悠妮蓋亞/遇海盜)手動接線+轉錄 FDTXT_033/032(intro-scenes)
