@@ -23,6 +23,17 @@
   均在 Docker/Xvfb E1 測試中驗證，並覆蓋 JOIN 後的 town save/load；未具備
   raw provenance 的條件仍失敗即關閉。證據見
   [`fd2_ch16_post_ida.txt`](../data/fd2_ch16_post_ida.txt)。
+- [x] **ch23 post 原始 staging 原語（E1）**：IDA／Capstone 已證實
+  `0x11eee` case 23 會在 tick 變化時間接呼叫 `0x24d22(0)`；重製端新增
+  `RotateNativeCh23Rows` 與 `ApplyNativeCh23PaletteCycle`，保留 312-byte
+  列旋轉、`0x60003` palette table 與位址來源。這只關閉可重用 raw 原語，
+  初始 latch、tick gate、完整 12-step 工作與一般玩家畫面仍未閉合，
+  `postbattle_ch23_persist` 不接正式戰役。證據見
+  [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
+- [x] **ch21 post 證據勘誤**：補明 `0x1f882` 是 0–63、每步 2 ms 的原生
+  palette 淡出，不是同步／等待輔助器；`postbattle_ch22_persist` 仍因
+  frontier、演出資源消費端與 indexed 畫面狀態未閉合而失敗即關閉。證據見
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
   fallback。這些是覆蓋統計，不是原版完成百分比。
