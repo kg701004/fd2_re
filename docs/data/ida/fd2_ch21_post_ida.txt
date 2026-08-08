@@ -33,6 +33,17 @@
   `0x245ff..0x24610` 是兩次 `memset(0xA0000, ...)`，再跳到共享尾端
   `0x239ac`；`0x239b1` 設定下一章 22。
 
+## 已證實：`0x1f882` 是可重用的 64-step palette 淡出原語
+
+- `0x1f882` 的共享尾段以 `EBX=0..63`（含兩端）逐步呼叫
+  `0x11d40(0,255,EBX)`，每步等待 2 ms；它是 baseline-minus-delta 的
+  原生調色盤淡出，不是同步／等待輔助器。此語意已由 Docker Capstone
+  固定，並在 SDD 的 native palette IR 與 compiler regression 中保存。
+- 因此 ch21 候選的 raw unknown 記錄只剩 `0x24618` indexed transition；
+  `0x1f882` 雖可 lower 成 `native_palette_fade_out`，仍不能因此解除
+  `postbattle_ch22_persist` binding，因 frontier、acting 消費端與 indexed
+  畫面狀態仍未以一般玩家路徑閉合。
+
 ## 原始布局表（已證實）
 
 IDA `ida_dump_bytes.py` 直接讀取下列線性位址：
