@@ -2356,10 +2356,13 @@ tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 `ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated
 `native_ch23_loop` candidate beats that preserve every loop call site, the
 30/12 repetition counts, register-shaped arguments, and stage values 2..14.
-The runner fails closed while the indexed/latch adapter is absent. Initial latch
-state, `dword_53C03` lifetime, tick gating, the complete indexed presentation
-consumer, and normal-player E2 still lack proof, so `postbattle_ch23_persist`
-remains fail-closed. Detailed evidence is in
+The runner fails closed while the raw state/latch adapter is absent. IDA now
+proves the shared indexed consumer chain inside `0x11cac` (`0x11eee` →
+`0x122dc` → `0x127a9` → `0x1acf3` → `0x11eb0`), including ch23 call-sites
+`0x24c63` and `0x24cd3`; this is static consumer evidence, not a claim that
+the remake has a runnable adapter. Initial latch state, `dword_53C03` lifetime,
+tick gating, raw state mapping, and normal-player E2 still lack proof, so
+`postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 
 The adjacent `0x24e80` handler contains one independent raw mutation loop: for runtime indices `0x10 <= i < caller_count`, records with byte `+0x07 == 0x1f` receive `+0=0x10` and `+1=0x06`. `battle.RewriteNativeMarker1F` preserves the explicit start/count, matching-marker-only writes, and bounds validation. The bytes remain unnamed and are not treated as roster identity or renderer state.

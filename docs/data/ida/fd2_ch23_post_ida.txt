@@ -88,13 +88,20 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `0x138`（312）byte rows 對 `0x53aff` staging buffer 做列旋轉。因此
   `0x24d22` 的 setter／copy branch 是同一個 raw staging contract 的兩個
   入口，仍不可把它提升成泛用畫面幀或 palette index。
+- IDA Pro 9.4 的 `0x11cac` 函式本體也固定了 indexed 消費鏈：
+  `0x11eee` 後依序呼叫 `0x122dc`、`0x127a9`、`0x1acf3`，再由
+  `0x11eb0` 以 `312×192`、stride `456` 複製到 VGA；所有 caller 的
+ 直接交叉參照包含 ch23 的 `0x24c63` 與 `0x24cd3`。因此本檔不再把
+  indexed frame／重繪消費鏈標記為未知；但這只證明靜態共用消費鏈，
+  不代表重製執行器已具備其 raw state／latch adapter。
 - 這也固定了兩段 ch23 loop 的差異：第一段使用 `0x11cac(1)`，第二段
   使用 `0x11cac(0)` 並額外觸發 `0x4dfcc`；兩者不可在可編輯腳本中折疊
   成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows`、
   `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，以及保留完整 call-site／
-  stage 值的 `native_ch23_loop` 候選 beats；但尚未證明 handler 入口的初始
-  latch、`dword_53C03` 生命週期、BIOS tick gate 與完整 12 次呈現工作的
-  indexed 消費，故仍不建立 production binding。
+  stage 值的 `native_ch23_loop` 候選 beats；共用 indexed 消費鏈已由 IDA
+  靜態閉合，但 handler 入口的初始 latch、`dword_53C03` 生命週期、
+  BIOS tick gate、raw state adapter 與一般玩家 E2 仍未閉合，故仍不建立
+  production binding。
 
 限制與目前判定
 --------------
@@ -107,5 +114,6 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - 目前仍 fail-closed。帶原始位址、12 次 loop 順序與 raw latch／tick
   provenance 的候選已保存於
   [`ch23_post_candidate.json`](../../../remake/assets/cutscenes/bindings/ch23_post_candidate.json)
-  並有 compiler／runner regression；下一步必須補上 indexed frame／重繪
-  消費端及一般玩家路徑驗證後，才可評估 production binding。
+  並有 compiler／runner regression；下一步是把已證實的共用 indexed 消費鏈
+  接到有 raw provenance 的 state/latch adapter，再以一般玩家路徑驗證後，
+  才可評估 production binding。
