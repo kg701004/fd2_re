@@ -220,6 +220,15 @@ func (binding *HandlerBinding) CompilerBindings() HandlerBindings {
 		if binding == nil {
 			return HandlerBindingOverride{}, false
 		}
+		// A native acting call can share one call instruction while its
+		// branch-local immediate is pushed at different source addresses.
+		// Prefer an address-plus-resource override before the ordinary address
+		// key so the original call site remains the stable identity.
+		if input.Op == "act" && input.ActingID != nil {
+			if scoped, ok := binding.Overrides[input.Source.Addr+"#"+strconv.Itoa(*input.ActingID)]; ok {
+				return scoped, true
+			}
+		}
 		override, ok := binding.Overrides[input.Source.Addr]
 		return override, ok
 	}

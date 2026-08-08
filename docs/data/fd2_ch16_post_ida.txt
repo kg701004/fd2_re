@@ -1,0 +1,62 @@
+《炎龍騎士團 2》raw ch16 post（玩家第17戰戰後）：IDA Pro 9.4 直接指令證據
+=======================================================================
+
+固定參考版本
+------------
+FD2.EXE 大小 357074；MD5 `b97caf2239a27a896069d03549d96e1e`；SHA-256
+`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+IDA Pro 9.4 在合法授權 Docker 中分析；線性位址與檔案偏移不可混用。
+
+已證實：`sub_23B5F` 的分支順序
+--------------------------------
+- 函式範圍 `0x23b5f..0x23cd5`，dispatch call site `0x25e23`。
+- `0x23b8c` 呼叫 `sub_11506`；`0x23b93` 呼叫 `sub_33499(0x12)`，即
+  原始 `roster_has(18)` 分支條件。
+- 有角色18：`0x23bbe` 讀 FDTXT index5，`0x23bd0` 呼叫
+  `sub_135DD(0x11,0x0e)`，`0x23bdc` 呼叫 `sub_10B4E(3)`，接著以
+  `0x23be6` push `0x34`、在共同 call site `0x23c5f` 呼叫 `sub_1366A`
+  （ACTING 52）。
+- 沒有角色18：`0x23c04` 呼叫 `sub_233C6` 版面 helper，接著
+  `0x23c2b` FDTXT index7、`0x23c3f` ACTING50、`0x23c4b` 再次
+  `sub_135DD(0x11,0x0e)`、`0x23c55` `sub_10B4E(3)`，最後以
+  `0x23c5d` push `0x33`、同一 `0x23c5f` call site 執行 ACTING51。
+- 共同尾端依序為 `0x23c86` FDTXT index6、`0x23c90` ACTING53、
+  `0x23cb7` FDTXT index8、`0x23cc1` `sub_112A5(0x10)` JOIN16，及
+  `0x23cc9` `inc dword_53c03`。因此章節遞增在 JOIN16 之後。
+
+已證實：`0x23c04` 的版面常數
+-----------------------------
+- `sub_233C6` 範圍 `0x233c6..0x234bb`；本次呼叫逐筆寫 slots 0..15，
+  special slot 52 為 `(23,23,pose2)`，相機 scalar 為 `(17,17)`。
+- IDA 線性位址 `0x521a3:0x11` 原始位元組：
+  `17 16 17 18 15 16 17 18 19 14 15 16 17 18 19 1a 12`。
+- IDA 線性位址 `0x521b3:0x11` 原始位元組：
+  `12 13 13 13 14 14 14 14 14 15 15 15 15 15 15 15 16`。
+- 因此可編輯稿將前兩列解碼為十六進位數值的座標；`sub_233C6` 同一
+  helper 的既有 `(24 像素／格)`對照只用於本呼叫的相機／pan 投影，並非
+  全域座標假設。
+
+已證實：演出資源與對話索引
+---------------------------
+- 固定版 FD2.EXE 的演出解碼：ACTING50 為 slot52 pose0（5拍＋特殊15拍）；
+  ACTING51 為 slot61 pose0（5拍＋特殊4拍）；ACTING52 為 slot60 pose0
+  （5拍＋特殊4拍）；ACTING53 為 slots0..15 pose2（特殊5拍）。可編輯稿為
+  [`ch16_post.json`](../../remake/assets/cutscenes/acting/ch16_post.json)。
+- FDTXT_017 count-aligned 對照 `ch17.json`：index5 是 scene3 lines0..3；
+  index7 是 scene4 lines1..3；index6 是 scene4 line0；index8 是
+  scene4 lines4..21。正式 binding 保留每個原始 call site。
+
+runtime frontier 與推論等級
+--------------------------
+- **已證實（靜態）**：兩條 branch 都呼叫 `sub_10B4E(3)`；act resource
+  51／52 的原始 targets 分別是 slot61／60，且 map16 的 group3 可由
+  raw `raw_placement_gate=0` 選取。
+- **強推論（E1 runtime bridge）**：第17戰開場的 persistent party＋已發生
+  group2 reinforcement，使戰後 handler 入口為 60 或 61 slots；group3
+  後分別成為 61 或 62。正式 binding 使用 `slot_counts:[60,61]` 與明示
+  `spawn_groups:{3:1}`；重製在入口數量不是其中之一時失敗即關閉。
+- 未修改一般玩家 DOSBox 的第17戰同狀態畫面、對話、城鎮／商店／存檔路徑仍
+  未達 E2；不得把本切片描述成完整 parity。
+
+本檔只保存可回查的原始位址、位元組、雜湊及推論等級；語意名稱是附加索引，
+不可取代 IDA 原始函式名與 call site。

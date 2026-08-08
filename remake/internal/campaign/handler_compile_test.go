@@ -808,7 +808,7 @@ func TestCompileCompleteChapter2PostBindingPreservesTinoBranches(t *testing.T) {
 
 func TestRuntimeContextAlternativeSlotCounts(t *testing.T) {
 	context := &HandlerRuntimeContext{SlotCounts: []int{15, 27}}
-	if context.MinimumSlotCount() != 15 || !context.AcceptsSlotCount(15) || !context.AcceptsSlotCount(27) || context.AcceptsSlotCount(16) {
+	if context.MinimumSlotCount() != 15 || context.MaximumSlotCount() != 27 || !context.AcceptsSlotCount(15) || !context.AcceptsSlotCount(27) || context.AcceptsSlotCount(16) {
 		t.Fatalf("alternative runtime context = %#v", context)
 	}
 }

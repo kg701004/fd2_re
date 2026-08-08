@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "handler_script": "../handlers/ch16_post.json",
+  "acting_resources": "../acting/ch16_post.json",
+  "story_index_map": "../dialogue-index/count-aligned.json",
+  "runtime_context": {
+    "slot_counts": [60, 61],
+    "spawn_groups": { "3": 1 },
+    "story_viewport": true
+  },
+  "dialogue_contexts": {
+    "0x23bbe": { "source_dat": "FDTXT_017", "script": "ch17.json" },
+    "0x23c2b": { "source_dat": "FDTXT_017", "script": "ch17.json" },
+    "0x23c86": { "source_dat": "FDTXT_017", "script": "ch17.json" },
+    "0x23cb7": { "source_dat": "FDTXT_017", "script": "ch17.json" }
+  },
+  "overrides": {
+    "0x23bd0": { "pan": { "x": 408, "y": 336, "tile_step": true } },
+    "0x23c4b": { "pan": { "x": 408, "y": 336, "tile_step": true } },
+    "0x23c04": {
+      "layout": {
+        "units": [
+          { "slot": 0, "x": 23, "y": 18, "pose": 0 },
+          { "slot": 1, "x": 22, "y": 19, "pose": 0 },
+          { "slot": 2, "x": 23, "y": 19, "pose": 0 },
+          { "slot": 3, "x": 24, "y": 19, "pose": 0 },
+          { "slot": 4, "x": 21, "y": 20, "pose": 0 },
+          { "slot": 5, "x": 22, "y": 20, "pose": 0 },
+          { "slot": 6, "x": 23, "y": 20, "pose": 0 },
+          { "slot": 7, "x": 24, "y": 20, "pose": 0 },
+          { "slot": 8, "x": 25, "y": 20, "pose": 0 },
+          { "slot": 9, "x": 20, "y": 21, "pose": 0 },
+          { "slot": 10, "x": 21, "y": 21, "pose": 0 },
+          { "slot": 11, "x": 22, "y": 21, "pose": 0 },
+          { "slot": 12, "x": 23, "y": 21, "pose": 0 },
+          { "slot": 13, "x": 24, "y": 21, "pose": 0 },
+          { "slot": 14, "x": 25, "y": 21, "pose": 0 },
+          { "slot": 15, "x": 26, "y": 21, "pose": 0 },
+          { "slot": 52, "x": 23, "y": 23, "pose": 2 }
+        ],
+        "cam_x": 408,
+        "cam_y": 408
+      }
+    },
+    "0x23c3f": { "act": { "resource": 50 } },
+    "0x23c5f#51": { "act": { "resource": 51 } },
+    "0x23c5f#52": { "act": { "resource": 52 } },
+    "0x23c90": { "act": { "resource": 53 } }
+  }
+}

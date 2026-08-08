@@ -105,6 +105,14 @@ def audit(campaign_path: Path, handlers_dir: Path, generated_dir: Path) -> dict:
             addr = source.get("addr")
             covered = False
             override = overrides.get(addr, {}) if isinstance(addr, str) else {}
+            # A single native call site can receive branch-local immediates.
+            # Authored bindings may scope the override as ``addr#acting_id``;
+            # preserve that provenance instead of treating the shared call as
+            # an uncovered generic operation.
+            if op == "act" and isinstance(addr, str) and isinstance(beat.get("acting_id"), int):
+                scoped = overrides.get(f"{addr}#{beat['acting_id']}")
+                if isinstance(scoped, dict):
+                    override = scoped
             if field == "dialog":
                 covered = isinstance(override, dict) and "dialog" in override
                 covered = covered or (isinstance(addr, str) and addr in contexts)

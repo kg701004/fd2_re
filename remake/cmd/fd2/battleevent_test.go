@@ -1096,3 +1096,101 @@ func TestChapter18PostJoins21And7Town19SaveBoundary(t *testing.T) {
 		t.Fatalf("town19 save/load node=%q members=%v order=%v roster=%v", g.camp.NodeID(), g.partyMembers, g.partyJoinOrder, g.partyRoster)
 	}
 }
+
+func TestChapter17PostBranchJoin16Town18SaveBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		order     []int
+		preSlots  int
+		postSlots int
+	}{
+		{name: "roster_has_18", order: []int{0, 4, 9, 30, 1, 8, 2, 10, 13, 12, 5, 6, 11, 14, 17, 18}, preSlots: 60, postSlots: 61},
+		{name: "roster_lacks_18", order: []int{0, 4, 9, 30, 1, 8, 2, 10, 13, 12, 5, 6, 11, 14, 17, 15}, preSlots: 61, postSlots: 62},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := &Game{
+				partyMembers:   make(map[int]bool, len(tc.order)),
+				partyJoinOrder: append([]int(nil), tc.order...),
+				partyDeploy:    make(map[int]bool, len(tc.order)-1),
+			}
+			for _, id := range tc.order {
+				g.partyMembers[id] = true
+			}
+			for _, id := range tc.order[1:] {
+				g.partyDeploy[id] = true
+			}
+			pre, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch16_pre.json"))
+			if err != nil || len(issues) != 0 || len(pre) == 0 || pre[0].LoadCH == nil {
+				t.Fatalf("ch16_pre compile err=%v issues=%#v beats=%#v", err, issues, pre)
+			}
+			if err := g.applyLoadCH(pre[0].LoadCH); err != nil {
+				t.Fatal(err)
+			}
+			if !g.partyMembers[18] {
+				// Execute the proven ch16_pre else arm: native group1 is
+				// present before battle17 only when character18 is absent.
+				g.materializeStoryGroup(1)
+			}
+			g.resetBattle("assets/maps/map16/map16_units.json", "assets/scenarios/ch17.json")
+			if g.loadErr != "" || g.st == nil || g.sc == nil || !g.sc.RuntimeAppendGroups {
+				t.Fatalf("ch17 handoff err=%q state=%v scenario=%v", g.loadErr, g.st != nil, g.sc != nil && g.sc.RuntimeAppendGroups)
+			}
+			if _, err := g.st.AppendGroupWithNativePlacement(2, 0); err != nil {
+				t.Fatalf("ch17 group2 frontier: %v", err)
+			}
+			if len(g.st.Units) != tc.preSlots {
+				t.Fatalf("ch17 pre frontier=%d, want %d", len(g.st.Units), tc.preSlots)
+			}
+			beats, issues, err := campaign.CompileHandlerBinding(assetPath("assets/cutscenes/bindings/ch16_post.json"))
+			if err != nil || len(issues) != 0 {
+				t.Fatalf("ch16_post compile err=%v issues=%#v", err, issues)
+			}
+			g.camp = campaign.NewRunner(&campaign.Campaign{
+				Start: "postbattle_ch17_persist",
+				Nodes: map[string]*campaign.Node{
+					"postbattle_ch17_persist": {Type: "cutscene", Next: "town_ch18"},
+					"town_ch18":               {Type: "town"},
+				},
+			})
+			g.beats, g.beatIdx, g.storyBG = beats, -1, true
+			g.beatAdvance()
+			maxSlots := len(g.st.Units)
+			for frame := 0; frame < 12000 && g.camp.NodeID() != "town_ch18"; frame++ {
+				if len(g.dialog) != 0 {
+					g.dialog = nil
+					g.beatAdvance()
+				}
+				g.tick(1)
+				if g.st != nil && len(g.st.Units) > maxSlots {
+					maxSlots = len(g.st.Units)
+				}
+				if g.loadErr != "" {
+					t.Fatalf("ch16_post stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)
+				}
+			}
+			if g.camp.NodeID() != "town_ch18" || g.handlerChapter != 17 || g.st != nil || maxSlots != tc.postSlots {
+				t.Fatalf("ch16_post boundary node=%q chapter=%d state=%v maxSlots=%d, want %d", g.camp.NodeID(), g.handlerChapter, g.st != nil, maxSlots, tc.postSlots)
+			}
+			if !g.partyMembers[16] {
+				t.Fatal("JOIN16 membership missing")
+			}
+			if joined, ok := g.partyRoster[16]; !ok || !joined.HasNativeIdentity || joined.NativeIdentity != 16 ||
+				!joined.HasNativeRecordByte8 || int(joined.NativeRecordByte8) != 16 {
+				t.Fatalf("JOIN16 persistent record=%#v", joined)
+			}
+			t.Setenv("XDG_DATA_HOME", t.TempDir())
+			userDataDirCached = ""
+			g.saveGameToSlot(2)
+			if g.msg != "已存檔(槽位3：town_ch18)" {
+				t.Fatalf("town18 save message=%q", g.msg)
+			}
+			g.camp.Cur = "postbattle_ch17_persist"
+			g.partyMembers, g.partyJoinOrder = nil, nil
+			g.partyDeploy, g.partyRoster = nil, nil
+			g.loadGameFromSlot(2)
+			if g.camp.NodeID() != "town_ch18" || !g.partyMembers[16] || len(g.partyJoinOrder) != len(tc.order)+1 {
+				t.Fatalf("town18 save/load node=%q members=%v order=%v roster=%v", g.camp.NodeID(), g.partyMembers, g.partyJoinOrder, g.partyRoster)
+			}
+		})
+	}
+}

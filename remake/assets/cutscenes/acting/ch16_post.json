@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "resources": {
+    "50": [
+      { "beats": 5, "units": [{ "slot": 52, "pose": 0 }] },
+      { "beats": 15, "special": true, "units": [{ "slot": 52, "pose": 0 }] }
+    ],
+    "51": [
+      { "beats": 5, "units": [{ "slot": 61, "pose": 0 }] },
+      { "beats": 4, "special": true, "units": [{ "slot": 61, "pose": 0 }] }
+    ],
+    "52": [
+      { "beats": 5, "units": [{ "slot": 60, "pose": 0 }] },
+      { "beats": 4, "special": true, "units": [{ "slot": 60, "pose": 0 }] }
+    ],
+    "53": [
+      {
+        "beats": 5,
+        "special": true,
+        "units": [
+          { "slot": 0, "pose": 2 },
+          { "slot": 1, "pose": 2 },
+          { "slot": 2, "pose": 2 },
+          { "slot": 3, "pose": 2 },
+          { "slot": 4, "pose": 2 },
+          { "slot": 5, "pose": 2 },
+          { "slot": 6, "pose": 2 },
+          { "slot": 7, "pose": 2 },
+          { "slot": 8, "pose": 2 },
+          { "slot": 9, "pose": 2 },
+          { "slot": 10, "pose": 2 },
+          { "slot": 11, "pose": 2 },
+          { "slot": 12, "pose": 2 },
+          { "slot": 13, "pose": 2 },
+          { "slot": 14, "pose": 2 },
+          { "slot": 15, "pose": 2 }
+        ]
+      }
+    ]
+  }
+}

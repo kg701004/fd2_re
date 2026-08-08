@@ -3293,3 +3293,24 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 本輪所有測試、IDA、Capstone、JSON／Markdown 稽核均在一次性 Docker 容器內；
   `/tmp/fd2cap` 不存在。工作結束時不得留下本輪 FD2 容器；其他專案的既有
   `modest_hermann` IDA 容器不屬本輪，未予停止。
+
+## 2026-08-09：raw ch16 post 接入玩家第17戰（最新）
+
+- 前一節的 raw `ch17_post→玩家第18戰` 判讀維持有效；本節補上正確的下一個
+  owner：`battle_ch17` 使用 raw `ch16_post`，handler `sub_23B5F` 位於
+  `0x23b5f..0x23cd5`。任何把 raw ch17 接到 `postbattle_ch17_persist` 的舊候選
+  均不得恢復。
+- 合法 IDA Pro 9.4 Docker 與 Capstone Docker 已保存固定 FD2.EXE 雜湊、原始
+  table／call site／FDTXT_017 index5–8、ACTING50–53、JOIN16 及
+  `sub_233C6` 的 layout／PAN 參數於 [`fd2_ch16_post_ida.txt`](../data/fd2_ch16_post_ida.txt)。
+  共享 ACTING call site 以 `source_addr#acting_id` 作用域覆寫保存 immediate
+  分支，不改寫原始位址；新增資源稿與 binding 都是可編輯資料。
+- Docker/Xvfb 回歸以真實 `ch16_pre`／`ch17`／`ch16_post` 資料驅動兩條
+  `roster_has(18)` branch：有18由60進61 slots，無18由61進62 slots；兩路都
+  進 `town_ch18`，JOIN16 路徑另驗證持久隊伍與 town save/load。編譯器只在靜態
+  分支採 slot 上界，runtime 仍拒絕不精確 count 或缺 raw provenance。
+- 目前稽核為24個標準 postbattle 節點 **20 active／4 blocked**；story/cutscene
+  為121節點、9個獨立 script、50個 handler binding、62個 fallback。剩餘 blocked
+  為玩家第22、23、24、29戰；未修改一般玩家 DOSBox E2、完整30章無除錯路徑及
+  UI／AI缺口仍不得以本批 E1 測試宣稱完成。所有本批一次性容器使用 `--rm`，
+  `/tmp/fd2cap` 不存在；交接前仍須再檢查 FD2 容器狀態。

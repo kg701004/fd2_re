@@ -80,10 +80,9 @@ type HandlerRuntimeContext struct {
 	StoryViewport bool        `json:"story_viewport,omitempty"`
 }
 
-// MinimumSlotCount is the compile-time frontier shared by every allowed
-// runtime shape. SlotCount preserves the original exact-context form;
-// SlotCounts models optional native reinforcement groups (for example 15 or
-// 27 slots at the chapter-three post-battle entry).
+// MinimumSlotCount is the smallest allowed runtime shape. SlotCount preserves
+// the original exact-context form; SlotCounts models optional native
+// reinforcement groups (for example 15 or 27 slots at a post-battle entry).
 func (context *HandlerRuntimeContext) MinimumSlotCount() int {
 	if context == nil {
 		return 0
@@ -98,6 +97,26 @@ func (context *HandlerRuntimeContext) MinimumSlotCount() int {
 		}
 	}
 	return minimum
+}
+
+// MaximumSlotCount is an upper bound for static compilation of branch-local
+// operations. Runtime playback still requires AcceptsSlotCount to match one
+// exact frontier; using the maximum here only lets a proven spawn in one arm
+// validate the optional slot that arm creates.
+func (context *HandlerRuntimeContext) MaximumSlotCount() int {
+	if context == nil {
+		return 0
+	}
+	if context.SlotCount > 0 {
+		return context.SlotCount
+	}
+	maximum := 0
+	for _, count := range context.SlotCounts {
+		if count > maximum {
+			maximum = count
+		}
+	}
+	return maximum
 }
 
 func (context *HandlerRuntimeContext) AcceptsSlotCount(count int) bool {
@@ -132,7 +151,7 @@ type HandlerCompileIssue struct {
 func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Beat, []HandlerCompileIssue) {
 	activeSlotCount := 0
 	if bindings.RuntimeContext != nil {
-		activeSlotCount = bindings.RuntimeContext.MinimumSlotCount()
+		activeSlotCount = bindings.RuntimeContext.MaximumSlotCount()
 	}
 	return compileHandlerScript(script, bindings, activeSlotCount)
 }
