@@ -37,23 +37,23 @@ func TestApplyNativeCh23PaletteCycleWritesOnlyNativeRange(t *testing.T) {
 	if err := ApplyNativeCh23PaletteCycle(dac, 0); err != nil {
 		t.Fatal(err)
 	}
-	if dac[0] != 63 || dac[0x1f*3] != 63 || dac[0x30*3] != 63 {
-		t.Fatal("palette cycle modified an entry outside 0x20..0x2f")
+	if dac[0] != 63 || dac[0xdf*3] != 63 || dac[0xf0*3] != 63 {
+		t.Fatal("palette cycle modified an entry outside 0xe0..0xef")
 	}
-	if got := dac[0x20*3 : 0x20*3+3]; got[0] != 0x0e || got[1] != 0x15 || got[2] != 0x26 {
+	if got := dac[0xe0*3 : 0xe0*3+3]; got[0] != 0x0e || got[1] != 0x15 || got[2] != 0x26 {
 		t.Fatalf("palette phase0 entry=%#v", got)
 	}
 	if err := ApplyNativeCh23PaletteCycle(dac, 1); err != nil {
 		t.Fatal(err)
 	}
-	if got := dac[0x20*3 : 0x20*3+3]; got[0] != 0x0d || got[1] != 0x14 || got[2] != 0x25 {
+	if got := dac[0xe0*3 : 0xe0*3+3]; got[0] != 0x0d || got[1] != 0x14 || got[2] != 0x25 {
 		t.Fatalf("palette phase1 entry=%#v", got)
 	}
 }
 
 func TestApplyNativeCh23PaletteCycleRejectsInvalidAtomically(t *testing.T) {
 	dac := make([]byte, 256*3)
-	dac[0x20*3] = 11
+	dac[0xe0*3] = 11
 	want := append([]byte(nil), dac...)
 	if err := ApplyNativeCh23PaletteCycle(dac, 16); err == nil {
 		t.Fatal("invalid palette phase accepted")

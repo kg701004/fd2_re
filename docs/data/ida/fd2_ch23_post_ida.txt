@@ -57,7 +57,9 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   adapter 時明確失敗即關閉，因此仍不建立 `postbattle_ch23_persist` binding。
 - `0x4dfcc` 讀取線性位址 `0x60003` 的 31 組 RGB 三元組；其
   `byte_60002=0..15` 以 `3*phase` 為起點，將連續 16 組寫入 DAC
-  `0x20..0x2f`。重製端 `ApplyNativeCh23PaletteCycle` 保留這個固定視窗
+  `0xe0..0xef`。IDA 偽代碼的 `BYTE1(v2)=-32` 與 Docker Capstone 的
+  `mov ah,0xe0`／`out dx,al` 共同固定這個高位索引；舊的低位索引
+  說法已撤回。重製端 `ApplyNativeCh23PaletteCycle` 保留這個固定視窗
   與原始位址來源；它是 raw palette 原語，不代表完整 palette 時序已接通。
 
 已證實：保留原始名稱的 `0x24d22` raw staging 分支

@@ -2349,8 +2349,10 @@ supports the bounded annotation “312-byte staging row-rotation raw latch”;
 it does not justify a generic frame, palette, or UI name. IDA also shows
 `0x11cac(1)` and `0x11cac(0)` share an indexed chain through
 `0x11eee`／`0x122dc`／`0x127a9`／`0x1acf3` and a 456-stride `0x11eb0` copy,
-with only the zero argument calling `0x4dfcc`; the direct caller still does
-not read `0x51a10`. The same ch23 audit fixes `0x17aa9(1)` as a DOS BIOS
+with only the zero argument calling `0x4dfcc`; its IDA `BYTE1(v2)=-32` and
+Capstone `mov ah,0xe0` fix the palette write window at DAC indexes `0xe0..0xef`,
+not the previously stated low-index window. The direct caller still does not read
+`0x51a10`. The same ch23 audit fixes `0x17aa9(1)` as a DOS BIOS
 tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 (`ESI=0..11`). The remake now has raw `RotateNativeCh23Rows` and
 `ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated

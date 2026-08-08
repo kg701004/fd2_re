@@ -8,11 +8,15 @@ const (
 	NativeCh23StageStride = 312
 	NativeCh23StageWidth  = 312
 	NativeCh23StageHeight = 192
+	// NativeCh23PaletteBase is the VGA DAC index written by 0x4DFCC.  The
+	// original instruction is `mov ah,0xe0` before OUT 0x3c8, so this is not
+	// the low 0x20 palette window used by an older, withdrawn interpretation.
+	NativeCh23PaletteBase = 0xe0
 )
 
 // nativeCh23PaletteCycle is the fixed 31×RGB byte window at linear 0x60003
 // used by 0x4DFCC.  The helper selects a byte offset of 3*byte_60002 and
-// writes the next 16 RGB triples to DAC indexes 0x20..0x2f. Values are six-bit
+// writes the next 16 RGB triples to DAC indexes 0xe0..0xef. Values are six-bit
 // VGA components copied from the fixed FD2.EXE, not inferred from a screenshot.
 var nativeCh23PaletteCycle = [31][3]byte{
 	{0x0e, 0x15, 0x26}, {0x0d, 0x14, 0x25}, {0x0d, 0x14, 0x25}, {0x0d, 0x14, 0x25},
@@ -48,7 +52,7 @@ func RotateNativeCh23Rows(buffer []byte, latch int) error {
 }
 
 // ApplyNativeCh23PaletteCycle reproduces 0x4DFCC's 16-entry DAC write.  It
-// changes only palette indexes 0x20..0x2f and leaves every other entry intact.
+// changes only palette indexes 0xe0..0xef and leaves every other entry intact.
 // The phase is the raw byte_60002 value and must be in 0..15.
 func ApplyNativeCh23PaletteCycle(dac []byte, phase int) error {
 	if len(dac) != 256*3 || phase < 0 || phase > 15 {
@@ -57,7 +61,7 @@ func ApplyNativeCh23PaletteCycle(dac []byte, phase int) error {
 	next := append([]byte(nil), dac...)
 	for i := 0; i < 16*3; i++ {
 		rgb := nativeCh23PaletteCycle[(phase*3+i)/3][(phase*3+i)%3]
-		next[0x20*3+i] = rgb
+		next[NativeCh23PaletteBase*3+i] = rgb
 	}
 	copy(dac, next)
 	return nil
