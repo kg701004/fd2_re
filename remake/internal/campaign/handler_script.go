@@ -65,6 +65,14 @@ type Native2189ALoop struct {
 type HandlerCondition struct {
 	Op        string `json:"op"`
 	UnitSlots []int  `json:"unit_slots,omitempty"`
+	// NativeInventoryItemID is the unsigned byte passed to 0x24b14. The
+	// compiler accepts it only for the exact raw inventory-prefix predicate;
+	// it is not a normalized inventory search.
+	NativeInventoryItemID *int `json:"native_inventory_item_id,omitempty"`
+	// NativePersistentIdentity is the unsigned byte compared at persistent
+	// record+0x08 by 0x24bde/0x33499. The record field remains raw evidence,
+	// not a character-name assertion.
+	NativePersistentIdentity *int `json:"native_persistent_identity,omitempty"`
 	// Threshold is used only by raw count predicates; it is never inferred
 	// from a roster size or normalized alive count.
 	Threshold *int `json:"threshold,omitempty"`

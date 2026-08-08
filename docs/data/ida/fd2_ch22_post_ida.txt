@@ -21,6 +21,9 @@ FD2.EXE：raw ch22 post／玩家第23戰戰後處理器證據
 - `0x247b4` 先以 `0x233c6` 建立 16×17 的配置／場景資料，之後以
   `0x24b14(100)` 掃描 16 個原生單位索引。成功與失敗分支都保留原始
   對白與 acting 位址：`0x15f84` 的 text index 8／9、`0x1366a(71)`。
+- 直接指令在 `0x247c6` 比較 `0x24b14` 回傳值與 `-1`，`je 0x247fb`；
+  因此回傳不是 `-1` 才播放 text index 8／JOIN22，回傳 `-1` 才播放
+  text index 9／`0x1366a(71)`。這個方向由原始跳轉固定，不由角色名稱推測。
 - 接著以 `0x24bde(18)` 檢查 persistent record；成立時播放 text index 10、
   `0x1366a(72)`、`0x32975(17)` 與 text index 11。不成立時再以
   `dword_53BEF < 15` 分支到 text index 13／`0x112a5(19)`，否則播放
@@ -42,6 +45,11 @@ FD2.EXE：raw ch22 post／玩家第23戰戰後處理器證據
 - `0x24bde(int a1)` 迭代 persistent record count `[0x53BFB]`，比較每筆
   record 的 raw byte `+8` 與 `a1`，找到 18 回傳 `1`，否則 `0`。這是
   raw persistent membership 條件；record 格式與玩家可見角色意義仍屬未知。
+- `0x24840` 的 `test eax,eax; je 0x248b5` 固定「找到 18」分支；未找到
+  才到 `0x248b5` 的 raw `cmp dword [0x53BEF],0xf`。`jl 0x24902` 代表
+  `[0x53BEF] < 15` 時播放 text index 13／JOIN19，否則播放 text index 12、
+  ACTING72 與 deactivate slot17。這三個比較位址已附加到 editable `if` beats，
+  但 `[0x53BEF]` 的高階名稱仍未知。
 
 已證實：`0x2189a` 的十次索引呈現呼叫形狀
 --------------------------------------------
@@ -59,6 +67,14 @@ FD2.EXE：raw ch22 post／玩家第23戰戰後處理器證據
   放入可編輯腳本；沒有把它命名成肖像、特效、過場或玩法。重製執行器
   對 `native_2189a_loop` 目前明確回報「indexed adapter 未完成」並停止，
   因此不會以猜測的 generic renderer 取代原始效果。
+- `0x24b14`、`0x24bde` 與 `[0x53BEF] < 15` 已在
+  `ch22_post.json` 轉成 `native_inventory_item_present`、
+  `native_persistent_identity_present` 與 `native_round_lt` 結構化條件。
+  這些條件只消費完整 raw inventory／persistent provenance；缺少 raw bytes
+  時 runner 失敗即關閉，不退回 normalized inventory 或角色名稱。
+- `ch22_post.json` 的 `diagnostics.unknown_ops` 現為 5（兩個 `0x24b4d`、
+  兩個 `0x11df2`、一個 `0x4dbfc`）；原先的 10 是條件與 `0x2189a` 尚未
+  結構化前的歷史計數，不再作為現況斷言。
 - ch22 的三個 caller 位址為 `0x24978`、`0x249c4`（raw
   `[10,15,1]`）及 `0x24a10`（raw `[16,30,1]`）。三個 payload 都在
   `remake/assets/cutscenes/handlers/ch22_post.json` 保存。

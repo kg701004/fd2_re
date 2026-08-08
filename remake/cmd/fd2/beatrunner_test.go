@@ -1107,6 +1107,52 @@ func TestBeatNativeCh15RawComparisonsFailClosedWithoutProvenance(t *testing.T) {
 	}
 }
 
+func TestBeatChapter22RawBranchConditionsUseOnlyProvenance(t *testing.T) {
+	item, identity, round := 100, 18, 15
+	branch := campaign.Beat{Op: "if", Condition: &campaign.BeatCondition{Op: "native_inventory_item_present", NativeInventoryItemID: &item}, Then: []campaign.Beat{{Op: "join", CharID: 22}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}
+	g := newBeatTestGame(t, []campaign.Beat{branch})
+	g.st = &battle.State{Units: make([]*battle.Unit, 16)}
+	for i := range g.st.Units {
+		g.st.Units[i] = &battle.Unit{InventorySlots: make([]int, 8), NativeInventoryFlags: make([]int, 8)}
+	}
+	g.st.Units[3].InventorySlots[2] = 100
+	g.beatAdvance()
+	if g.loadErr != "" || !g.partyMembers[22] {
+		t.Fatalf("raw inventory item branch party=%#v err=%q", g.partyMembers, g.loadErr)
+	}
+
+	branch = campaign.Beat{Op: "if", Condition: &campaign.BeatCondition{Op: "native_persistent_identity_present", NativePersistentIdentity: &identity}, Then: []campaign.Beat{{Op: "join", CharID: 22}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}
+	g = newBeatTestGame(t, []campaign.Beat{branch})
+	g.partyRoster = map[int]battle.Unit{1: {HasNativeIdentity: true, NativeIdentity: 18}}
+	g.beatAdvance()
+	if g.loadErr != "" || !g.partyMembers[22] {
+		t.Fatalf("raw persistent identity branch party=%#v err=%q", g.partyMembers, g.loadErr)
+	}
+
+	branch = campaign.Beat{Op: "if", Condition: &campaign.BeatCondition{Op: "native_round_lt", NativeRound: &round}, Then: []campaign.Beat{{Op: "join", CharID: 22}}, Else: []campaign.Beat{{Op: "join", CharID: 19}}}
+	for _, tc := range []struct {
+		counter int
+		want    int
+	}{{counter: 14, want: 22}, {counter: 15, want: 19}} {
+		g = newBeatTestGame(t, []campaign.Beat{branch})
+		g.st = &battle.State{NativeRoundCounter: tc.counter}
+		g.beatAdvance()
+		if g.loadErr != "" || !g.partyMembers[tc.want] {
+			t.Fatalf("raw round=%d party=%#v err=%q", tc.counter, g.partyMembers, g.loadErr)
+		}
+	}
+
+	g = newBeatTestGame(t, []campaign.Beat{{Op: "if", Condition: &campaign.BeatCondition{Op: "native_inventory_item_present", NativeInventoryItemID: &item}}})
+	g.st = &battle.State{Units: make([]*battle.Unit, 16)}
+	for i := range g.st.Units {
+		g.st.Units[i] = &battle.Unit{}
+	}
+	g.beatAdvance()
+	if g.loadErr == "" {
+		t.Fatal("missing raw inventory slots did not fail closed")
+	}
+}
+
 func TestBeatNativeAnyOfCombinesOnlyRawPredicates(t *testing.T) {
 	round, threshold := 18, 4
 	condition := &campaign.BeatCondition{Op: "native_any_of", Any: []campaign.BeatCondition{

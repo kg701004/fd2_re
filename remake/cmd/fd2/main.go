@@ -1644,6 +1644,38 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			}
 		}
 		return false, nil
+	case "native_inventory_item_present":
+		if g.st == nil || condition.NativeInventoryItemID == nil || *condition.NativeInventoryItemID < 0 || *condition.NativeInventoryItemID > 0xff {
+			return false, fmt.Errorf("native_inventory_item_present lacks raw item byte or battle state")
+		}
+		if len(g.st.Units) < 16 {
+			return false, fmt.Errorf("native_inventory_item_present requires 16 runtime records, got %d", len(g.st.Units))
+		}
+		records, err := battle.NativeInventoryRecords(g.st.Units, 16)
+		if err != nil {
+			return false, fmt.Errorf("native_inventory_item_present raw records: %w", err)
+		}
+		unit, _, err := battle.FindNativeInventoryItem(records, byte(*condition.NativeInventoryItemID))
+		if err != nil {
+			return false, fmt.Errorf("native_inventory_item_present search: %w", err)
+		}
+		return unit >= 0, nil
+	case "native_persistent_identity_present":
+		if condition.NativePersistentIdentity == nil || *condition.NativePersistentIdentity < 0 || *condition.NativePersistentIdentity > 0xff {
+			return false, fmt.Errorf("native_persistent_identity_present lacks raw record+0x08 byte")
+		}
+		if g.partyRoster == nil {
+			return false, fmt.Errorf("native_persistent_identity_present lacks persistent roster")
+		}
+		for index, unit := range g.partyRoster {
+			if !unit.HasNativeIdentity {
+				return false, fmt.Errorf("native_persistent_identity_present roster record %d lacks raw +0x08", index)
+			}
+			if unit.NativeIdentity == *condition.NativePersistentIdentity {
+				return true, nil
+			}
+		}
+		return false, nil
 	case "native_inactive_count_gt":
 		if len(condition.UnitSlots) == 0 || condition.Threshold == nil || *condition.Threshold < 0 {
 			return false, fmt.Errorf("缺少有效 native_inactive_count_gt condition")
@@ -1670,6 +1702,11 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			return false, fmt.Errorf("native_round_gt lacks raw [0x53bef] provenance")
 		}
 		return g.st.NativeRoundCounter > *condition.NativeRound, nil
+	case "native_round_lt":
+		if g.st == nil || condition.NativeRound == nil || *condition.NativeRound < 0 || g.st.NativeRoundCounter <= 0 {
+			return false, fmt.Errorf("native_round_lt lacks raw [0x53bef] provenance")
+		}
+		return g.st.NativeRoundCounter < *condition.NativeRound, nil
 	case "native_record_word_gte":
 		if g.st == nil || condition.UnitSlot == nil || condition.NativeRecordWordOffset == nil || *condition.NativeRecordWordOffset != 0x42 || condition.NativeRecordWordValue == nil || *condition.NativeRecordWordValue < 0 || *condition.NativeRecordWordValue > 0xffff {
 			return false, fmt.Errorf("native_record_word_gte lacks raw +0x42 contract")

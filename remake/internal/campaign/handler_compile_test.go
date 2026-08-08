@@ -2207,6 +2207,20 @@ func TestLoadChapter22PostPreservesNative2189ALoops(t *testing.T) {
 	if loops[0].Source.Addr != "0x24978" || loops[1].Source.Addr != "0x249c4" || loops[2].Source.Addr != "0x24a10" {
 		t.Fatalf("ch22_post loop sources=%#v", loops)
 	}
+	if len(script.Beats) < 3 || script.Beats[1].Op != "if" || script.Beats[1].Condition == nil ||
+		script.Beats[1].Condition.Op != "native_inventory_item_present" || script.Beats[1].Condition.NativeInventoryItemID == nil ||
+		*script.Beats[1].Condition.NativeInventoryItemID != 100 {
+		t.Fatalf("ch22_post inventory branch=%#v", script.Beats[1])
+	}
+	if script.Beats[2].Op != "if" || script.Beats[2].Condition == nil ||
+		script.Beats[2].Condition.Op != "native_persistent_identity_present" || script.Beats[2].Condition.NativePersistentIdentity == nil ||
+		*script.Beats[2].Condition.NativePersistentIdentity != 18 {
+		t.Fatalf("ch22_post persistent branch=%#v", script.Beats[2])
+	}
+	nested := script.Beats[2].Else
+	if len(nested) != 1 || nested[0].Op != "if" || nested[0].Condition == nil || nested[0].Condition.Op != "native_round_lt" || nested[0].Condition.NativeRound == nil || *nested[0].Condition.NativeRound != 15 {
+		t.Fatalf("ch22_post round branch=%#v", nested)
+	}
 }
 
 func TestCompileNative2189ALoopPreservesRawCallShapeAndFailsClosed(t *testing.T) {
@@ -2238,6 +2252,51 @@ func TestCompileNative2189ALoopPreservesRawCallShapeAndFailsClosed(t *testing.T)
 	}}}, HandlerBindings{})
 	if len(badIssues) != 1 {
 		t.Fatalf("mutated 0x2189a loop must fail closed: %#v", badIssues)
+	}
+}
+
+func TestCompileChapter22PostRawBranchConditions(t *testing.T) {
+	item := 100
+	identity := 18
+	round := 15
+	script := &HandlerScript{Beats: []HandlerBeat{
+		{
+			Op: "if", Source: HandlerSource{Addr: "0x247c6"}, NativeTarget: "0x24b14", RawArgs: []any{100},
+			Condition: &HandlerCondition{Op: "native_inventory_item_present", NativeInventoryItemID: &item},
+		},
+		{
+			Op: "if", Source: HandlerSource{Addr: "0x24840"}, NativeTarget: "0x24bde", RawArgs: []any{18},
+			Condition: &HandlerCondition{Op: "native_persistent_identity_present", NativePersistentIdentity: &identity},
+		},
+		{
+			Op: "if", Source: HandlerSource{Addr: "0x248b5", Target: "0x53bef"}, RawArgs: []any{15},
+			Condition: &HandlerCondition{Op: "native_round_lt", NativeRound: &round},
+		},
+	}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 3 {
+		t.Fatalf("compiled ch22 conditions=%#v issues=%#v", beats, issues)
+	}
+	if beats[0].Condition == nil || beats[0].Condition.Op != "native_inventory_item_present" || beats[0].Condition.NativeInventoryItemID == nil || *beats[0].Condition.NativeInventoryItemID != 100 {
+		t.Fatalf("inventory condition=%#v", beats[0].Condition)
+	}
+	if beats[1].Condition == nil || beats[1].Condition.Op != "native_persistent_identity_present" || beats[1].Condition.NativePersistentIdentity == nil || *beats[1].Condition.NativePersistentIdentity != 18 {
+		t.Fatalf("persistent condition=%#v", beats[1].Condition)
+	}
+	if beats[2].Condition == nil || beats[2].Condition.Op != "native_round_lt" || beats[2].Condition.NativeRound == nil || *beats[2].Condition.NativeRound != 15 {
+		t.Fatalf("round condition=%#v", beats[2].Condition)
+	}
+	for name, condition := range map[string]*HandlerCondition{
+		"item out of range":       {Op: "native_inventory_item_present", NativeInventoryItemID: intPtr(256)},
+		"identity out of range":   {Op: "native_persistent_identity_present", NativePersistentIdentity: intPtr(-1)},
+		"round missing threshold": {Op: "native_round_lt"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, badIssues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: condition}}}, HandlerBindings{})
+			if len(badIssues) != 1 {
+				t.Fatalf("condition must fail closed: %#v", badIssues)
+			}
+		})
 	}
 }
 

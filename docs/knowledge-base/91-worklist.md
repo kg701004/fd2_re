@@ -62,10 +62,20 @@
   這只解除「0x2189a 完全未知」的過時斷言，不解除
   `postbattle_ch22_persist→town_ch23`、一般玩家 E2 或戰後城鎮／商店／整備／
   存檔 gate。證據見 [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
+- [x] **玩家第23戰／raw ch22 post 分支條件（E1）**：`0x247c6` 的
+  `0x24b14(100)` 回傳方向、`0x24840` 的 `0x24bde(18)` persistent `+8`
+  比較，以及 `0x248b5` 的 `[0x53bef] < 15` 已轉成巢狀 editable `if`。
+  compiler／BeatRunner 只接受完整 raw inventory、persistent identity 與 raw
+  round provenance；缺欄位失敗即關閉，不把它們命名成角色或一般物品欄。這只
+  改善 ch22 handler CFG，仍不解除 indexed renderer、正式 postbattle binding
+  或 town／shop／整備／存檔 gate。證據見
+  [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)；canonical
+  `diagnostics.unknown_ops` 已由歷史 10 校正為 5。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
-  fallback；`mapping_gaps.native_semantics` 由 29 降為 26，僅表示三個
-  `0x2189a` caller 已有可編輯 raw 原語，不代表 renderer 或戰役節點已解鎖。
+  fallback；`mapping_gaps.native_semantics` 由 29 降為 24，表示三個
+  `0x2189a` caller 與兩個 ch22 raw predicate 已有可編輯原語／條件，不代表
+  renderer 或戰役節點已解鎖。
   這些是覆蓋統計，不是原版完成百分比。
 - [ ] **下一個戰後切片**：玩家第22、23、24、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。

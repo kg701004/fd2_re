@@ -200,6 +200,20 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 					continue
 				}
 				condition.UnitSlots = append([]int(nil), input.Condition.UnitSlots...)
+			case "native_inventory_item_present":
+				if input.Condition.NativeInventoryItemID == nil || *input.Condition.NativeInventoryItemID < 0 || *input.Condition.NativeInventoryItemID > 0xff {
+					issue(i, input, "native_inventory_item_present requires an unsigned raw item byte")
+					continue
+				}
+				itemID := *input.Condition.NativeInventoryItemID
+				condition.NativeInventoryItemID = &itemID
+			case "native_persistent_identity_present":
+				if input.Condition.NativePersistentIdentity == nil || *input.Condition.NativePersistentIdentity < 0 || *input.Condition.NativePersistentIdentity > 0xff {
+					issue(i, input, "native_persistent_identity_present requires an unsigned raw record+0x08 byte")
+					continue
+				}
+				identity := *input.Condition.NativePersistentIdentity
+				condition.NativePersistentIdentity = &identity
 			case "native_inactive_count_gt":
 				if len(input.Condition.UnitSlots) == 0 || input.Condition.Threshold == nil || *input.Condition.Threshold < 0 {
 					issue(i, input, "native_inactive_count_gt requires unit_slots and a non-negative threshold")
@@ -224,6 +238,13 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			case "native_round_gt":
 				if input.Condition.NativeRound == nil || *input.Condition.NativeRound < 0 {
 					issue(i, input, "native_round_gt requires a non-negative raw round threshold")
+					continue
+				}
+				threshold := *input.Condition.NativeRound
+				condition.NativeRound = &threshold
+			case "native_round_lt":
+				if input.Condition.NativeRound == nil || *input.Condition.NativeRound < 0 {
+					issue(i, input, "native_round_lt requires a non-negative raw round threshold")
 					continue
 				}
 				threshold := *input.Condition.NativeRound

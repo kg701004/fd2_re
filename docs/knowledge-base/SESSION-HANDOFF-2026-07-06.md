@@ -3375,3 +3375,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   通過；這是 E1 可編輯資料消費切片，不是一般玩家 E2。`postbattle_ch22_persist`
   仍 blocked，下一節點不可假設為 `town_ch23`；城鎮／商店／整備／存檔邊界仍需
   raw runtime trace、indexed adapter 與未修改玩家路徑驗證。
+
+## 2026-08-09：raw ch22 post 分支條件轉成 editable CFG
+
+- 直接指令核對固定 `0x247c6 cmp eax,-1; je 0x247fb`、`0x24840 test eax,eax;
+  je 0x248b5`，以及 `0x248b5 cmp dword [0x53bef],0xf; jl 0x24902`。因此
+  `0x24b14(100)` 找到時才走 text8／JOIN22，`0x24bde(18)` 找到時走
+  text10／ACT72／deactivate17／text11；未找到 18 時再依 raw counter `<15`
+  選 text13／JOIN19 或 text12／ACT72／deactivate17。
+- `ch22_post.json` 現保存三層巢狀 `if`，條件名稱僅描述 byte-level predicate：
+  `native_inventory_item_present`、`native_persistent_identity_present`、
+  `native_round_lt`。compiler 與 BeatRunner regression 通過；執行器缺少
+  完整 raw inventory／persistent record／round provenance 時失敗即關閉，不使用
+  normalized inventory 或角色名稱替代。
+- 這是 E1 控制流資料化，不是畫面或一般玩家 E2；`postbattle_ch22_persist`、
+  indexed renderer 與戰後 town／shop／整備／save 邊界仍保持 blocked。

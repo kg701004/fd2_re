@@ -113,18 +113,20 @@ type LoadCHState struct {
 
 // BeatCondition is the runtime form of a proven handler predicate.
 type BeatCondition struct {
-	Op                     string          `json:"op"`
-	UnitSlots              []int           `json:"unit_slots,omitempty"`
-	Threshold              *int            `json:"threshold,omitempty"`
-	NativeRound            *int            `json:"native_round,omitempty"`
-	NativeRecordWordOffset *int            `json:"native_record_word_offset,omitempty"`
-	NativeRecordWordValue  *int            `json:"native_record_word_value,omitempty"`
-	UnitSlot               *int            `json:"unit_slot,omitempty"`
-	Any                    []BeatCondition `json:"any,omitempty"`
-	CharID                 *int            `json:"char_id,omitempty"`
-	EventStateIndex        *int            `json:"event_state_index,omitempty"`
-	EventStateValue        *int            `json:"event_state_value,omitempty"`
-	RequiredSlotCount      *int            `json:"required_slot_count,omitempty"`
+	Op                       string          `json:"op"`
+	UnitSlots                []int           `json:"unit_slots,omitempty"`
+	NativeInventoryItemID    *int            `json:"native_inventory_item_id,omitempty"`
+	NativePersistentIdentity *int            `json:"native_persistent_identity,omitempty"`
+	Threshold                *int            `json:"threshold,omitempty"`
+	NativeRound              *int            `json:"native_round,omitempty"`
+	NativeRecordWordOffset   *int            `json:"native_record_word_offset,omitempty"`
+	NativeRecordWordValue    *int            `json:"native_record_word_value,omitempty"`
+	UnitSlot                 *int            `json:"unit_slot,omitempty"`
+	Any                      []BeatCondition `json:"any,omitempty"`
+	CharID                   *int            `json:"char_id,omitempty"`
+	EventStateIndex          *int            `json:"event_state_index,omitempty"`
+	EventStateValue          *int            `json:"event_state_value,omitempty"`
+	RequiredSlotCount        *int            `json:"required_slot_count,omitempty"`
 }
 
 // HandlerUnitLayout is one absolute runtime-slot placement recovered from a

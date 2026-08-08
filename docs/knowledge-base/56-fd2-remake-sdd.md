@@ -3189,3 +3189,11 @@ stride 456、13×8 原始場景建立、312×192 呈現區域、320 呈現 strid
 `postbattle_ch22_persist→town_ch23`。`0x24b14`／`0x24bde` 的 persistent
 record 高階意義、一般玩家 runtime frontier、DOSBox E2 與戰後城鎮／商店／
 整備／存檔路徑仍是強推論或未知，維持 fail-closed。
+
+同一輪又把 `0x247c6` 的 `cmp eax,-1`、`0x24840` 的 persistent lookup
+分支，以及 `0x248b5` 的 `cmp [0x53bef],15; jl` 轉成可編輯巢狀 `if`：
+`native_inventory_item_present(100)`、`native_persistent_identity_present(18)`
+與 `native_round_lt(15)`。這些是原始 byte-level predicate，不是角色或物品
+名稱；compiler 與 BeatRunner regression 只在完整 raw inventory／persistent
+record provenance 存在時選臂，缺資料便停止。這改善了 handler 的控制流可編輯性，
+但不解除 indexed renderer、`postbattle_ch22_persist` 或戰間節點 gate。
