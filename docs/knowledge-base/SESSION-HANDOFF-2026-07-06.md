@@ -892,7 +892,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 ch25 post activation：新增 `dialogue_overrides` address+text-index schema，讓同一 native dialog call-site 的條件 text index 可各自指向 editable scene/line；不偽造 FDTXT_026 全量 count alignment。ch25 string5/6→scene2 branch、7→scene2 lines9–10、8/9→scene2/3 branch、10/11→scene4 已通過 compiler regression；`postbattle_ch25_persist` 接入 authored binding，前往 `town_ch26`，coverage 45 handler-bound / 10 unbound。
 - 2026-07-27 ch25 camera assertion correction：重讀完整 `0x233c6` scalar ABI 後撤回 `(5,9)→(120,216)`；caller push 順序最後兩個 scalar 是 `cam_x=9, cam_y=5`，正確像素為 `(216,120)`。binding、test、SDD、worklist 已同步修正。
 - 2026-07-27 ch06 post branch recheck：Docker Capstone 固定 `[0x53ad5]+0x11==1` 才檢查 `unit_inactive(43)`；inactive 走 dialog #5，active 才走 `0x233c6` 9-slot layout（X=`[12,11,13,10,14,10,14,9,15]`、Y=`[4,4,4,5,5,6,6,7,7]`、pose=`[0,0,0,3,1,3,1,3,1]`）、special slot43=`(12,7,pose2)`、camera raw `(6,2)`，再 dialog #4/JOIN12。map6 只有 40 editable units，native slot43/96-slot buffer 尚未有 runtime model，故維持 fail-closed。
-- 2026-08-09 ch23 post handler recheck 勘誤：合法 IDA Pro 9.4 與 Docker Capstone 固定 `0x24c1e..0x24d22` 的兩段 loop：第一段每 stage 30 次 `0x11cac(1)→0x17aa9(1)`，第二段每 stage 12 次 raw PUSH `[ESI,255,0]→0x11d40→0x11cac(0)→0x17aa9(1)`，`ESI=0..11`；形式參數是 `0x11d40(0,255,ESI)`。`0x17aa9` 是 BIOS tick wait；`0x11d40` 是全 256-entry DAC 減法／夾零；`0x4dfcc` 則由 IDA `BYTE1(v2)=-32` 與 Capstone `mov ah,0xe0` 固定寫入 DAC `0xe0..0xef`，撤回舊低位索引說法；`0x24d22` 在此 handler 只走非零 setter，寫 raw `0x51a10`。沿 `0x11cac→0x11eee` 追查後確認 case 23 在 BIOS tick 變化時會間接呼叫 `0x24d22(0)`，其 `0x138` bytes row copy 是 312-byte staging 列旋轉消費端；IDA 另固定 `0x11eee→0x122dc→0x127a9→0x1acf3→0x11eb0` 的共用 indexed 消費鏈，直接交叉參照包含 ch23 的 `0x24c63`／`0x24cd3`。因此舊的「沒有消費端」說法已撤回；新證據只關閉靜態 E1 consumer chain，不代表重製已有 raw state/latch adapter。重製端已加入 `RotateNativeCh23Rows`／`ApplyNativeCh23PaletteCycle` 原語，並以兩個 `native_ch23_loop` 候選 beats 保存完整 call-site、30／12 次數與 stage 2..14；runner 在 raw state/latch adapter 未完成時失敗即關閉。初始 latch、`dword_53C03` 生命週期、raw state mapping 與一般玩家 E2 仍未閉合；tick gate 已證實為 `[0x46c] != [0x539f8]` 的 BIOS tick 變化條件，故不命名泛用 renderer，也不接 `postbattle_ch23_persist`。證據見 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
+- 2026-08-09 ch23 post handler recheck 勘誤：合法 IDA Pro 9.4 與 Docker Capstone 固定 `0x24c1e..0x24d22` 的兩段 loop：第一段每 stage 30 次 `0x11cac(1)→0x17aa9(1)`，第二段每 stage 12 次 raw PUSH `[ESI,255,0]→0x11d40→0x11cac(0)→0x17aa9(1)`，`ESI=0..11`；形式參數是 `0x11d40(0,255,ESI)`。`0x17aa9` 是 BIOS tick wait；`0x11d40` 是全 256-entry DAC 減法／夾零；`0x4dfcc` 則由 IDA `BYTE1(v2)=-32` 與 Capstone `mov ah,0xe0` 固定寫入 DAC `0xe0..0xef`，撤回舊低位索引說法；`0x24d22` 在此 handler 只走非零 setter，寫 raw `0x51a10`。沿 `0x11cac→0x11eee` 追查後確認 case 23 在 BIOS tick 變化時會間接呼叫 `0x24d22(0)`，其 `0x138` bytes row copy 是 312-byte staging 列旋轉消費端；IDA 另固定 `0x11eee→0x122dc→0x127a9→0x1acf3→0x11eb0` 的共用 indexed 消費鏈，直接交叉參照包含 ch23 的 `0x24c63`／`0x24cd3`。因此舊的「沒有消費端」說法已撤回；新證據只關閉靜態 E1 consumer chain，不代表重製已有 raw state/latch adapter。重製端已加入 `RotateNativeCh23Rows`／`ApplyNativeCh23PaletteCycle` 原語，並以兩個 `native_ch23_loop` 候選 beats 保存完整 call-site、30／12 次數與 stage 2..14；runner 在 raw state/latch adapter 未完成時失敗即關閉。固定版 raw seed 已由 IDA／Capstone 證實為 `0x01`，但入口 latch 的執行期值、`dword_53C03` 生命週期、raw state mapping 與一般玩家 E2 仍未閉合；tick gate 已證實為 `[0x46c] != [0x539f8]` 的 BIOS tick 變化條件，故不命名泛用 renderer，也不接 `postbattle_ch23_persist`。證據見 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
 - 2026-07-27 native item-row producer closure：逐 byte 比對 EXE 證實
   `0x4e56c` 的 linear `0x602ad` 對應 file `0x540ad`，比既有 normalized
   `item.json` 的 `0x540ac` 起點向後一 byte；stride 同為 23，故 raw row
@@ -3414,8 +3414,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   「tick gate 完全未知」已撤回；它是 BIOS tick 變化閘門，不是固定影格率。
 - 同一分支的 `0x120c6..0x120fe` 保留 `0x53aff`、`0x138` row stride、
   `0xc0` rows 與 `0x11eb0` present 呼叫形狀。後續 `0x10652` 載入器證據已
-  證實 raw staging 的建立／擁有者；完整呈現目的地或 handler 入口 latch 初值仍
-  未知，因此 `postbattle_ch23_persist` 仍
+  證實 raw staging 的建立／擁有者；固定版 raw seed 為 `0x01`，但完整呈現目的地
+  或 handler 入口 latch 的執行期值仍未知，因此 `postbattle_ch23_persist` 仍
   fail-closed，沒有把 `nativeMapWork`／PNG framebuffer 猜成原版 staging。
 - SDD、worklist 與 `fd2_ch23_post_ida.txt` 已同步；這是 E1 反組譯證據收窄，
   不是 production renderer 或一般玩家 E2 完成。
@@ -3438,7 +3438,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `FDOTHER.DAT` #42 regression 固定 312×192、`0x138` stride、`0xea00`
   staging surface 與透明 `0x4e63d` blit。這是可執行的 E1 原語，不是完整
   indexed state/latch renderer；`native_ch23_loop` 仍保持失敗即關閉。
-- 既有「staging 建立／擁有者未知」已修正為「raw loader owner 已知；完整
-  present 目的地生命週期、入口 latch 初值與 raw state adapter 仍未知」。
+- 既有「staging 建立／擁有者未知」已修正為「raw loader owner 已知；固定版 raw
+  seed 為 `0x01`，但完整 present 目的地生命週期、入口 latch 的執行期值與 raw
+  state adapter 仍未知」。
   沒有因此新增 renderer、campaign 或 `postbattle_ch23_persist` binding；
   城鎮／商店／整備／存檔邊界與一般玩家 E2 仍保持失敗即關閉。

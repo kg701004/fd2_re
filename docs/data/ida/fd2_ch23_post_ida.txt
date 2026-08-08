@@ -106,8 +106,9 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `[0x53b03]` 並清零該 global。這證實 loader 的 decode／handle cleanup
   邊界，但不替 `0x4e63d` 的參數命名成解壓縮、圖片或 palette 操作。
 - `0x1083b→0x10842` 呼叫 `0x24d22(0)`；這是 loader 完成後的 zero-argument
-  raw latch/copy 分支入口。它不會把 `[0x51a10]` 的初始值變成已知常數，
-  因此入口 latch 初值、後續 present 目的地生命週期及一般玩家 E2 仍未知。
+  raw latch/copy 分支入口。此呼叫本身不能證明 handler 入口的執行期值；
+  固定版檔案映像的 raw seed 已證實為 `0x01`，但入口 latch 的執行期值、
+  後續 present 目的地生命週期及一般玩家 E2 仍未知。
 - `0x1088d` 在 `0x108a6` 呼叫 `0x10652`，只證明此 loader 位於共用 chapter
   setup 的 caller 內；沒有證據把它接成 `postbattle_ch23_persist` 的正式
   renderer。重製端維持 fail-closed，不建立資源語意或畫面 adapter。
@@ -115,6 +116,21 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   已證實的 #42、312×192、`0x4e63d` 透明 blit 邊界；它們保留 raw 幾何與
   RLE，不宣稱 #42 是背景、轉場或 UI。完整 indexed state／present adapter
   仍由 `native_ch23_loop` 的失敗即關閉閘門保護。
+
+已證實：`byte_51A10` 的固定版 raw data seed
+---------------------------------------------
+
+- 合法 IDA Pro 9.4 `ida_dump_bytes.py` 與 Capstone `data` 指令在同一固定版
+  `FD2.EXE` 都讀到 `0x51a10:01 ff 05 00 ...`；因此檔案映像中
+  `byte_51A10` 的 raw seed 是 `0x01`。這是輸入二進位的資料證據，不把相鄰
+  `ff 05` bytes 命名成 latch 欄位。
+- IDA 資料交叉參照只列出 `0x24d22..0x24df2`：非零參數在 `0x24d39` 寫入
+  low byte，零參數在 `0x24d41/0x24d59/0x24d86/0x24dac/0x24dc9` 讀取它。
+  因此「靜態 seed 完全未知」已撤回；但 `0x24c1e` 會在第一段與第二段
+  迴圈間寫入 stage 2..14，固定檔案 seed 不能直接當成 handler 入口值。
+- 目前仍缺一般玩家路徑中第一個 zero-argument `0x24d22(0)` 的執行期
+  時序與 caller-owned state snapshot；重製端不把 `0x01` 強制注入
+  `native_ch23_loop` renderer，維持失敗即關閉。
 
 已證實：`0x11cac→0x11eee` 透過 case 23 間接消費 raw latch
 ---------------------------------------------------------------
@@ -139,7 +155,7 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   row stride 與 `0xc0` rows 傳入 `0x11eb0`。配合 `0x10652` 的
   `0x107dd→0x107ea` 配置證據，現在已知 raw ch23 loader 是
   `[0x53aff]` 這個 staging owner pointer 的建立端；但完整呈現目的地的
-  位址生命週期與入口 latch 初值仍未知，不能由 `nativeMapWork` 或 PNG
+  位址生命週期與入口 latch 的執行期值仍未知，不能由 `nativeMapWork` 或 PNG
   framebuffer 代替。
 - IDA Pro 9.4 的 `0x11cac` 函式本體也固定了 indexed 消費鏈：
   `0x11eee` 後依序呼叫 `0x122dc`、`0x127a9`、`0x1acf3`，再由
@@ -152,7 +168,8 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows`、
   `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，以及保留完整 call-site／
   stage 值的 `native_ch23_loop` 候選 beats；共用 indexed 消費鏈已由 IDA
-  靜態閉合；handler 入口的初始 latch、`dword_53C03` 生命週期、
+  靜態閉合；固定版檔案映像的 raw seed 為 `0x01`，但 handler 入口的執行期
+  latch、`dword_53C03` 生命週期、
   `0x53aff` staging 擁有者／呈現目的地、raw state adapter 與一般玩家 E2
   仍未閉合，故仍不建立
   production binding。
