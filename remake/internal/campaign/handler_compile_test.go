@@ -2058,6 +2058,74 @@ func TestCompileChapter29PostPreservesDialogueAcrossChapterTextSwitch(t *testing
 	}
 }
 
+func TestCompileChapter21PostCandidatePreservesRecoveredLayoutActingAndTransition(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch21_post_candidate.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(issues) != 0 {
+		t.Fatalf("ch21_post candidate issues=%#v", issues)
+	}
+	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
+		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{66, 72, 73, 79}) || !beats[0].RuntimeContext.StoryViewport {
+		t.Fatalf("ch21_post runtime context=%#v", beats[0])
+	}
+	var layout, act65, act66, transition Beat
+	for _, beat := range beats {
+		switch beat.Source {
+		case "0x24512":
+			if beat.Op == "layout_units" {
+				layout = beat
+			}
+		case "0x24543":
+			act65 = beat
+		case "0x24580":
+			act66 = beat
+		case "0x245ce":
+			transition = beat
+		}
+	}
+	if layout.Op != "layout_units" || layout.Layout == nil || len(layout.Layout.Units) != 17 ||
+		layout.Layout.Units[16] != (HandlerUnitLayout{Slot: 72, X: 22, Y: 25, Pose: 2}) ||
+		layout.Layout.CamX != 384 || layout.Layout.CamY != 432 {
+		t.Fatalf("ch21_post layout=%#v", layout)
+	}
+	if act65.Op != "act" || len(act65.Acting) != 2 || len(act65.Acting[0].Units) != 1 ||
+		act65.Acting[0].Units[0].Slot == nil || *act65.Acting[0].Units[0].Slot != 1 {
+		t.Fatalf("ch21_post acting65=%#v", act65)
+	}
+	if act66.Op != "act" || len(act66.Acting) != 50 {
+		t.Fatalf("ch21_post acting66 frame count=%d", len(act66.Acting))
+	}
+	foundSlot72 := false
+	for _, frame := range act66.Acting {
+		for _, unit := range frame.Units {
+			if unit.Slot != nil && *unit.Slot == 72 {
+				foundSlot72 = true
+			}
+		}
+	}
+	if !foundSlot72 {
+		t.Fatalf("ch21_post acting66 does not preserve special slot72")
+	}
+	if transition.Op != "indexed_transition" || transition.IndexedTransition == nil ||
+		transition.IndexedTransition.CursorSource != "native_relative_cursor" ||
+		transition.IndexedTransition.CursorYOffset != 3 || transition.IndexedTransition.Frames != 9 ||
+		transition.IndexedTransition.FrameDelayMs != 5 || transition.IndexedTransition.TailDelayMs != 500 ||
+		transition.IndexedTransition.PaletteDeltaEnd != 62 || transition.IndexedTransition.PaletteDelayMs != 4 {
+		t.Fatalf("ch21_post indexed transition=%#v", transition)
+	}
+	foundFade := false
+	for _, beat := range beats {
+		if beat.Op == "native_palette_fade_out" && beat.Source == "0x245fa" {
+			foundFade = true
+		}
+	}
+	if !foundFade {
+		t.Fatal("ch21_post 0x1f882 palette fade was not lowered")
+	}
+}
+
 func TestCompileUnitPresentRejectsFormerlyAcceptedBinding(t *testing.T) {
 	p := HandlerUnitPresent{Slot: 18, X: 22, Y: 24, Frames: 6, FrameDelayMs: 10, TailTicks: 2}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{

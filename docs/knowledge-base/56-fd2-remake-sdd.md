@@ -3130,11 +3130,15 @@ blocked 為玩家第22、23、24、29戰；這些統計是覆蓋範圍，不是�
 frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊、工具與
 原始表見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
 
-這提升了 runtime 拓撲證據，但不等於畫面或 handler 語意已閉合：各 frontier
-的 record 內容、acting 65/66 的同一資源消費端仍缺一般玩家 trace。`0x24618`
-所消費的 raw 相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA
-固定；重製端已建立帶 provenance、只接受 `native_relative_cursor` 與 Y+3
-的 fail-closed 動態欄位橋接，但仍未閉合 indexed 畫面狀態。`postbattle_ch22_persist`
-目前沒有正式 binding，故不得由 layout 表或 generated binding 猜接
-`town_ch23`；缺證據時維持失敗即關閉。本節不宣稱 renderer parity 或一般玩家
-E2。
+這提升了 runtime 拓撲證據，但不等於畫面或正式 handler 已閉合：IDA 已證實
+`0x233c6` 的 16 格 layout、special slot72 與 raw camera 參數，Docker exporter
+也已將 acting 65／66 轉錄為可編輯 frame 表；候選 binding 與 compiler regression
+見 [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)
+及 [`ch21_post.json`](../../remake/assets/cutscenes/acting/ch21_post.json)，屬 E1
+資料消費閉合，不是一般玩家畫面證據。各 frontier 的 record 內容、原版 runtime
+trace 與 indexed 畫面狀態仍未閉合。`0x24618` 所消費的 raw 相對游標 globals
+（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 固定；重製端已建立帶 provenance、
+只接受 `native_relative_cursor` 與 Y+3 的 fail-closed 動態欄位橋接，但仍未
+建立正式 binding。`postbattle_ch22_persist` 仍不得由 layout 表或 generated
+binding 猜接 `town_ch23`；缺證據時維持失敗即關閉。本節不宣稱 renderer parity
+或一般玩家 E2。

@@ -3327,10 +3327,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   對照 `ch22.json` 的 group0 初始及回合3／5／7 追加後，候選 native frontier
   為 **66→72→73→79**。這是**強推論**，不是已驗證一般玩家 runtime trace；
   證據與固定版雜湊見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
-- `postbattle_ch22_persist` 仍保持失敗即關閉：各 frontier 的同狀態 raw
-  record、acting 65/66 的資源消費端仍待一般玩家 trace；`0x24618` 的 raw
-  相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換則已由 IDA 證實；重製端
+- `postbattle_ch22_persist` 仍保持失敗即關閉：`0x233c6` 的 16 格 layout、
+  special slot72、raw camera 與 acting 65/66 已由 IDA／Docker exporter 轉成
+  E1 可編輯候選，並有 compiler regression；各 frontier 的同狀態 raw record、
+  一般玩家 runtime trace 與 indexed 畫面狀態仍未閉合。`0x24618` 的 raw
+  相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端
   已補上帶 provenance、只接受 `native_relative_cursor`／Y+3 的 fail-closed
-  動態欄位橋接，但 indexed 畫面狀態與正式 binding 仍未閉合。不得只因 frontier
-  已可估算就建立 production binding 或接 `town_ch23`；城鎮／整備邊界仍保留
-  在 campaign graph。
+  動態欄位橋接，但正式 binding 仍未建立。不得只因 frontier 已可估算就建立
+  production binding 或接 `town_ch23`；城鎮／整備邊界仍保留在 campaign graph。

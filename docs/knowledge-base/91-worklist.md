@@ -32,8 +32,16 @@
   [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
 - [x] **ch21 post 證據勘誤**：補明 `0x1f882` 是 0–63、每步 2 ms 的原生
   palette 淡出，不是同步／等待輔助器；`postbattle_ch22_persist` 仍因
-  frontier、演出資源消費端與 indexed 畫面狀態未閉合而失敗即關閉。證據見
+  frontier runtime trace 與 indexed 畫面狀態未閉合而失敗即關閉。證據見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
+- [x] **ch21 post layout／演出候選（E1）**：IDA 已閉合 `0x233c6` 的 16 格
+  layout、special slot72、raw camera `(16,18)` 與 `0x244b6` 的參數順序；
+  Docker exporter 已把 acting 65／66 轉成可編輯 frame 表，候選 binding 與
+  compiler regression 也確認 slot／frame／`native_relative_cursor` provenance。
+  這只關閉資料消費候選，不解除正式戰役節點；一般玩家 frontier record、
+  indexed 畫面與 E2 仍待補足。詳見
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)、
+  [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
   fallback。這些是覆蓋統計，不是原版完成百分比。
@@ -69,13 +77,13 @@
   `sub_1088d→sub_10b4e→sub_10c50` 已匯出。map21 的 raw header／group
   分布與事件追加順序給出候選 runtime frontier **66→72→73→79**（強推論），
   不再把槽位數寫成完全未知。證據見
-  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。仍缺各 frontier
-  的一般玩家 runtime record、acting 65/66 的同一資源消費端。`0x24618` 的
-  raw 相對游標 globals（`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端
-  已有帶 provenance 且只接受 `native_relative_cursor`／Y+3 的 fail-closed
-  動態欄位橋接。各 frontier 的 runtime record、indexed 畫面狀態與正式
-  `postbattle_ch22_persist` binding 仍未閉合，因此不接 `town_ch23`，維持
-  失敗即關閉。
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。layout、special
+  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選與 compiler regression；仍缺
+  各 frontier 的一般玩家 runtime record、indexed 畫面狀態與正式
+  `postbattle_ch22_persist` binding。`0x24618` 的 raw 相對游標 globals
+  （`0x53ab9/0x53abd`）與 Y+3 變換已由 IDA 證實；重製端已有帶 provenance
+  且只接受 `native_relative_cursor`／Y+3 的 fail-closed 動態欄位橋接，因此
+  不接 `town_ch23`，維持失敗即關閉。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章
   一般玩家可破關鏈。不要以asset／codec、文件行數或通過的重製端單元測試代替。

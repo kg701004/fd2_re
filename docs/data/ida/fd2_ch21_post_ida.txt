@@ -33,6 +33,40 @@
   `0x245ff..0x24610` 是兩次 `memset(0xA0000, ...)`，再跳到共享尾端
   `0x239ac`；`0x239b1` 設定下一章 22。
 
+## 已證實：`0x233c6` layout ABI、special slot72 與演出 65／66
+
+- IDA Pro 9.4 的 `0x244b6` 直接指令（PUSH 由右至左）為：
+  `0x52273`、`0x52283`、`0x52293` 三組 16-byte 表，接著
+  `start=0`、`end=0x0f`、`special_slot=0x48`、`special_x=0x16`、
+  `special_y=0x19`、`special_pose=0x02`、`camera_raw_x=0x10`、
+  `camera_raw_y=0x12`，最後呼叫 `0x233c6`。這些是原始參數與位址，
+  不是角色名稱或部署規則。
+- `sub_233c6` 對 slots 0..15 逐筆寫入 80-byte runtime records 的 X、Y、
+  pose；當 special index 非零時另寫 slot 72 的 `(22,25,pose 2)`，並將
+  raw camera globals 設為 `(16,18)`，接著重設游標、重繪並等待 200 ms。
+  layout 表與 special slot 是**已證實**；把 raw camera `(16,18)` 轉為重製
+  像素 `(384,432)` 依既有 24-pixel tile ABI，屬**強推論的重製映射**，
+  不取代原始數值。
+- `0x52273`／`0x52283`／`0x52293` 的完整原始位元組如下；重製候選檔保留
+  同一順序與 slot identity：
+
+  ```text
+  X:    16 16 15 17 14 15 16 17 18 14 15 16 17 18 15 17
+  Y:    16 14 16 16 17 17 17 17 17 18 18 18 18 18 19 19
+  pose: 02 00 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+  ```
+
+- 使用同一固定雜湊 `FD2.EXE`，以 Docker 內的
+  `tools/export_acting_resources.py` 匯出後，resource `0x41`（十進位 65）
+  有 2 個 frame、只寫 slot 1；resource `0x42`（十進位 66）有 50 個
+  frame，涵蓋 slots 0..15 並直接使用 special slot 72。完整可編輯 frame
+  表已保存於 [`ch21_post.json`](../../../remake/assets/cutscenes/acting/ch21_post.json)，
+  這是**已證實的資源轉錄**，不是角色命名或一般玩家畫面證據。
+- `remake/assets/cutscenes/bindings/ch21_post_candidate.json` 將上述 layout、
+  acting、兩段 PAN 與 `0x24618` indexed transition 綁成可編譯候選；候選
+  編譯回歸確認所有 slot／frame／游標來源均保留原始 provenance，但檔案不會
+  自動接入 `postbattle_ch22_persist`。
+
 ## 已證實：`0x1f882` 是可重用的 64-step palette 淡出原語
 
 - `0x1f882` 的共享尾段以 `EBX=0..63`（含兩端）逐步呼叫
@@ -41,8 +75,8 @@
   固定，並在 SDD 的 native palette IR 與 compiler regression 中保存。
 - 因此 ch21 候選的 raw unknown 記錄只剩 `0x24618` indexed transition；
   `0x1f882` 雖可 lower 成 `native_palette_fade_out`，仍不能因此解除
-  `postbattle_ch22_persist` binding，因 frontier、acting 消費端與 indexed
-  畫面狀態仍未以一般玩家路徑閉合。
+  `postbattle_ch22_persist` binding，因 frontier 的一般玩家 runtime trace、
+  postbattle record 內容與 indexed 畫面狀態仍未閉合。
 
 ## 原始布局表（已證實）
 
@@ -108,7 +142,8 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   fail-closed resolver 將 `NativeMapViewState.VisibleCursorX/Y` 橋接到
   `tile_x/tile_y`；測試保留 raw provenance。這只閉合可重用的輸入橋接，尚未
   轉成 `postbattle_ch22_persist` 的 production binding，仍失敗即關閉；
-  indexed frame input 與一般玩家狀態回歸仍待補足。
+  indexed frame input 與一般玩家狀態回歸仍待補足；候選編譯只證明資料與
+  fail-closed adapter 可消費，不代表 renderer parity。
 
 ## 現況判定
 
@@ -117,9 +152,10 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   沒有正式 binding，故 `postbattle_ch22_persist` 仍**失敗即關閉**。
 - map21 authored JSON 的 70 筆資料現在已與原生 loader 的 16／70 header、
   group 分布及事件追加順序對齊，故 **66／72／73／79** 是可追溯的候選
-  materialized frontiers（強推論），不再把槽位數寫成完全未知。仍需要
-  原版一般玩家戰後 runtime trace 證實各 frontier 的 record 內容、acting
-  65/66 的同一資源消費端，以及重製端 indexed 畫面狀態，才可建立
-  production binding；raw cursor／Y+3 的可重用橋接已由上述測試固定。
+  materialized frontiers（強推論），不再把槽位數寫成完全未知。`0x233c6`
+  的 layout ABI、special slot72 與 acting 65/66 的資源轉錄已由上述
+  IDA／Docker 證據閉合為 E1 候選；仍需要原版一般玩家戰後 runtime trace
+  證實各 frontier 的 record 內容與實際 renderer 狀態，才可建立 production
+  binding。raw cursor／Y+3 的可重用橋接與候選編譯回歸已固定，但不提升為 E2。
 - 本檔不是 renderer parity 或一般玩家 E2 證據；任何只依三組表、map 項目數
   或舊 generated binding 建立的 `town_ch23` 接線都應視為未證實。
