@@ -54,9 +54,19 @@
   DOSBox E2 與戰後城鎮／商店／整備／存檔流程仍待。證據見
   [`fd2_ch22_pre_ida.txt`](../data/ida/fd2_ch22_pre_ida.txt) 與
   [`ch22_pre_candidate.json`](../../remake/assets/cutscenes/bindings/ch22_pre_candidate.json)。
+- [x] **玩家第23戰／raw ch22 post `0x2189a` 原語（E1）**：IDA／Capstone 已固定
+  `0x24754` 的三個 `0x2189a` caller、十次外層迴圈、`work+0x8088`、456 stride、
+  13×8 raw 場景建立、312×192 呈現與五個巢狀 call-site。三個呼叫點已在
+  `ch22_post.json` 轉成 `native_2189a_loop`，compiler regression 保留
+  push-shaped raw arguments；runner 在 indexed adapter 未完成時失敗即關閉。
+  這只解除「0x2189a 完全未知」的過時斷言，不解除
+  `postbattle_ch22_persist→town_ch23`、一般玩家 E2 或戰後城鎮／商店／整備／
+  存檔 gate。證據見 [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
-  fallback。這些是覆蓋統計，不是原版完成百分比。
+  fallback；`mapping_gaps.native_semantics` 由 29 降為 26，僅表示三個
+  `0x2189a` caller 已有可編輯 raw 原語，不代表 renderer 或戰役節點已解鎖。
+  這些是覆蓋統計，不是原版完成百分比。
 - [ ] **下一個戰後切片**：玩家第22、23、24、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。
 - [ ] **E2 與完整戰役**：取得未修改一般玩家路徑的 DOSBox 同狀態逐幀證據，

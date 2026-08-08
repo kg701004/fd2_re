@@ -3357,3 +3357,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   戰後城鎮／商店／整備／存檔與完整戰役鏈仍保持 blocked；本批只達 E1 的
   靜態證據與資料消費候選。未來接入前仍需 raw runtime trace、同狀態畫面及
   town boundary 回歸。
+
+## 2026-08-09：raw ch22 post `0x2189a` 原語勘誤（玩家第23戰戰後）
+
+- 舊交接中把 `0x2189a` 只列為 `unknown`，已被本輪 IDA Pro 9.4／Capstone
+  交叉證據收窄：`0x24754` 在 `0x24978`、`0x249c4`、`0x24a10` 三處呼叫同一
+  個十次索引呈現 helper；`0x21914`、`0x21955`、`0x2195d`、`0x21986`、
+  `0x219a3` 的巢狀 call-site、raw push 形狀、`work+0x8088`、stride 456、
+  13×8、312×192 與呈現 stride 320 已保留。原始 handler 控制流程與
+  `0x24b14(100)`／`0x24bde(18)` 的 raw 條件則另行保留，沒有替未知 record
+  建立角色或玩法名稱。
+- 重製端新增 `Native2189ALoop`／`native_2189a_loop`，三個 JSON beat 及
+  compiler／fail-closed regression 已完成；runner 仍會在沒有 indexed state
+  adapter 時停止，沒有猜接 renderer 或 campaign。完整證據與固定檔案雜湊見
+  [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
+- 本輪 Docker 回歸：`go test ./internal/campaign ./cmd/fd2 ./internal/battle`
+  通過；這是 E1 可編輯資料消費切片，不是一般玩家 E2。`postbattle_ch22_persist`
+  仍 blocked，下一節點不可假設為 `town_ch23`；城鎮／商店／整備／存檔邊界仍需
+  raw runtime trace、indexed adapter 與未修改玩家路徑驗證。

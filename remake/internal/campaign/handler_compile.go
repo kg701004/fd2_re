@@ -598,6 +598,25 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat := runtime(input, "native_ch23_loop")
 			beat.NativeCh23Loop = &copyLoop
 			beats = append(beats, beat)
+		case "native_2189a_loop":
+			loop := input.Native2189ALoop
+			if loop == nil {
+				issue(i, input, "native_2189a_loop requires an explicit raw loop payload")
+				continue
+			}
+			if err := validateNative2189ALoop(input, *loop); err != nil {
+				issue(i, input, err.Error())
+				continue
+			}
+			copyLoop := *loop
+			copyLoop.MapDraw.RawArgs = append([]any(nil), loop.MapDraw.RawArgs...)
+			copyLoop.Composite.RawArgs = append([]any(nil), loop.Composite.RawArgs...)
+			copyLoop.Stage.RawArgs = append([]any(nil), loop.Stage.RawArgs...)
+			copyLoop.Present.RawArgs = append([]any(nil), loop.Present.RawArgs...)
+			copyLoop.Tail.RawArgs = append([]any(nil), loop.Tail.RawArgs...)
+			beat := runtime(input, "native_2189a_loop")
+			beat.Native2189ALoop = &copyLoop
+			beats = append(beats, beat)
 		case "focus_unit":
 			// 0x12d7b reads the selected unit X/Y and delegates to 0x12cea,
 			// which walks the cursor there X-first/Y-second and scrolls only at
@@ -1114,6 +1133,66 @@ func validateNativeCh23Loop(input HandlerBeat, loop NativeCh23Loop) error {
 		return fmt.Errorf("native_ch23_loop has unknown phase %q", loop.Phase)
 	}
 	return nil
+}
+
+func validateNative2189ALoop(input HandlerBeat, loop Native2189ALoop) error {
+	if input.Source.Target != "0x2189a" || len(input.RawArgs) != 3 {
+		return fmt.Errorf("native_2189a_loop requires the original 0x2189a call and three raw immediates")
+	}
+	validOuter := false
+	for _, want := range [][3]int{{10, 15, 1}, {16, 30, 1}} {
+		valid := true
+		for i, expected := range want {
+			got, ok := immediateHandlerInt(input.RawArgs, i)
+			if !ok || got != expected {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			validOuter = true
+			break
+		}
+	}
+	if !validOuter {
+		return fmt.Errorf("native_2189a_loop outer raw immediates are not one of the recovered ch22 call-sites")
+	}
+	if loop.Repeat != 10 || loop.StepSource != "caller_arg9" || loop.WorkOffset != 0x8088 ||
+		loop.WorkStride != 456 || loop.MapRows != 13 || loop.MapColumns != 8 ||
+		loop.ClipWidth != 312 || loop.ClipHeight != 192 || loop.PresentStride != 320 {
+		return fmt.Errorf("native_2189a_loop geometry/timing differs from 0x2189a")
+	}
+	if !native2189aCallShape(loop.MapDraw, "0x21914", "0x11eee", 6) ||
+		immediateOrInvalid(loop.MapDraw.RawArgs, 2) != 8 || immediateOrInvalid(loop.MapDraw.RawArgs, 3) != 13 || immediateOrInvalid(loop.MapDraw.RawArgs, 4) != 456 {
+		return fmt.Errorf("native_2189a_loop map-draw call-site is not the recovered 13x8 setup")
+	}
+	if !native2189aCallShape(loop.Composite, "0x21955", "0x219ad", 7) ||
+		immediateOrInvalid(loop.Composite.RawArgs, 1) != 192 || immediateOrInvalid(loop.Composite.RawArgs, 2) != 0 || immediateOrInvalid(loop.Composite.RawArgs, 3) != 12 {
+		return fmt.Errorf("native_2189a_loop composite call-site is not the recovered 312x192 pass")
+	}
+	if !native2189aCallShape(loop.Stage, "0x2195d", "0x127a9", 0) {
+		return fmt.Errorf("native_2189a_loop stage call-site is not proven")
+	}
+	if !native2189aCallShape(loop.Present, "0x21986", "0x11eb0", 6) ||
+		immediateOrInvalid(loop.Present.RawArgs, 0) != 192 || immediateOrInvalid(loop.Present.RawArgs, 1) != 456 || immediateOrInvalid(loop.Present.RawArgs, 2) != 312 || immediateOrInvalid(loop.Present.RawArgs, 4) != 320 {
+		return fmt.Errorf("native_2189a_loop present call-site is not the recovered viewport")
+	}
+	if !native2189aCallShape(loop.Tail, "0x219a3", "0x11cac", 1) || immediateOrInvalid(loop.Tail.RawArgs, 0) != 0 {
+		return fmt.Errorf("native_2189a_loop tail redraw call-site is not proven")
+	}
+	return nil
+}
+
+func native2189aCallShape(call HandlerNativeCall, addr, target string, rawCount int) bool {
+	return call.Source.Addr == addr && call.Source.Target == target && len(call.RawArgs) == rawCount
+}
+
+func immediateOrInvalid(args []any, index int) int {
+	value, ok := immediateHandlerInt(args, index)
+	if !ok {
+		return -1
+	}
+	return value
 }
 
 func nativeCallMatches(call *HandlerNativeCall, addr, target string, want []any) bool {

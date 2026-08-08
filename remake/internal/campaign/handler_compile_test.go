@@ -2175,6 +2175,72 @@ func TestCompileChapter23PostCandidatePreservesRawLoopSchedule(t *testing.T) {
 	}
 }
 
+func TestLoadChapter22PostPreservesNative2189ALoops(t *testing.T) {
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch22_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var loops []HandlerBeat
+	for _, beat := range script.Beats {
+		if beat.Op == "native_2189a_loop" {
+			loops = append(loops, beat)
+		}
+	}
+	if len(loops) != 3 {
+		t.Fatalf("ch22_post native 0x2189a loops=%d, want 3", len(loops))
+	}
+	for i, beat := range loops {
+		if beat.NativeTarget != "0x2189a" || beat.Native2189ALoop == nil || beat.Native2189ALoop.Repeat != 10 ||
+			beat.Native2189ALoop.WorkOffset != 0x8088 || beat.Native2189ALoop.WorkStride != 456 ||
+			beat.Native2189ALoop.MapRows != 13 || beat.Native2189ALoop.MapColumns != 8 ||
+			beat.Native2189ALoop.ClipWidth != 312 || beat.Native2189ALoop.ClipHeight != 192 ||
+			beat.Native2189ALoop.PresentStride != 320 {
+			t.Fatalf("loop[%d] payload=%#v", i, beat.Native2189ALoop)
+		}
+		if beat.Native2189ALoop.StepSource != "caller_arg9" ||
+			beat.Native2189ALoop.MapDraw.Source.Addr != "0x21914" ||
+			beat.Native2189ALoop.Composite.Source.Addr != "0x21955" ||
+			beat.Native2189ALoop.Present.Source.Addr != "0x21986" {
+			t.Fatalf("loop[%d] raw call chain=%#v", i, beat.Native2189ALoop)
+		}
+	}
+	if loops[0].Source.Addr != "0x24978" || loops[1].Source.Addr != "0x249c4" || loops[2].Source.Addr != "0x24a10" {
+		t.Fatalf("ch22_post loop sources=%#v", loops)
+	}
+}
+
+func TestCompileNative2189ALoopPreservesRawCallShapeAndFailsClosed(t *testing.T) {
+	loop := &Native2189ALoop{
+		Repeat: 10, StepSource: "caller_arg9", WorkOffset: 0x8088, WorkStride: 456,
+		MapRows: 13, MapColumns: 8, ClipWidth: 312, ClipHeight: 192, PresentStride: 320,
+		MapDraw:   HandlerNativeCall{Source: HandlerSource{Addr: "0x21914", Target: "0x11eee"}, RawArgs: []any{"[0x53aad]", "[0x53aa9]", 8, 13, 456, "work+0x8088"}},
+		Composite: HandlerNativeCall{Source: HandlerSource{Addr: "0x21955", Target: "0x219ad"}, RawArgs: []any{"edi", 192, 0, 12, "esi", "[esp+0x18]", "[esp+0x18]"}},
+		Stage:     HandlerNativeCall{Source: HandlerSource{Addr: "0x2195d", Target: "0x127a9"}},
+		Present:   HandlerNativeCall{Source: HandlerSource{Addr: "0x21986", Target: "0x11eb0"}, RawArgs: []any{192, 456, 312, "work+0x8088", 320, 656644}},
+		Tail:      HandlerNativeCall{Source: HandlerSource{Addr: "0x219a3", Target: "0x11cac"}, RawArgs: []any{0}},
+	}
+	script := &HandlerScript{Beats: []HandlerBeat{{
+		Op: "native_2189a_loop", NativeTarget: "0x2189a", RawArgs: []any{10, 15, 1},
+		Source: HandlerSource{Addr: "0x24978", Target: "0x2189a"}, Native2189ALoop: loop,
+	}}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 || len(beats) != 1 || beats[0].Op != "native_2189a_loop" || beats[0].Native2189ALoop == nil {
+		t.Fatalf("compiled loop=%#v issues=%#v", beats, issues)
+	}
+	if got := beats[0].Native2189ALoop.Present.RawArgs[5]; got != 656644 {
+		t.Fatalf("present raw target=%#v, want 656644", got)
+	}
+	bad := *loop
+	bad.Repeat = 9
+	_, badIssues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{
+		Op: "native_2189a_loop", NativeTarget: "0x2189a", RawArgs: []any{10, 15, 1},
+		Source: HandlerSource{Addr: "0x24978", Target: "0x2189a"}, Native2189ALoop: &bad,
+	}}}, HandlerBindings{})
+	if len(badIssues) != 1 {
+		t.Fatalf("mutated 0x2189a loop must fail closed: %#v", badIssues)
+	}
+}
+
 func TestCompileUnitPresentRejectsFormerlyAcceptedBinding(t *testing.T) {
 	p := HandlerUnitPresent{Slot: 18, X: 22, Y: 24, Frames: 6, FrameDelayMs: 10, TailTicks: 2}
 	beats, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{

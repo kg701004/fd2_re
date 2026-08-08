@@ -1070,6 +1070,17 @@ func (g *Game) beatStart(b campaign.Beat) {
 		// the raw row rotation or DAC writes into a generic fade/redraw.
 		g.loadErr = "beat native_ch23_loop: native ch23 indexed/latch renderer adapter未完成"
 		return
+	case "native_2189a_loop":
+		if b.Native2189ALoop == nil {
+			g.loadErr = "beat native_2189a_loop:缺少原始十次 loop payload"
+			return
+		}
+		// 0x2189a owns a 10-pass indexed work-buffer/composite/present loop.
+		// Preserve the exact inner call-sites in editable data, but do not turn
+		// it into a generic portrait/effect animation until its indexed source,
+		// palette and 0x219ad consumer are proven in the runtime.
+		g.loadErr = "beat native_2189a_loop: native 0x2189a indexed adapter未完成"
+		return
 	case "layout_units":
 		if b.Layout == nil || len(b.Layout.Units) == 0 {
 			g.loadErr = "beat layout_units:缺少可編輯的 runtime layout"

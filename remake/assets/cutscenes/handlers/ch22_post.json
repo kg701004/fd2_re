@@ -175,7 +175,7 @@
       }
     },
     {
-      "op": "unknown",
+      "op": "native_2189a_loop",
       "native_target": "0x2189a",
       "raw_args": [
         10,
@@ -185,6 +185,37 @@
       "source": {
         "addr": "0x24978",
         "target": "0x2189a"
+      },
+      "native_2189a_loop": {
+        "repeat": 10,
+        "step_source": "caller_arg9",
+        "work_offset": 32904,
+        "work_stride": 456,
+        "map_rows": 13,
+        "map_columns": 8,
+        "clip_width": 312,
+        "clip_height": 192,
+        "present_stride": 320,
+        "map_draw": {
+          "source": {"addr": "0x21914", "target": "0x11eee"},
+          "raw_args": ["[0x53aad]", "[0x53aa9]", 8, 13, 456, "work+0x8088"]
+        },
+        "composite": {
+          "source": {"addr": "0x21955", "target": "0x219ad"},
+          "raw_args": ["edi", 192, 0, 12, "esi", "[esp+0x18]", "[esp+0x18]"]
+        },
+        "stage": {
+          "source": {"addr": "0x2195d", "target": "0x127a9"},
+          "raw_args": []
+        },
+        "present": {
+          "source": {"addr": "0x21986", "target": "0x11eb0"},
+          "raw_args": [192, 456, 312, "work+0x8088", 320, 656644]
+        },
+        "tail": {
+          "source": {"addr": "0x219a3", "target": "0x11cac"},
+          "raw_args": [0]
+        }
       }
     },
     {
@@ -216,7 +247,7 @@
       }
     },
     {
-      "op": "unknown",
+      "op": "native_2189a_loop",
       "native_target": "0x2189a",
       "raw_args": [
         10,
@@ -226,6 +257,37 @@
       "source": {
         "addr": "0x249c4",
         "target": "0x2189a"
+      },
+      "native_2189a_loop": {
+        "repeat": 10,
+        "step_source": "caller_arg9",
+        "work_offset": 32904,
+        "work_stride": 456,
+        "map_rows": 13,
+        "map_columns": 8,
+        "clip_width": 312,
+        "clip_height": 192,
+        "present_stride": 320,
+        "map_draw": {
+          "source": {"addr": "0x21914", "target": "0x11eee"},
+          "raw_args": ["[0x53aad]", "[0x53aa9]", 8, 13, 456, "work+0x8088"]
+        },
+        "composite": {
+          "source": {"addr": "0x21955", "target": "0x219ad"},
+          "raw_args": ["edi", 192, 0, 12, "esi", "[esp+0x18]", "[esp+0x18]"]
+        },
+        "stage": {
+          "source": {"addr": "0x2195d", "target": "0x127a9"},
+          "raw_args": []
+        },
+        "present": {
+          "source": {"addr": "0x21986", "target": "0x11eb0"},
+          "raw_args": [192, 456, 312, "work+0x8088", 320, 656644]
+        },
+        "tail": {
+          "source": {"addr": "0x219a3", "target": "0x11cac"},
+          "raw_args": [0]
+        }
       }
     },
     {
@@ -257,7 +319,7 @@
       }
     },
     {
-      "op": "unknown",
+      "op": "native_2189a_loop",
       "native_target": "0x2189a",
       "raw_args": [
         16,
@@ -267,6 +329,37 @@
       "source": {
         "addr": "0x24a10",
         "target": "0x2189a"
+      },
+      "native_2189a_loop": {
+        "repeat": 10,
+        "step_source": "caller_arg9",
+        "work_offset": 32904,
+        "work_stride": 456,
+        "map_rows": 13,
+        "map_columns": 8,
+        "clip_width": 312,
+        "clip_height": 192,
+        "present_stride": 320,
+        "map_draw": {
+          "source": {"addr": "0x21914", "target": "0x11eee"},
+          "raw_args": ["[0x53aad]", "[0x53aa9]", 8, 13, 456, "work+0x8088"]
+        },
+        "composite": {
+          "source": {"addr": "0x21955", "target": "0x219ad"},
+          "raw_args": ["edi", 192, 0, 12, "esi", "[esp+0x18]", "[esp+0x18]"]
+        },
+        "stage": {
+          "source": {"addr": "0x2195d", "target": "0x127a9"},
+          "raw_args": []
+        },
+        "present": {
+          "source": {"addr": "0x21986", "target": "0x11eb0"},
+          "raw_args": [192, 456, 312, "work+0x8088", 320, 656644]
+        },
+        "tail": {
+          "source": {"addr": "0x219a3", "target": "0x11cac"},
+          "raw_args": [0]
+        }
       }
     },
     {

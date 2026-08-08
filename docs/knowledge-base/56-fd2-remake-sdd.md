@@ -3170,3 +3170,22 @@ FDTXT source、ACTING 68..70 與所有 raw call-site；`0x24618` runtime bridge
 這是 E1 的資料消費候選，不是正式 campaign binding；`story_ch23`、
 `postbattle_ch22_persist→town_ch23`、indexed renderer、一般玩家 DOSBox E2
 與戰後城鎮／商店／整備存檔流程仍保持失敗即關閉。
+
+## 2026-08-09 raw ch22 post `0x2189a` 索引呈現原語（玩家第23戰戰後；E1）
+
+合法 IDA Pro 9.4 與 Docker Capstone 以固定雜湊的 `FD2.EXE` 閉合
+`0x24754` 戰後 handler 的三個 `0x2189a` 呼叫點（`0x24978`、`0x249c4`、
+`0x24a10`）。IDA 偽代碼與指令層共同證實十次外層迴圈、`work+0x8088`、
+stride 456、13×8 原始場景建立、312×192 呈現區域、320 呈現 stride，以及
+`0x21914`／`0x21955`／`0x2195d`／`0x21986`／`0x219a3` 的巢狀呼叫順序。
+原始 push 形狀與 caller 第九參數步進來源均保留於
+[`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
+
+重製端新增 `native_2189a_loop` 可編輯原語，將三個呼叫點與所有 raw 引數
+寫入 [`ch22_post.json`](../../remake/assets/cutscenes/handlers/ch22_post.json)，
+並以 compiler regression 驗證幾何常數、巢狀位址及錯誤 payload 失敗即關閉。
+執行器尚未具備可證實的 indexed state／buffer adapter，遇到此原語會停止並
+回報未完成；沒有把它猜成肖像、特效或一般 renderer，也沒有接到
+`postbattle_ch22_persist→town_ch23`。`0x24b14`／`0x24bde` 的 persistent
+record 高階意義、一般玩家 runtime frontier、DOSBox E2 與戰後城鎮／商店／
+整備／存檔路徑仍是強推論或未知，維持 fail-closed。
