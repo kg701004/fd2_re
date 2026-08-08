@@ -14,6 +14,10 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `0x17aa9`、`0x11d40..0x11df2`、`0x11eee`、`0x4dfcc`
 - 註記方式：保留 IDA 原始名稱、線性位址與 raw operand；以下語意均為
   附加註記並標示推論等級。
+- 本輪新增交叉驗證命令（`fd2-cap-local`、Capstone 5 Docker）：
+  `tools/disasm_le.py FD2.EXE range 0x24c1e 0x24df2` 與
+  `tools/disasm_le.py FD2.EXE range 0x11eee 0x122f0`；輸入仍綁定上述
+  MD5／SHA-256，位址基準仍為 Capstone 線性位址。
 
 已證實：`0x24c1e` 的兩段計數流程
 ----------------------------------
@@ -90,6 +94,17 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   `0x138`（312）byte rows 對 `0x53aff` staging buffer 做列旋轉。因此
   `0x24d22` 的 setter／copy branch 是同一個 raw staging contract 的兩個
   入口，仍不可把它提升成泛用畫面幀或 palette index。
+- Docker Capstone 逐指令核對 `0x11eee` 的 case 23 分支：`0x11eff` 讀
+  signed BIOS tick `[0x46c]`，`0x11f07` 與 `[0x539f8]` 比較；`0x12096`
+  只在 raw chapter `[0x53c03]==0x17`（十進位 23）進入此路徑，`0x120a7`
+  再次檢查 tick，只有不相等時才由 `0x120af→0x24d22(0)`，接著
+  `0x120b9` 把新 tick 寫回 `[0x539f8]`。因此「tick gate 完全未知」已
+  撤回；已證實的 gate 是 BIOS tick 變化，不是固定影格延遲。
+- 同一分支在 `0x120c6..0x120fe` 將 `0x53aff` staging、`0x138` raw
+  row stride 與 `0xc0` rows 傳入 `0x11eb0`。這只證明 case 23 的
+  staging present 參數形狀；`0x53aff` 的建立／擁有者、呈現目的地的完整
+  位址生命週期與入口 latch 初值仍未知，不能由 `nativeMapWork` 或 PNG
+  framebuffer 代替。
 - IDA Pro 9.4 的 `0x11cac` 函式本體也固定了 indexed 消費鏈：
   `0x11eee` 後依序呼叫 `0x122dc`、`0x127a9`、`0x1acf3`，再由
   `0x11eb0` 以 `312×192`、stride `456` 複製到 VGA；所有 caller 的
@@ -101,8 +116,9 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   成同一個 generic redraw。重製端現已提供 `RotateNativeCh23Rows`、
   `ApplyNativeCh23PaletteCycle` 兩個 raw 原語，以及保留完整 call-site／
   stage 值的 `native_ch23_loop` 候選 beats；共用 indexed 消費鏈已由 IDA
-  靜態閉合，但 handler 入口的初始 latch、`dword_53C03` 生命週期、
-  BIOS tick gate、raw state adapter 與一般玩家 E2 仍未閉合，故仍不建立
+  靜態閉合；handler 入口的初始 latch、`dword_53C03` 生命週期、
+  `0x53aff` staging 擁有者／呈現目的地、raw state adapter 與一般玩家 E2
+  仍未閉合，故仍不建立
   production binding。
 
 限制與目前判定

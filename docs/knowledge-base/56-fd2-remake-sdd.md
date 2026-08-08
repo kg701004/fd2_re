@@ -2343,8 +2343,10 @@ returning; `arg==0` instead allocates `latch*0x138` bytes, copies from
 (`0xbf-latch` down through `0`) before a final `0x138`-byte copy and
 `0x37416` free. The ch23 caller only takes the non-zero setter branch for
 stages 2..14. Direct data xrefs for `0x51a10` remain local to the helper, but
-the `dword_53C03==23` branch of `0x11eee`, reached by `0x11cac`, calls
-`0x24d22(0)` after a BIOS-tick change. This proves an indirect consumer and
+the `dword_53C03==23` branch of `0x11eee`, reached by `0x11cac`, compares
+`[0x46c]` with `[0x539f8]` at `0x120a7` and calls `0x24d22(0)` at `0x120af`
+only after a BIOS-tick change, then stores the new tick at `0x120b9`. This
+proves the exact tick gate and an indirect consumer and
 supports the bounded annotation “312-byte staging row-rotation raw latch”;
 it does not justify a generic frame, palette, or UI name. IDA also shows
 `0x11cac(1)` and `0x11cac(0)` share an indexed chain through
@@ -2358,12 +2360,16 @@ tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 `ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated
 `native_ch23_loop` candidate beats that preserve every loop call site, the
 30/12 repetition counts, register-shaped arguments, and stage values 2..14.
-The runner fails closed while the raw state/latch adapter is absent. IDA now
+The runner fails closed while the raw state/latch adapter is absent. The same
+case-23 branch passes `0x53aff`, row stride `0x138`, and `0xc0` rows to
+`0x11eb0`; the staging owner, full present destination lifetime, and entry
+latch remain unknown. IDA now
 proves the shared indexed consumer chain inside `0x11cac` (`0x11eee` →
 `0x122dc` → `0x127a9` → `0x1acf3` → `0x11eb0`), including ch23 call-sites
 `0x24c63` and `0x24cd3`; this is static consumer evidence, not a claim that
 the remake has a runnable adapter. Initial latch state, `dword_53C03` lifetime,
-tick gating, raw state mapping, and normal-player E2 still lack proof, so
+`0x53aff` staging ownership／present destination, raw state mapping, and
+normal-player E2 still lack proof, so
 `postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 

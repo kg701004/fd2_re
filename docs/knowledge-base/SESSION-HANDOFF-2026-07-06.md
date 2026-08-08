@@ -3405,3 +3405,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   blocked 及玩家第 22、23、24、29 戰的失敗即關閉狀態。
 - 這次只修正會污染記憶的完成度句子，沒有把任何未證實 renderer、handler 或戰後
   town／shop／整備／存檔語意接入正式 campaign。
+
+## 2026-08-09：ch23 tick gate 交叉驗證
+
+- Capstone Docker 逐指令核對 `0x11eee`：raw chapter `0x17`（十進位 23）在
+  `0x120a7` 比較 `[0x46c]` 與 `[0x539f8]`，只有 tick 改變才由
+  `0x120af→0x24d22(0)` 旋轉 staging，並在 `0x120b9` 更新 last tick。
+  「tick gate 完全未知」已撤回；它是 BIOS tick 變化閘門，不是固定影格率。
+- 同一分支的 `0x120c6..0x120fe` 保留 `0x53aff`、`0x138` row stride、
+  `0xc0` rows 與 `0x11eb0` present 呼叫形狀。這仍未證明 staging 的建立／擁有者、
+  完整呈現目的地或 handler 入口 latch 初值，因此 `postbattle_ch23_persist` 仍
+  fail-closed，沒有把 `nativeMapWork`／PNG framebuffer 猜成原版 staging。
+- SDD、worklist 與 `fd2_ch23_post_ida.txt` 已同步；這是 E1 反組譯證據收窄，
+  不是 production renderer 或一般玩家 E2 完成。
