@@ -3103,11 +3103,15 @@ blocked 為玩家第22、23、24、29戰；這些統計是覆蓋範圍，不是�
 授權 IDA Pro 9.4 已以固定雜湊的 `FD2.EXE` 重建一次性資料庫，閉合
 `0x244b6` 的直接呼叫序列、`0x24512→sub_233C6` 的三組 16-byte raw layout
 表、FDTXT_022 索引4/5/6、ACTING raw immediate 65/66、兩個 PAN、
-`0x245ce→0x24618` 及 `0x1f882→sync→chapter22`。完整位址、輸入雜湊、
-工具與原始表見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
+`0x245ce→0x24618` 及 `0x1f882→sync→chapter22`。同一工具鏈再追出
+`sub_1088D→sub_10B4E→sub_10C50` 的 map21 loader：固定資源 header 是
+16 個持久名冊槽、70 筆控制列，map21 raw group0/1/2/3 的事件追加後候選
+frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊、工具與
+原始表見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
 
-這只提升原始靜態證據，不提升 runtime 或畫面語意：map21 的 70 筆 authored
-資料不能單獨證明戰後 materialized slot count，亦不能證明 acting 65/66 的
-同一資源消費端。`postbattle_ch22_persist` 目前沒有正式 binding，缺少上述
-證據時必須保持失敗即關閉；不得由 layout 表或 generated binding 猜接
-`town_ch23`。本節不宣稱 renderer parity 或一般玩家 E2。
+這提升了 runtime 拓撲證據，但不等於畫面或 handler 語意已閉合：各 frontier
+的 record 內容、acting 65/66 的同一資源消費端，以及 `0x24618` 使用的
+cursor 全域與 indexed 畫面狀態仍缺一般玩家 trace。`postbattle_ch22_persist`
+目前沒有正式 binding，故不得由 layout 表或 generated binding 猜接
+`town_ch23`；缺證據時維持失敗即關閉。本節不宣稱 renderer parity 或一般玩家
+E2。

@@ -10,7 +10,9 @@
   映像中，以 IDA flat linear address 執行；資料庫是由唯讀原版複本在
   `/tmp/fd2-ida-ch21*` 一次性重建，沒有修改原始檔或儲存庫內資料庫。
 - 交叉驗證：IDA `tools/ida_probe_functions.py`、
-  `tools/ida_dump_bytes.py`；匯出只保留位址、指令與原始位元組。
+  `tools/ida_dump_bytes.py`、`tools/ida_probe_data_xrefs.py`；loader 另以
+  `sub_1088D`／`sub_10B4E`／`sub_10C50` 的同一 IDA 資料庫重建。匯出只保留
+  位址、指令、原始位元組與資料交叉參照。
 
 ## 已證實的直接指令
 
@@ -45,15 +47,48 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
 `0x48, 0x16, 0x19, 0x02, 0x10, 0x12`，但在沒有同一 battle runtime
 槽位與消費端追蹤前，不把它們升格為角色、部署格或玩家可見鏡頭語意。
 
+## map21 loader 指令與資源（loader 欄位已證實；frontier 為強推論）
+
+- `sub_1088D` 範圍 `0x1088d..0x10b4e`：`0x108c9..0x1091d` 依
+  `3*map+2`、`3*map+1`、`3*map` 讀取 FDFIELD positions/control/field；
+  `0x10987..0x10995` 將 control header byte+1/+2 寫入
+  `dword_53BE7`／`dword_53BE3`，`0x1099a` 將下一個 runtime index
+  `dword_53BEB` 設為持久名冊數，後續 `0x10b3e` 呼叫 `sub_10B4E(0)`。
+- `sub_10B4E` 範圍 `0x10b4e..0x10c50`：`0x10bcc..0x10be4` 逐筆以
+  26-byte row stride 取 control row，`0x10be4` 讀 raw byte+0x15，符合
+  請求 group 才在 `0x10bee` 呼叫 `sub_10C50(row, group)`。
+- `sub_10C50` 範圍 `0x10c50..0x11019`：`0x10c69..0x10c81` 以
+  `dword_53BEB*0x50` 取得目的 runtime record，`0x10d6c..0x10d79` 以
+  row index 取 raw group data，`0x11003..0x1100b` 完成 native constructor
+  後遞增 `dword_53BEB`。這證實追加順序與 runtime index 來源。
+- Docker 讀取的 map21 資源雜湊：`FDFIELD_063.bin` 9004 bytes，MD5
+  `5b6823738ad3ad6226ed65481020818b`、SHA-256
+  `9cc8e97a4e0e963d48529cb85bb8a43ab305914eba0110a1d970cc773f22ae82`；
+  `FDFIELD_064.bin` 1951 bytes，MD5 `653e458025a7994d87a60c22ca5c7191`、
+  SHA-256 `2338bf283917ae5f7e3155c1d57a6895d41862438b64ce46b720662708ab9241`；
+  `FDFIELD_065.bin` 518 bytes，MD5 `f350c11805833ecb38d3ba9b4e59f9c4`、
+  SHA-256 `34a931a2870f6252593c41705509067718c773673882468e896922f4401ea57a`。
+  控制 header 為 `15 10 46`，positions u16 header 為 86。
+- 本輪對照檔亦固定為 `map21_units.json` 59147 bytes、MD5
+  `cc15d98026d88d5b25fc8fc2bea65a22`、SHA-256
+  `5f663fcfcc51a8f6fcce7fed879ca6920a51bbc9d9befc502a97684cc2dfd722`，以及
+  `ch22.json` 16861 bytes、MD5 `c422ee15e07deb344c900e86800d9606`、
+  SHA-256 `acf986deb0863bc167058c46ed7fdaf9a69472a65ed48e0cfc824d090cca03d6`。
+- 因此 raw group0=50、group1=6、group2=1、group3=6、group255=7，配合
+  `ch22.json` 回合3／5／7 的追加，候選 materialized frontier 為
+  **66→72→73→79**。這是**強推論**，不是一般玩家 runtime trace；
+  positions 的 86 是 70 筆控制列位置加16部署格，不能解讀成86個 runtime unit。
+
 ## 現況判定
 
 - 推論等級：上述位址、指令、表位元組與文字索引為**已證實**。
 - `remake/assets/cutscenes/handlers/ch21_post.json` 保留上述 raw beats；目前
   沒有正式 binding，故 `postbattle_ch22_persist` 仍**失敗即關閉**。
-- map21 authored JSON 有 70 筆資料，但這不能單獨證明戰後 handler 的
-  materialized runtime slot count；`0x233C6` 寫入的特殊 slot 也不能由
-  map JSON 直接推回。需要原版一般玩家戰後 runtime trace、完整 spawn
-  frontier、acting 65/66 的同一資源消費端，以及 indexed transition 的
+- map21 authored JSON 的 70 筆資料現在已與原生 loader 的 16／70 header、
+  group 分布及事件追加順序對齊，故 **66／72／73／79** 是可追溯的候選
+  materialized frontiers（強推論），不再把槽位數寫成完全未知。仍需要
+  原版一般玩家戰後 runtime trace 證實各 frontier 的 record 內容、acting
+  65/66 的同一資源消費端，以及 `0x24618` 使用的 cursor 全域與 indexed
   畫面狀態，才可建立 production binding。
 - 本檔不是 renderer parity 或一般玩家 E2 證據；任何只依三組表、map 項目數
   或舊 generated binding 建立的 `town_ch23` 接線都應視為未證實。

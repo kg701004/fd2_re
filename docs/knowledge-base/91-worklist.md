@@ -54,10 +54,14 @@
 - [~] **玩家第22戰／raw ch21 post 靜態證據**：授權 IDA Pro 9.4 已固定
   `0x244b6`、`0x24512→0x233c6`、文字索引4/5/6、ACTING raw 65/66、
   PAN raw `(16,16)`／`(16,14)`、`0x245ce→0x24618` 與尾端
-  `0x1f882→sync→chapter22`；三組 16-byte layout 表已匯出。證據見
-  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。目前仍缺
-  戰後 materialized slot frontier、acting 同一資源消費端與 indexed renderer
-  狀態，因此不建立 production binding、不接 `town_ch23`，維持失敗即關閉。
+  `0x1f882→sync→chapter22`；三組 16-byte layout 表及原生 loader
+  `sub_1088d→sub_10b4e→sub_10c50` 已匯出。map21 的 raw header／group
+  分布與事件追加順序給出候選 runtime frontier **66→72→73→79**（強推論），
+  不再把槽位數寫成完全未知。證據見
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。仍缺各 frontier
+  的一般玩家 runtime record、acting 65/66 的同一資源消費端與
+  `0x24618` cursor/indexed 畫面狀態，因此不建立 production binding、不接
+  `town_ch23`，維持失敗即關閉。
 - [ ] **介面與完整戰役驗收**：UI-01至UI-12目前全部仍為partial；城鎮與商店
   只有部分ch02狀態達E2。仍須同狀態DOSBox／重製逐幀比較，以及無debug的30章
   一般玩家可破關鏈。不要以asset／codec、文件行數或通過的重製端單元測試代替。

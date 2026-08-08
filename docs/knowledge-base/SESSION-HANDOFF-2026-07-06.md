@@ -3314,3 +3314,20 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   為玩家第22、23、24、29戰；未修改一般玩家 DOSBox E2、完整30章無除錯路徑及
   UI／AI缺口仍不得以本批 E1 測試宣稱完成。所有本批一次性容器使用 `--rm`，
   `/tmp/fd2cap` 不存在；交接前仍須再檢查 FD2 容器狀態。
+
+## 2026-08-09：raw ch21 loader frontier 勘誤（玩家第22戰；仍未接入）
+
+- 前段曾把「map21 authored 70 筆不足以知道戰後 runtime slots」寫成完全
+  未知；這個說法已由新的 IDA Pro 9.4 loader 證據收窄，不再作為現況斷言。
+  `sub_1088D` 讀 map21 `FDFIELD_064` header `15 10 46`，明確得到 16 個
+  持久名冊槽與 70 筆控制列；`sub_10B4E(0)` 依 raw group byte+0x15 呼叫
+  `sub_10C50` 追加 runtime record。positions `FDFIELD_065` 的 header 86
+  是 70 筆列位置加 16 部署格，不是 86 個 runtime slots。
+- map21 raw group 分布 group0=50、group1=6、group2=1、group3=6、group255=7，
+  對照 `ch22.json` 的 group0 初始及回合3／5／7 追加後，候選 native frontier
+  為 **66→72→73→79**。這是**強推論**，不是已驗證一般玩家 runtime trace；
+  證據與固定版雜湊見 [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
+- `postbattle_ch22_persist` 仍保持失敗即關閉：尚缺各 frontier 的同狀態 raw
+  record、acting 65/66 的資源消費端，以及 `0x24618` 使用的 cursor 全域與
+  indexed 畫面狀態。不得只因 frontier 已可估算就建立 production binding 或
+  接 `town_ch23`；城鎮／整備邊界仍保留在 campaign graph。
