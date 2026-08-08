@@ -2336,7 +2336,21 @@ Portrait text correction (official IDA, 2026-07-26): the epilogue selector at `0
 
 Persistent identity lookup is separately closed at `0x24bde`: Docker Capstone shows a caller-supplied count loop over the persistent `[0x53bf7]` array, stride `0x50`, comparing only the unsigned byte at record `+0x08`, with native boolean success/failure. `battle.FindNativePersistentIdentity` preserves the first raw index, explicit count/capacity validation, and read-only behavior. This is an identity-table primitive only; it does not rename `+8` as portrait, Fig, NPC, or a general character alias.
 
-The adjacent `0x24d22(arg)` boundary remains evidence-only. Capstone shows `arg!=0` writing only its low byte to global `0x51a10` and returning; `arg==0` instead allocates `latch*0x138` bytes, copies from `0x53aff + (0xc0-latch)*0x138`, then copies rows in descending order (`0xbf-latch` down through `0`) before a final `0x138`-byte copy and `0x37416` free. The setter and the renderer/copy branch are therefore separate contracts. No name is assigned to `0x51a10`, and the copy loop is not lowered as a generic fade or presentation effect.
+The adjacent `0x24d22(arg)` boundary remains evidence-only. IDA Pro 9.4 and
+Capstone show `arg!=0` writing only its low byte to raw global `0x51a10` and
+returning; `arg==0` instead allocates `latch*0x138` bytes, copies from
+`0x53aff + (0xc0-latch)*0x138`, then copies rows in descending order
+(`0xbf-latch` down through `0`) before a final `0x138`-byte copy and
+`0x37416` free. The ch23 caller only takes the non-zero setter branch for
+stages 2..14. The setter and copy branch are separate contracts: IDA data
+xrefs expose no external direct consumer for `0x51a10`, so no name is assigned
+to that raw global and the copy loop is not lowered as a generic fade or
+presentation effect. The same ch23 audit now fixes `0x17aa9(1)` as a DOS BIOS
+tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
+(`ESI=0..11`); their 12-step redraw/latch ordering still lacks a single
+indexed presentation consumer, so `postbattle_ch23_persist` remains
+fail-closed. Detailed evidence is in
+[`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 
 The adjacent `0x24e80` handler contains one independent raw mutation loop: for runtime indices `0x10 <= i < caller_count`, records with byte `+0x07 == 0x1f` receive `+0=0x10` and `+1=0x06`. `battle.RewriteNativeMarker1F` preserves the explicit start/count, matching-marker-only writes, and bounds validation. The bytes remain unnamed and are not treated as roster identity or renderer state.
 

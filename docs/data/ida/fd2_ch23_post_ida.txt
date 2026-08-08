@@ -1,0 +1,81 @@
+FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
+====================================================
+
+輸入基準
+--------
+
+- 檔名：FD2.EXE
+- 大小：357074 bytes
+- MD5：b97caf2239a27a896069d03549d96e1e
+- SHA-256：222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+- 第一順位工具：IDA Pro 9.4，資料庫線性位址
+- 第二順位驗證：Capstone 5 Docker，`tools/disasm_le.py` 線性位址
+- 本批 IDA 函式：`0x24c1e..0x24d22`、`0x24d22..0x24df2`、
+  `0x17aa9`、`0x11d40..0x11df2`
+- 註記方式：保留 IDA 原始名稱、線性位址與 raw operand；以下語意均為
+  附加註記並標示推論等級。
+
+已證實：`0x24c1e` 的兩段計數流程
+----------------------------------
+
+- `0x24c4c` 呼叫 `0x15f84`，text index 2；`0x24cad` 再呼叫同一對白
+  播放器，text index 3。兩者的文字來源是 `FDTXT_024`，但不代表
+  `postbattle_ch23_persist` 已可執行。
+- 第一段在 `0x24c61` 呼叫 `0x11cac(1)`，接著在 `0x24c6b` 呼叫
+  `0x17aa9(1)`；`EBX` 從 0 累加至 29，共 30 次。`EDI` 從 2 開始，
+  每段結束時在 `0x24c81` 呼叫 `0x24d22(EDI)`，直到 stage 9。
+- 第二段在 `0x24cc1..0x24ce7` 迴圈 12 次：先以 raw PUSH 順序
+  `[ESI,255,0]` 呼叫 `0x11d40`，再 `0x11cac(0)`、`0x17aa9(1)`；
+  `ESI` 每次加 1，因此其正式參數是 `(start=0,end=255,delta=0..11)`。
+  `EDI` 於每段結束在 `0x24cf2` 呼叫 `0x24d22(EDI)`，stage 為 10..14。
+- `0x24cff` 透過 `0x375c0` 將 `0xa0000` 起點的 `0xfa00` bytes 清零，
+  接著 `0x24d13` 呼叫 `0x11506`，`0x24d18` 遞增章節。這個尾端順序是
+  已證實的 sync／chapter 行為，不等於已證實的戰間整備消費端。
+
+已證實：`0x17aa9(1)` 是 BIOS tick 等待
+----------------------------------------
+
+- `0x17aa9` 讀取 `[0x46c]`，以 `dword_53A2C` 保存前次 tick；差值小於
+  immediate `1` 時持續輪詢，並處理 `0x10000` wrap。其時間單位是 DOS
+  BIOS tick（約 54.9 ms），不是固定 60 Hz frame。
+- 重製編譯器已有 `0x17aa9` 正整數 immediate → editable `delay` 的通用
+  lowering（每 tick 以 3 個重製 frame 表示）；這只固定等待原語，不代表
+  ch23 的完整 renderer 時序已閉合。
+
+已證實：`0x11d40(0,255,ESI)` 是 12 次完整 DAC 範圍更新
+--------------------------------------------------------
+
+- `0x11d40(start,end,delta)` 逐一讀取 `dword_53A65 + 3*index` 的 RGB
+  三元組，減去 `delta`、負值夾到 0，再寫入 VGA DAC ports `0x3c8/0x3c9`。
+- ch23 的直接指令在 `0x24cc1` 先 push `ESI`、`0xff`、`0`；因此 formal
+  參數是 `(0,255,ESI)`，而不是 raw PUSH 順序看似的 `(ESI,255,0)`。
+  `ESI=0..11` 是由同一個 12 次迴圈直接遞增所得（已證實）。
+- 每次 palette 更新後仍有 `0x11cac(0)`、`0x17aa9(1)` 與
+  `0x24d22(EDI)` 的相鄰時序；重製端目前沒有把這 12 組 register-bound
+  palette、重繪與 latch setter 以同一可編輯呈現工作消費，因此不建立
+  `postbattle_ch23_persist` binding。
+
+已證實但不命名：`0x24d22` 的兩個分支
+--------------------------------------
+
+- `0x24d22..0x24df2` 在 `arg != 0` 時只將低位元組寫入 `byte_51A10` 後返回；
+  ch23 只傳入非零 stage 2..14，因此本 handler 不會走 `arg == 0` 分支。
+- `arg == 0` 另配置 `latch*0x138` bytes，從
+  `0x53aff + (0xc0-latch)*0x138` 複製，再由 `0xbf-latch` 向 0 倒序複製
+  0x138-byte rows，最後釋放暫存區。這是獨立的 copy branch，不能泛稱
+  淡入淡出或 indexed renderer。
+- IDA 對 `0x51a10` 的資料交叉參照只見 `0x24d22` 函式內的寫入／讀取，
+  沒有可直接命名的外部消費端；因此保留 raw global，不把它命名為
+  latch、frame、palette 或畫面狀態。
+
+限制與目前判定
+--------------
+
+- 本檔是 E1 靜態證據；尚無未修改一般玩家 DOSBox 戰後→整備／存檔的 E2
+  路徑，也未證明 `0x11cac` 如何消費 `0x51a10` 所代表的狀態。
+- `postbattle_ch23_persist → preparation_ch24 → story_ch24` 的 campaign
+  邊界保留；沒有以 generic town、靜態 palette 或猜測性 `indexed copy`
+  取代原版流程。
+- 目前仍 fail-closed。下一步必須先建立帶原始位址與 12 次 loop 順序的
+  可編輯呈現描述，並以 indexed frame／重繪消費端及一般玩家路徑驗證後，
+  才能評估 production binding。
