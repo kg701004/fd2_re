@@ -2362,13 +2362,19 @@ tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
 30/12 repetition counts, register-shaped arguments, and stage values 2..14.
 The runner fails closed while the raw state/latch adapter is absent. The same
 case-23 branch passes `0x53aff`, row stride `0x138`, and `0xc0` rows to
-`0x11eb0`; the staging owner, full present destination lifetime, and entry
-latch remain unknown. IDA now
+`0x11eb0`。重新核對 `0x10652..0x1088d` 後，raw 載入器的擁有者邊界已收窄：
+當 `[0x53c03]==0x17` 時，`0x107dd` 精確配置 `0xea00` bytes 並寫入
+`[0x53aff]`；`0x107ef..0x10804` 保留資源值 `0x1a4d`、raw 參數／索引
+`0x2a` 與傳給 `0x111ba` 的既有 `[0x53b03]` handle；`0x10809..0x10820`
+保留 `0x4e63d` 的原始堆疊形狀，接著 `0x10823..0x10831` 釋放並清零
+`[0x53b03]`；`0x1083b` 呼叫 `0x24d22(0)`。這證明 raw ch23 staging
+配置與清理邊界，不證明資源的語意類型。完整 present 目的地生命週期與
+入口 latch 初值仍未知。IDA 現在
 proves the shared indexed consumer chain inside `0x11cac` (`0x11eee` →
 `0x122dc` → `0x127a9` → `0x1acf3` → `0x11eb0`), including ch23 call-sites
 `0x24c63` and `0x24cd3`; this is static consumer evidence, not a claim that
 the remake has a runnable adapter. Initial latch state, `dword_53C03` lifetime,
-`0x53aff` staging ownership／present destination, raw state mapping, and
+full `0x53aff` present-destination mapping, raw state mapping, and
 normal-player E2 still lack proof, so
 `postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).

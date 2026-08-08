@@ -3418,3 +3418,22 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   fail-closed，沒有把 `nativeMapWork`／PNG framebuffer 猜成原版 staging。
 - SDD、worklist 與 `fd2_ch23_post_ida.txt` 已同步；這是 E1 反組譯證據收窄，
   不是 production renderer 或一般玩家 E2 完成。
+
+## 2026-08-09：ch23 raw staging loader owner 交叉驗證
+
+- Docker Capstone 以同一固定版 `FD2.EXE` 重讀 `0x10652..0x1088d`。在
+  `0x107d4`，只有 raw chapter `[0x53c03]==0x17` 進入分支；
+  `0x107dd→0x107ea` 呼叫 `0x36d16(0xea00)` 並把指標寫入 `[0x53aff]`。
+  `0xea00` 恰為 `0x138×0xc0`，所以 raw ch23 staging 的配置大小與 owner
+  pointer 已有直接證據。
+- `0x107ef..0x10804` 保留 `push 0x2a; push [0x53b03]; push 0x1a4d;
+  call 0x111ba` 的原始參數形狀；`0x10809..0x10820` 保留
+  `push -1; push 0x138; push [0x53aff]; push 0; push 0; push eax;
+  call 0x4e63d`；`0x10823..0x10831` 呼叫 `0x37416` 後清零 `[0x53b03]`；
+  `0x1083b→0x10842` 最後呼叫 `0x24d22(0)`。這收窄 loader 的 raw
+  decode／handle cleanup 邊界，但不把 `0x1a4d`、`0x2a` 或 `0x4e63d` 命名成
+  圖片、解壓縮或 palette 語意。
+- 既有「staging 建立／擁有者未知」已修正為「raw loader owner 已知；完整
+  present 目的地生命週期、入口 latch 初值與 raw state adapter 仍未知」。
+  沒有因此新增 renderer、campaign 或 `postbattle_ch23_persist` binding；
+  城鎮／商店／整備／存檔邊界與一般玩家 E2 仍保持失敗即關閉。
