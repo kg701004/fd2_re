@@ -896,6 +896,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-08-09 ch24 post raw handler recheck：合法 IDA Pro 9.4 與 Docker Capstone 共同固定 table index24 的 raw entry `0x14df2→0x24df2`，以及獨立相鄰 index25 `0x14e80→0x24e80`。`sub_24DF2` 順序是 FDTXT_025 index6、PAN raw `(4,16)`、raw `0x10b4e(2)`、ACTING75、FDTXT_025 index7、`0x112a5(0x1a)` append、`0x11506`，再以 raw `0x1d` 跳入共享 `0x237c8` 尾段；共享尾段另有 index3、`0x11506`、`0x112a5(0x0e)`。`0x112a5` 的 append 形狀已證實，但 `0x1a`、`0x1d`、`0x0e` 與 spawn immediate 2 的高階語意未知。table index不直接等於玩家戰次；map24／文字／ACTING75 只支持玩家第25戰候選，先前 `postbattle_ch24→town_ch25` 同號接線已撤回，`postbattle_ch24_persist` 仍 fail-closed。完整固定版雜湊、IDA 函式範圍與 raw table bytes 見 [`fd2_ch24_post_ida.txt`](../data/ida/fd2_ch24_post_ida.txt)。
 - 2026-08-09 ch29 terminal body recheck：合法 IDA Pro 9.4／Docker Capstone 完整固定 `sub_2BCE5(0x2bce5..0x2c39b)` 的兩個 caller（`0x2545d`、`0x25970`）與 `sub_2C405(0x2c405..0x2c9ec)` 的獨立邊界。前綴 raw 順序為 FDOTHER `#0x36` frame0/9、`0x11df2` ramp、三輪重複 ramp、frame `0x0c..0x6c`、40／200 次 indexed composite；`0x2c172` 後呼叫 `0x2c405`，後者先 `0x1088d(0x1e)`、500次 raw staging，再進 `0x2c548` montage。`0x10620` 只比較 `word[0x41a]`／`word[0x41c]`，`0x4e031` 只複製前者，沒有已證實按鍵映射；`0x25975` self-loop 與 `0x28a64` 清理尾端均不是 campaign 返回。完整 fixed hash／raw body 見 [`fd2_ch29_terminal_body_ida.txt`](../data/ida/fd2_ch29_terminal_body_ida.txt)。indexed owner、一般玩家 E2、輸入事件與終局 campaign handoff 仍 fail-closed。
 - 2026-08-09 ch28 post／玩家第29戰 candidate recheck：raw table index28 bytes `8c 54 01 00`→線性 `0x2548c`，是獨立於 index29 `0x25757` 的 `sub_2548C`。IDA／Capstone 固定 FDTXT_029 string10..15、raw `0x35bba(20)`、`0x10b4e(9)`、PAN `(9,8)`、`0x12cea(10,15)`、`0x22253` 五個 raw push、`0x24b4d` 三段過場、`0x35e5a` 三次、兩段 palette loop、`0x11506` 與 `inc [0x53c03]` 返回；count-aligned map 將文字保留在 ch29 scene2..4。這與現行 battle_ch29/map28 支持玩家第29戰 post 候選，但未知 indexed renderer／E2 仍未閉合，`postbattle_ch29_persist→preparation_ch30` 不接線。完整雜湊與 raw body 見 [`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
+- 2026-08-09 ch29 `0x35bba(20)` raw boundary：IDA／Capstone 固定它從
+  runtime index20 起逐筆清除 0x50-byte record 的 `+0x40`，再呼叫有七個
+  其他 caller 的共用 `0x1db65`。`0x1db65` 讀取 raw `+0/+1/+5/+0x40` 並進入
+  共用 indexed 呈現／更新鏈；這只刪除「0x35bba 完全未知」的斷言，不命名
+  `+0x40` 成 HP／狀態，不把 `0x1db65` 接成 ch29 renderer 或 campaign owner。
+  indexed frame、一般玩家 E2、town／shop／整備／save handoff 及
+  `postbattle_ch29_persist` 仍保持失敗即關閉。完整 raw 位址與雜湊見
+  [`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
 - 2026-07-27 native item-row producer closure：逐 byte 比對 EXE 證實
   `0x4e56c` 的 linear `0x602ad` 對應 file `0x540ad`，比既有 normalized
   `item.json` 的 `0x540ac` 起點向後一 byte；stride 同為 23，故 raw row

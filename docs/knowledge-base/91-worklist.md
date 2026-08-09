@@ -95,6 +95,13 @@
   `0x2189a` caller 與兩個 ch22 raw predicate 已有可編輯原語／條件，不代表
   renderer 或戰役節點已解鎖。
   這些是覆蓋統計，不是原版完成百分比。
+- [x] **ch29 candidate `0x35bba(20)` raw 邊界**：IDA／Capstone 已固定
+  `0x35bba` 只從 runtime index20 起清除每筆 0x50-byte record 的
+  `+0x40`，再呼叫多 caller 共用的 `0x1db65`。後者讀取 raw `+0/+1/+5/+0x40`
+  並進入共用 indexed 呈現／更新消費鏈；欄位與高階 renderer 語意維持未知，
+  不命名成 HP／狀態，也不接 `postbattle_ch29_persist`。這只刪除「0x35bba
+  完全未知」的過時斷言，未增加戰役覆蓋率。證據見
+  [`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
 - [ ] **下一個戰後切片**：玩家第22、23、24、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。
 - [ ] **E2 與完整戰役**：取得未修改一般玩家路徑的 DOSBox 同狀態逐幀證據，

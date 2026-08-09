@@ -3352,3 +3352,12 @@ index28 與最後的 chapter-global increment 共同支持「玩家第29戰 post
 擁有者尚未閉合，也沒有未修改一般玩家的 E2，因此不能把現有
 `postbattle_ch29_persist` 接到 `preparation_ch30`。campaign、城鎮／商店／整備／
 存檔仍採 fail-closed；這一節不宣稱正式 binding。
+
+補充 raw 邊界：`0x35bba(20)` 的完整 body 已固定為從 runtime index20 起，
+逐筆清除 0x50-byte record 的 `+0x40`，再呼叫有七個其他 caller 的共用
+`0x1db65`。`0x1db65` 讀取 raw `+0/+1/+5/+0x40` 並進入共用 indexed
+呈現／更新鏈；這只刪除「`0x35bba` 完全未知」的過時斷言，不命名 `+0x40`
+成 HP／狀態，也不把 `0x1db65` 接成 ch29 renderer 或 campaign owner。
+indexed frame、一般玩家 E2 與 battle→postbattle→town／shop／整備／save
+仍失敗即關閉。完整 raw 位址與雜湊見
+[`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
