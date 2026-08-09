@@ -3646,3 +3646,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   不替 caller 命名或猜測 tick 時序。Docker `go test ./internal/fdother -run NativeCh23`
   與 `go test ./internal/...` 均通過；`postbattle_ch23_persist`、indexed adapter
   與一般玩家 E2 維持失敗即關閉。
+
+## 2026-08-09：ch21 多 frontier layout 閘門勘誤
+
+- `ch21_post_candidate.json` 的候選 runtime frontier 仍保留原始證據推導的
+  **66→72→73→79**；其 layout 也保留 special slot72，沒有把其中一項猜測
+  改寫成事實或刪除。
+- 編譯器原先只用最大 slot count（79）檢查 `layout_units`，因此會錯誤產生
+  看似可執行的候選；現改為同時追蹤最小 frontier。slot72 在最小 66-slot
+  入口不可用時，候選以 layout issue 失敗即關閉，不會產生 `runtime_context`。
+  分支指定的 `required_slot_count`、`loadch` 與已證實的 `spawn` 會同步更新
+  最小與最大 frontier，既有 ch02/ch06/ch07/ch16 等 branch regression 均通過。
+- 新回歸名稱為
+  `TestCompileChapter21PostCandidateFailsClosedBelowMinimumRuntimeFrontier`；
+  Docker 完整 `go test ./internal/campaign -count=1` 通過。這是編譯期拓撲
+  安全閘門，不代表 slot72 已找到原版 materialize 時機；`postbattle_ch22_persist`
+  與 `town_ch23` 仍保持失敗即關閉，indexed runtime／一般玩家 E2 仍待。

@@ -57,10 +57,12 @@
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
 - [x] **ch21 post layout／演出候選（E1）**：IDA 已閉合 `0x233c6` 的 16 格
   layout、special slot72、raw camera `(16,18)` 與 `0x244b6` 的參數順序；
-  Docker exporter 已把 acting 65／66 轉成可編輯 frame 表，候選 binding 與
-  compiler regression 也確認 slot／frame／`native_relative_cursor` provenance。
-  這只關閉資料消費候選，不解除正式戰役節點；一般玩家 frontier record、
-  indexed 畫面與 E2 仍待補足。詳見
+  Docker exporter 已把 acting 65／66 轉成可編輯 frame 表，並保留
+  `native_relative_cursor` provenance。由於候選 runtime frontier 是
+  **66→72→73→79**，靜態 layout 同時引用 slot72 時，編譯器現在會以最小
+  66-slot 閘門失敗即關閉，不產生可執行 `runtime_context`；這是拓撲不一致的
+  明確診斷，不是把 slot72 語意升格或擅自刪除。這只關閉資料消費候選，不解除
+  正式戰役節點；各 frontier 的 record、indexed 畫面與 E2 仍待補足。詳見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)、
   [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)。
 - [x] **玩家第23戰／raw ch22 pre 可編輯候選（E1）**：IDA／Capstone 已固定
@@ -162,7 +164,8 @@
   分布與事件追加順序給出候選 runtime frontier **66→72→73→79**（強推論），
   不再把槽位數寫成完全未知。證據見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。layout、special
-  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選與 compiler regression；
+  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選；編譯器 regression 會對
+  最小 66-slot frontier 拒絕 slot72 layout，避免把候選誤當可執行 binding；
   `0x24618` 的九段 LUT 9→1、5ms／段、500ms 尾端、0..62／4ms 調色盤序列與
   固定目的地 `0xA0504` 已由 IDA／Capstone 閉合；仍缺各 frontier 的一般玩家
   runtime record、indexed 畫面狀態與正式 `postbattle_ch22_persist` binding。
@@ -287,7 +290,7 @@
 - [x] **UI-VERTICAL-CH02-TOWN-HOTEL-RAW-RETURN**：新增 `hotel` campaign node、`Game.applyHotelServiceSelection`／`Game.leaveHotel` 與 `TestCampaignTownHotelRawRouteReturnTrace`，驗證 `town_ch02→hotel_ch02→town_ch02`，selector 0/1/2/3 保留 raw resource13 與 `0x2ffa5/0x30012/0x301f4/0x19953→0x197e5` order；未命名服務、不做 party/gold mutation，未知 selector fail-closed。保存 [`town-hotel-raw-return-ch02.json`](../data/ui-traces/town-hotel-raw-return-ch02.json)。
 - [x] **POSTBATTLE-UNBOUND-FAIL-CLOSED**：`Game.enterNode` 對沒有 active handler 的 `postbattle_*` cutscene 拒絕空 beats auto-advance，新增 `TestUnboundPostbattleCutsceneFailsClosed`；流程停在原 node、保留 `loadErr/msg`，避免未完成 persistence/reward handler 被誤當成直接回 town。
 - [x] **POSTBATTLE-SAVE-FAIL-CLOSED**：`saveGameToSlot` 對所有 `postbattle_*` 節點拒絕 F5，新增 `TestSaveRejectsUnboundPostbattleBoundary`；未完成 persistence handler 不會產生假 save。
-- [x] **POSTBATTLE-BINDING-GATE-AUDIT**：新增唯讀 `tools/audit_postbattle_binding_gates.py`，逐一依 handler source address 檢查 generated binding 的 `loadch/pan/dialog/act/layout` 覆蓋；目前 18 節點仍 blocked，ch09/ch10/ch12/ch18 已通過 compiler regression 並提升為 active handler，ch09 resource37 由 Docker exporter 解碼，其餘 skeleton 禁止自動啟用。
+- [x] **POSTBATTLE-BINDING-GATE-AUDIT**：新增唯讀 `tools/audit_postbattle_binding_gates.py`，逐一依 handler source address 檢查 generated binding 的 `loadch/pan/dialog/act/layout` 覆蓋；**本項原始稽核快照曾列 18 個 blocked，現況以文件頂端 19 active／5 blocked 為準**。ch09/ch10/ch12/ch18 已通過 compiler regression 並提升為 active handler，ch09 resource37 由 Docker exporter 解碼，其餘 skeleton 禁止自動啟用。
 
 ## 第 1 輪 ✅
 - [x] 素材盤點(`FD2.EXE` + 12 `.DAT` + 音效驅動)

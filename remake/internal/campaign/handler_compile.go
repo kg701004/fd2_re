@@ -150,16 +150,20 @@ type HandlerCompileIssue struct {
 // this compiler owns no FD2 chapter-specific constants.
 func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Beat, []HandlerCompileIssue) {
 	activeSlotCount := 0
+	minimumSlotCount := 0
 	if bindings.RuntimeContext != nil {
 		activeSlotCount = bindings.RuntimeContext.MaximumSlotCount()
+		minimumSlotCount = bindings.RuntimeContext.MinimumSlotCount()
 	}
-	return compileHandlerScript(script, bindings, activeSlotCount)
+	return compileHandlerScript(script, bindings, activeSlotCount, minimumSlotCount)
 }
 
 // compileHandlerScript carries the proven pre-branch slot frontier into each
 // arm.  Branches still may not change the outer compiler context: after a
-// merge, callers may rely only on slots known before the branch.
-func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activeSlotCount int) ([]Beat, []HandlerCompileIssue) {
+// merge, callers may rely only on slots known before the branch.  The minimum
+// frontier is tracked separately from the maximum so a static operation cannot
+// accidentally require a slot that exists only in one optional runtime shape.
+func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activeSlotCount, minimumSlotCount int) ([]Beat, []HandlerCompileIssue) {
 	if script == nil {
 		return nil, []HandlerCompileIssue{{Reason: "nil handler script"}}
 	}
@@ -180,6 +184,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			}
 			condition := &BeatCondition{Op: input.Condition.Op}
 			thenSlotCount := activeSlotCount
+			thenMinimumSlotCount := minimumSlotCount
 			switch input.Condition.Op {
 			case "any_unit_inactive":
 				if len(input.Condition.UnitSlots) == 0 {
@@ -335,6 +340,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				condition.EventStateValue = &value
 				condition.RequiredSlotCount = &required
 				thenSlotCount = required
+				thenMinimumSlotCount = required
 			default:
 				issue(i, input, "if requires a proven condition")
 				continue
@@ -351,8 +357,8 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				issue(i, input, "if arms cannot use active-slot operations before branch compiler context is modeled")
 				continue
 			}
-			thenBeats, thenIssues := compileHandlerScript(&HandlerScript{Beats: input.Then}, bindings, thenSlotCount)
-			elseBeats, elseIssues := compileHandlerScript(&HandlerScript{Beats: input.Else}, bindings, activeSlotCount)
+			thenBeats, thenIssues := compileHandlerScript(&HandlerScript{Beats: input.Then}, bindings, thenSlotCount, thenMinimumSlotCount)
+			elseBeats, elseIssues := compileHandlerScript(&HandlerScript{Beats: input.Else}, bindings, activeSlotCount, minimumSlotCount)
 			if len(thenIssues) > 0 || len(elseIssues) > 0 {
 				for _, branchIssue := range thenIssues {
 					branchIssue.Reason = "if then: " + branchIssue.Reason
@@ -389,6 +395,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat.LoadCH = &state
 			beats = append(beats, beat)
 			activeSlotCount = state.SlotCount
+			minimumSlotCount = state.SlotCount
 		case "delay":
 			if input.Ms == nil {
 				issue(i, input, "delay lacks an immediate millisecond value")
@@ -526,6 +533,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 					continue
 				}
 				activeSlotCount += size
+				minimumSlotCount += size
 			}
 			beat := runtime(input, "spawn")
 			beat.Group = *input.Group
@@ -1081,16 +1089,16 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				continue
 			}
 			seen := make(map[int]bool, len(layout.Units))
-			valid := activeSlotCount > 0
+			valid := activeSlotCount > 0 && minimumSlotCount > 0
 			for _, unit := range layout.Units {
-				if unit.Slot < 0 || unit.Slot >= activeSlotCount || unit.Pose < 0 || unit.Pose > 3 || seen[unit.Slot] {
+				if unit.Slot < 0 || unit.Slot >= activeSlotCount || unit.Slot >= minimumSlotCount || unit.Pose < 0 || unit.Pose > 3 || seen[unit.Slot] {
 					valid = false
 					break
 				}
 				seen[unit.Slot] = true
 			}
 			if !valid {
-				issue(i, input, "layout_units needs unique slots and poses 0..3 within every allowed runtime frontier")
+				issue(i, input, fmt.Sprintf("layout_units needs unique slots and poses 0..3 within every allowed runtime frontier (minimum slot_count=%d, maximum slot_count=%d)", minimumSlotCount, activeSlotCount))
 				continue
 			}
 			layoutBeat := runtime(input, "layout_units")

@@ -3243,10 +3243,14 @@ frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊�
 
 這提升了 runtime 拓撲證據，但不等於畫面或正式 handler 已閉合：IDA 已證實
 `0x233c6` 的 16 格 layout、special slot72 與 raw camera 參數，Docker exporter
-也已將 acting 65／66 轉錄為可編輯 frame 表；候選 binding 與 compiler regression
-見 [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)
+也已將 acting 65／66 轉錄為可編輯 frame 表；候選 binding 見
+[`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)
 及 [`ch21_post.json`](../../remake/assets/cutscenes/acting/ch21_post.json)，屬 E1
-資料消費閉合，不是一般玩家畫面證據。各 frontier 的 record 內容、原版 runtime
+資料消費證據，不是一般玩家畫面證據。由於候選 runtime frontier 是
+**66→72→73→79**，同一靜態 layout 使用 slot72 不能在最小 66-slot 入口安全
+執行；編譯器已加入最小 frontier 閘門，對此候選明確失敗即關閉並不產生
+`runtime_context`，保留原始 slot72 證據而不猜測它何時已 materialize。各 frontier
+的 record 內容、原版 runtime
 trace 與 indexed 畫面狀態仍未閉合。`0x24618` 所消費的 raw 相對游標 globals
 （`0x53ab9/0x53abd`）與第 21 戰呼叫點 `0x245ce` 的 Y+3 變換已由 IDA 固定；
 重製端以呼叫位址核對這個來源專屬橋接（source-specific bridge），未證實來源或偏移會失敗即

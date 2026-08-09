@@ -2058,25 +2058,22 @@ func TestCompileChapter29PostPreservesDialogueAcrossChapterTextSwitch(t *testing
 	}
 }
 
-func TestCompileChapter21PostCandidatePreservesRecoveredLayoutActingAndTransition(t *testing.T) {
+func TestCompileChapter21PostCandidateFailsClosedBelowMinimumRuntimeFrontier(t *testing.T) {
 	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch21_post_candidate.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(issues) != 0 {
-		t.Fatalf("ch21_post candidate issues=%#v", issues)
+	if len(issues) != 1 || issues[0].Op != "layout_units" || issues[0].Source.Addr != "0x24512" {
+		t.Fatalf("ch21_post candidate must reject slot72 at minimum frontier 66: issues=%#v", issues)
 	}
-	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil ||
-		!reflect.DeepEqual(beats[0].RuntimeContext.SlotCounts, []int{66, 72, 73, 79}) || !beats[0].RuntimeContext.StoryViewport {
-		t.Fatalf("ch21_post runtime context=%#v", beats[0])
+	for _, beat := range beats {
+		if beat.Op == "runtime_context" || beat.Op == "layout_units" {
+			t.Fatalf("ch21_post unresolved candidate emitted runnable context/layout: beat=%#v", beat)
+		}
 	}
-	var layout, act65, act66, transition Beat
+	var act65, act66, transition Beat
 	for _, beat := range beats {
 		switch beat.Source {
-		case "0x24512":
-			if beat.Op == "layout_units" {
-				layout = beat
-			}
 		case "0x24543":
 			act65 = beat
 		case "0x24580":
@@ -2084,11 +2081,6 @@ func TestCompileChapter21PostCandidatePreservesRecoveredLayoutActingAndTransitio
 		case "0x245ce":
 			transition = beat
 		}
-	}
-	if layout.Op != "layout_units" || layout.Layout == nil || len(layout.Layout.Units) != 17 ||
-		layout.Layout.Units[16] != (HandlerUnitLayout{Slot: 72, X: 22, Y: 25, Pose: 2}) ||
-		layout.Layout.CamX != 384 || layout.Layout.CamY != 432 {
-		t.Fatalf("ch21_post layout=%#v", layout)
 	}
 	if act65.Op != "act" || len(act65.Acting) != 2 || len(act65.Acting[0].Units) != 1 ||
 		act65.Acting[0].Units[0].Slot == nil || *act65.Acting[0].Units[0].Slot != 1 {
