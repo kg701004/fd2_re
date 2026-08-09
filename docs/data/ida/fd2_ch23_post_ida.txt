@@ -26,19 +26,33 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   以下只轉錄與 ch23 目的地／複製 ABI 直接相關的原始參數與位址，未以
   Hex-Rays 自訂名稱取代原始函式名。
 
+已證實：raw handler table 的 index 23／24 對應
+-----------------------------------------------
+
+- 資料映像的 handler table 位於線性位址 `0x51de9`；同一批 LE 輸入的檔案
+  偏移是 `0x51be9`。little-endian raw entry 23 為 `0x14c1e`，依 object
+  base `0x10000` 解析成線性位址 `0x24c1e`；entry 24 為 `0x14df2`，解析成
+  `0x24df2`。這只固定 raw table consumer／函式邊界，不把 table index 直接
+  命名成玩家戰次。
+- `0x24c1e` 是 IDA 識別的 `sub_24C1E`，其 caller 是 `0x25e23` 的
+  `call dword ptr [eax*4+0x51de9]`；`0x24df2` 是相鄰 raw entry 的獨立函式。
+  map／LOADCH context 可作 internal chapter 23 候選，但玩家戰役 owner、
+  一般玩家 provenance 與 campaign handoff 仍未閉合。
+
 已證實：`0x24c1e` 的兩段計數流程
 ----------------------------------
 
 - `0x24c4c` 呼叫 `0x15f84`，text index 2；`0x24cad` 再呼叫同一對白
   播放器，text index 3。兩者的文字來源是 `FDTXT_024`，但不代表
   `postbattle_ch23_persist` 已可執行。
-- 第一段在 `0x24c61` 呼叫 `0x11cac(1)`，接著在 `0x24c6b` 呼叫
-  `0x17aa9(1)`；`EBX` 從 0 累加至 29，共 30 次。`EDI` 從 2 開始，
-  每段結束時在 `0x24c81` 呼叫 `0x24d22(EDI)`，直到 stage 9。
-- 第二段在 `0x24cc1..0x24ce7` 迴圈 12 次：先以 raw PUSH 順序
-  `[ESI,255,0]` 呼叫 `0x11d40`，再 `0x11cac(0)`、`0x17aa9(1)`；
-  `ESI` 每次加 1，因此其正式參數是 `(start=0,end=255,delta=0..11)`。
-  `EDI` 於每段結束在 `0x24cf2` 呼叫 `0x24d22(EDI)`，stage 為 10..14。
+- 第一段每個內層迴圈開始前先在 `0x24c81` 呼叫 `0x24d22(EDI)`，
+  `EDI` 依序為 2..9；接著在 `0x24c61` 呼叫 `0x11cac(1)`，再於
+  `0x24c6b` 呼叫 `0x17aa9(1)`。`EBX` 每段從 0 累加至 29，共 30 次。
+- 第二段每個 outer stage 迴圈開始前先在 `0x24cf2` 呼叫 `0x24d22(EDI)`，
+  `EDI` 依序為 10..14；接著在 `0x24cc1..0x24ce7` 每個 stage 迴圈 12 次：先以 raw
+  PUSH 順序 `[ESI,255,0]` 呼叫 `0x11d40`，再 `0x11cac(0)`、
+  `0x17aa9(1)`；`ESI` 在 outer stage 之間沒有重設，整段五個 stage 共 60
+  次，正式參數的 delta 依序是 `0..59`。
 - `0x24cff` 透過 `0x375c0` 將 `0xa0000` 起點的 `0xfa00` bytes 清零，
   接著 `0x24d13` 呼叫 `0x11506`，`0x24d18` 遞增章節。這個尾端順序是
   已證實的 sync／chapter 行為，不等於已證實的戰間整備消費端。
@@ -53,17 +67,18 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   lowering（每 tick 以 3 個重製 frame 表示）；這只固定等待原語，不代表
   ch23 的完整 renderer 時序已閉合。
 
-已證實：`0x11d40(0,255,ESI)` 是 12 次完整 DAC 範圍更新
---------------------------------------------------------
+已證實：`0x11d40(0,255,ESI)` 的每段 12 次／整段 60 次 DAC 更新
+------------------------------------------------------------------
 
 - `0x11d40(start,end,delta)` 逐一讀取 `dword_53A65 + 3*index` 的 RGB
   三元組，減去 `delta`、負值夾到 0，再寫入 VGA DAC ports `0x3c8/0x3c9`。
 - ch23 的直接指令在 `0x24cc1` 先 push `ESI`、`0xff`、`0`；因此 formal
   參數是 `(0,255,ESI)`，而不是 raw PUSH 順序看似的 `(ESI,255,0)`。
-  `ESI=0..11` 是由同一個 12 次迴圈直接遞增所得（已證實）。
-- 每次 palette 更新後仍有 `0x11cac(0)`、`0x17aa9(1)` 與
-  `0x24d22(EDI)` 的相鄰時序；重製端現以兩個嚴格驗證的
-  `native_ch23_loop` 可編輯 beats 保留這 12 組 register-bound palette、
+  `ESI` 只在 `0x24cb5` 初始化一次，沒有在 `0x24cf2` 重設；因此五個
+  outer stage 的 12 次內層呼叫合計為 `ESI=0..59`（已證實）。
+- 每次 palette 更新後仍有 `0x11cac(0)`、`0x17aa9(1)`；下一個 stage
+  開始前再呼叫 `0x24d22(EDI)`。重製端現以兩個嚴格驗證的
+  `native_ch23_loop` 可編輯 beats 保留這 60 組 register-bound palette、
   重繪、tick 與 latch setter 的原始位址。執行器在沒有 indexed／latch
   adapter 時明確失敗即關閉，因此仍不建立 `postbattle_ch23_persist` binding。
 - `0x4dfcc` 讀取線性位址 `0x60003` 的 31 組 RGB 三元組；其
@@ -209,7 +224,7 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - `postbattle_ch23_persist → preparation_ch24 → story_ch24` 的 campaign
   邊界保留；沒有以 generic town、靜態 palette 或猜測性 `indexed copy`
   取代原版流程。
-- 目前仍 fail-closed。帶原始位址、12 次 loop 順序與 raw latch／tick
+- 目前仍 fail-closed。帶原始位址、每段 12 次／整段 60 次 loop 順序與 raw latch／tick
   provenance 的候選已保存於
   [`ch23_post_candidate.json`](../../../remake/assets/cutscenes/bindings/ch23_post_candidate.json)
   並有 compiler／runner regression；下一步是把已證實的共用 indexed 消費鏈

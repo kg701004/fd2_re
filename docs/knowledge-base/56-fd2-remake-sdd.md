@@ -2400,8 +2400,9 @@ with only the zero argument calling `0x4dfcc`; its IDA `BYTE1(v2)=-32` and
 Capstone `mov ah,0xe0` fix the palette write window at DAC indexes `0xe0..0xef`,
 not the previously stated low-index window. The direct caller still does not read
 `0x51a10`. The same ch23 audit fixes `0x17aa9(1)` as a DOS BIOS
-tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates
-(`ESI=0..11`). The remake now has raw `RotateNativeCh23Rows` and
+tick wait and `0x11d40(0,255,ESI)` as twelve register-bound full-DAC updates per
+outer stage, five stages total (`ESI=0..59`; no reset at the stage boundary). The
+remake now has raw `RotateNativeCh23Rows` and
 `ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated
 `native_ch23_loop` candidate beats that preserve every loop call site, the
 30/12 repetition counts, register-shaped arguments, and stage values 2..14.

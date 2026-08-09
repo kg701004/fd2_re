@@ -109,3 +109,90 @@ func ApplyNativeCh23PaletteCycle(dac []byte, phase int) error {
 	copy(dac, next)
 	return nil
 }
+
+// NativeCh23LoopSpec 是 raw ch23 handler 的一段固定排程。它只描述
+// 0x24c61..0x24cf2 的呼叫次數、0x24d22 stage 值與原始 ESI 參數；不把
+// 0x11cac 的畫面內容或 0x11d40 的第三參數命名成遊戲語意。
+type NativeCh23LoopSpec struct {
+	Phase       string
+	Repeat      int
+	StageValues []int
+	Palette     bool
+}
+
+// NativeCh23LoopHooks 是尚未命名的原始呼叫端。呼叫者必須自行提供
+// indexed draw、tick 與（palette 段）0x11d40 的 raw ESI 消費端；缺任何
+// callback 就拒絕執行，避免把純資料排程誤接成 generic renderer。
+type NativeCh23LoopHooks struct {
+	Palette func(rawESI int) error
+	Draw    func() error
+	Tick    func() error
+}
+
+func nativeCh23LoopSpecValid(spec NativeCh23LoopSpec) bool {
+	if spec.Phase == "initial" {
+		return !spec.Palette && spec.Repeat == 30 && equalNativeCh23Stages(spec.StageValues, 2, 9)
+	}
+	if spec.Phase == "palette" {
+		return spec.Palette && spec.Repeat == 12 && equalNativeCh23Stages(spec.StageValues, 10, 14)
+	}
+	return false
+}
+
+func equalNativeCh23Stages(values []int, first, last int) bool {
+	if len(values) != last-first+1 {
+		return false
+	}
+	for i, value := range values {
+		if value != first+i {
+			return false
+		}
+	}
+	return true
+}
+
+// RunNativeCh23Loop 執行已證實的 raw staging 排程，但不發布畫面、不改
+// battle/campaign state，也不自行解釋 palette。每次呼叫前先複製 staging
+// 與 DAC；任何 callback 或 shape 錯誤都回復兩個 buffer，保留原子拒絕。
+func RunNativeCh23Loop(spec NativeCh23LoopSpec, staging, dac []byte, hooks NativeCh23LoopHooks) error {
+	if !nativeCh23LoopSpecValid(spec) {
+		return errors.New("fdother: invalid ch23 raw loop spec")
+	}
+	if len(staging) != NativeCh23StageStride*NativeCh23StageHeight || hooks.Draw == nil || hooks.Tick == nil {
+		return errors.New("fdother: ch23 loop requires exact staging and draw/tick callbacks")
+	}
+	if spec.Palette && (hooks.Palette == nil || len(dac) != 256*3) {
+		return errors.New("fdother: ch23 palette loop requires raw ESI callback and DAC")
+	}
+	beforeStage := append([]byte(nil), staging...)
+	beforeDAC := append([]byte(nil), dac...)
+	rollback := func(err error) error {
+		copy(staging, beforeStage)
+		copy(dac, beforeDAC)
+		return err
+	}
+	rawESI := 0
+	for _, stage := range spec.StageValues {
+		// Native 0x24c81/0x24cf2 sets the latch before the following
+		// inner draw/tick loop; the row rotation must therefore be visible
+		// to the first callback of this stage.
+		if err := RotateNativeCh23Rows(staging, stage); err != nil {
+			return rollback(err)
+		}
+		for i := 0; i < spec.Repeat; i++ {
+			if spec.Palette {
+				if err := hooks.Palette(rawESI); err != nil {
+					return rollback(err)
+				}
+				rawESI++
+			}
+			if err := hooks.Draw(); err != nil {
+				return rollback(err)
+			}
+			if err := hooks.Tick(); err != nil {
+				return rollback(err)
+			}
+		}
+	}
+	return nil
+}

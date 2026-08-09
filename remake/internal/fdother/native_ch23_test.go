@@ -1,6 +1,8 @@
 package fdother
 
 import (
+	"bytes"
+	"errors"
 	"os"
 	"testing"
 )
@@ -104,5 +106,90 @@ func TestApplyNativeCh23PaletteCycleRejectsInvalidAtomically(t *testing.T) {
 		if dac[i] != want[i] {
 			t.Fatalf("palette mutated at %d", i)
 		}
+	}
+}
+
+func TestRunNativeCh23InitialLoopPreservesRawSchedule(t *testing.T) {
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
+	for row := 0; row < NativeCh23StageHeight; row++ {
+		staging[row*NativeCh23StageStride] = byte(row)
+	}
+	draws, ticks, palettes := 0, 0, 0
+	firstDrawRow := -1
+	err := RunNativeCh23Loop(NativeCh23LoopSpec{
+		Phase:       "initial",
+		Repeat:      30,
+		StageValues: []int{2, 3, 4, 5, 6, 7, 8, 9},
+	}, staging, nil, NativeCh23LoopHooks{
+		Draw: func() error {
+			if draws == 0 {
+				firstDrawRow = int(staging[0])
+			}
+			draws++
+			return nil
+		},
+		Tick:    func() error { ticks++; return nil },
+		Palette: func(int) error { palettes++; return nil },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if draws != 8*30 || ticks != draws || palettes != 0 || firstDrawRow != 190 {
+		t.Fatalf("initial schedule draws=%d ticks=%d palettes=%d", draws, ticks, palettes)
+	}
+}
+
+func TestRunNativeCh23PaletteLoopKeepsRawESIOrder(t *testing.T) {
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
+	dac := bytes.Repeat([]byte{0x5a}, 256*3)
+	var rawESI []int
+	draws, ticks := 0, 0
+	err := RunNativeCh23Loop(NativeCh23LoopSpec{
+		Phase:       "palette",
+		Repeat:      12,
+		StageValues: []int{10, 11, 12, 13, 14},
+		Palette:     true,
+	}, staging, dac, NativeCh23LoopHooks{
+		Palette: func(value int) error { rawESI = append(rawESI, value); return nil },
+		Draw:    func() error { draws++; return nil },
+		Tick:    func() error { ticks++; return nil },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rawESI) != 60 || draws != 60 || ticks != 60 {
+		t.Fatalf("palette schedule rawESI=%d draws=%d ticks=%d", len(rawESI), draws, ticks)
+	}
+	for i, value := range rawESI {
+		if value != i {
+			t.Fatalf("raw ESI[%d]=%d", i, value)
+		}
+	}
+}
+
+func TestRunNativeCh23LoopRollsBackOnCallbackFailure(t *testing.T) {
+	staging := bytes.Repeat([]byte{0x31}, NativeCh23StageStride*NativeCh23StageHeight)
+	dac := bytes.Repeat([]byte{0x42}, 256*3)
+	beforeStage, beforeDAC := append([]byte(nil), staging...), append([]byte(nil), dac...)
+	err := RunNativeCh23Loop(NativeCh23LoopSpec{
+		Phase:       "palette",
+		Repeat:      12,
+		StageValues: []int{10, 11, 12, 13, 14},
+		Palette:     true,
+	}, staging, dac, NativeCh23LoopHooks{
+		Palette: func(value int) error {
+			if value == 7 {
+				return errors.New("synthetic raw palette failure")
+			}
+			return nil
+		},
+		Draw: func() error { return nil },
+		Tick: func() error { return nil },
+	})
+	if err == nil {
+		t.Fatal("callback failure accepted")
+	}
+	if !bytes.Equal(staging, beforeStage) || !bytes.Equal(dac, beforeDAC) {
+		t.Fatal("callback failure mutated raw buffers")
 	}
 }
