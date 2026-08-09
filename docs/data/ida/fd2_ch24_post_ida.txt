@@ -54,6 +54,28 @@ Capstone 與 IDA 指令逐項一致，`0x24df2` 依序執行：
 以上是 E1 靜態控制流程證據。它支持「raw handler 有兩段對話、PAN、spawn、
 ACTING、persistent append 與共享尾段」；不支持自行建立新的正式 campaign binding。
 
+## 已證實：`0x10b4e(2)` 的 FDFIELD group materializer 與 map24 列數
+
+本輪以合法 IDA Pro 9.4 追查 `sub_10B4E`（`0x10b4e..0x10c50`）及其唯一
+直接 callee `sub_10C50`（`0x10c50..0x11019`）。`sub_10B4E` 先開啟
+`FDICON.B24`，以 `sub_111BA` 讀取 `FDFIELD.DAT` 的 current field 資料，從
+`[0x53a55]+0x83` 起按 0x1a-byte stride 掃描 `[0x53be3]` 筆列；只有 row
+`+0x15 == arg_0` 才在 `0x10bec..0x10bf2` 呼叫 `sub_10C50(row_index,
+FDICON_stream)`。`sub_10C50` 依 raw row 與 position record 選擇座標、建立
+`[0x53a45] + [0x53beb] * 0x50` runtime record，最後遞增 `[0x53beb]`。因此
+這裡的「spawn」是可編輯 FDFIELD group materializer；不是角色身分或 JOIN
+語意。兩個函式的原始名稱、位址與運算元均保留，語意仍是附加註記。
+
+固定版原始 `FDFIELD.DAT` 解包 resource 073（map24 control）為 1951 bytes，
+MD5 `d64cca11484662bd45ab6c34aeb63ff9`、SHA-256
+`433bc1a2146c22598b42a53b1fbd901bce54bc4328147613128f69ad483b177b`；header
+後的 70 筆列分布為 group0=46、group1=8、group2=1、group255=15，group2
+唯一列索引為 54。可編輯 `remake/assets/maps/map24/map24_units.json` 的
+第 54 筆也只有一筆 `group=2`（座標 `(10,24)`、raw key 29），與原始列的
+`+0x15=2` 及 position record 相符。這證實候選 binding 的
+`runtime_context.spawn_groups["2"] = 1` 是列數投影，不是猜測的角色數；仍不
+證實一般玩家戰後 runtime frontier 或 `0x112a5(0x1a/0x0e)` 的永久身分。
+
 ## 已證實：相鄰 `sub_24E80` 的邊界，不與 `0x24DF2` 混稱
 
 `0x24e80` 開頭以 `push 0x6c` 呼叫 `0x36cd7`，掃描 runtime index

@@ -879,6 +879,18 @@ func TestCh24PostCandidatePreservesUnknownAppendAndFailsClosed(t *testing.T) {
 	if len(beats) == 0 || len(issues) != 2 {
 		t.Fatalf("ch24 candidate must retain proven prefix but fail closed: beats=%#v issues=%#v", beats, issues)
 	}
+	var spawnGroups []int
+	for _, beat := range beats {
+		if beat.Op == "spawn" {
+			if beat.Group == nil || *beat.Group != 2 || beat.RawPlacementGate == nil || *beat.RawPlacementGate != 0 {
+				t.Fatalf("ch24 proven FDFIELD materializer=%#v", beat)
+			}
+			spawnGroups = append(spawnGroups, *beat.Group)
+		}
+	}
+	if len(spawnGroups) != 1 || spawnGroups[0] != 2 {
+		t.Fatalf("ch24 group2 materializer was not retained: %v", spawnGroups)
+	}
 	for _, issue := range issues {
 		if issue.Op != "raw_append" {
 			t.Fatalf("unexpected ch24 blocked op=%#v", issue)
