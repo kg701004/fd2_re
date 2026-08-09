@@ -438,9 +438,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 official IDA `0x24618` body recheck：固定 `0x11eee` 13×8 terrain staging、九次 descriptor `9..1` pass、每次 `0x22046`→320×192 viewport copy→5ms、500ms hold、palette delta `0..62` step2/4ms。新增 `fdother.BuildNativeIndexedTransitionSchedule` 保存 outer loop raw cadence；descriptor/double-buffer/presentation 仍 fail-closed。
 - 2026-07-27 stale dialogue assertion cleanup：重跑 `0x15f84/0x168b6/0x1956b` 後，`09`、`01`、`18` 改為 operand provenance 模型：`-17/-18` 先經 `0x12c60` identity lookup（必要時 direct-DATO fallback），`-19/-20` 走 runtime unit `+7`，`FFFA/FFFB` 是遞迴名稱／數值插入碼。刪除「每個 operand 都是固定肖像 ID／特效」斷言，未改動 story JSON。
 - 2026-07-20 0x24618 schema completion：metadata 另保留 fixed `source_y=0`、`blit_width=0xc0`、clip `0x138×0xc0`，以及 tile/source step；compiler 只接受完整 9-frame/500ms/palette timing，避免把 descriptor copy 簡化成普通 fade。
-- 2026-07-20 ch29 post `0x1088d` correction：先前將 `0x25870 → 0x1088d` 縮窄 lower 成 `load_ch_text(ch30.json)` 已撤回，因 Docker/Capstone 證實本體不只載 FDTXT：它依 chapter 載三個 FDFIELD resource、讀 map control、重建 `0x1e00` runtime unit buffer、從 persistent `[0x53bf7]` 複製 own records、套 own-deploy coordinates 並 spawn groups。現已以既有完整 `loadch` state（chapter30/map29/roster70/ch30 story+scenario）重新 lower，compiler regression 明確鎖住不得退回文字-only；handler 仍因 layout、transition、ending 等 unresolved ops fail-closed，尚未接 campaign。internal chapter 29 是最終戰 handler，`0x2bce5` 返回後自迴圈，不會進 generic preparation；現行 final battle→generic ending 暫時略過此 handler。
+- 2026-07-20 ch29 post `0x1088d` correction：先前將 `0x25870 → 0x1088d` 縮窄 lower 成 `load_ch_text(ch30.json)` 已撤回，因 Docker/Capstone 證實本體不只載 FDTXT：它依 chapter 載三個 FDFIELD resource、讀 map control、重建 `0x1e00` runtime unit buffer、從 persistent `[0x53bf7]` 複製 own records、套 own-deploy coordinates 並 spawn groups。現已以既有完整 `loadch` state（chapter30/map29/roster70/ch30 story+scenario）重新 lower，compiler regression 明確鎖住不得退回文字-only；handler 仍因 layout、transition、ending 等 unresolved ops fail-closed，尚未接 campaign。當時把 map29／LOADCH context 暫記為 internal chapter 29 終局候選；這不是已閉合的玩家戰次或 campaign owner。`0x2bce5` 返回後自迴圈，不會進 generic preparation；現行 final battle→generic ending 暫時略過此 handler。
 - 2026-07-20 ch29 post layout audit：Docker/Capstone 證實 `0x257b4 → 0x233c6` 使用三個固定 20-byte arrays（slots 0..19 的 X/Y/pose）與 camera `(16,18)`；數值已可重取，但 remake 尚未證實 20-slot `handlerUnitAt(slot)` 身分等同 native runtime array，且 campaign 未接這個 native post handler。因此不建立猜測性 `layout_units` binding，維持 fail-closed；先需補 roster frontier/identity evidence。
-- 2026-07-20 terminal-flow reconciliation：`0x25970 call 0x2bce5` 之後的 `EB FE` 是 `jmp 0x25975` self-loop，證實 `0x25757` 不會返回通用戰後/整備流程。它對應 internal chapter 29（玩家面向的 map29 最終戰）；`preparation_ch30` 仍是最終戰**之前**的既有節點，不能把此 post handler 接到 map28 的 `battle_ch29` 勝利。
+- 2026-07-20 terminal-flow reconciliation：`0x25970 call 0x2bce5` 之後的 `EB FE` 是 `jmp 0x25975` self-loop，證實 `0x25757` 不會返回通用戰後／整備流程。當時依同函式的 map29 FDFIELD／LOADCH context 暫列為 internal chapter 29 終局候選；2026-08-09 caller-table 勘誤補充：不可只由 table index 29 命名玩家戰次，也不能把候選當成玩家第29戰的正式 owner。`preparation_ch30` 仍是終局**之前**的既有節點，不能把此 post handler 接到 map28 的 `battle_ch29` 勝利。
 - 2026-07-20 map29 final roster provenance：`0x1088d` 證實 `[0x53a45]+slot*0x50` slots 0..19 先由 persistent `[0x53bf7]` ordinal 0..19 複製，再寫 map29 own-deploy ordinal positions；`0x233c6` 只覆寫該同一 buffer 的 x/y/pose。`0x1b750` 是裝備／衍生能力 synthesis，不改 identity。進一步 direct `0x112a5` 證實 JOIN 以 `[0x53bfb]*0x50` append 一筆 persistent record 後遞增 count，故正常遊戲 ordinal 就是首次 JOIN chronology；remake `partyJoinOrder`／`reorderScenarioParty` 的角色順序方向正確。map JSON row order 仍不得替代此 persistent order。
 - 2026-07-20 final layout materialization：將 `0x257b4 → 0x233c6` 的三個 native 20-byte arrays 完整寫入 editable `layout_units` binding（slot0..19、camera 16×24/18×24）；compiler regression 鎖定首兩筆、末筆、camera。這只保存已證實資料，不能繞過終局 handler 的 runtime array/renderer gate；其餘 unresolved ops 仍阻止 campaign playback。
 - 2026-07-20 final camera pan：`0x25933 push 12; 0x25935 push 11; call 0x135dd` 依 native x-first/y-second ABI lower 為 editable tile-step pan `(264,288)`；compiler regression 鎖定此 final-map camera target。它不影響仍 fail-closed 的 transition/ending path。
@@ -3490,3 +3490,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   20 筆 raw entry；沒有寫入 battle state、沒有猜動畫／角色名稱，也沒有把
   `postbattle_ch29_persist` 接到下一城鎮。indexed resource owner、輸入事件、
   campaign／town／shop／整備／save handoff 與一般玩家 E2 仍失敗即關閉。
+
+## 2026-08-09：ch29 終局 caller table 校正
+
+- IDA／Capstone 固定 `0x25e23` 以 `[0x53c03]` 消費資料映像 `0x51de9`：
+  index26→`0x250cc`、index29→`0x25757`。`0x25757` 的
+  `0x25970→0x2bce5→0x25975` 是 self-loop；`0x250cc` 依
+  `0x24b14(0x64)` 分成 success exit 與 ending self-loop。這些是 raw
+  caller／控制流證據，不是玩家戰次名稱或 town／preparation owner。
+- 已新增 [`fd2_ch29_terminal_callers_ida.txt`](../data/ida/fd2_ch29_terminal_callers_ida.txt)。
+  這次只刪除／校正「table index 可直接命名戰次」與「self-loop 可直接回城」
+  的不必要斷言；`postbattle_ch29_persist`、完整 ending owner、輸入事件、
+  一般玩家 chapter provenance 仍保持失敗即關閉。

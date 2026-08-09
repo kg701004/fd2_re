@@ -475,8 +475,17 @@ terminal、一般玩家 E2 仍未閉合，因此不解除 `postbattle_ch29_persi
 原始位址 `0x525dc..0x52617` 輸出並帶雜湊；`MontageTail.Plan` 只產生 raw
 entry，不寫入 `battle.State`、不呈現畫面，也不命名欄位。這關閉「尾端完全未知」
 的過時斷言，但不關閉 indexed resource owner、輸入事件、campaign／town／
-shop／整備／save handoff 或 `postbattle_ch29_persist`；證據見
+ shop／整備／save handoff 或 `postbattle_ch29_persist`；證據見
 [`fd2_ch29_post_montage_tail_ida.txt`](../data/ida/fd2_ch29_post_montage_tail_ida.txt)。
+
+2026-08-09 ch29 terminal caller correction：IDA／Capstone 直接固定
+`0x25e23` 以 `[0x53c03]` 消費 raw table `0x51de9`；目前已證實
+index26→`0x250cc`、index29→`0x25757`。`0x25757` 在 `0x25970→0x2bce5`
+後於 `0x25975` 自迴圈；`0x250cc` 則依 `0x24b14(0x64)` 分成 success exit
+與 ending self-loop。這修正「`0x25757` 可直接接 preparation」或「table index
+等同玩家戰次」的過度斷言，但不提升 `0x24b14` 名稱、frame 語意、一般玩家
+chapter provenance 或 campaign owner。完整 caller 證據見
+[`fd2_ch29_terminal_callers_ida.txt`](../data/ida/fd2_ch29_terminal_callers_ida.txt)。
 
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 

@@ -1,0 +1,60 @@
+# FD2 終局 caller／handler table：IDA Pro 9.4 證據
+
+## 輸入與工具
+
+- 輸入：`FD2.EXE`，大小 357074 位元組。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- IDA：合法 IDA Pro 9.4，`fd2-ida-authorized-local`，一次性無網路 Docker。
+- 交叉驗證：`fd2-cap-local` Docker 內 Capstone 5.0.3。
+- 所有位址均為 `FD2.EXE` 線性位址；`0x51de9` 是資料映像中的 raw handler table，
+  不是檔案偏移。
+
+## 已證實：`0x25e23` 的 raw table consumer
+
+`0x25bf4..0x25ebb` 先取 `[0x53c03]`，再以
+`call dword ptr [eax*4 + 0x51de9]` 呼叫 handler。固定 little-endian table
+前 30 筆為：
+
+```text
+index 26 -> 0x250cc
+index 27 -> 0x25464
+index 28 -> 0x2548c
+index 29 -> 0x25757
+```
+
+完整 table raw bytes 與檔案雜湊由 Capstone Docker 的 `data 0x51de9 120`
+重生；這裡只列與終局 caller 直接相關的四筆。table index 不是自動等同
+玩家第幾戰，必須與 `[0x53c03]` 的來源及一般玩家 trace 一起判定。
+
+## 已證實：`0x250cc`（table index 26）兩條尾端
+
+- `0x250cc` 的成功臂在 `0x25184→0x24b14(0x64)` 找到 raw item 後，於
+  `0x25333→0x11506` 做 persistent cleanup、`0x25338` 遞增
+  `[0x53c03]`、`0x2533e→0x25089`，最後跳到 `0x1b5ea`。這一臂不是
+  `0x2bce5` 終局自迴圈。
+- 另一臂從 `0x25348` 顯示 frame `0x0d/0x0e/0x0f`、呼叫 `0x1c2da`、
+  `0x22253`，再在 `0x25458→0x25089` 後於 `0x2545d` 呼叫 `0x2bce5`，
+  `0x25462` 進入同一函式內自迴圈。
+
+這只證明 raw call order 與 self-loop；`0x24b14(0x64)` 的遊戲名稱、
+frame 內容及成功臂後續 chapter owner 仍依各自證據處理。
+
+## 已證實：`0x25757`（table index 29）終局尾端
+
+`0x25757` 先執行 `0x233c6`、`0x24618`、`0x1088d([0x53c03])`、
+`0x11cac` 與多段 raw palette／文字呈現；在 `0x2596d` 之後，
+`0x25970` 呼叫 `0x2bce5`，`0x25975` 立即跳回自己。這個 self-loop 是
+`0x25757` 這個 raw table entry 的已證實控制流，不是 town、shop、整備或
+下一場戰鬥的返回 owner。
+
+## 重製邊界與勘誤
+
+- `0x2bce5` 的 prefix、`0x2c548` party cycle 與 `0x2c194..0x2c39a` raw
+  tail 現已各自有可編輯 executor／schedule，但 shared indexed owner、輸入
+  事件、table index 的一般玩家來源與 campaign handoff 尚未閉合。
+- 不可把「`0x25757→0x2bce5` self-loop」改寫成
+  `postbattle_ch29_persist→preparation_ch30`；也不可把 table index 29
+  直接命名為玩家第 29 戰而跳過 `[0x53c03]` provenance。
+- `postbattle_ch29_persist` 仍保持失敗即關閉；城鎮／商店／整備／存檔邊界
+  仍保留在 campaign graph，等待一般玩家 raw chapter trace 與完整 ending owner。
