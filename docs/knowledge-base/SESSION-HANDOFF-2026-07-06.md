@@ -3767,3 +3767,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 本項只關閉 variant1 的五項畫面消費端 E2；selection5 的 BIOS 掃描碼／後續 Enter、
   未修改一般玩家城鎮／戰後路徑與其他城鎮仍 fail-closed。重新嘗試時若按鍵節奏未進入
   城鎮，不得把標題／載入畫面誤寫成原版證據。
+
+## 2026-08-09：工作清單 AI 完成度斷言勘誤
+
+- 盤點 `docs/knowledge-base/91-worklist.md` 時發現歷史快照把正規化
+  `NextAIPlan`／`aiStep` 寫成「AI 行走+敵攻我演出」已完成，容易被誤讀為原版
+  敵方 AI 已接通。該條現明示為 **normalized approximation、非 native parity**；
+  現況 AI 段落也明確寫成「尚未接入原版 native AI 的 production planner」。
+- `docs/knowledge-base/11-enemy-ai.md`、`docs/knowledge-base/42-re-vs-remake-gap-audit.md`
+  與 `docs/knowledge-base/56-fd2-remake-sdd.md` 原本已保留相同的 fail-closed 限定，
+  本勘誤不改變任何位址、候選橋或執行器語意；下一個真正解除閘門的證據仍是固定
+  存檔中的 command／目標 trace 及正式回合消費端回歸。

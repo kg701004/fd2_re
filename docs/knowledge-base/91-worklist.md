@@ -368,7 +368,8 @@
   record snapshots，再交給 caller-owned score resolver。測試確認候選順序、
   raw 群組篩選、穩定選擇與 resolver 失敗即關閉；這是 E0 資料鏈，不代表
   `0x1B83D` command record 來源、地形修正 writer、正式回合執行或
-  `NextAIPlan` 已接通。
+  尚未接入原版 native AI 的 production planner；現有 `NextAIPlan` 仍是
+  normalized approximation 的執行分離，不代表原版 AI parity。
 - [x] **RE-AI-PHYSICAL-EXECUTION-1548E**：Docker Capstone 證實唯一 callers
   `0x13E39/0x14F9B`；callee 消費 `0x53C43/47/4B`，經 `0x14B78` 後依
   `0x53AF9` 選地圖呈現或 `0x28A6C(actor,target)`，收尾固定回1。沒有
@@ -768,7 +769,9 @@
       AoE 指空地、FD2_SEED。缺口列冊:風妖精 dmg=0 矛盾、劍技倍率表、傳送 UI
 - [x] **全 33 戰場匯出**(haiku):remake/assets/maps/map1-32(96 檔,抽驗 3 圖合法);
       旗艦接線 loadMap(dir)+campaign battle.map 欄位(map3 實測換圖)
-- [x] **AI 行走+敵攻我演出**(旗艦):NextAIPlan 決策執行分離+aiStep;atkOwn 欄位按陣營
+- [x] **AI 行走+敵攻我演出（歷史 normalized approximation；非 native parity）**：
+      `NextAIPlan` 決策執行分離+`aiStep`；`atkOwn` 欄位按陣營。這只代表重製端可玩
+      近似路徑，不代表原版敵方 AI 已完成
 - [x] **SFX 引擎接入**(旗艦):loadSFX/playSFX+游標/確認/命中掛點(命中暫代,待戰鬥池)
 - [ ] 戰鬥音效池([0x5411f] 動態子容器)導出+逐招對照
 - [ ] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)
