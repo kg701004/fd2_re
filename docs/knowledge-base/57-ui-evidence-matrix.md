@@ -329,3 +329,11 @@ selector effect trace，故不代表所有已學 command 已有可執行 remake 
 其內層 `0x4e16e` 讀 tile flag 與該 record 的 byte table 後決定是否擴張。故目前可用的
 E0 模型是 **seed mode + table + terrain/cost gate + marker + unit filter**；尚不可把 target highlight
 reducer 成單一菱形或宣稱其完整路徑／LOS 規則。
+
+### 2026-08-09：玩家近戰結算消費鏈（E1 重製端）
+
+戰場 action menu 的近戰確認現在進入 `battle.State.AttackWithRNG`，使用由
+`Game` 注入的固定種子亂數，並把 `AttackResult` 的未命中／暴擊／傷害／經驗交給
+訊息與 FIGANI 演出。缺少亂數來源時先停止，測試也確認不會先改寫攻方或守方狀態。
+這是重製端消費鏈的 E1 回歸，不是原版 raw 攻擊 ABI、完整 indexed settlement
+或一般玩家 E2；命中表、劍技與完整經驗介面仍維持未關閉。

@@ -3831,3 +3831,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 這批 helper 與 regression 只保存 E0 位址級 CFG，不接 `NextAIPlan`、
   正式回合交易或畫面；一般玩家的事件資料、動態回傳與完整 AI orchestration
   仍是下一道閘門。
+
+## 2026-08-09：玩家近戰選單接入型別結算（E1 重製端）
+
+- 檢查戰場 action menu 後，發現近戰確認仍呼叫舊的 `State.Attack`；該介面會
+  消耗程序全域亂數，且丟棄完整 `AttackResult`。現已新增
+  `Game.resolvePlayerPhysicalAttack`，改由注入的遊戲亂數呼叫
+  `AttackWithRNG`，並將未命中／暴擊／傷害／經驗保留到訊息與演出橋。
+- 缺少亂數來源時會在任何狀態變更前失敗即關閉；Docker 回歸涵蓋確定命中、缺少
+  亂數不 mutation，以及訊息保留未命中／暴擊／經驗。這只補重製端「選單→型別
+  結算→演出」垂直切片，不宣稱原版攻擊 ABI、完整劍技／命中表或一般玩家 E2。

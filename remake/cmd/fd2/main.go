@@ -4968,6 +4968,51 @@ func absInt(v int) int {
 	return v
 }
 
+// resolvePlayerPhysicalAttack is the production bridge from the battle
+// action menu to the typed physical-settlement result.  The old UI path used
+// State.Attack, which consumes a process-global RNG and discards Miss/Crit/
+// experience metadata even though AttackWithRNG already exposes them.  A
+// missing game RNG is an input failure: do not mutate the battle state through
+// an implicit fallback source.
+func (g *Game) resolvePlayerPhysicalAttack(actor, target *battle.Unit) (battle.AttackResult, error) {
+	if g == nil || g.st == nil || actor == nil || target == nil {
+		return battle.AttackResult{}, errors.New("player physical attack context unavailable")
+	}
+	if g.rng == nil {
+		return battle.AttackResult{}, errors.New("player physical attack RNG unavailable")
+	}
+	return g.st.AttackWithRNG(actor, target, g.rng), nil
+}
+
+func playerPhysicalAttackMessage(actor, target *battle.Unit, result battle.AttackResult) string {
+	actorName, targetName := "攻方", "目標"
+	if actor != nil {
+		if actor.Name != "" {
+			actorName = actor.Name
+		} else if actor.ClsName != "" {
+			actorName = actor.ClsName
+		}
+	}
+	if target != nil {
+		if target.Name != "" {
+			targetName = target.Name
+		} else if target.ClsName != "" {
+			targetName = target.ClsName
+		}
+	}
+	if result.Missed {
+		return fmt.Sprintf("%s 攻擊 %s，未命中", actorName, targetName)
+	}
+	message := fmt.Sprintf("%s 攻擊 %s，造成 %d 傷害", actorName, targetName, result.Amount)
+	if result.Crit {
+		message += "，暴擊"
+	}
+	if result.ExpGained > 0 {
+		message += fmt.Sprintf("，經驗 +%.0f", result.ExpGained)
+	}
+	return message
+}
+
 // dirToward 從 (ax,ay) 朝 (tx,ty) 的方向:0下 1左 2上 3右(FDICON 方向幀)。
 func dirToward(ax, ay, tx, ty int) int {
 	dx, dy := tx-ax, ty-ay
@@ -5219,9 +5264,13 @@ func (g *Game) confirm() {
 			anm = g.sel.ClsName
 		}
 		defHP0 := tgt.HP
-		dmg := g.st.Attack(g.sel, tgt)
+		attackResult, err := g.resolvePlayerPhysicalAttack(g.sel, tgt)
+		if err != nil {
+			g.msg = "攻擊：" + err.Error()
+			return
+		}
 		g.awardDeathReward(tgt, g.sel)
-		g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
+		g.msg = playerPhysicalAttackMessage(g.sel, tgt, attackResult)
 		actor := g.sel
 		g.atk = g.newAtkAnim(actor.BattleFig, tgt.BattleFig, anm, nm,
 			actor.HP, actor.MaxHP, actor.Lv, actor.MP, tgt.Lv, tgt.MP,

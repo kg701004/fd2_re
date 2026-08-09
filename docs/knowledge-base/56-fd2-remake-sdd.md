@@ -3466,3 +3466,13 @@ index28 與最後的 chapter-global increment 共同支持「玩家第29戰 post
 indexed frame、一般玩家 E2 與 battle→postbattle→town／shop／整備／save
 仍失敗即關閉。完整 raw 位址與雜湊見
 [`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
+
+## 2026-08-09：玩家近戰選單到結算的亂數邊界（E1 重製端）
+
+玩家在戰場 action menu 確認近戰目標後，`Game` 現以注入的遊戲亂數呼叫
+`battle.State.AttackWithRNG`，不再經由會消耗程序全域亂數且丟棄結算欄位的舊
+`State.Attack` 介面。`AttackResult` 的未命中、暴擊、傷害與經驗資料會保留到
+訊息／演出橋；缺少 `Game` 亂數來源時先停止，避免部分 mutation。這只證明
+重製端「選單→型別結算→演出」的消費鏈與固定種子可重現性，不把青衫公式升格
+為原版攻擊 ABI，也不宣稱命中表、劍技、完整經驗 UI 或一般玩家 E2 已閉合。
+回歸涵蓋確定命中、缺少亂數的失敗即關閉，以及訊息保留未命中／暴擊／經驗。
