@@ -3694,3 +3694,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   movement／battle effect、UI 或一般玩家 E2。下一步應取得固定存檔的
   `0x1b83d` command-record 來源與實際選中目標 trace，再考慮更窄的 runtime
   consumer；不得用 normalized `aiTargets` 補缺資料。
+
+## 2026-08-09：戰鬥 FIGANI 幀延遲呈現橋（E1）
+
+- 從固定雜湊版本的玩家 `FIGANI.DAT` 逐幀擷取 descriptor `+6`，新增
+  `remake/assets/figani/delays.json`；現有 22 個 PNG 動畫的幀數與延遲均由
+  `cmd/fd2/TestFIGANIDelaysMatchNativeFrameHeaders` 交叉比對。
+- 新增 `internal/figani.DisplayScheduler`，依官方 `NativeScheduler` 的先呈現後
+  累加規則，把 raw delay 轉成明示 `FD2_BATTLE_FPT` 顯示倍率；全螢幕攻擊演出
+  不再以固定 15 幀補猜，PNG／延遲表不一致即不建立演出。
+- Docker/Xvfb 實跑：`internal/figani` scheduler tests、`cmd/fd2` FIGANI
+  placement/delay regression 與 `TestNewAtkAnimRequiresNativeDelayPairing` 通過。
+  這只關閉幀順序與停留時間的 E1 呈現邊界；命中幀、傷害、音效、台座、完整
+  原版畫面與一般玩家 E2 仍未閉合，不能將本項誤寫成完整戰鬥演出。

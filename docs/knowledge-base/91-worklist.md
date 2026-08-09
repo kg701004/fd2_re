@@ -1419,6 +1419,12 @@
 - [x] **finale `0x2c548` official-IDA gate recheck (2026-07-26)**：IDA 9.4 ASM 直接確認 phase-0 的 `0x2c548` gate 先 free 500-pass staging，再配置 `0x1f400`、`0xfa00`、`0xfa00` 三塊 indexed buffer；以 `sub_111ba("TAI.DAT",3)` 與 `sub_111ba("FDOTHER.DAT",0x38)` 載入 montage inputs，FDOTHER #0x38 先以 stride `0x140`、transparent `-1` blit 到第一個 64000-byte buffer，接著由 `[0x53bfb]-1` 反向取 party record。這是專用 indexed montage 的資源/緩衝 ABI，不是 generic fade 或可直接替換的 PNG scene；DATO、FIGANI schedule、mirror branch 與 standalone executor 已閉合，輸入／campaign owner 仍 fail-closed。
 - [x] **indexed FIGANI decoder foundation**：新增 `internal/figani`，直接讀 FIGANI LLLLLL resource、13-byte frame header（signed X/Y、delay、real W/H）和 4-mode RLE，透明 span 以 mask 保留而非轉 palette0；`BlitAt` 寫入 indexed surface，實機 `FIGANI.DAT` #13 regression 通過。下一步是 TAI frame 與 native 0x29164 fade/composite，不能改走 RGBA PNG。
 - [x] **native FIGANI scheduler `0x2b9a1` (2026-07-26)**：官方 IDA 確認 `arg4==0` 僅清 `byte_540fc`（subframe）且不 render；非零路徑先以目前 `byte_540fd` frame 呼叫 `0x2935b`，再讀 descriptor `+6` delay，累加 subframe，達 delay 才換 frame 並於 frame count wrap。`internal/figani.NativeScheduler.Step` 已照此實作與 regression；renderer 仍由 caller 顯式提供，未猜測 `0x2935b` 的 presentation semantics。
+- [x] **戰鬥 FIGANI 幀延遲呈現橋（2026-08-09，E1）**：從固定版本
+  `FIGANI.DAT` 擷取 22 個已匯出動畫的 descriptor `+6`，保存為
+  `remake/assets/figani/delays.json`；`cmd/fd2` 回歸逐幀比對原始延遲與幀數。
+  `internal/figani.DisplayScheduler` 現供全螢幕攻擊 PNG 幀選擇與停留時間使用，
+  `FD2_BATTLE_FPT` 只作明示顯示倍率。缺少配對資料即不建立演出，不再補猜固定
+  15 幀。此項不解除命中／傷害／音效／台座／完整原版畫面或 E2 gate。
 - [x] **0x29164 first fade closure**：第一參數是 party loop unit index（讀 `[0x53a45]+unit×80+6`），不是 TAI；TAI#3 是尾端 aux argument，7-byte transparent raw 不可餵 `0x2935b`。兩條 native path 都做 `esi=8..0` 共9次 present，每次 DAC baseline delta=`esi×6`（48→0）；geometry／aux platform role 已由 `RenderFigureFadePass`／`RenderMirrorFigureFadePass` 嚴格消費，輸入／campaign 仍不接。
 - [x] **non-mirrored figure-fade schedule**：`native_2c548.json`／`Montage.PlanFigureFade(1)` 現嚴格記錄 final caller 的 `unit+6==1` branch：work stride640、320×200 left viewport、stage byte offset `8..0 ×10`、palette delta `48..0`，TAI#3@164,157 explicit transparent no-op、secondary FIGANI frame0。`unit+6==0` mirrored branch已有獨立 planner／pixel primitive，未把非鏡像公式套用。
 - [x] **non-mirrored indexed fade primitive**：`RenderFigureFadePass` 現真正執行每輪 B→A（320→640）restore、secondary FIGANI 在 `stage×10` 的 indexed blit、A left viewport→VGA 與 baseline DAC delta；TAI#3 bytes 必須是原始透明 no-op。像素 regression 鎖住 backdrop 保留、stage shift 與 48→2 palette；B→C 的 post-figure `memmove(64000)` 亦已記錄，供下一段 portrait renderer 使用。

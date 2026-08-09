@@ -47,3 +47,42 @@ func TestFIGANIMetaMatchesNativeFrameHeaders(t *testing.T) {
 		}
 	}
 }
+
+// delays.json is the presentation bridge for native FIGANI descriptor +6.
+// Keep the archive comparison separate from meta.json so a stale timing
+// export cannot silently change the full-screen attack cadence.
+func TestFIGANIDelaysMatchNativeFrameHeaders(t *testing.T) {
+	const archivePath = "../../../org_game/炎龍騎士團/FLAME2/FIGANI.DAT"
+	if _, err := os.Stat(archivePath); err != nil {
+		t.Skip("player-provided FIGANI.DAT is absent")
+	}
+	raw, err := os.ReadFile("../../assets/figani/delays.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var delays map[string][]int
+	if err := json.Unmarshal(raw, &delays); err != nil {
+		t.Fatal(err)
+	}
+	if len(delays) == 0 {
+		t.Fatal("FIGANI delay metadata is empty")
+	}
+	for key, want := range delays {
+		resource, err := strconv.Atoi(key)
+		if err != nil {
+			t.Fatalf("invalid FIGANI delay key %q: %v", key, err)
+		}
+		animation, err := figani.DecodeResource(archivePath, resource)
+		if err != nil {
+			t.Fatalf("FIGANI %d: %v", resource, err)
+		}
+		if len(want) != len(animation.Frames) {
+			t.Fatalf("FIGANI %d delay frames=%d, native=%d", resource, len(want), len(animation.Frames))
+		}
+		for i, frame := range animation.Frames {
+			if want[i] != frame.Delay {
+				t.Fatalf("FIGANI %d frame %d delay=%d, native=%d", resource, i, want[i], frame.Delay)
+			}
+		}
+	}
+}

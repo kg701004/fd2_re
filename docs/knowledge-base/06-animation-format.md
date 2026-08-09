@@ -57,6 +57,21 @@ AFM - Animation File Manager Version 1.00 Copyright (C) 1993 Lo Yuan Tsung 09/29
 > (如 013:f11 劈擊 dx=89 伸向左、f12-14 突刺 dy 38→63),引擎只要每幀貼在 (dx,dy),不需任何錨點/位移計算。
 > remake 資產管線須把 (dx,dy) 一併導出(`remake/assets/figani/meta.json`),別只導像素。
 
+### 2026-08-09：戰鬥呈現開始消費原始幀延遲（E1）
+
+`remake/assets/figani/delays.json` 是從固定版本的 `FIGANI.DAT`（雜湊見
+[`fd2-reference-files.json`](../data/fd2-reference-files.json)）逐幀擷取的 descriptor
+`+6` 值，現有 22 個已匯出 PNG 動畫逐幀對齊。`cmd/fd2` 的回歸會在玩家提供原始
+封存檔時逐筆比對延遲與幀數；缺檔只跳過該項原版資產比對，不把別的版本資料當成
+相同位址的事實。匯出工具是版控中的 `tools/decode_figani.py`（Python `struct`，
+以每個資源相對位址的 descriptor `+6` 讀取）；這是資源內偏移，不是 `FD2.EXE`
+線性位址，也不取代官方 IDA 對 `0x2b9a1` 的控制流程證據。
+
+`internal/figani.DisplayScheduler` 只把原始延遲轉成顯示時脈，並保留明示的
+`FD2_BATTLE_FPT` 速度倍率。全螢幕攻擊演出現在要求 PNG 幀數與延遲表一一配對；
+缺配對即不建立演出，不再以固定 15 幀補猜。這一刀只關閉幀選擇與停留時間的
+呈現邊界，不證明命中幀、傷害、音效、台座或整個原版畫面已達 E2。
+
 **3-byte 迷你資源**(如 `FIGANI_002` = `00 00 0A`):動畫之間的群組分隔 / 索引標記,非動畫本體。
 
 ## 幀像素 codec(已完整破解)

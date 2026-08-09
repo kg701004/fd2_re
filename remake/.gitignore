@@ -1,6 +1,11 @@
 # 遊戲資產(玩家自備原版後由 tools/ 產生)+ 建置產物,不入庫;引擎原始碼才入庫
 # 用 assets/* 擋「內容」(map.json/units.json/sprites/tileset 等 ROM 衍生),但保留目錄例外能力
 assets/*
+# FIGANI 描述元（descriptor）+6 延遲表是小型、非像素的證據匯出；納入版控後，呈現橋接可在
+# 沒有著作權原始封存檔的情況下重現。PNG 動畫幀仍維持忽略。
+!assets/figani/
+assets/figani/*
+!assets/figani/delays.json
 # 例外:原創劇本(可擴充事件 DSL 實例)入庫
 !assets/scenarios/
 # 例外:劇情對白文本(使用者確認 FD2 版權已過期,SRPG 對白允許公開;2026-07-03)

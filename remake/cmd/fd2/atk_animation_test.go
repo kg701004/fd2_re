@@ -1,0 +1,32 @@
+package main
+
+import (
+	"testing"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+func TestNewAtkAnimRequiresNativeDelayPairing(t *testing.T) {
+	t.Setenv("FD2_BATTLE_FPT", "2")
+	g := &Game{
+		figani: map[int][]*ebiten.Image{
+			13: {ebiten.NewImage(1, 1), ebiten.NewImage(1, 1), ebiten.NewImage(1, 1)},
+		},
+		figaniDelays: map[int][]int{13: {1, 2, 1}},
+	}
+	a := g.newAtkAnim(4, 96, "亞雷斯", "盜賊", 48, 48, 1, 0, 2, 0, 28, 8, 28, 0, true)
+	if a == nil || a.figaniTimeline == nil {
+		t.Fatal("paired FIGANI delay schedule did not create an attack presentation")
+	}
+	if a.bodyTicks != 8 || a.total != 16 || a.frameIndex != 0 {
+		t.Fatalf("attack timeline body=%d total=%d frame=%d", a.bodyTicks, a.total, a.frameIndex)
+	}
+	if got, ok := a.figaniTimeline.FrameStart(2); !ok || got != 6 {
+		t.Fatalf("frame 2 start=%d/%v, want 6/true", got, ok)
+	}
+
+	g.figaniDelays = nil
+	if got := g.newAtkAnim(4, 96, "亞雷斯", "盜賊", 48, 48, 1, 0, 2, 0, 28, 8, 28, 0, true); got != nil {
+		t.Fatal("unpaired FIGANI PNGs received a guessed attack timeline")
+	}
+}

@@ -39,6 +39,7 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/dato"
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
+	"github.com/wicanr2/fd2_re/remake/internal/figani"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
 )
 
@@ -331,21 +332,22 @@ type Game struct {
 	result             string // 勝負:""/win/lose
 	msg                string // 短訊息(攻擊傷害等)
 	// 地圖單位 sprite(FDICON 待機分鏡):fig index → 幀序列
-	sprites  map[int][]*ebiten.Image
-	figani   map[int][]*ebiten.Image         // 攻擊全身動畫(FIGANI):fig → 幀序列
-	atk      *atkAnim                        // 進行中的攻擊演出
-	bg       *ebiten.Image                   // 戰鬥背景(BG.DAT,by 戰場;map0=BG_004 森林)
-	tai      *ebiten.Image                   // 我方腳下台座(TAI.DAT;0x29164 載 0x28c46,doc35 §3.3)
-	panel    *ebiten.Image                   // 狀態欄框素材(FDOTHER#5 LMI1 #22,149×42;含bevel+HP/MP標籤+槽,doc35 §4)
-	dlgBox   *ebiten.Image                   // 對話框框素材(FDOTHER#5 LMI1 #21,310×99;orig 下框(5,112)@320)
-	dlgGrad  *ebiten.Image                   // 對話框內部漸層(比對頭像底色 40,69,138→56,85,154 消接縫色差;lazy 建)
-	fontNm   *Font                           // 狀態欄名字(整數尺寸 face,scale1 銳利)
-	digits   [10]*ebiten.Image               // 狀態欄數字 0-9(LMI1 #31-40 原版 digit cell,白/藍影)
-	redSil   map[*ebiten.Image]*ebiten.Image // 命中閃紅的全紅剪影快取(orig=VGA 色盤閃紅)
-	redFlash *ebiten.Image                   // 命中全螢幕紅罩(orig=DAC 整組色盤設紅→整片泛紅)
-	dim      *ebiten.Image                   // 全螢幕暗化/底板共用(回合橫幅、單位面板)
-	figMeta  map[int][][2]int                // FIGANI 每幀內嵌絕對螢幕座標 (dx,dy)@320(doc06;動畫走位全靠它)
-	font     *Font                           // 原版點陣中文字型(doc 08)
+	sprites      map[int][]*ebiten.Image
+	figani       map[int][]*ebiten.Image         // 攻擊全身動畫(FIGANI):fig → 幀序列
+	figaniDelays map[int][]int                   // 原始 FIGANI descriptor +6 delay，與 PNG 幀數一一對齊
+	atk          *atkAnim                        // 進行中的攻擊演出
+	bg           *ebiten.Image                   // 戰鬥背景(BG.DAT,by 戰場;map0=BG_004 森林)
+	tai          *ebiten.Image                   // 我方腳下台座(TAI.DAT;0x29164 載 0x28c46,doc35 §3.3)
+	panel        *ebiten.Image                   // 狀態欄框素材(FDOTHER#5 LMI1 #22,149×42;含bevel+HP/MP標籤+槽,doc35 §4)
+	dlgBox       *ebiten.Image                   // 對話框框素材(FDOTHER#5 LMI1 #21,310×99;orig 下框(5,112)@320)
+	dlgGrad      *ebiten.Image                   // 對話框內部漸層(比對頭像底色 40,69,138→56,85,154 消接縫色差;lazy 建)
+	fontNm       *Font                           // 狀態欄名字(整數尺寸 face,scale1 銳利)
+	digits       [10]*ebiten.Image               // 狀態欄數字 0-9(LMI1 #31-40 原版 digit cell,白/藍影)
+	redSil       map[*ebiten.Image]*ebiten.Image // 命中閃紅的全紅剪影快取(orig=VGA 色盤閃紅)
+	redFlash     *ebiten.Image                   // 命中全螢幕紅罩(orig=DAC 整組色盤設紅→整片泛紅)
+	dim          *ebiten.Image                   // 全螢幕暗化/底板共用(回合橫幅、單位面板)
+	figMeta      map[int][][2]int                // FIGANI 每幀內嵌絕對螢幕座標 (dx,dy)@320(doc06;動畫走位全靠它)
+	font         *Font                           // 原版點陣中文字型(doc 08)
 
 	nativeChapterRestore *campaign.NativeChapterSlotRestorePlan // 四槽 LOAD 的已驗證戰間狀態；未知 raw bytes 僅保存、不猜接
 }
@@ -360,10 +362,13 @@ type atkAnim struct {
 	defHP0, defHP1   int // 守方攻擊前/後 HP(impact 抽乾動畫)
 	defMax           int
 	timer, total     int
-	fpt              int    // 播放速度(tick/幀;FD2_BATTLE_FPT 可調)
-	atkOwn           bool   // 攻方是否我方(狀態欄按陣營:我方欄右上/敵方欄左下)
-	terrain          int    // 攻擊格地形索引(戰鬥背景 = 戰場地形,跟 FDFIELD 戰場資料有關)
-	after            func() // 原版 action handler 完成後才進 selector1；不得在演出前提交
+	fpt              int                      // 播放速度(tick/幀;FD2_BATTLE_FPT 可調)
+	atkOwn           bool                     // 攻方是否我方(狀態欄按陣營:我方欄右上/敵方欄左下)
+	terrain          int                      // 攻擊格地形索引(戰鬥背景 = 戰場地形,跟 FDFIELD 戰場資料有關)
+	figaniTimeline   *figani.DisplayScheduler // 已證實 FIGANI 幀延遲；不承載命中／傷害語意
+	frameIndex       int                      // 目前已呈現的 FIGANI 幀
+	bodyTicks        int                      // 幀本體的精確延遲總長，尾段停格另計
+	after            func()                   // 原版 action handler 完成後才進 selector1；不得在演出前提交
 }
 
 // storyWalkJob 場景走位動畫(doc46 §5.3):cutscene 固定路徑位移,非玩家可控,重用
@@ -4648,20 +4653,31 @@ func battleFPT() int {
 }
 
 // newAtkAnim 建立全螢幕戰鬥演出(所有角色通用):攻方=攻擊動作(組×3+1)、守方=待機(組×3),
-// 演出長度=幀數×fpt+尾段停格;位置/走位由 FIGANI 幀內嵌 (dx,dy) 資料驅動(doc06)。
+// 幀長由 FIGANI descriptor +6 與明確的 fpt 顯示倍率決定；位置/走位由幀內嵌 (dx,dy)
+// 資料驅動(doc06)。缺少一一配對的延遲表時返回 nil，呼叫端必須明確記錄呈現缺口，
+// 不得宣稱畫面已播放。
 func (g *Game) newAtkAnim(atkGroup, defGroup int, atkName, defName string,
 	atkHP, atkMax, atkLV, atkMP, defLV, defMP, defHP0, defHP1, defMax, terrain int, atkOwn bool) *atkAnim {
 	fpt := battleFPT()
 	af := figaniIndex(atkGroup) + 1
-	n := len(g.figani[af])
-	if n == 0 {
-		n = 15
+	frames := g.figani[af]
+	delays, ok := g.figaniDelays[af]
+	if len(frames) == 0 || !ok || len(delays) != len(frames) {
+		// Never invent a 15-frame animation or silently fall back to a fixed
+		// delay: an unpaired PNG/export schedule is not an original attack.
+		return nil
 	}
-	total := (n + 4) * fpt // 尾段停格 4 幀時間
+	timeline, err := figani.NewDisplayScheduler(delays, fpt)
+	if err != nil {
+		return nil
+	}
+	bodyTicks := timeline.BodyTicks()
+	total := bodyTicks + 4*fpt // 尾段停格 4 幀時間
 	return &atkAnim{atkFig: af, defFig: figaniIndex(defGroup), atkName: atkName, defName: defName,
 		atkHP: atkHP, atkMax: atkMax, atkLV: atkLV, atkMP: atkMP, defLV: defLV, defMP: defMP,
 		defHP0: defHP0, defHP1: defHP1, defMax: defMax, timer: total, total: total,
-		fpt: fpt, terrain: terrain, atkOwn: atkOwn}
+		fpt: fpt, terrain: terrain, atkOwn: atkOwn, figaniTimeline: timeline,
+		bodyTicks: bodyTicks}
 }
 
 func (g *Game) finishAttackPresentation() {
@@ -4788,6 +4804,41 @@ func loadFIGANI() map[int][]*ebiten.Image {
 		out[f.id] = append(out[f.id], f.img)
 	}
 	return out
+}
+
+// loadFIGANIDelays loads descriptor +6 values exported from the fixed
+// player-provided FIGANI.DAT. It is deliberately separate from the PNG
+// presentation assets: a missing, malformed, or mismatched schedule must not
+// be replaced with a guessed frame count or delay.
+func loadFIGANIDelays() (map[int][]int, error) {
+	raw, err := os.ReadFile(assetPath("assets/figani/delays.json"))
+	if err != nil {
+		return nil, err
+	}
+	var encoded map[string][]int
+	if err := json.Unmarshal(raw, &encoded); err != nil {
+		return nil, err
+	}
+	out := make(map[int][]int, len(encoded))
+	for key, delays := range encoded {
+		id, err := strconv.Atoi(key)
+		if err != nil || id < 0 {
+			return nil, fmt.Errorf("invalid FIGANI delay resource %q", key)
+		}
+		if len(delays) == 0 {
+			return nil, fmt.Errorf("FIGANI %d has no frame delays", id)
+		}
+		for frame, delay := range delays {
+			if delay <= 0 {
+				return nil, fmt.Errorf("FIGANI %d frame %d has invalid delay %d", id, frame, delay)
+			}
+		}
+		out[id] = append([]int(nil), delays...)
+	}
+	if len(out) == 0 {
+		return nil, errors.New("FIGANI delay table is empty")
+	}
+	return out, nil
 }
 
 // loadStoryScript 讀本機劇情文本檔(story-pipe 管線輸出:{"scenes":[{"label","lines":[{speaker,text}]}]})。
@@ -5175,7 +5226,14 @@ func (g *Game) confirm() {
 		g.atk = g.newAtkAnim(actor.BattleFig, tgt.BattleFig, anm, nm,
 			actor.HP, actor.MaxHP, actor.Lv, actor.MP, tgt.Lv, tgt.MP,
 			defHP0, tgt.HP, tgt.MaxHP, g.terrainAt(g.curX, g.curY), true) // 戰鬥背景 = 守方格地形
-		g.atk.after = func() {
+		if g.atk != nil {
+			g.atk.after = func() {
+				g.finishSuccessfulUnitAction(actor, nil)
+			}
+		} else {
+			// Damage was already resolved by the typed battle rule; record the
+			// missing presentation without fabricating a frame sequence.
+			g.loadErr = fmt.Sprintf("FIGANI attack presentation unavailable: %d -> %d", actor.BattleFig, tgt.BattleFig)
 			g.finishSuccessfulUnitAction(actor, nil)
 		}
 		g.sel, g.reach, g.moved = nil, nil, false
@@ -5281,8 +5339,22 @@ func (g *Game) Update() error {
 	if g.atk != nil {
 		g.atk.timer--
 		a := g.atk
+		prog := a.total - a.timer
+		if a.figaniTimeline != nil && prog <= a.bodyTicks {
+			frame, presented, _, err := a.figaniTimeline.Step()
+			if err != nil {
+				// The timeline was validated at load time; a runtime failure must
+				// not run the action continuation with an unpresented frame.
+				a.after = nil
+				g.atk = nil
+				g.loadErr = "FIGANI attack timeline: " + err.Error()
+				return nil
+			}
+			if presented {
+				a.frameIndex = frame
+			}
+		}
 		if a.fpt > 0 { // 三段音效(== 比對每 tick 遞增的 prog,各觸發一次)
-			prog := a.total - a.timer
 			swingAt := (len(g.figani[a.atkFig]) - 4) * a.fpt
 			switch prog {
 			case swingAt: // 揮擊(蓄力揮出)
@@ -5486,6 +5558,9 @@ func (g *Game) Update() error {
 				g.dialog = nil // 清開場對白(避免蓋住演出)
 				fig, _ := strconv.Atoi(v)
 				g.atk = g.newAtkAnim(fig, 96, "亞雷斯", "盜賊", 48, 48, 1, 0, 2, 0, 28, 8, 28, 0, true)
+				if g.atk == nil {
+					g.loadErr = fmt.Sprintf("FD2_SHOT_ATTACK FIGANI presentation unavailable: %d", fig)
+				}
 			}
 			if os.Getenv("FD2_SHOT_ATKSEL") != "" { // 截圖驗證:選單位→原地開環→模擬環選「攻擊」(ringSel==1)
 				// 關環,進攻擊目標選擇階段(驗證武器攻擊距離高亮,doc32;搭配 FD2_SHOT_CUR 指定選哪個單位)。
@@ -6921,14 +6996,13 @@ func (g *Game) drawBattleScene(screen *ebiten.Image) {
 	const sc = 2.0 // doc35:無 runtime 縮放,FIGANI 原生尺寸 ×2(原版 320→畫布 640)
 
 	// 資料驅動動畫(doc06,所有角色通用):每幀貼幀標頭內嵌的絕對螢幕座標 (dx,dy)@320 ×2,
-	// 走位/伸擊/突刺全在資料裡。播放速度 = a.fpt(tick/幀,FD2_BATTLE_FPT 可調);
-	// 命中幀 = 攻擊動畫的倒數第 4 幀(FIGANI_013:f11 黃劈擊弧,其後 3 幀為突刺收勢——通用推定)。
+	// 走位/伸擊/突刺全在資料裡。幀停留消費原始 descriptor +6 delay，並以
+	// FD2_BATTLE_FPT 作為明確的顯示速度倍率；未配對的資源不會建立攻擊演出。
 	atkFrames := g.figani[a.atkFig]
-	fpt := a.fpt
-	if fpt < 1 {
-		fpt = 3
+	atkFi := a.frameIndex
+	if atkFi < 0 {
+		atkFi = 0
 	}
-	atkFi := prog / fpt
 	if len(atkFrames) > 0 && atkFi >= len(atkFrames) {
 		atkFi = len(atkFrames) - 1
 	}
@@ -6936,7 +7010,12 @@ func (g *Game) drawBattleScene(screen *ebiten.Image) {
 	if impactFi < 1 {
 		impactFi = 1
 	}
-	impactS := impactFi * fpt
+	impactS := impactFi * a.fpt
+	if a.figaniTimeline != nil {
+		if start, ok := a.figaniTimeline.FrameStart(impactFi); ok {
+			impactS = start
+		}
+	}
 	impactE := impactS + 8
 	// (1) 狀態欄先畫(會被 figure 蓋住一部分,如原版)
 	if g.font != nil {
@@ -7335,6 +7414,11 @@ func loadGame() *Game {
 	g.sprites = loadSprites()
 	g.portraits = loadPortraits()
 	g.figani = loadFIGANI()
+	if delays, e := loadFIGANIDelays(); e == nil {
+		g.figaniDelays = delays
+	} else if g.loadErr == "" {
+		g.loadErr = "FIGANI delays: " + e.Error()
+	}
 	g.figMeta = loadFigMeta()
 	g.nativeUIPalette = loadNativeUIPalette()
 	g.nativeActionCells = loadNativeActionCells(g.nativeUIPalette)
@@ -7952,7 +8036,12 @@ func (g *Game) aiStep() {
 			g.atk = g.newAtkAnim(u.BattleFig, tgt.BattleFig, anm, nm,
 				u.HP, u.MaxHP, u.Lv, u.MP, tgt.Lv, tgt.MP,
 				hp0, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), u.Camp == battle.Own)
-			g.atk.after = finish
+			if g.atk != nil {
+				g.atk.after = finish
+			} else {
+				g.loadErr = fmt.Sprintf("AI FIGANI attack presentation unavailable: %d -> %d", u.BattleFig, tgt.BattleFig)
+				finish()
+			}
 			g.checkResult()
 			return
 		}

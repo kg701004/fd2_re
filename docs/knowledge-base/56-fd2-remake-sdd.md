@@ -2144,6 +2144,14 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
 
    FIGANI scheduler boundary: official IDA at `0x2b9a1` shows `arg4==0` only clears the subframe counter and performs no render. On the advancing path, native code selects the current frame first, calls `0x2935b`, then reads descriptor `+6` as the delay; only after the rendered subframe reaches that delay does it reset subframe and wrap the frame index. `internal/figani.NativeScheduler.Step` implements this state machine as a pure, caller-owned primitive. It does not infer `0x2935b` presentation semantics or authorize an ending renderer.
 
+   **2026-08-09 battle presentation bridge (E1):** `remake/assets/figani/delays.json` now
+   records the descriptor `+6` delays for the 22 exported FIGANI resources, with a
+   regression against the fixed player-provided `FIGANI.DAT` hash. The battle full-screen
+   PNG adapter consumes `internal/figani.DisplayScheduler`, which scales only the display
+   clock by explicit `FD2_BATTLE_FPT` and rejects a missing or mismatched delay/PNG pair.
+   This closes frame selection and hold duration only; it does not authorize inferred hit
+   timing, damage/HP commit, sound, palette flash, TAI placement, or E2 visual parity.
+
    Battle-entry split-slide boundary: official IDA at `0x1f42d`/`0x1f1cc` fixes FDOTHER#5 LMI1 entry `0x52`, stride 456, five offsets `100,75,50,25,0`, and placements `(85-offset,82)` plus `(165+offset,81)`. `fdother.NativeBattleEntrySplitSlideSteps`, clipped cell blit, and `RunNativeBattleEntrySplitSlide` preserve one present/restore pair per pass. Direct caller `0x1a30b` operates on battle records and the 456-stride battle surface; this is not evidence of a preparation-selection-window animation. MAP/TURN labels and native VGA restore remain caller-owned and fail-closed. A deterministic remake shell capture is tracked as [`preparation-remake.png`](../figures/preparation-remake.png) (Xvfb, `FD2_CAMP_NODE=preparation_ch02`, frame 30, 640×400); it is not an original visual oracle.
 
    Preparation record gate boundary: the official `0x1a866` loop reads only raw unit offsets `+0x25`, `+0x05`, `+0x06`, `+0x40`, `+0x42`; it accepts when `+0x25!=0`, selector equals `+0x06`, and `+0x05 bit0==0`, then writes `+0x40 := max(0,+0x40-(+0x42/10))` and stores the divisor. `fdother.ParseNativePreparationRecord`, `NativePreparationEligible`, and `NativePreparationAdjustedWord40` preserve this ABI without naming the fields as active/alive, deployment, coordinates, or gameplay stats.

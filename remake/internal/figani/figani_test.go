@@ -83,6 +83,56 @@ func TestNativeSchedulerInitializesWithoutRenderingAndAdvancesAfterRender(t *tes
 	}
 }
 
+func TestDisplaySchedulerHonoursNativeDelaysAndScale(t *testing.T) {
+	s, err := NewDisplayScheduler([]int{1, 2, 1}, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.BodyTicks() != 8 {
+		t.Fatalf("body ticks=%d, want 8", s.BodyTicks())
+	}
+	for frame, want := range []int{0, 0, 1, 1, 1, 1, 2, 2} {
+		got, presented, done, stepErr := s.Step()
+		if stepErr != nil || !presented || got != want {
+			t.Fatalf("tick %d frame/present/done=%d/%v/%v err=%v, want frame %d", frame, got, presented, done, stepErr, want)
+		}
+		if frame < 7 && done {
+			t.Fatalf("tick %d ended the body early", frame)
+		}
+		if frame == 7 && !done {
+			t.Fatal("last body tick did not report done")
+		}
+	}
+	if got, presented, done, err := s.Step(); err != nil || presented || !done || got != 2 {
+		t.Fatalf("tail step frame/present/done=%d/%v/%v err=%v", got, presented, done, err)
+	}
+	for _, want := range []struct {
+		frame int
+		start int
+	}{{0, 0}, {1, 2}, {2, 6}} {
+		if got, ok := s.FrameStart(want.frame); !ok || got != want.start {
+			t.Fatalf("frame %d start=%d/%v, want %d/true", want.frame, got, ok, want.start)
+		}
+	}
+}
+
+func TestDisplaySchedulerRejectsUnknownDelayState(t *testing.T) {
+	for name, delays := range map[string][]int{
+		"empty":    nil,
+		"zero":     {1, 0},
+		"negative": {1, -1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := NewDisplayScheduler(delays, 1); err == nil {
+				t.Fatal("invalid delay state was accepted")
+			}
+		})
+	}
+	if _, err := NewDisplayScheduler([]int{1}, 0); err == nil {
+		t.Fatal("zero display scale was accepted")
+	}
+}
+
 func TestFrameBlitAtBaseShiftsNativeWorkSurface(t *testing.T) {
 	f := Frame{X: 2, Y: 3, Width: 1, Height: 1, Pixels: []byte{9}, Mask: []byte{1}}
 	dst := make([]byte, 640*5)

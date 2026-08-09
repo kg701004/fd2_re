@@ -87,8 +87,13 @@ func TestNativeEvent61MissingItemRunsOnlyEditableFDTXT2(t *testing.T) {
 
 func TestNativeEvent61AttackWaitsForPresentationCompletion(t *testing.T) {
 	g, trigger := nativeEvent61PlayerGame(t, 0x20)
+	// The map-26 fixture's native battle selector is 113, whose FIGANI PNG
+	// resource is not yet exported. Use the already paired player resources so
+	// this test isolates selector1 deferral rather than silently approving a
+	// missing presentation asset.
+	trigger.BattleFig = 4
 	target := &battle.Unit{
-		Name: "測試敵兵", Camp: battle.Enemy, X: 2, Y: 46,
+		Name: "測試敵兵", BattleFig: 96, Camp: battle.Enemy, X: 2, Y: 46,
 		HP: 20, MaxHP: 20, OnField: true,
 	}
 	g.st.Units = append(g.st.Units, target)

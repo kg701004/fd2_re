@@ -52,6 +52,104 @@ func (s *NativeScheduler) Step(animation *Animation, advance bool) (int, bool, e
 	return selected, true, nil
 }
 
+// DisplayScheduler adapts the native descriptor delay to a caller's display
+// ticks.  The native routine advances one subframe only after the current
+// frame has been presented; ticksPerNative lets a renderer retain an explicit
+// speed control without discarding the raw +6 delay.  It contains no pixel or
+// hit-effect semantics, so it is safe to use for a presentation-only bridge.
+type DisplayScheduler struct {
+	native         NativeScheduler
+	animation      Animation
+	ticksPerNative int
+	frameStarts    []int
+	bodyTicks      int
+	displayTick    int
+	currentFrame   int
+	done           bool
+}
+
+// NewDisplayScheduler constructs a strict delay timeline from raw descriptor
+// delays.  Zero or negative delays are rejected instead of being normalised.
+func NewDisplayScheduler(delays []int, ticksPerNative int) (*DisplayScheduler, error) {
+	if len(delays) == 0 {
+		return nil, errors.New("figani: display scheduler has no frames")
+	}
+	if ticksPerNative <= 0 {
+		return nil, errors.New("figani: display scheduler has invalid tick scale")
+	}
+	starts := make([]int, len(delays)+1)
+	frames := make([]Frame, len(delays))
+	total := 0
+	for i, delay := range delays {
+		if delay <= 0 {
+			return nil, fmt.Errorf("figani: frame %d has invalid delay %d", i, delay)
+		}
+		starts[i] = total
+		frames[i] = Frame{Delay: delay}
+		total += delay * ticksPerNative
+	}
+	starts[len(delays)] = total
+	return &DisplayScheduler{
+		animation:      Animation{Frames: frames},
+		ticksPerNative: ticksPerNative,
+		frameStarts:    starts,
+		bodyTicks:      total,
+	}, nil
+}
+
+// Step presents one caller display tick and returns the selected native frame.
+// The final tick returns done=true; a caller may keep drawing CurrentFrame
+// during a separately owned tail hold without advancing this state machine.
+func (s *DisplayScheduler) Step() (frame int, presented, done bool, err error) {
+	if s == nil || len(s.animation.Frames) == 0 || s.ticksPerNative <= 0 || s.bodyTicks <= 0 {
+		return 0, false, false, errors.New("figani: invalid display scheduler state")
+	}
+	if s.done {
+		return s.currentFrame, false, true, nil
+	}
+	if s.displayTick%s.ticksPerNative == 0 {
+		selected, rendered, stepErr := s.native.Step(&s.animation, true)
+		if stepErr != nil {
+			return 0, false, false, stepErr
+		}
+		if !rendered {
+			return 0, false, false, errors.New("figani: native display step did not present")
+		}
+		s.currentFrame = selected
+	}
+	s.displayTick++
+	if s.displayTick >= s.bodyTicks {
+		s.done = true
+	}
+	return s.currentFrame, true, s.done, nil
+}
+
+// BodyTicks returns the exact scaled duration before a caller-owned tail hold.
+func (s *DisplayScheduler) BodyTicks() int {
+	if s == nil {
+		return 0
+	}
+	return s.bodyTicks
+}
+
+// FrameStart returns the scaled display tick at which a frame is first
+// presented.  It is useful for a separately evidenced visual marker, but does
+// not itself assign attack, damage or sound semantics.
+func (s *DisplayScheduler) FrameStart(frame int) (int, bool) {
+	if s == nil || frame < 0 || frame >= len(s.animation.Frames) {
+		return 0, false
+	}
+	return s.frameStarts[frame], true
+}
+
+// CurrentFrame returns the last selected frame without advancing the schedule.
+func (s *DisplayScheduler) CurrentFrame() int {
+	if s == nil {
+		return 0
+	}
+	return s.currentFrame
+}
+
 // Frame holds the 13-byte FIGANI header fields consumed by 0x2935b. X/Y are
 // signed native 320x200 coordinates; Pixels is a decoded W×H indexed image
 // where Mask distinguishes transparent codec output from palette index zero.
