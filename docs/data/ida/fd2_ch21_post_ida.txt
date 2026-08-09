@@ -78,6 +78,24 @@
   `postbattle_ch22_persist` binding，因 frontier 的一般玩家 runtime trace、
   postbattle record 內容與 indexed 畫面狀態仍未閉合。
 
+## 已證實：`0x24618` 的九段 indexed transition 時序與固定 present
+
+- 合法 IDA Pro 9.4 偽代碼與 Docker Capstone 在 `0x24618..0x24754` 對上：
+  配置 `0x25680` bytes 的暫存區，先以 `0x11EEE` 建立初始 indexed work，
+  再呼叫 `0x25A96(dword_53B13,11,1)`。迴圈由 raw `EBX=9` 倒數到 `1`，
+  每段先複製完整 work buffer，再呼叫 `0x22046`，接著由
+  `0x11EB0(0xA0504,0x140,dword_53A49+0x8088,0x1C8,0x138,0xC0)`
+  複製 312×192 rows 到固定線性目的地 `0xA0504`，每段等待 5 ms。
+- 迴圈結束後釋放 `0x25680` bytes 暫存區，等待 500 ms；再以
+  `0x11DF2(0,255,delta)` 執行 `delta=0,2,...,62` 的 32 段調色盤更新，
+  每段等待 4 ms，最後呼叫 `0x1D4CB`。這些是**已證實的時序／複製 ABI**，
+  不是 generic fade 或同步替代品。
+- `0x245ce` 的呼叫端仍保留原始 PUSH 順序
+  `8,10,[0x53abd]+3,[0x53ab9]`；本節不把未由完整 caller／runtime state
+  閉合的暫存器／堆疊欄位改名成游標、半徑或角色資料。重製端已有可編輯
+  `indexed_transition` 時序與來源專屬游標橋接，但 frontier record、完整
+  indexed state 與一般玩家 E2 尚未閉合，故不建立正式 campaign binding。
+
 ## 原始布局表（已證實）
 
 IDA `ida_dump_bytes.py` 直接讀取下列線性位址：

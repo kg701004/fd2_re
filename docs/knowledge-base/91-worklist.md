@@ -113,9 +113,11 @@
   分布與事件追加順序給出候選 runtime frontier **66→72→73→79**（強推論），
   不再把槽位數寫成完全未知。證據見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。layout、special
-  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選與 compiler regression；仍缺
-  各 frontier 的一般玩家 runtime record、indexed 畫面狀態與正式
-  `postbattle_ch22_persist` binding。`0x24618` 的 raw 相對游標 globals
+  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選與 compiler regression；
+  `0x24618` 的九段 LUT 9→1、5ms／段、500ms 尾端、0..62／4ms 調色盤序列與
+  固定目的地 `0xA0504` 已由 IDA／Capstone 閉合；仍缺各 frontier 的一般玩家
+  runtime record、indexed 畫面狀態與正式 `postbattle_ch22_persist` binding。
+  `0x24618` 的 raw 相對游標 globals
   （`0x53ab9/0x53abd`）與 ch21 呼叫點 `0x245ce` 的 Y+3 變換已由 IDA 證實；
   重製端已有帶 provenance 且依呼叫位址白名單核對偏移的 fail-closed 動態欄位橋接，因此
   不接 `town_ch23`，維持失敗即關閉。

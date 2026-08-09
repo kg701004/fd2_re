@@ -3287,9 +3287,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`native_join_base_units.json`](../../remake/assets/data/native_join_base_units.json)
   提供 map17 raw +8 base，未知角色仍 fail-closed。
 - Docker/Xvfb 真實回歸通過 `battle_ch18→postbattle_ch18→town_ch19`、演出、
-  JOIN21／7、town save/load，以及 `TestNativeJoinBaseTable*`。postbattle 稽核
-  現為24節點19 active／5 blocked；story 稽核為121節點、49個 handler binding、
-  63個 fallback。未修改一般玩家 DOSBox E2 仍未完成。
+  JOIN21／7、town save/load，以及 `TestNativeJoinBaseTable*`。（歷史快照；後續
+  `ch16_post` 接入已取代）當時的舊 postbattle 覆蓋統計不再作為現況依據；story
+  稽核為121節點、49個 handler binding、63個 fallback。未修改一般玩家
+  DOSBox E2 仍未完成。
 - 本輪所有測試、IDA、Capstone、JSON／Markdown 稽核均在一次性 Docker 容器內；
   `/tmp/fd2cap` 不存在。工作結束時不得留下本輪 FD2 容器；其他專案的既有
   `modest_hermann` IDA 容器不屬本輪，未予停止。
@@ -3330,7 +3331,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `postbattle_ch22_persist` 仍保持失敗即關閉：`0x233c6` 的 16 格 layout、
   special slot72、raw camera 與 acting 65/66 已由 IDA／Docker exporter 轉成
   E1 可編輯候選，並有 compiler regression；各 frontier 的同狀態 raw record、
-  一般玩家 runtime trace 與 indexed 畫面狀態仍未閉合。`0x24618` 的 raw
+  一般玩家 runtime trace 與 indexed 畫面狀態仍未閉合。`0x24618` 的九段 LUT
+  9→1、5ms／段、500ms 尾端、0..62／4ms 調色盤序列與固定目的地 `0xA0504`
+  已由 IDA／Capstone 閉合；其 raw
   相對游標 globals（`0x53ab9/0x53abd`）與 ch21 呼叫點 `0x245ce` 的 Y+3
   變換已由 IDA 證實；重製端已補上依呼叫位址核對、帶 provenance 的 fail-closed
   動態欄位橋接，但正式 binding 仍未建立。不得只因 frontier 已可估算就建立

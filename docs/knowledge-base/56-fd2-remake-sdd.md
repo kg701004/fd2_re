@@ -3119,7 +3119,8 @@ E2。當時其餘 blocked postbattle 包含玩家第17、18、22、23、24、29�
   JOIN21／7、持久隊伍與 save/load。這不等於未修改一般玩家 DOSBox E2，也不
   解除玩家第17、22、23、24、29戰的 blocked 狀態。
 
-本次索引修正後，24 個標準 postbattle 節點為 19 active／5 blocked；
+（歷史快照；後續 `ch16_post` 接入已取代）本次索引修正當時的舊覆蓋統計
+不再作為現況依據；
 story/cutscene 稽核為 121 節點、9 個獨立 script、49 個 handler binding、
 63 個 fallback。這些是覆蓋統計，不是完成百分比。
 
@@ -3156,7 +3157,9 @@ blocked 為玩家第22、23、24、29戰；這些統計是覆蓋範圍，不是�
 授權 IDA Pro 9.4 已以固定雜湊的 `FD2.EXE` 重建一次性資料庫，閉合
 `0x244b6` 的直接呼叫序列、`0x24512→sub_233C6` 的三組 16-byte raw layout
 表、FDTXT_022 索引4/5/6、ACTING raw immediate 65/66、兩個 PAN、
-`0x245ce→0x24618` 及 `0x1f882→sync→chapter22`。同一工具鏈再追出
+`0x245ce→0x24618` 的九段 indexed transition（LUT 9→1、每段 5 ms、
+固定目的地 `0xA0504`、500 ms 尾端與 0..62 調色盤序列）及
+`0x1f882→sync→chapter22`。同一工具鏈再追出
 `sub_1088D→sub_10B4E→sub_10C50` 的 map21 loader：固定資源 header 是
 16 個持久名冊槽、70 筆控制列，map21 raw group0/1/2/3 的事件追加後候選
 frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊、工具與
