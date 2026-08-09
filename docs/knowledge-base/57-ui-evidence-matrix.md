@@ -140,9 +140,11 @@ cell geometry、frame order 與 font-independent draw path 實際出畫；它們
 重製端現已補上 `fdother.CaptureActionOverlaySnapshot`／
 `fdother.RestoreActionOverlaySnapshot` 的固定 `72×72 = 0x1440` indexed 快照原語與
 失敗即關閉測試。API 要求 caller 明確給出矩形左上角，故不把 cursor、camera 或
-relative blit offset 猜成備份 owner；現行 Ebiten adapter 仍由整幅場景重畫取代
-private-buffer restore，待原版備份 owner 與 DOSBox 同狀態畫面證據閉合後再接正式
-renderer。
+relative blit offset 猜成備份 owner；`ActionOverlaySnapshotOrigin` 現已由 IDA／Capstone
+固定為游標各減一個 24-pixel cell 的 flat byte address（完整位址與雜湊見
+[`fd2_action_overlay_snapshot_ida.txt`](../data/ida/fd2_action_overlay_snapshot_ida.txt)）。
+現行 Ebiten adapter 仍由整幅場景重畫取代 private-buffer restore，待正式 runtime
+consumer 與 DOSBox 同狀態畫面證據閉合後再接 renderer。
 
 2026-07-25 renderer gate 縮小：native skin adapter 現至少直接套用 `0x1b83d` 的「equipped 且
 ID `<0x80`」attack 前提，並在 raw `NativeCommandMask` 非零時以其作 spell availability；沒有 raw

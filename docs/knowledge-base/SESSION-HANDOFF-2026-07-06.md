@@ -3621,3 +3621,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   接進目前每幀整幅重畫的 Ebiten adapter；因此 UI-03 仍是 partial，正式 renderer
   的快照生命週期與 DOSBox 同狀態視覺差分仍是後續 gate。`56` SDD、`57` UI evidence
   matrix 與 `91` worklist 已同步這個邊界，避免把「有單元測試」誤寫成原版畫面完成。
+
+## 2026-08-09：IDA 重核 action overlay 快照 owner
+
+- 官方 IDA Pro 9.4 與 Docker Capstone 5.0.3 重新讀取 `0x175a9..0x176b4`，固定
+  `0x175a9` 先配置 `0x1440` bytes，從
+  `framebuffer+0x8088+0x18*(dword_53ab9-1)+0x18*0x1c8*(dword_53abd-1)`
+  開始，逐 `0x1c8` stride 複製 `0x48` bytes 共 `0x48` 列；`0x17643` 以同一
+  來源逐列還原。原始位址與指令、雜湊及工具版本已保存於
+  [`fd2_action_overlay_snapshot_ida.txt`](../data/ida/fd2_action_overlay_snapshot_ida.txt)。
+- `fdother.ActionOverlaySnapshotOrigin` 現已保存「可視游標各減一個 24-pixel cell」
+  的 raw byte address，並以 regression 拒絕零／負 cursor；這修正了先前只知道
+  72×72 大小、卻沒有 owner 的文件邊界。現行 Ebiten adapter 仍沒有消費 private
+  snapshot，因而不提升 UI-03 的 E2 狀態。

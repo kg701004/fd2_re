@@ -626,3 +626,12 @@ cursor、camera 或 relative offset 猜成 private-buffer owner。
 原版 backup/restore 的證據。只有在補齊 native owner、同狀態 DOSBox 畫面與
 正式 renderer 的消費端後，才可把 UI-03 提升；單純把 `[x]` 測試項寫進工作清單
 會重新造成「資料原語＝玩家畫面」的記憶混亂。
+
+### 反向追查快照 owner 要看逐列來源，而不是只看配置大小
+
+第一次只看到 `malloc(0x1440)`，只能證實 72×72 大小，不能知道它對應畫面哪一塊。
+IDA／Capstone 逐行重核後才閉合真正 owner：來源從 `0x8088` framebuffer base
+開始，欄列分別是可視游標各減一個 24-pixel cell，來源每列走 `0x1c8`、快照每列
+走 `0x48`，共 `0x48` 列。這讓重製端可以安全提供
+`ActionOverlaySnapshotOrigin`，但仍不應把 flat byte address 直接當成 Ebiten
+像素座標；正式 renderer 還要證明誰持有 snapshot 以及何時 restore。

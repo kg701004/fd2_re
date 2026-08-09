@@ -47,6 +47,22 @@ func TestActionOverlayOriginMatchesNativeAddressExpression(t *testing.T) {
 	}
 }
 
+func TestActionOverlaySnapshotOriginMatchesNativePredecessorCell(t *testing.T) {
+	got, err := ActionOverlaySnapshotOrigin(6, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := 0x8088 + 5*0x18 + 4*0x18*0x1c8
+	if got != want {
+		t.Fatalf("snapshot origin=%#x, want %#x", got, want)
+	}
+	for _, cursor := range [][2]int{{0, 1}, {1, 0}, {-1, 1}} {
+		if _, err := ActionOverlaySnapshotOrigin(cursor[0], cursor[1]); err == nil {
+			t.Fatalf("invalid snapshot cursor %v was accepted", cursor)
+		}
+	}
+}
+
 func TestActionOverlaySnapshotCapturesAndRestoresExplicit72By72Region(t *testing.T) {
 	const stride, height = 100, 100
 	src := make([]byte, stride*height)

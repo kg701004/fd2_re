@@ -1,0 +1,72 @@
+# FD2 action overlay 72×72 snapshot owner（IDA Pro 9.4／Capstone 5）
+
+## 輸入與位址基準
+
+- 輸入：`FD2.EXE`
+- 大小：357074 位元組
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- IDA：使用者合法提供的 IDA Pro 9.4.0.260610，flat linear address；資料庫只在
+  一次性 `fd2-ida-authorized-local` Docker 容器的 `/tmp` 建立。
+- Capstone：5.0.3，使用 `tools/disasm_le.py` 的 FD2 LE linear address；只在
+  `fd2-cap-local` Docker 容器執行。
+- 原始位址、資料位址與檔案雜湊不可套用到其他版本；本檔不改名、不寫回 IDA
+  資料庫註記。
+
+## 重現命令
+
+IDA：以 `tools/ida_probe_functions.py` 查詢：
+
+```text
+0x1741c 0x175a9 0x17643 0x176b4 0x11bfa 0x11c59
+```
+
+Capstone：
+
+```text
+python3 tools/disasm_le.py FD2.EXE range 0x175a9 0x176b4
+python3 tools/disasm_le.py FD2.EXE range 0x176b4 0x177fc
+```
+
+## 已證實的備份／還原 ABI
+
+IDA 與 Capstone 的指令完全對齊：
+
+```text
+0x175a9 sub_175A9：malloc(0x1440)，逐 ebx=0..0x47：
+  memmove(snapshot + ebx*0x48, source, 0x48)
+  source += 0x1c8
+
+source 起點：
+  framebuffer + 0x8088
+  + 0x18 * (dword_53AB9 - 1)
+  + 0x18 * 0x1c8 * (dword_53ABD - 1)
+
+0x17643 sub_17643：逐 ebx=0..0x47：
+  memmove(source, snapshot + ebx*0x48, 0x48)
+  source += 0x1c8
+```
+
+因此 `0x175a9/0x17643` 的 private indexed buffer 固定是 `0x1440 = 72×72`
+bytes；來源每列 stride 是 `0x1c8`，快照列寬是 `0x48`。來源左上角使用可視
+游標 `[0x53ab9]/[0x53abd]` 各減一個 24-pixel cell；它不是 camera scroll
+`[0x53aa9]/[0x53aad]`。
+
+## 呼叫者與邊界
+
+- `0x1741c` 在 `0x174e7` 先呼叫 `0x175a9`；其後四張 cell 每幀貼圖、present，
+  每次迴圈先呼叫 `0x17643`，最後仍再呼叫一次 `0x17643`。
+- `0x176b4` 的 opening/closing caller 包含 `0x18d8c`（`0x18f04`）、
+  `0x1728c`（`0x1734a`）、`0x19df7`（`0x19edc`）與 `0x1bbdc`（`0x1bca1`）。
+  close offset 初值／delta 仍以 `0x176b4` 原始指令為準，不由快照 owner 推導。
+- `0x11bfa/0x11c59` 只修改 cursor/camera 相關 globals 並呼叫 redraw helper；
+  它們不是快照配置器，也不能反向命名游標或鏡頭語意。
+
+## 重製端對映邊界
+
+`fdother.ActionOverlaySnapshotOrigin` 已保存上述「游標各減一格」的 raw byte
+address，`CaptureActionOverlaySnapshot`／`RestoreActionOverlaySnapshot` 已保存
+0x1440 bytes 與逐列 stride regression。這些 API 保留 caller-owned framebuffer，
+不把 flat byte address 偷換成 Ebiten 像素座標。現行 Ebiten action adapter 仍以
+每幀整幅場景重畫避免殘影，尚未把 private buffer 接入正式 renderer；因此本檔
+只關閉快照 owner 的 E0 位址契約，不宣稱 UI-03 已達原版 E2 畫面一致。

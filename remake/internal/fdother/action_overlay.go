@@ -70,6 +70,20 @@ func CaptureActionOverlaySnapshot(src []byte, stride, x, y int) ([]byte, error) 
 	return snapshot, nil
 }
 
+// ActionOverlaySnapshotOrigin implements the exact 0x175a9/0x17643 backup
+// address.  Unlike ActionOverlayOrigin, the native backup rectangle starts
+// one 24-pixel cell above and to the left of the visible cursor origin. The
+// caller still owns the framebuffer base and must not reinterpret this byte
+// address as a screen-space pixel coordinate.
+func ActionOverlaySnapshotOrigin(cursorColumn, cursorRow int) (int, error) {
+	if cursorColumn <= 0 || cursorRow <= 0 {
+		return 0, errors.New("fdother: action overlay snapshot cursor is invalid")
+	}
+	return nativeActionOverlayBase +
+		nativeActionOverlayStep*(cursorColumn-1) +
+		nativeActionOverlayStep*nativeFramebufferStride*(cursorRow-1), nil
+}
+
 // RestoreActionOverlaySnapshot restores a previously captured native 72×72
 // indexed rectangle.  A malformed snapshot is rejected before any write.
 func RestoreActionOverlaySnapshot(dst, snapshot []byte, stride, x, y int) error {
