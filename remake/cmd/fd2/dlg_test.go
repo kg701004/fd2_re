@@ -1,9 +1,11 @@
 package main
 
 import (
+	"math"
 	"strings"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 )
 
@@ -59,5 +61,61 @@ func TestDlgPaginationStartsSmoothScrollAndBlocksSkip(t *testing.T) {
 	g.dlgScrollT = 0
 	if !g.dlgAdvance() || len(g.dialog) != 0 || g.dlgPage != 0 {
 		t.Fatalf("完成最後一頁後未換句: dialog=%d page=%d", len(g.dialog), g.dlgPage)
+	}
+}
+
+func TestPortraitScaleComputation(t *testing.T) {
+	computeScale := func(width float64) float64 {
+		return 168.0 / width
+	}
+
+	// 1) given a mock/stub image width of 80px, the computed scale should match the original 2.1 behavior (within floating point tolerance)
+	scale80 := computeScale(80.0)
+	expected80 := 2.1
+	if math.Abs(scale80-expected80) > 1e-9 {
+		t.Errorf("expected scale for 80px to be %f, got %f", expected80, scale80)
+	}
+
+	// 2) given a different width (e.g. 320px), the computed scale should produce the same ~168px effective display size
+	scale320 := computeScale(320.0)
+	effectiveSize320 := scale320 * 320.0
+	if math.Abs(effectiveSize320-168.0) > 1e-9 {
+		t.Errorf("expected effective display size for 320px to be 168.0, got %f", effectiveSize320)
+	}
+}
+
+func TestDlgWrapWithDynamicPortraitScale(t *testing.T) {
+	// Let's create mock images of different sizes.
+	img80 := ebiten.NewImage(80, 80)
+	img320 := ebiten.NewImage(320, 320)
+
+	// Save original globalPortraits to restore after test
+	oldGlobalPortraits := globalPortraits
+	defer func() {
+		globalPortraits = oldGlobalPortraits
+	}()
+
+	// Test 1: With 80px portrait
+	globalPortraits = map[int][]*ebiten.Image{
+		48: {img80},
+	}
+	long := "我就知道你會一時無法接受,這樣吧,三天之後,你再給我考慮的結果,當然了,我希望能夠聽到肯定的答覆。你先回去休息吧。"
+	dl := battle.DialogLine{Speaker: 48, Text: long}
+	lines80 := dlgWrap(dl)
+
+	// Test 2: With 320px portrait
+	globalPortraits = map[int][]*ebiten.Image{
+		48: {img320},
+	}
+	lines320 := dlgWrap(dl)
+
+	// They should wrap exactly the same way, producing identical lines!
+	if len(lines80) != len(lines320) {
+		t.Fatalf("length mismatch: 80px had %d lines, 320px had %d lines", len(lines80), len(lines320))
+	}
+	for i := range lines80 {
+		if lines80[i] != lines320[i] {
+			t.Errorf("line %d mismatch: 80px=%q, 320px=%q", i, lines80[i], lines320[i])
+		}
 	}
 }

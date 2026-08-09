@@ -1825,16 +1825,25 @@ func equalIntOrder(a, b []int) bool {
 	return true
 }
 
+var globalPortraits map[int][]*ebiten.Image
+
 // dlgWrap 把一句對白依框寬換行成顯示列(繪製與 Enter 分頁共用同一套,確保頁數一致)。
 // 換行寬度與繪製碼一致:下框到框右緣;上框(說話者 id>=32,頭像在右)止於頭像左緣前。
 func dlgWrap(dl battle.DialogLine) []string {
-	const ps = 2.1
+	ps := 2.1
+	sourceWidth := 80.0
+	if globalPortraits != nil {
+		if fr, ok := globalPortraits[dl.Speaker]; ok && len(fr) > 0 {
+			sourceWidth = float64(fr[0].Bounds().Dx())
+			ps = 168.0 / sourceWidth
+		}
+	}
 	upper := dl.Speaker >= 32
 	bx, tx := 10.0, 216.0
 	rightEdge := bx + 620 - 16
 	if upper {
 		tx = 32
-		rightEdge = (float64(logicalW) - 16 - 80*ps) - 8 // 頭像左緣前 8px
+		rightEdge = (float64(logicalW) - 16 - sourceWidth*ps) - 8 // 頭像左緣前 8px
 	}
 	perLine := int((rightEdge - tx) / (fontSize * 1.7))
 	if perLine < 1 {
@@ -4688,6 +4697,7 @@ func loadPortraits() map[int][]*ebiten.Image {
 	for _, f := range frs {
 		out[f.id] = append(out[f.id], f.img)
 	}
+	globalPortraits = out
 	return out
 }
 
@@ -6075,19 +6085,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				gop.GeoM.Translate(bx+8, by+8)
 				screen.DrawImage(g.dlgGrad, gop)
 				// 頭像:側臉,收進框內(不凸出框頂),臉朝文字(對照 orig_02:我方左朝右、對方上框右朝左)。
-				const ps = 2.1 // 80×80 DATO → 168px,收進框高(~176px)內
-				hx, tx, ty := 16.0, 216.0, by+24
-				hy := by + (198-80*ps)/2 // 頭像垂直置中於框內(框高198,頭像168),不凸出框上下邊
-				if upper {
-					hx = float64(logicalW) - 16 - 80*ps
-					tx = 32
-					ty = by + 46
+				ps := 2.1
+				sourceWidth := 80.0
+				var fr []*ebiten.Image
+				if g.portraits != nil {
+					fr = g.portraits[dl.Speaker]
 				}
-				if fr := g.portraits[dl.Speaker]; len(fr) > 0 {
-					mi := 0
+				mi := 0
+				if len(fr) > 0 {
 					if g.mouthOpen && len(fr) > 3 {
 						mi = 3
 					}
+					sourceWidth = float64(fr[mi].Bounds().Dx())
+					ps = 168.0 / sourceWidth
+				}
+				hx, tx, ty := 16.0, 216.0, by+24
+				hy := by + (198-sourceWidth*ps)/2 // 頭像垂直置中於框內(框高198,頭像168),不凸出框上下邊
+				if upper {
+					hx = float64(logicalW) - 16 - sourceWidth*ps
+					tx = 32
+					ty = by + 46
+				}
+				if len(fr) > 0 {
 					// 原生 DATO 面朝右;要臉朝文字:下框(頭像在左)朝右=鏡像、上框(頭像在右)朝左=不鏡像。
 					po := &ebiten.DrawImageOptions{}
 					if upper { // 上框:頭像在右,臉朝左文字 → 原生朝右不鏡像
@@ -6095,7 +6114,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						po.GeoM.Translate(hx, hy)
 					} else { // 下框:頭像在左,臉朝右文字 → 鏡像
 						po.GeoM.Scale(-ps, ps)
-						po.GeoM.Translate(hx+80*ps, hy)
+						po.GeoM.Translate(hx+sourceWidth*ps, hy)
 					}
 					screen.DrawImage(fr[mi], po)
 				} else {
