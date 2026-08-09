@@ -24,7 +24,7 @@
 最新可驗證戰役切片：玩家第16戰戰後（raw `ch15_post`）已進入
 `town_ch17`；玩家第17戰戰後（raw `ch16_post`）已進入 `town_ch18`；玩家第18戰
 戰後（raw `ch17_post`）已進入 `town_ch19`，並驗證 JOIN、持久隊伍與存檔邊界。
-玩家第22、23、24、29戰仍維持失敗即關閉；
+玩家第22、23、24、25、29戰仍維持失敗即關閉；
 詳細位址、分支與證據等級見[工作清單](docs/knowledge-base/91-worklist.md)、
 [介面證據矩陣](docs/knowledge-base/57-ui-evidence-matrix.md)與
 [最新交接勘誤](docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md)。
@@ -169,6 +169,18 @@ CONTINUE 戰場還原或完整開場動畫已完成。
 | 原版 DOSBox | 重製端執行期 |
 |---|---|
 | ![原版標題選單](docs/figures/title-original-dosbox.png) | ![重製端標題選單執行期畫面](docs/figures/title-remake-runtime.png) |
+
+### 對話框
+
+重製端已能從可編輯的序章腳本實際跑出對話框執行期（runtime）畫面；下圖是
+Docker／Xvfb 產生的 640×400 E1 證據。它證明腳本、肖像、藍框與中文字型已通過
+重製端消費端，但不是原版同狀態的一般玩家 E2 等價證明。將重製圖縮放至原版
+320×200 後，與原版 DOSBox 對話畫面的平均絕對誤差（AE）為 60414，仍可看出
+版面、背景與文字避讓尚未一致。
+
+| 原版 DOSBox | 重製端執行期（E1） |
+|---|---|
+| ![ch01 原版 DOSBox 對話框](docs/figures/ch01-dialogue-original-dosbox.png) | ![重製端對話框執行期畫面](docs/figures/dialogue-remake-runtime.png) |
 
 ### 戰場與戰鬥演出
 

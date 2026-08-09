@@ -108,8 +108,13 @@
   就緒探測（readiness probe）。Docker 實測輸出 320×200 原版標題選單與戰場對話畫面，避免
   把根視窗左上角的局部黑畫面誤列為介面證據；另保存目前重製端執行期畫面
   [`title-remake-runtime.png`](../figures/title-remake-runtime.png)，不把原版重複圖再加入。
-- [ ] **下一個戰後切片**：玩家第22、23、24、29戰；每關都必須保留
+- [ ] **下一個戰後切片**：玩家第22、23、24、25、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。
+- [x] **UI-05 重製端對話框執行期擷取**：以 `FD2_CAMPAIGN=1` 的可編輯序章腳本，
+  在 Docker／Xvfb 實際產生 640×400 [`dialogue-remake-runtime.png`](../figures/dialogue-remake-runtime.png)。
+  這是 E1 消費端證據；縮放至原版 320×200 後與
+  [`ch01-dialogue-original-dosbox.png`](../figures/ch01-dialogue-original-dosbox.png)
+  的 AE=60414，未解除上／右肖像位置、控制碼、排版與一般玩家 E2 缺口。
 - [ ] **E2 與完整戰役**：取得未修改一般玩家路徑的 DOSBox 同狀態逐幀證據，
   並完成剩餘 UI、戰鬥 AI、對話資料化與 30 章無除錯破關鏈；目前仍不可宣稱
   《炎龍騎士團 2》重製完成。

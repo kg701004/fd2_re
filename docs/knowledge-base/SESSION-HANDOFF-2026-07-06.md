@@ -3542,3 +3542,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`title-remake-runtime.png`](../figures/title-remake-runtime.png)，供 README 與
   UI 矩陣標示 E1 差距。原版一般玩家 E2、戰後節點與 AI 正式執行仍未因抓圖工具
   修正而解除失敗即關閉。
+
+## 2026-08-09：重製端對話框執行期證據
+
+- 以 `fd2-go-test-local` Docker／Xvfb 執行 `FD2_CAMPAIGN=1`，從可編輯的序章腳本
+  產生 640×400 重製端對話框畫面
+  [`dialogue-remake-runtime.png`](../figures/dialogue-remake-runtime.png)。
+  圖檔 SHA-256 為
+  `6e66e18ed66ac018c69a29d7e2f880444c96d68d4e4ad021626663b4cd914061`。
+- 將該畫面縮放至原版 DOSBox 320×200 對話框 oracle
+  [`ch01-dialogue-original-dosbox.png`](../figures/ch01-dialogue-original-dosbox.png)
+  後，實測平均絕對誤差（AE）為 `60414`。這證明資料腳本→肖像／文字→重製端
+  渲染器（renderer）的 E1 消費鏈已存在，但不是同狀態 E2，也沒有解除上／右肖像位置、
+  控制碼、裁切、分頁或一般玩家路徑缺口。
+- 本次只新增可回查的執行期圖與現況統計勘誤；沒有把對話 renderer 的未證實語意
+  接入戰役正式流程。暫存擷取目錄在 Docker 內清理，主機 `/tmp/fd2cap` 仍不存在。
