@@ -125,6 +125,13 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   `dword_53BEB*0x50` 取得目的 runtime record，`0x10d6c..0x10d79` 以
   row index 取 raw group data，`0x11003..0x1100b` 完成 native constructor
   後遞增 `dword_53BEB`。這證實追加順序與 runtime index 來源。
+- 全域 runtime buffer 的交叉證據（同一固定版 IDA／資料流索引，詳見
+  [`26-per-chapter-event-handlers.md`](../../knowledge-base/26-per-chapter-event-handlers.md)）顯示
+  `[0x53a45]` 先配置 `0x1e00` bytes，也就是 96 個 `0x50`-byte 槽；
+  `[0x53BEB]` 是目前已追加記錄的 count，而不是配置容量。故 66→72→73→79
+  只能描述候選的「已 materialize 數量」，不能被寫成原版只有 66 槽或 slot72
+  在短前沿一定不存在。短前沿的 slot72 record 內容與 renderer 消費仍未由本檔
+  閉合，重製候選閘門因此採保守失敗即關閉，不把物理 buffer 容量誤當成語意證據。
 - Docker 讀取的 map21 資源雜湊：`FDFIELD_063.bin` 9004 bytes，MD5
   `5b6823738ad3ad6226ed65481020818b`、SHA-256
   `9cc8e97a4e0e963d48529cb85bb8a43ab305914eba0110a1d970cc773f22ae82`；

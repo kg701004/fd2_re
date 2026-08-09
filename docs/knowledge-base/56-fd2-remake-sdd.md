@@ -211,7 +211,14 @@ loadslots、ending、town variant1/2與商店其餘child panels；不得因ch02�
 切片而外推成全章覆蓋。完整分項和證據分級以doc57為準；README 已撤回把 raw `title.png`／
 `dialogue.png` 稱為 remake runtime 對照的標示。
 
-`~/.codex/knowledge-base` 在本執行環境目前沒有可讀檔案（`rg --files /home/anr2/.codex/knowledge-base` 無輸出），因此其中的 Ghidra/IDA 技巧尚未納入本輪證據。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic` 為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
+2026-08-09 已在隔離環境讀取共用知識庫的
+`~/.codex/knowledge-base/fd2/reverse-engineering-gui-restoration.md` 與
+`sources/claude/retro/ida-pro-9.4.md`。其中的 composition graph、E0/E1/E2
+分層、非破壞性斷言索引、IDA xref 優先與 Docker 工具分工，現在作為本專案的
+方法論檢查表；它們不是 FD2 原版證據，地址、資源與行為仍必須回到本儲存庫的
+IDA／Capstone／DOSBox 產物。使用者已確認 `/home/anr2/ida_pro/ida94b1/idapro.hexlic`
+為其合法持有的授權檔；官方 Docker image 的文字版 `/opt/ida-9.4/idat -h` 已以該檔
+唯讀掛載驗證可啟動。不得使用同目錄既存的 `kg_patch` 設定、檔案或 Compose 掛載。
 
 repo 提供不含 license／遊戲資料的 `tools/docker/fd2-ida.Dockerfile` 與
 `tools/ida_export_fd2_xrefs.py`，供使用者授權的私有 IDA workspace 匯出 xref 後重跑。2026-07-26 已以使用者
@@ -3247,11 +3254,12 @@ frontier 為 **66→72→73→79**（強推論）。完整位址、輸入雜湊�
 [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)
 及 [`ch21_post.json`](../../remake/assets/cutscenes/acting/ch21_post.json)，屬 E1
 資料消費證據，不是一般玩家畫面證據。由於候選 runtime frontier 是
-**66→72→73→79**，同一靜態 layout 使用 slot72 不能在最小 66-slot 入口安全
-執行；編譯器已加入最小 frontier 閘門，對此候選明確失敗即關閉並不產生
-`runtime_context`，保留原始 slot72 證據而不猜測它何時已 materialize。各 frontier
-的 record 內容、原版 runtime
-trace 與 indexed 畫面狀態仍未閉合。`0x24618` 所消費的 raw 相對游標 globals
+**66→72→73→79**，而原版 `[0x53a45]` 的全域配置是 96 個 `0x50`-byte
+槽、`[0x53beb]` 只是追加 count，不能把 66 寫成物理容量上限。候選仍未證明
+slot72 在每一個宣告入口都已 materialize；編譯器因此以「最小已 materialize
+frontier」作保守閘門，對此候選明確失敗即關閉並不產生 `runtime_context`，保留
+原始 slot72 證據而不猜測短前沿的 record 內容或 renderer 消費。各 frontier
+的 record 內容、原版 runtime trace 與 indexed 畫面狀態仍未閉合。`0x24618` 所消費的 raw 相對游標 globals
 （`0x53ab9/0x53abd`）與第 21 戰呼叫點 `0x245ce` 的 Y+3 變換已由 IDA 固定；
 重製端以呼叫位址核對這個來源專屬橋接（source-specific bridge），未證實來源或偏移會失敗即
 關閉。仍未建立正式 binding。`postbattle_ch22_persist` 仍不得由 layout 表或

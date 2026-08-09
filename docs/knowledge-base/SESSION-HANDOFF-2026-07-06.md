@@ -71,7 +71,7 @@ strict binding fail-closed。
 
 依使用者要求本輪先建立 `56-fd2-remake-sdd.md`，暫停新增 handler／renderer。盤點確認目前已有 Ebiten battle/story/cutscene、shop、church、preparation、save 與部分 native ending primitive，但原版 menu dispatch、完整 postbattle town/rest flow、weapon reach、item UI、native indexed presentation 仍未達 remake。`42`/`51` 只作 baseline。
 
-working tree 的 `native_2c548.json`、`internal/ending`、`internal/figani` figure-fade 變更是上一輪未提交工作，已保留未覆蓋；待 SDD gate 後另行 Docker regression。`/tmp/fd2cap` 不存在。使用者所述 `~/.codex/knowledge-base` 在本環境無可讀檔案，Ghidra/IDA 技巧尚未宣稱已套用，待提供可見路徑或下一輪補入。
+working tree 的 `native_2c548.json`、`internal/ending`、`internal/figani` figure-fade 變更是上一輪未提交工作，已保留未覆蓋；待 SDD gate 後另行 Docker regression。`/tmp/fd2cap` 不存在。**本句關於 `~/.codex/knowledge-base` 無可讀檔案是當時接手環境的歷史觀察，已由 2026-08-09 勘誤取代；不可作為現況斷言。**
 
 下一項：UI evidence matrix 已建立於 `57`，逐章 battle→postbattle→town/shop/church/preparation/ending graph
 已收進 SDD `56 §5.1`；後續要以原版 handler/DOSBox 補 E0/E2，而非把 existing Ebiten shell 或 legacy
@@ -3338,6 +3338,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   持久名冊槽與 70 筆控制列；`sub_10B4E(0)` 依 raw group byte+0x15 呼叫
   `sub_10C50` 追加 runtime record。positions `FDFIELD_065` 的 header 86
   是 70 筆列位置加 16 部署格，不是 86 個 runtime slots。
+- 全域 runtime buffer 交叉證據顯示 `[0x53a45]` 配置 96 個 `0x50`-byte
+  槽，而 `[0x53beb]` 是追加 count；因此 66 不是原版物理容量上限。這只
+  讓「候選已 materialize 數量」與「配置容量」分開，沒有證明短前沿的
+  slot72 record 已具備可供 renderer 消費的內容。
 - map21 raw group 分布 group0=50、group1=6、group2=1、group3=6、group255=7，
   對照 `ch22.json` 的 group0 初始及回合3／5／7 追加後，候選 native frontier
   為 **66→72→73→79**。這是**強推論**，不是已驗證一般玩家 runtime trace；
@@ -3653,8 +3657,10 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   **66→72→73→79**；其 layout 也保留 special slot72，沒有把其中一項猜測
   改寫成事實或刪除。
 - 編譯器原先只用最大 slot count（79）檢查 `layout_units`，因此會錯誤產生
-  看似可執行的候選；現改為同時追蹤最小 frontier。slot72 在最小 66-slot
-  入口不可用時，候選以 layout issue 失敗即關閉，不會產生 `runtime_context`。
+  看似可執行的候選；現改為同時追蹤最小「已 materialize」frontier。slot72
+  在最小 66-slot 入口尚未取得 record provenance 時，候選以 layout issue
+  失敗即關閉，不會產生 `runtime_context`。這是候選資料契約的保守閘門，
+  不是宣稱原版 96-slot buffer 不存在或 slot72 必然越界。
   分支指定的 `required_slot_count`、`loadch` 與已證實的 `spawn` 會同步更新
   最小與最大 frontier，既有 ch02/ch06/ch07/ch16 等 branch regression 均通過。
 - 新回歸名稱為
@@ -3662,3 +3668,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   Docker 完整 `go test ./internal/campaign -count=1` 通過。這是編譯期拓撲
   安全閘門，不代表 slot72 已找到原版 materialize 時機；`postbattle_ch22_persist`
   與 `town_ch23` 仍保持失敗即關閉，indexed runtime／一般玩家 E2 仍待。
+
+## 2026-08-09：共用反組譯／GUI 方法論勘誤
+
+- 重新盤點後確認 `~/.codex/knowledge-base/fd2/reverse-engineering-gui-restoration.md`
+  與 `sources/claude/retro/ida-pro-9.4.md` 實際可讀；早期「本環境沒有可讀
+  知識庫」只屬當時環境觀察，已不再作為現況結論。
+- 本輪採用其中的 composition graph、scene owner、E0/E1/E2 分層、IDA xref
+  優先、非破壞性斷言索引與 Docker-only 工具分工。這些是方法論，不提升任何
+  FD2 地址、資源或玩法語意；真正證據仍必須落在本儲存庫的固定雜湊、IDA／
+  Capstone 匯出、資源 regression 或 DOSBox 實驗。

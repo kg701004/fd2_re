@@ -80,8 +80,10 @@ type HandlerRuntimeContext struct {
 	StoryViewport bool        `json:"story_viewport,omitempty"`
 }
 
-// MinimumSlotCount is the smallest allowed runtime shape. SlotCount preserves
-// the original exact-context form; SlotCounts models optional native
+// MinimumSlotCount is the smallest allowed *materialized* runtime shape in the
+// authored binding contract. It is not the native allocation capacity: the
+// original battle buffer is larger and [0x53beb] is the append count. SlotCount
+// preserves the original exact-context form; SlotCounts models optional native
 // reinforcement groups (for example 15 or 27 slots at a post-battle entry).
 func (context *HandlerRuntimeContext) MinimumSlotCount() int {
 	if context == nil {
@@ -162,7 +164,9 @@ func CompileHandlerScript(script *HandlerScript, bindings HandlerBindings) ([]Be
 // arm.  Branches still may not change the outer compiler context: after a
 // merge, callers may rely only on slots known before the branch.  The minimum
 // frontier is tracked separately from the maximum so a static operation cannot
-// accidentally require a slot that exists only in one optional runtime shape.
+// accidentally require a slot that the binding has not proven materialized in
+// every optional runtime shape. This is a candidate fail-closed contract, not
+// a claim that the native 96-record allocation is physically absent.
 func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activeSlotCount, minimumSlotCount int) ([]Beat, []HandlerCompileIssue) {
 	if script == nil {
 		return nil, []HandlerCompileIssue{{Reason: "nil handler script"}}
@@ -1098,7 +1102,7 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				seen[unit.Slot] = true
 			}
 			if !valid {
-				issue(i, input, fmt.Sprintf("layout_units needs unique slots and poses 0..3 within every allowed runtime frontier (minimum slot_count=%d, maximum slot_count=%d)", minimumSlotCount, activeSlotCount))
+				issue(i, input, fmt.Sprintf("layout_units needs unique slots and poses 0..3 within every allowed materialized runtime frontier (minimum slot_count=%d, maximum slot_count=%d; native buffer capacity is not inferred)", minimumSlotCount, activeSlotCount))
 				continue
 			}
 			layoutBeat := runtime(input, "layout_units")

@@ -58,10 +58,12 @@
 - [x] **ch21 post layout／演出候選（E1）**：IDA 已閉合 `0x233c6` 的 16 格
   layout、special slot72、raw camera `(16,18)` 與 `0x244b6` 的參數順序；
   Docker exporter 已把 acting 65／66 轉成可編輯 frame 表，並保留
-  `native_relative_cursor` provenance。由於候選 runtime frontier 是
-  **66→72→73→79**，靜態 layout 同時引用 slot72 時，編譯器現在會以最小
-  66-slot 閘門失敗即關閉，不產生可執行 `runtime_context`；這是拓撲不一致的
-  明確診斷，不是把 slot72 語意升格或擅自刪除。這只關閉資料消費候選，不解除
+  `native_relative_cursor` provenance。候選 runtime frontier 是
+  **66→72→73→79**；原版 `[0x53a45]` 實際配置 96 個 `0x50`-byte 槽，
+  `[0x53beb]` 是追加 count，不是 66-slot 物理容量。由於尚未證明 slot72
+  在每個宣告入口都已 materialize，編譯器以最小已 materialize frontier
+  保守失敗即關閉，不產生可執行 `runtime_context`；這不是原版 buffer 越界
+  判定，也不刪除 slot72。這只關閉資料消費候選，不解除
   正式戰役節點；各 frontier 的 record、indexed 畫面與 E2 仍待補足。詳見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)、
   [`ch21_post_candidate.json`](../../remake/assets/cutscenes/bindings/ch21_post_candidate.json)。
@@ -164,8 +166,9 @@
   分布與事件追加順序給出候選 runtime frontier **66→72→73→79**（強推論），
   不再把槽位數寫成完全未知。證據見
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。layout、special
-  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選；編譯器 regression 會對
-  最小 66-slot frontier 拒絕 slot72 layout，避免把候選誤當可執行 binding；
+  slot72 與 acting 65/66 的可編輯轉錄已有 E1 候選；原版 buffer 是 96 槽，
+  `[0x53beb]` 是追加 count；編譯器 regression 會對最小宣告的 66-slot
+  已 materialize frontier 拒絕 slot72 layout，避免把候選誤當可執行 binding；
   `0x24618` 的九段 LUT 9→1、5ms／段、500ms 尾端、0..62／4ms 調色盤序列與
   固定目的地 `0xA0504` 已由 IDA／Capstone 閉合；仍缺各 frontier 的一般玩家
   runtime record、indexed 畫面狀態與正式 `postbattle_ch22_persist` binding。
