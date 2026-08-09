@@ -887,7 +887,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-27 ch08 postbattle closure：Docker acting exporter 解碼 resource36 為 5 beats、slot47/pose0；Docker `parse_field.py extracted/raw 8` 與 editable map8 交叉確認 `enemy_ally_total=60`、group4 僅一筆，故 `spawn_groups[4]=1`。`0x235d8` raw pan `(6,1)` 依既有 24px tile ABI 轉為 `(144,24)`；FDTXT_009 index4 count-aligned 對 ch09 scene4 lines0–4。新增 authored `ch08_post` acting/binding、campaign `postbattle_ch08_persist→town_ch09` 接線與 compiler regression；renderer parity 仍未宣稱。
 - 2026-07-27 ch11 postbattle closure：Docker Capstone 證實 `0x2382b→0x233c6` 複製三組 14-byte arrays：X=`[10,11,9,12,8,10,11,9,12,8,8,12,8,12]`、Y=`[4,4,4,4,4,5,5,5,5,5,3,3,2,2]`、pose=`[2,2,2,2,2,2,2,2,2,2,3,1,3,1]`；scalar ABI 定案 slots0–13、special slot2 最終覆寫 `(10,4,pose0)`、camera raw `(14,0)`→remake `(336,0)`。map11 editable/raw frontier=60。Docker acting exporter 解碼 resource45 為 slot8 special frame0與6；FDTXT_012 index3/4 對 ch12 scene3 lines0–2、3–9。新增 authored `ch11_post` binding/acting、campaign `postbattle_ch11_persist→town_ch12` 接線與 compiler regression；renderer parity 仍未宣稱。
 - 2026-07-27 ch13 postbattle closure：Docker Capstone 證實 `0x23942→0x233c6` 複製三組 16-byte arrays：X=`[18,17,19,18,17,19,16,20,16,15,15,16,20,21,21,20]`、Y=`[15,15,15,16,16,16,15,15,15,16,16,16,15,15,12,13]`、pose=`[2,2,2,2,2,2,2,2,2,2,3,3,3,3,1,1]`；scalar ABI 定案 slots0–15、special slot0 最終覆寫 `(0,0,pose0)`、camera raw `(12,10)`→remake `(288,240)`。map13 70-slot frontier、group1 一筆。Docker acting exporter 解碼 resource47 為 slot67/pose2 4 beats；FDTXT_014 index2/3 對 ch14 scene0 lines8–17、scene1 lines0–6。新增 authored `ch13_post` binding/acting、campaign `postbattle_ch13_persist→town_ch14` 接線與 compiler regression；renderer parity 仍未宣稱。
-- **歷史、已撤回（2026-07-27；2026-08-09 再收窄）** ch24 postbattle slice：當時曾把 raw `ch24_post`（實際屬玩家第25戰）誤接到 `postbattle_ch24_persist→town_ch25`，後來又把玩家第25戰的 owner 寫成已正式閉合。2026-08-09 的 IDA／Capstone 複核保留「玩家第25戰候選」判定，但 table index 不直接等於玩家戰次；`postbattle_ch25_persist→town_ch26` 尚未具備完整 E2，因此不得視為正式接線。`postbattle_ch24_persist` 仍失敗即關閉，原始 handler 的 dialog/PAN/spawn/ACT/JOIN 證據仍保留，不能把歷史 owner 敘述當成現況。
+- **歷史、已撤回（2026-07-27；2026-08-09 再收窄）** ch24 postbattle slice：當時曾把 raw `ch24_post`（實際屬玩家第25戰）誤接到 `postbattle_ch24_persist→town_ch25`，後來又把玩家第25戰的 owner 寫成已正式閉合。2026-08-09 的 IDA／Capstone 複核保留「玩家第25戰候選」判定，但 table index 不直接等於玩家戰次；`postbattle_ch25_persist→town_ch26` 尚未具備完整 E2，因此不得視為正式接線。`postbattle_ch24_persist` 仍失敗即關閉，原始 handler 的 dialog/PAN/spawn/ACT 與兩個 raw append 呼叫仍保留；`0x1a/0x0e` 不得命名成 JOIN，不能把歷史 owner 敘述當成現況。
 - 2026-07-27 ch25 post evidence：Docker Capstone 固定 `0x24e80` layout caller 的 16-slot arrays（X=`[14,15,15,14,16,14,15,16,13,14,15,16,17,14,15,16]`、Y=`[6,9,6,9,9,10,10,10,11,11,11,11,11,12,12,12]`、pose=`[0,2,0,2,2,2,2,2,2,2,2,2,2,2,2,2]`）、scalar camera raw `(9,5)`→`(216,120)`；map25 raw frontier=70。Docker acting exporter 解碼 resource77/78/79/80，並將 FDTXT_026 string5–11 對到 ch26 scene2/3/4。因 FDTXT_026 整體 raw 61 utterances 與 authored ch26 63 lines 不一致，沒有建立假 count-aligned mapping；只新增 generated layout/acting evidence 與 fail-closed regression，未接 campaign。
 - 2026-07-27 ch25 post activation：新增 `dialogue_overrides` address+text-index schema，讓同一 native dialog call-site 的條件 text index 可各自指向 editable scene/line；不偽造 FDTXT_026 全量 count alignment。ch25 string5/6→scene2 branch、7→scene2 lines9–10、8/9→scene2/3 branch、10/11→scene4 已通過 compiler regression；`postbattle_ch25_persist` 接入 authored binding，前往 `town_ch26`，coverage 45 handler-bound / 10 unbound。
 - 2026-07-27 ch25 camera assertion correction：重讀完整 `0x233c6` scalar ABI 後撤回 `(5,9)→(120,216)`；caller push 順序最後兩個 scalar 是 `cam_x=9, cam_y=5`，正確像素為 `(216,120)`。binding、test、SDD、worklist 已同步修正。
@@ -3322,9 +3322,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `roster_has(18)` branch：有18由60進61 slots，無18由61進62 slots；兩路都
   進 `town_ch18`，JOIN16 路徑另驗證持久隊伍與 town save/load。編譯器只在靜態
   分支採 slot 上界，runtime 仍拒絕不精確 count 或缺 raw provenance。
-- 目前稽核為24個標準 postbattle 節點 **20 active／4 blocked**；story/cutscene
-  為121節點、9個獨立 script、50個 handler binding、62個 fallback。剩餘 blocked
-  為玩家第22、23、24、29戰；未修改一般玩家 DOSBox E2、完整30章無除錯路徑及
+- 目前稽核為24個標準 postbattle 節點 **19 active／5 blocked**；story/cutscene
+  為121節點、9個獨立 script、49個 handler binding、63個 fallback。剩餘 blocked
+  為玩家第22、23、24、25、29戰；未修改一般玩家 DOSBox E2、完整30章無除錯路徑及
   UI／AI缺口仍不得以本批 E1 測試宣稱完成。所有本批一次性容器使用 `--rm`，
   `/tmp/fd2cap` 不存在；交接前仍須再檢查 FD2 容器狀態。
 
@@ -3416,8 +3416,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `91-worklist.md` 第 11 輪的「全 30 章一條龍可玩」都是當時的規劃或 authored
   快照，已改成明確的歷史限定語；沒有刪除資產、raw 對映或方法證據。
 - `26-per-chapter-event-handlers.md` 的標題改為「原版 handler 對照（raw 對映已驗；
-  不等於重製流程完成）」；`56` 頂端日期與現況同步到 2026-08-09，列出 20 active／4
-  blocked 及玩家第 22、23、24、29 戰的失敗即關閉狀態。
+  不等於重製流程完成）」；`56` 頂端日期與現況同步到 2026-08-09，列出 19 active／5
+  blocked 及玩家第 22、23、24、25、29 戰的失敗即關閉狀態。
 - 這次只修正會污染記憶的完成度句子，沒有把任何未證實 renderer、handler 或戰後
   town／shop／整備／存檔語意接入正式 campaign。
 

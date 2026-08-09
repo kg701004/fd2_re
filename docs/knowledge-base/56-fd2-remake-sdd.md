@@ -15,7 +15,7 @@
 
 目前不是「沒有程式」，而是「有一個可跑的垂直切片，尚未達 remake」：`remake/cmd/fd2/main.go` 仍承擔 scene state、輸入 dispatch、戰鬥 UI、對話、town、shop、church、preparation 與 Draw；`internal/battle`、`internal/campaign`、`internal/ending`、`internal/figani` 已有可測的部分 primitive。這些 primitive 不等於原版 UI 或完整 campaign。
 
-已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。現行戰後稽核為 20 active／4 blocked；玩家第 22、23、24、29 戰仍失敗即關閉，已接切片也只達重製端 E1，不能當成一般玩家 E2 或完整 30 章完成。
+已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。現行戰後稽核為 19 active／5 blocked；玩家第 22、23、24、25、29 戰仍失敗即關閉，已接切片也只達重製端 E1，不能當成一般玩家 E2 或完整 30 章完成。
 
 ### 1.3 進度停滯審計（2026-07-27）
 
@@ -3211,9 +3211,9 @@ ACTING53、index8、JOIN16、chapter17。共享 call site 的 ACTING immediate
   byte5 或唯一 identity 時仍失敗即關閉。這是 E1 垂直切片，未修改一般玩家
   DOSBox 同狀態 E2、完整第17戰輸入路徑與其餘 blocked 章節仍未完成。
 
-本次稽核後，24 個標準 postbattle 節點為 **20 active／4 blocked**；story/cutscene
-為 121 節點、9 個獨立 script、50 個 handler binding、62 個 fallback。剩餘
-blocked 為玩家第22、23、24、29戰；這些統計是覆蓋範圍，不是重製完成百分比。
+本次稽核後，24 個標準 postbattle 節點為 **19 active／5 blocked**；story/cutscene
+為 121 節點、9 個獨立 script、49 個 handler binding、63 個 fallback。剩餘
+blocked 為玩家第22、23、24、25、29戰；這些統計是覆蓋範圍，不是重製完成百分比。
 
 ## 2026-08-09 raw ch21 post 靜態證據（玩家第22戰；尚未接入）
 
@@ -3309,6 +3309,11 @@ raw dispatch，不直接代表玩家戰次。
 已撤回。重製端仍維持 `postbattle_ch24_persist` fail-closed，尚未把
 `postbattle_ch25_persist → town_ch26` 當成已驗證正式接線。缺少未修改一般玩家
 路徑、持續隊伍與戰後城鎮／商店／整備／存檔的 E2 時，這一節只屬靜態 E1 證據。
+
+現行 `ch24_post.json` 只保留 `0x112a5` 的兩個 raw append 呼叫（immediate
+`0x1a` 與 `0x0e`），不再把它們改名成 JOIN 26／29；對應 binding 仍是候選資料，
+`postbattle_ch25_persist` 已撤回正式 handler binding，編譯器會對兩個未知操作
+產生問題並停止執行。
 
 ## 2026-08-09 raw ch29 terminal body `0x2bce5→0x2c405`（E1）
 

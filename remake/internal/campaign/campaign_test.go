@@ -430,7 +430,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch22_persist": "",
 		"postbattle_ch23_persist": "",
 		"postbattle_ch24_persist": "",
-		"postbattle_ch25_persist": "assets/cutscenes/bindings/ch24_post.json",
+		"postbattle_ch25_persist": "",
 		"postbattle_ch26_persist": "assets/cutscenes/bindings/ch25_post.json",
 		"postbattle_ch28_persist": "assets/cutscenes/bindings/ch27_post.json",
 		"postbattle_ch29_persist": "",
@@ -850,33 +850,39 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 50 || fallback != 62 || retreat != 30 || rumor != 23 || postbattle != 4 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 49 || fallback != 63 || retreat != 30 || rumor != 23 || postbattle != 5 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }
 
-func TestCh24PostBindingMaterializesSpawnPanActAndDialogue(t *testing.T) {
-	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch24_post.json")
-	if err != nil || len(issues) != 0 {
-		t.Fatalf("ch24 post compile err=%v issues=%#v", err, issues)
+func TestCh24PostCandidatePreservesUnknownAppendAndFailsClosed(t *testing.T) {
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch24_post.json")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(beats) == 0 || beats[0].Op != "runtime_context" || beats[0].RuntimeContext == nil || beats[0].RuntimeContext.SlotCount != 70 || beats[0].RuntimeContext.SpawnGroups[2] != 1 {
-		t.Fatalf("ch24 runtime context=%#v", beats[:min(len(beats), 1)])
+	if script.Diagnostics["unknown_ops"] != 2 {
+		t.Fatalf("ch24 unknown operation count=%d, want 2", script.Diagnostics["unknown_ops"])
 	}
-	var pan, act *Beat
-	var dialogs []*Beat
-	for i := range beats {
-		switch beats[i].Op {
-		case "pan":
-			pan = &beats[i]
-		case "act":
-			act = &beats[i]
-		case "dialog":
-			dialogs = append(dialogs, &beats[i])
+	var raw []HandlerBeat
+	for _, beat := range script.Beats {
+		if beat.Op == "raw_append" {
+			raw = append(raw, beat)
 		}
 	}
-	if pan == nil || pan.X != 96 || pan.Y != 384 || !pan.TileStep || act == nil || len(act.Acting) != 1 || act.Acting[0].Units[0].Slot == nil || *act.Acting[0].Units[0].Slot != 70 || len(dialogs) != 18 || dialogs[0].Line != 0 || dialogs[17].Line != 17 {
-		t.Fatalf("ch24 pan=%#v act=%#v dialogs=%#v", pan, act, dialogs)
+	if len(raw) != 2 || raw[0].NativeTarget != "0x112a5" || raw[1].NativeTarget != "0x112a5" || len(raw[0].RawArgs) != 1 || len(raw[1].RawArgs) != 1 || raw[0].RawArgs[0] != float64(26) || raw[1].RawArgs[0] != float64(14) {
+		t.Fatalf("ch24 raw append calls=%#v", raw)
+	}
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch24_post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(beats) == 0 || len(issues) != 2 {
+		t.Fatalf("ch24 candidate must retain proven prefix but fail closed: beats=%#v issues=%#v", beats, issues)
+	}
+	for _, issue := range issues {
+		if issue.Op != "raw_append" {
+			t.Fatalf("unexpected ch24 blocked op=%#v", issue)
+		}
 	}
 }
 
