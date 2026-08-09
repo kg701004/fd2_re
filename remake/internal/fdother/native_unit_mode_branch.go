@@ -14,8 +14,8 @@ const (
 	NativeModeCall13FD4
 )
 
-// PlanNativeUnitMode2 保存 mode 2 的控制流。0x14237 在 0x145c3 固定
-// 回傳 0，所以 0x14ef0 失敗時一定接著呼叫 0x13fd4；不會走 0x13e9c。
+// PlanNativeUnitMode2 保存 mode 2 的控制流。0x14ef0 失敗後直接呼叫
+// 0x14237，再進入共用收尾；不會走 0x13e9c 或 0x13fd4。
 func PlanNativeUnitMode2(candidateDispatchSucceeded bool) []NativeUnitModeAction {
 	if candidateDispatchSucceeded {
 		return []NativeUnitModeAction{NativeModeCall14EF0}
@@ -23,7 +23,6 @@ func PlanNativeUnitMode2(candidateDispatchSucceeded bool) []NativeUnitModeAction
 	return []NativeUnitModeAction{
 		NativeModeCall14EF0,
 		NativeModeCall14237,
-		NativeModeCall13FD4,
 	}
 }
 

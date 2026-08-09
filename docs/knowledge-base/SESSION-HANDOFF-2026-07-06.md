@@ -3596,3 +3596,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   只保存 `0x1548e`／`0x15311`／`0x15055`／共用收尾路由；缺欄位即失敗關閉，
   不執行 producer／尾端函式、不接 `NextAIPlan`。六個 caller 的 turn/camp
   語意、完整交易、UI、一般玩家路徑與 E2 仍未閉合。
+
+## 2026-08-09：mode 2／`0x13fd4` 控制流勘誤
+
+- 合法 IDA 9.4 直接輸出與既有 Capstone `0x13a9f` 指令共同證實：mode 2 的
+  `0x13b4d→0x14ef0` 失敗後只呼叫 `0x14237`，再跳入 `0x13b1e→0x13c06`
+  共用收尾；沒有 `0x13fd4` 或 `0x13e9c`。`sub_13FD4` 的 IDA direct callers
+  是 `0x13bc5`、`0x13c0f`、`0x13c84`、`0x13d58`、`0x13e52`、`0x19082`，
+  沒有 `0x13b5f`。完整勘誤見
+  [`fd2_ai_mode_dispatch_ida.txt`](../data/ida/fd2_ai_mode_dispatch_ida.txt)。
+- 已修正 `PlanNativeUnitMode2`、測試、`11` AI dossier、SDD、gap audit 與
+  worklist；`0x13fd4` 的 raw HP 回復與 mode 11／其他已證實 caller 不受影響。

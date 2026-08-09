@@ -2607,7 +2607,7 @@ item category or church service name.
 
 模式 2／11 的控制流已有更窄的可執行契約：
 `fdother.PlanNativeUnitMode2` 固定 `0x14EF0` 失敗後為
-`0x14237→0x13FD4`，明確排除 `0x13E9C`；`PlanNativeUnitMode11`
+`0x14237` 後進入共用收尾，明確排除 `0x13E9C` 與 `0x13FD4`；`PlanNativeUnitMode11`
 保存 `[0x53C23]` 與 `[0x53C4F]` 兩個獨立 signed `>=6` gate，以及
 第一段執行後仍會評估第二段的順序。`battle.ApplyNativeAIIdleRecovery`
 另保存 `0x13FD4` 的 raw `+0x25/+0x26` 零值 gate 與

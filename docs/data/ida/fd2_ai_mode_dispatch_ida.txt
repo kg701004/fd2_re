@@ -1,0 +1,68 @@
+# FD2.EXE 0x13a9f mode dispatch correction
+#
+# Input: org_game/炎龍騎士團/FLAME2/FD2.EXE
+# Size: 357074 bytes
+# MD5: b97caf2239a27a896069d03549d96e1e
+# SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+# IDA: IDA Pro 9.4.0.260610, DOS LE loader, linear address space
+# Capstone companion: 5.0.3, Docker image fd2-cap-local
+# Evidence level: 已證實（E0 raw）；本檔只作控制流勘誤，未提升為 E1/E2
+
+## IDA function and callers
+
+- `sub_13A9F`: `0x13a9f..0x13e9c`。
+- `0x13a9f` 的上層 direct callers：`0x1d876`（`0x1d80b`）、
+  `0x1d942`／`0x1d9d2`（`0x1d8ba`）。
+- `sub_13FD4`: `0x13fd4..0x14121`。IDA direct callers 為
+  `0x13bc5`、`0x13c0f`、`0x13c84`、`0x13d58`、`0x13e52`（均在
+  `sub_13A9F`），以及 `0x19082`（`0x18d8c..0x190ac`）。
+  `0x13b5f` 不在 `sub_13FD4` caller 清單。
+
+## Mode 2 raw branch
+
+IDA 直接指令：
+
+```text
+0x13b46  cmp eax, 2
+0x13b49  jnz 0x13b66
+0x13b4b  push edi
+0x13b4c  push esi
+0x13b4d  call sub_14EF0
+0x13b52  add esp, 8
+0x13b55  test eax, eax
+0x13b57  jnz 0x13e5a
+0x13b5d  push edi
+0x13b5e  push esi
+0x13b5f  call sub_14237
+0x13b64  jmp 0x13b1e
+0x13b1e  add esp, 8
+0x13b21  jmp 0x13c06
+```
+
+因此 mode 2 的已證實控制流是：
+
+```text
+0x14EF0 成功 → 共用收尾
+0x14EF0 失敗 → 0x14237 → 共用收尾
+```
+
+此分支沒有 `call 0x13fd4`，也沒有 `call 0x13e9c`。原先把共用跳點
+解讀成 `0x14237→0x13fd4` 的敘述已撤回；`PlanNativeUnitMode2` 現在只保存
+`[0x14ef0, 0x14237]`。
+
+## 0x13fd4 caller boundary
+
+同一份 IDA 函式輸出列出的 `0x13fd4` 呼叫點是：
+
+```text
+0x13bc5  call sub_13FD4
+0x13c0f  call sub_13FD4
+0x13c84  call sub_13FD4
+0x13d58  call sub_13FD4
+0x13e52  call sub_13FD4
+0x19082  call sub_13FD4
+```
+
+這些位址只固定 caller 邊界，不把 `0x13fd4` 命名成待機、休息或其他玩法。
+其 raw HP／`+0x25/+0x26` 寫入契約仍由既有 `ApplyNativeAIIdleRecovery` 保存；
+本次勘誤只移除 mode 2 的錯誤接線。
