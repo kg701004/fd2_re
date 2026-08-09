@@ -3717,3 +3717,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - `TestNativeCommandGridMissingInputsRemainInert` 驗證空 ID、負值／越界 selected
   不會改指令格（command grid）長度或選取狀態，也不擴大 command effect。兩項測試均在 Docker
   中通過；未修改 renderer、command whitelist 或原版語意。
+
+## 2026-08-09：原版 command grid E2 可達性盤點
+
+- 目前沒有可安全重播的原版戰術指令格時間線。`tools/docker/fd2-dosbox-screenshot.sh`
+  只提供通用按鍵／像素同步原語；既有原版時間線只閉合 title、空槽 LOAD、修改路徑
+  town／shop 與 ch02 town hub，沒有「進入戰場→選取我方單位→開啟指令格」的已證實前置狀態。
+- 原版 `FD2.SAV` 四槽目前皆空；`/tmp/fd2-load-valid` 歷史複本只驗證修改 metadata 後的
+  LOAD／城鎮畫面，交接已明確標為修改路徑，不能當一般玩家戰鬥狀態。不能把
+  `FD2_SHOT_RING`、command-mask fixture 或重製截圖當成原版 oracle。
+- 因此 UI-03 先維持 E0 layout／input contract 與重製端 E1，缺原版存檔時失敗即關閉；
+  下一個解除條件是取得合法、未修改、含已知戰鬥前／中狀態的存檔，再在 Docker 可寫副本
+  以 `waitpixel`／逐步 `shot` 建立原版與重製同狀態比較。
