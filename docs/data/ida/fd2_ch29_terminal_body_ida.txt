@@ -1,0 +1,94 @@
+# FD2 終局 handler `0x2bce5`／`0x2c405` raw body 證據
+
+## 輸入與工具
+
+- 輸入：`FD2.EXE`，357074 bytes。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- 第一順位：合法 IDA Pro 9.4 Docker，函式邊界、直接交叉參照與原始名稱保留。
+- 交叉驗證：Capstone 5 Docker，`tools/disasm_le.py` 線性位址。
+- 本檔所有高階文字都是附加語意；raw immediate、全域位址、呼叫順序與函式名
+  不被自訂名稱取代。這是 E1 靜態證據，不是一般玩家 E2。
+
+## 已證實：`sub_2BCE5` 的 caller 與前綴
+
+IDA 將 `0x2bce5..0x2c39b` 識別為 `sub_2BCE5`，直接 caller 只有：
+
+- `0x2545d`：位於 `0x250cc..0x25464` 的一條 ending 分支。
+- `0x25970`：位於 `0x25757..0x25977`，返回位址 `0x25975` 立即跳回同一
+  raw handler 的 self-loop。
+
+兩個 caller 都只證明終局 raw dispatch；不能把 `sub_2BCE5` 直接命名成城鎮、
+商店、整備、下一場戰鬥或 campaign owner。
+
+前綴 `0x2bce5..0x2c172` 的可回查順序如下：
+
+1. 配置 `0x1f400` 與兩個 `0xfa00` bytes buffer；以
+   `FDOTHER.DAT` resource `0x36` 解出 frame0，呼叫 `0x2935b`，複製
+   `0xfa00` bytes 至 VGA，等待 raw `0x3e8`。
+2. 呼叫 `0x20421(2,0x64,0)`，接著 `0x11df2(0,0xff,0x3f)`、重複複製，
+   再以 resource frame9 建立下一個畫面。
+3. `0x2be18..0x2be35` 對 `0x11df2(0,0xff,EBX)` 執行 `EBX=0x3f..0`，
+   每次 raw delay `4`；之後等待 `0x7d0`。
+4. 以 raw `[0x53c03] == 0x1a` 分成兩組文字 immediate；所有 `0x2c39b`
+   參數保留原始 push 順序，不能把 immediate 自動命名成角色或章節。
+5. `0x2bea0..0x2becd` 再做三輪 `0x3f..0` palette ramp，每步 delay4、
+   輪間 delay `0xc8`；再以 `0x2bee0..0x2bf04` 播放 frame `0x0c..0x6c`
+   （每幀 raw delay `0x14`），複製 64000 bytes 後進入第二段文字分支。
+6. 第二段文字後等待 `0x7d0`，執行 40 次 `0x11eb0`／兩次 frame blit 的
+   raw composite 迴圈（`0x2bf60..0x2c026`），接著清理及兩次 frame1/5
+   呈現，最後進入 `0x2c0c5..0x2c172` 的 200 次迴圈。這裡的 indexed
+   buffer／LUT 來源與畫面層順序保留為獨立 renderer 契約，不能縮成 generic
+   fade。
+7. `0x2c172` 釋放第一個 buffer、清 VGA，呼叫 `0x2c405`；返回後於
+   `0x2c194..0x2c39a` 執行 raw montage tail。這不是 campaign return。
+
+## 已證實：`sub_2C405` 是另一個函式，且配置終局 montage context
+
+IDA 函式範圍為 `0x2c405..0x2c9ec`，caller 只有 `0x2c18f`。開頭直接呼叫
+`0x1088d(0x1e)`，並寫入 `dword_53c67 = 0xc88`；這固定 raw LOADCH immediate
+與 staging 常數，但不把 `0x1e` 自動升格成玩家章節或 campaign node。
+
+在 `0x2c498..0x2c548`：
+
+- 迴圈計數為 `0..0x1f3`，共 500 次；每次呼叫
+  `0x11d40(0,0xff,BL)`、`0x11eb0`，並以 raw tick `1` 前進。
+- `BL` 從 `0x28` 開始；在前 200 次每五次下降一次，後 200 次每五次上升
+  一次，剩餘迴圈沿 raw 指令保持，不另命名成淡入／淡出。
+- `0x2c548` 之後配置兩個 `0xfa00` buffer，載入 `TAI.DAT` resource3、
+  `FDOTHER.DAT` resource `0x38` 與 `FIGANI.DAT`；再依
+  `[0x53bfb]-1` 逆序選取 runtime record。record byte `+7` 只作為 raw
+  FIGANI／DATO 資源索引來源，不能由此推導角色身分。
+- `0x2c66c` 呼叫 `0x29164`，`0x2c685` 呼叫 `0x2b9a1`；其後 20 次
+  `0x2c692..0x2c6f4` 的 secondary loop、依 descriptor count 的 primary
+  loop、DATO 與五組 `0x15f84` 文字目的地，均以原始參數保存。
+- portrait loop 在 `0x2c7ed..0x2c967` 依 record byte `+8` 選擇文字，
+  `edi < 0xdc` 時使用 `unit[+8]+0x0c`，否則使用 raw `0x2d`；每次
+  `0x10620` 回傳非零時，才將 loop counter 設為 `1` 並呼叫 `0x4e031`。
+  這只證實「字組改變／清除閘門」，不證實是哪個按鍵，也不提供 skip 的
+  campaign 語意。
+- 完成 20 個 record 後釋放資源並跳到共享 `0x28a64` 清理尾端；`0x28a64`
+  的 caller／owner 證據另見 [`fd2_ch29_input_cleanup_ida.txt`](fd2_ch29_input_cleanup_ida.txt)。
+
+## 已證實：輸入 helper 的最小 raw 契約
+
+- `0x10620..0x10652`：讀 absolute word `0x41a` 與 `0x41c`，相等回傳0，
+  不相等回傳1；它在整個 EXE 有多個 caller。
+- `0x4e031..0x4e040`：將 word `[0x41a]` 複製到 `[0x41c]`；它同樣是
+  共用 helper，不是終局專用事件消費器。
+- `0x2c950` 與 `0x2c961` 是 `sub_2C405` 內的兩個 call site；只能保存
+  `NativeBIOSKeyboardState.WordsDiffer`／`Copy041ATo041C` 原語，不能增加
+  未證實的 Enter、Space、Esc 或 skip 映射。
+
+## 重製邊界
+
+- `native_2bce5.json`、`internal/ending.Player`、`MontageCycle` 與
+  `MontageTail` 可以保存上述 raw schedule，並在原始資源與 buffer provenance
+  完整時執行獨立預覽。
+- `0x2c405` 的 montage、`0x2c194..0x2c39a` tail、輸入事件與
+  `postbattle_ch29_persist`／終局 campaign handoff 目前仍未有一般玩家 E2；
+  不把它們接到 town/shop/preparation/save，也不把 `0x1088d(0x1e)` 當作
+  玩家戰次證據。
+- 缺少完整 indexed owner 或 raw chapter provenance 時，runtime 必須停止在
+  已證實的獨立畫面邊界（fail-closed），不可用 generic ending 或下一章節
+  替代。

@@ -3309,3 +3309,27 @@ raw dispatch，不直接代表玩家戰次。
 已撤回。重製端仍維持 `postbattle_ch24_persist` fail-closed，尚未把
 `postbattle_ch25_persist → town_ch26` 當成已驗證正式接線。缺少未修改一般玩家
 路徑、持續隊伍與戰後城鎮／商店／整備／存檔的 E2 時，這一節只屬靜態 E1 證據。
+
+## 2026-08-09 raw ch29 terminal body `0x2bce5→0x2c405`（E1）
+
+合法 IDA Pro 9.4 與 Docker Capstone 以固定版 `FD2.EXE` 重讀終局函式完整範圍；
+位址、函式邊界、雜湊與逐段 raw 順序見
+[`fd2_ch29_terminal_body_ida.txt`](../data/ida/fd2_ch29_terminal_body_ida.txt)。
+`sub_2BCE5` 的兩個 caller 仍是 `0x2545d` 與 `0x25970`；後者在 `0x25975`
+自迴圈，不能被寫成 campaign 返回。前綴已證實 resource `FDOTHER.DAT#0x36`、
+frame0／frame9、`0x11df2` 的 `0x3f..0` ramp、三輪重複 ramp、frame
+`0x0c..0x6c`、40 次與 200 次 indexed composite，以及於 `0x2c172` 呼叫
+獨立 `sub_2C405` 的順序。
+
+`sub_2C405` 另以 raw `0x1088d(0x1e)` 建立終局 staging，先跑 500 次
+`0x11d40`／`0x11eb0` 迴圈，再於 `0x2c548` 配置 TAI／FDOTHER／FIGANI／DATO／
+FDTXT 所需的 montage context，依 `[0x53bfb]-1` 逆序處理 runtime record。
+這補足了「前綴已 lower」與「完整終局可接 campaign」之間的證據差距，但仍不
+證實 `0x1e` 是玩家戰次或下一節點。
+
+輸入方面，`0x10620` 只比較 absolute `word[0x41a]`／`word[0x41c]`，
+`0x4e031` 只複製前者到後者；兩者都有其他 caller。`0x2c950`／`0x2c961`
+因此只能保存 raw 字組變化閘門，不能猜成 Enter、Space、Esc 或 generic skip。
+`MontageCycle`、`Player` 與 `MontageTail` 維持獨立可驗證執行器；indexed owner、
+輸入事件、一般玩家 E2 及 battle→postbattle→town/shop/preparation/save
+campaign handoff 仍失敗即關閉。
