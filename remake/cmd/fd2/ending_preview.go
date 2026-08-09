@@ -211,20 +211,29 @@ func (g *Game) drawNativeEndingDialogue(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(10, by)
 	screen.DrawImage(box, op)
-	const scale = 2.1
-	hx, tx, ty := 16.0, 216.0, by+24
-	hy := by + (198-80*scale)/2
-	if upper {
-		hx, tx, ty = float64(logicalW)-16-80*scale, 32, by+46
+	scale := 2.1
+	sourceWidth := 80.0
+	var fr []*ebiten.Image
+	if g.portraits != nil {
+		fr = g.portraits[dl.Speaker]
 	}
-	if fr := g.portraits[dl.Speaker]; len(fr) > 0 {
+	if len(fr) > 0 {
+		sourceWidth = float64(fr[0].Bounds().Dx())
+		scale = 168.0 / sourceWidth
+	}
+	hx, tx, ty := 16.0, 216.0, by+24
+	hy := by + (198-sourceWidth*scale)/2
+	if upper {
+		hx, tx, ty = float64(logicalW)-16-sourceWidth*scale, 32, by+46
+	}
+	if len(fr) > 0 {
 		po := &ebiten.DrawImageOptions{}
 		if upper {
 			po.GeoM.Scale(scale, scale)
 			po.GeoM.Translate(hx, hy)
 		} else {
 			po.GeoM.Scale(-scale, scale)
-			po.GeoM.Translate(hx+80*scale, hy)
+			po.GeoM.Translate(hx+sourceWidth*scale, hy)
 		}
 		screen.DrawImage(fr[0], po)
 	} else {
