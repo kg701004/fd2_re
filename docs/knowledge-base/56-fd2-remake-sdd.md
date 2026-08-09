@@ -2445,6 +2445,14 @@ entry #42, exact 312×192 geometry, a `0x138`-stride `0xea00` staging surface,
 and transparent `0x4e63d` blitting, while leaving the indexed state/latch
 adapter outside the production handler.
 
+相鄰的 ch22 `0x2189a` 稽核遵循相同的非破壞性規則。IDA data-xref 顯示 caller
+直接讀取共用 `0x53a49`／`0x53aa9`／`0x53aad`／`0x53a6d`，但沒有在此函式
+寫入；同一批 globals 也被多個地圖、角色、轉場與 indexed caller 消費。
+`0x53b03` 仍是 raw resource loader handle，`0x53b07`／`0x53b0b` 則由共用
+呈現函式寫入，再由 indexed 路徑讀取。這只是擁有者邊界證據，不授權把任何
+欄位別名成 camera、portrait、effect 或 framebuffer；`native_2189a_loop`
+因此仍維持失敗即關閉。
+
 The adjacent `0x24e80` handler contains one independent raw mutation loop: for runtime indices `0x10 <= i < caller_count`, records with byte `+0x07 == 0x1f` receive `+0=0x10` and `+1=0x06`. `battle.RewriteNativeMarker1F` preserves the explicit start/count, matching-marker-only writes, and bounds validation. The bytes remain unnamed and are not treated as roster identity or renderer state.
 
 The mutation core after a selected `0x11506` pair is independently transcribed: copy runtime→persistent `0x50` bytes; clear persistent bytes `+0x22..+0x27`; mask persistent byte `+0x05` with `1`; if the result is not `1`, copy word `+0x42` to `+0x40`; always copy word `+0x46` to `+0x44`. `battle.ApplyNativePersistentRecordCopy` implements only this raw core with atomic bounds validation. The preceding `0x3453e` zero-identity/inactive gate and trailing `0x1145a` call remain outside the helper and outside remake sync semantics.

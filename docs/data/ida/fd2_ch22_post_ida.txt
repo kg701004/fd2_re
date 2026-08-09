@@ -79,6 +79,24 @@ FD2.EXE：raw ch22 post／玩家第23戰戰後處理器證據
   `[10,15,1]`）及 `0x24a10`（raw `[16,30,1]`）。三個 payload 都在
   `remake/assets/cutscenes/handlers/ch22_post.json` 保存。
 
+已證實：`0x2189a` 工作區相關 globals 的 owner 邊界
+----------------------------------------------------
+
+- IDA Pro 9.4 data-xref 顯示 `0x2189a` 直接讀取共用的
+  `0x53a49`（`0x21934`／`0x21971`）、`0x53aad`（`0x218f9`）、
+  `0x53aa9`（`0x218ff`）與 `0x53a6d`（`0x21922`），函式本身沒有對這些
+  global 的直接寫入。這些位址在 `0x11cac`、`0x11eee`、`0x127a9`、
+  `0x21eb1`、`0x22046`、`0x24618` 等多個共用 caller 也有直接交叉參照，
+  不能視為 ch22 專屬狀態。
+- `0x53b03` 的直接配置／清理集中於 `0x10652..0x1088d` raw resource
+  loader，再由 `0x11eee` 讀取；`0x53b07`／`0x53b0b` 的寫入分散在
+  `0x1300d`、`0x13185`、`0x13315`、`0x12eaa` 等共用呈現函式，
+  `0x11eee` 只讀取它們。這些 data-xref 只收窄 owner 邊界，不替工作區欄位
+  命名成 camera、portrait、effect 或 framebuffer。
+- 因此 `Native2189ALoop` 仍只能保存 10 次 raw call-site／幾何契約；
+  ch22 的 indexed adapter、工作區生命週期、一般玩家入口與戰後城鎮／整備／
+  存檔 owner 仍失敗即關閉。
+
 已證實：相鄰 raw 原語
 ----------------------
 

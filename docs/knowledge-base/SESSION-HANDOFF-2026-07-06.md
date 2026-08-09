@@ -3510,3 +3510,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x12eaa`、`0x1300d`、`0x13185`、`0x13315`。這只關閉 raw offset-state
   的靜態 owner 邊界，不把欄位改名成 camera／framebuffer／`nativeMapWork`，
   也不解除 `postbattle_ch23_persist` 的 indexed／campaign fail-closed gate。
+
+- 2026-08-09 ch22 `0x2189a` global xref：IDA data-xref 固定 caller 只讀取
+  共用 `0x53a49`／`0x53aa9`／`0x53aad`／`0x53a6d`，這些位址同時被
+  `0x11cac`、`0x11eee`、`0x127a9`、`0x21eb1`、`0x22046`、`0x24618` 等
+  多個呈現 caller 消費；`0x53b03` 是 raw resource loader handle，
+  `0x53b07`／`0x53b0b` 由共用呈現函式寫入。這只收窄 owner 邊界，不把工作區
+  欄位命名成 camera／portrait／effect／framebuffer；`native_2189a_loop`、
+  `postbattle_ch22_persist` 與戰後城鎮／整備／存檔仍保持失敗即關閉。

@@ -81,6 +81,14 @@
   或 town／shop／整備／存檔 gate。證據見
   [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)；canonical
   `diagnostics.unknown_ops` 已由歷史 10 校正為 5。
+- [x] **RE-CH22-2189A-GLOBAL-XREF**：IDA data-xref 已固定 `0x2189a` 直接
+  讀取 `0x53a49`／`0x53aa9`／`0x53aad`／`0x53a6d`，但這些 globals 同時由
+  `0x11cac`、`0x11eee`、`0x127a9`、`0x21eb1`、`0x22046`、`0x24618` 等
+  共用 caller 消費；`0x53b03` 仍屬 raw resource loader handle，
+  `0x53b07`／`0x53b0b` 寫入則分散於共用呈現函式。這只關閉 ch22 工作區的
+  靜態 owner 邊界，不把欄位命名成 camera／portrait／effect，也不解除
+  `native_2189a_loop` 的 indexed／campaign fail-closed gate。證據見
+  [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
 - [x] **本輪稽核基線**：24 個標準戰後節點為 20 active／4 blocked；
   story/cutscene 為 121 節點、9 個獨立 script、50 個 handler binding、62 個
   fallback；`mapping_gaps.native_semantics` 由 29 降為 24，表示三個
