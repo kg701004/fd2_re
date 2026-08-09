@@ -97,6 +97,12 @@
   這些是覆蓋統計，不是原版完成百分比。新增的第五個封鎖節點是玩家第25戰：
   `0x24df2` 的兩個 `0x112a5` immediate 已辨識為角色索引 26「聖寇拉斯」與
   14「珊」，但仍不能把該次 append 命名成永久 JOIN。
+- [x] **RE-4DBFC-RAW-MASK-CONTRACT**：合法 IDA Pro 9.4 重新固定
+  `0x4dbfc..0x4dc34` 的 `count=u8[base+0]*u8[base+2]` 與逐格
+  `cell[+3]=0xff`、`cell[+2]&=0x1f`、`cell[+1]&=0x03`；`0x24a92` 只是其中一個
+  呼叫者，完整函式共有34個直接呼叫點。這只關閉原始變更契約（raw mutation contract），
+  不是 ch22 專屬清理器；目前 State 沒有完整 `+1/+2/+3` cell buffer，故
+  `ch22_post.json` 仍保留 unknown、不可猜接成單純 target-field reset。
 - [x] **ch29 candidate `0x35bba(20)` raw 邊界**：IDA／Capstone 已固定
   `0x35bba` 只從 runtime index20 起清除每筆 0x50-byte record 的
   `+0x40`，再呼叫多 caller 共用的 `0x1db65`。後者讀取 raw `+0/+1/+5/+0x40`

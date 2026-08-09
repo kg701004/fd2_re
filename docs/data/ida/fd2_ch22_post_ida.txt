@@ -109,6 +109,26 @@ FD2.EXE：raw ch22 post／玩家第23戰戰後處理器證據
 - `0x4dbfc` 對 `dword_53A51` 的原始欄位逐筆清除／遮罩；目前只保留 raw
   初始化描述，沒有把它提升成地圖、單位或存檔語意。
 
+## 2026-08-09 `0x4dbfc` 原始遮罩原語複核（非破壞性）
+
+合法 IDA Pro 9.4 Docker 重新建立同一固定雜湊資料庫後，固定函式範圍
+`0x4dbfc..0x4dc34`。它先從輸入指標讀取兩個 raw bytes，計算
+`count = u8[base+0] * u8[base+2]`，再從 `base+4` 起逐筆以 4 bytes 步進；每筆
+直接執行：
+
+```text
+cell[+3] = 0xff
+cell[+2] = cell[+2] & 0x1f
+cell[+1] = cell[+1] & 0x03
+```
+
+`0x24a92` 的 caller 只提供原始 `dword ptr [0x3a51]` 指標；IDA 同次列出
+該函式共有 34 個直接呼叫點，故不能把它命名成 ch22 專屬清理器或只看成
+單一畫面效果。這是**已證實**的 raw mutation contract，但重製的戰役狀態
+目前只保存 `byte+3` 的投影，未保存同一 cell 的完整 `+1/+2/+3` 原始陣列；
+因此 `ch22_post.json` 的 `0x4dbfc` 仍保留 raw unknown，不能猜測性降級成
+單純 `reset_native_target_field`，`postbattle_ch23_persist` 也維持失敗即關閉。
+
 證據等級與限制
 --------------
 

@@ -3577,3 +3577,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   消費端（consumer）的**已證實**邊界，不能把函式改名成單一戰後角色演出或通用淡出。
   完整原始位址、函式範圍及「不提升為 campaign owner」限制已追加到
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
+- 同輪 IDA 又固定 ch22 `0x24a92→0x4dbfc` 的完整 raw 遮罩：依
+  `u8[base+0]*u8[base+2]` 決定筆數，逐格寫 `+3=0xff`、遮罩 `+2=0x1f`、
+  `+1=0x03`；該函式共有34個共享直接呼叫者（callers）。因重製狀態沒有完整 cell
+  `+1/+2/+3` buffer，沒有把這項證據誤降成只重設 `byte+3`；ch22 的 unknown
+  與 `postbattle_ch23_persist` 失敗即關閉邊界保持不變。完整證據見
+  [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
