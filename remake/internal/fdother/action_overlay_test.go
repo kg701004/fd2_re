@@ -47,6 +47,41 @@ func TestActionOverlayOriginMatchesNativeAddressExpression(t *testing.T) {
 	}
 }
 
+func TestActionOverlaySnapshotCapturesAndRestoresExplicit72By72Region(t *testing.T) {
+	const stride, height = 100, 100
+	src := make([]byte, stride*height)
+	for y := 0; y < height; y++ {
+		for x := 0; x < stride; x++ {
+			src[y*stride+x] = byte((x + 3*y) & 0xff)
+		}
+	}
+	original := append([]byte(nil), src...)
+	snapshot, err := CaptureActionOverlaySnapshot(src, stride, 11, 13)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot) != NativeActionOverlaySnapshotBytes {
+		t.Fatalf("snapshot bytes=%d, want %d", len(snapshot), NativeActionOverlaySnapshotBytes)
+	}
+	for y := 13; y < 13+NativeActionOverlaySnapshotHeight; y++ {
+		for x := 11; x < 11+NativeActionOverlaySnapshotWidth; x++ {
+			src[y*stride+x] = 0xee
+		}
+	}
+	if err := RestoreActionOverlaySnapshot(src, snapshot, stride, 11, 13); err != nil {
+		t.Fatal(err)
+	}
+	if string(src) != string(original) {
+		t.Fatal("snapshot restore did not recover the original rectangle")
+	}
+	if _, err := CaptureActionOverlaySnapshot(src, stride, 29, 29); err == nil {
+		t.Fatal("out-of-bounds 72x72 snapshot was accepted")
+	}
+	if err := RestoreActionOverlaySnapshot(src, snapshot[:len(snapshot)-1], stride, 11, 13); err == nil {
+		t.Fatal("malformed snapshot was accepted")
+	}
+}
+
 func TestActionOverlayFrameOffsets(t *testing.T) {
 	got, err := ActionOverlayFrameOffsets(1, false)
 	if err != nil {

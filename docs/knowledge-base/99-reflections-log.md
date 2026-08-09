@@ -612,3 +612,17 @@ stride456 work scene裁成312×192後貼到VGA `(4,4)`。若只把背景換進�
 啟動Xvfb、等待socket、`exec` binary的可觀察runner後才真的產生新圖。GUI artifact
 驗證不能只信process exit：還要查mtime、尺寸並人工看圖，否則README很容易長期
 展示與source不一致的舊成果。
+
+### 72×72 快照原語不等於 native renderer 完成
+
+原版 `0x175a9/0x17643` 的 `0x1440` bytes 很容易被誤讀成「只要在 Ebiten
+畫面上貼四張 cell 就完成」。本輪先把它收斂成兩個明確的 indexed API：
+`CaptureActionOverlaySnapshot` 與 `RestoreActionOverlaySnapshot`。矩形左上角由
+caller 明確傳入，任何尺寸／stride／邊界錯誤都在寫入前拒絕；測試同時驗證
+非均質資料的完整還原與外部像素不被碰觸。這保留了原始位元組契約，又不把
+cursor、camera 或 relative offset 猜成 private-buffer owner。
+
+目前重製的 Ebiten 路徑每幀重畫整幅場景，所以視覺上不會累積殘影，但這不是
+原版 backup/restore 的證據。只有在補齊 native owner、同狀態 DOSBox 畫面與
+正式 renderer 的消費端後，才可把 UI-03 提升；單純把 `[x]` 測試項寫進工作清單
+會重新造成「資料原語＝玩家畫面」的記憶混亂。

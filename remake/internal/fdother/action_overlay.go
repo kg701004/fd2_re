@@ -29,7 +29,64 @@ const (
 	nativeFramebufferStride = 0x1c8
 	nativeActionOverlayBase = 0x8088
 	nativeActionOverlayStep = 0x18
+
+	// NativeActionOverlaySnapshotWidth/Height and Bytes are the exact private
+	// indexed backup size used by 0x175a9/0x17643.  The caller must provide the
+	// top-left rectangle explicitly; this package does not infer a screen
+	// anchor from the cursor or from the relative blit offsets.
+	NativeActionOverlaySnapshotWidth  = 72
+	NativeActionOverlaySnapshotHeight = 72
+	NativeActionOverlaySnapshotBytes  = NativeActionOverlaySnapshotWidth * NativeActionOverlaySnapshotHeight
 )
+
+// validateActionOverlaySnapshotRect checks a caller-owned indexed framebuffer
+// rectangle without assigning any unproven coordinate meaning to it.
+func validateActionOverlaySnapshotRect(buf []byte, stride, x, y int) error {
+	if stride < NativeActionOverlaySnapshotWidth || x < 0 || y < 0 ||
+		x+NativeActionOverlaySnapshotWidth > stride ||
+		y+NativeActionOverlaySnapshotHeight > len(buf)/stride {
+		return errors.New("fdother: action overlay snapshot rectangle is invalid")
+	}
+	return nil
+}
+
+// CaptureActionOverlaySnapshot copies the native 72×72 indexed backup region.
+// x and y are the explicit top-left rectangle supplied by the caller.  No
+// cursor, camera, palette, or screen-coordinate semantics are inferred here.
+func CaptureActionOverlaySnapshot(src []byte, stride, x, y int) ([]byte, error) {
+	if stride <= 0 || len(src) == 0 {
+		return nil, errors.New("fdother: action overlay snapshot source is invalid")
+	}
+	if err := validateActionOverlaySnapshotRect(src, stride, x, y); err != nil {
+		return nil, err
+	}
+	snapshot := make([]byte, NativeActionOverlaySnapshotBytes)
+	for row := 0; row < NativeActionOverlaySnapshotHeight; row++ {
+		copy(
+			snapshot[row*NativeActionOverlaySnapshotWidth:],
+			src[(y+row)*stride+x:(y+row)*stride+x+NativeActionOverlaySnapshotWidth],
+		)
+	}
+	return snapshot, nil
+}
+
+// RestoreActionOverlaySnapshot restores a previously captured native 72×72
+// indexed rectangle.  A malformed snapshot is rejected before any write.
+func RestoreActionOverlaySnapshot(dst, snapshot []byte, stride, x, y int) error {
+	if stride <= 0 || len(dst) == 0 || len(snapshot) != NativeActionOverlaySnapshotBytes {
+		return errors.New("fdother: action overlay snapshot restore input is invalid")
+	}
+	if err := validateActionOverlaySnapshotRect(dst, stride, x, y); err != nil {
+		return err
+	}
+	for row := 0; row < NativeActionOverlaySnapshotHeight; row++ {
+		copy(
+			dst[(y+row)*stride+x:(y+row)*stride+x+NativeActionOverlaySnapshotWidth],
+			snapshot[row*NativeActionOverlaySnapshotWidth:],
+		)
+	}
+	return nil
+}
 
 // ActionOverlayOrigin implements the common 0x1741c/0x179d5 framebuffer
 // address expression. cursorColumn and cursorRow are the visible map cursor

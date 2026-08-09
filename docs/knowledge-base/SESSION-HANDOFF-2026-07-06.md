@@ -3607,3 +3607,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`fd2_ai_mode_dispatch_ida.txt`](../data/ida/fd2_ai_mode_dispatch_ida.txt)。
 - 已修正 `PlanNativeUnitMode2`、測試、`11` AI dossier、SDD、gap audit 與
   worklist；`0x13fd4` 的 raw HP 回復與 mode 11／其他已證實 caller 不受影響。
+
+## 2026-08-09：action overlay 72×72 索引快照原語
+
+- 依官方 IDA／Capstone 已保存的 `0x175a9`／`0x17643` 證據，原版開啟前與每幀
+  還原固定使用 `72×72 = 0x1440` indexed bytes。重製端在
+  `remake/internal/fdother/action_overlay.go` 新增
+  `CaptureActionOverlaySnapshot`／`RestoreActionOverlaySnapshot`；兩者都只接受
+  caller 明確提供的矩形左上角，尺寸、stride、邊界或快照長度不符時於寫入前
+  失敗。`action_overlay_test.go` 以非均質 100×100 indexed fixture 驗證完整
+  區域還原、外部像素保留與 malformed/out-of-bounds fail-closed。
+- 這只關閉可重生的資料原語，不推論 native private-buffer owner，也沒有把 API
+  接進目前每幀整幅重畫的 Ebiten adapter；因此 UI-03 仍是 partial，正式 renderer
+  的快照生命週期與 DOSBox 同狀態視覺差分仍是後續 gate。`56` SDD、`57` UI evidence
+  matrix 與 `91` worklist 已同步這個邊界，避免把「有單元測試」誤寫成原版畫面完成。

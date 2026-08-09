@@ -137,6 +137,13 @@ attack/spell/item availability approximation 說成 native `0x1b83d/0x1c269/0x1b
 [settled overlay screenshot](../figures/action-overlay-native-remake.png) 已證實 loader、palette、
 cell geometry、frame order 與 font-independent draw path 實際出畫；它們不是原版 DOSBox 畫面對照。
 
+重製端現已補上 `fdother.CaptureActionOverlaySnapshot`／
+`fdother.RestoreActionOverlaySnapshot` 的固定 `72×72 = 0x1440` indexed 快照原語與
+失敗即關閉測試。API 要求 caller 明確給出矩形左上角，故不把 cursor、camera 或
+relative blit offset 猜成備份 owner；現行 Ebiten adapter 仍由整幅場景重畫取代
+private-buffer restore，待原版備份 owner 與 DOSBox 同狀態畫面證據閉合後再接正式
+renderer。
+
 2026-07-25 renderer gate 縮小：native skin adapter 現至少直接套用 `0x1b83d` 的「equipped 且
 ID `<0x80`」attack 前提，並在 raw `NativeCommandMask` 非零時以其作 spell availability；沒有 raw
 mask 的舊 editable scenario 才退回 normalized `Spells`。attack target geometry、`unit+0x27` 的名稱及
