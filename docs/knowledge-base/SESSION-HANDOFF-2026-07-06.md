@@ -3529,3 +3529,14 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `0x53b07`／`0x53b0b` 由共用呈現函式寫入。這只收窄 owner 邊界，不把工作區
   欄位命名成 camera／portrait／effect／framebuffer；`native_2189a_loop`、
   `postbattle_ch22_persist` 與戰後城鎮／整備／存檔仍保持失敗即關閉。
+
+## 2026-08-09：DOSBox 原版抓圖工具校正
+
+- `tools/docker/fd2-dosbox-screenshot.sh` 的 `shot:` 已改為擷取實際 DOSBox
+  用戶端視窗（client window）；Xvfb 根視窗只用於既有固定座標就緒探測（readiness probe）。Docker／DOSBox
+  實測產生 320×200 的標題選單與 `FD2.SAV` CONTINUE 後戰場對話畫面，確認先前
+  1024×768 根視窗截圖只是左上角局部，不再把它當成 UI 證據。
+- 既有 `title-original-dosbox.png` 與新的標題畫面逐像素相同；新的戰場畫面與
+  `ch01-dialogue-original-dosbox.png` 只有動畫時序差異，沒有新增圖片，避免在
+  `docs/figures/` 留下重複證據。原版一般玩家 E2、戰後節點與 AI 正式執行仍未
+  因抓圖工具修正而解除失敗即關閉。

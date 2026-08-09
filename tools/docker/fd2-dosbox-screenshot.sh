@@ -88,6 +88,16 @@ if [[ -z "$window" ]]; then
 fi
 
 xdotool windowfocus "$window"
+
+# Root-window captures include the Xvfb desktop and can place the DOSBox
+# client at an arbitrary offset.  Evidence screenshots must contain the
+# actual DOSBox client window; keep root captures only for fixed-coordinate
+# readiness probes below.
+capture_window() {
+    local output="$1"
+    import -window "$window" "$output"
+}
+
 town_ready() {
     import -window root /tmp/fd2-town-probe.png
     [[ "$(convert /tmp/fd2-town-probe.png -format \
@@ -172,7 +182,7 @@ for step in "${steps[@]}"; do
             fi
             ;;
         type) echo "[fd2-shot] type $arg"; xdotool windowfocus "$window"; xdotool type --delay 80 "$arg" ;;
-        shot) echo "[fd2-shot] shot $arg"; import -window root "/shots/${arg}.png" ;;
+        shot) echo "[fd2-shot] shot $arg"; capture_window "/shots/${arg}.png" ;;
         *) echo "unknown timeline step: $step" >&2; exit 2 ;;
     esac
 done
