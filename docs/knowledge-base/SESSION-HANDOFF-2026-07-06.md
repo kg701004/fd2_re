@@ -3476,3 +3476,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   一般玩家 E2、`0x2c194..0x2c39a` handoff 與
   `postbattle_ch29_persist` campaign terminal 仍保持失敗即關閉。完整證據見
   [`fd2_ch29_input_cleanup_ida.txt`](../data/ida/fd2_ch29_input_cleanup_ida.txt)。
+
+## 2026-08-09：ch29 montage 後續 raw tail schedule
+
+- 合法 IDA Pro 9.4／Docker Capstone 固定 `0x2c194..0x2c39a` 不會直接回傳
+  campaign：先清 VGA、載入 FDOTHER #60，接著載入 #58／#57，跑 20 次 raw
+  table loop，最後載入 #59 並釋放。`0x2c253..0x2c33b` 的三組 20-byte
+  table、unit raw offsets、`0x28a6c`／`0x11d40`／`0x2935b`／`0x1f882`／
+  `0x375c0` 呼叫與 20／78 tick 已輸出到
+  [`fd2_ch29_post_montage_tail_ida.txt`](../data/ida/fd2_ch29_post_montage_tail_ida.txt)。
+- 新增 `remake/assets/endings/native_2c194_tail.json` 與
+  `ending.MontageTail.Plan`。它只驗證資源索引、raw tables、位址契約並產生
+  20 筆 raw entry；沒有寫入 battle state、沒有猜動畫／角色名稱，也沒有把
+  `postbattle_ch29_persist` 接到下一城鎮。indexed resource owner、輸入事件、
+  campaign／town／shop／整備／save handoff 與一般玩家 E2 仍失敗即關閉。

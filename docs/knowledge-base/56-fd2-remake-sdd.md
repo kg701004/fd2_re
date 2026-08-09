@@ -467,6 +467,17 @@ terminal、一般玩家 E2 仍未閉合，因此不解除 `postbattle_ch29_persi
 `0x2c194..0x2c39a` handoff 與一般玩家 E2 仍失敗即關閉；證據見
 [`fd2_ch29_input_cleanup_ida.txt`](../data/ida/fd2_ch29_input_cleanup_ida.txt)。
 
+2026-08-09 ch29 post-montage tail raw schedule：IDA／Capstone 又閉合
+`0x2c194..0x2c39a` 的資源與迴圈契約：FDOTHER #60 的前置解碼、#58／#57
+的 20-entry raw table loop、`unit+6/+7/+0x56/+0x57` 寫入、
+`0x28a6c(0,1)`、`0x11d40(0,255,0)`、`0x2935b`、20／78 tick、
+`0x1f882`，以及最後 FDOTHER #59 的解碼與釋放。三組 20-byte 表以固定版
+原始位址 `0x525dc..0x52617` 輸出並帶雜湊；`MontageTail.Plan` 只產生 raw
+entry，不寫入 `battle.State`、不呈現畫面，也不命名欄位。這關閉「尾端完全未知」
+的過時斷言，但不關閉 indexed resource owner、輸入事件、campaign／town／
+shop／整備／save handoff 或 `postbattle_ch29_persist`；證據見
+[`fd2_ch29_post_montage_tail_ida.txt`](../data/ida/fd2_ch29_post_montage_tail_ida.txt)。
+
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
 `internal/dato` now provides the corresponding resource boundary: four-frame DATO LLLLLL parsing, the native `0x4e916` high-run codec, opaque-zero semantics, and bounds-checked indexed blit. `MouthState` preserves the verified `0x16D00` cadence as a pure tested adapter and is used by the dialogue update loop; complete DATO runtime resource binding and ending UI integration remain explicit gates. For the separate `0x24618` transition, `fdother` now preserves the native full-buffer seed and 456→320 viewport copy contract, but runtime LUT selection and indexed presentation are still fail-closed.

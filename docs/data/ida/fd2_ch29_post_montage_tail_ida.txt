@@ -1,0 +1,83 @@
+# FD2 raw ch29 montage 後續尾端：IDA Pro 9.4／Capstone 證據
+
+## 輸入與工具
+
+- 輸入：`FD2.EXE`，大小 357074 位元組。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- IDA：合法 IDA Pro 9.4，`fd2-ida-authorized-local`，一次性無網路 Docker。
+- 交叉驗證：`fd2-cap-local` Docker 內 Capstone 5.0.3。
+- 所有 `0x...` 均為 FD2.EXE 線性位址，不是檔案偏移或重製端位址。
+
+## 已證實：`0x2c194..0x2c39a` 呼叫順序
+
+`0x2c18f` 由 `0x2bce5` 呼叫 `0x2c405`；`0x2c194` 是該函式在
+`0x2c405` 返回後的下一段，不是直接返回 campaign。Capstone 直接指令固定：
+
+```text
+0x2c194  push 0xfa00; push 0; push 0xa0000; call 0x375c0
+0x2c1a8  push 1; push -1; call 0x25977
+0x2c1b4  push 0x32; call 0x17aa9
+0x2c1be  push 0x3c; push [esp+0x48]; push 0x1a4d; call 0x111ba
+0x2c1d3  push -1; push 0x140; push 0xa0000; ...; call 0x4e63d
+0x2c1ec  call 0x1f525
+0x2c1f3  push 0; push 0x12; call 0x25977
+0x2c1fd  push 0x50; call 0x17aa9
+0x2c207  call 0x1f882
+0x2c220  push 0x3a; push esi; push 0x1a4d; call 0x111ba
+0x2c234  push 0x39; push [esp+0x44]; push 0x1a4d; call 0x111ba
+```
+
+以上只提升資源索引、配置／透明解碼與等待呼叫的 raw 契約；`0x25977`、
+`0x1f525` 與 `0x4e63d` 的完整語意仍不可由這段單獨命名。
+
+## 已證實：20-entry raw table loop
+
+固定 `0x525dc..0x52617` 的 60 bytes 被分成三組各 20 bytes：
+
+```text
+global_540ff = 04 03 33 0e 19 12 28 35 16 18 1c 11 1e 1f 32 21 22 34 24 2f
+unit_plus_7  = 33 6e 13 69 36 75 1e 7b 27 7f 40 51 34 7d 1a 73 29 5b 1f 7e
+unit_plus_14 = 67 14 53 1c 7c 26 5d 22 70 2c 56 35 50 37 78 24 6a 3c 7a 32
+```
+
+Capstone 固定迴圈 `0x2c253..0x2c33b`：
+
+```text
+0x2c258  [0x53a45]+6 = 0
+0x2c268  [0x53a45]+7 = byte[stack+0x28+i]
+0x2c274  if byte[stack+0x14+i] < 0x4c: [0x53a45]+0x56 = 2; else 0
+0x2c299  [0x53a45]+0x57 = byte[stack+0x14+i]
+0x2c2a0  [0x540ff] = byte[stack+i]
+0x2c2a6  call 0x28a6c(0,1)
+0x2c2bb  call 0x11d40(0,255,0)
+0x2c2cc  call 0x17aa9(0x14)
+0x2c2d6  call 0x2935b(resource_57,i,0xa0000,0x140,-1)
+0x2c2ef  call 0x17aa9(0x4e)
+0x2c2f9  call 0x1f882
+0x2c302  call 0x375c0(0xa0000,0,0xfa00)
+0x2c313  i++ ; i < 0x14
+```
+
+`unit+6` 的第 0 筆為 0，其餘 19 筆為 2；其餘三組數值保留 raw 表名，
+不可升格為角色、職業、動畫或結局名稱。重製端以
+`native_2c194_tail.json` 與 `MontageTail.Plan` 保存這個可編輯 schedule，
+只產生 raw entry，不直接寫入 `battle.State` 或呈現畫面。
+
+## 已證實：尾端收尾
+
+`0x2c33b` 後恢復 `[0x53a65]`、釋放 #58，等待 `0x17aa9(0x32)`，載入
+FDOTHER #59、以 `0x4e63d` 解碼到 VGA、呼叫 `0x1f525`，釋放資源後從
+`0x2c39a` 返回。這只是 presentation／資源生命週期，尚未證明 campaign
+node、town、shop、整備、save 或結局 owner。
+
+## 推論等級與限制
+
+- 已證實：四個 FDOTHER resource index、三組 20-byte raw table、20 次 loop、
+  unit raw offsets、`0x28a6c`／`0x11d40`／`0x2935b`／`0x1f882`／`0x375c0`
+  的直接呼叫形狀。
+- 未知：各 raw table 欄位的遊戲名稱、`0x25977`／`0x1f525` 的完整語意、
+  這段與終局／戰役／城鎮的 handoff。
+
+因此 `MontageTail` 目前是可編輯、可驗證、失敗即關閉的 raw schedule，
+不是 campaign binding，也不解除 `postbattle_ch29_persist`。
