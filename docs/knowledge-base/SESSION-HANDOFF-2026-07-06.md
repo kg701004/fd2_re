@@ -3634,3 +3634,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   的 raw byte address，並以 regression 拒絕零／負 cursor；這修正了先前只知道
   72×72 大小、卻沒有 owner 的文件邊界。現行 Ebiten adapter 仍沒有消費 private
   snapshot，因而不提升 UI-03 的 E2 狀態。
+
+## 2026-08-09：ch23 runner 移除未證實的自動列旋轉
+
+- 重新對照 `0x24d22`：ch23 handler 的非零 `stage=2..14` 呼叫只寫入
+  `byte_0x51a10`；`arg==0` 的 312-byte 列複製是在共享 `0x11eee` 的 BIOS tick
+  變化閘門下間接發生。先前 `RunNativeCh23Loop` 在每個 stage 開始時直接呼叫
+  `RotateNativeCh23Rows`，把 handler 排程誤當成已發生的 renderer 副作用，已移除。
+- `NativeCh23LoopHooks` 現要求 `Latch(rawStage)`、`Draw`、`Tick`，palette 段另要求
+  raw `ESI` 回呼（callback）；runner 只重現原始呼叫順序並在回呼失敗時回復 staging／DAC，
+  不替 caller 命名或猜測 tick 時序。Docker `go test ./internal/fdother -run NativeCh23`
+  與 `go test ./internal/...` 均通過；`postbattle_ch23_persist`、indexed adapter
+  與一般玩家 E2 維持失敗即關閉。

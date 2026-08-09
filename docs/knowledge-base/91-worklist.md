@@ -38,8 +38,9 @@
   `FDOTHER.DAT` #42→312×192 單幀、`0xea00` staging 配置與透明 blit，重製端以
   `DecodeNativeCh23Stage`／`BlitNativeCh23Stage` 保存此窄原語；另以兩個嚴格驗證的
   `native_ch23_loop` beats 保留第一段 30 次、第二段 12 次的完整 call-site、
-  stage 值與 register-shaped arguments。執行器在 indexed／latch adapter 未完成
-  時失敗即關閉，固定版 raw seed 為 `0x01`；共用尾端固定目的地 `0xA0504`，
+  stage 值與 register-shaped arguments。執行器現在要求明示的原始 latch 回呼（raw-latch callback），
+  不會自行把非零 setter 推論成列旋轉；缺 indexed／latch adapter 時失敗即關閉，
+  固定版 raw seed 為 `0x01`；共用尾端固定目的地 `0xA0504`，
   但入口 latch 的執行期值、中間 `0x53aff` 偏移生命週期、一般玩家畫面與
   `postbattle_ch23_persist` 仍未閉合。證據見
   [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。

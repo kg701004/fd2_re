@@ -2415,7 +2415,11 @@ remake now has raw `RotateNativeCh23Rows` and
 `ApplyNativeCh23PaletteCycle` primitives, plus two strictly validated
 `native_ch23_loop` candidate beats that preserve every loop call site, the
 30/12 repetition counts, register-shaped arguments, and stage values 2..14.
-The runner fails closed while the raw state/latch adapter is absent. The same
+The runner now requires an explicit raw-latch callback for every non-zero
+`0x24d22(stage)` setter and deliberately does **not** rotate rows by itself;
+the `arg==0` copy belongs to the BIOS-tick-gated shared consumer. It therefore
+fails closed while the raw state/latch adapter is absent, instead of turning a
+handler schedule into an inferred renderer. The same
 case-23 branch passes `0x53aff`, row stride `0x138`, and `0xc0` rows to
 `0x11eb0`。重新核對 `0x10652..0x1088d` 後，raw 載入器的擁有者邊界已收窄：
 當 `[0x53c03]==0x17` 時，`0x107dd` 精確配置 `0xea00` bytes 並寫入

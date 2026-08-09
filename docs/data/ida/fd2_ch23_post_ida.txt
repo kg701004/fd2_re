@@ -135,7 +135,10 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
 - 重製端 `fdother.DecodeNativeCh23Stage`／`BlitNativeCh23Stage` 只消費上述
   已證實的 #42、312×192、`0x4e63d` 透明 blit 邊界；它們保留 raw 幾何與
   RLE，不宣稱 #42 是背景、轉場或 UI。完整 indexed state／present adapter
-  仍由 `native_ch23_loop` 的失敗即關閉閘門保護。
+ 仍由 `native_ch23_loop` 的失敗即關閉閘門保護；該 runner 現要求呼叫端明示
+ `0x24d22(stage)` 的原始 latch 回呼（raw-latch callback），不會在 handler stage setter 後
+ 自動執行 `arg==0` 列旋轉。列旋轉只可由具備 BIOS-tick／raw staging
+ provenance 的共享消費端 adapter 提供。
 
 已證實：`byte_51A10` 的固定版 raw data seed
 ---------------------------------------------

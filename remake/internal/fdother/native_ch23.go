@@ -121,9 +121,13 @@ type NativeCh23LoopSpec struct {
 }
 
 // NativeCh23LoopHooks 是尚未命名的原始呼叫端。呼叫者必須自行提供
-// indexed draw、tick 與（palette 段）0x11d40 的 raw ESI 消費端；缺任何
-// callback 就拒絕執行，避免把純資料排程誤接成 generic renderer。
+// 0x24d22 的 raw latch setter、indexed draw、tick 與（palette 段）
+// 0x11d40 的 raw ESI 消費端；缺任何 callback 就拒絕執行，避免把純資料
+// 排程誤接成 generic renderer。latch setter 只代表非零 byte 寫入；它不會
+// 在此排程器內偷偷執行 arg==0 的列旋轉，因為那是 BIOS tick 閘門下的共享
+// 消費端副作用，必須由有原始 state provenance 的 adapter 自行決定。
 type NativeCh23LoopHooks struct {
+	Latch   func(rawStage int) error
 	Palette func(rawESI int) error
 	Draw    func() error
 	Tick    func() error
@@ -158,8 +162,8 @@ func RunNativeCh23Loop(spec NativeCh23LoopSpec, staging, dac []byte, hooks Nativ
 	if !nativeCh23LoopSpecValid(spec) {
 		return errors.New("fdother: invalid ch23 raw loop spec")
 	}
-	if len(staging) != NativeCh23StageStride*NativeCh23StageHeight || hooks.Draw == nil || hooks.Tick == nil {
-		return errors.New("fdother: ch23 loop requires exact staging and draw/tick callbacks")
+	if len(staging) != NativeCh23StageStride*NativeCh23StageHeight || hooks.Latch == nil || hooks.Draw == nil || hooks.Tick == nil {
+		return errors.New("fdother: ch23 loop requires exact latch/draw/tick callbacks")
 	}
 	if spec.Palette && (hooks.Palette == nil || len(dac) != 256*3) {
 		return errors.New("fdother: ch23 palette loop requires raw ESI callback and DAC")
@@ -173,10 +177,11 @@ func RunNativeCh23Loop(spec NativeCh23LoopSpec, staging, dac []byte, hooks Nativ
 	}
 	rawESI := 0
 	for _, stage := range spec.StageValues {
-		// Native 0x24c81/0x24cf2 sets the latch before the following
-		// inner draw/tick loop; the row rotation must therefore be visible
-		// to the first callback of this stage.
-		if err := RotateNativeCh23Rows(staging, stage); err != nil {
+		// Native 0x24c81/0x24cf2 only calls 0x24d22(stage), whose non-zero
+		// branch writes byte_0x51a10. Do not infer that the staging rows have
+		// already rotated here: 0x11eee's BIOS-tick consumer may call
+		// 0x24d22(0) later, and that timing/state belongs to the adapter.
+		if err := hooks.Latch(stage); err != nil {
 			return rollback(err)
 		}
 		for i := 0; i < spec.Repeat; i++ {

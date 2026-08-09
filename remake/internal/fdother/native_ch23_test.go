@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -116,11 +117,16 @@ func TestRunNativeCh23InitialLoopPreservesRawSchedule(t *testing.T) {
 	}
 	draws, ticks, palettes := 0, 0, 0
 	firstDrawRow := -1
+	var latches []int
 	err := RunNativeCh23Loop(NativeCh23LoopSpec{
 		Phase:       "initial",
 		Repeat:      30,
 		StageValues: []int{2, 3, 4, 5, 6, 7, 8, 9},
 	}, staging, nil, NativeCh23LoopHooks{
+		Latch: func(stage int) error {
+			latches = append(latches, stage)
+			return nil
+		},
 		Draw: func() error {
 			if draws == 0 {
 				firstDrawRow = int(staging[0])
@@ -134,8 +140,26 @@ func TestRunNativeCh23InitialLoopPreservesRawSchedule(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if draws != 8*30 || ticks != draws || palettes != 0 || firstDrawRow != 190 {
-		t.Fatalf("initial schedule draws=%d ticks=%d palettes=%d", draws, ticks, palettes)
+	if draws != 8*30 || ticks != draws || palettes != 0 || firstDrawRow != 0 {
+		t.Fatalf("initial schedule draws=%d ticks=%d palettes=%d firstRow=%d", draws, ticks, palettes, firstDrawRow)
+	}
+	if !reflect.DeepEqual(latches, []int{2, 3, 4, 5, 6, 7, 8, 9}) {
+		t.Fatalf("raw latch stages=%v", latches)
+	}
+}
+
+func TestRunNativeCh23RequiresRawLatchCallback(t *testing.T) {
+	staging := make([]byte, NativeCh23StageStride*NativeCh23StageHeight)
+	err := RunNativeCh23Loop(NativeCh23LoopSpec{
+		Phase:       "initial",
+		Repeat:      30,
+		StageValues: []int{2, 3, 4, 5, 6, 7, 8, 9},
+	}, staging, nil, NativeCh23LoopHooks{
+		Draw: func() error { return nil },
+		Tick: func() error { return nil },
+	})
+	if err == nil {
+		t.Fatal("missing raw latch callback accepted")
 	}
 }
 
@@ -150,6 +174,7 @@ func TestRunNativeCh23PaletteLoopKeepsRawESIOrder(t *testing.T) {
 		StageValues: []int{10, 11, 12, 13, 14},
 		Palette:     true,
 	}, staging, dac, NativeCh23LoopHooks{
+		Latch:   func(int) error { return nil },
 		Palette: func(value int) error { rawESI = append(rawESI, value); return nil },
 		Draw:    func() error { draws++; return nil },
 		Tick:    func() error { ticks++; return nil },
@@ -177,6 +202,10 @@ func TestRunNativeCh23LoopRollsBackOnCallbackFailure(t *testing.T) {
 		StageValues: []int{10, 11, 12, 13, 14},
 		Palette:     true,
 	}, staging, dac, NativeCh23LoopHooks{
+		Latch: func(stage int) error {
+			staging[0] = byte(stage)
+			return nil
+		},
 		Palette: func(value int) error {
 			if value == 7 {
 				return errors.New("synthetic raw palette failure")
