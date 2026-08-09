@@ -177,3 +177,27 @@ X/Y/pose 輸入。呼叫端另帶 raw special/focus scalar；其數值為
   binding。raw cursor／Y+3 的可重用橋接與候選編譯回歸已固定，但不提升為 E2。
 - 本檔不是 renderer parity 或一般玩家 E2 證據；任何只依三組表、map 項目數
   或舊 generated binding 建立的 `town_ch23` 接線都應視為未證實。
+
+## 2026-08-09 IDA 直接交叉參照複核（非破壞性）
+
+同一份固定雜湊 `FD2.EXE` 以合法 IDA Pro 9.4 Docker headless 重新建立資料庫，
+只讀取函式邊界、直接程式碼交叉參照（code xref）與原始指令；沒有改寫原始名稱、位址或運算元。
+`sub_24618` 的直接呼叫者（caller）為：
+
+```text
+0x245ce  caller 0x244b6..0x24618
+0x252ee  caller 0x250cc..0x25464
+0x25848  caller 0x25757..0x25977
+0x336e5  caller 0x336a0..0x338c4
+0x33bb9  caller 0x33af1..0x33c9d
+0x33c09  caller 0x33af1..0x33c9d
+0x33c66  caller 0x33af1..0x33c9d
+0x33ce2  caller 0x33c9d..0x33dba
+```
+
+同次複核確認 `sub_22046` 的直接呼叫者為 `0x21f4c`、`0x21fe0`、
+`0x22388`、`0x225f6`、`0x226a1` 與 `0x246c7`。因此 `0x24618`／
+`0x22046` 是共享的 indexed 轉場／重映射消費端，不能按單一戰後 handler
+命名成角色演出或通用淡出。這項交叉參照只提升共享 caller 邊界為**已證實**；
+它不提供各 caller 的戰役 owner、一般玩家 E2 畫面或 runtime frontier，
+所以 `postbattle_ch22_persist` 及其他未具完整狀態的節點仍維持失敗即關閉。

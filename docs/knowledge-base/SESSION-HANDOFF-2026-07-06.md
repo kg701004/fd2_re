@@ -3571,3 +3571,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt) 一致；ch21 的
   執行期前沿（frontier）／索引畫面狀態（indexed runtime）仍不足，
   `postbattle_ch22_persist` 維持失敗即關閉。
+- 同次 IDA 直接程式碼交叉參照另固定 `0x24618` 的 8 個直接呼叫者（`0x245ce`、
+  `0x252ee`、`0x25848`、`0x336e5`、`0x33bb9`、`0x33c09`、`0x33c66`、
+  `0x33ce2`）與 `0x22046` 的 6 個直接呼叫者；這只是共享 indexed
+  消費端（consumer）的**已證實**邊界，不能把函式改名成單一戰後角色演出或通用淡出。
+  完整原始位址、函式範圍及「不提升為 campaign owner」限制已追加到
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt)。
