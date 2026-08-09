@@ -107,3 +107,30 @@ mode 1:
 callee 與回傳分支；輸入的成功／失敗旗標必須由呼叫端提供，缺少原始
 provenance 時不得把它們接到正式 AI 執行器。這是 E0 控制流資料化，並未
 替 `0x14121`、`0x13e9c` 或 `0x13fd4` 命名成玩法。
+
+## Mode 3／4／5／7／9／10 raw branch adapters
+
+依同一份 `sub_13A9F` IDA／Capstone 指令，其他已出現於固定 FDFIELD
+低四位分布的分支可精確表示如下；括號內是 caller 必須保留的 raw
+回傳／狀態輸入：
+
+```text
+mode 3: 14ef0 失敗 → 12c60
+  -1 → 14121 → (失敗時) 13e9c → (零時) 13fd4
+  找到 → 12d7b → 14b78 → (零時) 13fd4 → 寫 0x51a83=0
+mode 4: 寫 0x51a83=0 → 12d7b → 14b78 → (零時) 13fd4
+mode 5: 14ef0 失敗 → 寫 0x51a83=0 → 12d7b
+  [0x53ad5+ebp] 非零或 15df3 非零 → 14121 備援
+  否則 → 15df3 → 14b78 → (零時) 13fd4
+  座標相符後：type<2 寫 unit+0x31/+0x32，type==0 呼叫 1bb8c，
+  寫 [0x53ad5+ebp]=1、呼叫 25b45／12263、寫 unit+0x34=7
+mode 7: 寫 0x51a83=0 → 12d7b → 14b78 → (零時) 13fd4；
+  原始座標相符才呼叫 32975
+mode 9: 12c60 -1 → mode 0 的 14ef0 起點；找到 → 12d7b → 14b78 → (零時) 13fd4
+mode 10: 14ef0 失敗 → 重用 mode 4 路徑
+```
+
+`fdother.PlanNativeUnitMode3/4/5/7/9/10` 只保存這些 raw 位址與明示
+輸入，不把 `12c60` 索引、事件 byte、座標比對或寫入欄位升格為玩法
+名稱；缺少 provenance 時仍須失敗即關閉。這些是 E0 控制流 helper，
+未接 `NextAIPlan` 或正式回合交易。

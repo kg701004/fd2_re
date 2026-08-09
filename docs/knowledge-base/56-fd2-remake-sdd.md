@@ -2680,6 +2680,11 @@ item category or church service name.
 E0 控制流資料化，不是玩法名稱或正式 `NextAIPlan` 接線。缺少 raw 回傳
 來源時必須失敗即關閉。
 
+`fdother.PlanNativeUnitMode3/4/5/7/9/10` 同樣保存已證實的 lookup、
+移動、事件狀態、座標比對與 raw writes；mode 5 的抵達後寫入只以
+`EventRecordType` byte gate 表示。這些 helper 仍是 E0 控制流資料化，
+不授權正式 AI planner、交易或呈現消費端。
+
 模式 11 的唯一已知 runtime source 是全域事件 82 handler `0x35F92`：
 battle-local state entry `+0x10` 等於 4 時，`0x36078` 透過
 `0x3419C(20,20,11)` 只改單位索引 20 的低四位。它位於

@@ -3817,3 +3817,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 測試只比較位址級 action 順序與 caller-supplied 回傳旗標；不命名
   `0x14121`／`0x13E9C` 的玩法，也沒有接入 `NextAIPlan`。這是 E0 raw
   控制流切片，正式回合交易、畫面與一般玩家路徑仍未閉合。
+
+## 2026-08-09：mode 3／4／5／7／9／10 raw 分支資料化（E0）
+
+- 依固定雜湊 `FD2.EXE` 的既有 IDA／Capstone `0x13A9F` 指令，新增
+  `PlanNativeUnitMode3/4/5/7/9/10`。mode 3／9 保留 `0x12C60` 的
+  `-1` 與索引分支；mode 4／7／10 保留 `0x51A83` 清零、`0x12D7B`、
+  `0x14B78`、`0x13FD4` 與 `0x32975` 的 raw 順序。
+- mode 5 另以 `NativeUnitMode5Inputs` 保存 `[0x53AD5+ebp]`、
+  `0x15DF3`／`0x14B78` 回傳、座標比對與 `0x53A55` type byte；抵達時只
+  依 raw `<2`／`==0` gate 列出 `+0x31/+0x32`、`0x1BB8C`、
+  `[0x53AD5+ebp]=1`、`0x25B45`、`0x12263`、`+0x34=7` writes/calls。
+- 這批 helper 與 regression 只保存 E0 位址級 CFG，不接 `NextAIPlan`、
+  正式回合交易或畫面；一般玩家的事件資料、動態回傳與完整 AI orchestration
+  仍是下一道閘門。
