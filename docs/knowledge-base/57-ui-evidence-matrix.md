@@ -11,7 +11,7 @@ oracle、目前 source rebuild 截圖、indexed fixture，以及外部原版畫�
 
 | 畫面／流程 | 視覺還原估計 | 直接證據與主要差距 |
 |---|---:|---|
-| title/main menu | 60–70% | runtime 使用原始 title/menu 圖與接近原座標；但 README 的 `title.png` 只是錯色盤的 raw 解碼產物，並非目前 runtime screenshot。四槽讀檔畫面與 LOAD restore owner 已接；畫面仍加了非原版 F2 提示，logozoom 是近似，CONTINUE current-battle restore 尚未閉合 |
+| title/main menu | 60–70% | Docker／Xvfb 已擷取重製端實際標題選單 [`title-remake-runtime.png`](../figures/title-remake-runtime.png)，與 DOSBox oracle [`title-original-dosbox.png`](../figures/title-original-dosbox.png) 可在 320×200 內容上直接對照；畫面仍加了非原版 F2 提示，logozoom 是近似，CONTINUE current-battle restore 尚未閉合。README 的 `title.png` 仍只是錯色盤的 raw 解碼產物，不可當 runtime screenshot |
 | tactical field/HUD | 60–70%（限 ch01 E2 slice；全 33 圖已有 E0 renderer inputs） | `native-map-ch01-original-video.png` 與 `native-map-ch01-remake.png` 已對齊 terrain、cursor、HUD resource/layout；2026-07-29 稽核發現只有 map0 曾帶 `native_tile_blit_modes/native_terrain_control`，現已從雜湊鎖定的 FDFIELD／FDSHAP 同步至全部 33 圖並有全圖 regression。ch26 又由 pre-handler PAN/FOCUS 與 cursor state machine 閉合 event61 所需 runtime view/HUD E1；ch27 的 selector0→event62→event63 raw camp0 敵軍 AI 前 runner、兩批增援與全白／恢復演出已達重製端 E1，戰前 view／selector0 及 inherited HUD owner 也已閉合並接線。gate A 由存檔保存、anchor 為程序內持續、gate B 由 controller 物化；仍缺未修改 DOSBox 同狀態逐幀比較與一般玩家 CONTINUE 路徑。其餘 ch02+ 與同狀態畫面仍未驗，不能把資料完整度當成 renderer E2 |
 | action/command/item/target UI | 45–55% | action skin、command grid、item panel已有原資源 indexed adapters；完整 availability、selector 6/7+、effect presentation、同狀態 DOSBox diff 未閉合 |
 | story dialogue | 30–40% | 原版 oracle 固定左下 80×80 portrait、native frame/text/page marker；目前一般 runtime 仍有 RGBA/font/layout path，upper/right anchor、FFxx、scroll/clipping 未逐類驗收。README 的 `dialogue.png` 是文字解碼圖，不是 remake 對話 runtime screenshot |
@@ -214,6 +214,10 @@ E2 oracle；它沒有有效存檔資料，因此不證明 record layout、LOAD �
 START 分支首個可重現對話 crop 為 `docs/figures/ch01-dialogue-original-dosbox.png`：第一章場景中可見
 左側 DATO portrait、下方藍框、兩行文字與框底中央 page indicator。這提升 UI-05 的一個 lower/left
 E2 anchor；它不涵蓋 upper/right speaker、FFxx control code、完整 pagination timing 或 remake renderer。
+
+重製端標題選單的 Docker／Xvfb 實際擷取為 `docs/figures/title-remake-runtime.png`
+（640×400 輸出、內含 2× 內容與非原版 F2 音源提示列）。它是重製端 E1 執行期證據，
+不是未修改一般玩家 E2，也不解除 CONTINUE current-battle、完整開場動畫或輸入差分缺口。
 
 ### D8 native trace（2026-07-25，E0 partial）
 

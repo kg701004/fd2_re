@@ -106,7 +106,8 @@
 - [x] **DOSBox 原版抓圖工具校正**：`tools/docker/fd2-dosbox-screenshot.sh`
   的 `shot:` 現在擷取實際 DOSBox 用戶端視窗（client window）；Xvfb 根視窗只保留給固定座標
   就緒探測（readiness probe）。Docker 實測輸出 320×200 原版標題選單與戰場對話畫面，避免
-  把根視窗左上角的局部黑畫面誤列為介面證據；既有圖片未因重複而新增。
+  把根視窗左上角的局部黑畫面誤列為介面證據；另保存目前重製端執行期畫面
+  [`title-remake-runtime.png`](../figures/title-remake-runtime.png)，不把原版重複圖再加入。
 - [ ] **下一個戰後切片**：玩家第22、23、24、29戰；每關都必須保留
   town／shop／整備／連戰與存檔邊界，不可只把節點接到下一場戰鬥。
 - [ ] **E2 與完整戰役**：取得未修改一般玩家路徑的 DOSBox 同狀態逐幀證據，

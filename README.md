@@ -160,6 +160,16 @@ ch02 武器店、道具店與秘密商店：上排為原版，下排為重製；
 |---|---|
 | ![原版空槽讀檔畫面](docs/figures/load-empty-original-dosbox.png) | ![重製空槽讀檔畫面](docs/figures/load-empty-remake.png) |
 
+### 標題選單
+
+原版與重製端的標題選單同樣以 320×200 內容呈現；重製圖是 Docker／Xvfb
+實際執行期擷取，保留目前非原版的音源提示列，僅作介面對照，不代表
+CONTINUE 戰場還原或完整開場動畫已完成。
+
+| 原版 DOSBox | 重製端執行期 |
+|---|---|
+| ![原版標題選單](docs/figures/title-original-dosbox.png) | ![重製端標題選單執行期畫面](docs/figures/title-remake-runtime.png) |
+
 ### 戰場與戰鬥演出
 
 ch01 戰場目前已能由原始地圖、單位、前景與 HUD 資產合成。下列兩圖是相近
