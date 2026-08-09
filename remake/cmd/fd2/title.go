@@ -165,7 +165,7 @@ func (g *Game) titleUpdate() bool {
 				g.cutAdvance()
 				return true
 			}
-			g.cutTick++
+			g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
 			if g.cutTick >= step.tick {
 				g.cutAdvance()
 			}
@@ -176,7 +176,7 @@ func (g *Game) titleUpdate() bool {
 				g.cutAdvance()
 				return true
 			}
-			g.cutTick++
+			g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
 			g.scrollY = 535 * (1 - float64(g.cutTick)/float64(step.tick)) // 535→0(底→頂)
 			if g.cutTick >= step.tick {
 				g.scrollY = 0
@@ -193,7 +193,7 @@ func (g *Game) titleUpdate() bool {
 				return true
 			}
 		}
-		g.cutTick++
+		g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
 		if g.cutTick >= step.tick {
 			g.cutTick = 0
 			g.cutFrame++
@@ -206,7 +206,7 @@ func (g *Game) titleUpdate() bool {
 		if g.scrollY >= 534 { // 開場即配樂(使用者記憶:登登登登磅礡進場;曲號待 dosbox 對照)
 			g.playBGM("FDMUS_018") // 同開場曲(RE 確認,取代舊猜測 FDMUS_004)
 		}
-		g.scrollY -= 1.5 // 捲動速度(原版逐列複製;待 dosbox 錄影校)
+		g.scrollY -= 1.5 * float64(cutsceneSpeedUp) // 捲動速度(原版逐列複製;待 dosbox 錄影校)+過場加速
 		anyKey := len(inpututil.AppendJustPressedKeys(nil)) > 0
 		if g.scrollY <= 0 || anyKey {
 			g.titlePhase = "logozoom" // dosbox 實拍(doc23 §2.4):紅閃→「2」縮入→白閃→選單

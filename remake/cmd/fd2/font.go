@@ -29,12 +29,22 @@ type Font struct {
 	ascs  map[int]float64
 }
 
-// 字型搜尋路徑:打包用 assets 優先,否則用系統 Noto CJK(桌面)。
+// 字型搜尋路徑:打包用 assets 優先,否則用系統 CJK 字型(桌面)。
+//
+// Windows 路徑補充說明:先前版本只列 Linux 系統字型路徑,在 Windows 上
+// loadFont() 會找不到任何檔案而回傳 nil,導致所有文字(含本次新增的關卡
+// 目標畫面)完全不渲染,沒有任何錯誤訊息。這裡加入 Windows 內建繁體中文
+// UI 字型「微軟正黑體」(msjh.ttc)與備援的細明體(mingliu.ttc)路徑,兩者
+// 都是 Windows 隨附授權字型,C:\Windows\Fonts 下確認存在(Win10/11 預設
+// 安裝)。這不是重製引擎原本設計的一部分,是為了讓 Windows 桌面版本能實際
+// 顯示文字而補上的相依性修正。
 var fontPaths = []string{
 	"assets/fonts/cjk.ttc",
 	"assets/fonts/cjk.otf",
 	"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
 	"/usr/share/fonts/truetype/arphic/uming.ttc",
+	`C:\Windows\Fonts\msjh.ttc`,    // 微軟正黑體(Win10/11 預設繁中 UI 字型)
+	`C:\Windows\Fonts\mingliu.ttc`, // 細明體(較舊 Windows 備援)
 }
 
 const fontSize = 18.0

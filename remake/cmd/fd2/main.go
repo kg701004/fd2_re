@@ -40,6 +40,7 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdicon"
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
+	"github.com/wicanr2/fd2_re/remake/internal/objectives"
 )
 
 const (
@@ -143,6 +144,7 @@ type Game struct {
 	beats                      []campaign.Beat // 目前 cutscene 節點的過場原語序列(doc50 §2)
 	beatIdx                    int             // 目前執行到第幾拍(-1=尚未開始)
 	beatDelay                  int             // beat「delay」剩餘幀數(0=非等待中)
+	objChapter                 int             // >0:正顯示章節目標畫面(objectives_screen.go),阻塞 beat runner 等 Enter/Space
 	battleEvent                *battleEventRun // 戰場事件的阻塞 action 序列；與 campaign BeatRunner 分離
 	battleEventDelay           int             // battle event delay 剩餘幀數
 	campLines                  []campaign.Line // cutscene 節點載入的章文本(dialog beat 依 Line/Count 取子段)
@@ -518,7 +520,7 @@ func (g *Game) stepStoryWalks() {
 	}
 	live := g.storyWalks[:0]
 	for _, w := range g.storyWalks {
-		w.t++
+		w.t += cutsceneSpeedUp // 過場加速(cutscene_speed.go);frames 本身仍是原版證據值
 		frac := float64(w.t) / float64(w.frames)
 		if frac > 1 {
 			frac = 1
@@ -585,7 +587,7 @@ func (g *Game) stepFade() {
 	if g.fade == nil {
 		return
 	}
-	g.fade.t++
+	g.fade.t += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
 	if g.fade.t >= g.fade.total {
 		cb := g.fade.then
 		g.fade = nil
@@ -601,7 +603,7 @@ func (g *Game) stepTransitionReveal() {
 		return
 	}
 	if job.ticks > 0 {
-		job.ticks--
+		job.ticks = decTimer(job.ticks) // 過場加速(cutscene_speed.go);remaining 幀數不變,只加速幀間延遲
 		return
 	}
 	job.remaining--
@@ -655,7 +657,7 @@ func (g *Game) stepCamPan() {
 		}
 		return
 	}
-	j.t++
+	j.t += cutsceneSpeedUp // 過場加速(cutscene_speed.go);tileStep 模式已足夠快,不受此影響
 	frac := float64(j.t) / float64(j.frames)
 	if frac > 1 {
 		frac = 1
@@ -895,7 +897,7 @@ func (g *Game) stepActJob() {
 	}
 	u := &g.storyActors[j.actor]
 	u.SetMapPose(j.poses[j.idx])
-	j.t++
+	j.t += cutsceneSpeedUp // 過場加速(cutscene_speed.go);僅舊版姿態近似路徑,原生 acting 逐 tick 重現不動
 	if j.t >= j.frames {
 		j.t = 0
 		j.idx++
@@ -1106,6 +1108,13 @@ func (g *Game) beatStart(b campaign.Beat) {
 		if err := g.applyLoadCH(b.LoadCH); err != nil {
 			g.loadErr = "beat loadch: " + err.Error()
 			return // fail closed rather than continuing on the old map/roster.
+		}
+		// LoadCHState.Chapter 是 0-based stage 編號(同 FDFIELD stage,見
+		// TestApplyLoadCHDirectReplayUsesBindingPartyOrder:Chapter=0 對應
+		// ch01.json);internal/objectives 用攻略慣例的 1-based 章節數,故 +1。
+		if c, ok := objectives.ByNumber(b.LoadCH.Chapter + 1); ok { // 章節目標畫面(objectives_screen.go);阻塞至 Enter/Space
+			g.objChapter = c.Number
+			return
 		}
 		g.beatAdvance()
 	case "pan":
@@ -3054,6 +3063,12 @@ func (g *Game) campInput() bool {
 		return false
 	}
 	enter := inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace)
+	if g.objChapter > 0 { // 章節目標畫面(objectives_screen.go,重製目標 #5)阻塞 beat runner,直到玩家關閉
+		if enter {
+			g.dismissObjectivesScreen()
+		}
+		return true
+	}
 	n := g.camp.Node()
 	if n == nil {
 		return true // game over:鎖定
@@ -5156,6 +5171,9 @@ func (g *Game) Update() error {
 	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF3) { // 全域:開發除錯 HUD 開關
 		g.debug = !g.debug
 	}
+	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF11) { // 全域:全螢幕切換(重製目標 #2:1080P 流暢)
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+	}
 	if g.bannerT > 0 {
 		g.bannerT--
 	}
@@ -5449,7 +5467,7 @@ func (g *Game) Update() error {
 	g.stepNativeSpawnIntro()                     // native 0x32999 twelve-pass indexed spawn transition
 	g.stepNativeTurnStaging()                    // event63 raw-camp0 pre-AI staging helper
 	if g.camp != nil && g.storyAutoAdvance > 0 { // 無對白節點自動轉場倒數(行軍蒙太奇)
-		g.storyAutoAdvance--
+		g.storyAutoAdvance = decTimer(g.storyAutoAdvance) // 過場加速(cutscene_speed.go)
 		if g.storyAutoAdvance == 0 {
 			if n := g.camp.Node(); n != nil {
 				g.advanceStoryNode(n)
@@ -5457,7 +5475,7 @@ func (g *Game) Update() error {
 		}
 	}
 	if g.beatDelay > 0 { // beat「delay」倒數(doc50 0x375b2)
-		g.beatDelay--
+		g.beatDelay = decTimer(g.beatDelay) // 過場加速(cutscene_speed.go)
 		if g.beatDelay == 0 {
 			g.beatAdvance()
 		}
@@ -5734,6 +5752,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	if g.nativeEnding != nil {
 		g.drawNativeEndingPreview(screen)
+		return
+	}
+	if g.objChapter > 0 {
+		g.drawObjectivesScreen(screen)
+		if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+			g.captureShot(screen)
+		}
 		return
 	}
 	if g.m == nil {
@@ -7791,7 +7816,7 @@ func (g *Game) stepBattleEventDelay() {
 	if g.battleEventDelay <= 0 {
 		return
 	}
-	g.battleEventDelay--
+	g.battleEventDelay = decTimer(g.battleEventDelay) // 過場加速(cutscene_speed.go)
 	if g.battleEventDelay == 0 {
 		g.advanceBattleEvent()
 	}
@@ -7887,8 +7912,37 @@ func (g *Game) aiStep() {
 	}
 }
 
+// windowScaleFor 是 defaultWindowSize 的純邏輯部分(不碰 ebiten 執行期查詢),
+// 便於單元測試:給定螢幕尺寸,選一個 640×400 邏輯畫布的整數倍窗口(重製目標
+// #2:「畫面升級到 1080P」)最大能塞進 margin 比例的螢幕。抓不到螢幕尺寸
+// (sw/sh<=0)時退回原本的 2 倍(1280×800),行為與這次改動前一致;螢幕小於
+// 2 倍邏輯畫布時也不縮小,維持原本可玩的最小尺寸不變。
+func windowScaleFor(sw, sh int) int {
+	if sw <= 0 || sh <= 0 {
+		return 2
+	}
+	const margin = 0.9 // 留邊界給視窗標題列/工作列,避免貼滿螢幕
+	scale := 2
+	for next := scale + 1; float64(logicalW*next) <= float64(sw)*margin && float64(logicalH*next) <= float64(sh)*margin; next++ {
+		scale = next
+	}
+	return scale
+}
+
+// defaultWindowSize 依螢幕實際大小選一個 640×400 邏輯畫布的整數倍窗口。視窗
+// 本來就可拖曳縮放(WindowResizingModeEnabled 早已開啟,Ebiten 對非整數縮放
+// 預設套用平滑 box filter,見 run.go SetScreenFilterEnabled 註解),真正缺的
+// 只是「一啟動就已經很大」的預設值,不必讓玩家自己發現可以拖大視窗。
+func defaultWindowSize() (int, int) {
+	sw, sh := ebiten.ScreenSizeInFullscreen()
+	scale := windowScaleFor(sw, sh)
+	return logicalW * scale, logicalH * scale
+}
+
 func main() {
-	ebiten.SetWindowSize(logicalW*2, logicalH*2)
+	w, h := defaultWindowSize()
+	ebiten.SetWindowSize(w, h)
+	ebiten.SetWindowSizeLimits(logicalW, logicalH, -1, -1) // 最小 1 倍(640×400),避免縮到不能用
 	ebiten.SetWindowTitle("炎龍騎士團2 重製 (fd2_re)")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	if err := ebiten.RunGame(loadGame()); err != nil {
