@@ -1,0 +1,55 @@
+# FD2.EXE 0x14237 actor 端物品來源（非破壞性 IDA 證據）
+
+證據等級：已證實（E0 raw control/data provenance）；本檔不命名兩個幾何 byte 的玩法語意，
+也不代表原版敵方回合已在重製端執行。
+
+輸入版本
+--------
+
+- 檔案：`FD2.EXE`
+- 大小：357074 bytes
+- MD5：`b97caf2239a27a896069d03549d96e1e`
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`
+- 基準：`docs/data/fd2-reference-files.json`
+
+工具與位址空間
+--------------
+
+- 第一工具：使用者合法 IDA Pro 9.4.0.260610，DOS LE loader，linear address space，
+  `fd2-ida-authorized-local` Docker image。
+- 第二工具：`fd2-cap-local` Docker image 內 Capstone 5.0.3；本輪以
+  `python3 tools/disasm_le.py FD2.EXE range 0x14280 0x142c5`、
+  `range 0x1b722 0x1b8a6` 與 `range 0x4e56c 0x4e583` 逐指令交叉驗證；
+  本檔的函式邊界與 callers 以 IDA 為準。
+- 原始名稱、線性位址與運算元保留；附加語意只描述資料流，沒有用改名覆蓋原始定位。
+
+IDA 函式邊界與直接交叉參照
+--------------------------
+
+- `sub_14237`：`0x14237..0x145CD`；本來源鏈的 caller 是 `0x14288`、`0x1429C`。
+- `sub_1B83D`：`0x1B83D..0x1B8A6`；`0x1428B` 呼叫它，第二參數為 `0`。
+- `sub_1B722`：`0x1B722..0x1B750`；`0x142A1` 呼叫它，參數是 actor index 與 raw slot。
+- `sub_4E56C`：`0x4E56C..0x4E583`；`0x142AA` 呼叫它，回傳 item table row pointer。
+
+已證實的資料流
+--------------
+
+1. `0x1B83D(unit,0)` 以 runtime base `[0x53A45] + unit*0x50` 掃描八個
+   `[flag,item]` cells（record `+0x0A` 起）。只有 `flag & 0x40` 且 item byte `<0x80`
+   的第一格回傳 raw slot；找不到回 `-1`。這個函式不是 command-record loader。
+2. `0x1B722(unit,slot)` 以 `record + 0x0B + slot*2` 讀 item byte，回傳 raw item ID。
+3. `0x4E56C(item)` 計算 `0x602AD + item*0x17`，不做 table bounds check；重製橋在
+   editable raw table 上額外驗證 bounds，保留 fail-closed。
+4. `0x142B2..0x142BE` 從該 row 讀 `+0x0B` 與 `+0x0C` 兩個 raw byte；
+   `0x14430..0x14448` 將它們與 caller-owned 參數一起傳入 `0x14818`。本檔不把
+   它們命名成射程、範圍、陣營或其他玩法欄位。
+5. `0x4E516(id)=0x619FD+id*7` 的 command-record table 是另一條 command-mask
+   producer 資料鏈；不可把本物品列來源與 `0x4E516` 混稱。
+
+重製對應與界線
+--------------
+
+`battle.ResolveNativeAIPhysicalItemSource` 保存上述來源鏈，回傳 detached 物品列及
+兩個 raw byte；缺少完整 runtime record、item table 或 row bounds 時失敗即關閉。它尚未
+建立 `0x14818` 幾何、物理評分、選中目標、移動、攻擊或 `NextAIPlan` 消費端；後續仍需
+固定原版存檔的實際選中目標 trace，不能以 normalized `aiTargets` 補值。

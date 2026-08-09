@@ -3692,8 +3692,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - Docker `go test ./internal/battle -run 'NativeAIPhysicalAttackCandidates|NativeAIPhysicalAttackCandidate'`
   通過；這只證明 E0 資料鏈與失敗即關閉，不接 `NextAIPlan`、正式敵方回合、
   movement／battle effect、UI 或一般玩家 E2。下一步應取得固定存檔的
-  `0x1b83d` command-record 來源與實際選中目標 trace，再考慮更窄的 runtime
-  consumer；不得用 normalized `aiTargets` 補缺資料。
+  `0x1b83d→0x1b722→0x4e56c` actor 物品列來源已閉合；下一步只追實際選中目標
+  trace，再考慮更窄的 runtime consumer；不得用 normalized `aiTargets` 補缺資料。
 
 ## 2026-08-09：戰鬥 FIGANI 幀延遲呈現橋（E1）
 
@@ -3778,3 +3778,18 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   與 `docs/knowledge-base/56-fd2-remake-sdd.md` 原本已保留相同的 fail-closed 限定，
   本勘誤不改變任何位址、候選橋或執行器語意；下一個真正解除閘門的證據仍是固定
   存檔中的 command／目標 trace 及正式回合消費端回歸。
+
+## 2026-08-09：`0x14237` actor 物品來源閉合（E0）
+
+- 合法 IDA Pro 9.4 在固定雜湊 `FD2.EXE` 上確認：`0x14288→0x1B83D(unit,0)`
+  回傳 equipped 且 item `<0x80` 的 raw slot；`0x1429C→0x1B722(unit,slot)` 讀
+  runtime record `+0x0B` 的 item ID；`0x142AA→0x4E56C(item)` 計算
+  `0x602AD + item*0x17`。`0x142B2..0x142BE` 讀 item row `+0x0B/+0x0C`，
+  這兩個 raw byte 才是 `0x14818` 的 actor-side caller input。完整非破壞性證據見
+  [`fd2_ai_physical_item_source_ida.txt`](../data/ida/fd2_ai_physical_item_source_ida.txt)。
+- 這條來源不是 `0x4E516` command-record table；先前工作清單把
+  「`0x1B83D command record 來源`」寫得過寬，現已改成 item-source closure。
+  新增 `battle.ResolveNativeAIPhysicalItemSource`，以完整 raw runtime record 與
+  bounded item-row table 產生 detached row snapshot；無 equipped low item、缺 row
+  或 bounds 不符時失敗即關閉。這仍不接 `0x14818`、物理 score、選中目標、移動、攻擊
+  或 `NextAIPlan`，下一道 gate 仍是固定存檔的實際目標 trace。

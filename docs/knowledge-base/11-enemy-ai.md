@@ -220,8 +220,11 @@ max HP `+0x42`，且 raw `+0x25/+0x26` 都為零時，寫入
 
 1. `0x14258` 以第一參數索引 `0x50` 位元組單位記錄，保存 actor
    `word +0x48/+0x4A`。
-2. `0x14288→0x1B83D` 及 `0x1429C→0x1B722→0x4E56C` 取得 actor
-   的 raw command record；上一節四段流程建立候選格集合。
+2. `0x14288→0x1B83D` 先取得 actor 的 equipped low-item raw slot；
+   `0x1429C→0x1B722→0x4E56C` 再把 slot 的 item ID 映射到
+   `0x602AD + item*0x17` row。`0x142B2..0x142BE` 讀 row `+0x0B/+0x0C`
+   作為後續 `0x14818` 的 caller-owned raw geometry；這不是
+   `0x4E516` command-record loader。上一節四段流程建立候選格集合。
 3. 每個候選格若通過 `0x1F183(actor)`，`0x143D9→0x12E38` 取地形
    control byte，依 `0x51A12/0x51A2A` 百分比表修正 actor
    `word +0x48/+0x4A`。
@@ -522,8 +525,10 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 1. 在固定原版存檔與固定單位上，依序於 `0x1D8BA`、`0x13A9F`、
    `0x14EF0`、`0x15AD8` 記錄單位索引、關鍵原始欄位與
    `0x53C23..0x53C3F`。比較只改一格位置或一個候選的兩個狀態。
-2. 追蹤 `0x14237` 的 `0x1B83D→0x1B722` command record 來源，
-   再以固定原版存檔動態比對已閉合的候選落點、方向陣列與實際選定結果。
+2. 已由合法 IDA 9.4 追蹤 `0x14237` 的
+   `0x1B83D→0x1B722→0x4E56C` actor 物品列來源（見
+   [`fd2_ai_physical_item_source_ida.txt`](../data/ida/fd2_ai_physical_item_source_ida.txt)）；
+   尚待以固定原版存檔動態比對候選落點、方向陣列與實際選定結果。
 3. 先證實單位掃描順序、候選數與選定結果的資料來源，再命名剩餘 raw 欄位；
    不以現有重製人工智慧輸出補足原版未知值。
 

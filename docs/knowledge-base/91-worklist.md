@@ -367,9 +367,17 @@
   `0x14818` target geometry、raw `+5/+6` 目標篩選與 detached actor／target
   record snapshots，再交給 caller-owned score resolver。測試確認候選順序、
   raw 群組篩選、穩定選擇與 resolver 失敗即關閉；這是 E0 資料鏈，不代表
-  `0x1B83D` command record 來源、地形修正 writer、正式回合執行或
+  `0x1B83D` actor 物品列來源、地形修正 writer、正式回合執行或
   尚未接入原版 native AI 的 production planner；現有 `NextAIPlan` 仍是
   normalized approximation 的執行分離，不代表原版 AI parity。
+- [x] **RE-AI-PHYSICAL-ITEM-SOURCE**：合法 IDA 9.4 釐清
+  `0x14237` 的 `0x1B83D(unit,0)` 只是 equipped low-item slot lookup；
+  `0x1B722(unit,slot)` 讀 runtime `+0x0B` item ID，`0x4E56C` 再以
+  `0x602AD + id*0x17` 取得 item row，`0x142B2..0x142BE` 讀 row
+  `+0x0B/+0x0C` 供 `0x14818`。新增
+  `battle.ResolveNativeAIPhysicalItemSource` 與 raw bounds／detached-row
+  regression；這修正「0x1B83D command record 來源」斷言，但仍是 E0 provenance，
+  不接 score resolver、選中目標、正式回合或 `NextAIPlan`。
 - [x] **RE-AI-PHYSICAL-EXECUTION-1548E**：Docker Capstone 證實唯一 callers
   `0x13E39/0x14F9B`；callee 消費 `0x53C43/47/4B`，經 `0x14B78` 後依
   `0x53AF9` 選地圖呈現或 `0x28A6C(actor,target)`，收尾固定回1。沒有

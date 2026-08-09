@@ -62,7 +62,13 @@ actor `+0x48`、target `+0x4a` 與必要時 `0x4e516([0x53c2f])` 分派
 敵0／友1／己2；但完整 target transaction、movement/effect/UI 與 runtime
 AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
 
-物理候選的資料邊界另由 `battle.BuildNativeAIPhysicalAttackCandidates` 保存：
+物理候選的資料邊界另由 `battle.BuildNativeAIPhysicalAttackCandidates` 保存；
+`0x14237` actor 端的 `0x1B83D→0x1B722→0x4E56C` 物品列來源則由
+[`fd2_ai_physical_item_source_ida.txt`](../data/ida/fd2_ai_physical_item_source_ida.txt)
+與 `battle.ResolveNativeAIPhysicalItemSource` 保存。這條來源已閉合，但不等同
+command-mask 的 `0x4E516` table。
+
+物理候選的資料邊界：
 它只連接已證實的 row-major movement destinations、caller-provided
 `0x14818` geometry、raw `+5/+6` target filter 與 detached record snapshots。
 地形百分比修正、`0x1DEBE`、target `+8` 等輸入必須由明示 resolver 提供；
