@@ -3807,3 +3807,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   AI dossier、SDD、gap audit 與工作清單均改為保存這條共用基本區塊路徑。完整原始
   指令與 IDA／Capstone 工具版本、雜湊仍見
   [`fd2_ai_mode_dispatch_ida.txt`](../data/ida/fd2_ai_mode_dispatch_ida.txt)。
+
+## 2026-08-09：mode 0／1 備援控制流資料化（E0）
+
+- 依固定雜湊 `FD2.EXE` 的既有 IDA／Capstone `0x13A9F` 輸出，新增
+  `fdother.PlanNativeUnitMode0`／`PlanNativeUnitMode1`。mode 0 保留
+  `0x14EF0→0x14121→0x13E9C` 的巢狀失敗路徑，`0x13E9C` 回傳 0 才列入
+  `0x13FD4`；mode 1 只列 `0x14EF0→0x14121`，零回傳才列 `0x13FD4`。
+- 測試只比較位址級 action 順序與 caller-supplied 回傳旗標；不命名
+  `0x14121`／`0x13E9C` 的玩法，也沒有接入 `NextAIPlan`。這是 E0 raw
+  控制流切片，正式回合交易、畫面與一般玩家路徑仍未閉合。

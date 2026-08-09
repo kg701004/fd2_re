@@ -1,6 +1,6 @@
 package fdother
 
-// NativeUnitModeAction 只保存 0x13a9f 模式 2／11 的原始呼叫順序。
+// NativeUnitModeAction 只保存 0x13a9f 模式 0／1／2／11 的原始呼叫順序。
 // 名稱刻意使用位址，不把函式猜成狂暴、護衛或其他玩法語意。
 type NativeUnitModeAction uint8
 
@@ -12,7 +12,48 @@ const (
 	NativeModeCall1548E
 	NativeModeCall14121
 	NativeModeCall13FD4
+	NativeModeCall13E9C
 )
+
+// PlanNativeUnitMode0 保存 mode 0 的原始備援順序。三個布林值都必須由
+// 呼叫端以相同 raw 記錄與 callee 回傳值提供；本函式不替它們命名成
+// 「攻擊」或「追擊」。0x14121 失敗後才呼叫 0x13e9c，後者回傳 0
+// 才會經共用 0x13c06 呼叫 0x13fd4。
+func PlanNativeUnitMode0(
+	candidateDispatchSucceeded bool,
+	blockedSearchSucceeded bool,
+	nearestCoordinateSearchSucceeded bool,
+) []NativeUnitModeAction {
+	if candidateDispatchSucceeded {
+		return []NativeUnitModeAction{NativeModeCall14EF0}
+	}
+	actions := []NativeUnitModeAction{NativeModeCall14EF0, NativeModeCall14121}
+	if blockedSearchSucceeded {
+		return actions
+	}
+	actions = append(actions, NativeModeCall13E9C)
+	if !nearestCoordinateSearchSucceeded {
+		actions = append(actions, NativeModeCall13FD4)
+	}
+	return actions
+}
+
+// PlanNativeUnitMode1 保存 mode 1 的原始順序。它在 0x14ef0 失敗後只
+// 呼叫 0x14121，並透過同一個 0x13c06 分支在回傳 0 時進入 0x13fd4；
+// 不會呼叫 mode 0 專用的 0x13e9c。
+func PlanNativeUnitMode1(
+	candidateDispatchSucceeded bool,
+	blockedSearchSucceeded bool,
+) []NativeUnitModeAction {
+	if candidateDispatchSucceeded {
+		return []NativeUnitModeAction{NativeModeCall14EF0}
+	}
+	actions := []NativeUnitModeAction{NativeModeCall14EF0, NativeModeCall14121}
+	if !blockedSearchSucceeded {
+		actions = append(actions, NativeModeCall13FD4)
+	}
+	return actions
+}
 
 // PlanNativeUnitMode2 保存 mode 2 的控制流。0x14ef0 失敗後直接呼叫
 // 0x14237，再經 0x13b1e→0x13c06 共用分支；0x14237 的函式尾端以

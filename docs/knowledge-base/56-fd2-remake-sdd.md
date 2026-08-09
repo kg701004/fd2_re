@@ -2675,6 +2675,11 @@ item category or church service name.
 `min(currentHP+floor(maxHP/5),maxHP)`。玩家休息正式路徑也已刪除錯誤的
 「至少回復 1」近似，改讀 `NativeTransient[3:5]`。
 
+`fdother.PlanNativeUnitMode0`／`PlanNativeUnitMode1` 也只保存原始
+`0x14EF0`／`0x14121`／`0x13E9C`／`0x13FD4` 的巢狀回傳順序；它們是
+E0 控制流資料化，不是玩法名稱或正式 `NextAIPlan` 接線。缺少 raw 回傳
+來源時必須失敗即關閉。
+
 模式 11 的唯一已知 runtime source 是全域事件 82 handler `0x35F92`：
 battle-local state entry `+0x10` 等於 4 時，`0x36078` 透過
 `0x3419C(20,20,11)` 只改單位索引 20 的低四位。它位於

@@ -5,6 +5,59 @@ import (
 	"testing"
 )
 
+func TestPlanNativeUnitMode0PreservesNestedFallbacks(t *testing.T) {
+	if got := PlanNativeUnitMode0(true, false, false); !reflect.DeepEqual(
+		got,
+		[]NativeUnitModeAction{NativeModeCall14EF0},
+	) {
+		t.Fatalf("successful mode 0 actions = %v", got)
+	}
+	if got := PlanNativeUnitMode0(false, true, false); !reflect.DeepEqual(
+		got,
+		[]NativeUnitModeAction{NativeModeCall14EF0, NativeModeCall14121},
+	) {
+		t.Fatalf("blocked-search mode 0 actions = %v", got)
+	}
+	want := []NativeUnitModeAction{
+		NativeModeCall14EF0,
+		NativeModeCall14121,
+		NativeModeCall13E9C,
+		NativeModeCall13FD4,
+	}
+	if got := PlanNativeUnitMode0(false, false, false); !reflect.DeepEqual(got, want) {
+		t.Fatalf("nested mode 0 fallback actions = %v, want %v", got, want)
+	}
+	if got := PlanNativeUnitMode0(false, false, true); !reflect.DeepEqual(
+		got,
+		[]NativeUnitModeAction{NativeModeCall14EF0, NativeModeCall14121, NativeModeCall13E9C},
+	) {
+		t.Fatalf("nearest-coordinate mode 0 actions = %v", got)
+	}
+}
+
+func TestPlanNativeUnitMode1UsesSharedRecoveryWithoutNearestFallback(t *testing.T) {
+	if got := PlanNativeUnitMode1(true, false); !reflect.DeepEqual(
+		got,
+		[]NativeUnitModeAction{NativeModeCall14EF0},
+	) {
+		t.Fatalf("successful mode 1 actions = %v", got)
+	}
+	if got := PlanNativeUnitMode1(false, true); !reflect.DeepEqual(
+		got,
+		[]NativeUnitModeAction{NativeModeCall14EF0, NativeModeCall14121},
+	) {
+		t.Fatalf("blocked-search mode 1 actions = %v", got)
+	}
+	want := []NativeUnitModeAction{
+		NativeModeCall14EF0,
+		NativeModeCall14121,
+		NativeModeCall13FD4,
+	}
+	if got := PlanNativeUnitMode1(false, false); !reflect.DeepEqual(got, want) {
+		t.Fatalf("mode 1 shared recovery actions = %v, want %v", got, want)
+	}
+}
+
 func TestPlanNativeUnitMode2PreservesSharedRecovery(t *testing.T) {
 	got := PlanNativeUnitMode2(false)
 	want := []NativeUnitModeAction{
