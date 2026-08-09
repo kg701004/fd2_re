@@ -35,6 +35,13 @@
   但入口 latch 的執行期值、中間 `0x53aff` 偏移生命週期、一般玩家畫面與
   `postbattle_ch23_persist` 仍未閉合。證據見
   [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
+- [x] **RE-CH23-STAGING-GLOBAL-XREF**：IDA data-xref／Capstone 已固定 `0x53aff`
+  的 raw loader owner、`0x51a10` 的 `0x24d22` local owner、`0x539f8` 的
+  `0x11eee` tick snapshot owner；`0x53aed`／`0x53af1`／`0x53af5` 的寫入
+  分散於 `0x12eaa`、`0x1300d`、`0x13185`、`0x13315` 共用呈現函式。這只
+  關閉 offset-state 的靜態 owner 邊界，不把欄位命名成 camera／framebuffer，
+  也不解除 ch23 的 indexed／campaign fail-closed gate。完整位址與輸入雜湊見
+  [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt)。
 - [x] **ch21 post 證據勘誤**：補明 `0x1f882` 是 0–63、每步 2 ms 的原生
   palette 淡出，不是同步／等待輔助器；`postbattle_ch22_persist` 仍因
   frontier runtime trace 與 indexed 畫面狀態未閉合而失敗即關閉。證據見

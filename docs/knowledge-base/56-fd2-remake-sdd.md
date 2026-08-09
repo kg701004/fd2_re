@@ -2431,6 +2431,14 @@ normal-player E2 still lack proof, so
 `postbattle_ch23_persist` remains fail-closed. Detailed evidence is in
 [`fd2_ch23_post_ida.txt`](../data/ida/fd2_ch23_post_ida.txt).
 
+IDA data-xref 稽核已在不替欄位命名的前提下收窄擁有者邊界：`0x53aff` 由
+raw `0x10652..0x1088d` 載入器配置／清理，再交給 `0x11eee`／`0x24d22` 消費；
+`0x51a10` 只在 `0x24d22` 內讀寫；`0x539f8` 只由 `0x11eee` tick gate 比較／
+寫回。offset globals `0x53aed`、`0x53af1`、`0x53af5` 則由共用函式
+`0x12eaa`、`0x1300d`、`0x13185`、`0x13315` 寫入，包含明示的 `0x18`／零值
+哨兵與累加更新。這只是靜態 E1 擁有者證據，不授權建立 camera、viewport、
+framebuffer 或 `nativeMapWork` 別名，因此 ch23 production adapter 仍失敗即關閉。
+
 The narrow executable boundary is now represented by
 `fdother.DecodeNativeCh23Stage`／`BlitNativeCh23Stage`: they require archive
 entry #42, exact 312×192 geometry, a `0x138`-stride `0xea00` staging surface,

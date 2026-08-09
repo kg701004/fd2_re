@@ -3502,3 +3502,11 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   這次只刪除／校正「table index 可直接命名戰次」與「self-loop 可直接回城」
   的不必要斷言；`postbattle_ch29_persist`、完整 ending owner、輸入事件、
   一般玩家 chapter provenance 仍保持失敗即關閉。
+
+- 2026-08-09 ch23 staging owner xref：IDA／Capstone 追查固定 `0x53aff` 只由
+  raw `0x10652..0x1088d` loader 配置／清理並交給 `0x11eee`／`0x24d22`，
+  `0x51a10` 只在 `0x24d22` 讀寫，`0x539f8` 只在 `0x11eee` tick gate
+  比較／寫回；`0x53aed`、`0x53af1`、`0x53af5` 的寫入則分散於
+  `0x12eaa`、`0x1300d`、`0x13185`、`0x13315`。這只關閉 raw offset-state
+  的靜態 owner 邊界，不把欄位改名成 camera／framebuffer／`nativeMapWork`，
+  也不解除 `postbattle_ch23_persist` 的 indexed／campaign fail-closed gate。

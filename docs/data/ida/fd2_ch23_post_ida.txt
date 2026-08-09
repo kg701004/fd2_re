@@ -195,6 +195,25 @@ FD2.EXE：raw ch23 post／玩家第24戰戰後處理器證據
   仍未閉合，故仍不建立
   production binding。
 
+已證實：ch23 staging／offset globals 的 owner 邊界
+--------------------------------------------------
+
+- IDA Pro 9.4 data-xref 與 Capstone 5.0.3 交叉核對 `0x53aed`、`0x53af1`、
+  `0x53af5`、`0x53aff`、`0x51a10`、`0x539f8` 的直接讀寫：`0x53aff` 只有
+  `0x10652..0x1088d` raw loader 配置、清理並交給 `0x11eee`／`0x24d22`
+  消費；`0x51a10` 的讀寫只在 `0x24d22..0x24df2`；`0x539f8` 的比較／寫入
+  只在 `0x11eee` tick gate。
+- `0x53aed` 的寫入位於 `0x130a6=0x18`、`0x130e9=0`；`0x53af1` 的寫入
+  位於 `0x132b3=0x18`、`0x132e6=0`。`0x53af5` 則由
+  `0x12f84`、`0x130b0`、`0x13296`、`0x133ee` 累加，並在
+  `0x12ff4`、`0x13153` 清零。這些寫入分散於 raw 函式
+  `0x12eaa`、`0x1300d`、`0x13185`、`0x13315`，不是 `0x24c1e` 專屬
+  producer。
+- 上述位置只證明共用 indexed／角色呈現流程的 offset-state lifetime；
+  不足以把欄位命名成 camera、viewport、framebuffer 或重製端
+  `nativeMapWork`。因此目前只新增 data-xref evidence，raw ch23 的
+  production indexed adapter 與 campaign handoff 仍失敗即關閉。
+
 已證實：`0x11eb0` 的逐列複製 ABI 與 ch23 的實際目的地
 ---------------------------------------------------------
 
