@@ -2399,7 +2399,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   的完整玩法命名與上層 raw phase。
 - 兩遍目的也已由既有 producer 證據閉合：`0x1598A` 的法術候選最佳分數
   寫 `[0x53C23]`，`0x1567E` 的 item-command 候選最佳分數寫
-  `[0x53C33]`。優先遍任一 signed score 至少6才讓敵軍行動；收尾
+  `[0x53C33]`。第一遍只有任一 signed score 至少6才讓敵軍進入 dispatcher；收尾
   `0x13512` 設 bit7，第二遍 `+5 & 0x81` 會排除它，所以不是雙動。
   typed score 欄位已改用 producer＋地址名稱，仍不猜特定 spell/item。
 - 2026-07-29 AI command-index 勘誤：Docker Capstone 交叉核對

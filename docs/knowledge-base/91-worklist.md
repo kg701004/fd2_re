@@ -311,7 +311,8 @@
   `PlanNativePhaseUnitScans` 已分開三遍、保留 signed threshold 與缺 score
   fail-closed regression；`ExecuteNativePhaseUnitScans` 另保存每遍動態
   重判、兩張表順序與 pending 提前退出。`0x1598A→53C23` 命令遮罩候選、`0x1567E→53C33`
-  item-command 候選與 `0x13512` bit7 已串成「高價值優先遍後排除雙動」。
+  item-command 候選與 `0x13512` bit7 已串成「分數門檻優先遍後排除雙動」；
+  不替門檻命名成高階玩法。
   尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中
   command／目標與畫面順序；不得重複把陣營碼、兩張表或 pending 碼降回未知。
 - [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`

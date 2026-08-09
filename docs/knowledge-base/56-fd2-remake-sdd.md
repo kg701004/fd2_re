@@ -98,7 +98,8 @@ production AI 已切換至原版執行器。直接證據見
 候選最佳分數寫 `[0x53C23]`，`0x1567E` 的 item-command 候選最佳分數寫
 `[0x53C33]`；優先遍任一 signed score `>=6` 才進 action dispatcher。
 成功收尾 `0x13512` 設 raw bit7，第二遍的 `+5 & 0x81` admission 隨即
-排除該記錄。因此這是高價值 command 優先，不是雙動。typed input 欄位
+排除該記錄。因此這是原始分數門檻通過的 command 先行，不是雙動；不替分數
+賦予高階玩法名稱。typed input 欄位
 保留地址後綴，避免把 producer 類別擴張成某個特定 spell/item 效果。
 
 `0x14237..0x145CC` 現已閉合為物理候選評分迴圈，而不是未知的 generic candidate
