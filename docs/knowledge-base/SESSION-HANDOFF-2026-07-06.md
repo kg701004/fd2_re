@@ -2914,8 +2914,9 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 ## 2026-08-02：CONTINUE 返回控制器與地圖計時勘誤
 
 - 合法 IDA Pro 9.4 以唯讀 IDC 稽核固定 `sub_4E031` 僅有
-  `0x41A→0x41C` word copy；它沒有單位、回合或事件 dispatch。依 BIOS
-  data-area ABI 推論此操作會丟棄待處理輸入，但直接證據只提升到 word copy。
+  `0x41A→0x41C` word copy；它沒有單位、回合或事件 dispatch。把兩個 word
+  視為 BIOS head/tail、進而解釋為丟棄待處理輸入，最多是外部 ABI 的強推論；
+  直接證據只提升到 word copy，重製端不可把它當成已證實按鍵 consume。
   `0x10010` 經 `0x1061B→0x22BBE` epilogue 返回後，main 才於
   `0x25DCE` 呼叫並循環重入 `0x117E7` 共享戰鬥控制器。Capstone 以相同
   FD2.EXE（357074 bytes；MD5 `b97caf2239a27a896069d03549d96e1e`；
@@ -3470,5 +3471,8 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   regression；這是獨立 indexed renderer，不是 campaign 接線。
 - 明確勘誤：舊「party scheduler／dedicated renderer 完全不存在」只適用於
   本節之前的歷史快照，現況已由 standalone executor 取代；`0x10620→0x4e031`
-  的輸入 consume、`0x28a64` 後續 owner、一般玩家 E2 與
-  `postbattle_ch29_persist` campaign terminal 仍保持失敗即關閉。
+  的 raw word 比較／複製已以 `NativeBIOSKeyboardState` 保存，但按鍵映射與
+  外層輸入事件仍未知；`0x28a64` 已校正為共用清理 epilogue，不是後續 owner。
+  一般玩家 E2、`0x2c194..0x2c39a` handoff 與
+  `postbattle_ch29_persist` campaign terminal 仍保持失敗即關閉。完整證據見
+  [`fd2_ch29_input_cleanup_ida.txt`](../data/ida/fd2_ch29_input_cleanup_ida.txt)。

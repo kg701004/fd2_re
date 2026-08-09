@@ -450,10 +450,22 @@ IDA 證實的 slot swap、九段 mirror/non-mirror fade、20 次 secondary loop�
 primary descriptor `+6` tick、portrait 220/440 loop、DATO mouth countdown、
 五個 FDTXT destination 與最後 64 段 palette 收尾逐步產生 indexed VGA frame。
 Docker 以玩家原始資源跑完兩個 unit side branch 的完整 cycle regression。
-這是獨立可編輯 renderer，尚未接 `0x10620→0x4e031` 輸入 consume、
-`0x28a64` 後續 owner、campaign terminal 或一般玩家 E2；因此不解除
-`postbattle_ch29_persist` 的失敗即關閉狀態。完整原始位址與工具雜湊見
+這是獨立可編輯 renderer，尚未接輸入事件映射或 campaign；`0x10620` 的
+raw word 比較、`0x4e031` 的 `0x41a→0x41c` 複製，以及 `0x28a64` 的共用
+清理尾端已另以固定位址證據收窄，但不提升為按鍵或戰役語意。campaign
+terminal、一般玩家 E2 仍未閉合，因此不解除 `postbattle_ch29_persist` 的
+失敗即關閉狀態。完整原始位址與工具雜湊見
 [`fd2_ch29_montage_ida.txt`](../data/ida/fd2_ch29_montage_ida.txt)。
+
+2026-08-09 raw input primitive correction：IDA／Capstone 已證實
+`0x10620` 只比較 `word[0x41a]` 與 `word[0x41c]`，`0x4e031` 只做
+`word[0x41c]=word[0x41a]`；`0x2c950`／`0x2c961` 是 ch29 montage 內的
+呼叫點，但 `0x4e031` 也有其他 caller，不能命名成終局專用按鍵消費器。
+`0x28a64` 是 `0x28784` 共用清理 epilogue，不是 campaign 返回 owner。
+重製端新增 `fdsave.NativeBIOSKeyboardState`，只保存這兩個 raw word 的
+比較／複製契約，測試不解碼按鍵、不接 generic skip。按鍵映射、外層事件、
+`0x2c194..0x2c39a` handoff 與一般玩家 E2 仍失敗即關閉；證據見
+[`fd2_ch29_input_cleanup_ida.txt`](../data/ida/fd2_ch29_input_cleanup_ida.txt)。
 
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
@@ -2613,8 +2625,9 @@ catalog 與正式 party materialization 已由下一段閉合。控制映像、r
 selector／record、timing 與 future-group constructor 的個別 adapters 已由
 下文閉合；整組 `battle.State` 到正式控制器的原子交接仍未閉合。
 2026-08-02 以合法 IDA Pro 9.4 重查後撤回「`0x4E031` 是戰鬥驅動器」：
-該函式只把 absolute `0x41A` 的 word 複製到 `0x41C`；清除待處理鍵盤輸入
-是依 BIOS ABI 得到的強推論，不是函式本體的直接語意。第三分支返回 0
+該函式只把 absolute `0x41A` 的 word 複製到 `0x41C`；把兩個 word 視為
+BIOS head/tail、進而解釋為丟棄待處理輸入，最多是外部 ABI 的強推論，不能
+當作函式本體或重製端的已證實語意。第三分支返回 0
 後，main 才在 `0x25DCE` 呼叫並循環重入共享戰鬥控制器 `0x117E7`。
 逐指令證據見
 [`fd2_current_snapshot_ida.txt`](../data/fd2_current_snapshot_ida.txt) 與

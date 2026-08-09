@@ -1,0 +1,75 @@
+# FD2 raw input predicate and cleanup epilogue：IDA Pro 9.4 證據
+
+## 輸入與工具
+
+- 輸入：`FD2.EXE`，大小 357074 位元組。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- IDA：合法 IDA Pro 9.4，`fd2-ida-authorized-local`，一次性無網路 Docker。
+- 交叉驗證：`fd2-cap-local` Docker 內 Capstone 5.0.3。
+- 所有 `0x...` 均為 FD2.EXE 線性位址；不可與檔案偏移或重製端位址混用。
+
+## 已證實：`0x10620` 的原始比較
+
+IDA 函式範圍為 `0x10620..0x10652`，直接指令為：
+
+```text
+0x1062d xor edx, edx
+0x1062f mov eax, 41Ah
+0x10634 movsx eax, word ptr [eax]
+0x1063a mov eax, 41Ch
+0x1063f movsx eax, word ptr [eax]
+0x10642 cmp eax, [esp+4+var_4]
+0x10645 jz  0x1064c
+0x10647 mov edx, 1
+0x10651 retn
+```
+
+唯一可提升為已證實的語意是：回傳 `word[0x41a] != word[0x41c]`。
+這不是按鍵碼解碼，也不是戰鬥、回合或事件分派。
+
+## 已證實：`0x4e031` 的原始寫入
+
+IDA 函式範圍為 `0x4e031..0x4e040`，直接指令為：
+
+```text
+0x4e031 push esi
+0x4e032 mov esi, 41Ah
+0x4e037 mov ax, [esi]
+0x4e03a mov [esi+2], ax
+0x4e03e pop esi
+0x4e03f retn
+```
+
+因此可證實的效果只有把 `word[0x41a]` 寫入 `word[0x41c]`。BIOS
+鍵盤 head/tail 是合理的強推論，但本證據不閉合按鍵映射、環形佇列消費
+規則或任一玩家可見動作。重製端的 `NativeBIOSKeyboardState` 只保存兩個
+原始 word，並以 `WordsDiffer`／`Copy041ATo041C` 提供相同位元組契約。
+
+## 已證實：ch29 montage 內的呼叫位置
+
+- `0x2c950`（位於 `0x2c405..0x2c9ec`）呼叫 `0x10620`。
+- `0x2c961`（同一函式）呼叫 `0x4e031`；呼叫前的分支把外層 `j` 寫成
+  `1`，但這不等於已知的「跳過」按鍵語意。
+- `0x2c3a6`、`0x2c3b7`、`0x2c3fe` 也呼叫 `0x4e031`，所以不能把
+  `0x4e031` 命名成只屬於終局 montage 的消費器。
+
+## 已證實：`0x28a64` 不是返回 owner
+
+IDA 將 `0x28a64` 放在 `0x28784..0x28a6c` 的共用函式尾端；ch29 montage
+的 `0x2c9e7` 只跳到這段清理 epilogue。IDA xref 顯示 `0x2c405` 的直接
+caller 是 `0x2c18f`（位於 `0x2bce5..0x2c39b`），而 `0x2c194` 之後仍有
+資源釋放、`0x25977`、FDOTHER #60/#58/#57/#59 與其他呈現流程。故
+`0x28a64` 不可被寫成戰役節點返回、下一城鎮或 campaign owner。
+
+## 推論等級與重製邊界
+
+- 已證實：兩個 raw word 的比較與複製；`0x2c950`／`0x2c961` 呼叫點；
+  `0x28a64` 是共用清理尾端。
+- 強推論：`0x41a`／`0x41c` 對應 BIOS 鍵盤 head/tail。
+- 未知：按鍵映射、外層輸入事件、`j=1` 的玩家可見意義、
+  `0x2c194..0x2c39a` 的完整終局 handoff。
+
+因此本證據只允許 raw input primitive；`MontageCycle`、
+`postbattle_ch29_persist` 與戰役終局仍保持失敗即關閉，不能以此證據宣稱
+完整重製或一般玩家 E2。

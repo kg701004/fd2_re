@@ -43,10 +43,11 @@ IDA 將 `0x2c548` 識別為 `0x2c405` 函式內部位址；以下保留原始位
    `0x15f84` 文字呼叫（FDTXT_031 index 10、FDTXT_000 的 unit `+8+1`、
    FDTXT_031 index 11、FDTXT_000 的 unit `+0x20+150`、以及
    `n<220 ? unit+8+12 : 45`），present 後 `0x17aa9(1)`。
-10. `0x10620` 若偵測到原始輸入變化，將外層 `j` 寫成 1 並呼叫 `0x4e031`；
-    輸入事件與 consume ABI 尚未由一般玩家 E2 閉合，重製端不得自行宣稱
-    任意按鍵等價。所有 party loop 結束後呼叫 `0x1f882`，再釋放資源並跳至
-    `0x28a64`。
+10. `0x10620` 若偵測到 `word[0x41a] != word[0x41c]`，將外層 `j` 寫成 1
+    並呼叫 `0x4e031`；`0x4e031` 的已證實效果只有把 `word[0x41a]` 複製到
+    `word[0x41c]`。BIOS head/tail 是強推論，按鍵映射、佇列消費與 `j=1`
+    的玩家可見意義仍未知。所有 party loop 結束後呼叫 `0x1f882`，再釋放
+    資源並跳至 `0x28a64`。
 
 ## 共用 helper 的直接證據
 
@@ -57,8 +58,10 @@ IDA 將 `0x2c548` 識別為 `0x2c405` 函式內部位址；以下保留原始位
   `0x540fd` 再依 frame descriptor `+6` 推進 subframe。`0x2935b` 只負責
   frame-table descriptor 解碼與 `0x4e63d` call。
 - 上述結果由 IDA Pro 9.4 偽代碼與同一線性位址的 Capstone 指令交叉確認；
-  尚未把未知 `0x4e031` consume、`0x25977` palette/狀態呼叫或 `0x28a64`
-  後續流程升格為已證實語意。
+  `0x4e031` 的 raw word copy 已證實，但不可把它擴寫成按鍵 consume。
+  `0x25977` 的 palette/狀態語意與 `0x28a64` 之後的共享清理／終局 handoff
+  仍未知；完整位址與呼叫者證據見
+  [`fd2_ch29_input_cleanup_ida.txt`](fd2_ch29_input_cleanup_ida.txt)。
 
 ## 重製端消費邊界
 
@@ -66,5 +69,7 @@ IDA 將 `0x2c548` 識別為 `0x2c405` 函式內部位址；以下保留原始位
 figure fade、20 次 secondary intro、primary FIGANI frame delay、DATO／FDTXT
 portrait loop 與最後 64 段 palette fade 做成獨立可測試的 indexed executor；
 它只接受原始資源與 caller 提供的 raw random byte，不連接 campaign，也不替
-`0x10620→0x4e031` 猜測鍵盤語意。`postbattle_ch29_persist` 仍保持失敗即關閉，
-直到終局 owner、輸入 consume、一般玩家 E2 與完整結束節點均閉合。
+`0x10620→0x4e031` 猜測鍵盤語意；raw word 原語另見
+[`fd2_ch29_input_cleanup_ida.txt`](fd2_ch29_input_cleanup_ida.txt)。
+`postbattle_ch29_persist` 仍保持失敗即關閉，直到終局 handoff、輸入事件映射、
+一般玩家 E2 與完整結束節點均閉合。
