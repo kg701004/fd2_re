@@ -103,6 +103,42 @@ func TestInventoryRecipeSuccessSyncsThenReturnsToTown(t *testing.T) {
 	}
 }
 
+func TestInventoryRecipeInsufficientReturnsToTownAndSaveLoad(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	userDataDirCached = ""
+	recipe, chapter := skyKeyRecipeNode(), 21
+	c := &campaign.Campaign{Start: "recipe", Nodes: map[string]*campaign.Node{
+		"recipe":       recipe,
+		"crafted":      {Type: "cutscene", Next: "town", Beats: []campaign.Beat{{Op: "set_chapter", Chapter: &chapter}}},
+		"insufficient": {Type: "cutscene", Next: "town", Beats: []campaign.Beat{{Op: "sync_party"}}},
+		"town":         {Type: "town", Town: "試驗城"},
+	}}
+	g := &Game{
+		camp: campaign.NewRunner(c), gold: 246,
+		partyMembers: map[int]bool{0: true}, partyJoinOrder: []int{0},
+		partyDeploy: map[int]bool{0: true},
+		st:          &battle.State{Units: recipeUnits()},
+	}
+	g.enterNode()
+	if g.camp.Cur != "insufficient" || g.loadErr != "" {
+		t.Fatalf("insufficient recipe branch = node %q err %q", g.camp.Cur, g.loadErr)
+	}
+	g.tick(storyFadeFrames)
+	if g.camp.NodeID() != "town" || g.st != nil || len(g.partyRoster) != 1 {
+		t.Fatalf("insufficient recipe town boundary = node %q state=%#v roster=%#v", g.camp.NodeID(), g.st, g.partyRoster)
+	}
+	g.saveGameToSlot(0)
+	if g.msg != "已存檔(槽位1：town)" {
+		t.Fatalf("insufficient recipe save message=%q", g.msg)
+	}
+	g.camp.Cur, g.gold = "recipe", 1
+	g.partyMembers, g.partyJoinOrder, g.partyDeploy, g.partyRoster = nil, nil, nil, nil
+	g.loadGameFromSlot(0)
+	if g.camp.NodeID() != "town" || g.gold != 246 || len(g.partyJoinOrder) != 1 || !g.partyMembers[0] {
+		t.Fatalf("insufficient recipe save/load boundary = node %q gold=%d order=%#v members=%#v", g.camp.NodeID(), g.gold, g.partyJoinOrder, g.partyMembers)
+	}
+}
+
 func TestInventoryRecipeFailsClosedWithoutSixteenRuntimeSlots(t *testing.T) {
 	g := &Game{st: &battle.State{Units: recipeUnits()[:15]}}
 	if crafted, err := g.applyInventoryRecipe(skyKeyRecipeNode()); err == nil || crafted {

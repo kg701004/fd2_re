@@ -3707,3 +3707,13 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   placement/delay regression 與 `TestNewAtkAnimRequiresNativeDelayPairing` 通過。
   這只關閉幀順序與停留時間的 E1 呈現邊界；命中幀、傷害、音效、台座、完整
   原版畫面與一般玩家 E2 仍未閉合，不能將本項誤寫成完整戰鬥演出。
+
+## 2026-08-09：戰後城鎮／存檔與 command grid 防禦性回歸
+
+- `TestInventoryRecipeInsufficientReturnsToTownAndSaveLoad` 補上天空之鑰材料不足
+  分支的實際可編輯（editable）路徑：recipe→insufficient→town，清除戰場暫態後在
+  town22 等價節點存檔，再清空暫態並讀檔，驗證金幣、持續隊伍成員與加入順序。
+  成功分支原有回歸保持不變；這不是 raw `ch21_post` handler 或一般玩家 E2 證據。
+- `TestNativeCommandGridMissingInputsRemainInert` 驗證空 ID、負值／越界 selected
+  不會改指令格（command grid）長度或選取狀態，也不擴大 command effect。兩項測試均在 Docker
+  中通過；未修改 renderer、command whitelist 或原版語意。

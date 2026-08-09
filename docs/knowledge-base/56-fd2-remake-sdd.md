@@ -3385,6 +3385,15 @@ FDTXT 所需的 montage context，依 `[0x53bfb]-1` 逆序處理 runtime record�
 輸入事件、一般玩家 E2 及 battle→postbattle→town/shop/preparation/save
 campaign handoff 仍失敗即關閉。
 
+## 2026-08-09：戰間與指令格的窄回歸邊界
+
+- 天空之鑰材料不足分支已由 `TestInventoryRecipeInsufficientReturnsToTownAndSaveLoad`
+  實際驗證 `recipe→insufficient→town`，在 town22 等價節點保存後清除暫態並讀回
+  持續隊伍；這只補可編輯戰間／存檔邊界，不解讀 raw `ch21_post`，也不提升一般玩家 E2。
+- `TestNativeCommandGridMissingInputsRemainInert` 只驗證空 command ID 與越界選取值的
+  純資料失敗即關閉契約；它不開放未知 command、效果或 renderer 語意。兩項回歸均在
+  Docker 中執行，UI-03／UI-12 的其餘原版證據門檻維持不變。
+
 ## 2026-08-09 raw index28 `0x2548c`（玩家第29戰 post 候選；E1）
 
 raw handler table index28 的 bytes `8c 54 01 00` 解析為線性位址 `0x2548c`，

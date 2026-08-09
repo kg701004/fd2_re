@@ -1041,6 +1041,7 @@
 - [~] **王座廳 NPC 擺位**(cutscene-bg 執行中):國王/王后坐王座 + 索爾站紅毯中央,對照 f_006.png;
       story 節點加 actor 擺位欄。RE 查 FDFIELD 組32 是否帶 NPC roster(sprite id/cell 直接來自原版)
 - [x] **ch21/ch22 pre-handler**：FDTXT_022 index0（11句）與 map21/70-slot、pan(16,28)、acting67 已接 editable binding；`story_ch22` 已接回原版 pre-handler，compiler/campaign/battle regression 通過。
+- [x] **ch21 合成不足分支的戰間存檔邊界（2026-08-09）**：`inventory_recipe` 材料不足時實際走可編輯（editable）的 insufficient→town 節點，清除戰場暫態但保留持續隊伍；Docker/Xvfb regression 會在 town22 等價節點存檔、清空暫態後讀回金幣、隊伍成員與加入順序。這只補足戰後城鎮／存檔回歸，不猜 raw `ch21_post` handler，也不宣稱一般玩家 E2。
 - [x] **外部資源／城鎮流程交叉盤點**：公開資料確認 `FDFIELD.DAT` 是可替換的外部場景層，且章節間存在 preparation、商店、教會、存讀檔流程；後續以 DAT provider + battle→town/prep graph 實作，未將網路資料當 binary 格式硬證據。
 - [ ] **社群行為 oracle 對照**：逐項把 FD2.EXE 修改表中的入隊、隨時存檔、等級上限、寶箱持久化轉成可編輯規則與 regression；先挑 save/chest 兩項和目前 persistent flow 最相關者。
 - [~] **ch22_pre control-flow**：固定 16-slot deactivate loop、`0x11df2` immediate `palette_update` 已 lower 並通過 regression；共用 `0x24618` 9-pass indexed adapter 已完成，但本 handler 的 exact binding／進入時 raw roster-camera context 尚待閉合，不能僅因 renderer 存在就接 `story_ch23`。
@@ -1294,6 +1295,7 @@
       anchor 與畫面 oracle，故仍不可將現有文字/ring UI 當成 original renderer。resource provenance 已補：
       `[0x53a89]` = `FDOTHER.DAT#2` 的 78-cell raw offset bank，`0x4e9e4` 直接貼 index pixels（0 preserve）；
       strict decoder/regression 已加入，仍未接 runtime renderer。
+- [x] **UI-03 指令格（command grid）失敗即關閉契約（2026-08-09）**：新增純資料 regression，確認空 command ID、selected 越界／負值不 panic、不改變 grid 長度或標記任何 cell；未接未知 command effect、renderer 語意或 DOSBox E2。
 - [x] **UI-03 command-record/table identity**：`0x4e516` 的 IDs 0..35 與 EXE spell table 7-byte rows
       byte-for-byte 相同，故 record `+3/+4/+5/+6` 可安全正名為 `dist/range/mp/target`；全 FDFIELD 和
       character-default initial masks 的已見 ID 範圍為 0..30。36..39 僅是 pointer 可達的相鄰 data、label
