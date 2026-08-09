@@ -1,0 +1,74 @@
+# FD2 ch24/ch25 post raw handler 證據（IDA／Capstone）
+
+## 輸入與位址基準
+
+- 輸入：`FD2.EXE`，357074 bytes。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- 第一順位工具：合法 IDA Pro 9.4 Docker，保留 IDA 原始函式名與線性位址。
+- 交叉驗證：Capstone 5 Docker，`tools/disasm_le.py` 的線性位址。
+- 本檔所有語意都是附加註記；原始函式名、位址、運算元與呼叫順序保留。
+
+## 已證實：raw handler table 與函式邊界
+
+資料映像的 handler table 位於線性位址 `0x51de9`，同一批 LE 輸入的檔案偏移
+是 `0x51be9`。本版 raw entry bytes 如下：
+
+| table index | file offset | raw bytes | raw little-endian | linear address |
+| ---: | ---: | --- | ---: | ---: |
+| 23 | `0x51c45` | `1e 4c 01 00` | `0x14c1e` | `0x24c1e` |
+| 24 | `0x51c49` | `f2 4d 01 00` | `0x14df2` | `0x24df2` |
+| 25 | `0x51c4d` | `80 4e 01 00` | `0x14e80` | `0x24e80` |
+
+IDA Pro 9.4 將 `0x24df2..0x24e80` 識別為 `sub_24DF2`，唯一直接 caller 是
+`0x25e23` 的 table consumer（`call funcs_25E23[eax*4]`）。`0x24e80..0x25052`
+是相鄰的獨立函式 `sub_24E80`，同樣由 `0x25e23` 間接呼叫。table index 只固定
+raw dispatch 與函式邊界，不可直接命名成玩家戰次；玩家第25／26戰的 owner 仍需
+以 map、文字、執行期路徑交叉閉合。
+
+## 已證實：`sub_24DF2` 的原始順序
+
+Capstone 與 IDA 指令逐項一致，`0x24df2` 依序執行：
+
+1. `push 0x28` → `call 0x36cd7`。
+2. `0x24e1b` 呼叫 `0x15f84`，保留 raw 參數與文字指標 `[0x53a79]`，立即值含
+   `6`；現有文字證據將此標為 FDTXT_025 index6。
+3. `0x24e27` 呼叫 `0x135dd`，原始 push 順序為 `push 0x10`、`push 4`；依既有
+   tile ABI 的附加換算是 PAN raw `(4,16)` → `(96,384)`，不改寫原始參數。
+4. `0x24e31` 呼叫 `0x10b4e`，立即值為 `2`；保存為 raw spawn 呼叫
+   `0x10b4e(2)`，不把 `2` 猜成角色、隊伍或 JOIN 語意。
+5. `0x24e3b` 呼叫 `0x1366a`，立即值為 `0x4b`（十進位75）；現有 acting
+   exporter 證據對應 ACTING resource75，解碼為4 beats、slot70、pose2。
+6. `0x24e62` 再呼叫 `0x15f84`，文字立即值為 `7`；現有文字證據將此標為
+   FDTXT_025 index7。
+7. `0x24e6c` 呼叫共享函式 `0x112a5`，立即值為 `0x1a`；`0x112a5` 的 raw
+   行為是將 persistent record append 至 `[0x53bf7] + [0x53bfb]*0x50`、寫入
+   原始欄位、呼叫 `0x1145a` 後增加 `[0x53bfb]`。這證實 append 呼叫形狀，
+   **沒有**證實立即值 `0x1a` 是 JOIN、角色編號或章節常數。
+8. `0x24e74` 呼叫 `0x11506`。
+9. `0x24e7b` 將 raw immediate `0x1d` push 後跳至 `0x237c8`。`0x237c8` 位於
+   共享函式 `sub_23790` 內，不是獨立的 handler；其尾段另執行文字 index3、
+   `0x11506`、`0x112a5(0x0e)`，再跳至 `0x231f2`。因此本批不把 `0x1d` 或
+   `0x0e` 命名成章節／JOIN 語意。
+
+以上是 E1 靜態控制流程證據。它支持「raw handler 有兩段對話、PAN、spawn、
+ACTING、persistent append 與共享尾段」；不支持自行建立新的正式 campaign binding。
+
+## 已證實：相鄰 `sub_24E80` 的邊界，不與 `0x24DF2` 混稱
+
+`0x24e80` 開頭以 `push 0x6c` 呼叫 `0x36cd7`，掃描 runtime index
+`0x10..[0x53beb)-1`；若 record byte `+7 == 0x1f`，就寫入 byte `+0 = 0x10`、
+`+1 = 0x06`。接著呼叫 `0x233c6` 的 16-slot layout、FDTXT／ACTING 資源，
+最後增加 `[0x53c03]` 並跳至 `0x15487`。這是 table index25／相鄰 handler 的
+獨立函式，不可將它的 layout 與 `0x24df2` 的 raw caller 混合。
+
+## 目前判定與失敗即關閉邊界
+
+- 目前 worklist 的 owner 勘誤保留：`0x24df2` 的 map／文字／ACTING 證據屬
+  玩家第25戰候選，`postbattle_ch24_persist` 仍 blocked；先前同號接到
+  `postbattle_ch24_persist → town_ch25` 的說法已撤回。
+- 這份 raw evidence 可供後續核對 `postbattle_ch25_persist → town_ch26`，但
+  table index 本身不是玩家戰次證據；若沒有一般玩家路徑與持續隊伍／城鎮／存檔
+  邊界的 E2，不能把它升格成正式接線。
+- `0x1a`、`0x1d`、`0x0e`、`0x10b4e(2)` 的高階語意保持未知；重製端維持
+  fail-closed，不以猜測替代 battle→postbattle→town/preparation/save 流程。

@@ -3287,3 +3287,25 @@ record 高階意義、一般玩家 runtime frontier、DOSBox E2 與戰後城鎮�
 名稱；compiler 與 BeatRunner regression 只在完整 raw inventory／persistent
 record provenance 存在時選臂，缺資料便停止。這改善了 handler 的控制流可編輯性，
 但不解除 indexed renderer、`postbattle_ch22_persist` 或戰間節點 gate。
+
+## 2026-08-09 raw ch24 post `0x24df2` 函式邊界與 owner 勘誤（E1）
+
+固定版 `FD2.EXE` 的 IDA Pro 9.4 與 Docker Capstone 共同固定 handler table
+index24 的 raw entry `0x14df2`（線性位址 `0x24df2`），以及相鄰 index25 的
+`0x14e80`（線性位址 `0x24e80`）。完整輸入雜湊、檔案／線性位址與逐項指令見
+[`fd2_ch24_post_ida.txt`](../data/ida/fd2_ch24_post_ida.txt)。table index 只代表
+raw dispatch，不直接代表玩家戰次。
+
+`sub_24DF2` 的已證實順序為：FDTXT_025 index6 → `0x135dd` raw PAN
+`(4,16)` → `0x10b4e(2)` → ACTING resource75 → FDTXT_025 index7 →
+`0x112a5(0x1a)` persistent append → `0x11506` → push raw `0x1d` 跳入共享
+`0x237c8` 尾段。共享尾段另執行文字 index3、`0x11506`、`0x112a5(0x0e)`，再
+跳至 `0x231f2`。`0x112a5` 的 append 形狀已證實，但 `0x1a`、`0x1d`、`0x0e`
+與 spawn immediate `2` 的角色／JOIN／章節語意仍未知，不能由名稱或 table index
+猜測升格。
+
+現有 map24、FDTXT_025 與 ACTING resource75 的交叉證據支持「`0x24df2` 是玩家
+第25戰 post handler 候選」；先前同號接到 `postbattle_ch24_persist → town_ch25`
+已撤回。重製端仍維持 `postbattle_ch24_persist` fail-closed，尚未把
+`postbattle_ch25_persist → town_ch26` 當成已驗證正式接線。缺少未修改一般玩家
+路徑、持續隊伍與戰後城鎮／商店／整備／存檔的 E2 時，這一節只屬靜態 E1 證據。
