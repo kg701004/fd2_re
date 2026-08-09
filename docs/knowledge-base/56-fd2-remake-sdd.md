@@ -273,7 +273,7 @@ Runtime 不應再讓 `main.go` 同時決定資料模型、輸入、規則和像�
 | UI-05 | Dialog | 上／下框、portrait anchor、文字避讓、控制碼、分頁／捲動、嘴型、輸入鎖 | partial；`internal/dato.MouthState` 已按 `0x16D00` cadence 接入更新迴圈，native frame/資源與所有 speaker layout 未閉合 |
 | UI-06 | Battle HUD | HP/MP/LV/name、面板 sprite、數字 cell、依游標避讓、palette/clip | partial；需以 FDOTHER/UI loader 和截圖差分驗收 |
 | UI-07 | Postbattle | result → handler → reward/roster cleanup → town/shop/rest/preparation 或 ending；不可預設直連下一戰 | partial；campaign schema 與 bounded menu trace 可表達，`town_ch02→preparation_ch02→story_ch02_pre→battle_ch02` 已有可重播 trace。標準 postbattle 現有19個節點接入零起算 owner 的 authored binding，另5個維持 blocked；玩家第17、18、20戰已依 raw ch16、ch17、ch19 的直接控制流程分別接入60／61→61／62、55與83→84 runtime frontier，並保留 `town_ch18`、`town_ch19`、`town_ch21` 及 save/load 邊界。五個未綁定節點原有的泛用 `sync_party→set_chapter` 會繞過 runtime guard，現已移除；所有未綁定標準節點均以空 beats 失敗即關閉。這批只達 E1，逐關戰間畫面與一般玩家路徑仍不足；直接位址證據見 [`fd2_ch16_post_ida.txt`](../data/fd2_ch16_post_ida.txt)、[`fd2_ch17_post_ida.txt`](../data/fd2_ch17_post_ida.txt)、[`fd2_ch19_post_ida.txt`](../data/ida/fd2_ch19_post_ida.txt)、[`fd2_ch12_post_dispatch_ida.txt`](../data/fd2_ch12_post_dispatch_ida.txt)、[`fd2_ch05_post_dispatch_ida.txt`](../data/fd2_ch05_post_dispatch_ida.txt) 與 [`fd2_post26_28_dispatch_ida.txt`](../data/fd2_post26_28_dispatch_ida.txt) |
-| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同；variant2 selection0–4 另有修改 LOAD 路徑 E2，五項與 `town_ch06` 指定 pulse 640×400 整幀 AE=0。Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant1、variant2 selection5 的 BIOS 掃描碼／Enter、未修改玩家路徑與逐章route E2 |
+| UI-08 | Town/hub | 可見選單、離開、shop/church/preparation 入口、BGM/SFX、持久隊伍 | partial；`campaign.MenuState` 已與 `choice/town` runtime 共用。ch02 variant0 的 [`selection0–5`](../figures/town-hub-six-selections-original-vs-remake.png) 都已達原版 DOSBox／source-built remake raw RGB 整幀相同；variant1與variant2 selection0–4 另有修改 LOAD 路徑 E2，兩組五項都與指定 pulse 640×400 整幀 AE=0。Left/Right wrap、Shift+F1 reveal、Enter進variant5及Escape回selection5亦有原版 input trace；shop/church/preparation 與 hotel raw route/return trace已接，仍需variant2 selection5 的 BIOS 掃描碼／Enter、未修改玩家路徑與逐章route E2 |
 | UI-09 | Shop | buy/sell、商品／角色／slot 游標、裝備詢問、金錢／庫存原子更新、secret gate | partial；stable scene、四項service menu及purchase/sell/standalone-equip/transfer四條production owner已接原版indexed compositor。equip為角色roster後切入完整item/status panel；transfer保存FDTXT512/511/510/506與raw remove→append/recalc。ch02 variant1/3/5 service0 selected phase、variant5四service/wrap/Escape return、weapon purchase-list四個selection、Yes/No、gold0不足金與gold1000裝備收件者selection0/cycle1均達原版DOSBox／production remake同狀態raw RGB整幀相同；recipient E2使用screenshot-only party bootstrap，DX為E2約束的projection而非直接raw dump。正常campaign JOIN→LOADCH首次typed roster已接runtime regression，但尚非完整playthrough E2或native FD2.SAV。另修正pulse double-`/2`、返回selection0、choice-close frame ownership與比較欄位geometry。尚待recipient input/scroll、no-recipient/full/success、sell/equip/transfer與其他章節E2 |
 | UI-10 | Church | revive、class change、費率、候選過濾、確認／取消、缺資料 fail-closed | partial；class path 已對齊 `0x31385→0x31793→0x311DC→0x19953`：Lv>=20、portrait<0x12 且 !=7，三列可見候選、上下 bounded，special>optional>default 自動解析唯一 target，再以左右 Yes/No 確認。`0x31019` 的 FDICON＋四段 FDTXT row、FDOTHER#14 entry16 panel 與 `0x1974c` 六幀 opening 已成 indexed compositor。候選確認／取消會先跑 `0x2d31b` 五幀 closing＋source restore；`0x19953` 已接 FFFC 動態角色名、FDOTHER#2 cells16/17、48/49與51/52 normal/pulse、四幀 opening／`0x197e5` 四幀 choice closing，之後再跑 dialogue closing 五幀＋source restore，最後才 mutation／返回。所有幀只由 Draw acknowledgement 推進。`0x3072f` stable scene 已由FDOTHER#5 raw grid/four-mode digits、FDOTHER#14 entry1、DATO#131與FDTXT585/586合成；`0x2d669`四幀開關、closing source restore及`0x2d85f`兩-tick selected pulse均接runtime並有原版資源artifact。FD2.SAV、raw service0 command overlay與未接callee仍fail-closed |
 | UI-11 | Preparation | 城鎮出發確認／無城鎮記錄詢問、依名冊門檻略過或進入部署、可選15／19筆另加固定 record0（總上場16／20）、取消、最終確認、進戰場 | partial；`0x2cad7` 與 `0x2d093→0x318ad` 的分流已接資料模型與原版提示。城鎮路徑保留實際 town frame，使用 FDTXT `0x201` 於 `(95,119)`；無城鎮路徑依 `0x2cc04` 清成黑畫面，使用 FDTXT `0x19a` 於 `(100,119)`，肯定結果在完整關框後才存檔。兩者都使用 DATO #75、FDOTHER #5 對話框、FDOTHER #2 Yes／No 與 6＋4＋兩 tick 脈動＋4＋5＋還原生命週期。`0x318ad/0x31e80` 的三區背景、計數、10 欄角色格、游標、彩色／灰色繪法、四向輸入與 `0x17fc0` 狀態已接；`0x320fc` 證實 selection byte i只重排 persistent record i+1，record0固定且不消耗quota。`0x1297d` 的有號 BIOS 低字差值與可見 `0,1,2,1` 待機週期亦已接。`0x31d3c` 最終確認沿用相同生命週期，文字為 FDTXT `0x292`，呈現原畫面後才處理結果。呼叫端也已閉合：城鎮出發 `0x2d16b` 收到 0 會退出，直接整備 `0x2ccd6` 收到 0 則重選。缺任一原始記錄或資源即退回。README 所列整備圖均為 E1 原始資源合成，不是 DOSBox 截圖或正常晚期戰役存檔。跨畫面初始相位、有效晚期存檔及原版實機差分仍缺。`0x1f42d` 屬戰場進入演出，不再列為選人視窗動畫 |
@@ -1245,8 +1245,21 @@ chapter 設為 `5`、roster count 設為 `4`。標題→LOAD→slot0 的實際 D
 完整雜湊、時間線與修改副本雜湊見
 [`native_town_variant2_e2.json`](../data/native_town_variant2_e2.json)，並列圖僅供
 審查見 [`town-variant2-five-selections-original-vs-remake.png`](../figures/town-variant2-five-selections-original-vs-remake.png)。
-selection5 的該城鎮 BIOS 掃描碼／後續 Enter、variant1，以及未修改一般玩家路徑
-仍然是待辦；不得把本節外推成 23 個城鎮已完成。
+selection5 的該城鎮 BIOS 掃描碼／後續 Enter，以及未修改一般玩家路徑仍然是待辦；不得把
+本節外推成 23 個城鎮已完成。
+
+### 變體一視覺證據邊界（2026-08-09）
+
+以同一固定雜湊原版 `FD2.EXE`／`FD2.SAV` 建立 Docker `/tmp` 研究副本；slot0 只填入目前
+持久隊伍資料，將 slot0 raw chapter 設為 `0x0b`、roster count 設為 `4`、currency 設為 `0`。
+這條 LOAD 路徑觀察到原版 variant1，並非未修改一般玩家戰後路徑。原版內容裁為 320×200，
+以 ImageMagick `-scale` 整數放大至 640×400；重製端使用 `FD2_CAMP_NODE=town_ch12` 與
+`FD2_SHOT_TOWN_STATE=selection,pulse`。五個正常選項分別以實測 pulse `1,2,1,0,1` 配對，
+五組未遮罩整幀 `compare -metric AE` 均為 `0`；這些 pulse 只表示本次畫面配對相位，不推論
+原版計時器映射。完整雜湊、存檔欄位、時間線與限制見
+[`native_town_variant1_e2.json`](../data/native_town_variant1_e2.json)，並列圖見
+[`town-variant1-five-selections-original-vs-remake.png`](../figures/town-variant1-five-selections-original-vs-remake.png)。
+selection5 的該城鎮 BIOS 掃描碼／後續 Enter、未修改一般玩家路徑與其餘城鎮仍維持失敗即關閉。
 The first [`side-by-side`](../figures/town-hub-original-vs-remake.png) exposed
 that the FDICON sprite could match while the label glyph did not. Capstone
 re-read of `0x4ea2a` corrected the shared glyph shadow from the remake's

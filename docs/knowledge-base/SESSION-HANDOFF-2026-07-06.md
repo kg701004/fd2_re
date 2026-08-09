@@ -3749,3 +3749,21 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 這一輪只關閉 variant2 的正常五項畫面消費端 E2；variant1、variant2 selection5
   的該章 BIOS 掃描碼／後續 Enter、未修改一般玩家城鎮／戰後路徑與其他城鎮仍維持
   fail-closed。不得把這個修改 LOAD 結果寫成原生 `FD2.SAV` 完整相容或 23 個城鎮完成。
+
+## 2026-08-09：ch02 城鎮 variant1 正常選項 E2（修改 LOAD 路徑）
+
+- 以固定雜湊的原始 `FD2.EXE`／`FD2.SAV` 建立 Docker `/tmp` 研究副本；slot0
+  只複製目前持久隊伍資料，將 raw chapter 設為 `0x0b`、roster count 設為 `4`、
+  currency 設為 `0`。`tools/fd2save.py` 在 `fd2-cap-local` 中解碼出
+  plaintext `0x59cb`、checksum `0x0025b9a9` 與 slot0 欄位；原始與研究副本雜湊及
+  限制集中於 [`native_town_variant1_e2.json`](../data/native_town_variant1_e2.json)。
+- 原版候選截圖由 `fd2-dosbox-screenshot-local` 取得，內容裁為 320×200，再以
+  ImageMagick `-scale` 整數放大至 640×400；重製端以
+  `FD2_CAMP_NODE=town_ch12`、`FD2_SHOT_TOWN_STATE=selection,pulse` 產生相同尺寸畫面。
+- 五個正常選項的 exact-pixel 配對為 selection/pulse `0/1`、`1/2`、`2/1`、`3/0`、`4/1`，
+  每組未遮罩整幀 `compare -metric AE` 均為 `0`。這些 pulse 只記錄本次擷取的相位，
+  不推論原版計時器映射；並列圖見
+  [`town-variant1-five-selections-original-vs-remake.png`](../figures/town-variant1-five-selections-original-vs-remake.png)。
+- 本項只關閉 variant1 的五項畫面消費端 E2；selection5 的 BIOS 掃描碼／後續 Enter、
+  未修改一般玩家城鎮／戰後路徑與其他城鎮仍 fail-closed。重新嘗試時若按鍵節奏未進入
+  城鎮，不得把標題／載入畫面誤寫成原版證據。

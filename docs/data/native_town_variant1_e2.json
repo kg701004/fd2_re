@@ -1,0 +1,99 @@
+{
+  "evidence_tier": "E2",
+  "scope": "ch02 native town variant1 normal selections 0..4",
+  "limitations": [
+    "原版畫面由修改後的 LOAD 存檔副本取得，不是未修改一般玩家戰後路徑。",
+    "本輪只驗證五個正常選項的畫面消費端；selection 5 的 BIOS 掃描碼／後續 Enter、未修改玩家路徑與其他章節仍未閉合。",
+    "五張原版候選擷取由 Docker 路徑提供；本輪重新執行時因按鍵節奏不同未穩定進入同一城鎮，故不把重跑失敗路徑當成新的原版證據。",
+    "這份資料只證明畫面消費端與指定狀態，不證明原生 FD2.SAV 完整相容。"
+  ],
+  "source": {
+    "fd2_exe": {
+      "size": 357074,
+      "md5": "b97caf2239a27a896069d03549d96e1e",
+      "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    },
+    "fd2_sav_original": {
+      "md5": "409795ccebc2af340d5c74152c2d471c",
+      "sha256": "6d14f2c22562cabca83725084f1a9d6539a1d4066da5c1debcdadb446812691f",
+      "role": "只讀來源；原始四槽仍為空"
+    },
+    "fd2_sav_research_copy": {
+      "md5": "c04c58e4a50434051f393a2c6cf37da8",
+      "sha256": "111682eba392900a58e19e26275c20af95926cddf1a1d56d95ec8a9bd9a1d3b9",
+      "role": "Docker /tmp 隔離副本；slot0 raw chapter=0x0b、roster_count=4、currency=0；不加入儲存庫"
+    },
+    "decoded_save": {
+      "tool": "tools/fd2save.py",
+      "container": "fd2-cap-local",
+      "plaintext_size": "0x59cb",
+      "checksum": "0x0025b9a9",
+      "runtime_header_chapter": "0x00",
+      "slot0_raw_chapter": "0x0b",
+      "slot0_roster_count": 4,
+      "slot0_currency": 0
+    }
+  },
+  "original_capture": {
+    "container": "fd2-dosbox-screenshot-local",
+    "timeline": "wait:2;Escape×4;wait:6;Down;wait:.3;Return;wait:2;Return;wait:8;shot:s0;Left;wait:.15;shot:s1;Left;wait:.15;shot:s2;Left;wait:.15;shot:s3;Left;wait:.15;shot:s4",
+    "raw_frame": "DOSBox client crop 320x200；以 ImageMagick -scale 整數放大至 640x400，禁止使用會插值的 resize",
+    "variant_observed": 1,
+    "readiness_signature": "srgb(56,77,16)|srgb(69,97,166)|srgb(117,138,138)"
+  },
+  "remake_capture": {
+    "node": "town_ch12",
+    "native_town_variant": 1,
+    "container": "fd2-go-test-local",
+    "hook": "FD2_SHOT_TOWN_STATE=selection,pulse",
+    "raw_frame": "640x400 Ebiten/Xvfb screenshot"
+  },
+  "selections": [
+    {
+      "selection": 0,
+      "pulse": 1,
+      "original_md5": "d3e90525454cf5de8b53257f3c380f2b",
+      "remake_md5": "d3e90525454cf5de8b53257f3c380f2b",
+      "original_sha256": "06fbbaa8d8486872448b538dde129d01fdeb1edffdf71ef86b71949d9af3bf63",
+      "remake_sha256": "06fbbaa8d8486872448b538dde129d01fdeb1edffdf71ef86b71949d9af3bf63",
+      "absolute_error": 0
+    },
+    {
+      "selection": 1,
+      "pulse": 2,
+      "original_md5": "109f368c1a4f66386375db3def6ce968",
+      "remake_md5": "109f368c1a4f66386375db3def6ce968",
+      "original_sha256": "8b209988af9262babacc993eb04a414c3acef36c6b282385bfdb264ae7ddec4d",
+      "remake_sha256": "8b209988af9262babacc993eb04a414c3acef36c6b282385bfdb264ae7ddec4d",
+      "absolute_error": 0
+    },
+    {
+      "selection": 2,
+      "pulse": 1,
+      "original_md5": "239fdd4f1739ada1ad847697423d34fb",
+      "remake_md5": "239fdd4f1739ada1ad847697423d34fb",
+      "original_sha256": "118e71918dbf32dfae8f32f7e9dd2ea97560cd5a946a93df2eb52f32ce4aac39",
+      "remake_sha256": "118e71918dbf32dfae8f32f7e9dd2ea97560cd5a946a93df2eb52f32ce4aac39",
+      "absolute_error": 0
+    },
+    {
+      "selection": 3,
+      "pulse": 0,
+      "original_md5": "65bfa3081baf58d17f8ac962b251083b",
+      "remake_md5": "65bfa3081baf58d17f8ac962b251083b",
+      "original_sha256": "8e283ba5ff21b359ec55ce6b57f38d46aaa87ea918cf8625e89050ba17123057",
+      "remake_sha256": "8e283ba5ff21b359ec55ce6b57f38d46aaa87ea918cf8625e89050ba17123057",
+      "absolute_error": 0
+    },
+    {
+      "selection": 4,
+      "pulse": 1,
+      "original_md5": "862d15c564d5f8eb8ed03c96f8432336",
+      "remake_md5": "862d15c564d5f8eb8ed03c96f8432336",
+      "original_sha256": "caa9a10ed0be718a8b1810ae81a9f11f8e0dfcd1644e87df9b7031c98bcd816d",
+      "remake_sha256": "caa9a10ed0be718a8b1810ae81a9f11f8e0dfcd1644e87df9b7031c98bcd816d",
+      "absolute_error": 0
+    }
+  ],
+  "figure": "../figures/town-variant1-five-selections-original-vs-remake.png"
+}
