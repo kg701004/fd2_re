@@ -5,11 +5,12 @@ import (
 	"testing"
 )
 
-func TestPlanNativeUnitMode2PreservesDirectRawFallback(t *testing.T) {
+func TestPlanNativeUnitMode2PreservesSharedRecovery(t *testing.T) {
 	got := PlanNativeUnitMode2(false)
 	want := []NativeUnitModeAction{
 		NativeModeCall14EF0,
 		NativeModeCall14237,
+		NativeModeCall13FD4,
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("mode 2 actions = %v, want %v", got, want)

@@ -15,7 +15,10 @@ const (
 )
 
 // PlanNativeUnitMode2 保存 mode 2 的控制流。0x14ef0 失敗後直接呼叫
-// 0x14237，再進入共用收尾；不會走 0x13e9c 或 0x13fd4。
+// 0x14237，再經 0x13b1e→0x13c06 共用分支；0x14237 的函式尾端以
+// xor eax,eax 回傳 0，因此這條失敗路徑會進入 0x13fd4。它不會走
+// 0x13e9c。這裡的布林值只表示呼叫端已提供的 0x14ef0 回傳狀態，
+// 不把任何位址命名成玩法語意。
 func PlanNativeUnitMode2(candidateDispatchSucceeded bool) []NativeUnitModeAction {
 	if candidateDispatchSucceeded {
 		return []NativeUnitModeAction{NativeModeCall14EF0}
@@ -23,6 +26,7 @@ func PlanNativeUnitMode2(candidateDispatchSucceeded bool) []NativeUnitModeAction
 	return []NativeUnitModeAction{
 		NativeModeCall14EF0,
 		NativeModeCall14237,
+		NativeModeCall13FD4,
 	}
 }
 

@@ -3793,3 +3793,17 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   bounded item-row table 產生 detached row snapshot；無 equipped low item、缺 row
   或 bounds 不符時失敗即關閉。這仍不接 `0x14818`、物理 score、選中目標、移動、攻擊
   或 `NextAIPlan`，下一道 gate 仍是固定存檔的實際目標 trace。
+
+## 2026-08-09：mode 2／`0x13FD4` 第二次控制流勘誤
+
+- 重新以合法 IDA Pro 9.4 `idat -A -B`（DOS LE 線性位址）與 Docker Capstone
+  交叉檢查 `sub_13A9F`、`sub_14237`。`0x13B5F` 呼叫 `0x14237` 後跳到
+  `0x13B1E→0x13C06`；`0x13C06` 的零回傳分支在 `0x13C0F` 呼叫 `0x13FD4`。
+- `sub_14237` 的函式尾端 `0x145C3` 以 `xor eax,eax` 回傳 0，無 equipped low item
+  也直接跳到同一尾端。因此現有證據支持的 mode 2 失敗路徑是
+  `0x14EF0→0x14237→0x13FD4`，不走 `0x13E9C`；不能用 `0x13FD4` 的 direct-xref
+  清單沒有 `0x13B5F`，推論執行期不會抵達共用 `0x13C0F`。
+- 先前「mode 2 不呼叫 `0x13FD4`」的勘誤本身已撤回；`PlanNativeUnitMode2`、測試、
+  AI dossier、SDD、gap audit 與工作清單均改為保存這條共用基本區塊路徑。完整原始
+  指令與 IDA／Capstone 工具版本、雜湊仍見
+  [`fd2_ai_mode_dispatch_ida.txt`](../data/ida/fd2_ai_mode_dispatch_ida.txt)。
