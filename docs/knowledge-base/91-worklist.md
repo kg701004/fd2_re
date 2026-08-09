@@ -499,7 +499,7 @@
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [~] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)：原始 action wrapper、四向環、command grid、物品列與目標游標已有可編輯／失敗即關閉切片；完整 end-turn 入口、indexed effect presentation、原版畫面差分仍未關閉。
 - [~] 攻擊結算:玩家選單路徑現在以注入的遊戲亂數呼叫 `AttackWithRNG`，保留未命中／暴擊／經驗結果並交給演出與訊息層；公式仍以**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)為目前重製依據，原版 raw 攻擊 ABI／一般玩家 E2 尚未關閉。
-- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher／尾端路由／score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
+- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；`aiStep` 現與玩家攻擊共用注入亂數的型別結算邊界，但仍是 normalized approximation。舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher／尾端路由／score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 native runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
 - [~] 敵方 AI 雙預選 bridge：`BuildNativeAIPhaseDiagnosticPlan` 已依
   `0x1D8BA` 原序將 `0x1598A→0x15B77→[0x53C23]` 與
   `0x1567E→0x15880→[0x53C33]` 兩個具型別 producer 接入

@@ -4968,20 +4968,24 @@ func absInt(v int) int {
 	return v
 }
 
-// resolvePlayerPhysicalAttack is the production bridge from the battle
-// action menu to the typed physical-settlement result.  The old UI path used
+// resolvePhysicalAttack is the production bridge from a battle action path to
+// the typed physical-settlement result.  The old UI path used
 // State.Attack, which consumes a process-global RNG and discards Miss/Crit/
 // experience metadata even though AttackWithRNG already exposes them.  A
 // missing game RNG is an input failure: do not mutate the battle state through
 // an implicit fallback source.
-func (g *Game) resolvePlayerPhysicalAttack(actor, target *battle.Unit) (battle.AttackResult, error) {
+func (g *Game) resolvePhysicalAttack(actor, target *battle.Unit) (battle.AttackResult, error) {
 	if g == nil || g.st == nil || actor == nil || target == nil {
-		return battle.AttackResult{}, errors.New("player physical attack context unavailable")
+		return battle.AttackResult{}, errors.New("physical attack context unavailable")
 	}
 	if g.rng == nil {
-		return battle.AttackResult{}, errors.New("player physical attack RNG unavailable")
+		return battle.AttackResult{}, errors.New("physical attack RNG unavailable")
 	}
 	return g.st.AttackWithRNG(actor, target, g.rng), nil
+}
+
+func (g *Game) resolvePlayerPhysicalAttack(actor, target *battle.Unit) (battle.AttackResult, error) {
+	return g.resolvePhysicalAttack(actor, target)
 }
 
 func playerPhysicalAttackMessage(actor, target *battle.Unit, result battle.AttackResult) string {
@@ -5264,7 +5268,7 @@ func (g *Game) confirm() {
 			anm = g.sel.ClsName
 		}
 		defHP0 := tgt.HP
-		attackResult, err := g.resolvePlayerPhysicalAttack(g.sel, tgt)
+		attackResult, err := g.resolvePhysicalAttack(g.sel, tgt)
 		if err != nil {
 			g.msg = "攻擊：" + err.Error()
 			return
@@ -8079,9 +8083,16 @@ func (g *Game) aiStep() {
 				anm = u.ClsName
 			}
 			hp0 := tgt.HP
-			dmg := g.st.Attack(u, tgt)
+			attackResult, err := g.resolvePhysicalAttack(u, tgt)
+			if err != nil {
+				// The normalized planner must not consume an action when the
+				// production RNG boundary is unavailable.
+				g.loadErr = "AI physical attack: " + err.Error()
+				g.aiBusy = false
+				return
+			}
 			g.awardDeathReward(tgt, u)
-			g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
+			g.msg = playerPhysicalAttackMessage(u, tgt, attackResult)
 			g.atk = g.newAtkAnim(u.BattleFig, tgt.BattleFig, anm, nm,
 				u.HP, u.MaxHP, u.Lv, u.MP, tgt.Lv, tgt.MP,
 				hp0, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), u.Camp == battle.Own)

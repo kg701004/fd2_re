@@ -3841,3 +3841,12 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 缺少亂數來源時會在任何狀態變更前失敗即關閉；Docker 回歸涵蓋確定命中、缺少
   亂數不 mutation，以及訊息保留未命中／暴擊／經驗。這只補重製端「選單→型別
   結算→演出」垂直切片，不宣稱原版攻擊 ABI、完整劍技／命中表或一般玩家 E2。
+
+## 2026-08-09：正規化敵方演出共用遊戲亂數邊界
+
+- `aiStep` 原本仍呼叫 `State.Attack` 的程序全域亂數；現改與玩家近戰共用
+  `resolvePhysicalAttack`／`AttackWithRNG`，固定 `FD2_SEED` 時敵方正規化演出也可
+  重現，並保留未命中／暴擊／經驗訊息。
+- 這只是重製端的一致性修正；`NextAIPlan`、目標選擇與回合 orchestration 仍是
+  normalized approximation，沒有把這次改動描述成原版 native AI 接線。亂數來源
+  缺失時 `aiStep` 停止且不標記單位已行動，維持失敗即關閉。
