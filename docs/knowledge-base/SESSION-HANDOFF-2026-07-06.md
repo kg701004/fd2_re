@@ -708,7 +708,7 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 2026-07-26 official IDA `0x2c548` gate recheck：`0x2c405` 完成 500-pass phase-0 後，`0x2c548` free staging、配置 `0x1f400 + 0xfa00 + 0xfa00` 三個 indexed buffers，呼叫 `sub_111ba("TAI.DAT",3)` 與 `sub_111ba("FDOTHER.DAT",0x38)`，並以 `sub_4e63d(FDOTHER#0x38, transparent=-1, stride=0x140, destination=first 0xfa00 buffer)` 建立 backdrop；其後才從 `[0x53bfb]-1` 反向進 party-cycle。這與既有 `native_2c548.json` first-cycle mapping 一致，但不代表 montage renderer 已完成，PNG/generic fade 仍禁止接入。
 - 2026-07-26 `0x29164` mirror-branch ABI：official IDA 釘出 `unit[+6]==0` 會進 `0x2927e..0x29357`，仍做 9 次 stage `8..0`、palette `stage*6`，但 primary FIGANI frame pointer 改為 `staging+0x140-stage*10`；`arg4==0` 才執行額外 TAI#3 與 secondary FIGANI blit。新增 `native_2c548.json` `mirror_branch` schema 與 loader regression；此為 evidence-only，未解除 indexed renderer gate。
 - 2026-07-26 mirror fade planner：新增 `Montage.PlanMirrorFigureFade(unitSide,sideFlag)`，輸出 9 個 exact primary offsets/palette deltas，並將 `arg4==0` secondary/platform gate 變成可測試純資料；Docker full regression 通過，未解除 renderer gate。
-- 2026-07-26 mirror indexed primitive：新增 `RenderMirrorFigureFadePass`，按 `0x292ad` 使用 caller-preseeded `work+0x140` right viewport，執行 primary `+0x140-stage*10`、`arg4==0` secondary 與兩次 present；TAI#3 只驗證原始透明 bytes。Docker ending/full regression 通過，DATO/完整 montage 仍 fail-closed。
+- 2026-07-26 mirror indexed primitive：新增 `RenderMirrorFigureFadePass`，按 `0x292ad` 使用 caller-preseeded `work+0x140` right viewport，執行 primary `+0x140-stage*10`、`arg4==0` secondary 與兩次 present；TAI#3 只驗證原始透明 bytes。Docker ending/full regression 通過；後續 `MontageCycle` 已將證實的 mirror pass 與 DATO/FDTXT phase 串接，輸入／campaign handoff 仍 fail-closed。
 - 2026-07-26 correction：`[0x53a81]` 經 `14-text-control-codes.md`/IDA loader 確認是 `FDOTHER.DAT#5` dialogue-frame bank，不是 DATO；`0x2c773→0x168b6` 的 5×7×5×5 args 先建 dialogue grid，`[0x53a85]` 才是後續 DATO portrait source。撤回 `dato_layout` 錯誤命名，改為 `dialogue_frame_layout`。
 - 2026-07-26 DATO decoder foundation：新增 `internal/dato`，按 official `0x4e8af→0x4e916` 高值-run codec 解四幀、保留 opaque zero、提供 indexed blit；synthetic 與玩家 DATO#37 regression 通過。只完成資源/像素 primitive，`0x168b6` grid、mouth cadence 與 ending UI 仍 fail-closed。
 - 2026-07-26 dialogue-frame grid transcription：新增 `Montage.PlanDialogueFrameGrid()`，按 `0x168b6` exact arithmetic 保存 49 次 `FDOTHER#5` raw resource/destination placements（固定12、兩組3×2 loop、5×5 grid）；不猜 cell 高階語意，DATO portrait/mouth renderer 仍 fail-closed。
@@ -3450,3 +3450,25 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   raw state adapter 仍未知」。
   沒有因此新增 renderer、campaign 或 `postbattle_ch23_persist` binding；
   城鎮／商店／整備／存檔邊界與一般玩家 E2 仍保持失敗即關閉。
+
+## 2026-08-09：ch29 `0x2c548` party montage standalone executor
+
+- 合法 IDA Pro 9.4 與 Capstone 5.0.3 以固定雜湊 `FD2.EXE` 重讀
+  `0x2c548` 所在的 `0x2c405`、`0x29164`、`0x2935b`、`0x2b9a1`、
+  `0x168b6`、`0x4e8af` 與 `0x10620`。新增證據檔
+  [`fd2_ch29_montage_ida.txt`](../data/ida/fd2_ch29_montage_ida.txt)，保留
+  原始位址、slot swap、resource index、descriptor `+6` tick 與五個文字
+  destination，不把未知欄位命名成角色或按鍵。
+- 新增 `internal/ending.LoadMontageCycleAssets`：唯讀載入
+  `FDOTHER#56`、`TAI#3`、`FDOTHER#5` grid、`FIGANI`、`DATO`、
+  `FDTXT_031/FDTXT_000` 與 FDOTHER#4 font；來源不完整或雜湊／格式不符時
+  失敗即關閉。
+- 新增 `internal/ending.MontageCycle`：實際逐步執行九段
+  mirror/non-mirror fade、20 次 secondary intro、primary FIGANI descriptor
+  `+6` delay、DATO/FDTXT portrait 220／440 loop，以及 `0x1f882` 的 64 段
+  palette 收尾。Docker 以原始資源跑完兩個 unit side branch 的完整 cycle
+  regression；這是獨立 indexed renderer，不是 campaign 接線。
+- 明確勘誤：舊「party scheduler／dedicated renderer 完全不存在」只適用於
+  本節之前的歷史快照，現況已由 standalone executor 取代；`0x10620→0x4e031`
+  的輸入 consume、`0x28a64` 後續 owner、一般玩家 E2 與
+  `postbattle_ch29_persist` campaign terminal 仍保持失敗即關閉。

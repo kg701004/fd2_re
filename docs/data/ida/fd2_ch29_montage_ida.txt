@@ -1,0 +1,70 @@
+# FD2 raw ch29 ending montage（玩家第29／30戰終局路徑）：IDA Pro 9.4 證據
+
+## 輸入與工具
+
+- 輸入：`FD2.EXE`，大小 357074 位元組。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- 第一順位：合法 IDA Pro 9.4 Docker，使用資料庫線性位址與偽代碼／交叉參照。
+- 交叉驗證：`fd2-cap-local` Docker 內 Capstone 5.0.3；原始檔與所有資源均唯讀掛載。
+- 本文件所有 `0x...` 皆為 `FD2.EXE` 線性位址；不可與檔案偏移或重製端位址混用。
+
+## 已證實：`0x2c548..0x2c9a9` 的 party montage 呼叫順序
+
+IDA 將 `0x2c548` 識別為 `0x2c405` 函式內部位址；以下保留原始位址，不替
+暫存器、全域欄位或未知函式建立推測性名稱。
+
+1. 先由 `0x1088d(30)` 載入 chapter 30 狀態；配置 `0x1f400` bytes 的
+   640-stride work surface、兩個各 `64000` bytes 的 320×200 buffer。
+2. 以 `0x111ba(TAI.DAT,0,3)`、`0x111ba(FDOTHER.DAT,0,56)` 讀取原始資源；
+   `0x4e63d` 將 FDOTHER #56 透明解碼到 320×200 backdrop。`TAI#3` 的用途只
+   能確認為 `0x29164` 的同一透明 blit 輸入，不能命名成平台或 UI 元件。
+3. 外層 `j=dword_53bfb-1..0` 以原始交換規則選取 unit slot：
+   `j=0→slot1`、`j=1→slot0`、其餘 `j→slot j`。unit `+7` 直接形成
+   `FIGANI` 資源 `group*3+1` 與 `group*3`；這是資源選取證據，不是角色身份命名。
+4. `0x29164(j,1,secondary,0,work,backdrop,TAI#3)` 先執行九段
+   `8..0` figure fade；隨後 `0x2b9a1(secondary,0,work,320)` 將兩個
+   scheduler bytes 歸零。
+5. secondary intro 固定 20 次：每次先以 `0x11eb0` 複製 backdrop，再由
+   `0x2b9a1(...,-1,...)` 解出當前 FIGANI frame，最後以 `0x11eb0` present
+   到 `0xa0000`，其後 `0x17aa9(1)`。
+6. primary FIGANI 迴圈讀取 table byte `+2` 的 frame count；每幀由
+   `0x2935b` 以 descriptor `+0/+2/+9/+11` 與透明 `-1` 解碼，present 後
+   等待 descriptor `+6` 的原始 byte。`+6` 不是重製端可任意替換的固定延遲。
+7. 將 backdrop 複製到第三個 `64000` bytes snapshot，呼叫
+   `0x111ba(DATO.DAT, ..., unit+7)`，再以
+   `0x168b6(snapshot,320,5,7,5,5)` 建立 49 個 FDOTHER #5 grid cell 的
+   原始位置。
+8. portrait loop 為 `j!=0` 時 220 次、`j==0` 時 440 次。每次先複製 grid
+   snapshot；倒數 byte 為零時取 `(0x4e893()&0x1f)+40`，否則先遞減；值
+   `<2` 選 DATO frame pointer offset 12（frame 3），否則選 offset 0（frame 0）。
+   `0x4e8af(work+3208,...)` 將 portrait 寫入原始 staging offset。
+9. 每次 portrait 迭代再執行 secondary `0x2b9a1(...,-1,...)`、五個
+   `0x15f84` 文字呼叫（FDTXT_031 index 10、FDTXT_000 的 unit `+8+1`、
+   FDTXT_031 index 11、FDTXT_000 的 unit `+0x20+150`、以及
+   `n<220 ? unit+8+12 : 45`），present 後 `0x17aa9(1)`。
+10. `0x10620` 若偵測到原始輸入變化，將外層 `j` 寫成 1 並呼叫 `0x4e031`；
+    輸入事件與 consume ABI 尚未由一般玩家 E2 閉合，重製端不得自行宣稱
+    任意按鍵等價。所有 party loop 結束後呼叫 `0x1f882`，再釋放資源並跳至
+    `0x28a64`。
+
+## 共用 helper 的直接證據
+
+- `0x29164` 的 `unit[+6]==0` 與非零分支都保留 9 段 `stage=8..0`、
+  640-stride work、TAI#3、secondary frame 0、palette `stage*6` 的原始
+  call order；兩個分支的 work origin 不同，不可合併成普通淡入。
+- `0x2b9a1` 的 `arg2==0` 只清 `0x540fc/0x540fd`；`arg2==-1` 先 present
+  `0x540fd` 再依 frame descriptor `+6` 推進 subframe。`0x2935b` 只負責
+  frame-table descriptor 解碼與 `0x4e63d` call。
+- 上述結果由 IDA Pro 9.4 偽代碼與同一線性位址的 Capstone 指令交叉確認；
+  尚未把未知 `0x4e031` consume、`0x25977` palette/狀態呼叫或 `0x28a64`
+  後續流程升格為已證實語意。
+
+## 重製端消費邊界
+
+`remake/internal/ending/montage_cycle.go` 現已把上述已證實的 backdrop、九段
+figure fade、20 次 secondary intro、primary FIGANI frame delay、DATO／FDTXT
+portrait loop 與最後 64 段 palette fade 做成獨立可測試的 indexed executor；
+它只接受原始資源與 caller 提供的 raw random byte，不連接 campaign，也不替
+`0x10620→0x4e031` 猜測鍵盤語意。`postbattle_ch29_persist` 仍保持失敗即關閉，
+直到終局 owner、輸入 consume、一般玩家 E2 與完整結束節點均閉合。

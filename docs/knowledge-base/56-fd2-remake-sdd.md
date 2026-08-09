@@ -424,7 +424,7 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。
 
-2026-07-26 official IDA recheck further closes the `0x2c405 → 0x2c548` hand-off boundary. After the 500-pass phase-0 scroll, native code frees staging, allocates one `0x1f400` and two `0xfa00` buffers, loads `TAI.DAT` entry `3` and `FDOTHER.DAT` entry `0x38`, and blits the latter into the first indexed buffer before iterating party records from `[0x53bfb]-1`. This resource/buffer contract is now recorded in `assets/endings/native_2c548.json`/worklist; it does **not** authorize a PNG or generic-fade adapter. The isolated FIGANI fade and portrait/text primitives are executable, but their full per-party scheduler and the dedicated indexed renderer remain fail-closed.
+2026-07-26 official IDA recheck further closes the `0x2c405 → 0x2c548` hand-off boundary. After the 500-pass phase-0 scroll, native code frees staging, allocates one `0x1f400` and two `0xfa00` buffers, loads `TAI.DAT` entry `3` and `FDOTHER.DAT` entry `0x38`, and blits the latter into the first indexed buffer before iterating party records from `[0x53bfb]-1`. This resource/buffer contract is now recorded in `assets/endings/native_2c548.json`/worklist; it does **not** authorize a PNG or generic-fade adapter. The later standalone `internal/ending.MontageCycle` now consumes the proven per-party scheduler and indexed renderer against original resources, but it remains separate from campaign／input handoff and does not claim general-player E2.
 
 Runtime audit correction (2026-07-28): the prefix player already executes
 frame12..108 and both 40/200-pass compositors, but its preview adapter retained
@@ -441,6 +441,19 @@ campaign terminal route.
 The same IDA pass closes the previously omitted `0x29164` mirror branch. When `unit[+6]==0`, the native path at `0x2927e..0x29357` retains the 9-pass `stage=8..0` and `stage*6` DAC cadence, but addresses the primary FIGANI frame at `staging+0x140-stage*10`; `arg4==0` gates the extra TAI#3 and secondary-FIGANI draws. This is now an explicit `mirror_branch` record in the editable montage schema with a loader regression. It remains evidence-only: no PNG approximation or runtime renderer permission follows from the transcription.
 
 `Montage.PlanMirrorFigureFade(unitSide,sideFlag)` exposes that schedule as a pure, testable plan (nine exact offsets and DAC deltas, with the `arg4==0` secondary/platform gate). The planner is deliberately not a pixel adapter and keeps the montage fail-closed.
+
+2026-08-09 `0x2c548` standalone executor closure：新增
+`internal/ending.LoadMontageCycleAssets` 與 `MontageCycle`，以原始
+`FDOTHER#56` backdrop、`TAI#3`、`FDOTHER#5` grid、`FIGANI`、`DATO`、
+`FDTXT_031/FDTXT_000` 和 FDOTHER#4 font 建立 provenance preflight；再依
+IDA 證實的 slot swap、九段 mirror/non-mirror fade、20 次 secondary loop、
+primary descriptor `+6` tick、portrait 220/440 loop、DATO mouth countdown、
+五個 FDTXT destination 與最後 64 段 palette 收尾逐步產生 indexed VGA frame。
+Docker 以玩家原始資源跑完兩個 unit side branch 的完整 cycle regression。
+這是獨立可編輯 renderer，尚未接 `0x10620→0x4e031` 輸入 consume、
+`0x28a64` 後續 owner、campaign terminal 或一般玩家 E2；因此不解除
+`postbattle_ch29_persist` 的失敗即關閉狀態。完整原始位址與工具雜湊見
+[`fd2_ch29_montage_ida.txt`](../data/ida/fd2_ch29_montage_ida.txt)。
 
 Correction: `[0x53a81]` in this call chain is `FDOTHER.DAT#5` (the dialogue-frame bank), not DATO. Official IDA shows `0x2c773` calling `0x168b6(destination=C, stride=0x140, arg8=5, argC=7, arg10=5, arg14=5)` to build that dialogue frame/grid; the later DATO pointer `[0x53a85]` is pasted by `0x4e8af`. This is a resource/layout boundary only; it does not authorize a single-static-portrait or guessed mouth cadence adapter.
 
