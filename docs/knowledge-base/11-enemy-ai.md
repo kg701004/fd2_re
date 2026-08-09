@@ -291,14 +291,20 @@ map0 真實匯出 roster、`spells.json` command #0、原版 movement-cost row 0
 `ScoreNativeAIScoredCommandGroups` 與 `ScoreNativeAI1598A` 已呼叫各分支
 評分並保存正分最佳命令；仍不執行或呈現動作。
 
-同一輪 caller scan 找到一個較可信的 dispatch boundary：`0x14ef0` 有六個 direct callers
-（`0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`）。其 body 先呼叫
-`0x14237`、`0x1598a`、`0x1567e`，再依 raw score/global state 分派至 `0x1548e`、
-`0x15311` 或 `0x15055`。這足以取代舊 `0x15140` 作為下一輪追蹤起點，但目前仍只稱
-**candidate dispatch boundary**：六個 callers 的 turn/camp 語意、`0x14237` 與
-其後執行分支仍未閉合。`0x14237` 的物理 producer 與 `0x1567e` 的
-item-command producer 已由後述具型別解碼器分別閉合；不得再把靜態 producer
-缺口與尚缺的動態 phase／執行交易混為一談。
+同一輪 caller scan 找到並由合法 IDA 9.4／Capstone 5.0.3 交叉閉合一個 raw
+dispatch boundary：`0x14ef0..0x15055` 有六個 direct callers
+（`0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`）。其 body
+固定先呼叫 `0x14237`、`0x1598a`、`0x1567e`，再以
+`[0x53c4f]`／`[0x53c23]`／`[0x53c33]` 的 signed 門檻、record `+0x34 & 0x40`、
+actor `+0x48`、`[0x53c4b]` 指向 record 的 `+0x4a`，以及必要時
+`0x4e516([0x53c2f])` 的 word 比較，分派至 `0x1548e`、`0x15311` 或 `0x15055`；
+全小於 6 或未命中的三向平手則只做共用收尾。完整 raw 控制流與雜湊見
+[`fd2_ai_14ef0_dispatch_ida.txt`](../data/ida/fd2_ai_14ef0_dispatch_ida.txt)。
+重製端 `battle.SelectNativeAI14EF0Tail` 只保存這段無副作用位址路由，要求每個
+直接讀取欄位都有 provenance，缺欄位即失敗關閉；它不執行三個 producer 或尾端
+函式，也不接 `NextAIPlan`。六個 callers 的 turn/camp 語意、完整
+`0x14237`／尾端交易、UI 與一般玩家 E2 仍未閉合。不得把靜態 raw producer
+契約與尚缺的動態 phase／執行交易混為一談。
 
 更上游的 `0x13a9f` 是目前可重現的 unit-action dispatcher：它以 `unit index` 建立
 `0x50`-byte record，先檢查 raw `+5` 的 `0x05` bits，再取 `record+0x34 & 0x0f`。

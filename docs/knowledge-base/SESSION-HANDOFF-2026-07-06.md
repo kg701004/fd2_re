@@ -3583,3 +3583,16 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   `+1/+2/+3` buffer，沒有把這項證據誤降成只重設 `byte+3`；ch22 的 unknown
   與 `postbattle_ch23_persist` 失敗即關閉邊界保持不變。完整證據見
   [`fd2_ch22_post_ida.txt`](../data/ida/fd2_ch22_post_ida.txt)。
+
+## 2026-08-09：AI `0x14ef0` raw 尾端分派契約
+
+- 合法 IDA Pro 9.4（9.4.0.260610）與 Docker Capstone 5.0.3 以固定
+  FD2.EXE 雜湊重跑 `0x14ef0..0x15055`；函式先固定呼叫
+  `0x14237→0x1598a→0x1567e`，再讀 `[0x53c4f]`／`[0x53c23]`／`[0x53c33]`
+  signed 分數、record `+0x34 & 0x40`、actor `+0x48`、target `+0x4a`，
+  tie branch 另呼 `0x4e516([0x53c2f])`。原始路由與六個 direct callers
+  已保存於 [`fd2_ai_14ef0_dispatch_ida.txt`](../data/ida/fd2_ai_14ef0_dispatch_ida.txt)。
+- 重製端新增 `battle.SelectNativeAI14EF0Tail` 與 raw provenance regression，
+  只保存 `0x1548e`／`0x15311`／`0x15055`／共用收尾路由；缺欄位即失敗關閉，
+  不執行 producer／尾端函式、不接 `NextAIPlan`。六個 caller 的 turn/camp
+  語意、完整交易、UI、一般玩家路徑與 E2 仍未閉合。

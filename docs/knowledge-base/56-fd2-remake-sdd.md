@@ -49,9 +49,15 @@ setup 後進入 `0x1D80B`／`0x1D8BA` unit scans；每筆 `0x50`-byte record 經
 `+5`、`+0x26` gates 後進 `0x13A9F`。`0x13A9F` 讀 `record+0x34 & 0x0f`，再依 raw
 command nibble 分派 `0x14EF0`、`0x1598A`、`0x15311`、`0x1548E`；`0x14EF0` 內有
 依序執行的 `0x14237` 物理、`0x1598A` command-mask 與 `0x1567E`
-item-command 三個 producer。只有 `0x1598A` 內的 `0x15AD8→0x15B77`
+item-command 三個 producer。其 `0x14ef0..0x15055` raw 尾端再以
+`[0x53c4f]`／`[0x53c23]`／`[0x53c33]` 門檻、record `+0x34 & 0x40`、
+actor `+0x48`、target `+0x4a` 與必要時 `0x4e516([0x53c2f])` 分派
+`0x1548e`／`0x15311`／`0x15055`；完整低階契約見
+[`fd2_ai_14ef0_dispatch_ida.txt`](../data/ida/fd2_ai_14ef0_dispatch_ida.txt)。只有 `0x1598A` 內的 `0x15AD8→0x15B77`
 負責該 producer 的 raw score/tie-break；`0x1567E` 改呼 `0x15880`。
-這取代舊文件把 `0x15140` 稱作 AI entry 的說法。SDD 只授權保存上述 raw call topology；
+這取代舊文件把 `0x15140` 稱作 AI entry 的說法。重製端只保存
+`SelectNativeAI14EF0Tail` 的無副作用 raw 路由，缺 provenance 即失敗關閉，
+不接 `NextAIPlan`。SDD 只授權保存上述 raw call topology；
 `+6` 的 raw camp code 已由 constructor 與 `0x14818` consumer 固定為
 敵0／友1／己2；但完整 target transaction、movement/effect/UI 與 runtime
 AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。

@@ -1,0 +1,113 @@
+# FD2.EXE AI 0x14ef0 raw tail dispatch evidence
+#
+# Input: org_game/炎龍騎士團/FLAME2/FD2.EXE
+# Size: 357074 bytes
+# MD5: b97caf2239a27a896069d03549d96e1e
+# SHA-256: 222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f
+# IDA: IDA Pro 9.4.0.260610, DOS LE loader, linear address space
+# Capstone: 5.0.3, Docker image fd2-cap-local, LE linear address space
+# Evidence level: 已證實（E0 raw）；無一般玩家 runtime trace，未提升為 E1/E2
+
+## IDA function boundary and direct callers
+
+- `sub_14EF0`: `0x14ef0..0x15055`。
+- IDA Hex-Rays 直接反編譯顯示固定先呼叫：
+  `0x14237(a1,a2)` → `0x1598a(a1,a2)` → `0x1567e(a1,a2)`。
+- `0x14ef0` 的 direct callers（均位於 `sub_13a9f 0x13a9f..0x13e9c`）：
+  `0x13af5`、`0x13b2d`、`0x13b4d`、`0x13b6d`、`0x13c24`、`0x13dec`。
+- 以上只證實 raw call topology；沒有把六個 caller 命名為敵方回合、角色或
+  具體 command。
+
+## Hex-Rays transcription（只補位址導覽標籤）
+
+```c
+void __cdecl sub_14EF0(int a1, int a2)
+{
+  int v2;
+  char v3;
+  unsigned __int16 *v4;
+  int v5;
+
+  sub_36CD7(32);
+  sub_14237(a1, a2);
+  sub_1598A(a1, a2);
+  sub_1567E(a1, a2);
+  v2 = dword_53A45 + 80 * a1;
+  v3 = *(_BYTE *)(v2 + 52) & 0x40;
+  v5 = *(unsigned __int16 *)(v2 + 72)
+     - *(unsigned __int16 *)(dword_53A45 + 80 * dword_53C4B + 74);
+  if ( dword_53C4F < 6 && dword_53C23 < 6 && dword_53C33 < 6 )
+    JUMPOUT(0x22BBE);
+  if ( dword_53C4F > dword_53C23 && dword_53C4F > dword_53C33 )
+    goto CALL_1548E;
+  if ( dword_53C4F == dword_53C23 && dword_53C4F > dword_53C33 )
+  {
+    v4 = (unsigned __int16 *)sub_4E516(dword_53C2F);
+    if ( dword_53C2F >= 11 )
+    {
+      if ( v3 == 0 )
+        goto CALL_15311;
+    }
+    else if ( *v4 >= v5 )
+      goto CALL_15311;
+CALL_1548E:
+    sub_1548E(a1, a2);
+    goto DONE;
+  }
+  if ( dword_53C4F == dword_53C33 && dword_53C4F > dword_53C23 )
+  {
+    if ( v3 != 0 )
+      goto CALL_1548E;
+  }
+  else
+  {
+    if ( dword_53C23 > dword_53C4F && dword_53C23 >= dword_53C33 )
+      goto CALL_15311;
+    if ( dword_53C33 <= dword_53C4F || dword_53C33 <= dword_53C23 )
+      goto DONE;
+  }
+  sub_15055(a1, a2);
+  goto DONE;
+CALL_15311:
+  sub_15311(a1, a2);
+DONE:
+  dword_51A83 = 0;
+  JUMPOUT(0x22BBE);
+}
+```
+
+上述是 Hex-Rays 的控制流抄錄；`CALL_*` 標籤是本證據檔附加的位址導覽標記，
+不取代原始函式位址或 IDA 名稱。
+
+## Capstone direct instruction cross-check
+
+`0x14ef0..0x15055` 的 Docker Capstone 輸出固定以下原始讀取與路由：
+
+- `0x14f05`／`0x14f0b`／`0x14f15`／`0x14f1f` 依序呼叫
+  `0x14237`、`0x1598a`、`0x1567e`。
+- `0x14f4c` 讀 unit record `+0x34` 後與 `0x40` 做 AND；
+  `0x14f55` 讀 actor `+0x48`，`0x14f59` 讀 record indexed by
+  `[0x53c4b]` 的 `+0x4a`，並在 `0x14f5d` 做 unsigned-word 差值。
+- `0x14f62..0x14f7f`：只有 `[0x53c4f]`、`[0x53c23]`、`[0x53c33]`
+  全部小於 6 時直接跳 `0x22bbe`，不呼叫尾端 handler。
+- strict `[0x53c4f]` 最大值：`0x14f99→0x1548e`。
+- `[0x53c4f]==[0x53c23]>[0x53c33]`：`0x14fba→0x4e516([0x53c2f])`；
+  command id `<11` 時比較回傳 word 與 actor-target 差值；command id `>=11`
+  時改看 record `+0x34 & 0x40`，最後在 `0x14fd9→0x15311` 或
+  `0x14f99→0x1548e`。
+- `[0x53c4f]==[0x53c33]>[0x53c23]`：raw `+0x34 & 0x40` 非零走
+  `0x1548e`，否則 `0x15055`。
+- `[0x53c23]>[0x53c4f]` 且 `[0x53c23]>=[0x53c33]`：走 `0x15311`。
+- `[0x53c33]` 嚴格大於另兩者：走 `0x15055`；其餘平手落到共用收尾，
+  不呼叫尾端 handler。
+- 所有尾端路由最後都在 `0x15041` 將 `[0x51a83]` 寫為 0，再跳
+  `0x22bbe`；這是 raw cleanup，不命名成回合、完成或 AI 狀態。
+
+## 重製端使用界線
+
+`battle.SelectNativeAI14EF0Tail` 只保存上述 raw score／record／`0x4e516`
+門檻的無副作用路由，並要求每個直接讀取欄位的 provenance。它不執行
+`0x14237`、`0x1598a`、`0x1567e` 或三個尾端函式，不寫入 battle state，也不
+接目前正規化的 `NextAIPlan`。缺少 raw 欄位或 tie branch 的 command word 時
+會失敗即關閉。完整 AI turn、target transaction、movement/effect/UI、六個
+caller 的一般玩家路徑仍未閉合。

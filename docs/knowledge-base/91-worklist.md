@@ -6,6 +6,14 @@
 
 ## 目前驗收（2026-08-09）
 
+- [x] **RE-AI-14EF0-RAW-DISPATCH**：合法 IDA Pro 9.4 與 Docker Capstone
+  5.0.3 交叉固定 `0x14ef0..0x15055` 的完整 raw 尾端契約：三個 producer
+  的固定順序、三個 signed score、record `+0x34 & 0x40`、actor／target
+  `+0x48/+0x4a`、必要時 `0x4e516([0x53c2f])`，以及
+  `0x1548e/0x15311/0x15055` 路由與共用收尾。六個 direct callers 亦已列出。
+  `battle.SelectNativeAI14EF0Tail` 僅保存 provenance 閘門下的無副作用位址路由，
+  regression 已通過；不接 `NextAIPlan`，不宣稱 turn/camp、完整交易或 E2。
+  證據見 [`fd2_ai_14ef0_dispatch_ida.txt`](../data/ida/fd2_ai_14ef0_dispatch_ida.txt)。
 - [x] **玩家第18戰／raw ch17 post 垂直切片**：已修正 raw handler 與玩家戰鬥
   編號的偏移，`ch17_post` 是玩家第18戰戰後，不是第17戰。IDA 直接指令閉合
   `0x23cd5`、sub_233C6 版面、演出56–58與 FDTXT_018 index10 跨場景分段；
@@ -307,7 +315,9 @@
   真正的物理候選評分入口 `0x14237` 與法術 `0x15AD8→0x15B77` 已分離，
   仍需閉合候選格順序、raw helper 語意、turn/camp 與 runtime execution → `11-…`
 - [x] **RE-AI-CALLER-15AD8**：Docker Capstone 閉合 `0x15A1E..0x15B76` 的 bounded candidate→`0x14818` target builder→`0x15B77` score→best-score/tie-break/write globals 邊界；`0x15B77` 的 command `<0x0d`、recovery `0x0d..0x10`、raw flag `0x14..0x16` branches 已寫入 `11`，不把它升格成完整 AI turn。
-- [x] **RE-AI-DISPATCH-14EF0**：Docker Capstone 找到 `0x14EF0` 的六個 direct callers 與 `0x14237→0x1598A→0x1567E` 後續分派至 `0x1548E/0x15311/0x15055`；已記為 candidate dispatch boundary，不命名 turn/camp 或宣稱完整 AI parity。
+- [x] **RE-AI-DISPATCH-14EF0**：`0x14EF0` 已由 `RE-AI-14EF0-RAW-DISPATCH` 的
+  IDA／Capstone 證據取代舊的 candidate-only 敘述；此歷史條目保留索引，現況
+  以完整 raw 尾端契約、六個 caller 與 fail-closed 診斷路由為準。
 - [x] **RE-REFERENCE-FILE-HASHES**：固定目前反組譯版本的 `FD2.EXE` 大小
   `357074`、MD5 `b97caf2239a27a896069d03549d96e1e` 與 SHA-256，另為
   12 個實際解析資產建立可重算清單
@@ -463,7 +473,7 @@
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
 - [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
-- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
+- [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher／尾端路由／score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
 - [~] 敵方 AI 雙預選 bridge：`BuildNativeAIPhaseDiagnosticPlan` 已依
   `0x1D8BA` 原序將 `0x1598A→0x15B77→[0x53C23]` 與
   `0x1567E→0x15880→[0x53C33]` 兩個具型別 producer 接入
