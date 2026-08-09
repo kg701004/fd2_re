@@ -3303,12 +3303,14 @@ raw dispatch，不直接代表玩家戰次。
 `(4,16)` → `0x10b4e(2)` → ACTING resource75 → FDTXT_025 index7 →
 `0x112a5(0x1a)` persistent append → `0x11506` → push raw `0x1d` 跳入共享
 `0x237c8` 尾段。共享尾段另執行文字 index3、`0x11506`、`0x112a5(0x0e)`，再
-跳至 `0x231f2`。`0x112a5` 的 append 形狀已證實，但 `0x1a`、`0x1d`、`0x0e`
-所代表的角色／JOIN／章節高階語意仍未知，不能由名稱或 table index 猜測升格。
+跳至 `0x231f2`。`0x112a5` 的 append 形狀已證實，固定角色表也已辨識
+`0x1a`（26）為聖寇拉斯、`0x0e`（14）為珊；但兩次 append 是否代表永久
+JOIN、臨時演出或其他隊伍操作，以及 `0x1d` 的章節／分支語意，仍未知，不能
+由名稱或 table index 猜測升格。
 補充追查已證實 `0x10b4e(2)` 會以 FDFIELD row `+0x15` 比對 group，逐筆呼叫
 `0x10c50` 建立 runtime record；map24 resource 073 的 70 筆列中 group2 恰有
 1 筆，故候選 binding 的 `spawn_groups["2"] = 1` 是可重生的列數投影。這只
-閉合增援 materializer 的靜態列數，不替 `0x112a5(0x1a/0x0e)` 賦予 JOIN 身分，
+閉合增援 materializer 的靜態列數，不替已辨識的角色索引 `0x1a/0x0e` 賦予 JOIN 身分，
 也不解除一般玩家與戰間節點的 E2 gate。
 
 現有 map24、FDTXT_025 與 ACTING resource75 的交叉證據支持「`0x24df2` 是玩家

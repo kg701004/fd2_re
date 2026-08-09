@@ -882,10 +882,10 @@ func TestCh24PostCandidatePreservesUnknownAppendAndFailsClosed(t *testing.T) {
 	var spawnGroups []int
 	for _, beat := range beats {
 		if beat.Op == "spawn" {
-			if beat.Group == nil || *beat.Group != 2 || beat.RawPlacementGate == nil || *beat.RawPlacementGate != 0 {
+			if beat.Group != 2 || beat.RawPlacementGate == nil || *beat.RawPlacementGate != 0 {
 				t.Fatalf("ch24 proven FDFIELD materializer=%#v", beat)
 			}
-			spawnGroups = append(spawnGroups, *beat.Group)
+			spawnGroups = append(spawnGroups, beat.Group)
 		}
 	}
 	if len(spawnGroups) != 1 || spawnGroups[0] != 2 {
