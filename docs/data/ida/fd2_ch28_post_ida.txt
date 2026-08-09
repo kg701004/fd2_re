@@ -1,0 +1,68 @@
+# FD2 玩家第29戰候選 raw handler `0x2548c` 證據
+
+## 輸入與 raw table
+
+- 輸入：`FD2.EXE`，357074 bytes。
+- MD5：`b97caf2239a27a896069d03549d96e1e`。
+- SHA-256：`222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f`。
+- 工具：合法 IDA Pro 9.4 Docker；Capstone 5 Docker（`tools/disasm_le.py`）。
+- handler table 資料映像線性位址 `0x51de9`、檔案偏移 `0x51be9`。
+- index28 的 bytes 為檔案 `0x51c59: 8c 54 01 00`，raw little-endian
+  `0x1548c`，object base `0x10000` 後為線性位址 `0x2548c`。
+- 相鄰 index29 為 `0x25757`；它是另一個終局 self-loop 候選，不可和 index28
+  的玩家第29戰候選混稱。
+
+## 已證實：函式邊界與逐段順序
+
+IDA 將 `0x2548c..0x25757` 識別為 `sub_2548C`，唯一直接 caller 是
+`0x25e23` 的 table consumer（`call funcs_25E23[eax*4]`）。Capstone 對
+同一線性範圍逐項一致。以下保留 raw immediate、運算元與來源位址：
+
+1. `0x254b6` 呼叫 `0x15f84`，文字 immediate `10`；`0x254c0` 呼叫
+   `0x35bba(20)`。接著以 `[0x53a45]+0x640` 的 record 寫入 byte `+7=0x7e`、
+   `+8=0x7e`；這是 raw mutation，不命名角色或狀態。
+2. `0x254fb` 呼叫文字 immediate `11`；`0x25505` 呼叫 raw
+   `0x10b4e(9)`；`0x25511` 的 push 順序為 `8`、`9` 後呼叫 `0x135dd`，
+   保存為 raw PAN `(9,8)`，不覆蓋原始順序。
+3. `0x2551d` 呼叫 `0x12cea(10,15)`；`0x25535` 呼叫 `0x22253`，五個
+   raw push 依序為 `10,15,10,15,[0x53beb]-1`。該函式的 geometry／unit
+   語意尚未證實，僅保存 raw call site。
+4. `0x2555c` 呼叫文字 immediate `12`；接著 `0x24b4d(20)` 三次，兩個
+   間隔各 raw delay `0x258`（600 ms）。`0x255c5` 呼叫文字 immediate `13`。
+5. 再執行 `0x24b4d(20)` 三次，間隔為 `0xc8`、`0xc8`、`0x64`（200、200、
+   100 ms）；最後一次為 `0x24b4d(40)` 後 delay `0xc8`。
+6. `0x25682`、`0x25694`、`0x256a6` 各呼叫一次 `0x35e5a`，每次後 raw
+   delay `0x12c`（300 ms）；`0x256d7` 再呼叫文字 immediate `15`。
+7. `0x256eb..0x25701` 呼叫 `0x11df2(EBX,0xff,0)`，`EBX=0..0x3f`，
+   每次 raw delay `4`；清除 64000 bytes 後 delay `0x320`（800 ms）。
+   `0x25733..0x25748` 再呼叫 `0x11df2(EBX,0xff,0)`，`EBX=0x3e..0`，
+   每次 raw delay `4`。
+8. `0x2574a` 呼叫 `0x11506`，`0x2574f` 對 global `[0x53c03]` 做一次
+   `inc`，`0x25756` 返回。函式本身沒有直接呼叫 town、shop、preparation、
+   save 或下一戰節點。
+
+## 文字與 owner 判定
+
+固定版 `FDTXT_029` 的 count-aligned index map 將 raw string 10 對到
+`ch29.json` scene2 line7；string 11 對到 scene2 lines8–10 加 scene3 line0；
+string 12 對到 scene3 lines1–12；string 13 對到 scene4 line0；string 14
+對到 scene4 lines1–10；string 15 對到 scene4 line11。跨 scene 的資料仍保留
+`dialogue-index/count-aligned.json` 的逐字 mapping，不把它壓成單一場景。
+
+現行 campaign 的 `battle_ch29` 使用 map28，且重製 handler 草稿
+[`ch28_post.json`](../../../remake/assets/cutscenes/handlers/ch28_post.json)
+已保存上述 raw call sites。map28、文字 index10..15、raw index28 與尾端
+`inc [0x53c03]` 共同支持「玩家第29戰 post handler 候選」的 E1 判定；這不是
+只靠 table index 的命名。
+
+## 失敗即關閉邊界
+
+- `0x35bba`、`0x12cea`、`0x22253`、`0x24b4d`、`0x35e5a` 的完整 indexed
+  renderer／工作區擁有者仍未全部閉合；不得用 generic pan、acting、fade 或
+  文字播放器取代它們。
+- 未修改一般玩家戰後→整備／城鎮／商店／存檔的 E2 前，不建立
+  `postbattle_ch29_persist→preparation_ch30` 正式 binding。既有
+  `postbattle_ch29_persist` 仍保持 fail-closed；index29 `0x25757` 的終局
+  self-loop 仍是另一條獨立 raw 路徑。
+- 完整原始函式、雜湊與 call order 保存於本檔；後續任何 owner 修訂都必須
+  追加勘誤，不得以 table index 覆蓋線性位址與 raw provenance。

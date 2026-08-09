@@ -27,6 +27,11 @@ index 29 -> 0x25757
 重生；這裡只列與終局 caller 直接相關的四筆。table index 不是自動等同
 玩家第幾戰，必須與 `[0x53c03]` 的來源及一般玩家 trace 一起判定。
 
+index28 `0x2548c` 的完整 handler body（FDTXT_029 10..15、raw
+`0x10b4e(9)`／`0x24b4d`／palette、`0x11506` 與 chapter-global increment）
+另見 [`fd2_ch28_post_ida.txt`](fd2_ch28_post_ida.txt)；該檔仍將它標為玩家第29戰
+候選，不把未閉合 renderer 升格成正式 campaign owner。
+
 ## 已證實：`0x250cc`（table index 26）兩條尾端
 
 - `0x250cc` 的成功臂在 `0x25184→0x24b14(0x64)` 找到 raw item 後，於

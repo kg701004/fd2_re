@@ -3333,3 +3333,22 @@ FDTXT 所需的 montage context，依 `[0x53bfb]-1` 逆序處理 runtime record�
 `MontageCycle`、`Player` 與 `MontageTail` 維持獨立可驗證執行器；indexed owner、
 輸入事件、一般玩家 E2 及 battle→postbattle→town/shop/preparation/save
 campaign handoff 仍失敗即關閉。
+
+## 2026-08-09 raw index28 `0x2548c`（玩家第29戰 post 候選；E1）
+
+raw handler table index28 的 bytes `8c 54 01 00` 解析為線性位址 `0x2548c`，
+與 index29 的 `0x25757` 是兩個不同函式。IDA／Capstone 證實 `sub_2548C`
+由 `0x25e23` table consumer 呼叫，順序包含 FDTXT_029 string10／11／12／13／
+14／15、`0x35bba(20)`、raw `0x10b4e(9)`、PAN raw `(9,8)`、
+`0x12cea(10,15)`、`0x22253` 的五個 raw push、三段 `0x24b4d(20)` 過場、
+三次 `0x35e5a`、兩段 `0x11df2` 調色盤迴圈，最後 `0x11506` 與
+`inc [0x53c03]` 返回。逐項位址、雜湊與文字跨場景 mapping 見
+[`fd2_ch28_post_ida.txt`](../data/ida/fd2_ch28_post_ida.txt)。
+
+map28（現行 `battle_ch29`）、FDTXT_029 count-aligned index10..15、raw
+index28 與最後的 chapter-global increment 共同支持「玩家第29戰 post handler
+候選」；不再把 index29 的 terminal self-loop 當成第29戰。但 `0x35bba`、
+`0x12cea`、`0x22253`、`0x24b4d`、`0x35e5a` 的完整 indexed renderer／工作區
+擁有者尚未閉合，也沒有未修改一般玩家的 E2，因此不能把現有
+`postbattle_ch29_persist` 接到 `preparation_ch30`。campaign、城鎮／商店／整備／
+存檔仍採 fail-closed；這一節不宣稱正式 binding。
