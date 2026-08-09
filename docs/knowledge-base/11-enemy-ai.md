@@ -246,6 +246,20 @@ max HP `+0x42`，且 raw `+0x25/+0x26` 都為零時，寫入
 保留先出現者的選擇順序。兩者沒有接入目前正規化 `NextAIPlan`，也沒有替
 `0x1DEBE`、raw `+8` 或兩個 `word` 欄位擴張語意。
 
+2026-08-09 新增 `battle.BuildNativeAIPhysicalAttackCandidates`，把這段
+已閉合的幾何鏈接成一個唯讀候選橋：它先呼叫
+`NativeAIPhysicalDestinations` 產生 row-major 落點，再以 caller 明示的
+`TargetMode`／`TargetInnerMark`／`TargetCode` 重播 `0x14818` cell geometry，
+最後依 raw `+5`／`+6` 篩選目標並逐筆交給
+`NativeAIPhysicalAttackScoreResolver`。resolver 必須明示提供地形修正後的
+`+0x48/+0x4A/+0x40`、`0x1DEBE` 結果與 target `+8`；函式會傳入 detached
+`0x50`-byte actor／target 記錄快照，缺資料或 resolver 失敗即關閉。
+候選仍交由既有 `SelectNativePhysicalAttackCandidate` 比較 priority、score
+與穩定同分順序。這完成「落點→raw 目標索引→評分輸入」的 E0 資料鏈，**不**
+代表已知 native command record 來源、完整地形百分比 writer、正式回合執行、
+目標畫面或 `NextAIPlan` 已接通；回歸見
+`native_ai_physical_candidates_test.go`。
+
 ### 法術命令評分：`0x15B77`
 
 Docker Capstone 直接讀到 `0x15a1e..0x15b76` 的 caller：它枚舉 bounded candidate
@@ -523,7 +537,7 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 
 ## 重製對應（fail-closed）
 
-目前已能以完整原始記錄、命令遮罩、MP、候選幾何、兩個單位級分數及三遍
+目前已能以完整原始記錄、命令遮罩、MP、候選幾何、物理候選橋、兩個單位級分數及三遍
 門檻建立原始 AI 診斷切片；另有逐筆回呼順序、動態 bit7 重判及 pending
 提前退出的 E0 執行契約，但尚未提供 `0x13A9F` 與各表 handler 的正式效果，
 不可宣稱整回合已重現。`0x1DEBE` 條件、raw `+8`、上層 mode 語意、

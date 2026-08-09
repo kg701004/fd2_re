@@ -62,6 +62,13 @@ actor `+0x48`、target `+0x4a` 與必要時 `0x4e516([0x53c2f])` 分派
 敵0／友1／己2；但完整 target transaction、movement/effect/UI 與 runtime
 AI execution 仍是 fail-closed，不得由 normalized `aiActUnit` 反推 native parity。
 
+物理候選的資料邊界另由 `battle.BuildNativeAIPhysicalAttackCandidates` 保存：
+它只連接已證實的 row-major movement destinations、caller-provided
+`0x14818` geometry、raw `+5/+6` target filter 與 detached record snapshots。
+地形百分比修正、`0x1DEBE`、target `+8` 等輸入必須由明示 resolver 提供；
+缺失時失敗即關閉。這是 E0 diagnostic bridge，不是 command record loader、
+正式 AI planner、戰鬥執行器或 UI consumer；`NextAIPlan` 仍維持近似路徑。
+
 上層掃描現已有可重現的完整指令產物
 [`phase setup`](../data/fd2_ai_phase_setup_disasm.txt)、
 [`unit scans`](../data/fd2_ai_unit_scan_disasm.txt) 與

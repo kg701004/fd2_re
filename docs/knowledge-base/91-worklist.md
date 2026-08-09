@@ -361,6 +361,14 @@
   `ScoreNativePhysicalAttackCandidate`／`SelectNativePhysicalAttackCandidate`
   與門檻、嚴格HP比較、priority及穩定同分測試；合法 IDA 9.4 另交叉確認
   函式邊界、三個 callers 與 `0x1DEBE` 唯一 caller。不接 normalized planner。
+- [x] **RE-AI-PHYSICAL-CANDIDATE-BRIDGE**：新增
+  `BuildNativeAIPhysicalAttackCandidates`，以 raw records 串起
+  `NativeAIPhysicalDestinations` 的 row-major 落點、caller 明示的
+  `0x14818` target geometry、raw `+5/+6` 目標篩選與 detached actor／target
+  record snapshots，再交給 caller-owned score resolver。測試確認候選順序、
+  raw 群組篩選、穩定選擇與 resolver 失敗即關閉；這是 E0 資料鏈，不代表
+  `0x1B83D` command record 來源、地形修正 writer、正式回合執行或
+  `NextAIPlan` 已接通。
 - [x] **RE-AI-PHYSICAL-EXECUTION-1548E**：Docker Capstone 證實唯一 callers
   `0x13E39/0x14F9B`；callee 消費 `0x53C43/47/4B`，經 `0x14B78` 後依
   `0x53AF9` 選地圖呈現或 `0x28A6C(actor,target)`，收尾固定回1。沒有

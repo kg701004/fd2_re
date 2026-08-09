@@ -3678,3 +3678,19 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   優先、非破壞性斷言索引與 Docker-only 工具分工。這些是方法論，不提升任何
   FD2 地址、資源或玩法語意；真正證據仍必須落在本儲存庫的固定雜湊、IDA／
   Capstone 匯出、資源 regression 或 DOSBox 實驗。
+
+## 2026-08-09：AI 物理候選資料橋（E0，未接正式回合）
+
+- 新增 `battle.BuildNativeAIPhysicalAttackCandidates`，把已閉合的
+  `0x145cd→0x4e040→0x146d1→0x14b16` row-major 落點、caller 明示的
+  `0x14818` target geometry、raw `+5/+6` 目標篩選與 detached `0x50`-byte
+  actor／target record snapshots 串成候選資料鏈。
+- 地形百分比修正、`0x1debe` 結果、target `+8` 與 command record 來源仍由
+  `NativeAIPhysicalAttackScoreResolver` 明示提供；缺 provenance 或回呼失敗
+  即關閉。既有 `SelectNativePhysicalAttackCandidate` 仍負責 priority→score→
+  先出現者同分選擇。
+- Docker `go test ./internal/battle -run 'NativeAIPhysicalAttackCandidates|NativeAIPhysicalAttackCandidate'`
+  通過；這只證明 E0 資料鏈與失敗即關閉，不接 `NextAIPlan`、正式敵方回合、
+  movement／battle effect、UI 或一般玩家 E2。下一步應取得固定存檔的
+  `0x1b83d` command-record 來源與實際選中目標 trace，再考慮更窄的 runtime
+  consumer；不得用 normalized `aiTargets` 補缺資料。
