@@ -1,0 +1,77 @@
+{
+  "evidence_tier": "E2",
+  "scope": "ch02 native town variant2 normal selections 0..4",
+  "limitations": [
+    "原版畫面由修改後的 LOAD 存檔副本取得，不是未修改一般玩家戰後路徑。",
+    "selection 5 的 BIOS 掃描碼揭露與後續 Enter 尚未在本輪驗證。",
+    "這份資料只證明畫面消費端與指定狀態，不證明原生 FD2.SAV 完整相容。"
+  ],
+  "source": {
+    "fd2_exe": {
+      "size": 357074,
+      "md5": "b97caf2239a27a896069d03549d96e1e",
+      "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    },
+    "fd2_sav_original": {
+      "md5": "409795ccebc2af340d5c74152c2d471c",
+      "sha256": "6d14f2c22562cabca83725084f1a9d6539a1d4066da5c1debcdadb446812691f",
+      "role": "只讀來源；原始四槽仍為空"
+    },
+    "fd2_sav_research_copy": {
+      "md5": "d01214def4bb400b21781d54df0abc81",
+      "sha256": "3255c205870a440dd8310d05ab4da7c097b5b641c37f455bd3c75fb8889e296a",
+      "role": "Docker /tmp 隔離副本；slot0 roster 由 current persistent roster 複製，metadata raw chapter=5、roster_count=4、currency=0；不加入儲存庫"
+    }
+  },
+  "original_capture": {
+    "container": "fd2-dosbox-screenshot-local",
+    "timeline": "wait:2;key:Escape;wait:4;key:Escape;wait:4;key:Escape;wait:4;key:Escape;wait:6;key:Down;wait:.3;key:Return;wait:2;key:Return;wait:5;shot:s0;key:Left;wait:.15;shot:s1;key:Left;wait:.15;shot:s2;key:Left;wait:.15;shot:s3;key:Left;wait:.15;shot:s4",
+    "raw_frame": "DOSBox client crop 320x200；以 ImageMagick -scale 整數放大至 640x400，禁止使用會插值的 resize",
+    "variant_observed": 2
+  },
+  "remake_capture": {
+    "node": "town_ch06",
+    "native_town_variant": 2,
+    "container": "fd2-go-test-local",
+    "hook": "FD2_SHOT_TOWN_STATE=selection,pulse",
+    "raw_frame": "640x400 Ebiten/Xvfb screenshot"
+  },
+  "selections": [
+    {
+      "selection": 0,
+      "pulse": 0,
+      "original_md5": "f3e63a76362b09e528f3d7ff48fe8444",
+      "remake_md5": "c3b8ddaa8fa21f67f4aaf31cdfee94ac",
+      "absolute_error": 0
+    },
+    {
+      "selection": 1,
+      "pulse": 1,
+      "original_md5": "039d0cecee6e553b1dd51c885c699efe",
+      "remake_md5": "57c1e0f2245823d6da897391683ec815",
+      "absolute_error": 0
+    },
+    {
+      "selection": 2,
+      "pulse": 2,
+      "original_md5": "4629eb862d7e289c29039703ad5582f0",
+      "remake_md5": "4b1ada2eaa242f04bc45ec829648665d",
+      "absolute_error": 0
+    },
+    {
+      "selection": 3,
+      "pulse": 1,
+      "original_md5": "f0c3a06672511f4bfd65b65dacc9cde5",
+      "remake_md5": "1d130e84e43ea3cf4cf0050c7139f511",
+      "absolute_error": 0
+    },
+    {
+      "selection": 4,
+      "pulse": 0,
+      "original_md5": "680604fcb32690733c06e76ee2c95ec2",
+      "remake_md5": "c96e3250bd2051a45e62a50dde2b2a41",
+      "absolute_error": 0
+    }
+  ],
+  "figure": "../figures/town-variant2-five-selections-original-vs-remake.png"
+}

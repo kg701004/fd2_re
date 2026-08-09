@@ -3729,3 +3729,23 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
 - 因此 UI-03 先維持 E0 layout／input contract 與重製端 E1，缺原版存檔時失敗即關閉；
   下一個解除條件是取得合法、未修改、含已知戰鬥前／中狀態的存檔，再在 Docker 可寫副本
   以 `waitpixel`／逐步 `shot` 建立原版與重製同狀態比較。
+
+## 2026-08-09：ch02 城鎮 variant2 正常選項 E2（修改 LOAD 路徑）
+
+- 由固定雜湊的原始 `FD2.EXE`／`FD2.SAV` 建立全新 Docker `/tmp` 副本；slot0
+  只複製目前持久隊伍資料（current persistent roster），metadata raw chapter 設為 `5`、roster count
+  `4`、currency `0`。原始檔與修改副本的 MD5／SHA-256、欄位範圍及限制集中記錄在
+  [`native_town_variant2_e2.json`](../data/native_town_variant2_e2.json)。副本不可視為
+  未修改一般玩家存檔，完成後不加入儲存庫。
+- 以 Docker DOSBox 重播標題→LOAD→slot0→城鎮，觀察到原版 variant2。實際選項時間線
+  先以 selection0 截圖，再以 Left 每次間隔 `0.15` 秒取得 selection1–4；不是把方向鍵
+  循環回 selection0 誤當成隱藏 selection5。原版截圖先裁為 320×200，再用 ImageMagick
+  `-scale` 整數放大至 640×400；不可用插值縮放製造差異。
+- 重製端使用 `FD2_CAMP_NODE=town_ch06`、`FD2_SHOT_TOWN_STATE=selection,pulse`。
+  原版 selection0–4 分別與重製 pulse `0,1,2,1,0` 對齊，五組 640×400 未遮罩整幀
+  `compare -metric AE` 均為 `0`。對照圖
+  [`town-variant2-five-selections-original-vs-remake.png`](../figures/town-variant2-five-selections-original-vs-remake.png)
+  只作審查導覽，不取代 JSON 中的 raw frame hash。
+- 這一輪只關閉 variant2 的正常五項畫面消費端 E2；variant1、variant2 selection5
+  的該章 BIOS 掃描碼／後續 Enter、未修改一般玩家城鎮／戰後路徑與其他城鎮仍維持
+  fail-closed。不得把這個修改 LOAD 結果寫成原生 `FD2.SAV` 完整相容或 23 個城鎮完成。
