@@ -288,6 +288,8 @@ event25 同時要求 turn10／state16==1；未踏格反例不增援。戰後再�
 [`fd2_ch06_post_event25_ida.txt`](../data/ida/fd2_ch06_post_event25_ida.txt)；
 目前為 E1，尚缺未修改一般玩家路徑的 DOSBox E2。
 
+> **歷史快照（2026-08-02；後續現況以本文件的 2026-08-09 稽核為準）**
+
 2026-08-02 重新核對主迴圈後，撤回 2026-07-27 的錯誤同號索引斷言。
 `0x25e23` 以目前 raw chapter 選 post-handler，handler 自己才增加章節；因此玩家第N戰必須執行
 `ch(N-1)_post`。`postbattle_ch14_persist` 現改接 `ch13_post`，`postbattle_ch15_persist`
@@ -298,7 +300,7 @@ event25 同時要求 turn10／state16==1；未踏格反例不增援。戰後再�
 `postbattle_ch04/05/08/09/10/11/12/13/18/19/24/25/29` 共13個既有同號 binding 會報
 `active_index_mismatch`。逐章複核後，ch04/05/09/11/12/19/25 已安全移接至前一號 raw
 binding；ch08/10/13/18/24/29 因未知呼叫、缺 mapping 或來源位址可疑而撤回錯接並失敗即關閉。
-後續以 IDA 逐一補驗共享尾段並啟用 raw ch25、ch27 與 ch05 的正確 owner；現況稽核為
+後續以 IDA 逐一補驗共享尾段並啟用 raw ch25、ch27 與 ch05 的正確 owner；**當時歷史稽核為**
 13個 active、11個 blocked，沒有 mapping complete、index mismatch 或 inline bypass。
 
 同輪重讀 `ch15_post` 已補足 layout evidence，但沒有解除 gate：native 先寫 slots `0..15`，再寫

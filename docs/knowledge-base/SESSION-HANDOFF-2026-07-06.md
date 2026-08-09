@@ -3557,3 +3557,15 @@ slot6 active 條件、SPAWN2、兩段 PAN、800/200ms 與 FDTXT_003 #4 七句也
   控制碼、裁切、分頁或一般玩家路徑缺口。
 - 本次只新增可回查的執行期圖與現況統計勘誤；沒有把對話 renderer 的未證實語意
   接入戰役正式流程。暫存擷取目錄在 Docker 內清理，主機 `/tmp/fd2cap` 仍不存在。
+
+## 2026-08-09：歷史統計與 ch21 未知語意勘誤
+
+- SDD 中 2026-08-02 的 13 active／11 blocked 已明確標為歷史快照；目前有效稽核
+  仍是 19 active／5 blocked，玩家第22、23、24、25、29戰均失敗即關閉。
+- 工作清單的 2026-08-02 區段已標為歷史檢查點，並補回漏列的玩家第25戰；這只
+  修正文件斷言，不把任何候選處理器（handler）提升為正式戰役接線。
+- 合法 IDA Pro 9.4 Docker 重跑 `0x17aa9`、`0x24d22`、`0x11d40`、`0x24618`、
+  `0x22046`、`0x25a96`、`0x1f882` 與 `0x11df2` 後，結果與
+  [`fd2_ch21_post_ida.txt`](../data/ida/fd2_ch21_post_ida.txt) 一致；ch21 的
+  執行期前沿（frontier）／索引畫面狀態（indexed runtime）仍不足，
+  `postbattle_ch22_persist` 維持失敗即關閉。
