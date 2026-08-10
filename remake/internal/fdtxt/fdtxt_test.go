@@ -141,8 +141,15 @@ func TestPlayerFDTXT031Physical44HasStablePayload(t *testing.T) {
 		t.Fatalf("physical strings=%d, want 46", s.Count())
 	}
 	words, err := s.Words(44)
-	if err != nil || len(words) != 130 || words[0] != 0x00b5 || words[len(words)-1] != 0x0248 {
+	if err != nil || len(words) != 130 || words[0] != 0x00b5 || words[len(words)-1] != 0x0249 {
 		t.Fatalf("physical #44 words=%d first/last=%#x/%#x err=%v", len(words), words[0], words[len(words)-1], err)
+	}
+	// 末三字 words[127:130] 全是 0x0249(連續三次同一 glyph),對照原檔尾端 raw bytes
+	// 49 02 49 02 49 02 ff ff——像是「……」省略號收尾,不是解碼器重複輸出同一項的錯誤。
+	for i := len(words) - 3; i < len(words); i++ {
+		if words[i] != 0x0249 {
+			t.Fatalf("physical #44 word[%d]=%#x, want repeated trailing glyph 0x0249", i, words[i])
+		}
 	}
 }
 

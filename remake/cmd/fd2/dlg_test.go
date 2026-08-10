@@ -15,8 +15,9 @@ func TestDlgPaginationPreservesText(t *testing.T) {
 	// 王座廳 line17(父王,上框 id>=32):57 字,上框 perLine=13 → 5 行 → 2 頁。
 	long := "我就知道你會一時無法接受,這樣吧,三天之後,你再給我考慮的結果,當然了,我希望能夠聽到肯定的答覆。你先回去休息吧。"
 	dl := battle.DialogLine{Speaker: 48, Text: long}
+	g := &Game{}
 
-	lines := dlgWrap(dl)
+	lines := g.dlgWrap(dl)
 	// 1) 全文保全:所有顯示列接回 == 『長句』(含引號),無任何字被丟棄。
 	joined := strings.Join(lines, "")
 	want := "『" + toFullWidth(dl.Text) + "』"
@@ -24,7 +25,7 @@ func TestDlgPaginationPreservesText(t *testing.T) {
 		t.Fatalf("分頁丟字:\n got=%q\nwant=%q", joined, want)
 	}
 	// 2) 頁數 = ceil(行數/3),且 >1(這句必分頁)。
-	pages := dlgPageCount(dl)
+	pages := g.dlgPageCount(dl)
 	wantPages := (len(lines) + 2) / 3
 	if pages != wantPages || pages < 2 {
 		t.Fatalf("頁數錯:got=%d want=%d(行數=%d)", pages, wantPages, len(lines))
@@ -41,7 +42,8 @@ func TestDlgPaginationPreservesText(t *testing.T) {
 // TestDlgShortLineSinglePage 短句(<=3行)維持單頁,Enter 直接換句(不影響原行為)。
 func TestDlgShortLineSinglePage(t *testing.T) {
 	dl := battle.DialogLine{Speaker: 0, Text: "是。"}
-	if p := dlgPageCount(dl); p != 1 {
+	g := &Game{}
+	if p := g.dlgPageCount(dl); p != 1 {
 		t.Fatalf("短句應單頁,got=%d", p)
 	}
 }
@@ -89,25 +91,19 @@ func TestDlgWrapWithDynamicPortraitScale(t *testing.T) {
 	img80 := ebiten.NewImage(80, 80)
 	img320 := ebiten.NewImage(320, 320)
 
-	// Save original globalPortraits to restore after test
-	oldGlobalPortraits := globalPortraits
-	defer func() {
-		globalPortraits = oldGlobalPortraits
-	}()
-
 	// Test 1: With 80px portrait
-	globalPortraits = map[int][]*ebiten.Image{
+	g := &Game{portraits: map[int][]*ebiten.Image{
 		48: {img80},
-	}
+	}}
 	long := "我就知道你會一時無法接受,這樣吧,三天之後,你再給我考慮的結果,當然了,我希望能夠聽到肯定的答覆。你先回去休息吧。"
 	dl := battle.DialogLine{Speaker: 48, Text: long}
-	lines80 := dlgWrap(dl)
+	lines80 := g.dlgWrap(dl)
 
 	// Test 2: With 320px portrait
-	globalPortraits = map[int][]*ebiten.Image{
+	g.portraits = map[int][]*ebiten.Image{
 		48: {img320},
 	}
-	lines320 := dlgWrap(dl)
+	lines320 := g.dlgWrap(dl)
 
 	// They should wrap exactly the same way, producing identical lines!
 	if len(lines80) != len(lines320) {

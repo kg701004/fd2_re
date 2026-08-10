@@ -1,0 +1,6 @@
+# remake/internal/battle/model.go 對這個檔案的內容做 byte-exact SHA256 驗證
+# (提取自 FDFIELD.DAT 的 native turn-event 資料表,見 nativeTurnEventCatalogSHA256)。
+# Windows checkout 若套用 core.autocrlf 把 LF 轉成 CRLF,會讓雜湊比對失敗,導致
+# HasNativeTurnEventControlState 恆為 false、event62/63 整條鏈路失效。強制此檔
+# 永遠以 checked-in 的原始位元組(LF)存在,不受使用者 autocrlf 設定影響。
+remake/assets/maps/native_turn_event_controls.json -text

@@ -206,17 +206,16 @@ func (g *Game) drawNativeEndingDialogue(screen *ebiten.Image) {
 	if upper {
 		by = 4
 	}
-	box := ebiten.NewImage(620, 198)
-	box.Fill(color.RGBA{0x2c, 0x44, 0x84, 0xf2})
+	if g.dlgBoxFallback == nil { // 跟 main.go 對話框 fallback 共用同一張快取(尺寸/顏色相同)
+		g.dlgBoxFallback = ebiten.NewImage(620, 198)
+		g.dlgBoxFallback.Fill(color.RGBA{0x2c, 0x44, 0x84, 0xf2})
+	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(10, by)
-	screen.DrawImage(box, op)
+	screen.DrawImage(g.dlgBoxFallback, op)
 	scale := 2.1
 	sourceWidth := 80.0
-	var fr []*ebiten.Image
-	if g.portraits != nil {
-		fr = g.portraits[dl.Speaker]
-	}
+	fr := g.getPortraitFrames(dl.Speaker)
 	if len(fr) > 0 {
 		sourceWidth = float64(fr[0].Bounds().Dx())
 		scale = 168.0 / sourceWidth
@@ -239,7 +238,7 @@ func (g *Game) drawNativeEndingDialogue(screen *ebiten.Image) {
 	} else {
 		tx = 32
 	}
-	lines := dlgWrap(dl)
+	lines := g.dlgWrap(dl)
 	start := g.dlgPage * 3
 	for i := 0; i < 3 && start+i < len(lines); i++ {
 		g.font.Draw(screen, lines[start+i], tx, ty+float64(i)*38, 1.7, color.RGBA{0xf0, 0xf4, 0xff, 0xff})

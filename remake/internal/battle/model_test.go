@@ -10,7 +10,7 @@ import (
 
 // 驗證序章 units.json 正確載入(M1-8 headless 回歸雛形)。
 func TestLoadSerial0(t *testing.T) {
-	st, err := Load("../../assets/map0_units.json")
+	st, err := Load("../../assets/maps/map0/map0_units.json")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}

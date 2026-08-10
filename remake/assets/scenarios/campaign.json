@@ -24,7 +24,7 @@
     "battle_ch01": {
       "type": "battle",
       "bgm": "",
-      "units": "assets/map0_units.json",
+      "units": "assets/maps/map0/map0_units.json",
       "scenario": "assets/scenarios/ch01.json",
       "native_map_view": {
         "camera_x": 1,

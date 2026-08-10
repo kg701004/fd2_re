@@ -28,6 +28,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -303,7 +304,8 @@ type Game struct {
 	shopSellPicking          bool
 	shopSellUnitSel          int
 	shopSellSlotSel          int
-	portraits                map[int][]*ebiten.Image // DATO 頭像:肖像 id → 4 嘴型幀
+	portraits                map[int][]*ebiten.Image // DATO 頭像解碼快取:肖像 id → 4 嘴型幀(lazy,見 getPortraitFrames)
+	portraitIndex            map[int][]string        // DATO 頭像檔名索引:肖像 id → 4 個檔案路徑(開機建,只列檔名不解碼)
 	mouthOpen                bool                    // 嘴型動畫狀態(原版 0x16d00:m0閉/m3開)
 	mouthTimer               int                     // 閉嘴倒數(原版 rand%30+2 tick)
 	mouthState               dato.MouthState         // native 0x16d00 cadence adapter
@@ -331,21 +333,24 @@ type Game struct {
 	result             string // 勝負:""/win/lose
 	msg                string // 短訊息(攻擊傷害等)
 	// 地圖單位 sprite(FDICON 待機分鏡):fig index → 幀序列
-	sprites  map[int][]*ebiten.Image
-	figani   map[int][]*ebiten.Image         // 攻擊全身動畫(FIGANI):fig → 幀序列
-	atk      *atkAnim                        // 進行中的攻擊演出
-	bg       *ebiten.Image                   // 戰鬥背景(BG.DAT,by 戰場;map0=BG_004 森林)
-	tai      *ebiten.Image                   // 我方腳下台座(TAI.DAT;0x29164 載 0x28c46,doc35 §3.3)
-	panel    *ebiten.Image                   // 狀態欄框素材(FDOTHER#5 LMI1 #22,149×42;含bevel+HP/MP標籤+槽,doc35 §4)
-	dlgBox   *ebiten.Image                   // 對話框框素材(FDOTHER#5 LMI1 #21,310×99;orig 下框(5,112)@320)
-	dlgGrad  *ebiten.Image                   // 對話框內部漸層(比對頭像底色 40,69,138→56,85,154 消接縫色差;lazy 建)
-	fontNm   *Font                           // 狀態欄名字(整數尺寸 face,scale1 銳利)
-	digits   [10]*ebiten.Image               // 狀態欄數字 0-9(LMI1 #31-40 原版 digit cell,白/藍影)
-	redSil   map[*ebiten.Image]*ebiten.Image // 命中閃紅的全紅剪影快取(orig=VGA 色盤閃紅)
-	redFlash *ebiten.Image                   // 命中全螢幕紅罩(orig=DAC 整組色盤設紅→整片泛紅)
-	dim      *ebiten.Image                   // 全螢幕暗化/底板共用(回合橫幅、單位面板)
-	figMeta  map[int][][2]int                // FIGANI 每幀內嵌絕對螢幕座標 (dx,dy)@320(doc06;動畫走位全靠它)
-	font     *Font                           // 原版點陣中文字型(doc 08)
+	sprites                                      map[int][]*ebiten.Image
+	figani                                       map[int][]*ebiten.Image         // 攻擊全身動畫(FIGANI):fig → 幀序列
+	atk                                          *atkAnim                        // 進行中的攻擊演出
+	bg                                           *ebiten.Image                   // 戰鬥背景(BG.DAT,by 戰場;map0=BG_004 森林)
+	tai                                          *ebiten.Image                   // 我方腳下台座(TAI.DAT;0x29164 載 0x28c46,doc35 §3.3)
+	panel                                        *ebiten.Image                   // 狀態欄框素材(FDOTHER#5 LMI1 #22,149×42;含bevel+HP/MP標籤+槽,doc35 §4)
+	dlgBox                                       *ebiten.Image                   // 對話框框素材(FDOTHER#5 LMI1 #21,310×99;orig 下框(5,112)@320)
+	dlgGrad                                      *ebiten.Image                   // 對話框內部漸層(比對頭像底色 40,69,138→56,85,154 消接縫色差;lazy 建)
+	dlgBoxFallback                               *ebiten.Image                   // 對話框無素材 fallback 純色框(固定 620×198;lazy 建一次重複用)
+	objPanelBG, objPanelBorderH, objPanelBorderV *ebiten.Image                   // 章節目標畫面面板(objectives_screen.go;固定尺寸,lazy 建一次重複用)
+	fontNm                                       *Font                           // 狀態欄名字(整數尺寸 face,scale1 銳利)
+	digits                                       [10]*ebiten.Image               // 狀態欄數字 0-9(LMI1 #31-40 原版 digit cell,白/藍影)
+	redSil                                       map[*ebiten.Image]*ebiten.Image // 命中閃紅的全紅剪影快取(orig=VGA 色盤閃紅)
+	redFlash                                     *ebiten.Image                   // 命中全螢幕紅罩(orig=DAC 整組色盤設紅→整片泛紅)
+	dim                                          *ebiten.Image                   // 全螢幕暗化/底板共用(回合橫幅、單位面板)
+	whitePixel                                   *ebiten.Image                   // 1×1 白點,GeoM 縮放+ColorScale 染色畫實心矩形共用(drawBattlePanel 血條槽/填充,避免每幀配置新材質)
+	figMeta                                      map[int][][2]int                // FIGANI 每幀內嵌絕對螢幕座標 (dx,dy)@320(doc06;動畫走位全靠它)
+	font                                         *Font                           // 原版點陣中文字型(doc 08)
 
 	nativeChapterRestore *campaign.NativeChapterSlotRestorePlan // 四槽 LOAD 的已驗證戰間狀態；未知 raw bytes 僅保存、不猜接
 }
@@ -1825,18 +1830,14 @@ func equalIntOrder(a, b []int) bool {
 	return true
 }
 
-var globalPortraits map[int][]*ebiten.Image
-
 // dlgWrap 把一句對白依框寬換行成顯示列(繪製與 Enter 分頁共用同一套,確保頁數一致)。
 // 換行寬度與繪製碼一致:下框到框右緣;上框(說話者 id>=32,頭像在右)止於頭像左緣前。
-func dlgWrap(dl battle.DialogLine) []string {
+func (g *Game) dlgWrap(dl battle.DialogLine) []string {
 	ps := 2.1
 	sourceWidth := 80.0
-	if globalPortraits != nil {
-		if fr, ok := globalPortraits[dl.Speaker]; ok && len(fr) > 0 {
-			sourceWidth = float64(fr[0].Bounds().Dx())
-			ps = 168.0 / sourceWidth
-		}
+	if fr := g.getPortraitFrames(dl.Speaker); len(fr) > 0 {
+		sourceWidth = float64(fr[0].Bounds().Dx())
+		ps = 168.0 / sourceWidth
 	}
 	upper := dl.Speaker >= 32
 	bx, tx := 10.0, 216.0
@@ -1863,8 +1864,8 @@ func dlgWrap(dl battle.DialogLine) []string {
 }
 
 // dlgPageCount 該句對白的總頁數(每頁最多 3 行)。
-func dlgPageCount(dl battle.DialogLine) int {
-	n := (len(dlgWrap(dl)) + 2) / 3
+func (g *Game) dlgPageCount(dl battle.DialogLine) int {
+	n := (len(g.dlgWrap(dl)) + 2) / 3
 	if n < 1 {
 		n = 1
 	}
@@ -1877,7 +1878,7 @@ func (g *Game) dlgAdvance() bool {
 	if g.dlgScrollT > 0 { // 捲動尚未完成時，Enter 不得跳過下一頁
 		return false
 	}
-	if len(g.dialog) > 0 && g.dlgPage+1 < dlgPageCount(g.dialog[len(g.dialog)-1]) {
+	if len(g.dialog) > 0 && g.dlgPage+1 < g.dlgPageCount(g.dialog[len(g.dialog)-1]) {
 		g.dlgScrollFrom = g.dlgPage
 		g.dlgPage++
 		g.dlgScrollT = dlgScrollFrames
@@ -2221,7 +2222,7 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 	g.nativeMapClock.Reset()
 	g.nativeMapWork, g.nativeMapVGA = nil, nil
 	if unitsPath == "" {
-		unitsPath = "assets/map0_units.json"
+		unitsPath = "assets/maps/map0/map0_units.json"
 	}
 	// A verified pre-handler LOADCH owns the same runtime array used by the
 	// following battle. Preserve it only when both editable source paths match
@@ -4664,13 +4665,16 @@ func loadSprites() map[int][]*ebiten.Image {
 	return out
 }
 
-// loadPortraits 載入 assets/portraits/DATO_NNN_mM.png,按肖像 id 分組成 4 嘴型幀。
-func loadPortraits() map[int][]*ebiten.Image {
-	out := map[int][]*ebiten.Image{}
+// loadPortraitIndex 掃描 assets/portraits/DATO_NNN_mM.png 檔名,建立「肖像 id →
+// 4 個嘴型幀檔路徑(依嘴型排序)」索引。只列檔名不解碼(便宜,開機做一次)——
+// 真正的解碼(貴,尤其素材放大後單張變大)延遲到 getPortraitFrames 第一次真的
+// 要顯示該角色時才做,不是每個角色都會在同一輪劇情裡出場。
+func loadPortraitIndex() map[int][]string {
+	out := map[int][]string{}
 	files := assetGlob("assets/portraits/DATO_*_m*.png")
 	type fr struct {
 		id, m int
-		img   *ebiten.Image
+		path  string
 	}
 	var frs []fr
 	for _, fp := range files {
@@ -4678,15 +4682,7 @@ func loadPortraits() map[int][]*ebiten.Image {
 		if _, e := fmt.Sscanf(filepath.Base(fp), "DATO_%d_m%d.png", &id, &m); e != nil {
 			continue
 		}
-		raw, e := os.ReadFile(fp)
-		if e != nil {
-			continue
-		}
-		im, _, e := image.Decode(bytes.NewReader(raw))
-		if e != nil {
-			continue
-		}
-		frs = append(frs, fr{id, m, ebiten.NewImageFromImage(im)})
+		frs = append(frs, fr{id, m, fp})
 	}
 	sort.Slice(frs, func(i, j int) bool {
 		if frs[i].id != frs[j].id {
@@ -4695,10 +4691,55 @@ func loadPortraits() map[int][]*ebiten.Image {
 		return frs[i].m < frs[j].m
 	})
 	for _, f := range frs {
-		out[f.id] = append(out[f.id], f.img)
+		out[f.id] = append(out[f.id], f.path)
 	}
-	globalPortraits = out
 	return out
+}
+
+// getPortraitFrames 延遲載入指定肖像 id 的嘴型幀:第一次被哪個角色用到才真的
+// 解碼,之後直接回傳快取(g.portraits),不重複解碼。4 個嘴型幀的檔案讀取+
+// image.Decode 是各自獨立的純 CPU/IO 工作,用 goroutine 平行處理;
+// ebiten.NewImageFromImage(GPU 材質上傳)不能跨 goroutine 操作,留在呼叫端
+// goroutine 序列做。
+func (g *Game) getPortraitFrames(speaker int) []*ebiten.Image {
+	if g.portraits == nil {
+		g.portraits = map[int][]*ebiten.Image{}
+	}
+	if fr, ok := g.portraits[speaker]; ok {
+		return fr
+	}
+	paths := g.portraitIndex[speaker]
+	if len(paths) == 0 {
+		g.portraits[speaker] = nil
+		return nil
+	}
+	decoded := make([]image.Image, len(paths))
+	var wg sync.WaitGroup
+	for i, p := range paths {
+		wg.Add(1)
+		go func(i int, p string) {
+			defer wg.Done()
+			raw, e := os.ReadFile(p)
+			if e != nil {
+				return
+			}
+			im, _, e := image.Decode(bytes.NewReader(raw))
+			if e != nil {
+				return
+			}
+			decoded[i] = im
+		}(i, p)
+	}
+	wg.Wait()
+	var frames []*ebiten.Image
+	for _, im := range decoded {
+		if im == nil {
+			continue
+		}
+		frames = append(frames, ebiten.NewImageFromImage(im))
+	}
+	g.portraits[speaker] = frames
+	return frames
 }
 
 // loadFIGANI 載入 assets/figani/FIGANI_NNN_fNN.png,按 fig id 分組成攻擊全身分鏡。
@@ -6059,13 +6100,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				op.GeoM.Scale(2, 2*sc)
 				op.GeoM.Translate(bx, by+(1-sc)*99) // 以框垂直中心收合
 				screen.DrawImage(g.dlgBox, op)
-			} else { // 無素材 fallback:純色框
-				box := ebiten.NewImage(620, 198)
-				box.Fill(color.RGBA{0x2c, 0x44, 0x84, 0xf2})
+			} else { // 無素材 fallback:純色框(固定 620×198,lazy 建一次重複用,見 g.dlgBoxFallback)
+				if g.dlgBoxFallback == nil {
+					g.dlgBoxFallback = ebiten.NewImage(620, 198)
+					g.dlgBoxFallback.Fill(color.RGBA{0x2c, 0x44, 0x84, 0xf2})
+				}
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Scale(1, sc)
 				op.GeoM.Translate(bx, by+(1-sc)*99)
-				screen.DrawImage(box, op)
+				screen.DrawImage(g.dlgBoxFallback, op)
 			}
 			if g.dlgPhase == 0 { // 縮/展相位中不畫頭像與文字
 				// 框內部漸層:與頭像底色同一漸層(頂 40,69,138 → 底 56,85,154),消除頭像↔框接縫色差
@@ -6087,10 +6130,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				// 頭像:側臉,收進框內(不凸出框頂),臉朝文字(對照 orig_02:我方左朝右、對方上框右朝左)。
 				ps := 2.1
 				sourceWidth := 80.0
-				var fr []*ebiten.Image
-				if g.portraits != nil {
-					fr = g.portraits[dl.Speaker]
-				}
+				fr := g.getPortraitFrames(dl.Speaker)
 				mi := 0
 				if len(fr) > 0 {
 					if g.mouthOpen && len(fr) > 3 {
@@ -6122,7 +6162,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 				// 自動換行(dlgWrap 與 Enter 分頁共用)。Enter 翻頁時保留舊頁與新頁，
 				// 以平滑往上捲動取代瞬間切換(原版文字捲動效果;速度為 remake 可編輯參數)。
-				lines := dlgWrap(dl)
+				lines := g.dlgWrap(dl)
 				drawPage := func(page int, offset float64) {
 					start := page * 3
 					for i := 0; i < 3 && start+i < len(lines); i++ {
@@ -6989,15 +7029,19 @@ func (g *Game) drawBattlePanel(screen *ebiten.Image, x, y float64, name string, 
 	panel := g.panel
 	// orig 是 149×42 原生尺寸 blit(非拉伸滿半屏;網格比對 v37 抓到的差異)→ 固定 ×2
 	const sc = 2.0
+	if g.whitePixel == nil {
+		g.whitePixel = ebiten.NewImage(1, 1)
+		g.whitePixel.Fill(color.White)
+	}
 	fillRect := func(bx, by, bw, bh float64, c color.RGBA) {
 		if bw < 1 {
 			return
 		}
-		im := ebiten.NewImage(int(bw), int(bh))
-		im.Fill(c)
 		o := &ebiten.DrawImageOptions{}
+		o.GeoM.Scale(bw, bh)
 		o.GeoM.Translate(bx, by)
-		screen.DrawImage(im, o)
+		o.ColorScale.Scale(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
+		screen.DrawImage(g.whitePixel, o)
 	}
 	if panel != nil { // 框素材(bevel + HP/MP標籤 + LV‧ + 槽 全來自原版;palette 已 6→8bit 校正)
 		op := &ebiten.DrawImageOptions{}
@@ -7061,28 +7105,6 @@ func (g *Game) drawBattlePanel(screen *ebiten.Image, x, y float64, name string, 
 	drawNum(fmt.Sprintf("%03d", mp), 126, 30)
 }
 
-// drawStatBar 狀態條(暗槽 + 填充);暗槽 = 填充色暗版(對照 orig:空槽呈暗黃/暗紅,非統一黑)。
-func drawStatBar(screen *ebiten.Image, x, y, w, frac float64, c color.RGBA) {
-	if frac < 0 {
-		frac = 0
-	}
-	if frac > 1 {
-		frac = 1
-	}
-	slot := ebiten.NewImage(int(w), 9)
-	slot.Fill(color.RGBA{c.R / 4, c.G / 4, c.B / 4, 0xff}) // 暗槽=填充色暗版
-	os := &ebiten.DrawImageOptions{}
-	os.GeoM.Translate(x, y)
-	screen.DrawImage(slot, os)
-	if frac > 0 {
-		bar := ebiten.NewImage(int(w*frac)+1, 9)
-		bar.Fill(c)
-		ob := &ebiten.DrawImageOptions{}
-		ob.GeoM.Translate(x, y)
-		screen.DrawImage(bar, ob)
-	}
-}
-
 // mapSpriteGroup chooses the exact native raw FDICON key only for a battle
 // State whose whole construction sequence materialized successfully. Story
 // actors remain on their editable legacy Fig path by construction.
@@ -7104,7 +7126,7 @@ func (g *Game) drawUnitSprite(screen *ebiten.Image, x, y, w, h float64, u *battl
 	y += u.OffY
 	frames := g.sprites[spriteGroup]
 	if len(frames) == 0 {
-		drawUnit(screen, x, y, w, h, campColor(u.Camp), u) // fallback 色塊
+		g.drawUnit(screen, x, y, w, h, campColor(u.Camp), u) // fallback 色塊
 		return
 	}
 	// 方向走動幀:dir(0下1左2上3右)×3 + 走動相位;不足 12 幀(只導下方向)則退回
@@ -7121,25 +7143,32 @@ func (g *Game) drawUnitSprite(screen *ebiten.Image, x, y, w, h float64, u *battl
 	screen.DrawImage(frames[idx], op)
 }
 
-// drawUnit 畫一個單位(fallback:內縮色塊 + 頂部 HP bar)。
-func drawUnit(dst *ebiten.Image, x, y, w, h float64, col color.RGBA, u *battle.Unit) {
+// drawUnit 畫一個單位(fallback:內縮色塊 + 頂部 HP bar)。共用 g.whitePixel(見
+// drawBattlePanel)GeoM 縮放+ColorScale 染色畫實心矩形,不每次呼叫配置新材質。
+func (g *Game) drawUnit(dst *ebiten.Image, x, y, w, h float64, col color.RGBA, u *battle.Unit) {
+	if g.whitePixel == nil {
+		g.whitePixel = ebiten.NewImage(1, 1)
+		g.whitePixel.Fill(color.White)
+	}
+	fillRect := func(bx, by, bw, bh float64, c color.RGBA) {
+		if bw < 1 {
+			return
+		}
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(bw, bh)
+		op.GeoM.Translate(bx, by)
+		op.ColorScale.Scale(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
+		dst.DrawImage(g.whitePixel, op)
+	}
 	pad := 3.0
-	body := ebiten.NewImage(int(w-2*pad), int(h-2*pad))
-	body.Fill(col)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(x+pad, y+pad)
-	dst.DrawImage(body, op)
+	fillRect(x+pad, y+pad, w-2*pad, h-2*pad, col)
 	// HP bar
 	bw := w - 2*pad
 	frac := float64(u.HP) / float64(u.MaxHP)
 	if frac < 0 {
 		frac = 0
 	}
-	bar := ebiten.NewImage(int(bw*frac)+1, 2)
-	bar.Fill(color.RGBA{0x30, 0xff, 0x30, 0xff})
-	op2 := &ebiten.DrawImageOptions{}
-	op2.GeoM.Translate(x+pad, y+pad-3)
-	dst.DrawImage(bar, op2)
+	fillRect(x+pad, y+pad-3, bw*frac+1, 2, color.RGBA{0x30, 0xff, 0x30, 0xff})
 }
 
 func drawCursor(dst *ebiten.Image, x, y, w, h float64) {
@@ -7274,7 +7303,7 @@ func loadGame() *Game {
 		// The preview intentionally bypasses map/battle loading, but native
 		// 0x2c39b dialogue still uses the ordinary player-provided DATO faces
 		// and FD font once it reaches its recovered text branch.
-		g.portraits = loadPortraits()
+		g.portraitIndex = loadPortraitIndex()
 		g.font = loadFont()
 		return g
 	}
@@ -7283,7 +7312,7 @@ func loadGame() *Game {
 		return g
 	}
 	// 載入單位(M1)
-	if st, err := battle.Load(assetPath("assets/map0_units.json")); err == nil {
+	if st, err := battle.Load(assetPath("assets/maps/map0/map0_units.json")); err == nil {
 		g.st = st
 	} else if g.loadErr == "" {
 		g.loadErr = "units: " + err.Error()
@@ -7299,7 +7328,7 @@ func loadGame() *Game {
 		}
 	}
 	g.sprites = loadSprites()
-	g.portraits = loadPortraits()
+	g.portraitIndex = loadPortraitIndex()
 	g.figani = loadFIGANI()
 	g.figMeta = loadFigMeta()
 	g.nativeUIPalette = loadNativeUIPalette()

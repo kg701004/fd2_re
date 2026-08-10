@@ -45,7 +45,7 @@ func (g *Game) drawObjectivesScreen(screen *ebiten.Image) {
 	const margin = 32.0
 	panelX, panelY := margin, margin
 	panelW, panelH := float64(logicalW)-margin*2, float64(logicalH)-margin*2
-	drawObjPanel(screen, panelX, panelY, panelW, panelH)
+	g.drawObjPanel(screen, panelX, panelY, panelW, panelH)
 
 	x := panelX + 24
 	y := panelY + 16
@@ -104,25 +104,32 @@ func (g *Game) dismissObjectivesScreen() {
 	g.beatAdvance()
 }
 
-func drawObjPanel(dst *ebiten.Image, x, y, w, h float64) {
-	sub := ebiten.NewImage(int(w), int(h))
-	sub.Fill(objScreenPanel)
+// drawObjPanel 畫面板背景+邊框。這個畫面顯示期間每幀都會呼叫(擋住 beat runner
+// 等玩家按鍵,可能連續畫上百幀),x/y/w/h 每次都是同一組常數(margin 換算),
+// 所以背景/邊框圖片 lazy 建一次快取在 Game 上重複貼,不要每幀重新配置 GPU
+// 材質(同檔案既有 g.dlgGrad 的作法)。
+func (g *Game) drawObjPanel(dst *ebiten.Image, x, y, w, h float64) {
+	if g.objPanelBG == nil {
+		g.objPanelBG = ebiten.NewImage(int(w), int(h))
+		g.objPanelBG.Fill(objScreenPanel)
+		g.objPanelBorderH = ebiten.NewImage(int(w), 2)
+		g.objPanelBorderH.Fill(objScreenBorder)
+		g.objPanelBorderV = ebiten.NewImage(2, int(h))
+		g.objPanelBorderV.Fill(objScreenBorder)
+	}
+
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(x, y)
-	dst.DrawImage(sub, op)
+	dst.DrawImage(g.objPanelBG, op)
 
-	border := ebiten.NewImage(int(w), 2)
-	border.Fill(objScreenBorder)
 	for _, dy := range []float64{0, h - 2} {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(x, y+dy)
-		dst.DrawImage(border, op)
+		dst.DrawImage(g.objPanelBorderH, op)
 	}
-	borderV := ebiten.NewImage(2, int(h))
-	borderV.Fill(objScreenBorder)
 	for _, dx := range []float64{0, w - 2} {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(x+dx, y)
-		dst.DrawImage(borderV, op)
+		dst.DrawImage(g.objPanelBorderV, op)
 	}
 }

@@ -333,7 +333,7 @@ func TestExecuteActionCheckedFailsClosedBeforeNativeIntroMutation(t *testing.T) 
 }
 
 func TestChapter1SetupMaterializesYuniCommandZero(t *testing.T) {
-	st, err := Load("../../assets/map0_units.json")
+	st, err := Load("../../assets/maps/map0/map0_units.json")
 	if err != nil {
 		t.Fatal(err)
 	}
