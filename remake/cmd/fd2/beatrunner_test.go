@@ -1286,6 +1286,9 @@ func TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne(t *testin
 			g.dialog = nil
 			g.beatAdvance()
 		}
+		if g.objChapter > 0 { // 章節目標畫面(objectives_screen.go)同樣阻塞 beat runner,見 campInput()
+			g.dismissObjectivesScreen()
+		}
 		g.tick(1)
 		if g.loadErr != "" {
 			t.Fatalf("compiled ch00 handler stopped at beat %d/%d: %s", g.beatIdx, len(g.beats), g.loadErr)

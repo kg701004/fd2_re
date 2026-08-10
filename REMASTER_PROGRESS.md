@@ -283,6 +283,43 @@ map26 event63 時機問題、`TestBattleCh27...` 相對路徑問題,皆跟本次
   的 `getPortraitFrames`;縮放比例動態計算的修正由 Jules 完成,PR 已審閱
   合併)。
 
+## 實機驗證與收尾（org_game 接上後才浮現的缺口）—— ✅ 完成
+
+使用者要求「有沒有實際運行過確認」後,真的建置執行檔、開真視窗、截圖驗證,
+過程中發現並處理了幾件事:
+
+1. **地圖角色 sprite 一直是色塊 fallback**:`remake/assets/sprites/` 整個
+   資料夾從未在這份 checkout 產生過。用專案自己的 `tools/export_sprites.py`
+   (讀 FDICON.B24)匯出全 140 組角色 × 12 幀待機分鏡(1680 張),截圖確認
+   地圖上單位從純色方塊變成真正的 Q 版角色圖。屬 `.gitignore` 排除的玩家
+   衍生素材,不入庫,跟頭像/sprite 同慣例。
+2. **2K 螢幕視窗尺寸「看起來」選錯倍數,結果是量測工具的錯,不是程式的錯**:
+   一開始用非 DPI-aware 的 PowerShell 量視窗,量到「1280×800」,誤判是
+   Windows 二次模糊拉伸的 bug。深入看 Ebiten 原始碼才發現它自己內部本來就
+   會呼叫 per-monitor DPI-aware v2 API,我加的「修正」完全多餘,已還原。
+   用正確的 DPI-aware 工具重新量測,證實實際視窗物理尺寸是 1920×1200(3
+   倍,吃滿 2560×1600 面板),截圖完全銳利。**教訓:量測工具本身的 DPI
+   狀態會直接影響量到的數字,不能只看 PowerShell 回報的座標就下結論。**
+3. **org_game 接上後,3 個原本因缺原版檔案而 `t.Skip` 的測試第一次真的執行,
+   暴露出 3 個既有缺口**(都跟 DPI 調查無關):
+   - `command_labels.json` 執行期路徑缺檔:資料其實已經在
+     `docs/data/command_labels.json` 產生過,只是沒複製到
+     `remake/assets/data/`。直接複製過去即可。
+   - `assets/figani/meta.json`(0x2935b 逐幀 X/Y 定位資料)整個沒產生過,
+     而且沒有任何現成工具能產生它——`internal/figani` 是 Go internal
+     package,Python 工具碰不到。新增 `remake/cmd/export-figani-meta`(小型
+     常駐 Go 工具,直接重用 `internal/figani.DecodeResource`,跟
+     `figmeta_test.go` 交叉驗證用的是同一份解碼邏輯,兩邊不會跑偏),對
+     FIGANI.DAT 掃出 199 個可解析資源並全部收錄(比文件記載的 22 個「實際
+     用到」的還多,但每一筆都是直接從原檔解出來的真資料,多收錄無害)。
+   - `TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne`
+     卡在 beat 114/151:這是這個 session 稍早做的「關卡目標畫面」功能跟這
+     個測試手動模擬輸入迴圈之間的落差——測試只知道要清 `g.dialog`,不知道
+     也要清 `g.objChapter`(新畫面用的阻塞旗標)。照 `campInput()` 的真實
+     邏輯補上對應處理。
+
+`go test ./...` 全 repo 現在 100% 通過,`go build ./...` 乾淨。
+
 ## 待辦（依序）
 
 1. ~~過場加速~~ —— 已完成，見上。
@@ -290,7 +327,8 @@ map26 event63 時機問題、`TestBattleCh27...` 相對路徑問題,皆跟本次
 3. ~~1080P 縮放渲染管線~~ —— 已完成，見上。
 4. ~~原始角色頭像放大優化 + 動態縮放~~ —— 已完成，見上「角色美術升級」。
 5. ~~效能優化(不額外花費)~~ —— 已完成，見上。
-6. 角色美術「重新設計」(AI 生圖換畫風)—— 使用者已決定不做,見上。若未來
+6. ~~實機驗證與收尾~~ —— 已完成，見上。
+7. 角色美術「重新設計」(AI 生圖換畫風)—— 使用者已決定不做,見上。若未來
    要重啟,索爾試驗的完整記錄仍在
    `C:\Users\kg701\Desktop\GAME\FD2\character_art_pilot_sol\README.md`。
 
