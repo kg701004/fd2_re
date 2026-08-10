@@ -188,8 +188,8 @@ func (g *Game) drawNativeEndingPreview(screen *ebiten.Image) {
 	op.GeoM.Scale(2, 2)
 	screen.DrawImage(g.nativeEnding.view, op)
 	g.drawNativeEndingDialogue(screen)
-	if g.shotPath != "" && g.frame == g.shotFrame {
-		saveShot(screen, g.shotPath)
+	if g.shotPath != "" && !g.shotTaken && g.frame >= g.shotFrame {
+		g.captureShot(screen)
 	}
 }
 
