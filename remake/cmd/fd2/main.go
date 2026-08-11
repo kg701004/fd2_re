@@ -82,6 +82,7 @@ type Game struct {
 	nativeMapViewportForW          int                                // outsideW/H Layout last picked nativeMapViewport for, so it's only recomputed on an actual size change
 	nativeMapViewportForH          int
 	wantFullscreenAtStart          bool // FD2_SHOT_FULLSCREEN=1: toggle true fullscreen on the first Update tick (verification hook for the wider native map viewport)
+	wantSkipStoryAtStart           bool // FD2_SKIP_STORY_AT_START=1: same as FD2_SHOT_SKIP_STORY but not gated behind FD2_SHOT, for interactive verification sessions
 	nativeMapDAC                   []byte                             // current 256xRGB six-bit DAC state for handler palette ramps
 	nativePaletteRamp              *nativePaletteRampJob              // exact 0x1f882/0x1f525 indexed DAC presentation
 	nativeFullDACWhite             bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
@@ -5284,6 +5285,20 @@ func (g *Game) Update() error {
 		g.wantFullscreenAtStart = false
 		g.toggleFullscreen()
 	}
+	if g.wantSkipStoryAtStart {
+		// Same effect as the FD2_SHOT_SKIP_STORY shot-setup hook, but not
+		// gated behind FD2_SHOT (which auto-terminates once its frame is
+		// reached) -- for interactive verification sessions that need to stay
+		// running past the scripted node-entry camera pan.
+		g.wantSkipStoryAtStart = false
+		g.storyBG = false
+		g.battleEvent = nil
+		g.nativeFieldEvent61 = nil
+		for len(g.dialog) > 0 {
+			g.dialog = g.dialog[:len(g.dialog)-1]
+		}
+		g.dlgShown, g.dlgPhase, g.dlgPage, g.dlgScrollT = dlgNone, 0, 0, 0
+	}
 	g.stepActionOverlayLifecycle()
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
@@ -7442,6 +7457,7 @@ func loadGame() *Game {
 		}
 	}
 	g.wantFullscreenAtStart = os.Getenv("FD2_SHOT_FULLSCREEN") != ""
+	g.wantSkipStoryAtStart = os.Getenv("FD2_SKIP_STORY_AT_START") != ""
 	if g.wantFullscreenAtStart {
 		// Precompute nativeMapViewport from the real monitor now: Layout()
 		// normally does this on the first real frame, but a campaign node
