@@ -389,33 +389,43 @@ func ComposeNativeFrame(work, vga []byte, in NativeFrameInput) error {
 // LUT pass → centered rectangle LUT → 312×192 viewport copy. It clones the
 // work buffer before every operation, so missing raw banks or malformed
 // coordinates cannot partially mutate either caller buffer.
+//
+// The transition's own geometry primitives (ApplyIndexedTransitionPass,
+// CopyNativeTransitionViewport) already take stride/width/height entirely as
+// explicit parameters, so this resizes in lockstep with in.Viewport exactly
+// like ComposeFrame: NativeTransitionPresentStride (320) generalizes to
+// vp.canvasWidth() -- reproducing 320 exactly at the original {13,8}, since
+// 320 = 312 content + 8 = contentWidth + 2*4px border, the same border
+// vp.canvasWidth() already accounts for.
 func ComposeNativeTransitionFrame(work, vga []byte, in NativeTransitionFrameInput, pass fdother.IndexedTransitionPass, lut []byte) error {
-	if len(work) < (fdother.NativeTransitionStageOffset+fdother.NativeTransitionStageHeight*fdother.NativeTransitionStageStride) || len(vga) < fdother.NativeTransitionPresentStride*fdother.NativeTransitionStageHeight {
+	vp := in.viewportOrDefault()
+	vpStride, vpBase := vp.workStride(), vp.workBase()
+	presentStride := vp.canvasWidth()
+	if len(work) < vpBase+vp.contentHeight()*vpStride || len(vga) < presentStride*vp.contentHeight() {
 		return errors.New("indexedmap: incomplete native transition buffers")
 	}
 	if in.TerrainBank == nil || in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 || len(in.TerrainLUT) != 256 || len(lut) != 256 {
 		return errors.New("indexedmap: incomplete native transition input")
 	}
-	vp := in.viewportOrDefault()
 	frame := append([]byte(nil), work...)
-	baseX, baseY := workBase%workStride, workBase/workStride
-	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.TerrainLUT); err != nil {
+	baseX, baseY := vpBase%vpStride, vpBase/vpStride
+	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, vpStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.TerrainLUT); err != nil {
 		return fmt.Errorf("indexedmap: transition terrain: %w", err)
 	}
 	redraw := func(dst []byte) error {
-		if err := in.UnitBank.BlitNativeUnitLayer(dst, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
+		if err := in.UnitBank.BlitNativeUnitLayerAt(dst, vpBase, vpStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
 			return fmt.Errorf("indexedmap: transition units: %w", err)
 		}
-		if err := in.ForegroundBank.BlitNativeForegroundLayer(dst, workStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.Flip, in.TerrainLUT); err != nil {
+		if err := in.ForegroundBank.BlitNativeForegroundLayerAt(dst, vpBase, vpStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.Flip, in.TerrainLUT); err != nil {
 			return fmt.Errorf("indexedmap: transition foreground: %w", err)
 		}
 		return nil
 	}
-	if err := fdother.ApplyIndexedTransitionPass(frame, workStride, lut, pass, redraw); err != nil {
+	if err := fdother.ApplyIndexedTransitionPass(frame, vpStride, lut, pass, redraw); err != nil {
 		return fmt.Errorf("indexedmap: transition pass: %w", err)
 	}
-	viewport := make([]byte, fdother.NativeTransitionPresentStride*fdother.NativeTransitionStageHeight)
-	if err := fdother.CopyNativeTransitionViewport(viewport, fdother.NativeTransitionPresentStride, frame, fdother.NativeTransitionStageOffset, fdother.NativeTransitionStageStride, fdother.NativeTransitionStageWidth, fdother.NativeTransitionStageHeight); err != nil {
+	viewport := make([]byte, presentStride*vp.contentHeight())
+	if err := fdother.CopyNativeTransitionViewport(viewport, presentStride, frame, vpBase, vpStride, vp.contentWidth(), vp.contentHeight()); err != nil {
 		return fmt.Errorf("indexedmap: transition viewport: %w", err)
 	}
 	copy(work, frame)

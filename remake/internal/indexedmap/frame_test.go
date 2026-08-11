@@ -279,6 +279,58 @@ func TestComposeNativeTransitionFramePreservesNativeLayerOrder(t *testing.T) {
 	}
 }
 
+// TestComposeNativeTransitionFrameAtWiderViewportPlacesUnitCorrectly mirrors
+// the Phase 3 indexedmap.TestComposeFrameAtWiderViewportPlacesUnitBelow...
+// regression for the transition path: proves NativeTransitionFrameInput.
+// Viewport actually resizes the transition stage's own work-buffer
+// stride/base and present-copy geometry (not just the FrameInput.Viewport
+// steady view), by checking a unit at Y>0 lands exactly where the wider
+// viewport's own formulas predict in the present buffer -- a uniform
+// terrain-color sample is not a reliable regression guard here, since a
+// stride bug can still incidentally paint an arbitrary sampled pixel when
+// every terrain tile shares one fill color (caught by hand while verifying
+// this test actually fails without the fix).
+func TestComposeNativeTransitionFrameAtWiderViewportPlacesUnitCorrectly(t *testing.T) {
+	vp := NativeMapViewport{Cols: 15, Rows: 8}
+	if got, want := vp.workStride(), 504; got != want {
+		t.Fatalf("workStride()=%d, want %d (test assumes a stride wider than the original 456)", got, want)
+	}
+	work := make([]byte, vp.workSize())
+	vga := make([]byte, vp.canvasWidth()*vp.contentHeight())
+	cells := make([]fdicon.NativeTerrainCell, 15*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	identity := make([]byte, 256)
+	for i := range identity {
+		identity[i] = byte(i)
+	}
+	// A radial pass covering the whole (wider) stage so the redraw + LUT
+	// remap don't themselves clip the widened content before the copy.
+	pass, err := fdother.BuildNativeIndexedTransitionPassFor(6, 6, 500, 0, vp.contentHeight(), vp.contentWidth(), vp.contentHeight())
+	if err != nil {
+		t.Fatal(err)
+	}
+	const unitX, unitY = 5, 3 // Y>0: the specific case a stale fixed stride would misplace
+	in := NativeTransitionFrameInput{
+		TerrainBank: bank(12, 1), UnitBank: bank(12, 9), ForegroundBank: bank(12, 0), SelectorCache: cache,
+		Cells: cells, Controls: []byte{0, 0, 0, 0}, TerrainLUT: identity, MapWidth: 15, Viewport: vp,
+		Units:           []fdicon.NativeUnitLayerEntry{{X: unitX, Y: unitY, Slot: 0}},
+		ForegroundUnits: []fdicon.NativeForegroundLayerEntry{{Inactive: true}},
+	}
+	if err := ComposeNativeTransitionFrame(work, vga, in, pass, identity); err != nil {
+		t.Fatal(err)
+	}
+	wantOffset := unitY*24*vp.canvasWidth() + unitX*24
+	if got := vga[wantOffset]; got != 9 {
+		t.Fatalf("pixel at unit's expected wider-transition-viewport position = %d, want unit fill 9 (unit misplaced by a stale fixed work stride)", got)
+	}
+}
+
 func TestComposeNativeTransitionFrameRejectsMissingRawInputAtomically(t *testing.T) {
 	work := make([]byte, workStride*320)
 	vga := make([]byte, viewWidth*viewHeight)
