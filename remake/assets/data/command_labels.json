@@ -1,212 +1,217 @@
 {
-  "schema": "fd2.native_command_labels.v1",
-  "source": {
-    "resource": "FDTXT_000",
-    "string_index_formula": "0x1b9 + command_id",
-    "slot_count": 40,
-    "provenance": "0x1ceed -> 0x15f84([0x53a7d], 0x1b9 + command_id, ...)"
+ "schema": "fd2.native_command_labels.v1",
+ "source": {
+  "resource": "FDTXT_000",
+  "string_index_formula": "0x1b9 + command_id",
+  "slot_count": 40,
+  "provenance": "0x1ceed -> 0x15f84([0x53a7d], 0x1b9 + command_id, ...)"
+ },
+ "entries": [
+  {
+   "command_id": 0,
+   "string_index": 441,
+   "label": "火炎術"
   },
-  "entries": [
-    {
-      "command_id": 0,
-      "string_index": 441,
-      "label": "火炎術"
-    },
-    {
-      "command_id": 1,
-      "string_index": 442,
-      "label": "烈炎術"
-    },
-    {
-      "command_id": 2,
-      "string_index": 443,
-      "label": "炎龍術"
-    },
-    {
-      "command_id": 3,
-      "string_index": 444,
-      "label": "天火術"
-    },
-    {
-      "command_id": 4,
-      "string_index": 445,
-      "label": "電擊術"
-    },
-    {
-      "command_id": 5,
-      "string_index": 446,
-      "label": "落雷術"
-    },
-    {
-      "command_id": 6,
-      "string_index": 447,
-      "label": "轟雷術"
-    },
-    {
-      "command_id": 7,
-      "string_index": 448,
-      "label": "神雷術"
-    },
-    {
-      "command_id": 8,
-      "string_index": 449,
-      "label": "聖光彈"
-    },
-    {
-      "command_id": 9,
-      "string_index": 450,
-      "label": "咒殺術"
-    },
-    {
-      "command_id": 10,
-      "string_index": 451,
-      "label": "碎岩術"
-    },
-    {
-      "command_id": 11,
-      "string_index": 452,
-      "label": "地震術"
-    },
-    {
-      "command_id": 12,
-      "string_index": 453,
-      "label": "裂地術"
-    },
-    {
-      "command_id": 13,
-      "string_index": 454,
-      "label": "治療術"
-    },
-    {
-      "command_id": 14,
-      "string_index": 455,
-      "label": "回復術"
-    },
-    {
-      "command_id": 15,
-      "string_index": 456,
-      "label": "再生術"
-    },
-    {
-      "command_id": 16,
-      "string_index": 457,
-      "label": "神恩術"
-    },
-    {
-      "command_id": 17,
-      "string_index": 458,
-      "label": "魔刃術"
-    },
-    {
-      "command_id": 18,
-      "string_index": 459,
-      "label": "魔鎧術"
-    },
-    {
-      "command_id": 19,
-      "string_index": 460,
-      "label": "風行術"
-    },
-    {
-      "command_id": 20,
-      "string_index": 461,
-      "label": "解毒術"
-    },
-    {
-      "command_id": 21,
-      "string_index": 462,
-      "label": "社麻術"
-    },
-    {
-      "command_id": 22,
-      "string_index": 463,
-      "label": "封咒術"
-    },
-    {
-      "command_id": 23,
-      "string_index": 464,
-      "label": "傳送術"
-    },
-    {
-      "command_id": 24,
-      "string_index": 465,
-      "label": "破龍擊"
-    },
-    {
-      "command_id": 25,
-      "string_index": 466,
-      "label": "行動術"
-    },
-    {
-      "command_id": 26,
-      "string_index": 467,
-      "label": "毒擊術"
-    },
-    {
-      "command_id": 27,
-      "string_index": 468,
-      "label": "麻庫術"
-    },
-    {
-      "command_id": 28,
-      "string_index": 469,
-      "label": "淒煌斬"
-    },
-    {
-      "command_id": 29,
-      "string_index": 470,
-      "label": "熾炎刀"
-    },
-    {
-      "command_id": 30,
-      "string_index": 471,
-      "label": "音速刃"
-    },
-    {
-      "command_id": 31,
-      "string_index": 472,
-      "label": ""
-    },
-    {
-      "command_id": 32,
-      "string_index": 473,
-      "label": "熾天使"
-    },
-    {
-      "command_id": 33,
-      "string_index": 474,
-      "label": "風妖精"
-    },
-    {
-      "command_id": 34,
-      "string_index": 475,
-      "label": "破壞神"
-    },
-    {
-      "command_id": 35,
-      "string_index": 476,
-      "label": "暗邪鬼"
-    },
-    {
-      "command_id": 36,
-      "string_index": 477,
-      "label": ""
-    },
-    {
-      "command_id": 37,
-      "string_index": 478,
-      "label": "記錄讀取完畢！"
-    },
-    {
-      "command_id": 38,
-      "string_index": 479,
-      "label": "本章不能由商店內讀取！"
-    },
-    {
-      "command_id": 39,
-      "string_index": 480,
-      "label": "道具滿了！"
-    }
-  ],
-  "semantic_status": "raw native labels only; a label does not prove a slot is reachable or define its gameplay effect"
+  {
+   "command_id": 1,
+   "string_index": 442,
+   "label": "烈炎術"
+  },
+  {
+   "command_id": 2,
+   "string_index": 443,
+   "label": "炎龍術"
+  },
+  {
+   "command_id": 3,
+   "string_index": 444,
+   "label": "天火術"
+  },
+  {
+   "command_id": 4,
+   "string_index": 445,
+   "label": "電擊術"
+  },
+  {
+   "command_id": 5,
+   "string_index": 446,
+   "label": "落雷術"
+  },
+  {
+   "command_id": 6,
+   "string_index": 447,
+   "label": "轟雷術"
+  },
+  {
+   "command_id": 7,
+   "string_index": 448,
+   "label": "神雷術"
+  },
+  {
+   "command_id": 8,
+   "string_index": 449,
+   "label": "聖光彈"
+  },
+  {
+   "command_id": 9,
+   "string_index": 450,
+   "label": "咒殺術"
+  },
+  {
+   "command_id": 10,
+   "string_index": 451,
+   "label": "碎岩術"
+  },
+  {
+   "command_id": 11,
+   "string_index": 452,
+   "label": "地震術"
+  },
+  {
+   "command_id": 12,
+   "string_index": 453,
+   "label": "裂地術"
+  },
+  {
+   "command_id": 13,
+   "string_index": 454,
+   "label": "治療術"
+  },
+  {
+   "command_id": 14,
+   "string_index": 455,
+   "label": "回復術"
+  },
+  {
+   "command_id": 15,
+   "string_index": 456,
+   "label": "再生術"
+  },
+  {
+   "command_id": 16,
+   "string_index": 457,
+   "label": "神恩術"
+  },
+  {
+   "command_id": 17,
+   "string_index": 458,
+   "label": "攻擊術"
+  },
+  {
+   "command_id": 18,
+   "string_index": 459,
+   "label": "防禦術"
+  },
+  {
+   "command_id": 19,
+   "string_index": 460,
+   "label": "速度術"
+  },
+  {
+   "command_id": 20,
+   "string_index": 461,
+   "label": "解毒術"
+  },
+  {
+   "command_id": 21,
+   "string_index": 462,
+   "label": "社麻術"
+  },
+  {
+   "command_id": 22,
+   "string_index": 463,
+   "label": "封咒術"
+  },
+  {
+   "command_id": 23,
+   "string_index": 464,
+   "label": "傳送術"
+  },
+  {
+   "command_id": 24,
+   "string_index": 465,
+   "label": "破龍擊"
+  },
+  {
+   "command_id": 25,
+   "string_index": 466,
+   "label": "行動術"
+  },
+  {
+   "command_id": 26,
+   "string_index": 467,
+   "label": "施毒術"
+  },
+  {
+   "command_id": 27,
+   "string_index": 468,
+   "label": "麻痺術"
+  },
+  {
+   "command_id": 28,
+   "string_index": 469,
+   "label": "淒煌斬"
+  },
+  {
+   "command_id": 29,
+   "string_index": 470,
+   "label": "熾炎刀"
+  },
+  {
+   "command_id": 30,
+   "string_index": 471,
+   "label": "音速刃"
+  },
+  {
+   "command_id": 31,
+   "string_index": 472,
+   "label": ""
+  },
+  {
+   "command_id": 32,
+   "string_index": 473,
+   "label": "熾天使"
+  },
+  {
+   "command_id": 33,
+   "string_index": 474,
+   "label": "風妖精"
+  },
+  {
+   "command_id": 34,
+   "string_index": 475,
+   "label": "破壞神"
+  },
+  {
+   "command_id": 35,
+   "string_index": 476,
+   "label": "暗邪鬼"
+  },
+  {
+   "command_id": 36,
+   "string_index": 477,
+   "label": "MP吸取術"
+  },
+  {
+   "command_id": 37,
+   "string_index": 478,
+   "label": "記錄讀取完畢！"
+  },
+  {
+   "command_id": 38,
+   "string_index": 479,
+   "label": "本章不能由商店內讀取！"
+  },
+  {
+   "command_id": 39,
+   "string_index": 480,
+   "label": "道具滿了！"
+  },
+  {
+   "command_id": 36,
+   "string_index": -1,
+   "label": "MP吸取術"
+  }
+ ],
+ "semantic_status": "raw native labels only; a label does not prove a slot is reachable or define its gameplay effect"
 }
