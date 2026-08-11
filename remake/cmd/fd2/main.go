@@ -5478,6 +5478,11 @@ func (g *Game) Update() error {
 				}
 				g.dlgShown, g.dlgPhase, g.dlgPage, g.dlgScrollT = dlgNone, 0, 0, 0
 			}
+			if os.Getenv("FD2_SHOT_SKIP_STORY") != "" { // 截圖驗證:跳過節點進場的腳本運鏡,直接進互動戰場
+				g.storyBG = false
+				g.battleEvent = nil
+				g.nativeFieldEvent61 = nil
+			}
 			for i := 0; i < g.shotTurn; i++ { // 推進 N 個回合(觸發增援事件),驗證進場
 				g.endTurn()
 			}
@@ -7437,6 +7442,18 @@ func loadGame() *Game {
 		}
 	}
 	g.wantFullscreenAtStart = os.Getenv("FD2_SHOT_FULLSCREEN") != ""
+	if g.wantFullscreenAtStart {
+		// Precompute nativeMapViewport from the real monitor now: Layout()
+		// normally does this on the first real frame, but a campaign node
+		// materialized straight from loadGame() (see FD2_CAMP_NODE below) can
+		// lock a battle's viewport onto g.st before Ebiten ever calls Layout,
+		// which would silently leave it at the zero value (falls back to the
+		// original 13x8) even for a window that's about to go fullscreen.
+		if sw, sh, ok := truePhysicalScreenSize(); ok {
+			g.nativeMapViewport = pickNativeMapViewport(sw, sh)
+			g.nativeMapViewportForW, g.nativeMapViewportForH = sw, sh
+		}
+	}
 	if os.Getenv("FD2_ENDING_PREFIX") != "" {
 		preview, err := newNativeEndingPreview()
 		if err != nil {
