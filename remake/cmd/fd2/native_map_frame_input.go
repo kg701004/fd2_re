@@ -19,12 +19,17 @@ type nativeMapFrameRuntime struct {
 
 // buildNativeMapFrameInput joins the all-or-nothing original asset bundle,
 // exact exported FDFIELD cells, battle-local raw roster and explicit runtime
-// globals. Any incomplete provenance rejects the entire frame input.
+// globals. Any incomplete provenance rejects the entire frame input. viewport
+// is the chosen steady map viewport (see pickNativeMapViewport); callers
+// must already have clamped it to the field's own dimensions (see
+// clampNativeMapViewportToField), since a viewport bigger than the field has
+// no valid camera position.
 func buildNativeMapFrameInput(
 	assets *nativeMapAssets,
 	field *MapData,
 	state *battle.State,
 	runtime nativeMapFrameRuntime,
+	viewport indexedmap.NativeMapViewport,
 ) (indexedmap.NativeFrameInput, error) {
 	if !nativeMapAssetsAvailable(assets) || field == nil || state == nil {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: incomplete assets, field, or battle state")
@@ -64,6 +69,7 @@ func buildNativeMapFrameInput(
 		PixelShift: roster.UnitPixelShift,
 		RangeMode:  state.NativeMapRangeMode, CursorX: view.CursorX, CursorY: view.CursorY,
 		Units: roster.Units, ForegroundUnits: roster.Foreground,
+		Viewport: viewport,
 	}
 	hud := runtime.HUD
 	hud.DisplayGateA = state.NativeMapHUDState.DisplayGateA != 0

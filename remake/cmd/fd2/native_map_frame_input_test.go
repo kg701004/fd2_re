@@ -137,6 +137,56 @@ func TestDrawNativeMapFramePresentsCorrectedVGABorder(t *testing.T) {
 	}
 }
 
+// TestDrawNativeMapFrameAtWiderViewportSizesBuffersAndShowsMoreTerrain is the
+// Phase 5 integration proof: a battle whose field is bigger than 13x8 and
+// whose native map view was materialized with a wider NativeMapViewportCols/
+// Rows (as materializeNativeMapRuntime would do for a big enough window, see
+// clampNativeMapViewportToField) must compose+present a correspondingly
+// bigger VGA canvas, not silently stay at the original fixed 320x200.
+func TestDrawNativeMapFrameAtWiderViewportSizesBuffersAndShowsMoreTerrain(t *testing.T) {
+	assets, field, state := completeNativeMapFrameFixture(t)
+	wideCols, wideRows := 17, 10
+	field.W, field.H = wideCols, wideRows
+	field.Tiles = make([]int, field.W*field.H)
+	field.NativeTileBlitModes = make([]byte, field.W*field.H)
+	for i := range field.NativeTileBlitModes {
+		field.NativeTileBlitModes[i] = 0xff
+	}
+	state.W, state.H = field.W, field.H
+	state.NativeTileBlitModes = append([]byte(nil), field.NativeTileBlitModes...)
+	state.NativeMapViewportCols, state.NativeMapViewportRows = wideCols, wideRows
+	if err := state.MaterializeNativeMapViewState(battle.NativeMapViewState{}); err != nil {
+		t.Fatal(err)
+	}
+	// Mode 0 = no range overlay, isolating the terrain-fill assertion below
+	// from the range bank's own fill color near the (0,0) cursor.
+	if !state.MaterializeNativeMapRangeMode(0) {
+		t.Fatal("range mode materialization rejected")
+	}
+	g := &Game{nativeMapAssets: assets, m: field, st: state}
+	screen := ebiten.NewImage(1200, 700)
+	if !g.drawNativeMapFrame(screen) {
+		t.Fatal("wider-viewport native map frame was not presented")
+	}
+	wantVP := indexedmap.NativeMapViewport{Cols: wideCols, Rows: wideRows}
+	if got, want := len(g.nativeMapVGA), wantVP.VGASize(); got != want {
+		t.Fatalf("VGA buffer bytes=%d, want %d (not resized for the wider viewport)", got, want)
+	}
+	if got, want := len(g.nativeMapWork), wantVP.WorkSize(); got != want {
+		t.Fatalf("work buffer bytes=%d, want %d (not resized for the wider viewport)", got, want)
+	}
+	canvasW, _ := wantVP.CanvasSize()
+	if canvasW <= 320 {
+		t.Fatalf("wider viewport canvas width=%d, want more than the original 320", canvasW)
+	}
+	// Column just inside the widened canvas, beyond the original 312px
+	// content window, must carry the unit's fill color -- proving the wider
+	// content was actually composed and presented, not clamped back down.
+	if got := g.nativeMapVGA[4*canvasW+340]; got != 1 {
+		t.Fatalf("pixel at widened column 340 = %d, want terrain fill 1 (wider viewport not actually drawn)", got)
+	}
+}
+
 func TestComposeNativeMapFrameAdmitsOpeningAndInteractiveSelectors(t *testing.T) {
 	assets, field, state := completeNativeMapFrameFixture(t)
 	for i := range assets.Range.Sprites {
@@ -268,7 +318,7 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 		t.Fatal("binary map timing advance rejected")
 	}
 	runtime := nativeMapFrameRuntime{HUD: indexedmap.NativeMapHUDInput{}}
-	got, err := buildNativeMapFrameInput(assets, field, state, runtime)
+	got, err := buildNativeMapFrameInput(assets, field, state, runtime, indexedmap.DefaultNativeMapViewport)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,12 +336,12 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 func TestBuildNativeMapFrameInputRejectsControlDriftAndMissingRawRoster(t *testing.T) {
 	assets, field, state := completeNativeMapFrameFixture(t)
 	field.NativeTerrainControl[0] = 1
-	if _, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}); err == nil {
+	if _, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport); err == nil {
 		t.Fatal("accepted editable/native control-table drift")
 	}
 	field.NativeTerrainControl[0] = 0
 	state.Units[0].HasBattleFig = false
-	if got, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}); err == nil ||
+	if got, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport); err == nil ||
 		got.Frame.Units != nil || got.Frame.ForegroundUnits != nil {
 		t.Fatalf("partial frame=%+v err=%v", got.Frame, err)
 	}

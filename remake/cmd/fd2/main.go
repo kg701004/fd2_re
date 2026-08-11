@@ -76,8 +76,11 @@ type Game struct {
 	uiCanvas                       *ebiten.Image // fixed logicalW x logicalH target for every non-expandable screen (shop/church/prep/title/menus/etc); reused across frames
 	m                              *MapData
 	nativeMapAssets                *nativeMapAssets                   // all original map HUD resources, nil on any missing/malformed asset
-	nativeMapWork                  []byte                             // persistent 456-stride original tactical framebuffer
-	nativeMapVGA                   []byte                             // persistent 320x200 indexed VGA surface
+	nativeMapWork                  []byte                             // persistent tactical framebuffer, sized for nativeMapViewport (456-stride at the original 13x8)
+	nativeMapVGA                   []byte                             // persistent indexed VGA surface, sized for nativeMapViewport (320x200 at the original 13x8)
+	nativeMapViewport              indexedmap.NativeMapViewport       // steady map viewport preset chosen by Layout for the current window size (see pickNativeMapViewport); {13,8} (zero value falls back via viewportOrDefault) until Layout runs once
+	nativeMapViewportForW          int                                // outsideW/H Layout last picked nativeMapViewport for, so it's only recomputed on an actual size change
+	nativeMapViewportForH          int
 	nativeMapDAC                   []byte                             // current 256xRGB six-bit DAC state for handler palette ramps
 	nativePaletteRamp              *nativePaletteRampJob              // exact 0x1f882/0x1f525 indexed DAC presentation
 	nativeFullDACWhite             bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
@@ -2154,13 +2157,23 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 	// a separate persistent option and must not be fabricated.
 	candidate := &battle.State{W: g.st.W, H: g.st.H}
 	view := n.NativeMapView
-	if err := candidate.MaterializeNativeMapViewState(battle.NativeMapViewState{
+	rawView := battle.NativeMapViewState{
 		CameraX: view.CameraX, CameraY: view.CameraY,
 		CursorX: view.CursorX, CursorY: view.CursorY,
 		VisibleCursorX: view.VisibleCursorX, VisibleCursorY: view.VisibleCursorY,
-	}); err != nil {
-		g.loadErr = "native map runtime view: " + err.Error()
-		return false
+	}
+	// Try the window-sized viewport first; a campaign-authored camera position
+	// calibrated for the original 13x8 window can fall outside a wider one's
+	// stricter CameraX/Y bound (see battle.validateNativeMapView), so silently
+	// retry at the original size rather than reject an otherwise-valid battle.
+	wide := clampNativeMapViewportToField(g.nativeMapViewport, g.st.W, g.st.H)
+	candidate.NativeMapViewportCols, candidate.NativeMapViewportRows = wide.Cols, wide.Rows
+	if err := candidate.MaterializeNativeMapViewState(rawView); err != nil {
+		candidate.NativeMapViewportCols, candidate.NativeMapViewportRows = 0, 0
+		if err := candidate.MaterializeNativeMapViewState(rawView); err != nil {
+			g.loadErr = "native map runtime view: " + err.Error()
+			return false
+		}
 	}
 	if view.RangeMode == nil || (*view.RangeMode != 0 && *view.RangeMode != 1) ||
 		!candidate.MaterializeNativeMapRangeMode(*view.RangeMode) {
@@ -2196,6 +2209,8 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 	}
 	g.st.NativeMapViewState = candidate.NativeMapViewState
 	g.st.HasNativeMapViewState = true
+	g.st.NativeMapViewportCols = candidate.NativeMapViewportCols
+	g.st.NativeMapViewportRows = candidate.NativeMapViewportRows
 	g.st.NativeMapRangeMode = candidate.NativeMapRangeMode
 	g.st.HasNativeMapRangeModeState = true
 	g.st.NativeMapHUDState = candidate.NativeMapHUDState
@@ -7285,15 +7300,24 @@ func (g *Game) Layout(outsideW, outsideH int) (int, int) {
 	// bypasses whatever internal bookkeeping keeps the outsideW/outsideH argument
 	// here in sync, so it stays stale at the pre-toggle size. ebiten.WindowSize()
 	// is a direct query of the window we just resized and reflects it correctly.
+	w, h := outsideW, outsideH
 	if g.trueFullscreen {
-		if w, h := ebiten.WindowSize(); w >= logicalW && h >= logicalH {
-			return w, h
+		if ww, wh := ebiten.WindowSize(); ww >= logicalW && wh >= logicalH {
+			w, h = ww, wh
 		}
 	}
-	if outsideW < logicalW || outsideH < logicalH {
-		return logicalW, logicalH
+	if w < logicalW || h < logicalH {
+		w, h = logicalW, logicalH
 	}
-	return outsideW, outsideH
+	// Recompute the steady map viewport preset only when the returned size
+	// actually changes, not every frame -- see pickNativeMapViewport and
+	// composeNativeMapFrameAt, which reallocates g.nativeMapWork/nativeMapVGA
+	// only when the chosen viewport's own buffer sizes change.
+	if w != g.nativeMapViewportForW || h != g.nativeMapViewportForH {
+		g.nativeMapViewport = pickNativeMapViewport(w, h)
+		g.nativeMapViewportForW, g.nativeMapViewportForH = w, h
+	}
+	return w, h
 }
 
 // nativeFDOTHERPath opts into original UI data without distributing it. A
@@ -7787,8 +7811,10 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 
 // drawNativeMapFrame is the production 0x11cac bridge for the currently
 // materialized neutral tactical state. It composes terrain, range, units,
-// foreground and HUD atomically, then presents the corrected 312x192 viewport
-// at VGA (4,4) on a 320x200 paletted surface.
+// foreground and HUD atomically, then presents the corrected viewport onto a
+// paletted surface sized for the battle's effectiveNativeMapViewport (320x200
+// at the original 13x8; see pickNativeMapViewport for wider presets), still
+// doubled 2x to preserve the original's chunky-pixel look.
 func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 	if err := g.composeNativeMapFrame(); err != nil {
 		return false
@@ -7800,7 +7826,8 @@ func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 			palette = current
 		}
 	}
-	img := image.NewPaletted(image.Rect(0, 0, 320, 200), palette)
+	canvasW, canvasH := g.effectiveNativeMapViewport().CanvasSize()
+	img := image.NewPaletted(image.Rect(0, 0, canvasW, canvasH), palette)
 	copy(img.Pix, g.nativeMapVGA)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(2, 2)
@@ -7830,17 +7857,23 @@ func (g *Game) composeNativeMapFrameAt(now time.Time) error {
 	if !candidateGame.advanceNativeMapClock(now) {
 		return errors.New("native map frame: timing state unavailable")
 	}
+	// The viewport is not re-picked from the current window size every frame:
+	// it was locked onto g.st when the battle's native map view was
+	// materialized (see materializeNativeMapRuntime), so camera scroll/HUD
+	// dodge (which read g.st.NativeMapViewportCols/Rows directly) and this
+	// frame's own composition always agree.
+	viewport := g.effectiveNativeMapViewport()
 	in, err := buildNativeMapFrameInput(
-		a, g.m, &candidateState, nativeMapFrameRuntime{HUD: hud},
+		a, g.m, &candidateState, nativeMapFrameRuntime{HUD: hud}, viewport,
 	)
 	if err != nil {
 		return err
 	}
-	if len(g.nativeMapWork) != indexedmap.NativeUnitPresentWorkSize {
-		g.nativeMapWork = make([]byte, indexedmap.NativeUnitPresentWorkSize)
+	if want := viewport.WorkSize(); len(g.nativeMapWork) != want {
+		g.nativeMapWork = make([]byte, want)
 	}
-	if len(g.nativeMapVGA) != indexedmap.NativeMapVGASize {
-		g.nativeMapVGA = make([]byte, indexedmap.NativeMapVGASize)
+	if want := viewport.VGASize(); len(g.nativeMapVGA) != want {
+		g.nativeMapVGA = make([]byte, want)
 	}
 	if err := indexedmap.ComposeNativeFrame(g.nativeMapWork, g.nativeMapVGA, in); err != nil {
 		return err

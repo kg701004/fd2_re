@@ -72,3 +72,21 @@ func (v NativeMapViewport) workBase() int {
 	stride := v.workStride()
 	return nativeMapWorkMargin*stride + nativeMapWorkMargin
 }
+
+// CanvasSize exposes canvasWidth/canvasHeight (320x200 at the original
+// {13,8}) for callers outside this package choosing a viewport preset
+// against a real window size, or sizing the paletted image a composed frame
+// gets copied into (see cmd/fd2's pickNativeMapViewport/drawNativeMapFrame).
+func (v NativeMapViewport) CanvasSize() (width, height int) {
+	return v.canvasWidth(), v.canvasHeight()
+}
+
+// VGASize exposes vgaSize (NativeMapVGASize, 320*200 at the original {13,8})
+// for callers outside this package allocating the VGA buffer ComposeFrame
+// writes into.
+func (v NativeMapViewport) VGASize() int { return v.vgaSize() }
+
+// WorkSize exposes workSize (NativeUnitPresentWorkSize, 456*336 at the
+// original {13,8}) for callers outside this package allocating the native
+// work buffer ComposeFrame/ComposeNativeTransitionFrame composite into.
+func (v NativeMapViewport) WorkSize() int { return v.workSize() }
