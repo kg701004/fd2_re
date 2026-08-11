@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
 )
 
@@ -64,6 +65,43 @@ func TestClampNativeMapViewportToFieldNeverExceedsFieldOrShrinksBelowDefault(t *
 	}
 	if got := clampNativeMapViewportToField(indexedmap.DefaultNativeMapViewport, 13, 8); got != indexedmap.DefaultNativeMapViewport {
 		t.Fatalf("default viewport against exact-size field = %+v, want unchanged default", got)
+	}
+}
+
+// TestNativeMapViewportLadderFallsBackToNarrowerPresetNotStraightToDefault
+// mirrors the real battle_ch01 campaign fixture (24x24 field, authored
+// camera (1,13)): the widest window-fitting preset {44,26} clamps to
+// {24,24}, which the authored camera can't satisfy (needs CameraX<=width-
+// viewCols and CameraY<=height-viewRows), but the narrower {17,10} preset
+// can. The ladder must offer that middle ground, not jump straight from the
+// widest preset to the original 13x8 default.
+func TestNativeMapViewportLadderFallsBackToNarrowerPresetNotStraightToDefault(t *testing.T) {
+	ladder := nativeMapViewportLadder(indexedmap.NativeMapViewport{Cols: 44, Rows: 26}, 24, 24)
+	want := []indexedmap.NativeMapViewport{
+		{Cols: 24, Rows: 24}, {Cols: 24, Rows: 21}, {Cols: 24, Rows: 17},
+		{Cols: 22, Rows: 13}, {Cols: 17, Rows: 10}, {Cols: 13, Rows: 8},
+	}
+	if len(ladder) != len(want) {
+		t.Fatalf("ladder=%+v, want %+v", ladder, want)
+	}
+	for i := range want {
+		if ladder[i] != want[i] {
+			t.Fatalf("ladder[%d]=%+v, want %+v (full ladder=%+v)", i, ladder[i], want[i], ladder)
+		}
+	}
+	found := false
+	for _, vp := range ladder {
+		if vp == (indexedmap.NativeMapViewport{Cols: 17, Rows: 10}) {
+			found = true
+			view := battle.NativeMapViewState{CameraX: 1, CameraY: 13, CursorX: 8, CursorY: 17, VisibleCursorX: 7, VisibleCursorY: 4}
+			state := &battle.State{W: 24, H: 24, NativeMapViewportCols: vp.Cols, NativeMapViewportRows: vp.Rows}
+			if err := state.MaterializeNativeMapViewState(view); err != nil {
+				t.Fatalf("battle_ch01's authored camera rejected {17,10}: %v", err)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("ladder never offered {17,10}, the preset battle_ch01's authored camera actually fits")
 	}
 }
 

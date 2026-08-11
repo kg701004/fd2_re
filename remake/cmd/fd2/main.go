@@ -81,6 +81,7 @@ type Game struct {
 	nativeMapViewport              indexedmap.NativeMapViewport       // steady map viewport preset chosen by Layout for the current window size (see pickNativeMapViewport); {13,8} (zero value falls back via viewportOrDefault) until Layout runs once
 	nativeMapViewportForW          int                                // outsideW/H Layout last picked nativeMapViewport for, so it's only recomputed on an actual size change
 	nativeMapViewportForH          int
+	wantFullscreenAtStart          bool // FD2_SHOT_FULLSCREEN=1: toggle true fullscreen on the first Update tick (verification hook for the wider native map viewport)
 	nativeMapDAC                   []byte                             // current 256xRGB six-bit DAC state for handler palette ramps
 	nativePaletteRamp              *nativePaletteRampJob              // exact 0x1f882/0x1f525 indexed DAC presentation
 	nativeFullDACWhite             bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
@@ -2162,18 +2163,22 @@ func (g *Game) materializeNativeMapRuntime(n *campaign.Node) bool {
 		CursorX: view.CursorX, CursorY: view.CursorY,
 		VisibleCursorX: view.VisibleCursorX, VisibleCursorY: view.VisibleCursorY,
 	}
-	// Try the window-sized viewport first; a campaign-authored camera position
-	// calibrated for the original 13x8 window can fall outside a wider one's
-	// stricter CameraX/Y bound (see battle.validateNativeMapView), so silently
-	// retry at the original size rather than reject an otherwise-valid battle.
-	wide := clampNativeMapViewportToField(g.nativeMapViewport, g.st.W, g.st.H)
-	candidate.NativeMapViewportCols, candidate.NativeMapViewportRows = wide.Cols, wide.Rows
-	if err := candidate.MaterializeNativeMapViewState(rawView); err != nil {
-		candidate.NativeMapViewportCols, candidate.NativeMapViewportRows = 0, 0
-		if err := candidate.MaterializeNativeMapViewState(rawView); err != nil {
-			g.loadErr = "native map runtime view: " + err.Error()
-			return false
+	// Try the widest viewport the window fits first, then progressively
+	// narrower presets: a campaign-authored camera position calibrated for
+	// the original 13x8 window can fall outside a wider preset's stricter
+	// CameraX/Y bound (see battle.validateNativeMapView) while still fitting
+	// a somewhat narrower one, so this only falls all the way back to the
+	// original size when nothing wider works at all.
+	var viewErr error
+	for _, vp := range nativeMapViewportLadder(g.nativeMapViewport, g.st.W, g.st.H) {
+		candidate.NativeMapViewportCols, candidate.NativeMapViewportRows = vp.Cols, vp.Rows
+		if viewErr = candidate.MaterializeNativeMapViewState(rawView); viewErr == nil {
+			break
 		}
+	}
+	if viewErr != nil {
+		g.loadErr = "native map runtime view: " + viewErr.Error()
+		return false
 	}
 	if view.RangeMode == nil || (*view.RangeMode != 0 && *view.RangeMode != 1) ||
 		!candidate.MaterializeNativeMapRangeMode(*view.RangeMode) {
@@ -5271,6 +5276,14 @@ func (g *Game) tileAt(idx int) *ebiten.Image {
 
 func (g *Game) Update() error {
 	g.frame++
+	if g.wantFullscreenAtStart {
+		// Deferred from loadGame(): ebiten.SetWindowSize/Position (used by
+		// toggleFullscreen) need a live window, which doesn't exist yet
+		// during loadGame(), only from inside the Update loop after
+		// ebiten.RunGame has started it.
+		g.wantFullscreenAtStart = false
+		g.toggleFullscreen()
+	}
 	g.stepActionOverlayLifecycle()
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
@@ -7423,6 +7436,7 @@ func loadGame() *Game {
 			g.shotTurn = n
 		}
 	}
+	g.wantFullscreenAtStart = os.Getenv("FD2_SHOT_FULLSCREEN") != ""
 	if os.Getenv("FD2_ENDING_PREFIX") != "" {
 		preview, err := newNativeEndingPreview()
 		if err != nil {

@@ -50,6 +50,38 @@ func (g *Game) effectiveNativeMapViewport() indexedmap.NativeMapViewport {
 	return indexedmap.NativeMapViewport{Cols: g.st.NativeMapViewportCols, Rows: g.st.NativeMapViewportRows}
 }
 
+// nativeMapViewportLadder returns candidate viewports to try for a battle,
+// widest first: preferred (see pickNativeMapViewport) and every narrower
+// preset after it in nativeMapViewportPresets, each clamped to the field's
+// own size (see clampNativeMapViewportToField), deduping consecutive equal
+// results. Presets after preferred are guaranteed to still fit the same
+// window, since nativeMapViewportPresets only shrinks both canvas dimensions
+// further down the list. This exists because a campaign-authored camera
+// position calibrated for the original 13x8 window (see
+// materializeNativeMapRuntime) can be incompatible with the single widest
+// preset that fits the window while still being compatible with a somewhat
+// narrower one -- falling straight back to the original size would forfeit
+// that available middle ground. The original 13x8 default is always last,
+// since every field must be at least that size for the game to be playable
+// at all today.
+func nativeMapViewportLadder(preferred indexedmap.NativeMapViewport, fieldW, fieldH int) []indexedmap.NativeMapViewport {
+	start := len(nativeMapViewportPresets) - 1
+	for i, v := range nativeMapViewportPresets {
+		if v == preferred {
+			start = i
+			break
+		}
+	}
+	ladder := make([]indexedmap.NativeMapViewport, 0, len(nativeMapViewportPresets)-start)
+	for _, v := range nativeMapViewportPresets[start:] {
+		clamped := clampNativeMapViewportToField(v, fieldW, fieldH)
+		if len(ladder) == 0 || ladder[len(ladder)-1] != clamped {
+			ladder = append(ladder, clamped)
+		}
+	}
+	return ladder
+}
+
 // clampNativeMapViewportToField shrinks a candidate viewport so it never
 // exceeds the current battle's own field dimensions -- a viewport wider or
 // taller than the field itself has no valid camera position at all (see
