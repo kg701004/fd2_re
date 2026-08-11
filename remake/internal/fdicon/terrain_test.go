@@ -30,7 +30,8 @@ func TestNativeMapHUDUnitFrameIndexMatches1AE4D(t *testing.T) {
 }
 
 func TestNativeMapHUDLayoutForMatches1ACF3(t *testing.T) {
-	l, err := NativeMapHUDLayoutFor(1, NativeMapStride)
+	const contentWidth, contentHeight = 312, 192 // 13x8 tiles, the original size
+	l, err := NativeMapHUDLayoutFor(1, NativeMapStride, contentWidth, contentHeight)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,11 +42,46 @@ func TestNativeMapHUDLayoutForMatches1ACF3(t *testing.T) {
 	}) {
 		t.Fatalf("layout=%+v", l)
 	}
-	if _, err := NativeMapHUDLayoutFor(252, NativeMapStride); err == nil {
+	if _, err := NativeMapHUDLayoutFor(252, NativeMapStride, contentWidth, contentHeight); err == nil {
 		t.Fatal("off-screen native HUD frame was accepted")
 	}
-	if _, err := NativeMapHUDLayoutFor(1, 320); err == nil {
-		t.Fatal("non-native stride was accepted")
+	// The stride gate is a minimum bound (a remake viewport may need a wider
+	// work-buffer row than the original 456), not the original's exact-match
+	// gate -- so a narrower stride must still fail closed, but a wider one is
+	// legitimate and must be accepted (see indexedmap.NativeMapViewport).
+	if _, err := NativeMapHUDLayoutFor(1, 320, contentWidth, contentHeight); err == nil {
+		t.Fatal("narrower-than-native stride was accepted")
+	}
+	if _, err := NativeMapHUDLayoutFor(1, NativeMapStride+48, contentWidth, contentHeight); err != nil {
+		t.Fatalf("wider-than-native stride was rejected: %v", err)
+	}
+}
+
+// TestNativeMapHUDLayoutForGeneralizesPanelRowToContentHeight proves the
+// panel row is genuinely computed from contentHeight (192-34-1=157 at the
+// original size), not a hardcoded 157 wearing a parameter -- it must move to
+// track a taller remake viewport's content area (see
+// indexedmap.NativeMapViewport), always flush against the bottom edge with a
+// 1px inset, matching NativeMapHUDPanelHeight (34).
+func TestNativeMapHUDLayoutForGeneralizesPanelRowToContentHeight(t *testing.T) {
+	const contentWidth, tallerContentHeight = 312, 288 // 12 tile rows instead of 8
+	l, err := NativeMapHUDLayoutFor(1, NativeMapStride, contentWidth, tallerContentHeight)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantRow := tallerContentHeight - NativeMapHUDPanelHeight - 1
+	if got := (l.Frame - 1) / NativeMapStride; got != wantRow {
+		t.Fatalf("panel row=%d, want %d (contentHeight-panelHeight-1)", got, wantRow)
+	}
+	// A right-flush anchor must also track the wider content, not stay pinned
+	// to the original 242.
+	const widerContentWidth = 480 // 20 tiles instead of 13
+	rightAnchor := widerContentWidth - NativeMapHUDPanelWidth - 1
+	if _, err := NativeMapHUDLayoutFor(rightAnchor, NativeMapStride, widerContentWidth, 192); err != nil {
+		t.Fatalf("right-flush anchor at wider content was rejected: %v", err)
+	}
+	if _, err := NativeMapHUDLayoutFor(rightAnchor+2, NativeMapStride, widerContentWidth, 192); err == nil {
+		t.Fatal("anchor past the wider content's right edge was accepted")
 	}
 }
 

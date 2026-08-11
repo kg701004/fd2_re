@@ -39,6 +39,19 @@ type FrameInput struct {
 	RangeMode, CursorX, CursorY                      int
 	Units                                            []fdicon.NativeUnitLayerEntry
 	ForegroundUnits                                  []fdicon.NativeForegroundLayerEntry
+	// Viewport is the visible tile-count window. The zero value (Cols==0)
+	// means "use DefaultNativeMapViewport" so existing callers/tests that
+	// never set it keep the exact original {13,8} behavior.
+	Viewport NativeMapViewport
+}
+
+// viewportOrDefault returns in.Viewport, falling back to the original 13x8
+// window when unset (Cols<=0), so old callers/tests need no changes.
+func (in FrameInput) viewportOrDefault() NativeMapViewport {
+	if in.Viewport.Cols <= 0 || in.Viewport.Rows <= 0 {
+		return DefaultNativeMapViewport
+	}
+	return in.Viewport
 }
 
 // NativeFrameInput is the complete, directly composable steady redraw slice.
@@ -67,6 +80,18 @@ type NativeTransitionFrameInput struct {
 	MovingCycle, PixelShift               int
 	Units                                 []fdicon.NativeUnitLayerEntry
 	ForegroundUnits                       []fdicon.NativeForegroundLayerEntry
+	// Viewport is the visible tile-count window; zero value falls back to
+	// DefaultNativeMapViewport, same as FrameInput.Viewport.
+	Viewport NativeMapViewport
+}
+
+// viewportOrDefault mirrors FrameInput.viewportOrDefault for the transition
+// input contract.
+func (in NativeTransitionFrameInput) viewportOrDefault() NativeMapViewport {
+	if in.Viewport.Cols <= 0 || in.Viewport.Rows <= 0 {
+		return DefaultNativeMapViewport
+	}
+	return in.Viewport
 }
 
 // NativeUnitPresentStripLayout is 0x22390..0x22434's direct work-buffer to
@@ -340,14 +365,22 @@ func BuildNativeTerrainCells(tiles []int, blitModes []byte) ([]fdicon.NativeTerr
 // accepting an arbitrary callback. All source data remain explicit and any
 // rejection keeps work/VGA unchanged through ComposeFrame's transaction.
 func ComposeNativeFrame(work, vga []byte, in NativeFrameInput) error {
+	// BlitNativeMapHUD's own row/column math is still hardcoded to the
+	// original fdicon.NativeMapStride (456) internally (see hud.go); that
+	// generalization is Phase 4's job. At the current DefaultNativeMapViewport
+	// this vpBase equals the original 0x8088 exactly, so this slice is a
+	// no-op change in behavior. It is only correct in principle to slice
+	// at vpBase rather than the fixed workBase for a wider viewport too.
+	vp := in.Frame.viewportOrDefault()
+	vpBase := vp.workBase()
 	return ComposeFrame(work, vga, in.Frame, func(dst []byte) error {
 		// 0x11cfa passes [0x53a49]+0x8088 to 0x1acf3, not the allocation
 		// base. HUD row/column offsets are therefore viewport-relative, just
 		// like the preceding 0x11eee terrain destination.
-		if len(dst) < workBase {
+		if len(dst) < vpBase {
 			return errors.New("indexedmap: native HUD viewport base outside work buffer")
 		}
-		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst[workBase:], in.HUD)
+		return BlitNativeMapHUD(in.Frames, in.HUDTerrain, in.HUDUnits, in.HUDCache, dst[vpBase:], in.HUD, vp)
 	})
 }
 
@@ -363,16 +396,17 @@ func ComposeNativeTransitionFrame(work, vga []byte, in NativeTransitionFrameInpu
 	if in.TerrainBank == nil || in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 || len(in.TerrainLUT) != 256 || len(lut) != 256 {
 		return errors.New("indexedmap: incomplete native transition input")
 	}
+	vp := in.viewportOrDefault()
 	frame := append([]byte(nil), work...)
 	baseX, baseY := workBase%workStride, workBase/workStride
-	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 13, 8, in.Flip, in.TerrainCycle, in.TerrainLUT); err != nil {
+	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.TerrainLUT); err != nil {
 		return fmt.Errorf("indexedmap: transition terrain: %w", err)
 	}
 	redraw := func(dst []byte) error {
-		if err := in.UnitBank.BlitNativeUnitLayer(dst, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, 12, 7, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
+		if err := in.UnitBank.BlitNativeUnitLayer(dst, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
 			return fmt.Errorf("indexedmap: transition units: %w", err)
 		}
-		if err := in.ForegroundBank.BlitNativeForegroundLayer(dst, workStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, 12, 7, in.Flip, in.TerrainLUT); err != nil {
+		if err := in.ForegroundBank.BlitNativeForegroundLayer(dst, workStride, in.ForegroundUnits, in.MapWidth, in.Cells, in.Controls, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.Flip, in.TerrainLUT); err != nil {
 			return fmt.Errorf("indexedmap: transition foreground: %w", err)
 		}
 		return nil
@@ -398,7 +432,9 @@ func ComposeNativeTransitionFrame(work, vga []byte, in NativeTransitionFrameInpu
 // order. All work happens on a private clone first, so rejected editable input
 // or a HUD error never leaves either caller buffer partially changed.
 func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error) error {
-	if renderHUD == nil || len(work)%workStride != 0 || len(vga) < NativeMapVGASize || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 {
+	vp := in.viewportOrDefault()
+	vpStride, vpBase := vp.workStride(), vp.workBase()
+	if renderHUD == nil || len(work)%vpStride != 0 || len(vga) < vp.vgaSize() || in.MapWidth <= 0 || len(in.Cells)%in.MapWidth != 0 {
 		return errors.New("indexedmap: incomplete native frame input")
 	}
 	if in.TerrainBank == nil || in.RangeBank == nil || in.UnitBank == nil || in.ForegroundBank == nil || in.SelectorCache == nil {
@@ -406,8 +442,8 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 	}
 	frame := append([]byte(nil), work...)
 	cells := append([]fdicon.NativeTerrainCell(nil), in.Cells...)
-	baseX, baseY := workBase%workStride, workBase/workStride
-	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, workStride, baseX, baseY, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, 13, 8, in.Flip, in.TerrainCycle, in.LUT); err != nil {
+	baseX, baseY := vpBase%vpStride, vpBase/vpStride
+	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, vpStride, baseX, baseY, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.LUT); err != nil {
 		return fmt.Errorf("indexedmap: terrain: %w", err)
 	}
 	if in.RangeMode == 6 {
@@ -419,13 +455,13 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 		// 0x127a9 foreground. Commit to caller state only after the full frame
 		// succeeds, retaining the adapter's failure-atomic boundary.
 		cells[in.CursorY*in.MapWidth+in.CursorX].BlitMode = 0
-	} else if err := fdother.BlitNativeRangeOverlay(in.RangeBank, frame, in.CameraX, in.CameraY, 13, 8, in.RangeMode, in.CursorX, in.CursorY); err != nil {
+	} else if err := fdother.BlitNativeRangeOverlayAt(in.RangeBank, frame, vpBase, vpStride, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.RangeMode, in.CursorX, in.CursorY); err != nil {
 		return fmt.Errorf("indexedmap: range: %w", err)
 	}
-	if err := in.UnitBank.BlitNativeUnitLayer(frame, workStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, 12, 7, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
+	if err := in.UnitBank.BlitNativeUnitLayerAt(frame, vpBase, vpStride, in.SelectorCache, in.Units, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.IdleCycle, in.MovingCycle, in.PixelShift); err != nil {
 		return fmt.Errorf("indexedmap: units: %w", err)
 	}
-	if err := in.ForegroundBank.BlitNativeForegroundLayer(frame, workStride, in.ForegroundUnits, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, 12, 7, in.Flip, in.LUT); err != nil {
+	if err := in.ForegroundBank.BlitNativeForegroundLayerAt(frame, vpBase, vpStride, in.ForegroundUnits, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, vp.Cols-1, vp.Rows-1, in.Flip, in.LUT); err != nil {
 		return fmt.Errorf("indexedmap: foreground: %w", err)
 	}
 	if err := renderHUD(frame); err != nil {
@@ -433,9 +469,9 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 	}
 	copyFrame := append([]byte(nil), vga...)
 	if err := fdicon.CopyNativeIndexedRegion(
-		copyFrame[steadyViewportOffset:], viewWidth,
-		frame[workBase:], workStride,
-		steadyViewportWidth, viewHeight,
+		copyFrame[vp.viewportOffset():], vp.canvasWidth(),
+		frame[vpBase:], vpStride,
+		vp.contentWidth(), vp.contentHeight(),
 	); err != nil {
 		return fmt.Errorf("indexedmap: viewport copy: %w", err)
 	}

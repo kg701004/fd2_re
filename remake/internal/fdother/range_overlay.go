@@ -111,21 +111,32 @@ func DecodeNativeRangeOverlayBank(datPath string) (*fdicon.Bank, error) {
 }
 
 // BlitNativeRangeOverlay executes the verified drawable part of 0x122dc and
-// 0x126f7 against the native 456-stride work buffer.  The descriptor cells
-// are direct 0x4deda RLE input, so Sprite.BlitAt deliberately preserves
-// mode-3 spans.  Camera clipping happens before descriptor lookup exactly as
-// in 0x126f7. Raw mode 0 follows 0x122dc's default no-op branch. Mode 6
-// remains rejected because it is a separate raw grid mutation, not a drawing
-// operation.
+// 0x126f7 against the native 456-stride work buffer.  It always uses the
+// original recovered work-buffer origin/stride (0x8088/456); callers at a
+// wider viewport (see indexedmap.NativeMapViewport) must use
+// BlitNativeRangeOverlayAt instead.
+func BlitNativeRangeOverlay(bank *fdicon.Bank, dst []byte, cameraX, cameraY, visibleWidth, visibleHeight, mode, cursorX, cursorY int) error {
+	return BlitNativeRangeOverlayAt(bank, dst, nativeRangeOverlayBase, nativeRangeOverlayStride, cameraX, cameraY, visibleWidth, visibleHeight, mode, cursorX, cursorY)
+}
+
+// BlitNativeRangeOverlayAt is BlitNativeRangeOverlay generalized to an
+// explicit work-buffer origin/stride, for viewports wider than the original
+// 13x8 (see indexedmap.NativeMapViewport). stride below nativeRangeOverlayStride
+// is rejected as a minimum-bound guard, not the original exact-match gate.
+// The descriptor cells are direct 0x4deda RLE input, so Sprite.BlitAt
+// deliberately preserves mode-3 spans.  Camera clipping happens before
+// descriptor lookup exactly as in 0x126f7. Raw mode 0 follows 0x122dc's
+// default no-op branch. Mode 6 remains rejected because it is a separate raw
+// grid mutation, not a drawing operation.
 //
 // All selected visible sprites and their destinations are preflighted before
 // writing. This is the editable-input safety boundary, not a claim that the
 // original performed bounds checks on its framebuffer pointer.
-func BlitNativeRangeOverlay(bank *fdicon.Bank, dst []byte, cameraX, cameraY, visibleWidth, visibleHeight, mode, cursorX, cursorY int) error {
+func BlitNativeRangeOverlayAt(bank *fdicon.Bank, dst []byte, workBase, stride, cameraX, cameraY, visibleWidth, visibleHeight, mode, cursorX, cursorY int) error {
 	if bank == nil || len(bank.Sprites) != nativeRangeOverlayTiles {
 		return errors.New("fdother: incomplete native range overlay descriptor bank")
 	}
-	if visibleWidth <= 0 || visibleHeight <= 0 || len(dst)%nativeRangeOverlayStride != 0 {
+	if visibleWidth <= 0 || visibleHeight <= 0 || stride < nativeRangeOverlayStride || len(dst)%stride != 0 {
 		return errors.New("fdother: invalid native range overlay framebuffer")
 	}
 	if mode == 0 {
@@ -144,15 +155,15 @@ func BlitNativeRangeOverlay(bank *fdicon.Bank, dst []byte, cameraX, cameraY, vis
 		if placement.Descriptor < 0 || placement.Descriptor >= len(bank.Sprites) {
 			return errors.New("fdother: native range overlay descriptor is outside bank")
 		}
-		x := nativeRangeOverlayBase%nativeRangeOverlayStride + (placement.X-cameraX)*fdicon.NativeSize
-		y := nativeRangeOverlayBase/nativeRangeOverlayStride + (placement.Y-cameraY)*fdicon.NativeSize
-		if x < 0 || y < 0 || x+fdicon.NativeSize > nativeRangeOverlayStride || y+fdicon.NativeSize > len(dst)/nativeRangeOverlayStride {
+		x := workBase%stride + (placement.X-cameraX)*fdicon.NativeSize
+		y := workBase/stride + (placement.Y-cameraY)*fdicon.NativeSize
+		if x < 0 || y < 0 || x+fdicon.NativeSize > stride || y+fdicon.NativeSize > len(dst)/stride {
 			return errors.New("fdother: native range overlay destination is outside framebuffer")
 		}
 		visible = append(visible, blit{x, y, placement.Descriptor})
 	}
 	for _, draw := range visible {
-		if err := bank.Sprites[draw.descriptor].BlitAt(dst, nativeRangeOverlayStride, draw.x, draw.y); err != nil {
+		if err := bank.Sprites[draw.descriptor].BlitAt(dst, stride, draw.x, draw.y); err != nil {
 			return fmt.Errorf("fdother: native range overlay descriptor %d: %w", draw.descriptor, err)
 		}
 	}

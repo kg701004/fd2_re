@@ -19,10 +19,20 @@ type NativeMapViewState struct {
 	VisibleCursorX, VisibleCursorY int
 }
 
-func validateNativeMapView(view NativeMapViewState, width, height int) error {
-	if width < nativeMapViewWidth || height < nativeMapViewHeight ||
-		view.CameraX < 0 || view.CameraX > width-nativeMapViewWidth ||
-		view.CameraY < 0 || view.CameraY > height-nativeMapViewHeight ||
+// nativeMapViewportOrDefault returns the active steady map viewport
+// tile-count window, falling back to the original 13x8 when unset (Cols<=0),
+// so old callers/tests that never set it keep the exact original behavior.
+func (s *State) nativeMapViewportOrDefault() (cols, rows int) {
+	if s == nil || s.NativeMapViewportCols <= 0 || s.NativeMapViewportRows <= 0 {
+		return nativeMapViewWidth, nativeMapViewHeight
+	}
+	return s.NativeMapViewportCols, s.NativeMapViewportRows
+}
+
+func validateNativeMapView(view NativeMapViewState, width, height, viewCols, viewRows int) error {
+	if width < viewCols || height < viewRows ||
+		view.CameraX < 0 || view.CameraX > width-viewCols ||
+		view.CameraY < 0 || view.CameraY > height-viewRows ||
 		view.CursorX < 0 || view.CursorX >= width ||
 		view.CursorY < 0 || view.CursorY >= height ||
 		view.VisibleCursorX != view.CursorX-view.CameraX ||
@@ -36,7 +46,8 @@ func (s *State) MaterializeNativeMapViewState(view NativeMapViewState) error {
 	if s == nil {
 		return fmt.Errorf("battle: nil native map view state")
 	}
-	if err := validateNativeMapView(view, s.W, s.H); err != nil {
+	viewCols, viewRows := s.nativeMapViewportOrDefault()
+	if err := validateNativeMapView(view, s.W, s.H, viewCols, viewRows); err != nil {
 		return err
 	}
 	s.NativeMapViewState = view
@@ -67,8 +78,9 @@ func (s *State) MoveNativeMapCursor(dx, dy int) (moved, ok bool) {
 	if s == nil || !s.HasNativeMapViewState || absInt(dx)+absInt(dy) != 1 {
 		return false, false
 	}
+	viewCols, viewRows := s.nativeMapViewportOrDefault()
 	view := s.NativeMapViewState
-	if err := validateNativeMapView(view, s.W, s.H); err != nil {
+	if err := validateNativeMapView(view, s.W, s.H, viewCols, viewRows); err != nil {
 		return false, false
 	}
 	switch {
@@ -87,7 +99,7 @@ func (s *State) MoveNativeMapCursor(dx, dy int) (moved, ok bool) {
 			return false, true
 		}
 		view.CursorY++
-		if view.VisibleCursorY > 5 && view.CameraY != s.H-nativeMapViewHeight {
+		if view.VisibleCursorY > viewRows-1-2 && view.CameraY != s.H-viewRows {
 			view.CameraY++
 		} else {
 			view.VisibleCursorY++
@@ -97,7 +109,7 @@ func (s *State) MoveNativeMapCursor(dx, dy int) (moved, ok bool) {
 			return false, true
 		}
 		view.CursorX++
-		if view.VisibleCursorX > 10 && view.CameraX != s.W-nativeMapViewWidth {
+		if view.VisibleCursorX > viewCols-1-2 && view.CameraX != s.W-viewCols {
 			view.CameraX++
 		} else {
 			view.VisibleCursorX++
@@ -113,7 +125,7 @@ func (s *State) MoveNativeMapCursor(dx, dy int) (moved, ok bool) {
 			view.VisibleCursorX--
 		}
 	}
-	if err := validateNativeMapView(view, s.W, s.H); err != nil {
+	if err := validateNativeMapView(view, s.W, s.H, viewCols, viewRows); err != nil {
 		return false, false
 	}
 	s.NativeMapViewState = view

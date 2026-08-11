@@ -132,17 +132,27 @@ func NativeFrameIndex(motionOffset int, forceBase bool, idleCycle, movingCycle i
 }
 
 // NativePlacementOffset reproduces 0x127e0's byte destination before it is
-// added to the native 0x53a49 framebuffer. Map cells are 24×24 indexed pixels
-// in a 456-byte stride. motionOffset is unit+4 and advances in byte space in
-// the runtime pose direction: down, left, up, right. forceBase is unit+0x26
+// added to the native 0x53a49 framebuffer. Map cells are 24×24 indexed
+// pixels in a caller-supplied stride (456 bytes / NativeMapStride at the
+// original viewport size). motionOffset is unit+4 and advances in byte space
+// in the runtime pose direction: down, left, up, right. forceBase is unit+0x26
 // nonzero; the original then adds its toggled global pixelShift (0 or 1).
 // This returns a byte offset rather than pretending it is a GUI coordinate.
-func NativePlacementOffset(x, y, cameraX, cameraY, pose, motionOffset, pixelShift int, forceBase bool) (int, error) {
+//
+// origin is the work-buffer byte offset of the (cameraX-1, cameraY-1) cell --
+// verified equal to workBase-6*stride at the original {workBase:0x8088,
+// stride:456}, which exactly reproduces the recovered NativeUnitOriginBytes
+// (0x75d8) constant. Callers pass their own workBase/stride so this stays
+// correct for viewports wider than the original 13x8 (see
+// indexedmap.NativeMapViewport); it is not itself an EXE-recovered formula
+// for those wider sizes, only the {0x8088,456} case is.
+func NativePlacementOffset(workBase, stride, x, y, cameraX, cameraY, pose, motionOffset, pixelShift int, forceBase bool) (int, error) {
 	if pose < 0 || pose >= 4 || pixelShift < 0 || pixelShift > 1 {
 		return 0, errors.New("fdicon: invalid native placement")
 	}
-	directionOffset := [4]int{NativeSize * NativeMapStride, -4, -NativeSize * NativeMapStride, 4}
-	offset := NativeUnitOriginBytes + (y-cameraY)*NativeSize*NativeMapStride + (x-cameraX)*NativeSize + motionOffset*directionOffset[pose]
+	origin := workBase - 6*stride
+	directionOffset := [4]int{NativeSize * stride, -4, -NativeSize * stride, 4}
+	offset := origin + (y-cameraY)*NativeSize*stride + (x-cameraX)*NativeSize + motionOffset*directionOffset[pose]
 	if forceBase {
 		offset += pixelShift
 	}

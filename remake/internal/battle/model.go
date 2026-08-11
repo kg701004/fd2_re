@@ -513,6 +513,12 @@ type State struct {
 	HasNativeMapHUDState  bool
 	NativeMapViewState    NativeMapViewState
 	HasNativeMapViewState bool
+	// NativeMapViewportCols/Rows is the active steady map viewport tile-count
+	// window (13x8 at the original size, see indexedmap.NativeMapViewport).
+	// This is a remake-only sizing knob, not a recovered EXE dimension, so
+	// zero/unset falls back to the original 13x8 (see
+	// nativeMapViewportOrDefault in native_map_view.go).
+	NativeMapViewportCols, NativeMapViewportRows int
 	// NativeMapRangeMode is raw [0x51a83]. Despite the retained field name it
 	// is an overlay/selection selector, not a bounded GUI range enum:
 	// 0x122dc draws only 1..5 and mutates the field for 6, while 0x115b6 still

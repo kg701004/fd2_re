@@ -32,12 +32,37 @@ func (b *Bank) BlitNativeUnitLayer(dst []byte, stride int, cache *NativeSelector
 	return b.BlitNativeUnitLayerWithBaseShift(dst, stride, cache, units, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, 0)
 }
 
+// nativeUnitLayerWorkBase reproduces the original 0x8088 native placement
+// origin for the recovered {stride:456} case. It is not a general formula:
+// widening the viewport (see indexedmap.NativeMapViewport) picks its own new
+// workBase separately and BlitNativeUnitLayerAt below takes it explicitly.
+const nativeUnitLayerWorkBase = 0x8088
+
 // BlitNativeUnitLayerWithBaseShift preserves callers which temporarily adjust
 // the native [0x53A49] framebuffer pointer before invoking 0x127E0. BaseShift
 // is a signed byte offset applied after NativePlacementOffset; it does not
 // change unit coordinates, camera bounds, animation state, or selector slots.
+// It always uses the original recovered work-buffer origin (0x8088); callers
+// at a wider viewport must use BlitNativeUnitLayerAt instead.
 func (b *Bank) BlitNativeUnitLayerWithBaseShift(dst []byte, stride int, cache *NativeSelectorCache, units []NativeUnitLayerEntry, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, baseShift int) error {
-	if b == nil || cache == nil || stride != NativeMapStride || visibleXMax < 0 || visibleYMax < 0 {
+	return b.blitNativeUnitLayer(dst, nativeUnitLayerWorkBase, stride, cache, units, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, baseShift)
+}
+
+// BlitNativeUnitLayerAt is BlitNativeUnitLayerWithBaseShift generalized to an
+// explicit work-buffer origin, for viewports wider than the original 13x8
+// (see indexedmap.NativeMapViewport) where the work buffer is no longer the
+// original fixed 456-stride/0x8088-origin allocation.
+func (b *Bank) BlitNativeUnitLayerAt(dst []byte, workBase, stride int, cache *NativeSelectorCache, units []NativeUnitLayerEntry, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift int) error {
+	return b.blitNativeUnitLayer(dst, workBase, stride, cache, units, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, 0)
+}
+
+// blitNativeUnitLayer is the shared implementation. stride below
+// NativeMapStride is rejected; the original EXE only ever used exactly
+// NativeMapStride (456), but a wider remake viewport legitimately uses a
+// larger one, so this is a minimum-bound guard rather than the original
+// exact-match gate.
+func (b *Bank) blitNativeUnitLayer(dst []byte, workBase, stride int, cache *NativeSelectorCache, units []NativeUnitLayerEntry, cameraX, cameraY, visibleXMax, visibleYMax, idleCycle, movingCycle, pixelShift, baseShift int) error {
+	if b == nil || cache == nil || stride < NativeMapStride || visibleXMax < 0 || visibleYMax < 0 {
 		return errors.New("fdicon: invalid native unit layer")
 	}
 	commands := make([]nativeUnitBlit, 0, len(units))
@@ -56,7 +81,7 @@ func (b *Bank) BlitNativeUnitLayerWithBaseShift(dst []byte, stride int, cache *N
 		if err != nil {
 			return err
 		}
-		offset, err := NativePlacementOffset(unit.X, unit.Y, cameraX, cameraY, unit.Pose, unit.MotionOffset, pixelShift, unit.ForceBase)
+		offset, err := NativePlacementOffset(workBase, stride, unit.X, unit.Y, cameraX, cameraY, unit.Pose, unit.MotionOffset, pixelShift, unit.ForceBase)
 		if err != nil {
 			return err
 		}

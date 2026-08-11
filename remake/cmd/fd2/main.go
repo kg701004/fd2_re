@@ -73,6 +73,7 @@ type Game struct {
 	trueFullscreen                 bool
 	preFullscreenW, preFullscreenH int
 	preFullscreenX, preFullscreenY int
+	uiCanvas                       *ebiten.Image // fixed logicalW x logicalH target for every non-expandable screen (shop/church/prep/title/menus/etc); reused across frames
 	m                              *MapData
 	nativeMapAssets                *nativeMapAssets                   // all original map HUD resources, nil on any missing/malformed asset
 	nativeMapWork                  []byte                             // persistent 456-stride original tactical framebuffer
@@ -5821,6 +5822,43 @@ func clamp(v *float64, lo, hi float64) {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Only the bare operable map/battle view (unit selected, moving, plain
+	// dialogue) expands to fill a real window/screen bigger than the fixed
+	// 640x400 canvas -- see toggleFullscreen/Layout. Every other screen
+	// (shop/church/prep/title/menus/transitions/story cutscenes) keeps its
+	// existing, unmodified 640x400 layout by rendering into g.uiCanvas
+	// instead, which gets centered onto the real screen at the end; this
+	// avoids re-deriving position math for every one of those screens.
+	realScreen := screen
+	expandableView := g.m != nil && g.st != nil &&
+		!g.storyBG && g.battleEvent == nil &&
+		g.titlePhase == "" && g.nativeEnding == nil && g.objChapter <= 0 &&
+		g.indexedTransition == nil && g.nativePaletteRamp == nil && g.spawnIntroTransition == nil &&
+		!(g.nativeTurnStaging != nil && g.nativeTurnStaging.indexed) &&
+		!g.ring && !g.nativeCommandOpen && !g.spellOpen && !g.itemOpen &&
+		g.nativeShopMode == "" && g.churchMode == "" && !g.prepSelecting && !g.prepConfirm
+	if !expandableView {
+		if g.uiCanvas == nil {
+			g.uiCanvas = ebiten.NewImage(logicalW, logicalH)
+		}
+		g.uiCanvas.Clear()
+		screen = g.uiCanvas
+	}
+	defer func() {
+		if screen == realScreen {
+			return
+		}
+		rb, sb := realScreen.Bounds(), screen.Bounds()
+		scale := float64(rb.Dx()) / float64(sb.Dx())
+		if s := float64(rb.Dy()) / float64(sb.Dy()); s < scale {
+			scale = s
+		}
+		op := &ebiten.DrawImageOptions{}
+		op.Filter = ebiten.FilterLinear
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate((float64(rb.Dx())-float64(sb.Dx())*scale)/2, (float64(rb.Dy())-float64(sb.Dy())*scale)/2)
+		realScreen.DrawImage(screen, op)
+	}()
 	// The exact full-DAC saturation covers the complete mode-13h surface,
 	// including HUD and dialogue. Defer preserves that hardware ordering across
 	// every early-return presentation branch.
@@ -5932,7 +5970,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// story 場景與原版阻塞 battle event 走 320×200 離屏再放大 storyZoom 倍
 	// (還原 13×8 格取景)；一般可操作戰場維持 640×400 直繪。
 	// 對話框/HUD/淡幕仍畫在 screen 原生解析度。
-	target, viewW, viewH := screen, logicalW, logicalH
+	target, viewW, viewH := screen, screen.Bounds().Dx(), screen.Bounds().Dy()
 	legacyViewport := g.storyBG || g.battleEvent != nil
 	if legacyViewport {
 		if g.storyView == nil {
@@ -6135,7 +6173,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				upper = *g.dlgUpper
 			}
 			// 框位置:模板匹配 orig 下框 (5,112)@320(底部裁 11px 超出畫面,原版如此);上框鏡射 y=-11
-			bx, by := 10.0, 198.0 // 下框上移使底邊396在畫面內(原224底邊422出畫面,使用者回饋2026-07-05)
+			// 下框錨定在「目前畫面」底部(不是寫死的640x400):地圖可擴大填滿視窗時
+			// (expandableView),對話框維持原生620x198大小、貼齊實際螢幕下緣,
+			// 不隨地圖一起被拉伸(使用者回饋:地圖跟對話框要能分開縮放)。
+			bx, by := 10.0, float64(screen.Bounds().Dy())-198-4 // 下框上移使底邊在畫面內留4px邊界(原224底邊422出畫面,使用者回饋2026-07-05)
 			if upper {
 				by = 4 // 上框下移使頂邊4在畫面內(原-22頂邊出畫面)
 			}
@@ -7232,7 +7273,27 @@ func drawCursor(dst *ebiten.Image, x, y, w, h float64) {
 }
 
 func (g *Game) Layout(outsideW, outsideH int) (int, int) {
-	return logicalW, logicalH
+	// Returning the true outside size (rather than the fixed logical canvas)
+	// lets Draw expand the map/battle view to fill the real window instead of
+	// uniformly stretching a fixed 640x400 image (see the expandableView
+	// gate and uiCanvas compositing at the top of Draw). Screens that stay
+	// on the fixed canvas render into g.uiCanvas and are blitted centered.
+	//
+	// toggleFullscreen's borderless-window workaround (see fullscreen_windows.go)
+	// calls ebiten.SetWindowSize/SetWindowPosition/SetWindowDecorated directly to
+	// route around ebiten.SetFullscreen's DPI-virtualized monitor size bug; that
+	// bypasses whatever internal bookkeeping keeps the outsideW/outsideH argument
+	// here in sync, so it stays stale at the pre-toggle size. ebiten.WindowSize()
+	// is a direct query of the window we just resized and reflects it correctly.
+	if g.trueFullscreen {
+		if w, h := ebiten.WindowSize(); w >= logicalW && h >= logicalH {
+			return w, h
+		}
+	}
+	if outsideW < logicalW || outsideH < logicalH {
+		return logicalW, logicalH
+	}
+	return outsideW, outsideH
 }
 
 // nativeFDOTHERPath opts into original UI data without distributing it. A
@@ -7628,8 +7689,9 @@ func (g *Game) drawPhaseBanner(screen *ebiten.Image) {
 	if g.bannerT < 20 { // 末段淡出
 		a = float64(g.bannerT) / 20
 	}
-	if g.dim == nil {
-		g.dim = ebiten.NewImage(logicalW, logicalH)
+	sb := screen.Bounds()
+	if g.dim == nil || g.dim.Bounds().Dx() != sb.Dx() || g.dim.Bounds().Dy() != sb.Dy() {
+		g.dim = ebiten.NewImage(sb.Dx(), sb.Dy())
 		g.dim.Fill(color.RGBA{0, 0, 0, 0xff})
 	}
 	op := &ebiten.DrawImageOptions{}
@@ -7637,7 +7699,7 @@ func (g *Game) drawPhaseBanner(screen *ebiten.Image) {
 	screen.DrawImage(g.dim, op)
 	w := g.font.Width(g.banner, 2.2)
 	c := color.RGBA{uint8(0xff * a), uint8(0xc8 * a), uint8(0x50 * a), uint8(0xff * a)} // 金字(ColorScale 已預乘)
-	g.font.Draw(screen, g.banner, (float64(logicalW)-w)/2, float64(logicalH)/2-24, 2.2, c)
+	g.font.Draw(screen, g.banner, (float64(sb.Dx())-w)/2, float64(sb.Dy())/2-24, 2.2, c)
 }
 
 // drawUnitHUD 是 native full-frame admission 失敗時的 playable fallback，
@@ -7650,7 +7712,7 @@ func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
 		nm = u.ClsName
 	}
 	const bh = 84.0 // 149×42 原生 ×2
-	bx, by := 6.0, float64(logicalH)-bh-6-20
+	bx, by := 6.0, float64(screen.Bounds().Dy())-bh-6-20
 	g.drawBattlePanel(screen, bx, by, nm, u.Lv, u.HP, u.MaxHP, u.MP)
 	g.font.Draw(screen, fmt.Sprintf("AP %d  DP %d  MV %d", u.AP, u.DP, u.MV), bx+8, by+bh+2, 0.9, color.RGBA{0xc8, 0xe0, 0xff, 0xff})
 }
@@ -7705,7 +7767,7 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 		return false
 	}
 	frame := make([]byte, fdicon.NativeMapStride*200)
-	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, a.Units, g.st.NativeMapSelectorCache, frame, in); err != nil {
+	if err := indexedmap.BlitNativeMapHUD(a.Frames, a.Terrain, a.Units, g.st.NativeMapSelectorCache, frame, in, indexedmap.DefaultNativeMapViewport); err != nil {
 		return false
 	}
 	overlayPalette := append(color.Palette(nil), a.Palette...)

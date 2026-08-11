@@ -181,15 +181,15 @@ func TestNativePlacementOffsetMatches127E0(t *testing.T) {
 		{3, 1, 1, true, base + 5},
 	}
 	for _, tc := range cases {
-		got, err := NativePlacementOffset(8, 6, 5, 4, tc.pose, tc.motion, tc.shift, tc.force)
+		got, err := NativePlacementOffset(0x8088, NativeMapStride, 8, 6, 5, 4, tc.pose, tc.motion, tc.shift, tc.force)
 		if err != nil || got != tc.want {
 			t.Fatalf("%+v got=%#x err=%v", tc, got, err)
 		}
 	}
-	if _, err := NativePlacementOffset(0, 0, 0, 0, 4, 0, 0, false); err == nil {
+	if _, err := NativePlacementOffset(0x8088, NativeMapStride, 0, 0, 0, 0, 4, 0, 0, false); err == nil {
 		t.Fatal("invalid pose accepted")
 	}
-	if _, err := NativePlacementOffset(0, 0, 0, 0, 0, 0, 2, true); err == nil {
+	if _, err := NativePlacementOffset(0x8088, NativeMapStride, 0, 0, 0, 0, 0, 0, 2, true); err == nil {
 		t.Fatal("invalid native pixel shift accepted")
 	}
 }

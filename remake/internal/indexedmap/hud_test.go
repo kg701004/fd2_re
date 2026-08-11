@@ -10,6 +10,8 @@ import (
 	"github.com/wicanr2/fd2_re/remake/internal/fdother"
 )
 
+const testHUDContentWidth, testHUDContentHeight = 312, 192
+
 func frame(width, height int, pixel byte) fdother.Frame {
 	raw := make([]byte, 4)
 	binary.LittleEndian.PutUint16(raw, uint16(width))
@@ -51,9 +53,28 @@ func TestAdvanceNativeMapHUDAnchorMatches1AD2A(t *testing.T) {
 		{0xf2, 6, 9, 0xf2},
 		{7, 99, 7, 7},
 	} {
-		if got := AdvanceNativeMapHUDAnchor(tc.anchor, tc.raw53ABD, tc.raw53AB9); got != tc.want {
+		if got := AdvanceNativeMapHUDAnchor(tc.anchor, tc.raw53ABD, tc.raw53AB9, 13, 8); got != tc.want {
 			t.Fatalf("anchor=%#x raw=(%d,%d): got %#x, want %#x", tc.anchor, tc.raw53ABD, tc.raw53AB9, got, tc.want)
 		}
+	}
+}
+
+// TestAdvanceNativeMapHUDAnchorGeneralizesToWiderViewport proves the
+// viewCols/viewRows-derived thresholds and flush-right anchor actually
+// change at a wider-than-original viewport, not just accepted and ignored.
+func TestAdvanceNativeMapHUDAnchorGeneralizesToWiderViewport(t *testing.T) {
+	vp := NativeMapViewport{Cols: 20, Rows: 10}
+	wantRight := vp.contentWidth() - fdicon.NativeMapHUDPanelWidth - 1
+	if got := AdvanceNativeMapHUDAnchor(1, 8, 2, vp.Cols, vp.Rows); got != wantRight {
+		t.Fatalf("wider viewport right dodge = %#x, want %#x", got, wantRight)
+	}
+	if got := AdvanceNativeMapHUDAnchor(wantRight, 8, 17, vp.Cols, vp.Rows); got != 1 {
+		t.Fatalf("wider viewport left dodge = %#x, want 1", got)
+	}
+	// Row 7 is inside the original 13x8's dodge zone (>5) but outside the
+	// wider 20x10 viewport's (>7): must NOT dodge.
+	if got := AdvanceNativeMapHUDAnchor(1, 7, 2, vp.Cols, vp.Rows); got != 1 {
+		t.Fatalf("row below wider dodge threshold changed anchor: got %#x, want unchanged 1", got)
 	}
 }
 
@@ -113,14 +134,14 @@ func TestNativeMapHUDOptionalUnitEligibleMatches1AE2A(t *testing.T) {
 
 func TestBlitNativeMapHUDPanelGatesAndOrigin(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, false, 1); err != nil {
+	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, false, 1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	if dst[layout.Frame] != 0 {
 		t.Fatal("closed display gate drew panel")
 	}
-	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, true, 1); err != nil {
+	if err := BlitNativeMapHUDPanel(hudFrames(), dst, true, true, 1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
 	if dst[layout.Frame] != 0x5a {
@@ -132,7 +153,7 @@ func TestBlitNativeMapHUDPanelRejectsInvalidEntryBeforeWrite(t *testing.T) {
 	frames := hudFrames()
 	frames.Panel = frame(1, 1, 7)
 	dst, before := make([]byte, fdicon.NativeMapStride*200), make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUDPanel(frames, dst, true, true, 1); err == nil {
+	if err := BlitNativeMapHUDPanel(frames, dst, true, true, 1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err == nil {
 		t.Fatal("wrong panel geometry accepted")
 	}
 	if string(dst) != string(before) {
@@ -155,23 +176,23 @@ func TestBlitNativeMapHUDComposesRecoveredSubpassesAtomically(t *testing.T) {
 		OptionalUnit: &NativeMapHUDOptionalUnit{SelectorSlot: 0, RawState: 3, Current: 7, Maximum: 8},
 	}
 	dst := make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in); err != nil {
+	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in, DefaultNativeMapViewport); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	if dst[layout.Frame] != 0x5a || dst[layout.Terrain] != 0x66 || dst[layout.AP] != 0x42 || dst[layout.DP] != 0x31 || dst[layout.Unit] != 0x77 || dst[layout.HP] != 0x70 {
 		t.Fatalf("HUD composition=%#x/%#x/%#x/%#x/%#x/%#x", dst[layout.Frame], dst[layout.Terrain], dst[layout.AP], dst[layout.DP], dst[layout.Unit], dst[layout.HP])
 	}
 	before := append([]byte(nil), dst...)
 	in.TerrainControl = 6
-	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in); err == nil {
+	if err := BlitNativeMapHUD(hudFrames(), terrain, units, cache, dst, in, DefaultNativeMapViewport); err == nil {
 		t.Fatal("invalid terrain control accepted")
 	}
 	if string(dst) != string(before) {
 		t.Fatal("failed full HUD composition mutated destination")
 	}
 	in.DisplayGateB = false
-	if err := BlitNativeMapHUD(hudFrames(), nil, nil, nil, dst, in); err != nil {
+	if err := BlitNativeMapHUD(hudFrames(), nil, nil, nil, dst, in, DefaultNativeMapViewport); err != nil {
 		t.Fatal(err)
 	}
 	if string(dst) != string(before) {
@@ -183,15 +204,15 @@ func TestBlitNativeMapHUDTerrainIconUses12E38TileAtPanelPlus6(t *testing.T) {
 	terrain := bank(2, 0)
 	terrain.Sprites[1] = solid(0x66)
 	dst := make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 1); err != nil {
+	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	if dst[layout.Terrain] != 0x66 {
 		t.Fatalf("terrain icon=%#x", dst[layout.Terrain])
 	}
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 2); err == nil {
+	if err := BlitNativeMapHUDTerrainIcon(terrain, dst, 1, 2, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err == nil {
 		t.Fatal("out-of-bank terrain descriptor accepted")
 	}
 	if string(dst) != string(before) {
@@ -207,15 +228,15 @@ func TestBlitNativeMapHUDUnitIconUsesCacheAndAliasesStateThree(t *testing.T) {
 	units := bank(12, 0)
 	units.Sprites[1] = solid(0x77) // cache key 0, pose 0, aliased cycle 1
 	dst := make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 3); err != nil {
+	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 3, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	if dst[layout.Unit] != 0x77 {
 		t.Fatalf("unit icon=%#x", dst[layout.Unit])
 	}
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 4); err == nil {
+	if err := BlitNativeMapHUDUnitIcon(units, cache, dst, 1, 0, 4, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err == nil {
 		t.Fatal("invalid raw state accepted")
 	}
 	if string(dst) != string(before) {
@@ -237,15 +258,15 @@ func TestNativeMapHUDTerrainAPDPMatches1ACF3Tables(t *testing.T) {
 
 func TestBlitNativeMapHUDTerrainAPDPUsesLayoutAndIsAtomic(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*200)
-	if err := BlitNativeMapHUDTerrainAPDP(hudFrames(), dst, 1, 2); err != nil {
+	if err := BlitNativeMapHUDTerrainAPDP(hudFrames(), dst, 1, 2, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	if dst[layout.AP] != 0x42 || dst[layout.AP+8] != 0x50 || dst[layout.AP+14] != 0x55 || dst[layout.DP] != 0x31 || dst[layout.DP+8] != 0x51 || dst[layout.DP+14] != 0x50 {
 		t.Fatalf("unexpected AP/DP cells: AP=%#x/%#x/%#x DP=%#x/%#x/%#x", dst[layout.AP], dst[layout.AP+8], dst[layout.AP+14], dst[layout.DP], dst[layout.DP+8], dst[layout.DP+14])
 	}
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDTerrainAPDP(hudFrames(), dst, 1, 6); err == nil {
+	if err := BlitNativeMapHUDTerrainAPDP(hudFrames(), dst, 1, 6, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err == nil {
 		t.Fatal("invalid control byte accepted")
 	}
 	if string(dst) != string(before) {
@@ -254,7 +275,7 @@ func TestBlitNativeMapHUDTerrainAPDPUsesLayoutAndIsAtomic(t *testing.T) {
 }
 
 func TestBlitNativeMapHUDHPMatches1875DAnd187D6(t *testing.T) {
-	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight)
 	for _, tc := range []struct {
 		current, maximum     uint16
 		first, second, third byte
@@ -263,7 +284,7 @@ func TestBlitNativeMapHUDHPMatches1875DAnd187D6(t *testing.T) {
 		{7, 8, 0x70, 0x70, 0x77},
 	} {
 		dst := make([]byte, fdicon.NativeMapStride*200)
-		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, tc.current, tc.maximum); err != nil {
+		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, tc.current, tc.maximum, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 			t.Fatal(err)
 		}
 		if dst[layout.HP] != tc.first || dst[layout.HP+6] != tc.second || dst[layout.HP+12] != tc.third {
@@ -275,7 +296,7 @@ func TestBlitNativeMapHUDHPMatches1875DAnd187D6(t *testing.T) {
 		want    byte
 	}{{1000, 0x7a}, {1001, 0x7b}} {
 		dst := make([]byte, fdicon.NativeMapStride*200)
-		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, 1000, tc.maximum); err != nil {
+		if err := BlitNativeMapHUDHP(hudFrames(), dst, 1, 1000, tc.maximum, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 			t.Fatal(err)
 		}
 		if dst[layout.HP] != tc.want {
@@ -285,7 +306,7 @@ func TestBlitNativeMapHUDHPMatches1875DAnd187D6(t *testing.T) {
 	frames, dst := hudFrames(), make([]byte, fdicon.NativeMapStride*200)
 	frames.HPMismatchOverflow = frame(1, 1, 0)
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDHP(frames, dst, 1, 1000, 1001); err == nil {
+	if err := BlitNativeMapHUDHP(frames, dst, 1, 1000, 1001, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err == nil {
 		t.Fatal("invalid overflow geometry accepted")
 	}
 	if string(dst) != string(before) {
@@ -302,13 +323,13 @@ func TestBlitNativeMapHUDSignedNumberSelectsSignAndAbsoluteValue(t *testing.T) {
 		return nil
 	}
 	origin := fdicon.NativeMapStride + 10
-	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, origin, 12, draw); err != nil {
+	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, fdicon.NativeMapStride, origin, 12, draw); err != nil {
 		t.Fatal(err)
 	}
 	if dst[origin] != 0x31 || dst[origin+8] != 0x5a || calledOrigin != origin+8 || calledAbsolute != 12 {
 		t.Fatalf("positive sign/digits mismatch: sign=%#x origin=%d absolute=%d", dst[origin], calledOrigin, calledAbsolute)
 	}
-	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, origin, -9, draw); err != nil {
+	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, fdicon.NativeMapStride, origin, -9, draw); err != nil {
 		t.Fatal(err)
 	}
 	if dst[origin] != 0x42 || calledAbsolute != 9 {
@@ -319,7 +340,7 @@ func TestBlitNativeMapHUDSignedNumberSelectsSignAndAbsoluteValue(t *testing.T) {
 func TestBlitNativeMapHUDSignedNumberIsAtomicOnDigitFailure(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*20)
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, 1, 1, func([]byte, int, int) error { return errors.New("digits") }); err == nil {
+	if err := BlitNativeMapHUDSignedNumber(hudFrames(), dst, fdicon.NativeMapStride, 1, 1, func([]byte, int, int) error { return errors.New("digits") }); err == nil {
 		t.Fatal("digit failure accepted")
 	}
 	if string(dst) != string(before) {
@@ -330,14 +351,14 @@ func TestBlitNativeMapHUDSignedNumberIsAtomicOnDigitFailure(t *testing.T) {
 func TestBlitNativeMapHUDTwoDigitNumberMatches187D6CallSlice(t *testing.T) {
 	dst := make([]byte, fdicon.NativeMapStride*30)
 	origin := fdicon.NativeMapStride + 10
-	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, origin, -12); err != nil {
+	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, fdicon.NativeMapStride, origin, -12); err != nil {
 		t.Fatal(err)
 	}
 	if dst[origin] != 0x42 || dst[origin+8] != 0x51 || dst[origin+14] != 0x52 {
 		t.Fatalf("sign/digits=%#x %#x %#x", dst[origin], dst[origin+8], dst[origin+14])
 	}
 	before := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, origin, 100); err == nil {
+	if err := BlitNativeMapHUDTwoDigitNumber(hudFrames(), dst, fdicon.NativeMapStride, origin, 100); err == nil {
 		t.Fatal("three-digit value accepted")
 	}
 	if string(dst) != string(before) {
@@ -378,7 +399,7 @@ func TestDecodeNativeMapHUDFramesUsesFourModeDirectoryEntries(t *testing.T) {
 	if frames.HPEqualOverflow.Width != 18 || frames.HPEqualOverflow.Height != 8 || frames.HPMismatchOverflow.Width != 18 || frames.HPMismatchOverflow.Height != 8 {
 		t.Fatalf("HP overflow=%dx%d/%dx%d", frames.HPEqualOverflow.Width, frames.HPEqualOverflow.Height, frames.HPMismatchOverflow.Width, frames.HPMismatchOverflow.Height)
 	}
-	if err := BlitNativeMapHUDPanel(frames, make([]byte, fdicon.NativeMapStride*200), true, true, 1); err != nil {
+	if err := BlitNativeMapHUDPanel(frames, make([]byte, fdicon.NativeMapStride*200), true, true, 1, fdicon.NativeMapStride, testHUDContentWidth, testHUDContentHeight); err != nil {
 		t.Fatal(err)
 	}
 }

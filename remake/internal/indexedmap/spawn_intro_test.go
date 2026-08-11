@@ -78,8 +78,8 @@ func TestComposeNativeSpawnIntroPass6RebuildsOldAndLiftedNewUnitsAfterPresent(t 
 	if err := ComposeNativeSpawnIntroPass(work, vga, snapshot, in, entry, step); err != nil {
 		t.Fatal(err)
 	}
-	oldOffset, _ := fdicon.NativePlacementOffset(0, 0, 0, 0, 0, 0, 0, false)
-	newOffset, _ := fdicon.NativePlacementOffset(1, 1, 0, 0, 0, 0, 0, false)
+	oldOffset, _ := fdicon.NativePlacementOffset(0x8088, fdicon.NativeMapStride, 0, 0, 0, 0, 0, 0, 0, false)
+	newOffset, _ := fdicon.NativePlacementOffset(0x8088, fdicon.NativeMapStride, 1, 1, 0, 0, 0, 0, 0, false)
 	lifted := newOffset - 8*workStride
 	if snapshot[oldOffset] != 3 || snapshot[lifted] != 3 || snapshot[newOffset] != 0 {
 		t.Fatalf("pass6 snapshot old/lifted/normal=%d/%d/%d", snapshot[oldOffset], snapshot[lifted], snapshot[newOffset])

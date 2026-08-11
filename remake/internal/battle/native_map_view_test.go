@@ -68,6 +68,29 @@ func TestNativeMapCursorFieldEdgeIsValidNoMove(t *testing.T) {
 	}
 }
 
+// TestNativeMapCursorScrollThresholdTracksWiderViewport proves
+// NativeMapViewportCols/Rows actually changes the camera-follow deadzone --
+// not just accepted and ignored -- by placing the cursor where the original
+// fixed 13x8 viewport would scroll the camera but a wider 20-tile viewport
+// must not (the cursor is still comfortably inside the wider view).
+func TestNativeMapCursorScrollThresholdTracksWiderViewport(t *testing.T) {
+	st := &State{W: 30, H: 30, NativeMapViewportCols: 20, NativeMapViewportRows: 8}
+	if err := st.MaterializeNativeMapViewState(NativeMapViewState{
+		CameraX: 0, CameraY: 0, CursorX: 11, CursorY: 0,
+		VisibleCursorX: 11, VisibleCursorY: 0,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// VisibleCursorX=11 is past the original 13x8's right threshold (>10)
+	// but well inside the wider 20-tile viewport's (>17): must not scroll.
+	if moved, ok := st.MoveNativeMapCursor(1, 0); !moved || !ok {
+		t.Fatal("right move rejected")
+	}
+	if got := st.NativeMapViewState; got.CameraX != 0 || got.VisibleCursorX != 12 {
+		t.Fatalf("wider viewport scrolled early: camera=%d visible=%d, want camera=0 visible=12", got.CameraX, got.VisibleCursorX)
+	}
+}
+
 func TestNativeMapRangeModePreservesFullRawSelectorBounds(t *testing.T) {
 	st := &State{}
 	if !st.MaterializeNativeMapRangeMode(0) ||

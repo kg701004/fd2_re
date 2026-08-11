@@ -50,17 +50,27 @@ func NativeMapHUDOptionalUnitEligible(rawByte7, rawByte1F, rawByte6 byte) bool {
 	return rawByte7 != 0x79 && (rawByte1F != 0x0a || rawByte6 != 1)
 }
 
+// nativeMapHUDAnchorDodgeMargin is the fixed tile-count trigger zone on
+// every edge of the HUD anchor deadzone: reproduces the original's literal
+// 3/9 thresholds at the 13-tile original width (3 and 13-1-3=9) and
+// generalizes the same dodge-away-from-cursor margin for a wider remake
+// viewport (see battle.nativeMapHUDAnchorDodgeMargin, kept in sync).
+const nativeMapHUDAnchorDodgeMargin = 3
+
 // AdvanceNativeMapHUDAnchor preserves the small persistent-global branch at
 // 0x1ad2a..0x1ad5f. The native code changes the raw anchor only in either
 // outer region; every other coordinate pair retains the prior global value.
 // It deliberately accepts and returns a raw anchor rather than assigning a
-// semantic name to either coordinate global.
-func AdvanceNativeMapHUDAnchor(anchor, raw53ABD, raw53AB9 int) int {
-	if raw53ABD > 5 {
-		if raw53AB9 < 3 {
-			return 0xf2
+// semantic name to either coordinate global. viewCols/viewRows is the active
+// steady map viewport (13x8 at the original size); the row threshold and the
+// flush-right anchor generalize from it instead of the original's fixed
+// 5/0xf2 (see NativeMapHUDLayoutFor's own panelRow/contentWidth formulas).
+func AdvanceNativeMapHUDAnchor(anchor, raw53ABD, raw53AB9, viewCols, viewRows int) int {
+	if raw53ABD > viewRows-1-2 {
+		if raw53AB9 < nativeMapHUDAnchorDodgeMargin {
+			return viewCols*nativeMapTileSize - fdicon.NativeMapHUDPanelWidth - 1
 		}
-		if raw53AB9 > 9 {
+		if raw53AB9 > viewCols-1-nativeMapHUDAnchorDodgeMargin {
 			return 1
 		}
 	}
@@ -133,11 +143,11 @@ func DecodeNativeMapHUDFrames(datPath string) (NativeMapHUDFrames, error) {
 // icon, unit icon, signed numbers and the higher-level meanings of the gates
 // remain separate primitives; this function deliberately does not fabricate
 // them from the panel artwork.
-func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, displayGateB bool, anchorX int) error {
+func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, displayGateB bool, anchorX, stride, contentWidth, contentHeight int) error {
 	if !displayGateA || !displayGateB {
 		return nil
 	}
-	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight)
 	if err != nil {
 		return err
 	}
@@ -145,7 +155,7 @@ func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, 
 	if panel.Width != 69 || panel.Height != 34 {
 		return errors.New("indexedmap: native map HUD panel geometry differs from entry #130")
 	}
-	return panel.BlitAt(dst, fdicon.NativeMapStride, layout.Frame, -1)
+	return panel.BlitAt(dst, stride, layout.Frame, -1)
 }
 
 // BlitNativeMapHUD composes the proven 0x1acf3 draw order atomically:
@@ -153,26 +163,28 @@ func BlitNativeMapHUDPanel(frames NativeMapHUDFrames, dst []byte, displayGateA, 
 // display gate performs the native no-op before requiring any resource input.
 // It intentionally leaves cursor-cell and optional-unit admission to their
 // separately recovered raw resolvers.
-func BlitNativeMapHUD(frames NativeMapHUDFrames, terrain, units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, in NativeMapHUDInput) error {
+func BlitNativeMapHUD(frames NativeMapHUDFrames, terrain, units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, in NativeMapHUDInput, vp NativeMapViewport) error {
 	if !in.DisplayGateA || !in.DisplayGateB {
 		return nil
 	}
+	stride := vp.workStride()
+	contentWidth, contentHeight := vp.contentWidth(), vp.contentHeight()
 	frame := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDPanel(frames, frame, true, true, in.AnchorX); err != nil {
+	if err := BlitNativeMapHUDPanel(frames, frame, true, true, in.AnchorX, stride, contentWidth, contentHeight); err != nil {
 		return err
 	}
-	if err := BlitNativeMapHUDTerrainIcon(terrain, frame, in.AnchorX, in.TerrainDescriptor); err != nil {
+	if err := BlitNativeMapHUDTerrainIcon(terrain, frame, in.AnchorX, in.TerrainDescriptor, stride, contentWidth, contentHeight); err != nil {
 		return err
 	}
-	if err := BlitNativeMapHUDTerrainAPDP(frames, frame, in.AnchorX, in.TerrainControl); err != nil {
+	if err := BlitNativeMapHUDTerrainAPDP(frames, frame, in.AnchorX, in.TerrainControl, stride, contentWidth, contentHeight); err != nil {
 		return err
 	}
 	if in.OptionalUnit != nil {
 		unit := in.OptionalUnit
-		if err := BlitNativeMapHUDUnitIcon(units, cache, frame, in.AnchorX, unit.SelectorSlot, unit.RawState); err != nil {
+		if err := BlitNativeMapHUDUnitIcon(units, cache, frame, in.AnchorX, unit.SelectorSlot, unit.RawState, stride, contentWidth, contentHeight); err != nil {
 			return err
 		}
-		if err := BlitNativeMapHUDHP(frames, frame, in.AnchorX, unit.Current, unit.Maximum); err != nil {
+		if err := BlitNativeMapHUDHP(frames, frame, in.AnchorX, unit.Current, unit.Maximum, stride, contentWidth, contentHeight); err != nil {
 			return err
 		}
 	}
@@ -185,16 +197,16 @@ func BlitNativeMapHUD(frames NativeMapHUDFrames, terrain, units *fdicon.Bank, ca
 // directly indexes the selected FDSHAP bank and is raw-blitted at panel +6.
 // It intentionally does not reuse a PNG terrain preview or infer a semantic
 // terrain/icon category.
-func BlitNativeMapHUDTerrainIcon(terrain *fdicon.Bank, dst []byte, anchorX, tile int) error {
+func BlitNativeMapHUDTerrainIcon(terrain *fdicon.Bank, dst []byte, anchorX, tile, stride, contentWidth, contentHeight int) error {
 	if terrain == nil || tile < 0 || tile > 0x3ff || tile >= len(terrain.Sprites) {
 		return errors.New("indexedmap: native map HUD terrain descriptor is invalid")
 	}
-	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight)
 	if err != nil {
 		return err
 	}
 	frame := append([]byte(nil), dst...)
-	if err := terrain.Sprites[tile].BlitAt(frame, fdicon.NativeMapStride, layout.Terrain%fdicon.NativeMapStride, layout.Terrain/fdicon.NativeMapStride); err != nil {
+	if err := terrain.Sprites[tile].BlitAt(frame, stride, layout.Terrain%stride, layout.Terrain/stride); err != nil {
 		return err
 	}
 	copy(dst, frame)
@@ -205,7 +217,7 @@ func BlitNativeMapHUDTerrainIcon(terrain *fdicon.Bank, dst []byte, anchorX, tile
 // unit lookup succeeds. slot is runtime unit+2's selector-cache slot; rawState
 // is the global state read by that HUD path, where 3 aliases 1. The underlying
 // FDICON selector cache resolves the slot back to its raw twelve-frame block.
-func BlitNativeMapHUDUnitIcon(units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, anchorX, slot, rawState int) error {
+func BlitNativeMapHUDUnitIcon(units *fdicon.Bank, cache *fdicon.NativeSelectorCache, dst []byte, anchorX, slot, rawState, stride, contentWidth, contentHeight int) error {
 	if units == nil || cache == nil {
 		return errors.New("indexedmap: native map HUD unit icon source is absent")
 	}
@@ -220,12 +232,12 @@ func BlitNativeMapHUDUnitIcon(units *fdicon.Bank, cache *fdicon.NativeSelectorCa
 	if err != nil {
 		return err
 	}
-	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight)
 	if err != nil {
 		return err
 	}
 	frame := append([]byte(nil), dst...)
-	if err := sprite.BlitAt(frame, fdicon.NativeMapStride, layout.Unit%fdicon.NativeMapStride, layout.Unit/fdicon.NativeMapStride); err != nil {
+	if err := sprite.BlitAt(frame, stride, layout.Unit%stride, layout.Unit/stride); err != nil {
 		return err
 	}
 	copy(dst, frame)
@@ -253,20 +265,20 @@ func NativeMapHUDTerrainAPDP(controlByte1 byte) (ap, dp int, err error) {
 // BlitNativeMapHUDTerrainAPDP is the two 0x1aeb1 calls following terrain-icon
 // blit. It uses layout AP/DP origins and retains an atomic editable boundary:
 // an invalid raw control byte or any number-render failure changes nothing.
-func BlitNativeMapHUDTerrainAPDP(frames NativeMapHUDFrames, dst []byte, anchorX int, controlByte1 byte) error {
+func BlitNativeMapHUDTerrainAPDP(frames NativeMapHUDFrames, dst []byte, anchorX int, controlByte1 byte, stride, contentWidth, contentHeight int) error {
 	ap, dp, err := NativeMapHUDTerrainAPDP(controlByte1)
 	if err != nil {
 		return err
 	}
-	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight)
 	if err != nil {
 		return err
 	}
 	frame := append([]byte(nil), dst...)
-	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, layout.AP, ap); err != nil {
+	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, stride, layout.AP, ap); err != nil {
 		return err
 	}
-	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, layout.DP, dp); err != nil {
+	if err := BlitNativeMapHUDTwoDigitNumber(frames, frame, stride, layout.DP, dp); err != nil {
 		return err
 	}
 	copy(dst, frame)
@@ -278,8 +290,8 @@ func BlitNativeMapHUDTerrainAPDP(frames NativeMapHUDFrames, dst []byte, anchorX 
 // is formatted as exactly three decimal digits. Equal current/max uses glyph
 // base #0x1f, unequal words base #0x2a, and values over 999 use the matching
 // base+10 18x8 overflow entry rather than a truncated number.
-func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, current, maximum uint16) error {
-	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride)
+func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, current, maximum uint16, stride, contentWidth, contentHeight int) error {
+	layout, err := fdicon.NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight)
 	if err != nil {
 		return err
 	}
@@ -294,7 +306,7 @@ func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, curr
 		if overflow.Width != 18 || overflow.Height != 8 {
 			return errors.New("indexedmap: native map HUD HP overflow geometry differs from entries #0x29/#0x34")
 		}
-		if err := overflow.BlitAt(frame, fdicon.NativeMapStride, layout.HP, -1); err != nil {
+		if err := overflow.BlitAt(frame, stride, layout.HP, -1); err != nil {
 			return err
 		}
 	} else {
@@ -303,7 +315,7 @@ func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, curr
 			if glyph.Width < 5 || glyph.Width > 6 || glyph.Height != 8 {
 				return errors.New("indexedmap: native map HUD HP glyph geometry differs from entries #0x1f..#0x33")
 			}
-			if err := glyph.BlitAt(frame, fdicon.NativeMapStride, layout.HP+place*6, -1); err != nil {
+			if err := glyph.BlitAt(frame, stride, layout.HP+place*6, -1); err != nil {
 				return err
 			}
 		}
@@ -321,7 +333,7 @@ func BlitNativeMapHUDHP(frames NativeMapHUDFrames, dst []byte, anchorX int, curr
 // origin is an already-recovered framebuffer byte offset (for example the
 // AP/DP origins from NativeMapHUDLayoutFor). The transaction uses a clone so
 // a failing digit callback cannot leave only a sign on the caller's buffer.
-func BlitNativeMapHUDSignedNumber(frames NativeMapHUDFrames, dst []byte, origin, value int, drawDigits func(dst []byte, origin, absolute int) error) error {
+func BlitNativeMapHUDSignedNumber(frames NativeMapHUDFrames, dst []byte, stride, origin, value int, drawDigits func(dst []byte, origin, absolute int) error) error {
 	if drawDigits == nil || origin < 0 || origin >= len(dst) {
 		return errors.New("indexedmap: incomplete native map HUD signed number")
 	}
@@ -343,7 +355,7 @@ func BlitNativeMapHUDSignedNumber(frames NativeMapHUDFrames, dst []byte, origin,
 		return errors.New("indexedmap: native map HUD sign geometry differs from LMI entries")
 	}
 	frame := append([]byte(nil), dst...)
-	if err := sign.BlitAt(frame, fdicon.NativeMapStride, origin, -1); err != nil {
+	if err := sign.BlitAt(frame, stride, origin, -1); err != nil {
 		return err
 	}
 	if err := drawDigits(frame, origin+8, absolute); err != nil {
@@ -358,13 +370,13 @@ func BlitNativeMapHUDSignedNumber(frames NativeMapHUDFrames, dst []byte, origin,
 // each character six pixels apart, and its format string is "%0.2d" at this
 // call site. Values outside two decimal digits are rejected instead of
 // silently truncating an editable value to native's first two characters.
-func BlitNativeMapHUDTwoDigitNumber(frames NativeMapHUDFrames, dst []byte, origin, value int) error {
-	return BlitNativeMapHUDSignedNumber(frames, dst, origin, value, func(frame []byte, digitOrigin, absolute int) error {
-		return blitNativeMapHUDTwoDigits(frames, frame, digitOrigin, absolute)
+func BlitNativeMapHUDTwoDigitNumber(frames NativeMapHUDFrames, dst []byte, stride, origin, value int) error {
+	return BlitNativeMapHUDSignedNumber(frames, dst, stride, origin, value, func(frame []byte, digitOrigin, absolute int) error {
+		return blitNativeMapHUDTwoDigits(frames, frame, stride, digitOrigin, absolute)
 	})
 }
 
-func blitNativeMapHUDTwoDigits(frames NativeMapHUDFrames, dst []byte, origin, absolute int) error {
+func blitNativeMapHUDTwoDigits(frames NativeMapHUDFrames, dst []byte, stride, origin, absolute int) error {
 	if absolute < 0 || absolute > 99 || origin < 0 || origin >= len(dst) {
 		return errors.New("indexedmap: native map HUD two-digit value is invalid")
 	}
@@ -373,7 +385,7 @@ func blitNativeMapHUDTwoDigits(frames NativeMapHUDFrames, dst []byte, origin, ab
 		if glyph.Width < 5 || glyph.Width > 6 || glyph.Height != 8 {
 			return errors.New("indexedmap: native map HUD decimal glyph geometry differs from entries #0x1f..#0x28")
 		}
-		if err := glyph.BlitAt(dst, fdicon.NativeMapStride, origin+place*6, -1); err != nil {
+		if err := glyph.BlitAt(dst, stride, origin+place*6, -1); err != nil {
 			return err
 		}
 	}

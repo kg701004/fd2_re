@@ -59,6 +59,91 @@ func TestComposeFramePreservesNativeLayerOrder(t *testing.T) {
 	}
 }
 
+// TestComposeFrameAtWiderViewportShowsMoreTerrain proves FrameInput.Viewport
+// actually widens the composed/copied content -- not just accepted and
+// ignored -- by checking a pixel column beyond the original 13-tile (312px)
+// window but within a wider 15-tile (360px) window. The work buffer is sized
+// via vp.workSize(), the Phase 3 work-buffer sizing formula (504-byte stride
+// for this 360px-content viewport, wider than the original fixed 456).
+func TestComposeFrameAtWiderViewportShowsMoreTerrain(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	vp := NativeMapViewport{Cols: 15, Rows: 8}
+	work, vga := make([]byte, vp.workSize()), make([]byte, vp.vgaSize())
+	cells := make([]fdicon.NativeTerrainCell, 15*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	in := FrameInput{
+		TerrainBank: bank(12, 1), RangeBank: bank(20, 2), UnitBank: bank(12, 3), ForegroundBank: bank(12, 0),
+		SelectorCache: cache, Cells: cells, Controls: []byte{0x80, 0, 0, 0}, LUT: make([]byte, 256), MapWidth: 15,
+		RangeMode: 0, Viewport: vp, // mode 0 = no range overlay, isolates the terrain-fill assertion below
+	}
+	if err := ComposeFrame(work, vga, in, func([]byte) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := vp.contentWidth(), 360; got != want {
+		t.Fatalf("contentWidth()=%d, want %d", got, want)
+	}
+	// Column 340 is beyond the original 312px window but within the new
+	// 360px one; it must carry the terrain fill color, proving the wider
+	// viewport is actually composed and copied, not silently clamped back
+	// to the original size.
+	beyondOriginal := vp.viewportOffset() + 340
+	if got := vga[beyondOriginal]; got != 1 {
+		t.Fatalf("pixel at widened column 340 = %d, want terrain fill 1 (wider viewport not actually drawn)", got)
+	}
+	// The border immediately past the new content width must still be
+	// untouched (border preserved at the new, not the old, size).
+	afterNewContent := vp.viewportOffset() + vp.contentWidth()
+	if got := vga[afterNewContent]; got != 0 {
+		t.Fatalf("pixel just past widened content = %d, want untouched border 0", got)
+	}
+}
+
+// TestComposeFrameAtWiderViewportPlacesUnitBelowCameraRowCorrectly is the
+// Phase-3 hidden-coupling-bug regression test: it composes a wider viewport
+// (work-buffer stride 504, not the original fixed 456) with a unit at map
+// row Y=2 (camera row > 0), and checks the unit's distinct fill color lands
+// exactly at the VGA offset the viewport's own stride/base formula predicts.
+// Before Phase 3 fixed fdicon.NativePlacementOffset/BlitNativeUnitLayer to
+// take an explicit stride/workBase, this call silently used the fixed
+// original 456/0x8088 while the surrounding terrain/copy already used the
+// wider 504/vp.workBase(), which would place the unit at the wrong pixel row
+// (or push it out of the destination bounds) instead of the position below.
+func TestComposeFrameAtWiderViewportPlacesUnitBelowCameraRowCorrectly(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	vp := NativeMapViewport{Cols: 15, Rows: 8}
+	if got, want := vp.workStride(), 504; got != want {
+		t.Fatalf("workStride()=%d, want %d (test assumes a stride wider than the original 456)", got, want)
+	}
+	work, vga := make([]byte, vp.workSize()), make([]byte, vp.vgaSize())
+	cells := make([]fdicon.NativeTerrainCell, 15*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	const unitX, unitY = 5, 2 // Y>0: the specific case a stale fixed stride would misplace
+	in := FrameInput{
+		TerrainBank: bank(12, 1), RangeBank: bank(20, 2), UnitBank: bank(12, 9), ForegroundBank: bank(12, 0),
+		SelectorCache: cache, Cells: cells, Controls: []byte{0, 0, 0, 0}, LUT: make([]byte, 256), MapWidth: 15,
+		RangeMode: 0, Viewport: vp,
+		Units:           []fdicon.NativeUnitLayerEntry{{X: unitX, Y: unitY, Slot: 0}},
+		ForegroundUnits: []fdicon.NativeForegroundLayerEntry{{Inactive: true}},
+	}
+	if err := ComposeFrame(work, vga, in, func([]byte) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	wantOffset := vp.viewportOffset() + unitY*24*vp.canvasWidth() + unitX*24
+	if got := vga[wantOffset]; got != 9 {
+		t.Fatalf("pixel at unit's expected wider-viewport position = %d, want unit fill 9 (unit misplaced by a stale fixed work stride)", got)
+	}
+}
+
 func TestComposeFrameRejectsMissingHUDBeforeMutation(t *testing.T) {
 	work, vga := make([]byte, 456*300), make([]byte, NativeMapVGASize)
 	beforeWork, beforeVGA := append([]byte(nil), work...), append([]byte(nil), vga...)
@@ -148,7 +233,7 @@ func TestComposeNativeFrameBindsRecoveredHUDInsteadOfCallback(t *testing.T) {
 	if err := ComposeNativeFrame(work, vga, in); err != nil {
 		t.Fatal(err)
 	}
-	layout, _ := fdicon.NativeMapHUDLayoutFor(136, workStride)
+	layout, _ := fdicon.NativeMapHUDLayoutFor(136, workStride, steadyViewportWidth, viewHeight)
 	if work[workBase+layout.Frame] != 0x5a ||
 		work[workBase+layout.Terrain] != 0x66 ||
 		work[workBase+layout.Unit] != 0x77 ||

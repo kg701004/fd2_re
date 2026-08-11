@@ -50,7 +50,8 @@ func (p *NativeMapHUDPersistentState) CaptureNativeMapHUD(runtime NativeMapHUDRu
 	if p == nil {
 		return false
 	}
-	if _, err := fdicon.NativeMapHUDLayoutFor(runtime.AnchorX, fdicon.NativeMapStride); err != nil {
+	contentWidth, contentHeight := defaultNativeMapHUDContentSize()
+	if _, err := fdicon.NativeMapHUDLayoutFor(runtime.AnchorX, fdicon.NativeMapStride, contentWidth, contentHeight); err != nil {
 		return false
 	}
 	p.DisplayGateA = runtime.DisplayGateA
@@ -77,7 +78,8 @@ func (p NativeMapHUDPersistentState) MaterializeRuntime(gateB byte) (NativeMapHU
 	if !p.HasDisplayGateA || !p.HasAnchorX {
 		return NativeMapHUDRuntimeState{}, false
 	}
-	if _, err := fdicon.NativeMapHUDLayoutFor(p.AnchorX, fdicon.NativeMapStride); err != nil {
+	contentWidth, contentHeight := defaultNativeMapHUDContentSize()
+	if _, err := fdicon.NativeMapHUDLayoutFor(p.AnchorX, fdicon.NativeMapStride, contentWidth, contentHeight); err != nil {
 		return NativeMapHUDRuntimeState{}, false
 	}
 	return NativeMapHUDRuntimeState{
@@ -89,7 +91,8 @@ func (s *State) MaterializeNativeMapHUDState(gateA, gateB byte, anchorX int) boo
 	if s == nil {
 		return false
 	}
-	if _, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride); err != nil {
+	contentWidth, contentHeight := s.nativeMapHUDContentSize()
+	if _, err := fdicon.NativeMapHUDLayoutFor(anchorX, fdicon.NativeMapStride, contentWidth, contentHeight); err != nil {
 		return false
 	}
 	s.NativeMapHUDState = NativeMapHUDRuntimeState{
@@ -99,21 +102,51 @@ func (s *State) MaterializeNativeMapHUDState(gateA, gateB byte, anchorX int) boo
 	return true
 }
 
+// nativeMapHUDContentSize is the pixel content area the HUD panel is
+// anchored within (312x192 -- 13x8 tiles -- at the original size), derived
+// from the same active viewport as the steady map view (see
+// nativeMapViewportOrDefault in native_map_view.go) so the two never drift.
+func (s *State) nativeMapHUDContentSize() (contentWidth, contentHeight int) {
+	cols, rows := s.nativeMapViewportOrDefault()
+	return cols * fdicon.NativeSize, rows * fdicon.NativeSize
+}
+
+// defaultNativeMapHUDContentSize is nativeMapHUDContentSize's nil-State
+// fallback, for the two persistent-state methods below that only see a value
+// type and cannot reach the owning State's active viewport.
+func defaultNativeMapHUDContentSize() (contentWidth, contentHeight int) {
+	return nativeMapViewWidth * fdicon.NativeSize, nativeMapViewHeight * fdicon.NativeSize
+}
+
+// nativeMapHUDAnchorDodgeMargin is the fixed tile-count trigger zone on
+// every edge of the HUD anchor deadzone (see AdvanceNativeMapHUDAnchor):
+// reproduces the original's literal 3/9 thresholds at the 13-tile original
+// width (3 and 13-1-3=9) and its dodge-away-from-cursor behavior for any
+// wider remake viewport.
+const nativeMapHUDAnchorDodgeMargin = 3
+
 // AdvanceNativeMapHUDAnchor applies the only two proven writes in 0x1acf3.
-// rawVisibleX/Y are [0x53ab9]/[0x53abd], not dialogue-box dimensions.
+// rawVisibleX/Y are [0x53ab9]/[0x53abd], not dialogue-box dimensions. The
+// panel dodges to the flush-right anchor when the cursor nears the left
+// edge, to flush-left when it nears the right edge, and only within the
+// bottom two viewport rows (matching indexedmap.AdvanceNativeMapHUDAnchor's
+// row deadzone) -- see nativeMapHUDContentSize for how this generalizes to
+// a wider/taller remake viewport instead of the original fixed 13x8.
 func (s *State) AdvanceNativeMapHUDAnchor(rawVisibleX, rawVisibleY int) bool {
 	if s == nil || !s.HasNativeMapHUDState {
 		return false
 	}
+	viewCols, viewRows := s.nativeMapViewportOrDefault()
+	contentWidth, contentHeight := s.nativeMapHUDContentSize()
 	next := s.NativeMapHUDState.AnchorX
-	if rawVisibleY > 5 {
-		if rawVisibleX < 3 {
-			next = 0xf2
-		} else if rawVisibleX > 9 {
+	if rawVisibleY > viewRows-1-2 {
+		if rawVisibleX < nativeMapHUDAnchorDodgeMargin {
+			next = contentWidth - fdicon.NativeMapHUDPanelWidth - 1
+		} else if rawVisibleX > viewCols-1-nativeMapHUDAnchorDodgeMargin {
 			next = 1
 		}
 	}
-	if _, err := fdicon.NativeMapHUDLayoutFor(next, fdicon.NativeMapStride); err != nil {
+	if _, err := fdicon.NativeMapHUDLayoutFor(next, fdicon.NativeMapStride, contentWidth, contentHeight); err != nil {
 		return false
 	}
 	s.NativeMapHUDState.AnchorX = next

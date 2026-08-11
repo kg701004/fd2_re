@@ -53,15 +53,42 @@ func NativeCommandBackgroundSelector(initial byte, targets []NativeCommandBackgr
 	return selector
 }
 
+// NativeMapHUDPanelWidth and NativeMapHUDPanelHeight are FDOTHER #5 LMI1
+// entry #130's fixed geometry (see BlitNativeMapHUDPanel's own 69x34 check).
+// They are exported so callers picking a viewport-relative anchor (see
+// indexedmap.AdvanceNativeMapHUDAnchor) can derive the same flush-edge
+// positions NativeMapHUDLayoutFor now computes internally.
+const (
+	NativeMapHUDPanelWidth  = 69
+	NativeMapHUDPanelHeight = 34
+)
+
 // NativeMapHUDLayoutFor reproduces the fixed offsets used by 0x1acf3 after
-// its raw horizontal anchor has been selected.  The original caller always
-// supplies the 456-byte map work-buffer stride; accepting another stride
-// would hide an adapter mismatch, so it fails closed.
-func NativeMapHUDLayoutFor(anchorX, stride int) (NativeMapHUDLayout, error) {
-	if stride != NativeMapStride || anchorX < 0 || anchorX+69 > 320 {
+// its raw horizontal anchor has been selected, viewport-relative to a
+// content area contentWidth x contentHeight pixels (312x192 -- 13x8 tiles --
+// at the original size). The original caller always supplies the 456-byte
+// map work-buffer stride; a narrower stride would hide an adapter mismatch,
+// so anything below it still fails closed, but a wider stride is legitimate
+// for a remake viewport bigger than the original 13x8 (see
+// indexedmap.NativeMapViewport) so it is only a minimum-bound guard now.
+//
+// The panel row is not itself a recovered EXE formula -- 157 is the one
+// literal 0x1acf3 uses -- but it reproduces that literal exactly as
+// contentHeight-NativeMapHUDPanelHeight-1 (192-34-1=157): the panel is
+// always flush against the content's bottom edge with a 1px inset. This
+// generalizes it for a taller remake viewport rather than guessing a new
+// constant. The anchorX bound is likewise tightened from the original's
+// loose 320px (VGA canvas width, not the content width actually being
+// addressed) to the semantically correct contentWidth, which changes no
+// observable behavior since only anchorX in {1, contentWidth-70} are ever
+// actually selected (see indexedmap.AdvanceNativeMapHUDAnchor).
+func NativeMapHUDLayoutFor(anchorX, stride, contentWidth, contentHeight int) (NativeMapHUDLayout, error) {
+	if stride < NativeMapStride || contentWidth <= 0 || contentHeight <= 0 ||
+		anchorX < 0 || anchorX+NativeMapHUDPanelWidth > contentWidth {
 		return NativeMapHUDLayout{}, errors.New("fdicon: invalid native map HUD layout")
 	}
-	base := stride*157 + anchorX
+	panelRow := contentHeight - NativeMapHUDPanelHeight - 1
+	base := stride*panelRow + anchorX
 	return NativeMapHUDLayout{
 		Frame:   base,
 		Terrain: base + 6,

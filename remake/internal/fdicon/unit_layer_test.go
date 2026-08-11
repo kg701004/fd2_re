@@ -27,7 +27,7 @@ func TestBlitNativeUnitLayerMatches127E0OrderAndBranches(t *testing.T) {
 	if err := nativeLayerBank().BlitNativeUnitLayer(dst, NativeMapStride, cache, units, 0, 0, 12, 7, 0, 0, 0); err != nil {
 		t.Fatal(err)
 	}
-	base, _ := NativePlacementOffset(0, 0, 0, 0, 0, 0, 0, false)
+	base, _ := NativePlacementOffset(0x8088, NativeMapStride, 0, 0, 0, 0, 0, 0, 0, false)
 	if got, want := dst[base], byte(0x10); got != want {
 		t.Fatalf("raw unit pixel=%#x, want %#x", got, want)
 	}
@@ -49,7 +49,7 @@ func TestBlitNativeUnitLayerFailsBeforePartialFrame(t *testing.T) {
 	if err := nativeLayerBank().BlitNativeUnitLayer(dst, NativeMapStride, cache, units, 0, 0, 12, 7, 0, 0, 0); err == nil {
 		t.Fatal("unknown slot was accepted")
 	}
-	base, _ := NativePlacementOffset(0, 0, 0, 0, 0, 0, 0, false)
+	base, _ := NativePlacementOffset(0x8088, NativeMapStride, 0, 0, 0, 0, 0, 0, 0, false)
 	if dst[base] != 0 {
 		t.Fatal("failed layer partially modified destination")
 	}
@@ -68,7 +68,7 @@ func TestBlitNativeUnitLayerWithBaseShiftMatches32999PointerLift(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	base, _ := NativePlacementOffset(0, 0, 0, 0, 0, 0, 0, false)
+	base, _ := NativePlacementOffset(0x8088, NativeMapStride, 0, 0, 0, 0, 0, 0, 0, false)
 	if dst[base] != 0 || dst[base-8*NativeMapStride] != 0x10 {
 		t.Fatalf("shifted unit wrote base=%#x lifted=%#x", dst[base], dst[base-8*NativeMapStride])
 	}
