@@ -22,7 +22,7 @@ func (s *State) ExecuteNativeCommandHeal(actor, confirmed *Unit, commandID int, 
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command heal state/rng")
 	}
-	if commandID < 13 || commandID > 16 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if commandID < 13 || commandID > 16 || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command heal record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]

@@ -567,22 +567,22 @@
     {
      "id": 128,
      "name": "布衣",
-     "price": 50
+     "price": 1
     },
     {
      "id": 129,
      "name": "旅行裝",
-     "price": 500
+     "price": 1
     },
     {
      "id": 132,
      "name": "皮甲",
-     "price": 300
+     "price": 1
     },
     {
      "id": 165,
      "name": "法師袍",
-     "price": 750
+     "price": 1
     }
    ],
    "next": "town_ch02"
@@ -595,7 +595,37 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch02"
@@ -656,27 +686,27 @@
     {
      "id": 0,
      "name": "短劍",
-     "price": 50
+     "price": 1
     },
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 32,
      "name": "手斧",
-     "price": 300
+     "price": 1
     },
     {
      "id": 132,
      "name": "皮甲",
-     "price": 300
+     "price": 1
     },
     {
      "id": 165,
      "name": "法師袍",
-     "price": 750
+     "price": 1
     }
    ],
    "next": "town_ch03"
@@ -689,7 +719,37 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch03"
@@ -750,42 +810,42 @@
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 33,
      "name": "迴旋斧",
-     "price": 800
+     "price": 1
     },
     {
      "id": 45,
      "name": "長弓",
-     "price": 500
+     "price": 1
     },
     {
      "id": 53,
      "name": "釘頭鎚",
-     "price": 180
+     "price": 1
     },
     {
      "id": 129,
      "name": "旅行裝",
-     "price": 500
+     "price": 1
     },
     {
      "id": 132,
      "name": "皮甲",
-     "price": 300
+     "price": 1
     },
     {
      "id": 133,
      "name": "硬皮甲",
-     "price": 800
+     "price": 1
     },
     {
      "id": 165,
      "name": "法師袍",
-     "price": 750
+     "price": 1
     }
    ],
    "next": "town_ch04"
@@ -798,12 +858,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch04"
@@ -864,32 +954,32 @@
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 2,
      "name": "長劍",
-     "price": 800
+     "price": 1
     },
     {
      "id": 20,
      "name": "刺矛",
-     "price": 80
+     "price": 1
     },
     {
      "id": 21,
      "name": "騎槍",
-     "price": 400
+     "price": 1
     },
     {
      "id": 133,
      "name": "硬皮甲",
-     "price": 800
+     "price": 1
     },
     {
      "id": 144,
      "name": "環狀甲",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch05"
@@ -902,17 +992,47 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch05"
@@ -983,52 +1103,52 @@
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 2,
      "name": "長劍",
-     "price": 800
+     "price": 1
     },
     {
      "id": 20,
      "name": "刺矛",
-     "price": 80
+     "price": 1
     },
     {
      "id": 21,
      "name": "騎槍",
-     "price": 400
+     "price": 1
     },
     {
      "id": 33,
      "name": "迴旋斧",
-     "price": 800
+     "price": 1
     },
     {
      "id": 44,
      "name": "短弓",
-     "price": 100
+     "price": 1
     },
     {
      "id": 45,
      "name": "長弓",
-     "price": 500
+     "price": 1
     },
     {
      "id": 145,
      "name": "鎖子甲",
-     "price": 3600
+     "price": 2
     },
     {
      "id": 134,
      "name": "夜行裝",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 166,
      "name": "僧侶袍",
-     "price": 1800
+     "price": 1
     }
    ],
    "next": "town_ch06"
@@ -1041,17 +1161,47 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch06"
@@ -1122,62 +1272,62 @@
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 2,
      "name": "長劍",
-     "price": 800
+     "price": 1
     },
     {
      "id": 21,
      "name": "騎槍",
-     "price": 400
+     "price": 1
     },
     {
      "id": 22,
      "name": "長戟",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 33,
      "name": "迴旋斧",
-     "price": 800
+     "price": 1
     },
     {
      "id": 34,
      "name": "戰斧",
-     "price": 800
+     "price": 1
     },
     {
      "id": 45,
      "name": "長弓",
-     "price": 500
+     "price": 1
     },
     {
      "id": 53,
      "name": "釘頭鎚",
-     "price": 180
+     "price": 1
     },
     {
      "id": 54,
      "name": "巨鎚",
-     "price": 640
+     "price": 1
     },
     {
      "id": 133,
      "name": "硬皮甲",
-     "price": 800
+     "price": 1
     },
     {
      "id": 134,
      "name": "夜行裝",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 145,
      "name": "鎖子甲",
-     "price": 3600
+     "price": 2
     }
    ],
    "next": "town_ch07"
@@ -1190,12 +1340,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch07"
@@ -1266,52 +1446,52 @@
     {
      "id": 2,
      "name": "長劍",
-     "price": 800
+     "price": 1
     },
     {
      "id": 3,
      "name": "巨劍",
-     "price": 1500
+     "price": 1
     },
     {
      "id": 21,
      "name": "騎槍",
-     "price": 400
+     "price": 1
     },
     {
      "id": 22,
      "name": "長戟",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 45,
      "name": "長弓",
-     "price": 500
+     "price": 1
     },
     {
      "id": 34,
      "name": "戰斧",
-     "price": 800
+     "price": 1
     },
     {
      "id": 54,
      "name": "巨鎚",
-     "price": 640
+     "price": 1
     },
     {
      "id": 134,
      "name": "夜行裝",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 145,
      "name": "鎖子甲",
-     "price": 3600
+     "price": 2
     },
     {
      "id": 166,
      "name": "僧侶袍",
-     "price": 1800
+     "price": 1
     }
    ],
    "next": "town_ch08"
@@ -1324,12 +1504,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch08"
@@ -1400,42 +1610,42 @@
     {
      "id": 3,
      "name": "巨劍",
-     "price": 1500
+     "price": 1
     },
     {
      "id": 22,
      "name": "長戟",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 35,
      "name": "戰鎚",
-     "price": 2000
+     "price": 1
     },
     {
      "id": 46,
      "name": "黑暗弓",
-     "price": 1800
+     "price": 1
     },
     {
      "id": 63,
      "name": "鐵爪",
-     "price": 850
+     "price": 1
     },
     {
      "id": 135,
      "name": "魔法皮甲",
-     "price": 4000
+     "price": 2
     },
     {
      "id": 146,
      "name": "鱗甲",
-     "price": 5800
+     "price": 2
     },
     {
      "id": 173,
      "name": "武鬥裝",
-     "price": 1200
+     "price": 1
     }
    ],
    "next": "town_ch09"
@@ -1448,12 +1658,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch09"
@@ -1525,42 +1765,42 @@
     {
      "id": 3,
      "name": "巨劍",
-     "price": 1500
+     "price": 1
     },
     {
      "id": 35,
      "name": "戰鎚",
-     "price": 2000
+     "price": 1
     },
     {
      "id": 46,
      "name": "黑暗弓",
-     "price": 1800
+     "price": 1
     },
     {
      "id": 54,
      "name": "巨鎚",
-     "price": 640
+     "price": 1
     },
     {
      "id": 63,
      "name": "鐵爪",
-     "price": 850
+     "price": 1
     },
     {
      "id": 135,
      "name": "魔法皮甲",
-     "price": 4000
+     "price": 2
     },
     {
      "id": 146,
      "name": "鱗甲",
-     "price": 5800
+     "price": 2
     },
     {
      "id": 167,
      "name": "祭司袍",
-     "price": 6400
+     "price": 2
     }
    ],
    "next": "town_ch10"
@@ -1573,17 +1813,47 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch10"
@@ -1655,42 +1925,42 @@
     {
      "id": 3,
      "name": "巨劍",
-     "price": 1500
+     "price": 1
     },
     {
      "id": 4,
      "name": "黑暗劍",
-     "price": 2400
+     "price": 1
     },
     {
      "id": 23,
      "name": "先鋒矛",
-     "price": 1800
+     "price": 1
     },
     {
      "id": 24,
      "name": "斬馬刀",
-     "price": 4400
+     "price": 2
     },
     {
      "id": 64,
      "name": "皇帝指環",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 136,
      "name": "盜賊之衣",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 147,
      "name": "連環鋼甲",
-     "price": 8400
+     "price": 3
     },
     {
      "id": 173,
      "name": "武鬥裝",
-     "price": 1200
+     "price": 1
     }
    ],
    "next": "town_ch11"
@@ -1703,12 +1973,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch11"
@@ -1779,42 +2079,42 @@
     {
      "id": 4,
      "name": "黑暗劍",
-     "price": 2400
+     "price": 1
     },
     {
      "id": 24,
      "name": "斬馬刀",
-     "price": 4400
+     "price": 2
     },
     {
      "id": 36,
      "name": "巨斧",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 55,
      "name": "槤枷",
-     "price": 1000
+     "price": 1
     },
     {
      "id": 64,
      "name": "皇帝指環",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 136,
      "name": "盜賊之衣",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 147,
      "name": "連環鋼甲",
-     "price": 8400
+     "price": 3
     },
     {
      "id": 173,
      "name": "武鬥裝",
-     "price": 1200
+     "price": 1
     }
    ],
    "next": "town_ch12"
@@ -1827,12 +2127,42 @@
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch12"
@@ -1904,42 +2234,42 @@
     {
      "id": 5,
      "name": "戰士劍",
-     "price": 4200
+     "price": 2
     },
     {
      "id": 24,
      "name": "斬馬刀",
-     "price": 4400
+     "price": 2
     },
     {
      "id": 36,
      "name": "巨斧",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 47,
      "name": "巨弓",
-     "price": 4800
+     "price": 2
     },
     {
      "id": 136,
      "name": "盜賊之衣",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 147,
      "name": "連環鋼甲",
-     "price": 8400
+     "price": 3
     },
     {
      "id": 168,
      "name": "聖者袍",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 173,
      "name": "武鬥裝",
-     "price": 1200
+     "price": 1
     }
    ],
    "next": "town_ch13"
@@ -1952,22 +2282,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch13"
@@ -2038,42 +2398,42 @@
     {
      "id": 5,
      "name": "戰士劍",
-     "price": 4200
+     "price": 2
     },
     {
      "id": 25,
      "name": "惡魔之矛",
-     "price": 6000
+     "price": 2
     },
     {
      "id": 36,
      "name": "巨斧",
-     "price": 3200
+     "price": 2
     },
     {
      "id": 47,
      "name": "巨弓",
-     "price": 4800
+     "price": 2
     },
     {
      "id": 137,
      "name": "忍者裝",
-     "price": 9600
+     "price": 3
     },
     {
      "id": 148,
      "name": "合金鎖甲",
-     "price": 10800
+     "price": 3
     },
     {
      "id": 168,
      "name": "聖者袍",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 174,
      "name": "鬥士服",
-     "price": 5600
+     "price": 2
     }
    ],
    "next": "town_ch14"
@@ -2086,22 +2446,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch14"
@@ -2162,42 +2552,42 @@
     {
      "id": 6,
      "name": "巨魔劍",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 25,
      "name": "惡魔之矛",
-     "price": 6000
+     "price": 2
     },
     {
      "id": 37,
      "name": "血之斧",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 48,
      "name": "精靈弓",
-     "price": 7200
+     "price": 2
     },
     {
      "id": 137,
      "name": "忍者裝",
-     "price": 9600
+     "price": 3
     },
     {
      "id": 148,
      "name": "合金鎖甲",
-     "price": 10800
+     "price": 3
     },
     {
      "id": 168,
      "name": "聖者袍",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 174,
      "name": "鬥士服",
-     "price": 5600
+     "price": 2
     }
    ],
    "next": "town_ch15"
@@ -2210,22 +2600,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch15"
@@ -2296,37 +2716,37 @@
     {
      "id": 6,
      "name": "巨魔劍",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 25,
      "name": "惡魔之矛",
-     "price": 6000
+     "price": 2
     },
     {
      "id": 37,
      "name": "血之斧",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 48,
      "name": "精靈弓",
-     "price": 7200
+     "price": 2
     },
     {
      "id": 137,
      "name": "忍者裝",
-     "price": 9600
+     "price": 3
     },
     {
      "id": 148,
      "name": "合金鎖甲",
-     "price": 10800
+     "price": 3
     },
     {
      "id": 169,
      "name": "霧之袍",
-     "price": 16400
+     "price": 4
     }
    ],
    "next": "town_ch16"
@@ -2339,22 +2759,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch16"
@@ -2414,52 +2864,52 @@
     {
      "id": 16,
      "name": "暗殺刀",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 25,
      "name": "惡魔之矛",
-     "price": 6000
+     "price": 2
     },
     {
      "id": 37,
      "name": "血之斧",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 49,
      "name": "狙擊弓",
-     "price": 12000
+     "price": 3
     },
     {
      "id": 56,
      "name": "魔法杖",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 65,
      "name": "毒爪",
-     "price": 3600
+     "price": 2
     },
     {
      "id": 138,
      "name": "潛行服",
-     "price": 12000
+     "price": 3
     },
     {
      "id": 149,
      "name": "魔法鱗甲",
-     "price": 13200
+     "price": 3
     },
     {
      "id": 169,
      "name": "霧之袍",
-     "price": 16400
+     "price": 4
     },
     {
      "id": 156,
      "name": "鎧甲",
-     "price": 12000
+     "price": 3
     }
    ],
    "next": "town_ch17"
@@ -2472,22 +2922,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch17"
@@ -2557,57 +3037,57 @@
     {
      "id": 18,
      "name": "忍者刀",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 26,
      "name": "黃金之戟",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 38,
      "name": "閃電鎚",
-     "price": 12500
+     "price": 3
     },
     {
      "id": 49,
      "name": "狙擊弓",
-     "price": 12000
+     "price": 3
     },
     {
      "id": 56,
      "name": "魔法杖",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 65,
      "name": "毒爪",
-     "price": 3600
+     "price": 2
     },
     {
      "id": 138,
      "name": "潛行服",
-     "price": 12000
+     "price": 3
     },
     {
      "id": 149,
      "name": "魔法鱗甲",
-     "price": 13200
+     "price": 3
     },
     {
      "id": 169,
      "name": "霧之袍",
-     "price": 16400
+     "price": 4
     },
     {
      "id": 156,
      "name": "鎧甲",
-     "price": 12000
+     "price": 3
     },
     {
      "id": 175,
      "name": "武者鎧甲",
-     "price": 11000
+     "price": 3
     }
    ],
    "next": "town_ch18"
@@ -2620,22 +3100,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch18"
@@ -2706,57 +3216,57 @@
     {
      "id": 18,
      "name": "忍者刀",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 26,
      "name": "黃金之戟",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 38,
      "name": "閃電鎚",
-     "price": 12500
+     "price": 3
     },
     {
      "id": 97,
      "name": "十字弓",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 56,
      "name": "魔法杖",
-     "price": 5600
+     "price": 2
     },
     {
      "id": 67,
      "name": "碎岩爪",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 139,
      "name": "神秘裝",
-     "price": 14400
+     "price": 4
     },
     {
      "id": 150,
      "name": "血環甲",
-     "price": 15600
+     "price": 4
     },
     {
      "id": 169,
      "name": "霧之袍",
-     "price": 16400
+     "price": 4
     },
     {
      "id": 157,
      "name": "銀鎧甲",
-     "price": 15000
+     "price": 4
     },
     {
      "id": 175,
      "name": "武者鎧甲",
-     "price": 11000
+     "price": 3
     }
    ],
    "next": "town_ch19"
@@ -2769,22 +3279,52 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch19"
@@ -2856,57 +3396,57 @@
     {
      "id": 18,
      "name": "忍者刀",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 26,
      "name": "黃金之戟",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 38,
      "name": "閃電鎚",
-     "price": 12500
+     "price": 3
     },
     {
      "id": 97,
      "name": "十字弓",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 57,
      "name": "封咒杖",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 67,
      "name": "碎岩爪",
-     "price": 7800
+     "price": 2
     },
     {
      "id": 139,
      "name": "神秘裝",
-     "price": 14400
+     "price": 4
     },
     {
      "id": 150,
      "name": "血環甲",
-     "price": 15600
+     "price": 4
     },
     {
      "id": 170,
      "name": "黑暗之袍",
-     "price": 18000
+     "price": 4
     },
     {
      "id": 157,
      "name": "銀鎧甲",
-     "price": 15000
+     "price": 4
     },
     {
      "id": 176,
      "name": "妖魔鬥服",
-     "price": 18000
+     "price": 4
     }
    ],
    "next": "town_ch20"
@@ -2919,27 +3459,57 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch20"
@@ -3010,57 +3580,57 @@
     {
      "id": 19,
      "name": "地獄刀",
-     "price": 14800
+     "price": 4
     },
     {
      "id": 26,
      "name": "黃金之戟",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 39,
      "name": "狂暴之斧",
-     "price": 12800
+     "price": 3
     },
     {
      "id": 97,
      "name": "十字弓",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 57,
      "name": "封咒杖",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 68,
      "name": "金鋼指環",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 140,
      "name": "暗殺服",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 151,
      "name": "金鋼鎖甲",
-     "price": 22000
+     "price": 5
     },
     {
      "id": 170,
      "name": "黑暗之袍",
-     "price": 18000
+     "price": 4
     },
     {
      "id": 158,
      "name": "魔法鎧甲",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 176,
      "name": "妖魔鬥服",
-     "price": 18000
+     "price": 4
     }
    ],
    "next": "town_ch21"
@@ -3073,27 +3643,57 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch21"
@@ -3259,57 +3859,57 @@
     {
      "id": 19,
      "name": "地獄刀",
-     "price": 14800
+     "price": 4
     },
     {
      "id": 27,
      "name": "龍之槍",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 39,
      "name": "狂暴之斧",
-     "price": 12800
+     "price": 3
     },
     {
      "id": 98,
      "name": "水晶弓",
-     "price": 13500
+     "price": 3
     },
     {
      "id": 57,
      "name": "封咒杖",
-     "price": 8800
+     "price": 3
     },
     {
      "id": 68,
      "name": "金鋼指環",
-     "price": 11200
+     "price": 3
     },
     {
      "id": 140,
      "name": "暗殺服",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 151,
      "name": "金鋼鎖甲",
-     "price": 22000
+     "price": 5
     },
     {
      "id": 189,
      "name": "地之袍",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 158,
      "name": "魔法鎧甲",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 188,
      "name": "鬥士護甲",
-     "price": 20000
+     "price": 5
     }
    ],
    "next": "town_ch22"
@@ -3322,27 +3922,57 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch22"
@@ -3541,57 +4171,57 @@
     {
      "id": 9,
      "name": "大地之劍",
-     "price": 18000
+     "price": 4
     },
     {
      "id": 28,
      "name": "破魔槍",
-     "price": 16000
+     "price": 4
     },
     {
      "id": 41,
      "name": "力量之斧",
-     "price": 22000
+     "price": 5
     },
     {
      "id": 50,
      "name": "封魔弓",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 60,
      "name": "龍之杖",
-     "price": 22400
+     "price": 5
     },
     {
      "id": 70,
      "name": "巨神指環",
-     "price": 17500
+     "price": 4
     },
     {
      "id": 142,
      "name": "惡魔皮甲",
-     "price": 30000
+     "price": 6
     },
     {
      "id": 153,
      "name": "力量鎖甲",
-     "price": 36000
+     "price": 7
     },
     {
      "id": 161,
      "name": "聖鎧甲",
-     "price": 42000
+     "price": 9
     },
     {
      "id": 171,
      "name": "天之袍",
-     "price": 32000
+     "price": 7
     },
     {
      "id": 177,
      "name": "武神護甲",
-     "price": 34000
+     "price": 7
     }
    ],
    "next": "town_ch26"
@@ -3604,22 +4234,52 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 196,
      "name": "解毒劑",
-     "price": 20
+     "price": 1
     },
     {
      "id": 197,
      "name": "退麻劑",
-     "price": 20
+     "price": 1
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch26"
@@ -3702,57 +4362,57 @@
     {
      "id": 10,
      "name": "龍神劍",
-     "price": 25000
+     "price": 5
     },
     {
      "id": 31,
      "name": "巨神戟",
-     "price": 24000
+     "price": 5
     },
     {
      "id": 42,
      "name": "大地之鎚",
-     "price": 28000
+     "price": 6
     },
     {
      "id": 104,
      "name": "火神弓",
-     "price": 32000
+     "price": 7
     },
     {
      "id": 60,
      "name": "龍之杖",
-     "price": 22400
+     "price": 5
     },
     {
      "id": 105,
      "name": "鬥神指環",
-     "price": 25800
+     "price": 6
     },
     {
      "id": 143,
      "name": "雷神服",
-     "price": 42000
+     "price": 9
     },
     {
      "id": 154,
      "name": "惡魔鱗甲",
-     "price": 45000
+     "price": 9
     },
     {
      "id": 162,
      "name": "大地鎧甲",
-     "price": 50000
+     "price": 10
     },
     {
      "id": 171,
      "name": "天之袍",
-     "price": 32000
+     "price": 7
     },
     {
      "id": 177,
      "name": "武神護甲",
-     "price": 34000
+     "price": 7
     }
    ],
    "next": "town_ch27"
@@ -3765,12 +4425,42 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
+    },
+    {
+     "id": 88,
+     "name": "聖者之戒",
+     "price": 2
+    },
+    {
+     "id": 89,
+     "name": "勇者徽章",
+     "price": 2
+    },
+    {
+     "id": 90,
+     "name": "精靈契印",
+     "price": 2
+    },
+    {
+     "id": 91,
+     "name": "領悟之書",
+     "price": 2
+    },
+    {
+     "id": 92,
+     "name": "心眼之書",
+     "price": 2
+    },
+    {
+     "id": 93,
+     "name": "白金徽章",
+     "price": 2
     }
    ],
    "next": "town_ch27"
@@ -3987,7 +4677,11 @@
    "town": "羅德鎮",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 0, "scan_code": 84, "to": "shop_ch02_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 84,
+    "to": "shop_ch02_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4021,7 +4715,11 @@
    "town": "往塞拉村途中",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 1, "scan_code": 95, "to": "shop_ch03_secret"},
+   "native_secret_gate": {
+    "selection": 1,
+    "scan_code": 95,
+    "to": "shop_ch03_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4055,7 +4753,11 @@
    "town": "塞拉村前",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 2, "scan_code": 106, "to": "shop_ch04_secret"},
+   "native_secret_gate": {
+    "selection": 2,
+    "scan_code": 106,
+    "to": "shop_ch04_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4089,7 +4791,11 @@
    "town": "塞拉村",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 3, "scan_code": 87, "to": "shop_ch05_secret"},
+   "native_secret_gate": {
+    "selection": 3,
+    "scan_code": 87,
+    "to": "shop_ch05_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4123,7 +4829,11 @@
    "town": "普里茲港",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 4, "scan_code": 98, "to": "shop_ch06_secret"},
+   "native_secret_gate": {
+    "selection": 4,
+    "scan_code": 98,
+    "to": "shop_ch06_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4157,7 +4867,11 @@
    "town": "往王城的途中",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 0, "scan_code": 109, "to": "shop_ch07_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 109,
+    "to": "shop_ch07_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4191,7 +4905,11 @@
    "town": "王城前的戰鬥",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 1, "scan_code": 90, "to": "shop_ch08_secret"},
+   "native_secret_gate": {
+    "selection": 1,
+    "scan_code": 90,
+    "to": "shop_ch08_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4225,7 +4943,11 @@
    "town": "騎士的抉擇",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 2, "scan_code": 101, "to": "shop_ch09_secret"},
+   "native_secret_gate": {
+    "selection": 2,
+    "scan_code": 101,
+    "to": "shop_ch09_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4259,7 +4981,11 @@
    "town": "洞窟中的激戰",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 3, "scan_code": 112, "to": "shop_ch10_secret"},
+   "native_secret_gate": {
+    "selection": 3,
+    "scan_code": 112,
+    "to": "shop_ch10_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4293,7 +5019,11 @@
    "town": "幻之森林",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 4, "scan_code": 93, "to": "shop_ch11_secret"},
+   "native_secret_gate": {
+    "selection": 4,
+    "scan_code": 93,
+    "to": "shop_ch11_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4327,7 +5057,11 @@
    "town": "北山道",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 0, "scan_code": 94, "to": "shop_ch12_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 94,
+    "to": "shop_ch12_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4361,7 +5095,11 @@
    "town": "哈斯米爾之戰",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 1, "scan_code": 105, "to": "shop_ch13_secret"},
+   "native_secret_gate": {
+    "selection": 1,
+    "scan_code": 105,
+    "to": "shop_ch13_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4395,7 +5133,11 @@
    "town": "平原的會戰",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 2, "scan_code": 86, "to": "shop_ch14_secret"},
+   "native_secret_gate": {
+    "selection": 2,
+    "scan_code": 86,
+    "to": "shop_ch14_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4429,7 +5171,11 @@
    "town": "拉卡湖的激戰",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 3, "scan_code": 97, "to": "shop_ch15_secret"},
+   "native_secret_gate": {
+    "selection": 3,
+    "scan_code": 97,
+    "to": "shop_ch15_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4463,7 +5209,11 @@
    "town": "冰原之戰",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 4, "scan_code": 108, "to": "shop_ch16_secret"},
+   "native_secret_gate": {
+    "selection": 4,
+    "scan_code": 108,
+    "to": "shop_ch16_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4497,7 +5247,11 @@
    "town": "血與冰之刃",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 0, "scan_code": 88, "to": "shop_ch17_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 88,
+    "to": "shop_ch17_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4531,7 +5285,11 @@
    "town": "遙遠的彼岸",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 1, "scan_code": 100, "to": "shop_ch18_secret"},
+   "native_secret_gate": {
+    "selection": 1,
+    "scan_code": 100,
+    "to": "shop_ch18_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4565,7 +5323,11 @@
    "town": "黑暗中的狙擊",
    "bgm": "FDMUS_010",
    "native_town_variant": 2,
-   "native_secret_gate": {"selection": 2, "scan_code": 111, "to": "shop_ch19_secret"},
+   "native_secret_gate": {
+    "selection": 2,
+    "scan_code": 111,
+    "to": "shop_ch19_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4599,7 +5361,11 @@
    "town": "死亡般的沈寂",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 3, "scan_code": 92, "to": "shop_ch20_secret"},
+   "native_secret_gate": {
+    "selection": 3,
+    "scan_code": 92,
+    "to": "shop_ch20_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4633,7 +5399,11 @@
    "town": "亞述森林",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 4, "scan_code": 103, "to": "shop_ch21_secret"},
+   "native_secret_gate": {
+    "selection": 4,
+    "scan_code": 103,
+    "to": "shop_ch21_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4667,7 +5437,11 @@
    "town": "遠古呼喚",
    "bgm": "FDMUS_010",
    "native_town_variant": 1,
-   "native_secret_gate": {"selection": 0, "scan_code": 104, "to": "shop_ch22_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 104,
+    "to": "shop_ch22_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4701,7 +5475,11 @@
    "town": "未知的迴廊",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 4, "scan_code": 88, "to": "shop_ch26_secret"},
+   "native_secret_gate": {
+    "selection": 4,
+    "scan_code": 88,
+    "to": "shop_ch26_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4735,7 +5513,11 @@
    "town": "命運的交會點",
    "bgm": "FDMUS_010",
    "native_town_variant": 0,
-   "native_secret_gate": {"selection": 0, "scan_code": 99, "to": "shop_ch27_secret"},
+   "native_secret_gate": {
+    "selection": 0,
+    "scan_code": 99,
+    "to": "shop_ch27_secret"
+   },
    "options": [
     {
      "label": "酒店：打聽消息",
@@ -4768,171 +5550,197 @@
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch02",
-   "next": "story_ch02_pre"
+   "next": "story_ch02_pre",
+   "party_limit": 15
   },
   "preparation_ch03": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch03",
-   "next": "story_ch03"
+   "next": "story_ch03",
+   "party_limit": 15
   },
   "preparation_ch04": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch04",
-   "next": "story_ch04"
+   "next": "story_ch04",
+   "party_limit": 15
   },
   "preparation_ch05": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch05",
-   "next": "story_ch05"
+   "next": "story_ch05",
+   "party_limit": 15
   },
   "preparation_ch06": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch06",
-   "next": "story_ch06"
+   "next": "story_ch06",
+   "party_limit": 15
   },
   "preparation_ch07": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch07",
-   "next": "story_ch07"
+   "next": "story_ch07",
+   "party_limit": 15
   },
   "preparation_ch08": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch08",
-   "next": "story_ch08"
+   "next": "story_ch08",
+   "party_limit": 15
   },
   "preparation_ch09": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch09",
-   "next": "story_ch09"
+   "next": "story_ch09",
+   "party_limit": 15
   },
   "preparation_ch10": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch10",
-   "next": "story_ch10"
+   "next": "story_ch10",
+   "party_limit": 15
   },
   "preparation_ch11": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch11",
-   "next": "story_ch11"
+   "next": "story_ch11",
+   "party_limit": 15
   },
   "preparation_ch12": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch12",
-   "next": "story_ch12"
+   "next": "story_ch12",
+   "party_limit": 15
   },
   "preparation_ch13": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch13",
-   "next": "story_ch13"
+   "next": "story_ch13",
+   "party_limit": 15
   },
   "preparation_ch14": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch14",
-   "next": "story_ch14"
+   "next": "story_ch14",
+   "party_limit": 15
   },
   "preparation_ch15": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch15",
-   "next": "story_ch15"
+   "next": "story_ch15",
+   "party_limit": 15
   },
   "preparation_ch16": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch16",
-   "next": "story_ch16"
+   "next": "story_ch16",
+   "party_limit": 15
   },
   "preparation_ch17": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch17",
-   "next": "story_ch17"
+   "next": "story_ch17",
+   "party_limit": 15
   },
   "preparation_ch18": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch18",
-   "next": "story_ch18"
+   "next": "story_ch18",
+   "party_limit": 16
   },
   "preparation_ch19": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch19",
-   "next": "story_ch19"
+   "next": "story_ch19",
+   "party_limit": 17
   },
   "preparation_ch20": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch20",
-   "next": "story_ch20"
+   "next": "story_ch20",
+   "party_limit": 19
   },
   "preparation_ch21": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch21",
-   "next": "story_ch21"
+   "next": "story_ch21",
+   "party_limit": 20
   },
   "preparation_ch22": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch22",
-   "next": "story_ch22"
+   "next": "story_ch22",
+   "party_limit": 22
   },
   "preparation_ch23": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "next": "story_ch23"
+   "next": "story_ch23",
+   "party_limit": 24
   },
   "preparation_ch24": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "next": "story_ch24"
+   "next": "story_ch24",
+   "party_limit": 25
   },
   "preparation_ch25": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "next": "story_ch25"
+   "next": "story_ch25",
+   "party_limit": 26
   },
   "preparation_ch26": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch26",
-   "next": "story_ch26"
+   "next": "story_ch26",
+   "party_limit": 26
   },
   "preparation_ch27": {
    "type": "preparation",
    "prompt": "要進入戰場嗎？",
    "cancel": "town_ch27",
-   "next": "story_ch27"
+   "next": "story_ch27",
+   "party_limit": 28
   },
   "preparation_ch28": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "party_limit": 19,
+   "party_limit": 29,
    "next": "story_ch28"
   },
   "preparation_ch29": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "party_limit": 19,
+   "party_limit": 29,
    "next": "story_ch29"
   },
   "preparation_ch30": {
    "type": "preparation",
    "prompt": "要記錄戰況嗎？",
-   "party_limit": 19,
+   "party_limit": 29,
    "next": "story_ch30"
   },
   "church_ch02": {
@@ -5058,32 +5866,32 @@
     {
      "id": 1,
      "name": "闊劍",
-     "price": 250
+     "price": 1
     },
     {
      "id": 22,
      "name": "長戟",
-     "price": 1200
+     "price": 1
     },
     {
      "id": 53,
      "name": "釘頭鎚",
-     "price": 180
+     "price": 1
     },
     {
      "id": 192,
      "name": "藥草",
-     "price": 10
+     "price": 1
     },
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 132,
      "name": "皮甲",
-     "price": 300
+     "price": 1
     }
    ],
    "next": "town_ch02"
@@ -5096,12 +5904,12 @@
     {
      "id": 193,
      "name": "回復劑",
-     "price": 80
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch03"
@@ -5114,12 +5922,12 @@
     {
      "id": 96,
      "name": "風精之羽",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch04"
@@ -5132,22 +5940,22 @@
     {
      "id": 198,
      "name": "力量藥水",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 199,
      "name": "耐力藥水",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 200,
      "name": "速度藥水",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 94,
      "name": "生命之實",
-     "price": 10000
+     "price": 3
     }
    ],
    "next": "town_ch05"
@@ -5160,12 +5968,12 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch06"
@@ -5178,22 +5986,22 @@
     {
      "id": 88,
      "name": "聖者之戒",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 92,
      "name": "心眼之書",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 93,
      "name": "白金勳章",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 205,
      "name": "飛龍卵",
-     "price": 100
+     "price": 1
     }
    ],
    "next": "town_ch07"
@@ -5206,22 +6014,22 @@
     {
      "id": 4,
      "name": "黑暗劍",
-     "price": 2400
+     "price": 1
     },
     {
      "id": 23,
      "name": "先鋒矛",
-     "price": 1800
+     "price": 1
     },
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch08"
@@ -5234,12 +6042,12 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch09"
@@ -5252,12 +6060,12 @@
     {
      "id": 94,
      "name": "生命之實",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 95,
      "name": "魔力水晶",
-     "price": 10000
+     "price": 3
     }
    ],
    "next": "town_ch10"
@@ -5270,12 +6078,12 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch11"
@@ -5288,12 +6096,12 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 206,
      "name": "魔法水",
-     "price": 1000
+     "price": 1
     }
    ],
    "next": "town_ch12"
@@ -5306,12 +6114,12 @@
     {
      "id": 7,
      "name": "斬鐵劍",
-     "price": 9600
+     "price": 3
     },
     {
      "id": 30,
      "name": "聖之槍",
-     "price": 24000
+     "price": 5
     }
    ],
    "next": "town_ch13"
@@ -5324,12 +6132,12 @@
     {
      "id": 194,
      "name": "再生藥",
-     "price": 300
+     "price": 1
     },
     {
      "id": 205,
      "name": "飛龍卵",
-     "price": 100
+     "price": 1
     }
    ],
    "next": "town_ch14"
@@ -5342,12 +6150,12 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch15"
@@ -5360,22 +6168,22 @@
     {
      "id": 94,
      "name": "生命之實",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 95,
      "name": "魔力水晶",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 198,
      "name": "力量藥水",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 199,
      "name": "耐力藥水",
-     "price": 10000
+     "price": 3
     }
    ],
    "next": "town_ch16"
@@ -5388,17 +6196,17 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 97,
      "name": "十字弓",
-     "price": 8800
+     "price": 3
     }
    ],
    "next": "town_ch17"
@@ -5411,12 +6219,12 @@
     {
      "id": 58,
      "name": "力之杖",
-     "price": 10000
+     "price": 3
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch18"
@@ -5429,12 +6237,12 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch19"
@@ -5447,12 +6255,12 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch20"
@@ -5465,12 +6273,12 @@
     {
      "id": 50,
      "name": "封魔弓",
-     "price": 20000
+     "price": 5
     },
     {
      "id": 69,
      "name": "裂刃爪",
-     "price": 13200
+     "price": 3
     }
    ],
    "next": "town_ch21"
@@ -5483,12 +6291,12 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch22"
@@ -5501,17 +6309,17 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     },
     {
      "id": 40,
      "name": "光之斧",
-     "price": 15500
+     "price": 4
     }
    ],
    "next": "town_ch26"
@@ -5524,12 +6332,12 @@
     {
      "id": 195,
      "name": "神聖之水",
-     "price": 800
+     "price": 1
     },
     {
      "id": 207,
      "name": "水晶粒",
-     "price": 5000
+     "price": 2
     }
    ],
    "next": "town_ch27"

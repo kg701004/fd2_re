@@ -256,7 +256,7 @@ func TestNextAIPlan_DefaultSpellCommandIsDisabled(t *testing.T) {
 func TestNextAIPlanPreservesRawNativeScoredCommandsWithoutExecutingThem(t *testing.T) {
 	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MaxHP: 10, MP: 5, X: 0, Y: 0, NativeCommandMask: [5]byte{1 << 2, 0, 0, 1 << 4}}
 	target := &Unit{Camp: Own, OnField: true, HP: 10, MaxHP: 10, X: 1, Y: 0}
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}

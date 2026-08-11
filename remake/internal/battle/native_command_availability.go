@@ -6,24 +6,25 @@ package battle
 // unit+0x44. It deliberately does not include the action-direction +0x27
 // gate, target geometry, or any command/status name.
 func NativeCommandAvailable(unit *Unit, book []NativeCommandRecord, commandID int) bool {
-	if unit == nil || commandID < 0 || commandID >= 36 || len(book) != 36 || book[commandID].ID != commandID {
+	if unit == nil || commandID < 0 || commandID >= NativeCommandRecordCount || len(book) != NativeCommandRecordCount || book[commandID].ID != commandID {
 		return false
 	}
 	if unit.NativeCommandMask[commandID/8]&(1<<uint(commandID%8)) == 0 {
 		return false
 	}
-	return book[commandID].MPCost >= 0 && book[commandID].MPCost <= unit.MP
+	cost := NativeCommandMPCostFor(unit, book[commandID].MPCost)
+	return cost >= 0 && cost <= unit.MP
 }
 
 // NativeAvailableCommandIDs returns only IDs with a closed command record and
 // sufficient current MP. Unknown physical bits 36..39 are omitted rather
 // than promoted to executable commands.
 func NativeAvailableCommandIDs(unit *Unit, book []NativeCommandRecord) []int {
-	if unit == nil || len(book) != 36 {
+	if unit == nil || len(book) != NativeCommandRecordCount {
 		return nil
 	}
-	ids := make([]int, 0, 36)
-	for id := 0; id < 36; id++ {
+	ids := make([]int, 0, NativeCommandRecordCount)
+	for id := 0; id < NativeCommandRecordCount; id++ {
 		if NativeCommandAvailable(unit, book, id) {
 			ids = append(ids, id)
 		}

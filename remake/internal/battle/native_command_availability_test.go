@@ -3,7 +3,7 @@ package battle
 import "testing"
 
 func TestNativeCommandAvailabilityUsesRawBitAndMPCost(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: id}
 	}
@@ -23,13 +23,17 @@ func TestNativeCommandAvailabilityUsesRawBitAndMPCost(t *testing.T) {
 }
 
 func TestNativeAvailableCommandIDsOmitsUnknownPhysicalBits(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}
-	u := &Unit{MP: 0, NativeCommandMask: [5]byte{0, 0, 0, 0, 0x90}}
+	// bit 39 (byte4 bit7) is still genuinely unknown -- id36 (byte4 bit4,
+	// mask 0x10) is now a real remake-only command (see
+	// NativeCommandRecordCount's doc comment) and is deliberately excluded
+	// from this mask so this test keeps proving true-unknown bits stay out.
+	u := &Unit{MP: 0, NativeCommandMask: [5]byte{0, 0, 0, 0, 0x80}}
 	if got := NativeAvailableCommandIDs(u, book); len(got) != 0 {
-		t.Fatalf("unknown IDs 36/39 should not be returned: %v", got)
+		t.Fatalf("unknown ID 39 should not be returned: %v", got)
 	}
 	u.NativeCommandMask[4] = 1
 	if got := NativeAvailableCommandIDs(u, book); len(got) != 1 || got[0] != 32 {
@@ -45,7 +49,7 @@ func TestNativeCommandAvailabilityFailsClosedOnMalformedBook(t *testing.T) {
 }
 
 func TestNativeAvailableAICommandIDsAppliesRaw27Gate(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}
@@ -60,7 +64,7 @@ func TestNativeAvailableAICommandIDsAppliesRaw27Gate(t *testing.T) {
 }
 
 func TestNativeAvailableAIScoredCommandIDsKeepsLowAndHighRawIndices(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	u := &Unit{MP: 4, NativeCommandMask: [5]byte{1 << 2, 0, 0, 1 << 4, 0}}
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
@@ -72,7 +76,7 @@ func TestNativeAvailableAIScoredCommandIDsKeepsLowAndHighRawIndices(t *testing.T
 }
 
 func TestNativeAvailableAIScoredCommandIDsFailsClosedOnRaw27Gate(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id, MPCost: 0}
 	}

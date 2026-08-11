@@ -17,7 +17,7 @@ type NativeCommand25Result struct {
 // Renderer, message feedback and UI remain outside this fail-closed slice.
 func (s *State) ExecuteNativeCommand25(actor, confirmed *Unit) ([]NativeCommand25Result, error) {
 	const commandID = 25
-	if s == nil || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if s == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command 25 record unavailable")
 	}
 	record := s.NativeCommandBook[commandID]

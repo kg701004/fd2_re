@@ -41,7 +41,7 @@ func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandI
 	default:
 		return nil, fmt.Errorf("native command application unavailable id=%d", commandID)
 	}
-	if len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command application record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]

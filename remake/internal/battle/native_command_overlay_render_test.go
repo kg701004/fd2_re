@@ -9,7 +9,7 @@ func TestRenderNativeCommandOverlayMatches1CEEDCoordinates(t *testing.T) {
 		book[id] = NativeCommandRecord{ID: id, MPCost: id + 1}
 	}
 	dst := make([]byte, nativeItemPanelBytes)
-	if err := RenderNativeCommandOverlay(assets, []int{0, 1, 2, 3, 4}, book, 4, dst); err != nil {
+	if err := RenderNativeCommandOverlay(assets, []int{0, 1, 2, 3, 4}, book, nil, 4, dst); err != nil {
 		t.Fatal(err)
 	}
 	// Synthetic glyph 441 starts at index 441 and is drawn at (18,103).

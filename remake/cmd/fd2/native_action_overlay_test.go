@@ -148,12 +148,12 @@ func TestNativeActionSelectableRejectsDisabledWordAndInvalidDirection(t *testing
 
 func TestNativeCommandTargetWhitelistKeepsUnresolvedIDsFailClosed(t *testing.T) {
 	g := &Game{}
-	for _, id := range []int{0, 13, 16, 20, 21, 22, 24, 25, 26, 27, 28, 29, 31} {
+	for _, id := range []int{0, 13, 16, 20, 21, 22, 24, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36} {
 		if !g.nativeCommandTargetSupported(id) {
 			t.Fatalf("verified target/effect id %d was rejected", id)
 		}
 	}
-	for _, id := range []int{-1, 1, 9, 10, 17, 18, 19, 23, 30, 32, 35, 36} {
+	for _, id := range []int{-1, 1, 9, 10, 17, 18, 19, 23, 30, 37} {
 		if g.nativeCommandTargetSupported(id) {
 			t.Fatalf("unresolved target/effect id %d was enabled", id)
 		}
@@ -161,7 +161,7 @@ func TestNativeCommandTargetWhitelistKeepsUnresolvedIDsFailClosed(t *testing.T) 
 }
 
 func TestNativeCommandTargetProjectionUsesSelectedRawCommandRecord(t *testing.T) {
-	book := make([]battle.NativeCommandRecord, 36)
+	book := make([]battle.NativeCommandRecord, battle.NativeCommandRecordCount)
 	book[0] = battle.NativeCommandRecord{ID: 0, SelectionMode: 1, TargetCode: 0}
 	// An invalid selected record must fail; hard-coding record 0 would
 	// incorrectly return a target list here.

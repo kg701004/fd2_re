@@ -29,7 +29,9 @@ func TestNativeCommandDamageMissDoesNotConsumeVarianceOrMutate(t *testing.T) {
 }
 
 func TestApplyNativeCommandDamageClampsHP(t *testing.T) {
-	target := &Unit{HP: 1, MaxHP: 100}
+	// Camp:Enemy is deliberate: locks in the raw HP-clamp-at-zero math,
+	// unaffected by the remake-only Own/Ally auto-revive QoL feature.
+	target := &Unit{Camp: Enemy, HP: 1, MaxHP: 100}
 	got, _, err := ApplyNativeCommandDamage(target, 100, 100, 10, 2)
 	if err != nil || !got.Hit || got.Damage < 90 || got.Damage > 99 || target.HP != 0 {
 		t.Fatalf("got=%+v hp=%d err=%v", got, target.HP, err)

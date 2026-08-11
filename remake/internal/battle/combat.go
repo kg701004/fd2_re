@@ -265,7 +265,7 @@ type AIPlan struct {
 }
 
 func (s *State) nativeAIPlanScoredCommands(u *Unit) []int {
-	if s == nil || len(s.NativeCommandBook) != 36 {
+	if s == nil || len(s.NativeCommandBook) != NativeCommandRecordCount {
 		return nil
 	}
 	return NativeAvailableAIScoredCommandIDs(u, s.NativeCommandBook)

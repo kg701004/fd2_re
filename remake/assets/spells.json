@@ -394,5 +394,16 @@
   "mp": 36,
   "target": 0,
   "raw": "00000004022400"
+ },
+ {
+  "id": 36,
+  "off": "remake-only, no native source",
+  "dmg": 40,
+  "hit": 85,
+  "dist": 5,
+  "range": 0,
+  "mp": 20,
+  "target": 0,
+  "raw": "28005505001400"
  }
 ]

@@ -72,7 +72,7 @@ func main() {
 	}
 	commandPixels := append([]byte(nil), base...)
 	if err := battle.RenderNativeCommandOverlay(
-		assets, []int{0, 13, 20, 24, 26}, book, -1, commandPixels,
+		assets, []int{0, 13, 20, 24, 26}, book, nil, -1, commandPixels,
 	); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

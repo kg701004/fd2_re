@@ -450,6 +450,26 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 	}
 }
 
+// qolShopPrice 是刻意偏離原版的重製版售價調整表(使用者要求):把全遊戲 123
+// 種商店貨品的原始 item.json price(10..50000)等比縮放到 1..10,
+// new = clamp(1, 10, 1 + round((price-10)/(50000-10)*9))。價格數字不再是
+// 原版策略深度的一部分,純粹是重製版 QoL 選擇;鍵是 item id,值是縮放後售價。
+var qolShopPrice = map[int]int{
+	0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 9: 4, 10: 5,
+	16: 2, 18: 3, 19: 4, 20: 1, 21: 1, 22: 1, 23: 1, 24: 2, 25: 2, 26: 3,
+	27: 3, 28: 4, 30: 5, 31: 5, 32: 1, 33: 1, 34: 1, 35: 1, 36: 2, 37: 2,
+	38: 3, 39: 3, 40: 4, 41: 5, 42: 6, 44: 1, 45: 1, 46: 1, 47: 2, 48: 2,
+	49: 3, 50: 5, 53: 1, 54: 1, 55: 1, 56: 2, 57: 3, 58: 3, 60: 5, 63: 1,
+	64: 1, 65: 2, 67: 2, 68: 3, 69: 3, 70: 4, 88: 2, 89: 2, 90: 2, 91: 2,
+	92: 2, 93: 2, 94: 3, 95: 3, 96: 5, 97: 3, 98: 3, 104: 7, 105: 6, 128: 1,
+	129: 1, 132: 1, 133: 1, 134: 2, 135: 2, 136: 2, 137: 3, 138: 3, 139: 4, 140: 5,
+	142: 6, 143: 9, 144: 1, 145: 2, 146: 2, 147: 3, 148: 3, 149: 3, 150: 4, 151: 5,
+	153: 7, 154: 9, 156: 3, 157: 4, 158: 5, 161: 9, 162: 10, 165: 1, 166: 1, 167: 2,
+	168: 3, 169: 4, 170: 4, 171: 7, 173: 1, 174: 2, 175: 3, 176: 4, 177: 7, 188: 5,
+	189: 5, 192: 1, 193: 1, 194: 1, 195: 1, 196: 1, 197: 1, 198: 3, 199: 3, 200: 3,
+	205: 1, 206: 1, 207: 2,
+}
+
 func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testing.T) {
 	type shopRecord struct {
 		Chapter int    `json:"chapter"`
@@ -603,6 +623,29 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 				shopID := fmt.Sprintf("shop_ch%02d_%s", chapter, kind)
 				shop := campaign.Nodes[shopID]
 				wantGoods := goodsByChapterKind[fmt.Sprintf("%02d/%s", chapter, kind)]
+				if kind == "item" {
+					// 刻意偏離原版:轉職道具(58h-5Dh)在原版完全不進商店貨架,
+					// 只能靠寶箱/事件取得;此處是使用者要求的重製版 QoL 調整,
+					// 讓每章道具店額外販售這 6 件,售價沿用 item.json 原始 price(5000)
+					// 再套用下方 qolShopPrice 等比縮放。
+					wantGoods = append(append([]Good{}, wantGoods...), []Good{
+						{ID: 88, Name: "聖者之戒", Price: 5000},
+						{ID: 89, Name: "勇者徽章", Price: 5000},
+						{ID: 90, Name: "精靈契印", Price: 5000},
+						{ID: 91, Name: "領悟之書", Price: 5000},
+						{ID: 92, Name: "心眼之書", Price: 5000},
+						{ID: 93, Name: "白金徽章", Price: 5000},
+					}...)
+				} else {
+					wantGoods = append([]Good{}, wantGoods...)
+				}
+				for i := range wantGoods {
+					scaled, ok := qolShopPrice[wantGoods[i].ID]
+					if !ok {
+						t.Fatalf("%s: item %d missing from qolShopPrice table", shopID, wantGoods[i].ID)
+					}
+					wantGoods[i].Price = scaled
+				}
 				if shop == nil || shop.Type != "shop" || shop.Next != townID || !reflect.DeepEqual(shop.Goods, wantGoods) {
 					t.Fatalf("%s = %#v, want editable original goods %#v and return to %s", shopID, shop, wantGoods, townID)
 				}
@@ -651,11 +694,12 @@ func TestCampaignFullPostBattleTownContractMatchesOriginalShopChapters(t *testin
 			if prep.Next != fmt.Sprintf("story_ch%02d", chapter) {
 				t.Fatalf("%s next = %q, want departure to chapter story", prepID, prep.Next)
 			}
-			if chapter >= 28 && prep.PartyLimit != 19 {
-				t.Fatalf("%s party_limit=%d, want late-route original cap 19", prepID, prep.PartyLimit)
-			}
-			if chapter < 28 && prep.PartyLimit != 0 {
-				t.Fatalf("%s party_limit=%d, want default original cap 15", prepID, prep.PartyLimit)
+			// 刻意偏離原版:使用者要求拿掉出戰人數上限,party_limit 已改成
+			// max(該章戰前實際已加入角色數-1(固定隊長不占名額), 原版15)逐章
+			// 提高,不再是原版寫死的 15/19。
+			qolPartyLimit := map[int]int{23: 24, 24: 25, 25: 26, 28: 29, 29: 29, 30: 29}
+			if prep.PartyLimit != qolPartyLimit[chapter] {
+				t.Fatalf("%s party_limit=%d, want qol-expanded cap %d", prepID, prep.PartyLimit, qolPartyLimit[chapter])
 			}
 		})
 	}

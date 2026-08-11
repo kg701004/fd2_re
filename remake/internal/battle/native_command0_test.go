@@ -3,14 +3,19 @@ package battle
 import "testing"
 
 func TestExecuteBoundNativeCommand0UsesTwoStageTargetsAndOneMPDebit(t *testing.T) {
-	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 20, MP: 3, OnField: true}
+	// Camp:Enemy is deliberate here (not a statement about who casts this
+	// command narratively): this test locks in the raw native MP-debit math,
+	// and the remake-only QoL flat-1-MP discount (user request) only applies
+	// to Own/Ally, so an Own actor would no longer exercise the original
+	// 2-MP deduction this test verifies.
+	actor := &Unit{Camp: Enemy, X: 0, Y: 0, HP: 20, MP: 3, OnField: true}
 	confirmed := &Unit{Camp: Enemy, ClassID: 5, X: 1, Y: 0, HP: 100, OnField: true}
 	other := &Unit{Camp: Enemy, ClassID: 5, X: 2, Y: 0, HP: 100, OnField: true}
 	st := &State{W: 3, H: 1, Units: []*Unit{actor, confirmed, other}, NativeCompositionEventBytes: make([]byte, 3), NativeCommandBook: []NativeCommandRecord{{ID: 0}}}
 	// The executor requires the complete verified book rather than an invented
 	// partial record; fill unused rows with exact sequential IDs for this unit
 	// test, which only dispatches ID 0.
-	for id := 1; id < 36; id++ {
+	for id := 1; id < NativeCommandRecordCount; id++ {
 		st.NativeCommandBook = append(st.NativeCommandBook, NativeCommandRecord{ID: id})
 	}
 	st.NativeCommandBook[0] = NativeCommandRecord{ID: 0, Damage: 50, Hit: 100, SelectionMode: 1, EffectMode: 0, MPCost: 2, TargetCode: 0}
@@ -27,7 +32,7 @@ func TestExecuteBoundNativeCommand0UsesTwoStageTargetsAndOneMPDebit(t *testing.T
 func TestExecuteBoundNativeCommand0FailsBeforeMPOnMissingResistance(t *testing.T) {
 	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 20, MP: 3, OnField: true}
 	target := &Unit{Camp: Enemy, ClassID: 99, X: 1, Y: 0, HP: 100, OnField: true}
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id].ID = id
 	}
@@ -38,8 +43,30 @@ func TestExecuteBoundNativeCommand0FailsBeforeMPOnMissingResistance(t *testing.T
 	}
 }
 
+func TestNativeCommandHitForOverridesID9OnlyForOwnAlly(t *testing.T) {
+	own := &Unit{Camp: Own}
+	ally := &Unit{Camp: Ally}
+	enemy := &Unit{Camp: Enemy}
+	if got := NativeCommandHitFor(own, 9, 50); got != 100 {
+		t.Fatalf("Own casting id9: hit=%d, want 100", got)
+	}
+	if got := NativeCommandHitFor(ally, 9, 50); got != 100 {
+		t.Fatalf("Ally casting id9: hit=%d, want 100", got)
+	}
+	if got := NativeCommandHitFor(enemy, 9, 50); got != 50 {
+		t.Fatalf("Enemy casting id9: hit=%d, want unchanged raw 50", got)
+	}
+	// Every other command ID must stay untouched regardless of caster camp.
+	if got := NativeCommandHitFor(own, 0, 90); got != 90 {
+		t.Fatalf("Own casting id0: hit=%d, want unchanged raw 90", got)
+	}
+	if got := NativeCommandHitFor(nil, 9, 50); got != 50 {
+		t.Fatalf("nil caster: hit=%d, want unchanged raw 50", got)
+	}
+}
+
 func TestExecuteNativeCommandDamageAcceptsRecoveredIDOne(t *testing.T) {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id].ID = id
 	}
@@ -55,7 +82,7 @@ func TestExecuteNativeCommandDamageAcceptsRecoveredIDOne(t *testing.T) {
 func TestExecuteNativeCommandDamageAcceptsRecoveredCompositorIDTen(t *testing.T) {
 	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 3, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 5, OnField: true, HP: 200, MaxHP: 200, X: 1, Y: 0}
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id}
 	}

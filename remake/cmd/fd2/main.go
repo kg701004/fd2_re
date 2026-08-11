@@ -4121,7 +4121,7 @@ func (g *Game) ringInput() bool {
 		}
 		if enter && g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) {
 			id := ids[g.nativeCommandSel]
-			if g.nativeCommandTargetSupported(id) && g.st != nil && len(g.st.NativeCommandBook) == 36 {
+			if g.nativeCommandTargetSupported(id) && g.st != nil && len(g.st.NativeCommandBook) == battle.NativeCommandRecordCount {
 				record := g.st.NativeCommandBook[id]
 				if id == 0 && len(g.st.NativeCommandResistances) == 0 {
 					g.msg = "原始指令 0：抗性資料未驗證"
@@ -4276,7 +4276,7 @@ func (g *Game) ringInput() bool {
 // executor; other command labels remain visible but fail closed at confirm.
 func (g *Game) nativeCommandTargetSupported(id int) bool {
 	switch id {
-	case 0, 13, 14, 15, 16, 20, 21, 22, 24, 25, 26, 27, 28, 29, 31:
+	case 0, 13, 14, 15, 16, 20, 21, 22, 24, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36:
 		return true
 	default:
 		return false
@@ -4299,7 +4299,7 @@ func (g *Game) nativeCommandTargetUnitsFor(id int) ([]*battle.Unit, error) {
 	if g == nil || g.st == nil || g.sel == nil || !g.nativeCommandTargetSupported(id) {
 		return nil, fmt.Errorf("native target command context unavailable")
 	}
-	if len(g.st.NativeCommandBook) != 36 {
+	if len(g.st.NativeCommandBook) != battle.NativeCommandRecordCount {
 		return nil, fmt.Errorf("native command book incomplete")
 	}
 	record := g.st.NativeCommandBook[id]
@@ -5034,7 +5034,7 @@ func (g *Game) confirm() {
 	if g.nativeCommand0Targeting {
 		id := g.nativeCommandTargetID
 		tgt := g.st.UnitAt(g.curX, g.curY)
-		if len(g.st.NativeCommandBook) != 36 || id < 0 || id >= len(g.st.NativeCommandBook) ||
+		if len(g.st.NativeCommandBook) != battle.NativeCommandRecordCount || id < 0 || id >= len(g.st.NativeCommandBook) ||
 			len(g.st.NativeTileBlitModes) != g.st.W*g.st.H ||
 			g.curX < 0 || g.curX >= g.st.W || g.curY < 0 || g.curY >= g.st.H {
 			g.msg = fmt.Sprintf("原始指令 %d：cursor-confirm raw state 不完整", id)
@@ -5103,6 +5103,48 @@ func (g *Game) confirm() {
 			results, e := g.st.ExecuteNativeCommand25(g.sel, tgt)
 			err = e
 			message = fmt.Sprintf("原始指令 25：完成 raw clear (%d targets)", len(results))
+		case id == 32:
+			results, state, e := g.st.ExecuteNativeCommand32(g.sel, tgt, g.st.NativeCommandResistances, g.nativeRNGState)
+			err = e
+			if e == nil {
+				g.nativeRNGState = state
+			}
+			hit, total := 0, 0
+			for _, result := range results {
+				if result.Hit {
+					hit++
+					total += result.Damage
+				}
+				damageTargets = append(damageTargets, result.Target)
+			}
+			message = fmt.Sprintf("原始指令 32：命中 %d，傷害 %d", hit, total)
+		case id == 33:
+			results, e := g.st.ExecuteNativeCommand33(g.sel, tgt, g.rng)
+			err = e
+			total := 0
+			for _, result := range results {
+				total += result.Restore.Actual
+			}
+			message = fmt.Sprintf("原始指令 33：回復 %d", total)
+		case id == 34:
+			results, e := g.st.ExecuteNativeCommand34(g.sel, tgt, g.rng)
+			err = e
+			message = fmt.Sprintf("原始指令 34：強化 %d 名單位", len(results))
+		case id == 35:
+			results, e := g.st.ExecuteNativeCommand35(g.sel, tgt, g.rng)
+			err = e
+			message = fmt.Sprintf("原始指令 35：完成 raw application (%d targets)", len(results))
+		case id == 36:
+			results, e := g.st.ExecuteNativeCommandMPSteal(g.sel, tgt, g.rng)
+			err = e
+			hit, total := 0, 0
+			for _, result := range results {
+				if result.Hit {
+					hit++
+					total += result.Stolen
+				}
+			}
+			message = fmt.Sprintf("原始指令 36：命中 %d，吸取MP %d", hit, total)
 		default:
 			err = fmt.Errorf("native command target executor unavailable id=%d", id)
 		}

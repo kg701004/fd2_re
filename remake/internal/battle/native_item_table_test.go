@@ -16,10 +16,14 @@ func TestLoadTrackedNativeItemEffectRowPrefix(t *testing.T) {
 	if got, want := len(table)/NativeItemEffectRowSize, 0xd7; got != want {
 		t.Fatalf("row count = %d, want %d", got, want)
 	}
+	// bytes[19:21] = 售價(小端 uint16)。刻意偏離原版:使用者要求的重製版 QoL
+	// 調整,把全遊戲售價依原始比例縮放到 1..10(item 0 原價 50 → 縮放後 1,
+	// 見 campaign_test.go 的 qolShopPrice);其餘 22 個位元組(戰鬥/AI 用的
+	// 道具效果資料)未改動。
 	if got, want := table[:NativeItemEffectRowSize], []byte{
 		0x01, 0x0a, 0x00, 0x5f, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
-		0x00, 0x05, 0x00, 0x32, 0x00, 0x05, 0x00,
+		0x00, 0x05, 0x00, 0x01, 0x00, 0x05, 0x00,
 	}; string(got) != string(want) {
 		t.Fatalf("row 0 = %x, want %x", got, want)
 	}

@@ -46,7 +46,7 @@ func (g *Game) prepareNativeChurchStatus(id int) ([]byte, []byte, bool) {
 	}
 	commands := append([]byte(nil), base...)
 	if err := battle.RenderNativeCommandOverlay(
-		assets, ids, g.nativeCommandBook, -1, commands,
+		assets, ids, g.nativeCommandBook, &unit, -1, commands,
 	); err != nil {
 		return nil, nil, false
 	}

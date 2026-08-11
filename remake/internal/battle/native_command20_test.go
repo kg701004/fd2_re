@@ -6,7 +6,7 @@ import (
 )
 
 func nativeCommandClearRestoreBook(id int) []NativeCommandRecord {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for i := range book {
 		book[i] = NativeCommandRecord{ID: i}
 	}
@@ -16,7 +16,10 @@ func nativeCommandClearRestoreBook(id int) []NativeCommandRecord {
 }
 
 func TestExecuteNativeCommandClearRestoreUsesRecordTenAndRawFlag(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 1, MaxHP: 100, X: 1, Y: 0, NativeTransient: [6]byte{0, 0, 0, 3}}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(20)}
 
@@ -30,7 +33,10 @@ func TestExecuteNativeCommandClearRestoreUsesRecordTenAndRawFlag(t *testing.T) {
 }
 
 func TestExecuteNativeCommandClearRestoreConsumesCommandWhenFlagEmpty(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 10, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 10, MaxHP: 20, X: 1, Y: 0}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandClearRestoreBook(21)}
 

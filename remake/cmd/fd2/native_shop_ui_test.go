@@ -357,7 +357,10 @@ func TestNativeShopProductionOwnerDrawsOriginalMenuAndPurchaseList(t *testing.T)
 	finishSell := g.nativeShopUIJob.after
 	g.nativeShopUIJob = nil
 	finishSell()
-	if g.gold != 137 || len(g.partyRoster[0].Inventory) != 0 ||
+	// 刻意偏離原版:item 0 原價 50、賣出得 3/4*50=37(→100+37=137)。使用者
+	// 要求的重製版 QoL 調整把全遊戲售價縮放到 1..10,item 0 縮放後為 1,
+	// 賣出價 trunc(3*1/4)=0,故 gold 不變。
+	if g.gold != 100 || len(g.partyRoster[0].Inventory) != 0 ||
 		g.partyRoster[0].InventorySlots[0] != 0xff ||
 		g.nativeShopMode != "sell_roster" {
 		t.Fatalf(

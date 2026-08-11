@@ -12,7 +12,9 @@ func TestLoadNativeCommandRecordsRuntimeExport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(records) != 36 {
+	// 36 native + 1 remake-only QoL addition (id36 MP吸取術, user request;
+	// see NativeCommandRecordCount's doc comment).
+	if len(records) != 37 {
 		t.Fatalf("records=%d", len(records))
 	}
 	got := records[0]

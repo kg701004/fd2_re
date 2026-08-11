@@ -12,6 +12,18 @@ type NativeCommandDamageResult struct {
 	NativeCommandDamage
 }
 
+// NativeCommandHitFor is a deliberate remake-only QoL deviation (user
+// request): command 9 (咒殺術 — the raw native "50% certain-kill" spell that
+// command_labels.json/doc02 mark enemy-only) always hits when the CASTER is
+// Own/Ally; an Enemy casting it keeps the original 50 raw native chance from
+// spells.json. No other command ID and no target-side camp is affected.
+func NativeCommandHitFor(caster *Unit, commandID, rawHit int) int {
+	if commandID == 9 && caster != nil && caster.Camp != Enemy {
+		return 100
+	}
+	return rawHit
+}
+
 // ExecuteBoundNativeCommand0 uses the state-bound verified resistance table.
 // A missing table remains fail-closed rather than falling back to the legacy
 // normalized magic approximation.
@@ -32,7 +44,7 @@ func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int
 	if s == nil {
 		return nil, rngState, fmt.Errorf("missing native command state")
 	}
-	if commandID < 0 || commandID > 12 || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if commandID < 0 || commandID > 12 || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, rngState, fmt.Errorf("native command damage record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
@@ -57,7 +69,7 @@ func (s *State) ExecuteNativeCommandDamage(actor, confirmed *Unit, commandID int
 	}
 	results := make([]NativeCommandDamageResult, 0, len(targets))
 	for _, target := range targets {
-		resolved, nextRNG, err := ApplyNativeCommandDamage(target, record.Damage, record.Hit, resistByClass[target.ClassID], rngState)
+		resolved, nextRNG, err := ApplyNativeCommandDamage(target, record.Damage, NativeCommandHitFor(actor, commandID, record.Hit), resistByClass[target.ClassID], rngState)
 		if err != nil {
 			return nil, rngState, err
 		}

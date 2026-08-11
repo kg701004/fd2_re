@@ -17,7 +17,7 @@ func (s *countingZeroSource) Int63() int64 {
 func (s *countingZeroSource) Seed(int64) {}
 
 func nativeCommandApplicationBook(id int) []NativeCommandRecord {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for i := range book {
 		book[i] = NativeCommandRecord{ID: i}
 	}
@@ -38,7 +38,10 @@ func passingNativeApplicationRNG(t *testing.T) *rand.Rand {
 }
 
 func TestExecuteNativeCommandApplicationUsesThreeRNGDrawsAndNativeDamage(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
 
@@ -67,7 +70,10 @@ func TestExecuteNativeCommandApplicationConsumesGateDamageMarkerDraws(t *testing
 }
 
 func TestExecuteNativeCommandApplicationKeepsRawGateButConsumesSuccessfulCommand(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, X: 1, Y: 0, NativeTransient: [6]byte{0, 0, 0, 4}}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
 

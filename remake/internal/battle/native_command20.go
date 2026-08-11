@@ -56,7 +56,7 @@ func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, command
 	default:
 		return nil, fmt.Errorf("native command clear/restore unavailable id=%d", commandID)
 	}
-	if len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID || s.NativeCommandBook[10].ID != 10 {
+	if len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID || s.NativeCommandBook[10].ID != 10 {
 		return nil, fmt.Errorf("native command clear/restore records unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]

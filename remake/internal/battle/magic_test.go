@@ -277,8 +277,10 @@ func TestLoadSpells_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadSpells: %v", err)
 	}
-	if len(spells) != 36 {
-		t.Fatalf("法術數 = %d, want 36", len(spells))
+	// 36 native + 1 remake-only QoL addition (id36 MP吸取術, user request;
+	// see NativeCommandRecordCount's doc comment).
+	if len(spells) != 37 {
+		t.Fatalf("法術數 = %d, want 37", len(spells))
 	}
 
 	var fireball Spell

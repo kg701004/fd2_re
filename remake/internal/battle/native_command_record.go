@@ -7,9 +7,16 @@ import (
 	"os"
 )
 
-const NativeCommandRecordCount = 36
+// NativeCommandRecordCount is a deliberate remake-only QoL expansion (user
+// request): the original verified table only ever had 36 real command
+// records (IDs 0..35, 0-indexed). ID 36 is a brand-new remake-only command
+// (MP steal, see native_command_mp_steal.go) appended immediately after the
+// last native ID; it has no native 0x4e516 raw source bytes, only an
+// editable spells.json entry.
+const NativeCommandRecordCount = 37
 
 // NativeCommandRecord is the verified 7-byte 0x4e516 record for IDs 0..35.
+// ID 36 is the sole remake-only exception (see NativeCommandRecordCount).
 // The field names intentionally describe only their proven call-site roles:
 // generic 0x1cff0 uses SelectionMode (+3) from the actor, then EffectMode
 // (+4) from the confirmed cursor; +5 is MP cost and +6 is target code.

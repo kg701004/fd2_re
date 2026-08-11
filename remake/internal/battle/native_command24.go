@@ -71,7 +71,7 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 	if !ok {
 		return nil, fmt.Errorf("native derived-strike command unavailable id=%d", commandID)
 	}
-	if len(s.NativeCommandBook) != 36 || s.NativeCommandBook[commandID].ID != commandID {
+	if len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native derived-strike record unavailable id=%d", commandID)
 	}
 	record := s.NativeCommandBook[commandID]
@@ -108,7 +108,7 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 // Its indexed multi-hit presentation and UI cursor lifecycle remain outside
 // this method; callers must supply both recovered cursor positions.
 func (s *State) ExecuteNativeCommand30(actor *Unit, savedCursor, confirmedCursor Cell, rng *rand.Rand) ([]NativeCommand24Damage, error) {
-	if s == nil || actor == nil || rng == nil || len(s.NativeCommandBook) != 36 || s.NativeCommandBook[30].ID != 30 {
+	if s == nil || actor == nil || rng == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[30].ID != 30 {
 		return nil, fmt.Errorf("native command 30 state unavailable")
 	}
 	record := s.NativeCommandBook[30]

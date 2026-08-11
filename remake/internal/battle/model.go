@@ -46,6 +46,14 @@ type Unit struct {
 	ClassID   int    // 原版職業 table index；商店裝備相容以此對 class_equip_types 判定
 	Lv        int
 	HP, MaxHP int
+	// AutoReviveUsed is a deliberate remake-only QoL addition (user
+	// request): Own/Ally units may be auto-revived to full HP up to twice
+	// per battle instead of staying at 0 HP. Resets to zero every fresh
+	// battle load (it's a plain zero-valued field on a freshly materialized
+	// Unit, never copied by applyPersistentStats/scenario setup), so the
+	// count does not carry across chapters or retreats. See
+	// ApplyHPDamage.
+	AutoReviveUsed int
 	MP, MaxMP int
 	AP, DP    int
 	HIT, EV   int // 命中/閃避基礎值(doc02 §2;doc03:EXE 內為「衍生值」非表格原始欄位,
@@ -395,6 +403,15 @@ func (u *Unit) ApplyHPDamage(damage int) {
 	u.HP -= damage
 	if u.HP < 0 {
 		u.HP = 0
+	}
+	// QoL deviation (user request): Own/Ally units auto-revive to full HP
+	// up to twice per battle instead of staying at 0. This intentionally
+	// runs before the native byte+5 death-flag write below, so an
+	// auto-revived unit never gets marked dead in the first place.
+	if u.HP == 0 && u.Camp != Enemy && u.AutoReviveUsed < 2 {
+		u.AutoReviveUsed++
+		u.HP = u.MaxHP
+		return
 	}
 	if u.HP == 0 && u.HasNativeRecordByte5 {
 		u.NativeRecordByte5 = 1

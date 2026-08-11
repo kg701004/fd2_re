@@ -12,14 +12,31 @@ func RenderNativeCommandOverlay(
 	assets NativeItemPanelDataAssets,
 	commandIDs []int,
 	book []NativeCommandRecord,
+	unit *Unit,
 	selected int,
 	dst []byte,
 ) error {
 	if len(dst) != nativeItemPanelBytes || selected < -1 || selected >= len(commandIDs) {
 		return errors.New("battle: native command overlay inputs are invalid")
 	}
-	if len(commandIDs) > 32 {
+	// QoL deviation (user request): the original local buffer only ever held
+	// up to 32 slots because no native unit ever set more than a handful of
+	// command bits. NativeCommandRecordCount(36) is the true ceiling now
+	// that a unit can hold every defined command; anything beyond that is
+	// still rejected as a genuine data error.
+	if len(commandIDs) > NativeCommandRecordCount {
 		return errors.New("battle: native command overlay exceeds local command buffer")
+	}
+	windowSel := selected
+	if windowSel < 0 {
+		windowSel = 0
+	}
+	if len(commandIDs) > 0 {
+		start, visible := NativeCommandGridWindow(len(commandIDs), windowSel, 0)
+		commandIDs = commandIDs[start:start+visible]
+		if selected >= 0 {
+			selected -= start
+		}
 	}
 	staged := append([]byte(nil), dst...)
 	for i, commandID := range commandIDs {
@@ -47,7 +64,7 @@ func RenderNativeCommandOverlay(
 		if err := blitNativeItemPanelNumber(
 			assets.Frames, staged,
 			NativeItemPanelPoint{X: x + 73, Y: y + 5},
-			book[commandID].MPCost, 42, 2,
+			NativeCommandMPCostFor(unit, book[commandID].MPCost), 42, 2,
 		); err != nil {
 			return fmt.Errorf("battle: native command %d MP cost: %w", commandID, err)
 		}

@@ -6,7 +6,7 @@ import (
 )
 
 func nativeCommand24Book() []NativeCommandRecord {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for id := range book {
 		book[id] = NativeCommandRecord{ID: id}
 	}
@@ -17,7 +17,10 @@ func nativeCommand24Book() []NativeCommandRecord {
 }
 
 func TestExecuteNativeCommand24UsesDerivedStatsAndOneMPDebit(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 200}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommand24Book()}
 
@@ -42,7 +45,10 @@ func TestExecuteNativeCommand24RejectsInvalidBookBeforeMutation(t *testing.T) {
 }
 
 func TestExecuteNativeCommandDerivedStrikeUsesRecoveredID28Multiplier(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 300}
 	book := nativeCommand24Book()
 	book[28] = NativeCommandRecord{ID: 28, SelectionMode: 1, EffectMode: 0, MPCost: 22, TargetCode: 0}
@@ -79,7 +85,10 @@ func TestNativeCommand30TargetsUsesSavedCursorAndXPriority(t *testing.T) {
 }
 
 func TestExecuteNativeCommand30UsesSpecialLineAndOneMPDebit(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, AP: 100, MP: 30}
 	between := &Unit{Camp: Enemy, OnField: true, X: 2, Y: 0, DP: 20, HP: 300}
 	confirmed := &Unit{Camp: Enemy, OnField: true, X: 4, Y: 0, DP: 20, HP: 300}
 	friendly := &Unit{Camp: Own, OnField: true, X: 3, Y: 0, DP: 20, HP: 300}

@@ -6,7 +6,7 @@ import (
 )
 
 func nativeCommandHealBook(id int) []NativeCommandRecord {
-	book := make([]NativeCommandRecord, 36)
+	book := make([]NativeCommandRecord, NativeCommandRecordCount)
 	for i := range book {
 		book[i] = NativeCommandRecord{ID: i}
 	}
@@ -15,7 +15,10 @@ func nativeCommandHealBook(id int) []NativeCommandRecord {
 }
 
 func TestExecuteNativeCommandHealUsesSelectedRecordAndCapsHP(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
+	// Camp:Enemy is deliberate (see native_command0_test.go): locks in raw
+	// native MP-debit math, unaffected by the remake-only Own/Ally QoL
+	// MP discount.
+	actor := &Unit{Camp: Enemy, OnField: true, HP: 20, MP: 5, X: 0, Y: 0}
 	target := &Unit{Camp: Own, OnField: true, HP: 40, MaxHP: 100, X: 1, Y: 0}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandHealBook(13)}
 
