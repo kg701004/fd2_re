@@ -257,9 +257,22 @@ def export_handler(
                 skipped.append(dialog_diagnostic(beat, source_dat, "multi_scene_target", "one dialog string crosses scenes; runtime adapter required"))
                 continue
             script = mapping["script"]
-            if addr in contexts:
-                raise ValueError(f"handler {handler_path} repeats dialog source address {addr}")
-            contexts[addr] = {"source_dat": source_dat, "script": script}
+            new_context = {"source_dat": source_dat, "script": script}
+            existing_context = contexts.get(addr)
+            if existing_context is not None and existing_context != new_context:
+                # A shared dialog call site (e.g. two `if` branches converging
+                # on one CALL instruction, each setting a different text_index
+                # global before the jump) legitimately repeats a source addr.
+                # dialogue_contexts is keyed by addr but does not carry
+                # text_index, so identical branches collapse into one entry
+                # safely. Only a genuine mismatch -- the same call site
+                # resolving to two different FDTXT/script contexts -- is an
+                # authoring error worth stopping the whole export for.
+                raise ValueError(
+                    f"handler {handler_path} dialog source address {addr} resolves to "
+                    f"conflicting contexts: {existing_context} vs {new_context}"
+                )
+            contexts[addr] = new_context
         return source_dat, reason, origin
 
     process_beats(beats, current_source, context_reason, context_origin, "beats")
