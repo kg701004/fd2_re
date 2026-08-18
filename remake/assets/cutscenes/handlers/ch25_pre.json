@@ -2,59 +2,190 @@
   "schema_version": 1,
   "chapter": 25,
   "phase": "pre",
-  "handler": "0x33aae",
+  "handler": "0x3396a",
   "beats": [
     {
       "op": "loadch",
       "source": {
-        "addr": "0x33ab8",
+        "addr": "0x33974",
         "target": "0x205da"
       },
       "chapter_expr": null
     },
     {
-      "op": "pan",
-      "grid_x": 9,
-      "grid_y": 39,
+      "op": "load_res",
+      "args": [],
       "source": {
-        "addr": "0x33ac1",
+        "addr": "0x3398c",
+        "target": "0x111ba"
+      }
+    },
+    {
+      "op": "pan",
+      "grid_x": 5,
+      "grid_y": 0,
+      "source": {
+        "addr": "0x3399d",
         "target": "0x135dd"
       }
     },
     {
-      "op": "act",
-      "acting_id": 76,
-      "source": {
-        "addr": "0x33acb",
-        "target": "0x1366a"
-      }
-    },
-    {
       "op": "dialog",
-      "text_index": 0,
+      "text_index": 1,
       "source": {
-        "addr": "0x33133",
+        "addr": "0x339c4",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "reset_pose",
+      "op": "play_sfx",
+      "args": [
+        "dword ptr [0x3b13]"
+      ],
       "source": {
-        "addr": "0x3313b",
-        "target": "0x134e4"
+        "addr": "0x339eb",
+        "target": "0x25a96"
       }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x24b4d",
+      "raw_args": [
+        20
+      ],
+      "source": {
+        "addr": "0x339f5",
+        "target": "0x24b4d"
+      }
+    },
+    {
+      "op": "delay",
+      "ms": 600,
+      "source": {
+        "addr": "0x33a02",
+        "target": "0x375b2"
+      }
+    },
+    {
+      "op": "play_sfx",
+      "args": [
+        "dword ptr [0x3b13]"
+      ],
+      "source": {
+        "addr": "0x33a14",
+        "target": "0x25a96"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x24b4d",
+      "raw_args": [
+        20
+      ],
+      "source": {
+        "addr": "0x33a1e",
+        "target": "0x24b4d"
+      }
+    },
+    {
+      "op": "delay",
+      "ms": 600,
+      "source": {
+        "addr": "0x33a2b",
+        "target": "0x375b2"
+      }
+    },
+    {
+      "op": "play_sfx",
+      "args": [
+        "dword ptr [0x3b13]"
+      ],
+      "source": {
+        "addr": "0x33a3d",
+        "target": "0x25a96"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x24b4d",
+      "raw_args": [
+        20
+      ],
+      "source": {
+        "addr": "0x33a47",
+        "target": "0x24b4d"
+      }
+    },
+    {
+      "op": "delay",
+      "ms": 600,
+      "source": {
+        "addr": "0x33a54",
+        "target": "0x375b2"
+      }
+    },
+    {
+      "op": "play_sfx",
+      "args": [
+        "dword ptr [0x3b13]"
+      ],
+      "source": {
+        "addr": "0x33a66",
+        "target": "0x25a96"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x24b4d",
+      "raw_args": [
+        60
+      ],
+      "source": {
+        "addr": "0x33a70",
+        "target": "0x24b4d"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 2,
+      "source": {
+        "addr": "0x33a97",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
     },
     {
       "op": "focus_unit",
       "source": {
-        "addr": "0x33142",
+        "addr": "0x33aa1",
         "target": "0x12d7b"
       },
       "unit_slot": 0
+    },
+    {
+      "op": "play_sfx",
+      "args": [
+        "dword ptr [0x3b13]"
+      ],
+      "source": {
+        "addr": "0x1d50a",
+        "target": "0x25a96"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x37416",
+      "raw_args": [
+        "dword ptr [0x3b13]"
+      ],
+      "source": {
+        "addr": "0x1a80a",
+        "target": "0x37416"
+      }
     }
   ],
   "diagnostics": {
-    "unknown_ops": 0
+    "unknown_ops": 5
   }
 }

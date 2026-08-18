@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "handler_script": "../handlers/ch24_post.json",
+  "handler_script": "../handlers/ch25_post.json",
   "acting_resources": "../acting/ch24_post.json",
   "story_index_map": "../dialogue-index/count-aligned.json",
   "runtime_context": {

@@ -2963,3 +2963,31 @@ CS=0170 DS=0178 ES=0178 SS=0178
 1. 全專案30章的`chNN_pre.json`/`chNN_post.json`檔名＋`_manifest.json`需要系統性重新編號（i→i+1），這是本次發現裡最大條的項目，影響範圍遠超過ch23，需要獨立規劃（改檔名、改manifest、重跑下游binding compiler、逐章重新驗證），非今天能完成。
 2. 若仍然想拿到`0x24d22`/`0x11d40`的live數值，正確做法是玩**ch24**的戰鬥（不是ch23），觸發真正呼叫這兩個函式的`0x24c1e`。
 3. ch23 postbattle handler_binding要重新對照正確位址`0x24754`撰寫（含`0x24b14`/`0x24bde`兩個分支子函式，對應「戰後餘波」與「羅德曼抉擇」的劇情分支選項）。
+
+## 2026-08-18（續十七）#112 — 執行off-by-one重新編號（i→i+1），全專案60個handler檔案完成改名+驗證
+
+延續續十六的發現，完整執行了「後續建議」第1項：把`remake/assets/cutscenes/handlers/`下全部30對（60個）`chNN_pre.json`/`chNN_post.json`，連同`_manifest.json`的`"chapter"`欄位，系統性重新編號 i→i+1。
+
+**重新推導＋二次獨立驗證（不只信續十六列出的幾個十六進位位址）**：
+
+1. 用`tools/export_handler_dialogue_bindings.py`既有機制（`source_dat_for_chapter`本身就已經是`doc23 §4`證實過的獨立規則：某個immediate chapter值對應的FDTXT resource＝`chapter+1`）批次跑全部60個handler,取得每個handler實際引用的`source_dat`(FDTXT_NNN)／`script`(story chNN.json)。結果：**有dialogue_contexts可解析的25個post handler，diff全部=+1，零例外**；`remake/assets/cutscenes/bindings/`裡人工authored的27個pre handler binding（含`ch21_pre.json`的`loadch{chapter:21,...,script:"ch22.json"}`這種當時就已經手動核對過的override）也是**diff全部=+1，零例外**。
+2. 對「有dialogue但raw string index範圍太小、兩種假設都落在範圍內」的3個pre handler(當時缺自動binding的ch22/27/29_pre)，改用`tools/decode_story_text.py`直接解碼對應FDTXT bin原文比對：
+   - `ch22_pre.json`(`0x336a0`)的text_index 0-3解碼＝「呼!難過死了..咦!這裡是..敵人的根據地嗎?」——與`ch23.json`故事檔第一幕逐字相符（`FDTXT_022`同index卻是完全不相關的「聖靈之塔」內容）。
+   - `ch27_pre.json`(`0x33c9d`)的loadch在dialog之前、無immediate值(`chapter_expr:null`，讀執行期章節計數器)，解碼text_index 0＝「這裏就是黃金城嗎?好奇怪的建築」——對應`ch28`的「黃金城」劇情,而非`FDTXT_027`本身的「進入遺跡」內容(那是給ch26_pre用的)。
+   - `ch29_pre.json`(`0x33e3c`)同構造，text_index 0-2解碼＝「唔..我們還活著嗎?」「好強烈的震動」「這是怎麼回事?」——對應`ch30`開場的墜機甦醒劇情,而非`FDTXT_029`本身的「悠妮駭入ASR-06」內容(那是給ch28_pre用的)。
+   
+   三例全部確認：table index i的pre-battle handler對話一律屬於**真正第(i+1)章**,零反例,結論與續十六一致，i→i+1是正確且唯一的修法(而非只調整display邏輯)。
+
+**執行的修改**（approach (a)：實際重新命名檔案＋改manifest，理由：`chNN_pre.json`是被programmatic呼叫者依檔名直接引用的，不是只用來顯示）：
+
+- `remake/assets/cutscenes/handlers/ch00..29_{pre,post}.json` → `ch01..30_{pre,post}.json`（`git mv`，60個檔案，由ch29→ch30逆序處理避免互相覆蓋）；每個檔案內**只**改頂層`"chapter"`欄位(`HandlerScript.Chapter`，Go端從未被生產程式碼讀取，只用於文件/測試斷言)，beats陣列裡每個原始`loadch`/`set_chapter`的`"chapter"`immediate值**完全不動**——那是反組譯出來的原始機器值(仍是舊的0-based table index)，動它就是真的改資料而非改標籤。
+- `_manifest.json`：60筆entry的`"chapter"`欄位同步+1。
+- `remake/assets/cutscenes/bindings/*.json`（人工authored,約49個）＋`bindings/generated/*.json`（60個,`export_handler_dialogue_bindings.py`產物）：**只**改`"handler_script"`指標欄位裡的檔名（例如`"../handlers/ch21_pre.json"`→`"../handlers/ch22_pre.json"`），bindings自己的檔名**不變**——`bindings/chNN_*.json`是`campaign_full.json`/`campaign.go`wiring／全部Go test既有的「postbattle_ch(N+1)_persist使用ch(N)_post.json」慣例的一部分,續十六前就已經是這樣運作且是對的,這次沒有必要也没有去動它,只把它内部对指向 handlers/ 檔案的指標修正到新檔名。overrides裡`loadch.chapter`等immediate值同樣不動(`handler_compile.go`裡有`loadch chapter %d disagrees with binding chapter %d`的一致性檢查,這些值本來就該跟raw beat一致)。
+- `remake/internal/campaign/handler_compile_test.go`／`handler_script_test.go`：8處直接寫死`assets/cutscenes/handlers/chNN_*.json`路徑的地方跟著改檔名；`TestChapter0PreHandlerPreservesReclassifiedNativeOperations`裡`script.Chapter != 0`斷言改成`!= 1`（這是唯一一處Go測試真的讀取`HandlerScript.Chapter`頂層欄位的地方）。`TestCompileGeneratedHandlerBindingsCompletionFrontier`原本用`filepath.Base(path)`直接假設`bindings/generated/`和`handlers/`檔名相同來反查handler檔案，這個假設在off-by-one修正後不再成立，改成直接讀binding自己的`HandlerScript`欄位（跟`CompileHandlerBinding`內部邏輯一致，不再靠檔名巧合）。
+- `tools/export_handler_dialogue_bindings.py`：`export_handler()`裡`initial_source = source_dat_for_chapter(chapter)`這一行原本吃的是handler頂層`"chapter"`欄位、外加`+1`換算FDTXT resource——這條`+1`規則是校準給*舊的*0-based table index用的；現在頂層`"chapter"`欄位已經是真實1-based章節數(＝FDTXT編號本身)，這一處改成直接`f"FDTXT_{chapter:03d}"`(不再加1)。beats內部`loadch` override仍呼叫`source_dat_for_chapter(immediate)`(該處仍是未變動的raw immediate，繼續需要+1)——`source_dat_for_chapter`函式定義本身保留不動，只改了頂層那一個call site。
+
+**建置/回歸驗證**：`go build ./...`與`go test ./...`（`remake/`全部package）在改名後全數通過，包含`internal/campaign`（handler script/binding compiler本體）與`cmd/fd2`（campaign wiring/beatrunner等大量postbattle_chNN_persist相關測試）。過程中抓到並修正了一次自己造成的regex雙重疊加bug（`bindings/generated/`用`../../handlers/`兩層、頂層`bindings/`用`../handlers/`一層，第一版修正腳本沒排除重疊導致頂層49個檔案被誤加了兩次+1，靠事後全量掃描`handler_script`指標是否都能在`handlers/`目錄下找到對應檔案抓出來並修正）。
+
+**修正後再驗證**：重跑步驟1的`export_handler_dialogue_bindings.py`批次解析（改用修正後的`source_dat_for_chapter`呼叫），60個handler裡57個乾淨解析（3個因為既有、跟這次off-by-one無關的舊bug——同一handler內部同位址被合併/走訪兩次導致`dialogue_contexts`重複key而中止，ch07/15/26_post，這個bug改名前對ch06/15/25_post就已經存在，只是編號跟著平移）全部呈現`diff=0`（即檔名章節數與其自己引用的FDTXT/story章節數完全一致）；剩下的`ch01_pre.json`(原ch00,序章)因為同時橫跨序章專屬資源(FDTXT_031/032)與過場進入ch01(FDTXT_001)兩種內容，diff自然包含`{0,31,32}`，其中`0`現在才是對的（loadch(chapter=0)進入`ch01.json`，`FDTXT_(0+1)=FDTXT_001`）。
+
+**未動的已知範圍外項目**（故意不碰,避免blast radius超出這次任務）：`docs/data/chapter_beats/`（`dump_chapter_beats.py`的原始未轉換dump，非Go/其他工具消費，純歷史raw evidence，仍是舊編號）；`remake/assets/cutscenes/handlers/candidates/ch15_post_cfg.json`與`remake/assets/cutscenes/bindings/ch15_post_candidate.json`（皆為已被`ch15_post.json`取代的歷史草稿，未被任何程式讀取）；散落在既有Go測試函式名稱／註解／docs散文裡提到的舊章節數（例如`TestCompileChapter29PreLowersEveryNativeStagingPresent`其實現在測的是真正的ch30，函式名沒有一併改名）——這些都只是文件性質的舊標籤殘留，不影響正確性，之後有心力可以再一併整理。

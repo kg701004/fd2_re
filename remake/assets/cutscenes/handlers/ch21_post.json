@@ -2,123 +2,161 @@
   "schema_version": 1,
   "chapter": 21,
   "phase": "post",
-  "handler": "0x244b6",
+  "handler": "0x240fa",
   "beats": [
     {
       "op": "layout_units",
       "source": {
-        "addr": "0x24512",
+        "addr": "0x2415b",
         "target": "0x233c6"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": 4,
-      "source": {
-        "addr": "0x24539",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
-      "op": "act",
-      "acting_id": 65,
-      "source": {
-        "addr": "0x24543",
-        "target": "0x1366a"
       }
     },
     {
       "op": "dialog",
       "text_index": 5,
       "source": {
-        "addr": "0x2456a",
+        "addr": "0x24182",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "pan",
-      "grid_x": 16,
-      "grid_y": 16,
+      "op": "unknown",
+      "native_target": "0x31860",
+      "raw_args": [
+        "edx",
+        "eax"
+      ],
       "source": {
-        "addr": "0x24576",
-        "target": "0x135dd"
+        "addr": "0x241bd",
+        "target": "0x31860"
       }
     },
     {
-      "op": "act",
-      "acting_id": 66,
+      "op": "unknown",
+      "native_target": "0x31860",
+      "raw_args": [
+        "eax",
+        "ebx"
+      ],
       "source": {
-        "addr": "0x24580",
+        "addr": "0x24209",
+        "target": "0x31860"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x1b8e7",
+      "raw_args": [
+        "eax",
+        "ebx"
+      ],
+      "source": {
+        "addr": "0x24218",
+        "target": "0x1b8e7"
+      }
+    },
+    {
+      "op": "grant_item",
+      "item_id": 100,
+      "source": {
+        "addr": "0x24224",
+        "target": "0x1c220"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 7,
+      "source": {
+        "addr": "0x2424b",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 63,
+      "source": {
+        "addr": "0x2425f",
         "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 8,
+      "source": {
+        "addr": "0x24286",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 64,
+      "source": {
+        "addr": "0x2429a",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 9,
+      "source": {
+        "addr": "0x242c1",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x24336",
+      "raw_args": [],
+      "source": {
+        "addr": "0x242c9",
+        "target": "0x24336"
       }
     },
     {
       "op": "dialog",
       "text_index": 6,
       "source": {
-        "addr": "0x245a7",
+        "addr": "0x24308",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "pan",
-      "grid_x": 16,
-      "grid_y": 14,
+      "op": "join",
+      "char_id": 24,
       "source": {
-        "addr": "0x245b3",
-        "target": "0x135dd"
+        "addr": "0x24312",
+        "target": "0x112a5"
       }
     },
     {
-      "op": "unknown",
-      "native_target": "0x24618",
-      "raw_args": [
-        8,
-        10,
-        "eax",
-        "dword ptr [0x3ab9]"
-      ],
+      "op": "join",
+      "char_id": 23,
       "source": {
-        "addr": "0x245ce",
-        "target": "0x24618"
-      }
-    },
-    {
-      "op": "delay",
-      "ms": 500,
-      "source": {
-        "addr": "0x245db",
-        "target": "0x375b2"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x1f882",
-      "raw_args": [],
-      "source": {
-        "addr": "0x245fa",
-        "target": "0x1f882"
+        "addr": "0x2431c",
+        "target": "0x112a5"
       }
     },
     {
       "op": "sync_party",
       "source": {
-        "addr": "0x239ac",
+        "addr": "0x24324",
         "target": "0x11506"
       }
     },
     {
       "op": "set_chapter",
-      "chapter": 22,
+      "chapter": 21,
       "source": {
-        "addr": "0x239b1"
+        "addr": "0x24329"
       }
     }
   ],
   "diagnostics": {
-    "unknown_ops": 2
+    "unknown_ops": 4
   }
 }

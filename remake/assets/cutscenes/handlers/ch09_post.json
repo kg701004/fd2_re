@@ -2,109 +2,39 @@
   "schema_version": 1,
   "chapter": 9,
   "phase": "post",
-  "handler": "0x235f9",
+  "handler": "0x235bc",
   "beats": [
     {
-      "op": "unknown",
-      "native_target": "0x1f882",
-      "raw_args": [
-        "ebx",
-        "esi",
-        "edi"
-      ],
+      "op": "pan",
+      "grid_x": 6,
+      "grid_y": 1,
       "source": {
-        "addr": "0x23623",
-        "target": "0x1f882"
+        "addr": "0x235d8",
+        "target": "0x135dd"
       }
     },
     {
-      "op": "unknown",
-      "native_target": "0x13536",
-      "raw_args": [],
+      "op": "spawn",
+      "group": 4,
       "source": {
-        "addr": "0x23628",
-        "target": "0x13536"
-      }
-    },
-    {
-      "op": "direct_record_patch",
-      "direct_record_patch": {
-        "units": [
-          { "slot": 0, "x": 14, "y": 38, "pose": 2 },
-          { "slot": 1, "x": 15, "y": 39, "pose": 2 },
-          { "slot": 2, "x": 16, "y": 38, "pose": 2 },
-          { "slot": 3, "x": 13, "y": 38, "pose": 2 },
-          { "slot": 4, "x": 14, "y": 39, "pose": 2 },
-          { "slot": 5, "x": 15, "y": 38, "pose": 2, "raw_bytes": [{ "offset": 5, "value": 0 }] },
-          { "slot": 6, "x": 16, "y": 39, "pose": 2 },
-          { "slot": 7, "x": 17, "y": 39, "pose": 2 },
-          { "slot": 8, "x": 14, "y": 40, "pose": 2 },
-          { "slot": 9, "x": 15, "y": 40, "pose": 2 },
-          { "slot": 10, "x": 16, "y": 40, "pose": 2 },
-          { "slot": 50, "x": 15, "y": 35, "raw_bytes": [{ "offset": 38, "value": 0 }] },
-          { "slot": 51, "x": 14, "y": 35, "raw_bytes": [{ "offset": 38, "value": 0 }] },
-          { "slot": 52, "x": 16, "y": 35, "raw_bytes": [{ "offset": 5, "value": 0 }] }
-        ],
-        "view": {
-          "camera_x": 9,
-          "camera_y": 34,
-          "cursor_x": 9,
-          "cursor_y": 34,
-          "visible_cursor_x": 0,
-          "visible_cursor_y": 0
-        }
+        "addr": "0x235e2",
+        "target": "0x10b4e"
       },
-      "source": {
-        "addr": "0x2362d"
-      }
+      "raw_placement_gate": 0
     },
     {
-      "op": "redraw",
-      "args": [
-        1
-      ],
+      "op": "act",
+      "acting_id": 36,
       "source": {
-        "addr": "0x236ee",
-        "target": "0x11cac"
-      }
-    },
-    {
-      "op": "palette_fade",
-      "source": {
-        "addr": "0x236f6",
-        "target": "0x1f525"
-      }
-    },
-    {
-      "op": "delay",
-      "ms": 200,
-      "source": {
-        "addr": "0x23700",
-        "target": "0x375b2"
+        "addr": "0x235ec",
+        "target": "0x1366a"
       }
     },
     {
       "op": "dialog",
       "text_index": 4,
       "source": {
-        "addr": "0x23727",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
-      "op": "act",
-      "acting_id": 37,
-      "source": {
-        "addr": "0x2373b",
-        "target": "0x1366a"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": 5,
-      "source": {
-        "addr": "0x23762",
+        "addr": "0x231e5",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
@@ -112,35 +42,19 @@
     {
       "op": "sync_party",
       "source": {
-        "addr": "0x2376a",
+        "addr": "0x231ed",
         "target": "0x11506"
       }
     },
     {
-      "op": "join",
-      "char_id": 11,
-      "source": {
-        "addr": "0x23771",
-        "target": "0x112a5"
-      }
-    },
-    {
-      "op": "join",
-      "char_id": 6,
-      "source": {
-        "addr": "0x2377b",
-        "target": "0x112a5"
-      }
-    },
-    {
       "op": "set_chapter",
-      "chapter": 10,
+      "chapter": 9,
       "source": {
-        "addr": "0x23783"
+        "addr": "0x231f2"
       }
     }
   ],
   "diagnostics": {
-    "unknown_ops": 2
+    "unknown_ops": 0
   }
 }

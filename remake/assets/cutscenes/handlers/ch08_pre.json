@@ -2,39 +2,56 @@
   "schema_version": 1,
   "chapter": 8,
   "phase": "pre",
-  "handler": "0x3327d",
+  "handler": "0x33219",
   "beats": [
     {
       "op": "loadch",
       "source": {
-        "addr": "0x33288",
+        "addr": "0x33223",
         "target": "0x205da"
       },
       "chapter_expr": null
     },
     {
       "op": "pan",
-      "grid_x": 6,
-      "grid_y": 0,
+      "grid_x": 7,
+      "grid_y": 32,
       "source": {
-        "addr": "0x332b0",
+        "addr": "0x3322c",
         "target": "0x135dd"
+      }
+    },
+    {
+      "op": "act",
+      "acting_id": 31,
+      "source": {
+        "addr": "0x33236",
+        "target": "0x1366a"
       }
     },
     {
       "op": "dialog",
       "text_index": 0,
       "source": {
-        "addr": "0x332d7",
+        "addr": "0x3325d",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "act",
-      "acting_id": 35,
+      "op": "pan",
+      "grid_x": 7,
+      "grid_y": 23,
       "source": {
-        "addr": "0x332eb",
+        "addr": "0x33269",
+        "target": "0x135dd"
+      }
+    },
+    {
+      "op": "act",
+      "acting_id": 32,
+      "source": {
+        "addr": "0x33273",
         "target": "0x1366a"
       }
     },
@@ -42,25 +59,25 @@
       "op": "dialog",
       "text_index": 1,
       "source": {
-        "addr": "0x33312",
+        "addr": "0x33133",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
+      "op": "reset_pose",
+      "source": {
+        "addr": "0x3313b",
+        "target": "0x134e4"
+      }
+    },
+    {
       "op": "focus_unit",
       "source": {
-        "addr": "0x3331c",
+        "addr": "0x33142",
         "target": "0x12d7b"
       },
       "unit_slot": 0
-    },
-    {
-      "op": "reset_pose",
-      "source": {
-        "addr": "0x33324",
-        "target": "0x134e4"
-      }
     }
   ],
   "diagnostics": {

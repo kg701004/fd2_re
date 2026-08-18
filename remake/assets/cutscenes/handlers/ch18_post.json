@@ -2,29 +2,103 @@
   "schema_version": 1,
   "chapter": 18,
   "phase": "post",
-  "handler": "0x23e39",
+  "handler": "0x23cd5",
   "beats": [
     {
       "op": "sync_party",
       "source": {
-        "addr": "0x23e43",
+        "addr": "0x23d15",
         "target": "0x11506"
       }
     },
     {
-      "op": "dialog",
-      "text_index": 3,
+      "op": "layout_units",
       "source": {
-        "addr": "0x23e67",
+        "addr": "0x23d39",
+        "target": "0x233c6"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 7,
+      "source": {
+        "addr": "0x23d60",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "set_chapter",
-      "chapter": 19,
+      "op": "act",
+      "acting_id": 56,
       "source": {
-        "addr": "0x231f2"
+        "addr": "0x23d74",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 8,
+      "source": {
+        "addr": "0x23d9b",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 57,
+      "source": {
+        "addr": "0x23daf",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 9,
+      "source": {
+        "addr": "0x23dd6",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 58,
+      "source": {
+        "addr": "0x23dea",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 10,
+      "source": {
+        "addr": "0x23e11",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "join",
+      "char_id": 21,
+      "source": {
+        "addr": "0x23e1b",
+        "target": "0x112a5"
+      }
+    },
+    {
+      "op": "join",
+      "char_id": 7,
+      "source": {
+        "addr": "0x23e25",
+        "target": "0x112a5"
+      }
+    },
+    {
+      "op": "set_chapter",
+      "chapter": 18,
+      "source": {
+        "addr": "0x23e2d"
       }
     }
   ],

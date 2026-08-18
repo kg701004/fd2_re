@@ -2,22 +2,22 @@
   "schema_version": 1,
   "chapter": 9,
   "phase": "pre",
-  "handler": "0x3332b",
+  "handler": "0x3327d",
   "beats": [
     {
       "op": "loadch",
       "source": {
-        "addr": "0x33335",
+        "addr": "0x33288",
         "target": "0x205da"
       },
       "chapter_expr": null
     },
     {
       "op": "pan",
-      "grid_x": 10,
+      "grid_x": 6,
       "grid_y": 0,
       "source": {
-        "addr": "0x3333e",
+        "addr": "0x332b0",
         "target": "0x135dd"
       }
     },
@@ -25,7 +25,24 @@
       "op": "dialog",
       "text_index": 0,
       "source": {
-        "addr": "0x3320c",
+        "addr": "0x332d7",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 35,
+      "source": {
+        "addr": "0x332eb",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 1,
+      "source": {
+        "addr": "0x33312",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
@@ -33,10 +50,17 @@
     {
       "op": "focus_unit",
       "source": {
-        "addr": "0x33142",
+        "addr": "0x3331c",
         "target": "0x12d7b"
       },
       "unit_slot": 0
+    },
+    {
+      "op": "reset_pose",
+      "source": {
+        "addr": "0x33324",
+        "target": "0x134e4"
+      }
     }
   ],
   "diagnostics": {

@@ -165,8 +165,15 @@ def export_handler(
     if not is_nonnegative_int(chapter) or not isinstance(beats, list):
         raise ValueError(f"handler {handler_path} lacks non-negative chapter or beats array")
 
-    # 0x205da → 0x1088d enters the full chapter loader; its FDTXT resource is chapter+1 (doc23 §4).
-    initial_source: str | None = source_dat_for_chapter(chapter)
+    # remake/assets/cutscenes/handlers/chNN_*.json's top-level "chapter" field
+    # used to be the raw (0-based) dispatch-table index, so its active FDTXT
+    # resource was chapter+1 (doc23 §4). The 2026-08-18 off-by-one fix (see
+    # doc58) renamed every handler file/manifest entry so this field now holds
+    # the real (1-based) chapter number directly -- its FDTXT resource is
+    # therefore FDTXT_<chapter>, with no extra +1. A per-beat `loadch`
+    # immediate below is untouched raw disassembly data (still the original
+    # 0-based table index), so that call site still needs source_dat_for_chapter's +1.
+    initial_source: str | None = f"FDTXT_{chapter:03d}"
     current_source = initial_source
     context_reason: str | None = (
         None

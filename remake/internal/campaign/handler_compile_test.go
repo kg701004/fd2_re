@@ -479,7 +479,7 @@ func TestCompileHandlerSpawnRequiresExplicitRawPlacementGate(t *testing.T) {
 func TestHandlerBindingUsesSourceAddress(t *testing.T) {
 	binding := &HandlerBinding{
 		SchemaVersion: 1,
-		HandlerScript: "handlers/ch00_pre.json",
+		HandlerScript: "handlers/ch01_pre.json",
 		Overrides: map[string]HandlerBindingOverride{
 			"0x32339": {Pan: &HandlerPoint{X: 72, Y: 816, Frames: 60}},
 			"0x32382": {Dialog: &HandlerDialog{Lines: []HandlerDialogLine{{Line: 0}}}},
@@ -551,7 +551,7 @@ func TestCompileCompleteChapter0Binding(t *testing.T) {
 	if d := binding.Overrides["0x3244d"].Dialog; d == nil || d.Scene != "王城一隅,亞雷斯撞見" || len(d.Lines) != 5 {
 		t.Fatalf("grass FDTXT #2 binding = %#v, want five contextual lines", d)
 	}
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch00_pre.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch01_pre.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1531,7 +1531,17 @@ func TestCompileGeneratedHandlerBindingsCompletionFrontier(t *testing.T) {
 		if err != nil {
 			t.Fatalf("CompileHandlerBinding(%q): %v", path, err)
 		}
-		script, err := LoadHandlerScript(filepath.Join(filepath.Dir(path), "../../handlers", filepath.Base(path)))
+		// The generated binding's own handler_script field is the source of
+		// truth for which handlers/chNN_*.json it wraps: the two directories
+		// no longer share a filename convention now that
+		// remake/assets/cutscenes/handlers/chNN_*.json is numbered by real
+		// (1-based) chapter while bindings/generated/chNN_*.json keeps the
+		// legacy 0-based dispatch-table index (see doc58's off-by-one fix).
+		binding, err := LoadHandlerBinding(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		script, err := LoadHandlerScript(filepath.Join(filepath.Dir(path), binding.HandlerScript))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1679,7 +1689,7 @@ func TestCompileNativeStagingPresent33F78PreservesWrapperABI(t *testing.T) {
 }
 
 func TestCompileChapter29PreLowersEveryNativeStagingPresent(t *testing.T) {
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch29_pre.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch30_pre.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1707,8 +1717,8 @@ func TestCompileChapter29PreLowersEveryNativeStagingPresent(t *testing.T) {
 
 func TestCompileChapterHandlersLowerEveryNativePalettePulse(t *testing.T) {
 	paths := []string{
-		"../../assets/cutscenes/handlers/ch28_post.json",
-		"../../assets/cutscenes/handlers/ch29_pre.json",
+		"../../assets/cutscenes/handlers/ch29_post.json",
+		"../../assets/cutscenes/handlers/ch30_pre.json",
 	}
 	wantSources := map[string]bool{
 		"0x25682": false, "0x25694": false, "0x256a6": false, "0x33efd": false,
@@ -1742,7 +1752,7 @@ func TestCompileChapterHandlersLowerEveryNativePalettePulse(t *testing.T) {
 }
 
 func TestCompileChapter26PostLowersEveryNativePaletteRamp(t *testing.T) {
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch26_post.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch27_post.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1917,7 +1927,7 @@ func TestCompileChapter27PostMapsFDTXT028StringSeven(t *testing.T) {
 }
 
 func TestCompileChapter27PreUsesNativeStagingPushOrder(t *testing.T) {
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch27_pre.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch28_pre.json")
 	if err != nil {
 		t.Fatal(err)
 	}

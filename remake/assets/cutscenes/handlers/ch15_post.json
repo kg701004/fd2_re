@@ -2,80 +2,39 @@
   "schema_version": 1,
   "chapter": 15,
   "phase": "post",
-  "handler": "0x23a0a",
+  "handler": "0x239bd",
   "beats": [
     {
-      "op": "layout_units",
-      "source": {
-        "addr": "0x23a5e",
-        "target": "0x233c6"
-      }
-    },
-    {
-      "op": "unit_inactive",
-      "args": [
-        "eax"
+      "op": "if",
+      "source": { "addr": "0x239c9", "target": "0x33499" },
+      "condition": { "op": "roster_has", "char_id": 12 },
+      "then": [
+        { "op": "dialog", "text_index": 12, "source": { "addr": "0x239f6", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
       ],
-      "source": {
-        "addr": "0x23a74",
-        "target": "0x3453e"
-      }
+      "else": [
+        { "op": "dialog", "text_index": 13, "source": { "addr": "0x239f6", "target": "0x15f84" }, "text_table": "dword ptr [0x3a79]" }
+      ]
     },
     {
       "op": "sync_party",
       "source": {
-        "addr": "0x23a95",
+        "addr": "0x239fe",
         "target": "0x11506"
       }
     },
     {
-      "op": "dialog",
-      "text_index": 2,
-      "source": {
-        "addr": "0x23adc",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
-      "op": "act",
-      "acting_id": 49,
-      "source": {
-        "addr": "0x23af0",
-        "target": "0x1366a"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": 3,
-      "source": {
-        "addr": "0x23b17",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
-      "op": "dialog",
-      "text_index": 4,
-      "source": {
-        "addr": "0x23b40",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
       "op": "join",
-      "char_id": 18,
+      "char_id": 15,
       "source": {
-        "addr": "0x23b4a",
+        "addr": "0x237c8",
         "target": "0x112a5"
       }
     },
     {
       "op": "set_chapter",
-      "chapter": 16,
+      "chapter": 15,
       "source": {
-        "addr": "0x23b52"
+        "addr": "0x231f2"
       }
     }
   ],

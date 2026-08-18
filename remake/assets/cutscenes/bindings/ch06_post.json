@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "handler_script": "../handlers/ch06_post.json",
+  "handler_script": "../handlers/ch07_post.json",
   "story_index_map": "../dialogue-index/count-aligned.json",
   "runtime_context": {
     "slot_counts": [34, 44],

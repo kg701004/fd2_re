@@ -2,31 +2,29 @@
   "schema_version": 1,
   "chapter": 8,
   "phase": "post",
-  "handler": "0x235bc",
+  "handler": "0x234bb",
   "beats": [
     {
-      "op": "pan",
-      "grid_x": 6,
-      "grid_y": 1,
+      "op": "layout_units",
       "source": {
-        "addr": "0x235d8",
-        "target": "0x135dd"
+        "addr": "0x234fe",
+        "target": "0x233c6"
       }
     },
     {
-      "op": "spawn",
-      "group": 4,
+      "op": "dialog",
+      "text_index": 3,
       "source": {
-        "addr": "0x235e2",
-        "target": "0x10b4e"
+        "addr": "0x23525",
+        "target": "0x15f84"
       },
-      "raw_placement_gate": 0
+      "text_table": "dword ptr [0x3a79]"
     },
     {
       "op": "act",
-      "acting_id": 36,
+      "acting_id": 33,
       "source": {
-        "addr": "0x235ec",
+        "addr": "0x23539",
         "target": "0x1366a"
       }
     },
@@ -34,27 +32,56 @@
       "op": "dialog",
       "text_index": 4,
       "source": {
-        "addr": "0x231e5",
+        "addr": "0x23560",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
     },
     {
+      "op": "act",
+      "acting_id": 34,
+      "source": {
+        "addr": "0x2357e",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "unknown",
+      "native_target": "0x11d40",
+      "raw_args": [
+        64,
+        255,
+        0
+      ],
+      "source": {
+        "addr": "0x23599",
+        "target": "0x11d40"
+      }
+    },
+    {
+      "op": "join",
+      "char_id": 5,
+      "source": {
+        "addr": "0x2327d",
+        "target": "0x112a5"
+      }
+    },
+    {
       "op": "sync_party",
       "source": {
-        "addr": "0x231ed",
+        "addr": "0x23285",
         "target": "0x11506"
       }
     },
     {
       "op": "set_chapter",
-      "chapter": 9,
+      "chapter": 8,
       "source": {
-        "addr": "0x231f2"
+        "addr": "0x2328a"
       }
     }
   ],
   "diagnostics": {
-    "unknown_ops": 0
+    "unknown_ops": 1
   }
 }

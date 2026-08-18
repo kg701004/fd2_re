@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "handler_script": "../handlers/ch25_pre.json",
+  "handler_script": "../handlers/ch26_pre.json",
   "acting_resources": "../acting/map32.json",
   "overrides": {
     "0x33ab8": {

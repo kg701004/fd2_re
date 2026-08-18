@@ -2,69 +2,64 @@
   "schema_version": 1,
   "chapter": 6,
   "phase": "post",
-  "handler": "0x232e8",
+  "handler": "0x23296",
   "beats": [
     {
-      "op": "sync_party",
-      "source": { "addr": "0x23319", "target": "0x11506" }
+      "op": "join",
+      "char_id": 13,
+      "source": {
+        "addr": "0x232a2",
+        "target": "0x112a5"
+      }
     },
     {
-      "op": "if",
-      "condition": {
-        "op": "native_event_state_eq",
-        "event_state_index": 17,
-        "event_state_value": 1,
-        "required_slot_count": 44
+      "op": "spawn",
+      "group": 3,
+      "source": {
+        "addr": "0x232ac",
+        "target": "0x10b4e"
       },
-      "source": { "addr": "0x2331e" },
-      "then": [
-        {
-          "op": "if",
-          "condition": {
-            "op": "any_unit_inactive",
-            "unit_slots": [43]
-          },
-          "source": { "addr": "0x2332e", "target": "0x3453e" },
-          "then": [
-            {
-              "op": "dialog",
-              "text_index": 5,
-              "source": { "addr": "0x233b2", "target": "0x15f84" },
-              "text_table": "dword ptr [0x3a79]"
-            }
-          ],
-          "else": [
-            {
-              "op": "layout_units",
-              "source": { "addr": "0x23358", "target": "0x233c6" }
-            },
-            {
-              "op": "dialog",
-              "text_index": 4,
-              "source": { "addr": "0x2337f", "target": "0x15f84" },
-              "text_table": "dword ptr [0x3a79]"
-            },
-            {
-              "op": "join",
-              "char_id": 12,
-              "source": { "addr": "0x23389", "target": "0x112a5" }
-            }
-          ]
-        }
-      ],
-      "else": [
-        {
-          "op": "dialog",
-          "text_index": 5,
-          "source": { "addr": "0x233b2", "target": "0x15f84" },
-          "text_table": "dword ptr [0x3a79]"
-        }
-      ]
+      "raw_placement_gate": 0
+    },
+    {
+      "op": "pan",
+      "grid_x": 5,
+      "grid_y": 14,
+      "source": {
+        "addr": "0x232b8",
+        "target": "0x135dd"
+      }
+    },
+    {
+      "op": "act",
+      "acting_id": 27,
+      "source": {
+        "addr": "0x232c2",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 6,
+      "source": {
+        "addr": "0x231e5",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "sync_party",
+      "source": {
+        "addr": "0x231ed",
+        "target": "0x11506"
+      }
     },
     {
       "op": "set_chapter",
-      "chapter": 7,
-      "source": { "addr": "0x233ba" }
+      "chapter": 6,
+      "source": {
+        "addr": "0x231f2"
+      }
     }
   ],
   "diagnostics": {

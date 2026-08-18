@@ -35,7 +35,7 @@ func TestLoadExportedHandlerScripts(t *testing.T) {
 }
 
 func TestChapter1PostPreservesInactiveDiamond(t *testing.T) {
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch01_post.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch02_post.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,11 +67,11 @@ func TestChapter1PostPreservesInactiveDiamond(t *testing.T) {
 }
 
 func TestChapter0PreHandlerPreservesReclassifiedNativeOperations(t *testing.T) {
-	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch00_pre.json")
+	script, err := LoadHandlerScript("../../assets/cutscenes/handlers/ch01_pre.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if script.Handler != "0x3231b" || script.Phase != "pre" || script.Chapter != 0 {
+	if script.Handler != "0x3231b" || script.Phase != "pre" || script.Chapter != 1 {
 		t.Fatalf("chapter 0 pre identity = %#v", script)
 	}
 	if got := script.Diagnostics["unknown_ops"]; got != 0 {

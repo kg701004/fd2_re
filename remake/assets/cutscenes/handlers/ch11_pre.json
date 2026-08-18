@@ -2,22 +2,31 @@
   "schema_version": 1,
   "chapter": 11,
   "phase": "pre",
-  "handler": "0x333f5",
+  "handler": "0x33367",
   "beats": [
     {
       "op": "loadch",
       "source": {
-        "addr": "0x333ff",
+        "addr": "0x33371",
         "target": "0x205da"
       },
       "chapter_expr": null
     },
     {
-      "op": "pan",
-      "grid_x": 4,
-      "grid_y": 4,
+      "op": "dialog",
+      "text_index": 0,
       "source": {
-        "addr": "0x33408",
+        "addr": "0x33395",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "pan",
+      "grid_x": 10,
+      "grid_y": 7,
+      "source": {
+        "addr": "0x333ab",
         "target": "0x135dd"
       }
     },
@@ -25,51 +34,51 @@
       "op": "spawn",
       "group": 1,
       "source": {
-        "addr": "0x33419",
+        "addr": "0x333b5",
         "target": "0x10b4e"
       },
-      "raw_placement_gate": 1
+      "raw_placement_gate": 0
     },
     {
       "op": "act",
-      "acting_id": 40,
+      "acting_id": 38,
       "source": {
-        "addr": "0x3342a",
+        "addr": "0x333bf",
         "target": "0x1366a"
-      }
-    },
-    {
-      "op": "pan",
-      "grid_x": 11,
-      "grid_y": 40,
-      "source": {
-        "addr": "0x33436",
-        "target": "0x135dd"
-      }
-    },
-    {
-      "op": "act",
-      "acting_id": 41,
-      "source": {
-        "addr": "0x33440",
-        "target": "0x1366a"
-      }
-    },
-    {
-      "op": "reset_pose",
-      "source": {
-        "addr": "0x33448",
-        "target": "0x134e4"
       }
     },
     {
       "op": "dialog",
-      "text_index": 0,
+      "text_index": 1,
       "source": {
-        "addr": "0x3320c",
+        "addr": "0x333e6",
         "target": "0x15f84"
       },
       "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "act",
+      "acting_id": 39,
+      "source": {
+        "addr": "0x3310c",
+        "target": "0x1366a"
+      }
+    },
+    {
+      "op": "dialog",
+      "text_index": 2,
+      "source": {
+        "addr": "0x33133",
+        "target": "0x15f84"
+      },
+      "text_table": "dword ptr [0x3a79]"
+    },
+    {
+      "op": "reset_pose",
+      "source": {
+        "addr": "0x3313b",
+        "target": "0x134e4"
+      }
     },
     {
       "op": "focus_unit",
