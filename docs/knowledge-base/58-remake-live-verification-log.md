@@ -3214,3 +3214,42 @@ CS=0170 DS=0178 ES=0178 SS=0178
 - 新增`cmd/fd2/roster_has_all_items_test.go`的`TestBeatRosterHasAllItemsGrantsSkyKeyOnFullSet`（16 slot全部集滿6道具→beats跑完後道具被消耗、拿到item 100、join/sync_party/set_chapter尾端一樣執行）與`TestBeatRosterHasAllItemsSkipsGrantWhenOneItemMissing`（缺一個道具→5個已有的道具都沒被消耗、沒拿到item 100，但join/sync_party/set_chapter尾端仍然執行——對應原生「不論成功失敗都走到同一段merge」的行為）。這兩個測試直接驅動`campaign.Beat`序列（跟`beatrunner_test.go`既有寫法一致），不是重新測`campaign.Node`那條已經沒問題的路徑。
 
 **跟續十八卡片的關係**：`spawn_task`開的那張追蹤卡片可以視為已處理完畢並結案——不是因為卡片描述的live bug被修好了（它本來就不是live bug），而是因為卡片指出的disassembly-export artifact本身的缺口，這次已經照卡片給的完整反組譯證據修好了。
+
+## 續二十三：接手0x24d22/0x11d40活體捕獲第N輪——修正unit record欄位語意、發現「殺光initial group就過關」不觸發斷點的矛盾、Normal core實驗未解決問題反而暴露嚴重渲染延遲，誠實記錄未完成（2026-08-18）
+
+延續續二十一留下的「環境已修好、斷點已就緒，但需要真的打完整場ch24戰鬥」狀態接手。這輪的具體進展、新發現、以及最終仍未達成原始目標的完整經過如下。
+
+**接手時的狀態**：續二十一收尾時沒有關閉環境（不同於前幾輪慣例），這次一開始就發現WSL2裡still有一個活著超過40分鐘的dosbox-x/tmux/Xvfb session，`0x24c82`/`0x24cc9`/`0x24cf3`三個斷點也還在，直接沿用不必重建。
+
+**修正unit record欄位語意（跟doc58先前記錄有出入）**：透過連續live記憶體讀寫，這次確認：
+- **座標欄位是`+0x00=X`、`+0x01=Y`（單一byte），對player與enemy record一致**——用`map23_units.json`的已知座標（例如group1第一隻`x=7,y=8`）逐一比對live記憶體`07 08`吻合，`索爾`初始部署點`(20,19)`比對live記憶體`14 13`（0x14=20,0x13=19）也吻合。**這推翻續二十一附近段落裡「Y,X」的說法**——先前的措辭是含糊的口語描述，不是精確的位元組定義，這次用兩種record（我方/敵方）交叉驗證後才真正確立。
+- **HP current在`+0x40`、HP max在`+0x42`（皆word）**——這點**修正了本文件較早（2452行附近）「用SMV把current HP欄位(+0x42/+0x43)…改成01 00(1)」的說法**：那次的patch（`+0x42`）之所以看起来有效，很可能是因为battle engine某處tick會把current HP clamp到max（`current=min(current,max)`），把HPmax設成1連带讓HPcur在下個tick也變1，不是`+0x42`本身就是current。這次改成**同時**把`+0x40`與`+0x42`都寫成`01 00`，兩個欄位都覆蓋，不依賴這個未經獨立證實的clamp行為。這個新offset跟`remake/internal/battle/native_ai_item_execute.go`等既有Go程式碼裡`record[0x40:0x42]`=HP、`record[0x42:0x44]`=(相鄰欄位)的既定寫法完全吻合，不是這次新發現，只是先前doc58的口語描述誤導了自己。
+- **AP在`+0x48`（word）**——這次新增的防禦性patch：把敵人AP也改成1，避免攻擊方在對決動畫裡被高AP敵人反擊誤傷（見下方「意外損失希爾法」）。
+
+**存檔binary patch技巧（新建立、可重複使用）**：`tools/fd2save.py`模組本身有`decode()`/`encode()`兩個function（不只是CLI的`--write-plain`），可以直接`import`後在Python裡：
+1. `plain = bytearray(fd2save.decode(raw_bytes))`解碼；
+2. 改`plain[fd2save.SLOT_OFFSET + fd2save.ROSTER_SIZE]`（章節raw值，slot 0 metadata第1個byte）；
+3. 改`plain[fd2save.SLOT_OFFSET + i*0x50 + 0x40:...+2]`（第i個常駐roster成員的current HP，little-endian word）；
+4. `new_raw = fd2save.encode(bytes(plain))`重新做checksum+rolling XOR，直接寫回`FD2.SAV`。
+
+用這個方法把一次不小心被覆寫成「已通關ch24」的存檔，快速改回「ch24戰前」（chapter raw`0x17`）並同時把陣亡的角色HP補滿，不必重玩story從頭。**這比續21次次都要重新LOAD→選12人→按過全部對話快得多**，是這輪除RE本身外最有複用價值的產出。
+
+**「殺光initial group就過關」現象再次重現，但這次抓到矛盾**：延續續二十的做法（HP-1 patch＋assist attack讓死亡走真實流程），順利把`initial_groups:[1]`的4隻敵人（座標`(7,8)`/`(7,26)`/`(32,28)`/`(32,6)`）逐一用真實UI攻擊擊殺（每隻都在記憶體上確認`+0x40`歸零、`byte+5`死亡旗標置位，其中一隻還親眼看到「從敵人身上,得到2000元!」戰利品對話框），過程中觸發了一段先前沒特別記錄過的劇情對白「希莉亞,抓緊我!悠妮,妳也過來!」，接著`FD2.SAV`真的存檔進**第二十五章**（用`fd2save.py`重新解碼確認`slot=0 chapter=0x18`）——跟續二十觀察到的「不用打完70隻就會贏」現象一致。
+
+**但這次第一次認真核對了斷點**：整個過程中`0170:1C0C82`/`1C0CC9`/`1C0CF3`三個斷點**一次都沒有命中**（`BPLIST`確認斷點全程都還在，`tmux capture-pane`顯示全程是`(Running)`，從未跳回`I->`）。根據續十六已經反組譯證實的結論——`0x24c1e`（ch24 postbattle handler本體）內部完全沒有旗標/分支判斷，只要這個函式被呼叫過，`0x24d22`（跑8+5次）／`0x11d40`（跑60次）必定命中數十次——這次的「零命中」代表**這個函式從頭到尾根本沒被執行過**，即使章節確實往前推進、對話確實有播放。
+
+**這帶出一個跟先前假設不同的新結論（比續二十/二十一的樂觀解讀更保守）**：「殺光`initial_groups`就過關」這個捷徑，很可能**不是**觸發`battle_ch24`真正的`on_win`→`postbattle_ch24_persist`→`0x24c1e`這條鏈路，而是某種**不同、更短的原生分支**（例如「戰場上暫時沒有存活敵人」的某個中繼判斷，只是恰好也會把章節計數器往前推、也會播一小段對白，但不是完整的postbattle cutscene本體）。這個解讀目前**只是假說，沒有反組譯佐證**——下一輪如果要繼續追，應該優先做的是**最省成本的診斷**：卡在「希莉亞,抓緊我」這句對白正要播放的那個瞬間按`Alt+Pause`，直接讀`CS:EIP`，看當下實際執行位址落在哪個區段、跟已知的`0x24c1e`範圍差多遠，而不是急著去打full-clear（那是遠更貴的驗證路徑）。
+
+**意外損失希爾法（不影響死亡處理驗證有效性，但誠實記錄）**：早期一次子回合裡，索爾在沒有neuter敵人AP的狀況下攻擊`0x26EFAC`（enemy3），戰鬥動畫顯示希爾法（不是索爾本身，另一隻被teleport上陣的unit）的HP從240掉到0——事後用記憶體確認她的`+0x40`真的變成`0000`，`byte+5`變成`0x81`（bit7 Acted+bit0）。**但後來重讀一次全新部署的希爾法record（尚未行動、HP滿）時，byte+5已經是`0x01`（bit0已置位）**，證明`byte+5 bit0`本身**不是**單純的死亡旗標（跟doc58/25-battle-event-system.md早就撤回的「bit0=存活」舊說一致，這次是又一次獨立佐證同一個結論），HP=0才是真正的死亡判準，bit0在不同角色/情境下有其他語意，不能望文生義。修正做法：後續所有敵人都同時neuter HP(`+0x40`/`+0x42`=1)跟AP(`+0x48`=1)，此後沒有再發生任何我方單位意外掉血。
+
+**Normal core實驗：排除了「Dynamic core JIT導致breakpoint被跳過」這個假說的簡單解法，但引出一個更嚴重的新環境問題**——懷疑斷點不命中可能是DOSBox-X的Dynamic（JIT）core在把code block編譯成host機器碼時，只在block入口檢查中斷點、不會逐指令檢查block內部位址（debugger本身在每次進入時都印出「Warning: Single-stepping may not work correctly with Dynamic core」，懷疑這個警告可能也適用於一般breakpoint，不只F10/F11單步）。用`-c "config -set cpu core=normal"`在FD2.EXE啟動前切換到Normal（純直譯）core，重開一輪，**確認警告訊息真的消失了**（Normal core下debugger console完全不再印這行）。但緊接著發現一個嚴重的新問題：**`xdotool`送的按鍵在畫面上長時間（數秒到十幾秒）沒有任何視覺回應，一度誤判為「Enter鍵完全失效」，實際上是嚴重的渲染延遲（render backlog）**——按`Escape`（或任何鍵）之後，畫面才會一次跳到「所有先前按鍵其實都有正確處理」之後的真實狀態（曾經一次補完6層選單堆疊：角色卡→法術列表→…）。這個延遲**不是Normal core特有**：同一個session稍後切回Dynamic core（重開一次乾淨的dosbox-x）依然重現了同等級的延遲，代表根因更可能是**Xvfb/dosbox-x這個特定執行環境在長時間運行後的某種資源或渲染佇列累積問題**，不是CPU core選擇造成的——這一輪**沒能把Normal core測試做完整**（沒有機會在Normal core、UI操作可靠的前提下重新走一次「殺4隻enemy→看斷點會不會命中」），因為光是應付渲染延遲、釐清「到底是輸入沒送到還是畫面沒更新」就耗掉了這輪大半的時間預算。
+
+**另一個踩到的坑（已釐清、非本輪主線問題）**：`xdotool key --window <id> alt+Pause`偶爾會讓Alt鍵在X11層級「邏輯上卡住沒放開」，導致後續單獨送的`Return`被DOSBox-X解讀成`Alt+Return`組合鍵，跳出的是**DOSBox-X自己的存檔/讀檔/命令列quick menu**（4宮格圖示：報表/自動/設定/`C:>_`），不是遊戲內選單——一度誤判成「遊戲選單變了」，浪費了幾輪嘗試。用`xdotool keyup --window <id> alt`（及`Alt_L`/`Alt_R`）可以強制清掉這個卡住狀態。但**這次事後複查發現，造成「Enter看起來沒反應」的主因其實是上一段的渲染延遲，不是這個Alt卡住問題**——兩個問題疊在一起發生，一度互相混淆診斷方向，值得記一筆避免下次重蹈覆轍。
+
+**新發現：戰鬥目的地預覽游標的「預設起始位置」可能直接落在敵方單位所在格**——這種情況下按Enter確認會被靜默拒絕（格子已被佔用），跟doc58/續二十一已經記錄過的「移動力預算不足導致靜默拒絕」是**兩種不同成因、但外觀完全一樣**的靜默失敗（畫面都是「什麼事都沒發生」）。這次的解法是先用方向鍵把預覽游標**移離**敵方格子（哪怕只移到旁邊的空地）才按Enter確認，即使目標本來就是「原地不動、直接進指令環攻擊相鄰敵人」。
+
+**這輪最終在乾淨重開的Dynamic core環境下，用上面修正過的record offset（`+0x40`/`+0x42`=HP、`+0x48`=AP）跟存檔patch技巧，完整重新驗證了一次「patch HP/AP→teleport貼近→真實UI攻擊→記憶體確認HP歸零＋死亡旗標置位」的端到端流程對`group 1`第一隻敵人（`(7,8)`那隻）依然成立且乾淨**（沒有再誤觸副作用），但受限於這輪已經消耗的時間預算，**沒有機會在這個乾淨環境下走完剩下3隻＋再次核對斷點**，也因此**這輪同樣沒有捕獲到`0x24d22`/`0x11d40`的即時暫存器值**。
+
+**誠實結論（不誇大）**：這輪的核心產出是「修正了兩個先前文件記�錯或講含糊的technical fact」（HP offset、座標byte順序）＋「一個新的、可重複使用的存檔patch技巧」＋「一個比續二十/二十一更保守、更有事實根據的假說：殺光initial group的『速通』可能根本沒有走過`0x24c1e`」——這比「原始目標達成與否」本身更重要，因為它把下一輪的搜尋空間從「怎麼打完整場戰鬥」收斂成「這條捷徑到底執行了什麼程式碼，如果它真的繞過了`0x24c1e`，才需要認真考慮打full-clear這條更貴的路」。**原始的3個call site即時暫存器捕獲，這輪依然沒有達成**，不是完全失敗（環境、record layout、存檔工具都比進場時更扎實），也不是成功，如實記錄，留給下一輪。
+
+**環境收尾**：確認`dosbox-x`/`Xvfb`/`tmux`全部關閉（`pkill`後`pgrep`只剩defunct殘留，非活動行程）。`~/fd2-run/FD2.SAV`留在「patch過的ch24戰前狀態」（chapter raw `0x17`、12人常駐roster HP全滿，含補滿的希爾法）而不是這輪一開始讀到的那個檔案——這是刻意的，方便下一輪直接LOAD就從ch24戰前開始，不必重放整個ch1-23的存檔路徑；備份檔`~/fd2-run/FD2.SAV.bak`（09:22版本，ch23剛結束）與`~/fd2-run/FD2.SAV.before_patch_test`（21:22版本，這輪中途一次「已通關ch24」的存檔）都保留在`fd2-run/`目錄下未刪除，供需要時比對。**這輪沒有修改`remake/`下任何Go原始碼或campaign資產檔案**——所有變動都是DOSBox-X即時記憶體patch（行程結束即消失）跟上述唯一一次`FD2.SAV`二進位檔patch（僅限WSL2 sandbox裡的執行期存檔，不在repo版控範圍內）。
