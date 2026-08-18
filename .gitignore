@@ -56,3 +56,11 @@ music_mt32/
 music_ogg/
 video/
 remake/fd2-linux-*
+
+# 預訓練模型權重(可公開重新下載,不入庫;見 tools/realesrgan_*.py)
+tools/models/
+*.pth
+
+# DOSBox-X live-verification 暫存截圖/log(草稿,正式證據存
+# docs/knowledge-base/evidence/ 才入庫)
+.wsl_build/
