@@ -2870,3 +2870,29 @@ LEN: 802705
 **實測結果**：LOAD→ch23存檔→NO（不記錄）→直接進選人畫面「出戰人數 X12/剩餘人數 X12」（零故事分支，證實續十的timing修法持續有效）。Single-step選滿12人（含改名後的希爾法，第11個位置），remaining精準到0，觸發「確定要進入戰場嗎？」YES/NO確認框，按Enter(YES)後**成功進入ch23戰前過場動畫**（畫面顯示地圖+單位+對話框，索爾開口說話）——這是本任務（#118）自本session開始以來第一次真正穿越選人畫面、抵達戰前流程。
 
 **下一步（尚未執行）**：現在需要在這段戰前過場流程中，對 `0x24618`（`FUN_000336a0`，ch23戰前handler）等目標位址下live中斷點讀取EAX，這仍然需要解決先前記錄的中斷點時機bug（`-break-start`初始中斷點在real mode設定、對protected mode selector中斷點不生效的問題）——`BPINT 21`+重新設定的workaround方向理論上正確但尚未在這個新的、已知能穩定抵達戰前畫面的情境下重新實測。
+
+## 2026-08-18（續十二）#118 — 改用Alt+Pause＋live byte-signature/delta方法，成功抓到 `0x24618` 的即時EAX值
+
+放棄`-break-start`路線（real/protected mode時機bug從未真正解過），改用[[fd2-dosbox-live-memory-extraction]]記載的既有方法論（Alt+Pause進入除錯器＋`MEMDUMPBIN`比對byte-signature算delta）：
+
+1. 在標題選單畫面（穩定、可重現的暫停點）按 `Alt+Pause` 進入除錯器，`GDT` 指令找到這次run的flat selector：`0170`＝code（base=0, limit=FFFFFFFF, type=1A）、`0178`＝data（同base/limit, type=12）——跟續一記錄的舊run選到的selector數值一樣，但**這只是巧合，不能假設每次都相同**，本質上每次都要重新用GDT查。
+2. `MEMDUMPBIN 170 100000 200000` 一次性 dump 2MB live記憶體（這次沒有被限制在6000 bytes——之前紀錄的「MEMDUMPBIN固定回傳6000 bytes」上限這次測試沒有重現，改用大到 0x200000 都一次成功，可能是先前那次遇到的是別的限制或版本差異）。
+3. 用先前已經對照過真實509158-byte EXE檔案offset `0x4a62c`／`0x4a636` 驗證過的 byte-signature（`5356575583ec088b742424`＝`FUN_000336a0`函式prologue）在這份live dump裡搜尋——**唯一命中一次**，在 `0x1bef22`，往回推10 bytes（`push 0x34;call...`那段）算出 `0x24618` 的即時位址＝`0x1bef18`。
+4. `BP 170:1BEF18` 設中斷點、`RUN`——**題目要求的「先在乾淨暫停狀態下設定保護模式selector中斷點」這個關鍵順序這次確實做對了**（不是在`-break-start`的真實模式階段設定）。
+
+**跑完整個已驗證流程**（LOAD→ch23存檔→NO→選滿12人含希爾法→YES進入戰場）後，**中斷點成功命中**——反組譯畫面顯示的程式碼跟Ghidra dump逐byte相同（`push 0x34;call 001D302F;push ebx;push esi;push edi;push ebp;sub esp,8;mov esi,[esp+0x24];call 001B94CB;imul eax,[esp+0x1c],0x18;add eax,0xc`），確認位址完全正確。
+
+**即時暫存器讀值（命中當下，即0x24618執行前一刻）**：
+```
+EAX=00000006  ESI=00000000  EDI=0027BDA0
+EBX=00000010  ECX=00000000  EBP=001F1684
+EDX=00000178  ESP=001F1640  EIP=001C0618 (=live addr of Ghidra 0x24618)
+CS=0170 DS=0178 ES=0178 SS=0178
+```
+**EAX = 6**——這是本次task #118從一開始設定目標以來，第一次真正拿到`0x24618`當下的live EAX數值，不是猜測、不是delta巧合，是這次run全新推導出的真實位址上真實命中的結果。
+
+補充驗證：`RUN`繼續執行後中斷點沒有再次命中（畫面正常往下走到戰前對話「『呼！難過死了..咦！這裡是敵人的根據地嗎？』」），代表這個函式在ch23戰鬥設定流程裡只會被呼叫一次，不是逐單位迴圈——這對解讀EAX=6的語意是有用的旁證（比較可能是某種場景/事件層級的參數，而非逐單位變數）。
+
+**已知限制**：這次的live selector `0170`/`0178`base=0、與續九誤判「flat selector 0038讀回全部0」不是同一回事（0038從一開始就不是正確的選擇子；`0170`才是）；且DOSBox-X的`T`（單步）指令在這個build上不會真正推進（畫面上EIP完全不變、`cc`計數器也不動），符合先前開機時LOG就已經印出的已知警告「Single-stepping may not work correctly with Dynamic core」——這代表若未來要繼續往下追蹤`0x24d22`/`0x11d40`等後續位址，應該用「多設幾個獨立breakpoint＋分別RUN」而非依賴單步，或改用Normal core重開。
+
+**方法論總結（更新）**：live delta必須每次重新用GDT＋byte-signature／MEMDUMPBIN推導，不可沿用任何舊session記錄的數值（即使選擇子數字剛好相同也只是巧合）；`-break-start`路線的real/protected mode時機bug從未解決、但完全可以繞過不管——只要在遊戲已經進入protected mode後的任何一個穩定暫停點（本次用標題選單畫面＋Alt+Pause）先設好中斷點，再正常跑到目標流程即可。task #118 的核心目標（live驗證 `0x24618`）**首次達成**。
