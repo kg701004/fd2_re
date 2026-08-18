@@ -1,0 +1,1428 @@
+# fd2_re — AI item-execution chain (0x3A269) raw disassembly evidence
+# 2026-08-15, task #98 (AI execution chains)
+#
+# Source file: FD2.EXE, size 509158 bytes
+# MD5:    33464c81e6a364fd0660141139aa8e6e
+# SHA256: 8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b
+# (the adopted 新版/1998-repackaged reference EXE, see project_fd2_re_exe_version_mismatch memory)
+#
+# Methodology:
+# - Static structural disassembly via tools/disasm_le.py (LE-aware linear->file
+#   offset conversion, capstone x86-32) for any address inside LE object0's
+#   declared range [0x10000, 0x4EF29) -- this is a pure static-file read, valid
+#   for understanding code structure/call graph regardless of runtime relocation.
+# - For addresses BEYOND object0's bounds (0x4EF29+) -- confirmed these do NOT
+#   exist anywhere in the file's 3 declared LE objects at all (object1/object2
+#   are small non-code data objects) -- these are loaded via FD2's own overlay
+#   mechanism (see task #8, "partially resolved") and are only readable via
+#   live DOSBox-X memory (docker/dosbox-x, fd2-dosbox-x image).
+# - Live delta established THIS RUN via byte-signature search (NOT reused from
+#   any prior session -- confirmed the delta is NOT stable across container
+#   restarts, contradicting an earlier assumption in this same investigation):
+#     anchor: the already-known 0x13A9F-dispatcher-equivalent prologue at
+#     static/file linear 0x38CBD (40-byte signature, see below), found in a
+#     live MEMDUMPBIN 178 10000 800000 (8MB from GDT selector 0178, base
+#     0x10000) dump at live linear 0x1AFAA9.
+#     delta = live - static = 0x1AFAA9 - 0x38CBD = 0x176DEC
+#   This delta is valid for this specific container run only. A future session
+#   must re-derive it via the same signature search, never reuse 0x176DEC
+#   directly.
+#   Confirms the load-time absolute-address patching phenomenon: the anchor's
+#   `mov ebx, dword ptr [0x3a45]` (bytes 45 3a 00 00) became
+#   `mov ebx, dword ptr [0x1efa45]` (bytes 45 fa 1e 00) live -- i.e. the same
+#   delta (0x176DEC... wait, 0x1efa45-0x3a45=0x1EC000, a DIFFERENT delta than
+#   the code delta) is applied to DATA globals independently of the CODE
+#   delta -- data and code are relocated by different amounts. Do not assume
+#   one delta covers both; this file only established the CODE delta.
+#
+# === Anchor signature (static, file linear 0x38CBD) ===
+# 53 56 57 55 83 ec 0c 8b 74 24 20 8b 7c 24 24 89
+# f0 c1 e0 02 01 f0 c1 e0 04 8b 1d 45 3a 00 00 01
+# c3 f6 43 05 05 0f 85 a9
+# (matches live at 0x1AFAA9 with ONLY the embedded [0x3a45] operand patched)
+
+=== 0x3A269 item-execution entry point (static disasm) ===
+0x03a269  push    0x54
+0x03a26e  call    0x5c243                          ; Watcom stack-probe (0x54=84 bytes locals), not game logic
+0x03a273  push    ebx
+0x03a274  push    esi
+0x03a275  push    edi
+0x03a276  push    ebp
+0x03a277  sub     esp, 0x24
+0x03a27a  mov     ebp, dword ptr [esp + 0x38]       ; param1 = actorIndex
+0x03a27e  mov     eax, ebp
+0x03a280  shl     eax, 2
+0x03a283  add     eax, ebp
+0x03a285  shl     eax, 4                            ; eax = actorIndex * 0x50 (native record stride)
+0x03a288  mov     edi, dword ptr [0x3a45]           ; roster base (same global used everywhere else)
+0x03a28e  add     edi, eax                          ; edi = actorRecord
+0x03a290  push    dword ptr [0x3c3f]                ; [0x53C3F] = NativeAI1567EScoreResult.InventorySlot
+0x03a296  push    ebp
+0x03a297  call    0x40936                           ; -> actorRecord[0xb + slot*2]  (the FLAGS byte, even offset;
+                                                      ;    confirmed via direct trace of 0x40936, see below)
+0x03a29c  add     esp, 8
+0x03a29f  mov     dword ptr [0x3c57], eax           ; save flags byte to new global [0x53C57] (undocumented until now)
+0x03a2a4  push    eax
+0x03a2a5  call    0x73ad0                           ; -> 0x1f22ad(live-patched) + flags*23  (by-index pointer helper,
+                                                      ;    sibling of the already-known 0x73A7A family; CONFIRMED via
+                                                      ;    live disasm, see below -- table semantics NOT yet identified)
+0x03a2aa  add     esp, 4
+0x03a2ad  mov     esi, eax
+0x03a2af  cmp     dword ptr [esp + 0x3c], 0          ; param3
+0x03a2b4  jne     0x3a2c9
+0x03a2b6  movzx   eax, byte ptr [eax + 0x11]
+0x03a2ba  test    eax, eax
+0x03a2bc  jne     0x3a2c5
+0x03a2be  mov     ebx, 1
+0x03a2c3  jmp     0x3a2cd
+0x03a2c5  xor     ebx, ebx
+0x03a2c7  jmp     0x3a2cd
+0x03a2c9  movzx   ebx, byte ptr [eax + 0x11]
+0x03a2cd  push    ebp
+0x03a2ce  call    0x37f8f                           ; CONFIRMED no-op (mode5 investigation): reset pathing origin
+0x03a2d3  add     esp, 4
+0x03a2d6  mov     al, byte ptr [esi + 0x10]          ; "type" byte from the 23-byte-stride table row
+0x03a2d9  mov     byte ptr [esp + 0x20], al
+0x03a2dd  movzx   eax, al
+0x03a2e0  cmp     eax, 0xf
+0x03a2e3  jle     0x3a30f
+0x03a2e5  push    0
+0x03a2e7  sub     eax, 0x10                          ; command - 0x10, SAME pattern as the already-documented
+                                                      ; 0x1567E item-scoring split (command<=0xF vs >0xF)
+0x03a2ea  push    eax
+0x03a2eb  movzx   eax, byte ptr [edi + 1]             ; actor Y
+0x03a2ef  push    eax
+0x03a2f0  movzx   eax, byte ptr [edi]                 ; actor X
+0x03a2f3  push    eax
+0x03a2f4  lea     eax, [esp + 0x10]
+0x03a2f8  push    eax
+0x03a2f9  push    dword ptr [0x3c3b]                  ; item command target X (own global, distinct from physical's 0x53C43)
+0x03a2ff  push    dword ptr [0x3c37]                  ; item command target Y
+0x03a305  call    0x39c0c                             ; "walk N steps toward target" builder -- NOT yet traced;
+                                                        ; likely the item-command execution-side counterpart to
+                                                        ; scoring's already-known 0x149F8
+0x03a30a  add     esp, 0x1c
+0x03a30d  jmp     0x3a330
+0x3a30f:
+0x03a30f  push    ebx
+0x03a310  push    0
+0x03a312  movzx   eax, byte ptr [esi + 0x12]           ; range/tier byte from the 23-byte-stride table row
+0x03a316  push    eax
+0x03a317  lea     eax, [esp + 0xc]
+0x03a31b  push    eax
+0x03a31c  push    dword ptr [0x3c3b]
+0x03a322  push    dword ptr [0x3c37]
+0x03a328  call    0x39a2c                             ; CONFIRMED: the SAME generic target-array builder already
+                                                        ; implemented as NativeAIPhysicalAttackTargets in Go
+0x03a32d  add     esp, 0x18
+0x3a330: (both branches converge)
+0x03a330  mov     edi, eax                             ; edi = target array pointer
+0x03a332  push    dword ptr [0x3a51]
+0x03a338  call    0x73160                              ; unnamed, not traced (presentation-adjacent global [0x3a51])
+0x03a33d  add     esp, 4
+0x03a340  push    0xc8
+0x03a345  call    0x5cb1e                              ; recurring pattern elsewhere too; suspected delay/frame-tick
+0x03a34a  add     esp, 4
+0x03a34d  movzx   eax, byte ptr [esi + 0x12]
+0x03a351  add     eax, 2
+0x03a354  mov     dword ptr [0x1a83], eax              ; likely animation/portrait id, unconfirmed
+0x03a359  movzx   eax, byte ptr [esp + 0x20]            ; reload saved "type" byte
+0x03a35e  cmp     eax, 0x10
+0x03a361  jge     0x3a37c
+0x03a363  push    dword ptr [0x3c3b]
+0x03a369  push    dword ptr [0x3c37]
+0x03a36f  call    0x37efe                              ; bail-out branch when type<0x10 path found no target;
+                                                        ; matches doc25's established "full-inventory/no-target,
+                                                        ; show message, don't change state" pattern
+0x03a374  add     esp, 8
+0x03a377  jmp     0x3a4f9                               ; (not yet traced past this point)
+0x3a37c: (type >= 0x10 path continues)
+0x03a37c  movzx   eax, byte ptr [esp]                    ; first entry of target array
+0x03a380  push    eax
+0x03a381  push    ebp
+0x03a382  call    0x4425e                                ; CONFIRMED (below): NOT an effect applier -- computes
+                                                          ; a facing-direction classification (0-3) from actor to
+                                                          ; target, writes into actorRecord+3 (Pose byte)
+0x03a387  add     esp, 8
+0x03a38a  push    1
+0x03a38c  call    0x36ec0                                ; CONFIRMED (below): sprite/screen-blit helper (rendering)
+0x03a391  add     esp, 4
+0x03a394  push    1
+0x03a396  call    0x3ccbd                                ; CONFIRMED (below): busy-wait/timer-sync delay loop
+0x03a39b  add     esp, 4
+0x03a39e  push    2
+0x03a3a0  call    0x3ccbd                                ; same delay loop, different duration
+0x03a3a5  add     esp, 4
+0x03a3a8  push    ebp
+0x03a3a9  call    0x531dc                                ; overlay-region function, LIVE-traced (below): allocates
+                                                          ; two large buffers (0xfa00=64000, 0x1f400=128000 bytes --
+                                                          ; VGA-framebuffer-sized), calls 0x3804C(actorX,actorY,&out)
+                                                          ; (the SAME FDSHAP-cell-data helper doc11 already knows
+                                                          ; from mode5) -- consistent with a screen-capture/overlay
+                                                          ; effect for the item-use animation, NOT yet fully traced
+0x03a3ae  add     esp, 4
+0x03a3b1  push    -4
+0x03a3b3  push    0x50
+0x03a3b5  push    ebp
+0x03a3b6  call    0x46aae                                ; CONFIRMED (below): world-cell-to-screen-pixel coordinate
+                                                          ; conversion + sprite blit (0x37102) -- rendering, not a
+                                                          ; record/inventory mutation despite the 0x50 (record-stride
+                                                          ; lookalike) argument
+0x03a3bb  add     esp, 0xc
+0x03a3be  push    0xc8
+0x03a3c3  call    0x5cb1e
+0x03a3c8  add     esp, 4
+0x03a3cb  mov     ebx, 0x40
+0x03a3d0  jmp     0x3a3ed
+0x3a3d2: (64-iteration animation loop body)
+0x03a3d2  push    ebx
+0x03a3d3  push    0xff
+0x03a3d8  push    0
+0x03a3da  call    0x37006                               ; not traced; likely a per-frame draw/update call
+0x03a3df  add     esp, 0xc
+0x03a3e2  push    4
+0x03a3e4  call    0x5cb1e
+0x03a3e9  add     esp, 4
+0x03a3ec  dec     ebx
+0x03a3ed  test    ebx, ebx
+                                                          ; (loop tail not fully captured; ebx starts at 0x40=64)
+
+=== 0x40936 (flags-byte getter, static disasm) ===
+0x040936  push    4
+0x04093b  call    0x5c243                                ; stack probe
+0x040940  mov     edx, dword ptr [esp + 4]                ; param1 = actorIndex
+0x040944  mov     eax, edx
+0x040946  shl     eax, 2
+0x040949  add     edx, eax
+0x04094b  shl     edx, 4                                  ; edx = actorIndex * 0x50
+0x04094e  mov     eax, dword ptr [0x3a45]
+0x040953  add     edx, eax                                ; edx = actorRecord
+0x040955  mov     eax, dword ptr [esp + 8]                ; param2 = inventorySlot
+0x040959  add     eax, eax                                ; eax = slot*2 (EVEN offset -> FLAGS byte, not item ID)
+0x04095b  add     eax, edx
+0x04095d  add     eax, 0xb                                ; + nativeInventoryOffset (0xb, matches existing Go code)
+0x040960  movzx   eax, byte ptr [eax]
+0x040963  ret
+# CONCLUSION: 0x40936(actorIndex, inventorySlot) returns actorRecord[0xb + slot*2],
+# i.e. the slot's FLAGS byte (bit 0x40=equipped, 0x80=empty, per existing project
+# convention) -- NOT the item ID (which would be the +1 odd offset). This means the
+# subsequent 0x73AD0(flagsByte) call indexes its 23-byte-stride table BY THE RAW
+# FLAGS BYTE VALUE, not by item ID. Semantics of that table are NOT yet identified.
+
+=== 0x73AD0 (by-index pointer helper, LIVE disasm @ live 0x1EA8BC = static+0x176DEC) ===
+00073ad0: push ebp
+00073ad1: mov ebp, esp
+00073ad3: mov eax, dword ptr [ebp + 8]                  ; param1 = index (the flags byte from 0x40936's result)
+00073ad6: mov edx, 0x17                                  ; 0x17 = 23
+00073adb: mul edx                                         ; eax = index * 23
+00073add: lea edx, [0x1f22ad]                             ; live-patched absolute base of a 23-byte-stride table
+00073ae3: add eax, edx
+00073ae5: pop ebp
+00073ae6: ret
+# CONFIRMED sibling of the already-known "0x73A7A: by-index get record pointer"
+# helper family (doc11), just for a DIFFERENT table (23-byte stride vs whatever
+# 0x73A7A indexes). Table CONTENTS/semantics not yet identified -- this is exactly
+# the kind of table that would need per-map/global data extraction once its row
+# layout is understood (the code reads row+0x10 as a "type" byte and row+0x12 as
+# a "range/tier" byte, both already visible in the 0x3A269 trace above).
+
+=== 0x531DC (overlay-region function, LIVE disasm @ live 0x1C9FC8 = static+0x176DEC) ===
+000531dc: push 0x54
+000531e1: call 0x5c243                                   ; stack probe
+000531e6: push ebx
+000531e7: push esi
+000531e8: push edi
+000531e9: push ebp
+000531ea: sub esp, 0x24
+000531ed: mov dword ptr [0x1f013b], 0                    ; clears an unnamed global (live-patched address)
+000531f7: mov ebx, dword ptr [esp + 0x38]                ; param1 = actorIndex
+000531fb: mov eax, ebx
+000531fd: shl eax, 2
+00053200: add eax, ebx
+00053202: shl eax, 4
+00053205: mov ebx, dword ptr [0x1efa45]                  ; roster base (live-patched [0x3a45])
+0005320b: add ebx, eax                                    ; ebx = actorRecord
+0005320d: movzx esi, byte ptr [ebx + 7]                   ; unnamed record field
+00053211: push dword ptr [0x1efa49]
+00053217: call 0x5c982                                    ; likely free() -- paired with a null-out immediately after
+0005321c: add esp, 4
+0005321f: push dword ptr [0x1efa5d]
+00053225: call 0x5c982
+0005322a: add esp, 4
+0005322d: mov dword ptr [0x1efa5d], 0
+00053237: push 0xfa00                                     ; 64000 bytes = 320x200 VGA-mode framebuffer size
+0005323c: call 0x5c282                                    ; likely malloc()
+00053241: mov dword ptr [esp + 0x20], eax
+00053245: add esp, 4
+00053248: mov dword ptr [esp + 0x20], eax
+0005324c: push 0x1f400                                    ; 128000 bytes = 2x the above
+00053251: call 0x5c282
+00053256: add esp, 4
+00053259: mov ebp, eax
+0005325b: push 0xfa00
+00053260: push 0
+00053262: push dword ptr [esp + 0x24]
+00053266: call 0x5cb24                                    ; likely memset(buf, 0, 64000)
+0005326b: add esp, 0xc
+0005326e: mov eax, esp
+00053270: push eax
+00053271: movzx eax, byte ptr [ebx + 1]                    ; actor Y
+00053275: push eax
+00053276: movzx eax, byte ptr [ebx]                        ; actor X
+00053279: push eax
+0005327a: call 0x3804c                                    ; CONFIRMED SAME helper doc11 already knows from mode5:
+                                                            ; "get FDSHAP-derived data for cell (x,y)" -- here queried
+                                                            ; for the ACTOR'S OWN current cell
+0005327f: add esp, 0xc
+00053282: movzx eax, byte ptr [esp + 6]
+00053287: mov dword ptr [esp + 8], eax
+0005328b: push 3
+0005328d: push 0
+0005328f: push 0x1ee4a0
+# (not traced further -- strongly suggests a screen-capture/zoom-transition
+# effect built around the actor's own map cell for the item-use presentation,
+# consistent with everything else traced in this chain, but NOT confirmed)
+
+=== 0x4425E (facing-direction classifier, static disasm) ===
+(prologue not captured in this pass, params via [esp+0x10]/[esp+0x14] after probe)
+0x04426b  mov     eax, dword ptr [esp + 0x10]              ; param A = unit index
+0x04426f  mov     ebx, eax
+0x044271  shl     ebx, 2
+0x044274  add     ebx, eax
+0x044276  shl     ebx, 4
+0x044279  mov     eax, dword ptr [0x3a45]
+0x04427e  add     ebx, eax                                 ; ebx = recordA
+0x044280  mov     edx, dword ptr [esp + 0x14]               ; param B = other unit index
+0x044284  mov     esi, edx
+0x044286  shl     esi, 2
+0x044289  add     esi, edx
+0x04428b  shl     esi, 4
+0x04428e  add     esi, eax                                  ; esi = recordB
+0x044290  movzx   edx, byte ptr [ebx]                        ; recordA.X
+0x044293  movzx   eax, byte ptr [esi]                        ; recordB.X
+0x044296  sub     edx, eax
+0x044298  push    edx
+0x044299  call    0x5cb46                                    ; likely abs()
+0x04429e  mov     edi, eax
+0x0442a0  add     esp, 4
+0x0442a3  movzx   edx, byte ptr [ebx + 1]                     ; recordA.Y
+0x0442a7  movzx   eax, byte ptr [esi + 1]                     ; recordB.Y
+0x0442ab  sub     edx, eax
+0x0442ad  push    edx
+0x0442ae  call    0x5cb46
+0x0442b3  add     esp, 4                                      ; eax = abs(dY)
+0x0442b6  cmp     edi, eax                                    ; compare abs(dX) vs abs(dY)
+0x0442b8  jle     0x442d4
+0x0442ba  movzx   edx, byte ptr [ebx]
+0x0442bd  movzx   eax, byte ptr [esi]
+0x0442c0  cmp     edx, eax
+0x0442c2  jle     0x442cc
+0x0442c4  mov     byte ptr [ebx + 3], 1                       ; recordA.Pose(+3) = 1
+0x0442c8  ret (pop epilogue)
+0x0442cc  mov     byte ptr [ebx + 3], 3
+0x0442d0  ret
+0x0442d4  movzx   edx, byte ptr [ebx + 1]
+0x0442d8  movzx   eax, byte ptr [esi + 1]
+0x0442dc  cmp     edx, eax
+0x0442de  jle     0x442e8
+0x0442e0  mov     byte ptr [ebx + 3], 2
+0x0442e4  ret
+0x0442e8  mov     byte ptr [ebx + 3], 0
+0x0442ec  ret
+# CONFIRMED: 4-way facing-direction classifier. Writes recordA (the FIRST param)
+# +3 (the Pose/facing byte, matches the constructor's own puVar16[3]=Pose usage)
+# to one of 0/1/2/3 based on which axis dominates and its sign. Presentation
+# only -- "make the actor face the target before playing the item-use
+# animation" -- not a stat/effect mutation. Reused generically (also the SAME
+# construction pattern would apply to attack-facing, not yet confirmed shared
+# with 0x3A6A2/physical execution, but structurally identical to it).
+
+=== 0x46AAE (world-to-screen coordinate + sprite blit, static disasm, partial) ===
+0x046ac3  mov     edx, dword ptr [esp + 0x1c]               ; param = actorIndex (or cell index)
+...
+0x046ad8  movzx   edx, byte ptr [eax]                        ; record.X
+0x046adb  sub     edx, dword ptr [0x3aa9]                    ; - camera scroll X
+0x046ae1  imul    edx, edx, 0x18                              ; * 24 (tile pixel size)
+0x046ae4  add     edx, 0xc
+0x046aea  movzx   eax, byte ptr [eax + 1]                     ; record.Y
+0x046aee  sub     eax, dword ptr [0x3aad]                     ; - camera scroll Y
+0x046af4  imul    eax, eax, 0x18
+0x046af7  add     eax, 0x12
+...
+0x046b22  add     eax, 0x8088                                 ; matches the ALREADY-KNOWN foreground_layer.go
+                                                                ; 0x8088 literal (see 2026-08-14 plan re: viewport
+                                                                ; widening's Phase-3 hidden-coupling bug) -- strong
+                                                                ; cross-validation this is the SAME work-buffer base
+0x046b28  call    0x37102                                     ; sprite/icon blit
+# CONFIRMED: standard cell->pixel screen coordinate conversion (matches the
+# EXACT formula already reproduced in indexedmap/fdicon for tile rendering),
+# followed by a blit call. Pure presentation.
+
+=== 0x3CCBD (busy-wait/timer-sync delay, static disasm) ===
+0x03cccb  mov     eax, 0x46c
+0x03ccd0  movsx   eax, word ptr [eax]                        ; read a hardware/BIOS timer tick counter at abs 0x46c
+0x03ccd3  mov     dword ptr [0x3a2c], eax
+0x03ccd8  mov     eax, 0x46c
+0x03ccdd  movsx   eax, word ptr [eax]
+0x03cce0  sub     eax, dword ptr [0x3a2c]
+0x03cce6  test    eax, eax
+0x03cce8  jge     0x3ccef
+0x03ccea  add     eax, 0x10000
+0x03ccef  cmp     eax, edx                                    ; edx = the pushed duration param (1, 2, ...)
+0x03ccf1  jl      0x3ccd8                                     ; loop until enough ticks elapsed
+0x03ccf3  mov     eax, 0x46c
+0x03ccf8  movsx   eax, word ptr [eax]
+0x03ccfb  mov     dword ptr [0x3a2c], eax
+0x03cd00  ret
+# CONFIRMED: a simple busy-wait loop reading a BIOS/timer tick counter at
+# absolute address 0x46c (matches the classic real-mode BIOS tick-count
+# location, 0x40:0x6C in segment:offset form -- consistent even in this
+# protected-mode flat build). Pure animation-pacing delay, not game logic.
+
+=== 0x36EC0 (sprite/screen-blit helper, static disasm, partial) ===
+0x036eca  push    ebx
+0x036ecb  call    0x37b91
+0x036ed0  cmp     dword ptr [esp + 8], 0
+0x036ed5  jne     0x36edc
+0x036ed7  call    0x73530                                    ; another overlay-region call, not traced
+0x036edc  push    dword ptr [0x3aad]
+0x036ee2  push    dword ptr [0x3aa9]
+0x036ee8  push    8
+0x036eea  push    0xd
+0x036eec  push    0x1c8
+0x036ef1  mov     eax, dword ptr [0x3a49]
+0x036ef6  add     eax, 0x8088                                 ; SAME 0x8088 work-buffer base as 0x46AAE
+0x036efb  push    eax
+0x036efc  call    0x37102                                     ; same blit call as 0x46AAE
+0x036f01  add     esp, 0x18
+0x036f04  call    0x374f0
+0x036f09  call    0x379bd
+0x036f0e  push    0x1c8
+# CONFIRMED: same rendering family as 0x46AAE (identical 0x37102 blit call,
+# identical 0x8088 work-buffer base). Presentation, not effect logic.
+0x045e8e  push    esi
+0x045e8f  push    edi
+0x045e90  push    ebp
+0x045e91  sub     esp, 0x6c
+0x045e94  mov     ebp, dword ptr [esp + 0x8c]
+0x045e9b  call    0x426df
+0x045ea0  mov     dword ptr [0x3ec4], 0
+0x045eaa  push    dword ptr [esp + 0x84]
+0x045eb1  push    dword ptr [esp + 0x84]
+0x045eb8  call    0x40936
+0x045ebd  add     esp, 8
+0x045ec0  push    eax
+0x045ec1  call    0x73ad0
+0x045ec6  add     esp, 4
+0x045ec9  movzx   edx, word ptr [eax + 0xe]
+0x045ecd  mov     dword ptr [esp + 0x68], edx
+0x045ed1  mov     bl, byte ptr [eax + 0xd]
+0x045ed4  movzx   eax, bl
+0x045ed7  cmp     eax, 5
+0x045eda  je      0x45ee1
+0x045edc  cmp     eax, 0xd
+0x045edf  jne     0x45f0a
+0x045ee1  push    dword ptr [esp + 0x68]
+0x045ee5  push    ebp
+0x045ee6  push    dword ptr [esp + 0x90]
+0x045eed  push    dword ptr [esp + 0x8c]  ; ->0x54348
+0x045ef4  call    0x463b8
+0x045ef9  add     esp, 0x10
+0x045efc  movzx   eax, bl
+0x045eff  cmp     eax, 5
+0x045f02  jne     0x4625a
+0x045f08  jmp     0x45f38
+0x045f0a  cmp     eax, 6
+0x045f0d  jne     0x45f53
+0x045f0f  push    0x25
+0x045f11  push    ebp
+0x045f12  push    dword ptr [esp + 0x90]
+0x045f19  push    0x14
+0x045f1b  push    dword ptr [esp + 0x90]
+0x045f22  call    0x47d0a
+0x045f27  add     esp, 0x14
+0x045f2a  cmp     dword ptr [0x3ec4], 0
+0x045f31  je      0x45f38
+0x045f33  call    0x4316c
+0x045f38  push    dword ptr [esp + 0x84]
+0x045f3f  push    dword ptr [esp + 0x84]
+0x045f46  call    0x40afb
+0x045f4b  add     esp, 8
+0x045f4e  jmp     0x4625a
+0x045f53  cmp     eax, 7
+0x045f56  jne     0x45f66
+0x045f58  push    0x26
+0x045f5a  push    ebp
+0x045f5b  push    dword ptr [esp + 0x90]
+0x045f62  push    0x15
+0x045f64  jmp     0x45f1b
+0x045f66  cmp     eax, 8
+0x045f69  jne     0x45f93
+0x045f6b  push    0x11
+0x045f6d  push    ebp
+0x045f6e  push    dword ptr [esp + 0x90]
+0x045f75  push    dword ptr [esp + 0x90]
+0x045f7c  push    0x37
+0x045f7e  push    edx
+0x045f7f  push    dword ptr [esp + 0x98]
+0x045f86  call    0x46296
+0x045f8b  add     esp, 0x1c
+0x045f8e  jmp     0x4625a
+0x045f93  cmp     eax, 9
+0x045f96  jne     0x45fad
+0x045f98  push    0x12
+0x045f9a  push    ebp
+0x045f9b  push    dword ptr [esp + 0x90]
+0x045fa2  push    dword ptr [esp + 0x90]
+0x045fa9  push    0x39
+0x045fab  jmp     0x45f7e
+0x045fad  cmp     eax, 0xa
+0x045fb0  jne     0x45fc7
+0x045fb2  push    0x13
+0x045fb4  push    ebp
+0x045fb5  push    dword ptr [esp + 0x90]
+0x045fbc  push    dword ptr [esp + 0x90]
+0x045fc3  push    0x3e
+0x045fc5  jmp     0x45f7e
+0x045fc7  cmp     eax, 0xb
+0x045fca  jne     0x46065
+0x045fd0  push    ebp
+0x045fd1  push    dword ptr [esp + 0x8c]
+0x045fd8  push    0xd
+0x045fda  push    dword ptr [esp + 0x8c]
+0x045fe1  call    0x416e0
+0x045fe6  add     esp, 0x10
+0x045fe9  push    ebp
+0x045fea  push    dword ptr [esp + 0x8c]  ; ->0x5372c
+0x045ff1  push    0xd
+0x045ff3  push    dword ptr [esp + 0x8c]  ; ->0x45fed
+0x045ffa  call    0x414ee  ; ->0x45670
+0x045fff  add     esp, 0x10
+0x046002  xor     esi, esi
+0x046004  jmp     0x46023
+0x046006  push    dword ptr [esp + 0x68]
+0x04600a  push    eax
+0x04600b  call    0x41bf1  ; ->0x5372c
+0x046010  add     esp, 8
+0x046013  movzx   edx, byte ptr [edi]
+0x046016  push    edx
+0x046017  push    0x69
+0x046019  push    eax
+0x04601a  call    0x432ef
+0x04601f  add     esp, 0xc
+0x046022  inc     esi
+0x046023  cmp     esi, dword ptr [esp + 0x88]
+0x04602a  jge     0x46056
+0x04602c  lea     edi, [esi + ebp]
+0x04602f  movzx   eax, byte ptr [edi]
+0x046032  mov     ebx, eax
+0x046034  shl     ebx, 2
+0x046037  add     ebx, eax
+0x046039  shl     ebx, 4
+0x04603c  mov     edx, dword ptr [0x3a45]
+0x046042  movzx   edx, word ptr [edx + ebx + 0x46]
+0x046047  test    edx, edx
+0x046049  jne     0x46006
+0x04604b  push    eax
+0x04604c  call    0x433f0
+0x046051  add     esp, 4
+0x046054  jmp     0x46022
+0x046056  push    0
+0x046058  call    0x36ec0
+0x04605d  add     esp, 4
+0x046060  jmp     0x45f33
+0x046065  cmp     eax, 0xc
+0x046068  jne     0x46083
+0x04606a  push    ebp
+0x04606b  push    dword ptr [esp + 0x8c]
+0x046072  push    dword ptr [esp + 0x88]
+0x046079  call    0x47bab
+0x04607e  jmp     0x46257
+0x046083  cmp     eax, 0xe
+0x046086  jne     0x460a8
+0x046088  push    0x26
+0x04608a  push    ebp
+0x04608b  push    dword ptr [esp + 0x90]
+0x046092  push    0x1b
+0x046094  push    dword ptr [esp + 0x90]
+0x04609b  call    0x47f2f
+0x0460a0  add     esp, 0x14  ; ->0x5281c
+0x0460a3  jmp     0x4625a
+0x0460a8  cmp     eax, 0xf
+0x0460ab  jne     0x460c6
+0x0460ad  push    ebp
+0x0460ae  push    dword ptr [esp + 0x8c]
+0x0460b5  push    dword ptr [esp + 0x88]
+0x0460bc  call    0x47a7a  ; ->0x5281c
+0x0460c1  jmp     0x46257
+0x0460c6  cmp     eax, 0x10  ; ->0x52820
+0x0460c9  jne     0x460e4
+0x0460cb  push    ebp
+0x0460cc  push    dword ptr [esp + 0x8c]  ; ->0x54628
+0x0460d3  push    dword ptr [esp + 0x88]  ; ->0x5462c
+0x0460da  call    0x47935
+0x0460df  jmp     0x46257
+0x0460e4  cmp     eax, 0x11
+0x0460e7  jne     0x46101
+0x0460e9  push    0xd
+0x0460eb  push    ebp
+0x0460ec  push    dword ptr [esp + 0x90]  ; ->0x539b0
+0x0460f3  push    dword ptr [esp + 0x90]  ; ->0x539e0
+0x0460fa  push    0x42
+0x0460fc  jmp     0x45f7e
+0x046101  cmp     eax, 0x12
+0x046104  jne     0x4611e
+0x046106  push    0xd
+0x046108  push    ebp
+0x046109  push    dword ptr [esp + 0x90]
+0x046110  push    dword ptr [esp + 0x90]
+0x046117  push    0x46
+0x046119  jmp     0x45f7e
+0x04611e  cmp     eax, 0x13
+0x046121  jne     0x46173
+0x046123  movzx   edx, byte ptr [ebp]
+0x046127  mov     eax, edx
+0x046129  shl     eax, 2
+0x04612c  add     eax, edx
+0x04612e  shl     eax, 4
+0x046131  mov     ebx, dword ptr [0x3a45]  ; ->0x539e0
+0x046137  add     ebx, eax  ; ->0x539ec
+0x046139  movzx   eax, byte ptr [ebx + 0x3c]
+0x04613d  mov     dword ptr [esp + 0x64], eax
+0x046141  push    0x13
+0x046143  push    ebp
+0x046144  push    dword ptr [esp + 0x90]
+0x04614b  push    dword ptr [esp + 0x90]
+0x046152  push    0x3b
+0x046154  push    dword ptr [esp + 0x7c]
+0x046158  push    dword ptr [esp + 0x98]
+0x04615f  call    0x46296
+0x046164  add     esp, 0x1c
+0x046167  mov     al, byte ptr [esp + 0x64]
+0x04616b  mov     byte ptr [ebx + 0x3c], al
+0x04616e  jmp     0x4625a  ; ->0x537f4
+0x046173  cmp     eax, 0x14
+0x046176  je      0x46181  ; ->0x49ad8
+0x046178  cmp     eax, 0x18
+0x04617b  jne     0x4620a  ; ->0x537f8
+0x046181  push    ebp
+0x046182  push    dword ptr [esp + 0x8c]
+0x046189  push    dword ptr [esp + 0x70]
+0x04618d  push    dword ptr [esp + 0x8c]
+0x046194  call    0x416e0
+0x046199  add     esp, 0x10
+0x04619c  push    ebp
+0x04619d  push    dword ptr [esp + 0x8c]
+0x0461a4  push    dword ptr [esp + 0x70]  ; ->0x5391c
+0x0461a8  push    dword ptr [esp + 0x8c]
+0x0461af  call    0x41f2b
+0x0461b4  add     esp, 0x10
+0x0461b7  xor     esi, esi
+0x0461b9  jmp     0x461cb  ; ->0x527f4
+0x0461bb  movzx   edx, byte ptr [ebx]
+0x0461be  push    edx
+0x0461bf  push    0x5e  ; ->0x53778
+0x0461c1  push    eax
+0x0461c2  call    0x432ef
+0x0461c7  add     esp, 0xc  ; ->0x53776
+0x0461ca  inc     esi
+0x0461cb  cmp     esi, dword ptr [esp + 0x88]  ; ->0x53776
+0x0461d2  jge     0x461f9
+0x0461d4  push    dword ptr [esp + 0x68]
+0x0461d8  lea     ebx, [esi + ebp]
+0x0461db  movzx   eax, byte ptr [ebx]
+0x0461de  push    eax
+0x0461df  call    0x41972
+0x0461e4  add     esp, 8
+0x0461e7  test    eax, eax  ; ->0x52833
+0x0461e9  jne     0x461bb
+0x0461eb  movzx   eax, byte ptr [ebx]
+0x0461ee  push    eax
+0x0461ef  call    0x433f0
+0x0461f4  add     esp, 4  ; ->0x527f2
+0x0461f7  jmp     0x461ca
+0x0461f9  push    0
+0x0461fb  call    0x36ec0
+0x046200  add     esp, 4
+0x046203  call    0x4316c
+0x046208  jmp     0x4625a  ; ->0x52832
+0x04620a  cmp     eax, 0x15
+0x04620d  jne     0x46229
+0x04620f  push    edx
+0x046210  push    ebp
+0x046211  push    dword ptr [esp + 0x90]
+0x046218  push    dword ptr [esp + 0x8c]  ; ->0x4a0e8
+0x04621f  call    0x4632e
+0x046224  add     esp, 0x10
+0x046227  jmp     0x4625a
+0x046229  cmp     eax, 0x16
+0x04622c  jne     0x4623e  ; ->0x52832
+0x04622e  push    0x27
+0x046230  push    ebp
+0x046231  push    dword ptr [esp + 0x90]
+0x046238  push    eax
+0x046239  jmp     0x46094
+0x04623e  cmp     eax, 0x17
+0x046241  jne     0x4625a
+0x046243  push    ebp
+0x046244  push    dword ptr [esp + 0x8c]  ; ->0x527ec
+0x04624b  push    dword ptr [esp + 0x88]
+0x046252  call    0x4739e  ; ->0x52832
+0x046257  add     esp, 0xc
+0x04625a  mov     dword ptr [0x3ec8], 0  ; ->0x527f0
+0x046264  call    0x4270a
+0x046269  mov     eax, esp
+0x04626b  push    eax
+0x04626c  call    0x408cb
+0x046271  mov     ebx, eax
+0x046273  add     esp, 4
+0x046276  call    0x42d79
+0x04627b  mov     eax, esp
+0x04627d  push    eax
+0x04627e  push    ebx
+0x041b37  push    ebp
+0x041b38  sub     esp, 4
+0x041b3b  mov     eax, dword ptr [esp + 0x18]
+0x041b3f  mov     esi, eax
+0x041b41  shl     esi, 2
+0x041b44  add     esi, eax
+0x041b46  shl     esi, 4
+0x041b49  mov     eax, dword ptr [0x3a45]
+0x041b4e  add     esi, eax
+0x041b50  movzx   edi, word ptr [esi + 0x40]
+0x041b54  movzx   eax, word ptr [esi + 0x42]
+0x041b58  mov     dword ptr [esp], eax
+0x041b5b  mov     edx, dword ptr [esp + 0x1c]  ; ->0x41bb2
+0x041b5f  mov     eax, edx  ; ->0x41bbf
+0x041b61  shl     eax, 3
+0x041b64  add     edx, eax  ; ->0x41dc2
+0x041b66  mov     ebx, 0xa  ; ->0x41dc2
+0x041b6b  mov     eax, edx  ; ->0x41c2c
+0x041b6d  sar     edx, 0x1f
+0x041b70  idiv    ebx  ; ->0x41dc2
+0x041b72  mov     ebp, eax
+0x041b74  call    0x73df7  ; ->0x41c5d
+0x041b79  mov     edx, eax
+0x041b7b  mov     ebx, 0x64  ; ->0x41c9e
+0x041b80  sar     edx, 0x1f  ; ->0x41d28
+0x041b83  idiv    ebx
+0x041b85  imul    edx, dword ptr [esp + 0x1c]
+0x041b8a  mov     ebx, 0x3e8
+0x041b8f  mov     eax, edx
+0x041b91  sar     edx, 0x1f
+0x041b94  idiv    ebx
+0x041b96  mov     ebx, eax
+0x041b98  add     edi, ebp
+0x041b9a  add     edi, eax
+0x041b9c  cmp     edi, dword ptr [esp]
+0x041b9f  jle     0x41ba4
+0x041ba1  mov     edi, dword ptr [esp]
+0x041ba4  movzx   eax, word ptr [esi + 0x40]
+0x041ba8  mov     ecx, edi
+0x041baa  sub     ecx, eax
+0x04330b  movsd   dword ptr es:[edi], dword ptr [esi]
+0x04330c  movsb   byte ptr es:[edi], byte ptr [esi]
+0x04330d  mov     edi, 3
+0x043312  xor     esi, esi  ; ->0x543e8
+0x043314  mov     edx, dword ptr [esp + 0x24]
+0x043318  mov     eax, edx  ; ->0x543e0
+0x04331a  shl     eax, 2
+0x04331d  add     edx, eax
+0x04331f  shl     edx, 4
+0x043322  mov     eax, dword ptr [0x3a45]
+0x043327  add     eax, edx
+0x043329  movzx   edx, byte ptr [eax]
+0x04332c  movzx   ebx, byte ptr [eax + 1]
+0x043330  mov     eax, dword ptr [0x3aa9]
+0x043335  dec     eax
+0x043336  cmp     edx, eax
+0x043338  jle     0x35d5a
+0x04333e  mov     eax, dword ptr [0x3aa9]
+0x043343  add     eax, dword ptr [0x1a87]
+0x043349  cmp     edx, eax
+0x04334b  jge     0x35d5a
+0x043351  mov     eax, dword ptr [0x3aad]
+0x043356  dec     eax
+0x043357  cmp     ebx, eax
+0x043359  jl      0x35d5a  ; ->0x543e0
+0x04335f  mov     eax, dword ptr [0x3aad]  ; ->0x543e8
+0x043364  add     eax, dword ptr [0x1a8b]
+0x04336a  cmp     ebx, eax
+0x04336c  jg      0x35d5a
+0x043372  xor     ebx, ebx
+0x043374  jmp     0x4337f
+0x043376  mov     byte ptr [eax + 0x3c6c], 0
+0x04337d  dec     edi
+0x04337e  inc     ebx
+0x04337f  cmp     ebx, 4  ; ->0x543e8
+0x043382  jge     0x433e4
+0x043384  push    ebp
+0x043385  push    0x1b6  ; ->0x543e8
+0x04338a  lea     eax, [esp + 8]
+0x04338e  push    eax
+0x04338f  call    0x5cd3d  ; ->0x543e0
+0x043394  add     esp, 0xc
+0x043397  mov     al, bl
+0x043399  mov     ah, 5
+0x04339b  mul     ah
+0x04339d  mov     dl, al
+0x04339f  add     dl, 2
+0x0433a2  mov     eax, dword ptr [0x3ec4]
+0x0433a7  mov     byte ptr [ebx + eax + 0x3d34], dl  ; ->0x543e0
+0x0433ae  mov     dl, byte ptr [esp + 0x24]
+
+=== 0x46296 (generic word-add stat/inventory delta primitive, kinds 8/9/a/11/12/13) ===
+0x0462a6  push    dword ptr [esp + 0x1c]
+0x0462aa  push    dword ptr [esp + 0x28]  ; ->0x53774
+0x0462ae  push    dword ptr [esp + 0x14]  ; ->0x52832
+0x0462b2  call    0x416e0
+0x0462b7  add     esp, 0x10
+0x0462ba  push    ebx
+0x0462bb  push    dword ptr [esp + 0x1c]
+0x0462bf  push    dword ptr [esp + 0x28]  ; ->0x4a0c4
+0x0462c3  push    dword ptr [esp + 0x14]
+0x0462c7  call    0x414ee
+0x0462cc  add     esp, 0x10
+0x0462cf  movzx   edx, byte ptr [ebx]
+0x0462d2  mov     eax, edx  ; ->0x4a0e8
+0x0462d4  shl     eax, 2
+0x0462d7  add     eax, edx
+0x0462d9  shl     eax, 4
+0x0462dc  mov     edx, dword ptr [0x3a45]
+0x0462e2  add     eax, edx
+0x0462e4  add     eax, dword ptr [esp + 0x10]
+0x0462e8  mov     edx, dword ptr [esp + 0xc]  ; ->0x53730
+0x0462ec  add     word ptr [eax], dx
+0x0462ef  movzx   eax, byte ptr [ebx]
+0x0462f2  push    eax
+0x0462f3  push    0x5e
+0x0462f5  push    dword ptr [esp + 0x14]  ; ->0x53730
+0x0462f9  call    0x432ef  ; ->0x53730
+0x0462fe  add     esp, 0xc
+0x046301  push    0
+0x046303  call    0x36ec0
+0x046308  add     esp, 4  ; ->0x53778
+0x04630b  call    0x4316c
+0x046310  push    dword ptr [esp + 8]
+0x046314  call    0x40964  ; ->0x52832
+0x046319  add     esp, 4  ; ->0x52833
+0x04631c  push    dword ptr [esp + 0x14]
+0x046320  push    dword ptr [esp + 0xc]
+0x046324  call    0x40afb
+0x046329  add     esp, 8
+0x04632c  pop     ebx
+0x04632d  ret
+0x04632e  push    0x24
+0x046333  call    0x5c243
+0x046338  push    ebx  ; ->0x527ec
+0x046339  push    esi
+0x04633a  push    edi
+0x04633b  push    ebp
+0x04633c  mov     edi, dword ptr [esp + 0x1c]
+0x046340  mov     ebp, dword ptr [esp + 0x20]
+0x046344  push    edi
+0x046345  push    dword ptr [esp + 0x1c]  ; ->0x53776
+0x046349  push    ebp
+0x04634a  push    dword ptr [esp + 0x20]
+0x04634e  call    0x416e0
+0x046353  add     esp, 0x10
+0x046356  push    edi
+
+=== 0x47D0A (status-cure handler, kinds 6/7) ===
+0x047d17  push    ebp
+0x047d18  push    dword ptr [esp + 0x20]
+0x047d1c  push    dword ptr [esp + 0x20]
+0x047d20  push    dword ptr [esp + 0x20]  ; ->0x494f0
+0x047d24  push    dword ptr [esp + 0x20]  ; ->0x4951f
+0x047d28  call    0x416e0  ; ->0x49558
+0x047d2d  add     esp, 0x10
+0x047d30  push    dword ptr [esp + 0x20]  ; ->0x495bc
+0x047d34  push    dword ptr [esp + 0x20]  ; ->0x495ec
+0x047d38  push    dword ptr [esp + 0x20]
+0x047d3c  push    dword ptr [esp + 0x20]
+0x047d40  call    0x414ee  ; ->0x49626
+0x047d45  add     esp, 0x10
+0x047d48  xor     edi, edi
+0x047d4a  jmp     0x47d59
+0x047d4c  movzx   eax, byte ptr [ebx]
+0x047d4f  push    eax
+0x047d50  call    0x433f0
+0x047d55  add     esp, 4
+0x047d58  inc     edi
+0x047d59  cmp     edi, dword ptr [esp + 0x1c]
+0x047d5d  jge     0x47dcb
+0x047d5f  mov     ebx, dword ptr [esp + 0x20]
+0x047d63  movzx   esi, byte ptr [edi + ebx]
+0x047d67  mov     ebx, esi
+0x047d69  shl     ebx, 2
+0x047d6c  add     ebx, esi
+0x047d6e  shl     ebx, 4
+0x047d71  mov     eax, dword ptr [0x3a45]
+0x047d76  add     ebx, eax
+0x047d78  movzx   ebp, byte ptr [ebx + 0x21]
+0x047d7c  movzx   eax, byte ptr [ebx + 0x20]
+0x047d80  cmp     eax, 8
+0x047d83  jle     0x47d8d
+0x047d85  cmp     eax, 0x19
+0x047d88  jge     0x47d8d
+0x047d8a  add     ebp, 0x1e
+0x047d8d  mov     esi, dword ptr [esp + 0x24]
+0x047d91  add     esi, ebx
+0x047d93  movzx   eax, byte ptr [esi]
+0x047d96  mov     ebx, dword ptr [esp + 0x20]
+0x047d9a  add     ebx, edi
+0x047d9c  test    eax, eax
+0x047d9e  je      0x47d4c
+0x047da0  push    0xa
+0x047da2  movzx   eax, byte ptr [ebx]
+0x047da5  push    eax
+0x047da6  call    0x41b2a
+0x047dab  add     esp, 8
+0x047dae  movzx   ebx, byte ptr [ebx]
+0x047db1  push    ebx
+0x047db2  push    0x69
+0x047db4  push    eax
+0x047db5  call    0x432ef
+0x047dba  add     esp, 0xc
+0x047dbd  mov     byte ptr [esi], 0
+0x047dc0  shl     ebp, 2
+0x047dc3  add     dword ptr [0x3ec8], ebp
+0x047dc9  jmp     0x47d58
+0x047dcb  push    0
+0x047dcd  call    0x36ec0
+0x047dd2  add     esp, 4
+0x047dd5  pop     ebp
+0x047dd6  pop     edi
+0x047dd7  pop     esi
+0x047dd8  pop     ebx
+0x047dd9  ret
+0x047dda  push    0x18
+0x047ddf  call    0x5c243
+0x047de4  push    0x26
+0x047de6  push    dword ptr [esp + 0x10]
+0x047dea  push    dword ptr [esp + 0x10]
+0x047dee  push    0x15
+0x047df0  jmp     0x47caf
+0x047df5  push    0x18
+0x047dfa  call    0x5c243
+0x047dff  push    0x27
+0x047e01  push    dword ptr [esp + 0x10]
+0x047e05  push    dword ptr [esp + 0x10]
+0x047e09  push    0x16
+0x047e0b  push    dword ptr [esp + 0x14]
+0x047e0f  call    0x47eee
+0x047e14  add     esp, 0x14
+0x047e17  ret
+0x047e18  push    0x20
+
+=== 0x41BF1 (MP-restore, kind 0xb caster branch) ===
+0x041bfe  push    ebp
+0x041bff  sub     esp, 4
+0x041c02  mov     eax, dword ptr [esp + 0x18]
+0x041c06  mov     esi, eax
+0x041c08  shl     esi, 2
+0x041c0b  add     eax, esi
+0x041c0d  shl     eax, 4
+0x041c10  mov     esi, dword ptr [0x3a45]
+0x041c16  add     esi, eax
+0x041c18  movzx   edi, word ptr [esi + 0x44]
+0x041c1c  movzx   eax, word ptr [esi + 0x46]
+0x041c20  mov     dword ptr [esp], eax
+0x041c23  mov     eax, dword ptr [esp + 0x1c]
+0x041c27  mov     edx, eax
+0x041c29  shl     edx, 3
+0x041c2c  add     edx, eax
+0x041c2e  mov     ebx, 0xa
+0x041c33  mov     eax, edx
+0x041c35  sar     edx, 0x1f
+0x041c38  idiv    ebx
+0x041c3a  mov     ebp, eax
+0x041c3c  call    0x73df7
+0x041c41  mov     edx, eax
+0x041c43  mov     ebx, 0x64
+0x041c48  sar     edx, 0x1f
+0x041c4b  idiv    ebx
+0x041c4d  imul    edx, dword ptr [esp + 0x1c]
+0x041c52  mov     ebx, 0x3e8
+0x041c57  mov     eax, edx
+0x041c59  sar     edx, 0x1f
+0x041c5c  idiv    ebx
+0x041c5e  mov     ebx, eax
+0x041c60  add     edi, ebp
+0x041c62  add     edi, eax
+0x041c64  cmp     edi, dword ptr [esp]
+0x041c67  jle     0x41c6c
+0x041c69  mov     edi, dword ptr [esp]
+0x041c6c  movzx   edx, word ptr [esi + 0x44]
+0x041c70  mov     eax, edi
+0x041c72  sub     eax, edx
+0x041c74  mov     edx, eax
+0x041c76  mov     word ptr [esi + 0x44], di
+0x041c7a  movzx   eax, byte ptr [esi + 7]
+0x041c7e  cmp     eax, 0x4b
+0x041c81  jge     0x41be9
+0x041c87  movzx   eax, byte ptr [esi + 0x21]
+0x041c8b  mov     esi, eax
+0x041c8d  shl     esi, 2
+0x041c90  add     eax, esi
+0x041c92  shl     eax, 3
+0x041c95  imul    edx, eax
+0x041c98  jmp     0x41bdb
+0x041c9d  push    0xc
+0x041ca2  call    0x5c243
+0x041ca7  push    ebx
+
+=== 0x433F0 (resist/no-effect message) ===
+0x0433fa  push    ebx
+0x0433fb  sub     esp, 4
+0x0433fe  mov     ecx, dword ptr [esp + 0xc]
+0x043402  mov     eax, dword ptr [0x204a]  ; ->0x543e4
+0x043407  mov     dword ptr [esp], eax
+0x04340a  mov     eax, ecx
+0x04340c  shl     eax, 2
+0x04340f  lea     edx, [ecx + eax]  ; ->0x543d8
+0x043412  shl     edx, 4
+0x043415  mov     eax, dword ptr [0x3a45]  ; ->0x543e4
+0x04341a  movzx   ebx, byte ptr [edx + eax]
+0x04341e  movzx   edx, byte ptr [edx + eax + 1]
+0x043423  mov     eax, dword ptr [0x3aa9]
+0x043428  dec     eax
+0x043429  cmp     ebx, eax
+0x04342b  jle     0x434a1
+0x043431  mov     eax, dword ptr [0x3aa9]
+0x043436  add     eax, dword ptr [0x1a87]
+0x04343c  cmp     ebx, eax
+0x04343e  jge     0x434a1
+0x043440  mov     eax, dword ptr [0x3aad]  ; ->0x543f8
+0x043445  dec     eax
+0x043446  cmp     edx, eax
+0x043448  jl      0x434a1
+0x04344a  mov     eax, dword ptr [0x3aad]  ; ->0x543e0
+0x04344f  add     eax, dword ptr [0x1a8b]
+0x043455  cmp     edx, eax
+0x043457  jg      0x434a1
+0x043459  xor     edx, edx
+0x04345b  jmp     0x43474
+0x04345d  mov     eax, dword ptr [0x3ec4]  ; ->0x543e0
+0x043462  mov     byte ptr [edx + eax + 0x3dfc], cl
+0x043469  mov     bl, byte ptr [esp + edx]
+0x04346c  mov     byte ptr [edx + eax + 0x3c6c], bl
+0x043473  inc     edx
+0x043474  cmp     edx, 4
+0x043477  jge     0x4349a
+0x043479  mov     ebx, dword ptr [0x3ec4]
+
+=== 0x41972 (race-based resistance check, kinds 0x14/0x15/0x18) ===
+0x04197c  push    ebx
+0x04197d  push    esi
+0x04197e  push    edi
+0x04197f  sub     esp, 0x74
+0x041982  mov     ecx, 0x1c
+0x041987  mov     edi, esp
+0x041989  mov     esi, 0x1f96
+0x04198e  rep movsd dword ptr es:[edi], dword ptr [esi]
+0x041990  mov     eax, dword ptr [esp + 0x84]
+0x041997  mov     ebx, eax
+0x041999  shl     ebx, 2
+0x04199c  add     ebx, eax
+0x04199e  shl     ebx, 4
+0x0419a1  mov     eax, dword ptr [0x3a45]
+0x0419a6  movzx   esi, byte ptr [ebx + eax + 0x20]
+0x0419ab  push    dword ptr [esp + 0x88]
+0x0419b2  call    0x73a7a
+0x0419b7  mov     ebx, eax
+0x0419b9  add     esp, 4
+0x0419bc  movsx   edx, word ptr [eax]
+0x0419bf  imul    edx, dword ptr [esp + esi*4 - 4]
+0x0419c4  mov     esi, 0xa
+0x0419c9  mov     eax, edx
+0x0419cb  sar     edx, 0x1f
+0x0419ce  idiv    esi
+0x0419d0  mov     esi, eax
+0x0419d2  movzx   eax, byte ptr [ebx + 2]
+0x0419d6  mov     dword ptr [esp + 0x70], eax
+0x0419da  cmp     dword ptr [esp + 0x88], 9
+0x0419e2  jle     0x41a01
+0x0419e4  cmp     dword ptr [esp + 0x88], 0xd
+0x0419ec  jge     0x41a01
+0x0419ee  push    dword ptr [esp + 0x84]
+0x0419f5  call    0x44397
+0x0419fa  add     esp, 4
+0x0419fd  test    eax, eax
+0x0419ff  jne     0x41a2a
+0x041a01  call    0x73df7
+
+=== 0x39C0C (item command>0xF walk-N-steps target builder) ===
+0x039c19  sub     esp, 0x10  ; ->0x54174
+0x039c1c  mov     edi, dword ptr [esp + 0x38]
+0x039c20  mov     dword ptr [esp + 8], 0
+0x039c28  mov     dword ptr [esp + 0xc], 0  ; ->0x54170
+0x039c30  xor     ebx, ebx
+0x039c32  mov     eax, dword ptr [esp + 0x2c]
+0x039c36  cmp     eax, dword ptr [esp + 0x20]
+0x039c3a  jne     0x39c5a
+0x039c3c  mov     eax, dword ptr [esp + 0x30]
+0x039c40  cmp     eax, dword ptr [esp + 0x24]
+0x039c44  jle     0x39c50
+0x039c46  mov     dword ptr [esp + 0xc], 0xffffffff
+0x039c4e  jmp     0x39c6e
+0x039c50  mov     dword ptr [esp + 0xc], 1  ; ->0x50978
+0x039c58  jmp     0x39c6e
+0x039c5a  jle     0x39c66  ; ->0x54164
+0x039c5c  mov     dword ptr [esp + 8], 0xffffffff
+0x039c64  jmp     0x39c6e
+0x039c66  mov     dword ptr [esp + 8], 1
+0x039c6e  mov     eax, dword ptr [0x3ab1]
+0x039c73  mov     dword ptr [esp], eax
+0x039c76  mov     eax, dword ptr [0x3ab5]  ; ->0x54174
+0x039c7b  mov     dword ptr [esp + 4], eax
+0x039c7f  mov     eax, dword ptr [esp + 0x2c]
+0x039c83  mov     dword ptr [0x3ab1], eax  ; ->0x54178
+0x039c88  mov     eax, dword ptr [esp + 0x30]
+0x039c8c  mov     dword ptr [0x3ab5], eax  ; ->0x54170
+0x039c91  xor     esi, esi
+0x039c93  jmp     0x39c96
+0x039c95  inc     esi
+0x039c96  cmp     esi, dword ptr [esp + 0x34]
+0x039c9a  jge     0x39d12
+0x039ca0  mov     eax, dword ptr [esp + 8]
+0x039ca4  add     dword ptr [0x3ab1], eax
+0x039caa  mov     eax, dword ptr [esp + 0xc]  ; ->0x5030f
+0x039cae  add     dword ptr [0x3ab5], eax  ; ->0x54164
+0x039cb4  mov     eax, dword ptr [0x3ab1]
+0x039cb9  cmp     eax, dword ptr [0x3ac1]
+0x039cbf  jge     0x39c95
+0x039cc1  test    eax, eax
+0x039cc3  jl      0x39c95
+0x039cc5  mov     eax, dword ptr [0x3ab5]
+0x039cca  cmp     eax, dword ptr [0x3ac5]  ; ->0x50311
+0x039cd0  jge     0x39c95
+0x039cd2  test    eax, eax  ; ->0x54164
+0x039cd4  jl      0x39c95
+0x039cd6  call    0x37e21
+0x039cdb  mov     edx, eax
+0x039cdd  mov     ecx, eax
+0x039cdf  cmp     eax, -1
+0x039ce2  je      0x39c95  ; ->0x54178
+0x039ce4  shl     eax, 2
+0x039ce7  add     eax, edx
+0x039ce9  shl     eax, 4  ; ->0x50468
+0x039cec  mov     edx, dword ptr [0x3a45]  ; ->0x54164
+
+=== 0x73DF7 (RNG, LIVE disasm @ live 0x1EABE3 = static+0x176DEC) ===
+00073df7: xor eax, eax
+00073df9: mov ax, word ptr [0x1f47b8]
+00073dff: add ax, 0x9014
+00073e03: rol ax, 1
+00073e06: rol ax, 1
+00073e09: rol ax, 1
+00073e0c: mov word ptr [0x1f47b8], ax
+00073e12: ret 
+00073e13: push ebp
+
+=== kind 0xc full (0x47BAB), confirmed HIT/EV+15 buff with duration@+0x24 ===
+0x047bb8  push    ebp
+0x047bb9  sub     esp, 4
+0x047bbc  push    dword ptr [esp + 0x20]
+0x047bc0  push    dword ptr [esp + 0x20]  ; ->0x48b74
+0x047bc4  push    0x13  ; ->0x48ba2
+0x047bc6  push    dword ptr [esp + 0x24]  ; ->0x48bd6
+0x047bca  call    0x416e0  ; ->0x48bf2
+0x047bcf  add     esp, 0x10  ; ->0x48c11
+0x047bd2  push    dword ptr [esp + 0x20]  ; ->0x48c32
+0x047bd6  push    dword ptr [esp + 0x20]
+0x047bda  push    0x13
+0x047bdc  push    dword ptr [esp + 0x24]
+0x047be0  call    0x414ee  ; ->0x48c59
+0x047be5  add     esp, 0x10
+0x047be8  xor     ebp, ebp  ; ->0x48ca1
+0x047bea  jmp     0x47bf9
+0x047bec  movzx   edx, byte ptr [edi]  ; ->0x48cc0
+0x047bef  push    edx
+0x047bf0  call    0x433f0  ; ->0x48ce2
+0x047bf5  add     esp, 4
+0x047bf8  inc     ebp
+0x047bf9  cmp     ebp, dword ptr [esp + 0x1c]
+0x047bfd  jge     0x47c85  ; ->0x48d2e
+0x047c03  mov     edx, dword ptr [esp + 0x20]  ; ->0x48d51
+0x047c07  movzx   edx, byte ptr [edx + ebp]  ; ->0x48d7a
+0x047c0b  mov     esi, edx  ; ->0x48da6
+0x047c0d  shl     esi, 2
+0x047c10  add     esi, edx  ; ->0x48dd5
+0x047c12  shl     esi, 4  ; ->0x48e0f
+0x047c15  mov     edx, dword ptr [0x3a45]
+0x047c1b  add     esi, edx
+0x047c1d  movzx   edx, byte ptr [esi + 0x21]  ; ->0x48e4f
+0x047c21  mov     dword ptr [esp], edx
+0x047c24  movzx   edx, byte ptr [esi + 0x20]  ; ->0x48e89
+0x047c28  cmp     edx, 8  ; ->0x48ec9
+0x047c2b  jle     0x47c36  ; ->0x48efb
+0x047c2d  cmp     edx, 0x19
+0x047c30  jge     0x47c36  ; ->0x48f30
+0x047c32  add     dword ptr [esp], 0x1e  ; ->0x48f6c
+0x047c36  movzx   edx, byte ptr [esi + 0x24]
+0x047c3a  mov     edi, dword ptr [esp + 0x20]
+0x047c3e  add     edi, ebp
+0x047c40  test    edx, edx  ; ->0x48fae
+0x047c42  jne     0x47bec
+0x047c44  call    0x73df7  ; ->0x48fea
+0x047c49  mov     edx, eax
+0x047c4b  mov     ebx, 4  ; ->0x49053
+0x047c50  sar     edx, 0x1f  ; ->0x4907d
+0x047c53  idiv    ebx  ; ->0x490ac
+0x047c55  add     edx, 2
+0x047c58  mov     byte ptr [esi + 0x24], dl
+0x047c5b  add     word ptr [esi + 0x4c], 0xf
+0x047c60  add     word ptr [esi + 0x4e], 0xf  ; ->0x490e1
+0x047c65  movzx   edx, byte ptr [edi]
+0x047c68  push    edx  ; ->0x49145
+
+=== kind 0xf full (0x47A7A), confirmed DP%-buff with duration@+0x23 ===
+0x047a87  push    ebp
+0x047a88  sub     esp, 0xc  ; ->0x4809b
+0x047a8b  push    dword ptr [esp + 0x28]  ; ->0x480c8
+0x047a8f  push    dword ptr [esp + 0x28]
+0x047a93  push    0x12
+0x047a95  push    dword ptr [esp + 0x2c]
+0x047a99  call    0x416e0
+0x047a9e  add     esp, 0x10
+0x047aa1  push    dword ptr [esp + 0x28]
+0x047aa5  push    dword ptr [esp + 0x28]
+0x047aa9  push    0x12
+0x047aab  push    dword ptr [esp + 0x2c]
+0x047aaf  call    0x414ee
+0x047ab4  add     esp, 0x10
+0x047ab7  xor     ebp, ebp
+0x047ab9  jmp     0x47ac8
+0x047abb  movzx   eax, byte ptr [edi]
+0x047abe  push    eax
+0x047abf  call    0x433f0
+0x047ac4  add     esp, 4
+0x047ac7  inc     ebp
+0x047ac8  cmp     ebp, dword ptr [esp + 0x24]  ; ->0x480f0
+0x047acc  jge     0x47a2f  ; ->0x48149
+0x047ad2  mov     eax, dword ptr [esp + 0x28]  ; ->0x481f0
+0x047ad6  movzx   edx, byte ptr [eax + ebp]
+0x047ada  mov     eax, edx
+0x047adc  shl     eax, 2
+0x047adf  add     eax, edx
+0x047ae1  shl     eax, 4
+0x047ae4  mov     esi, dword ptr [0x3a45]  ; ->0x4823e
+0x047aea  add     esi, eax
+0x047aec  movzx   eax, byte ptr [esi + 0x21]  ; ->0x48295
+0x047af0  mov     dword ptr [esp + 8], eax  ; ->0x482e1
+0x047af4  movzx   eax, byte ptr [esi + 0x20]  ; ->0x48338
+0x047af8  cmp     eax, 8
+0x047afb  jle     0x47b07
+0x047afd  cmp     eax, 0x19
+0x047b00  jge     0x47b07
+0x047b02  add     dword ptr [esp + 8], 0x1e
+0x047b07  movzx   eax, byte ptr [esi + 0x23]  ; ->0x48384
+0x047b0b  mov     edi, dword ptr [esp + 0x28]  ; ->0x483b4
+0x047b0f  add     edi, ebp
+0x047b11  test    eax, eax
+0x047b13  jne     0x47abb
+0x047b15  call    0x73df7  ; ->0x483df
+0x047b1a  mov     edx, eax
+0x047b1c  mov     ebx, 4  ; ->0x48411
+0x047b21  sar     edx, 0x1f
+0x047b24  idiv    ebx
+0x047b26  add     edx, 2
+0x047b29  mov     byte ptr [esi + 0x23], dl
+0x047b2c  movzx   eax, word ptr [esi + 0x4a]
+0x047b30  mov     dword ptr [esp + 4], eax
+0x047b34  fild    dword ptr [esp + 4]
+0x047b38  fmul    qword ptr [0x218]
+
+=== kind 0x10 full (0x47935), confirmed AP%-buff with duration@+0x22 ===
+0x047942  push    ebp
+0x047943  sub     esp, 0xc
+0x047946  push    dword ptr [esp + 0x28]
+0x04794a  push    dword ptr [esp + 0x28]
+0x04794e  push    0x11
+0x047950  push    dword ptr [esp + 0x2c]
+0x047954  call    0x416e0
+0x047959  add     esp, 0x10
+0x04795c  push    dword ptr [esp + 0x28]
+0x047960  push    dword ptr [esp + 0x28]
+0x047964  push    0x11
+0x047966  push    dword ptr [esp + 0x2c]
+0x04796a  call    0x414ee
+0x04796f  add     esp, 0x10
+0x047972  xor     ebp, ebp
+0x047974  jmp     0x47983
+0x047976  movzx   eax, byte ptr [edi]
+0x047979  push    eax
+0x04797a  call    0x433f0
+0x04797f  add     esp, 4
+0x047982  inc     ebp
+0x047983  cmp     ebp, dword ptr [esp + 0x24]
+0x047987  jge     0x47a2f  ; ->0x47d88
+0x04798d  mov     eax, dword ptr [esp + 0x28]
+0x047991  movzx   edx, byte ptr [eax + ebp]
+0x047995  mov     eax, edx
+0x047997  shl     eax, 2
+0x04799a  add     eax, edx
+0x04799c  shl     eax, 4
+0x04799f  mov     esi, dword ptr [0x3a45]
+0x0479a5  add     esi, eax
+0x0479a7  movzx   eax, byte ptr [esi + 0x21]
+0x0479ab  mov     dword ptr [esp + 8], eax
+0x0479af  movzx   eax, byte ptr [esi + 0x20]
+0x0479b3  cmp     eax, 8
+0x0479b6  jle     0x479c2
+0x0479b8  cmp     eax, 0x19
+0x0479bb  jge     0x479c2
+0x0479bd  add     dword ptr [esp + 8], 0x1e
+0x0479c2  movzx   eax, byte ptr [esi + 0x22]
+0x0479c6  mov     edi, dword ptr [esp + 0x28]  ; ->0x47da5
+0x0479ca  add     edi, ebp
+0x0479cc  test    eax, eax  ; ->0x47dc4
+0x0479ce  jne     0x47976
+0x0479d0  call    0x73df7  ; ->0x47dd8
+0x0479d5  mov     edx, eax
+0x0479d7  mov     ebx, 4
+0x0479dc  sar     edx, 0x1f
+0x0479df  idiv    ebx
+0x0479e1  add     edx, 2
+0x0479e4  mov     byte ptr [esi + 0x22], dl
+0x0479e7  movzx   eax, word ptr [esi + 0x48]  ; ->0x47e0b
+0x0479eb  mov     dword ptr [esp + 4], eax  ; ->0x47e28
+0x0479ef  fild    dword ptr [esp + 4]  ; ->0x47e3a
+0x0479f3  fmul    qword ptr [0x210]  ; ->0x47e57
+
+=== kind 0xe/0x16 full (0x47F2F), race-immune+50%chance inflict, duration 2-5 ===
+0x047f3c  push    ebp
+0x047f3d  sub     esp, 4
+0x047f40  push    dword ptr [esp + 0x24]
+0x047f44  push    dword ptr [esp + 0x24]
+0x047f48  push    dword ptr [esp + 0x24]
+0x047f4c  push    dword ptr [esp + 0x24]
+0x047f50  call    0x416e0
+0x047f55  add     esp, 0x10
+0x047f58  push    dword ptr [esp + 0x24]
+0x047f5c  push    dword ptr [esp + 0x24]
+0x047f60  push    dword ptr [esp + 0x24]
+0x047f64  push    dword ptr [esp + 0x24]
+0x047f68  call    0x414ee
+0x047f6d  add     esp, 0x10
+0x047f70  mov     dword ptr [esp], 0
+0x047f77  jmp     0x47f88
+0x047f79  movzx   eax, byte ptr [esi]
+0x047f7c  push    eax
+0x047f7d  call    0x433f0
+0x047f82  add     esp, 4
+0x047f85  inc     dword ptr [esp]
+0x047f88  mov     eax, dword ptr [esp]
+0x047f8b  cmp     eax, dword ptr [esp + 0x20]
+0x047f8f  jge     0x48039
+0x047f95  mov     esi, dword ptr [esp + 0x24]
+0x047f99  add     esi, eax
+0x047f9b  movzx   eax, byte ptr [esi]
+0x047f9e  mov     edi, eax
+0x047fa0  shl     edi, 2
+0x047fa3  add     eax, edi
+0x047fa5  shl     eax, 4
+0x047fa8  mov     edi, dword ptr [0x3a45]
+0x047fae  add     edi, eax
+0x047fb0  mov     dl, byte ptr [edi + 0x20]
+0x047fb3  mov     ebp, dword ptr [esp + 0x28]
+0x047fb7  add     ebp, edi
+0x047fb9  movzx   eax, byte ptr [ebp]
+0x047fbd  test    eax, eax
+0x047fbf  jne     0x4802a
+0x047fc1  movzx   eax, dl
+0x047fc4  cmp     eax, 0x19
+0x047fc7  je      0x4802a
+0x047fc9  cmp     eax, 0x1a
+0x047fcc  je      0x4802a
+0x047fce  call    0x73df7
+0x047fd3  mov     edx, eax
+0x047fd5  mov     ebx, 0x64
+0x047fda  sar     edx, 0x1f
+0x047fdd  idiv    ebx
+0x047fdf  cmp     edx, 0x32
+0x047fe2  jge     0x47f79
+0x047fe4  push    0xa
+0x047fe6  movzx   eax, byte ptr [esi]
+0x047fe9  push    eax
+0x047fea  call    0x41a33
+0x047fef  add     esp, 8
+0x047ff2  movzx   edx, byte ptr [esi]
+0x047ff5  push    edx
+0x047ff6  push    0x5e
+0x047ff8  push    eax
+0x047ff9  call    0x432ef
+0x047ffe  add     esp, 0xc
+0x048001  call    0x73df7
+0x048006  mov     edx, eax
+0x048008  mov     ebx, 4
+0x04800d  sar     edx, 0x1f
+0x048010  idiv    ebx
+0x048012  add     edx, 2
+0x048015  mov     byte ptr [ebp], dl
+0x048018  movzx   eax, byte ptr [edi + 0x21]
+0x04801c  shl     eax, 3
+0x04801f  add     dword ptr [0x3ec8], eax
+0x048025  jmp     0x47f85
+0x04802a  mov     edx, dword ptr [esp + 0x24]
+0x04802e  add     edx, dword ptr [esp]
+0x048031  movzx   eax, byte ptr [edx]
+0x048034  jmp     0x47f7c
+0x048039  push    0
+0x04803b  call    0x36ec0
+0x048040  add     esp, 4
+0x048043  cmp     dword ptr [0x3ec4], 0
+0x04804a  je      0x47dd2
+0x048050  jmp     0x47c8f
+0x048055  push    0x18
+0x04805a  call    0x5c243
+0x04805f  push    0x26
+0x048061  push    dword ptr [esp + 0x10]
+0x048065  push    dword ptr [esp + 0x10]
+0x048069  push    0x1b
+0x04806b  jmp     0x47e0b
+0x048070  push    0x1c
+0x048075  call    0x5c243
+0x04807a  push    ebx
+0x04807b  push    1
+0x04807d  push    -1
+
+=== 0x41A33 (HP damage, mirror of 0x41B2A heal) - CONFIRMED kind0xe/0x16's hit consequence ===
+0x041a3e  push    esi
+0x041a3f  push    edi
+0x041a40  push    ebp
+0x041a41  sub     esp, 8  ; ->0x53690
+0x041a44  mov     eax, dword ptr [esp + 0x1c]
+0x041a48  mov     esi, eax
+0x041a4a  shl     esi, 2
+0x041a4d  add     esi, eax
+0x041a4f  shl     esi, 4  ; ->0x41a40
+0x041a52  mov     eax, dword ptr [0x3a45]  ; ->0x40100
+0x041a57  add     esi, eax
+0x041a59  movzx   edi, word ptr [esi + 0x40]
+0x041a5d  movzx   eax, word ptr [esi + 0x42]
+0x041a61  mov     dword ptr [esp], eax
+0x041a64  mov     eax, dword ptr [esp + 0x20]  ; ->0x5360c
+0x041a68  mov     edx, eax
+0x041a6a  shl     edx, 3
+0x041a6d  add     edx, eax
+0x041a6f  mov     ebp, 0xa
+0x041a74  mov     eax, edx  ; ->0x5368c
+0x041a76  sar     edx, 0x1f
+0x041a79  idiv    ebp
+0x041a7b  mov     ebp, eax
+0x041a7d  call    0x73df7
+0x041a82  mov     edx, eax
+0x041a84  mov     dword ptr [esp + 4], 0x64  ; ->0x543b0
+0x041a8c  sar     edx, 0x1f
+0x041a8f  idiv    dword ptr [esp + 4]
+0x041a93  imul    edx, dword ptr [esp + 0x20]  ; ->0x543c4
+0x041a98  mov     dword ptr [esp + 4], 0x3e8
+0x041aa0  mov     eax, edx
+0x041aa2  sar     edx, 0x1f  ; ->0x543c0
+0x041aa5  idiv    dword ptr [esp + 4]
+0x041aa9  add     ebp, eax
+0x041aab  sub     edi, ebp
+0x041aad  test    edi, edi
+0x041aaf  jge     0x41ab3

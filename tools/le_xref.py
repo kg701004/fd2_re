@@ -59,6 +59,32 @@ def file_to_linear(meta, f):
     return None
 
 
+# LE fixup record field flags, cross-checked 2026-08-14 against Open Watcom's
+# own reference dumper (bld/exedump/c/wdfix.c Dmp_fixrec_tab, via
+# bld/watcom/h/exeflat.h) after this function was found to silently return
+# nothing for addresses independently known correct. The previous version
+# unconditionally read a 2-byte srcoff then an "object+target-offset" pair
+# for every record, never branching on OSF_SFLAG_LIST or OSF_TARGET_MASK
+# first -- any list-type or external-target record (common; imports use
+# EXT_ORD/EXT_NAME) desyncs the byte stream for every record after it on
+# that page. See docs/knowledge-base/11-enemy-ai.md's "位址不可跨版位移"
+# section and the fd2-le-parser-object1-bug memory for the investigation
+# this came out of.
+_OSF_SOURCE_MASK = 0x0F
+_OSF_SOURCE_SEG = 0x02
+_OSF_SFLAG_LIST = 0x20
+_OSF_TARGET_MASK = 0x03
+_OSF_TARGET_INTERNAL = 0x00
+_OSF_TARGET_EXT_ORD = 0x01
+_OSF_TARGET_EXT_NAME = 0x02
+_OSF_TARGET_INT_VIA_ENTRY = 0x03
+_OSF_TFLAG_ADDITIVE_VAL = 0x04
+_OSF_TFLAG_OFF_32BIT = 0x10
+_OSF_TFLAG_ADD_32BIT = 0x20
+_OSF_TFLAG_OBJ_MOD_16BIT = 0x40
+_OSF_TFLAG_ORDINAL_8BIT = 0x80
+
+
 def parse_fixups(d, meta):
     """回傳 dict: src_file_offset -> target_linear(僅 internal 1..N obj)。"""
     n = meta["page_cnt"]
@@ -69,20 +95,49 @@ def parse_fixups(d, meta):
         end = meta["fixrec"] + fpt[pg + 1]
         fbase = page_file(meta, pg)
         while i < end:
-            src = d[i]; flags = d[i + 1]; i += 2
-            srcoff = struct.unpack_from("<h", d, i)[0]; i += 2
-            if flags & 0x40:
-                obj = struct.unpack_from("<H", d, i)[0]; i += 2
+            source = d[i]; flags = d[i + 1]; i += 2
+            if source & _OSF_SFLAG_LIST:
+                cnt = d[i]; i += 1
+                srcoffs = []
             else:
-                obj = d[i]; i += 1
-            if flags & 0x10:
-                toff = struct.unpack_from("<I", d, i)[0]; i += 4
-            else:
-                toff = struct.unpack_from("<H", d, i)[0]; i += 2
-            if src & 0x20:  # source list 少見,略過該頁其餘
-                break
-            if 1 <= obj <= len(meta["objs"]):
-                out[fbase + srcoff] = meta["objs"][obj - 1]["base"] + toff
+                srcoff = struct.unpack_from("<h", d, i)[0]; i += 2
+                cnt = 0
+                srcoffs = [srcoff]
+            target_type = flags & _OSF_TARGET_MASK
+            obj = toff = None
+            if target_type == _OSF_TARGET_INTERNAL:
+                if flags & _OSF_TFLAG_OBJ_MOD_16BIT:
+                    obj = struct.unpack_from("<H", d, i)[0]; i += 2
+                else:
+                    obj = d[i]; i += 1
+                if (source & _OSF_SOURCE_MASK) != _OSF_SOURCE_SEG:
+                    if flags & _OSF_TFLAG_OFF_32BIT:
+                        toff = struct.unpack_from("<I", d, i)[0]; i += 4
+                    else:
+                        toff = struct.unpack_from("<H", d, i)[0]; i += 2
+            elif target_type in (_OSF_TARGET_EXT_ORD, _OSF_TARGET_EXT_NAME):
+                i += 2 if flags & _OSF_TFLAG_OBJ_MOD_16BIT else 1
+                if target_type == _OSF_TARGET_EXT_ORD:
+                    if flags & _OSF_TFLAG_ORDINAL_8BIT:
+                        i += 1
+                    else:
+                        i += 4 if flags & _OSF_TFLAG_OFF_32BIT else 2
+                else:
+                    i += 4 if flags & _OSF_TFLAG_OFF_32BIT else 2
+                if flags & _OSF_TFLAG_ADDITIVE_VAL:
+                    i += 4 if flags & _OSF_TFLAG_ADD_32BIT else 2
+            elif target_type == _OSF_TARGET_INT_VIA_ENTRY:
+                i += 2 if flags & _OSF_TFLAG_OBJ_MOD_16BIT else 1
+                if flags & _OSF_TFLAG_ADDITIVE_VAL:
+                    i += 4 if flags & _OSF_TFLAG_ADD_32BIT else 2
+            if cnt:
+                srcoffs = [struct.unpack_from("<h", d, i + 2 * k)[0] for k in range(cnt)]
+                i += 2 * cnt
+            if target_type == _OSF_TARGET_INTERNAL and obj is not None and toff is not None \
+                    and 1 <= obj <= len(meta["objs"]):
+                target = meta["objs"][obj - 1]["base"] + toff
+                for so in srcoffs:
+                    out[fbase + so] = target
     return out
 
 

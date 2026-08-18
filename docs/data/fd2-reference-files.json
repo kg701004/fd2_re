@@ -1,12 +1,22 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": "FD2 反向工程所使用的執行檔與唯讀遊戲資產；不含可變動的 FD2.SAV、FD2.TMP",
+  "notes": [
+    "2026-08-14: FD2.EXE/FDOTHER.DAT/FDTXT.DAT/FIGANI.DAT 改基準——原參考版(舊版,FD2.EXE 357074 bytes)已在使用者機器上遺失,USB 備份也是同一份跟不上的拷貝,經與 docs/knowledge-base/03-exe-and-data-structures.md 記載的「新版」錨定特徵比對(item效果表 0x792C1 附近 6 byte 特徵值精準命中,僅差 1 byte 定位慣例),確認使用者僅存的這份 509158 bytes 拷貝就是文件早已記錄的「新版」(1998 重打包版),經使用者決定後正式改為新基準。此後任何對這 4 個檔案的反組譯/位址引用,若沿用舊版位址(如 0x1B750/0x4e555/0x1c75e/0x14818/0x10c50 等),必須先用錨定特徵重新定位,不可假設位址不變。舊版 hash 保留在下方各檔案的 previous_edition 欄位供歷史對照,不再是有效基準。"
+  ],
   "files": [
     {
       "file": "FD2.EXE",
-      "size": 357074,
-      "md5": "b97caf2239a27a896069d03549d96e1e",
-      "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+      "size": 509158,
+      "md5": "33464c81e6a364fd0660141139aa8e6e",
+      "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+      "edition": "新版(1998 重打包版,2026-08-14 起為基準)",
+      "previous_edition": {
+        "note": "舊版,已遺失,不再可用",
+        "size": 357074,
+        "md5": "b97caf2239a27a896069d03549d96e1e",
+        "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+      }
     },
     {
       "file": "ANI.DAT",
@@ -47,8 +57,15 @@
     {
       "file": "FDOTHER.DAT",
       "size": 3382481,
-      "md5": "22f56e5027edc7c766ad34ca4e5aca93",
-      "sha256": "a81b13493725fb70e750c4d9e0dce4e1b57d0df312c4ad4157e6d45171b13bce"
+      "md5": "0496698f0ac67a3ff2448d8c7d80113f",
+      "sha256": "882580dfa31bd22e069eb151b7a86a2b8dbcd8194ec755b00036c96a4a0e0667",
+      "edition": "新版(1998 重打包版,2026-08-14 起為基準)",
+      "previous_edition": {
+        "note": "舊版,已遺失,不再可用(檔案大小相同,內容不同)",
+        "size": 3382481,
+        "md5": "22f56e5027edc7c766ad34ca4e5aca93",
+        "sha256": "a81b13493725fb70e750c4d9e0dce4e1b57d0df312c4ad4157e6d45171b13bce"
+      }
     },
     {
       "file": "FDSHAP.DAT",
@@ -59,14 +76,28 @@
     {
       "file": "FDTXT.DAT",
       "size": 120502,
-      "md5": "fe5c487ce4313485f1da9d48d35b05f9",
-      "sha256": "a4555f8a0e61e884b4f504d56a8bdde11672583bbbbc6506281ae10dcdfb1f69"
+      "md5": "6a4fa335323e603e2ea93098f3bf2366",
+      "sha256": "b47e39ee727482528da061a8705f5cdee8a9cf759447aeda298afe17d9dd8bcc",
+      "edition": "新版(1998 重打包版,2026-08-14 起為基準)",
+      "previous_edition": {
+        "note": "舊版,已遺失,不再可用(檔案大小相同,內容不同)",
+        "size": 120502,
+        "md5": "fe5c487ce4313485f1da9d48d35b05f9",
+        "sha256": "a4555f8a0e61e884b4f504d56a8bdde11672583bbbbc6506281ae10dcdfb1f69"
+      }
     },
     {
       "file": "FIGANI.DAT",
-      "size": 15279582,
-      "md5": "7da21ec0ad9917455459f1acb970bdf4",
-      "sha256": "e909314ce37b70701238fd24febc8f61603bbe8d81a9ecbf8f289c97a5b67a1f"
+      "size": 15310188,
+      "md5": "1da413eee684e300e2b38e14caabbf51",
+      "sha256": "c0cef326c5f8bc61252f03394140dbeed2280ddba0da99bfacdee1bf568846f8",
+      "edition": "新版(1998 重打包版,2026-08-14 起為基準)",
+      "previous_edition": {
+        "note": "舊版,已遺失,不再可用",
+        "size": 15279582,
+        "md5": "7da21ec0ad9917455459f1acb970bdf4",
+        "sha256": "e909314ce37b70701238fd24febc8f61603bbe8d81a9ecbf8f289c97a5b67a1f"
+      }
     },
     {
       "file": "TAI.DAT",

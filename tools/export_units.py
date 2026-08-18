@@ -14,17 +14,20 @@
 數值:以 (race,cls) 查 EXE base;查不到則用 race 任一 cls 近似,再不到給保底值。
 重製 Unit 用此 json;原版資產(著作權)只在本機,不入庫。
 
-hit/ev/crit(worklist 第 8 輪 gap-audit doc42 第 1 項補欄,doc02 §4.1 物理攻擊公式需要):
+hit/ev/crit(2026-08-14 依兩份反組譯證據取代 DEFAULT_HIT=90/DEFAULT_EV=5 近似值):
   - crit:職業暴擊率,查 docs/data/exe_tables/resist_crit.json(EXE 0x5219B 反組譯,已與
     doc02 §7.2 人物成長表交叉驗證吻合,如劍士5%/騎士3%/法師3%),查不到(單位表 cls 超出
     26 種玩家職業,如怪物專屬職業)一律 0(保守預設,非文件明確值)。
-  - hit/ev:doc03 明確記載這是「衍生值(由上面計算,直接改無效)」——由 DX + 已裝備武器/
-    護甲的 HIT/EV(item.json)在遊戲執行時合成,**不是**「敵/友單位 10B」表的原始欄位
-    (該表只有 RA/CL/HP/MP/AP/DP/DX/MV/EX,無 HIT/EV 欄)。remake 尚無裝備系統(doc42 gap
-    #12),也沒有敵方武器指定資料可用,故此處用固定近似值(DEFAULT_HIT/DEFAULT_EV,取
-    item.json 早期武器/護甲數值的中位數區間),而非反組譯或計算所得——doc42 稱「只是
-    匯出腳本未取用」不完全準確,實際是來源表本身缺這兩欄,待裝備系統/HIT-EV 合成公式
-    RE 出來後再取代此近似值。
+  - hit/ev:兩段已證實的原生邏輯合起來算出完整值(不再只是 base 近似)——
+    (1) native sub_1B750(0x1B750..0x1B83D,IDA Pro 9.4 + Capstone 雙工具反組譯,見
+    docs/data/fd2_runtime_equipment_recalc_1b750_ida.txt)證實 HIT/EV 起始值共用同一個
+    raw signed word +0x3e(=`dx`,doc32 已將 +0x37/+0x39/+0x3e 命名為 persistent base
+    AP/DP/DX),再各自加上已裝備物品的 item.json hit/ev word;(2) 建構器 0x10c50(official
+    IDA 9.4 pseudocode,見 docs/knowledge-base/56-fd2-remake-sdd.md「2026-07-27 —
+    constructor inventory flag materialization」)證實出場 inventory 只有前兩個 raw slot
+    會被自動判定為「已裝備」(flag 0x40),第 3 格以後一律只是持有(flag 0x00),不影響
+    HIT/EV。詳細算法見 spawn_equipped_item_ids()/hit_ev_for_unit()。不含 native command
+    19「速度術」+15 的戰鬥中暫時加成(那是回合內狀態,不屬於出場靜態值)。
 
 用法:
   python3 export_units.py <extracted/raw> <map_index> <out_dir> [native_unit_tables.json]
@@ -35,11 +38,47 @@ import parse_field
 
 EXE_UNIT = os.path.join(os.path.dirname(__file__), "..", "docs", "data", "exe_tables", "unit.json")
 EXE_RESIST_CRIT = os.path.join(os.path.dirname(__file__), "..", "docs", "data", "exe_tables", "resist_crit.json")
+EXE_ITEM = os.path.join(os.path.dirname(__file__), "..", "docs", "data", "exe_tables", "item.json")
 
-# HIT/EV 固定近似值(見檔頭註解:來源表本身無此欄,待裝備系統/合成公式 RE 出來後取代)。
-# 落點取 item.json 早期刀劍/防具 HIT(90~100 區間)、EV(5~10 區間)的中位數。
-DEFAULT_HIT = 90
-DEFAULT_EV = 5
+
+def spawn_equipped_item_ids(inventory_slots):
+    """出場 inventory 的前兩個 raw slot 是原版建構器(0x10c50)自動裝備的欄位。
+
+    證據:docs/knowledge-base/56-fd2-remake-sdd.md「2026-07-27 — constructor
+    inventory flag materialization」——official IDA 9.4 pseudocode 對 0x10c50
+    的結論:第一個 item cell 一律拿 flag 0x40(裝備);若 source byte0 是 0xff
+    (空),改把 source byte1 放進第一個 cell、第二個 flag 保留 0x80(空);否則
+    第二個 cell 也拿 flag 0x40。source byte2..7 一律 flag 0x00(持有,未裝備)
+    或 0x80(空)。換句話說只有 raw source 的前兩格可能被判定為「已裝備」,
+    2 號以後的格子(藥水、卷軸等)不會自動裝備,不影響 HIT/EV。
+    """
+    slots = list(inventory_slots)
+    while len(slots) < 2:
+        slots.append(0xFF)
+    first, second = slots[0], slots[1]
+    if first == 0xFF:
+        return [second] if second != 0xFF else []
+    equipped = [first]
+    if second != 0xFF:
+        equipped.append(second)
+    return equipped
+
+
+def hit_ev_for_unit(base_dx, inventory_slots, items_by_id):
+    """套用 native sub_1B750(見 docs/data/fd2_runtime_equipment_recalc_1b750_ida.txt)
+    的 HIT/EV 公式:兩者共用同一個 base(=dx),再各自加上已裝備物品(前兩格,見
+    spawn_equipped_item_ids)的 item.json hit/ev word。不含 native command
+    19「速度術」+15 的暫時性戰鬥中加成(那是回合內狀態,不屬於出場靜態值)。
+    """
+    hit, ev = base_dx, base_dx
+    for item_id in spawn_equipped_item_ids(inventory_slots):
+        item = items_by_id.get(item_id)
+        if item is None:
+            continue
+        hit += item.get("hit", 0)
+        ev += item.get("ev", 0)
+    return hit, ev
+
 
 # FDFIELD death_effect type=2 會以 16-bit value 索引 EXE 特殊死亡 handler 表。
 # 0x34F74(id39) 把三位元組 00 D3 00 交給 reward dispatcher；
@@ -187,6 +226,7 @@ def main(argv):
     info = parse_field.parse_map(raw, m)
     exe = json.load(open(EXE_UNIT, encoding="utf-8"))
     resist_crit = json.load(open(EXE_RESIST_CRIT, encoding="utf-8"))
+    items_by_id = {it["id"]: it for it in json.load(open(EXE_ITEM, encoding="utf-8"))}
     native_tables = None
     if len(argv) >= 5:
         native_tables = json.load(open(argv[4], encoding="utf-8"))
@@ -201,13 +241,17 @@ def main(argv):
         raw_unit_key = u["raw_unit_key"]
         bs = base_stats(exe, u["race"], u["cls"])
         cls_name = PORTRAIT_CLS_NAME.get(raw_unit_key, bs.get("cls_name", ""))
+        hit, ev = hit_ev_for_unit(bs["dx"], u.get("inventory_slots", []), items_by_id)
         rec = {
             "camp": u["camp"], "cls": u["cls"], "cls_name": cls_name,
             # `portrait` remains a legacy editable-schema field. Its source is
             # the raw b1 key, not a universal DATO identity proof.
             "lv": u["lv"], "portrait": raw_unit_key, "group": u.get("group", 0),
             "hp": bs["hp"], "mp": bs["mp"], "ap": bs["ap"], "dp": bs["dp"], "mv": bs["mv"],
-            "hit": DEFAULT_HIT, "ev": DEFAULT_EV, "crit": crit_by_cls(resist_crit, u["cls"]),
+            # HIT/EV = native sub_1B750 公式:base(=dx)+已裝備物品(出場 inventory 前兩格,
+            # 見 spawn_equipped_item_ids)的 item.json hit/ev word,兩份反組譯證據見
+            # hit_ev_for_unit() docstring。取代舊的 DEFAULT_HIT=90/DEFAULT_EV=5 近似值。
+            "hit": hit, "ev": ev, "crit": crit_by_cls(resist_crit, u["cls"]),
             "fig": raw_unit_key,  # legacy compatibility approximation; not native unit+2
             "map_selector_key": u["native_map_selector_key"],  # FDFIELD b0 -> 0x11019 -> unit+2 slot
             "native_record_byte6": u["native_record_byte6"],  # FDFIELD b0 -> runtime record +6

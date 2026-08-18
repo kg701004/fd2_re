@@ -648,17 +648,78 @@ target 的 `+0x27` 必為零、class `+0x20` 不得為 `0x19/0x1a`、且 `rand()
 `0x1C81F(target,10)` 固定扣 10 HP、顯示 damage，並寫 `rand()%4+2` 至 `+0x27`。它須獨立追蹤，不能併稱為 cure
 或依 raw offsets 猜測 status name。
 
+**2026-08-14 補充**：`+0x25` 已在同一天對 `0x1A866` 的反組譯中獨立確認為中毒(見上文「這是
+phase-based timer ABI」段落補充)——`0x1A866` 第一個迴圈對 `+0x25` 非零的單位做
+`maxHP/10` 傷害，跟這裡 ID20 清除的是同一個 byte。兩個互不相關的函式(一個是每回合傷害迴圈，
+一個是指令清除邏輯)都指向同一個 offset，讓「ID20=解毒」這個推論有兩個獨立來源交叉支持，
+不是單一函式內部猜測。`+0x26`(ID21 清除)本身仍未命名，但已知 `0x1A30B` 的己方自然回血
+sweep 也要求 `+0x26==0` 才生效，跟中毒的擋回血模式一致——只能當作「+0x26 可能是同類 debuff」
+的旁證，還不到能命名的程度。**訂正(同一天稍晚)**：上一句「只在自己的檔案與測試裡被呼叫，尚未接進指令執行路徑」是錯的——
+那是只查了 `ClearNativeUnitByte`/`ApplyNativeRawApplication` 這兩個底層 raw byte-array
+primitive 的呼叫端，漏了更高層、真正在玩的 Unit-based 版本。`battle.ExecuteNativeCommandClearRestore`
+(ID20/21)與 `battle.ExecuteNativeCommandApplication`(ID22/26/27)**已經**接在
+`cmd/fd2/main.go` 的指令執行 dispatch 裡，含目標解析、MP 扣除全部到位。`ExecuteNativeCommandApplication`
+把 ID26 綁定到 `+0x25`、ID27 綁定到 `+0x26`、ID22 綁定到 `+0x27`——對照 `ExecuteNativeCommandClearRestore`
+把 ID20 綁定到 `+0x25`、ID21 綁定到 `+0x26`，形成兩組清除/施加對稱指令(ID20↔26 同為 `+0x25`＝中毒，
+ID21↔27 同為 `+0x26`)。新增整合測試 `TestNativeCommand26PoisonLifecycleThroughTickToCommand20Cure`
+證實 ID26 下毒→camp-phase tick 扣血→ID20 解毒的完整迴圈，`go test` 全綠。
+
 這六個 transient bytes 的 decrement 已由 official IDA 釘死，但 gate 仍是 raw ABI：已重跑的 caller `0x1A4D1`、`0x1A55E`、`0x1A797` 分別傳入 selector 1/0/2；`0x1A866` 只接受 `record+6 == selector` 且 `(record+5 & 1)==0` 的 record；不可把它改寫成 `Camp/OnField/Alive` normalized 條件。通過 gate 後依序對 `unit+0x22..+0x27` 的每個非零 byte decrement。任何一個 byte 變零時才顯示 expiry feedback 並呼叫 `0x1B750(unit)` 重算 derived fields；因此 ID17/18 的 AP/DP 增幅會在自己的 duration 歸零後由重算移除，其他 flag 不可因為共用 sweep 就被誤認為同一 status。這是 phase-based timer ABI，不是每次 action 或 frame 的 timer；status labels/UI icon 仍未命名。
+
+**2026-08-14 補充**：`0x1a866` 其實有**兩個**迴圈，不是只有上述的 decrement/expiry 迴圈。
+第一個迴圈(在 decrement 迴圈之前)只檢查 `record+0x25`(=`NativeTransient` 陣列 index 3)是否
+非零——非零就對該單位套用 `currentHP -= maxHP/10`(整數除法，clamp 至 0)，**不會**去動這個
+byte 本身(遞減是第二個迴圈的事)。這證實 `+0x25`(index 3)就是「中毒」：legacy `TickStatus`
+的 `dmg := u.MaxHP/10` 公式本身完全正確，只是先前不知道它該綁定哪一個 raw index、也不知道
+這其實是獨立於 decrement 迴圈的第二次掃描。已寫入 `battle.ApplyNativeTransientPoisonDamage`，
+呼叫時機與 selector 見上文 `0x1a30b` 修正段落。
+
+**2026-08-14 再補充：三個 index 的正式名稱已找到**——`docs/data/command_labels.json`
+(來源 FDTXT_000 resource，公式 `0x1b9+command_id`，provenance `0x1ceed→0x15f84`，本專案
+已有的既存反組譯證據，非本次新查)記載了每個 native command 的真實遊戲內名稱：
+`command20="解毒術"`、`command26="毒擊術"`(兩者皆綁定 `+0x25`，一清一施，見下文
+`ExecuteNativeCommandClearRestore`/`ExecuteNativeCommandApplication` 段落)——跟今天從
+`0x1A866` 反組譯獨立推出「`+0x25`=中毒」完全吻合，形成公式面+命名面雙重印證。同理
+`command21="社麻術"`(疑為「解痲術」的字模誤判，見 doc09 已知的少數罕用字模誤判問題)、
+`command27="麻庫術"`(疑為「麻痺術」)皆綁定 `+0x26`，故 **`+0x26`(index 4)= 麻痺**；
+`command22="封咒術"` 綁定 `+0x27`，故 **`+0x27`(index 5)= 封咒**，且 `+0x27` 目前找不到
+對應的清除指令(可能只能靠自然歸零解除，沒有主動解咒指令)。至此 6 個 transient byte 只剩
+`+0x22/+0x23/+0x24`(index 0/1/2，command17/18/19 的 AP/DP/HIT+EV 增益，各自對應
+`command_labels.json` 的「魔刃術/魔鎧術/風行術」)未涉及狀態異常命名——這三個是增益不是異常，
+名稱本身已經很清楚，不需要再找「debuff 名稱」。
 
 同一場景流程中的 `0x1A7BD`/`0x1A7F1` 不是 transient selector 語意本身：前者在 `[0x53AF9] != 0` 時以 `0x111BA(0x1A4D,0,0x40)` 建立 resource handle 並寫 `[0x53B0F]`，後者釋放該 handle。`0x1A4EB` 與 `0x1A58F` 都採「setup → unit scan → release」順序；因此 selector→campaign phase 仍不可由這兩個 resource helper 推導。
 
 Remake 已以 `Unit.NativeTransient[6]` 及 optional `NativeRecordByte5/6` 保留這段 raw ABI，並提供 bounded offset access（只接受 `0x22..0x27`）及 `State.TickNativeTransientsRaw(selector)`；FDFIELD b0→runtime `+6` 的 parser/exporter provenance 也已補上，缺少 raw gates 時仍 fail-closed。它刻意不呼叫 normalized `TickStatus` 或 legacy shared `BuffTurns`，也尚未自行接 campaign equipment recompute；expiry consumer/UI 必須先帶入 `0x1B750` 對應的資料依賴才能開放。
 
 Selector caller audit（Docker Capstone）已補上 raw 值但不替它們命名：`0x1a4d1` 以 `push 1` 呼叫
-`0x1a866`，`0x1a55e` 以 `push 0` 呼叫，`0x1a797` 以 `push 2` 呼叫；三者各自位於不同
-redraw/phase caller，不能直接映射成 Go `Camp` 或玩家／敵方回合。`0x1a30b` 內部另有
-`record+6 == 2` 的 sweep，與上述 direct callers 分開。故 runtime 仍只提供 raw selector API，
-不把 `completeTurn` 或 normalized camp 自動綁到任一 selector。
+`0x1a866`，`0x1a55e` 以 `push 0` 呼叫，`0x1a797` 以 `push 2` 呼叫。
+
+**2026-08-14 修正**：上一段「三者各自位於不同 redraw/phase caller」「`0x1a30b` 內部另有
+`record+6 == 2` 的 sweep，與上述 direct callers 分開」這個說法是錯的——玩家提供對「新版」
+基準版 FD2.EXE 的完整 Ghidra 反組譯（976 個函式全覆蓋），逐行核對後確認：`0x1a4d1`/
+`0x1a55e`/`0x1a797` 三個呼叫點**全部位於同一個函式 `FUN_0001a30b`(0x1a30b,size 1202)內部**，
+不是分散在不同的 caller。`0x1a30b` 本體的完整流程是單一線性序列：
+1. `record+6==2` 的 own-camp 自然回血 sweep(`+0x40 += +0x42/5` clamp，即
+   `fdother.NativeBattleEntryStep` 已證實的公式，額外閘門 `+0x25==0` 且 `+0x26==0`——
+   排除中毒與另一個尚未命名的狀態)；
+2. `push 1; call 0x1a866`(selector 1)；
+3. 兩次勝負條件檢查(`0x1a7bd`/`0x1d80b`/`0x1a7f1`)；
+4. `push 0; call 0x1a866`(selector 0)；
+5. 再兩次勝負條件檢查，其中 `INC [0x53bef]`(=`NativeRoundCounter`)剛好夾在這裡；
+6. 一段 9 幀 + 二次方版位的回合數字跑馬燈演出(`0x15f0e`/`0x187d6`/`0x15e71` 等)；
+7. `push 2; call 0x1a866`(selector 2)，結束。
+
+也就是說 `0x1a30b` 才是「每回合結束時真正的原生 orchestrator」，`0x1a866` 只是它內部重複呼叫
+三次的子函式；先前把兩者當成「分開的東西」是誤讀。**仍然成立、未變的結論**：selector
+數值本身仍不能直接映射成 Go `Camp` 或玩家/敵方回合(玩家/敵方是 remake 自己的抽象，原版是
+1/0/2 三個 raw camp 值)，`runtime` 也仍只暴露 raw selector API。但呼叫**順序**(own regen→
+selector1→selector0→round++→selector2)與**觸發時機**(每回合結束一次，非逐 camp 各自觸發)
+現在已經是逐行反組譯證實的事實，不再是未知。remake 已依此順序在
+`cmd/fd2/main.go:completeTurn()` 接上 `battle.State.NativeCampPhaseOwnRegen()`、
+`ApplyNativeTransientPoisonDamage(selector)`、`TickNativeTransientsRaw(selector)`，
+selector 順序固定傳入 `1,0,2`；目前所有地圖資產的 `native_transient` 均為全零，這段接線
+目前是無副作用的(要等 native command 執行路徑開始寫入 `NativeTransient` 才會有實際效果)。
 
 ID23 走 `0x1CFF0` 的 command-`0x17` special selector，不能套 generic two-stage target contract。其 handler
 `0x2218A` 以 record23 扣 MP，並呼叫 `0x22253` 兩次：依 C stack ABI，第一次將 selected unit 的 runtime

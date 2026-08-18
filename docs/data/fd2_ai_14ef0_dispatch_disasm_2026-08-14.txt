@@ -1,0 +1,192 @@
+# 來源檔案 FD2.EXE（"新版"1998 重打包版，現行參考基準）；大小 509158 位元組；
+# MD5 33464c81e6a364fd0660141139aa8e6e；
+# SHA-256 8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b
+#
+# 位址取得方式：舊版（357074 bytes，已遺失）doc 位址不可直接套用新版，見
+# docs/knowledge-base/11-enemy-ai.md 的「位址不可跨版位移」節。本檔位址改用
+# 「先確認 0x13A9F dispatcher 在新版的真實位置（0x38CBD，位元組特徵搜尋確認），
+# 再讀取其對 0x14EF0 的呼叫（0x038d09 call 0x3a104）取得 0x14EF0 真實新版位址」
+# 這條鏈路確認，非猜測位移。0x3a104 即舊版 doc 命名的「0x14EF0」。
+#
+# 本檔涵蓋 0x14EF0 本體（三分數決策 + 分派）及其三個執行分派目標的函式開頭。
+# python 環境：capstone 需要用 `python`（非 `python3`）啟動；le_xref.parse_le
+# 取得 LE object/page 表，linear_to_file 換算後直接對 raw bytes 跑 capstone，
+# 不要用 tools/disasm_le.py 的 dis/range 子命令（對本檔案有已知 bug，見
+# feedback_fd2_disasm_le_range_bug 記憶）。
+
+## 0x14EF0（新版 0x3A104）本體：三分數決策 + 分派
+
+0x03a104  push    0x20
+0x03a109  call    0x5c243                  ; prologue，frame size 0x20
+0x03a10e  push    ebx
+0x03a10f  push    esi
+0x03a110  push    edi
+0x03a111  push    ebp
+0x03a112  sub     esp, 4
+0x03a115  mov     esi, dword ptr [esp + 0x18]   ; esi = actor
+0x03a119  mov     edi, dword ptr [esp + 0x1c]   ; edi = selector
+0x03a11d  push    edi
+0x03a11e  push    esi
+0x03a11f  call    0x3944b                  ; = 舊版 0x14237（物理評分/落點/目標枚舉，0x53C43/47/4B/4F 是輸出）
+0x03a124  add     esp, 8
+0x03a127  push    edi
+0x03a128  push    esi
+0x03a129  call    0x3ab9e                  ; = 舊版 0x1598A（法術評分，MaxScore -> [0x53C23]，battle.ScoreNativeAI1598A 已閉合）
+0x03a12e  add     esp, 8
+0x03a131  push    edi
+0x03a132  push    esi
+0x03a133  call    0x3a892                  ; = 舊版 0x1567E（道具評分，MaxScore -> [0x53C33]，battle.ScoreNativeAI1567E 已閉合）
+0x03a138  add     esp, 8
+0x03a13b  mov     eax, esi
+0x03a13d  shl     eax, 2
+0x03a140  add     eax, esi
+0x03a142  shl     eax, 4
+0x03a145  mov     ebx, dword ptr [0x3a45]       ; -> 0x53a45 roster base
+0x03a14b  lea     edx, [ebx + eax]              ; edx = &actorRecord
+0x03a14e  mov     ecx, dword ptr [0x3c4b]       ; -> [0x53C4B]，0x14237 寫入的 target index
+0x03a154  mov     eax, ecx
+0x03a156  shl     eax, 2
+0x03a159  add     eax, ecx
+0x03a15b  shl     eax, 4
+0x03a15e  add     eax, ebx                      ; eax = &targetRecord
+0x03a160  mov     bl, byte ptr [edx + 0x34]
+0x03a163  and     bl, 0x40                       ; ebp = actorRecord[0x34] & 0x40（record+0x34 高四位其中一 bit，非低四位 mode nibble）
+0x03a166  movzx   ebp, bl
+0x03a169  movzx   edx, word ptr [edx + 0x48]     ; actor AP（record+0x48，battle.ApplyNativeEquipmentRecalc 已證實此欄位）
+0x03a16d  movzx   eax, word ptr [eax + 0x4a]     ; target DP（record+0x4A）
+0x03a171  sub     edx, eax
+0x03a173  mov     dword ptr [esp], edx           ; local score = actor.AP - target.DP（重算，供後續 spell-exec 分支用；跟 0x14237 內部已有的 score 不是同一份存放位置）
+0x03a176  cmp     dword ptr [0x3c4f], 6          ; -> [0x53C4F]（0x14237 寫入，doc11 舊稱「priority」，這裡當成 >=6 gate 用——實際數值只會是 8/0x12/初始 sentinel，見下方推論）
+0x03a17d  jge     0x3a198
+0x03a17f  cmp     dword ptr [0x3c23], 6          ; -> [0x53C23] spell MaxScore
+0x03a186  jge     0x3a198
+0x03a188  cmp     dword ptr [0x3c33], 6          ; -> [0x53C33] item MaxScore
+0x03a18f  jge     0x3a198
+0x03a191  xor     eax, eax                        ; 三者皆 <6 -> 回傳 0（無行動）
+0x03a193  jmp     0x47dd2                         ; 共用 epilogue
+0x03a198  mov     eax, dword ptr [0x3c4f]
+0x03a19d  cmp     eax, dword ptr [0x3c23]
+0x03a1a3  jle     0x3a1b9
+0x03a1a5  cmp     eax, dword ptr [0x3c33]
+0x03a1ab  jle     0x3a1b9
+0x03a1ad  push    edi
+0x03a1ae  push    esi
+0x03a1af  call    0x3a6a2                        ; 物理嚴格最高 -> 物理執行（見下）
+0x03a1b4  jmp     0x3a252
+0x03a1b9  mov     eax, dword ptr [0x3c4f]
+0x03a1be  cmp     eax, dword ptr [0x3c23]
+0x03a1c4  jne     0x3a1ff
+0x03a1c6  cmp     eax, dword ptr [0x3c33]
+0x03a1cc  jle     0x3a1ff
+0x03a1ce  push    dword ptr [0x3c2f]              ; -> [0x53C2F]（尚未命名的 spell-related global）
+0x03a1d4  call    0x73a7a                          ; 由索引取 record 指標的共用 helper（結果 eax 被當 record ptr 用，見後續 byte[eax+6]）
+0x03a1d9  add     esp, 4
+0x03a1dc  cmp     dword ptr [0x3c2f], 0xb
+0x03a1e3  jge     0x3a1f9
+0x03a1e5  movzx   eax, word ptr [eax]
+0x03a1e8  cmp     eax, dword ptr [esp]
+0x03a1eb  jl      0x3a1ad
+0x03a1ed  push    edi
+0x03a1ee  push    esi
+0x03a1ef  call    0x3a525                        ; 法術執行（見下）
+0x03a1f4  jmp     0x3a252
+0x03a1f9  test    ebp, ebp
+0x03a1fb  je      0x3a1ed
+0x03a1fd  jmp     0x3a1ad
+0x03a1ff  mov     eax, dword ptr [0x3c4f]
+0x03a204  cmp     eax, dword ptr [0x3c33]
+0x03a20a  jne     0x3a221
+0x03a20c  cmp     eax, dword ptr [0x3c23]
+0x03a212  jle     0x3a221
+0x03a214  test    ebp, ebp
+0x03a216  jne     0x3a1ad
+0x03a218  push    edi
+0x03a219  push    esi
+0x03a21a  call    0x3a269                        ; 道具執行（見下）
+0x03a21f  jmp     0x3a252
+0x03a221  mov     eax, dword ptr [0x3c23]
+0x03a226  cmp     eax, dword ptr [0x3c4f]
+0x03a22c  jle     0x3a236
+0x03a22e  cmp     eax, dword ptr [0x3c33]
+0x03a234  jge     0x3a1ed                        ; spell 嚴格 > 兩者 -> 法術執行
+0x03a236  mov     eax, dword ptr [0x3c33]
+0x03a23b  cmp     eax, dword ptr [0x3c4f]
+0x03a241  jle     0x3a255
+0x03a243  cmp     eax, dword ptr [0x3c23]
+0x03a249  jle     0x3a255
+0x03a24b  push    edi
+0x03a24c  push    esi
+0x03a24d  call    0x3a269                        ; item 嚴格 > 兩者 -> 道具執行
+0x03a252  add     esp, 8
+0x03a255  mov     dword ptr [0x1a83], 0
+0x03a25f  mov     eax, 1
+0x03a264  jmp     0x47dd2
+
+## 物理執行分派目標（0x3a6a2）—— actor/target/dest 消費，0x53C43/47/4B 直接對映 doc11 已記載欄位
+
+0x03a6a2  push    0x2c
+0x03a6a7  call    0x5c243
+0x03a6ac  push    ebx
+0x03a6ad  push    esi
+0x03a6ae  push    edi
+0x03a6af  sub     esp, 0xc
+0x03a6b2  mov     ebx, dword ptr [esp + 0x1c]
+0x03a6b6  mov     dword ptr [0x1a83], 0
+0x03a6c0  push    ebx
+0x03a6c1  call    0x37f8f                  ; = 舊版 0x12D7B（mode5 investigation 已確認：重置 pathing 原點成單位當下座標，無副作用）
+0x03a6c6  add     esp, 4
+0x03a6c9  push    dword ptr [esp + 0x20]
+0x03a6cd  push    ebx
+0x03a6ce  push    dword ptr [0x3c47]        ; -> [0x53C47] destination Y（doc11 已記載）
+0x03a6d4  push    dword ptr [0x3c43]        ; -> [0x53C43] destination X（doc11 已記載）
+0x03a6da  call    0x39d8c                  ; = 舊版 0x14B78（移動）
+0x03a6df  add     esp, 0x10
+0x03a6e2  mov     dword ptr [0x1a83], 1
+0x03a6ec  push    dword ptr [0x3c4b]        ; -> [0x53C4B] target index（doc11 已記載）
+0x03a6f2  call    0x37f8f                  ; 再次重置 pathing 原點（移動後，供攻擊呈現用？未繼續追）
+
+## 法術執行分派目標（0x3a525）—— 讀 [0x53C2F]，經共用 record-by-index helper 取 raw camp byte(+6)
+
+0x03a525  push    0x58
+0x03a52a  call    0x5c243
+0x03a52f  push    ebx
+0x03a530  push    esi
+0x03a531  push    edi
+0x03a532  sub     esp, 0x30
+0x03a535  push    dword ptr [0x3c2f]        ; -> [0x53C2F]
+0x03a53b  call    0x73a7a                  ; record-by-index helper（同上）
+0x03a540  add     esp, 4
+0x03a543  mov     esi, eax                  ; esi = record ptr
+0x03a545  cmp     dword ptr [esp + 0x44], 0
+0x03a54a  jne     0x3a55f
+0x03a54c  movzx   eax, byte ptr [eax + 6]   ; raw camp byte(+6)
+0x03a550  test    eax, eax
+0x03a552  jne     0x3a55b
+0x03a554  mov     edi, 1
+0x03a559  jmp     0x3a563
+0x03a55b  xor     edi, edi
+0x03a55d  jmp     0x3a563
+0x03a55f  movzx   edi, byte ptr [eax + 6]
+
+## 道具執行分派目標（0x3a269）—— 讀 [0x53C3F]（inventory slot，battle.NativeAI1567EScoreResult.InventorySlot 已記載）
+
+0x03a269  push    0x54
+0x03a26e  call    0x5c243
+0x03a273  push    ebx
+0x03a274  push    esi
+0x03a275  push    edi
+0x03a276  push    ebp
+0x03a277  sub     esp, 0x24
+0x03a27a  mov     ebp, dword ptr [esp + 0x38]   ; ebp = actor index
+0x03a27e  mov     eax, ebp
+0x03a280  shl     eax, 2
+0x03a283  add     eax, ebp
+0x03a285  shl     eax, 4
+0x03a288  mov     edi, dword ptr [0x3a45]
+0x03a28e  add     edi, eax                      ; edi = &actorRecord
+0x03a290  push    dword ptr [0x3c3f]            ; -> [0x53C3F] inventory slot（doc: NativeAI1567EScoreResult.InventorySlot）
+0x03a296  push    ebp
+0x03a297  call    0x40936                        ; item 使用/消耗 helper（未繼續追）
+0x03a29c  add     esp, 8
+0x03a29f  mov     dword ptr [0x3c57], eax
+0x03a2a4  push    eax

@@ -150,6 +150,51 @@ gate；全域事件 handler 可能先設 pending，但章節 handler 仍會執�
 | 10 | 先走 `0x14EF0`；失敗改移向 `+0x35/+0x36` |
 | 11 | 先以 `0x1598A` 建第一組結果；signed `[0x53C23]>=6` 時執行 `0x15311`，但仍繼續以 `0x14237` 建物理結果。signed `[0x53C4F]>=6` 時執行 `0x1548E`；否則走 `0x14121`，失敗才呼叫 `0x13FD4` |
 
+**2026-08-14 模式 5 深挖 + 位址不可跨版位移警示**：模式 5 的 `+0x3D` 事件
+資料機制已完整反組譯——`0x12D7B(actor)` 只是把 pathing 原點重置成單位當下
+座標(讀 record[0]/[1] 轉呼叫另一個座標 setter),對可觀察遊戲狀態無副作用,
+可安全略過;`0x15DF3(event_id,&out)` 對地圖網格做雙層迴圈掃描,呼叫
+`0x3804C(x,y,&local)` 取每格 FDSHAP 衍生資料,篩選條件是地形控制旗標
+`&0x60==0x20`(與 doc25 已記載的「寶箱/隱藏物品」旗標定義同一組位元),且
+其內嵌值等於 `event_id`,找到就把 (x,y) 寫回 `*out`;抵達後在
+`[0x53a55+0x53+event_id*3]` 讀 3-byte-stride 記錄(kind byte + word 值),
+`kind<2` 時寫入 `record+0x31/+0x32`(即 `Unit.NativeRecordDeathEffect` 既有
+儲存位置),`kind==0` 額外呼叫 `0x1BB8C`(`AssignNativeReservedItem`)發放
+物品,最後標記 `[0x53AD5+event_id]`(`State.NativeEventState`)為已觸發並把
+`record+0x34` 整個寫成 7(下次評估直接進模式 7,因為此時已站在目標格,會
+立刻觸發模式 7 的抵達停用)。**"已觸發"分支**(`NativeEventState[id]!=0`)
+與模式 1 的備援體完全同構,已在 `ApplyNativeAIMode5MovementFallback` 實作。
+
+**"尚未觸發"分支已補上(2026-08-15)——原以為缺資料抽取,實際上資料早就
+在,只是沒接線**:動手抽取前先查 `remake/internal/*/*.go`(依
+`feedback_check_existing_evidence_before_disasm` 記憶的教訓)發現
+`State.Treasures map[Cell]Treasure`(`model.go` 的 `loadTreasures`,在
+`battle.Load` 時就已建好)早就把「FDSHAP 逐格 `&0x60` 旗標(`0x40`=隱藏,
+對應這裡說的地形控制旗標)+ 控制段 16-slot 寶物 kind/value 表(`f.Chests`,
+即 `[0x53a55+0x53+id*3]` 那組 3-byte-stride 記錄)」join 好了,資料來源是
+`tools/sync_native_treasures.py`(逐格 `treasure_slots`/`treasure_hidden`,
+每張 `map.json` 都有)——這正是 `0x15DF3` 掃描重現所需的完整資料,只是先前
+沒人把它接進 AI 移動 fallback。已在 `ApplyNativeAIMode5MovementFallback`
+補上:掃 `s.Treasures` 找 `Slot==record+0x3D` 的格子(`nativeMode5TreasureTargetCell`),
+找到就用既有的 `ctx.moveToward` 移動過去(不使用 `OpenedTreasure` 二次
+過濾——那是玩家 `ClaimTreasure` 用的獨立旗標,跟這裡已經檢查過的
+`NativeEventState` 是不同概念)。找不到對應格子(該圖真的沒有這個
+event_id,或資料不全)才 `ok=false` 交還呼叫端,不猜測。新增
+`TestApplyNativeAIMode5MovementFallbackMovesTowardTreasureCellWhenNotYetConsumed`
+覆蓋成功路徑;`go build/vet/test ./...` 全綠,零回歸。抵達後套用效果
+(寫 `record+0x31/+0x32`、發放物品、標記已觸發、`record+0x34=7`)仍未做——
+那是 task #98(執行鏈)的範圍,這裡只補了移動決策。
+
+反組譯這兩個函式時發現一個重要教訓:`docs/data/fd2_ai_mode_dispatch_disasm.txt`
+的位址(`0x13a9f` 等)全部來自已遺失的舊版 357074-byte EXE,**不能直接套用到
+現行 509158-byte「新版」參考檔**——實測用位元組特徵搜尋確認,dispatcher 本體
+在新版位於 `0x38CBD`,不是 `0x13A9F`,且位移量本身在模組內也不是常數
+(進入點位移 0x25114,其第一個被呼叫函式位移卻是 0x25214,相差 0x100)。
+正確作法是直接對新版 EXE 在其真實位址重新反組譯(byte-pattern 定位入口後
+用 capstone 讀取當下 call 目標),而非把舊位址加一個猜測 delta。這不影響
+模式 0/1/2/3/4/7/8/9/10 既有結論(全部源自自洽的舊版 dump 檔,並與 doc11
+自身獨立記載的表格交叉核對,從未把舊位址直接套進新版即時反組譯)。
+
 重製資料管線現保留 `native_record_byte34/35/36`，並可依原版規則
 讀取低四位或保留高四位地批次改寫。這只是可執行的原始資料契約；
 正規化 `NextAIPlan` 尚未依此表驅動，所以不能宣稱敵方回合已與原版相同。
@@ -240,6 +285,571 @@ max HP `+0x42`，且 raw `+0x25/+0x26` 都為零時，寫入
 評分契約；`SelectNativePhysicalAttackCandidate` 另保存優先級、分數及同分
 保留先出現者的選擇順序。兩者沒有接入目前正規化 `NextAIPlan`，也沒有替
 `0x1DEBE`、raw `+8` 或兩個 `word` 欄位擴張語意。
+
+**2026-08-14 欄位語意交叉確認 + `0x1DEBE` 補完**：`ApplyNativeEquipmentRecalc`/
+`ApplyNativeRuntimeEquipmentRecalc`(既有,`native_equipment.go`)已證實
+`record+0x48/+0x4A/+0x4C/+0x4E` 分別是裝備結算後的 AP/DP/HIT/EV;
+`tryIdleRecovery`(本次 session 稍早,mode 0/1 移動 fallback)已證實
+`record+0x40/+0x42` 是目前/最大 HP。兩者交叉後,`0x14237` 的物理評分公式
+語意變得清楚(僅公式層面,不改變任何 raw 命名規則):`actor AP − target DP`,
+若嚴格大於 `target 目前 HP` 則分數翻倍、優先級提高(等同「預估可斬殺」加權),
+`0x1DEBE` 條件成立再加 `actor DP − target AP`(近戰反打加成)。`0x1DEBE(actor,x,y)`
+本身(doc91 `RE-ITEM-ADJACENCY-GATE-1DEBE` 條目,前次 session 已閉合)現已補上
+Go 實作:`NativeAI1DEBEAdjacencyGate`——active gate、Manhattan 相鄰一格、
+`0x1B83D(actor,0)`(`NativeEquippedInventorySlot`,既有)找到的裝備武器之
+`item row +0x0b<=1`。
+
+**地形百分比表(第 3-4 步)**:`ebx`=地形 control byte(來自 `0x3804C`/`0x12E38`
+查表,mode5 investigation 已確認的通用函式),以 `ebx*4` 索引一張 6 筆
+dword-stride 表,`adjustedWord = word + word*table[ebx]/100`(有號除法向零截斷)。
+表的絕對位址(`0x51A12`/`0x51A2A`)在新版 EXE 上因 DOS4GW loader 重定位而無法
+靠檔案位移直接推算,但**表的實際數值早就在 `remake/internal/battle/terrain.go`
+的 `NativeTerrainAPDPPct` 裡**(`0x1acf3` 索引同一組位址,6 筆:
+`(5,0)/(0,0)/(-5,10)/(-5,10)/(-5,-5)/(0,0)`),且已接進 `combat.go` 的
+`AttackWithRNG`/`estDamage`。2026-08-14 用 DOSBox-X live memory 直接讀執行中
+的遊戲記憶體獨立重新驗證過一次(方法:對照檔案裡已知的函式 prologue 位元組特徵,
+在 live memory 找到同一特徵算出位移差值,再換算目標指令的真實位址;
+`MEMDUMPBIN` 的 selector 參數必須用真正的 flat selector 如 `178`,填 `0`
+會讀到垃圾),讀出的數值逐項相同;也用戰場游標實測的地形 UI 面板
+(平地 A+05/D+00、樹林 A−05/D+10)獨立交叉驗證,同樣吻合——UI 面板顯示的正是
+這張表的原始百分比,不是套用到特定單位 AP/DP 後的結果。三個獨立來源(舊
+disasm 公式、live memory、遊戲內 UI)在此收斂,信心度很高。這套 DOSBox-X
+live memory 萃取方法論存進了使用者記憶(`fd2-dosbox-live-memory-extraction`),
+下次真的遇到位址算不出來的資料缺口可以直接套用。**教訓**:判斷「這個資料
+還沒有」之前一定要先查 `remake/internal/*/*.go` 有沒有現成實作,不能只查
+`docs/`——花了一整輪裝 Docker、建 dosbox-x 才發現這張表根本早就在 `terrain.go`
+裡,`feedback_check_existing_evidence_before_disasm` 這條記憶已擴大範圍記錄
+此教訓。
+
+**`0x14237` composer 真正還缺的部分**:上面關閉的是**公式**(第 1、3、5-7 步)。
+第 2 步(`0x14288→0x1B83D`/`0x1429C→0x1B722→0x4E56C` 取 actor raw command
+record)與第 4 步(`0x14430→0x14818` 從候選格建立目標索引陣列,含 per-target
+地形修正)都還沒有 Go 實作,也還沒有任何函式把 `NativeAIPhysicalDestinations`
+(落點)、目標枚舉、`TerrainAPDPPct`(地形修正)、
+`ScoreNativePhysicalAttackCandidate`+`SelectNativePhysicalAttackCandidate`
+(評分/選擇)串成一個「輸入 actor,輸出最佳物理攻擊候選」的完整函式——
+`combat.go` 現有的 `estDamage` 只是不含 priority 分級/`0x1DEBE`/raw`+8`
+的 normalized 估值,不能當作已完成。
+
+**2026-08-14 對第 2/4 步的進一步反組譯**(延續同一份
+[`fd2_ai_physical_score_14237_disasm_partial_2026-08-14.txt`](../data/fd2_ai_physical_score_14237_disasm_partial_2026-08-14.txt),
+補完到第 374 行,涵蓋完整第 1-4 步本體):
+
+- **第 2 步已確認**:`0x40a51(actor,0)` 就是 `0x1B83D(actor,a2=0)`(裝備武器 slot,
+  找不到回 -1、直接整個函式回傳 0——跟已知的 attack precondition 完全一致);
+  找到 slot 後 `0x40936(selector,slot)`→item ID,再 `0x73ad0(itemID)`→該 item
+  在 EXE item table 的 row 指標,讀 **row `+0xb`/`+0xc`** 存起來(doc32 已標記
+  這兩個欄位是「caller-specific geometry inputs」,現在確認 caller 正是
+  `0x14237` 物理評分本身,跟目標枚舉的幾何參數有關,不是通用武器射程)。
+- **候選格集合的建構**(第 1-2 步收尾)其實是 `0x14237` 自己內部呼叫
+  `0x397e1`(反標記對方陣營格 `0x40`+四鄰格,邏輯跟既有
+  `nativeAIMarkOpposingGroupFlags` 完全一致)接著 `0x398e5`(疑似 budget
+  flood-fill,尚未展開)產生的——證實 `battle.NativeAIPhysicalDestinations`
+  重現的正是這條鏈路的最終結果,可以直接重用,不用重新反組譯 `0x397e1`/
+  `0x398e5`/`0x398bb` 這幾個底層 helper。
+- **第 3 步(地形修正)逐格重複執行兩次**:候選格迴圈裡先對 **actor 自己」
+  當下座標**套一次 `0x3804C`+百分比表調整(`[esp+0x3c]`=adjusted AP),
+  找到目標後又對**每個目標自己的座標**再套一次同一張表(`[esp+0x24]`附近
+  的第二次 `0x3804C`+`idiv 100` 區塊,`0x039762` 起),分別調整 actor/target
+  的 AP/DP——這與 `battle.TerrainAPDPPct` 目前「呼叫端自己對 actor 格、target
+  格各查一次」的使用方式完全吻合,不需要改介面。
+- **第 4 步(目標索引陣列)卡在 `0x39a2c`**:候選格迴圈在算完 actor 地形修正後
+  呼叫 `0x39a2c`(6 個參數,含 item row `+0xc`、目的格 X/Y),回傳目標數量
+  並把目標索引填進一塊 100-byte 緩衝區。這個函式本體**還沒有反組譯**——
+  是目前唯一還卡住完整 composer 的未知函式;拿到它的參數語意與內部邏輯後,
+  第 4 步就能收工,`0x14237` composer 才有辦法真正組裝完成。
+- 額外發現:候選格→目標的雙層迴圈本身(`0x39a2c` 找到目標後,對每個目標
+  再做一次差值檢查、`priority` 累積、寫回 `[0x3c43/47/4b/4f]`)已經跟第 5-7
+  步(`ScoreNativePhysicalAttackCandidate`/`SelectNativePhysicalAttackCandidate`)
+  的邏輯一一對應得上,沒有發現新的分歧。
+
+**結論**:composer 現在缺的唯一硬缺口,是反組譯 `0x39a2c` 本體(目標索引陣列
+產生器)。這是一個**有明確邊界、可獨立完成**的小任務,不是「量級遠大於已完成
+部分」的大工程——跟先前 0x1DEBE/地形表比,難度相近。
+
+**2026-08-14 `0x39a2c` 反組譯完成,composer 全部組裝完畢**:對新版 EXE 直接
+反組譯 `0x39a2c` 本體(174 行,含其收尾迴圈),確認它是「以純 Manhattan 距離
+(不含地形成本/尋路)+ `record+6` 的 0/1/2/3 raw 陣營碼」枚舉目標——跟
+`0x14818`(`NativeCommandTargetFieldBytes`,給法術/道具用)是不同、更簡單的
+函式,不能重用,已新增 `NativeAIPhysicalAttackTargets` 獨立實作。同一輪也
+釐清了三個先前不確定的細節(皆已在反組譯中直接確認,非推測):
+
+- **`0x1F183`(舊版位址)在新版對應的是 `0x44397`,不是消失了**——每個候選格
+  都會對 actor 呼叫一次、每個目標也會各自呼叫一次,回傳 0 時**整段地形修正
+  直接跳過**(維持 raw 值),不是「調整後套用另一個值」。跟 `move.go` 既有的
+  `nativeMovementRow19Predicate`(class 0x13 或 race∈{4,5})是同一條 raw 公式,
+  現以 `nativeAIPhysicalTerrainPercentApplies` 重現(raw-record 版本,原因見
+  下)。
+- **actor 的搜尋 budget 不是固定 28**,而是 actor 自己的 `record+0x3B`(剩餘
+  步數)——這跟 mode 0 fallback 的 `0x14121`(固定 28)不同,是 `0x14237` 自己
+  另外呼叫的。
+- **`0x1DEBE` 的 `(x,y)` 參數是候選目的格,不是目標的座標**——從壓堆疊順序
+  直接讀出來(`push[esp+0x48]`兩次,讀到的是目的格 X/Y 的相鄰記憶體,不是
+  target 的);也就是這個近戰反打加成檢查的是「actor 現在的位置離候選目的格
+  夠不夠近」,跟 target 在哪裡無關。
+
+新增 `battle.NativeAIPhysicalAttackTargets`(目標枚舉)、
+`battle.ScoreNativeAI14237`(完整 composer:武器裝備查詢→候選格→地形修正→
+目標枚舉→逐目標評分→`SelectNativePhysicalAttackCandidate` 選出勝者),含
+端到端測試(含 1DEBE 加成、raw+8 三分之二乘數同時觸發的完整公式路徑,驗證
+跟已獨立測試過的底層 primitive 一致)。`go build/vet/test` 全綠。
+
+**接線狀態(2026-08-14 更新)**:`ScoreNativeAI14237` 已接進真正驅動
+`cmd/fd2` 敵方回合演出的路徑——`combat.go` 的 `NextAIPlan()`(不是
+`aiActUnit`;後者從未被 `cmd/fd2` 呼叫,是死碼,見下一段)。接法是
+fail-closed 的並聯,不是替換:`NextAIPlan` 每個單位先呼叫
+`nativeAI14237Plan`,`ok==true` 時直接採用其 Path/Target(並標記
+`AIPlan.NativeSourced=true`,純除錯/驗證用欄位,遊戲邏輯不應依賴它);
+`ok==false`(原始資料不全)時完全退回既有 `aiTargets`/`estDamage` 正規化
+近似,對現有 29 個章節的既有行為零改動零風險。`go build/vet/test ./...`
+全綠,零回歸。另外(次要,`aiActUnit` 目前無人呼叫,但保留供未來復活該
+路徑時沿用同一套邏輯)也在 `combat.go` 的 `aiActUnit` 開頭接了
+`ApplyNativeAI14237PhysicalAttack`。
+
+**live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01
+FD2_SHOT_AI=1 FD2_SHOT_TURN=1`,配合新增的 `AI決策: ... native=%v` 除錯輸出
+逐幀觀察)發現一個真實、與本次 composer 工作無關的既有資料缺口**:
+`NativeAIScoringRecords`(把整個 roster 編碼成 native raw record 陣列,
+`nativeAI14237Plan`/`ApplyNativeAI14237PhysicalAttack` 都靠它)要求陣列
+中**每一個**單位(不只是行動中的 AI 單位本身)都有完整的
+`NativeRecordByte34/35/36`+`NativeRecordWord42/46` 原始 provenance;
+ch01 實際戰鬥中,4 名玩家角色(索爾/亞雷斯/悠妮/蓋亞,透過
+`internal/campaign` 的隊伍延續/加入路徑構造)這五個欄位全部缺席
+(`Has...=false`),而同一場戰鬥的敵方單位(直接從
+`assets/maps/map0/map0_units.json` 載入,該檔案本身就含這些欄位)全部
+齊全。結果是 `NativeAIScoringRecords` 對整個 roster 回傳
+`"unit 0 lacks raw provenance"` 錯誤,`nativeAI14237Plan` 因而對**每一個**
+敵方單位都 fail-closed 退回 `aiTargets` 近似——也就是說,在今天的實際
+玩家隊伍資料下,`ScoreNativeAI14237` 雖然接線正確、公式正確、單元測試
+全過,但在真正戰鬥裡**目前還沒有機會真的觸發**。這不是接線的 bug(接線
+本身的 fail-closed 行為完全正確,寧可退回近似也不要用不完整資料算出
+錯誤決策),而是玩家隊伍單位建構路徑(`internal/campaign/
+native_join_constructor.go`/`native_persistent_party.go`/
+`native_continue_runtime_units.go`)還沒有反組譯出 byte34/35/36+word42/46
+在「玩家角色」語境下該填什麼值——這幾個欄位目前只在敵方 JSON 資料裡
+有現成值可搬,玩家角色從來沒有經過那條原始資料管線。留給下一輪有時間
+做這個獨立小型反組譯調查時補上;補上後 `ScoreNativeAI14237` 不需要再
+改一行程式碼就會自動在真正戰鬥中開始生效(fail-closed 設計的直接好處)。
+
+**加碼驗證(同日,臨時 debug-only 補丁,已完全復原不留痕跡)**:為了分清
+「接線本身有問題」跟「只是資料缺口」,額外用一個僅存在於當次測試 build、
+從未進正式程式碼的臨時補丁,把上述 4 名玩家角色缺的 5 個欄位填上中性
+占位值,重新跑同一場 live 驗證。結果:
+
+- `NativeAIScoringRecords` 對整個 roster 編碼成功,不再報錯——證實先前
+  的失敗確實只是資料缺口,不是接線邏輯錯誤。
+- `ScoreNativeAI14237` 完整跑到底(武器裝備查詢→候選落點→地形修正→
+  目標枚舉→評分→選擇),對 ch01 開場那 8 個已上場敵人(全部 group 1/2)
+  逐一回傳 `HasWinner=false`——追查後每一筆都對得上:這 8 個敵人的
+  `inventory_slots[0]` 全部是 `0`(FD2 的「空」占位 item ID),對應
+  `0x14237` 反組譯註記本身就寫明的「沒裝備武器不是錯誤,直接回傳無候選」
+  早退路徑——換句話說,composer 正確判斷「這些敵人手上沒武器,打不了」,
+  不是漏抓目標。
+- 進一步想找一個真的有武器的敵人強制站到玩家單位旁邊驗證「真的會選中
+  攻擊目標」,但發現 `map0_units.json` 裡有武器(`inventory_slots[0]`
+  非 0/0xff)的敵人全部屬於 group 10/11(後續增援波,例如索引 23/24/25
+  是 `[1,...]`/`[52,...]`),ch01 prep-battle 這條路徑載入的初始 roster
+  只有 group 1/2 共 8 個單位,增援波當下根本不在 `st.Units` 裡——要湊出
+  這個情境需要額外接增援出場邏輯,已超出「驗證接線是否正確」的範圍,
+  沒有繼續往下做。
+- **結論**:composer 的資料管線+執行邏輯用真實遊戲資料格式跑起來是對的
+  (跟先前 session 已詳盡覆蓋的 Go 單元測試——含 1DEBE 加成、raw+8 乘數
+  同時觸發的完整公式路徑——互相印證);今天在真正戰鬥裡看不到它選中
+  目標,原因僅止於上述玩家角色 provenance 缺口,不是 composer 本身還有
+  未發現的邏輯問題。
+
+**玩家角色 provenance 缺口正式補上(2026-08-15)**:改用使用者上傳的完整
+976-fn Ghidra decompile(`FD2_decompile_full.txt`,見
+[[fd2-ghidra-decompile]])做靜態反組譯(原本規劃的 DOSBox-X 活體記憶體
+路線因這台機器 Docker Desktop 本身的環境問題卡死,已放棄,詳見下方
+「環境問題」附記),找到 FDFIELD 驅動的敵方部署建構器本體(對應舊文既
+記載的「FDFIELD b17/b18/b19→runtime+0x34/+0x35/+0x36」那個函式),逐行
+核對後得到兩個可直接落地的結論:
+
+1. **`record+0x34/0x35/0x36` 是 FDFIELD 部署建構器專屬欄位**——反組譯全文
+   搜尋每一個讀寫 `+0x34`/`+0x35`/`+0x36` 的位置,除了這個建構器本身,
+   唯一的讀取端是 `0x13A9F` AI 分派器(byte34 低 4 位是 mode nibble、
+   byte35/36 是 mode7「返回重生點」用的 X/Y——不是旗標位元),而
+   `0x13A9F` 從不對玩家陣營(`Own`)執行。另外三個位元讀取點
+   (`&0x40`/`&0x80`/`&1`,對應既有文件記過的「+0x34 bit0 令法術治療分數
+   ×2」)全部只用在**施法者評估自己同陣營候選**的場景,敵方 AI 從不會把
+   玩家單位當這種候選(玩家跟敵方是對立陣營)。**結論:對玩家單位而言,
+   這三個位元組的實際數值在目前任何已知 AI 讀取路徑下都不影響決策**,
+   而透過 JOIN/class-table 建構器(`native_join_constructor.go`)的反組譯
+   也證實它從未寫入這三個位元組——也就是說原始二進位下,新加入隊伍的
+   玩家角色這幾個位元組本來就是(record slot 的)零初始狀態,不是猜測。
+2. **`record+0x42/+0x46`(最大 HP/MP)不是 FDFIELD 專屬**——同一個建構器
+   在新單位剛生成、目前 HP/MP 等於上限時,把 `+0x40`(目前HP)跟
+   `+0x42`(最大HP)寫入同一個計算值,`+0x44`/`+0x46` 同理——證實
+   `NativeRecordWord42 = uint16(單位的MaxHP)`、`NativeRecordWord46 =
+   uint16(單位的MaxMP)` 這個既有假設(部分既有程式碼——
+   `native_join_constructor.go`/`native_persistent_party.go`/
+   `native_continue_runtime_units.go`——早已用這個公式,只是沒覆蓋到
+   `event.go` 的 `Scenario.PartyUnits`,也就是最單純的「剛開場的隊伍」
+   構造路徑)是對的。
+
+已在 `remake/internal/battle/event.go`(`Scenario.PartyUnits`)、
+`remake/internal/campaign/native_join_constructor.go`、
+`remake/internal/campaign/native_persistent_party.go` 三個新單位建構點
+補上 `NativeRecordByte34/35/36=0` + `NativeRecordWord42/46=MaxHP/MaxMP`
+(`native_continue_runtime_units.go` 是存讀回真實 raw record 的續存路徑,
+本來就正確,未動)。`go build/vet/test ./...` 全綠,零回歸。用同一套
+`FD2_CAMP_PREP_BATTLE=battle_ch01 FD2_SHOT_AI=1 FD2_SHOT_TURN=1` 重跑
+live 驗證,`NativeAIScoringRecords` 不再對整個 roster 報錯——先前擋住
+**每一個**敵方單位的資料缺口正式關閉。ch01 開場那個特定敵人仍然
+`HasWinner=false`,但原因跟前面確認過的完全一致(它裝備的是 item ID 0,
+FD2 的「空」占位——沒武器打不了是正確結果),不是新引入的問題。
+
+**環境問題附記(跟 fd2_re 專案本身無關)**:這台機器的 Docker Desktop 在
+這次調查中反覆出現 `dockerInference`/`docker-secrets-engine` 等多個
+AF_UNIX socket 檔案「The filename, directory name, or volume label
+syntax is incorrect」錯誤,連 factory reset、整機重開機都沒解決(只有
+把單一卡死目錄整個改名才讓它往前一步,隨即在另一個全新路徑撞上同一種
+錯誤)——判斷是這台 Windows 環境本身 AF_UNIX socket 建立機制的系統性
+問題,不是這個專案的 Docker 設定或 `docker/dosbox-x/Dockerfile` 的問題。
+已改用靜態反組譯路線繞過,不影響本項結論的正確性,但代表
+`reference_fd2_dosbox_live_memory_extraction` 那套活體記憶體方法論在這台
+機器上暫時不可用,需要時再另外排查(可能需要系統管理員權限層級的
+Windows AF_UNIX/防毒軟體診斷)。
+
+### `0x14EF0` 本體：三分數決策 + 分派（2026-08-14 新版即時反組譯首度取得）
+
+沿用「先確認 `0x13A9F` 在新版真實位址(`0x38CBD`)，再讀取其對 `0x14EF0` 的
+呼叫得到 `0x14EF0` 真實新版位址(`0x3A104`)」這條已驗證鏈路（見上方「位址
+不可跨版位移」節），直接對新版 EXE 反組譯 `0x14EF0` 本體，完整結構首次取得
+（舊版 dump 只到 `0x13A9F` 為止，從未涵蓋 `0x14EF0` 內部）。完整反組譯見
+[`fd2_ai_14ef0_dispatch_disasm_2026-08-14.txt`](../data/fd2_ai_14ef0_dispatch_disasm_2026-08-14.txt)。
+
+確認的結構（呼叫端已知全等於 `actor,selector` 兩參數）：
+
+1. 依序呼叫**物理**評分(`0x14237`)、**法術**評分(`0x1598A`，`battle.ScoreNativeAI1598A` 已閉合)、**道具**評分(`0x1567E`，`battle.ScoreNativeAI1567E` 已閉合)。三者各自把結果寫進 `[0x53C43/47/4B/4F]`(物理:目的X/Y/目標索引/**priority**，非 score)、`[0x53C23]`(法術 MaxScore)、`[0x53C33]`(道具 MaxScore)。
+2. **三分數門檻**：`[0x53C4F]>=6 OR [0x53C23]>=6 OR [0x53C33]>=6` 任一成立才繼續；三者皆 `<6` 直接回傳 0(無行動)。**物理槽位比較的其實是 priority(值域只有 8 或 0x12)，不是分數**——這代表物理的「>=6」門檻在實務上等同「有沒有找到任何被接受的候選」，跟法術/道具的門檻在語意上不是同一種東西，這點先前完全沒被記錄過。
+3. **勝者選擇——2026-08-15 訂正為逐行反組譯版本(見
+   `docs/data/fd2_ai_14ef0_dispatch_disasm_2026-08-14.txt` 完整證據,下面這段先前是
+   不夠精確的自然語言摘要,已用 `battle.SelectNativeAIThreeScoreWinner`
+   (`native_ai_three_score_choice.go`,9 條測試逐分支覆蓋)重新逐行核對過)**:
+
+   ```
+   若 physical<6 且 spell<6 且 item<6 → 無行動
+   若 physical>spell 且 physical>item → 物理
+   若 physical==spell 且 physical>item:
+       若 spellCommandID<0xb(攻擊術家族):
+           若 book[spellCommandID].Damage < (actor.AP-target.DP,以物理候選自己的
+              actor/target 重算,不是 0x14237 內部已存的分數)→ 物理
+           否則 → 法術
+       否則(spellCommandID>=0xb,回復/增益/狀態術家族):
+           bit==0 → 法術;bit!=0 → 物理
+   若 physical==item 且 physical>spell:
+       bit==0 → 道具;bit!=0 → 物理
+   若 spell>physical 且 spell>=item → 法術
+   若 item>physical 且 item>spell → 道具
+   以上皆不成立(例如三者剛好完全相等)→ 無行動(不呼叫任何一條執行分派)
+   ```
+
+   `bit = actorRecord[0x34]&0x40`(**高四位**,跟已知的低四位 mode nibble 是不同
+   bit,遊戲語意未命名)。**重要訂正**:先前筆記誤以為「三者完全相等時看 bit 決定
+   法術或道具」,逐行核對組語後確認**三者完全相等(physical==spell==item)會落到
+   跟三者皆<6 不同、但同樣是「無行動」的分支**——bit 只在「物理與法術(或物理與
+   道具)兩者相等、且都嚴格大於第三者」時才生效,不是三方全等時的 tie-break。另一個
+   先前完全沒記錄到的重點:物理/法術同分時,若法術是攻擊術家族(命令 ID<11),
+   tie-break 用的是**該指令的 Damage 數值 vs 重算的物理分數**,不是 bit——bit 只用
+   在法術是回復/增益/狀態術家族(ID>=11)時。
+4. 三個執行分派目標也已個別確認開頭：
+   - **物理執行**(`0x3A6A2`)：呼叫 `0x12D7B`(重置 pathing 原點，本 session mode5 investigation 已證實無副作用)→ 以 `[0x53C47]`(Y)、`[0x53C43]`(X) 呼叫 `0x14B78` 移動 → 再讀 `[0x53C4B]`(target index)、再呼叫一次 `0x12D7B`。跟 `0x1548E` 已知的移動+攻擊呈現流程高度吻合，但這次是從 `0x14EF0` 直接反組譯確認呼叫端，不是舊 doc 的位址推測。
+   - **法術執行**(`0x3A525`)：讀 `[0x53C2F]`(未命名的 spell-related global)，經一個「by-index 取 record 指標」共用 helper(`0x73A7A`)取得 record，讀其 raw camp byte(`+6`)。**2026-08-14 補充偵察**(反組譯了 `0x3A525` 本體,`0x3A525..0x3A6A1`,約 380 bytes):先檢查 `[0x3C23]>=6`(法術分數門檻,低於則整段直接回傳 0,像是保險檢查);接著呼叫 `0x12D7B`(pathing 重置),再呼叫 `0x39A2C`——**確認 `0x39A2C` 是通用函式,不是物理專屬**,法術執行這裡也拿它建目標索引陣列(用 `[0x3C27]/[0x3C2B]` 當座標、`esi+4` 當某種 range/tier 值),不影響本節已完成的 `NativeAIPhysicalAttackTargets` 實作(那是以物理攻擊的參數語意包一層,函式本身仍是同一顆)。再往下呼叫 `0x55115`、`0x426DF`/`0x4270A`(經 `[eax*4+0x1D01]` 的 jump table,疑似依法術 family 分派效果 handler)、`0x40867`、`0x42D79`、`0x3FC31` 等一整串完全沒追過的函式,還牽涉 `[0x3AF9]` 這個未命名旗標(疑似演出/動畫開關)。**結論:法術執行鏈確實是量級遠大於評分本身的獨立效果系統(傷害/回復/狀態套用+演出),不是能在同一輪順手關閉的小任務**,doc42「量級更大」的判斷經這次偵察確認無誤,不是還沒查過就假設困難。
+   - **道具執行**(`0x3A269`)：讀 `[0x53C3F]`(即 `battle.NativeAI1567EScoreResult.InventorySlot`)，以 `(actorIndex, inventorySlot)` 呼叫一個道具使用/消耗 helper。
+
+**2026-08-15 深入偵察(task #98,Docker 4.83.0 降版後重新可用 DOSBox-X live 記憶體)**:
+完整反組譯了 `0x3A269` 本體(約 150 條指令,`docs/data/fd2_ai_item_exec_3a269_disasm_2026-08-15.txt` 有完整逐行證據+每個子函式的獨立反組譯),混用 `tools/disasm_le.py` 做 LE object0 範圍內(`[0x10000,0x4EF29)`)的純靜態反組譯,以及 DOSBox-X live 記憶體讀取 overlay 區(超出 LE object 範圍的呼叫目標,已知屬 task #8 的 overlay 機制)兩種方法:
+
+- **確認的 call chain**:`0x40936(actorIndex,slot)` 只回傳 `actorRecord[0xb+slot*2]`(即 FLAGS byte,偶數 offset,不是 item ID)→ `0x73AD0(flagsByte)` 回傳 `0x1f22ad + flagsByte*23`(23-byte-stride 表,**確認**是 `0x73A7A`「by-index 取指標」helper 家族的另一個成員,表格內容語意未解)→ 依表格 row+0x10 的「type」byte 決定走 `0x39C0C`(type>0xF,`command-0x10` 分支,跟已知 `0x1567E` 評分的 command 分裂規則完全對上)還是**確認**已知的通用 `0x39A2C`(type≤0xF,建目標陣列)。
+- **道具執行後半段幾乎全是演出,不是效果套用**——逐一反組譯確認:`0x4425E` 是「依兩單位座標算 4 方向並寫入 record+3(Pose)」的朝向計算(不是效果);`0x46AAE`/`0x36EC0` 是 cell→screen 座標換算+ sprite blit(跟既有 `foreground_layer.go` 的 `0x8088` work-buffer base 字面值完全對上,強力交叉驗證);`0x3CCBD` 是讀 BIOS tick counter(絕對位址 `0x46c`)的忙等延遲迴圈;`0x531DC`(overlay 區,live 反組譯)配置兩個 VGA framebuffer 大小的緩衝區(0xfa00=64000、0x1f400=128000 bytes)並呼叫已知的 `0x3804C(actorX,actorY,&out)`(mode5 investigation 已確認的「取該格 FDSHAP 衍生資料」helper),疑似螢幕擷取/縮放轉場效果,尚未追完。
+- **仍未找到真正的「消耗道具/套用效果」邏輯**——上述每一個已追完的呼叫都是演出或純目標枚舉,沒有一個在修改 HP/MP/inventory slot。真正的效果套用要嘛藏在還沒追的呼叫裡(`0x39C0C` 本體、`0x73160`、`0x37006`、`0x531DC` 後半段),要嘛在 `0x3A269` 尚未反組譯的尾段(`jmp 0x3a4f9` 之後)。**結論:跟法術執行鏈一樣,道具執行也是量級遠超「評分→執行」單純轉發的獨立系統,這次偵察定位出大量演出層 helper 並排除它們是效果來源,但核心效果邏輯仍未關閉**——不誇大偵察範圍,誠實標記為部分完成。
+- **方法論副產物,對未來繼續有價值**:1) 確認同一個 container run 內,`0x73A7A`/`0x73AD0` 這類 overlay 區位址無法靠 `disasm_le.py` 純靜態讀到(超出 LE object0/1/2 宣告範圍,需要 live 記憶體);2) 確認 live delta(這次 run 是 `0x176DEC`,即時對照 byte 特徵搜出來的,**不可**沿用到下次 container 重啟)必須每次重新用位元組特徵搜尋法重新推導,不能用 MEMDUMPBIN 直接餵靜態位址(這次一開始犯過這個錯,浪費了一輪);3) 確認 CODE 的 relocation delta 和內嵌絕對位址「DATA」引用的 patch 量是**兩個不同的量**(0x176DEC vs `[0x3a45]`→`[0x1efa45]` 的差值 0x1EC000),不能假設同一個 delta 兩者通用。
+
+**2026-08-15 重大結構性發現:道具與法術執行鏈共用同一個效果核心 `0x45E83`**——
+繼續往下追 `0x3A269` 尾端(`jmp 0x3a4f9` 之後,先前標記「尚未反組譯」的部分)找到
+`push actorIndex,inventorySlot,targetArrayPtr,&localBuf; call 0x45E83`。完整反組譯
+`0x45E83` 本體(約 280 條指令,已整段附進
+`docs/data/fd2_ai_item_exec_3a269_disasm_2026-08-15.txt`)後確認:
+
+1. **函式一開頭就呼叫 `0x426DF`**——這正是 doc11 先前為**法術執行鏈**(`0x3A525`)
+   記錄過的「疑似依法術 family 分派效果 handler」的 jump-table 函式之一。函式**結尾**
+   (不管中間走哪個分支,`kind` 落在已知範圍或未知都會匯合到這裡)則依序呼叫
+   `0x4270A`(法術鏈另一個已知 jump-table 函式)→`0x408CB`→`0x42D79`(法術鏈另兩個
+   先前完全沒追過的函式)。**結論:`0x45E83` 不是道具專屬,是道具與法術共用的核心
+   效果套用系統**——`0x3A269`(道具)跟 `0x3A525`(法術)最終都會走進同一套機制,
+   代表法術執行鏈原本被判斷「量級遠大於評分本身」的那個獨立效果系統,跟這裡找到
+   的道具效果系統是**同一個東西**,不是兩套要分別關閉的工程。這大幅改變了 task #98
+   剩餘工作的樣貌(從「兩條各自要追的獨立系統」變成「一個共用核心 + 兩個很薄的
+   前段轉接層」),但也代表這個共用核心本身规模夠大,值得先看完整 kind 目錄再評估。
+
+**⚠️ 2026-08-15 重大修正(讀者請先看這段再看下面的 kind 表)**:下面這張表跟後續
+公式小節,是這輪反組譯的產出,但**核對既有 Go 程式碼後發現裡面大部分(HP/MP 回復、
+HP 傷害、BaseAP/DP/DX 調整、HIT/EV/DP%/AP% buff、狀態清除、狀態施放)在更早的 session
+就已經反組譯+實作+測試完成**,只是用舊版位址編號(`0x1c916`/`0x1c81f`/`0x1c9dd`/
+`0x22997`/`0x22721`/`0x22866`/`0x22af6`/`0x22d1b`)記錄在
+`remake/internal/battle/native_raw_*.go`,這次沒有事先查就重新反組譯了一輪——是這個
+專案已經記過的「重工」錯誤模式再犯一次(見 `feedback_check_existing_evidence_before_disasm`
+memory)。下表**保留**是因為:(a) 新舊位址對照本身有價值,(b) 逐行反組譯**證實**了既有
+Go 實作跟原生二進位的公式一致(含一個修正:公式的 RNG 項是 `bonus%100`(餘數),先前
+筆記誤寫成 `bonus/100`(商數),已核對既有程式碼 `nextRNG%100` 訂正),不是平白無據的
+猜測。**新舊位址對照**:`0x41B2A`=`0x1c916`(HP回復)、`0x41A33`=`0x1c81f`(HP傷害)、
+`0x41BF1`=`0x1c9dd`(MP回復)、`0x47BAB`=`0x22997`(HIT/EV buff)、`0x47A7A`=`0x22866`
+(DP% buff)、`0x47935`=`0x22721`(AP% buff)、`0x47D0A`≈`0x22af6`(狀態清除,
+`ApplyNativeRawFlagRestore`)、`0x47F2F`≈`0x22d1b`(狀態施放,`ApplyNativeRawApplication`)。
+**真正的缺口不是效果公式本身**(那些已經做完),**是 AI 決策從來沒有連到這些既有實作**
+——`combat.go` 的 `NextAIPlan` 每個分支都寫死 `SpellID: -1`,`cmd/fd2/main.go` 的
+`ExecuteNativeCommand*` 系列只接在玩家手動操作的 `confirm()`,`aiStep`(AI 回合驅動)
+完全沒有呼叫過。道具side 更早一步:`native_item_*.go` 的 6 個 `RouteForType`+`Apply*`
+配對(HP回復/MP回復/APDP/HITEV/狀態清除/狀態施放,同樣已存在+測試)甚至**沒有任何
+呼叫端**——不只 AI 沒接,玩家道具介面也沒接,是比法術更早一步的缺口。詳見本節最後
+「真正待辦」的修正版。
+
+2. **`kind` byte 分派表(來源:`0x73AD0(flagsByte)` 回傳的 23-byte-stride table row
+   的 `+0xd` byte,`+0xe` 是伴隨的 16-bit payload word)**——目前已個別確認呼叫目標
+   的 kind 值(**目標函式位址已確認,個別函式內部語意大多還沒追,除了特別註記的
+   幾個**):
+
+   | kind | 呼叫目標 | 狀態 |
+   |---:|---|---|
+   | 5, 0xd | `0x463B8` → `0x41B2A` | ✅ **完整證實**:HP 回復,見下方公式小節(含 `0x73DF7` RNG 加成項,已解開) |
+   | 6 | `0x47D0A(0x25,...)` | ✅ **結構證實**:狀態解除模式(清 `record+0x25`+小量回復 10),見下方小節 |
+   | 7 | `0x47D0A(0x26,...)` | ✅ **結構證實**:同上模式,清 `record+0x26` |
+   | 8 | `0x46296(...,0x37,payload,...)` | ✅ **完整證實**:`record[target+0x37] += payload`(`+0x37`=已知 `BaseAP`),接著呼叫 `0x40964`(既有裝備 recalc 函式)重算有效 AP |
+   | 9 | `0x46296(...,0x39,payload,...)` | ✅ **完整證實**:同上,`record[target+0x39] += payload`(`+0x39`=已知 `BaseDP`) |
+   | 0xa | `0x46296(...,0x3e,payload,...)` | ✅ **完整證實**:同上,`record[target+0x3e] += payload`(`+0x3e`=已知 `DX`) |
+   | 0xb | inline | ✅ **完整證實**:`record+0x46`(`MaxMP`)非零呼叫 `0x41BF1`(MP 版 `0x41B2A`,讀寫 `+0x44/+0x46`)+顯示,為零呼叫 `0x433F0`(resist)——對有 MP 單位回 MP、無 MP 顯示無效,道具「Ether」類效果 |
+   | 0xc | `0x47BAB` | ✅ **完整證實**:`RNG()/100+2` 寫入 `record+0x24`(buff 持續回合數),`word[target+0x4c] += 0xf`、`word[target+0x4e] += 0xf`(`+0x4c`=`HIT`、`+0x4e`=`EV`,均已知 offset)——**HIT/EV 各 +15 的定量 buff,持續 2~? 回合(RNG 決定上限未知,除數為 100 但沒看到明確上限測試,先只記「除以 100 再 +2」這個確切算式)** |
+   | 0xe, 0x16 | `0x47F2F(0x26/0x1b,...)` / `(0x27,...)` | ✅ **完整證實**:先種族免疫檢查(`race==0x19 或 0x1a` 直接跳過)+目標欄位(`record+呼叫端傳入的 offset`,kind0xe 是 `+0x1b`)已非零就跳過(已中招不重複),否則 `RNG()%100>=50` 也跳過(**50% 機率**)——命中才呼叫 `0x41A33(targetByte,10)`,已逐行反組譯確認是 `0x41B2A`(HP回復)的**完全鏡像**:同樣的 `payload*9/10+RNG加成/1000` 算式,但用**減法**且夾在 0 以下(不是加法夾 maxHP),即 **~9 點傷害+隨機加成的直接傷害**,並把 `RNG()%4+2`(2~5 回合)寫入該欄位,`[0x3ec8]` 另外累加 `race[+0x21]*8` 的種族修正——**狀態異常(如中毒/麻痺類,附帶命中瞬間小量傷害)的完整命中判定+持續回合機制,公式跟數值完全閉合**;`kind0e` 寫入的欄位 `+0x1b` 落在已知的 `initial_command_mask`(`+0x1a..+0x1d`)範圍內,語意待進一步確認是否真的是指令遮罩位元還是巧合重疊 |
+   | 0xf | `0x47A7A` | ✅ **完整證實**:`RNG()/4+2` 寫入 `record+0x23`(buff 持續回合),`word[target+0x4a]`(`DP`)套用 `floor(DP*常數[0x218]+1)` 的百分比加成——**DP 百分比 buff,持續 2~5 回合** |
+   | 0x10 | `0x47935` | ✅ **完整證實**:同構,`RNG()/4+2` 寫入 `record+0x22`,`word[target+0x48]`(`AP`)套用 `floor(AP*常數[0x210]+1)` 百分比加成——**AP 百分比 buff,持續 2~5 回合** |
+   | 0x11 | `0x46296(...,0xd,payload,...)` | ✅ **機制證實,語意未定**:`record[target+0xd] += payload`(word add)——`+0xd` 落在 inventory 區(slot1 flags+id 兩個 byte 疊在一起被當 16-bit 加),語意不明,**不可**套用 kind8/9/a 的 stat-offset 猜測 |
+   | 0x12 | `0x46296(...,0xd,payload,...)` | 同上,offset 同為 `0xd`,只差 id 常數 `0x46` |
+   | 0x13 | `0x46296(...,0x3b,...)`,外層先存後還原 `record+0x3c` | 未確認語意,「暫存一 byte、套效果、還原」的模式 |
+   | 0x14, 0x18 | inline,`0x41972` 判斷 | ✅ **結構證實**:`0x41972` 讀 `record+0x20`(已知 `RACE`)並呼叫 `0x73A7A`,==0 時對 target 套用+顯示(`0x432EF id=0x5e`),否則 `0x433F0`(resist)——強烈疑似種族抗性檢查,未逐行證實 `0x73A7A` 後半段在比對什麼確切種族清單 |
+   | 0x15 | `0x4632E` | ✅ **結構證實**:跟 kind0x14/0x18 用同一個 `0x41972` 抗性檢查骨架,同一套 resist/apply 分支 |
+   | 0x17 | `0x4739E` | 🟡 **不同類型,未確認**:不是狀態迴圈模式——讀 actor 自己的 X/Y,push 兩個 `0xff` 常數後呼叫另一函式,疑似「以座標為目標」的效果(傳送/範圍類?),跟其他 kind 的「對 target 陣列迭代」模式不同,需要獨立追蹤 |
+
+   共 20 個已定位的 kind 分支。**11 個完整證實**(5/0xd, 8, 9, 0xa, 0xb, 0xc, 0xe/0x16,
+   0xf, 0x10),**4 個結構證實但確切語意未 100% 閉合**(6,7,14,15,18),**3 個機制證實、
+   語意未定**(0x11,0x12,0x13),**1 個結構完全不同、獨立仍未追**(0x17)。
+
+3. **共用 primitive 目錄(這輪新確認)**:
+   - `0x432EF`:✅ 已證實**只是浮動數字顯示**(拆位數寫進 UI 緩衝、檢查目標是否在鏡頭
+     可視範圍),不套用效果,先前「疑似套用數值」的猜測已排除。
+   - `0x433F0`:✅ 已證實是「resist/無效」訊息顯示(讀 `[0x204a]` 格式字串,跟
+     `0x432EF` 讀 `[0x2045]` 是不同訊息),同樣做鏡頭可視檢查。
+   - `0x46296`:✅ 已證實是**通用 16-bit record word 累加 primitive**——
+     `record[target+offset] += payload`,offset 由呼叫端決定(kind8/9/a/11/12/13
+     各自傳不同 offset),之後統一呼叫 `0x432EF` 顯示、`0x36EC0`+`0x4316C` 播動畫、
+     `0x40964`(裝備 recalc)、`0x40AFB`(疑似 inventory UI 清單刷新)。
+   - `0x41972`:✅ 已證實讀 `record+0x20`(RACE)+呼叫 `0x73A7A`,是 kind14/15/18
+     共用的抗性判斷式(細節未完全閉合)。
+   - `0x39C0C`(道具 `0x3A269` 本體、command>0xF 分支專用):✅ **已證實**跟已知
+     `0x149F8`(評分端)是同一種「從起點朝目標走 N 步」路徑建構器——item command 值
+     (`command-0x10`)決定走幾步,逐步累加 `[0x3ab1]`/`[0x3ab5]` 座標,產生沿線
+     cell 陣列。至此 `0x3A269` 本體(不含共用效果核心 `0x45E83`)裡原本標記
+     「尚未追」的部分已全部關閉。
+
+**`0x41B2A`:kind5/0xd(HP 回復)的完整公式,已逐行反組譯證實**——這是整個效果系統
+目前唯一一個從「選中道具」到「record 被寫入新值」全程證實的分支:
+
+```
+target = 目標單位 record(param1 by-index)
+curHP  = word[target+0x40]      # 目前 HP(已知欄位)
+maxHP  = word[target+0x42]      # 最大 HP(已知欄位)
+payload = param2                 # 23-byte-stride table row+0xe 的 16-bit payload word
+
+termA = (payload * 9) / 10                 # 89~90% payload,整數除法無條件捨去
+bonus = call 0x73DF7()                     # ✅ 已證實是 RNG:seed=word[live-patched全域];
+                                            # seed=(seed+0x9014) rol 1 rol 1 rol 1;寫回並回傳新 seed
+                                            # (簡單 additive+rotate LCG-like PRNG,無參數、純內部狀態)
+termB = ((bonus % 100) * payload) / 1000   # ⚠️ 訂正(2026-08-15):原筆記誤寫成
+                                            # bonus/100(商數),重核 idiv 後 imul 的是
+                                            # edx(餘數)不是 eax(商數),應為 bonus%100;
+                                            # 跟既有 Go 實作 native_raw_restore.go 的
+                                            # `int(nextRNG%100)*amount/1000` 完全一致
+
+newHP = min(curHP + termA + termB, maxHP)  # 加總後夾在 maxHP 以內
+delta = newHP - curHP                       # 保存差值(給下方 0x432EF 的浮動數字顯示用)
+word[target+0x40] = newHP                   # ***實際寫回,這是真正的遊戲狀態變更***
+```
+
+**此公式現已 100% 閉合,不含任何未知函式**——`0x73DF7` 這輪已完整反組譯確認是純
+RNG,不影響已確認的公式結構。
+
+`0x432EF(delta, effectAnimID, targetByte)` 緊接著被呼叫,反組譯後確認**只做畫面
+呈現**(把 `delta` 拆位數、寫進螢幕座標旁的浮動數字顯示緩衝區,並檢查目標是否在
+目前鏡頭可視範圍內,不在畫面內就整段跳過不顯示——不影響已經寫入 record 的實際效果),
+不是效果套用的一部分,先前「疑似套用數值」的猜測已被排除。`0x433F0` 同樣是訊息顯示
+(resist/無效,讀不同的格式字串),不套用效果。
+
+**`record+0x22..+0x27` 狀態/buff 持續回合欄位家族(這輪完整定位)**:
+- `+0x22`:kind0x10(AP% buff)持續回合,`RNG()/4+2`
+- `+0x23`:kind0xf(DP% buff)持續回合,`RNG()/4+2`
+- `+0x24`:kind0xc(HIT/EV +15 定量 buff)持續回合,`RNG()/100+2`
+- `+0x25`:kind6 清除目標(cure)
+- `+0x26`:kind7 清除目標(cure);也是 kind0xe 的狀態異常欄位(`0x47F2F` 呼叫端傳入)
+- `+0x1b`(不在 +0x22..+0x27 範圍內,落在已知的 `initial_command_mask` 區):
+  kind0xe 實際 SET 的欄位——offset 落點待確認是否真的跟指令遮罩衝突或只是巧合
+
+**2026-08-15 修正後的真實現況**:20 個 kind 裡,**至少 9 個(5,0xd,6,7,8,9,0xa,0xb,0xc,
+0xf,0x10,0xe,0x16——比原本數字還多,因為訂正後把 0xe/0x16 也算進「效果+公式都閉合」
+而非只有「結構」)公式已經在既有 Go 程式碼(`native_raw_*.go`)裡實作+測試過**,這次
+反組譯只是重新證實+補上新舊位址對照,不是從零開始的新工作。**3 個機制證實、語意
+未定**(0x11,0x12,0x13,offset `0xd` 落在 inventory 區的語意仍不明,這部分確實還沒有
+既有實作對照,是真的新發現)。**1 個結構完全不同、仍未追**(0x17)。
+
+**真正的缺口,修正後的版本**:
+1. ~~AI 決策沒有連到已存在的法術執行~~ **✅ 已完成並測試(2026-08-15 續)**——見下方
+   「三分數決策已接進 NextAIPlan」段落。
+2. ~~道具側連玩家都沒接~~ **⚠️ 這句話是錯的,2026-08-15 續再次核對後撤回**:
+   `cmd/fd2/native_item_panel_ui.go` 的 `applyNativeTargetItem` 早就是一個完整、
+   已接進玩家 `confirm()`(經由 `g.nativeItemTargeting` 游標選擇流程)的頂層
+   dispatcher,依序試 `NativeItemHPRestoreRouteForType`/`MPRestore`/
+   `MarkerClearRestore`/`HITEVStep`/`APDPStep`/`MarkerApplication`/
+   `CommandDamage`/`Relocation` 八組 route,呼叫對應 `Apply*`。**這是本文件先前
+   幾輪反組譯中沒有交叉檢查 `cmd/fd2/` 目錄就下的錯誤結論**——教訓:確認「沒有
+   呼叫端」之前必須同時 grep `internal/battle/` 與 `cmd/fd2/` 兩邊,只查
+   `native_item_*.go` 內部看不到外部呼叫者。真正沒接的只有 **AI 側**:
+   `applyNativeTargetItem` 全程依賴 `g.sel`/`g.nativeItemTargeting` 等玩家游標
+   UI 狀態,`nativeAIThreeScorePlan`(見下方)在道具獲勝時目前刻意 `return nil,
+   false` 完全讓給 legacy fallback,原因是重構這條已上線、玩家在用的路徑成
+   AI 可呼叫的無 UI 版本,風險/工作量都明顯大於法術那條(法術那條的
+   `ExecuteNativeCommand*` 系列本來就已經是無 UI 純函式,只有 `confirm()` 的
+   switch 外殼是 UI 綁定,拆殼即可重用)。
+3. ~~`ScoreNativeAI1567E`(道具評分)也沒接進 `NextAIPlan`~~ **✅ 已完成並測試
+   (2026-08-15 續二)**——見下方「道具執行鏈已閉環」段落。
+4. 剩餘機制未定的 3 個 kind(0x11/0x12/0x13)、跟結構完全不同的 kind0x17,可以留到
+   之後——它們不影響「先把已有的 9+ 個 kind 接上 AI 決策」這個更高優先、更明確的
+   工作。
+
+**2026-08-15(續)三分數決策已接進 `NextAIPlan`,法術執行鏈已閉環**:
+`native_ai_three_score_plan.go` 的 `nativeAIThreeScorePlan` 直接呼叫
+`ScoreNativeAI14237`/`ScoreNativeAI1598A`/`ScoreNativeAI1567E` 三個既有評分函式,
+再用 `SelectNativeAIThreeScoreWinner`(見上方「勝者選擇」段落)決定贏家,取代
+`combat.go NextAIPlan` 原本只呼叫 `nativeAI14237Plan`(只有物理)的寫法。法術獲勝
+時設定真正的 `plan.SpellID`(不再永遠 -1),`cmd/fd2/main.go` 的 `aiStep` 也已改為
+在 `plan.SpellID>=0` 時呼叫新拆出的 `executeNativeCommandTarget`(從 `confirm()` 的
+`nativeCommand0Targeting` switch 殼抽出的無 UI 版本,兩邊共用同一份邏輯)而不是
+永遠呼叫 `AttackWithRNG`。`go build && go vet && go test ./...`(整個 remake 模組)
+全綠,新增 `TestNextAIPlanThreeScoreFullProvenancePhysicalWinsWithNoSpellbook` 證明
+「完整 production 形狀資料(含真正的 `NativeCommandBook`,先前 `nativeAI14237_apply_test.go`
+的 fixture 從未設定這欄,實際上一直在悄悄退回 legacy fallback 而非真的測到 native
+composer)下物理仍正確獲勝」。**尚未做的是實機驗證**(`FD2_SHOT_AI=1` 截圖確認 AI
+真的選擇施法而非一律近戰)與**道具執行鏈**(見上方第 2 點)。
+
+**2026-08-15(續二)道具執行鏈已閉環,task #98 三條執行鏈全部接完**:
+新增 `internal/battle/native_ai_item_execute.go` 的 `ApplyNativeAIItemCommand`,
+是 `cmd/fd2/native_item_panel_ui.go` 的 `applyNativeTargetItem` 的直接無 UI 版本
+(同一套 RouteForType 級聯:HP/MP 回復、狀態清除回復、HIT/EV 增益、AP/DP 增益、
+marker application、command damage 八種類型逐一嘗試;record/sync bookkeeping
+逐行對照原函式重寫,不是重新設計)。`AIPlan` 新增 `ItemID`/`ItemSlot` 欄位
+(比照既有 `SpellID: -1` 慣例,`ItemID: -1` 表示本計畫不用道具,7 個既有
+`&AIPlan{...}` 建構點全部同步補上)。`nativeAIThreeScorePlan` 的
+`NativeAICommandItem` 分支不再無條件 `return nil, false`,改成解析
+`ScoreNativeAI1567E` 的獲勝 `(X,Y)` 格→`UnitAt`→設定 `ItemID`/`ItemSlot`
+(找不到單位錨點的 AoE 型道具——原地施放無單位——仍 fail-closed 退回
+legacy)。`cmd/fd2/main.go` 的 `aiStep` 新增道具分支呼叫
+`ApplyNativeAIItemCommand`。**重要的安全修正**:道具/法術分支執行失敗時原本會
+落到下面「一般攻擊」分支,但道具/治療類法術的目標經常是我方單位——加了
+`plan.Target.Camp != u.Camp` 守衛,確保任何 fallback 都不會打到友軍。新增
+`ApplyNativeAIItemCommand` 三個測試(HP 回復+消耗道具格成功案例、行列不合法
+fail-closed、遷移類型 23 unsupported-但不報錯的 defer 案例),`go build/vet/test
+./...`(整個 remake 模組)全綠。
+
+這代表 task #98 三條執行鏈(物理/法術/道具)**全部接線完成並通過單元測試**,
+真正的瓶頸從「反組譯規模龐大的獨立效果系統」變成「實機驗證」——目前只有
+disassembly-grounded 單元測試(含用真正 production 形狀資料的整合測試)證明
+正確性,還沒有用 `FD2_SHOT_AI=1` 截圖確認 AI 在真實戰鬥中會選擇施法/用道具
+(2026-08-15 續嘗試過,原生 Windows 從未跑過這條 headless 驗證路徑——過去都是
+靠已刪除的 `fd2-go-test-local` Docker+Xvfb image,重建它是獨立、有一定成本的
+後續工作,不影響本次接線工作的正確性結論)。
+
+**2026-08-15(續三)實際重建 Docker image 並實跑,誠實記錄結果——不是「完成」,
+是「比之前更多的證據,但仍有明確缺口」**:用保存的
+`tools/docker/fd2-go-test.Dockerfile` 重建 `fd2-go-test-local`(原 image 已刪除,
+Dockerfile 還在),編出 Linux 版 `fd2-linux`,以 `xvfb-run` + 既有的
+`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01 FD2_SHOT_AI=1` 組合(跟
+2026-08-14 物理鏈驗證同一套指令)實跑:
+
+- **確認的部分**:整條新管線(`nativeAIThreeScorePlan`→三個 `Score*` 呼叫→
+  `SelectNativeAIThreeScoreWinner`→`aiStep` 分派)對著真正 production 資料
+  (真實載入的 `NativeCommandBook`/`NativeItemEffectRows`/`NativeTerrainMoveCodes`
+  等,不是單元測試的合成 fixture)完整跑過一輪,沒有 crash、沒有 panic,正確判定
+  「三個管線都沒有候選」(`physicalPriority=0 spellMax=0 itemMax=0`)並退回移動
+  近似——這是新增的、比之前更強的證據,證明接線在真正編譯的執行檔裡確實會被呼叫
+  且不會炸掉,不只是 Go test 裡自我一致。
+- **沒有確認的部分**:battle_ch01 這個場景本身沒能重現「AI 真的選擇施法/用道具」
+  的畫面。原因追出來了(不是新 bug):(1) 這個 harness 的 `FD2_SHOT_TURN` 只是
+  直接呼叫 `g.endTurn()` N 次來快轉觸發增援事件,**不會**真的模擬移動,所以
+  無法讓敵人在多回合後真的接近玩家單位;(2) ch01 唯一的敵人「盜賊」載入時就在
+  玩家單位的攻擊/施法範圍外,而盜賊本身也沒有法術/道具能力(mask 全 0,即使
+  真的贴近了也只會考慮物理);(3) 寫了一個一次性掃描工具(已刪除,不是留在
+  repo 裡的東西)找到 map7(`battle_ch08`)有法術能力(`NativeCommandMask` 非0)
+  的敵人一開場就在玩家單位 3-4 格內,但 `battle_ch08` 這個節點透過
+  `FD2_CAMP_PREP_BATTLE` 完全沒進到可互動的 native 戰場狀態(截圖幀數開到 1500
+  仍然连一次 `aiStep` 都沒觸發)——這跟本文件 task 清單裡「調查 ch02-25/28-30
+  為何連不上 harness 的 interactive native state」是同一類、先前就記錄過的
+  harness 限制,不是這次接線造成的新問題。
+- **保留下來的工具**:`internal/battle/native_ai_three_score_plan.go` 新增
+  `nativeAIDebugf`(`FD2_AI_DEBUG=1` 才輸出,平常完全靜默),把三個管線各自的
+  分數、以及 gate 在哪個檢查點失敗印出來——這是這輪診斷「native=false 到底是
+  資料缺失還是真的沒候選」花了不少時間才分清楚後,決定留下來給下一次驗證用的,
+  仿照 `main.go` 既有一堆 `FD2_SHOT_*` debug hook 的慣例。
+
+**誠實結論**:task #98 的三條執行鏈程式碼完成、單元測試通過、且**這次追加了
+一次成功的真機執行**(證明管線在真正的編譯執行檔裡跑得動),但**沒有拿到
+「AI 真的選擇施法/用道具」這個畫面**——這需要要嘛寫腳本模擬多回合玩家操作
+撐過 harness 限制,要嘛另外構造/找到一個施法者敵人一開場就在射程內的合成
+戰場。這是有明確成本的後續工作,不是「順手就能補上」的小事,留給使用者
+決定要不要繼續投入。
+
+**2026-08-15(續四)深挖 ch08 harness 連不上的根因,釐清這不是接線 bug**:
+- `FD2_CAMP_NODE=battle_ch08`(走完整的 `g.enterNode()` 節點分派)截圖出來是一張
+  **正確算繪、乾淨的隊伍部署畫面**(地圖、建物、寶箱、游標都對,玩家隊伍聚在
+  出生點,尚未各自展開到戰術位置)——證明 harness 本身、地圖算繪都沒問題。
+- `FD2_CAMP_PREP_BATTLE=battle_ch08`(ch01 驗證一路在用的捷徑,`resetBattle()`
+  之後仍會被隨後的 `g.enterNode()` 對「當時 `g.camp.Cur`」重跑一次節點設定)
+  截圖出來卻是**明顯損壞的畫面**(紅色色塊、單位貼圖比例錯亂/被裁切)——這是
+  一個真的 bug,只是恰好在 ch01 這張最簡單的地圖上沒炸出來。已用 spawn_task
+  另外記錄、不在本次範圍內修。
+- 兩邊都沒有任何 `aiStep`/AI決策 log,因為**兩者都停在部署畫面**,沒有進到
+  戰鬥回合——這正好對上任務清單本身的狀態:task #67「Ch01 戰鬥機制」
+  in_progress,task #68 起的 ch02+`「戰鬥+商店/教會/城鎮/整備」`全部
+  `[pending]`。換句話說:**ch08 連不上互動 native 狀態,不是 harness 缺陷,
+  是 ch08 的部署→開戰這段流程本身還沒被驗證/接上 headless 操作腳本**——這其實
+  是 task #74 未來要做的工作範圍,不是這次三條 AI 執行鏈接線可以順手解決的事。
+
+**最終決定(這次不繼續追,誠實記錄邊界)**:再往下走(寫腳本模擬部署確認+
+開戰,或另開一個合成場景的 debug hook)屬於明顯更大、超出「接線 AI 決策」
+範圍的工作。task #98 停在:**三條執行鏈程式碼完成、單元測試(含 disassembly
+-grounded 的決策邏輯與用 production 形狀資料的整合測試)全部通過、且已有一次
+成功的真機執行證明管線本身不會 crash 且對真實資料判斷正確**;但**沒有拿到
+「AI 選擇施法/用道具」的實機畫面**,這需要先做完 ch02+ 的部署/開戰腳本化
+(task #74 系列)才有辦法達成,不建議為了這一個驗證畫面去搶跑那塊工作。
+
+**2026-08-15 補充判斷:物理執行鏈可能不需要額外工程**——`0x3A6A2` 反組譯出的
+序列(重置 pathing 原點→移動→讀 target index→再重置 pathing 原點)本身沒有
+獨立的「套用傷害」opcode,而是結構上等同已知的 `0x1548E` 移動+攻擊呈現流程
+(同一個「移到目標旁邊、resolve 目標、交給共用近戰呈現」骨架,原版靠這個
+共用流程本身觸發傷害計算,不是 `0x3A6A2` 自己另外算)。這正是這個 session
+已經接進 `NextAIPlan`/`aiStep` 的 Path+Target→walk→`AttackWithRNG` 流程
+在做的事——中度信心判斷(未在 0x3A6A2 之後繼續往下追出明確的傷害計算
+呼叫點,不是 100% 端到端證實),但足以認為**物理執行鏈目前已被既有接線
+覆蓋,不需要再花額外反組譯工程**,跟法術/道具那兩條真的還沒接執行效果的
+情況不同。task #98 的剩餘範圍實際上只有法術+道具兩條執行鏈,不是三條。
+
+**這次反組譯把 `0x14EF0` 的決策骨架整個閉合了**，是目前為止對這一塊最完整的
+一次考證。**仍未閉合、也是啟動完整實作前最後的缺口**：
+- 物理分支的地形百分比表數值已確認(見上一節,`terrain.go` 既有 + 三個獨立來源交叉驗證)，
+  但 `0x14237` composer 本身(候選格→目標枚舉→評分→選擇全部串起來)仍未組成一個可呼叫的
+  Go 函式——這是接線工程,不是資料問題。
+- 法術/道具**執行**(不是評分)本身分別是另外兩條獨立、目前完全沒追過的效果鏈
+  (法術傷害/回復/狀態套用、道具消耗與效果)，比評分本身的量級更大。
+- `[0x53C2F]`、`0x73A7A`、`0x40936` 三個新出現的 raw 符號都還沒有命名或
+  接入型別化 Go。
 
 ### 法術命令評分：`0x15B77`
 
@@ -351,6 +961,22 @@ handler 在 `0x1A58F` 敵軍 AI 前執行，不能僅憑數值把兩者改名成
 1. `0x14B78(destinationX,destinationY,actor,selector)` 依 actor
    `record+0x20` 選 `0x4E555` 成本列；`0x1F183` 成立時改用列 19，
    actor `record+8==0x1C` 時改用列 1。
+   **2026-08-14 補完(Ghidra 反組譯「新版」基準版 FD2.EXE，逐行核對)**：
+   `0x14B78` 本身的選擇順序已逐行確認 —— 預設 `ESI=record+0x20`(class)；
+   呼叫 `0x1F183(actor)` 非零則 `ESI=0x13`(列19)；接著**不論上一步結果**
+   再檢查 `record+8==0x1C`，成立則 `ESI=1`(列1)——**列1 蓋過列19**，
+   兩者同時成立時以列1為準。`0x1F183` 本身也已完整反組譯：
+   `record = unitArrayBase(0x53a45) + actorIndex*0x50`；
+   `if record+0x7==0x1C: return false`；
+   `elif record+0x20==0x13: return true`(class 0x13，這個分支跟預設
+   selector 本來就會選到列19，屬於 no-op 情形)；
+   `elif record+0x1F(race) in {4,5}: return true`；`else: return false`。
+   已寫入 `remake/internal/battle/move.go` 的 `nativeMovementRow19Predicate`
+   +`nativeMoveCost`，`record+0x1f/+0x20` 對應既有 `NativeRecordRace`/
+   `ClassID`；`record+7` 這個閘門 byte 是全新欄位，目前沒有任何 map
+   的 units.json 匯出管線填過它，因此故意不建模、不猜測——只會讓少數
+   本該被 `record+7==0x1C` 抑制的單位多套用一次列19，範圍比先前完全
+   不套用列19還要窄，符合本專案 fail-closed 原則。
 2. 它先以 actor `record+0x3B` 為剩餘步數，呼叫
    `0x4E1A6` mode 0 直接尋路。方向碼由 `0x13488` 的四個執行分支證實：
    `0=下、1=左、2=上、3=右`；搜尋鄰居順序固定為右、左、下、上。
@@ -382,6 +1008,21 @@ Manhattan 距離選最近座標，完全同距離保留先出現者，再交 `0x
 `SelectNativeNearestOppositeCoordinate` 保存上述只接受原始資料的契約；
 尚未直接取代 `NextAIPlan`，避免在上層 mode／record 欄位未完整接線前冒稱
 整個敵方回合已與原版相同。
+
+**2026-08-14 補完**：mode 0 這整段 fallback(`0x14121→0x13E9C→0x13FD4`)
+已組成 `battle.ApplyNativeAIMovementFallback` 並接進 `aiActUnit`(見
+`native_ai_movement_fallback.go`)——這是**只有「原地無立即行動時該往哪移動」
+這一小塊**,不是完整 `NextAIPlan`;「原地是否已有可攻擊目標」的 `0x14EF0`
+三分數決策，以及 mode 0 以外其餘 8+ 個 mode 分支，仍是重製近似，尚未替換。
+`0x14121` 找到的座標會餵給 `0x14B78` 做正常尋路移動(不是直接落點)這件事，
+本次用 Ghidra 反組譯 `0x14121` 本體重新逐行核對過，跟本節既有敘述一致。
+
+**訂正(同一天稍晚)**：最初接線時漏查了單位自己的 mode 值就套用 mode 0 邏輯，
+是真的 bug，已修正——`ApplyNativeAIMovementFallback` 現在會先檢查
+`record+0x34&0xf`，只有等於 `NativeAIDispatchMode0`(0)才執行；其餘 mode 的
+單位 fail-closed 回傳 `ok=false`，退回舊近似。33 張地圖實際統計 mode 分布：
+0=1063、1=34、2=535、3=78、4=34、5=41、7=4、8=90、9=2、10=6 (共 1887 筆)——
+mode 0 雖是多數(56%)，但 mode 2 也佔了 28%，不能省略這個檢查。
 
 > 戰棋上敵方(與友軍 NPC)每回合怎麼決定「移動到哪、打誰、打不打」。
 > 舊第 3 輪筆記曾把 `0x15140` 記為 AI 主決策函式；該地址目前已被 canonical recheck 撤回，單位陣列 `[0x3A45]`、
