@@ -21,57 +21,60 @@
       "text_table": "dword ptr [0x3a79]"
     },
     {
-      "op": "unknown",
-      "native_target": "0x31860",
-      "raw_args": [
-        "edx",
-        "eax"
-      ],
-      "source": {
-        "addr": "0x241bd",
-        "target": "0x31860"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x31860",
-      "raw_args": [
-        "eax",
-        "ebx"
-      ],
-      "source": {
-        "addr": "0x24209",
-        "target": "0x31860"
-      }
-    },
-    {
-      "op": "unknown",
-      "native_target": "0x1b8e7",
-      "raw_args": [
-        "eax",
-        "ebx"
-      ],
-      "source": {
-        "addr": "0x24218",
-        "target": "0x1b8e7"
-      }
-    },
-    {
-      "op": "grant_item",
-      "item_id": 100,
-      "source": {
-        "addr": "0x24224",
-        "target": "0x1c220"
-      }
-    },
-    {
-      "op": "dialog",
-      "text_index": 7,
-      "source": {
-        "addr": "0x2424b",
-        "target": "0x15f84"
+      "op": "if",
+      "condition": {
+        "op": "roster_has_all_items",
+        "item_ids": [209, 210, 211, 212, 213, 214]
       },
-      "text_table": "dword ptr [0x3a79]"
+      "source": {
+        "addr": "0x24191",
+        "target": "0x31860"
+      },
+      "then": [
+        {
+          "op": "consume_items",
+          "item_ids": [209, 210, 211, 212, 213, 214],
+          "source": {
+            "addr": "0x24218",
+            "target": "0x1b8e7"
+          }
+        },
+        {
+          "op": "grant_item",
+          "item_id": 100,
+          "source": {
+            "addr": "0x24224",
+            "target": "0x1c220"
+          }
+        },
+        {
+          "op": "dialog",
+          "text_index": 7,
+          "source": {
+            "addr": "0x2424b",
+            "target": "0x15f84"
+          },
+          "text_table": "dword ptr [0x3a79]"
+        },
+        {
+          "op": "dialog",
+          "text_index": 8,
+          "source": {
+            "addr": "0x24286",
+            "target": "0x15f84"
+          },
+          "text_table": "dword ptr [0x3a79]"
+        },
+        {
+          "op": "dialog",
+          "text_index": 9,
+          "source": {
+            "addr": "0x242c1",
+            "target": "0x15f84"
+          },
+          "text_table": "dword ptr [0x3a79]"
+        }
+      ]
     },
     {
       "op": "act",
@@ -82,30 +85,12 @@
       }
     },
     {
-      "op": "dialog",
-      "text_index": 8,
-      "source": {
-        "addr": "0x24286",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
-    },
-    {
       "op": "act",
       "acting_id": 64,
       "source": {
         "addr": "0x2429a",
         "target": "0x1366a"
       }
-    },
-    {
-      "op": "dialog",
-      "text_index": 9,
-      "source": {
-        "addr": "0x242c1",
-        "target": "0x15f84"
-      },
-      "text_table": "dword ptr [0x3a79]"
     },
     {
       "op": "unknown",
@@ -157,6 +142,6 @@
     }
   ],
   "diagnostics": {
-    "unknown_ops": 4
+    "unknown_ops": 1
   }
 }

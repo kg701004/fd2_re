@@ -125,6 +125,9 @@ type BeatCondition struct {
 	EventStateIndex        *int            `json:"event_state_index,omitempty"`
 	EventStateValue        *int            `json:"event_state_value,omitempty"`
 	RequiredSlotCount      *int            `json:"required_slot_count,omitempty"`
+	// ItemIDs is roster_has_all_items's original unsigned-byte item id list
+	// (native 0x31860 scanned across runtime slots 0..15 once per id).
+	ItemIDs []int `json:"item_ids,omitempty"`
 }
 
 // HandlerUnitLayout is one absolute runtime-slot placement recovered from a
@@ -393,6 +396,12 @@ type Beat struct {
 	ItemID     *int `json:"item_id,omitempty"`
 	ResourceID *int `json:"resource_id,omitempty"`
 	SFXIndex   *int `json:"sfx_index,omitempty"`
+
+	// consume_items: original unsigned-byte item identities removed one copy
+	// each from the runtime roster (native 0x1b8e7). Used only inside an "if
+	// roster_has_all_items" arm, where the condition already proved every id
+	// present, so consumption here is unconditional per id.
+	ItemIDs []int `json:"item_ids,omitempty"`
 }
 
 // Node 節點。Type: story / cutscene / battle / town / preparation / church / choice /

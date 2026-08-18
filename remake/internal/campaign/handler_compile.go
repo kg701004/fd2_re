@@ -273,6 +273,28 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				}
 				charID := *input.Condition.CharID
 				condition.CharID = &charID
+			case "roster_has_all_items":
+				// Native 0x24150 (ch21 postbattle) proves this exact shape:
+				// cmp ebx,6 after a nested item_id x runtime-slot search loop
+				// (0x31860) -- true only when every listed item_id is found
+				// at least once among runtime slots 0..15. See ch21_post.json
+				// / doc58's 2026-08-18 entry for the full disassembly.
+				if len(input.Condition.ItemIDs) == 0 {
+					issue(i, input, "roster_has_all_items requires at least one item_id")
+					continue
+				}
+				validItems := true
+				for _, id := range input.Condition.ItemIDs {
+					if id < 0 || id > 0xff {
+						validItems = false
+						break
+					}
+				}
+				if !validItems {
+					issue(i, input, "roster_has_all_items item_ids must be unsigned bytes")
+					continue
+				}
+				condition.ItemIDs = append([]int(nil), input.Condition.ItemIDs...)
 			case "native_event_state_nonzero":
 				if input.Condition.EventStateIndex == nil || *input.Condition.EventStateIndex < 0 || *input.Condition.EventStateIndex >= 0x20 {
 					issue(i, input, "native_event_state_nonzero requires a 0..31 event_state_index")
@@ -610,6 +632,29 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 			beat := runtime(input, "grant_item")
 			itemID := *input.ItemID
 			beat.ItemID = &itemID
+			beats = append(beats, beat)
+		case "consume_items":
+			// Native 0x1b8e7(unit,slot), re-scanned once per item_id via
+			// 0x31860 (ch21 postbattle 0x24218-0x24220). Only valid inside an
+			// "if roster_has_all_items" then-arm, which already proved every
+			// id present; this beat is intentionally unconditional per id.
+			if len(input.ItemIDs) == 0 {
+				issue(i, input, "consume_items requires at least one item_id")
+				continue
+			}
+			validItems := true
+			for _, id := range input.ItemIDs {
+				if id < 0 || id > 0xff {
+					validItems = false
+					break
+				}
+			}
+			if !validItems {
+				issue(i, input, "consume_items item_ids must be unsigned bytes")
+				continue
+			}
+			beat := runtime(input, "consume_items")
+			beat.ItemIDs = append([]int(nil), input.ItemIDs...)
 			beats = append(beats, beat)
 		case "load_res", "play_sfx", "release_res":
 			if bindings.Resource == nil {

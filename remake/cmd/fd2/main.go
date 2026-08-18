@@ -1504,6 +1504,19 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		g.grantItemToParty(*b.ItemID)
 		g.beatAdvance()
+	case "consume_items":
+		if len(b.ItemIDs) == 0 {
+			g.loadErr = "beat consume_items:缺少有效 item_ids"
+			return
+		}
+		if g.st == nil {
+			g.loadErr = "beat consume_items:缺少 runtime battle state"
+			return
+		}
+		for _, itemID := range b.ItemIDs {
+			g.consumeItemFromParty(itemID)
+		}
+		g.beatAdvance()
 	case "bgm":
 		g.playBGM(b.Track)
 		g.beatAdvance()
@@ -1646,6 +1659,22 @@ func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error
 			return false, fmt.Errorf("roster_has 缺少 permanent party roster")
 		}
 		return g.partyMembers[*condition.CharID], nil
+	case "roster_has_all_items":
+		if len(condition.ItemIDs) == 0 {
+			return false, fmt.Errorf("缺少有效 roster_has_all_items item_ids")
+		}
+		if g.st == nil {
+			return false, fmt.Errorf("roster_has_all_items 缺少 runtime battle state")
+		}
+		// 0x31860 scans runtime slots 0..15 once per item_id (ch21 postbattle
+		// 0x24191-0x241cd); partyHasItemID already reproduces that exact
+		// 16-slot scan for a single item_id (see doc58's 2026-08-18 entry).
+		for _, itemID := range condition.ItemIDs {
+			if !g.partyHasItemID(itemID) {
+				return false, nil
+			}
+		}
+		return true, nil
 	case "any_unit_inactive":
 		if len(condition.UnitSlots) == 0 {
 			return false, fmt.Errorf("缺少有效 any_unit_inactive condition")
@@ -2685,6 +2714,38 @@ func (g *Game) partyHasItemID(itemID int) bool {
 	for _, unit := range g.partyRoster {
 		for _, held := range unit.Inventory {
 			if held == itemID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// consumeItemFromParty is the beat-level projection of native 0x1b8e7, used
+// only by the "consume_items" beat inside an "if roster_has_all_items"
+// then-arm (see ch21_post.json / doc58's 2026-08-18 entry). It removes the
+// first matching copy of itemID from runtime slots 0..15, mirroring
+// applyInventoryRecipe's own find-then-remove pass for the identical native
+// 0x24150 routine (that function's doc comment below names the same handler
+// by its bindings/generated/ch20_post.json filename). A miss is a silent
+// no-op: the caller only reaches this beat after roster_has_all_items already
+// proved every id present, so a miss here would indicate a state-consistency
+// bug elsewhere, not a normal branch outcome to report through g.loadErr.
+func (g *Game) consumeItemFromParty(itemID int) bool {
+	if g.st == nil {
+		return false
+	}
+	limit := len(g.st.Units)
+	if limit > 16 {
+		limit = 16
+	}
+	for _, unit := range g.st.Units[:limit] {
+		if unit == nil {
+			continue
+		}
+		for i, held := range unit.Inventory {
+			if held == itemID {
+				unit.RemoveInventoryIndex(i)
 				return true
 			}
 		}

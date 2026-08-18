@@ -43,6 +43,10 @@ type HandlerCondition struct {
 	// RequiredSlotCount 是此條件成立時由同一原生 producer 證實的精確
 	// runtime frontier。它讓分支內 slot 操作可驗證，但不會擴張外層 frontier。
 	RequiredSlotCount *int `json:"required_slot_count,omitempty"`
+	// ItemIDs is roster_has_all_items's original unsigned-byte item id list
+	// (native 0x31860 scanned across runtime slots 0..15 once per id; see
+	// ch21_post.json / doc58's 2026-08-18 entry).
+	ItemIDs []int `json:"item_ids,omitempty"`
 }
 
 // HandlerRepeatHint records a directly recovered fixed-count loop around one
@@ -74,6 +78,13 @@ type HandlerBeat struct {
 	RawPlacementGate  *int                      `json:"raw_placement_gate,omitempty"`
 	CharID            *int                      `json:"char_id,omitempty"`
 	ItemID            *int                      `json:"item_id,omitempty"`
+	// ItemIDs is the original unsigned-byte item id list shared by
+	// roster_has_all_items (condition) and consume_items (beat): native
+	// 0x24150 (ch21 postbattle) scans item_ids 0xd1..0xd6 across runtime
+	// slots 0..15 (0x31860) as an "if" gate, then on success re-scans and
+	// removes each match (0x1b8e7) before grant_item (0x1c220). See doc58's
+	// 2026-08-18 entry for the full disassembly.
+	ItemIDs           []int                     `json:"item_ids,omitempty"`
 	ResourceID        *int                      `json:"resource_id,omitempty"`
 	SFXIndex          *int                      `json:"sfx_index,omitempty"`
 	Track             *int                      `json:"track,omitempty"`

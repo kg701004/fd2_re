@@ -2242,3 +2242,111 @@ func TestNativeEventStateEqualsRejectsFrontierAbsentFromBinding(t *testing.T) {
 		t.Fatalf("unlisted refined frontier issues=%#v", issues)
 	}
 }
+
+// TestCompileRosterHasAllItemsGatesConsumeAndGrant covers the 2026-08-18 fix
+// for ch21 postbattle's sky-key crafting gate (doc58's "續十八"/"續二十二"
+// entries): native 0x24150 only removes item_ids 0xd1..0xd6 and grants
+// item_id 0x64 when all six are present (cmp ebx,6 after the 0x31860 search
+// loop), not unconditionally. roster_has_all_items/consume_items are the
+// compiled forms of that search-then-remove shape.
+func TestCompileRosterHasAllItemsGatesConsumeAndGrant(t *testing.T) {
+	itemID := 100
+	script := &HandlerScript{Beats: []HandlerBeat{{
+		Op: "if",
+		Condition: &HandlerCondition{
+			Op:      "roster_has_all_items",
+			ItemIDs: []int{0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6},
+		},
+		Then: []HandlerBeat{
+			{Op: "consume_items", ItemIDs: []int{0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6}},
+			{Op: "grant_item", ItemID: &itemID},
+		},
+	}}}
+	beats, issues := CompileHandlerScript(script, HandlerBindings{})
+	if len(issues) != 0 {
+		t.Fatalf("well-formed roster_has_all_items issues=%#v", issues)
+	}
+	if len(beats) != 1 || beats[0].Op != "if" || beats[0].Condition == nil ||
+		beats[0].Condition.Op != "roster_has_all_items" ||
+		!reflect.DeepEqual(beats[0].Condition.ItemIDs, []int{0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6}) {
+		t.Fatalf("compiled condition = %#v", beats[0])
+	}
+	if len(beats[0].Then) != 2 || beats[0].Then[0].Op != "consume_items" ||
+		!reflect.DeepEqual(beats[0].Then[0].ItemIDs, []int{0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6}) ||
+		beats[0].Then[1].Op != "grant_item" || beats[0].Then[1].ItemID == nil || *beats[0].Then[1].ItemID != 100 {
+		t.Fatalf("compiled then-arm = %#v", beats[0].Then)
+	}
+
+	// Fail-closed shapes: empty item_ids and an out-of-byte-range id.
+	for _, bad := range []*HandlerCondition{
+		{Op: "roster_has_all_items"},
+		{Op: "roster_has_all_items", ItemIDs: []int{0x100}},
+	} {
+		_, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "if", Condition: bad}}}, HandlerBindings{})
+		if len(issues) != 1 {
+			t.Fatalf("roster_has_all_items condition=%#v issues=%#v, want exactly 1", bad, issues)
+		}
+	}
+	for _, bad := range [][]int{nil, {0x100}} {
+		_, issues := CompileHandlerScript(&HandlerScript{Beats: []HandlerBeat{{Op: "consume_items", ItemIDs: bad}}}, HandlerBindings{})
+		if len(issues) != 1 {
+			t.Fatalf("consume_items item_ids=%#v issues=%#v, want exactly 1", bad, issues)
+		}
+	}
+}
+
+// TestCompileCh21PostBindingGatesSkyKeyOnRosterHasAllItems compiles the real
+// production asset (assets/cutscenes/bindings/generated/ch20_post.json,
+// which wraps assets/cutscenes/handlers/ch21_post.json under the established
+// post-handler off-by-one binding convention) and checks the recovered
+// 0x24150 gate compiled to the expected shape. The handler also still
+// carries three pre-existing, unrelated compile issues (a not-yet-bound
+// layout_units mapping and two acting_id calls with no acting_resources
+// table for this binding, plus the still-unclassified 0x24336 celebration
+// animation) -- none of those block the item-gate fix itself, since only
+// the "if" beat's own then/else issues can cascade-reject that beat.
+func TestCompileCh21PostBindingGatesSkyKeyOnRosterHasAllItems(t *testing.T) {
+	beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/generated/ch20_post.json")
+	if err != nil {
+		t.Fatalf("ch20_post (wraps ch21_post) err=%v", err)
+	}
+	for _, iss := range issues {
+		if iss.Op == "if" {
+			t.Fatalf("sky-key if-beat did not compile: %#v", iss)
+		}
+	}
+	var gate *Beat
+	for i := range beats {
+		if beats[i].Op == "if" {
+			gate = &beats[i]
+			break
+		}
+	}
+	if gate == nil {
+		t.Fatalf("ch21_post did not compile an if-beat; beats=%#v", beats)
+	}
+	if gate.Condition == nil || gate.Condition.Op != "roster_has_all_items" ||
+		!reflect.DeepEqual(gate.Condition.ItemIDs, []int{209, 210, 211, 212, 213, 214}) {
+		t.Fatalf("sky-key gate condition = %#v", gate.Condition)
+	}
+	if len(gate.Then) < 2 || gate.Then[0].Op != "consume_items" ||
+		!reflect.DeepEqual(gate.Then[0].ItemIDs, []int{209, 210, 211, 212, 213, 214}) {
+		t.Fatalf("sky-key gate then[0] = %#v", gate.Then)
+	}
+	if gate.Then[1].Op != "grant_item" || gate.Then[1].ItemID == nil || *gate.Then[1].ItemID != 100 {
+		t.Fatalf("sky-key gate then[1] = %#v", gate.Then[1])
+	}
+	// The unconditional tail (dialog(6)/join(24)/join(23)/sync_party/
+	// set_chapter) must survive outside the if, in both success and failure.
+	tailOps := map[string]bool{"join": false, "sync_party": false, "set_chapter": false}
+	for _, b := range beats {
+		if _, ok := tailOps[b.Op]; ok {
+			tailOps[b.Op] = true
+		}
+	}
+	for op, seen := range tailOps {
+		if !seen {
+			t.Fatalf("unconditional tail is missing %q: beats=%#v", op, beats)
+		}
+	}
+}
