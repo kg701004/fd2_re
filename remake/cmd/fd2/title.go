@@ -139,6 +139,13 @@ func (g *Game) cutAdvance() {
 	}
 }
 
+// titleSkipToMenuPressed 是使用者明確要求的 remake 便利:開頭動畫(cutscene/
+// scroll/logozoom 任一階段)按 ESC 或 ENTER 都直接跳去主選單,不必先跳到下一
+// 個階段再按一次。
+func titleSkipToMenuPressed() bool {
+	return inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyEnter)
+}
+
 // titleUpdate 處理開頭動畫/主選單輸入。回傳 true = 仍在 title 流程。
 func (g *Game) titleUpdate() bool {
 	switch g.titlePhase {
@@ -152,8 +159,9 @@ func (g *Game) titleUpdate() bool {
 		if g.cutIdx == 0 && g.cutFrame == 0 && g.cutTick == 0 {
 			g.playBGM("FDMUS_018") // 開場/標題曲(RE 確認:boot 0x025db5 play_bgm(18,0),doc12 §15)
 		}
-		// 按鍵跳過:該步 skippable 才可按任意鍵跳(原版旗標);ESC 一律跳整段(remake 便利)。
-		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) ||
+		// 按鍵跳過:該步 skippable 才可按任意鍵跳(原版旗標);ESC/ENTER 一律跳整段
+		// 直接進選單(使用者明確要求的 remake 便利,跟原本只認 ESC 不同)。
+		if titleSkipToMenuPressed() ||
 			(step.skip && len(inpututil.AppendJustPressedKeys(nil)) > 0) {
 			g.titlePhase = "menu"
 			g.titleSel = 0
@@ -165,7 +173,7 @@ func (g *Game) titleUpdate() bool {
 				g.cutAdvance()
 				return true
 			}
-			g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
+			g.cutTick += titleSpeedUp // 開頭動畫維持原版節奏(cutscene_speed.go)
 			if g.cutTick >= step.tick {
 				g.cutAdvance()
 			}
@@ -176,7 +184,7 @@ func (g *Game) titleUpdate() bool {
 				g.cutAdvance()
 				return true
 			}
-			g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
+			g.cutTick += titleSpeedUp // 開頭動畫維持原版節奏(cutscene_speed.go)
 			g.scrollY = 535 * (1 - float64(g.cutTick)/float64(step.tick)) // 535→0(底→頂)
 			if g.cutTick >= step.tick {
 				g.scrollY = 0
@@ -193,7 +201,7 @@ func (g *Game) titleUpdate() bool {
 				return true
 			}
 		}
-		g.cutTick += cutsceneSpeedUp // 過場加速(cutscene_speed.go)
+		g.cutTick += titleSpeedUp // 開頭動畫維持原版節奏(cutscene_speed.go)
 		if g.cutTick >= step.tick {
 			g.cutTick = 0
 			g.cutFrame++
@@ -203,10 +211,15 @@ func (g *Game) titleUpdate() bool {
 		}
 		return true
 	case "scroll":
+		if titleSkipToMenuPressed() {
+			g.titlePhase = "menu"
+			g.titleSel = 0
+			return true
+		}
 		if g.scrollY >= 534 { // 開場即配樂(使用者記憶:登登登登磅礡進場;曲號待 dosbox 對照)
 			g.playBGM("FDMUS_018") // 同開場曲(RE 確認,取代舊猜測 FDMUS_004)
 		}
-		g.scrollY -= 1.5 * float64(cutsceneSpeedUp) // 捲動速度(原版逐列複製;待 dosbox 錄影校)+過場加速
+		g.scrollY -= 1.5 * float64(titleSpeedUp) // 捲動速度(原版逐列複製;待 dosbox 錄影校)開頭動畫維持原版節奏
 		anyKey := len(inpututil.AppendJustPressedKeys(nil)) > 0
 		if g.scrollY <= 0 || anyKey {
 			g.titlePhase = "logozoom" // dosbox 實拍(doc23 §2.4):紅閃→「2」縮入→白閃→選單
@@ -214,6 +227,11 @@ func (g *Game) titleUpdate() bool {
 		}
 		return true
 	case "logozoom":
+		if titleSkipToMenuPressed() {
+			g.titlePhase = "menu"
+			g.titleSel = 0
+			return true
+		}
 		g.titleTick++
 		if g.titleTick > 50 || len(inpututil.AppendJustPressedKeys(nil)) > 0 { // 紅閃12+縮放30+白閃8
 			g.titlePhase = "menu"
@@ -341,12 +359,14 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 			p := float64(t-12) / 30
 			sc := 2 * (3 - 2*p) // 6→2
 			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(-160, -100) // 以畫面中心縮放
+			op.Filter = ebiten.FilterLinear // 標題圖含細密網點材質(龍紋/燙金),需線性濾波才能還原成原版CRT上的漸層觀感,否則放大後每個網點都各自可見,看起來像雜訊
+			op.GeoM.Translate(-160, -100)   // 以畫面中心縮放
 			op.GeoM.Scale(sc, sc)
 			op.GeoM.Translate(320, 200)
 			screen.DrawImage(ta.title, op)
 		default: // 全螢幕白閃(bloom)
 			op := &ebiten.DrawImageOptions{}
+			op.Filter = ebiten.FilterLinear
 			op.GeoM.Scale(2, 2)
 			screen.DrawImage(ta.title, op)
 			w := ebiten.NewImage(logicalW, logicalH)
@@ -356,6 +376,7 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 		}
 	case "menu":
 		op := &ebiten.DrawImageOptions{}
+		op.Filter = ebiten.FilterLinear
 		op.GeoM.Scale(2, 2)
 		screen.DrawImage(ta.title, op)
 		// 選單項(置中;y 位置對照原版標題畫面下半)
@@ -384,6 +405,7 @@ func (g *Game) drawTitle(screen *ebiten.Image) {
 			return
 		}
 		op := &ebiten.DrawImageOptions{}
+		op.Filter = ebiten.FilterLinear
 		op.GeoM.Scale(2, 2)
 		screen.DrawImage(ta.title, op)
 		if g.font == nil {

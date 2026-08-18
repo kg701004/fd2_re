@@ -17,6 +17,44 @@ func (g *Game) beginActionOverlayOpen(selection int) {
 	g.actionOverlayAfter = nil
 	g.actionOverlayDrawn = false
 	g.actionOverlayShotHold = false
+	g.resetRingPulse()
+}
+
+// resetRingPulse restarts the selected-cell blink cadence whenever the ring
+// (re)opens; it keeps ticking across arrow-key selection changes within the
+// same open session, same as the sibling native menus. 2026-08-13: added because the ring's
+// selection border was a flat static color while every sibling native menu
+// in this codebase (town/church/shop/class -- see nativeTownUIPulse and its
+// siblings) blinks its selected cell on a 4-tick BIOS-clock cadence, ported
+// from actual disassembly of those menus' own routines (e.g. 0x2d1b5 for
+// town). No equivalent disassembly offset for THIS menu's own selected-cell
+// blink is on file yet (doc51 only confirms doc13's state-machine offsets
+// 0x18ED0/0x18890 for the menu structure itself, not its blink timing), so
+// this reuses the same proven cadence/mechanism for visual consistency
+// rather than claiming a byte-verified port -- flagged in
+// docs/knowledge-base for follow-up RE work if the exact original timing
+// ever gets confirmed.
+func (g *Game) resetRingPulse() {
+	g.ringUIClock.Reset()
+	g.ringPulse = 0
+	g.ringLastTick = 0
+	g.ringHasTick = false
+}
+
+// stepRingPulseTick mirrors stepNativeTownUIPulseTick's proven 4-tick-delta,
+// four-state wrap-around cadence.
+func (g *Game) stepRingPulseTick(rawTick int) {
+	if !g.ringHasTick {
+		g.ringLastTick = rawTick
+		g.ringHasTick = true
+		return
+	}
+	delta := int16(uint16(rawTick) - uint16(g.ringLastTick))
+	if delta < 4 {
+		return
+	}
+	g.ringLastTick = rawTick
+	g.ringPulse = (g.ringPulse + 1) & 3
 }
 
 // beginActionOverlayClose starts the independent four-present sequence from

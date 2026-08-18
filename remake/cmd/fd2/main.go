@@ -52,7 +52,36 @@ const (
 	// 走入/運鏡完全失去意義(使用者 2-1);story 場景世界層 2×(48px/格,視野 13.3×8.3 格)
 	// 即還原原版取景與長廊運鏡。戰場是否同步 2× 另議(動 HUD/指令環佈局,worklist)。
 	storyZoom = 2
+	// maxDynamicStoryZoom:dynamicStoryZoom 的放大上限,避免一張很小的地圖
+	// (例如某些劇情走位節點)被放到誇張的大格子。
+	maxDynamicStoryZoom = 8
 )
+
+// dynamicStoryZoom 回傳「填滿畫面(screenW x screenH)」需要的最大整數放大
+// 倍率(避免非整數縮放讓 pixel art 模糊),下限是 storyZoom(全遊戲 2x
+// chunky-pixel 慣例),上限 maxDynamicStoryZoom。故意取兩軸倍率的較大值(填滿
+// /cover,不是取較小值的整張塞入/contain):地圖比畫面窄的那一情境本來就是
+// 這次要修的問題(使用者回饋:地圖應該延伸充滿整個視窗),取 contain 只會在
+// 長寬比不同時繼續留黑邊。跟 NativeMapViewport(cmd/fd2/native_map_viewport.go)
+// 同一個精神——鏡頭本來就會捲動跟著角色,不需要整張地圖同時塞進畫面。
+// 地圖比畫面大時(常見於真正的戰場地圖)算出來的倍率會 <= storyZoom,直接
+// 用下限,維持現有「鏡頭跟著游標捲動」的行為不變。
+func dynamicStoryZoom(screenW, screenH, mapPxW, mapPxH int) int {
+	zoom := storyZoom
+	if mapPxW > 0 && mapPxH > 0 {
+		z := screenW / mapPxW
+		if zh := screenH / mapPxH; zh > z {
+			z = zh
+		}
+		if z > zoom {
+			zoom = z
+		}
+	}
+	if zoom > maxDynamicStoryZoom {
+		zoom = maxDynamicStoryZoom
+	}
+	return zoom
+}
 
 // MapData 對應 assets/map.json(由 tools/export_engine_assets.py 產生)。
 type MapData struct {
@@ -75,62 +104,68 @@ type Game struct {
 	preFullscreenX, preFullscreenY int
 	uiCanvas                       *ebiten.Image // fixed logicalW x logicalH target for every non-expandable screen (shop/church/prep/title/menus/etc); reused across frames
 	m                              *MapData
-	nativeMapAssets                *nativeMapAssets                   // all original map HUD resources, nil on any missing/malformed asset
-	nativeMapWork                  []byte                             // persistent tactical framebuffer, sized for nativeMapViewport (456-stride at the original 13x8)
-	nativeMapVGA                   []byte                             // persistent indexed VGA surface, sized for nativeMapViewport (320x200 at the original 13x8)
-	nativeMapViewport              indexedmap.NativeMapViewport       // steady map viewport preset chosen by Layout for the current window size (see pickNativeMapViewport); {13,8} (zero value falls back via viewportOrDefault) until Layout runs once
-	nativeMapViewportForW          int                                // outsideW/H Layout last picked nativeMapViewport for, so it's only recomputed on an actual size change
+	nativeMapAssets                *nativeMapAssets             // all original map HUD resources, nil on any missing/malformed asset
+	nativeMapWork                  []byte                       // persistent tactical framebuffer, sized for nativeMapViewport (456-stride at the original 13x8)
+	nativeMapVGA                   []byte                       // persistent indexed VGA surface, sized for nativeMapViewport (320x200 at the original 13x8)
+	nativeMapViewport              indexedmap.NativeMapViewport // steady map viewport preset chosen by Layout for the current window size (see pickNativeMapViewport); {13,8} (zero value falls back via viewportOrDefault) until Layout runs once
+	nativeMapViewportForW          int                          // outsideW/H Layout last picked nativeMapViewport for, so it's only recomputed on an actual size change
 	nativeMapViewportForH          int
-	wantFullscreenAtStart          bool // FD2_SHOT_FULLSCREEN=1: toggle true fullscreen on the first Update tick (verification hook for the wider native map viewport)
-	wantSkipStoryAtStart           bool // FD2_SKIP_STORY_AT_START=1: same as FD2_SHOT_SKIP_STORY but not gated behind FD2_SHOT, for interactive verification sessions
+	wantFullscreenAtStart          bool                               // FD2_SHOT_FULLSCREEN=1: toggle true fullscreen on the first Update tick (verification hook for the wider native map viewport)
+	wantSkipStoryAtStart           bool                               // FD2_SKIP_STORY_AT_START=1: same as FD2_SHOT_SKIP_STORY but not gated behind FD2_SHOT, for interactive verification sessions
 	nativeMapDAC                   []byte                             // current 256xRGB six-bit DAC state for handler palette ramps
 	nativePaletteRamp              *nativePaletteRampJob              // exact 0x1f882/0x1f525 indexed DAC presentation
 	nativeFullDACWhite             bool                               // exact 0x11DF2(0,255,255) overlay for legacy RGB scenes
 	nativeFullDACBlack             bool                               // exact ch07 post 0x11D40(0,255,64)+mode-13h clear
 	nativeMapHUDPersistent         battle.NativeMapHUDPersistentState // gate A save-persistent；anchor process-persistent
 	tileset                        *ebiten.Image
-	tiles                          []*ebiten.Image     // 切好的圖塊
-	st                             *battle.State       // 戰鬥狀態(單位)
-	nativeMapClock                 nativeBIOSClock     // battle-local 18.2065Hz BIOS low-word adapter
-	sc                             *battle.Scenario    // 劇本(事件系統,doc 29)
-	dialog                         []battle.DialogLine // 待顯示對話(事件產生,含說話者)
-	storyBG                        bool                // 場景背景模式(story 節點指定 Map):鏡頭固定不跟游標,不畫單位/游標/HUD(doc23 §4)
-	storyActors                    []battle.Unit       // 原版目前已 materialize 的 scene unit array；index 只在該 load/spawn 時序內有意義
-	storyRoster                    []battle.Unit       // LOADCH 保留的 FDFIELD records；SPAWN 按 group 順序 append 到 storyActors
-	storyCompositionEventBytes     []byte              // LOADCH 的 immutable FDFIELD composition +2；future-group placement 的原始輸入
-	storySpawned                   map[int]bool        // 原版 group 已 materialize；防止 handler 重複 SPAWN 時重複 append
-	storyRosterPath                string              // 最近一次 handler LOADCH 的 exact roster source；battle handoff gate
-	storyPartyScenario             string              // 最近一次 handler LOADCH 的 exact party scenario；battle handoff gate
-	partyMembers                   map[int]bool        // JOIN 建立的永久玩家名冊；key=原版 0..31 charID，不使用 NPC portrait
-	partyJoinOrder                 []int               // JOIN 首次出現順序；章0 cutscene 的 party runtime slot 以此為準
-	partyRoster                    map[int]battle.Unit // 0x11506 戰後同步的跨關角色能力／HP／MP／經驗快照
-	partyDeploy                    map[int]bool        // preparation 0x318ad 的本戰出擊勾選；不改永久 JOIN 名冊
-	prepIDs                        []int               // preparation UI 角色順序（JOIN chronology）
-	prepSel                        int                 // preparation UI 游標
-	prepLimit                      int                 // preparation UI 原版出擊上限（15，末段 19）
-	prepSelecting                  bool                // 已通過前置確認，且流程要求進入原版選人階段
-	prepConfirm                    bool                // 選滿或小隊確認後的最終出戰確認階段
-	prepConfirmSel                 int                 // 0=肯定，1=取消
-	prepClock                      nativeBIOSClock     // preparation 0x31e80→0x1297d 的 BIOS 低字來源
-	prepIdleCycle                  int                 // 原版 [0x53c0b] 0..3；繪圖時 3 正規化為1
-	prepLastTick                   int                 // 原版 [0x53c0f] 有號 BIOS 低字 latch
-	prepPromptSource               []byte              // 0x1956b 前的 town 畫面或 0x2cc04 黑色來源
-	churchSel                      int                 // church service menu cursor (0..3)
-	churchMode                     string              // menu / status_* / transfer_* / revive* / class / class_confirm
-	churchIDs                      []int               // current church candidate ids
-	churchRosterStart              int                 // 0x2e6b8 [0x5412f], even six-entry viewport origin
-	churchVerticalStart            int                 // 0x30c22/0x311dc three-row viewport origin
-	churchStatusID                 int                 // selected actor passed to 0x17aed
-	churchStatusPanel              []byte              // 0x17eef/0x17fc0 + 0x184c0(actor,-1)
-	churchCommandPanel             []byte              // 0x17eef/0x17fc0 + 0x1ceed(actor,-1)
-	churchItemStart                int                 // 0x2df6b even six-entry item viewport origin
-	churchTransferSource           int                 // raw transfer source roster id
-	churchTransferItem             int                 // compact source inventory index
-	churchTransferItems            []int               // compact source inventory indices
-	churchTransferDest             int                 // raw destination id used by FDTXT506 FFFC
-	churchReviveID                 int                 // selected 0x30dc3 candidate
-	churchReviveFee                int                 // level * raw class fee
-	churchClassID                  int                 // selected class-change candidate
+	tileCellScale                  int                            // 1=原生24px;>1=tileset.png 是這個倍率的高解析版(見 loadMap/hasHDNativeTerrain)
+	spriteCellScale                int                            // 同 tileCellScale,但對象是 assets/sprites/fig_*.png(見 loadSprites 呼叫處)
+	tiles                          []*ebiten.Image                // 切好的圖塊
+	mapComposite                   *ebiten.Image                  // 整張地圖預先合成好的單一大圖(見 loadMap);nil = 沒有(尚未就緒或這張地圖沒有),退回逐格 tiles 繪法
+	mapCompositeScale              int                            // mapComposite 相對原生 W*tw x H*th 的整數倍率(同 tileCellScale 的量測算法)
+	mapCompositePending            <-chan mapCompositeAsyncResult // 背景解碼中的 map_composite.png(見 startLoadMapCompositeAsync/pollMapCompositeAsync);nil = 沒有在跑
+	classicUnitHUDAnchor           int                            // drawUnitHUD 左下/右下閃避游標的持久 anchor 狀態(見 updateClassicUnitHUDAnchor);0=尚未初始化,首次使用時補成靠左
+	st                             *battle.State                  // 戰鬥狀態(單位)
+	nativeMapClock                 nativeBIOSClock                // battle-local 18.2065Hz BIOS low-word adapter
+	sc                             *battle.Scenario               // 劇本(事件系統,doc 29)
+	dialog                         []battle.DialogLine            // 待顯示對話(事件產生,含說話者)
+	storyBG                        bool                           // 場景背景模式(story 節點指定 Map):鏡頭固定不跟游標,不畫單位/游標/HUD(doc23 §4)
+	storyActors                    []battle.Unit                  // 原版目前已 materialize 的 scene unit array；index 只在該 load/spawn 時序內有意義
+	storyRoster                    []battle.Unit                  // LOADCH 保留的 FDFIELD records；SPAWN 按 group 順序 append 到 storyActors
+	storyCompositionEventBytes     []byte                         // LOADCH 的 immutable FDFIELD composition +2；future-group placement 的原始輸入
+	storySpawned                   map[int]bool                   // 原版 group 已 materialize；防止 handler 重複 SPAWN 時重複 append
+	storyRosterPath                string                         // 最近一次 handler LOADCH 的 exact roster source；battle handoff gate
+	storyPartyScenario             string                         // 最近一次 handler LOADCH 的 exact party scenario；battle handoff gate
+	partyMembers                   map[int]bool                   // JOIN 建立的永久玩家名冊；key=原版 0..31 charID，不使用 NPC portrait
+	partyJoinOrder                 []int                          // JOIN 首次出現順序；章0 cutscene 的 party runtime slot 以此為準
+	partyRoster                    map[int]battle.Unit            // 0x11506 戰後同步的跨關角色能力／HP／MP／經驗快照
+	partyDeploy                    map[int]bool                   // preparation 0x318ad 的本戰出擊勾選；不改永久 JOIN 名冊
+	prepIDs                        []int                          // preparation UI 角色順序（JOIN chronology）
+	prepSel                        int                            // preparation UI 游標
+	prepLimit                      int                            // preparation UI 原版出擊上限（15，末段 19）
+	prepSelecting                  bool                           // 已通過前置確認，且流程要求進入原版選人階段
+	prepConfirm                    bool                           // 選滿或小隊確認後的最終出戰確認階段
+	prepConfirmSel                 int                            // 0=肯定，1=取消
+	prepClock                      nativeBIOSClock                // preparation 0x31e80→0x1297d 的 BIOS 低字來源
+	prepIdleCycle                  int                            // 原版 [0x53c0b] 0..3；繪圖時 3 正規化為1
+	prepLastTick                   int                            // 原版 [0x53c0f] 有號 BIOS 低字 latch
+	prepPromptSource               []byte                         // 0x1956b 前的 town 畫面或 0x2cc04 黑色來源
+	churchSel                      int                            // church service menu cursor (0..3)
+	churchMode                     string                         // menu / status_* / transfer_* / revive* / class / class_confirm
+	churchIDs                      []int                          // current church candidate ids
+	churchRosterStart              int                            // 0x2e6b8 [0x5412f], even six-entry viewport origin
+	churchVerticalStart            int                            // 0x30c22/0x311dc three-row viewport origin
+	churchStatusID                 int                            // selected actor passed to 0x17aed
+	churchStatusPanel              []byte                         // 0x17eef/0x17fc0 + 0x184c0(actor,-1)
+	churchCommandPanel             []byte                         // 0x17eef/0x17fc0 + 0x1ceed(actor,-1)
+	churchItemStart                int                            // 0x2df6b even six-entry item viewport origin
+	churchTransferSource           int                            // raw transfer source roster id
+	churchTransferItem             int                            // compact source inventory index
+	churchTransferItems            []int                          // compact source inventory indices
+	churchTransferDest             int                            // raw destination id used by FDTXT506 FFFC
+	churchReviveID                 int                            // selected 0x30dc3 candidate
+	churchReviveFee                int                            // level * raw class fee
+	churchClassID                  int                            // selected class-change candidate
 	churchBranches                 []campaign.ClassChangeBranch
 	hotelSel                       int // raw 0x2fc85 selector (0..3)
 	hotelRoute                     fdother.NativeHotelServiceRoute
@@ -172,6 +207,7 @@ type Game struct {
 	nativeTurnStaging              *nativeTurnStagingJob
 	nativeFieldEvent61             *nativeFieldEvent61Job
 	nativeEnding                   *nativeEndingPreview // FD2_ENDING_PREFIX=1 的 0x2bce5 fail-closed prefix oracle
+	wantQuit                       bool                 // ending 畫面(無論原生預覽或純文字)按 Enter/Esc 要求乾淨結束程式
 	walk                           *walkAnim            // 移動動畫(沿路徑逐格走,FDICON 方向幀)
 	camp                           *campaign.Runner     // 劇本節點圖(doc 19;FD2_CAMPAIGN 啟用)
 	campSel                        int                  // choice 節點游標
@@ -195,7 +231,11 @@ type Game struct {
 	actionOverlayAfter       func()
 	actionOverlayDrawn       bool
 	actionOverlayShotHold    bool
-	ringIcons                [4]*ebiten.Image  // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
+	ringIcons                [4]*ebiten.Image // fallback only: 0上=攻擊 1左=法術 2右=物品 3下=待機
+	ringUIClock              nativeBIOSClock  // 選中格脈動節奏(2026-08-13 補;見 resetRingPulse doc)
+	ringPulse                int
+	ringLastTick             int
+	ringHasTick              bool
 	nativeActionCells        [10]*ebiten.Image // FDOTHER#2 cells 0..9; only from player-provided original data
 	nativeUIPalette          color.Palette
 	nativeClassUI            *nativeClassUIAssets
@@ -264,6 +304,7 @@ type Game struct {
 	nativeItemRelocating     bool
 	nativeItemRelocationUnit int
 	nativeMovementCostRows   [][]byte
+	nativeAICombatItemRows   []byte // ScoreNativeAI14237's own cache; kept separate from nativeItemEffectRows/nativeJoinItemEffectRows per this file's existing one-cache-per-subsystem convention
 	nativeRNGState           uint16 // original 0x627b8: initialized to zero, process-lifetime only
 	nativeItemPanel          *ebiten.Image
 	nativeItemPanelBase      []byte
@@ -334,6 +375,16 @@ type Game struct {
 	shotSel    bool // 截圖前自動選取游標單位(FD2_SHOT_SELECT=1)
 	shotSetup  bool // screenshot setup also must tolerate skipped exact frames
 	shotTaken  bool // frame scheduling may skip an exact number; capture once at-or-after it
+	// FD2_SHOT_SHOP_BUY_CONFIRM=1 (2026-08-16): end-to-end native shop
+	// purchase verification bookkeeping -- state captured at initiation,
+	// compared against final state at capture time (see captureShot).
+	debugShopBuyInitiated        bool // fires stepShotShopBuyConfirm's setup once, as early as possible
+	debugShopBuyPending          bool
+	debugShopBuyRecipientID      int
+	debugShopBuyGoldBefore       int
+	debugShopBuyInvBefore        []int
+	debugForceResultInitiated    bool // fires stepShotForceResult's FD2_SHOT_FORCE_WIN/FORCE_LOSE once, as early as possible
+	debugRingPulseWatchInitiated bool // fires stepShotRingPulseWatch's FD2_SHOT_RING_PULSE_WATCH once, as early as possible
 	// 選取狀態
 	sel                *battle.Unit
 	reach              map[battle.Cell]bool
@@ -345,6 +396,7 @@ type Game struct {
 	sprites                                      map[int][]*ebiten.Image
 	figani                                       map[int][]*ebiten.Image         // 攻擊全身動畫(FIGANI):fig → 幀序列
 	atk                                          *atkAnim                        // 進行中的攻擊演出
+	battleSceneBuf                               *ebiten.Image                   // drawBattleScene 的固定 640x400 原生離屏緩衝,見該函式註解
 	bg                                           *ebiten.Image                   // 戰鬥背景(BG.DAT,by 戰場;map0=BG_004 森林)
 	tai                                          *ebiten.Image                   // 我方腳下台座(TAI.DAT;0x29164 載 0x28c46,doc35 §3.3)
 	panel                                        *ebiten.Image                   // 狀態欄框素材(FDOTHER#5 LMI1 #22,149×42;含bevel+HP/MP標籤+槽,doc35 §4)
@@ -1277,7 +1329,17 @@ func (g *Game) beatStart(b campaign.Beat) {
 		}
 		g.beatAdvance()
 	case "spawn_intro":
-		if b.Source != "" {
+		// 2026-08-13 修復:先前 b.Source!="" 一律走原生路徑,若玩家沒有原版
+		// FDOTHER.DAT(assets/story/ch00_pre.json 這種序章過場很常見),
+		// startNativeSpawnIntro 會因 native map assets/field unavailable 失敗,
+		// g.loadErr 設了但這裡直接 return——beat runner 從此卡死不再前進,
+		// 而 g.loadErr 只有 g.m==nil 時才會顯示給玩家看(main.go Draw()),
+		// 這裡地圖是有載入的,所以錯誤完全不可見,玩家只看到畫面卡住無反應
+		// (第一章開場的十二格海盜登場動畫,無原生素材新玩家一律卡死於此)。
+		// 前置檢查 nativeMapAssetsAvailable,不可用時直接退回下面 b.Source==""
+		// 那條「陽春但保證能動」的路徑(group 照樣加進戰場,只是沒有原生動畫,
+		// 用固定 beatDelay 前進),不再嘗試也不再靠它卡住整個過場。
+		if b.Source != "" && nativeMapAssetsAvailable(g.nativeMapAssets) {
 			if b.RawPlacementGate == nil {
 				g.loadErr = fmt.Sprintf("beat spawn_intro %s: raw placement gate unavailable", b.Source)
 				return
@@ -1866,6 +1928,20 @@ func (g *Game) dlgWrap(dl battle.DialogLine) []string {
 		if nn > len(txt) {
 			nn = len(txt)
 		}
+		// Don't split inside a run of ASCII letters/digits (e.g. "Shift+F1"
+		// wrapping as "Shi"/"ft+F1鍵") -- back the cut up to the start of
+		// that run. Chinese text has no such runs, so this is a no-op for
+		// the common case; if the run itself is longer than perLine, keep
+		// the hard break rather than looping forever.
+		if nn < len(txt) && isASCIIWordRune(txt[nn-1]) && isASCIIWordRune(txt[nn]) {
+			back := nn
+			for back > 0 && isASCIIWordRune(txt[back-1]) {
+				back--
+			}
+			if back > 0 {
+				nn = back
+			}
+		}
 		lines = append(lines, string(txt[:nn]))
 		txt = txt[nn:]
 	}
@@ -1959,6 +2035,13 @@ func (g *Game) enterNode() {
 	if n == nil {
 		return // 流程結束(game over)
 	}
+	// 2026-08-16: g.result("win"/"lose")先前從未在任何地方被清空,一旦某場戰鬥結束就會
+	// 永遠卡在非空值——Draw() 的「勝負(中央大字)」區塊(g.result != "")完全沒有依 node
+	// type 或 g.st 收斂,只要 g.font!=nil 就畫,所以敗北後轉場到 retreat_chNN 這類無地圖
+	// 的 story 節點時,舊戰場的「敗北」大字會卡在畫面上不消失。在真正離開這場戰鬥、
+	// 進入下一個節點的當下清空,是這個旗標唯一該被消耗的時機(這裡是 real Enter-handler
+	// 呼叫 g.camp.Advance()/g.enterNode() 之後統一會經過的入口,不需要在每個呼叫端各自補)。
+	g.result = ""
 	g.playBGM(n.BGM)
 	g.storyBG = false // 預設離開場景背景模式;story+Map 節點下面再開回
 	g.storyWalks = nil
@@ -1995,6 +2078,24 @@ func (g *Game) enterNode() {
 			for i := len(lines) - 1; i >= 0; i-- { // 反序堆疊:顯示取末端,Enter 逐句 pop
 				g.dialog = append(g.dialog, battle.DialogLine{Speaker: lines[i].Speaker, Text: lines[i].Text})
 			}
+		}
+		// 2026-08-16: n.Map=="" 的純文字 story 節點(如 retreat_ch01)原本完全不碰
+		// g.st/g.sel,殘留的上一場戰鬥狀態會讓 Draw() 頂層那段依 g.st!=nil 的邏輯繼續往下
+		// 畫舊戰場(地圖/單位/HUD/卡住的「勝負」大字全部疊在新節點的對話框上)——實測
+		// FD2_SHOT_FORCE_LOSE 轉場到 retreat_ch01 證實了這個路徑。
+		//
+		// 不能對 "cutscene" 一併套用同一無條件清空:cutscene 節點的 beats(如
+		// sync_party,syncPartyFromBattle())在 enterNode() 設好初始狀態後才逐幀執行,
+		// 且明確需要讀 g.st 反映剛結束那場戰鬥的最終單位狀態(HP/inventory)——這裡曾經
+		// 誤把清空搬到 if n.Map!="" 外面對兩種 type 都生效,直接讓
+		// TestCh00CompiledHandlerCarriesItsExactRuntimeRosterIntoChapterOne/
+		// TestInventoryGateSkyKeyRoutesThroughSyncThenPreparation/
+		// TestInventoryRecipeSuccessSyncsThenReturnsToTown 三個測試全部因為
+		// "beat sync_party: no completed battle state" 掛掉,回歸測試當場抓到。
+		// cutscene 沒有自己的地圖時是否也有同一類殘留視覺問題,這次沒有實測案例
+		// (未發現任何 map=="" 的 cutscene 節點),範圍只收斂到已證實的 story 這一種。
+		if n.Type == "story" && n.Map == "" {
+			g.st, g.sel = nil, nil // 清殘留單位/選取(避免上一戰場畫面疊在新背景上)
 		}
 		if n.Map != "" { // 場景背景圖(doc23 §4:序幕王城/草地= FDFIELD map32 複合場景,非戰場地圖疊對白)
 			if err := g.loadMap(n.Map); err != nil {
@@ -2138,6 +2239,27 @@ func (g *Game) enterNode() {
 		g.setupNativeShop()
 	case "ending":
 		g.dialog, g.st, g.sel = nil, nil, nil
+		// Only the true final-victory node ("ending", reached via
+		// battle_ch30.on_win) attempts the recovered native 0x2bce5/0x2c405
+		// playback; ending_ch27_no_sky_key (the sky-key-missing bad ending)
+		// has no matching native resource evidence, so it deliberately keeps
+		// the plain text panel below. newNativeEndingPreview() requires
+		// player-provided FDOTHER.DAT/ANI.DAT/FDTXT.DAT (never bundled, see
+		// its own doc comment) and its timeline still blocks partway through
+		// at the first unrecovered native operation -- both are expected,
+		// not errors, so any failure here falls through to the same text
+		// panel every other node uses instead of surfacing loadErr.
+		if g.camp != nil && g.camp.Cur == "ending" {
+			if preview, err := newNativeEndingPreview(); err == nil {
+				g.nativeEnding = preview
+				if g.portraitIndex == nil {
+					g.portraitIndex = loadPortraitIndex()
+				}
+				if g.font == nil {
+					g.font = loadFont()
+				}
+			}
+		}
 	}
 }
 
@@ -2269,6 +2391,8 @@ func (g *Game) resetBattle(unitsPath, scnPath string) {
 		g.bindCommandLearn(st)
 		g.bindNativeCommandBook(st)
 		g.bindNativeCommandResistances(st)
+		g.bindNativeMovementCostRows(st)
+		g.bindNativeAIItemEffectRows(st)
 		if adoptHandlerState {
 			st.Units = nil
 			st.Roster = make([]*battle.Unit, len(handlerRoster))
@@ -2326,6 +2450,43 @@ func (g *Game) bindNativeCommandBook(st *battle.State) {
 		return
 	}
 	st.NativeCommandBook = append([]battle.NativeCommandRecord(nil), g.nativeCommandBook...)
+}
+
+// bindNativeMovementCostRows gives each freshly loaded battle the 0x4e555
+// 29×20 per-class terrain-cost table (see move.go MoveCostFor). Lazily
+// loaded once via g.nativeMovementCostRows so repeated battles/native item
+// relocation share the same parsed table instead of re-reading the file.
+func (g *Game) bindNativeMovementCostRows(st *battle.State) {
+	if st == nil {
+		return
+	}
+	if g.nativeMovementCostRows == nil {
+		if rows, err := battle.LoadNativeMovementCostRows(
+			assetPath("assets/data/native_movement_cost_rows.json"),
+		); err == nil {
+			g.nativeMovementCostRows = rows
+		}
+	}
+	st.NativeMovementCostRows = g.nativeMovementCostRows
+}
+
+// bindNativeAIItemEffectRows gives each freshly loaded battle the raw item
+// effect row table ScoreNativeAI14237 needs for its equipped-weapon
+// row+0xb/+0xc lookup (see native_ai_14237.go). Lazily loaded once via
+// g.nativeAICombatItemRows, same JSON source as the item-panel UI and JOIN
+// constructor's own independent caches (native_item_effect_rows.json).
+func (g *Game) bindNativeAIItemEffectRows(st *battle.State) {
+	if st == nil {
+		return
+	}
+	if g.nativeAICombatItemRows == nil {
+		if rows, err := battle.LoadNativeItemEffectRowPrefix(
+			assetPath("assets/data/native_item_effect_rows.json"),
+		); err == nil {
+			g.nativeAICombatItemRows = rows
+		}
+	}
+	st.NativeItemEffectRows = g.nativeAICombatItemRows
 }
 
 func (g *Game) bindNativeCommandResistances(st *battle.State) {
@@ -3869,6 +4030,14 @@ func (g *Game) campInput() bool {
 		}
 		return true
 	case "ending":
+		// Plain-text ending panel only (g.nativeEnding != nil short-circuits
+		// Update() long before campInput() runs, see the block guarded by
+		// "if g.nativeEnding != nil" above). Previously this absorbed every
+		// keypress with no way out, leaving the player stuck on the ending
+		// screen forever; Enter/Space/Escape now request a clean shutdown.
+		if enter || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			g.wantQuit = true
+		}
 		return true
 	case "battle":
 		if g.result != "" && enter { // 勝敗後 Enter → 依結果轉場(敗北可走敗北路線)
@@ -4332,10 +4501,13 @@ func (g *Game) nativeCommandTargetUnitsFor(id int) ([]*battle.Unit, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !g.sel.HasNativeRecordByte6 {
+		return nil, fmt.Errorf("native target command actor lacks raw camp provenance")
+	}
 	return battle.NativeCommandTargets(
 		g.st.W, g.st.H,
 		battle.Cell{X: g.sel.X, Y: g.sel.Y},
-		record.SelectionMode, record.TargetCode,
+		record.SelectionMode, record.TargetCode, int(g.sel.NativeRecordByte6),
 		flags, g.st.Units,
 	)
 }
@@ -4590,14 +4762,28 @@ func (g *Game) loadMap(dir string) error {
 	if cols == 0 {
 		cols = tsW / m.TileW
 	}
-	n := (g.tileset.Bounds().Dy() / m.TileH) * cols
+	g.tileCellScale = tileCellScaleFor(tsW, cols, m.TileW)
+	cellW, cellH := m.TileW*g.tileCellScale, m.TileH*g.tileCellScale
+	n := (g.tileset.Bounds().Dy() / cellH) * cols
 	for i := 0; i < n; i++ {
-		sx := (i % cols) * m.TileW
-		sy := (i / cols) * m.TileH
-		r := image.Rect(sx, sy, sx+m.TileW, sy+m.TileH)
+		sx := (i % cols) * cellW
+		sy := (i / cols) * cellH
+		r := image.Rect(sx, sy, sx+cellW, sy+cellH)
 		g.tiles = append(g.tiles, g.tileset.SubImage(r).(*ebiten.Image))
 	}
 	g.m = &m
+	// map_composite.png (up to ~4800x6144px, tens of MB) decodes in
+	// 100-700ms in Go's pure-Go PNG decoder -- doing that synchronously here
+	// would freeze whichever frame calls loadMap() (scripted cutscene "loadch"
+	// transitions and battle-prep both call it from inside Update()), which is
+	// exactly the kind of stutter a player would notice during an opening
+	// animation. Decode it on a background goroutine instead; Draw() falls
+	// back to the tile-grid renderer (unaffected, always-ready) until it's
+	// ready, then pollMapCompositeAsync (called from Update()) swaps it in.
+	// Any previous in-flight decode for this Game is implicitly abandoned:
+	// its result lands in its own buffered channel that nothing reads again.
+	g.mapComposite, g.mapCompositeScale = nil, 0
+	g.mapCompositePending = startLoadMapCompositeAsync(dir, &m)
 	// Keep the existing PNG map playable, but expose native resources only as
 	// an all-or-nothing bundle. The indexed presentation bridge consumes this
 	// field later; no partial resource is allowed to affect gameplay.
@@ -4609,6 +4795,92 @@ func (g *Game) loadMap(dir string) error {
 		g.nativeMapDAC = append(g.nativeMapDAC[:0], native.PaletteDAC...)
 	}
 	return nil
+}
+
+// mapCompositeAsyncResult is what startLoadMapCompositeAsync's background
+// goroutine hands back to pollMapCompositeAsync. img is a plain CPU-side
+// image.Image, not yet an *ebiten.Image: turning it into one uploads to the
+// GPU and per Ebitengine's threading contract (see run.go: "game's functions
+// are called on the same goroutine" as RunGame) that must happen on the main
+// Update() goroutine, not here.
+type mapCompositeAsyncResult struct {
+	img   image.Image // nil if absent/invalid -- same "not an error" contract loadMapComposite always had
+	scale int
+}
+
+// startLoadMapCompositeAsync optionally loads "<dir>/map_composite.png" -- a
+// single pre-composited image of the map's ENTIRE tile layout (built by
+// cmd/compose-map-image, see tools/realesrgan_batch.py's whole-map upscale
+// pass), used by Draw() as one draw call instead of the per-tile grid loop.
+// This is what actually fixes the tile-seam problem: upscaling the tileset
+// SHEET treats each tile in isolation, so identical tiles that repeat
+// adjacently on the real map get inconsistent detail baked in by the model
+// and the seam is visible; upscaling one whole-map image lets the model see
+// true tile-to-tile adjacency once, so there is nothing left to seam.
+//
+// The actual file read + PNG decode (slow: 100-700ms for the larger maps)
+// runs on a background goroutine so loadMap()'s caller (Update(), during
+// scripted cutscene map transitions) never blocks on it -- see the "keep
+// UI/game state changes on the main goroutine" comment above. The returned
+// channel is buffered(1): if this Game moves on to another loadMap() before
+// this result is read, pollMapCompositeAsync simply never reads this
+// channel again and it (and this goroutine, already exited) become garbage
+// -- no leak, no synchronization needed to "cancel" it.
+//
+// Absence is normal, not an error: only maps actually run through the
+// compose+upscale pipeline have this file, others fall back to the existing
+// tile-grid renderer unchanged (nil image, no error signal at all -- the
+// caller doesn't need to distinguish "missing" from "map has no HD pass
+// yet", both mean the same thing to Draw()).
+func startLoadMapCompositeAsync(dir string, m *MapData) <-chan mapCompositeAsyncResult {
+	out := make(chan mapCompositeAsyncResult, 1)
+	path := assetPath(dir + "/map_composite.png")
+	mCopy := *m // capture by value: safe to read from another goroutine, caller's *m is not touched again
+	go func() {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			out <- mapCompositeAsyncResult{}
+			return
+		}
+		img, _, err := image.Decode(bytes.NewReader(raw))
+		if err != nil {
+			out <- mapCompositeAsyncResult{}
+			return
+		}
+		b := img.Bounds()
+		scale := tileCellScaleFor(b.Dx(), mCopy.W, mCopy.TileW)
+		// Validate both axes agree with the same integer scale before
+		// trusting this file -- a mismatched/corrupt composite must fall
+		// back to the tile grid rather than draw a distorted/cropped map.
+		if scale < 1 || b.Dx() != mCopy.W*mCopy.TileW*scale || b.Dy() != mCopy.H*mCopy.TileH*scale {
+			out <- mapCompositeAsyncResult{}
+			return
+		}
+		out <- mapCompositeAsyncResult{img: img, scale: scale}
+	}()
+	return out
+}
+
+// pollMapCompositeAsync is called once per Update() tick: non-blocking
+// check for a finished background composite decode (see
+// startLoadMapCompositeAsync), and if one just landed, do the actual GPU
+// upload (ebiten.NewImageFromImage) here on the main goroutine where it's
+// safe to. A nil img (missing/invalid file) still clears
+// g.mapCompositePending so Draw() isn't left checking a drained channel
+// every frame forever.
+func (g *Game) pollMapCompositeAsync() {
+	if g.mapCompositePending == nil {
+		return
+	}
+	select {
+	case res := <-g.mapCompositePending:
+		g.mapCompositePending = nil
+		if res.img != nil {
+			g.mapComposite = ebiten.NewImageFromImage(res.img)
+			g.mapCompositeScale = res.scale
+		}
+	default:
+	}
 }
 
 // battleFPT 戰鬥演出播放速度(tick/幀):環境變數 FD2_BATTLE_FPT 可調(調慢=數字大),預設 3。
@@ -4897,6 +5169,12 @@ func loadFigMeta() map[int][][2]int {
 	return out
 }
 
+// isASCIIWordRune 判斷是否為半形英數字(dlgWrap 換行時避免從這種字元中間切開,
+// 如 "Shift+F1" 不該斷成 "Shi"/"ft+F1")。
+func isASCIIWordRune(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
+}
+
 // toFullWidth 把半形標點轉全形(中文排版 + 避開部分 face 缺半形 ASCII glyph)。
 func toFullWidth(s string) string {
 	r := []rune(s)
@@ -4943,6 +5221,156 @@ func dirToward(ax, ay, tx, ty int) int {
 		return 0
 	}
 	return 2
+}
+
+// executeNativeCommandTarget dispatches one native command ID (the raw
+// 0x4e516 command book's ID, 0..36) against a resolved (actor, target) pair
+// and returns a summary message plus any units that took damage (for death
+// awards). Extracted 2026-08-15 from confirm()'s cursor-confirmation flow so
+// aiStep can drive the exact same execution path native_ai_three_score_plan.go
+// chooses (NextAIPlan setting a non -1 SpellID) instead of only ever calling
+// AttackWithRNG regardless of what the native decision actually picked. This
+// function has no UI/cursor-state coupling -- callers own their own
+// pose/animation/message side effects around it.
+// destination, when non-nil, is the exact record+3 cell the AI scoring
+// pipeline (nativeAIThreeScorePlan/ScoreNativeAI1598A) already chose for this
+// cast -- ground truth threaded straight to NativeCommandEffectTargets
+// instead of letting it reconstruct a destination by search (2026-08-17, see
+// the #115 follow-up in 58-remake-live-verification-log.md). It is nil for
+// the player cursor-confirmation flow, which has no prior scoring pass and
+// relies on NativeCommandEffectTargets's confirmed-cell fallback instead.
+func (g *Game) executeNativeCommandTarget(sel, tgt *battle.Unit, id int, destination *battle.Cell) (message string, damageTargets []*battle.Unit, err error) {
+	switch {
+	case id == 0:
+		results, state, e := g.st.ExecuteBoundNativeCommand0(sel, tgt, g.nativeRNGState, destination)
+		err = e
+		if e == nil {
+			g.nativeRNGState = state
+		}
+		hit, total := 0, 0
+		for _, result := range results {
+			if result.Hit {
+				hit++
+				total += result.Damage
+			}
+			damageTargets = append(damageTargets, result.Target)
+		}
+		message = fmt.Sprintf("原始指令 0：命中 %d，傷害 %d", hit, total)
+	case id >= 1 && id <= 12:
+		// ExecuteNativeCommandDamage already covers 0..12 byte-for-byte (see
+		// its own doc comment); id==0 gets its own case above only because
+		// ExecuteBoundNativeCommand0 also fail-closes on a missing
+		// resistance table before touching state. IDs 1..12 were never
+		// dispatched here at all -- every AI-chosen spell/command in that
+		// range failed with "native command target executor unavailable"
+		// even though the underlying executor was already implemented and
+		// tested (native_command0_test.go). Confirmed via
+		// TestSweepNativeAIWinnersAcrossAllChapters: ch21/ch25/ch30 all
+		// picked command 2 or 12 as their AI winner and had nowhere to go.
+		results, state, e := g.st.ExecuteNativeCommandDamage(sel, tgt, id, g.st.NativeCommandResistances, g.nativeRNGState, destination)
+		err = e
+		if e == nil {
+			g.nativeRNGState = state
+		}
+		hit, total := 0, 0
+		for _, result := range results {
+			if result.Hit {
+				hit++
+				total += result.Damage
+			}
+			damageTargets = append(damageTargets, result.Target)
+		}
+		message = fmt.Sprintf("原始指令 %d：命中 %d，傷害 %d", id, hit, total)
+	case id >= 13 && id <= 16:
+		results, e := g.st.ExecuteNativeCommandHeal(sel, tgt, id, g.rng, destination)
+		err = e
+		total := 0
+		for _, result := range results {
+			total += result.Restore.Actual
+		}
+		message = fmt.Sprintf("原始指令 %d：回復 %d", id, total)
+	case id == 17 || id == 18 || id == 19:
+		results, e := g.st.ExecuteNativeCommandModifier(sel, tgt, id, g.rng, destination)
+		err = e
+		applied := 0
+		for _, result := range results {
+			if result.Applied {
+				applied++
+			}
+		}
+		message = fmt.Sprintf("原始指令 %d：完成增益 (%d/%d targets)", id, applied, len(results))
+	case id == 20 || id == 21:
+		results, e := g.st.ExecuteNativeCommandClearRestore(sel, tgt, id, g.rng, destination)
+		err = e
+		message = fmt.Sprintf("原始指令 %d：完成 raw interval 處理 (%d targets)", id, len(results))
+	case id == 22 || id == 26 || id == 27:
+		results, e := g.st.ExecuteNativeCommandApplication(sel, tgt, id, g.rng, destination)
+		err = e
+		for _, result := range results {
+			if result.Damage > 0 {
+				damageTargets = append(damageTargets, result.Target)
+			}
+		}
+		message = fmt.Sprintf("原始指令 %d：完成 raw application (%d targets)", id, len(results))
+	case id == 24 || id == 28 || id == 29 || id == 31:
+		results, e := g.st.ExecuteNativeCommandDerivedStrike(sel, tgt, id, g.rng, destination)
+		err = e
+		total := 0
+		for _, result := range results {
+			total += result.Damage
+			damageTargets = append(damageTargets, result.Target)
+		}
+		message = fmt.Sprintf("原始指令 %d：傷害 %d", id, total)
+	case id == 25:
+		results, e := g.st.ExecuteNativeCommand25(sel, tgt, destination)
+		err = e
+		message = fmt.Sprintf("原始指令 25：完成 raw clear (%d targets)", len(results))
+	case id == 32:
+		results, state, e := g.st.ExecuteNativeCommand32(sel, tgt, g.st.NativeCommandResistances, g.nativeRNGState, destination)
+		err = e
+		if e == nil {
+			g.nativeRNGState = state
+		}
+		hit, total := 0, 0
+		for _, result := range results {
+			if result.Hit {
+				hit++
+				total += result.Damage
+			}
+			damageTargets = append(damageTargets, result.Target)
+		}
+		message = fmt.Sprintf("原始指令 32：命中 %d，傷害 %d", hit, total)
+	case id == 33:
+		results, e := g.st.ExecuteNativeCommand33(sel, tgt, g.rng, destination)
+		err = e
+		total := 0
+		for _, result := range results {
+			total += result.Restore.Actual
+		}
+		message = fmt.Sprintf("原始指令 33：回復 %d", total)
+	case id == 34:
+		results, e := g.st.ExecuteNativeCommand34(sel, tgt, g.rng, destination)
+		err = e
+		message = fmt.Sprintf("原始指令 34：強化 %d 名單位", len(results))
+	case id == 35:
+		results, e := g.st.ExecuteNativeCommand35(sel, tgt, g.rng, destination)
+		err = e
+		message = fmt.Sprintf("原始指令 35：完成 raw application (%d targets)", len(results))
+	case id == 36:
+		results, e := g.st.ExecuteNativeCommandMPSteal(sel, tgt, g.rng, destination)
+		err = e
+		hit, total := 0, 0
+		for _, result := range results {
+			if result.Hit {
+				hit++
+				total += result.Stolen
+			}
+		}
+		message = fmt.Sprintf("原始指令 36：命中 %d，吸取MP %d", hit, total)
+	default:
+		err = fmt.Errorf("native command target executor unavailable id=%d", id)
+	}
+	return message, damageTargets, err
 }
 
 // confirm 處理 Enter/Space:選取我方單位顯示移動範圍,或移動到可達格 / 原地待機。
@@ -5075,104 +5503,7 @@ func (g *Game) confirm() {
 			g.msg = fmt.Sprintf("原始指令 %d：游標確認不合法", id)
 			return
 		}
-		message := ""
-		var err error
-		var damageTargets []*battle.Unit
-		switch {
-		case id == 0:
-			results, state, e := g.st.ExecuteBoundNativeCommand0(g.sel, tgt, g.nativeRNGState)
-			err = e
-			if e == nil {
-				g.nativeRNGState = state
-			}
-			hit, total := 0, 0
-			for _, result := range results {
-				if result.Hit {
-					hit++
-					total += result.Damage
-				}
-				damageTargets = append(damageTargets, result.Target)
-			}
-			message = fmt.Sprintf("原始指令 0：命中 %d，傷害 %d", hit, total)
-		case id >= 13 && id <= 16:
-			results, e := g.st.ExecuteNativeCommandHeal(g.sel, tgt, id, g.rng)
-			err = e
-			total := 0
-			for _, result := range results {
-				total += result.Restore.Actual
-			}
-			message = fmt.Sprintf("原始指令 %d：回復 %d", id, total)
-		case id == 20 || id == 21:
-			results, e := g.st.ExecuteNativeCommandClearRestore(g.sel, tgt, id, g.rng)
-			err = e
-			message = fmt.Sprintf("原始指令 %d：完成 raw interval 處理 (%d targets)", id, len(results))
-		case id == 22 || id == 26 || id == 27:
-			results, e := g.st.ExecuteNativeCommandApplication(g.sel, tgt, id, g.rng)
-			err = e
-			for _, result := range results {
-				if result.Damage > 0 {
-					damageTargets = append(damageTargets, result.Target)
-				}
-			}
-			message = fmt.Sprintf("原始指令 %d：完成 raw application (%d targets)", id, len(results))
-		case id == 24 || id == 28 || id == 29 || id == 31:
-			results, e := g.st.ExecuteNativeCommandDerivedStrike(g.sel, tgt, id, g.rng)
-			err = e
-			total := 0
-			for _, result := range results {
-				total += result.Damage
-				damageTargets = append(damageTargets, result.Target)
-			}
-			message = fmt.Sprintf("原始指令 %d：傷害 %d", id, total)
-		case id == 25:
-			results, e := g.st.ExecuteNativeCommand25(g.sel, tgt)
-			err = e
-			message = fmt.Sprintf("原始指令 25：完成 raw clear (%d targets)", len(results))
-		case id == 32:
-			results, state, e := g.st.ExecuteNativeCommand32(g.sel, tgt, g.st.NativeCommandResistances, g.nativeRNGState)
-			err = e
-			if e == nil {
-				g.nativeRNGState = state
-			}
-			hit, total := 0, 0
-			for _, result := range results {
-				if result.Hit {
-					hit++
-					total += result.Damage
-				}
-				damageTargets = append(damageTargets, result.Target)
-			}
-			message = fmt.Sprintf("原始指令 32：命中 %d，傷害 %d", hit, total)
-		case id == 33:
-			results, e := g.st.ExecuteNativeCommand33(g.sel, tgt, g.rng)
-			err = e
-			total := 0
-			for _, result := range results {
-				total += result.Restore.Actual
-			}
-			message = fmt.Sprintf("原始指令 33：回復 %d", total)
-		case id == 34:
-			results, e := g.st.ExecuteNativeCommand34(g.sel, tgt, g.rng)
-			err = e
-			message = fmt.Sprintf("原始指令 34：強化 %d 名單位", len(results))
-		case id == 35:
-			results, e := g.st.ExecuteNativeCommand35(g.sel, tgt, g.rng)
-			err = e
-			message = fmt.Sprintf("原始指令 35：完成 raw application (%d targets)", len(results))
-		case id == 36:
-			results, e := g.st.ExecuteNativeCommandMPSteal(g.sel, tgt, g.rng)
-			err = e
-			hit, total := 0, 0
-			for _, result := range results {
-				if result.Hit {
-					hit++
-					total += result.Stolen
-				}
-			}
-			message = fmt.Sprintf("原始指令 36：命中 %d，吸取MP %d", hit, total)
-		default:
-			err = fmt.Errorf("native command target executor unavailable id=%d", id)
-		}
+		message, damageTargets, err := g.executeNativeCommandTarget(g.sel, tgt, id, nil)
 		if err != nil {
 			g.msg = fmt.Sprintf("原始指令 %d：請選擇有效目標 (%v)", id, err)
 			return
@@ -5223,9 +5554,13 @@ func (g *Game) confirm() {
 			anm = g.sel.ClsName
 		}
 		defHP0 := tgt.HP
-		dmg := g.st.Attack(g.sel, tgt)
+		result := g.st.AttackWithRNG(g.sel, tgt, g.rng)
 		g.awardDeathReward(tgt, g.sel)
-		g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
+		if result.Missed {
+			g.msg = fmt.Sprintf("%s 攻擊 %s,未命中", anm, nm)
+		} else {
+			g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, result.Amount)
+		}
 		actor := g.sel
 		g.atk = g.newAtkAnim(actor.BattleFig, tgt.BattleFig, anm, nm,
 			actor.HP, actor.MaxHP, actor.Lv, actor.MP, tgt.Lv, tgt.MP,
@@ -5277,6 +5612,7 @@ func (g *Game) tileAt(idx int) *ebiten.Image {
 
 func (g *Game) Update() error {
 	g.frame++
+	g.pollMapCompositeAsync()
 	if g.wantFullscreenAtStart {
 		// Deferred from loadGame(): ebiten.SetWindowSize/Position (used by
 		// toggleFullscreen) need a live window, which doesn't exist yet
@@ -5300,6 +5636,9 @@ func (g *Game) Update() error {
 		g.dlgShown, g.dlgPhase, g.dlgPage, g.dlgScrollT = dlgNone, 0, 0, 0
 	}
 	g.stepActionOverlayLifecycle()
+	if g.ring {
+		g.stepRingPulseTick(g.ringUIClock.Sample(time.Now()))
+	}
 	g.stepNativeClassUILifecycle(time.Now())
 	g.stepNativeChurchUILifecycle(time.Now())
 	g.stepNativeShopUILifecycle(time.Now())
@@ -5327,10 +5666,26 @@ func (g *Game) Update() error {
 	}
 	if g.nativeEnding != nil {
 		if err := g.nativeEnding.advance(time.Now()); err != nil {
+			// FD2_ENDING_PREFIX=1's standalone oracle (g.camp==nil) keeps
+			// failing hard on purpose -- that's the whole point of a
+			// "fail-closed prefix oracle" during RE work. Once triggered from
+			// real campaign flow (g.camp!=nil), an unexpected error here must
+			// not crash a player's finished playthrough: drop back to the
+			// plain-text ending panel (enterNode's "ending" case already put
+			// real chapter text there) instead of log.Fatal-ing the process.
+			if g.camp != nil {
+				g.nativeEnding = nil
+				return nil
+			}
 			g.loadErr = "native ending: " + err.Error()
 			return err
 		}
 		if err := g.queueNativeEndingDialogue(); err != nil {
+			if g.camp != nil {
+				g.nativeEnding = nil
+				g.dialog = nil
+				return nil
+			}
 			g.loadErr = "native ending dialogue: " + err.Error()
 			return err
 		}
@@ -5344,6 +5699,15 @@ func (g *Game) Update() error {
 			}
 		}
 		if g.shotPath != "" && g.shotTaken {
+			return ebiten.Termination
+		}
+		// The recovered 0x2bce5 timeline blocks (not errors) at the first
+		// unrecovered native operation and simply stops advancing -- with no
+		// exit key a real interactive player would be stuck staring at a
+		// frozen frame forever, same bug class as the plain-text ending
+		// panel this replaces for chapters where the preview loads. Escape
+		// always works, even mid-dialogue/mid-playback.
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			return ebiten.Termination
 		}
 		return nil
@@ -5401,7 +5765,11 @@ func (g *Game) Update() error {
 	}
 	// 移動動畫:原版每格 unit+4=1..6，第7 tick提交目的格。
 	g.stepBattleWalk()
-	g.aiStep() // AI 回合驅動(aiBusy 時逐單位行走→攻擊演出)
+	g.aiStep()                 // AI 回合驅動(aiBusy 時逐單位行走→攻擊演出)
+	g.stepShotAutoplay()       // FD2_SHOT_AUTOPLAY=1:驗證用玩家自動走位+攻擊(shot_autoplay.go)
+	g.stepShotShopBuyConfirm() // FD2_SHOT_SHOP_BUY_CONFIRM=1:驗證用真實商店購買(shot_shop_buy_confirm.go)
+	g.stepShotForceResult()    // FD2_SHOT_FORCE_WIN/FD2_SHOT_FORCE_LOSE=1:驗證用真實勝敗轉場(shot_force_result.go)
+	g.stepShotRingPulseWatch() // FD2_SHOT_RING_PULSE_WATCH=1:驗證用指令環選中格閃爍(shot_ring_pulse_watch.go)
 	// 嘴型動畫(忠實原版 0x16d00,doc14):每 2 frame 一 tick;閉嘴隨機 2-31 tick、開嘴一瞬
 	if len(g.dialog) > 0 && g.frame%2 == 0 {
 		randomMod30 := 0
@@ -5553,9 +5921,207 @@ func (g *Game) Update() error {
 						break
 					}
 				}
+				// FD2_SHOT_COMMAND_FORCE=<id>: ch01's map roster ships with no
+				// command unlocked (commands are learned via level-up,
+				// internal/battle/command_learn.go), but campaign/JOIN setup
+				// can still grant one dynamically to some unit before this
+				// point runs -- so this always adds the requested id (not
+				// gated on "no one already has a command") and explicitly
+				// selects it within that unit's id list, rather than assuming
+				// index 0. Debug-only: mutates g.st.Units, never a real save.
+				if spec := os.Getenv("FD2_SHOT_COMMAND_FORCE"); spec != "" {
+					if id, err := strconv.Atoi(spec); err == nil && id >= 0 && id < 40 {
+						target := g.sel
+						if target == nil || target.Camp != battle.Own {
+							target = nil
+							for _, unit := range g.st.Units {
+								if unit != nil && unit.Camp == battle.Own {
+									target = unit
+									break
+								}
+							}
+						}
+						if target != nil {
+							target.EnableNativeCommand(id)
+							g.sel, g.curX, g.curY = target, target.X, target.Y
+							for i, gotID := range target.NativeCommandIDs() {
+								if gotID == id {
+									g.nativeCommandSel = i
+									break
+								}
+							}
+						}
+					}
+				}
 				if g.sel != nil {
 					g.resetActionOverlayLifecycle()
-					g.nativeCommandOpen, g.nativeCommandSel = true, 0
+					g.nativeCommandOpen = true
+				}
+				// FD2_SHOT_COMMAND_CONFIRM=1: replicates ringInput's own
+				// nativeCommandOpen Enter-branch (select command -> enter
+				// targeting) then aims the cursor at the nearest enemy and
+				// calls the real g.confirm() cursor-confirm executor, so a
+				// screenshot pass can prove a full cast (damage/heal/status)
+				// instead of only that the grid opens. MP is force-topped so
+				// the cost gate never blocks this debug-only path.
+				if os.Getenv("FD2_SHOT_COMMAND_CONFIRM") != "" && g.sel != nil && g.nativeCommandOpen {
+					g.sel.MP = 999
+					// Teleport next to the nearest enemy first: the forced
+					// caster's real ch01 spawn position may not have anyone
+					// in the command's actual range, and this debug path
+					// exists to prove execution, not real deployment.
+					nearestEnemy := (*battle.Unit)(nil)
+					nearestDist := 1 << 30
+					for _, u := range g.st.Units {
+						if u == nil || u.Camp != battle.Enemy || !u.OnField {
+							continue
+						}
+						dist := absInt(u.X-g.sel.X) + absInt(u.Y-g.sel.Y)
+						if dist < nearestDist {
+							nearestEnemy, nearestDist = u, dist
+						}
+					}
+					if nearestEnemy != nil {
+						for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+							nx, ny := nearestEnemy.X+d[0], nearestEnemy.Y+d[1]
+							if nx >= 0 && ny >= 0 && nx < g.st.W && ny < g.st.H && g.st.UnitAt(nx, ny) == nil {
+								g.sel.SetMapPlacement(nx, ny, g.sel.Dir)
+								break
+							}
+						}
+					}
+					ids := g.sel.NativeCommandIDs()
+					if g.nativeCommandSel >= 0 && g.nativeCommandSel < len(ids) &&
+						len(g.st.NativeCommandBook) == battle.NativeCommandRecordCount {
+						id := ids[g.nativeCommandSel]
+						record := g.st.NativeCommandBook[id]
+						if g.nativeCommandTargetSupported(id) {
+							if candidates, err := g.nativeCommandTargetUnitsFor(id); err == nil {
+								if err := g.materializeNativeCommandTargetField(record); err == nil {
+									g.nativeCommandOpen, g.nativeCommand0Targeting = false, true
+									g.nativeCommandTargetID = id
+									if len(candidates) > 0 {
+										target := candidates[0]
+										g.curX, g.curY = target.X, target.Y
+										g.confirm()
+										log.Printf("FD2_SHOT_COMMAND_CONFIRM result: msg=%q target=(%d,%d) target.HP=%d",
+											g.msg, target.X, target.Y, target.HP)
+									} else {
+										log.Printf("FD2_SHOT_COMMAND_CONFIRM: no valid target candidate in range")
+									}
+								} else {
+									log.Printf("FD2_SHOT_COMMAND_CONFIRM: materialize target field failed: %v", err)
+								}
+							} else {
+								log.Printf("FD2_SHOT_COMMAND_CONFIRM: nativeCommandTargetUnitsFor failed: %v", err)
+							}
+						}
+					}
+				}
+			}
+			// FD2_SHOT_ITEM_FORCE=<id>: puts item <id> in the first Own unit's
+			// slot2(raw, held not equipped -- slots 0/1 auto-equip per the
+			// constructor rule) and opens the real native item panel, so a
+			// screenshot pass can exercise actual use-in-battle without first
+			// finding/buying that specific item through a real playthrough.
+			// Debug-only: mutates g.st.Units directly, never a real save.
+			//
+			// FD2_SHOT_ITEM_DAMAGE=<hp> (2026-08-15, requires FD2_SHOT_ITEM_CONFIRM):
+			// sets the actor's HP to <hp> before use, so a consume-on-use
+			// HP-restore item's before/after delta is actually visible (a
+			// fully-healed unit would show no change). FD2_SHOT_ITEM_CONFIRM's
+			// completion step was also extended to call applyNativeTargetItem
+			// against the actor itself once beginNativeTargetItem opens
+			// targeting, so a full immediate-or-targeted item use completes
+			// end-to-end (not just reaching "選擇目標") -- this is what actually
+			// proved ch01's real chest item 192 (0xC0, HP-restore, consumes
+			// source) restores HP correctly and is removed from inventory.
+			// Requires FD2_ORIGINAL_FDOTHER/FD2_ORIGINAL_FDTXT/FD2_ORIGINAL_DATO
+			// pointed at the real DAT files (org_game/), or the native item
+			// panel silently fails to open (g.nativeItemEffectRows stays empty).
+			if spec := os.Getenv("FD2_SHOT_ITEM_FORCE"); spec != "" && g.st != nil {
+				if id, err := strconv.Atoi(spec); err == nil && id >= 0 {
+					g.dialog = nil
+					for _, unit := range g.st.Units {
+						if unit == nil || unit.Camp != battle.Own {
+							continue
+						}
+						if len(unit.InventorySlots) != 8 {
+							unit.InventorySlots = make([]int, 8)
+							for i := range unit.InventorySlots {
+								unit.InventorySlots[i] = 0xff
+							}
+						}
+						if len(unit.NativeInventoryFlags) != 8 {
+							unit.NativeInventoryFlags = make([]int, 8)
+							for i := range unit.NativeInventoryFlags {
+								unit.NativeInventoryFlags[i] = 0x80
+							}
+						}
+						unit.InventorySlots[2] = id
+						unit.NativeInventoryFlags[2] = 0
+						g.sel, g.curX, g.curY = unit, unit.X, unit.Y
+						break
+					}
+					if g.sel != nil {
+						g.moved = true
+						g.resetActionOverlayLifecycle()
+						g.itemOpen, g.itemSel = true, 0
+						g.itemAnimStep, g.itemClosing = 0, false
+						g.prepareNativeItemPanel(g.sel)
+						for i := 0; i < 11; i++ { // run the real opening schedule to completion(frame11→0)
+							g.stepNativeItemPanelAnimation()
+						}
+						// FD2_SHOT_ITEM_CONFIRM=1: also select+confirm the forced
+						// slot, exercising the real ringInput() Enter branch
+						// (native_item_panel_ui.go applyNativeImmediateItem /
+						// beginNativeTargetItem) instead of only viewing the panel.
+						if os.Getenv("FD2_SHOT_ITEM_CONFIRM") != "" {
+							actor := g.sel // applyNativeImmediateItem success clears g.sel; keep our own ref for logging
+							hpBefore := 0
+							if actor != nil {
+								if v, err := strconv.Atoi(os.Getenv("FD2_SHOT_ITEM_DAMAGE")); err == nil && v > 0 && v < actor.HP {
+									actor.HP = v
+								}
+								hpBefore = actor.HP
+							}
+							if rawSlots := nativeItemRawSlots(g.sel); len(rawSlots) > 0 {
+								for i, slot := range rawSlots {
+									if slot == 2 {
+										g.itemSel = i
+										break
+									}
+								}
+								rawSlot := rawSlots[g.itemSel]
+								occupied, itemID := g.nativeItemMenuSlot(g.sel, rawSlot)
+								if occupied {
+									row := itemID * battle.NativeItemEffectRowSize
+									if row >= 0 && row+battle.NativeItemEffectRowSize <= len(g.nativeItemEffectRows) {
+										if applied, applyErr := g.applyNativeImmediateItem(rawSlot, itemID); applyErr != nil {
+											g.msg = fmt.Sprintf("物品 %02Xh：%v", itemID, applyErr)
+										} else if applied {
+											g.msg = fmt.Sprintf("物品 %02Xh：原始效果完成", itemID)
+										} else if targeting, targetErr := g.beginNativeTargetItem(rawSlot, itemID); targetErr != nil {
+											g.msg = fmt.Sprintf("物品 %02Xh：%v", itemID, targetErr)
+										} else if targeting {
+											g.msg = fmt.Sprintf("物品 %02Xh：選擇目標", itemID)
+											if applied2, applyErr2 := g.applyNativeTargetItem(actor); applyErr2 != nil {
+												g.msg = fmt.Sprintf("物品 %02Xh：目標確認失敗：%v", itemID, applyErr2)
+											} else if applied2 {
+												g.msg = fmt.Sprintf("物品 %02Xh：對目標完成效果", itemID)
+											} else {
+												g.msg = fmt.Sprintf("物品 %02Xh：目標確認未套用", itemID)
+											}
+										} else {
+											g.msg = fmt.Sprintf("物品 %02Xh：使用效果尚未驗證", itemID)
+										}
+									}
+								}
+								log.Printf("FD2_SHOT_ITEM_CONFIRM result: msg=%q hpBefore=%d actor.HP=%d actor.MaxHP=%d actor.AP=%d actor.DP=%d actor.DX=%d actor.Inventory=%v",
+									g.msg, hpBefore, actor.HP, actor.MaxHP, actor.AP, actor.DP, actor.DX, actor.Inventory)
+							}
+						}
+					}
 				}
 			}
 			if os.Getenv("FD2_SHOT_SPELL") != "" { // 截圖驗證:開法術選單
@@ -5567,10 +6133,202 @@ func (g *Game) Update() error {
 					g.spellOpen, g.spellSel = true, 0
 				}
 			}
+			// FD2_SHOT_SPELL_CONFIRM=1 (2026-08-16): end-to-end native spell-cast
+			// verification. Reopens the ch01 "法術子選單...N/A" gap wrongly closed
+			// on 2026-08-15 by querying map0_units.json (stale map template)
+			// instead of the authoritative assets/scenarios/ch01.json -- 悠妮 does
+			// have real spell capability there (Spells=[0,4,13]), never exercised
+			// live before. Debug-only: finds the first Own unit with a non-empty
+			// Spells list, force-selects it, opens its first spell (id 0, 火炎術,
+			// dmg50/hit90/dist5/mp2/single-target-enemy per assets/spells.json),
+			// targets the nearest enemy within InCastRange, and drives the exact
+			// real g.confirm() cast-execution path (magic.go CastArea) -- the same
+			// code a real ring→法術→選目標→Enter sequence would call, not a
+			// synthetic shortcut.
+			if os.Getenv("FD2_SHOT_SPELL_CONFIRM") != "" && g.st != nil {
+				g.dialog = nil
+				var caster *battle.Unit
+				for _, u := range g.st.Units {
+					if u != nil && u.Camp == battle.Own && u.OnField && u.HP > 0 && len(u.Spells) > 0 {
+						caster = u
+						break
+					}
+				}
+				if caster == nil {
+					log.Printf("FD2_SHOT_SPELL_CONFIRM: no Own unit with Spells found")
+				} else {
+					id := caster.Spells[0]
+					var sp *battle.Spell
+					for i := range g.spells {
+						if g.spells[i].ID == id {
+							sp = &g.spells[i]
+							break
+						}
+					}
+					if sp == nil {
+						log.Printf("FD2_SHOT_SPELL_CONFIRM: spell id %d not found in g.spells (len=%d)", id, len(g.spells))
+					} else {
+						// FD2_SHOT_SPELL_DIST=<n> (2026-08-16, same pattern as
+						// FD2_SHOT_ATTACK_CONFIRM/DIST): require an exact cast-center
+						// distance to some enemy instead of always repositioning to the
+						// nearest one -- lets a caller prove both a valid in-range cast
+						// AND a negative out-of-range control (e.g. dist beyond sp.Dist
+						// should silently fail InCastRange, same as InAttackRange's
+						// negative case for melee). Default (unset) keeps the original
+						// 2026-08-16 behavior: minimize distance to some enemy.
+						wantDist := -1
+						if v := os.Getenv("FD2_SHOT_SPELL_DIST"); v != "" {
+							if n, err := strconv.Atoi(v); err == nil {
+								wantDist = n
+							}
+						}
+						reach := g.st.Reachable(caster)
+						var moveX, moveY, moveDist int = caster.X, caster.Y, -1
+						var target *battle.Unit
+						consider := func(x, y int) {
+							for _, u := range g.st.Units {
+								if u == nil || u.Camp == battle.Own || !u.OnField || u.HP <= 0 {
+									continue
+								}
+								d := shotAutoplayManhattan(x, y, u.X, u.Y)
+								if wantDist >= 0 && d != wantDist {
+									continue
+								}
+								if target == nil || (wantDist < 0 && d < moveDist) {
+									moveX, moveY, moveDist, target = x, y, d, u
+								}
+							}
+						}
+						consider(caster.X, caster.Y)
+						for c := range reach {
+							if g.st.UnitAt(c.X, c.Y) != nil {
+								continue
+							}
+							consider(c.X, c.Y)
+						}
+						targetName := func(u *battle.Unit) string {
+							if u.Name != "" {
+								return u.Name
+							}
+							return u.ClsName
+						}
+						if target == nil {
+							log.Printf("FD2_SHOT_SPELL_CONFIRM: no reachable cell at dist=%d found for %s", wantDist, caster.Name)
+						} else {
+							// Reposition BEFORE checking InCastRange -- it reads
+							// caster.X/Y live, so checking with the caster still at
+							// its pre-move cell would compare the wrong distance
+							// (a real bug caught while adding the dist=5 boundary
+							// case: it fell into the "exceeds spell dist" branch
+							// even though moveDist==sp.Dist, because caster hadn't
+							// actually moved to moveX/moveY yet at check time).
+							if moveX != caster.X || moveY != caster.Y {
+								caster.SetMapPlacement(moveX, moveY, caster.Dir)
+							}
+							if !g.st.InCastRange(caster, *sp, target.X, target.Y) {
+								// wantDist places the caster in range of SOME enemy at
+								// exactly that distance, but that distance may exceed
+								// sp.Dist -- this IS the intended negative-control
+								// path, not a bug: log the honest "can't cast"
+								// outcome instead of forcing g.confirm().
+								log.Printf("FD2_SHOT_SPELL_CONFIRM: repositioned %s to (%d,%d), dist=%d to %s exceeds spell dist=%d -- cast correctly unavailable",
+									caster.Name, caster.X, caster.Y, moveDist, targetName(target), sp.Dist)
+							} else {
+								g.sel, g.curX, g.curY = caster, target.X, target.Y
+								g.moved, g.reach = true, nil
+								g.castSp = sp
+								mpBefore, targetHPBefore := caster.MP, target.HP
+								g.confirm()
+								log.Printf("FD2_SHOT_SPELL_CONFIRM result: caster=%s at (%d,%d) spell=%s(id=%d) target=%s dist=%d msg=%q "+
+									"mpBefore=%d mpAfter=%d targetHPBefore=%d targetHPAfter=%d",
+									caster.Name, caster.X, caster.Y, sp.Name, sp.ID, targetName(target), moveDist, g.msg,
+									mpBefore, caster.MP, targetHPBefore, target.HP)
+							}
+						}
+					}
+				}
+			}
+			// FD2_SHOT_ATTACK_CONFIRM=<單位名> (2026-08-16): 逐一單位、可指定
+			// 距離的物理攻擊驗證。索爾/亞雷斯攻擊距離不同（atk_min/max 分別是
+			// [1,1]/[1,2]，見 ch01.json），先前唯一的物理攻擊 E1/E2 證據
+			// （shot_autoplay.go 的貪婪最短路徑走位、DOSBox 互動「走到旁邊」）
+			// 兩者都只測到距離1（貼身），從未真正測過亞雷斯射程2（不移動到相鄰格）
+			// 這個真正跟索爾不同的行為。搭配 FD2_SHOT_ATTACK_DIST=<n> 指定精確
+			// 曼哈頓距離（不設就取最近可達格，等同貼身）；找不到符合距離的可達格
+			// 時誠實記錄失敗，不要靜默改用別的距離。
+			if spec := os.Getenv("FD2_SHOT_ATTACK_CONFIRM"); spec != "" && g.st != nil {
+				g.dialog = nil
+				var attacker *battle.Unit
+				for _, u := range g.st.Units {
+					if u != nil && u.Camp == battle.Own && u.OnField && u.HP > 0 && u.Name == spec {
+						attacker = u
+						break
+					}
+				}
+				if attacker == nil {
+					log.Printf("FD2_SHOT_ATTACK_CONFIRM: no Own unit named %q found", spec)
+				} else {
+					wantDist := -1
+					if v := os.Getenv("FD2_SHOT_ATTACK_DIST"); v != "" {
+						if n, err := strconv.Atoi(v); err == nil {
+							wantDist = n
+						}
+					}
+					reach := g.st.Reachable(attacker)
+					var bestX, bestY, bestDist int = attacker.X, attacker.Y, -1
+					var target *battle.Unit
+					consider := func(x, y int) {
+						for _, u := range g.st.Units {
+							if u == nil || u.Camp == battle.Own || !u.OnField || u.HP <= 0 {
+								continue
+							}
+							d := shotAutoplayManhattan(x, y, u.X, u.Y)
+							if wantDist >= 0 && d != wantDist {
+								continue
+							}
+							if target == nil || (wantDist < 0 && d < bestDist) {
+								bestX, bestY, bestDist, target = x, y, d, u
+							}
+						}
+					}
+					consider(attacker.X, attacker.Y)
+					for c := range reach {
+						if g.st.UnitAt(c.X, c.Y) != nil {
+							continue
+						}
+						consider(c.X, c.Y)
+					}
+					if target == nil {
+						log.Printf("FD2_SHOT_ATTACK_CONFIRM: no reachable cell at dist=%d found for %s (AtkMin=%d AtkMax=%d)",
+							wantDist, attacker.Name, attacker.AtkMin, attacker.AtkMax)
+					} else {
+						if bestX != attacker.X || bestY != attacker.Y {
+							attacker.SetMapPlacement(bestX, bestY, attacker.Dir)
+						}
+						g.sel, g.moved, g.reach = attacker, true, nil
+						g.curX, g.curY = target.X, target.Y
+						hpBefore := target.HP
+						g.confirm()
+						log.Printf("FD2_SHOT_ATTACK_CONFIRM result: attacker=%s(AtkMin=%d,AtkMax=%d) at (%d,%d) target=%s dist=%d "+
+							"msg=%q targetHPBefore=%d targetHPAfter=%d",
+							attacker.Name, attacker.AtkMin, attacker.AtkMax, attacker.X, attacker.Y,
+							target.Name, bestDist, g.msg, hpBefore, target.HP)
+					}
+				}
+			}
 			if v := os.Getenv("FD2_SHOT_ATTACK"); v != "" { // 全螢幕戰鬥演出(驗證用):亞雷斯打盜賊
 				g.dialog = nil // 清開場對白(避免蓋住演出)
 				fig, _ := strconv.Atoi(v)
 				g.atk = g.newAtkAnim(fig, 96, "亞雷斯", "盜賊", 48, 48, 1, 0, 2, 0, 28, 8, 28, 0, true)
+			}
+			if os.Getenv("FD2_SHOT_BATTLE_EVENT") != "" { // 截圖驗證:強制進入阻塞戰場 action 序列狀態
+				// 只是把 g.battleEvent 設成非 nil,不呼叫 startBattleEvent/推進任何
+				// 真實 action(演出內容無關本測項);Draw() 只在乎 g.battleEvent!=nil
+				// 這個旗標本身,驗證的是「演出期間地圖視野是否跟一般互動戰場一樣
+				// 隨視窗延伸」(2026-08-13 修復,見 Draw() 內 g.battleEvent 相關註解),
+				// 不是驗證演出內容本身(演出內容/HP 血條變化交給 FD2_SHOT_ATTACK)。
+				g.dialog = nil
+				g.battleEvent = &battleEventRun{actions: nil, index: -1}
 			}
 			if os.Getenv("FD2_SHOT_ATKSEL") != "" { // 截圖驗證:選單位→原地開環→模擬環選「攻擊」(ringSel==1)
 				// 關環,進攻擊目標選擇階段(驗證武器攻擊距離高亮,doc32;搭配 FD2_SHOT_CUR 指定選哪個單位)。
@@ -5650,11 +6408,43 @@ func (g *Game) Update() error {
 			}
 		}
 	} else if g.battleEvent == nil && g.nativeTurnStaging == nil {
-		if !g.syncNativeMapView() {
-			g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
-			g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
-			clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
-			clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+		// syncNativeMapView() alone is not enough of a gate: g.st.HasNativeMapViewState
+		// becomes true through ordinary campaign progression regardless of whether
+		// FDOTHER.DAT was ever supplied (materializeNativeMapRuntime never checks
+		// nativeMapAssetsAvailable) -- see the identical reasoning already applied to
+		// battleView's own gate, above. Without this second check, a player who
+		// hasn't set up native assets (the common, default case) gets pinned to the
+		// scenario-authored camera_x/camera_y, which was authored for the original
+		// fixed 320x200/13x8 viewport and has no relationship to this window's
+		// actual dynamic size -- nothing native is being drawn on top to align
+		// with, so trusting it here only fights the dynamic camera-follow/centering
+		// below for no benefit. Still call syncNativeMapView() unconditionally first
+		// so its g.curX/g.curY cursor-position sync (used elsewhere, harmless) keeps
+		// happening; only its camX/camY assignment gets overridden when unavailable.
+		if !(g.syncNativeMapView() && nativeMapAssetsAvailable(g.nativeMapAssets)) {
+			// vw/vh must match whatever Draw()'s dynamicStoryZoom actually
+			// allocated g.storyView at (which can be far larger than the
+			// original fixed logicalW/logicalH=640x400 on a big monitor --
+			// see the "地圖延展" widening work). Using the stale fixed
+			// constants here made the camera unable to pan far enough to
+			// ever reach the map's true right/bottom edge on any window
+			// wider or taller than 640x400 native px, which is what showed
+			// up as "地圖延展不夠/右側黑邊/最大化後沒有填滿" even though
+			// Draw() itself was already rendering the wider viewport
+			// correctly -- only the pan RANGE was still capped to the old
+			// size. g.storyView holds last frame's Draw() output (Update()
+			// always runs after at least one Draw() once the game is
+			// visible), so its Bounds() is the correct, always-current
+			// viewport size; fall back to the fixed constants only for the
+			// very first frame before Draw() has ever run.
+			vw, vh := logicalW, logicalH
+			if g.storyView != nil {
+				vw, vh = g.storyView.Bounds().Dx(), g.storyView.Bounds().Dy()
+			}
+			g.camX = float64(g.curX*g.m.TileW-vw/2) + float64(g.m.TileW)/2
+			g.camY = float64(g.curY*g.m.TileH-vh/2) + float64(g.m.TileH)/2
+			clampOrCenterCam(&g.camX, g.m.W*g.m.TileW, vw)
+			clampOrCenterCam(&g.camY, g.m.H*g.m.TileH, vh)
 		}
 	}
 	if !nativeModifierHeld() && inpututil.IsKeyJustPressed(ebiten.KeyF5) { // 快速存檔(節點邊界語意:存 campaign 進度)
@@ -5672,6 +6462,9 @@ func (g *Game) Update() error {
 		return nil // PAN/delay/dialogue sequence blocks battle input and repeated end-turn
 	}
 	if g.campInput() { // campaign 節點(story/choice/ending/勝敗轉場)攔截輸入
+		if g.wantQuit {
+			return ebiten.Termination
+		}
 		return nil
 	}
 	if g.ringInput() { // radial 指令環 / 法術選單
@@ -5776,16 +6569,38 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		g.endTurn()
 	}
-	// 相機跟隨游標(置中,夾在地圖內)
-	if !g.syncNativeMapView() {
-		g.camX = float64(g.curX*g.m.TileW - logicalW/2 + g.m.TileW/2)
-		g.camY = float64(g.curY*g.m.TileH - logicalH/2 + g.m.TileH/2)
-		clamp(&g.camX, 0, float64(g.m.W*g.m.TileW-logicalW))
-		clamp(&g.camY, 0, float64(g.m.H*g.m.TileH-logicalH))
+	// 相機跟隨游標(置中,夾在地圖內)。這是同一幀第二次相機同步(見上方
+	// 「先於各攔截」那次)——這次在游標移動輸入(方向鍵/觸控)處理完之後才跑,
+	// 讓相機能在同一幀跟上剛剛的移動,不會慢一幀。跟上面那次一樣的
+	// vw/vh + clampOrCenterCam 動態視窗邏輯,兩處必須同步修——這裡曾經
+	// 漏改,殘留的舊 logicalW/logicalH 常數在這個較晚的同步點覆蓋掉上面
+	// 已經修好的結果,讓修正看起來「沒有生效」。同一個 nativeMapAssetsAvailable
+	// 雙重閘門(見上方那次同步的完整說明)在這裡也要一起補上。
+	if !(g.syncNativeMapView() && nativeMapAssetsAvailable(g.nativeMapAssets)) {
+		vw, vh := logicalW, logicalH
+		if g.storyView != nil {
+			vw, vh = g.storyView.Bounds().Dx(), g.storyView.Bounds().Dy()
+		}
+		g.camX = float64(g.curX*g.m.TileW-vw/2) + float64(g.m.TileW)/2
+		g.camY = float64(g.curY*g.m.TileH-vh/2) + float64(g.m.TileH)/2
+		clampOrCenterCam(&g.camX, g.m.W*g.m.TileW, vw)
+		clampOrCenterCam(&g.camY, g.m.H*g.m.TileH, vh)
 	}
 	return nil
 }
 
+// syncNativeMapView copies the campaign-scripted cursor/camera position into
+// live game state, faithfully, regardless of whether native FDOTHER.DAT
+// assets are available -- callers that need to decide whether to actually
+// TRUST that camera value for on-screen display (as opposed to, say, a test
+// asserting the materialized value itself) must check
+// nativeMapAssetsAvailable(g.nativeMapAssets) themselves; do not fold that
+// decision in here. (2026-08-13: tried exactly that once -- gating the
+// camera assignment on nativeMapAssetsAvailable inside this function --
+// and it broke TestGameMaterializesEditableNativeMapRuntime and five other
+// tests that depend on this function faithfully reflecting materialized
+// state with no native assets loaded. Reverted; the two Update() call
+// sites keep their own explicit `&& nativeMapAssetsAvailable(...)` checks.)
 func (g *Game) syncNativeMapView() bool {
 	if g == nil || g.m == nil || g.st == nil || !g.st.HasNativeMapViewState {
 		return false
@@ -5869,21 +6684,74 @@ func clamp(v *float64, lo, hi float64) {
 	}
 }
 
+// clampOrCenterCam clamps a camera axis to [0, mapExtent-viewportExtent] the
+// normal way, EXCEPT when the map is narrower than the viewport on this axis
+// (mapExtent < viewportExtent, e.g. a small map on a big monitor): plain
+// clamp() collapses that inverted range to a hard 0, which always draws the
+// map flush against one edge of the viewport and dumps 100% of the
+// unavoidable "地圖比視窗窄" black margin on the opposite edge. Using a
+// negative camera offset of -(shortfall)/2 instead shifts the drawn content
+// to the middle, splitting that same margin evenly on both edges -- same
+// total black area, just centered instead of lopsided (looks like an
+// intentional aspect-ratio letterbox rather than a mispositioned map).
+func clampOrCenterCam(v *float64, mapExtent, viewportExtent int) {
+	if viewportExtent > mapExtent {
+		*v = -float64(viewportExtent-mapExtent) / 2
+		return
+	}
+	clamp(v, 0, float64(mapExtent-viewportExtent))
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Only the bare operable map/battle view (unit selected, moving, plain
-	// dialogue) expands to fill a real window/screen bigger than the fixed
-	// 640x400 canvas -- see toggleFullscreen/Layout. Every other screen
-	// (shop/church/prep/title/menus/transitions/story cutscenes) keeps its
-	// existing, unmodified 640x400 layout by rendering into g.uiCanvas
-	// instead, which gets centered onto the real screen at the end; this
-	// avoids re-deriving position math for every one of those screens.
+	// The bare operable map/battle view (unit selected, moving, plain
+	// dialogue) *and* storyBG scenes (village walk / camp-rest cutscenes)
+	// expand to fill a real window/screen bigger than the fixed 640x400
+	// canvas -- see toggleFullscreen/Layout. storyBG used to be excluded
+	// here, which is why it still drew into a fixed 320x200 offscreen (see
+	// g.storyView below) even on a huge window: it always rendered a small,
+	// top-left-anchored box with black filling the rest (使用者回饋:標題/
+	// 對話框畫面沒有延伸填滿視窗)。Every remaining screen (shop/church/prep/
+	// title/menus/transitions) still keeps its existing, unmodified 640x400
+	// layout by rendering into g.uiCanvas instead, which gets centered onto
+	// the real screen at the end; this avoids re-deriving position math for
+	// every one of those screens.
+	//
+	// g.ring (the post-move radial action menu) was ALSO on that fixed-canvas
+	// exclusion list until drawRing() below got its own zoom/borderPx fix
+	// (2026-08-13): keeping it excluded meant selecting+moving a unit flipped
+	// the whole frame from the dynamic wide view to the small 640x400 canvas
+	// (itself then rescaled to fill the real window), i.e. a completely
+	// different effective zoom level for as long as the ring stayed open --
+	// reported by a user as "the screen zooms in after moving" and "the
+	// status panel covers the character" (both true: switching canvases
+	// mid-interaction changes where everything lands). drawRing is now
+	// zoom/borderPx-aware like the rest of this expandable path, so it no
+	// longer needs the fixed canvas -- removing it here keeps the view
+	// stable across select/move/ring instead of jumping twice. The other
+	// menu flags stay excluded; only drawRing got the coordinate fix, not
+	// drawSpellMenu/drawItemMenu/drawNativeCommandGrid (those use fixed
+	// absolute logical-canvas coordinates and would need their own pass).
+	//
+	// g.battleEvent (the blocking on-turn action-sequence presentation --
+	// attack/spell/item animations playing out on the map) was excluded the
+	// same way, and for the same reason it turned out to be safe to remove
+	// (2026-08-13, user report: "attack screen doesn't expand like the map
+	// does"). It has no separate drawing code at all -- it's the exact same
+	// tile/unit-sprite path used for the ordinary interactive map, just held
+	// at the fixed small canvas by the zoom-selection switch below. Every
+	// zoom/borderPx-dependent overlay (cursor, unit-name label, HUD panel,
+	// native map frame) is independently gated off by legacyViewport during
+	// battle events regardless of this flag, and the dialogue box already
+	// anchors to screen.Bounds() dynamically -- so removing g.battleEvent
+	// from this list only affects the base map/unit layer, which was already
+	// proven zoom-safe (drawn into the native target buffer, blitted onto
+	// screen as one scaled op).
 	realScreen := screen
 	expandableView := g.m != nil && g.st != nil &&
-		!g.storyBG && g.battleEvent == nil &&
 		g.titlePhase == "" && g.nativeEnding == nil && g.objChapter <= 0 &&
 		g.indexedTransition == nil && g.nativePaletteRamp == nil && g.spawnIntroTransition == nil &&
 		!(g.nativeTurnStaging != nil && g.nativeTurnStaging.indexed) &&
-		!g.ring && !g.nativeCommandOpen && !g.spellOpen && !g.itemOpen &&
+		!g.nativeCommandOpen && !g.spellOpen && !g.itemOpen &&
 		g.nativeShopMode == "" && g.churchMode == "" && !g.prepSelecting && !g.prepConfirm
 	if !expandableView {
 		if g.uiCanvas == nil {
@@ -5906,6 +6774,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op.GeoM.Scale(scale, scale)
 		op.GeoM.Translate((float64(rb.Dx())-float64(sb.Dx())*scale)/2, (float64(rb.Dy())-float64(sb.Dy())*scale)/2)
 		realScreen.DrawImage(screen, op)
+	}()
+	// 2026-08-13 修復:g.loadErr 先前只有 g.m==nil 那個早期分支會顯示給玩家看
+	// (下面幾行)。cutscene/beat runner 另外有 30+ 處會在失敗時設 g.loadErr 然後
+	// 直接 return——不呼叫 g.beatAdvance(),後續 beat 全部不再執行——但地圖通常
+	// 已經載入,所以錯誤訊息從來沒被看到過,玩家只會看到畫面卡住、不回應任何
+	// 按鍵、沒有任何提示。註解自己都寫「誠實 stub,勝過假裝完成」,實作上卻從
+	// 沒真的做到「誠實」。這個 defer 補上:不管哪個分支提早 return,只要
+	// g.loadErr 非空就疊字顯示,讓卡住至少看得出原因,不必再靠 log 才查得到
+	// (實際案例:第一章開場 spawn_intro beat 在沒有原生 FDOTHER.DAT 資產時失敗,
+	// 卡在過場中途一片空白,直到用 FD2_CUTSCENE_LOG 才查到 loadErr 內容)。
+	defer func() {
+		if g.loadErr != "" {
+			ebitenutil.DebugPrintAt(screen, "loadErr: "+g.loadErr, 4, screen.Bounds().Dy()-16)
+		}
 	}()
 	// The exact full-DAC saturation covers the complete mode-13h surface,
 	// including HUD and dialogue. Defer preserves that hardware ordering across
@@ -6015,36 +6897,137 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// 邊,選黑純為視覺乾淨、非還原原版行為。
 	screen.Fill(color.RGBA{0, 0, 0, 0xff})
 	nativeMapPresented := false
-	// story 場景與原版阻塞 battle event 走 320×200 離屏再放大 storyZoom 倍
-	// (還原 13×8 格取景)；一般可操作戰場維持 640×400 直繪。
+	campaignBattleView := g.camp == nil || (g.camp.Node() != nil && g.camp.Node().Type == "battle")
+	// 每一種狀態(一般互動戰場/story場景/非battle節點)都走離屏世界層再放大
+	// zoom 倍(跟全遊戲「原生解析度畫、doubled 顯示」的慣例一致,title/對話框/
+	// native map 都是同一套規則)貼回畫布——這段古典 PNG tile 繪法平常是給 native
+	// indexed 疊圖蓋掉的底層,但 native 疊圖只在真的可操作戰場才會嘗試(見下方
+	// campaignBattleView 閘門處),真實遊玩時(camp 沒接、非戰鬥 story 節點)常常
+	// 沒有疊圖可蓋,這段底層本身就是玩家看到的畫面,固定原生像素/固定2x完全不看
+	// 視窗大小,大螢幕上只填一小塊角落(使用者回饋:地圖應該延伸充滿整個視窗)。
+	// g.battleEvent(阻塞演出,攻擊/法術/物品動畫播放期間)以前也維持固定 320x200
+	// 離屏,2026-08-13 使用者回饋「攻擊畫面沒有跟地圖一樣放大延伸」後改成跟一般
+	// 互動戰場共用同一套 dynamicStoryZoom FOV 選擇(見下方 switch,不再有專屬
+	// case)——這段演出本來就沒有自己的繪製程式碼,走的是同一條 tile/unit 底層,
+	// 只是先前被排除在外。
 	// 對話框/HUD/淡幕仍畫在 screen 原生解析度。
-	target, viewW, viewH := screen, screen.Bounds().Dx(), screen.Bounds().Dy()
-	legacyViewport := g.storyBG || g.battleEvent != nil
-	if legacyViewport {
-		if g.storyView == nil {
-			g.storyView = ebiten.NewImage(logicalW/storyZoom, logicalH/storyZoom)
-		}
-		g.storyView.Fill(color.RGBA{0, 0, 0, 0xff})
-		target, viewW, viewH = g.storyView, logicalW/storyZoom, logicalH/storyZoom
-	}
 	tw, th := g.m.TileW, g.m.TileH
-	// 只畫可見範圍
-	x0 := int(g.camX) / tw
-	y0 := int(g.camY) / th
-	x1 := (int(g.camX)+viewW)/tw + 1
-	y1 := (int(g.camY)+viewH)/th + 1
-	for cy := y0; cy <= y1 && cy < g.m.H; cy++ {
-		for cx := x0; cx <= x1 && cx < g.m.W; cx++ {
-			if cy < 0 || cx < 0 {
-				continue
+	legacyViewport := g.storyBG || g.battleEvent != nil
+	// battleView is the one case where native indexed presentation might draw
+	// on top of this classic layer this same frame (see the
+	// !legacyViewport && campaignBattleView gate around drawNativeMapFrame,
+	// below): the classic FOV/zoom there must derive from
+	// effectiveNativeMapViewport(), not dynamicStoryZoom's independent
+	// whole-map-covers-screen formula, so an HD tileset drawn here lines up
+	// pixel-for-pixel with wherever native draws units/cursor/HUD on top.
+	// storyBG/non-battle nodes have no such second renderer to agree with,
+	// so they keep using dynamicStoryZoom's "cover the window" choice.
+	//
+	// campaignBattleView alone is NOT enough of a guard: it's true whenever
+	// g.camp is nil (the ordinary default-flow case with no campaign.Runner
+	// attached at all, not just real battles), and in that state native
+	// presentation is guaranteed to fail (no HasNativeMapViewState) --
+	// effectiveNativeMapViewport() would then silently fall back to the
+	// original tiny 13x8 default, shrinking a screen that would otherwise
+	// have filled via dynamicStoryZoom (regression caught by live
+	// screenshot verification, not by any unit test). Require
+	// HasNativeMapViewState too: the same fundamental prerequisite
+	// composeNativeMapFrameAt itself checks before attempting anything.
+	//
+	// HasNativeMapViewState STILL is not enough on its own: it only reflects
+	// whether the campaign-authored camera/view got materialized, which has
+	// no dependency on whether FDOTHER.DAT was ever supplied (see
+	// materializeNativeMapRuntime -- it never calls nativeMapAssetsAvailable
+	// at all). A player who hasn't set up native assets (the common,
+	// supported case -- FDOTHER.DAT is player-provided, opt-in) reaches
+	// HasNativeMapViewState=true through ordinary campaign progression while
+	// drawNativeMapFrame can never succeed, which -- without this check --
+	// locked the classic layer to native's tiny fixed viewport with nothing
+	// ever drawn on top of it, AND with that lock computed once (not
+	// re-derived from the live window every frame the way dynamicStoryZoom
+	// is), so it also stopped responding to the player resizing/maximizing
+	// their window (real user report, live screenshot from packaged fd2.exe,
+	// not caught by any headless test). Require nativeMapAssetsAvailable
+	// too, so this whole branch only ever activates when native presentation
+	// can genuinely draw something to align with.
+	battleView := !legacyViewport && campaignBattleView && g.st != nil && g.st.HasNativeMapViewState &&
+		nativeMapAssetsAvailable(g.nativeMapAssets)
+	zoom := storyZoom
+	bw, bh := logicalW/storyZoom, logicalH/storyZoom
+	borderPx := 0.0
+	switch {
+	case battleView:
+		// native 永遠固定 2x(24px 原生 tile → 48px 畫面),寬度是視窗選好的
+		// Cols/Rows 格數(見 pickNativeMapViewport),不是整張地圖塞滿螢幕。
+		// borderPx 從 CanvasSize()(含 VGA 邊框)反推,不直接引用
+		// indexedmap 內部沒 export 的邊框常數,兩邊改了也不會跟著壞掉。
+		nvp := g.effectiveNativeMapViewport()
+		zoom = 2
+		bw, bh = nvp.Cols*tw, nvp.Rows*th
+		canvasW, _ := nvp.CanvasSize()
+		borderPx = float64(canvasW-bw) / 2
+	default:
+		// 這張地圖本身的原生像素範圍比螢幕還窄時(見下方「地圖比畫面窄」註解),
+		// 只放大視窗 FOV(bw/bh)沒用——沒那麼多格可畫,還是會留一堆黑邊
+		// (使用者回饋)。改成也放大 zoom 本身,取「地圖整張塞得進螢幕」的最大
+		// 整數倍率(避免非整數縮放模糊 pixel art),下限維持 storyZoom(2x,
+		// 全遊戲 chunky-pixel 慣例),上限夾在 8 避免小地圖被放到誇張的大格子。
+		zoom = dynamicStoryZoom(screen.Bounds().Dx(), screen.Bounds().Dy(), g.m.W*tw, g.m.H*th)
+		if w := screen.Bounds().Dx() / zoom; w > bw {
+			bw = w
+		}
+		if h := screen.Bounds().Dy() / zoom; h > bh {
+			bh = h
+		}
+	}
+	if g.storyView == nil || g.storyView.Bounds().Dx() != bw || g.storyView.Bounds().Dy() != bh {
+		g.storyView = ebiten.NewImage(bw, bh)
+	}
+	g.storyView.Fill(color.RGBA{0, 0, 0, 0xff})
+	target, viewW, viewH := g.storyView, bw, bh
+	if g.mapComposite != nil {
+		// 整張地圖已經合成成單一大圖(見 loadMapComposite):一次 DrawImage 就是
+		// 完整地圖,ebiten 只會實際 rasterize target 範圍內的部分,camera 平移
+		// 邏輯跟下面逐格繪法完全一樣(同一個 g.camX/g.camY,同一個縮回原生像素
+		// 再讓外層 zoom 放大的兩段縮放),換掉的只是「逐格 blit」變成「一張圖」,
+		// 沒有格與格之間的邊界,tile 縫問題從根本上不存在。
+		op := &ebiten.DrawImageOptions{}
+		if g.mapCompositeScale > 1 {
+			op.Filter = ebiten.FilterLinear
+			inv := 1.0 / float64(g.mapCompositeScale)
+			op.GeoM.Scale(inv, inv)
+		}
+		op.GeoM.Translate(-g.camX, -g.camY)
+		target.DrawImage(g.mapComposite, op)
+	} else {
+		// 只畫可見範圍
+		x0 := int(g.camX) / tw
+		y0 := int(g.camY) / th
+		x1 := (int(g.camX)+viewW)/tw + 1
+		y1 := (int(g.camY)+viewH)/th + 1
+		for cy := y0; cy <= y1 && cy < g.m.H; cy++ {
+			for cx := x0; cx <= x1 && cx < g.m.W; cx++ {
+				if cy < 0 || cx < 0 {
+					continue
+				}
+				t := g.tileAt(g.m.Tiles[cy*g.m.W+cx])
+				if t == nil {
+					continue
+				}
+				op := &ebiten.DrawImageOptions{}
+				if g.tileCellScale > 1 {
+					// tile 的實際圖檔比邏輯格大(見 loadMap 的 tileCellScale),先縮
+					// 回原生 tw x th 大小,才不會在這個離屏世界層裡佔了超過一格的
+					// 面積;之後 target 整層再被 zoom 放大回螢幕,兩邊縮放疊起來
+					// 淨效果是「用比較銳利的來源做出同樣大小的格子」。線性濾波
+					// 避免縮小取樣鋸齒。
+					op.Filter = ebiten.FilterLinear
+					inv := 1.0 / float64(g.tileCellScale)
+					op.GeoM.Scale(inv, inv)
+				}
+				op.GeoM.Translate(float64(cx*tw)-g.camX, float64(cy*th)-g.camY)
+				target.DrawImage(t, op)
 			}
-			t := g.tileAt(g.m.Tiles[cy*g.m.W+cx])
-			if t == nil {
-				continue
-			}
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(cx*tw)-g.camX, float64(cy*th)-g.camY)
-			target.DrawImage(t, op)
 		}
 	}
 	// 移動範圍高亮(已選單位:藍色半透明格)
@@ -6099,8 +7082,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 		// 攻擊射程高亮(紅;已移動、選攻擊、尚未選中目標的階段,doc32 武器攻擊距離接線 —
-		// 沒有這格高亮,槍兵2格射程會「打得到但畫面看不出範圍」)
-		if g.castSp == nil && g.moved && !g.ring && !g.spellOpen {
+		// 沒有這格高亮,槍兵2格射程會「打得到但畫面看不出範圍」)。
+		// 2026-08-13 修復:先前少排除 itemOpen/nativeCommandOpen,這兩個選單
+		// 跟「選攻擊」共用同一個 g.moved==true 已移動狀態,只有 g.ring 在關掉選單
+		// 時被清掉——玩家移動後開道具選單(ringSel=2)時,這格高亮沒被關閉的條件
+		// 排除,疊在半透明的道具面板底下同時畫出來,實機截圖證實(使用者回報)。
+		// expandableView 那組排除清單(上方)已經在排除同樣這幾個選單狀態,這裡少列一次。
+		// 追查同一類漏洞時另外發現:nativeCommandOpen 進入 nativeCommand0Targeting
+		// (原始指令自己的選目標階段)時會被設回 false(4210行),!g.nativeCommandOpen
+		// 這條在那個子階段完全不排除——同一顆漏洞的第二個實例,一併補上
+		// !g.nativeCommand0Targeting。itemOpen 則整段 targeting/relocating 都不會被
+		// clearNativeItemPanel() 清掉(該函式只清面板資料,故意不動 itemOpen),
+		// 所以 !g.itemOpen 本身已經涵蓋 nativeItemTargeting/nativeItemRelocating,不必重複列。
+		if g.castSp == nil && g.moved && !g.ring && !g.spellOpen && !g.itemOpen &&
+			!g.nativeCommandOpen && !g.nativeCommand0Targeting {
 			ah := ebiten.NewImage(tw, th)
 			ah.Fill(color.RGBA{0xe0, 0x30, 0x30, 0x5c})
 			for y := 0; y < g.m.H; y++ {
@@ -6138,26 +7133,33 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		uy := float64(u.Y*th) - g.camY
 		g.drawUnitSprite(target, ux, uy, float64(tw), float64(th), u, u.Fig)
 	}
-	if legacyViewport { // 離屏世界層放大貼回畫布(48px/格,原版取景)
+	{ // 離屏世界層放大貼回畫布(48px/格起,原版取景;離屏層現在跟真實視窗一樣大,zoom 可能大於原本固定的 storyZoom)
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(storyZoom, storyZoom)
+		op.GeoM.Scale(float64(zoom), float64(zoom))
+		if battleView {
+			// native 疊圖(有的話)不是畫在 screen 原點:它的完整 VGA 畫布含邊框,
+			// 內容從 borderPx 位置才開始。這裡的離屏世界層只有內容、沒有邊框,
+			// 要位移同樣距離兩邊才會對齊,不然地形會跟 native 畫的單位/游標/HUD
+			// 差 borderPx*zoom 像素。
+			op.GeoM.Translate(borderPx*float64(zoom), borderPx*float64(zoom))
+		}
 		screen.DrawImage(g.storyView, op)
 		if g.unitLabels { // FD2_UNIT_LABELS:cutscene sprite 左上標 [idx]名(x,y)dDir,協助回報/對映原版 slot
 			for i := range g.storyActors {
 				u := &g.storyActors[i]
-				sx := (float64(u.X*tw) - g.camX + u.OffX) * storyZoom
-				sy := (float64(u.Y*th) - g.camY + u.OffY) * storyZoom
+				sx := (float64(u.X*tw)-g.camX+u.OffX)*float64(zoom) + borderPx*float64(zoom)
+				sy := (float64(u.Y*th)-g.camY+u.OffY)*float64(zoom) + borderPx*float64(zoom)
 				ebitenutil.DebugPrintAt(screen, fmt.Sprintf("[%d]f%d(%d,%d)d%d", i, u.Fig, u.X, u.Y, u.Dir), int(sx), int(sy)-14)
 			}
 		}
 	}
 	// 游標(白框):指令環/法術選單開啟時不顯示(原版該狀態下選取指示只在環上的選中圖示,
-	// 常駐白框會疊在中央、與環的選中框混淆,見 playfix #5)
-	curPx := float64(g.curX*tw) - g.camX
-	curPy := float64(g.curY*th) - g.camY
-	campaignBattleView := g.camp == nil || (g.camp.Node() != nil && g.camp.Node().Type == "battle")
+	// 常駐白框會疊在中央、與環的選中框混淆,見 playfix #5)。座標乘 zoom,才會跟
+	// 離屏世界層貼回畫布後的實際位置對齊(離屏層原生座標 -> 畫面座標)。
+	curPx := (float64(g.curX*tw)-g.camX)*float64(zoom) + borderPx*float64(zoom)
+	curPy := (float64(g.curY*th)-g.camY)*float64(zoom) + borderPx*float64(zoom)
 	if !g.ring && !g.spellOpen && !legacyViewport && campaignBattleView {
-		drawCursor(screen, curPx, curPy, float64(tw), float64(th))
+		drawCursor(screen, curPx, curPy, float64(tw)*float64(zoom), float64(th)*float64(zoom))
 	}
 	// HUD(對照原版 orig_04/08):游標單位資訊=左下面板(非常駐頂列);回合切換=中央大字橫幅。
 	if g.st != nil && g.font != nil && !legacyViewport {
@@ -6186,7 +7188,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		!g.ring && !g.spellOpen && !g.itemOpen && g.castSp == nil {
 		nativeMapPresented = g.drawNativeMapFrame(screen)
 	}
-
 	// 中文層(原版點陣字型,doc 08):選中單位名 + 對話框(DebugPrint 不支援中文)
 	if g.font != nil {
 		if g.st != nil && !legacyViewport && !nativeMapPresented { // 選中單位中文名(放游標格上方,避開頂部 DebugPrint)
@@ -6196,8 +7197,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					nm = u.ClsName
 				}
 				if nm != "" {
-					nx := float64(g.curX*tw) - g.camX
-					ny := float64(g.curY*th) - g.camY - 18
+					nx := (float64(g.curX*tw)-g.camX)*float64(zoom) + borderPx*float64(zoom)
+					ny := (float64(g.curY*th)-g.camY)*float64(zoom) + borderPx*float64(zoom) - 18
 					g.font.Draw(screen, nm, nx, ny, 1.0, color.RGBA{0xff, 0xeb, 0x78, 0xff})
 				}
 			}
@@ -6221,10 +7222,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				upper = *g.dlgUpper
 			}
 			// 框位置:模板匹配 orig 下框 (5,112)@320(底部裁 11px 超出畫面,原版如此);上框鏡射 y=-11
-			// 下框錨定在「目前畫面」底部(不是寫死的640x400):地圖可擴大填滿視窗時
-			// (expandableView),對話框維持原生620x198大小、貼齊實際螢幕下緣,
-			// 不隨地圖一起被拉伸(使用者回饋:地圖跟對話框要能分開縮放)。
-			bx, by := 10.0, float64(screen.Bounds().Dy())-198-4 // 下框上移使底邊在畫面內留4px邊界(原224底邊422出畫面,使用者回饋2026-07-05)
+			// 框錨定在「目前畫面」(不是寫死的640x400):地圖可擴大填滿視窗時
+			// (expandableView),對話框維持原生620x198大小、水平置中、貼齊實際
+			// 螢幕下緣,不隨地圖一起被拉伸(使用者回饋:地圖跟對話框要能分開
+			// 縮放;框應該延伸放在畫面下方,不能卡在視窗左下角一小塊)。
+			bx := (float64(screen.Bounds().Dx()) - 620) / 2
+			by := float64(screen.Bounds().Dy()) - 198 - 4 // 下框上移使底邊在畫面內留4px邊界(原224底邊422出畫面,使用者回饋2026-07-05)
 			if upper {
 				by = 4 // 上框下移使頂邊4在畫面內(原-22頂邊出畫面)
 			}
@@ -6273,11 +7276,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					sourceWidth = float64(fr[mi].Bounds().Dx())
 					ps = 168.0 / sourceWidth
 				}
-				hx, tx, ty := 16.0, 216.0, by+24
+				// hx/tx 原本是寫死的螢幕絕對座標(假設 bx 恆為10);框改成水平置中後
+				// 改成相對 bx 的偏移量,頭像/文字才會跟著框一起移動,不會脫框。
+				hx, tx, ty := bx+6, bx+206, by+24
 				hy := by + (198-sourceWidth*ps)/2 // 頭像垂直置中於框內(框高198,頭像168),不凸出框上下邊
 				if upper {
-					hx = float64(logicalW) - 16 - sourceWidth*ps
-					tx = 32
+					hx = bx + 620 - 6 - sourceWidth*ps
+					tx = bx + 22
 					ty = by + 46
 				}
 				if len(fr) > 0 {
@@ -6338,7 +7343,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Command UI is an indexed-sprite layer; it must not depend on an optional
 	// Chinese font being available in the runtime environment.
-	g.drawRing(screen)
+	g.drawRing(screen, float64(zoom), borderPx)
 	g.drawNativeCommandGrid(screen)
 	g.drawSpellMenu(screen)
 	g.drawItemMenu(screen)
@@ -6362,63 +7367,143 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) captureShot(screen *ebiten.Image) {
+	if g.debugShopBuyPending {
+		g.debugShopBuyPending = false
+		recipient := g.partyRoster[g.debugShopBuyRecipientID]
+		log.Printf("FD2_SHOT_SHOP_BUY_CONFIRM after-state: recipient=%s(id=%d) goldBefore=%d goldAfter=%d "+
+			"invBefore=%v invAfter=%v nativeShopUIJobStillPending=%v",
+			recipient.Name, g.debugShopBuyRecipientID, g.debugShopBuyGoldBefore, g.gold,
+			g.debugShopBuyInvBefore, recipient.InventorySlots, g.nativeShopUIJob != nil)
+	}
 	g.shotTaken = true
 	saveShot(screen, g.shotPath)
 }
 
 // drawRing shows the native FDOTHER #2 action overlay when the player has
 // supplied FDOTHER.DAT. The historical PNG ring remains a fail-closed fallback.
-func (g *Game) drawRing(screen *ebiten.Image) {
+// drawRing draws the radial action menu (marker + redrawn unit sprite + 4
+// direction icons/borders, or the native action overlay in its place) onto a
+// small NATIVE-resolution offscreen buffer using the exact same native-pixel
+// coordinate math this function always had, then blits that ONE buffer onto
+// screen scaled by zoom and offset by borderPx -- the same "draw native, blit
+// scaled once" pattern the main map view already uses (target -> screen).
+//
+// Before this fix, every DrawImage call inside here targeted screen directly
+// using raw native ux/uy with no zoom/borderPx applied at all -- correct only
+// by coincidence at the legacy fixed zoom=1 canvas, but at any real zoom
+// (dynamicStoryZoom routinely picks 2-8x, battleView is fixed at 2x with a
+// nonzero borderPx whenever the viewport doesn't exactly fill the canvas) the
+// whole ring/marker/redrawn-sprite ends up positioned and sized for a 1:1
+// canvas while actually landing on the already-zoomed final screen -- i.e.
+// squeezed into the top-left corner at native scale, nowhere near the unit.
+// This is what a user reported as "moving a unit zooms the screen in / the
+// status panel covers the character / no menu pops up": the ring WAS being
+// drawn, just at the wrong scale and position to be recognizable as one.
+func (g *Game) drawRing(screen *ebiten.Image, zoom, borderPx float64) {
 	if !g.ring || g.sel == nil || g.m == nil {
 		return
 	}
 	tw, th := g.m.TileW, g.m.TileH
-	ux := float64(g.sel.X*tw) - g.camX
-	uy := float64(g.sel.Y*th) - g.camY
-	if g.drawNativeActionOverlay(screen, ux, uy) {
-		g.markActionOverlayDrawn()
-		return
-	}
-	// 行動中單位標記 + 補畫其 sprite 在最上層:部署較密的隊形下,鄰格友軍的 sprite
-	// 可能探進環的中央空隙,讓人誤以為環中央是別的角色(playfix #5)。用橘色底標記
-	// 「這是誰在動」+ 把 g.sel 自己的 sprite 疊到最上層,消除歧義。
-	mark := ebiten.NewImage(tw, th)
-	mark.Fill(color.RGBA{0xff, 0xa8, 0x20, 0x50})
-	mop := &ebiten.DrawImageOptions{}
-	mop.GeoM.Translate(ux, uy)
-	screen.DrawImage(mark, mop)
-	g.drawUnitSprite(screen, ux, uy, float64(tw), float64(th), g.sel, g.mapSpriteGroup(g.sel))
 	const iw, ih = 56.0, 52.0 // 28×26 ×2
-	pos := [4][2]float64{     // 0上 1左 2右 3下
-		{ux + float64(tw)/2 - iw/2, uy - ih - 6},
-		{ux - iw - 6, uy + float64(th)/2 - ih/2},
-		{ux + float64(tw) + 6, uy + float64(th)/2 - ih/2},
-		{ux + float64(tw)/2 - iw/2, uy + float64(th) + 6},
-	}
-	border := func(x, y float64, c color.RGBA) {
-		for _, r := range [][4]float64{{x - 3, y - 3, iw + 6, 3}, {x - 3, y + ih, iw + 6, 3},
-			{x - 3, y, 3, ih}, {x + iw, y, 3, ih}} {
-			b := ebiten.NewImage(int(r[2]), int(r[3]))
-			b.Fill(c)
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(r[0], r[1])
-			screen.DrawImage(b, op)
+	const pad = iw + 6 + 3    // 圖示寬 + 間距 + 選中框,四個方向都要留夠
+	bw := int(float64(tw) + 2*pad)
+	bh := int(float64(th) + 2*pad)
+	buf := ebiten.NewImage(bw, bh)
+	ux, uy := pad, pad // buffer 內,單位左上角固定在 (pad,pad)
+
+	if g.drawNativeActionOverlay(buf, ux, uy) {
+		g.markActionOverlayDrawn()
+	} else {
+		// 行動中單位標記 + 補畫其 sprite 在最上層:部署較密的隊形下,鄰格友軍的
+		// sprite 可能探進環的中央空隙,讓人誤以為環中央是別的角色(playfix #5)。
+		// 用橘色底標記「這是誰在動」+ 把 g.sel 自己的 sprite 疊到最上層,消除歧義。
+		mark := ebiten.NewImage(tw, th)
+		mark.Fill(color.RGBA{0xff, 0xa8, 0x20, 0x50})
+		mop := &ebiten.DrawImageOptions{}
+		mop.GeoM.Translate(ux, uy)
+		buf.DrawImage(mark, mop)
+		g.drawUnitSprite(buf, ux, uy, float64(tw), float64(th), g.sel, g.mapSpriteGroup(g.sel))
+		pos := [4][2]float64{ // 0上 1左 2右 3下
+			{ux + float64(tw)/2 - iw/2, uy - ih - 6},
+			{ux - iw - 6, uy + float64(th)/2 - ih/2},
+			{ux + float64(tw) + 6, uy + float64(th)/2 - ih/2},
+			{ux + float64(tw)/2 - iw/2, uy + float64(th) + 6},
 		}
-	}
-	for i, ic := range g.ringIcons {
-		if ic == nil {
-			continue
+		border := func(x, y float64, c color.RGBA) {
+			for _, r := range [][4]float64{{x - 3, y - 3, iw + 6, 3}, {x - 3, y + ih, iw + 6, 3},
+				{x - 3, y, 3, ih}, {x + iw, y, 3, ih}} {
+				b := ebiten.NewImage(int(r[2]), int(r[3]))
+				b.Fill(c)
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(r[0], r[1])
+				buf.DrawImage(b, op)
+			}
 		}
-		x, y := pos[i][0], pos[i][1]
-		if i == g.ringSel { // 選中:橘黃框(orig 選中樣式)
-			border(x, y, color.RGBA{0xff, 0xa8, 0x20, 0xff})
+		// assets/ui/ring_*.png (attack/status/item/wait icon art, generated by
+		// cmd/export-ring-icons from a player-supplied original FDOTHER.DAT,
+		// see loadGame()) is gitignored player-derived content -- a fresh
+		// checkout or a machine without the original asset still has
+		// g.ringIcons[i] nil for all 4 slots. The old code silently
+		// `continue`'d past a nil icon, which ALSO skipped the selection
+		// border (both were behind the same nil check) -- so the whole menu
+		// was completely invisible when the art was missing:
+		// no icons, no highlight box, nothing to navigate by. A player could
+		// press Enter, land on an unavailable slot (opening defaults to
+		// selection=1/spell, which this unit may not have), see "此指令目前
+		// 不可用" and have zero visual cue that arrow keys move a selection
+		// or which direction does what -- reported as "無法執行下一步"
+		// (can't proceed at all). Fixed with a text-label fallback (name in
+		// Chinese, same font already used elsewhere in this menu family) so
+		// the menu stays usable without needing the missing art; the box/
+		// border always draws regardless of whether icon art exists, so the
+		// selection highlight alone is enough to navigate even before any
+		// label renders.
+		labels := [4]string{"攻擊", "法術", "物品", "待機"}
+		for i, ic := range g.ringIcons {
+			x, y := pos[i][0], pos[i][1]
+			boxColor := color.RGBA{0x10, 0x1c, 0x40, 0xd0}
+			fillRect := func(bx, by, bw, bh float64, c color.RGBA) {
+				b := ebiten.NewImage(int(bw), int(bh))
+				b.Fill(c)
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(bx, by)
+				buf.DrawImage(b, op)
+			}
+			fillRect(x, y, iw, ih, boxColor)
+			if i == g.ringSel { // 選中:橘黃框(orig 選中樣式),g.ringPulse 驅動明暗交替(見 resetRingPulse doc)
+				c := color.RGBA{0xff, 0xa8, 0x20, 0xff}
+				if g.ringPulse >= 2 {
+					c = color.RGBA{0xb0, 0x74, 0x16, 0xff}
+				}
+				border(x, y, c)
+			}
+			if ic != nil {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Scale(2, 2)
+				op.GeoM.Translate(x, y)
+				buf.DrawImage(ic, op)
+			} else if g.font != nil {
+				lc := color.RGBA{0xe0, 0xe8, 0xff, 0xff}
+				if i == g.ringSel {
+					lc = color.RGBA{0xff, 0xff, 0xff, 0xff}
+				}
+				// 2026-08-14: 0.55(≈10px)在這個 56×52 的格子裡太小,兩個中文字
+				// 糊成一團難以辨認(玩家實測回報「選法術卻像是看到別的字」)——
+				// 排查發現這不是選單邏輯錯位(pos[i]/labels[i] 用同一個 i,已確認
+				// 一一對應無誤),是純粹字級太小的可讀性問題。0.85(≈15px)在同樣
+				// 版位內仍放得下兩字,明顯更好認。
+				g.font.Draw(buf, labels[i], x+4, y+ih/2-11, 0.85, lc)
+			}
 		}
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(2, 2)
-		op.GeoM.Translate(x, y)
-		screen.DrawImage(ic, op)
+		g.markActionOverlayDrawn()
 	}
-	g.markActionOverlayDrawn()
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(zoom, zoom)
+	worldX := float64(g.sel.X*tw) - g.camX - pad
+	worldY := float64(g.sel.Y*th) - g.camY - pad
+	op.GeoM.Translate(worldX*zoom+borderPx*zoom, worldY*zoom+borderPx*zoom)
+	screen.DrawImage(buf, op)
 }
 
 func (g *Game) actionOverlayAvailability() [4]int {
@@ -6555,10 +7640,45 @@ func (g *Game) drawNativeActionOverlay(screen *ebiten.Image, cursorX, cursorY fl
 			return false
 		}
 		dx, dy := nativeActionOffsetXY(offset)
+		x, y := cursorX+float64(dx*2), cursorY+float64(dy*2)
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(2, 2)
-		op.GeoM.Translate(cursorX+float64(dx*2), cursorY+float64(dy*2))
+		op.GeoM.Translate(x, y)
 		screen.DrawImage(g.nativeActionCells[index], op)
+		// 2026-08-16: the classic/text-fallback ring renderer (labels := [4]string{...}
+		// below in this file) got a selected-cell pulse border added 2026-08-13
+		// (g.ringPulse, see resetRingPulse's doc comment), but it was only ever wired
+		// into that fallback path -- this native path (what a player who actually
+		// supplied their own original FDOTHER.DAT sees, i.e. the common case) never
+		// got the equivalent, so the pulse was silently a no-op for real players. Found
+		// live: FD2_SHOT_RING_PULSE_WATCH confirmed g.ringPulse genuinely advances over
+		// real wall-clock time (0 at frame 1, 2 at frame 300), but two screenshots at
+		// those exact frames were byte-for-byte pixel identical -- the state was
+		// changing, nothing was reading it here. direction (native order: up/left/
+		// right/down, 0-3) is the same 0-3 numbering as g.ringSel (see the ↑0攻擊/
+		// ←1法術/→2物品/↓3待機 comment on the arrow-key handler), so no remapping
+		// is needed to identify the selected cell.
+		if direction == g.ringSel {
+			bounds := g.nativeActionCells[index].Bounds()
+			iw, ih := float64(bounds.Dx())*2, float64(bounds.Dy())*2
+			c := color.RGBA{0xff, 0xa8, 0x20, 0xff}
+			if g.ringPulse >= 2 {
+				c = color.RGBA{0xb0, 0x74, 0x16, 0xff}
+			}
+			const borderPx = 3.0
+			for _, r := range [][4]float64{
+				{x - borderPx, y - borderPx, iw + borderPx*2, borderPx},
+				{x - borderPx, y + ih, iw + borderPx*2, borderPx},
+				{x - borderPx, y, borderPx, ih},
+				{x + iw, y, borderPx, ih},
+			} {
+				b := ebiten.NewImage(int(r[2]), int(r[3]))
+				b.Fill(c)
+				bop := &ebiten.DrawImageOptions{}
+				bop.GeoM.Translate(r[0], r[1])
+				screen.DrawImage(b, bop)
+			}
+		}
 	}
 	return true
 }
@@ -7045,7 +8165,22 @@ func saveShot(img *ebiten.Image, path string) {
 }
 
 // drawBattleScene 全螢幕戰鬥演出(對照原版 orig_05:守方左面右/攻方右土台/斬擊弧/血條/命中閃紅抽血)。
-func (g *Game) drawBattleScene(screen *ebiten.Image) {
+//
+// 內部所有座標都是逐格對照原版量測出的 640×400(320×200 原生 ×2)絕對值
+// (bg/panel/figure/台座的每一個 dx,dy 都是模板匹配結果),不能像地圖那樣改成
+// 「視窗多大就多顯示一些內容」——這是一個排好的定幀演出,沒有更多世界可露出。
+// 2026-08-13 修好前,這個函式直接把上述固定座標畫在傳入的 screen 上;一旦
+// screen 是真實大視窗(g.atk 從未被排除在 Draw() 的 expandableView 之外),
+// 整場演出就會縮在視窗左上角一小塊、其餘全黑(使用者回饋:「攻擊畫面沒有
+// 放大延伸」,FD2_SHOT_ATTACK 全螢幕截圖證實)。修法比照 target/g.storyView
+// 那套「原生解析度畫、最後一次縮放貼回」慣例:先畫進固定 640×400 的
+// g.battleSceneBuf,函式最後再把整塊 buffer 等比縮放置中貼回真正的 screen
+// ——內部每一個座標常數完全不動,只換掉「畫在哪張圖上」。
+func (g *Game) drawBattleScene(realScreen *ebiten.Image) {
+	if g.battleSceneBuf == nil {
+		g.battleSceneBuf = ebiten.NewImage(logicalW, logicalH)
+	}
+	screen := g.battleSceneBuf
 	a := g.atk
 	prog := a.total - a.timer
 	// 原版 320×200 精確 layout(網格量測)→ 本畫布 ×2。黑底(畫面外圍黑邊)
@@ -7151,9 +8286,22 @@ func (g *Game) drawBattleScene(screen *ebiten.Image) {
 		op.ColorScale.ScaleAlpha(0.3) // 半透明紅罩(整片泛紅、不全遮)
 		screen.DrawImage(g.redFlash, op)
 	}
-	if g.shotSeries != "" { // 逐幀截圖(GIF/分鏡素材)
+	if g.shotSeries != "" { // 逐幀截圖(GIF/分鏡素材,存原生 640x400 buffer,不受視窗大小影響)
 		saveShot(screen, fmt.Sprintf("%s/frame_%02d.png", g.shotSeries, prog))
 	}
+	// 整塊固定 640x400 演出等比縮放置中貼回真正的視窗(同 Draw() 的 uiCanvas
+	// 收斂慣例):視窗比 640x400 寬或窄的那一軸留黑邊,不拉伸變形。
+	rb, sb := realScreen.Bounds(), screen.Bounds()
+	scale := float64(rb.Dx()) / float64(sb.Dx())
+	if s := float64(rb.Dy()) / float64(sb.Dy()); s < scale {
+		scale = s
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.Filter = ebiten.FilterLinear
+	op.GeoM.Scale(scale, scale)
+	op.GeoM.Translate((float64(rb.Dx())-float64(sb.Dx())*scale)/2, (float64(rb.Dy())-float64(sb.Dy())*scale)/2)
+	realScreen.Fill(color.RGBA{0, 0, 0, 0xff})
+	realScreen.DrawImage(screen, op)
 }
 
 // drawBattlePanel 原版戰鬥狀態欄:用 FDOTHER#5 LMI1 #22 框素材(149×42,含 bevel + HP/MP標籤 +
@@ -7242,8 +8390,26 @@ func (g *Game) drawBattlePanel(screen *ebiten.Image, x, y float64, name string, 
 // mapSpriteGroup chooses the exact native raw FDICON key only for a battle
 // State whose whole construction sequence materialized successfully. Story
 // actors remain on their editable legacy Fig path by construction.
+//
+// Own-camp only: tools/export_units.py exports map_selector_key straight
+// from FDFIELD's raw b0 byte for every unit, but every enemy in every one of
+// the 33 exported *_units.json comes out as the literal 0 -- the SAME raw
+// key the player's own protagonist uses (own/ally rows carry their own
+// distinct values; this is specifically an enemy-export gap). The native
+// "unit+2" selector cache assigns slots by first-seen raw key, so every
+// enemy collides onto the protagonist's already-cached slot and
+// NativeMapSpriteKey resolves them all to the protagonist's sprite instead
+// of their own Fig (confirmed via direct fig_000 vs fig_096 asset
+// comparison, and matches a real player screenshot). Skipping native
+// materialization for enemy batches entirely (tried first) breaks 8+ tests
+// elsewhere -- HasMapSelectorSlot doubles as a "this unit has valid native
+// presentation provenance" marker the indexed-VGA pipeline requires
+// regardless of camp -- so the guard has to live here, at sprite selection,
+// not at materialization. Enemies/allies keep going through the native
+// pipeline for everything else; only which PNG sprite gets drawn falls back
+// to their own (correct) Fig.
 func (g *Game) mapSpriteGroup(u *battle.Unit) int {
-	if g.st != nil {
+	if g.st != nil && u.Camp == battle.Own {
 		if key, ok := g.st.NativeMapSpriteKey(u); ok {
 			return key
 		}
@@ -7270,6 +8436,13 @@ func (g *Game) drawUnitSprite(screen *ebiten.Image, x, y, w, h float64, u *battl
 		idx = f % len(frames)
 	}
 	op := &ebiten.DrawImageOptions{}
+	if g.spriteCellScale > 1 {
+		// 跟 loadMap 的 tileCellScale 同一套道理:素材圖檔比原生 24px 大時,
+		// 先縮回原生尺寸,站位才不會比格子大一圈(見 hasHDNativeTerrain 註解)。
+		op.Filter = ebiten.FilterLinear
+		inv := 1.0 / float64(g.spriteCellScale)
+		op.GeoM.Scale(inv, inv)
+	}
 	op.GeoM.Translate(x, y-4) // 略上移讓單位「站」在格上
 	if u.Acted {
 		op.ColorScale.Scale(0.55, 0.55, 0.6, 1) // 已行動變暗(對映原版灰階)
@@ -7505,6 +8678,21 @@ func loadGame() *Game {
 		}
 	}
 	g.sprites = loadSprites()
+	// spriteCellScale mirrors loadMap's tileCellScale for assets/sprites/
+	// fig_*.png: if these were upscaled (e.g. Real-ESRGAN) in the same batch
+	// as the tileset, every frame is scaled by the same integer ratio, so
+	// checking one representative frame against the native 24px sprite size
+	// is enough. drawUnitSprite compensates back down with it so a bigger
+	// sprite still stands on exactly one tile-sized footprint.
+	g.spriteCellScale = 1
+	for _, frames := range g.sprites {
+		if len(frames) > 0 {
+			if s := frames[0].Bounds().Dx() / fdicon.NativeSize; s > 1 {
+				g.spriteCellScale = s
+			}
+			break
+		}
+	}
 	g.portraitIndex = loadPortraitIndex()
 	g.figani = loadFIGANI()
 	g.figMeta = loadFigMeta()
@@ -7545,11 +8733,19 @@ func loadGame() *Game {
 			g.dlgBox = ebiten.NewImageFromImage(im)
 		}
 	}
-	// Native 0x18d8c result order is attack, spell, item, wait.  There is no
-	// separately proven spell icon in the extracted set; keep the historical
-	// status asset as the spell slot until the resource table is decoded.
-	for i, nm := range []string{"attack", "status", "item", "wait"} {
-		if raw, e := os.ReadFile(assetPath("assets/ui/ring_" + nm + ".png")); e == nil {
+	// 2026-08-14 解決(見 docs/knowledge-base/58-remake-live-verification-log.md
+	// Bug 5)：先前懷疑的「cell0/cell2 duplicate、視覺語意對調」根因確認是
+	// FDOTHER.DAT 版本不符(舊排查用的那份 hash 對不上專案參考版本)。專案已
+	// 改採玩家實際擁有的「新版」為新基準(docs/data/fd2-reference-files.json)，
+	// 用這份正確版本重新跑 cmd/export-ring-icons 後，4 張圖不再重複，且
+	// cell 對應到哪個動作名稱由玩家對照真實記憶確認：cell0=攻擊、cell2=待機、
+	// cell4=法術、cell6=物品——resource 內部的儲存順序本來就不等於選單方向的
+	// 0/1/2/3 順序（後者已由 native 0x18d8c switch 反組譯釘死，未受影響）。
+	// export-ring-icons 的 names/indices 已按此更新，assets/ui/ring_*.png
+	// 現在載入的檔名已對應正確格位；沒有這些圖檔(玩家未提供原版素材)時仍
+	// 照舊退回下面的文字後備。
+	for i, name := range [4]string{"attack", "status", "item", "wait"} {
+		if raw, e := os.ReadFile(assetPath("assets/ui/ring_" + name + ".png")); e == nil {
 			if im, _, e2 := image.Decode(bytes.NewReader(raw)); e2 == nil {
 				g.ringIcons[i] = ebiten.NewImageFromImage(im)
 			}
@@ -7574,6 +8770,8 @@ func loadGame() *Game {
 	} else if g.loadErr == "" {
 		g.loadErr = "native command records: " + e.Error()
 	}
+	g.bindNativeMovementCostRows(g.st)
+	g.bindNativeAIItemEffectRows(g.st)
 	if resistances, e := battle.LoadNativeCommandResistances(assetPath("assets/data/native_command_resistances.json")); e == nil {
 		g.nativeCommandResistances = resistances
 		g.bindNativeCommandResistances(g.st)
@@ -7773,19 +8971,163 @@ func (g *Game) drawPhaseBanner(screen *ebiten.Image) {
 	g.font.Draw(screen, g.banner, (float64(sb.Dx())-w)/2, float64(sb.Dy())/2-24, 2.2, c)
 }
 
-// drawUnitHUD 是 native full-frame admission 失敗時的 playable fallback，
-// 復用 full-screen battle panel 的 FDOTHER#5 LMI1 #22 frame。ch01 production
-// path 已由 ComposeNativeFrame 接入完整 0x1acf3 HUD；本函式不可再用來描述
-// native HUD 的完成度。AP/DP/MV 素材也未證實屬於 #22，故 fallback 仍以文字補列。
+// drawUnitHUD 是 native full-frame admission 失敗時的 playable fallback。
+// ch01 production path 已由 ComposeNativeFrame 接入完整 0x1acf3 HUD；本函式
+// 不可再用來描述 native HUD 的完成度。
+//
+// 這裡以前借用 full-screen battle panel(FDOTHER#5 LMI1 #22,drawBattlePanel:
+// 名字+等級+HP/MP血條的大框)當替代顯示,但那其實是另一個原版素材(戰鬥全螢幕
+// 攻防演出用的框),跟這個「游標停在角色上」情境原版真正顯示的面板完全是兩回事
+// ——真實截圖/錄影核對過(使用者提供的原版遊玩畫面+YouTube 實況):原版是一個
+// 小很多的藍框,左邊頭像、右邊疊「A+05」「D+00」兩行地形攻防加成,不是名字/
+// 血條/大戰鬥框。drawTerrainInfoPanel 就是照這個真實版面重畫的,頭像複用對話框
+// 本來就有的 getPortraitFrames 素材,A/D 數字則是 terrainAPDPFor 算出的地形加成
+// (跟 native HUD 系統同一條公式)。地形資料不存在的舊地圖(NativeTerrainControl
+// 為空)才退回舊的大框樣式,不讓面板整個消失。
 func (g *Game) drawUnitHUD(screen *ebiten.Image, u *battle.Unit) {
+	ap, dp, ok := g.terrainAPDPFor(u)
+	if !ok {
+		g.drawUnitHUDLegacyFallback(screen, u)
+		return
+	}
+	sc := 3.0
+	pw, ph := float64(fdicon.NativeMapHUDPanelWidth)*sc, float64(fdicon.NativeMapHUDPanelHeight)*sc
+	bx, by := 6.0, float64(screen.Bounds().Dy())-ph-6-20
+	if g.classicUnitHUDDodgeRight() {
+		bx = float64(screen.Bounds().Dx()) - pw - 6
+	}
+	g.drawTerrainInfoPanel(screen, bx, by, pw, ph, u, ap, dp)
+}
+
+// drawTerrainInfoPanel draws the compact portrait+terrain-bonus box (see
+// drawUnitHUD's comment for why this replaced the old big battle-panel
+// approximation). Background/border is a plain filled rect since there is no
+// player-independent source for the real bevel graphic (that IS the native
+// HUD frame, FDOTHER-only); portrait and A/D numbers are real per-unit data.
+func (g *Game) drawTerrainInfoPanel(screen *ebiten.Image, x, y, w, h float64, u *battle.Unit, ap, dp int) {
+	if g.whitePixel == nil {
+		g.whitePixel = ebiten.NewImage(1, 1)
+		g.whitePixel.Fill(color.White)
+	}
+	fillRect := func(bx, by, bw, bh float64, c color.RGBA) {
+		if bw < 1 || bh < 1 {
+			return
+		}
+		o := &ebiten.DrawImageOptions{}
+		o.GeoM.Scale(bw, bh)
+		o.GeoM.Translate(bx, by)
+		o.ColorScale.Scale(float32(c.R)/255, float32(c.G)/255, float32(c.B)/255, float32(c.A)/255)
+		screen.DrawImage(g.whitePixel, o)
+	}
+	fillRect(x, y, w, h, color.RGBA{0x18, 0x28, 0x50, 0xf0})
+	const border = 2.0
+	edge := color.RGBA{0x60, 0x90, 0xd8, 0xff}
+	fillRect(x, y, w, border, edge)
+	fillRect(x, y+h-border, w, border, edge)
+	fillRect(x, y, border, h, edge)
+	fillRect(x+w-border, y, border, h, edge)
+
+	portraitSize := h - 8
+	if frames := g.getPortraitFrames(u.Portrait); len(frames) > 0 && frames[0] != nil {
+		fr := frames[0]
+		fb := fr.Bounds()
+		if fb.Dx() > 0 && fb.Dy() > 0 {
+			s := portraitSize / float64(fb.Dx())
+			if sh := portraitSize / float64(fb.Dy()); sh < s {
+				s = sh
+			}
+			op := &ebiten.DrawImageOptions{}
+			op.Filter = ebiten.FilterLinear
+			op.GeoM.Scale(s, s)
+			op.GeoM.Translate(x+4, y+4)
+			screen.DrawImage(fr, op)
+		}
+	}
+
+	if g.font != nil {
+		tx := x + portraitSize + 10
+		textColor := color.RGBA{0xf0, 0xf4, 0xff, 0xff}
+		g.font.Draw(screen, fmt.Sprintf("A%+03d", ap), tx, y+h*0.28, 0.85, textColor)
+		g.font.Draw(screen, fmt.Sprintf("D%+03d", dp), tx, y+h*0.62, 0.85, textColor)
+	}
+}
+
+// drawUnitHUDLegacyFallback is the pre-existing big name/HP-bar panel, kept
+// only for maps with no native_terrain_control data to drive the real
+// drawTerrainInfoPanel (every one of the 33 shipped maps has this data --
+// this path is effectively dead for real content today, not the common case).
+func (g *Game) drawUnitHUDLegacyFallback(screen *ebiten.Image, u *battle.Unit) {
 	nm := u.Name
 	if nm == "" {
 		nm = u.ClsName
 	}
-	const bh = 84.0 // 149×42 原生 ×2
+	const bh = 84.0      // 149×42 原生 ×2
+	const panelW = 298.0 // 149 原生 ×2,同 drawBattlePanel 自己的 sc=2 縮放
 	bx, by := 6.0, float64(screen.Bounds().Dy())-bh-6-20
+	if g.classicUnitHUDDodgeRight() {
+		bx = float64(screen.Bounds().Dx()) - panelW - 6
+	}
 	g.drawBattlePanel(screen, bx, by, nm, u.Lv, u.HP, u.MaxHP, u.MP)
-	g.font.Draw(screen, fmt.Sprintf("AP %d  DP %d  MV %d", u.AP, u.DP, u.MV), bx+8, by+bh+2, 0.9, color.RGBA{0xc8, 0xe0, 0xff, 0xff})
+	line := fmt.Sprintf("AP %d  DP %d  MV %d", u.AP, u.DP, u.MV)
+	g.font.Draw(screen, line, bx+8, by+bh+2, 0.9, color.RGBA{0xc8, 0xe0, 0xff, 0xff})
+}
+
+// classicUnitHUDDodgeRight mirrors the original panel's proven side-dodge
+// behavior (indexedmap.AdvanceNativeMapHUDAnchor, reproducing 0x1ad2a..
+// 0x1ad5f: the panel only flips sides when the cursor is down in the panel's
+// own general area -- the bottom rows -- and only once the cursor is all the
+// way to one edge or the other; every other cursor position keeps whichever
+// side the panel was already on). Reuses that exact function/thresholds
+// (already generalized to an arbitrary viewport size by an earlier pass on
+// this project's native-viewport-widening work, not reinvented here) against
+// the classic renderer's own dynamic viewport instead of the native
+// pipeline's fixed preset, since the same dodge-away-from-cursor need
+// applies to this fallback panel too (confirmed live: user's real-game
+// reference screenshot shows this exact panel sitting bottom-right while the
+// selected unit is near the left edge of the screen).
+func (g *Game) classicUnitHUDDodgeRight() bool {
+	if g.m == nil || g.m.TileW <= 0 || g.m.TileH <= 0 {
+		return false
+	}
+	vw, vh := logicalW, logicalH
+	if g.storyView != nil {
+		vw, vh = g.storyView.Bounds().Dx(), g.storyView.Bounds().Dy()
+	}
+	viewCols, viewRows := vw/g.m.TileW, vh/g.m.TileH
+	if viewCols <= 0 || viewRows <= 0 {
+		return false
+	}
+	visCol := g.curX - int(g.camX)/g.m.TileW
+	visRow := g.curY - int(g.camY)/g.m.TileH
+	if g.classicUnitHUDAnchor == 0 {
+		g.classicUnitHUDAnchor = 1 // 原版預設靠左(anchor=1),見 AdvanceNativeMapHUDAnchor 的靠左 sentinel
+	}
+	g.classicUnitHUDAnchor = indexedmap.AdvanceNativeMapHUDAnchor(g.classicUnitHUDAnchor, visRow, visCol, viewCols, viewRows)
+	return g.classicUnitHUDAnchor > fdicon.NativeMapHUDPanelWidth
+}
+
+// terrainAPDPFor computes the original game's terrain attack/defense bonus
+// for the tile unit u is standing on, using the exact same formula the
+// proven native HUD system uses (indexedmap.NativeMapHUDTerrainAPDP) against
+// map.json's native_terrain_control data -- available for any loaded map
+// regardless of whether the player has FDOTHER.DAT configured. false means
+// this map has no native_terrain_control data (legacy PNG-only export) or u
+// is off the map bounds; callers must keep their own fallback for that case.
+func (g *Game) terrainAPDPFor(u *battle.Unit) (ap, dp int, ok bool) {
+	if g.m == nil || len(g.m.NativeTerrainControl) == 0 ||
+		u.X < 0 || u.Y < 0 || u.X >= g.m.W || u.Y >= g.m.H {
+		return 0, 0, false
+	}
+	tile := g.m.Tiles[u.Y*g.m.W+u.X]
+	if tile < 0 || tile >= len(g.m.NativeTerrainControl)/4 || tile > 0x3ff {
+		return 0, 0, false
+	}
+	control := g.m.NativeTerrainControl[tile*4+1]
+	a, d, err := indexedmap.NativeMapHUDTerrainAPDP(control)
+	if err != nil {
+		return 0, 0, false
+	}
+	return a, d, true
 }
 
 // drawNativeMapHUD presents the proven indexed 0x1acf3 panel/terrain/AP/DP
@@ -7856,12 +9198,50 @@ func (g *Game) drawNativeMapHUD(screen *ebiten.Image) bool {
 	return true
 }
 
+// tileCellScaleFor returns the integer ratio between a loaded tileset
+// image's real per-cell pixel size and a map's logical/native tile size
+// (tileW, e.g. 24) -- 1 when the image is native resolution (or too small to
+// contain even one full row/column at the expected size, which loadMap
+// treats as "no scale-up", not an error). Extracted from loadMap so the
+// exact formula loadMap uses to compute g.tileCellScale is independently
+// testable without needing real tileset.png/map.json fixtures on disk.
+func tileCellScaleFor(tilesetPxWidth, cols, tileW int) int {
+	if tileW <= 0 || cols <= 0 {
+		return 1
+	}
+	if s := tilesetPxWidth / (cols * tileW); s > 1 {
+		return s
+	}
+	return 1
+}
+
+// hasHDNativeTerrain reports whether the classic renderer's currently drawn
+// terrain for this map is higher-resolution than this map's own native tile
+// grid would produce -- i.e. whether an upscaled PNG terrain layer is
+// actually on screen already for drawNativeMapFrame to show through (see
+// indexedmap.FrameInput.SkipTerrain). True for either HD source: the
+// per-tile tileset.png swap (tileCellScale, see loadMap) or the whole-map
+// composite image (mapComposite, see loadMapComposite) -- Draw() picks
+// whichever of the two is loaded, and either one is "HD terrain is present"
+// from drawNativeMapFrame's point of view.
+func (g *Game) hasHDNativeTerrain() bool {
+	return (g.tileset != nil && g.tileCellScale > 1) || g.mapComposite != nil
+}
+
 // drawNativeMapFrame is the production 0x11cac bridge for the currently
 // materialized neutral tactical state. It composes terrain, range, units,
 // foreground and HUD atomically, then presents the corrected viewport onto a
 // paletted surface sized for the battle's effectiveNativeMapViewport (320x200
 // at the original 13x8; see pickNativeMapViewport for wider presets), still
 // doubled 2x to preserve the original's chunky-pixel look.
+//
+// When hasHDNativeTerrain(), composeNativeMapFrame runs with SkipTerrain set
+// (see buildNativeMapFrameInput's call site), so g.nativeMapVGA's terrain
+// region holds indexedmap.NativeMapTerrainSkipSentinel rather than drawn
+// tiles; presenting that sentinel as alpha-0 lets the classic renderer's
+// already-drawn HD tileset (screen.DrawImage'd earlier in Draw(), see
+// main.go's tile-blit loop) show through underneath everything native still
+// draws -- units, foreground decoration, range overlay, HUD -- unchanged.
 func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 	if err := g.composeNativeMapFrame(); err != nil {
 		return false
@@ -7872,6 +9252,14 @@ func (g *Game) drawNativeMapFrame(screen *ebiten.Image) bool {
 		if current, err := fdother.VGAPaletteFromDAC(g.nativeMapDAC); err == nil {
 			palette = current
 		}
+	}
+	if g.hasHDNativeTerrain() {
+		transparent := append(color.Palette(nil), palette...)
+		r, gr, b, _ := transparent[indexedmap.NativeMapTerrainSkipSentinel].RGBA()
+		transparent[indexedmap.NativeMapTerrainSkipSentinel] = color.NRGBA{
+			R: uint8(r >> 8), G: uint8(gr >> 8), B: uint8(b >> 8), A: 0,
+		}
+		palette = transparent
 	}
 	canvasW, canvasH := g.effectiveNativeMapViewport().CanvasSize()
 	img := image.NewPaletted(image.Rect(0, 0, canvasW, canvasH), palette)
@@ -7911,7 +9299,7 @@ func (g *Game) composeNativeMapFrameAt(now time.Time) error {
 	// frame's own composition always agree.
 	viewport := g.effectiveNativeMapViewport()
 	in, err := buildNativeMapFrameInput(
-		a, g.m, &candidateState, nativeMapFrameRuntime{HUD: hud}, viewport,
+		a, g.m, &candidateState, nativeMapFrameRuntime{HUD: hud}, viewport, g.hasHDNativeTerrain(),
 	)
 	if err != nil {
 		return err
@@ -8083,8 +9471,22 @@ func (g *Game) completeTurn() {
 	}
 	for _, u := range g.st.Units {
 		u.Acted = false
-		u.TickStatus()             // buff/封咒/中毒/麻痺回合遞減+中毒扣血(doc02 §6.4)
+		u.TickStatus()             // buff/封咒/中毒/麻痺回合遞減+中毒扣血(doc02 §6.4,normalized approximation)
 		g.awardDeathReward(u, nil) // poison/status death shares the same once-only reward path
+	}
+	// 2026-08-14: 0x1A866 的原生 camp-phase 掃描,disassembly-confirmed 呼叫序為
+	// 0x1A30B 內 own-camp 自然回血 → selector1(友) → selector0(敵) → selector2(己),
+	// 見 native_transient.go 註解與 docs/knowledge-base/11-enemy-ai.md。目前所有
+	// 地圖資產的 native_transient 欄位皆為全零(export_units.py 尚未填值,command
+	// IDs 17-27 尚未接完整寫入路徑),故這裡先接上正確的呼叫序與公式,實際效果要等
+	// native command 執行路徑開始寫入 NativeTransient 才會顯現——現在接上不會改變
+	// 任何現有玩法(全零輸入→全零輸出),但之後不用再補這段接線。
+	g.st.NativeCampPhaseOwnRegen()
+	for _, selector := range [3]byte{1, 0, 2} {
+		for _, dmg := range g.st.ApplyNativeTransientPoisonDamage(selector) {
+			g.awardDeathReward(dmg.Unit, nil)
+		}
+		g.st.TickNativeTransientsRaw(selector)
 	}
 	if g.result == "" {
 		g.showBanner("PLAYER PHASE")
@@ -8109,11 +9511,71 @@ func (g *Game) aiStep() {
 		return
 	}
 	u := plan.U
+	if os.Getenv("FD2_SHOT_AI") != "" {
+		tgtDesc := "無"
+		if plan.Target != nil {
+			tgtDesc = fmt.Sprintf("%s(%d,%d)", plan.Target.ClsName, plan.Target.X, plan.Target.Y)
+		}
+		log.Printf("AI決策: %s(%d,%d) native=%v 路徑段數=%d 目標=%s", u.ClsName, u.X, u.Y, plan.NativeSourced, len(plan.Path), tgtDesc)
+	}
 	act := func() {
 		finish := func() {
 			g.finishSuccessfulUnitAction(u, nil)
 		}
-		if plan.Target != nil && plan.Target.Alive() {
+		if plan.Target != nil && plan.Target.Alive() && plan.ItemID >= 0 {
+			// Native three-score composer picked the item pipeline
+			// (NextAIPlan's ItemID/ItemSlot, see
+			// native_ai_three_score_plan.go) -- execute it through
+			// ApplyNativeAIItemCommand, the UI-decoupled counterpart of
+			// native_item_panel_ui.go's applyNativeTargetItem.
+			tgt := plan.Target
+			u.SetMapPose(dirToward(u.X, u.Y, tgt.X, tgt.Y))
+			applied, nextRNG, err := g.st.ApplyNativeAIItemCommand(
+				u, tgt, plan.ItemID, plan.ItemSlot, g.st.NativeItemEffectRows, g.nativeRNGState,
+			)
+			if err != nil && os.Getenv("FD2_SHOT_AI") != "" {
+				log.Printf("AI 原始道具 %d 執行失敗，退回一般攻擊: %v", plan.ItemID, err)
+			}
+			if err == nil && applied {
+				g.nativeRNGState = nextRNG
+				g.msg = fmt.Sprintf("原始道具 %02Xh：套用完成", plan.ItemID)
+				g.checkResult()
+				finish()
+				return
+			}
+		}
+		if plan.Target != nil && plan.Target.Alive() && plan.SpellID >= 0 {
+			// Native three-score composer picked the spell/command pipeline
+			// (NextAIPlan's SpellID, see native_ai_three_score_plan.go) --
+			// execute it through the same dispatcher confirm()'s
+			// nativeCommand0Targeting flow uses, rather than always issuing
+			// a plain physical attack regardless of what native decided.
+			tgt := plan.Target
+			u.SetMapPose(dirToward(u.X, u.Y, tgt.X, tgt.Y))
+			message, damageTargets, err := g.executeNativeCommandTarget(u, tgt, plan.SpellID, plan.Destination)
+			if err != nil {
+				if os.Getenv("FD2_SHOT_AI") != "" {
+					log.Printf("AI 原始指令 %d 執行失敗，退回一般攻擊: %v", plan.SpellID, err)
+				}
+			} else {
+				for _, target := range damageTargets {
+					g.awardDeathReward(target, u)
+				}
+				g.msg = message
+				g.checkResult()
+				finish()
+				return
+			}
+		}
+		if plan.Target != nil && plan.Target.Alive() && plan.Target.Camp != u.Camp {
+			// The Camp guard is a safety net for the item/spell branches
+			// above falling through here on failure (err!=nil or
+			// applied=false): their targets are frequently allies (heal
+			// items/spells), and a plain physical attack must never land on
+			// a friendly unit just because the intended effect couldn't
+			// execute. Plain-attack plans (native physical or the legacy
+			// aiTargets approximation) always target hostiles already, so
+			// this check is a no-op for them.
 			tgt := plan.Target
 			u.SetMapPose(dirToward(u.X, u.Y, tgt.X, tgt.Y))
 			nm, anm := tgt.Name, u.Name
@@ -8124,9 +9586,13 @@ func (g *Game) aiStep() {
 				anm = u.ClsName
 			}
 			hp0 := tgt.HP
-			dmg := g.st.Attack(u, tgt)
+			result := g.st.AttackWithRNG(u, tgt, g.rng)
 			g.awardDeathReward(tgt, u)
-			g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, dmg)
+			if result.Missed {
+				g.msg = fmt.Sprintf("%s 攻擊 %s,未命中", anm, nm)
+			} else {
+				g.msg = fmt.Sprintf("%s 攻擊 %s,造成 %d 傷害", anm, nm, result.Amount)
+			}
 			g.atk = g.newAtkAnim(u.BattleFig, tgt.BattleFig, anm, nm,
 				u.HP, u.MaxHP, u.Lv, u.MP, tgt.Lv, tgt.MP,
 				hp0, tgt.HP, tgt.MaxHP, g.terrainAt(tgt.X, tgt.Y), u.Camp == battle.Own)

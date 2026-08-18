@@ -355,7 +355,7 @@ func TestNativeCommandTargetsMatchesRecoveredCampCodes(t *testing.T) {
 		2: {ally},
 		3: {own},
 	} {
-		got, err := NativeCommandTargets(3, 1, Cell{X: 1, Y: 0}, 2, code, make([]byte, 3), []*Unit{enemy, ally, own})
+		got, err := NativeCommandTargets(3, 1, Cell{X: 1, Y: 0}, 2, code, 2, make([]byte, 3), []*Unit{enemy, ally, own})
 		if err != nil || len(got) != len(want) {
 			t.Fatalf("code=%d got=%v err=%v want=%v", code, got, err, want)
 		}
@@ -413,7 +413,7 @@ func TestNativeCommandTargetsPrefersRawByte5Predicate(t *testing.T) {
 	usableRaw := &Unit{Camp: Enemy, X: 1, Y: 0, HP: 0, OnField: false, HasNativeRecordByte5: true, NativeRecordByte5: 0}
 	inactiveRaw := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, OnField: true, HasNativeRecordByte5: true, NativeRecordByte5: 1}
 	units := []*Unit{usableRaw, inactiveRaw}
-	got, err := NativeCommandTargets(3, 1, Cell{X: 0, Y: 0}, 2, 0, make([]byte, 3), units)
+	got, err := NativeCommandTargets(3, 1, Cell{X: 0, Y: 0}, 2, 0, 2, make([]byte, 3), units)
 	if err != nil || len(got) != 1 || got[0] != usableRaw {
 		t.Fatalf("raw target filter got=%v err=%v", got, err)
 	}
@@ -426,18 +426,93 @@ func TestNativeCommandTargetCellsFailsClosedWithoutRawFlags(t *testing.T) {
 }
 
 func TestNativeCommandEffectTargetsRequiresOriginalTwoStages(t *testing.T) {
-	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, OnField: true}
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	confirmed := &Unit{Camp: Enemy, X: 1, Y: 0, HP: 10, OnField: true}
 	otherEnemy := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, OnField: true}
 	units := []*Unit{actor, confirmed, otherEnemy}
 
 	// Generic command: +3=1 chooses the adjacent enemy as center; +4=0
 	// resolves the final effect only on that confirmed cell.
-	effects, err := NativeCommandEffectTargets(3, 1, actor, confirmed, 1, 0, 0, make([]byte, 3), units)
+	effects, err := NativeCommandEffectTargets(3, 1, actor, confirmed, 1, 0, 0, make([]byte, 3), units, nil)
 	if err != nil || len(effects) != 1 || effects[0] != confirmed {
 		t.Fatalf("effects=%v err=%v", effects, err)
 	}
-	if _, err := NativeCommandEffectTargets(3, 1, actor, otherEnemy, 1, 0, 0, make([]byte, 3), units); err == nil {
+	if _, err := NativeCommandEffectTargets(3, 1, actor, otherEnemy, 1, 0, 0, make([]byte, 3), units, nil); err == nil {
 		t.Fatal("a non-selection candidate must not become the effect origin")
 	}
+}
+
+// TestNativeCommandEffectTargetsScoredDestinationOverridesSearch proves the
+// 2026-08-17 #115 follow-up fix (58-remake-live-verification-log.md) actually
+// changes behavior, not just plumbing: confirmed sits within EffectMode=1 of
+// TWO different SelectionMode=1 destinations from actor (A=(2,1) and
+// B=(1,2), both adjacent to confirmed=(2,2)), each with its own distinct
+// companion unit (otherA only reachable via A, otherB only reachable via B).
+// Without a scored destination, the row-major search in
+// NativeCommandEffectTargets has no way to know which of A/B the AI's own
+// scoring pass actually used -- it deterministically finds A first and
+// returns otherA. Supplying B explicitly as scoredDestination (as
+// nativeAIThreeScorePlan now does via AIPlan.Destination) instead returns
+// otherB: proof the ground-truth destination is genuinely consulted, not
+// silently ignored in favor of the search.
+func TestNativeCommandEffectTargetsScoredDestinationOverridesSearch(t *testing.T) {
+	actor := &Unit{Camp: Own, X: 1, Y: 1, HP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	confirmed := &Unit{Camp: Enemy, X: 2, Y: 2, HP: 10, OnField: true}
+	otherA := &Unit{Camp: Enemy, X: 3, Y: 1, HP: 10, OnField: true}
+	otherB := &Unit{Camp: Enemy, X: 1, Y: 3, HP: 10, OnField: true}
+	units := []*Unit{actor, confirmed, otherA, otherB}
+	flags := make([]byte, 4*4)
+
+	// No scored destination: falls back to the deterministic row-major
+	// search, which reaches A=(2,1) (y=1) before B=(1,2) (y=2).
+	viaSearch, err := NativeCommandEffectTargets(4, 4, actor, confirmed, 1, 1, 0, flags, units, nil)
+	if err != nil {
+		t.Fatalf("search path: %v", err)
+	}
+	if !containsUnit(viaSearch, confirmed) || !containsUnit(viaSearch, otherA) || containsUnit(viaSearch, otherB) {
+		t.Fatalf("search path should resolve destination A (confirmed+otherA only), got %v", viaSearch)
+	}
+
+	// Scored destination B: ground truth, bypasses the search entirely and
+	// must resolve B's own effect group instead (confirmed+otherB only).
+	destB := Cell{X: 1, Y: 2}
+	viaScored, err := NativeCommandEffectTargets(4, 4, actor, confirmed, 1, 1, 0, flags, units, &destB)
+	if err != nil {
+		t.Fatalf("scored destination path: %v", err)
+	}
+	if !containsUnit(viaScored, confirmed) || !containsUnit(viaScored, otherB) || containsUnit(viaScored, otherA) {
+		t.Fatalf("scored destination B should resolve confirmed+otherB only, got %v", viaScored)
+	}
+}
+
+func TestNativeCommandEffectTargetsRejectsUnreachableScoredDestination(t *testing.T) {
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	confirmed := &Unit{Camp: Enemy, X: 1, Y: 0, HP: 10, OnField: true}
+	units := []*Unit{actor, confirmed}
+	far := Cell{X: 5, Y: 5}
+	if _, err := NativeCommandEffectTargets(6, 6, actor, confirmed, 1, 0, 0, make([]byte, 36), units, &far); err == nil {
+		t.Fatal("a scored destination outside actor's SelectionMode must fail closed")
+	}
+}
+
+func TestNativeCommandEffectTargetsRejectsScoredDestinationMissingConfirmed(t *testing.T) {
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	confirmed := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, OnField: true}
+	units := []*Unit{actor, confirmed}
+	// (1,0) is within actor's SelectionMode=1 reach, but confirmed at (2,0)
+	// is outside its EffectMode=0 (self-only) area -- a scored destination
+	// must still fail-closed like every other stage-2 mismatch.
+	near := Cell{X: 1, Y: 0}
+	if _, err := NativeCommandEffectTargets(3, 1, actor, confirmed, 1, 0, 0, make([]byte, 3), units, &near); err == nil {
+		t.Fatal("a scored destination whose effect area excludes confirmed must fail closed")
+	}
+}
+
+func containsUnit(units []*Unit, target *Unit) bool {
+	for _, u := range units {
+		if u == target {
+			return true
+		}
+	}
+	return false
 }

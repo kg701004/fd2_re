@@ -18,17 +18,17 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestLoadCutsceneSpeedUpDefaultsToFast(t *testing.T) {
+func TestLoadCutsceneSpeedUpDefaultsToNativePacing(t *testing.T) {
 	t.Setenv("FD2_CUTSCENE_SPEED", "")
-	if got := loadCutsceneSpeedUp(); got != 5 {
-		t.Errorf("loadCutsceneSpeedUp() with no env = %d, want 5", got)
+	if got := loadCutsceneSpeedUp(); got != 1 {
+		t.Errorf("loadCutsceneSpeedUp() with no env = %d, want 1 (native pacing, 2026-08-13 default)", got)
 	}
 }
 
 func TestLoadCutsceneSpeedUpHonorsEnvOverride(t *testing.T) {
-	t.Setenv("FD2_CUTSCENE_SPEED", "1")
-	if got := loadCutsceneSpeedUp(); got != 1 {
-		t.Errorf("loadCutsceneSpeedUp() with FD2_CUTSCENE_SPEED=1 = %d, want 1 (native pacing)", got)
+	t.Setenv("FD2_CUTSCENE_SPEED", "5")
+	if got := loadCutsceneSpeedUp(); got != 5 {
+		t.Errorf("loadCutsceneSpeedUp() with FD2_CUTSCENE_SPEED=5 = %d, want 5 (opt back into the fast pacing)", got)
 	}
 }
 
@@ -36,8 +36,8 @@ func TestLoadCutsceneSpeedUpIgnoresInvalidOverride(t *testing.T) {
 	for _, bad := range []string{"0", "-3", "not-a-number", "1.5"} {
 		t.Run(bad, func(t *testing.T) {
 			t.Setenv("FD2_CUTSCENE_SPEED", bad)
-			if got := loadCutsceneSpeedUp(); got != 5 {
-				t.Errorf("loadCutsceneSpeedUp() with FD2_CUTSCENE_SPEED=%q = %d, want fallback 5", bad, got)
+			if got := loadCutsceneSpeedUp(); got != 1 {
+				t.Errorf("loadCutsceneSpeedUp() with FD2_CUTSCENE_SPEED=%q = %d, want fallback 1", bad, got)
 			}
 		})
 	}

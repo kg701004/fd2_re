@@ -738,6 +738,46 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, redraw)
 				continue
 			}
+			// 0x35bba is ch28's postbattle reinforcement helper -- same family
+			// as 0x35822 (spawn + white-flash reveal) but without the leading
+			// camera pan and with a single group-only parameter. Confirmed
+			// 2026-08-18 via a headless Ghidra probe against FD2Analysis3: the
+			// export's recorded "0x35bba" target address lands 0x42 bytes
+			// inside the real function body (a "PUSH [esp+8] x2; CALL ...;
+			// MOVZX EAX,[esp+0xc]" argument-forwarding prologue precedes it),
+			// not at its true entry (0x35b78) -- an exporter addressing quirk,
+			// not a different mechanism. The real body from there onward is
+			// byte-for-byte the same choreography as 0x35822's already-proven
+			// case (spawn(group); delay 300ms; 0x11df2(0,255,255) full-DAC
+			// white; delay 200ms; 0x11df2(0,255,0) baseline restore; redraw),
+			// just missing the pan step and taking only the group argument.
+			// See doc58's 2026-08-18 #112 section for the full disassembly.
+			if input.NativeTarget == "0x35bba" {
+				group, okGroup := immediateHandlerInt(input.RawArgs, 0)
+				if !okGroup || group < 0 || group > 255 {
+					issue(i, input, "0x35bba reinforcement helper requires an immediate group argument")
+					continue
+				}
+				spawn := runtime(input, "spawn")
+				spawn.Group = group
+				beats = append(beats, spawn)
+				wait := runtime(input, "delay")
+				wait.Ms = 300
+				beats = append(beats, wait)
+				palette := runtime(input, "palette_update")
+				palette.PaletteStart, palette.PaletteEnd, palette.PaletteDelta = 0, 255, 255
+				beats = append(beats, palette)
+				delay := runtime(input, "delay")
+				delay.Ms = 200
+				beats = append(beats, delay)
+				palette = runtime(input, "palette_update")
+				palette.PaletteStart, palette.PaletteEnd, palette.PaletteDelta = 0, 255, 0
+				beats = append(beats, palette)
+				redraw := runtime(input, "redraw")
+				redraw.Frames = 1
+				beats = append(beats, redraw)
+				continue
+			}
 			if input.NativeTarget == "0x37416" && bindings.Resource != nil {
 				resource, ok := bindings.Resource(input)
 				if ok && resource.ResourceID >= 0 {

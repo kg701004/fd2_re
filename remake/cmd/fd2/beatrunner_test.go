@@ -1574,13 +1574,29 @@ func TestBeatSpawnCarriesRawPlacementGateIntoNativeGroupAppend(t *testing.T) {
 	}
 }
 
-func TestBeatSpawnIntroWithoutNativeAssetsFailsClosedBeforeGroupAppend(t *testing.T) {
-	gate := 0
+// TestBeatSpawnIntroWithoutNativeAssetsFallsBackToPlainSpawn guards the
+// 2026-08-13 fix: this beat used to unconditionally take the b.Source!=""
+// "native 0x32999 twelve-pass intro" path, and if the player has no original
+// FDOTHER.DAT (nativeMapAssetsAvailable false), startNativeSpawnIntro failed
+// with "native map assets/field unavailable", g.loadErr got set, and the
+// case returned WITHOUT calling g.beatAdvance() -- silently hanging the
+// entire beat runner forever (reproduced live: a fresh campaign playthrough
+// with no FDOTHER.DAT froze at chapter 1's opening pirate-ambush cutscene,
+// no dialogue, no response to input, and no visible error since g.loadErr
+// was only ever displayed when g.m==nil). The fix checks
+// nativeMapAssetsAvailable BEFORE attempting the native path; when
+// unavailable it now falls through to the exact same plain-spawn path used
+// when b.Source=="" (AppendGroupWithNativePlacement + a fixed beatDelay),
+// so the montage is less flashy but the campaign is never stuck.
+func TestBeatSpawnIntroWithoutNativeAssetsFallsBackToPlainSpawn(t *testing.T) {
+	gate := 1 // gate=1 direct-placement path (native_command_target_test.go's proven fixture)
 	g := newBeatTestGame(t, []campaign.Beat{{
-		Op: "spawn_intro", Group: 2, RawPlacementGate: &gate, Source: "0x3289b",
+		Op: "spawn_intro", Group: 6, RawPlacementGate: &gate, Source: "0x3289b", Frames: 12,
 	}})
 	active := &battle.Unit{
 		X: 1, Y: 1,
+		MapSelectorKey:           2,
+		HasMapSelectorKey:        true,
 		NativeMapPresentation:    battle.NativeMapPresentationState{X: 1, Y: 1},
 		HasNativeMapPresentation: true,
 		NativeRecordByte5:        0,
@@ -1589,26 +1605,46 @@ func TestBeatSpawnIntroWithoutNativeAssetsFailsClosedBeforeGroupAppend(t *testin
 		HasNativeRecordByte6:     true,
 	}
 	pending := &battle.Unit{
-		Group: 2, Dir: 0,
-		MapSelectorKey:          4,
+		Group: 6, Dir: 0, Lv: 2,
+		MapSelectorKey:          1,
 		HasMapSelectorKey:       true,
 		NativeRecordByte5:       0,
 		HasNativeRecordByte5:    true,
-		NativeRecordByte6:       4,
+		NativeRecordByte6:       1,
 		HasNativeRecordByte6:    true,
 		NativePositionRecord:    battle.NativePositionRecord{XWord: 1, YWord: 1},
 		HasNativePositionRecord: true,
+		NativeConstructor: &battle.NativeConstructorTable{
+			Branch: "high_class", Index: 0,
+			Record: []byte{4, 5, 10, 0, 3, 6, 7, 8, 9, 0},
+		},
+		Inventory: []int{0}, Equipped: []bool{true},
+		InventorySlots:       []int{0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		NativeInventoryFlags: []int{0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80},
 	}
 	g.st = &battle.State{
-		W: 3, H: 3, Units: []*battle.Unit{active}, Roster: []*battle.Unit{pending},
+		W: 3, H: 3, Roster: []*battle.Unit{pending},
 		NativeCompositionEventBytes: make([]byte, 9),
 	}
-	g.beatAdvance()
-	if g.loadErr == "" {
-		t.Fatal("缺少原版 0x32999 視覺／音訊素材時未採失敗即關閉")
+	if err := g.st.BindNativeFutureItemRows(make([]byte, battle.NativeItemEffectRowSize)); err != nil {
+		t.Fatal(err)
 	}
-	if len(g.st.Units) != 1 || g.st.Units[0] != active || g.beatDelay != 0 {
-		t.Fatalf("失敗前已變更狀態：units=%#v delay=%d", g.st.Units, g.beatDelay)
+	// AppendNativeMapSelectorBatch both registers the selector cache entry and
+	// appends into Units (same as native_command_target_test.go's newState) --
+	// do not also seed Units with active directly, or it ends up duplicated.
+	if err := g.st.AppendNativeMapSelectorBatch([]*battle.Unit{active}); err != nil {
+		t.Fatal(err)
+	}
+	// g.nativeMapAssets stays nil (unset) -- the case under test.
+	g.beatAdvance()
+	if g.loadErr != "" {
+		t.Fatalf("no-native-assets spawn_intro should fall back, not fail: loadErr=%q", g.loadErr)
+	}
+	if len(g.st.Units) != 2 {
+		t.Fatalf("fallback did not append the group: units=%#v", g.st.Units)
+	}
+	if g.beatDelay != 12 {
+		t.Fatalf("fallback should start the plain beatDelay(12) montage, got %d", g.beatDelay)
 	}
 }
 

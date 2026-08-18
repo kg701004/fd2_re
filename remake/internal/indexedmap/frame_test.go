@@ -24,6 +24,102 @@ func bank(n int, v byte) *fdicon.Bank {
 	return b
 }
 
+// TestComposeFrameSkipTerrainClearsToSentinelAndKeepsOtherLayers proves
+// FrameInput.SkipTerrain (a) never calls TerrainBank.BlitNativeTerrainRegion
+// -- a terrain bank painting a distinctive value (1) must not appear
+// anywhere in the composed viewport -- (b) instead leaves the terrain region
+// at NativeMapTerrainSkipSentinel wherever nothing else draws over it, and
+// (c) still runs range/unit/foreground/HUD exactly as before, since those
+// passes are unconditional and mask-based regardless of SkipTerrain.
+func TestComposeFrameSkipTerrainClearsToSentinelAndKeepsOtherLayers(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	foreground := bank(12, 0)
+	foreground.Sprites[1] = solid(4) // tile 0 + foreground index-one rule, same as the order test
+	work, vga := make([]byte, 456*300), make([]byte, NativeMapVGASize)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	in := FrameInput{
+		TerrainBank: bank(12, 1), RangeBank: bank(20, 2), UnitBank: bank(12, 3), ForegroundBank: foreground,
+		SelectorCache: cache, Cells: cells, Controls: []byte{0x80, 0, 0, 0}, LUT: make([]byte, 256), MapWidth: 13,
+		RangeMode: 1, Units: []fdicon.NativeUnitLayerEntry{{X: 0, Y: 0, Slot: 0}}, ForegroundUnits: []fdicon.NativeForegroundLayerEntry{{X: 0, Y: 0}},
+		SkipTerrain: true,
+	}
+	hudRan := false
+	if err := ComposeFrame(work, vga, in, func(frame []byte) error {
+		off := workBase
+		if frame[off] != 4 { // range -> unit -> foreground still ran, terrain (1) skipped
+			t.Fatalf("pre-HUD pixel=%d, want foreground 4 (terrain must not have painted 1 here)", frame[off])
+		}
+		hudRan = true
+		frame[off] = 5
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !hudRan {
+		t.Fatal("HUD callback never ran under SkipTerrain")
+	}
+	if vga[steadyViewportOffset] != 5 {
+		t.Fatalf("viewport pixel=%d, want HUD 5", vga[steadyViewportOffset])
+	}
+	// A viewport position no unit/foreground/range/HUD sprite touches must be
+	// the sentinel, not the terrain bank's value (1) and not a stale 0.
+	untouchedCol := workBase + 5*24 // column 5 tiles in, row 0: past this test's single unit/foreground cell
+	if got := work[untouchedCol]; got != NativeMapTerrainSkipSentinel {
+		t.Fatalf("untouched terrain-region pixel=%d, want sentinel %d", got, NativeMapTerrainSkipSentinel)
+	}
+	for i, c := range work {
+		if c == 1 {
+			t.Fatalf("terrain bank's paint value (1) found at work[%d] despite SkipTerrain", i)
+		}
+	}
+}
+
+// TestComposeFrameSkipTerrainClearsStalePriorFrameContent proves the
+// clear-region step actually overwrites whatever a PREVIOUS ComposeFrame
+// call left in the persistent work buffer -- guarding against exactly the
+// "stale ghosting" failure mode called out in SkipTerrain's doc comment,
+// where naively omitting the terrain call would leave last frame's terrain
+// visible instead of a clean hole.
+func TestComposeFrameSkipTerrainClearsStalePriorFrameContent(t *testing.T) {
+	cache := &fdicon.NativeSelectorCache{}
+	if _, err := cache.SlotFor(0); err != nil {
+		t.Fatal(err)
+	}
+	work, vga := make([]byte, 456*300), make([]byte, NativeMapVGASize)
+	cells := make([]fdicon.NativeTerrainCell, 13*8)
+	for i := range cells {
+		cells[i].BlitMode = 0xff
+	}
+	base := FrameInput{
+		TerrainBank: bank(12, 7), RangeBank: bank(20, 0), UnitBank: bank(12, 0), ForegroundBank: bank(12, 0),
+		SelectorCache: cache, Cells: cells, Controls: []byte{0x80, 0, 0, 0}, LUT: make([]byte, 256), MapWidth: 13,
+		RangeMode: 0,
+	}
+	// Frame 1: real terrain paints value 7 into the persistent work buffer.
+	if err := ComposeFrame(work, vga, base, func([]byte) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if work[workBase] != 7 {
+		t.Fatalf("frame 1 terrain pixel=%d, want 7", work[workBase])
+	}
+	// Frame 2: SkipTerrain on the SAME persistent work buffer must clear the
+	// stale 7, not leave it showing through as ghosted terrain.
+	skip := base
+	skip.SkipTerrain = true
+	if err := ComposeFrame(work, vga, skip, func([]byte) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if got := work[workBase]; got != NativeMapTerrainSkipSentinel {
+		t.Fatalf("frame 2 pixel=%d after SkipTerrain, want sentinel %d (stale frame-1 terrain must not survive)", got, NativeMapTerrainSkipSentinel)
+	}
+}
+
 func TestComposeFramePreservesNativeLayerOrder(t *testing.T) {
 	cache := &fdicon.NativeSelectorCache{}
 	if _, err := cache.SlotFor(0); err != nil {

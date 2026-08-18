@@ -160,6 +160,17 @@ func MaterializeNativePersistentPartyRecord(
 		HasNativeRecordWord42: true,
 		NativeRecordWord46:    uint16(view.MaxMP),
 		HasNativeRecordWord46: true,
+		// +0x34/0x35/0x36 are FDFIELD-deployment-constructor-exclusive and
+		// only ever consumed by the 0x13A9F AI dispatcher, which never runs
+		// for Own camp -- 0 matches the persistent party record's actual
+		// zero-initialized state (see native_join_constructor.go's identical
+		// note for the full disassembly justification).
+		NativeRecordByte34:    0,
+		HasNativeRecordByte34: true,
+		NativeRecordByte35:    0,
+		HasNativeRecordByte35: true,
+		NativeRecordByte36:    0,
+		HasNativeRecordByte36: true,
 		NativeCommandMask:     view.CommandMask,
 		NativeTransient:       view.Transient,
 		NativeRecordByte5:     view.RawByte5,

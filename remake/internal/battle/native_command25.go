@@ -15,7 +15,7 @@ type NativeCommand25Result struct {
 // unit+5 bit0x80 only when it was already set. The wrapper's successful
 // command completion still consumes the actor's action after the effect.
 // Renderer, message feedback and UI remain outside this fail-closed slice.
-func (s *State) ExecuteNativeCommand25(actor, confirmed *Unit) ([]NativeCommand25Result, error) {
+func (s *State) ExecuteNativeCommand25(actor, confirmed *Unit, scoredDestination *Cell) ([]NativeCommand25Result, error) {
 	const commandID = 25
 	if s == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[commandID].ID != commandID {
 		return nil, fmt.Errorf("native command 25 record unavailable")
@@ -25,7 +25,7 @@ func (s *State) ExecuteNativeCommand25(actor, confirmed *Unit) ([]NativeCommand2
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}

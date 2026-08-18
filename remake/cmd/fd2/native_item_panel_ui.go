@@ -341,7 +341,7 @@ func (g *Game) nativeItemSelectionTargets() []*battle.Unit {
 	}
 	targets, err := battle.NativeAttackCandidates(
 		g.st.W, g.st.H, battle.Cell{X: g.sel.X, Y: g.sel.Y},
-		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode,
+		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode, 2, // no-op selector; see NativeItemEffectTargets doc note
 		flags, g.st.Units,
 	)
 	if err != nil {

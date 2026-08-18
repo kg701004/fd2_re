@@ -34,6 +34,42 @@ func TestParseLMI1NativeCodec(t *testing.T) {
 	}
 }
 
+// TestParseLMI1DetectsRawStorageAboveSizeFloor reproduces the 2026-08-16
+// church-menu-icon bug (docs/knowledge-base/58, ch02 church_ch02): entries
+// whose directory slot is exactly 4+w*h bytes (no room for compression) are
+// stored as raw pixel bytes, not RLE -- and raw bytes above 0xc0 corrupt if
+// RLE-decoded anyway. Uses an 8x4=32-pixel entry (the raw-detection floor)
+// filled with 0xc7 bytes (>0xc0, i.e. what would misdecode as repeat control
+// bytes under the old always-RLE path) to prove the fix reads it verbatim.
+func TestParseLMI1DetectsRawStorageAboveSizeFloor(t *testing.T) {
+	const w, h = 8, 4
+	raw := make([]byte, w*h)
+	for i := range raw {
+		raw[i] = 0xc7
+	}
+	data := make([]byte, 6+1*4)
+	copy(data, "LMI1")
+	binary.LittleEndian.PutUint16(data[4:], 1)
+	binary.LittleEndian.PutUint32(data[6:], 10)
+	data = append(data, byte(w), 0, byte(h), 0)
+	data = append(data, raw...)
+	entries, err := ParseLMI1(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Width != w || entries[0].Height != h {
+		t.Fatalf("entries=%#v", entries)
+	}
+	if len(entries[0].Pixels) != w*h {
+		t.Fatalf("pixel count=%d, want %d", len(entries[0].Pixels), w*h)
+	}
+	for i, v := range entries[0].Pixels {
+		if v != 0xc7 {
+			t.Fatalf("pixel %d=%#x, want 0xc7 (raw passthrough, not RLE-misdecoded)", i, v)
+		}
+	}
+}
+
 func TestParseLMI1RejectsMalformedCodec(t *testing.T) {
 	data := make([]byte, 14)
 	copy(data, "LMI1")

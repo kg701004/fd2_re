@@ -24,12 +24,17 @@ type nativeMapFrameRuntime struct {
 // must already have clamped it to the field's own dimensions (see
 // clampNativeMapViewportToField), since a viewport bigger than the field has
 // no valid camera position.
+// skipTerrain is a remake-only extension (see indexedmap.FrameInput.SkipTerrain):
+// when true, the composed frame omits its own terrain layer so an
+// already-drawn HD PNG tileset can show through underneath; every other
+// pass (range/unit/foreground/HUD) is unaffected.
 func buildNativeMapFrameInput(
 	assets *nativeMapAssets,
 	field *MapData,
 	state *battle.State,
 	runtime nativeMapFrameRuntime,
 	viewport indexedmap.NativeMapViewport,
+	skipTerrain bool,
 ) (indexedmap.NativeFrameInput, error) {
 	if !nativeMapAssetsAvailable(assets) || field == nil || state == nil {
 		return indexedmap.NativeFrameInput{}, errors.New("native map frame: incomplete assets, field, or battle state")
@@ -69,7 +74,7 @@ func buildNativeMapFrameInput(
 		PixelShift: roster.UnitPixelShift,
 		RangeMode:  state.NativeMapRangeMode, CursorX: view.CursorX, CursorY: view.CursorY,
 		Units: roster.Units, ForegroundUnits: roster.Foreground,
-		Viewport: viewport,
+		Viewport: viewport, SkipTerrain: skipTerrain,
 	}
 	hud := runtime.HUD
 	hud.DisplayGateA = state.NativeMapHUDState.DisplayGateA != 0

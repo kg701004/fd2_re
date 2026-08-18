@@ -195,6 +195,15 @@ func (table NativeJoinConstructorTable) MaterializePersistentUnit(
 	unit.NativeTransient = [6]byte{}
 	unit.NativeRecordWord42, unit.HasNativeRecordWord42 = uint16(maxHP), true
 	unit.NativeRecordWord46, unit.HasNativeRecordWord46 = uint16(maxMP), true
+	// The class-table `record` buffer built above never writes +0x34/0x35/0x36
+	// (confirmed against the Ghidra decompile: those three bytes are only
+	// ever written by the separate FDFIELD-driven enemy/NPC deployment
+	// constructor, and only ever read back by the 0x13A9F AI dispatcher,
+	// which never runs for a JOINed Own-camp character). 0 matches the
+	// record slot's actual zero-initialized state, not a guess.
+	unit.NativeRecordByte34, unit.HasNativeRecordByte34 = 0, true
+	unit.NativeRecordByte35, unit.HasNativeRecordByte35 = 0, true
+	unit.NativeRecordByte36, unit.HasNativeRecordByte36 = 0, true
 	unit.Inventory = nil
 	unit.Equipped = nil
 	unit.InventorySlots = make([]int, 8)

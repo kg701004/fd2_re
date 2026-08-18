@@ -97,4 +97,17 @@ func TestMap0AssetsProducePositiveNativeAI1598AScoreForCommand0(t *testing.T) {
 		got.PositiveWinner.X != 23 || got.PositiveWinner.Y != 14 {
 		t.Fatalf("map0 command0 native winner=%+v", got)
 	}
+	// 2026-08-17: TargetIndices must carry the same record-index array the
+	// winning group was scored against (see NativeAISpellCandidate's doc
+	// comment) -- nativeAIThreeScorePlan now prefers this over
+	// UnitAt(X,Y), which silently resolved to the caster itself for
+	// SelectionMode==0 (self-origin) commands.
+	if len(got.PositiveWinner.TargetIndices) == 0 {
+		t.Fatal("map0 command0 native winner has no TargetIndices")
+	}
+	for _, index := range got.PositiveWinner.TargetIndices {
+		if int(index) == actor {
+			t.Fatalf("winner TargetIndices includes the caster itself: %v", got.PositiveWinner.TargetIndices)
+		}
+	}
 }

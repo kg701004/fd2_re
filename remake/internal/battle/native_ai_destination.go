@@ -31,23 +31,9 @@ func NativeAIPhysicalDestinations(
 		}
 	}
 
-	flags := append([]byte(nil), baseFlags...)
-	for unit := 0; unit < count; unit++ {
-		record := records[unit*nativeRecordSize:]
-		if record[5]&1 != 0 || !nativeAIOppositeSelectorGroup(record[6], selector) {
-			continue
-		}
-		x, y := int(record[0]), int(record[1])
-		if x < 0 || y < 0 || x >= w || y >= h {
-			return nil, fmt.Errorf("native AI destination unit %d is outside the grid", unit)
-		}
-		flags[y*w+x] |= NativeCommandGridBlocked
-		for _, delta := range nativeAIDestinationNeighbours {
-			nx, ny := x+delta[0], y+delta[1]
-			if nx >= 0 && ny >= 0 && nx < w && ny < h {
-				flags[ny*w+nx] |= NativeCommandGridZeroBudget
-			}
-		}
+	flags, err := nativeAIMarkOpposingGroupFlags(w, h, records, count, selector, baseFlags)
+	if err != nil {
+		return nil, err
 	}
 
 	field := make([]byte, w*h)
@@ -97,6 +83,39 @@ var nativeAIDestinationNeighbours = [][2]int{
 	{-1, 0},
 	{0, 1},
 	{0, -1},
+}
+
+// nativeAIMarkOpposingGroupFlags reproduces 0x145CD's cell marking: every
+// active opposing-selector-group unit's own cell gets NativeCommandGridBlocked
+// (0x40), and its in-bounds cardinal neighbours get NativeCommandGridZeroBudget
+// (0x80). Shared by NativeAIPhysicalDestinations and the mode-0 movement
+// fallback's 0x14121 blocked-cell search, both of which need the same
+// pre-marked flags before their own flood-fill runs.
+func nativeAIMarkOpposingGroupFlags(
+	w, h int,
+	records []byte,
+	count, selector int,
+	baseFlags []byte,
+) ([]byte, error) {
+	flags := append([]byte(nil), baseFlags...)
+	for unit := 0; unit < count; unit++ {
+		record := records[unit*nativeRecordSize:]
+		if record[5]&1 != 0 || !nativeAIOppositeSelectorGroup(record[6], selector) {
+			continue
+		}
+		x, y := int(record[0]), int(record[1])
+		if x < 0 || y < 0 || x >= w || y >= h {
+			return nil, fmt.Errorf("native AI destination unit %d is outside the grid", unit)
+		}
+		flags[y*w+x] |= NativeCommandGridBlocked
+		for _, delta := range nativeAIDestinationNeighbours {
+			nx, ny := x+delta[0], y+delta[1]
+			if nx >= 0 && ny >= 0 && nx < w && ny < h {
+				flags[ny*w+nx] |= NativeCommandGridZeroBudget
+			}
+		}
+	}
+	return flags, nil
 }
 
 func nativeAIOppositeSelectorGroup(recordByte6 byte, selector int) bool {

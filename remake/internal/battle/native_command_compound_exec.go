@@ -35,7 +35,7 @@ import (
 //     applies the three status effects inline instead.
 
 // ExecuteNativeCommand32 casts 熾天使.
-func (s *State) ExecuteNativeCommand32(actor, confirmed *Unit, resistByClass map[int]int, rngState uint16) ([]NativeCommandDamageResult, uint16, error) {
+func (s *State) ExecuteNativeCommand32(actor, confirmed *Unit, resistByClass map[int]int, rngState uint16, scoredDestination *Cell) ([]NativeCommandDamageResult, uint16, error) {
 	if s == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[32].ID != 32 {
 		return nil, rngState, fmt.Errorf("native command 32 record unavailable")
 	}
@@ -44,7 +44,7 @@ func (s *State) ExecuteNativeCommand32(actor, confirmed *Unit, resistByClass map
 	if err != nil {
 		return nil, rngState, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, rngState, err
 	}
@@ -70,7 +70,7 @@ func (s *State) ExecuteNativeCommand32(actor, confirmed *Unit, resistByClass map
 }
 
 // ExecuteNativeCommand33 casts 風妖精: a fixed 800 HP restore (see file doc).
-func (s *State) ExecuteNativeCommand33(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommandHealResult, error) {
+func (s *State) ExecuteNativeCommand33(actor, confirmed *Unit, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandHealResult, error) {
 	if s == nil || rng == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[33].ID != 33 {
 		return nil, fmt.Errorf("native command 33 record unavailable")
 	}
@@ -79,7 +79,7 @@ func (s *State) ExecuteNativeCommand33(actor, confirmed *Unit, rng *rand.Rand) (
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (s *State) ExecuteNativeCommand33(actor, confirmed *Unit, rng *rand.Rand) (
 
 // ExecuteNativeCommand34 casts 破壞神: AP+15%, DP+15%, HIT+15, EV+15 in one
 // application (see file doc for the offset naming this is based on).
-func (s *State) ExecuteNativeCommand34(actor, confirmed *Unit, rng *rand.Rand) ([]*Unit, error) {
+func (s *State) ExecuteNativeCommand34(actor, confirmed *Unit, rng *rand.Rand, scoredDestination *Cell) ([]*Unit, error) {
 	if s == nil || rng == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[34].ID != 34 {
 		return nil, fmt.Errorf("native command 34 record unavailable")
 	}
@@ -110,7 +110,7 @@ func (s *State) ExecuteNativeCommand34(actor, confirmed *Unit, rng *rand.Rand) (
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *State) ExecuteNativeCommand34(actor, confirmed *Unit, rng *rand.Rand) (
 // offsets (0x25/0x27/0x26), spending id35's own MP once rather than calling
 // ExecuteNativeCommandApplication three times (see file doc: that would
 // triple-charge using the sub-IDs' own MP costs instead).
-func (s *State) ExecuteNativeCommand35(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommandApplicationResult, error) {
+func (s *State) ExecuteNativeCommand35(actor, confirmed *Unit, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandApplicationResult, error) {
 	if s == nil || rng == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[35].ID != 35 {
 		return nil, fmt.Errorf("native command 35 record unavailable")
 	}
@@ -138,7 +138,7 @@ func (s *State) ExecuteNativeCommand35(actor, confirmed *Unit, rng *rand.Rand) (
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}

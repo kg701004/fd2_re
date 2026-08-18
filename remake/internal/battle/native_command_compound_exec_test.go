@@ -18,11 +18,11 @@ func compoundBook() []NativeCommandRecord {
 }
 
 func TestExecuteNativeCommand32DealsBookDamage(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 80}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 80, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, HP: 1000, ClassID: 5}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: compoundBook()}
 
-	got, _, err := st.ExecuteNativeCommand32(actor, target, map[int]int{5: 10}, 7)
+	got, _, err := st.ExecuteNativeCommand32(actor, target, map[int]int{5: 10}, 7, nil)
 	if err != nil || len(got) != 1 || !got[0].Hit || got[0].Damage <= 0 {
 		t.Fatalf("id32 result=%#v err=%v", got, err)
 	}
@@ -33,11 +33,11 @@ func TestExecuteNativeCommand32DealsBookDamage(t *testing.T) {
 }
 
 func TestExecuteNativeCommand33Heals800(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 60}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 60, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Own, OnField: true, X: 1, Y: 0, HP: 10, MaxHP: 2000}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: compoundBook()}
 
-	got, err := st.ExecuteNativeCommand33(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommand33(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 1 || got[0].Restore.Actual < 720 || got[0].Restore.Actual > 800 {
 		t.Fatalf("id33 result=%#v err=%v", got, err)
 	}
@@ -47,11 +47,11 @@ func TestExecuteNativeCommand33Heals800(t *testing.T) {
 }
 
 func TestExecuteNativeCommand34AppliesTripleBuff(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 40}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 40, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Own, OnField: true, X: 1, Y: 0, HP: 100, MaxHP: 100}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: compoundBook()}
 
-	got, err := st.ExecuteNativeCommand34(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommand34(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 1 || got[0] != target {
 		t.Fatalf("id34 result=%#v err=%v", got, err)
 	}
@@ -64,11 +64,11 @@ func TestExecuteNativeCommand34AppliesTripleBuff(t *testing.T) {
 }
 
 func TestExecuteNativeCommand35AppliesThreeStatusRolls(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 40}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 40, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, HP: 1000, ClassID: 5}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: compoundBook()}
 
-	got, err := st.ExecuteNativeCommand35(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommand35(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 3 {
 		t.Fatalf("id35 result=%#v err=%v", got, err)
 	}
@@ -88,7 +88,7 @@ func TestExecuteNativeCommand33FailsClosedOnInsufficientMP(t *testing.T) {
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, HP: 10, MaxHP: 2000}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: compoundBook()}
 
-	if _, err := st.ExecuteNativeCommand33(actor, target, rand.New(rand.NewSource(1))); err == nil || target.HP != 10 || actor.Acted {
+	if _, err := st.ExecuteNativeCommand33(actor, target, rand.New(rand.NewSource(1)), nil); err == nil || target.HP != 10 || actor.Acted {
 		// Camp:Enemy deliberately keeps the raw 52 MP cost (no QoL discount),
 		// so 1 MP must fail closed here.
 		t.Fatalf("insufficient-MP id33 mutated state: actor=%#v target=%#v", actor, target)

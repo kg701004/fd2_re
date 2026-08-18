@@ -26,7 +26,7 @@ type NativeCommandMPStealResult struct {
 // A miss moves nothing. Follows the same shape as ExecuteNativeCommandDamage
 // (native_command0.go): resolve targets, spend the caster's own cast cost
 // once, then apply the per-target effect.
-func (s *State) ExecuteNativeCommandMPSteal(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommandMPStealResult, error) {
+func (s *State) ExecuteNativeCommandMPSteal(actor, confirmed *Unit, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandMPStealResult, error) {
 	if s == nil || rng == nil || len(s.NativeCommandBook) != NativeCommandRecordCount || s.NativeCommandBook[36].ID != 36 {
 		return nil, fmt.Errorf("native command 36 record unavailable")
 	}
@@ -35,7 +35,7 @@ func (s *State) ExecuteNativeCommandMPSteal(actor, confirmed *Unit, rng *rand.Ra
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}

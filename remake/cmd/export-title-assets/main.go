@@ -7,9 +7,12 @@
 //   - scroll_big.png: FDOTHER #0x45-0x49(69-73)共 5 幀,各 320×147,直疊成
 //     320×735,用 0x4e63d 單幀 RLE(fdother.DecodeArchiveSingleFrame,跟 BG.DAT
 //     同格式)。
-//   - title.png / menu_1..6.png: FDOTHER #7(LMI1 容器)sub0-6,
-//     fdother.DecodeLMI1FrameResource;palette=FDOTHER #0x65(768B 淡入專用
-//     調色盤,非全域 UI 調色盤 #0)。
+//   - title.png / menu_1..6.png: FDOTHER #7(巢狀 LLLLLL 容器)sub0-6,用
+//     ArchiveEntry+ParseSingleFrame(不是 LMI1);palette=FDOTHER #8(title.go
+//     檔頭原本就寫對的號碼)。doc23 §2.1 標的 #0x65 是錯的——那份資源的低位
+//     索引(1-7)全部是同一色塊,不是連貫色階;實測 #8 才會重建出玩家提供的
+//     真實截圖配色(黑底、火焰橘黃字、藍色「2」),已用真實截圖交叉驗證過,
+//     不是本工具新猜測。
 //   - cut_guardian.png: image=FDOTHER #100(0x64),palette=FDOTHER #99(0x63)。
 //   - cut_castle.png: image=FDOTHER #75(0x4b),palette=FDOTHER #76(0x4c)。
 //
@@ -38,7 +41,7 @@ func main() {
 	check(os.MkdirAll(outDir, 0o755))
 
 	mainPalette := loadPalette(fdotherPath, 0)
-	titlePalette := loadPalette(fdotherPath, 0x65)
+	titlePalette := loadPalette(fdotherPath, 8)
 	guardianPalette := loadPalette(fdotherPath, 0x63)
 	castlePalette := loadPalette(fdotherPath, 0x4c)
 

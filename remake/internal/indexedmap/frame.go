@@ -43,6 +43,38 @@ type FrameInput struct {
 	// means "use DefaultNativeMapViewport" so existing callers/tests that
 	// never set it keep the exact original {13,8} behavior.
 	Viewport NativeMapViewport
+	// SkipTerrain is a remake-only extension (not an EXE reproduction
+	// concern): when true, ComposeFrame does not call
+	// TerrainBank.BlitNativeTerrainRegion at all, and instead clears the
+	// viewport-content region to NativeMapTerrainSkipSentinel before the
+	// range/unit/foreground/HUD passes run (all of which are mask-based and
+	// leave untouched pixels alone). This lets a caller substitute its own
+	// externally-drawn terrain (e.g. an upscaled PNG tile layer) underneath,
+	// while every other native pass -- unit icons, foreground decoration
+	// (still read from TerrainBank, unaffected), range overlay, HUD --
+	// draws exactly as it always has. TerrainBank must still be non-nil:
+	// ForegroundBank is commonly the same bank and still needs it.
+	SkipTerrain bool
+}
+
+// NativeMapTerrainSkipSentinel is the palette index FrameInput.SkipTerrain
+// clears the terrain region to. It was chosen by scanning every sprite
+// currently shipped in this game (unit bank, all 33 terrain/foreground
+// banks, range overlay, HUD digit/panel frames -- see
+// cmd/find-sentinel) for a byte value no masked blit ever writes; index 0 is
+// deliberately NOT used since it is not reserved for transparency and may
+// legitimately be a visible color (see ParseVGAPalette's doc comment).
+const NativeMapTerrainSkipSentinel byte = 255
+
+// clearIndexedRegion fills a stride-addressed w×h rectangle at (x,y) with
+// sentinel. Used only by FrameInput.SkipTerrain in place of a terrain blit.
+func clearIndexedRegion(dst []byte, stride, x, y, w, h int, sentinel byte) {
+	for row := 0; row < h; row++ {
+		start := (y+row)*stride + x
+		for i := 0; i < w; i++ {
+			dst[start+i] = sentinel
+		}
+	}
 }
 
 // viewportOrDefault returns in.Viewport, falling back to the original 13x8
@@ -453,7 +485,14 @@ func ComposeFrame(work, vga []byte, in FrameInput, renderHUD func([]byte) error)
 	frame := append([]byte(nil), work...)
 	cells := append([]fdicon.NativeTerrainCell(nil), in.Cells...)
 	baseX, baseY := vpBase%vpStride, vpBase/vpStride
-	if err := in.TerrainBank.BlitNativeTerrainRegion(frame, vpStride, baseX, baseY, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.LUT); err != nil {
+	if in.SkipTerrain {
+		// frame started as a clone of the PERSISTENT work buffer (prior
+		// frame's committed content), not a fresh allocation -- omitting the
+		// terrain call without clearing would leave stale terrain/unit
+		// ghosting from whatever was drawn last frame, not a clean hole for
+		// the caller's own terrain layer to show through.
+		clearIndexedRegion(frame, vpStride, baseX, baseY, vp.contentWidth(), vp.contentHeight(), NativeMapTerrainSkipSentinel)
+	} else if err := in.TerrainBank.BlitNativeTerrainRegion(frame, vpStride, baseX, baseY, in.MapWidth, cells, in.Controls, in.CameraX, in.CameraY, vp.Cols, vp.Rows, in.Flip, in.TerrainCycle, in.LUT); err != nil {
 		return fmt.Errorf("indexedmap: terrain: %w", err)
 	}
 	if in.RangeMode == 6 {

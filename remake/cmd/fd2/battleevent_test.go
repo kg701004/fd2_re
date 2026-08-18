@@ -2,13 +2,65 @@ package main
 
 import (
 	"bytes"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
+
+// TestConfirmAttackMessageDistinguishesMissFromZeroDamage guards against a
+// real bug found via live play (2026-08-14, user report: "攻擊完了 造成傷害0
+// 為什麼?"). confirm()'s attack branch used to call the simplified
+// battle.State.Attack(a,d) int wrapper, whose doc comment says "Miss 時為 0" --
+// but the UI message was built unconditionally as "造成 %d 傷害" with no
+// check for that sentinel, so a miss displayed as "造成 0 傷害" (dealt 0
+// damage) even though AttackWithRNG's own dmg<1 clamp guarantees a REAL hit
+// can never actually deal 0. Fixed by switching to AttackWithRNG and
+// branching the message on .Missed. Two call sites had this bug (the
+// player's attack here, and aiStep's AI/ally attack); this test covers the
+// shared root cause via confirm(), the one live-tested.
+func TestConfirmAttackMessageDistinguishesMissFromZeroDamage(t *testing.T) {
+	newGame := func(atkHIT, defEV int) (*Game, *battle.Unit) {
+		atk := &battle.Unit{Camp: battle.Own, Name: "攻方", X: 1, Y: 1, HP: 20, MaxHP: 20, OnField: true, HIT: atkHIT, AP: 30}
+		def := &battle.Unit{Camp: battle.Enemy, Name: "守方", X: 1, Y: 2, HP: 20, MaxHP: 20, OnField: true, EV: defEV, DP: 5}
+		st := &battle.State{W: 3, H: 3, Units: []*battle.Unit{atk, def}}
+		g := &Game{
+			m:     &MapData{W: 3, H: 3, TileW: 24, TileH: 24, Tiles: make([]int, 9)},
+			st:    st,
+			sel:   atk,
+			moved: true,
+			curX:  def.X, curY: def.Y,
+			rng: rand.New(rand.NewSource(1)),
+		}
+		return g, def
+	}
+
+	t.Run("miss shows 未命中, not 造成0傷害", func(t *testing.T) {
+		g, def := newGame(0, 100) // hitPct = 0-100 = -100 <= 0: rollsHitPct is deterministic false
+		g.confirm()
+		if g.msg != "攻方 攻擊 守方,未命中" {
+			t.Fatalf("miss message = %q, want 攻方 攻擊 守方,未命中", g.msg)
+		}
+		if def.HP != 20 {
+			t.Fatalf("a miss must not change defender HP: got %d, want 20", def.HP)
+		}
+	})
+
+	t.Run("hit never displays as 0 damage", func(t *testing.T) {
+		g, def := newGame(100, 0) // hitPct = 100: rollsHitPct is deterministic true
+		g.confirm()
+		if g.msg == "攻方 攻擊 守方,造成 0 傷害" {
+			t.Fatalf("a real hit displayed as 0 damage; AttackWithRNG's dmg<1 clamp guarantees >=1: msg=%q", g.msg)
+		}
+		if def.HP >= 20 {
+			t.Fatalf("a hit must reduce defender HP below 20: got %d", def.HP)
+		}
+	})
+}
 
 func driveNativeBattleIntro(t *testing.T, g *Game) int {
 	t.Helper()
@@ -185,6 +237,85 @@ func TestChapter1GlobalIntroEventsPresentThenRunExactFollowingActing(t *testing.
 	}
 }
 
+// TestChapter1GlobalIntroEventsFallBackToPlainSpawnWithoutNativeAssets is the
+// no-FDOTHER.DAT counterpart of TestChapter1GlobalIntroEventsPresentThenRunExactFollowingActing.
+// 2026-08-13 修復前:g.nativeMapAssets 為 nil 時,startNativeBattleSpawnIntro
+// 完全沒有防呆,event1/event2 這兩波腳本化增援會在深處失敗、
+// finishBattleEventWithError 直接清掉 g.battleEvent,整批敵人悄悄消失。
+// 這裡不設 FD2_ORIGINAL_FDOTHER(一般玩家的預設情況),驗證增援改為走陽春
+// fallback:部隊確實加入戰場、後續 ACTING 照常執行、不留任何 loadErr。
+func TestChapter1GlobalIntroEventsFallBackToPlainSpawnWithoutNativeAssets(t *testing.T) {
+	st, err := battle.Load(assetPath("assets/maps/map0/map0_units.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := battle.LoadScenario(assetPath("assets/scenarios/ch01.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc.Setup(st)
+	g := &Game{st: st, sc: sc, sfxSpawnIntro: []byte{1}}
+	if err := g.bindNativeFutureItemRows(st); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.loadMap("assets/maps/map0"); err != nil {
+		t.Fatal(err)
+	}
+	if nativeMapAssetsAvailable(g.nativeMapAssets) {
+		t.Fatal("test assumes no native FDOTHER.DAT assets are loaded")
+	}
+
+	// Event0 establishes the exact 14-slot frontier consumed by ACTING(3).
+	st.Turn = 3
+	g.finishTurn()
+	if len(g.dialog) != 1 || len(st.Units) != 14 {
+		t.Fatalf("turn3 frontier/dialogue units=%d dialog=%#v", len(st.Units), g.dialog)
+	}
+	g.dialog = nil
+	g.advanceBattleEvent()
+	if st.Turn != 4 || g.battleEvent != nil {
+		t.Fatalf("turn3 completion turn=%d event=%#v", st.Turn, g.battleEvent)
+	}
+	// hano_hawat_join's own join_party(char_id=1) action fails here with
+	// "找不到角色1的我方記錄" independent of native assets or this test's fix:
+	// this isolated battle.Load harness starts mid-battle without the earlier
+	// story progression that normally puts character 1 on the roster first.
+	// TestChapter1GlobalIntroEventsPresentThenRunExactFollowingActing carries
+	// the exact same pre-existing g.loadErr past this point (its own reset at
+	// this stage is for an unrelated intentional-failure check); reset here
+	// too so it can't be conflated with the fallback fix under test below.
+	g.loadErr = ""
+
+	// Event1 must append group4 directly (no native VGA/palette presentation
+	// job) and still run the independent 0x342E7 ACTING(3) on slots14..17.
+	g.finishTurn()
+	if len(st.Units) != 18 || g.spawnIntroTransition != nil || g.loadErr != "" {
+		t.Fatalf("event1 fallback units=%d intro=%v loadErr=%q, want 18/nil/empty",
+			len(st.Units), g.spawnIntroTransition, g.loadErr)
+	}
+	driveNativeBattleActing(t, g)
+	if st.Turn != 5 || g.battleEvent != nil {
+		t.Fatalf("event1 completion turn=%d event=%#v", st.Turn, g.battleEvent)
+	}
+
+	// Event2 repeats the same fallback, then ACTING(4), then exposes the
+	// authored boss dialogue exactly as the native-asset path does.
+	g.finishTurn()
+	if len(st.Units) != 23 || g.spawnIntroTransition != nil || g.loadErr != "" {
+		t.Fatalf("event2 fallback units=%d intro=%v loadErr=%q, want 23/nil/empty",
+			len(st.Units), g.spawnIntroTransition, g.loadErr)
+	}
+	driveNativeBattleActing(t, g)
+	if len(g.dialog) != 1 || g.dialog[0].Speaker != 71 || st.Turn != 5 || g.battleEvent == nil {
+		t.Fatalf("event2 following dialogue=%#v turn=%d event=%#v", g.dialog, st.Turn, g.battleEvent)
+	}
+	g.dialog = nil
+	g.advanceBattleEvent()
+	if st.Turn != 6 || g.battleEvent != nil {
+		t.Fatalf("event2 completion turn=%d event=%#v", st.Turn, g.battleEvent)
+	}
+}
+
 func TestChapter3Turn3BattleEventBlocksTurnUntilOriginalSequenceCompletes(t *testing.T) {
 	st, err := battle.Load(assetPath("assets/maps/map2/map2_units.json"))
 	if err != nil {
@@ -278,6 +409,46 @@ func TestBattleEventNativeSpawnFailureDoesNotAdvanceTurnContinuation(t *testing.
 			"失敗事件仍前進：err=%q continued=%v turn=%d run=%#v",
 			g.loadErr, continued, st.Turn, g.battleEvent,
 		)
+	}
+}
+
+// TestBattleEventViewportExpandsWithWindowSize guards the 2026-08-13 fix
+// (user report: "the attack screen doesn't expand like the map does"). Before
+// the fix, Draw()'s zoom-selection switch special-cased g.battleEvent != nil
+// to a constant 320x200 native canvas regardless of the real screen size --
+// the exact same "expandableView exclusion locks in the old fixed canvas"
+// bug class drawRing had. The blocking action-sequence presentation has no
+// drawing code of its own; it shares the ordinary map/unit layer, so this
+// asserts that layer's storyView now grows with the window during a battle
+// event exactly like it already does outside one.
+func TestBattleEventViewportExpandsWithWindowSize(t *testing.T) {
+	g := &Game{}
+	if err := g.loadMap(assetPath("assets/maps/map0")); err != nil {
+		t.Fatal(err)
+	}
+	st, err := battle.Load(assetPath("assets/maps/map0/map0_units.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.st = st
+	g.battleEvent = &battleEventRun{actions: nil, index: -1}
+
+	small := ebiten.NewImage(640, 400)
+	g.Draw(small)
+	if g.storyView == nil {
+		t.Fatal("storyView nil after small-window battle-event Draw")
+	}
+	smallBounds := g.storyView.Bounds()
+
+	wide := ebiten.NewImage(1920, 1080)
+	g.Draw(wide)
+	if g.storyView == nil {
+		t.Fatal("storyView nil after wide-window battle-event Draw")
+	}
+	wideBounds := g.storyView.Bounds()
+
+	if wideBounds.Dx() <= smallBounds.Dx() || wideBounds.Dy() <= smallBounds.Dy() {
+		t.Fatalf("battle event viewport did not expand with window size: small=%v wide=%v (a fixed 320x200 here would reproduce the pre-fix bug)", smallBounds, wideBounds)
 	}
 }
 

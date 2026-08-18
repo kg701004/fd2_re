@@ -1,6 +1,9 @@
 package battle
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 const (
 	// NativeCommandGridBlocked is original grid flag bit 0x40: 0x4e16e
@@ -283,12 +286,39 @@ func absInt(n int) int {
 	return n
 }
 
+// nativeCommandTargetCodeForSelector applies the same selector-relative
+// target-code reflection already proven (and disassembly-referenced) for the
+// AI scoring path by nativeAIScoredCommandTargetCode: the raw record+6 code
+// is written from a fixed reference frame, so a caster whose own raw camp
+// selector is 0 (native ABI Enemy) must have "hit the opposing side" (code 0)
+// and "hit non-opposing" (any other code) reflected before comparing against
+// units, while any other selector (native ABI Ally=1/Own=2) leaves the code
+// unchanged. This was previously only applied on the scoring side
+// (native_ai_scored_candidates.go), never at execution time -- the mismatch
+// this closes made every enemy-cast native spell fail with "confirmed unit
+// is not a native command candidate" (0/19 across the whole campaign as of
+// 2026-08-16's TestSweepNativeAIWinnersAcrossAllChapters, see
+// 58-remake-live-verification-log.md). A selector of 1 or 2 is a no-op here,
+// so player-triggered commands (always cast from the Own selector) are
+// unaffected by this change.
+func nativeCommandTargetCodeForSelector(code, selector int) int {
+	if selector != 0 {
+		return code
+	}
+	if code == 0 {
+		return 1
+	}
+	return 0
+}
+
 // NativeCommandTargetMatches is the exact record+6 predicate in 0x14818.
 // The native constructor ABI is Enemy=0, Ally=1, Own=2, whereas the Go Camp
 // enum is Own=0, Ally=1, Enemy=2.  Use named values here rather than copying
-// the native ordinals into the remake model.
-func NativeCommandTargetMatches(code int, camp Camp) bool {
-	switch code {
+// the native ordinals into the remake model. selector is the acting unit's
+// own raw camp byte (Unit.NativeRecordByte6); see
+// nativeCommandTargetCodeForSelector for why it must be applied here too.
+func NativeCommandTargetMatches(code, selector int, camp Camp) bool {
+	switch nativeCommandTargetCodeForSelector(code, selector) {
 	case 0:
 		return camp == Enemy
 	case 1:
@@ -334,7 +364,7 @@ func NativeCursorConfirmationAllowed(cursor Cell, fieldByte byte, overlaySelecto
 	}
 	for _, unit := range units {
 		if !nativeTargetUnitUsable(unit, true) ||
-			!NativeCommandTargetMatches(targetCode, unit.Camp) {
+			!NativeCommandTargetMatches(targetCode, 2, unit.Camp) {
 			continue
 		}
 		if absInt(unit.X-cursor.X)+absInt(unit.Y-cursor.Y) < radius {
@@ -388,8 +418,9 @@ func nativeTargetActorUsable(unit *Unit, rawComplete bool) bool {
 // NativeCommandTargets applies one recovered 0x14818 invocation and its
 // record+6 camp predicate to runtime units.  It is deliberately independent
 // of CastArea; for generic commands its origin/mode must be the confirmed
-// cursor and record+4 to represent the final effect list.
-func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
+// cursor and record+4 to represent the final effect list. selector is the
+// acting unit's own raw camp byte; see nativeCommandTargetCodeForSelector.
+func NativeCommandTargets(w, h int, origin Cell, dist, targetCode, selector int, flags []byte, units []*Unit) ([]*Unit, error) {
 	cells, err := NativeCommandTargetCells(w, h, origin, dist, flags)
 	if err != nil {
 		return nil, err
@@ -397,7 +428,7 @@ func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []b
 	rawComplete := nativeTargetRosterRawComplete(units)
 	var targets []*Unit
 	for _, unit := range units {
-		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, unit.Camp) {
+		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, selector, unit.Camp) {
 			continue
 		}
 		if cells[Cell{X: unit.X, Y: unit.Y}] {
@@ -411,8 +442,9 @@ func NativeCommandTargets(w, h int, origin Cell, dist, targetCode int, flags []b
 // 0x14237. mode is raw a4 and innerRadius is raw a5 from the item row; for
 // mode<0x10 the callee excludes cells with Manhattan distance strictly less
 // than innerRadius after the four-way grid pass. mode>=0x10 is the native
-// cross branch and does not apply the inner-radius marker.
-func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
+// cross branch and does not apply the inner-radius marker. selector is the
+// acting unit's own raw camp byte; see nativeCommandTargetCodeForSelector.
+func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode, selector int, flags []byte, units []*Unit) ([]*Unit, error) {
 	if innerRadius < 0 {
 		return nil, fmt.Errorf("invalid native attack inner radius")
 	}
@@ -430,7 +462,7 @@ func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode
 	rawComplete := nativeTargetRosterRawComplete(units)
 	targets := make([]*Unit, 0)
 	for _, unit := range units {
-		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, unit.Camp) {
+		if !nativeTargetUnitUsable(unit, rawComplete) || !NativeCommandTargetMatches(targetCode, selector, unit.Camp) {
 			continue
 		}
 		if cells[Cell{X: unit.X, Y: unit.Y}] {
@@ -440,31 +472,122 @@ func NativeAttackCandidates(w, h int, origin Cell, mode, innerRadius, targetCode
 	return targets, nil
 }
 
+// nativeActorSelector reads the acting unit's own raw camp byte, failing
+// closed rather than silently defaulting to a value that could mask a real
+// provenance gap in a caller's roster.
+func nativeActorSelector(actor *Unit) (int, error) {
+	if actor == nil || !actor.HasNativeRecordByte6 {
+		return 0, fmt.Errorf("native command actor lacks raw camp provenance")
+	}
+	return int(actor.NativeRecordByte6), nil
+}
+
 // NativeCommandEffectTargets mirrors the generic two-stage 0x1cff0 path.
 // The first 0x14818 call originates at actor with record+3; 0x115b6 confirms
 // one member of that list; the second call originates at the confirmed unit's
 // cell with record+4 and supplies the effect list to 0x2a6bd.  It deliberately
 // excludes the command 0x17/0x1e special branches and all presentation.
-func NativeCommandEffectTargets(w, h int, actor, confirmed *Unit, selectionMode, effectMode, targetCode int, flags []byte, units []*Unit) ([]*Unit, error) {
+//
+// Both stages resolve record+6 relative to the acting unit's own raw camp
+// selector (actor.NativeRecordByte6), matching the AI scoring path's
+// nativeAIScoredCommandTargetCode. Before 2026-08-17 this used the raw
+// targetCode unreflected, so a target the AI's own three-score pipeline had
+// legitimately picked would fail the confirmedCandidate check below and the
+// whole cast would be rejected -- every enemy-cast spell in the campaign
+// failed this way (0/19, see 58-remake-live-verification-log.md). Player
+// casts were unaffected because the player's selector (Own, native ABI 2) is
+// always a no-op for nativeCommandTargetCodeForSelector.
+//
+// Stage 1 no longer requires confirmed to be an occupied cell within
+// SelectionMode of actor directly (2026-08-17, see the #115 section of
+// 58-remake-live-verification-log.md). AI scoring (NativeAIScoredCommandCandidateGroups)
+// already validates targets via a two-hop path -- an intermediate
+// destination cell within SelectionMode of actor, then EffectMode's area
+// FROM that destination -- and a target only reachable through such an
+// intermediate cell (not directly within SelectionMode of actor) was
+// rejected here even though scoring had already proven it valid.
+//
+// scoredDestination, when non-nil, is the exact record+3 destination cell
+// the native AI scoring pipeline (0x1598a/NativeAIScoredCommandCandidateGroups)
+// already chose for this cast -- ground truth, not a reconstruction. When
+// present it is used directly as stage 2's origin (after the same
+// fail-closed "is confirmed actually in this destination's EffectMode
+// result" check every other path uses), skipping the search below entirely.
+// This exists because that search is only a *reconstruction*: when multiple
+// SelectionMode-reachable cells could each independently reach confirmed via
+// EffectMode, the row-major search below has no way to know which one
+// scoring actually used, and a different destination can carry a different
+// full splash-target set even though confirmed is a member of both. No such
+// multi-destination case has been observed in the campaign's actual data (a
+// full 30-chapter sweep only ever found one ambiguous case, and it has a
+// single valid destination), so the search path remains provably correct for
+// every currently-known case -- but callers that already know the real
+// destination (the AI plan pipeline) should always supply it rather than
+// relying on reconstruction.
+//
+// scoredDestination is nil for the player cursor-confirmation flow, where no
+// prior scoring pass exists: confirmed's own cell is trivially a valid
+// SelectionMode destination in that flow (the cursor is always constrained
+// to the highlighted SelectionMode area), so the fast path below remains
+// exact for every player-driven cast.
+func NativeCommandEffectTargets(w, h int, actor, confirmed *Unit, selectionMode, effectMode, targetCode int, flags []byte, units []*Unit, scoredDestination *Cell) ([]*Unit, error) {
 	rawComplete := nativeTargetRosterRawComplete(units)
 	if !nativeTargetActorUsable(actor, rawComplete) || !nativeTargetActorUsable(confirmed, rawComplete) {
 		return nil, fmt.Errorf("invalid native command actor/confirmed unit")
 	}
-	selection, err := NativeCommandTargets(w, h, Cell{X: actor.X, Y: actor.Y}, selectionMode, targetCode, flags, units)
+	selector, err := nativeActorSelector(actor)
 	if err != nil {
 		return nil, err
 	}
-	confirmedCandidate := false
-	for _, candidate := range selection {
-		if candidate == confirmed {
-			confirmedCandidate = true
-			break
+	destinations, err := NativeCommandTargetCells(w, h, Cell{X: actor.X, Y: actor.Y}, selectionMode, flags)
+	if err != nil {
+		return nil, err
+	}
+	if scoredDestination != nil {
+		if !destinations[*scoredDestination] {
+			return nil, fmt.Errorf("scored destination is not reachable within actor's SelectionMode")
+		}
+		effect, err := NativeCommandTargets(w, h, *scoredDestination, effectMode, targetCode, selector, flags, units)
+		if err != nil {
+			return nil, err
+		}
+		for _, candidate := range effect {
+			if candidate == confirmed {
+				return effect, nil
+			}
+		}
+		return nil, fmt.Errorf("confirmed unit is not within the scored destination's effect area")
+	}
+	confirmedCell := Cell{X: confirmed.X, Y: confirmed.Y}
+	if destinations[confirmedCell] {
+		effect, err := NativeCommandTargets(w, h, confirmedCell, effectMode, targetCode, selector, flags, units)
+		if err != nil {
+			return nil, err
+		}
+		return effect, nil
+	}
+	ordered := make([]Cell, 0, len(destinations))
+	for cell := range destinations {
+		ordered = append(ordered, cell)
+	}
+	sort.Slice(ordered, func(i, j int) bool {
+		if ordered[i].Y != ordered[j].Y {
+			return ordered[i].Y < ordered[j].Y
+		}
+		return ordered[i].X < ordered[j].X
+	})
+	for _, destination := range ordered {
+		effect, err := NativeCommandTargets(w, h, destination, effectMode, targetCode, selector, flags, units)
+		if err != nil {
+			return nil, err
+		}
+		for _, candidate := range effect {
+			if candidate == confirmed {
+				return effect, nil
+			}
 		}
 	}
-	if !confirmedCandidate {
-		return nil, fmt.Errorf("confirmed unit is not a native command candidate")
-	}
-	return NativeCommandTargets(w, h, Cell{X: confirmed.X, Y: confirmed.Y}, effectMode, targetCode, flags, units)
+	return nil, fmt.Errorf("confirmed unit is not a native command candidate")
 }
 
 // NativeCommand30Targets mirrors the special 0x149F8 selector used only by

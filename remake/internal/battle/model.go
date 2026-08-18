@@ -60,6 +60,12 @@ type Unit struct {
 	// 敵/友單位 10B 表無此欄,export_units.py 暫用固定近似值,見該檔頭註解)
 	CritPct  int // 暴擊率(doc03 職業暴擊率表 0x5219B,resist_crit.json,依 class 已驗證吻合 doc02 §7.2)
 	MV       int // 移動力
+	// MoveType 決定地形耗 MV 查表用哪一欄(doc02 §3.1:步行/騎兵/飛行三種地形成本不同,
+	// 例如森林對步行=1、騎兵=2,沼澤對步行=2、騎兵=3、飛行一律=1)。零值 MoveWalk 是唯一
+	// 目前有任何角色使用的值,跟這個欄位新增前的行為完全一樣;沒有把任何既有角色標成
+	// 騎兵/飛行,因為原版哪個職業對應哪個移動類型還沒有反組譯確認的資料來源,用猜的標
+	// 反而會引入新的不準確,寧可先把管線接好、等資料確認後再回填(見 move.go MoveCostFor doc)。
+	MoveType MoveType
 	AtkMin   int // 近戰攻擊距離下限(曼哈頓距離;0 視為預設 1,doc32 weapon_range.json 依武器 type 決定)
 	AtkMax   int // 近戰攻擊距離上限(0 視為預設 1;例:騎士槍type3=2,doc32)
 	Portrait int
@@ -577,6 +583,8 @@ type State struct {
 	NativeTileBlitModes          []byte                      // live FDFIELD entry byte+3; exact export admits it, then 0x4dbfc/0x14818 own mutation
 	NativeTerrainControl         []byte                      // raw FDSHAP four-byte terrain records; nil unless exact renderer export exists
 	NativeTerrainMoveCodes       []byte                      // FDSHAP control byte+1 selected by each FDFIELD tile; nil unless the complete exact export validates
+	NativeMovementCostRows       [][]byte                    // 0x4e555's 29×20 table (native_movement_cost_rows.json); selector=class, column=NativeTerrainMoveCodes
+	NativeItemEffectRows         []byte                      // native_item_effect_rows.json prefix; ScoreNativeAI14237's equipped-weapon row lookup
 	SpellBook                    []Spell                     // scenario-injected spell table; AI command mapping remains data-only
 	NativeCommandBook            []NativeCommandRecord       // verified raw IDs 0..35; distinct from normalized SpellBook
 	NativeCommandResistances     map[int]int                 // verified class raw multiplier; nil means native command effects stay closed

@@ -48,6 +48,26 @@ func TestDlgShortLineSinglePage(t *testing.T) {
 	}
 }
 
+// TestDlgWrapDoesNotSplitASCIIWord 2026-08-16 ch02 rumor_ch02 即時驗證抓到的真實 bug:
+// 「聽說這裡有不擺在檯面上的好東西…（酒店前按Shift+F1鍵）」這句話原本會把
+// "Shift+F1" 從中間切成 "Shi"/"ft+F1鍵" 兩行(純 rune 計數換行,沒有考慮英數字
+// 不該被從中間斷開)。這裡直接用一個會踩到同一個 cut point 的合成字串重現最小案例。
+func TestDlgWrapDoesNotSplitASCIIWord(t *testing.T) {
+	dl := battle.DialogLine{Speaker: 0, Text: "聽說這裡有不擺在檯面上的好東西…(酒店前按Shift+F1鍵)"}
+	g := &Game{}
+	lines := g.dlgWrap(dl)
+	for i, line := range lines {
+		if strings.Contains(line, "Shi") && !strings.Contains(line, "Shift") {
+			t.Fatalf("line %d 把 ASCII 單字從中間切開: %q (全部行=%v)", i, line, lines)
+		}
+	}
+	joined := strings.Join(lines, "")
+	want := "『" + toFullWidth(dl.Text) + "』"
+	if joined != want {
+		t.Fatalf("換行後全文未保全:\n got=%q\nwant=%q", joined, want)
+	}
+}
+
 func TestDlgPaginationStartsSmoothScrollAndBlocksSkip(t *testing.T) {
 	long := battle.DialogLine{Speaker: 0, Text: "這是一段需要分頁顯示的長對白,按下確認後應該平滑往上捲動,並且要在第二頁完整顯示剩餘內容後才能換句。"}
 	g := Game{dialog: []battle.DialogLine{long}}

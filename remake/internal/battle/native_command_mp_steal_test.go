@@ -15,11 +15,11 @@ func mpStealBook() []NativeCommandRecord {
 }
 
 func TestExecuteNativeCommandMPStealMovesMPOnHit(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 20, MaxMP: 100}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 20, MaxMP: 100, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, ClassID: 5, HP: 100, MP: 100}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: mpStealBook()}
 
-	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 1 || !got[0].Hit || got[0].Stolen != 40 {
 		t.Fatalf("result=%#v err=%v", got, err)
 	}
@@ -35,11 +35,11 @@ func TestExecuteNativeCommandMPStealMovesMPOnHit(t *testing.T) {
 }
 
 func TestExecuteNativeCommandMPStealClampsToTargetMPAndCasterMaxMP(t *testing.T) {
-	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 20, MaxMP: 25}
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, MP: 20, MaxMP: 25, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, ClassID: 5, HP: 100, MP: 5}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: mpStealBook()}
 
-	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 1 || !got[0].Hit {
 		t.Fatalf("result=%#v err=%v", got, err)
 	}
@@ -61,11 +61,11 @@ func TestExecuteNativeCommandMPStealEnemyPaysRawMPCost(t *testing.T) {
 	// TargetCode 0 always requires an Enemy-camp target regardless of the
 	// caster's own camp (NativeCommandTargetMatches); an Enemy caster still
 	// needs an Enemy-camp target here to reach a valid candidate at all.
-	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, HP: 100, MP: 20, MaxMP: 100}
+	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, HP: 100, MP: 20, MaxMP: 100, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, ClassID: 5, HP: 100, MP: 100}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: mpStealBook()}
 
-	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)))
+	got, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)), nil)
 	if err != nil || len(got) != 1 || !got[0].Hit {
 		t.Fatalf("result=%#v err=%v", got, err)
 	}
@@ -79,7 +79,7 @@ func TestExecuteNativeCommandMPStealFailsClosedOnInsufficientMP(t *testing.T) {
 	target := &Unit{Camp: Own, OnField: true, X: 1, Y: 0, ClassID: 5, HP: 100, MP: 30}
 	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: mpStealBook()}
 
-	if _, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1))); err == nil || target.MP != 30 || actor.Acted {
+	if _, err := st.ExecuteNativeCommandMPSteal(actor, target, rand.New(rand.NewSource(1)), nil); err == nil || target.MP != 30 || actor.Acted {
 		t.Fatalf("insufficient-MP cast mutated state: target.MP=%d acted=%v err=%v", target.MP, actor.Acted, err)
 	}
 }

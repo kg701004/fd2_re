@@ -159,9 +159,46 @@ func ParseLMI1(data []byte) ([]LMI1Entry, error) {
 		// end. Native 0x4e916 reads until its width×height destination loop is
 		// full, and a repeat may cross the next directory offset. Bound only at
 		// the containing resource, matching that behavior.
-		pixels, err := decodeLMI1Pixels(data[off+4:], w*h)
-		if err != nil {
-			return nil, fmt.Errorf("fdother: LMI1 entry %d: %w", i, err)
+		//
+		// 2026-08-16: some entries (confirmed for FDOTHER#14's church-menu
+		// service icons, entries 3-10, 24x20 each) are stored as RAW
+		// uncompressed pixel arrays, not RLE -- their directory slot is
+		// exactly 4+w*h bytes, leaving zero room for compression. Running
+		// these through decodeLMI1Pixels anyway "succeeds" (the RLE codec is
+		// byte-general enough to consume any stream without erroring) but
+		// produces garbage: raw pixel bytes above 0xc0 get misread as repeat
+		// control bytes. That garbage was visually confirmed live (see
+		// docs/knowledge-base/58-remake-live-verification-log.md, ch02
+		// church_ch02) and root-caused by re-decoding these entries as raw
+		// bytes instead, which produced clean, recognizable icon art. The
+		// slot-size-matches-payload-size check below is a general detector
+		// for this raw-storage case, not a special case for entries 3-10
+		// specifically -- it also flagged resource #14 entry 2 (6x99) as raw
+		// by the same signature, consistent with this being a real encoding
+		// distinction in the format rather than a one-off.
+		//
+		// budget==w*h alone is ambiguous, not just a raw-storage signature:
+		// it's also exactly what a genuinely-RLE-encoded entry looks like
+		// when it happens to have zero compression benefit (e.g. a run
+		// command costs 2 bytes regardless of run length, so a 2-pixel
+		// single-run entry -- see TestParseLMI1NativeCodec's synthetic
+		// {0xc2, 7} entry -- also has budget==w*h==2). Real icon art with any
+		// flat color regions virtually never has *zero* RLE savings once
+		// there are enough pixels for a run to pay for itself; only trust
+		// the raw-storage signature above a size floor comfortably beyond
+		// where that coincidence is plausible (confirmed cases are
+		// 480/594 px; small synthetic/edge-case entries like the 2px test
+		// stay on the RLE path as before).
+		const lmi1RawDetectionMinPixels = 32
+		var pixels []byte
+		if budget := end - (off + 4); budget == w*h && w*h >= lmi1RawDetectionMinPixels {
+			pixels = append([]byte(nil), data[off+4:off+4+w*h]...)
+		} else {
+			var err error
+			pixels, err = decodeLMI1Pixels(data[off+4:], w*h)
+			if err != nil {
+				return nil, fmt.Errorf("fdother: LMI1 entry %d: %w", i, err)
+			}
 		}
 		entries[i] = LMI1Entry{Width: w, Height: h, Pixels: pixels}
 		previous = off

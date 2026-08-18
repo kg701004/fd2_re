@@ -18,7 +18,7 @@ type NativeCommandHealResult struct {
 // targets, that record's MP debit, and per-target 0x1C916 restore using the
 // same record's u16 damage field. It remains fail-closed outside this exact
 // bounded family and does not attach its renderer/SFX/UI.
-func (s *State) ExecuteNativeCommandHeal(actor, confirmed *Unit, commandID int, rng *rand.Rand) ([]NativeCommandHealResult, error) {
+func (s *State) ExecuteNativeCommandHeal(actor, confirmed *Unit, commandID int, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandHealResult, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command heal state/rng")
 	}
@@ -30,7 +30,7 @@ func (s *State) ExecuteNativeCommandHeal(actor, confirmed *Unit, commandID int, 
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}

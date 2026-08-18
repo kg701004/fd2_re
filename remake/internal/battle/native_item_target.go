@@ -38,15 +38,32 @@ func NativeItemTargetPlanFromRow(row []byte) (NativeItemTargetPlan, error) {
 // around 0x115b6: actor-origin first-stage candidates, confirmed-candidate
 // validation, then confirmed-origin final effect targets.  The caller must
 // provide a row-derived plan and the original grid flags.
+//
+// Unlike NativeCommandEffectTargets, TargetCode here is NOT reflected
+// through the acting unit's raw camp selector. A selector-relative flip was
+// tried on 2026-08-17 (mirroring the proven spell/command fix) and then
+// reverted the same day: it broke every real campaign item AI winner
+// (ch27-29's itemID 79, TargetCode row+0x15==0, cast by an Enemy-selector
+// actor onto an Enemy-camp target -- exactly the same-team heal case
+// TargetCode 0's unflipped meaning, camp==Enemy, already matches). The
+// item-scoring path (ScoreNativeAI1567E, 0x1567e) does its own selector flip
+// on a DIFFERENT row byte (+0x11) for its coarser preselection scan; nothing
+// establishes that 0x1bbdc's execution-time TargetCode (+0x15, read here via
+// NativeItemTargetPlanFromRow) receives the same selector-relative treatment
+// at the disassembly level, and the only production data available says it
+// does not. selector is passed through NativeAttackCandidates as a fixed
+// no-op (native ABI Own=2) until real evidence says otherwise.
 func NativeItemEffectTargets(w, h int, actor, confirmed *Unit, plan NativeItemTargetPlan, flags []byte, units []*Unit) ([]*Unit, error) {
 	rawComplete := nativeTargetRosterRawComplete(units)
 	if !nativeTargetActorUsable(actor, rawComplete) || !nativeTargetActorUsable(confirmed, rawComplete) {
 		return nil, fmt.Errorf("invalid native item actor/confirmed unit")
 	}
+	const noOpSelector = 2
+	selector := noOpSelector
 	selection, err := NativeAttackCandidates(
 		w, h,
 		Cell{X: actor.X, Y: actor.Y},
-		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode,
+		plan.SelectionMode, plan.SelectionInnerMark, plan.TargetCode, selector,
 		flags, units,
 	)
 	if err != nil {
@@ -65,7 +82,7 @@ func NativeItemEffectTargets(w, h int, actor, confirmed *Unit, plan NativeItemTa
 	return NativeAttackCandidates(
 		w, h,
 		Cell{X: confirmed.X, Y: confirmed.Y},
-		plan.EffectMode, 0, plan.TargetCode,
+		plan.EffectMode, 0, plan.TargetCode, selector,
 		flags, units,
 	)
 }

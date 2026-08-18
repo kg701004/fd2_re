@@ -616,6 +616,22 @@ func (sc *Scenario) PartyUnits(fallback []Cell) []*Unit {
 		// Party constructors use FDFIELD camp code 2 for native record +6.
 		u.NativeRecordByte6 = 2
 		u.HasNativeRecordByte6 = true
+		// The JOIN/class-table constructor (native_join_constructor.go) never
+		// writes record+0x34/0x35/0x36 -- those three bytes are exclusive to
+		// the FDFIELD-driven enemy/NPC deployment constructor (mode nibble +
+		// spawn-return X/Y, both consumed only by the 0x13A9F AI dispatcher,
+		// which never runs for Own camp). A freshly materialized party
+		// member's record slot is otherwise zero-initialized, so 0 here
+		// matches the original binary's actual state, not a guess.
+		u.NativeRecordByte34, u.HasNativeRecordByte34 = 0, true
+		u.NativeRecordByte35, u.HasNativeRecordByte35 = 0, true
+		u.NativeRecordByte36, u.HasNativeRecordByte36 = 0, true
+		// record+0x42/+0x46 (max HP/MP) are written by every constructor from
+		// the unit's own max stats at spawn time (confirmed via the FDFIELD
+		// constructor's decompile: current and max HP/MP are the same value
+		// on a fresh spawn) -- not FDFIELD-exclusive like +0x34..+0x36 above.
+		u.NativeRecordWord42, u.HasNativeRecordWord42 = uint16(u.MaxHP), true
+		u.NativeRecordWord46, u.HasNativeRecordWord46 = uint16(u.MaxMP), true
 		if flags, flagErr := NativeInventoryFlagsFromSource(pm.InventorySlots); flagErr == nil {
 			u.NativeInventoryFlags = flags
 		}

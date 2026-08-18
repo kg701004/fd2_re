@@ -318,7 +318,7 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 		t.Fatal("binary map timing advance rejected")
 	}
 	runtime := nativeMapFrameRuntime{HUD: indexedmap.NativeMapHUDInput{}}
-	got, err := buildNativeMapFrameInput(assets, field, state, runtime, indexedmap.DefaultNativeMapViewport)
+	got, err := buildNativeMapFrameInput(assets, field, state, runtime, indexedmap.DefaultNativeMapViewport, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -333,15 +333,39 @@ func TestBuildNativeMapFrameInputUsesOnlyRawMaterializedState(t *testing.T) {
 	}
 }
 
+// TestBuildNativeMapFrameInputThreadsSkipTerrain proves the skipTerrain
+// argument actually reaches indexedmap.FrameInput.SkipTerrain -- the one
+// field that lets a caller substitute its own HD terrain layer -- and that
+// leaving it false (every existing caller/test) keeps the field at its zero
+// value, matching original ComposeFrame behavior exactly.
+func TestBuildNativeMapFrameInputThreadsSkipTerrain(t *testing.T) {
+	assets, field, state := completeNativeMapFrameFixture(t)
+	runtime := nativeMapFrameRuntime{HUD: indexedmap.NativeMapHUDInput{}}
+	on, err := buildNativeMapFrameInput(assets, field, state, runtime, indexedmap.DefaultNativeMapViewport, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !on.Frame.SkipTerrain {
+		t.Fatal("skipTerrain=true did not reach Frame.SkipTerrain")
+	}
+	off, err := buildNativeMapFrameInput(assets, field, state, runtime, indexedmap.DefaultNativeMapViewport, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if off.Frame.SkipTerrain {
+		t.Fatal("skipTerrain=false unexpectedly set Frame.SkipTerrain")
+	}
+}
+
 func TestBuildNativeMapFrameInputRejectsControlDriftAndMissingRawRoster(t *testing.T) {
 	assets, field, state := completeNativeMapFrameFixture(t)
 	field.NativeTerrainControl[0] = 1
-	if _, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport); err == nil {
+	if _, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport, false); err == nil {
 		t.Fatal("accepted editable/native control-table drift")
 	}
 	field.NativeTerrainControl[0] = 0
 	state.Units[0].HasBattleFig = false
-	if got, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport); err == nil ||
+	if got, err := buildNativeMapFrameInput(assets, field, state, nativeMapFrameRuntime{}, indexedmap.DefaultNativeMapViewport, false); err == nil ||
 		got.Frame.Units != nil || got.Frame.ForegroundUnits != nil {
 		t.Fatalf("partial frame=%+v err=%v", got.Frame, err)
 	}

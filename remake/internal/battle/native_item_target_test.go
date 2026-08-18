@@ -23,7 +23,7 @@ func TestNativeItemTargetPlanFromRowPreserves1BBDCCallFields(t *testing.T) {
 }
 
 func TestNativeItemEffectTargetsUsesConfirmedSecondStageOrigin(t *testing.T) {
-	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, MaxHP: 10, OnField: true}
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, MaxHP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	confirmed := &Unit{Camp: Enemy, X: 2, Y: 0, HP: 10, MaxHP: 10, OnField: true}
 	second := &Unit{Camp: Enemy, X: 3, Y: 0, HP: 10, MaxHP: 10, OnField: true}
 	units := []*Unit{actor, confirmed, second}
@@ -35,7 +35,7 @@ func TestNativeItemEffectTargetsUsesConfirmedSecondStageOrigin(t *testing.T) {
 }
 
 func TestNativeItemEffectTargetsRejectsUnconfirmedCandidate(t *testing.T) {
-	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, MaxHP: 10, OnField: true}
+	actor := &Unit{Camp: Own, X: 0, Y: 0, HP: 10, MaxHP: 10, OnField: true, HasNativeRecordByte6: true, NativeRecordByte6: 2}
 	tooFar := &Unit{Camp: Enemy, X: 3, Y: 0, HP: 10, MaxHP: 10, OnField: true}
 	plan := NativeItemTargetPlan{SelectionMode: 1, EffectMode: 1, TargetCode: 0}
 	if _, err := NativeItemEffectTargets(4, 1, actor, tooFar, plan, make([]byte, 4), []*Unit{actor, tooFar}); err == nil {

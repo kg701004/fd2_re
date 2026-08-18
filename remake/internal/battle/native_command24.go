@@ -56,14 +56,14 @@ func ResolveNativeCommand24Damage(actorAP, targetDP int, rng *rand.Rand) (amount
 // The original temporarily restores HP while showing its multi-step effect;
 // this state-only slice applies the final equivalent HP delta once.  It does
 // not claim the indexed presentation, SFX, timing, or AI dispatcher alias.
-func (s *State) ExecuteNativeCommand24(actor, confirmed *Unit, rng *rand.Rand) ([]NativeCommand24Damage, error) {
-	return s.ExecuteNativeCommandDerivedStrike(actor, confirmed, 24, rng)
+func (s *State) ExecuteNativeCommand24(actor, confirmed *Unit, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommand24Damage, error) {
+	return s.ExecuteNativeCommandDerivedStrike(actor, confirmed, 24, rng, scoredDestination)
 }
 
 // ExecuteNativeCommandDerivedStrike is the state-only 0x276EC family with
 // proven player dispatches 24, 28, 29 and 31. ID30 has its own special
 // cursor-selector entry point below; IDs32..35 use 0x27FC9 and stay closed.
-func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, commandID int, rng *rand.Rand) ([]NativeCommand24Damage, error) {
+func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, commandID int, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommand24Damage, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native derived-strike state/rng")
 	}
@@ -79,7 +79,7 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,11 @@ func (s *State) ExecuteNativeCommand30(actor *Unit, savedCursor, confirmedCursor
 	if err != nil {
 		return nil, err
 	}
-	selection, err := NativeCommandTargets(s.W, s.H, Cell{X: actor.X, Y: actor.Y}, record.SelectionMode, record.TargetCode, flags, s.Units)
+	selector, err := nativeActorSelector(actor)
+	if err != nil {
+		return nil, err
+	}
+	selection, err := NativeCommandTargets(s.W, s.H, Cell{X: actor.X, Y: actor.Y}, record.SelectionMode, record.TargetCode, selector, flags, s.Units)
 	if err != nil {
 		return nil, err
 	}

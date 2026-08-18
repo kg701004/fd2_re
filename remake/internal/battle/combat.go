@@ -184,9 +184,20 @@ func (s *State) aiApproachPath(u, target *Unit) []Cell {
 }
 
 // aiActUnit 是重製端既有的正規化近似，不代表原版 0x14237 的完整候選、
-// 地形、優先級與同分契約。
+// 地形、優先級與同分契約完整取代——**2026-08-14**:「原地是否已有可攻擊目標」
+// 現在優先走 disassembly-confirmed 的 native-accurate composer
+// (`ScoreNativeAI14237`,見 native_ai_14237.go/native_ai_14237_apply.go),
+// 只有這個單位缺完整 raw provenance(裝備/地形/移動成本資料不全)時才退回
+// 下面的 `aiTargets`/`estDamage` normalized 近似,不 regress 既有行為。
+// 「原地沒有目標時要往哪裡移動」已依單位真實的 `record+0x34&0xf` mode 值分流到
+// mode 0(0x14121→0x13E9C→0x13FD4)或 mode 1(0x14121→0x13FD4,無最近敵人
+// fallback)的 disassembly-confirmed 原生版本,見 ApplyNativeAIMovementFallback／
+// ApplyNativeAIMode1MovementFallback。兩者合計覆蓋 33 張地圖裡約 58%
+// 的 AI 單位(mode0=1063、mode1=34,共 1887 筆有 raw provenance);其餘
+// mode(2/3/4/5/7/8/9/10)與缺 raw provenance 的單位仍退回舊的最近可達格近似。
 func (s *State) aiActUnit(u *Unit) {
-	// 找重製端的近似攻擊目標；低傷害時仍保留最近單位作為移動目標。
+	// 找重製端的近似攻擊目標；低傷害時仍保留最近單位作為移動目標,供下面
+	// native 攻擊決策不可用、或 native 已權威判定無攻擊目標時的移動 fallback 使用。
 	best, moveTarget := s.aiTargets(u)
 	if moveTarget == nil {
 		return
@@ -194,27 +205,71 @@ func (s *State) aiActUnit(u *Unit) {
 	if best == nil {
 		best = moveTarget
 	}
+	// 1. native-accurate 物理評分 composer 優先:ok=true 且 attacked=true 表示
+	// 已經移動+攻擊完畢,這個單位的回合直接結束;ok=true 但 attacked=false 表示
+	// native 已權威搜過所有可達落點、判定沒有值得打的物理攻擊,跳過下面 2 的
+	// normalized 立即攻擊判定,但仍走既有的移動 fallback(3);ok=false 表示
+	// 這個單位缺完整 native 資料,完全退回原本 2/3 的既有邏輯,不 regress。
+	attacked, nativeAttackOK := s.ApplyNativeAI14237PhysicalAttack(u)
+	if attacked {
+		return
+	}
 	// 2. 已在攻擊範圍內(InAttackRange 依武器射程判定,doc32) → 直接打
-	if s.InAttackRange(u, best.X, best.Y) && s.estDamage(u, best) > 2 {
+	if !nativeAttackOK && s.InAttackRange(u, best.X, best.Y) && s.estDamage(u, best) > 2 {
 		s.Attack(u, best)
 		return
 	}
 	// 3. 移到「能攻擊到 best 的最近可達格」,再打
-	reach := s.Reachable(u)
-	var dstX, dstY = u.X, u.Y
-	bestD := manhattan(u.X, u.Y, best.X, best.Y)
-	for c := range reach {
-		if s.UnitAt(c.X, c.Y) != nil {
-			continue
-		}
-		d := manhattan(c.X, c.Y, best.X, best.Y)
-		if d < bestD {
-			bestD = d
-			dstX, dstY = c.X, c.Y
-		}
+	// 2026-08-14: 這一步(0x14EF0 判定原地無立即行動後的移動 fallback)已有
+	// disassembly-confirmed 的原生版本(0x14121 blocked-cell 搜索 → 0x13E9C
+	// 最近相反陣營單位 → 0x13FD4 原地回復),見 native_ai_movement_fallback.go。
+	// 只要這個單位有完整 raw provenance 就優先用原生版；缺資料的單位(如
+	// 手動建構的測試 fixture 或舊資產)保留原本的最近可達格近似,不 regress。
+	_, nativeOK := s.ApplyNativeAIMovementFallback(u)
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode1MovementFallback(u)
 	}
-	u.SetMapPlacement(dstX, dstY, u.Dir)
-	if best != moveTarget && s.InAttackRange(u, best.X, best.Y) {
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode2MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode3MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode4MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode5MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode7MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode8MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode9MovementFallback(u)
+	}
+	if !nativeOK {
+		_, nativeOK = s.ApplyNativeAIMode10MovementFallback(u)
+	}
+	if !nativeOK {
+		reach := s.Reachable(u)
+		var dstX, dstY = u.X, u.Y
+		bestD := manhattan(u.X, u.Y, best.X, best.Y)
+		for c := range reach {
+			if s.UnitAt(c.X, c.Y) != nil {
+				continue
+			}
+			d := manhattan(c.X, c.Y, best.X, best.Y)
+			if d < bestD {
+				bestD = d
+				dstX, dstY = c.X, c.Y
+			}
+		}
+		u.SetMapPlacement(dstX, dstY, u.Dir)
+	}
+	if !nativeAttackOK && best != moveTarget && s.InAttackRange(u, best.X, best.Y) {
 		s.Attack(u, best)
 	}
 	u.Acted = true
@@ -258,10 +313,33 @@ type AIPlan struct {
 	Path    []Cell // 含起點;len>=2 = 要移動(引擎播行走動畫)
 	Target  *Unit  // 到位後攻擊目標(nil = 僅移動/待機)
 	SpellID int    // 原版 spell command 的資料欄位；-1 表示本計畫不施法
+	// Destination is the exact record+3 cell 0x1598a scoring chose for
+	// SpellID (NativeAISpellCandidate.X/Y, i.e. spell.PositiveWinner.X/Y in
+	// nativeAIThreeScorePlan) -- ground truth, not a reconstruction. Threaded
+	// straight to NativeCommandEffectTargets by executeNativeCommandTarget so
+	// execution doesn't have to rediscover a destination that scoring already
+	// computed and validated. nil when SpellID<0, or for plans not sourced
+	// from the native spell-scoring path (see #115 in
+	// 58-remake-live-verification-log.md for why this exists: a target only
+	// reachable via a SelectionMode-internal intermediate cell -- not
+	// directly within SelectionMode of actor -- has no way to have that
+	// intermediate cell reconstructed correctly from confirmed alone when
+	// more than one such cell could work).
+	Destination *Cell
+	// ItemID/ItemSlot select the AI's native item command (see
+	// nativeAIThreeScorePlan/ApplyNativeAIItemCommand), 2026-08-15. ItemID
+	// -1 means this plan does not use an item; ItemSlot (the raw inventory
+	// slot, 0..7) is only meaningful when ItemID>=0.
+	ItemID, ItemSlot int
 	// NativeScoredCommands preserves raw command indices that passed the
 	// verified command-mask/+0x27/MP gates at 0x1598a. It is evidence only: planner code
 	// must still resolve target, score, presentation, and execution separately.
 	NativeScoredCommands []int
+	// NativeSourced is true when ScoreNativeAI14237 (the disassembly-
+	// confirmed native physical-attack composer) produced Path/Target,
+	// rather than the aiTargets/estDamage normalized approximation below.
+	// Debug/verification only -- gameplay code must not branch on it.
+	NativeSourced bool
 }
 
 func (s *State) nativeAIPlanScoredCommands(u *Unit) []int {
@@ -356,21 +434,43 @@ func (s *State) AISpellCandidates(caster *Unit, spell Spell) []*Unit {
 }
 
 // NextAIPlan 找下一個未行動的 AI 單位並產生重製端近似計畫
-// （不執行、不設 Acted）；它不是原版 0x14237/0x1548e 的替代實作。
+// （不執行、不設 Acted）；它不是原版 0x14237/0x1548e 的替代實作——
+// **2026-08-14**:native-accurate 的完整 0x14237 composer(`ScoreNativeAI14237`,
+// 見 native_ai_14237.go/native_ai_14237_apply.go 的 `nativeAI14237Plan`)
+// 現在優先於下面的 `aiTargets`/`estDamage` normalized 近似:單位有完整 raw
+// provenance(裝備/地形/移動成本資料)時直接採用 native 決策,資料不全時
+// (ok=false)完全退回既有邏輯,不 regress。這是本函式(不是已無人呼叫的
+// `aiActUnit`)才是真正驅動 cmd/fd2 敵方回合演出的路徑,見 main.go 的
+// aiStep()/NextAIPlan() 呼叫鏈。
+//
+// **2026-08-15**:改呼叫 `nativeAIThreeScorePlan`(見
+// native_ai_three_score_plan.go),它重現 0x14EF0 完整的三管線決策(物理
+// 0x14237 + 法術 0x1598A + 道具 0x1567E + `SelectNativeAIThreeScoreWinner`
+// 的勝出者判定),取代只跑物理管線的 `nativeAI14237Plan` 直接呼叫——後者仍
+// 存在,被新函式內部呼叫。ok=true/plan=nil 現在代表「三個管線都判定不值得
+// 行動」,語意涵蓋原本「物理沒有值得打的目標」的情況,下面的 fallback 分支
+// 不需變動。
 func (s *State) NextAIPlan() *AIPlan {
 	for _, u := range s.Units {
 		if !u.OnField || !u.Alive() || u.Camp == Own || u.Acted || u.Paralyzed {
 			continue
 		}
+		nativePlan, nativeOK := s.nativeAIThreeScorePlan(u)
+		if nativeOK && nativePlan != nil {
+			return nativePlan
+		}
+		// nativeOK && nativePlan==nil: native 已權威判定原地/可達範圍內沒有值得打
+		// 的物理攻擊,下面只借 aiTargets 找移動用的 moveTarget,不採用它的攻擊判斷
+		// (best/estDamage),避免 normalized 近似在 native 判過「不值得打」後又打。
 		best, moveTarget := s.aiTargets(u)
 		if moveTarget == nil {
-			return &AIPlan{U: u, SpellID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
+			return &AIPlan{U: u, SpellID: -1, ItemID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
 		}
-		if best == nil {
-			return &AIPlan{U: u, Path: s.aiApproachPath(u, moveTarget), SpellID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
+		if nativeOK || best == nil {
+			return &AIPlan{U: u, Path: s.aiApproachPath(u, moveTarget), SpellID: -1, ItemID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
 		}
 		if s.InAttackRange(u, best.X, best.Y) {
-			return &AIPlan{U: u, Target: best, SpellID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
+			return &AIPlan{U: u, Target: best, SpellID: -1, ItemID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
 		}
 		reach := s.Reachable(u)
 		dstX, dstY := u.X, u.Y
@@ -385,7 +485,7 @@ func (s *State) NextAIPlan() *AIPlan {
 				dstX, dstY = c.X, c.Y
 			}
 		}
-		p := &AIPlan{U: u, Path: s.Path(u, dstX, dstY), SpellID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
+		p := &AIPlan{U: u, Path: s.Path(u, dstX, dstY), SpellID: -1, ItemID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
 		// 到位後若可攻擊 best,帶上目標(引擎走完動畫再結算)
 		du, dv := dstX-best.X, dstY-best.Y
 		if du < 0 {

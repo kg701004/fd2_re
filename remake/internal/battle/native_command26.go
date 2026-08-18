@@ -26,7 +26,7 @@ type NativeCommandApplicationResult struct {
 // rolled damage 9. A third draw writes rand()%4+2 to +0x27 (ID22), +0x25
 // (ID26) or +0x26 (ID27). It intentionally does not map any offset onto the
 // legacy named status approximation.
-func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandID int, rng *rand.Rand) ([]NativeCommandApplicationResult, error) {
+func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandID int, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandApplicationResult, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command application state/rng")
 	}
@@ -49,7 +49,7 @@ func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandI
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}

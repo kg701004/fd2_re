@@ -276,6 +276,16 @@ func (g *Game) startNativeBattleSpawnIntro(
 	if g.st == nil || call.RawPlacementGate == nil || call.FollowingActing == nil {
 		return errors.New("native battle intro state/call unavailable")
 	}
+	// 2026-08-13 修復:跟 beatStart 的 "spawn_intro" 是同一種洞(見 main.go 該處
+	// 註解)——這裡先前沒有任何 nativeMapAssetsAvailable 前置檢查,沒有 FDOTHER.DAT
+	// 的玩家(常見情況)走到 ch01 自己腳本化的 event1/event2 增援波次時,下面
+	// buildNativeIndexedTransitionInputForState 會因原生素材不可用而失敗,
+	// 呼叫端 finishBattleEventWithError 只是清掉 g.battleEvent——整批增援敵人
+	// 就這樣悄悄消失,不會卡死但遊戲內容跑錯。跟過場那次一樣,不可用時退回
+	// 陽春但保證能動的路徑:直接把群組加進戰場,不播原生登場動畫。
+	if !nativeMapAssetsAvailable(g.nativeMapAssets) {
+		return g.startPlainBattleSpawnIntroFallback(action, call, then)
+	}
 	oldCount := len(g.st.Units)
 	candidate, err := cloneNativeBattleSpawnState(g.st)
 	if err != nil {
@@ -331,6 +341,42 @@ func (g *Game) startNativeBattleSpawnIntro(
 	g.st.NativeUnitPixelShiftState = candidate.NativeUnitPixelShiftState
 	g.st.HasNativeMapBinaryTimingState = candidate.HasNativeMapBinaryTimingState
 	g.spawnIntroTransition = job
+	return nil
+}
+
+// startPlainBattleSpawnIntroFallback mirrors beatStart's "spawn_intro"
+// plain-spawn fallback for the mid-battle scripted-event case: append the
+// group directly onto the live g.st (no clone/preflight, no VGA/palette
+// animation pass), then still run the scripted post-spawn acting so the
+// reinforcement wave behaves correctly afterward instead of silently being
+// dropped. loadNativeBattleFollowingActing reads g.sc.NativeActingResources
+// (scenario-authored JSON), not g.nativeMapAssets, so it works the same
+// with or without native FDOTHER.DAT assets.
+func (g *Game) startPlainBattleSpawnIntroFallback(
+	action battle.Action,
+	call battle.NativeSpawnCall,
+	then func(),
+) error {
+	oldCount := len(g.st.Units)
+	appended, err := g.st.AppendGroupWithNativePlacement(call.Group, byte(*call.RawPlacementGate))
+	if err != nil {
+		return err
+	}
+	if appended <= 0 || len(g.st.Units) != oldCount+appended {
+		return errors.New("native battle intro fallback append boundary unavailable")
+	}
+	camp := battle.Enemy
+	for _, unit := range g.st.Units[oldCount:] {
+		if action.Camp != "" {
+			unit.Camp = camp
+		}
+		unit.Acted = !action.ActImmediately
+	}
+	acting, err := g.loadNativeBattleFollowingActing(call.FollowingActing, len(g.st.Units))
+	if err != nil {
+		return err
+	}
+	g.startNativeBattleFollowingActing(acting, then)
 	return nil
 }
 

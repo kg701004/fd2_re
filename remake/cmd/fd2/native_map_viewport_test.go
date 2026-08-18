@@ -1,8 +1,14 @@
 package main
 
 import (
+	"image"
+	"image/png"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/indexedmap"
 )
@@ -193,5 +199,173 @@ func TestLayoutPicksAndCachesNativeMapViewport(t *testing.T) {
 	}
 	if g.nativeMapViewport != indexedmap.DefaultNativeMapViewport {
 		t.Fatalf("nativeMapViewport after a real size change=%+v, want DefaultNativeMapViewport", g.nativeMapViewport)
+	}
+}
+
+// TestHasHDNativeTerrainReflectsLoadedTileCellScale proves hasHDNativeTerrain
+// tracks g.tileCellScale (loadMap's own detection, see
+// TestTileCellScaleForDetectsUpscaledTilesets) rather than re-deriving
+// anything itself, so the two can never disagree.
+func TestHasHDNativeTerrainReflectsLoadedTileCellScale(t *testing.T) {
+	g := &Game{m: &MapData{Cols: 16, TileW: 24, TileH: 24}}
+	if g.hasHDNativeTerrain() {
+		t.Fatal("nil tileset must report no HD terrain")
+	}
+	g.tileset = ebiten.NewImage(16*24, 18*24) // native-resolution sheet
+	g.tileCellScale = 1
+	if g.hasHDNativeTerrain() {
+		t.Fatal("tileCellScale=1 reported as HD")
+	}
+	g.tileset = ebiten.NewImage(16*24*4, 18*24*4) // 4x-upscaled sheet
+	g.tileCellScale = 4
+	if !g.hasHDNativeTerrain() {
+		t.Fatal("tileCellScale=4 not detected as HD")
+	}
+}
+
+// TestTileCellScaleForDetectsUpscaledTilesets proves the exact formula
+// loadMap uses to detect an upscaled tileset.png without needing real
+// map.json/tileset.png fixtures on disk.
+func TestTileCellScaleForDetectsUpscaledTilesets(t *testing.T) {
+	cases := []struct {
+		name                string
+		tsW, cols, tileW    int
+		want                int
+	}{
+		{"native 16 cols * 24px", 384, 16, 24, 1},
+		{"4x upscale of the same sheet", 1536, 16, 24, 4},
+		{"2x upscale", 768, 16, 24, 2},
+		{"narrower than one native row is not an upscale", 100, 16, 24, 1},
+		{"cols=0 guards against divide by zero", 384, 0, 24, 1},
+		{"tileW=0 guards against divide by zero", 384, 16, 0, 1},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := tileCellScaleFor(c.tsW, c.cols, c.tileW); got != c.want {
+				t.Fatalf("tileCellScaleFor(%d,%d,%d)=%d, want %d", c.tsW, c.cols, c.tileW, got, c.want)
+			}
+		})
+	}
+}
+
+func writeTestPNG(t *testing.T, path string, w, h int) {
+	t.Helper()
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := png.Encode(f, image.NewRGBA(image.Rect(0, 0, w, h))); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// awaitMapCompositeAsync blocks (with a generous test timeout) for
+// startLoadMapCompositeAsync's background goroutine to finish, since tests
+// need a synchronous result even though production code (Update()'s
+// pollMapCompositeAsync) deliberately never blocks on it.
+func awaitMapCompositeAsync(t *testing.T, ch <-chan mapCompositeAsyncResult) mapCompositeAsyncResult {
+	t.Helper()
+	select {
+	case res := <-ch:
+		return res
+	case <-time.After(5 * time.Second):
+		t.Fatal("startLoadMapCompositeAsync did not complete in time")
+		return mapCompositeAsyncResult{}
+	}
+}
+
+// TestLoadMapCompositeUsesWholeMapImageWhenPresent proves loadMap's
+// whole-map-composite detection (the seam fix: one upscaled image per map
+// instead of a per-tile grid, see startLoadMapCompositeAsync/
+// apply_hd_composite.py) measures its scale the same self-describing way
+// tileCellScaleFor does for per-tile sheets, rather than assuming a
+// hardcoded 4x.
+func TestLoadMapCompositeUsesWholeMapImageWhenPresent(t *testing.T) {
+	dir := t.TempDir()
+	m := &MapData{W: 3, H: 2, TileW: 24, TileH: 24}
+	writeTestPNG(t, filepath.Join(dir, "map_composite.png"), 3*24*4, 2*24*4)
+
+	res := awaitMapCompositeAsync(t, startLoadMapCompositeAsync(dir, m))
+	if res.img == nil {
+		t.Fatal("expected composite image to load")
+	}
+	if res.scale != 4 {
+		t.Fatalf("scale=%d, want 4", res.scale)
+	}
+}
+
+// TestLoadMapCompositeAbsentFallsBackToTileGrid proves a map with no
+// map_composite.png (most maps, until each is individually run through the
+// compose+upscale pipeline) is not an error -- Draw() must keep using the
+// existing tile-grid renderer unchanged.
+func TestLoadMapCompositeAbsentFallsBackToTileGrid(t *testing.T) {
+	dir := t.TempDir()
+	m := &MapData{W: 3, H: 2, TileW: 24, TileH: 24}
+	res := awaitMapCompositeAsync(t, startLoadMapCompositeAsync(dir, m))
+	if res.img != nil || res.scale != 0 {
+		t.Fatalf("expected nil/0 for missing composite, got %v/%d", res.img, res.scale)
+	}
+}
+
+// TestLoadMapCompositeRejectsMismatchedDimensions proves a corrupt/wrong-size
+// composite file falls back to the tile grid rather than being drawn
+// distorted or cropped.
+func TestLoadMapCompositeRejectsMismatchedDimensions(t *testing.T) {
+	dir := t.TempDir()
+	m := &MapData{W: 3, H: 2, TileW: 24, TileH: 24}
+	writeTestPNG(t, filepath.Join(dir, "map_composite.png"), 3*24*4, 2*24*4+7)
+
+	res := awaitMapCompositeAsync(t, startLoadMapCompositeAsync(dir, m))
+	if res.img != nil || res.scale != 0 {
+		t.Fatalf("expected fallback for mismatched composite, got %v/%d", res.img, res.scale)
+	}
+}
+
+// TestPollMapCompositeAsyncAppliesResultOnMainGoroutine proves
+// pollMapCompositeAsync (Update()'s per-frame hook) both does nothing when
+// no decode is in flight/not yet finished, and applies + clears the pending
+// channel once a result is available -- the mechanism that lets Draw() see
+// the HD composite a few frames after loadMap() returns, instead of
+// blocking loadMap() itself on the slow decode.
+func TestPollMapCompositeAsyncAppliesResultOnMainGoroutine(t *testing.T) {
+	g := &Game{}
+	g.pollMapCompositeAsync() // no pending channel: must be a no-op, not a panic
+
+	dir := t.TempDir()
+	m := &MapData{W: 3, H: 2, TileW: 24, TileH: 24}
+	writeTestPNG(t, filepath.Join(dir, "map_composite.png"), 3*24*4, 2*24*4)
+	ch := startLoadMapCompositeAsync(dir, m)
+	awaitMapCompositeAsync(t, ch) // drain it directly so the retest below can push straight to poll
+
+	// Re-run for real against g via a fresh channel so pollMapCompositeAsync
+	// exercises the actual field, not just the free function.
+	g.mapCompositePending = startLoadMapCompositeAsync(dir, m)
+	deadline := time.Now().Add(5 * time.Second)
+	for g.mapComposite == nil && time.Now().Before(deadline) {
+		g.pollMapCompositeAsync()
+	}
+	if g.mapComposite == nil {
+		t.Fatal("pollMapCompositeAsync never applied the finished decode")
+	}
+	if g.mapCompositePending != nil {
+		t.Fatal("pollMapCompositeAsync left mapCompositePending set after applying a result")
+	}
+	if g.mapCompositeScale != 4 {
+		t.Fatalf("mapCompositeScale=%d, want 4", g.mapCompositeScale)
+	}
+}
+
+// TestHasHDNativeTerrainReflectsLoadedMapComposite proves hasHDNativeTerrain
+// also recognizes the whole-map-composite HD source, not just the per-tile
+// tileCellScale one (see TestHasHDNativeTerrainReflectsLoadedTileCellScale).
+func TestHasHDNativeTerrainReflectsLoadedMapComposite(t *testing.T) {
+	g := &Game{m: &MapData{Cols: 16, TileW: 24, TileH: 24}}
+	if g.hasHDNativeTerrain() {
+		t.Fatal("nil tileset/composite must report no HD terrain")
+	}
+	g.mapComposite = ebiten.NewImage(16*24*4, 18*24*4)
+	if !g.hasHDNativeTerrain() {
+		t.Fatal("loaded mapComposite not detected as HD")
 	}
 }

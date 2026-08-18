@@ -43,7 +43,7 @@ type NativeCommandClearRestoreResult struct {
 // 0x22AF6 for IDs20/21. The command's own record supplies target/MP data;
 // native 0x1C916 is deliberately invoked with record10's damage field, then
 // the nonzero target raw interval is cleared. No named status is inferred.
-func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, commandID int, rng *rand.Rand) ([]NativeCommandClearRestoreResult, error) {
+func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, commandID int, rng *rand.Rand, scoredDestination *Cell) ([]NativeCommandClearRestoreResult, error) {
 	if s == nil || rng == nil {
 		return nil, fmt.Errorf("missing native command clear/restore state/rng")
 	}
@@ -64,7 +64,7 @@ func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, command
 	if err != nil {
 		return nil, err
 	}
-	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units)
+	targets, err := NativeCommandEffectTargets(s.W, s.H, actor, confirmed, record.SelectionMode, record.EffectMode, record.TargetCode, flags, s.Units, scoredDestination)
 	if err != nil {
 		return nil, err
 	}
