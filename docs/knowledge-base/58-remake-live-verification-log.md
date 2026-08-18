@@ -2896,3 +2896,9 @@ CS=0170 DS=0178 ES=0178 SS=0178
 **已知限制**：這次的live selector `0170`/`0178`base=0、與續九誤判「flat selector 0038讀回全部0」不是同一回事（0038從一開始就不是正確的選擇子；`0170`才是）；且DOSBox-X的`T`（單步）指令在這個build上不會真正推進（畫面上EIP完全不變、`cc`計數器也不動），符合先前開機時LOG就已經印出的已知警告「Single-stepping may not work correctly with Dynamic core」——這代表若未來要繼續往下追蹤`0x24d22`/`0x11d40`等後續位址，應該用「多設幾個獨立breakpoint＋分別RUN」而非依賴單步，或改用Normal core重開。
 
 **方法論總結（更新）**：live delta必須每次重新用GDT＋byte-signature／MEMDUMPBIN推導，不可沿用任何舊session記錄的數值（即使選擇子數字剛好相同也只是巧合）；`-break-start`路線的real/protected mode時機bug從未解決、但完全可以繞過不管——只要在遊戲已經進入protected mode後的任何一個穩定暫停點（本次用標題選單畫面＋Alt+Pause）先設好中斷點，再正常跑到目標流程即可。task #118 的核心目標（live驗證 `0x24618`）**首次達成**。
+
+**額外嘗試 `0x24d22`/`0x11d40`（結果：確認範圍不對，非本次任務可完成）**：
+- 用同一個已驗證正確的global delta（`0x19C000`，從`0x24618`命中時的真實EIP`0x1C0618`反推，比先前MEMDUMPBIN signature search算出的`0x19A900`更準——後者差了`0x1700`，原因是舊dump是在標題畫面（ch23 overlay尚未載入）時做的，比對到的是當時記憶體裡剛好也符合prologue特徵的別的程式碼，不是真正的`FUN_000336a0`）算出 `0x24c82`/`0x24cf3`/`0x24cc9`（`0x24d22`/`0x11d40`的兩個call site）的即時位址，並在battle已進行中（overlay已載入）重新dump記憶體逐byte驗證無誤。
+- 設好三個中斷點、`RUN`，把整個戰前對話按到底（40+次Enter）、進入戰鬥地圖互動狀態、再嘗試方向鍵＋Enter——**三個中斷點全部沒有命中**。
+- 查 `docs/knowledge-base/91-worklist.md` 才發現：`0x24d22`/`0x11d40` 實際上屬於 **`postbattle_ch23_persist`**（戰鬥結束後的處理，跟 task #112「補postbattle handler_binding」是同一批位址），不是戰前(pre-battle)流程的一部分——換句話說，要命中這兩個中斷點，必須先**真正打完整場ch23戰鬥**（操作單位移動/攻擊，擊敗所有敵人或達成勝利條件），這是遠比「繞過選人畫面＋看到戰前過場」更大的工作量（要走一輪完整戰術戰鬥AI互動），非本次session範圍。
+- **task #118 原始目標（live驗證`0x24618`）已完整達成**；`0x24d22`/`0x11d40`的live驗證建議併入 task #112（postbattle handler_binding），需要額外規劃一次完整戰鬥play-through才能繼續。
