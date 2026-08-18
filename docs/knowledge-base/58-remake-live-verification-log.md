@@ -2945,3 +2945,21 @@ CS=0170 DS=0178 ES=0178 SS=0178
 2. **這兩個位址走的是ch23 postbattle某個特定分支**（例如特定對話選項或旗標），而這次「秒殺BOSS」的路徑可能沒有觸發到。
 
 **若要繼續**：需要在**這次postbattle cutscene播放期間**（不是戰前）重新Alt+Pause、重新MEMDUMPBIN比對byte-signature，取得這個新overlay context下`0x24d22`/`0x11d40`呼叫點真正的live位址，而不是沿用戰前推導的delta。這是一輪新的即時調查，非本次session範圍內完成。
+
+## 2026-08-18（續十六）#112 — 重大發現：整個handler manifest有系統性的off-by-one錯誤，`0x24d22`/`0x11d40`根本不屬於ch23
+
+使用者質疑「會不會是劇情觸發」，先派agent反組譯`0x24c1e`（原本認定的ch23 post handler）本體，證實**這段程式碼完全沒有任何旗標/分支判斷**——`0x24d22`/`0x11d40`的呼叫是無條件迴圈（分別跑8+5次、60次），只要這個函式真的執行過，中斷點必定會命中數十次。中斷點全程沒中，代表**這個函式從頭到尾根本沒被呼叫過**，推翻了「劇情觸發」跟「overlay換頁」兩個假說，指向：**handler映射本身錯了**。
+
+第二輪agent深查後確認：**`_manifest.json`／`chNN_post.json`／`chNN_pre.json`檔名，全部系統性差一章（off-by-one）**：
+
+- **唯一的實際dispatch呼叫點**（`0x25e1e: MOV EAX,[0x53c03]; CALL [EAX*4+0x51de9]`）證實 `[0x53c03]`（章節計數器）是**0-based**，但 manifest 產生流程（`tools/dump_chapter_beats.py`）誤把它當1-based（跟畫面顯示的章節數對齊），導致每個 `chNN_post.json`/`chNN_pre.json` 檔名都標低了一章。
+- **對話內容逐一比對，鐵證**：`0x24c1e`（原標「ch23_post」）實際發送的對話（FDTXT_024 idx2/3＝「空中遭遇惡魔族守軍」等）屬於**ch24**；真正的**ch23 postbattle handler是`0x24754`**，發送對話（FDTXT_023 idx8-17）完整對應到我剛才實際玩到的內容（「不愧是古代人建造的機兵」、羅德曼/卡里斯加入、「地震了!!」、詢問悠妮飛行岩）——約43個劇情beat，跟我按了近40次Enter完全吻合。
+- **系統性驗證**：把全部30個post handler的對話index分別套用「= chapter i」vs「= chapter i+1」重新解析，前者有**13章**指到FDTXT裡根本不存在的index（不可能的映射），後者**0個**不可能映射，而且每個都精準落在該章故事檔案的「後段」（符合postbattle語意）。
+- 連帶影響：ch23的**戰前**handler其實是`0x336a0`（現在誤標成`ch22_pre.json`），續一到續十六反覆驗證使用的`0x24618`／`FUN_000336a0`本身沒有錯（就是`0x336a0`這個函式，只是檔名標錯），**task #118的EAX=6結果不受影響、依然有效**。之前doc58記錄的「ch16 postbattle已修好」（`ch16_post.json`=`0x23b5f`）需要重新檢查，很可能其實是ch17的。
+
+**直接查證`0x24754`（真正的ch23 post handler）有沒有呼叫`0x24d22`/`0x11d40`**：反組譯整段`0x24754..0x24c1e`的全部CALL指令——**完全沒有出現`0x24d22`或`0x11d40`**，只有`0x11df2`（另一個「delta ramp」淡出函式，跟`0x11d40`是不同東西，`91-worklist.md`已經記過兩者不同）被呼叫兩次（`0x24a24`/`0x24ab4`）。**結論：`0x24d22`/`0x11d40`從一開始就不屬於ch23，是ch24 postbattle handler（`0x24c1e`）專用的**——今天整個「幫ch23抓這兩個位址」的任務本身建立在錯誤的章節映射上，不是live驗證方法的問題。
+
+**後續建議（留給#112或新task）**：
+1. 全專案30章的`chNN_pre.json`/`chNN_post.json`檔名＋`_manifest.json`需要系統性重新編號（i→i+1），這是本次發現裡最大條的項目，影響範圍遠超過ch23，需要獨立規劃（改檔名、改manifest、重跑下游binding compiler、逐章重新驗證），非今天能完成。
+2. 若仍然想拿到`0x24d22`/`0x11d40`的live數值，正確做法是玩**ch24**的戰鬥（不是ch23），觸發真正呼叫這兩個函式的`0x24c1e`。
+3. ch23 postbattle handler_binding要重新對照正確位址`0x24754`撰寫（含`0x24b14`/`0x24bde`兩個分支子函式，對應「戰後餘波」與「羅德曼抉擇」的劇情分支選項）。
