@@ -214,4 +214,83 @@ regression。資料驅動是目標架構，不是目前已證實所有事件語�
 - **[已驗證 raw]** byte[+5] bit0／bit7 的個別 mask 使用；回合 `[0x53bef]` increment 與 team-completion 語意仍需 state-machine caller evidence，不在本表宣稱。
 - **[低優先]** `[0x53ec8]` 累積計數(靜態:累加單位 +0x21,clamp99)非重製核心,可選。
 
+## 7. ch16 postbattle(原「raw ch15」)四條 raw branch trace、JOIN18 typed record、battle_ch16→postbattle_ch16→town_ch17 鏈路(2026-08-18)
+
+> **命名對照澄清(2026-08-18 off-by-one 修正後)**：本節對應的是91-worklist.md「raw ch15」系列詞條(玩家第16戰)。修正前這些詞條的位址落在**現在**改名後的
+> `remake/assets/cutscenes/handlers/ch16_post.json`(handler `0x23a0a`)，而不是同目錄下另一個、內容完全不同、早已解完的
+> `ch15_post.json`(handler `0x239bd`，單純 `roster_has(12)` 對白分支 + `join(char_id:15)`，`unknown_ops:0`，跟本節無關)。
+> production 實際接線用的是**候選檔** `remake/assets/cutscenes/handlers/candidates/ch15_post_cfg.json`(同一 `0x23a0a`，續十七刻意不改名，見該續集「未動的已知範圍外項目」)，
+> 經 `remake/assets/cutscenes/bindings/ch15_post.json`(`handler_script` 指向該候選檔)被
+> `remake/assets/scenarios/campaign_full.json` 的 `postbattle_ch16_persist` 節點直接引用——即候選檔**已經是正式 production binding**，不是尚未接線的草稿；`postbattle_binding_wiring_test.go` 的 `TestPostbattleCh16UsesPromotedCh15Binding` 亦覆蓋此點(compile 出的 beats 為 0 issues)。
+
+### 7.1 四條 raw branch 完整反組譯(Ghidra headless, `FD2Analysis3`, 唯讀, 2026-08-18 現場重跑)[驗]
+
+對 `0x23a0a..0x23b5e` 全段(handler entry 到 `RET`)重新逐指令反組譯，補回候選 JSON 的 nested if/else 沒有記錄的**確切 raw 位址**：
+
+```
+0x23a5e  call 0x233c6                     ; layout_units(76-slot 入口，同 ch17_post 共用 callee)
+0x23a66..0x23a86  unrolled loop EBX=0..7:  ; slots 66..73(=persistent 16 + group0 idx 50..57 相對 0x42 基底)
+    lea eax,[ebx+0x42]; push eax; call 0x34894  ; 見下方 §7.1.1，回傳 byte[idx*0x50+5]&1
+    test eax,eax; jz 繼續                  ; 非零才 inc byte[esp+0x20](inactive 計數)
+0x23a8b  cmp eax,0x4                       ; ← branch①
+0x23a8e  jle 0x23a95                       ;   inactive_count<=4 → 不設旗標
+          (fallthrough) mov [esp+0x24],1   ;   inactive_count>4  → 設旗標
+0x23a95  call 0x11506                      ; sync_party
+0x23a9a  cmp dword ptr [0x53bef],0x12      ; ← branch②：回合數(doc26§1已證)是否 >18
+0x23aa1  jg  0x23abd                       ;   round>18 → 直接跳「跳過JOIN」臂
+0x23aa3  cmp byte ptr [esp+0x24],1         ; ← branch③：branch①旗標覆核
+0x23aab  jz  0x23abd                       ;   inactive_count>4 → 同樣跳「跳過JOIN」臂
+0x23aad  mov eax,[0x53a45]                 ; [0x53a45]=戰場單位陣列基底=unit slot 0 (索爾)
+0x23ab2  movzx eax,word ptr [eax+0x42]     ; record0 raw +0x42 word(非 normalized MaxHP，doc91 已證)
+0x23ab6  cmp eax,0x140                     ; ← branch④
+0x23abb  jge 0x23b21                       ;   word42>=0x140(320) → 走「JOIN」臂
+          (fallthrough)                    ;   word42<0x140      → 併入同一「跳過JOIN」臂
+0x23abd..0x23b1c  「跳過JOIN」臂：dialog(idx2,@0x23adc) → act(resource49,@0x23af0) → dialog(idx3,@0x23b17)
+0x23b1f  jmp 0x23b52                       ; 結構性跳轉，直接跳過JOIN臂到共用尾端
+0x23b21..0x23b4f  「JOIN」臂：dialog(idx4,@0x23b40) → push 0x12(=18); call 0x112a5(@0x23b4a) = join(char_id=18)
+0x23b52  inc dword ptr [0x53c03]           ; set_chapter(16)，兩臂共用尾端
+0x23b58..0x23b5e  epilogue/ret
+```
+
+即完整邏輯是 **`(round>18) OR (inactive_count(slots66-73)>4) OR NOT(record0.raw+0x42>=0x140)` → 跳過JOIN臂；三者皆不成立才進JOIN臂**。候選 JSON(`native_any_of[native_inactive_count_gt, native_round_gt]` 外層 if，`native_record_word_gte` 內層 if)是這段 raw 邏輯的**忠實**重構(outer-then 對應branch①③的OR、outer-else 內層 if 對應branch④，inner-if 缺 else 是因為 raw 版本本身就是「word42<0x140 時 fallthrough 併回同一段共用臂」，不是候選 JSON 遺漏)。這條 trace 也精確坐實 91-worklist.md 先前記的「`0x23b1f` 跳到章節尾端，JOIN18 只屬於 else word42>=0x140 arm」一句——`0x23b1f` 正是這個結構性 `jmp`。
+
+#### 7.1.1 附帶發現：doc26 §1 對 `0x3453e` 的位址標註與本 handler 實際呼叫目標不符 [驗，範圍限定]
+
+上面迴圈 `@0x23a74` 的 `call` 指令，實際編碼目標是 **`0x34894`**，不是 doc26 §1 表格記錄的 `0x3453e`(handler JSON `unit_inactive` beat 的 `target` 欄位也寫 `0x3453e`，同樣有這個落差)。現場逐位元組核對(非反組譯誤判):
+- `0x3453e` 的原始 bytes 是 `e8 62 cd fd ff`(`call 0x112a5`)，屬於一個從 `0x34531` 開始、內部呼叫 `0x112a5`/`0x10b4e`/`0x135dd` 的另一函式中段，跟 byte5-bit0 讀取完全無關。
+- `0x34894` 才是本 handler 實際呼叫、且**獨立反組譯確認語意相符**的函式：`push 0x4; call 0x3702f; mov edx,[esp+4]; mov eax,edx; shl eax,2; add edx,eax; shl edx,4`(=idx\*5<<4=idx\*0x50，與 doc26 §1「`0x3453e` 全貌」記載的公式**完全相同**) `; mov eax,[0x53a45]; mov al,[edx+eax+5]; and al,1`(=byte[idx*0x50+5]&1)。
+- 結論：本 handler 這個呼叫點的**語意**(NativeRecordByte5Bit0)與既有理解一致、未受影響；但**位址標籤**`0x3453e`在目前 EXE build 對不上，doc26 §1 表格與 `ch16_post.json`/候選檔內 `unit_inactive` beat 的 `target` 欄位需要一次獨立審計(不在本次任務範圍，已用 `spawn_task` 另開追蹤)。
+
+### 7.2 JOIN18 當下的 typed persistent record [驗]
+
+`join(char_id=18)` 這個原語跟 doc26 §1 已收錄的其他 JOIN(如 ch15_post 的 `join(char_id:15)`、doc25 §6.4 的 JOIN31)走同一條**通用**(非角色專屬硬編碼)路徑，char_id=18 沒有任何特殊分支：
+
+- **runtime 消費**(`remake/cmd/fd2/main.go` `case "join"`,約行1409起)：先在 `g.st.Units`(剛結束那場 battle_ch16 的即時戰場單位陣列)裡找 `HasNativeRecordByte8 && NativeRecordByte8==18` 的唯一 record，找不到才退回 `g.storyActors`；找到 >1 筆會直接 `g.loadErr` fail-closed(拒絕曖昧來源)。
+- **typed record 建構**(`remake/internal/campaign/native_join_constructor.go` `MaterializePersistentUnit`，對應原生 `sub_112A5`／`0x112a5`，即上面 branch④ join 臂 `call 0x112a5` 的呼叫目標)：從 `remake/assets/data/native_join_constructor.json`(32-row 表，schema 綁定 FD2.EXE 精確 size/MD5/SHA256，逐 row 驗證 file offset 必須恰為 `0x55ba1+id*0x18`(defaults,24 bytes)與 `0x55ea1+id*0x0b`(growth,11 bytes)，缺一失敗即關閉)取出 `id=18` 這一 row(`default_file_offset:0x55d51`,`growth_file_offset:0x55f67`，已存在且通過 schema 驗證)，逐 byte 依 `sub_112A5` 已證實的寫入序列組出**完整 0x50-byte 原生 record**(等級、HP/MPword `+0x40/0x42/0x44/0x46`、四格初始裝備 `+0x0e..+0x15`、AP/DP/DX raw+effective word、race/class byte `+0x1F/0x20`)，再呼叫 `battle.ApplyNativeEquipmentRecalc` 補完裝備衍生值，最終輸出一個帶滿 provenance flag 的 typed `battle.Unit`(`NativeIdentity=18`／`HasNativeRecordByte5=true,值0`／`HasNativeRecordByte6=true,值2`／`HasNativeRecordWord42/46=true`／`NativeRecordRace/Class` 等)。
+- **寫入位置**：`g.partyRoster[18] = materialized`(持續隊伍 map)，並登記 `g.partyMembers[18]=true`、`append(g.partyJoinOrder,18)`。
+- **回歸覆蓋**：`native_join_constructor_test.go` 的 `TestNativeJoinConstructorMaterializesAllKnownRows` 對 id=0..31 全掃一遍(含18)，斷言每個 row 都能無誤產出完整 record(`NativeIdentity`、8 格 inventory/flags、`EquipmentBaseSet` 均非空)——JOIN18 不是特例，是這條已證實、覆蓋全部32個角色的共用路徑之一。
+
+### 7.3 `battle_ch16 → postbattle_ch16_persist → town_ch17` 鏈路確認 [驗]
+
+直接讀 `remake/assets/scenarios/campaign_full.json`(未假設，逐節點核對)：
+
+- `battle_ch16`(`map16`／`assets/scenarios/ch16.json`) `on_win` → `postbattle_ch16_persist`。
+- `postbattle_ch16_persist`(`type:"cutscene"`，**無** `map` 欄位) `handler_binding` → `assets/cutscenes/bindings/ch15_post.json`(即§7.1/7.2追的候選binding)，`next` → `town_ch17`。
+- `town_ch17`(`type:"town"`) 已有完整 `rumor_ch17`／`shop_ch17_weapon`／`shop_ch17_secret`／`preparation_ch17` 選項與 `native_secret_gate`，非殘缺樁。
+- **與下一章 pre-handler 的語意握手**：`ch17_pre.json`(`0x335aa`)的唯一分支就是 `roster_has(char_id:18)`(`0x335bb`→`0x33499`，即 doc26 §1 表格「章16 `roster_has(0x12=角色18)`」同一顆 raw 查詢)——若 JOIN18 在上一步成功(§7.1 的 word42>=0x140 臂)，`roster_has(18)` 為真，`then:[]` 什麼都不做；若 JOIN18 被跳過，`else` 分支 `spawn(group:1)` 補一組戰場單位頂替。這兩個 handler 的條件互為鏡像，不是巧合的相鄰關係，是設計上的替補鏈。
+- **cutscene 節點不清空 `g.st`**：`main.go` 進入 `type:"cutscene"` 節點時，只有 `n.Map!=""` 或(`type:"story"` 且 `Map==""`)才會 `g.st,g.sel=nil,nil`；`postbattle_ch16_persist` 兩者都不成立，代碼本身有明確註解說明 cutscene 的 beats「明確需要讀 g.st 反映剛結束那場戰鬥的最終單位狀態」——即 §7.1 四條 branch 讀的 slots66-73／`[0x53bef]`／record0+0x42，理論上就是battle_ch16結束當下的即時值，不是憑空缺值。
+- 編譯期回歸：`postbattle_binding_wiring_test.go` 的 `TestPostbattleCh16UsesPromotedCh15Binding` 直接 `campaign.Load` + `CompileHandlerBinding` 這整條鏈，斷言 0 issues、beats 非空。
+
+結論：**鏈路本身(節點跳轉、binding 指標、下一章互補條件、compile-time 校驗)結構完整、無斷點**，這部分不是 unbound。
+
+### 7.4 save regression [部分驗，部分待活體]
+
+- **通用機制已驗**：`remake/cmd/fd2/save.go` 把 `g.partyRoster`(`map[int]battle.Unit`)與 `g.handlerChapter` 原樣塞進存檔 JSON(`PartyRoster`/`Chapter` 欄位)；`battle.Unit` 內 `NativeRecordByte5`/`HasNativeRecordByte5`/`NativeRecordWord42`/`HasNativeRecordWord42` 等欄位都有正常 `json:"...,omitempty"` tag，不會在序列化時被丟棄。`save_test.go` 有 `PartyRoster` 通用往返測試(非 ch16/char18 專屬，但證實機制本身可靠)。**沒有發現任何地方會在存檔時把 JOIN18 或 §7.1 用到的 raw provenance 欄位清空或降級**。
+- **fail-closed 是刻意設計，非缺陷**：§7.1 三個 raw 條件(`native_inactive_count_gt`／`native_round_gt`／`native_record_word_gte`)在 `cmd/fd2/main.go`(約行1691-1729)的 runtime evaluator 裡，只要對應的 `Has...` provenance flag 未設(或 `NativeRoundCounter<=0`)就直接回傳 `error`，經 `case "if"`(約行1157)把錯誤寫進 `g.loadErr` 讓整個 beat runner 停住——不是靜默跳過分支、也不是猜測代入 OnField/Alive 之類的替代語意。這與 91-worklist.md 原文「unbound fail-closed」的措辭完全一致。
+- **仍待活體驗證的唯一缺口**：§7.3 已證實 `g.st` 在 `postbattle_ch16_persist` 這個 cutscene 節點理論上會延續 battle_ch16 剛結束那場戰鬥的狀態，但**還沒有一般玩家(或本次任務範圍內允許的方式)實際打完一場 battle_ch16、觸發這個 `if` beat，確認 slots66-73 的 `HasNativeRecordByte5`、`[0x53bef]` 的 `NativeRoundCounter`、以及 record0(索爾) `+0x42` 的 `HasNativeRecordWord42` 在那個時間點是否真的全部就緒**。這正是本任務系統提示明確要求「在一般玩家原版 runtime capture 前保持 unbound fail-closed」、且禁止本次使用 DOSBox-X 即時操作的那個缺口——誠實標註為**待活體驗證**，不猜測結果，也不下修現有 fail-closed 行為。
+
+### 91-worklist.md 第398行完成度
+
+**大部分解決**：四條 raw branch 已逐位址重新反組譯確認(§7.1，含附帶修正 doc26 §1 一處位址標籤落差)；JOIN18 typed persistent record 的讀/建構/寫入路徑與回歸覆蓋已完整追出(§7.2，證實非特例、是32角色共用路徑)；`battle_ch16→postbattle_ch16_persist→town_ch17` 鏈路已逐節點核對、且找到與 `ch17_pre` 互補分支的設計級證據(§7.3)；save regression 的通用機制與 fail-closed 正確性已確認(§7.4上半)。**唯一未解決**、也是本任務系統提示明確排除在範圍外的：battle_ch16 一般玩家原版 runtime capture(確認 slots66-73/round/record0+0x42 在 postbattle 當下的實際填充狀態)，仍如願保持 unbound fail-closed，留待下一輪允許使用即時環境時處理。
+
 > 相關:doc 25(事件系統架構)· doc 24(戰役迴圈 [0x53ecc] 狀態機)· doc 19(腳本系統)· doc 09(劇情)· doc 03(單位結構/roster)。工具:`tools/event_handler_dump.py`;資料:`docs/data/battle_events.json`。
