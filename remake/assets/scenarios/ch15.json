@@ -2,6 +2,7 @@
   "chapter": 15,
   "name": "拉卡湖的激戰",
   "map": 14,
+  "runtime_append_groups": true,
   "initial_groups": [
     0
   ],

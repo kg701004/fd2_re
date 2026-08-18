@@ -2834,6 +2834,7 @@
   },
   "postbattle_ch16_persist": {
    "type": "cutscene",
+   "handler_binding": "assets/cutscenes/bindings/ch15_post.json",
    "next": "town_ch17"
   },
   "retreat_ch16": {
@@ -3175,7 +3176,7 @@
   },
   "postbattle_ch18_persist": {
    "type": "cutscene",
-   "beats": [],
+   "handler_binding": "assets/cutscenes/bindings/ch17_post.json",
    "next": "town_ch19"
   },
   "retreat_ch18": {
@@ -4670,7 +4671,7 @@
   },
   "ending": {
    "type": "ending",
-   "text": "傳說的終章——空魔神殞落,炎龍騎士團的旅程至此告一段落。(campaign_full.json 自動生成 v1:節點骨架完整,逐章劇情全文/回合事件/主角隊招募待下一輪補完)"
+   "text": "反應爐超載後空間扭曲餘波未平,眾人劫後餘生;ASR-06見大勢已去,召喚地水風火四魔神(其以生化合成人技術複製的傀儡)做最後困獸之鬥,終被眾人合力擊敗。悠妮向眾人完整說明自己與ASR-06(空魔神)、要塞的真正來歷——古代人「審判之日」戰爭的遺物,三萬年來獨自沉睡在天空中。危機解除後,悠妮依約將眾人送返馬拉大陸,自己則選擇留下,把黃金城永遠帶離這個世界。"
   },
   "town_ch02": {
    "type": "town",

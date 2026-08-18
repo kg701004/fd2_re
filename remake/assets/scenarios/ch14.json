@@ -2,6 +2,7 @@
   "chapter": 14,
   "name": "平原的會戰",
   "map": 13,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
     1

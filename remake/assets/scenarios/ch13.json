@@ -2,6 +2,7 @@
   "chapter": 13,
   "name": "哈斯米爾之戰",
   "map": 12,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
     1

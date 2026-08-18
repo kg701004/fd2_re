@@ -2,6 +2,7 @@
   "chapter": 19,
   "name": "黑暗中的狙擊",
   "map": 18,
+  "runtime_append_groups": true,
   "initial_groups": [
     0
   ],

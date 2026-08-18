@@ -2,6 +2,7 @@
   "chapter": 16,
   "name": "冰原之戰",
   "map": 15,
+  "runtime_append_groups": true,
   "initial_groups": [
     0
   ],

@@ -2,6 +2,7 @@
   "chapter": 6,
   "name": "普里茲港",
   "map": 5,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
     2,

@@ -2,6 +2,7 @@
   "chapter": 9,
   "name": "騎士的抉擇",
   "map": 8,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
     1,

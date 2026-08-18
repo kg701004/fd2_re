@@ -2,6 +2,7 @@
   "chapter": 12,
   "name": "北山道",
   "map": 11,
+  "runtime_append_groups": true,
   "initial_groups": [
     1,
     3,

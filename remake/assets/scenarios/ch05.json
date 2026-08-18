@@ -2,6 +2,7 @@
   "chapter": 5,
   "name": "塞拉村",
   "map": 4,
+  "runtime_append_groups": true,
   "initial_groups": [
     0,
     1
