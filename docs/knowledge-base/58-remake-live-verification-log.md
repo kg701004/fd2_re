@@ -3305,3 +3305,130 @@ MaxHP/MaxMP兩欄是用`高分支公式 growth×LV`算出、並與`map24_units.j
 **idx16-19定位嘗試——誠實記錄未能鎖定**：續二十四提到的「大惡魔LV.12」與這次查到的「RA5/CL0x1A/LV13/AP33」（模板表倒數第3列）職業、AP量級都吻合，等級差1（12 vs 13）在可能是續二十四當下UI讀值時的口語化記憶誤差範圍內，是目前最接近的候選。但`map24_units.json`陣列順序（本輪用來分組的依據）**不等於**live DOSBox記憶體裡的runtime unit陣列順序（例如陣列第0筆是`own`、第1筆卻是奇怪的`high_class`分支`ally`而非預期的`lower_class`，順序明顯不是單純「我方全部在前」），所以無法從這份JSON可靠地推算出idx16/17/18/19在runtime陣列裡實際对应哪個(RA,CL,LV)組合。**建議下一輪直接在live session對idx16~19這4個record讀`+0x1F`(race)/`+0x20`(class)/`+0x21`(level)三個byte，回頭查表上面9列模板做比對**，而不是繼續用座標或擊殺順序猜。
 
 **本輪產出檔案**：`docs/data/ch24_enemy_template.json`（上表的機器可讀版本，含完整growth欄位與座標列表，供下一輪程式化查詢）。未修改`docs/data/exe_tables/*.json`（逐一核對後確認既有值已正確，包括大惡魔AP=33，不需要改）。未修改`remake/`下任何原始碼或資產檔案。
+
+## 續二十六：純靜態Ghidra headless反組譯完整追出「指令環預設攻擊(↑)」的真正傷害/命中路徑，推翻doc13舊的`0x1f04a→0x28a6c`錯誤映射，找到`0x2f7b6`傷害公式與`0x2ebe1`HP寫回點（2026-08-19）
+
+**任務範圍**：這輪不碰DOSBox-X/WSL2，純靜態用Ghidra headless（唯讀，`FD2Analysis3`project）反組譯續二十四/二十五留下的線索`0x18d8c`/`0x1d3f3`，目標是搞清楚「敵人HP卡在1不動、但攻擊動畫確實播放、我方確實掉血」這個謎團的根因。
+
+**方法**：`"C:/tools/ghidra_12.1.2_PUBLIC/support/analyzeHeadless.bat" "C:/Users/kg701/Desktop/GAME/FD2_ghidra_projects" FD2Analysis3 -process "FD2.EXE" -readOnly -noanalysis -scriptPath "C:/Users/kg701/Desktop/GAME/FD2_ghidra_projects" -postScript <script>`，用`DecompInterface`對`getFunctionContaining(addr)`回傳的function做完整反組譯/反編譯（而非只反組譯單一位址），並用`ReferenceManager.getReferencesTo`找每個關鍵函式的全部caller，逐層往下追呼叫鏈。共寫了6個一次性probe script（`Probe58Cont26.java`~`Probe58Cont26f.java`，留在`FD2_ghidra_projects/`供覆核）。
+
+### 關鍵發現1：`0x1d3f3`不是獨立function，是`0x1cff0`內部的一個地址
+
+`getFunctionContaining(0x1d3f3)`回傳`FUN_0001cff0`（body `0x1cff0..0x1d4ca`），跟`getFunctionContaining(0x1cff0)`完全是同一個function。這證實doc13原文「`0x1cff0`會以…／官方IDA 9.4的`0x1d3f3` dispatch再釘細一層」的敘述本身沒錯——`0x1d3f3`只是同一函式內switch-dispatch附近的一個更精確地址，不是另一個函式，不需要修正。
+
+### 關鍵發現2（本輪最重要）：續二十四實際使用的「指令環預設攻擊(↑)」完全不經過`0x2a6bd/0x1c75e/0x1c81f`，doc13的`0x1f04a→0x28a6c`映射是錯的
+
+完整反組譯`FUN_00018d8c`（body `0x18d8c..0x190ab`）後，`[0x53c57]==0`（↑，攻擊）分支的實際呼叫序列是：
+
+```
+FUN_00014818()                 // target候選陣列(既有文件的geometry primitive)
+iVar2 = FUN_000115b6()         // 游標confirm loop；-1 = 玩家取消
+FUN_0004df4c()
+if (iVar2 == -1) { FUN_00012cea(); return 0; }   // 取消攻擊
+FUN_00012c0d()                 // 取得confirm cursor格子上的unit index → target idx
+FUN_0001f04a(actorIdx, targetIdx)   // 見下：只是面向計算，不是攻擊/傷害
+FUN_0002e2b0(actorIdx, targetIdx)   // 見下：真正的攻擊orchestrator
+FUN_000134e4()                 // 清除全部unit的`+3`面向byte
+FUN_0001b6b7(); FUN_0001db65(); FUN_0001aa1d();
+FUN_00013512(actorIdx)         // 設`+5 bit7`(acted)，與doc既有結論一致
+FUN_0004e381()
+```
+
+**`0x1f04a`的真身**（完整反組譯，body `0x1f04a..0x1f0db`，僅106 byte）：
+
+```c
+void __stdcall FUN_0001f04a(int param_1,int param_2)
+{
+  pbVar3 = actor_base;  pbVar4 = target_base;
+  iVar1 = actor_Y; iVar2 = target_Y;   // 經 FUN_00037932 float/int轉換
+  if (iVar1 <= iVar2) {
+    if (target_X < actor_X) { actor[+3] = 2; return; }
+    actor[+3] = 0; return;
+  }
+  if (target_X < actor_X) { actor[+3] = 1; return; }
+  actor[+3] = 3; return;
+}
+```
+
+這純粹是「依攻守雙方X/Y座標算出攻方應該面向哪個方向，寫進`+3`」的helper，跟doc13第89行寫的「攻擊目標／全螢幕攻擊演出」完全對不上——它不呼叫`0x28a6c`，也不做任何傷害/HP相關運算。**doc13「0 ↑ `0x1f04a` → `0x28a6c`：攻擊目標／全螢幕攻擊演出」這行是錯誤映射，已在下方訂正**。真正銜接演出與傷害的是`0x1f04a`之後緊接著呼叫的`0x2e2b0`，這是先前完全沒有反組譯過的函式。
+
+### 關鍵發現3：找到真正的攻擊orchestrator `0x2e2b0`，以及真正的多段命中/HP寫回迴圈`0x2ebe1`
+
+`FUN_0002e2b0(actorIdx, targetIdx)`（body `0x2e2b0..0x2e95a`）本身是演出資源準備（讀`+6`camp、`+0x1f/+0x20`race/class、`+7`portrait/FIGANI選擇、呼叫`0x111ba`／`0x12e38`／`0x1f882`等既有文件記載的indexed資源helper），並在其中呼叫**3次**`FUN_0002ebe1(actorIdx, targetIdx, ...)`（呼叫點`0x2e6de`/`0x2e724`/`0x2e75b`，全部由xref確認）。
+
+`FUN_0002ebe1`（body `0x2ebe1..0x2f4d3`）就是實際的「多段受擊幀＋HP扣血」迴圈，關鍵片段（變數已按stack offset對齊，`local_48`=target unit base）：
+
+```c
+local_4c = *(ushort *)(local_48 + 0x40);   // 讀 target 目前HP，只讀一次，存成基準值
+FUN_0002f7b6(actorIdx, targetIdx, &outStruct);   // 見下：算出本次攻擊的命中結果與傷害量
+...
+// 之後在多幀受擊迴圈裡，每個「有效命中幀」執行一次：
+local_38 = local_38 + 1;
+local_44 = local_4c - (local_38 * local_70) / local_3c;   // local_70 = 傷害量, local_3c = 有效幀數
+if (local_44 < 0) local_44 = 0;
+*(short *)(local_48 + 0x40) = (short)local_44;             // 寫回 target +0x40 (HP)
+```
+
+**這直接回答了任務問題1**：HP寫回的目的位址就是`DAT_00053a45 + targetIdx*0x50 + 0x40`——跟續二十四debugger監看/patch的位址完全是同一個raw record、同一個offset，**沒有獨立的「工作副本」/快取unit record**。`0x12c0d`（取得confirm cursor格子上的unit index）本身也只是對同一個record陣列做**逐筆linear scan**（`while (idx<count) if (record[idx].x==cursorX && record[idx].y==cursorY && (FUN_00034894(idx)&1)==1) return idx;`），沒有任何以座標為key的空間索引/cache表。`FUN_00034894`本身只是回傳`record[idx]+5 & 1`（doc13既有記載的admission bit0）。**因此「把敵人用raw座標patch搬過去，繞開spawn/move API導致某個tile-occupancy/target-list快取沒同步」這個假說，本輪反組譯沒有找到任何支持證據，予以排除**——目標解析每次都是即時對真實座標欄位做線性掃描，不吃任何快取。
+
+**HP「卡在1不動」的真正機制**：`0x2ebe1`每個受擊幀都會重新執行`*(short*)(target+0x40) = local_4c - deltaThisFrame`，**這是一次真正的記憶體寫入，不是「沒有寫」**——只是如果`local_70`(傷害量)算出來是`0`，則每一幀寫回的值都等於`local_4c`（也就是攻擊發生前讀到的原始HP，這裡是`1`），所以debugger複查時會看到HP「從頭到尾都是1」，其實是被同一個值反覆覆寫，而不是完全沒被觸碰到。
+
+### 關鍵發現4：真正的傷害/命中公式`0x2f7b6`，首次由反組譯直接證實（而非攻略轉錄）
+
+`FUN_0002f7b6(actorIdx, targetIdx, &out[6])`（body `0x2f7b6..0x2facc`）完整反組譯：
+
+```c
+local_28 = actor.+0x48        // derived AP
+local_20 = target.+0x4a       // derived DP
+local_24 = target.+0x40       // 目前HP(這條function自己也讀了一份，僅供內部試算，實際寫回在0x2ebe1)
+uVar6    = actor.+0x4c        // derived HIT
+uVar7    = target.+0x4e       // derived EV
+bVar2 = actor.+0x20 (class); local_14 = actor.+0x21 (level); bVar3 = target.+0x21 (level)
+
+// (經 0x1f183 gate：camp!=0x1c 且 (class==0x13 或 race==4 或 race==5) 時略過以下的
+//  class/race % 加成表 DAT_00051a12(對AP)／DAT_00051a2a(對DP)；gate細節見下方註記)
+
+local_2c = DAT_000524a7[actorClass]   // 攻方 class-indexed byte，性質類似 resist_crit.json 的暴擊率(獨立表，位址不同，未逐一核對數值)
+uVar10 = local_2c 或另兩種特殊模式（依 actor.+7(cVar4) 選 rand 或固定值變體）
+
+iVar8 = FUN_0004ebe3(uVar10);   // RNG(0x4ebe3 是 xorshift 型移位暫存器，回傳值可視為近似均勻的16-bit亂數)
+if (iVar8 % 100 < (int)((uint)uVar6 - (uint)uVar7)) {      // ★ 命中判定 ★
+    // 命中：可能觸發暴擊(DP減半)、再算：
+    local_1c = ((local_28 - local_20) * 9) / 10;            // ★ 傷害基值 = (AP-DP)*0.9 ★
+    if (local_1c < 0) local_1c = 0;
+    // + 0~1/9基值範圍內的整數亂數變動
+}
+// 未命中：local_1c 維持初始化的 0，完全不進入上面的計算
+out[5] = local_1c;   // 傳回 0x2ebe1 當作 local_70(本次攻擊傷害量)
+```
+
+**命中率公式 = `(uint)攻方HIT(+0x4c) − (uint)守方EV(+0x4e)`，其結果被轉型成`(int)`跟`rand()%100`比較**，跟`docs/knowledge-base/27-combat-rules-and-validation-checklist.md`第21行、`remake/internal/battle/combat.go`第5/41/86行既有記載的「命中率=(攻方HIT−守方EV)%」**逐項吻合**——這是本專案第一次由反組譯（而非攻略轉錄）直接證實這個公式的位元組級行為，且發現一個先前只在攻略敘述層級存在、從未被指令級證實過的**關鍵行為**：**這個減法是先把兩個`ushort`都零擴展成32-bit unsigned再相減，然後才轉型成signed int做比較**。當**守方EV ≥ 攻方HIT**時，這個unsigned減法會下溢成一個極大的unsigned值，reinterpret成signed int後變成一個很大的**負數**，導致`rand()%100 < 負數`這個比較**恆為false**——也就是說命中率公式在EV≥HIT時的行為是**確定性0%命中（非機率性，每次必定Miss）**，不是「機率很低但仍有機會命中」。`remake/internal/battle/combat.go`第88行的既有註解「`pct<=0`是公式算出來的合法結果(HIT追不上EV)」方向完全正確，等於已經預先做對了這件事（remake用Go signed int比較，`pct<=0`時`rng.Intn(100)<pct`本來就恆false，跟native的unsigned下溢殊途同歸，結果一致，不需要修改remake程式碼）。
+
+**這直接回答了任務問題2**：續二十四那3隻打不掉的敵人，很可能就是**每次攻擊都被命中公式判定為100%必定Miss**（而非機率性運氣不好），只是攻擊動畫本身（`0x2e2b0`裡一連串`0x11eb0`/`0x2eb9f`/`0x17aa9`的多幀present/tick）不會因為Miss而跳過或改變播放內容，玩家肉眼完全看不出Hit跟Miss的差異，才會誤判成「有打中但沒扣血」。
+
+### 排除任務問題3（CL=0x1A職業免疫/減傷）
+
+`0x2f7b6`全函式反組譯後**找不到任何依`class`直接分支的傷害地板/免疫邏輯**——唯一的class相關項是`DAT_000524a7[actorClass]`(暴擊率類byte，只影響**攻方**crit機率，不是防禦方減傷)，以及`0x1f183`gate控制的race/class-indexed百分比加成表(`DAT_00051a12`對AP、`DAT_00051a2a`對DP)，這是加成表不是免疫表，且gate條件`(camp!=0x1c) && (class==0x13 || race==4 || race==5)`本身不是「同class就必定觸發」的簡單判斷。更關鍵的是：**續二十五整理的`docs/data/ch24_enemy_template.json`已經證實這4隻`initial_groups`敵人（含唯一被真實擊殺的那隻）全部是同一個`RA5/CL0x1A`職業，只有LV12/13(死掉那隻) vs LV14(3隻沒死)的差異**——同職業卻只有1/4死亡本身就從資料面排除了「這個class有靜態免疫/減傷特權」的可能性，反組譯結果與既有資料表相互印證，**予以排除**。若真有差異，唯一可能的變因是**等級相依**的衍生數值（下面呼應問題2）：3隻沒死的LV14個體，其`+0x4e`(derived EV，源自`0x1b750`對base DX`+0x3e`的等級成長值換算)極可能高於死掉的LV13個體，讓命中公式更容易落入`EV≥HIT`的100%必定Miss區間——但這是「等級差造成的量變」，不是「職業造成的質變」。
+
+### 呼應任務問題4：`0x1b750`完整反組譯 + 用新公式量化驗證續二十五的假說
+
+`FUN_0001b750(unitIdx)`（body `0x1b750..0x1b83c`）完整反組譯確認：它是一個**純函式**，輸入只有持久化的`unit.+0x37`(base AP)／`+0x39`(base DP)／`+0x3e`(base DX)以及8格裝備欄位（`bit0x40` equipped的item加成，讀item record `+1/+3/+5/+7`），加上`+0x22/+0x23`兩個百分比縮放旗標，輸出寫入`+0x48`(derived AP)／`+0x4a`(derived DP)／`+0x4c`(derived HIT-ish，DX-based)，並呼叫`FUN_000114fb`寫入`+0x4e`(derived EV-ish，DX-based)。**它完全不讀取`+0x48`自己現有的值**，純粹是`f(+0x37, 裝備, +0x22/+0x23)`。這證實：**只要`0x1b750`在手動patch`+0x48`之後又被呼叫一次，`+0x48`就會被無條件覆寫回`f(未patch過的+0x37)`**，跟續二十五的既有推論完全一致，這輪只是把它從「既有文件引用」升級成「本輪逐行重新反組譯確認」。
+
+新增的量化佐證：用本輪新找到的傷害公式`傷害基值=(AP-DP)*0.9`回推——素菲亞HP=120，若要一擊必殺（傷害≥120），攻方(敵人)的derived AP必須滿足`AP ≥ 目標DP + 133`。若敵人`+0x48`真的維持在手動patch的`1`，公式算出的傷害基值會是`(1-DP)*0.9`，`local_1c`在`<0`時被clamp成`0`，**理論上不可能造成任何傷害，更不可能一擊必殺**。續二十四觀察到的「AP壓到1、敵人反擊仍一擊必殺」這個事實，因此本身就是「`+0x48`在攻擊當下已經不是patch值1」的**間接但直接指向`0x1b750`覆寫**的量化證據——與續二十五的估算（大惡魔LV13`growth×LV=33×13=429`）數量級吻合，`429≥DP+133`在任何合理DP值下都成立。
+
+### 誠實的信心分級（不要當成100%定論）
+
+1. **高信心、有完整反組譯位址佐證**：續二十四的「指令環攻擊」呼叫鏈是`0x18d8c→0x14818→0x115b6→0x12c0d→0x1f04a(面向)→0x2e2b0→0x2ebe1(×3)→0x2f7b6(命中/傷害公式)→回填0x2ebe1`，真正HP寫回位址就是`target+0x40`（跟debugger監看的一致，無shadow copy）；`0x1f183`/`0x12c0d`都是即時對同一份record陣列做運算，沒有座標快取；`0x2f7b6`沒有CL特定免疫分支。
+2. **中高信心、公式已反組譯出但無法回溯驗證是否就是這輪症狀的實際觸發值**：3隻沒死敵人的HP之所以「卡在1」，最可能是命中公式`(HIT-EV)%`在EV≥HIT時的確定性0%命中（unsigned下溢機制），導致每次攻擊都是必定Miss、HP被反覆寫回同一原值。這是**目前唯一有反組譯級證據支持、且跟全部觀察症狀（HP精確釘死不是被算成大數字、動畫正常播放、我方確實掉血）都吻合**的假說，但**沒有續二十四/二十五當下實際捕獲這3隻敵人的`+0x4c`/`+0x4e`原始值可以直接驗證**，所以無法100%排除「其實有命中、但傷害基值本身算出0」這個同樣會產生一模一樣症狀的變體（`(AP-DP)*0.9`若DP極高、AP不夠高，也會clamp到0，行為表徵完全相同，兩者需要live capture才能區分）。
+3. **中信心、機制已閉環但沒有這輪session的即時暫存器/記憶體驗證**：素菲亞被秒殺是`0x1b750`覆寫手動`+0x48`patch回真實高AP值所致，新公式量化上完全支持這個結論，但仍缺一次「patch後、攻擊前」與「攻擊當下」的`+0x37`/`+0x48`前後對照讀值。
+
+### 下一輪live capture的具體建議
+
+1. **不要再只監看`+0x40`(HP)跟`+0x48`(AP)**。下一輪對idx17/18/19這3隻敵人，攻擊前**務必額外讀**：攻方(我方角色)的`+0x4c`(derived HIT)、守方(敵人)的`+0x4e`(derived EV)，並手算`(uint)HIT-(uint)EV`是否為負（若HIT<EV就是必定Miss，直接對上假說2）。
+2. 若要繞開「不確定是Miss還是傷害算0」的歧義，最乾脆的作法是**額外把這3隻敵人的`+0x4e`(EV)也直接patch成`0`**（不需要猜測公式細節，`HIT-0`必為非負，命中判定必過），再重複一次攻擊流程；若這樣HP終於會扣，就直接證實是命中判定的問題而非傷害公式本身；若HP依舊不變，則要轉向檢查`0x2f7b6`裡的`(AP-DP)*0.9`分支（可能是defender的`+0x4a`(DP)過高，或攻方`+0x48`(AP)沒有真的生效）。
+3. 若要驗證`0x1b750`覆寫假說，於「手動patch敵人`+0x48`=1」之後、下一次真正出手攻擊「之前」，立刻再讀一次該敵人的`+0x37`(base AP，理論上patch不動它)跟`+0x48`(derived AP)；若`+0x48`已經不是`1`了，就是`0x1b750`在patch跟攻擊之間的某個時間點被呼叫覆寫過（可能是`0x18d8c`每次進入action dispatch時都會跑一次`0x1b750`類的重算，也可能是敵方AI自己的回合觸發），直接鎖定觸發時機。
+4. 若想從根本上避免`0x1b750`覆寫問題，續二十五已建議改patch持久化的`+0x37`(base AP)而非`+0x48`(derived AP)；本輪新增建議：**同時**把`+0x39`(base DP)/`+0x3e`(base DX)都壓低，因為`0x1b750`會用這3個base值一起重算`+0x48/0x4a/0x4c/0x4e`四個欄位，只改`+0x37`仍可能讓敵人保留原本的高DX(→高EV)，繼續觸發本輪發現的必定Miss問題。
+
+### 文件訂正
+
+`docs/knowledge-base/13-battle-menu-system.md`第89行「0 ↑ `0x1f04a` → `0x28a6c`：攻擊目標／全螢幕攻擊演出」已訂正——`0x1f04a`只是攻守雙方座標算面向byte的106-byte小函式，不呼叫`0x28a6c`；真正銜接演出與命中/傷害計算的是`0x18d8c`在`0x1f04a`之後另外呼叫的`0x2e2b0`（本輪新反組譯，內部再呼叫`0x2ebe1`×3與`0x2f7b6`）。同時發現`0x28a6c`在目前的Ghidra project裡**不是一個函式起始位址**，而是位於`FUN_0002872b`(body `0x2872b..0x28b40`)內部的一個地址，全EXE沒有任何靜態`CALL`指令以它為目標（`getReferencesTo`回傳0筆）；`docs/knowledge-base/35-battle-animation-rendering.md`聲稱「`0x1561f`唯一caller，`push [0x53c4b]; push ebx; call 0x28a6c(ebx,[0x53c4b])`」與本輪對`0x1561f`所在函式`FUN_0001548e`的原始反組譯不符——`0x1561f`實際的機器碼是`CALL 0x0002e2b0`（`push [0x53c4b]; push ebx`兩個入參跟doc35描述的一致，只有呼叫目標位址不同）。這代表`0x1548e`(AI/自動路徑的物理攻擊executor)跟玩家`0x18d8c`↑分支共用同一個`0x2e2b0`攻擊orchestrator，是良性的交叉印證，但doc35對`0x28a6c`呼叫關係的描述本身需要後續一輪重新查證（本輪範圍未涵蓋，僅記錄發現、不展開修正doc35全文，避免在未完整追完`0x2e2b0→0x2872b`銜接前過度改寫）。
