@@ -417,7 +417,7 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 | unit[+6] | 攻 / 守旗標:選合成路徑(0x29c90 vs 0x29ded)+ 左右 buffer 交換(0x28e05) |
 | [0x5018d] | 1.15 double 常數；與 transient modifier / renderer 的精確關係待重判 |
 | 0x51a12 / 0x51a2a | map HUD `0x1acf3` 的地形 AP / DP 百分比表，索引為 FDSHAP control byte+1；已驗證 0→(+5,0)、1/5→(0,0)、2/3→(-5,+10)、4→(-5,-5) |
-| [0x53ec8] | `0x29f72`相關combat-result／presentation state；下游語意尚未閉合，不是已證實的縮放或figure X座標 |
+| [0x53ec8] | `0x29f72`相關combat-result／presentation state；下游語意尚未閉合，不是已證實的縮放或figure X座標(**2026-08-19 更新**:下游語意已由 `27` §5 反組譯閉環為單次行動經驗值暫存累加器,`0x29f72` 即本輪 project 內編號 `0x2f7b6`,細節見該文件) |
 
 ---
 

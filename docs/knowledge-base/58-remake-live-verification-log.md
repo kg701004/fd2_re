@@ -3566,3 +3566,24 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 ### 產出
 
 無`remake/`原始碼或campaign資產檔案變動（本輪純研究/文件）。新增檔案：`FD2_ghidra_projects/Probe58Cont28*.java`（6個probe script）+`ProbeExeInfo.java`+對應`probe58cont28*_out.txt`原始輸出（供覆核，不入`fd2_re`repo，留在Ghidra project目錄）。本文件本身是本輪唯一納入`fd2_re`版控的變動。
+
+## 續二十九：worklist 245/266 收口盤點——純靜態Ghidra補完`0x2f7b6`暴擊分支code-level證據，並意外完整解開`[0x53ec8]`經驗值累加/升級鏈，修正doc25/26/35先前「presentation value/語意待定」的錯誤標記（2026-08-19）
+
+**任務範圍**：對照worklist第245行(反組譯戰鬥/命中/傷害/AI演算法,與攻略公式交叉驗證)與第266行(反組譯完整性盤點),把doc58續二十六新反組譯出的ring-menu預設攻擊路徑(`0x2e2b0/0x2ebe1/0x2f7b6`)跟既有多輪已閉合的command式法術/道具/AI路徑(`0x1c75e/0x1c81f/0x1c916/0x276ec/0x14237/0x1598A/0x1567E`等)並排,對照攻略公式(doc02 §4)與remake `remake/internal/battle/*.go`,產出三方一致性盤點表(見`27`§5,不在此重複列表)。純靜態Ghidra headless(`FD2Analysis3`,唯讀,`analyzeHeadless.bat -readOnly -noanalysis`),寫了`Probe91Worklist245.java`/`Probe91Worklist245b.java`兩個probe script(留在`FD2_ghidra_projects/`供覆核)。
+
+**發現1:`0x2f7b6`完整decompile補完了續二十六漏標的暴擊分支**——續二十六的摘錄用「// 命中:可能觸發暴擊(DP減半)」這句註解帶過,沒有實際貼出反組譯碼,語氣上不算code-level證據。本輪重新完整反組譯`0x2f7b6`(body `0x2f7b6..0x2facc`全貌,90 instruction payload limit足夠一次拿到完整函式)證實:命中判定成立後,**另一次獨立**的`FUN_0004ebe3()` RNG呼叫、`roll%100<local_2c`(`local_2c`=職業暴擊率表`DAT_000524a7`,即doc32本輪已驗證的`0x774BC`,同一線性位址不同label)才觸發`local_20(DP)/=2`並設`param_3[1]=1`(crit旗標)。傷害基值`(AP-DP)*9/10`與續二十六記載完全一致,額外看到一段先前沒展開的jitter:`iVar8=local_1c/9; if(iVar8!=0){iVar11=FUN_0004ebe3(iVar8,local_1c%9); local_1c=local_1c+iVar11%iVar8;}`(在`*9/10`基礎上再加0~(damage/9)範圍內的整數變動)。
+
+**發現2(意外,非預期任務目標):`0x2f7b6`函式尾端有一段先前完全沒被讀過的經驗值計算分支**——`if((actor.+6==2/*己方*/) && (target.+7>0x43)){ ... DAT_00053ec8 = 守方等級×ExPerLevel(表[目標+0x7-0x44].+9) / 攻方等級(部分職業class∈(8,0x19)或race==0x1c時+0x1e); if(守方本次未死) DAT_00053ec8 = DAT_00053ec8×傷害/守方總HP; }`——這個公式結構與doc02 §4.5「(傷害HP/總HP)×(守方等級×守方每級經驗)×(守方等級/攻方等級);致死視同傷害HP=總HP」高度吻合(40年前攻略notes.md記載的文字公式,第一次由反組譯直接印證)。追查`DAT_00053ec8`發現它不是這個函式獨有的局部暫存值,而是全域,遂寫了`Probe91Worklist245b.java`對它做全EXE xref掃描:**26筆引用、16個不同函式**,含`0x1c81f`(command傷害)、`0x1c916`(HP恢復)、`0x22721/0x22866/0x22997/0x22af6/0x22d1b`(輔助法術/狀態buff)全部都讀寫這同一個global。
+
+**發現3(完整閉環):`0x117e7`(輸入dispatch)+`0x1e292`(消費/升級)證實`[0x53ec8]`就是單次戰鬥行動的暫存經驗值累加器,doc25/26/27/35先前「presentation value/語意待定」的標記是錯的**——完整反組譯`0x117e7`(body `0x117e7..0x11aa7`,原版鍵盤輸入dispatch loop,`iVar2=FUN_00011aa8()`取輸入碼再switch分派)發現:玩家確認攻擊指令(`iVar2==0x39||0x1c`分支)當下先`DAT_00053ec8=0`,執行完整個攻擊/演出序列(`FUN_00018890`迴圈,即ring-menu攻擊路徑的另一個既有入口)後`FUN_00011cac()`(HUD重繪),然後`if(99<DAT_00053ec8) DAT_00053ec8=99`——這正是doc26早就觀察到但語意未定的「`add reg`(非+1)+ 每tick `clamp 99`」寫入模式,現在完整解釋:每次玩家攻擊行動由上面§13/14的公式累加經驗貢獻,clamp在99再交給`0x1e292(actorIdx)`消費。完整反組譯`0x1e292`(body `0x1e292..0x1e528`)證實:`local_18=DAT_00053ec8+actor.+0x3c(持久化經驗值byte,先前只靠續二十四/二十五live memory讀值對上UI「EX.79」,現在補上完整writer/reader code);while(local_18>99){actor.+0x21(等級byte)+=1; local_18-=100; 呼叫0x1b750重算derived AP/DP/HIT/EV(續二十六已證實的同一個純函式!); if(達職業等級上限,byte常數'c'=99或'('=40其中一種,依actor.+7的職業家族分流)local_18=0}; actor.+0x3c=local_18; DAT_00053ec8=0`——完整證實了經驗值累加→每100一級→重算derived屬性的整條鏈路,且升級重算與續二十六發現的`0x1b750`(素菲亞被秒殺根因)是同一個函式,兩輪反組譯互相印證。
+
+**已同步修正**`docs/knowledge-base/26-per-chapter-event-handlers.md`第55行、`docs/knowledge-base/35-battle-animation-rendering.md`第420行的「語意待定/presentation state」標記,加註指向本輪與`27`§5的完整反組譯證據。
+
+**誠實的信心分級**：
+1. **高信心,code-level證據完整**：暴擊獨立擲骰+DP減半(表第3項)、`[0x53ec8]`是經驗值累加器且由`0x117e7`歸零/clamp99、由`0x1e292`消費並處理升級+重算derived屬性(表第15項)。
+2. **中信心,公式主幹對上但細節有落差**：攻擊經驗值公式(表第13項)只看到「÷攻方等級」一次,doc02文字上「守方等級」該出現兩次但反組譯只見一次;恢復法術經驗值公式(表第14項)完全沒看到「÷施法者等級」這個外層除法——兩者都可能是`0x1e292`之外還有其他呼叫點對`[0x53ec8]`做二次處理(本輪未追完,只確認了`0x1e292`是消費端,不是唯一的除法來源),也可能是攻略notes.md轉錄本身比實際公式複雜。
+3. **未追完,明確仍缺**：傳送/行動/魔刃魔鎧風行/麻痺毒擊/解毒祛麻共六種doc02 §4.5經驗公式對應的`[0x53ec8]`寫入點完全沒找;職業等級上限byte常數('c'=99/'('=40)的完整職業對應表未展開;命中後武器特殊效果(`0x2f7b6`內`cVar4`分支,type2狀態附加/type3未知旗標/type4固定暴擊加成)是本輪新發現但攻略未記載、remake未實作的原生機制,來源武器表(`FUN_0004e8bc`)未展開。
+
+### 產出
+
+新增`docs/knowledge-base/27-combat-rules-and-validation-checklist.md`§5「戰鬥演算法反組譯完整性盤點」(20項三方一致性表+6條仍缺清單+對worklist 245/266的完成度結論);同步修正`26`第55行、`35`第420行的過期標記。無`remake/`原始碼或campaign資產檔案變動(本輪純反組譯/文件盤點,未涉入live/DOSBox)。新增檔案：`FD2_ghidra_projects/Probe91Worklist245.java`、`Probe91Worklist245b.java`(留供覆核)。
