@@ -3455,3 +3455,114 @@ out[5] = local_1c;   // 傳回 0x2ebe1 當作 local_70(本次攻擊傷害量)
 3. **下一輪如果還要追這個目標**，續二十三/二十六留下的建議依然是最務實的方向：不要一次殺光`initial_groups`，設法拖到`runtime_append_groups`先觸發（可能靠回合數、可能靠特定單位到達特定座標、可能靠其他未知條件），這次嘗試驗證這個假說因為環境輸入交付問題而未完成，留給下一輪。**另一個從未認真嘗試過的方向**：直接靜態反組譯`runtime_append_groups`的觸發判斷邏輯本身（如果`campaign_full.json`/`map24_units.json`裡能找到對應的原生位址），比繼續盲測按鍵序列更可能有效率。
 
 **環境收尾**：`dosbox-x`/`Xvfb`/`tmux`全部確認關閉（`pgrep`無殘留）。**`FD2.SAV`留在「ch24戰前、12人常駐roster HP全滿且比賽前更高等級」的狀態**（chapter raw patch回`0x17`；因為本輪清光4隻initial_groups時4名角色升級，roster的HP/MP/等級欄位比這輪一開始讀到的還高，且全部正好是HP滿血，直接繼承作為下一輪起點，比重新湊回滿血更好）。**`FD2.EXE`保持原封不動的growth-table-patched狀態**（跟`FD2.EXE.pristine_bak`逐byte核對，diff僅252 bytes，全部落在`0x7AB5D..0x7ACC2`成長表範圍內，跟本輪一開始驗證的patch範圍完全一致，沒有意外殘留任何本輪嘗試過的party-select記憶體patch——那些全部是live-memory-only，行程結束即消失，從未寫回檔案）。
+
+## 續二十八：策略轉向——放棄live grind，純靜態Ghidra headless一次解開「殺光initial_groups就跳章」矛盾，推翻「繞過0x24c1e」的假說，改判定為live斷點環境本身的bug（2026-08-19）
+
+**任務範圍**：使用者明確指示這輪不碰DOSBox-X/WSL2，改用Ghidra headless（唯讀，`FD2Analysis3`project，`analyzeHeadless.bat -readOnly -noanalysis`）+ campaign/map資料檔 + 既有反組譯文件，一次徹底追出續二十三/二十四/二十七反覆卡住的核心矛盾：`0x24c1e`（已由續十六/十七off-by-one鐵證確認是ch24 postbattle handler）內部完全無分支、只要被呼叫就必定觸發`0x24d22`(13次)/`0x11d40`(60次)，但「殺光`initial_groups`4隻敵人就跳章節+播對話+autosave到ch25」這條捷徑，連續4輪live測試斷點全數掛零。**方法全程唯讀，共寫了7個一次性probe script（`Probe58Cont28.java`~`Probe58Cont28f.java`+`ProbeExeInfo.java`，留在`FD2_ghidra_projects/`供覆核，含對應`probe58cont28*_out.txt`原始輸出）**，用的`FD2.EXE`（Ghidra project `FD2Analysis3`裡載入的同一份，`exec path=/D:/Codex/FD2_extracted/FD2/FD2.EXE`，MD5 `a6e341a8decc6ebf7f4872076d9cf161`，size 802705 bytes——這與`fd2_battle_result_205be_disasm.txt`記錄的另一份357074-byte EXE雜湊不同，但兩者對本輪引用的所有位址反組譯出的機器碼位元組完全一致，判斷只是不同時期/不同additional-data-appended的同一底層映像，不影響結論）。
+
+### 問題1+2：ch24真正的勝利條件 + `0x51de9`dispatch表entry實際指向哪
+
+**`ch24.json`（`remake/assets/scenarios/ch24.json`，battle_ch24唯一的scenario來源，`campaign_full.json`第4080-4088行確認`battle_ch24`用`map`/`units`都是`assets/maps/map23`——注意原生map檔名此處故意錯位一格，`map23`才是ch24用的地圖，`map24`是ch25用的，這是既有、獨立於off-by-one handler問題之外的另一層命名慣例，不是新bug）給出**關鍵、此前幾輪live測試完全沒有交叉核對過的資料**：
+
+```json
+"chapter": 24, "map": 23, "runtime_append_groups": true,
+"initial_groups": [1],
+"events": [
+  {"id":"reinforce_ch24_e54_t2", "trigger":"on_turn_end","when":{"turn":2},"do":[{"type":"spawn_group","groups":[2],"camp":"enemy","native_event_id":54}]},
+  {"id":"reinforce_ch24_e54_t4", "trigger":"on_turn_end","when":{"turn":4},"do":[{"type":"spawn_group","groups":[4],...}]},
+  {"id":"reinforce_ch24_e54_t7", "trigger":"on_turn_end","when":{"turn":7},"do":[{"type":"spawn_group","groups":[7],...}]},
+  {"id":"reinforce_ch24_e54_t10","trigger":"on_turn_end","when":{"turn":10},"do":[{"type":"spawn_group","groups":[10],...}]}
+]
+```
+
+`runtime_append_groups`的4波增援全部是**回合數觸發**（`on_turn_end` turn 2/4/7/10），**不是**任何「initial_groups全滅」之類的條件式觸發——這一點續二十三提出的「假說：這4波可能靠initial_groups全滅觸發」在資料層級就直接排除了，續二十七猜測「可能靠回合數」完全正確。`story_ch24`（`campaign_full.json`第4064-4079行）顯示玩家可見目標文字是「目標:敵全滅」，即**表面設計意圖**確實是要打完全部（含4波增援），共70個FDFIELD單位（見續二十五的`map23_units.json`敵人模板整理，該輪筆誤把檔名寫成`map24_units.json`，實際campaign wiring證實是`map23_units.json`，這裡順帶訂正）。
+
+**`0x51de9` dispatch表entry實測**（`Probe58Cont28.java`，直接讀取loaded memory的DWORD陣列，非猜測）：
+
+```
+raw=22 (display ch23) post-handler=0x24754
+raw=23 (display ch24) post-handler=0x24c1e   ← 手算 23*4+0x51de9=0x51e45，讀出值=0x24c1e，逐位元組核對
+raw=24 (display ch25) post-handler=0x24df2
+```
+
+**完全確認**：`[0x53c03]=23`(raw)時的postbattle table entry就是`0x24c1e`，與續十六用對話內容比對出的off-by-one結論**完全吻合、無矛盾**——這輪換用「直接讀dispatch表原始記憶體」這條完全獨立的證據路徑，二次交叉驗證了續十六/十七的off-by-one修正是對的，不是可能性(B)。
+
+### 問題2核心：`[0x53ecc]==2`是否無條件呼叫`0x51de9[chapter]`？——完整反組譯外層dispatcher `FUN_00025bf4`確認：是，無gate
+
+`Probe58Cont28.java`完整反編譯了`0x25e1e`所在的函式`FUN_00025bf4`(戰役主迴圈，`0x25bf4`起，711 instructions)，核心迴圈：
+
+```c
+do {
+    iVar2 = FUN_000117e7();                              // 戰場迴圈tick(doc25 §6)
+    if (DAT_00053ecc == 1) { ... 固定資源79呈現 ...; iVar2 = 1; }
+    else if (DAT_00053ecc == 2) {
+        DAT_00051aac = 0;  FUN_00025977();
+        (**(code **)(&DAT_00051de9 + DAT_00053c03 * 4))();   // ★ 無條件呼叫postbattle handler，前面沒有任何gate/if
+        iVar2 = FUN_00026152();                              // 這是"再進0x2cad7 gate"的正確身分——doc23舊敘述把gate位址寫成0x2cad7是錯的
+        if (iVar2 == 0) { (*(code *)(&PTR_FUN_00051d71)[DAT_00053c03])(); ... }
+        else { iVar1 = 1; }
+        DAT_00051aac = 1;  DAT_00053ecc = 0;  FUN_0004e381();
+    }
+} while (iVar2 == 0);
+```
+
+**確認且訂正舊文件**：`[0x53ecc]==2`時，`(&DAT_00051de9)[chapter]`（即ch24的`0x24c1e`）**在呼叫前沒有任何條件判斷**——doc23第44行寫的「`[0x53ecc]==2 → call [...0x51de9]，再進0x2cad7 gate`」中「呼叫」這件事本身確實無條件，但**「gate」的真正函式是`0x26152`，不是`0x2cad7`**（`0x2cad7`只是`0x26152`函式體內部某個if分支的其中一個位址，不是獨立可呼叫的函式邊界；`0x26152`函式體另外也被`ProbeChapterTable2.java`等更早的既有probe腳本獨立引用過，命名一致）。這個gate發生在`0x24c1e`**呼叫完、回傳之後**，用途是判斷要不要接著呼叫`0x51d71[chapter]`(下一章戰前handler)，**不會**攔截或跳過`0x24c1e`本身的執行。
+
+### 問題4+5核心結論：`0x24c1e`必定被呼叫過，矛盾出在live斷點環境，不是遊戲邏輯繞過了它
+
+用`Probe58Cont28d.java`對整個EXE映像做**exhaustive byte-pattern掃描**（不依賴Ghidra的reference index——已證實`-noanalysis`模式下reference index不可靠，只找得到"剛好被之前的probe disassemble過"的instruction，`getReferencesTo(0x53c03)`一開始只回傳1筆，明顯漏掉肉眼可見在反組譯輸出裡的`0x24d18`），找`FF 05 03 3C 05 00`（`INC dword ptr [0x53c03]`）在整個程式映像裡的**全部**出現位置：
+
+```
+16 hits: 0x231f2, 0x2328a, 0x233ba, 0x23783, 0x239b1, 0x23b52, 0x23cc9, 0x23e2d,
+         0x240ed, 0x24329, 0x24957, 0x24d18, 0x25047, 0x25338, 0x2574f, 0x25855
+```
+
+`0x24d18`（`0x24c1e`函式體的最尾端，`INC dword ptr [0x53c03]`後直接`POP EDI/ESI/EBX; RET`）**是這16個「章節計數器+1」位址之一，且是ch24範圍內唯一一個**。額外掃描`ADD dword ptr[0x53c03],1`(0 hits)與所有`MOV dword ptr[0x53c03],imm32`(6 hits: 值分別是1/2/0/0x20/0x1f/0，全部是新遊戲/讀檔/序章FDTXT暫借用途，沒有一個是23或24，不可能是本次shortcut用到的路徑)。
+
+**結論(高信心,兩條獨立靜態證據交叉)**：
+1. **整個FD2.EXE裡，`[0x53c03]`從23變成24的唯一可能途徑，就是執行到`0x24d18`**——而`0x24d18`在`0x24c1e`函式體內，前面沒有任何`RET`/跳出/分支能繞過它（重新完整反編譯`FUN_00024c1e`(`Probe58Cont28f.java`)確認：整個函式從入口到`0x24d18`是純線性的兩段計數迴圈，迴圈邊界全部是編譯期常數`2..9`/`0..0x1d`/`0xa..0xe`/`0..0xb`，沒有任何依賴執行期單位/旗標/HP的`test`/`cmp`分支）。
+2. **`FD2.SAV`從chapter raw `0x17`(23)變成`0x18`(24)這件事本身，就是`0x24c1e`已經完整跑過一次的直接證據**——不需要live斷點佐證，因為靜態反組譯已排除了任何其他能達成同樣狀態變化的路徑。
+3. 由於`0x24c1e`的兩段迴圈裡呼叫`0x24d22`(13次,`iVar2=2..9`再`10..14`)與`0x11d40`(60次,`5組×12次`)**在到達`0x24d18`之前是強制執行的直線路徑**（沒有分支可以「跳過呼叫、只執行INC」），**這13+60次呼叫，在續二十三/二十四/二十七觀察到的每一次「殺光initial_groups→劇情對白→autosave到ch25」裡，理論上都確實發生過**。
+
+**這推翻了續二十三/二十四提出、續二十七仍延續的「殺光initial_group走了一條繞過`0x24c1e`的shortcut分支」假說**——靜態證據顯示**沒有**這樣一條分支存在（`0x24c1e`是`[0x53c03]`23→24的唯一途徑，架構上無法繞過）。真正發生的情況，判定為：**live DOSBox-X debugger的`0x1C0C82`/`0x1C0CC9`/`0x1C0CF3`斷點（由戰前對話overlay context推算出的delta）在postbattle cutscene實際執行時的記憶體佈局下，早已不對應`0x24d22`/`0x11d40`的真實runtime位址**——這正是續十五最早提出、但被續十六的off-by-one發現「搶走風頭」而未被獨立驗證/排除的**overlay換頁位址失效假說**。續十六的off-by-one發現解決的是「呼叫哪個handler」的問題（ch23→ch24修正），**不是**「同一個handler、不同overlay context下的live delta是否仍然有效」這個獨立問題——這輪的靜態證據顯示後者其實才是斷點掛零的真正原因。
+
+### 判定：既非(A)也非(B)，是修正版的(A)——真正的win-check機制 + live環境bug的組合解釋
+
+回答任務原始三選一：
+
+- **不是(B)**：0x51de9 dispatch表entry(直接讀記憶體)與off-by-one對話比對兩條獨立證據都指向`0x24c1e`=ch24 postbattle，沒有錯誤。
+- **不是純粹的(C)**：沒有「短路徑vs長路徑兩種合法破關方式」——只有一種`0x24c1e`，殺光initial_groups和殺光全部70隻（含4波增援）**都會**走到同一個`0x24c1e`，差別只在於「殺光initial_groups」這條路徑觸發的時機比原始設計（`敵全滅`字面文字暗示的「含增援」）早得多。
+- **是修正版的(A)**：ch24的**真正原生勝利條件**不是「FDFIELD定義的全部70個敵人死光」，而是「戰場執行期單位陣列（`[0x53a45]`，範圍`0..[0x53beb]`）目前沒有任何`+6==0(camp=enemy) && (+5&1)==0(admission=可用)`的存活列」——這是ch24使用的**預設**章節事件handler(`0x51b19[23]=0x205b4`,`Probe58Cont28b.java`直接讀表確認,與doc25/doc26舊表`23=D`吻合)`0x205b4→0x205be`完整反組譯出的邏輯（`0x0205c9 mov[0x53ecc],2`基準值；迴圈`edx=0..[0x53beb)`掃描，找到任一`+6==0 && bit0==0`的列就把`[0x53ecc]`覆寫成0；迴圈結束後額外檢查`record0`(陣列第0筆，即我方隊伍的某個固定成員)的bit0，若已設則覆寫成1；否則維持迴圈算出的0或基準值2）。**`[0x53beb]`本身是一個隨`spawn_group`呼叫動態遞增的「目前已建構單位數」計數器**（既有`50-cutscene-script-system-design.md`已證實`0x10c50`以`[0x53beb]`為新單位的destination slot、寫入後`inc[0x53beb]`），**尚未觸發的`on_turn_end`回合增援（group 2/4/7/10）根本還沒被`spawn_group`呼叫過，不存在於`0..[0x53beb)`這個掃描範圍內**——原生win-check在架構上**看不到**還沒登場的未來援軍，這不是bug，是這個handler的本來設計（單純「目前場上還有沒有活著的敵人」）。玩家只要在turn 2結束前（`on_turn_end`第一波增援觸發前）殺光`initial_groups`4隻敵人，`[0x53ecc]`就會合法地settle到2，觸發`0x24c1e`——**這條「捷徑」是ch24原生設計的真實副作用，不是重製或live環境臆造出來的錯覺**，只是它繞過的是「4波增援」這個內容，不是`0x24c1e`本身。
+
+**與remake既有Go邏輯的落差（連帶發現，記錄但不在本次任務範圍內修正）**：`remake/internal/battle/model.go`的`Result()`用`AliveCount(Enemy)==0 && PendingCount(Enemy)==0`（`PendingCount`額外檢查`s.PendingGroups[u.Group]`尚未登場的援軍），這比原生的`0x205b4`更嚴格——**原生沒有「檢查是否還有尚未觸發的未來回合增援」這一步**，remake這個design-time假設（`model.go`是M1階段就有的基礎設計，早於本次off-by-one/win-check調查）比原生行為更保守。這是否要改為忠實重現原生的「可提前結束」行為，是remake設計取捨問題，不在本次任務範圍內判斷或修改。
+
+### 問題5：`0x24d22`/`0x11d40`能否純靜態解掉——結論：完全解掉，不再需要live capture
+
+`Probe58Cont28f.java`對`0x24c1e`/`0x24d22`/`0x11d40`各自建立正式function boundary後完整反編譯（非只反組譯裸bytes）：
+
+```c
+// 0x24c1e 全貌(節錄迴圈骨架，兩段共13+60次呼叫的參數全部是編譯期常數):
+FUN_00015f84(...frame=2...);  DAT_00051a83=0;
+for (iVar2=2; iVar2<10; iVar2++) {               // 8次: iVar2=2,3,4,5,6,7,8,9
+    FUN_00024d22(iVar2);                          // 見下，非0參數
+    for (iVar1=0;iVar1<0x1e;iVar1++){ FUN_00011cac(); FUN_00017aa9(1); }  // 30次redraw+tick
+}
+FUN_00015f84(...frame=3...);  DAT_00051a83=0;
+for (; iVar2<0xf; iVar2++) {                      // 5次: iVar2=10,11,12,13,14
+    FUN_00024d22(iVar2);
+    for (iVar1=0;iVar1<0xc;iVar1++){ FUN_00011d40(0,0xff,ESI/*0..59累加*/); FUN_00011cac(); FUN_00017aa9(1); }  // 12次
+}
+FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
+```
+
+- **`0x24d22`(13次呼叫，參數固定是2..9再10..14，從未是0)**：完整反編譯後其函式本體是`if(param_1!=0){DAT_00051a10=(byte)param_1; return;} ...(else分支是另一個copy/blit迴圈,用DAT_00051a10當計次,只給參數0的caller用)`——在`0x24c1e`這13次呼叫裡，**參數永遠非0**，所以永遠只走「`DAT_00051a10=tier`」這個一行的setter分支，`else`分支(doc56第2396行提過的`0x51a10`相關copy分支)**在本函式的呼叫情境下完全不會被執行到**，不需要再猜。
+- **`0x11d40`(60次呼叫，參數固定是`(0,0xff,ESI)`，`ESI`是一個從0開始、在雙層迴圈裡逐次`INC`到59為止的單調計數器，反組譯層級確認，非猜測)**：函式本體是`for(p1<=p2){呼叫0x37ae5四次}`，用`(0,0xff)`固定範圍代表**每次都掃過完整256色VGA DAC調色盤**（呼應doc35/doc06既有的「VGA DAC調色盤寫入」定性），第三參數`ESI`(0..59)驅動`0x37ae5`內部的漸變/位移量——這是一個**60步的固定調色盤淡入/淡出動畫**，兩段`0x15f84`(frame 2→frame 3)夾住的是同一張戰果畫面資源的兩個影格，中間用調色盤過渡做cross-fade。
+- **結論**：這三個call site在`0x24c1e`裡的**全部參數，無一例外是編譯期常數或純迴圈計數器**，完全不依賴任何戰鬥執行期狀態（沒有讀取任何unit record、HP、旗標）——`0x24c1e`本質上是一段**與戰鬥結果內容無關的固定播出動畫**（結算畫面的調色盤淡出效果），本次可以**明確宣告**：`0x24d22`/`0x11d40`這兩個位址**不再需要live capture**，靜態反組譯已經把全部13+60次呼叫的參數值窮舉清楚。之前幾輪投入大量live驗證資源想「捕獲即時暫存器值」，回頭看是不必要的——這些值本來就是常數，不會因為戰鬥過程不同而改變。
+
+### 對後續調查的建議（若要繼續追，不在本輪任務範圍內執行）
+
+若仍想在live環境親眼確認`0x24c1e`真的執行過（例如想錄影驗證，而非只信靜態證明），建議：**不要沿用戰前對話overlay算出的delta**，改成在「希莉亞,抓緊我」那句對白**即將播放的瞬間**用`Alt+Pause`，直接讀`CS:EIP`（續二十三早就提過這個最省成本的診斷步驟，但後續幾輪都被拉去做敵人強度/miss相關的旁支調查，從未真正執行）；或者更直接：既然`[0x53c03]`只有這16個`INC`位址能改變，可以改為對**這16個位址本身**（尤其`0x24d18`所在的映像位址+overlay-context delta）下斷點，而不是對`0x24d22`/`0x11d40`（畢竟已經靜態解完，不再有動機去breakpoint它們）。但鑑於本次任務已經達成「不需要live capture」這個原本任務要追的目標，這件事的優先順序應該大幅降低。
+
+### 產出
+
+無`remake/`原始碼或campaign資產檔案變動（本輪純研究/文件）。新增檔案：`FD2_ghidra_projects/Probe58Cont28*.java`（6個probe script）+`ProbeExeInfo.java`+對應`probe58cont28*_out.txt`原始輸出（供覆核，不入`fd2_re`repo，留在Ghidra project目錄）。本文件本身是本輪唯一納入`fd2_re`版控的變動。
