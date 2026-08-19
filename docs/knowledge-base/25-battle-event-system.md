@@ -462,4 +462,162 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
   呼 `0x1088d`」是把兩個入口線性拼接的錯誤。直接指令與 callers 保存於
   [`fd2_battle_result_205be_disasm.txt`](../data/fd2_battle_result_205be_disasm.txt)。
 
+## 9. 社群修改表 oracle 對照：存檔可用性與寶箱持久化(2026-08-19)
+
+> 對應 `91-worklist.md` 第848行「社群行為 oracle 對照」；來源是
+> [GitBook FD2.EXE 修改表](https://jaceju-favorite-games.gitbooks.io/fd2/content/modify/FD2_EXE.html)
+> 列出的「入隊」「隨時存檔」「等級上限」「寶箱持久化」四項金手指行為線索
+> (已記錄於 `SESSION-HANDOFF-2026-07-06.md` L411)。本節只把其中「隨時存檔」
+> 「寶箱持久化」兩項，對照本 repo 既有 RE 證據(存檔 `0x30012`/`0x2602c`
+> 系列、寶箱事件 `0x354FE`/`0x1AA1D` 系列)轉成可編輯規則與 regression 方向；
+> 不把修改表本身當位址證據，只用它的「行為描述」當低成本 oracle 對照對象。
+
+### 9.1 存檔(save)：原版不是「隨處可存」，而是兩個固定戰間呼叫點 [驗]
+
+**原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
+UI-12、`91-worklist.md` L252/L260/L261/L1145)：
+
+- 存檔 writer `0x30012` 全 EXE**只有兩個呼叫者**：`0x2ccb6`(經城鎮 hub
+  `0x2cad7` 選項2「要進入戰場嗎？」confirm 之後)與 `0x2fd93`(經酒店/整備
+  流程 `0x2fc85` 分支)。兩者都落在**戰後過場結束到下一戰整備畫面之間**
+  的「戰間」流程內；全 EXE 主戰鬥迴圈(`0x10010` 起)沒有第三個
+  `0x30012` caller，因此**原版在戰鬥進行中無法存檔**——不是 UI 隱藏了
+  選單，是函式從未被接進戰鬥狀態機。
+- `0x2cad7` 依 `byte[chapter+0x526b9]` gate table 分流兩條路徑，兩者互斥
+  (已用 Docker 讀出 raw table：index `22..24`/`27..29`=1，其餘 town 範圍
+  =0)：
+  - **城鎮流程**(`0x526b9[index]==0`，對應 raw chapter 1..21/25..26)：
+    先進城鎮 hub(`[0x5412b]` option0/1/3/4 分別是酒店/商店家族/教會，
+    option2 才是存檔/整備入口)，Enter 後先顯示 FDTXT「要進入戰場嗎？」
+    confirm，接受才呼 `0x2ccb6→0x30012`，再進 `0x318ad` 整備。
+  - **整備限定流程**(`0x526b9[index]!=0`，對應 raw chapter 22..24/27..29
+    即顯示章節23-25/28-30)：跳過城鎮 hub，直接顯示 FDTXT `0x19a`
+    「要記錄戰況嗎？」；Yes 才呼 `0x30012(0)`，No 則略過存檔；兩臂之後
+    都進 `0x318ad` 整備。
+- LOAD(reader `0x2602c..0x26098`)只能從標題畫面四槽 selector 觸發；選定
+  非空槽後，先複製 `0xa00` roster、再載 metadata `+0..+9`(chapter/roster
+  count/currency 等)，接著**照樣重新進 `0x2cad7`** 用存檔章節決定回城鎮
+  或整備——回讀路徑本身也不繞過「戰間」邊界，證實存檔內容本來就只代表
+  一個戰間節點，從不代表任何戰鬥中途狀態。整個 `0x59cb` envelope(rolling
+  XOR `0x4dbd8`、checksum `0x4dbb9`)裡沒有任何回合數/地圖/單位位置欄位。
+
+**社群修改表「隨時存檔」對照**：修改表列的是繞過上述兩個呼叫點限制、
+讓玩家能在戰鬥中或任何畫面觸發存檔的 patch；這反向證實原版預設規則正是
+「只能在戰間兩個固定點存檔」，兩者互為肯定/否定證據，無矛盾。
+
+**remake 現行對照**(`remake/cmd/fd2/save.go`)：
+
+- `saveGameToSlot`(L70-103)已有一條 guard(L75)：node 是 `cutscene` 型別
+  且(有 `HandlerBinding`+進行中 `g.st`，或 node ID 以 `postbattle_` 開頭)
+  時拒絕存檔，訊息「戰後演出進行中，請在下一個節點存檔」——這對齊原版
+  「戰後過場本身不能存檔，要等進到下一個節點(城鎮/整備)」的邊界，已有
+  `TestSaveRejectsUnboundPostbattleBoundary`(`91-worklist.md` L119)。
+- **差距**：guard 只檔 `cutscene` 型別節點，**沒有檔 `battle` 型別節點**
+  (即實際戰鬥進行中的 `battle_chNN`)。目前 F5(`main.go` L6511-6512)在
+  `battle_chNN` 節點會直接呼叫 `saveGameToSlot`，因為 `saveData`(L55-66)
+  本來就不序列化 `g.st`(battle.State：單位/回合/寶箱)，所以存檔本身不會
+  寫壞任何東西，但會建立一個「看似成功」的存檔——讀檔後只會把該 `battle_
+  chNN` 節點**從頭重跑**，玩家在該場戰鬥內已推進的任何進度(含已開的寶箱、
+  已行動的單位)全部消失且沒有警告。這與原版「戰鬥中完全不存在存檔路徑」
+  的行為不同：原版玩家永遠不會誤觸一個會導致戰鬥重來的存檔，remake 玩家
+  可能會。
+
+**可編輯規則**：`SaveAllowedAtNode(nodeType, nodeID, hasActiveBattleState)`
+只在下列情況回傳 true——node 不是 `battle` 型別，且不是進行中的
+`postbattle_*`/handler-bound cutscene；即存檔只允許發生在「戰間」邊界
+節點(town/preparation/shop/church/其他非戰鬥選單)，對齊原版 `0x30012`
+兩個呼叫點皆位於戰間流程、戰鬥迴圈內不存在第三個呼叫點的事實。
+
+**建議 regression 方向**：新增
+`TestSaveRejectsDuringActiveBattleNode`——在 `battle_chNN` 節點、`g.st`
+非 nil(模擬戰鬥進行中，可選擇先 `ClaimTreasure` 讓某格寶箱進入已開啟
+狀態)時呼叫 `saveGameToSlot`，斷言回傳訊息與 `TestSaveRejectsUnboundPost
+battleBoundary` 同構(拒絕存檔，不產生檔案)，而不是目前的「靜默寫入一個
+會重跑整場戰鬥的節點邊界存檔」。這會把 guard 從「只擋 cutscene」擴大成
+「戰鬥迴圈內完全比照原版無存檔路徑」，同時關掉一個目前使用者不會被告知
+的資料遺失面。
+
+### 9.2 寶箱持久化(chest)：戰鬥內部才存在的旗標，本來就不進 `FD2.SAV` [驗]
+
+**原版機制**(既有證據見 doc25 §6.3、`91-worklist.md` L453/L1619、
+`SESSION-HANDOFF-2026-07-06.md` L630/L2224/L2333)：
+
+- 「已開啟」旗標存在**戰鬥期間才配置的 heap block** `[0x53AD5]`：
+  main 以 `malloc(0x20)`(32 bytes)取得，初始化端 `0x10322` 複製 32 bytes
+  進該 buffer(29 章開場共用)，事件路徑以 `0x13d00` 按 index 寫入單一
+  byte。這是「battle-local event state table」，不是全域存檔欄位。
+- 具體案例 map25 event58(五選一寶物，handler `0x354FE`)：先以 `0x1B8A6`
+  檢查行動單位八格 raw inventory 是否已滿(滿了只顯示 FDTXT `0x1E0` 並
+  返回，不改任何 opened state)；否則 `0x12E38` 讀目前寶物 slot，以 slot
+  索引 EXE 常數表 `0x5274E`(`[0x1D,0x2B,0x33,0x3D,0x47]`)取得物品，
+  `0x1BB8C(unit,item)` 寫入後，**把 `[0x53AD5]+0..4` 全部設為 1**——即
+  五個寶箱位置共用同一組「已選」旗標，拿走其中一個會讓其餘四個同時失效
+  (不是各自獨立的 opened bit)。
+- 這個 32-byte table 與另一張表不同，不要混淆：`[0x53A55]` 是**目前戰鬥
+  的即時 FDFIELD control 快照**(含 16 筆 turn events、16 筆 field
+  events、16 筆 chest controls 各 3B，`ContinueFieldControlView` 已拆解)，
+  `0x19357` 會在戰鬥中更新其中的「chest value」(寶箱**內容值**，例如換成
+  另一種獎勵)，這是內容/獎勵表，不是「已開啟」旗標本身。
+- **關鍵事實**：`0x59cb` 存檔 envelope 的 reader/writer(`0x2602c..
+  0x26098`/`0x30012`)只處理 metadata `+0..+9` 與 `0xa00` persistent
+  roster，**完全不觸碰 `[0x53AD5]` 或 `[0x53A55]`**。這不是遺漏，而是與
+  §9.1 的存檔邊界一致自洽：存檔只能發生在戰間(玩家已經離開該張戰鬥地圖)，
+  而每張戰鬥地圖在整個戰役流程中只會造訪一次(33 張圖對應 30 章戰役，無
+  「回頭重新踏上同一張地圖」的路徑)，所以「寶箱開啟狀態要不要跨存檔持久」
+  這個問題在原版設計裡根本不會發生——旗標只需要在**同一場戰鬥的生命週期
+  內**存在，戰鬥結束(無論勝負或存檔)那個 heap block 就跟著整場戰鬥狀態
+  一起消滅，不需要也没有被序列化。
+
+**社群修改表「寶箱持久化」對照**：修改表列的 patch 效果推測是讓玩家能重複
+拿取同一寶箱(例如重讀已存檔但寶箱曾被拿過的進度後箱子又出現)，這與上一段
+「旗標本來就不跨存檔」的結論一致——如果原版真的不持久化，玩家會觀察到
+「重讀檔寶箱又出現」的現象，因為 `[0x53AD5]` 每次進戰鬥都由 `0x10322`
+重新初始化，不是從存檔恢復；「持久化」修改表想解決的正是這個(對某些玩家
+而言不理想的)预设行为，而不是修正一個記憶體 bug。
+
+**remake 現行對照**(`remake/internal/battle/model.go`)：
+
+- `State.OpenedTreasure map[int]bool`(L600 附近)明確標註為「remake-owned
+  editable treasure state」，每次 `battle.Load` 建構新 `State` 時固定
+  `OpenedTreasure: map[int]bool{}` 全新配置(L939-940)，行為對齊
+  `0x10322` 每戰重新初始化的事實。
+- `ClaimTreasure`(L751 起)一般格寶箱設 `s.OpenedTreasure[t.Slot]=true`
+  (單槽獨立)；`claimNativeTreasureEvent`(L778 起)處理 event58 這類
+  native rule 時，對 rule 定義的所有共享 slot 都設 true(L798)，已有
+  regression `TestMap25NativeEventTreasureUsesEditableEvent58Rule` 驗證
+  五個 slot 會被同時關閉，對齊 `[0x53AD5]+0..4` 全設 1 的原版行為。
+- `remake/cmd/fd2/save.go` 的 `saveData`(L55-66)**沒有**任何寶箱/treasure
+  欄位，因此 `OpenedTreasure` 本來就不會被寫進存檔——這與原版「寶箱旗標
+  不進 `FD2.SAV`」的結論一致，是正確的對齊，不是遺漏。
+
+**可編輯規則**：`OpenedTreasure` 的生命週期綁定「單場戰鬥的
+`battle.State` 實例」，不綁定「campaign 存檔邊界」；規則本身已經是
+remake 現狀，此處把它從「隱含行為」提升為**明確不變式**：
+1) `battle.Load` 必須在每次建構 `State` 時重置 `OpenedTreasure` 為空；
+2) `saveData`/campaign 存檔格式必須永遠不含 treasure/chest 欄位；
+3) native event rule(如 event58)的「共享槽位」語意必須逐 rule 明確列出
+   受影響 slot 集合，不能假設所有寶物槽互斥。
+
+**建議 regression 方向**：
+- 新增 `TestOpenedTreasureNotSerializedInSaveData`(可放在
+  `remake/cmd/fd2/save_test.go`)：對一個已 `ClaimTreasure` 過的
+  `battle.State` 觸發 `saveGameToSlot`，反序列化寫出的 JSON，斷言其中
+  不存在任何 treasure/chest 相關 key——把「現狀正確」釘成不會被未來改動
+  意外打破的不變式(目前只是結構上沒有欄位，沒有主動測試防止有人以後
+  加欄位卻忘記排除戰鬥中途狀態)。
+- 新增 `TestBattleLoadResetsOpenedTreasureAcrossInstances`：對同一張
+  map 呼叫兩次 `battle.Load`，在第一個 `State` 上 `ClaimTreasure` 後，
+  斷言第二個新建的 `State.OpenedTreasure` 是空的——把 `0x10322`「每戰
+  重新初始化 32 bytes」的事實提升成可重複驗證的回歸，防止未來有人為了
+  「玩家體感」誤把 `OpenedTreasure` 挪進 campaign 持久層。
+
+### 9.3 worklist L848 完成度
+
+本節完成 `91-worklist.md` 第848行「先挑 save/chest 兩項」範圍：save(隨時
+存檔)與 chest(寶箱持久化)兩項的原版機制已有反組譯位址佐證(§9.1/§9.2)，
+並各自轉成可編輯規則(`SaveAllowedAtNode`／`OpenedTreasure` 生命週期不變式)
+與具體 regression 測試方向(尚未落地成測試碼，只完成規則設計與 test 命名/
+斷言描述)。第848行其餘兩項——「入隊」(入隊 ID/條件)與「等級上限」——
+不在本輪範圍內，留待後續 session。
+
 > 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`。
