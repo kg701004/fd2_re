@@ -1,0 +1,71 @@
+{
+ "_meta": {
+  "purpose": "ch24 (map24) enemy roster reference for live-capture cross-check. See docs/knowledge-base/58-remake-live-verification-log.md '續二十五' for full writeup and docs/knowledge-base/32-item-combat-stats-re.md §3.6 for the underlying table verification.",
+  "source_map": "remake/assets/maps/map24/map24_units.json",
+  "source_growth_table": "FD2.EXE 0x7AB0D 敵/友等級資訊表 (10B/單位: RA CL HP(u16) MP AP DP DX MV EX), byte-verified 2026-08-19 against the current FD2.EXE (509158 B)",
+  "hp_mp_formula": "VERIFIED: MaxHP = growth.hp * level, MaxMP = growth.mp * level (native constructor 0x10fe9, branch high_class; cross-checked against map24_units.json native_record_word42/word46, 9/9 combos match exactly)",
+  "ap_dp_dx_formula": "UNVERIFIED HYPOTHESIS ONLY: computed_*_HYPOTHESIS_growth_x_level assumes the same growth*level pattern as HP/MP. This has NOT been independently confirmed by decompile evidence. map24_units.json's flat ap/dp/mv fields are placeholder values (20/12/6 for every unit) and cannot be used to verify or refute this. Confirm live before relying on these numbers.",
+  "excluded": "15x race1/cls7(盜賊)/level5 units in group=255, all at coordinate (5,7) — likely an unused reserve/off-map roster pool, not part of the actual ch24 deployment. Excluded from this template.",
+  "idx16_19_note": "docs/knowledge-base/58-remake-live-verification-log.md '續二十四' patched 4 live enemies referred to as idx16/17/18/19. This template could NOT reliably map those runtime indices back to specific (race,cls,level) combos below, because map24_units.json's array order does not match the observed runtime unit-array order (e.g. array position 1 is an 'ally' on the high_class branch, not the expected lower_class party ordering). The closest attribute match for the killed idx16 ('大惡魔 LV.12' per 續二十四) is the race=5/cls=26/level=13/ap=33 row below (惡魔/大惡魔-class monster, level off by one from the live session's recollection). Recommend the next live round read +0x1F(race)/+0x20(class)/+0x21(level) directly at idx16-19 and match against this table instead of relying on this note."
+ },
+ "corrections_from_user_supplied_source_table": [
+  {
+   "table": "敵/友等級資訊 (0x7AB0D)",
+   "row": "大惡魔 (race=5, cls=0x1A, file offset 0x7ACB1)",
+   "field": "ap growth",
+   "user_supplied_value": 31,
+   "verified_exe_value": 33,
+   "note": "docs/data/exe_tables/unit.json idx42 (extracted from the now-lost old-build EXE at 0x55a9d) also records ap=33, so old and new builds agree; 31 is a transcription error in the user-supplied table, not a version difference."
+  },
+  {
+   "table": "職業暴擊率 (crit rate)",
+   "field": "new-build (0x7xxxx) file offset",
+   "user_supplied_value": "0x773AF",
+   "verified_exe_value": "0x774BC",
+   "note": "Anchor bytes 05 03 03 05 and the full 26-class crit table only occur once in the file, at 0x774BC. All 26 class values matched exactly once the correct offset was located. The other 5 tables checked this round all use a constant new/old offset delta of 0x25214; this table is the only one that breaks that pattern."
+  }
+ ],
+ "enemies": [
+  {"race": 1, "cls": 11, "cls_name": "聖騎士", "level": 17, "count_in_ch24": 4,
+   "growth_0x7AB0D": {"hp": 44, "mp": 4, "ap": 26, "dp": 12, "dx": 4, "mv": 8, "ex": 180},
+   "computed_max_hp_verified": 748, "computed_max_mp_verified": 68,
+   "computed_ap_HYPOTHESIS": 442, "computed_dp_HYPOTHESIS": 204, "computed_dx_HYPOTHESIS": 68, "mv_flat": 8,
+   "sample_coords": [[9,7],[8,8],[11,7],[12,8]]},
+  {"race": 1, "cls": 19, "cls_name": "龍騎士", "level": 24, "count_in_ch24": 2,
+   "growth_0x7AB0D": {"hp": 31, "mp": 0, "ap": 16, "dp": 7, "dx": 3, "mv": 9, "ex": 80},
+   "computed_max_hp_verified": 744, "computed_max_mp_verified": 0,
+   "computed_ap_HYPOTHESIS": 384, "computed_dp_HYPOTHESIS": 168, "computed_dx_HYPOTHESIS": 72, "mv_flat": 9,
+   "sample_coords": [[1,25],[23,31]]},
+  {"race": 4, "cls": 2, "cls_name": "戰士", "level": 25, "count_in_ch24": 15,
+   "growth_0x7AB0D": {"hp": 25, "mp": 0, "ap": 13, "dp": 8, "dx": 3, "mv": 6, "ex": 100},
+   "computed_max_hp_verified": 625, "computed_max_mp_verified": 0,
+   "computed_ap_HYPOTHESIS": 325, "computed_dp_HYPOTHESIS": 200, "computed_dx_HYPOTHESIS": 75, "mv_flat": 6,
+   "sample_coords": [[9,33],[8,36],[7,33],[18,20],[18,22],[16,21]]},
+  {"race": 4, "cls": 2, "cls_name": "戰士", "level": 26, "count_in_ch24": 1,
+   "growth_0x7AB0D": {"hp": 25, "mp": 0, "ap": 13, "dp": 8, "dx": 3, "mv": 6, "ex": 100},
+   "computed_max_hp_verified": 650, "computed_max_mp_verified": 0,
+   "computed_ap_HYPOTHESIS": 338, "computed_dp_HYPOTHESIS": 208, "computed_dx_HYPOTHESIS": 78, "mv_flat": 6,
+   "sample_coords": [[24,7]]},
+  {"race": 4, "cls": 5, "cls_name": "法師", "level": 24, "count_in_ch24": 4,
+   "growth_0x7AB0D": {"hp": 20, "mp": 30, "ap": 11, "dp": 6, "dx": 3, "mv": 6, "ex": 120},
+   "computed_max_hp_verified": 480, "computed_max_mp_verified": 720,
+   "computed_ap_HYPOTHESIS": 264, "computed_dp_HYPOTHESIS": 144, "computed_dx_HYPOTHESIS": 72, "mv_flat": 6,
+   "sample_coords": [[6,10],[9,16],[17,21],[8,34]]},
+  {"race": 5, "cls": 26, "cls_name": "？？？(monster, likely 大惡魔)", "level": 13, "count_in_ch24": 2,
+   "growth_0x7AB0D": {"hp": 40, "mp": 6, "ap": 33, "dp": 20, "dx": 6, "mv": 6, "ex": 200},
+   "note": "ap corrected from user-supplied 31 to verified EXE value 33; see corrections_from_user_supplied_source_table",
+   "computed_max_hp_verified": 520, "computed_max_mp_verified": 78,
+   "computed_ap_HYPOTHESIS": 429, "computed_dp_HYPOTHESIS": 260, "computed_dx_HYPOTHESIS": 78, "mv_flat": 6,
+   "sample_coords": [[22,7],[1,6]]},
+  {"race": 5, "cls": 26, "cls_name": "？？？(monster, likely 惡魔)", "level": 14, "count_in_ch24": 9,
+   "growth_0x7AB0D": {"hp": 40, "mp": 5, "ap": 30, "dp": 18, "dx": 6, "mv": 6, "ex": 180},
+   "computed_max_hp_verified": 560, "computed_max_mp_verified": 70,
+   "computed_ap_HYPOTHESIS": 420, "computed_dp_HYPOTHESIS": 252, "computed_dx_HYPOTHESIS": 84, "mv_flat": 6,
+   "sample_coords": [[0,26],[2,26],[1,27],[21,31],[22,32],[24,32]]},
+  {"race": 7, "cls": 26, "cls_name": "？？？(monster)", "level": 19, "count_in_ch24": 1,
+   "growth_0x7AB0D": {"hp": 140, "mp": 25, "ap": 24, "dp": 9, "dx": 4, "mv": 4, "ex": 250},
+   "computed_max_hp_verified": 2660, "computed_max_mp_verified": 475,
+   "computed_ap_HYPOTHESIS": 456, "computed_dp_HYPOTHESIS": 171, "computed_dx_HYPOTHESIS": 76, "mv_flat": 4,
+   "sample_coords": [[10,7]]}
+ ]
+}
