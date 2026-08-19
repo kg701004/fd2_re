@@ -395,7 +395,7 @@
 - [x] **ch15 compound predicate primitive**：新增受限 `native_any_of`，只接受已驗證的 raw round／inactive-count 子條件；任一子條件可證實為真才通過，全部缺 provenance 仍 fail-closed。尚未改寫 immutable `ch15_post.json` 或解除 campaign binding。
 - [x] **ch15 +0x42 persistence bridge**：`syncPartyFromBattle` snapshot 與 `applyPersistentStats` 現保留 `NativeRecordWord42/HasNativeRecordWord42`，測試覆蓋 raw word `0x140`；不由 normalized HP 推導，units source 缺 constructor provenance 時仍 fail-closed。
 - [x] **ch15 candidate editable CFG**：新增 `handlers/candidates/ch15_post_cfg.json`，保留 raw source addresses 與 nested OR/else branch。2026-08-02 IDA 重核修正 JOIN18 錯置：`0x23b1f` 跳到章節尾端，JOIN18 只屬於 `else word42>=0x140` arm。candidate binding 已改用直接 producer 證實的76-slot入口；production scenario 未接此建構，候選也不列入production handlers或campaign node。
-- [ ] 執行 raw ch15 四條 branch trace，補 JOIN18 當下的 typed persistent record、`battle_ch16→postbattle_ch16→town_ch17` 與 save regression；在一般玩家原版 runtime capture 前保持 unbound fail-closed。
+- [x] 執行 raw ch15 四條 branch trace，補 JOIN18 當下的 typed persistent record、`battle_ch16→postbattle_ch16→town_ch17` 與 save regression；在一般玩家原版 runtime capture 前保持 unbound fail-closed。——已解:`doc26 §7`(2026-08-18)。四分支邏輯/JOIN18讀寫路徑/ch16→ch17鏈路皆已反組譯確認;save regression本身可靠,唯一剩缺口(battle_ch16原版runtime capture)如實維持unbound fail-closed，待未來活體驗證。注意:此內容實際位於`ch16_post.json`(off-by-one改名後),非`ch15_post.json`(後者是另一個已解完的簡單案例),容易搞混。
 - [x] ch16/ch17 pre-handler：`0x335bb` 的 `roster_has(18)` 接 `test/jne 0x3344d`；有角色18直接進 shared tail，沒有才 `spawn(group 1)`。已轉為 editable `if roster_has`，map16/60-slot/FDTXT_017 binding 接入 `story_ch17`。compiler branch 現繼承前置 LOADCH slot frontier，但 merge 後不假設分支新增 slots。
 - [x] ch17 battle initial-group correction：原版 ch16 pre 只在 char18 缺席時 append group1，group3 是 ch16 post 才 spawn；`ch17.json` 不再把 1/3 固定 initial。Scenario 加入可編輯 `initial_groups_if_party_absent`，只控制戰前 `OnField` visibility；它不宣稱已還原 native append-slot identity，post handler 仍 fail-closed。
 - [x] ch17/ch18 pre-handler：FDTXT_018 index0/1/2（7+4+13句）與 map17/70-slot、acting54/55 已接 binding，`story_ch18` 已接回 editable handler。
@@ -461,7 +461,7 @@
 - [x] **全 30 關卡目標表(攻略 ground truth)** → `28`:每關勝利/失敗/加入條件;**失敗條件=護衛目標**證實 unit_state 機制;加入=roster_has;ch30 魔神連鎖=回合事件;remake 關卡規格直接可用
 - [x] **撤回章17 alive 誤讀**：依 caller-specific raw bit0 branch 重新解讀；舊「指定單位存活→設碼」已撤回 → `25`/`26` 回填
 - [~] 單位 0x50B 結構：`+5` raw bit0/bit7 predicates、`+8`角色ID、`+0/+1/+2/+6/+0x31` 已解；完整逐欄佈局 [阻]（remake 用自有 struct，不需）
-- [ ] (補)更新 doc 12:修正「main=0x10000」、補章節→BGM 表 0x51e63 精確曲號
+- [x] (補)更新 doc 12:修正「main=0x10000」、補章節→BGM 表 0x51e63 精確曲號——已解:真main=`0x25bf4`;30-entry表逐位元組複核無誤;開場BGM=FDMUS_018(取代猜測FDMUS_004)
 
 ## 第 6 輪（歷史單一戰鬥演出 fixture 對照；不代表通用戰鬥 renderer 1:1）
 > 目標:remake 戰鬥攻擊演出(orig_05)像素級對齊原版。方法=**密集網格疊圖 oracle**(見記憶 pixel-align)+ 反組譯確認機制,**無 dosbox debugger**(0.74 vanilla 不能 dump)。
@@ -617,7 +617,7 @@
 - [x] 聽辨清單(extracted/music_ogg/聽辨清單.md,待使用者逐曲填)
 - [ ] 戰鬥曲/勝利曲聽辨(使用者)
 - [ ] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub
-- [ ] ch10 等圖少數 tile 雜色查因
+- [x] ch10 等圖少數 tile 雜色查因——查無異常:`doc05`(2026-08-18)複核,FDSHAP RLE解碼0邊界異常,視覺比對只是原版手繪高對比dither,非bug,維持07-03non-bug結論
 - [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs raw transient/modifier bytes（舊稱 `magic_raw` 已撤回）
 - [ ] +0xd0 陣列填值(逐招音效對照,低優先)
 
@@ -676,7 +676,7 @@
       騎馬夜行/明月/合照/金鎖);**「2」logo 縮放亦由 ANI.DAT(資源#1)驅動**,更正 doc23 猜測。
       見 doc39。待補:⑥浮空城/⑨惡魔臉未逐幀窮舉、轉場閃光呼叫端排程。
 - [ ] 開場配樂曲號實聽驗證(容器 nosound 無法驗;使用者聽辨)
-- [ ] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)
+- [x] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)——已解:`doc25 §6.1.1` [驗],event_id 47/49 同構公式 `group_id = turn_counter DIV 2`,6/6 對照 map roster 全部吻合
 - [ ] ch09-33 文本(批次進行中:09-13 執行中)
 
 ## 第 14 輪 ✅(AFM 完全破解+開場過場端到端+文本過半)
@@ -699,8 +699,8 @@
 - [x] **speaker→頭像機制 RE**(sonnet):0xFFEF operand→0x12C60 查[0x53A45]/[0x53BF7] byte[+7]=DATO;
       三推論裁決(①部分成立=陣列重填+雙定址②怪物表不成立③字母碼是 render_story.py operand 洩漏 bug);
       **story JSON 零修改**(現行最忠實);修 render_story.py operand-skip;doc14 修正
-- [ ] **開場配樂曲號 RE**(bgm-title 執行中):play_bgm 開場鏈曲號→FDMUS 檔(取代猜測 FDMUS_004)
-- [ ] 開場分鏡⑨惡魔臉來源 RE(疑另一機制或 ANI.DAT)
+- [x] **開場配樂曲號 RE**(bgm-title 執行中):play_bgm 開場鏈曲號→FDMUS 檔(取代猜測 FDMUS_004)——已解:`doc12`,FDMUS_018,`0x25db1-0x25db5`唯一play_bgm(0x12,0)呼叫
+- [x] 開場分鏡⑨惡魔臉來源 RE(疑另一機制或 ANI.DAT)——已解:`doc39 §10.9`,是`title_seq`(0x1f894)捲到esi==0時露出立繪緩衝區頂端(FDOTHER #0x45/#0x46),非獨立機制;doc23§2.4⑦07-03已用肉眼比對解出,本輪Ghidra逐指令複驗控制流補強
 - [ ] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)
 - [ ] 待展開(位址已釘):0x3453E 額外檢查、tag==0x27 sentinel、[0x53BF7] 表用途
 
