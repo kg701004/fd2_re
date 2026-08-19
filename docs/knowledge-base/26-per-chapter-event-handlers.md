@@ -261,6 +261,14 @@ regression。資料驅動是目標架構，不是目前已證實所有事件語�
 - `0x34894` 才是本 handler 實際呼叫、且**獨立反組譯確認語意相符**的函式：`push 0x4; call 0x3702f; mov edx,[esp+4]; mov eax,edx; shl eax,2; add edx,eax; shl edx,4`(=idx\*5<<4=idx\*0x50，與 doc26 §1「`0x3453e` 全貌」記載的公式**完全相同**) `; mov eax,[0x53a45]; mov al,[edx+eax+5]; and al,1`(=byte[idx*0x50+5]&1)。
 - 結論：本 handler 這個呼叫點的**語意**(NativeRecordByte5Bit0)與既有理解一致、未受影響；但**位址標籤**`0x3453e`在目前 EXE build 對不上，doc26 §1 表格與 `ch16_post.json`/候選檔內 `unit_inactive` beat 的 `target` 欄位需要一次獨立審計(不在本次任務範圍，已用 `spawn_task` 另開追蹤)。
 
+> **2026-08-19 補充**(見 [`40-speaker-portrait-mapping.md`](40-speaker-portrait-mapping.md) 新增小節①)：
+> 同一個「位址標籤標成 `0x3453e`、實際 CALL 目標是 `0x34894`」的落差，在 `0x12C60`(speaker→頭像身分
+> 標籤查表)的呼叫點(`0x12ca0`)再次出現——doc40 原 pseudocode 也把它寫成 `0x3453E`。全程式 xref 掃描
+> 確認 `0x34894` 共 **8** 個直接呼叫點(`0x127c2/0x12a4a/0x12c47/0x12ca0/0x11682/0x1b63e/0x2a09f/0x11566`)，
+> `0x12ca0`(即 `0x12C60`)是本輪新確認的第 8 個 caller，先前未被本文件列入。`0x12C60` 的 caller-local
+> 行為：候選單位 `byte[+5]&1==1` 時拒絕、繼續掃描同 tag 的下一格，只有 `==0` 才接受——與本節「raw
+> predicate，語意由 caller 決定」的既有原則一致，不影響本文件已閉合的 `RE-RAW-BYTE5-BIT0-3453E` 結論。
+
 ### 7.2 JOIN18 當下的 typed persistent record [驗]
 
 `join(char_id=18)` 這個原語跟 doc26 §1 已收錄的其他 JOIN(如 ch15_post 的 `join(char_id:15)`、doc25 §6.4 的 JOIN31)走同一條**通用**(非角色專屬硬編碼)路徑，char_id=18 沒有任何特殊分支：

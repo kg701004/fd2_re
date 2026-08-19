@@ -222,13 +222,156 @@ operand word,PNG 才不會洩漏假字母/假漢字,未來章節重新渲染核�
    另存native opcode、scene/unit index與resource provenance；ch09第11格來源仍是必要
    evidence工作，而非可選考據。
 
+## 2026-08-19 補充:三個已釘位址展開(對應 `91-worklist.md` 第 705 行)
+
+> 方法:read-only Ghidra headless(`FD2Analysis3`,`-noanalysis`,唯讀),對三個項目分別重新反組譯 +
+> 全程式 xref 掃描獨立驗證(不只沿用舊 doc 結論)。腳本:`FD2_ghidra_projects/ProbeWorklist705{,b,c}.java`。
+
+### ① `0x3453E`(`0x12C60` 內的額外檢查函式)—— **同一個「位址標籤過期」問題,已展開**
+
+新鮮反組譯 `0x12C60`(節錄,array① 掃描段):
+
+```asm
+00012c91  MOVZX EAX,byte ptr [EBX+0x8]   ; 候選單位 byte[+8]
+00012c95  CMP EAX,EDI                     ; == tag?
+00012c97  JNZ 0x00012c85                  ; 不符→下一格
+00012c99  MOV dword ptr [0x53c1b],EBX     ; 記下候選
+00012c9f  PUSH ESI
+00012ca0  CALL 0x00034894                 ; ← 實際呼叫目標,不是 0x3453E
+00012ca5  ADD ESP,0x4
+00012ca8  TEST EAX,EAX
+00012caa  JNZ 0x00012c85                  ; 非0→視為拒絕,繼續掃描同一 tag 的下一格
+00012cac  MOV EAX,ESI                     ; 0→接受,回傳 index
+```
+
+`0x12C60` 在 `0x12ca0` 呼叫的**真正**位址是 `0x34894`,不是 doc 舊 pseudocode 寫的 `0x3453E`——
+這和 `docs/knowledge-base/26-per-chapter-event-handlers.md` §7.1.1(2026-08-18 前)已經獨立抓到的
+「`0x23a74` 呼叫點位址標籤過期」是**同一種 bug**,只是這次出現在 `0x12C60` 這個呼叫點。逐位元組核對:
+
+- `0x3453e` 的原始 bytes 是 `e8 62 cd fd ff` = `CALL 0x000112a5`,不在任何已定義 function 邊界內
+  (`getFunctionContaining(0x3453e)` = NONE),屬於一個從 `0x34531` 開始的呼叫序列中段
+  (`push 0x1; call 0x112a5; ...; push 0x3; call 0x10b4e; ...; push 8; push 5; call 0x135dd; ...`)。
+  `0x112a5` 正是 doc26 §7.2 已定案的 **JOIN 角色 constructor**(`sub_112A5`/`MaterializePersistentUnit`);
+  `0x34531` 這段呼叫序列因此高度疑似某個 JOIN 事件 handler(呼叫時 `push 0x1`=傳入角色/肖像 id),
+  跟 speaker/portrait byte5-bit0 查詢完全無關。
+- `0x34894`(`0x12C60` 實際呼叫的位址)反組譯確認 = `NativeRecordByte5Bit0(idx)`:
+  ```asm
+  00034894  PUSH 0x4
+  00034899  CALL 0x0003702f
+  0003489e  MOV EDX,[ESP+0x4]           ; idx
+  000348a2  MOV EAX,EDX
+  000348a4  SHL EAX,0x2
+  000348a7  ADD EDX,EAX                  ; edx = idx*5
+  000348a9  SHL EDX,0x4                  ; edx = idx*0x50
+  000348ac  MOV EAX,[0x53a45]            ; 戰場單位陣列基底
+  000348b1  MOV AL,[EDX+EAX+0x5]
+  000348b5  AND AL,0x1
+  000348b7  MOVZX EAX,AL
+  000348ba  RET
+  ```
+  與 `docs/knowledge-base/26-per-chapter-event-handlers.md` §1/`docs/knowledge-base/50-cutscene-script-system-design.md`
+  已經 Docker Capstone 閉合(`RE-RAW-BYTE5-BIT0-3453E`,2026-07-27)的 `NativeRecordByte5Bit0`
+  完全一致(`byte[idx*0x50+5] & 1`,raw predicate,不寫入)。
+- 全程式 xref 掃描:`0x34894` 共 **8** 個直接 CALL 呼叫點(`0x127c2/0x12a4a/0x12c47/0x12ca0/
+  0x11682/0x1b63e/0x2a09f/0x11566`),`0x12C60`(`0x12ca0`)是其中之一——**這是本輪新確認的第 8 個
+  caller**,先前 doc25/26/50 只追蹤過其他 caller(如 ch16_post `0x23a74`)。`0x12c47` 所在的
+  `FUN_00012c0d`(緊鄰 `0x12C60` 前一個函式)也呼叫同一函式,疑是同族的另一個查表/驗證 helper,
+  本輪未展開(範圍外)。
+
+**結論(caller-local,不升級成全域命名)**:`0x12C60` 找到 `byte[+8]==tag` 的候選單位後,用
+`NativeRecordByte5Bit0(候選index)` 再檢查一次——若該候選的 `byte[+5]&1 == 1`,`0x12C60` **拒絕該候選,
+繼續掃描同一 tag 的下一格**;只有 `&1 == 0` 才接受並回傳。這是 `0x12C60` 這個 caller 自己的分支行為,
+與 doc26 已建立的「byte[+5] bit0 是 caller-specific mask,不可全域命名成死亡/存活」原則一致——
+在 speaker/portrait 身分查表的語境下,可以精確描述為「跳過該 raw bit 被設置的候選單位」,但不主張
+這代表全域的「死亡/inactive」。**「額外檢查」語意已展開完畢,無殘留不確定性**(位址標籤已修正為
+`0x34894`;doc40 開頭 §「反組譯細節」的 pseudocode 之後應同步改標)。
+
+### ② `tag==0x27` sentinel —— **全程式窮舉掃描,確認唯一、且不與 -18 共用**
+
+對整個 EXE(976 個已定義函式 + 全部已反組譯指令)掃描所有 `CMP reg, 0x27` 立即數比較,
+**全程式僅此一處**:
+
+```
+000161a2  CMP EBP,0x27   [fn=FUN_00015f84]   ; 僅此一處,-17 開框碼(0x16140)內
+```
+
+同時重新反組譯 `-18`(`0xFFEE`,`0x1622A`)整段路徑,確認它**完全沒有 tag==0x27 判斷**——
+`cmp eax,-1 / jz` 分流只影響肖像變體旗標(`[esp+0x14]`=`0x70` 或 `0`),兩條分支都直接匯合到
+`0x1628c: MOV EDI,[0x53c1b]; MOVZX EBP, byte[EDI+7]`,無條件依賴 `0x12C60` 內部設的
+`[0x53c1b]`(找不到任何匹配時,若 array② 也全空,`[0x53c1b]` 會停留在 `0x12C60` 入口清的 0)。
+**這修正/收斂了 doc40 原文「(-18)同上(下框變體)」的措辭**:-18 與 -17 共用同一個 `0x12C60` 查表,
+但只有 **-17** 的 handler 自己額外加了 `tag==0x27` 這一條旁路判斷;-18 沒有。
+
+**結論**:`tag==0x27`(=39)是**僅存在於 `0xFFEF`(-17)開框碼 handler(`0x16140`)自身**的
+特例分支,程式其他任何地方都不會再檢查這個立即數——不是一個被多處共用的全域 sentinel 常數。
+比對成立;`je 0x161b1` 之後直接 `push ebp`(=0x27)當 DATO id,繞過 `[0x53c1b]` 查表結果,靜態邏輯本身
+無殘留疑點。**但「為什麼恰好是 39」(DATO.DAT 資源 #39 代表什麼)無法只靠 EXE 程式碼反組譯回答**——
+39 在指令流裡只是一個裸立即數,沒有任何字串/常數表把它標成「畫外音」或其他語意;要驗證 doc40 原本的
+猜測,需要去查 `DATO.DAT` 第 39 張資源實際內容(圖檔),這已經超出「反組譯 EXE」的範圍。
+**誠實標記**:sentinel 觸發條件與唯一性已窮舉確認[驗];「39 選這個數字的敘事/資產理由」仍需活體或
+資產檔案佐證,不在本輪範圍內關閉。
+
+### ③ `[0x53BF7]` 表用途 —— **doc40 原猜測「場景演員表」有誤,應正名為「我方持久名冊」**
+
+全程式 xref 掃描:`[0x53BF7]` 共 **26** 處直接參照(15 個函式),其計數欄位 `[0x53BFB]` 共 **41** 處
+(約 20 個函式)。三條各自獨立、彼此吻合的證據鏈,結論一致:
+
+1. **`0x33499` = `roster_has(id)`**(doc26 §1 已知,本輪重新反組譯全 body 逐指令核對):
+   `for edx in 0..[0x53bfb): if byte[[0x53bf7]+edx*0x50+8]==id: return 1` ——線性搜尋我方名冊,
+   跟角色 ID 比對 `byte[+8]`,回傳布林。這是「我方是否擁有某角色」的查詢,不是場景/地圖概念。
+2. **`0x11506` = 戰後 runtime→persistent 同步**(doc26/doc50 §3.2 已完整驗證):把剛結束那場戰鬥
+   `[0x53a45]`(戰場單位陣列)的資料,依 `+8` 角色 ID 配對,複製進 `[0x53bf7]`——同步方向明確是
+   「戰場資料寫回持久名冊」,語意上就是**存檔/跨關保留**的角色資料表,不會是隨場景重新填的暫態演員表。
+3. **`0x112a5`(doc26 §7.2 已定案為 JOIN 角色 constructor `MaterializePersistentUnit`)本輪新確認寫入位置**:
+   ```asm
+   000112b6  MOV EDX,[0x53bfb]              ; 目前名冊人數(下一個空位 index)
+   000112be  SHL EAX,0x2
+   000112c1  ADD EAX,EDX
+   000112c3  SHL EAX,0x4                     ; eax = count*0x50
+   000112c6  MOV ESI,[0x53bf7]               ; 名冊基底
+   000112cc  ADD ESI,EAX                     ; esi = &roster[count]  ← 新成員要寫入的槽
+   ...
+   00011337  MOV byte ptr [ESI+0x5],0x0      ; 新角色 byte[+5]=0(比照 doc26 已知的戰場單位 constructor 模式)
+   0001133b  MOV byte ptr [ESI+0x6],0x2
+   0001133f  MOV AL,[ESP+0x34]               ; caller 傳入的角色/肖像 id 參數
+   00011343  MOV byte ptr [ESI+0x7],AL
+   00011346  MOV byte ptr [ESI+0x8],AL       ; +7 與 +8 初始寫入同一個值(identity==portrait 初值)
+   ...
+   0001143e  PUSH dword ptr [0x53bfb]        ; (函式尾段)回傳舊 count 當新成員 index
+   0001144c  INC dword ptr [0x53bfb]         ; 名冊人數 +1
+   ```
+   即「加入新隊員」直接把新角色寫進 **`[0x53bf7]` 陣列的 `[0x53bfb]` 那個空位**,再把計數 +1——
+   這是**教科書等級的「往陣列尾端 append 一筆記錄」**,陣列語意只可能是「隊伍名冊」,不可能是
+   「當前場景演員表」(場景演員應該隨地圖載入整批 memcpy,不會有「逐一 JOIN 時 append 一筆」這種
+   API 形狀)。
+
+**結論**:`[0x53BF7]`(32 槽 × 0x50 bytes,計數 `[0x53BFB]`)是**我方隊伍/角色的持久名冊**
+(persistent party roster)——`roster_has` 查它、戰後同步把戰場結果寫回它、JOIN constructor 把新隊員
+append 進它。**doc40 本文開頭「陣列②…疑為『目前場景 NPC/劇情演員表』」的猜測應撤回**,改採
+`docs/knowledge-base/26-per-chapter-event-handlers.md` 第 45 行「`[0x53bf7]` = 我方隊伍/角色名冊」
+與 `docs/knowledge-base/50-cutscene-script-system-design.md` §3.2 的既有定案(本輪用全新反組譯 +
+JOIN constructor 寫入路徑獨立覆核,三條證據互相吻合,無矛盾)。
+
+連帶回頭看 `0xFFEF`/`0xFFEE`(-17/-18)身分標籤查表機制:`0x12C60` 掃完戰場單位陣列 `[0x53A45]`
+(array①)沒找到,才退而掃 **我方持久名冊 `[0x53BF7]`**(array②)——即開框碼的身分標籤查找,
+其實是「先在當前戰場找,找不到就退回問玩家隊伍名冊」,不是「兩張場景表」。這比 doc40 原本
+「陣列②是另一張同結構的場景表」更精確。
+
+其餘 12 個也讀寫 `[0x53BF7]` 但本輪未逐一展開語意的函式(`0x19df7/0x10010/0x25ebb/0x26152/
+0x2670e/0x2968d/0x2986f/0x2aa00/0x2af28/0x2b777/0x2b843/0x1088d`)——核心「這張表是什麼」的問題已
+由上述三條獨立證據鏈確認,不影響結論;個別 caller 的欄位級細節(doc40 原「待辦」第 4 項,
+`[0x53BF7]` 與 `[0x53A45]` 逐欄位比對)仍未做,留待需要時再展開。
+
 ## 待辦
 
 - [ ] ch09 對應地圖 FDFIELD 單位表第 11 格 `byte[+7]` 反解(取得萊汀入隊前的真實肖像 id)。
-- [ ] `0x3453E`(`0x12C60` 內的額外檢查函式)語意未展開。
-- [ ] `tag==0x27` sentinel 語意未窮舉驗證(疑「畫外音/無對應在場單位」旗標)。
-- [ ] `[0x53BF7]`(場景演員表)與 `[0x53A45]`(戰場單位表)的欄位差異未逐一比對(目前只確認
-      stride 相同、`byte[+7]/+8` 語意相同)。
+- [x] `0x3453E`(`0x12C60` 內的額外檢查函式)語意——**2026-08-19 已展開**:位址標籤過期,`0x12C60`
+      實際呼叫 `0x34894`(= doc26 已定案的 `NativeRecordByte5Bit0`);見上方新增小節①。
+- [x] `tag==0x27` sentinel 語意——**2026-08-19 已窮舉確認**觸發條件與唯一性(全程式僅一處,且
+      -18 不共用);「為何是 39」需 DATO.DAT 資產佐證,非 EXE 反組譯可關閉,誠實留白。見小節②。
+- [x] `[0x53BF7]` 表用途——**2026-08-19 已展開並正名**:非「場景演員表」,是**我方持久名冊**
+      (roster_has / 戰後同步 / JOIN constructor append 三條證據)。見小節③。逐欄位比對(與
+      `[0x53A45]` 的細部欄位差異)仍未做,保留待辦。
 - [ ] `tools/render_story.py` `lay_out()` operand-skip 修正(避免未來渲染再洩漏假字母)。
 - [ ] `docs/knowledge-base/14-text-control-codes.md` 的 `-17/-18` 肖像來源描述需回頭更正
       (見本文件開頭「修正」一節)。
