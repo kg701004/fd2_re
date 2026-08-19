@@ -242,9 +242,9 @@
 
 ## 第 4 輪以後(暫定)
 - [x] 地圖格式完整解析(FDFIELD 三段)+ 渲染全 33 圖(見上)
-- [ ] 反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證
+- [~] 反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證——大部分收口:`doc27 §5`(2026-08-19)20項三方一致性盤點,15項三方一致(物理/劍技/法術/恢復/命中/暴擊/AI評分);仍缺:經驗值公式攻守等級因子、武器命中特殊效果(0x2f7b6內cVar4分支)、6種傳送/魔刃等經驗公式、法術命中逐ID核對
 - [~] **物品系統反組譯**(M1 用)→ `32`:已確認物品表23B結構、roster 8裝備欄與 AP/DP raw temporary leads；舊 `0x15356` 傷害公式地址未由 canonical scan 證實。裝備加成精確累加點（夾攻擊大函式、表 base-relative）與使用效果碼待續。
-- [ ] **轉職系統反組譯**(M4):轉職觸發(教會/道具)、職業數值替換、能力繼承、轉職後成長表切換 → 攻略道具表(勇者徽章→英雄…)交叉驗
+- [~] **轉職系統反組譯**(M4):轉職觸發(教會/道具)、職業數值替換、能力繼承、轉職後成長表切換 → 攻略道具表(勇者徽章→英雄…)交叉驗——機制已解:`doc32 §6`(2026-08-19),教會Lv≥20→查0x526a7道具→0x1e529五組growth累加(Lv保留EXP歸零HP/MP回滿),成長表切換證實=同一張68列表後半段(idx32-67);13/18道具吻合攻略。caveat:部分函式位址來自遺失舊版EXE,新版待重定位;class_change_targets.json portrait11/12/13疑輪轉錯位待查
 - [~] **角色名對應**:補全 portrait→角色名 → `49`。核實後「12 個」已過期,實際已定案 38 組
       (0-31 共 32 + 48/66/68/96/97 共 5 + 本輪新增 126=ASR-06);其餘約 97 組多為泛用怪物/路人,
       對話走場景相依 `-19/-20`(見 `40`),**無法只靠對話反推**,需逐圖解 FDFIELD roster 才能繼續補
@@ -263,7 +263,7 @@
 - [x] **擴充劇本/玩法可行性評估**(戰場/對話/商店/機制)→ `17`
 - [~] SoundFont/MT-32 → 見 `16`(MT-32 已渲染);SoundFont 試聽 + TIMB 配器對映待補
 - [ ] 選定首個重製技術棧做「讀真資料 → 畫面」垂直切片
-- [ ] 反組譯完整性盤點
+- [x] 反組譯完整性盤點——`doc27 §5`(2026-08-19)戰鬥演算法20項三方一致性盤點表(攻略公式=反組譯位址=remake實作),明確標出15項一致+剩餘缺口清單
 
 ## 重製前置(規劃/實作)
 - [x] **音樂預錄 OGG**(MT-32 音源):15 首 → 本機 `extracted/music_ogg/`;`tools/export_music_ogg.sh`
@@ -701,8 +701,8 @@
       **story JSON 零修改**(現行最忠實);修 render_story.py operand-skip;doc14 修正
 - [x] **開場配樂曲號 RE**(bgm-title 執行中):play_bgm 開場鏈曲號→FDMUS 檔(取代猜測 FDMUS_004)——已解:`doc12`,FDMUS_018,`0x25db1-0x25db5`唯一play_bgm(0x12,0)呼叫
 - [x] 開場分鏡⑨惡魔臉來源 RE(疑另一機制或 ANI.DAT)——已解:`doc39 §10.9`,是`title_seq`(0x1f894)捲到esi==0時露出立繪緩衝區頂端(FDOTHER #0x45/#0x46),非獨立機制;doc23§2.4⑦07-03已用肉眼比對解出,本輪Ghidra逐指令複驗控制流補強
-- [ ] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)
-- [ ] 待展開(位址已釘):0x3453E 額外檢查、tag==0x27 sentinel、[0x53BF7] 表用途
+- [x] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)——重複項,已解見上方 `doc25 §6.1.1`(`group=turn/2`)
+- [x] 待展開(位址已釘):0x3453E 額外檢查、tag==0x27 sentinel、[0x53BF7] 表用途——已解:`doc40`/`doc26`(2026-08-19)。0x3453E=stale label(真實呼叫0x34894=NativeRecordByte5Bit0);tag==0x27全EXE唯一處0x161a2(推翻doc40「下框變體」說);[0x53BF7]=持久隊伍roster(非原猜的scene actor table,已訂正)。「為何是編號39」屬asset層,靜態無法答
 
 ## ⚠ 誠實揭露:全 33 章劇情文本「大部分轉錄完成但尚未接進遊戲」(2026-07-27 重查)
 
@@ -806,7 +806,7 @@
 - [x] **post-resolution inventory reservation writer**：Docker Capstone 固定 `0x1bb8c(unit,item)` 取第一個 flag bit7 cell、清 flag、寫入 item byte、回傳 1/-1；新增 `battle.AssignNativeReservedItem` 與 first-cell/none regression，保持 raw item/category opaque。
 
 ## 待辦:實測回饋(使用者 playtest,2026-07-03)
-- [ ] **開場過場節奏 3x 太快 RE**(dragon-fx2 DOS 對比發現,doc39 §10.8):原版魔王立繪捲動
+- [x] **開場過場節奏 3x 太快 RE**(dragon-fx2 DOS 對比發現,doc39 §10.8):原版魔王立繪捲動——已解:`doc39 §10.10`(2026-08-19)。原版535步×30ms、被6觸發點切7段、段間阻塞,總16.05s;remake把7段併成單一220-tick(3.67s)且搬到演出後,漏掉中間12.75s穿插等待。給了拆7段+各段tick對齊建議
       (esi535→0)貫穿全開場、與各 AFM 幕交錯(暫停播幕→續捲),貢獻 ~16s 延遲;remake 把捲動
       搬到最後單播→開場 5s vs 原版 14.7s。修需先補 0x11eb0/0x1f894 逐指令(捲動如何在 AFM
       直寫 framebuffer 後接回)。使用者已 OK 開頭閃光(#9),此為獨立節奏落差,低優先
@@ -845,7 +845,7 @@
       story 節點加 actor 擺位欄。RE 查 FDFIELD 組32 是否帶 NPC roster(sprite id/cell 直接來自原版)
 - [x] **ch21/ch22 pre-handler**：FDTXT_022 index0（11句）與 map21/70-slot、pan(16,28)、acting67 已接 editable binding；`story_ch22` 已接回原版 pre-handler，compiler/campaign/battle regression 通過。
 - [x] **外部資源／城鎮流程交叉盤點**：公開資料確認 `FDFIELD.DAT` 是可替換的外部場景層，且章節間存在 preparation、商店、教會、存讀檔流程；後續以 DAT provider + battle→town/prep graph 實作，未將網路資料當 binary 格式硬證據。
-- [ ] **社群行為 oracle 對照**：逐項把 FD2.EXE 修改表中的入隊、隨時存檔、等級上限、寶箱持久化轉成可編輯規則與 regression；先挑 save/chest 兩項和目前 persistent flow 最相關者。
+- [~] **社群行為 oracle 對照**：逐項把 FD2.EXE 修改表中的入隊、隨時存檔、等級上限、寶箱持久化轉成可編輯規則與 regression；先挑 save/chest 兩項和目前 persistent flow 最相關者。——save/chest已解:`doc25 §9`(2026-08-19)。存檔writer 0x30012只有2個戰間邊界呼叫者(戰鬥中不可存);寶箱旗標[0x53AD5]每戰重置不進存檔。對照出remake 2處缺regression(save未擋battle節點、treasure不變式)。入隊/等級上限留待後續
 - [~] **ch22_pre control-flow**：固定 16-slot deactivate loop、`0x11df2` immediate `palette_update` 已 lower 並通過 regression；共用 `0x24618` 9-pass indexed adapter 已完成，但本 handler 的 exact binding／進入時 raw roster-camera context 尚待閉合，不能僅因 renderer 存在就接 `story_ch23`。
 - [x] **ch23/ch24 pre-handler**：FDTXT_024 index0/index1（14句）與 map23/70-slot、spawn group1、四段鏡頭已接 binding；`story_ch24` 已接回原版 pre-handler，compiler/campaign/battle regression 通過。
 - [~] **ch23 post mapping boundary**：Docker Capstone 補齊初始 dialog `0x24c4c`→FDTXT_024 index2（scene0 line14、scene1 lines0–1），並固定 `0x24d22` latch/copy loop 的 raw 邊界；generated binding 已 mapping-complete，但 `0x11d40` palette、`0x24d22` indexed copy 與其他 renderer calls 仍 fail-closed，未接 `postbattle_ch23_persist`。
