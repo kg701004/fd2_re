@@ -731,3 +731,163 @@ fixup table 造成),data 區段的字串常數 delta 又整整差了一個 page�
    **必須先用 `Memory.findBytes` 位元組特徵搜尋獨立核實對應的 linear 位址**,不能假設兩者
    相等或存在簡單常數位移——本節示範的方法(截取 patch 前後 ~24 bytes 當特徵、
    `findBytes(start, pattern, null, true, monitor)`)可以直接複用。
+
+## 9.6 2026-08-20 續:換方法論再攻堅——三個新方法論全部窮盡,仍未解封,但排除一個新假說、確立一個更明確的定性
+
+> 動機:9.1/9.5 已用「在 `FD2Analysis3` 內部查詢/位址算術」的方法論窮盡三輪,本節換掉整個方法論,
+> 改成「回頭找最原始證據」「搜遍整台機器找遺失的舊版 EXE」「查清 `FD2_APK` 目錄的真實來源」三條
+> 全新路徑,逐一詳細記錄嘗試過程與結果。**結論先講:三條路都做到底,均未能解封
+> `0x2bce5`/`0x2c548` 等位址,但排除了一個原本合理的新假說(見 9.6.1 尾段),並且確認 `FD2_APK`
+> 目錄不是先前猜測的「行動版/APK 反解版本」。**
+
+### 9.6.1 方法1:回頭找「這些位址最早怎麼記錄下來的」原始證據——結論:從未存在過 raw byte context,只有語意結論被保存;但找到約40個更細的 sub-address,逐一測試後仍全部落空(含一個排除掉的「像是巧合命中」插曲)
+
+**先確認「原始證據」根本不存在**:對 8 個 cluster 位址(`0x2bce5`/`0x2c172`/`0x2c405`/`0x2c439`/
+`0x2c469`/`0x2c548`/`0x2c5e3`/`0x2c773`)以及後續從 `remake/assets/endings/native_2bce5.json`/
+`native_2c548.json`/`native_2c405.json` 取出的約 40 個更細的 sub-address(如 `0x2bd8b`/`0x2c584`/
+`0x29164`/`0x2935b`/`0x2927e` 等),分別用 `git log --all -S"<addr>"` 對整個 repo 歷史(非只搜
+working tree)做 pickaxe 搜尋,並直接讀出每一個「第一次出現」的完整 commit diff
+(`01117a5065b9`「docs: capture chapter ending renderer evidence」2026-07-20、`dd120bc2`「docs:
+map finale party montage boundary」2026-07-20、`e52da455`「docs: close finale montage gate
+provenance」2026-07-26 等)。三個 commit 的 diff **只新增了 worklist/json 裡的語意結論
+一行文字**(buffer 大小、資源名稱、呼叫順序),完全沒有任何 hex byte、opcode 助憶符或反組譯行
+被提交進 repo。`e52da455` 的訊息甚至直接寫「IDA 9.4 ASM 直接確認」、`dd120bc2` 寫「Docker
+Capstone 切出三個 native buffers」——**證實這些位址一開始就是透過互動式工具(官方 IDA GUI／
+互動式 Docker Capstone session)人工讀出後,只把「結論」謄寫進文件,原始 byte-level 輸出從未
+落地成檔案**。同時查了 `docs/data/ida/*.txt`、`docs/data/*_ida.txt`(全部 IDA 匯出檔)與
+`git log --all --diff-filter=D`(尋找任何被刪除的原始匯出檔)——沒有任何一個檔案含這批位址的
+任何一個。**結論:沒有原始 byte context 可以拿來當 signature 用,這條路的「找證據」字面意義
+到此為止,已經是能做到的極限**。
+
+**退而求其次:找到 40 個更細的 sub-address,用 Ghidra 逐一測試(9.1 只測過 8 個粗位址,從未
+測過這些)**。`native_2c548.json`/`native_2bce5.json`/`native_2c405.json` 裡記錄的並非只有
+handler 入口位址,還有大量內部子位址(`allocations[].source`、`resources[].source`、
+`party_cycle.source`、`figure_fade.source` 等),對應到當初 Docker Capstone/IDA 讀出的具體指令
+位置(例如 `0x2c584` = `sub_111ba("TAI.DAT",3)` 呼叫點、`0x29164` = `figure_renderer`、
+`0x2935b`/`0x2927e` = `mirror_branch`/`figure_fade` 相關呼叫)。寫了
+`FD2_ghidra_projects/ProbeFineSubAddrs20260820.java`,一次測試全部 59 個位址(8 個原 cluster +
+40 個新 sub-address + 已知有效的 sanity-check 位址如 `0x1088d`/`0x111ba`/`0x2ff01`),用
+`analyzeHeadless -readOnly` 對 `FD2Analysis3` 跑(方法見
+`reference_fd2_live_ghidra_headless_probe` memory)。結果:
+
+- 原 8 個 cluster 位址(含 `0x2bce5`/`0x2c548`)**全部 MISS**,與 9.1 一致。
+- 新增的約 40 個 sub-address 裡,**35 個 MISS**,只有 4 個技術上落在真實已定義的函式裡:
+  `0x29164`(`PUSH dword ptr [0x53c57]`,函式 `FUN_00028f65`)、`0x2935b`(`PUSH 0xc8`,函式
+  `FUN_00029300`)、`0x2927e`(`INC dword ptr [ESP+4]`,函式 `FUN_0002921a`),另有兩個落在函式體內
+  但不在指令邊界上。
+
+**追查這 4 個「技術上命中」是不是真突破**:寫了 `ProbeDecompCheck20260820.java` 反編譯這三個
+函式,結果**確認是數值巧合,不是版本位移後的真正對應**:
+
+- `FUN_00028f65`(含 `0x29164`)反編譯後是一個對 `DAT_00053c57`(action-ring 選擇器,與 9.2 已
+  證實的「戰鬥指令選單」全域完全一致)與 `DAT_00053a45+iVar2*2`(8-slot 陣列、bit 0x80 判斷)操作
+  的**戰鬥指令選單狀態機**,和「party montage figure renderer」語意完全無關。
+- `FUN_0002921a`(含 `0x2927e`)是一個泛用的仿射/旋轉缩放 blit 原語(`param_4` 當步進值逐行
+  逐列取樣來源緩衝),函式簽名 `(param_1,param_2,param_3,param_4)` 4 個參數,和 json 描述的
+  `mirror_branch`(`work_stride`/`stage_start`/`palette_delta_formula` 等欄位)對不上。
+- `FUN_00029300`(含 `0x2935b`)是一個 `DAT_00053c57` 0/1/2 三分支選單迴圈,尾端有一個
+  10 次遞減迴圈搭配 `&DAT_00052363`/`&DAT_00052375`(sin/cos 查表)算座標、呼叫
+  `FUN_0002921a` 10 次——**結構上確實很像某種圓弧 carousel 效果**(與 9.2 記錄的
+  `0x2c67d`「5 點圓弧 carousel」精神類似),但呼叫簽名(7 個參數,含查表結果與 `iVar7*-9+0x80`)
+  跟 `native_2c548.json` 記載的 `0x2935b(primary_figani,frame,staging,320,-1)` 完全對不上,
+  也不是黨 5 點而是 10 點迭代。
+
+**結論**:即使把搜尋粒度從 8 個粗位址細到 40 個內部子位址,`FD2Analysis3` 裡仍然找不到任何一個
+在語意上真正對應 party montage/chapter ending renderer 的位置——技術上落入函式體的 4 個
+sub-address 全部是與 party montage 無關的其他子系統(戰鬥選單/仿射 blit 原語/另一個 carousel
+變體)的數值巧合,**不構成解封**。
+
+**一個原本合理、但本節已排除的新假說(值得記錄,避免下一輪重複嘗試)**:懷疑這批位址
+(全部首見於 2026-07-20~07-28 的 commit)搞不好單純是「還沒套用 2026-08-18 `ca5703b3`
+rebaseline(改用新版 509158 bytes `FD2.EXE` 當基準)之前,對舊版 357074 bytes build 記錄的位址,
+從未被回頭轉換」。**用同一時期(2026-07-20/07-25/07-26)的其他位址交叉核對後,此假說不成立**:
+`0x22253`(2026-07-20 首見,`2c982c3d`/`ab3400bf`)、`0x25089`(2026-07-20 首見,`ab3400bf`)、
+`0x1cff0`(2026-07-25 首見,`92d13c9e`)——這些位址跟 `0x2bce5`/`0x2c548` 出自**完全相同的
+7 月時間窗、完全相同的工具鏈(worklist 明確標「Docker Capstone」/「官方 IDA」)**,而且在
+9.2 的窮舉裡已經獨立確認**目前在 `FD2Analysis3`(post-rebaseline)裡完全有效**、doc13/doc91
+持續引用至今。既然同一時期、同一工具產出的其他位址在 rebaseline 後仍然有效,「這批位址是舊版
+build 的殘留、只是還沒轉換」這個解釋就站不住腳——時間點本身不是問題的成因。真正原因目前仍
+無法確定,維持 9.1 原本列出的三個假說(不同 EXE build、live-memory 位址、轉錄誤差)中的後兩者。
+
+### 9.6.2 方法2:搜尋整台機器找有沒有殘留其他版本的 FD2.EXE——結論:徹底搜過,確認真的遺失,沒有第三份候選
+
+用 PowerShell `Get-ChildItem -Recurse -Include *.EXE,*.exe` 對 `C:\Users\kg701`、`C:\tools`
+(`D:\` 在這台機器上不存在,`Test-Path` 確認)做大小篩選(300000~600000 bytes,涵蓋新舊版兩種
+大小附近的合理範圍),共 238 筆命中,逐筆人工檢視檔名/路徑。與 FD2 相關的只有 5 筆,全部
+509158 bytes:`GAME\FD2\FD2.EXE`、`GAME\FD2_USB\FD2.EXE`、`GAME\FD2_APK\FD2.EXE`、
+`GAME\FD2_APK\FD2_old.EXE`(**先前完全沒被檢查過的候選檔**,見 9.6.3)、
+`fd2_re\org_game\炎龍騎士團\FLAME2\FD2.EXE`。逐一 MD5:
+
+| 檔案 | MD5 | 對應 |
+|---|---|---|
+| `GAME\FD2\FD2.EXE` | `33464c81e6a364fd0660141139aa8e6e` | 目前參考基準(新版) |
+| `GAME\FD2_USB\FD2.EXE` | `33464c81e6a364fd0660141139aa8e6e` | 與基準相同 |
+| `fd2_re\org_game\...\FLAME2\FD2.EXE` | `33464c81e6a364fd0660141139aa8e6e` | 與基準相同 |
+| `GAME\FD2_APK\FD2_old.EXE` | `33464c81e6a364fd0660141139aa8e6e` | **與基準逐 byte相同**(見 9.6.3,檔名誤導) |
+| `GAME\FD2_APK\FD2.EXE` | `a6e341a8decc6ebf7f4872076d9cf161` | 9.5 已知的 2-byte патch 版 |
+
+**沒有找到任何第三種、跟這兩個 hash 都不同的 509158 bytes 候選**。另外針對舊版文件記載的精確
+大小 357074 bytes(對應 MD5 `b97caf2239a27a896069d03549d96e1e`,見
+`docs/data/fd2_ai_command_index_disasm.txt` 檔頭)在同樣的搜尋樹(`C:\Users\kg701`、`C:\tools`)
+裡做**精確大小比對**(`Where-Object { $_.Length -eq 357074 }`)——**零命中**。也用
+`Shell.Application` COM 物件列舉資源回收筒(`Namespace(10)`,3 個項目)——全部是無關的錄影檔/
+舊作業壓縮檔,無 FD2 相關項目。另檢查了 `C:\tools\ghidra_project\FD2Project.rep`(memory 記載
+「只看得到 16-bit stub」的舊 project)的 `idata\00\00000000.prp` 中繼資料——只記錄
+`NAME="FD2.EXE"`,沒有內嵌任何 MD5/size,無法在不開啟該 project 的情況下確認它當初匯入的是
+哪一份檔案(且 memory 已明確建議忽略此 project,故本節未進一步開啟它去查——開啟的預期效益低,
+不值得冒著意外變更該唯讀 project 的風險)。
+
+**結論**:在使用者機器上、依任務指定的合理範圍內(`C:\Users\kg701`、`C:\tools`,`D:\` 不存在)
+搜尋徹底,確認**舊版 357074 bytes(`b97caf22...`)的 `FD2.EXE` 真的已經完全遺失,沒有任何殘留
+拷貝**,USB 備份、`FD2_APK`、`org_game` 目錄下的所有 EXE 都只是新版 509158 bytes 的（含或不含
+2-byte patch）拷貝。
+
+### 9.6.3 方法3:重新檢視 `FD2_APK` 目錄名稱與內容——結論:不是「行動版/APK 反解」,是一份含手動 patch EXE 的 1995 年 DOS 安裝目錄,附帶找到一個先前漏查的 `FD2_old.EXE`
+
+列出 `GAME\FD2_APK\` 完整內容(50 個檔案)並核對每個檔案的 `LastWriteTime`/`CreationTime`:
+
+- 目錄內容是一份**標準 1995 年 FD2 DOS 安裝**:全部音效卡驅動(`*.MDI`/`*.DIG`)、`*.DAT` 資源檔、
+  `PLAY.BAT`/`SETUP.BAT`,**沒有任何 APK 封裝檔、Android/行動裝置相關產物,也沒有任何
+  README/log 說明這個目錄名稱的由來**。
+- 驅動檔案 `LastWriteTime` 全部落在 1995-01-18(原版發行雛型日期一致),主要 `*.DAT` 落在
+  1995-06/07(與已知發行日期吻合),但 `FD2.SAV`(1995-07-15 存檔起始,後續存檔到
+  2007-08-07)、`FD2.TMP`(2007-10-22)——**這是一份被實際玩到 2007 年的個人存檔目錄**,不是
+  單純的原版光碟映像備份。
+- **關鍵新發現**:`FD2_APK\FD2.EXE` 的 `LastWriteTime` 是 **2004-10-23**(明顯晚於旁邊
+  `FD2_old.EXE` 與所有其他候選保留的原始 1995-07-07 時間戳),與 9.5 已證實的「同尺寸、2 處
+  in-place byte 代換(`JE→JMP`、`PUSH 0x0d→PUSH 0x12`)」完全吻合——**這份 `FD2.EXE` 就是 2004 年
+  有人手動改過的破解/微調版本**,而緊鄰它的 `FD2_old.EXE`(9.6.2 新找到、逐 byte 與目前基準
+  相同)才是原始未修改版,只是被人用「_old」這個容易誤導的名字保存下來（大概是修 patch 前的
+  備份,而不是"比目前基準還舊的另一個 build"）。
+- 全部 50 個檔案的 `CreationTime` 一致為 `2026-08-14 14:21:22`——代表整個資料夾是在
+  2026-08-14 那一次以資料夾為單位整批複製進這台 Windows 機器的(與 doc「2026-08-14 rebaseline
+  調查」的時間點吻合),但這只說明「這台機器何時取得這份拷貝」,對資料夾更早的來源沒有幫助。
+
+**結論**:`FD2_APK` 這個資料夾名稱**不代表任何行動版/APK 反解來源**——目錄內容、檔案格式、
+驅動程式清單都是純正的 1995 年 DOS 遊戲安裝,沒有任何證據指向 Android/行動裝置。它其實是
+「一份被實際玩到 2007 年、EXE 曾在 2004 年被手動 patch 過的個人 DOS 安裝備份」,`FD2_old.EXE`
+只是这份備份裡順手保留的「patch 前備份」,byte-for-byte 就是目前的基準版,**不是**任何新的
+候選版本。9.5.1 已經證實的「`FD2Analysis3` 分析的是 `FD2_APK\FD2.EXE`(2 byte patch 版),不是
+canonical baseline」這個落差,到這裡可以確認**與本輪要解的位址對不上問題完全無關**(9.5.3
+已經證明這 2 byte 是同尺寸原地代換,不影響任何位址)。
+
+### 9.6.4 給下一輪的總結建議
+
+三個新方法論都做到窮盡,沒有解封 `0x2bce5`/`0x2c548` 等位址,但都得到明確的負面結論,可以
+排除下一輪重複去做:
+
+1. **不要再花時間找「原始 byte context」**——9.6.1 已確認這批位址從一開始就只以「互動式工具
+   讀出後手寫的結論」形式存在,repo 裡從未有、現在也不可能回頭生出原始 byte-level 匯出檔。
+2. **不要再懷疑是舊版 357074 bytes build 沒轉換位址**——9.6.1 尾段已用同期其他位址反證排除;
+   9.6.2 也已證實舊版 EXE 在這台機器上真的完全找不到,連驗證這個假說的材料都沒有。
+3. **不要再去查 `FD2_APK` 的來源或懷疑它是行動版**——9.6.3 已徹底查清,它只是個人 DOS 存檔
+   備份,`FD2_APK\FD2.EXE`/`FD2_old.EXE` 兩者都已經被 9.5+9.6.2 排除在外。
+4. **如果還要再攻堅**,剩下唯一沒被排除的假說是 9.1 原本列出的「Capstone 分析的其實是 live
+   DOSBox 記憶體位址(含 relocation/loader 位移),不是靜態檔案 linear offset」——這條路需要
+   實際重新用 DOSBox-X live memory(`reference_fd2_dosbox_live_memory_extraction` memory)去對
+   `0x2bce5`/`0x2c548` 這兩個錨點跑一次即時記憶體特徵搜尋,而不是繼續在靜態工具（Ghidra/IDA/
+   git 歷史）裡打轉——這是三輪 static-only 嘗試後唯一還沒被實際測過的路徑。
+5. 本節新增的探測腳本 `ProbeFineSubAddrs20260820.java`、`ProbeDecompCheck20260820.java`
+   留在 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\` 供覆核,方法本身(從 editable IR json
+   反推子位址、逐一 probe 再用 decompile 排除數值巧合)可複用在其他「粗位址查無此人,細位址
+   要不要也試」的情境。
