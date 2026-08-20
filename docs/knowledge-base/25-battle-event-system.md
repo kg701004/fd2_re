@@ -221,6 +221,97 @@ handler 內硬編碼給 `0x1AA1D` 的單列亦全為 kind 0
 這把 event 82 收窄成「目前無已知資料生產端」，但在所有 runtime writer
 閉合前仍不宣稱程式碼不可達。
 
+#### 2026-08-19 補記：runtime `+0x31..+0x33` 全 EXE writer 稽核（回應 worklist RE-EVENT82-REACHABILITY）[驗]
+
+方法：不依賴既有 handler 清單，改用 Ghidra headless 對 `FD2.EXE` 全部
+`.image`（code）段做指令層級掃描——遍歷目前資料庫內已定義的**全部
+57,953 條指令、976 個函式**（與既有「976-fn 全量 Ghidra decompile」的
+函式總數一致，確認此專案沒有大片未反組譯的程式碼區），對每條指令的
+運算元做 `OperandType.isDynamic` 判定 + `getOpObjects` 掃描，找出「目的
+運算元是暫存器相對記憶體、且位移常數恰為 `0x31`／`0x32`／`0x33`」的寫入
+指令。全 EXE 只命中 **7 條**：
+
+| 位址 | 所在函式 | 指令 | 分類 |
+|---|---|---|---|
+| `0x10AB1` | `0x1088D`（persistent party ctor，寫 `[0x53bf7]` 我方名冊陣列） | `MOV byte [EBX+0x31],0xFF` | 舊有已記錄：常數 sentinel |
+| `0x10FAB` | `0x10C50`（FDFIELD battle-array ctor，寫 `[0x53a45]` 戰場單位陣列） | `MOV byte [EDX+0x31],AL` | 舊有已記錄：FDFIELD row `b22` 直拷 |
+| `0x10FB2` | `0x10C50` | `MOV word [EDX+0x32],AX` | 舊有已記錄：FDFIELD row `b23..b24` 直拷 |
+| `0x113D1` | **`0x112A5`（新找到）** | `MOV byte [ESI+0x31],0xFF` | 新 writer：常數 sentinel |
+| `0x13CE6` | **`0x13A9F`（新找到）** | `MOV byte [EBX+0x31],AL` | 新 writer：table-driven，但有 gate |
+| `0x13CEC` | `0x13A9F` | `MOV word [EBX+0x32],AX` | 新 writer：與上列同一 gate |
+| `0x3FA6F` | `0x3F950` | `MOV word [EAX+0x32],CX` | 偽陽性：不同結構體 |
+
+逐一反組譯／反編譯確認：
+
+1. **`0x112A5`**（4 個呼叫端 `0x327F7/0x32801/0x3280B/0x32815`）：這是**先前未記錄的第三個 unit-record constructor**，寫入對象是
+   `DAT_00053bf7 + DAT_00053bfb*0x50`——即我方名冊陣列 `[0x53bf7]`（32
+   槽），不是戰場單位陣列 `[0x53a45]`。屬於「新增角色進名冊」的初始化
+   函式（很可能是招募流程）。`+0x31` 寫入的是**字面常數 `0xFF`**，與
+   `0x1088D` 對 `[0x53a45]` 記錄做的事完全平行，只是作用在名冊陣列上。
+   常數寫入不可能產生 kind=2/payload=82，此 writer 排除。
+
+2. **`0x13A9F`**（3 個呼叫端 `0x1D876`、`0x1D942`、`0x1D9D2`）：這正是
+   doc26 單位結構表已標注「`+0x34` low nibble 的 dispatch 已閉合」的那個
+   dispatcher 本體（`bVar4 = *(iVar5+0x34) & 0xF`）；先前只記錄了 dispatch
+   本身已閉合，未把它的 `case 5` 分支交叉核對進本節的 event82 producer
+   清單，這是本次補的空缺。`case 5`（欄位互動型態 5，行為近似寶箱：
+   `bVar4==0` 時呼叫 `0x1BB8C(unit,item)` 給物品，語意與 doc §6.3 已知
+   的 item/money kind 一致）從 `DAT_00053a55[uVar7*3 + 0x53 / +0x54]`
+   讀出一組 `{kind:u8, payload:u16le}`，但反編譯清楚顯示複製動作被
+   **`if (bVar4 < 2)` 硬 gate**：
+
+   ```c
+   bVar4 = *(byte *)(iVar5 + 0x53);
+   uVar3 = *(undefined2 *)(iVar5 + 0x54);
+   if (bVar4 < 2) {
+     pcVar6[0x31] = bVar4;
+     *(undefined2 *)(pcVar6 + 0x32) = uVar3;
+     if (bVar4 == 0) { FUN_0001bb8c(); }
+   }
+   ```
+
+   即只有 `kind∈{0,1}`（物品／金錢）才會被複製進 `+0x31..+0x33`；
+   `kind==2`（event）在讀出後直接被 gate 擋掉，**不論來源表
+   `DAT_00053a55` 裡實際存了什麼值都不影響這個結論**——這條 writer
+   在結構上就不可能寫出 kind=2/payload=82，因此不必再額外稽核
+   `DAT_00053a55` 這張表的 33 圖資料內容。
+
+3. **`0x3F950`**：反編譯後是聲音／驅動程式初始化函式（字串常數
+   `"Insufficient memory for driver descriptor"`、`"Out of driver
+   handles"`、`"Out of timer handles"`），`+0x32` 寫入對象是驅動描述子
+   結構 `*(iVar1+0xc)+0x32`（存 driver handle index），與戰場單位陣列
+   完全無關，只是巧合共用同一個位移常數。判定為**偽陽性**，排除。
+
+**結論**：全 EXE 976 個函式、57,953 條已定義指令中，寫入位移
+`+0x31/+0x32/+0x33` 的指令只有 7 條；扣除 1 條偽陽性（不同結構體）後，
+4 條是 unit-record 的真實 writer——2 條（`0x10AB1`／`0x113D1`）是寫常數
+`0xFF` 的 sentinel，2 條（`0x13CE6`／`0x13CEC`）雖是 table-driven 但被
+`kind<2` gate 擋死，2 條（`0x10FAB`／`0x10FB2`）是舊有已知的 FDFIELD
+`b22..b24` 直拷（已由 33 圖靜態資料稽核排除 payload 82）。**已知 writer
+全部封閉，沒有任何一條能寫出 kind=2/payload=82**——這把「無已知
+producer」進一步坐實成「已窮盡全 EXE 指令層級 writer 稽核、仍無 event82
+producer」。
+
+**殘留不確定性（誠實記錄，未完全排除）**：
+- 本次掃描比對的是「立即值位移 = 0x31/0x32/0x33」的固定運算元，
+  抓不到位移完全由暫存器動態算出（例如 `MOV [EBX+ECX],AL` 而 `ECX`
+  執行期算出 0x31）的寫入。目前 codebase 對這顆結構體其餘欄位
+  （doc26 單位結構表 +0/+1…+0x4E 全部條目）一致採「固定位移 MOV」慣用法，
+  沒有觀察到用 `REP MOVSB`/動態位移對這顆結構體做欄位複製的先例，
+  但不能證明 100% 沒有這種寫法存在。
+- 掃描範圍是目前 Ghidra 資料庫已定義為「指令」的位址集合；函式總數
+  （976）與既有全量 decompile 記錄一致，可信已窮盡目前已知的程式碼區，
+  但無法對「從未被任何已知路徑到達、Ghidra 從未自動反組譯出來、
+  仍是 raw bytes」的區塊做出保證——這類區塊若存在，本掃描不會看到。
+
+Worklist `91-worklist.md` 第 215 行 **RE-EVENT82-REACHABILITY**：以上即
+本行「仍須稽核 runtime +0x31..+0x33 的其他 writer」的完整回應。全 EXE
+writer 已窮盡列舉並逐一分類，未發現新的 event82 producer；上述兩點
+殘留不確定性均為結構性極低機率的邊界情況，不影響「目前已知 writer
+均不可達 payload82」的結論，但按規範不升級為「證實死碼」的滿分結論，
+維持「已窮盡已知 writer 稽核、無新 producer、僅剩結構性邊界不確定性」
+的狀態。
+
 #### event 58：map25 五選一寶物 [驗]
 
 map25 的寶物 slots 0..4 都是 `{type:2,value:58}`。handler `0x354FE`
