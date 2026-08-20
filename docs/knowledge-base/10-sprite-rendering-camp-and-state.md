@@ -93,3 +93,117 @@
 - 反組譯場景單位繪製呼叫端,確認「BB 陣營 → remap 表」對應,dump 各陣營 remap 表還原實際配色。
 - 確認方向幀的組織(每方向幀組 vs 共用)。
 - 把 264 個 FIGANI 動畫對應到「角色 × 動作」,標出敵 / 我共用關係。
+
+## 2026-08-19 補充:native map HUD「逐章 view/gates/anchor」通用機制稽核
+
+> 對應 `91-worklist.md`「**native terrain/unit map HUD (`0x1acf3`)**」項(項目文字所在行號因檔案增修漂移,
+> 現行約在 L1121,内容與任務要求核對的「L966」為同一項)。本節只記錄**這輪新反組譯出的兩塊證據**——
+> `0x12c0d` 的完整 raw predicate/順序,以及「gate 是否逐章各自寫」的靜態呼叫鏈稽核;HUD 六個 subpass
+> 本身(panel/terrain/AP/DP/icon/HP)之前已在 `91-worklist.md` 與 `56-fd2-remake-sdd.md` 閉合,不重複。
+> 方法:純靜態 Ghidra headless(`analyzeHeadless -readOnly`,`FD2Analysis3` project,自寫 probe script,
+> 不碰 DOSBox-X/WSL2),`getFunctionContaining`/`getReferencesTo` 取函式邊界與呼叫端,與既有 `FD2_disasm_full.txt`
+> 交叉核對位址,未使用 `tools/disasm_le.py`(已知 LE 分頁解析 bug)。
+
+### 1. `0x12c0d` exact raw lookup predicate/order [已閉合]
+
+完整反組譯 `0x12c0d`(函式本體 `0x12c0d..0x12c5f`,`push 0x10; call 0x3702f` 是標準 stack-check prologue):
+
+```
+0x12c19  mov ebx,[0x53a45]        ; 戰場單位陣列基底(0x50-byte/單位,同 doc25/26/35 已證)
+0x12c1f  xor esi,esi              ; esi = 掃描索引,從 0 起
+0x12c27  cmp esi,[0x53beb]        ; esi >= count → 找不到,跳 0x12c58 回傳 -1
+0x12c2f  movzx edx,byte[ebx]      ; record+0 = 單位 X 格(doc50 §「單位結構」已證 +0=X格)
+0x12c32  movzx eax,byte[ebx+1]    ; record+1 = 單位 Y 格(+1=Y格)
+0x12c36  cmp edx,[0x53ab1]        ; X 是否等於 search-X
+0x12c3c  jnz 0x12c23              ; 不等 → ebx+=0x50, esi++, 繼續下一筆
+0x12c3e  cmp eax,[0x53ab5]        ; Y 是否等於 search-Y
+0x12c44  jnz 0x12c23              ; 不等 → 繼續下一筆
+0x12c46  push esi; call 0x34894   ; NativeRecordByte5Bit0(esi)(doc26 已證 = byte[idx*0x50+5]&1)
+0x12c4f  test eax,eax
+0x12c51  jnz 0x12c23              ; predicate 非 0(bit0=1)→ 拒絕,繼續下一筆
+0x12c53  mov eax,esi; ret         ; 三條件全過 → 回傳該筆 index
+0x12c58  mov eax,-1; ret          ; 掃完仍無 → 回傳 -1
+```
+
+**Predicate/順序(逐字):** 由 index 0 起遞增線性掃描 `[0x53a45]`(count=`[0x53beb]`),對每筆先比對
+`record+0==[0x53ab1]`(X),不等即跳下一筆;相等才比對 `record+1==[0x53ab5]`(Y),不等跳下一筆;
+X/Y 都相等才呼叫共用 predicate `0x34894`(=`byte[idx*0x50+5]&1`),非 0(bit0 已設)則仍跳下一筆。
+三個條件全部通過的**第一筆**(最小 index)勝出,回傳其 index;整個陣列掃完仍無匹配回傳 `-1`。
+三個條件之間是嚴格 AND、短路序(X→Y→predicate),沒有平手/優先權邏輯。
+
+**`[0x53ab1]`/`[0x53ab5]` 身分澄清(避免與另一組全域混淆):** 這對 search-X/Y **不是**
+`91-worklist.md`/`58-remake-live-verification-log.md` 已證的持久 anchor 游標對 `[0x53ab9]`/`[0x53abd]`
+(那對只由 `0x1ad2a..0x1ad5f` 的兩條 branch 改寫,見 `91-worklist.md` 「native HUD persistent anchor branch」)。
+`58-remake-live-verification-log.md`(2026-08-18,`#112/#118`)已完整反組譯攝影機平移函式 `0x135dd`,
+證實它逐格步進寫 `[0x53aa9]/[0x53aad]`(目標鏡頭 X/Y)與 `[0x53ab1]/[0x53ab5]`,**完全不碰**
+`[0x53ab9]/[0x53abd]`。故 `0x12c0d` 的 search-X/Y 是**攝影機目前平移到的格子座標**,不是持久
+anchor 游標——`56-fd2-remake-sdd.md`/`SESSION-HANDOFF-2026-07-06.md` 稱它「`0x12c0d(cursor)`」
+是口語簡稱(正常玩法下鏡頭確實跟隨選取游標移動,語意上大致重合),但底層是兩組不同全域,寫入端也不同函式,
+不能互相代換或合併成同一個變數處理。
+
+**`0x12c0d` 不是 HUD 專用函式**:對 `0x12c0d` 進入點做 `getReferencesTo`,共 **9** 個直接呼叫點,
+分屬 6 個不同 caller 函式——`0x117e7`(×2)、`0x1741c`、`0x176b4`、`0x179d5`、`0x18d8c`(`13-battle-menu-system.md`
+已證的「action-ring dispatcher」,指令環攻擊呼叫鏈 `0x18d8c→0x14818→0x115b6→0x12c0d→…`)、
+**`0x1acf3` 自己**(HUD compositor 對 `0x12c0d` 的呼叫,即 worklist「native HUD unit-icon subpass」項)、
+`0x1bbdc`、`0x149f8`(`13-battle-menu-system.md` 已證的「target-candidate builder」)。
+即:同一顆「掃單位陣列找格子座標命中且 bit0 未設的第一筆」raw primitive,同時被戰鬥指令目標選取
+與地圖 HUD 共用,佐證它是引擎層通用工具,不是為某一章或某個畫面寫的專屬碼。
+
+### 2. `0x51aab`/`0x51aac` raw gate:通用機制稽核結果 [已確認為通用,非逐章]
+
+對全程式掃出的每一個 `0x51aab`/`0x51aac` 讀寫點(`FD2_disasm_full.txt` 逐一核對: `0x10436`、
+`0x135b4`/`0x135d4`、`0x170ba`/`0x17163`/`0x1726b`/`0x17277`、`0x25dde`/`0x25dea`、
+`0x26080`/`0x260de`/`0x26112`、`0x29774`、`0x299aa`)做 `getFunctionContaining` 定出擁有函式,
+再對每個擁有函式的入口做 `getReferencesTo` 取呼叫端,結果:
+
+| gate 讀寫位址 | 擁有函式 | 呼叫端(全部) |
+|---|---|---|
+| `0x10436` | `FUN_00010010`(`0x10010..0x1061f`) | `0x1a251`、`0x26130` |
+| `0x135b4`/`0x135d4` | `FUN_00013565`(`0x13565..0x135dc`) | `0x11985` |
+| `0x170ba`/`0x17163`/`0x1726b`/`0x17277` | `FUN_00016f55`(`0x16f55..0x1728b`) | `0x118c1` |
+| `0x25dde`/`0x25dea` | `FUN_00025bf4`(`0x25bf4..0x25eba`) | `0x460dc` |
+| `0x26080`/`0x260de`/`0x26112` | `FUN_00025ebb`(`0x25ebb..0x26151`) | `0x25dbd` |
+| `0x29774` | `FUN_0002968d`(`0x2968d..0x2986e`) | `0x26331`、`0x2940e` |
+| `0x299aa` | `FUN_0002986f`(`0x2986f..0x29ab1`) | `0x29424` |
+
+**每個擁有函式只有 1–2 個固定呼叫端**,且沒有任何一個呼叫端落在既有 KB 已定案的「逐章 handler
+dispatch 位址帶」(`26-per-chapter-event-handlers.md` 記錄的 ch15/16/17 post-handler 都在
+`0x239bd`/`0x23a0a`/`0x23d39` 一帶)。反而:
+
+- `FUN_00013565`(`0x13565`)、`FUN_00016f55`(`0x16f55`)兩個函式的函式體**各自內含**
+  `91-worklist.md`「0x1a30b shared-caller correction」項已證的 3 個共用呼叫點之 1 或 2 個
+  (`0x135c5` 落在 `0x13565..0x135dc` 內;`0x17154`/`0x17272` 都落在 `0x16f55..0x1728b` 內)——
+  也就是說,這兩個函式本身就是「gate B 關 → 呼叫 `0x1a30b`(NativeBattleEntryStep 共用 primitive)
+  → gate B 開」的**通用 wrapper**,doc91 早已證實 `0x1a30b` 不分章節共用。
+- `FUN_00025bf4`(`0x25bf4`)經獨立交叉核對就是 `58-remake-live-verification-log.md`(2026-08-19,
+  「問題2核心」節)已完整反組譯 711 條指令、確認名稱為**戰役主迴圈**的函式:它以
+  `[0x53c03]*4+0x51de9` 讀 dispatch 表**無條件**(無 gate)呼叫全部 30 章的 post-battle handler。
+  即 ch01..ch30 的章節轉換全部通過這**同一個**函式,而這個函式正是 `0x25dde`/`0x25dea` 兩個
+  gate B 寫入點的擁有者。
+- 另外三個叢集(`FUN_00025ebb`/`FUN_0002968d`/`FUN_0002986f`,位址範圍 `0x25ebb..0x29ab1`)
+  彼此呼叫端也都只有 1–2 個,且都在同一個 `0x25xxx–0x29xxx` 引擎子系統區段內互相呼叫,沒有
+  發現任何一個呼叫端數量隨章節數增加(如 30 個不同 caller)的模式。
+
+**結論:通用機制已確認存在,不需要逐章特判程式碼。** 全部 `0x51aab`/`0x51aac` 讀寫都發生在
+共用引擎層(battle-turn wrapper + 戰役主迴圈 + 相鄰場景轉換子系統),沒有任何一個 gate 寫入點
+是被 30 個各自獨立的 per-chapter caller 呼叫;`worklist` 已記錄的「inherited HUD state vertical
+slice」bullet(`native_map_hud_inherited`)本身就已經用同一條 loader 路徑覆蓋 ch01/ch26/ch27——
+三章横跨全遊戲前段/後段,若真的逐章各自寫 code 理應在這三章間出現差異,但没有,這與本輪的
+呼叫鏈稽核互相印證。
+
+**因此 worklist 該項「其餘 ch02+ 缺逐章 view/gates/anchor 來源」的殘留範圍,實際性質是
+「資料」而非「程式碼」**:每章戰鬥入口的 gate A(save-persistent)/anchor/camera/cursor
+**初值**仍需要對每章分別確認其來源(繼承自 `FD2.SAV`、或由該章 pre-handler 顯式寫入),
+但不需要為每章重新反組譯一套獨立的 gate/HUD 呼叫邏輯——共用機制已經是同一份程式碼。
+本輪未逐章跑完 30 章的初值來源盤點(超出單輪範圍,且沒有 DOSBox 320×200 pixel oracle 可供
+逐章截圖核對,原文早已標註此限制仍未解除);已確認的三章(ch01/ch26/ch27)之外,其餘 27 章
+的「初值 from save vs from pre-handler」仍待後續個別確認,但已知**不必再懷疑「是否存在另一套
+機制」**。
+
+**L966(現行行號約 1121)完成度更新**:
+- `0x12c0d` exact raw lookup predicate/order → **已閉合**(見上,含 9 個呼叫點的共用性佐證)。
+- 「其餘 ch02+ 缺逐章 view/gates/anchor 來源」→ **通用機制已確認存在**(gate 寫入端與
+  `0x1acf3`/`0x12c0d`/`0x1a30b` 全部是共用引擎碼,非逐章特判);殘留範圍縮小為**純資料層**
+  的逐章初值來源盤點,已核對 ch01/ch26/ch27 三章(沿用既有 `native_map_hud_inherited`),
+  其餘 27 章的初值來源尚未逐一確認,但不再需要逐章反組譯新的 code path。
+- 原版 DOSBox 320×200 HUD pixel oracle 仍缺,不受本輪影響,維持 open。
