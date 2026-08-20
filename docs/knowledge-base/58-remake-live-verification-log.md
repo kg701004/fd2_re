@@ -3620,3 +3620,31 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 4. loadch/`runtime_context`(讓`deactivate_unit`不再因`slot_count=0`誤判越界)。
 5. `0x4dbfc`↔`0x4df4c`位址矛盾對`91-worklist.md:1193`/`range_overlay.go`的影響,需要獨立驗證是否要訂正既有文件。
 6. `0x24b14`/`0x24bde`的條件式skip schema、`0x2189a`的sprite walk-on引擎能力——這兩類是全專案共用的schema/引擎擴充,不是ch23專屬,值得跟其他章節(ch22舊分析提到的同一批位址)一起規劃,不要只為ch23單獨做。
+
+## 續三十一:追完續三十留下的`0x4dbfc`↔`0x4df4c`矛盾——確認是同一個exporter位址標籤錯誤,不是兩個不同call site,訂正`range_overlay.go`與`91-worklist.md`三處引用(2026-08-20)
+
+**任務背景**:續三十第3605行記錄了一個「本輪未解決」的矛盾——`docs/knowledge-base/91-worklist.md:1193`與`remake/internal/fdother/range_overlay.go`第66-72行`ClearNativeRangeOverlayMode6FieldByte`函式註解裡,已經證實、已經有生產程式碼的「mode6 raw-field byte clear」機制(`4*(cursorX+cursorY*width)+7`公式),語意跟續三十這輪新反組譯出的`0x4df4c`完全吻合,但doc91當時記錄的位址標籤是`0x4dbfc`,跟`0x4df4c`不一致。續三十判斷這可能是同一種exporter位址標籤錯誤(跟`handlers/ch23_post.json`那次一樣),也可能是兩個不同call site剛好行為相同,沒有追下去。這輪任務就是把這個矛盾追完,純靜態Ghidra headless(`FD2Analysis3`,唯讀,`-process "FD2.EXE" -readOnly -noanalysis`),不碰DOSBox-X/WSL2。
+
+**第一步:複核`0x4dbfc`不是合法entry point**——重讀續三十`ProbeCh23Post4dbfc.java`的既有輸出(`probe_ch23post_4dbfc_out.txt`),確認`getFunctionContaining(0x4dbfc)`回傳`FUN_0004dbe7 @ 0004dbe7`(`0x4dbfc`落在該函式中段,不是它的entry point),反編譯出來是純粹的64-bit(`param_1|param_2`兩個32-bit組成的pseudo-64-bit)位移運算,是Watcom C runtime的long-shift helper,跟遊戲邏輯無關;且`xrefs TO 0x4dbfc`當時就已經是空清單(零呼叫端)。這個結論複核成立,沒有發現需要推翻的地方。
+
+**第二步:複核`0x4df4c`的完整body,並抓出raw disasm跟decompile輸出不一致的地方**——重讀`ProbeCh23Post4df4c.java`既有輸出(`probe_ch23post_4df4c_out.txt`)。decompile版本(`FUN_0004df4c`)因為AH/AL分暫存器追蹤導致的已知反編譯器缺陷,產生了一段看起來語意混亂的`CONCAT11(...)  & 0x1fff`/`& 0x3ff`偽代碼,續三十引用這段時誤讀成「僅第一筆是常數0xff,後續筆數的值來自前一輪殘留的進位鏈」——這輪直接讀原始disasm bytes(`0x4df4c..0x4df83`)逐行核對,確認正確行為是:
+- `EDI=param_1+4`(跳過4-byte header,一次性,在迴圈外執行)
+- 迴圈外`MOV AL,0xff`(同樣只執行一次,但AL此後在迴圈內完全沒被改寫)
+- 迴圈本體(`LOOP`跳回`0x4df65`,不是跳回`0x4df63`那個`MOV AL,0xff`):`[EDI+3]=AL`(=0xff,因為AL迴圈全程不變,故**每一筆**cell都寫0xff,不是只有第一筆)、`[EDI+2] &= 0x1f`(read-modify-write)、`[EDI+1] &= 0x3`(read-modify-write,doc91原文沒提到這第三個mask但不衝突)、`EDI+=4`,迴圈次數`count=param_1[0]*param_1[2]`。
+**這個raw disasm讀法,跟`91-worklist.md:1193`原文「由header後的4-byte cells逐筆將byte+3初始化為0xff,再對byte+2 mask 0x1f」完全吻合**——doc91當時的行為描述其實比續三十step4自己的段落更準確,反過來印證doc91當時分析的就是`0x4df4c`這個函式本身,只是位址標籤打錯。
+
+**第三步:直接反組譯`0x108f0..0x10932`(range_overlay.go/91-worklist.md兩處都引用的loader),證明它親自呼叫`0x4df4c`**——新寫`ProbeMode6CallSite.java`,`getFunctionContaining(0x108f0)`回傳`FUN_0001088d @ 0001088d size=694`,decompile該函式清楚看到`DAT_00053a51 = (short *)FUN_000111ba(); ... FUN_0004df4c();`這一段,順序上緊接在載入`[0x53a51]`(FDFIELD pointer)之後。用`ProbeMode6CallSiteAddr.java`把該call的精確位址挖出來:`0x10974  PUSH dword ptr [0x00053a51]`、`0x1097a  CALL 0x0004df4c`——跟ch23_post beat 34在`0x24a92`的呼叫(`0x24a8c PUSH dword ptr [0x53a51]` / `0x24a92 CALL 0x4df4c`)是**完全相同的參數傳遞模式**(同一個global pointer、同一個callee)。`0x1097a`本身也出現在`0x4df4c`的xref清單裡(`ref from 0001097a type=UNCONDITIONAL_CALL`),交叉印證。
+
+**第四步:確認`0x122dc`本身不呼叫`0x4df4c`/`0x4dbfc`**——反組譯`0x122dc`(`getFunctionContaining`回傳`FUN_000122dc size=1051`)的mode1..5展開段(`0x122dc..0x123dc`),掃描其中全部`CALL`指令,只看到`CALL 0x3702f`(初始化)跟連續8次`CALL 0x126f7`(modes1..5既有已證實的`0x126f7`呼叫),完全沒有`CALL 0x4df4c`或`CALL 0x4dbfc`。這跟`91-worklist.md`既有行1185/1186「mode6直接清selected cell byte+3,7+直接return」的既有結論一致——mode6本身是inline單一byte寫入(不透過`0x4df4c`),`0x4df4c`是loader time的**全體cells批次初始化**,兩者是不同時機、不同粒度的操作,只是「同一個byte位置的語意」被拿來互相印證(loader把全部cell的byte+3批次設0xff建立baseline,mode6再對「被選中的單一cell」做同語意的清除)。
+
+**結論:是exporter位址標籤錯誤,不是兩個不同call site**。`0x4df4c`是唯一真正的函式,已知呼叫端至少包含:loader`FUN_0001088d`的`0x1097a`(對應`range_overlay.go`/`91-worklist.md:1193`原本想指的那個呼叫)、`ch23_post.json`beat 34的`0x24a92`(續三十已修正)、以及`ProbeCh23Post4df4c.java`當時掃到的另外30個呼叫端(`0x14c53`等,分布在`0x10000~0x1d000`一帶的command/spell相關函式群,顯示這是一個被廣泛重用的「FDFIELD批次初始化」共用utility,不是ch23或mode6專屬)。`0x4dbfc`從頭到尾都不是任何函式的合法entry point,`91-worklist.md`當時記錄`0x4dbfc`這個標籤,是跟續三十發現的`ch23_post.json`同一類exporter/記錄時期的位址錯位問題,不是「不同session位址不穩定」也不是「兩個不同函式剛好行為相同」。
+
+**已訂正**:
+1. `remake/internal/fdother/range_overlay.go`第66-72行`ClearNativeRangeOverlayMode6FieldByte`函式註解:`0x4dbfc`→`0x4df4c`,並補充精確呼叫位址(`0x1097a`,`PUSH [0x53a51]`/`CALL 0x4df4c`)與訂正緣由;純文件層修正,函式簽名/邏輯/行為完全未動。
+2. `docs/knowledge-base/91-worklist.md`第1193行(`0x122dc mode6 raw-field／scheduler closure`項)、第720行(`native command target flag/runtime-grid bridge`項,「結束即依`0x4dbfc`重建」)、第1297行(`native terrain renderer runtime bridge`項,「依`0x4dbfc`將live `State.NativeTileBlitModes`全填`0xff`」)三處`0x4dbfc`皆改為`0x4df4c`並加註訂正日期——這三處原文描述的行為(「重建」/「全填0xff」)跟`0x4df4c`的批次初始化語意完全吻合,判斷是同一次記錄時的系統性位址錯位,不只是1193一處,故一併訂正,避免文件內部繼續互相矛盾。
+
+**驗證**:`cd remake && go build ./... && go test ./...`全綠(含`internal/fdother`套件本身的既有test),`range_overlay.go`的訂正只動了註解文字,無任何測試斷言依賴該位址字面值,行為不變。
+
+### 產出
+
+`remake/internal/fdother/range_overlay.go`(註解訂正,無邏輯變動)、`docs/knowledge-base/91-worklist.md`(三處位址標籤訂正:720/1193/1297行)、本文件本節。新增Ghidra probe scripts:`C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeMode6CallSite.java`、`ProbeMode6CallSiteAddr.java`(+對應`probe_mode6_callsite_out.txt`、`probe_mode6_callsiteaddr_out.txt`原始輸出,供覆核;沿用續三十已有的`ProbeCh23Post4dbfc.java`/`ProbeCh23Post4df4c.java`輸出佐證,未重跑)。

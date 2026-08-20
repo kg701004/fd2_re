@@ -66,10 +66,14 @@ func NativeRangeOverlayMode6ByteAddress(width, cursorX, cursorY int) (int, error
 // ClearNativeRangeOverlayMode6FieldByte applies mode 6 to a raw FDFIELD
 // composition resource.  0x108f0..0x10932 loads that resource to [0x53a51],
 // whose signed u16 header is width/height followed by four bytes per cell;
-// 0x4dbfc initializes the fourth byte (event high byte / raw blit-mode byte)
-// to 0xff.  Mode 6's [base + 4*(x+y*width) + 7] write is therefore exactly
-// the fourth byte of the selected cell, not a range-overlay sprite operation.
-// No higher gameplay meaning is assigned to clearing that byte.
+// 0x4df4c (called at 0x1097a inside that same loader, PUSH [0x53a51] then
+// CALL 0x4df4c -- corrected 2026-08-20 from a mislabeled "0x4dbfc", which is
+// not a valid entry point at all but the mid-body of an unrelated Watcom
+// long-shift runtime helper, FUN_0004dbe7) initializes the fourth byte
+// (event high byte / raw blit-mode byte) to 0xff for every cell.  Mode 6's
+// [base + 4*(x+y*width) + 7] write is therefore exactly the fourth byte of
+// the selected cell, not a range-overlay sprite operation.  No higher
+// gameplay meaning is assigned to clearing that byte.
 func ClearNativeRangeOverlayMode6FieldByte(field []byte, cursorX, cursorY int) error {
 	if len(field) < 4 {
 		return errors.New("fdother: native range overlay mode 6 field is too short")
