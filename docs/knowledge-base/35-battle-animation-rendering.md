@@ -593,3 +593,141 @@ Ghidra 這邊窮舉搜尋的結果目前是紮實的負面證據,不是「還沒
    `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\` 供覆核,方法論本身(窮舉 DWORD/CALL-flow
    掃描找 dispatch table、依表格順序而非字面位址順序碰觸函式邊界)可以重複使用在其他「有文件
    位址但 Ghidra 反組譯不出對應語意」的 worklist 項目上。
+
+## 9.5 2026-08-20 續:「2 位元組落差=固定偏移量」假說根因調查——已排除,但附帶一個更根本的新發現
+
+> 動機:9.1 記錄了 doc11(§「版本核對」)先前發現的落差——`FD2Analysis3` 實際分析的檔案
+> (MD5 `a6e341a8decc6ebf7f4872076d9cf161`)與 `docs/data/fd2-reference-files.json` 記載的
+> 基準新版 `FD2.EXE`(MD5 `33464c81e6a364fd0660141139aa8e6e`)逐 byte 只差 2 處。假說:如果這
+> 2 個 byte 差異對應到一個**固定位址偏移量**,套用在 `0x2bce5` 這批位址上或許就能在
+> `FD2Analysis3` 裡找到真正對應的位置。本節獨立重新核對此假說,**結論:假說不成立**,但過程中
+> 發現一個對本專案定址慣例更根本、更有價值的事實(見 9.5.3)。
+
+### 9.5.1 先定位兩個候選檔案,確認 `FD2Analysis3` 實際分析的是哪一份
+
+MD5 比對(`Get-FileHash`)鎖定:
+
+| 路徑 | 大小 | MD5 | 對應 |
+|---|---:|---|---|
+| `C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE` | 509158 | `33464C81E6A364FD0660141139AA8E6E` | = `fd2-reference-files.json` 基準「新版」 |
+| `C:\Users\kg701\Desktop\GAME\FD2_USB\FD2.EXE` | 509158 | `33464C81E6A364FD0660141139AA8E6E` | 與基準相同(USB 備份) |
+| `C:\Users\kg701\Desktop\GAME\FD2_APK\FD2.EXE` | 509158 | `A6E341A8DECC6EBF7F4872076D9CF161` | = `FD2Analysis3` 實際分析的檔案(doc11 記錄的 hash) |
+
+即:`FD2Analysis3` project 實際載入分析的是 `FD2_APK\FD2.EXE`,不是 `GAME\FD2\FD2.EXE`
+這份目前的參考基準檔。兩者檔案大小完全相同(509158 bytes)。
+
+### 9.5.2 重新逐 byte diff,確認落差內容 + 修正 doc11 的 2 個 hex 位址誤植
+
+用 Python 對兩份檔案逐 byte 比對(`open(...).read()` 後逐 index 比較),獨立於 doc11 當時用的
+`cmp -l` 重做一次:
+
+```
+num diffs: 2
+0-based file offset 0x4455c (十進位 279900): 0x74 -> 0xeb
+0-based file offset 0x4a84b (十進位 305227): 0x0d -> 0x12
+```
+
+**與 doc11 記錄比對**:doc11 給的十進位偏移(`cmp -l` 1-based)279901/305228 完全正確
+(= 本次 0-based 279900/305227 各 +1,換算一致),byte 值 `0x74→0xeb`、`0x0d→0x12` 也完全一致。
+但 doc11 附帶寫的兩個 **hex 位址是誤植**:`0x44575`(應為 `0x4455d`,1-based hex)、
+`0x4a80c`(應為 `0x4a84c`,1-based hex)——十進位轉 hex 手動換算時的筆誤,不影響 doc11 原本
+「相隔極遠、不影響本節結論」的判斷,但下一輪如果要用 hex 位址原文查證,請用這裡訂正後的值。
+
+**context bytes(各取 patch byte 前後 12 bytes,`GAME\FD2\FD2.EXE`=ref,`GAME\FD2_APK\FD2.EXE`=apk)**:
+
+```
+0x4455c: ref: 7c 24 20 0f b6 28 0f b6 70 01 29 ee 74 0e e8 94 06 03 00 89 c2 c1 fa 1f
+         apk: 7c 24 20 0f b6 28 0f b6 70 01 29 ee eb 0e e8 94 06 03 00 89 c2 c1 fa 1f
+0x4a84b: ref: 00 6a 47 e8 37 ee fe ff 83 c4 04 6a 0d e8 a1 03 00 00 83 c4 04 85 c0 74
+         apk: 00 6a 47 e8 37 ee fe ff 83 c4 04 6a 12 e8 a1 03 00 00 83 c4 04 85 c0 74
+```
+
+**指令級解讀**:
+- Patch#1:`74 0e`(`JE +0xe`)→`eb 0e`(`JMP +0xe`,同一位移 byte 不變)——把一個條件分支
+  改成無條件跳轉,兩者都是 2-byte 指令,**指令長度完全不變**。
+- Patch#2:`6a 0d`(`PUSH 0x0d`)→`6a 12`(`PUSH 0x12`),緊接 `e8 ... CALL`——改的是傳給
+  下一個 `CALL` 的立即數引數,同樣是 1-byte immediate,**指令長度完全不變**。
+
+兩處都是典型「同尺寸 opcode/operand 級別 in-place 修改」,符合 doc11 原判斷「疑似
+no-CD/簡易 patch」的外觀(条件跳轉改無條件跳轉+改一個傳給 call 的參數,常見於繞過某個
+檢查失敗分支或改寫提示訊息代碼)。
+
+### 9.5.3 假說判定:**不成立**——同尺寸 byte 代換不可能產生任何位移,更遑論「固定」位移
+
+這一步不需要更多證據就能下結論:
+
+> **Patch#1/#2 都是「原地代換」,不是插入或刪除**——兩個檔案總長度完全相同(509158 bytes
+> = 509158 bytes),且除了這 2 個 byte 之外逐 byte 全部相同。同尺寸代換在數學上**不可能**讓
+> 這兩個 byte 之後(或之前)的任何其他位元組挪動位置。換句話說:這兩個檔案中,**每一個其他
+> 位元組的檔案 offset 都完全相等**,包括 `0x2bce5`/`0x2c172`/…/`0x2c773` 那批位址所在的整個
+> `0x2b000..0x2d000` 區段——不管用哪個檔案當基準,這批位址對應的原始檔案位元組**逐 byte
+> 完全相同**。
+
+因此「2 byte 落差 → 固定偏移量 → 套用在 0x2bce5 上找到真正位址」這條推理鏈在第一步就不成立:
+根本沒有偏移量可言(不是「偏移量算出來但很小/很怪」,而是「偏移量恆為 0,兩個候選檔案在
+party montage cluster 這個區段本來就是同一份資料」)。9.1 的窮舉負面結果因此**不可能**是這 2
+個 byte 造成的——9.1 用的 `FD2Analysis3`(分析 `FD2_APK` 版)與參考基準版在這個區段逐 byte
+相同,即使當初改用參考基準版重新開一個 Ghidra project,`0x2bce5` 等位址一樣會得到相同的
+「no hits / 非指令邊界」結果。**此假說到此已可視為排除**,以下 9.5.4 記錄一個過程中意外發現、
+與本假說無關但對未來 RE 工作有實際價值的事實。
+
+### 9.5.4 意外發現(比原假說更根本):「檔案 byte offset」與 Ghidra「linear 位址」在這份 EXE 裡**不是同一件事**,且兩者間沒有單一全域常數可換算
+
+追查 patch byte 在 Ghidra 裡實際落在哪個函式時,直接對 `FD2Analysis3`(`toAddr(0x4455c)`/
+`toAddr(0x4a84b)`,把 raw file offset 當成 linear 位址查詢)得到的反組譯結果,跟用 Python 讀出的
+raw byte context(見 9.5.2)**對不上**——`toAddr(0x4455c)` 落在一個完全不同、语意不相關的既有
+函式裡。改用**位元組特徵搜尋**(`Memory.findBytes`,搜尋 9.5.2 那兩段 24-byte context,不依賴
+任何位址假設,兩段各只命中 1 次,確認唯一)直接定位這兩段 patch 在 Ghidra 記憶體裡的**真正**
+linear 位址:
+
+| patch | raw file offset(0-based) | Ghidra 真正 linear 位址 | delta(linear − file_offset) |
+|---|---:|---:|---:|
+| #1(JE→JMP) | `0x4455c` | `0x1e548`(所在函式 `FUN_0001e529`) | `-155668`(`-0x26014`) |
+| #2(PUSH imm8) | `0x4a84b` | `0x2483b`(`PUSH 0x12; CALL 0x24bde`,前一句 `CALL 0x1366a`) | `-155664`(`-0x26010`) |
+
+兩個 delta 幾乎相同(只差 4),**但都遠不是 0**——直接推翻了 doc35 檔頭「obj1 linear=file
+offset」這句話字面上「raw .EXE 檔案 byte 位置 == Ghidra linear 位址」的解讀。另外**交叉核對**
+9.2 已獨立確認的 `"TAI.DAT\0"` 字串(反組譯/反編譯證實其 linear 位址為 `0x524a0`):它在
+raw 檔案裡的實際 byte 位置是 `0x774b4`(`bytes.find`,唯一命中)——delta 為 `-151572`
+(`-0x25014`),**跟前兩個 code delta 又不一樣**(差恰好 `0x1000`=一個 page)。
+
+**結論**:raw `.EXE` 檔案位元組 offset 與 Ghidra 的 linear 位址之間,在這份 DOS4GW LE
+執行檔裡**不存在單一全域常數換算式**——code 區段(object1)內部的 delta 大致落在
+`-0x26010~-0x26014` 一帶但仍會隨位置小幅漂移(~4 bytes/25KB,疑似 LE object page 邊界或
+fixup table 造成),data 區段的字串常數 delta 又整整差了一個 page。因此:
+
+1. 本專案文件裡「obj1 linear=file offset」這句慣例寫法,**必須理解成「已經用適當工具/轉換
+   处理過的 linear 位址」之間彼此一致,不能望文生義成「可以直接拿 raw .EXE 檔案的 byte 位移
+   當成 Ghidra 位址查詢」**——這次直接測試證實兩者對不上。9.1/doc91/doc11 等處引用的
+   `0x1A30B`、`0x524a0`……等大量已驗證位址,都是透過 Ghidra 本身的反組譯/反編譯/交叉呼叫鏈
+   確認的**linear 位址**,不是從任何 raw 檔案 byte 位移直接算出來的——這些既有結論本身沒有
+   問題,只是「linear=file offset」這句話不能被逆用去做「檔案 diff → 位址算術」。
+2. 就算暫時忽略 9.5.3 已經排除假說的結論,強行套用這次量到的 delta(`~-0x26010`)去試著
+   把 `0x2bce5` 解讀成某種「raw file offset」需要先減去 delta 才能拿到真正 linear 位址——
+   算出來是 `0x2bce5 - 0x26014 ≈ 0x5cd1`,遠低於 `FD2Analysis3` 的最小可定址位址
+   `0x10000`(見 `currentProgram.getMinAddress()`),**不是有效位址**,連嘗試都站不住腳。
+   這進一步佐證:`0x2bce5` 這批位址原本就是以 Ghidra/IDA 的 linear 位址記錄的(而非某種
+   raw 檔案位移的別名),9.1 直接用 `toAddr(0x2bce5)` 查詢的作法是正確的方法論,問題不在
+   查詢方式,而在這批位址本身的來源(見 9.1 已有的「可能是不同 EXE build / live-memory
+   位址 / 轉錄誤差」三個假說,本節未能新增證據去裁決其中哪一個)。
+
+### 9.5.5 對 party montage cluster(11 個 worklist 項目)的最終影響
+
+**本節排除了「2 byte 差異是位址對不上的根因」這個假說,且 9.5.4 的延伸測試顯示套用這次量到
+的 delta 也無法讓 `0x2bce5` 落在有效位址範圍內** ——两条路都走到底,結論一致。9.1 的三種獨立
+窮舉方法(資料表掃描/呼叫掃描/逐 byte 反組譯)得到的負面結果因此**維持不變**,`0x2bce5`/
+`0x2c548` renderer 的 blocker **仍未解除**,11 個 worklist 項目(L862/863/864/865/866/867/899/
+1017/1018/1019/1020)狀態不變。給下一輪的具體建議(取代「檢查 2-byte 落差是否為根因」這條,
+因為已經走完且排除):
+
+1. **不要再嘗試從 `FD2Analysis3` 內部用位址算術(offset/delta)去反推 `0x2bce5` 這批位址**——
+   9.5.4 已證實這份 EXE 沒有可用的全域 file-offset↔linear 換算常數,這條路完全走不通,無論
+   起點是哪一份候選 EXE。
+2. 依然是 9.1/9.4 原本的建議:**直接用官方 IDA(如果還拿得到同一份 session)或
+   DOSBox-X live memory 重新獨立核對 `0x2bce5`/`0x2c548` 這兩個錨點**,不要預設它們能在
+   `FD2Analysis3` 的 linear 位址空間裡直接解出。
+3. **一般性提醒(適用所有未來 RE 工作,不限本 cluster)**:任何時候要拿「raw `.EXE` 檔案
+   byte offset」(例如用 `cmp`/`fc`/Python 逐 byte diff 出來的結果)去對照 Ghidra 反組譯位址,
+   **必須先用 `Memory.findBytes` 位元組特徵搜尋獨立核實對應的 linear 位址**,不能假設兩者
+   相等或存在簡單常數位移——本節示範的方法(截取 patch 前後 ~24 bytes 當特徵、
+   `findBytes(start, pattern, null, true, monitor)`)可以直接複用。
