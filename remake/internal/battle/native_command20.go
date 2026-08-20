@@ -72,6 +72,7 @@ func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, command
 		return nil, fmt.Errorf("native command clear/restore insufficient MP")
 	}
 	results := make([]NativeCommandClearRestoreResult, 0, len(targets))
+	clearedTargets := make([]*Unit, 0, len(targets))
 	for _, target := range targets {
 		result := NativeCommandClearRestoreResult{Target: target, Offset: offset}
 		duration, _ := target.NativeTransientDuration(offset)
@@ -82,9 +83,13 @@ func (s *State) ExecuteNativeCommandClearRestore(actor, confirmed *Unit, command
 			}
 			target.SetNativeTransientDuration(offset, 0)
 			result.Cleared, result.Restore = true, restore
+			clearedTargets = append(clearedTargets, target)
 		}
 		results = append(results, result)
 	}
+	// [0x53EC8] write point 0x22af6: levelFactor(target)*4 per cleared target
+	// (doc13 §7 / doc27 §5.1.A -- "清除=半額" of the application family below).
+	s.awardNativeCommandExp(actor, clearedTargets, 4, rng)
 	actor.Acted = true
 	return results, nil
 }

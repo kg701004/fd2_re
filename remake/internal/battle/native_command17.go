@@ -66,6 +66,7 @@ func (s *State) ExecuteNativeCommandModifier(actor, confirmed *Unit, commandID i
 		return nil, fmt.Errorf("native command modifier insufficient MP")
 	}
 	results := make([]NativeCommandModifierApplyResult, 0, len(targets))
+	appliedTargets := make([]*Unit, 0, len(targets))
 	for _, target := range targets {
 		result := NativeCommandModifierApplyResult{Target: target, Offset: offset}
 		if duration, _ := target.NativeTransientDuration(offset); duration == 0 {
@@ -83,9 +84,13 @@ func (s *State) ExecuteNativeCommandModifier(actor, confirmed *Unit, commandID i
 				target.EV += 15
 			}
 			result.Applied = true
+			appliedTargets = append(appliedTargets, target)
 		}
 		results = append(results, result)
 	}
+	// [0x53EC8] write point 0x22721/0x22866/0x22997: levelFactor(target)*2 per
+	// successful target (doc13 §7 / doc27 §5.1.A).
+	s.awardNativeCommandExp(actor, appliedTargets, 2, rng)
 	actor.Acted = true
 	return results, nil
 }

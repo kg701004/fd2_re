@@ -5383,7 +5383,7 @@ func (g *Game) executeNativeCommandTarget(sel, tgt *battle.Unit, id int, destina
 		}
 		message = fmt.Sprintf("原始指令 %d：傷害 %d", id, total)
 	case id == 25:
-		results, e := g.st.ExecuteNativeCommand25(sel, tgt, destination)
+		results, e := g.st.ExecuteNativeCommand25(sel, tgt, destination, g.rng)
 		err = e
 		message = fmt.Sprintf("原始指令 25：完成 raw clear (%d targets)", len(results))
 	case id == 32:

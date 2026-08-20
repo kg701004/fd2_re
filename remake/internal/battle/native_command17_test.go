@@ -88,3 +88,25 @@ func TestExecuteNativeCommandModifierRejectsUnknownIDBeforeMutation(t *testing.T
 		t.Fatalf("unknown modifier ID must fail closed: actor=%#v err=%v", actor, err)
 	}
 }
+
+// TestExecuteNativeCommandModifierAwardsExpOnSuccessfulApply covers the
+// [0x53EC8] write point at 0x22721/0x22866/0x22997 (doc13 §7 / doc27
+// §5.1.A): levelFactor(target)*2 feeds the actor's persistent experience via
+// the shared GainExp threshold/level-up pipeline (native_command_exp.go).
+func TestExecuteNativeCommandModifierAwardsExpOnSuccessfulApply(t *testing.T) {
+	// target.Camp must stay Enemy: nativeCommandModifierBook's TargetCode:0
+	// resolves (with this NativeRecordByte6 selector) to "candidate.Camp ==
+	// Enemy", independent of actor.Camp (see NativeCommandTargetMatches).
+	// actor.Camp is Own so GainExp (Own/Ally-only) actually applies below.
+	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, Lv: 1, X: 0, Y: 0, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	target := &Unit{Camp: Enemy, OnField: true, HP: 20, AP: 100, Lv: 5, X: 1, Y: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandModifierBook(17)}
+
+	got, err := st.ExecuteNativeCommandModifier(actor, target, 17, rand.New(rand.NewSource(1)), nil)
+	if err != nil || len(got) != 1 || !got[0].Applied {
+		t.Fatalf("modifier = %#v, err=%v", got, err)
+	}
+	if actor.Exp != 10 { // levelFactor(Lv=5, ClassID=0)*2 = 10
+		t.Fatalf("actor.Exp = %v, want 10", actor.Exp)
+	}
+}

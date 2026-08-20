@@ -94,6 +94,34 @@ func TestExecuteNativeCommandApplicationSupportsRecoveredIDTwentyTwo(t *testing.
 	}
 }
 
+// TestExecuteNativeCommandApplicationAwardsExpOnlyWhenApplied covers the
+// [0x53EC8] write point at 0x22d1b (doc13 §7 / doc27 §5.1.A): levelFactor
+// (target)*8 only for a target the RNG gate + raw-interval check actually let
+// through, never for the gated-out no-op route.
+func TestExecuteNativeCommandApplicationAwardsExpOnlyWhenApplied(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, Lv: 1, X: 0, Y: 0, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	target := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, Lv: 5, X: 1, Y: 0}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
+
+	got, err := st.ExecuteNativeCommandApplication(actor, target, 26, passingNativeApplicationRNG(t), nil)
+	if err != nil || len(got) != 1 || !got[0].Applied {
+		t.Fatalf("application = %#v, %v", got, err)
+	}
+	if actor.Exp != 40 { // levelFactor(Lv=5, ClassID=2)*8 = 40
+		t.Fatalf("actor.Exp = %v, want 40", actor.Exp)
+	}
+
+	actor2 := &Unit{Camp: Own, OnField: true, HP: 20, MP: 5, Lv: 1, X: 0, Y: 0, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	target2 := &Unit{Camp: Enemy, ClassID: 2, OnField: true, HP: 20, Lv: 5, X: 1, Y: 0, NativeTransient: [6]byte{0, 0, 0, 4}}
+	st2 := &State{W: 2, H: 1, Units: []*Unit{actor2, target2}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommandApplicationBook(26)}
+	if _, err := st2.ExecuteNativeCommandApplication(actor2, target2, 26, rand.New(rand.NewSource(1)), nil); err != nil {
+		t.Fatalf("unexpected err=%v", err)
+	}
+	if actor2.Exp != 0 {
+		t.Fatalf("gated-out application must not award exp: actor2.Exp = %v, want 0", actor2.Exp)
+	}
+}
+
 func TestExecuteNativeCommandApplicationRejectsUnknownIDBeforeMutation(t *testing.T) {
 	actor := &Unit{MP: 5}
 	if _, err := (&State{}).ExecuteNativeCommandApplication(actor, nil, 25, rand.New(rand.NewSource(1)), nil); err == nil || actor.MP != 5 || actor.Acted {

@@ -63,6 +63,56 @@ func TestExecuteNativeCommandDerivedStrikeUsesRecoveredID28Multiplier(t *testing
 	}
 }
 
+// TestExecuteNativeCommandDerivedStrikeAwardsAttackExp is a documented
+// judgment call, not a proven [0x53EC8] byte-for-byte mapping: doc13 §6/§7
+// don't find command 24/28/29/31 among the enumerated accumulator write
+// points, so this reuses the already-verified AttackExp formula (growth.go,
+// doc02 §4.5 "攻擊" row) rather than leaving player-visible damage give zero
+// experience -- see 13-battle-menu-system.md's 2026-08-20 note.
+func TestExecuteNativeCommandDerivedStrikeAwardsAttackExp(t *testing.T) {
+	actor := &Unit{Camp: Own, OnField: true, X: 0, Y: 0, AP: 100, MP: 30, Lv: 1, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	// ExpPerLevel deliberately kept low (5, not e.g. 10) so the resulting
+	// AttackExp stays under the 100-per-level threshold for the damage this
+	// fixture rolls (~117-129, seed 2): this test is about the formula
+	// hookup, not the separate (already-tested) level-up wraparound, so it
+	// avoids the actor's own Lv changing out from under the "want" recompute.
+	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 200, MaxHP: 200, Lv: 5, ExpPerLevel: 5}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommand24Book()}
+
+	origLv := actor.Lv
+	got, err := st.ExecuteNativeCommand24(actor, target, rand.New(rand.NewSource(2)), nil)
+	if err != nil || len(got) != 1 {
+		t.Fatalf("ID24 result=%#v err=%v", got, err)
+	}
+	want := AttackExp(origLv, target.Lv, got[0].Damage, target.MaxHP, target.ExpPerLevel)
+	if want <= 0 || want >= 100 {
+		t.Fatalf("test fixture must land in (0,100) to avoid the level-up wraparound path: want=%v damage=%d", want, got[0].Damage)
+	}
+	if actor.Lv != origLv {
+		t.Fatalf("actor.Lv changed from %d to %d, fixture must stay under the level-up threshold", origLv, actor.Lv)
+	}
+	if actor.Exp != want {
+		t.Fatalf("actor.Exp = %v, want %v (AttackExp formula)", actor.Exp, want)
+	}
+}
+
+// TestExecuteNativeCommandDerivedStrikeSkipsExpForNonOwnAllyActor confirms
+// the AttackExp hookup does not touch RNG or state for an Enemy actor, so it
+// cannot perturb the many Camp:Enemy-actor fixtures already exercising this
+// executor's raw MP/damage math elsewhere in this file.
+func TestExecuteNativeCommandDerivedStrikeSkipsExpForNonOwnAllyActor(t *testing.T) {
+	actor := &Unit{Camp: Enemy, OnField: true, X: 0, Y: 0, AP: 100, MP: 30, Lv: 1, HasNativeRecordByte6: true, NativeRecordByte6: 2}
+	target := &Unit{Camp: Enemy, OnField: true, X: 1, Y: 0, DP: 20, HP: 200, MaxHP: 200, Lv: 5, ExpPerLevel: 10}
+	st := &State{W: 2, H: 1, Units: []*Unit{actor, target}, NativeCompositionEventBytes: make([]byte, 2), NativeCommandBook: nativeCommand24Book()}
+
+	if _, err := st.ExecuteNativeCommand24(actor, target, rand.New(rand.NewSource(2)), nil); err != nil {
+		t.Fatalf("unexpected err=%v", err)
+	}
+	if actor.Exp != 0 {
+		t.Fatalf("Enemy-camp actor.Exp = %v, want 0", actor.Exp)
+	}
+}
+
 func TestExecuteNativeCommandDerivedStrikeRejectsSpecialSelectorID30(t *testing.T) {
 	actor := &Unit{MP: 30}
 	if _, err := (&State{}).ExecuteNativeCommandDerivedStrike(actor, nil, 30, rand.New(rand.NewSource(1)), nil); err == nil || actor.MP != 30 || actor.Acted {

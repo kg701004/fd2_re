@@ -666,3 +666,93 @@ ID24/28/29/31 的 multi-hit 演出、所有 command 的 UI/status icon。這些�
 - native commands 17..19 的 `ExecuteNativeCommand17_19`(target 解析 + MP debit + duration write)
   尚未接成可執行 command；`TickNativeTransientsRaw` 到期未串接 `ApplyNativeRuntimeEquipmentRecalc`
   重算；到期/扣血文字 popup(`0x15F84` idx `0x1E1+offset`／固定 idx487)在 remake 端完全未實作。
+
+## native commands 20..27 EXP pipeline 接線 + 前提修正(2026-08-20)
+
+> 任務起點誤判需要澄清:交辦描述認為 command 20-27「RE 完成但玩家完全碰不到」,但實際
+> grep `cmd/fd2/main.go`(`nativeCommandTargetSupported`/`executeNativeCommandTarget`,約
+> L4529-4539、L5353-5388)發現 **20/21/22/24/25/26/27/28/29/31 這十個 ID 早已接進戰鬥指令
+> 選單**:選單本身用 `g.sel.NativeCommandIDs()`(單位自己的 raw command bitset)動態產生選項、
+> `g.nativeCommandLabels`(`command_labels.json` 來源)提供文字標籤,Enter 確認後經
+> `executeNativeCommandTarget` 分派到 `ExecuteNativeCommandClearRestore`(20/21)、
+> `ExecuteNativeCommandApplication`(22/26/27)、`ExecuteNativeCommandDerivedStrike`(24/28/29/31)、
+> `ExecuteNativeCommand25`(25)——這些函式本身也早已具備 MP debit(`SpendNativeCommandMP`)、
+> 命中率(`rand()%100<50`)、傷害、duration 寫入(`SetNativeTransientDuration`)。也就是說,
+> 「選單能選到 / MP 有扣 / duration 有寫」這幾項在本輪任務**開始前就已完成**,不是這輪新增的。
+> 本輪重新核實後,把心力集中在文件與 grep 都證實**真正缺**的兩塊:EXP pipeline、command 23。
+
+### 1. EXP pipeline:`[0x53EC8]` 累加器接線(新增)
+
+`remake/internal/battle/native_command_exp.go`(新檔)新增共用 helper:
+
+- `nativeCommandExpLevelFactor(target)`:`target.Lv`,若 `target.ClassID` 落在 `(8,0x19)`
+  (9..24)則 `+0x1e(30)`——逐位元組對映 doc27 §5.1.A 的 `levelFactor` 定義。
+- `(s *State) awardNativeCommandExp(actor, targets, multiplier, rng)`:對每個已成功的
+  target 累加 `levelFactor*multiplier`,`clamp(0,99)`(對映 `0x117e7`/`0x1e292` 的單次行動
+  clamp),再用**既有**的 `State.GainExp`(`growth.go`,legacy CastArea 法術路徑已在用的
+  threshold-100/連續升級/`0x1b750`-equivalent 屬性成長管線)一次性餵入——不另開第二個
+  持久化經驗欄位,`Unit.Exp` 是原生 `+0x3c` 持久化經驗 byte 的唯一 remake 對映,兩條來源
+  (legacy CastArea 與 native raw 指令)本就該匯入同一個累加器。
+
+接線位置與倍率(doc13 §7 / doc27 §5.1.A 六個既證實寫入點 + doc13 §7 本身新增的第七個):
+
+| command | 檔案/函式 | 倍率 | 觸發條件 |
+|---|---|---|---|
+| 17/18/19 | `native_command17.go ExecuteNativeCommandModifier` | ×2 | 每個 `Applied` target |
+| 20/21 | `native_command20.go ExecuteNativeCommandClearRestore` | ×4 | 每個 `Cleared` target |
+| 22/26/27 | `native_command26.go ExecuteNativeCommandApplication` | ×8 | 每個 `Applied` target |
+| 25 | `native_command25.go ExecuteNativeCommand25` | ×8 | 每個 `Cleared`(acted bit)target;獨立 `0x22C04` 寫入點,不經共用 application core |
+| 23 | `native_command23.go ExecuteNativeCommand23`(新) | ×10 | 單一 target,非迴圈 |
+
+`ExecuteNativeCommand25` 簽章新增 `rng *rand.Rand` 參數(原本沒有 RNG 需求;EXP 需要
+`GainExp` 的成長擲骰);呼叫端(`cmd/fd2/main.go:5386`)與既有測試已同步更新為傳入
+`g.rng`/`nil`。三個既有呼叫點全部確認過,無遺漏。
+
+**24/28/29/31(derived-strike)是誠實標記的判斷,非逐位元組還原**:doc13 §6/§7 與 doc27
+§5.1.A 的 `[0x53EC8]` 六寫入點清單都**沒有**列出 derived-strike 宿主 `0x2CF30`,即目前反組譯
+證據不支援「這四個 command 直接寫 `[0x53EC8]`」這個結論(可能完全沒有,也可能經由另一條
+尚未追出的路徑,如 §6 提到但未展開的攻擊經驗 `0x2f7b6`/`0x1ecc7`)。`native_command24.go
+ExecuteNativeCommandDerivedStrike` 選擇改用已驗證的一般攻擊經驗公式(`growth.go AttackExp`,
+doc02 §4.5「攻擊」列,`combat.go` 既有攻擊路徑同一條公式),理由是:這四個 command 本質上是
+經 `0x1C81F` 傷害寫入 primitive 的一次攻擊,讓玩家可見傷害的技能完全不給經驗值不合理。
+**這是本輪的工程判斷,不是 RE 結論**,未來若反組譯出 `0x2CF30` 或其呼叫鏈實際寫 `[0x53EC8]`
+的證據,應以那個結果取代這裡的近似。
+
+### 2. command 23(傳送術):新增 state-only executor,UI 仍未接(誠實範圍限縮)
+
+`remake/internal/battle/native_command23.go`(新檔)新增 `ExecuteNativeCommand23(actor,
+target, destX, destY, rng)`:record23 MP debit → 目的地合法性(**簡化版**:僅檢查邊界內 +
+無其他存活單位佔用,不是逐位元組還原 `NativeRelocationDestinationAllowed` 的 raw-byte
+movement-cost/table pipeline,因為那個函式吃的是 raw `[]byte` unit record + 地形 cost row,
+不是 `*Unit`)→ `SetMapPlacement` 搬移 → `[0x53EC8]` ×10 EXP(見上表)。
+
+**沒有做**、仍是真缺口:doc13 §5 描述的地圖游標目的地選取 UI(0xff/0xff 離場→cursor
+globals 入場的那套 renderer/legality/camera)在 remake 完全不存在,`nativeCommandTargetSupported`
+白名單(main.go L4534)刻意**不**加入 23——那個白名單的既有 unit-target 兩段式合流程
+(`nativeCommandTargetUnitsFor`)是給「選一個單位」設計的,23 選的是「選一個地圖格」,兩者
+合約不同,硬塞進同一個白名單只會讓 `nativeCommandTargetUnitsFor` 對著一個沒有候選單位清單的
+命令回錯誤。因此 23 現在的狀態是:**有一個測試覆蓋、可從程式碼呼叫的 state primitive,
+但玩家在戰鬥選單裡選到 23(如果他的 raw command bitset 剛好開了這個 bit)仍會落入
+main.go L4400-4407 的既有 fallback(「目標／效果尚未驗證」訊息,不執行、不消耗回合)**,
+因為 `nativeCommandTargetSupported(23)==false`。下一輪若要真正讓玩家用到,需要新增一個
+目的地格選取的輸入模式(類似既有 `g.reach`/`g.walk` 但沒有「已行動格排除」限制),不是本輪
+範圍(任務說明本身也把 23 列為次要)。
+
+### 3. 測試
+
+新增/擴充 regression test(`go test ./...` 全綠,含既有 test 未受影響的驗證):
+
+- `native_command_exp_test.go`(新):`nativeCommandExpLevelFactor` 邊界(class 8/9/0x18/0x19)、
+  `awardNativeCommandExp` 的 clamp99、Enemy actor no-op 不耗用 RNG、空 target 清單 no-op。
+- `native_command17_test.go`/`native_command20_test.go`/`native_command26_test.go`/
+  `native_command25_test.go`/`native_command24_test.go` 各新增至少一組「Own-camp actor 成功
+  路徑要拿到經驗值、no-op/gated-out 路徑不拿經驗值」的測試。
+- `native_command23_test.go`(新):搬移+MP debit+EXP 成功路徑、目的地被佔用/越界/book 缺失
+  三種 fail-closed 路徑。
+
+**測試踩坑記錄(供下一輪參考)**:`NativeCommandTargetMatches(targetCode, selector, unit.Camp)`
+用**候選單位自己的 Camp**、不是施法者 Camp,判斷是否符合 `TargetCode`(0=`Enemy`、
+1=`!=Enemy`、2=`Ally`、3=`Own`)——把既有測試的 actor/target 陣營同時换成 Own 來滿足
+「Own 才有經驗值」的 `GainExp` 前提時,若沒同步檢查對應 `TargetCode` 期望的候選陣營,
+目標解析會直接回傳空清單(不是報錯,是「這個 command 對這個陣營組合沒有合法目標」),
+容易誤判成程式邏輯錯誤。

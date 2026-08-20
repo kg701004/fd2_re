@@ -57,6 +57,7 @@ func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandI
 		return nil, fmt.Errorf("native command application insufficient MP")
 	}
 	results := make([]NativeCommandApplicationResult, 0, len(targets))
+	appliedTargets := make([]*Unit, 0, len(targets))
 	for _, target := range targets {
 		result := NativeCommandApplicationResult{Target: target, Offset: offset}
 		duration, _ := target.NativeTransientDuration(offset)
@@ -67,9 +68,13 @@ func (s *State) ExecuteNativeCommandApplication(actor, confirmed *Unit, commandI
 			result.Damage = damage
 			result.Duration = byte(rng.Intn(4) + 2)
 			target.SetNativeTransientDuration(offset, result.Duration)
+			appliedTargets = append(appliedTargets, target)
 		}
 		results = append(results, result)
 	}
+	// [0x53EC8] write point 0x22d1b: levelFactor(target)*8 per applied target
+	// (doc13 §7 / doc27 §5.1.A).
+	s.awardNativeCommandExp(actor, appliedTargets, 8, rng)
 	actor.Acted = true
 	return results, nil
 }

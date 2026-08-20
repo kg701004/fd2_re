@@ -95,6 +95,25 @@ func (s *State) ExecuteNativeCommandDerivedStrike(actor, confirmed *Unit, comman
 		target.ApplyHPDamage(damage)
 		results = append(results, NativeCommand24Damage{Target: target, Amount: amount, Damage: damage})
 	}
+	// doc13 §6/§7 and doc27 §5.1.A's [0x53EC8] write-point survey both stop
+	// short of the derived-strike host 0x2CF30: neither documents it writing
+	// the accumulator directly. These commands are still ordinary damage
+	// hits through the same 0x1C81F primitive as a normal attack, so this
+	// awards experience via the already-verified attack formula (growth.go
+	// AttackExp, doc02 §4.5 "攻擊" row) rather than leaving player-visible
+	// damage give zero experience. This is a judgment call, not a proven
+	// byte-for-byte mapping -- see 13-battle-menu-system.md's 2026-08-20 note.
+	for _, result := range results {
+		if result.Target == nil || (actor.Camp != Own && actor.Camp != Ally) {
+			continue
+		}
+		dmgForExp := result.Damage
+		if result.Target.HP == 0 {
+			dmgForExp = result.Target.MaxHP
+		}
+		exp := AttackExp(actor.Lv, result.Target.Lv, dmgForExp, result.Target.MaxHP, result.Target.ExpPerLevel)
+		s.GainExp(actor, exp, rng)
+	}
 	// 0x18D8C applies the invoking actor's completion bit after 0x1CFF0
 	// returns success; 0x276EC is such a successful handler route.
 	actor.Acted = true
