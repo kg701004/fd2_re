@@ -4,6 +4,161 @@
 > 每輪結束更新本表(打勾 / 補新項 / 調整順序)，與 `99-reflections-log.md` 互補。
 > 圖例:✅ 完成 · 🟡 進行中 · ⬜ 待辦 · ❌ 放棄(註明原因)
 
+## 稽核索引(2026-08-19)
+
+> 對稽核當時全部`[ ]`/`[~]`項目逐一分類，交叉核對`docs/knowledge-base/*.md`與`remake/`程式碼後產出，方便日後快速掃描而不必每次重讀全文。分類：**A**=已在別處完整解決只是狀態未同步（下方已直接改回`[x]`並附依據，不再重複列出）、**B**=需使用者本人（實聽/人眼校對/遊玩判斷）、**C**=純程式實作/資產/打包工作、**D**=真正開放、agent可續靜態分析的RE項目、**E**=需live DOSBox-X驗證、**F**=卡在外部限制（遺失素材/更大範圍重構前置）。稽核當時另發現2項（215、390）在稽核開始前就已是`[x]`（初次掃描誤判為開放項），未計入下方164項統計。標「未深入查證」者代表在合理時間內無法完全確認，已保守歸類，未來若要精查請優先看這些行。
+>
+> **統計（164項，扣除215/390誤判）**：A=18（已在下方對應行改回`[x]`）、B=7、C=38、D=67、E=29、F=5。
+
+19 - E - UI-VIS-TOWN 自述尚缺variant1/2，需DOSBox原版對照。
+20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
+24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
+26 - E - UI-VIS-PREPARATION自述仍需晚期合法存檔與DOSBox實機差分。
+45 - E - UI-VIS-LOAD自述成功native restore/delete/overwrite/roster ABI仍待E2。
+53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。
+54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
+69 - C - 文件維護政策宣告（專題文件不合併），非可關閉的分析任務。
+145 - D - doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。
+155 - E - RE-BATTLE-AI-SPECIAL-TOPIC自述下一步需固定存檔trace驗證實際選中command/畫面順序，需DOSBox。
+210 - D - REMAKE-AI-MODE-RUNTIME剩餘模式玩法名稱/event82觸發/回合orchestration可續靜態RE。
+212 - D - REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。
+245 - D - doc27§5已列明確剩餘清單(經驗值攻守等級因子/0x2f7b6內cVar4分支/6種傳送魔刃經驗公式/法術命中逐ID核對)，可續靜態分析。
+246 - D - 物品系統裝備加成精確累加點與使用效果碼仍未反組譯。
+247 - D - 核對doc32 L271/411-435，class_change_targets.json portrait11-13輪轉錯位仍「待查」，未被其他doc解決。
+248 - D - 角色名對應需逐圖解FDFIELD roster才能繼續補，屬可離線靜態分析。
+252 - E - FD2.SAV剩餘主要gate為一般玩家有效槽E2與current-battle restore，需DOSBox。
+264 - B - SoundFont試聽+TIMB配器對映屬人耳判斷，agent無法自主完成。
+272 - C - 讀`tools/decode_story_text.py`確認無`--script-json`旗標，純未實作。
+273 - C - `gen_campaign.py`自動生成campaign.json仍是純implementation，且本檔74行已將其降級為candidate scaffold。
+274 - D - `remake/internal/campaign`已有`handler_script.go`/`menu_state.go`等疑似涵蓋ScenarioRunner需求，但未逐一核對是否等同完整需求，保守標D（A傾向強，建議下輪覆核）。
+302 - C - Grep `remake/internal/battle`與`main.go`均無戰場選單狀態機(移動/攻擊/待機/道具/結束)對應實作，純未做。
+304 - D - 敵方AI回合完整權重/target selection仍缺，可續靜態分析（runtime execution另偏E）。
+305 - E - 敵方AI雙預選bridge自述尚缺同一原版runtime動態trace，需DOSBox。
+343 - C - Grep未見winCondition/checkVictory/advanceTurn等函式，純未實作。
+344 - C - headless確定性回歸(固定種子)屬測試基礎建設實作。
+348 - C - 與272同一工具(`--script-json`)，同樣未實作。
+353 - E - DATO頭像剩「完整frame/grid、speaker layout與runtime dialogue parity」，依專案慣例需DOSBox E2判定。
+359 - C - 音效系統開關(SoundFont/MT-32 selector)屬UI功能實作。
+360 - C - SFX接入是把已抽取音效資產接進引擎，屬工程實作。
+364 - C - 自動生成campaign.json工具屬工具鏈實作。
+365 - C - ScenarioRunner狀態機屬引擎實作。
+366 - D - 核對doc32 L150-186，0x602ad table base/stride/215-row prefix仍未閉合，可續靜態RE。
+367 - E - doc58 L560明載church僅60-70%完成度且無DOSBox逐幀比對(未達E2)。
+368 - D - 剩餘+0x22/+0x23/+0x24 DX/race/multiplier欄位資料化屬靜態RE工作。
+369 - E - 明文「raw race/multiplier欄位與實機回歸」需DOSBox對照。
+370 - D - 未見殘留任務語句但也未找到其他doc明示已結案，保守留D（未深入查證）。
+371 - E - 明文「仍需原版實機數值回歸」，需DOSBox驗證。
+372 - D - 外部攻略頁交叉盤點需持續以EXE table/campaign_full.json靜態核對，不能由攻略頁直接推論。
+389 - D - 核對doc50 L35/288與doc56 L1104，`0x3241f` raw FDICON key producer仍未追出，可續靜態RE。
+406 - E - 明文「HIT/EV/DX實機數值差分仍待」，需DOSBox對照。
+407 - D - 段落本身已描述完整靜態結論，但未見獨立doc佐證已結案，保守留D（未深入查證）。
+408 - C - 剩餘工作是供xvfb驗證remake自身fixture行為，屬對重製引擎（非原版DOSBox）的工程QA。
+409 - D - 護衛目標表已大致由doc28涵蓋，但retreat後整備語意未見覆蓋，仍可續靜態比對。
+410 - C - 完整GUI/Xvfb讀檔回歸是對重製自身存檔系統的工程測試，非原版RE。
+414 - C - 匯出戰場資產+數值表接入屬內容/資產工程工作。
+415 - C - 全劇情/對話接入(35章)屬內容整合工程工作。
+416 - F - 引用文件`83`在現有`docs/knowledge-base`(僅到58號)中不存在，依賴尚未建立的更大範圍盤點文件。
+417 - B - 正常玩法可達性驗證需實際完整遊玩破關鏈，屬人類體驗判斷工作。
+421 - C - 桌面交叉編譯+打包純屬建置工程工作。
+422 - C - WASM上網頁屬建置工程工作。
+423 - C - Android APK打包屬建置工程工作。
+424 - C - 玩家向README撰寫屬文件工作，非分析性。
+428 - C - EventSystem實作屬程式撰寫工作。
+429 - C - 自創戰場+自訂劇本屬內容創作工程工作。
+430 - C - 多分支劇情線/多結局屬功能實作工作。
+431 - C - 中文編碼回寫工具屬工具開發工作。
+437 - E - 剩餘核心「未修改一般玩家有效槽E2」，需DOSBox驗證CONTINUE/delete-overwrite語意。
+446 - D - 剩餘「補zero-HP初始record／所有LOADCH分支」屬靜態RE延續工作。
+447 - D - 剩餘「完成LOADCH raw record materialization」屬靜態資料抽取延續工作。
+458 - E - 自述剩餘門檻是同roster/event/tick的未修改DOSBox一般玩家比較，須live DOSBox。
+463 - F - 完整逐欄佈局已由項目自身標記為[阻]設計面擱置(remake用自有struct，不需)。
+510 - D - 「0x1cff0 command table」部分已由524-531等[x]項與doc56閉合，但「完整native演出」子句仍未解，整項未達完整A門檻，保守留D。
+518 - E - 剩餘清單明文列出DOSBox visual diff為待辦項，須live比對。
+532 - D - doc56 L608-616補充更多反組譯細節，但獨立resolver/renderer/SFX/UI仍未接入remake，可續靜態RE。
+533 - D - doc56 L618-627與worklist敘述一致，renderer/UI/timing仍未接，可續靜態RE。
+534 - D - doc56 L775確認multi-hit/SFX/native UI未接，可續靜態RE。
+536 - D - doc56補充equipment recalc已接住，但command transaction/phase-expiry caller/UI仍未接。
+538 - D - doc56 2026-08-14補充(L677-689)以`command_labels.json`已解出command20/21/26/27狀態名稱，但engine/UI整合未接，未達整項A門檻。
+539 - D - 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。
+540 - D - doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。
+541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。
+548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
+555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
+557 - D - AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。
+564 - E - doc56 L1354明文sell/equip/transfer仍需own same-state DOSBox traces。
+572 - D - doc37結論與worklist一致(spell id不選FIGANI已定論)，`0x2a6bd` command-specific presentation/SFX/命中分支仍待，可續靜態RE。
+575 - D - 歷史snapshot澄清note列出的3個缺口未查到專門解決文件，可續靜態RE（未深入查證每一子項）。
+584 - D - round10(本檔約595行)已解決「導出」半部(FDOTHER戰鬥音效池匯出)，但「逐招對照」核心未解，與604/622重複未閉合。
+587 - E - UI音效index 2-0xb語意畫面實測需要逐項操作介面聽測對應畫面，需live(DOSBox或使用者)驗證。
+603 - B - 使用者聽辨任務；本檔約599行僅解出FDMUS_018=商店，戰鬥曲聽辨本身仍待使用者。
+604 - D - 核心「index陣列填值上游、#48-64逐招對照」可續靜態RE，remake接入為次要工程部分。
+605 - E - 與587同一項目(UI音效index 2-0xb語意畫面實測)，同理需live驗證。
+618 - B - 與603重複，戰鬥曲/勝利曲聽辨屬使用者聽辨任務。
+622 - D - 與604同一「+0xd0填值」低優先項，可續靜態RE。
+640 - C - 戰場編輯器MVP(網頁HTML/JS+FSA API)屬實作工作。
+642 - C - 劇情編輯器(對白+事件表單+商店)屬實作工作。
+643 - C - 編輯器能力清單同步(Go --dump-registry)屬工具維護工作。
+644 - C - campaign節點圖編輯器(拖線/旗標/敗北路線可視化)屬實作工作。
+659 - B - round14(本檔約697行)已完成全33章自動轉錄，但緊接段落指出未經人工精確校對，本項要求的人眼精校性質仍需使用者。
+660 - D - 視窗縮放filter查證(可能linear暈染)未見他doc解決，可續靜態code inspection，不需DOSBox（未深入查證）。
+678 - B - 明文「容器nosound無法驗;使用者聽辨」。
+768 - C - ch02-33全章story節點接script(gen_campaign修+重生成)屬campaign製作工作，非分析。
+769 - C - runtime fallback heuristic wiring屬實作工作，項目自述ch02/03 handler beats仍待接線。
+791 - D - 緊接的`[x]`項重申MAP/TURN/ENEMY/FRIEND/NPC資源與YES/NO input仍未證實，確實仍開放，可續靜態Capstone/IDA。
+819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
+823 - B - 明文「待使用者釐清…不瞎編視覺」。
+848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
+849 - D - 核對`campaign_full.json`，`story_ch23`節點無`handler_binding`，「不能僅因renderer存在就接story_ch23」現況仍真，可續靜態Docker Capstone。
+851 - D - doc58續十六(約L3072-3089,2026-08-18)證實`0x24d22`/`0x11d40`實屬ch24 handler非ch23，項目位址前提有誤，但`postbattle_ch23_persist`在`campaign_full.json`仍是無`handler_binding`的空placeholder，實質缺口仍開放。
+852 - D - 剩餘「indexed double-buffer visual adapter」屬渲染管線RE缺口，可續靜態分析。
+853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。
+854 - E - 明文「仍缺未修改一般玩家/CONTINUE的同狀態E2」，需live DOSBox。
+857 - D - 剩餘「視覺/效果calls…資料化」屬RE工作（對話/gate本身已解，cf. 約1021行）。
+862 - D - 卡在`0x2bce5` ending renderer(party montage資產解碼)，與1017-1020同一鏈仍開放。
+863 - D - 同862之blocker(`0x2bce5` ending renderer)。
+864 - D - 同862之blocker。
+865 - D - 同862之blocker。
+866 - D - 同862之blocker。
+867 - D - 同862之blocker(terminal handler，此cluster的master item)。
+874 - D - 項目自述「既有unit_present metadata不完整，維持fail-closed」，後續項目未完全關閉此缺口。
+897 - C - 剩餘工作純屬BIOS-tick clock adapter實作，非分析。
+898 - D - 可能已部分由`ComposeNativeTransitionFrame`覆蓋，但同性質的874仍明文fail-closed，保守留D而非冒進判A。
+899 - D - 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。
+966 - D - 項目自述準確反映現況(ch01已完成,ch02+逐章view/gate provenance仍缺)，非過時，可續靜態逐章RE。
+1017 - D - 卡在`0x2c548`後的party montage資產解碼(FDOTHER#56/TAI#3/FIGANI/DATO)，可續靜態RE。
+1018 - D - 同1017之montage解碼blocker。
+1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。
+1020 - D - editable IR已建，卡在同1017之montage renderer。
+1038 - D - native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。
+1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。
+1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。
+1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。
+1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。
+1118 - D - doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。
+1138 - D - doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。
+1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。
+1148 - E - 項目自陳仍待DOSBox E2 visual/input diff；doc57 UI-10 church row同樣列此為唯一剩餘缺口。
+1150 - E - 項目自陳仍需DOSBox E2視聽diff，doc57同章節row確認此為唯一阻擋點。
+1160 - E - doc57 UI-11 row同樣措辭確認剩餘缺口為跨畫面初始相位+合法晚期存檔DOSBox差分。
+1182 - E - 項目自陳battle field/action/dialog的DOSBox pixel differential仍待補齊，未見任何doc宣稱已補齊。
+1183 - C - 防呆性宣告，其要求的resource provenance與indexed buffer contract實質已由後續`[x]`項閉合，剩下是組裝成完整renderer的工程整合。
+1192 - C - 與1183同一缺口具體化版本，FDOTHER#56/FIGANI/DATO/fade皆已由後續項目個別RE並`[x]`關閉，剩純組裝工程。
+1249 - C - 項目自陳七拍movement已知但尚未materialize進runtime loop，屬工程接線而非新RE。
+1314 - D - doc56 L2064-2069(2026-08-02)記載幾乎逐字相同的未解狀態，確認仍未解，需更多靜態反組譯把ch29/ch30結局流程接起來。
+1318 - C - 項目自陳剩餘缺口是item selector UI/indexed presentations/engine integration，`0x20c6f`本身RE已關閉。
+1344 - C - 項目自陳仍未完成全roster/save/export的raw record接線，raw identity byte本身RE已由前一項關閉，剩下為工程接線。
+1354 - D - 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
+1509 - E - doc58(約L2219-3451)記載此位址跨十餘輪live DOSBox-X session追至2026-08-19仍未解，使用者已決定暫緩，確屬需live驗證。
+1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。
+1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。
+1578 - C - 成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE。
+1604 - F - 明文卡在動態turn-writer/group-formula通用pending-group binding及`battle.State`→`Game`/controller的原子handoff，屬更大範圍重構前置依賴。
+1630 - F - 與1604同一家族/blocker(`ReadyForContinue=false`)，子項仍`[~]`，同樣卡在controller handoff重構。
+1790 - E - 明文尚缺一般玩家有效槽E2，需DOSBox live比對。
+1828 - E - 明文要求「DOSBox同camera/roster/tick逐幀比對」，依定義需live驗證。
+
+已改標`[x]`的18項A類（依據見各行內文）：265、303、349、357、358、384、585、586、601、619、680、844、901、959、960、1053、1385、1431。
+
 ## Visual parity correction（2026-07-28）
 
 - [x] **RE/FUTURE-GROUP-CONSTRUCTOR-10C50-1B750**：合法 IDA Pro 9.4 固定
@@ -262,7 +417,7 @@
 - [x] **音色合成評估+MT-32實證**(SoundFont/MT-32/版本切換,munt渲染15首)→ `16`
 - [x] **擴充劇本/玩法可行性評估**(戰場/對話/商店/機制)→ `17`
 - [~] SoundFont/MT-32 → 見 `16`(MT-32 已渲染);SoundFont 試聽 + TIMB 配器對映待補
-- [ ] 選定首個重製技術棧做「讀真資料 → 畫面」垂直切片
+- [x] 選定首個重製技術棧做「讀真資料 → 畫面」垂直切片——2026-08-19稽核確認：本檔第277行「重製MVP垂直切片」與289-294行「M0引擎骨架✅」已證實Go/Ebiten技術棧選定與垂直切片皆已完成，僅本行未同步。
 - [x] 反組譯完整性盤點——`doc27 §5`(2026-08-19)戰鬥演算法20項三方一致性盤點表(攻略公式=反組譯位址=remake實作),明確標出15項一致+剩餘缺口清單
 
 ## 重製前置(規劃/實作)
@@ -300,7 +455,7 @@
 - [x] 移動:flood-fill 可達範圍 + 高亮 + 選取/移動/待機(`move.go`);地形成本待接
 - [x] **地圖單位 sprite=FDICON Q版小人**(24×24 待機動畫)→ `31`(取代誤用的 FIGANI 全身)
 - [ ] 戰場選單狀態機(移動/攻擊/待機/道具/結束),對齊 `13`(游標/Enter/ESC)
-- [ ] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)
+- [x] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)——2026-08-19稽核確認：`docs/knowledge-base/27-combat-rules-and-validation-checklist.md`§5三方一致性表(物理/地形/命中/法術傷害/恢復/AI評分)均已標記remake實作並✓一致，僅本行未同步。
 - [~] 敵方 AI 回合：normalized flood-fill/評分與 raw evidence 對照；舊 `0x15140` 地址已由 canonical recheck 撤回。`0x13A9F/0x14EF0/0x15B77` 的 dispatcher/candidate/score slices 已各自有 evidence/adapter，但完整權重、turn/camp、target selection 與 runtime execution 仍待 RE。`0x1598A` 使用 `0x14818`、`0x1567E` 的 item-command spell branch 才使用 `0x149F8`；raw `+0x22..+0x27` 不命名 AP/DP/HIT/status。
 - [~] 敵方 AI 雙預選 bridge：`BuildNativeAIPhaseDiagnosticPlan` 已依
   `0x1D8BA` 原序將 `0x1598A→0x15B77→[0x53C23]` 與
@@ -346,7 +501,7 @@
 ## M2 — 文字 / 對話層
 > 驗收:對話框能顯示 UTF-8 劇情、帶頭像、翻頁;字用 TTF render(不再靠點陣字模)。
 - [ ] 工具:`decode_story_text.py --script-json`(35 章 → UTF-8 `script.json`,控制碼→結構)
-- [ ] 引擎 TTF 文字渲染(接 `18` 字型現代化:資料化 + TTF + 雙字型模式)
+- [x] 引擎 TTF 文字渲染(接 `18` 字型現代化:資料化 + TTF + 雙字型模式)——2026-08-19稽核確認：`remake/cmd/fd2/font.go`已用`golang.org/x/image/font/opentype`實作CJK TTF渲染，並由`main.go`多處`loadFont()`接入正式畫面，僅本行未同步。
 - [x] 對話框 UI ✅(debd52d):原版框素材(LMI1 #21 310×99)+ orig 佈局(下框(5,112)@320/上框鏡射)+
       大側臉頭像(我方左面右/對方右鏡像面左,對映 0x4E8AF/0x4E8E1)+ 白字『』框內換行(≤3行);
       翻頁=campaign story 逐句 Enter。LMI1 #20=單位詳細狀態面板(待用)
@@ -354,8 +509,8 @@
 
 ## M3 — 音訊層
 > 驗收:戰鬥/城鎮/劇情切場景時 BGM 正確切換,用預錄 OGG(MT-32 音源)。
-- [ ] OGG 串流播放(15 首,來源 `extracted/music_ogg/`)
-- [ ] 場景→曲號對映(對齊 `12`,play_bgm 邏輯)
+- [x] OGG 串流播放(15 首,來源 `extracted/music_ogg/`)——2026-08-19稽核確認：`remake/cmd/fd2/audio.go`的`playBGM`已用`vorbis.DecodeWithSampleRate`+`audio.NewInfiniteLoop`完整實作OGG串流播放，僅本行未同步。
+- [x] 場景→曲號對映(對齊 `12`,play_bgm 邏輯)——2026-08-19稽核確認：`main.go`多處場景轉場點已呼叫`playBGM`並帶入正確track(如`title.go` FDMUS_018／`0x025db5`)，wiring已落地，僅本行未同步。
 - [ ] (選配)SoundFont/MT-32 版本切換開關 → `16`
 - [ ] 音效(SFX)接入
 
@@ -381,7 +536,7 @@
 - [x] ch11/ch12 pre-handler：FDTXT_012 index0 跨 scene0/1（2+9句）與 map11/acting40/41 已接 binding，`story_ch12` 已接回 editable handler。
 - [x] ch12/ch13 pre-handler：FDTXT_013 index0（6句）與 map12/70-slot 已接 binding，`story_ch13` 已接回 editable handler。
 - [x] ch13/ch14 pre-handler：FDTXT_014 index0（4句）與 map13/70-slot、pan 20,20 已接 binding，`story_ch14` 已接回 editable handler。
-- [~] ch14/ch15 handler：Docker Capstone 已證實 pre `0x334f3..0x334f7` 的 `roster_has(12)`→FDTXT_015「有 12：0/1/2；無：3/4/5」，以及 raw `ch14_post` `0x239d1..0x239d3` 的「有：12；無：13」。主迴圈與前三戰既有測試證實玩家戰鬥 N 對應 raw `ch(N-1)_post`；因此 `postbattle_ch14_persist` 應使用 `ch13_post`，`postbattle_ch15_persist` 才使用 `ch14_post`（JOIN15→set_chapter15→town_ch16）。pre binding 含 map14/80-slot、pan、acting48；runtime 只讀 permanent party roster，缺此資料 fail-closed。
+- [x] ch14/ch15 handler：Docker Capstone 已證實 pre `0x334f3..0x334f7` 的 `roster_has(12)`→FDTXT_015「有 12：0/1/2；無：3/4/5」，以及 raw `ch14_post` `0x239d1..0x239d3` 的「有：12；無：13」。主迴圈與前三戰既有測試證實玩家戰鬥 N 對應 raw `ch(N-1)_post`；因此 `postbattle_ch14_persist` 應使用 `ch13_post`，`postbattle_ch15_persist` 才使用 `ch14_post`（JOIN15→set_chapter15→town_ch16）。pre binding 含 map14/80-slot、pan、acting48；runtime 只讀 permanent party roster，缺此資料 fail-closed。——2026-08-19稽核確認：此主張已由緊接的下一項「ch14/ch15 postbattle campaign index correction」驗證並回歸完成，僅本行未同步。
 - [x] **ch14/ch15 postbattle campaign index correction**：撤回「同號 postbattle node 對同號 raw post handler」的錯誤斷言；目前已驗證並回歸 `postbattle_ch14_persist→ch13_post→town_ch15`、`postbattle_ch15_persist→ch14_post→town_ch16`。其他仍採同號 binding 的章節必須逐一用直接指令複核，不能機械式整批平移。
 - [x] **既有 postbattle 索引錯接稽核**：稽核工具現將 active binding 與已證實的 `battle N→raw ch(N-1)_post` 關係逐筆比較，不再把「欄位非空」當成 active 正確。原有13個同號錯接已清除；IDA 直接指令再閉合 raw ch25→玩家ch26、raw ch27→玩家ch28、raw ch05→玩家ch06、raw ch06→玩家ch07、raw ch07→玩家ch08、raw ch09→玩家ch10、raw ch12→玩家ch13與raw ch19→玩家ch20。目前稽核為17 active／7 blocked，沒有 `active_index_mismatch`、`unbound_mapping_complete` 或 `unbound_inline_beats`。
 - [x] **玩家第 8 戰 raw ch07 post 垂直切片（E1）**：撤回 `ch08.json` 把 groups 1／8／9／10 預先 materialize 的舊設定。`0x1088D` 只建立 party＋group0（10＋19＝29 slots），event27 回合2..7才逐組追加兩筆，合法戰後 frontiers為29..41的奇數。address-keyed binding 已接 slot28 raw JOIN5身分、layout、ACTING33／34、FDTXT_008 index3／4、精確全黑與 framebuffer clear，再走JOIN5／sync／chapter8進 `town_ch09`；負向測試拒絕其他 `0x11D40` call site／參數。event28 slots10..27 raw `+0x34 &= 0x80` 的正式回合接線及 DOSBox E2仍待完成。證據見 [`fd2_ch07_post_ida.txt`](../data/ida/fd2_ch07_post_ida.txt)。
@@ -582,8 +737,8 @@
 - [x] **AI 行走+敵攻我演出**(旗艦):NextAIPlan 決策執行分離+aiStep;atkOwn 欄位按陣營
 - [x] **SFX 引擎接入**(旗艦):loadSFX/playSFX+游標/確認/命中掛點(命中暫代,待戰鬥池)
 - [ ] 戰鬥音效池([0x5411f] 動態子容器)導出+逐招對照
-- [ ] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)
-- [ ] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)
+- [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
+- [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
 
 ## 第 10 輪（歷史快照；不代表目前 parity）
@@ -598,7 +753,7 @@
 - [x] **全域文字銳利化**(旗艦):font.go per-尺寸 face 快取,所有 Draw 呼叫自動銳利(糊字根因=非整數縮放)
 - [x] **BGM 修正(使用者實聽 oracle)**:FDMUS_018=商店(推翻 doc12「戰鬥」推定);戰鬥曲撤下待聽辨
 - [x] **派工 SOP 入 rule**:rulebook/45 新節(haiku=資料/sonnet=RE·套件/旗艦=架構·把關;prompt 要素;把關不可省)
-- [ ] **每章 scenario stub**(ch2-30「能玩」關鍵):party 延續+deploy_cells+initial_groups 全開
+- [x] **每章 scenario stub**(ch2-30「能玩」關鍵):party 延續+deploy_cells+initial_groups 全開——2026-08-19稽核確認：本檔第11輪(608-611行)「ch2-30 scenario stub(sonnet):29個chNN.json(party延續/deploy_cells/initial_groups全開)」已完成此項，僅本行未同步。
       (gen_campaign 擴充,回合增援事件之後疊)← 下輪首位
 - [ ] 戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12
 - [ ] 戰鬥 SFX:index 陣列填值上游、#48-64 逐招對照、remake 接入(atkAnim 命中掛 battle 池)
@@ -616,7 +771,7 @@
       battle_sfx_map.json 骨架。依「夠用就停」:+0xd0 續追降低優先(共用音已可用)
 - [x] 聽辨清單(extracted/music_ogg/聽辨清單.md,待使用者逐曲填)
 - [ ] 戰鬥曲/勝利曲聽辨(使用者)
-- [ ] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub
+- [x] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub——2026-08-19稽核確認：本檔第12輪(625行)「gen_campaign v3招募累積+成長」與第13輪(665行)「gen v4增援疊入:18章35筆spawn_group」合計完成本項兩子句，僅本行未同步。
 - [x] ch10 等圖少數 tile 雜色查因——查無異常:`doc05`(2026-08-18)複核,FDSHAP RLE解碼0邊界異常,視覺比對只是原版手繪高對比dither,非bug,維持07-03non-bug結論
 - [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs raw transient/modifier bytes（舊稱 `magic_raw` 已撤回）
 - [ ] +0xd0 陣列填值(逐招音效對照,低優先)
@@ -677,7 +832,7 @@
       見 doc39。待補:⑥浮空城/⑨惡魔臉未逐幀窮舉、轉場閃光呼叫端排程。
 - [ ] 開場配樂曲號實聽驗證(容器 nosound 無法驗;使用者聽辨)
 - [x] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)——已解:`doc25 §6.1.1` [驗],event_id 47/49 同構公式 `group_id = turn_counter DIV 2`,6/6 對照 map roster 全部吻合
-- [ ] ch09-33 文本(批次進行中:09-13 執行中)
+- [x] ch09-33 文本(批次進行中:09-13 執行中)——2026-08-19稽核確認：本檔697行「全33章劇情文本完成(sonnet流水線6批):ch01-33共1452句」已涵蓋ch09-33轉錄，僅本行未同步（接線入遊戲是另一獨立仍開放議題，見707-721「誠實揭露」段落）。
 
 ## 第 14 輪 ✅(AFM 完全破解+開場過場端到端+文本過半)
 - [x] **AFM 格式完全破解**(sonnet):10-opcode 增量繪圖 VM(Lo Yuan Tsung 1993);
@@ -841,8 +996,8 @@
       重大:王城→草地=同 map32 鏡頭平移轉場非淡出換景;對白與演出逐條交錯;海島幕 3 個平移點。
       → remake 修正指示 doc47 §4；尚待逐章把 direct acting 資源接入可編輯 cutscene 節點，
       並以實機截圖核對 renderer/presentation 差異（不猜測性補 handler 語意）。
-- [~] **王座廳 NPC 擺位**(cutscene-bg 執行中):國王/王后坐王座 + 索爾站紅毯中央,對照 f_006.png;
-      story 節點加 actor 擺位欄。RE 查 FDFIELD 組32 是否帶 NPC roster(sprite id/cell 直接來自原版)
+- [x] **王座廳 NPC 擺位**(cutscene-bg 執行中):國王/王后坐王座 + 索爾站紅毯中央,對照 f_006.png;
+      story 節點加 actor 擺位欄。RE 查 FDFIELD 組32 是否帶 NPC roster(sprite id/cell 直接來自原版)——2026-08-19稽核確認：此項與本檔746-753行「王座廳 NPC 擺位」(2026-07-04)逐字重複，該項已用FDFIELD組32出場位置段解出國王/王后座標並接入`campaign.Actor{Fig,X,Y,Dir}`+`Node.Actors`、截圖核對f_006.png吻合，僅本行為舊重複提問未同步刪除。
 - [x] **ch21/ch22 pre-handler**：FDTXT_022 index0（11句）與 map21/70-slot、pan(16,28)、acting67 已接 editable binding；`story_ch22` 已接回原版 pre-handler，compiler/campaign/battle regression 通過。
 - [x] **外部資源／城鎮流程交叉盤點**：公開資料確認 `FDFIELD.DAT` 是可替換的外部場景層，且章節間存在 preparation、商店、教會、存讀檔流程；後續以 DAT provider + battle→town/prep graph 實作，未將網路資料當 binary 格式硬證據。
 - [~] **社群行為 oracle 對照**：逐項把 FD2.EXE 修改表中的入隊、隨時存檔、等級上限、寶箱持久化轉成可編輯規則與 regression；先挑 save/chest 兩項和目前 persistent flow 最相關者。——save/chest已解:`doc25 §9`(2026-08-19)。存檔writer 0x30012只有2個戰間邊界呼叫者(戰鬥中不可存);寶箱旗標[0x53AD5]每戰重置不進存檔。對照出remake 2處缺regression(save未擋battle節點、treasure不變式)。入隊/等級上限留待後續
@@ -898,7 +1053,7 @@
 - [~] **native `0x22253` renderer adapter**：已釘死 `0x22547→0x22046` indexed off-screen blit 呼叫鏈。2026-07-26 stack-slot recheck：FDOTHER #81 的 nested `LLLLLL` allocation 只存 local、尾端 free，未傳 renderer callees，故不再叫它 frame/pixel source；`0x11eee` 只做背景/tile redraw。真正已見資料是 boot `0x111ba(FDOTHER,#3)`→descriptor base `0x53a6d`（`0x22547` 倒序 entries 5→0）與 FDOTHER#6 `LMI1` bank：230 entries，`0x22470` entries 0x72..0x7c（12×21、九個20×22、24×23），`+0x1f6`=entry0x7c。**修正舊斷言**：`0x22046` 有六個靜態 caller，不是 unit-present 專屬；它只**兩次**呼 `0x219ad`，後者逐 row 用 `sqrt(radius²-dy²)*scale/10` 求 clip span，再以 remap LUT in-place map pixels，之後 `0x22046` 自己對另一矩形範圍作同 LUT remap。`__CHP` 已釘死為 toward-zero；`fdother.ApplyRadialLUTRemap` 與 `ApplyCenteredRectLUTRemap` 都有 boundary／clip／256-byte LUT regression。**原本的中間 redraw 已證實會 mutation**：`0x127a9→0x127e0` 依 camera-relative object sprites 經 `0x4deda/0x4de56` 寫 `0x53a49`，不可合併兩 radial passes 或省略。個別 caller 視覺語意、descriptor/buffer adapter、Ebiten adapter 仍缺，`unit_present` 暫維持 fail-closed。
 - [~] **chapter ending renderer (`0x2bce5`)**：已釘死 FDOTHER `#0x36`（十進位54）、320×200 雙 buffer、palette 0→63/4ms、2000ms hold、chapter26/29 分支文字與 fade-out；仍缺 ANI/FDOTHER compositing adapter，禁止把它吞成 generic ending。
 
-- [~] **shared object redraw compositor**：`0x127a9` 的 `0x127e0` 不是單純 loop bookkeeping：active roster entry 以 camera-relative placement 選 24×24 descriptor，走 `0x4deda` raw indexed-RLE 或 `0x4de56` palette-band-RLE 寫 `0x53a49`；尾端 `0x129ec` 又在同 buffer 疊 map/object layer。`+5 bit7` clear→raw、set→band 已由 direct branch 關閉。`BlitNativeUnitLayer` 現以 raw slot／pose／movement／base-frame／active gate、camera bounds、cycles 及 pixel shift 完整表達 steady unit layer，且 preflight 失敗不寫半張 frame；它不接 GUI。`0x53a61` 是 global raw-key cache 的 pointer blocks，runtime index 是回傳 `slot×12 + pose×3 + cycle`，而非角色 group。仍待將 terrain→range→unit→foreground→HUD→viewport copy 組成 caller adapter；在此之前不得把 `0x22046` passes 或 `unit_present` 接成 native UI。
+- [x] **shared object redraw compositor**：`0x127a9` 的 `0x127e0` 不是單純 loop bookkeeping：active roster entry 以 camera-relative placement 選 24×24 descriptor，走 `0x4deda` raw indexed-RLE 或 `0x4de56` palette-band-RLE 寫 `0x53a49`；尾端 `0x129ec` 又在同 buffer 疊 map/object layer。`+5 bit7` clear→raw、set→band 已由 direct branch 關閉。`BlitNativeUnitLayer` 現以 raw slot／pose／movement／base-frame／active gate、camera bounds、cycles 及 pixel shift 完整表達 steady unit layer，且 preflight 失敗不寫半張 frame；它不接 GUI。`0x53a61` 是 global raw-key cache 的 pointer blocks，runtime index 是回傳 `slot×12 + pose×3 + cycle`，而非角色 group。仍待將 terrain→range→unit→foreground→HUD→viewport copy 組成 caller adapter；在此之前不得把 `0x22046` passes 或 `unit_present` 接成 native UI。——2026-08-19稽核確認：`remake/internal/indexedmap/frame.go`的`ComposeFrame`(約476行起)已強制此 terrain→range→unit→foreground→HUD→viewport copy 順序並經本檔914行「steady native indexed map-frame scheduler」`[x]`收錄，caller adapter缺口已補上，僅本行未同步。
 - [x] **`0x11cac` range-layer provenance**：Docker Capstone 釘住 redraw order 為 `0x11eee terrain → 0x122dc range overlay/mutation → 0x127a9 unit+foreground → 0x1acf3 HUD → 0x11eb0 viewport copy`。修正舊斷言：只有 modes1..5 展開固定 calls 到 `0x126f7`；mode6直接清 selected cell byte+3，7+直接return。`0x126f7` camera-bound 後以 `0x4deda` 寫 `buffer+0x8088`。
 - [x] **`0x122dc` range call-table／asset closure**：Docker Capstone 完整直讀 modes 1..5，`fdother.NativeRangeOverlayPlacements` 保留原始 call order 的 1/1/5/13/21 個 `(x,y,descriptor)`；特別固定 mode3 centre=`#14`、mode5 的重複座標／不同 descriptor，禁止圖形化 normalize。`0x25c7d..0x25c92` 已證明 `FDOTHER#1→0x53a4d`；實檔 header 是 20-entry 24×24 four-mode-RLE bank，`0x126f7` 以 `base+6+4*descriptor` 選 #0..18 後 `0x4deda`。`DecodeNativeRangeOverlayBank`／`BlitNativeRangeOverlay` 以真實 resource regression 固定 456 stride、0x8088、camera clip 和 preflight。mode6 不呼 `0x126f7`，而是算 `4*(x+y*raw53ac1)+7` 後清 `[0x53a51]` 指向資料的一個 byte；drawable API 明確拒絕 mode6。native buffer/grid lifetime已接；mode6 production caller仍待。
 - [x] **RE-RANGE-MODE-ZERO-NOOP**：官方 IDA 9.4 重讀 `0x122dc`
@@ -956,8 +1111,8 @@
     - [x] **JOIN-112A5-PERSISTENT-RECORD-MATERIALIZATION**：IDA Pro 9.4 主判讀與 Docker Capstone 覆核固定 fresh JOIN 的 default/growth table 公式；`sync_native_join_constructor.py` 現從 32×0x18 defaults、32×0x0B growth 與 `fd2-reference-files.json` 產生雜湊綁定的 `native_join_constructor.json`。Go loader 驗證 EXE identity、row order、file offsets、raw strides；正常 JOIN→LOADCH 與 `scenario join_party` 共用 materializer，建立 identity／raw key、race/class、level/MV、command mask 及 `+0x42/+0x46`。凱麗 id12 初始 `+0x42=151`，event63 fixture 不再手填，也不從 ch27 近似 `hp=90` 反推。另修正友軍尚未轉為 Own 時被錯誤 camp gate 阻止建 persistent record 的舊缺陷。
     - [x] **JOIN-1145A-EQUIPMENT-RECOMPUTATION**：撤回「`sub_1145A` 尚未閉合」的舊斷言；raw helper、八格 `0x40` gate、item row `+1/+5/+3/+7`、signed/wrapping destinations 早已具直接證據。本輪把它接入正常 `JOIN 0x112A5` materializer：局部 0x50-byte transaction 先寫 raw inventory、base AP／DP／DX、HP／MP，再原子重算 typed AP／DP／HIT／EV；缺 item row 失敗即關閉。凱麗 fresh JOIN regression 固定 base `80/69/10`、items `0x3E/0xAC` 與 derived `100/79/110/15`。同輪修正 native save restore 遺漏 `+0x42/+0x46` provenance，以及商店 current stats 把 signed words 誤讀成 unsigned。這不宣稱保留原版 record 的未觸及 bytes，也不是 ch27 一般玩家時點 E2。
 - [x] **FDICON native placement primitive**：`NativePlacementOffset` 逐指令重現 `0x127e0` 的 456-byte buffer stride、`0x75d8` origin、24-pixel tile 與 `unit+4 × {+0x720,-4,-0x720,+4}` direction offset；`+0x26` 才加入 native 0/1 pixel shift。它回傳 framebuffer byte offset，不把未證實的 framebuffer origin/layer/UI 自動轉成 remake screen coordinate。
-- [~] **native foreground-terrain occlusion layer**：Docker trace 已把 `0x129ec` 定為 unit-sprite 後的前景補畫，但修正「每個可見 unit」的簡化說法：它先跳過 `0x1f183(slot)` true 的 raw gate（`unit+7==0x1c` 放行；其他 `unit+7` 的 class `0x13` 或 race `4/5` 跳過），再跳過 `0x3453e` inactive slot。**撤回**剛才將 `unit+7` 稱為 group 的錯誤：map sprite group 是 `unit+2`。`fdicon.NativeForegroundRedrawEligible` 以 regression 固定兩 gate，`NativeForegroundRedrawCells` 保留 eligible slot 的精確 `(x,y)`、`(x,y-1)`、移動 pose-neighbour 順序。`BlitNativeForegroundLayer` 現以 raw roster inputs 接上 steady `0x129ec→0x12ac6`：camera interval、bit7／bit8 descriptor、`index+1`、`0x8088` offset、raw/LUT-transparent branch 全部 byte-level regression；只在 supplied map 外的座標 fail-closed skip，不讀 unchecked native memory。Official IDA 9.4 再證明 `0x1366a` 的 scripted-step redraw 也做 `0x11eee` terrain→per-slot `0x127e0`→`0x129ec`，並在 `0x129ec` 後才進 `0x11eb0`／present；故不可只把 occlusion 掛在 steady `0x127a9`。range/HUD/VGA/Ebiten adapter 尚待。
-- [~] **FDSHAP raw-transparency / LUT branch boundary**：four-mode decoder 保留 opacity mask，`export_engine_assets.py` 以它輸出 raw `0x4deda` preview 的 RGBA tileset（map0 alpha `(0,255)`，opaque palette index0 不被猜透明）。**撤回**「mode3 一律等價 alpha」：`0x11eee` 的 entry `+3!=0xff` 走 `0x4dcc6`，其 mode3 對既有 destination 做 LUT remap，不是 skip。exporter 已保留 event high byte `native_tile_blit_modes`，供未來 indexed adapter；完整 palette/LUT compositor 與 `0x129ec` schedule 仍 fail-closed。
+- [x] **native foreground-terrain occlusion layer**：Docker trace 已把 `0x129ec` 定為 unit-sprite 後的前景補畫，但修正「每個可見 unit」的簡化說法：它先跳過 `0x1f183(slot)` true 的 raw gate（`unit+7==0x1c` 放行；其他 `unit+7` 的 class `0x13` 或 race `4/5` 跳過），再跳過 `0x3453e` inactive slot。**撤回**剛才將 `unit+7` 稱為 group 的錯誤：map sprite group 是 `unit+2`。`fdicon.NativeForegroundRedrawEligible` 以 regression 固定兩 gate，`NativeForegroundRedrawCells` 保留 eligible slot 的精確 `(x,y)`、`(x,y-1)`、移動 pose-neighbour 順序。`BlitNativeForegroundLayer` 現以 raw roster inputs 接上 steady `0x129ec→0x12ac6`：camera interval、bit7／bit8 descriptor、`index+1`、`0x8088` offset、raw/LUT-transparent branch 全部 byte-level regression；只在 supplied map 外的座標 fail-closed skip，不讀 unchecked native memory。Official IDA 9.4 再證明 `0x1366a` 的 scripted-step redraw 也做 `0x11eee` terrain→per-slot `0x127e0`→`0x129ec`，並在 `0x129ec` 後才進 `0x11eb0`／present；故不可只把 occlusion 掛在 steady `0x127a9`。range/HUD/VGA/Ebiten adapter 尚待。——2026-08-19稽核確認：`remake/internal/indexedmap/frame.go`之`ComposeFrame`已直接呼叫`ForegroundBank.BlitNativeForegroundLayerAt`並與range(`0x122dc`,見902-910行)、HUD(見914-925行)、viewport copy(`0x11eb0`,965行)同納入單一schedule，range/HUD/VGA/Ebiten adapter缺口已補上，僅本行未同步。
+- [x] **FDSHAP raw-transparency / LUT branch boundary**：four-mode decoder 保留 opacity mask，`export_engine_assets.py` 以它輸出 raw `0x4deda` preview 的 RGBA tileset（map0 alpha `(0,255)`，opaque palette index0 不被猜透明）。**撤回**「mode3 一律等價 alpha」：`0x11eee` 的 entry `+3!=0xff` 走 `0x4dcc6`，其 mode3 對既有 destination 做 LUT remap，不是 skip。exporter 已保留 event high byte `native_tile_blit_modes`，供未來 indexed adapter；完整 palette/LUT compositor 與 `0x129ec` schedule 仍 fail-closed。——2026-08-19稽核確認：`0x129ec`已由`ComposeFrame`排入schedule(見901/959行)，`0x4dcc6` LUT primitive與terrain compositor亦已由本檔961-965行`[x]`收錄，僅本行未同步。
 - [x] **native terrain frame selector**：`0x11eee` 對 visible FDFIELD cell 取 10-bit tile ID、讀 FDSHAP terrain-control byte；priority 為 bit8→`+2*flip(0x53a40)`，否則 bit10→`+trunc(0x3c0b/2)`，否則 bit4→`+flip`，其餘 base tile，隨後才選 `0x4deda/0x4dcc6`。`fdicon.NativeTerrainFrameIndex` strict regression 覆蓋 priority/negative truncation/bounds。這是 raw animation ABI，不替 bit 命名；GUI frame scheduler 尚未接。
 - [x] **native `0x4dcc6` LUT primitive**：`fdicon.Sprite.BlitLUT` 精確保留 source write→`lut[source]`、mode3→`lut[existing destination]`、mode1 dither holes 不改寫三種行為，short LUT fail-closed 並 regression。它不選 LUT／不管 map camera/layer，避免把原始 pure blitter 誤接成完整 terrain renderer。
 - [x] **native single-cell terrain compositor**：`Bank.BlitNativeTerrainCell` 組合 exact frame selector 與 FDFIELD `entry+3==0xff` raw／否則 LUT branch，regression 覆蓋兩支及 mode3 destination remap。camera-visible loop、LUT phase、foreground `0x129ec` 不在此 pure adapter 範圍。
@@ -1050,7 +1205,7 @@
 
 - [x] **可重現 UI/core regression container**：`fd2-go-test-local` 在 Docker build 時取得 Go modules、在 runtime 使用 `--network=none`；已實跑 `go test ./cmd/fd2 ./internal/... -count=1` exit 0。image 內含 Ebiten 所需 ALSA/X11/GL headers；這只驗 source build/test，並非原版 UI 畫面對照。
 - [x] **UI-01 original title screenshot oracle**：新增隔離 `fd2-dosbox-screenshot-local` runner（SVGA/Xvfb/xdotool，原始 FLAME2 不掛載、只用 `/tmp` sandbox），連續 Escape 跳過 opening 後得到 320×200 `docs/figures/title-original-dosbox.png`。畫面證實 START／LOAD／CONTINUE 及初始 cursor；title input/save semantics 仍未關閉。
-- [~] **UI-12 LOAD selector contract**：原版 DOSBox screenshot 與合法
+- [x] **UI-12 LOAD selector contract**：原版 DOSBox screenshot 與合法
   IDA 9.4 已固定四槽、slots `0..3`、↑↓ bounded（不 wrap）、
   Enter/Space confirm、Esc cancel；IDA 並固定 FDOTHER #13 entry16、
   FDTXT 索引、row/座標與 selected/normal 色碼。production 空槽已與
@@ -1058,7 +1213,7 @@
   native save boundary=`0x59cb`、
   record=`+0x312b+i*0xa28`（metadata=`0x28`、roster=`0xa00`）及
   rolling-XOR/checksum已有 adapter；JSON 仍是自有格式，尚未實作
-  native 有效槽 restore／完整 roster 相容。
+  native 有效槽 restore／完整 roster 相容。——2026-08-19稽核確認：`docs/knowledge-base/57-ui-evidence-matrix.md` UI-12 row 與 `remake/internal/campaign/native_chapter_slot_restore.go` 的 `BuildNativeChapterSlotRestorePlan` 已證實 native 有效槽 restore 邏輯確已實作，僅本行未同步。
 - [x] **UI-05 ch01 dialogue screenshot oracle**：START 分支得到 320×200 `docs/figures/ch01-dialogue-original-dosbox.png`，鎖住一種 lower/left DATO portrait、藍框、兩行文字與 page indicator；upper/right/control code/pagination 尚未由這張圖宣稱完成。
 - [x] **UI-04 native command-grid remake oracle**：Docker/Xvfb 以 player-provided FDOTHER.DAT、ch01 materialized 悠妮 `initial_command_mask=[1,0,0,0]` 捕捉 [`native-command-grid-remake.png`](../figures/native-command-grid-remake.png)。畫面確證 command0 label「火炎術」與 selected-unit HUD 同時存在，故 raw mask→grid cell `(18,103)`→editable label→palette/font renderer 已接通；這是 remake runtime smoke，**不是**原版 DOSBox visual diff、full command gate 或 effect/UI 完成證明。
 - [x] **FD2 remake SDD**：新增 `56-fd2-remake-sdd.md`，定義 UI contracts、battle→postbattle→town/shop/church/preparation flow、persistent party/save、native indexed renderer、E0–E3 證據分級與 milestone gates。
@@ -1382,14 +1537,14 @@
   再恢復原 buffer。此 helper 本身不做 gameplay mutation；其後獨立的
   row-selected command-damage loop 已由下方 caller closure 定案。
 - [x] **RE-ITEM-COMPAT-1C1C3**：官方 IDA 9.4 閉合 item selector compatibility predicate：`0x1c1c3(actor,item)` 取 actor class 對應的六-byte raw table，逐一比較 item row `+0`；只保存 six-byte table／row-byte ABI，不命名 class 或 equipment 語意。
-- [~] **UI-ITEM-8SLOT-SHELL**：舊 shell保留八個 raw holes並只支援↑↓，
+- [x] **UI-ITEM-8SLOT-SHELL**：舊 shell保留八個 raw holes並只支援↑↓，
   現已證實這不是 original parity。`0x1b9de` 依 signed flag非負 compact
   occupied prefix成兩欄四列；↑/↓ linear wrap、←/→±4，battle-use
   Enter拒絕effect type0。`0x184c0` 固定 label `(42+150*col,
   103+22*row)`、FDTXT `itemID+181`、selected/unselected raw color
   201/205、category icon59–61/equipped+3及stat icon64–67/41。
   `AdvanceNativeItemSelector`／`NativeItemSelectorCells` regression完成；
-  GUI shell/Enter/indexed animation仍待依此改寫。
+  GUI shell/Enter/indexed animation仍待依此改寫。——2026-08-19稽核確認：`remake/cmd/fd2/main.go`(4291/4309行)已將`battle.AdvanceNativeItemSelector`接入Enter/方向鍵處理，7783-7786行註解確認text shell僅作為legacy/缺證據fallback，僅本行未同步。
 - [x] **RE-ITEM-SELECTOR-12FRAME-PANELS**：`0x17e0b` opening固定
   frames11→0，`0x1b932` closing固定0→11；每幀由 saved 64000-byte
   buffer重建。`0x18409→0x182ad/0x18312/0x1839b` 的三區已資料化：
@@ -1428,7 +1583,7 @@
   regression通過。新增可重現工具 `cmd/fd2-item-panel-oracle` 與
   [`item-panel-native-indexed.png`](../figures/item-panel-native-indexed.png)。
   後續 Ebiten bridge見下一項。
-- [~] **UI-ITEM-PANEL-ROWS-EBITEN**：新增
+- [x] **UI-ITEM-PANEL-ROWS-EBITEN**：新增
   `RenderNativeItemPanelRows` 完成 `0x184c0` category/stat icons、
   FDTXT `itemID+181`、color201/205及stat number；oracle更新為有實際
   item rows。`NativeItemPanelRecordForUnit` 僅在 raw
@@ -1443,7 +1598,7 @@
   及 IDs94/95/96（type17/18/19）已接完整Enter transaction：兩段
   self-target驗證、raw base AP/DP/DX或MaxHP/MaxMP/MV加值、compact消耗、
   必要的equipment recompute、`+5 bit7`及action結束；其他effect/target
-  transaction仍fail-closed。
+  transaction仍fail-closed。——2026-08-19稽核確認：本檔後續`[x]`項「REMAKE-ITEM-HP-MP-TARGET-TRANSACTION」(types5/13/11)、「REMAKE-ITEM-TARGETED-EFFECT-BATCH-2」(types6/7/12/14-16/20-24)、「REMAKE-ITEM-TYPE23-DESTINATION-CURSOR」(type23/item101)已共同關閉此殘留缺口，僅本行未同步（indexed effect presentation仍是另一獨立開放議題）。
 - [x] **RE-ITEM-COMPAT-TABLE-4E53E**：官方 IDA 9.4 閉合 `0x4e53e(class)=0x6188a+class*7`；新增 `battle.NativeClassCompatibilityRowOffset` 與 `NativeClassItemCompatible`，嚴格保留 row+0..+5 比對及 row+6 opaque、bounds/short-row regression，不接 normalized class/equipment。
 - [x] **RE-RAW-HP-RESTORE-1C916**：新增
   `battle.ApplyNativeRawHPRestore`，保存 RNG step、amount arithmetic、
