@@ -33,6 +33,23 @@
 | `BGM(track)` (0x25977) | 配樂切換/停止 | beat op:bgm |
 | **走位 STEP/路徑** (step家族 + 0x13488) | 引擎逐格步進單位(方向陣列 0下1左2上3右);詳見 §1.1 | beat op:walk |
 | `PALFADE` (0x1f525) | 六位元 DAC 基準減量淡入：delta 64→0（含兩端，共65次），每次等待2ms | beat op:native_palette_fade_in；只有 ch00 `0x3241f` 因 raw FDICON key 尚缺而保留明示的 RGBA E1 近似 |
+
+**2026-08-19 補充(worklist L389／L544，0x3241f 追查)**：Ghidra headless 反組譯 `0x3241f`
+所在的呼叫序列(`0x323b0..0x3251a`)證實這整段是**純對白/演出交錯**，不含任何 FDICON 查表：
+`CALL 0x1f525`(=本表 PALFADE，逐指令核對與上表描述完全一致：`ebx=0x40..0`，每輪
+`push ebx,0xff,0; call 0x11d40; push 2; call 0x3790a; dec ebx`)之後緊接
+`PUSH 0x65/0x66/0x67/0x68; CALL 0x1366a`(=本表 `ACT`)與多次 `PUSH [0x53a79]…CALL 0x15f84`
+(=本表 `TXT`，text_index 依序 2/3/4/5)。**`0x1f525` 呼叫端在 `0x3241f` 沒有傳入任何參數**
+(前一條指令是與它無關的 `CALL 0x25977` 之 `ADD ESP,0x8` 清棧)，本體也只操作全域 DAC
+palette，不讀取任何 unit/FDICON/roster 欄位——這排除了「`0x1f525` 本身內含 FDICON key
+邏輯」的可能性，與 doc56 L1104(`0x3241f` 唯一具位址限制的 RGBA 近似)的既有結論一致，
+但把「查哪裡」的範圍縮小了：**map32 runtime roster 的 raw FDICON key producer 不在
+`0x3241f`／`0x1f525` 本身**，必須往 ch00 handler 更早或更晚的 spawn/materialize 段落找
+(候選：doc53 §B 記載的 `0x32975`(slot deactivate raw writer)／`0x32999`(SPAWN_INTRO，
+FDOTHER #9 十二次索引呈現)一帶，這兩個位址已知會處理 map32 的 unit roster，`0x3241f`
+純粹是它們之間的一段對白淡入，不是同一個責任範圍)。本輪未完成最終目標(仍未找到
+key producer 本身)，但排除了一個之前未證實排除的候選位置，下一輪應直接從 `0x32975`/
+`0x32999` 附近的呼叫序列往回/往後追，而非重複反組譯 `0x3241f`/`0x1f525`。
 | `DELAY(ms)` (0x375b2) | 延遲 | beat op:delay |
 | `DEACTIVATE_UNIT(slot)`（legacy DSL alias, 0x32975） | `unit[slot]+5 = 1`；此 caller 用於劇情退場，但 raw writer 本身不命名 bit0 的全域語意 | beat op:deactivate_unit（raw writer） |
 | `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再用 FDOTHER #9 做固定 12 次索引合成／呈現；後續 ACTING 是 caller 的獨立動作 | beat op:spawn_intro；原版 handler 走具型別12次呈現 adapter，缺證據／素材時失敗即關閉 |

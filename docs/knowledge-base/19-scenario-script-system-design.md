@@ -125,3 +125,35 @@ loop:
 - **平衡**:新戰場 / 敗北路線的敵人強度要配合進度(用 `03` 成長曲線當基準)。
 - **保全原味**:預設 campaign 必須 1:1 還原原版流程;擴充走另一份 campaign 檔。
 - **資料引用 vs 內含**:campaign 引用原版資源 id(玩家自備原版);新增劇情/戰場是衍生創作。
+
+## 2026-08-19 補充：ScenarioRunner 需求覆核(worklist L274)
+
+`91-worklist.md` 第274行原文猜測 `remake/internal/campaign` 的 `handler_script.go`／
+`menu_state.go` 疑似涵蓋了本篇的 ScenarioRunner 需求，標記「保守 D，A 傾向強」。逐一核對
+兩個檔案 + 實際 runner 程式碼後，結論是：**猜測的兩個檔案不是主要實作，但 ScenarioRunner
+本身確實已在別處實作，且功能超過本篇原始設計**：
+
+- `handler_script.go`(165 行)只定義 postbattle/cutscene 原生 handler 的 beat 編譯 schema
+  (`HandlerSource`/`HandlerCondition`/beat op 列表)，是「原生位址→可編輯 JSON」這條管線的
+  資料結構，與本篇的節點圖／勝敗條件／分支無關。
+- `menu_state.go`(49 行)只是一個泛用的選單游標狀態機(`MenuUp`/`MenuDown`/`MenuConfirm`)，
+  供 choice/town 節點的輸入使用，同樣不是節點圖本身。
+- **真正實作本篇 ScenarioRunner 的是 `remake/internal/campaign/campaign.go`
+  (`Node`/`Campaign`/`Runner`，729行)＋`remake/cmd/fd2/main.go` 的 `enterNode`/`campInput`**：
+  `Node.Type` 涵蓋本篇§「節點型別」全部六種(`battle`/`story`/`shop`/`choice`/`event`
+  以 `SetFlags`/`Next` 表達／`ending`)，且已超出原始設計新增 `preparation`/`town`/
+  `cutscene`/`inventory_gate`/`inventory_recipe` 等原版忠實需要的節點型別；`Campaign.Flags`
+  +`Node.SetFlags` 對應本篇「旗標系統」；`Runner.Advance(outcome)` 對應「轉場解析」。
+  `Load()`(見 `campaign.go:480`)在讀檔時驗證所有轉場目標存在，對應本篇「風險/注意」的
+  存檔完整性要求。
+- **但本篇§「勝利/失敗條件」列出的組合式詞彙尚未實作**：對 `defeat_all`/`defeat_boss`/
+  `survive_turns`/`reach`/`protect`/`escape`(勝)與 `all_own_dead`/`lose_unit`/`turn_limit`/
+  `protected_died`(敗)做全文 grep，remake 程式碼中完全沒有這些字面量或對應函式
+  (`winCondition`/`checkVictory`/`advanceTurn` 同樣查無實作，與 91-worklist 稽核索引第343行
+  「純未實作」的結論一致)。目前戰鬥的勝敗判定是單一硬編碼規則(殲滅式)，不是本篇設計的
+  可組合條件系統。
+
+**結論**：worklist L274 應從「D，保守，建議下輪覆核」更新為——ScenarioRunner 骨架
+(節點圖/旗標/轉場)**已完整實作，甚至超出本篇原始 schema**，但被猜測命中的兩個檔案本身
+不是該實作；本篇设计中唯一仍缺的具體技術債是**勝敗條件組合詞彙**(`survive_turns`/
+`protect`/`turn_limit` 等)尚未進 `Node` schema 或 `battle` 套件，仍是可續靜態工程項目。

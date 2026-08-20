@@ -125,6 +125,10 @@ doc56/57與逐節點E2為準。
 ①段（FDTXT_033）目前只有自動解碼，說話者標籤需人工校正後才適合直接入库（見 §1.1 附註）。
 著作權處理比照既有做法（`8215ecf` commit 已示範：對白改寫為原創同義句，原文留本機不入版控）。
 
+**2026-08-19 現況核對(worklist L1042)**：`docs/knowledge-base/scene-decode/`
+目前只有 `ch1-meadow.md`(庭院段)與 `ch1-throne.md`(王座廳段)，密林段(`forest_duel`/
+`forest_discover`)仍無對應 scene-decode 文件，確認本節「partial」判定未變。詳見 doc53 §G。
+
 ### 2.3【中】敵方組成因 2.1 而失真
 
 **現象**：因 group 10/11 誤入場，remake 開場敵方變成「8海盜 + 4戰士 + 3聖騎士」共 15 人，

@@ -303,4 +303,48 @@ regression。資料驅動是目標架構，不是目前已證實所有事件語�
 
 **大部分解決**：四條 raw branch 已逐位址重新反組譯確認(§7.1，含附帶修正 doc26 §1 一處位址標籤落差)；JOIN18 typed persistent record 的讀/建構/寫入路徑與回歸覆蓋已完整追出(§7.2，證實非特例、是32角色共用路徑)；`battle_ch16→postbattle_ch16_persist→town_ch17` 鏈路已逐節點核對、且找到與 `ch17_pre` 互補分支的設計級證據(§7.3)；save regression 的通用機制與 fail-closed 正確性已確認(§7.4上半)。**唯一未解決**、也是本任務系統提示明確排除在範圍外的：battle_ch16 一般玩家原版 runtime capture(確認 slots66-73/round/record0+0x42 在 postbattle 當下的實際填充狀態)，仍如願保持 unbound fail-closed，留待下一輪允許使用即時環境時處理。
 
-> 相關:doc 25(事件系統架構)· doc 24(戰役迴圈 [0x53ecc] 狀態機)· doc 19(腳本系統)· doc 09(劇情)· doc 03(單位結構/roster)。工具:`tools/event_handler_dump.py`;資料:`docs/data/battle_events.json`。
+### 7.5 ch22_post `0x24838→0x24bde(18)` 閉合為 `roster_has(char_id:18)`[驗，2026-08-19]
+
+`docs/data/chapter_beats/ch22_post.json`(與 `remake/assets/cutscenes/handlers/ch22_post.json`
+同源)在 `0x24838` 有一個 `op:unknown, native_target:0x24bde, raw_args:[18]`。Ghidra headless
+(`analyzeHeadless -readOnly`，`FD2Analysis3`)直接反組譯 `0x24bde..0x24c1d`：
+
+```
+push 0x8; call 0x3702f          ; 標準 stack-check prologue
+push ebx
+mov ecx,[esp+0x8]                ; ecx = 呼叫端傳入的 id(這裡是 0x12=18)
+xor edx,edx
+loop:
+  cmp edx,[0x53bfb]              ; edx >= roster count 就結束
+  jge miss
+  eax = edx*5*16 (=edx*0x50)     ; ebx = edx*0x50
+  eax = [0x53bf7]
+  al  = byte[ebx+eax+0x8]        ; byte[[0x53bf7]+edx*0x50+8]
+  cmp eax,ecx; jnz loop(edx++)
+  return 1
+miss:
+  return 0
+```
+
+這與 doc26 §7.2／doc40 已定案的 `roster_has(id)`(`0x33499`)pseudocode
+`for edx in 0..[0x53bfb]: if byte[[0x53bf7]+edx*0x50+8]==id: return 1` **逐位元組相同**——
+`[0x53bf7]`(我方 32 槽名冊)、stride `0x50`、比對 offset `+8` 三者都吻合。因此
+`0x24bde` 是 `roster_has` 演算法在另一個位址的獨立編譯副本(不是 `0x33499` 的 thunk：
+反組譯出的是完整迴圈本體，不是單一 `jmp`)，`0x24838` 這個 `op:unknown` 應改判為
+**`roster_has(char_id:18)`**，語意與 doc26 §7.3 記載的 `ch17_pre` `0x335bb→0x33499
+roster_has(char_id:18)` 完全一致(同一個「JOIN18 是否已在名冊」判斷，只是出現在
+ch22_post 這個更早的呼叫端)。
+
+doc56 L2502(「Caller-level evidence around `0x24838`」)已記載呼叫端結構本身
+(先 `0x24b14(0x64)` 分支，再 `0x24bde(0x12)` 分支：hit→text#10/acting#0x48/
+`0x32975(0x11)`；miss→依 `[0x53bef]<0x0f` 選 text#13+`0x112a5(0x13)` 或 text#12+
+`0x32975(0x11)`)——本節只補上 `0x24bde` 本身的內部演算法，未變更該 caller-level
+描述，也未替 char_id=18／text index 命名任何劇情身分。
+
+**尚待**：`0x24b14(0x64)`(ch22_post 的另一個 `op:unknown`，見 beats[1])未在本輪反組譯
+範圍內，其演算法是否也是同一套 roster/count 查詢仍待下一輪確認；`handler_compile.go`
+目前的 `case "roster_has"` 只接受 `HandlerCondition.CharID`，把 `0x24838` 從 beat 改成
+if/then/else condition node 需要重寫 `ch22_post.json` 的 beat 結構(不只是改 op 名稱)，
+本輪只完成演算法層級的證據，未動 JSON 或 compiler。
+
+> 相關:doc 25(事件系統架構)· doc 24(戰役迴圈 [0x53ecc] 狀態機)· doc 19(腳本系統)· doc 09(劇情)· doc 03(單位結構/roster)· doc 56 L2502(0x24838 caller-level evidence)。工具:`tools/event_handler_dump.py`;資料:`docs/data/battle_events.json`。worklist L1511 完成度:**演算法閉合**，JSON/compiler 接線未做，留待下一輪。

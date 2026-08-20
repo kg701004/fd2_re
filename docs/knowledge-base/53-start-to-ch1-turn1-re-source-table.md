@@ -84,3 +84,18 @@ handler 序列(反組譯,✅來源確定):
   青衫事件骨架只能建立authored candidate與E2案例，不能解除逐章handler gate。
 
 > 下一步建議:先做全部 ⚠(都有RE值,純照抄,無推測);❓ 逐項評估「靜態/影片能不能補」,不能才問你。
+
+## G. 2026-08-19 現況核對(worklist L1042)
+
+重新核對 §C(密林段，L44「序列」行標 ⚠須照序列重排)與 doc44 L115-117 的現況：
+`docs/knowledge-base/scene-decode/` 目錄目前只有 `ch1-meadow.md`(庭院段)與
+`ch1-throne.md`(王座廳段)兩份逐幀解碼文件，**沒有 `ch1-forest.md` 或同等的密林段
+scene-decode 文件**——確認密林段(campaign 節點 `forest_duel`/`forest_discover`)仍是
+doc44 §2.2 所述的「partial」狀態，尚未有其他 doc 補齊。本輪未新增反組譯，僅確認
+狀態未變：§C 表格「序列」一行列出的完整 handler 呼叫序列
+(`pan(5,42)→spawn(1)→act(0x5a)→txt#0→…→spawn(3)→pan(4,41)→…→reveal75(2)→spawn(5)→…
+act(0x5e-61)…→act(0x62)`)本身在 handler 層級已是 E0/E1(已由直接反組譯保存)，缺口是
+remake 端 `forest_duel`/`forest_discover` 兩個 campaign 節點的 beat 排列尚未依此序列
+重排(現況用 walk beat 近似)，且 act(0x5e-61) 的 acting_decoded 幀資料尚未接上(§C
+「蓋亞阻擋/悠妮昏迷 staging」一行同樣標 ⚠須接 acting_decoded)。下一輪若要關閉，
+工作範圍是 remake 端排程重寫，不是新的 Ghidra 反組譯。

@@ -711,4 +711,98 @@ remake 現狀，此處把它從「隱含行為」提升為**明確不變式**：
 斷言描述)。第848行其餘兩項——「入隊」(入隊 ID/條件)與「等級上限」——
 不在本輪範圍內，留待後續 session。
 
+#### 2026-08-19 補充：入隊／等級上限跨文件盤點(worklist L848 掃描)
+
+重新盤點後發現這兩項在其他 doc 已有實質進展，只是§9.3寫作時未交叉引用；
+本節只做跨文件核對與規則化，未新增反組譯：
+
+- **入隊(JOIN)機制本身已完整閉合**：`0x112a5(join_id)` = JOIN constructor
+  (`sub_112A5`)，把新成員寫入 `[0x53bf7]+count*0x50` 的 persistent record(`+7=+8=join_id`)
+  並遞增 `[0x53bfb]`；`remake/internal/campaign/native_join_constructor.go`
+  (`MaterializePersistentUnit`)＋schema 綁定的 `native_join_constructor.json`(32-row，
+  含 FD2.EXE MD5/SHA256 驗證)已把這條路徑做成通過回歸(`TestNativeJoinConstructorMaterializesAllKnownRows`)
+  的可編輯規則，見 doc26 §7.2、doc31、doc40 §「玩家初始 record 的狹窄例外」。
+  **仍未閉合的是「哪一章、哪個 handler 呼叫哪個 join_id」這個逐章 ID/條件表**——
+  這不是單一位址就能收斂的規則，而是隨每章 postbattle/pre-battle handler 解碼
+  逐步累積(doc26 §1、doc47、doc56 L2190/L2502 已各自記錄部分 chapter 的 join_id/條件，
+  例如 ch00 開場 `0x112a5(0/9/4/0x1e)`=索爾/悠妮/亞雷斯/蓋亞、ch16 `roster_has(18)`
+  對應 JOIN18)。「入隊」因此不是一項可一次關閉的任務，而是隨 doc57 UI-07 postbattle
+  逐章稽核自然收斂的副產品，不建議再開一個獨立 worklist 項目追蹤。
+- **等級上限機制核心已由另一輪(worklist 245/266，doc58 續二十九，2026-08-19)反組譯**：
+  `0x1e292` 的職業等級上限特例—`cVar1(actor+7)==0x1e/0x1f→99 上限`，否則`40 上限`—
+  已記載於 doc27 checklist item15/#5(`0x1e292` 完整經驗值/升級迴圈)。**這才是「等級上限」
+  的原生 gate**，不需要另外從頭反組譯。仍缺兩件事(doc27 明列，非本節新發現)：
+  (a) `cVar1` 完整對應哪些角色/職業(機兵→99 之外，社群攻略提到的「80」第三層級
+  在 `0x1e292` 目前只看到兩種分支，未證實存在第三分支，可能是社群近似值而非原生規則)；
+  (b) remake 尚未把這條 gate 接成執行規則(`growth.go` 目前門檻只有「100 經驗一級」，
+  沒有 class-specific cap／達上限經驗歸零)。**可編輯規則草案**：
+  `LevelCapFor(classByte) = 99 if classByte in {0x1e,0x1f} else 40`；
+  `if level>=cap: exp=0`(不繼續累加，對照 `0x1e292` 的 `while(local_18>99){...若達上限則local_18=0}`)。
+
+因此 doc25§9.3「不在本輪範圍內」的措辭已過期：入隊機制與等級上限機制的**原生
+mechanism 本身均已有反組譯佐證**，殘留缺口分別是「逐章 join_id 表」(持續累積中，
+非獨立任務)與「class→cap 完整對應表 + remake 執行接線」(doc27 已追蹤，非本節新開)。
+
+## 10. 2026-08-20：全域事件表 58..89 剩餘 handler 高階語意初步稽核（回應 worklist L212）
+
+> worklist 91 稽核索引第212行：「REMAKE-GLOBAL-EVENT-DISPATCH 的 58..89 handler 高階語意
+> 仍待逐一靜態反組譯」。§6.1 已證實全域事件表 `0x51b91` 共 90 entries（0..89），§6.4／
+> §6.1.1／本文件其他小節已個別閉合 58／59／60／61／63／82（見上方各節）；本節對其餘
+> 26 個 handler（62／64..81／83..89，扣掉已閉合的 6 個）做第一輪嘗試，方法與誠實的
+> coverage 邊界如下。
+
+**方法與已知限制**：`tools/extract_event_id_groups.py` 原本就是靠 basic-block walk（不是
+線性掃）取得每個 handler 的 `spawn_group` 呼叫，`docs/data/event_id_groups.json` 已對
+event_id 58..89 全部記錄 handler 入口位址（見下表）。本節新增
+`ProbeGlobalEvents58to89.java`，直接對這 26 個入口位址呼叫 Ghidra `createFunction` +
+`DecompInterface` 取高階 C 偽碼——但**用的函式邊界是「下一個 event_id 的入口位址」，
+不是 Ghidra 自己認可的真正函式邊界**（成功案例是因為剛好對齊；失敗案例代表下一個
+handler 的入口其實落在共用尾段、跳表 fallthrough 或另一個既有函式內部，不是獨立
+函式起點）。這個方法對本表約半數 entry 給出乾淨、無暫存器殘留警告的偽碼，另一半
+出現 `unaff_EBX`/`unaff_EBP`/`halt_baddata` 等 Ghidra 邊界錯誤訊號——後者**不代表該
+handler 沒有語意**，只代表本次用的邊界猜測法在那個位置不成立，需要未來比照
+`extract_event_id_groups.py` 的 basic-block walk（而非位址差）才能可靠展開。完整
+原始 decompile 輸出（含失敗訊息）存於
+[`fd2_global_events_58_89_decompile_2026-08-20.txt`](../data/fd2_global_events_58_89_decompile_2026-08-20.txt)。
+
+### 10.1 乾淨結果（無邊界警告，[驗]）
+
+| event | handler | 高階語意 |
+|---:|---|---|
+| 67 | `0x35a2f` | `0x1956B()`(確認?) → `0x2AEDB()`；回傳 -1 直接關閉退出。否則：`0x1B8E7()` → 畫面 → `0x111BA()`(資源載入) → **59 次迴圈**(`0x2EB9F`+`0x17AA9`，與 §6.4 event61 用的「resource45 59-frame 演出」同構) → `0x3776E()` → `[0x53AD5+0xC]=1`(battle-local event-state byte，index 12) → `0x12263()` → `0x10B4E()`(**spawn_group**) → `0x112A5()`(**JOIN constructor**，見 §9.3 2026-08-19 補充) → 畫面。**這是與 event61 同一種「59幀演出→spawn→JOIN」組合技的另一個 handler**，多了前置的 `0x2AEDB` 條件檢查（可能是「持有特定道具/旗標才觸發」的 gate，本節未展開 `0x2AEDB` 本體）。 |
+| 69 | `0x35ab8` | 與 event67 幾乎相同的尾段（`0x111BA`→59次迴圈→`0x3776E`→`[0x53AD5+0xC]=1`→`0x12263`→`0x10B4E`(**spawn_group**)→`0x112A5`(**JOIN**)→畫面），但**沒有** event67 開頭的 `0x1956B`/`0x2AEDB` 條件檢查——即「無條件版」的同一組合技。兩者共用 `[0x53AD5+0xC]` 這個 battle-local 旗標，語意上應是彼此互斥或依序消耗的同一組事件狀態（比照 §9.2 已知的 `[0x53AD5]` battle-local event-state table 慣例），但本節未證實兩者實際會不會出現在同一張地圖。 |
+| 76 | `0x35d60` | 只有 `0x15F84()`(畫面繪製) 然後返回——目前已知 primitive 裡最簡單的一種，近似 no-op 的畫面刷新，沒有 spawn／JOIN／狀態寫入。 |
+| 78 | `0x35ed2` | `if (某條件!=0) { 0x15F84(); func_0x00035F10(); }` 之後固定 `[0x53AD5+0x13] += 1`(battle-local byte, index 19)。條件運算式本身因為函式邊界猜測受寄存器殘留干擾（`in_CF` 未定義輸入），不可信；但「若條件成立則畫面+呼叫某 helper，然後固定遞增 index19」這個骨架可信。`func_0x00035F10` 本體未展開。 |
+| 84 | `0x360c0` | **多階段、自我重排程的計數器 handler**：`if ([0x53AD5+0x11] != 4) { 0x13512()(標記目前行動單位已行動) ; [0x53AD5+0x11]+=1 ; [0x53A55+3]=[0x53BEF]+1 }`（**`[0x53A55+3]` 正是 §6.1 已證實的 turn_events[0].turn 三位元組欄位**——即這個 handler 每次觸發只是把「下一次觸發」排到下一回合，同時假裝目前單位已完成行動）；**第 4 次觸發時**才走另一分支：畫面→`0x10B4E()`(**spawn_group**，未展開帶哪個 group 常數)→`[0x53AD5+0x15]=單位總數-3`→`[0x53A55+9]=[0x53BEF]`→兩次 `0x361B0()`+等待→迴圈3次 `0x361B0()`+畫面。**這是一個「連續 4 回合、每回合觸發一次，第 4 回合才真正 spawn 支援」的倒數機制**，與 §6.1.1 已知的「`group=turn/2`」「`group=turn`」兩種公式屬於同一「回合數驅動延遲增援」設計母題，但實作方式是自我重排程的計數器，不是單一算式。event84 是 §6.2 已列的「格子實際引用的 58 以上 event_id」之一，所以這個倒數機制大機率是某張地圖上「站上某格、連續 N 回合後才召喚援軍」的觸發器；哪張地圖、哪個格子仍待對照 `native_field_event_slots`。 |
+
+### 10.2 部分可信（邊界警告存在，僅尾段/局部語意保留，[推]）
+
+| event | handler | 可信片段 |
+|---:|---|---|
+| 65 | `0x3599b` | 尾段 `if (unit[param_4]+6 != 0) call func_0x000344F2()`——**讀取單位 raw camp byte(+6，doc11 既有定義)並在非 0（非敵方）時呼叫一個未展開的函式**；前段因邊界猜測產生暫存器殘留假象，不採信。`func_0x000344F2` 本體未展開（可能是 overlay 區呼叫，比照 doc11 task#98 已知的「`0x73A7A` 等 overlay 位址無法靠純靜態展開」限制）。 |
+| 74 | `0x35c32` | `push 2; push 0x1B; call func_0x00035B78()`——固定以兩個字面常數 (`0x1B`=27, `2`) 呼叫一個未展開的 overlay 函式，可能是「給予/設定 27 號 item 或 flag，數量或型態 2」，但因 `func_0x00035B78` 本體不在目前 LE object 範圍內（overlay），無法進一步展開，本節不猜測。 |
+| 75 | `0x35c79` | 尾段：呼叫 `func_0x00035B78()` 三次，`[0x51A83]=1`(既有：戰場輸入鎖旗標，本文件 L1038 端turn一節與 doc56 都用過)，`[0x53AD5+0x10] += 1`(battle-local byte, index 16)。前段暫存器殘留假象不採信。 |
+
+### 10.3 未能展開（邊界猜測失敗，本節不下結論）
+
+62／68／70／71／72／73／77／79／80／81／83／85／86／87／88／89 這 16 個 handler 這次
+用「下一 event 入口位址」當邊界產生的偽碼含 `unaff_*` 暫存器殘留或
+`halt_baddata`（Ghidra 判定該起點落在 bad instruction data），**不可信，未列入以上兩表**。
+其中 85／86／87／88／89（對應的表列間距只有 7..24 bytes）高度疑似只是**共用尾段
+fallthrough**（例如 event86 的 7-byte「handler」`*(unaff_EBX+0x11)+=1; [0x53A55+6]=[0x53BEF]+1;`
+與 event84 第 4 次觸發前分支的最後兩行幾乎逐字相同——很可能 90-entry 跳表裡這幾個
+slot 根本是指向另一個較大 handler 內部的共用出口，不是獨立函式），但這只是本節的
+觀察推論，**未經 basic-block walk 或 xref 交叉確認，不升級為結論**。
+
+### L212 完成度
+
+**部分閉合**：58／59／60／61／63／82（既有）+ 本節新增 67／69／76／78／84（乾淨）+
+65／74／75（局部片段）= 90 個 entry 中 13 個現在有位址佐證的高階語意描述，另 16 個
+（62／68／70／71／72／73／77／79／80／81／83／85..89）本輪嘗試但因函式邊界猜測失敗
+未取得可信結果，仍是 raw table entry。**下一步建議**：捨棄本節「下一入口位址當邊界」
+的做法，改用 `tools/extract_event_id_groups.py` 已驗證可靠的 basic-block walk 方式重新
+框定這 16 個 handler 的真正函式邊界，再重跑 decompile；優先序可参考 §6.2 已知「格子
+實際引用」的 62／65／69／75／80／84（其中 65／69／75／84 本節已有進展，剩 62／80
+待補）。
+
 > 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`。

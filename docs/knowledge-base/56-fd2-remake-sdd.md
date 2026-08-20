@@ -2068,6 +2068,42 @@ SDD 通過後按以下順序重審，不先補 renderer 猜測：
    raw `ch29_post` 的 LOADCH／persistent-roster 與 `0x2bce5` 證據仍保留，但其正確 owner
    必須和第30戰結局流程另行閉合，不能用已恢復函式本身推定 campaign 接點。
 
+   **2026-08-19 現況查證（worklist L1314）**：直接讀當前 `campaign_full.json`，
+   `postbattle_ch29_persist` 仍是 `beats:[]` 空 placeholder，`preparation_ch30` 前的
+   runtime guard 判定未變——上段 2026-08-02 的結論仍成立。`tools/audit_postbattle_binding_gates.py`
+   顯示這個節點對應的 `handlers/ch28_post.json`(注意：stem 命名比對是 `postbattle_chN_persist`
+   ↔ `handlers/ch(N-1)_post.json`)本身極簡（`handler 0x25464`，只有 `dialog@0x231e5(text_index7)
+   →sync_party@0x231ed→set_chapter(28)@0x231f2`，`unknown_ops:0`），已重組譯確認 `0x25464`
+   是純 trampoline：不帶參數直接 `JMP 0x231df`，跳進一段**跨多章共用**的對白繪製尾端
+   （`ch01_post`/`ch04_post` 的 dialog beat 也落在同一個 `0x231e5`，各自的 `text_index` 由各自
+   thunk 在跳轉前 push 的立即值決定，已存在的 `postbattle_ch05_persist`/`postbattle_ch02_persist`
+   即使帶著這個同位址 dialog gap 也維持 `active` 狀態——`handler_compile.go` 對 `dialog` 缺
+   binding 時 fail-closed 跳過該 beat，不擋 `sync_party`/`set_chapter`）。**這代表
+   `bindings/ch28_post.json` 若比照 `ch01_post.json`/`ch04_post.json` 的既有模式建立，
+   技術上可以立即啟用 `postbattle_ch29_persist`**，但本輪特意不做這個接線，原因：
+   1) 這個 stem 命名法本身已在 91-worklist 記錄過 13 次「同號錯接」教訓（見 `544` 一段
+      「既有 postbattle 索引錯接稽核」），每次都需要位址級 xref 才能排除誤配；
+   2) 存在另一個**不同**、內容豐富得多的 `handlers/ch29_post.json`(handler `0x2548c`，
+      含 `0x35bba`/`0x12cea`/`0x22253` 等尚未反組譯的 unknown ops)與另一個 binding
+      wrapper `bindings/ch29_post.json`(其內部 `handler_script` 指到 `handlers/ch30_post.json`，
+      handler `0x2548c`? — 需注意，同一份 wrapper 檔名在不同前綴下語意不一致，這正是
+      worklist 已知的命名陷阱)；`handlers/ch30_post.json` 含 7 個 unknown ops，包含
+      worklist 862-865 一路追蹤的既有已知阻塞點 `0x2bce5`(party montage ending renderer，
+      尚無素材解碼)。
+   3) 在沒有逐位址 xref 證實「raw ch28_post 確實是主迴圈為第29戰選中的那個 handler」之前
+      啟用它，可能重蹈同號錯接的覆轍。
+   **結論**：這不是新的死結——`0x2bce5` ending renderer 阻塞（worklist 862-865）依然是
+   結局流程最終要解的核心缺口；`postbattle_ch29_persist` 本身有一個結構簡單、`unknown_ops:0`
+   的候選 binding 可用，但啟用前需要下一輪比照「既有 postbattle 索引錯接稽核」的方法
+   （直接指令級 xref，不是 stem 猜測）驗證它就是主迴圈選中的 raw handler。
+
+   **2026-08-19 附帶查證（worklist L849／L851，story_ch23）**：直接讀當前
+   `campaign_full.json`，`story_ch23`（`type:"story"`，僅 `lines`/`bgm`/`next`，
+   4022-4036 行）與 `postbattle_ch23_persist`（`type:"cutscene"`，僅 `next:"preparation_ch24"`，
+   4046-4049 行）兩者都**確實沒有 `handler_binding` 欄位**——worklist 原文「不能僅因 renderer
+   存在就接 story_ch23」與「postbattle_ch23_persist 仍是無 handler_binding 的空 placeholder」
+   兩項現況都成立、未變。本輪只做直接讀檔核對，未新增反組譯。
+
    Presentation bridge (strict gate): `drawNativeMapHUD` converts the verified 456-stride indexed buffer to a 320×200 paletted Ebiten image only when `NativeMapHUDRuntimeState`, selector cache/cycle and every selected-unit raw admission byte are present. It now draws panel/terrain/AP/DP plus the proven unit icon and `+0x40/+0x42` HP path together. The former hardcoded `DisplayGateA=true, DisplayGateB=true, AnchorX=1` partial path has been removed because native load can overwrite gate A. Missing provenance falls back before any native drawing. `NativeMapHUDPersistentState` now separates save-persistent gate A、process-persistent anchor 與 controller-owned gate B；custom save and native chapter restore preserve gate A, while battle entry materializes gate B only from the proven value 1. `battle_ch01`、`battle_ch26` and `battle_ch27` use editable `native_map_hud_inherited` together with their evidenced views. Exact fixed HUD bytes remain available only for explicit fixtures/snapshots; this inherited owner closes E1 state flow, not whole-campaign visual parity.
 
    HUD pointer-base correction (2026-07-28): direct Capstone at
