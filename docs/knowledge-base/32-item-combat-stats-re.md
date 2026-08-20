@@ -23,7 +23,70 @@ row 0 是 normalized row 0 的 bytes 1..22 再接 normalized row 1 的 byte 0，
 runtime prefix，並在 docs 與 remake assets 各追蹤一份。這只閉合「已知 prefix
 的逐 byte producer」，不證明 native table 正好在 ID 214 結束。
 
-## 2. 傷害計算鏈 [驗]
+### 1.1 2026-08-19 table 真正邊界/stride 最終閉合(215 rows,回應 worklist L366/L1354)[驗]
+
+**先修正一個 provenance bug**：上面 §1 與既有 `tools/dump_exe_tables.py` 的
+`ANCHORS["item"]=(0x540AC, ...)` 是**舊版(357074B,已遺失)EXE 的 file offset**，
+不是目前唯一可用的 509158B「新版」EXE 的真實位置。直接對現有 `FD2.EXE`
+(md5 `33464c81e6a364fd0660141139aa8e6e`，與 `docs/data/fd2-reference-files.json`
+記載的基準一致)重跑 `dump_exe_tables.py` 可重現這個問題：
+
+```
+錨定特徵對齊:
+  item    @0x540ac ✗
+  shop    @0x56190 ✗
+  spell   @0x557fd ✗
+  ...(全部 9 張表 ✗)
+⚠ 部分錨定特徵未對齊,offset 可能不適用此版本!
+```
+
+對照 `03-exe-and-data-structures.md` 第 39-121 行早已記載的結論：這 9 張表的
+file offset 在「新版」EXE 裡整批位移了(其中 5 張已於 2026-08-19 逐 byte
+驗證固定位移 `0x25214`)，只有**程式碼(code/text section)位址沒有位移**。
+物品表先前不在那 5 張已驗證表之列，本輪補上：
+
+- 物品表 anchor `0B 01 0A 00 5F 00` 在目前 EXE 精確命中於 file `0x792C0`
+  (`03-exe-and-data-structures.md` 早已記載新版 offset 為 `0x792C1`，1 byte
+  差屬既有定位慣例)。用這個位置重讀 215 個已知 ID，`raw` 欄位與
+  `docs/data/exe_tables/item.json`(2026-08-07 用舊版 EXE 匯出)逐筆 byte-exact
+  相同——**證實物品表內容本身新舊版無差異，只有 file offset 位移了
+  `0x792C1 − 0x540AD = 0x25214`**，與另外 5 張表完全相同的固定位移一致，
+  可以把「item」正式併入那條位移規律，不再是例外。
+- 這代表 `docs/data/exe_tables/item.json`／`native_item_effect_rows.json`
+  的**數值本身仍然正確可信**；只有兩份 JSON 內的 `off`/`linear` 溯源欄位
+  (寫的是舊版 file offset)在目前 EXE 上已經失效，若要重新用 file offset
+  定位這張表必須用 `0x792C0`(normalized)／`0x792C1`(native)，不能沿用
+  `0x540AC`/`0x540AD`。`tools/dump_exe_tables.py` 的 `ANCHORS` dict 本身也還
+  沒更新成新版 offset(全部 9 張表都還是舊版值)，這是本輪發現、留給後續
+  輪次修的獨立 bug，不在本次任務範圍內處理。
+
+**Row 數/stride 的真正邊界**：runtime linear base `0x602AD`、stride `0x17`
+(23B)不變(Ghidra `FD2Analysis3` 對現有 EXE `-readOnly` 反組譯直接證實：
+trivial pointer accessor 現址 `FUN_0004e8bc`——舊文件記載的 `0x4e56c` 只是
+**函式本身**的舊版位址，`return &DAT_000602ad + param_1 * 0x17;` 一行完全
+不變，這也再次印證「code 位址位移、data 位址不位移」的既有結論)。
+
+用正確的新版 file base(`0x792C1` = native row 0 起點)往後推 215 列
+(`0x792C1 + 215*0x17 = 0x7A612`)、換算回 runtime linear(`0x602AD +
+215*0x17 = 0x615FE`)，這個位址與 file offset **精確等於**既有 §6.6 已
+逐 byte 驗證過的 class-change `target_portraits` class/mobility pair 表
+起點（`0x615FE`，首 8 byte `09 01 0a 00 09 01 0a 00`）——實際讀取 file
+`0x7A612` 得到的 bytes 正是 `09010a0009010a00`，**零 byte 間隙**：
+
+```
+native row214(最後一個已知 item ID)結束於 file 0x7A611
+native row215(第一個「越界」row)起點  file 0x7A612 / runtime 0x615FE
+                                    == 已知的 target_portraits 表起點,完全重疊,無 padding
+```
+
+**結論(回應 worklist L366/L1354)**：物品效果表 `0x602AD` 的真正邊界就是
+**215 rows(ID 0..214)、stride `0x17`(23B)、無隱藏 padding**，第 216 個
+「理論 row」的位置已經被另一張已證實的表(class-change `0x615FE`)佔用，
+不存在更多未知 item row。215-row prefix 不再只是「已知前綴」，而是**證實
+完整的 table**。取得這個結論不需要新的 caller 反組譯，只需要修正 §1 沿用
+的舊版 file offset provenance bug 後直接讀 byte。
+
+
 
 ```
 攻擊執行(大函式 0x15xxx,含演出+結算)
@@ -152,8 +215,11 @@ ch24 謎團調查的關鍵未決點，remake 匯出的 map JSON 目前 `ap`/`dp`
 因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的
 `weapon_range.json` 可供 remake 使用；raw table base `0x602ad`、stride
 `0x17` 與 215 個 ID 的 byte-exact prefix 已另存
-`native_item_effect_rows.json`。runtime table 的最終邊界及其餘欄位仍
-fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
+`native_item_effect_rows.json`。**2026-08-19 更新**：runtime table 的最終
+邊界已由 §1.1 閉合為精確 215 rows(與 `0x615FE` class-change 表零 gap
+銜接)，不再是「不能宣稱完整」；下面 §4.1 的欄位語意也已部分補上
+（`+0x9/+0xa` 見 §4.1 與 doc27 §5 第 5 項），僅 `+0x11` 仍待個別 caller
+證據。
 
 ### 4.1 2026-07-20 direct range-field trace（2026-07-27 勘誤）
 
@@ -168,6 +234,39 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
 
 因此 remake 暫時只沿用已由 `weapon_range.json` 獨立驗證的 normalized 武器射程；不得把 raw `+0x0b..+0x0d` 臆測成 `AtkMin/AtkMax`。這輪只修正 provenance 斷言，不改變未證實的戰鬥公式。
 
+**2026-08-19 補完：row 內三個互不相同的「type」欄位，避免混淆**——這張表同時有三個
+語意完全不同、卻都可能被籠統叫做「type」的 byte，回應 worklist L366/L1354「未命名
+欄位語意」的要求，逐一列清楚：
+
+| offset | 語意 | 證據 |
+|---|---|---|
+| `+0x0` | 裝備分類(武器/防具/其他) | 本輪 `FD2Analysis3` readOnly 反組譯的 UI icon 選擇函式 `FUN_000272d0`，以及裝備 recalc 函式(對應 `0x1145a`/`0x1b750` 邏輯、新版位址 `FUN_00028632`)都以 `<0x15`(武器類,icon `0x3b`)／`0x15..0x1f`(防具類,icon `0x3c`)／`>=0x20`(其他,icon `0x3d`)三段切分；裝備 recalc 用同一個 `<0x15` 分界判斷「同格另一件裝備是否落在對面陣營」才把 `+1/+3/+5/+7` 計入 AP/DP/HIT/EV，兩處分界完全一致 |
+| `+0xd` | 物品使用效果 dispatch code(type5/6/7/8-12/13/14-16/17-19/20-24 等) | 既有 `0x1bbdc`／`0x20c6f` 全表已閉合(見下方各條) |
+| `+0x9` | **武器命中後特殊效果 selector**(0=無;2=命中後對目標套用持久 marker `+0x25`,消耗一顆額外 RNG;3=只設定一個未命名 output flag;4=固定加成暴擊率) | doc27《27-combat-rules-and-validation-checklist.md》§5 第 5 項(2026-08-19,`0x2f7b6` 完整 crit 分支反組譯)已閉合；本輪在同一份 `FD2Analysis3` 反組譯輸出裡確認這是主攻擊路徑唯一讀取 `+0x9/+0xa` 的邏輯，且存在第二份獨立、byte-for-byte 相同的 copy(`FUN_0001ecc7`，疑似精簡/NPC 攻擊路徑)，交叉印證非個案 |
+| `+0xa` | 上一欄的強度值：`type==4` 時直接加進職業暴擊基準值(`DAT_000524a7[actorClass]`)；`type==2` 時當成 0-100 的 RNG 機率門檻 | 同上 doc27 §5 第 5 項 |
+
+`+0x9/+0xa` 不需要重新反組譯——doc27 早在同一輪(2026-08-19)已用 `0x2f7b6`(doc27 §5
+第 1/2/4 項也引用的同一個物理攻擊主函式，取代了本文 §2 舊「大函式 0x15xxx」的猜測位址)
+完整閉合，本節只是把這個結論接回 row 欄位表，避免兩份文件各自宣稱「未閉合」。
+
+`+0x15`(row 最後一個非跨列 byte)也已經在下面「Docker Capstone」段落與 `0x1bbdc`
+分析中閉合為「兩階段共用 target code」，不是未命名欄位。本輪在 `FUN_00015055`
+(新函式，item-use 進入點，同樣以 `+0x10<0x10` 分派 `0x14818`/`0x149f8`，並在其後
+把 `DAT_00051a83 = row+0x12 + 2`)找到第三個獨立 caller，交叉印證 `+0x10`/`+0x12`
+的既有語意，不需要更名。唯一仍完全沒有任何 caller 讀取的是 native row 最後一個 byte
+`+0x16`——結構上它就是「下一列 normalized row 的 byte 0」(見 §1 的一 byte 錯位)，
+且 §1.1 已證實 row215 起點與另一張表零 gap 銜接，故 `+0x16` 大機率只是這個 1-byte
+錯位視圖本身的副作用，不是被消費的獨立欄位；沒有找到反例，暫不強行命名。
+
+> **worklist L1118 更新(2026-08-19 續輪)**：先前留的「仍待對位 `0x14344` caller」懸念已釐清——純靜態
+> Ghidra headless(`FD2Analysis3`,唯讀)`getFunctionContaining(0x14344)` 直接回傳 `FUN_00014237`
+> (body `0x14237..0x145cc`),即本節一直在描述的同一個 `0x14237`,`0x14344` 只是它中段的一個位址,
+> **不是獨立的第二個 caller function**。因為專案是 `-noanalysis` 模式,反編譯器在這段沒有完整還原呼叫
+> 參數(`FUN_0004e8bc`/`FUN_0004e8a5`/`FUN_0003706e` 等多個呼叫顯示成看似無參數),本輪未能逐位元組
+> 核對 `0x14344` 這個精確位址存取的是 `+0x0b` 還是 `+0x0c`;但足以排除「這是不是另一條獨立資料流」的
+> 疑慮——它與上面 `0x14237` 的 caller-specific、fail-closed 描述是同一份證據,不需要當成新的獨立佐證點,
+> 也不改變本節「不得臆測 raw `+0x0b..+0x0d` 為通用射程」的結論。
+
 - **[阻] 表 base-relative 存取**:item/unit/growth 表(0x540ac…)在 code 中以「obj2 基底(reg)+ offset」讀,
   絕對位址不經 fixup → 不能用 `refs` 直接找讀取點,要追基底暫存載入處。
 - **[~] 物品使用效果碼**：`0x1bbdc` 的 selector／transfer／equip branches
@@ -179,12 +278,19 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   `(42/192,103+22r)` geometry、category/equipped/stat icon raw IDs。
   現行 remake shell仍保留八個 raw位置，是 provenance/debug UI而非原版
   parity；Enter transaction、indexed animation仍待接。
-- Docker Capstone 也已閉合共用 item pointer `0x4e56c(item)`：table base
-  `0x602ad`、row stride `0x17`（23 bytes）。EXE file view 已確認從
-  `0x540ad` 起，與 normalized `item.json` 的 `0x540ac` 起點相差一 byte；
-  215-row raw prefix 已獨立匯出並由 loader regression 固定。table 最終
-  長度與其餘未命名欄位仍未證實；只有已全表交叉的 `+1/+3/+5/+7`
-  可命名為 AP/HIT/DP/EV。
+- Docker Capstone 也已閉合共用 item pointer(舊版位址 `0x4e56c`，新版 EXE
+  同一段邏輯現位於 `FUN_0004e8bc`，兩者都是單行 `return base+idx*0x17`，
+  詳見 §1.1)：table base `0x602ad`、row stride `0x17`（23 bytes）。
+  **2026-08-19 更新**：`0x540ad` 只是舊版(已遺失)EXE 的 file offset，
+  目前唯一可用的新版 EXE 上正確 file offset 是 `0x792c1`（見 §1.1，
+  已排除 provenance bug）；215-row raw prefix 已獨立匯出並由 loader
+  regression 固定，且 §1.1 已用「row215 與已知的 `0x615FE` class-change
+  表零 gap 銜接」證實 table 就是恰好 215 rows，不再是「未證實的前綴」。
+  除已全表交叉的 `+1/+3/+5/+7`(AP/HIT/DP/EV)外，`+0x9/+0xa`(武器命中特效
+  selector/強度)、`+0xd`(效果 dispatch code)、`+0x10/+0x12/+0x15`(target
+  mode/target code)也已由 §4.1 與 doc27 §5 收斂命名；仍未命名的只剩
+  `+0xb/+0xc`(caller-specific 幾何輸入，多個 caller 各自解讀方式不同，
+  未見單一通用語意)與結構性冗餘的 `+0x16`。
 - `0x20c6f` 的 Docker trace 已確認完整 type dispatch；目前 typed gameplay
   closures 已覆蓋 5/13、8–12、14–16、22。其餘 callee 或 presentation
   語意仍依個別證據 fail-closed，不能再用「全部效果都未完成」的舊斷言
@@ -264,6 +370,63 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   raw-active occupant，依 target class/race/unit+7 選 29×20
   `0x4e555` editable cost row，目的地 terrain entry 必須為20。完整
   indexed renderer/Ebiten selector仍未接。
+
+### 4.2 2026-08-19 續輪:`0x20c6f` type dispatch 全 25 種 case 窮舉閉合 + 武器命中特殊效果來源鏈(回應 worklist L246)
+
+> 方法:純靜態 Ghidra headless(`FD2Analysis3`,唯讀,`ProbeAudit0820.java`/`ProbeAudit0820b.java`)
+> 對 `0x20c6f` 做完整 `DecompInterface` 反編譯,並對 `0x2f7b6` 做逐指令原始反組譯還原被 `-noanalysis`
+> 省略的呼叫參數。完整輸出見 `FD2_ghidra_projects/probe_audit0820_out.txt`／`probe_audit0820b_out.txt`。
+
+**A. `0x20c6f` 的 `cVar1`(item row `+0x0d`)dispatch 現在窮盡列出全部分支,不再只是「已覆蓋
+5/13、8–12、14–16、22」的部分清單**:
+
+| cVar1(row `+0x0d`) | 分派目標 | 對應既有結論 |
+|---|---|---|
+| 5, 13 | `0x211a4`(HP restore) | 已知 |
+| 6, 7 | `0x22af6`(marker clear/restore) | 已知 |
+| 8, 9, 10 | `0x21082`(base-stat add) | 已知 |
+| 11 | inline MP restore loop → `0x1c9dd` | 已知 |
+| 12 | `0x22997`(風行 HIT/EV+15) | 已知 |
+| 14 | `0x22d1b`(狀態施加) | 已知 |
+| 15 | `0x22866`(魔鎧 DP+15%) | 已知 |
+| 16 | `0x22721`(魔刃 AP+15%) | 已知 |
+| 17, 18 | `0x21082`(同 8/9/10 分支) | **本輪新確認**——先前只記「type17–19 由獨立欄位證據閉合」,現在補上 17/18 與 8/9/10 共用同一 callee 的 dispatch 證據 |
+| 19 | `0x21082`,但呼叫前後 save/restore raw `+0x3c`(EXP byte) | 已知,本輪補上 dispatch-level 佐證 |
+| 20, 24(`'\x18'`) | `0x1cd17`+`0x1c75e` 迴圈 | 已知 |
+| 21 | `0x2111a` | 已知 |
+| 22 | `0x22d1b`(同 14) | 已知 |
+| 23 | `0x2218a`(relocation) | 已知 |
+| **0, 1, 2, 3, 4** | **無分支命中,直接跳到清尾(`DAT_00053ec8=0`+`0x1b6b7`/`0x1db65`/`0x1aa1d`),不呼叫任何 gameplay callee** | **本輪新發現**:這 5 個 type 值透過此 dispatcher「使用」時是純粹的 no-op |
+
+**結論**:`cVar1`(row `+0x0d`)0–24 全部 25 個可能值現在都有明確歸屬(20 個有 callee、5 個是
+no-op),`0x20c6f` 這個 caller 的「使用效果碼」窮舉閉合,不再有「其餘 callee 仍依個別證據
+fail-closed」這種開放式表述必要——只剩 type3(見下)的下游旗標消費者與若干 marker 的玩家可見名稱未知。
+
+**B. 武器命中特殊效果(cVar4,先前 doc27 §5 表第 5 項標「原生獨有,remake 未實作」)來源鏈解出**：
+
+`FUN_0004e8bc(itemId)` 反組譯只有一行 `return &DAT_000602ad + itemId*0x17;`——與已知 item pointer
+helper `0x4e56c`(table base `0x602ad`、stride `0x17`)是**同一張表**(第二個編譯副本,見上方
+§1.1 併行確認的同一事實)。逐指令追蹤 `0x2f7b6` 對它的呼叫(`0x2f870 CALL 0x1b83d(unit,0)` 找已裝備
+`id<0x80` 武器 slot → `0x2f87d CALL 0x1b722(slot,unit)` 轉 item id → `0x2f886 CALL 0x4e8bc(itemId)`
+轉 row 指標),`cVar4 = row+9`(type)、`uVar9 = row+10`(強度值)。**堆疊偏移核對顯示這裡查詢的是
+`FUN_0002f7b6` 的第二個參數**(函式內扮演 DP/守方角色的那個 unit),不是直覺會猜的攻方武器——這是
+誠實記錄,不宣稱已確認是「攻方觸發」。
+
+用已存在的 `native_item_effect_rows.json`(215 筆,不需新反組譯,直接讀 byte[9]/[10])做全表分類,
+配合 `item.json` 的 AP/HIT/DP/EV/price 佐證：
+
+| type | 筆數 | 效果 | id(強度值) |
+|---|---|---|---|
+| 0 | 200 | 無效果 | 其餘全部 |
+| 2 | 6 | 命中後 `RNG%100<強度值` 觸發:目標 `record+0x25` 寫 `(RNG%4)+2` | 4(10) 14(30) 46(10) 59(30) 65(20) 66(20) |
+| 3 | 1 | 只設輸出旗標 `param_3[4]=1`,不改 record;下游消費者未追 | 71(強度值未使用) |
+| 4 | 8 | 固定加成暴擊率 `crit% += 強度值` | 7(30) 11(30) 18(5) 30(20) 39(10) 43(80) 49(10) 69(20) |
+
+**交叉連結**:type2 寫入的 `record+0x25`,與上面已文件化的「item type6/7 → `0x22af6`,讀 target
+`+0x25/+0x26`」是**同一個 byte**——這 6 把武器命中後可能附加的異常狀態,能被 item type6 治癒。狀態的
+玩家可見名稱仍未知,但資料流已封閉。detail 與第二個獨立實作(`0x1ecc7`,結構與 `0x2f7b6` 幾乎相同,
+同樣有 `cVar4` dispatch)見 `27-combat-rules-and-validation-checklist.md` §5.1。
+
 - **[~] 轉職系統**(worklist #247/M4):機制鏈(觸發→物品判定→數值替換→能力繼承→成長表切換)已由既有
   official IDA 9.4 + Docker Capstone 交叉證據閉合,本輪(2026-08-19)整理進 §6 並新增
   growth 表位址串接、道具↔職業表跨驗、本地 Ghidra 新版 EXE spot-check。**未閉合**:舊版
@@ -274,6 +437,27 @@ fail-closed，不能把 215 筆 prefix 宣稱為完整 table。
   raw-key cache slot，`unit+7` 有獨立 constructor／class-change writer；
   DATO portrait 又由場景文字／設施資源選取。轉職後 sprite、portrait 與
   persistent identity 的映射必須分別追 writer/caller，不能以相同數字推導。
+
+### 4.2 2026-08-19 worklist L366/L368/L1354 完成度小結
+
+- **L366／L1354(同一件事,已合併處理)**：`0x602ad` table 的真正邊界/stride 已在 §1.1
+  完全閉合——精確 215 rows(ID 0..214)、stride `0x17`、row215 與已知的 class-change
+  `0x615FE` 表零 gap 銜接，不再是「已知前綴」。未命名欄位語意也在 §4.1 收斂：
+  `+0x0`(裝備分類)、`+0x9/+0xa`(武器命中特效 selector/強度，交叉 doc27)、`+0xd`
+  (效果 dispatch code)、`+0x10/+0x12/+0x15`(target mode/target code)均已命名或
+  已有既有結論可引用；只剩 `+0xb/+0xc`(caller-specific 幾何，語意隨 caller 而異)
+  與結構性冗餘的 `+0x16` 仍未強行命名，但已排除「可能有更多未知 row」的疑慮。
+  **狀態：完成**。過程中額外發現並記錄一個獨立 provenance bug（`tools/dump_exe_tables.py`
+  的 `ANCHORS` 全部 9 張表都還是舊版 file offset，見 §1.1），已記錄但不在本次任務範圍內修。
+- **L368**：查證後確認這行 worklist 描述的「`+0x22/+0x23/+0x24` DX/race/multiplier」
+  與本文 `0x602ad` 物品表**完全無關**——它指的是另一個結構(persistent 戰鬥單位 record
+  的暫態 buff 持續時間 byte，command17/18/19「魔刃術/魔鎧術/風行術」各自的
+  AP+15%/DP+15%/HIT+15,EV+15 效果)，且已在 `13-battle-menu-system.md`(2026-08-19)
+  用 `0x1A866` 的到期訊息字串(FDTXT `0x1E1/0x1E2/0x1E3`)完整閉合，不是「race」也不是
+  「multiplier」欄位。本次未對 `0x602ad` 表做任何 `+0x22/+0x23/+0x24` 相關 RE，因為
+  那些 offset 根本超出這張表 23-byte 的 row 範圍(`0x22`=34 > `0x17`=23)。
+  **狀態：與本表無關，已查明是另一結構且已在別處閉合；worklist 該行文字本身過時，
+  但依任務指示不改動 `91-worklist.md`，僅在此記錄查證結果。**
 
 ## 5. 對 remake 的暫行做法
 
@@ -449,6 +633,19 @@ EXE。本輪用 `analyzeHeadless -readOnly`(`ProbeClassChange.java`/`ProbeClassC
 重新定位,不能整批套用單一 delta。後續如需在新版上引用這些位址(例如要做 native 行為的即時比對),
 必須先重跑訊號比對定位,本輪未做完整重新定位(超出本次任務範圍,留待下一輪)。
 
+**2026-08-19 續輪(worklist L247)第二個確認性 spot-check**：既然 `0x526a7` 的 byte-search 已零命中,
+本輪換一個角度——直接對舊版候選/target resolver 入口 `0x31793` 在**新版** EXE 上強制反組譯
+(`ProbeAudit0820b.java`,`disassemble()` fallback)。結果：`0x31793` 在新版**確實是合法的可反組譯
+程式碼**(不是資料或未對齊的位元組),但內容與轉職候選判定完全無關——它呼叫的是已知的 `0x11eb0`
+(viewport `memmove` blitter,見 worklist L1120)與 `0x11d40`(已證實的 postbattle handler helper)、
+`0x2eb9f`(疑似文字/數字渲染),並比對 `[0x53c03]==0x1a`(章節/模式號)做分支——看起來是某個無關的
+UI/清單畫面,不是轉職邏輯。這是**第二個獨立資料點**,強化(而非首次證明)`0x31793`/`0x526a7` 這類
+「用同一位址直接查」的 spot-check 方法已經走到頭:新版 EXE 在這個 code 區段做過重新編譯/佈局,兩個
+獨立位址的探測都指向「同位址已被別的功能佔用」而非「移了幾個 byte」,要繼續追這條線必須做全檔
+byte-signature 重新定位(等同重做一次官方 IDA 的分析範圍),不是本回合能負擔的靜態探測量。portrait
+11–13 道具輪轉錯位問題(§6.5)**維持未決**,不因本輪而更新結論方向,只是排除了「換個位址探探看」
+這條路。
+
 ### 6.7 對 remake 的現況
 
 `remake/internal/campaign/church.go`、`class_change_table.go`、`native_class_confirm.go`、
@@ -457,4 +654,41 @@ class-portrait 寫回),並有對應 regression test(`church_test.go`/`class_chan
 `native_class_confirm_test.go`/`native_class_list_test.go`)。§6.5 找到的三筆道具錯位若屬實會讓
 索菲亞/凱麗/貝克威轉職到錯誤的 item 需求,建議下一輪先確認(可能只是修正 JSON 三個欄位),再視需要
 回頭補新版位址重新定位(§6.6)。
+
+## 7. worklist 稽核索引 L245/L246/L247/L248/L1118/L1515 完成度總結(2026-08-19 續輪)
+
+> 本節逐項回應任務指定的六個稽核索引行號,含未在本檔本輪修改、但需要交代完成度的項目(L245 主體在
+> `27-combat-rules-and-validation-checklist.md` §5.1;L248 主體在 `49-character-id-name-table.md`)。
+
+- **L245**(doc27§5 剩餘清單:經驗值攻守等級因子/`0x2f7b6` cVar4 分支/6 種傳送魔刃經驗公式/法術命中率
+  逐 ID)：**大部分收口**。cVar4 分支來源鏈與全部 15 個觸發武器 id 解出(本檔 §4.2)、6 種經驗公式全部
+  找到反組譯(doc27 §5.1)、等級因子疑慮部分收斂(第二個獨立實作 `0x1ecc7` 佐證)。**唯一完全未動**的
+  是法術/道具命中率逐 ID 核對(`0x1c7ed` 的 `record[+2]` 未逐一 dump 比對 `spell.json`)。詳見 doc27 §5.1。
+- **L246**(物品系統裝備加成精確累加點與使用效果碼未反組譯)：**裝備加成精確累加點**早在 §3.5 已閉合
+  (`有效AP=角色底AP+武器.ap` 等四條公式,對截圖逐位吻合)。**使用效果碼**本輪(§4.2)把 `0x20c6f` 的
+  `cVar1` dispatch 從「部分覆蓋清單」補成 0–24 全 25 個值窮舉(20 個有 callee、5 個是 no-op),武器
+  on-hit 特殊效果(`cVar4`)也解出來源鏈與全部觸發武器 id。剩餘缺口只有:type3 旗標(僅 1 個道具
+  id71)的下游消費者、幾個 marker/狀態的玩家可見名稱。**視為已大幅收口**。
+- **L247**(class_change_targets.json portrait11–13 輪轉錯位仍待查)：**未解決,但探測方法已窮盡**。
+  本輪(§6.6 新增段落)對第二個舊版位址(`0x31793`)在新版 EXE 做 spot-check,確認該位址現在是無關的
+  UI 程式碼,強化(非首次證明)同位址探測法已走到頭。要解開輪轉是否為 JSON 建表錯誤或原生設計,需要
+  全檔 byte-signature 重新定位轉職相關函式,超出本輪可負擔的探測量,**維持 D(可續但需大量前置工程)**。
+- **L248**(角色名對應需逐圖解 FDFIELD roster)：**本輪未展開新工作**。`49-character-id-name-table.md`
+  (2026-08-19)已用對話 identity-tag 交叉驗證把 38/135 組角色名定案,並明確記錄其餘約 97 組(泛用
+  怪物/路人)因為對話走 `-19/-20`(場景相依、不可信)而**不可能靠對話反推**,必須逐張地圖解 FDFIELD
+  roster `byte[+7]` 才能繼續——這是遠大於本輪範圍的工程量(每張地圖都要解),doc49 已誠實列為待辦,
+  本輪未新增任何一張地圖的解碼。狀態不變。
+- **L1118**(doc32 L169:remake 暫沿用獨立驗證的 normalized 武器射程,不得臆測 raw `+0x0b..+0x0d`,
+  仍待對位 `0x14344` caller)：**懸念已釐清**(本檔 §4.1 新增段落)。`0x14344` 經 Ghidra
+  `getFunctionContaining` 證實就在既有已文件化的 `0x14237` 函式體內,不是獨立的第二個 caller,不需要
+  也不應該當成新的獨立佐證點。因 `-noanalysis` 模式反編譯器未還原該處呼叫參數,精確 byte 存取(`+0x0b`
+  或 `+0x0c`)仍未逐位元組核對,但這是既有 `0x14237` fail-closed 描述範圍內的已知限制,不是新缺口。
+- **L1515**(核對 `remake/internal/battle/native_inventory_search.go` 與 `main.go:2683-2695`,raw
+  gate minor 殘留範圍)：**已核對,確認完整、無需修改**。`FindNativeInventoryItemInUnit`/
+  `FindNativeInventoryItem`(`native_inventory_search.go:11-46`)完整重現 `0x31860`→`0x1b8a6`
+  →raw slot scan 的 count-sized prefix 搜尋,不驗證 compactness,與原生行為一致。`main.go:2683-2690`
+  的函式註解本身已誠實記載:`partyHasItemID` 優先呼叫這個 exact raw adapter,只有在 itemID 超出
+  byte 範圍或找不到 runtime records 時才退回 normalized/persistent roster 掃描(`main.go:2699-2721`)
+  這個「刻意保留的相容路徑」,不是未修的 raw gate 缺口。項目描述的「minor 殘留範圍」與程式碼現況完全
+  相符,無需改動。
 
