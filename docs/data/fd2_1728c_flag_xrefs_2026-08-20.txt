@@ -1,0 +1,54 @@
+FD2.EXE (FD2Analysis3 loaded file) MD5: a6e341a8decc6ebf7f4872076d9cf161  LEN: 802705 bytes
+Whole-EXE xrefs to [0x51e61]/[0x51e62]/[0x53af9]/[0x51aab] (the 4 flags toggled by 0x1728c),
+plus decompile of FUN_0003b124 (called on item0's toggle).
+Source script: ProbeFlagXrefs0820.java
+
+=== xrefs to [0x51e61] (0x51e61) ===
+  from 000172c4 (fn=0001728c) type=READ
+  from 00017364 (fn=0001728c) type=READ
+  from 0001736e (fn=0001728c) type=WRITE
+  from 0001a0ce (fn=00019df7) type=READ
+  from 0001043e (fn=00010010) type=WRITE
+  from 00025a3a (fn=00025977) type=READ
+  from 00026090 (fn=00025ebb) type=WRITE
+  from 00029784 (fn=0002968d) type=READ
+  from 000299ba (fn=0002986f) type=WRITE
+  total refs: 9
+=== xrefs to [0x51e62] (0x51e62) ===
+  from 000172da (fn=0001728c) type=READ
+  from 000173c6 (fn=0001728c) type=READ
+  from 000173cf (fn=0001728c) type=WRITE
+  from 000173db (fn=0001728c) type=WRITE
+  from 0001a0d7 (fn=00019df7) type=READ
+  from 00010446 (fn=00010010) type=WRITE
+  from 00025ab1 (fn=00025a96) type=READ
+  from 00025b60 (fn=00025b45) type=READ
+  from 00026098 (fn=00025ebb) type=WRITE
+  from 0002978c (fn=0002968d) type=READ
+  from 000299c2 (fn=0002986f) type=WRITE
+  total refs: 11
+=== xrefs to [0x53af9] (0x53af9) ===
+  from 000172f0 (fn=0001728c) type=READ
+  from 000173a5 (fn=0001728c) type=READ_WRITE
+  from 0001a0bc (fn=00019df7) type=READ
+  from 0001042e (fn=00010010) type=WRITE
+  from 0001a7c7 (fn=0001a7bd) type=READ
+  from 0001a7fb (fn=0001a7f1) type=READ
+  from 000153e7 (fn=00015311) type=READ
+  from 000154f5 (fn=0001548e) type=READ
+  from 00026088 (fn=00025ebb) type=WRITE
+  from 0002977c (fn=0002968d) type=READ
+  from 000299b2 (fn=0002986f) type=WRITE
+  total refs: 11
+=== xrefs to [0x51aab] (0x51aab) ===
+  from 00017306 (fn=0001728c) type=READ
+  from 000173ba (fn=0001728c) type=READ_WRITE
+  from 0001a0c5 (fn=00019df7) type=READ
+  from 00010436 (fn=00010010) type=WRITE
+  from 0001ad0c (fn=0001acf3) type=READ
+  from 00026080 (fn=00025ebb) type=WRITE
+  from 00029774 (fn=0002968d) type=READ
+  from 000299aa (fn=0002986f) type=WRITE
+  total refs: 8
+=== decompile FUN_0003b124 (call made on flag0 toggle) (0x3b124) ===
+function entry=0003b124 body=0003b124..0003b1a5 size=130

@@ -99,3 +99,12 @@ remake 端 `forest_duel`/`forest_discover` 兩個 campaign 節點的 beat 排列
 重排(現況用 walk beat 近似)，且 act(0x5e-61) 的 acting_decoded 幀資料尚未接上(§C
 「蓋亞阻擋/悠妮昏迷 staging」一行同樣標 ⚠須接 acting_decoded)。下一輪若要關閉，
 工作範圍是 remake 端排程重寫，不是新的 Ghidra 反組譯。
+
+**2026-08-20 更新**：`docs/knowledge-base/scene-decode/ch1-forest.md` 已補齊——FDTXT_032
+對白全解(11 條/40 段)、ACT90..98(0x5a..0x62)9 個 direct 資源全解碼(raw frames + 依 doc50
+規則推算的走位座標)、FDFIELD map31 精確 slot 對照(索爾slot0/亞雷斯slot1/蓋亞slot3/悠妮slot4，
+另有一個無對白的 slot2 佔位單位，疑為悠妮甦醒前的倒地圖，與 `0x32975(2)` 隱藏時機吻合)。
+順帶修好 `tools/export_acting_resources.py` 對新版 FD2.EXE(2026-08-14 換基準後)完全跑不動的
+offset 失準問題。**本輪未完成的部分**：座標推算沒有 dosbox 斷點交叉驗證(只有規則套用，非
+live 實測)；remake 端 `forest_duel`/`forest_discover` 兩節點的 beat 排列本身尚未重排，仍是
+上面說的「現況用 walk beat 近似」。詳見 `ch1-forest.md` §5。

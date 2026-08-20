@@ -129,6 +129,12 @@ doc56/57與逐節點E2為準。
 目前只有 `ch1-meadow.md`(庭院段)與 `ch1-throne.md`(王座廳段)，密林段(`forest_duel`/
 `forest_discover`)仍無對應 scene-decode 文件，確認本節「partial」判定未變。詳見 doc53 §G。
 
+**2026-08-20 更新**：`docs/knowledge-base/scene-decode/ch1-forest.md` 已補上——FDTXT_032
+對白全 11 條字串(40 段)解碼、acting id 0x5a..0x62(90..98)共 9 個全解(含推算走位座標)、
+FDFIELD map31 精確 slot 對照(索爾=slot0/亞雷斯=slot1/蓋亞=slot3/悠妮=slot4，另查出無對白的
+slot2 佔位單位)。**仍待補**：座標推算沒有 dosbox 斷點交叉驗證、`forest_duel`/`forest_discover`
+兩個 campaign 節點尚未依此重排 beats(remake 程式碼未動)。詳見 `ch1-forest.md` §5。
+
 ### 2.3【中】敵方組成因 2.1 而失真
 
 **現象**：因 group 10/11 誤入場，remake 開場敵方變成「8海盜 + 4戰士 + 3聖騎士」共 15 人，

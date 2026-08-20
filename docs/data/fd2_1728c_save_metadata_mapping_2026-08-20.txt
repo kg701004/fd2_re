@@ -1,0 +1,66 @@
+FD2.EXE (FD2Analysis3 loaded file) MD5: a6e341a8decc6ebf7f4872076d9cf161  LEN: 802705 bytes
+Disasm around the save-writer (0x19df7, near 0x1a0bc) and load/init (0x10010, near 0x1042e)
+instructions that read/write the 4 flags, showing they occupy consecutive save-metadata byte
+offsets (matches doc23's already-documented but previously-unnamed metadata +6..+9 fields).
+Also lists entry/body of the 6 other functions found by the xref sweep.
+Source script: ProbeSaveFlags0820.java
+
+=== disasm around 0x19df7 save fn near flag reads (0x1a0bc) ===
+0001a0a1  MOV DL,byte ptr [0x00053abd]
+0001a0a7  MOV byte ptr [EAX + 0x8],DL
+0001a0aa  MOV DL,byte ptr [0x00053bfb]
+0001a0b0  MOV byte ptr [EAX + 0x9],DL
+0001a0b3  MOV EDX,dword ptr [0x00053bf3]
+0001a0b9  MOV dword ptr [EAX + 0xa],EDX
+0001a0bc  MOV DL,byte ptr [0x00053af9]
+0001a0c2  MOV byte ptr [EAX + 0xe],DL
+0001a0c5  MOV DL,byte ptr [0x00051aab]
+0001a0cb  MOV byte ptr [EAX + 0xf],DL
+0001a0ce  MOV DL,byte ptr [0x00051e61]
+0001a0d4  MOV byte ptr [EAX + 0x10],DL
+0001a0d7  MOV DL,byte ptr [0x00051e62]
+0001a0dd  MOV byte ptr [EAX + 0x11],DL
+0001a0e0  PUSH 0x50182
+0001a0e5  PUSH 0x50185
+0001a0ea  CALL 0x00037324
+0001a0ef  MOV EDI,EAX
+0001a0f1  ADD ESP,0x8
+0001a0f4  PUSH 0x59cb
+0001a0f9  PUSH ESI
+0001a0fa  CALL 0x0004df09
+0001a0ff  ADD ESP,0x8
+0001a102  MOV dword ptr [ESI + 0x59c7],EAX
+0001a108  PUSH 0x59cb
+0001a10d  PUSH ESI
+0001a10e  CALL 0x0004df28
+
+=== disasm around 0x10010 ctor near flag writes (0x1042e) ===
+00010415  MOV [0x00053abd],EAX
+0001041a  MOVZX EAX,byte ptr [ESI + 0x9]
+0001041e  MOV [0x00053bfb],EAX
+00010423  MOV EAX,dword ptr [ESI + 0xa]
+00010426  MOV [0x00053bf3],EAX
+0001042b  MOV AL,byte ptr [ESI + 0xe]
+0001042e  MOV [0x00053af9],AL
+00010433  MOV AL,byte ptr [ESI + 0xf]
+00010436  MOV [0x00051aab],AL
+0001043b  MOV AL,byte ptr [ESI + 0x10]
+0001043e  MOV [0x00051e61],AL
+00010443  MOV AL,byte ptr [ESI + 0x11]
+00010446  MOV [0x00051e62],AL
+0001044b  PUSH EBP
+0001044c  CALL 0x0003776e
+00010451  ADD ESP,0x4
+00010454  PUSH dword ptr [0x00053a59]
+0001045a  CALL 0x0003776e
+0001045f  ADD ESP,0x4
+00010462  MOV dword ptr [0x00053a59],0x0
+0001046c  PUSH 0x0
+0001046e  MOV EAX,[0x00053c03]
+
+0x25977: entry=00025977 name=FUN_00025977 body=00025977..00025a95
+0x25a96: entry=00025a96 name=FUN_00025a96 body=00025a96..00025b44
+0x25b45: entry=00025b45 name=FUN_00025b45 body=00025b45..00025bf3
+0x25ebb: entry=00025ebb name=FUN_00025ebb body=00025ebb..00026151
+0x2968d: entry=0002968d name=FUN_0002968d body=0002968d..0002986e
+0x2986f: entry=0002986f name=FUN_0002986f body=0002986f..00029ab1

@@ -25,8 +25,21 @@ from typing import Any
 
 # FD2.EXE file-relative layout, verified against the acting getter's 106-entry
 # table.  These are extractor implementation details only: never serialized.
-DIRECTORY_OFFSET = 0x565D8
-DATA_OFFSET = 0x53E00
+#
+# 2026-08-20: rebased for the "新版(1998 重打包版)" FD2.EXE (509158 bytes,
+# md5 33464c81e6a364fd0660141139aa8e6e — see docs/data/fd2-reference-files.json).
+# The old constants below (0x565D8/0x53E00) matched the lost 357074-byte
+# edition only; running this tool against the new baseline previously raised
+# "resource 0 starts outside input". Recovered the new offsets by locating
+# the byte-identical resource-0 and resource-99 frame payloads (their bytes
+# are game content, not addresses, so they carry over unchanged) via direct
+# signature search, then solving for the directory/data bases that are
+# jointly consistent with both hits. All 106 resulting entries parse cleanly
+# and reproduce the existing map32.json byte-for-byte, confirming the values.
+# Old constants (357074-byte edition, kept for history only):
+#   DIRECTORY_OFFSET = 0x565D8; DATA_OFFSET = 0x53E00
+DIRECTORY_OFFSET = 0x7B7EC
+DATA_OFFSET = 0x79014
 RESOURCE_COUNT = 106
 
 
