@@ -318,6 +318,17 @@
   turn-camp與runtime execution已由`0x1A30B`交織順序(own regen→友軍`0x1D80B`掃描→敵軍`0x1D8BA`掃描→
   `[0x53BEF]`回合計數遞增)與三個end-turn入口(`0x13565`自動判定、`0x16F55`選單「全軍前進」/「結束回合」)
   補齊,完成度大幅提升;仍缺:`0x14818`各caller-specific mode是否有額外LOS判定、`0x1728C`子選單(selector2)語意。
+  ——本輪(2026-08-20續輪,`doc11`,回應L145尾巴)窮盡收尾:**`0x14818` LOS缺口視為已閉合**——完整
+  反組譯整個480-byte函式本體(`0x14818..0x149f7`)後確認,除既有已知的Manhattan(`mode<0x10`,含可選內圈
+  排除)/十字(`mode>=0x10`)距離規則,以及僅`mode<0x10`才有的flood-fill佔用阻擋(`0x4e8a5`/`0x4e390`,
+  doc13已閉合)之外,函式本體不呼叫任何額外視線/阻擋子函式;`mode>=0x10`十字分支甚至完全沒有阻擋判斷,
+  純幾何直線比較。**`0x1728C`子選單機制層已閉合,但玩法語意層仍未閉合,誠實保留fail-closed**——4項旗標
+  切換環的完整結構(`[0x51e61]`/`[0x51e62]`/`[0x53af9]`/`[0x51aab]`)、對應存檔metadata `+6..+9`欄位
+  (與doc23既有記錄互相印證)、切換時顯示的8個FDTXT人名標籤(米亞斯多德/蜜蒂/羅德曼/莎拉/約拿/卡里斯/
+  羅蘭/希爾法,與doc49角色ID17-24對應)、確認鍵動作(純翻轉旗標,撤回先前「音量呼叫」臆測)皆已反組譯
+  查證;但這四個旗標實際控制遊戲裡什麼行為(是否為recruit/上場二選一或純UI選項)仍未閉合,doc23原本
+  「玩法名稱仍不猜」的立場未被推翻。**L145兩個尾巴缺口不再是開放問題,但checkbox本身涵蓋的turn/camp
+  與runtime execution全貌已在本行閉合,不因0x1728C語意未知而降級整項狀態**。
 - [x] **RE-AI-CALLER-15AD8**：Docker Capstone 閉合 `0x15A1E..0x15B76` 的 bounded candidate→`0x14818` target builder→`0x15B77` score→best-score/tie-break/write globals 邊界；`0x15B77` 的 command `<0x0d`、recovery `0x0d..0x10`、raw flag `0x14..0x16` branches 已寫入 `11`，不把它升格成完整 AI turn。
 - [x] **RE-AI-DISPATCH-14EF0**：Docker Capstone 找到 `0x14EF0` 的六個 direct callers 與 `0x14237→0x1598A→0x1567E` 後續分派至 `0x1548E/0x15311/0x15055`；已記為 candidate dispatch boundary，不命名 turn/camp 或宣稱完整 AI parity。
 - [x] **RE-REFERENCE-FILE-HASHES**：固定目前反組譯版本的 `FD2.EXE` 大小
@@ -383,6 +394,18 @@
 - [~] **REMAKE-AI-MODE-RUNTIME**：模式 2/11 raw planner 與 `0x13FD4` mutation 已閉合，但其餘模式玩法名稱、event 82 觸發、完整回合 orchestration 及 `NextAIPlan` production 接線仍未完成。`set_ai:berserk` 仍只是 inert 事件標記。——本輪(2026-08-20)推進:`doc11`「回合orchestration」子項已閉合(見上`0x1A30B`交織順序);「event82觸發」子項在`doc25`2026-08-19全EXE writer稽核已窮盡(§6.3附記);仍缺:「剩餘模式玩法名稱」——此為刻意fail-closed立場(不替模式命名),非遺漏,待可靠玩家可見語意證據(攻略對照/DOSBox E2)才補上。
 - [x] **RE-FIELD-EVENT-13A44**：閉合地圖 event-word low5 的 1-based slot、FDSHAP `0x20/0x40` 寶箱 gate、FDFIELD 控制段 16×2 `(event_id,selector)` 與 `0xFF` gate；33 張地圖已同步為可編輯資料並有失敗即關閉查詢。
 - [~] **REMAKE-GLOBAL-EVENT-DISPATCH**：全域 `0x51B91` 已由錯誤的 58 entries 更正為 90 entries；回合事件使用 0..57，格子事件只覆蓋另一子集合。58..89 handler 的高階語意與各 dispatcher 的 selector 生產路徑仍須逐一閉合，未知 handler 不接正式流程。——本輪(2026-08-20)推進:`doc25`§10對58..89剩餘26個handler做第一輪嘗試,58/59/60/61/63/82(既有)+67/69/76/78/84(乾淨反組譯)+65/74/75(局部片段)=90個entry中13個現有位址佐證的高階語意描述;仍缺:62/68/70/71/72/73/77/79/80/81/83/85..89共16個handler因函式邊界猜測失敗未取得可信結果(下一步應改用`extract_event_id_groups.py`已驗證的basic-block walk方式,而非位址差猜邊界)。
+      ——本輪(2026-08-20續輪,`doc25`§10.4,回應L212剩餘16個handler)**部分推進，未完全解決**:改用
+      `getInstructionAt`+`.getNext()`手動basic-block walk配合逐byte hex dump逐一定位這16個。結果——
+      **9個(68/70/71/81/85/86/87/88/89)證實([驗])落在鄰居handler(多為event67/84)內部指令中段的
+      ModRM/位移/立即值operand byte，無獨立語意，不是真正進入點**；**6個(62/72/73/79/80/83)取得可引用
+      位址的具體行為描述([推])，多延伸既有event58(五選一寶物)/event72·84(回合重排程)/event73·74·75
+      (給予item 0x1B/0x23家族)/event78·79(條件繪圖)家族**；**1個(77)確認非獨立進入點(落在一個先前未
+      記錄的「給予item type 7」多階段handler尾端)，但該外層handler真正入口本輪60-byte視窗不足以定位，
+      仍未解**。**90個entry中有具體行為描述者由14升至20**(先前14個58/59/60/61/63/65/67/69/74/75/76/
+      78/82/84 + 本輪新增62/72/73/79/80/83)；另9個證實為共用鄰居代碼無獨立語意；1個(77)落點性質已知但
+      外層handler未定位；64/66兩個entry在先前範圍界定中被遺漏，不屬本輪範圍。**checkbox維持`[~]`**：
+      仍有77的外層handler、62/72/73/79/80/83升級為[驗]的交叉驗證、64/66兩個遺漏entry，以及各
+      dispatcher的selector生產路徑尚未逐一閉合。
 - [x] **RE-POST-RESOLUTION-1AA1D**：閉合 `{kind:u8,payload:u16le}`，kind0/1 為物品／金錢、kind2 dispatch 全域事件、kind3 為另一呈現分支；建構器只採 FDFIELD b22+b23..24，撤回 b23..25 24-bit payload。
 - [x] **REMAKE-NATIVE-TREASURE-ASSETS**：33 圖 composition+FDSHAP 寶物格及 16 槽控制列已選擇性同步；type0/1 可執行，其他型態保存 event/native_type 並失敗即關閉，不再誤給一般物品。
 - [x] **RE-EVENT82-REACHABILITY**：turn、field、treasure、unit effect 與四個 EXE 硬編碼後處理列均無 payload82；目前無已知資料 producer。仍須稽核 runtime `+0x31..+0x33` 的其他 writer，未證實 dead code。——已解:`doc25`(2026-08-19)全EXE指令級xref掃描,僅4個真正writer(2個寫死0xFF常數、2個被`kind<2`硬gate擋掉),**證實dead code**。殘留2個低機率不確定性(暫存器算位移寫入、未反組譯區域)如實記錄未升格為絕對結論。
@@ -749,7 +772,17 @@
       `FUN_0001c75e`二次核實，確認法術/道具命中率(`rng%100<record[+2]`)與物理攻擊HIT-EV公式
       (`0x2f7b6`)完全獨立，結論穩定(逐ID數值核對仍缺)。**L557 AoE**——在`FUN_0002ff01`內找到
       真正的多目標套用迴圈(對`param_4`陣列每個target各呼叫一次`0x1c75e`，id 0-8適用)，但上游
-      「range如何決定填入陣列的目標清單」仍未追完，部分推進未關閉。**L572位址勘誤(本輪最主要
+      「range如何決定填入陣列的目標清單」仍未追完，部分推進未關閉。
+      ——本輪(2026-08-20續輪,`doc27`§6.4,回應L557 AoE殘留缺口)**上游生成器完整追出，L557 AoE子項視為已關閉**:
+      逐指令反組譯`0x1cff0`確認`0x2ff01`的`param_3`(目標數)/`param_4`(目標陣列)來自呼叫`FUN_00014818`兩次——
+      第一次以spell/item record`[+3]`(選取階段/游標可達範圍)取候選、經`FUN_000115b6`互動確認迴圈；第二次以
+      `[+4]`(實際生效/AoE展開範圍)產生最終`targetCount`(commandId==0x1e特例改用`FUN_000149f8`直線步進)。
+      `FUN_00014818`本體確認`rangeByte<0x10`時呼叫`FUN_0004e390`+`FUN_0004e42c`遞迴四方向flood
+      fill塗地圖緩衝區(圓形/範圍型)，`>=0x10`時走列/欄門檻掃描(直線型)，最後統一掃描全部unit依緩衝區命中+
+      `[+6]`陣營篩選器收集roster index，直接餵給`0x2ff01`的`param_3/param_4`。**鏈路已用位址級反組譯完整
+      釘死，doc27原文結論為「完成度:已關閉」**；僅剩葉節點`FUN_0004e4be`(flood fill寫入原語)/`FUN_0004e8a5`
+      (回傳陣列用途)資料表細節未展開，不影響機制結論。**L557命中率、輔助系效果、SFX/renderer/UI整合仍未
+      閉合**，故本compound bullet整體checkbox維持`[~]`，僅AoE子項可視為done。**L572位址勘誤(本輪最主要
       產出)**:`0x2a6bd`在Ghidra project裡不是有效指令邊界(落在無關的451-byte調色盤特效函式
       `FUN_0002a694`中段)，真正的command-specific presentation dispatcher是`0x2ff01`(3876
       bytes)，其分支結構(id 0-8走AoE迴圈、id 24/28-31走`0x2cf30`、id≥32走`0x2d80d`)首次有
@@ -1309,6 +1342,15 @@
       反組譯保存)，缺口是remake端`forest_duel`/`forest_discover`兩個campaign節點的beat排列尚未依此序列
       重排(現況用walk beat近似)，且act(0x5e-61)的acting_decoded幀資料尚未接上；下一輪若要關閉，工作範圍
       是remake端排程重寫，不是新的Ghidra反組譯。
+      ——本輪(2026-08-20,`doc44`/`doc53`,回應L1042)新增`docs/knowledge-base/scene-decode/ch1-forest.md`，
+      補齊上述缺口的解碼半部:FDTXT_032森林段對白全11條字串(40段)已完整解碼、acting id
+      `0x5a..0x62`(90..98)共9個direct資源全解碼(raw frames+依doc50規則推算走位座標)、FDFIELD map31
+      精確slot對照(索爾=slot0/亞雷斯=slot1/蓋亞=slot3/悠妮=slot4，另查出一個無對白的slot2佔位單位，疑為
+      悠妮甦醒前倒地圖，與`0x32975(2)`隱藏時機吻合)。**仍未關閉，維持`[~]`**:座標推算僅套用doc50既有規則，
+      沒有dosbox斷點交叉驗證(non-live)；`forest_duel`/`forest_discover`兩個campaign節點本身尚未依此重排
+      beats(remake端排程仍是先前的walk beat近似，程式碼未動)。順帶修好`tools/export_acting_resources.py`
+      對新版FD2.EXE(2026-08-14換基準後)完全跑不動的offset失準問題(signature search反查新offset，經106筆
+      既有資料驗證)。
 
 ## 完成定義(反組譯研究)
 全部資產格式可解(解包+解壓+轉現代格式)、核心數值表全 dump 並驗證、
