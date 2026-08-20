@@ -1,0 +1,163 @@
+{
+  "_meta": {
+    "purpose": "已知的位址勘誤史——曾經被誤植、後來訂正的位址對照表。這是本專案最容易被誤用的高風險資訊:引用任何位址前,先在這裡查一下是不是踩到已知的錯誤位址。",
+    "schema_version": 1,
+    "created": "2026-08-20",
+    "how_to_query": "python tools/query_verified_address.py <地址> 會同時檢查本檔的 wrong_address/correct_address 欄位並提示。"
+  },
+  "errata": [
+    {
+      "wrong_address": "0x2a6bd",
+      "correct_address": "0x2ff01",
+      "wrong_semantic_claimed": "「native command 大型 presentation/state dispatcher」入口",
+      "discovered_date": "2026-08-19/20",
+      "discovery_method": "Ghidra headless -readOnly FD2Analysis3,getInstructionAt(0x2a6bd) 回傳 null;getInstructionContaining(0x2a6bd) 回傳落在另一條指令(MOV EAX,[ESP+0x24])中間第3個 byte——0x2a6bd 根本不是指令開頭。getFunctionContaining(0x2a6bd) 實際回傳 FUN_0002a694(451-byte 調色盤/貼圖特效函式),與描述完全不符。",
+      "root_cause": "手動反組譯階段的個別誤記(從反編譯 C 虛擬碼往回估位址時的常見誤差),不是位址系統性平移錯誤——對照組 0x1cff0/0x1d6c8/0x27fc9 三個同批引用位址皆命中有效指令邊界。",
+      "affected_docs": [
+        "docs/knowledge-base/13-battle-menu-system.md",
+        "docs/knowledge-base/37-spell-effect-figani.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "correction_section": "§6.3",
+      "still_pending": "13/37/56 三份文件的既有引用因數量多、風險高,僅補了簡短訂正註記,未逐一改寫每個引用點——讀者遇到字面 0x2a6bd 引用時仍需自行換算為 0x2ff01。"
+    },
+    {
+      "wrong_address": "0x276ec",
+      "correct_address": "0x2cf30",
+      "wrong_semantic_claimed": "「ID24 special 分支」(id==0x18 走特別分支)目標位址",
+      "discovered_date": "2026-08-19/20",
+      "discovery_method": "同 0x2a6bd 批次,Ghidra headless 直接邊界檢查:getInstructionContaining(0x276ec) 落在 CMP EAX,[0x53c57] 這條 6-byte 指令中間第4個 byte,不是有效指令邊界;getFunctionContaining(0x276ec) 實際是 FUN_000275e6,一個跟 derived strike 完全無關的通用選單方向鍵游標 handler。",
+      "root_cause": "與 0x2a6bd 同一批手動反組譯誤記,兩者孤立出現,不代表整批位址系統性偏移。",
+      "affected_docs": [
+        "docs/knowledge-base/13-battle-menu-system.md",
+        "docs/knowledge-base/37-spell-effect-figani.md",
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "correction_section": "§6.3",
+      "still_pending": "功能性結論(derived-strike 倍率 15/20/12/18)本身不受影響仍成立,只有位址標籤需要在引用時換算。"
+    },
+    {
+      "wrong_address": "0x4dbfc",
+      "correct_address": "0x4df4c",
+      "wrong_semantic_claimed": "range-overlay mode6 field-byte 清空函式(range_overlay.go ClearNativeRangeOverlayMode6FieldByte 註解)、ch23_post.json beat 34 native call 目標",
+      "discovered_date": "2026-08-20",
+      "discovery_method": "Ghidra headless 直接反組譯呼叫點 0x1097a 的 CALL 指令 bytes,證實真正目標是 0x4df4c;逐指令走訪 0x4df4c 迴圈本體(LOOP 跳回 0x4df65)確認其行為(byte+3 全部寫 0xff、byte+2 mask 0x1f、byte+1 mask 0x3)與 91-worklist.md:1193 原文描述完全吻合,反過來印證原分析對象就是這個函式,只是位址標籤打錯。",
+      "root_cause": "range_overlay.go 註解與 ch23_post.json exporter 的位址標籤誤植;0x4dbfc 本身落在一個無關函式(POP EBX/ECX/EDI/ESI/EBP;RET 尾端之後)的中段,不是任何函式的合法進入點。",
+      "affected_docs": [
+        "remake/internal/fdother/range_overlay.go",
+        "remake/assets/cutscenes/handlers/ch23_post.json",
+        "docs/knowledge-base/91-worklist.md"
+      ],
+      "correction_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "correction_section": "續三十/續三十一",
+      "still_pending": "已修正完成(commit 4cbe5949、2b6d0722)。純文件/資料層修正,函式簽名/邏輯/行為完全未動,go build/test 全綠。注意:0x4dbfc 這個數字另外也在 SESSION-HANDOFF 2026-07-28 出現過,語境是『FDFIELD byte+3 不是 live renderer state,0x4dbfc 先全填 0xff』——那筆記錄描述的行為其實就是 0x4df4c 的行為,同一錯誤標籤的更早期出現。"
+    },
+    {
+      "wrong_address": "0x3453E",
+      "correct_address": "0x34894",
+      "wrong_semantic_claimed": "byte[idx*0x50+5]&1 讀取函式(NativeRecordByte5Bit0),doc26 §1 表格 target 欄位、ch16_post.json unit_inactive beat target、doc40 speaker→頭像身分標籤查表呼叫點的 pseudocode 目標",
+      "discovered_date": "2026-08-19",
+      "discovery_method": "逐位元組核對(非反組譯誤判):0x3453e 原始 bytes 是 e8 62 cd fd ff(call 0x112a5),屬於另一個從 0x34531 開始的函式中段,跟 byte5-bit0 讀取完全無關。獨立反組譯確認 0x34894 才是真正被呼叫、且語意相符的函式(push 0x4; call 0x3702f;...=idx*0x50,與公式完全相同)。全程式 xref 掃描確認 0x34894 共 8 個直接呼叫點:0x127c2/0x12a4a/0x12c47/0x12ca0/0x11682/0x1b63e/0x2a09f/0x11566。",
+      "root_cause": "doc26 §1 表格與 doc40 pseudocode 的位址標籤誤植,語意結論(公式 idx*5<<4=idx*0x50)本身正確、未受影響。",
+      "affected_docs": [
+        "docs/knowledge-base/26-per-chapter-event-handlers.md",
+        "docs/knowledge-base/40-speaker-portrait-mapping.md",
+        "remake ch16_post.json 候選檔 unit_inactive beat target 欄位"
+      ],
+      "correction_doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+      "correction_section": "§7.1.1",
+      "still_pending": "doc26 §1 表格與 ch16_post.json/候選檔內 unit_inactive beat 的 target 欄位需要一次獨立審計訂正(已用 spawn_task 另開追蹤,尚未執行)。"
+    },
+    {
+      "wrong_address": "0x773AF",
+      "correct_address": "0x774BC",
+      "wrong_semantic_claimed": "職業暴擊率表(crit)新版 file offset",
+      "discovered_date": "2026-08-19",
+      "discovery_method": "Python seek/read 對 509158B 新版 EXE 逐 byte 核對表格內容;anchor bytes 05 03 03 05 全檔案唯一命中處是 0x774BC,不是原記載的 0x773AF(差 0x10D bytes)。",
+      "root_cause": "modify2 攻略或先前轉錄環節的 offset 數字抄錯,非新舊版資料差異——crit 表是 9 張表裡唯一打破 +0x25214 固定位移規律的一張,理論值(舊版 0x5219B+0x25214=0x774AF)與實測值(0x774BC)仍差 0xD byte,需 anchor byte 全檔搜尋才能鎖定,不能單純套公式。",
+      "affected_docs": [
+        "docs/knowledge-base/03-exe-and-data-structures.md"
+      ],
+      "correction_doc": "docs/knowledge-base/32-item-combat-stats-re.md",
+      "correction_section": "§3.6",
+      "still_pending": "已修正完成,tools/dump_exe_tables.py ANCHORS['crit'] 已使用正確值 0x774BC。"
+    },
+    {
+      "wrong_address": "0x55445 (硬編碼於 dump_native_movement_cost_rows,未經 ANCHORS 間接引用)",
+      "correct_address": "0x7A659",
+      "wrong_semantic_claimed": "native_movement_cost_rows(terrain-cost)表在目前 EXE 的 file offset——0x55445 是舊版(357074B,已遺失)的位置,對新版 EXE 直接使用會讀到錯誤資料甚至越界",
+      "discovered_date": "2026-08-20",
+      "discovery_method": "比對 9 張表中另 8 張已驗證表格的固定位移量 +0x25214,對 0x55445 套用公式得 0x7A659,並確認與相鄰表 class_equip_types(0x7A89D)恰好首尾相接、零間隙,交叉印證位移量正確。",
+      "root_cause": "tools/dump_exe_tables.py 這個函式的 file_base 常數是在 ANCHORS dict 改版時被遺漏的兩個函式之一(另一個是 class_equip_types),直接寫死舊版 offset,未像其他 9 張表一樣改用 ANCHORS 間接引用。",
+      "affected_docs": [
+        "tools/dump_exe_tables.py",
+        "tools/test_dump_exe_tables.py"
+      ],
+      "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+      "correction_section": "第 122-131 行(第 6 輪)",
+      "still_pending": "已修正完成(commit 4d5638fb),test_dump_exe_tables.py 的 test_native_movement_cost_rows_have_exact_29_by_20_boundary 同步更新為新版 0x7A659,4/4 單元測試通過。"
+    },
+    {
+      "wrong_address": "0x55689 (硬編碼於 dump_class_equip_types,未經 ANCHORS 間接引用)",
+      "correct_address": "0x7A89D",
+      "wrong_semantic_claimed": "class_equip_types(職業×item.type 白名單)表在目前 EXE 的 file offset",
+      "discovered_date": "2026-08-20",
+      "discovery_method": "同 0x55445,套用固定位移 +0x25214 並以逐 byte 自驗證確認。",
+      "root_cause": "與 native_movement_cost_rows 同一次疏漏,同一個 commit 修正。",
+      "affected_docs": [
+        "tools/dump_exe_tables.py"
+      ],
+      "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+      "correction_section": "第 122-131 行(第 6 輪)",
+      "still_pending": "已修正完成(commit 4d5638fb)。"
+    },
+    {
+      "wrong_address": "0x565D8 / 0x53E00",
+      "correct_address": "0x7B7EC / 0x79014",
+      "wrong_semantic_claimed": "tools/export_acting_resources.py 的 DIRECTORY_OFFSET / DATA_OFFSET(acting resources 106-entry directory)",
+      "discovered_date": "2026-08-20",
+      "discovery_method": "定位 byte-identical 的 resource-0 與 resource-99 frame payload(這些 bytes 是遊戲內容而非位址,新舊版之間不變)於新版 EXE 的實際位置,再聯立求解 directory/data 兩個 base 使兩筆命中同時成立;全部 106 筆解析乾淨且與既有 map32.json 逐 byte 相符,交叉驗證通過。",
+      "root_cause": "舊常數對應已遺失的 357074B 舊版 EXE;直接對新版(509158B)執行會拋出「resource 0 starts outside input」——這不是單純固定位移可解的問題(不同於大部分資料表的 +0x25214 規律),需要用內容訊號重新定位。",
+      "affected_docs": [
+        "tools/export_acting_resources.py"
+      ],
+      "correction_doc": "tools/export_acting_resources.py",
+      "correction_section": "module header comment(2026-08-20 rebased 說明)",
+      "still_pending": "已修正完成。舊常數保留在檔案註解中僅供歷史對照,不可用於當前基準 EXE。"
+    },
+    {
+      "wrong_address": "0x027fc9 / [0x5411f] / [0x54117]",
+      "correct_address": "0x2ff01(總派送函式) / DAT_00054153(SFX table_ptr)",
+      "wrong_semantic_claimed": "第10/11輪(docs/data/battle_sfx_map.json round≤11)記載的『戰鬥招式資源載入函式入口』與其 SFX table_ptr 全域變數",
+      "discovered_date": "2026-08-20",
+      "discovery_method": "改用 Ghidra headless(-readOnly,FD2Analysis3)反組譯+decompile 交叉核對,取代已知有誤判風險的 tools/disasm_le.py。發現 0x027fc9 實際落在與 SFX 無關的選單迴圈函式 FUN_00027f4a 內;真正的攻擊/招式總派送函式是 0x2ff01,其上游 caller(0x1cff0/0x015311)位址本身在第11輪就已找對,只有這個中繼位址是 disasm_le.py 解析錯誤產生的數字。",
+      "root_cause": "tools/disasm_le.py 在部分位址範圍反組譯出錯誤的指令邊界(另見 feedback_fd2_disasm_le_range_bug 記憶),第10/11輪手動反組譯時沿用了這個工具的錯誤輸出。",
+      "affected_docs": [
+        "docs/data/battle_sfx_map.json (round 10/11 段落,已標註 superseded 但保留)"
+      ],
+      "correction_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "correction_section": "第 12 輪",
+      "still_pending": "已修正完成(commit ba5fc4b2)。round10/11 舊位址段落刻意保留在 battle_sfx_map.json 供歷史對照,一律以 round12_verified_chain 為準。remake atkAnim 現有 SFX hook 點(#48/64/88)尚未接上本輪驗證過的真實資源家族(#82-90)。"
+    },
+    {
+      "wrong_address": "N/A(系統性規律,非單一位址)",
+      "correct_address": "新版(0x7xxxx) = 舊版(0x5xxxx) + 0x25214,唯 crit 表例外(見上)",
+      "wrong_semantic_claimed": "在 2026-08-14 改用新版 EXE(509158B)為基準之前,docs/knowledge-base/03-exe-and-data-structures.md 記載的資料表 offset 是對舊版(357074B,已遺失)EXE 有效的位置——若直接沿用會讀到錯誤資料。",
+      "discovered_date": "2026-08-14 ~ 2026-08-20(分批確認)",
+      "discovery_method": "doc03 第4輪確認程式碼段(text section)在新舊版之間位址不變,只有資料表位移了;第5輪對5張表逐 byte 核對確認固定位移量 0x25214;第6輪(2026-08-20)補完剩餘表格並修好 tools/dump_exe_tables.py 的 ANCHORS。",
+      "root_cause": "兩個發行版本(新版=1998重打包版)的資料段在檔案內被整體平移,程式碼段未受影響——這是版本差異,不是任何人的錯誤,但『舊版 offset 對新版無效』這個事實在專案早期文件裡沒有被充分強調,曾導致 dump_exe_tables.py/export_acting_resources.py 兩個工具在本 session 各自撞到同一類 bug。",
+      "affected_docs": [
+        "docs/knowledge-base/03-exe-and-data-structures.md",
+        "tools/dump_exe_tables.py",
+        "tools/export_acting_resources.py"
+      ],
+      "correction_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+      "correction_section": "§B(2026-08-14/08-19/08-20 三輪批注)",
+      "still_pending": "已成為本專案的標準換算捷徑,新增工具引用資料表 offset 時應直接查 verified_addresses.json 的 file_offset 條目,不要再手動套公式重算。"
+    }
+  ]
+}

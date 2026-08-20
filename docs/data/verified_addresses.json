@@ -1,0 +1,472 @@
+{
+  "_meta": {
+    "purpose": "統一的「已驗證位址資料庫」——收錄 FD2.EXE 反組譯過程中已確認語意的位址,解決同一 offset 散落在多個 .py/.go/.md 檔案裡各自硬編碼、沒人同步更新的問題。",
+    "schema_version": 1,
+    "created": "2026-08-20",
+    "reference_exe": {
+      "file": "FD2.EXE",
+      "edition": "新版(1998 重打包版)——目前唯一可用基準,舊版(357074 bytes)已遺失",
+      "size": 509158,
+      "md5": "33464c81e6a364fd0660141139aa8e6e",
+      "source": "docs/data/fd2-reference-files.json"
+    },
+    "linear_or_file_offset_convention": [
+      "'linear' = 程式碼(text section)或執行期資料全域變數位址。已由 doc03(2026-08-14 第4輪)證實:新舊版 EXE 在 0x10000-0x40000 這段程式碼區位址與機器碼位元組完全相同,可直接沿用舊版反組譯位址,不需每次用錨定特徵重新定位。",
+      "'file_offset' = 內嵌資料表(0x5xxxx/0x7xxxx 範圍)在 FD2.EXE 檔案內的 byte offset。這些會隨 EXE 版本改變:新版(0x7xxxx)= 舊版(0x5xxxx) + 0x25214(9 張表裡 8 張精確符合此固定位移,crit 表例外,見 known_address_errata.json)。使用前務必確認是對哪個版本的 EXE。"
+    ],
+    "how_to_query": "python tools/query_verified_address.py <地址,如 0x14818> 或 python tools/query_verified_address.py --search <關鍵字>",
+    "how_to_maintain": "每次訂正/新增一個位址語意時,在本檔追加/更新一筆條目;若是「舊位址錯誤→新位址」的勘誤,額外在 known_address_errata.json 記一筆。詳見 docs/knowledge-base/98-tooling-infrastructure.md。"
+  },
+  "entries": [
+    {
+      "address": "0x14818",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00014818(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector) — AoE/LOS 目標陣列上游生成器。rangeByte<0x10 時呼叫 0x4e390+0x4e42c 遞迴 flood-fill 塗地圖緩衝區(圓形/範圍型);>=0x10 時改走列/欄門檻掃描(直線/十字型)。最後統一掃描全部 unit,篩存活+地圖緩衝區命中+record[+6] 陣營篩選器,把 roster index 寫進 outBuf。body 0x14818..0x149f7,480 bytes。本體沒有額外 LOS/視線判定。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§6.4",
+      "verified_date": "2026-08-20",
+      "notes": "callers: 0x18d8c(攻擊環)/0x1bbdc(道具)/0x1cff0(法術/指令) 三條玩家路徑,另 5 個 caller 為敵方 AI 決策路徑(doc11)。第一次呼叫用 record[+3](選取範圍)、第二次用 record[+4](生效範圍),特例 commandId==0x1e 改用 0x149f8。方法:Ghidra headless -readOnly FD2Analysis3,腳本見 docs/data/fd2_14818_*_2026-08-20.txt。"
+    },
+    {
+      "address": "0x115b6",
+      "linear_or_file_offset": "linear",
+      "semantic": "攻擊環/道具/法術三條玩家路徑共用的唯一互動游標/確認迴圈。入口 EDI=targetCode(0-6,即 record+6)、EBP=候選陣列元素數。方向鍵(0x48/0x4a/0x4b/0x4d/0x50)移動游標完全不參照候選陣列、不做任何合法性判斷;確認鍵(0x39/0x1c)先查地圖緩衝區 byte(==0xff 拒絕、==4 直接接受),否則呼叫 0x14742 做唯一一次合法性判定。body 0x115b6..0x117e6,335 bytes。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/57-ui-evidence-matrix.md",
+      "source_section": "UI-04 不可用目標灰化",
+      "verified_date": "2026-08-20",
+      "notes": "9 個呼叫點全部落在 0x18d8c/0x1bbdc/0x1cff0 三個玩家 UI caller 內(另加 0x18981 是 0x18d8c 的外層 wrapper)。結論:原版沒有「不可用目標灰化」UI 元素,合法性只在確認出手那一刻判定一次。"
+    },
+    {
+      "address": "0x14742",
+      "linear_or_file_offset": "linear",
+      "semantic": "0x14742(cursorX, cursorY, radius, 0, targetCode) — 目標合法性判定完整本體。對全部 unit 逐一算與游標的曼哈頓距離(兩次 0x37932 abs 相加),死亡/inactive 或距離>=radius 者跳過,依 targetCode 做陣營篩選(0→camp==0接受,1→!=0,2→==1,3→==2),命中計數器遞增,回傳計數(非零才合法)。body 0x14742..0x14817,214 bytes。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/57-ui-evidence-matrix.md",
+      "source_section": "UI-04 §3",
+      "verified_date": "2026-08-20",
+      "notes": "全域僅一個呼叫點 0x1175f(在 0x115b6 內)。拒絕時只是 JMP/JZ 回讀下一輸入事件,沒有任何專屬繪製/調色盤/音效呼叫。"
+    },
+    {
+      "address": "0x1cff0",
+      "linear_or_file_offset": "linear",
+      "semantic": "Generic native command 兩段式資料契約入口:actor/record+3 candidate list → confirmed candidate → confirmed cell/record+4 final-effect list。0x1d43c 處呼叫 0x2ff01(commandId/actorIdx/targetCount/targetArrayPtr 四個實參逐指令核對)。commandId 來自 byte ptr [ESP+[0x53c57]+0xd0]。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/91-worklist.md",
+      "source_section": "RE-* generic native command two-stage data contract",
+      "verified_date": "2026-08-19",
+      "notes": "不涵蓋 0x17/0x1e special branches、MP/effect/renderer,且尚未接 UI。"
+    },
+    {
+      "address": "0x2ff01",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_0002ff01(actorIdx, commandId, targetCount, targetArrayPtr) — command-specific presentation/state 大型 dispatcher。body 0x2ff01..0x30e24,3876 bytes。依 commandId 分三路:0-8 走 AoE 套用迴圈(0x11eb0/0x2eb9f/0x311e5 等 step 呼叫);0x18 或 >0x1b 呼叫 0x2cf30(derived-strike);>=0x20 呼叫 0x2d80d。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§6.3",
+      "verified_date": "2026-08-20",
+      "notes": "曾被誤記為 0x2a6bd,見 known_address_errata.json。呼叫點:0x1d43c(在 0x1cff0 內)、0x015400(在 0x015311 內,doc36 round12 交叉確認)。"
+    },
+    {
+      "address": "0x2cf30",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_0002cf30 — ID24/28/29/31 derived-strike 宿主函式。trunc(actorAP*multiplier/10)-DP,倍率 15/20/12/18 分別對應 command 24/28/29/31,結果送入 0x1c81f HP writer。ID24 先經 0x2b659 以 0x1ca89(actor,0x18) 扣 record24+5 MP。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "表第 6 項 / §6.3",
+      "verified_date": "2026-08-20",
+      "notes": "曾被誤記為 0x276ec,見 known_address_errata.json。remake 對照:native_command24.go ResolveNativeCommandDerivedStrikeDamage。"
+    },
+    {
+      "address": "0x2d80d",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_0002d80d — commandId>=0x20 分支宿主函式。同樣走 id+0x21 → 兩段式 FDOTHER.DAT 載入模式,最終存入 DAT_00054153;但第二個 index 來源是這個函式自己的堆疊暫存區,不是 0x526bc 全域表。",
+      "confidence": "inferred",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 12 輪 round12_verified_chain",
+      "verified_date": "2026-08-20",
+      "notes": "未展開,超出多輪任務範圍。index 來源未追出。"
+    },
+    {
+      "address": "0x027fc9",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00027f4a 內部的一條指令位址(選單方向鍵游標邏輯),與戰鬥 SFX 派送完全無關。",
+      "confidence": "disputed",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 12 輪(位址勘誤第三輪)",
+      "verified_date": "2026-08-20",
+      "notes": "第10/11輪曾誤記為「攻擊/招式總派送函式」,已由 Ghidra headless 反組譯+decompile 交叉核對推翻;真正的總派送函式是 0x2ff01。詳見 known_address_errata.json。"
+    },
+    {
+      "address": "0x1c81f",
+      "linear_or_file_offset": "linear",
+      "semantic": "共用 HP writer:直接讀/減寫 unit+0x40(current HP)並向下 clamp 0。傷害與治療皆經此函式。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/03-exe-and-data-structures.md",
+      "source_section": "§A unit struct +0x40",
+      "verified_date": "2026-08-19",
+      "notes": "remake 對照:native_command_damage.go ResolveNativeCommandDamage。"
+    },
+    {
+      "address": "0x1c75e",
+      "linear_or_file_offset": "linear",
+      "semantic": "法術/道具傷害計算入口:base=recordDmg*resist_raw/10,resist_raw 表(word_51f96,loaded-view 0x51d96)與職業魔法抗性表(file 0x76FAA)交叉核對一致,結果送入 0x1c81f。unit+0x20(class ID)用作 command damage multiplier table index。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "表第 7 項",
+      "verified_date": "2026-08-19",
+      "notes": "接續呼叫 0x1c81f。"
+    },
+    {
+      "address": "0x1c7ed",
+      "linear_or_file_offset": "linear",
+      "semantic": "法術/道具命中率判定:呼叫 0x4e893 做 RNG%100<record[+2] 檢查。與物理 HIT-EV 完全獨立。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "表第 8 項 / §6.1",
+      "verified_date": "2026-08-19",
+      "notes": "record[+2] 逐 ID 實際數值尚未 dump 出來跟 spell.json 的 hit 欄比對——remake magic.go 的「hit=0 視為必中」特例是否等價於 record[+2]=100 仍未確認(表第 8 項標記 ◐ 部分一致)。"
+    },
+    {
+      "address": "0x4e893",
+      "linear_or_file_offset": "linear",
+      "semantic": "RNG%100<threshold 的通用命中率檢查函式,被 0x1c7ed 呼叫。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "表第 8 項",
+      "verified_date": "2026-08-19",
+      "notes": null
+    },
+    {
+      "address": "0x2f7b6",
+      "linear_or_file_offset": "linear",
+      "semantic": "物理攻擊命中率(HIT-EV)% 分支:(uint)HIT-(uint)EV 下溢 → reinterpret 成負數 → 恆 miss(unsigned underflow)。同時是攻擊 EXP 寫入點之一(DAT_00053ec8 累加)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "表第 4 項 / §5.1",
+      "verified_date": "2026-08-19",
+      "notes": "remake combat.go rollsHitPct:pct<=0→false,提前預判到這個 native unsigned 下溢行為,完全一致。"
+    },
+    {
+      "address": "0x1c916",
+      "linear_or_file_offset": "linear",
+      "semantic": "HP 恢復的 EXP 寫入點(DAT_00053ec8 累加)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": "與攻擊 EXP(0x2f7b6)並列為兩個已知的獨立 EXP 累加公式實作之一。"
+    },
+    {
+      "address": "0x53ec8",
+      "linear_or_file_offset": "linear",
+      "semantic": "DAT_00053ec8 — 累積計數(推測為 EXP),累加單位欄位 +0x21 之值,clamp 99。除已知的攻擊(0x2f7b6)/HP恢復(0x1c916)外,另有 6 個獨立寫入點,全部共用同一個 levelFactor = target.+0x21(等級),若 target.+0x20(class) 落在 (8,0x19) 區間則 +30。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": "非重製核心(回合用[0x53bef]、戰鬥用公式)→低優先/可選,不阻塞。MP 恢復(0x1c9dd)完全沒有出現在此 DAT 的 xref 清單裡——native 端 MP 恢復不給經驗值。"
+    },
+    {
+      "address": "0x22721",
+      "linear_or_file_offset": "linear",
+      "semantic": "魔刃(AP+15%)EXP 寫入點:DAT_00053ec8 += levelFactor*2,對每個成功目標各加一次(迴圈內)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": "remake 已於 commit efcf12ee(2026-08-20)接進 ExecuteNativeCommandModifier。"
+    },
+    {
+      "address": "0x22866",
+      "linear_or_file_offset": "linear",
+      "semantic": "魔鎧(DP+15%)EXP 寫入點:結構與 0x22721 幾乎逐行相同,欄位從 +0x48/+0x22 換成 +0x4a/+0x23。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": null
+    },
+    {
+      "address": "0x22997",
+      "linear_or_file_offset": "linear",
+      "semantic": "風行(HIT+15/EV+15)EXP 寫入點:同結構,欄位 +0x4c/+0x4e/+0x24。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": null
+    },
+    {
+      "address": "0x2218a",
+      "linear_or_file_offset": "linear",
+      "semantic": "相對定位術/瞬間移動(item type23,NativeRelocationDestinationAllowed)EXP 寫入點:DAT_00053ec8 += levelFactor*10,唯一不帶迴圈的版本,只對單一 param_3 指定 target 計一次。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.A",
+      "verified_date": "2026-08-19",
+      "notes": null
+    },
+    {
+      "address": "0x1e292",
+      "linear_or_file_offset": "linear",
+      "semantic": "職業等級上限特例分支:只比對 record+7(portrait,非職業 class)是否為 0x1e/0x1f(蓋亞/渥德),函式內沒有第三分支——封閉列舉。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§5.1.D",
+      "verified_date": "2026-08-19",
+      "notes": "同一函式也用來取 growth row 的 learn_idx,經 0x4e4a2 取得 0x626b3+idx*12 升級學招表。"
+    },
+    {
+      "address": "0x1ca89",
+      "linear_or_file_offset": "linear",
+      "semantic": "0x1ca89(actor, commandId) — native command MP 交易:generic command 在 candidate array 建立後、逐 target effect 前以 record byte+5 從 actor runtime +0x44 扣 MP。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/91-worklist.md",
+      "source_section": "native command MP transaction",
+      "verified_date": "2026-08-18",
+      "notes": "remake: SpendNativeCommandMP,以 raw 0..255 cost 實作,invalid/MP不足時不變更。官方 IDA 0x21227→0x1CA89 已證實。"
+    },
+    {
+      "address": "0x34894",
+      "linear_or_file_offset": "linear",
+      "semantic": "push 0x4; call 0x3702f; ...(idx*5<<4=idx*0x50) ; mov al,[edx+eax+5]; and al,1 — 讀取 record byte[idx*0x50+5]&1(NativeRecordByte5Bit0,inactive/acted flag)的共用函式。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/26-per-chapter-event-handlers.md",
+      "source_section": "§7.1.1",
+      "verified_date": "2026-08-19",
+      "notes": "曾在 doc26 §1 表格與 doc40 誤記為 0x3453e,見 known_address_errata.json。全程式 xref 掃描確認共 8 個直接呼叫點:0x127c2/0x12a4a/0x12c47/0x12ca0/0x11682/0x1b63e/0x2a09f/0x11566。"
+    },
+    {
+      "address": "0x4df4c",
+      "linear_or_file_offset": "linear",
+      "semantic": "以 header 後的 4-byte cells 逐筆將 byte+3 初始化為 0xff(每一筆 cell 皆寫,非只有第一筆),再對 byte+2 mask 0x1f、byte+1 mask 0x3(read-modify-write)。迴圈次數 count=param_1[0]*param_1[2]。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續三十一",
+      "verified_date": "2026-08-20",
+      "notes": "先前 range_overlay.go 註解與 ch23_post.json beat 34 誤標為 0x4dbfc,已訂正,見 known_address_errata.json。精確呼叫位址 0x1097a(PUSH [0x53a51]; CALL 0x4df4c)。"
+    },
+    {
+      "address": "0x4dbfc",
+      "linear_or_file_offset": "linear",
+      "semantic": "另一個函式本體中段(緊接 POP EBX;POP ECX;POP EDI;POP ESI;POP EBP;RET 尾端之後幾個 bytes),不是任何函式的合法進入點。與 0x4df4c(FDFIELD/range-overlay byte+3 清空)是完全不同子系統——這個位址標籤曾被 ch22 exporter 誤判成一個過場演出呼叫目標。",
+      "confidence": "disputed",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續二十八 / 續三十一",
+      "verified_date": "2026-08-20",
+      "notes": "重要陷阱:0x4dbfc 這個數字在專案裡出現在兩種完全不同語境——(a) 早期(SESSION-HANDOFF 2026-07-28)文件描述『runtime byte+3 全填 0xff』的行為,實際函式是 0x4df4c,標籤打錯;(b) ch22 postbattle exporter 對某個間接呼叫的誤判產物,落在無關函式尾端,根本不是合法呼叫目標。兩者都不該再被引用為有效位址,一律換算為 0x4df4c 或直接視為 exporter 資料品質問題。"
+    },
+    {
+      "address": "0x24618",
+      "linear_or_file_offset": "linear",
+      "semantic": "ch21 postbattle unresolved native call site 之一(handler_binding 稽核 10 個去重獨立位址之一)。",
+      "confidence": "inferred",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續三十",
+      "verified_date": "2026-08-20",
+      "notes": "與 0x24b14/0x24bde/0x2189a/0x4dbfc(ch22)、0x24d22/0x11d40(ch23)、0x10652(ch22) 同批列出,詳細語意未逐一展開,僅完成去重枚舉。"
+    },
+    {
+      "address": "0x24a92",
+      "linear_or_file_offset": "linear",
+      "semantic": "ch23_post.json beat 34 的 call site。反組譯 CALL 指令 bytes 證實真正呼叫目標是 0x4df4c,不是 handler JSON 原記載的 0x4dbfc。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續三十一(commit 2b6d0722)",
+      "verified_date": "2026-08-20",
+      "notes": "remake/assets/cutscenes/handlers/ch23_post.json 已訂正 native_target/source.target;go build/test 全綠,無測試依賴該位址字面值。"
+    },
+    {
+      "address": "0x1b8a6",
+      "linear_or_file_offset": "linear",
+      "semantic": "raw occupied item count(constructor eight-slot flags)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/91-worklist.md",
+      "source_section": "RE-ITEM-AVAILABILITY-GATE-1B8A6",
+      "verified_date": "2026-08-18",
+      "notes": "remake: NativeInventoryAvailableCount,overlay 在八格 constructor flags 存在時以 bit7-clear count 決定 item disabled;len(Inventory) 僅是 legacy fallback。"
+    },
+    {
+      "address": "0x526bc",
+      "linear_or_file_offset": "linear",
+      "semantic": "DAT_00526bc — action_id→資源 index 的全域資料段起點(全域資料,非程式碼)。4 組資料在函式進入時複製到堆疊不同偏移:ESP+0xa4(action_id 0-9,SFX index,len10)、ESP+0xb0(12-21,len10)、ESP+0xb0(續)、ESP+0xbc(24-32,len9)、ESP+0x98(動畫內插步數,len10,與 SFX index 共用同一段原始資料但不同讀取語意)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 12 輪 round12_sfx_index_table",
+      "verified_date": "2026-08-20",
+      "notes": "raw bytes 見 docs/data/battle_sfx_map.json round12_sfx_index_table.raw_bytes_hex_from_0x526bc。action_id 0-9 → FDOTHER.DAT #82-90,已逐一驗證為合法 LLLLLL PCM 容器。action_id 10/11/22/23 落在表的未初始化缺口,語意不明。"
+    },
+    {
+      "address": "0x54153",
+      "linear_or_file_offset": "linear",
+      "semantic": "DAT_00054153 — 真正的 SFX table_ptr 全域變數,直接餵給 play_sfx_a(0x25a96)/play_sfx_b(0x25b45)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 12 輪",
+      "verified_date": "2026-08-20",
+      "notes": "取代第10/11輪誤記的 [0x5411f]/[0x54117],見 known_address_errata.json。"
+    },
+    {
+      "address": "0x25a96",
+      "linear_or_file_offset": "linear",
+      "semantic": "play_sfx_a——SFX 播放函式之一。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 9/10 輪(第12輪 decompile 交叉重驗)",
+      "verified_date": "2026-08-20",
+      "notes": null
+    },
+    {
+      "address": "0x25b45",
+      "linear_or_file_offset": "linear",
+      "semantic": "play_sfx_b——SFX 播放函式之二。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
+      "source_section": "第 9/10 輪(第12輪 decompile 交叉重驗)",
+      "verified_date": "2026-08-20",
+      "notes": null
+    },
+    {
+      "address": "0x792C0",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "物品功效表(item)起點,ANCHORS['item']。23B/物品,0xD7(215)筆。anchor bytes 0B 01 0A 00 5F 00。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "適用 509158B/md5 33464c81 新版 EXE。舊版(357074B,已遺失)offset 為 0x540AC,位移 +0x25214。native_item_effect_rows 的 raw runtime view 從 file 0x792C1(=ANCHORS+1)起,stride 0x17,對應 linear 0x602AD。"
+    },
+    {
+      "address": "0x7B3A4",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "商店出售表(shop)起點,ANCHORS['shop']。28B/章節。anchor bytes 80 81 84 A5 FF。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x56190,位移 +0x25214。"
+    },
+    {
+      "address": "0x7AA11",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "法術功效表(spell)起點,ANCHORS['spell']。7B/法術,0x24(36)筆:DA DA HT DS RN MP WH。anchor bytes 32 00 5A 05。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x557FD,位移 +0x25214。"
+    },
+    {
+      "address": "0x7ADB5",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "人物出場屬性表(character_defaults)起點,ANCHORS['char']。32×24B:RA CL LV HP MP MV CMD×4 IT×6 AP DP DX。anchor bytes 01 01 01 2A。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x55BA1,位移 +0x25214。索菲亞 idx11 IT[2]=0xD1(黃金徽章)已驗證。"
+    },
+    {
+      "address": "0x7B0B5",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "升級成長表(growth)起點,ANCHORS['growth']。11B/人,共 68 列(idx0-31 為 32 名角色基礎成長,idx32-67 共 36 列為轉職後 reroll/leveling 共用列,以 target portrait 0x20-0x43 索引)。anchor bytes 06 08 04 06。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x55EA1,位移 +0x25214。舊記載「66 列」已訂正為 68 列(舊記載只是使用者比對表當時只覆蓋 66 列,非表本身筆數)。"
+    },
+    {
+      "address": "0x7B6C7",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "升級學招表(command_learn)起點,ANCHORS['learn']。12B/項(最多六組 required_level/command_id pair),20 筆。anchor bytes 05 11 09 01。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x564B3,位移 +0x25214。0x1e292 取 growth row 的 learn_idx,經 0x4e4a2 取得 0x626b3+idx*12(runtime linear)。"
+    },
+    {
+      "address": "0x76FAA",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "職業魔法抗性表(resist)起點,ANCHORS['resist']。4B/職業,26 職業(01-1A)。anchor bytes 0A 00 00 00 0A 00 00 00。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x51D96,位移 +0x25214。與 0x1c75e 使用的 resist_raw 表(word_51f96,loaded-view 0x51d96)交叉核對一致。"
+    },
+    {
+      "address": "0x774BC",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "職業暴擊率表(crit)起點,ANCHORS['crit']。1B/職業,26 職業。anchor bytes 05 03 03 05。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "9 張表中唯一的位移例外(見 known_address_errata.json):不是 +0x25214,實測與該固定位移理論值(0x774AF)仍差 0xD byte,真實位置由 anchor byte 全檔案搜尋鎖定。舊版 offset 記載為 0x5219B。"
+    },
+    {
+      "address": "0x7AB0D",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "敵/友單位每級成長表(unit)起點,ANCHORS['unit']。10B/列:RA CL HP(u16) MP AP DP DX MV EX,60 列(6 友+54 敵)。anchor bytes 01 02 12 00 00 05。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "ANCHORS dict",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x558F9,位移 +0x25214。表為「每級成長值」,出場即時 HP/MP = 該列數值×等級(非 base+(LV-1)×growth)。大惡魔(0x7ACB1 列)AP 成長值正確為 33,非外部表格轉錄的 31。"
+    },
+    {
+      "address": "0x7A659",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "native_movement_cost_rows(terrain-cost)表起點。20B/selector,29 個 selector,對應 linear 0x61646-0x61889。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "dump_native_movement_cost_rows",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x55445,位移 +0x25214,2026-08-20 修正(先前寫死舊版 offset,未經 ANCHORS 間接引用)。與 0x7A89D(class_equip_types)恰好首尾相接、零間隙,佐證位移量正確。"
+    },
+    {
+      "address": "0x7A89D",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "class_equip_types(職業×item.type 六欄白名單)表起點,對應原版 0x1c1c3 讀取邏輯。7B/職業(首 byte 常數 1,後六個 item.type slots),29 職業。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "dump_class_equip_types",
+      "verified_date": "2026-08-20",
+      "notes": "舊版 offset 0x55689,位移 +0x25214,2026-08-20 修正(同上,先前寫死舊版 offset)。"
+    },
+    {
+      "address": "0x602AD",
+      "linear_or_file_offset": "linear",
+      "semantic": "0x4e56c 回傳的 raw runtime item-row 視圖起點(linear),stride 0x17(23),對應 file 0x792C1(=item ANCHORS+1)。比 dump_item 的 normalized/攻略視圖向後一 byte。",
+      "confidence": "verified",
+      "source_doc": "tools/dump_exe_tables.py",
+      "source_section": "dump_native_item_effect_rows",
+      "verified_date": "2026-08-20",
+      "notes": "count=0xD7 只代表目前可追蹤的已知 item ID 前綴,不宣稱 native table 在此結束。"
+    },
+    {
+      "address": "0x7B7EC",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "acting resources directory offset(106-entry acting directory)。tools/export_acting_resources.py DIRECTORY_OFFSET。",
+      "confidence": "verified",
+      "source_doc": "tools/export_acting_resources.py",
+      "source_section": "module header",
+      "verified_date": "2026-08-20",
+      "notes": "2026-08-20 由舊版常數 0x565D8(對應已遺失的 357074B 版)重新定位到新版基準,見 known_address_errata.json。由 byte-identical resource-0/resource-99 frame payload 訊號比對+聯立求解得出,非簡單固定位移。"
+    },
+    {
+      "address": "0x79014",
+      "linear_or_file_offset": "file_offset",
+      "semantic": "acting resources data offset。tools/export_acting_resources.py DATA_OFFSET。",
+      "confidence": "verified",
+      "source_doc": "tools/export_acting_resources.py",
+      "source_section": "module header",
+      "verified_date": "2026-08-20",
+      "notes": "2026-08-20 由舊版常數 0x53E00 重新定位到新版基準,見 known_address_errata.json。全部 106 筆解析乾淨且與既有 map32.json 逐 byte 相符,交叉驗證。"
+    }
+  ]
+}
