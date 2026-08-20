@@ -94,7 +94,7 @@ handler 裡把實際視窗尺寸捨入到最近的整數倍。
 | UI-01 title/menu | 原版 `0x1fe2c` scan-code loop（↑/↓ wrap；Enter/Space/`0xe0`/`0x52` confirm）、`0x25ebb` return dispatcher、DOSBox oracle `docs/figures/title-original-dosbox.png` 已固定 START／LOAD／CONTINUE 與 title cursor；四槽 selector、valid-save typed restore 與 indexed 畫面已接。CONTINUE 的 FDFIELD 控制映像、battle-local event state、current-runtime-order selector rebuild，以及標題 caller 的 opening／interactive range mode、HUD gate B／anchor 已閉合成唯讀 preflight；後續 map timing、live field、runtime units、future-group transaction 與未改寫 chapter0 pending roster 亦有嚴格 consumer | partial | 第三主選單 CONTINUE 的 production owner 仍缺動態 turn-writer／group-formula 的通用 pending-group binding，及 `0x117E7` 對應的正式 `Game` controller handoff；另缺刪除／覆寫與完整 boot 畫面差分 |
 | UI-02 field | map/camera/cursor/unit/HUD Draw 約 3441–3568、4571、4595；camera、absolute/visible cursor、HUD anchor/gates 與 FDOTHER #130 panel 已有直接原版資料流；ch26 event61 所需 view/HUD 已達 E1。ch27 event62 已接向左一步第七拍 selector0，能由完整 raw row 與 `0x2066E` 已證實的新戰鬥回合初始值1啟用 event63；`sub_1A813(0)` 的敵軍 AI 前 owner、兩次 0x35822 增援、delta255 全白／delta0 恢復及 AI continuation 已接正式 runner。ch26_pre 返回 battle_ch27 的 view `(camera 9,49; cursor 14,54; visible 5,5)`、selector0 與 inherited HUD 已由 IDA／Capstone 閉合並接線；gate A 從存檔、anchor 從程序持續狀態、gate B 從 controller 取得，不猜章節常數。event63 的 indexed regression 由雜湊綁定 `NativeJoinConstructorTable` 建立凱麗 fresh raw `+0x42=151`，不再手填 fixture，也不由章節近似 HP 反推。ch00 的 `0x32999` 已以 FDOTHER #9 接12次索引呈現、pass6/7/8 snapshot 重建及 pass1 #95，兩次各12幀後能沿正式 handler 進入戰鬥、戰後、城鎮與整備。ch01 global event1/2 又驗證 turn4/5 各12次呈現後才執行 ACTING(3/4)，event2 對話不會越過 acting；缺 acting 資源時不發布 roster/cache/turn continuation。這些目前是 E1 決定性路徑，不是同狀態 DOSBox 畫面 E2 | partial | 除 ch26／ch27 event62/63／ch00／ch01 event1/2 E1 切片外，ch02+ 的逐章 dynamic view/gates/anchor producer、ch27 一般玩家／CONTINUE 同 roster/event/tick DOSBox 像素差分、該時點角色 raw record 的實際值，以及 `0x12c0d` 的 exact raw lookup predicate/order；另補 ch00 與 ch01 event1/2 同 camera/roster/pass 的原版逐幀比較 |
 | UI-03 action menu | Docker Capstone `0x18890` + `0x18d8c`：↑0 attack、←1 spell、→2 item、↓3 wait/field interaction；native command grid每欄四列。item branch `0x1bbdc` 的compact兩欄四列input、`0x17eef/0x17fc0/0x184c0`完整 indexed compositor與12-frame三區clip schedule已有 Ebiten adapter；tracked item Enter transaction已接。`0x19953` 是另一 selector | partial | end-turn entry、indexed effect presentation、DOSBox visual diff與缺archive UX |
-| UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 的 two-stage targets、observed type5–24 effect dispatch 已閉合。item entry materialize `row[+0x12]+2`；first selector return後grid reset且selector回1。type23 destination把literal target code6傳給`0x115b6`，不是global selector6；兩層取消都回item panel。remake已接tracked transaction、occupancy/class/race/29×20 cost/terrain gate | partial | native argument↔weapon min/max mapping、AOE/LOS、不可用目標灰化、indexed item/effect presentation；global selector6的production owner仍待 |
+| UI-04 target/range | `0x1cff0` + `0x149f8` 證實 command record `+3/+4/+6` 參與 target-candidate geometry；`0x1bbdc` item case 0 的 two-stage targets、observed type5–24 effect dispatch 已閉合。item entry materialize `row[+0x12]+2`；first selector return後grid reset且selector回1。type23 destination把literal target code6傳給`0x115b6`，不是global selector6；兩層取消都回item panel。remake已接tracked transaction、occupancy/class/race/29×20 cost/terrain gate。**2026-08-20**：AoE 候選陣列上游生成器 `0x14818` 全鏈路（flood-fill/十字掃描/陣營篩選）已完整反組譯關閉（doc27 §6.4），本體亦確認無額外 LOS 判定（doc11 本輪段落）；本輪（見下「不可用目標灰化」小節）進一步窮盡 `0x14818` 全域 call-xref，鎖定玩家 UI 唯一消費端 `0x115b6`，逐指令反組譯後確認**原版沒有「灰化」視覺元素**——合法性只在按確認鍵當下用單一呼叫點 `0x14742` 判定一次，游標可自由移動、不合法確認會被靜默拒絕、不觸發任何額外渲染/音效分支 | partial | native argument↔weapon min/max mapping、indexed item/effect presentation；global selector6的production owner仍待。AOE／LOS／不可用目標灰化三項本輪已閉合（見下），不再是開放問題 |
 | UI-05 dialog | dialog Draw 約 3590–3686；`dlgAdvance` 有 page/scroll state；ch01 original oracle `docs/figures/ch01-dialogue-original-dosbox.png` 固定左肖像下框、文字、page indicator | partial | 每種 upper/lower portrait anchor、control-code renderer、native clipping |
 | UI-06 HUD | native map HUD `0x1acf3` 的 panel→terrain→AP→DP→optional unit icon→HP 已由 `BlitNativeMapHUD→ComposeNativeFrame` 接入 ch01 production full frame；display gates、persistent anchor、LMI1 #130／hex #0x83/#0x84、digit banks與FDICON selector均有 regression。`0x11cfa`證實HUD base是`work+0x8088`。FD2.SAV 初始快照為 camera `(1,13)`／absolute cursor `(8,17)`／visible `(7,4)`；原版錄影434.5秒的較晚比較幀則與remake對齊 `(1,13)`／`(8,15)`／`(7,2)`、tree icon及`A -05/D +10`。全 33 圖現具雜湊驗證後同步的 composition byte+3 與 terrain control；ch01／ch26／ch27 已改用 `native_map_hud_inherited`：gate A 由 custom save／native chapter restore 保存，anchor 在程序內持續，gate B 只接受已證實的 controller entry 1。event63 production regression 已由正式 JOIN table 提供 persistent raw record 並進 indexed path；#22仍只在 native admission 失敗時 fallback | partial | 除 ch26／ch27 E1 切片外，ch02+逐章動態 view/gates/anchor provenance、ch27 未修改一般玩家／CONTINUE 同一 roster/event state 的 pixel diff、`0x12c0d` exact raw lookup predicate/order；raw globals高階名稱仍不猜 |
 | UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開。主迴圈直接指令、scenario `chNN→map(N-1)` 與 handler `chNN_post→set_chapter(N+1)` 共同證實玩家戰鬥 N 使用 raw `ch(N-1)_post`。13個既有同號錯接已全數清除；**2026-08-19 重跑 `tools/audit_postbattle_binding_gates.py`
@@ -142,12 +142,20 @@ min/max，不是「武器」的 min/max**。另外核對 `docs/knowledge-base/32
 撤回**過一次「range_min/range_max」的命名（該文件原話：「這些都不足以反推出通用武器射程
 或 normalized `AtkMin/AtkMax`」），remake 目前改用獨立驗證的 `weapon_range.json`，不讀
 raw `+0x0b/+0x0c`。本輪重新確認這個撤回仍然是目前最後結論，沒有新證據能重新命名這兩個
-byte。**AOE（範圍效果半徑）／LOS（視線阻擋）／不可用目標灰化的視覺回饋**三項在 doc32／
-doc57 現有內容中完全沒有對應章節——`0x14818` 的 `mode<0x10` 排除 marker cells／`mode>=0x10`
-走十字形 clear 分支只回答了「候選格集合怎麼算」，沒有回答「LOS 是否真的擋路徑」或「UI
-怎麼把不可選格畫成灰色」；本輪未找到任何可作為下一步起點的新位址線索，維持 partial，
-留給下一輪專門排查（建議起點：`0x1ceed` command grid renderer 的 disabled-item 繪製路徑，
-若存在的話應該就在附近，本輪未及查證）。
+byte。**2026-08-20 更新——AOE／LOS／不可用目標灰化三項已全數閉合，不再是開放問題**：
+AOE 候選陣列上游生成器 `0x14818` 全鏈路（`record[+3]`/`[+4]` → flood-fill/十字掃描 →
+陣營篩選 → unit-index 陣列）已由 doc27 §6.4 用位址級反組譯完整追出；同一天稍早的 doc11
+段落窮盡反組譯 `0x14818` 全部 480 bytes 本體，確認除已知的 Manhattan/十字距離規則與
+flood-fill 佔用阻擋外，函式內完全沒有第三種呼叫（沒有 raycast、沒有呼叫任何地形 gate
+函式），即「LOS 是否擋路徑」已有明確答案：**`0x14818` 本體沒有 LOS 判定**。「不可用目標
+灰化」則由本輪（見下方新增小節「UI-04 不可用目標灰化」）窮盡 `0x14818` 的全域 call-xref
+（8 個 caller 函式、17 個呼叫點）解決：玩家 UI 路徑（`0x18d8c`／`0x1bbdc`／`0x1cff0`，其餘
+5 個 caller 皆為 doc11 已證實的敵方 AI 決策路徑、無玩家可見 UI）全部匯流到同一個互動
+游標／確認迴圈 `0x115b6`，其唯一的合法性判定呼叫 `0x14742`（全域僅一個呼叫點，
+`0x1175f`）只在按下確認鍵那一刻執行一次；方向鍵游標移動（`0x11b48`/`0x11b9b`/`0x11c59`/
+`0x11bfa`）完全不參照候選陣列或呼叫任何合法性判定，游標可自由移到地圖任何格；不合法
+確認被靜默拒絕（跳回同一個「讀下一個輸入」入口，跟按任何其他鍵一樣，沒有專屬分支）。
+**結論：原版沒有灰化這個 UI 元素**，合法性只在出手確認當下判定一次。
 
 **L1138 — UI-03 end-turn entry**：`91-worklist.md` 稽核記錄與 doc58 都指向同一個未閉合點——
 doc58「續 N」的一次 live DOSBox-X 觀測已確認選單結構（上=系統選單/左=行軍/右=設定/下=END，
@@ -414,3 +422,106 @@ selector effect trace，故不代表所有已學 command 已有可執行 remake 
 其內層 `0x4e16e` 讀 tile flag 與該 record 的 byte table 後決定是否擴張。故目前可用的
 E0 模型是 **seed mode + table + terrain/cost gate + marker + unit filter**；尚不可把 target highlight
 reducer 成單一菱形或宣稱其完整路徑／LOS 規則。
+
+### UI-04 不可用目標灰化——窮盡 `0x14818` caller xref，結論「原版沒有灰化」（2026-08-20）
+
+> **背景**：UI-04 row 長期標記「AOE/LOS/不可用目標灰化」完全沒有證據鏈，是矩陣裡少數
+> 從未被真正調查過的項目。同一天稍早 doc27 §6.4 已完整追出 AoE 目標陣列上游生成器
+> `0x14818`（依 spell/item record `[+3]`/`[+4]` 分流成 flood-fill 圓形／十字直線兩條路，
+> 收集陣營篩選後的 unit-index 陣列），doc11 本輪段落亦窮盡反組譯其 480-byte 本體確認無
+> 額外 LOS 判定。本節任務：對 `0x14818` 做**全域 call-xref 掃描**（不只看已知的
+> `0x2ff01` 攻擊執行路徑），找出是否有另一個 caller 是在**選單顯示/游標移動階段**呼叫
+> （而非實際出手階段），並反組譯它如何把候選結果轉成 UI 呈現。
+>
+> **方法**：純靜態、唯讀 Ghidra headless（`analyzeHeadless -readOnly -noanalysis`，
+> `FD2Analysis3` 專案）。腳本：`ProbeUI04Xrefs0820.java`（call-xref 掃描）、
+> `ProbeUI04CursorLoop0820.java`（`0x115b6`/`0x14742` 本體逐指令反組譯）、
+> `ProbeUI04Tail0820.java`（`0x14742` 收尾、`0x12d7b`、`0x11b48` 逐指令反組譯），皆存於
+> `FD2_ghidra_projects/`；合併輸出見
+> [`fd2_14818_callers_and_115b6_disasm_2026-08-20.txt`](../data/fd2_14818_callers_and_115b6_disasm_2026-08-20.txt)。
+
+#### 1. 全域 call-xref：`0x14818` 共 8 個 caller 函式、17 個呼叫點
+
+逐一核對每個 caller 函式的角色：
+
+| caller 函式 | 呼叫點 | 角色 |
+|---|---|---|
+| `FUN_00018d8c`(`0x18d8c`) | `0x18e25`、`0x18f6a` | 玩家 UI——「指令環攻擊」action-ring dispatcher（doc10/doc13 已證）|
+| `FUN_0001bbdc`(`0x1bbdc`) | `0x1bc3c`/`0x1bd43`/`0x1bd93`/`0x1becf` | 玩家 UI——item two-stage target（RE-ITEM-TWO-STAGE-TARGET-1BBDC 已證）|
+| `FUN_0001cff0`(`0x1cff0`) | `0x1d1c9`/`0x1d211`/`0x1d2bf`/`0x1d32a`/`0x1d38e` | 玩家 UI——一般 command（法術/道具）dispatcher（doc27 §6.4 已證）|
+| `FUN_00014237`(`0x14237`) | `0x14448` | 敵方 AI——物理落點候選枚舉（doc11 已證，`unit[+0x34]&0xf` 狀態機閘門）|
+| `FUN_00015055`(`0x15055`) | `0x15114` | 敵方 AI——法術執行演出流程（doc11/doc27 §6.4 已證，非玩家路徑）|
+| `FUN_00015311`(`0x15311`) | `0x15381` | 敵方 AI——執行結果分派（doc11/doc36 已證，`0x2ff01` 的另一個 caller，但走 AI 閘門）|
+| `FUN_0001567e`(`0x1567e`) | `0x1575a`/`0x157d4` | 敵方 AI——道具 command 預選（doc11 已證）|
+| `FUN_0001598a`(`0x1598a`) | `0x15aaa` | 敵方 AI——command mask 預選（doc11 已證）|
+
+即：**只有 3 個 caller 函式是玩家可見 UI 路徑**（`0x18d8c`／`0x1bbdc`／`0x1cff0`），其餘 5
+個全部是 doc11 已定案、由 `0x13a9f` 依 `unit[+0x34]&0xf` 狀態機呼叫的敵方 AI 決策鏈，
+沒有玩家可見的選單/游標渲染。窮盡這 17 個呼叫點後，**沒有找到任何額外的「選單顯示/
+游標移動階段專屬」caller**——3 個玩家 UI caller 全部都是「先呼叫 `0x14818` 取得候選陣列、
+緊接著呼叫 `0x115b6` 做互動確認」的同一種模式（見下）。
+
+#### 2. `0x115b6`：玩家路徑唯一共用的游標/確認迴圈
+
+對 `0x115b6` 做同樣的 call-xref 掃描，得 9 個呼叫點，全部落在上述 3 個玩家 UI caller
+函式內（外加 `FUN_00018890`@`0x18981`，是 `0x18d8c` 的外層 wrapper，直接呼叫 `0x115b6`
+而不自己呼叫 `0x14818`）——**`0x115b6` 是攻擊環/道具/法術三條玩家路徑共用的唯一互動
+游標/確認迴圈**，是回答「合法目標怎麼呈現給玩家」的正確位置。
+
+逐指令反組譯 `0x115b6..0x117e6`（335 bytes）結構如下：
+
+- **入口**：`EDI`=targetCode（`0`-`6`，即 record `+6`）、`EBP`=候選陣列元素數、
+  `[ESP+0x30]`=候選 unit-index 陣列指標（皆為 `0x14818` 的直接輸出）；`radius=[0x51a83]`
+  （`>1` 才 `-1`）。
+- **候選陣列 cycling（非移動鍵，`0x2c`/`0x4c`）**：`ESI` 是陣列索引，wrap-around 遞增，
+  每次切到新候選 `EBX`（unit index）就呼叫 `0x12d7b(EBX)`——反組譯後確認這是讀該 unit
+  record `+0/+1`（X/Y 座標）再呼叫 `0x12cea(x,y)`，即「把游標**吸附**到這個候選的格子
+  上」，不是繪製灰階/高亮色塊的 renderer。
+- **自由方向鍵移動（`0x48`/`0x50`/`0x4b`/`0x4d`）**：分別呼叫 `0x11b48`/`0x11b9b`/
+  `0x11c59`/`0x11bfa`。逐指令反組譯 `0x11b48`（上）確認：它只對 `[0x53ab5]`(游標Y)/
+  `[0x53abd]`/`[0x53aad]`(捲動門檻/camera) 做遞增遞減與邊界檢查，再呼叫 `0x11cac(0)`
+  更新畫面；**完全沒有讀取候選陣列、沒有呼叫 `0x14818` 或 `0x14742`，也沒有任何合法性
+  判斷**——玩家可以把游標自由移到地圖上任何一格，不受候選清單限制。
+- **確認鍵（scancode `0x39` 空白鍵／`0x1c` Enter）**：`targetCode==5` 一律直接拒絕；
+  `==6`（搬移/relocation）走獨立的地形合法性分支（`0x1637`-`0x1719`，已由
+  RE-RELOCATION-MODE6-LEGALITY 記錄關閉，屬另一條路徑）；其餘先讀游標所在格在
+  `0x14818` 已標記的地圖緩衝區 byte（`[0x53a51]+cellIdx*4+7`），`==0xff` 一律拒絕；
+  `==4` 通過後直接接受；否則（`0`/`1`/`2`/`3`）呼叫**全域僅一個呼叫點**（`0x1175f`）的
+  `0x14742(cursorX, cursorY, radius, 0, targetCode)`，其回傳值（非零才接受）決定確認
+  是否成立。
+
+#### 3. `0x14742`：合法性判定的完整本體，以及拒絕分支的視覺表現
+
+逐指令反組譯 `0x14742..0x14817`（214 bytes，全域唯一呼叫點 `0x1175f`）：對全部
+`[0x53beb]` 個 unit 逐一計算與游標的曼哈頓距離（兩次 `0x37932` 純 `abs()` 相加），
+死亡/inactive（`unit[+5]&1`）或距離 `>=radius` 者跳過；依 `targetCode` 做陣營篩選
+（`0`→`unit+6==0` 接受、`1`→`!=0` 接受、`2`→`==1` 接受、`3`→`==2` 接受，與
+`0x14818`/`0x14742` 既有的 camp-selector 慣例完全一致）；命中則計數器 `EDI` 遞增（若
+呼叫端有給非空輸出指標，同時把該 unit index 寫入輸出陣列），迴圈結束回傳 `EDI`——
+即回傳「游標半徑內符合陣營篩選的候選數」，非零才算合法，與既有文件「count 非零才
+確認」的結論完全吻合，本輪以獨立反組譯重新核實。
+
+**確認被拒絕時，`0x115b6` 唯一的處理是 `JMP`/`JZ` 回到 `0x117a9`（`CALL 0x12dac` 讀下
+一個輸入事件）——這跟按任何其他非動作鍵時走的路徑完全相同，沒有專屬分支、沒有呼叫
+任何額外的繪製/調色盤/音效函式。** 也就是說，游標移到不合法目標既不會變色也不會有
+任何特殊呈現；玩家按下確認鍵時若目標不合法，畫面上什麼都不會發生，只是迴圈繼續等待
+下一個輸入。
+
+#### 結論
+
+窮盡 `0x14818` 的全部 17 個呼叫點後，**沒有第二個「選單顯示/游標移動階段專屬」的
+caller**——玩家可見的 3 條路徑（攻擊環/道具/法術）全部共用同一個 `0x115b6` 互動迴圈，
+而這個迴圈本身已被完整反組譯：合法性判定被壓縮成「按下確認鍵那一刻的單一次
+`0x14742` 呼叫」，游標移動階段完全自由、不受候選清單或合法性約束，也沒有任何條件式
+渲染呼叫可以充當「灰化」。**這代表原版根本沒有「不可用目標灰化」這個 UI 元素**——
+選目標合法性是在確認出手那一刻才判定，玩家可以自由把游標移到任何格子，選到非法
+目標時只會被靜默拒絕（無反應），不是先預先把不可選格畫成灰色。`0x14818` 產生的候選
+陣列，唯一的 UI 用途是讓「切換候選」熱鍵（`0x2c`/`0x4c`）把游標吸附到下一個合法目標，
+而不是限制或渲染游標可達範圍。
+
+**UI-04「不可用目標灰化」完成度**：**已關閉**，結論明確且窮盡（並非找不到證據而交
+白卷）——原版沒有灰化機制，legality gate 只在確認時判定一次。連帶地，AOE（doc27
+§6.4）與 LOS（doc11 本輪段落，`0x14818` 本體無額外視線判定）兩項也已在同一天閉合，
+UI-04 row 剩餘的開放項目縮小為「native argument↔weapon min/max mapping」、
+「indexed item/effect presentation」與「global selector6 的 production owner」，與
+`0x14818`/`0x115b6`/`0x14742` 這條合法性判定鏈無關。

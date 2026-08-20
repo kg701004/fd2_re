@@ -1,0 +1,340 @@
+FD2.EXE (FD2Analysis3 loaded file) MD5: a6e341a8decc6ebf7f4872076d9cf161  LEN: 802705 bytes
+Ghidra headless -readOnly -noanalysis, FD2Analysis3 project. UI-04 target task
+(57-ui-evidence-matrix.md UI-04 row): (1) global call-xref scan of every
+caller of 0x14818/0x115b6/0x14742; (2) full disasm of FUN_000115b6
+(0x115b6..0x117e6, the interactive cursor/confirm loop fed by 0x14818's
+"selection phase" candidate array) and FUN_00014742 (0x14742..0x14817, the
+confirm-time legality predicate); (3) full disasm of its two helper callees
+0x12d7b (candidate-array cycle: snaps cursor to a candidate unit's cell) and
+0x11b48 (an arrow-key cursor-move handler, representative of the 4 direction
+helpers 0x11b48/b9b/c59/bfa) to check whether either path renders a distinct
+"grayed"/disabled visual for illegal cells.
+Source scripts: ProbeUI04Xrefs0820.java, ProbeUI04CursorLoop0820.java,
+ProbeUI04Tail0820.java (all saved in FD2_ghidra_projects/).
+
+ProbeUI04Xrefs0820.java> ##### XREFS TO 0x14818 #####
+ProbeUI04Xrefs0820.java>   call site 0x00018e25  in function FUN_00018d8c @0x00018d8c
+ProbeUI04Xrefs0820.java>   call site 0x00018f6a  in function FUN_00018d8c @0x00018d8c
+ProbeUI04Xrefs0820.java>   call site 0x0001bc3c  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001bd43  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001bd93  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001becf  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001d1c9  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d211  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d2bf  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d32a  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d38e  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x00014448  in function FUN_00014237 @0x00014237
+ProbeUI04Xrefs0820.java>   call site 0x00015114  in function FUN_00015055 @0x00015055
+ProbeUI04Xrefs0820.java>   call site 0x00015381  in function FUN_00015311 @0x00015311
+ProbeUI04Xrefs0820.java>   call site 0x0001575a  in function FUN_0001567e @0x0001567e
+ProbeUI04Xrefs0820.java>   call site 0x000157d4  in function FUN_0001567e @0x0001567e
+ProbeUI04Xrefs0820.java>   call site 0x00015aaa  in function FUN_0001598a @0x0001598a
+ProbeUI04Xrefs0820.java>   total call xrefs: 17
+ProbeUI04Xrefs0820.java> ##### XREFS TO 0x115b6 #####
+ProbeUI04Xrefs0820.java>   call site 0x00018981  in function FUN_00018890 @0x00018890
+ProbeUI04Xrefs0820.java>   call site 0x00018f76  in function FUN_00018d8c @0x00018d8c
+ProbeUI04Xrefs0820.java>   call site 0x0001bd54  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001bdf2  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001bedb  in function FUN_0001bbdc @0x0001bbdc
+ProbeUI04Xrefs0820.java>   call site 0x0001d1da  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d238  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d2e3  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   call site 0x0001d3ac  in function FUN_0001cff0 @0x0001cff0
+ProbeUI04Xrefs0820.java>   total call xrefs: 9
+ProbeUI04Xrefs0820.java> ##### XREFS TO 0x14742 #####
+ProbeUI04Xrefs0820.java>   call site 0x0001175f  in function FUN_000115b6 @0x000115b6
+ProbeUI04Xrefs0820.java>   total call xrefs: 1
+ProbeUI04CursorLoop0820.java> FUN 0x115b6 bounds: [[000115b6, 000117e6]]
+ProbeUI04CursorLoop0820.java> === range 0x115b6 .. 0x11810 ===
+ProbeUI04CursorLoop0820.java> 000115b6  PUSH 0x3c
+ProbeUI04CursorLoop0820.java> 000115bb  CALL 0x0003702f
+ProbeUI04CursorLoop0820.java> 000115c0  PUSH EBX
+ProbeUI04CursorLoop0820.java> 000115c1  PUSH ESI
+ProbeUI04CursorLoop0820.java> 000115c2  PUSH EDI
+ProbeUI04CursorLoop0820.java> 000115c3  PUSH EBP
+ProbeUI04CursorLoop0820.java> 000115c4  SUB ESP,0x14
+ProbeUI04CursorLoop0820.java> 000115c7  MOV EDI,dword ptr [ESP + 0x28]
+ProbeUI04CursorLoop0820.java> 000115cb  MOV EBP,dword ptr [ESP + 0x2c]
+ProbeUI04CursorLoop0820.java> 000115cf  XOR ESI,ESI
+ProbeUI04CursorLoop0820.java> 000115d1  CMP EDI,0x6
+ProbeUI04CursorLoop0820.java> 000115d4  JNZ 0x000115dc
+ProbeUI04CursorLoop0820.java> 000115d6  MOV dword ptr [ESP + 0xc],EBP
+ProbeUI04CursorLoop0820.java> 000115da  XOR EBP,EBP
+ProbeUI04CursorLoop0820.java> 000115dc  MOV EAX,[0x00051a83]
+ProbeUI04CursorLoop0820.java> 000115e1  MOV dword ptr [ESP + 0x8],EAX
+ProbeUI04CursorLoop0820.java> 000115e5  CMP EAX,0x1
+ProbeUI04CursorLoop0820.java> 000115e8  JLE 0x000115ee
+ProbeUI04CursorLoop0820.java> 000115ea  DEC dword ptr [ESP + 0x8]
+ProbeUI04CursorLoop0820.java> 000115ee  TEST EBP,EBP
+ProbeUI04CursorLoop0820.java> 000115f0  JZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 000115f6  MOV EBX,dword ptr [ESP + 0x30]
+ProbeUI04CursorLoop0820.java> 000115fa  MOVZX EBX,byte ptr [EBX]
+ProbeUI04CursorLoop0820.java> 000115fd  MOV EAX,EBX
+ProbeUI04CursorLoop0820.java> 000115ff  SHL EAX,0x2
+ProbeUI04CursorLoop0820.java> 00011602  ADD EAX,EBX
+ProbeUI04CursorLoop0820.java> 00011604  SHL EAX,0x4
+ProbeUI04CursorLoop0820.java> 00011607  MOV EDX,dword ptr [0x00053a45]
+ProbeUI04CursorLoop0820.java> 0001160d  MOVZX EAX,byte ptr [EDX + EAX*0x1 + 0x7]
+ProbeUI04CursorLoop0820.java> 00011612  CMP EAX,0x79
+ProbeUI04CursorLoop0820.java> 00011615  JZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 0001161b  PUSH EBX
+ProbeUI04CursorLoop0820.java> 0001161c  CALL 0x00012d7b
+ProbeUI04CursorLoop0820.java> 00011621  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 00011624  JMP 0x000117a9
+ProbeUI04CursorLoop0820.java> 00011629  CMP EAX,0x39
+ProbeUI04CursorLoop0820.java> 0001162c  JZ 0x00011637
+ProbeUI04CursorLoop0820.java> 0001162e  CMP EAX,0x1c
+ProbeUI04CursorLoop0820.java> 00011631  JNZ 0x0001176b
+ProbeUI04CursorLoop0820.java> 00011637  CMP EDI,0x6
+ProbeUI04CursorLoop0820.java> 0001163a  JNZ 0x00011719
+ProbeUI04CursorLoop0820.java> 00011640  MOV byte ptr [ESP + 0x10],0x0
+ProbeUI04CursorLoop0820.java> 00011645  XOR EBX,EBX
+ProbeUI04CursorLoop0820.java> 00011647  JMP 0x0001164a
+ProbeUI04CursorLoop0820.java> 00011649  INC EBX
+ProbeUI04CursorLoop0820.java> 0001164a  CMP EBX,dword ptr [0x00053beb]
+ProbeUI04CursorLoop0820.java> 00011650  JGE 0x00011695
+ProbeUI04CursorLoop0820.java> 00011652  MOV EAX,EBX
+ProbeUI04CursorLoop0820.java> 00011654  SHL EAX,0x2
+ProbeUI04CursorLoop0820.java> 00011657  LEA EDX,[EBX + EAX*0x1]
+ProbeUI04CursorLoop0820.java> 0001165a  SHL EDX,0x4
+ProbeUI04CursorLoop0820.java> 0001165d  MOV EAX,[0x00053a45]
+ProbeUI04CursorLoop0820.java> 00011662  ADD EAX,EDX
+ProbeUI04CursorLoop0820.java> 00011664  CMP EBX,dword ptr [ESP + 0xc]
+ProbeUI04CursorLoop0820.java> 00011668  JZ 0x00011649
+ProbeUI04CursorLoop0820.java> 0001166a  MOVZX EDX,byte ptr [EAX]
+ProbeUI04CursorLoop0820.java> 0001166d  CMP EDX,dword ptr [0x00053ab1]
+ProbeUI04CursorLoop0820.java> 00011673  JNZ 0x00011649
+ProbeUI04CursorLoop0820.java> 00011675  MOVZX EAX,byte ptr [EAX + 0x1]
+ProbeUI04CursorLoop0820.java> 00011679  CMP EAX,dword ptr [0x00053ab5]
+ProbeUI04CursorLoop0820.java> 0001167f  JNZ 0x00011649
+ProbeUI04CursorLoop0820.java> 00011681  PUSH EBX
+ProbeUI04CursorLoop0820.java> 00011682  CALL 0x00034894
+ProbeUI04CursorLoop0820.java> 00011687  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 0001168a  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 0001168c  JNZ 0x00011649
+ProbeUI04CursorLoop0820.java> 0001168e  MOV byte ptr [ESP + 0x10],0x1
+ProbeUI04CursorLoop0820.java> 00011693  JMP 0x00011649
+ProbeUI04CursorLoop0820.java> 00011695  MOVZX EAX,byte ptr [ESP + 0x10]
+ProbeUI04CursorLoop0820.java> 0001169a  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 0001169c  JNZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 000116a2  MOV EDX,dword ptr [ESP + 0xc]
+ProbeUI04CursorLoop0820.java> 000116a6  MOV EAX,EDX
+ProbeUI04CursorLoop0820.java> 000116a8  SHL EAX,0x2
+ProbeUI04CursorLoop0820.java> 000116ab  ADD EAX,EDX
+ProbeUI04CursorLoop0820.java> 000116ad  SHL EAX,0x4
+ProbeUI04CursorLoop0820.java> 000116b0  MOV EDX,dword ptr [0x00053a45]
+ProbeUI04CursorLoop0820.java> 000116b6  MOV BL,byte ptr [EDX + EAX*0x1 + 0x20]
+ProbeUI04CursorLoop0820.java> 000116ba  MOVZX EAX,byte ptr [EDX + EAX*0x1 + 0x7]
+ProbeUI04CursorLoop0820.java> 000116bf  CMP EAX,0x1c
+ProbeUI04CursorLoop0820.java> 000116c2  JNZ 0x000116c6
+ProbeUI04CursorLoop0820.java> 000116c4  MOV BL,0x1
+ProbeUI04CursorLoop0820.java> 000116c6  PUSH dword ptr [ESP + 0xc]
+ProbeUI04CursorLoop0820.java> 000116ca  CALL 0x0001f183
+ProbeUI04CursorLoop0820.java> 000116cf  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 000116d2  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 000116d4  JZ 0x000116d8
+ProbeUI04CursorLoop0820.java> 000116d6  MOV BL,0x13
+ProbeUI04CursorLoop0820.java> 000116d8  MOVZX EAX,BL
+ProbeUI04CursorLoop0820.java> 000116db  PUSH EAX
+ProbeUI04CursorLoop0820.java> 000116dc  CALL 0x0004e8a5
+ProbeUI04CursorLoop0820.java> 000116e1  MOV EBX,EAX
+ProbeUI04CursorLoop0820.java> 000116e3  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 000116e6  MOV EAX,ESP
+ProbeUI04CursorLoop0820.java> 000116e8  PUSH EAX
+ProbeUI04CursorLoop0820.java> 000116e9  PUSH dword ptr [0x00053ab5]
+ProbeUI04CursorLoop0820.java> 000116ef  PUSH dword ptr [0x00053ab1]
+ProbeUI04CursorLoop0820.java> 000116f5  CALL 0x00012e38
+ProbeUI04CursorLoop0820.java> 000116fa  ADD ESP,0xc
+ProbeUI04CursorLoop0820.java> 000116fd  MOVZX EAX,byte ptr [ESP + 0x5]
+ProbeUI04CursorLoop0820.java> 00011702  MOVZX EAX,byte ptr [EBX + EAX*0x1]
+ProbeUI04CursorLoop0820.java> 00011706  CMP EAX,0x14
+ProbeUI04CursorLoop0820.java> 00011709  JZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 0001170f  MOV EAX,0x1
+ProbeUI04CursorLoop0820.java> 00011714  JMP 0x0001951b
+ProbeUI04CursorLoop0820.java> 00011719  CMP EDI,0x5
+ProbeUI04CursorLoop0820.java> 0001171c  JZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 00011722  MOV EAX,[0x00053ab5]
+ProbeUI04CursorLoop0820.java> 00011727  IMUL EAX,dword ptr [0x00053ac1]
+ProbeUI04CursorLoop0820.java> 0001172e  ADD EAX,dword ptr [0x00053ab1]
+ProbeUI04CursorLoop0820.java> 00011734  MOV EBX,dword ptr [0x00053a51]
+ProbeUI04CursorLoop0820.java> 0001173a  MOVZX EBX,byte ptr [EBX + EAX*0x4 + 0x7]
+ProbeUI04CursorLoop0820.java> 0001173f  CMP EBX,0xff
+ProbeUI04CursorLoop0820.java> 00011745  JZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 00011747  CMP EDI,0x4
+ProbeUI04CursorLoop0820.java> 0001174a  JZ 0x0001170f
+ProbeUI04CursorLoop0820.java> 0001174c  PUSH EDI
+ProbeUI04CursorLoop0820.java> 0001174d  PUSH 0x0
+ProbeUI04CursorLoop0820.java> 0001174f  PUSH dword ptr [ESP + 0x10]
+ProbeUI04CursorLoop0820.java> 00011753  PUSH dword ptr [0x00053ab5]
+ProbeUI04CursorLoop0820.java> 00011759  PUSH dword ptr [0x00053ab1]
+ProbeUI04CursorLoop0820.java> 0001175f  CALL 0x00014742
+ProbeUI04CursorLoop0820.java> 00011764  ADD ESP,0x14
+ProbeUI04CursorLoop0820.java> 00011767  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 00011769  JMP 0x00011709
+ProbeUI04CursorLoop0820.java> 0001176b  CMP EAX,0x2c
+ProbeUI04CursorLoop0820.java> 0001176e  JZ 0x00011775
+ProbeUI04CursorLoop0820.java> 00011770  CMP EAX,0x4c
+ProbeUI04CursorLoop0820.java> 00011773  JNZ 0x0001178d
+ProbeUI04CursorLoop0820.java> 00011775  TEST EBP,EBP
+ProbeUI04CursorLoop0820.java> 00011777  JZ 0x0001178d
+ProbeUI04CursorLoop0820.java> 00011779  INC ESI
+ProbeUI04CursorLoop0820.java> 0001177a  CMP ESI,EBP
+ProbeUI04CursorLoop0820.java> 0001177c  JNZ 0x00011780
+ProbeUI04CursorLoop0820.java> 0001177e  XOR ESI,EBP
+ProbeUI04CursorLoop0820.java> 00011780  MOV EAX,dword ptr [ESP + 0x30]
+ProbeUI04CursorLoop0820.java> 00011784  MOVZX EBX,byte ptr [ESI + EAX*0x1]
+ProbeUI04CursorLoop0820.java> 00011788  JMP 0x000115fd
+ProbeUI04CursorLoop0820.java> 0001178d  CMP EAX,0x48
+ProbeUI04CursorLoop0820.java> 00011790  JNZ 0x000117c3
+ProbeUI04CursorLoop0820.java> 00011792  CALL 0x00011b48
+ProbeUI04CursorLoop0820.java> 00011797  PUSH 0x1
+ProbeUI04CursorLoop0820.java> 00011799  PUSH 0x0
+ProbeUI04CursorLoop0820.java> 0001179b  PUSH dword ptr [0x00053eec]
+ProbeUI04CursorLoop0820.java> 000117a1  CALL 0x00025a96
+ProbeUI04CursorLoop0820.java> 000117a6  ADD ESP,0xc
+ProbeUI04CursorLoop0820.java> 000117a9  CALL 0x00012dac
+ProbeUI04CursorLoop0820.java> 000117ae  MOV EBX,EAX
+ProbeUI04CursorLoop0820.java> 000117b0  CMP EAX,0x1
+ProbeUI04CursorLoop0820.java> 000117b3  JNZ 0x00011629
+ProbeUI04CursorLoop0820.java> 000117b9  MOV EAX,0xffffffff
+ProbeUI04CursorLoop0820.java> 000117be  JMP 0x0001951b
+ProbeUI04CursorLoop0820.java> 000117c3  CMP EAX,0x50
+ProbeUI04CursorLoop0820.java> 000117c6  JNZ 0x000117cf
+ProbeUI04CursorLoop0820.java> 000117c8  CALL 0x00011b9b
+ProbeUI04CursorLoop0820.java> 000117cd  JMP 0x00011797
+ProbeUI04CursorLoop0820.java> 000117cf  CMP EAX,0x4b
+ProbeUI04CursorLoop0820.java> 000117d2  JNZ 0x000117db
+ProbeUI04CursorLoop0820.java> 000117d4  CALL 0x00011c59
+ProbeUI04CursorLoop0820.java> 000117d9  JMP 0x00011797
+ProbeUI04CursorLoop0820.java> 000117db  CMP EAX,0x4d
+ProbeUI04CursorLoop0820.java> 000117de  JNZ 0x000117a9
+ProbeUI04CursorLoop0820.java> 000117e0  CALL 0x00011bfa
+ProbeUI04CursorLoop0820.java> 000117e5  JMP 0x00011797
+ProbeUI04CursorLoop0820.java> 000117e7  PUSH 0x18
+ProbeUI04CursorLoop0820.java> 000117ec  CALL 0x0003702f
+ProbeUI04CursorLoop0820.java> 000117f1  PUSH EBX
+ProbeUI04CursorLoop0820.java> 000117f2  PUSH ESI
+ProbeUI04CursorLoop0820.java> 000117f3  CALL 0x00011aa8
+ProbeUI04CursorLoop0820.java> 000117f8  CMP EAX,0x1
+ProbeUI04CursorLoop0820.java> 000117fb  JZ 0x0001180b
+ProbeUI04CursorLoop0820.java> 000117fd  CMP EAX,0x2c
+ProbeUI04CursorLoop0820.java> 00011800  JZ 0x0001180b
+ProbeUI04CursorLoop0820.java> 00011802  CMP EAX,0x4c
+ProbeUI04CursorLoop0820.java> 00011805  JNZ 0x00011884
+ProbeUI04CursorLoop0820.java> 0001180b  XOR ECX,ECX
+ProbeUI04CursorLoop0820.java> 0001180d  MOV EBX,dword ptr [0x00053ae9]
+ProbeUI04CursorLoop0820.java> === 0x14742 body ===
+ProbeUI04CursorLoop0820.java> FUN 0x14742 bounds: [[00014742, 00014817]]
+ProbeUI04CursorLoop0820.java> === range 0x14742 .. 0x147f0 ===
+ProbeUI04CursorLoop0820.java> 00014742  PUSH 0x20
+ProbeUI04CursorLoop0820.java> 00014747  CALL 0x0003702f
+ProbeUI04CursorLoop0820.java> 0001474c  PUSH EBX
+ProbeUI04CursorLoop0820.java> 0001474d  PUSH ESI
+ProbeUI04CursorLoop0820.java> 0001474e  PUSH EDI
+ProbeUI04CursorLoop0820.java> 0001474f  PUSH EBP
+ProbeUI04CursorLoop0820.java> 00014750  SUB ESP,0x8
+ProbeUI04CursorLoop0820.java> 00014753  MOV ESI,dword ptr [ESP + 0x2c]
+ProbeUI04CursorLoop0820.java> 00014757  XOR EDI,EDI
+ProbeUI04CursorLoop0820.java> 00014759  MOV dword ptr [ESP + 0x4],EDI
+ProbeUI04CursorLoop0820.java> 0001475d  JMP 0x00014763
+ProbeUI04CursorLoop0820.java> 0001475f  INC dword ptr [ESP + 0x4]
+ProbeUI04CursorLoop0820.java> 00014763  MOV EAX,dword ptr [ESP + 0x4]
+ProbeUI04CursorLoop0820.java> 00014767  CMP EAX,dword ptr [0x00053beb]
+ProbeUI04CursorLoop0820.java> 0001476d  JGE 0x00014811
+ProbeUI04CursorLoop0820.java> 00014773  MOV EBP,EAX
+ProbeUI04CursorLoop0820.java> 00014775  SHL EAX,0x2
+ProbeUI04CursorLoop0820.java> 00014778  ADD EAX,EBP
+ProbeUI04CursorLoop0820.java> 0001477a  SHL EAX,0x4
+ProbeUI04CursorLoop0820.java> 0001477d  MOV EBX,dword ptr [0x00053a45]
+ProbeUI04CursorLoop0820.java> 00014783  ADD EBX,EAX
+ProbeUI04CursorLoop0820.java> 00014785  MOVZX EAX,byte ptr [EBX]
+ProbeUI04CursorLoop0820.java> 00014788  MOVZX EBP,byte ptr [EBX + 0x1]
+ProbeUI04CursorLoop0820.java> 0001478c  MOV dword ptr [ESP],EBP
+ProbeUI04CursorLoop0820.java> 0001478f  SUB EAX,dword ptr [ESP + 0x1c]
+ProbeUI04CursorLoop0820.java> 00014793  PUSH EAX
+ProbeUI04CursorLoop0820.java> 00014794  CALL 0x00037932
+ProbeUI04CursorLoop0820.java> 00014799  MOV EBP,EAX
+ProbeUI04CursorLoop0820.java> 0001479b  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 0001479e  MOV EAX,dword ptr [ESP]
+ProbeUI04CursorLoop0820.java> 000147a1  SUB EAX,dword ptr [ESP + 0x20]
+ProbeUI04CursorLoop0820.java> 000147a5  PUSH EAX
+ProbeUI04CursorLoop0820.java> 000147a6  CALL 0x00037932
+ProbeUI04CursorLoop0820.java> 000147ab  ADD ESP,0x4
+ProbeUI04CursorLoop0820.java> 000147ae  ADD EAX,EBP
+ProbeUI04CursorLoop0820.java> 000147b0  TEST byte ptr [EBX + 0x5],0x1
+ProbeUI04CursorLoop0820.java> 000147b4  JNZ 0x0001475f
+ProbeUI04CursorLoop0820.java> 000147b6  CMP EAX,dword ptr [ESP + 0x24]
+ProbeUI04CursorLoop0820.java> 000147ba  JGE 0x0001475f
+ProbeUI04CursorLoop0820.java> 000147bc  TEST ESI,ESI
+ProbeUI04CursorLoop0820.java> 000147be  JNZ 0x000147c8
+ProbeUI04CursorLoop0820.java> 000147c0  MOVZX EAX,byte ptr [EBX + 0x6]
+ProbeUI04CursorLoop0820.java> 000147c4  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 000147c6  JZ 0x000147f9
+ProbeUI04CursorLoop0820.java> 000147c8  CMP ESI,0x1
+ProbeUI04CursorLoop0820.java> 000147cb  JNZ 0x000147d5
+ProbeUI04CursorLoop0820.java> 000147cd  MOVZX EAX,byte ptr [EBX + 0x6]
+ProbeUI04CursorLoop0820.java> 000147d1  TEST EAX,EAX
+ProbeUI04CursorLoop0820.java> 000147d3  JNZ 0x000147f9
+ProbeUI04CursorLoop0820.java> 000147d5  CMP ESI,0x2
+ProbeUI04CursorLoop0820.java> 000147d8  JNZ 0x000147e3
+ProbeUI04CursorLoop0820.java> 000147da  MOVZX EAX,byte ptr [EBX + 0x6]
+ProbeUI04CursorLoop0820.java> 000147de  CMP EAX,0x1
+ProbeUI04CursorLoop0820.java> 000147e1  JZ 0x000147f9
+ProbeUI04CursorLoop0820.java> 000147e3  CMP ESI,0x3
+ProbeUI04CursorLoop0820.java> 000147e6  JNZ 0x0001475f
+ProbeUI04CursorLoop0820.java> 000147ec  MOVZX EAX,byte ptr [EBX + 0x6]
+ProbeUI04Tail0820.java> === range 0x147ec .. 0x14818 ===
+ProbeUI04Tail0820.java> 000147ec  MOVZX EAX,byte ptr [EBX + 0x6]
+ProbeUI04Tail0820.java> 000147f0  CMP EAX,0x2
+ProbeUI04Tail0820.java> 000147f3  JNZ 0x0001475f
+ProbeUI04Tail0820.java> 000147f9  CMP dword ptr [ESP + 0x28],0x0
+ProbeUI04Tail0820.java> 000147fe  JZ 0x0001480b
+ProbeUI04Tail0820.java> 00014800  MOV EBX,dword ptr [ESP + 0x28]
+ProbeUI04Tail0820.java> 00014804  MOV AL,byte ptr [ESP + 0x4]
+ProbeUI04Tail0820.java> 00014808  MOV byte ptr [EDI + EBX*0x1],AL
+ProbeUI04Tail0820.java> 0001480b  INC EDI
+ProbeUI04Tail0820.java> 0001480c  JMP 0x0001475f
+ProbeUI04Tail0820.java> 00014811  MOV EAX,EDI
+ProbeUI04Tail0820.java> 00014813  JMP 0x00010b46
+ProbeUI04Tail0820.java> === 0x12d7b (candidate-cycle helper) ===
+ProbeUI04Tail0820.java> bounds: [[00012d7b, 00012dab]]
+ProbeUI04Tail0820.java> === range 0x12d7b .. 0x12dac ===
+ProbeUI04Tail0820.java> 00012d7b  PUSH 0xc
+ProbeUI04Tail0820.java> 00012d80  CALL 0x0003702f
+ProbeUI04Tail0820.java> 00012d85  MOV EDX,dword ptr [ESP + 0x4]
+ProbeUI04Tail0820.java> 00012d89  MOV EAX,EDX
+ProbeUI04Tail0820.java> 00012d8b  SHL EAX,0x2
+ProbeUI04Tail0820.java> 00012d8e  ADD EDX,EAX
+ProbeUI04Tail0820.java> 00012d90  SHL EDX,0x4
+ProbeUI04Tail0820.java> 00012d93  MOV EAX,[0x00053a45]
+ProbeUI04Tail0820.java> 00012d98  ADD EAX,EDX
+ProbeUI04Tail0820.java> 00012d9a  MOVZX EDX,byte ptr [EAX]
+ProbeUI04Tail0820.java> 00012d9d  MOVZX EAX,byte ptr [EAX + 0x1]
+ProbeUI04Tail0820.java> 00012da1  PUSH EAX
+ProbeUI04Tail0820.java> 00012da2  PUSH EDX
+ProbeUI04Tail0820.java> 00012da3  CALL 0x00012cea
+ProbeUI04Tail0820.java> 00012da8  ADD ESP,0x8
+ProbeUI04Tail0820.java> 00012dab  RET
+ProbeUI04Tail0820.java> === 0x11b48 (direction-key helper, up) ===
+ProbeUI04Tail0820.java> bounds: [[00011b48, 00011b9a]]
+ProbeUI04Tail0820.java> === range 0x11b48 .. 0x11b9b ===
+ProbeUI04Tail0820.java> 00011b48  PUSH 0x8
+ProbeUI04Tail0820.java> 00011b4d  CALL 0x0003702f
+ProbeUI04Tail0820.java> 00011b52  CMP dword ptr [0x00053ab5],0x0
+ProbeUI04Tail0820.java> 00011b59  JZ 0x00011b90
+ProbeUI04Tail0820.java> 00011b5b  CMP dword ptr [0x00053abd],0x2
+ProbeUI04Tail0820.java> 00011b62  JGE 0x00011b7b
+ProbeUI04Tail0820.java> 00011b64  CMP dword ptr [0x00053aad],0x0
+ProbeUI04Tail0820.java> 00011b6b  JZ 0x00011b7b
+ProbeUI04Tail0820.java> 00011b6d  DEC dword ptr [0x00053ab5]
+ProbeUI04Tail0820.java> 00011b73  DEC dword ptr [0x00053aad]
+ProbeUI04Tail0820.java> 00011b79  JMP 0x00011b90
+ProbeUI04Tail0820.java> 00011b7b  DEC dword ptr [0x00053ab5]
+ProbeUI04Tail0820.java> 00011b81  DEC dword ptr [0x00053abd]
+ProbeUI04Tail0820.java> 00011b87  CMP dword ptr [0x00051a83],0x0
+ProbeUI04Tail0820.java> 00011b8e  JZ 0x00011b9a
+ProbeUI04Tail0820.java> 00011b90  PUSH 0x0
+ProbeUI04Tail0820.java> 00011b92  CALL 0x00011cac
+ProbeUI04Tail0820.java> 00011b97  ADD ESP,0x4
+ProbeUI04Tail0820.java> 00011b9a  RET
