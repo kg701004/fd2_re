@@ -1,78 +1,110 @@
 {
   "_meta": {
     "purpose": "戰鬥招式/單位 → SFX 池(FDOTHER.DAT 資源)對照,供 remake 音效系統參考",
-    "round": 11,
-    "status": "部分完成 — index2(真正 SFX table_ptr 的填值來源)未能靜態釘死到單一表,詳見 notes",
-    "related_doc": "docs/knowledge-base/36-sfx-audio-data.md 第 10/11 輪"
+    "round": 12,
+    "status": "資源層級 index 對照已完整解出(action_id 0-9 → FDOTHER.DAT #82-90,逐一驗證)；語意標籤(招式中文名稱)與池內 sub-index 觸發時機仍缺,部分關閉",
+    "related_doc": "docs/knowledge-base/36-sfx-audio-data.md 第 12 輪(位址勘誤第三輪)",
+    "round12_note": "第10/11輪用 tools/disasm_le.py 手動反組譯出的函式入口 0x027fc9 是誤判(disasm_le.py 已知在部分位址範圍反組譯出錯誤指令邊界)——0x027fc9 實際落在一個與SFX無關的選單迴圈函式(FUN_00027f4a)內。本輪改用 Ghidra headless(-readOnly,專案 FD2Analysis3)反組譯+decompile 交叉核對,找到真正的攻擊/招式總派送函式 0x2ff01,並確認其上游 caller(0x01d43c@0x1cff0、0x015400@0x015311)位址本身原本就是對的——round11 的呼叫鏈『形狀』沒錯,只有中繼位址錯。本檔案 control_flow_round10_11_superseded 區段保留舊位址並標註 superseded,避免歷史脈絡遺失,但一律以下方 round12_verified_chain 為準。"
   },
-  "control_flow": {
-    "load_site": {
-      "linear": "0x028110-0x028156",
-      "function_entry": "0x027fc9",
-      "desc": "戰鬥招式資源載入函式:兩個參數 [esp+0x4c]=單位idx(進[0x53a45]+idx*80 隊伍表)、[esp+0x50]=招式/動作id",
-      "call1": {
-        "addr": "0x028129",
-        "index_formula": "招式id + 0x21",
-        "result_reg": "edi",
-        "target": "call 0x111ba(FDOTHER.DAT, index1, 0)",
-        "confirmed_use": "未確認 SFX 用途,疑為招式動畫/特效資料(non-SFX)"
-      },
-      "call2": {
-        "addr": "0x02814e",
-        "index_formula": "byte ptr [esp + 招式id - 0xc]  (讀取位址於函式 0x027fc9 自己的區域性堆疊,esp 為該函式 prologue 後基準)",
-        "result_reg": "eax -> [0x5411f]",
-        "target": "call 0x111ba(FDOTHER.DAT, index2, 0)",
-        "confirmed_use": "確認為真正 SFX table_ptr([0x5411f] 後續餵給 play_sfx_a/play_sfx_b)"
-      }
-    },
-    "caller_of_0x027fc9": {
-      "addr": "0x02a7ce",
-      "function_entry": "0x02a6bd",
-      "note": "招式id 實際上 = 0x02a6bd 的第2參數(讀進 ebp,0x02a6d1),只有 ebp>=0x20 時才會呼叫 0x027fc9(0x02a7b3 cmp ebp,0x20;jl skip)"
-    },
-    "callers_of_0x02a6bd": [
-      {
-        "addr": "0x015400",
-        "function_entry": "0x015311",
-        "id_source": "edi = 回傳值 of call 0x014818(0x015381)",
-        "note": "0x014818 反組譯結果是「AoE/範圍距離標記」函式(在 [0x53a51] 地圖旗標陣列寫 0xff,依 [0x3ac1]/[0x3ac5] 地圖寬高與半徑判斷),不是單純的招式id查表;此路徑的 id 語意存疑,未完全解出真正 return 語意(未追到函式真正 ret 位址)"
-      },
-      {
-        "addr": "0x01d43c",
-        "function_entry": "0x01cff0",
-        "id_source": "byte ptr [esp + [0x3c57] + 0xd0]  (區域性陣列,[0x3c57]為目前步驟計數器)",
-        "note": "此路徑同一函式內有一個平行陣列 [esp+0xc8+counter](比對 9/0x17/0x18/0x1b/0x1e)已找到填值來源(見 native_0x1c269_bit_scan);但 [esp+0xd0+counter] 陣列本身填值來源本輪未追出(不是同一次 call 0x1c269 填的,是獨立陣列)"
-      }
-    ]
-  },
-  "native_0x1c269_bit_scan": {
-    "function": "0x01c269",
-    "desc": "把單位資料表(base [0x53a45]+idx*80)offset +0x1a 起的 5 bytes(40-bit)逐位元掃描,每個已設定 bit 轉成 0-39 的 byte index 並寫入呼叫端緊密陣列(呼叫端 0x01cff0 傳入 &[esp+0xc8]);這只定案 bit-scan 與輸出 ABI,不定案為法術或招式語意",
-      "evidence": [
-        "0x01c280-0x01c294: ebp = [0x53a45] + idx*4*4+idx*16(= idx*80,與全專案既有 stride 80 公式一致)",
-        "0x01c2a7: movzx edi, byte ptr [edi(loop i=0..4) + ebp + 0x1a]",
-        "0x01c2ae-0x01c2d1: 內層迴圈 bit=0..7,test dl,1 判斷該 bit 是否設定,設定則寫 cl=i*8+bit 到輸出陣列並遞增輸出計數"
+  "round12_verified_chain": {
+    "summary": "玩家可用指令 40-bit bit-scan(0x1c269) → local_20[]指令清單(0x1cff0) → bVar1=local_20[選單index](=action_id, 0-39) → 依 bVar1 分三路：<9或==0x18或>0x1b 進 FUN_0002ff01(0x2ff01)；[9,0x17]合法值走 DAT_00051d01 指令id專屬函式指標表；FUN_0002ff01 內再依 bVar1<0x20(非0x18/>0x1b) 走自己 body 或呼叫 FUN_0002cf30(0x18,0x1c-0x1f 法術)或 FUN_0002d80d(>=0x20)",
+    "dispatcher": {
+      "addr": "0x2ff01",
+      "function": "FUN_0002ff01",
+      "signature": "(unit_idx, action_id, target_count, target_array)",
+      "callers": [
+        {"call_site": "0x01d43c", "in_function": "0x1cff0", "note": "id = bVar1 = local_20[DAT_00053c57],round11 已找到此 caller 位址,本輪確認其呼叫目標是 0x2ff01 而非誤記的 0x02a6bd"},
+        {"call_site": "0x015400", "in_function": "0x015311", "note": "同上,round11 已找到此 caller 位址"}
       ],
-    "semantic_status": "unit+0x1a..+0x1d is initialized from the four-byte initial_command_mask, while the fifth scanned byte and individual command semantics are not yet mapped; do not label this output as a spell bitfield or learned-move list"
+      "verification_method": "Ghidra headless -readOnly, project FD2Analysis3, ReferenceManager.getReferencesTo + DecompInterface.decompileFunction; 5 個既有高信心位址(play_sfx_a=0x25a96/play_sfx_b=0x25b45/[0x53eec]載入=0x25c63/通用容器載入器=0x111ba)decompile 結果與 doc36 第9/10輪逐項語意吻合,確認 FD2Analysis3 載入的 802705-byte/MD5 a6e341a8 build 與現行 509158-byte/MD5 33464c81 基準在 0x10000-0x40000 這段程式碼區位址與機器碼位元組完全相同"
+    },
+    "spell_branch": {"addr": "0x2cf30", "function": "FUN_0002cf30", "condition": "action_id==0x18 或 0x1c<=action_id<=0x1f"},
+    "high_action_branch": {"addr": "0x2d80d", "function": "FUN_0002d80d", "condition": "action_id>=0x20", "note": "同樣的 id+0x21 → 兩段式 FDOTHER.DAT 載入模式,最終存進同一個 DAT_00054153;但這次的第二個 index 來源是這個函式自己的堆疊暫存區,不是 round12 找到的 0x526bc 全域表,來源未追出(round11 對舊位址0x027fc9的『非穩定宣告陣列』評語,套用在正確位址0x2d80d上依然成立)"},
+    "per_id_handler_table": {"addr": "0x51d01", "desc": "DAT_00051d01,action_id 9-0x17 範圍(合法值)的個別指令處理函式指標表,未逐一展開,超出本輪範圍"}
   },
-  "candidate_sfx_resource_pools": {
-    "source": "第10輪 PCM 特徵掃描(doc36),與本輪 control-flow trace 為獨立證據",
+  "round12_sfx_index_table": {
+    "table_ptr_global": "DAT_00054153",
+    "table_ptr_note": "取代第10/11輪誤記的 [0x5411f]/[0x54117];已用原始反組譯核對 push dword ptr [0x00054153] 直接餵給 play_sfx_a(0x25a96)/play_sfx_b(0x25b45)",
+    "index_source_global_table": {
+      "linear_start": "0x0526bc",
+      "linear_end_dumped": "0x0526ec",
+      "desc": "FUN_0002ff01 進函式時把此段資料用 4 組 MOVSD/MOVSD/MOVSW(或MOVSB) 複製到堆疊,稍後 movzx eax,byte ptr[esp+action_id+0xa4](linear 0x3026c) 讀出 FDOTHER.DAT 資源號,寫入 DAT_00054153",
+      "raw_bytes_hex_from_0x526bc": "07 08 06 0d 06 06 05 05 10 14 12 13 1a 27 16 18 20 25 1c 14 15 1b 2b 17 19 21 26 1e 2c 52 52 53 54 55 56 57 58 59 5a 31 32 33 34 35 33 6e 13",
+      "copy_groups": [
+        {"stack_dest": "ESP+0x98", "src_start": "0x526bc", "len": 10, "used_by": "*(byte*)(&local_a8+action_id) 讀取點(另一張表,動畫內插步數,非SFX index,見下)"},
+        {"stack_dest": "ESP+0xbc", "src_start": "0x526c6", "len": 9, "used_by_action_id_range": "24-32 (有效: 25,26,27;24本身被路由到法術分支)"},
+        {"stack_dest": "ESP+0xb0", "src_start": "0x526cf", "len": 10, "used_by_action_id_range": "12-21"},
+        {"stack_dest": "ESP+0xa4", "src_start": "0x526d9", "len": 10, "used_by_action_id_range": "0-9", "this_is_the_sfx_index_range": true}
+      ],
+      "uninitialized_gaps": ["ESP 0xae-0xaf (action_id 10,11)", "ESP 0xba-0xbb (action_id 22,23)"]
+    },
+    "action_id_0_9_to_fdother_resource": {
+      "0": {"resource": 82, "verified_llllll_pcm": true, "note": "與 id1 共用同一資源"},
+      "1": {"resource": 82, "verified_llllll_pcm": true},
+      "2": {"resource": 83, "verified_llllll_pcm": true},
+      "3": {"resource": 84, "verified_llllll_pcm": true},
+      "4": {"resource": 85, "verified_llllll_pcm": true},
+      "5": {"resource": 86, "verified_llllll_pcm": true},
+      "6": {"resource": 87, "verified_llllll_pcm": true},
+      "7": {"resource": 88, "verified_llllll_pcm": true, "note": "與第10輪常數index載入點0x033987巧合命中同一資源"},
+      "8": {"resource": 89, "verified_llllll_pcm": true},
+      "9": {"resource": 90, "verified_llllll_pcm": true}
+    },
+    "verification": "直接解包 FDOTHER.DAT(md5 0496698f0ac67a3ff2448d8c7d80113f,與現行基準檔一致):資源 #82/83/84/85/86/87/88/89/90 全部是巢狀 LLLLLL 容器、逐項 8-bit unsigned PCM(值域集中 0x80 附近),且 sub0 對這 9 個資源逐位元組完全相同(82807a80807980857c80807680827980...,6561 bytes)。已用 tools/export_sfx.py --actionid 匯出全部 25 個有效 WAV 到 remake/assets/sfx/actionid_<資源號>_<子序>.wav。",
+    "action_id_12_21_25_27_non_sfx": {
+      "12": 20, "13": 21, "14": 27, "15": 43, "16": 23, "17": 25, "19": 38, "20": 30, "21": 44, "25": 19, "26": 26, "27": 39,
+      "verified": "資源 #19/20/21/26/27/30/38/39/43/44 逐一檢查皆不是 LLLLLL 容器,證實這個 id 範圍載入的不是音效資源,型態未鑑定"
+    },
+    "animation_interpolation_step_table": {
+      "linear_start": "0x0526bc",
+      "desc": "同一段全域資料在另一個讀取點 *(byte*)(&local_a8+action_id) 被用作動畫內插步數(不是SFX index),action_id 0-9 對應值",
+      "values_id_0_to_9": [7, 8, 6, 13, 6, 6, 5, 5, 16, 20]
+    }
+  },
+  "unresolved": [
+    "action_id 0-9 對應的玩家可讀招式名稱(劍/斧/拳/弓/…)未解——同一函式另外用 unit.byte[7] 選 FIGANI.DAT 動畫資源,語意上兩者可能共享同一條武器類別軸,但未交叉證實;需要下一輪對照 FDICON/指令文字表,或動態驗證按鍵觸發哪個id(本輪任務範圍禁止碰DOSBox-X/WSL2)",
+    "每個資源池內 2-5 個子樣本各自何時觸發(揮空/命中/爆擊對應哪個sub index)未追出,需要反組譯每指令動畫函式指標表 DAT_000524c6[action_id*4] 的個別函式內容,本輪只定位了表位址",
+    "action_id 12-21/25-27 載入的非SFX資源型態未鑑定",
+    "action_id 10/11/22/23 落在表的未初始化缺口(ESP 0xae-0xaf、0xba-0xbb),讀到堆疊殘值,語意不明",
+    "FUN_0002d80d(id>=0x20分支)自己的index來源未追出——與round12找到的0x526bc全域表無關,是這個函式自己的堆疊暫存區"
+  ],
+  "candidate_sfx_resource_pools_round10": {
+    "source": "第10輪 PCM 特徵掃描(doc36),與round12的動態control-flow trace是獨立證據",
+    "relationship_to_round12": "與round12動態追出的真實家族 #82-90 是兩個不同、相鄰的資源家族,僅 #88 重疊(round10常數index載入點0x033987 與 round12 action_id=7 的動態載入,巧合指向同一份資源)。#48-53/64/78 目前仍只有PCM特徵佐證,未找到任何動態/常數載入點的反組譯證據,維持round10「候選,未證實載入點」狀態,不因round12而升級",
     "pools": {
-      "48": "候選(sub0 與 49-53/64 共用揮擊音),未逐一證實常數/動態載入點",
+      "48": "候選(sub0與49-53/64共用揮擊音),未逐一證實常數/動態載入點",
       "49": "候選,同上",
       "50": "候選,同上",
       "51": "候選,同上",
       "52": "候選,同上",
       "53": "候選,同上",
       "64": "候選,同上",
-      "78": "候選(只有 1 個真樣本)",
-      "88": "唯一直接反組譯證實:linear 0x033987,常數 index=0x58(=88),非攻擊路徑,疑為固定特效/事件演出"
+      "78": "候選(只有1個真樣本)",
+      "88": "唯一直接反組譯證實常數index載入(linear 0x033987,index=0x58=88,非攻擊路徑,疑為固定特效/事件演出);round12另外證實它同時也是action_id=7的動態SFX池"
     },
     "common_sub0": "資源 #48/49/50/51/52/53/64 的 sub0 逐位元組相同(len=4182,mean=122.2,range=[47,204]),疑為所有武器/職業分類共用的通用揮擊/命中音;各池另帶自己專屬的少數幾個音效"
   },
-  "unresolved": [
-    "0x027fc9 內 index2 = byte[esp+id-0xc] 在該函式自己的堆疊框架中,並非一個編譯器宣告的穩定陣列(該區域落在宣告的 0x38-byte 區域之外或邊界上);其真實填值來源需要往上追到呼叫鏈更早處的一個尚未定位的陣列(候選:0x01cff0 的 [esp+0xd0+counter] 陣列,填值函式未知)",
-    "招式id 的兩條不同呼叫路徑(0x015400 經 0x014818 / 0x01d43c 經未知陣列)語意可能不同,不能假設同一套 id→resource 對照",
-    "unit+0x1a..+0x1e 的 40-bit scan 及個別 command ID 的欄位語意仍未閉合；前四個 bytes 的 initial_command_mask provenance 已定，仍不得以 unit+0x22 modifier flags 反推 spell bitfield"
-  ]
+  "control_flow_round10_11_superseded": {
+    "_note": "以下是round10/11用tools/disasm_le.py手動反組譯出的位址,round12用Ghidra headless查證後確認0x027fc9本身是誤判(實際落在FUN_00027f4a這個與SFX無關的選單迴圈函式內),0x02a6bd這個中繼位址在真實控制流中不存在。保留此區段供歷史脈絡對照,任何新引用一律以上方round12_verified_chain為準,不要沿用下面的位址。",
+    "load_site": {
+      "linear": "0x028110-0x028156",
+      "function_entry": "0x027fc9",
+      "status": "SUPERSEDED — 0x027fc9 實際是 FUN_00027f4a(選單2選項上下游標迴圈),與SFX無關"
+    },
+    "caller_of_0x027fc9": {
+      "addr": "0x02a7ce",
+      "function_entry": "0x02a6bd",
+      "status": "SUPERSEDED — 此中繼位址在真實控制流中不存在,round11找到的caller(0x015400/0x01d43c)其實直接呼叫0x2ff01"
+    }
+  },
+  "native_0x1c269_bit_scan": {
+    "function": "0x01c269",
+    "desc": "把單位資料表(base [0x53a45]+idx*80)offset +0x1a 起的 5 bytes(40-bit)逐位元掃描,每個已設定 bit 轉成 0-39 的 byte index 並寫入呼叫端緊密陣列(呼叫端 0x01cff0 傳入 &[esp+0xc8]);這只定案 bit-scan 與輸出 ABI,不定案為法術或招式語意。round12 確認此輸出(經 0x1cff0 的 local_20[] 與選單index)就是 action_id 的真正來源",
+    "evidence": [
+      "0x01c280-0x01c294: ebp = [0x53a45] + idx*4*4+idx*16(= idx*80,與全專案既有 stride 80 公式一致)",
+      "0x01c2a7: movzx edi, byte ptr [edi(loop i=0..4) + ebp + 0x1a]",
+      "0x01c2ae-0x01c2d1: 內層迴圈 bit=0..7,test dl,1 判斷該 bit 是否設定,設定則寫 cl=i*8+bit 到輸出陣列並遞增輸出計數"
+    ],
+    "semantic_status": "unit+0x1a..+0x1d is initialized from the four-byte initial_command_mask, while the fifth scanned byte and individual command semantics are not yet mapped; do not label this output as a spell bitfield or learned-move list"
+  }
 }

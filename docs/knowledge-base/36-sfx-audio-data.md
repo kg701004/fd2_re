@@ -150,7 +150,7 @@ uint32 表 + `ADLIB-`/樂器名字串),且遊戲程式碼中未找到任何對 `
 | `FDOTHER.DAT` #31(巢狀容器,14 個 8-bit unsigned PCM) | 逐個解出轉 WAV(補標準 44-byte RIFF 檔頭,8-bit unsigned mono),或轉 OGG |
 | `AIL_init_sample` → `set_sample_address` → `set_sample_loop_count` → `start_sample` | SDL_mixer `Mix_LoadWAV` + `Mix_PlayChannel` |
 | 雙 handle(`[0x53ee4]`/`[0x53ee8]`) | 兩個 SDL_mixer channel(允許疊播) |
-| 戰鬥音效動態 index(`+0x21`) | 待逐招對照後,做 `attack_id → sfx_index` 對照表 |
+| 戰鬥音效動態 index(`+0x21`) | 第12輪已解出 action_id 0-9 → `FDOTHER.DAT` #82-90 資源層級對照(見下方第12輪段落);`attack_id → sfx_index` 對照表仍缺招式中文名稱標籤 |
 
 ## 待辦(後輪)
 
@@ -423,6 +423,142 @@ sub0 開頭 `40 01 c8 00` = `0x140,0xc8`=320×200 VGA 解析度標頭、std≈80
    同一函式內一個平行陣列(`+0xc8`)已完整追出填值來源為 `0x1c269` 的 40-bit bit-scan
 (`0x1c269`),是本輪最扎實的具體成果,但與 SFX index2 本身仍隔一層未接上。`docs/data/battle_sfx_map.json`
 記錄完整位址證據鏈與候選 FDOTHER 資源池(沿用第 10 輪 PCM 特徵掃描結果,未變動)。
+
+## ⚠ 位址勘誤第三輪 + 逐招對照突破(第 12 輪,2026-08-19)
+
+**本輪任務**:worklist L584/604/622(三項同一件事:「逐招對照」核心未解)。改用 Ghidra headless
+(`-readOnly -noanalysis`,真正做過 LE 載入的專案 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\FD2Analysis3`,
+方法見專案 memory `fd2-live-ghidra-headless-probe`)反組譯 + decompile 交叉核對,取代 `tools/disasm_le.py`
+(該工具已知在特定位址範圍反組譯出誤位元組邊界,見專案 memory `fd2-disasm-le-range-bug`)。
+
+**先驗證再信任**:`FD2Analysis3` 專案內部實際載入的 EXE 是 802705 bytes、MD5 `a6e341a8decc6ebf7f4872076d9cf161`
+(`currentProgram.getExecutablePath()=/D:/Codex/FD2_extracted/FD2/FD2.EXE`),與 `docs/data/fd2-reference-files.json`
+記載的現行基準(509158 bytes、MD5 `33464c81e6a364fd0660141139aa8e6e`)是**不同檔案**。用五個第9/10輪已透過
+capstone 交叉驗證過的位址(`play_sfx_a=0x25a96`、`play_sfx_b=0x25b45`、`[0x53eec]`載入=`0x25c63`、
+通用容器載入器=`0x111ba`)在 `FD2Analysis3` 內 decompile,結果與文件既有描述逐項語意吻合(guard 條件、
+AIL 呼叫序列、三個資源載入順序皆對得上)——確認這兩份 build 在 `0x10000`–`0x40000` 這段程式碼區「位址與
+機器碼位元組完全相同」(與 `docs/knowledge-base/58-remake-live-verification-log.md` 先前記錄的「不同 build
+但共用區段 byte-identical」現象一致),本輪反組譯結果可放心沿用到現行 509158-byte 基準版本的位址。
+
+**發現位址誤植**:第 10/11 輪手動用 `tools/disasm_le.py` 反組譯出的「`[0x5411f]` 載入函式,入口
+`0x027fc9`」是誤判——`getFunctionContaining(0x27fc9)` 在 Ghidra 內查證,`0x27fc9` 實際落在
+`FUN_00027f4a`(一個與 SFX 完全無關的「2 選項上下游標選單迴圈」)內部。round 11 描述的上游呼叫鏈**形狀**
+是對的(`0x01cff0`/`0x015311` 兩個 caller 確實存在),但中繼位址(`0x02a6bd`)在真實控制流中根本不存在,
+它們其實**直接**呼叫下面的 `0x2ff01`,中間沒有那一層。
+
+**真實呼叫鏈**(`ReferenceManager.getReferencesTo` 逐一找 caller,非猜測位址):
+
+```
+玩家可用指令 40-bit bit-scan(0x1c269,unit+0x1a..+0x1e,round11 已定案)
+  → local_20[] 指令清單(填值函式 0x1cff0)
+  → bVar1 = local_20[目前選單 index]   ; 這是 round11「index2」要找的上游語意本體:
+                                        ; 玩家目前選中的「指令 id」(bit-scan 輸出,0-39)
+  → if bVar1<9 或 ==0x18 或 >0x1b:
+        FUN_0002ff01(unit_idx, bVar1, target_count, target_array)   ; 0x2ff01,真正的攻擊/招式總派送函式
+          if bVar1<0x20 且不是(==0x18 或 >0x1b):
+              走自己的 body ── 物理攻擊動畫 + SFX 池載入(見下)
+          elif bVar1==0x18 或 0x1c..0x1f:
+              呼叫 FUN_0002cf30(0x2cf30)   ; 法術/魔法演出
+          else(bVar1>=0x20):
+              呼叫 FUN_0002d80d(0x2d80d)   ; 另一組(id 0x20-0x23,四類特殊演出)
+    else(bVar1 落在 [9,0x17] 的合法值):
+        (**(DAT_00051d01 + bVar1*4))()   ; 個別指令 id 專屬處理函式指標表(9-23),未逐一展開,超出本輪範圍
+```
+
+`FUN_0002ff01` 的兩個 caller 正是 `0x01d43c`(在函式 `0x1cff0` 內)與 `0x015400`(在函式 `0x015311` 內)——
+**round11 找到的這兩個 caller 位址本身是對的**,只有它們原本以為的中繼函式(`0x02a6bd`/`0x027fc9`)是
+`disasm_le.py` 誤解析出的錯誤數字。
+
+**攻擊 SFX 池 index 表的真身:資料段一段固定 byte array,linear `0x0526bc`**
+
+`FUN_0002ff01` 一進函式就把 `0x0526bc` 起的資料(四小段,各自用 `MOVSD/MOVSD/MOVSW`(或 `MOVSB`)複製)
+搬進堆疊區域變數,稍後用 `movzx eax, byte ptr [esp + bVar1 + 0xa4]`(linear `0x3026c`)讀出「這個
+指令 id 該載入 `FDOTHER.DAT` 的哪個資源號」,寫進 `DAT_00054153`(這才是「戰鬥 SFX table_ptr」的真身,
+取代第 10/11 輪誤記的 `[0x5411f]`/`[0x54117]`;後續 `push dword ptr [0x00054153]` 直接餵給
+`play_sfx_a`/`play_sfx_b`,已用原始反組譯逐一核對過,見 `docs/data/battle_sfx_map.json`)。已用 Ghidra
+直接 dump `0x0526bc` 起 48 bytes 原始資料,並用同一段程式碼裡 `LEA EDI,[ESP+0x98/0xa4/0xb0/0xbc]` 四個
+複製目的位址反推出每一段的堆疊落點,得到完整 id→資源號對照,並逐一解包 `FDOTHER.DAT`(md5
+`0496698f0ac67a3ff2448d8c7d80113f`,與現行基準檔一致)驗證資源型態:
+
+| action_id(bVar1) | 全域來源位址 | FDOTHER.DAT 資源號 | 解包驗證 |
+|---|---|---|---|
+| 0 | 0x526d9 | **82** | ✅ LLLLLL,3 subs(2 有效 PCM) |
+| 1 | 0x526da | **82** | 與 id0 共用同一份資源 |
+| 2 | 0x526db | **83** | ✅ LLLLLL,5 subs(4 有效) |
+| 3 | 0x526dc | **84** | ✅ LLLLLL,4 subs(3 有效) |
+| 4 | 0x526dd | **85** | ✅ LLLLLL,3 subs(2 有效) |
+| 5 | 0x526de | **86** | ✅ LLLLLL,3 subs(2 有效) |
+| 6 | 0x526df | **87** | ✅ LLLLLL,5 subs(4 有效) |
+| 7 | 0x526e0 | **88** | ✅ LLLLLL,3 subs(2 有效)(與第10輪常數index載入點`0x033987`巧合命中同一資源) |
+| 8 | 0x526e1 | **89** | ✅ LLLLLL,4 subs(3 有效) |
+| 9 | 0x526e2 | **90** | ✅ LLLLLL,4 subs(3 有效) |
+| 12 | 0x526cf | 20 | ❌ 不是 LLLLLL(非 SFX,型態未鑑定) |
+| 13 | 0x526d0 | 21 | ❌ 未逐一驗證(同一批,推定非 SFX) |
+| 14 | 0x526d1 | 27 | ❌ 同上 |
+| 15 | 0x526d2 | 43 | ❌ 同上 |
+| 16 | 0x526d3 | 23 | ❌ 同上 |
+| 17 | 0x526d4 | 25 | ❌ 同上 |
+| 19 | 0x526d6 | 38 | ❌ 同上 |
+| 20 | 0x526d7 | 30 | ❌ 同上 |
+| 21 | 0x526d8 | 44 | ❌ 不是 LLLLLL(已驗證) |
+| 25 | 0x526c7 | 19 | ❌ 不是 LLLLLL(已驗證) |
+| 26 | 0x526c8 | 26 | ❌ 不是 LLLLLL(已驗證) |
+| 27 | 0x526c9 | 39 | ❌ 不是 LLLLLL(已驗證) |
+| 10, 11, 22, 23 | 落在四段複製之間、未被任何一段覆蓋的兩個 2-byte 缺口(`0x98`-`0xa1`/`0xbc`-`0xc4`/`0xb0`-`0xb9`/`0xa4`-`0xad` 四段之間的 `0xae`-`0xaf`、`0xba`-`0xbb`) | 未初始化 | 讀到的是堆疊殘值,語意不明,標記待查 |
+| 18(=0x18)、0x1c-0x1f | N/A | — | 改走法術分支(`FUN_0002cf30`),不查這張表 |
+
+**id=0-9 逐一解包驗證**(直接讀 `FDOTHER.DAT` 目錄,已用 `tools/export_sfx.py --actionid` 匯出全部
+25 個有效 WAV 到 `remake/assets/sfx/actionid_<資源號>_<子序>.wav`):資源 `#82/83/84/85/86/87/88/89/90`
+全部是巢狀 `LLLLLL` 容器、逐項 8-bit unsigned PCM(值域集中 0x80 附近),且 **sub0 對這 9 個資源逐位元組
+完全相同**(`82 80 7a 80 80 79 80 85 7c 80 80 76 80 82 79 80 …`,6561 bytes)── 與第 10 輪已記錄的
+「共用揮擊音 + 各池專屬音」設計完全吻合。資源 `#19/20/21/26/27/30/38/39/43/44`(action_id 12-21/25-27
+範圍)逐一檢查皆**不是** `LLLLLL` 容器(不同 magic bytes),證實這個 id 範圍載入的不是音效資源。
+
+**與第 10 輪候選家族的關係**:第 10 輪 PCM 特徵掃描獨立找到的候選池 `#48/49/50/51/52/53/64/78`
+與本輪動態追出的真實家族 `#82-90` 是**兩個不同、相鄰的資源家族**,僅 `#88` 重疊(第10輪常數 index
+載入點 `0x033987` 與本輪 action_id=7 的動態載入,巧合指向同一份資源)。`#48-53/64/78` 目前仍只有 PCM
+特徵佐證,未找到任何動態/常數載入點的反組譯證據 ── **維持第10輪「候選,未證實載入點」狀態,不因本輪
+而升級**。
+
+**remake `atkAnim` 現有 SFX hook 點對照**:`remake/cmd/fd2/main.go` 的 `atkAnim`(struct 定義
+`:420`,揮擊/命中/陣亡播放點 `:5794-5800`)**已經**掛了 SFX,但用的是第10輪未證實載入點的候選池
+(`g.sfxSwing=battle_48_00.wav`、`g.sfxImpact=battle_64_00.wav`、`g.sfxDeath=battle_88_00.wav`,
+載入處 `:8910-8912`,程式碼註解已誠實標註「近似:...;attack_id→sfx 對照表 doc36 未 RE」),對**所有**
+攻擊一律套用同一組固定音效,不分 action_id。本輪找到的 `actionid_82_00.wav`..`actionid_90_00.wav`
+(9 個真正動態驗證過、逐 action_id 對應的池)尚**未**接進 remake ── 要接上仍缺「action_id 從哪個
+remake 資料結構取得」這一層(remake 的攻擊資料模型目前無 0-39 範圍的原生 action_id 欄位),以及上面
+仍未解的「招式中文名稱↔action_id」對照,故本輪不動 remake 程式碼,只記錄現狀供下一輪接線參考。
+
+**id≥0x20 分支(`FUN_0002d80d`,即第10/11輪原本誤以為是 `0x027fc9` 本身內容的那段邏輯)**:在正確位址
+重新核對後確認,其內部同樣是「`id+0x21` 載入一次 `FDOTHER.DAT`,再用一個 `byte[&pcStack_54 + id]`
+動態值載入第二次,結果同樣存進 `DAT_00054153`」的兩段式載入模式 ── 但這次的 index 來源是這個函式
+**自己**的另一塊堆疊暫存區,不是 `0x526bc` 那張全域表。來源仍未追出;round11 對(當時位址錯誤的)
+`0x027fc9`「並非編譯器宣告的穩定陣列」這句評語,套用在正確位址 `0x2d80d` 上依然成立。此為本輪唯一
+沒有前進的子項,誠實列為未解。
+
+**仍缺的部分(誠實列出)**:
+1. action_id 0-9 對應的玩家可讀招式名稱(劍/斧/拳/弓/…)未解 ── 同一函式另外用 `unit.byte[7]` 選
+   `FIGANI.DAT` 動畫資源,語意上兩者可能共享同一條「武器類別」軸,但未交叉證實;需要下一輪對照
+   `FDICON`/指令文字表,或允許動態驗證時用 DOSBox-X 實測按鍵觸發哪個 id(本輪任務範圍禁止碰
+   DOSBox-X/WSL2)。
+2. 每個資源池內 2-5 個子樣本各自何時觸發(例如揮空/命中/爆擊分別對應哪個 sub index)未追出 ──
+   需要反組譯「每指令動畫函式指標表」`DAT_000524c6[action_id*4]` 的個別函式內容,本輪只定位了表位址,
+   未展開。
+3. action_id 12-21/25-27 載入的非 SFX 資源型態未鑑定。
+4. action_id 10/11/22/23 落在表的未初始化缺口,語意不明。
+5. `FUN_0002d80d`(id≥0x20 分支)自己的 index 來源未追出(見上)。
+
+**worklist L584/604/622 完成度**:三項合併視為「逐招對照」核心同一件事的完成度判斷 ──
+- ✅ 修正了 round10/11 引用的錯誤函式位址(`0x027fc9` 其實是無關的選單迴圈;真正的攻擊總派送函式是
+  `0x2ff01`,其上游 caller `0x1cff0`/`0x015311` 位址本身原本就是對的)。
+- ✅ 完整解出「action_id 0-9 → `FDOTHER.DAT` #82-90」的資源層級對照,10/10(9 個獨立資源,id0/1共用)
+  皆逐一解包驗證為合法 PCM SFX 池,且 sub0 共用機制與第10輪推論吻合,25 個 WAV 已匯出。
+- ❌ 未解:id 0-9 對應的玩家可讀招式名稱;池內子樣本個別觸發時機;id 12-21/25-27 載入資源的型態;
+  id 10/11/22/23 的表缺口;`0x20-0x23` 分支自己的 index 來源。
+- **綜合判斷**:三項從「核心完全未解」推進到「資源層級 index 對照已完整解出且逐一驗證,語意標籤與
+  sub-index 觸發時機仍缺」── **部分關閉,非完全關閉**。建議下一輪標題聚焦「`DAT_000524c6` 個別指令
+  動畫函式反組譯 + 招式中文名稱交叉對照」,方法沿用本輪的 Ghidra headless decompile(不要再用
+  `tools/disasm_le.py` 手動反組譯這個位址範圍)。
 
 ## 導出 WAV:戰鬥音效候選池(第 10 輪)
 

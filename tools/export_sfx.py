@@ -13,9 +13,15 @@ FDOTHER.DAT 資源 #31 是巢狀 `LLLLLL` 容器(見 docs/knowledge-base/36-sfx-
 第 1 次呈現直接使用的固定資源（見 docs/knowledge-base/36），
 用同一個巢狀 LLLLLL 解包邏輯,輸出到 remake/assets/sfx/battle_<資源號>_<子序>.wav。
 
+第 12 輪新增 `--actionid` 模式:玩家選定的物理攻擊類指令(action_id 0-9)經
+`FUN_0002ff01`(linear 0x2ff01)動態載入的真實 SFX 池家族 `#82-90`(見 doc36 第12輪,
+Ghidra headless 反組譯+ decompile 動態追出,逐一驗證為合法 LLLLLL 容器),輸出到
+remake/assets/sfx/actionid_<資源號>_<子序>.wav。與 `--battle` 家族相鄰但不同,僅 #88 重疊。
+
 用法:
     python3 tools/export_sfx.py                # UI 音效池(資源 #31)→ sfx_NN.wav
-    python3 tools/export_sfx.py --battle        # 戰鬥音效匯出集合 → battle_NN_MM.wav
+    python3 tools/export_sfx.py --battle        # 戰鬥音效候選家族(第10輪) → battle_NN_MM.wav
+    python3 tools/export_sfx.py --actionid      # action_id 0-9 真實家族(第12輪) → actionid_NN_MM.wav
     python3 tools/export_sfx.py --res <idx>      # 導出任意 FDOTHER.DAT 資源號(需為巢狀容器)
 """
 import os
@@ -35,6 +41,12 @@ SAMPLE_RATE = 11025  # 推定值,見 docs/knowledge-base/36-sfx-audio-data.md �
 # 戰鬥音效候選池:PCM 特徵(值集中 0x80 附近、std 窄)比對確認,見 doc36 第 10 輪。
 # 精確「哪個 index 對應哪招」仍是動態值(攻擊資料決定),此處先把整個候選家族導出。
 BATTLE_EXPORT_INDICES = [48, 49, 50, 51, 52, 53, 64, 78, 88, 95]
+
+# 第 12 輪動態追出的真實家族:action_id 0-9(玩家選定的物理攻擊類指令,見 doc36
+# 第 12 輪)經 FUN_0002ff01(0x2ff01)用 linear 0x0526bc 起的全域表動態載入,
+# 逐一解包驗證皆為合法巢狀 LLLLLL PCM 容器,sub0 逐位元組相同(共用揮擊音)。
+# 與 BATTLE_EXPORT_INDICES 的候選家族(#48-53/64/78)是相鄰但不同的家族,僅 #88 重疊。
+BATTLE_ACTION_ID_INDICES = [82, 83, 84, 85, 86, 87, 88, 89, 90]
 
 
 def export_container(data: bytes, name_prefix: str, label: str):
@@ -68,7 +80,7 @@ def export_container(data: bytes, name_prefix: str, label: str):
 def main():
     argv = sys.argv[1:]
 
-    if "--battle" in argv or "--res" in argv:
+    if "--battle" in argv or "--res" in argv or "--actionid" in argv:
         dat = open(FDOTHER_DAT, "rb").read()
         try:
             top_entries = parse_directory(dat)
@@ -79,14 +91,19 @@ def main():
         if "--res" in argv:
             idx = int(argv[argv.index("--res") + 1])
             indices = [idx]
+            prefix = "battle_"
+        elif "--actionid" in argv:
+            indices = BATTLE_ACTION_ID_INDICES
+            prefix = "actionid_"
         else:
             indices = BATTLE_EXPORT_INDICES
+            prefix = "battle_"
 
         written = []
         for idx in indices:
             off, ln = top_entries[idx]
             chunk = dat[off:off + ln]
-            written += export_container(chunk, f"battle_{idx:02d}_", f"FDOTHER.DAT #{idx}")
+            written += export_container(chunk, f"{prefix}{idx:02d}_", f"FDOTHER.DAT #{idx}")
 
         print(f"\n完成: {len(written)} 個 WAV 已寫入 {OUT_DIR}")
         return 0
