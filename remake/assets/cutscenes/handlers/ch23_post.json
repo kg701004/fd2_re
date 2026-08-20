@@ -316,13 +316,13 @@
     },
     {
       "op": "unknown",
-      "native_target": "0x4dbfc",
+      "native_target": "0x4df4c",
       "raw_args": [
         "dword ptr [0x3a51]"
       ],
       "source": {
         "addr": "0x24a92",
-        "target": "0x4dbfc"
+        "target": "0x4df4c"
       }
     },
     {

@@ -3587,3 +3587,36 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 ### 產出
 
 新增`docs/knowledge-base/27-combat-rules-and-validation-checklist.md`§5「戰鬥演算法反組譯完整性盤點」(20項三方一致性表+6條仍缺清單+對worklist 245/266的完成度結論);同步修正`26`第55行、`35`第420行的過期標記。無`remake/`原始碼或campaign資產檔案變動(本輪純反組譯/文件盤點,未涉入live/DOSBox)。新增檔案：`FD2_ghidra_projects/Probe91Worklist245.java`、`Probe91Worklist245b.java`(留供覆核)。
+
+## 續三十:ch23 postbattle handler campaign binding調查——`handlers/ch23_post.json`(0x24754)確認早已完整反組譯,不是「沒人寫」;真正缺口是compile-to-runtime這層6類binding工作,規模超出單session;修正一個exporter位址錯誤(2026-08-20)
+
+**任務背景**:使用者指出`91-worklist.md`L849/L851稽核`postbattle_ch23_persist`在`campaign_full.json`仍是空placeholder,而續十六(2026-08-18,約L3072-3089)已經反組譯確認ch23真正的postbattle handler是`0x24754`(對話FDTXT_023 idx8-17,約43個劇情beat,已用live playthrough驗證吻合),要求這輪把RE成果實際寫成campaign binding,不碰DOSBox-X/WSL2。
+
+**第一步:核對現況,發現前提有一半已經不成立**——`remake/assets/cutscenes/handlers/ch23_post.json`早已存在(續十七2026-08-18的off-by-one全專案重新編號時就已產生),內容是`chapter:23`、`handler:"0x24754"`、43個beats,dialog `text_index`涵蓋8-17,與續十六的描述逐項吻合。`remake/assets/cutscenes/bindings/generated/ch22_post.json`(bindings目錄用的是舊的raw-index off-by-one命名慣例,即「`chNN`=raw dispatch index=display chapter-1」,與`story_ch24`用`ch23_pre.json`、`postbattle_ch25_persist`用`ch24_post.json`的既有慣例完全一致)也早已存在,`handler_script`正確指向`../../handlers/ch23_post.json`,且全部10個`dialog` beat的`dialogue_contexts`都已對應到`FDTXT_023`/`ch23.json`。**「只是沒人寫」這個前提不成立——beat結構與對話映射這兩層都已經有人做完了。**
+
+**第二步:量化真正剩下的缺口**——`cmd/dump-unresolved`對空binding跑`handlers/ch23_post.json`得到31個issue(多數是dialog/act/load_res/layout_units/pan這些「有binding就能解」的資料缺口,不是反組譯缺口)。改用暫時性測試呼叫`CompileHandlerBinding("bindings/generated/ch22_post.json")`(套用已有的dialogue binding後)得到**193 beats,21個issue**:
+- `unknown`(無proven lowering,真正的反組譯/schema缺口)×6:`0x24b14`(beat1)、`0x24bde`(beat6)、`0x2189a`×3(beat20/24/28)、beat34(見下)。
+- `act`(缺acting resource解碼)×6、`load_res`(缺resource ID binding)×3、`pan`(缺camera座標)×2、`layout_units`(缺runtime-slot座標表)×1、`deactivate_unit`(因未設loadch/runtime_context,`slot_count=0`,slot 17判定越界)×2、`prepare_chapter_aux_graphics`(`0x10652`,`handler_compile.go`完全沒有這個op的case)×1。
+
+**第三步:Ghidra headless(唯讀,`FD2Analysis3`,`-readOnly -noanalysis`)逐一核對6個unknown call site**——`ProbeCh23PostCallSites.java`/`ProbeCh23Post2189a.java`直接反組譯`0x247be`/`0x24838`/`0x24978`/`0x249c4`/`0x24a10`五個call site,確認其真實`CALL`目標分別是`0x24b14`/`0x24bde`/`0x2189a`/`0x2189a`/`0x2189a`,跟JSON記錄完全一致——這五個維持2026-08-18(當時稱「ch22」,off-by-one修正前的同一份分析)已有的結論不變:`0x24b14`/`0x24bde`是existence-check函式(掃描道具/名單,回傳值被捨棄),`0x2189a`是10-iteration sprite walk-on動畫迴圈——都是**語意已解開但需要新schema(條件式skip)或新引擎能力(walk-on動畫)才能lower**,不是反組譯不夠。
+
+**第四步:第6個發現是真正的新結果——`ProbeCh23Post4dbfc.java`揪出一個exporter位址錯誤**。JSON原本記錄beat 34(call site`0x24a92`)的`native_target`是`0x4dbfc`,但直接反組譯`0x24a92`的機器碼(`e8 b5 94 02 00`)算出真正的CALL目標是**`0x4df4c`**,不是`0x4dbfc`——`0x4dbfc`落在一個完全無關的Watcom long-shift runtime library helper(`FUN_0004dbe7`,零xref、反編譯出來是純粹的64-bit位移運算,跟遊戲邏輯無關)內部,不是任何函式的合法entry point。`ProbeCh23Post4df4c.java`反組譯真正的`0x4df4c`:對`param_1`(呼叫端傳入`[dword ptr [0x53a51]]`)以4-byte stride走`count=param_1[0]*param_1[2]`筆,每筆把offset+7寫`0xff`(僅第一筆是常數0xff,後續筆數的值來自前一輪殘留的進位鏈,不是單純的常數初始化)。**已修正**`handlers/ch23_post.json`該beat的`native_target`與`source.target`兩個欄位,`0x4dbfc`→`0x4df4c`。
+
+**額外交叉比對,發現一個待查矛盾(本輪未解決,誠實記錄不強行收斂)**:`0x4df4c`的行為(對`[0x53a51]`指向的FDFIELD buffer,以`header+4*cellIdx+3`公式逐格寫`0xff`)跟`docs/knowledge-base/91-worklist.md:1193`與`remake/internal/fdother/range_overlay.go`第66-72行`ClearNativeRangeOverlayMode6FieldByte`函式註解裡已經證實、已經有生產程式碼的「mode6 raw-field byte clear」機制——`4*(cursorX+cursorY*width)+7`公式——語意完全吻合(同一個header=4/stride=4/offset+3的排列),但doc91當時記錄的位址標籤是`0x4dbfc`,跟這輪反組譯出的`0x4df4c`不一致。可能是不同session/不同EXE build的位址不穩定(`feedback_fd2_old_new_exe_address_instability`memory記過的已知風險類別),也可能doc91當時的記錄本身也有同一種off-by-N錯位(類似續二十六`0x35bba`落在`0x35b78`函式中段那次)。**這個矛盾這輪沒有追下去**,不確定是否需要訂正`91-worklist.md`或`range_overlay.go`的位址標籤,留給獨立task,本輪遵照指示未動`91-worklist.md`。
+
+**決定:不把`postbattle_ch23_persist`接上`handler_binding`**。理由:
+1. `CompileHandlerBinding`是fail-closed設計——留有21個issue的binding一旦被`campaign_full.json`引用,會讓`campaign_test.go`裡`TestEveryContinuingBattleSyncsBeforeOriginalIntermission`直接fail(該測試對`HandlerBinding!=""`的postbattle節點強制要求`len(issues)==0`)。
+2. 要清零這21個issue,其中`act`/`load_res`/`pan`/`layout_units`/`deactivate_unit`(loadch context)這5類是「跟ch16/ch17/ch21同等級的binding資料工作」(需要Ghidra逐一解碼acting frame table、resource ID、camera座標、layout座標表),`unknown`裡的`0x24b14`/`0x24bde`需要新增「條件式skip」beat schema、`0x2189a`需要新的sprite walk-on動畫引擎能力,`0x10652`(`prepare_chapter_aux_graphics`)連op本身的compiler case都不存在——合計6類獨立工作,不是這輪能誠實做完的範圍,任何一類都足以是獨立一輪的任務。
+3. 這個決定跟本專案既有慣例一致,不是我這次自創的例外——`handlers/ch27_post.json`(`0x22253`/`unit_present`,同樣「語意已解但引擎不支援」)、`handlers/ch29_post.json`同樣的處境,`postbattle_ch27_persist`/`postbattle_ch29_persist`在`campaign_full.json`裡也同樣維持未接的空placeholder(`"beats":[]`或完全無`handler_binding`),不是漏接,是專案自己一貫的fail-closed取捨。
+
+**影響範圍**:僅修改`remake/assets/cutscenes/handlers/ch23_post.json`一個beat的兩個位址欄位(`native_target`、`source.target`,`0x4dbfc`→`0x4df4c`)。未動`campaign_full.json`、`91-worklist.md`、`bindings/`任何檔案。`cd remake && go build ./... && go test ./...`全綠(無既有test引用`ch23_post.json`或`0x4dbfc`字面值,修正不影響任何既有斷言;暫時性驗證用的`TestZZZScratchCh22PostGenerated`只用來量測issue數,已在提交前刪除,未進版控)。
+
+**產出**:`remake/assets/cutscenes/handlers/ch23_post.json`位址修正。本文件本節。Ghidra probe scripts留存於`C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeCh23Post4dbfc.java`/`ProbeCh23Post4df4c.java`/`ProbeCh23PostCallSites.java`/`ProbeCh23Post2189a.java`(+對應`probe_ch23post_*_out.txt`原始輸出,供覆核)。
+
+**留給下一輪(依優先度)**:
+1. `layout_units`(`0x233c6`呼叫,座標表)——照ch17已驗證過的手法(`0x521c3`/`0x521d4`/`0x521e5`那類固定表位址搬移)去抓。
+2. 6個`act`beat的acting resource解碼(`0x1366a`呼叫端)。
+3. 3個`load_res`(`0x111ba`)resource ID binding、2個`pan`(`0x135dd`)camera座標——這兩類過去多輪都証實是相對輕量的工作。
+4. loadch/`runtime_context`(讓`deactivate_unit`不再因`slot_count=0`誤判越界)。
+5. `0x4dbfc`↔`0x4df4c`位址矛盾對`91-worklist.md:1193`/`range_overlay.go`的影響,需要獨立驗證是否要訂正既有文件。
+6. `0x24b14`/`0x24bde`的條件式skip schema、`0x2189a`的sprite walk-on引擎能力——這兩類是全專案共用的schema/引擎擴充,不是ch23專屬,值得跟其他章節(ch22舊分析提到的同一批位址)一起規劃,不要只為ch23單獨做。
