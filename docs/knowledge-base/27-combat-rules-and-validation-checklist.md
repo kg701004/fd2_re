@@ -202,7 +202,7 @@ for (iStack_34 = 0; iStack_34 < param_3 /*targetCount*/; iStack_34++) {
 }
 ```
 
-即 `param_3`=目標數、`param_4`=目標 unit-index 陣列(byte array),對陣列中**每一個**目標各自獨立呼叫一次 `FUN_0001c75e`(各自擲一次命中骰、各自吃傷害公式),迴圈本身對 id 0–8 一視同仁,不分辨形狀。**這就是「AoE(range>0)打幾個目標」的原生套用機制**:range 造成的多目標效果,是由「呼叫 `0x1cff0`/`0x2ff01` 之前,誰把 N 個合法目標填進 `param_4` 陣列」決定,dispatcher 本身只是機械地對陣列每格重跑一次命中+傷害。**尚未追完的缺口**:`FUN_0001cff0` 呼叫 `FUN_0002ff01` 的實際傳參處(本輪因先反編譯 caller、後才建立 callee 型別,decompiler 未重新解析呼叫點,只顯示 `FUN_0002ff01();` 不含實參)還沒有回頭用逐指令反組譯把 `param_3/param_4` 的**產生來源**釘死;`0x1cff0` 內已知會在跳到 id-based 分支前呼叫 `FUN_00014818()`/`FUN_000115b6()`(一般情形)或 `FUN_000149f8()`(僅 `local_20[..]==0x1e` 即 id30 專用)取得候選/確認清單,這些函式的輸出是否直接餵給 `param_3/param_4`、range 半徑/形狀在哪一步被套用,**仍是開放問題**,留給下一輪逐指令追蹤。
+即 `param_3`=目標數、`param_4`=目標 unit-index 陣列(byte array),對陣列中**每一個**目標各自獨立呼叫一次 `FUN_0001c75e`(各自擲一次命中骰、各自吃傷害公式),迴圈本身對 id 0–8 一視同仁,不分辨形狀。**這就是「AoE(range>0)打幾個目標」的原生套用機制**:range 造成的多目標效果,是由「呼叫 `0x1cff0`/`0x2ff01` 之前,誰把 N 個合法目標填進 `param_4` 陣列」決定,dispatcher 本身只是機械地對陣列每格重跑一次命中+傷害。**尚未追完的缺口**:`FUN_0001cff0` 呼叫 `FUN_0002ff01` 的實際傳參處(本輪因先反編譯 caller、後才建立 callee 型別,decompiler 未重新解析呼叫點,只顯示 `FUN_0002ff01();` 不含實參)還沒有回頭用逐指令反組譯把 `param_3/param_4` 的**產生來源**釘死;`0x1cff0` 內已知會在跳到 id-based 分支前呼叫 `FUN_00014818()`/`FUN_000115b6()`(一般情形)或 `FUN_000149f8()`(僅 `local_20[..]==0x1e` 即 id30 專用)取得候選/確認清單,這些函式的輸出是否直接餵給 `param_3/param_4`、range 半徑/形狀在哪一步被套用,~~仍是開放問題~~——**2026-08-20 續輪(§6.4)已用逐指令反組譯完整追完,見下**。
 
 **一個相關但不可混用的旁支發現**:另在 `FUN_00014ef0`(0x14ef0)/`FUN_00015055`(0x15055)一叢(由 `FUN_00013a9f` 依 `unit[+0x34]&0xf` 狀態機呼叫,即 doc11 的敵方 AI 行動執行,非玩家)裡也看到 `cmd>=0x10 → spellId=cmd-0x10 [0x150d3]` 後呼叫 `FUN_000149f8` 做「以起點/終點方向逐格步進、收集符合陣營 selector 的 unit」;但傳入的步進次數(count 參數)在此路徑上等於 **spellId 本身**(`0x150d6: PUSH EAX` 緊接 `0x150d3: SUB EAX,0x10` 的結果),不是任何距離/半徑欄位——若 spellId=0 該迴圈完全不執行、收不到任何目標,這個結果本身很可疑,尚未排除是筆者參數對應錯誤或該路徑本就只服務極少數 AI 分支。**這是 AI 執行路徑,不是玩家 command ring 的 `0x1cff0/0x2ff01` 路徑**,不能拿來回答玩家施法 UI 的 AoE 問題,僅記錄以免下一輪重複走冤枉路。同時**修正 doc37 §0 的舊標籤**:doc37 把這叢函式稱為「選單施法」(暗示玩家選單直接施法路徑),但 `FUN_00013a9f` 的呼叫閘門(`unit[+0x34]&0xf` 狀態值)是 doc11 已定案的敵方 AI 行為狀態欄,此路徑應正名為「AI 法術執行」,不是玩家路徑。doc37 §0 另引用「`0x015195`(push ebp; call 0x28784)」作為施法演出呼叫點,本輪即時反組譯該位址實際指令是 `CALL 0x2dfc8`,並對整個可執行段做位元組樣式掃描(`E8`+rel32)找 `0x28784` 的直接呼叫者,**掃描結果為零筆**——doc37 這個特定位址引用需要重新核實(可能是間接呼叫、也可能是舊分析狀態下的誤記),本輪未展開,留待下一輪用逐指令反組譯或間接呼叫掃描補上。
 
@@ -217,8 +217,41 @@ for (iStack_34 = 0; iStack_34 < param_3 /*targetCount*/; iStack_34++) {
 
 順著 `0x1cff0`(§6.2 已確認完整、正確)往下重新反組譯,找到真正符合「id∈{0..8,0x18,≥0x1c} 直接呼叫」「大型 presentation/state dispatcher」描述的函式是 **`0x2ff01`**(`FUN_0002ff01`,body `0x2ff01..0x30e24`,3876 bytes,規模與描述相符)。**結論:doc13/37/56/91 裡的「`0x2a6bd`」引用,實際指的應是 `0x2ff01`;「id==0x18 走 `0x276ec`」的正確目標是 `0x2ff01` 內部的 `commandId==0x18 || commandId>0x1b` 分支,實際跳去的是 `0x2cf30`**。本文件僅記錄此勘誤與新位址證據,**未回頭修改 doc13/37/56 的既有引用**(超出本輪任務範圍,且那些文件的既有功能性結論——如表第 6 項 derived-strike 公式——本身仍是對的,只有位址標籤需要在未來一輪統一置換)。
 
+### 6.4 AoE 目標陣列上游生成器——完整追出(2026-08-20,回應 §6.2 殘留缺口)
+
+> 方法同 §6:純靜態 Ghidra headless(`FD2Analysis3`,`-readOnly -noanalysis`)。從 §6.2 已知的 `FUN_0002ff01` call site 往上,對 `FUN_0001cff0` 整個函式體(`0x1cff0..0x1d4ca`)做逐指令原始反組譯(而非只看 decompile 虛擬碼,因為 decompiler 在單獨反編譯 `FUN_0001cff0` 時尚未解析出 `FUN_0002ff01`/`FUN_00014818` 的簽名,呼叫點參數會被吃掉顯示成 `FUN_xxx();`),逐一核對每個 `CALL` 前的 `PUSH` 序列釘死實際傳參。腳本:`ProbeAoESource0820.java`(對應 `probe_aoe_source_0820_out.txt`)、`ProbeAoEGenerators0820.java`(`probe_aoe_generators_0820_out.txt`)、`ProbeAoE14818Disasm0820.java`(`probe_aoe_14818_disasm_0820_out.txt`)、`ProbeAoERangeMap0820.java`(`probe_aoe_rangemap_0820_out.txt`)、`ProbeAoEStamper0820.java`(`probe_aoe_stamper_0820_out.txt`),皆存於 `FD2_ghidra_projects/`。
+
+**結論先講:上游生成器找到了,是 `FUN_00014818`(`0x14818`),它把「施法者目前選定的座標 + 法術/道具記錄裡的一個 range/shape byte」展開成「全地圖內符合陣營篩選的目標 unit-index 陣列」,§6.2 的 `FUN_0002ff01` 只是機械地套用這份已經展開好的陣列。** 完整鏈路:
+
+1. **`FUN_0002ff01` 的真正呼叫點**:`0x1d43c`(在 `FUN_0001cff0` 內)。逐指令核對其 4 個實參(`__stdcall`,由近到遠依序對應 `param_4..param_1`):
+   ```
+   0001d423  MOV EAX,ESP                              ; EAX = 目前 ESP(指向 stack 上已建好的 byte 陣列)
+   0001d425  PUSH EAX                                  ; -> param_4 targetArrayPtr
+   0001d426  PUSH ESI                                  ; -> param_3 targetCount
+   0001d427  MOV EAX,[0x00053c57]
+   0001d42c  MOVZX EAX,byte ptr [ESP+EAX*0x1+0xd0]      ; EAX = local_20[選定索引] = commandId
+   0001d434  PUSH EAX                                  ; -> param_2 commandId
+   0001d435  PUSH dword ptr [ESP+0xf8]                 ; -> param_1 actorIdx(FUN_0001cff0 自己的傳入參數)
+   0001d43c  CALL 0x0002ff01
+   ```
+   即 `param_3`(目標數)= `ESI`、`param_4`(目標陣列指標)= 呼叫當下的 `ESP`,兩者都是同一個 stack frame 裡「先前已經被填好」的值——順著往回找是誰設定 `ESI`/那塊 stack 記憶體。
+
+2. **`ESI`/陣列的產生者是 `FUN_00014818`**,在 `FUN_0001cff0` 內對一般情形(非 `commandId==0x17` 特例)實際呼叫兩次,分別用 spell/item 記錄的**兩個不同 byte 欄位**當 range 參數:
+   - 第一次(`0x1d2bf`):`param_4 = record[+3]`(來自 `FUN_0004e866` 回傳的 record row,即 §6.1 命中率公式所用的同一筆記錄),`param_6 = record[+6]`(陣營/side 選擇器),`param_1/param_2 = DAT_00053ab1/DAT_00053ab5`(目前游標/施法座標)。回傳的候選數與陣列接著餵給 `FUN_000115b6`(`0x1d2e3`)——**這個函式不是生成器,是互動確認迴圈**:內部 `FUN_00012dac()` 讀輸入事件,對 `0x2c/0x4c`(確認鍵)、`0x48/0x50/0x4b/0x4d`(方向鍵→呼叫游標移動 `FUN_00011b48/b9b/c59/bfa`)分派,即「玩家在 `record[+3]` 這個『可選取範圍』內用游標挑目標/確認位置」的 UI 迴圈。
+   - 第二次(`0x1d32a`,confirm 完成後):`param_4 = record[+4]`(**另一個** byte 欄位,不是 record[+3]),其餘參數結構相同。這次呼叫的回傳值(`EAX`)才是最終寫進 `ESI` 並流向 `0x1d43c` 的 `targetCount`。**特例**:若 `commandId==0x1e`(30),改用 `FUN_000149f8`(`0x1d35c`,直線步進生成器,`steps = record[+3]-0x10`,與 §6.2 附記的 AI 路徑 `0x150d3` 用法同構)取代第二次 `FUN_00014818`。
+   - 因此 `record[+3]`=「選取階段(游標可達)範圍」、`record[+4]`=「實際生效(AoE 展開)範圍」是兩個獨立欄位,呼叫同一個生成器函式,語意類似「先選點、再以另一個半徑在該點展開」。
+
+3. **`FUN_00014818(originX, originY, outBuf, rangeByte, extraThreshold, sideSelector)`**(body `0x14818..0x149f7`,480 bytes)原始反組譯逐行核實,結構分三段:
+   - `rangeByte < 0x10`:先無條件呼叫 `FUN_0004e8a5(...)`(23 bytes,`&DAT_00061646 + idx*0x14` 的陣列存取殼)與 `FUN_0004e390(...)`(見下第4點,實際播種+啟動遞迴 flood fill);接著若 `extraThreshold(param_5)!=0` 才額外跑一段「掃全地圖、用 `FUN_00037932`(`0x37932`,純 `abs()`)算 `|col-originX|+|row-originY|` 曼哈頓距離、`< extraThreshold` 就標記地圖緩衝區(`DAT_00053a51+7`,每格 4 bytes)為 `0xff`」的迴圈——**這段在兩次 `0x14818` 呼叫裡 `extraThreshold` 都固定傳 `0`,永遠不執行**,證實實際 AoE 半徑機制不是這段,而是下面第4點的遞迴 flood fill。
+   - `rangeByte >= 0x10`:改成兩個獨立的列/欄掃描,用 `rangeByte-0x10` 當門檻(直線/十字類形狀,與 `FUN_000149f8` 的 `steps=record[3]-0x10` 編碼同一套「≥0x10 表示直線形」慣例)。
+   - 不論走哪一段,最後統一跑 `0x14940..0x149f0`:掃描全部 `DAT_00053beb` 個 unit,篩「存活(`unit[+5]&1==0`)且所在格在地圖緩衝區裡 `!=0xff`」且「`unit[+6]` 陣營欄位符合 `sideSelector`(0=己方 `==0`,1=非己方 `!=0`,2=`==1`,3=`==2`)」者,把 roster index 寫進 `outBuf` 並計數,回傳計數——**這就是把「地圖上哪些格子在範圍內」轉成「哪些 unit-index 該挨這次法術/道具」的最後一步,亦即 `FUN_0002ff01` 的 `param_3/param_4` 的直接來源**。
+
+4. **半徑真正怎麼「長出來」**:`FUN_0004e390`(`0x4e390..0x4e42b`,156 bytes)把起始格座標與一個初始「預算」寫進共用地圖緩衝區(`param_8[(width*originRow+originCol)*4+7] = value`),然後呼叫 `FUN_0004e42c`(`0x4e42c..0x4e4bd`,146 bytes)——逐指令核對後確認這是一個**標準四方向遞迴 flood fill**:對右/左/下/上 4 個鄰格,各自呼叫 `FUN_0004e4be`(留在 register 呼叫、本輪未反編譯的葉節點函式,依 `JC`/進位旗標判斷「已訪問/越界/預算用盡」)嘗試標記,若未被擋(`!JC`)且預算(`EBX`,每走一步消耗一個單位)仍夠,就遞迴呼叫自己继续往外擴散——即「以起點為中心、以 `rangeByte` 換算出的預算為半徑,BFS 式往外塗滿地圖緩衝區」,這正是把 `record[+3]`/`record[+4]` 這個純量 range byte 轉成「哪些地圖格子算在範圍內」的實際機制。
+
+**結論**:AoE(range>0)目標清單生成的完整鏈路——`spell/item record[+3]`(選取範圍)/`record[+4]`(生效範圍)→ `FUN_00014818` 依 `<0x10`/`>=0x10` 分流成「`FUN_0004e390`+`FUN_0004e42c` 遞迴 flood fill 塗地圖緩衝區」或「列/欄門檻掃描」→ 掃描全部 unit、按緩衝區命中 + `record[+6]` 陣營篩選器收集 roster index → 回傳陣列+計數 → 經 `FUN_0001cff0` 的 stack frame 原樣傳給 `FUN_0002ff01` 的 `param_3/param_4` → §6.2 已證實的逐目標套用迴圈——**已用位址級反組譯完整釘死,不再是開放問題**。唯一未展開的末梢是葉節點 `FUN_0004e4be` 本身(地圖緩衝區的實際寫入/邊界判斷原語)與 `FUN_0004e8a5` 回傳陣列的確切用途,兩者都只影響「精確步進代價/資料表內容」的細節,不影響本節已確立的「range byte → flood fill → 陣營篩選 → unit-index 陣列」整體機制結論,留待需要精確重現地圖形狀時再補。
+
 ### worklist L555/L557/L572 完成度
 
 - **L555**(doc56 L600:scroll/composite/專用演出/SFX/UI 未接):`FUN_0002ff01` 的逐目標迴圈證實了 scroll/composite 的原生結構(`FUN_00011eb0`/`FUN_0002eb9f`/`FUN_000311e5` 等 step 呼叫,HP 從 `iStack_38` 動畫過渡到 `iStack_50`),但 renderer/SFX/UI 仍未接進 remake——**部分推進,未關閉**。
-- **L557**(AoE range>0、命中率):命中率——**本輪以 code-level 反編譯二次核實,確認與物理 HIT−EV 完全獨立,可視為結論穩定**(逐 ID 數值核對仍缺,見 §6.1)。AoE——**找到真正的多目標套用迴圈與其位址(`0x2ff01` 內 `param_3`/`param_4`),但上游「range 如何決定填入陣列的目標清單」仍未追完**——**部分推進,未關閉**。
+- **L557**(AoE range>0、命中率):命中率——**本輪以 code-level 反編譯二次核實,確認與物理 HIT−EV 完全獨立,可視為結論穩定**(逐 ID 數值核對仍缺,見 §6.1)。AoE——**2026-08-20 續輪(§6.4)已用位址級反組譯完整追出上游生成器**:`FUN_00014818` 依 spell/item record 的 `[+3]`(選取範圍)/`[+4]`(生效範圍)兩個 byte 欄位,分流成「`FUN_0004e390`+`FUN_0004e42c` 遞迴 flood fill 塗地圖緩衝區」(圓形/範圍型,`<0x10`)或「列/欄門檻掃描」(直線型,`>=0x10`),再掃描全部 unit 依緩衝區命中+`[+6]` 陣營篩選收集成 `FUN_0002ff01` 的 `param_3/param_4`——**鏈路完整,已關閉**(僅剩葉節點 `FUN_0004e4be`/`FUN_0004e8a5` 的資料表細節未展開,不影響機制結論)。
 - **L572**(doc37 結論、`0x2a6bd` command-specific presentation/SFX/命中分支):doc37 的 spell-id 不選 FIGANI 結論本身不受影響,仍成立。`0x2a6bd` 位址勘誤(§6.3)是本輪最主要產出:command-specific presentation dispatcher 的**真正位址**現為 `0x2ff01`,其分支結構(id 0–8 走 AoE 迴圈、id 24/28–31 走 `0x2cf30`、id≥32 走 `0x2d80d`)首次有反組譯佐證——**位址勘誤與大方向分支已解,SFX 與逐 command 完整 presentation contract 仍未展開,部分推進,未關閉**。
