@@ -794,15 +794,98 @@ fallthrough**（例如 event86 的 7-byte「handler」`*(unaff_EBX+0x11)+=1; [0x
 slot 根本是指向另一個較大 handler 內部的共用出口，不是獨立函式），但這只是本節的
 觀察推論，**未經 basic-block walk 或 xref 交叉確認，不升級為結論**。
 
-### L212 完成度
+### 10.4 2026-08-20 第二輪：basic-block walk 逐位元組定位（回應 §10.3 遺留的 16 個）[驗]/[推]
 
-**部分閉合**：58／59／60／61／63／82（既有）+ 本節新增 67／69／76／78／84（乾淨）+
-65／74／75（局部片段）= 90 個 entry 中 13 個現在有位址佐證的高階語意描述，另 16 個
-（62／68／70／71／72／73／77／79／80／81／83／85..89）本輪嘗試但因函式邊界猜測失敗
-未取得可信結果，仍是 raw table entry。**下一步建議**：捨棄本節「下一入口位址當邊界」
-的做法，改用 `tools/extract_event_id_groups.py` 已驗證可靠的 basic-block walk 方式重新
-框定這 16 個 handler 的真正函式邊界，再重跑 decompile；優先序可参考 §6.2 已知「格子
-實際引用」的 62／65／69／75／80／84（其中 65／69／75／84 本節已有進展，剩 62／80
-待補）。
+§10.3 的失敗根因**不是**「函式邊界猜測不準」這麼籠統——用 `getInstructionAt`+`.getNext()`
+手動 basic-block walk（BFS：call 過站不進入、遇 RET/無條件 JMP 到別處才停，條件跳兩路都走，
+與 `tools/extract_event_id_groups.py` 同一演算法，但直接在 Ghidra 資料庫上重放，因為
+docker/capstone 環境已隨 2026-08-16 移除 Docker Desktop 不可用）搭配**逐位元組 hex dump**
+（`getByte`，不經過任何反組譯器詮釋）比對後，找到一個可重現、可用位址證明的具體機制：
 
-> 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`。
+**這 16 個 event_id 在 `0x51b91` 跳表裡的 relocated 位址，有極高比例根本不是任何指令的
+起始位元組——它們落在鄰近（通常是編號較小、已經解出的）handler 本體內部某條指令的
+「中段」（ModRM/位移/立即值運算元的某個 byte）。** 這用 hex dump 可以直接、無歧義地證明：
+取目標位址往前/往後各數十 byte 的原始 bytes，若能在其中辨認出「某條已知指令 X 的 opcode
+起點在目標位址前 N byte 處，且 N+X 的指令長度剛好蓋過目標位址」，就證明目標位址是 X 的
+操作數 byte，不可能是獨立進入點——這與 Ghidra 自己既有 976-函式分析對這些位址普遍回報
+`getFunctionContaining()==null`／`halt_baddata`（=已經把該 byte 判定成別的指令的一部分，
+拒絕在此重新起始反組譯）完全吻合，是兩種獨立方法給出的同一結論。
+
+驗證用腳本：`ProbeGlobalEvents16BBWalk.java`(BFS walk)、`ProbeGlobalEventsRawBytes.java`／
+`ProbeExtra.java`(hex dump)、`ProbeEvent67Walk.java`／`ProbeEvent84Walk.java`(鄰居 handler
+的乾淨 walk，作為比對基準)，皆存於 `FD2_ghidra_projects/`，執行方式與既有
+`reference_fd2_live_ghidra_headless_probe` 記憶一致（`-readOnly -noanalysis` + `-postScript`）。
+
+#### 10.4.1 證實「落在鄰居 handler 內部、無獨立語意」（byte 級比對，[驗]）
+
+先取 event67(`0x35a2f`)與 event84(`0x360c0`)兩個已由 §10.1 認證的乾淨 handler，各自重新
+walk 出**真正**的逐指令位址表（見下方引用），再與 16 個目標的 hex dump 逐 byte 對照：
+
+| event | 位址 | 落點 |
+|---:|---|---|
+| 68 | `0x35a48` | event67 自己的 `0x35a47: 83 C4 04`(ADD ESP,4，CALL 0x1956B 後的清棧)第 2 byte(`C4`)——並非新指令起點 |
+| 70 | `0x35b05` | event67/68/69 共用 59 幀迴圈的 `0x35b04: 68 E4 BC 0A 00`(PUSH 0xABCE4，逐幀繪圖用的 resource id)第 2 byte |
+| 71 | `0x35b6b` | 同一段共用尾聲 `0x35b67: FF 35 79 3A 05 00`(PUSH dword[0x53A79]，draw 呼叫前的最後一個引數)第 5 byte |
+| 81 | `0x35f6f` | event80 自己的 `0x35f6e: C7 05 83 1A 05 00 01 00 00 00`(MOV dword[0x51A83],1)第 2 byte；9 byte 後即 RET |
+| 85 | `0x360d8` | event84 自己的 `0x360d5: E8 38 D4 FD FF`(CALL 0x13512，即 doc 已載的「標記單位已行動」)第 4 byte |
+| 86 | `0x360e3` | **恰好對齊** event84 自己的 `INC byte[EBX+0x11]`（`FE 43 11`）——是真指令邊界，但 EBX 未初始化：event84 本體要先執行 `0x360dd: MOV EBX,[0x53AD5]` 才設好 EBX，86 這個進入點跳過了那一步，若真被呼叫會對任意殘留 EBX 值做 `INC [EBX+0x11]`，即記憶體毀損，不像是設計上會被觸發的入口 |
+| 87 | `0x360ea` | event84 自己的 `0x360e6: A0 EF 3B 05 00`(MOV AL,[0x53BEF])最後 1 byte |
+| 88 | `0x360f1` | event84 自己的 `0x360ed: 8B 1D 55 3A 05 00`(MOV EBX,[0x53A55])第 5 byte |
+| 89 | `0x360f8` | event84 自己的 `0x360f6: 83 C4 04`(ADD ESP,4)最後 1 byte，9 byte 後即 `POP EBX; RET` |
+
+這 9 個（68／70／71／81／85／86／87／88／89）**沒有、也不可能有屬於自己的獨立高階語意**——
+它們的「table entry」單純是 relocation 落在別人函式體中段的產物。這比 §10.3 原本「疑似
+共用尾段但未確認」的推論更進一步：不只是**推論**，是**證實**（byte 級逐一比對，附精確
+offset），也把 §10.3 對 85..89 的觀察從 [推] 升級為 [驗]，並新增 68／70／71／81 四個同類案例。
+
+#### 10.4.2 有自己可讀出的具體行為（[推]，多數第一個位元組落在鄰居尾巴，但緊接著的本體乾淨自洽）
+
+| event | 位址 | 行為 |
+|---:|---|---|
+| 62 | `0x35898` | 目標本身落在 `0x35895: FF 74 24 20`(PUSH dword[ESP+0x20])最後 1 byte，但緊接著 `0x35899: CALL 0x1B8A6`——與 event58 檢查行動單位八格 raw inventory 用的**同一個函式**。往回追溯（`ProbeExtra.java` 的 -120 byte 視窗）找到所在函式的乾淨序頭 `PUSH EBX,ESI,EDI; SUB ESP,0x10; ...; MOV ESI,0x5274E`——`0x5274E` 正是 §「event58：map25 五選一寶物」文件的同一張五格資源表；往後（本節較早的 BFS walk）也證實會以 FDTXT index `0x1E0` 顯示訊息，與 event58 記載的「inventory 滿時顯示的 FDTXT_000 `0x1E0`」逐字相同。**結論**：event62 是 event58「五選一寶物」機制在另一張地圖／另一套單位查找路徑下的平行副本（同演算法、不同 unit-record 讀取方式），不是同一份程式碼，但共用同一張資源表與同一句提示文字。 |
+| 72 | `0x35bf2` | 目標落在鄰近 `PUSH 0x4`（0x35bee 起）最後 1 byte，緊接 `CALL 0x3702F(arg=4)`（未展開的 overlay/helper，目標未解析）後即乾淨自洽：`MOV EAX,[0x53AD5]; CMP byte[EAX+0x11],0; JNZ +0x19（非0則跳到RET）; [若為0:] MOV DL,[0x53BEF]; INC DL; MOV byte[0x53A55+3],DL; MOV EAX,[0x53AD5]; MOV byte[EAX+0x11],1; RET`。即 event84 四回合倒數重排程機制的**單次版**（[0x53AD5+0x11] 當一次性旗標而非 0..4 計數器，把下回合排進 `turn_events[0].turn`（`[0x53A55+3]`）後就把旗標鎖住，之後再觸發直接 RET 不重複）。 |
+| 73 | `0x35c23` | 目標落在鄰近一個 `CALL 0x3702F(arg=0x10)` 指令中段，緊接著乾淨自洽：`PUSH 1,0x1B,3; CALL 0x35B78; ADD ESP,0xC; PUSH 2,0x1B,0xF; JMP 0x3566E`（尾呼叫）。與 §10.2 已載的 event74（`push2;push0x1B;call 0x35B78`）、event75 是同一個「給予 item `0x1B`(27)」helper 家族的第三個變體（數量 3，尾呼叫帶 (2,0x1B,0xF) 三個引數到共用出口 `0x3566E`，與 event74/75 共用同一尾端）。 |
+| 79 | `0x35ee6` | 目標落在 event78 自己 `PUSH 0x140` 指令（9-arg draw 呼叫序列的一部分）中段第 3 byte，緊接著的每個 byte 都與 event78「條件成立」分支逐一相同：`PUSH 0xA0000,2,[0x53A79]; CALL 0x15F84; CALL 0x35F10(arg=0x14); MOV EAX,[0x53AD5]; INC byte[EAX+0x13]; RET`。這證實（byte 級，非猜測）§10.1 原先對 event79 的推測——event79 就是 event78「必定執行、不檢查旗標」的版本，重入點精準落在 78 自己 `if` 判斷之後的 true 分支開頭附近。 |
+| 80 | `0x35f5a` | 目標落在某 `CALL <give-item helper>(2,0x23,4)` 呼叫最後 1 byte，緊接乾淨自洽：`ADD ESP,0xC; PUSH 3,0x23,0xE; CALL <同家族 helper>; ADD ESP,0xC; MOV dword[0x51A83],1; RET`。與 event75 已載的「呼叫 `0x35B78` 系列 helper 數次 + `[0x51A83]=1`(戰場輸入鎖)」同一家族，這裡給予的是 item/flag `0x23`(35) 兩種數量(4、14)後鎖輸入。（event81 的「落點」即證實落在這個 `[0x51A83]=1` 指令中段，見 §10.4.1。） |
+| 83 | `0x36088` | 目標落在鄰近一個 `MOV EAX,[0x53AD5]` 指令中段第 4 byte，緊接乾淨自洽：`MOV byte[EAX+0x11],1; MOV DL,[0x53BEF]; INC DL; MOV EAX,[0x53A55]; MOV byte[EAX+6],DL; MOV EAX,[0x53AD5]; MOV byte[EAX+0x10],4; MOV EAX,[0x53A55]; MOV DL,[0x53BEF]...`（超出本次 40-byte 視窗）。與 event72/event84 同屬「把下一次觸發排進某個 turn_events slot」家族，但這裡寫入的是 `[0x53A55+6]`（另一個 slot，不是 72/84 用的 `+3`）並額外把 `[0x53AD5+0x10]` 設成 4——確切是哪個 map/slot 觸發、`+0x10` 這個 battle-local byte 的完整語意，本節未展開，留待後續。 |
+
+這 6 個（62／72／73／79／80／83）**取得了可引用位址、可讀懂的具體行為**，但因為緊鄰
+handler 的真正起點多半只往回追了幾十 byte（未逐一重新驗證是否又落在「更前一個」
+handler 的中段），標 [推] 而非 [驗]；其中 79 因為對照對象（event78）本身已是 §10.1
+的 [驗] 結果，可信度最高。
+
+#### 10.4.3 仍未解（[阻]，本節誠實承認）
+
+| event | 位址 | 失敗原因（具體） |
+|---:|---|---|
+| 77 | `0x35ebe` | 目標落在一個 `JMP rel32`（尾呼叫）指令中段第 2 byte；往回 60 byte 的視窗看到這是一個**先前未記錄**、更大的多階段「給予 item type 7」handler 的尾端——依序 `PUSH id,7,qty; CALL <0x35B78 家族 helper>` 三次（引數組合 `(3,7,8)`、`(4,7,4)`、`(5,7,0)`，最後一組改用尾呼叫 `JMP` 到約 `0x35D56`），但**這個外層 handler 自己真正的入口位址本節沒有找到**（60-byte 視窗不夠，需要更長的回溯 walk，本節未做）。因此雖然「77 本身不是獨立進入點」這個結論成立（與 §10.4.1 同一現象），但沒有已知鄰居的「乾淨版本」可引用比對，不能像 68/70/71/81/85..89 那樣給出可信賴的精確位址佐證，故仍列為未解，而非證實共用。 |
+
+### L212 完成度（2026-08-20 更新）
+
+**本節（10.4）處理了 §10.3 列出的全部 16 個 handler，逐一都有明確結論**：
+
+- **9 個（68／70／71／81／85／86／87／88／89）**：以 byte 級 hex dump + 已驗證鄰居的
+  basic-block walk **證實**它們的 table 位址落在鄰居 handler 內部某條指令中段，不是獨立
+  進入點、沒有屬於自己的語意——這是本節的核心新結論，把 §10.3 的「觀察推論」升級為
+  [驗]。
+- **6 個（62／72／73／79／80／83）**：取得可引用位址的具體行為描述（[推]），多與既有
+  handler 家族（event58 五選一寶物、event72/84 turn 重排程、event73/74/75 給予 item、
+  event78/79 條件繪圖）互為印證或擴充。
+- **1 個（77）**：確認「非獨立進入點」但外層 handler 真正入口未定位，仍列未解。
+
+**90 個 entry 累計**：先前 §6/§10.1/§10.2 已有具體行為描述的 14 個
+（58／59／60／61／63／65／67／69／74／75／76／78／82／84）+ 本節新增 6 個
+（62／72／73／79／80／83）= **20 個有具體位址佐證的行為描述**；另有 **9 個
+（68／70／71／81／85／86／87／88／89）證實為共用鄰居代碼、無獨立語意**（這 9 個「解決」
+的方式是證明它們不是真正的 handler，而非解出行為）；**1 個（77）**落點性質已知但外層
+handler 未定位，仍未解；`64`／`66` 兩個 entry 在 §10 最早的範圍界定中被遺漏（26 個目標
+只覆蓋到 24 個 + 本節 16 個，64/66 不在任一份清單內），不屬於本次任務範圍，留給後續
+稽核；其餘 60 個（0..57 的 turn_events 子集）不在 L212 討論範圍內。
+
+**下一步建議**：77 的外層 handler 需要更長距離的回溯 basic-block walk（本節 60-byte
+視窗不足）才能定位真正入口；62/72/73/79/80/83 六個「[推]」項目若要升級為 [驗]，需要
+對它們各自緊鄰的「上一個」handler 也做一次乾淨 basic-block walk 加以交叉確認（方法與
+本節對 event67/84 所做的完全一樣，只是尚未對每一個都做）；64/66 兩個先前遺漏的 entry
+建議與後續 event82-style 稽核一併排入。
+
+> 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`、`FD2_ghidra_projects/ProbeGlobalEvents16BBWalk.java`、`ProbeGlobalEventsRawBytes.java`、`ProbeExtra.java`、`ProbeEvent67Walk.java`、`ProbeEvent84Walk.java`。
