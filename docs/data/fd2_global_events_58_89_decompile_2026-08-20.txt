@@ -1,0 +1,359 @@
+Raw analyzeHeadless output for ProbeGlobalEvents58to89.java (2026-08-20).
+Source: FD2Analysis3 Ghidra project, -readOnly -noanalysis.
+Analyzed file MD5 (ProbeCheckHash.java): a6e341a8decc6ebf7f4872076d9cf161, size 509158
+(matches C:\Users\kg701\Desktop\GAME\FD2_APK\FD2.EXE; differs from the canonical
+"新版" reference in docs/data/fd2-reference-files.json (MD5 33464c81e6a364fd0660141139aa8e6e)
+by exactly 2 unrelated patched bytes at file offset 279901/305228 -- see
+fd2_field_menu_endturn_disasm_2026-08-20.txt §"版本核對" for the full cmp -l check;
+none of the addresses below are anywhere near those two offsets).
+Method caveat: function boundaries were guessed as "next event_id's handler address" per
+docs/data/event_id_groups.json ordering, NOT Ghidra's own recognized function boundaries --
+this succeeds for roughly half the entries (clean decompile) and produces register-residue
+artifacts (unaff_EBX/unaff_EBP) or halt_baddata for the other half (boundary guess wrong).
+See docs/knowledge-base/25-battle-event-system.md §10 for the interpreted, confidence-tagged
+results ([驗] vs [推] vs unusable) derived from this raw log.
+====================================================================
+
+INFO  Using log config file: jar:file:/C:/tools/ghidra_12.1.2_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)
+INFO  Using log file: C:\Users\kg701\AppData\Roaming\ghidra\ghidra_12.1.2_PUBLIC\application.log (LoggingInitialization)  
+INFO  Loading user preferences: C:\Users\kg701\AppData\Roaming\ghidra\ghidra_12.1.2_PUBLIC\preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (797 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: SHA1PRNG (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (2490 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\SystemEmulation\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\Base\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Debug\Debugger-rmi-trace\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Debug\Debugger\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Processors\JVM\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\VersionTracking\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Processors\DATA\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\PyGhidra\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\BytePatterns\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\SwiftDemangler\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\FunctionID\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Processors\8051\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\GnuDemangler\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\BSim\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\Decompiler\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Processors\Atmel\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\WildcardAssembler\ghidra_scripts
+    C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Processors\PIC\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\MicrosoftCodeAnalyzer\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\FileFormats\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\PDB\ghidra_scripts
+    C:\tools\ghidra_12.1.2_PUBLIC\Ghidra\Features\DecompilerDependent\ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\FD2Analysis3 (HeadlessAnalyzer)  
+INFO  Opening project: C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\FD2Analysis3 (HeadlessProject)  
+INFO  Updating language version for Program FD2.EXE: x86/little/32/default (Version 4.7) (ProgramDB)  
+INFO  REPORT: Processing read-only project file: /FD2.EXE (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: ProbeGlobalEvents58to89.java  (HeadlessAnalyzer)  
+INFO  SCRIPT: C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeGlobalEvents58to89.java (HeadlessAnalyzer)  
+INFO  ProbeGlobalEvents58to89.java> === event 62 handler 0x35898 (size 0x2f) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_00035898(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+
+{
+  byte *pbVar1;
+  int unaff_EBX;
+  int unaff_EBP;
+  
+  pbVar1 = (byte *)(CONCAT31((int3)((uint)param_1 >> 8),(byte)param_1 & (byte)((uint)param_3 >> 8))
+                   + -2);
+  *pbVar1 = *pbVar1 | (byte)((uint)param_1 >> 8);
+  *(int *)(unaff_EBX + -0x77cfb3c) = *(int *)(unaff_EBX + -0x77cfb3c) + 1;
+  *(byte *)(unaff_EBP + 0x48) = *(byte *)(unaff_EBP + 0x48) | (byte)((uint)param_2 >> 8);
+  FUN_00015f84();
+  FUN_00016559();
+  FUN_00016c57();
+  FUN_000196cb();
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 64 @ 0x358ea : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 65 handler 0x3599b (size 0x2d) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_0003599b(undefined4 param_1,undefined4 param_2,undefined4 param_3,int param_4)
+
+{
+  char cVar1;
+  char *pcVar2;
+  
+  cVar1 = (char)param_1 + (char)((uint)param_3 >> 8);
+  pcVar2 = (char *)CONCAT31((int3)((uint)param_1 >> 8),cVar1);
+  *pcVar2 = *pcVar2 + cVar1;
+  if (*(char *)(DAT_00053a45 + 6 + param_4 * 0x50) != '\0') {
+    func_0x000344f2();
+  }
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 66 @ 0x359c8 : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 67 handler 0x35a2f (size 0x19) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_00035a2f(void)
+
+{
+  int iVar1;
+  
+  FUN_0001956b();
+  iVar1 = FUN_0002aedb();
+  if (iVar1 == -1) {
+    FUN_00015f84();
+    FUN_00016559();
+    FUN_00016c57();
+    FUN_000196cb();
+    return;
+  }
+  FUN_0001b8e7();
+  FUN_00015f84();
+  FUN_00016c57();
+  FUN_000196cb();
+  FUN_000111ba();
+  for (iVar1 = 0; iVar1 < 0x3b; iVar1 = iVar1 + 1) {
+    FUN_0002eb9f();
+    FUN_00017aa9();
+  }
+  FUN_0003776e();
+  *(undefined1 *)(DAT_00053ad5 + 0xc) = 1;
+  FUN_00012263();
+  FUN_00010b4e();
+  FUN_000112a5();
+  FUN_00015f84();
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 68 @ 0x35a48 : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 69 handler 0x35ab8 (size 0x4d) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_00035ab8(void)
+
+{
+  int iVar1;
+  
+  FUN_00015f84();
+  FUN_00016c57();
+  FUN_000196cb();
+  FUN_000111ba();
+  for (iVar1 = 0; iVar1 < 0x3b; iVar1 = iVar1 + 1) {
+    FUN_0002eb9f();
+    FUN_00017aa9();
+  }
+  FUN_0003776e();
+  *(undefined1 *)(DAT_00053ad5 + 0xc) = 1;
+  FUN_00012263();
+  FUN_00010b4e();
+  FUN_000112a5();
+  FUN_00015f84();
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 70 @ 0x35b05 : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 71 @ 0x35b6b : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 72 handler 0x35bf2 (size 0x31) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_00035bf2(undefined4 param_1,undefined4 param_2,int param_3)
+
+{
+  byte bVar1;
+  byte bVar2;
+  char cVar3;
+  char cVar5;
+  byte in_AF;
+  uint uVar4;
+  
+  bVar2 = (char)param_1 + (char)((uint)param_3 >> 8);
+  bVar1 = 9 < (bVar2 & 0xf) | in_AF;
+  uVar4 = CONCAT31((int3)((uint)param_1 >> 8),bVar2 + bVar1 * '\x06') & 0xffffff0f;
+  cVar3 = (char)uVar4;
+  cVar5 = (char)((uint)param_1 >> 8) + bVar1;
+  *(char *)((int)&DAT_00053ad5 + param_3) = *(char *)((int)&DAT_00053ad5 + param_3) + cVar5;
+  if (*(char *)(CONCAT31((int3)(CONCAT22((short)(uVar4 >> 0x10),CONCAT11(cVar5,cVar3)) >> 8),
+                         cVar3 + bVar1) + 0x11) == '\0') {
+    *(char *)(DAT_00053a55 + 3) = DAT_00053bef + '\x01';
+    *(undefined1 *)(DAT_00053ad5 + 0x11) = 1;
+  }
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 73 handler 0x35c23 (size 0xf) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_00035c23(int param_1,int param_2,undefined4 param_3)
+
+{
+  *(byte *)(param_1 * 2) = *(byte *)(param_1 * 2) | (byte)param_2;
+  *(char *)(param_2 + 1) = *(char *)(param_2 + 1) + (char)((uint)param_3 >> 8);
+  func_0x00035b78();
+  func_0x00035b78();
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 74 handler 0x35c32 (size 0x47) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_00035c32(void)
+
+{
+  undefined4 uStack00000004;
+  undefined4 uStack00000008;
+  
+  uStack00000008 = 2;
+  uStack00000004 = 0x1b;
+  func_0x00035b78();
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 75 handler 0x35c79 (size 0xe7) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_00035c79(void)
+
+{
+  int unaff_EBX;
+  
+  *(int *)(unaff_EBX + 0x36a24c4) = *(int *)(unaff_EBX + 0x36a24c4) + 1;
+  func_0x00035b78();
+  func_0x00035b78();
+  func_0x00035b78();
+  DAT_00051a83 = 1;
+  *(char *)(DAT_00053ad5 + 0x10) = *(char *)(DAT_00053ad5 + 0x10) + '\x01';
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 76 handler 0x35d60 (size 0x15e) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_00035d60(void)
+
+{
+  FUN_00015f84();
+  return;
+}
+
+ (GhidraScript)  
+WARN  Decompiling 00035ebe, pcode error at 00035ebe: Unable to resolve constructor at 00035ebe (DecompileCallback)  
+INFO  ProbeGlobalEvents58to89.java> === event 77 handler 0x35ebe (size 0x14) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+/* WARNING: Control flow encountered bad instruction data */
+
+void __stdcall FUN_00035ebe(void)
+
+{
+                    /* WARNING: Bad instruction - Truncating control flow here */
+  halt_baddata();
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 78 handler 0x35ed2 (size 0x14) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_00035ed2(int *param_1)
+
+{
+  byte in_CF;
+  
+  if ((int)param_1 + (uint)in_CF + *param_1 != 0) {
+    FUN_00015f84();
+    func_0x00035f10();
+  }
+  *(char *)(DAT_00053ad5 + 0x13) = *(char *)(DAT_00053ad5 + 0x13) + '\x01';
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 79 @ 0x35ee6 : FAILED to create function === (GhidraScript)  
+WARN  Decompiling 00035f5a, pcode error at 00035f5b: Unable to resolve constructor at 00035f5b (DecompileCallback)  
+INFO  ProbeGlobalEvents58to89.java> === event 80 handler 0x35f5a (size 0x15) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+/* WARNING: Control flow encountered bad instruction data */
+
+void __stdcall FUN_00035f5a(void)
+
+{
+                    /* WARNING: Bad instruction - Truncating control flow here */
+  halt_baddata();
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 81 handler 0x35f6f (size 0x23) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void FUN_00035f6f(int param_1)
+
+{
+  int *piVar1;
+  
+  piVar1 = (int *)((int)&DAT_00051a83 + param_1);
+  *piVar1 = (int)(*piVar1 + (int)piVar1);
+  *(char *)piVar1 = (char)*piVar1 + (char)piVar1;
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 83 handler 0x36088 (size 0x38) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+int FUN_00036088(int param_1,int param_2,int param_3)
+
+{
+  *(int *)(param_2 + 0x53bef15) = *(int *)(param_2 + 0x53bef15) + param_3;
+  return param_1 + 0x1140c600;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 84 handler 0x360c0 (size 0x18) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_000360c0(void)
+
+{
+  undefined1 uStack_8;
+  
+  if (*(char *)(DAT_00053ad5 + 0x11) != '\x04') {
+    FUN_00013512();
+    *(char *)(DAT_00053ad5 + 0x11) = *(char *)(DAT_00053ad5 + 0x11) + '\x01';
+    *(char *)(DAT_00053a55 + 6) = DAT_00053bef + '\x01';
+    return;
+  }
+  FUN_00015f84();
+  FUN_00010b4e();
+  *(char *)(DAT_00053ad5 + 0x15) = (char)DAT_00053beb + -3;
+  *(char *)(DAT_00053a55 + 9) = DAT_00053bef;
+  FUN_000361b0();
+  thunk_FUN_0003e01d();
+  FUN_000361b0();
+  thunk_FUN_0003e01d();
+  for (uStack_8 = 3; uStack_8 < 7; uStack_8 = uStack_8 + 1) {
+    FUN_000361b0();
+    FUN_00015f84();
+  }
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 85 @ 0x360d8 : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 86 handler 0x360e3 (size 0x7) === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> 
+void __stdcall FUN_000360e3(void)
+
+{
+  int unaff_EBX;
+  
+  *(char *)(unaff_EBX + 0x11) = *(char *)(unaff_EBX + 0x11) + '\x01';
+  *(char *)(DAT_00053a55 + 6) = DAT_00053bef + '\x01';
+  return;
+}
+
+ (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 87 @ 0x360ea : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 88 @ 0x360f1 : FAILED to create function === (GhidraScript)  
+INFO  ProbeGlobalEvents58to89.java> === event 89 @ 0x360f8 : FAILED to create function === (GhidraScript)  
+INFO  REPORT: Discarding changes to the following read-only file: /FD2.EXE (HeadlessAnalyzer)  

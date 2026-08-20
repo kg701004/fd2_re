@@ -1,0 +1,355 @@
+FD2 end-turn / field system menu -- raw evidence dump (2026-08-20)
+====================================================================
+
+Source: FD2Analysis3 Ghidra project (analyzeHeadless -readOnly -noanalysis),
+        via ProbeCheckHash.java / FD2_decompile_full.txt / FD2_disasm_full.txt
+        (already-completed 976-fn full decompile export, see [[fd2-ghidra-decompile]]).
+
+Analyzed file identity (ProbeCheckHash.java):
+  EXEC_PATH (original import path, no longer present on disk): /D:/Codex/FD2_extracted/FD2/FD2.EXE
+  MD5 (Ghidra-recorded): a6e341a8decc6ebf7f4872076d9cf161
+  LEN (Ghidra in-memory image size, includes uninitialized/bss expansion): 802705
+
+Cross-check against docs/data/fd2-reference-files.json canonical "新版" baseline:
+  canonical FD2.EXE: size 509158, MD5 33464c81e6a364fd0660141139aa8e6e
+  candidate copies on this machine (2026-08-20):
+    C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE       509158  33464c81e6a364fd0660141139aa8e6e  (matches canonical)
+    C:\Users\kg701\Desktop\GAME\FD2_USB\FD2.EXE   509158  33464c81e6a364fd0660141139aa8e6e  (matches canonical)
+    C:\Users\kg701\Desktop\GAME\FD2_APK\FD2.EXE   509158  a6e341a8decc6ebf7f4872076d9cf161  (matches FD2Analysis3's import)
+  `cmp -l` between FD2\FD2.EXE (canonical) and FD2_APK\FD2.EXE (FD2Analysis3's actual source):
+    only 2 differing bytes in the whole 509158-byte file:
+      file offset 279901 (0x44575): 0o164 (0x74, "je rel8") -> 0o353 (0xeb, "jmp rel8")
+      file offset 305228 (0x4a80c): 0o15  (0x0d)             -> 0o22  (0x12)
+    Both offsets are far from every address cited in this note (0x1a30b/0x13565/0x16f55/
+    0x1728c region, and the 0x354fe..0x36100 global-event-handler region) -- same code,
+    same addresses, just two isolated bytes patched (looks like a single conditional-jump
+    flip, consistent with a no-CD/minor community patch). Addresses below are therefore
+    safe to treat as applying to the canonical "新版" 509158-byte reference too.
+
+--------------------------------------------------------------------
+1. FUN_00013565 @ 0x13565 (team predicate) -- decompile, full function
+--------------------------------------------------------------------
+void __stdcall FUN_00013565(void)
+
+{
+  int iVar1;
+  bool bVar2;
+  int iVar3;
+
+  FUN_0003702f();
+  bVar2 = true;
+  for (iVar3 = 0; iVar3 < DAT_00053beb; iVar3 = iVar3 + 1) {
+    iVar1 = DAT_00053a45 + iVar3 * 0x50;
+    if ((((*(byte *)(iVar1 + 5) & 0x81) == 0) && (*(char *)(iVar1 + 6) == '\x02')) &&
+       (*(char *)(iVar1 + 0x26) == '\0')) {
+      bVar2 = false;
+    }
+  }
+  if (bVar2) {
+    DAT_00051aac = 0;
+    DAT_00051a83 = 0;
+    FUN_0001a30b();
+    DAT_00051a83 = 1;
+    DAT_00051aac = 1;
+  }
+  return;
+}
+
+Sole caller (grep "CALL 0x00013565" over FD2_disasm_full.txt): 0x00011985,
+inside FUN_000117e7 (the main battle loop, size covers 0x117e7..0x119xx).
+
+--------------------------------------------------------------------
+2. FUN_000117e7 @ 0x117e7 (main battle loop) -- decompile excerpt showing
+   where 0x13565 is called (full function; unrelated branches trimmed to "...")
+--------------------------------------------------------------------
+int __stdcall FUN_000117e7(void)
+{
+  ...
+  if ((iVar2 == 0x39) || (iVar2 == 0x1c)) {           /* Space / Enter */
+    if (DAT_00051a42 != '\0') { DAT_00051a42 = DAT_00051a42 + -1; }
+    iVar2 = FUN_00012c0d();                            /* unit-at-cursor lookup */
+    if (iVar2 == -1) {
+      do { iVar2 = FUN_00016f55(); } while (iVar2 == 0);   /* <-- field system menu */
+      if (iVar2 == 1) { iVar2 = 0; }
+      return iVar2;
+    }
+    iVar2 = iVar2 * 0x50 + DAT_00053a45;
+    DAT_00053ec8 = 0;
+    if ((*(char *)(iVar2 + 7) != 'y') && (*(char *)(iVar2 + 0x1f) != '\n')) {
+      if ((*(char *)(iVar2 + 6) == '\x02') &&
+         (((*(byte *)(iVar2 + 5) & 0x80) == 0 && (*(char *)(iVar2 + 0x26) == '\0')))) {
+        FUN_00025a96();
+        do { iVar2 = FUN_00018890(); } while (iVar2 == 0);   /* action ring */
+      }
+      else {
+        FUN_00017aed();
+      }
+      FUN_00011cac();
+      if (99 < DAT_00053ec8) { DAT_00053ec8 = 99; }
+      FUN_0001e292();
+      (**(code **)(&DAT_00051b19 + DAT_00053c03 * 4))();     /* chapter handler table */
+      FUN_00013565();                                        /* <-- TEAM PREDICATE */
+      if (DAT_00051a8f != 0xff) {
+        (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();   /* pending global event */
+      }
+      DAT_00051a8f = 0xff;
+      goto LAB_0001187a;
+    }
+  }
+  ...
+}
+
+--------------------------------------------------------------------
+3. FUN_0001a30b @ 0x1a30b (round orchestrator) -- decompile, full function
+   (already independently documented in doc56 2026-08-14; reproduced here
+   verbatim for this note's self-containedness and to show the exact
+   0x1d80b / 0x1d8ba call sites doc56's numbered summary abstracted away)
+--------------------------------------------------------------------
+void __stdcall FUN_0001a30b(void)
+{
+  bool bVar1;
+  uint uVar2;
+  int iVar3;
+  int iVar4;
+  uint uVar5;
+
+  FUN_0003702f();
+  bVar1 = false;
+  FUN_00017aa9();
+  for (iVar4 = 0; iVar4 < DAT_00053beb; iVar4 = iVar4 + 1) {
+    iVar3 = iVar4 * 0x50 + DAT_00053a45;
+    if (((*(char *)(iVar3 + 6) == '\x02') && ((*(byte *)(iVar3 + 5) & 0x81) == 0)) &&
+       ((*(char *)(iVar3 + 0x25) == '\0' &&
+        ((*(char *)(iVar3 + 0x26) == '\0' && (*(short *)(iVar3 + 0x40) != *(short *)(iVar3 + 0x42))))))) {
+      FUN_0001da16();
+      bVar1 = true;
+    }
+  }
+  FUN_00011eb0();
+  if (bVar1) { FUN_00025a96(); }
+  FUN_00017aa9();
+  for (iVar4 = 0; iVar4 < DAT_00053beb; iVar4 = iVar4 + 1) {
+    iVar3 = iVar4 * 0x50 + DAT_00053a45;
+    uVar2 = (uint)*(ushort *)(iVar3 + 0x42);
+    if ((((*(char *)(iVar3 + 6) == '\x02') && ((*(byte *)(iVar3 + 5) & 0x81) == 0)) &&
+        (*(char *)(iVar3 + 0x25) == '\0')) &&
+       ((*(char *)(iVar3 + 0x26) == '\0' && (*(ushort *)(iVar3 + 0x40) != uVar2)))) {
+      uVar5 = (uint)*(ushort *)(iVar3 + 0x40) + uVar2 / 5;
+      if (uVar2 < uVar5) { uVar5 = uVar2; }
+      *(short *)(iVar3 + 0x40) = (short)uVar5;
+      FUN_0001da16(DAT_00053a49 + 0x8088,uVar2 % 5,uVar2,DAT_00053a49 + 0x8088,0x1c8,iVar4,0,0);
+      FUN_00013512();
+    }
+  }
+  FUN_00011eb0();
+  FUN_00017aa9();
+  FUN_00011cac();
+  FUN_0001a813();
+  FUN_0001a866();
+  if (DAT_00053ecc == 0) {
+    FUN_0001a7bd();
+    FUN_0001d80b();                    /* <-- ally(camp1) AI single-pass scan */
+    FUN_0001a7f1();
+    if (DAT_00053ecc == 0) {
+      if ((&DAT_00051e63)[DAT_00053c03] != (&DAT_00051e81)[DAT_00053c03]) { FUN_00025977(); }
+      FUN_0001f1cc();
+      thunk_FUN_0003e01d();
+      FUN_0001f30a();
+      FUN_00013536();
+      FUN_00011cac();
+      FUN_0001a813();
+      FUN_0001a866();
+      if (DAT_00053ecc == 0) {
+        FUN_00025977();
+        FUN_0001a7bd();
+        FUN_0001d8ba();                /* <-- enemy(camp0) AI preselect+2nd-pass scan */
+        FUN_0001a7f1();
+        if (DAT_00053ecc == 0) {
+          _DAT_00053bef = _DAT_00053bef + 1;   /* <-- ROUND COUNTER INCREMENT */
+          if ((&DAT_00051e63)[DAT_00053c03] != (&DAT_00051e81)[DAT_00053c03]) { FUN_00025977(); }
+          FUN_0001f1cc();
+          thunk_FUN_0003e01d();
+          FUN_0001f30a();
+          DAT_00051a83 = 0;
+          FUN_00013536();
+          FUN_00011cac();
+          FUN_00025977();
+          for (iVar4 = 0; iVar4 < 9; iVar4 = iVar4 + 1) {
+            FUN_00015f0e();
+            if (6 < iVar4) { FUN_000187d6(); }
+            thunk_FUN_0003e01d();
+            if (iVar4 == 8) { thunk_FUN_0003e01d(); }
+            FUN_00015e71();
+          }
+          for (iVar4 = 2; iVar4 < 6; iVar4 = iVar4 + 1) {
+            if (iVar4 == 5) { iVar4 = 9; }
+            FUN_00015f0e();
+            FUN_000187d6();
+            FUN_00011eb0();
+            FUN_00017aa9();
+            FUN_00015e71();
+          }
+          FUN_00011cac();
+          thunk_FUN_0003e01d();
+          DAT_00053ae9 = 0;
+          FUN_0001a813();
+          FUN_0001a866();
+          DAT_00051a83 = 1;
+          FUN_00012d7b();
+          FUN_0004e381();
+        }
+      }
+    }
+  }
+  return;
+}
+
+--------------------------------------------------------------------
+4. FUN_00016f55 @ 0x16f55 (field system menu) -- raw disasm, full function
+   body (0x16f55..0x17287), Capstone-equivalent mnemonics as printed by
+   Ghidra's disassembly listing. Comments added inline (marked with ";").
+--------------------------------------------------------------------
+00016f55  PUSH 0x54
+00016f5a  CALL 0x0003702f
+00016f5f  PUSH EBX
+00016f60  PUSH ESI
+00016f61  PUSH EDI
+00016f62  SUB ESP,0x20
+00016f65  MOV ECX,0x4
+00016f6a  MOV EDI,ESP
+00016f6c  MOV ESI,0x51e9f
+00016f71  MOVSD.REP ES:EDI,ESI
+00016f73  MOV ECX,0x4
+00016f78  LEA EDI,[ESP + 0x10]
+00016f7c  MOV ESI,0x53ef2
+00016f81  MOVSD.REP ES:EDI,ESI
+00016f83  MOV dword ptr [0x00053c57],0x0        ; ring cursor reset to 0
+00016f8d..00016fae  ring input loop via 0x1741c/0x177fc, redraw via 0x176b4/0x11cac
+00016fd3  CMP EBX,-0x1
+00016fd6  JNZ 0x00016fe4                        ; EBX==-1 (cancel) -> return 1 immediately
+...
+00016fe4  CMP dword ptr [0x00053c57],0x0
+00016feb  JNZ 0x00016ff4
+00016fed  CALL 0x00019df7                       ; selector0: save (already known)
+00016ff2  JMP 0x00016fdd
+00016ff4  CMP dword ptr [0x00053c57],0x1
+00016ffb  JNZ 0x000171b0
+00017001  MOV EAX,[0x00053a45]
+00017006  MOVZX EAX,byte ptr [EAX + 0x7]         ; record0+7 -> confirm-dialog variant selector
+0001700a  PUSH EAX
+0001700b  CALL 0x0001956b                        ; open Yes/No dialog (variant = record0+7)
+00017013..00017035  draw FDTXT string id 0x1a1 via 0x15f84 ("決定要行軍嗎？")
+0001703d  PUSH 0x0
+0001703f  CALL 0x00016559
+00017047  CALL 0x00019953                        ; Yes/No input read
+0001704c  MOV EBX,EAX
+0001704e  CALL 0x000197e5                        ; close dialog cells
+00017053  CMP EBX,0x1
+00017056  JNZ 0x0001716f                          ; not confirmed -> decline branch
+0001705c  CMP dword ptr [0x00053c57],0x0
+00017063  JNZ 0x0001716f                          ; confirmed but on "No" -> decline branch
+00017069..0001708f  draw FDTXT string id 0x1a2 via 0x15f84 ("那麼全軍發進吧！")
+00017092  PUSH 0xc8
+00017097  CALL 0x0003790a                         ; wait 200 ticks
+0001709f  CALL 0x000196cb                         ; closing animation
+000170a4  MOV ESI,dword ptr [0x00053ab1]           ; fixed destination X (captured once)
+000170aa  MOV EDI,dword ptr [0x00053ab5]           ; fixed destination Y (captured once)
+000170b0  MOV dword ptr [0x00051a83],0x0
+000170ba  MOV byte ptr [0x00051aac],0x0
+000170c1  XOR EBX,EBX                              ; unit loop index = 0
+000170c6  CMP EBX,dword ptr [0x00053beb]
+000170cc  JGE 0x0001714a
+000170d2..000170e2  record = DAT_00053a45 + EBX*0x50
+000170e4  TEST byte ptr [EAX + 0x5],0x85
+000170e8  JNZ 0x000170c5                           ; skip if dead/acted/other bit
+000170ea  MOVZX EDX,byte ptr [EAX + 0x6]
+000170ee  CMP EDX,0x2
+000170f1  JNZ 0x000170c5                           ; skip if not camp2 (own)
+000170f3  MOVZX EDX,byte ptr [EAX]                  ; unit's own X
+000170f6  MOVZX EAX,byte ptr [EAX + 0x1]            ; unit's own Y
+000170fc  CALL 0x00012cea                           ; camera focus to unit's own cell
+00017104  MOV dword ptr [0x00051a8f],0xff
+0001710e  PUSH 0x1
+00017110  PUSH EBX                                  ; actor index
+00017111  PUSH EDI                                  ; destY = [0x53ab5] (fixed)
+00017112  PUSH ESI                                  ; destX = [0x53ab1] (fixed)
+00017113  CALL 0x00014b78                           ; move actor toward fixed anchor
+0001711b  CMP dword ptr [0x00051a8f],0xff
+00017125  JZ 0x00017137
+00017127..00017134  dispatch pending global event [0x51b91]
+00017137  CALL 0x000134e4                           ; finalize (known: shared with 0x1548e chain)
+0001713c  PUSH EBX
+0001713d  CALL 0x00013512                           ; mark record+5 bit7 (acted)
+00017142  ADD ESP,0x4
+00017145  JMP 0x000170c5                             ; next unit
+0001714a  PUSH 0x0
+0001714c  CALL 0x00011cac
+00017154  CALL 0x0001a30b                            ; <-- selector1 "march the whole army" -> round orchestrator
+00017159  MOV dword ptr [0x00051a83],0x1
+00017163  MOV byte ptr [0x00051aac],0x1
+0001716a  JMP 0x00016fd8                             ; return 1
+0001716f..000171ab  decline branch: draw FDTXT string id 0x19c ("是嗎？那麼就不要了。"),
+                     wait 200 ticks, closing animation, return 1
+000171b0  CMP dword ptr [0x00053c57],0x2
+000171b7  JNZ 0x000171c3
+000171b9  CALL 0x0001728c                            ; selector2: submenu (not expanded this session)
+000171be  JMP 0x00017285
+000171c3  CMP dword ptr [0x00053c57],0x3
+000171ca  JNZ 0x00017285
+000171d0  PUSH 0x4b
+000171d2  CALL 0x0001956b                            ; open Yes/No dialog (variant 0x4b)
+000171da..00017201  draw FDTXT string id 0x1a3 via 0x15f84 ("要結束本回合的行動嗎？")
+00017204  PUSH 0x0
+00017206  CALL 0x00016559
+0001720e  CALL 0x00019953                            ; Yes/No input read
+00017213  MOV EBX,EAX
+00017215  CALL 0x000197e5
+0001721a  CMP EBX,0x1
+0001721d  JNZ 0x0001716f                              ; not confirmed -> decline branch (shared with selector1)
+00017223  CMP dword ptr [0x00053c57],0x0
+0001722a  JNZ 0x0001716f
+00017230..00017256  draw FDTXT string id 0x1a4 via 0x15f84 ("好的，就結束本回合的行動吧！")
+00017259  PUSH 0xc8
+0001725e  CALL 0x0003790a                             ; wait 200 ticks
+00017266  CALL 0x000196cb                             ; closing animation
+0001726b  MOV byte ptr [0x00051aac],0x0
+00017272  CALL 0x0001a30b                             ; <-- selector3 "end turn" -> round orchestrator DIRECTLY (no per-unit move loop)
+00017277  MOV byte ptr [0x00051aac],0x1
+0001727e  MOV EAX,EBX
+00017280  JMP 0x00016fdd
+00017285  XOR EAX,EAX
+00017287  JMP 0x00016fdd
+
+--------------------------------------------------------------------
+5. FDTXT_000 string verification (tools/decode_text.py, rendered with
+   FDOTHER_004 font glyphs, visually read -- FDTXT_000.bin has 661 strings
+   total, all target indices in range)
+--------------------------------------------------------------------
+  index 0x19c (412): 是嗎？那麼就不要了。   (decline / cancel message, shared by selector1 & selector3)
+  index 0x1a1 (417): 決定要行軍嗎？         (selector1 confirm prompt)
+  index 0x1a2 (418): 那麼全軍發進吧！       (selector1 confirmed-action message)
+  index 0x1a3 (419): 要結束本回合的行動嗎？ (selector3 confirm prompt)
+  index 0x1a4 (420): 好的，就結束本回合的行動吧！ (selector3 confirmed-action message)
+
+--------------------------------------------------------------------
+6. FUN_0001728c @ 0x1728c (selector2 submenu) -- entry only, NOT expanded
+   this session; recorded so a future pass can pick up where this left off.
+--------------------------------------------------------------------
+0001728c  PUSH 0x3c
+00017291  CALL 0x0003702f
+...
+000172ba  MOV dword ptr [0x00053c57],0x0
+000172c4  MOVZX EAX,byte ptr [0x00051e61]
+000172cb  TEST EAX,EAX
+000172cd  SETZ AL
+...  ADD EAX,0x12                                ; ring item conditionally 0x12/0x13 based on [0x51e61]==0
+000172da  MOVZX EAX,byte ptr [0x00051e62]
+...  ADD EAX,0x14                                ; ring item conditionally 0x14/0x15 based on [0x51e62]==0
+000172f0  MOVZX EAX,byte ptr [0x00053af9]
+...  ADD EAX,0x16                                ; ring item conditionally 0x16/0x17 based on [0x53af9]!=0
+                                                  ; ([0x53af9] is the known "resource handle active" flag,
+                                                  ; see 0x1a7bd/0x1a7f1 in doc56)
+(function continues past what was captured this session; a 4th flag read
+ from [0x51aab] with +0x18 offset was also observed in the raw disasm but
+ not followed further -- see doc56/doc57's existing [0x51aab] references
+ for prior art on that flag before re-deriving it.)

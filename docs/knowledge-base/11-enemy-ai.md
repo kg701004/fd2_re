@@ -1133,6 +1133,148 @@ score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略�
 - 這個橋只涵蓋無副作用的分數與門檻，沒有呼叫 `0x13A9F`、逐單位事件／章節
   回呼或 `[0x53ECC]` 提早離開，因此不是正式敵方回合執行器。
 
+## 2026-08-20：完整回合主鏈收尾——native end-turn 的 caller／team predicate／AI completion timing（回應 worklist L145/L210/L304/L1038）
+
+> **方法**：Ghidra headless（`analyzeHeadless -readOnly -noanalysis`，`FD2Analysis3` 專案，
+> `ProbeGlobalEvents58to89.java`／`ProbeCheckHash.java` 等一次性 probe 腳本存於
+> `FD2_ghidra_projects/`）直接對已完整反組譯的 976-fn 資料庫取
+> `FUN_0001a30b`／`FUN_00013565`／`FUN_00016f55`／`FUN_0001728c` 的
+> decompile／disasm，逐行核對；FDTXT 字串以既有 `tools/decode_text.py` 對
+> `extracted/raw/FDTXT/FDTXT_000.bin` + `extracted/raw/FDOTHER/FDOTHER_004.bin`
+> 字型渲染成圖片後目視核對，不是猜測。
+>
+> **版本核對**：`FD2Analysis3` 實際分析的檔案 MD5 為 `a6e341a8decc6ebf7f4872076d9cf161`
+> （`ProbeCheckHash.java` 讀出），與 `docs/data/fd2-reference-files.json` 記載的目前基準
+> 「新版」`FD2.EXE`（`33464c81e6a364fd0660141139aa8e6e`，同為 509158 bytes）**不完全相同**——
+> 逐 byte `cmp -l` 只有兩處差異：檔案位移 `279901`(`0x44575`, `0x74→0xeb`) 與
+> `305228`(`0x4a80c`, `0x0d→0x12`)，皆為單一 opcode 級別的就地修改（`je→jmp` 型態，疑似
+> no-CD／簡易 patch），與本節引用的所有位址（`0x1a30b`/`0x13565`/`0x16f55`/`0x1728c`
+> 及事件 handler 區段 `0x354fe..0x36100`）都相隔極遠，不影響本節結論；仍如實記錄此落差，
+> 供未來若在 `0x44575`/`0x4a80c` 附近做 RE 時提高警覺。
+
+前面各節已個別關閉「評分」（`0x14EF0` 三分數決策）與「執行」（物理／法術／道具三條
+執行鏈皆已接進 `NextAIPlan`/`aiStep`），但「一個 AI 單位的回合怎麼被觸發、又怎麼結束」
+一直缺一個貫穿的主鏈證據——這正是 worklist 稽核索引 L1038（「native end-turn 完整
+caller／team predicate／AI completion timing」）、L145（「turn/camp 與 runtime
+execution」）、L210（「回合 orchestration」）與 L304（AI 完整權重的觸發時機）共同指向的
+缺口。本節直接反組譯補上，取代先前「兩遍敵軍掃描的玩法理由未知」的開放狀態。
+
+### 完整主鏈（玩家輸入 → team predicate → 回合 orchestrator → 敵我 AI 掃描 → 回合計數）
+
+```
+0x117E7 主戰鬥迴圈讀鍵
+  │ Enter/Space(scancode 0x1c/0x39)且游標下有己方(camp2)可用單位(+5&0x80==0, +0x26==0)
+  ├─► 0x18890 指令環(既有：doc13/doc25 §6「跑戰鬥」)
+  │        …單位完成行動後，收尾 0x13512 設 record+5 bit7(已知：標記已行動)
+  ├─► 0x1E292、章節 handler 表 [0x53c03*4+0x51b19]()（既有：doc25 §3 全 30 章 handler）
+  └─► 0x13565()  ★ team predicate（本節新證）
+           │ 逐筆掃 record[0..count) ：若存在任一 record+6=='\x02'(camp2/己方)
+           │ 且 (record+5 & 0x81)==0(未行動且非死亡/非另一 raw bit) 且 record+0x26==0(無麻痺類 transient)
+           │ → bVar2=false(隊伍未完成)
+           ├─ bVar2==true(己方無人再需要行動) → [0x51aac]=0;[0x51a83]=0; 0x1A30B(); [0x51a83]=1;[0x51aac]=1
+           └─ bVar2==false → 直接返回，回主迴圈等下一次輸入
+  └─► 若 [0x51A8F]!=0xFF：呼叫 [0x51A8F*4+0x51b91]()（既有：doc25 §6.2 格子事件全域 dispatch），再清 0xFF
+```
+
+`0x13565` 是原生「己方是否已無人可行動」的精確判定式：它只看 `record+6==2`（doc11 既有
+「敵0／友1／己2」raw camp 定義）的單位，`+5&0x81` 沿用既有的 bit7(已行動)／bit0 rawgate，
+`+0x26` 是 doc56 已定名的「麻痺」transient byte（command21/27 綁定）。因此「team predicate」
+字面上就是「己方陣營裡還有沒有一個活著、未行動、未被麻痺的單位」；只要答案是否定，
+`0x117E7` 立刻呼叫 `0x1A30B` 進入下一輪。
+
+### `0x1A30B`：回合 orchestrator 與兩個 AI 掃描的精確交織順序（補完 doc56 既有骨架）
+
+doc56（2026-08-14）已完整反組譯 `0x1A30B`（size 1202）本體並列出七步序列（own regen→
+selector1→兩次勝負檢查→selector0→兩次勝負檢查(內含 `INC [0x53BEF]`)→回合跑馬燈→
+selector2），本節這次逐行反組譯進一步確認：doc56 所稱的「兩次勝負條件檢查」**分別內嵌
+的正是 doc11 本文早已各自獨立證實的兩個敵我 AI 掃描函式**，寫成一條連續呼叫鏈（非
+recheck 前的推測）：
+
+```
+0x1A30B():
+  1. own-camp(record+6==2) 自然回血掃描：+0x25==0 且 +0x26==0 才 +0x40 = min(+0x40++0x42/5, +0x42)
+     （= doc11 已知 0x13FD4 同一公式，這裡是獨立內嵌版本，套用對象是玩家隊伍不是 AI 單位）
+  2. 0x11CAC(重繪) → 0x1A813(1) → 0x1A866(1, 六個 transient byte tick，見 doc56)
+  3. if [0x53ECC]==0:
+       0x1A7BD(resource setup) → 0x1D80B() ★友軍(camp1) AI 單遍掃描(doc11 已閉合) → 0x1A7F1(resource release)
+       if [0x53ECC]==0:
+         （章節 BGM 表切換等既有步驟）
+         0x11CAC() → 0x1A813(0) → 0x1A866(0)
+         if [0x53ECC]==0:
+           0x25977() → 0x1A7BD() → 0x1D8BA() ★敵軍(camp0) AI 預選+第二遍掃描(doc11 已閉合) → 0x1A7F1()
+           if [0x53ECC]==0:
+             [0x53BEF] += 1   ★★★ 回合計數器遞增——AI completion timing ★★★
+             （章節 BGM 表切換）→ 9 幀 + 4 幀回合數字跑馬燈(0x15F0E/0x187D6/0x15E71)
+             → 0x11CAC() → 0x1A813(2) → 0x1A866(2) → 0x12D7B() → 0x4E381()
+```
+
+這把「AI completion timing」釘死成一句可驗證的話：**`[0x53BEF]`（回合數）只在
+`0x1D80B`（友軍單遍）與 `0x1D8BA`（敵軍預選＋第二遍）兩個掃描都跑完、且沿途任何一次
+`[0x53ECC]` pending 檢查都維持 0（沒有任何全域事件／章節 handler 中途插隊）時才會遞增**；
+只要其中一次掃描或其後的章節 handler 把 `[0x53ECC]` 設成非 0，整個 `0x1A30B` 提前
+return，回合不推進，[0x53BEF] 也不變。三個 `0x1A866` 呼叫（selector 1/0/2）與友軍／敵軍
+AI 掃描不是同一件事，但**順序是固定交織的**：selector1 緊接友軍掃描、selector0 緊接
+敵軍掃描（並包住計數器遞增）、selector2 在回合跑馬燈之後單獨執行，不再接 AI 掃描。這是
+L145「turn/camp 與 runtime execution」與 L210「回合 orchestration」原本缺的那條連接線。
+
+### `0x16F55`：手動強制結束回合——「全軍前進」與「結束回合」是兩個不同指令（全新反組譯）
+
+`0x117E7` 在游標下沒有可行動己方單位時呼叫 `0x16F55()`（既有 doc23 只記到「回標題/選單
+模組」，未記錄它也是**戰場內的系統選單**，本節補上）。它是一個 0..3 四項 ring
+（`[0x53C57]` 選擇 index，`0x1741C`/`0x177FC` 讀鍵），逐項反組譯＋FDTXT 字串核對如下
+（字串以 FDOTHER_004 字型渲染 `FDTXT_000` 對應 index 直接目視確認，非猜測）：
+
+| `[0x53C57]` | 呼叫鏈 | FDTXT 確認文字 | 結論 |
+|---:|---|---|---|
+| 0 | 直接呼叫 `0x19DF7` | （無確認對話） | 存檔（既有 doc56 2026-08-02 已記） |
+| 1 | `0x1956B(record0+7)`(Yes/No dialog) → `0x19953` 確認 → 若 Yes 且 `[0x53C57]` 仍為0：對每個 `record+6==2` 且 `(record+5&0x85)==0` 的己方單位執行 `0x12CEA`(鏡頭 focus 到該單位) → `0x14B78([0x53AB1],[0x53AB5], unitIdx, 1)`(走既有 doc11 移動管線，目的座標是進選單前就讀入、迴圈中固定不變的錨點座標) → `0x134E4` → `0x13512`(標記已行動)；全部單位跑完才呼叫 `0x1A30B()` | FDTXT `0x1A1`＝**「決定要行軍嗎？」**；確認後 FDTXT `0x1A2`＝**「那麼全軍發進吧！」** | **「全軍前進」**：強制每個尚未行動的己方單位都跑一次真正的移動管線（往同一個固定錨點座標），逐一標記已行動，最後才進 `0x1A30B` |
+| 2 | `0x1728C()` | （未展開，見下） | 另一個子選單，4 個 ring 項目依 `[0x51E61]`/`[0x51E62]`/`[0x53AF9]`/`[0x51AAB]` 四個既有旗標決定是否反白；本節未展開其内容，留待後續 |
+| 3 | `0x1956B(0x4B)`(Yes/No dialog) → `0x19953` 確認 → 若 Yes 且 `[0x53C57]` 仍為0：等待 200 tick(`0x3790A`) → `0x196CB`(收尾動畫) → **直接**呼叫 `0x1A30B()`，**不**跑選項1那個逐單位移動迴圈 | FDTXT `0x1A3`＝**「要結束本回合的行動嗎？」**；確認後 FDTXT `0x1A4`＝**「好的，就結束本回合的行動吧！」** | **「結束回合」**：不移動任何單位，直接跳進回合 orchestrator |
+| （拒絕／取消任一分支） | — | FDTXT `0x19C`＝**「是嗎？那麼就不要了。」** | 兩個分支共用同一句取消文字 |
+
+（原始位址、字串 index 與渲染流程存於本次 session 的
+[`fd2_field_menu_endturn_disasm_2026-08-20.txt`](../data/fd2_field_menu_endturn_disasm_2026-08-20.txt)；
+FDTXT_000 目前共 661 條字串，index `0x19c/0x1a1/0x1a2/0x1a3/0x1a4` 皆在範圍內且已渲染核對。）
+
+這證實原版有**兩個語意不同的手動結束回合入口**，不是同一個「結束回合」按鈕的兩種措辭：
+「全軍前進」會讓每個還沒行動的己方單位真的跑一次移動管線（往同一個固定錨點），才進入
+`0x1A30B`；「結束回合」則完全不移動任何單位，直接進入 orchestrator。兩者跟 `0x13565`
+的自然（全員已行動才自動觸發）路徑是**三條可以到達 `0x1A30B` 的獨立入口**，且都遵守
+「先讓己方（camp2）的狀態穩定下來，才進兩個 AI 掃描」這個不變式——手動路徑用強制移動
+或直接跳過取代 `0x13565` 的判斷，但送進 `0x1A30B` 之後的行為（own regen → 友軍掃描 →
+敵軍掃描 → 回合計數）完全相同，沒有另開後門跳過 AI 掃描。
+
+### L145／L210／L304／L1038 完成度
+
+- **L1038（native end-turn 完整 caller／team predicate／AI completion timing）**：
+  **本輪視為已閉合**。三個入口（`0x13565` 自動判定、`0x16F55` selector1「全軍前進」、
+  selector3「結束回合」）與 `0x1A30B` 本體（doc56 已閉合，本輪補上與 `0x1D80B`/`0x1D8BA`
+  的精確交織順序）合起來完整回答了 caller、team predicate 與 AI completion timing 三個
+  子問題，均有反組譯位址與（結束回合選單部分）FDTXT 字串佐證。**尚未閉合**的只有
+  `0x1728C`（selector2 子選單）本體語意，以及 remake 端尚未把這三個手動入口與
+  `0x13565` 自動判定接成統一的 Go 實作（目前 `remake/cmd/fd2/main.go` 仍是 Tab
+  手動換回合，見 worklist L1193「⬜ 自動結束回合」原文）——這是工程接線，不是新的 RE
+  缺口。
+- **L145（doc11「候選格順序／raw helper 語意／turn/camp 與 runtime execution」）**：
+  候選格順序、raw camp 定義（+6=0/1/2）與物理/法術/道具三條執行鏈皆早已個別關閉；
+  本輪補上的 `0x1A30B` 交織順序，是最後一塊「runtime execution 怎麼被觸發／怎麼收尾」
+  的證據。**視為完成度大幅提升、僅剩極小尾巴**：`0x14818` 各 caller-specific mode
+  是否有額外視線（LOS）判定、`0x1728C` 子選單語意，兩者仍待未來 session。
+  同分/ tie-break、地形修正、`0x1DEBE` 等公式細節維持既有 [x] 狀態不變。
+- **L210（REMAKE-AI-MODE-RUNTIME「剩餘模式玩法名稱／event82 觸發／回合
+  orchestration」）**：「回合 orchestration」子項**本輪已閉合**（見上方主鏈與
+  `0x1A30B` 交織順序）；「event82 觸發」子項在 doc25 2026-08-19 的全 EXE writer 稽核
+  已窮盡（見 doc25 §6.3 附記，本文件不重複）；**唯獨「剩餘模式玩法名稱」仍未閉合**——
+  這是本專案刻意的 fail-closed 立場（見本文件多處「不替模式命名」聲明），不是遺漏，
+  只有在找到可靠的玩家可見語意證據（例如攻略對照或 DOSBox E2 逐幀比對）前才會補上。
+- **L304（敵方 AI 回合完整權重／target selection）**：物理／法術／道具三條評分公式與
+  `0x14EF0` 三分數 tie-break 早已個別關閉（見本文件前段各節）；本輪新補的是「兩遍敵軍
+  掃描為什麼存在」的**觸發時機**面（`0x1D8BA` 在 `0x1A30B` 內只會被呼叫一次、且是
+  selector0 那一次，跟 selector1 的 `0x1D80B` 友軍單遍不是同一次呼叫，此前只知道兩者
+  都在某個更外層流程裡，現在確定是同一個 `0x1A30B` 裡先友後敵、緊接著遞增回合數的
+  固定順序）。**target selection 的完整權重公式面維持既有 [x] 狀態**；「為何需要
+  預選與第二遍」這個玩法設計層的問題，本輪未新增證據，仍待後續。
+
 ## 下一步最小驗證
 
 1. 在固定原版存檔與固定單位上，依序於 `0x1D8BA`、`0x13A9F`、
