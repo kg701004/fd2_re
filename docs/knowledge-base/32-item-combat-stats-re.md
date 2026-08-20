@@ -86,7 +86,7 @@ native row215(第一個「越界」row)起點  file 0x7A612 / runtime 0x615FE
 完整的 table**。取得這個結論不需要新的 caller 反組譯，只需要修正 §1 沿用
 的舊版 file offset provenance bug 後直接讀 byte。
 
-
+## 2. 傷害計算鏈 [驗]
 
 ```
 攻擊執行(大函式 0x15xxx,含演出+結算)
@@ -242,12 +242,12 @@ ch24 謎團調查的關鍵未決點，remake 匯出的 map JSON 目前 `ap`/`dp`
 |---|---|---|
 | `+0x0` | 裝備分類(武器/防具/其他) | 本輪 `FD2Analysis3` readOnly 反組譯的 UI icon 選擇函式 `FUN_000272d0`，以及裝備 recalc 函式(對應 `0x1145a`/`0x1b750` 邏輯、新版位址 `FUN_00028632`)都以 `<0x15`(武器類,icon `0x3b`)／`0x15..0x1f`(防具類,icon `0x3c`)／`>=0x20`(其他,icon `0x3d`)三段切分；裝備 recalc 用同一個 `<0x15` 分界判斷「同格另一件裝備是否落在對面陣營」才把 `+1/+3/+5/+7` 計入 AP/DP/HIT/EV，兩處分界完全一致 |
 | `+0xd` | 物品使用效果 dispatch code(type5/6/7/8-12/13/14-16/17-19/20-24 等) | 既有 `0x1bbdc`／`0x20c6f` 全表已閉合(見下方各條) |
-| `+0x9` | **武器命中後特殊效果 selector**(0=無;2=命中後對目標套用持久 marker `+0x25`,消耗一顆額外 RNG;3=只設定一個未命名 output flag;4=固定加成暴擊率) | doc27《27-combat-rules-and-validation-checklist.md》§5 第 5 項(2026-08-19,`0x2f7b6` 完整 crit 分支反組譯)已閉合；本輪在同一份 `FD2Analysis3` 反組譯輸出裡確認這是主攻擊路徑唯一讀取 `+0x9/+0xa` 的邏輯，且存在第二份獨立、byte-for-byte 相同的 copy(`FUN_0001ecc7`，疑似精簡/NPC 攻擊路徑)，交叉印證非個案 |
-| `+0xa` | 上一欄的強度值：`type==4` 時直接加進職業暴擊基準值(`DAT_000524a7[actorClass]`)；`type==2` 時當成 0-100 的 RNG 機率門檻 | 同上 doc27 §5 第 5 項 |
+| `+0x9` | **武器命中後特殊效果 selector**(0=無;2=命中後對目標套用持久 marker `+0x25`,消耗一顆額外 RNG;3=只設定一個未命名 output flag;4=固定加成暴擊率) | doc27《27-combat-rules-and-validation-checklist.md》§5 第 5 項(`0x2f7b6` 完整 crit 分支反組譯)首先閉合；下方 §4.2(同輪稍後的續輪成果)進一步用 215 筆 `native_item_effect_rows.json` 逐筆分類出全部觸發物品 id(0=200 筆無效果、2=6 筆、3=1 筆、4=8 筆)，並找到第二份獨立、byte-for-byte 相同的 copy(`FUN_0001ecc7`)交叉印證 |
+| `+0xa` | 上一欄的強度值：`type==4` 時直接加進職業暴擊基準值(`DAT_000524a7[actorClass]`)；`type==2` 時當成 0-100 的 RNG 機率門檻 | 同上，見 doc27 §5 第 5 項與下方 §4.2 |
 
-`+0x9/+0xa` 不需要重新反組譯——doc27 早在同一輪(2026-08-19)已用 `0x2f7b6`(doc27 §5
+`+0x9/+0xa` 不需要重新反組譯——doc27 與下方 §4.2 已用 `0x2f7b6`(doc27 §5
 第 1/2/4 項也引用的同一個物理攻擊主函式，取代了本文 §2 舊「大函式 0x15xxx」的猜測位址)
-完整閉合，本節只是把這個結論接回 row 欄位表，避免兩份文件各自宣稱「未閉合」。
+完整閉合，本節只是把這個結論接回 row 欄位表，避免多份文件各自宣稱「未閉合」。
 
 `+0x15`(row 最後一個非跨列 byte)也已經在下面「Docker Capstone」段落與 `0x1bbdc`
 分析中閉合為「兩階段共用 target code」，不是未命名欄位。本輪在 `FUN_00015055`
@@ -438,17 +438,22 @@ helper `0x4e56c`(table base `0x602ad`、stride `0x17`)是**同一張表**(第二
   DATO portrait 又由場景文字／設施資源選取。轉職後 sprite、portrait 與
   persistent identity 的映射必須分別追 writer/caller，不能以相同數字推導。
 
-### 4.2 2026-08-19 worklist L366/L368/L1354 完成度小結
+### 4.3 2026-08-19 worklist L366/L368/L1354 完成度小結
+
+> 編號承接上方獨立續輪新增的 §4.2(worklist L246，`0x20c6f` type dispatch 窮舉 +
+> 武器命中特殊效果來源鏈)，兩節是同一天不同續輪各自產出，內容互補不重疊，§4.1 的
+> `+0x9/+0xa` 欄位說明已改為同時引用 doc27 與 §4.2。
 
 - **L366／L1354(同一件事,已合併處理)**：`0x602ad` table 的真正邊界/stride 已在 §1.1
   完全閉合——精確 215 rows(ID 0..214)、stride `0x17`、row215 與已知的 class-change
-  `0x615FE` 表零 gap 銜接，不再是「已知前綴」。未命名欄位語意也在 §4.1 收斂：
-  `+0x0`(裝備分類)、`+0x9/+0xa`(武器命中特效 selector/強度，交叉 doc27)、`+0xd`
-  (效果 dispatch code)、`+0x10/+0x12/+0x15`(target mode/target code)均已命名或
-  已有既有結論可引用；只剩 `+0xb/+0xc`(caller-specific 幾何，語意隨 caller 而異)
-  與結構性冗餘的 `+0x16` 仍未強行命名，但已排除「可能有更多未知 row」的疑慮。
-  **狀態：完成**。過程中額外發現並記錄一個獨立 provenance bug（`tools/dump_exe_tables.py`
-  的 `ANCHORS` 全部 9 張表都還是舊版 file offset，見 §1.1），已記錄但不在本次任務範圍內修。
+  `0x615FE` 表零 gap 銜接，不再是「已知前綴」。未命名欄位語意也在 §4.1(併同 §4.2)
+  收斂：`+0x0`(裝備分類)、`+0x9/+0xa`(武器命中特效 selector/強度)、`+0xd`(效果
+  dispatch code，§4.2 已窮舉全部 25 個值)、`+0x10/+0x12/+0x15`(target mode/target
+  code)均已命名或已有既有結論可引用；只剩 `+0xb/+0xc`(caller-specific 幾何，語意
+  隨 caller 而異)與結構性冗餘的 `+0x16` 仍未強行命名，但已排除「可能有更多未知
+  row」的疑慮。**狀態：完成**。過程中額外發現並記錄一個獨立 provenance bug
+  （`tools/dump_exe_tables.py` 的 `ANCHORS` 全部 9 張表都還是舊版 file offset，
+  見 §1.1），已記錄但不在本次任務範圍內修。
 - **L368**：查證後確認這行 worklist 描述的「`+0x22/+0x23/+0x24` DX/race/multiplier」
   與本文 `0x602ad` 物品表**完全無關**——它指的是另一個結構(persistent 戰鬥單位 record
   的暫態 buff 持續時間 byte，command17/18/19「魔刃術/魔鎧術/風行術」各自的
