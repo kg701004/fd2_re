@@ -416,6 +416,13 @@ runtime 對 native path 使用 `NativeCommandRecord`，不使用 normalized `Spe
 缺列或未知 ID 都 fail-closed。Game bootstrap 只把這份 immutable book copy 到每個新 `battle.State.NativeCommandBook`；
 它不取代 `SpellBook`，也尚未驅動 UI/effect。
 
+> **⚠ 位址勘誤(2026-08-19，`91-worklist.md`稽核索引總註記/`27-combat-rules-and-validation-checklist.md`§6.3/
+> `13-battle-menu-system.md`§6)**：本節起下文所有 `0x2a6bd`／`0x276ec` 引用，經 Ghidra headless 直接邊界檢查
+> 證實在目前分析版本裡都**不是有效指令邊界**。真正位址是 `0x2a6bd→0x2ff01`（大型 presentation dispatcher，
+> id 0-8 走 AoE 套用迴圈）、`0x276ec→0x2cf30`（ID24/28/29/31 derived-strike 宿主函式，倍率 15/20/12/18
+> 數值不變）。既有功能性結論（generic pipeline 語意、command-0 renderer boundary、derived stat 運算等）
+> 不受影響，仍成立；未逐一改寫下文每一處引用，位址標籤請於使用時换算。
+
 選單 confirm 的 execution contract 必須再區分：`0x1cff0` 先完成 raw command ID 的 selector/target path，再由 ID 分派。`0..8`、`0x18`、`>=0x1c` 呼叫 `0x2a6bd(unit, id, target, scratch)`；`0x09..0x17` 與 `0x19..0x1b` 先走 `0x1d6c8(id)` 的四輪 palette flicker，之後才進 `funcs_1541f[id]` jump table。這證實 command 0 屬 generic pipeline，**不**證實它等同 normalized `Spells[0]`、也不允許在未解 callee 前為它填 damage/target contract。native-grid confirm 對無完整 effect trace 的 ID 必須維持 fail-closed。
 
 `0x2a6bd` 的 command-0 entry 本身也不能被誤讀成 effect formula：它以 ID 作 presentation mode，command 0 不走 `>=0x20`／`0x18..0x1b` 的 special early branch，而採 generic compositor defaults，並經 `funcs_2ac25[0]=0x26152` 多輪繪製 320×200 battle buffers、FIGANI／FDOTHER cells、present/tick。這是已證實的 renderer boundary；HP、status、MP mutation 的責任仍需沿其後續 callee／caller 另行 dataflow 證明。

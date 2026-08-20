@@ -53,6 +53,13 @@ spell-id→FIGANI 索引；spell/command 仍會分流 target geometry、family s
 
 ## 3. `0x2a6bd` 的已知邊界（避免後續誤用）
 
+> **⚠ 位址勘誤(2026-08-19，`91-worklist.md`稽核索引總註記/`27-combat-rules-and-validation-checklist.md`§6.3)**：
+> 本節與下方所有引用的 `0x2a6bd`／`0x276ec`，經 Ghidra headless 直接邊界檢查證實在目前分析版本裡都**不是有效
+> 指令邊界**（分別落在無關函式中段）。真正位址是 `0x2a6bd→0x2ff01`（大型 presentation dispatcher）、
+> `0x276ec→0x2cf30`（ID24/28/29/31 derived-strike 宿主函式）。本節既有的功能性結論（dispatch 語意、
+> derived stat 運算、與 `funcs_1541f` 的區別）不受影響，仍成立；只有位址標籤本身需要在引用時换算，未逐一
+> 改寫下文每一處引用。
+
 反組譯初期曾把 `0x2a6bd` 說成只屬於「武器特殊攻擊結果 UI」、與 native command 無關；此斷言已撤回。
 官方 IDA 9.4 已證實玩家 command confirm 的 `0x1cff0` 對 IDs `0..8`、`0x18`、`>=0x1c` 直接呼叫它。
 因此它是 native command 的大型 presentation／state dispatcher，不能再以物品 `atk_attr` 枚舉取代 command ID。
