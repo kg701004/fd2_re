@@ -83,6 +83,7 @@
 | 我想做… | 查 |
 |---|---|
 | **dosbox-x debugger**(建置/BP trace/dump/BPLM 判死) | **`48`** |
+| **一次查多個位址的 Ghidra disasm/decompile/xref/function bounds**(不要再寫一次性 `Probe*.java`) | **`98`**(`ProbeBatch.java` + `tools/ghidra_batch_probe.py`) |
 | Call-graph 反組譯方法紀錄 | `24` |
 | 當年開發工具考證 | `04` |
 | 「1995 年怎麼做這遊戲」總覽 | `15` |
@@ -107,7 +108,8 @@
 `36`SFX · `37`法術特效對映 · `38`編輯器設計 · `39`ANI.DAT AFM · `40`說話者→頭像查表 · `41`打包 ·
 `42`RE-vs-remake稽核 · `44`第一章對照 · `45`職業名錯位 · `46`第一章開場時間軸 · `47`序章handler全轉錄 ·
 `48`dosbox-x debugger · `49`char id→角色名 · `50`**過場機制總表(唯一主檔)** · `51`試玩落差R2 · `52`戰場分鏡+兩套系統 · `53`START→ch1回合1 RE來源表 · `54`acting實測原始記錄(機制見`50`) · `55`草地走位量測 ·
-`56` FD2 remake SDD（UI／campaign／證據 gate） · `57` UI evidence matrix · `90`計畫 · `91`worklist · `99`反思
+`56` FD2 remake SDD（UI／campaign／證據 gate） · `57` UI evidence matrix ·
+`98`研究工具基礎建設(Ghidra 批次探測,非遊戲知識) · `90`計畫 · `91`worklist · `99`反思
 
 (缺號 33/34/43 = 曾用後併入他篇或未建。)
 
