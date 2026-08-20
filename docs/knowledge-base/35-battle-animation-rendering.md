@@ -432,3 +432,164 @@ remake 對不準的根因即在此:該照各 frame header 的寬高 + 下面的�
 4. **狀態欄(血條框)** ✅(本輪嚴格 RE 重做,§4):真函式 = **0x18c6d**(座標器 0x2a289,byte[+6]→ 我方(0,154)/敵方(171,4))。**0x29164 不是狀態欄,是 figure + 台座(TAI.DAT)淡入**(舊標錯已改)。三元素釘死:**① 框/深藍底/立體 bevel = 素材 sprite**(0x4e8af blit [0x53a81]+0x5e);**② HP/MP 條 = 程式畫**(0x18795 算 `len=cur*101/max+1` → 0x17d6f 逐欄 blit [0x53a81] 漸層欄 cell,空槽 0x1d;HP=unit+0x40/+0x42、MP=+0x44/+0x46);**③ 名 = `0x15f84→0x4ea2a` 以 `[0x53a75]` FDOTHER#4 font畫 16×16 glyph**、**數值 = 6px digit cell**([0x53a81],0x187d6)。`[0x53a81]` loader 已由 boot `0x25c97` 定案為 FDOTHER #5；`[0x53a85]` 是 DATO mouth-frame工作指標，不再誤稱字模。
 5. **動畫階段** ✅:[0x540ff] phase + 重複呼叫驅動;0x2939d 幀迴圈 + `idiv 100` 百分比進度;幀 (dx,dy) = swing 斬擊弧;**閃紅 = VGA DAC 色盤 0x3c8/0x3c9(0x11d40)**(figure 淡入同手法);**HP 條非色盤**(程式畫,見 §4.2,舊「HP 抽乾=色盤」已刪);idle fallback 0x5255f/0x52577。**待確認**:閃紅色值序列、各階段確切幀數。
 6. **座標系** ✅:320×200、VGA 0xa0000、**work stride 640 但只 present 左半 320**(雙寬 off-screen 預備區,用途待確認)。
+
+---
+
+## 9. 2026-08-20 — `0x2bce5`/`0x2c548` party montage cluster:純 Ghidra headless 反組譯,誠實負面結論 + 一個真實但不同主題的新發現
+
+> 任務範圍:worklist L862/863/864/865/866/867(cluster master)/899/1017/1018/1019/1020,全部卡在
+> `0x2bce5` chapter-ending renderer 與 `0x2c548` 之後的 party montage 資產解碼(FDOTHER#56/TAI#3/
+> FIGANI/DATO,見 `remake/assets/endings/native_2bce5.json`、`native_2c548.json`)。本輪**只用**
+> Ghidra headless(`analyzeHeadless -readOnly`,`FD2Analysis3` project,方法見
+> `reference_fd2_live_ghidra_headless_probe` memory),未碰 DOSBox-X/WSL2/Docker(Docker 已於
+> 2026-08-16 移除)。全部一次性 probe script 留在 `FD2_ghidra_projects/Probe{MontageMaster,
+> MontageAlign,MontageLinear,MontageReal,LoadchCalls,FindTableRefs,TableDump,TableBytes,
+> PhaseTable,FindDispatcher,MasterLoop,CallersOf2ff01,CommandContext2}.java` 供覆核。
+
+### 9.1 結論先講:`0x2bce5`/`0x2c172`/`0x2c405`/`0x2c439`/`0x2c469`/`0x2c548`/`0x2c5e3`/`0x2c773` 在這個
+Ghidra project 裡**不是任何已知程式碼或資料的位址**
+
+逐一驗證方法與結果:
+
+1. **直接反組譯**:`getInstructionAt(0x2c548)` 回傳 null(該區塊從未被 base 976-function 分析
+   碰過)。強制 `disassemble(0x2c548)` 會從**該 byte 的字面位移**開始線性解碼,但 0x2c548 實際上
+   落在另一個真實 function(`FUN_0002c217`,見 9.2)內部一條 `JMP rel32` 指令的**中間位元組**
+   (該 JMP 在 0x2c530+22=0x2c546 起、長 5 bytes,0x2c548 正好是其 immediate 的第 3 個
+   byte),導致 Ghidra 產生「overlaps instruction」警告與完全垃圾的 decompile(隨機 tick 計數器,
+   跟 TAI.DAT/FDOTHER 毫無關係)。**這是本輪最大的方法論教訓**:forcing disassembly at a literal
+   cited address without first confirming instruction alignment produces confident-looking but
+   wrong decompiles;必須先用其他證據(caller、資料表)釘死真正的 entry point。
+2. **原始 byte dump 校正**:手動逐 byte 解碼 `0x2c530..0x2c630` 確認該區塊本身是合法、自洽的
+   x86 code(非亂碼),但其語意是一個 6-slot tick counter(`[0x54050]`)配 `FUN_0004ebe3`/
+   `FUN_0002eb9f`/`FUN_00025a96`/`FUN_00025b45` 呼叫,和 TAI.DAT/FDOTHER.DAT 完全無關。
+3. **窮舉 DWORD 掃描**:對 `0x2bce5`/`0x2c172`/`0x2c405`/`0x2c439`/`0x2c469`/`0x2c548`/
+   `0x2c5e3`/`0x2c773` 逐一在整個程式記憶體image 做 little-endian DWORD byte-pattern 搜尋
+   (`Memory.findBytes`,不依賴 Ghidra 是否已反組譯該處)——**全部「no hits」**,只有
+   `0x2c67d` 命中一次(見 9.2,但那屬於另一個不相關的子系統)。
+4. **窮舉 CALL/JMP flow 掃描**:對整個 base 976-function image 裡**每一條**已定義指令呼叫
+   `insn.getFlows()`(直接位址,含已解析的相對跳轉),找 target 落在 `0x2b000..0x2d000` 的——
+   全部命中都在 `0x2b000..0x2b97f`(屬於 9.2 的子系統)或 `0x2cfd8`/`0x30300+`(同上),
+   **完全沒有任何一條指令直接呼叫 0x2bce5/0x2c172/0x2c405/0x2c548/0x2c5e3/0x2c773**。
+
+三種獨立方法(資料表掃描、直接呼叫掃描、逐 byte 反組譯)都得到一致的負面結果:**在
+`FD2Analysis3` 這個 project 裡,這批位址目前既不是有效的指令邊界,也不是任何資料表/直接呼叫的
+目標**。這些位址原本是 2026-07 系列 session 用「official IDA 9.4」與(已移除的)「Docker
+Capstone」交叉確認的(見 doc91 worklist 1368/1377/1380 行);本輪換一個工具(Ghidra headless on
+`FD2Analysis3`)得到的結果對不上,原因無法在本輪內確定——可能是(a)IDA 分析的是不同的 EXE
+build(對照 `feedback_fd2_old_new_exe_address_instability` memory,這個專案先前就証實過舊/新版
+位址不能直接套用同一常數位移)、(b)Capstone 分析的其實是 live DOSBox 記憶體位址而非靜態檔案
+offset(對照 `reference_fd2_dosbox_live_memory_extraction` memory 提到的 selector/delta 問題)、
+或(c)這批位址本身在原始筆記裡就有轉錄誤差。**下一輪如果要再嘗試,建議先用官方 IDA 或
+DOSBox-X live memory 重新獨立核對這幾個位址,而不要預設它們在 Ghidra 這邊直接可信**——
+Ghidra 這邊窮舉搜尋的結果目前是紮實的負面證據,不是「還沒找」而是「目前找不到」。
+
+### 9.2 意外發現:一個完整、可驗證的 FIGANI/TAI.DAT/BG.DAT/FDOTHER.DAT phase-table 演出引擎——但屬於**戰鬥指令選單**,不是章節結局
+
+在窮舉搜尋 9.1 的位址時,順藤摸到一個結構幾乎一模一樣(FIGANI+TAI.DAT+BG.DAT+FDOTHER.DAT 資產、
+9-tick 淡入淡出、[0x53a45]+slot×0x50 unit lookup、`0x17aa9` tick-wait)但**位址完全不同**、而且
+**完整可反組譯/可反編譯**的子系統。逐項證據:
+
+- **字串 anchor**:`0x524a0` 處是原始 ASCII `"TAI.DAT\0"`(Ghidra 從未把它標成 defined string,
+  純 raw bytes,故先前的 defined-data 字串搜尋找不到)。緊接其後 `0x524a8..0x524c5` 是一段數字
+  header,再來 `0x524c6..0x524ed` 是一張**10 筆、單調遞增的程式位址表**(逐 byte 手動核對,非
+  4-byte-aligned 陷阱已排除):
+
+  | index | 位址 | Ghidra function | body | 大小(bytes) |
+  |---|---|---|---|---|
+  | 0 | `0x2b996` | `FUN_0002b996` | 0x2b996..0x2c944(共用尾端) | 423 |
+  | 1 | `0x2bb33` | `FUN_0002bb33` | 0x2bb33..0x2c944(共用尾端) | 579 |
+  | 2 | `0x2bd6c` | `FUN_0002bd6c` | 0x2bd6c..0x2bf82 | 535 |
+  | 3 | `0x2bfd9` | `FUN_0002bfd9` | 0x2bfd9..0x2c216 | 574 |
+  | 4 | `0x2c217` | `FUN_0002c217` | 0x2c217..0x2c440 | 554 |
+  | 5 | `0x2c441` | `FUN_0002c441` | 0x2c441..0x2c67c | 572 |
+  | 6 | `0x2c67d` | `FUN_0002c67d` | 0x2c67d..0x2cafb | 1151 |
+  | 7 | `0x2cafc` | `FUN_0002cafc` | 0x2cafc..0x2ccf3 | 504 |
+  | 8 | `0x2ccf4` | `FUN_0002ccf4` | 0x2ccf4..0x2ce19 | 294 |
+  | 9 | `0x2ce1a` | `FUN_0002ce1a` | 0x2ce1a..0x2cf2f | 278 |
+
+  全部 10 個都**依表格順序**(避免了 9.1 教訓裡的「先碰到誤植邊界污染後續分析」問題)個別
+  `getFunctionContaining`+decompile,全部成功、乾淨、無 overlap 警告。
+
+- **共同 calling convention**:每個 handler 都是 `FUN(int param_1_slot)`(除 idx8/idx9 為全域、
+  不吃 slot),用一個隱藏的 event code(`in_stack_00000014`,實際是呼叫端 AL/stack 傳入)分派
+  0/1/2/3/4/5/6/7/8 九種事件:`0`=初始化(reset 一組 N 元素的 per-slot tick 陣列,N 依 handler
+  而異:7/8/1(single-byte state 0..0x12)/12/6/6/5/3/16/1)、`3`=回傳固定 duration 常數、
+  `6`=「凍結」旗標、`1/2/5/7/8`=每幀 tick(遞增陣列、到門檻時呼叫 `FUN_0002eb9f`/`FUN_00025a96`/
+  `FUN_00025b45`,疑似 present/SFX cue,並把「下一個顯示的內容」用一個 `0..N-1` 的次要索引陣列
+  以 mod-N 方式輪替——即角色進場輪替)。逐 slot 的 mirror 判斷都是同一條
+  `*(char*)(DAT_00053a45+6+param_1*0x50)==0`(和 doc91 既有「unit_side_offset:6」文件完全吻合)。
+  **idx6(`0x2c67d`)特別不同**:用 `0.017453277`(π/180)+ `iVar*0x48`(72°)算 5 個等角點的 sin/cos
+  座標(`func_0x0003cbd5`/`func_0x0003cbe8`),再乘一個每 tick ±6 的 `DAT_000540c9` 角度/半徑
+  累加器——這是一個**5 點圓弧 carousel 定位器**,不是既有文件講的「stage×10 平移淡出」。
+
+- **主控引擎**:窮舉掃描整個已分析程式,找到唯二兩處用這張表做**間接呼叫**的地方——
+  `CALL dword ptr [EAX*0x4 + 0x524c6]`(共 10 處,`0x30469..0x30a7f`)與
+  `CALL dword ptr [EBP*0x4 + 0x524c6]`(共 4 處,`0x312dd..0x3143c`)。前者全部落在
+  `FUN_0002ff01`(**master 引擎**,body `0x2ff01..0x30e24`,3876 bytes,簽名
+  `(int param_1, int param_2, int param_3, int param_4)`),後者落在
+  `FUN_00031266`(**過場助手**,body `0x31266..0x314dd`,632 bytes)。完整反編譯確認:
+  - `param_2`(0..9)同時是 phase-table index**與** UI 模式碼(對照
+    `param_2==0x18`/`param_2>0x1b` 提早跳走、`param_2==8`/`param_2>3` 調整 duration)。
+  - 開場依序 `sub_111ba` 載入(逐一比對 push 的字串位址確認):**`BG.DAT`**(`0x5248e`)、
+    **`TAI.DAT`**(`0x524a0`,唯一 1 次)、**`FIGANI.DAT`**(`0x52495`,2 次)、
+    **`FDOTHER.DAT`**(`0x51a4d`,2 次),接著迴圈 `for(i=0;i<param_3;i++) local_140[i]=sub_111ba()`
+    再載 `param_3`(疑似逐角色 DATO 頭像,對照既有文件「DATO=unit+7」推論,未逐位元組證實)
+    份額外資源。
+  - `param_3`/`param_4`:`param_3`=顯示的角色數,`param_4`=長度 `param_3` 的 slot-index 陣列
+    (`DAT_00053a45 + param_4[i]*0x50` 取得每個角色的 unit record)——**這正是 party roster
+    cycle 的 caller-supplied 清單**。
+  - 主迴圈:`for(i=0;i<param_3;i++)` 逐角色,對每個角色跑 `table[param_2]()` 驅動的 per-frame
+    迴圈(含 palette-delta 4 元素 rotation `local_c8[local_1c]`、`0x1c75e` legality check、
+    `unit.+0x40` 欄位在 `FUN_0004ebe3()` 隨機值控制下的**線性內插 tween**),角色與角色之間
+    (除最後一位)呼叫 `FUN_00031266`——即 4-tick 正向+5-tick 反向(共 9 tick)的轉場,和既有
+    doc91 文件「`0x29164` 9 次 present、DAC baseline delta=esi×6」的敘述在**節奏與次數上**吻合,
+    但實際位址、buffer 佈局、觸發路徑完全不同。
+  - 尾段:3 次以 `DAT_00053a6d`(FDOTHER#3 LUT bank,和 `0x22046`/`0x24618` 共用同一全域)做的
+    LUT-indexed DAC 轉場,然後釋放全部已載資源、回填 baseline DAC。
+
+- **關鍵反證(排除是章節結局)**:`FUN_0002ff01` 的**唯二**兩個呼叫者是 `FUN_0001cff0`
+  (`0x1d43c`)與 `FUN_00015311`(`0x15400`)——這兩個都是 doc91/doc13 既有文件裡**戰鬥指令
+  dispatch/選單**的已知位址(`0x1cff0` 是「command table」,`0x15311` 緊鄰既有文件記錄的
+  `0x14818`/`0x15195` 戰鬥動畫 caller neighborhood)。兩處呼叫前都先讀 `[0x53c57]`
+  (doc13 既有的「action-ring 狀態選擇器」)去查一張 stack-copied per-command byte table
+  (`[ESP+EAX+0xc8]` 判斷是否要播、`[ESP+EAX+0xd0]` 取 0..9 的 phase index),完全在**戰鬥指令
+  選單**的控制流內,窮舉搜尋也**找不到任何從 `0x25xxx`(ch29/30 handler)或 `0x1088d`(loadch)
+  範圍呼叫 `0x2ff01` 的路徑**。因此這是一個**戰鬥指令選單裡的角色瀏覽/carousel 演出**(可能是
+  formation 換位、替補角色瀏覽等尚未命名的指令),**不是**章節結局 party montage。
+
+### 9.3 對本 cluster 11 個 worklist 項目的具體影響
+
+- **L862/863/864/865/866/867(cluster master)**:blocker(`0x2bce5` ending renderer)**未解除**。
+  本輪窮舉三種獨立方法(資料表掃描/呼叫掃描/逐 byte 反組譯)排除了「這批位址在 `FD2Analysis3`
+  裡可直接反組譯」這個假設,並發現一個表面很像但實際屬於戰鬥選單的無關子系統(9.2)——
+  這是有價值的**負面結果**,可以避免下一輪重複走同一條死路,但不構成 renderer 解封。
+- **L899**(chapter ending renderer,已釘死結構但缺 compositing adapter):同上,無新進展;
+  9.2 的 phase-table/master-engine 架構(param_2 event dispatch、per-slot tween、LUT 轉場)
+  如果日後証實 ending renderer 用的是**同一種設計模式**(不同位址、不同呼叫者),可以作為
+  「這類 native 演出大致長怎樣」的參考藍圖,但目前**不能**當成同一份程式碼直接套用。
+- **L1017/1018/1019/1020**(`0x2c548` 後 party montage 資產解碼,FDOTHER#56/TAI#3/FIGANI/DATO):
+  同上,`0x2c548`/`0x2c5e3` 本身在這個 project 裡验证為不可達,montage renderer 仍未解。
+  9.2 找到的資源載入序列(BG.DAT→TAI.DAT→FIGANI.DAT×2→FDOTHER.DAT×2→per-角色資源)結構上
+  與既有 `native_2c548.json` 描述的資產組合高度相似(TAI.DAT/FIGANI/FDOTHER 都在),值得下一輪
+  在**重新獨立核對舊位址**之後,比對這兩套呼叫序列是否其實是同一支函式在不同 EXE 版本裡的
+  位移結果——但本輪未能證實這個推測,不可當結論使用。
+
+### 9.4 給下一輪的具體建議
+
+1. **先重新核對舊位址的來源**,不要預設 Ghidra 這邊的窮舉負面結果是「還沒找到」——三種獨立
+   方法一致找不到,足以懷疑原始位址轉錄本身(工具差異或版本差異),應該先用官方 IDA(如果還
+   拿得到同一份 session)或(如果使用者同意破例)DOSBox-X live memory 重新單獨核對
+   `0x2bce5`/`0x2c548` 這兩個錨點,而不是再花時間在 Ghidra 這邊重試同一批位址。
+2. 9.2 的 `FUN_0002ff01`/`FUN_00031266`/`0x524c6` phase table 是完整、可驗證、有明確 caller 的
+   一手資料,值得另開一個 worklist 項目(不在本次授權範圍內編輯 91-worklist.md,故留在這裡
+   供之後採用)描述為「戰鬥指令選單 party carousel 演出引擎」,對照 doc13/doc91 既有的
+   `0x1cff0`「完整 native 演出」缺口(稽核索引 510/532/533/534/536/538/539/540/541/548/555/572
+   行)可能有直接幫助。
+3. 本輪所有 probe script(`ProbeMontageMaster.java`、`ProbeMontageAlign.java`、
+   `ProbeMontageLinear.java`、`ProbeMontageReal.java`、`ProbeLoadchCalls.java`、
+   `ProbeFindTableRefs.java`、`ProbeTableDump.java`、`ProbeTableBytes.java`、
+   `ProbePhaseTable.java`、`ProbeFindDispatcher.java`、`ProbeMasterLoop.java`、
+   `ProbeCallersOf2ff01.java`、`ProbeCommandContext2.java`)留在
+   `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\` 供覆核,方法論本身(窮舉 DWORD/CALL-flow
+   掃描找 dispatch table、依表格順序而非字面位址順序碰觸函式邊界)可以重複使用在其他「有文件
+   位址但 Ghidra 反組譯不出對應語意」的 worklist 項目上。
