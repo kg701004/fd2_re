@@ -44,7 +44,9 @@ class NativeItemEffectRowsTest(unittest.TestCase):
         )
 
     def test_native_movement_cost_rows_have_exact_29_by_20_boundary(self):
-        base = 0x55445
+        # 2026-08-20: file base 位移 +0x25214(舊版 0x55445 → 新版 0x7A659),
+        # 對齊 dump_exe_tables.dump_native_movement_cost_rows 的 file_base 修正。
+        base = 0x7A659
         data = bytearray(base + 29 * 20)
         for selector in range(29):
             data[base + selector * 20:base + (selector + 1) * 20] = bytes([selector] * 20)

@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """炎龍騎士團2 — 從 FD2.EXE 傾印內嵌資料表。
 
-第 2 輪逆向工程成果。當前手上的 FD2.EXE(357074 B, 1998 重打包)經錨定特徵比對，
-資料表佈局完全對應青衫攻略所稱的「舊版」offset(8/9 錨定特徵命中於文件精確位置)。
+第 2 輪逆向工程成果，2026-08-20 修正 offset provenance bug。舊版(357074 B,
+已遺失)EXE 的 file offset 已不適用；ANCHORS 現在對齊唯一可用的「新版」
+canonical FD2.EXE(509158 B, md5 33464c81e6a364fd0660141139aa8e6e)。9 張表裡
+有 8 張與舊版 offset 精確相差固定值 `0x25214`(newer = older + 0x25214)；
+唯一例外是 `crit`(職業暴擊率表),它與同一固定位移算出的理論值仍差 0xD byte,
+真實位置需另外用 anchor byte 全檔案搜尋鎖定(見
+docs/knowledge-base/32-item-combat-stats-re.md §3.6)。
 本工具依這些 offset + 結構傾印各表成 JSON / CSV，並對關鍵表做數值自驗。
 
 用法:
@@ -15,17 +20,18 @@ import os
 import json
 import struct
 
-# 錨定特徵(用於確認版本對齊;偵測不到就警告)
+# 錨定特徵(用於確認版本對齊;偵測不到就警告)。新版 offset = 舊版 offset + 0x25214,
+# 除 crit 外(該表新版位置由 anchor byte 全檔搜尋鎖定,見上方模組說明)。
 ANCHORS = {
-    "item":   (0x540AC, bytes.fromhex("0B010A005F00")),
-    "shop":   (0x56190, bytes.fromhex("808184A5FF")),
-    "spell":  (0x557FD, bytes.fromhex("32005A05")),
-    "char":   (0x55BA1, bytes.fromhex("0101012A")),
-    "growth": (0x55EA1, bytes.fromhex("06080406")),
-    "learn":  (0x564B3, bytes.fromhex("05110901")),
-    "resist": (0x51D96, bytes.fromhex("0A0000000A000000")),
-    "crit":   (0x5219B, bytes.fromhex("05030305")),
-    "unit":   (0x558F9, bytes.fromhex("010212000005")),
+    "item":   (0x792C0, bytes.fromhex("0B010A005F00")),
+    "shop":   (0x7B3A4, bytes.fromhex("808184A5FF")),
+    "spell":  (0x7AA11, bytes.fromhex("32005A05")),
+    "char":   (0x7ADB5, bytes.fromhex("0101012A")),
+    "growth": (0x7B0B5, bytes.fromhex("06080406")),
+    "learn":  (0x7B6C7, bytes.fromhex("05110901")),
+    "resist": (0x76FAA, bytes.fromhex("0A0000000A000000")),
+    "crit":   (0x774BC, bytes.fromhex("05030305")),
+    "unit":   (0x7AB0D, bytes.fromhex("010212000005")),
 }
 
 CLASS_NAMES = ["龍","劍士","戰士","騎士","弓兵","法師","僧侶","盜賊","武者","劍聖",
@@ -39,11 +45,12 @@ def u16(d, o): return struct.unpack_from("<H", d, o)[0]
 
 def dump_growth(d):
     """升級成長表:每人物 11B。AP0 AP1 DP0 DP1 DX0 DX1 HP0 HP1 MP0 MP1 MGidx。
-    傾印到下一張表(shop @0x56190)之前。"""
+    傾印到下一張表(shop)之前。"""
     base = ANCHORS["growth"][0]
+    shop_base = ANCHORS["shop"][0]
     rows = []
     o = base
-    while o + 11 <= 0x56190:
+    while o + 11 <= shop_base:
         r = d[o:o + 11]
         rows.append({
             "idx": len(rows), "off": hex(o),
@@ -80,11 +87,12 @@ def dump_command_learn(d, growth):
 
 
 def dump_unit(d):
-    """敵/友單位每級成長:10B = RA CL HP MP AP DP DX MV EX。傾印到 char 表(0x55BA1)前。"""
+    """敵/友單位每級成長:10B = RA CL HP MP AP DP DX MV EX。傾印到 char 表前。"""
     base = ANCHORS["unit"][0]
+    char_base = ANCHORS["char"][0]
     rows = []
     o = base
-    while o + 10 <= 0x55BA1:
+    while o + 10 <= char_base:
         r = d[o:o + 10]
         # 結構:RA(1) CL(1) HP(2 LE) MP(1) AP(1) DP(1) DX(1) MV(1) EX(1) = 10B
         rows.append({
@@ -191,11 +199,13 @@ def dump_native_item_effect_rows(d, count=0xD7):
 def dump_native_movement_cost_rows(d):
     """0x4e555 selector→20-byte terrain-cost rows.
 
-    The linear table is 0x61646..0x61889. In this anchored executable it maps
-    to file 0x55445; 0x6188a begins the separately exported compatibility
-    table, proving an exact 29-row boundary.
+    The linear table is 0x61646..0x61889. In the current canonical (新版)
+    executable this maps to file 0x7A659 (舊版 0x55445 + 固定位移
+    0x25214,2026-08-20 修正); 0x6188a begins the separately exported
+    compatibility table (file 0x7A89D, 即 class_equip_types 起點),
+    proving an exact 29-row boundary with zero gap.
     """
-    file_base = 0x55445
+    file_base = 0x7A659
     linear_base = 0x61646
     stride = 20
     rows = []
@@ -230,8 +240,9 @@ def dump_resist_crit(d):
 
 
 def dump_class_equip_types(d):
-    """原版 0x1c1c3 的 class×item.type 六欄白名單（file 0x55689）。"""
-    base, stride = 0x55689, 7
+    """原版 0x1c1c3 的 class×item.type 六欄白名單（file 0x7A89D,舊版 0x55689 +
+    固定位移 0x25214,2026-08-20 修正）。"""
+    base, stride = 0x7A89D, 7
     rows = []
     for cls in range(29):
         o = base + cls * stride

@@ -118,6 +118,17 @@
 > 560`／`native_record_word46: 70` 精確相符。AP/DP/DX 是否也是同一 growth×level 公式尚未被
 > 獨立反組譯證實(remake 匯出的 map JSON 目前 `ap`/`dp`/`mv` 欄位是每個單位相同的佔位值，不是
 > 真實算出值)，詳見 doc58「續二十五」。
+>
+> **`tools/dump_exe_tables.py` 的 `ANCHORS` dict 修正完成(2026-08-20，第 6 輪)**：上面第 82 行
+> 標的「需要先改成讀新版 offset」在這輪補上——全部 9 張表(item/shop/spell/char/growth/learn/
+> resist/crit/unit)的 `ANCHORS` 已改為第 60-70 行表格記載的新版(0x7xxxx)offset，並把兩處先前
+> 寫死舊版 offset、未經 `ANCHORS` 間接引用的表(`dump_native_movement_cost_rows` 的
+> `file_base`、`dump_class_equip_types` 的 `base`)也依同一 `0x25214` 固定位移換算並逐 byte 驗證
+> 通過(前者 `0x55445→0x7A659`，後者 `0x55689→0x7A89D`；兩表恰好首尾相接、零間隙，佐證位移量
+> 正確)。對現有 `FD2.EXE`(509158 B)重跑 `dump_exe_tables.py`：**9/9 錨定特徵命中，自驗全部通過**
+> (含 growth/unit/職業魔抗/職業暴擊/裝備相容/索菲亞初始物品等既有斷言)。`tools/test_dump_exe_tables.py`
+> 裡硬寫舊版 `0x55445` 的 `test_native_movement_cost_rows_have_exact_29_by_20_boundary` 同步改
+> 為新版 `0x7A659`，4/4 單元測試通過。
 
 ### 各表欄位語意
 

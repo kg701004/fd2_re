@@ -58,7 +58,7 @@ file offset 在「新版」EXE 裡整批位移了(其中 5 張已於 2026-08-19 
   定位這張表必須用 `0x792C0`(normalized)／`0x792C1`(native)，不能沿用
   `0x540AC`/`0x540AD`。`tools/dump_exe_tables.py` 的 `ANCHORS` dict 本身也還
   沒更新成新版 offset(全部 9 張表都還是舊版值)，這是本輪發現、留給後續
-  輪次修的獨立 bug，不在本次任務範圍內處理。
+  輪次修的獨立 bug，不在本次任務範圍內處理。**（2026-08-20 已修：見 §1.2）**
 
 **Row 數/stride 的真正邊界**：runtime linear base `0x602AD`、stride `0x17`
 (23B)不變(Ghidra `FD2Analysis3` 對現有 EXE `-readOnly` 反組譯直接證實：
@@ -85,6 +85,54 @@ native row215(第一個「越界」row)起點  file 0x7A612 / runtime 0x615FE
 不存在更多未知 item row。215-row prefix 不再只是「已知前綴」，而是**證實
 完整的 table**。取得這個結論不需要新的 caller 反組譯，只需要修正 §1 沿用
 的舊版 file offset provenance bug 後直接讀 byte。
+
+### 1.2 2026-08-20 `tools/dump_exe_tables.py` 全部 9 張表 ANCHORS 修正 [驗]
+
+接續 §1.1 留下的 provenance bug：`ANCHORS` dict 當時全部 9 張表都還是已遺失舊版
+EXE(357074 B)的 file offset，對現有唯一可用的新版 `FD2.EXE`(509158 B)全部
+anchor 失敗。本輪逐表核對 `03-exe-and-data-structures.md` §B 第 60-70 行已記載
+的「新版/舊版」對照表，並直接對 canonical EXE 讀 bytes 驗證每一個候選 offset：
+
+| 表(ANCHORS key) | 舊版 offset | 新版 offset(已驗證) | 位移量 | anchor bytes |
+|---|---|---|---|---|
+| item   | 0x540AC | 0x792C0 | +0x25214 | `0B 01 0A 00 5F 00` |
+| shop   | 0x56190 | 0x7B3A4 | +0x25214 | `80 81 84 A5 FF` |
+| spell  | 0x557FD | 0x7AA11 | +0x25214 | `32 00 5A 05` |
+| char   | 0x55BA1 | 0x7ADB5 | +0x25214 | `01 01 01 2A` |
+| growth | 0x55EA1 | 0x7B0B5 | +0x25214 | `06 08 04 06` |
+| learn  | 0x564B3 | 0x7B6C7 | +0x25214 | `05 11 09 01` |
+| resist | 0x51D96 | 0x76FAA | +0x25214 | `0A 00 00 00 0A 00 00 00` |
+| crit   | 0x5219B | 0x774BC | **+0x321(例外)** | `05 03 03 05` |
+| unit   | 0x558F9 | 0x7AB0D | +0x25214 | `01 02 12 00 00 05` |
+
+8/9 張表精確符合 §3.6 已確立的固定位移 `0x25214`；`crit`(職業暴擊率表)沿用同一
+既有例外(見 §3.6 第 1 點)，新版真實位置 `0x774BC` 與位移公式理論值 `0x774AF`
+仍差 `0xD` byte，用 anchor byte `05 03 03 05` 全檔搜尋鎖定，唯一命中處就是
+`0x774BC`。
+
+另外兩個函式(`dump_native_movement_cost_rows`、`dump_class_equip_types`)先前
+把舊版 offset 直接寫死在函式體內、未經 `ANCHORS` dict 引用，同樣需要修正：
+
+| 函式 | 用途 | 舊版 offset | 新版 offset(已驗證) |
+|---|---|---|---|
+| `dump_native_movement_cost_rows` | 地形移動成本(20B×29 selector) | 0x55445 | 0x7A659 |
+| `dump_class_equip_types` | 職業裝備相容白名單(7B×29 職業) | 0x55689 | 0x7A89D |
+
+兩者同樣是 `+0x25214`，且驗證後發現 `0x7A659 + 29*20 = 0x7A89D` 恰好等於
+`class_equip_types` 新版起點，零間隙銜接，與 §1.1 對 item 表邊界驗證用的同一
+手法互相佐證位移量正確。`dump_growth`/`dump_unit` 另有兩處以舊版 offset
+(`0x56190`、`0x55BA1`)當作迴圈上界字面值，一併改為引用
+`ANCHORS["shop"][0]`/`ANCHORS["char"][0]`，不再硬編碼。
+
+對現有 `FD2.EXE`(509158 B)重跑 `python3 tools/dump_exe_tables.py`：
+
+```
+錨定特徵對齊: item/shop/spell/char/growth/learn/resist/crit/unit 全部 ✓(9/9)
+數值自驗(對照青衫攻略字面值): 全部通過 ✓
+```
+
+`tools/test_dump_exe_tables.py` 裡 `test_native_movement_cost_rows_have_exact_29_by_20_boundary`
+原本硬寫舊版 `base = 0x55445`，同步改為新版 `0x7A659`；4/4 單元測試通過。
 
 ## 2. 傷害計算鏈 [驗]
 
