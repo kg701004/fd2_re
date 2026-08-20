@@ -411,6 +411,252 @@ remake 未實作)、**engine integration 誠實區分兩條路徑**(legacy 已�
 decrement、UI、engine integration 尚未閉合」的斷言至此可視為**前三項收斂、第四項精確定位剩餘
 落差**，不再是完全開放的未知。
 
+## native commands 20..27 殘留缺口收斂(2026-08-19,續)
+
+> 同一批任務的延續：套用剛完成的 17..19 方法(純靜態 Ghidra headless 重新反組譯 command
+> handler，交叉核對 `docs/data/command_labels.json`/FDTXT_000 與 `remake/internal/battle`)
+> 到 command 20..27 家族。方法與工具同上一節：`FD2Analysis3`(唯讀)+
+> `analyzeHeadless -readOnly -noanalysis`，用 `getFunctionContaining`/強制 `disassemble()`
+> 逐位址驗證，不信任任何舊文件的位址轉錄而不覆核。
+
+### 0. worklist 行號對應澄清(先確認，任務本身要求)
+
+worklist 開頭的「D-」稽核區塊（約第 75-85 行）引用的行號(510/532/533/534/536/538/539/540/
+541/548)是**舊快照**，檔案後續增補內容把它們全部往下推移；今天直接讀那些行號會看到完全無關的
+內容(ch02..ch15 story handler 清單)。逐條用內文比對(doc56 行號/關鍵字)才能定位真正對應項目：
+
+| 任務給的行號 | 實際對應 | 現行 worklist 位置 |
+|---|---|---|
+| L510 | `0x1cff0` command table／完整 native 演出 | 現行 L665(「魔法系統」項) |
+| L532 | doc56 舊 L608-616＝IDs13..16 治療 | 現行 L687 |
+| L533 | doc56 舊 L618-627＝ID24 | 現行 L688 |
+| L534 | doc56 舊 L775＝UI-03 matrix「28,29,31」列 | 現行 L689 |
+| L536 | doc56 舊 L770＝UI-03 matrix「17–19」列(逐字比對「`ApplyNativeRuntimeEquipmentRecalc`…command transaction與phase-expiry caller仍未接」) | **就是上一節已收斂的 17..19 項本身**，不是另一個 536 鄰近項 |
+| L538/539 | doc56 舊 L677-689＝`command_labels.json` 20/21/26/27/22 命名補充 | 現行 L691(17-19 項尾註)+本節 |
+| L540 | doc56 舊 L698-722＝`0x1a30b` 全流程 7 步驟+`completeTurn()` 接線 | 現行 L691 段落內(同一大節) |
+| L541 | doc56 舊 L724-729＝ID23 relocation | 現行 L696-701 |
+| L548 | doc56 舊 L731-736＝IDs25..27 jump table | 現行 L703-709 |
+
+**L536 的結論**：任務描述本身已預期「這行行號跟已解的17-19那項不同,可能是另一個536-鄰近項」——
+逐字核對後確認**不是**另一項，就是 17-19 那條(doc56 UI-03 matrix 表格同一行同時涵蓋 raw
+writer／`ApplyNativeRuntimeEquipmentRecalc`／「command transaction與phase-expiry caller仍未接」
+三件事，跟上一節「native commands 17..19 殘留缺口收斂」逐項對應)。上一節已經完整處理，此處不重複。
+
+### 1. status labels(全部七個 command 的正式名稱，含新解出的 24/28/29/30)
+
+`command_labels.json` 用 `docs/data/glyph_map.json` 解出的完整清單（`export_story_index_map.py`
+既有 pipeline，Read 工具直接讀取避免終端機字碼錯亂）：
+
+| command | label | 對應 offset/機制 |
+|---|---|---|
+| 20 | 解毒術 | `+0x25` 清除 |
+| 21 | 社麻術(疑「解痲術」字模誤判，見 doc09) | `+0x26` 清除 |
+| 22 | 封咒術 | `+0x27` 施加(無對應清除指令) |
+| 23 | 傳送術 | 特殊座標搬移(非 CastArea) |
+| 24 | **破龍擊**(本輪新解出，doc56 先前只描述機制未命名) | 玩家專屬 derived-strike，倍率15 |
+| 25 | 行動術 | 清 `record+5` bit `0x80`(acted flag) |
+| 26 | 毒擊術 | `+0x25` 施加 |
+| 27 | 麻庫術(疑「麻痺術」字模誤判) | `+0x26` 施加 |
+| 28 | 淒煌斬 | derived-strike 倍率20 |
+| 29 | 熾炎刀 | derived-strike 倍率12 |
+| 30 | 音速刃 | 特殊 cursor derived-strike 倍率18 |
+| 31 | (FDTXT string 472 為空字串) | derived-strike 倍率18(與30共用預設倍率，命名缺) |
+
+24/28/29/30 是本輪新查(先前 doc56/doc13 只描述數值行為，未附遊戲內名稱)。31 的空字串不是解碼失敗，
+是資源本身該 slot 沒有文字——不可臆測名稱。
+
+### 2. commands 20/21：清除/回復路徑(反組譯確認，位元組級)
+
+強制反組譯 `0x22a85`(cmd20 wrapper)/`0x22bc6`(cmd21 wrapper)/`0x22aa8`/`0x22af6`，證實：
+
+- `0x22a85`：`PUSH 0x25`(flag offset 常數，即 `+0x25`)→ 轉發 → `PUSH 0x14`(=20，command ID 常數)
+  → `CALL 0x22aa8`。
+- `0x22bc6`：`PUSH 0x26`(flag offset)→ 轉發 → `PUSH 0x15`(=21)→ **`JMP 0x22a9b`**——不是獨立
+  call，是直接尾跳進 cmd20 wrapper 呼叫 `0x22aa8` 前的同一段程式碼，兩個 command 100% 共用同一份
+  機器碼，只差兩個立即數常數。
+- `0x22aa8`：`0x1CA89(actor, id)` MP debit → 轉發 5 個參數給 `0x22af6`。
+- `0x22af6`：動畫 `0x1C4CC`/`0x1C2DA` → 逐 target 迴圈：讀 class(`+0x20`/`+0x21`)算 class-adjusted
+  level(class 在 9..0x18 之間**不**加 `0x1e`，否則加)→ 讀 `record[+offset]`(`+0x25` 或 `+0x26`)→
+  為 0 就走失敗顯示(`0x1E1DC`)；非 0 就固定以 `record10`(literal `0xa`)呼 `0x1C916(target,10)` 回血、
+  `0x1E0DB(...,0x69,target)` 顯示、**清空該 flag byte 為 0**、`class-adjusted level << 2`(×4)
+  累加進 `[0x53EC8]`（見第 7 節）。
+
+跟 doc56 舊敘述("`0x22A85/0x22BC6→0x22AA8→0x22AF6`，clear `+0x25/+0x26` 並借 record10 restore")
+完全吻合，本輪新增：wrapper 共用機器碼的精確跳轉關係、class-adjusted level 的確切位元運算、以及
+`×4` EXP 累加(此為全新發現，doc56 未記載)。
+
+### 3. commands 22/26/27：施加路徑(反組譯確認，三個 command 共用同一核心)
+
+強制反組譯 `0x22be1`(cmd22)/`0x22cbf`(cmd26)/`0x22e41`(cmd27)/`0x22cda`/`0x22d1b`：
+
+- `0x22be1`：`PUSH 0x27`(flag offset，**確認封咒綁定 `+0x27`**)→ `PUSH 0x16`(=22)→
+  `CALL 0x22cda`。
+- `0x22cbf`：`PUSH 0x25`(flag offset，**確認毒擊綁定 `+0x25`，與解毒配對**)→ `PUSH 0x1a`(=26)→
+  **`JMP 0x22bf7`**(尾跳進 cmd22 wrapper 呼叫 `0x22cda` 前的同一段)。
+- `0x22e41`：`PUSH 0x26`(flag offset，**確認麻庫/麻痺綁定 `+0x26`，與社麻/解痲配對**)→
+  `PUSH 0x1b`(=27)→ 同樣 `JMP 0x22bf7`。三個 command 共用一份機器碼，只差 flag offset 與 command ID
+  兩個常數，跟 20/21 的 wrapper 共用模式完全一致。
+- `0x22cda`：`0x1CA89(actor,id)` MP debit → 轉發 5 參數給 `0x22d1b`。
+- `0x22d1b`：動畫 `0x1C4CC`/`0x1C2DA` → 逐 target：讀 `record[+offsetParam]`，**非 0(已有效果)直接
+  跳失敗**；讀 class，**class==0x19 或 0x1a 直接跳失敗**(此 exclusion 原僅記載於 doc56 的 ID22 描述，
+  本輪確認它其實是**三個 command 共用**的同一段程式碼，22/26/27 皆適用，非 ID22 專屬)；
+  `rand()%100`(`CALL 0x4EBE3`)`>=50` 跳失敗；否則固定金額 `0xa`(10)呼
+  `0x1C81F(target,10)`(內部 90–99.9% RNG，doc56 已知的「base10 實際9 HP」由這裡的共用 writer 產生，
+  非本函式自己再骰一次)、`0x1E0DB(...,0x5e,target)` 顯示 damage；`rand()%4+2`(第二個 `0x4EBE3`)
+  寫入 flag byte 當 duration；`class-adjusted level(+0x21) << 3`(×8)累加進 `[0x53EC8]`。
+
+跟 doc56 的「`0x22BE1→0x22CDA→0x22D1B`」「gate RNG→damage RNG→duration RNG 三 draws」（此處
+指 `rand()%100` gate + `rand()%4+2` duration 兩次自身骰，加上 `0x1C81F` 內部第三次骰）完全吻合。
+本輪新增：wrapper 共用機器碼細節、class exclusion 泛化到三個 command（非 ID22 專屬）、以及 `×8`
+EXP 累加。
+
+### 4. command 25：行動點清除(獨立 handler，非共用 wrapper 家族)
+
+`0x22C04` 是獨立函式(不像 20/21/22/26/27 用共用 wrapper 尾跳模式)：`0x1CA89(actor, 0x19)`
+(=25) MP debit → 逐 target `TEST record[+5], 0x80`，未設就失敗顯示；已設就 `AND record[+5], 0x7f`
+清除該 bit(**這正是「acted」旗標**，`SetNativeRecordBit7`/`ClearNativeRecordBit7All` 的同一個
+bit)→ 同樣 `class-adjusted level(+0x21) << 3`(×8)累加進 `[0x53EC8]`——跟第 3 節的 22/26/27 用
+完全相同的 ×8 常數，且與 command25 自己的遊戲內名稱「**行動術**」吻合(見第 7 節與 doc02 §4.5
+交叉印證)。跟 doc56「`0x22C04` 以 record25 MP debit，僅在 target `+5 bit0x80` 已設時清 raw bit」
+完全吻合；`ExecuteNativeCommand25` 的既有 raw core（`remake/internal/battle/native_command25.go`）
+與此逐位元組一致。
+
+### 5. command 23：傳送術特殊搬移(反組譯確認，含 EXP 印證)
+
+`0x2218A`：`0x12D7B` 數值 popup → `0x1CA89(actor, 0x17)`(=23)MP debit → class-adjusted
+level `IMUL ×0xa`(=10)累加進 `[0x53EC8]`(見第 7 節，精確吻合 doc02「傳送術=10×」)→ 讀 selected
+unit 原座標 `+0/+1` → 呼叫 `0x22253` 兩次：
+
+1. 第一次傳入 `0xff/0xff` 取代原座標(離場演出，原座標仍保留給呼叫端)；
+2. 中間清 `[0x51A83]=0`(忙碌/鎖定旗標)，接著讀 selector cursor globals `[0x51CF9]/[0x51CFD]`；
+3. 第二次以這對 cursor globals 呼叫 `0x22253`(入場演出)，結束後 `[0x51A83]=1`。
+
+跟 doc56「`0x2218A` 以 record23 扣 MP，並呼叫 `0x22253` 兩次…第一次將 selected unit 的 runtime
+`+0/+1` 寫為 `0xff/0xff`…第二次直接寫為 selector cursor globals」完全吻合，逐指令釘死。`0x22253`
+本身確認是真正的 framebuffer blit routine(`+0x8088` 位址運算、`0x11EEE` blit 呼叫、`0x22470`
+子程式)，複雜度真實存在，非文件過度謹慎——renderer 未接是誠實描述，不是保守化的免責聲明。
+
+### 6. commands 24/28/29/31：derived-strike 位址修正(與同日另一輪 doc27 §6.3 獨立收斂)
+
+doc56/worklist 引用的「`0x276EC`」在**目前這個 Ghidra 專案裡經強制反組譯證實不是有效的指令邊界**：
+`getFunctionContaining(0x276ec)` 回傳 `FUN_000275e6`，逐指令走訪該函式後發現它是一個**跟 derived
+strike 完全無關**的通用選單方向鍵游標 handler(掃鍵碼 `0x48/0x4a/0x4b/0x4d/0x50` 上下左右、Enter
+`0x1c`/`0x39`、ESC `0x1`，操作游標邊界變數 `[0x53c57]`／`[0x53f4e]`)；`0x276ec` 精確落在其中一條
+`CMP EAX,dword ptr [0x53c57]` 指令的 4-byte 立即數中段，不是指令起點。
+
+**寫下這段之後才發現** `docs/knowledge-base/27-combat-rules-and-validation-checklist.md` §6.3
+（同一天、幾乎同一時段的另一輪工作，檔案 mtime 比本節動筆時間更新)已經用完全獨立的方法（不是
+`getReferencesTo(0x1c81f)`，而是先重新反組譯 `0x1cff0→0x2ff01` 大型 dispatcher，發現 `0x2a6bd`
+本身也不是有效指令邊界，再從 `0x2ff01` 內部 `commandId==0x18 || commandId>0x1b` 分支直接讀出跳轉
+目標)得出**完全相同的結論**：真正的 derived-strike 宿主函式是 `0x2CF30`。兩條獨立路徑（本節的
+xref-to-`0x1c81f`反查、doc27 §6.3 的 dispatcher 逐層反組譯）收斂到同一個位址，是很強的交叉印證，
+不是巧合。本節保留 xref 方法的完整記錄（`getReferencesTo(0x1c81f)` 只有三個呼叫端：`0x1C75E`
+(IDs0-12 共用 writer)、`0x22D1B`(第 3 節的 22/26/27 application core)、以及 `0x2CF30`），但
+`0x2a6bd`/`0x2ff01`/`0x1cff0` 分支結構的完整版本請見 doc27 §6.2/§6.3，本節不重複展開，以避免兩份
+文件各自維護一套可能漂移的敘述。這也再次印證專案既有教訓([[fd2-old-new-exe-address-instability]])：
+**舊文件位址不可盲目信任，須用 xref/反組譯覆核**。
+
+逐指令反組譯 `0x2CF30`(範圍至少到 `0x2D695`，是個含大量 `0x111BA`/`0x11EB0`/`0x37910` 資源載入與
+blit 呼叫的大型多段演出函式，doc27 §6.2 進一步確認它是 `0x2ff01` 內 `commandId==0x18||commandId>0x1b`
+分支的直接跳轉目標)確認：
+
+- 倍率 dispatch(`0x2CFF9`-`0x2D049`)：`command==0x18`(24)→ mult=`0xf`(15)；
+  `command==0x1c`(28)→ mult=`0x14`(20)；`command==0x1d`(29)→ mult=`0xc`(12)；否則(31)→
+  mult=`0x12`(18)。**與 doc56 舊敘述的四個倍率數值(15/20/12/18)完全一致，只有位址引用需要修正**，
+  數值結論不變。
+- `0x2D062`-`0x2D07A`：`trunc(actor derived +0x48 × mult / 10)`，跟 doc56 公式一致。
+- `0x2D42E`-`0x2D47E`：讀 target `+0x40`(current HP)/`+0x4a`(derived defense-like stat)，
+  `delta = multResult - target+0x4a`，呼叫 `0x1C81F(targetHP, delta)`。
+- `0x2D488`-`0x2D49F`：結果 `clamp` 到**原始已存的 HP 上限**(不得超過)——這正是 doc56 敘述的
+  「原版為了多段演出會先暫存 total delta、把 HP 復原，再以等份遞減回最終值」機制的具體指令位址，
+  先前只有敘述沒有位址佐證。
+
+`ExecuteNativeCommand24`/`ExecuteNativeCommandDerivedStrike`(`remake/internal/battle`)目前引用的
+是抽象的 state-only final delta，不依賴 `0x276EC` 這個位址本身，因此**這個位址修正不影響既有
+remake 程式碼的正確性**，只影響文件引用；下一輪如果要對照原生位址驗證，應改查 `0x2CF30`
+而非 `0x276EC`。
+
+### 7. `[0x53EC8]` 經驗值累加器：與 doc27 §5.1 獨立交叉印證+一項增量發現
+
+反組譯 command 20..27 途中，在 20/21/22/23/25/26/27 的 handler 尾端都看到同一種
+「`class-adjusted level << N` 累加進 `[0x53EC8]`」寫法。寫完初稿後才發現
+`docs/knowledge-base/27-combat-rules-and-validation-checklist.md` §5.1（同一天、更早收尾的
+另一輪工作)已經用完全獨立的方法（對 `[0x53EC8]` 做完整 xref 掃描 + decompile，而非本節這樣
+逐 command wrapper 往下追)把「傳送術/行動術/魔刃魔鎧風行/麻痺毒擊/解毒祛麻的經驗值公式」這個
+open item 標記為完整閉合，列出 6 個寫入點：`0x22721`(魔刃×2)/`0x22866`(魔鎧×2)/`0x22997`
+(風行×2)/`0x22af6`(清除×4)/`0x22d1b`(施加×8)/`0x2218a`(傳送×10)——跟本節第 2/3/5 節與下表
+的倍率**完全一致**（`0x22af6`/`0x22d1b` 是共用核心，本節額外指出它們涵蓋哪些 command ID；
+doc27 §5.1 focus 在寫入點本身，不逐 command 展開）。兩輪各自獨立反組譯收斂到相同的六個位址與
+倍率，是有力的交叉印證。
+
+**本節增量發現(doc27 §5.1 未列出)**：command 25 除了透過共用 `0x22af6`/`0x22d1b` 核心之外，
+**本身的獨立 handler `0x22C04` 也有自己的一份 `class-adjusted level << 3`(×8)累加**（見第 4
+節），不經過 `0x22d1b` 這個共用 application core。doc27 §5.1 的六格清單只列了
+`0x22af6`(清除族)與`0x22d1b`(施加族)兩個共用寫入點，沒有單獨列出 `0x22C04` 這個 ID25 專屬的
+第三個寫入點——雖然數值同樣是 ×8(跟施加族相同常數)，但**位址不同、不經過共用 application
+core**，是這張清單目前唯一遺漏的寫入點，值得在下一輪合併時補上。
+
+對照 `docs/knowledge-base/02-game-data-reference.md` §4.5：
+
+| command(s) | `[0x53EC8]` 倍率 | doc02 §4.5 對應列 | 結果 |
+|---|---|---|---|
+| 17/18/19(魔刃/魔鎧/風行) | ×2 | 「2 × Σ(受法者等級/施法者等級)」 | **精確吻合** |
+| 23(傳送術) | ×10 | 「10 × (受法者等級/施法者等級)」 | **精確吻合** |
+| 25(行動術，`0x22C04` 專屬+透過`0x22d1b`共用) | ×8 | 「8 × (受法者等級/施法者等級)」 | **精確吻合**，且遊戲內名稱本身就是「行動術」，三重印證(名稱+機制+EXP係數) |
+| 22/26/27(封咒/毒擊/麻庫，共用`0x22d1b`) | ×8 | doc02 只列「麻痹術／毒擊術＝Σ(40×9/受法者總HP)×(等級比)」，**未列封咒術**這個類別 | **不吻合**：程式碼是簡單 ×8 常數，非含 HP 項的複雜公式；封咒(22)透過共用核心拿到跟毒擊/麻痺一樣的係數，但攻略表格沒有封咒這一列 |
+| 20/21(解毒/社麻，共用`0x22af6`) | ×4 | 「解毒術／祛麻術＝Σ(40×9/受法者總HP)×(等級比)」(與麻痹/毒擊同一條公式文字) | **不吻合**：程式碼是簡單 ×4 常數，剛好是施加路徑(×8)的一半，「清除=半額、施加=全額」的乾淨設計，非攻略描述的 HP 加權公式 |
+
+**麻痺毒擊/解毒祛麻的攻略文字落差是本節新增的觀察**，doc27 §5.1 把六個類別標記「完整閉合」是
+指「寫入點全部找到」，但沒有逐格核對 doc02 §4.5 的公式文字是否真的對得上數值——本節核對後發現
+其中兩類（麻痺毒擊、解毒祛麻）攻略文字的 `Σ(40×9/受法者總HP)` HP 加權項在程式碼裡找不到，只有
+簡單常數倍率，呼應 doc27 §5 對攻擊/治療經驗公式已有的「攻略轉錄可能比實際公式複雜」判斷，但這次
+是套用到「解毒祛麻/麻痺毒擊」這兩個先前(§5.1 寫作時)未及逐格核對的類別。不推翻 doc27 §5.1 的
+「寫入點已閉合」結論，只是在其上補一層「數值 vs 攻略文字」的核對。
+
+`remake` 對這整條 EXP pipeline（`grep 0x53ec8\|NativeExperience` 全 `remake/internal/battle`
+無結果）完全沒有實作，doc27 已將其列為「非重製核心／低優先」，本節不改變那個優先順序判斷。
+
+### 8. engine integration 對照 remake/internal/battle(逐 command)
+
+`grep` 確認以下檔案與函式**已存在**且與本輪反組譯結果逐位元組一致(檔案路徑供覆核)：
+
+- `remake/internal/battle/native_command20.go`：`ExecuteNativeCommandClearRestore`，涵蓋 ID20/21。
+- `remake/internal/battle/native_command25.go`：`ExecuteNativeCommand25`。
+- `remake/internal/battle/native_command26.go`：`ExecuteNativeCommandApplication`，涵蓋
+  ID22/26/27(檔名雖叫 26 但涵蓋三個 command，與本輪確認的「三者共用同一核心」設計一致)。
+- `remake/internal/battle/native_command17.go`：涵蓋 17/18/19 的 `ApplyNativeCommandModifier`。
+- `remake/internal/battle/native_command_compound_exec.go`：ID32-35 的 `NativeCompoundCommandPlan`。
+
+**沒有找到**的部分（`grep -r "0x53ec8\|NativeExperience\|NativeActionExp" remake/internal/battle`
+零結果）：第 7 節的 EXP 累加器整條 pipeline，以及 ID23 relocation 的 legality/camera/render、
+ID24/28/29/31 的 multi-hit 演出、所有 command 的 UI/status icon。這些跟 doc56 UI-03 matrix 既有的
+「未接」標記一致，本輪未改變任何一個 UI/renderer 欄位的狀態——純粹是把 engine-side 的 raw dataflow
+證據加厚，沒有新增可玩功能。
+
+### 對 worklist 相關行的完成度(依第 0 節對映)
+
+- **L510**(`0x1cff0` command table)：本輪未新增證據，維持 D(「完整 native 演出」子句仍未解)。
+- **L532**(IDs13-16 治療)：本輪未觸碰，維持既有狀態不變。
+- **L533**(ID24)：機制數值不變，但**位址引用修正**(`0x276EC`→`0x2CF30`)+**新增遊戲內名稱「破龍擊」**+
+  新增 EXP 累加對照(不吻合 doc02，未列類別)；multi-hit/SFX/native UI 仍未接，D 不變。
+- **L534**(28/29/31 UI matrix 列)：同 L533，位址修正+新增遊戲內名稱(淒煌斬/熾炎刀/音速刃)+31 名稱缺；
+  UI 未接，D 不變。
+- **L536**(＝17-19 項本身)：已在上一節完全收斂，本節第 7 節額外補上其 EXP 係數(×2，精確吻合 doc02)。
+- **L538/L539**(20/21/26/27/22 命名)：狀態名稱早已由 `command_labels.json` 解出；本輪新增**逐指令反組譯
+  佐證**(wrapper 共用機器碼、flag offset 常數、class exclusion 泛化)+**EXP 係數對照**(25=行動術精確吻合，
+  22/26/27 不吻合攻略文字但已找到程式碼真值)。engine/UI 整合狀態不變，仍 D。
+- **L540**(`0x1a30b` 全流程)：本輪未重新觸碰，狀態不變，維持 D。
+- **L541**(ID23 relocation)：逐指令反組譯確認 wrapper/`0x22253` 呼叫序列與 doc56 完全吻合，新增
+  EXP 係數(×10，精確吻合 doc02「傳送術」)；legality/camera/render/UI 仍未接，D 不變。
+- **L548**(IDs25-27 jump table)：逐指令反組譯確認 jump table 本身+新增 25「行動術」名稱與 EXP 係數
+  三重印證；UI/status labels 仍未接，D 不變。
+
+所有十項的既有 D 判定（「可續靜態 RE，非必須 live DOSBox」）**維持不變**——本輪工作完全符合這個判定：
+新增了大量位元組級反組譯佐證、與同日另一輪 doc27 工作獨立交叉印證了一個位址修正(`0x276EC`→
+`0x2CF30`)與六個 EXP 寫入點、補上 doc27 §5.1 清單遺漏的一個寫入點(`0x22C04`)並指出兩個類別的
+攻略文字落差，但沒有一項從 D 升級到可玩 UI/engine 完整整合（那需要 renderer/legality/status icon，
+本輪明確不做）。
+
 ## 待辦(後輪)
 - 反組譯選單繪製與選項表,確認確切選項與排列(2D 位置)。
 - ✅ 按鍵綁定(Enter/Space 確認、ESC 取消、方向鍵)— 已反組譯。
