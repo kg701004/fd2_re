@@ -3801,3 +3801,48 @@ int __stdcall FUN_0001b8a6(int unit_index) {
 1. **`tools/fd2save.py`**:新增`UNIT_INVENTORY_SLOT_COUNT`(8)、`UNIT_INVENTORY_FLAG_OFFSET`(0x0a)、`UNIT_INVENTORY_ITEM_OFFSET`(0x0b)、`UNIT_INVENTORY_EMPTY_BIT`(0x80)常數與`roster_inventory()`/`roster_inventory_items()`函式(仿`UNIT_CHARACTER_ID_OFFSET`/`roster_character_ids()`既有模式);`summarize()`新增每個populated slot的`roster_inventory_items`輸出行;module docstring把inventory offset從「STILL UNPROVEN」移到新增的「PROVEN(2026-08-21,續三十四)」段落,並補充HP/MP欄位的新靜態證據(但維持unproven分類,見上方第5節)。
 2. **`tools/test_fd2save.py`**:新增`test_roster_inventory_reads_proven_flag_and_item_offsets`(合成資料,涵蓋`0x40`/`0x00`/`0x80`三種flag值與對應item byte行為)與`test_real_saves_inventory_flag_bytes_are_within_known_value_set`(對機器上現存三份真實存檔做本節第4點的sanity check,檔案不存在時skip不影響CI)。`python -m unittest test_fd2save -v`(`tools/`目錄下)11個測試全數通過,含3個對真實存檔的live-data測試。
 3. 本文件本節(純Ghidra headless反組譯過程與結論)。**沒有**編輯`91-worklist.md`(依指示)。續三十二留下的「ch27天空之鑰清空inventory」可行性限制**在此解除**——下一輪若要合成「已過ch21但無天空之鑰」的測試存檔,可以安全使用`roster_inventory`系列API,不需要再視inventory offset為未證實假說(仍建議先用round-trip自檢,降低寫壞存檔風險)。
+
+## 續三十五:嘗試接手續三十二/三十四留下的ch27天空之鑰live驗證——存檔合成成功,但WSL2 WSLService本身進入無法自行恢復的deadlock,誠實停損(2026-08-21)
+
+**任務範圍**:延續續三十二(靜態確認分歧點在ch27,決定暫緩live驗證)與續三十四(解除`fd2save.py` inventory offset的可信度阻礙),這輪任務是實際執行live驗證——用`fd2save.py`合成一份「已過ch21但沒有天空之鑰道具」的測試存檔、部署進WSL2、(建議)離線patch敵人成長表降低ch27戰鬥難度、LOAD存檔、打贏ch27(擊毀機甲隊長)、觀察戰後壞結局分支演出,並嘗試在`0x2545d call 0x2bce5`附近設中斷點,捕捉doc35第9節卡住多輪的party montage renderer(`0x2bce5`)第一手live資訊。
+
+### 第一步:存檔合成——成功
+
+用`tools/fd2save.py`續三十四剛證實的`roster_inventory()`/`roster_inventory_items()`API寫了一支一次性腳本(過程檔案,已移出repo放到session scratchpad,不留在`tools/`),以機器上唯一的完整存檔`C:\Users\kg701\Desktop\GAME\FD2\FD2.SAV`(ch10進度,13人隊伍)為基底:
+
+1. **章節跳轉**:slot0 metadata的chapter byte從`0x0a`(10)改成`0x1a`(26)——沿用續七/續九已驗證的技巧(raw chapter=N-1 → LOAD後顯示「第N章」),原始raw=10對應「第十一章」的話,26應對應「第二十七章」的讀檔起點,直接跳過ch11-26。
+2. **inventory清空**:逐一掃描13名角色的8個inventory slot(`record+0x0a`flag/`record+0x0b`item id,續三十四PROVEN offset),找到唯一一筆danger item——索菲亞(char_id=11,roster index 11)slot2持有item`209`(0xd1,天空之鑰材料之一)——把該slot的flag byte改成`0x80`(空,native compact-remove的標準寫法,item byte原樣保留不清零)。複查後確認13人、全部slot都不含item 209-214(0xd1-0xd6)或item 100(0x64,天空之鑰本身)。
+3. **round-trip自檢**:先把新checksum寫回plaintext buffer本身(避免拿「還沒更新checksum的舊plaintext」跟「encode後新checksum的plaintext」做無意義的逐byte比較,這是本輪一個小失誤但當場發現修正,不是codec本身的bug),再驗證`decode(encode(patched)) == patched`,**通過**。
+4. 寫出`C:\Users\kg701\Desktop\GAME\FD2_ch27_test.SAV`(22987 bytes),用`fd2save.py summarize()`複查:`slot=0 chapter=0x1a roster_count=0x0d roster_char_ids=[0,9,4,30,1,8,2,10,13,12,5,11,6]`(13人id序列與續三十三已證實的招募順序完全吻合),`roster_inventory_items`確認索菲亞(index11)只剩`[54,167]`,209已移除,其餘12人inventory維持原樣未受影響。
+
+**這一步達成任務指示的「優先嘗試ch27戰前捷徑」**,沒有回退到「從ch21開始往下玩」這條更貴的路線。
+
+### 第二步起:WSL2環境完全無法使用——確認是本機WSLService層級的deadlock,非本任務邏輯問題
+
+嘗試照續二十一方法(`wsl -d Ubuntu bash -c "..."`查現有session狀態)開始,從第一次呼叫起**所有**`wsl.exe`相關指令(含最基本的`wsl --status`、`wsl -l -v`、`wsl -d Ubuntu bash -c "echo x"`)全部卡住120秒以上、最終被系統移到背景仍然拿不到任何輸出。診斷過程與已排除的假說:
+
+1. **不是續二十一/二十七記錄過的「單一連線斷線」問題**——那個問題的特徵是Xvfb/dosbox-x/tmux在某個時間點突然消失,但至少`wsl.exe`本身能正常呼�應、能看到行程消失的證據;這次是**連最基本、不牽涉任何Ubuntu發行版內容的`wsl --status`都卡死**,問題層級更底層。
+2. **檢查行程狀態**:Windows工作管理員層級能看到`vmmemWSL`(PID 32808)、`wslservice`(PID 6560,對應Windows服務`WSLService`)都存在且`Responding=True`,但這只代表它們有回應Windows訊息迴圈,不代表內部功能正常。
+3. **檢查是否為累積的殭屍`wsl.exe`client拖垮**:第一輪嘗試時發現同時有4個`wsl.exe`背景行程已經卡住超過10分鐘(可能是本session稍早幾次呼叫留下的),用`Stop-Process`清掉這些殭屍client後,**新發起的`wsl.exe`呼叫依然卡住**——排除「純粹client端排隊」假說,問題在服務本身。
+4. **嘗試直接重啟服務**:`Stop-Process -Id <vmmemWSL/wslservice> -Force`→**Access denied**(非管理員權限,無法對這兩個受保護行程動手);`Restart-Service -Name WSLService -Force`→**「Cannot open WSLService service on computer '.'」**(同樣是權限不足,無法透過服務管理員層級重啟)。這兩者都需要系統管理員權限,而這個環境下的操作帳號沒有——**依安全規則,這屬於「修改系統/服務設定」的範疇,即使有技術手段(例如嘗試取得UAC提升)也不應該由我自行繞過權限邊界去執行,只能誠實回報需要使用者用系統管理員權限手動處理**。
+5. **多輪重試**:清掉殭屍client後至少乾淨重試了3次(含一次用背景monitor每15秒自動重試共5輪、外加數次手動即時嘗試),涵蓋約25分鐘的實際等待時間,**沒有一次`wsl.exe`呼叫成功返回**,包含完全不涉及Ubuntu發行版、不需要啟動任何Linux行程的`wsl --status`。
+
+**結論**:這是WSL2的Windows端服務(`WSLService`/`vmmemWSL`)本身進入了某種deadlock或無回應狀態,根因無法在無系統管理員權限的前提下進一步診斷(無法讀取需要權限的服務內部狀態、無法重啟服務本身),也**不是**這次任務的存檔合成、chapter-jump技巧或`fd2save.py` API本身有問題——這幾項在第一步都已經獨立驗證成功。**這是典型的、使用者已預告過的「明顯異常,適時停損」情境**:純環境層級的基礎設施故障,不是可以透過調整這次任務的操作序列、按鍵時序或存檔內容來繞過的問題。
+
+**留給下一輪的具體建議**(這是本輪能給出的最有行動力的產出):
+1. **使用者需要先用系統管理員權限手動恢復WSL2**——最直接的方法是在系統管理員PowerShell/CMD跑`wsl --shutdown`(強制關閉整個WSL2輕量VM,不會遺失`~/fd2-run/`等WSL檔案系統內的資料),或直接重新開機;確認`wsl --status`能在幾秒內正常返回後,才適合重新排這個任務。
+2. **`C:\Users\kg701\Desktop\GAME\FD2_ch27_test.SAV`已經合成完成、通過round-trip自檢**,下一輪環境恢復後可以直接複製到`~/fd2-run/FD2.SAV`使用,不需要重新合成——省下第一步的時間。
+3. **敵人成長表patch狀態未知,需要下一輪重新確認**:這次完全沒有機會連進WSL2檢查`~/fd2-run/FD2.EXE`是否還帶著續二十七當時patch過的52筆成長表(HP/MP/AP/DP/DX≈1)——如果WSL2的檔案系統在這次deadlock中沒有損毀,`~/fd2-run/`理論上應該還保留續二十七收尾時的狀態(該輪收尾記錄是「growth-table-patched,與pristine_bak diff僅252 bytes全部落在成長表範圍」),但這只是推論,**下一輪連上後第一件事應該是重新diff確認**,不要假設它還在。
+4. Windows端本機`C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE`(本輪讀取比對用)本身逐byte核對過**是pristine未patch版本**(第一筆成長表`RA=1 CL=2 HP_growth=14 MP=0 AP=5 DP=4 DX=1 MV=4 EX=30`,不是全部壓成1),不會意外污染任何東西。
+
+### 環境收尾
+
+本輪從頭到尾**沒有任何一次`wsl.exe`呼叫成功連進Ubuntu發行版**,因此**沒有機會啟動、也沒有機會需要關閉**Xvfb/tmux/dosbox-x——不存在「這次啟動的行程忘記清理」的風險。已將本輪一開始就存在的、疑似前幾輪殘留的4個殭瘍`wsl.exe`背景行程用`Stop-Process -Force`清除(這是使用者權限範圍內能做、且不影響任何遊戲/存檔資料的清理動作)。`FD2.EXE`的patch狀態(Windows本機pristine、WSL2內部未知)已如上誠實記錄。
+
+### 產出
+
+1. `C:\Users\kg701\Desktop\GAME\FD2_ch27_test.SAV`(新檔案,不在repo版控範圍內,machine-local test save)——已通過round-trip自檢,chapter=26、13人inventory不含天空之鑰材料。
+2. 本文件本節。**沒有**編輯`91-worklist.md`(依指示)。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。`tools/fd2save.py`本輪未修改(續三十四已經完成offset API,本輪只是使用它)。
+3. 一次性存檔合成腳本留在session scratchpad(非repo路徑),供之後需要重現相同存檔時參考,未提交進repo(定位上等同過去幾輪"Probe*.java"一次性腳本的處理方式,只是這次連repo外的暫存位置都清楚記錄路徑)。
+
+**誠實結論(呼應使用者的雙重目標)**:主要目標(ch27天空之鑰分支的live畫面驗證)與次要目標(順手捕捉`0x2bce5`的live資訊)**這輪都沒有達成**,但不是因為操作序列、存檔工具或按鍵時序出錯——第一步(存檔合成)乾淨達成且可驗證,問題完全卡在WSL2服務本身在使用者所在機器上的無回應狀態,這是本次任務範圍外、需要系統管理員權限才能排除的環境故障。與續三十二"評估後主動不執行"的性質不同:那次是判斷不值得冒險去做;這次是**真正嘗試了,但被一個純基礎設施問題擋住**,兩者不應混為一談。
