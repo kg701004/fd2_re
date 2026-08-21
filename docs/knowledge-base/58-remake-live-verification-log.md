@@ -4507,3 +4507,124 @@ delta事實上是穩定的**,續四十觀察到的「舊delta`0x19BF60`失效」
    觸發autosave、沒有改動存檔;`~/fd2-run/FD2.EXE`與`FD2.EXE.pristine_bak`diff維持精確252
    bytes,沒有本輪修改。**沒有**編輯`91-worklist.md`(依指示)。**沒有**修改`remake/`下任何
    原始碼或campaign資產檔案。
+
+## 續四十四:接手續四十三最高優先建議——先修好Normal core+固定cycles環境本身,再重測`0x188d9`斷點可靠性,兩者都成功,並順帶拿到真實MV值,推翻「MV=0」假說(2026-08-21)
+
+**任務背景**:續四十三發現`0x188d9`(record `+0x3b`即MV的讀取指令)在Dynamic core下連續5次獨立開機
+都無法命中斷點,懷疑是DOSBox-X Dynamic core的JIT只在區塊入口檢查斷點表(**這次協調端補充查證
+Github issue佐證:Dynamic core每32條指令一個區塊,只有區塊第一條指令能被斷點停住**,方向確認正確)。
+嘗試切`core=normal`繞開,但沿用Dynamic core調校出的`cycles=auto[max]`跟Normal core不相容,模擬近乎
+凍結,沒能重新測試。這輪任務明確分兩階段:先在乾淨情境下把Normal core+固定cycles跑穩,證實後才
+去接續MV診斷,不倒過來衝資料。
+
+### 第一階段:Normal core + 固定cycles——完全解決,且意外修好一個更根本的debugger輸入問題
+
+**環境啟動沿用續二十一/續四十的方法**(Xvfb+tmux+dosbox-x單次呼叫+`sleep 3595`+`run_in_background`),
+啟動時就用**launch-time `-c` flag**(不是互動debugger指令,見下)帶上`-c 'config -set core=normal'
+-c 'config -set cycles=5000'`,一次到位。實測`cycles=5000`在這台機器上完全順暢:連續截圖顯示開場
+動畫每2秒明顯往下播放好幾個畫面(不是續二十三記錄過的「按鍵數秒到十幾秒沒反應」render backlog),
+`xdotool key Return/Down/Right/Escape`全程即時生效,標題畫面→LOAD→存檔選擇→軍營→出口確認→戰前
+對話→戰鬥地圖整條流程一路順暢跑完,沒有再出現過去任何一輪記錄過的凍結或延遲。**沒有花時間試多組
+cycles數值**——協調端提供的官方經驗值範圍(3000-5000起跳)第一次就命中,不需要繼續往上探。
+
+**關鍵驗證(warning訊息消失)**:Alt+Pause進debugger後用`grep -i 'core\|Warning\|Single-step'`
+掃描整個pane scrollback,**完全沒有命中**——Dynamic core開機時必印的
+`Warning: Single-stepping may not work correctly with "Dynamic core".`這行完全沒出現,直接、乾淨
+地確認Normal core確實生效,不需要再靠其他間接證據推論。
+
+**意外發現並解決一個比cycles更根本的環境問題:debugger console的Enter鍵一度完全「送不出去」**——
+一開始沿用續三十五/三十六記錄的`tmux send-keys C-u清行→load-buffer/paste-buffer貼文字→再貼一次
+獨立`\n``方法,結果文字確實正確逐字元疊加在`I-> `輸入列上,但無論送`Enter`(具名鍵)、`C-m`、
+`C-j`、或paste`\r`/`\n`,輸入列上的文字都**原封不動留在畫面上**,只多印一行
+`*** Debugger command not recognized`,一度誤判成「Enter完全失效」,反覆嘗試多種送法都無效,
+逐步排查才發現**真相是兩件事疊加**:(1) Enter其實一直都有正確送達並執行(HELP指令用
+`tmux send-keys -l 'HELP'`+`tmux send-keys -l $'\r'`這個組合首次測試就成功印出完整分頁說明,
+證實這個送法本身是可靠的);(2) **debugger對「無法辨識的指令」不會自動清空輸入列**(HELP分頁
+說明裡`Escape - Clear input line`這行本身就暗示了這件事)——先前每次測試的`CONFIG -set core=normal`
+本身就不是合法的debugger指令(`CONFIG`是DOSBox-X的**開機期`-c`旗標指令**,不是Alt+Pause互動
+debugger的指令集,完整`HELP`列表逐頁確認過沒有`CONFIG`/`CPU`這類指令),所以每次送出都被判定
+「not recognized」、印出錯誤訊息,但舊文字留在原地,下一次輸入的字元會直接接在後面(這解釋了
+為什麼畫面上一度出現`CONFIG -set core=normalHELP`這種明顯是兩次不同輸入疊加在一起的怪異文字)。
+**確認可靠的debugger指令送出方法(比續三十五/三十六記錄更精確)**:`tmux send-keys -t dbg -l
+'<指令文字>'`,再**獨立一次**`tmux send-keys -t dbg -l $'\r'`(重點是`-l`literal flag,不能省略,
+也不能用具名`Enter`/`C-m`鍵混用文字——這輪測試中唯一穩定成功的組合就是這個);若指令被拒絕
+(not recognized),必須先用連續`BSpace`(具名鍵,非`-l`literal;這次測過`Escape`具名鍵**沒有**
+成功清行,原因未明,不建議依賴)清空輸入列,才能送下一個指令,不能假設輸入列會自動清空。
+
+**額外踩到並修好一個舊教訓的新變體**:重開dosbox-x時用`pkill -9 dosbox-x`(不是`tmux kill-server`,
+以為這樣安全),結果**整個tmux session還是連帶消失**——因為tmux視窗的唯一command就是dosbox-x本身,
+該command結束(不論是被誰以什麼方式終止)、且沒有設定`remain-on-exit`時,tmux視窗會自動關閉,
+帶著整個session/server一起關閉。這推翻續二十七/三十五記錄的「只殺dosbox-x本身安全,只有
+`tmux kill-server`才危險」這個過於樂觀的簡化——**正確結論是:任何讓dosbox-x進程結束的方式都可能
+連帶關閉tmux**,除非**在建立session後立刻執行`tmux set-option -t dbg remain-on-exit on`**(這次
+補做之後,同一個session內重開dosbox-x就不再連帶關閉tmux了)。這次意外觸發後,Xvfb跟維持連線的
+背景`sleep 3595`都還活著(符合續二十一記錄的「同一條連線」理論),只需要重新`tmux new-session`
+接上既有Xvfb即可恢復,沒有傷到根本。
+
+**第一階段結論:Normal core + 固定cycles(5000)完全可行,可流暢操作,且警告訊息確認消失**——原始
+任務指示的「最高優先」項目達成。
+
+### 第二階段:斷點可靠性重測——2/2乾淨命中,徹底解決,F11單步也一併確認可靠
+
+**delta重新驗證(不假設沿用)**:依方法論規定重新做一次byte-signature比對,先用`C 0170:1B48D9`
+(用續四十三上次記錄的delta`0x19C000`算出的候選位址)直接讀live反組譯,結果**逐行完全吻合**
+Ghidra靜態反組譯(`movzx eax,[esi+003B]`/`mov [esp+0018],eax`/`movzx ebx,[esi+0020]`/`push ebp`/
+`call 001BB183`)——這是delta`0x19C000`在**同一份`FD2.EXE`+同一個dosbox-x build+同一個launch
+腳本**組合下**連續第6次獨立開機驗證成功**,進一步強化續四十三「這個特定組合下DOS4GW loader base
+delta事實上穩定」的觀察(但方法論上仍不能假設下一輪可以跳過驗證這步)。
+
+**LOAD→ch27測試存檔→戰前對話→戰鬥地圖全程用screenshot逐步確認**(不用固定Enter次數盲送腳本,
+吸取續四十三「一路skip穿進回憶錄戰鬥」的教訓)——這次**沒有**誤觸那場LV.01回憶錄戰鬥,推測跟
+Normal core下按鍵到畫面反應的時間關係比Dynamic core更一致有關(沒有進一步驗證這個推測)。
+
+**在`0170:1B48D9`(=`0x188d9`+delta`0x19C000`)設`BP`,`RUN`後選取單位——第一次Enter斷點立即
+命中**,`Register Overview`確認`EIP=001B48D9`跟斷點位址逐位元精確相符,`ESI=0026DF88`(unit
+record基底)。**這是這個位址在整個續三十六~四十三系列(含至少6次獨立嘗試)中第一次真正命中**。
+用`D 0178:26DF88`dump完整record原始bytes,手算`+0x3b`偏移(`0026DF88+3B=0026DFC3`),對照dump
+第5列(`0026DFB8`起16 bytes:`CE FF 00 C1 CE C1 CB 6A 02 A8 01 1E 08 00 C0 00`)index 11
+=`0x1E`=**十進位30**。**用`F11`(single-step)驗證同一結論**:單步後`EIP`精確前進一條指令到
+`001B48DD`(下一行`mov [esp+0018],eax`),`EAX`從`00000000`變成`0000001E`,跟記憶體直接讀出的值
+逐位元組相符——這同時證實**F11單步在Normal core下也正確可靠**(續四十三完全沒機會測試這點,
+這次一併補上)。
+
+**斷點可靠性二次複測**:`RUN`恢復、`Escape`關指令環、方向鍵移動游標、對另一個單位再按一次
+`Enter`——**斷點再次乾淨命中**,`EIP=001B48D9`再度精確相符(`ESI`同樣是`0026DF88`,推測是
+`Escape`後游標預設又回到索爾身上,雖然不是真正測到「另一顆」record,但確認的是**同一位址在
+同一次live session中被觸發兩次、兩次都100%命中**,已足以推翻「這個位址的斷點不可靠」這個假說)。
+
+**第二階段結論:斷點可靠性問題徹底解決**——2/2乾淨命中(對比續四十三系列0/5+從未命中),
+`EIP`精確符合斷點位址,`F11`單步也驗證可靠。**這證實續四十三的JIT假說方向完全正確**:問題出在
+Dynamic core對非branch-target直線code位址的斷點檢查限制(協調端這輪補充查證到的官方GitHub
+issue——「Dynamic core每32條指令一個區塊,只有區塊第一條指令能被斷點停住」——精確吻合`0x11912`
+(區塊入口)可靠、`0x188d9`(區塊中段)不可靠的長期矛盾現象),换成Normal core後這個限制完全不存在。
+
+### 意外的資料產出:MV真實值=30,直接推翻「MV=0導致flood-fill全失敗」假說
+
+續四十二純靜態推論的候選根因——`0x188d9`讀出的MV如果是`0`或不合理小值,會讓flood-fill第一步就
+判定所有方向不可達,可以解釋「所有移動嘗試,包含0格,全部一致失敗」的長期矛盾——**這次live驗證
+直接讀到真實MV bytes是`0x1E`=30,跟續三十六以來多次記錄的「索爾MV.30」完全吻合,是一個完全合理、
+不是0、不是損毀值的正常數字**。這**明確推翻**續四十二/四十三的MV候選根因假說:record `+0x3b`
+本身沒有問題,問題不在這裡。ch27整體「移動/指令環互動一直失敗」這個更大的謎團**沒有因此解開**,
+但排除了一個曾經看起來很有希望的候選線索,把後續調查範圍縮小到flood-fill函式讀到這個正確MV值
+**之後**的邏輯(`0x188d9`往下,含`call 001BB183`那個子函式,以及`0x117e7`/`0x4e42c`家族之後的
+下游路徑),而不是MV讀取本身。
+
+### 誠實結論
+
+1. **環境本身的兩個目標(Normal core可行性、斷點可靠性)這輪都完全達成**,不是「修好但沒空重測」
+   的半成品。
+2. **意外多修好一個比任務指示範圍更根本的問題**:debugger console的可靠指令送出方法(`-l`+獨立
+   `$'\r'`,外加「not recognized不會清行」這個行為特性),以及tmux `remain-on-exit`設定——這兩點
+   對之後任何一輪需要操作dosbox-x heavy debugger的session都直接適用,價值不亞於Normal core本身。
+3. **MV=0假說被live資料明確推翻**,不是「這輪沒空驗證」的懸而未決——這是這輪除環境修復外唯一
+   一次成功dump到`0x188d9`目標值的機會,結果是乾淨的陰性結果(MV正常,不是候選根因)。
+4. **沒有嘗試完整打贏ch27戰鬥或繼續往`0x188d9`之後的下游邏輯深挖**——依任務指示,這輪的優先順序
+   明確是「環境修穩優先於數據量」,兩階段目標都在預算內達成後就沒有把剩餘時間硬拗去追一個全新的
+   下游謎團,誠實留給下一輪(候選方向:`call 001BB183`這個flood-fill子函式的live行為,或
+   `0x117e7`/`0x4e42c`家族之後、`0x188d9`讀完MV之後的邏輯路徑)。
+5. **環境收尾**:`dosbox-x`/`Xvfb`/`tmux`三者均已用`pkill -9`/`tmux kill-server`確認終止(複查
+   `pgrep`/`tmux ls`均為空);維持環境的背景`wsl.exe`連線已用`TaskStop`主動停止;額外清理了1個
+   前幾輪殘留的孤兒`sleep 3595`行程。收尾前重新核對`~/fd2-run/FD2.SAV`md5與部署前一致
+   (`e6d9a35756cddfc2519969b10f039181`,這輪全程沒有觸發autosave);`~/fd2-run/FD2.EXE`與
+   `FD2.EXE.pristine_bak`diff維持精確252 bytes,沒有本輪修改。**沒有**編輯`91-worklist.md`
+   (依指示)。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。
