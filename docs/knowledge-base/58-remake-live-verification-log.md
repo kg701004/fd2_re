@@ -3685,3 +3685,26 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 ### 產出
 
 本文件本節(純文件新增,無程式碼變動)。查證過程中重新現場執行過的命令:`python tools/query_verified_address.py --search "..."`(三次,均無命中)、`python tools/decode_text.py dump extracted/raw/FDTXT/FDTXT_027.bin`(現場重跑,輸出未落盤於repo內,僅本節摘要其比對結果)。未修改`91-worklist.md`(依指示)。
+
+## 續三十三:回應續三十二留下的`fd2save.py`可信度疑慮——round-trip自檢+對三份真實存檔的語意複核,角色ID欄位轉為PROVEN,HP/inventory仍未解(2026-08-21)
+
+**任務背景**:續三十二評估後決定不冒險用`fd2save.py`手動patch inventory slot去合成「缺天空之鑰」的測試存檔,原因是「存檔裡的persistent roster record是否用跟runtime battle record(`0x31860`)相同的欄位偏移量,`fd2save.py`本身並未證實」。本輪任務是把這個可信度缺口實際查清楚:先做round-trip自檢(能抓codec本身的bug,但不能證明欄位語意),再對機器上現存的三份真實`FD2.SAV`(`FD2/FD2.SAV`=ch10進度、`FD2_ch21_test.SAV`=續七跳章ch21、`FD2_ch23_test.SAV`=續十/續十一跳章ch23)做語意複核,拿它們跟本session先前輪次已經live驗證過的已知事實比對。
+
+**round-trip自檢**:`tools/test_fd2save.py`原本就有合成資料的`encode→decode`往返測試,這次額外對三份真實存檔跑`decode→encode→decode`並斷言`encode(decode(x)) == x`(bytes-for-bytes)——三份檔案全部通過,codec本身(rolling XOR＋checksum)沒有問題,這部分先前就已經有把握,這次只是補上用真實資料而非只用合成資料的regression。
+
+**語意複核(這才是回應續三十二疑慮的核心)**:
+
+1. 用`fd2save.py`本身的`decode()`+`slot_bounds()`讀三份真實存檔的slot 0 metadata(`chapter`/`roster_count`/`currency`),結果**逐一精確吻合本session先前輪次已經用真實DOSBox-X操作驗證過的事實**:`FD2/FD2.SAV`→`chapter=0x0a`(10,吻合續七「手上已有一份進度到ch10的FD2.SAV」)、`FD2_ch21_test.SAV`→`chapter=0x14`(20,吻合續七「把ch10存檔的slot0章節byte從10改成20…讀檔畫面正確顯示『第二十一章』」)、`FD2_ch23_test.SAV`→`chapter=0x16`(22,吻合續九「ch23(raw=22)」與續十的成功跳章記錄);三份`roster_count`全部是`0x0d`(13,吻合續七/續十一「13人隊伍」)。這證實slot metadata層(`SLOT_OFFSET`/`SLOT_SIZE`/chapter/roster_count/currency欄位)不只是自洽,而是跟已知的live遊戲行為精確對應。
+2. **角色ID欄位(record+0x08),原本只是續十一從`FUN_0002b749`反組譯出的「推論」,這次獨立複核後可以升級為PROVEN**:對三份存檔的slot 0,用`record_offset = SLOT_OFFSET + i*UNIT_SIZE`、`char_id = plain[record_offset+8]`逐筆讀出13筆記錄,結果**三份檔案完全一致**且**與續十一記錄的已知加入順序逐字吻合**:`[0,9,4,30,1,8,2,10,13,12,5,11,6]` = 索爾(0)/悠妮(9)/亞雷斯(4)/蓋亞(30)/哈諾(1)/希莉亞(8)/鐵諾(2)/瑪琳(10)/貝克威(13)/凱麗(12)/洛娜(5)/索菲亞(11)/萊汀(6)——每一個id都用`docs/data/exe_tables/characters.json`的`index→name`表交叉核對過,13/13全部正確,包括續十一特別提到「record12=萊汀」與「id=24=希爾法」(角色表證實`index 24`確實是希爾法)。這個欄位現在有**兩個獨立證據來源**:(a)續十一的live DOSBox-X patch-and-play(改這個byte,遊戲畫面真的顯示不同角色)、(b)本輪對三份真實存檔的靜態交叉比對(13/13全部match,不是巧合)。額外發現:`FD2_ch21_test.SAV`跟`FD2_ch23_test.SAV`的全部13筆角色ID與HP相關欄位跟`FD2/FD2.SAV`(ch10母檔)**逐byte相同**,證實這兩份檔案確實只是母檔patch了chapter byte、角色資料本身完全沒被動過——與續七/續十對這兩份檔案來源的描述完全一致,不是意外巧合的假陽性。
+3. **HP欄位仍未解決,這次額外發現一個容易誤導的細節**:record`+0x40`/`+0x42`兩個word在三份存檔裡永遠相等(例如索爾兩者都是823、萊汀兩者都是240),數值範圍也合理(120~1133,不是先前續六在runtime record上誤猜HP offset時讀到的離譜值「全部單位都是1024」那種明顯錯誤訊號)。但**這頂多是「不像猜錯」,不是「證實猜對」**——`+0x40`/`+0x42`相等很可能只是因為這幾份存檔都是滿血狀態(current HP=max HP),沒有任何一份存檔的已知非滿血HP數值可以拿來比對,所以這次**沒有**把它升級成proven,`fd2save.py`的docstring已明確標註這一點,避免下一輪誤用。
+4. **inventory欄位:`fd2save.py`目前完全沒有對應的解析邏輯**——這是續三十二任務指示要求「若程式碼裡有現成的inventory欄位解析邏輯就交叉驗證」,但檢查後確認`fd2save.py`從頭到尾沒有為persistent roster record實作過任何inventory slot的offset或解析函式,`0x31860`/`record+0x0b+2*slot`那套公式始終只存在於runtime battle record的反組譯文件(doc32/50/56)裡,從未被移植進這個工具。這正面回答了續三十二的疑慮:**不是"這個工具有一個沒驗證的inventory功能",而是"這個工具根本沒有inventory功能"**——續三十二判斷「不冒險手動推算這個offset去patch」是正確的決定,本輪沒有新增inventory offset的臆測。
+
+**修正**:`tools/fd2save.py`本身沒有發現需要修正的bug(codec邏輯、`SLOT_OFFSET`等既有常數全部正確)。新增內容(非修正):`UNIT_CHARACTER_ID_OFFSET = 0x08`常數與`roster_character_ids()`函式(把角色ID欄位从"手動算offset的一次性腳本"變成模組正式API,並補充完整的verified/unverified欄位狀態說明到module docstring),`summarize()`輸出新增每個非空slot的`roster_char_ids`那一行。
+
+**結論(誠實狀態,直接回應續三十二的疑慮)**:
+- **`chapter`/`roster_count`/`currency`(slot metadata)與角色ID(`record+0x08`)現在都是PROVEN**,有多輪獨立live驗證+本輪跨檔案交叉複核背書,可以放心用`fd2save.py`來patch這些欄位(續七/續十一過去這麼做而且都成功,不是僥倖)。
+- **HP(`record+0x40`/`+0x42`推測)跟inventory欄位仍然完全未證實**,`fd2save.py`現在也沒有為它們提供任何寫入/解析API——**續三十二「不冒險手動推算inventory offset去patch」的判斷維持有效,本輪沒有解除這個限制**。下一輪如果真的要做ch27天空之鑰的live驗證,合成存檔時只能安全地改chapter/roster_count/角色ID這幾類已證實欄位,**不能**指望用`record+0x0b+2*slot`公式去清空inventory——除非先花一輪session專門對persistent save record(不是runtime battle record)的inventory布局做獨立的live驗證(例如:load一個已知持有天空之鑰的存檔,對照畫面上的道具欄,在存檔byte裡逐一比對找出真正的offset),否則這條路目前仍然走不通。
+
+### 產出
+
+`tools/fd2save.py`(新增`UNIT_CHARACTER_ID_OFFSET`常數、`roster_character_ids()`函式、`summarize()`新增roster_char_ids輸出、module docstring補充欄位verified/unverified狀態說明;既有codec邏輯與其他常數未變動)、`tools/test_fd2save.py`(新增`FD2SaveRealFileTest`:對機器上現存三份真實`FD2.SAV`做round-trip與角色ID語意驗證,檔案不存在時自動skip不影響CI;另補兩個合成資料的`roster_character_ids()`單元測試)、本文件本節。驗證:`python -m unittest test_fd2save -v`(`tools/`目錄下執行)9個測試全數通過,含2個對真實存檔的live-data測試(這台機器上有測試檔案,故未被skip)。

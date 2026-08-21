@@ -6,6 +6,29 @@ This is deliberately a *storage* tool, not a gameplay save editor.  Native
 the reversible rolling XOR and 0x4dbb9 sums every byte except the final u32.
 The remaining record fields are kept raw until their native meanings are
 proven.  No original save or game asset is included in this repository.
+
+Field-verification status (see docs/knowledge-base/58-remake-live-verification-log.md,
+"續十一" 2026-08-18 and its "續三十二" 2026-08-21 follow-up, for full evidence):
+  - PROVEN: SLOT_OFFSET/SLOT_SIZE/ROSTER_SIZE/UNIT_SIZE (roster stride), the
+    per-slot chapter/roster_count/currency metadata bytes, and
+    UNIT_CHARACTER_ID_OFFSET (record+0x08). The character-id offset was
+    confirmed twice independently: (a) live DOSBox-X patch-and-play — editing
+    record 12's id byte made the game actually display a different party
+    member on the roster-select screen — and (b) a static cross-check done
+    2026-08-21 of three real FD2.SAV files (ch10/ch21/ch23 progress) whose
+    13 populated record+0x08 bytes match the documented recruitment order
+    exactly (索爾/悠妮/亞雷斯/蓋亞/哈諾/希莉亞/鐵諾/瑪琳/貝克威/凱麗/洛娜/
+    索菲亞/萊汀).
+  - STILL UNPROVEN: any other per-unit field (HP, MP, level, inventory
+    slots, ...). A word at record+0x40/+0x42 has been *speculated* to be
+    current/max HP by analogy with the runtime battle record's confirmed
+    `target+0x40` HP write-back (0x2ebe1), but that battle-time record is a
+    separate in-memory structure from this persistent save record, and the
+    analogy has never been checked against a live/known HP value in the save
+    file itself — do not treat it as confirmed. Inventory slot offsets in
+    this persistent record are completely unresolved; no decode logic for
+    them exists in this module. Do not binary-patch these fields expecting
+    predictable in-game results.
 """
 
 from __future__ import annotations
@@ -28,6 +51,9 @@ ROSTER_UNITS = ROSTER_SIZE // UNIT_SIZE
 CURRENT_RUNTIME_OFFSET = 0x30C3
 CURRENT_PERSISTENT_ROSTER_OFFSET = 0x08A3
 CURRENT_RUNTIME_ROSTER_OFFSET = 0x12A3
+# Verified 2026-08-21 (see module docstring): each 0x50-byte persistent
+# roster record's character-id byte lives at this offset.
+UNIT_CHARACTER_ID_OFFSET = 0x08
 
 
 def rol16(value: int, count: int) -> int:
@@ -79,6 +105,22 @@ def slot_bounds(slot: int) -> tuple[int, int]:
     return start, start + SLOT_SIZE
 
 
+def roster_character_ids(plain: bytes, slot: int, count: int | None = None) -> list[int]:
+    """Return each roster record's character-id byte (record + UNIT_CHARACTER_ID_OFFSET).
+
+    This offset is proven (see module docstring). `count` defaults to
+    ROSTER_UNITS (all 32 record slots, including unused/garbage ones past
+    the slot's real roster_count); pass the slot's roster_count to read only
+    the populated records.
+    """
+    start, _ = slot_bounds(slot)
+    n = ROSTER_UNITS if count is None else count
+    return [
+        plain[start + i * UNIT_SIZE + UNIT_CHARACTER_ID_OFFSET]
+        for i in range(n)
+    ]
+
+
 def summarize(plain: bytes) -> str:
     """Print only fixed raw mappings; do not assign unproven gameplay names."""
     lines = [
@@ -111,6 +153,12 @@ def summarize(plain: bytes) -> str:
             f"currency={global_3bf3:#010x} "
             f"globals_51aab_53af9_51e61_51e62={meta[6:10].hex()}"
         )
+        if chapter != 0xFF and 0 < roster_count <= ROSTER_UNITS:
+            char_ids = roster_character_ids(plain, slot, roster_count)
+            lines.append(
+                f"  roster_char_ids(record+{UNIT_CHARACTER_ID_OFFSET:#04x})="
+                f"{char_ids}"
+            )
     return "\n".join(lines)
 
 
