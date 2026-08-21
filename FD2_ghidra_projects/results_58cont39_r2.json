@@ -1,0 +1,26 @@
+[
+  {
+    "id": "callscan_205da",
+    "address": "0x205da",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x205da",
+      "raw_candidates": 0,
+      "hits": [],
+      "count": 0
+    }
+  },
+  {
+    "id": "callscan_1088d",
+    "address": "0x1088d",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x1088d",
+      "raw_candidates": 0,
+      "hits": [],
+      "count": 0
+    }
+  }
+]

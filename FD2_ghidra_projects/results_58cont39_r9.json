@@ -1,0 +1,161 @@
+[
+  {
+    "id": "disasm_117e7_d1",
+    "address": "0x118da",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x118da",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x2",
+          "bytes": "c1 e0 02"
+        },
+        {
+          "address": "0x118dd",
+          "mnemonic": "ADD",
+          "operands": "EAX,EDX",
+          "bytes": "01 d0"
+        },
+        {
+          "address": "0x118df",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x4",
+          "bytes": "c1 e0 04"
+        },
+        {
+          "address": "0x118e2",
+          "mnemonic": "MOV",
+          "operands": "EDX,dword ptr [0x00053a45]",
+          "bytes": "8b 15 45 3a 05 00"
+        },
+        {
+          "address": "0x118e8",
+          "mnemonic": "ADD",
+          "operands": "EAX,EDX",
+          "bytes": "01 d0"
+        },
+        {
+          "address": "0x118ea",
+          "mnemonic": "MOVZX",
+          "operands": "EDX,byte ptr [EAX + 0x6]",
+          "bytes": "0f b6 50 06"
+        },
+        {
+          "address": "0x118ee",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [0x00053ec8],0x0",
+          "bytes": "c7 05 c8 3e 05 00 00 00 00 00"
+        },
+        {
+          "address": "0x118f8",
+          "mnemonic": "MOVZX",
+          "operands": "EBX,byte ptr [EAX + 0x7]",
+          "bytes": "0f b6 58 07"
+        },
+        {
+          "address": "0x118fc",
+          "mnemonic": "CMP",
+          "operands": "EBX,0x79",
+          "bytes": "83 fb 79"
+        },
+        {
+          "address": "0x118ff",
+          "mnemonic": "JZ",
+          "operands": "0x00011aa3",
+          "bytes": "0f 84 9e 01 00 00"
+        },
+        {
+          "address": "0x11905",
+          "mnemonic": "MOVZX",
+          "operands": "EBX,byte ptr [EAX + 0x1f]",
+          "bytes": "0f b6 58 1f"
+        },
+        {
+          "address": "0x11909",
+          "mnemonic": "CMP",
+          "operands": "EBX,0xa",
+          "bytes": "83 fb 0a"
+        },
+        {
+          "address": "0x1190c",
+          "mnemonic": "JZ",
+          "operands": "0x00011aa3",
+          "bytes": "0f 84 91 01 00 00"
+        },
+        {
+          "address": "0x11912",
+          "mnemonic": "CMP",
+          "operands": "EDX,0x2",
+          "bytes": "83 fa 02"
+        },
+        {
+          "address": "0x11915",
+          "mnemonic": "JNZ",
+          "operands": "0x00011925",
+          "bytes": "75 0e"
+        },
+        {
+          "address": "0x11917",
+          "mnemonic": "TEST",
+          "operands": "byte ptr [EAX + 0x5],0x80",
+          "bytes": "f6 40 05 80"
+        },
+        {
+          "address": "0x1191b",
+          "mnemonic": "JNZ",
+          "operands": "0x00011925",
+          "bytes": "75 08"
+        },
+        {
+          "address": "0x1191d",
+          "mnemonic": "MOVZX",
+          "operands": "EAX,byte ptr [EAX + 0x26]",
+          "bytes": "0f b6 40 26"
+        },
+        {
+          "address": "0x11921",
+          "mnemonic": "TEST",
+          "operands": "EAX,EAX",
+          "bytes": "85 c0"
+        },
+        {
+          "address": "0x11923",
+          "mnemonic": "JZ",
+          "operands": "0x00011930",
+          "bytes": "74 0b"
+        },
+        {
+          "address": "0x11925",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x11926",
+          "mnemonic": "CALL",
+          "operands": "0x00017aed",
+          "bytes": "e8 c2 61 00 00"
+        },
+        {
+          "address": "0x1192b",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x4",
+          "bytes": "83 c4 04"
+        },
+        {
+          "address": "0x1192e",
+          "mnemonic": "JMP",
+          "operands": "0x0001194f",
+          "bytes": "eb 1f"
+        }
+      ],
+      "start": "0x118da",
+      "end": "0x1192e",
+      "count": 24,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  }
+]

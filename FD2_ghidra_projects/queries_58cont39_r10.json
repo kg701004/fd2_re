@@ -1,0 +1,4 @@
+[
+  {"id": "fb_12c0d", "address": "0x12c0d", "action": "function_bounds"},
+  {"id": "decompile_12c0d", "address": "0x12c0d", "action": "decompile"}
+]

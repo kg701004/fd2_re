@@ -1,0 +1,274 @@
+[
+  {
+    "id": "callscan_205da",
+    "address": "0x205da",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x205da",
+      "raw_candidates": 28,
+      "hits": [
+        {
+          "call_addr": "0x32330",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x32538",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x3281d",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x32d22",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x32e96",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x32fbc",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33053",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33155",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33173",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33223",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33288",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33335",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33371",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x333ff",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33475",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33486",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x334e4",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x335b4",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x335e4",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33688",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x336ab",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x338ce",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33974",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33ab8",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33afb",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33ca8",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33dc4",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x33e46",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        }
+      ],
+      "count": 28,
+      "blocks": [
+        {
+          "name": ".object1",
+          "start": "0x10000",
+          "end": "0x4ef28",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object2",
+          "start": "0x50000",
+          "end": "0x556af",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object3",
+          "start": "0x60000",
+          "end": "0x634d1",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".image",
+          "start": "0x0",
+          "end": "0x7c4e5",
+          "initialized": true,
+          "execute": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "callscan_1088d",
+    "address": "0x1088d",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x1088d",
+      "raw_candidates": 3,
+      "hits": [
+        {
+          "call_addr": "0x205ff",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": "FUN_000205da"
+        },
+        {
+          "call_addr": "0x25870",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        },
+        {
+          "call_addr": "0x31c7b",
+          "confirmed_call_instruction": true,
+          "decoded_mnemonic": "CALL",
+          "in_function": null
+        }
+      ],
+      "count": 3,
+      "blocks": [
+        {
+          "name": ".object1",
+          "start": "0x10000",
+          "end": "0x4ef28",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object2",
+          "start": "0x50000",
+          "end": "0x556af",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object3",
+          "start": "0x60000",
+          "end": "0x634d1",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".image",
+          "start": "0x0",
+          "end": "0x7c4e5",
+          "initialized": true,
+          "execute": false
+        }
+      ]
+    }
+  }
+]

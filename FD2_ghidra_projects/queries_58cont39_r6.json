@@ -1,0 +1,7 @@
+[
+  {"id": "disasm_3312d", "address": "0x3312d", "action": "disasm", "max_bytes": 700},
+  {"id": "fb_11df2", "address": "0x11df2", "action": "function_bounds"},
+  {"id": "fb_24b14", "address": "0x24b14", "action": "function_bounds"},
+  {"id": "fb_135dd", "address": "0x135dd", "action": "function_bounds"},
+  {"id": "fb_1366a", "address": "0x1366a", "action": "function_bounds"}
+]

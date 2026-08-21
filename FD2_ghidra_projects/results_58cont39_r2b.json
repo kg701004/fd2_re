@@ -1,0 +1,86 @@
+[
+  {
+    "id": "callscan_205da",
+    "address": "0x205da",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x205da",
+      "raw_candidates": 0,
+      "hits": [],
+      "count": 0,
+      "blocks": [
+        {
+          "name": ".object1",
+          "start": "0x10000",
+          "end": "0x4ef28",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object2",
+          "start": "0x50000",
+          "end": "0x556af",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object3",
+          "start": "0x60000",
+          "end": "0x634d1",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".image",
+          "start": "0x0",
+          "end": "0x7c4e5",
+          "initialized": true,
+          "execute": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "callscan_1088d",
+    "address": "0x1088d",
+    "action": "call_scan",
+    "ok": true,
+    "result": {
+      "target": "0x1088d",
+      "raw_candidates": 0,
+      "hits": [],
+      "count": 0,
+      "blocks": [
+        {
+          "name": ".object1",
+          "start": "0x10000",
+          "end": "0x4ef28",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object2",
+          "start": "0x50000",
+          "end": "0x556af",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".object3",
+          "start": "0x60000",
+          "end": "0x634d1",
+          "initialized": true,
+          "execute": false
+        },
+        {
+          "name": ".image",
+          "start": "0x0",
+          "end": "0x7c4e5",
+          "initialized": true,
+          "execute": false
+        }
+      ]
+    }
+  }
+]

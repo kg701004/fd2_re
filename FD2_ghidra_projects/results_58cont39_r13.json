@@ -1,0 +1,19 @@
+[
+  {
+    "id": "fb_24e80",
+    "address": "0x24e80",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": false,
+      "note": "address not contained in any known function boundary"
+    }
+  },
+  {
+    "id": "decompile_24e80",
+    "address": "0x24e80",
+    "action": "decompile",
+    "ok": false,
+    "error": "java.lang.RuntimeException: address 0x24e80 is not inside any known function; cannot decompile"
+  }
+]

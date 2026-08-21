@@ -4038,3 +4038,122 @@ else → 進入上面§1的完整複製(memmove+覆寫+memset)
 ### 產出
 
 本文件本節(續三十八)。**沒有**修改`tools/fd2save.py`(見§4,確認無需修改)。**沒有**編輯`91-worklist.md`(依指示)。反組譯佐證留存於`FD2_ghidra_projects/queries_58cont38*.json`/`results_58cont38*.json`(共7組批次查詢,涵蓋`0x1088d`/`0x10a77`/`0x11506`/`0x10b4e`/`0x10c50`/`0x3771c`/`0x37910`/`0x3702f`/`0x3706e`/`0x37324`/`0x3776e`/`0x205ff`的decompile、disasm、xref_to、function_bounds)。
+
+## 續三十九:四條新線索窮盡排查——ch27初始化路徑逐位址確認、指令環gate逐指令重驗到位元組層級、EXE patch範圍論證排除、ch26 postbattle sync新發現;矛盾仍未解但排除面大幅收斂(2026-08-21)
+
+**任務背景**:延續續三十六/三十七/三十八——ch27 live測試裡索爾/悠妮/鐡諾/洛娜四名單位全部卡進`0x17aed`非互動假畫面,續三十八已用純靜態反組譯排除`record[+6]`/`record[+0x26]`(`0x1088D`對兩者皆無條件覆寫,與存檔內容無關),使用者另外直接讀取`FD2_ch27_test.SAV`bytes確認13名真實隊伍成員`record+5`全部是`0x00`(已行動旗標乾淨)——三個已知gate條件都被排除,矛盾未解。本輪指示四條新角度,全程只用`tools/ghidra_batch_probe.py`對`FD2Analysis3`唯讀headless查詢,**沒有碰DOSBox-X/WSL2**(含線索3的EXE byte-diff,見下方§3的替代論證方式)。
+
+### 工具改良:為`ghidra_batch_probe.py`新增`call_scan`動作(窮舉byte-pattern掃描,補`xref_to`在本project的已知盲點)
+
+排查線索1時發現`xref_to 0x205da`只回3筆結果,但doc25(`25-battle-event-system.md:43`)明確記載「28個直接caller」——這正是續二十八記錄過的同一類問題:本project在`-noanalysis`模式下`getReferencesTo()`只找得到「剛好已經被某次probe反組譯過」的呼叫點,不是完整的static reference index。續二十八當時是為單一問題(`INC [0x53c03]`)寫一支一次性`Probe58Cont28d.java`做窮舉byte-pattern掃描解決,本輪把這個能力**正式收進共用工具**:在`FD2_ghidra_projects/ProbeBatch.java`新增`call_scan`動作(`actionCallScan`,對每個`.objectN`記憶體區塊——**排除`.image`,它是涵蓋全部`.objectN`的重複超集,若一併掃會讓每筆命中double-count**——逐byte找`E8`(CALL rel32)opcode、算出目標位址,對命中的呼叫點額外用Ghidra真實反組譯器強制解碼一次確認是合法5-byte CALL指令),並在`tools/ghidra_batch_probe.py`docstring補上使用說明與範例。debug過程中也確認了這個LE-format program的一個環境細節(已寫進程式碼註解供後人參考):**每個memory block的`isExecute()`都回傳`false`**(這份LE執行檔的loader沒有正確設定執行權限位元),原始版本用`isExecute()`過濾會直接漏掉所有程式碼區塊、回傳0筆命中,必須改用區塊名稱(排除`.image`)過濾。
+
+用`call_scan`重新查`0x205da`:**28筆命中,全部通過真實反組譯確認**(`call_addr`從`0x32330`到`0x33e46`),與doc25「28個直接caller」**精確吻合**——`xref_to`回3筆是reference-index不完整造成的低估,doc25的既有記錄本身沒有錯,這輪等於是為doc25那筆數據補上獨立佐證。
+
+### 線索1:ch27戰鬥初始化——確認就是標準`0x205da→0x1088D`路徑,無獨立roster建構路徑;但意外發現`0x1088D`實際有3個直接呼叫端,不是續三十八記錄的1個
+
+**確認ch27走哪個handler,不靠章節off-by-one慣例推論,直接用測試存檔本身的raw chapter值當索引**:`FD2_ch27_test.SAV`讀出的`chapter=0x1a`(=26)就是遊戲載入這份存檔後會寫進`DAT_00053c03`的值,而`0x25bf4`戰役主迴圈(續二十八已反組譯)裡`(*(code*)(&PTR_FUN_00051d71)[DAT_00053c03])()`正是用這個值直接索引`0x51d71`表——不需要另外假設off-by-one換算。用`bytes`動作dump `0x51d71`起160 bytes(40筆dword),解碼後確認這是一張**30筆、緊接在`0x51de9`(postbattle表,續二十八已證實)之前**的表(`0x51d71+30*4=0x51de9`,首尾精確相接,證實表大小=30,一章一筆),index=26的值是`0x33af1`。
+
+對`0x33af1`做`disasm`(123條指令,`0x33af1..0x33c98`,`JMP 0x3312d`結尾非`RET`——這是一個尾端直接跳進共用code的handler,不是靠`CALL`/`RET`的獨立函式,說明先前`function_bounds`對這段位址回傳`in_function:false`是因為project從未把它建成正式Function,不是bug):
+
+- 開頭僅`PUSH 0x28; CALL 0x3702f`(輸入緩衝清理,幾乎每個handler開頭都有)後,**第10個byte就是`CALL 0x205da`**(`0x33afb`)——戰鬥初始化(進而`0x1088D`重建roster、`+6=2`/`+0x26`歸零)在這個handler裡幾乎是第一件事,遠早於後面6次戰前對白繪圖呼叫。
+- 之後的123-10=113 bytes全部是已知語意的演出呼叫:`0x135dd`/`0x1366a`(文字/繪圖)、`0x15f84`(繪事件全螢幕畫面,doc25既有原語,以`N=0,3,4,5,6,7`六種不同resource index各呼叫一次,對應續三十六/三十七記錄的「約13次Enter推進戰前對白」的視覺內容)、`0x24618`(doc91`91-worklist.md:662`已定案是13×8地圖轉場合成特效,純視覺,**不是**doc58中途一度誤猜的acting)、`0x11df2`(palette漸變特效)——**這113 bytes裡沒有任何一條指令寫入`[0x53a45]`戰場單位陣列**(沒有`MOV byte [xxx+5]`/`[xxx+6]`/`[xxx+0x26]`這類pattern,逐條核對過)。
+- 尾端`JMP 0x3312d`跳進的共用tail code只有8條指令(`disasm`確認,`0x3312d..0x3314a`,`RET`結尾):最後一次`0x15f84`繪圖 → `0x134e4`(移動/演出完成通知)→ `PUSH 0;CALL 0x12d7b`(**這正是`0x117e7`用來把游標跳到「下一個可操作單位」的同一個函式**,這裡以`param=0`呼叫,語意是「把瀏覽游標初始定位到單位0」,是純粹的cursor/camera定位,不寫入單位戰鬥狀態欄位)。
+
+**結論(高信心)**:ch27的戰鬥初始化100%確認是標準`0x205da→0x1088D`路徑,沒有為ch27另開一條roster建構路徑;而且從`0x1088D`執行完畢到玩家實際能按Enter為止,中間執行的每一條指令都是已知語意的純演出/繪圖呼叫,**沒有任何指令有能力覆寫`record[+5]`/`[+6]`/`[+0x26]`**——這條線索原本設想的「ch27戰前演出偷偷把全員標記已行動」假說(續三十七收尾建議的優先項之一),本輪**用逐指令窮舉排除了**。
+
+**意外發現(獨立於本線索原始目的,但值得記錄以免下一輪誤用舊結論)**:續三十八§3寫「`0x1088D`目前唯一收到的直接呼叫端是`0x205ff`」,本輪用`call_scan 0x1088d`查出**實際有3個直接呼叫端**:
+1. `0x205ff`(已知,在`FUN_000205da`內)。
+2. `0x25870`——**新發現**,位於`0x24e80..0x250cb`這個函式內(用`0x51de9`postbattle表index=25核對,精確落在ch26 postbattle handler範圍內,見下方§4)。
+3. `0x31c7b`——**新發現**,位於一個獨立函式內(`disasm`確認`0x31c50`起是`PUSH EBX/ESI/EDI/EBP; SUB ESP,0x24`的標準函式序言,清了幾個區域變數後直接`PUSH 0x1e`(=30,**字面常數**,不是`[0x53c03]`)接著`CALL 0x1088d`,再呼叫`0x3706e(0x36b00)`——申請一塊224000-byte的大緩衝區,遠大於`0x1088D`本體內部自己配置的`0x1e00`(7680 byte)戰場陣列,顯示這是完全獨立於戰鬥流程的另一個子系統(可能是角色一覽/結局畫面一類需要顯示全體角色資料但跟目前章節無關的畫面,用固定chapter=30製造一份「終局」roster快照)——**本輪沒有時間繼續往下查`0x31c7b`所在函式的完整身分**,留給下一輪,但可以確定它與ch27 live測試的執行路徑無關(ch27測試從未觸發需要224000-byte大緩衝區的畫面)。
+
+### 線索2:`0x117e7`指令環入口——逐指令(非僅decompile)重新反組譯Enter分支,確認只有3個已知gate,沒有第4個
+
+用`disasm`從`0x118da`(scancode==0x39/0x1c 分支、`FUN_00012c0d()`拿到合法unit index之後)逐段追到`0x1192e`(呼叫`0x17aed`後的`JMP`),**逐條指令與decompile比對,byte-for-byte一致**:
+
+```asm
+0x118ea  MOVZX EDX,[EAX+6]        ; EDX = record[+6]
+0x118f8  MOVZX EBX,[EAX+7]        ; EBX = record[+7]
+0x118fc  CMP EBX,0x79             ; 'y'
+0x118ff  JZ 0x11aa3               ; record[+7]=='y' → 整段Enter處理直接跳過(含postbattle handler呼叫鏈)
+0x11905  MOVZX EBX,[EAX+0x1f]     ; EBX = record[+0x1f]
+0x11909  CMP EBX,0xa              ; '\n'(0x0a)
+0x1190c  JZ 0x11aa3               ; record[+0x1f]==0x0a → 同上,整段跳過
+0x11912  CMP EDX,0x2              ; 第一個已知gate:record[+6]==2
+0x11915  JNZ 0x11925              ; 不等 → 0x17aed
+0x11917  TEST [EAX+5],0x80        ; 第二個已知gate:record[+5]&0x80==0
+0x1191b  JNZ 0x11925              ; 已設 → 0x17aed
+0x1191d  MOVZX EAX,[EAX+0x26]     ; 第三個已知gate:record[+0x26]==0
+0x11921  TEST EAX,EAX
+0x11923  JZ 0x11930               ; ==0 → 進0x18890真指令環
+0x11925  CALL 0x17aed             ; 三者任一失敗 → 非互動假畫面
+```
+
+**確認新發現、但不是本次矛盾的答案**:在3個已知gate**之前**,還有2個更早的前置檢查(`record[+7]!='y'` 且 `record[+0x1f]!=0x0a`)——這兩者任一成立,整個Enter處理(含呼叫`0x18890`**或**`0x17aed`、以及後面的postbattle handler鏈`0x51b19[chapter]`/`0x51b91[...]`)**全部**被跳過,直接`return 0`,畫面上**什麼反應都不會有**(連`0x17aed`的固定演出都不會播)。這點doc13先前的文件只記到3個record gate,沒提這2個前置檢查——本輪補上,但它們**不是**這次矛盾的答案:續三十六/三十七的live測試明確觀察到`0x17aed`的視覺特徵(法術卡/裝備卡固定演出),代表這2個前置檢查當時必定是「通過」的(`record[+7]!='y'`且`record[+0x1f]!=0x0a`),才會走到後面3個已知gate、再落入`0x17aed`分支——邏輯上這2個新發現的檢查**排除了自己是根因的可能性**,但完整記錄下來,避免下一輪重複發現同一件事還誤以為是新線索。
+
+**結論**:`0x117e7`的Enter分支經過逐指令重新反組譯,確認**只有續三十七/三十八已記載的3個gate**(`+6==2`/`+5&0x80==0`/`+0x26==0`),加上2個前置的slot有效性檢查(`+7`/`+0x1f`,已排除)——**沒有第4個隱藏gate**。矛盾沒有解開,但這條路徑已經被逐位元組窮盡,可以排除「還有沒發現的判斷式」這個假說。
+
+### 線索3:成長表EXE patch有沒有污染entry gate相關code——用區段隔離論證排除,沒有重新碰WSL2
+
+依指示這輪不碰DOSBox-X/WSL2,改用純位址空間論證(補強、不取代續二十七/三十六/三十七已做過的live byte-diff)：
+
+- 已知的patch範圍(續三十六/三十七逐byte diff確認)是`0x7AB5D..0x7ACC2`(精確252 bytes,3輪核對數字一致,沒有漂移)。
+- 這輪`call_scan`副產物意外dump出這個project的LE object segment佈局:`.object1=0x10000..0x4ef28`、`.object2=0x50000..0x556af`、`.object3=0x60000..0x634d1`(`.image=0x0..0x7c4e5`是涵蓋全部三者的重複超集,不是獨立區段)。
+- **`0x7AB5D`(=503,133)遠大於`.object3`的結尾`0x634d1`(=406,737)**——換句話說,成長表patch座落的位址範圍**完全落在三個已知LE code/data segment之外**,是檔案更後段的附加資料區(與敵人數值表這個「純資料,不是code」的性質吻合)。
+- 而本輪線索1/2/4追出的所有entry-gate相關位址(`0x1088D`、`0x117e7`、`0x33af1`、`0x11506`、`0x205da`)全部落在`.object1`(`0x10000..0x4ef28`)之內,與patch範圍相距至少`0x7AB5D-0x4ef28≈0x2BC35`(約180,000 bytes)。
+
+**結論**:即使不重新做一次live byte-diff,單純從「patch範圍不屬於任何已知code segment、且與所有gate相關code距離達18萬byte以上」這個位址空間論證,就足以排除「growth-table patch意外溢出污染了entry gate code」這個假說——這與續三十六/三十七各自獨立做過的「diff僅252 bytes、範圍精確不變」的live驗證結論一致,是同一個結論的第二條獨立證據路徑。
+
+### 線索4:存檔跳章有沒有漏掉某個global旗標——意外挖出一個先前查過但沒解讀的函式`0x11506`,結論是「沒有漏掉會影響這三個gate byte的東西」
+
+追`0x1088D`的第2個新呼叫端`0x25870`所在函式(`0x24e80..0x250cb`,用`0x51de9`postbattle表index=25核對,確認就是ch26的postbattle handler),逐段`disasm`追出關鍵路徑:
+
+```
+0x25042  CALL 0x11506     ; ★ 章節結算前的「戰場陣列→持久化名冊」sync-back
+0x25047  INC [0x53c03]    ; 章節計數器 +1(續二十八已知的16個「INC chapter」site之一)
+0x25855  CALL 0x1088d     ; ★ 緊接著又直接重建一次roster(不透過0x205da)
+```
+
+`0x11506`這個位址**續三十八其實已經查過**(見續三十八「產出」段列出的query清單含`0x11506`),但續三十八的正文完全沒有解讀它的內容,只當成`0x1088D`旁邊的一個陪襯位址——本輪完整`decompile`+`disasm`(176 bytes全函式)才第一次把它的邏輯講清楚:
+
+```c
+// FUN_00011506 節錄(逐指令核對,dest/src已用disasm還原,decompile本身跟續三十八記過的
+// FUN_0003771c/FUN_00037910同樣有「stack參數消失」的問題)
+for (每個戰場單位battle[i], i in 0..DAT_00053beb) {
+  for (每個持久化名冊單位persist[j], j in 0..DAT_00053bfb) {
+    if (battle[i].+8 == persist[j].+8) {           // 用identity key配對
+      memmove(dest=persist[j], src=battle[i], n=0x50);  // 整筆50-byte record複製回持久化名冊
+      memset(persist[j]+0x22, 0, 6);                // 清 +0x22..+0x27(含+0x26)
+      persist[j].+5 &= 1;                           // 只留bit0,清掉bit7(Acted)
+      if (persist[j].+5 != 1) persist[j].+0x40 = persist[j].+0x42;  // 非死亡才同步HP
+      persist[j].+0x44 = persist[j].+0x46;          // 同步MP
+      FUN_0001145a(j);                              // 其他收尾(未追)
+    }
+  }
+}
+```
+
+這是**戰鬥結束後、章節推進前**的持久化名冊回寫函式:把剛打完的戰場最終狀態整筆複製回存檔用的名冊記錄,再對`+5`/`+0x22..+0x27`做收尾修正(**與`0x1088D`進戰場時做的事互為鏡像**:`0x1088D`進場時無條件把`+6`設2、`+0x22..+0x27`歸零;`0x11506`出場時無條件把`+5`遮罩成只剩bit0、`+0x22..+0x27`也歸零)。
+
+**交叉比對這對本輪矛盾的意義**:如果`FD2_ch27_test.SAV`是用`fd2save.py`跳章合成、繞過了实際打完ch26這一步,理論上會**跳過**這次`0x11506`回寫——但因為`0x11506`對`+5`做的事(`&=1`,即「不管原本是什麼,清掉bit7」)跟我們**已經獨立驗證過**的實際存檔內容(`+5==0x00`,bit7本來就是0)**結果完全一樣**,對`+0x22..+0x27`做的事(`memset`歸零)也跟`0x1088D`進場時無論如何都會做的事完全重複——**這條線索沒有找到「合成存檔比正常玩少了什麼、而且那個缺口剛好會導致這3個gate byte出錯」的具體證據**。換句話說:即使我們的合成存檔繞過了`0x11506`這一步,對`record[+6]`/`record[+5]`/`record[+0x26]`這三個入口gate byte來說,結果跟「有沒有經過`0x11506`」**無法產生差異**——因為`0x1088D`進場時的無條件覆寫,加上這個測試存檔本來就已經是乾淨值,讓`0x11506`這一步變成多餘。
+
+`tools/fd2save.py`本身重新確認過一次:目前只有`decode`/`summarize`/`--write-plain`(唯讀匯出),**沒有**任何「跳章寫入」的函式;實際合成`FD2_ch27_test.SAV`的方法（續三十四/三十五做的)沒有留下可覆核的獨立腳本,只能靠直接讀bytes驗證最終結果(已完成)。本輪**沒有**修改`tools/fd2save.py`(理由同續三十八:找不到需要修改的東西)。
+
+### 誠實結論:四條線索全部有明確排除證據,但矛盾本身依然未解——已知的靜態排查空間已經窮盡
+
+1. **線索1(ch27初始化路徑)**:CONFIRMED標準路徑,無替代roster建構路徑;意外訂正續三十八「`0x1088D`只有1個caller」的說法(實際3個),並為doc25「28個caller」補上獨立佐證、修好`ghidra_batch_probe.py`的`xref_to`盲點(新增`call_scan`)。
+2. **線索2(指令環gate)**:CONFIRMED只有3個已知gate(逐位元組),新發現2個已排除的前置檢查。
+3. **線索3(EXE patch污染)**:排除,位址空間論證(patch區在所有已知code segment之外、距gate code達18萬byte)+ 沿用先前3輪live byte-diff的一致結果。
+4. **線索4(存檔跳章缺陷)**:排除對`+5`/`+6`/`+0x26`這三個gate byte的影響——新解讀出`0x11506`(postbattle sync-back)的完整邏輯,證實它對這三個byte做的事跟`0x1088D`的無條件覆寫**重疊**,合成存檔繞過它不會造成這三個byte出錯。
+
+**四條線索原本設想的「可能根因」全部被靜態證據排除,但續三十六/三十七觀察到的「全部單位卡進`0x17aed`」現象本身沒有消失、也沒有找到替代解釋**——這代表矛盾的根因,**很可能不在我們目前反組譯覆蓋到的任何一段程式碼裡**,而是在:(a) 一個我們還沒定位到的、真正寫入這3個byte的第三方caller(`0x1088D`的3個caller、`0x11506`都不是;`0x117e7`本身的3個gate讀取端也不是寫入端);或(b) **純粹是live執行環境本身的問題**,不是遊戲邏輯——這個可能性不能再繼續用靜態反組譯排除,因為我們已經把`record[+5]/[+6]/[+0x26]`所有已知的讀寫端都逐一查過,全部乾淨。
+
+**給下一輪的具體建議(優先序,這次是誠實的「靜態方法已到極限」判斷,不是敷衍)**:
+
+1. **最高優先、且是本輪能給出的最具體建議**:靜態排查已經沒有更多可查的位址了,下一輪如果要真正解開矛盾,必須回到live環境,但**不要**再重複「窮舉按鍵組合」——改成直接在`0x11912`(`CMP EDX,0x2`,即`record[+6]`的比較指令,已知live delta換算方法見續三十六/三十七)下執行斷點,單步時直接dump當下`EAX`(=record基底位址)往後`+5`/`+6`/`+0x26`三個byte的**即時記憶體值**。這是唯一能分辨「到底是這3個byte的哪一個、在哪個時間點被改壞」的方法——本輪四條線索都是「應該是乾淨的」,只有live dump能證實「實際上是不是真的乾淨」。
+2. 次要:若live dump證實這3個byte在按Enter當下確實不是預期值,回頭查是不是`FUN_00012c0d()`(取得游標下單位index)解出了錯說的index——即實際被檢查的record根本不是玩家以為選中的那個單位(用live dump比對`FUN_00012c0d()`回傳值與預期index是否一致)。
+3. 次要、與本次矛盾無關但值得補完:`0x31c7b`所在函式(字面`chapter=0x1e`、224000-byte大緩衝區)身分未明,若之後研究"角色總覽"或"結局"類畫面時可以直接沿用本輪定位到的位址。
+4. 本輪產出的`FD2_ghidra_projects/ProbeBatch.java`新增`call_scan`動作已通用化收進共用工具(`tools/ghidra_batch_probe.py`docstring同步更新),下一輪任何懷疑`xref_to`結果不完整時可以直接用,不需要再臨時寫一次性Java script。
+
+### 產出
+
+本文件本節(續三十九)。**修改**`C:/Users/kg701/Desktop/GAME/FD2_ghidra_projects/ProbeBatch.java`(新增`call_scan`動作,通用共用工具,非一次性script;此檔案是`ghidra_batch_probe.py`預設指向的外部Ghidra project目錄的一部分,**不在`fd2_re`這個git repo範圍內**,故這次commit看不到它的diff,但已持久化在磁碟上供下一輪直接複用)與`tools/ghidra_batch_probe.py`(docstring補充說明,這個是repo內、有進commit)。**沒有**修改`tools/fd2save.py`(見§4,確認無需修改)。**沒有**碰DOSBox-X/WSL2(線索3改用位址空間論證,不需要重新live byte-diff)。**沒有**編輯`91-worklist.md`(依指示)。反組譯佐證留存於`FD2_ghidra_projects/queries_58cont39_r*.json`/`results_58cont39_r*.json`(共21組批次查詢,涵蓋`0x117e7`/`0x205da`/`0x1088d`/`0x33af1`/`0x3312d`/`0x25850`/`0x24e80`/`0x11506`/`0x12c0d`/`0x34894`/`0x31c7b`/`0x51d71`/`0x51b19`/`0x51de9`的decompile、disasm、xref_to、call_scan、bytes、function_bounds)。

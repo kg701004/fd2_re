@@ -1,0 +1,65 @@
+[
+  {
+    "id": "disasm_11506_full",
+    "address": "0x11506",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x11506",
+          "mnemonic": "PUSH",
+          "operands": "0x20",
+          "bytes": "68 20 00 00 00"
+        },
+        {
+          "address": "0x1150b",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 1f 5b 02 00"
+        },
+        {
+          "address": "0x11510",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x11511",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x11512",
+          "mnemonic": "PUSH",
+          "operands": "EDI",
+          "bytes": "57"
+        },
+        {
+          "address": "0x11513",
+          "mnemonic": "PUSH",
+          "operands": "EBP",
+          "bytes": "55"
+        },
+        {
+          "address": "0x11514",
+          "mnemonic": "XOR",
+          "operands": "EBP,EBP",
+          "bytes": "31 ed"
+        },
+        {
+          "address": "0x11516",
+          "mnemonic": "JMP",
+          "operands": "0x00011519",
+          "bytes": "eb 01"
+        }
+      ],
+      "start": "0x11506",
+      "end": "0x11516",
+      "count": 8,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  }
+]

@@ -1,0 +1,211 @@
+[
+  {
+    "id": "fb_117e7",
+    "address": "0x117e7",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000117e7",
+      "start": "0x117e7",
+      "end": "0x11aa7",
+      "size": 698,
+      "entry_point": "0x117e7"
+    }
+  },
+  {
+    "id": "decompile_117e7",
+    "address": "0x117e7",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000117e7",
+      "entry_point": "0x117e7",
+      "signature": "undefined FUN_000117e7(void)",
+      "code": "\r\nint __stdcall FUN_000117e7(void)\r\n\r\n{\r\n  bool bVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  FUN_0003702f();\r\n  iVar2 = FUN_00011aa8();\r\n  if (((iVar2 == 1) || (iVar2 == 0x2c)) || (iVar2 == 0x4c)) {\r\n    bVar1 = false;\r\n    iVar2 = DAT_00053ae9;\r\n    for (iVar4 = 0; iVar4 < DAT_00053beb; iVar4 = iVar4 + 1) {\r\n      iVar3 = iVar2 * 0x50 + DAT_00053a45;\r\n      if ((((*(byte *)(iVar3 + 5) & 0x85) == 0) && (*(char *)(iVar3 + 6) == '\\x02')) && (!bVar1)) {\r\n        FUN_00012d7b();\r\n        DAT_00053ae9 = iVar2 + 1;\r\n        if (DAT_00053ae9 == DAT_00053beb) {\r\n          DAT_00053ae9 = 0;\r\n        }\r\n        bVar1 = true;\r\n      }\r\n      iVar2 = iVar2 + 1;\r\n      if (iVar2 == DAT_00053beb) {\r\n        iVar2 = 0;\r\n      }\r\n    }\r\nLAB_0001187a:\r\n    FUN_0004e381();\r\n    return 0;\r\n  }\r\n  if ((iVar2 == 0x39) || (iVar2 == 0x1c)) {\r\n    if (DAT_00051a42 != '\\0') {\r\n      DAT_00051a42 = DAT_00051a42 + -1;\r\n    }\r\n    iVar2 = FUN_00012c0d();\r\n    if (iVar2 == -1) {\r\n      do {\r\n        iVar2 = FUN_00016f55();\r\n      } while (iVar2 == 0);\r\n      if (iVar2 == 1) {\r\n        iVar2 = 0;\r\n      }\r\n      return iVar2;\r\n    }\r\n    iVar2 = iVar2 * 0x50 + DAT_00053a45;\r\n    DAT_00053ec8 = 0;\r\n    if ((*(char *)(iVar2 + 7) != 'y') && (*(char *)(iVar2 + 0x1f) != '\\n')) {\r\n      if ((*(char *)(iVar2 + 6) == '\\x02') &&\r\n         (((*(byte *)(iVar2 + 5) & 0x80) == 0 && (*(char *)(iVar2 + 0x26) == '\\0')))) {\r\n        FUN_00025a96();\r\n        do {\r\n          iVar2 = FUN_00018890();\r\n        } while (iVar2 == 0);\r\n      }\r\n      else {\r\n        FUN_00017aed();\r\n      }\r\n      FUN_00011cac();\r\n      if (99 < DAT_00053ec8) {\r\n        DAT_00053ec8 = 99;\r\n      }\r\n      FUN_0001e292();\r\n      (**(code **)(&DAT_00051b19 + DAT_00053c03 * 4))();\r\n      FUN_00013565();\r\n      if (DAT_00051a8f != 0xff) {\r\n        (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();\r\n      }\r\n      DAT_00051a8f = 0xff;\r\n      goto LAB_0001187a;\r\n    }\r\n  }\r\n  else if (iVar2 != 0x22) {\r\n    if ((iVar2 == 0x3b) || (iVar2 == 0x49)) {\r\n      FUN_0002000a();\r\n      return 0;\r\n    }\r\n    if ((iVar2 == 0x3c) || (iVar2 == 0x47)) {\r\n      iVar2 = FUN_00012c0d();\r\n      if ((iVar2 != -1) &&\r\n         ((iVar2 = DAT_00053a45 + iVar2 * 0x50, *(char *)(iVar2 + 7) != 'y' &&\r\n          (*(char *)(iVar2 + 0x1f) != '\\n')))) {\r\n        FUN_00017aed();\r\n        return 0;\r\n      }\r\n    }\r\n    else {\r\n      if (iVar2 == 0x48) {\r\n        FUN_00025a96();\r\n        FUN_00011b48();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x50) {\r\n        FUN_00025a96();\r\n        FUN_00011b9b();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4b) {\r\n        FUN_00025a96();\r\n        FUN_00011c59();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4d) {\r\n        FUN_00025a96();\r\n        FUN_00011bfa();\r\n      }\r\n    }\r\n  }\r\n  return 0;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "disasm_117e7",
+    "address": "0x117e7",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x117e7",
+          "mnemonic": "PUSH",
+          "operands": "0x18",
+          "bytes": "68 18 00 00 00"
+        },
+        {
+          "address": "0x117ec",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 3e 58 02 00"
+        },
+        {
+          "address": "0x117f1",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x117f2",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x117f3",
+          "mnemonic": "CALL",
+          "operands": "0x00011aa8",
+          "bytes": "e8 b0 02 00 00"
+        },
+        {
+          "address": "0x117f8",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x1",
+          "bytes": "83 f8 01"
+        },
+        {
+          "address": "0x117fb",
+          "mnemonic": "JZ",
+          "operands": "0x0001180b",
+          "bytes": "74 0e"
+        },
+        {
+          "address": "0x117fd",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x2c",
+          "bytes": "83 f8 2c"
+        },
+        {
+          "address": "0x11800",
+          "mnemonic": "JZ",
+          "operands": "0x0001180b",
+          "bytes": "74 09"
+        },
+        {
+          "address": "0x11802",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x4c",
+          "bytes": "83 f8 4c"
+        },
+        {
+          "address": "0x11805",
+          "mnemonic": "JNZ",
+          "operands": "0x00011884",
+          "bytes": "0f 85 79 00 00 00"
+        },
+        {
+          "address": "0x1180b",
+          "mnemonic": "XOR",
+          "operands": "ECX,ECX",
+          "bytes": "31 c9"
+        },
+        {
+          "address": "0x1180d",
+          "mnemonic": "MOV",
+          "operands": "EBX,dword ptr [0x00053ae9]",
+          "bytes": "8b 1d e9 3a 05 00"
+        },
+        {
+          "address": "0x11813",
+          "mnemonic": "XOR",
+          "operands": "ESI,ESI",
+          "bytes": "31 f6"
+        },
+        {
+          "address": "0x11815",
+          "mnemonic": "JMP",
+          "operands": "0x00011818",
+          "bytes": "eb 01"
+        }
+      ],
+      "start": "0x117e7",
+      "end": "0x11815",
+      "count": 15,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  },
+  {
+    "id": "xref_205da",
+    "address": "0x205da",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x32330",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x32538",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x3281d",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 3
+    }
+  },
+  {
+    "id": "fb_205da",
+    "address": "0x205da",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000205da",
+      "start": "0x205da",
+      "end": "0x2067c",
+      "size": 163,
+      "entry_point": "0x205da"
+    }
+  },
+  {
+    "id": "decompile_205da",
+    "address": "0x205da",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000205da",
+      "entry_point": "0x205da",
+      "signature": "undefined FUN_000205da(void)",
+      "code": "\r\n/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */\r\n\r\nvoid __stdcall FUN_000205da(void)\r\n\r\n{\r\n  FUN_0003702f();\r\n  DAT_00051a83 = 0;\r\n  DAT_00053ecc = 0;\r\n  FUN_0001088d();\r\n  FUN_00037910();\r\n  DAT_00053aa9 = 0;\r\n  DAT_00053aad = 0;\r\n  DAT_00053ab1 = 0;\r\n  DAT_00053ab5 = 0;\r\n  DAT_00053ab9 = 0;\r\n  DAT_00053abd = 0;\r\n  FUN_00011cac();\r\n  DAT_00051a83 = 1;\r\n  FUN_0001f525();\r\n  _DAT_00053bef = 1;\r\n  FUN_0004e381();\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "xref_1088d",
+    "address": "0x1088d",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x205ff",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 1
+    }
+  },
+  {
+    "id": "fb_1088d",
+    "address": "0x1088d",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001088d",
+      "start": "0x1088d",
+      "end": "0x10b42",
+      "size": 694,
+      "entry_point": "0x1088d"
+    }
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "bytes_205ff",
+    "address": "0x205ff",
+    "action": "bytes",
+    "ok": true,
+    "result": {
+      "start": "0x205ff",
+      "length": 16,
+      "hex": "e8 89 02 ff ff 83 c4 04 6a 20 6a 00 ff 35 d5 3a"
+    }
+  },
+  {
+    "id": "disasm_205ff",
+    "address": "0x205ff",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x205ff",
+          "mnemonic": "CALL",
+          "operands": "0x0001088d",
+          "bytes": "e8 89 02 ff ff"
+        },
+        {
+          "address": "0x20604",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x4",
+          "bytes": "83 c4 04"
+        },
+        {
+          "address": "0x20607",
+          "mnemonic": "PUSH",
+          "operands": "0x20",
+          "bytes": "6a 20"
+        },
+        {
+          "address": "0x20609",
+          "mnemonic": "PUSH",
+          "operands": "0x0",
+          "bytes": "6a 00"
+        },
+        {
+          "address": "0x2060b",
+          "mnemonic": "PUSH",
+          "operands": "dword ptr [0x00053ad5]",
+          "bytes": "ff 35 d5 3a 05 00"
+        }
+      ],
+      "start": "0x205ff",
+      "end": "0x2060b",
+      "count": 5,
+      "stop_reason": "max_bytes",
+      "truncated": true
+    }
+  }
+]

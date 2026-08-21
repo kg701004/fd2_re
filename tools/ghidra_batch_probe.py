@@ -26,7 +26,8 @@ queries.json 格式(陣列,每筆一個 query):
       {"id": "q3", "address": "0x53a51", "action": "xref_to"},
       {"id": "q4", "address": "0x14818", "action": "function_bounds"},
       {"id": "q5", "address": "0x24d22", "action": "xref_from"},
-      {"id": "q6", "address": "0x53a51", "action": "bytes", "count": 16}
+      {"id": "q6", "address": "0x53a51", "action": "bytes", "count": 16},
+      {"id": "q7", "address": "0x205da", "action": "call_scan"}
     ]
 
 action 說明(對應 ProbeBatch.java 的實作):
@@ -41,6 +42,14 @@ action 說明(對應 ProbeBatch.java 的實作):
   - function_bounds:   address 所在 function 的名稱/起訖/大小;不在任何已知 function 內則
                         回傳 {"in_function": false}(不是失敗,是明確的空結果)。
   - bytes:              從 address 開始 N bytes(`count`,預設 32)的 hex dump,不反組譯。
+  - call_scan:          (2026-08-21新增)窮舉整個程式映像(跳過重複的`.image`超集區塊),逐byte找
+                        `E8`(CALL rel32)opcode、計算目標位址,回傳所有目標等於`address`的呼叫點,
+                        每筆額外用 Ghidra 真實反組譯器在該位址強制解碼一次確認是不是合法 CALL 指令
+                        (`confirmed_call_instruction`)。**這是`xref_to`不可靠時的替代方案**——本
+                        project 的`-noanalysis`模式下,`getReferencesTo()`只找得到「剛好已經被某次
+                        probe 反組譯過」的呼叫點(親測:`xref_to 0x205da`只回3筆,`call_scan`才找到
+                        真正的28筆,與doc25既有記錄的「28個直接caller」精確吻合)。呼叫多、位址範圍大
+                        時較慢(全EXE約需額外1-2秒),但比手動窮舉可靠。
 
 輸出格式:JSON 陣列,每筆對應輸入的 "id",含 "ok"(true/false)。單一 query 失敗不會讓整批
 中斷 —— 其餘 query 照跑,失敗的那筆在輸出裡帶 "error" 說明原因。

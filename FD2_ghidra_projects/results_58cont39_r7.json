@@ -1,0 +1,93 @@
+[
+  {
+    "id": "disasm_117e7_b1",
+    "address": "0x11884",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x11884",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x39",
+          "bytes": "83 f8 39"
+        },
+        {
+          "address": "0x11887",
+          "mnemonic": "JZ",
+          "operands": "0x00011892",
+          "bytes": "74 09"
+        },
+        {
+          "address": "0x11889",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x1c",
+          "bytes": "83 f8 1c"
+        },
+        {
+          "address": "0x1188c",
+          "mnemonic": "JNZ",
+          "operands": "0x000119b5",
+          "bytes": "0f 85 23 01 00 00"
+        },
+        {
+          "address": "0x11892",
+          "mnemonic": "CMP",
+          "operands": "byte ptr [0x00051a42],0x0",
+          "bytes": "80 3d 42 1a 05 00 00"
+        },
+        {
+          "address": "0x11899",
+          "mnemonic": "JZ",
+          "operands": "0x000118a3",
+          "bytes": "74 08"
+        },
+        {
+          "address": "0x1189b",
+          "mnemonic": "DEC",
+          "operands": "byte ptr [0x00051a42]",
+          "bytes": "fe 0d 42 1a 05 00"
+        },
+        {
+          "address": "0x118a1",
+          "mnemonic": "JMP",
+          "operands": "0x000118b3",
+          "bytes": "eb 10"
+        }
+      ],
+      "start": "0x11884",
+      "end": "0x118a1",
+      "count": 8,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  },
+  {
+    "id": "disasm_117e7_b2",
+    "address": "0x118e0",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [],
+      "start": "0x118e0",
+      "end": "0x118e0",
+      "count": 0,
+      "stop_reason": "end_of_code",
+      "truncated": false
+    }
+  },
+  {
+    "id": "disasm_117e7_b3",
+    "address": "0x11940",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [],
+      "start": "0x11940",
+      "end": "0x11940",
+      "count": 0,
+      "stop_reason": "end_of_code",
+      "truncated": false
+    }
+  }
+]

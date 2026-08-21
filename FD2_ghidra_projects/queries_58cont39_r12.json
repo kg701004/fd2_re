@@ -1,0 +1,6 @@
+[
+  {"id": "disasm_25870_ctx", "address": "0x25850", "action": "disasm", "max_bytes": 100},
+  {"id": "disasm_31c7b_ctx", "address": "0x31c50", "action": "disasm", "max_bytes": 100},
+  {"id": "bytes_25850", "address": "0x25850", "action": "bytes", "count": 64},
+  {"id": "bytes_31c50", "address": "0x31c50", "action": "bytes", "count": 64}
+]

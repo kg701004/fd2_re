@@ -1,0 +1,4 @@
+[
+  {"id": "disasm_ch27_prebattle_handler", "address": "0x33af1", "action": "disasm", "max_bytes": 460},
+  {"id": "bytes_ch27_prebattle_handler", "address": "0x33af1", "action": "bytes", "count": 460}
+]

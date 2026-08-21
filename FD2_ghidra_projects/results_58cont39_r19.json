@@ -1,0 +1,77 @@
+[
+  {
+    "id": "d1",
+    "address": "0x11519",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x11519",
+          "mnemonic": "CMP",
+          "operands": "EBP,dword ptr [0x00053beb]",
+          "bytes": "3b 2d eb 3b 05 00"
+        },
+        {
+          "address": "0x1151f",
+          "mnemonic": "JGE",
+          "operands": "0x00011455",
+          "bytes": "0f 8d 30 ff ff ff"
+        },
+        {
+          "address": "0x11525",
+          "mnemonic": "MOV",
+          "operands": "EAX,EBP",
+          "bytes": "89 e8"
+        },
+        {
+          "address": "0x11527",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x2",
+          "bytes": "c1 e0 02"
+        },
+        {
+          "address": "0x1152a",
+          "mnemonic": "ADD",
+          "operands": "EAX,EBP",
+          "bytes": "01 e8"
+        },
+        {
+          "address": "0x1152c",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x4",
+          "bytes": "c1 e0 04"
+        },
+        {
+          "address": "0x1152f",
+          "mnemonic": "MOV",
+          "operands": "EDI,dword ptr [0x00053a45]",
+          "bytes": "8b 3d 45 3a 05 00"
+        },
+        {
+          "address": "0x11535",
+          "mnemonic": "ADD",
+          "operands": "EDI,EAX",
+          "bytes": "01 c7"
+        },
+        {
+          "address": "0x11537",
+          "mnemonic": "XOR",
+          "operands": "ESI,ESI",
+          "bytes": "31 f6"
+        },
+        {
+          "address": "0x11539",
+          "mnemonic": "JMP",
+          "operands": "0x0001153c",
+          "bytes": "eb 01"
+        }
+      ],
+      "start": "0x11519",
+      "end": "0x11539",
+      "count": 10,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  }
+]

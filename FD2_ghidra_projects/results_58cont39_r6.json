@@ -1,0 +1,117 @@
+[
+  {
+    "id": "disasm_3312d",
+    "address": "0x3312d",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x3312d",
+          "mnemonic": "PUSH",
+          "operands": "dword ptr [0x00053a79]",
+          "bytes": "ff 35 79 3a 05 00"
+        },
+        {
+          "address": "0x33133",
+          "mnemonic": "CALL",
+          "operands": "0x00015f84",
+          "bytes": "e8 4c 2e fe ff"
+        },
+        {
+          "address": "0x33138",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x24",
+          "bytes": "83 c4 24"
+        },
+        {
+          "address": "0x3313b",
+          "mnemonic": "CALL",
+          "operands": "0x000134e4",
+          "bytes": "e8 a4 03 fe ff"
+        },
+        {
+          "address": "0x33140",
+          "mnemonic": "PUSH",
+          "operands": "0x0",
+          "bytes": "6a 00"
+        },
+        {
+          "address": "0x33142",
+          "mnemonic": "CALL",
+          "operands": "0x00012d7b",
+          "bytes": "e8 34 fc fd ff"
+        },
+        {
+          "address": "0x33147",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x4",
+          "bytes": "83 c4 04"
+        },
+        {
+          "address": "0x3314a",
+          "mnemonic": "RET",
+          "operands": "",
+          "bytes": "c3"
+        }
+      ],
+      "start": "0x3312d",
+      "end": "0x3314a",
+      "count": 8,
+      "stop_reason": "ret",
+      "truncated": false
+    }
+  },
+  {
+    "id": "fb_11df2",
+    "address": "0x11df2",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00011df2",
+      "start": "0x11df2",
+      "end": "0x11eaf",
+      "size": 190,
+      "entry_point": "0x11df2"
+    }
+  },
+  {
+    "id": "fb_24b14",
+    "address": "0x24b14",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": false,
+      "note": "address not contained in any known function boundary"
+    }
+  },
+  {
+    "id": "fb_135dd",
+    "address": "0x135dd",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000135dd",
+      "start": "0x135dd",
+      "end": "0x13669",
+      "size": 141,
+      "entry_point": "0x135dd"
+    }
+  },
+  {
+    "id": "fb_1366a",
+    "address": "0x1366a",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001366a",
+      "start": "0x1366a",
+      "end": "0x13993",
+      "size": 810,
+      "entry_point": "0x1366a"
+    }
+  }
+]

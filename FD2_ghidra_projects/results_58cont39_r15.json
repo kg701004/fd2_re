@@ -1,0 +1,101 @@
+[
+  {
+    "id": "d1",
+    "address": "0x24ec6",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x24ec6",
+          "mnemonic": "CMP",
+          "operands": "EDX,dword ptr [0x00053beb]",
+          "bytes": "3b 15 eb 3b 05 00"
+        },
+        {
+          "address": "0x24ecc",
+          "mnemonic": "JGE",
+          "operands": "0x00024ef2",
+          "bytes": "7d 24"
+        },
+        {
+          "address": "0x24ece",
+          "mnemonic": "MOV",
+          "operands": "EAX,EDX",
+          "bytes": "89 d0"
+        },
+        {
+          "address": "0x24ed0",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x2",
+          "bytes": "c1 e0 02"
+        },
+        {
+          "address": "0x24ed3",
+          "mnemonic": "ADD",
+          "operands": "EAX,EDX",
+          "bytes": "01 d0"
+        },
+        {
+          "address": "0x24ed5",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x4",
+          "bytes": "c1 e0 04"
+        },
+        {
+          "address": "0x24ed8",
+          "mnemonic": "MOV",
+          "operands": "EBX,dword ptr [0x00053a45]",
+          "bytes": "8b 1d 45 3a 05 00"
+        },
+        {
+          "address": "0x24ede",
+          "mnemonic": "ADD",
+          "operands": "EAX,EBX",
+          "bytes": "01 d8"
+        },
+        {
+          "address": "0x24ee0",
+          "mnemonic": "MOVZX",
+          "operands": "EBX,byte ptr [EAX + 0x7]",
+          "bytes": "0f b6 58 07"
+        },
+        {
+          "address": "0x24ee4",
+          "mnemonic": "CMP",
+          "operands": "EBX,0x1f",
+          "bytes": "83 fb 1f"
+        },
+        {
+          "address": "0x24ee7",
+          "mnemonic": "JNZ",
+          "operands": "0x00024ec5",
+          "bytes": "75 dc"
+        },
+        {
+          "address": "0x24ee9",
+          "mnemonic": "MOV",
+          "operands": "byte ptr [EAX],0x10",
+          "bytes": "c6 00 10"
+        },
+        {
+          "address": "0x24eec",
+          "mnemonic": "MOV",
+          "operands": "byte ptr [EAX + 0x1],0x6",
+          "bytes": "c6 40 01 06"
+        },
+        {
+          "address": "0x24ef0",
+          "mnemonic": "JMP",
+          "operands": "0x00024ec5",
+          "bytes": "eb d3"
+        }
+      ],
+      "start": "0x24ec6",
+      "end": "0x24ef0",
+      "count": 14,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  }
+]

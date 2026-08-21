@@ -1,0 +1,4 @@
+[
+  {"id": "disasm_31c7b_direct", "address": "0x31c7b", "action": "disasm", "max_bytes": 60},
+  {"id": "bytes_31c7b_pre", "address": "0x31c60", "action": "bytes", "count": 40}
+]

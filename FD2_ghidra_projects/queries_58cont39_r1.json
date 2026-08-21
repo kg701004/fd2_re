@@ -1,0 +1,10 @@
+[
+  {"id": "fb_117e7", "address": "0x117e7", "action": "function_bounds"},
+  {"id": "decompile_117e7", "address": "0x117e7", "action": "decompile"},
+  {"id": "disasm_117e7", "address": "0x117e7", "action": "disasm", "max_bytes": 3000},
+  {"id": "xref_205da", "address": "0x205da", "action": "xref_to"},
+  {"id": "fb_205da", "address": "0x205da", "action": "function_bounds"},
+  {"id": "decompile_205da", "address": "0x205da", "action": "decompile"},
+  {"id": "xref_1088d", "address": "0x1088d", "action": "xref_to"},
+  {"id": "fb_1088d", "address": "0x1088d", "action": "function_bounds"}
+]

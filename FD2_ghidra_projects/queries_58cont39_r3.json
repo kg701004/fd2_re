@@ -1,0 +1,9 @@
+[
+  {"id": "disasm_ctx_32330", "address": "0x322f0", "action": "disasm", "max_bytes": 200},
+  {"id": "disasm_ctx_32538", "address": "0x324f0", "action": "disasm", "max_bytes": 200},
+  {"id": "disasm_ctx_3281d", "address": "0x327d0", "action": "disasm", "max_bytes": 200},
+  {"id": "disasm_ctx_25870", "address": "0x25840", "action": "disasm", "max_bytes": 200},
+  {"id": "disasm_ctx_31c7b", "address": "0x31c40", "action": "disasm", "max_bytes": 200},
+  {"id": "xref_25870_fn", "address": "0x25870", "action": "xref_to"},
+  {"id": "xref_31c7b_fn", "address": "0x31c7b", "action": "xref_to"}
+]

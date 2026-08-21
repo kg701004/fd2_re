@@ -1,0 +1,28 @@
+[
+  {
+    "id": "fb_34894",
+    "address": "0x34894",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00034894",
+      "start": "0x34894",
+      "end": "0x348ba",
+      "size": 39,
+      "entry_point": "0x34894"
+    }
+  },
+  {
+    "id": "decompile_34894",
+    "address": "0x34894",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00034894",
+      "entry_point": "0x34894",
+      "signature": "undefined FUN_00034894(void)",
+      "code": "\r\nbyte __stdcall FUN_00034894(int param_1)\r\n\r\n{\r\n  FUN_0003702f();\r\n  return *(byte *)(param_1 * 0x50 + 5 + DAT_00053a45) & 1;\r\n}\r\n\r\n"
+    }
+  }
+]

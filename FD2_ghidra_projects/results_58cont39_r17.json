@@ -1,0 +1,28 @@
+[
+  {
+    "id": "fb_11506",
+    "address": "0x11506",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00011506",
+      "start": "0x11506",
+      "end": "0x115b5",
+      "size": 176,
+      "entry_point": "0x11506"
+    }
+  },
+  {
+    "id": "decompile_11506",
+    "address": "0x11506",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00011506",
+      "entry_point": "0x11506",
+      "signature": "undefined FUN_00011506(void)",
+      "code": "\r\nvoid __stdcall FUN_00011506(void)\r\n\r\n{\r\n  int iVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  int iVar5;\r\n  \r\n  FUN_0003702f();\r\n  iVar3 = 0;\r\n  do {\r\n    if (DAT_00053beb <= iVar3) {\r\n      return;\r\n    }\r\n    iVar5 = DAT_00053a45 + iVar3 * 0x50;\r\n    for (iVar4 = 0; iVar4 < DAT_00053bfb; iVar4 = iVar4 + 1) {\r\n      iVar2 = iVar4 * 0x50 + DAT_00053bf7;\r\n      if (*(char *)(iVar5 + 8) == *(char *)(iVar2 + 8)) {\r\n        if (*(char *)(iVar2 + 8) == '\\0') {\r\n          iVar1 = FUN_00034894();\r\n          if (iVar1 != 0) goto LAB_0001153b;\r\n        }\r\n        FUN_0003771c();\r\n        FUN_00037910();\r\n        *(byte *)(iVar2 + 5) = *(byte *)(iVar2 + 5) & 1;\r\n        if (*(char *)(iVar2 + 5) != '\\x01') {\r\n          *(undefined2 *)(iVar2 + 0x40) = *(undefined2 *)(iVar2 + 0x42);\r\n        }\r\n        *(undefined2 *)(iVar2 + 0x44) = *(undefined2 *)(iVar2 + 0x46);\r\n        FUN_0001145a();\r\n      }\r\nLAB_0001153b:\r\n    }\r\n    iVar3 = iVar3 + 1;\r\n  } while( true );\r\n}\r\n\r\n"
+    }
+  }
+]
