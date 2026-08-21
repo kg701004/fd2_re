@@ -85,3 +85,42 @@ EXE 的位址被誤用在新版(509158B)基準上」這同一類 bug。位址勘
 每次都把新位址塞進這裡才能繼續工作——這是輔助查詢用的資料庫,不是強制關卡;但引用任何
 「聽起來眼熟」的位址前,先花一秒查一下能省下一整輪的重工。目前**尚未**把既有 `.py`/`.go`
 工具改成讀這份資料庫(那是後續逐步遷移的工作,範圍較大,本輪只建資料庫本身+CLI)。
+
+## 已知盲點:`FD2Analysis3` 的 Ghidra decompile 系統性不顯示呼叫引數(2026-08-21 發現)
+
+**問題**:在 doc35 §9.7 的「行為指紋全域掃描」任務裡,第一輪嘗試用 `DecompInterface.
+decompileFunction` 產生的 C 偽代碼文字去比對呼叫引數字面值(例如「有沒有把 `54` 傳給
+資源載入器」),結果全域 0 命中。抽查已知一定會呼叫該 loader 的既有位址(`0x25977`)後發現
+**decompile 輸出把呼叫顯示成空括號**(`FUN_000111ba()`),即使目標 function 本身已有具名的
+正式簽名(`int __stdcall FUN_000111ba(undefined4 param_1,int param_2)`)。進一步抽查
+`FUN_000111ba` 自己的 decompile,發現**它自己內部呼叫的 6 個 helper 也全部是空括號**——
+證實這不是單一 function 的問題,是這個 project 的 decompiler 在呼叫端引數渲染上**系統性
+失效**(推測是 Watcom stdcall 呼叫端的 p-code 引數綁定沒有被完整重建;與是否加 `-noanalysis`
+無關,decompile 本身有自己的 per-function p-code 正規化)。
+
+**影響**:任何「在 decompile 偽代碼文字裡搜引數字面值/常數」的方法論,在 `FD2Analysis3` 上
+**先天不可靠**——先前一些文件段落(如 doc35 §9.2)裡出現的「`0x111ba("TAI.DAT"@0x52393,
+prevSlot, idx)`」這類帶引數字面值的寫法,應理解成分析當時**人工從 disasm 逐條核對出來的
+還原結果**,不是 Ghidra decompile 視窗直接吐出的原始輸出——回頭核對前不要假設兩者等價。
+
+**替代方法(已驗證可信)**:改用純指令層級,不依賴 decompiler 對引數的重建:
+1. 用 `insn.getFlowType().isCall()` + `insn.getFlows()` 判斷一條指令是否呼叫目標位址
+   (doc35 §9.1 method 4、§9.7.3 都用這招,已用已知 ground truth——boot loader 依序載入
+   FDOTHER #0x1f/#1/#2/#3/#4/#5/#6——逐位元組核對過)。
+2. 呼叫端引數:從 CALL 往回掃最近幾條指令裡的 `PUSH <立即數>`(stdcall 引數由右至左壓入,
+   緊接在 CALL 之前),用 `Instruction.getScalar(0)` 取立即數值。
+3. 這招仍有盲點:`PUSH <暫存器>`(引數先被 `MOV reg,imm` 或 if/else 分支鏈設定後才 PUSH)
+   看不到立即數。要補這個洞,需要對整個 function 做**單趟正向掃描**,追蹤每個暫存器「最後
+   一次被 `MOV reg,imm` 設過的值」以及「這個 function 裡曾經被設過的所有不同立即數值」
+   (可以覆蓋 doc35 §9.7.5 記錄的「預設值 + compare-and-branch 覆寫」樣式),`PUSH reg` 時
+   回報該暫存器的歷史候選值集合。這仍然無法解開真正迴圈/表格算出來的索引(例如
+   `for(i=0;i<n;i++) buf[i]=loader(...,table[i])`),那類狀況要誠實標記「未解出」,不能
+   當成「已排除」。
+
+**之後的 agent 該怎麼用**:任何要用 Ghidra decompile 文字比對引數/常數的新研究,**先用一個
+已知答案的呼叫點驗證一次**(例如上面的 boot loader FDOTHER 序列),不要預設 decompile 輸出
+忠實反映呼叫引數;預設改用指令層級 CALL-flow-target 掃描,必要時加暫存器歷史回溯這一層。
+範例腳本(可直接參考或複製改寫):`FD2_ghidra_projects/GlobalBehaviorScan.java`(v1,示範
+decompile 文字比對本身的盲點,對照用)、`GlobalBehaviorScanV2.java`(v2,指令層級主方法)、
+`GlobalBehaviorScanV3.java`(v3,加暫存器歷史回溯)、`GlobalBehaviorScanDebug.java`
+(輔助稽核,列出每個呼叫端完整的 decompile 引數文字,是本次發現盲點的直接工具)。

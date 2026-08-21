@@ -891,3 +891,161 @@ canonical baseline」這個落差,到這裡可以確認**與本輪要解的位�
    留在 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\` 供覆核,方法本身(從 editable IR json
    反推子位址、逐一 probe 再用 decompile 排除數值巧合)可複用在其他「粗位址查無此人,細位址
    要不要也試」的情境。
+
+## 9.7 2026-08-21 — 行為指紋全域掃描:換掉整個方法論(不再信任任何位址),掃遍 976 個 function 找 ending renderer 的行為特徵——誠實負面結論,但排除了「同時符合任兩個特徵」這個組合假說,並意外揪出一個嚴重的 Ghidra decompile 偽代碼盲點
+
+> 動機:9.1/9.5/9.6 三輪都是「先假設一批位址是對的,再想辦法在 `FD2Analysis3` 裡驗證/换算它」,
+> 三輪全部失敗。本節換一個完全不同的方向:**不引用任何舊位址**,改成先把 ending renderer 已經
+> 釘死的**行為規格**(doc35 §9 / `native_2bce5.json`)寫成 4 條可程式化檢查的特徵,再對整個
+> `FD2Analysis3`(976 個已知 function,無一遺漏)逐一比對——如果 renderer 真的還在這個 project
+> 的靜態分析範圍內,不管它現在被 Ghidra 標成哪個位址、叫什麼名字,行為特徵都應該找得到它。
+
+### 9.7.1 四條行為特徵(對照 `native_2bce5.json`/`docs/knowledge-base/23-boot-title-and-scenario-flow.md` L411 訂出)
+
+| # | 特徵 | 依據 |
+|---|---|---|
+| c1 | 呼叫已證實的通用資源載入器 `FUN_000111ba`(簽名 `(descriptor, prevSlot, index)`,doc23 L411/doc35 §6),且 `index` 引數為 **54(0x36)**——即載入 FDOTHER.DAT 第 54 號資源 | `native_2bce5.json`:`"resource": {"archive": "FDOTHER.DAT", "index": 54}` |
+| c2 | 同一個 function 裡同時出現常數 **320**(0x140)與 **200**(0xc8) | ending 畫面是 320×200 雙緩衝(doc35 §9 前言) |
+| c3 | 呼叫已證實的 VGA DAC 色盤寫入 helper `FUN_00011d40`(doc06/doc35 §6,`push start,end,value; call 0x11d40`) | `native_2bce5.json` 的 `palette_update`/`palette_ramp`/`palette_ramp_repeat` 全部落在此呼叫 |
+| c4 | 同一個 function 裡同時出現常數 **2000**(hold 時間 ms)與 **4**(每步 palette ramp 延遲 ms) | `native_2bce5.json`:`{"op":"delay_ms","ms":2000}` 緊接 `{"op":"palette_ramp",...,"delay_ms":4}` |
+
+### 9.7.2 第一輪(decompile 文字比對)先撞上一個更根本的方法論陷阱:這個 project 的 Ghidra decompile **幾乎不顯示任何呼叫引數**
+
+寫了 `GlobalBehaviorScan.java`(留在 `FD2_ghidra_projects\`),對 976 個 function 逐一
+`DecompInterface.decompileFunction`,在偽代碼文字裡 regex 比對上述 4 條特徵。跑完(976/976,
+0 個 decompile 失敗,7 秒):**c1 全域 0 命中**,c4 全域 0 命中,c3(呼叫 `FUN_00011d40`)命中
+15 個 function,但沒有任何一個同時命中 c1 或 c4,最高分數只有 1(單一特徵)。
+
+**在把這個結果當結論之前先做二次確認**(參照 memory「檢查現有證據」與「驗證資料來源」習慣):
+抽查已知一定會呼叫 loader 的 `0x25977`(doc12 §15 輪已證實呼叫 `0x111ba` 載 FDMUS.DAT)跟
+`FUN_000111ba` 自己的 decompile,結果**兩者的呼叫語句全部不顯示引數**——例如
+`FUN_00025977` 裡載入呼叫顯示成 `DAT_00053ee0 = FUN_000111ba();`(空括號),連
+`FUN_000111ba` 自己內部呼叫 `FUN_0003776e()`/`FUN_00037324()`……等 6 個 helper 也全部是空括號,
+即使它自己的正式簽名已經是 `int __stdcall FUN_000111ba(undefined4 param_1,int param_2)`
+（兩個具名參數）。**結論:這不是 loader 專屬的問題,是這個 project 的 decompiler 呼叫引數渲染
+在系統性層級上大量失效**(推測是 Watcom stdcall 呼叫端 p-code 的引數綁定沒有被完整重建,
+與是否 `-noanalysis` 無關,因為 decompile 本身有自己的 per-function p-code 正規化)。這代表
+**任何「在 decompile 偽代碼文字裡搜引數字面值」的方法論,在這個 project 上先天不可靠**——
+9.2 記錄的「`0x111ba("TAI.DAT"@0x52393, prevSlot, idx)` 帶引數字面值」那類寫法,回頭核對
+應理解為分析當時人工從 disasm 逐條核對出來的**還原**,不是 Ghidra decompile 視窗直接顯示的
+原始輸出。這是本輪除了 ending renderer 本身以外,對「之後任何要用 decompile 文字比對的
+研究」都有直接影響的新發現,已同步記入 `docs/knowledge-base/98-tooling-infrastructure.md`。
+
+### 9.7.3 第二輪:改用純指令層級(CALL flow target + PUSH 立即數回溯),用已知 ground truth 驗證方法本身正確
+
+寫了 `GlobalBehaviorScanV2.java`:不再看 decompile 文字,改成對每個 function 的**每一條指令**
+直接用 `insn.getFlows()`(9.1 method 4 已驗證過的技巧)判斷是否為呼叫 `0x111ba`/`0x11d40`;
+命中呼叫 `0x111ba` 時,從該 CALL 往回掃最近 8 條指令裡的 `PUSH <立即數>`,收集成引數候選清單
+(c1);c2/c4 則對整個 function 的**每一條指令、每一個 operand**做 `Scalar` 掃描,不依賴
+decompile 呈現。
+
+**先驗證方法本身可信**:對 boot 已知序列(doc23 L411 已證實 `0x25c97` 呼叫 `0x111ba(...,5)`
+載入 FDOTHER#5)——本輪掃出 `FUN_00025bf4`(body `0x25bf4..?`)connectedly 依序呼叫
+loader 6 次,index 引數逐一為 `0x1f→0x1→0x2→0x3→0x4→0x5→0x6`,descriptor 全部是
+`0x51a4d`(即 `"FDOTHER.DAT\0"` 字串位址,doc35 §9.2 已證實)——**與既有文件記錄的
+「boot `0x25c97` 呼叫 `0x111ba(...,5)`」逐位元組吻合**,證明這套「CALL flow + PUSH 回溯」
+方法本身可靠,可以拿去信任其餘結果。
+
+**全域統計**:976/976 function 掃完(<1 秒)。全程式共 **113 處**呼叫 `0x111ba`,其中
+**48 處**的 descriptor 引數確認指向 `0x51a4d`(FDOTHER.DAT,經逐一核對 `PUSH 0x51a4d`
+指令的 `getReferencesFrom` 落在該字串位址)。這 48 筆逐一列出 index 引數,**沒有任何一筆
+index 是字面 `54`/`0x36`**——實際出現過的值含 `0x0/0x1/0x2/0x3/0x4/0x5/0x6/0x7/0x8/0x9/0xa/
+0xd/0xe/0x1f/0x2a/0x37/0x40/0x4a/0x4c/0x4d/0x4e/0x4f/0x50/0x51/0x5f/0x63/0x65/0x66`,範圍涵蓋
+到 `0x66`(102),但恰好跳過 `0x36`(54)——**c1(在整個程式的 113 個 loader 呼叫點裡找字面
+index=54)全域 0 命中,且這次的方法已經用已知正確答案驗證過可信,不是方法失效**。
+
+c2(320+200 同一 function)命中 **21 個** function、c3(呼叫 `0x11d40`)命中 **20 個**
+function(比 v1 的 15 個多,因為不再受 decompile 引數盲點影響)、c4(2000+4 同一 function)
+命中 **1 個**(`0x25977`,已知的 FDMUS.DAT 音樂載入函式,與 party montage 無關,判定為巧合)。
+**同時符合 c2+c3(score=2)的有 6 個 function**,是本輪最高分,**沒有任何 function 同時符合
+c1(0 命中)**——即使把「符合 c3 加另一條就當候選」的門檻放到最寬,能列出的候選也只有這 6 個。
+
+### 9.7.4 對 6 個 score=2 候選逐一人工複核:全部確認屬於已有文件記錄的其他子系統,無一是 ending renderer
+
+| 位址 | function | 大小 | 呼叫端 | 人工複核結論 |
+|---|---|---:|---|---|
+| `0x1f894` | `FUN_0001f894` | 1765B | `0x25ec8`(在既有 boot/開場序列範圍) | 內部呼叫 `0x1f525`/`0x1f81e`/`0x1f73f`/`0x1f882`(doc39 已記錄的**開場/標題 palette fade 家族**),535 幀主迴圈,屬於**開機/標題演出**,不是章節結局 |
+| `0x279bc` | `FUN_000279bc` | 887B | `0x26966` | 內部 `DAT_00053c57` 0/1/2/3 dispatch(doc13 已證實的「action-ring 狀態選擇器」)+ 10 點圓弧 sin/cos carousel(呼叫 `FUN_0002921a`)——**與 doc35 §9.2/§9.6.1 已認定的「戰鬥指令選單 party carousel」完全同一家族**，descriptor `0x51a4d` 引數解出的 index 經 9.7.5 register-history 回溯確認只有 `{0xc,0x1d,0x3f}` 三種可能，不含 54 |
+| `0x29300` | `FUN_00029300` | — | — | **就是 9.6.1 已經反編譯過、已排除的同一個 function**(該節結論:「戰鬥指令選單 carousel，跟 party montage 語意不合」)——本輪從行為指紋角度重新找到同一個答案，交叉驗證 9.6.1 沒有找錯 |
+| `0x29daa` | `FUN_00029daa` | 720B | `0x2693a` | 與 `0x279bc` 幾乎逐行相同的樣板(`DAT_00053c57` dispatch 到另外 4 個 handler + 同一段 10 點 carousel),同一家族的另一個菜單情境實例 |
+| `0x2e9a8` | `FUN_0002e9a8` | 503B | 5 處(`0x2e137`/`0x2e6ba`/`0x30356`/`0x2d31e`/`0x2d9b1`) | 8 迴圈 `0x11eb0` present + `0x11d40` 色盤 + `*(char*)(DAT_00053a45+6+param_1*0x50)` unit-side 判斷——**正是 doc35 §4.0/§9.2 已證實的「figure/台座淡入」共用 helper**，被至少 5 個不同呼叫端共用，是通用元件不是 renderer 本體 |
+| `0x2fb2c` | `FUN_0002fb2c` | 744B | `0x2abcc`(= `FUN_0002aa00`) | `FUN_0002aa00` 正是 `0x29daa` 的 `DAT_00053c57==3` 分支目標——**同一個戰鬥選單家族的第 4 個情境 handler**,載入 3 個資源(index 由暫存器決定,未解出字面值)後跑 8 迴圈 blit+色盤，仍是選單演出,不是 party montage |
+
+六個候選全部人工複核完畢,**沒有一個是 ending renderer**——其中三個(`0x279bc`/`0x29300`/
+`0x29daa`)加上 `0x2fb2c` 共四個,其實都是 doc35 §9.2/§9.6.1 已經定性過的「戰鬥指令選單 party
+carousel」家族的不同情境實例(對照既有文件,這個家族目前已知至少有 `0x2ff01`/`0x29300`/
+`0x279bc`/`0x29daa`/`0x2fb2c` 五個同構 function,比 9.2 原本只認出 1 個多);`0x1f894` 屬於
+開場/標題;`0x2e9a8` 是被多處共用的底層淡入 helper。**這次behavior-first 掃描沒有意外撞見
+renderer,但意外把「戰鬥選單 carousel 家族」的成員數從 1 個擴到至少 5 個,補全了 doc35 §9.4
+給下一輪的建議 2 提到的「值得另開項目」**。
+
+### 9.7.5 第三輪:補一個資料流缺口——57/113 個 loader 呼叫點的 index 是暫存器/迴圈算出來的,v2 看不到;寫 v3 加一層簡單的暫存器歷史回溯,結果仍是 0 命中
+
+複查 v2 的「index 引數不是立即數」(v2 標記為 `null`)的呼叫點時,手動反組譯其中一個
+(`FUN_000279bc` 在 `0x27a1a` 的呼叫)發現真正的模式是**「預設值 + compare-and-branch 覆寫」**:
+
+```
+0x279d7  MOV ESI,0xc        ; 預設 index=0xc(12)
+0x279f0  CMP [0x53f4a],0x3
+0x279f7  JNZ 0x27a00
+0x279f9  MOV ESI,0x1d       ; 若條件==3,覆寫成 0x1d(29)
+0x27a00  CMP [0x53f4a],0x5
+0x27a07  JNZ 0x27a0e
+0x27a09  MOV ESI,0x3f       ; 若條件==5,覆寫成 0x3f(63)
+0x27a0e  PUSH ESI ... CALL 0x111ba
+```
+
+`PUSH ESI` 本身沒有立即數 operand,v2 的純 PUSH-立即數回溯完全看不到 `{0xc,0x1d,0x3f}` 這三個
+候選值——這是 v2 的已知盲點,不查會讓「c1 全域 0 命中」這個結論**打折扣**(可能只是漏看,不是
+真的沒有)。寫了 `GlobalBehaviorScanV3.java`:對每個 function 做**單趟正向掃描**,追蹤「每個
+暫存器最後一次被 `MOV reg,imm` 設成的值」+「這個暫存器在這個 function 裡曾經被設過的所有
+不同立即數值」(涵蓋上面這種 if/else 分支鏈覆寫模式,不含真正的迴圈/表格運算),`PUSH reg` 時
+額外回報該暫存器的歷史立即數集合。
+
+**結果**:113 個 loader 呼叫點裡,**43 個**是直接立即數(與 v2 一致)、**13 個**靠暫存器歷史
+回溯解出(新增覆蓋,例如 `0x279bc`/`0x29daa`/`0x1f894`/`0x2ff01` 的部分呼叫點),合計
+**56/113**(50%)有解出具體候選值;**57 個**(50%)仍然真正無法用這個層級的靜態方法解出
+(多半落在 `0x2ff01`/`0x2cf30`/`0x2d80d`/`0x2dfc8`/`0x2e2b0`/`0x2fb2c`/`0x1088d` 等已知的
+**迴圈/表格驅動**載入函式裡,例如 9.2 已記錄的 `0x2ff01` 內 `for(i=0;i<param_3;i++)
+local_140[i]=sub_111ba()` 逐角色迴圈——這類迴圈索引原則上執行期真的可能算出 54,但無法靠
+靜態單趟暫存器追蹤解出,誠實標記為「未解出」而非「排除」)。**在可解出的 56 個呼叫點裡,
+沒有任何一個候選值等於 54/0x36**——`GlobalBehaviorScanV3` 全域回報
+`functions_with_any_54_hit_direct_or_register_history: 0`。
+
+### 9.7.6 誠實結論與對 11 個 worklist 項目的影響
+
+**結論**:本輪用一個和 9.1/9.5/9.6 完全不同的方向(行為特徵優先,不引用任何舊位址)、對
+`FD2Analysis3` 976 個 function **無一遺漏**地做了排除法——涵蓋 113 個 loader 呼叫點裡
+56 個可靜態解出的 index 值、20 個呼叫色盤 helper 的 function、21 個同時有 320+200 常數的
+function——**任何組合(單條件或雙條件)都沒有指向一個新的 ending renderer 候選**。這比
+9.1/9.5/9.6 的「查不到某幾個特定位址」更進一步:**這次是「就算完全不管位址、只看行為,這個
+project 裡目前分析出的 976 個 function 也沒有一個表現出 ending renderer 的行為特徵組合」**——
+對「這段程式碼可能是 overlay/動態載入、Ghidra 靜態分析看不到」這個假說(9.1 三個假說之一)
+是一次獨立、方法論完全不同的加強佐證,但仍不是證明(57 個迴圈/表格驅動的呼叫點沒有徹底解開,
+理論上不能 100% 排除 renderer 藏在其中某個既有 function 的一段迴圈索引裡,只是**沒有任何
+證據支持**這個可能,且與已知的 5 個「戰鬥選單 carousel」家族更吻合)。11 個 worklist 項目
+(L862/863/864/865/866/867/899/1017/1018/1019/1020)的 blocker **依然未解除**,但下一輪如果
+還要嘗試,**不要再重複「行為指紋 vs 976 個 function 全比對」這條路**——本輪已經做到窮盡,
+唯一還沒試過的仍是 9.6.4 結論 4 提到的「DOSBox-X live memory 重新獨立核對錨點」(本次任務
+明確排除、不碰 DOSBox-X/WSL2)。
+
+### 9.7.7 本輪的兩個附帶價值(獨立於 ending renderer 本身)
+
+1. **戰鬥選單 carousel 家族從 1 個成員擴到至少 5 個**(`0x2ff01`/`0x29300`/`0x279bc`/
+   `0x29daa`/`0x2fb2c`,均為 `DAT_00053c57` 狀態機 + 10 點或 5 點 sin/cos carousel 的同構
+   變體),補全 doc35 §9.4 建議 2「值得另開一個 worklist 項目」的具體範圍。
+2. **新工具盲點記錄**(已同步 doc98):`FD2Analysis3` 的 Ghidra decompile 在這個 project 上
+   系統性地不顯示呼叫引數(即使目標 function 已有具名參數的正式簽名)——任何未來要用
+   decompile 偽代碼文字比對引數字面值的研究,必須先用一個已知答案的呼叫點驗證,不能預設
+   decompile 輸出忠實反映引數;指令層級 `insn.getFlows()` + `PUSH` 立即數回溯(必要時加一層
+   單趟暫存器歷史追蹤,見 9.7.5)是目前唯一驗證過在這個 project 上可信的替代方法。
+
+### 9.7.8 本輪腳本清單
+
+`GlobalBehaviorScan.java`(v1,decompile 文字比對,已知對這個 project 有 9.7.2 記錄的盲點,
+保留供對照)、`GlobalBehaviorScanV2.java`(v2,指令層級 CALL-flow + PUSH 立即數回溯,主要方法,
+已用 boot loader ground truth 驗證)、`GlobalBehaviorScanV3.java`(v3,加一層單趟暫存器歷史
+回溯,補 v2 的 `PUSH reg` 盲點)、`GlobalBehaviorScanDebug.java`(v1 結果可疑時的輔助稽核腳本,
+列出每個呼叫 loader 的 function 完整 decompile 引數文字,是發現 9.7.2 盲點的直接原因)。全部
+留在 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\`,結果 JSON(`global_behavior_scan_
+results.json`/`_v2_results.json`/`_v3_results.json`/`_debug_results.json`)一併保留供覆核。
