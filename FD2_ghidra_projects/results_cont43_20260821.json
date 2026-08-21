@@ -1,0 +1,191 @@
+[
+  {
+    "id": "disasm_18890",
+    "address": "0x18890",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x18890",
+          "mnemonic": "PUSH",
+          "operands": "0x68",
+          "bytes": "68 68 00 00 00"
+        },
+        {
+          "address": "0x18895",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 95 e7 01 00"
+        },
+        {
+          "address": "0x1889a",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x1889b",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x1889c",
+          "mnemonic": "PUSH",
+          "operands": "EDI",
+          "bytes": "57"
+        },
+        {
+          "address": "0x1889d",
+          "mnemonic": "PUSH",
+          "operands": "EBP",
+          "bytes": "55"
+        },
+        {
+          "address": "0x1889e",
+          "mnemonic": "SUB",
+          "operands": "ESP,0x2c",
+          "bytes": "83 ec 2c"
+        },
+        {
+          "address": "0x188a1",
+          "mnemonic": "MOV",
+          "operands": "EBP,dword ptr [ESP + 0x40]",
+          "bytes": "8b 6c 24 40"
+        },
+        {
+          "address": "0x188a5",
+          "mnemonic": "MOV",
+          "operands": "ECX,0x4",
+          "bytes": "b9 04 00 00 00"
+        },
+        {
+          "address": "0x188aa",
+          "mnemonic": "MOV",
+          "operands": "EDI,ESP",
+          "bytes": "89 e7"
+        },
+        {
+          "address": "0x188ac",
+          "mnemonic": "MOV",
+          "operands": "ESI,0x53f12",
+          "bytes": "be 12 3f 05 00"
+        },
+        {
+          "address": "0x188b1",
+          "mnemonic": "MOVSD.REP",
+          "operands": "ES:EDI,ESI",
+          "bytes": "f3 a5"
+        },
+        {
+          "address": "0x188b3",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [0x00053c53],0x0",
+          "bytes": "c7 05 53 3c 05 00 00 00 00 00"
+        },
+        {
+          "address": "0x188bd",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [0x00051a8f],0xff",
+          "bytes": "c7 05 8f 1a 05 00 ff 00 00 00"
+        },
+        {
+          "address": "0x188c7",
+          "mnemonic": "MOV",
+          "operands": "EAX,EBP",
+          "bytes": "89 e8"
+        },
+        {
+          "address": "0x188c9",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x2",
+          "bytes": "c1 e0 02"
+        },
+        {
+          "address": "0x188cc",
+          "mnemonic": "ADD",
+          "operands": "EAX,EBP",
+          "bytes": "01 e8"
+        },
+        {
+          "address": "0x188ce",
+          "mnemonic": "SHL",
+          "operands": "EAX,0x4",
+          "bytes": "c1 e0 04"
+        },
+        {
+          "address": "0x188d1",
+          "mnemonic": "MOV",
+          "operands": "ESI,dword ptr [0x00053a45]",
+          "bytes": "8b 35 45 3a 05 00"
+        },
+        {
+          "address": "0x188d7",
+          "mnemonic": "ADD",
+          "operands": "ESI,EAX",
+          "bytes": "01 c6"
+        },
+        {
+          "address": "0x188d9",
+          "mnemonic": "MOVZX",
+          "operands": "EAX,byte ptr [ESI + 0x3b]",
+          "bytes": "0f b6 46 3b"
+        },
+        {
+          "address": "0x188dd",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [ESP + 0x18],EAX",
+          "bytes": "89 44 24 18"
+        },
+        {
+          "address": "0x188e1",
+          "mnemonic": "MOVZX",
+          "operands": "EBX,byte ptr [ESI + 0x20]",
+          "bytes": "0f b6 5e 20"
+        },
+        {
+          "address": "0x188e5",
+          "mnemonic": "PUSH",
+          "operands": "EBP",
+          "bytes": "55"
+        },
+        {
+          "address": "0x188e6",
+          "mnemonic": "CALL",
+          "operands": "0x0001f183",
+          "bytes": "e8 98 68 00 00"
+        },
+        {
+          "address": "0x188eb",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x4",
+          "bytes": "83 c4 04"
+        },
+        {
+          "address": "0x188ee",
+          "mnemonic": "TEST",
+          "operands": "EAX,EAX",
+          "bytes": "85 c0"
+        },
+        {
+          "address": "0x188f0",
+          "mnemonic": "JZ",
+          "operands": "0x000188f9",
+          "bytes": "74 07"
+        },
+        {
+          "address": "0x188f2",
+          "mnemonic": "MOV",
+          "operands": "EBX,0x13",
+          "bytes": "bb 13 00 00 00"
+        }
+      ],
+      "start": "0x18890",
+      "end": "0x188f2",
+      "count": 29,
+      "stop_reason": "max_bytes",
+      "truncated": true
+    }
+  }
+]
