@@ -1,0 +1,7 @@
+[
+  {"id": "fbounds_18d8c", "address": "0x18d8c", "action": "function_bounds"},
+  {"id": "decompile_18d8c", "address": "0x18d8c", "action": "decompile"},
+  {"id": "disasm_18d8c", "address": "0x18d8c", "action": "disasm", "max_bytes": 1400},
+  {"id": "xrefto_53c57", "address": "0x53c57", "action": "xref_to"},
+  {"id": "bytes_53c57", "address": "0x53c57", "action": "bytes", "count": 8}
+]

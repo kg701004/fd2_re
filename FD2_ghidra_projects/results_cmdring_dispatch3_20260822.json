@@ -1,0 +1,202 @@
+[
+  {
+    "id": "decompile_173e7",
+    "address": "0x173e7",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000173e7",
+      "entry_point": "0x173e7",
+      "signature": "undefined FUN_000173e7(void)",
+      "code": "\r\nvoid __stdcall FUN_000173e7(int param_1)\r\n\r\n{\r\n  FUN_0003702f();\r\n  for (DAT_00053c57 = 0; (DAT_00053c57 < 4 && (*(int *)(param_1 + DAT_00053c57 * 4) != 0));\r\n      DAT_00053c57 = DAT_00053c57 + 1) {\r\n  }\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "decompile_1b932",
+    "address": "0x1b932",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_0001b932",
+      "entry_point": "0x1b932",
+      "signature": "undefined FUN_0001b932(void)",
+      "code": "\r\nbool __stdcall FUN_0001b932(void)\r\n\r\n{\r\n  int iVar1;\r\n  int iVar2;\r\n  \r\n  FUN_0003702f();\r\n  FUN_00017e0b();\r\n  DAT_00053c57 = 0;\r\n  do {\r\n    iVar1 = FUN_0001b9de();\r\n  } while (iVar1 == 0);\r\n  for (iVar2 = 0; iVar2 < 0xc; iVar2 = iVar2 + 1) {\r\n    FUN_00018409();\r\n  }\r\n  FUN_0003771c();\r\n  FUN_0003776e();\r\n  FUN_0003776e();\r\n  FUN_0003776e();\r\n  return iVar1 != -1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "decompile_16f55",
+    "address": "0x16f55",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00016f55",
+      "entry_point": "0x16f55",
+      "signature": "undefined FUN_00016f55(void)",
+      "code": "\r\nundefined4 __stdcall FUN_00016f55(void)\r\n\r\n{\r\n  undefined4 uVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  undefined4 *puVar4;\r\n  undefined4 *puVar5;\r\n  byte bVar6;\r\n  undefined4 local_2c [4];\r\n  undefined4 local_1c [4];\r\n  \r\n  bVar6 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00051e9f;\r\n  puVar5 = local_2c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  puVar4 = &DAT_00053ef2;\r\n  puVar5 = local_1c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  DAT_00053c57 = 0;\r\n  FUN_0001741c();\r\n  do {\r\n    iVar3 = FUN_000177fc();\r\n  } while (iVar3 == 0);\r\n  FUN_000176b4();\r\n  FUN_00011cac();\r\n  if (iVar3 != -1) {\r\n    if (DAT_00053c57 == 0) {\r\n      uVar1 = FUN_00019df7();\r\n      return uVar1;\r\n    }\r\n    if (DAT_00053c57 == 1) {\r\n      FUN_0001956b();\r\n      FUN_00015f84();\r\n      FUN_00016559();\r\n      iVar3 = FUN_00019953();\r\n      FUN_000197e5();\r\n      if ((iVar3 == 1) && (DAT_00053c57 == 0)) {\r\n        FUN_00015f84();\r\n        thunk_FUN_0003e01d();\r\n        FUN_000196cb();\r\n        DAT_00051a83 = 0;\r\n        DAT_00051aac = 0;\r\n        for (iVar3 = 0; iVar3 < DAT_00053beb; iVar3 = iVar3 + 1) {\r\n          iVar2 = DAT_00053a45 + iVar3 * 0x50;\r\n          if (((*(byte *)(iVar2 + 5) & 0x85) == 0) && (*(char *)(iVar2 + 6) == '\\x02')) {\r\n            FUN_00012cea();\r\n            DAT_00051a8f = 0xff;\r\n            FUN_00014b78();\r\n            if (DAT_00051a8f != 0xff) {\r\n              (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();\r\n            }\r\n            FUN_000134e4();\r\n            FUN_00013512();\r\n          }\r\n        }\r\n        FUN_00011cac();\r\n        FUN_0001a30b();\r\n        DAT_00051a83 = 1;\r\n        DAT_00051aac = 1;\r\n        return 1;\r\n      }\r\n    }\r\n    else {\r\n      if (DAT_00053c57 == 2) {\r\n        FUN_0001728c();\r\n        return 0;\r\n      }\r\n      if (DAT_00053c57 != 3) {\r\n        return 0;\r\n      }\r\n      FUN_0001956b();\r\n      FUN_00015f84();\r\n      FUN_00016559();\r\n      iVar3 = FUN_00019953();\r\n      FUN_000197e5();\r\n      if ((iVar3 == 1) && (DAT_00053c57 == 0)) {\r\n        FUN_00015f84();\r\n        thunk_FUN_0003e01d();\r\n        FUN_000196cb();\r\n        DAT_00051aac = 0;\r\n        FUN_0001a30b();\r\n        DAT_00051aac = 1;\r\n        return 1;\r\n      }\r\n    }\r\n    FUN_00015f84();\r\n    thunk_FUN_0003e01d();\r\n    FUN_000196cb();\r\n  }\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "decompile_19953",
+    "address": "0x19953",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00019953",
+      "entry_point": "0x19953",
+      "signature": "undefined FUN_00019953(void)",
+      "code": "\r\n/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */\r\n\r\nundefined4 __stdcall FUN_00019953(void)\r\n\r\n{\r\n  int iVar1;\r\n  undefined4 extraout_ECX;\r\n  int iVar2;\r\n  byte bVar3;\r\n  int aiStack_24 [4];\r\n  char local_14;\r\n  \r\n  bVar3 = 0;\r\n  FUN_0003702f();\r\n  aiStack_24[(uint)bVar3 * -2] = (&DAT_00051ef1)[(uint)bVar3 * -2];\r\n  local_14 = '\\0';\r\n  DAT_00053c57 = 0;\r\n  iVar1 = FUN_0004ebe3();\r\n  FUN_0003771c(iVar1 / 0x1e,iVar1 % 0x1e,extraout_ECX,DAT_00053c63,0xa0000,64000);\r\n  aiStack_24[1] = 0;\r\n  aiStack_24[2] = 0;\r\n  for (iVar2 = 0; iVar2 < 200; iVar2 = iVar2 + 1) {\r\n    FUN_0003771c();\r\n  }\r\n  if (1 < DAT_00053a51) {\r\n    FUN_0001297d();\r\n    FUN_00011eee();\r\n    FUN_000127a9();\r\n  }\r\n  for (aiStack_24[3] = 0; iVar2 = iVar1 % 0x1e + 2, aiStack_24[3] < 4;\r\n      aiStack_24[3] = aiStack_24[3] + 1) {\r\n    aiStack_24[1] = aiStack_24[1] + -4;\r\n    aiStack_24[2] = aiStack_24[2] + 4;\r\n    for (iVar2 = 0; iVar2 < 0x56; iVar2 = iVar2 + 1) {\r\n      FUN_0003771c();\r\n    }\r\n    for (iVar2 = 0; iVar2 < 2; iVar2 = iVar2 + 1) {\r\n      FUN_0004ed34();\r\n    }\r\n    FUN_00011eb0();\r\n  }\r\n  while( true ) {\r\n    while (iVar1 = FUN_00010620(), iVar1 == 0) {\r\n      FUN_0004e31c();\r\n      if ((1 < _DAT_0000046c - _DAT_00053c17) || (_DAT_0000046c - _DAT_00053c17 < 0)) {\r\n        DAT_00053c13 = DAT_00053c13 + 1;\r\n        if (DAT_00053c13 == 4) {\r\n          DAT_00053c13 = 0;\r\n        }\r\n        _DAT_00053c17 = (int)_DAT_0000046c;\r\n        if (1 < DAT_00053a51) {\r\n          FUN_0001297d();\r\n          FUN_00011eee();\r\n          FUN_000127a9();\r\n        }\r\n        if (local_14 == '\\0') {\r\n          iVar1 = iVar2 + -1;\r\n          if (iVar2 == 0) {\r\n            if (DAT_00053a51 == 0) {\r\n              FUN_0004ebff();\r\n            }\r\n            else {\r\n              FUN_0004ec31();\r\n            }\r\n            local_14 = '\\x01';\r\n          }\r\n        }\r\n        else {\r\n          if (DAT_00053a51 == 0) {\r\n            FUN_0004ebff();\r\n          }\r\n          else {\r\n            FUN_0004ec31();\r\n          }\r\n          iVar1 = FUN_0004ebe3();\r\n          iVar1 = iVar1 % 0x1e + 10;\r\n          local_14 = '\\0';\r\n        }\r\n        if (DAT_00053a51 < 2) {\r\n          for (iVar2 = 0; iVar2 < 200; iVar2 = iVar2 + 1) {\r\n            FUN_0003771c();\r\n          }\r\n        }\r\n        else {\r\n          for (iVar2 = 0; iVar2 < 0x56; iVar2 = iVar2 + 1) {\r\n            FUN_0003771c();\r\n          }\r\n        }\r\n        for (iVar2 = 0; iVar2 < 2; iVar2 = iVar2 + 1) {\r\n          FUN_0004ed34();\r\n        }\r\n        FUN_00011eb0();\r\n        iVar2 = iVar1;\r\n      }\r\n    }\r\n    DAT_00053a8e = '\\x10';\r\n    FUN_000370f0();\r\n    if ((((DAT_00053a8e == -0x20) || (DAT_00053a8e == 'R')) || (DAT_00053a8e == '\\x1c')) ||\r\n       (DAT_00053a8e == '9')) break;\r\n    if ((DAT_00053a8e == '\\x01') || (DAT_00053a8e == 'S')) {\r\n      DAT_00053c13 = 0;\r\n      return 0xffffffff;\r\n    }\r\n    if (DAT_00053a8e == 'K') {\r\n      DAT_00053c57 = 0;\r\n    }\r\n    else if (DAT_00053a8e == 'M') {\r\n      DAT_00053c57 = 1;\r\n    }\r\n  }\r\n  DAT_00053c13 = 0;\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "xrefto_173e7",
+    "address": "0x173e7",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x18e53",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x18ed6",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bc65",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 3
+    }
+  },
+  {
+    "id": "xrefto_16f55",
+    "address": "0x16f55",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x118c1",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 1
+    }
+  },
+  {
+    "id": "xrefto_19953",
+    "address": "0x19953",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x17047",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1720e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1917e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x192d6",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x19f58",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a1e8",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a299",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1aaba",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x262ec",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26793",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2891b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x28ae4",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x28ea5",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x29472",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2a59a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2ab63",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b404",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 17
+    }
+  },
+  {
+    "id": "xrefto_1b932",
+    "address": "0x1b932",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x19304",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1aae6",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bce1",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bea0",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bf5a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bfd0",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 6
+    }
+  }
+]

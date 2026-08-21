@@ -1,0 +1,1045 @@
+[
+  {
+    "id": "fbounds_18d8c",
+    "address": "0x18d8c",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00018d8c",
+      "start": "0x18d8c",
+      "end": "0x190ab",
+      "size": 800,
+      "entry_point": "0x18d8c"
+    }
+  },
+  {
+    "id": "decompile_18d8c",
+    "address": "0x18d8c",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00018d8c",
+      "entry_point": "0x18d8c",
+      "signature": "undefined FUN_00018d8c(void)",
+      "code": "\r\nundefined4 __stdcall FUN_00018d8c(int param_1,undefined4 *param_2,int param_3)\r\n\r\n{\r\n  int iVar1;\r\n  int iVar2;\r\n  uint uVar3;\r\n  undefined4 *puVar4;\r\n  undefined4 *puVar5;\r\n  byte bVar6;\r\n  undefined4 local_30 [4];\r\n  undefined4 local_20;\r\n  undefined4 local_1c;\r\n  uint local_18;\r\n  uint local_14;\r\n  \r\n  bVar6 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00051ed5;\r\n  puVar5 = local_30;\r\n  for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  *param_2 = 0;\r\n  DAT_00053ec8 = 0;\r\n  iVar2 = FUN_0001b83d();\r\n  if (iVar2 == -1) {\r\n    *param_2 = 1;\r\n  }\r\n  else {\r\n    FUN_0001b722();\r\n    iVar2 = FUN_0004e8bc();\r\n    local_14 = (uint)*(byte *)(iVar2 + 0xb);\r\n    local_18 = (uint)*(byte *)(iVar2 + 0xc);\r\n    iVar2 = FUN_00014818();\r\n    if (iVar2 == 0) {\r\n      *param_2 = 1;\r\n    }\r\n    FUN_0004df4c();\r\n  }\r\n  FUN_000173e7();\r\n  FUN_0001741c();\r\n  iVar2 = FUN_0001b8a6();\r\n  if (iVar2 == 0) {\r\n    param_2[2] = 1;\r\n  }\r\n  iVar2 = FUN_0001c269();\r\n  if (iVar2 == 0) {\r\n    param_2[1] = 1;\r\n  }\r\n  iVar2 = DAT_00053a45 + param_1 * 0x50;\r\n  if (*(char *)(iVar2 + 0x27) != '\\0') {\r\n    param_2[1] = 1;\r\n  }\r\n  FUN_000173e7();\r\n  do {\r\n    iVar1 = FUN_000177fc();\r\n  } while (iVar1 == 0);\r\n  FUN_000176b4();\r\n  FUN_00011cac();\r\n  if (iVar1 == -1) {\r\n    return 0xffffffff;\r\n  }\r\n  if (DAT_00053c57 == 0) {\r\n    local_1c = DAT_00053ab1;\r\n    local_20 = DAT_00053ab5;\r\n    FUN_0003706e();\r\n    FUN_00014818();\r\n    iVar2 = FUN_000115b6();\r\n    FUN_0004df4c();\r\n    FUN_0003776e();\r\n    if (iVar2 == -1) {\r\n      FUN_00012cea();\r\n      return 0;\r\n    }\r\n    FUN_00012c0d();\r\n    FUN_0001f04a();\r\n    FUN_0002e2b0();\r\n    FUN_000134e4();\r\n    FUN_0001b6b7();\r\n    FUN_0001db65();\r\n    FUN_0001aa1d();\r\n    FUN_00013512();\r\n    FUN_0004e381();\r\n  }\r\n  else if (DAT_00053c57 == 1) {\r\n    do {\r\n      iVar1 = FUN_0001cff0();\r\n    } while (iVar1 == 0);\r\n    if (iVar1 == -1) {\r\n      return 0;\r\n    }\r\n    FUN_00013512();\r\n    uVar3 = (uint)*(byte *)(iVar2 + 0x21);\r\n    if (8 < *(byte *)(iVar2 + 0x20)) {\r\n      uVar3 = uVar3 + 0x1e;\r\n    }\r\n    DAT_00053ec8 = DAT_00053ec8 / (int)uVar3;\r\n  }\r\n  else if (DAT_00053c57 == 2) {\r\n    do {\r\n      iVar2 = FUN_0001bbdc();\r\n    } while (iVar2 == 0);\r\n    if (iVar2 == -1) {\r\n      return 0;\r\n    }\r\n    DAT_00053ec8 = 0;\r\n  }\r\n  else {\r\n    if (param_3 == 0) {\r\n      FUN_00013fd4();\r\n    }\r\n    FUN_000190ac();\r\n    FUN_00013512();\r\n  }\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "disasm_18d8c",
+    "address": "0x18d8c",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x18d8c",
+          "mnemonic": "PUSH",
+          "operands": "0xb0",
+          "bytes": "68 b0 00 00 00"
+        },
+        {
+          "address": "0x18d91",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 99 e2 01 00"
+        },
+        {
+          "address": "0x18d96",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x18d97",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x18d98",
+          "mnemonic": "PUSH",
+          "operands": "EDI",
+          "bytes": "57"
+        },
+        {
+          "address": "0x18d99",
+          "mnemonic": "PUSH",
+          "operands": "EBP",
+          "bytes": "55"
+        },
+        {
+          "address": "0x18d9a",
+          "mnemonic": "SUB",
+          "operands": "ESP,0x84",
+          "bytes": "81 ec 84 00 00 00"
+        },
+        {
+          "address": "0x18da0",
+          "mnemonic": "MOV",
+          "operands": "EBP,dword ptr [ESP + 0x98]",
+          "bytes": "8b ac 24 98 00 00 00"
+        },
+        {
+          "address": "0x18da7",
+          "mnemonic": "MOV",
+          "operands": "ECX,0x4",
+          "bytes": "b9 04 00 00 00"
+        },
+        {
+          "address": "0x18dac",
+          "mnemonic": "LEA",
+          "operands": "EDI,[ESP + 0x64]",
+          "bytes": "8d 7c 24 64"
+        },
+        {
+          "address": "0x18db0",
+          "mnemonic": "MOV",
+          "operands": "ESI,0x51ed5",
+          "bytes": "be d5 1e 05 00"
+        },
+        {
+          "address": "0x18db5",
+          "mnemonic": "MOVSD.REP",
+          "operands": "ES:EDI,ESI",
+          "bytes": "f3 a5"
+        },
+        {
+          "address": "0x18db7",
+          "mnemonic": "MOV",
+          "operands": "EAX,dword ptr [ESP + 0x9c]",
+          "bytes": "8b 84 24 9c 00 00 00"
+        },
+        {
+          "address": "0x18dbe",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [EAX],0x0",
+          "bytes": "c7 00 00 00 00 00"
+        },
+        {
+          "address": "0x18dc4",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [0x00053ec8],0x0",
+          "bytes": "c7 05 c8 3e 05 00 00 00 00 00"
+        },
+        {
+          "address": "0x18dce",
+          "mnemonic": "PUSH",
+          "operands": "0x0",
+          "bytes": "6a 00"
+        },
+        {
+          "address": "0x18dd0",
+          "mnemonic": "PUSH",
+          "operands": "EBP",
+          "bytes": "55"
+        },
+        {
+          "address": "0x18dd1",
+          "mnemonic": "CALL",
+          "operands": "0x0001b83d",
+          "bytes": "e8 67 2a 00 00"
+        },
+        {
+          "address": "0x18dd6",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x8",
+          "bytes": "83 c4 08"
+        },
+        {
+          "address": "0x18dd9",
+          "mnemonic": "CMP",
+          "operands": "EAX,-0x1",
+          "bytes": "83 f8 ff"
+        },
+        {
+          "address": "0x18ddc",
+          "mnemonic": "JNZ",
+          "operands": "0x00018ded",
+          "bytes": "75 0f"
+        },
+        {
+          "address": "0x18dde",
+          "mnemonic": "MOV",
+          "operands": "EAX,dword ptr [ESP + 0x9c]",
+          "bytes": "8b 84 24 9c 00 00 00"
+        },
+        {
+          "address": "0x18de5",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [EAX],0x1",
+          "bytes": "c7 00 01 00 00 00"
+        },
+        {
+          "address": "0x18deb",
+          "mnemonic": "JMP",
+          "operands": "0x00018e4c",
+          "bytes": "eb 5f"
+        }
+      ],
+      "start": "0x18d8c",
+      "end": "0x18deb",
+      "count": 24,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  },
+  {
+    "id": "xrefto_53c57",
+    "address": "0x53c57",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x16f83",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x16fe4",
+          "type": "READ"
+        },
+        {
+          "from": "0x16ff4",
+          "type": "READ"
+        },
+        {
+          "from": "0x1705c",
+          "type": "READ"
+        },
+        {
+          "from": "0x171b0",
+          "type": "READ"
+        },
+        {
+          "from": "0x171c3",
+          "type": "READ"
+        },
+        {
+          "from": "0x17223",
+          "type": "READ"
+        },
+        {
+          "from": "0x172ba",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1735b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1739c",
+          "type": "READ"
+        },
+        {
+          "from": "0x173b1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1783f",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17858",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17871",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1788a",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17a7d",
+          "type": "READ"
+        },
+        {
+          "from": "0x18f22",
+          "type": "READ"
+        },
+        {
+          "from": "0x19005",
+          "type": "READ"
+        },
+        {
+          "from": "0x1904c",
+          "type": "READ"
+        },
+        {
+          "from": "0x173f5",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17407",
+          "type": "READ"
+        },
+        {
+          "from": "0x17410",
+          "type": "READ"
+        },
+        {
+          "from": "0x17401",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x19193",
+          "type": "READ"
+        },
+        {
+          "from": "0x192ef",
+          "type": "READ"
+        },
+        {
+          "from": "0x19314",
+          "type": "READ"
+        },
+        {
+          "from": "0x1932b",
+          "type": "READ"
+        },
+        {
+          "from": "0x19972",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19d16",
+          "type": "READ"
+        },
+        {
+          "from": "0x19dd0",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19de8",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19efa",
+          "type": "READ"
+        },
+        {
+          "from": "0x19f0d",
+          "type": "READ"
+        },
+        {
+          "from": "0x19f6d",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a19d",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a1fd",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a2ae",
+          "type": "READ"
+        },
+        {
+          "from": "0x1aad1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1aaf2",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ab01",
+          "type": "READ"
+        },
+        {
+          "from": "0x1b950",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1b9f2",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ba42",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ba5d",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1ba7c",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1ba8b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1baa5",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1bac8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bad7",
+          "type": "READ"
+        },
+        {
+          "from": "0x1baf8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bb08",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bb18",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bb34",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bb59",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bcd1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bcf3",
+          "type": "READ"
+        },
+        {
+          "from": "0x1be3e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1be90",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf20",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf40",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf4e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf66",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf77",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bfbc",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bfdc",
+          "type": "READ"
+        },
+        {
+          "from": "0x1c018",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1c033",
+          "type": "READ"
+        },
+        {
+          "from": "0x1c06c",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d0be",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d167",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d199",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d28f",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d2fb",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d407",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d427",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d44b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d461",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d532",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d579",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d594",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d5b3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d5c3",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d5dd",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d600",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d610",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d631",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d645",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d665",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d68e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1508b",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2600c",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2602c",
+          "type": "READ"
+        },
+        {
+          "from": "0x2630c",
+          "type": "READ"
+        },
+        {
+          "from": "0x267af",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b30",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27b51",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b88",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b9f",
+          "type": "READ"
+        },
+        {
+          "from": "0x27bae",
+          "type": "READ"
+        },
+        {
+          "from": "0x26e66",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x26e6c",
+          "type": "READ"
+        },
+        {
+          "from": "0x26e75",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x26e98",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x26e9e",
+          "type": "READ"
+        },
+        {
+          "from": "0x26ea7",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x26f71",
+          "type": "READ"
+        },
+        {
+          "from": "0x270c8",
+          "type": "READ"
+        },
+        {
+          "from": "0x270e5",
+          "type": "READ"
+        },
+        {
+          "from": "0x2711b",
+          "type": "READ"
+        },
+        {
+          "from": "0x28830",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2885f",
+          "type": "READ"
+        },
+        {
+          "from": "0x28934",
+          "type": "READ"
+        },
+        {
+          "from": "0x289d1",
+          "type": "READ"
+        },
+        {
+          "from": "0x289e8",
+          "type": "READ"
+        },
+        {
+          "from": "0x28a6d",
+          "type": "READ"
+        },
+        {
+          "from": "0x28ada",
+          "type": "READ"
+        },
+        {
+          "from": "0x28af5",
+          "type": "READ"
+        },
+        {
+          "from": "0x2760f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2762d",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27633",
+          "type": "READ"
+        },
+        {
+          "from": "0x2765a",
+          "type": "READ"
+        },
+        {
+          "from": "0x27674",
+          "type": "READ"
+        },
+        {
+          "from": "0x27693",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27699",
+          "type": "READ"
+        },
+        {
+          "from": "0x276b9",
+          "type": "READ"
+        },
+        {
+          "from": "0x276d8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x276e9",
+          "type": "READ"
+        },
+        {
+          "from": "0x27703",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x277d7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27dae",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27ddb",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e25",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e43",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27e49",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e6a",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e82",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ea1",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27ea7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ec7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ee6",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27efc",
+          "type": "READ"
+        },
+        {
+          "from": "0x27f16",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27fcf",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27ffc",
+          "type": "READ"
+        },
+        {
+          "from": "0x28049",
+          "type": "READ"
+        },
+        {
+          "from": "0x28067",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2806d",
+          "type": "READ"
+        },
+        {
+          "from": "0x2808d",
+          "type": "READ"
+        },
+        {
+          "from": "0x280a8",
+          "type": "READ"
+        },
+        {
+          "from": "0x280c3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x280c9",
+          "type": "READ"
+        },
+        {
+          "from": "0x28da4",
+          "type": "READ"
+        },
+        {
+          "from": "0x28dc7",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x28e0a",
+          "type": "READ"
+        },
+        {
+          "from": "0x28e15",
+          "type": "READ"
+        },
+        {
+          "from": "0x28eba",
+          "type": "READ"
+        },
+        {
+          "from": "0x28f2a",
+          "type": "READ"
+        },
+        {
+          "from": "0x29086",
+          "type": "READ"
+        },
+        {
+          "from": "0x290a9",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x290ec",
+          "type": "READ"
+        },
+        {
+          "from": "0x29164",
+          "type": "READ"
+        },
+        {
+          "from": "0x29177",
+          "type": "READ"
+        },
+        {
+          "from": "0x291fe",
+          "type": "READ"
+        },
+        {
+          "from": "0x293ae",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x293cf",
+          "type": "READ"
+        },
+        {
+          "from": "0x293f2",
+          "type": "READ"
+        },
+        {
+          "from": "0x29405",
+          "type": "READ"
+        },
+        {
+          "from": "0x2941b",
+          "type": "READ"
+        },
+        {
+          "from": "0x29483",
+          "type": "READ"
+        },
+        {
+          "from": "0x29650",
+          "type": "READ"
+        },
+        {
+          "from": "0x29701",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29725",
+          "type": "READ"
+        },
+        {
+          "from": "0x298e2",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29909",
+          "type": "READ"
+        },
+        {
+          "from": "0x29c72",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d1d",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d3e",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x29d44",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d59",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d7a",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x29ecc",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29eed",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f10",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f20",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f2f",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f3f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a533",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a5ab",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a322",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2a356",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3a1",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3ae",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a3b4",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3cd",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3eb",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3f3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a3f9",
+          "type": "READ"
+        },
+        {
+          "from": "0x2ab06",
+          "type": "READ"
+        },
+        {
+          "from": "0x2ab7d",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a8dc",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2a914",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a95f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a96c",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a972",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a98f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a9ad",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a9b5",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a9bb",
+          "type": "READ"
+        },
+        {
+          "from": "0x2b424",
+          "type": "READ"
+        }
+      ],
+      "count": 209
+    }
+  },
+  {
+    "id": "bytes_53c57",
+    "address": "0x53c57",
+    "action": "bytes",
+    "ok": true,
+    "result": {
+      "start": "0x53c57",
+      "length": 8,
+      "hex": "00 00 00 00 00 00 00 00"
+    }
+  }
+]
