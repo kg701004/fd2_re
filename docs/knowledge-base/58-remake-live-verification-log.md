@@ -3708,3 +3708,96 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 ### 產出
 
 `tools/fd2save.py`(新增`UNIT_CHARACTER_ID_OFFSET`常數、`roster_character_ids()`函式、`summarize()`新增roster_char_ids輸出、module docstring補充欄位verified/unverified狀態說明;既有codec邏輯與其他常數未變動)、`tools/test_fd2save.py`(新增`FD2SaveRealFileTest`:對機器上現存三份真實`FD2.SAV`做round-trip與角色ID語意驗證,檔案不存在時自動skip不影響CI;另補兩個合成資料的`roster_character_ids()`單元測試)、本文件本節。驗證:`python -m unittest test_fd2save -v`(`tools/`目錄下執行)9個測試全數通過,含2個對真實存檔的live-data測試(這台機器上有測試檔案,故未被skip)。
+
+## 續三十四:純靜態反組譯關閉續三十二/續三十三留下的persistent save inventory offset懸案——record+0x0a(flag)/+0x0b(item id)+2*slot直接證實,不是類比推論(2026-08-21)
+
+**任務背景**:續三十二/續三十三兩輪都確認`tools/fd2save.py`完全沒有persistent roster record的inventory解析邏輯,唯一存在的`record+0x0b+2*slot`公式(`0x1b722`反組譯出來)只被驗證作用在battle-time runtime record(全域`[0x53a45]`),從未證實persistent存檔上的record(全域`[0x53bf7]`,已知經`0x30012`/`0x2602c`與存檔bulk memcpy)是否用同一套offset。本輪任務指定純Ghidra headless靜態反組譯(不碰DOSBox-X/WSL2),要求逐欄位窮舉存檔序列化迴圈本身在做什麼,而不是繼續類比runtime record。
+
+**方法**:用`tools/ghidra_batch_probe.py`(見`docs/knowledge-base/98-tooling-infrastructure.md`)對`FD2Analysis3`(project內程式`FD2.EXE`,MD5`a6e341a8decc6ebf7f4872076d9cf161`,802705 bytes,與`docs/data/fd2_1728c_save_metadata_mapping_2026-08-20.txt`記錄的project檔案一致)分批查詢disasm/decompile/xref,共8輪、約30筆查詢,單次`analyzeHeadless`啟動成本被完全攤銷。
+
+### 1. 先重核已知存檔位址,確認寫入/讀出兩側都精確bulk-memcpy整段roster,不做逐欄位轉換
+
+- `0x2602c`(讀檔,`function_bounds`落在`FUN_00025ebb`0x25ebb..0x26151內)disasm逐指令核對,與`docs/knowledge-base/23-boot-title-and-scenario-flow.md:296-300`「2026-07-29 IDA Pro 9.4重核」的文字描述**逐位元組吻合**:`EBX = SLOT_OFFSET(0x312b) + slot*SLOT_SIZE(0xa28)`,接著`PUSH 0xa00; PUSH EBX; PUSH [0x53bf7]; CALL 0x3771c`——即`memcpy([0x53bf7], record, 0xa00)`,把整段roster**原封不動**複製進全域`[0x53bf7]`,再才逐byte讀`record+0xa00..+0xa09`的metadata(chapter/roster_count/currency/`0x51aab`/`0x53af9`/`0x51e61`/`0x51e62`)。
+- 寫檔側同理:doc23:294描述的「`0x30012`...copies exactly 2560 roster bytes to record+0」實際上是頂層存檔函式`FUN_0002968d`(0x2968d,呼叫鏈`malloc(0x59cb)→逐slot memcpy([0x53bf7]對應偏移的完整roster block)→checksum(0x4df09)→XOR(0x4df28)→fwrite(0x373ca)`)的一部分;decompile的`iVar4 = iVar1 + 0x312b + DAT_00053c57*0xa28`與metadata寫入(`*(iVar4+0xa00)=DAT_00053c03`等)與`fd2save.py`既有常數逐項相符。`0x30012`本身只是這條大函式尾端`CALL 0x2d80d`的call site,不是獨立入口,舊文件「0x30012 writer」的描述應理解為「這個call site所屬的整個save-slot函式」,不影響既有結論的正確性。
+- **結論**:存檔序列化邏輯對roster **沒有任何逐欄位轉換或remap**——它是單一個`memcpy(dest, [0x53bf7]或record, 0xa00)`,`[0x53bf7]`buffer裡的每一個byte(含char id、inventory、HP等所有既有/未知欄位)都原封不動地成為存檔檔案裡對應slot的前0xa00 bytes,反之亦然。這代表「persistent record的欄位語意」這個問題,完全等價於「`[0x53bf7]`這個記憶體buffer裡每個unit record的欄位語意」——不需要另外去追「存檔序列化有沒有把inventory複製過去」,因為它是整塊複製,沒有欄位級的取捨。
+
+### 2. 找到`[0x53bf7]`的欄位建構者——角色加入(join/recruit)建構子`FUN_000112a5`(0x112a5),直接反組譯出完整欄位表,不是類比
+
+`xref_to 0x53bf7`只有26個引用(遠少於battle-time working buffer`[0x53a45]`的200個),其中一個READ在`0x112c6`,其所屬函式`FUN_000112a5`(0x112a5..0x11451,429 bytes)decompile後完整揭露:
+
+```
+iVar11 = DAT_00053bf7 + DAT_00053bfb * 0x50   // 新記錄 = persistent roster base + roster_count(已知PROVEN欄位)*UNIT_SIZE
+```
+
+這就是「新角色加入隊伍」時,直接在**persistent roster本身**(不是battle working buffer)寫入新記錄的建構子。逐欄位讀出的完整寫入序列(部分,與inventory相關者列出):
+
+| 記錄偏移 | 內容 | 來源 |
+|---|---|---|
+| +0x05 | `0` | 常數 |
+| +0x06 | `2` | 常數(角色狀態/型別?未定名) |
+| +0x07 | `param_1`(portrait) | 呼叫參數 |
+| +0x08 | `param_1` | 呼叫參數——**與既有PROVEN的`UNIT_CHARACTER_ID_OFFSET=0x08`完全吻合**,加入當下char id即portrait值 |
+| +0x0a | `0x40` | 常數,**inventory slot0的flag byte**(見下) |
+| +0x0b | `puVar7[0xc]`(來源表byte) | **inventory slot0的item id byte** |
+| +0x0c | `0x40` | 常數,**inventory slot1的flag byte** |
+| +0x0d | `puVar7[0xd]` | **inventory slot1的item id byte** |
+| +0x0e/+0x10/+0x12/+0x14 | 迴圈(`iVar9=0..3`):來源`puVar7[iVar9+0xe]==-1`則`0x80`否則`0` | **inventory slot2..5的flag byte** |
+| +0x0f/+0x11/+0x13/+0x15 | 迴圈:`puVar7[iVar9+0xe]`(即使是`-1`哨兵也照抄) | **inventory slot2..5的item id byte** |
+| +0x16 | `0x80` | **inventory slot6的flag byte**(直接設空,無對應item byte寫入) |
+| +0x18 | `0x80` | **inventory slot7的flag byte**(同上) |
+| +0x1e | `0` | 常數 |
+| +0x1f/+0x20 | `puVar7[0]`/`puVar7[1]` | 來源表 |
+| +0x21 | `bVar1`(=`puVar7[2]`,等級?) | 來源表 |
+| +0x31 | `0xff` | 常數 |
+| +0x37 | `sVar2+pbVar8[0]*bVar1`(AP) | 成長計算,與doc32 §6.3church class-change的`+0x37 AP`欄位一致 |
+| +0x39 | `sVar3+pbVar8[2]*bVar1`(DP) | 同上,`+0x39 DP`一致 |
+| +0x3b | `puVar7[7]`(MV) | 同上,`+0x3b MV`一致 |
+| +0x3c | `0`(EXP) | 同上,`+0x3c EXP歸零`一致 |
+| +0x3e | `sVar4+pbVar8[4]*bVar1`(DX) | 同上,`+0x3e DX`一致 |
+| +0x40/+0x42 | `sVar5`(current/max HP,建立時相等) | 與doc32「+0x40/+0x42 current/max HP」一致 |
+| +0x44/+0x46 | `sVar6`(current/max MP) | 與doc32「+0x44/+0x46 current/max MP」一致 |
+
+**這張表本身就是續三十二/續三十三要的「runtime record每個欄位offset→persistent slot record每個欄位offset」對照——因為它證實了兩者根本是同一份定義,不是兩份需要對照的獨立結構**:doc32的AP/DP/MV/EXP/DX/HP/MP欄位原本只在church轉職(非戰鬥,但也不是persistent record本身,而是透過`0x2a2e8`/`0x1e529`這類函式在記憶體中操作)脈絡下被反組譯出來,本輪的`FUN_000112a5`則是**直接對`DAT_00053bf7`(已證實=存檔bulk memcpy的來源/去向)操作**,兩者欄位offset逐項相符,不是巧合,而是因為persistent roster、church流程操作的角色資料、以及(下一段的)battle-time inventory掃描,三者共用同一個`struct Unit`定義與`0x50`-byte stride,沒有分頭維護不同布局。
+
+### 3. inventory 8個slot的精確公式:flag byte在先,item id byte在後,不是純粹的「8個item id」
+
+先前文件(doc32/50/56)只記錄了`0x1b722`(讀item id)的`record+0x0b+2*slot`公式,沒有記錄`0x1b8a6`(算「已佔用slot數」的count helper)真正在讀哪個offset。本輪完整decompile `0x1b8a6`:
+
+```c
+int __stdcall FUN_0001b8a6(int unit_index) {
+  int count = 0;
+  for (int slot = 0; slot < 8; slot++) {
+    if ((*(byte*)(slot*2 + DAT_00053a45 + unit_index*0x50 + 10) & 0x80) == 0) count++;
+  }
+  return count;
+}
+```
+
+`+10 = +0x0a`——這才是**flag byte**的真正offset公式:`record + 0x0a + 2*slot`,bit `0x80`=1代表該slot空。緊接在後一byte(`record + 0x0b + 2*slot`)才是item id byte,只有flag的`0x80` bit清除時才有意義(item byte本身在移除道具時**不會被清成0**,只有flag位元改變——這點被續三十三份三份真實存檔的sanity check直接驗證,見下)。這個flag+item成對的完整公式,同時被兩處完全獨立的程式碼路徑使用,offset/stride一致:
+- **persistent roster建構子**`FUN_000112a5`(操作`[0x53bf7]`,本輪新反組譯)
+- **battle-time/城鎮教會共用的inventory掃描**`0x1b8a6`/`0x1b722`/`0x1b8e7`(操作`[0x53a45]`,doc32/50/56既有記錄)
+
+兩者stride(`0x50`)、flag offset(`+0x0a`)、item offset(`+0x0b`)、slot數(8)、空位語意(`0x80`)**逐項相符**,不是同一份程式碼被重複反組譯兩次——是EXE裡兩個不同的呼叫端(角色加入 vs 道具掃描),各自獨立反組譯出相同的欄位布局常數。
+
+**`[0x53a45]`是不同的buffer,但這不影響結論**:額外查證`[0x53a45]`(`xref_to`200筆讀寫,涵蓋幾乎整個戰鬥+城鎮程式碼範圍)是每次章節/地圖載入(`FUN_0001088d`即`0x1088d`,doc23§4已知的章節載入函式)`free`舊buffer、`malloc(0x1e00)`(7680 bytes = 96×0x50)重新配置的**per-map工作陣列**,容量遠大於persistent roster的32格,推測用來同時容納該地圖的玩家+敵人+NPC單位;它不是`[0x53bf7]`的別名,而是每章節重新配置的獨立buffer。本輪**沒有**找到明確的「`[0x53bf7]`→`[0x53a45]`欄位對欄位hydration」複製函式(時間範圍內窮盡搜尋未果,誠實記錄為未解,見下方「未排除的假說」)。但這不影響inventory offset本身的答案——因為`FUN_000112a5`已經是**直接對`[0x53bf7]`operate**的獨立證據,不需要再透過`[0x53a45]`類比,兩者只是互相佐證同一個struct定義而已。
+
+### 4. 三份真實存檔sanity check:flag byte的值域100%落在反組譯預測的三個常數內,item byte的殘留模式也吻合預期
+
+用新offset對機器上三份真實存檔(`FD2/FD2.SAV`=ch10、`FD2_ch21_test.SAV`=跳章ch21、`FD2_ch23_test.SAV`=跳章ch23,與續三十三相同的三份)解碼全部4個slot、每個populated unit的8個inventory cell:
+
+- **flag byte值域**:三份檔案、全部4個slot、全部unit(13+9+10+11=43筆unit記錄×3檔≈129筆,實際因ch21/ch23測試檔的slot0與母檔逐byte相同只需去重約43筆獨立記錄)、全部8個slot,**每一個flag byte都恰好落在`{0x00, 0x40, 0x80}`三個值之一,零例外**——這正是`FUN_000112a5`唯一會寫入這個offset的三個常數(`0x40`=slot0/1固定初始item、`0x00`=slot2-5有實際道具、`0x80`=空)。如果offset錯了,理應看到接近隨機分布的0-255值,而不是精確落在這三個值。
+- **item byte殘留模式吻合預期**:多筆unit在flag=`0x80`(空)的slot上,item byte呈現**同一個值連續重複多個slot**(例如某unit的slot2-7全部是`0xc9`)——這與「移除道具用compact-remove、只搬移flag和前面的slot,尾端被騰空的slot item byte從未被清零」的既有已知行為(doc32:565「`0x1b8e7`成功後移除該inventory slot,標準compact-remove primitive」)完全吻合,不是隨機亂碼。另外flag=`0x80`卻item=`0xff`的情況也出現(如「哈諾」slot3),對應`FUN_000112a5`迴圈裡「來源是`-1`哨兵時item byte仍照抄」的行為——這兩種「空格殘留值」的樣式都精確對應反組譯出的兩條不同程式碼路徑(初始建構 vs 之後移除),而不是巧合。
+- **跨檔案一致性**:`FD2.SAV`(ch10)與`FD2_ch21_test.SAV`(章節byte改20)、`FD2_ch23_test.SAV`(章節byte改22)三者的slot0全部43組flag/item pair**逐byte相同**,與續三十三「這兩份測試檔只是母檔patch了chapter byte」的既有結論完全一致,不是意外巧合。
+
+**sanity check通過,無需已知基準比對即可判定「不是明顯亂碼」**——這是續三十三/續三十二等待的最後一塊拼圖。
+
+### 5. 未排除的假說(誠實記錄)
+
+- **`[0x53bf7]`→`[0x53a45]`的hydration函式**:本輪窮盡時間範圍內的xref追蹤未找到。不排除它存在但呼叫鏈更深(例如透過一個間接跳轉表或本次沒查到的中繼函式);也不排除實際上是反向設計——`[0x53a45]`只在**當下這張地圖出場的單位**建立獨立記錄(可能透過各自的`FUN_000112a5`-類建構子重新初始化,而不是複製既有persistent record),之後才在章節結束時把玩家單位的異動**寫回**`[0x53bf7]`。兩種設計都與本節已證實的「inventory offset本身正確」不衝突,只是「什麼時候/怎麼同步」仍未解——如果之後要做「battle中吃藥、離開battle後存檔,道具有沒有正確扣除」這類問題,才需要再花一輪追這個同步點。
+- **HP/MP(`+0x40`/`+0x42`/`+0x44`/`+0x46`)**:本輪意外在`FUN_000112a5`(直接操作`[0x53bf7]`)裡找到這四個offset的建構邏輯,與doc32既有的church class-change類比證據(操作對象不明確是否為同一buffer)相互獨立佐證,offset本身高度可信。但**仍未達PROVEN**——建構當下`current==max`,三份真實存檔也都是滿血,沒有任何已知的非滿血樣本可以分辨「+0x40是current還是+0x42是current」這種排列組合誤判的可能性(church recalc的「max→current回填」間接指出+0x40=current,但這是另一個函式的間接證據,不是本輪`FUN_000112a5`直接排除的)。`fd2save.py`的docstring已誠實反映這個中間狀態,**沒有**新增HP/MP的decode函式(超出本輪任務範圍,留待下一輪若要處理HP才做)。
+
+### 產出
+
+1. **`tools/fd2save.py`**:新增`UNIT_INVENTORY_SLOT_COUNT`(8)、`UNIT_INVENTORY_FLAG_OFFSET`(0x0a)、`UNIT_INVENTORY_ITEM_OFFSET`(0x0b)、`UNIT_INVENTORY_EMPTY_BIT`(0x80)常數與`roster_inventory()`/`roster_inventory_items()`函式(仿`UNIT_CHARACTER_ID_OFFSET`/`roster_character_ids()`既有模式);`summarize()`新增每個populated slot的`roster_inventory_items`輸出行;module docstring把inventory offset從「STILL UNPROVEN」移到新增的「PROVEN(2026-08-21,續三十四)」段落,並補充HP/MP欄位的新靜態證據(但維持unproven分類,見上方第5節)。
+2. **`tools/test_fd2save.py`**:新增`test_roster_inventory_reads_proven_flag_and_item_offsets`(合成資料,涵蓋`0x40`/`0x00`/`0x80`三種flag值與對應item byte行為)與`test_real_saves_inventory_flag_bytes_are_within_known_value_set`(對機器上現存三份真實存檔做本節第4點的sanity check,檔案不存在時skip不影響CI)。`python -m unittest test_fd2save -v`(`tools/`目錄下)11個測試全數通過,含3個對真實存檔的live-data測試。
+3. 本文件本節(純Ghidra headless反組譯過程與結論)。**沒有**編輯`91-worklist.md`(依指示)。續三十二留下的「ch27天空之鑰清空inventory」可行性限制**在此解除**——下一輪若要合成「已過ch21但無天空之鑰」的測試存檔,可以安全使用`roster_inventory`系列API,不需要再視inventory offset為未證實假說(仍建議先用round-trip自檢,降低寫壞存檔風險)。

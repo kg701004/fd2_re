@@ -82,6 +82,33 @@ class FD2SaveTest(unittest.TestCase):
             len(fd2save.roster_character_ids(bytes(plain), 0)), fd2save.ROSTER_UNITS
         )
 
+    def test_roster_inventory_reads_proven_flag_and_item_offsets(self):
+        plain = bytearray(fd2save.FILE_SIZE)
+        start, _ = fd2save.slot_bounds(0)
+        record = start + 2 * fd2save.UNIT_SIZE  # unit index 2
+        # slot0/1: always-occupied starting items (flag 0x40 per FUN_000112a5)
+        plain[record + fd2save.UNIT_INVENTORY_FLAG_OFFSET + 0] = 0x40
+        plain[record + fd2save.UNIT_INVENTORY_ITEM_OFFSET + 0] = 0x1F
+        plain[record + fd2save.UNIT_INVENTORY_FLAG_OFFSET + 2] = 0x40
+        plain[record + fd2save.UNIT_INVENTORY_ITEM_OFFSET + 2] = 0xA3
+        # slot2: occupied optional item (flag 0x00)
+        plain[record + fd2save.UNIT_INVENTORY_FLAG_OFFSET + 4] = 0x00
+        plain[record + fd2save.UNIT_INVENTORY_ITEM_OFFSET + 4] = 0x5B
+        # slot3..7: empty (flag 0x80); item byte left as native stale garbage
+        for i in range(3, 8):
+            plain[record + fd2save.UNIT_INVENTORY_FLAG_OFFSET + 2 * i] = 0x80
+            plain[record + fd2save.UNIT_INVENTORY_ITEM_OFFSET + 2 * i] = 0xC9
+        cells = fd2save.roster_inventory(bytes(plain), 0, 2)
+        self.assertEqual(len(cells), fd2save.UNIT_INVENTORY_SLOT_COUNT)
+        self.assertEqual(cells[0], (0x40, 0x1F))
+        self.assertEqual(cells[1], (0x40, 0xA3))
+        self.assertEqual(cells[2], (0x00, 0x5B))
+        self.assertEqual(cells[3], (0x80, 0xC9))
+        # only the non-empty (flag bit 0x80 clear) cells surface as "items"
+        self.assertEqual(
+            fd2save.roster_inventory_items(bytes(plain), 0, 2), [0x1F, 0xA3, 0x5B]
+        )
+
 
 class FD2SaveRealFileTest(unittest.TestCase):
     """Optional live-data checks: only run when a real FD2.SAV is present on
@@ -118,6 +145,37 @@ class FD2SaveRealFileTest(unittest.TestCase):
         # Every file we have locally starts from the same base save, so the
         # populated prefix always matches the same known recruitment order.
         self.assertEqual(char_ids, _KNOWN_SLOT0_CHAR_IDS[:roster_count])
+
+    def test_real_saves_inventory_flag_bytes_are_within_known_value_set(self):
+        """Sanity check (doc58 "續三十四", 2026-08-21), not a known-value
+        comparison: every decoded flag byte across every populated
+        unit/slot in every real save on this machine must be one of the
+        exact three values FUN_000112a5 ever writes to that offset
+        (0x00/0x40/0x80). Any other byte would mean the offset is wrong.
+        """
+        checked_any_file = False
+        for path in _CANDIDATE_REAL_SAVES:
+            if not path.is_file():
+                continue
+            checked_any_file = True
+            plain = fd2save.decode(path.read_bytes())
+            for slot in range(fd2save.SLOT_COUNT):
+                start, _ = fd2save.slot_bounds(slot)
+                meta = plain[start + fd2save.ROSTER_SIZE : start + fd2save.SLOT_SIZE]
+                chapter = meta[0]
+                roster_count = meta[1]
+                if chapter == 0xFF or not (0 < roster_count <= fd2save.ROSTER_UNITS):
+                    continue
+                for unit in range(roster_count):
+                    for flag, _item in fd2save.roster_inventory(plain, slot, unit):
+                        self.assertIn(
+                            flag,
+                            (0x00, 0x40, 0x80),
+                            f"{path.name} slot={slot} unit={unit}: "
+                            f"unexpected inventory flag byte {flag:#04x}",
+                        )
+        if not checked_any_file:
+            self.skipTest("no real FD2.SAV found on this machine")
 
 
 if __name__ == "__main__":
