@@ -3648,3 +3648,40 @@ FUN_00037910(...); FUN_00011506();  DAT_00053c03++;  return;
 ### 產出
 
 `remake/internal/fdother/range_overlay.go`(註解訂正,無邏輯變動)、`docs/knowledge-base/91-worklist.md`(三處位址標籤訂正:720/1193/1297行)、本文件本節。新增Ghidra probe scripts:`C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeMode6CallSite.java`、`ProbeMode6CallSiteAddr.java`(+對應`probe_mode6_callsite_out.txt`、`probe_mode6_callsiteaddr_out.txt`原始輸出,供覆核;沿用續三十已有的`ProbeCh23Post4dbfc.java`/`ProbeCh23Post4df4c.java`輸出佐證,未重跑)。
+
+## 續三十二:雙結局分歧點查證——純靜態確認分歧在ch27(不必等到ch29/30 party montage懸案),外加獨立FDTXT_027 raw byte複核(2026-08-21)
+
+**任務背景**:使用者想知道——原版玩家若在ch21集不滿6個道具(item `0xd1..0xd6`)、沒拿到天空之鑰(item `0x64`),接下來玩到ch26/27會不會看到明顯不同的劇情,還是這個差異要一路玩到ch29/30真結局蒙太奇(卡住的`0x2bce5`懸案,見doc35第9節)才會顯現。任務指定分兩階段:第一階段純靜態查證分歧點在哪一章;第二階段視結果決定要不要上DOSBox-X live驗證。
+
+### 第一階段:查現有證據,分歧點確認在ch27
+
+先跑`python tools/query_verified_address.py --search "天空之鑰"/"sky key"/"0x64"`——三個關鍵字**都沒有命中**(該資料庫顯然沒收錄這段)。改讀`docs/knowledge-base/26-per-chapter-event-handlers.md`、`28-chapter-objectives-and-recruits.md`,後者第52行攻略表已先給出一條線索:「23 | 22 | 向天空之旅 | 擊毀機甲隊長 | ... | 卡里斯(持天空之鑰)」。再依`feedback_check_existing_evidence_before_disasm`的教訓,動工前先廣泛grep全KB(而非直接開Ghidra),結果發現**這個問題本session之前就已經被多輪工作、多個獨立工具交叉反組譯確認過**,不需要重跑Ghidra:
+
+1. **`docs/knowledge-base/50-cutscene-script-system-design.md` §3.9(2026-07-16)**:「玩家第27章...天空之鑰分支已先接成editable campaign gate:`battle_ch27 → inventory_gate_ch27_sky_key`。`0x25186 call 0x24b14(item 0x64)`的完整body只掃runtime unit records slots 0..15...找到鑰匙才走`story_ch27_post_sky_key_success`的`sync_party→set_chapter(27)`,再停在`preparation_ch28`;回傳-1則走獨立`ending_ch27_no_sky_key`,對應`0x2545d call 0x2bce5`壞結局。」——**關鍵細節**:原生失敗分支呼叫的`0x2545d`,最終走到的正是`0x2bce5`——也就是ch29/30真結局用的**同一個**party montage renderer(至今仍卡住的懸案)。換句話說,原版遊戲在ch27若沒有天空之鑰,會直接短路呼叫終局渲染器,不會繼續打到ch28/29/30正常流程。
+2. **`docs/knowledge-base/56-fd2-remake-sdd.md`(Docker Capstone,2026-07-26 獨立工具複核)**:第1100行「In ch26 post, `0x24b14(0x64)` selects the sky-key success arm; that arm contains no `0x1b8e7` call and only later performs sync/chapter increment/persistent cleanup. The missing arm is a separate ending presentation path.」;第2434行進一步把`0x24b14(item)`本身的raw掃描邏輯(呼叫`0x31860`→`0x1b8a6`+`0x1b722`,對slots `0..count-1`)確認為closed primitive。第1140行的E1/E2稽核表明列「27 | `inventory_gate_ch27_sky_key` → success/missing branch | 道具gate→分支劇情 | gate E1;native待核」——**gate本身(有沒有鑰匙→走哪個分支)是E1級(工具反組譯)已證,只有「native待核」的是視覺演出細節,不是「有沒有分支」這件事本身**。
+3. **`docs/knowledge-base/91-worklist.md:1117`**:「ch26 post item-gate branch:`0x25186→0x24b14(0x64)`是前16個runtime slots的exact inventory search...FDTXT_027 idx8–12 / idx13–16對應兩臂」——兩個分支各自對應到FDTXT_027裡不同的文字段落,已經有明確的字串index範圍。
+4. **`remake/assets/story/ch27.json`**(先前session依FDTXT_027逐句轉錄的可編輯劇本,標注來源與E1/E0邊界):實際讀取內容確認兩個分支講的是完全不同的劇情——
+   - **成功臂(場景「悠妮記憶甦醒,坦承身世」)**:悠妮向索爾坦承自己並非人類、記憶甦醒,隊伍全員在轉送平台上,索爾把天空之鑰交給悠妮,悠妮啟動轉送裝置,全隊一起被送往「第一空中要塞(黃金城)」,劇情正常往ch28延續。
+   - **缺鑰臂(場景「缺少天空之鑰的離別(分支)」)**:悠妮向索爾道別後說明「**沒有天空之鑰,只有我能直接從此地前往黃金城**」,獨自啟動「A1型分解傳送」,拒絕約拿等人的挽留,獨自帶走黃金城「讓它沈睡在一個誰也找不到的地方」,單方面永別——是一段完全不同、明確走向「與悠妮死別/隊伍失去黃金城線索」的劇情分支,不是換兩句台詞而已。
+5. **`docs/knowledge-base/02-game-data-reference.md:332`**:道具表本身也印證`0x64`＝「天空之鑰」,用途欄寫「進入隱藏關物品」,跟ch27轉送黃金城的劇情語意一致。
+6. 額外(次要,供完整性參考):`0x24754`(現行編號ch23_post,即續十七off-by-one修正前的「ch22_post」)在更早的位置也有一個`0x24b14(0x64)`檢查(呼叫點`0x247be`),見doc26:339、doc58:2203-2280、doc58:3591-3601三處交叉確認——這個較早的分支只影響戰後餘波的對白文字選擇(text#8 vs 後續`0x24bde(0x12)`/回合數分支選text#10/#12/#13),不像ch27那樣整條劇情線分岔,重要性遠低於ch27的gate,故本次以ch27為主要分歧點。
+
+**本輪新增的獨立複核(不是重述舊結論)**:為了不只依賴前幾輪session對`ch27.json`的轉錄,這次重新對原始資源`extracted/raw/FDTXT/FDTXT_027.bin`跑一次全新的`python tools/decode_text.py dump`(現場重跑,不是讀取先前留存的輸出),在**glyph-id層級**逐一比對第9筆(`[9]`,對應成功臂「悠妮記憶甦醒」)與第13筆(`[13]`,對應缺鑰臂「缺少天空之鑰的離別」)兩個raw字串:兩者開頭約9行glyph-id序列**完全相同**(對應兩個分支共用的開場兩句對白——「索爾,所有過去的事,我都想起來了...」/「悠妮,不管是為了什麼事,我都不會怪妳...」,`ch27.json`裡兩個場景的第1、2行確實逐字相同),但從第9行之後**兩者的glyph-id序列完全分岔**,`[13]`很快接上一段`[9]`裡完全沒有的新字串區塊。這獨立證實:(a) `ch27.json`的轉錄忠實反映原始FDTXT_027位元組,不是先前session手誤或杜撰;(b) 兩個分支在**原始資源檔案層級**就是不同的字串,不是remake自行編造的分支內容。
+
+**第一階段結論**:**分歧點確認在ch27(玩家第27章,戰鬥後),遠早於ch29/30**。缺天空之鑰的玩家在打完第27戰之後,馬上就會看到與集滿道具者完全不同的一整段劇情(悠妮告別、隊伍失去黃金城/獨自帶走黃金城),不需要、事實上原版遊戲可能根本不會再讓玩家玩到ch28/29/30正常流程(因為缺鑰分支的`0x2545d call 0x2bce5`很可能直接進入結局渲染器)。ch29/30卡住的`0x2bce5`懸案,只影響「這兩個分支各自的**演出動畫細節**能不能完整呈現」,不影響「這兩個分支的**劇情內容本身是否不同**」這個問題——後者本節已經用純靜態證據(2019/07/16、2026-07-26 Docker Capstone、本次FDTXT raw byte複核三方交叉)確定回答為「是,而且差異很大」。
+
+### 第二階段:評估後決定不啟動DOSBox-X live驗證,原因記錄如下
+
+使用者的任務指示是:若第一階段找到ch29/30之前的分歧點,則用WSL2 DOSBox-X(續二十一的Xvfb+tmux+dosbox-x單次呼叫法)搭配`tools/fd2save.py`存檔binary patch,跳到分歧點附近實際驗證畫面差異。本輪**評估後判斷不執行這一步**,理由誠實記錄如下,供之後若要接手的session參考:
+
+1. **`tools/fd2save.py`本身的定位是「storage envelope工具」,不是「玩法存檔編輯器」**——它的docstring明講「The remaining record fields are kept raw until their native meanings are proven」,目前只暴露`current_runtime`（章節/回合/鏡頭等）與每個存檔槽的`chapter`/`roster_count`/`currency`四個欄位為summarize()已知field,並沒有提供「設定某角色inventory」的proven writer。要合成一個「已過ch21但確定沒有天空之鑰」的存檔,必須自行對每個unit的0x50-byte roster record手動patch inventory slot(依doc56 2434行`0x31860`揭露的`record+0x0b+2*slot`推論,但**這個offset是從runtime battle record反組譯出來的,存檔裡的persistent roster record是否用完全相同的偏移量,`fd2save.py`本身並未證實**)——用未經證實的欄位偏移去手動改寫二進位存檔,有做出一個「看似合法但其實損毀」的存檔的風險,一旦真的這樣測出「畫面沒有差異」,反而可能是存檔本身無效導致的假陰性,而不是遊戲行為的真結論。
+2. **即使成功合成有效存檔,仍必須真的贏下第27戰(擊毀機甲隊長)才能觸發這個postbattle gate**——這不是像本文件開頭「純截圖採樣」那樣的免戰複查,是要真的打完一整場戰鬥。本文件續十三到續二十九(2026-08-18~08-20,十幾輪、每輪都是獨立的一次dedicated session)的完整記錄顯示:即使在「WSL2自動化環境已修好、中斷點已設好」的最佳狀況下,**單一整場戰鬥(ch23/ch24)的live驗證仍反覆卡關**——移動力預算精算、指令環按鍵時序、debugger斷點漏接、渲染延遲等問題交替出現,多輪都以「環境問題解決但原始戰鬥目標仍未達成」收尾(見續二十一、續二十三、續二十四、續二十七、續二十八的誠實負面結論)。相較之下,ch27的勝利條件雖然是「擊毀機甲隊長」（不是敵全滅,理論上比ch23/24全滅類戰鬥短）,但仍然是一整場需要移動、指令環操作、多回合的戰鬥,不是幾秒鐘能重現的畫面差異。
+3. **本輪(第一階段)已經用三個独立管道(2026-07-16 IDA/Ghidra、2026-07-26 Docker Capstone、本次現場重跑的raw FDTXT decode)交叉確認了分歧點與分歧內容,證據強度已經很高**——live DOSBox驗證能新增的價值主要是「畫面演出細節」與「確認一般玩家路徑真的會走到這個分支(E2)」,但這兩點都不影響「原版有沒有一個比ch29/30更早的可觀察分歧點」這個使用者真正想知道的問題,已經可以用現有靜態證據誠實肯定回答。
+
+**因此本輪判斷:不值得為了補這最後一段E2視覺確認,去冒風險合成一個可能無效的存檔、再賭上又一輪可能耗時數小時仍打不完一場戰鬥的live grind**。這是本輪主動縮小範圍的決定,不是使用者事先核准的縮寫——如果使用者仍然想要實際螢幕截圖等級的證據,建議開一輪獨立的dedicated live session,路線為:(a) 用`fd2save.py`的`decode()`/`encode()`載入一個已經打到ch26附近的既有存檔槽、把該槽`chapter`欄位設為`0x1A`(26,對應「即將打第27戰」)、並嘗試比照`0x31860`的`record+0x0b+2*slot`公式清空所有unit的inventory slot以確保沒有item `0x64`與`0xd1..0xd6`(**risk如上第1點,下手前應先用一個已知有鑰匙的存檔做「不改動、純解碼再編碼往返」的round-trip測試,確認encode(decode(x))==x沒有跑掉,再動手patch,降低寫壞存檔的機率**);(b) 依續二十一方法起WSL2 DOSBox-X,load該存檔,靠指令環操作打贏第27戰(目標是機甲隊長,不必全滅);(c) 截圖記錄戰後劇情文字,跟`ch27.json`的兩個場景比對。
+
+**本輪沒有啟動DOSBox-X/WSL2/Xvfb任何行程,因此結束前無需額外清理環境**。
+
+### 產出
+
+本文件本節(純文件新增,無程式碼變動)。查證過程中重新現場執行過的命令:`python tools/query_verified_address.py --search "..."`(三次,均無命中)、`python tools/decode_text.py dump extracted/raw/FDTXT/FDTXT_027.bin`(現場重跑,輸出未落盤於repo內,僅本節摘要其比對結果)。未修改`91-worklist.md`(依指示)。
