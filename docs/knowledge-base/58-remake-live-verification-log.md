@@ -3941,3 +3941,100 @@ int __stdcall FUN_0001b8a6(int unit_index) {
 ### 產出
 
 本文件本節。**沒有**編輯`91-worklist.md`（依指示）。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。**沒有**修改`tools/fd2save.py`或`docs/knowledge-base/13-battle-menu-system.md`（這輪純粹使用本session稍早已完成的doc13反組譯成果，沒有新增反組譯）。
+
+## 續三十八:純靜態反組譯`record[+6]`/`record[+0x26]`的完整寫入端——推翻「存檔跳章方法論本身有天生缺陷」的假說(2026-08-21)
+
+**任務背景**:延續續三十七收尾建議的最高優先項——doc13已反組譯出指令環三個entry gate(`record[+6]==0x02`、`record[+5]&0x80==0`、`record[+0x26]==0`)的**讀取端**,但續三十七全部4個受測單位(索爾/悠妮/鐡諾/洛娜)都落入`0x17aed`非互動假畫面,懷疑`record[+6]`或`record[+0x26]`這兩個「語意未定名」欄位在ch27這個**用`fd2save.py`跳章節合成的存檔**裡沒有被正確初始化。本輪目標:純靜態反組譯追出這兩個欄位的**寫入端**(誰寫、何時寫、正常流程下的值),並交叉比對`fd2save.py`已知會動到的偏移,判斷根因是不是「存檔跳章這個手法天生沒辦法正確初始化戰鬥所需的runtime欄位」。全程只用`tools/ghidra_batch_probe.py`對`FD2Analysis3`唯讀headless查詢(decompile/disasm/xref/function_bounds),沒有碰DOSBox-X/WSL2。
+
+### 0. 起點:既有文件已經部分回答過這題,先核對沒有過時
+
+`docs/knowledge-base/26-per-chapter-event-handlers.md`「單位`0x50`結構」表格(2026-08-19,已標`[驗]`)其實已經寫著:
+
+> `+6` | party constructor 寫 literal 2；FDFIELD constructor 直接複製 row `b0`
+> `+0x22..+0x27` | 六個獨立 live transient bytes；不可降成單一 buff 狀態
+
+`docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md`(2026-08-02)也記過一句「只有`0x10C50`先清`+0x22..+0x27`的caller」。但這兩份文件都**沒有給出`0x1088D`本體反組譯佐證**(前者是「已知結論」摘要表,沒附instruction-level證據;後者甚至暗示只有`0x10C50`才清`+0x22..+0x27`,沒提`0x1088D`)——doc58續三十七的「語意未定名」措辭正是因為`0x117e7`/`0x18d8c`這條**讀取端**反組譯完整,但寫入端只有片段摘要、沒有本輪要求的「誰寫、何時寫、正常值」逐指令證據。本輪的任務就是把這個缺口用完整反組譯補上。
+
+### 1. `0x1088D`(黨隊角色戰場記錄建構器)完整反組譯:`record[+6]`與`record[+0x26]`的寫入端逐指令證實
+
+用`ghidra_batch_probe.py`對`0x1088d`做`decompile`+`disasm`(從函式起點`0x1088d`到主複製迴圈`0x10a77..0x10b17`,共94+52條指令,`function_bounds`確認函式範圍`0x1088d..0x10b42`,694 bytes)。核心迴圈(`0x10a77`起,對應doc91既有記錄的`0x1088d→0x10a77`路徑)逐指令如下:
+
+```asm
+0x10a77  PUSH 0x50            ; size = 0x50 (完整一筆 unit record)
+0x10a79  PUSH EDI             ; src = EDI = persistent record (DAT_00053bf7 + i*0x50)
+0x10a7a  PUSH EBX             ; dest = EBX = battle-array record (DAT_00053a45 + i*0x50)
+0x10a7b  CALL 0x3771c         ; memmove(dest, src, 0x50) —— 完整 0x50-byte 記錄先整筆搬過來
+0x10a80  ADD ESP,0xc
+0x10a83  MOVZX EDX,[ESI]      ; position resource X
+0x10a86  MOVZX EAX,[ESI+2]    ; position resource Y
+0x10a8a  MOV [EBX],DL         ; +0 = X（覆寫 memmove 帶過來的值）
+0x10a8c  MOV [EBX+1],AL       ; +1 = Y
+0x10a8f  PUSH [ESP]
+0x10a92  MOVZX EAX,[EBX+7]
+0x10a96  PUSH EAX
+0x10a9a  CALL 0x11019         ; FDICON cache slot
+0x10aa2  MOV [EBX+2],AL       ; +2 = FDICON slot
+0x10aa5  MOV byte [EBX+3],0   ; +3 = 0
+0x10aa9  MOV byte [EBX+4],0   ; +4 = 0
+0x10aad  MOV byte [EBX+6],0x2 ; +6 = 字面常數 2 —— 【本輪要問的第一個答案】
+0x10ab1  MOV byte [EBX+0x31],0xff
+0x10ab5  PUSH 0x6             ; size = 6
+0x10ab7  PUSH 0x0             ; value = 0
+0x10ab9  LEA EAX,[EBX+0x22]   ; dest = EBX+0x22
+0x10abd  CALL 0x37910         ; memset(EBX+0x22, 0, 6) —— 清 +0x22..+0x27（含 +0x26）
+                               ;   【本輪要問的第二個答案】
+0x10ac6  CALL 0x1b750         ; 裝備/衍生屬性重算
+0x10ace  ADD EDI,0x50
+0x10ad5  ADD EBX,0x50
+0x10ad8  INC EBP
+```
+
+`0x3771c`與`0x37910`兩個之前只當「不透明呼叫」的函式,本輪也分別完整反組譯確認真實身分:`FUN_0003771c(dest,src,n)`是標準**memmove**實作(有處理overlap的word-aligned bulk copy,`0x3771c..0x376d`,82 bytes);`FUN_00037910(dest,byteVal,n)`把單一byte廣播成dword後轉呼叫`0x3e060`,是標準**memset**wrapper(`0x37910..0x37931`,34 bytes)。這解開了`0x1088d`decompile裡`FUN_0003771c();`/`FUN_00037910();`兩行「參數消失」的謎(Ghidra decompiler沒能把stack-push的參數摺進偽代碼,純disasm才看得到真正的`PUSH size/src/dest`序列)。
+
+**結論(逐指令證實,不是推論)**:
+
+- **`record[+6]`**:對每一個成功複製進戰場單位陣列的黨隊成員,`0x1088D`在`memmove`整筆搬移「完整持久化記錄」之後,**無條件**用字面常數`MOV byte [EBX+6],0x2`覆寫。這行為與doc26「party constructor寫literal 2」的既有摘要完全吻合,現在有完整instruction-level佐證。語意上`+6`是**camp/陣營**byte(交叉核對`docs/knowledge-base/10-sprite-rendering-camp-and-state.md:22`與`03-exe-and-data-structures.md:16`:「0x06 camp：00=敵方01=友方02=己方；0x10c50直接從FDFIELD unit b0寫入」——`0x1088D`與`0x10C50`是兩條不同來源但同一欄位的互補writer:`0x1088D`負責黨隊自己人(固定寫2=己方),`0x10C50`負責FDFIELD場景預置單位(直接複製b0,可能是0/1/2)),**與`0x50-byte`persistent save record原本`+6`欄位的值完全無關**——不論存檔裡這個byte是什麼,`0x1088D`都會把它覆寫成`2`。
+- **`record[+0x26]`**:同一個迴圈,緊接在`+6=2`之後,`0x1088D`呼叫`memset(EBX+0x22, 0, 6)`,把`+0x22/+0x23/+0x24/+0x25/+0x26/+0x27`這連續6個byte(doc26表格已標「六個獨立live transient bytes」)**全部歸零**,`+0x26`落在這個範圍內。**這同樣與persistent record原本`+0x26`欄位的值完全無關**——`memset`是無條件覆寫,不是「僅在某條件下才清」。
+
+交叉比對doc13已知的狀態效果綁定(`13-battle-menu-system.md`,command 20/21分別對應`+0x25`/`+0x26`,標記為「中毒」/「麻痺」,`0x22e41`已confirm「麻庫/麻痺綁定+0x26」),`+0x26`最合理的高階語意是**麻痺(paralysis)剩餘回合數/旗標**:非零=麻痺中,不能進指令環,這與指令環第三個gate`record[+0x26]==0`才能進入完全吻合,是自洽的遊戲設計(被麻痺的單位不能下指令),不是巧合。
+
+### 2. 這個迴圈何時、以什麼條件觸發——確認ch27測試場景下沒有例外分支
+
+同一段disasm裡,迴圈唯一的「跳過複製、改標記`+5=1`(空/未配置)」分支條件是(`0x10ae1..0x10af4`):
+
+```
+if (chapter < 0xd) {                     // ch27 遠大於 0xd,這個分支整段不成立
+    if (slot_index == 6 && persistent_record[+8] != 2) → 跳過複製,標 +5=1
+}
+else if (已複製人數 >= DAT_00053bfb /* 持久化roster實際人數 */) → 跳過複製,標 +5=1
+else → 進入上面§1的完整複製(memmove+覆寫+memset)
+```
+
+`chapter < 0xd`這條特殊規則(疑似「前13章某個劇情限定角色必須在第6槽」的早期章節限定檢查)對ch27完全不適用;剩下唯一的跳過條件只是「持久化roster裡已經沒有更多真人可填」,也就是說**`DAT_00053bfb`(持久化roster人數)範圍內的每一個黨隊成員,在ch27這種`chapter>=0xd`場景下,無條件走完整的`+6=2`/`+0x26清零`覆寫**,沒有任何分支能讓一個真實黨隊成員繞過這兩個寫入。續三十七測試的索爾/悠妮/鐡諾/洛娜四人全部是`fd2save.py`合成存檔裡`roster_character_ids`確認存在的真實成員(非空槽),因此理論上全部應該落在這條無條件覆寫路徑上。
+
+### 3. 呼叫時機:確認`0x1088D`是「每次進戰場」都重新執行,不是只在最初LOAD時跑一次
+
+`0x1088D`目前唯一收到的直接呼叫端是`0x205ff`(位於`FUN_000205da`,`0x205da..0x2067c`,對照`docs/knowledge-base/25-battle-event-system.md:43`「戰場重設／章節載入 | 0x205da | **28個直接caller** | 清`[0x51a83]/[0x53ecc]`、呼`0x1088d([0x53c03])`,再重設戰場全域」)。本輪decompile確認`0x205da`結尾還會執行`_DAT_00053bef = 1`——**這正是doc26已證實的「回合數`[0x53bef]`戰場開始mov 1」那一行**,代表`0x205da`(進而`0x1088D`)是在**每次戰鬥回合真正開始時**被重新呼叫,不是只在存檔LOAD當下跑一次就沿用到底。`0x1088D`本體開頭也有`if (DAT_00053a45 != 0) FUN_0003776e(DAT_00053a45);`(釋放舊陣列)再`FUN_0003706e(0x1e00)`(**重新malloc**一塊全新的0x1e00-byte戰場陣列)——每次呼叫都是完全重建,不是就地修改殘留記憶體。這與續三十七記錄的live操作時序(LOAD→軍營→出口Enter→YES確認進戰場→約13次Enter推進戰前對白→進入戰鬥地圖)吻合:玩家看到「戰鬥地圖」的那一刻,`0x1088D`已經跑過、`record[+6]`/`record[+0x26]`理論上已經是新鮮值,不是延續存檔載入當下的殘留狀態。
+
+### 4. 與`tools/fd2save.py`已知欄位交叉比對:`record[+6]`/`record[+0x26]`根本不是這個工具能碰、也不需要碰的欄位
+
+`tools/fd2save.py`目前已證實的欄位——`SLOT_OFFSET`/`SLOT_SIZE`/`UNIT_SIZE`(存檔envelope結構)、`UNIT_CHARACTER_ID_OFFSET`(`record+0x08`)、`UNIT_INVENTORY_FLAG_OFFSET`/`UNIT_INVENTORY_ITEM_OFFSET`(`record+0x0a`/`+0x0b`)——全部作用在**持久化存檔的`[0x53bf7]`roster區塊**(`FD2.SAV`裡`0xa00`-byte/32槽的那份)。本輪反組譯證實的`record[+6]`(camp)與`record[+0x26]`(麻痺,`+0x22..+0x27`transient區的一員)則是**戰場單位陣列`DAT_00053a45`的runtime-only欄位**——`0x1088D`每次進戰場都用`memmove`把持久化記錄整筆搬過來,**緊接著就無條件用literal write跟memset把這兩個位置覆寫掉**,覆寫動作完全不看persistent record原本這兩個byte的內容是什麼。
+
+這代表兩件事:
+
+1. **持久化存檔(`FD2.SAV`)裡`record+6`/`record+0x22..+0x27`這幾個byte的值,對「能不能正常打開指令環」這件事完全不重要**——不管`fd2save.py`合成的存檔裡這幾個byte是0、是垃圾值、還是繼承自某個更早的存檔快照,`0x1088D`進戰場時都會把它們覆寫成正確值(`+6=2`、`+0x26=0`)。這跟`UNIT_CHARACTER_ID_OFFSET`/inventory那兩個「持久化就是最終值,遊戲直接讀」的欄位性質完全不同——`+6`/`+0x26`是「持久化的值只是memmove的暫存來源,馬上會被覆寫」的欄位。
+2. **`fd2save.py`不需要、也不應該新增任何`+6`/`+0x26`的patch支援**——這兩個欄位根本不在「跳章節合成存檔」這個手法能影響的範圍內,因為它們不是由存檔內容決定的,而是由`0x1088D`在battle-entry時重新計算的。本輪**沒有修改`tools/fd2save.py`**,理由是找不到任何需要修改的東西,不是遺漏。
+
+### 5. 誠實結論:推翻「存檔跳章方法論本身有天生缺陷」的假說——至少對`record[+6]`/`record[+0x26]`這兩個gate byte不成立
+
+任務背景提出的假說是:「原版遊戲設計本身就假設你是照順序玩過來的,不是直接跳章」,導致某個runtime欄位在存檔跳章下沒被正確初始化。**本輪逐指令反組譯的結果不支持這個假說**——`0x1088D`對`record[+6]`(literal `2`)與`record[+0x26]`(隨`+0x22..+0x27`一起`memset`歸零)都是**無條件覆寫**,不是「假設你循序玩過來,所以延用某個之前應該被設好的值」;不管`fd2save.py`合成的持久化存檔裡這兩個byte原本是什麼,`0x1088D`每次進戰場都會把它們重設成正確值。這兩個具體byte,跳章節這個手法**沒有天生缺陷**。
+
+**因此續三十七觀察到的「全部4個單位都卡在`0x17aed`」現象,根因必須是別的東西**,以下是本輪反組譯排除法之後,對下一輪更精確的優先序:
+
+1. **`record[+5]`(Acted旗標,doc13第二個gate`&0x80==0`)本輪沒有找到`0x1088D`裡任何「無條件清`+5`bit7」的對應寫入**——`0x1088D`的SUCCESS分支裡`+5`完全靠`memmove`繼承persistent record原本的值,沒有像`+6`/`+0x26`那樣被explicit覆寫;FAIL分支(空槽)才會`OR byte [EBX+5],1`(只設bit0,不動bit7)。這代表**如果persistent存檔裡某個黨隊成員的`+5`bit7(Acted)剛好是被設過的殘留值,`0x1088D`不會主動清掉它**——與`+6`/`+0x26`的「無條件覆寫」行為形成鮮明對比,是本輪反組譯篩出的**唯一一個「理論上可能繼承存檔垃圾值」的gate byte**,下一輪應該優先反組譯持久化record`+5`欄位在**存檔寫入端**(`0x11506`/`0x30119`一類的save writer)有沒有做等價的歸零,如果沒有,這才是真正符合「存檔跳章方法論天生缺陷」假說的候選欄位,而且`fd2save.py`要新增這個patch在技術上是可行的(單一byte`&= 0x7f`即可)。
+2. **另一個未排除的可能性**:`0x1088D`跑完之後、玩家實際能操作指令環之前,ch27特定的戰前對白/演出腳本(續三十七記錄的「約13次Enter推進戰前對白」)有沒有额外一段「強制標記部分或全部單位為已行動」的邏輯——這是doc58續三十七原本就提出、本輪還沒有時間去查的假說,`0x1088D`本身反組譯乾淨不代表ch27的per-chapter event handler也乾淨,留給下一輪。
+3. 本輪的反組譯方法(`ghidra_batch_probe.py`一次JVM啟動查完decompile+disasm+xref+function_bounds共9次query,約6秒完成)全程沒有碰DOSBox-X/WSL2,佐證JSON留在`FD2_ghidra_projects/results_58cont38*.json`供覆核。
+
+### 產出
+
+本文件本節(續三十八)。**沒有**修改`tools/fd2save.py`(見§4,確認無需修改)。**沒有**編輯`91-worklist.md`(依指示)。反組譯佐證留存於`FD2_ghidra_projects/queries_58cont38*.json`/`results_58cont38*.json`(共7組批次查詢,涵蓋`0x1088d`/`0x10a77`/`0x11506`/`0x10b4e`/`0x10c50`/`0x3771c`/`0x37910`/`0x3702f`/`0x3706e`/`0x37324`/`0x3776e`/`0x205ff`的decompile、disasm、xref_to、function_bounds)。
