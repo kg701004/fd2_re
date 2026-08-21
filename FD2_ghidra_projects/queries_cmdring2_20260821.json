@@ -1,0 +1,14 @@
+[
+  {"id": "disasm_18d8c_full", "address": "0x18d8c", "action": "disasm", "max_bytes": 800},
+  {"id": "fb_1b83d", "address": "0x1b83d", "action": "function_bounds"},
+  {"id": "dc_1b83d", "address": "0x1b83d", "action": "decompile"},
+  {"id": "fb_1b722", "address": "0x1b722", "action": "function_bounds"},
+  {"id": "dc_1b722", "address": "0x1b722", "action": "decompile"},
+  {"id": "fb_4e8bc", "address": "0x4e8bc", "action": "function_bounds"},
+  {"id": "dc_4e8bc", "address": "0x4e8bc", "action": "decompile"},
+  {"id": "fb_1b8a6", "address": "0x1b8a6", "action": "function_bounds"},
+  {"id": "dc_1b8a6", "address": "0x1b8a6", "action": "decompile"},
+  {"id": "fb_1c269", "address": "0x1c269", "action": "function_bounds"},
+  {"id": "dc_1c269", "address": "0x1c269", "action": "decompile"},
+  {"id": "bytes_53ec8", "address": "0x53ec8", "action": "bytes", "count": 4}
+]

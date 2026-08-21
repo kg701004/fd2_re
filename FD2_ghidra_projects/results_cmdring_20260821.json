@@ -1,0 +1,252 @@
+[
+  {
+    "id": "fb_117e7",
+    "address": "0x117e7",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000117e7",
+      "start": "0x117e7",
+      "end": "0x11aa7",
+      "size": 698,
+      "entry_point": "0x117e7"
+    }
+  },
+  {
+    "id": "dc_117e7",
+    "address": "0x117e7",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000117e7",
+      "entry_point": "0x117e7",
+      "signature": "undefined FUN_000117e7(void)",
+      "code": "\r\nint __stdcall FUN_000117e7(void)\r\n\r\n{\r\n  bool bVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  FUN_0003702f();\r\n  iVar2 = FUN_00011aa8();\r\n  if (((iVar2 == 1) || (iVar2 == 0x2c)) || (iVar2 == 0x4c)) {\r\n    bVar1 = false;\r\n    iVar2 = DAT_00053ae9;\r\n    for (iVar4 = 0; iVar4 < DAT_00053beb; iVar4 = iVar4 + 1) {\r\n      iVar3 = iVar2 * 0x50 + DAT_00053a45;\r\n      if ((((*(byte *)(iVar3 + 5) & 0x85) == 0) && (*(char *)(iVar3 + 6) == '\\x02')) && (!bVar1)) {\r\n        FUN_00012d7b();\r\n        DAT_00053ae9 = iVar2 + 1;\r\n        if (DAT_00053ae9 == DAT_00053beb) {\r\n          DAT_00053ae9 = 0;\r\n        }\r\n        bVar1 = true;\r\n      }\r\n      iVar2 = iVar2 + 1;\r\n      if (iVar2 == DAT_00053beb) {\r\n        iVar2 = 0;\r\n      }\r\n    }\r\nLAB_0001187a:\r\n    FUN_0004e381();\r\n    return 0;\r\n  }\r\n  if ((iVar2 == 0x39) || (iVar2 == 0x1c)) {\r\n    if (DAT_00051a42 != '\\0') {\r\n      DAT_00051a42 = DAT_00051a42 + -1;\r\n    }\r\n    iVar2 = FUN_00012c0d();\r\n    if (iVar2 == -1) {\r\n      do {\r\n        iVar2 = FUN_00016f55();\r\n      } while (iVar2 == 0);\r\n      if (iVar2 == 1) {\r\n        iVar2 = 0;\r\n      }\r\n      return iVar2;\r\n    }\r\n    iVar2 = iVar2 * 0x50 + DAT_00053a45;\r\n    DAT_00053ec8 = 0;\r\n    if ((*(char *)(iVar2 + 7) != 'y') && (*(char *)(iVar2 + 0x1f) != '\\n')) {\r\n      if ((*(char *)(iVar2 + 6) == '\\x02') &&\r\n         (((*(byte *)(iVar2 + 5) & 0x80) == 0 && (*(char *)(iVar2 + 0x26) == '\\0')))) {\r\n        FUN_00025a96();\r\n        do {\r\n          iVar2 = FUN_00018890();\r\n        } while (iVar2 == 0);\r\n      }\r\n      else {\r\n        FUN_00017aed();\r\n      }\r\n      FUN_00011cac();\r\n      if (99 < DAT_00053ec8) {\r\n        DAT_00053ec8 = 99;\r\n      }\r\n      FUN_0001e292();\r\n      (**(code **)(&DAT_00051b19 + DAT_00053c03 * 4))();\r\n      FUN_00013565();\r\n      if (DAT_00051a8f != 0xff) {\r\n        (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();\r\n      }\r\n      DAT_00051a8f = 0xff;\r\n      goto LAB_0001187a;\r\n    }\r\n  }\r\n  else if (iVar2 != 0x22) {\r\n    if ((iVar2 == 0x3b) || (iVar2 == 0x49)) {\r\n      FUN_0002000a();\r\n      return 0;\r\n    }\r\n    if ((iVar2 == 0x3c) || (iVar2 == 0x47)) {\r\n      iVar2 = FUN_00012c0d();\r\n      if ((iVar2 != -1) &&\r\n         ((iVar2 = DAT_00053a45 + iVar2 * 0x50, *(char *)(iVar2 + 7) != 'y' &&\r\n          (*(char *)(iVar2 + 0x1f) != '\\n')))) {\r\n        FUN_00017aed();\r\n        return 0;\r\n      }\r\n    }\r\n    else {\r\n      if (iVar2 == 0x48) {\r\n        FUN_00025a96();\r\n        FUN_00011b48();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x50) {\r\n        FUN_00025a96();\r\n        FUN_00011b9b();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4b) {\r\n        FUN_00025a96();\r\n        FUN_00011c59();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4d) {\r\n        FUN_00025a96();\r\n        FUN_00011bfa();\r\n      }\r\n    }\r\n  }\r\n  return 0;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_17aed",
+    "address": "0x17aed",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00017aed",
+      "start": "0x17aed",
+      "end": "0x17d6e",
+      "size": 642,
+      "entry_point": "0x17aed"
+    }
+  },
+  {
+    "id": "dc_17aed",
+    "address": "0x17aed",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00017aed",
+      "entry_point": "0x17aed",
+      "signature": "undefined FUN_00017aed(void)",
+      "code": "\r\nvoid __stdcall FUN_00017aed(void)\r\n\r\n{\r\n  int iVar1;\r\n  \r\n  FUN_0003702f();\r\n  FUN_00017e0b();\r\n  FUN_00016c57();\r\n  iVar1 = FUN_0001c269();\r\n  if (iVar1 != 0) {\r\n    FUN_00025a96();\r\n    for (iVar1 = 0; iVar1 < 7; iVar1 = iVar1 + 1) {\r\n      FUN_0003771c();\r\n      FUN_000182ad();\r\n      FUN_00018312();\r\n      FUN_0001839b();\r\n      FUN_0003771c();\r\n    }\r\n    FUN_0003771c();\r\n    FUN_000182ad();\r\n    FUN_00018312();\r\n    FUN_0003771c();\r\n    FUN_0004ebff();\r\n    FUN_0001ceed();\r\n    FUN_00025a96();\r\n    for (iVar1 = 6; -1 < iVar1; iVar1 = iVar1 + -1) {\r\n      FUN_0003771c();\r\n      FUN_000182ad();\r\n      FUN_00018312();\r\n      FUN_0001839b();\r\n      FUN_0003771c();\r\n    }\r\n    FUN_00016c57();\r\n  }\r\n  for (iVar1 = 0; iVar1 < 0xc; iVar1 = iVar1 + 1) {\r\n    if ((iVar1 == 0) || (iVar1 == 7)) {\r\n      FUN_00025a96();\r\n    }\r\n    FUN_00018409();\r\n  }\r\n  FUN_0003771c();\r\n  FUN_0003776e();\r\n  FUN_0003776e();\r\n  FUN_0003776e();\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_18890",
+    "address": "0x18890",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00018890",
+      "start": "0x18890",
+      "end": "0x18b83",
+      "size": 756,
+      "entry_point": "0x18890"
+    }
+  },
+  {
+    "id": "dc_18890",
+    "address": "0x18890",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00018890",
+      "entry_point": "0x18890",
+      "signature": "undefined FUN_00018890(void)",
+      "code": "\r\nint __stdcall FUN_00018890(int param_1)\r\n\r\n{\r\n  char cVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  undefined4 *puVar4;\r\n  undefined1 *puVar5;\r\n  undefined4 *puVar6;\r\n  byte bVar7;\r\n  undefined4 local_3c;\r\n  undefined4 local_38;\r\n  int local_2c;\r\n  int local_28;\r\n  uint local_24;\r\n  undefined4 local_20;\r\n  undefined4 local_1c;\r\n  undefined4 local_18;\r\n  undefined4 local_14;\r\n  \r\n  bVar7 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00053f12;\r\n  puVar6 = &local_3c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar6 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar7 * -2 + 1;\r\n    puVar6 = puVar6 + (uint)bVar7 * -2 + 1;\r\n  }\r\n  DAT_00053c53 = 0;\r\n  DAT_00051a8f = 0xff;\r\n  iVar3 = DAT_00053a45 + param_1 * 0x50;\r\n  local_24 = (uint)*(byte *)(iVar3 + 0x3b);\r\n  FUN_0001f183();\r\n  FUN_0004e8a5();\r\n  local_20 = FUN_0003706e();\r\n  local_1c = local_20;\r\n  FUN_000145cd();\r\n  FUN_0004e390();\r\n  FUN_000146d1();\r\n  local_14 = DAT_00053ab1;\r\n  local_18 = DAT_00053ab5;\r\n  FUN_00018b84();\r\n  local_2c = FUN_000115b6();\r\n  FUN_0004df4c();\r\n  if (local_2c == -1) {\r\n    FUN_00012cea();\r\nLAB_000189b6:\r\n    FUN_0003776e();\r\nLAB_00018b77:\r\n    iVar3 = 1;\r\n  }\r\n  else {\r\n    FUN_000145cd();\r\n    iVar2 = FUN_0004e4f6();\r\n    local_28 = iVar2;\r\n    FUN_0004df4c();\r\n    DAT_00051a83 = 0;\r\n    FUN_00012cea();\r\n    DAT_00051a83 = 1;\r\n    if ((iVar2 == 0) || (iVar2 == 0xff)) {\r\n      if (local_28 != 0) goto LAB_00018b77;\r\n      do {\r\n        iVar3 = FUN_00018d8c();\r\n      } while (iVar3 == 0);\r\n      if (iVar3 != -1) {\r\n        FUN_00013a44();\r\n        goto LAB_000189b6;\r\n      }\r\n      FUN_0003776e();\r\n      if (DAT_00053c53 == 0) {\r\n        return 0;\r\n      }\r\n    }\r\n    else {\r\n      FUN_00013488();\r\n      FUN_000134e4();\r\n      cVar1 = *(char *)(iVar3 + 7);\r\n      if (((cVar1 != '\\x12') && (cVar1 != '\\x13')) && (cVar1 != '\\\"')) {\r\n        local_38 = 1;\r\n      }\r\n      do {\r\n        iVar3 = FUN_00018d8c();\r\n      } while (iVar3 == 0);\r\n      if (iVar3 != -1) {\r\n        FUN_00013a44();\r\n        FUN_0003776e();\r\n        return iVar3;\r\n      }\r\n      FUN_0003776e();\r\n      if (DAT_00053c53 == 0) {\r\n        puVar5 = (undefined1 *)(DAT_00053a45 + param_1 * 0x50);\r\n        *puVar5 = (undefined1)local_14;\r\n        puVar5[1] = (undefined1)local_18;\r\n        FUN_00012cea();\r\n        return DAT_00053c53;\r\n      }\r\n    }\r\n    FUN_00013512();\r\n    FUN_00013a44();\r\n    iVar3 = DAT_00053c53;\r\n  }\r\n  return iVar3;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_18d8c",
+    "address": "0x18d8c",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00018d8c",
+      "start": "0x18d8c",
+      "end": "0x190ab",
+      "size": 800,
+      "entry_point": "0x18d8c"
+    }
+  },
+  {
+    "id": "dc_18d8c",
+    "address": "0x18d8c",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00018d8c",
+      "entry_point": "0x18d8c",
+      "signature": "undefined FUN_00018d8c(void)",
+      "code": "\r\nundefined4 __stdcall FUN_00018d8c(int param_1,undefined4 *param_2,int param_3)\r\n\r\n{\r\n  int iVar1;\r\n  int iVar2;\r\n  uint uVar3;\r\n  undefined4 *puVar4;\r\n  undefined4 *puVar5;\r\n  byte bVar6;\r\n  undefined4 local_30 [4];\r\n  undefined4 local_20;\r\n  undefined4 local_1c;\r\n  uint local_18;\r\n  uint local_14;\r\n  \r\n  bVar6 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00051ed5;\r\n  puVar5 = local_30;\r\n  for (iVar2 = 4; iVar2 != 0; iVar2 = iVar2 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  *param_2 = 0;\r\n  DAT_00053ec8 = 0;\r\n  iVar2 = FUN_0001b83d();\r\n  if (iVar2 == -1) {\r\n    *param_2 = 1;\r\n  }\r\n  else {\r\n    FUN_0001b722();\r\n    iVar2 = FUN_0004e8bc();\r\n    local_14 = (uint)*(byte *)(iVar2 + 0xb);\r\n    local_18 = (uint)*(byte *)(iVar2 + 0xc);\r\n    iVar2 = FUN_00014818();\r\n    if (iVar2 == 0) {\r\n      *param_2 = 1;\r\n    }\r\n    FUN_0004df4c();\r\n  }\r\n  FUN_000173e7();\r\n  FUN_0001741c();\r\n  iVar2 = FUN_0001b8a6();\r\n  if (iVar2 == 0) {\r\n    param_2[2] = 1;\r\n  }\r\n  iVar2 = FUN_0001c269();\r\n  if (iVar2 == 0) {\r\n    param_2[1] = 1;\r\n  }\r\n  iVar2 = DAT_00053a45 + param_1 * 0x50;\r\n  if (*(char *)(iVar2 + 0x27) != '\\0') {\r\n    param_2[1] = 1;\r\n  }\r\n  FUN_000173e7();\r\n  do {\r\n    iVar1 = FUN_000177fc();\r\n  } while (iVar1 == 0);\r\n  FUN_000176b4();\r\n  FUN_00011cac();\r\n  if (iVar1 == -1) {\r\n    return 0xffffffff;\r\n  }\r\n  if (DAT_00053c57 == 0) {\r\n    local_1c = DAT_00053ab1;\r\n    local_20 = DAT_00053ab5;\r\n    FUN_0003706e();\r\n    FUN_00014818();\r\n    iVar2 = FUN_000115b6();\r\n    FUN_0004df4c();\r\n    FUN_0003776e();\r\n    if (iVar2 == -1) {\r\n      FUN_00012cea();\r\n      return 0;\r\n    }\r\n    FUN_00012c0d();\r\n    FUN_0001f04a();\r\n    FUN_0002e2b0();\r\n    FUN_000134e4();\r\n    FUN_0001b6b7();\r\n    FUN_0001db65();\r\n    FUN_0001aa1d();\r\n    FUN_00013512();\r\n    FUN_0004e381();\r\n  }\r\n  else if (DAT_00053c57 == 1) {\r\n    do {\r\n      iVar1 = FUN_0001cff0();\r\n    } while (iVar1 == 0);\r\n    if (iVar1 == -1) {\r\n      return 0;\r\n    }\r\n    FUN_00013512();\r\n    uVar3 = (uint)*(byte *)(iVar2 + 0x21);\r\n    if (8 < *(byte *)(iVar2 + 0x20)) {\r\n      uVar3 = uVar3 + 0x1e;\r\n    }\r\n    DAT_00053ec8 = DAT_00053ec8 / (int)uVar3;\r\n  }\r\n  else if (DAT_00053c57 == 2) {\r\n    do {\r\n      iVar2 = FUN_0001bbdc();\r\n    } while (iVar2 == 0);\r\n    if (iVar2 == -1) {\r\n      return 0;\r\n    }\r\n    DAT_00053ec8 = 0;\r\n  }\r\n  else {\r\n    if (param_3 == 0) {\r\n      FUN_00013fd4();\r\n    }\r\n    FUN_000190ac();\r\n    FUN_00013512();\r\n  }\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_1864d",
+    "address": "0x1864d",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000184c0",
+      "start": "0x184c0",
+      "end": "0x1875c",
+      "size": 669,
+      "entry_point": "0x184c0"
+    }
+  },
+  {
+    "id": "dc_1864d",
+    "address": "0x1864d",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000184c0",
+      "entry_point": "0x184c0",
+      "signature": "undefined FUN_000184c0(void)",
+      "code": "\r\nvoid __stdcall FUN_000184c0(int param_1)\r\n\r\n{\r\n  byte bVar1;\r\n  byte *pbVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  FUN_0003702f();\r\n  iVar3 = DAT_00053a45 + param_1 * 0x50;\r\n  iVar4 = 0;\r\n  do {\r\n    if (7 < iVar4) {\r\n      return;\r\n    }\r\n    if ((*(byte *)(iVar3 + iVar4 * 2 + 10) & 0x80) == 0) {\r\n      pbVar2 = (byte *)FUN_0004e8bc();\r\n      FUN_0001685c();\r\n      FUN_00015f84();\r\n      bVar1 = *pbVar2;\r\n      if (bVar1 < 0x15) {\r\n        FUN_0001685c();\r\n      }\r\n      else if (bVar1 < 0x20) {\r\n        FUN_0001685c();\r\n      }\r\n      else if ((bVar1 == 0x20) && (pbVar2[0xd] == 5)) {\r\n        FUN_0001685c();\r\n      }\r\n      else {\r\n        if ((*pbVar2 != 0x20) || (pbVar2[0xd] != 0xb)) {\r\n          FUN_00016886();\r\n          goto LAB_000186e0;\r\n        }\r\n        FUN_0001685c();\r\n      }\r\n      FUN_000187d6();\r\n    }\r\nLAB_000186e0:\r\n    iVar4 = iVar4 + 1;\r\n  } while( true );\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "xr_1864d",
+    "address": "0x1864d",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x18622",
+          "type": "CONDITIONAL_JUMP"
+        },
+        {
+          "from": "0x1862b",
+          "type": "CONDITIONAL_JUMP"
+        }
+      ],
+      "count": 2
+    }
+  },
+  {
+    "id": "fb_14818",
+    "address": "0x14818",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00014818",
+      "start": "0x14818",
+      "end": "0x149f7",
+      "size": 480,
+      "entry_point": "0x14818"
+    }
+  },
+  {
+    "id": "dc_14818",
+    "address": "0x14818",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00014818",
+      "entry_point": "0x14818",
+      "signature": "undefined FUN_00014818(void)",
+      "code": "\r\nint __stdcall FUN_00014818(int param_1,int param_2,int param_3,int param_4,int param_5,int param_6)\r\n\r\n{\r\n  int iVar1;\r\n  int iVar2;\r\n  byte *pbVar3;\r\n  undefined1 *puVar4;\r\n  int iVar5;\r\n  int iVar6;\r\n  int local_14;\r\n  \r\n  FUN_0003702f();\r\n  local_14 = 0;\r\n  if (param_4 < 0x10) {\r\n    FUN_0004e8a5();\r\n    FUN_0004e390();\r\n    if (param_5 != 0) {\r\n      puVar4 = (undefined1 *)(DAT_00053a51 + 7);\r\n      for (iVar5 = 0; iVar5 < DAT_00053ac5; iVar5 = iVar5 + 1) {\r\n        for (iVar6 = 0; iVar6 < DAT_00053ac1; iVar6 = iVar6 + 1) {\r\n          iVar1 = FUN_00037932();\r\n          iVar2 = FUN_00037932();\r\n          if (iVar2 + iVar1 < param_5) {\r\n            *puVar4 = 0xff;\r\n          }\r\n          puVar4 = puVar4 + 4;\r\n        }\r\n      }\r\n    }\r\n  }\r\n  else {\r\n    for (iVar5 = 0; iVar5 < DAT_00053ac1; iVar5 = iVar5 + 1) {\r\n      iVar6 = FUN_00037932();\r\n      if (iVar6 <= param_4 + -0x10) {\r\n        *(undefined1 *)(DAT_00053a51 + 7 + (param_2 * DAT_00053ac1 + iVar5) * 4) = 0;\r\n      }\r\n    }\r\n    for (iVar5 = 0; iVar5 < DAT_00053ac5; iVar5 = iVar5 + 1) {\r\n      iVar6 = FUN_00037932();\r\n      if (iVar6 <= param_4 + -0x10) {\r\n        *(undefined1 *)((DAT_00053ac1 * iVar5 + param_1) * 4 + 7 + DAT_00053a51) = 0;\r\n      }\r\n    }\r\n  }\r\n  for (iVar5 = 0; iVar5 < DAT_00053beb; iVar5 = iVar5 + 1) {\r\n    pbVar3 = (byte *)(DAT_00053a45 + iVar5 * 0x50);\r\n    if ((((pbVar3[5] & 1) == 0) &&\r\n        (*(char *)(DAT_00053a51 + 7 + ((uint)*pbVar3 + (uint)pbVar3[1] * DAT_00053ac1) * 4) != -1))\r\n       && (((((param_6 == 0 && (pbVar3[6] == 0)) || ((param_6 == 1 && (pbVar3[6] != 0)))) ||\r\n            ((param_6 == 2 && (pbVar3[6] == 1)))) || ((param_6 == 3 && (pbVar3[6] == 2)))))) {\r\n      if (param_3 != 0) {\r\n        *(char *)(param_3 + local_14) = (char)iVar5;\r\n      }\r\n      local_14 = local_14 + 1;\r\n    }\r\n  }\r\n  return local_14;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_115b6",
+    "address": "0x115b6",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000115b6",
+      "start": "0x115b6",
+      "end": "0x117e6",
+      "size": 561,
+      "entry_point": "0x115b6"
+    }
+  },
+  {
+    "id": "dc_115b6",
+    "address": "0x115b6",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000115b6",
+      "entry_point": "0x115b6",
+      "signature": "undefined FUN_000115b6(void)",
+      "code": "\r\nundefined4 __stdcall FUN_000115b6(int param_1,uint param_2,byte *param_3)\r\n\r\n{\r\n  byte bVar1;\r\n  byte *pbVar2;\r\n  int iVar3;\r\n  uint uVar4;\r\n  uint uVar5;\r\n  bool bVar6;\r\n  byte local_1f;\r\n  uint local_18;\r\n  \r\n  FUN_0003702f();\r\n  uVar5 = 0;\r\n  if (param_1 == 6) {\r\n    local_18 = param_2;\r\n    param_2 = 0;\r\n  }\r\n  if (param_2 == 0) goto LAB_000117a9;\r\n  bVar1 = *param_3;\r\n  do {\r\n    if (*(char *)(DAT_00053a45 + 7 + (uint)bVar1 * 0x50) != 'y') {\r\n      FUN_00012d7b();\r\n    }\r\nLAB_000117a9:\r\n    while( true ) {\r\n      iVar3 = FUN_00012dac();\r\n      if (iVar3 == 1) {\r\n        return 0xffffffff;\r\n      }\r\n      if ((iVar3 != 0x39) && (iVar3 != 0x1c)) break;\r\n      if (param_1 != 6) goto LAB_00011719;\r\n      bVar6 = false;\r\n      for (uVar4 = 0; (int)uVar4 < DAT_00053beb; uVar4 = uVar4 + 1) {\r\n        pbVar2 = (byte *)(DAT_00053a45 + uVar4 * 0x50);\r\n        if ((((uVar4 != local_18) && (*pbVar2 == DAT_00053ab1)) && (pbVar2[1] == DAT_00053ab5)) &&\r\n           (iVar3 = FUN_00034894(), iVar3 == 0)) {\r\n          bVar6 = true;\r\n        }\r\n      }\r\n      if (!bVar6) {\r\n        FUN_0001f183();\r\n        iVar3 = FUN_0004e8a5();\r\n        FUN_00012e38();\r\n        bVar6 = *(char *)(iVar3 + (uint)local_1f) == '\\x14';\r\n        goto LAB_00011709;\r\n      }\r\n    }\r\n    if (((iVar3 != 0x2c) && (iVar3 != 0x4c)) || (param_2 == 0)) {\r\n      if (iVar3 == 0x48) {\r\n        FUN_00011b48();\r\n      }\r\n      else if (iVar3 == 0x50) {\r\n        FUN_00011b9b();\r\n      }\r\n      else if (iVar3 == 0x4b) {\r\n        FUN_00011c59();\r\n      }\r\n      else {\r\n        if (iVar3 != 0x4d) goto LAB_000117a9;\r\n        FUN_00011bfa();\r\n      }\r\n      FUN_00025a96();\r\n      goto LAB_000117a9;\r\n    }\r\n    uVar5 = uVar5 + 1;\r\n    if (uVar5 == param_2) {\r\n      uVar5 = uVar5 ^ param_2;\r\n    }\r\n    bVar1 = param_3[uVar5];\r\n  } while( true );\r\nLAB_00011719:\r\n  if ((param_1 != 5) &&\r\n     (*(char *)(DAT_00053a51 + 7 + (DAT_00053ab5 * DAT_00053ac1 + DAT_00053ab1) * 4) != -1)) {\r\n    if (param_1 != 4) {\r\n      iVar3 = FUN_00014742();\r\n      bVar6 = iVar3 == 0;\r\nLAB_00011709:\r\n      if (bVar6) goto LAB_000117a9;\r\n    }\r\n    return 1;\r\n  }\r\n  goto LAB_000117a9;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_177fc",
+    "address": "0x177fc",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000177fc",
+      "start": "0x177fc",
+      "end": "0x17897",
+      "size": 156,
+      "entry_point": "0x177fc"
+    }
+  },
+  {
+    "id": "dc_177fc",
+    "address": "0x177fc",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000177fc",
+      "entry_point": "0x177fc",
+      "signature": "undefined FUN_000177fc(void)",
+      "code": "\r\nundefined4 __stdcall FUN_000177fc(undefined4 param_1,int *param_2)\r\n\r\n{\r\n  int iVar1;\r\n  \r\n  FUN_0003702f();\r\n  iVar1 = FUN_00017898();\r\n  if (iVar1 == 1) {\r\n    return 0xffffffff;\r\n  }\r\n  if ((iVar1 != 0x39) && (iVar1 != 0x1c)) {\r\n    if (iVar1 == 0x48) {\r\n      if (*param_2 == 0) {\r\n        DAT_00053c57 = 0;\r\n        return 0;\r\n      }\r\n    }\r\n    else if (iVar1 == 0x50) {\r\n      if (param_2[3] == 0) {\r\n        DAT_00053c57 = 3;\r\n        return 0;\r\n      }\r\n    }\r\n    else if (iVar1 == 0x4b) {\r\n      if (param_2[1] == 0) {\r\n        DAT_00053c57 = 1;\r\n        return 0;\r\n      }\r\n    }\r\n    else if ((iVar1 == 0x4d) && (param_2[2] == 0)) {\r\n      DAT_00053c57 = 2;\r\n    }\r\n    return 0;\r\n  }\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "xr_17aed",
+    "address": "0x17aed",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x11926",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x11a17",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x29656",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 3
+    }
+  }
+]

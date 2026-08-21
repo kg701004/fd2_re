@@ -1,0 +1,20 @@
+[
+  {"id": "fb_117e7", "address": "0x117e7", "action": "function_bounds"},
+  {"id": "dc_117e7", "address": "0x117e7", "action": "decompile"},
+  {"id": "fb_17aed", "address": "0x17aed", "action": "function_bounds"},
+  {"id": "dc_17aed", "address": "0x17aed", "action": "decompile"},
+  {"id": "fb_18890", "address": "0x18890", "action": "function_bounds"},
+  {"id": "dc_18890", "address": "0x18890", "action": "decompile"},
+  {"id": "fb_18d8c", "address": "0x18d8c", "action": "function_bounds"},
+  {"id": "dc_18d8c", "address": "0x18d8c", "action": "decompile"},
+  {"id": "fb_1864d", "address": "0x1864d", "action": "function_bounds"},
+  {"id": "dc_1864d", "address": "0x1864d", "action": "decompile"},
+  {"id": "xr_1864d", "address": "0x1864d", "action": "xref_to"},
+  {"id": "fb_14818", "address": "0x14818", "action": "function_bounds"},
+  {"id": "dc_14818", "address": "0x14818", "action": "decompile"},
+  {"id": "fb_115b6", "address": "0x115b6", "action": "function_bounds"},
+  {"id": "dc_115b6", "address": "0x115b6", "action": "decompile"},
+  {"id": "fb_177fc", "address": "0x177fc", "action": "function_bounds"},
+  {"id": "dc_177fc", "address": "0x177fc", "action": "decompile"},
+  {"id": "xr_17aed", "address": "0x17aed", "action": "xref_to"}
+]
