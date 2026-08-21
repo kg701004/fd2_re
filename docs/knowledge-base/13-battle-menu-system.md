@@ -1460,3 +1460,201 @@ doc32(行 385/586)、doc56(行 2463-2464)、doc58(行 3754,`+0x3b | puVar7[7](MV
    (`DAT_00053a69`,地形類別表)兩者的實際內容值都還沒有被 live dump 過,只確認了「指標本身
    不是垃圾」,不代表表格內容數值正確;可以在 `CALL 0x0004e4be` 前對這兩張表做一次記憶體
    dump 逐值核對是否合理。
+
+## `0x115b6` 在「攻擊目標確認」呼叫現場的完整反組譯——找到 Enter 確認的真正 gate 是 `FUN_00014742`(敵方鄰近性再驗證),其距離門檻讀自一個 96-xref 的高度共用 global(2026-08-22,呼應 doc58「續四十七」缺口)
+
+**任務背景**:doc58「續四十七」live 驗證證實開指令環立刻 Enter 會選到攻擊(`DAT_00053c57==0`),
+但後續無論送多少次 Enter,`0x2e2b0`(攻擊 orchestrator)斷點從未命中、索爾的已行動旗標
+(`+5 bit7`)全程維持 `00`——誠實記錄卡點收斂到「`0x18d8c` case 0 呼叫鏈裡 `0x14818`→`0x115b6`
+(目標確認)這一段」,並指出 `0x115b6`「內部邏輯尚未完整反組譯」。**這個說法需要先澄清一個
+容易混淆的既有事實**:`0x115b6` 本體(561 bytes,`0x115b6..0x117e6`)其實已經在本文件上一節
+(「`0x18890` 完整反組譯」,2026-08-21)被完整反組譯過一次——但那一輪的呼叫現場是**移動確認**
+(`0x18890` 內 `0x18981` 呼叫,`param_1=4`),不是這裡要查的**攻擊目標確認**(`0x18d8c` case 0
+內 `0x18f76` 呼叫,`param_1=0`)。`0x115b6` 是同一份機器碼被至少 9 個不同呼叫端共用的通用
+「候選游標＋確認」函式(`param_1` 是 mode selector),兩種呼叫現場的 `param_1` 不同,會走進函式
+內部完全不同的分支——這正是這次任務要補的缺口:不是函式本體沒查過,是**這個特定呼叫現場
+(`param_1=0`)沒有被逐位元組追過參數與分支**。本節用 `ProbeBatch.java`/`tools/ghidra_batch_probe.py`
+(`disasm`/`decompile`/`call_scan`/`xref_to`/`bytes`,`-readOnly -noanalysis`)補齊,查詢紀錄留存於
+`FD2_ghidra_projects` 對應 `results_*_20260822.json`(本輪 queries/results 亦存於
+scratchpad,可依需要另行搬入 repo)。
+
+### 0. `0x115b6` 的全部 9 個呼叫端與 `0x2e2b0` 的全部 4 個呼叫端(`call_scan` 窮舉)
+
+`call_scan 0x115b6`(比 `xref_to` 可靠,見既有方法論)找到 **9 個呼叫端**,全部 `confirmed_call_instruction=true`:
+
+| 呼叫位址 | 所在函式 | 語意 |
+|---|---|---|
+| `0x18981` | `FUN_00018890`(移動確認外層,doc13 上一節) | 移動目的地確認,`param_1=4` |
+| `0x18f76` | `FUN_00018d8c`(指令環,本節) | **攻擊目標確認,`param_1=0`** |
+| `0x1bd54`/`0x1bdf2`/`0x1bedb` | `FUN_0001bbdc`(道具 action,doc13 舊 §「`0x1bbdc`」) | 道具目標確認(3 處,`param_1` 未逐一查) |
+| `0x1d1da`/`0x1d238`/`0x1d2e3`/`0x1d3ac` | `FUN_0001cff0`(法術 command loop) | 法術目標確認(4 處,`param_1` 未逐一查) |
+
+`call_scan 0x2e2b0`(攻擊 orchestrator)找到 **4 個呼叫端**,同樣全部 `confirmed_call_instruction=true`:
+`0x1561f`(`FUN_0001548e` 內,doc13 08-19 訂正已記載的舊 `doc35` 誤標對象)、**`0x18fc6`**
+(`FUN_00018d8c` 內,即本節攻擊 case 0 的呼叫點)、`0x31aee`、`0x3578b`(這兩個 in_function=null,
+待查,但與本次「索爾攻擊為何沒出手」無關,因為索爾走的是 `0x18d8c` 路徑)。**`0x2e2b0` 只有這
+4 個呼叫端,不存在第 5 條隱藏路徑**——這回答了任務項目 4。
+
+### 1. 攻擊目標確認呼叫現場(`0x18f76`,`0x18d8c` case 0 內)——逐位元組核對參數與 Enter/Escape 分支
+
+直接反組譯 `0x18f50..0x18fb0` 附近的機器碼(而非只看 decompile,因為 `FUN_000115b6()` 在
+decompile 裡完全不顯示參數,是已知的 decompiler arg-blindness),精確還原呼叫序列:
+
+```asm
+PUSH dword ptr [0x00053ab5]      ; DAT_00053ab5(游標 Y)
+PUSH dword ptr [0x00053ab1]      ; DAT_00053ab1(游標 X)
+CALL 0x00014818                  ; 候選陣列 builder,回傳 count(EAX)
+ADD  ESP,0x18
+PUSH ESI                         ; = param_3(候選陣列指標)
+PUSH EAX                         ; = param_2(候選 count)
+PUSH 0x0                         ; = param_1(mode=0，攻擊)
+CALL 0x000115b6                  ; @0x18f76
+MOV  EDI,EAX                     ; 回傳值存 EDI(對應 decompile 的 iVar2)
+ADD  ESP,0xc
+PUSH dword ptr [0x00053a51]
+CALL 0x0004df4c                  ; 已知共用尾綴
+ADD  ESP,0x4
+PUSH ESI
+CALL 0x0003776e                  ; 已知共用尾綴
+ADD  ESP,0x4
+CMP  EDI,-1                      ; if (iVar2 == -1)
+JNZ  0x00018fb3                  ; 不等於 -1 → 跳過取消區塊，繼續往下
+  PUSH dword ptr [ESP+0x74]
+  PUSH dword ptr [ESP+0x7c]
+  CALL 0x00012cea
+  XOR  EAX,EAX
+  JMP  <epilogue>                ; return 0(取消，回到 0x18890 外層重呼 0x18d8c)
+0x18fb3: ...                      ; 繼續 → 0x12c0d → 0x1f04a → 0x18fc6: CALL 0x0002e2b0
+```
+
+**結論(回答任務項目 3)**:`0x115b6` 回傳後,`0x18d8c` case 0 只有唯一一個分支
+——`CMP EDI,-1 / JNZ`——完全對應既有 decompile 記載的 `if (iVar2 == -1) { ...; return 0; }`。
+**沒有第二個隱藏 gate**:只要 `0x115b6` 回傳的不是 `-1`(即回傳 `1`,confirm 成功),執行流就會
+無條件依序呼叫 `0x12c0d`→`0x1f04a`→`0x2e2b0`,中間沒有任何額外的 `CMP`/`TEST`/`Jcc`。**這代表
+「orchestrator 斷點從未命中」不可能是這段 `0x18d8c` 尾段邏輯本身的問題——真正的卡點只能是
+`0x115b6` 從未回傳 `1`(甚至從未回傳,卡在自己內部的阻塞式讀鍵迴圈裡)。**
+
+### 2. `0x115b6` 完整職責(`param_1=0` 攻擊分支的逐位元組路徑)——回答任務項目 2
+
+完整反組譯 + decompile 交叉核對後的精確簽名與控制流(取代上一節較簡化的敘述版本):
+
+```c
+undefined4 __stdcall FUN_000115b6(int param_1 /*mode*/, uint param_2 /*count*/, byte *param_3 /*候選陣列*/)
+```
+
+- `param_1==6`:特殊「同格多單位堆疊」模式(把 `param_2` 另存 `local_18`、`param_2` 歸零),不是
+  本次路徑,略過。
+- `param_2==0`(本次無關,因為 `0x14818` 一定會回傳至少 1 個候選才會進 case 0——見 §4):
+  直接跳過候選格繪製,進入按鍵迴圈。
+- **按鍵迴圈**(`FUN_00012dac()` 阻塞式讀鍵,doc13 上一節已證實其結構):
+  - `scancode==1`(Esc) → `return 0xffffffff`。
+  - `scancode∈{0x39(Space),0x1c(Enter)}` 且 `param_1!=6` → 直接跳到 **confirm 驗證段**(見下)。
+  - 方向鍵(`0x48/0x50/0x4b/0x4d`)→ 呼叫對應的候選格移動 helper(`0x11b48`/`0x11b9b`/
+    `0x11c59`/`0x11bfa`,doc13 上一節已列)、`0x25a96` 重繪,迴圈頂端。
+  - 其他鍵(`0x2c`/`0x4c`,且 `param_2!=0`)→ 候選陣列內循環换下一個候選格(`uVar5` 遞增並
+    wrap),迴圈頂端。
+- **confirm 驗證段(`LAB_00011719`)**:
+  ```c
+  if (param_1 == 5) goto 迴圈頂端;              // mode 5 永遠拒絕確認(語意待查)
+  if (目標格 record(DAT_00053a51 索引 cursorY*width+cursorX 的 +7 byte) == -1)
+      goto 迴圈頂端;                             // 目標格是空格 → 靜默拒絕，繼續讀鍵
+  if (param_1 == 4) return 1;                    // 移動確認：格子非空即可，不再驗證
+  iVar3 = FUN_00014742(cursorX, cursorY, <距離門檻>, 0, param_1);
+  if (iVar3 == 0) goto 迴圈頂端;                  // ★★★ 見 §3，這是攻擊確認唯一的額外 gate
+  return 1;
+  ```
+  **`param_1=0`(攻擊)這條路徑,confirm 成功的必要條件是 `FUN_00014742(...)!=0`**——這是
+  doc13/doc58 先前從未追過的一段,也是本節的核心發現。
+
+### 3. `FUN_00014742`:重新驗證「游標當下位置附近是否還有活著的敵方單位」,距離門檻讀自一個 96-xref 的高共用 global
+
+`FUN_00014742`(214 bytes,`0x14742..0x14817`)完整反組譯,簽名
+`FUN_00014742(int cursorX, int cursorY, int distThreshold, int outBuf, int campFilter)`(5 參數,
+逐一由 `0x1174c..0x1175f` 的 5 個 `PUSH` 直接反組譯核對,不依賴 decompile 的空參數列表)。呼叫端
+實際傳入:`cursorX=DAT_00053ab1`、`cursorY=DAT_00053ab5`、`distThreshold=` **`0x115b6` 自己入口處
+`clamp(DAT_00051a83)`**(`EAX=DAT_00051a83; 若 EAX>1 則 EAX--`,見 `0x115dc..0x115ea`,結果存在
+`0x115b6` 自己的 local frame,`0x14742` 呼叫現場用 `PUSH dword ptr [ESP+0x10]` 讀出這個值)、
+`outBuf=0`(不寫陣列,只要 count)、`campFilter=param_1`(本次=0)。函式本體:
+
+```c
+int FUN_00014742(cursorX, cursorY, distThreshold, outBuf, campFilter) {
+  int matchCount = 0;
+  for (i = 0; i < DAT_00053beb /*roster size*/; i++) {
+    rec = DAT_00053a45 + i*0x50;
+    dx = abs(rec[+0] - cursorX);           // FUN_00037932 = abs()
+    dy = abs(rec[+1] - cursorY);
+    if ((rec[+5] & 1) == 0                  // raw admission bit0（doc13/25/26 既有: 不可直接命名死亡/存活）
+        && dx+dy < distThreshold            // Manhattan 距離門檻
+        && campFilter 對應 rec[+6] 相符（0=敵/1=非敵/2=友/3=己，既有 code）) {
+      if (outBuf != 0) outBuf[matchCount] = i;
+      matchCount++;
+    }
+  }
+  return matchCount;
+}
+```
+
+**也就是說:攻擊目標確認的 Enter 鍵,真正判定「可以確認」的條件不是候選陣列本身,而是重新
+掃一遍全體單位,現場核對「游標目前所在位置附近、距離 < `distThreshold` 的範圍內,是否還存在
+一個 `rec[+5]&1==0`(raw admission bit0 清除)且 `rec[+6]==0`(敵方陣營)的活躍單位」——這是一個
+**即時再驗證**,不是單純讀候選陣列的第 N 個元素。`distThreshold` 若為 `1`(即 `DAT_00051a83==1`
+時 clamp 後不變),則 `dx+dy<1` 要求 **游標必須恰好落在該敵方單位所在格**(距離 0),與既有
+gameplay 記載(doc13「移動/攻擊操作流程」item 6:「目標游標會自動吸附到最近的敵人」)吻合——
+這個 gate 語意上應該是「confirm 當下,游標吸附到的那格是否還站著一個可打的活敵人」,不是廣義
+的武器射程檢查(武器射程已經在更早的 `0x14818` 候選建構階段用過)。
+
+**但 `DAT_00051a83` 本身不能被靜態信任為「這裡一定是 1」**:`xref_to 0x00051a83` 掃出
+**96 筆引用**,寫入端(`WRITE`)散布在**至少 40+ 個不同位址**、橫跨 `0x10483` 一路到
+`0x328f4`(含 `0x13xxx`/`0x14xxx`/`0x15xxx`/`0x16xxx`/`0x17xxx`/`0x18xxx`/`0x1axxx`/
+`0x1bxxx`/`0x1dxxx`/`0x2022xx`/`0x323xx-0x328xx` 這麼大的範圍),**結構上跟 doc13 前一節
+記載的 `DAT_00053c57`(20+ 個 writer、3 套獨立選單子系統共用)高度相似**——這很可能又是一個
+被多套完全不相關的子系統(移動/選單/道具/法術/演出叢集)共用的暫存 global,不是攻擊確認
+專屬的「射程」變數。**目前唯一已知會把它設成 `1` 的地方是 `0x18890`(移動確認外層)在**
+**move-confirm 成功之後**(`DAT_00051a83 = 0; FUN_00012cea(); DAT_00051a83 = 1;`,doc13
+上一節記載)——但 `0x18d8c`(指令環)自己完整反組譯後確認**完全不觸碰這個 global**,所以
+攻擊確認當下 `DAT_00051a83` 到底是不是 `1`,完全取決於**这次遊戲執行到攻擊確認之前,這 40+
+個 writer 裡最後一個被執行到的是哪一個、寫了什麼值**——這是純靜態分析無法回答的問題,
+必須靠 live 記憶體讀取。
+
+### 4. 對「離線 patch+存檔跳章」情境的具體風險檢查(回答任務項目 5,仿照 `0x18890`/floodfill 的同類型檢查)
+
+`FUN_00014742` 這個 gate 依賴三類「可能只有正常流程才會設好」的狀態,逐一列出:
+
+1. **`DAT_00051a83`(距離門檻的原始值)**:見 §3,是一個 40+ writer 共用的 global,**如果這場
+   離線 patch+存檔跳章合成的戰鬥從一開始沒有走過任何一個正常會寫入它的 code path(例如从未
+   成功完成過一次 `0x18890` 的 move-confirm,因為續四十七這次連移動確認本身都不可靠)**,它的值
+   可能停留在某個跟「1」無關的殘留值——過大(門檻寬鬆,不會卡)或過小/負值/垃圾值(門檻永遠
+   不滿足,confirm 永遠失敗,完全吻合續四十七觀察到的症狀)。
+2. **敵方單位 `rec[+5]` bit0(raw admission bit)**:doc13/25/26 三份文件都明確警告「不可直接
+   命名成死亡/存活」,但已知 writer 包括 constructor(`0x10eed` 寫 0)與 HP 死亡路徑
+   (`0x1dc61`/`0x1dd4c`/`0x32975` 寫 1)。**如果離線 patch 敵人成長表(續二十七)的工具在改寫
+   敵人 record 時,連帶把這個 raw byte 誤寫成非 0(bit0=1),或者存檔跳章合成流程沒有正確重建
+   這個 byte(例如直接複製了另一份已經標記過「不可選」的敵人 record)**,`FUN_00014742` 會把
+   這隻敵人整個排除在外——即使牠在畫面上明顯存活、站在原地。這跟續四十五推翻的「MV=0」假說
+   結構完全一樣:**一個持久狀態欄位如果被外部工具動過手腳,會在完全不同的 native 函式
+   (這次是 `0x14742`,不是 floodfill)裡造成同一種「confirm 永遠失敗」症狀**。
+3. **游標吸附位置(`DAT_00053ab1`/`DAT_00053ab5`)是否真的落在敵人格上**:`distThreshold`
+   若為 `1`,要求距離恰好為 `0`。這依賴更早的 `0x14818`(候選 builder)或方向鍵 helper
+   正確把游標「吸附」到敵人格——**本節沒有查證 `0x14818` 是否在攻擊 case 0 這次呼叫裡真的執行
+   了自動吸附,還是游標停在移動前的殘留位置**;如果游標沒有精確落在敵人格上,`FUN_00014742`
+   同樣會回傳 0,不需要牽扯 `+5`/`DAT_00051a83` 任何一個假說。
+
+**與續四十七「SMV 傳送繞過移動」的張力**:上述三個依賴都是**敵方單位或全域暫存狀態**,不是
+索爾自己的 record——`SMV` 只改了索爾的 `+0`/`+1`,不會直接影響這三者。但**如果續四十七的
+SMV 傳送同時也跳過了正常 `0x18890` move-confirm 流程(它確實跳過了,見 §3 對
+`DAT_00051a83` 的分析)**,`DAT_00051a83` 這條依賴就會落空——這是一條 SMV 傳送**間接**
+造成 confirm 失敗的新機制,不同於續四十七自己提出但存疑的「格子佔用索引表」假說,**推薦優先
+驗證這一條,因為它有具體位址與具體讀取值可以直接對照**。
+
+### 5. 小結
+
+- `0x115b6` 這個特定呼叫現場(`param_1=0`,攻擊目標確認)**這次是首次被完整反組譯**,`0x18d8c`
+  回傳後到 `0x2e2b0` 之間**只有一個 `CMP EDI,-1/JNZ` gate**,沒有第二個隱藏條件——回答任務
+  項目 3。
+- `0x2e2b0` 全 EXE 只有 4 個呼叫端,索爾這條路徑唯一相關的是 `0x18fc6`(`0x18d8c` 內)——回答
+  任務項目 4。
+- 真正決定「Enter 能不能確認攻擊」的是 `0x115b6` 內部呼叫的 `FUN_00014742`,它在**游標目前
+  位置**重新掃一遍找活敵人,距離門檻來自一個 96-xref、40+ writer 的高共用 global
+  `DAT_00051a83`——這個 global 的值**無法靜態確定**,必須 live 讀取。
+- 三個具體、可 live 驗證的候選根因已列出(§4),優先順序:`DAT_00051a83` 的即時值 >
+  敵方 `+5` bit0 的即時值 > 游標吸附位置是否精確命中敵人格。
