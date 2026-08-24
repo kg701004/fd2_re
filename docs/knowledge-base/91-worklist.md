@@ -2167,13 +2167,30 @@
   camera/roster/tick 逐幀比對兩次白閃與增援。ch27 戰前 view／selector0 已
   閉合並接線，persistent HUD 擁有者也已達 E1；本項剩餘該時點真實 roster
   raw record、CONTINUE 邊界及原版逐幀 oracle。完成前 event63 仍不可標成 E2。
-- [ ] **CH27-REAL-UI-MOVE-CONFIRM-BROKEN**：`0x115b6`(mode 4)的移動確認
-  `Enter`鍵在 ch27 這個存檔上實測 100% 失敗——換不同合法目標格、atomic
-  vs. held按鍵、加長settle延遲、完整環境重開機皆試過，仍無一次成功；方向鍵
-  ／Escape／選單Enter同期都正常，範圍窄到只咬定這一條輸入路徑。目前繞過
-  方式是 SMV-teleport(與 ch24 續二十/二十一/二十三/二十四已驗證過的手法
-  相同，非本輪新發明)，不是真正解法。攻擊執行本身已在此繞過法下用斷點
-  證實無誤(`0x1AD75F`確認閘門通過、`0x1CA2B0`=native`0x2e2b0`攻擊
-  orchestrator命中、目標HP `15→0`、Sor `record[+5]` `0x00→0x80`，見
-  doc58 續五十三)；本項要解的是「為何真實UI的Enter確認移動在ch27失效」
-  本身，不是攻擊邏輯。
+- [ ] **REAL-UI-MOVE-CONFIRM-ENTER-SPACE-INTERMITTENT-INPUT-DROP**(原
+  `CH27-REAL-UI-MOVE-CONFIRM-BROKEN`，doc58 續五十四訂正範圍/措辭)：
+  `0x115b6`(mode 4)移動確認的 `Enter`/`Space` 鍵**不是 ch27 這個存檔
+  100% 壞掉**——doc58 續四十五已用斷點(`FUN_0004e4f6`回傳`5`非`0xff`)
+  +screenshot 在**同一份存檔**(`FD2.SAV` md5
+  `e6d9a35756cddfc2519969b10f039181`)上，用同一套「Up×5→Enter」手法
+  成功走通過一次；但續四十七起到續五十四，同一份存檔、同一手法反覆失敗，
+  屬於**跨 session 的間歇性(intermittent)輸入傳遞失效**，不是這個存檔/
+  這段程式邏輯必然壞掉。續五十四用斷點在失敗當下直接證實：CPU 確實停在
+  `FUN_00012dac`(native `0x12dac..0x12e37`，`0x115b6` 專用阻塞式讀鍵
+  輪詢器)合法等鍵，不是當機/跑飛；對已卡住的同一個讀鍵迴圈送 `Enter`
+  或 `Space`，`LAB_00011719`(native `0x11719`，confirm 驗證段)與函式
+  `RET`(native `0x117e6`)斷點皆從未命中；但在完全相同的一刻送方向鍵
+  `Up`，畫面立即正確反應(游標位移)——證實問題精確收斂在 `Enter`/`Space`
+  這兩個 scancode 選擇性地沒有被這個讀鍵迴圈觀察到，不是整體輸入管線
+  不通，也不是這段反組譯邏輯本身的 bug。續五十四同時用一輪從頭到尾零
+  `Alt+Pause` 的乾淨對照組重現過失敗，排除「debugger 介入本身擾動輸入
+  時序」是唯一成因；force-release(`xdotool keyup`)後重送也無法修復。
+  **仍未解決**：這個選擇性掉鍵背後在 SDL2/DOSBox-X/Xvfb 哪一層發生、
+  為何同一存檔同一手法時好時壞，doc58 續五十四誠實列為下一輪候選方向
+  (DOSBox-X mapper 對 Return/Space 的特殊處理、`FUN_00010620` 本身尚未
+  反組譯)。目前繞過方式仍是 SMV-teleport(與 ch24 續二十/二十一/二十三/
+  二十四已驗證過的手法相同，非新發明)，不是真正解法；攻擊執行本身已在此
+  繞過法下用斷點證實無誤(`0x1AD75F`確認閘門通過、`0x1CA2B0`=native
+  `0x2e2b0`攻擊orchestrator命中、目標HP `15→0`、Sor `record[+5]`
+  `0x00→0x80`，見doc58 續五十三)；本項要解的是「為何真實UI的Enter/Space
+  確認移動會間歇性失效」本身，不是攻擊邏輯，也不是這個存檔/章節專屬的問題。
