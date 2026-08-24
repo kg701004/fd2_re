@@ -124,3 +124,111 @@ prevSlot, idx)`」這類帶引數字面值的寫法,應理解成分析當時**�
 decompile 文字比對本身的盲點,對照用)、`GlobalBehaviorScanV2.java`(v2,指令層級主方法)、
 `GlobalBehaviorScanV3.java`(v3,加暫存器歷史回溯)、`GlobalBehaviorScanDebug.java`
 (輔助稽核,列出每個呼叫端完整的 decompile 引數文字,是本次發現盲點的直接工具)。
+
+## N-way 平行 dosbox-x live-verification harness(`tools/dosbox_harness.sh`,2026-08-24)
+
+**問題**:`docs/knowledge-base/91-worklist.md` 還剩約 30 個 E-class(需要 live DOSBox-X 驗證)
+項目,doc48 §8 的 recipe 一次只能跑一顆 dosbox-x(固定 tmux session `dbg`、Xvfb `:99`、工作
+目錄 `~/fd2-run`),多個互不相關的待驗證項目只能排隊一個一個做。
+
+**解法**:`tools/dosbox_harness.sh`,一支純 bash 腳本(這台專案 `tools/` 目錄本身已有多支
+`.sh` 走 `set -euo pipefail` + 純指令列風格,這支延續同樣風格),把 doc48 §8.4 的單 instance
+recipe 包成可命名、可重複呼叫、彼此隔離的子指令:
+
+```
+tools/dosbox_harness.sh launch <name> [keepalive_seconds]   # 起一顆全新隔離 instance(長駐,見下)
+tools/dosbox_harness.sh screenshot <name> [output_path]     # 截當前畫面成 PNG
+tools/dosbox_harness.sh send-keys <name> <key> [key2 ...]   # 送遊戲按鍵(xdotool key 語法)
+tools/dosbox_harness.sh enter-debugger <name>                # 送 Alt+Pause,切進 ncurses debugger TUI
+tools/dosbox_harness.sh debugger-cmd <name> <指令文字...>     # 對 debugger console 打字+Enter
+tools/dosbox_harness.sh status                                # 列出目前所有 harness 管理的 instance
+tools/dosbox_harness.sh teardown <name>                       # 收掉單一 instance
+tools/dosbox_harness.sh teardown-all                          # 收掉全部 harness instance
+```
+
+因為 Windows 側呼叫 WSL2 有續五十五記錄的 `$變數`/`~`路徑被外層 relay 吃掉的問題,這支工具
+**寫成實體 `.sh` 檔案放在 repo 裡**(不是塞進 `bash -c '...'` 字串),呼叫方式固定是:
+
+```
+MSYS_NO_PATHCONV=1 wsl -d Ubuntu bash /mnt/c/Users/kg701/Desktop/GAME/fd2_re/tools/dosbox_harness.sh <子指令> ...
+```
+
+**隔離設計(每個 instance 三件事都各自獨立,不只是換名字)**:
+1. **Xvfb TCP display**:自動配置,從 `:199` 起、每個新 instance +100(`:199`/`:299`/…),
+   配置時同時檢查①harness 自己的 registry(`~/.fd2-harness/instances/*.state`)②
+   `ss -tln` 實際監聽中的 port,雙重確認不撞號——不只避開彼此,也避開 doc48 §8.4 canonical
+   recipe 固定用的 `:99`。
+2. **獨立 tmux server**:harness 的所有 tmux 操作一律加 `-L fd2harness`,也就是完全另開一個
+   tmux **server 進程**,不是在 default server 上開不同 session 名字。這樣即使將來子指令的
+   session 名字算錯或打錯,`kill-session`/`kill-server` 的作用範圍也物理上不可能碰到
+   default server 上的 `dbg`(doc58 續五十九/續六十在跑的那個)。
+3. **獨立工作目錄**:每次 `launch` 都把 `~/fd2-run`(canonical 遊戲檔案來源,可用
+   `FD2_HARNESS_SOURCE_DIR` 覆寫)`cp -r` 一份全新的到 `~/fd2-run-harness-<name>`,單顆
+   87MB、機器有 950GB 可用空間,不共用、不互相污染存檔/暫存檔。
+
+**建置過程中踩到的坑**:
+- **真的抓到一個 bug**:第一版把 `Xvfb "127.0.0.1:$port" ...` 當成顯示器參數直接丟給
+  `Xvfb`,結果 Xvfb 直接報 `Fatal server error: Unrecognized option: 127.0.0.1:199` 整個
+  無法啟動——`Xvfb` 的顯示器參數只能是裸 `:N`(display number),`127.0.0.1:N` 這個完整
+  TCP 位址形式**只用在 client 端**(`xdotool`/`dosbox-x`/`import` 的 `DISPLAY` 環境變數),
+  doc48 §8.4 的範例其實已經是對的寫法(`Xvfb :99 ...` + `export DISPLAY=127.0.0.1:99`),
+  是這次重新包裝成參數化腳本時手滑弄反了兩者。已修正並重新實測通過。
+- 延續 doc48 §8.4 續二十一/續四十六的既有教訓:`launch` 子指令**必須**以
+  `exec sleep <keepalive>` 結尾撐住整條 WSLg 連線,呼叫方(agent)**必須**把整個
+  `wsl -d Ubuntu bash .../dosbox_harness.sh launch ...` 當成單一次呼叫背景執行(工具的
+  `run_in_background:true`),不能自己在腳本內部再包一層 `&` 讓外層 wsl.exe 提前 return——
+  否則同樣會在 15-60 秒內被整組回收。這個限制现在是**per-instance**的:每個 `launch` 呼叫
+  都要各自維持自己的一條長駐連線,`status`/`screenshot`/`send-keys`/`debugger-cmd`/
+  `teardown` 才是可以隨時單發呼叫的短指令。
+- **teardown 絕不用 blanket `pkill -9 dosbox-x`/`pkill -9 -f Xvfb`**(doc48 §8.4 給單
+  instance 手動復原時用的寫法)——那樣會連 canonical `dbg`/`:99` 或別的 harness instance
+  一起殺掉。改成只 kill 自己 registry 記錄的**具體 PID**,而且 kill 前用
+  `ps -p <PID> -o args=` 核對該 PID 現在跑的程式仍然是預期的 Xvfb/sleep(防呆:萬一該
+  PID 因為系統重用而變成別的進程,不會誤殺)。
+- `launch` 只確認 DOSBox 視窗**存在**(`STATUS=running`),**不代表**開場動畫/標題畫面已經
+  跑完——doc48 既有的「送鍵前先 screenshot 確認畫面」原則對每個 harness instance 依然
+  適用,harness 本身不擅自幫你判斷「已經到標題」。
+- `teardown` 預設**保留**工作目錄(`~/fd2-run-harness-<name>`,方便事後檢查崩潰現場的
+  `FD2.TMP`/存檔),只清 registry 狀態檔+process;要收空間自己手動 `rm -rf`。
+
+**2026-08-24 實測驗證(不是紙上談兵,是真的並行跑過)**:
+
+- 驗證前用 `ps aux`/`tmux ls` 確認 doc58 續五十九/續六十的 canonical session(`dbg`、
+  `:99`、`~/fd2-run`)當時確實正在跑,harness 全程避開這三個名字,測完再次確認它完全沒被動過。
+- `launch alpha` + `launch beta`(各自背景執行,間隔約 40 秒)成功各自配到 `:199`/`:299`,
+  `status` 顯示兩者 `XVFB_OK`/`SESS_OK` 皆為 `yes`,加上原本的 canonical instance,當時
+  **同時有 3 顆 dosbox-x 進程在跑**。
+- `screenshot alpha`/`screenshot beta` 同一時刻各截一張:alpha 已到標題畫面(START/LOAD/
+  CONTINUE 選單),beta 還在約 30 秒的開場過場動畫中途——直接證明兩者進度完全獨立,不是
+  同一個畫面複製出來的。
+- 兩者都到標題畫面後,對 alpha 送 `send-keys alpha Down Down`(不碰 beta),再次分別截圖:
+  alpha 反白移到 `CONTINUE`,beta 仍停在預設的 `START`——證明 X11/xdotool 按鍵通道確實
+  各自獨立路由,沒有互相干擾。
+- 對 beta 送 `enter-debugger` + `debugger-cmd beta 'D CS EIP'`,`tmux -L fd2harness
+  capture-pane` 讀到 `DEBUG: Set data overview to F000:CFD0`,證明 debugger console
+  通道也正常運作;之後重新截圖 alpha,畫面仍是先前的 `CONTINUE` 反白狀態沒有變化,證明
+  beta 進 debugger 這件事沒有影響到 alpha。
+- `teardown-all` 之後,`ps aux`/`tmux ls`(default server)/`tmux -L fd2harness ls` 三方
+  核對:canonical `dbg`/`:99`/dosbox-x 三個進程原封不動仍在執行,harness 自己開的兩顆
+  Xvfb/dosbox-x 全部消失,`fd2harness` 這個 tmux server 整個不存在了(`no server
+  running`)——teardown 精準,沒有誤傷、也沒有殘留。
+
+**資源使用量測(用來定並行上限,不是憑空假設)**:3 顆 dosbox-x 同時跑(canonical + 2 個
+harness)時,`free -h` 顯示僅用掉 954MiB/7.8GiB(這台機器 `.wslconfig` 限制的 WSL2 VM 記憶體
+上限),`uptime` load average 0.43(4 核心)——完全沒有壓力跡象,每顆 dosbox-x 進程 CPU
+佔用約 13-23%。
+
+**建議並行上限:2-3 顆 harness instance**(疊加在可能同時存在的 1 顆 doc48 §8.4 canonical
+instance 之上)。**2 顆是這次直接實測驗證過的**(如上);3 顆是根據觀察到的資源餘裕(3 顆
+共用時記憶體/CPU 都遠低於 `.wslconfig` 的 4 核心/8GB 上限)做的保守外推,**尚未實際測過 3
+顆同時 launch**,下一輪如果要衝更高並行數,應該先重新量測而不是直接假設會線性延伸——
+dosbox-x 的 cycles 模擬對單一 instance 是 CPU-bound 的,這台 VM 實際只有 4 個邏輯核心,
+核心數才是真正的硬上限,記憶體目前看起來還不是瓶頸。
+
+**環境變數覆寫**(不想用預設值時):`FD2_HARNESS_REGISTRY_DIR`(state 檔目錄,預設
+`~/.fd2-harness/instances`)、`FD2_HARNESS_TMUX_SOCKET`(預設 `fd2harness`)、
+`FD2_HARNESS_SOURCE_DIR`(canonical 遊戲檔案來源,預設 `~/fd2-run`)、
+`FD2_HARNESS_DOSBOX_BIN`(dosbox-x 執行檔路徑,預設
+`~/fd2-dosbox-build/dosbox-x/src/dosbox-x`,與 doc58 續二十一起 WSL2-native 建置沿用的
+同一顆二進位檔)、`FD2_HARNESS_SHOT_DIR`(screenshot 輸出目錄,預設
+`<repo>/.wsl_build/harness`,已在 `.gitignore` 的 `.wsl_build/` 規則下,不會誤入版控)。

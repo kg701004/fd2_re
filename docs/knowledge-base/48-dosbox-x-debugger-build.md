@@ -451,3 +451,20 @@ tcp` + `DISPLAY=127.0.0.1:99`,不要嘗試 unix socket。
    不可靠(已知官方限制,`core=normal`可解,見續四十三/四十四),但**即使在 Normal core
    下**,續四十八/續五十仍記錄過斷點「registered 但從未命中」的個案,不是 100% 徹底解決,
    遇到時建議優先用畫面/screenshot 驗證遊戲狀態,不要完全依賴 debugger 讀值。
+
+## 9. N-way 平行驗證 harness(`tools/dosbox_harness.sh`,2026-08-24)
+
+§8.4 的 recipe 一次只跑一顆 dosbox-x(tmux session `dbg`、Xvfb `:99`、工作目錄 `~/fd2-run`)。
+`tools/dosbox_harness.sh` 把它包成可重複呼叫的 `launch`/`screenshot`/`send-keys`/
+`enter-debugger`/`debugger-cmd`/`status`/`teardown`/`teardown-all` 子指令,讓多個互不相關的
+91-worklist 項目可以同時各開一顆獨立 dosbox-x 驗證,不用排隊。每個 instance 有自己的 Xvfb TCP
+display(自動配置,`:199`/`:299`/…)、自己的 tmux **server**(`-L fd2harness`,與 §8.4 用的
+default server 完全分開,不只是換 session 名字)、自己的工作目錄(`~/fd2-run-harness-<name>`,
+從 `~/fd2-run` 複製而來),所以可以跟 §8.4 這條「單一 instance」recipe 的 session 同時跑,
+互不干擾——2026-08-24 已在 §8.4 的 canonical session(`dbg`/`:99`)**正在執行中**時,額外並行
+啟動兩顆 harness instance 實測驗證過(畫面各自獨立進度、送鍵/debugger 指令互不串線、
+`teardown-all` 只清掉 harness 自己的 process,`dbg`/`:99` 全程未受影響)。
+
+完整用法、已驗證的並行上限(2-3 顆)、建置過程中踩到的坑(含一個真的 bug:Xvfb 的顯示器參數
+只能是裸 `:N`,不能是 `127.0.0.1:N`,那個形式只用在給 client 端的 `DISPLAY` 環境變數)記錄在
+`docs/knowledge-base/98-tooling-infrastructure.md`,不在此重複。

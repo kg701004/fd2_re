@@ -4,3 +4,9 @@
 # HasNativeTurnEventControlState 恆為 false、event62/63 整條鏈路失效。強制此檔
 # 永遠以 checked-in 的原始位元組(LF)存在,不受使用者 autocrlf 設定影響。
 remake/assets/maps/native_turn_event_controls.json -text
+
+# tools/*.sh 都是給 WSL2 bash 執行的(dosbox-x harness、ffmpeg 擷取等)。同樣的
+# core.autocrlf 問題:Windows checkout 會把 LF 轉成 CRLF,WSL bash 遇到 CRLF 腳本
+# 會直接 syntax error(shebang 行、heredoc 都會壞)。強制這個目錄下的 .sh 一律用
+# LF checkout,不受使用者 autocrlf 設定影響。
+tools/*.sh text eol=lf
