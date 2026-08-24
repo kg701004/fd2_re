@@ -48,7 +48,16 @@ def main(argv):
         "rules": [
             {
                 "event_id": 58,
-                "handler": "0x354fe",
+                # NOTE(2026-08-24, doc25 §11.7): 0x354fe is the literal, byte-confirmed
+                # value of the 0x51b91 dispatch table's event_id=58 slot, but that address
+                # falls mid-instruction inside event57's own handler (0x354dd) and does not
+                # reach this logic at all -- it's a table artifact. The five-choice-treasure
+                # code (0x1B8A6 inventory check / 0x5274E table / 0x1BB8C write) actually
+                # lives in a separate function starting at 0x35854, which currently has no
+                # known static caller. "handler" below records where the logic body is, not
+                # a verified call target reachable from event_id 58 -- see doc25 §11.7.5 and
+                # 91-worklist.md L212 before changing this back.
+                "handler": "0x35854",
                 "item_table_address": "0x5274e",
                 "item_by_slot": items,
                 "open_slots": [0, 1, 2, 3, 4],

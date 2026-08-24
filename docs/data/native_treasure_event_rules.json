@@ -8,7 +8,7 @@
   "rules": [
     {
       "event_id": 58,
-      "handler": "0x354fe",
+      "handler": "0x35854",
       "item_table_address": "0x5274e",
       "item_by_slot": [
         29,

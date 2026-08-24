@@ -25,7 +25,7 @@
 145 - D - doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。
 155 - E - RE-BATTLE-AI-SPECIAL-TOPIC自述下一步需固定存檔trace驗證實際選中command/畫面順序，需DOSBox。
 210 - D - REMAKE-AI-MODE-RUNTIME剩餘模式玩法名稱/event82觸發/回合orchestration可續靜態RE。
-212 - D - REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。**大幅推進(2026-08-24,doc25§11)**:32個handler全部取得明確狀態(22個具體行為描述、10個確認table artifact)，但event58/76/78三個既有「[驗]乾淨」結論被新發現的指令邊界疑慮動搖、尚未re-verify，checkbox維持`[~]`。
+212 - D - REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。**大幅推進(2026-08-24,doc25§11)**:32個handler全部取得明確狀態(22個具體行為描述、10個確認table artifact)，但event58/76/78三個既有「[驗]乾淨」結論被新發現的指令邊界疑慮動搖、尚未re-verify，checkbox維持`[~]`。——**re-verify完成(2026-08-24續輪,doc25§11.7)**:找到第二條獨立管道(直接讀`0x51b91`跳表原始bytes，用4個既驗錨點(event0/59/77/82)校準出一致的relocation偏移量`0x356`)，逐byte確認event58/76/78三個table槽位的原始值**precisely等於**既有登記位址(`0x354fe`/`0x35d60`/`0x35ed2`)，排除誤讀；再交叉指令邊界回溯(58新補、76/78重驗)確認三者皆落在鄰居handler(58→event57`0x354dd`、76/78→§11.5已找到的`0x35d5d`/`0x35ec1`)中段，無獨立語意。**三者definitively確認為table artifact**，58..89最終統計更正為18個具體行為描述/14個table artifact。副作用：doc25§6.3「event58:map25五選一寶物」的入口位址`0x354FE`與「透過event_id58觸發」歸因已撤回(邏輯描述本身不受影響)，該寶物邏輯真正的runtime觸發路徑變成新的未解問題，見doc25§11.7.5。**checkbox可視為此項本身已閉合**；剩餘的「各dispatcher selector生產路徑」與新開的「map25 event58真正觸發路徑」屬另外的開放項，不影響本項58..89 handler語意的收斂結論。
 245 - D - doc27§5已列明確剩餘清單(經驗值攻守等級因子/0x2f7b6內cVar4分支/6種傳送魔刃經驗公式/法術命中逐ID核對)，可續靜態分析。
 246 - D - 物品系統裝備加成精確累加點與使用效果碼仍未反組譯。
 247 - D - 核對doc32 L271/411-435，class_change_targets.json portrait11-13輪轉錯位仍「待查」，未被其他doc解決。
@@ -422,10 +422,28 @@
       湊巧resync誤判)——**證據強但未經獨立管道完全釘死，本輪未直接改寫這3項既有結論，留待專門
       re-verify**。32個entry最終統計：22個有具體行為描述、10個確認為table artifact無獨立語意。
       **checkbox仍維持`[~]`**：剩event58/76/78的re-verify、各dispatcher selector生產路徑未逐一閉合。
+      ——本輪(2026-08-24續輪,`doc25`§11.7,definitively收斂58/76/78)**re-verify完成**:找到§11.5當時
+      缺的第二條獨立管道——不靠反組譯，直接讀`0x51b91`跳表原始4-byte值，用4個既驗錨點
+      (event0=`0x341db`/event59=`0x35641`/event77=`0x35ebe`/event82=`0x35f92`)校準出一致的LE
+      relocation偏移`0x356`(4/4錨點命中,零反例)，逐byte確認event58/76/78三個table槽位的原始值
+      **precisely等於**既有登記位址`0x354fe`/`0x35d60`/`0x35ed2`——不是誤讀，也排除了§11.5回溯找到
+      的「更早疑似真入口」(`0x35854`/`0x35d5d`/`0x35ec1`)是table實際編碼值的可能性。交叉指令邊界
+      回溯(58新補、76/78重驗)確認三者皆落在鄰居handler中段：58→event57自己handler(`0x354dd`)的
+      `PUSH 0xcd`立即值中段(15-byte巧合resync)、76/78→§11.5已找到的獨立乾淨函式`0x35d5d`/`0x35ec1`
+      的PUSH/CMP運算元中段。**三者definitively確認為table artifact，無獨立語意**——與64/66/77/68/70/
+      71/81/85..89同款,不是「未經獨立管道完全釘死」的存疑狀態。58..89最終統計更正為**18個具體行為
+      描述、14個table artifact**(原22/10統計本身加總亦有誤，一併更正)。額外發現：doc25§6.3「event
+      58:map25五選一寶物」的入口位址`0x354FE`與「透過event_id58觸發」歸因需撤回——邏輯描述本身
+      (`0x1B8A6`/`0x5274E`/`0x1BB8C`/FDTXT`0x1E0`)不受影響仍為[驗]，但其真正所在函式`0x35854`
+      目前查無任何已知靜態呼叫者，map25寶物slot在原版runtime真正的觸發路徑變成新的未解問題(見
+      doc25§11.7.5，也牽動已標`[x]`的**REMAKE-TREASURE-EVENT58**——該項的遊戲規則描述本身未受
+      影響，僅其RE位址佐證`0x354FE`已知有誤，見該行附註)。**本項(58..89 handler高階語意)可視為
+      definitively收斂完成**；checkbox維持`[~]`僅因「各dispatcher selector生產路徑」子項仍未逐一
+      閉合，與本輪解決的範圍無關。
 - [x] **RE-POST-RESOLUTION-1AA1D**：閉合 `{kind:u8,payload:u16le}`，kind0/1 為物品／金錢、kind2 dispatch 全域事件、kind3 為另一呈現分支；建構器只採 FDFIELD b22+b23..24，撤回 b23..25 24-bit payload。
 - [x] **REMAKE-NATIVE-TREASURE-ASSETS**：33 圖 composition+FDSHAP 寶物格及 16 槽控制列已選擇性同步；type0/1 可執行，其他型態保存 event/native_type 並失敗即關閉，不再誤給一般物品。
 - [x] **RE-EVENT82-REACHABILITY**：turn、field、treasure、unit effect 與四個 EXE 硬編碼後處理列均無 payload82；目前無已知資料 producer。仍須稽核 runtime `+0x31..+0x33` 的其他 writer，未證實 dead code。——已解:`doc25`(2026-08-19)全EXE指令級xref掃描,僅4個真正writer(2個寫死0xFF常數、2個被`kind<2`硬gate擋掉),**證實dead code**。殘留2個低機率不確定性(暫存器算位移寫入、未反組譯區域)如實記錄未升格為絕對結論。
-- [x] **REMAKE-TREASURE-EVENT58**：閉合 map25 slots0..4 共用 event58；空欄時依 slot 給 `[1D,2B,33,3D,47]` 並共同關閉五槽，滿八格不改狀態。規則已綁定 EXE 雜湊、匯出成 editable JSON 並接正式 ClaimTreasure。
+- [x] **REMAKE-TREASURE-EVENT58**：閉合 map25 slots0..4 共用 event58；空欄時依 slot 給 `[1D,2B,33,3D,47]` 並共同關閉五槽，滿八格不改狀態。規則已綁定 EXE 雜湊、匯出成 editable JSON 並接正式 ClaimTreasure。——**RE位址附註(2026-08-24,doc25§11.7)**：本項描述的遊戲規則本身未受影響，但其原先引用的 RE handler 位址 `0x354FE` 已確認是 `0x51b91` 跳表 event58 槽位的 table artifact(落在 event57 handler 中段，不含這段邏輯)；真正的邏輯本體在 `0x35854`，且該函式目前查無已知靜態呼叫者，原版 runtime 如何從 map25 資料的 `value:58` 呼到這段程式碼仍未查明。若 `native_treasure_event_rules.json` 或相關 regression 有依賴 `0x354FE` 這個位址值本身(而非規則的行為結果)，建議之後核對更新；不影響本項 checkbox 狀態。
 - [x] **RE-PHASE-RESOURCE-1A7BD**：Docker Capstone 固定 `0x1A7BD` 是 `[0x53AF9]` gate 下的 `0x111BA(0x1A4D,0,0x40)` resource-handle setup，`0x1A7F1` 釋放 `[0x53B0F]`；已從 transient selector／campaign phase 語意中分離。
 - [x] **音樂播放與場景切換**機制(AIL XMIDI 序列)→ `12-…`
 - [x] **戰場選單與行動系統**(行動狀態機/選單游標/Get_EasyMagic)→ `13-…`
