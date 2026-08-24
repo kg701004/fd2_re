@@ -144,6 +144,21 @@
       "still_pending": "已修正完成(commit ba5fc4b2)。round10/11 舊位址段落刻意保留在 battle_sfx_map.json 供歷史對照,一律以 round12_verified_chain 為準。remake atkAnim 現有 SFX hook 點(#48/64/88)尚未接上本輪驗證過的真實資源家族(#82-90)。"
     },
     {
+      "wrong_address": "0x027fc9(僅限『native command ID32-35 複合 handler』這條語意鏈,與上一筆 0x27fc9→0x2ff01『總派送函式』勘誤是不同的兩件事,不可混用)",
+      "correct_address": "0x2d80d",
+      "wrong_semantic_claimed": "docs/knowledge-base/56-fd2-remake-sdd.md(2305-2311行、852-855行)與 docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md(554行)記載的『ID32..35 compound-handler closure』——32進0x2111a、33清+0x25..+0x27後固定800進0x211a4、34連呼0x22721/0x22866/0x22997、35連呼0x22d1b寫+0x25/+0x27/+0x26——這串正確的呼叫序列在2026-07-26原始反組譯時被記在已知錯誤位址 0x27fc9 上(0x27fc9實際是無關的選單方向鍵游標函式FUN_00027f4a,見上一筆errata)。",
+      "discovered_date": "2026-08-24",
+      "discovery_method": "本輪(doc27 §6.5)用 tools/ghidra_batch_probe.py 對 FUN_0002ff01 內 id>=0x20 分支的真正 callee 0x2d80d 做完整逐指令反組譯+decompile,獨立重新推導出與doc56/SESSION-HANDOFF舊敘述幾乎逐字相同的四分支呼叫序列(id 0x20/0x21/0x22/0x23 分別對映 0x2111a/0x211a4(800)/0x22721+0x22866+0x22997/0x22d1b×3),並與 docs/data/command_labels.json(32=熾天使/33=風妖精/34=破壞神/35=暗邪鬼)、doc02攻略文字(『破壞神=同時施魔刃+魔鎧+風行』『暗邪鬼=同時施麻痹+封咒+毒擊』)三重印證吻合。額外新追出第二段FDOTHER.DAT SFX index來源=DAT_00052668的4個byte(91/92/93/94,緊接#82-90家族),補上doc36 round12未追完的缺口。",
+      "root_cause": "2026-07-26當時的手動反組譯把FUN_0002ff01 id>=0x20分支的真正callee誤記成0x27fc9(可能是disasm_le.py在該位址範圍解析出的錯誤邊界,與上一筆errata同一根因家族),但函式內部邏輯本身的反組譯是正確的——這是位址標籤錯誤,不是功能性結論錯誤。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md"
+      ],
+      "correction_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "correction_section": "§6.5",
+      "still_pending": "doc56/SESSION-HANDOFF-2026-07-06.md 裡舊的『0x27fc9』字面引用尚未逐一改寫為0x2d80d(功能性結論不受影響,已由本輪§6.5獨立重新驗證);remake battle package 尚未接上ID32-35四分支的完整演出邏輯。"
+    },
+    {
       "wrong_address": "N/A(系統性規律,非單一位址)",
       "correct_address": "新版(0x7xxxx) = 舊版(0x5xxxx) + 0x25214,唯 crit 表例外(見上)",
       "wrong_semantic_claimed": "在 2026-08-14 改用新版 EXE(509158B)為基準之前,docs/knowledge-base/03-exe-and-data-structures.md 記載的資料表 offset 是對舊版(357074B,已遺失)EXE 有效的位置——若直接沿用會讀到錯誤資料。",

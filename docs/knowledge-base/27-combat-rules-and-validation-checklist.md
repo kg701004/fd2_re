@@ -250,11 +250,38 @@ for (iStack_34 = 0; iStack_34 < param_3 /*targetCount*/; iStack_34++) {
 
 **結論**:AoE(range>0)目標清單生成的完整鏈路——`spell/item record[+3]`(選取範圍)/`record[+4]`(生效範圍)→ `FUN_00014818` 依 `<0x10`/`>=0x10` 分流成「`FUN_0004e390`+`FUN_0004e42c` 遞迴 flood fill 塗地圖緩衝區」或「列/欄門檻掃描」→ 掃描全部 unit、按緩衝區命中 + `record[+6]` 陣營篩選器收集 roster index → 回傳陣列+計數 → 經 `FUN_0001cff0` 的 stack frame 原樣傳給 `FUN_0002ff01` 的 `param_3/param_4` → §6.2 已證實的逐目標套用迴圈——**已用位址級反組譯完整釘死,不再是開放問題**。唯一未展開的末梢是葉節點 `FUN_0004e4be` 本身(地圖緩衝區的實際寫入/邊界判斷原語)與 `FUN_0004e8a5` 回傳陣列的確切用途,兩者都只影響「精確步進代價/資料表內容」的細節,不影響本節已確立的「range byte → flood fill → 陣營篩選 → unit-index 陣列」整體機制結論,留待需要精確重現地圖形狀時再補。
 
+### 6.5 `0x2cf30`/`0x2d80d` 完整反組譯——derived-strike 演出/SFX 迴圈 + 四類複合 handler 逐支釘死(2026-08-24)
+
+> 背景:worklist 91 第 792 行標記 `0x2ff01` 分支結構「id 24/28–31 走 `0x2cf30`、id≥32 走 `0x2d80d`」首次有反組譯佐證,但兩個 callee 本身尚未逐指令展開。方法:純靜態 `tools/ghidra_batch_probe.py`(`disasm`/`decompile`/`xref_to`/`call_scan`/`bytes` 五種 action,`FD2Analysis3`,`-readOnly -noanalysis`)。`call_scan` 對兩個位址各自窮舉全 EXE,確認**唯一 caller**都在 `FUN_0002ff01` 內(`0x2cf30`←`0x3003f`、`0x2d80d`←`0x30012`),與既有分支結論一致,無第二呼叫路徑。
+
+**`0x2cf30`(`FUN_0002cf30`,body `0x2cf30..0x2d80c`,2269 bytes,ID24/28/29/30/31 derived-strike)**——逐指令反組譯+decompile 確認:
+
+- **倍率表訂正**:`if id==0x18(24) mult=15; elif id==0x1c(28) mult=20; elif id==0x1d(29) mult=12; else mult=18`。**`else` 分支同時覆蓋 `id==0x1e`(30,音速刃)與 `id==0x1f`(31,`command_labels.json` 該 slot label 為空字串)**——先前記錄「倍率 15/20/12/18 分別對應 24/28/29/31」的措辭會讓人誤以為 30 沒有倍率或另有分支,實際上 30/31 共用同一個「非 24/28/29」的預設值 18,已在 `verified_addresses.json` 訂正措辭。傷害本體 `trunc(actor.+0x48(AP,short)*mult/10)`,經已知的 `0x1c81f` HP writer 寫入(與法術/道具傷害共用同一個底層寫入核心,只是傷害數值來源不同)。
+- **derived-strike 有自己獨立的逐目標演出/SFX 迴圈,不是單純呼叫 `0x1c81f` 就結束**:對每個 target 呼叫完 `0x1c81f` 後,再走一個「hit-event 陣列回放」迴圈——陣列來源是 `FUN_000314de()`(先於主迴圈呼叫一次,回傳指標存入 `local_28`/`DAT_0005414b`),逐 event(`local_24` 從 `local_28[2]` 掃到 `*local_28`)檢查 `local_28[event+5]!=0` 才呼叫 `FUN_00025a96`(=已知 `play_sfx_a`,`0x25a96`)觸發音效,`local_28[event+4]==1` 時把這一步的 HP 顯示值分成 N 步遞減播放(`id==0x1c`(28,淒煌斬)用 8 步、其餘三招用 1 步——這是**淒煌斬相對其他三招唯一有實質差異的演出**,同時它在函式前段的資源載入區也多一次 `FUN_0002facd()` 繪製呼叫,其餘三招沒有)。event 陣列本身逐 byte 完整語意(哪個 event 對應揮擊/命中/爆擊等)未展開到 leaf level,但「呼叫 `0x1c81f` 算傷害→回放 hit-event 陣列觸發 `play_sfx_a`」這個機制結論已用位址級反組譯釘死。
+- 函式前段另外無條件載入 3 個資源(`DAT_0005413f`/`DAT_00054143`/`DAT_00054147`,各一次 `FUN_000111ba()`),四招共用,未鑑定型態,不影響上述結論。
+
+**`0x2d80d`(`FUN_0002d80d`,body `0x2d80d..0x2df00`,1780 bytes,ID32-35『四類特殊演出』)**——逐指令反組譯+decompile 確認內部依 `commandId` 精確分四支,對照 `docs/data/command_labels.json`(32=熾天使、33=風妖精、34=破壞神、35=暗邪鬼)與 `docs/knowledge-base/02-game-data-reference.md` 攻略文字逐支核對:
+
+| id | 名稱(`command_labels.json`) | `0x2d80d` 內呼叫的 callee | doc02 攻略文字 | 一致? |
+|---|---|---|---|---|
+| 0x20(32) | 熾天使 | `FUN_0002111a(0x20, targetArray, targetCount)`(item type21 共用同一入口,終端經 `0x1c75e`) | 「召喚(最強攻擊)」 | ✓ 定性一致(固定強攻 relay) |
+| 0x21(33) | 風妖精 | 逐 target 先 `memset(target+0x25, 0, 3)`(清 `+0x25/+0x26/+0x27` 三個狀態欄位)→ `FUN_000211a4(0x320=800, targetArray, targetCount)`(終端經 `0x1c916`) | 傷害欄「800」「720-799」固定值區間 | ✓ `0x320`=800(十進位)精確吻合 |
+| 0x22(34) | 破壞神 | 依序 `FUN_00022721`(魔刃/AP+15%)→`FUN_00022866`(魔鎧/DP+15%)→`FUN_00022997`(風行/HIT+15,EV+15),每次呼叫間 `DAT_00053ec4=0` | 「同時施魔刃術+魔鎧術+風行術」 | ✓ 三重印證(位址+呼叫順序+攻略文字)精確吻合 |
+| 0x23(35) | 暗邪鬼 | 依序 `FUN_00022d1b`(狀態施加共用核心)三次,record id 依序 `0x25`(=毒,對應 command26 毒擊術)、`0x27`(=封咒,對應 command22 封咒術)、`0x26`(=麻痺,對應 command27 麻庫術) | 「同時施麻痹術+封咒術+毒擊術」 | ✓ 三重印證精確吻合 |
+
+四支各自在一個「`iVar5` 從 1 數到 `*pbVar6`(FDOTHER 資源自帶的 frame/sub-count byte)」的逐幀演出迴圈裡,於特定 frame 觸發一次額外 SFX:id 0x21 在 `iVar5==6`、id 0x22 在 `iVar5==2` 觸發 `play_sfx_a`(`0x25a96`);id 0x20/0x23 在 `iVar5==1` 觸發 **`play_sfx_b`**(`0x25b45`,允許與 handle A 疊播)。這與已知的「`play_sfx_a`/`play_sfx_b` 呼叫端固定 3-push 慣例(table_ptr/index/priority)」ABI 完全吻合(原始反組譯核對:`PUSH 0x1; PUSH 0x1; PUSH [0x54153]; CALL 0x25a96`)。
+
+**第二段 FDOTHER.DAT SFX index 來源——doc36 round12「id≥0x20 分支自己的 index 來源未追出」本輪追出並關閉**:原始反組譯 `0x2d981..0x2d985` 確認 `movzx eax, byte ptr [ESP + commandId*0x1 - 0xc]`——**`commandId` 本身(0x20-0x23 全值,不是 `id-0x20`)直接當 byte offset**,落在函式序言把單一全域 `DAT_00052668`(一個 dword)存入的 4-byte 堆疊區內(`MOV EAX,[0x52668]; MOV [ESP+0x14],EAX`,而 `commandId-0xc` 對 `id=0x20..0x23` 正好等於 `ESP+0x14..0x17`,即這個 dword 的 4 個 byte)。用 `bytes` action 直接 dump `0x52668`:`5b 5c 5d 5e`(十進位 91/92/93/94)。已用 `tools/export_sfx.py --res {91,92,93,94}` 逐一解包驗證:四個都是合法的巢狀 `LLLLLL` SFX 容器(91/94 各 4 個 sub-sample、92/93 各 3 個,sub0 皆為同一份 6561-byte 共用揮擊音,與 doc36 round12 記錄的 `#82-90` 家族結構完全同構),resource 編號緊接在已知的 `#82-90`(action_id 0-9 物理攻擊 SFX 池)之後、連號 91-94,四個 WAV 已匯出至 `remake/assets/sfx/battle_{91,92,93,94}_{00,01,...}.wav`。第一段 FDOTHER.DAT index(`commandId+0x21`,即 resource 65-68)未逐一解包驗證型態,推定是配合演出的貼圖/BG 類資源而非 SFX,留待需要時再展開。
+
+**與舊文件的關係(位址勘誤,非新結論)**:`docs/knowledge-base/56-fd2-remake-sdd.md`(2305-2311 行、852-855 行)與 `docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md`(554 行)在 2026-07-26 已經記過幾乎一模一樣的 ID32-35 呼叫序列,但當時標的位址是已知錯誤的 `0x27fc9`(`0x27fc9` 實際是無關的選單方向鍵游標函式 `FUN_00027f4a`,見 `known_address_errata.json` 既有 `0x27fc9`→`0x2ff01` 勘誤條目)。本輪在**正確位址** `0x2d80d` 重新獨立反組譯,結論與舊文件幾乎逐字吻合——視為對舊(誤標位址)結論的獨立重新確認,不是推翻;已在 `known_address_errata.json` 補一筆專門條目區分「總派送函式勘誤」與「ID32-35 複合 handler 勘誤」這兩件不同的事,避免未來讀者把兩者混為一談。
+
+**尚未展開(誠實列出)**:derived-strike(`0x2cf30`)hit-event 陣列(`FUN_000314de` 回傳)逐 byte 語意;`0x2d80d` 兩個色票全域(`DAT_0005265c/60/64`,供 `FUN_0002df01` 呼叫用,推測是揮動/爆閃效果的顏色參數)未鑑定;第一段 FDOTHER index(resource 65-68)型態未解包驗證;remake 尚未接上 ID24/28-31 的演出/SFX 迴圈與 ID32-35 的四分支邏輯(僅接了 ID24 的傷害公式,見 doc42 gap audit)。
+
 ### worklist L555/L557/L572 完成度
 
 - **L555**(doc56 L600:scroll/composite/專用演出/SFX/UI 未接):`FUN_0002ff01` 的逐目標迴圈證實了 scroll/composite 的原生結構(`FUN_00011eb0`/`FUN_0002eb9f`/`FUN_000311e5` 等 step 呼叫,HP 從 `iStack_38` 動畫過渡到 `iStack_50`),但 renderer/SFX/UI 仍未接進 remake——**部分推進,未關閉**。
 - **L557**(AoE range>0、命中率):命中率——**本輪以 code-level 反編譯二次核實,確認與物理 HIT−EV 完全獨立,可視為結論穩定**(逐 ID 數值核對仍缺,見 §6.1)。AoE——**2026-08-20 續輪(§6.4)已用位址級反組譯完整追出上游生成器**:`FUN_00014818` 依 spell/item record 的 `[+3]`(選取範圍)/`[+4]`(生效範圍)兩個 byte 欄位,分流成「`FUN_0004e390`+`FUN_0004e42c` 遞迴 flood fill 塗地圖緩衝區」(圓形/範圍型,`<0x10`)或「列/欄門檻掃描」(直線型,`>=0x10`),再掃描全部 unit 依緩衝區命中+`[+6]` 陣營篩選收集成 `FUN_0002ff01` 的 `param_3/param_4`——**鏈路完整,已關閉**(僅剩葉節點 `FUN_0004e4be`/`FUN_0004e8a5` 的資料表細節未展開,不影響機制結論)。
-- **L572**(doc37 結論、`0x2a6bd` command-specific presentation/SFX/命中分支):doc37 的 spell-id 不選 FIGANI 結論本身不受影響,仍成立。`0x2a6bd` 位址勘誤(§6.3)是本輪最主要產出:command-specific presentation dispatcher 的**真正位址**現為 `0x2ff01`,其分支結構(id 0–8 走 AoE 迴圈、id 24/28–31 走 `0x2cf30`、id≥32 走 `0x2d80d`)首次有反組譯佐證——**位址勘誤與大方向分支已解,SFX 與逐 command 完整 presentation contract 仍未展開,部分推進,未關閉**。
+- **L572**(doc37 結論、`0x2a6bd` command-specific presentation/SFX/命中分支):doc37 的 spell-id 不選 FIGANI 結論本身不受影響,仍成立。`0x2a6bd` 位址勘誤(§6.3)是先前一輪最主要產出:command-specific presentation dispatcher 的**真正位址**現為 `0x2ff01`,其分支結構(id 0–8 走 AoE 迴圈、id 24/28–31 走 `0x2cf30`、id≥32 走 `0x2d80d`)首次有反組譯佐證。**本輪(§6.5)進一步把 `0x2cf30`/`0x2d80d` 兩個 callee 逐指令展開**:derived-strike 倍率表訂正(30/31 共用 18)+ 自己的 hit-event SFX 迴圈、ID32-35 四分支語意逐支對上 command_labels.json+doc02 攻略文字、doc36 round12 遺留的「id≥0x20 index 來源未追出」缺口關閉(`DAT_00052668`=[91,92,93,94])——**位址勘誤、大方向分支、兩個 callee 內部邏輯與逐 command SFX index 均已解;仍未展開的只剩 hit-event 陣列 leaf-level 語意與 remake 演出/SFX 接線,結構性理解視為已關閉,執行層 SFX/renderer/UI 完整 presentation contract 仍未展開**。
 
 ## 8. `+0x22/+0x23/+0x24` 不是 DX/race/multiplier——worklist L368/570/571/609 措辭勘誤複核(2026-08-24)
 

@@ -71,22 +71,22 @@
     {
       "address": "0x2cf30",
       "linear_or_file_offset": "linear",
-      "semantic": "FUN_0002cf30 — ID24/28/29/31 derived-strike 宿主函式。trunc(actorAP*multiplier/10)-DP,倍率 15/20/12/18 分別對應 command 24/28/29/31,結果送入 0x1c81f HP writer。ID24 先經 0x2b659 以 0x1ca89(actor,0x18) 扣 record24+5 MP。",
+      "semantic": "FUN_0002cf30(actorIdx, commandId, targetCount, targetArray) — 唯一 caller 是 0x3003f(FUN_0002ff01 內,已用 call_scan 窮舉確認僅此一處)。ID24/28/29/30/31(0x18、0x1c-0x1f)derived-strike 宿主函式,body 0x2cf30..0x2d80c,2269 bytes。倍率表精確逐分支反組譯確認:`if id==0x18(24) mult=15; elif id==0x1c(28) mult=20; elif id==0x1d(29) mult=12; else mult=18`——**else 分支覆蓋 id 0x1e(30,音速刃)與 0x1f(31,label 為空字串)兩者**,不是只對應 31 一個 id(舊註解「15/20/12/18分別對應24/28/29/31」漏列 30,已訂正為『18 是 29 以外/24/28 以外的預設值,30、31 共用同一個 18』)。`local_48=trunc(actorAP(short,+0x48)*mult/10)`,結果經 0x1c81f HP writer 寫入(與 spell/item 傷害共用同一個 HP 寫入核心)。**本輪新增**:函式自己的逐目標演出/SFX 迴圈——對每個 target 呼叫 0x1c81f 後,走一個獨立的『hit-event 陣列』回放迴圈(來源 `FUN_000314de()` 回傳的 local_28 指標,非 0x2ff01 id0-8 AoE 路徑用的同一份資料),逐 event 檢查 `local_28[event+5]!=0` 才呼叫 0x00025a96(=play_sfx_a,已知 SFX 播放函式)觸發音效,`local_28[event+4]==1` 時另外把 HP 顯示值分成 N 步遞減播放(id 0x1c 用 8 步、其餘用 1 步——這是 id28『淒煌斬』相對其他三招唯一的演出差異,連同它在函式前段多一次 FUN_0002facd() 繪製呼叫)。event 陣列逐 byte 語意(何時播 SFX、幾步動畫)未展開到 leaf level,不影響已釘死的傷害公式與 SFX 觸發機制結論。ID24 先經 0x2b659 以 0x1ca89(actor,0x18) 扣 record24+5 MP。",
       "confidence": "verified",
       "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
-      "source_section": "表第 6 項 / §6.3",
-      "verified_date": "2026-08-20",
-      "notes": "曾被誤記為 0x276ec,見 known_address_errata.json。remake 對照:native_command24.go ResolveNativeCommandDerivedStrikeDamage。"
+      "source_section": "表第 6 項 / §6.3 / §6.5(本輪)",
+      "verified_date": "2026-08-24",
+      "notes": "曾被誤記為 0x276ec,見 known_address_errata.json。remake 對照:native_command24.go ResolveNativeCommandDerivedStrikeDamage(僅接了傷害公式,尚未接演出/SFX 迴圈)。方法:tools/ghidra_batch_probe.py disasm/decompile/call_scan,2026-08-24。"
     },
     {
       "address": "0x2d80d",
       "linear_or_file_offset": "linear",
-      "semantic": "FUN_0002d80d — commandId>=0x20 分支宿主函式。同樣走 id+0x21 → 兩段式 FDOTHER.DAT 載入模式,最終存入 DAT_00054153;但第二個 index 來源是這個函式自己的堆疊暫存區,不是 0x526bc 全域表。",
-      "confidence": "inferred",
-      "source_doc": "docs/knowledge-base/36-sfx-audio-data.md",
-      "source_section": "第 12 輪 round12_verified_chain",
-      "verified_date": "2026-08-20",
-      "notes": "未展開,超出多輪任務範圍。index 來源未追出。"
+      "semantic": "FUN_0002d80d(actorIdx, commandId, targetCount, targetArray) — 唯一 caller 是 0x30012(FUN_0002ff01 內,call_scan 確認僅此一處)。commandId>=0x20(32-35)『四類特殊演出』宿主函式,body 0x2d80d..0x2df00,1780 bytes。**本輪完整逐指令反組譯+decompile,確認函式内部依 commandId 精確分四支(id 0x21/0x22 另外走過同一段『iVar5 從1數到*pbVar6(FDOTHER資源的frame/count byte)』的逐幀演出迴圈,id 0x20/0x23 亦同,只是SFX handle不同)**,對照 docs/data/command_labels.json 與 doc02 攻略,四個 command 的遊戲內名稱與效果完整對上:\n· id 0x20(32,熾天使)→ 呼叫 FUN_0002111a(0x20, targetArray, targetCount)(已知的固定強力攻擊 relay,type21 item 共用同一入口,終端經 0x1c75e);frame==1 觸發 play_sfx_b(0x25b45)。doc02:『熾天使…召喚(最強攻擊)』。\n· id 0x21(33,風妖精)→ 逐 target 先 `memset(target_record+0x25, 0, 3)`(清 +0x25/+0x26/+0x27 三個狀態欄位)再呼叫 FUN_000211a4(0x320=800, targetArray, targetCount)(已知的固定量 HP 應用 relay,終端經 0x1c916);frame==6 觸發 play_sfx_a(0x25a96)。doc02:風妖精傷害欄同為『800/720-799』固定值區間,與 0x320=800 精確吻合。\n· id 0x22(34,破壞神)→ 依序呼叫 FUN_00022721(魔刃/AP+15%)、FUN_00022866(魔鎧/DP+15%)、FUN_00022997(風行/HIT+15,EV+15)三個已知輔助法術 writer,每次呼叫間 `DAT_00053ec4=0`;frame==2 觸發 play_sfx_a。doc02:『破壞神…同時施魔刃術+魔鎧術+風行術』——三重印證(位址+順序+攻略文字)精確吻合。\n· id 0x23(35,暗邪鬼)→ 依序呼叫 FUN_00022d1b(狀態施加共用核心)三次,record id 分別為 0x25(=毒/command26 毒擊術)、0x27(=封咒/command22 封咒術)、0x26(=麻痺/command27 麻庫術),呼叫順序 25→27→26;frame==1 觸發 play_sfx_b。doc02:『暗邪鬼…同時施麻痹術+封咒術+毒擊術』——三重印證精確吻合。\n**第二段 FDOTHER.DAT index 來源本輪追出**:原始反組譯確認 `movzx eax,[ESP+commandId-0xc]`,commandId(0x20-0x23,非 id-0x20)直接當 byte offset,落在函式序言把全域 `DAT_00052668`(單一 dword)存入的 4-byte 堆疊區內——即 index = commandId 對應到 `DAT_00052668` 的第 (commandId-0x20) 個 byte。已用 bytes probe 直接 dump `0x52668`:`5b 5c 5d 5e`(91/92/93/94 十進位)。已用 `tools/export_sfx.py --res {91,92,93,94}` 逐一解包驗證:四個都是合法巢狀 LLLLLL 容器(91/94 各 4 sub、92/93 各 3 sub,sub0 皆共用同一份 6561-byte 揮擊音,與 doc36 round12 的 #82-90 家族同構),緊接在已知 #82-90 SFX 家族之後,resource # 連號 91-94——**這就是 doc36 round12『id≥0x20 分支自己的 index 來源未追出』的答案,該項現已關閉**。第一段 FDOTHER.DAT index(=commandId+0x21,即 resource 65-68)未逐一解包驗證型態,推定是配合演出的貼圖/BG 類資源而非 SFX。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/27-combat-rules-and-validation-checklist.md",
+      "source_section": "§6.5(本輪)",
+      "verified_date": "2026-08-24",
+      "notes": "先前 doc56/SESSION-HANDOFF-2026-07-06.md 曾把這四個 command 的『複合 handler』語意記在已知錯誤位址 0x27fc9 上(0x27fc9 實際是無關的選單游標函式,見 known_address_errata.json);本輪用 Ghidra 反組譯在正確位址 0x2d80d 重新獨立推導,結論與 doc56/SESSION-HANDOFF 舊敘述的呼叫序列(0x2111a/0x211a4+800/0x22721+0x22866+0x22997/0x22d1b 三次寫 +0x25+0x27+0x26)幾乎逐字吻合——視為對舊(誤標位址)結論的獨立重新確認,非新推翻。remake 對照:battle package 尚未接 ID32-35 完整分支(doc42 gap audit)。方法:tools/ghidra_batch_probe.py disasm/decompile/call_scan/bytes,2026-08-24。"
     },
     {
       "address": "0x027fc9",
