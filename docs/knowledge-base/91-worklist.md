@@ -2188,7 +2188,24 @@
   **仍未解決**：這個選擇性掉鍵背後在 SDL2/DOSBox-X/Xvfb 哪一層發生、
   為何同一存檔同一手法時好時壞，doc58 續五十四誠實列為下一輪候選方向
   (DOSBox-X mapper 對 Return/Space 的特殊處理、`FUN_00010620` 本身尚未
-  反組譯)。目前繞過方式仍是 SMV-teleport(與 ch24 續二十/二十一/二十三/
+  反組譯)。**doc58 續五十五(2026-08-24)補充**：窮盡搜尋英文+中文 upstream
+  資料，找到唯一具體候選——`bugs.freedesktop.org` #4761「`XTestFakeKeyEvent`
+  broken in Xvfb」(2005，Xvfb 下部分按鍵事件遺失/重複，真正 X server 不會，
+  緩解為每鍵間隔 200ms+)；直接讀 dosbox-x 原始碼(`sdlmain.cpp`/
+  `keyboard.cpp`，確認是 SDL2 build)與 xdotool 原始碼(`xdo.c`)均未找到
+  Linux 路徑上對 Enter/Space 的差異化處理（唯一特例是 `#if MACOSX` 包住的
+  IME 分支，Linux 不編譯）。Live 重現同一卡住畫面後**連續測試 4 種候選並
+  全部失敗**：400ms keydown/keyup hold、`xdotool key --delay 300` 原子呼叫、
+  Space 300ms hold、`--clearmodifiers`——同一時刻送 `Up` 仍立即正確反應
+  (對照組)。**結論：「加長延遲/清除 modifier 能修好」這個具體假說已被明確
+  證偽**，不只是未驗證；freedesktop #4761 這類一般性 Xvfb 不可靠即使真實
+  存在，也不是這裡選擇性 Enter/Space 掉鍵的直接成因，或至少不是簡單延遲
+  能解的那種表現形式。下一輪建議：(a) 靜態反組譯 `FUN_00010620`；
+  (b) 用 `xev` 等工具在 X11 層獨立驗證 KeyPress/KeyRelease 事件本身有無
+  抵達 X server，把「X11 有沒有收到」與「DOSBox-X/SDL2 有沒有處理」分開
+  驗證；(c) 測試「debugger 是否曾經介入過同一個 Xvfb 環境」的殘留效應
+  （兩輪失敗重現都沒有專門控制這個變因）。目前繞過方式仍是 SMV-teleport
+  (與 ch24 續二十/二十一/二十三/
   二十四已驗證過的手法相同，非新發明)，不是真正解法；攻擊執行本身已在此
   繞過法下用斷點證實無誤(`0x1AD75F`確認閘門通過、`0x1CA2B0`=native
   `0x2e2b0`攻擊orchestrator命中、目標HP `15→0`、Sor `record[+5]`

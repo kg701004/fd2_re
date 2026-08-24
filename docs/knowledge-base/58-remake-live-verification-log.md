@@ -6251,3 +6251,155 @@ floodfill高亮/兩次移動確認失敗前後對照/方向鍵Up對照組成功/
 `dbg_enter.sh`/`dbg_setbp.sh`/`dbg_run*.sh`/`dbg_check_eip.sh`/`dbg_try_space.sh`/
 `dbg_force_release_retry.sh`)留在`~/fd2-run/`(WSL2本機,不在repo版控範圍內)。已依指示
 直接編輯`91-worklist.md`的`CH27-REAL-UI-MOVE-CONFIRM-BROKEN`條目(見下一次commit)。
+
+## 續五十五:國內外資料檢索`REAL-UI-MOVE-CONFIRM-ENTER-SPACE-INTERMITTENT-INPUT-DROP`根因
+——找到一個真實存在的通用候選(Xvfb的`XTestFakeKeyEvent`已知不可靠,upstream bug報告
+建議200ms+延遲),但live重現測試**明確證偽**「拉長延遲/清除modifier能修好這個症狀」這個
+具體假說本身;根因誠實維持未解(2026-08-24)
+
+**任務背景**:接手續五十四留下的「根因收斂到鍵盤輸入傳遞層,但不知道是哪一層、為什麼是
+Enter/Space選擇性掉、為什麼同一存檔同一手法時好時壞」,這輪任務指定**不要再盲測**,先
+窮盡搜尋(英文+中文)找 upstream 文件/bug report,只有找到具體可測的候選才 live 驗證。
+
+### 1. 搜尋結果(英文為主,中文查無直接相關資料)
+
+**找到的最相關真實bug**:`bugs.freedesktop.org` #4761(`XTestFakeKeyEvent broken in
+Xvfb`,2005年,經`xorg.freedesktop.narkive.com`存檔頁面確認內容)——回報者用Java Robot
+與自製C library(基於xvkbd)在Xvfb下重現「某些按鍵事件被client收到兩次,某些完全遺失」,
+同一套程式在**真正的X server**下完全正常;唯一有效的緩解是**每個按鍵事件之間插入200ms
+延遲**(100ms不夠,實測過)。這是一個真實存在、有具體數字的upstream已知限制,方向與任務
+背景提示的「SDL2/XTest在Xvfb下不可靠」完全吻合。
+
+**其他搜尋角度,誠實記錄查無成果**:
+- xdotool issue tracker(#151、#105等)裡確實有「特定按鍵送不出去」的回報,但根因都是
+  **鍵盤layout特定**(Dvorak的`Control+V`實體對應到`Control+K`那類問題),不是Xvfb/headless
+  相關,也不是Return/Space這種基礎ASCII鍵會遇到的問題類型。
+- 直接讀`dosbox-x`原始碼(`src/gui/sdlmain.cpp`,約10800行,`build-debug-sdl2`腳本確認
+  這個環境用的是SDL2 build):`SDL_KEYDOWN`/`SDL_KEYUP`的處理路徑裡,唯一對Enter有特殊
+  處理的分支被`#if defined(MACOSX)`包住(IME候選字確認的Enter/BS/TAB/方向鍵特例),**在
+  Linux上這整段被前處理器排除,完全不會編譯進去**——這個分支不可能是本專案(WSL2 Linux)
+  症狀的成因。`src/hardware/keyboard.cpp`裡`KEYBOARD_AddKey()`唯一對`KBD_space`的特殊
+  處理是「放開時觸發`APM_Suspend_Wakeup_Key()`」,是APM休眠喚醒鉤子,與一般按鍵傳遞無關。
+  沒有找到任何Linux路徑上針對Enter/Space的差異化處理。
+- `xdotool`原始碼(`xdo.c`)的按鍵傳遞邏輯:`xdo_send_keysequence_window_list_do()`裡有
+  「keysym若不在目前keymap上,借用一個空的scratch keycode暫時綁定、送出、再解除綁定」的
+  已知複雜機制,但這個路徑只在`keys[i].needs_binding==1`(keysym完全沒被映射)時觸發——
+  `Return`/`Space`是任何預設X keymap都一定有的基礎鍵,理論上不會走到這條路徑,查不到證據
+  支持這是本專案症狀的成因。
+- SDL2 IME/XIM(`SDL_StartTextInput`/`ibus`/`fcitx`)、SDL2事件佇列滿載丟事件、DOSBox-X
+  typematic repeat相關issue(#3404/#5466/#5767)——都是真實存在的問題類別,但都沒有查到
+  與「Return/Space選擇性掉、方向鍵完全不受影響」這個精確特徵吻合的具體報告或原始碼證據。
+- 中文搜尋(PTT、Mobile01、部落格等DOSBox中文資源)沒有找到任何討論Xvfb/headless自動化
+  按鍵可靠性的內容——這類資源幾乎全是一般玩家的鍵盤設定教學,不是這個症狀的討論範圍,
+  誠實記錄這條路線沒有產出。
+
+**小結**:找到一個真實、有具體數字、upstream已知的候選機制(Xvfb+`XTestFakeKeyEvent`
+不可靠,200ms+延遲是唯一被回報過有效的緩解),但**沒有任何來源解釋為什麼這個機制會
+選擇性只影響Return/Space而不影響方向鍵**——freedesktop這個2005年的bug報告描述的是
+「隨機丟失/重複」,不是「特定keysym結構性選擇性丟失」。這個候選是**唯一夠具體、可以
+直接測試**的線索,所以進入下一步live驗證,但預期上一開始就沒有把握它能解釋選擇性這個
+特徵,只是它是目前唯一有實測數字支持的候選。
+
+### 2. Live驗證:重現同一個卡住的畫面後,連續測試4種候選解法,**全部失敗**——明確證偽
+「拉長延遲」與「清除modifier」這兩類假說對這個症狀本身無效
+
+**環境部署**:完整走一次doc48§8.4 recipe(`launch_ch27.sh`,`core=normal`+`cycles=5000`),
+`FD2.SAV`部署前md5`e6d9a35756cddfc2519969b10f039181`與歷次記錄一致。標題→LOAD→存檔1
+(第二十七章)→軍營→`Right`×3→出口確認YES→80次slow-key Return(40+40)推進戰前對白→
+成功進入部署畫面(索爾HP823/823、A+05/D+00,與續四十四~五十四完全一致)→選取索爾→
+`Up`×5,screenshot確認目的地預覽游標停在監視器旁(與續五十四第一次失敗的目標格外觀
+一致)。
+
+**連續測試4種候選,對同一個已經卡住等待確認的畫面**(每次測試後都screenshot確認畫面
+**完全沒有變化**——角色隊形、游標位置、指令環,bit-for-bit與測試前相同):
+
+1. `xdotool keydown Return`+**400ms**hold+`keyup`(比續五十四失敗過的150ms久一倍以上,
+   已經超過freedesktop bug建議的200ms門檻)——**失敗**。
+2. `xdotool key --delay 300 --window <win> Return`(用xdotool內建的down+delay+up原子
+   呼叫,而非手動keydown/sleep/keyup,測試是否manual版本本身時序有問題)——**失敗**。
+3. `xdotool keydown space`+**300ms**hold+`keyup`(換Space,同樣拉長延遲)——**失敗**。
+4. `xdotool key --clearmodifiers --window <win> Return`(測試是否有殘留modifier狀態
+   干擾,任務背景建議的候選之一)——**失敗**。
+
+**對照組**:在4次失敗測試之間,額外送一次`Up`(150ms hold)做即時對照——**畫面立即正確
+反應**(目的地游標從監視器旁移動到監視器所在那一列,且該格圖示變化,證實不是idle動畫
+雜訊),與續五十四的對照組結果完全一致。
+
+**結論**:這次用4種延遲/modifier相關的具體變體,在與續五十四完全相同的卡住畫面上重新
+測試過一輪,**全部確認無效**——這不是「續五十四剛好沒試夠久」的延遲不足問題,`400ms`
+(超過freedesktop bug報告過的200ms緩解門檻兩倍)與xdotool原子呼叫、`--clearmodifiers`
+都不能讓卡住的`0x115b6`讀鍵迴圈觀察到Enter或Space。**這明確排除了「這個bug純粹是需要
+更長延遲的XTest/Xvfb時序問題」這個候選假說對本症狀的解釋力**——即使Xvfb的
+`XTestFakeKeyEvent`確實存在已知的一般性不可靠(§1的freedesktop bug是真的),它也**不是**
+這裡選擇性Enter/Space掉鍵的直接成因,或至少不是能用簡單加長延遲解決的那種表現形式。
+
+### 3. 環境工具鏈的一個新發現(與鍵盤bug本身無關,但影響本輪與未來輪的腳本撰寫方式)
+
+本輪一開始嘗試用「單一`wsl -d Ubuntu bash -c '<含shell變數的多行指令>'`」呼叫(例如
+`x=hello; echo $x`)時,**發現`$變數`在傳遞給wsl.exe的過程中被消掉,變成空字串**(`echo
+$x`印出空白,`for i in $(seq 1 3); do echo $i; done`每次印出空白)——但**指令替換
+`$( ... )`本身正常運作**,`~`(tilde)在同一層也會被外層git-bash提前展開成Windows路徑
+導致`wsl.exe`收到錯的路徑。用`echo AAA; echo BBB`(無變數)可以正常依序執行,排除是
+分號定序本身的問題,精確定位在「`-c`參數字串裡的裸`$識別字`在到達wsl內部bash之前就
+已經被消掉」。**繞過法**:不要把含變數的邏輯直接塞進`wsl bash -c "..."`的參數字串,
+改成用Write工具把完整腳本寫成檔案(本輪存在`.wsl_build/step_*.sh`,Windows端路徑也是
+WSL端`/mnt/c/...`掛載點),再用`MSYS_NO_PATHCONV=1 wsl -d Ubuntu bash /mnt/c/.../
+腳本.sh`執行——腳本檔案內部的變數由WSL自己的bash讀檔案直接解釋,不經過那層有問題的
+relay,本輪驗證這個方法完全可靠。`MSYS_NO_PATHCONV=1`前綴則是解決git-bash把看似
+Unix路徑的參數自動轉換成Windows路徑這個獨立問題(`/home/...`會被錯誤地轉成
+`C:/Program Files/Git/home/...`)。**這個發現不影響續五十四以前的資料可信度**——查證
+過歷次留存的`step_*.sh`/`dbg_*.sh`都是先前輪次就已經是實體腳本檔案,呼叫方式本來就是
+「執行檔案」而非「內嵌變數的`-c`字串」,沒有踩到這個relay bug;但如果未來有輪次直接把
+帶`$`的多行邏輯塞進`-c`字串裡卻沒發現變數沒有生效,可能會誤判成「dosbox-x/xdotool沒
+反應」,值得記錄避免下一輪誤診。
+
+### 4. 誠實結論
+
+1. **根因依然未解**——這是本輪最重要但不令人滿意的結論。窮盡搜尋(英文為主,中文查無
+   相關資料)只找到一個真實但無法解釋選擇性特徵的候選(Xvfb `XTestFakeKeyEvent`一般性
+   不可靠),live測試進一步**明確證偽**了「這個候選的常見緩解手法(拉長延遲、清除
+   modifier)對本症狀有效」這個具體假說,把它從「未驗證的候選」降級為「已測試無效」。
+2. **不是「這個環境的xdotool呼叫方式不夠講究」的問題**——本輪測試涵蓋手動
+   keydown/sleep/keyup、xdotool原子`key --delay`呼叫、`--clearmodifiers`共4種變體,
+   加上一次400ms的長延遲,結果一致失敗,排除了「只是呼叫手法不夠好」這類簡單解釋。
+3. **DOSBox-X原始碼審查(Linux+SDL2路徑)沒有找到任何Enter/Space的差異化處理邏輯**——
+   唯一存在的特例(macOS IME候選字确認手勢)在Linux build上完全不編譯,不可能是成因;
+   `KEYBOARD_AddKey`裡Space的特例只是APM喚醒鉤子。這排除了「DOSBox-X自己的按鍵處理
+   程式碼刻意/意外對這兩個鍵做了什麼」這個候選方向,把嫌疑進一步往SDL2事件層或X11/
+   Xvfb本身推——但這兩層本輪都沒有找到具體、可驗證的機制解釋選擇性。
+4. **下一輪建議方向(誠實列出,不是新發現,是排除法後剩下的選項)**:(a)續五十四已提到
+   但本輪沒有時間做的`FUN_00010620`(鍵是否可讀的檢查函式)靜態反組譯,查它對特定
+   scancode是否有本專案doc13靜態分析還沒覆蓋到的選擇性處理;(b)在下一次症狀重現時,
+   直接用`xev`或類似工具在X11層(不透過DOSBox-X)單獨驗證送出的Return/Space
+   KeyPress/KeyRelease事件本身有沿沒有真的抵達X server,把「X11層有沒有收到」與
+   「DOSBox-X/SDL2有沒有處理」這兩段分開驗證,比本輪與續五十四都只驗證「DOSBox-X端
+   有沒有反應」更精確;(c)鑑於§1找到的freedesktop bug與本專案的症狀在「Xvfb」這個
+   環境上重疊但緩解手法對不上,一個尚未測過的方向是**這個bug是否只在DOSBox-X進入過
+   debugger至少一次之後才會出現的殘留效應**(續五十四與本輪都是全新開機或至少沒有
+   在同一個進迴圈前用過debugger,但整個WSL2/Xvfb環境在更早的session裡可能已經被
+   debugger操作過難以完全排除殘留狀態,這點兩輪都沒有專門測試「連續開機不重開Xvfb
+   多次」這個變因)。
+5. **誠信說明**:本輪任務要求「找到具體候選才測試,不要繼續盲測」,實際執行結果是——
+   確實先窮盡搜尋、只挑了搜尋出來最具體的候選去測,但測試結果是陰性(候選被證偽),
+   不是找到了修法。這是一個誠實的陰性結果,不是隱藏在「還在調查」措辭下的迴避。
+
+### 5. 環境收尾
+
+`dosbox-x`(`pkill -9`,確認變成`<defunct>`後徹底消失)、`tmux`(`tmux kill-server`,
+確認`no server running`)、`Xvfb`、`launch_ch27.sh`背景包裝行程與其`sleep 3595`
+keepalive均已個別確認終止(`pgrep`全部查無結果)。收尾前複查`~/fd2-run/FD2.SAV`md5
+(`e6d9a35756cddfc2519969b10f039181`)與部署前完全一致,`FD2.EXE`與`.pristine_bak`
+diff維持精確252 bytes——本輪全程只用screenshot+xdotool操作,沒有任何`SMV`或記憶體
+寫入,沒有觸發autosave。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。
+
+### 6. 產出
+
+本文件本節(續五十五)。過程截圖(標題/LOAD/軍營/戰前對白/部署/選取索爾/Up×5/4種
+confirm候選失敗前後對照/Up對照組成功,約15張)留存於`.wsl_build/`(`probe1-3.png`、
+`t04_load.png`、`t08_afterenter.png`、`t09_camp_right3.png`、`t10_afterexit.png`、
+`s07_dialogue1.png`、`t14_select_sol.png`、`t15_up5.png`、`t16_confirm_longdelay.png`、
+`t16_confirm_atomickey.png`、`t16_confirm_space300.png`、`t_control_up.png`、
+`t16_confirm_clearmod.png`),均為過程debug產物,非repo追蹤內容。本輪新增的測試腳本
+(`step_confirm_longdelay.sh`/`step_confirm_atomickey.sh`/`step_confirm_space300.sh`/
+`step_control_up.sh`/`step_confirm_clearmod.sh`)同樣留在`.wsl_build/`。已同步更新
+`91-worklist.md`同一條目(見下一次commit)。
