@@ -1049,3 +1049,61 @@ project 裡目前分析出的 976 個 function 也沒有一個表現出 ending r
 列出每個呼叫 loader 的 function 完整 decompile 引數文字,是發現 9.7.2 盲點的直接原因)。全部
 留在 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\`,結果 JSON(`global_behavior_scan_
 results.json`/`_v2_results.json`/`_v3_results.json`/`_debug_results.json`)一併保留供覆核。
+
+## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
+
+> 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code
+> inspection,不需DOSBox」。目標是確認原版 EXE 的 320×200→640×400(或任何選單/轉場用到的)縮放,
+> 用的是 nearest-neighbor(硬邊 2x 點放大,對齊 remake 目前的 `Scale(2,2)`)還是 linear/bilinear
+> (會糊,不對齊 remake 現況)。方法:純靜態複核既有反組譯證據(本節、`03-exe-and-data-structures.md`、
+> `39-ani-afm-format.md`),未跑新 Ghidra query——本文既有記錄已經足夠回答這個問題。
+
+### 10.1 結論先講:原版圖形管線從頭到尾只有 320×200 原生解析度,**沒有任何數位縮放/內插運算**——
+「nearest 還是 linear」這個問題本身對原版程式碼不成立
+
+三條各自獨立、早於本輪就已完整反組譯的證據鏈同時指向同一個結論:
+
+1. **顯示模式本身就是固定 320×200**:`03-exe-and-data-structures.md`(L11/L15)已確認 `FD2.EXE` 只用
+   **VGA mode 13h**(320×200,256 色),DOS 擴充器是 Rational **DOS/4GW**——一個純粹把 16-bit DOS 切到
+   32-bit 平坦記憶體的記憶體管理層,**不是圖形/縮放函式庫**。整個遊戲沒有第二個顯示模式,自然也沒有
+   「切換到更高解析度模式再縮放進去」這種需求。
+2. **blit 原語本身沒有縮放運算**(本文 §2.1、§6,早於本輪已反組譯釘死):
+   - 通用 blit `0x4e63d(src,X,Y,dst,stride,transp)` 逐指令反組譯確認**整條路徑沒有任何
+     `imul`/`fild`/`fmul` 縮放運算**——來源尺寸即 src header 自帶的寬高,`dst = dst + Y*stride + X`
+     直接寫,無伸縮。守方 figure 較小、攻方較大是**美術素材本身畫成不同尺寸**(景深燒進素材),
+     不是 runtime 縮放。
+   - 螢幕座標系(§6)實測值:螢幕寬 `0x140`=320、高 `0xc8`=200、VGA framebuffer 固定在 `0xA0000`;
+     `work buffer stride`=`0x280`=640 **不是** 2x 顯示縮放,是雙倍寬的**離螢幕捲動預備區**(右半用來
+     預畫下一幀/捲入內容),present 原語 `0x11eb0` 是逐列 320-byte 的**純 memcpy**(`0x373c4`)把
+     work buffer 左半 320 寬複製進 VGA——BG→work、work→VGA 兩段都走同一個無縮放 memcpy。
+3. **開場「2」logo 縮放進場動畫也不是內插縮放,而是逐幀不同內容的 VM 繪圖腳本**:
+   `39-ani-afm-format.md`(§4.1/§4.2,已由官方 IDA + Docker Capstone 反組譯確認)證實 `ANI.DAT`/AFM
+   播放器主函式 `0x020421` 的每一幀是一段 10-opcode「增量繪圖 VM」bytecode,**VM opcode 直接寫 VGA
+   `0xA0000`**,不透過額外 blit/縮放步驟。玩家看到的「2」逐幀放大是**美術師預先畫好一系列不同大小
+   的幀內容、由 VM 逐幀繪出**,不是程式對單一來源圖做即時 resample。
+
+### 10.2 為什麼原版不需要縮放:mode 13h 的「放大」是類比訊號輸出,不是數位運算
+
+1995 年的實體 VGA 硬體以 320×200 直接驅動 RAMDAC 輸出類比訊號給 CRT,螢幕本身用掃描時序把這
+320×200 的像素網格顯示滿整個畫面——這是類比電路層級的行為,不存在「nearest 還是 bilinear」這種
+數位濾波選擇。換句話說,**「320×200→640×400 2x 倍增」在原版 EXE 的程式碼裡完全不存在**;這個倍增
+關係只在下列兩種**現代**情境下才會出現,兩者都不是原版 EXE 的行為:
+
+- DOSBox/DOSBox-X 之類模擬器的輸出縮放器(依使用者設定可選 nearest/hqx/其他濾波)。
+- remake 自己的 `Ebiten` 呈現層——`cmd/fd2/main.go`/`internal/indexedmap/frame.go` 目前對 320×200
+  的 indexed buffer 呼叫 `Scale(2,2)`(Ebiten 預設 `FilterNearest`,硬邊點放大),這是**remake 自訂
+  的現代呈現選擇**,不是在「重現原版某個濾波演算法」。
+
+### 10.3 對 remake 的意義
+
+因為原版根本沒有任何縮放/內插濾波器可供比對,「remake 現在用 nearest 對不對」這個問題沒有一個
+「原版真值」可以違反或吻合——**唯一有意義的判準是「像不像 mode 13h 從未被過濾過的原始硬邊像素」**,
+而 `Scale(2,2)`(nearest)完全符合這個判準:它單純把每個原生像素複製成 2×2 色塊,不引入原版從未
+存在過的模糊/漸層。若改用 bilinear/線性濾波,反而會產生原版**從未出現過**的暈染效果,是新增的失真
+而不是「更貼近原版」。因此 `C:\Users\kg701\.claude\plans\hazy-crunching-liskov.md` 規劃中沿用
+`Scale(2,2)`/nearest 的既有做法在這個 RE 事實基礎上是**正確選擇**,不需要改成 linear/bilinear 去
+「貼近原版」——原版沒有這種東西可貼近。
+
+**信心等級:高**——三條獨立證據鏈(顯示模式/DOS 擴充器性質、blit 原語逐指令反組譯無縮放運算、
+AFM VM 直接寫 framebuffer)彼此不衝突,且都是早於本輪、經過反組譯確認的既有結論,本輪只是把它們
+聚焦到「原版有沒有縮放 filter」這個具體問題上並下結論,未發現任何反例。

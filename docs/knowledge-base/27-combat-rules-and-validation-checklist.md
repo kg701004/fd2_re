@@ -255,3 +255,73 @@ for (iStack_34 = 0; iStack_34 < param_3 /*targetCount*/; iStack_34++) {
 - **L555**(doc56 L600:scroll/composite/專用演出/SFX/UI 未接):`FUN_0002ff01` 的逐目標迴圈證實了 scroll/composite 的原生結構(`FUN_00011eb0`/`FUN_0002eb9f`/`FUN_000311e5` 等 step 呼叫,HP 從 `iStack_38` 動畫過渡到 `iStack_50`),但 renderer/SFX/UI 仍未接進 remake——**部分推進,未關閉**。
 - **L557**(AoE range>0、命中率):命中率——**本輪以 code-level 反編譯二次核實,確認與物理 HIT−EV 完全獨立,可視為結論穩定**(逐 ID 數值核對仍缺,見 §6.1)。AoE——**2026-08-20 續輪(§6.4)已用位址級反組譯完整追出上游生成器**:`FUN_00014818` 依 spell/item record 的 `[+3]`(選取範圍)/`[+4]`(生效範圍)兩個 byte 欄位,分流成「`FUN_0004e390`+`FUN_0004e42c` 遞迴 flood fill 塗地圖緩衝區」(圓形/範圍型,`<0x10`)或「列/欄門檻掃描」(直線型,`>=0x10`),再掃描全部 unit 依緩衝區命中+`[+6]` 陣營篩選收集成 `FUN_0002ff01` 的 `param_3/param_4`——**鏈路完整,已關閉**(僅剩葉節點 `FUN_0004e4be`/`FUN_0004e8a5` 的資料表細節未展開,不影響機制結論)。
 - **L572**(doc37 結論、`0x2a6bd` command-specific presentation/SFX/命中分支):doc37 的 spell-id 不選 FIGANI 結論本身不受影響,仍成立。`0x2a6bd` 位址勘誤(§6.3)是本輪最主要產出:command-specific presentation dispatcher 的**真正位址**現為 `0x2ff01`,其分支結構(id 0–8 走 AoE 迴圈、id 24/28–31 走 `0x2cf30`、id≥32 走 `0x2d80d`)首次有反組譯佐證——**位址勘誤與大方向分支已解,SFX 與逐 command 完整 presentation contract 仍未展開,部分推進,未關閉**。
+
+## 8. `+0x22/+0x23/+0x24` 不是 DX/race/multiplier——worklist L368/570/571/609 措辭勘誤複核(2026-08-24)
+
+> 背景:`91-worklist.md` 現行第 570/571/609 行(戰後 town/整備流程、class-change church 兩段)仍把
+> unit record `+0x22/+0x23/+0x24` 稱為「DX/race/multiplier 欄位」並列為待資料化項目。本輪純靜態複核
+> (讀 `docs/knowledge-base/13-battle-menu-system.md`、`docs/knowledge-base/32-item-combat-stats-re.md`
+> §4.3、`remake/internal/battle`,未跑新 Ghidra query)確認:**這個欄位語意早在 2026-08-19 就已完全
+> 反組譯並資料化,「DX/race/multiplier」是過時措辭,不是真正開放的 RE 缺口。**
+
+### 8.1 真正語意:command17/18/19 暫態 buff 持續時間 byte,不是角色屬性
+
+`doc13`(`13-battle-menu-system.md`「native commands 17..19 殘留缺口收斂」節)與 `doc32` §4.3(L368)
+已交叉反組譯確認:
+
+| offset | 對應 command | 法術 | 效果 | 到期文字(FDTXT_000) |
+|---|---|---|---|---|
+| `+0x22` | 17 | 魔刃術 | AP+15%(寫 `+0x48`) | idx0x1E1「增加攻擊力的效果消失了！」 |
+| `+0x23` | 18 | 魔鎧術 | DP+15%(寫 `+0x4A`) | idx0x1E2「增加防禦力的效果消失了！」 |
+| `+0x24` | 19 | 風行術 | HIT+15,EV+15(寫 `+0x4C/+0x4E`) | idx0x1E3「增加速度的效果消失了！」(文字比喻,機制上不動 MV) |
+
+寫入端 `0x22721`/`0x22866`/`0x22997`(施法命中時各自 `+= rand()%4+2`)、遞減端 `0x1A866`(每回合逐 byte
+`DEC`,歸零才顯示到期文字並呼叫 `0x1B750`)、重算端 `0x1B750`(非零才把 AP/DP 乘 1.15 或 HIT/EV 各加 15,
+寫回 `+0x48/+0x4A/+0x4C/+0x4E`,而非對稱減法)三段呼叫鏈已逐指令反組譯釘死。這與 `+0x25/+0x26/+0x27`
+(中毒/麻痺/封咒到期)共用同一個 `0x1A866` decrement 迴圈與到期訊息呼叫序列,但只有 index0-2(即
+`+0x22..+0x24`)緊接著呼叫 `0x1B750` 重算 derived stat。
+
+**跟 DX、race 完全無關**:`+0x22/+0x23/+0x24` 落在已知 `0x50`-byte unit record 裡,而 raw
+race/class/level 三個 byte 是 `+0x1F/+0x20/+0x21`(見 `26-per-chapter-event-handlers.md` L279、
+`45-class-name-mapping.md`)、raw AP/DP/DX 各自的 effective word 也不在這三個 offset——兩組欄位在
+record 佈局裡本來就不重疊,「DX/race/multiplier」的舊猜測沒有位址證據支持。`doc32` §4.3 額外確認過
+另一個容易混淆的候選(`0x602ad` 道具表,215 rows、stride `0x17`=23)也不可能是這三個 offset 的來源,
+因為 `0x22`(34)已經超出該表單行 23-byte 的範圍。
+
+### 8.2 靜態資料值:所有已知地圖資產在這三個 offset 上恆為 0(這是設計本身,不是資料缺口)
+
+`+0x22/+0x23/+0x24` 是**純 runtime 暫態欄位**,只在戰鬥中施放魔刃/魔鎧/風行命中後才被寫非零值;
+在任何 persistent/存檔前的靜態角色資料裡沒有意義,`doc56`(2026-08-19)已記錄現有 33 張地圖資產的
+`native_transient` 陣列(即這三個 byte 加上 `+0x25/+0x26/+0x27`)**全數為 0**。因此「查明這三個 offset
+對每個 unit/character 的靜態值」這個問題本身答案是明確的——恆為 0,原版沒有任何角色會在關卡開始時
+自帶魔刃/魔鎧/風行 buff。不需要、也不可能再從 EXE 的角色資料表裡"多挖出"一批非零值。
+
+### 8.3 remake 現況:資料層三個 primitive 都已存在,只是還沒串成可執行指令
+
+`remake/internal/battle` 已有三個各自獨立、有測試覆蓋的 raw-ABI primitive,逐位元組對映上述三段
+原生邏輯:
+
+- `battle.ApplyNativeCommandModifier`(`native_command_modifier.go`)— 對映 `0x22721/0x22866/0x22997` 的
+  施法命中寫入(`__CHP` 朝零、`rand()%4+2` duration)。
+- `battle.ApplyNativeRuntimeEquipmentRecalc`(`native_equipment.go`)— 對映 `0x1B750` 的 1.15/朝零/+15
+  條件式 derived-stat 重算。
+- `battle.TickNativeTransientsRaw`(`native_transient.go`)— 對映 `0x1A866` 的逐 byte decrement + 歸零
+  回報 expiry。
+
+**三者彼此沒有被串接**(`doc13` 已指出):沒有等價於 ID20/21/22/26/27 已有的
+`ExecuteNativeCommandClearRestore`/`ExecuteNativeCommandApplication` 的 `ExecuteNativeCommand17_19`
+command executor(target 解析 + `0x1CA89` MP debit + 呼叫 `ApplyNativeCommandModifier` 寫 duration);
+且即使接上,`TickNativeTransientsRaw` 目前也不會在 expiry 時呼叫 `ApplyNativeRuntimeEquipmentRecalc`。
+這是真正剩下的落差,但屬於**引擎整合(engine integration)**,不是「資料化」——資料/語意本身已經
+完整反組譯並落地成可測試的 Go 函式。remake 玩家目前透過完全不同的 legacy 路徑
+(`magic.go applySpell` case17/18/19 → `Unit.BuffAPPct/BuffDPPct/BuffHit/BuffEV` + 共用 `BuffTurns`)
+施放並看到魔刃/魔鎧/風行效果,那是刻意簡化的可玩近似,不是這三個 native raw-ABI primitive 的串接結果。
+
+### 8.4 結論
+
+worklist 第 570/571/609 行的「原版 `+0x22/+0x23/+0x24` DX/race/multiplier 欄位資料化」描述**過時**:
+真正的欄位語意(command17/18/19 buff duration byte)、寫入/遞減/重算三段原生邏輯、以及到期文字全部
+已在 2026-08-19 完整閉合(見 `doc13`、`doc32` §4.3),靜態角色資料上的值也已確認恆為 0。唯一仍待的
+工作是把已存在的三個 remake primitive 串成一個可執行的 `ExecuteNativeCommand17_19` command,那是
+implementation/engine-integration 工作,不是 RE 缺口。本節不修改 `91-worklist.md`(依任務指示由外部
+協調 session 同步),僅在此記錄查證結果與證據鏈供之後同步參考。
