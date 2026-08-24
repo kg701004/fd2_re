@@ -1099,6 +1099,155 @@ postbattle 勝利轉場(非直接寫入死亡 signature 本身觸發，見下)�
    「觸發勝利→CG 過場→詩句文字→角色卡」的完整操作序列與時間點，可直接複用，不需要重新
    反覆嘗試 doc58 續四十六~六十一 那套「真實逐格擊殺」路線。
 
+## 9.9 2026-08-24(同日)— 對 §9.8 新候選 `0x4EC6A`/`0x4EE28` 做完整靜態反查：位址換算逐 byte
+坐實，但兩者皆為深度共用的通用引擎原語(RLE 解壓縮 getbyte + `TXT(idx)` 對白播放器的字型描邊
+子函式)，不是 montage 專屬 orchestrator——靜態方法論到此收斂到已知的死路，誠實負面結論
+
+> 用 `tools/ghidra_batch_probe.py`(`disasm`/`function_bounds`/`decompile`/`call_scan`/`xref_from`)
+> 對 §9.8 記錄的 native `0x4EC6A`/`0x4EE28` 做完整反查，依 §9.8 給下一輪的建議逐項執行。
+
+### 9.9.1 位址換算:逐 byte 核對,`0x19C000` delta 在這個位址範圍精確成立,不需校正
+
+`python tools/query_verified_address.py` 對 `0x4EC6A`/`0x4EE28`/`0x1EAC6A`/`0x1EAE28` 四個位址
+查詢均回傳「資料庫裡沒有記錄」——這是全新位址,不在既有 `verified_addresses.json`/
+`known_address_errata.json` 收錄範圍內,也不是任何已知勘誤對象。
+
+用 `disasm` 對 native `0x4EC6A`/`0x4EE28` 直接反組譯,結果與 doc58 續六十二記錄的 live 手動取樣
+**逐 byte 完全吻合**:
+
+- native `0x4ec6a`:`fe cc`(`DEC AH`)+`c3`(`RET`) —— 對應 live `0x1EAC6A` 記錄的
+  `FECC(dec ah); C3(ret); ...` 開頭兩個 byte。
+- native `0x4ee28`:`fe c9`(`DEC CL`)、`75 ed`(`JNZ 0x4ee19`)、`5f`(`POP EDI`)、
+  `03 fd`(`ADD EDI,EBP`)、`fe cd`(`DEC CH`)、`75 df`(`JNZ 0x4ee12`)、`61`(`POPAD`)、
+  `5d`(`POP EBP`)、`c3`(`RET`) —— 與 live `0x1EAE28` 記錄的
+  `FEC9; jne $-13; pop edi; add edi,ebp; FECD; jne $-21; popad; pop ebp; ret` **逐指令精確吻合**
+  (`jne $-13`/`$-21` 是相對位移寫法,換算後正是 `0x4ee2a→0x4ee19`/`0x4ee31→0x4ee12`)。
+
+**結論**:`native + 0x19C000 = live` 這個 delta 在這個位址範圍(0x4Exxx)一樣精確成立,不是近似值,
+不需要额外校正——這是本專案第 N 次獨立交叉驗證這個 delta(見 doc58 續四十~續六十二的完整歷史),
+這次補上的是「一個先前從未驗證過的新位址區段」也同樣吻合。
+
+### 9.9.2 function_bounds:兩個位址落在兩個不同的小函式裡,不是同一段程式碼的頭尾
+
+- native `0x4EC6A` 落在 `FUN_0004ec66`(`0x4ec66`–`0x4ec7b`,22 bytes)內部——不是函式進入點本身,
+  是進入點往後 4 bytes 處的**第二個進入點**(典型的「多重 tail-entry 共用程式碼」手法,常見於
+  手寫組合語言的小工具函式)。
+- native `0x4EE28` 落在 `FUN_0004ed7a`(`0x4ed7a`–`0x4ee35`,188 bytes)的尾端(entry+0xae)。
+
+兩者是**完全不同的兩個函式**,彼此沒有直接呼叫關係——doc58 續六十二把這兩個位址一併歸類成
+「RLE 解碼迴圈」的假說,在 §9.9.3 逐一 decompile 後證實**只有一半成立**。
+
+### 9.9.3 decompile:第一個確實是教科書級 RLE getbyte;第二個其實是 16×16 字型描邊繪製器,
+跟 RLE 完全無關
+
+**`FUN_0004ec66`**(含 `0x4EC6A`)——逐 byte 手動反組譯 22 bytes
+(`0a e4 74 03 fe cc c3 ac 3c c0 77 03 32 e4 c3 8a e0 80 ec c1 ac c3`)+ Ghidra decompile
+兩相印證,結構為:
+
+```
+OR AH,AH          ; 測試「剩餘重複次數」計數器(AH)
+JZ  read_new       ; 若計數器為 0,讀新的 control byte
+DEC AH             ; 否則計數器 -1(仍在重複填色模式)
+RET                ; 回傳(AL 沿用上次呼叫留下的填色值——呼叫端把 EAX 當狀態保存)
+read_new:
+LODSB              ; AL = *ESI++,讀 control byte
+CMP AL,0xC0
+JA  is_run
+XOR AH,AH
+RET                ; literal byte(<=0xC0),回傳,計數器歸零
+is_run:
+MOV AH,AL
+SUB AH,0xC1        ; AH = 重複次數-1
+LODSB              ; AL = *ESI++,讀填色值
+RET
+```
+
+這是標準的 run-length-encoded bytestream「取下一個解壓縮 byte」原語,與 doc58 續六十二對
+live `0x1EAC6A` 的判讀(「教科書等級的 RLE 解碼原語」)**完全吻合**,這部分假說成立。
+
+**`FUN_0004ed7a`**(含 `0x4EE28`)——decompile 出來的結構跟 RLE **完全無關**,是一個
+**16×16 點陣字型/圖示描邊繪製器**:
+
+1. 前段:把 10 個參數存進一批全域(`DAT_000627a3`~`DAT_000627b0`),若填色參數
+   (`param_10`,即描邊背景色)非 0,先用它把 16 列(每列 4 個 dword=16 px)的目的緩衝區全部
+   填滿——即字元格背景/底色。
+2. 後段:`DAT_000627ac + DAT_000627b0 * 0x20` 是字型表基底(以「字元碼 × 0x20 bytes」定位,
+   0x20=32 bytes=16 列 × 2 bytes/列,是標準 16×16 單色點陣字型格式);逐列讀一個
+   16-bit bitmask,逐 bit 檢查,若該 bit 為 1,對輸出緩衝區同一位置寫 3 個像素:
+   `puVar9`(主體色 `uVar1`)、`puVar9-1`(左側描邊色 `uVar2`)、`puVar9+1`(右側描邊色 `uVar2`)——
+   這是標準的「主體色+左右描邊色」文字繪製手法(常見於 RPG 對話框文字加陰影/描邊,確保文字
+   在任何背景上都可讀)。尾端 `fe c9;75 ed;...popad;pop ebp;ret`(即 live `0x1EAE28`)正是這組
+   雙層 16×16 迴圈(內層逐 bit、外層逐列)收尾的部分。
+
+**結論**:doc58 續六十二「兩次取樣都落在同一個 RLE 解碼迴圈附近」的判讀**只對了一半**——
+`0x1EAC6A`(CG 過場取樣)確實是 RLE getbyte,`0x1EAE28`(角色卡取樣)其實是**完全不同、
+語意上是文字描邊繪製**的函式,只是兩次取樣剛好落在程式碼記憶體裡相鄰的位置(`0x4ec66`/
+`0x4ed7a` 相距僅 0x114 bytes,同屬 `.object1` 這個小型美術/文字工具函式聚落),兩者之間
+**沒有呼叫關係**,不應該被當成同一個機制的兩個切面。
+
+### 9.9.4 call_scan 逐層往上追:兩條線都在 2-3 層內收斂到「深度共用的通用引擎原語」,符合
+本篇任務自己預先訂的「幾十個不相關呼叫點=generic utility」判準
+
+**RLE getbyte 這條線**(`FUN_0004ec66`):
+
+- 直接呼叫者只有 3 個(`0x4ebcb`∈`FUN_0004ebab`、`0x4ec1f`∈`FUN_0004ebff`、
+  `0x4ec51`∈`FUN_0004ec31`),乍看很集中。
+- 但這 3 個 sibling 函式各自被呼叫的地方分別是 **9 / 36 / 5** 個直接呼叫點,散佈在
+  `0x15f77`(對白系統)、`0x1c60a`/`0x1cc14`/`0x1ddcd`/`0x1de3a`/`0x1e0b0`(戰鬥選單/走位一帶)、
+  `0x224f5`/`0x225a3`(另一批選單邏輯)、`0x2663d`~`0x2b012`(spell/FIGANI 特效一帶,doc37 涵蓋
+  的區段)、`0x32ab5` 等等——橫跨全 EXE 幾乎所有已知子系統,語意完全不相關。這確認
+  `FUN_0004ec66` 及其 3 個 wrapper 是一個**通用的「解壓縮資料到緩衝區」引擎工具**,任何
+  地方只要要展開一段 RLE 壓縮資料(文字表、圖塊、調色盤…)都會呼叫它,不是 montage 專屬。
+
+**字型描邊繪製這條線**(`FUN_0004ed7a`):
+
+- 直接呼叫者只有 2 個(`0x16119`/`0x16477`),而且**兩者都在同一個函式** `FUN_00015f84` 內部,
+  看起來高度集中,像是找到專屬呼叫端了。
+- 但 `FUN_00015f84` **早就是本專案 doc50(`50-cutscene-script-system-design.md` L19/L29)
+  記載的已知函式**——就是全遊戲通用的 **`TXT(idx)` 對白播放原語**(「播章文本第 idx 條
+  (開框/頭像/翻頁)」),`call_scan` 對它本身找到 **296 個直接呼叫點**,散佈在
+  `0x100e9` 到 `0x32e24`+ 幾乎整個 EXE 範圍,含自我遞迴呼叫(`0x16073`)。decompile 顯示它是
+  一個 bytecode 腳本直譯器:讀一串 `short` 控制碼陣列,`-1`=結束、`-2`/`-3`=換行/分頁(並在
+  特定音樂 ID 下插入 `FUN_00016e24` 額外處理)、`-4`/`-5`=遞迴呼叫下一段腳本(`FUN_00015f84`
+  呼叫自己)、`-6`=迴圈畫 `bVar3` 張 portrait/字卡(逐次呼叫 `FUN_0004ed7a` 畫一張)、
+  `-0x11`~`-0x14`=切換 `DAT_00053c67`(音樂/場景 ID,`0x728`/`0x9017`)並重置狀態、
+  default(其餘正值)=畫一行文字(呼叫一次 `FUN_0004ed7a`,`iVar5 += 0x10` 換行)。這與 doc50
+  對 `TXT(idx)` 的既有描述(對白逐條播放、含開框/頭像/翻頁)完全吻合,是**全 27 章對白系統共用
+  的通用直譯器**,doc50 §3 記載的每一章 cutscene compiler 輸出都會呼叫它。
+
+### 9.9.5 誠實結論
+
+1. **§9.8 的位址換算完全正確**:`native + 0x19C000 = live` 這次在全新位址範圍(`0x4Exxx`)
+   逐 byte 精確吻合,`0x4EC6A`/`0x4EE28` 兩個 native 位址本身沒有問題。
+2. **`0x1EAC6A`(native `0x4EC6A`)確實是 RLE 解碼原語,`0x1EAE28`(native `0x4EE28`)其實是
+   一個跟 RLE 完全無關的 16×16 字型描邊繪製子函式**——§9.8「兩者是同一個 RLE 迴圈」的假說
+   訂正:只有一半成立,兩者只是程式碼位置相鄰,沒有呼叫關係。
+3. **兩者都不是 ending montage 專屬的 orchestrator,而是深度共用的通用引擎原語**,完全符合
+   本篇任務自己預先訂出的判準(「若從幾十個不相關地方被呼叫,是 generic utility 而非
+   dedicated renderer」)——RLE getbyte 一線在 2 層內發散到 9+36+5 個跨子系統呼叫點;
+   字型描邊一線更極端,2 層內直接撞進 doc50 早已記載、擁有 **296 個呼叫點**的全遊戲共用
+   `TXT(idx)` 對白直譯器。這不是新發現的子系統,是本專案文件裡本來就有名字、有位址、
+   全遊戲每一章都在用的既有機制。
+4. **對 doc91 11 個 worklist 項目的影響**:本輪**沒有**達成「定位到專屬 montage orchestrator」
+   這個目標,§9.1–9.9 累積下來的證據形狀高度一致——不只是「找不到 `0x2bce5`/`0x2c548`」,
+   連 §9.8 補的新候選線索,往上追蹤也一樣收斂到通用共用機制。這跟 doc35 §9.2 對戰鬥指令
+   選單得到的既有結論(「完整可驗證的 FIGANI/TAI.DAT/BG.DAT/FDOTHER.DAT phase-table 演出
+   引擎」)是同一種架構模式的側面印證:**這個引擎很可能根本沒有「一個特定 function 是
+   ending montage 的 orchestrator」這種東西**——真正驅動 montage 演出的很可能是餵給
+   `FUN_00015f84`(`TXT`)這個通用直譯器的**一段特定 script/bytecode 資料**(放在某個
+   FDTXT/資源檔裡,尚未定位是哪一份、哪個 index),而不是一段獨立的 CODE。継續在 CODE
+   空間裡找「montage 專屬 function」這件事,本身可能是問錯問題。
+5. **給下一輪的具體建議(如果要繼續這條線)**:不要再往 `FUN_00015f84` 的 296 個呼叫點上游
+   窮舉(不可行,且 §9.7 全域行為指紋掃描已經證明這類窮舉在本專案容易撞上更根本的
+   decompile 引數盲點)。改成 **live 方法**——在確認 YES 觸發勝利、即將進入 CG/詩句/角色卡
+   畫面前,對 `TXT`(live `0x15f84+0x19C000=0x1B1F84`)入口設中斷點,命中時直接讀
+   `param_1`/`param_2`(依 doc50 `TXT(idx)` 簽名,通常是 text_index 或章節文本表指標)與
+   `D SS:ESP` 找呼叫端——這樣才可能找到「是哪個 chapter handler / 哪個 index 把 ending
+   montage 的文本/演出腳本餵給這個通用直譯器」,而不是繼續在 leaf 原語層面打轉。這個方法論
+   跟 doc58 續六十二 §4 建議 2 一致,只是這次補上了具體理由：**呼叫端在 976-function 清單內
+   不代表能收斂——因為這個特定呼叫端(`TXT`)本身就是全遊戲共用的直譯器,問題的答案在
+   「餵給它的資料」而不是「呼叫它的 CODE」**。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code
