@@ -50,6 +50,53 @@ FDOTHER #9 十二次索引呈現)一帶，這兩個位址已知會處理 map32 �
 純粹是它們之間的一段對白淡入，不是同一個責任範圍)。本輪未完成最終目標(仍未找到
 key producer 本身)，但排除了一個之前未證實排除的候選位置，下一輪應直接從 `0x32975`/
 `0x32999` 附近的呼叫序列往回/往後追，而非重複反組譯 `0x3241f`/`0x1f525`。
+
+**2026-08-24 續輪(最終定案，回應 worklist L389／L544)**：改用「從消費端窮舉反查」而非
+繼續往 `0x32975`/`0x32999` 附近人工追猜。`0x11019` 是 FDICON raw key→cache slot 的唯一
+入口，已知有兩條合法 producer：player-party 路徑(`0x1088d→0x10a77`，讀 persistent record
+`+7`)與 scripted/FDFIELD 路徑(`0x10c50`，讀 FDFIELD `b0`，doc31 §6 已證實)。用
+`tools/ghidra_batch_probe.py` 的 `call_scan` 動作對 `0x10c50` 做**全域窮舉**(掃 `.object1`/
+`.object2`/`.object3`/`.image` 全部可執行區塊找 `E8`(CALL rel32) opcode，非僅靠不完整的
+reference index)：全檔案**只有一筆**命中，`0x10bee`，位於 `FUN_00010b4e`——也就是既有原語
+表 `SPAWN(g)`(`0x10b4e`)本身。換句話說，**scripted FDFIELD 單位的 FDICON key 永遠只能透過
+`SPAWN(g)→0x10c50→0x11019` 這一條路徑產生，不存在第二個 caller**；這就窮舉排除了
+`0x32975`(整 byte 覆寫 `unit[slot]+5`，反組譯本體不含任何對 `0x10c50`/`0x11019` 的呼叫)與
+`0x32999`(spawn+FDOTHER #9 呈現，本體同樣不呼叫 `0x10c50`/`0x11019`，與上輪「內呼叫
+`0x10b4e` append group」的既有描述一致——它呼叫的是 `0x10b4e`，但用的是自己的 group 參數，
+不是 map32 王座廳這批單位的來源，見下)，不必再逐位址人工追猜。
+
+**真正的 producer 鏈**：反組譯 `0x1088d`(即 `LOADCH` 原語 `0x205da` 內部呼叫的完整函式本體，
+`0x1088d..0x10b42`，694 bytes 全函式已 decompile+逐指令 disasm 核對)，玩家隊伍複製迴圈
+(既有 `0x10a77` 段)結束後，函式尾端**無條件**執行：
+```
+0x10b3c  PUSH 0x0
+0x10b3e  CALL 0x00010b4e     ; SPAWN(0) —— 每次 LOADCH/戰場重設呼叫 0x1088d 都會自動觸發
+```
+即 `0x1088d` 每次執行都會**自己**呼叫一次 `SPAWN(group=0)`，不需要 handler 顯式下
+`0x10b4e(0)`；`0x10b4e(g)` 掃描目前章節已由 `0x1088d` 開頭載入的 26-byte-stride 控制資源
+(`DAT_00053a55`，即既有 doc23/doc03 記載的 FDFIELD 控制表)，逐筆比對 `+0x98` byte 與 `g`
+是否相等，相等才呼叫 `0x10c50(idx)`；`0x10c50` 才是真正讀 FDFIELD `b0`、呼叫 `0x11019`
+產生 FDICON raw key、把回傳的 cache slot 寫入新單位 `+2` 的 constructor(`0x10ed6 CALL
+0x11019`，逐指令核對與既有 doc31 §6 記載完全一致)。
+
+**結論(最終關閉)**：ch00(序章)handler 借用章節值 32(`[0x53c03]=0x20; CALL 0x205da`)載入
+map32 時，王座廳 21 名單位(國王/王后/索爾×2/亞雷斯/守衛×16，doc47 §8 dosbox 實測序列)的
+raw FDICON key **不是**由 `0x3241f`、`0x32975` 或 `0x32999` 產生——三者已用窮舉 `call_scan`
+排除。真正的 producer 是**doc31 §6 早已證實的通用機制** `0x10b4e→0x10c50→0x11019`(FDFIELD
+scripted-spawn 路徑)，只是這條路徑對 ch00 而言是由 `0x205da→0x1088d` 尾端**無條件內建**的
+`SPAWN(0)` 呼叫觸發，不出現在 handler 自己的顯式 call 序列裡——這正好解釋了 doc47 §8 的
+dosbox 實測為何在 LOADCH 之後、任何顯式 handler `0x10b4e` call 之前，就已經看到 21 筆單位
+就位(國王 48/王后 66/索爾 0×2/亞雷斯 4/守衛 68×8+69×8)：因為 `0x1088d` 自己已先呼叫過一次
+`SPAWN(0)`。消費端沿用既有 doc31 §6 已驗證公式：`unit+2`(`0x11019` 回傳的 cache slot)經
+`slot×12+方向×3+cycle` 索引 `FDICON.B24` 指標表(`[0x53a61]`，`0x1292c` 讀取)。這不是新機制，
+只是把 ch00 具體接上了既有已證實的通用路徑；`0x11019` 全域另有 8 個呼叫點(`call_scan` 窮舉，
+含已知的 save/CONTINUE bootstrap `0x10010` 與另外 5 個尚未逐一核對身分的呼叫端)，均不影響
+本節「map32 intro roster」這個結論，留給日後個別章節/流程需要時再追。
+
+方法：純靜態 Ghidra headless(`FD2Analysis3`，`-readOnly`)`decompile`＋逐指令 `disasm` 還原
+`FUN_0001088d`、`FUN_00010b4e`、`FUN_00010c50`，並用 `call_scan` 對 `0x10c50`／`0x11019` 做
+全域窮舉確認呼叫端數量(`0x10c50`=1、`0x11019`=8)；未使用 DOSBox-X 或 live memory。
+
 | `DELAY(ms)` (0x375b2) | 延遲 | beat op:delay |
 | `DEACTIVATE_UNIT(slot)`（legacy DSL alias, 0x32975） | `unit[slot]+5 = 1`；此 caller 用於劇情退場，但 raw writer 本身不命名 bit0 的全域語意 | beat op:deactivate_unit（raw writer） |
 | `SPAWN_INTRO(g)` (0x32999) | 內呼叫 0x10b4e append group，再用 FDOTHER #9 做固定 12 次索引合成／呈現；後續 ACTING 是 caller 的獨立動作 | beat op:spawn_intro；原版 handler 走具型別12次呈現 adapter，缺證據／素材時失敗即關閉 |

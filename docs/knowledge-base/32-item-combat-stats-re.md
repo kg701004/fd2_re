@@ -134,6 +134,43 @@ anchor 失敗。本輪逐表核對 `03-exe-and-data-structures.md` §B 第 60-70
 `tools/test_dump_exe_tables.py` 裡 `test_native_movement_cost_rows_have_exact_29_by_20_boundary`
 原本硬寫舊版 `base = 0x55445`，同步改為新版 `0x7A659`；4/4 單元測試通過。
 
+### 1.3 2026-08-24 獨立複驗(回應 worklist L366/L1354，不重新推導，只核對既有結論)[驗]
+
+> 背景：worklist 上這兩行的原始措辭仍是「base/stride/215-row prefix 仍未閉合」，但 §1.1/§1.2/
+> §4.3 已在 2026-08-19～20 記錄「狀態：完成」。查證前先確認這不是文件互相矛盾——worklist 本身
+> 的措辭是先前輪次留下未同步的舊文字（任務指示不得直接改 `91-worklist.md`），不是真的還有缺口。
+> 本輪不重新推導，只用純靜態證據**獨立**核對 §1.1 的三個關鍵斷言，確認沒有錯誤或遺漏。
+
+直接對 canonical `FD2.EXE`(509158 bytes)重新 `seek`/`read`(不經任何既有 exporter，避免沿用
+同一套可能共享的 bug)：
+
+- md5 `33464c81e6a364fd0660141139aa8e6e`，與 `docs/data/fd2-reference-files.json` 記載基準一致。
+- file `0x792c0` 起 6 bytes = `0b 01 0a 00 5f 00`，與 §1.1 記載的 anchor 完全相同。
+- file `0x792c1`(native row0)起 23 bytes = `01 0a 00 5f 00 00 00 00 00 00 00 01 01 00 00 00 00
+  00 05 00 32 00 05 00`，stride `0x17` 起點內容存在、非全零/垃圾資料。
+- **零 gap 邊界獨立核對**：file `0x7A611`(row214 最後一個 byte)= `00`；file `0x7A612`
+  (row215/理論第 216 列起點)起 8 bytes = `09 01 0a 00 09 01 0a 00`——與 §1.1 引用的 class-change
+  `target_portraits` 表起點首 8 byte **逐 byte相同**，且 `0x7A612` 精確等於
+  `0x792c1 + 215*0x17` 的算術結果，無 padding、無缺口，與 §1.1 結論一致。
+
+`FUN_0004e8bc` 重新 `decompile` + 逐指令 `disasm`(`FD2Analysis3`，`-readOnly`，Ghidra headless)：
+
+```
+undefined * __stdcall FUN_0004e8bc(int param_1)
+{
+  return &DAT_000602ad + param_1 * 0x17;
+}
+```
+逐指令核對：`MOV EAX,[EBP+8]`(param_1)→`MUL 0x17`→`LEA EDX,[0x602ad]`→`ADD EAX,EDX`→`RET`，
+單一 5 行 accessor，與 §1.1 記載完全一致，沒有隱藏的 bounds check 或第二個分支。
+
+**結論**：base `0x602ad`(runtime linear)／file `0x792c1`(新版)、stride `0x17`(23B)、215-row
+(ID 0..214)零 gap 邊界、`FUN_0004e8bc` 單行 accessor——四項獨立複驗全部與 §1.1 既有結論
+byte-exact 吻合，沒有發現任何需要修正之處。**本項到此確認為真正閉合，worklist L366/L1354
+可視為已解決，不需要再排入下一輪 RE 工作**；欄位語意層面仍只剩 §4.1/§4.3 已明確標註的
+`+0xb/+0xc`(caller-specific 幾何)與結構性冗餘 `+0x16` 未強行命名，這是刻意保留的
+fail-closed 邊界，不是遺漏。
+
 ## 2. 傷害計算鏈 [驗]
 
 ```

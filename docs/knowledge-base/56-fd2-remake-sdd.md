@@ -1108,8 +1108,12 @@ baseline-minus-delta 寫入。handler compiler 分別保存為
 `native_palette_fade_out{0→63,2ms}` 與 `native_palette_fade_in{64→0,2ms}`；
 runtime 已用目前六位元 DAC baseline 與索引 framebuffer 執行，每一步都必須經
 Draw acknowledgement 才前進。60Hz host 無法呈現 DOS 的2ms wall-clock cadence，
-所以這只證明寫入序列與端點，不宣稱時序 E2。ch00 `0x3241f` 因 raw FDICON key
-尚未閉合，仍是唯一明示的 RGBA E1 近似；其他 call site 不得沿用該 fallback。
+所以這只證明寫入序列與端點，不宣稱時序 E2。ch00 `0x3241f` 呼叫端本身不含 FDICON 查表
+(doc50 2026-08-19 已證實)；map32 intro roster 的 raw FDICON key producer 已由 doc50
+2026-08-24 續輪最終定案為既有通用路徑 `0x205da→0x1088d`(尾端無條件 `SPAWN(0)`)→
+`0x10b4e→0x10c50→0x11019`，機制細節與呼叫端窮舉證據**只在 doc50 記錄，本檔不重複**。
+remake 端是否已把 ch00 這段接上原生 selector(取代目前的 RGBA E1 近似)仍是獨立的實作
+工作，機制反組譯已閉合不代表 remake wiring 已完成；其他 call site 仍不得沿用該 fallback。
 
 raw ch19 post（玩家第20戰）已由 IDA Pro 9.4 與 Capstone 重新閉合。入口先以
 四張 byte table 對 slots `0..15`、`52..60` 寫 `record+0/+1/+3`，並設定
