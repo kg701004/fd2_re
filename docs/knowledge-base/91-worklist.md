@@ -2167,3 +2167,13 @@
   camera/roster/tick 逐幀比對兩次白閃與增援。ch27 戰前 view／selector0 已
   閉合並接線，persistent HUD 擁有者也已達 E1；本項剩餘該時點真實 roster
   raw record、CONTINUE 邊界及原版逐幀 oracle。完成前 event63 仍不可標成 E2。
+- [ ] **CH27-REAL-UI-MOVE-CONFIRM-BROKEN**：`0x115b6`(mode 4)的移動確認
+  `Enter`鍵在 ch27 這個存檔上實測 100% 失敗——換不同合法目標格、atomic
+  vs. held按鍵、加長settle延遲、完整環境重開機皆試過，仍無一次成功；方向鍵
+  ／Escape／選單Enter同期都正常，範圍窄到只咬定這一條輸入路徑。目前繞過
+  方式是 SMV-teleport(與 ch24 續二十/二十一/二十三/二十四已驗證過的手法
+  相同，非本輪新發明)，不是真正解法。攻擊執行本身已在此繞過法下用斷點
+  證實無誤(`0x1AD75F`確認閘門通過、`0x1CA2B0`=native`0x2e2b0`攻擊
+  orchestrator命中、目標HP `15→0`、Sor `record[+5]` `0x00→0x80`，見
+  doc58 續五十三)；本項要解的是「為何真實UI的Enter確認移動在ch27失效」
+  本身，不是攻擊邏輯。
