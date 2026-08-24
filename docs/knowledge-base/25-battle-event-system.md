@@ -888,4 +888,185 @@ handler 未定位，仍未解；`64`／`66` 兩個 entry 在 §10 最早的範�
 本節對 event67/84 所做的完全一樣，只是尚未對每一個都做）；64/66 兩個先前遺漏的 entry
 建議與後續 event82-style 稽核一併排入。
 
-> 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`、`FD2_ghidra_projects/ProbeGlobalEvents16BBWalk.java`、`ProbeGlobalEventsRawBytes.java`、`ProbeExtra.java`、`ProbeEvent67Walk.java`、`ProbeEvent84Walk.java`。
+## 11. 2026-08-24：58..89 殘留缺口(64/66/77)收斂 + 兩個共用原語解析 + 位址邊界方法論警示
+
+> 回應 worklist L212 剩餘部分。§10 已處理 58..89 中 30 個(20 個有具體行為描述 + 9 個證實
+> 「表項落在鄰居 handler 中段、無獨立語意」+ 1 個(77)落點已知但外層未定位)，但 §10 自己
+> 承認「64/66 兩個 entry 在最早的範圍界定中被遺漏」——本節是這兩個 ID 第一次被觸碰。方法
+> 與 §10.4 完全相同：`tools/ghidra_batch_probe.py`(disasm/decompile/bytes/xref_to/call_scan)
+> 逐 byte 回溯，不假設表項位址就是真正指令起點。
+
+### 11.1 event64：證實落在 event62 所屬大函式的尾端 tail-jump 位移運算元內 [驗]
+
+`docs/data/event_id_groups.json` 記錄 handler=`0x358ea`。逐 byte dump(`0x358c0` 起 60 byte)
+還原出的真實指令流，是 §10.4.2 已知的 event62 大函式(序頭 `0x3585e`)的延續：
+
+```
+0x358c2  push dword[0x53a7d]
+0x358c8  call <sub> ; add esp,0x24
+0x358d0  push 0 ; call <sub> ; add esp,4
+0x358da  push 0 ; call <sub> ; add esp,4
+0x358e4  call <sub>
+0x358e9  jmp 0x35990            ; E9 A2 00 00 00
+```
+
+`event64` 註冊位址 `0x358ea` 正是這條 `jmp rel32`(操作碼 `E8` 在 `0x358e9`)位移運算元的
+第 1 byte(4-byte 位移落在 `0x358ea..0x358ed`)。跳轉目標 `0x35990` 反組譯證實是
+`ADD ESP,0x10; POP EDI; POP ESI; POP EBX; RET`——與 event62 大函式序頭
+(`PUSH EBX,ESI,EDI; SUB ESP,0x10`)對稱的共用收尾。事件63 的註冊位址(`0x358c7`)也同樣
+落在這段指令流中段(`PUSH dword[0x53a7d]` 的最後 1 byte)，這正是 §6.1 為何從未能靠
+event63 自己的位址解出語意、必須改走「raw camp0/敵軍AI前 runner」路徑的 byte 級成因。
+
+**結論**：event64 與 event63 相同，是「表項落在 event62 大函式中段」的產物，沒有獨立語意——
+併入 §10.4.1「無獨立語意，byte 級證實」名單，成為第 10 個成員。
+
+### 11.2 event65 完整函式(補完 §10.2 的 [推] 片段)、event66 落點與其執行路徑 [驗]/[推]
+
+byte 級逐一回溯，找到兩個緊鄰、幾乎同構的完整函式：
+
+**Function A**(event65 註冊位址 `0x3599b` 所在區段)，真正入口 `0x35997`：
+```
+0x35997  push 0x10 ; call 0x3702f         ; 標準輸入緩衝清理序頭
+0x359a1  mov edx,[esp+4] ; eax=edx*0x50   ; 單位 stride 公式(shl 2;add;shl 4)
+0x359af  mov edx,[0x53a45]                ; 單位陣列基底
+0x359b5  cmp byte[edx+eax+6],0            ; 讀觸發單位 raw camp byte(+6)
+0x359ba  jz 0x359ca                       ; ==0 直接跳過
+0x359bc  push 0,0x2c,0x27 ; call 0x344f2 ; add esp,0xc
+0x359ca  ret
+```
+`0x3599b`(event65 註冊位址)實際落在 `PUSH 0x10` 立即值的最後 1 byte——從那裡起跳會先產生
+2 條垃圾指令，恰好在 `0x359a1` 重新對齊回真正指令流，這正是 §10.2 當時「尾段可信、前段
+暫存器殘留」判斷的成因；現在補上完整、乾淨的函式全貌(`0x35997..0x359ca`)，把 event65 從
+「尾段片段」升級為完整已知函式。
+
+**Function B**(緊接在 Function A 之後)，入口 `0x359cb`：
+```
+0x359cb  push 0x10 ; call 0x3702f
+0x359d5  mov edx,[esp+4] ; eax=edx*0x50
+0x359e3  mov edx,[0x53a45]
+0x359e9  cmp byte[edx+eax+6],0
+0x359ee  jz 0x35a0c
+0x359f0  push 0,0x18,0x17 ; call 0x344f2 ; add esp,0xc    ; 條件呼叫
+0x359fe  push 0,0x38,0x35 ; call 0x344f2 ; add esp,0xc    ; 無條件呼叫
+0x35a0c  ret
+```
+
+event66 註冊位址 `0x359c8` 落在 Function A 尾端 `ADD ESP,0xC`(`83 C4 0C`)的 ModRM byte，
+**不是**任何函式的真正入口。但若字面上從 `0x359c8` 開始執行：bytes `C4 0C C3` 會被解碼成一條
+(語意上應無害，只汙染 ECX/ES 段暫存器的)`LES ECX,[EBX+EAX*8]`，**恰好吃掉 3 bytes、精確
+吃到 Function A 的 RET 為止**，程式計數器接著落在 `0x359cb`——無縫接上 Function B 的完整、
+自洽入口。這是可重現、逐 byte 驗證過的執行路徑(非猜測)，故標 [推] 而非「無語意」：
+**event66 實際執行內容 = Function B 的完整行為**(見上)。
+
+event65/66 兩者都是「檢查觸發單位 raw camp(+6) 是否非零，再以不同常數呼叫同一個共用效果
+函式 `0x344f2`」的同構事件，差異只在傳入常數(0x2c/0x27 vs 0x18/0x17 與 0x38/0x35)。
+
+### 11.3 兩個先前「未展開」的共用呼叫目標
+
+**`func_0x344f2(a,b,c)`**——原先各節標註「可能是 overlay 呼叫，靜態無法展開」，實際反組譯
+證實是普通 in-segment 函式，本體用 tail-jump 共用實作：
+```
+0x344f2  push 0xc ; call 0x3702f
+0x344fc  push ebx ; push esi
+0x344fe  esi=[esp+0x10] ; ecx=[esp+0x14] ; edx=[esp+0xc]
+0x3450a  jmp 0x3452a                      ; tail-call 到共用實作(本節未展開 0x3452a 本體)
+```
+不再是「不可展開的 overlay」，只是共用尾端(`0x3452a`)這次沒有再往下追展開。
+
+**`func_0x35B78(group_id, item_id, count?)`**——**修正**先前 §10.2/§10.4.2/§10.4.3 對
+event73/74/75/77 的推測(「給予道具的 helper」)。實際反組譯顯示這是一個**「spawn_group +
+兩段調色盤淡入 + 全螢幕重繪」**的複合原語，不是純粹的給予道具函式：
+```
+0x35b78  push 0x10 ; call 0x3702f
+0x35b82  push [esp+8] ; push [esp+8] ; call 0x135dd ; add esp,8   ; 未展開：對第2引數複製
+                                                                    ; 兩次餵給 0x135dd
+0x35b92  movzx eax,[esp+0xc] ; push eax ; call 0x10b4e            ; ★ spawn_group(底部引數=group_id)
+0x35b9d  push 0x12c ; call 0x3790a ; add esp,4                    ; 未展開，疑似淡入階段1(時長300)
+0x35bad  push 0xff,0xff,0 ; call 0x11df2 ; add esp,0xc            ; 未展開，疑似RGB/淡色參數
+0x35bc1  push 0xc8 ; call 0x3790a ; add esp,4                     ; 疑似淡入階段2(時長200)
+0x35bce  push 0,0xff,0 ; call 0x11df2 ; add esp,0xc
+0x35bdf  push 0 ; call 0x11cac ; add esp,4                        ; ★主戰場重繪函式(§7.6 已證實)
+0x35be9  jmp 0x35722                                               ; tail-call(本節未展開)
+```
+呼叫慣例(以 event73 `push 1,0x1B,3;call 0x35B78` 為例，cdecl 逆序push)：`group_id`=最底部
+引數(=1)、`item_id`=中間引數(=0x1B)，傳給 `0x135dd` 的即是這個 `item_id`。**修正**：
+event73/74/75/77 系列呼叫應理解為「用給定 group_id 呼叫 spawn_group、並用 item_id 對
+`0x135dd` 做某種登記/檢查，再播放兩段調色盤淡入特效並重繪」——較可能是「援軍/新單位登場的
+淡入演出」，不是單純給予道具。`0x135dd`、`0x3790a`、`0x11df2`、`0x3452a` 四個子函式本節
+仍未展開，留待後續。
+
+### 11.4 event77 外層 handler 完整重建 [驗]/[推]
+
+沿用同一方法往回追，event76(見 §11.5 邊界更正)RET 之後緊接兩個此前未編號的短函式：
+```
+0x35d85  push 4 ; call 0x3702f ; eax=[0x53a55] ; dl=[0x53bef] ; mov[eax+6],dl ; ret
+         ; turn_events slot(+6) 單次重排程寫入
+0x35d9e  push 0x28 ; call 0x3702f ; 畫面draw(arg4) ; call 0x344f2(0,0x2d,0x29) ;
+         畫面draw(arg6) ; mov[0x53ad5+0x12],1 ; ret
+```
+再接著才是**真正的 event77 外層函式，入口 `0x35e5b`**：
+```
+0x35e5b  push 0x28 ; call 0x3702f(0x28)
+0x35e65  push 0,0x2d,0x29 ; call 0x344f2 ; add esp,0xc
+0x35e73  畫面draw(9引數，arg5)
+0x35e9a  push 3,7,8 ; call 0x35b78 ; add esp,0xc
+0x35ea8  push 4,7,4 ; call 0x35b78 ; add esp,0xc
+0x35eb6  push 5,7,0
+0x35ebc  jmp 0x35d55                                    ; ★ tail-call，尾呼叫進另一個 0x35b78(5,7,0) 呼叫點
+```
+`0x35ebc` 這條 `jmp 0x35d55`(`E9 94 FE FF FF`)的位移運算元涵蓋 `0x35ebd..0x35ec0`，而
+**event77 註冊位址 `0x35ebe` 正是這 4 bytes 位移中的第 2 byte**——byte 級精確證實，收斂
+§10.4.3 原本「約落在 JMP 中段」的推論。若字面上從 `0x35ebe` 執行，開頭 2 bytes `FE FF`
+會解碼成 `FE`(INC/DEC 群組)搭配 ModRM `FF`(reg 欄位=7，該 opcode 群組未定義此擴充)——
+**不合法的操作碼編碼**，即這個位址若真的被 CPU 執行到，會是未定義行為，不是可運作的程式
+路徑。
+
+尾呼叫目標 `0x35d55` 反組譯證實是另一個 `push 1,0x12,0x11;call 0x35b78` 呼叫點，其後緊接
+event76 自己的畫面draw序列。也就是說 event77「第三次 0x35b78 呼叫」透過尾呼叫其實落腳在
+**另一個獨立呼叫點的程式碼裡**，不是進了新函式本體。
+
+外層函式 `0x35e5b` 用 `call_scan`/`xref_to` 查無任何 `E8` 直接呼叫或既有 xref 指向它——即
+這個函式**目前找不到已知呼叫者**，語意上自洽(給予/登記 item 7 的三個變體 + 淡入 + 重繪)，
+但它與 event77 之間的關係僅止於「event77 的 table 項落在它的尾呼叫運算元裡」這個 byte 巧合，
+不能反推「event77 事件被觸發時會執行它」——依 §10.4.3 同款判準，這仍歸類為「table 項不是
+有效進入點」，但其所在的完整函式體本節首次完整記錄，供後續 caller 溯源使用。
+
+### 11.5 方法論警示：「反組譯無警告」不足以證明表項是真正的函式入口
+
+本節在核對 event77 上下文時，連帶用「回溯確認上一條指令是否恰好在表項位址結束」的方式，
+覆核了幾個 §10.1 已標 [驗]「乾淨無警告」的既有結果——**這個邊界檢查此前沒有系統性做過**，
+結果至少兩個既有 [驗] 結果實際上也沒通過：
+
+| event | 既有記錄 | 本次回溯結果 |
+|---:|---|---|
+| 76 | 入口 `0x35d60`，「僅 `0x15F84()` 然後返回」 | `0x35d60` 落在 `PUSH 0x13` 指令的立即值 byte(該 `PUSH` 屬於一段從 `0x35d5d` 開始、`push 1,0x13,0x4a,0x4c,...` 的畫面draw引數序列，`0x35d5d` 本身緊接在 §11.4 event77 外層函式尾呼叫目標 `0x35d55` 的 `call 0x35b78` 之後)。從 `0x35d60` 起跳的 flow-directed 反組譯之所以「無警告」，是因為一條 3-byte 垃圾指令(`ADC EBP,[EDX+0x4a]`)剛好吃滿 3 byte、在 `0x35d63` 巧合重新對齊回真正的指令流——純屬巧合，不是證據。真正函式入口應為 `0x35d5d`(或更早，本節未回溯到底)。 |
+| 78 | 入口 `0x35ed2`，「條件不可信/骨架可信」 | `0x35ed2` 落在 `CMP byte[EAX+0x13],0` 指令(真正起於 `0x35ed0`)的位移 byte。往回追可回溯到 `0x35ec1`(`PUSH 0x28;CALL 0x3702f` 標準序頭)，這才是本函式(緊接在 event77 外層函式尾聲之後)的真正入口。骨架結論(有條件則畫面+`0x35F10`，然後 `[0x53AD5+0x13]+=1`)不受影響，但引用位址應從 `0x35ed2` 改成 `0x35ec1`。 |
+
+此外，`0x354FE`(既有「event 58：map25 五選一寶物」一節引用的入口)本次用同一方法
+flow-directed 反組譯**直接產生不可信的垃圾指令流**(`ADD byte[EAX],AL` 等)，完全不含該節
+描述的 `0x1B8A6`/`0x5274E`/FDTXT `0x1E0` 等內容；而這些內容**確實存在於程式中**，但位於
+§10.4.2(event62)已知的另一個函式內——往回掃描該函式的標準「`push N;call 0x3702f`」序頭，
+精確找到 `0x35854`(`push 0x44;call 0x3702f`，緊接已知的 `0x3585e` 序幕)。`0x35854` 是否
+才是 event58 真正的表項值，本節**未能**透過獨立管道(直接重讀 `0x51b91` 原始跳表 bytes)
+完全實錘——嘗試過直接讀表，但讀出的值與本文件其他已高度驗證的表項(event0、event82)對不
+上，懷疑是資料段/多重疊加記憶體區塊的定址問題，非本節能力範圍內排除，**因此本節不更動
+「event 58」既有小節的結論**，僅在此留下明確、可重現的 byte 證據與座標，供後續專門稽核。
+
+**建議**：未來任何「flow-directed 反組譯從表項位址起跳、無 Ghidra 警告」的結果，都應該
+**額外**做一次「往回確認上一條指令是否恰好在表項位址結束」的邊界檢查(本節示範的方法)，
+不能只憑「沒有 `unaff_*`/`halt_baddata`」就判定 [驗]。已標 [驗] 的 58/76/78 三項建議重新
+核對；67/69/82/84 本次已個別核對，邊界成立(前一指令恰好在表項位址結束)，維持 [驗]。
+
+### 11.6 90 entries 累計現況更新
+
+58..89 全 32 個 entry，加上本節後**全部都有明確狀態**(此前 64/66 完全遺漏)：
+- **22 個有具體位址佐證的行為描述**：58/59/60/61/63/65/67/69/74/75/76/78/82/84(既有14) +
+  62/72/73/79/80/83(§10 新增6) + **66(本節新增第22個)**。
+- **11 個證實為表項落在鄰居 handler 中段、無獨立語意**：68/70/71/81/85/86/87/88/89(既有9)+
+  **64、77(本節新增第10、11個)**。
+- 60 個(0..57 turn_events 子集)不在 L212 範圍內。
+- 開放子執行緒(非本節能力範圍，留給後續)：`0x135dd`/`0x3790a`/`0x11df2`/`0x3452a` 四個
+  共用子函式本體未展開；58/76/78 三個既有 [驗] 條目的引用位址疑似需要修正(§11.5)；直接
+  重讀 `0x51b91` 原始跳表 bytes 的定址異常待排除。
+
+> 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`、`tools/ghidra_batch_probe.py`、`FD2_ghidra_projects/ProbeGlobalEvents16BBWalk.java`、`ProbeGlobalEventsRawBytes.java`、`ProbeExtra.java`、`ProbeEvent67Walk.java`、`ProbeEvent84Walk.java`。
