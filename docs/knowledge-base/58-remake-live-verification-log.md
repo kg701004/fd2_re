@@ -6792,3 +6792,65 @@ doc58第2698行起只有一句「移到空地按Enter叫出系統選單」，本
 ### 9. 產出
 
 本文件本節（續六十一）。過程截圖約50張，暫存於WSL端`~/shots/boot*.png`與Windows端專案根目錄暫存檔（已於本輪結束後清除），均為過程debug產物，非repo追蹤內容。
+
+## 續六十二：全新平行路線——使用者提出的「敵方HP/MP/ATK/DEF=1、我方999」stat-buff構想，接手時被協調中的另一輪同步修正為「全滅式勝利條件」，最終用`tools/dosbox_harness.sh`隔離instance走通「敵方47格全部死亡signature + End Turn確認」捷徑，首次觸發真正的postbattle勝利轉場並深入結局montage(2026-08-24)
+
+**任務背景**：使用者提出一個新構想——與其在ch27走續五十九～六十一反覆卡住的「真實逐格擊殺」路線，不如直接用debugger把全部敵方HP/MP/ATK/DEF寫成1、我方寫成999，讓每次真實攻擊都保證一擊必殺、敵方回合也毫無風險，藉此大幅加速「用真實攻擊鏈打贏整場戰鬥」的過程。任務指示明確要求使用**新建的`tools/dosbox_harness.sh`平行harness**（instance name`statbuff`），全程避開另一輪正在canonical`dbg`/`:99`/`~/fd2-run`上進行的獨立即時驗證，不得互相干擾。
+
+執行中途，協調端（orchestrating session）兩次插入即時修正：(1) 引用同步完成的`docs/knowledge-base/25-battle-event-system.md` §3.1 新反組譯結論——ch27真正的引擎層勝利判定**不是「殺3隻隊長」，而是「目前存在的全部敵方record全滅」**（`0x51b19[26]=0x20a87 → CALL 0x205be`，`0x205be`是純掃描：任一`+6==0 && (+5&1)==0`的record存在就不算贏）；(2) 建議在正式展開「buff+逐格攻擈47隻」大工程前，先**免費快速測試**一個更直接的捷徑——既然勝利判定是純掃描，直接把全部47格敵方record的死亡signature（`+5=0x01`）一次寫入，再想辦法觸發一次判定，看是否就能免戰而勝。本輪據此徹底調整原計畫，兩個修正都被完整採納並執行。
+
+### 1. 環境部署：`dosbox_harness.sh launch statbuff`，中途踩到一次真實的Xvfb啟動race+一次背景呼叫被回收，均已定位並修復
+
+第一次`launch statbuff 7000`背景呼叫回傳後，`status`顯示`XVFB_OK=yes`但`screenshot`失敗，`ps aux`顯示Xvfb已變成`<defunct>`；查`~/.fd2-harness/instances/statbuff.xvfb.log`發現`_XSERVTransSocketCreateListener: failed to bind listener`，`ls /tmp/.X*-lock`確認`/tmp/.X199-lock`是上一次啟動殘留的stale lock file——`teardown`+手動`rm -f /tmp/.X199-lock`後重新`launch`即乾淨成功。這是`tools/dosbox_harness.sh`本身doc98未記錄過的一個新環境坑，值得補充：**stale `/tmp/.X<port>-lock`會讓同一port的下一次`launch`重試失敗**，`launch`失敗後應先清該lock檔再重試，不只是重跑`launch`。
+
+第二輪操作中途（scan完全部47格敵方record、準備第一次mass-write測試前），這次背景`launch`呼叫本身被系統回收（`Xvfb`再度變`<defunct>`，`ps aux`確認），推測是單次wsl.exe呼叫在等待期間某種瞬斷；`teardown`+重新`launch`後乾淨恢復，之後全程保持穩定到收尾，過程重新走一次完整boot序列（LOAD→存檔格1→軍營Right×3→出口→YES→約45次Enter推進戰前對白），抵達戰場時「823 A+05 D+00」HUD fingerprint與既有記錄一致。全程用`ps aux`/`tmux ls`（default socket）交叉核對，canonical`dbg`/`:99`session（PID隨使用者端該輪重開機而變動，但session本身持續存在）**從未被本輪碰過**。
+
+### 2. 決定性發現：全滅47格敵方record + 真實End Turn確認，確實觸發了真正的postbattle勝利——`0x205be`的觸發時機首次被live坐實
+
+用`D 0178:26DF88`起連續掃描slot0~62（0x50 stride）取得全隊+全敵方47格（slot16~62）的完整0x50-byte record，逐格核對後確認：
+
+- **敵方record欄位配置與我方完全相同**：`+0x40`/`+0x42`=HP現值/上限（word）、`+0x44`/`+0x46`=MP現值/上限、`+0x48`=AP、`+0x4a`=DP、`+0x4c`=HIT、`+0x4e`=EV——這對雜兵（如slot16監視器兵，HP15/15/MP15/15/AP465/DP195/HIT95/EV15）與**3隻隊長**（slot24-26，class`0x74`，`+0x40..+0x4e`＝`20 00 20 00 20 00 20 00 E8 00 D4 00 B6 00 20 00`＝HP32/32/MP32/32/AP232/DP212/HIT182/EV32）都成立，逐byte核對後**與doc13/doc27已反組譯釘死的AP/DP/HIT/EV offset(`+0x48/+0x4a/+0x4c/+0x4e`)精確吻合**。
+- 這推翻了續五十九～六十一「敵方`+0x40`=LV不是HP」的既有推論——真正原因是**隊長的HP現值恰好等於32，與其LV32數字重合**（隊長maxHP設計值就是32，不是攻略書描述的「HP3200」——這個落差目前判斷是攻略書用了不同單位/誇飾寫法，不代表遊戲引擎內部真實數值；本輪未進一步查證兩者關係，留待後續）。**enemy與ally record layout其實是同一份結構**，不需要為敵方另外定義HP/MP/ATK/DEF offset，先前「LV not HP」的說法在此訂正撤回。
+- 用一支`kill_all.sh`（`for k in 16..62: SMV <base+k*0x50+5> 01`）一次寫入47格死亡signature，逐一抽查slot16/24-26/60-62確認全部`+5=0x01`落地成功。
+- **先做被動測試（協調端要求的免費捷徑）**：全部47格寫死後單純`RUN`，不做任何UI互動，等待約8秒真實時間（`cycles=5000`下對應相當可觀的模擬CPU週期，`cc=`計數器前後核對確實跳了約4.7億次）——**沒有**任何勝利轉場，畫面停在原本戰場部隊佈署畫面不動。移動游標、開指令環等互動操作也未觸發任何變化。這證實`0x205be`**不是每畫面/每次互動被動輪詢**，doc25§3.1原本標記「未驗證」的觸發時機問題，本輪往負面方向補了一塊證據。
+- 移動游標到空地格、`Enter`開系統選單環（上=系統選單/戰況總覽、左=行軍、右=設定、下=END，`Down`確認選到END後邊框變藍）、`Enter`確認END、彈出「要結束本回合的行動嗎？」YES/NO確認框——**在這個確認框停留的當下**先進debugger補做一次`kill_all.sh`確保47格死亡signature仍全部有效，`RUN`恢復、`Enter`確認YES——**畫面立即跳轉到一個全新場景**：13人隊伍在藍色地板房間裡圍站，正前方站著一位紅衣角色，正上方有神秘控制台造型物件。**這正是真正的postbattle勝利轉場**，不是continue/failure畫面。
+
+**結論（高信心）**：`0x205be`的評估時機**綁定在「確認End Turn」這個UI操作觸發的路徑上**（很可能就是`0x20a87`透過`0x1197b`或逐單位掃描路徑`0x1d8a0/0x1d96c/0x1d9fc`之一，在End Turn流程中被呼叫到），而不是逐畫面輪詢，也不需要任何一次「真實攻擊事件」——**協調端修正後的「全滅式全記憶體竄改+觸發End Turn」捷徑本輪驗證成立**，直接推翻續六十一「只寫3隻隊長signature、真實攻擊雜兵都無法觸發勝利」的舊結論——**根因不是「捷徑本身不成立」，而是續六十一只寫了3/47格，遠遠沒有滿足「全滅」這個真正判定條件**，本輪把47格全寫齊後，同一類直接記憶體竄改方法就成功了。原定的「HP/ATK/DEF stat buff讓真實攻擊一擊必殺」大工程因此**變得不必要**——沒有實際執行對敵人的真實逐格攻擊，也沒有寫入我方999屬性buff，任務因為捷徑本身成立而提前達成核心目標。
+
+### 3. 深入結局montage：多個場景逐步確認，含CG過場、七言/白話詩句過場文字、逐角色回顧卡——這是doc35§9追了5輪、11個worklist項目都未解封的真正結局內容，本輪首次現場觀察到完整流程
+
+確認YES之後，連續逐句`Return`推進，觀察到清楚的場景序列（每個場景都有screenshot佐證，存於`.wsl_build/harness/r2post*.png`）：
+
+1. 13人隊伍圍站藍色房間場景，索爾對悠妮說「悠妮？妳還好吧？」，悠妮回「這是我該做的」——戰後對話。
+2. 過場CG（非戰鬥sprite風格的手繪全螢幕圖）：漂浮的天空島嶼（山頭覆雪、下方懸浮岩石根系），暗示某個重要地點（可能與遊戲副標「Legend of Golden Castle／黃金城傳說」相關）。
+3. 另一張CG：索爾與一位身著暗綠色重甲、獨眼特徵的巨大人形角色相對而立，天空背景——推測是重要NPC/敵對角色的最終呈現鏡頭。
+4. 全螢幕深藍底、淺藍字的七言/白話詩句捲動文字（無角色portrait框），內容為：「（在往昔的回憶中，）在未來的歲月裏，或許很難有再相見的機會，但這段冒險的回憶仍會長存，在每個人的心裡……」——標準RPG結局詩篇文字。
+5. **逐角色回顧卡**（本篇任務最初鎖定的「party montage」核心內容）：左側character portrait框＋「姓名：ＸＸ／職業：ＸＸ」欄位＋2段式劇情後日談文字，右側全身FIGANI立繪＋雲霧背景；左下角固定顯示「FLAME DRAGON KNIGHTS 2」黃色logo字樣。本輪實際觀察到2位角色的卡片：
+   - **萊汀（職業：騎士）**：「萊汀仍任王國禁衛軍隊長一職。瑪麗的死解開了他心裏的死結，而莎拉的英姿則讓他找到了生命的另一個目標。這是讓眾人深深祝福的一對，雖然他們至今仍不肯承認。」
+   - **悠妮（職業：召喚師）**，2段文字循環：「但她相信，三千年也好，三萬年也好，她一定會再那個叫做索爾的年輕人在夢中相聚，她相信，這樣就已經足夠了……」／「在漂浮在另一個時空的黃金城裏，悠妮在休眠艙裡沈睡著……等待著她的是另一段長久的沈眠，連她也不知道自己何時會再醒來。」
+
+**未完全查清**：悠妮這張卡片本輪嘗試超過60次`Return`/`Space`/`Escape`+多次長時間等待（含一次15秒純等待）都只在這2段文字之間來回循環，**未能前進到下一位角色**（推測隊伍另外11人應該也各有一張卡）。可能原因：(a) 這個特定過場對「下一步」需要的按鍵與前面對話系統不同（本輪只測過Return/Space/Escape）；(b) 需要真實wall-clock時間（不是`cycles=5000`模擬週期）滿足某個計時器才會自動前進，本輪等待的15秒未必足夠；(c) 悠妮卡片本身在敘事上刻意設計成「兩段對照」需要額外互動（例如方向鍵）才能離開。**這是唯一尚未解開的小尾巴**，不影響本輪已達成的核心目標（觸發真勝利、深入結局內容），留給下一輪或視需要另行查證。
+
+### 4. 結局montage renderer真實位址：`0x2bce5`/`0x2c548`舊候選再次確認不可達，但捕捉到一個全新、very promising的候選——RLE風格解碼迴圈，live位址`0x1EAC6A`/`0x1EAE28`（native約`0x4EC6A`/`0x4EE28`）
+
+在確認YES觸發勝利、進入postbattle轉場**之前**，先於debugger設下`BP 0170:1C7CE5`（native`0x2bce5`+`0x19C000`）與`BP 0170:1C8148`（native`0x2c548`+`0x19C000`）兩個doc35§9舊候選位址的斷點。全程（含CG過場、詩句捲動、2張角色卡）持續`RUN`，**兩個斷點自始至終都沒有命中過一次**——這與doc35§9.1～9.7（連續5輪、3種獨立方法論）「`0x2bce5`/`0x2c548`這批位址在`FD2Analysis3`裡完全不可達、全EXE無任何靜態CALL指向它們」的既有負面結論**完全吻合**，本輪算是首次用live執行流程（而非純靜態反組譯）交叉印證了同一個負面結論，不是新發現，但把信心等級再往上補了一層（過去5輪都是「靜態上找不到call」，這次補上「live執行流程也真的沒有經過這裡」）。
+
+**新發現**：在CG過場（天空島嶼）與角色卡（萊汀）畫面顯示期間，兩次獨立`Alt+Pause`手動中斷取樣，EIP都落在同一個小range內的兩個相近位址——`001EAC6A`（`FECC / C3 / AC / 3CC0 / 7703 / 32E4 / C3 / 8AE0 / 80ECC1 / AC / C3`：`dec ah; ret; lodsb; cmp al,C0; ja+3; xor ah,ah; ret; mov ah,al; sub ah,C1; lodsb; ret`）與`001EAE28`（`FEC9; jne $-13; pop edi; add edi,ebp; FECD; jne $-21; popad; pop ebp; ret`）。前者是教科書等級的**RLE解碼原語**（讀一個control byte，若≤0xC0視為literal直接回傳、否則計算run-length並讀下一個byte當填充值）——這與逐字元/逐像素解壓縮CG圖或FIGANI立繪的典型手法完全吻合，兩次獨立取樣都落在這個範圍內，暗示這是montage渲染期間**被高頻率呼叫**的一個熱迴圈，很可能就是角色卡portrait/CG的圖像解壓縮核心。
+
+換算native位址：`0x1EAC6A - 0x19C000 = 0x4EC6A`；`0x1EAE28 - 0x19C000 = 0x4EE28`。**本輪未能進一步反向追出這個解碼迴圈的呼叫端（caller）**——沒有查它的function起點、沒有xref_from，只是兩次手動斷點取樣捕捉到的即時位置，**不能直接當成「結局montage orchestrator入口」本身**，比較像是orchestrator呼叫的一個共用底層解碼helper。但這是doc35§9系列首次拿到一個**live執行流程實際命中、且與已知目標場景（結局montage渲染中）同時發生**的具體候選位址，遠比純靜態窮舉更有方向性，建議下一輪：(1) 用`tools/ghidra_batch_probe.py`對`0x4EC6A`/`0x4EE28`做`function_bounds`+`xref_from`查詢，找出真正的函式邊界與呼叫端；(2) 若呼叫端本身也不在已知976-function清單內（重演doc35§9.1的「該區塊從未被base分析碰過」窘境），可以複用本輪「先set breakpoint、live RUN到這個場景」的方法，改成**在這個解碼迴圈的呼叫瞬間對ESP/[ESP]取值**（返回位址即為caller），用「D SS:ESP」或類似指令直接讀出呼叫端位址，不需要靜態反組譯就能拿到下一層線索。
+
+### 5. 誠實結論
+
+1. **使用者「stat-buff」構想與協調端「全滅式全記憶體竄改捷徑」構想，本輪由後者達成任務核心目標**：全滅47格敵方record死亡signature + 觸發End Turn確認 → **真正觸發勝利、進入postbattle轉場**，是doc58系列從續四十六起、歷經超過15輪嘗試（續四十六～六十一）都未能達成的目標，本輪首次達成，且是乾淨、有明確因果鏈的正面結果（不是巧合）。
+2. **原定的HP/MP/ATK/DEF stat buff方案本身未被實際驗證**（因為捷徑提前達成目標，沒有必要性去執行）——但本輪對enemy/ally record layout做的逐格核對（§2第一點）已經足以支持該方案：**若未來需要真的用stat buff讓真實攻擊鏈一擊必殺（例如某些其他章節的勝利判定不是純「全滅」而需要真實擊殺事件時），可直接沿用`+0x40/0x42`(HP)、`+0x44/0x46`(MP)、`+0x48`(AP)、`+0x4a`(DP)、`+0x4c`(HIT)、`+0x4e`(EV)這組offset，敵我通用，不需要另外找敵方專屬欄位**。
+3. **doc25§3.1「未驗證：`0x51b19[26]`實際被呼叫的頻率/時機」這個開放問題，本輪往負面方向補了證據**：確認不是被動輪詢（idle等待+互動皆未觸發），確認End Turn確認YES這個具體操作路徑會觸發它——但本輪沒有實際命中`0x205be`本身的斷點去100%坐實（該斷點是在上一次、已崩潰重開的harness instance裡設的，重開後沒有重新設定），這部分嚴格說是「行為證據」而非「斷點直接證據」，下一輪如果要100%釘死，應在End Turn確認YES前重新對`0x1C05BE`(native`0x205be`)下斷點。
+4. **doc35§9結局montage renderer**：`0x2bce5`/`0x2c548`舊候選的負面結論本輪用live方式再次印證（維持不變）；**新增一個有價值的候選線索**（RLE解碼迴圈，live`0x1EAC6A`/`0x1EAE28`，native約`0x4EC6A`/`0x4EE28`），未完全解封但比之前的盲目窮舉更有方向。
+5. **悠妮角色卡「卡在2段循環、未能前進到下一位角色」是唯一未解的小尾巴**，不影響任務核心成果，已誠實記錄於§3供下一輪查證。
+
+### 6. 環境收尾
+
+`tools/dosbox_harness.sh teardown statbuff`——`tmux kill-session`（socket`fd2harness`）成功、Xvfb pid確認殺除。收尾後`ps aux`核對：canonical`dbg`session（`Xvfb :99`+`dosbox-x`+`tmux new-session -s dbg`）三個進程**原封不動仍在執行**（PID與uptime顯示是使用者端該輪重開機後的新PID，但本輪從未主動碰過，純觀察確認未受干擾），`tmux ls`（default socket）也確認`dbg`session存在。收尾前`md5sum ~/fd2-run/FD2.SAV`＝`e6d9a35756cddfc2519969b10f039181`、`md5sum ~/fd2-run/FD2.EXE`＝`72e36e47f1f7d77dc102839262956480`，與歷次記錄完全一致——本輪全程操作（含47格SMV死亡signature寫入、兩次montage候選位址斷點）都發生在**`statbuff` harness自己獨立的`~/fd2-run-harness-statbuff/`工作目錄複本、獨立tmux socket、獨立Xvfb display**，完全隔離於canonical環境與canonical存檔，沒有觸發任何autosave。harness workdir（`~/fd2-run-harness-statbuff/`）依`teardown`預設行為保留未刪除，供事後查核。**沒有**編輯`91-worklist.md`（依指示，任務未達成montage renderer完全解封的「完全結案」門檻，只達成勝利觸發+深入結局內容的部分成果，留給orchestrating session視情況同步）。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。
+
+### 7. 產出
+
+本文件本節（續六十二）。過程截圖（`boot0~7.png`、`r2boot1~3.png`、`r2ring1~5.png`、`win_test1~13.png`、`r2post1~14.png`、`r2final.png`等約60張）存於Windows端`.wsl_build/harness/`（過程debug產物，非repo追蹤內容）。輔助腳本`kill_all.sh`（47格死亡signature批次寫入）、`scan_full.sh`（0x50-byte完整record掃描，取`+0x00`與`+0x40`兩列）留存於`.wsl_build/harness/`與harness workdir，可供下一輪複用。

@@ -1050,6 +1050,55 @@ project 裡目前分析出的 976 個 function 也沒有一個表現出 ending r
 留在 `C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\`,結果 JSON(`global_behavior_scan_
 results.json`/`_v2_results.json`/`_v3_results.json`/`_debug_results.json`)一併保留供覆核。
 
+## 9.8 2026-08-24 — 首次用 live 執行流程觸發真正的 postbattle 勝利轉場，深入結局 montage 本體；`0x2bce5`/`0x2c548` 舊候選再次被 live 印證不可達，但捕捉到一個全新候選解碼迴圈
+
+> 完整過程見 `docs/knowledge-base/58-remake-live-verification-log.md` 續六十二。本節只摘要對
+> 本篇(doc35 §9)有直接影響的結論，供之後靜態反組譯攻堅時引用。
+
+**背景**：doc25 §3.1(2026-08-24 同日完成)靜態反組譯出 ch27 真正的引擎層勝利判定是
+`0x51b19[26]=0x20a87 → CALL 0x205be`，`0x205be` 是純掃描「目前存活的敵方 record 是否為
+0」的通用邏輯，不是隊長專屬計數器。doc58 續六十二據此把 ch27 的 47 格敵方 record 全部寫入死亡
+signature(`+5=0x01`)，並在真實 UI 的「End Turn 確認 YES」操作點上觸發了一次真正的
+postbattle 勝利轉場(非直接寫入死亡 signature 本身觸發，見下)。
+
+**對本篇的直接影響**：
+
+1. **`0x2bce5`/`0x2c548`(§9.1-9.7 記錄的舊候選 cluster)這次用 live 執行流程再次印證不可達**：
+   本輪在觸發勝利之前，於 `0x2bce5+0x19C000=0x1C7CE5`、`0x2c548+0x19C000=0x1C8148` 兩處
+   下斷點，全程(CG 過場、詩句捲動文字、角色回顧卡)持續 `RUN`，**兩個斷點自始至終未命中一次**。
+   這與 §9.1-9.7 三種獨立靜態方法論(資料表掃描/呼叫掃描/逐 byte 反組譯/行為指紋全域掃描)的
+   「全 EXE 無任何靜態 CALL 指向這批位址」負面結論完全吻合——第一次由 live 執行流程(而非
+   純靜態分析)交叉印證同一個負面結論，信心等級再往上補一層，**§9.1-9.7 的結論維持不變，
+   不需要修正**。
+2. **新候選：一個 RLE 風格解碼迴圈，live 位址 `0x1EAC6A`/`0x1EAE28`，native 約
+   `0x4EC6A`/`0x4EE28`**——CG 過場(天空島嶼)與角色回顧卡(萊汀)畫面顯示期間，兩次獨立
+   `Alt+Pause` 手動取樣，EIP 都落在同一個小 range 內：
+   - `0x1EAC6A`：`FECC(dec ah); C3(ret); AC(lodsb); 3CC0(cmp al,C0); 7703(ja +3);
+     32E4(xor ah,ah); C3(ret); 8AE0(mov ah,al); 80ECC1(sub ah,C1); AC(lodsb); C3(ret)`——
+     教科書等級的 RLE 解碼原語(讀 control byte，≤0xC0 視為 literal，否則算 run-length
+     並讀填充值)。
+   - `0x1EAE28`：`FEC9; jne $-13; pop edi; add edi,ebp; FECD; jne $-21; popad; pop ebp; ret`——
+     像是外層迴圈收尾(雙層 loop counter 遞減 + `popad` 還原暫存器)。
+   兩次獨立取樣都落在這個範圍，暗示這是 montage 渲染期間**被高頻率呼叫**的熱迴圈，很可能是
+   角色卡 portrait/CG 圖像解壓縮的核心 helper。**本輪未反向追出呼叫端**(沒有查 function
+   bounds/xref_from)，不能直接當成「montage orchestrator 入口」本身，比較像是 orchestrator
+   呼叫的共用底層解碼 primitive——但這是本篇 §9 系列首次拿到一個 **live 執行流程實際命中、
+   且與已知目標場景(結局 montage 渲染中)同時發生**的具體候選位址，遠比純靜態窮舉更有方向性。
+
+**給下一輪的具體建議**：
+
+1. 用 `tools/ghidra_batch_probe.py` 對 `0x4EC6A`/`0x4EE28` 做 `function_bounds`+`xref_from`
+   查詢，找出真正的函式邊界與呼叫端——這是目前唯一有具體位址可查的線索，比 §9.1-9.7 對
+   `0x2bce5`/`0x2c548` 的盲目窮舉更有機會定案。
+2. 若呼叫端本身也不在已知 976-function 清單內(重演 §9.1 的「該區塊從未被 base 分析碰過」
+   窘境)，可複用續六十二的方法——**先 set breakpoint、live RUN 到這個場景，命中瞬間對
+   `D SS:ESP` 取值**(CALL 後 [ESP] 即為返回位址=呼叫端)，不需要靜態反組譯就能拿到下一層線索；
+   這比純靜態方法更適合這個 project(§9.7.2 已記錄 decompile 引數渲染系統性失效，呼叫鏈追蹤
+   本來就更依賴 live 佐證)。
+3. 完整重現路徑(不需重新摸索)：doc58 續六十二 §2-3 已記錄從「全滅 47 格敵方 record」到
+   「觸發勝利→CG 過場→詩句文字→角色卡」的完整操作序列與時間點，可直接複用，不需要重新
+   反覆嘗試 doc58 續四十六~六十一 那套「真實逐格擊殺」路線。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code

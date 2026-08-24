@@ -206,6 +206,15 @@ for (iStack_34 = 0; iStack_34 < param_3 /*targetCount*/; iStack_34++) {
 
 **一個相關但不可混用的旁支發現**:另在 `FUN_00014ef0`(0x14ef0)/`FUN_00015055`(0x15055)一叢(由 `FUN_00013a9f` 依 `unit[+0x34]&0xf` 狀態機呼叫,即 doc11 的敵方 AI 行動執行,非玩家)裡也看到 `cmd>=0x10 → spellId=cmd-0x10 [0x150d3]` 後呼叫 `FUN_000149f8` 做「以起點/終點方向逐格步進、收集符合陣營 selector 的 unit」;但傳入的步進次數(count 參數)在此路徑上等於 **spellId 本身**(`0x150d6: PUSH EAX` 緊接 `0x150d3: SUB EAX,0x10` 的結果),不是任何距離/半徑欄位——若 spellId=0 該迴圈完全不執行、收不到任何目標,這個結果本身很可疑,尚未排除是筆者參數對應錯誤或該路徑本就只服務極少數 AI 分支。**這是 AI 執行路徑,不是玩家 command ring 的 `0x1cff0/0x2ff01` 路徑**,不能拿來回答玩家施法 UI 的 AoE 問題,僅記錄以免下一輪重複走冤枉路。同時**修正 doc37 §0 的舊標籤**:doc37 把這叢函式稱為「選單施法」(暗示玩家選單直接施法路徑),但 `FUN_00013a9f` 的呼叫閘門(`unit[+0x34]&0xf` 狀態值)是 doc11 已定案的敵方 AI 行為狀態欄,此路徑應正名為「AI 法術執行」,不是玩家路徑。doc37 §0 另引用「`0x015195`(push ebp; call 0x28784)」作為施法演出呼叫點,本輪即時反組譯該位址實際指令是 `CALL 0x2dfc8`,並對整個可執行段做位元組樣式掃描(`E8`+rel32)找 `0x28784` 的直接呼叫者,**掃描結果為零筆**——doc37 這個特定位址引用需要重新核實(可能是間接呼叫、也可能是舊分析狀態下的誤記),本輪未展開,留待下一輪用逐指令反組譯或間接呼叫掃描補上。
 
+**2026-08-24 live 交叉驗證補充(doc58 續六十二)**:上面 `+0x40`(HP)、以及 `+0x44/+0x46`(MP)、
+`+0x48/+0x4A/+0x4C/+0x4E`(AP/DP/HIT/EV)這組 `0x50`-byte unit record 欄位配置,對**敵方 record
+(含 boss 級單位)完全適用,不需要另外的敵方專屬 offset**——ch27 戰場對 slot16(雜兵,HP15/15/
+MP15/15/AP465/DP195/HIT95/EV15)與 slot24-26(機甲隊長,class`0x74`,HP32/32/MP32/32/AP232/
+DP212/HIT182/EV32)逐 record 用 debugger `D` 指令核對過,欄位語意與上述 ally 表格逐 byte 吻合。
+doc58 續五十九~六十一曾記錄「敵方 record 的 `+0x40` 是 LV 不是 HP」,經本輪核對是誤判——真正
+原因是這 3 隻隊長的 maxHP 設計值恰好等於 32,與其 LV 32 數字重合造成混淆,record 本身結構完全
+共用同一份 ally/enemy 通用欄位表,見 doc58 續六十二 §2。
+
 ### 6.3 位址勘誤:「`0x2a6bd`」不是有效的指令邊界
 
 `0x2a6bd` 被 doc13/doc37/doc56/doc91 多處引用為「native command 大型 presentation/state dispatcher」入口。本輪對它做直接邊界檢查(`getInstructionAt`/`getInstructionContaining`):
