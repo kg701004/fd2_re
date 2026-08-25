@@ -7225,3 +7225,75 @@ shell 啟動）；②**dosbox-x 的 heavy-debug 除錯主控台需要一個真�
 `0x37B13` 定性、逐候選判定表）。本節（續六十七）。過程 screenshot（`t2b_boot.png`~
 `t2h_final.png` 等）與第二輪 trace 分析結果存於 Windows 端 `.wsl_build/`（`trace2_*`、
 `trace_analysis2/`，`.gitignore` 排除，不進版控）。**未修改** `91-worklist.md`。
+
+## 續六十八：不重開 live 環境，重用續六十六/續六十七留下的快取 trace 資料測試「假說A」（CG-blit
+是否藏在已知 generic 原語裡）——排除 sprite-blit 家族、鎖定未分析區塊是文字密集腳本 handler，
+誠實縮小但未關閉搜尋範圍（2026-08-25）
+
+**任務背景**：續六十六/續六十七合計排除了 19+14 個候選，結論指出這個 `LOGC` trace 主要抓到的是
+背景音訊/計時器機器碼，不是畫面渲染碼。本輪任務單提出兩個新假說：①（假說A）真正的 CG-blit
+可能藏在已知（已有 Ghidra function boundary）的 generic blit/present 原語裡，只是沒人把它跟
+這個場景連起來；②（假說B）用截圖時間點對齊 `LOGC` 找出 CG 顯示的精確瞬間窗口。
+
+**環境**：任務單提醒續六十七收尾時執行過 `wsl --shutdown`，本輪原本要先確認 WSL2 能不能乾淨開機
+再決定要不要做假說B——但檢查 `.wsl_build/` 後發現續六十六/續六十七的**去重後**輸出檔案
+（`trace_unique_cseip.txt`/`trace2_unique_cseip.txt`，12,297/14,931 筆）與**完整的 Ghidra 批次
+查詢結果**（`trace_analysis/ghidra_results.json`/`trace_analysis2/ghidra_results.json`，每筆
+trace 位址各自的 `function_bounds` 全部細節）都還留在 Windows 端（`.gitignore` 排除進版控，但
+檔案沒被刪除）——假說A**完全不需要重開 WSL/dosbox-x**，直接用 `tools/ghidra_batch_probe.py`
+（純靜態、Windows 端 Ghidra headless，不依賴任何 live 環境）對快取資料做新的查詢即可。本輪全程
+沒有觸碰 WSL2/dosbox-x，`wsl --shutdown` 之後的狀態沒有被驗證也沒有必要驗證。
+
+**核心方法與結果**（完整技術細節、逐原語命中表、call_scan 逐一溯源見
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.17，不在此重複）：
+
+1. 列出 doc35 已記錄的 12+4 個 generic blit/present/palette/文字原語，對兩份 trace 的
+   `ghidra_results.json` 做「目標位址落在哪個已執行過的 function 範圍內」查詢（比對函式範圍，
+   不只比對函式起點）。**續六十六 trace**（正確涵蓋 CG1→CG2→詩句→萊汀卡窗口）裡，present
+   （`0x11eb0`）/色盤（`0x11d40`）/FDTXT（`0x15f84`）/一個小型 glyph-blit（`0x4e98d`，確認
+   `0x4e9bb`與`0x4ea2a`其實是同一支函式）全部命中，但**戰鬥 figure 用的整個 sprite-blit 家族
+   （`0x4e63d`生成blit/`0x2921a`仿射縮放blit/`0x4e8af`RLE逐列blit）是徹底零命中**。
+2. **續六十七 trace**（已知「推進過頭」跳過目標畫面、停在隊長名冊/戰前轉場）反而命中了這整個
+   sprite-blit 家族（`0x4e63d`55次/`0x2921a`73次/`0x4e8a5`9次）。對這三者的容器函式做
+   `call_scan` 逐一找呼叫端、核對既有文件：全部回溯到**戰鬥指令「action-ring」目標選取鏈**
+   （`10-sprite-rendering-camp-and-state.md` L144-150 已證）、**敵方 AI 物理攻擊評分函式**
+   （`11-enemy-ai.md` 已證的 `0x14237..0x145CC`）、**場景表讀取子系統**
+   （`40-speaker-portrait-mapping.md` 列出的 `[0x53BF7]` caller 之一）——沒有一個指向 CG 畫面，
+   跟續六十七自己「推進過頭撞到別的 HUD 畫面」的既有記錄完全吻合，是良性的 false lead。
+3. **反向 `call_scan`**（從已知原語找呼叫端，不受未分析區域缺函式邊界限制）：`0x31000-0x34000`
+   這塊（已確認含 §9.11 的角色卡 renderer 鏈 `0x31529..0x321ED`）本身直接呼叫 FDTXT **65 次
+   以上**（遠超角色卡本身需要量，延伸進整塊此前沒查過的 `0x32000-0x34000`）、呼叫 glyph-blit
+   **3 次**、但呼叫 sprite-blit 家族**0 次**——證實這整塊是一個文字極度密集的腳本化 UI
+   handler，不是圖像 codec。
+
+**誠實結論**：假說A**部分成立但未完全解封**——確認 CG 顯示機制大概率**不是**呼叫戰鬥 figure
+共用的 sprite-blit 原語家族，搜尋範圍收斂到「`0x31000-0x34000` 內部、扣除已知 FDTXT/glyph-blit
+呼叫點之外的剩餘 inline 程式碼」——但本輪沒有逐 byte 反組譯這塊剩餘範圍，沒有直接指認出具體的
+CG 拷貝迴圈本身。假說B（截圖時間點對齊）**未執行**：①`LOGC` 沒有 timestamp/instruction-counter
+可對齊，需要額外開發輔助手法；②假說A已經把範圍從「全新未知位址」收斂到「已知範圍內的具體子集」，
+ROI 判斷上優先權更高；③doc35 §9.17.6 已經給出一個更便宜的下一步替代方案（對 `0x11eb0` present
+下 live 斷點讀 return address，直接驗證「present 是否被 `0x31000-0x34000` 內的 inline 程式碼
+呼叫」，比重新設計時間對齊機制成本低）。
+
+**本輪的方法論貢獻**：證實續六十六/續六十七的快取分析產物（`trace_analysis*/ghidra_results.json`）
+本身是可重複查詢的資產——不必每次都重開 live 環境反覆論證同一份 trace，只要問題是「這份已知
+執行位址清單裡，有沒有命中某個特定函式/範圍」，就可以直接用 `ghidra_batch_probe.py` 對現有
+JSON 或對 Ghidra project 重新查，純靜態、幾秒內完成。下一輪若要繼續分析這兩份 trace，應優先
+檢查 `.wsl_build/trace_analysis{,2}/` 是否還在，不必假設「不重新 live capture 就沒有新資料
+可看」。
+
+**誠實整體評估（對整條「CG-blit 位置」追查線的建議）**：這已經是對同一個謎題的第 20+ 輪攻堅（靜
+態反組譯×3套方法論、窮舉記憶體掃描、live 斷點、jump-table dump、完整執行軌跡捕捉×2次獨立
+capture、本輪的原語逆向交叉比對）。本輪產生了實質、有證據支持的新收斂（排除 sprite-blit 家族、
+鎖定 `0x31000-0x34000` 內部 inline 程式碼這個更具體的範圍），不是又一次純負面排除——**因此判斷
+還沒到報酬遞減的終點，值得再投入一輪**，但下一輪的正確切入點是 doc35 §9.17.6 建議的 #1（逐 byte
+線性反組譯 `0x32000-0x34000`）或 #2（對 `0x11eb0` 下 live 斷點讀 return address 驗證 inline
+假說），而不是再開一輪新的 `LOGC` 全窗口捕捉——執行軌跡捕捉這個方法論本身已經被本輪與續六十六/
+續六十七合計三輪用到位，繼續加大 instruction count 或换觸發路徑帶來的邊際資訊已經很低，真正還沒
+做過的是「對已收斂範圍做逐 byte 靜態反組譯」與「對已確認會命中的 present 原語做 live return-address
+驗證」這兩件事。
+
+**產出**：`docs/knowledge-base/35-battle-animation-rendering.md` §9.17（完整技術細節、逐原語命中表、
+call_scan 溯源表、給下一輪的三點具體建議）。本節（續六十八）。**未修改** `91-worklist.md`（未達
+任何一項解封條件）。**未觸碰 WSL2/dosbox-x/FD2.SAV**，全程純 Windows 端 Ghidra headless 靜態查詢
+（`tools/ghidra_batch_probe.py`，約 9 秒/批，共 3 批次）+ 讀取既有快取 JSON。

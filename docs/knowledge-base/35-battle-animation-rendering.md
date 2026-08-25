@@ -2335,6 +2335,184 @@ CALL 型呼叫端可以證實**,不排除是其他用途(如鍵盤輸入緩衝�
    系統,不構成任何一項 worklist 解封條件。`wsl --shutdown` 已在收尾執行(doc48 §8.1 建議的
    降低 deadlock 風險做法)。
 
+## 9.17 2026-08-25 續:重用續六十六/續六十七留下的快取 trace 資料(不需重開 live 環境),對「已知
+generic 原語是否也在這個場景被呼叫」做逆向 `call_scan`——排除 sprite-blit 家族、確認未分析區塊
+是文字密集的腳本 handler,誠實縮小(但未關閉)montage 影像顯示機制的搜尋範圍(2026-08-25)
+
+> 任務動機:續六十六/續六十七的 19+14 個候選全數排除後,懷疑真正的 CG-blit 程式碼可能藏在
+> **已經有 Ghidra function boundary、之前只在其他脈絡下被記錄過**的既有原語裡(本節「假說A」),
+> 而不是還要繼續找全新未分析位址。續六十六/續六十七的原始 `LOGCPU.TXT`(7.9GB/更大)雖已不在,
+> 但去重後的 `trace_unique_cseip.txt`(12,297/14,931 筆)與完整的 `ghidra_batch_probe.py`
+> 批次查詢結果(`trace_analysis/ghidra_results.json`、`trace_analysis2/ghidra_results.json`,
+> 每筆 trace 位址各自的 `function_bounds` 結果)**仍留在 Windows 端 `.wsl_build/`**(`.gitignore`
+> 排除,不進版控,但檔案本身沒被刪除)——不需要重開 WSL/dosbox-x 就能重新查詢,本節全程只用
+> `tools/ghidra_batch_probe.py` 對已建好的 Ghidra project 做純靜態查詢。
+
+### 9.17.1 方法:先列出 doc35 目前已記錄的 generic blit/present/palette 原語清單,對兩份 trace
+的 `ghidra_results.json` 做「目標位址落在哪個已執行過的 function 範圍內」查詢(不是只比對
+function 起點,避免漏掉「命中同一函式但不是入口那個 byte」的情況)
+
+清單(全部整理自本文件 §2/§3/§4/§6/§9.9,共 12 個):`0x4e63d`(生成 blit,無縮放 RLE)、
+`0x37795`(VGA DAC 埠寫入原語)、`0x373c4`(present 用 memcpy helper)、`0x4e8af`/`0x4e8e1`
+(RLE 逐列 blit,正向/鏡像)、`0x4e916`(RLE getbyte codec)、`0x4e9bb`(cell blit 原語)、`0x4ea2a`
+(FDOTHER#4 16×16 1bpp glyph blit)、`0x373eb`(memcpy helper,doc 明文「非 blit」)、`0x4ec6a`
+(§9.9 確認的另一個 RLE getbyte 原語)、`0x2927e`/`FUN_0002921a`(仿射/旋轉縮放 blit 原語)、
+`0x29164`(TAI.DAT 台座 loader/blit)。另外 `0x11eb0`(present)、`0x11d40`(VGA DAC 色盤寫)、
+`0x1685c`(cell blit dispatcher)、`0x15f84`(FDTXT 排版)四個先前(§9.15.2)已經用「函式起點
+精確比對」查過,本輪一併用「函式範圍」重查以確認結果一致。
+
+### 9.17.2 結果(續六十六 trace,600M instructions,正確涵蓋戰前對白→CG1→CG2→詩句→萊汀角色卡
+這段窗口):generic **present/palette/文字/字形** 原語全部命中,但整個 **sprite/figure blit 家族
+零命中**
+
+| 原語 | 位址 | 續六十六 trace 命中 | 續六十七 trace 命中 |
+|---|---|---|---|
+| present | `0x11eb0` | ✅ 26 | ✅ 26 |
+| VGA DAC 色盤寫 | `0x11d40` | ✅ 56 | ✅ 56 |
+| DAC 埠寫入原語 | `0x37795` | ✅ 13(在 `FUN_0003777e` 內) | ✅ 13 |
+| cell blit dispatcher | `0x1685c` | ✅ 13 | ✅ 13 |
+| FDTXT 排版 | `0x15f84` | ✅ 169 | ✅ 193 |
+| cell blit / glyph blit(見下) | `0x4e9bb`/`0x4ea2a` | ✅ 74(同一函式 `FUN_0004e98d`) | ✅ 74 |
+| memcpy helper(非 blit) | `0x373eb` | ✅ 83 | ✅ 81 |
+| RLE getbyte 原語(§9.9 已知) | `0x4ec6a` | ✅ 13 | ✅ 13 |
+| **生成 blit(無縮放)** | `0x4e63d` | ❌ 0 | ✅ 55 |
+| **仿射/縮放 blit** | `0x2927e`/`0x2921a` | ❌ 0 | ✅ 73 |
+| **RLE 逐列 blit(正向)** | `0x4e8af`/`0x4e8a5` | ❌ 0 | ✅ 9 |
+| RLE 逐列 blit(鏡像) | `0x4e8e1` | ❌ 0 | ❌ 0 |
+| present memcpy helper | `0x373c4` | ❌ 0(疑似位址誤植,見 9.17.5) | ❌ 0 |
+| TAI.DAT 台座 loader | `0x29164` | ❌ 0 | ❌ 0 |
+
+**第一個具體發現**:`0x4e9bb`(doc 舊稱「cell blit 原語」)與 `0x4ea2a`(doc 舊稱「FDOTHER#4
+glyph blit」)**其實是同一個 Ghidra function**(`FUN_0004e98d`,`0x4e98d..0x4eb47`,442 bytes)
+——過去分別記錄成兩個不同「原語」,現在確認是同一支函式裡的兩個內部位址,不是兩支獨立函式。
+
+**第二個具體發現(核心)**:**兩輪 trace 對 present/palette/DAC/FDTXT/glyph-blit 這五類「文字與
+螢幕更新」原語的命中結果完全一致(數字幾乎相同),但續六十六(正確涵蓋 CG 播放窗口的那次)對
+`0x4e63d`/`0x2921a`/`0x4e8af` 這整個「sprite/figure blit 家族」是徹底的零命中**——不是命中數
+低,是完全沒有任何一個位址落在這些函式的範圍內。續六十七才出現這三者的命中(55/73/9 次),但續
+六十七本身在收尾時已誠實記錄「這次按太快、推進過頭,停在隊長名冊/戰前轉場畫面而非任何一張角色卡
+上」(見 §9.16.8)。
+
+### 9.17.3 續六十七的 sprite-blit 命中溯源:全部指向battle-menu/AI/portrait 既有子系統,不是
+CG 畫面——用純靜態 `call_scan` 找到每個原語函式在全程式範圍內的呼叫端,逐一核對
+
+對 `0x4e63d`(所在函式 `FUN_0004e5cc`)、`0x2921a`、`0x4e8a5` 三者的容器函式做 `call_scan`
+(掃全 exe image 找 `E8 CALL rel32` 目標等於該位址的呼叫點,經 Ghidra 反組譯器逐筆確認合法),
+逐一核對其呼叫端是否落在續六十七 trace 也命中的 function 範圍內:
+
+- `0x4e63d`(`FUN_0004e5cc`)全程式只有 **1 個外部呼叫端**:`0x4e4f6`(`FUN_0004e4f6`,一個緊鄰的
+  wrapper)。`0x4e4f6` 自己的呼叫端只有 4 個(`0x141b0`/`0x14c3a`/`0x14c7d`/`0x14e9f`/`0x189f8`,
+  分屬 `FUN_00014121`/`FUN_00014b78`/`FUN_00018890`),續六十七 trace 裡只有 `FUN_00018890`
+  (`0x18890`)被命中(112 次)。
+- `0x2921a` 全程式有 **4 個呼叫端**:`0x268a3`(`FUN_0002670e`)、`0x27cc3`(`FUN_000279bc`)、
+  `0x295c1`(`FUN_00029300`)、`0x2a037`(`FUN_00029daa`)。續六十七 trace 只命中 `0x2670e`
+  (98 次),其餘三個都沒被觸及。
+- `0x4e8a5`(RLE 逐列 blit)全程式有 **8 個呼叫端**,續六十七 trace 命中其中 4 個:`0x115b6`
+  (52 次)、`0x14237`(4 次)、`0x14818`(90 次)、`0x18890`(與上面 `0x4e63d` 共用的同一個
+  caller,112 次)。
+
+**逐一查這些 caller 的既有文件記錄**:
+- `0x18d8c→0x14818→0x115b6→0x12c0d` 是 `10-sprite-rendering-camp-and-state.md`(L144-150)已經
+  完整證實的**戰鬥指令「action-ring」目標選取呼叫鏈**(`0x12c0d` 是「掃單位陣列找格子座標命中」
+  的引擎通用 primitive,`13-battle-menu-system.md` 已證是「action-ring dispatcher」的一部分)。
+- `0x14237`(`FUN_00014237`)所在的 byte 範圍(`0x14237..0x145CC`)是 `11-enemy-ai.md` 已經完整
+  反組譯過的**敵方 AI 物理攻擊評分函式**(「物理攻擊候選」章節,`0x13A9F`/`0x14EF0` 是它的既有
+  caller)。
+- `0x2670e` 是 `40-speaker-portrait-mapping.md`(L360-362)列出的 12 個讀寫全域場景表
+  `[0x53BF7]` 的 caller 之一(該文件本身未逐一展開語意,但已確認是「場景表」讀取相關,屬
+  portrait/場景切換子系統)。
+
+**結論**:續六十七命中的 sprite-blit 家族呼叫端**全部**回溯到已有獨立文件記錄的**戰鬥指令選單 /
+敵方 AI / 場景表**子系統,沒有一個指向 CG 畫面或章節結局演出。這跟續六十七自己收尾時的誠實記錄
+(「這次推進過頭,停在隊長名冊/戰前轉場畫面」)完全吻合——`823 A+05 D+00` 那個 HUD+全隊列隊畫面
+很可能會途經戰鬥指令/單位游標一類的通用 UI 元件,連帶命中了它們背後共用的 sprite blit 原語,但
+這不是 CG 資產顯示本身。
+
+### 9.17.4 逆向 `call_scan`(從已知原語找呼叫端,而非從候選位址找呼叫端)在**未分析區塊本身**
+上的結果:0x31000-0x34000 這塊(已確認含角色卡 renderer 鏈)呼叫 FDTXT **65+ 次**、呼叫
+glyph-blit **3 次**、呼叫 sprite-blit 家族 **0 次**
+
+續六十六/續六十七/§9.11 都在 `0x31529..0x321ED` 這段抓到了角色卡 renderer 鏈,但這段(以及它
+所在、Ghidra 完全沒建過邊界的 `0x31000-0x34000` 一帶更大範圍)本身無法用 `xref_from`
+查詢(`function_bounds` 回傳 `in_function:false`,`xref_from` 因此也拿不到任何結果——這是
+§9.10-§9.15 已經記錄過的既有限制)。**但反過來,從已知原語出發做 `call_scan` 不受這個限制影響
+**——`call_scan` 是逐 byte 掃全 exe image 找 `E8` opcode,不需要目標位址本身有函式邊界。
+
+對 `0x15f84`(FDTXT)、`0x4e98d`(glyph/cell blit)、`0x1685c`(cell dispatcher)三者做
+`call_scan`,只看呼叫端落在 `0x30000-0x34000` 這個範圍內的:
+
+- **`0x15f84`**:全程式 296 個直接呼叫端,其中 **65 個**落在 `0x30000-0x34000`(`0x31c21` 起
+  一路到 `0x33f21`,遠遠超出 §9.11 定位的 `0x31529..0x321ED` 那一小段,延伸進整個
+  `0x32000-0x34000` 這塊此前完全沒碰過的區域)。
+- **`0x4e98d`**(glyph/cell blit):全程式 39 個直接呼叫端,其中 **3 個**(`0x31a28`/
+  `0x31bc1`/`0x31dfe`)落在**已確認的角色卡 renderer 鏈範圍內**(`0x31529..0x321ED`)。
+- **`0x1685c`**(cell blit dispatcher):全程式 45 個直接呼叫端,**0 個**落在 `0x30000-0x34000`。
+- 對照組——**`0x4e63d`/`0x2921a`/`0x4e8a5` 三個 sprite-blit 家族原語,全程式呼叫端清單裡沒有
+  任何一個落在 `0x30000-0x34000`**(全部列在 §9.17.3,分別是 1/4/8 個呼叫端,位址範圍集中在
+  `0x11000-0x2a000`)。
+
+**解讀**:`0x31000-0x34000`(至少 12KB)這整塊 Ghidra 從未建過邊界的區域,是一個**文字極度密集**
+的腳本化 UI handler——光是直接呼叫 FDTXT 排版就有 65 次以上,遠超過角色卡 renderer 鏈本身(§9.11
+記錄的 `0x31529→0x319d3→0x31c49→0x320a1` 只是這塊裡的一小段)。它會呼叫 glyph-blit(畫字型
+cell,3 次),但**完全不呼叫** sprite/figure blit 家族的任何一個原語。
+
+### 9.17.5 綜合結論:假說A 部分成立(排除 sprite-blit 家族)但未完全解封——CG 影像本身很可能是
+`0x31000-0x34000` 內未反組譯的 inline 程式碼,不是對外呼叫某個共用原語
+
+把 §9.17.2-9.17.4 三條證據串起來:
+
+1. **正確涵蓋 CG 播放窗口的續六十六 trace,對 doc35 已知的整個 sprite/figure blit 家族
+   (`0x4e63d`/`0x2921a`/`0x4e8af`)是零命中**——這排除了「CG1/CG2 全螢幕圖像是透過跟戰鬥
+   figure 相同的共用 blit 原語顯示」這個最直覺的假說。
+2. 續六十七 trace 命中的 sprite-blit 家族,靜態溯源全部回到**已有獨立文件記錄的戰鬥選單/AI/
+   場景表子系統**,且續六十七本身已知「推進過頭」跳過了目標 CG 畫面——這批命中對 CG 顯示機制
+   沒有解釋力,是良性的 false lead。
+3. 唯一在**正確視窗**裡命中的「畫面相關」原語是 present(`0x11eb0`)、色盤(`0x11d40`)、FDTXT
+   排版(`0x15f84`)、以及一個小型 glyph/cell blit(`0x4e98d`)——後者的呼叫端逆向查證顯示它是
+   `0x31000-0x34000` 這塊未分析區域拿來畫**文字**(角色名/數值/poem 字元)的通用工具,不是給
+   整張 CG 圖片用的。
+4. 同一塊未分析區域(`0x31000-0x34000`)透過逆向 `call_scan` 證實**大量直接呼叫 FDTXT**(65+
+   次,遠超過角色卡本身需要的量,顯示整個章節開場的對白/CG字幕/詩句/角色卡是同一個腳本化
+   handler 依序處理的文字密集序列)、但**完全不呼叫任何已知 sprite-blit 原語**。
+
+**推論(中高信心,非定論)**:CG1/CG2 全螢幕圖像的解碼與寫入,很可能**不是**透過呼叫某個
+doc35 已經記錄過的共用原語完成的——它更可能是**寫死在 `0x31000-0x34000` 這塊從未反組譯過的區域
+內部的 inline 程式碼**(例如直接 `rep movsw`/`rep movsd` 把已解碼的圖像資料搬進 work buffer,
+再靠已確認會命中的 `0x11eb0` present 出去),混雜在同一個大型腳本 handler 裡,跟角色卡的 FDTXT
+呼叫、glyph blit 呼叫寫在一起——這能同時解釋:①為什麼多輪 `call_scan`/`xref_to` 對候選位址
+本身持續落空(inline 程式碼沒有獨立的函式邊界可查)、②為什麼 present/palette 兩個「螢幕更新」
+原語會被命中但沒有任何專屬「blit」原語被命中(inline 拷貝不透過已知 blit 呼叫)。
+
+**沒有查清的部分(誠實列出)**:
+1. 本節**沒有**逐 byte 反組譯 `0x31000-0x34000` 這塊區域裡,扣除已知的 FDTXT/glyph-blit 呼叫點
+   之外的「其餘程式碼」——也就是說,還沒有直接找到、指認出具體的 CG 拷貝迴圈本身,只是透過
+   排除法把搜尋範圍從「全新未分析位址」進一步限縮到「這塊已知範圍裡,不是 FDTXT 呼叫、不是
+   glyph-blit 呼叫的部分」。
+2. `0x373c4`(doc 記錄的 present 用 memcpy helper)兩輪都是零命中,但 `0x11eb0`(present 本身)
+   有命中——這暗示 doc35 §6 對 `0x373c4` 的位址記錄可能有偏移誤差(類似 §9.5.4 已經發現過的
+   「檔案 offset 不等於 linear 位址」陷阱),或者這個特定呼叫路徑没有真的呼叫到 `0x373c4` 那層
+   helper;本節未展開查證,留給下一輪。
+3. 假說B(用截圖時間點對齊 trace 找 CG 顯示的精確瞬間)本輪**沒有執行**——見下方給下一輪的建議。
+
+### 9.17.6 給下一輪的具體建議
+
+1. **優先**:對 `0x32000-0x34000`(續六十六/續六十七都沒深入查證、但確認有 65+ 個 FDTXT 呼叫
+   密集分布的範圍)做一次完整的**逐 byte 線性反組譯**(不是流程導向反組譯,直接從 `0x32000`
+   開始每個位址都嘗試解碼,类似 §9.11.1 手動 instruction-boundary 回溯的做法),重點找
+   `REP MOVSW`/`REP MOVSD`/直接寫 `ES:[EDI]`/對 `0xA0000`-鄰近位址的直接參照——這類 pattern
+   不會出現在 `call_scan` 結果裡(inline 拷貝不是 CALL),必須逐 byte 掃過去才找得到。
+2. 若要驗證「CG 拷貝是 inline 而非呼叫」這個假說本身,可以對 `0x11eb0`(present)下 live
+   斷點,在 CG1 剛顯示的那一刻用 `D SS:ESP` 讀 return address——如果 return address 落在
+   `0x31000-0x34000` 這塊未分析區域內,直接證實 present 是被這塊區域的 inline 程式碼呼叫的,
+   等於間接證實了本節的推論(比逐 byte 反組譯更快,但需要重開 live DOSBox-X 環境)。
+3. 假說B(screenshot 時間點對齊 trace 找 CG 顯示瞬間)本輪未執行,原因:①`LOGC` 本身沒有
+   timestamp/instruction-counter 可以跟截圖時間對齊,需要額外開發「每按一次鍵記錄當下已執行
+   instruction 數」的輔助手法,續六十六/續六十七都沒有這樣的基礎設施;②本節用快取資料完成的
+   假說A分析已經把搜尋範圍實質縮小(排除 sprite-blit 家族、鎖定 `0x31000-0x34000` 內部
+   inline 程式碼這個更具體的方向),對 ROI 的邊際貢獻可能高於重新設計一套時間對齊機制。
+   下一輪若要做,建議先試 #2(live present 斷點讀 return address)這個更便宜的驗證手段,
+   假說B 的完整時間對齊機制留到 #2 也做不出結果時再上。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code
