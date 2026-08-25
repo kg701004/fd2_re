@@ -2513,6 +2513,243 @@ doc35 已經記錄過的共用原語完成的——它更可能是**寫死在 `0
    下一輪若要做,建議先試 #2(live present 斷點讀 return address)這個更便宜的驗證手段,
    假說B 的完整時間對齊機制留到 #2 也做不出結果時再上。
 
+## 9.18 2026-08-25 — 執行 §9.17.6 建議 #1:對 `0x32000-0x34000` 逐 byte 線性反組譯,定位到具體的
+CG 影像解碼呼叫點(`0x3205f`→`FUN_0004ebff`→`FUN_0004ec66`),用快取的 LOGC trace 交叉驗證確實在
+正確視窗內執行過;誠實澄清這不是「新發現的專屬 blit 函式」,是已知的通用 RLE-decompress 引擎
+在這個具體呼叫點的接線方式
+
+> 任務:對 `0x32000-0x34000`(2KB,§9.17.4 已確認密集呼叫 FDTXT 的未分析區塊)做逐 byte 手動
+> instruction-boundary walking,找 `REP MOVSW`/`REP MOVSD`/直接寫 `0xA0000` 鄰近位址/新的
+> resource-load 呼叫。方法與 doc25 §11.7、doc35 §9.11.1 相同:用 `ghidra_batch_probe.py` 的
+> `disasm` action(forced `disassemble()` + `getInstructionAt().getNext()` 逐指令步進,不靠
+> Ghidra 自動 function 邊界),從已知合法邊界(`call_scan` 確認過的 CALL 指令位址、或前一段
+> `RET`/`JMP` 後的下一個 byte)出發,遇到誤對齊(出現不合理的 opcode 序列)就換更近的合法邊界
+> 重試。
+
+### 9.18.1 先建立可靠的錨點:`call_scan` 對已知原語做窮舉,取得 0x32000-0x34000 內部所有已驗證的
+指令邊界
+
+對 `0x15f84`(FDTXT)、`0x111ba`(資源載入器)做 `call_scan`(全 exe 窮舉 `E8` opcode,每筆用 Ghidra
+真反組譯器強制確認合法),過濾出落在 `0x32000-0x34000` 的呼叫點:
+
+- **FDTXT**:64 筆(`0x3209c` 起一路到 `0x33f21`,與 §9.17.4 記錄的「65+ 個」一致,誤差是這次
+  用精確窮舉重算)。
+- **`0x111ba`**:**5 筆全新**(§9.17.4 沒有查過這個原語)——`0x329b3`/`0x329c7`/`0x3398c`/
+  `0x33fe9`/`0x33ffe`。逐一手動回溯 PUSH 引數(§9.18.3 的方法),確認全部是
+  `0x111ba("FDOTHER.DAT"@0x51a4d, prevSlot=0, index=N)`,`N` 依序見到
+  `9`/`0x5f`(95)/`0x12`/`0x15`/`0x16`/`0x17`/`0x18`/`0x19`/`0x1a`/`0xe`/`0x10`/`0x12` 等多個小
+  索引——這是這塊 handler 從 `FDOTHER.DAT` 載入一批 UI/CG 小資源的證據,但引數本身不足以單獨
+  判定哪個 index 是 CG 圖片(見 9.18.5 開放問題)。
+
+這批 confirmed CALL 位址提供了密集(每 60-90 bytes 一個)、逐 byte 驗證過的合法邊界網,足以支撐
+逐段 `disasm` 而不必猜測對齊。
+
+### 9.18.2 逐段線性反組譯 0x32000-0x34000:REP MOVS 家族全域掃描只找到 **1 筆**,且與 CG 顯示
+無關(小型 7-dword struct copy,銜接一個已知的「移動」呼叫)
+
+先用 `bytes` action 一次抓出整段 8192 bytes 原始 hex,在 Python 端做全域 byte-pattern 掃描
+(比對 `REP MOVSD`=`F3 A5`、`REP MOVSW`=`F3 66 A5`、`REP MOVSB`=`F3 A4`、`REP STOSx` 三種、
+`ES:` override prefix=`0x26`、字面值 `0xA0000`(LE `00 00 0A 00`)):
+
+| pattern | 命中數 | 位址 |
+|---|---|---|
+| `REP MOVSD` | **1** | `0x3224b` |
+| `REP MOVSW`/`REP MOVSB`/`REP STOSx` | 0 | — |
+| `ES:` prefix | 5 | `0x33352`/`0x33360`/`0x333be`/`0x338b4`/`0x338f4`(均在後段,未逐一展開,見 9.18.5) |
+| 字面 `0xA0000` | **66** | 幾乎每個 FDTXT 呼叫點前都有一個(見 9.18.4) |
+
+對唯一一筆 `REP MOVSD`(`0x3224b`)用 `disasm` 逐指令核對上下文(從最近的合法邊界
+`0x3222b` 的 `JMP` 之後、`0x32230` 開始重新解碼):
+
+```
+0x32230 PUSH  0x3c
+0x32235 CALL  0x3702f          ; 與已知 0x37795/0x3790a 同宗的 DAC/palette helper 家族
+0x3223a PUSH  ESI
+0x3223b PUSH  EDI
+0x3223c SUB   ESP,0x24
+0x3223f MOV   ECX,0x7          ; 7 個 dword = 28 bytes
+0x32244 MOV   EDI,ESP          ; 目的地是本地堆疊,不是 VGA/work buffer
+0x32246 MOV   ESI,0x52725      ; 來源是一個固定的全域小 struct
+0x3224b REP MOVSD               ; 複製 28 bytes 到堆疊
+0x3224e PUSH  [ESP+0x30]
+0x32252 CALL  0x1f183          ; 已知的「移動」相關呼叫(見專案 memory 備註「closed 0x1F183
+                                 ; movement gap」),與圖像顯示無關
+```
+
+**結論**:這是把一個固定 28-byte 結構從 `0x52725` 複製到堆疊當作 `CALL 0x1f183` 的引數暫存區,
+跟 CG 圖像資料量級(數萬 bytes)完全不成比例,語意上也接到已知的「移動」子系統,不是 CG blit。
+**這排除了「CG 拷貝是一段裸露的 REP MOVS 迴圈」這個最直覺的子假說**——0x32000-0x34000 全域
+唯一的 REP MOVS 指令跟 CG 顯示無關。
+
+### 9.18.3 找到真正的機制:`0x3205f` 呼叫 `FUN_0004ebff`,一個「以資料流自帶的 width/height 為
+迴圈邊界、逐列 RLE 解壓縮寫入、步進量(stride)由呼叫端傳入」的通用引擎函式——引數逐一回溯後,
+這正是這塊 handler 用來把 CG 像素資料寫進 work buffer 的呼叫
+
+在 §9.17.4 已知角色卡鏈 `0x31529..0x321ED` 內部的迴圈(`0x32031→0x32043→0x3213d→0x321ed`
+循環,`INC EDI; CMP EDI,[ESP]; JGE 0x31e27` 跳回既有鏈)逐指令核對時,发现這段迴圈裡有一組先前
+從未展開過的呼叫:
+
+```
+0x32031 DEC   byte ptr [ESP+0x1c]      ; 遞減一個「剩餘階段數」計數器
+0x32035 MOVZX EAX,byte ptr [ESP+0x1c]
+0x3203a CMP   EAX,0x2
+0x3203d JGE   0x32043                  ; 剩餘 >=2 時 BL=0(fall through)
+0x3203f MOV   BL,0xc                   ; 剩餘 <2 時 BL=0xC(12)——二選一的圖像/表格索引
+0x32041 JMP   0x32045
+0x32043 XOR   BL,BL
+...
+0x32045 MOVZX EAX,BL
+0x32048 MOV   EBX,[0x53a85]            ; EBX = 表格基底指標
+0x3204e ADD   EBX,dword ptr [EBX+EAX*1]; EBX += *(EBX+idx) —— relative-offset table,
+                                        ; idx=0 或 0xC(12) 兩個 slot 解出實際來源指標
+0x32051 PUSH  0x140                    ; stride = 320(螢幕寬度)
+0x32056 PUSH  EBX                      ; 來源指標(剛解出的 RLE 資料流)
+0x32057 MOV   EAX,[0x53c67]            ; 目的地偏移(同一全域,§9.9.4 已知是 TXT 直譯器切換的
+                                        ; 「場景/音樂 ID」,這裡兼作 work buffer 內偏移量)
+0x3205c ADD   EAX,ESI                  ; EAX = ESI(work buffer 基底) + 偏移
+0x3205e PUSH  EAX                      ; 目的地指標
+0x3205f CALL  0x4ebff                  ; FUN_0004ebff(dest=EAX, src=EBX, stride=0x140)
+```
+
+`FUN_0004ebff`(`0x4ebff-0x4ec30`,50 bytes)完整反組譯:
+
+```
+PUSH EBP; MOV EBP,ESP; PUSHAD
+MOV EDI,[EBP+8]     ; param1 = dest (ESI+偏移,即 work buffer 內某個子區域)
+MOV ESI,[EBP+0xc]   ; param2 = src  (RLE 壓縮資料流指標)
+MOV EBX,[EBP+0x10]  ; param3 = stride (呼叫端傳入 0x140=320)
+LODSW ESI            ; AX = *(WORD*)src; src+=2   -> 讀出資料流表頭的「寬度」
+MOV BP,AX
+LODSW ESI            ; AX = *(WORD*)src; src+=2   -> 讀出資料流表頭的「高度」
+MOV DX,AX
+XOR ECX,ECX; XOR AX,AX
+row_loop:
+  PUSH EDI
+  MOV CX,BP                    ; 內層迴圈次數 = 寬度
+  col_loop:
+    CALL 0x4ec66                ; 見下方——標準 RLE getbyte 原語(§9.9 已記錄)
+    STOSB ES:EDI                ; *dest++ = AL(解壓縮出的一個像素 byte)
+    LOOP col_loop
+  POP EDI
+  ADD EDI,EBX                  ; dest += stride,換下一列
+  DEC DX
+  JNZ row_loop                 ; 外層迴圈次數 = 高度
+POPAD; POP EBP; RET
+```
+
+`CALL 0x4ec66` 呼叫的正是 **doc35 §9.9.3 已經逐 byte 反組譯確認過的「教科書級 RLE getbyte 原語」**
+(`OR AH,AH; JZ read_new; DEC AH; RET; read_new: LODSB; CMP AL,0xC0; JA is_run; XOR AH,AH; RET;
+is_run: MOV AH,AL; SUB AH,0xC1; LODSB; RET`)——AH 是「目前顏色的剩餘重複次數」,AL 是目前要填的
+顏色值,是標準的 run-length byte-stream 解碼器。
+
+**這正是一個完整、自洽的「解壓縮一張點陣圖到緩衝區」迴圈**:資料流表頭前 4 bytes 是寬高
+(`LODSW`×2),逐 pixel 呼叫 RLE getbyte 解出顏色、`STOSB` 寫進目的緩衝區,每列結束後用呼叫端
+傳入的 `stride`(這裡是 `0x140`=320,螢幕寬度)推進到下一列——這不是「特定畫面專屬」的寫法,而是
+一個 generic「RLE image blob → linear buffer, given width/height (from stream) + stride (from
+caller)」函式,可以用在任何尺寸、任何目的緩衝區的圖像。
+
+### 9.18.4 收尾:目的緩衝區與後續 `present()` 呼叫是同一個 `ESI`,直接串起「解壓縮進 work
+buffer」→「present 到 VGA」的完整鏈
+
+`0x3205f` 呼叫結束後幾十 bytes 內(`0x32165` 一帶),同一個 `ESI` 暫存器(呼叫 `FUN_0004ebff`
+時用來算目的地位址的那個)被直接 `PUSH ESI` 當作 `0x11eb0`(已知 present 原語)的來源引數:
+
+```
+0x32168 PUSH 0xc8       ; 200(高度)
+0x3216d PUSH 0x140       ; 320(stride)
+0x32172 PUSH 0x140       ; 320(stride)
+0x32177 PUSH ESI         ; 來源 = 同一個 work buffer 基底
+0x32178 PUSH 0x140       ; 320
+0x3217d PUSH 0xa0000     ; 目的地 = VGA framebuffer 線性位址
+0x32182 CALL 0x11eb0     ; present(0xA0000, 0x140, ESI, 0x140, 0x140, 0xc8)
+```
+
+`0x3217d PUSH 0xa0000` 這個字面值在整段範圍出現 **66 次**——幾乎每一個 FDTXT 呼叫前都有一次,
+證實這不是 CG 專屬的參數,而是 `FDTXT`/`present` 呼叫的標準樣板引數(目的地固定是 VGA
+framebuffer、stride 固定是螢幕寬度),不是本節要找的「CG 專屬證據」;真正有鑑別力的是
+`0x3205f` 這個呼叫點本身的引數接線方式(表格索引選圖 + 資料流自帶尺寸 + stride 傳遞),不是
+`0xA0000` 這個常數。
+
+**這條鏈完整回答了任務的核心問題**:CG 影像的像素資料,是先由 `0x111ba` 從 `FDOTHER.DAT` 載入
+一段 RLE 壓縮的資料流(存進由 `[0x53a85]` 索引的一張 2-slot(至少)relative-offset 表,依一個
+逐迴圈遞減的「剩餘階段數」計數器在兩個 slot 之間切換——結構上與任務描述的「CG1→CG2」兩張圖像
+輪替吻合,但本節未逐一證實這兩個 slot 真的分別對應 CG1/CG2 或其他兩種資產),再由 `0x3205f`
+呼叫已知的通用引擎函式 `FUN_0004ebff`(内部呼叫 §9.9 已記錄的 RLE getbyte 原語
+`FUN_0004ec66`)逐列解壓縮寫進 `ESI` 為基底的 work buffer,最後由既有已知的 `present()`
+(`0x11eb0`)把整個 work buffer copy 到 VGA framebuffer(`0xA0000`)。**沒有任何一步是裸露的
+inline REP MOVS 拷貝**,§9.17.5 原本推論的「inline REP MOVS」假說沒有成立,但「CG 拷貝碼在
+`0x31000-0x34000` 內部,不是靠呼叫某個 sprite-blit 家族原語」這個更上層的判斷成立——只是實際
+機制是「呼叫另一個此前沒被列進 sprite-blit 家族清單、但本身也是通用共用原語的解壓縮函式」,不是
+一段真正 hand-inlined 的拷貝迴圈。
+
+### 9.18.5 用快取的 LOGC trace 交叉驗證:`FUN_0004ebff`/`FUN_0004ec66` 的函式本體在續六十六
+trace(正確涵蓋 CG 顯示窗口)裡有 **61 個不重複位址命中**,證實這段程式碼確實在真正的 CG 顯示
+當下執行過(不只是「可達」,是「真的執行了」)
+
+用 `native+0x19C000=live` delta(§9.9.1 已在 `0x4Exxx` 這段位址範圍逐 byte 驗證過)把
+`0x4ebff-0x4ec7b`(涵蓋 `FUN_0004ebff`+`FUN_0004ec66` 兩個相鄰函式)換算成 live 位址
+`0x1EABFF-0x1EAC7B`,對 `.wsl_build/trace_unique_cseip.txt`(續六十六,600M instructions,
+正確涵蓋戰前對白→CG1→CG2→詩句→萊汀角色卡窗口)做範圍過濾:**61 個不重複位址命中**(對照組:
+`0x32000-0x34000` 整段範圍在同一份 trace 裡有 171 個不重複位址命中,量級一致,沒有異常)。
+
+### 9.18.6 對 doc35 §9.9.4「`FUN_0004ebff`/`FUN_0004ec66` 是通用共用原語,不是 montage 專屬」
+這個既有結論的關係澄清——兩者不矛盾,是同一件事的兩個層次
+
+§9.9.4 已經用 `call_scan` 證實 `FUN_0004ebff` 全程式有 **36 個直接呼叫端**,散佈在對話系統、戰鬥
+選單/走位、spell/FIGANI 特效(doc37)等幾乎所有子系統,並且明確給出的判準是「幾十個不相關呼叫點
+=generic utility,不是 dedicated renderer」——這個結論**依然成立,本節沒有推翻它**,`0x32ab5`
+(§9.9.4 原文已列出的其中一個呼叫端)本身就已經落在 `0x32000-0x34000` 這個範圍內,只是先前沒有
+被連結到「這是 CG 顯示的機制」這件事上。
+
+本節要澄清的是**問題本身問錯了層次**:任務要找的是「CG 影像是被什麼程式碼畫出來的」,不是「有沒有
+一個 montage 專屬的 dedicated 函式」。doc9.9.5 point 4 早就預言過這個引擎的架構模式——「這個引擎
+很可能根本沒有『一個特定 function 是 ending montage 的 orchestrator』這種東西」——本節的發現
+精確印證了這個預言在 CG 影像顯示這一層也成立:CG 圖片的解壓縮呼叫的正是全遊戲共用的通用
+「RLE-decompress-with-caller-supplied-stride」引擎函式,跟畫戰鬥選單、對話框描邊字型用的是**同一個
+架構模式**(共用引擎原語 + 資料驅動),不是另外寫一套專屬的圖像 codec。這跟 §9.2 對戰鬥選單
+carousel 系統的既有結論(「完整可驗證的 phase-table 演出引擎,靠資料索引驅動共用原語,不是
+per-feature 專屬函式」)是同一種設計哲學的第三次獨立印證。
+
+### 9.18.7 誠實範圍:沒有查清的部分
+
+1. **`[0x53a85]` 這張 relative-offset 表格的完整內容**(有幾個 slot、slot 0 和 slot 0xC 分別解出
+   的指標實際指向哪個資源、是否真的分別對應 CG1/CG2)本節**沒有**逐一 dump 出來確認——只確認了
+   「用一個遞減計數器在至少 2 個 slot 之間切換」這個控制流結構,沒有確認資料語意。
+2. **哪個 `0x111ba("FDOTHER.DAT", 0, index)` 呼叫(§9.18.1 列出的 11 個 index)實際把資料寫進
+   `[0x53a85]` 表格**本節**沒有**逐一比對——只確認了這批 index 存在,沒有把「載入」跟「解壓縮進
+   work buffer」這兩步用同一個 index 串起來。
+3. **5 個 `ES:` prefix 命中**(`0x33352`/`0x33360`/`0x333be`/`0x338b4`/`0x338f4`,§9.18.2 表格)
+   **沒有**展開查證——這些在角色卡/poem 段落之後的區塊(`0x33000+` 一帶),本節優先處理了
+   `0x4ebff` 這條更接近核心目標的線索,沒有時間逐一核對這 5 個 `ES:` 命中的語意。
+4. **本節全程沒有重開 live DOSBox-X 環境**(§9.17.6 建議 #2 的「對 present 下斷點讀 return
+   address」沒有執行)——續六十六 trace 的**執行證據**(61 個位址真的被執行過,不只是可達)已經
+   達到跟 live 斷點類似的驗證強度,ROI 判斷上沒有必要再開一輪 live 環境去重複驗證同一件事。
+
+### 9.18.8 對 `91-worklist.md` 的影響:**未修改**——這是 ch27 戰前 CG1/CG2 顯示問題,跟 worklist
+`0x2bce5`/`native_2c548` 那組「結局 party montage」cluster 是兩個獨立的東西
+
+`91-worklist.md` 搜尋 `0x2bce5`/`native_2c548`/「下一個 ending gate」的 11 個項目,記錄的是
+**ch26/ch29 戰後(post-battle)的「party montage」渲染系統**——doc35 §9.11.4/§9.11.5/§9.12-§9.14
+已經用三輪獨立靜態方法確認這組位址(`0x2bce5`/`0x2c172`/.../`0x2c773`)全部落在既有的 §9.2
+戰鬥選單 carousel handler 內部,跟本篇(§9.10 起)一直在查的 **ch27 戰前「轉送站」CG1/CG2/詩句/
+角色卡演出**是完全不同的兩段程式碼、不同的觸發時機、不同的呼叫鏈,§9.11.5 已經明文訂正過這個
+框架混淆。本節(§9.18)的發現屬於後者(ch27 戰前 CG 顯示機制),**不構成**對 `0x2bce5`/
+`native_2c548` party montage cluster 任何一項的解封證據,因此依 worklist 稽核慣例維持這 11 項
+現狀不動。
+
+### 9.18.9 給下一輪的具體建議(如果要繼續深挖)
+
+1. **最高優先**:dump `[0x53a85]` 表格的完整內容(有幾個 slot、每個 slot 解出的指標指向哪裡),
+   搭配逐一核對 §9.18.1 列出的 11 個 `0x111ba(...,index)` 呼叫寫入哪個 slot——這能把「index 0
+   和 0xC 分別是 CG1 還是 CG2」這個開放問題坐實。
+2. 若想要 100% 影像級證據(不只是程式碼路徑證據),可以對 `0x4ebff`(live `0x1EABFF`)下斷點,
+   命中時 dump `EDI`(目的地指標)指向的 work buffer 記憶體,存成 raw 320-wide 點陣圖用既有的
+   `internal/afm`/`internal/fdother` 之類的 palette 轉換工具轉成 PNG 視覺比對,直接肉眼確認
+   解出來的像素是不是遊戲截圖看到的 CG1/CG2 畫面——這是本篇任務(過去 20+ 輪)第一次有機會做到
+   「反組譯結論 → 實際像素比對」的完整閉環,值得優先於任何其他後續動作。
+3. §9.18.7 列出的 5 個 `ES:` prefix 命中值得順手查一下,但優先度低於 #1/#2——它們在角色卡/poem
+   段落之後,大概率是另一組文字繪製相關的 helper,不太可能是另一個獨立的 CG blit。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code
