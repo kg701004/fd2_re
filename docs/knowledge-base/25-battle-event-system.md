@@ -843,6 +843,55 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 >   [`camproute-town-hub-exit-confirm-dialog.png`](../figures/camproute-town-hub-exit-confirm-dialog.png)、
 >   [`camproute-battle-map-after-yes-confirm-ch27.png`](../figures/camproute-battle-map-after-yes-confirm-ch27.png)。
 >   完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
+>
+> **2026-08-25 續輪(`writerfire` 平行 harness)：終於用上 raw chapter 27
+> (22-24/27-29 這個「整備限定流程」範圍)的合成存檔直接測試，但writer依然
+> 零命中——且發現doc56的整備UI位址本身也是舊版殘留**。用 `tools/fd2save.py`
+> 把 harness 私有 `FD2.SAV` slot0 的章節 byte 從 `0x1a`(26)改成 `0x1b`(27)
+> (round-trip 自檢通過)，LOAD 後 UI 顯示「第二十八章」（=raw+1，與既有公式
+> 吻合），**選中後畫面直接跳過城鎮 hub，顯示 FDTXT `0x19a`「要記錄戰況嗎？」**
+> ——這是本節「整備限定流程跳過城鎮hub直接顯示0x19a」這個結構性主張第一次
+> 被 raw chapter 真的落在 22-24/27-29 範圍內的存檔 live 印證（先前所有輪次
+> 測的都是範圍外的章節）。武裝 `LOGC`(10 億指令)後按 Enter 接受，進入一個
+> 與 `56-fd2-remake-sdd.md` 描述的 `0x318ad` 選人畫面外觀一致的介面（HP/MP
+> 狀態欄＋出戰/剩餘人數計數器＋角色 icon 網格，Enter 對目前游標角色
+> toggle 選取＋前進一格，剩餘人數同步遞減/遞增)。**用 `xref_to` 重新核對
+> `FUN_0002ff01` 在目前 build 全 EXE 依然只有 `camproute` 找到的那兩個
+> caller(`0x1d43c`/`0x15400`)，沒有第三個**；完整涵蓋「YES 確認→選人畫面
+> 反覆互動(全選/reset 循環)」全程的 1 億～10 億指令 `LOGC` 追蹤，對 writer
+> 本體(`0x2ff01`/`0x30012`)、兩個已知 caller、及它們各自的外層 dispatcher
+> (`0x18890`/`0x18d8c`、`0x13a9f`/`0x14ef0`)**全部零命中**——比 `camproute`
+> 的結果更弱：`camproute` 的城鎮路徑至少命中了 `0x18890→0x18d8c→0x1cff0`
+> 這條 dispatcher(只是在 `0x1cff0` 內部走了跳過 writer 那一臂)，這輪的
+> 整備限定路徑連 dispatcher 本身都沒進去過。**方法論已交叉驗證無誤**：
+> 追蹤期間吞吐量最高的位址(native `0x10620`)換算後精確命中 Ghidra 一個
+> 真實 50-byte 函式 `FUN_00010620`，逐位元組與 `56-fd2-remake-sdd.md`
+> 描述的「`0x32004`...輪詢 `0x10620`」吻合，證實 delta(`0x19C000`)/CS
+> (`0170`)換算沒有出錯。**同時發現 doc56 對這個選人 UI 本身引用的位址
+> (`0x318ad`/`0x31e80`/`0x32004`/`0x320fc`/`0x31d3c`/`0x318c7`)全部
+> `function_bounds` 回傳 `in_function:false`**——跟本節先前修正
+> `0x2cad7`/`0x2ccb6`/`0x2fd93` 時發現的問題是同一類：舊版/舊 IDA session
+> 殘留位址，從未在目前 `FD2Analysis3` 重新核對過，`56-fd2-remake-sdd.md`
+> 的整備 UI 章節需要下一輪比照本節做同樣的 xref_to/LOGC 重新定位。
+> **結構性卡點(誠實記錄，非猜測)**：這個選人畫面的出戰上限是 19(對應
+> `[0x53c03]>0x1a`分支)，但整款遊戲可招募角色總數只有 13(與 `prepE2`
+> 輪既有結論一致)，选滿 12 名可用角色後 `Escape`／`Delete`(依 doc56
+> raw scancode 分析選出的兩個候選「確認」鍵)都只會把選取重置回全空，
+> 不會前進到 `0x320fc`/`0x31d3c`——也就是說這條路徑在鍵盤操作範圍內
+> **從未能真正推進到選人畫面之後**，无法排除 writer 其實在更下游(選人
+> 完成後)才被呼叫的可能。曾嘗試把存檔 roster_count 從 13 硬改成 19(複製
+> record0 填補空位)以求選滿，但這樣改完後遊戲在 YES 確認後直接靜默彈回
+> 標題 LOAD 選單(重跑一次同樣發生，不是偶發)，判斷是 roster 完整性檢查
+> 失敗，**不是**安全的合成測試手法，不建議下一輪重複。**誠實結論**：本輪
+> 沒有能夠證實或推翻 writer 在整備限定流程真的會被呼叫；反而讓本節「Yes
+> 才呼 `0x30012(0)`」這個沿用自舊文件的具體宣稱本身變得可疑——更可能的
+> 結構是 writer(如果這條路徑真的會呼叫它)是在選人 UI**完成**(而非
+> 剛進入)之後才被呼叫，需要下一輪先用 LOGC ground-truth 方法重新定位
+> doc56 選人 UI 目前 build 的真實位址，才能繼續往下追。截圖：
+> [`writerfire-fdtxt-0x19a-record-battle-confirm.png`](../figures/writerfire-fdtxt-0x19a-record-battle-confirm.png)、
+> [`writerfire-selection-ui-all-selected-remaining07.png`](../figures/writerfire-selection-ui-all-selected-remaining07.png)、
+> [`writerfire-selection-ui-delete-resets-to-empty.png`](../figures/writerfire-selection-ui-delete-resets-to-empty.png)。
+> 完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

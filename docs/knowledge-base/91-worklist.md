@@ -528,6 +528,45 @@
     下一輪。doc25§9.1已同步更新此修正。截圖：
     [`camproute-town-hub-exit-confirm-dialog.png`](../figures/camproute-town-hub-exit-confirm-dialog.png)、
     [`camproute-battle-map-after-yes-confirm-ch27.png`](../figures/camproute-battle-map-after-yes-confirm-ch27.png)。
+  - **2026-08-25 平行 harness（`writerfire`），終於補上 raw chapter 27（落在
+    22-24/27-29「整備限定流程」範圍內）的合成存檔測試，但writer依然零命中，
+    且發現doc56整備UI位址集本身也是舊版殘留**：用`fd2save.py`把harness私有
+    `FD2.SAV` slot0章節byte由`0x1a`(26)改成`0x1b`(27)（round-trip自檢通過），
+    LOAD後畫面顯示「第二十八章」（=raw+1），**選中後直接跳過城鎮hub，顯示
+    FDTXT`0x19a`「要記錄戰況嗎？」**——首次用真的落在該範圍內的存檔live印證
+    doc25§9.1「整備限定流程跳過城鎮hub」這個結構性主張（先前所有輪次測的
+    章節都在範圍外）。武裝`LOGC`(10億指令)後按Enter接受，進入一個外觀與
+    `56-fd2-remake-sdd.md`描述的`0x318ad`選人畫面一致的介面（HP/MP狀態欄＋
+    出戰/剩餘人數計數器＋角色icon網格，Enter對目前游標角色toggle選取＋
+    前進一格）。`xref_to`重新核對`FUN_0002ff01`全EXE依然只有`camproute`
+    找到的兩個caller（`0x1d43c`/`0x15400`），沒有第三個；涵蓋「YES確認→
+    選人畫面反覆互動」全程的LOGC追蹤對writer本體、兩個caller、及其外層
+    dispatcher（`0x18890`/`0x18d8c`、`0x13a9f`/`0x14ef0`）**全部零命中**
+    ——比`camproute`更弱（`camproute`至少命中了`0x18890→0x18d8c→0x1cff0`
+    這條dispatcher，只是內部走跳過writer那臂；這輪連dispatcher本身都沒
+    進去過）。方法論已交叉驗證無誤（追蹤最熱位址native`0x10620`精確命中
+    Ghidra真實函式`FUN_00010620`，與doc56「`0x32004`輪詢`0x10620`」的描述
+    吻合）。**同時發現doc56對這個選人UI本身引用的位址（`0x318ad`/`0x31e80`/
+    `0x32004`/`0x320fc`/`0x31d3c`/`0x318c7`）全部`function_bounds`回傳
+    `in_function:false`**——與本節先前修正`0x2cad7`/`0x2ccb6`/`0x2fd93`
+    同一類錯誤（舊版/舊IDA session殘留，未隨EXE rebaseline重新核對），
+    `56-fd2-remake-sdd.md`整備UI章節需要下一輪比照doc25§9.1重新定位。
+    **結構性卡點**：選人畫面出戰上限19（`[0x53c03]>0x1a`分支），但全遊戲
+    可招募角色僅13人（與`prepE2`既有結論一致），選滿12名可用角色後
+    `Escape`/`Delete`（doc56 raw scancode分析選出的兩個候選確認鍵）都只會
+    把選取重置回全空，不會前進到`0x320fc`/`0x31d3c`——這條路徑在鍵盤操作
+    範圍內從未能真正推進到選人畫面之後。曾嘗試把roster_count從13硬改成19
+    （複製record0填補空位）求選滿，但改完後遊戲在YES確認後直接靜默彈回
+    標題LOAD選單（重跑一次同樣發生），判斷是roster完整性檢查失敗，
+    **不是**安全的合成測試手法，不建議下一輪重複。**誠實結論**：本輪沒有
+    證實或推翻writer在整備限定流程真的會被呼叫；反而讓doc25§9.1「Yes才呼
+    `0x30012(0)`」這個沿用自舊文件的具體宣稱本身變得可疑——更可能的結構是
+    writer（如果這條路徑真的會呼叫它）是在選人UI**完成**（而非剛進入）
+    之後才被呼叫，需要下一輪先用LOGC ground-truth方法重新定位doc56選人UI
+    目前build的真實位址才能繼續往下追。doc25§9.1已同步更新此修正。截圖：
+    [`writerfire-fdtxt-0x19a-record-battle-confirm.png`](../figures/writerfire-fdtxt-0x19a-record-battle-confirm.png)、
+    [`writerfire-selection-ui-all-selected-remaining07.png`](../figures/writerfire-selection-ui-all-selected-remaining07.png)、
+    [`writerfire-selection-ui-delete-resets-to-empty.png`](../figures/writerfire-selection-ui-delete-resets-to-empty.png)。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
