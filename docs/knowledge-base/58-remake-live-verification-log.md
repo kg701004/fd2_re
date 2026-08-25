@@ -7155,3 +7155,73 @@ renderer 呼叫鏈與 ch26/29 戰後 handler self-loop 範圍內**：
 30 張）存於 WSL 端 `~/fd2-run/`，過程 debug 產物，非 repo 追蹤內容。原始 `LOGCPU.TXT`
 （7.9GB）與去重後的 `trace_unique_cseip.txt`/分析結果 JSON 存於 Windows 端
 `.wsl_build/trace_analysis/`（`.gitignore` 排除，不進版控）。
+
+## 續六十七：接手續六十六留下的 13 個全新候選查證任務——全部 decompile/disasm 完畢，11 個確認
+是通用 XMIDI/PCM 音訊驅動內部程式碼、2 個是既有 doc39 AFM VM 調色盤 opcode 表裡的既有 handler，
+零個是 montage 專屬渲染碼；第二輪獨立 live capture（10 億指令）交叉確認 + 找到 1 個新候選但同樣
+判定非渲染相關（2026-08-25）
+
+**任務背景**：續六十六找到 13 個全新候選但只做了「反組譯樣式辨識」層級的初步定性，`call_scan`/
+`xref_to` 除 `FUN_000443d0` 外全部落空。本輪任務：完整 decompile `FUN_000443d0` 並追呼叫鏈、
+對其餘 12 個候選逐一擴大查證，判定各自是通用共用工具還是 montage 專屬；若排除完仍無正面結果，
+再嘗試擴大 live capture 涵蓋悠妮卡之後的內容。
+
+**核心結果**（完整技術細節見 `docs/knowledge-base/35-battle-animation-rendering.md` §9.16，
+不在此重複）：
+
+1. **`FUN_000443d0`**（續六十六標記的最佳起點）完整 decompile 後確認是 **XMIDI 音樂序列載入
+   函式**（內嵌 `"Invalid XMIDI sequence"`/`"catNo timbres loaded"` 除錯字串），呼叫鏈
+   `FUN_0003adf5`（暫停/切換/恢復音軌 wrapper）→`FUN_00025977`（通用「設定目前音樂軌 ID」
+   API，**`xref_to` 找到 29 個呼叫點，分散在 `0x10000`~`0x32000` 整個程式碼範圍**）——確認
+   **不是** montage 專屬，是背景音樂持續播放的副產品。
+2. **`0x4364c`/`0x43270`/`0x4391f`/`0x42980`/`0x434d1` 五個候選**確認是同一個**通用軟體 MIDI
+   事件派發器**（`FUN_00042980` 對 classic MIDI status byte 0x80/0x90/0xb0/0xc0/0xe0 做
+   switch，`call_scan` 找到 24 個內部呼叫點）。**訂正續六十六對 `0x434d1` 的誤判**：擴大
+   disasm 後證實它讀的是跟 `0x4364c` 同一個 `[EBX+0x14]` 3-byte MIDI 事件游標、`JMP` 跳回
+   同一個派發迴圈，不是「RGB triple palette pack」——續六十六當初的「反組譯樣式辨識」猜測
+   在這個案例上被證明方向錯誤。
+3. **`0x3ea8e`**（確認 ISR）擴大 disasm 補完全部細節：16 通道獨立速率 rate-accumulator 軟體
+   計時器，PIC EOI 後逐通道呼叫已註冊的函式指標——全程持續運作，跟畫面內容無關。
+4. **`0x4809b`/`0x47d88`/`0x49430`** disasm 逐指令核對，確認是 PCM 混音 clamp/64-bit 定點
+   相位累加重取樣內迴圈，跟續六十六初步定性一致。
+5. **`0x36e57`/`0x36f24`**（續六十六定性為「疑似 palette」「RLE 解壓縮」）——本輪唯一的正面
+   關聯：對 native `0x5276a` 讀出完整 10-entry function-pointer 表，逐 byte 核對確認這兩個
+   位址正是 `docs/knowledge-base/39-ani-afm-format.md` §4.2 早就完整記錄過的 ANI.DAT/AFM
+   過場動畫 VM「調色盤 opcode 派發表」裡的既有 handler（`0x36e57`=table[1]=768-byte 字面
+   複製、`0x36f24`=table[6]=RLE 解壓，行為都跟 doc39 描述的演算法逐字吻合，含寫入 doc39 行
+   87 已記錄的 palette 暫存指標 `[0x52766]`）——**不是新子系統**，是替一個十幾輪前就反組譯
+   過的既有框架首次補上精確 native 位址。
+6. **第二輪獨立 live capture**（doc48 §8.4 recipe 重開環境，`LOGC 3B9ACA00`=10 億指令，比
+   續六十六的 6 億大 1.67 倍）：重演同一條「LOAD→軍營 Right×3→出口確認 YES→連續 Return」
+   路徑時**重現了續六十六第一次嘗試的「推進過頭」症狀**——這次停在一個「823 A+05 D+00」
+   HUD+全隊列隊的畫面（疑似隊長名冊/戰前轉場，不是萊汀卡也不是悠妮卡），不是預期中的悠妮卡。
+   去重後 14,931 筆唯一位址（比續六十六多），交叉比對：上述 11 個音訊候選**全部獨立重新
+   出現**（強化「跟畫面內容無關」的結論），`0x36e57`/`0x36f24`（AFM VM 調色盤 handler）
+   **這次沒有出現**（與「這次按太快、可能跳過或加速通過了 CG 播放」的推測一致，側面佐證
+   §9.16.6 對這兩個候選的因果解讀），另外找到 **1 個全新候選 `0x37B13`-`0x37B28`**（21
+   bytes，12 命中）：disasm 確認是一個環狀緩衝區/FIFO「寫入一個 byte」原語，`xref_to` 只有
+   1 個 DATA 型別引用（跟 `0x3ea8e` 的 xref 模式相同，暗示是某個 function-pointer 表裡的
+   一格），語意上沒有任何圖形相關證據，中信心判定是同一音訊/裝置驅動子系統的另一個通用工具
+   函式，非montage候選。
+
+**誠實結論**：兩輪合計 14 個全新候選（13+1）全部查清語意，**沒有一個**指向 montage 專屬渲染
+碼。這是一次乾淨的「排除」結果，不是正面發現。同時本輪具體證實了 `LOGC` 方法論的一個重要
+限制（續六十六 §5 原本只是理論列出，這次有案例佐證）：**「執行過」不等於「跟目標場景語意
+相關」**——背景音樂/計時器 ISR 全程持續運作，命中數本身不能當作候選相關性的排序依據（續
+六十六依命中數排序、優先追命中數最高的 `FUN_000443d0`，這次證實那正是誤判機率最高的一類）。
+
+**環境**：`wsl -d Ubuntu`（非預設 distro，機器預設 distro 是 `kali-linux`，下一輪需注意
+`wsl -d Ubuntu` 這個 flag 不可省略）。踩到並修正兩個新環境坑，記錄避免下一輪重踩：①
+`dosbox-x` 不在非互動 `bash -c` shell 的 `PATH` 裡（需要用絕對路徑
+`/home/kg701004/fd2-dosbox-build/dosbox-x/src/dosbox-x`，或確保透過會 source `.bashrc` 的
+shell 啟動）；②**dosbox-x 的 heavy-debug 除錯主控台需要一個真正的終端機**——若把
+`dosbox-x` 的 stdout/stderr 重新導向到檔案（`> log 2>&1`），除錯主控台會直接印
+`"Debugger is not available unless you start DOSBox-X from a terminal"` 並整個停用，
+`Alt+Pause` 送出後畫面看似正常但 `tmux capture-pane` 完全空白——**不要**對 `dosbox-x` 的
+啟動命令做任何 stdout 重導向，必須讓它直接繼承 tmux pane 的 pty。`FD2.SAV` md5 收尾核對
+跟開場一致，`wsl --shutdown` 已在收尾執行。
+
+**產出**：`docs/knowledge-base/35-battle-animation-rendering.md` §9.16（完整技術細節，含
+`0x37B13` 定性、逐候選判定表）。本節（續六十七）。過程 screenshot（`t2b_boot.png`~
+`t2h_final.png` 等）與第二輪 trace 分析結果存於 Windows 端 `.wsl_build/`（`trace2_*`、
+`trace_analysis2/`，`.gitignore` 排除，不進版控）。**未修改** `91-worklist.md`。

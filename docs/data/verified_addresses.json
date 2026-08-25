@@ -497,6 +497,86 @@
       "source_section": "§9.11.4/§9.12",
       "verified_date": "2026-08-25",
       "notes": "與 0x2545d 同一勘誤:舊記錄(91-worklist.md L1179 等,見 0x2545d 條目完整清單)稱『0x25970 → 0x2bce5』,call_scan(0x2bce5) 全 exe 窮舉 0 筆,從未有 byte 證據支持。這也解釋了『悠妮卡永久循環』懸案(doc35 §9.11.6):binary 裡就是硬編碼 EB FE 死迴圈,不是輸入處理漏測。"
+    },
+    {
+      "address": "0x443d0",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_000443d0(sequenceHandle) — XMIDI 音樂序列載入函式(946 bytes,0x443d0..0x44781)。內嵌除錯字串 \"Invalid XMIDI sequence\"/\"catNo timbres loaded\"。解析 IFF/RIFF 風格 chunk 標頭(byte-swap 大端序長度),掃描子 chunk 找三個位置索引,失敗印 Invalid XMIDI sequence;成功後配置 timbre(樂器音色)cache,失敗印 catNo timbres loaded。與畫面內容/montage 渲染無關,是通用音樂序列載入器。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.1",
+      "verified_date": "2026-08-25",
+      "notes": "曾被 doc35 §9.15.4(續六十六)誤判為「值得優先追的 montage 候選」(依 LOGC trace 命中數排序,169 hits 全 capture 最高)——decompile 後證實只是背景音樂持續播放的副產品,不是渲染碼。唯一確認呼叫端 0x3ae6d(FUN_0003adf5 內)。"
+    },
+    {
+      "address": "0x25977",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00025977(trackId) — 通用「設定/切換目前背景音樂軌道」API(287 bytes,0x25977..0x25a95)。比對 trackId 跟目前狀態 DAT_00051a11,不同才動作;trackId==0xffffffff 是「停止」代碼。內部呼叫 FUN_000111ba(資源載入)→FUN_0003666c→FUN_0003adf5(音軌切換 wrapper,內部呼叫 XMIDI 載入器 FUN_000443d0)→FUN_0003aeee→收尾。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.1",
+      "verified_date": "2026-08-25",
+      "notes": "xref_to 找到 29 個獨立呼叫點,分散在 0x10000/0x1a000/0x22000/0x25000-0x27000/0x2a000/0x32000 範圍——遊戲整個劇情/戰鬥/城鎮系統共用的背景音樂切換入口,不限定任何單一場景。"
+    },
+    {
+      "address": "0x42980",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00042980(voice, statusByte, subType, param4, param5) — 通用軟體 MIDI 事件派發器(1094 bytes,0x42980..0x42dc5)。對 statusByte&0xf0 做 switch,分支值正是標準 MIDI status byte 高 nibble(0x80 Note Off/0x90 Note On/0xb0 CC/0xc0 Program Change/0xe0 Pitch Bend);subType 額外對 0x6c-0x77 做細分派發(XMIDI 特有 meta/controller 子類型)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.2",
+      "verified_date": "2026-08-25",
+      "notes": "call_scan 找到 24 個內部呼叫點,全部落在 0x42b00-0x45299 範圍內部(FUN_00042dd0/FUN_00042ea0/FUN_00042f50/FUN_00043230/FUN_00044f00/FUN_000450b0 等互相遞迴),自成一體的 MIDI 事件處理系統。0x4364c/0x43270/0x4391f/0x434d1 都是這個系統的呼叫端/迴圈段/事件讀取段,共用同一組音軌狀態指標([0x543e0]/[0x543d4]/[0x543ec])。"
+    },
+    {
+      "address": "0x434d1",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00042980 MIDI 派發迴圈裡的一段:從 [EBX+0x14](音軌解析游標,跟 0x4364c 共用同一欄位)讀 3-byte MIDI 事件(status/data1/data2)組 24-bit 值寫回 [EBX+0x6c],結束 JMP 0x433a5 跳回同一個派發主迴圈。屬於 0x42980 MIDI 事件派發器的一部分,不是獨立函式。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.2",
+      "verified_date": "2026-08-25",
+      "notes": "errata:曾被 docs/knowledge-base/35-battle-animation-rendering.md §9.15.4(續六十六)誤判為「經典 RGB triple 讀 3-byte 組 24-bit 值,強烈疑似 palette/色彩處理」——擴大 disasm(max_bytes=300)後證實讀的是 MIDI 事件 tuple 不是調色盤資料,純屬讀 3 個相鄰 byte 組值的通用 pattern 撞樣式誤判,已在 §9.16.2 訂正。"
+    },
+    {
+      "address": "0x3ea8e",
+      "linear_or_file_offset": "linear",
+      "semantic": "16 通道獨立速率 rate-accumulator 軟體計時器 ISR(125 bytes,0x3ea8e..0x3ebb3)。PUSHAD+切換私有 stack(標準保護模式 ISR prologue)→第一迴圈:16 個通道各自累加 rate 值([EDI+0x52ad4]),溢位門檻([EDI+0x52b14])時遞增該通道『已到期 tick 數』([EDI+0x52b54])→OUT 0x20,AL(8259 PIC EOI)+STI→第二迴圈:對已到期通道呼叫其註冊的函式指標([EDI+0x52a54])。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.3",
+      "verified_date": "2026-08-25",
+      "notes": "全程持續運作,跟畫面內容無關,最可能驅動音樂序列播放節拍但介面本身通用(N 個可獨立設速率的 callback 通道)。唯一靜態 xref 是 DATA 型別(來自 0x3ed2e),不是 CALL——這個「只有 DATA xref」的模式後來在 §9.16.8 的 0x37b13 上再次出現,可能是同一類 function-pointer 表機制。"
+    },
+    {
+      "address": "0x36e57",
+      "linear_or_file_offset": "linear",
+      "semantic": "ANI.DAT/AFM 過場動畫 VM 調色盤 opcode 派發表(native 0x5276a,10 個 4-byte function pointer)裡的 table[1]:768-byte 字面調色盤複製(MOV EDI,[0x52766]; MOV ECX,0xC0; REP MOVSD; RET)。[0x52766] 是 docs/knowledge-base/39-ani-afm-format.md 行 87 已記錄的 VM palette 暫存指標。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.6",
+      "verified_date": "2026-08-25",
+      "notes": "與 docs/knowledge-base/39-ani-afm-format.md §4.2 opcode 1「整包字面載入(768 bytes 原樣拷貝)」語意逐字吻合——本次是該既有框架首次補上精確 native 位址,不是新子系統。"
+    },
+    {
+      "address": "0x36f24",
+      "linear_or_file_offset": "linear",
+      "semantic": "同一張 AFM VM 調色盤 opcode 表(native 0x5276a)裡的 table[6]:RLE 解壓縮迴圈(LODSB 讀 control byte,高 2 bit==11 判斷 run 模式,低 6 bit 當 run length,SHR/REP STOSW/RCL/REP STOSB 填值展開,填滿 768 bytes)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.6",
+      "verified_date": "2026-08-25",
+      "notes": "與 docs/knowledge-base/39-ani-afm-format.md §4.2 opcode 2「RLE解壓(2-mode:控制byte高2bit==11→run,否則→literal)」演算法完全一致。doc39 原始 opcode 編號是否跟這張表的 raw index(這裡是 table[6] 不是 table[2])一一對應,尚未逐格全部核對,留待下一輪。"
+    },
+    {
+      "address": "0x37b13",
+      "linear_or_file_offset": "linear",
+      "semantic": "12-byte 完整小函式(0x37b13..0x37b28):環狀緩衝區/FIFO「寫入一個 byte」原語。PUSH EBX/EBP; MOV EBP,ESP; EAX=[EBP+0xc](緩衝區物件指標); BL=[EBP+0x10](要寫入的 byte); EDX=[EAX](讀出舊寫入位置指標); INC [EAX](寫入位置前進); [EDX]=BL(寫到舊位置); INC [EAX+0x10](計數欄位遞增); RET。",
+      "confidence": "unverified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.16.8",
+      "verified_date": "2026-08-25",
+      "notes": "中信心、非結論:語意極通用(無圖形/palette/framebuffer 相關運算),緊鄰 0x36000-0x3A000 已確認音訊驅動範圍,傾向判定是同一子系統的通用 byte-stream 工具(如 MIDI 輸出佇列),但唯一 xref 是 DATA 型別(0x37b35,疑似 function-pointer 表一格),call_scan 全域 0 筆命中,無法確認實際呼叫端/用途。不排除是其他用途(鍵盤/序列埠緩衝)。"
     }
   ]
 }
