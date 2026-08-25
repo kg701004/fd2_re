@@ -706,6 +706,68 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 > 呼叫鏈這個具體 claim 需要下一輪重新核對**，`[驗]` 標記對這個子結論
 > 應視為待覆核，不要當成已定案的 live-verified 事實直接引用。完整過程
 > 見 `91-worklist.md` UI-VIS-LOAD 條目。
+>
+> **2026-08-25 續輪(`savewriter`平行 harness)：真正的酒店存檔 writer 已用
+> 同一套 `LOGC` ground-truth 追蹤方法論定位，修正本節標題與下方內文對
+> `0x30012`/`0x2ccb6`/`0x2cad7` 的引用**——這條 live 路徑是「軍營帳篷場景
+> (游標預設在酒店)→Enter進酒店→NPC對話框右下角4-icon列→Right×1選
+> index1(磁片+左箭頭)→Enter開四槽清單→對slot1按Enter」，即
+> `91-worklist.md` UI-VIS-LOAD 記載的「tavernE2」輪已 live 驗證會真的
+> 寫入`FD2.SAV`的那條路徑。武裝`LOGC`(6億指令)涵蓋從進酒店到「記錄
+> 儲存完畢！」全程，事後用`FD2.SAV`的`stat`確認`mtime`從harness
+> fresh-copy的`Birth`時間(20:54:07)前進到`Modify`21:00:08(checksum
+> 因為這次是「LOAD slot0→立即原地重存同一slot0」的idempotent write，
+> 維持`e6d9a35756cddfc2519969b10f039181`不變——這正是`98-tooling-
+> infrastructure.md`與本節上方旗標記錄過的「不能只看checksum，要核對
+> mtime」陷阱的又一次實例，mtime本身已足以證明有真實write syscall)。
+>
+> 去重後 9960 個唯一位址交叉`ghidra_batch_probe.py`：舊鏈
+> `0x30012`/`0x2ccb6`/`0x2cad7`/`0x2fd93`/`0x318ad`/其所在完整函式
+> `0x2ff01`與其內部呼叫目標`0x2d80d`**全部零命中**，與 saveE2 輪對
+> town-hub-exit路徑的既有結論一致再添一組獨立證據。**真正的 writer 是
+> `0x2968d`**(`FUN_0002968d`，範圍`0x2968d..0x2986e`)，靜態反組譯全鏈
+> 逐位元組核對：
+> - 入口先 `fopen("FD2.SAV","rb")`→`fread(buf,1,0x59cb,fh)`→一個
+>   transform helper(`0x4df28`)→`fclose`，把既有存檔內容讀進 0x59cb
+>   (=**22987 十進位，與 harness `FD2.SAV`實際檔案大小逐位元組相同**)
+>   bytes 的記憶體 buffer。
+> - 迴圈以 `FUN_00029bcb()`讀取存檔位清單的使用者輸入事件(-1=取消退出)；
+>   選定一個槽位後，把該槽 record(`buf+0x312b+slot*0xa28+0xa00..+0xa09`)
+>   的 metadata 逐 byte 寫入(`DAT_00053c03`/`DAT_00053bfb`/`DAT_00053bf3`
+>   /`DAT_00051aab`/`DAT_00053af9`/`DAT_00051e61`/`DAT_00051e62`)——這與
+>   本節先前記載的「metadata `+0..+9`」欄位語意一致，是同一套`0x59cb`
+>   envelope 格式的**另一個獨立實作**，不是同一段程式碼。
+> - 再 `fopen("FD2.SAV","wb")`→checksum(`0x4df09(buf,0x59cb)`)寫入
+>   `buf+0x59c7`(envelope 尾端 4 bytes，呼應本節「checksum」欄位的既有
+>   描述)→transform(`0x4df28`)→`fwrite(buf,1,0x59cb,fh)`→`fclose`。
+> - `fwrite`呼叫鏈完整靜態追到底：`0x377a3`→`0x3de66`→`0x46d53`→
+>   `0x46da2: MOV AH,0x40 / INT 21h`(DOS 寫檔系統呼叫，`ghidra_batch_probe`
+>   對函式起點做`bytes`批次掃描逐位元組確認`b4 40`opcode)；另外找到兩個
+>   姊妹低階寫檔stub `0x3d12a`(`FUN_0003d093`)與`0x3d470`(`FUN_0003d3e5`)，
+>   三者這輪追蹤裡都被命中，推測是同一份靜態鏈結 CRT 對`fwrite`的多個
+>   inlined/重複副本。
+> - fopen 檔名/模式字串直接 byte dump 核對：`0x50254`/`0x5025f`兩處都是
+>   `"FD2.SAV\0"`，`0x50251`是`"rb\0"`、`0x5025c`是`"wb\0"`——與上面推論的
+>   讀/寫兩段 fopen 完全吻合，不是猜測的函式簽名。
+> - 呼叫者鏈：`FUN_0002968d`(0x2968d)由`0x29300`(`FUN_00029300`)的
+>   `index==1`分支呼叫，該函式反編譯後是清楚的三分支(+一個 live 測試
+>   從未觸及的第四分支)icon dispatcher：`index0→0x29620`(狀態)、
+>   `index1→0x2968d`(存檔，本節新確認)、`index2→0x2986f`(離開)——與
+>   `91-worklist.md` tavernE2 輪 live 觀察到的「index0=狀態/index1=存檔/
+>   index2=離開/index3 未解」逐項精確對應。`0x29300`由`0x2670e`
+>   (`FUN_0002670e`，酒店 NPC 對話框/4-icon列本體)呼叫。這條完整呼叫鏈
+>   (`0x2670e→0x29300→0x2968d→...→0x46da2 INT21 AH40`)裡的每一個位址
+>   都在本輪 `LOGC` 追蹤的 9960 個唯一命中位址集合裡被直接確認執行過，
+>   不是靜態推論。
+> - **誠實限制**：這條鏈是 tavern icon1 存檔路徑專屬(**不是**取代舊
+>   `0x30012`鏈，是證明舊鏈在這條 live 路徑上未被呼叫、且找到這條路徑
+>   實際呼叫的是誰)；`0x30012`/`FUN_0002ff01`本身是否仍是「整備/軍營
+>   出口」流程真正的 writer(如果那條路徑真的會存檔)、或者它本身也是
+>   另一條從未被 live 觸發過的死碼，**仍未證實**，需要另一輪針對
+>   `0x2fd93`/`0x2cad7`整備分支單獨做 live trace 才能回答；本輪範圍
+>   只涵蓋並修正 tavern icon1 這一條。截圖：
+>   [`tavern-icon1-save-writer-logc-trace-confirmed.png`](../figures/tavern-icon1-save-writer-logc-trace-confirmed.png)。
+>   完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

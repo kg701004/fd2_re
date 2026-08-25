@@ -434,6 +434,48 @@
       追蹤到的 9000+ 個 unique 位址跑 `ghidra_batch_probe.py`
       `function_bounds`，找出「confirm YES 之後真正進入的第一個新
       function」是誰，才能建立起這條 live 路徑的真實呼叫鏈。
+  - **2026-08-25 平行 harness（`savewriter`，`:299`，同時有 sibling
+    instance `prepE2`在跑但互不干擾）續測，把上一輪「下一輪對 tavern-
+    icon1 路徑跑同一套 `LOGC` ground-truth 追蹤，應該就能直接定位真正
+    的 writer 位址」的待辦做掉，真正的存檔 writer 已定位並完整靜態驗證**：
+    LOAD 存檔位1（第二十七章）→軍營帳篷場景（游標預設在酒店）→Enter
+    進酒店→NPC對話框「有什麼事嗎？」直接顯示4-icon列（不需要額外
+    Enter推對白）→在此武裝`LOGC`（6億指令）→Right×1選index1（磁片+
+    左箭頭）→Enter開四槽清單→對slot1按Enter→畫面顯示「記錄儲存
+    完畢！」——`FD2.SAV`的`stat` mtime從harness fresh-copy的
+    `Birth`(20:54:07)前進到`Modify`(21:00:08)，確認真的有write
+    syscall（checksum因為這次是「LOAD slot0→原地立即重存同slot0」的
+    idempotent write維持不變，屬於`98-tooling-infrastructure.md`已記載
+    的「不能只看checksum」陷阱的再一次實例，不是沒寫入）。
+    去重後9960個唯一位址（`tools/dosbox_exec_trace_analyze.py`交叉
+    `ghidra_batch_probe.py`）：doc25§9.1舊鏈`0x30012`/`0x2ccb6`/
+    `0x2cad7`/`0x2fd93`/`0x318ad`（含`0x30012`所在完整函式`0x2ff01`與
+    其內部呼叫目標`0x2d80d`）**全部零命中**，與同日稍早`saveE2`輪對
+    town-hub-exit路徑的結論相互獨立印證。**真正的writer是`0x2968d`**
+    （`FUN_0002968d`）：對trace命中的177個候選function/cluster起點做
+    批次disasm，逐一找`INT`指令，鎖定3個真正的`MOV AH,0x40 / INT 21h`
+    （DOS寫檔syscall）位址（`0x3d12a`/`0x3d470`/`0x46da2`，逐位元組
+    `bytes`批次掃描確認opcode`b4 40`，排除decompile呼叫引數不可靠的
+    已知盲點）；沿呼叫鏈往上（`xref_to`）追出`0x46da2`所在函式被
+    `0x2968d`透過`0x377a3→0x3de66→0x46d53`呼叫，`0x2968d`本身
+    push `0x59cb`（=**22987十進位，與harness`FD2.SAV`實際檔案大小
+    逐位元組相同**）並對`0x50254`/`0x5025f`（byte dump確認皆為
+    `"FD2.SAV\0"`）分別以`0x50251`=`"rb\0"`、`0x5025c`=`"wb\0"`兩種
+    模式呼叫`fopen`，先讀入既有存檔到buffer、迴圈依`FUN_00029bcb()`
+    使用者輸入patch選定槽位的metadata（`buf+slot*0xa28+0xa00..+0xa09`，
+    呼應doc25既有的「metadata+0..+9」欄位語意但是獨立實作）、再開
+    `"wb"`寫回checksum(`buf+0x59c7`)+完整`0x59cb`bytes。呼叫者鏈
+    `0x2670e`（酒店NPC對話框/4-icon列本體）→`0x29300`（反編譯後是
+    清楚的三分支icon dispatcher：`index0→0x29620`狀態／`index1→
+    0x2968d`存檔／`index2→0x2986f`離開，與本輪tavernE2 live觀察的
+    icon語意逐項精確對應）→`0x2968d`，整條鏈的每個位址都在本輪9960
+    個trace命中位址裡被直接確認執行過，不是靜態推論。截圖：
+    [`tavern-icon1-save-writer-logc-trace-confirmed.png`](../figures/tavern-icon1-save-writer-logc-trace-confirmed.png)。
+    **誠實限制**：這條鏈只證實tavern icon1這一條路徑的writer，**不是**
+    否定`0x30012`/`FUN_0002ff01`的存在或作用——它是否仍是整備/軍營
+    出口流程（`0x2fd93`/`0x2cad7`分支）真正會用到的writer、或本身也是
+    死碼，本輪未觸及，需要另一輪針對整備分支單獨live trace才能回答。
+    doc25§9.1已同步更新此修正。
   - 機器既有 `~/fd2-run/FD2.SAV`（`md5sum e6d9a35756cddfc2519969b10f039181`）
     全程只被讀取（harness `launch` 對 `~/fd2-run-harness-loadE2` 的
     隔離複本），本輪結束前重新核對 md5 與 mtime 均未變，其他驗證回合
