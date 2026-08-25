@@ -271,6 +271,72 @@
     在本輪測試中始終無法可靠控制選中項（Left/Right/Up/Down/滑鼠點擊
     均未觀察到穩定的位置移動證據，且重複同一動作序列出現不一致結果），
     這個 icon row 的真實輸入 ABI 仍是未解問題，留給下一輪。
+  - **2026-08-25 平行 harness（`tavernE2`，`:199`，與同時在跑的 `saveE2`
+    互不干擾）續測，酒店 NPC 對話框 4-icon 輸入 ABI 之謎已完全解開，
+    且順帶 live 驗證出一條目前唯一已知「確實會寫入 FD2.SAV」的路徑**：
+    - **根因不是輸入不可靠，是這個 widget 完全沒有可見的選中游標渲染**。
+      逐鍵窮舉（Left/Right/Up/Down/Tab/數字鍵/F1-F10/Insert/Home/End/
+      PageUp/PageDown/KP_Left/KP_Right/KP_Up/KP_Down/滑鼠點擊，每次都
+      在按鍵前後各截一張 320×200 全幀比對）證實：**Up/Down/Tab/數字鍵/
+      滑鼠點擊對這個 icon row 完全是 no-op（AE=0，多次獨立測試零例外，
+      不是偶發丟鍵，是這幾個鍵本來就沒接這個 widget）**；**Left/Right
+      則是每按一下都確實把一個內部游標移動剛好 1 格，但游標移動本身
+      在畫面上零像素變化（4 個 icon 方框完全不會高亮/變色/加框），純黑
+      箱**，這正是上一輪判定「無法可靠控制選中項」的根本原因——上一輪
+      是在等一個從未存在過的視覺回饋，不是方向鍵真的沒反應。用「先按
+      N 下 Right，再按 Enter，觀察 Enter 實際打開哪個畫面」的間接探測法
+      逐格驗證，確認游標是 **bounded 不 wrap 的 3 格**（index 0..2，即使
+      畫面畫了 4 個 icon 方框，Right 按到第 3 下之後也還是停在 index 2，
+      同一個「要離開戰場嗎？」畫面，第 4 個 icon 方框未觀察到可達成的
+      獨立語意，維持未解）：
+      - **index0（放大鏡+對話泡）＝狀態**：直接開啟既有已 E2 關閉的
+        `NativeThreeRowWindow` 兩欄×三列 roster 總覽（與 loadE2 輪
+        `roster_char_ids` 交叉驗證過的同一個 widget）。
+      - **index1（磁片+左箭頭）＝存檔，本輪 live 寫入成功並完整驗證**：
+        Right×1+Enter 開啟一個與標題畫面 LOAD 選單同排版的四槽清單
+        （`1)第二十七章…2)第七章…3)第八章…4)第九章…`），對 slot1
+        按 Enter 後畫面顯示「**記錄儲存完畢！**」，`FD2.SAV` md5
+        由 `e6d9a35756cddfc2519969b10f039181`→`9f35a4488cc36e596561b02
+        3bbebe15d`、mtime 同步更新；`tools/fd2save.py` 解出 slot0（對應
+        清單「1)」）的 raw chapter 由原本的 `0x1a`（第二十七章）改寫成
+        `0x06`，與這次 LOAD 進場用的 slot2（`0x06`，即「第七章」）目前
+        session 的 roster_char_ids/currency（`[0,9,4,30,1,8,2,10,13]`／
+        `0x0098b811`）逐位元組相同，證實這是把**目前 session 的即時進度
+        真的寫進了選中槽位**，不是介面裝飾——[`tavern-inn-icon1-save-
+        slot-list.png`](../figures/tavern-inn-icon1-save-slot-list.png)、
+        [`tavern-inn-icon1-save-complete.png`](../figures/tavern-inn-
+        icon1-save-complete.png)。這是目前整個 91 worklist 唯一一條
+        **live 實測「按了之後 FD2.SAV 真的改變」的存檔路徑**，可以拿來
+        跟同輪 `saveE2` 用 `LOGC` 追蹤過、確認**不會**寫入的 town-hub
+        「出口」路徑對照，下一輪對這條 tavern-icon1 路徑跑同一套
+        `LOGC` ground-truth 追蹤，應該就能直接定位真正的 writer 位址，
+        不用再猜 `0x2cad7`/`0x2ccb6`/`0x30012` 是否適用。
+      - **index2（磁片+右箭頭）＝離開，會整個結束 FD2.EXE 行程、不存檔**：
+        Right×2+Enter 開啟「要離開戰場嗎？」YES/NO confirm（與 doc25
+        §9.1 記載的 FDTXT 文字相同，但這裡的語意其實是「離開遊戲」，
+        不是戰鬥相關）；選 YES 後畫面直接跳回 DOSBox-X 視窗內的
+        `C:\>` DOS 提示字元（FD2.EXE 行程整個終止），`FD2.SAV`
+        md5/mtime 全程未變——[`tavern-inn-icon2-leave-confirm.png`]
+        (../figures/tavern-inn-icon2-leave-confirm.png)、[`tavern-inn-
+        icon2-quit-to-dos.png`](../figures/tavern-inn-icon2-quit-to-dos.png)。
+      - index3（`C:>_`圖示）：如上所述，Right 游標在 index2 就
+        bounded，本輪未能觸及一個獨立於 index2 的第 4 個語意，誠實
+        列為未解（可能是純裝飾/未接線，也可能需要目前未找到的另一種
+        觸發手法）。
+      - Escape 會從子畫面退回 icon row 一層（游標位置保留，不重置）；
+        Delete 會直接整個退出對話框回到城鎮 hub 五格畫面（比 Escape
+        更深一層的取消），過程中同樣未寫入 `FD2.SAV`。
+    - **不是續五十四/續五十五記錄的 Enter/Space 選擇性掉鍵問題，是完全
+      不同、而且更確定性的現象**：續五十四/五十五的症狀是 Enter/Space
+      在戰鬥地圖移動確認時「時好時壞」，方向鍵不受影響；這裡剛好相反且
+      無一例外——Enter/Space（以及 Insert/Home/End/PageUp/PageDown 等
+      多個非方向鍵，經測試全部殊途同歸地等同「確認目前游標位置」）本輪
+      **100% 可靠**（約 15 次獨立測試零失敗），真正沒有視覺回饋的是
+      Left/Right 本身，且游標移動的邏輯生效是 100% 確定的（用後續
+      Enter 的目的地間接驗證），不是隨機丟鍵。
+    - 機器既有 `~/fd2-run/FD2.SAV` 全程只被讀取（harness `launch` 對
+      `~/fd2-run-harness-tavernE2` 隔離複本），本輪造成的 SAVE 寫入只
+      發生在這個隔離複本內，未影響機器上的既有進度或其他平行 instance。
   - **2026-08-25 平行 harness（`saveE2`，`:299`，與同時在跑的 `tavernE2`
     互不干擾）續測，用 ground-truth 指令追蹤（`tools/dosbox_exec_trace.sh`
     的 `LOGC`，見 `98-tooling-infrastructure.md`「Ground-truth 執行流程
