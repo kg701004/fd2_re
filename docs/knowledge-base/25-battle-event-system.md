@@ -692,6 +692,21 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 
 ### 9.1 存檔(save)：原版不是「隨處可存」，而是兩個固定戰間呼叫點 [驗]
 
+> **2026-08-25 live 覆核旗標**：本節「`0x2cad7` gate→`0x2ccb6`→`0x30012`」
+> 這條具體呼叫鏈是純靜態(xref)證據；`91-worklist.md` UI-VIS-LOAD
+> 2026-08-25 續輪用 `LOGC` ground-truth 指令追蹤(見 `98-tooling-
+> infrastructure.md`)重新走一次「town hub 出口→YES確認」的 live 路徑
+> (存檔位 1「第二十七章 命運的交會點」)，3 億指令涵蓋 YES confirm 到
+> 過場對白全程，**`0x2cad7`/`0x2ccb6`/`0x30012` 三個位址全部零命中**
+> (同一份追蹤裡 `TXT` 直譯器 `0x1B1F84` 有命中，排除 delta 算錯)，
+> `FD2.SAV` mtime/checksum 全程未變。這條 live 路徑顯示的文字內容
+> (FDTXT `0x201`「要進入戰場嗎？」)與本節描述一致，但底下呼叫鏈明顯
+> 不是這裡記載的這條——**「原版只能在戰間兩個固定點存檔」的大結論本身
+> 未被推翻(沒有相反證據)，但`0x2cad7`/`0x2ccb6`是這條 live 路徑實際
+> 呼叫鏈這個具體 claim 需要下一輪重新核對**，`[驗]` 標記對這個子結論
+> 應視為待覆核，不要當成已定案的 live-verified 事實直接引用。完整過程
+> 見 `91-worklist.md` UI-VIS-LOAD 條目。
+
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：
 

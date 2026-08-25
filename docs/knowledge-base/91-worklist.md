@@ -271,6 +271,75 @@
     在本輪測試中始終無法可靠控制選中項（Left/Right/Up/Down/滑鼠點擊
     均未觀察到穩定的位置移動證據，且重複同一動作序列出現不一致結果），
     這個 icon row 的真實輸入 ABI 仍是未解問題，留給下一輪。
+  - **2026-08-25 平行 harness（`saveE2`，`:299`，與同時在跑的 `tavernE2`
+    互不干擾）續測，用 ground-truth 指令追蹤（`tools/dosbox_exec_trace.sh`
+    的 `LOGC`，見 `98-tooling-infrastructure.md`「Ground-truth 執行流程
+    追蹤」節）取代純 file-polling，把上一輪「仍需下一輪對`0x2ccb6`/
+    `0x2cad7`做live斷點或Ghidra交叉確認」的待辦徹底做掉**：先用
+    `BP 0170:1B1F84`（`TXT`直譯器，296 呼叫點，doc35 §9.9 已驗證的通用
+    對白函式）等三個斷點做初步嘗試，發現**斷點『registered 但從未命中』
+    這個 doc48 §8.4 已知瑕疵這次也踩到**——即使在明顯持續有對白畫面渲染
+    的情況下，三個斷點全程零命中，判斷 BP 在本輪環境不可信，改用
+    `LOGC` 逐指令 ground-truth 追蹤（同一顆斷點失靈的函式`0x1B1F84`在
+    `LOGC`追蹤裡確實有命中，交叉證實不是 delta 算錯，是 BP 機制本身的
+    問題）。用同一存檔（LOAD→存檔位 1「第二十七章 命運的交會點」→軍營
+    icon 選單`Right×3`→「出口」→「要進入戰場嗎？」YES）重跑三次，其中
+    第三次做到最嚴謹的控制組：**先在 debugger console 記下這次 fresh
+    boot（`cp -r`複製時刻）的 `FD2.SAV` 原始 mtime 當基準，武裝
+    `LOGC`（3 億指令）後立刻按 YES，完整涵蓋「YES confirm → 這裡就是
+    遺跡了嗎過場對白」這一段**，事後逐位元組核對：
+    - `FD2.SAV` 的 mtime 與 checksum（`e6d9a35756cddfc2519969b10f039181`）
+      **全程沒有變化**，與此次 fresh copy 的原始基準完全相同——**不是
+      「內容相同所以誤判沒變」，是這次連 mtime 都乾淨比對過，物理上
+      沒有任何 write syscall 打中這個檔案**。
+    - 去重後的 3 億指令 unique `CS:EIP` 清單裡，**`0x30012`（writer）、
+      `0x2ccb6`（doc25 §9.1 認定的唯一 town-flow caller）、`0x2cad7`
+      （gate dispatcher 本身）、`0x2fd93`/`0x318ad`（另一條 caller／
+      整備入口）全部零命中**，往外各擴 0x100 bytes 鄰域也是零——這不只
+      是「writer 沒被呼叫」，是**整條 doc25 §9.1 描述的 gate dispatcher
+      `0x2cad7` 本身這次都沒有被執行到**，同一份追蹤裡`TXT`直譯器
+      （`0x1B1F84`）確實有命中，證實 delta／追蹤方法論本身無誤，問題
+      不在量測工具。
+    - 工作目錄逐檔案 mtime 稽核（`find -newermt`）確認整個 session 期間
+      唯一被寫入的檔案只有 `FD2.TMP`（遊戲固有暫存檔）與本工具自己的
+      `LOGCPU.TXT`/`trace_*.txt`——**排除「寫到別的存檔槽/別的檔名」
+      這個候選假說**，也排除「DOSBox-X 掛載的檔案系統快取寫入、沒有
+      即時 flush 到 host 磁碟」這個候選假說（不是 flush 延遲，是這次
+      CPU 追蹤本身就沒有執行到會發出寫入的程式碼）。
+    - **結論修正**：上一輪列的「可能原因」二選一（前置狀態未滿足 vs.
+      出口觸發的是另一個非`0x2cad7`分支的確認框）現在有 live ground-
+      truth 證據支持**第二種**——這次「出口」→YES 走的流程，連
+      `0x2cad7` gate dispatcher 本身的位址都沒有被 CPU 碰過，文字內容
+      雖然與 doc25 §9.1 描述的 FDTXT `0x201`「要進入戰場嗎？」一致，
+      但背後呼叫鏈明顯不是 doc25 §9.1 記載的那一條。**doc25 §9.1 標記
+      的`[驗]`需要下一輪重新檢視**——不是否定「原版只能在戰間兩個固定
+      點存檔」這個大結論（沒有相反證據），而是「`0x2cad7`/`0x2ccb6`是
+      這條 live 路徑的實際呼叫鏈」這個具體 claim 需要用 xref/資料驅動
+      方式重新找過，目前唯一可信的是「這個特定存檔／這個特定觸發序列
+      下，SAVE 這輪確實沒有被呼叫」。
+    - 過程中意外驗證一個有實用價值的方法論教訓：**比較存檔『有沒有被
+      寫入』不能只看 checksum**——如果测试用的存檔狀態本身就是先前
+      某輪存檔操作留下的（例如再次載入同一章節、同一 roster），即使
+      writer 真的被呼叫，寫出來的 bytes 也可能與磁碟上已有內容完全
+      相同（idempotent write），此時 checksum 比對會呈假陰性；必須同時
+      核對 mtime（本輪一度誤判 mtime「有變化」，後來發現是沒有記錄
+      「這次 fresh boot 的原始 copy-time mtime」當基準，屬於比較基準
+      缺失的方法論錯誤，非真的觀察到變化——修正後的第三輪补上了嚴謹
+      基準，結論才站得住），最嚴謹的做法就是本輪最終採用的
+      「CPU 指令級 ground-truth 追蹤」，直接排除「這段程式碼有沒有被
+      執行到」的疑慮，不用依賴檔案系統層的間接證據。
+    - screenshot：[`save-writer-logc-trace-no-hit-postyes-dialogue.png`](../figures/save-writer-logc-trace-no-hit-postyes-dialogue.png)
+      （YES confirm 之後正常推進到「這裡就是遺跡了嗎？」過場對白，證實
+      YES 分支確實有被正常處理、遊戲邏輯持續運作，只是這條路徑沒有
+      呼叫到 SAVE 相關的任何已知位址）。
+    - **仍待下一輪**：目前只證明「這條路徑沒有經過 doc25 §9.1 記載的
+      呼叫鏈」，還沒找到它實際經過哪條呼叫鏈（如果真的有存檔會發生在
+      更後面的整備畫面／戰鬥地圖，或者這個特定存檔狀態根本就不會觸發
+      任何存檔）。建議方向：對已經证实會執行的鄰近位址（如
+      `0x1B1F84`附近上游）做 `D SS:ESP` 讀 call stack，或直接對這次
+      追蹤到的 9000+ 個 unique 位址跑 `ghidra_batch_probe.py`
+      `function_bounds`，找出「confirm YES 之後真正進入的第一個新
+      function」是誰，才能建立起這條 live 路徑的真實呼叫鏈。
   - 機器既有 `~/fd2-run/FD2.SAV`（`md5sum e6d9a35756cddfc2519969b10f039181`）
     全程只被讀取（harness `launch` 對 `~/fd2-run-harness-loadE2` 的
     隔離複本），本輪結束前重新核對 md5 與 mtime 均未變，其他驗證回合
