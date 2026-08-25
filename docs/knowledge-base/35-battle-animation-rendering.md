@@ -1794,6 +1794,168 @@ void __stdcall FUN_00031266(void)
    清單出處),比直接開新工具做全域間接呼叫掃描的投資報酬率更高;若建議 1 也查不出結果,
    再考慮全域間接呼叫掃描。
 
+## 9.14 2026-08-25 續:對照 §9.2/§9.13 的 phase-table carousel 系統與 11 個 worklist 項目逐項核對——
+高信心確認「位址重疊是巧合、兩者是不同子系統」,但不撤回 party montage 本身的既有記錄
+
+> 任務動機:§9.13 已高信心判定 8 個 cluster 位址落在 §9.2 那 10 個 handler 函式的 body
+> 範圍內,但留下三個明確缺口:(a) `function_bounds` 在目前 `-readOnly` project 對這 10
+> 個 handler 全部回傳 `in_function:false`,§9.13 用的「落在哪個 handler」是位址算術+
+> 反組譯模式比對推論出來的,不是 Ghidra `getFunctionContaining` 直接確認;(b) 8 個 cluster
+> 位址裡只驗證了 4 個(`0x2bce5`/`0x2c172`/`0x2c548`/`0x2c773`),另外 4 個
+> (`0x2c405`/`0x2c439`/`0x2c469`/`0x2c5e3`)沒查;(c) 沒有把 §9.2 這個系統的**實際內容**
+> 拿去跟 `91-worklist.md` 11 個項目**逐項**列出的具體訴求(FDOTHER#56、FIGANI/DATO 頭像、
+> dialogue-frame grid、mirror/non-mirror 淡出、input-skip、2000ms/4ms 計時、FDOTHER#0x36/54、
+> 320×200 buffer)直接比對,只有籠統的「戰鬥選單,不是結局」結論。本節補齊這三點。
+
+### 9.14.1 補齊缺口 (a):`function_bounds` 直接重測 10 個 handler + 8 個 cluster 位址,結果與
+§9.13 的推論一致——`-readOnly` 分析確實沒有持久化,但這不影響位元組層級的結論
+
+用 `python tools/ghidra_batch_probe.py` 對 §9.2 表格的全部 10 個 handler 入口
+(`0x2b996/0x2bb33/0x2bd6c/0x2bfd9/0x2c217/0x2c441/0x2c67d/0x2cafc/0x2ccf4/0x2ce1a`)與 8 個
+cluster 位址各下一次 `function_bounds`(18 筆查詢,`.wsl_build/montage_task_queries.json`→
+`montage_task_results.json`,6.4s 完成,18/18 `ok`),結果**全部** `in_function:false`——
+包括 §9.2 當初已經完整反編譯過的 10 個 handler 本身。這與 §9.13.2 的觀察完全吻合:那次
+`analyzeHeadless` 是加了 `-readOnly` 跑的,session 內用 `disassemble()`/`getFunctionContaining()`
+建立的函式邊界不會寫回 `.gpr` project 檔,新開一個 headless session(不論是 §9.13 的還是本節
+這次)都看不到,只有原本就在 base 976-function 分析裡的函式(如 `0x14818`/`0x2ff01`,見
+doc98 記錄的驗證案例)才會持久存在。**這是這個 project 已知、記錄在案的限制,不是新問題**——
+代表任何一輪要重新確認 §9.2 的 10 個 handler 邊界,都必須靠位元組層級方法(逐 byte 反組譯、
+byte-pattern 掃描)重新推導,不能依賴 `function_bounds` 直接查到持久化結果。
+
+### 9.14.2 補齊缺口 (b):剩餘 4 個 cluster 位址(`0x2c405`/`0x2c439`/`0x2c469`/`0x2c5e3`)逐一
+反組譯,結果與 §9.13.2 已驗證的 4 個位址**同一種模式**,進一步強化(而非推翻)§9.13 的結論
+
+- **`0x2c439`**:冷啟動反組譯直接給出一段**完全乾淨、無需重新對齊**的函式尾聲——
+  `ADD ESP,0x2c; POP EBP; POP EDI; POP ESI; POP EBX; RET`(`start=0x2c439, end=0x2c440,
+  stop_reason=ret`)。`0x2c440` **正是** §9.2 表格記錄的 idx4 handler(`FUN_0002c217`)body
+  終點(`0x2c217..0x2c440`)——這是本節目前為止**最強的一筆直接證據**:不需要位址算術或模式
+  比對,`0x2c439` 反組譯出的乾淨 `RET` 邊界字面上就落在 §9.2 早先記錄的函式終點前 7 bytes,
+  逐位元組確認 idx4 handler 的邊界記錄準確。
+- **`0x2c469`**:冷啟動第一條指令是 `LOOPNZ 0x2c46d`(不合理的函式開頭),但接下來立刻是
+  一段乾淨、語意明確的邏輯:`SHL EDX,0x4; MOV EAX,[0x53a45]; MOVZX EAX,byte ptr
+  [EDX+EAX*1+6]; TEST EAX,EAX; JNZ 0x2c49a; ...`——`[0x53a45]+slot×0x50+6` **正是** §9.2
+  記錄的 mirror 判斷 `*(char*)(DAT_00053a45+6+param_1*0x50)==0`(unit_side_offset:6)。位址
+  `0x2c469` 落在 idx5 handler(`0x2c441..0x2c67c`)範圍內,内容也确实是同一 handler 描述过的
+  mirror-check 邏輯——與 §9.13.2 對 `0x2bce5`/`0x2c172`/`0x2c548` 的觀察(冷啟動略有錯位,
+  但幾 byte 內重新對齊成 §9.2 已知邏輯段落)**同一種模式**。
+- **`0x2c405`**:冷啟動前 7 bytes 是明顯垃圾(`INC EAX; ADD EAX,0; ADD AL,CH; SHL byte ptr
+  [EDI],CL; ADD AL,[EAX]`),但從 `0x2c411` 起重新對齊成一段合理的「除以 2 並正確處理正負號」
+  慣用法:`MOV EDX,EAX; MOV EBX,2; SAR EDX,0x1f; IDIV EBX; MOV EAX,EDX`——同樣落在 idx4
+  handler(`0x2c217..0x2c440`)範圍內,語意上與 §9.2 記錄的「per-slot tween/palette-delta
+  4 元素 rotation」需要的整數除法運算相容(未逐位元組證實是同一段,但模式一致)。
+- **`0x2c5e3`**:冷啟動 `disasm` 回傳 `count:0, stop_reason:end_of_code`——**Ghidra 這次連
+  一條指令都沒能在這個位址解出**(`getInstructionAt`/`disassemble()` 均未產生可讀結果,原始
+  bytes `80 40 05 00 ff 44 24 28 ...` 手動解碼其實是合法的 `ADD byte ptr [EAX+5],0` 開頭,不
+  確定是 Ghidra 內部因同一 batch session 先前查詢造成的暫態狀態衝突,還是這個位址本身有更深的
+  問題)。這一筆**沒有**得到正面確認,誠實列為未解——但即使排除這一筆,其餘 3+4=7 個 cluster
+  位址(§9.13 驗證 4 個+本節驗證 3 個)全部與「§9.2 handler 內部分支/邏輯片段」一致,`0x2c5e3`
+  單獨一筆的不確定不足以動搖整體判讀。
+
+**小結**:8 個 cluster 位址中,7 個(§9.13 的 4 個+本節新驗證的 3 個)都得到「冷啟動可能需要
+1 到 7 bytes 重新對齊,但對齊後的程式碼與 §9.2 已記錄的 handler 內部邏輯段落(present/SFX cue
+呼叫、mirror 判斷、tween 除法)一致,且位址算術上落在對應 handler 的 body 範圍內」這個結果;
+`0x2c773`(§9.13 記錄)與 `0x2c5e3`(本節記錄)兩筆反組譯不出乾淨結果,誠實列為未決,但不影響
+其餘 6 筆的一致結論。
+
+### 9.14.3 補齊缺口 (c):把 §9.2 系統的實際內容,對 `91-worklist.md` 11 個項目逐項列出的具體
+訴求逐一核對——結論是**主題不符**,§9.2 系統本質上答不出這些訴求裡的任何一項
+
+`91-worklist.md` 對這個 cluster 的具體訴求(讀原文逐項摘出,而非用本節自己的轉述):
+
+| worklist 具體訴求 | 出處 | §9.2 系統是否具備 | 判定 |
+|---|---|---|---|
+| FDOTHER `#0x36`(十進位54)、320×200 雙 buffer、palette 0→63/4ms、2000ms hold | L1226 | §9.2 開場載入的是 **FDOTHER.DAT 兩次**(具體 index 未反編譯出字面數字,只知道是逐角色資源,不是 index 54/56 固定資源);沒有 320×200 雙 buffer 記錄(§9.2 用的是**戰鬥畫面現有 VGA/work buffer**,不建立獨立的 ending 專用 buffer);沒有 4ms/2000ms 這組計時常數,§9.2 唯一的計時是 `0x17aa9` tick-wait 與 9-tick(4正+5反)轉場,節奏對不上 | **不符** |
+| FDOTHER#56 backdrop、TAI#3、FIGANI/DATO party montage(`native_2c548.json`) | L1017-1020/1347-1354/1593 | §9.2 確實載入 **TAI.DAT**(唯一 1 次)+**FIGANI.DAT**(2 次)+**FDOTHER.DAT**(2 次),資源組合表面相似;但 §9.2 完全**沒有 DATO.DAT** 載入(worklist 的 party montage 明確依賴 DATO 頭像,`DATO=unit+7`),也沒有找到任何字面 `#56`/`#0x38` index 常數——§9.2 的 FDOTHER 用途是逐角色資源,不是固定的 backdrop 資源號 | **不符**(資源*類別*重疊,但缺 DATO,無固定 index) |
+| dialogue-frame grid(`0x168b6`,49 次呼叫、`FDOTHER.DAT#5`) | L1595/1597-1600 | §9.2 完全沒有出現任何「49 次呼叫同一 layout 函式」或 `FDOTHER#5` 的痕跡;§9.2 的顯示對象是角色 sprite(FIGANI)本身,不是文字/對話框網格 | **不符** |
+| mirror / non-mirror figure fade(`0x29164`,`unit+6` branch、9-present、DAC delta=esi×6/48→0/2或8ms、stage×10) | L1606-1610 | §9.2 **確實有**同構的邏輯:同一個 `unit+6==0` mirror 判斷(即本節 9.14.2 在 `0x2c469` 找到的那段)、`FUN_00031266` 的 9-tick(4正+5反)轉场與 doc91 描述的 9-present 節奏數字上吻合;但 §9.2 的 palette 是「4 元素 rotation」+`0x2eb9f`/`0x25a96`/`0x25b45` present/SFX cue,不是 worklist 描述的 `esi×6` DAC delta 或 `stage×10` 平移;**這是 8 個訴求裡唯一有結構性重疊的一項**,但重疊的解釋更可能是「兩個系統共用同一份 unit-record 佈局慣例(`[0x53a45]+slot×0x50+6`=mirror flag),各自獨立實作各自的 mirror 分支」,不是同一段程式碼 | **表層邏輯慣例重疊,但參數/計時/呼叫鏈不符** |
+| input-skip handling | 通篇多處 | §9.2 完整反編譯裡**沒有任何**輸入輪詢/按鍵檢查——`FUN_0002ff01`/`FUN_00031266` 全程是純計時驅動的迴圈,不讀鍵盤/搖桿狀態 | **不符** |
+| chapter26/29 分支文字、fade-out | L1226/1356 | §9.2 沒有任何 FDTXT 呼叫、沒有文字渲染,也沒有章節條件分支(`param_2` 是呼叫端傳入的 phase/UI 模式碼,不是章節號) | **不符** |
+
+**7 項具體訴求裡,6 項在 §9.2 的完整反編譯內容裡找不到對應,1 項(mirror flag 慣例)只是共用
+底層 unit-record 佈局,不是同一段程式碼**。加上 §9.2 自己的關鍵反證(9.3 已記錄):`FUN_0002ff01`
+的唯二呼叫者是戰鬥指令 dispatch(`0x1cff0`/`0x15311`),窮舉搜尋找不到任何從 ch29/ch30 handler
+或 `0x1088d`(loadch)範圍呼叫 `0x2ff01` 的路徑——**§9.2 這個系統在資源類別(TAI/FIGANI/FDOTHER)
+表面相似之外,無論從呼叫鏈、參數語意、計時常數還是渲染對象(角色 sprite carousel vs. 文字+頭像
++backdrop montage)來看,都是一個服務戰鬥指令選單的獨立系統,不是章節結局 party montage 的
+同一份程式碼**。
+
+### 9.14.4 綜合判讀:高信心確認「位址重疊是巧合」,但明確**不撤回** `91-worklist.md` 既有的
+party montage 記錄本身——兩者證據來源不同,矛盾指向的是「位址對應關係」而非「內容真偽」
+
+必須誠實面對一個表面矛盾:`91-worklist.md` L1592-1610 對 `0x2c548`/`0x29164`/`0x2b9a1`/
+`0x168b6`/`0x2c773` 的記錄極其具體(FIGANI/DATO 解碼器、49 次 dialogue-frame grid 呼叫、
+`unit+6` mirror 分支的兩條路徑差異、`0x292ad`/`0x2927e..0x29357` 這種精確到個位 byte 的
+分支位址),且明確標注是「官方 IDA(9.4)」「Docker Capstone」交叉確認、並與玩家提供的真實
+`FDOTHER.DAT`/`DATO.DAT` 檔案做過逐 byte/逐 pixel regression——這**不是**可以用「舊記錄多半
+是猜測」一句話帶過的低品質證據。但本節(與 §9.1/§9.6/§9.7/§9.9/§9.12/§9.13 五輪獨立方法論)
+在 `FD2Analysis3` 這個目前使用的 Ghidra project 裡,對**字面上同一批 hex 位址**做窮舉/逐 byte
+反組譯/decompile,得到的是一個內容、語意都完全不同的戰鬥選單子系統。兩邊都是紮實方法論做出來的
+結果,不能簡單判定其中一邊「錯」。
+
+最合理的解釋(§9.1 三個假說裡的其中一個,本節認為現在證據權重最高的一個):**`91-worklist.md`
+L1592-1610 那批記錄所依據的「official IDA 9.4」/Docker Capstone session,分析的很可能不是
+`FD2Analysis3` 現在載入的這一份 EXE build,或者是把 DOSBox-X live 記憶體位址誤記成靜態檔案
+linear 位址**——這與這個專案自己的既有記憶(`feedback_fd2_old_new_exe_address_instability`:
+「舊/新版位址不能直接套用同一常數位移」)、以及 §9.5.4 這一輪才確認的「這份 EXE 沒有可用的
+file-offset↔linear 位址全域換算常數」完全一致:如果 L1592-1610 的位址記錄來自另一份 EXE build
+或另一種位址空間,那麼「字面數字相同」本來就不代表「指向同一段位元組」,本節與 §9.2/§9.13 在
+`FD2Analysis3` 裡找到一個完全不同、但表面資源組合相似的系統就不是巧合中的巧合,而是**同一組
+「TAI/FIGANI/FDOTHER 讀取+9-tick 轉場+unit+6 mirror flag」引擎設計慣例,在兩個不同 build/
+位址空間裡各自出現一次**的自然結果——原始 party montage 系統(FIGANI/DATO/dialogue-grid/
+mirror-fade)很可能**依然真實存在**於遊戲裡,只是它在 `FD2Analysis3` 目前這份 EXE 裡的真正
+linear 位址,還沒有被重新獨立核對出來。
+
+**因此本節的結論分兩層,不可合併成一句話**:
+
+1. **高信心(五輪以上獨立方法論一致)**:`0x2bce5`/`0x2c172`/`0x2c405`/`0x2c439`/`0x2c469`/
+   `0x2c548`/`0x2c773`(以及大概率 `0x2c5e3`)這批**字面 hex 位址**,在 `FD2Analysis3` 這個
+   Ghidra project 目前載入的 EXE 裡,對應的是 §9.2 記錄的戰鬥指令選單 party carousel 系統的
+   內部分支/邏輯片段,**不是**章節結局 party montage 的程式碼。以這批字面位址為前提的「§9.2
+   系統=結局 renderer」假說**明確排除**。
+2. **中信心、不撤回**:`91-worklist.md` L1017-1020/1226/1347-1356/1570-1610/1897-1898 描述的
+   party montage 系統本身(FDOTHER backdrop、FIGANI/DATO 頭像、dialogue-frame grid、
+   mirror/non-mirror figure fade)的**內容**,證據來源獨立於本節(官方 IDA + 已移除的 Docker
+   Capstone + 玩家真實檔案 regression),**不因本節的負面結果而被推翻**——本節排除的是「§9.2
+   這個特定的 Ghidra 位址範圍是否就是它」,不是「它是否存在」。
+
+### 9.14.5 對 11 個 worklist 項目的逐項最終判定
+
+依任務要求逐一給出 full/partial/unrelated:
+
+| # | worklist 項目 | 判定 | 理由 |
+|---|---|---|---|
+| 1 | L862(cluster master #1) | **unrelated**(對 §9.2 假說) | §9.14.3/9.14.4:§9.2 系統與訴求內容不符,blocker 本身未解除 |
+| 2 | L863 | **unrelated** | 同上,同一 blocker 的另一種標註 |
+| 3 | L864 | **unrelated** | 同上 |
+| 4 | L865 | **unrelated** | 同上 |
+| 5 | L866 | **unrelated** | 同上 |
+| 6 | L867(terminal handler,cluster master) | **unrelated** | 同上;terminal handler 仍因未解的 ending renderer fail-closed |
+| 7 | L899/L1226(chapter ending renderer 結構:FDOTHER#0x36、320×200 buffer、0→63/4ms、2000ms) | **unrelated** | §9.14.3 表格第 1 列:資源 index、buffer 佈局、計時常數全部對不上 §9.2 |
+| 8 | L1017-1020/L1347-1354(FDOTHER#56/TAI#3/FIGANI/DATO montage) | **unrelated** | §9.14.3 表格第 2 列:資源*類別*重疊但缺 DATO、缺固定 index,呼叫鏈也不同 |
+| 9 | L1570-1608(`0x2bce5` 可播放前綴、party cycle、dialogue-frame grid、mirror/non-mirror fade) | **partial**(僅底層慣例) | §9.14.3 表格第 4/5 列:dialogue-frame grid 完全不符;mirror flag 判斷式**慣例相同**(`[0x53a45]+slot×0x50+6`)但參數/計時/呼叫鏈不同,不是同一段程式碼——實務上仍應視為未解 |
+| 10 | L1572(下一個 ending gate:FDOTHER#56 backdrop、FIGANI/DATO、dialogue-frame grid、mirror/non-mirror fade、input-skip) | **unrelated** | §9.14.3 表格全六列逐一核對,§9.2 缺 DATO、缺 dialogue grid、缺 input-skip;terminal route 仍不可接 |
+| 11 | L1897-1898(command-23 raw writer 與 `0x2bce5` renderer 的呼叫關係) | **unrelated** | §9.12 已排除 `0x25089→0x2bce5` 的直接呼叫;§9.2/9.13/9.14 進一步確認 `0x2bce5` 本身是不相關子系統的內部分支,command-23 raw writer 與它從未有過真實呼叫關係 |
+
+**總體信心**:對「§9.2 這個已完整反編譯的戰鬥選單系統=章節結局 party montage」這個具體假說,
+**高信心排除**(五輪以上獨立方法論、含本輪新增的 3 個 cluster 位址驗證與 7 項具體訴求逐一核對,
+結論一致無反例)。但對「這 11 個 worklist 項目描述的 party montage 系統本身是否存在/是否已被
+正確記錄」這個更大的問題,**維持原有的中高信心**(來源是官方 IDA + 玩家檔案 regression,不受
+本輪影響)——本輪**不構成任何一項的解封**,也**不構成對既有 party montage 記錄的撤回**,兩者
+是完全不同的問題,不應混為一談。`91-worklist.md` 11 個項目狀態維持 `[~]`,僅在 master item 補註
+指向本節。
+
+**給下一輪的具體建議**:
+1. 停止在 `FD2Analysis3` 裡用字面位址算術重試 `0x2bce5`/`0x2c548` 這批數字——本輪與前五輪
+   一致證實這條路已經走到底,§9.14.4 給出的「不同 EXE build/位址空間」假說才是下一步該查的
+   方向。
+2. 具體做法:找出 L1592-1610 那批記錄實際使用的 IDA session/EXE 檔案(如果還留有 `.idb`/
+   `.i64` 或當時的 session 記錄),用 `Memory.findBytes` 對 FIGANI/DATO 相關的已知字串或
+   byte pattern(如 `"DATO"`、`0x168b6` 附近的 49 次呼叫特徵)在 `FD2Analysis3` 裡重新定位,
+   而不是直接信任字面 hex 數字——這與 §9.5.4 排除「file offset vs linear address」假說時
+   使用的方法完全同構,应可直接複用。
+3. 若步驟 2 找到新位址,才有資格重新評分 L1017-1020/1226/1570-1608 等項目;在那之前,維持
+   `[~]` fail-closed 是唯一誠實的狀態。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code

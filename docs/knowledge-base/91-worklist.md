@@ -1179,7 +1179,20 @@
 - [~] **ch29 post terminal handler**：`0x25870 → 0x1088d` 不是純文字載入：它會載 FDTXT/FDFIELD、重建 unit buffer、從 persistent roster 複製 records、寫 map29 deployment 並 spawn groups。現已 lower 為完整 editable `loadch`（chapter30/map29/roster70/ch30 story+scenario），而非文字-only operation；`0x112a5` 已證實 persistent records 依 JOIN 呼叫 append，因此正常遊戲 slot order 可用 `partyJoinOrder` 表示。layout、動態 pan與`0x24618` indexed adapter已完成；`0x2bce5` renderer仍未完成，故整支handler維持fail-closed。`0x25970 → 0x31529` 返回後是 self-loop，這是 internal ch29／map29 最終戰的終局路徑，**不是** map28 戰後可接 `preparation_ch30` 的 handler。〔**2026-08-25 勘誤**：原文此處字面寫的是「`0x25970 → 0x2bce5`」，已用兩輪獨立 `ghidra_batch_probe.py`（`doc35`§9.11/§9.12）逐 byte 核對出 `0x25970` 的 CALL 指令目標其實是 `0x31529`（`call_scan(0x2bce5)` 全 exe 窮舉 0 筆，`0x2bce5` 從未被任何位置直接 CALL 過），self-loop 本身的觀察不變。詳見 `known_address_errata.json`。〕現行 final battle→generic ending 暫略過它；完成後以 terminal node 接入。——本輪(2026-08-20,`doc35`§9,
   此為cluster master item)誠實負面結論:窮盡三種獨立靜態方法均證實`0x2bce5`等位址不是有效指令邊界，
   blocker未解除；意外發現的`FUN_0002ff01`戰鬥選單party carousel子系統已排除是ending renderer，另留給
-  「native command presentation」相關項目參考。
+  「native command presentation」相關項目參考。〔**2026-08-25(`doc35`§9.14)逐項核對收尾**：對
+  §9.2/§9.13的10個handler重測`function_bounds`(全數`in_function:false`，`-readOnly`分析未持久化，
+  已知限制)；補測剩餘4個cluster位址(`0x2c405/0x2c439/0x2c469/0x2c5e3`)，其中`0x2c439`給出乾淨
+  `RET`邊界、字面對上idx4 handler已記錄的終點`0x2c440`，`0x2c469`重新對齊後正是idx5 handler的
+  `unit+6`mirror判斷式，`0x2c405`同樣重新對齊成合理除法慣用法，僅`0x2c5e3`反組譯不出結果；再把
+  §9.2系統內容對11個項目逐項列出的具體訴求(FDOTHER#0x36/54、320×200 buffer、0→63/4ms、2000ms、
+  FDOTHER#56/DATO、dialogue-frame grid 49次呼叫、input-skip)逐一比對，7項裡6項完全不符、僅
+  mirror-flag判斷式`[0x53a45]+slot×0x50+6`慣例相同(不同段程式碼)。**高信心確認§9.2系統=章節結局
+  montage這個假說可排除**，但**明確不撤回**`91-worklist.md`既有party montage記錄本身(來源獨立於
+  §9.2/Ghidra，是官方IDA+玩家檔案regression)——最可能的解釋是L1592-1610那批記錄依據的IDA/Capstone
+  session分析的是不同EXE build或誤記live記憶體位址為靜態linear位址(呼應
+  `feedback_fd2_old_new_exe_address_instability`與本文件§9.5.4的既有發現)，不是內容本身造假。詳見
+  `doc35`§9.14，含11項逐一unrelated/partial判定與下一輪建議(用byte-pattern重新定位而非信任字面
+  hex數字)。〕
 - [x] **ch29 post layout data**：`0x257b4 → 0x233c6` 的 20 slots X/Y/pose 與 camera `(16,18)` 已存入 editable binding，並有 compiler regression；`0x112a5` 已補證 persistent ordinal=JOIN chronology。整支終局 handler 尚未接 campaign（ending renderer仍fail-closed），不表示終局已可播放。
 - [x] **ch29 post final pan**：`0x25937 → 0x135dd(11,12)` 已依 X-first/Y-second native ABI lower 為 tile-step `(264,288)`，compiler regression 通過；終局`0x24618`已接，仍待ending renderer。
 - [x] **0x24618 indexed transition runtime closure**：editable schema與compiler保存tile/radial-radius、9-pass LUT `9..1`、5ms/500ms/4ms schedule及32-step `0x11df2` DAC ramp。Docker重讀證實`0x11df2`每次從immutable `[0x53a65]`取RGB再加delta／upper-clamp63，非對current DAC累積。runtime現在all-or-nothing preflight原始field、tile-aligned camera、actor provenance、selector cache、FDOTHER#3 LUT與FDOTHER#0 768-byte baseline DAC；`ComposeNativeTransitionFrame`逐pass執行terrain→first LUT→unit/foreground→second LUT→rect LUT→312×192 present。每個pass與baseline-derived DAC step皆需真實Draw acknowledgement，500ms tail固定30 ticks；拒絕時不改既有work/VGA。60Hz host無法重現5/4ms每次寫入的原始wall-clock，故只宣稱完整狀態／順序，不宣稱DOS timing parity。ch29 terminal仍由後續`0x2bce5` gate阻擋。
@@ -1569,7 +1582,7 @@
 
 - [x] **0x2bce5 可播放前綴（仍 fail-closed）**：`internal/ending.Player` 現以毫秒 clock 依原序執行 frame0/copy/hold、ANI#2、baseline-derived ramp、兩段native text、frame12..108、40/200-pass composite，再銜接`0x2c405`的500-pass scroll。玩家 `FDOTHER/FDTXT/ANI` integration regression精確停在`0x2c548` montage gate；不再沿用「只到第一個text、text/composite一律blocked」的舊描述，也絕不改用generic ending。
 - [x] **獨立畫面 oracle**：`FD2_ENDING_PREFIX=1` 會讀玩家自備 DAT，將 indexed VGA DAC 轉為 320×200、2× 顯示於 Ebiten；它不接 campaign，故無法假裝原版終局已完成。可用 `FD2_FDOTHER=/path/FDOTHER.DAT`、`FD2_FDTXT=/path/FDTXT.DAT`、`FD2_ANI=/path/ANI.DAT` 指定素材（FDTXT預設同FDOTHER目錄），並沿用 `FD2_SHOT` 截圖。
-- [ ] **下一個 ending gate**：依`native_2c548.json`完成party cycle的FDOTHER#56 backdrop、FIGANI/DATO、dialogue-frame grid、mirror/non-mirror figure fade與輸入skip的dedicated indexed adapter；在此之前不接campaign terminal route。
+- [ ] **下一個 ending gate**：依`native_2c548.json`完成party cycle的FDOTHER#56 backdrop、FIGANI/DATO、dialogue-frame grid、mirror/non-mirror figure fade與輸入skip的dedicated indexed adapter；在此之前不接campaign terminal route。〔2026-08-25(`doc35`§9.14)：`0x2c548`這個字面位址在`FD2Analysis3`裡逐項核對確認是§9.2戰鬥選單carousel系統的內部分支，不具備這裡列的FDOTHER#56/DATO/dialogue-frame grid/input-skip中任一項；`native_2c548.json`描述的內容本身不撤回(來源獨立)，但需要重新在`FD2Analysis3`裡用byte-pattern定位真正位址，不能沿用`0x2c548`這個字面數字。〕
 
 ### 2026-07-20 native ending dialogue bridge
 
