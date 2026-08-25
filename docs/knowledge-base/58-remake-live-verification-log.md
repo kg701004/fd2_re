@@ -6988,3 +6988,31 @@ doc58第2698行起只有一句「移到空地按Enter叫出系統選單」，本
 ### 9. 產出
 
 本文件本節（續六十四）。過程截圖（`title_check.png`、`b1~b5_*.png`、`v2_*.png`、`vm_*.png`、`adv2~4_*.png`、`rk1~7.png`、`livecheck1~3.png`、`free1~2.png`、`test{down,down2,right,up,left,space}.png`、`mashdown.png`等約90張）與Ghidra批次查詢結果（`montage_queries1~4.json`/`montage_results1~4.json`）留存於Windows端`.wsl_build/`，過程debug產物，非repo追蹤內容。
+
+## 續六十五：純文件訂正（不涉及新 live 驗證）——續三十二～續六十四整條 ch27 機甲隊長 live 驗證任務的核心前提「`0x2545d call 0x2bce5`」經逐 byte 核對證實從一開始就是位址誤植，真正的呼叫目標是 `0x31529`（2026-08-25）
+
+> **這是一則追加訂正說明，不是新的 live 驗證任務，也不改寫上面續三十二～續六十四的原始記錄**（依專案慣例，歷史記錄保留原樣，只在此處補充事後訂正）。
+
+**背景**：`docs/knowledge-base/35-battle-animation-rendering.md` §9.11（2026-08-25 稍早）用手動 instruction-boundary 回溯 + Capstone 離線反組譯，從已知函式邊界逐層 `call_scan` 往上追出結局 montage cluster 附近一段真正的角色卡 renderer 鏈（`0x31529`→`0x319d3`→`0x31c49`→`0x320a1`），並在過程中發現 `call_scan(0x31529)` 全 exe 窮舉恰好命中 **2** 筆：`0x2545d` 與 `0x25970`——這兩個位址正是 `91-worklist.md` L1179/L1898 與本文件續三十二起反覆引用的「`0x2545d`/`0x25970 → 0x2bce5` 壞結局」claim 裡的呼叫端。§9.11.8 誠實記錄了這個字面數字落差（`0x2bce5` vs `0x31529`），但沒有進一步查證。
+
+本輪（`doc35`§9.12）接手這個落差，用**第二輪、完全獨立**的 `tools/ghidra_batch_probe.py` 呼叫（`disasm`/`bytes`/`call_scan`/`xref_to`）覆核：
+
+- `0x2545d` 原始 bytes `e8 c7 c0 00 00`（disp32=`0xc0c7`）→ `0x2545d+5+0xc0c7 = 0x31529`。
+- `0x25970` 原始 bytes `e8 b4 bb 00 00`（disp32=`0xbbb4`）→ `0x25970+5+0xbbb4 = 0x31529`。
+- 两处返回位址後緊接 `EB FE` 無條件自我死迴圈（self-loop 本身的觀察與舊記錄一致，只有呼叫目標數字不同）。
+- `call_scan(0x2bce5)` 對 `.object1`/`.object2`/`.object3`/`.image` 全區段 `E8` opcode 逐 byte 掃描：**0 筆命中**——`0x2bce5` 在整個 binary 裡從未被任何位置以直接位址 `CALL` 過。
+
+**結論**：`0x2545d call 0x2bce5` / `0x25970 call 0x2bce5` 這條呼叫邊**從一開始就沒有 byte 證據支持**，是本專案已知的「位址標籤誤植」錯誤類型（同 `known_address_errata.json` 已收錄的 `0x2a6bd`/`0x276ec` 等案例），最早出處是 `docs/knowledge-base/50-cutscene-script-system-design.md` §3.9（2026-07-16），早於本專案後期才建立的「每個位址 claim 都要有 disp32 byte 級證據」慣例。真正的呼叫目標是 `0x31529`（`doc35`§9.11 定位的角色卡 renderer orchestrator，本身與 `0x2bce5` 是兩個不同的函式）。
+
+**這對本文件續三十二～續六十四的意義**：這 10+ 輪任務的核心捷徑假說——「ch27 無天空之鑰壞結局會直接呼叫 `0x2545d call 0x2bce5`，短路抵達終局 montage renderer，不需要真的打到 ch29/30」——其「短路路徑存在」與「self-loop 終點」兩部分觀察不受影響，但**呼叫目標本身從一開始就引用錯了地址**。這完整、事後解釋了：
+
+1. **續三十六（2026-08-22）的早期警訊**：當時用 delta 換算 `0x2545d` 的 live 位址後，dump 出來「不是一個乾淨的 CALL 指令邊界」，附近找到的兩個真正 CALL 指令目標「都跟 `0x2bce5` 對不上」——續三十六當時誠實記成「未解決」，現在確認這正是因為比對基準（`0x2bce5`）本身就錯了，不是搜尋範圍或方法有問題。
+2. **續五十六～續六十四在 `0x2545d`/`0x25970` 附近對 `0x2bce5` 下的斷點連續 10+ 輪、跨乾淨重開機、跨不同進場路徑（戰後真實 montage／戰前幻象）全部 0 命中**——這是必然結果：這些路徑最終走到的都是 `0x2545d`/`0x25970` 這兩個 self-loop 終點，它們的 CALL 目標本來就是 `0x31529`，`0x2bce5` 在這條呼叫路徑上physically不可能被執行到。不是 live 驗證方法有誤，也不是運氣不好。
+
+**重要邊界（避免誤讀成「這些輪次的其他發現也作廢」）**：
+
+- 續六十二（2026-08-24）用獨立的「全滅47格+End Turn」捷徑真正打贏 ch27、深入觀察到完整結局 montage（CG過場、詩句捲動、萊汀/悠妮角色回顧卡）——這是本專案首次現場觀察到的真實內容，價值不受本次訂正影響。續六十二對 `0x2bce5`/`0x2c548` 下的斷點同樣 0 命中，這與本則訂正完全吻合、不是新矛盾；但這也意味著續六十二實際看到的角色卡內容很可能走的是另一條呼叫鏈（可能與 `doc35`§9.11.2 找到的 `0x31c49` 角色卡 renderer、或戰後跳表 `table_post[30]`＝ch30 真結局有關）——**這只是留給下一輪查證的線索，本則訂正未驗證這個猜想，不宣稱已定案**。
+- `0x2bce5` 本身作為結局 montage renderer 的既有反組譯成果（FDOTHER #054 frame decoder、palette timing、`91-worklist.md` #1226/#1354/#1570 等）完全不受影響，也沒有被推翻——推翻的**只是**「`0x2545d`/`0x25970` 直接呼叫它」這一條特定的呼叫邊。`0x2bce5` 若真的會被觸發，仍是本專案尚未解開的問題（`doc35`§9.11.8 記錄一個未驗證的間接呼叫線索），與本則訂正無關。
+- 續四十六～續四十九、續五十七～六十一等輪次記錄的環境/操作/UI 發現（`dosbox_harness.sh`、SMV teleport、隊長座標定位、auto-target-lock bug、move-confirm Enter bug 等）全部與呼叫目標位址無關，完全不受本次訂正影響。
+
+**已完成的訂正動作**：`known_address_errata.json` 新增條目；`91-worklist.md` L1179/L1898、`39-ani-afm-format.md` L253、`50-cutscene-script-system-design.md` L655、`SESSION-HANDOFF-2026-07-06.md` L221/L443/L452 均已原地加註（保留原文，未刪改歷史記錄）；`verified_addresses.json` 新增 `0x31529`/`0x2545d`/`0x25970` 三筆條目。完整技術細節見 `docs/knowledge-base/35-battle-animation-rendering.md` §9.12。

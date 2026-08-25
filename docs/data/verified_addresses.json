@@ -467,6 +467,36 @@
       "source_section": "module header",
       "verified_date": "2026-08-20",
       "notes": "2026-08-20 由舊版常數 0x53E00 重新定位到新版基準,見 known_address_errata.json。全部 106 筆解析乾淨且與既有 map32.json 逐 byte 相符,交叉驗證。"
+    },
+    {
+      "address": "0x31529",
+      "linear_or_file_offset": "linear",
+      "semantic": "換場淡出/擦除+角色卡序列 orchestrator(暫稱 G)。Prologue `PUSH 0x80; CALL 0x3702f`(配置 128-byte 緩衝區)→`PUSH EBX,ESI,EDI,EBP; SUB ESP,0x54`。內部依全域 `[0x53c03]`(目前章節)是否等於 0x1a(26)分支選圖示資源 id,呼叫 `0x319d3`(落在同一函式內,其函式再 CALL `0x31c49` 角色卡 renderer 本體,內含連續 5 次 `CALL 0x15f84`=TXT 的 `0x320a1` 序列)。函式邊界:0x31529..0x31c48(POP EDI;POP ESI;RET)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.11.3/§9.12",
+      "verified_date": "2026-08-25",
+      "notes": "call_scan(0x31529) 全 exe(.object1/2/3/.image,E8 opcode 逐 byte 掃描)窮舉恰 2 筆:0x2545d、0x25970,與 Ghidra 自身 xref_to(0x31529) 結果一致(該區域少見的 xref_to 未失靈案例)。呼叫端皆在 CALL 返回後緊接 `EB FE` 無條件自我死迴圈(見 0x2545d/0x25970 條目)。§9.12 用第二輪獨立 ghidra_batch_probe.py 呼叫覆核 §9.11 的 Capstone 手算結果,逐 byte 一致。"
+    },
+    {
+      "address": "0x2545d",
+      "linear_or_file_offset": "linear",
+      "semantic": "戰後跳表 `0x51de9[26]`(table_post,ch26 戰後 handler,起點 0x250cc)函式體內的一個 CALL 指令。原始 bytes `e8 c7 c0 00 00`,disp32=0xc0c7,`0x2545d+5+0xc0c7=0x31529`——即 CALL 0x31529(見該條目),回傳後緊接 `0x25462: EB FE` 無條件自我死迴圈,下一 handler(idx27 trampoline)起點為 0x25464。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.11.4/§9.12",
+      "verified_date": "2026-08-25",
+      "notes": "重要勘誤:91-worklist.md(L1179/L1898)、docs/knowledge-base/39-ani-afm-format.md(L253)、docs/knowledge-base/50-cutscene-script-system-design.md(L655)、docs/knowledge-base/SESSION-HANDOFF-2026-07-06.md(L221/443/452)舊記錄皆稱此處『CALL 0x2bce5』——call_scan(0x2bce5) 全 exe 窮舉 0 筆,0x2bce5 從未在任何位置被直接 CALL 過,舊 claim 從未有 byte 證據支持,屬同 known_address_errata.json 已收錄的錯誤類型(位址標籤誤植,非位址系統性平移)。詳見 doc35 §9.12 與 known_address_errata.json 新條目。"
+    },
+    {
+      "address": "0x25970",
+      "linear_or_file_offset": "linear",
+      "semantic": "戰後跳表 `0x51de9[29]`(table_post,ch29 戰後 handler=全遊戲最後一戰,起點 0x25757)函式體內的一個 CALL 指令。原始 bytes `e8 b4 bb 00 00`,disp32=0xbbb4,`0x25970+5+0xbbb4=0x31529`——即 CALL 0x31529(見該條目),回傳後緊接 `0x25975: EB FE` 無條件自我死迴圈,下一獨立函式為 0x25977(play_bgm,doc12 §15 已證實)。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
+      "source_section": "§9.11.4/§9.12",
+      "verified_date": "2026-08-25",
+      "notes": "與 0x2545d 同一勘誤:舊記錄(91-worklist.md L1179 等,見 0x2545d 條目完整清單)稱『0x25970 → 0x2bce5』,call_scan(0x2bce5) 全 exe 窮舉 0 筆,從未有 byte 證據支持。這也解釋了『悠妮卡永久循環』懸案(doc35 §9.11.6):binary 裡就是硬編碼 EB FE 死迴圈,不是輸入處理漏測。"
     }
   ]
 }

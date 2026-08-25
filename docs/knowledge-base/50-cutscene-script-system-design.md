@@ -652,7 +652,7 @@ FDTXT_000 `0x201` 詢問「要進入戰場嗎？」，然後進 `0x318ad` 出戰
 `battle_ch27 → inventory_gate_ch27_sky_key`。`0x25186 call 0x24b14(item 0x64)` 的完整 body
 只掃 runtime unit records slots 0..15，不檢查 camp／active；找到鑰匙才走
 `story_ch27_post_sky_key_success` 的 `sync_party → set_chapter(27)`，再停在 `preparation_ch28`；
-回傳 `-1` 則走獨立 `ending_ch27_no_sky_key`，對應 `0x2545d call 0x2bce5` 壞結局。
+回傳 `-1` 則走獨立 `ending_ch27_no_sky_key`，對應 `0x2545d call 0x2bce5` 壞結局。〔**2026-08-25 勘誤**：`0x2545d` 的 CALL 目標逐 byte 核對（`doc35`§9.11/§9.12）其實是 `0x31529`，不是 `0x2bce5`（`call_scan(0x2bce5)` 全 exe 窮舉 0 筆）——回傳後緊接 `EB FE` self-loop 的結論不變，只有壞結局呼叫的具體 renderer 位址需訂正。本行是這個誤植最早的出處（2026-07-16），後續被 doc39/`SESSION-HANDOFF-2026-07-06.md`/`91-worklist.md` 輾轉引用，並成為 `doc58` 續三十二~續六十四 ch27 live 驗證任務的前提，詳見 `known_address_errata.json`。〕
 runtime 在沒有 active battle array 時另查 persistent roster，是為 node-boundary save/load 做的 remake
 projection，不冒充 `0x24b14` 的 byte-exact 行為。Load 會拒絕缺 `item_id` 或缺任一 arm 的 gate；
 runtime／campaign tests 同時固定 slots 0..15、present/missing、成功 sync、save round-trip 與第28章整備邊界。
