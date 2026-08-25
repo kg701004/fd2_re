@@ -468,3 +468,28 @@ default server 完全分開,不只是換 session 名字)、自己的工作目錄
 完整用法、已驗證的並行上限(2-3 顆)、建置過程中踩到的坑(含一個真的 bug:Xvfb 的顯示器參數
 只能是裸 `:N`,不能是 `127.0.0.1:N`,那個形式只用在給 client 端的 `DISPLAY` 環境變數)記錄在
 `docs/knowledge-base/98-tooling-infrastructure.md`,不在此重複。
+
+## 10. 內建執行流程追蹤指令(`LOG`/`LOGC`,2026-08-25)——`tools/dosbox_exec_trace.sh`
+
+除了 §4.2 表列的斷點/dump 指令,這個專案用的 heavy-debug build(`--enable-debug=heavy`,見 §2)
+**內建**了一組逐指令執行追蹤指令:`LOG`/`LOGS`/`LOGL`/`LOGC <hex count>`(輸出到 debugger
+工作目錄的 `LOGCPU.TXT`)、`ADDLOG`、`HEAVYLOG`——`strings`(對這台專案 WSL2-native 建置的
+二進位)與 `debug.cpp` 原始碼(`~/fd2-dosbox-build/dosbox-x/src/debug/debug.cpp`,同一顆
+§8 沿用至今的建置)都已 2026-08-25 直接核對確認存在,不是猜測。`LOGC` 只印 `CS:EIP`(最輕量,
+無暫存器/flag),是位址獵尋任務(如 doc35 §9 的 party montage renderer 獵尋)的正確選擇——
+不需要像原本規劃過的備案那樣自己刻一支腳本化單步+EIP 擷取工具,這個功能 dosbox-x 本來就有。
+
+已驗證(不是紙上談兵):武裝 `LOGC` 之後遊戲畫面持續渲染、持續接受 `xdotool` 按鍵——不是
+會凍結整個模擬器的阻塞操作,可以邊記錄邊照常操作遊戲;吞吐量約每秒數百萬到近千萬指令(與
+`cycles=5000` 這個模擬速度設定是兩回事,不要混為一談,見下方 doc98 連結裡的完整說明);
+600,000,000 指令的一次追蹤,`awk` 單趟去重後只剩 12,297 筆唯一 `CS:EIP`(主程式碼段
+`CS=0170` 佔 8,727 筆),批次比對 Ghidra 的 `function_bounds` 只要 6.6 秒。
+
+完整用法、內部行為的 `debug.cpp` 依據、吞吐量實測數字、一個文件比對假陽性的教訓(位址字串比對
+沒做邊界檢查會被 hash/URL 之類的長字串子字串誤判)、已知限制,見
+`docs/knowledge-base/98-tooling-infrastructure.md`「Ground-truth 執行流程追蹤」一節,不在此
+重複。封裝好的工具是 `tools/dosbox_exec_trace.sh`(WSL 端武裝/收集/去重)+
+`tools/dosbox_exec_trace_analyze.py`(Windows 端換算 native 位址、批次比對 Ghidra、分類
+已知/已分析未記錄/完全未分析三類)。首次實戰結果(ch27 戰前「轉送站幻象」montage 完整執行
+流程捕捉)見 `docs/knowledge-base/58-remake-live-verification-log.md` 續六十六與
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.15。

@@ -232,3 +232,116 @@ dosbox-x 的 cycles 模擬對單一 instance 是 CPU-bound 的,這台 VM 實際�
 `~/fd2-dosbox-build/dosbox-x/src/dosbox-x`,與 doc58 續二十一起 WSL2-native 建置沿用的
 同一顆二進位檔)、`FD2_HARNESS_SHOT_DIR`(screenshot 輸出目錄,預設
 `<repo>/.wsl_build/harness`,已在 `.gitignore` 的 `.wsl_build/` 規則下,不會誤入版控)。
+
+## Ground-truth 執行流程追蹤(`tools/dosbox_exec_trace.sh` + `tools/dosbox_exec_trace_analyze.py`,2026-08-25)
+
+**問題**:doc35 §9 的 party montage renderer 獵尋(§9.1-§9.14,15+ 輪)一直是「猜一個候選位址→
+驗證→失敗」的模式——每個候選都靠人工推理(位址算術、decompile 偽代碼、live 斷點取樣)挑出來,
+猜錯了就要重新猜。這個方法論本身有上限:Ghidra 的 base 分析在關鍵區域(§9.10-§9.11 發現的
+`0x31529`/`0x320a1` 一帶)從未建立 function boundary,`function_bounds`/`xref_to`/`call_scan`
+全部失靈,純靜態方法在這種區域**structurally 找不到任何線索去猜下一個候選**。
+
+**解法思路**:不用猜的——直接記錄 CPU 在目標畫面(例如結局 CG 播放中)實際執行過的**每一個**
+位址,再拿這份 ground-truth 清單去跟 Ghidra 比對,凡是「Ghidra 完全沒建過 function boundary」
+的位址,就是有真實證據支持的候選,不是猜測。
+
+**第一步(前情提要,不要重做):dosbox-x heavy-debug build 內建就有這個功能,不需要自己刻**。
+WebSearch(`"dosbox-x debugger LOG command trace instructions"`)+ 直接讀 WSL2-native 建置
+(`~/fd2-dosbox-build/dosbox-x/src/debug/debug.cpp`,doc48 §8 記載的同一顆原始碼)證實:
+`--enable-debug=heavy`(這個專案的建置腳本本來就有加,見 doc48 §2)編進了一組完整的指令追蹤
+debugger console 指令——`LOG`/`LOGS`/`LOGL`/`LOGC`/`ADDLOG`/`HEAVYLOG`,`strings` 對建好的
+二進位檔案確認全部存在(2026-08-25 對這個專案實際用的 build 二進位親自驗證,不是查文件猜的)。
+其中 **`LOGC <hex count>`** 是本工具用的變體——`debug.cpp` 原始碼裡 `LogInstruction()` 對
+`cpuLogType==3`(`LOGC` 對應的模式)只印一行 `"CCCC:IIIIIIII"`(`setw(4) SegValue(cs) << ":" <<
+setw(8) reg_eip`),完全不含暫存器/flag(`LOG`/`LOGS`/`LOGL` 三個變體都會印完整暫存器狀態,
+每行貴很多,對純位址獵尋沒有額外價值)。所以**不需要自己刻一個腳本化單步+EIP 擷取的替代方案**
+——原本規劃書 step 3 設想的「單步太慢,退而求其次用取樣」這條備案完全沒用到,LOGC 本身已經是
+一個高效、逐指令、非取樣的完整追蹤工具。
+
+**LOGC 的關鍵行為(全部是本輪 live 實測驗證,不是讀 source 猜的)**:
+1. 在 debugger console(`Alt+Pause` 進去、TUI 顯示 `I->` 提示字元的狀態)下 `LOGC <hex count>`
+   + Enter,會把 `debugging` 旗標設回 `false`、呼叫 `DOSBOX_SetNormalLoop()`——也就是**立刻
+   恢復真正的模擬執行**,不是純粹的 debugger 內部操作。每執行一條指令就在
+   `DEBUG_HeavyIsBreakpoint()`(`C_HEAVY_DEBUG` 編譯開關下才存在,per-instruction 呼叫)裡
+   寫一行到 `LOGCPU.TXT`、遞減計數器,計數器歸零時自動 `DEBUG_EnableDebugger()`(游戲此時
+   凍結,回到 debugger TUI,印出 `DEBUG: cpu log LOGCPU.TXT created`)。
+2. **這段追蹤期間遊戲畫面持續正常渲染、也持續正常接受 `xdotool` 鍵盤輸入**——這是最關鍵的
+   實測發現,不是理所當然的事(原本擔心 LOGC 是一個會凍結整個模擬器的同步阻塞操作)。實測
+   方法:armed 一個 30M/150M/600M 指令的 LOGC 之後,立刻對遊戲視窗送出正常的 `xdotool key
+   Return` 序列並 `import -window root` 截圖,畫面確實持續前進(從角色走路→轉送站對白→CG
+   過場→詩句捲動→角色卡),證實 LOGC 不是需要「先跑完、再操作」的阻塞式操作,可以邊記錄
+   邊正常玩。
+3. **吞吐量**(這台專案 WSL2 VM 實測,2026-08-25):10,000,000 instructions ≈ 3.8 秒 wall
+   clock(≈140MB 檔案,14 bytes/行的固定格式);600,000,000 instructions 在本輪實際任務裡
+   完整跑完,產生 7.9GB 的 `LOGCPU.TXT`。這個吞吐量**跟遊戲的模擬速度(`cycles=5000`)是兩回事
+   ——不要把 `cycles=5000` 讀成「每秒 5000 條指令」**:`cycles` 是每個 timer tick 的 CPU 週期
+   預算,timer tick 本身在沒有真實 vsync 節流(Xvfb 沒有螢幕刷新率限制)的環境下可以跑得比
+   1995 年原生硬體快很多,LOGC 底下的迴圈更是完全不受這層節流影響(它直接接管主迴圈,寫檔
+   I/O 才是唯一瓶頸)。實務結論:**幾百萬到幾億這個量級的 hex count,幾秒到一分鐘內就能跑完,
+   足以涵蓋好幾秒鐘的真實遊戲內容**,不需要精算「這個場景大概要多少條指令」,直接給一個寬鬆
+   的大數字(例如 `600000000` 對應本輪實測涵蓋了從戰前對白到角色卡渲染的完整轉場)。
+4. **去重後的位址數遠小於原始行數**——600,000,000 行(逐指令、含所有重複的迴圈疊代)`awk
+   '!seen[$0]++'` 單趟去重後只剩 **12,297** 筆唯一 `CS:EIP`(其中主程式碼段 `CS=0170` 佔
+   8,727 筆),再往下只有 1,579 筆(18%)落在 Ghidra base 分析從未建過 function boundary
+   的區域。這代表「窮舉去重」這件事本身**完全可行**,不需要退而求其次做取樣——去重後的候選
+   清單小到可以在幾秒內全部餵給 `ghidra_batch_probe.py` 做 `function_bounds` 批次查詢
+   (8,727 筆查詢實測 6.6 秒跑完,見下)。`awk` 去重本身(不是 `sort -u`,那個量級會太慢)
+   對 600M 行、7.9GB 的檔案約 70 秒完成。
+
+**工具本身**:
+- `tools/dosbox_exec_trace.sh`——WSL 端(bash),負責「武裝」LOGC(`arm <tmux-session>
+  <hex-count> [workdir]`,對已經在 debugger console 待命的 session 送 `LOGC <hex>` +
+  Enter)、輪詢是否跑完(`wait-done`)、查看目前進度(`status`)、單趟 `awk` 去重
+  (`dedup`,輸出 `trace_unique_cseip.txt`)。**只負責 arm/collect,不負責送遊戲按鍵**——
+  每個場景的觸發序列都不一樣(doc58 已經記錄好各章節的具體按鍵序列),武裝完之後用平常的
+  `xdotool`/`tmux send-keys` 照舊操作即可,不需要學新的按鍵介面。跟 `tools/dosbox_harness.sh`
+  一樣支援 `FD2_TRACE_TMUX_SOCKET` 覆寫(用在 harness 的私有 tmux server 上,而不是
+  doc48 §8.4 canonical `dbg` session 用的 default server)。
+- `tools/dosbox_exec_trace_analyze.py`——Windows 端(python,呼叫本機 Ghidra 安裝),吃
+  `trace_unique_cseip.txt`,做三件事:①依 `--cs`(預設 `0170`)過濾、依 `--delta`(預設
+  `0x19C000`,這個專案 live→native 位址換算的既有常數)換算成 native 位址、去重;②把換算
+  後的 native 位址清單餵給 `tools/ghidra_batch_probe.py` 做一次批次 `function_bounds` 查詢;
+  ③依結果分三類:**(a) 已知/已記錄**——`in_function=true` 且該 function 起點位址能在
+  `docs/knowledge-base/*.md` 裡用**位元組邊界安全**的 regex 找到(見下的「假陽性」教訓);
+  **(b) Ghidra 已分析但未記錄**——`in_function=true` 但文件裡查無此位址,值得下一輪直接
+  `decompile` 看內容;**(c) 完全未分析**——`in_function=false`,Ghidra base 分析從未在這個
+  位址建過 function boundary,這是最有價值的一類,再依 `--cluster-gap`(預設 `0x40` bytes)
+  把相鄰位址合併成連續區塊,並且**對區塊裡的每一個位址個別做文件比對**(不是只查區塊起點/
+  終點)——因為像 `0x320a1` 這種已知案例,它自己不是 function 起點,單查邊界值查不到,但
+  區塊裡別的位址可能有記錄。
+
+**踩到並修正的一個坑(值得記錄,免得下一輪重踩)**:第一版的文件比對用裸子字串搜尋
+(`hex_string in text`),結果對 `0x43270` 一帶的位址(5 位十六進位、沒有字母的短數字)產生
+**假陽性**——`0x432b2` 命中是因為它剛好是某個 MD5-like hash 字串
+(`3c0a2c935260b8ca80432b25b3600111`)的子字串,`0x43385` 命中是因為它剛好是某個 baidu.com
+URL(`597a0643385421312b5243cf.html`)的子字串,兩者都跟位址完全無關。**這正是 doc35 §9 整條
+調查線反覆踩過的「位址巧合重疊」陷阱的同一個坑,只是這次是文件比對版本**,不是 live 驗證版本
+——教訓一致:**任何位址字串比對都要做邊界檢查**(`grep_docs_for_address()` 改成
+`(?<![0-9A-Fa-f])(?:0[xX])?<hex>(?![0-9A-Fa-f])` 這種前後不能接續十六進位字元的 regex,
+確認不是更長十六進位字串/URL/hash 的子字串),不能只做裸子字串搜尋。修正後重新核對過幾個
+`0x24b14`/`0x25089` 這類確實命中的案例,確認都是文件裡貨真價實的位址引用(如
+`docs/knowledge-base/50-cutscene-script-system-design.md` 的「`0x25186 call 0x24b14(item
+0x64)`」),不是巧合子字串。
+
+**已知限制(誠實列出)**:
+1. `LOGC` 只記 `CS:EIP`,不記完整 call stack/暫存器——知道「執行過這裡」,不知道「從哪裡呼叫
+   過來的」;要接上呼叫鏈仍要另外對候選位址做 `xref_to`/`call_scan`(常常一樣落空,見 doc35
+   §9.10-§9.11 的既有經驗)或 live 讀 `D SS:ESP` 找 return address。
+2. `.gitignore` 的 `.wsl_build/` 規則下,原始 `LOGCPU.TXT`(GB 級)與去重後的
+   `trace_unique_cseip.txt`(KB~數百 KB 級)都不進版控——只有分析結果(本文件/doc35/doc58
+   的文字紀錄)會留下來,原始追蹤檔案是單輪 process 產物,跟 harness 的 screenshot 同等級。
+3. 文件比對(category a/c-known vs c-new 的判定)是 **best-effort、非權威**——比對到只代表
+   「該去讀那份文件」,讀了才能判斷這個位址是不是真的已經被理解;沒比對到也不保證真的是全新
+   (文件可能用了不同的位址系統,如 §9.14.4 記錄過的「另一份 IDA session/live 位址誤記成
+   linear 位址」假說)。
+4. `LOGC` 記錄期間如果遊戲觸發了 dosbox-x 本身的其他斷點(`BP`/`BPM`)也會被打斷提前結束——
+   本輪操作時特別注意在武裝 `LOGC` 前先清掉不需要的舊斷點,避免誤判「LOGC 提前結束」為
+   「count 已經跑完」。
+5. 本工具驗證了「600M 指令、8700+ 唯一位址、批次比對 6.6 秒」這個量級可行,**沒有**測試更大
+   數量級(例如數十億指令)是否會遇到新瓶頸(檔案系統/awk 記憶體),下一輪如果要拉更長的
+   追蹤窗口,應該先重新量測而不是直接假設線性延伸。
+
+**首次實戰結果**:2026-08-25 用這套工具實際捕捉了 ch27 戰前「轉送站幻象」montage 的完整執行
+流程(從戰前對白、經 CG 過場、詩句捲動、到萊汀角色卡渲染),完整技術細節與交叉比對結果見
+`docs/knowledge-base/58-remake-live-verification-log.md` 續六十六與
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.15。

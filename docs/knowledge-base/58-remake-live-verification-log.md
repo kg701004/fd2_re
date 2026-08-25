@@ -7016,3 +7016,142 @@ doc58第2698行起只有一句「移到空地按Enter叫出系統選單」，本
 - 續四十六～續四十九、續五十七～六十一等輪次記錄的環境/操作/UI 發現（`dosbox_harness.sh`、SMV teleport、隊長座標定位、auto-target-lock bug、move-confirm Enter bug 等）全部與呼叫目標位址無關，完全不受本次訂正影響。
 
 **已完成的訂正動作**：`known_address_errata.json` 新增條目；`91-worklist.md` L1179/L1898、`39-ani-afm-format.md` L253、`50-cutscene-script-system-design.md` L655、`SESSION-HANDOFF-2026-07-06.md` L221/L443/L452 均已原地加註（保留原文，未刪改歷史記錄）；`verified_addresses.json` 新增 `0x31529`/`0x2545d`/`0x25970` 三筆條目。完整技術細節見 `docs/knowledge-base/35-battle-animation-rendering.md` §9.12。
+
+## 續六十六：全新方法論——用 dosbox-x 內建 `LOGC` 指令追蹤指令捕捉真正的結局 montage 執行流程，首次用 ground-truth 執行證據（而非位址猜測）交叉核對 doc35 §9 的角色卡 renderer 假說，並找出一批全新、Ghidra 從未分析過的候選函式（2026-08-25）
+
+**任務背景**：doc35 §9（§9.1-§9.14，15+ 輪）一直是「猜候選位址→驗證→失敗」的模式，方法論本身
+在 Ghidra base 分析從未建過 function boundary 的區域（§9.10-§9.11 發現的 `0x31529`/`0x320a1`
+一帶）structurally 找不到下一步線索。本輪任務是建一支新工具，直接**記錄 CPU 在 montage 播放
+期間實際執行過的每一個位址**（而非猜測候選），再拿這份 ground-truth 清單去跟 Ghidra 比對。
+
+### 1. 研究先行：dosbox-x heavy-debug build 本來就內建指令追蹤功能，不需要自己刻替代方案
+
+WebSearch 確認 dosbox-x debugger 有 `LOG`/`LOGS`/`LOGL`/`LOGC <hex count>` 系列指令（輸出到
+`LOGCPU.TXT`），`LOGC` 是「只印 `CS:EIP`」的最輕量變體。直接 grep 這個專案 WSL2-native 建置
+的原始碼（`~/fd2-dosbox-build/dosbox-x/src/debug/debug.cpp`，doc48 §8 沿用至今的同一顆
+source tree）與對已建好的二進位 `strings` 確認：`ADDLOG`/`LOGS`/`LOGL`/`LOGC`/`HEAVYLOG`
+字串全部存在，`LogInstruction()` 對 `cpuLogType==3`（`LOGC`）只印一行
+`setw(4) SegValue(cs) << ":" << setw(8) reg_eip`，`DEBUG_HeavyIsBreakpoint()` 逐指令呼叫
+（`#if C_HEAVY_DEBUG` 編譯開關下，這個專案的建置腳本本來就有 `--enable-debug=heavy`）。
+**結論：不需要規劃書 step 3 設想的「單步太慢，退而求其次做取樣」備案**——`LOGC` 本身就是
+一個高效、逐指令、完全窮舉（在武裝的視窗內）的追蹤工具，詳見 doc98「Ground-truth 執行流程
+追蹤」一節與 doc48 §10。
+
+### 2. 環境部署與可行性驗證：單一 canonical instance（`dbg`/`:99`/`~/fd2-run`），依 doc48 §8.4
+recipe 啟動，`FD2.SAV`/`FD2.EXE` md5 與歷次記錄一致（`e6d9a357...`/`72e36e47...`）
+
+依 §8.4 recipe（`core=normal`+`cycles=5000`，Xvfb+tmux+長 `sleep`）啟動，等待 45 秒確認片頭
+動畫播完抵達 `START/LOAD/CONTINUE` 三選單畫面（screenshot 驗證，非憑經驗數字）。
+
+**LOGC 可行性驗證（關鍵，先於正式任務單獨測試）**：進 debugger（`xdotool key --window $WIN
+--clearmodifiers alt+Pause`，單一組合呼叫+`--clearmodifiers`，依續六十四教訓），`LOGC 2710`
+（10,000 instructions）測試，1 秒內完成、`LOGCPU.TXT` 確實產生 10,000 行 `CCCC:IIIIIIII`
+格式。逐步放大測試：`LOGC F4240`（1,000,000）、`LOGC 989680`（10,000,000，~3.8 秒，140MB），
+最後正式任務用 `LOGC 1C9C380`（30,000,000）與 `LOGC 8F0D180`（150,000,000）、
+`LOGC 23C34600`（600,000,000）。**每一次武裝後都立刻對遊戲視窗送 `xdotool key Return` +
+`import -window root` 截圖，證實畫面持續前進、按鍵持續生效**——LOGC 不是阻塞操作，可以邊記錄
+邊照常玩遊戲，這是本輪最重要的方法論確認（否則整個工具沒有實用價值，只能記錄「什麼都不做時
+CPU 在幹嘛」）。
+
+### 3. 場景重現：LOAD→軍營 Right×3→出口確認 YES→戰前對白→（意外）`轉送站`幻象→CG 過場→
+詩句捲動→萊汀角色卡，全程用 `LOGC` 武裝捕捉——沿用續六十四發現的「戰前幻象」捷徑，不需要
+47 格死亡 signature 全滅工程
+
+依續六十四的發現（這段「結局montage」內容在 ch27 **戰前**——camp exit 確認 YES 之後、抵達
+戰場之前的劇情演出裡就會完整播放一次「轉送站」幻象，文字/CG/角色卡內容與續六十二記錄的戰後
+真實 montage 逐句相同），本輪同樣不需要進 debugger 寫 47 格死亡 signature、不需要 UI 指令環
+navigation，單純 LOAD→存檔格1→軍營 `Right×3`→出口→確認 YES→逐句 `Return` 推進對白即可
+重現。
+
+第一次嘗試（70 次連續 `Return`，每次間隔 0.6 秒，同時武裝 `LOGC 8F0D180`=150,000,000）推進
+過頭，直接跳到戰場（`823 A+05 D+00` HUD fingerprint）、`LOGC` 提前耗盡（150M instructions
+實際在遠短於 42 秒的按鍵發送時間內就跑完，之後的按鍵發到已凍結的 debugger，無效）——這證實
+**武裝的 hex count 要跟預期的鍵盤操作時長互相校準**，不能無腦給一個數字就假設一定夠撐到操作
+結束。在戰場上嘗試 `Escape`/`Return` 混合按鍵（仿續六十四的 UI 測試操作）未能重現轉送站幻象
+——這與續六十四的記錄一致（不是每次 `Escape` 測試都會意外觸發，可能跟具體按鍵序列/時機有關）。
+
+第二次：`RUN` 恢復執行、重新武裝 `LOGC 23C34600`（600,000,000，約 15 秒的 wall clock 記錄
+budget）後單純連續送 `Return`（不再穿插 `Escape`），**連續推進即成功重現**：戰前對白
+（莎拉「就是這個了，轉送站..好久沒看到這種東西了....」）→控制台互動→CG1（漂浮天空島嶼，與
+續六十二逐幀一致）→CG2（索爾與獨眼重甲巨人對峙，日/夜兩種色調各一次）→七言/白話詩句捲動文字
+（逐句核對與續六十二記錄完全相同）→萊汀角色卡（portrait+「姓名：萊汀/職業：騎士」+背景故事
+文字，逐字核對與續六十二記錄完全相同）。全程 screenshot 佐證（`trace_vis1~10.png` 等，約
+15 張，存於 WSL `~/fd2-run/`，過程 debug 產物，非 repo 追蹤內容）。`LOGC` 在萊汀卡畫面顯示
+時剛好耗盡（600,000,000 行精確命中，回到 debugger，遊戲凍結在這張卡上）——**這代表本輪的
+追蹤窗口完整涵蓋了「戰前對白開始」到「第一張角色卡渲染中」的整段執行過程，沒有中斷或遺漏**。
+
+### 4. Ground-truth 位址清單：12,297 筆唯一 `CS:EIP`（主程式碼段 `CS=0170` 佔 8,727 筆），
+批次比對 Ghidra 後分出三類——已知/已記錄、Ghidra 已分析未記錄、完全未分析
+
+`tools/dosbox_exec_trace.sh dedup` 對 600,000,000 行（7.9GB）`LOGCPU.TXT` 單趟 `awk` 去重，
+70 秒完成，剩 12,297 筆唯一位址（段別分布：`0170`=8,727、`0070`=1,156、`0F71`=947、
+`0080`=514、`0088`=381、`0C5C`=235、`137C`=185、`0018`=104、`F000`=48——`0170` 是既有文件
+確認的主程式碼段，其餘是 DPMI/DOS4GW 內部段或 BIOS/中斷 thunk，不在本輪範圍內）。
+
+`tools/dosbox_exec_trace_analyze.py`（native = live − `0x19C000`）對 8,727 筆 `0170` 位址
+批次查 `ghidra_batch_probe.py` 的 `function_bounds`（6.6 秒完成），結果：
+
+- **`in_function=true`：7,148 筆**——落在 Ghidra base 分析已建過的 976-function 清單內。
+- **`in_function=false`：1,579 筆**——完全在 base 分析從未建過 function boundary 的區域，
+  合併相鄰位址（gap≤0x40 bytes）後形成 **19 個連續區塊**。
+
+對這 19 個區塊逐一用文件比對（`docs/knowledge-base/*.md` regex，已修正過一次假陽性教訓，見
+doc98）分成「已經在文件裡出現過」與「完全全新」兩組：
+
+**（甲）確認已知、構成強交叉驗證——6 個區塊，全部落在 doc35 §9.10-§9.12 已定位的角色卡
+renderer 呼叫鏈與 ch26/29 戰後 handler self-loop 範圍內**：
+
+| 區塊 | 對應既有記錄 |
+|---|---|
+| `0x31529..0x319D3`（331 個位址命中） | doc35 §9.11 定位的角色卡 renderer orchestrator（G：換場淡出+裝飾圖示分支） |
+| `0x31BDF..0x321ED`（437 個位址命中） | 涵蓋 `0x31c49`（角色卡 renderer 本體）、`0x320a1`（續六十四 live 斷點捕捉到的 TXT 呼叫序列）一帶 |
+| `0x25348..0x2545D`（74 個） | `0x2545d call 0x31529`，ch26 戰後 handler 內的呼叫點（doc35 §9.11.4/§9.12） |
+| `0x25089..0x250CB`（22 個） | `reset_persistent_roster_state`（worklist #1173/#1898） |
+| `0x24B14..0x24B4C`（20 個） | `0x24b14(item 0x64)`，doc50 記載的 inventory_gate 相關呼叫 |
+| `0x2516D..0x25191`（10 個） | doc50 記載範圍內的其他呼叫點 |
+
+**這是本輪最重要的正面結果**：本輪用**完全獨立於前幾輪的方法論**（live 窮舉執行追蹤，而不是
+人工挑斷點取樣或位址算術回溯）、走的是**戰前幻象**這條路徑（不是續六十二的戰後 mass-kill 路徑）
+，結果精確命中 doc35 §9.11 用純靜態方法（手動 instruction-boundary 回溯）定位出的同一組
+`0x31529`/`0x31c49`/`0x320a1` 角色卡 renderer 位址範圍——**兩種完全不同的方法論（窮舉 live
+執行 vs 手動靜態回溯）、兩條不同的觸發路徑（戰前幻象 vs 戰後真實 montage 的呼叫鏈，見下段
+討論），得出同一組位址**，這是目前為止對這個角色卡 renderer 假說信心等級最高的一次交叉驗證。
+同時這也回答了 doc35 §9.12（續六十五訂正）留下的一個開放猜想——「續六十二實際看到的角色卡
+內容很可能走的是 `0x31c49`/`0x31529` 這條鏈」——**本輪首次用直接執行證據證實這個猜想成立**
+（戰前幻象路徑經過同一組位址，而戰前/戰後兩條路徑逐字呈現相同的萊汀/悠妮卡片內容，見續六十四
+§2，合理推斷共用同一個底層 renderer）。
+
+**（乙）全新、之前任何一輪都未提及的候選——13 個區塊**，詳細反組譯內容見
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.15。
+
+### 5. 誠實結論與工具評價
+
+1. **dosbox-x 確實有內建的高效指令追蹤功能（`LOGC`），本輪首次在這個專案裡實際用於位址獵尋**，
+   不需要自己刻腳本化單步方案。吞吐量、非阻塞行為、去重規模都已用真實數字驗證（見 §1-4、doc98）。
+2. **本輪達成任務要求的核心目標**：①確認內建 trace 功能存在並使用之；②捕捉到完整涵蓋至少
+   一個完整 CG 場景（以及戰前對白、詩句、角色卡）的真實執行 trace；③交叉比對 Ghidra，產出
+   分類後的候選清單，其中 13 個區塊是任何一輪都未曾考慮過的全新候選。
+3. **限制（誠實列出，不誇大）**：①`LOGC` 只記 `CS:EIP`，沒有 call stack，新候選的呼叫鏈仍待
+   下一輪查證（`xref_to`/`call_scan` 對這類位址常常一樣落空，見 doc35 §9.15 的逐一嘗試記錄）；
+   ②本輪只捕捉了「戰前對白→CG→詩句→第一張角色卡渲染中」這段窗口，`LOGC` 剛好在萊汀卡顯示時
+   耗盡，**沒有**涵蓋到悠妮卡或後續內容（如果真的存在更多角色卡），下一輪可以直接複用同一套
+   工具、加大 hex count 或分段武裝繼續往後捕捉；③文件比對是 best-effort，不是權威判定（見
+   doc98 記錄的假陽性教訓與修正）。
+4. **沒有**修改 `remake/` 下任何原始碼或 campaign 資產檔案，**沒有**觸發 `FD2.SAV` autosave
+   （收尾前 `md5sum` 核對與歷次記錄一致）。**沒有**編輯 `91-worklist.md`——本輪產出的是新工具
+   +新候選清單，不構成任何一項 worklist 項目的完全解封，留給下一輪或 orchestrating session
+   視 §9.15 的候選查證結果決定是否更新狀態。
+
+### 6. 產出
+
+新工具 `tools/dosbox_exec_trace.sh`（WSL 端武裝/收集/去重）+
+`tools/dosbox_exec_trace_analyze.py`（Windows 端換算 native 位址、批次比對 Ghidra、三類分類、
+文件比對假陽性修正）。本文件本節（續六十六）。詳細候選反組譯內容見
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.15。工具用法文件見
+`docs/knowledge-base/98-tooling-infrastructure.md`「Ground-truth 執行流程追蹤」一節，doc48
+§10 有指標小節。過程截圖（`trace_boot1~2.png`、`trace_load1~2.png`、`trace_camp1~2.png`、
+`trace_exit1.png`、`trace_confirm1.png`、`trace_cursor1~7.png`、`trace_afterkill.png`、
+`trace_vis1~10.png`、`trace_midlog1~2.png`、`trace_state1.png`、`trace_after70.png` 等約
+30 張）存於 WSL 端 `~/fd2-run/`，過程 debug 產物，非 repo 追蹤內容。原始 `LOGCPU.TXT`
+（7.9GB）與去重後的 `trace_unique_cseip.txt`/分析結果 JSON 存於 Windows 端
+`.wsl_build/trace_analysis/`（`.gitignore` 排除，不進版控）。
