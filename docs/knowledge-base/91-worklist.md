@@ -735,6 +735,36 @@
   `re-battle-ai-e2-ch08-enemy-adjacent-turn4-still-138hp.png`、
   `re-battle-ai-e2-ch08-sol-attack-valid-vs-adjacent-enemy.png`、
   `re-battle-ai-e2-ch08-battle-status-turn4.png`。
+  ——**2026-08-25 續：live record 讀取關閉「是否為 empty-weapon」子題（DOSBox-X
+  harness instance `aiattack`，同一 ch08 存檔，`tools/dosbox_harness.sh`
+  獨立第二輪）**：沿用上一輪確立的 LOAD 存檔位3→軍營走出口→YES→約20+次
+  Enter 推進戰前對白流程，成功重現互動戰鬥；主動誘敵索爾北上兩回合，
+  連續與 3 隻敵方單位鄰接（2 隻`人類 法師`＋1 隻`人類 戰士`／`鎧甲武士`）。
+  進 debugger 用 `[0x53a45]`→delta`0x19C000`→`0x1EFA45` 讀出這次開機的
+  陣列基底`0x26C484`（`[0x53beb]`→`0x1EFBEB`讀出總數33），逐筆`D`讀出
+  索爾（slot0）與鄰接戰士（slot11，位址`0x26C7F4`）完整`0x50`-byte raw
+  record。**結果：戰士`+0x0A`＝`0x40`（bit7未設＝非空）、`+0x0B`＝`0x03`
+  （武器item id），武器欄位確認非空**，與角色資訊畫面顯示的「巨劍」
+  逐位元組吻合——**直接推翻這個個案的 empty-weapon fail-closed 假說**。
+  真正原因改用 doc11 既有 `0x14237` 第5步公式重新核對：`actor AP(戰士
+  73,record`+0x48`)− target DP(索爾711,record`+0x48/+0x4A`＝
+  `922`/`711`，與畫面 UI 逐位元組吻合)`＝`−638`，遠低於文件既記載的
+  `<=2`拒絕門檻——**這隻戰士對索爾完全沒有合法物理攻擊候選，是命中
+  已有靜態反組譯的AP−DP評分拒絕分支，不是武器欄位問題**。旁證：兩隻鄰接
+  法師同回合 MP 從`011/011`降到`009/011`（吻合`火炎術 -MP02`），索爾HP
+  `802→705`（-97），證實**至少一隻法師確實出手攻擊**（走的是法術評分
+  `0x1598A`路徑，不受這條物理AP−DP門檻限制）——同一場戰鬥裡「有武器
+  但物理评分被拒絕的戰士」與「真的出手的法師」形成直接對照組。**結論
+  （比原訂目標更精確、已達 record 位元組級驗證）**：doc91上一輪138HP
+  守衛的「可能是empty-weapon」假說，對**這次調查到的這隻不同敵方個體**
+  被證偽；真因是`0x14237`公式本身既有的score`<=2`拒絕分支對「高DP目標
+  vs 低AP敵人」這種組合的正常設計行為，不是資料缺陷或未知邏輯。因為
+  索爾在兩輪都是同一個高DP(711)角色，且此門檻是通用評分公式（非特例），
+  原138HP守衛極可能命中同一條門檻，但138HP那隻本體這輪未在已初始化的
+  33筆陣列中定位到（疑似屬後續增援波，未展開追查），該個體本身仍未逐
+  位元組驗證，留待下一輪視需要補上。詳細位元組證據與交叉驗證見doc11
+  「物理攻擊候選：`0x14237`」小節2026-08-25補充。截圖：
+  `docs/figures/re-battle-ai-e2-ch08-armed-warrior-mode2-no-attack-2026-08-25.png`。
 - [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`
   mode 0/1/2、方向碼、成本與 `0x40/0x80` gate；`0x14B78` 依
   Manhattan→軸差→逐列順序選落點，`0x13E9C` 才是最後的 Manhattan
