@@ -663,6 +663,39 @@
   item-command 候選與 `0x13512` bit7 已串成「高價值優先遍後排除雙動」。
   尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中
   command／目標與畫面順序；不得重複把陣營碼、兩張表或 pending 碼降回未知。
+  ——**2026-08-25 固定存檔 live trace（DOSBox-X harness instance `aiE2`，ch08
+  「王城前的戰鬥」存檔）**：LOAD 存檔位3→軍營走出口→YES 進戰場→約20+次
+  Enter 推進戰前對白，成功進入互動戰鬥（`MAP·08 TURN·001`，
+  `ENEMY·22 FRIEND·11 NPC·00`，勝利條件「敵全滅」、失敗條件「索爾死亡」）。
+  全員待機＋系統選單環（上=系統選單/戰況總覽、左=行軍、右=設定、下=END）
+  →END→YES 確認，成功觸發「ENEMY PHASE」演出（鏡頭依序掃過營寨守衛×2、
+  橋上守衛×3、開戰全景等多個定點鏡頭），驗證 doc58 記載的 End Turn 操作
+  序列在 ch08 同樣可重現。主動移動索爾（滿血 HP802/MP790）北上至十字路口
+  誘敵，其後連續三個 ENEMY PHASE（turn1→2→3→4）觀察同一隻銀甲守衛
+  （138HP）：turn1→2 時，它從路口北側移動到與索爾正上方緊鄰的格子
+  （Manhattan距離1），但**沒有攻擊**，索爾 HP 全程 802/802 無變化——這與
+  doc11「mode dispatcher 先評 `0x14EF0`（含攻擊候選），失敗才走純移動
+  fallback，同一次行動不會移動後再重評攻擊」的靜態結論吻合。但 turn2→3、
+  turn3→4 時，守衛已連續與索爾緊鄰卻**仍然沒有攻擊**，位置、HP皆不變；
+  反向驗證：主動選取索爾開指令環，「攻擊」圖示對這隻鄰接守衛顯示為
+  **可選（橘框高亮，非灰階/紅框disabled）**，證明範圍/鄰接判定本身合法，
+  不是座標誤判。**誠實結論（部分閉合，非完整 E2 confirm）**：第一輪
+  「移動而不攻擊」直接支持既有靜態結論；但「已連續多回合鄰接仍不攻擊」
+  是 doc11 沒有明確記載過的現象，本輪只用畫面觀察，未讀 EXE record
+  記憶體，所以無法排除／證實最可能的解釋（doc11 2026-08-14 記載 ch01
+  開場8個敵人 `inventory_slots[0]` 全部是空 item ID、導致 `0x14237`
+  早退回傳無候選的同一模式，若套用在這隻守衛身上可完整解釋此現象，但
+  未經 live record 驗證，仍是推論）。全程沒有一次真正的攻擊發生，因此
+  本輪也**無法**觀察/比對「選中結果的畫面呈現順序」（游標/攻擊動畫演出）
+  這個原始子題目標。下一步（真正閉合需要）：對此守衛的 raw record
+  （`+0xb` 起 inventory slots、`+6` camp、`+0x34` mode nibble）做一次
+  live 記憶體讀取確認是否為空武器欄位；若確認，執行順序子題可視為驗證
+  通過，畫面呈現子題則需換一個「確定會出手」的存檔/敵人才能觀察。截圖：
+  `docs/figures/re-battle-ai-e2-ch08-enemy-phase-banner.png`、
+  `re-battle-ai-e2-ch08-enemy-approaches-adjacent.png`、
+  `re-battle-ai-e2-ch08-enemy-adjacent-turn4-still-138hp.png`、
+  `re-battle-ai-e2-ch08-sol-attack-valid-vs-adjacent-enemy.png`、
+  `re-battle-ai-e2-ch08-battle-status-turn4.png`。
 - [x] **RE-AI-PATH-FALLBACK-14B78**：Docker Capstone 閉合 `0x4E1A6`
   mode 0/1/2、方向碼、成本與 `0x40/0x80` gate；`0x14B78` 依
   Manhattan→軸差→逐列順序選落點，`0x13E9C` 才是最後的 Manhattan
