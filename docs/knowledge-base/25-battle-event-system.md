@@ -768,6 +768,81 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 >   只涵蓋並修正 tavern icon1 這一條。截圖：
 >   [`tavern-icon1-save-writer-logc-trace-confirmed.png`](../figures/tavern-icon1-save-writer-logc-trace-confirmed.png)。
 >   完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
+>
+> **2026-08-25 續輪(`camproute`平行 harness)：本節標題與上面幾輪引用的
+> `0x2cad7`/`0x2ccb6`/`0x2fd93` 三個位址本身是錯的(舊 EXE 版本的殘留位址，
+> 未在目前 `FD2Analysis3` Ghidra project 裡對應到「城鎮hub存檔閘門」這段
+> 邏輯)——`ghidra_batch_probe.py` 直接查證：`0x2cad7`/`0x2ccb6` 兩個位址
+> **都不落在任何已知 function 邊界內**(`function_bounds` 回傳
+> `in_function:false`，Ghidra base 分析從未在這裡建過指令邊界，硬解出來的
+> `disasm` 是垃圾位元組)；`0x2fd93` **落在一個完全無關的函式**
+> `FUN_0002fb2c`(0x2fb2c..0x2fe13，一段戰鬥前 party 動畫/montage 迴圈，
+> 呼叫 `FUN_0004e98d`/`FUN_00017aa9` 這類移動渲染函式，與存檔邏輯無關)。
+> 也就是說，本節從 `saveE2`/`savewriter` 輪起，每次「對 `0x2cad7`/
+> `0x2ccb6`/`0x2fd93` 做 LOGC 追蹤得到零命中」的結論，其實是在追蹤**跟
+> 存檔閘門完全無關的位址**，不是真的驗證了「城鎮 hub 出口流程沒有走存檔
+> 閘門」這件事——零命中本身沒錯，但它沒有回答原本要問的問題。
+>
+> **修正後的靜態證據**(`xref_to` 與 `call_scan` 兩種獨立方法交叉確認，
+> 結果一致)：writer `FUN_0002ff01`(entry `0x2ff01`，doc25 稱的
+> `0x30012` 是其內部呼叫 `0x2d80d` 的那一行，位於函式中段偏移
+> `0x111`)在目前 build 裡**全 EXE 只有兩個直接呼叫者**：
+> - `0x15400`(位於 `FUN_00015311`，entry `0x15311`)——本身是一個依
+>   `DAT_00053c2f`/`DAT_00053af9` 分流的閘門：`(DAT_00053c2f < 10) &&
+>   (DAT_00053af9 == 0)` 才呼叫 writer，否則走一個 `DAT_00051d01` 索引的
+>   函式指標跳表。`FUN_00015311` 由 `FUN_00013a9f`(0x13a9f，一個依
+>   `record[+0x34]&0xf` 分流的 11 分支 per-unit 狀態機，`record` 基底
+>   `DAT_00053a45 + unit_index*0x50`)與 `FUN_00014ef0`(0x14ef0，依多個
+>   `DAT_00053c23`/`DAT_00053c33`/`DAT_00053c4f` 章節/難度門檻決定要不要
+>   進 `FUN_00015311`)呼叫。
+> - `0x1d43c`(位於 `FUN_0001cff0`，entry `0x1cff0`)——結構幾乎相同的
+>   第二個閘門：`bVar1 = local_20[DAT_00053c57]`，`(bVar1<9) ||
+>   (bVar1==0x18) || (bVar1>0x1b)` 才呼叫 writer，否則同樣走
+>   `DAT_00051d01` 跳表。`FUN_0001cff0` 由 `FUN_00018d8c`(0x18d8c，一個
+>   依 `DAT_00053c57` 模式選擇器分流的迴圈：`==0` 處理某種roster載入、
+>   `==1` 就是反覆呼叫 `FUN_0001cff0()` 直到非零、`==2` 呼叫另一函式)
+>   呼叫，`FUN_00018d8c` 本身由 `FUN_00018890`(0x18890)呼叫。
+>
+> 這兩條鏈跟本節標題原本描述的「`0x2cad7` gate table 分流兩條路徑」
+> 結構上是同一個概念(兩個互斥的存檔閘門，各自依某個 per-chapter/
+> per-mode 門檻決定要不要呼叫 writer)，但**位址完全不同**——舊位址是
+> 錯的，`0x15311`/`0x1cff0` 這兩條才是目前 build 真正的呼叫鏈。
+>
+> **live 覆核(`camproute` harness，2026-08-25)**：用同一張 `saveE2`/
+> `savewriter` 輪用過的存檔位1(raw chapter `0x1a`=26，顯示「第二十七章」，
+> 依本節下方「城鎮流程」/「整備限定流程」分類屬於 `byte[chapter+0x526b9]
+> ==0` 的**城鎮流程**、不是整備限定流程)，走「LOAD→軍營帳篷場景→
+> icon選單`Right×3`→「出口」→「要進入戰場嗎？」YES」這條與 `saveE2`
+> 輪完全相同的路徑，這次武裝 `LOGC`(10.7 億指令，涵蓋 YES confirm 到
+> 完整過場對白到真正進入戰鬥地圖部署畫面全程)並用上面修正後的正確位址
+> 交叉比對：
+> - `0x18890`→`0x18d8c`→`0x1cff0` **三個位址全部命中**(在去重後 14,924
+>   個唯一位址集合裡直接確認)，證實這條 live 路徑確實會執行到修正後的
+>   真正閘門鏈——不是猜測，是這輪 `camproute` 自己重新武裝的追蹤直接測到的。
+> - 但 `FUN_0002ff01`(0x2ff01/`0x30012`)、其內部呼叫的 `0x2d80d`、以及
+>   另一條閘門鏈(`0x15311`/`0x15400`/`0x13a9f`/`0x14ef0`)**全部零命中**，
+>   跟 per-unit roster 迴圈(`0x1d80b`/`0x1d8ba`)也零命中。
+> - 對照 `FUN_0001cff0` 的分支條件(`bVar1<9||==0x18||>0x1b` 才呼叫
+>   writer)：這條 live 路徑走的是**不呼叫 writer 的那一臂**(跳表分流)，
+>   與本節下方「城鎮流程」章節分類完全自洽——這次測的存檔本來就屬於
+>   `byte[chapter+0x526b9]==0` 的城鎮流程，不是唯一應該打到 writer 的
+>   「整備限定流程」(raw chapter 22..24/27..29)。也就是說，**這輪並沒有
+>   否定`0x30012`的可達性，反而用正確位址第一次乾淨地印證了本節原本的
+>   結構性主張**(城鎮流程走跳表、只有整備限定流程才走 writer)——只是
+>   手上沒有 raw chapter 22-24/27-29 的存檔可以直接 LOAD 測試「應該會
+>   呼叫 writer」的那一臂，這需要真的推進到那幾章(或另尋捷徑)才能補齊，
+>   不在本輪合理工作量內完成。
+> - **誠實結論**：`0x30012`/`FUN_0002ff01` **不是死碼**——修正後的靜態
+>   呼叫鏈(`0x15311`/`0x1cff0` 兩條)都是被 live 追蹤直接證實會執行到的
+>   真實 UI 分派程式碼路徑(`0x1cff0` 這條本輪剛剛實測命中)，不是從未被
+>   接進任何狀態機的孤立函式；但也**尚未被 live 直接命中過**——本輪與
+>   之前所有輪次一致地顯示，凡是測過的存檔/路徑，走的都是這兩個閘門的
+>   「跳過 writer」那一臂。下一輪如果要徹底補齊，需要一張 raw chapter
+>   22-24 或 27-29 的存檔（目前 harness 內建的 4 個存檔位都不在這個範圍：
+>   raw chapter 分別是 0x1a/0x06/0x07/0x08）。截圖：
+>   [`camproute-town-hub-exit-confirm-dialog.png`](../figures/camproute-town-hub-exit-confirm-dialog.png)、
+>   [`camproute-battle-map-after-yes-confirm-ch27.png`](../figures/camproute-battle-map-after-yes-confirm-ch27.png)。
+>   完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

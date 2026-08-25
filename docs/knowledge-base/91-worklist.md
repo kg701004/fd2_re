@@ -480,6 +480,54 @@
     全程只被讀取（harness `launch` 對 `~/fd2-run-harness-loadE2` 的
     隔離複本），本輪結束前重新核對 md5 與 mtime 均未變，其他驗證回合
     依賴的既有進度未受影響。
+  - **2026-08-25 平行 harness（`camproute`），把上一輪留下的「`0x30012`
+    是否仍是整備/軍營出口流程真正的writer、或本身也是死碼」待辦做掉，
+    結論：不是死碼，但也尚未被live直接命中過**。先用
+    `ghidra_batch_probe.py` 重新核對doc25§9.1標題引用的`0x2cad7`/
+    `0x2ccb6`/`0x2fd93`三個位址，發現**這三個位址在目前`FD2Analysis3`
+    project裡本身就是錯的**：`0x2cad7`/`0x2ccb6`都不落在任何已知function
+    邊界內（`function_bounds`回傳`in_function:false`，硬解出來的disasm是
+    垃圾位元組）；`0x2fd93`落在一個完全無關的函式`FUN_0002fb2c`
+    （0x2fb2c..0x2fe13，戰鬥前party動畫/montage迴圈）。也就是說本輪之前
+    `saveE2`/`savewriter`兩輪對這三個位址做LOGC追蹤得到的「零命中」，
+    其實是在追蹤跟存檔閘門無關的位址，沒有真正回答問題（零命中本身沒錯，
+    只是測錯了對象——很可能是舊EXE版本殘留的位址，沒有隨EXE rebaseline
+    重新核對過，呼應既有memory `fd2-re-old-new-exe-address-instability`）。
+    改用`xref_to`+`call_scan`兩種獨立方法交叉確認writer
+    `FUN_0002ff01`（entry`0x2ff01`，doc25稱的`0x30012`是其內部呼叫
+    `0x2d80d`那行，位於函式中段偏移`0x111`）在目前build的**真正**呼叫者：
+    只有兩個，`0x15400`（在`FUN_00015311`，依`DAT_00053c2f`/
+    `DAT_00053af9`門檻分流，本身由per-unit狀態機`FUN_00013a9f`與章節
+    門檻函式`FUN_00014ef0`呼叫）與`0x1d43c`（在`FUN_0001cff0`，依
+    `local_20[DAT_00053c57]`值域`<9||==0x18||>0x1b`才呼叫writer否則走
+    `DAT_00051d01`跳表，本身由迴圈`FUN_00018d8c`呼叫，`FUN_00018d8c`
+    由`FUN_00018890`呼叫）。這兩條鏈結構上對應doc25標題原本描述的「兩個
+    互斥存檔閘門」概念，只是位址全部要換成這輪修正後的。
+    **live覆核**：用`saveE2`/`savewriter`輪同一張存檔位1（raw chapter
+    `0x1a`=26，顯示第二十七章，屬於doc25分類的「城鎮流程」而非「整備
+    限定流程」），走完全相同的「LOAD→軍營帳篷場景→icon選單`Right×3`→
+    「出口」→「要進入戰場嗎？」YES」路徑，用`camproute`自己重新武裝的
+    `LOGC`（10.7億指令，涵蓋YES confirm到完整過場對白到真正進入戰鬥
+    地圖部署畫面全程，去重後14,924個唯一位址）交叉比對修正後位址：
+    `0x18890`→`0x18d8c`→`0x1cff0`三個位址**全部命中**（證實這條live
+    路徑真的會執行到修正後的真正閘門鏈，不是猜測）；但`0x2ff01`/
+    `0x2d80d`（writer本體）與另一條閘門鏈（`0x15311`/`0x15400`/
+    `0x13a9f`/`0x14ef0`）**全部零命中**。對照`FUN_0001cff0`的分支條件，
+    這條路徑走的是「不呼叫writer」的跳表那一臂——與doc25「城鎮流程走
+    跳表、只有raw chapter 22-24/27-29的整備限定流程才走writer」的既有
+    結構性主張完全自洽（測的存檔本來就是城鎮流程章節，不是整備限定），
+    這輪等於用正確位址第一次乾淨印證了這個既有主張，而不是推翻它。
+    **誠實結論**：`0x30012`/`FUN_0002ff01`不是死碼——它的兩條真正呼叫鏈
+    都是live追蹤直接證實會執行到的真實UI分派程式碼（`0x1cff0`這條本輪
+    剛實測命中），不是從未接進任何狀態機的孤立函式；但也尚未被live
+    直接命中——本輪與之前所有輪次一致地顯示，凡是測過的存檔/路徑走的都
+    是這兩個閘門的「跳過writer」那一臂。要徹底補齊還需要一張raw chapter
+    22-24或27-29的存檔（harness目前4個存檔位raw chapter分別是
+    0x1a/0x06/0x07/0x08，都不在這個範圍），這需要真的推進到那幾章（或
+    另尋捷徑構造測試存檔）才能補齊，不在本輪合理工作量內完成，留給
+    下一輪。doc25§9.1已同步更新此修正。截圖：
+    [`camproute-town-hub-exit-confirm-dialog.png`](../figures/camproute-town-hub-exit-confirm-dialog.png)、
+    [`camproute-battle-map-after-yes-confirm-ch27.png`](../figures/camproute-battle-map-after-yes-confirm-ch27.png)。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
