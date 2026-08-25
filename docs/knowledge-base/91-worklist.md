@@ -17,7 +17,7 @@
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
-26 - E - UI-VIS-PREPARATION自述仍需晚期合法存檔與DOSBox實機差分。
+26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。
 45 - E - UI-VIS-LOAD自述成功native restore/delete/overwrite/roster ABI仍待E2。
 53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。
 54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
@@ -215,6 +215,34 @@
   行為已撤回，證據見[`fd2_preparation_fixed_record_ida.txt`](../data/ida/fd2_preparation_fixed_record_ida.txt)。
   保存 record 與 ch02 departure 生命週期證據圖。仍須晚期合法存檔、
   跨畫面初始相位與 DOSBox 同狀態實機差分，故維持部分完成。
+  **2026-08-25 平行 harness（`prepE2`，`:199`，獨立於當時可能同時在跑的其他 instance）
+  用機器上唯一真實存檔（`~/fd2-run/FD2.SAV` 4 槽，非 chapter-jump 合成）補測**：
+  slot1（最新進度，raw chapter `0x1a`＝第27章「命運的交會點」，13 人真實名冊
+  `[0,9,4,30,1,8,2,10,13,12,5,11,6]`）LOAD→軍營帳篷場景→`Right`×3 cycle到「出口」→
+  Enter，完整重現 FDTXT `0x201`「要進入戰場嗎？」YES/NO 確認框（含 NPC 頭像）；
+  選 YES 後**畫面直接跳進約10段戰前對白**（「這裡就是遺跡了嗎」…「一切的謎底就在
+  眼前了！」，逐句與續四十五/續四十八舊記錄的對白內容完全吻合），**全程沒有出現
+  任何選人核取方塊畫面，也沒有出現獨立的 `0x31d3c` 最終確認畫面**，對白結束後
+  直接進入戰鬥地圖、13 人全隊已自動部署完畢（索爾 HP823/823，與舊記錄一致）。
+  這與 production `acceptTownDeparturePrompt`（`remake/cmd/fd2/main.go:3066`）「
+  `len(prepIDs) <= prepLimit` 時直接 `leavePreparation("confirm")`，完全跳過
+  `prepSelecting`/`prepConfirm` 兩個階段」的既有邏輯逐步吻合。截圖：
+  [`preparation-ch27-departure-original-dosbox.png`](../figures/preparation-ch27-departure-original-dosbox.png)
+  （3 格：YES/NO確認→對白開場→部隊已部署的戰鬥地圖）。
+  **重要限制、誠實記錄**：續九（2026-08-17）已用 Ghidra 靜態核對出一張逐章旗標表
+  （`DAT_000523e7`，chapter-indexed）：只有第23、24、25、28、29、30、31章會顯示
+  選人畫面，其餘（含這次測試的26/27章）全部是0（略過）。機器上僅有的4個真實存檔槽
+  （ch27/7/8/9）**全部落在「略過」的章節區間**，且本作僅有13名可招募角色，正常
+  單周目任何時間點的名冊人數都不會超過15／19門檻——換句話說，**用這台機器現有的
+  合法存檔，結構上不可能走到選人核取方塊畫面或 `0x320fc` 重排隊伍那條路徑**；
+  過去唯一真正操作過該畫面的續八～續十一（2026-08-17/18）用的是 ch23/ch24
+  chapter-jump 合成存檔＋binary-patch 門檻，不符合本項「合法存檔」的驗收標準。
+  故 `0x318ad` 選人核取／`0x320fc` 重排／`0x31d3c` 選滿後最終確認這三段，在「一般
+  玩家合法存檔」前提下**目前沒有已知路徑可達**，仍待下一輪判斷是否改用「合法途中
+  存檔＋真的打贏ch22前所有戰鬤推進到ch23」這種更高成本的方式，或修正驗收標準本身。
+  同輪嘗試用 `fd2-preparation-oracle` 做同狀態 pixel diff，但這台機器**未安裝 Go
+  工具鏈**（`go`/`golang` 全機找不到，需要下一輪先處理環境），故本輪僅完成
+  逐格畫面的定性比對，未做位元組級差分。
 - [~] **UI-VIS-LOAD**：合法 IDA 9.4 證實 `0x25F48` 載入 FDOTHER #13，
   `0x30437` 使用 entry16（310×86）於 `(5,112)`，不是 FDOTHER #5
   對話框。production 已改走 FDTXT #0／原版字型／palette 的 indexed
