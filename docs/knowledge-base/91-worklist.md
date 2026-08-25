@@ -222,7 +222,59 @@
   source 的 [`load-empty-remake.png`](../figures/load-empty-remake.png)。
   `/tmp` 修改存檔的 chapter1 有效槽與 production 也全幀 RGB 相同；這只
   關閉有效槽排版，成功 native restore、delete/overwrite 與 roster ABI
-  仍待 E2。
+  仍待 E2。**2026-08-25 平行 harness（`loadE2`，`:199`，不干擾同時可能在跑的
+  canonical/其他 instance）真機補測，一般玩家未修改存檔、非合成路徑**：
+  - **native restore 與 roster ABI 已 E2 關閉**：標題 START/LOAD/CONTINUE
+    確認全幀渲染後，↓ 選 LOAD，四槽畫面（`1)第二十七章…2)第七章…3)第
+    八章…4)第九章…`）與機器既有 `~/fd2-run/FD2.SAV`（4 槽皆非空，
+    slot0..3 raw chapter=`0x1a/0x06/0x07/0x08`）逐槽比對顯示章節=raw+1，
+    與 `fdsave.py`/`docs/data/fd2_load_slots_ui_ida.txt` 記錄的公式一致；
+    選 slot2（第七章）Enter 後畫面黑轉場、gameplay 實際恢復到章節7城鎮
+    （酒店旁街道），非僅静態排版——[`load-slot2-restored-gameplay-original-dosbox.png`](../figures/load-slot2-restored-gameplay-original-dosbox.png)。
+    進入酒店 NPC 對話後的 party roster widget（`NativeThreeRowWindow`
+    同款兩欄×三列）完整捲動顯示全部 9 名成員，逐一比對
+    `tools/fd2save.py` 對同一 `FD2.SAV` slot1（0-indexed，即畫面
+    slot2）解出的 `roster_char_ids=[0,9,4,30,1,8,2,10,13]`
+    （索爾/悠妮/亞雷斯/蓋亞/哈諾/希莉亞/鐵諾/瑪琳/貝克威，經
+    `native_character_catalog.json` id→name 換算）：畫面兩欄×三列、
+    row-major 讀序與此陣列逐一精確吻合（含捲動後第二頁）——
+    [`load-slot2-roster-abi-crosscheck-original-dosbox.png`](../figures/load-slot2-roster-abi-crosscheck-original-dosbox.png)。
+    Roster ABI（順序與身分）視為 E2 關閉。
+  - **delete：靜態證據已排除、非「仍缺」**。`docs/data/fd2_load_slots_ui_ida.txt`
+    明載 `0x30550` 四槽輸入迴圈契約僅 `slot 0..3、上下 bounded 不循環、
+    Enter/Space 確認、Escape 取消`——沒有第五個「刪除」分支。本輪 live
+    嘗試（數字鍵、額外方向鍵）在該畫面均無額外效果，與此靜態證據一致。
+    原生 LOAD 四槽畫面不存在刪除功能，這是可關閉的結論，不是尚待驗證的
+    缺口；remake（`native_load_slots_ui.go`）本來就沒有實作刪除，兩者
+    現在確認是**行為一致（都沒有），不是 remake 的缺失**。
+  - **save/overwrite：locate 到正確原生觸發點，但尚未在 live 環境親眼
+    看到磁碟真的被覆寫，仍列 partial**。`docs/knowledge-base/25-battle-
+    event-system.md` §9.1 記載 writer `0x30012` 只有兩個呼叫者，其一是
+    `0x2ccb6`（城鎮 hub option2「要進入戰場嗎？」confirm 之後）。本輪
+    在 town hub（非商店本身，是酒店/武器店/道具店/教會/**出口**五格可
+    互相 wrap 切換的那層，`Left`/`Right` 有效、`Up`/`Down` 對它無效）
+    找到「出口」格，Enter 後正確跳出 FDTXT `0x201`
+    「要進入戰場嗎？」YES/NO confirm——[`town-hub-exit-battlefield-confirm-original-dosbox.png`](../figures/town-hub-exit-battlefield-confirm-original-dosbox.png)，
+    與 doc25 §9.1 描述的存檔閘門文字完全一致。選 YES 後完整跑完章節8
+    開場過場（約 20 次對話 Enter）直到真正進入戰鬥地圖，但期間全程用
+    `md5sum`/`fd2save.py` 監控 harness 私有 `FD2.SAV`，checksum
+    （`0x002777a7`）與四槽內容全程逐位元組未變、mtime 也未更新（同目錄
+    `FD2.TMP` 則持續更新，證實 DOSBox 進程確實在正常寫檔，只是沒有寫
+    `FD2.SAV`）。可能原因：這次是經新載入的 slot2 直接推進到下一章，
+    存檔所需的某個前置狀態（例如「目前作用中槽位」指標）未被這條
+    live 路徑滿足；也可能 hub「出口」實際觸發的是另一個外觀相同但非
+    `0x2cad7` 分支的確認框。兩者都未證實，誠實列為**仍需下一輪對
+    `0x2ccb6`/`0x2cad7` 做 live 斷點或 Ghidra 交叉確認**，不得倒推成
+    「原版此路徑不存檔」。因此 overwrite 動作本身（selection 應該覆寫
+    哪一槽、是否有覆寫前確認）**這輪未能實測到**。酒店 NPC 對話框
+    右下角另有一組 4 icon（狀態／存讀／離開），對它的方向鍵/滑鼠輸入
+    在本輪測試中始終無法可靠控制選中項（Left/Right/Up/Down/滑鼠點擊
+    均未觀察到穩定的位置移動證據，且重複同一動作序列出現不一致結果），
+    這個 icon row 的真實輸入 ABI 仍是未解問題，留給下一輪。
+  - 機器既有 `~/fd2-run/FD2.SAV`（`md5sum e6d9a35756cddfc2519969b10f039181`）
+    全程只被讀取（harness `launch` 對 `~/fd2-run-harness-loadE2` 的
+    隔離複本），本輪結束前重新核對 md5 與 mtime 均未變，其他驗證回合
+    依賴的既有進度未受影響。
 - [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
