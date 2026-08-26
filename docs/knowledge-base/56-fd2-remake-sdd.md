@@ -1250,6 +1250,56 @@ then copies only 312×192 to VGA `(4,4)` through `0x11eb0`; it is not a
 > "closed at E1/production level" status above is not reliable until the
 > real function is found.
 
+> **Follow-up (2026-08-26, purely static `ghidra_batch_probe.py` batch queries,
+> no DOSBox-X involved — see doc91 UI-VIS-TOWN's matching 2026-08-26 entry for
+> the full derivation)**: the real town-hub redraw function has now been
+> located, anchored on the "0x1f-byte record rooted at `0x6238d`" formula
+> (itself independently confirmed elsewhere, unaffected by the erratum above).
+> `xref_to 0x6238d` finds exactly one DATA reference, from `0x4e817`, inside
+> `FUN_0004e809` (`0x4e809..0x4e820`); both `decompile` and raw `disasm`
+> confirm this function is exactly `return &DAT_0006238d + (chapter-1)*0x1f`,
+> matching the cited formula byte-for-byte — the one part of this paragraph
+> that was never in doubt. `call_scan 0x4e809` (needed because `xref_to` is
+> unreliable under this project's `-noanalysis` mode) finds 7 real callers,
+> all clustered in `0x26000..0x2a000`, nowhere near the disproven
+> `0x2cd16..0x2e900` cluster. Decompiling those 7 callers identifies
+> **`FUN_000265ec` (`0x265ec..0x2670d`) as the real per-frame town-hub redraw
+> function**, called from the real main loop `FUN_00026152` (`0x26152`:
+> polls input, updates `DAT_00053f4a` selection with wrap and `DAT_00053f52`
+> pulse counter, calls `FUN_0002670e` on Enter/Space); `FUN_0002670e`
+> (`0x2670e`) is the real selection-confirm dispatcher, branching on
+> `DAT_00053f4a` to `FUN_00029300` (tavern), `FUN_000279bc` (shop family),
+> or `FUN_00029daa` (church). Full disassembly of `FUN_000265ec` confirms
+> `0x26608` reads record byte 0, and `0x266d5` calls `FUN_0004e22a`
+> (`0x4e22a..0x4e29b`) to draw the FDICON selector icon, with destination
+> `[buffer]+0x8088 + coord_table(0x52363/0x52375)[record_byte0*6+selection]`
+> — `0x8088` and the `0x1c8` (456) stride exactly match this paragraph's
+> already-verified `0x11eb0`/`0x11cac` VGA-blit constants, and the final
+> `0x26701` call to `0x11eb0` passes the same `0xa0504`/`0x140`/`0xc0`
+> constants recorded above, anchoring the whole trace as correct. The source
+> pointer comes from a 4-entry self-relative offset table at
+> `[DAT_00053a61]`, indexed by the pulse value mapped to `0,1,2,1` — matching
+> the "sprites 0,1,2,1" claim's pulse-cycle shape — but the underlying sprite
+> identity is resolved through the already-verified generic FDICON
+> `key×12 + pose×3 + cycle` cache (`FUN_00011019`, `0x11019`, same citation as
+> `Bank.SpriteFor` above), not the disproven `0x526d7`/`0x52635`/`0x52647`
+> tables. **This falsifies the "+42 delta" hypothesis from doc91's
+> `task_4845f230` entry**: `FUN_0004e22a`'s signature is only
+> `(src, dst, stride)` — no palette/recolor parameter at all. Its RLE decode
+> (hardcoded 24×24, the same four-mode 2-bit control scheme — raw copy, solid
+> fill, interleaved dither, transparent skip — that `internal/fdicon` already
+> implements) only ever moves raw index bytes; it never applies a
+> `(v+delta)&7+base`-style band offset. The real call site is a pure raw
+> copy, so the earlier guess that a missing palette-band offset explains the
+> red-patch bug does not hold up against the actual disassembly. **The bug's
+> root cause is still unconfirmed.** An unverified lead for the next round:
+> `FUN_00026152`'s setup phase calls `FUN_0004e98d` (which supports raw,
+> configurable-band, and solid-fill modes) once before the redraw loop starts,
+> but this round could not recover that call site's actual argument values,
+> and did not locate the VGA-palette-select call for the town-hub scene — so
+> whether town-hub activates a different DAC palette than resource#0 for this
+> region remains open. No Go code was changed this round.
+
 All 23 editable town nodes now carry the raw `native_town_variant` value
 0/1/2. `ComposeNativeTownFrame` consumes the original indexed resources and
 fails closed for any missing asset, invalid variant, selection outside 0..5,
