@@ -666,3 +666,15 @@ log.md`續六十二/續六十三的原始記錄,確認是逐字抄錄既有已�
 
 用法、CLI 參數、完整 docstring 見`tools/fd2_chapter_sweep.py`檔頭;Phase 2 掃描結果見
 `docs/knowledge-base/99-chapter-sweep-results.md`。
+
+**Phase 2(2026-08-27):30/30 章節全數掃過,單一背景 process 循序跑完,~63 分鐘,零崩潰
+/零掛起/收尾三方(`ps aux`/兩個 tmux socket)全部乾淨**。30 章 verdict 全部是
+`needs_manual_followup`(如預期,見上面 Phase 1 的誠實限制),但掃描本身帶出兩個有具體
+後續行動價值的新發現:①用 post-load 截圖分類,**22 章落在共用的「營帳」樣板場景、6 章
+(ch23/24/25/28/29/30)完全跳過營帳直接落在正式的「出戰人數選人」畫面,零例外精確吻合
+`docs/knowledge-base/25-battle-event-system.md` §9.1 先前僅用靜態反組譯推導、標記「尚待
+驗證」的「raw chapter 22/23/24/27/28/29 是整備限定流程」結構性主張**,是這個推論的第一次
+live 交叉驗證;②`hashlib.md5`去重確認**唯一**提前 stall(全黑畫面卡住)的是 ch01,可歸因
+於本工具唯一可用的真實存檔(晚期 13 人 roster)反向 patch 回最初章節產生的「早章節+晚期
+滿編隊伍」未定義組合,不代表 ch01 本身有結構缺陷。完整章節分類表、方法論、下一輪建議見
+doc99。
