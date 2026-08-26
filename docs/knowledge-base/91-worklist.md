@@ -2941,3 +2941,21 @@
   不是「ydotool測試後無效」的陰性結果）。需要使用者本人手動執行
   `sudo apt-get install -y ydotool`+啟動`ydotoold`後，下一輪才能真正開始
   20-30次量化測試。
+  **doc58 續七十二(2026-08-26)**：使用者已手動完成`ydotool`原始碼編譯安裝
+  （apt版缺daemon二進位，已改裝`/usr/local/bin/`）+`sudo ydotoold &`啟動，
+  本輪驗證後接上`YDOTOOL_SOCKET=/tmp/.ydotool_socket`+`wsl -u root`成功執行
+  `ydotool key`。**結果比預期的「掉鍵率對照」更根本**：用`xev`在X11事件層
+  直接比對，`xdotool`的按鍵事件被完整捕捉，但`ydotool`送出的按鍵（3次獨立
+  呼叫、共4個底層keydown/keyup）**在X11層完全沒有任何蹤跡**；在真正的
+  DOSBox-X標題選單上重複驗證（`/proc/bus/input/devices`確認`ydotoold`
+  virtual device確實存在於kernel層），累計**至少47次獨立ydotool按鍵嘗試，
+  送達率0/47**，同一session穿插的7次`xdotool`按鍵100%送達，含一次positive
+  control（真`xdotool Return`讓畫面立即劇烈變化，證實pipeline與遊戲本身
+  都正常）。**根因**：`Xvfb`架構上只支援`XTestFakeKeyEvent`合成事件，
+  沒有`evdev`/`libinput`熱插拔支援去消費`ydotoold`透過kernel `uinput`
+  建立的虛擬鍵盤裝置——不是「這條路線比較不可靠」，是「這條路線在這個
+  headless Xvfb環境下physically無法送達」。**不推翻**續五十五的
+  `XTestFakeKeyEvent`候選（本輪`xdotool`100%成功，沒有復現任何掉鍵，
+  沒有對那個候選做任何新測試），原本「同一存檔同一手法時好時壞」的間歇性
+  根因**依然完全未解**。不建議在目前架構下繼續投入`ydotool`路線；doc48
+  §8.4 canonical recipe未修改。詳見doc58續七十二。

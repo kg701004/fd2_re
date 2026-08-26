@@ -451,6 +451,19 @@ tcp` + `DISPLAY=127.0.0.1:99`,不要嘗試 unix socket。
    不可靠(已知官方限制,`core=normal`可解,見續四十三/四十四),但**即使在 Normal core
    下**,續四十八/續五十仍記錄過斷點「registered 但從未命中」的個案,不是 100% 徹底解決,
    遇到時建議優先用畫面/screenshot 驗證遊戲狀態,不要完全依賴 debugger 讀值。
+4. **按鍵發送一律用 `xdotool key --window <winid>`(`XTestFakeKeyEvent`),不要嘗試
+   `ydotool`(Linux kernel `uinput` 注入)**——doc58 續七十二(2026-08-26)已實測排除:
+   `Xvfb` 架構上只支援 `XTest` extension 合成事件,沒有 `evdev`/`libinput` 熱插拔支援
+   去消費 `ydotoold` 透過 `uinput` 建立的虛擬鍵盤裝置。直接用 `xev` 在 X11 事件層核對,
+   `ydotool` 送出的按鍵(含 DOSBox-X 標題選單上累計 47 次獨立嘗試,20 Enter+20 Space
+   批次測試在內)**送達率 0%**,同一 session 穿插的 `xdotool` 按鍵 100% 正常送達——這不是
+   「`ydotool` 也會掉鍵」的統計性負面結果,是「這條注入路徑在這個 headless Xvfb 環境下
+   architecturally 無法送達」的確定性結論,不需要重新驗證,除非未來環境改用真正支援
+   evdev 熱插拔的顯示後端(例如 WSLg 自己的 Wayland/Xwayland display,但那條路線引入
+   §8.1/8.2 記載過的其他已知限制,doc58 續七十二**沒有**測試過,不是建議)。這**不代表**
+   續五十五指認的 `XTestFakeKeyEvent`/Xvfb 一般性不可靠候選被推翻或證實——本輪 `xdotool`
+   全程 100% 成功,沒有復現任何掉鍵,也沒有對那個候選做任何新測試;戰鬥地圖 Enter 確認
+   間歇性失效(本節第 2 項)的根因依然完全未解。
 
 ## 9. N-way 平行驗證 harness(`tools/dosbox_harness.sh`,2026-08-24)
 
