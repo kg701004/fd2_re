@@ -1830,6 +1830,14 @@
   **未解除**。過程中意外發現一個結構相似但實為戰鬥指令選單party carousel的無關子系統(`FUN_0002ff01`
   @`0x2ff01`，與doc27§6.2/doc13發現的command presentation dispatcher是同一函式)，已排除是ending
   renderer。這是有價值的負面結果(避免下一輪重複走死路)，不構成renderer解封。
+  **重大進展(2026-08-27,`doc35`§9.23/`doc58`續八十)**:上面排除掉的`FUN_0002ff01`，本輪用live
+  `BPPM`記憶體寫入斷點重新證實它其實正是party montage角色回顧卡背景圖的真正renderer——只是不經過
+  字面的`0x2bce5`位址，而是`FUN_0002ff01`→`FUN_0002eb9f`(新完整反編譯的wrapper)→`FUN_0004e98d`
+  (新發現的`FUN_0004e8d3`姊妹函式，RLE解碼+三模式重著色)這條鏈。2026-08-20當時的判斷需要修正為:
+  `FUN_0002ff01`是通用的`0x524c6` phase-table carousel引擎，同時服務戰鬥選單、ch27戰前CG1
+  (`doc35`§9.22)、與本項目追蹤的postbattle party montage角色卡背景(`doc35`§9.23)三種情境，不是
+  「戰鬥選單專屬、與ending無關」。`0x2bce5`這個字面位址本身依然不可達，但cluster背後的功能性問題
+  (terminal handler後續的視覺內容怎麼畫出來)已有高信心答案。完整證據見`doc35`§9.23。
 - [~] **ch29 post focus lowering**：`0x12cea` 已安全 lower 成 tile-step pan(22,23) 並通過 regression；cleanup與`0x24618`已接，仍待ending renderer。
 - [~] **ch29 post persistent cleanup**：`0x25089` 已 lower 為 editable `reset_persistent_roster_state`，並以 runtime/campaign regression 鎖定清 transient、回填 MaxHP/MaxMP；本 handler 的主要剩餘 renderer gate 是 `0x2bce5` ending。——本輪(2026-08-20,`doc35`§9)同cluster誠實負面
   結論:blocker未解除，見上方「ch29 post staged mapping」項附註。
@@ -1901,6 +1909,19 @@
   同cluster誠實負面結論:無新進展。§9.2的phase-table/master-engine架構(param_2 event dispatch、per-slot
   tween、LUT轉場)如果日後証實ending renderer用的是同一種設計模式(不同位址、不同呼叫者)，可作為
   「這類native演出大致長怎樣」的參考藍圖，但目前不能當成同一份程式碼直接套用。
+  **重大進展(2026-08-27,`doc35`§9.23/`doc58`續八十)**:用live `BPPM`記憶體寫入斷點(繞過猜測
+  CALL位址、直接在work buffer/VGA像素被寫入的瞬間攔截)找到了party montage角色回顧卡**背景圖**
+  的真正渲染機制——**不是**`0x2bce5`這個字面位址(doc35 §9.1-9.14已證實在目前project裡不是有效
+  邊界)，而是已知的`0x524c6` phase-table carousel引擎(`FUN_0002ff01`/`FUN_00030e9d`/
+  `FUN_00031266`，同一套§9.22已定案的CG1渲染引擎)經由一個新完整反編譯的wrapper
+  `FUN_0002eb9f`(native `0x2eb9f-0x2ebe0`)呼叫一個新發現的`FUN_0004e8d3`姊妹函式
+  `FUN_0004e98d`(native `0x4e98d-0x4eb47`，RLE解碼+三模式重著色:原樣複製/色相輪轉/純色填充)。
+  live斷點兩層(VGA層、work buffer層)精確命中，`function_bounds`/`decompile`/`call_scan`三重
+  靜態交叉核對，加上像素值核對(命中瞬間寫入值落在畫面實際灰階範圍內)。**這代表本項目的功能性
+  問題("chapter ending背景怎麼渲染")已有高信心答案，但答案是"沿用既有的`0x524c6` carousel
+  引擎"，不是`0x2bce5`這個特定字面位址對應的獨立renderer**——舊位址本身依然不可達，未被推翻。
+  完整技術細節見`doc35`§9.23。仍未做:FIGANI立繪本體/portrait框的繪製機制、Ebiten compositing
+  adapter本身的實作。
 
 - [x] **shared object redraw compositor**：`0x127a9` 的 `0x127e0` 不是單純 loop bookkeeping：active roster entry 以 camera-relative placement 選 24×24 descriptor，走 `0x4deda` raw indexed-RLE 或 `0x4de56` palette-band-RLE 寫 `0x53a49`；尾端 `0x129ec` 又在同 buffer 疊 map/object layer。`+5 bit7` clear→raw、set→band 已由 direct branch 關閉。`BlitNativeUnitLayer` 現以 raw slot／pose／movement／base-frame／active gate、camera bounds、cycles 及 pixel shift 完整表達 steady unit layer，且 preflight 失敗不寫半張 frame；它不接 GUI。`0x53a61` 是 global raw-key cache 的 pointer blocks，runtime index 是回傳 `slot×12 + pose×3 + cycle`，而非角色 group。仍待將 terrain→range→unit→foreground→HUD→viewport copy 組成 caller adapter；在此之前不得把 `0x22046` passes 或 `unit_present` 接成 native UI。——2026-08-19稽核確認：`remake/internal/indexedmap/frame.go`的`ComposeFrame`(約476行起)已強制此 terrain→range→unit→foreground→HUD→viewport copy 順序並經本檔914行「steady native indexed map-frame scheduler」`[x]`收錄，caller adapter缺口已補上，僅本行未同步。
 - [x] **`0x11cac` range-layer provenance**：Docker Capstone 釘住 redraw order 為 `0x11eee terrain → 0x122dc range overlay/mutation → 0x127a9 unit+foreground → 0x1acf3 HUD → 0x11eb0 viewport copy`。修正舊斷言：只有 modes1..5 展開固定 calls 到 `0x126f7`；mode6直接清 selected cell byte+3，7+直接return。`0x126f7` camera-bound 後以 `0x4deda` 寫 `buffer+0x8088`。
@@ -2024,6 +2045,20 @@
   TAI.DAT→FIGANI.DAT×2→FDOTHER.DAT×2→per-角色資源)結構上與`native_2c548.json`描述的資產組合高度相似，
   值得下一輪重新獨立核對舊位址後比對是否為同一函式在不同EXE版本的位移結果，但本輪未能證實，不可當結論
   使用。
+  **重大進展(2026-08-27,`doc35`§9.23/`doc58`續八十)**:改用live `BPPM`記憶體寫入斷點(不再猜測
+  CALL位址，直接在真正的postbattle party montage角色回顧卡背景圖被寫入work buffer的瞬間攔截，
+  重現路徑:doc58續六十二的「47格死亡signature+End Turn確認」)，找到角色回顧卡背景圖的真正
+  renderer:`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`(既有的`0x524c6` phase-table carousel
+  引擎，doc35 §9.13/§9.22已定案，同一套驅動CG1的引擎)→`FUN_0002eb9f`(native
+  `0x2eb9f-0x2ebe0`，本輪首次完整反編譯的wrapper)→`FUN_0004e98d`(native `0x4e98d-0x4eb47`，
+  本輪首次發現的`FUN_0004e8d3`姊妹函式，RLE解碼+三模式重著色:原樣複製/色相輪轉/純色填充)→
+  work buffer→present()→VGA。live斷點兩層(VGA層/work buffer層)精確命中，
+  `function_bounds`/`decompile`/`call_scan`三重靜態交叉核對，加上像素值核對(命中瞬間寫入值
+  `0x63`落在畫面實際灰階雲霧範圍`0x60-0x64`內)。**誠實範圍**:這回答的是「party montage背景圖
+  怎麼畫出來」這個功能性問題，答案是「沿用既有的`0x524c6` carousel引擎，不是`0x2c548`這個
+  字面位址對應的獨立renderer」——`0x2c548`/`0x2c5e3`等舊位址本身依然不可達，未被推翻；FIGANI
+  立繪本體、portrait框、`native_2c548.json`描述的細部資產索引(FDOTHER#56/TAI#3/DATO)本輪
+  **未逐項查證**。完整技術細節見`doc35`§9.23。
 - [~] **ending compositor asset preflight**：正確圖源是 `FDOTHER_054.bin`（263655B、111-frame table），不是 `FDOTHER_036.bin`（408×138 的無關資源）；ANI #2 已可由 `internal/afm` 解出 26×320×200 frames。`internal/fdother` 已有 fail-closed raw table parser、原版透明 RLE in-place blitter，及 player-provided `FDOTHER.DAT` 的 `#0x36` archive loader；後者有與 raw #054 byte-for-byte 的 regression。schedule/branch adapter與phase0 preview均已接，下一個資產／renderer gate是`native_2c548.json`描述的FDOTHER#56、TAI#3、FIGANI/DATO party montage。——本輪(2026-08-20,`doc35`§9)同cluster誠實負面結論:無新進展，見上方「indexed ending compositor core」項附註。
 - [~] **ending `#0x36` frame decoder contract**：`0x2935b` 以 `base+8+frame*4` offset table取 descriptor；`+0/+2` 是內嵌目的地 dx/dy，`+9/+11` 是 real w/h，payload 自 `+9` 以 transparent `-1` RLE blit。玩家素材 regression 現對 #054 全111幀逐一做 320×200 in-place decode。`0x2bce5` 的 frame0、frame9、frame12..108、兩段 frame-pair composite與palette/delay loop均已有runtime；`0x2c39b`已定案為DATO portrait ID＋current FDTXT string index並接兩段preview dialogue。舊「文字args尚無語意／缺完整prefix bridge」斷言已撤回；剩餘gate是`0x2c548` montage。——本輪(2026-08-20,
   `doc35`§9)同cluster誠實負面結論:無新進展，見上方「indexed ending compositor core」項附註。

@@ -8994,3 +8994,81 @@ postbattle轉場)。方法論关键發現(完整技術細節見doc35 §9.22,此�
 `ch27-prebattle-cg1-island-fade-out-midframe.png`、
 `ch27-prebattle-cg1-island-fade-out-complete.png`)。過程debug產物(逐句對白截圖約25張、
 Ghidra批次查詢JSON/結果)留存於Windows端`.wsl_build/`,不納入repo版控。
+
+## 續八十:接手doc35 §9.21.10/§9.22建議——把剛驗證成功的`BPPM`記憶體寫入斷點技術,套用到
+`91-worklist.md`真正追蹤的目標(戰後party montage角色回顧卡背景圖,而非§9.19-§9.22查的ch27
+戰前CG1小島)——**正面、定案**:找到`FUN_0004e8d3`的姊妹函式`FUN_0004e98d`(RLE解碼+三模式
+重著色),經由此前只聞其名的小wrapper `FUN_0002eb9f`,被已知的`0x524c6` phase-table carousel
+引擎(`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`)呼叫(2026-08-27)
+
+> 任務背景:本篇任務長期卡在`91-worklist.md`的11個項目(`0x2bce5`/`native_2c548` chapter-ending
+> renderer/party montage cluster),doc35 §9.1-9.14已用三種獨立靜態方法確認這批舊位址在目前
+> `FD2Analysis3` project裡不是任何有效指令/資料邊界。doc58續六十二已經證實用「47格死亡signature
+> + End Turn確認」可以真正觸發戰鬥勝利、深入結局montage(戰後對話→CG1→CG2→詩句捲動文字→逐角色
+> 回顧卡)。doc35 §9.22(續七十九)剛用一種全新方法論(`BPPM`記憶體寫入斷點,繞過猜測CALL位址)
+> 成功定位了ch27**戰前**「轉送站」CG1小島的真實繪製函式(`FUN_0004e8d3`)。本節把這個剛驗證成功
+> 的技術,套用到`91-worklist.md`真正追蹤的目標——戰後party montage角色回顧卡的背景圖。
+
+**環境**:`tools/dosbox_harness.sh`新隔離instance(`montage1`),完整重演doc58續六十二的
+「47格死亡signature+End Turn」捷徑(依doc48§8.4 recipe啟動、LOAD存檔格1、軍營Right×3、出口
+確認YES、推進戰前對白至戰場、進debugger對slot16-90批次`SMV`寫入`+5=0x01`死亡旗標、`RUN`後
+單純`Escape`一次即直接跳轉postbattle勝利轉場,比續六十二/續七十九的操作序列更短)。完整技術
+細節(VGA層/work buffer層兩層`BPPM`定位過程、`FUN_0004e98d`完整decompile、呼叫鏈`call_scan`
+交叉核對、像素/視覺驗證)見`docs/knowledge-base/35-battle-animation-rendering.md` §9.23,此處
+僅摘要:
+
+1. **重現路徑**:47格死亡signature批次寫入+`Escape`→postbattle轉場(13人隊伍圍站藍色房間,
+   `docs/figures/ch27-postbattle-13person-gather-room.png`)→連續`Return`推進戰後對話→CG1→
+   CG2→詩句捲動文字→**萊汀**回顧卡(`docs/figures/ch27-postbattle-card-laiting-backdrop.png`)
+   →自動推進**悠妮**卡(`docs/figures/ch27-postbattle-card-yuni-backdrop.png`)→自動推進到
+   **本篇任務系列從未記錄過的第三張新角色卡**(持劍騎藍灰雙翼飛龍的角色,
+   `docs/figures/ch27-postbattle-card-dragonrider-backdrop-midrender.png`,捕捉到debugger
+   暫停瞬間的中途渲染狀態,可見未上色的幾何色塊,獨立佐證背景圖是逐byte RLE解碼而非一次性blit)。
+   **證實每位角色回顧卡的背景圖是各自獨立、逐角色不同的插畫資產**,不是共用模板。
+2. **第一層`BPPM`(VGA `0xA0AAA`/`0xA0ABA`/`0xA0ADA`)**:命中已知的通用present() `repe movsd`
+   逐列memcpy(`FUN_0003771c`,doc35 §9.20.6已記錄,116個呼叫端全域共用,呼叫端是present()原語
+   `FUN_00011eb0`,doc35 §10.1已知)——這一層只是「work buffer內容被複製進VGA」,不是內容本身
+   的產生點,需往上游追。
+3. **第二層`BPPM`(反推得出的work buffer位址`0x3E5BEA`/`0x3E5BFA`/`0x3E5C1C`)**:**決定性命中**
+   ——`EIP`落在一個此前20+輪從未記錄過的`FUN_0004e8d3`姊妹函式`FUN_0004e98d`(native
+   `0x4e98d-0x4eb47`,443 bytes)內部。完整decompile確認這是同一套RLE解碼骨架的**三模式重著色
+   引擎**(原樣複製/色相輪轉/純色填充,依呼叫端`param_6`值域選擇,比`FUN_0004e8d3`的純LUT重映射
+   更泛用)。
+4. **呼叫鏈**:`FUN_0004e98d`經由一個此前只在doc35 §9.1/§9.2被順帶提及過名字、從未完整反編譯過
+   的小wrapper `FUN_0002eb9f`(native `0x2eb9f-0x2ebe0`,66 bytes,decompile只有兩行:
+   `FUN_0003702f(); FUN_0004e98d();`)呼叫——`FUN_0002eb9f`本身被已知的`0x524c6` phase-table
+   carousel引擎三個成員(`FUN_0002ff01`8個呼叫點、`FUN_00030e9d`3個呼叫點、`FUN_00031266`4個
+   呼叫點,全部是doc35 §9.13/§9.22已定案的既有函式)呼叫。live讀出的實際呼叫位址(`D SS:ESP`
+   返回位址反查,用`python3 -c`核算避免手動心算錯誤)是native `0x2ebd7`,與`call_scan`靜態
+   窮舉出的同一個呼叫點完全吻合。
+5. **像素交叉核對**:第一次真正命中(`0x3E5BEA`,`00→0x63`)落在畫面實際灰階雲霧範圍
+   (`0x60-0x64`)內,與screenshot肉眼比對吻合。
+
+**誠實整體結論**:角色回顧卡背景圖的渲染機制已定位、已用live `BPPM`記憶體寫入斷點直接證實——
+`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`(已知的`0x524c6` phase-table carousel引擎)→
+`FUN_0002eb9f`(本輪首次完整反編譯的小wrapper)→`FUN_0004e98d`(本輪首次發現的`FUN_0004e8d3`
+姊妹函式)→work buffer→present()→VGA。**這與doc35 §9.22定案的CG1機制是同一套引擎的兩個不同
+輸出分支,不是另一套獨立系統**——CG1走`FUN_0004e8d3`(LUT任意重映射),角色卡背景圖走
+`FUN_0004e98d`(三模式重著色)。**誠實信心等級:高**(live斷點兩層精確命中+
+`function_bounds`/`decompile`/`call_scan`三重靜態交叉核對+獨立像素/視覺驗證,四條證據線一致)。
+
+**對`91-worklist.md`的影響**:本輪對`0x2bce5`/`native_2c548`舊位址本身**沒有**新增任何直接
+證據(doc35 §9.1-9.14的負面結論維持不變,這批舊位址在目前project裡依然不是有效邊界)——但本輪
+用完全獨立的方法論(live記憶體寫入斷點),找到了這11個項目背後**真正的功能性問題**(角色回顧卡
+背景圖怎麼畫出來)的答案:資料驅動地由已知的`0x524c6` phase-table carousel引擎渲染,不需要一個
+獨立的「ending renderer」入口。已依doc35 §9.23的完整證據更新`91-worklist.md`相關項目,詳見該
+文件變更本身;FIGANI立繪本體、portrait框、dialogue-frame grid、mirror/non-mirror figure fade、
+input-skip handling等cluster內其餘子項目**未逐項查證**,誠實維持原狀。
+
+**環境收尾**:`tools/dosbox_harness.sh teardown montage1`已執行,`ps aux`核對`tmux`/`Xvfb`/
+`dosbox-x`進程樹確認終止,無殘留。本輪全程操作(47格死亡signature批次寫入、兩層`BPPM`斷點、
+live disasm)都只發生在DOSBox-X模擬的RAM裡,沒有觸發autosave,沒有修改`remake/`下任何原始碼或
+campaign資產檔案。
+
+**產出**:本文件本節(續八十)。5張存證截圖已存入`docs/figures/`
+(`ch27-postbattle-13person-gather-room.png`、`ch27-postbattle-card-laiting-backdrop.png`、
+`ch27-postbattle-card-yuni-backdrop.png`、
+`ch27-postbattle-card-dragonrider-backdrop-partial.png`、
+`ch27-postbattle-card-dragonrider-backdrop-midrender.png`)。完整技術細節見doc35 §9.23,
+不在此重複。過程debug產物(Ghidra批次查詢JSON/結果)留存於Windows端`.wsl_build/`與
+scratchpad暫存目錄,不納入repo版控。

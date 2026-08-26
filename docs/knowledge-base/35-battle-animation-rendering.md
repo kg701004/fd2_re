@@ -3586,6 +3586,190 @@ out-complete.png`：小島完全消失，對白框顯示「啊！又..又消失�
    繪製機制）已經達成，不建議因為上述小尾巴再開新一輪「攻堅」，除非有具體、獨立的理由需要
    CG2/詩句的機制細節**。
 
+## 9.23 2026-08-27 續:把 §9.22 的 `BPPM` 記憶體寫入斷點技術套用到**戰後 party montage 角色回顧卡
+背景圖**(`91-worklist.md` 11 項 cluster 追蹤的真正目標)——**正面、定案**:找到 `FUN_0004e8d3`
+的一個此前從未記錄過的姊妹函式 `FUN_0004e98d`(RLE 解碼+三模式重著色),經由一個先前只在 §9.1/9.2
+順帶提過名字、從未反編譯過的小型 wrapper `FUN_0002eb9f`,被已知的 `0x524c6` phase-table carousel
+主控函式 `FUN_0002ff01`(及其呼叫的 `FUN_00030e9d`/`FUN_00031266`)呼叫——與 CG1 用的是**同一套
+底層渲染引擎**,只是走姊妹函式而非 `FUN_0004e8d3` 本身
+
+> 任務背景:與 §9.19-§9.22(ch27 戰前「轉送站」CG1 小島)不同,本節目標是 `91-worklist.md`
+> 追蹤的 `0x2bce5`/`native_2c548` 戰後(postbattle)party montage cluster 本身——doc58 續六十二
+> 已經證實這段內容經由「47 格死亡 signature + End Turn 確認」可以真正觸發戰鬥勝利、深入結局
+> montage(戰後對話→CG1→CG2→詩句捲動文字→逐角色回顧卡),且證實這段內容與 ch27 戰前的「轉送站」
+> 幻象共用完全相同的底層文字/CG。本節把 §9.22 剛驗證成功的 `BPPM` 記憶體寫入斷點技術,套用在
+> **角色回顧卡的背景圖**(worklist 描述的 FDOTHER#56 backdrop)上。
+
+### 9.23.1 環境與重現路徑:`tools/dosbox_harness.sh` 新隔離 instance(`montage1`),完整重演
+doc58 續六十二的「47 格死亡 signature + End Turn」捷徑,一次成功抵達 postbattle 轉場並推進到
+角色回顧卡畫面
+
+依 doc48 §8.4 recipe(`core=normal`+`cycles=5000`)啟動,等待片頭動畫完整跑到 START/LOAD/CONTINUE
+三選單畫面(screenshot 確認)才開始送鍵。LOAD→存檔格1(「第二十七章 命運的交會點」)→軍營
+`Right×3`→出口確認 YES→約 15 次 `Return` 推進戰前對白抵達戰場(`823 A+05 D+00` HUD fingerprint
+確認)。進 debugger,用 `SMV <base+k*0x50+5> 01` 對 `0x26DF88` 基底(stride `0x50`)的
+slot16~90(涵蓋全部 47 格已知敵方)批次寫入死亡旗標,逐一抽查 slot16(`0x26E488`)/slot62
+(`0x26F2E8`)確認 `+5=0x01` 落地成功、`+6=0x00`(敵方標記)與 doc58 續六十二記錄的 layout 完全
+吻合。`RUN` 恢復後單純按 `Escape` 開啟自由游標模式,一次按鍵後畫面**直接跳轉到 postbattle 勝利
+轉場**(13 人隊伍圍站藍色房間場景,`docs/figures/ch27-postbattle-13person-gather-room.png`)——
+比續六十二/續七十九記錄的「移動游標+開單位小卡+Down/Down/Left/Left」序列更簡短就達成同樣效果,
+可能是本次死亡 signature 涵蓋範圍(slot16-90,比續六十二的 slot16-62 略寬)或本輪 UI 操作時序
+差異所致,未進一步定案根因,不影響本輪核心目標。
+
+連續 `Return` 推進戰後對話(索爾/悠妮對話→告白→挽留→控制台指令序列→訣別→傳送特效),依序經過
+CG1(懸浮天空島嶼,「看!是..是黃金城!」)、CG2(索爾與獨眼重甲巨人對峙)、七言/白話詩句捲動文字
+(「在往日的回憶中,在未來的歲月裏……」),抵達第一張角色回顧卡:**萊汀**(職業:騎士,
+`docs/figures/ch27-postbattle-card-laiting-backdrop.png`)——版面與 doc58 續六十二記錄逐字
+吻合(左側 portrait 框+姓名/職業欄位+2 段劇情後日談文字,右側全身 FIGANI 立繪+雲霧背景,
+左下角固定「FLAME DRAGON KNIGHTS 2」黃色 logo)。這段對白途中一度自動連續推進(未持續送
+`Return` 也自行前進),直接跳到**悠妮**卡(職業:召喚師,`docs/figures/
+ch27-postbattle-card-yuni-backdrop.png`),再繼續自動推進到**第三張、本篇任務系列從未記錄過的
+新角色卡**——背景是一位持劍騎在藍灰色雙翼飛龍上的角色,構圖與前兩張的「靜態雲霧背景」不同,是
+一張獨立、更具動態感的插畫(`docs/figures/ch27-postbattle-card-dragonrider-backdrop-midrender.png`,
+本輪捕捉到的是**斷點暫停時的中途渲染狀態**,可見左上角一塊尚未上色的紅色/米色/藍色幾何色塊,
+是背景圖逐 byte RLE 解碼過程中被 debugger 暫停的真實中間狀態,不是渲染錯誤)。**這證實每位角色
+回顧卡的背景圖是各自獨立、逐角色不同的插畫資產,不是共用的通用「雲霧背景」模板**——萊汀/悠妮
+兩張背景外觀相似(都是灰階雲霧)只是巧合或風格延續,不是同一份寫死資源。
+
+### 9.23.2 定位背景圖 VGA/work buffer 位址:延續 §9.22.1 的方法,`D 0178:A0AAA` 一列逐 byte
+核對灰階雲霧漸層(`0x60-0x64` 索引值範圍),確認落點正是螢幕上背景區
+
+萊汀卡完整顯示時 `Alt+Pause` 進 debugger,`D 0178:A0AAA`(對應螢幕座標 native x=170,y=8,
+換算自截圖量測的卡片版面:右側背景區約在 screen x∈[535,830]/y∈[215,410],2x 縮放,viewport
+原點 screen(192,215))讀出 `64 63 63 63...62 62 62 62 61 61 61 61 60 60...`——連續的
+`0x60-0x64` 灰階漸層,與畫面上該處的雲霧背景色澤精確對應,證實這個 VGA 位址範圍確實是背景圖
+內容,不是文字/portrait 框的像素。本輪 VGA framebuffer 讀取全程正常(與 §9.22.1 記錄一致,
+未重現 §9.19.6 的「讀零」限制)。
+
+### 9.23.3 第一層 `BPPM`(VGA `0xA0AAA`/`0xA0ABA`/`0xA0ADA` 三點):命中的是已知的**通用
+present() 逐列 memcpy**(`FUN_0003771c`,doc35 §9.20.6 已記錄的通用 memmove/memcpy),
+呼叫端是已知的 present() 原語(`FUN_00011eb0`,native `0x11eb0`)——這一層只是「work buffer
+內容被複製進 VGA」,不是內容本身的產生點
+
+對三個 VGA 位址下 `BPPM`,依 §9.22.5 記錄的「首次觸發是 baseline=0 假陽性」陷阱各消化一次
+`RUN` 後,真正命中的 `EIP` 落在 `0x1D3761`(`repe movsd`/`repe movsb` 組合,經
+`tools/ghidra_batch_probe.py` `function_bounds` 查詢確認是 `FUN_0003771c`,native
+`0x3771c-0x3776d`,82 bytes,decompile 產出教科書等級的 `memcpy`/`memmove` 混合實作)。連續
+命中顯示這段位址先被清零(`64/61→00`,大範圍 unrolled zero-store 迴圈,另一個獨立的通用清
+buffer 原語,native `0x3e0b9` 附近,本輪未深究其確切函式邊界)再被重新寫入非零內容——這正是
+「每幀清空 work buffer→重繪內容→present 到 VGA」的標準流程,與 doc35 §10.1 記錄的
+「BG→work、work→VGA 兩段都走同一個無縮放 memcpy」完全吻合。用 `D SS:ESP` 讀 `FUN_0003771c`
+呼叫瞬間的返回位址,反查出呼叫端是 `0x11ed4`(native)——即 doc35 §10.1 已知的 present() 原語
+`FUN_00011eb0`(decompile:`FUN_0003702f(); for(...) FUN_0003771c();`,一個逐列迴圈,116 個
+呼叫端,是全域共用的「複製 N 列」通用原語,不是 montage 專屬)。**這一層排除了「VGA 寫入本身」
+作為目標**,確認要往更上游(work buffer 的內容來源)追。
+
+### 9.23.4 第二層 `BPPM`(work buffer 對應位址 `0x3E5BEA`/`0x3E5BFA`/`0x3E5C1C`,依 present()
+呼叫瞬間 `EAX`(dest 列首)+screen-row 偏移量反推而得):**決定性命中**——`EIP` 落在一個此前
+從未記錄過的 `FUN_0004e8d3` 姊妹函式 `FUN_0004e98d` 內部,呼叫端追溯到已知的 `0x524c6`
+phase-table carousel 引擎
+
+同樣消化 baseline 假陽性後,真正命中兩次:`EIP=0x1EAA23`(native `0x4EA23`)與
+`EIP=0x1EA9F7`(native `0x4E9F7`),`Register Overview` 顯示 `ESI`(src)指向一個全新來源緩衝區
+(`0x2F8AC8`/`0x4920AE` 一帶,與 work buffer/VGA 都不同),`EDI`(dest)緊鄰兩個 BPPM 目標位址。
+`tools/ghidra_batch_probe.py` 的 `function_bounds` 查詢確認這兩個位址**不在** §9.22 已定案的
+`FUN_0004e8d3`(native `0x4e8d3-0x4e98c`)範圍內,而是落在**緊接其後、此前從未有任何文件提及**
+的一個姊妹函式:
+
+```
+FUN_0004e98d  native 0x4e98d-0x4eb47(443 bytes)
+```
+
+完整 decompile 顯示,這是與 `FUN_0004e8d3` 共用同一套控制碼驅動 RLE 解碼骨架(同一個
+`DAT_000627b4`/`DAT_000627b6` width/height pair、同一種「最高位元決定 run/literal、次高位元
+決定单/雙倍寫入」的控制碼判讀邏輯)的**三模式重著色引擎**,依呼叫端傳入的 `param_6` 選擇行為:
+
+- `param_6 == 0xFFFFFFFF`:原樣寫入(無重著色,等同透明複製)。
+- `param_6 > 0xFF`(拆成 `cVar7`/`cVar9` 兩個 byte):每個輸出像素做
+  `(原始byte + cVar9 & 7) + cVar7` 的**循環色相偏移**(疑似彩虹/律動特效用)。
+- `param_6 <= 0xFF`:整段輸出**固定填成單一顏色**(`(byte)(iVar2>>8)`,一種可逐 tick 更新的
+  純色淡入/淡出填充)。
+
+對照 `FUN_0004e8d3` 的「`param_6` 當 LUT 表基底、逐 byte 查表重映射」設計,`FUN_0004e98d`
+是同一個引擎家族**更泛用的版本**——`FUN_0004e8d3` 只做「任意調色盤重映射」,`FUN_0004e98d`
+額外支援「原樣複製」「色相輪轉」「純色填充」三種模式,同一份壓縮資料可以透過切換 `param_6`
+的值域(而非只是切換 LUT 表內容)做出更多樣的淡入/淡出/特效變化。
+
+**呼叫鏈**(`call_scan` 窮舉,`FUN_0004e98d` 全 exe 39 個呼叫端,但關鍵的一個此前完全沒有
+文件記錄的環節如下):
+
+```
+FUN_0002ff01(8 個呼叫點:0x303b0/0x30425/0x30580/0x3062b/0x30aa8/0x30b0a/0x30b20/0x30bfa/0x30cd3)
+FUN_00030e9d(3 個呼叫點:0x3103d/0x31055/0x311b3)          } 全部呼叫
+FUN_00031266(4 個呼叫點:0x312f7/0x31317/0x31404/0x31424)  }   ↓
+                                                    FUN_0002eb9f(native 0x2eb9f-0x2ebe0,66 bytes)
+                                                    decompile:
+                                                      FUN_0003702f();   // 清/staging(通用)
+                                                      FUN_0004e98d();   // 本節新發現的 RLE+重著色引擎
+```
+
+`FUN_0002eb9f` 本身此前只在 §9.1/§9.2 被順帶提及過名字(「到門檻時呼叫
+`FUN_0002eb9f`/`FUN_00025a96`/`FUN_00025b45`,疑似 present/SFX cue」),**從未被完整反編譯過**
+——本輪首次確認它是一個 2 行、66 bytes 的極小 wrapper:先呼叫已知的清/staging 原語
+`FUN_0003702f`,再呼叫本節新發現的 `FUN_0004e98d`。live 讀出的實際呼叫位址(`D SS:ESP` 返回
+位址反查,`python3 -c` 核算,不手動心算 hex 加法)是 `native 0x2ebd7`,精確落在 `FUN_0002eb9f`
+函式體(`0x2eb9f-0x2ebe0`)內部、緊鄰 `call_scan` 靜態掃描到的同一個呼叫點——兩種方法(live 反查
+與靜態窮舉)完全吻合。
+
+**`FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266` 三者都不是新函式**——`FUN_0002ff01` 正是
+doc35 §9.13 已定位的 `0x524c6` phase-table carousel **主控引擎**本體(§9.22 已證實它同時
+驅動 CG1 的 `FUN_0004e8d3`);`FUN_00030e9d` 是 §9.22.8 已知的、被 `FUN_0002ff01` 呼叫的
+輔助函式;`FUN_00031266` 是 §9.13.3 已完整反編譯的「9-tick 轉場助手」。**這代表本節發現的
+角色回顧卡背景圖渲染機制,與 §9.22 定案的 CG1 懸浮小島渲染機制,是同一套 `0x524c6`
+phase-table carousel 引擎的兩種不同輸出——CG1 走 `FUN_0004e8d3`(LUT 任意重映射),角色卡
+背景圖走 `FUN_0004e98d`(三模式重著色,經 `FUN_0002eb9f` 這個此前未反編譯的小 wrapper 間接
+呼叫)**,而不是兩套互不相關的機制。
+
+### 9.23.5 像素/視覺交叉核對:命中瞬間寫入的值落在畫面實際灰階雲霧範圍內,且第三張(飛龍騎士)
+卡片捕捉到「中途渲染」畫面提供額外的獨立視覺證據
+
+第一次真正命中(`0x3E5BEA`,`00→0x63`)——`0x63` 正落在 §9.23.2 讀出的 `0x60-0x64` 灰階雲霧
+索引範圍內,與畫面上該處的實際色澤吻合。第二次命中(`0x3E5BFA`,`00→0xC0`)數值不在最終灰階
+範圍內,但由於此時遊戲已自動推進到第三張(飛龍騎士)卡片、且該卡片背景本身包含大片非灰階的
+彩色幾何區塊(紅色/米色/藍色,見 `docs/figures/ch27-postbattle-card-dragonrider-backdrop-
+midrender.png`),`0xC0` 更可能對應該畫面局部的不同色階,而非灰階雲霧——本輪未針對第三張卡片
+的實際調色盤逐一核對這個具體數值,誠實列為未完全查清的細節,但不影響核心結論(function 本身
+與呼叫鏈已用 `function_bounds`/`call_scan`/live `EIP` 三重交叉核對)。中途渲染截圖本身(可見
+未完成的幾何色塊)獨立佐證了「這張卡片背景是逐 byte RLE 解碼、非一次性 blit」的機制判斷,與
+`FUN_0004e98d` 的逐 byte 控制碼解碼迴圈結構完全對應。
+
+### 9.23.6 誠實整體結論
+
+1. **角色回顧卡背景圖的渲染機制已定位、已用 live `BPPM` 記憶體寫入斷點直接證實**:
+   `FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`(已知的 `0x524c6` phase-table carousel 引擎
+   三個成員)→`FUN_0002eb9f`(本輪首次完整反編譯的小 wrapper)→`FUN_0004e98d`(本輪首次發現
+   的 `FUN_0004e8d3` 姊妹函式,RLE 解碼+三模式重著色)→work buffer→(既有的 present()
+   `FUN_00011eb0`/`FUN_0003771c`)→VGA。**誠實信心等級:高**——live 斷點兩層(VGA 層、work
+   buffer 層)分別精確命中,`function_bounds`/`decompile`/`call_scan` 三重靜態交叉核對,
+   加上一張獨立的「中途渲染」截圖佐證解碼機制,四條證據線一致。
+2. **這與 §9.22 定案的 CG1 機制是同一套引擎、不同輸出分支**——不是另一套獨立系統。`91-
+   worklist.md` 追蹤的 `0x2bce5`/`native_2c548` 舊位址,doc35 §9.1-9.14 已經用三種獨立靜態
+   方法確認在目前 `FD2Analysis3` project 裡不是任何有效指令/資料邊界(很可能是版本不同的
+   IDA/Capstone 分析結果、或轉錄誤差,見 §9.12 的完整勘誤鏈)——本節**不是**在那些舊位址上
+   重新確認出内容,而是用完全獨立的方法論(live 記憶體寫入斷點)重新找到**同一個功能性問題
+   的真正答案**:角色回顧卡背景圖是資料驅動地由已知的 `0x524c6` phase-table carousel
+   引擎渲染,不需要一個獨立的「ending renderer」入口。
+3. **本輪的技術新增**(相對 §9.22):(a) 發現 `FUN_0004e8d3` 有一個此前 20+ 輪都沒人找到的
+   姊妹函式 `FUN_0004e98d`(RLE 解碼+三模式重著色,比 `FUN_0004e8d3` 的純 LUT 重映射更泛用);
+   (b) 完整反編譯了此前只聞其名的 `FUN_0002eb9f`(2 行 wrapper);(c) 用 live 反查(`D SS:ESP`
+   返回位址)與靜態 `call_scan` 兩種獨立方法交叉確認同一個呼叫點(native `0x2ebd7`),互相印證;
+   (d) 首次記錄「47 格死亡 signature 批次寫入後單純按一次 `Escape` 就直接觸發 postbattle
+   轉場」這個比續六十二/續七十九記錄的操作序列更短的路徑(未定案根因,見 §9.23.1)。
+4. **未完全查清的部分(誠實列出)**:(a) 沒有窮舉 `FUN_0002ff01`/`FUN_00030e9d`/`FUN_00031266`
+   共 15 個呼叫 `FUN_0002eb9f` 的呼叫點裡,究竟是哪一個(或哪幾個)對應本輪 live 命中的這兩幀,
+   只確認了「屬於這 15 個裡的其中之一,不是憑空冒出的新呼叫端」;(b) 沒有 dump 第三張(飛龍
+   騎士)卡片背景圖的完整原始 RLE 資料流做逐 byte 解碼還原成圖片(如 §9.19.3 對角色卡 80×80
+   小圖那樣的完整格式驗證),`0xC0` 這個數值本輪未對應到明確的畫面內容;(c) FIGANI 立繪本體
+   (角色全身像)與 portrait 框(左上角小頭像)的繪製機制本輪**未觸及**,只確認了背景圖層;
+   (d) `91-worklist.md` 11 個項目提到的 FIGANI/DATO 具體資源索引、dialogue-frame grid、
+   mirror/non-mirror figure fade、input-skip handling,本輪**均未逐項查證**,只解決了
+   backdrop 渲染機制本身這一項。
+5. **對下一輪的建議**(非必要,核心目標已達成):若要完整關閉整個 cluster,下一輪可以(a) 對
+   `FUN_0002eb9f` 的 15 個呼叫點逐一加 live 斷點,配合 `param_2`(phase-table index)區分
+   CG1/CG2/角色卡三種情境分別對應哪些呼叫點;(b) 對 FIGANI 立繪與 portrait 框套用同一套
+   「VGA 層 BPPM→work buffer 層 BPPM→function_bounds/decompile/call_scan 三重核對」方法論,
+   預期同樣會收斂到 `0x524c6` carousel 引擎家族內的某個成員。
+
 ## 10. 視窗縮放 filter 查證(worklist 稽核索引「660」——原版全程無任何顯示縮放/內插程式碼)(2026-08-24)
 
 > 任務:worklist 稽核索引曾列「視窗縮放filter查證(可能linear暈染)未見他doc解決,可續靜態code
