@@ -547,3 +547,21 @@ GUI 選單列(即使非全螢幕),讓視窗永遠比原生解析度大;純截圖
 crop/resize+統計)沒抓到的小範圍 remake compositor 差異。完整設計、踩坑記錄、已知限制見
 `docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff
 harness」一節,對應 `docs/knowledge-base/91-worklist.md` 的 UI-VIS-DIFF-HARNESS 項目。
+
+## 12. 全章節結構性掃描(`tools/fd2_chapter_sweep.py`,2026-08-27)
+
+對應 `docs/knowledge-base/91-worklist.md` M5「正常玩法可達性驗證」項目:把 §9 的
+`tools/dosbox_harness.sh`(啟動/截圖/送鍵/debugger console)、`tools/fd2save.py`
+(章節跳轉 patch/合成 roster)、以及§10 記錄過的`native+0x19C000=live`位址換算慣例
+組合成一支逐章跑、失敗不中斷整批的自動化掃描工具——對每個章節 N:chapter-jump patch
+存檔→LOAD→讀`DAT_00053a45`(live`0x1EFA45`)判斷是否在戰鬥中→若是則掃描 unit record
+陣列寫入敵方死亡 signature+送出續六十二證實過的 End-Turn→YES 捷徑,若否則用通用
+bounded 按鍵迴圈嘗試推進→讀回存檔章節 byte 是否前進作為主要 pass 訊號。
+
+2026-08-27 對 ch02/ch27 的驗證:harness 層(launch/screenshot/debugger-cmd/teardown)
+與戰鬥偵測的「陰性」判斷(正確認出「不在戰鬥中」,從未誤判)都乾淨驗證通過,但**通用
+導航仍無法在合理步數預算內走到 ch27 的戰場**——這忠實反映了本篇§8.4 已知的專案級開放
+問題(doc58 續五十七到續六十三記錄過解出 ch27 一個章節的 reach 序列本身就花了多輪人工
+即時試錯,且同一存檔在不同 session 觀察到至少兩種不同 UI 型態)。完整驗證記錄、已知限制、
+下一輪建議見`docs/knowledge-base/98-tooling-infrastructure.md`「全章節結構性掃描」一節;
+掃描結果見`docs/knowledge-base/99-chapter-sweep-results.md`。

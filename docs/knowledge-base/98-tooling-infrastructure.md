@@ -557,3 +557,112 @@ DOSBox-X 擷取端本身的變異,與 remake/Go 端改動無關(本輪測試時 
 GUARANTEES`/`WHAT THIS TOOL DOES NOT GUARANTEE`兩節)與相關函式的 docstring
 (`default_party_binding_for_chapter`/`lock_pulse_phase`/`reach_town_hub`),含完整驗證
 數字,不只在本文件重複一次。
+
+## 全章節結構性掃描(`tools/fd2_chapter_sweep.py`,2026-08-27)
+
+**目標**:`docs/knowledge-base/91-worklist.md` M5 的「正常玩法可達性驗證」項目(30 章
+全破關鏈需要人類完整遊玩才能判斷)一直是`[ ]`完全未動工。這支工具把「每章的戰鬥/劇情
+內容是否存在且能在引擎層面正常運作(不崩潰/不卡死/能轉場)」這件事包成可重複呼叫、
+逐章跑、失敗不中斷整批的自動化掃描,把「有沒有人整套玩過」從「需要人類手動玩 30 章」
+降級成「機器結構性掃過,異常交給人類複查」。
+
+**架構**(Windows 端 python,呼叫模式與`tools/dosbox_diff_harness.py`一致——`wsl_run()`/
+`sh()`/`to_wsl_path()`同一套 subprocess 包裝,呼叫的是`tools/dosbox_harness.sh`而非
+diff harness 的姊妹腳本,因為這支工具不需要 byte-exact 320×200 擷取,只需要能看、能送鍵、
+能進 debugger 讀寫記憶體):
+
+1. `prepare_chapter_save()`——複製一份真實 FD2.SAV,用既有`tools/fd2save.py`的
+   `set_slot_chapter()`把 slot0 章節 byte patch 成目標章節,並用`estimate_roster_size()`
+   (數`docs/data/chapter_beats/ch{01..N-1}_post.json`裡`op=="join"`的 beat 累積數,
+   跟前一輪人工推導 ch11-22/23-29 名冊成長規模用的方法完全同源)決定要不要用既有
+   `append_roster_members()`補足合成隊員,`--no-roster-pad`可關閉(驗證已知存檔如
+   ch27 時應該關閉,見下)。
+2. 開一個獨立`dosbox_harness.sh` instance,把 patch 過的存檔複寫進其 workdir 的
+   FD2.SAV(遊戲只在玩家真的選 LOAD 那一刻才讀檔,啟動後任何時間覆寫都安全)。
+3. Escape 跳過開場動畫、Down+Enter 選 LOAD、Enter 選存檔位。
+4. **戰鬥偵測是讀記憶體,不是看畫面**——讀`DAT_00053a45`(戰鬥單位陣列基底指標,已驗證
+   即時線性位址`0x1EFA45`,selector`0178`,見`docs/knowledge-base/58-remake-live-
+   verification-log.md`多輪`native+0x19C000=live`delta 推導與交叉確認)的值,落在合理
+   heap 位址範圍內視為「目前在戰鬥中」,否則視為「劇情/城鎮/其他節點」。這是工程層面的
+   結構性訊號,不是像素判讀,符合本任務「檢查引擎層結構完整性,不是模擬人類判斷畫面」的
+   定位。
+5. **戰鬥中**:掃描`0x50`-byte stride 的 unit record 陣列(逐格讀`+6`camp byte,
+   2=我方/0=敵方,續六十二/續六十三已證實),對每個敵方 slot 寫入死亡 signature
+   (`+5=0x01`,**不是**我方的`Acted`旗標值`0x80`,兩者刻意分開,不會誤寫我方 record),
+   接著送出續六十二證實過的 End-Turn→YES 捷徑(`Enter`開指令環→`Down`選 END→`Enter`
+   確認→`Enter`確認「結束本回合？」)。
+6. **非戰鬥**:落回一個通用、無章節專屬知識的`advance_generic()`bounded 迴圈(單發
+   Enter/Escape/方向鍵輪替,每步截圖+做戰鬥指標檢查,偵測連續同雜湊畫面視為 stall)。
+   `KNOWN_NAVIGATE_HINTS`允許對個別章節掛一段已知按鍵提示(目前只有 ch27,來自續五十七/
+   五十八/六十二記錄的兩種變體嘗試),但**這是本工具驗證過程中最弱的一環**,見下。
+7. **主要 verdict 訊號是讀回存檔,不是猜畫面**:全程跑完後把 harness workdir 的
+   FD2.SAV 複製回來、解碼、比對 slot0 章節 byte 是否比 patch 進去的值更高——原生 autosave
+   把章節 byte 往前推,是這個專案從續二十三/二十四起一路採信的「乾淨轉場」ground truth,
+   遠比嘗試辨識未知章節的轉場畫面可靠。
+8. 不論成功與否都會截圖存證、把每章的完整過程 log 寫入`result.json`、並且**保證呼叫自己
+   instance 的`teardown`**(`try/finally`包住整段核心邏輯,單章丟例外不會讓實例卡著或讓
+   整批中斷)。
+
+**2026-08-27 Phase 1 驗證(ch27/ch02,誠實記錄,包含一個未解的已知限制)**:
+
+- **基礎設施面(harness 層)驗證乾淨**:對 ch27 連續跑了 3 輪(含 2 輪調整導航策略後重測)
+  +獨立手動 probe 2 輪,ch02 跑 1 輪,共 5 次 launch/teardown 循環,每次`ps aux`/
+  `tmux -L fd2harness ls`/`tmux ls`(default socket)都確認乾淨——沒有殘留 dosbox-x、
+  Xvfb、或 tmux server,doc48 §8.4 canonical `dbg` session(本輪未使用但同時檢查)全程
+  未被碰過。全程沒有任何一次腳本崩潰或未捕捉例外,每次都正確落到`result.json`並清楚寫出
+  verdict/detail/log。
+- **戰鬥偵測機制的「陰性」訊號驗證正確**:ch02(真的沒有戰鬥可觸發)與 ch27 的多次嘗試裡,
+  `read_battle_array_base()`全程正確回報「不在戰鬥中」,從未在真正的城鎮/營帳畫面上誤判
+  成戰鬥——這是這個機制在真實資料上的第一次正面驗證(先前只在文件記錄的位址推導上驗證過)。
+- **章節跳轉與 roster 估算邏輯驗證正確**:`prepare_chapter_save()`對 ch02(估算 2 人,
+  源存檔已有 13 人,不補)與 ch27(`--no-roster-pad`關閉時估算 23 人,`--no-roster-pad`
+  開啟時保留源存檔的 13 人)都產生預期的行為;round-trip 自檢(`fd2save.decode`)全程通過。
+  這裡有一個本工具自己發現、值得記住的細節:機器上唯一的真實存檔(md5
+  `e6d9a35756cddfc2519969b10f039181`)slot0 本來就已經是 ch27 raw chapter byte
+  (`0x1a`),所以對 ch27 的驗證其實是拿續五十七到續六十三**同一份、位元組不變**的存檔在測,
+  不是另一份「看起來像」的存檔——這讓 ch27 的驗證比預期更貼近既有 live 紀錄的基準線。
+- **誠實的未解限制:通用 advance_generic 導航無法在本輪的步數/嘗試預算內走到 ch27 的戰場**。
+  ch27 這次連續 3 輪(含 1 輪改良版本、1 輪掛 ch27 專屬`KNOWN_NAVIGATE_HINTS`)+2 輪
+  獨立手動互動式 probe(共約 30+ 次即時方向鍵嘗試,含系統性嘗試四個角落與圍籬沿線)都停在
+  post-load 的「可行走營帳地圖」節點,從未觸發doc58續五十九描述的「圍籬缺口→出口→YES」
+  轉場。**這不是本工具獨有的缺陷**——doc58 續五十七到續六十三記錄了這個專案自己過去要
+  解出 ch27 這一個章節的可靠 reach 序列,花了跨越多輪、由人類即時操作+反覆試錯才成功
+  (且續五十九明確記載同一套存檔在不同 session 呈現過至少兩種不同 UI 型態:icon 選單 vs.
+  可行走地圖,沒有已知的判別方式能事先預測會拿到哪一種)。本工具忠實反映了這個已知的
+  專案級開放問題,而不是掩蓋或假裝解決——`verdict=needs_manual_followup`是正確、誠實的
+  輸出,不是一個 false pass。
+- **有意義的旁證發現**:ch02 與 ch27 的 post-load 營帳地圖畫面(截圖)**逐像素肉眼比對
+  完全相同**(同一套帳篷佈局、同一組 4 個商店熱點:酒店/道具店/武器店/教會),證實這是
+  全遊戲共用的通用「營帳」場景樣板,不是各章節各自的美術——這代表**解開任一章節的「走到
+  圍籬缺口」座標,理論上能立刻套用到所有使用同一樣板的其他章節**,是下一輪如果要優先攻堅
+  導航問題時最值得投資的單點(本輪已用完合理的即時互動式試錯預算,留給下一輪用更有系統的
+  方法,例如反組譯地圖 collision/exit-trigger 表,而不是繼續盲目試方向鍵)。
+
+**戰鬥處理核心邏輯的驗證方式**:由於上述導航限制,無法在本輪端到端觸發一次真正的戰鬥掃描/
+mass-kill/End-Turn 呼叫鏈並觀察其效果。這部分改用**靜態核對**驗證——`BATTLE_ARRAY_PTR_LIVE`
+(`0x1EFA45`)、`UNIT_STRIDE`(`0x50`)、`UNIT_CAMP_OFFSET`(`+6`)、`UNIT_ACTED_OFFSET`
+(`+5`)、死亡 signature 值(`0x01`,與我方`Acted`旗標`0x80`刻意分開)、End-Turn 按鍵序列
+(`Enter→Down→Enter→Enter`)全部逐一比對`docs/knowledge-base/58-remake-live-verification-
+log.md`續六十二/續六十三的原始記錄,確認是逐字抄錄既有已用真實勝利驗證過的數值,不是重新
+猜測——但**這個核對本身不是新的 live 證據**,下一輪一旦解出通用/ch27 專屬的可靠 reach 序列,
+應該優先重跑一次端到端驗證取得真正的 live 交叉核對,而不是繼續信賴這次的靜態核對。
+
+**已知限制(誠實列出)**:
+1. `advance_generic()`與`KNOWN_NAVIGATE_HINTS`對絕大多數(28/30)章節完全沒有專屬知識,
+   預期會大量產生`needs_manual_followup`,而不是`pass`——這忠實反映「這個專案自己都還沒
+   解出可靠通用 reach 序列」的現況,見上。
+2. 戰鬥偵測與死亡 signature/enemy scan 只在 ch27 一個章節被 live 驗證過(續六十二/
+   六十三),本工具假設同一份`DAT_00053a45`陣列與`+5`/`+6` layout 對所有章節的戰鬥通用,
+   這個假設**尚未跨章節交叉驗證**——如果某章戰鬥用不同陣列/layout,最壞情況是
+   `scan_enemy_slots`回傳 0 筆(因為讀到的 camp byte 不符合預期的`2`/`0`兩值),會誠實
+   標成 anomaly,不會靜默寫壞不相關的記憶體(寫入動作只作用在自己讀到`camp==0`的位址)。
+3. 合成 roster 補位(`append_roster_members`)不跑 Go 端的裝備 recalc 尾段(見
+   `tools/fd2save.py`模組 docstring),補位單位的裝備戰鬥數值不準確;本輪只在離線邏輯
+   測試過,未在真正補位過的存檔上做過 live 驗證。
+4. 主要 pass 訊號(章節 byte 是否前進)依賴原生 autosave 在本工具的執行時間窗口內真的落地
+   ——如果某章節的 autosave 在結局 montage 播完才寫入(續六十二記錄過montage可以很長),
+   本工具目前的截止時間可能在 autosave 之前就結束,產生「戰鬥其實打贏了但章節 byte 沒動」
+   的`anomaly`而非`pass`,這是已知、故意保守(寧可誤判 anomaly 也不要誤判 pass)的行為。
+
+用法、CLI 參數、完整 docstring 見`tools/fd2_chapter_sweep.py`檔頭;Phase 2 掃描結果見
+`docs/knowledge-base/99-chapter-sweep-results.md`。
