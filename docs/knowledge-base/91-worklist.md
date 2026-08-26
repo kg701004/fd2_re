@@ -2932,3 +2932,12 @@
   `0x2e2b0`攻擊orchestrator命中、目標HP `15→0`、Sor `record[+5]`
   `0x00→0x80`，見doc58 續五十三)；本項要解的是「為何真實UI的Enter/Space
   確認移動會間歇性失效」本身，不是攻擊邏輯，也不是這個存檔/章節專屬的問題。
+  **doc58 續七十一(2026-08-26)**：嘗試改用`ydotool`(Linux `uinput`注入，
+  機制上與`xdotool`的`XTestFakeKeyEvent`完全不同，繞開續五十五指認的
+  Xvfb候選成因)重測掉鍵率，但**在安裝步驟就被permission卡死**——`ydotool`
+  未安裝，`ydotoold`daemon要開的`/dev/uinput`是`600 root root`，環境沒有
+  passwordless sudo也沒有既有udev規則放寬，AI代理依安全規範不得代為輸入
+  使用者密碼，本輪**沒有取得任何ydotool按鍵可靠度數據**（誠實記錄為未完成，
+  不是「ydotool測試後無效」的陰性結果）。需要使用者本人手動執行
+  `sudo apt-get install -y ydotool`+啟動`ydotoold`後，下一輪才能真正開始
+  20-30次量化測試。

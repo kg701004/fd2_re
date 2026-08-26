@@ -7480,3 +7480,108 @@ box，精確對應懸浮小島本身的位置，天空/雲朵/太陽等背景其
 `docs/figures/ch27-prebattle-cg1-island-crop-{visible,gone}.png`。這把「CG1 是單一個需要找到
 的呼叫點」這個原始問題框架，訂正成「天空背景與懸浮小島是兩個獨立資源，需要分開查證」——完整
 技術細節、bbox 數字、下一輪建議見 doc35 §9.19.5（已更新）與 §9.19.9（已更新）。
+
+## 續七十一:嘗試用`ydotool`(Linux `uinput`注入,繞過續五十五指認的Xvfb
+`XTestFakeKeyEvent`候選機制)重測`REAL-UI-MOVE-CONFIRM-ENTER-SPACE-INTERMITTENT-INPUT-DROP`
+——**在安裝/daemon設定這一步就被環境權限卡死,未能取得任何按鍵可靠度數據,誠實記錄為
+未完成而非負面結果**(2026-08-26)
+
+**任務背景**:續五十五窮盡搜尋後,唯一找到的具體候選(Xvfb `XTestFakeKeyEvent`已知不可靠)
+在live測試裡被證偽(拉長延遲/清除modifier對本症狀無效)。本輪任務要求換一條**機制本身
+不同**的路線——`ydotool`透過Linux kernel `uinput`虛擬輸入裝置注入,從Xvfb角度看等同一個
+真實實體鍵盤,完全繞開`XTestFakeKeyEvent`這條X11 extension路徑,若能取得夠大樣本(目標
+20-30次獨立Enter/Space按壓,比照續四十四`cycles`量化測試與doc48§8.3的850次規模)且掉鍵率
+明顯低於`xdotool`已知的間歇性基準,即可視為找到修法;若掉鍵率相同,則是有價值的反向證據
+(暗示bug不在X11注入層,而在DOSBox-X自己的SDL2事件佇列或更深層)。
+
+### 1. 環境檢查:`ydotool`未安裝,且`/dev/uinput`權限與`sudo`設定組合起來讓標準安裝流程
+在**不輸入使用者密碼**的前提下走不通
+
+依doc48§8的WSL2-native環境(`wsl -d Ubuntu`,Ubuntu 24.04.4 LTS)逐項核對:
+
+```
+$ which ydotool ydotoold          # 均查無結果,未安裝
+$ apt-cache policy ydotool
+  Candidate: 0.1.8-3build1(noble/universe,已在官方套件庫,不需要額外PPA或原始碼編譯)
+$ sudo -n true
+  sudo: a password is required     # 沒有passwordless sudo
+$ sudo -n -l
+  sudo: a password is required     # 連「查詢自己有哪些NOPASSWD權限」都需要密碼,排除
+                                    # 「只是沒設NOPASSWD但有其他免密管道」的可能性
+$ ls -la /etc/sudoers.d/           # 只有唯讀的官方README,沒有任何自訂NOPASSWD規則檔
+$ stat -c "%a %U %G" /dev/uinput
+  600 root root                    # 只有root可讀寫,沒有group-writable或既有udev規則放寬
+$ getent group input                # gid 995存在但目前沒有任何成員(含目前使用者)
+$ id                                 # 目前使用者屬於sudo群組(有終端sudo資格)但不在input群組
+$ systemctl status ydotool.service  # 查無此unit,沒有既有殘留設定可以沿用
+```
+
+**結論(邏輯鏈)**:`ydotool`套件安裝(`apt-get install`)需要root;即使改用「不裝套件、
+只跑靜態編譯的`ydotoold`二進位」這條路,`ydotoold`daemon本身要開`/dev/uinput`
+(`crw------- root root`)一樣需要root權限,沒有任何既有udev規則、`input`群組成員資格或
+NOPASSWD sudo規則可以繞過——**這兩步都卡在同一個「需要使用者親自輸入sudo密碼」的關卡**。
+依專案安全規範(密碼類憑證一律不得由AI代為輸入,即使被要求或看似被授權),本輪**沒有**嘗試
+猜測、詢問或以任何形式取得使用者密碼,也沒有嘗試繞過權限檢查(如尋找其他可寫的uinput-like
+裝置節點、或用非官方管道取得已有root權限的殘留daemon)。
+
+### 2. 為何沒有嘗試「不需要root的替代方案」
+
+有考慮過但排除的替代路線,誠實記錄排除理由:
+- **靜態編譯的`ydotool`client單獨使用**:`ydotool`是client-daemon架構,client本身送出的
+  是IPC訊息給`ydotoold`,不是直接寫`/dev/uinput`,沒有daemon,client完全無法運作,這條路線
+  不成立。
+- **用其他不需要root的uinput替代品**(如純Python `evdev`/`uinput`函式庫走使用者態):同樣
+  底層都要開`/dev/uinput`這個字元裝置節點,權限問題完全相同,不是繞過而是換皮。
+- **請使用者當場在對話中提供密碼讓本輪代為輸入**:直接違反安全規則清單裡的「Prohibited」
+  類別(不因使用者口頭同意而解除),本輪沒有這樣做,也不會這樣做。
+
+**唯一合法的解封路徑**:使用者自己在WSL2 Ubuntu終端機(非透過本輪自動化)手動執行以下三行
+（本輪只列出指令供使用者參考執行，不代為執行）：
+
+```bash
+sudo apt-get update && sudo apt-get install -y ydotool
+sudo ydotoold &                    # daemon以root身分持有uinput，client端不需要额外群組設定
+                                    # 若要背景常駐可改用 systemd --user 或 nohup，此處僅示範
+ydotool key 28:1 28:0              # 驗證：client端不需要sudo即可透過daemon送出一次Enter
+```
+
+（`ydotoold`以root啟動後會建立一個client可連的socket，一般client呼叫`ydotool`本身不需要
+額外sudo；若socket權限預設仍鎖給root，下一輪需要視實測情況追加`--socket-perm`或
+把目前使用者加入`input`群組後`newgrp`/重新登入生效，兩者皆超出本輪能自行驗證的範圍。）
+
+### 3. 誠實結論
+
+1. **本輪沒有取得任何`ydotool`按鍵可靠度數據**——不是「測了但沒有效果」的陰性結果，而是
+   **連第一次測試按鍵都沒有機會送出**，因為`ydotoold`daemon從未成功啟動。這與續五十五
+   「窮盡搜尋後測試候選、候選被證偽」的陰性結果性質不同，不應該被解讀成「ydotool不管用」
+   ——目前完全沒有證據支持或反對ydotool能否解決Enter/Space選擇性掉鍵。
+2. **這不是「這個環境沒有uinput子系統」或「WSL2不支援uinput」這類技術性限制**——
+   `/dev/uinput`裝置節點確實存在（`crw------- root root`），Linux kernel層面的uinput
+   支援是有的，卡住的純粹是**權限**（root-only裝置節點+沒有passwordless sudo+沒有既有
+   udev規則放寬），不是WSL2/Xvfb架構性地不支援這條注入路徑。這點值得記錄，因為如果下一輪
+   誤判成「WSL2環境不支援uinput」而放棄這條路線，會是不必要的悲觀。
+3. **任務指示的`38-...`/`58-...`文件更新**：本節（續七十一）記錄的是「環境設置被permission
+   卡住」，**不構成**對doc48§8.4 canonical recipe的任何修改依據——沒有新的按鍵可靠度證據
+   可以拿來訂正recipe的建議，doc48§8保持不動。`91-worklist.md`
+   `REAL-UI-MOVE-CONFIRM-ENTER-SPACE-INTERMITTENT-INPUT-DROP`項目狀態不變（仍是open，
+   根因仍未解），只在項目下方追加一行指向本節，避免下一輪重複踩同一個「以為沒試過ydotool」
+   的空。
+4. **給下一輪/使用者的具體行動項**：如果要繼續走`ydotool`這條線，需要使用者本人先在WSL2
+   終端機執行§2列出的兩行sudo指令（`apt-get install`+`ydotoold`啟動），完成後留言告知，
+   下一輪就能直接從「daemon已就緒」開始做§0任務描述裡要求的20-30次重複測試，不需要重新
+   走一次本節的權限盤點。
+
+### 4. 環境收尾
+
+本輪**沒有**啟動任何`dosbox-x`/`Xvfb`/`tmux`session（發現ydotool安裝卡住後，判斷在沒有
+可用注入機制的情況下啟動遊戲環境沒有意義，避免浪費一次不必要的WSL2 boot-shutdown週期）；
+偵測到WSL2裡已有一個非本輪啟動的`Xvfb :898`process（另一個並行session的殘留，依doc48§9
+的並行安全規範，**未**觸碰或`pkill`它）。`~/fd2-run/`目錄與`FD2.SAV`/`FD2.EXE`**均未**
+被本輪讀寫。沒有修改`remake/`下任何原始碼或campaign資產檔案。
+
+### 5. 產出
+
+本文件本節（續七十一）。`91-worklist.md`對應項目追加一行指向本節（見下一次commit）。
+本節誠信說明：任務要求「測試ydotool、量測掉鍵率」，實際執行結果是**連測試都沒能開始**，
+這是誠實的「未完成」而非包裝過的負面結果或正面結果——沒有在文件其他地方宣稱「已測試
+ydotool」或做任何暗示已完成量化測試的措辭。
