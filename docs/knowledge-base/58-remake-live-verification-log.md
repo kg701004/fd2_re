@@ -7760,3 +7760,199 @@ baseline/ydotool嘗試後/xdotool sanity/positive control共約10張,`A_baseline
 `dbtest_batch.sh``dbtest_teardown.sh`)同樣留在`.wsl_build/`。已同步更新
 `91-worklist.md`同一條目(見下一次commit)。`docs/knowledge-base/48-dosbox-x-
 debugger-build.md`§8經檢視後**未**修改(見§4結論第4點,沒有新的建議設置可以寫入)。
+
+## 續七十三:純資料檢索輪(國內外)——找到兩個此前從未被本專案檢查過的全新候選機制
+(SDL2 X11 XIM/`XFilterEvent`吃鍵路徑、`xdotool``--window`焦點分支決定
+`XTEST`/`XSendEvent`),但分別用環境檢查與本專案既有的「同一瞬間對照組」證據
+排除,根因依然未解;誠實記錄搜尋廣度與一項防禦性建議(2026-08-26)
+
+**任務背景**:接手續七十二「`ydotool`路線因Xvfb架構性不支援`uinput`熱插拔而
+不可行」的結論。本輪指定**純資料檢索**(國內外),只在找到具體可測候選時才輕量
+live驗證,目標是找續五十四/五十五未覆蓋過的新角度,不是重複「拉長延遲/換注入
+機制」這類已證偽的路線。
+
+### 1. 新候選A:SDL2自己的X11 XIM/`XFilterEvent`吃鍵路徑——環境檢查後判定
+目前不適用,但這是本專案第一次真正查過這一層
+
+續五十五讀過`dosbox-x`自己的`sdlmain.cpp`/`keyboard.cpp`,確認Linux路徑沒有
+對Enter/Space的差異化處理;但**從未讀過SDL2函式庫本身**(`SDL_x11events.c`)
+的XIM處理邏輯——這是DOSBox-X連結的外部函式庫,不是DOSBox-X自己的程式碼,續
+五十五的原始碼審查範圍沒有覆蓋到它。
+
+查`libsdl-org/SDL`原始碼(`src/video/x11/SDL_x11events.c`)與相關issue
+(`#6437`「Compose key keypress events aren't sent to IME under X11」)後
+確認:`X11_HandleKeyEvent()`裡有一段**只在`SDL_TextInputActive(window)`
+為真時才執行**的邏輯——`if (SDL_TextInputActive(...)) { if (X11_XFilterEvent
+(xevent, None)) { ...handled_by_ime = true; } }`。`XFilterEvent`回傳`True`
+時,這個KeyPress事件會被SDL**整個吞掉**,不會轉成`SDL_KEYDOWN`往下傳。SDL的
+issue追蹤器上有其他討論明確指出這條路徑的一個已知壞習慣:「IBus via XIM has
+a bad habit of returning true from XFilterEvents for everything, and then
+resending another event later if it didn't really need to filter it」——
+如果IBus這類IME daemon連上了XIM,它有時會吃掉按鍵事件、之後才用`XSendEvent`
+補送回去,補送是否可靠、時序是否吻合遊戲當下的讀鍵窗口都是未知數。這個機制
+在「哪些鍵容易被吃」這件事上,天生就會偏好Enter/Space這類**IME確認/送出鍵**
+(這正是輸入法最常用來"commit"候選字的按鍵),而不是方向鍵(通常是候選字導覽鍵,
+沒有preedit在跑時多數IME不會攔截)——這是本輪找到、方向與症狀選擇性特徵**最
+吻合**的一個候選,值得認真檢查是否適用這個環境。
+
+**環境檢查(唯讀,未啟動`dosbox-x`/`Xvfb`/`tmux`,直接查WSL2 Ubuntu現狀)**:
+
+```
+$ echo $XMODIFIERS $GTK_IM_MODULE $QT_IM_MODULE   # 全部空白,未設定
+$ which ibus-daemon fcitx fcitx5                   # 全部查無,未安裝
+$ pgrep -fal 'ibus|fcitx'                          # 查無任何真實進程
+                                                    # (第一次呼叫因為指令字串
+                                                    # 本身含"fcitx"文字被pgrep
+                                                    # 自我比對命中,重跑
+                                                    # `pgrep -fal ibus`與
+                                                    # `pgrep -fal fcitx`分開
+                                                    # 各自確認查無結果)
+$ dpkg -l | grep -iE 'ibus|fcitx'
+  ii  gir1.2-ibus-1.0 / libibus-1.0-5 / libibus-1.0-dev / libusb-1.0-0
+  # 只有ibus的共用函式庫(某個其他套件的依賴關係帶進來的),沒有`ibus`本體
+  # 套件、沒有`ibus-daemon`,沒有任何fcitx套件
+```
+
+**結論**:這個WSL2 Ubuntu環境裡**沒有任何XIM daemon在跑**,`XMODIFIERS`也
+沒有指向任何一個。X11用戶端(SDL2)在這種情況下,`XOpenIM`通常會退回Xlib內建
+的「local/none」style輸入法(沒有外部IME協定伺服器可對話),這種內建退回機制
+一般是近乎透通的no-op,`XFilterEvent`對一般ASCII鍵基本上不會回傳`True`——
+SDL issue #6437與IBus那個「壞習慣」討論的前提都是**有一個真正的IME daemon
+透過XIM連上**,這個前提在本專案目前的環境設定下不成立。**這是本專案第一次
+真正檢查「這一層機制在這個環境裡是否可能發生」而不只是讀原始碼**,結論是
+目前判定不適用,但誠實列出殘留的不確定性:(a)沒有查證`dosbox-x`的
+`sdlmain.cpp`是否明確呼叫過`SDL_StopTextInput()`(SDL2預設在桌面平台是
+text-input啟用,若`dosbox-x`從未主動關閉,`SDL_TextInputActive`這個閘門
+本身依然是開的,只是後面`XFilterEvent`那一步因為沒有真實IME daemon而大概率
+不會吃鍵);(b)沒有live測試過「內建退回style的XIM是否在某些邊界情況下依然
+會對Return/Space回傳`True`」,只是依照一般X11行為推論機率低——不是100%
+排除,是「目前查無支持這個候選在本環境成立的證據」,留給下一輪如果要徹底
+排除,可以在同一個Xvfb上跑`xev`+手動`XSetLocaleModifiers`測試組合。
+
+### 2. 新候選B:`xdotool key --window <win>`本身依「目標視窗當下有沒有輸入
+焦點」在`XTestFakeKeyEvent`與`XSendEvent`兩種完全不同機制間切換——本專案
+第一次發現這個分支,但用本專案自己既有的「同一瞬間對照組」證據直接排除它是
+選擇性掉鍵的成因
+
+續五十五讀過`xdo.c`,但只記錄了「keysym不在目前keymap時借用scratch
+keycode暫時綁定」這個機制,**沒有提到**另一個更基本的分支。重新查
+`jordansissel/xdotool`原始碼(`xdo.c`的`_xdo_send_key()`)與官方man page:
+
+- 當`window == CURRENTWINDOW`(即不帶`--window`,送給目前有焦點的視窗)時,
+  用`XTestFakeKeyEvent`(XTEST extension,全域合成硬體級事件)。
+- 當帶了具體`--window <winid>`時,xdotool會先呼叫`xdo_get_focused_window()`
+  查詢當下真正有輸入焦點的視窗——**如果查到的焦點視窗剛好就是你指定的那個
+  視窗,依然走`XTestFakeKeyEvent`**;但**如果焦點視窗不是你指定的那個(或
+  查詢當下焦點狀態不明確)**,就會退回用`XSendEvent`直接把一個合成的
+  `XKeyEvent`結構post給目標視窗——這是完全不同的傳遞機制,官方man page
+  明講:「X11 servers will set a special flag on all events generated in
+  this way... Many programs observe this flag and reject these events」。
+
+這個分支本身是真實、有原始碼佐證、本專案先前輪次(續五十四/五十五/七十一/
+七十二)都沒有記錄過的新發現。本專案的操作腳本(`dbg_enter.sh`等)一致使用
+`xdotool key --window <win> ...`這個帶`--window`的呼叫形式,如果DOSBox-X
+視窗在xdo內部查詢焦點的那個瞬間**焦點狀態不明確或暫時不在該視窗上**(這個
+Xvfb環境**沒有window manager**,沒有WM意味著沒有一致的click-to-focus/
+焦點維護機制,X server預設focus policy在沒有WM主動`XSetInputFocus`的情況
+下偏向`PointerRoot`,焦點狀態理論上比一般有WM的桌面更不確定),就有機會落入
+較不可靠的`XSendEvent`路徑——這個假說的形狀(環境本身的焦點不確定性,隨
+session不同而不同)與症狀的「同一存檔同一手法跨session時好時壞」表面上
+相當吻合。
+
+**但本專案自己已有的證據直接排除它作為選擇性掉鍵(Enter/Space掉、方向鍵不掉)
+的成因**:續五十四§3在**完全相同的一個凍結瞬間**(同一個CPU阻塞讀鍵迴圈、
+同一個`--window`呼叫慣例)先送`Enter`/`Space`(失敗)、緊接著送`Up`(立即
+正確反應)。`_xdo_send_key()`的`XTEST`/`XSendEvent`分支選擇只取決於**當下
+查到的視窗焦點狀態**,不取決於送的是哪一個keysym——如果這一刻焦點真的不明確
+導致落入`XSendEvent`,`Up`也應該同樣受影響,不會單獨被放過。這代表候選B
+即使是真實存在的機制,也**不是**這裡keysym選擇性症狀的根本成因,至多只能是
+一個獨立、疊加在真正成因之上、偶發的額外噪音來源。
+
+**防禦性建議(不是修法,是清理未來量測雜訊的低成本動作)**:既然這是一個有
+原始碼佐證的真實脆弱點,下一輪不管有沒有繼續追根因,都可以在每次`xdotool
+key`呼叫前明確補一次`xdotool windowfocus --sync <winid>`(或乾脆拿掉
+`--window`、依賴呼叫前已經`activate`過的當前焦點,強制固定走`XTEST`路徑),
+排除掉這個已知會退化成`XSendEvent`的分支,讓未來的量化測試數據更乾淨、不必
+再擔心這個變因混進掉鍵率統計。
+
+### 3. 其他檢索角度,誠實記錄查無新成果
+
+- **`xdotool` issue tracker廣泛複查**(`#151`/`#105`/`#195`/`#222`/`#491`/
+  `#150`/`#210`/`#52`):`#105`(`--clearmodifiers`需要在release前插入sleep)
+  屬於續五十五已測試過、確認對本症狀無效的延遲類假說,沒有新資訊;`#150`/
+  `#491`是鍵盤layout特定問題(多鍵盤佈局衝突),本專案是單一標準US佈局,不
+  適用;其餘幾個都是無關的視窗管理員/repeat行為問題,沒有一個報告符合
+  「Xvfb下Return/Space選擇性掉、方向鍵不受影響」這個精確特徵。
+- **DOSBox-X自己的issue tracker**:沒有找到任何headless/Xvfb自動化輸入
+  相關的討論;唯一沾邊的`#5142`(全螢幕模式下鍵盤無反應除非DOS程式已開啟)
+  是完全不同的症狀模式(全面無反應,不是選擇性),`dosbox-pure`(不同專案,
+  fork自DOSBox而非DOSBox-X)的Enter鍵bug也是不同成因(啟動選單狀態機
+  問題,非輸入傳遞層)。
+- **TAS/速通社群的DOSBox headless自動化案例**:沒有找到任何公開文件描述
+  過"用DOSBox-X + Xvfb + 合成鍵盤事件做全自動TAS/測試"這整套組合本身——
+  這仍然是一個相當冷門、缺乏社群先例可借鏡的use case,誠實記錄找不到任何
+  可抄的既有解法,不是漏搜。
+- **Xvfb啟動旗標**:沒有找到任何文件記載`-noreset`或其他`-extension`類
+  旗標會影響鍵盤事件的送達可靠度(這些旗標多半與GLX/RENDER/SECURITY
+  extension的啟停有關,不是鍵盤路徑);目前使用的`-listen tcp -nolisten
+  local`組合本身查無任何已知會干擾鍵盤事件的記錄。
+- **WM/compositor層對Return/Space的特殊處理**:再次確認本專案的Xvfb環境
+  沒有執行任何window manager或compositor(與續一至續七十二歷次記錄一致),
+  沒有WM就沒有WM層級的全域鍵盤快捷鍵攔截機制可以背這個鍋——這條路線本身
+  在架構上就不成立,但催生了§2談到的「沒有WM等於焦點狀態較不確定」這個
+  連帶角度。
+- **中文資料**:本輪把搜尋範圍從續五十五的PTT/Mobile01/部落格,擴大到
+  CSDN/博客園/簡書一類的自動化開發教學文,依然沒有找到任何專門討論
+  Xvfb+SDL2/DOSBox選擇性掉鍵的內容——這類資源反覆出現的建議是「檢查
+  視窗焦點」這個通用排錯建議,某種程度上side印證了§2候選B是社群裡真實
+  存在的一類常見問題,但沒有提供比本專案自己更精確的診斷。
+
+### 4. 誠實結論
+
+1. **根因依然未解**——本輪沒有修好任何東西,這是最重要也最不令人滿意的
+   結論,需要在這裡誠實寫清楚。
+2. **本輪新增兩個此前從未被本專案檢查過、有原始碼/upstream issue佐證的
+   真實機制**(SDL2 XIM/`XFilterEvent`吃鍵路徑;`xdotool --window`的
+   `XTEST`/`XSendEvent`焦點分支),兩者都不需要重新開一次`dosbox-x`/
+   `Xvfb`/`tmux`遊戲環境就能得出排除結論——候選A用一次唯讀的WSL2環境
+   檢查(確認沒有IME daemon)排除,候選B用**本專案自己既有的**續五十四
+   §3「同一瞬間對照組」證據排除(選擇性分支不可能只放過方向鍵)。這代表
+   本輪雖然沒找到修法,但確實把候選清單往下縮小了兩項,且是用比先前
+   幾輪更省成本的方式(不需要live重現失敗)做到的。
+3. **候選A的排除不是100%確定**——誠實列出殘留的不確定性(§1末段(a)(b)),
+   如果下一輪想徹底關閉這條線,需要查`dosbox-x`是否呼叫`SDL_StopTextInput`
+   +在同一個Xvfb上用`xev`測試內建退回style XIM對Return/Space的實際行為,
+   本輪沒有做到這一步(判斷投入產出比不划算,因為連IME daemon本身都不存在,
+   這條線的優先順序本來就低)。
+4. **候選B衍生的防禦性建議值得下一輪採納**,即使它不是根因:在每次
+   `xdotool key --window`前補一次`windowfocus --sync`,清除掉一個已知
+   會讓機制退化的分支,避免它在未來的量化測試裡混進雜訊、干擾對真正根因
+   的判讀。
+5. **給下一輪的誠實建議**:上游(X11/Xvfb/xdotool/SDL2)這一側,續五十四
+   /五十五/七十一/七十二與本輪加總起來已經覆蓋得相當全面(XTest可靠性、
+   注入機制替換、原始碼審查、IME/XIM路徑、焦點分支),持續沒有找到能解釋
+   「keysym選擇性、同存檔同手法跨session時好時壞」這個精確特徵的機制。
+   相對地,續五十四/五十五已提過、至今仍未執行的**`FUN_00010620`(這個
+   讀鍵迴圈用來判斷"鍵是否可讀"的檢查函式)靜態反組譯**,是目前唯一還沒
+   被排除法蓋到的角度,且是遊戲/DOSBox-X BIOS鍵盤緩衝區模擬**內部**的
+   邏輯,不是X11/SDL2傳遞層——不是本輪的新發現,但在本輪把傳遞層排查得
+   更乾淨之後,值得被列為下一輪**優先**方向,而不是眾多候選之一。
+
+### 5. 環境收尾
+
+本輪**沒有**啟動任何`dosbox-x`/`Xvfb`/`tmux`session,只對WSL2 Ubuntu跑過
+一次唯讀環境檢查(`echo`環境變數、`which`、`pgrep`、`dpkg -l`,均為查詢類
+指令,沒有安裝/移除/啟動任何服務)。`~/fd2-run/`目錄與`FD2.SAV`/`FD2.EXE`
+**均未**被本輪讀寫。續七十一/七十二使用者手動裝好的`ydotool`/`ydotoold`
+**未**被本輪觸碰。沒有修改`remake/`下任何原始碼或campaign資產檔案。
+
+### 6. 產出
+
+本文件本節(續七十三)。無截圖(純資料檢索+一次唯讀WSL2環境探查,沒有進入
+遊戲畫面)。參考來源:`bugs.freedesktop.org` #4761、`libsdl-org/SDL` issue
+`#6437`與`src/video/x11/SDL_x11events.c`原始碼、`jordansissel/xdotool`
+`xdo.c`原始碼與官方man page、`jordansissel/xdotool`issue tracker多筆、
+`joncampbell123/dosbox-x`issue tracker。`91-worklist.md`同一條目已追加
+一行指向本節(見下一次commit)。`docs/knowledge-base/48-dosbox-x-debugger-
+build.md`§8經檢視後**未**修改——本輪沒有找到任何新的建議設置可以寫入
+canonical recipe。
