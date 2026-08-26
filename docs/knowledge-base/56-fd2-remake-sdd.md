@@ -1299,6 +1299,145 @@ then copies only 312×192 to VGA `(4,4)` through `0x11eb0`; it is not a
 > and did not locate the VGA-palette-select call for the town-hub scene — so
 > whether town-hub activates a different DAC palette than resource#0 for this
 > region remains open. No Go code was changed this round.
+>
+> **2026-08-26 continuation (static `ghidra_batch_probe.py` + real-save
+> inspection + Go-verified real-palette rendering): root cause found and
+> fixed, `task_4845f230` CLOSED.** This round resolved the prior round's
+> exact unverified lead — `FUN_0004e98d`'s town-hub call site — and it turned
+> out to be a dead end for a different reason than expected, which redirected
+> the search to the actual bug.
+>
+> *`FUN_0004e98d`'s town-hub call site is the background draw, not the
+> selector icon.* `xref_from 0x26152` locates the single call at `0x263f4`;
+> disassembling the pushes immediately before it recovers all six real
+> arguments: `param_1=ESI` (a buffer just loaded by `FUN_000111ba(descriptor=
+> 0x51a4d "FDOTHER.DAT", prevSlot=[stack], index=table[variant])`, where the
+> 3-byte table at `0x52405` is `{0x0b,0x3d,0x3e}` — the three background
+> resource ids `11/61/62` doc91 already recorded), `param_2=0`, `param_3=0`,
+> `param_4=[0x53a5d]+0x8088` (the same work-buffer-plus-offset base
+> `FUN_000265ec` later blits the FDICON selector onto), `param_5=0x1c8`
+> (456, the same stride), `param_6=0xffffffff`. Decompiling `FUN_0004e98d`
+> itself confirms `param_6==0xffffffff` selects its **raw-copy** branch (of
+> the three modes doc91 correctly identified: raw/`0xff<(ushort)param_6`
+> band `((src+deltaHiByte)&7)+baseLoByte`/solid-fill-if-`param_6<=0xff` —
+> the band math is real and matches the earlier `(v+delta)&7+base` shape,
+> but this call site never selects it). So the sole town-hub call to
+> `FUN_0004e98d` is a plain, unrecolored (0,0)-origin background blit at
+> `[buffer]+0x8088`, stride 456 — unrelated to the character selector icon.
+> This closes the lead from the previous erratum as a dead end.
+>
+> *The real selector-icon source pointer, and why it is not a fixed sprite
+> index.* Full disassembly of `FUN_000265ec` (`0x265ec..0x2670d`, the
+> already-confirmed real per-frame redraw) shows the FDICON source computed
+> at `0x2668b..0x26694`: `EDX=[0x53a61]` (the "4-entry self-relative offset
+> table" from the previous erratum), `EAX=[EDX+pulse*4]` (pulse pre-mapped
+> 3→1 at `0x26681..0x26686`), `EAX+=EDX` — a pure `base+table[pulse]`
+> lookup with **no group or pose term added**. `[0x53a61]` is never written
+> anywhere in `FUN_00026152` (confirmed by its full 164-entry `xref_from`
+> dump — only two reads, both the entry-time free-if-nonzero pattern shared
+> with the sibling slots `0x53a45/0x53a55/0x53a5d/0x53a51`), so it must be
+> allocated elsewhere. Decompiling `FUN_00011019` (`0x11019..0x111b9`, the
+> already-known generic FDICON `key×12+pose×3+cycle` cache builder) shows
+> exactly this: on the first call in a session (`DAT_00053bdf==0`) it sets
+> `DAT_00053a61 = FUN_0003706e()` (allocate) and writes 12 self-relative
+> offsets for that first key at buffer offset 0; every later call for a new
+> key appends another 12-entry block further into the same buffer. Because
+> the buffer is allocated once and `[0x53a61]` itself never changes,
+> `FUN_000265ec`'s unconditional `[0x53a61+pulse*4]` read always resolves
+> the **first key ever cached this session** — i.e. whichever key
+> `FUN_00026152`'s own priming loop passes on its very first iteration.
+> Disassembling that loop (`0x2623d..0x26258`, `for(iVar2=0;
+> iVar2<DAT_00053bfb;iVar2++) FUN_00011019(key)`) shows
+> `key = *(byte*)([0x53bf7] + iVar2*0x50 + 7)` — record `iVar2`'s byte+7 in
+> the persistent-party roster (`[0x53bf7]`, stride `0x50` — the same
+> `UNIT_SIZE`/roster layout `tools/fd2save.py` and `native_persistent_party.go`
+> already document). For `iVar2=0` this is **persistent roster record 0's
+> byte+7**, i.e. the fixed party leader (record 0 is documented elsewhere in
+> this doc and in doc91's UI-VIS-PREPARATION entry as the quota-exempt,
+> always-first record). Pose is implicitly 0 throughout (no `pose*3` term is
+> ever added), matching group×12+pose×3+cycle with pose fixed at 0.
+>
+> *The remake already has this exact mechanism, just not wired into town.*
+> `remake/internal/campaign/native_persistent_party.go` already carries the
+> comment "Raw +7 is the player-persistent key passed to 0x11019, so it is
+> preserved as `MapSelectorKey`" and projects it from `PersistentRecordView.
+> RawPresentationKey` (`remake/internal/fdsave/save.go`'s `r.Raw[7]`) for
+> every other native screen that draws a roster member's icon (preparation
+> roster, church roster/revive, shop equip/sell/transfer/recipient — all via
+> `Bank.SpriteFor(unit.MapSelectorKey, 0, cycle)`). `native_town_scene.go`
+> was the one screen that never adopted it: `DecodeNativeTownAssets` instead
+> hardcoded `copy(out.Pulse[:], bank.Sprites[:3])` — i.e. always FDICON
+> **group 0**, regardless of which character is actually the persistent
+> party leader.
+>
+> *Confirmed on real data, not just statically.* Three real `FD2.SAV` files
+> used by this project's own diff-harness fixtures
+> (`.wsl_build/diffharness/FD2_variant1_ch12.SAV`,
+> `FD2_variant2_ch03.SAV`, `FD2_ch02.SAV` — chapters `0x0b`/`0x02`/`0x01`)
+> all show persistent roster record 0's byte+7 = **`0x20` (32)**, not 0.
+> Decoding the real `FDICON.B24`'s sprites 0/1/2 (group 0, what the remake
+> drew) versus 384/385/386 (group 32 = `0x20*12`, what native actually
+> draws) with the real `FDOTHER.DAT` resource#0 palette (via a throwaway
+> `remake/internal/fdicon` + `fdother.ParseVGAPalette` render, not a guessed
+> color table) is decisive:
+> [`town-hub-fdicon-group0-vs-group32-real-palette.png`](../figures/town-hub-fdicon-group0-vs-group32-real-palette.png)
+> shows group 0 (left) with a solid red patch on the belt/torso and group 32
+> (right) — same blue-haired character family, same correctly-red headband —
+> with an ordinary grey-blue belt matching the rest of its outfit, no red
+> patch at all. (An earlier same-day attempt at this comparison used a
+> hand-guessed index-to-color bucket table instead of the real palette and
+> wrongly suggested both groups shared the defect from raw index-range
+> overlap alone; that comparison is superseded by this real-palette render
+> and was never committed.) This also means doc91's `task_4845f230` claim
+> that "none of the 1680 sprites lack the red patch" does not hold for group
+> 32 under the real palette; that earlier 1680-sprite sweep's methodology
+> was not re-examined this round, but its conclusion is contradicted by this
+> direct real-palette decode.
+>
+> **Root cause: (a) — the remake was missing the party-leader-specific
+> group resolution entirely**, not a missing recolor step, wrong palette
+> resource, or wrong base sprite data. Fixed by changing
+> `NativeTownAssets` to keep the full decoded `*fdicon.Bank` (`Units` field,
+> replacing the fixed `Pulse [3]fdicon.Sprite`) and adding a `leaderKey int`
+> parameter to `ComposeNativeTownFrame`, which now resolves
+> `assets.Units.SpriteFor(leaderKey, 0, frame)` per draw instead of a fixed
+> index — mirroring the exact pattern already proven correct by
+> `preparation_roster.go`/`native_preparation_ui.go` and the shop/church
+> screens. The production caller (`native_town_ui.go`'s
+> `composeNativeTownFrame`) resolves `leaderKey` from
+> `g.partyRoster[g.partyJoinOrder[0]].MapSelectorKey`, failing closed (no
+> frame) if that is unavailable, matching every other `MapSelectorKey`-gated
+> native screen's existing convention. `go test ./...` passes with no
+> regressions (one existing test,
+> `TestNativeTownProductionOwnerUsesEditableVariantAndHiddenSelection`,
+> needed a minimal `partyRoster`/`partyJoinOrder` fixture added, since it
+> previously exercised town-hub without any party state at all — itself
+> evidence the old code path never actually depended on party identity).
+>
+> **Honest limitation on live re-verification.** `tools/dosbox_diff_harness.
+> py`'s `remake_shot()`/`town` subcommands drive the remake side purely via
+> `FD2_CAMP_NODE` (a direct node jump against `campaign_full.json`, bypassing
+> the normal title→LOAD→chapter-boot flow that populates
+> `partyJoinOrder`/`partyRoster`) and do not set `FD2_SHOT_PARTY_BINDING`
+> (the existing, separate mechanism other screens' oracle rounds have used
+> to synthesize a bound party for this kind of direct-jump capture). Against
+> a rebuilt `fd2-linux-verify`, this made the post-fix town-hub composer
+> fail closed (no party state available) and fall through to whatever
+> screen renders behind it — this is the new fail-closed check doing exactly
+> what it is supposed to do given no leader identity is available, not a
+> defect in the fix itself, but it means this round could not produce a
+> fresh end-to-end DOSBox-X-vs-remake byte-exact capture through this
+> specific tool without first also wiring `FD2_SHOT_PARTY_BINDING` (or
+> equivalent) into the harness's town path — left for a follow-up round.
+> Separately, the DOSBox-X side of the same harness run was itself
+> non-deterministic across repeated invocations in this session (different
+> `orig_rgb_md5` each run, occasionally landing on an unrelated tavern-roster
+> screen) even with the unmodified pre-fix binary rebuilt at current HEAD,
+> confirming this instability predates and is unrelated to this round's
+> change. The real-save-plus-real-palette evidence above is offered in place
+> of a fresh live capture; it uses the same ground-truth palette and
+> ground-truth key data the live harness would ultimately compare against,
+> just assembled offline.
 
 All 23 editable town nodes now carry the raw `native_town_variant` value
 0/1/2. `ComposeNativeTownFrame` consumes the original indexed resources and

@@ -136,6 +136,22 @@ func (g *Game) stepNativeTownUILifecycle(nowTick int) {
 	g.stepNativeTownUIPulseTick(nowTick)
 }
 
+// nativeTownLeaderKey resolves the raw FDICON.B24 group key 0x265ec always
+// draws: persistent roster record 0's MapSelectorKey (0x53bf7+7), i.e. the
+// fixed party leader (0x26253's priming loop caches record 0's key first,
+// and 0x265ec's draw call always reads that first-primed block). It is not
+// the currently-selected menu item.
+func (g *Game) nativeTownLeaderKey() (int, bool) {
+	if len(g.partyJoinOrder) == 0 {
+		return 0, false
+	}
+	unit, ok := g.partyRoster[g.partyJoinOrder[0]]
+	if !ok || !unit.HasMapSelectorKey {
+		return 0, false
+	}
+	return unit.MapSelectorKey, true
+}
+
 func (g *Game) composeNativeTownFrame() ([]byte, bool) {
 	if g.camp == nil || g.nativeTownUI == nil ||
 		g.nativeTownUI.scene == nil || g.nativeClassUI == nil {
@@ -145,6 +161,10 @@ func (g *Game) composeNativeTownFrame() ([]byte, bool) {
 	if n == nil || n.Type != "town" || n.NativeTownVariant == nil {
 		return nil, false
 	}
+	leaderKey, ok := g.nativeTownLeaderKey()
+	if !ok {
+		return nil, false
+	}
 	frame, err := campaign.ComposeNativeTownFrame(
 		g.nativeTownUI.scene,
 		g.nativeClassUI.strings,
@@ -152,6 +172,7 @@ func (g *Game) composeNativeTownFrame() ([]byte, bool) {
 		*n.NativeTownVariant,
 		g.campSel,
 		g.nativeTownUIPulse,
+		leaderKey,
 	)
 	if err != nil {
 		return nil, false

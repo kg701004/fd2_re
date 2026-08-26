@@ -37,13 +37,16 @@ var nativeTownSelectionY = [nativeTownVariantCount][6]int{
 	{26, 144, 163, 150, 31, 20},
 }
 
-// NativeTownAssets are the exact resources consumed by
-// 0x2cd46..0x2d05a: three full-screen backgrounds, FDOTHER#10's opaque
-// current-label panel, and FDICON's first three pulse sprites.
+// NativeTownAssets are the exact resources consumed by 0x265ec..0x2670d
+// (the real per-frame town-hub redraw, ground-truthed 2026-08-26 -- see
+// doc56's erratum; 0x2cd46..0x2d05a was a stale, disproven address from an
+// earlier EXE build): three full-screen backgrounds, FDOTHER#10's opaque
+// current-label panel, and the full FDICON bank the selector sprite is
+// resolved from at draw time.
 type NativeTownAssets struct {
 	Backgrounds [nativeTownVariantCount][]byte
 	Label       fdother.LMI1Entry
-	Pulse       [3]fdicon.Sprite
+	Units       *fdicon.Bank
 }
 
 func DecodeNativeTownAssets(
@@ -82,26 +85,41 @@ func DecodeNativeTownAssets(
 		)
 	}
 	bank, err := fdicon.DecodeFile(filepath.Clean(fdiconPath))
-	if err != nil || len(bank.Sprites) < len(out.Pulse) {
-		return nil, errors.New("campaign: native town FDICON pulse is incomplete")
+	if err != nil || len(bank.Sprites) == 0 {
+		return nil, errors.New("campaign: native town FDICON bank is incomplete")
 	}
-	copy(out.Pulse[:], bank.Sprites[:len(out.Pulse)])
+	out.Units = bank
 	return out, nil
 }
 
-// ComposeNativeTownFrame reproduces 0x2cf71's steady redraw. It starts from
-// the caller-selected FDOTHER background, redraws the current-label panel and
-// FDTXT_000 selection name, applies FDICON pulse sequence 0,1,2,1, then copies
-// the native 312x192 viewport to VGA (4,4).
+// ComposeNativeTownFrame reproduces 0x265ec's steady redraw (ground-truthed
+// 2026-08-26; 0x2cf71 was a stale, disproven address -- see doc56's
+// erratum). It starts from the caller-selected FDOTHER background, redraws
+// the current-label panel and FDTXT_000 selection name, then draws the
+// selector sprite and copies the native 312x192 viewport to VGA (4,4).
+//
+// leaderKey is the raw FDICON.B24 group key for the selector sprite. It is
+// not a fixed asset index: 0x26152's town-hub setup primes the shared
+// FDICON pointer cache (0x11019) once per roster record before the redraw
+// loop starts, and 0x265ec's draw call always reads the *first*-primed
+// cache block, i.e. group 0 = whichever key primed first. That is always
+// persistent roster record 0 (0x53bf7 + 0*0x50 + 7) -- the fixed,
+// always-present party leader, never the currently-selected town-hub menu
+// item. Passing a fixed sprite index here (the pre-2026-08-26 behavior)
+// silently assumed that leader's raw key was 0; three real FD2.SAV files
+// (chapters 1/2/0xb) all show record 0's byte+7 = 0x20 (32), not 0. Pose is
+// always 0 (0x265ec never adds a pose*3 term); cycle is the pulse sequence
+// 0,1,2,1, matching 0x2670e's counter-3-to-1 remap.
 func ComposeNativeTownFrame(
 	assets *NativeTownAssets,
 	strings *fdtxt.Strings,
 	font *fdtxt.Font,
-	variant, selection, pulse int,
+	variant, selection, pulse, leaderKey int,
 ) ([]byte, error) {
 	if assets == nil || strings == nil || font == nil ||
 		variant < 0 || variant >= nativeTownVariantCount ||
 		selection < 0 || selection > 5 || pulse < 0 || pulse > 3 ||
+		leaderKey < 0 || leaderKey > 0xff ||
 		len(assets.Backgrounds[variant]) != NativeTownWidth*NativeTownHeight {
 		return nil, errors.New("campaign: native town state is invalid")
 	}
@@ -123,7 +141,11 @@ func ComposeNativeTownFrame(
 	if frame == 3 {
 		frame = 1
 	}
-	if err := assets.Pulse[frame].BlitAt(
+	sprite, err := assets.Units.SpriteFor(leaderKey, 0, frame)
+	if err != nil {
+		return nil, err
+	}
+	if err := sprite.BlitAt(
 		scene, NativeTownWidth,
 		nativeTownSelectionX[variant][selection],
 		nativeTownSelectionY[variant][selection],

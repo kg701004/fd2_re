@@ -57,9 +57,12 @@ func TestDecodeAndComposeNativeTownUsesOriginalResources(t *testing.T) {
 	}
 	strings, font := loadNativeTownTextAssets(t, base)
 	frames := make([][]byte, 4)
+	// 0x20 is the confirmed fixed protagonist key (persistent roster record
+	// 0's byte+7 in three real FD2.SAV files spanning chapters 1/2/0xb).
+	const leaderKey = 0x20
 	for pulse := range frames {
 		frames[pulse], err = ComposeNativeTownFrame(
-			assets, strings, font, 0, 0, pulse,
+			assets, strings, font, 0, 0, pulse, leaderKey,
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -89,8 +92,22 @@ func TestDecodeAndComposeNativeTownUsesOriginalResources(t *testing.T) {
 
 func TestComposeNativeTownRejectsInvalidState(t *testing.T) {
 	if _, err := ComposeNativeTownFrame(
-		nil, nil, nil, 0, 0, 0,
+		nil, nil, nil, 0, 0, 0, 0,
 	); err == nil {
 		t.Fatal("nil native town assets were accepted")
+	}
+}
+
+func TestComposeNativeTownRejectsInvalidLeaderKey(t *testing.T) {
+	assets := &NativeTownAssets{}
+	if _, err := ComposeNativeTownFrame(
+		assets, &fdtxt.Strings{}, &fdtxt.Font{}, 0, 0, 0, -1,
+	); err == nil {
+		t.Fatal("negative leaderKey was accepted")
+	}
+	if _, err := ComposeNativeTownFrame(
+		assets, &fdtxt.Strings{}, &fdtxt.Font{}, 0, 0, 0, 0x100,
+	); err == nil {
+		t.Fatal("out-of-range leaderKey was accepted")
 	}
 }

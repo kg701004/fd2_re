@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/wicanr2/fd2_re/remake/internal/battle"
 	"github.com/wicanr2/fd2_re/remake/internal/campaign"
 )
 
@@ -44,6 +45,13 @@ func TestNativeTownProductionOwnerUsesEditableVariantAndHiddenSelection(t *testi
 		campSel:       1,
 		nativeClassUI: shared,
 		nativeTownUI:  town,
+		// 0x265ec always draws persistent roster record 0's key (the fixed
+		// party leader), confirmed 0x20 in three real FD2.SAV files -- see
+		// nativeTownLeaderKey.
+		partyJoinOrder: []int{0},
+		partyRoster: map[int]battle.Unit{
+			0: {MapSelectorKey: 0x20, HasMapSelectorKey: true},
+		},
 	}
 	visible, ok := g.composeNativeTownFrame()
 	if !ok || len(visible) != 320*200 {

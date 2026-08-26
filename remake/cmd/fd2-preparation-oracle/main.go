@@ -123,8 +123,11 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
+			// leaderKey 0x20 is the confirmed fixed protagonist key (record
+			// 0's byte+7 in three real FD2.SAV files spanning chapters
+			// 1/2/0xb); this oracle has no live game state to look it up.
 			source, err = campaign.ComposeNativeTownFrame(
-				townAssets, strings, font, 0, 2, 0,
+				townAssets, strings, font, 0, 2, 0, 0x20,
 			)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
