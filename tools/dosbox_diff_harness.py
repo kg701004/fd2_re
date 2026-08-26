@@ -31,6 +31,15 @@ WHAT THIS TOOL ACTUALLY GUARANTEES (read before trusting a result)
    No PIL resize/resample call is used anywhere in this path.
 3. The diff itself (mean-abs-diff, exact-pixel-match %, MD5) is over those
    two true-320x200 arrays -- nothing is scaled to match the other first.
+4. The remake side is driven with a real FD2_SHOT_PARTY_BINDING (see
+   default_party_binding_for_chapter()), not just FD2_CAMP_NODE. Scenes
+   gated on a leader/roster identity -- town hub's selector icon
+   (remake/cmd/fd2/native_town_ui.go's nativeTownLeaderKey, added
+   2026-08-26's task_4845f230), shop/church recipient lists, etc -- fail
+   closed with no captured frame if FD2_CAMP_NODE is set alone (correct
+   remake-side behavior, but useless for a diff). `town` derives this
+   automatically from --chapter-byte; `remake-shot` takes it as an
+   explicit --party-binding flag since it composes arbitrary nodes.
 
 WHAT THIS TOOL DOES NOT GUARANTEE
 --------------------------------------------------------------------
@@ -49,6 +58,29 @@ WHAT THIS TOOL DOES NOT GUARANTEE
   FD2_SHOT_TOWN_STATE override, and the remake's own compositor may have
   real, still-open discrepancies (this tool is partly *for* finding those).
   Report the statistics; do not round 99.x% up to "byte-exact" in writeups.
+- The DOSBox-X-side capture ITSELF is not run-to-run deterministic by
+  default, independent of anything on the remake/Go side: repeating
+  `reach_town_hub` -> `raw_screenshot` on 5 separately-launched instances
+  against the byte-identical patched FD2.SAV produced 4 identical
+  `rgb_md5` and 1 different one (2026-08-26 measurement). Diffing the
+  outlier showed only 362/64000 pixels differing (0.57%), all inside a
+  tight 24x24 bbox over the party leader's standing sprite -- a genuine
+  in-game idle-animation frame (visually confirmed: same pose, one frame
+  later in a breathing/bob cycle), not a torn/garbled capture or a wrong
+  screen. Root cause: nothing pins WHEN in that real-time animation loop
+  the screenshot lands. `lock_pulse_phase()`/`reach_town_hub`'s
+  `pulse_lock` param (wired into `town` via `KNOWN_PULSE_LOCKS`, on by
+  default, `--no-pulse-lock` to disable) mitigates this by polling a
+  single scene-specific pixel via the existing `wait-pixel` primitive
+  until it matches a known color before capturing -- verified 2026-08-26
+  to produce 5/5 identical `rgb_md5` across 5 fresh instances for
+  town_ch02/selection 0 (previously 4/5). This is a per-scene pixel/color
+  pair, not a universal fix: only `("town_ch02", 0)` has one today: a new
+  scene needs its own discriminating pixel picked the same way (diff two
+  outlier captures, find a coordinate whose color flips between them).
+  Scenes without an entry in `KNOWN_PULSE_LOCKS` fall back to the old
+  unlocked behavior and may still show this same class of small,
+  animation-region-confined variance.
 
 Usage
 -----
@@ -59,16 +91,23 @@ Usage
 
     # Full town-hub scenario: launch/reuse a diffharness instance, navigate
     # Title -> LOAD -> (patched save) -> town hub, capture both sides,
-    # diff, write a side-by-side PNG + JSON report:
+    # diff, write a side-by-side PNG + JSON report. Automatically supplies
+    # FD2_SHOT_PARTY_BINDING (derived from --chapter-byte) and, for
+    # (node, selection) pairs in KNOWN_PULSE_LOCKS, locks DOSBox-X capture
+    # timing onto a known idle-animation phase for run-to-run determinism:
     python tools/dosbox_diff_harness.py town \\
         --instance diffharness --chapter-byte 0x01 --node town_ch02 \\
         --selection 0 --pulses 0,1,2,3 \\
         --out-prefix .wsl_build/diffharness/report_town_ch02_sel0
 
-    # Low-level primitives (compose your own navigation for a new scene):
+    # Low-level primitives (compose your own navigation for a new scene).
+    # --party-binding is required for any scene gated on a leader/roster
+    # identity (town/shop/church/...) -- see default_party_binding_for_chapter()
+    # for how `town` derives it automatically from --chapter-byte:
     python tools/dosbox_diff_harness.py raw-shot --instance diffharness --out out.png
     python tools/dosbox_diff_harness.py remake-shot --node town_ch02 \\
-        --town-state 0,0 --out out.png
+        --town-state 0,0 --party-binding assets/cutscenes/bindings/ch01_pre.json \\
+        --out out.png
     python tools/dosbox_diff_harness.py diff --a orig.png --b remake.png \\
         --out-prefix report
 
@@ -102,6 +141,29 @@ DIFF_DIR = REPO_ROOT / ".wsl_build" / "diffharness"
 # a slot's chapter byte N displays as "ch(N+1)" (chapter_byte 0x01 -> town_ch02,
 # chapter_byte 0x0B -> town_ch12, etc; verified against the LOAD slot-list text
 # "第 二 章" for chapter_byte=0x01 during this tool's own validation run).
+
+
+def default_party_binding_for_chapter(chapter_byte: int) -> str:
+    """Map a slot0 chapter byte to the handler binding that carries the
+    matching FD2_SHOT_PARTY_BINDING party JOIN state.
+
+    Not a guess: this is the exact chapter_byte->binding pairing
+    docs/knowledge-base/58-remake-live-verification-log.md's 2026-08-16
+    ch02/ch03/ch04 rounds used by hand (`town_ch03` with
+    `FD2_SHOT_PARTY_BINDING=ch02_pre.json`, `town_ch04` with
+    `ch03_pre.json`, etc) -- the binding whose own `loadch.chapter` field
+    equals chapter_byte is named `ch{chapter_byte:02d}_pre.json` (verified:
+    ch01_pre.json has "chapter": 1 and party_order [0,9,4,30,1], which is
+    "the party about to enter ch02 battle", i.e. the party actually
+    standing in the ch02 town hub -- same reasoning applies for any N).
+    Only ch00/ch01/ch02 currently carry a party_order in their `_pre`
+    binding (checked 2026-08-26: `grep party_order` on every
+    remake/assets/cutscenes/bindings/ch*_pre.json), so this only resolves
+    for chapter_byte 0..2 today; later chapters need their own binding
+    authored first (remake-side error message says so explicitly if this
+    guess is wrong -- it fails closed, not silently).
+    """
+    return f"assets/cutscenes/bindings/ch{chapter_byte:02d}_pre.json"
 
 
 def wsl_run(cmd: str, timeout: int = 60, check: bool = False) -> subprocess.CompletedProcess:
@@ -173,16 +235,29 @@ def launch_instance(instance: str, sav_file: Path | None, keepalive: int = 3595)
 
 
 def geometry(instance: str) -> tuple[int, int]:
+    w, h, _x, _y = full_geometry(instance)
+    return w, h
+
+
+def full_geometry(instance: str) -> tuple[int, int, int, int]:
+    """Returns (width, height, x, y): x/y are the window's ROOT-window
+    origin (xdotool getwindowgeometry --shell's X=/Y=), needed because
+    wait-pixel (see lock_pulse_phase) probes with `import -window root`,
+    not window-relative coordinates like raw-screenshot's `-window $win`."""
     out = sh(f"geometry {instance}")
-    w = h = None
+    w = h = x = y = None
     for line in out.splitlines():
         if line.startswith("WIDTH="):
             w = int(line.split("=", 1)[1])
         elif line.startswith("HEIGHT="):
             h = int(line.split("=", 1)[1])
-    if w is None or h is None:
+        elif line.startswith("X="):
+            x = int(line.split("=", 1)[1])
+        elif line.startswith("Y="):
+            y = int(line.split("=", 1)[1])
+    if w is None or h is None or x is None or y is None:
         raise RuntimeError(f"could not parse geometry output: {out!r}")
-    return w, h
+    return w, h, x, y
 
 
 def send_keys(instance: str, *keys: str) -> None:
@@ -216,7 +291,62 @@ def raw_screenshot(instance: str, out: Path) -> str:
     raise RuntimeError(f"unexpected raw-screenshot output: {result!r}")
 
 
-def reach_town_hub(instance: str, sav_file: Path, escape_taps: int = 30) -> None:
+def lock_pulse_phase(instance: str, window_xy: tuple[int, int], rgb: tuple[int, int, int],
+                      delay: float = 0.15, max_tries: int = 60) -> bool:
+    """Poll a single native-320x200-window-relative pixel (window_xy) via
+    the root-window `wait-pixel` primitive until it matches rgb, to settle
+    DOSBox-X capture timing onto a known idle-animation phase before
+    raw_screenshot(). Returns True if it locked, False if it timed out
+    (caller decides whether that's fatal -- see cmd_town's --pulse-lock).
+
+    WHY THIS EXISTS (2026-08-26, problem 2 of task_... town-hub diff-harness
+    follow-up): repeating `reach_town_hub` -> `raw_screenshot` back-to-back
+    on 5 independently-launched instances against the identical patched
+    FD2.SAV produced 4 identical rgb_md5 and 1 different one; diffing the
+    outlier against the majority showed only 362/64000 pixels differing
+    (0.57%), every one of them inside a tight 24x24 bbox exactly over the
+    party leader's standing sprite -- a real, in-game idle-animation frame
+    (visually confirmed: same character, same pose, one frame later in a
+    breathing/bob cycle), not a torn/garbled capture. Root cause: nothing
+    in this tool pins WHEN in that real-time animation loop the screenshot
+    lands -- `wait_for_native_geometry`'s polling loop and the fixed fade
+    sleeps in `reach_town_hub` bound roughly when the town hub becomes
+    visible, not which of its (at least 2, empirically) idle-sprite frames
+    is showing at that instant. This targets one pixel inside that same
+    bbox that was observed to flip between the two outcomes (RGB
+    (142,0,0), a chunk of the sprite's red neckerchief only visible in one
+    of the two frames) and waits for it, so every call settles on the same
+    phase instead of a coin flip.
+
+    LIMITS (2026-08-26, honest): (1) this pixel/color pair was picked by
+    inspecting exactly one node/selection/save (town_ch02, ch01_pre.json
+    party, selection 0) -- a different scene, party leader sprite, or town
+    layout will very likely need its own pixel/color, this is not a
+    universal fix; (2) it locks onto whichever phase this specific color
+    is present in, not necessarily "the" canonical phase -- if the real
+    animation loop has more than 2 frames this only proves the 2 observed
+    here are covered, not that every possible frame is enumerable this way;
+    (3) `import -window root` full-Xvfb-screen capture, called max_tries
+    times at delay-second intervals, is not free -- keep max_tries*delay
+    bounded (default 60*0.15s=9s) rather than assuming it always locks
+    quickly.
+    """
+    w, h, x, y = full_geometry(instance)
+    if (w, h) != (320, 200):
+        raise RuntimeError(f"lock_pulse_phase requires a settled native 320x200 window, got {w}x{h}")
+    rx, ry = x + window_xy[0], y + window_xy[1]
+    # sh()/wsl_run() do not raise on the shell script's own nonzero exit
+    # (see wsl_run's docstring -- wsl.exe's return code is not trustworthy),
+    # so success/failure here is read from stdout content, not an exception:
+    # cmd_wait_pixel only ever writes to stdout on its "matched" path: the
+    # `die` timeout path writes solely to stderr, which sh() discards.
+    out = sh(f"wait-pixel {instance} {rx},{ry},{rgb[0]},{rgb[1]},{rgb[2]} {delay} {max_tries}",
+             timeout=int(delay * max_tries) + 20)
+    return "matched" in out
+
+
+def reach_town_hub(instance: str, sav_file: Path, escape_taps: int = 30,
+                    pulse_lock: tuple[tuple[int, int], tuple[int, int, int]] | None = None) -> bool:
     """Worked example navigate sequence: Title (after skipping the opening
     cutscene) -> Down -> Enter (selects LOAD) -> Enter (loads the only
     populated save slot) -> town hub. `sav_file` must already have its
@@ -230,6 +360,14 @@ def reach_town_hub(instance: str, sav_file: Path, escape_taps: int = 30) -> None
     deterministic wall-clock time (doc48 §8.3) -- polling window geometry
     is a cheap, robust proxy for "a mode-13h screen is now showing" that
     doesn't require guessing a sleep duration.
+
+    pulse_lock, when given, is ((x, y), (r, g, b)) in the native 320x200
+    frame: after the town hub becomes visible this blocks on
+    lock_pulse_phase() before returning, to settle DOSBox-X's real-time
+    idle-animation onto a known phase (see that function's docstring for
+    why this exists and its scene-specific limits). Returns whether the
+    lock succeeded (True if pulse_lock was None -- nothing to lock);
+    callers that need the guarantee should check this rather than assume.
     """
     launch_instance(instance, sav_file)
     # Give the instance's own 30s window-search loop room to find the window
@@ -252,6 +390,9 @@ def reach_town_hub(instance: str, sav_file: Path, escape_taps: int = 30) -> None
     send_keys(instance, "Return")  # confirm slot 1 (cursor default)
     time.sleep(2.0)  # fade transition into the town hub
     wait_for_native_geometry(instance)
+    if pulse_lock is None:
+        return True
+    return lock_pulse_phase(instance, pulse_lock[0], pulse_lock[1])
 
 
 # --------------------------------------------------------------------------
@@ -260,7 +401,7 @@ def reach_town_hub(instance: str, sav_file: Path, escape_taps: int = 30) -> None
 
 def remake_shot(node: str, town_state: str | None, out: Path, frame: int = 30,
                  xvfb_display: int = 898, extra_env: dict[str, str] | None = None,
-                 timeout: int = 75) -> None:
+                 timeout: int = 75, party_binding: str | None = None) -> None:
     """Run the pre-built remake/fd2-linux-verify binary under a throwaway
     Xvfb display and capture a deterministic frame via FD2_SHOT/FD2_SHOT_FRAME.
 
@@ -271,6 +412,17 @@ def remake_shot(node: str, town_state: str | None, out: Path, frame: int = 30,
     -- no rebuild is needed for pure screenshot capture). It self-terminates
     after saving its shot (see main.go's captureShot), so this call is
     naturally bounded.
+
+    party_binding, when given, sets FD2_SHOT_PARTY_BINDING to a
+    remake/assets/cutscenes/bindings/*.json path (relative to the remake/
+    dir this call cd's into) so g.partyJoinOrder/g.partyRoster are
+    populated the same way production reaches them. Scenes gated on a
+    leader/roster identity -- e.g. the town hub's selector icon, see
+    remake/cmd/fd2/native_town_ui.go's nativeTownLeaderKey -- fail closed
+    (composeNativeTownFrame returns ok=false, FD2_SHOT saves nothing) if
+    this is unset, per 2026-08-26's task_4845f230. Pass party_binding=""
+    explicitly to opt out (e.g. for scenes that intentionally have no
+    party, like the title screen) rather than omitting it.
     """
     remake_dir = to_wsl_path(REPO_ROOT / "remake")
     out_wsl = to_wsl_path(out)
@@ -286,6 +438,8 @@ def remake_shot(node: str, town_state: str | None, out: Path, frame: int = 30,
     ]
     if town_state:
         env_lines.append(f"export FD2_SHOT_TOWN_STATE={town_state}")
+    if party_binding:
+        env_lines.append(f"export FD2_SHOT_PARTY_BINDING={party_binding}")
     if extra_env:
         env_lines += [f"export {k}={v}" for k, v in extra_env.items()]
     else:
@@ -432,13 +586,26 @@ def cmd_raw_shot(args):
 
 
 def cmd_remake_shot(args):
-    remake_shot(args.node, args.town_state, Path(args.out), frame=args.frame)
+    remake_shot(args.node, args.town_state, Path(args.out), frame=args.frame,
+                party_binding=args.party_binding)
     print(f"wrote {args.out}")
 
 
 def cmd_diff(args):
     report = diff_frames(Path(args.a), Path(args.b), Path(args.out_prefix), remake_is_2x=not args.no_2x)
     print(json.dumps(report, indent=2))
+
+
+# Known (node, selection) -> ((x,y), (r,g,b)) pulse-lock pixels, for
+# lock_pulse_phase(). Populated empirically (see that function's docstring):
+# 2026-08-26 found (40,57)=(142,0,0) -- a fragment of the party leader's red
+# neckerchief only visible in one of >=2 idle-sprite frames -- distinguishes
+# the two outcomes actually observed across 5 repeated town_ch02/selection0
+# captures. Not derived for any other scene yet; cmd_town falls back to no
+# lock (old best-effort behavior) for anything not in this table.
+KNOWN_PULSE_LOCKS: dict[tuple[str, int], tuple[tuple[int, int], tuple[int, int, int]]] = {
+    ("town_ch02", 0): ((40, 57), (142, 0, 0)),
+}
 
 
 def cmd_town(args):
@@ -455,17 +622,34 @@ def cmd_town(args):
     patch_sav_chapter(src_sav, patched_sav, slot=0, chapter_byte=chapter_byte)
     print(f"patched save -> {patched_sav} (slot0 chapter byte {chapter_byte:#04x})")
 
-    reach_town_hub(args.instance, patched_sav)
+    pulse_lock = None
+    if not args.no_pulse_lock:
+        pulse_lock = KNOWN_PULSE_LOCKS.get((args.node, args.selection))
+    locked = reach_town_hub(args.instance, patched_sav, pulse_lock=pulse_lock)
+    if pulse_lock is not None:
+        print(f"DOSBox-X pulse-lock {'succeeded' if locked else 'TIMED OUT (capture may be phase-inconsistent)'} "
+              f"-- target {pulse_lock}")
+    elif not args.no_pulse_lock:
+        print(f"no known pulse-lock pixel for ({args.node!r}, {args.selection}); "
+              f"capture may vary run-to-run by a small idle-animation phase (see doc98)")
     orig_png = diff_dir / f"{args.node}_sel{args.selection}_orig.png"
     md5 = raw_screenshot(args.instance, orig_png)
     print(f"DOSBox-X capture -> {orig_png} rgb_md5={md5}")
+
+    party_binding = args.party_binding
+    if party_binding is None:
+        party_binding = default_party_binding_for_chapter(chapter_byte)
+    if party_binding:
+        print(f"remake party binding -> {party_binding} "
+              f"(pass --party-binding \"\" to opt out)")
 
     pulses = [int(p) for p in args.pulses.split(",")]
     best = None
     for pulse in pulses:
         remake_png = diff_dir / f"{args.node}_sel{args.selection}_pulse{pulse}_remake.png"
         try:
-            remake_shot(args.node, f"{args.selection},{pulse}", remake_png)
+            remake_shot(args.node, f"{args.selection},{pulse}", remake_png,
+                        party_binding=party_binding)
         except Exception as e:
             # A single slow/flaky capture (WSL invocation hiccup, see
             # wsl_run's docstring) should not sink the whole report --
@@ -505,6 +689,12 @@ def build_parser():
     sp.add_argument("--node", required=True)
     sp.add_argument("--town-state", default=None, help="selection,pulse")
     sp.add_argument("--frame", type=int, default=30)
+    sp.add_argument("--party-binding", default=None,
+                     help="FD2_SHOT_PARTY_BINDING path (relative to remake/), e.g. "
+                          "assets/cutscenes/bindings/ch01_pre.json; required for any "
+                          "scene gated on a leader/roster identity (town hub, shop, "
+                          "church, ...) or the remake fails closed with no frame; "
+                          "omit for scenes that need no party (e.g. title)")
     sp.add_argument("--out", required=True)
     sp.set_defaults(func=cmd_remake_shot)
 
@@ -522,6 +712,15 @@ def build_parser():
     sp.add_argument("--selection", type=int, default=0, help="town hub selection 0..5")
     sp.add_argument("--pulses", default="0,1,2,3", help="comma-separated pulse values to try on the remake side")
     sp.add_argument("--sav-source", default=None, help="real FD2.SAV to patch (default: pull from WSL fd2-run)")
+    sp.add_argument("--party-binding", default=None,
+                     help="override FD2_SHOT_PARTY_BINDING (default: derived from "
+                          "--chapter-byte via default_party_binding_for_chapter(); "
+                          "pass \"\" to opt out and let the remake fail closed instead)")
+    sp.add_argument("--no-pulse-lock", action="store_true",
+                     help="skip the DOSBox-X-side idle-animation pulse lock (see "
+                          "KNOWN_PULSE_LOCKS/lock_pulse_phase) even if this "
+                          "(node, selection) has a known lock pixel; capture may "
+                          "then vary run-to-run by a small idle-animation phase")
     sp.add_argument("--out-prefix", default=None)
     sp.set_defaults(func=cmd_town)
 

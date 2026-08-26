@@ -475,3 +475,85 @@ Debug Help`GUI選單列,即使非全螢幕),因為 dosbox-x 的視窗化 SDL 輸
 完整 shell 腳本細節見 `tools/dosbox_diff_harness.sh` 檔頭註解;完整 CLI 用法/guarantee 邊界見
 `tools/dosbox_diff_harness.py` 模組 docstring。`docs/knowledge-base/48-dosbox-x-debugger-
 build.md`§11 有一個指向本節的簡短入口。
+
+### 2026-08-26 續:town-hub badge 修復後的兩個 follow-up gap(接 task_4845f230)
+
+`49b16f6e`(town-hub selector icon 修好、`native_town_scene.go` 改用`leaderKey`解析
+`MapSelectorKey`)的 commit message 誠實記錄了一個未收尾的缺口:當時用本工具的
+`town`/`remake-shot`路徑重放城鎮 hub 場景,remake 側只給了`FD2_CAMP_NODE`卻沒給
+party binding,新加的 fail-closed 檢查(正確地)拒絕產出畫面,導致那輪修復完全沒有
+live 重放證據。同時獨立發現 DOSBox-X 端本身重跑會給出不同結果。本節記錄兩者都已處理。
+
+**缺口一:remake 側 party binding——已解**。`remake/cmd/fd2/main.go:8984`的
+`FD2_SHOT_PARTY_BINDING`環境變數(讀取一份`remake/assets/cutscenes/bindings/*.json`
+handler binding、透過`materializeShotPartyFromBinding()`重建`g.partyJoinOrder`/
+`g.partyRoster`)才是正確的機制——這不是新發現,`docs/knowledge-base/58-remake-live-
+verification-log.md`續轮(2026-08-16)的`town_ch03`/`shop_ch02_item`等節點早就手動用過
+(`FD2_SHOT_PARTY_BINDING=ch01_pre.json`),只是先前沒有被接進`dosbox_diff_harness.py`
+本身。已修:
+- 新增`default_party_binding_for_chapter(chapter_byte)`——把 slot0 章節 byte 對應到
+  `ch{chapter_byte:02d}_pre.json`(驗證依據:`ch01_pre.json`的`loadch.chapter`欄位確實是
+  1、`party_order=[0,9,4,30,1]`,與 doc58 續五十九手動用過的組合完全一致;目前僅
+  `ch00`/`ch01`/`ch02_pre.json`三份 binding 真的帶`party_order`,其餘章節的`_pre.json`
+  尚未補上這段資料,呼叫時 remake 側會用清楚的錯誤訊息說「no complete party LOADCH
+  state」,不是靜默錯誤)。
+- `remake_shot()`新增`party_binding`參數,設定時自動加上
+  `export FD2_SHOT_PARTY_BINDING=...`;`town`子指令預設自動代入,`remake-shot`子指令
+  開放`--party-binding`手動指定(給 town/shop/church 以外、章節推導規則不適用的場景用)。
+- **live 驗證(2026-08-26,全新 instance,非紙上談兵)**:未修前重放`town_ch02`/
+  `selection0`,remake 側因為沒有 leaderKey 直接產出全黑/無效畫面,diff 統計爛到
+  `exact_pixel_pct≈2.7%`(比對到錯誤畫面,不是失敗)。修完後同一場景重放,remake 側
+  正確畫出城鎮 hub(帳篷、柵欄、「酒店」選單、正確的隊伍縮圖清單),與 DOSBox-X 側
+  對齊後達到`exact_pixel_pct=99.36-99.43%`(4個候選pulse值),與本文件上一節
+  2026-08-26首次驗證記錄的 99.3-99.4% 同一量級——證實這不只是「有畫面就好」,是真的
+  重新達到先前已記錄的 rigor 等級。側圖見
+  `docs/knowledge-base/evidence/town_ch02_sel0_badgefix_diffharness_20260826.png`,
+  角色頭部無紅色斑塊,與`49b16f6e`修復的視覺結論一致(該 commit 自己的證據是靜態合成
+  的 FDICON 比對,這是本輪補上的第一份**動態 E2 live 重放**證據)。
+
+**缺口二:DOSBox-X 端本身重跑不穩定——已定位根因、已驗證一個範圍內的緩解,誠實列出限制**。
+
+*重現*:對同一份已 chapter-jump patch 過的`FD2.SAV`,連續啟動 5 個全新獨立 instance、
+各自走`reach_town_hub()`→`raw_screenshot()`,4 次拿到相同`rgb_md5`,1 次不同——確認這是
+DOSBox-X 擷取端本身的變異,與 remake/Go 端改動無關(本輪測試時 Go 端程式碼本身沒有變動)。
+
+*根因*:比對那 1 次離群結果與其餘 4 次,只有 362/64000 像素(0.57%)不同,且全部集中在
+一塊 24×24px 的小範圍內,精確對應**隊伍隊長的站立 sprite**——放大比對後確認是同一個
+角色、同一個姿勢,只是待機呼吸/晃動循環裡的**下一幀**(不是殘破/半繪製的截圖,也不是
+截到完全不同的畫面)。這個工具鏈裡沒有任何機制釘住「畫面截圖那一刻,待機動畫剛好走到
+第幾幀」——`wait_for_native_geometry()`的輪詢與`reach_town_hub()`裡的固定 sleep 只保證
+「城鎮 hub 大致已經顯示」,不保證是哪一幀。
+
+*緩解(已驗證有效,範圍有限)*:新增`lock_pulse_phase()`——重用既有的`wait-pixel`原語
+(`dosbox_diff_harness.sh`本來就有的子指令,先前只在文件裡提過、沒有被`.py`呼叫過),
+對城鎮 hub 場景鎖定一個**已知會在不同待機幀之間翻轉**的像素座標/顏色組合(本輪對
+`town_ch02`/`selection0`實測找到`(x=40,y=57)=(142,0,0)`,是隊長紅領巾的一小塊像素),
+截圖前先輪詢等它出現。`reach_town_hub()`新增`pulse_lock`參數,`town`子指令透過
+`KNOWN_PULSE_LOCKS`表(目前只有`("town_ch02", 0)`一筆)預設自動套用(`--no-pulse-lock`
+可關閉)。**效果實測**:同樣連續 5 個全新獨立 instance,加鎖後**5/5 次`rgb_md5`完全相同**
+(先前未加鎖是 4/5)。
+
+*誠實列出限制*:
+1. 這是**逐場景**的緩解,不是通用解——`(x,y,rgb)`這組數字是針對`town_ch02`/`selection0`
+   這個具體畫面挑出來的,換一個節點/角色隊長/城鎮美術,大機率需要重新用同一手法(比對
+   兩次離群結果、找一個會翻轉的像素)重新挑一組,`KNOWN_PULSE_LOCKS`目前只有這一筆。
+   沒有登記的場景組合會自動 fall back 回未加鎖行為,可能重現同一類(但通常很小、侷限在
+   角色 sprite 範圍內的)變異。
+2. 鎖定的是「這個像素落在其中一種已觀察到的幀」,不是證明窮舉了所有可能幀——如果待機
+   循環實際有 3 幀以上,這個方法只保證鎖定其中鎖定目標對應的那一幀,不保證是「原版真正
+   同步的那一幀」(反正 DOSBox-X 本身跑的是即時模擬,「哪一幀算正確」這個問題本來就沒有
+   單一標準答案,鎖定的意義是讓**同一份 harness 重複呼叫時可重現**,不是宣稱找到了原版
+   權威時刻)。
+3. 這與續五十四/續五十五記錄的 Enter/Space 選擇性掉鍵問題是**完全不同類別**的不穩定——
+   那個是輸入傳遞層(未解),這個是擷取時機對到即時動畫相位(已定位、已驗證緩解),兩者
+   不要混為一談。
+4. `lock_pulse_phase()`本身有成本(預設`max_tries=60`、`delay=0.15s`,最長多等9秒)且
+   仰賴`import -window root`(全螢幕截圖再挑像素,不是`raw-screenshot`的
+   `-window $win`),與`raw_screenshot()`本身的擷取路徑是兩條獨立的 X11 呼叫——本輪未
+   發現兩者互相干擾的證據,但沒有專門測試這條路徑本身的穩定性上限(例如`wait-pixel`
+   本身會不會偶爾也卡住)。
+
+兩處修復都已寫進`tools/dosbox_diff_harness.py`模組 docstring(`WHAT THIS TOOL ACTUALLY
+GUARANTEES`/`WHAT THIS TOOL DOES NOT GUARANTEE`兩節)與相關函式的 docstring
+(`default_party_binding_for_chapter`/`lock_pulse_phase`/`reach_town_hub`),含完整驗證
+數字,不只在本文件重複一次。
