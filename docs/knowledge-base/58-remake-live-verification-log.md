@@ -8855,3 +8855,77 @@ CPU tick差/行程狀態)、debugger console逐次capture-pane文字紀錄
 ### 7. 產出
 
 本文件本節(續七十七)。過程screenshot(標題/LOAD/軍營/戰前對白/部署畫面/5次獨立Enter失敗前後對照/1次Space失敗/15連發batch前後對照/2次方向鍵成功對照,約20張,`shot_title.png`/`shot_nav1~6.png`/`shot_trial01~06.png`/`shot_trial_ctrl_right.png`/`shot_batchA_before/after.png`/`shot_ctrl_after_batch.png`)、`xtrace_capture.log`(完整協定層封包記錄,約19萬行)、`xtrace_summary.txt`(整理過的統計摘要與關鍵封包節錄)、輔助腳本(`launch_final.sh`/`press.sh`/`shot.sh`/`mash.sh`/`trypress.sh`/`batch_press.sh`)均留存於WSL2端`~/fd2-run/`(本輪環境已teardown,檔案本身未清除,供下一輪需要時直接取用,不在repo版控範圍內)。已同步更新`91-worklist.md`同一條目(見下一次commit)。`docs/knowledge-base/48-dosbox-x-debugger-build.md`§8經檢視後**已**修改(新增`xtrace`正確用法與`setsid`禁忌兩項,見下一次commit)。
+
+## 續七十八:接手 doc35 §9.20.9 建議#1——對 ch27 戰前「轉送站」CG1(懸浮天空島嶼)第一次做到
+live 斷點命中+引數 dump+RLE 資料格式解碼+像素還原+與真實截圖比對的完整閉環,結果是**反面的**:
+`0x2541f`/`FUN_0004ebab` 這條被 §9.20 靜態反組譯高度看好的候選,實際畫的是悠妮傳送特效的一個
+12×21→24×23px 小型光點/閃爍動畫,不是 ~77×68px 的懸浮小島本體;懸浮小島真正的繪製機制依然
+未定位(2026-08-26)
+
+**任務背景**:doc35 §9.20(續前一輪的靜態反組譯)把 ch26 戰後 handler 尾段裡的
+`0x2541f: CALL 0x22253` 定位成「CG1 現身效果」候選——這段呼叫嵌在兩句對白(「看!是..是黃金城!」
+/「啊!又..又消失了!」)之間,且 `0x22253`/`0x22470` 已知是 doc31 §9 記錄過的「27-present 索引
+單位現身/離場演出引擎」,§9.20 因此推論 CG1 沿用了這套引擎的 intro phase 來畫小島。但 §9.20 全程
+只用快取的 trace + 反組譯,**沒有**重開 live 環境驗證——本節接手 §9.20.9 的具體建議,補上這一步。
+
+**環境與觸發手法**(見 doc35 §9.21.1 完整細節,不在此重複):`tools/dosbox_harness.sh` 隔離
+instance `cg1v`,LOAD→軍營出口確認YES→純 `Escape` 連續推進約30句對白(遺跡→機甲戰鬥旁白→莎拉
+頭痛→悠妮告白→索爾挽留→「沒有天空之鑰...」→「A1型分解傳送啟動待命,座標1-1-72..」→悠妮訣別→
+消失),全程**不需要**進 debugger 做47格死亡signature——直到悠妮消失那一刻才第一次進 debugger
+下斷點,比續七十/續六十四記錄的流程更快、更簡潔。
+
+**斷點命中與引數核對**(完整逐位元組資料見 doc35 §9.21.2-9.21.3):`BP 0170:1C141F`
+(`0x2541f+0x19C000`)精確命中,`Code Overview` 顯示 `CALL 001BE253`,與 `0x22253+0x19C000`
+逐位元組吻合。改設 `BP 0170:1EABAB`(`FUN_0004ebab` 入口)命中11次(對應11楨迴圈),`D SS:ESP`
+讀出三引數:`dest=0x24FDB8`(11楨全程不變)、`src` 每楨遞增指向不同資料流、`stride=0x1C8`(456,
+與 §9.20.9 純靜態反推的常數值完全吻合)——ABI 接線100%驗證為真。
+
+**關鍵負面發現**:逐楨讀 `src` 指標的 width/height header,11楨尺寸只在 12×21 到 24×23px 之間
+變化,**遠小於** §9.19.5 pixel-diff 實測的懸浮小島 bounding box(原生解析度約 77×68px)。用
+raw disasm 逐指令核對出的正確 RLE 演算法(`FUN_0004ec66`:byte<0xC1為literal,byte≥0xC1為
+run,count=byte-0xC1+1)解碼第1楨完整30-byte body,精確輸出252個像素(=12×21,body剛好耗盡)
+——252個像素裡只有8個非透明,顏色全部是同一個索引,排列成一條**對角線**,還原成圖後
+(`docs/figures/ch27-fun0004ebab-decoded-sprite-frame1-16x.png`)是典型的閃光/星芒粒子拖尾圖案,
+不是任何角色或建築剪影的局部。斷點命中當下的實際遊戲畫面
+(`docs/figures/ch27-transport-pad-materialize-effect-before.png`/
+`ch27-transport-pad-materialize-effect-frame10.png`)顯示悠妮的角色立繪本身完整可見(但那是
+另一套不受本次斷點控制的地圖單位渲染子系統畫的),`FUN_0004ebab` 只是疊加了一個肉眼難以單獨
+察覺的小型光點動畫在同一畫面區域。
+
+**LOGC 執行流程追蹤補充查證**:讓遊戲繼續執行到 CG1 本體真正出現(懸浮天空島嶼,對照藍天白雲
+太陽背景,`docs/figures/ch27-prebattle-cg1-island-visible-verify79.png`,構圖與 §9.19.5 舊截圖
+一致),武裝 `LOGC 2000000`(3355萬指令)追蹤一次 `Return` 推進(小島同一次按鍵內完整消失,
+`docs/figures/ch27-prebattle-cg1-island-gone-verify79.png`,切到一個此前所有輪次都沒記錄過的
+新角色——光頭尖耳綠眼、橘色勁裝)。去重後5822個唯一位址裡2個「全新」候選,逐一核對後都不是
+真正的新發現:較大的一個(`0x4370F..0x4386C`,73命中)實際落在 doc35 §9.16.2 早已定案的「通用
+軟體MIDI事件派發器」範圍內(CG演出配樂持續播放導致大量MIDI派發碼被執行,與畫面繪製無關);
+較小的一個(`0x31772`,僅7bytes、零xref)證據不足。**這次 LOGC 追蹤沒有找到任何新的島嶼繪製
+候選**——已知限制:武裝時機在小島「消失」半段之後才開始,沒有涵蓋「出現」半段。
+
+**誠實整體評估**:這是這個謎題(續三十二起)第23輪攻堅,本輪首次完整走完「live斷點命中→引數
+dump→RLE解碼→像素還原→與真實截圖比對」全部步驟(比§9.19對`0x3205f`那輪更完整,額外做了獨立
+的getbyte演算法逐位元組修正),但結果與§9.19同構:**反面**。`0x2541f`/`FUN_0004ebab` 這個
+doc35 §9.20 認定的候選被 live 像素證據排除——它服務的是悠妮傳送特效這個完全獨立的視覺元素,
+不是懸浮小島。**誠實信心等級**:對「`0x2541f`/`FUN_0004ebab` 不是CG1繪製機制」是**高**(三重
+live證據:斷點精確命中+引數ABI逐位元組核對+像素還原直接對比);對「CG1真正繪製機制是什麼」
+仍是**未知**——這條調查線再次回到「有已知會顯示/消失的CG、沒有候選函式直接證據」的起點,
+累積至今的收穫是排除法本身(`0x3205f`→角色卡專屬,`0x2541f`/`FUN_0004ebab`→悠妮傳送特效
+專屬),不是定位。
+
+**對 `91-worklist.md` 的影響**:未修改——本節結論是排除一個候選、沒有找到新機制的負面結果,
+ch27戰前CG1顯示問題本身仍無專屬worklist項目追蹤(續七十已確認過這點),與`0x2bce5`/
+`native_2c548`戰後party montage cluster的11個項目依然是完全獨立的問題,未觸碰。
+
+**完整技術細節(斷點/引數表格、RLE演算法逐指令反組譯、LOGC分類結果、下一輪具體建議)見
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.21,不在此重複。**
+
+**環境收尾**:`tools/dosbox_harness.sh teardown cg1v` 已執行,`tmux`/`Xvfb`/`dosbox-x` 進程樹
+確認終止。本輪全程操作(含47格死亡signature批次寫入嘗試——實際上最終路徑未用到、純debugger
+斷點/RUN/DV讀取、LOGC追蹤)都只發生在DOSBox-X模擬的RAM裡,沒有觸發autosave,沒有修改
+`remake/`下任何原始碼或campaign資產檔案。
+
+**產出**:本文件本節(續七十八)。5張存證截圖已存入`docs/figures/`
+(`ch27-transport-pad-materialize-effect-{before,frame10}.png`、
+`ch27-fun0004ebab-decoded-sprite-frame1-16x.png`、
+`ch27-prebattle-cg1-island-{visible,gone}-verify79.png`)。過程debug產物(約30張逐句對白截圖、
+Ghidra批次查詢JSON、LOGC trace去重後的位址清單)留存於Windows端`.wsl_build/`,不納入repo版控。
