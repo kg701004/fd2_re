@@ -698,6 +698,47 @@
     writer」。`tools/fd2save.py`／`test_fd2save.py` 本輪新增的
     `build_join_record`/`append_roster_members`/`set_slot_chapter`
     已成為這類測試可重複使用的基礎設施。完整過程見 UI-VIS-PREPARATION 條目。
+    **下方 `cleanretest` 輪已用乾淨單一動作重測並修正「回到標題 LOAD 選單」
+    /「已發生真實寫入」兩個敘述，`0x2968d` 本身的結論信心提升為高。**
+  - **2026-08-26（`cleanretest` harness，獨立全新 registry，啟動前
+    `tmux ls`/`ps` 確認無殘留 instance，結束後乾淨 teardown）：用乾淨單一
+    動作重測「要記錄戰況嗎？」Yes 分支，`0x2968d` 命中確認、寫入未發生確認，
+    且定位出一條先前未記錄的新呼叫路徑**。存檔沿用上一輪同一組 13 個新角色
+    id（`14,17,3,15,18,16,21,7,25,28,24,23,22`）疊加到真實
+    `~/fd2-run/FD2.SAV` slot0，chapter 設 raw `0x1b`(27)。全新 boot →
+    title→`Down`→`Return`→`Return`(選 slot0，清單顯示「1)第二十八章
+    探索者」)→FDTXT `0x19a`，與上一輪觸發點截圖一致
+    ([`cleanretest-fdtxt-0x19a-record-battle-confirm.png`](../figures/cleanretest-fdtxt-0x19a-record-battle-confirm.png))。
+    **本輪只做一次動作**：武裝 LOGC(3 億指令)後單一次 `Left`+`Return`(選
+    YES)，不再送任何鍵，等追蹤自動跑滿收工。**結果**：`0x2968d`
+    (`FUN_0002968d`)確認命中，`disasm` 逐指令核對其讀取序列（fopen rb→
+    fread 0x59cb→transform 0x4df28）與已知 tavern icon1 writer 結構逐位元組
+    相同，證實是同一個 482-byte 函式，不是撞位址；`0x2ff01`/`FUN_0002ff01`
+    及其兩個已知 caller/dispatcher 全部零命中，再次排除舊假設。**新發現**：
+    對 `0x2968d` 做 `xref_to` 找到全 EXE 僅兩個直接呼叫者——已知的
+    `0x2940e`(酒店 icon dispatcher `FUN_00029300`內部)與**先前未記錄的
+    `0x26331`**(位於 UI-VIS-TOWN 條目已記錄的「town-hub 主迴圈/redraw函式」
+    `FUN_00026152`內部)；本輪 LOGC 命中集合證實走的是 `0x26331` 這條
+    （`0x2940e`/`0x29300` 零命中），即整備限定流程的 Yes 分支由
+    `FUN_00026152`內部分支直接呼叫存檔函式，不經過酒店 NPC 對話框 dispatcher
+    鏈。**`FD2.SAV` md5/mtime 按鍵前後與追蹤跑滿後三次採樣完全相同，本輪未
+    發生任何真實寫入**，修正上一輪「Yes 觸發真實寫入」的敘述。**畫面敘述修正**：
+    按 Yes 後顯示的四槽清單（[`cleanretest-yes-branch-slot-picker-after-confirm.png`](../figures/cleanretest-yes-branch-slot-picker-after-confirm.png)）
+    外觀與標題 LOAD 選單相同，但 `disasm` 證實這其實是 `FUN_0002968d`
+    讀完檔案後、在 offset `0x85`(`0x29712`)呼叫的內部目標槽位選擇器
+    `FUN_00029bcb`(`0x29bcb..0x29da9`，獨立函式，`CMP EAX,-1`判斷取消)，
+    **不是**跳出存檔流程回到 title 重新進 LOAD——程式仍停在「請選擇要覆寫的
+    存檔位」這個互動迴圈，真正的 checksum(`0x4df09`)/寫入 transform
+    (`0x4df28`)/fwrite 鏈在同一函式更後段(offset `0x11a`)，要等選擇器真的
+    收到一次槽位選擇才會執行，本輪刻意只送一次 Yes 鍵、未觸及。這也回頭解釋
+    上一輪「確實真實寫入」不是矛盾——上一輪混雜的按鍵序列很可能多按了一次
+    確認鍵落進這個選擇器並選中某槽，兩輪其實是同一函式的不同階段。**結論
+    （信心高）**：Yes 呼叫的是與 tavern icon1 writer 同一個 `FUN_0002968d`
+    函式（經由新定位的 `FUN_00026152`/`0x26331` 呼叫，不是酒店 dispatcher），
+    但 Yes 本身不會無條件寫入磁碟，只會讀檔後開啟同一函式自己的目標槽選擇器
+    等待進一步輸入。**誠實限制**：下一輪可低風險補測——在這個選擇器上再按
+    一次 `Return` 選 slot，確認「記錄儲存完畢！」與 `FD2.SAV` 真的改變。
+    doc25 §9.1 已同步更新此修正。
 - [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實

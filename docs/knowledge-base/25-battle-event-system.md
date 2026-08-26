@@ -1000,7 +1000,89 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 > 不是乾淨單一路徑對照組，此一具體結論信心較低，留給下一輪用乾淨的單一動作
 > 序列重新驗證。完整過程、截圖與 `test_fd2save.py` 新增的 known-answer
 > regression 見 `91-worklist.md` UI-VIS-PREPARATION／UI-VIS-LOAD 兩個條目
-> 2026-08-26 續輪段落。
+> 2026-08-26 續輪段落。**下方 2026-08-26（`cleanretest` harness）續輪已用乾淨
+> 單一動作重測，`0x2968d` 這個具體結論成立且信心已提升為高，但「回到標題
+> LOAD 選單」與「已發生真實寫入」這兩個周邊敘述都需要修正，見下方完整記錄。**
+>
+> **2026-08-26 續輪（`cleanretest` harness，獨立全新 registry/Xvfb `:199`，
+> 啟動前用 `tmux ls`/`ps` 確認無殘留 instance，結束後 teardown 乾淨）：
+> 用乾淨單一動作重測 Yes 分支，`0x2968d` 命中已確認、寫入未命中已確認、
+> 周邊兩個舊敘述已修正**。存檔合成沿用上一輪同一組 13 個新角色 id
+> （`14,17,3,15,18,16,21,7,25,28,24,23,22`）以 `append_roster_members()`
+> 疊加到真實 `~/fd2-run/FD2.SAV` slot0（13 真人 roster），
+> `set_slot_chapter(0, 0x1b)`（raw 27，對應「第二十八章」）；
+> `tools/fd2save.py --out` round-trip 自檢通過。全新 boot 後逐步 screenshot
+> 確認狀態（title→`Down`→`Return`（開 LOAD）→`Return`（選 slot0，清單顯示
+> 「1)第二十八章 探索者」）→直接顯示 FDTXT `0x19a`「要記錄戰況嗎？」，與上一輪
+> 觸發點截圖一致，[`cleanretest-fdtxt-0x19a-record-battle-confirm.png`]
+> (../figures/cleanretest-fdtxt-0x19a-record-battle-confirm.png)）。**本輪只做
+> 一次動作**：`enter-debugger`（Alt+Pause）→`dosbox_exec_trace.sh arm`（LOGC
+> 3 億指令）→單一次 `xdotool key Left Return`（選 YES）→不再送任何鍵，等
+> LOGC 跑滿 3 億指令自動收工，全程未重試、未混入其他 slot 操作。
+>
+> **交叉核對結果**：
+> - **`0x2968d`（`FUN_0002968d`）確實命中**，且不只是位址命中——完整
+>   `disasm`（`ghidra_batch_probe.py`）逐指令核對，前 0x85 bytes 與本節上方
+>   savewriter 輪已記錄的 tavern icon1 writer 讀取序列逐位元組相同結構
+>   （`PUSH 0x38`→`CALL 0x3702f` alloc→`PUSH 0x59cb`→`CALL 0x3706e` alloc
+>   buffer→push `"rb\0"`/`"FD2.SAV\0"`（`0x50251`/`0x50254`）→`CALL 0x37324`
+>   fopen→`TEST EAX,EAX`/`JZ 0x296ee`→（存在時）`CALL 0x373ca` fread(buf,1,
+>   `0x59cb`,fh)→`CALL 0x4df28` transform decode）——**這不是巧合撞位址，是
+>   同一個 482-byte 函式（`0x2968d..0x2986e`）真的被完整執行到讀取階段**。
+> - **`0x2ff01`/`FUN_0002ff01`（舊稱 `0x30012`）、其內部呼叫 `0x2d80d`、兩個
+>   已知 caller（`0x1d43c`/`0x15400`）、其外層 dispatcher（`0x18890`/
+>   `0x18d8c`/`0x15311`/`0x1cff0`/`0x13a9f`/`0x14ef0`）全部零命中**——與
+>   `rostertest`/`camproute`/`writerfire` 歷輪一致，再次確認舊假設在這條路徑
+>   上不成立。
+> - **新發現：`0x2968d` 這次不是經由已知的 tavern dispatcher 鏈
+>   （`0x29300`/`0x2670e`）呼叫的**——對 `0x2968d` 做 `xref_to` 找到全 EXE
+>   只有兩個直接呼叫者：`0x2940e`（位於已知的 `FUN_00029300` 酒店 icon
+>   dispatcher 內部，tavern icon1 路徑用這個）與**`0x26331`（位於
+>   `FUN_00026152`——即本文件/`91-worklist.md` UI-VIS-TOWN 條目已記錄的
+>   「town-hub 主迴圈/redraw 函式」內部，先前只知道它在 Enter/Space 時呼叫
+>   `FUN_0002670e` 進 town-hub 選單，這個直接呼叫 `0x2968d` 的分支是本輪新
+>   定位、先前未記錄的第二條路徑）**。本輪 LOGC 命中集合直接證實走的是
+>   `0x26331` 這條（該位址與其前 16 個連續位址 `0x262f1..0x2632f` 均命中，
+>   `0x2940e`/`0x29300` 零命中）——也就是說「整備限定流程」（跳過城鎮 hub、
+>   直接顯示 `0x19a`）的 Yes 分支，是 `FUN_00026152` 內部一個獨立分支直接呼叫
+>   存檔函式，不經過酒店 NPC 對話框那條 dispatcher 鏈，兩條路徑最終共用同一個
+>   `0x2968d` 實作，但呼叫點不同。
+> - **`FD2.SAV` 全程未變**：`md5sum`/`stat mtime` 在按鍵前後、以及 3 億指令
+>   LOGC 完整跑完後，三次採樣完全相同（`1499a9ad12877e83238162db6acff922`，
+>   mtime 停在 harness 複製檔案當下，不是按鍵後的時間）——**本輪沒有發生任何
+>   真實磁碟寫入**，修正上一輪（混雜多次嘗試）「Yes 觸發真實寫入」的敘述。
+> - **畫面「回到標題 LOAD 選單」的敘述需要修正，不是真的回到標題畫面**：
+>   按 Yes 後螢幕確實顯示與標題 LOAD 選單外觀相同的四槽清單
+>   ([`cleanretest-yes-branch-slot-picker-after-confirm.png`]
+>   (../figures/cleanretest-yes-branch-slot-picker-after-confirm.png))，但
+>   逐指令 disasm 證實這其實是 **`FUN_0002968d` 讀完檔案後，自己在 offset
+>   `0x85`（`0x29712`）呼叫的內部目標槽位選擇器 `FUN_00029bcb`
+>   （`0x29bcb..0x29da9`，479 bytes，獨立函式，`CMP EAX,-1` 判斷取消/Escape）**
+>   ——程式仍在 Yes 分支的存檔流程內部，停在「請選擇要覆寫的存檔位」這個互動
+>   輸入迴圈，**不是**跳出存檔流程回到 title 畫面重新進 LOAD；兩者視覺上用的
+>   是同一個四槽清單 UI，只有讀 disasm 才分得出來。函式本體同一份 disasm
+>   顯示，真正的 checksum（`0x4df09`）/寫入用 transform（`0x4df28`）/fwrite
+>   鏈這段程式碼確實存在於 `0x2968d` 函式更後段（offset `0x11a`
+>   起，`0x297ae`），只是要等 `FUN_00029bcb` 這個互動選擇器**真的收到一次槽位
+>   選擇**才會執行到——本輪刻意只送一次 Yes 確認鍵、不再送任何後續鍵，所以
+>   停在選擇器等待輸入的狀態，合理解釋了為什麼寫入沒發生。
+> - **這也回頭解釋了上一輪的「確實真實寫入」為什麼會發生，不是互相矛盾**：
+>   上一輪按鍵序列混雜多次嘗試，很可能除了選 Yes 之外還額外按了一次確認鍵
+>   落進這個槽位選擇器並選中了某一槽，才觸發後段的 checksum/transform/fwrite
+>   ——兩輪其實觀察到的是同一個函式的不同階段，不是兩個衝突的發現。
+>
+> **修正後的結論（本輪視為已關閉，信心高）**：「要記錄戰況嗎？」Yes 分支呼叫
+> 的是 `FUN_0002968d`——與已獨立確認過的 tavern icon1 存檔 writer **同一個
+> 函式**，不是舊假設的 `0x30012`/`FUN_0002ff01`；但這次是經由先前未記錄的
+> `FUN_00026152`（`0x26331`）直接呼叫，不是經由酒店 icon dispatcher。Yes 本身
+> **不會無條件寫入磁碟**——它會先讀入既有 `FD2.SAV`，再開啟一個與標題 LOAD
+> 選單外觀相同、但其實是這個存檔函式自己的四槽目標選擇器，等玩家真的選定一個
+> 槽位之後，同一函式後段的 checksum/transform/fwrite 才會執行，產生真實寫入
+> （這部分沿用上一輪已觀察到的行為，本輪未重新觸發，誠實列為下一輪可低風險
+> 補測的下一步：在這個選擇器上再按一次 `Return` 選 slot，確認出現「記錄
+> 儲存完畢！」文字且 `FD2.SAV` 這次真的改變）。**No 分支**維持
+> `rostertest` 輪已用同樣乾淨方法論確認的結論不變：直接進選人畫面，全程對
+> `0x2968d`/`0x2ff01` 兩條鏈皆零命中。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：
