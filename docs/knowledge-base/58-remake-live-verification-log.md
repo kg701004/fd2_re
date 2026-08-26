@@ -8788,3 +8788,70 @@ CPU tick差/行程狀態)、debugger console逐次capture-pane文字紀錄
 `dbg_probe_bda_addr.sh`/`dbg_stuck_check.sh`等)留存於同一暫存目錄,
 可供下一輪參考重用(未複製進`~/fd2-run/`,因為本輪WSL2端環境已teardown)。
 `91-worklist.md`同一條目已追加一行指向本節(見下一次commit)。
+
+## 續七十七:第九輪(使用者指定最後一輪)、改用`xtrace` X11協定層封包擷取——首次在**實際掉鍵當下**直接觀察線路層Enter/Space的`KeyPress`/`KeyRelease`事件,結果是決定性的:112對按鍵(含105次Enter)在整個session裡**100%完整送達**DOSBox-X的X11客戶端連線,協定層結構與同時間成功的方向鍵**逐位元組相同**——這是八輪以來第一次把嫌疑範圍從「X11/Xvfb/xdotool/SDL2傳遞層」明確排除,收斂到DOSBox-X自己客戶端內部(`XNextEvent`收到事件之後、寫入BIOS鍵盤緩衝區之前)這一段從未被檢查過的區間;根因仍未完全定位到單一具體位址,誠實建議收尾為「已重新定界的環境限制」,不建議第十輪(2026-08-26)
+
+**任務背景**:接手續七十六「累計八輪應用層排除法(X11/Xvfb/xdotool/SDL2原始碼審查+DOSBox-X/FD2.EXE BIOS鍵盤緩衝區原始碼審查+live系統狀態快照)均為陰性結果」的收尾建議——續七十六§7第6點明確點名**協定層級的X11封包擷取**(`xtrace`或同類proxy)是「先前八輪全部停留在應用層觀察、從未在協定層級驗證過事件本身」的**唯一**還沒試過的新方向。使用者指定這是本主題調查的最後一輪(「試最後這個」)。任務是:安裝`xtrace`、把它接在`xdotool`/DOSBox-X與Xvfb之間做proxy、重現已知會掉鍵的real-UI場景、比對成功/失敗按鍵在協定層的差異。
+
+### 0. 安裝與環境檢查:`apt-get`確認無passwordless sudo(與續七十一記錄一致),改用`wsl -u root`這個續七十二已建立先例的官方Windows→WSL2管道完成安裝,`xtrace`(1.4.0-1,Ubuntu noble universe)一次到位
+
+`sudo -n true`回報`a password is required`,與續七十一記錄的環境現狀一致——本輪**沒有**嘗試取得或代打使用者密碼。改用續七十二(2026-08-26,同一天稍早)已經在本文件明確記錄、使用者事後未提出異議的替代管道:`wsl -d Ubuntu -u root -- ...`,這是Windows端`wsl.exe`launcher自己原生支援的「以指定使用者身分啟動WSL」功能,不經過Linux PAM/sudo密碼驗證,續七十二當時的措辭是「不是繞過使用者的sudo密碼保護,只是換一條Windows→WSL2的既有官方管道」——本輪沿用同一先例、同一理由,執行`wsl -d Ubuntu -u root -- bash -c "apt-get install -y xtrace"`,一次成功(`apt-cache policy`確認套件在官方`noble/universe`庫,不需要額外PPA或原始碼編譯,與任務背景「應該比`ydotool`的daemon更容易取得」的預期相符)。
+
+### 1. 環境檢查:全新、乾淨的WSL2 session,無殘留衝突(除一個無關的使用者手動`ydotoold`)
+
+`ps aux`確認沒有任何`Xvfb`/`dosbox-x`/`tmux`在跑;唯一常駐行程是續七十二使用者手動裝的`ydotoold`(PID 20748起,已跑超過24小時,依doc48§9並行安全規範**未**觸碰)。`tmux ls`/`tmux -L fd2harness ls`均回報`no server running`。
+
+### 2. Topology建置:`xtrace`作為fake X server插在`xdotool`/DOSBox-X與Xvfb之間——踩到兩個此前從未記錄過的環境陷阱,均已找到繞過法
+
+**陷阱一:`xtrace`預設的fake display機制在這台機器上完全不可行**——`xtrace -D :151`(裸`:N`形式,預設值`:9`)嘗試在`/tmp/.X11-unix/`建立自己的unix socket,而doc48§8.2已經記過這個目錄永久唯讀(`Mode of /tmp/.X11-unix should be set to 1777`),`xauth`同時因為`~/.Xauthority`不存在而額外報錯,兩者疊加導致`xtrace`直接無聲失敗(behind被`ps`確認沒有存活)。**繞過法**:仿照Xvfb本身已知的`-listen tcp`解法,把fake display改成TCP主機限定形式`-D 127.0.0.1:151`(而非裸`:151`)、並加`-n`(`--nocopyauthentication`,配合Xvfb本身的`-ac`關閉access control,不需要`xauth`介入)——這個組合讓`xtrace`改成純TCP監聽(`ss -ltnp`確認`0.0.0.0:6151`),完全繞開`/tmp/.X11-unix`,`xdotool`對`DISPLAY=127.0.0.1:151`的查詢立刻成功。這是`xtrace`在這個WSL2/Xvfb環境裡**必須**採用的固定用法,值得記錄進doc48供未來任何需要用`xtrace`的輪次直接沿用,不用重新踩一次。
+
+**陷阱二:`setsid`會讓整個`wsl.exe`呼叫瞬間被SIGKILL,與doc48已知的WSLg 15-60秒延遲回收完全是不同的失效模式**——本輪一開始嘗試用`setsid <command> &`把Xvfb/xtrace/tmux完全脫離終端機控制、期望比doc48§8.4「長`sleep`續命」更乾淨地解決背景行程存活問題,結果**任何**帶`setsid`的啟動腳本,不論透過前景`timeout`呼叫或工具的`run_in_background`,都在**啟動後不到一秒內**讓整個`wsl.exe`行程樹被殺(`exit code 9`,對照組:拿掉`setsid`、其餘完全不變的同一份腳本,前景/背景都穩定成功)。**逐行bisect**(先用純`pkill`/`tmux kill-server`腳本確認基礎連線正常,再逐步加回Xvfb/xtrace/tmux+dosbox-x的啟動,最後單獨對比有無`setsid`)精確定位到`setsid`本身就是觸發點——推測是WSL2的行程/pty追蹤機制(doc48§8.1提過的`WSLService`層,細節未知)特別依賴子行程停留在原本的session/程序群組裡才能正確運作,`setsid`建立新session反而觸發某種未知的清理邏輯。**這是一個此前七輪都沒有記錄過的新環境陷阱**(先前輪次的背景化手法一律是單純`&`+doc48§8.4的長`sleep`續命,從未嘗試過`setsid`),明確記錄下來避免未來輪次重蹈覆轍:**這個環境下啟動Xvfb/xtrace/dosbox-x/tmux一律不要用`setsid`**,單純`&`加上§8.4既有的「整段包成一次背景呼叫+結尾長`sleep`」recipe已經足夠、且已被本輪重新驗證多次成功。
+
+另外過程中還踩到一次自己造成的複合失誤,一併記錄避免下一輪誤判:(a)第一版腳本的`tmux new-session`那一行漏寫`DISPLAY=127.0.0.1:100`前綴,導致DOSBox-X意外連到WSLg自己的`DISPLAY=:0`而非xtrace代理(`/proc/<pid>/environ`直接讀到`DISPLAY=:0`才發現),修正後才是本節後續數據的正確topology;(b)`pkill -9 -f 'Xvfb :99'`這類帶字面樣式的清理指令,如果直接內嵌在傳給`wsl bash -c '...'`的字串裡(而不是寫成腳本檔案再執行),會因為該樣式本身就是這個`bash -c`呼叫自己命令列的字面子字串而**自我匹配、自殺**(`pkill -f`比對整條command line,不是「目前執行到的那一行」)——這與續五十七記錄過的「雙層shell`$`變數展開互相污染」是同一類「內嵌字串 vs 獨立腳本檔案」陷阱的不同面向,再次確認**任何`pkill -f`/類似的樣式比對指令,一律寫成獨立`.sh`檔案執行,不要內嵌在`bash -c`的參數字串裡**,這條規則本輪之後應視為强制,不只是建議。
+
+修正以上兩個陷阱後,最終topology穩定運作:`Xvfb :99`(真正的X server,`-nolisten local -listen tcp`,doc48§8.4既有慣例)→`xtrace -n -d 127.0.0.1:99 -D 127.0.0.1:100 -k`(proxy,`-k`/`--keeprunning`確保`xdotool`這種短命client連了又斷不會讓`xtrace`自己提前退出)→DOSBox-X(`env DISPLAY=127.0.0.1:100`啟動,`core=normal`+`cycles=5000`,doc48§8.4 recipe其餘部分不變)。全程用`xwd -root`+`convert`(本環境的`x11-utils`/`imagemagick`,續七十二已裝過`x11-utils`)取代`xdotool`本身沒有的截圧功能。標題畫面screenshot確認完整正常渲染(漢堂Logo+FLAME DRAGON 2主選單),證實整條proxy鏈路(DOSBox-X→xtrace→Xvfb)視覺上與不經過`xtrace`的直連完全一致,沒有引入任何渲染異常。
+
+### 3. 重現已知場景:沿用續七十六發現的「部署畫面選取單位」高頻掉鍵場景(比戰鬥地圖move-confirm更省時間,不需要每次都reboot穿過完整戰前對白)
+
+標題→`Down`→`Enter`進LOAD→`Enter`選存檔位1→軍營(`Right`×3到「出口」,與續五十七/續七十六一致)→`Enter`確認出口→「要進入戰場嗎」`Enter`(YES)→80次slow-key Return(40+40)推進戰前對白(監視器基地過場、ASR-07對話)→成功抵達部署畫面(索爾HP`823/823`、A+05/D+00,與續四十四起歷次記錄的ch27機甲戰場指紋完全吻合)。這段導覽過程送出的約80次Enter(對白推進)**全部視覺上成功**(對白逐句正確推進,與續五十七的逐句核對結果一致)。
+
+### 4. 決定性數據:112對Enter/Space/方向鍵的`KeyPress`+`KeyRelease`,在協定層**100%送達**DOSBox-X的X11客戶端連線(`client 000`),包含全部105次Enter——但「部署畫面選取單位」這個Enter依然視覺上100%無反應
+
+在部署畫面上,對預設選中的索爾(HP卡`823/A+05/D+00`)連續測試,每次都同步記錄`xtrace_capture.log`的行數增量、`xdotool`送鍵、與前後screenshot:
+
+1. **5次獨立單發Enter測試**(`trial01`~`trial05`,各自獨立keydown 150ms+keyup、間隔1秒):**5次視覺上全部無反應**(screenshot與送鍵前逐像素相同,無floodfill高亮、指令環未開)。逐次核對`xtrace_capture.log`在對應時間窗口內的內容,**每一次都精確找到一對`KeyPress(2) keycode=0x24`+`KeyRelease(3) keycode=0x24`,且都標記`000:>:`(server送給client 000,也就是DOSBox-X自己的X11連線)**——確認並非「送出但沒有經過X server處理」,而是X server已經完整合成、寄送、DOSBox-X的連線也確實收到了這個事件封包,但畫面完全沒有反應。
+2. **1次獨立Space測試**(`trial06`):同樣視覺上無反應,`xtrace`同樣精確捕捉到`KeyPress(2) keycode=0x41`+`KeyRelease(3) keycode=0x41`送達`client 000`。
+3. **1次15連發Enter batch測試**(`batchA`,每次150ms hold+250ms間隔,比照續七十六「45連敗」的高樣本量精神,但用更省時間的15次驗證同一結論是否在批次規模下依然成立):batch前後screenshot**逐像素完全相同**(HP卡持續顯示782,未曾切到索爾或觸發任何UI狀態變化);對應時間窗口內`xtrace_capture.log`精確找到**16對**`KeyPress`/`KeyRelease`(比送出的15次多1,是sed行號窗口邊界含到前一筆殘留的正常現象,非本輪異常),**送達率100%**——這代表就算把「或許剛好每次都運氣不好卡到極窄的視窗沒被xtrace記錄到」這個統計學上的疑慮也用更大樣本排除掉,確認不是取樣覆蓋率不足的問題。
+4. **對照組(方向鍵)貫穿全程**:batch前的`Right`(讓遊戲從「選取索爾」狀態換到選取另一名角色,HP卡從823變782,證實pipeline在測試序列開始前是活的)、batch後緊接著的`Left`(HP卡立即變回空白地形圖示,游標正確位移)——**兩次方向鍵均在協定層與視覺上同時100%成功**,且`Left`是緊接在15次Enter連續失敗**之後**送出、仍然立刻成功,直接排除「這個session的鍵盤管線已經整體壞掉」這個候選。
+
+**整個session累計統計**(`grep "000:>:.*Event KeyPress" xtrace_capture.log`直接對整份log計數):**112次KeyPress全部送達`client 000`,其中keycode`0x24`(Enter)105次、`0x41`(Space)1次、`0x72`(Right)4次、`0x71`(Left)1次、`0x74`(Down)1次,KeyRelease配對數量完全相同(112)**——這105次Enter裡,約80次是戰前對白推進(**全部視覺成功**),其餘約25次是部署畫面選取單位測試(**全部視覺失敗**)。**同一個session、同一支`xdotool`呼叫鏈、同一個DOSBox-X連線,協定層對Enter這個keysym的送達率是100%,不因UI情境不同而改變;但應用層(遊戲畫面)的反應率在對白推進情境是100%成功、在部署畫面選取單位情境是0%成功**——這組對照直接證明掉鍵**不可能**發生在X11協定層或`xtrace`自己能觀察到的任何環節(Xvfb的事件合成、`XTestFakeKeyEvent`的傳遞、Server到Client的封包遞送),因為協定層的行為在兩種情境下完全一致(送達率都是100%),只有應用層的反應不一致。
+
+**逐位元組比對失敗Enter與成功方向鍵的協定封包結構,找不到任何差異**(除了`keycode`欄位本身與各自的`time`時間戳):
+
+```
+失敗的Enter(trial01):
+138:000:>:87f5: Event KeyPress(2) keycode=0x24 time=0x02472370 root=0x0000021f event=0x00200009 child=None(0x00000000) root-x=512 root-y=384 event-x=320 event-y=200 state=0 same-screen=true(0x01)
+236:000:>:8808: Event KeyRelease(3) keycode=0x24 time=0x024724c4 root=0x0000021f event=0x00200009 child=None(0x00000000) root-x=512 root-y=384 event-x=320 event-y=200 state=0 same-screen=true(0x01)
+
+成功的Right(trial_ctrl_right):
+138:000:>:9ee4: Event KeyPress(2) keycode=0x72 time=0x0248ebf0 root=0x0000021f event=0x00200009 child=None(0x00000000) root-x=512 root-y=384 event-x=320 event-y=200 state=0 same-screen=true(0x01)
+236:000:>:9ef7: Event KeyRelease(3) keycode=0x72 time=0x0248edfc root=0x0000021f event=0x00200009 child=None(0x00000000) root-x=512 root-y=384 event-x=320 event-y=200 state=0 same-screen=true(0x01)
+```
+
+`root`/`event`/`child`/`root-x`/`root-y`/`event-x`/`event-y`/`state`/`same-screen`全部逐欄位相同,`state=0`代表送出當下沒有任何殘留modifier(呼應續五十五已經測過、確認`--clearmodifiers`對本症狀無效的結論——這裡從協定層直接證實原本`state`欄位本來就是乾淨的0,不需要額外清除)。**沒有找到任何協定層級的異常標記**(沒有error reply、沒有重複事件、沒有delay、沒有不同的event mask或視窗路由)可以解釋為什麼同樣格式、同樣送達的一個封包,一個被遊戲處理、一個沒有。
+
+### 5. 誠實結論
+
+1. **這是八輪以來第一次帶著決定性、可重複驗證的數據,把嫌疑範圍從「X11/Xvfb/xdotool/SDL2傳遞層」正面排除**——續五十四~七十六窮盡讀過這一層幾乎所有能想到的原始碼與機制(`XTestFakeKeyEvent`可靠性、`ydotool`/`uinput`替代注入、SDL2 XIM/`XFilterEvent`、`xdotool --window`焦點分支、DOSBox-X的Linux SDL2按鍵路徑、BIOS `INT16h`四個子功能),但**從未在實際掉鍵的當下,直接在協定線路上看過這個事件本身**——續七十二的`xev`測試雖然也是協定層工具,但驗證的是「一般情況下`xdotool`是否可靠」這個基準場景(標題選單,已知100%成功),不是「這一次具體的掉鍵」。本輪第一次把這兩者接在一起:**同一個session、協定層100%送達、應用層卻在特定UI情境下0%反應**,這組直接對照在方法論上比先前任何一輪都更接近事情的真相。
+2. **根因仍未完全定位到單一具體位址或函式**——本輪只能確定「不在X11/Xvfb/`xdotool`/`XTestFakeKeyEvent`這一段」,但**不能**確定精確是DOSBox-X的哪一段程式碼在吃掉這個事件。續七十五已經完整讀過`FD2.EXE`讀鍵的BIOS `INT16h AH=0x10h`實作(`get_key`/`check_key`),證實那一層對Enter/Space沒有差異化處理;本輪新排除的「X11協定層」與續七十五已排除的「DOSBox-X的BIOS鍵盤緩衝區讀寫層」中間,還有一段**從未被任何一輪檢查過的具體區間**:DOSBox-X自己的SDL2事件迴圈——`SDL_PollEvent`/`X11_HandleKeyEvent`(SDL2函式庫內部,續七十三檢查過其中的XIM/`XFilterEvent`分支但判定不適用,**沒有**檢查這個函式其餘的一般按鍵轉譯路徑)→`GFX_LoseFocus`/`sdlmain.cpp`裡真正呼叫`KEYBOARD_AddKey()`前的邏輯→`KEYBOARD_AddKey()`本身(續五十五/七十五都讀過,只找到`Space`釋放時的APM喚醒鉤子,沒有找到Enter/Space的攔截)。**誠實列出這個具體缺口,是本輪對「如果真的要有第十輪」最precise的交接**,但同時明確不建議真的開這個第十輪(見下方)。
+3. **這個發現的價值是方法論上的收斂,不是使用者可以直接感受到的修法**——protocol層100%送達不會讓遊戲變得可操作,`91-worklist.md`原本記載的symptom(部署畫面/戰鬥地圖某些UI情境下Enter/Space間歇性或情境性完全無反應)完全沒有改變,SMV-teleport依然是唯一已知的實務繞過法。本輪的貢獻是**把一個橫跨八輪、涵蓋「整個X11/Xvfb/SDL2/xdotool生態系」的巨大候選空間,壓縮成「DOSBox-X自己的SDL2事件迴圈到`KEYBOARD_AddKey`之間」這一段具體、範圍小得多的區間**,如果未來真的要投入資源修復,這是目前唯一還沒被讀過原始碼、也沒被協定層或應用層證據排除的角落。
+4. **附帶價值:`xtrace`本身在這個WSL2/Xvfb環境裡的正確用法,已被本輪完整驗證並值得寫入doc48供未來重用**——`-D 127.0.0.1:<port>`(TCP主機限定形式,不能用裸`:N`)+`-n`(跳過`xauth`)+`-k`(容忍`xdotool`這類短命client)是這個環境下唯一可行的組合;`setsid`是這個環境下啟動任何長駐行程(Xvfb/xtrace/tmux/dosbox-x)的**新增已知禁忌**,與doc48§8.4既有的「不要在腳本內部提前用`&`把行程丟到背景」並列,兩者都會導致行程被意外收掉,但觸發條件與時間尺度完全不同(`setsid`是秒級瞬殺,原本的`&`陷阱是15-60秒延遲回收)。
+5. **「試最後這個」的誠實交代**:本輪確實得到了此前八輪都沒有的新結論(協定層100%排除),但**沒有**找到`91-worklist.md`條目可以標記為「已解決」的具體修法,症狀對使用者而言依然無法直接操作。依使用者本回合的框架,本輪是這個bug調查主題**目前計劃內的最後一輪**——建議收尾措辭是「已重新定界的環境限制」(scope縮小、根因仍未定案),不是「已解決」也不是原地踏步的「依然完全未知」。是否要為了「DOSBox-X自己的SDL2事件迴圈」這個新縮小的具體缺口開一輪全新調查,留給使用者未來自行決定,本輪不代為建議開啟或不開啟。
+
+### 6. 環境收尾
+
+`dosbox-x`(`pkill -9`)、`xtrace`、`Xvfb :99`、`tmux`(`kill-server`)均已確認終止(收尾後`ps aux`回報`NO_PROCS`)。收尾前複查`~/fd2-run/FD2.SAV`md5(`e6d9a35756cddfc2519969b10f039181`)與部署前完全一致——本輪全程沒有任何一次Enter/Space在部署畫面成功選取單位,不可能觸發autosave,與md5未變互相印證。`~/fd2-run/FD2.EXE`本輪未讀寫。使用者續七十二手動安裝、已持續運作超過24小時的`ydotoold`常駐行程**未**被本輪觸碰(依doc48§9並行安全規範,非本輪資源不主動清理)。**沒有**修改`remake/`下任何原始碼或campaign資產檔案。
+
+### 7. 產出
+
+本文件本節(續七十七)。過程screenshot(標題/LOAD/軍營/戰前對白/部署畫面/5次獨立Enter失敗前後對照/1次Space失敗/15連發batch前後對照/2次方向鍵成功對照,約20張,`shot_title.png`/`shot_nav1~6.png`/`shot_trial01~06.png`/`shot_trial_ctrl_right.png`/`shot_batchA_before/after.png`/`shot_ctrl_after_batch.png`)、`xtrace_capture.log`(完整協定層封包記錄,約19萬行)、`xtrace_summary.txt`(整理過的統計摘要與關鍵封包節錄)、輔助腳本(`launch_final.sh`/`press.sh`/`shot.sh`/`mash.sh`/`trypress.sh`/`batch_press.sh`)均留存於WSL2端`~/fd2-run/`(本輪環境已teardown,檔案本身未清除,供下一輪需要時直接取用,不在repo版控範圍內)。已同步更新`91-worklist.md`同一條目(見下一次commit)。`docs/knowledge-base/48-dosbox-x-debugger-build.md`§8經檢視後**已**修改(新增`xtrace`正確用法與`setsid`禁忌兩項,見下一次commit)。

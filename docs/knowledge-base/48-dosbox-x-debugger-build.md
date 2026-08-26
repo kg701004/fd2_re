@@ -464,6 +464,22 @@ tcp` + `DISPLAY=127.0.0.1:99`,不要嘗試 unix socket。
    續五十五指認的 `XTestFakeKeyEvent`/Xvfb 一般性不可靠候選被推翻或證實——本輪 `xdotool`
    全程 100% 成功,沒有復現任何掉鍵,也沒有對那個候選做任何新測試;戰鬥地圖 Enter 確認
    間歇性失效(本節第 2 項)的根因依然完全未解。
+5. **需要用 `xtrace` 做 X11 協定層封包擷取時,固定用法**(doc58 續七十七,2026-08-26 驗證):
+   fake display 一律用 TCP 主機限定形式 `-D 127.0.0.1:<port>`,**不能**用裸 `:<port>`
+   形式——裸形式會嘗試在 `/tmp/.X11-unix` 建立 unix socket,這個目錄在本機永久唯讀
+   (§8.2),導致 `xtrace` 無聲失敗(`ps` 查無存活行程)。同時加 `-n`
+   (`--nocopyauthentication`)跳過 `xauth`(`~/.Xauthority` 不存在會報錯)、`-k`
+   (`--keeprunning`)容忍 `xdotool` 這類短命 client 連了又斷。完整範例:
+   `xtrace -n -d 127.0.0.1:99 -D 127.0.0.1:100 -k -o capture.log`,DOSBox-X 與
+   `xdotool` 都要指向 fake display(`127.0.0.1:100`),不是 Xvfb 本身的真實 display。
+6. **啟動 Xvfb/xtrace/tmux/dosbox-x 這類長駐行程時,一律不要用 `setsid`**(doc58
+   續七十七新發現的環境陷阱,與 §8.4 開頭已知的「不要在腳本內部提前用 `&` 把行程丟到
+   背景」是兩種不同的失效模式,不要混淆):任何帶 `setsid <command> &` 的啟動腳本,
+   不論前景 `timeout` 呼叫或背景執行,都會在**啟動後不到一秒內**讓整個 `wsl.exe`
+   行程樹被 SIGKILL(逐行 bisect 確認是 `setsid` 本身觸發,拿掉它、其餘完全不變的
+   腳本立刻穩定成功)——推測與 WSL2 行程/pty 追蹤機制依賴子行程留在原本
+   session/程序群組裡有關,細節未知。單純 `&` 加上本節開頭「整段包成一次背景呼叫 +
+   結尾長 `sleep`」的既有 recipe 已經足夠,不需要也不要用 `setsid` 追求更乾淨的脫離。
 
 ## 9. N-way 平行驗證 harness(`tools/dosbox_harness.sh`,2026-08-24)
 

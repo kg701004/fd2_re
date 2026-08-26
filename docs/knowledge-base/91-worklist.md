@@ -3046,3 +3046,31 @@
   透過繼續調查收斂到的單一程式碼bug；既有手動繞過法（重試按鍵；需要
   繞過UI互動本身時用SMV-teleport直接寫記憶體）依然是正確的實務路徑。
   詳見doc58續七十六。
+  **doc58續七十七（2026-08-26，第九輪／使用者指定最後一輪，`xtrace` X11協定層封包
+  擷取）**：安裝`xtrace`（`wsl -u root`繞開無passwordless sudo的環境限制，沿用
+  續七十二已建立的官方Windows→WSL2管道先例），接成`DOSBox-X ⇄ xtrace
+  (127.0.0.1:100代理) ⇄ Xvfb(127.0.0.1:99)`的proxy topology（環境陷阱：fake
+  display必須用TCP主機限定形式`127.0.0.1:N`而非裸`:N`，否則因`/tmp/.X11-unix`
+  永久唯讀而無聲失敗；`setsid`會讓`wsl.exe`一秒內被SIGKILL，兩者均已寫入
+  doc48§8.4）。在續七十六發現的「部署畫面選取單位」高頻掉鍵場景上，同步記錄
+  `xtrace_capture.log`與screenshot：**整個session累計112對KeyPress/KeyRelease
+  （含105次Enter、1次Space、6次方向鍵）100%送達DOSBox-X的X11客戶端連線**——
+  5次獨立Enter、1次Space、15連發Enter batch，**協定層送達率100%，但應用層
+  （遊戲畫面）反應率0%**；同一session裡約80次戰前對白推進Enter協定層與應用層
+  都100%成功；方向鍵在15次失敗Enter之後緊接送出仍立即成功。逐位元組比對失敗
+  Enter與成功方向鍵的協定封包結構（`root`/`event`/`child`/座標/`state`/
+  `same-screen`），**除keycode本身外完全相同**，無任何協定層異常標記。
+  **結論：這是八輪以來第一次用決定性數據把X11/Xvfb/xdotool/SDL2傳遞層正面
+  排除**——掉鍵不在協定層，協定層100%可靠。但根因仍未完全定位到單一位址：
+  X11協定層（本輪排除）與DOSBox-X的BIOS鍵盤緩衝區讀寫層（續七十五已排除）
+  之間，還有一段從未被檢查過的具體區間——DOSBox-X自己的SDL2事件迴圈
+  （`SDL_PollEvent`/`X11_HandleKeyEvent`的一般按鍵轉譯路徑，續七十三只查過
+  其中的XIM分支）到`KEYBOARD_AddKey()`之間。**最終狀態**：症狀本身（部署
+  畫面/戰鬥地圖某些UI情境下Enter/Space間歇性或情境性完全無反應）未消失，
+  SMV-teleport仍是唯一已知繞過法；本項狀態訂正為**「已重新定界的環境限制」**
+  （scope大幅縮小、根因仍未定案，不是「已解決」也不是原地踏步）。依使用者
+  本輪框架，這是本主題目前計劃內的最後一輪，**不建議**再投入「讀更多原始碼」
+  或「拍更多快照」這類已跑過九輪、邊際產出遞減的方法論；如果未來要繼續，
+  唯一還沒被排除法蓋到、有明確範圍的角落是DOSBox-X的SDL2事件迴圈本身
+  （`sdlmain.cpp`裡`X11_HandleKeyEvent`到`KEYBOARD_AddKey()`前的邏輯），
+  是否要為此開新一輪留給使用者自行決定。詳見doc58續七十七。
