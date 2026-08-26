@@ -577,6 +577,36 @@
       "source_section": "§9.16.8",
       "verified_date": "2026-08-25",
       "notes": "中信心、非結論:語意極通用(無圖形/palette/framebuffer 相關運算),緊鄰 0x36000-0x3A000 已確認音訊驅動範圍,傾向判定是同一子系統的通用 byte-stream 工具(如 MIDI 輸出佇列),但唯一 xref 是 DATA 型別(0x37b35,疑似 function-pointer 表一格),call_scan 全域 0 筆命中,無法確認實際呼叫端/用途。不排除是其他用途(鍵盤/序列埠緩衝)。"
+    },
+    {
+      "address": "0x10620",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00010620(void) — 讀鍵迴圈用來判斷「鍵是否可讀」的通用檢查函式(doc58續五十四/續七十三提及但先前從未反組譯)。body 0x10620..0x10651,50 bytes,無條件跳躍/RET stop。反組譯確認:呼叫一次 FUN_0003702f() (即編譯器插入的堆疊溢位檢查樣板,見 0x37042 內字串常數 \"Stack Overflow!\r\n\",與鍵盤邏輯無關),接著直接讀取兩個絕對記憶體位址 0x41a/0x41c (= BIOS Data Area 段位 0040:001A/0040:001C,經典的 BIOS 鍵盤緩衝區 head/tail 指標) 的 word 值,比較兩者是否不相等,回傳布林值。**完全不呼叫任何 INT 16h、不讀取埠、不對 scancode 做任何區分**——是純粹的「緩衝區裡有沒有任何一個字元在等」通用旗標檢查,doc58續五十四提到的 5 種調查方向之一(BIOS計時器/中斷呼叫模式)在這裡的答案是「直接 peek BDA,連中斷都沒呼叫」。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續七十四",
+      "verified_date": "2026-08-26",
+      "notes": "16-17 個呼叫點(xref_to 16 筆+call_scan 多找到 0x32194 一筆 in_function=null),均為分散在各 UI 情境(戰鬥confirm/選單/軍營/command ring等)的近乎複製貼上的阻塞式讀鍵輪詢迴圈樣板(如 0x12dac/0x11aa8/0x18b84),每個樣板呼叫方式相同、只有等待期間的 idle 重繪副程式清單不同。"
+    },
+    {
+      "address": "0x12dac",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_00012dac(void) — 0x115b6(攻擊/道具/法術/移動確認共用互動迴圈)專用的阻塞式讀鍵輪詢器+scancode正規化。body 0x12dac..0x12e37,140 bytes。邏輯:while(!FUN_00010620()) { FUN_0004e31c()(VGA調色盤循環动畫,port 0x3c8/0x3c9,純視覺效果與鍵盤無關); 若 BIOS tick counter(0000:046C,linear 0x46c)變化則呼叫 FUN_00011cac() idle重繪 }。偵測到有鍵後:設定 sentinel byte [0x53a8e]=0x10,呼叫 FUN_000370f0() 真正取出一個按鍵——反組譯證實這是呼叫 INT 16h AH=0x10h「Read Extended Keystroke(讀取增強型按鍵)」的貨真價實 BIOS 軟體中斷模擬(見 0x370f0/0x3da76/0x46870 條目),不是 raw port/緩衝區手動 dequeue。取得原始 scancode 後做**唯一**的鍵值正規化:若讀回值==0xe0(擴充旗標位元組)或==0x52,一律改寫成 0x1c(Enter 的標準 scancode);若讀回值==0x53,改寫成 0x01(Esc)。Space(0x39)與四個方向鍵(0x48/0x50/0x4b/0x4d)完全沒有任何正規化/重寫,原樣回傳。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續七十四",
+      "verified_date": "2026-08-26",
+      "notes": "FUN_00011aa8(0x11aa8..0x11b47,160 bytes)是幾乎逐行相同的獨立副本(另一個 UI 情境用,只有 idle-tick 記錄用的全域變數不同:_DAT_000539f0/_DAT_000539f2 取代 unaff_ESI),同樣以 0xe0/0x52→0x1c、0x53→0x01 做正規化——代表這個 Enter 多重原始表示法的正規化手法在原始碼裡至少複製了兩份,不是單一函式的特例。這是本專案至今唯一在偵測/讀取層(而非事後應用層 dispatch)找到的 scancode 相關特殊處理,但它只針對已經成功讀到的值做規範化,無法解釋「完全沒讀到」的掉鍵。"
+    },
+    {
+      "address": "0x370f0",
+      "linear_or_file_offset": "linear",
+      "semantic": "FUN_000370f0(int_num, regs_in_ptr, regs_out_ptr) — Watcom C 執行時期 int86x() 的封裝呼叫鏈起點。body 0x370f0..0x37118,41 bytes。反組譯證實呼叫序列為:FUN_0003da49(&局部12-byte段暫存器結構)存 CS/DS/ES/SS/FS/GS → FUN_0003da76(int_num, regs_in, regs_out, &段暫存器結構)。0x12dac 呼叫此函式前明確 PUSH 0x16(=中斷向量16,即 INT 16h 鍵盤服務)與兩份 0x53a8d 指標(regs_in==regs_out,原地覆寫),且已預先把 [0x53a8d+1](= AH 欄位)設為 0x10——合起來精確等同 Watcom 標準函式庫呼叫 `int86x(0x16, &regs, &regs, &sregs)` 且 AH=0x10h,即 BIOS INT 16h AH=0x10h「Read Extended Keystroke」。",
+      "confidence": "verified",
+      "source_doc": "docs/knowledge-base/58-remake-live-verification-log.md",
+      "source_section": "續七十四",
+      "verified_date": "2026-08-26",
+      "notes": "呼叫鏈末端 FUN_0003da76(0x3da76..0x3da96)呼叫 FUN_00046870(0x46870..0x468a6),後者反組譯可見 PUSH ES/DS 段暫存器、呼叫 FUN_000468a7(本輪未展開,推測是實際觸發 DOS extender 的 real-mode interrupt simulation/DPMI callback 那一層)、再把 EAX/EBX/ECX/EDX/ESI/EDI/carry flag/DS/ES 全部寫回輸出暫存器結構——是教科書等級的 int86x() runtime 內部實作,非本專案自訂邏輯。這是本專案首次靜態確認 FD2.EXE 讀鍵是透過真正的 BIOS INT 16h 軟體中斷(且是 AH=0x10h 而非最常見的 AH=0x00h),而非直接操作連接埠或自製緩衝區。"
     }
   ]
 }

@@ -7956,3 +7956,253 @@ key`呼叫前明確補一次`xdotool windowfocus --sync <winid>`(或乾脆拿掉
 一行指向本節(見下一次commit)。`docs/knowledge-base/48-dosbox-x-debugger-
 build.md`§8經檢視後**未**修改——本輪沒有找到任何新的建議設置可以寫入
 canonical recipe。
+
+## 續七十四:純靜態 Ghidra 反組譯輪——完整反組譯續五十四/續七十三點名但從未
+拆開過的`FUN_00010620`與其整條讀鍵管線,證實 FD2.EXE 自己的程式碼裡 Enter/
+Space 與方向鍵走的是**逐位元組相同**的偵測/讀取路徑,排除「遊戲本身的輪詢
+邏輯對特定鍵有差別待遇」這個候選,但意外挖到一個先前完全沒人查過的具體
+事實(讀鍵用的是`INT 16h AH=0x10h`而非最常見的`AH=0x00h`),留給下一輪當
+DOSBox-X端的新起點(2026-08-26)
+
+**任務背景**:接手續七十三的建議——上游(X11/Xvfb/xdotool/SDL2)這一側五輪
+下來已經查得相當窮盡,持續找不到能解釋「keysym選擇性、同存檔同手法跨session
+時好時壞」的機制;續七十三§4把`FUN_00010620`(讀鍵迴圈用來判斷「鍵是否可讀」
+的檢查函式,續五十四§4第一次點名、續七十三再次點名,但兩輪都**沒有**實際
+反組譯過)列為下一輪優先方向。本輪指定**純靜態 Ghidra 分析**,不開
+`dosbox-x`/`Xvfb`,目標是把`FUN_00010620`與呼叫它的完整管線全部拆開,看
+遊戲自己的讀鍵邏輯有沒有任何會讓 Enter/Space 被讀得比方向鍵慢、少、或用不同
+機制的地方。
+
+### 1. `FUN_00010620`本體:純粹的 BIOS 鍵盤緩衝區 head/tail 旗標檢查,完全
+不呼叫任何中斷、不對 scancode 做任何區分
+
+用`tools/ghidra_batch_probe.py`對`0x10620`跑`decompile`+`disasm`+
+`function_bounds`(FD2Analysis3,native位址,body`0x10620..0x10651`,
+50 bytes),完整結果:
+
+```c
+bool __stdcall FUN_00010620(void)
+{
+  FUN_0003702f();
+  return _DAT_0000041c != _DAT_0000041a;
+}
+```
+
+逐指令反組譯(15條,`RET`結束)確認:`FUN_0003702f()`只是編譯器插入的堆疊
+溢位檢查樣板(往下追一層,`FUN_00037042`內嵌字串常數`"Stack Overflow!\r\n"`,
+是 Watcom 執行時期的標準`__STK`類prologue,FUN_00010620/FUN_00012dac/
+FUN_000115b6等大量不相干函式的開頭都會呼叫它,與鍵盤邏輯完全無關)。真正的
+邏輯只有一行:讀取絕對記憶體位址`0x41a`與`0x41c`(`MOVSX EAX,word ptr
+[0x41a]`/`[0x41c]`)的 word 值並比較是否不相等。**這兩個位址正是實模式
+BIOS Data Area 段位 0040:001A(鍵盤緩衝區 head 指標)與 0040:001C(tail
+指標)的線性位址換算(0x40*16=0x400,+0x1A/+0x1C)**——這是最經典的
+「緩衝區裡有沒有字元在等」旗標,`head!=tail`即代表至少有一筆待讀。**全程
+沒有`INT`指令、沒有`IN`/`OUT`埠讀寫、沒有對讀到的值(這個函式其實根本
+還沒讀值,只比較指標)做任何 scancode 相關判斷**——是完全通用的布林閘門,
+不區分是哪一個鍵。這回答了任務背景假設的「BIOS計時器/中斷呼叫模式」猜想:
+答案是兩者都不是,是直接 peek BDA 記憶體。
+
+`xref_to`+`call_scan`找到 16-17 個呼叫點(`call_scan`額外多找到
+`0x32194`一筆,`in_function:null`,落在`.object1`區塊但不在任何已分析
+function邊界內,本輪未深究),散布在整個程式碼裡的各種 UI 情境(戰鬥
+confirm、選單、軍營、command ring等)——這代表它是一個被廣泛共用的低階
+原語,不是`0x115b6`專屬。
+
+### 2. 完整追出讀鍵管線:`0x12dac`(`0x115b6`專用輪詢器)與孿生函式`0x11aa8`
+——確認實際「取出一個鍵」用的是貨真價實的`INT 16h AH=0x10h`(Read Extended
+Keystroke)BIOS軟體中斷,不是 raw port/自製緩衝區
+
+反組譯`FUN_00012dac`(body`0x12dac..0x12e37`,140 bytes,doc13/續五十四
+已知這是`0x115b6`專用的阻塞式讀鍵輪詢器):
+
+```c
+char __stdcall FUN_00012dac(void)
+{
+  FUN_0003702f();
+  while (true) {
+    iVar1 = FUN_00010620();
+    if (iVar1 != 0) break;
+    FUN_0004e31c();                       // VGA調色盤循環動畫,純視覺效果
+    if (unaff_ESI != _DAT_0000046c) {     // BIOS tick counter(0000:046C)變化
+      FUN_00011cac();                     // 才呼叫一次 idle 重繪
+      unaff_ESI = (int)_DAT_0000046c;
+    }
+  }
+  DAT_00053a8e = '\x10';                  // sentinel:AH欄位預先寫死 0x10
+  FUN_000370f0();                         // 真正取出一個鍵
+  if ((DAT_00053a8e == -0x20) || (DAT_00053a8e == 'R')) DAT_00053a8e = '\x1c';
+  if (DAT_00053a8e == 'S') DAT_00053a8e = '\x01';
+  return DAT_00053a8e;
+}
+```
+
+`FUN_0004e31c`反組譯後證實是 VGA 調色盤循環特效(對 port `0x3c8`/`0x3c9`
+連續`OUT`,經典的水波/火焰調色盤動畫),`FUN_00011cac`則是既有已知的 idle
+重繪(`0x1297d`/`0x11eee`/`0x122dc`/`0x127a9`/`0x1acf3`/`0x11eb0`六個
+UI刷新呼叫)——這兩者都與讀鍵時序本身無關,只是等待期間搭便車跑的視覺效果。
+
+跳出迴圈後的關鍵段落(補一次`disasm`從`0x12de6`到`0x12e37`逐指令核對,
+不只看decompile):
+
+```
+0x12de6  MOV byte ptr [0x53a8e],0x10
+0x12ded  PUSH 0x53a8d          ; regs_out ptr
+0x12df2  PUSH 0x53a8d          ; regs_in ptr(與regs_out同一位址,原地覆寫)
+0x12df7  PUSH 0x16             ; 中斷向量號碼 = 0x16 !!
+0x12df9  CALL 0x370f0
+```
+
+`0x53a8d`是一塊小型暫存器結構的起始位址,`0x53a8e`(=`0x53a8d+1`)正是
+標準`union REGS`版面裡 AX 的高位元組(AH)欄位。往下追`FUN_000370f0`
+(body`0x370f0..0x37118`,41 bytes)完整反組譯,呼叫序列是:
+`FUN_0003da49(&局部12-byte段暫存器結構)`(逐一存 CS/DS/ES/SS/FS/GS,
+反組譯逐行對應`MOV AX,CS`等六組段暫存器讀取,教科書等級的`struct SREGS`
+填值)→`FUN_0003da76(int_num, regs_in, regs_out, &段暫存器結構)`→
+`FUN_00046870`(反組譯可見`PUSH ES`/`PUSH DS`把段暫存器一併打包,呼叫
+`FUN_000468a7`——本輪未展開這一層,合理推測是DOS extender實際觸發
+real-mode interrupt simulation/DPMI callback的底層,超出「FD2.EXE自己的
+邏輯」範圍——再把EAX/EBX/ECX/EDX/ESI/EDI/carry flag/DS/ES全部寫回輸出
+暫存器結構)。**這一整條呼叫鏈,連同呼叫端明確`PUSH 0x16`當作第一個引數、
+且預先把AH欄位設成`0x10`,合起來精確等同 Watcom C 執行時期標準函式庫呼叫
+`int86x(0x16, &regs, &regs, &sregs)`且`AH=0x10h`——也就是貨真價實的
+BIOS `INT 16h AH=0x10h`「Read Extended Keystroke(讀取增強型按鍵)」軟體
+中斷,不是直接操作連接埠、不是自製的環狀緩衝區手動 dequeue**。這是本專案
+第一次靜態確認 FD2.EXE 讀鍵走的是哪一支具體的 BIOS 服務,而且答案是
+`AH=0x10h`而非最常見、續五十五讀過的`dosbox-x`原始碼裡最常被討論的
+`AH=0x00h`/`AH=0x01h`。
+
+另外反組譯`FUN_00011aa8`(body`0x11aa8..0x11b47`,160 bytes,`call_scan`
+清單裡另一個`FUN_00010620`呼叫點所在的函式)後發現它是`FUN_00012dac`
+**幾乎逐行相同的獨立副本**——同一套`FUN_00010620`輪詢+`0xe0`/`0x52`→
+`0x1c`、`0x53`→`0x01`正規化邏輯,只有記錄 idle-tick 用的全域變數換成
+`_DAT_000539f0`/`_DAT_000539f2`(取代`unaff_ESI`)。代表這整套「輪詢+
+INT16h AH=0x10h讀取+scancode正規化」樣板在原始碼裡至少被複製貼上了兩次,
+用在不同UI情境,不是`0x115b6`專屬的一次性邏輯。
+
+### 3. 讀鍵管線裡**唯一**出現的 scancode 相關特殊處理:只正規化 Enter 的
+多重原始表示法,且只發生在成功讀到值之後——無法解釋「完全沒讀到」的掉鍵
+
+`FUN_00012dac`/`FUN_00011aa8`讀到原始值後做的正規化:
+- 若讀回的 scancode == `0xe0`(BIOS擴充按鍵的「延伸旗標」位元組,或
+  `== 0x52`)→改寫成`0x1c`(Enter的標準scancode)。
+- 若讀回的 scancode == `0x53`→改寫成`0x01`(Esc)。
+
+`0xe0`是增強型(101/102鍵)鍵盤在 BIOS `INT16h AH=0x10h`底下用來標記
+「這是舊式84鍵鍵盤沒有的擴充鍵」的已知合法機制(常見於數字鍵台 Enter、
+右Ctrl/右Alt等);`0x52`/`0x53`則對應 Scan Code Set 1 的 Insert/Delete
+(或NumLock關閉時數字鍵台0/小數點鍵)。這代表原作者已經知道、也已經處理過
+「Enter在增強型BIOS讀取下可能以不只一種原始位元組出現」這個真實存在的
+硬體/BIOS層怪癖——**但這個正規化只發生在`FUN_000370f0`已經成功回傳一個
+值之後,是把「讀到的值」重新歸類,不是「有沒有讀到值」的判斷**。Space
+(`0x39`)與四個方向鍵(`0x48`/`0x50`/`0x4b`/`0x4d`)完全沒有任何正規化,
+原樣以單一scancode回傳。也就是說:即使這是本專案讀鍵管線裡唯一與特定鍵
+(Enter)相關的差異化邏輯,它的作用範圍是「已成功讀到之後的值改寫」,結構上
+不可能解釋一次完全沒被`FUN_00010620`/`FUN_000370f0`觀察到的掉鍵,也完全
+不涉及Space。
+
+### 4. `FUN_000115b6`(移動/攻擊/道具/法術確認共用互動迴圈,`verified_
+addresses.json`既有記錄)的 dispatch 邏輯確認:Enter/Space與方向鍵的分岔
+發生在讀值**之後**的應用層比較,不是讀值**當下**的機制差異
+
+完整反組譯`FUN_000115b6`(body`0x115b6..0x117e6`,561 bytes——這裡順帶
+發現既有`verified_addresses.json`記錄的「335 bytes」與同一筆記錄自己列出
+的位址範圍`0x115b6..0x117e6`算出來的560+1=561 bytes對不上,是舊記錄的
+數字筆誤,本輪未動既有entry,只在此誠實記一筆供未來訂正參考)。關鍵段落:
+
+```c
+while (true) {
+  iVar3 = FUN_00012dac();
+  if (iVar3 == 1) return 0xffffffff;
+  if ((iVar3 != 0x39) && (iVar3 != 0x1c)) break;   // Enter/Space走confirm分支
+  ...
+}
+if (((iVar3 != 0x2c) && (iVar3 != 0x4c)) || (param_2 == 0)) {
+  if (iVar3 == 0x48) FUN_00011b48();               // Up
+  else if (iVar3 == 0x50) FUN_00011b9b();          // Down
+  else if (iVar3 == 0x4b) FUN_00011c59();          // Left
+  else if (iVar3 == 0x4d) FUN_00011bfa();          // Right
+  ...
+}
+```
+
+`iVar3`是`FUN_00012dac()`的回傳值,亦即已經走完整條「輪詢→INT16h
+AH=0x10h讀取→scancode正規化」管線之後的最終結果。**這裡對`0x39`/`0x1c`
+(confirm)與`0x48`/`0x50`/`0x4b`/`0x4d`(方向)的判斷,是對同一個已經到手
+的區域變數做`==`比較,不是重新輪詢、不是呼叫不同的讀取函式、不涉及任何
+額外的中斷或buffer存取**——Enter/Space與方向鍵在抵達這一步之前,經歷的是
+逐位元組相同的偵測與讀取路徑,分岔只發生在值已經確定之後的「這個值該觸發
+哪個UI動作」層級。
+
+另外確認`0x18d8c`(command ring dispatch,任務背景提到的既有已知位址,
+body`0x18d8c..0x190ab`,800 bytes)的完整反組譯:它內部有自己的環狀選單
+游標輪詢(`FUN_000177fc`,本輪未展開),真正需要「確認」時直接呼叫
+`FUN_000115b6()`——與`0x115b6`共用同一條讀鍵管線,不是另一套獨立機制。
+`0x18b84`(`0x18bab`是`FUN_00010620`另一個呼叫點所在)反組譯後發現它是
+**純粹的「等到有鍵為止」閘門,自己不dequeue**(迴圈跳出後直接`return`,
+沒有呼叫`FUN_000370f0`),等待期間額外多跑8個UI重繪副程式(`0x1297d`/
+`0x11eee`/`0x122dc`/`0x127a9`/`0x18c6d`/`0x1acf3`/`0x11eb0`,比
+`0x11cac`預設的6個更多)——同樣是同一套`FUN_00010620`閘門樣板的另一個
+變體,只是等待期間跑的副作用不同,讀鍵機制本身沒有差異。
+
+### 5. 誠實結論
+
+1. **本輪的核心負面結果(最重要、但也最不令人興奮的部分)**:靜態反組譯
+   `FUN_00010620`與其完整呼叫管線(`0x12dac`/`0x11aa8`/`0x18b84`三個
+   `FUN_00010620`呼叫端、`0x370f0`→`0x3da49`/`0x3da76`→`0x46870`
+   讀鍵呼叫鏈、`0x115b6`/`0x18d8c`兩個dispatch層)後,**沒有找到任何
+   FD2.EXE自己的程式碼會讓Enter/Space被讀得比方向鍵更晚、更少、或透過不同
+   機制(輪詢vs中斷、緩衝區位置、時序窗口)**的證據。所有鍵——Enter、
+   Space、四個方向鍵——共用完全相同的「`FUN_00010620`旗標檢查→BIOS
+   `INT16h AH=0x10h`一次性讀取→回傳值比較」路徑,唯一與鍵值相關的特殊
+   邏輯(`0xe0`/`0x52`→`0x1c`,`0x53`→`0x01`)只發生在讀值**之後**、
+   只影響Enter/Esc的值本身怎麼被歸類,不影響Space,也不可能解釋「完全沒
+   讀到」的掉鍵。**這代表續五十四§4列出、續七十三§4列為下一輪優先方向的
+   「`FUN_00010620`對特定scancode有選擇性處理」這個候選,本輪用完整反
+   組譯正面排除**——不是沒查到,是查完之後確認這個機制不存在。
+2. **一個先前完全沒被記錄過的具體新事實**:FD2.EXE讀鍵用的是BIOS
+   `INT 16h AH=0x10h`(Read Extended Keystroke,增強型/101鍵盤讀取
+   功能),不是`AH=0x00h`/`AH=0x01h`這組最基本的功能。續五十五讀過
+   `dosbox-x`的`src/hardware/keyboard.cpp`(IRQ1→BIOS緩衝區寫入層)與
+   `sdlmain.cpp`(SDL事件→scancode注入層),**但兩份文件都沒有提到、也
+   沒有查過`dosbox-x`自己怎麼實作BIOS軟體中斷本身**(`AH=0x10h`/
+   `0x11h`這組擴充功能通常實作在另一個檔案,如`src/hardware/bios/
+   bios_keyboard.cpp`或等價位置,不是`keyboard.cpp`/`sdlmain.cpp`
+   涵蓋的範圍)。**這是本輪對下一輪最具體的建議**:如果要繼續往下查,
+   下一個未被排除法蓋到的角度是`dosbox-x`原始碼裡`INT16h AH=0x10h`
+   (而非`AH=0x00h`)這個特定子功能的實作細節,看它與`AH=0x00h`/
+   `AH=0x11h`相比,在缓衝區消費/擴充旗標處理上是否存在任何實作差異
+   ——**這是一個明確可查證的具體方向,不是本輪已經驗證過的結論**,
+   本輪只確認了FD2.EXE呼叫的是哪一個子功能,沒有讀`dosbox-x`怎麼實作它
+   (任務指示本輪為純靜態Ghidra分析,不開`dosbox-x`/查其原始碼)。
+3. **誠實看待這個新方向的機率**:即使`AH=0x10h`的實作與`AH=0x00h`真的
+   有差異,也還是需要一個額外的假說解釋「為什麼偏偏是Enter/Space這兩個
+   scancode被影響、方向鍵不受影響」——`AH=0x10h`本身設計上是要讓增強型
+   按鍵(含方向鍵!)比舊式84鍵BIOS更準確地被讀到,不是天生對Enter/Space
+   有差別待遇的功能。這代表這個新方向頂多是「值得排除的下一個候選」,
+   不是「大概率就是答案」的候選——列出來是誠實地把它交給下一輪,不是
+   過度樂觀地宣稱找到根因。
+4. **與既有已驗證知識的整合**:本輪反組譯出的`FUN_00010620`/
+   `FUN_00012dac`/`FUN_00011aa8`/`FUN_000370f0`/`FUN_0003da49`/
+   `FUN_0003da76`/`FUN_00046870`與`FUN_000115b6`(既有`verified_
+   addresses.json`記錄)完全銜接一致,沒有發現任何與既有文件矛盾之處;
+   `0x18d8c`(既有已知的command ring dispatch)反組譯後確認內部呼叫
+   `FUN_000115b6()`做確認,與既有認知一致。
+
+### 6. 環境收尾
+
+本輪**沒有**啟動任何`dosbox-x`/`Xvfb`/`tmux`/WSL2 session,純粹對
+`FD2Analysis3`(Ghidra project,`FD2.EXE`程式)用`tools/
+ghidra_batch_probe.py`跑了7批次共35筆`decompile`/`disasm`/
+`function_bounds`/`xref_to`/`call_scan`查詢(均為`-readOnly`唯讀模式),
+沒有修改任何Ghidra project內容。`~/fd2-run/`、`FD2.SAV`、`FD2.EXE`(WSL2
+端)均未被本輪讀寫(本輪根本沒有開WSL2)。沒有修改`remake/`下任何原始碼或
+campaign資產檔案。
+
+### 7. 產出
+
+本文件本節(續七十四)。`docs/data/verified_addresses.json`新增3筆條目
+(`0x10620`/`0x12dac`/`0x370f0`,均`confidence=verified`、
+`source_section=續七十四`)。查詢過程的queries/results JSON留存於
+`.wsl_build/q1~q7.json`/`r1~r7.json`(Windows端暫存目錄,過程debug產物,
+非repo追蹤內容)。`91-worklist.md`同一條目待下一次commit時追加一行指向
+本節。
