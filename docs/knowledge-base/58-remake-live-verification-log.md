@@ -8929,3 +8929,68 @@ ch27戰前CG1顯示問題本身仍無專屬worklist項目追蹤(續七十已確�
 `ch27-fun0004ebab-decoded-sprite-frame1-16x.png`、
 `ch27-prebattle-cg1-island-{visible,gone}-verify79.png`)。過程debug產物(約30張逐句對白截圖、
 Ghidra批次查詢JSON、LOGC trace去重後的位址清單)留存於Windows端`.wsl_build/`,不納入repo版控。
+
+## 續七十九:接手 doc35 §9.21.10 建議#2——首次對 VGA framebuffer 下記憶體寫入斷點(`BPPM`),
+**正面、定案**:`FUN_0004e8d3`(native `0x4e8d3`)是繪製 CG1 懸浮小島的真正函式,live 斷點
+在小島淡出過程中精確命中「正在寫入小島像素的 `REPE MOVSB` 迴圈」,逐位元組核對引數/呼叫鏈,
+並用螢幕截圖三連拍(可見→淡出中→消失)完整閉環驗證——本篇任務(續三十二起,20+ 輪)第一次
+正面解封 CG1 繪製機制(2026-08-27)
+
+> 任務背景:doc35 §9.19/§9.21 兩輪各自排除一個候選(`0x3205f`→角色卡專屬、`0x2541f`/
+> `FUN_0004ebab`→悠妮傳送特效專屬)。§9.21.10 建議下一輪換方法論:不要再窮舉/猜測 CALL 位址,
+> 改成直接對 VGA framebuffer 或已知 work buffer 位址下**記憶體變更斷點**(`BPPM`/`FM`),讓
+> 斷點在小島像素被寫入的瞬間自己攔截。本節執行這個建議。
+
+**環境**:`tools/dosbox_harness.sh` 新隔離 instance(`cg1w`→重開`cg1v2`→再重開`cg1v3`,前兩次
+分別因為「純Escape路徑卡在戰場走位畫面沒推進到轉送站幻象」與「想更細粒度重測」而重開,第三次
+`cg1v3`改用doc35 §9.19已驗證兩次成功的「47格死亡signature+End Turn確認」捷徑,一次成功抵達
+postbattle轉場)。方法論关键發現(完整技術細節見doc35 §9.22,此處僅摘要):
+
+1. **本輪 VGA framebuffer 讀取正常**——`D 0178:A0000`/`D 0178:AB000` 在 title screen 與
+   小島顯示當下都讀出真實、非零、與畫面內容對應的色彩索引資料,與 §9.19.6「三種定址方式全部
+   回傳全零」矛盾。判斷不是那筆記錄造假,而是那次很可能發生在 CG 淡入淡出瞬間 VGA 硬體某種
+   瞬時狀態下的限定性限制,不是這個 debugger 建置的全域限制。
+2. **`BPPM` 有一個「首次觸發是 baseline=0 造成的假陽性」實作陷阱**(dosbox-x 的
+   `AddMemBreakpoint()` 沒有把 baseline 初始化成真實記憶體值)——每個新設的 `BPPM` 斷點,
+   第一次 `RUN` 一定會「假觸發」一次(把 baseline 修正成真實值),要等第二次 `RUN` 才開始
+   偵測真正的變化。這不是 doc48 §7 記錄的「任何記憶體斷點存在即讓 RUN 退化成單步」病態行為——
+   本輪確認 `BPPM` 效能正常,`cc` 計數器在真正等待變化時正常跳動,只是有這個初始化陷阱。
+3. **決定性命中**:小島完全可見那一刻,對小島邊緣像素(`0178:A4B87`等三個位址)下 `BPPM`,
+   `RUN` 命中時 `Register Overview` 直接顯示 `EIP=001EAA23`(`REPE MOVSB` 指令)、
+   `EDI=000A4B8A`(緊鄰斷點位址)——連續 `RUN` 兩次,`EDI`/`ESI` 同步遞增,證實是真正執行中
+   的逐 byte 拷貝迴圈。往回人工反組譯找到函式入口:live `0x1EA8D3`,native `0x4E8D3`。
+4. **靜態核實**:`FUN_0004e8d3`(native `0x4e8d3-0x4e98c`)是一個「RLE 解碼 + 呼叫端傳入
+   LUT/調色盤表重映射」的通用引擎(`MOV EBP,[EBP+0x1c]` 把 EBP 重用成 LUT 表基底、
+   `MOV AL,[EAX+EBP*1]` 用原始 byte 當索引查表取真正顏色)——**LUT 重映射正是淡入淡出效果
+   的標準實作手法**,完整解釋「同一份壓縮資料、逐幀換一張 LUT 表就能造出淡入淡出」的現象。
+5. **呼叫鏈**:`call_scan` 對 `0x4e8d3` 窮舉全 exe,只有 4 個呼叫點,全部落在
+   `FUN_0002ff01`(直接呼叫2次)與其內部呼叫的 `FUN_00030e9d`(再呼叫2次)之內——
+   `FUN_0002ff01` 正是 **doc35 §9.13 已定位過的 `0x524c6` phase-table jump table 分派器
+   本體**,本輪等於補完了「這個已知的 carousel 系統具體怎麼畫出 CG 圖片」這最後一塊拼圖。
+6. **像素級收尾驗證**:清斷點、`RUN` 到底,連續截圖捕捉「小島淡出中途」(幾乎透明,只剩極淡
+   山峰輪廓殘影)與「小島完全消失,索爾說『啊!又消失了!』」——與 §9.19.1/§9.21.1 記錄的
+   對白節奏完全吻合,三張截圖(可見/淡出中/消失)+ 中間的 `BPPM` 命中,構成本篇任務首次
+   「反組譯結論→live斷點命中→像素級截圖」完整正面驗證閉環。
+
+**誠實整體結論**:CG1 懸浮小島的真實繪製函式已定位、已用 live 記憶體寫入斷點直接證實
+(`FUN_0004e8d3`,由 `FUN_0002ff01`/`FUN_00030e9d` 驅動)。這**不是**推翻 §9.19/§9.21 的排除
+結論(那兩個候選確實只服務角色卡/傳送特效,依然成立),而是終於用一個此前 20+ 輪從未嘗試過的
+新方法論(記憶體寫入斷點,繞過「猜哪個函式」的根本限制)補上了正確答案。**誠實信心等級:高**
+(live 斷點直接命中+逐位元組核對+像素級截圖三重獨立證據)。
+
+**對 `91-worklist.md` 的影響**:未修改——本節結論是 ch27 戰前/戰後共用的「轉送站」CG 顯示機制,
+與 worklist 追蹤的 `0x2bce5`/`native_2c548` 戰後 party montage cluster 依然是兩個獨立問題。
+
+**完整技術細節(BPPM baseline陷阱逐步操作記錄、`FUN_0004e8d3`/`FUN_0002ff01`/`FUN_00030e9d`
+完整 disasm/decompile、呼叫鏈 xref 表格、給下一輪的建議)見
+`docs/knowledge-base/35-battle-animation-rendering.md` §9.22,不在此重複。**
+
+**環境收尾**:`tools/dosbox_harness.sh teardown cg1v3` 已執行,`tmux`/`Xvfb`/`dosbox-x` 進程樹
+確認終止。本輪全程操作(47格死亡signature批次寫入、BPPM斷點、live disasm)都只發生在DOSBox-X
+模擬的RAM裡,沒有觸發autosave,沒有修改`remake/`下任何原始碼或campaign資產檔案。
+
+**產出**:本文件本節(續七十九)。3張存證截圖已存入`docs/figures/`
+(`ch27-prebattle-cg1-island-appear-visible-live.png`、
+`ch27-prebattle-cg1-island-fade-out-midframe.png`、
+`ch27-prebattle-cg1-island-fade-out-complete.png`)。過程debug產物(逐句對白截圖約25張、
+Ghidra批次查詢JSON/結果)留存於Windows端`.wsl_build/`,不納入repo版控。
