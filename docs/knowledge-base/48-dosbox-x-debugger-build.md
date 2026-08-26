@@ -493,3 +493,28 @@ default server 完全分開,不只是換 session 名字)、自己的工作目錄
 已知/已分析未記錄/完全未分析三類)。首次實戰結果(ch27 戰前「轉送站幻象」montage 完整執行
 流程捕捉)見 `docs/knowledge-base/58-remake-live-verification-log.md` 續六十六與
 `docs/knowledge-base/35-battle-animation-rendering.md` §9.15。
+
+## 11. DOSBox-vs-remake byte-exact pixel diff harness(`tools/dosbox_diff_harness.sh`,2026-08-26)
+
+§9 的 `tools/dosbox_harness.sh` 是給互動式/視覺檢查用的通用 N-way harness,`screenshot`子指令
+用 `import -window root`,視窗多大就截多大——這對「肉眼看畫面對不對」足夠,但**不是** byte-exact
+擷取(視窗通常比遊戲原生 320×200 大,要縮到 320×200 得經過一次 resize,引入取樣誤差)。
+
+`tools/dosbox_diff_harness.sh`是專門給 pixel-diff 用的姊妹腳本(獨立 registry/tmux
+socket/Xvfb port range,刻意不修改`dosbox_harness.sh`本身,避免影響同時在跑的其他 agent),
+啟動的是**套件版 `dosbox`(非 dosbox-x)**,搭配`[sdl] output=surface`+
+`[render] scaler=none aspect=false`config,讓 SDL 視窗精確等於目前模擬視訊模式的原生解析度
+(標題/戰鬥選單等 mode 13h 畫面=320×200,開場動畫的 SVGA 過場=640×400),`raw-screenshot`
+子指令在擷取前會核對視窗幾何、量到的尺寸不對就直接報錯,不會偷偷 crop/resize。改用 plain
+dosbox 而非本篇§2-8 的 heavy-debug `dosbox-x`,是因為 dosbox-x 的視窗化 SDL 輸出固定會多畫一條
+GUI 選單列(即使非全螢幕),讓視窗永遠比原生解析度大;純截圖工作用不到 debugger,換掉沒有
+任何功能損失。
+
+配套的 `tools/dosbox_diff_harness.py`(Windows 端)把 FD2.SAV chapter-jump patch、DOSBox-X
+擷取、`remake/fd2-linux-verify`擷取(640×400 邏輯畫布→無損 2×2 區塊取樣還原 320×200)、diff
+統計/視覺化全部接成一條 CLI 指令。2026-08-26 已驗證:①對既有 UI-01 title-screen oracle 重放
+取得逐位元組相同的 raw RGB MD5;②全自動重放 ch02 城鎮 hub selection0(UI-08-TOWN-VARIANT0
+同一場景),99.3-99.4% exact-pixel-match,並精確定位出一個先前用較弱比對方法(variant1/2 的
+crop/resize+統計)沒抓到的小範圍 remake compositor 差異。完整設計、踩坑記錄、已知限制見
+`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff
+harness」一節,對應 `docs/knowledge-base/91-worklist.md` 的 UI-VIS-DIFF-HARNESS 項目。

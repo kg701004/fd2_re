@@ -19,7 +19,7 @@
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
 26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。**2026-08-26續輪(純靜態)重新derive「19 vs 13」矛盾**：確認doc56 UI-11引用的整備UI位址(0x318ad等8個)在FD2Analysis3全部`in_function:false`(舊版殘留)，但同一套cap/confirm/cursor-skip邏輯已由`58-remake-live-verification-log.md`續九～續十一(task #118,早於prepE2一週)對照實際509158-byte`FD2.EXE`做純檔案byte-signature驗證過：15/19門檻與「選滿才能離開」都是真的，不是誤讀；「僅13名可招募角色」這句話只對機器上現有的合成/早期存檔成立——獨立核對`docs/data/chapter_beats/ch{NN}_post.json`的join op數量，ch11-22共13次加入(與續九的獨立查證吻合)，真的照劇情推進的存檔抵達23-31章時名冊規模應在20+，並非結構性上限。仍待下一輪驗證的唯一開放問題：選人畫面渲染迴圈是否真的硬編碼上限12(不論roster多大)——若成立則推翻上述樂觀結論，需要`roster_count≥15`的存檔實測。詳見doc25§9.1與`known_address_errata.json`。
 45 - E - UI-VIS-LOAD自述成功native restore/delete/overwrite/roster ABI仍待E2。
-53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。
+53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。**已解(2026-08-26)**：`tools/dosbox_diff_harness.sh`+`.py`把整條live擷取／diff流程做成可重複呼叫的CLI並全自動重放通過，詳見該checkbox行與doc98。
 54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
 69 - C - 文件維護政策宣告（專題文件不合併），非可關閉的分析任務。
 145 - D - doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。
@@ -607,7 +607,7 @@
     [`writerfire-fdtxt-0x19a-record-battle-confirm.png`](../figures/writerfire-fdtxt-0x19a-record-battle-confirm.png)、
     [`writerfire-selection-ui-all-selected-remaining07.png`](../figures/writerfire-selection-ui-all-selected-remaining07.png)、
     [`writerfire-selection-ui-delete-resets-to-empty.png`](../figures/writerfire-selection-ui-delete-resets-to-empty.png)。
-- [ ] **UI-VIS-DIFF-HARNESS**：固定同一FD2.SAV／roster／camera／cursor／tick，輸出DOSBox與remake 320×200 pair及pixel diff；現有ch01兩張角色狀態不同，只證明compositor slice。
+- [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
   戰役消費的網格、回合排程、事件虛擬機、索引色渲染、輸入、存檔介面與

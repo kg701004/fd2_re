@@ -345,3 +345,133 @@ URL(`597a0643385421312b5243cf.html`)的子字串,兩者都跟位址完全無關�
 流程(從戰前對白、經 CG 過場、詩句捲動、到萊汀角色卡渲染),完整技術細節與交叉比對結果見
 `docs/knowledge-base/58-remake-live-verification-log.md` 續六十六與
 `docs/knowledge-base/35-battle-animation-rendering.md` §9.15。
+
+## DOSBox-vs-remake byte-exact pixel diff harness(`tools/dosbox_diff_harness.sh` + `tools/dosbox_diff_harness.py`,2026-08-26)
+
+**解決的問題**:`docs/knowledge-base/91-worklist.md`的 UI-VIS-DIFF-HARNESS 項目要求「固定同一
+FD2.SAV／roster／camera／cursor／tick,輸出DOSBox與remake 320×200 pair及pixel diff」。這件事
+本身在本 session 已經被多個獨立回合手刻過至少 5-6 次(UI-08-TOWN-VARIANT0、UI-09-CH02-SECRET-
+SHOP-*、UI-VIS-TOWN variant1/2、UI-SHOP-*-E2……),每次都重新發明一套螢幕截圖/裁切/diff腳本,
+且**達到的嚴謹度不一致**——UI-08-TOWN-VARIANT0 用(已移除的)Docker pipeline 取得「320×200 raw
+RGB 全幀 MD5 相同」等級的證據,但同年 UI-VIS-TOWN variant1/2 改用`tools/dosbox_harness.sh`的
+`import -window root`+手動裁切/resize,文件裡誠實記錄了「未達 variant0 等級的 byte-exact RGB
+MD5」這個倒退。本工具的目的是把「怎麼拿到真正 byte-exact 的 320×200 pair」這件事一次做對、
+包成可重複呼叫的形式,不要再讓下一輪 E2 任務手刻出比 variant0 更弱的版本。
+
+**關鍵發現:variant0 的 byte-exact 證據其實來自 plain `dosbox`,不是 `dosbox-x`**——回頭讀
+`tools/docker/fd2-dosbox-screenshot.sh`(2026-08-26 稽核時發現的既有腳本,先前沒有文件明確點出
+這一層)才確認:它的 config 用了 `[sdl] output=surface` + `[render] scaler=none aspect=false`,
+呼叫的二進位是 `dosbox`(套件版 0.74-3),**不是**`docs/knowledge-base/48-dosbox-x-debugger-
+build.md`§8 一路沿用的 heavy-debug `dosbox-x`。這個差異是本工具重建時卡關的關鍵:同一組
+config 套用在 `dosbox-x` 上,視窗仍然會是 640×417(附帶`Main CPU Video Sound DOS Drive Capture
+Debug Help`GUI選單列,即使非全螢幕),因為 dosbox-x 的視窗化 SDL 輸出本身就會畫這條選單列,
+`scaler=none`/`aspect=false`不影響它;換成套件版 `dosbox`(這台機器上本來就有裝,
+`/usr/bin/dosbox`,`apt list --installed`確認)後,同一組 config 讓視窗**精確**等於當前模擬
+視訊模式的原生解析度(標題/戰鬥選單等 mode 13h 畫面量到 320×200,開場動畫的 SVGA 過場量到
+640×400,無任何 letterbox/選單列)。**純截圖工作不需要 debugger**(本任務brief已預告這點),
+所以放棄 dosbox-x 換 plain dosbox 沒有任何功能損失。
+
+**架構**:
+
+1. `tools/dosbox_diff_harness.sh`(WSL 端)——`tools/dosbox_harness.sh`的姊妹腳本,**不是**修改
+   它(避免影響同時可能在跑`tools/dosbox_harness.sh`的其他 agent),完全獨立的 registry
+   (`~/.fd2-diffharness/instances`)、tmux socket(`fd2diffharness`)、Xvfb port range(`:799`
+   起,跟 canonical `:99` 與 harness 的 `:199/:299/…` 都不重疊)。子指令:
+   ```
+   dosbox_diff_harness.sh launch <name> [keepalive_seconds] [sav_file]
+   dosbox_diff_harness.sh raw-screenshot <name> [output_path]   # 精確 320x200,無法達成則 fail closed
+   dosbox_diff_harness.sh geometry <name>
+   dosbox_diff_harness.sh send-keys <name> <key> [key2 ...]
+   dosbox_diff_harness.sh wait-pixel <name> <x,y,r,g,b> <delay_s> <max_tries>
+   dosbox_diff_harness.sh status / teardown <name> / teardown-all
+   ```
+   `launch`可選第三參數直接把一份已 chapter-jump-patch 過的 FD2.SAV 覆蓋進隔離 workdir(啟動前
+   複製,不是遊戲執行中熱替換)。`raw-screenshot`在送出`import -window <winid>`前先用
+   `xdotool getwindowgeometry`核對視窗剛好 320×200,不是就直接報錯**拒絕**產出(不會偷偷
+   crop/resize 掩蓋過去——這正是本工具要修正的舊 rigor gap),成功時額外印
+   `rgb_md5=<內容雜湊>`(`convert img.png rgb:- | md5sum`,只雜湊像素內容不含 PNG 容器 metadata)。
+   Xvfb screen 用 1024×768(不能比開場動畫的最大視窗小,否則視窗被裁切/位移,本輪實測踩過)。
+
+2. `tools/dosbox_diff_harness.py`(Windows 端)——單一 CLI 把整條流程接起來:
+   ```
+   # chapter-jump патch 一份真實 FD2.SAV 的 slot0 章節 byte(沿用 UI-VIS-TOWN variant1/2 已驗證
+   # 過的技巧,原理見 tools/fd2save.py;chapter_byte+1 = 存檔清單顯示的「第N章」)
+   python tools/dosbox_diff_harness.py patch-sav --src FD2.SAV --dst out.SAV --chapter-byte 0x01
+
+   # 完整城鎮 hub 情境:啟動/沿用 diffharness instance、Title→LOAD→(patch過的存檔)→城鎮 hub、
+   # 兩側各自截圖、對每個候選 pulse(0..3)做 diff、輸出 side-by-side PNG + JSON report
+   python tools/dosbox_diff_harness.py town --instance diffharness \
+       --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3
+
+   # 低階原語(自組其他情境的 navigate 序列時用)
+   python tools/dosbox_diff_harness.py raw-shot --instance diffharness --out out.png
+   python tools/dosbox_diff_harness.py remake-shot --node town_ch02 --town-state 0,0 --out out.png
+   python tools/dosbox_diff_harness.py diff --a orig.png --b remake.png --out-prefix report
+   ```
+   remake 側呼叫的是**既有的**`remake/fd2-linux-verify`(2026-08-15 build,Docker 移除前建置、
+   本輪確認在 WSL2-native Xvfb 下可直接執行,不需要重建),用`FD2_CAMP_NODE`/`FD2_SHOT_TOWN_STATE`/
+   `FD2_SHOT`/`FD2_SHOT_FRAME`驅動,並自動補上`FD2_ORIGINAL_FDOTHER`/`FD2_ORIGINAL_FDTXT`/
+   `FD2_ORIGINAL_DATO`(**本輪新發現**:沒有這三個環境變數,native town/shop/church 這類原生 UI
+   compositor 完全不會啟動,`FD2_SHOT_TOWN_STATE`自己的「必須是 native town node」檢查會直接
+   fail closed——先前文件沒有明講這是必要條件,只在個別 E2 回合的 ad hoc 指令裡出現過)。
+   截圖固定產出 640×400(`logicalW/H`原生畫布 ×2,見`remake/cmd/fd2/main.go`),本工具用
+   `arr[0::2, 0::2, :]`(取每個 2×2 區塊左上角像素)還原成真 320×200——這是**無損**還原,不是
+   resize:因為 renderer 本來就是把每個原生像素畫成純色 2×2 區塊,沒有插值可言。diff 統計量
+   (mean-abs-diff、exact-pixel-match %、raw RGB MD5)完全計算在這兩份真 320×200 陣列上。
+
+**已知踩坑,寫給下一輪**:
+- **`wsl.exe`本身會偶發回傳非零 exit code,即使遠端指令本身邏輯上一定成功**(例如
+  `pkill ...; true`這種保證 exit 0 的指令,`wsl.exe`wrapper 偶爾還是回 9)。本工具的
+  `wsl_run()`預設`check=False`,靠 stdout 內容或後續主動 probe(如`ensure_remake_xvfb`用
+  `xdotool getdisplaygeometry`重新驗證連線)判斷成敗,不要相信 subprocess 的 returncode。
+- **給 remake 截圖用的 Xvfb 不要每次呼叫都 pkill 重開**——`nohup Xvfb ... &`+立刻`kill`的
+  重啟模式會偶發讓新 Xvfb bind 失敗(前一個 socket 還沒真的釋放),導致
+  `fd2-linux-verify`卡在 X11 連線且沒有任何錯誤輸出。改成`ensure_remake_xvfb()`:進程內
+  快取「這個 display 已確認可用」,首次呼叫才真的探測(`xdotool getdisplaygeometry`成功才算
+  活著,不能只信`pgrep`——殭屍 process 仍會被`pgrep`比對到但拒絕新連線),探測失敗才
+  pkill+重啟+再探測一次。
+- **remake 側需要真實原版素材路徑**(見上,`FD2_ORIGINAL_*`三個環境變數),否則截圖本身不報錯
+  但畫面是空白 fallback,`FD2_SHOT_TOWN_STATE`會直接 fail closed 讓你馬上發現,但如果未來換
+  一個不做這層檢查的畫面種類,可能會安靜地截到不代表 native UI 的畫面——新場景務必先確認
+  remake 端真的是 native compositor 在畫,不是預設 placeholder。
+- `fd2-linux-verify`單次呼叫時間不穩定(觀察到 5-40+ 秒都有,可能跟 WSL2 磁碟 I/O 或 asset
+  首次載入有關),`remake_shot()`預設 timeout 75 秒;`town`子指令對每個 pulse 值的呼叫個別
+  try/except,單一 pulse 逾時不會讓整份 report 失敗,只會在輸出裡標記該 pulse 被跳過。
+
+**驗證(2026-08-26,非紙上談兵)**:
+1. **對已閉合的 UI-01 title-screen oracle 重放,取得逐位元組相同的結果**:用本工具的
+   `raw-screenshot`對(全新 WSL2-native 環境、跳過開場動畫後)標題畫面截圖,`rgb_md5`與
+   `docs/figures/title-original-dosbox.png`(2026-07-25 用已移除的 Docker pipeline 產生)
+   **完全相同**(`d05b5e19806e5dc3d3e78d199eb74168`)——證明這個 WSL2-native 替代方案在
+   byte-exact 這個維度上跟舊 Docker pipeline **等價**,不是「看起來差不多」而是逐位元組雜湊
+   相同。
+2. **端到端自動化重跑 ch02 城鎮 hub selection0(UI-08-TOWN-VARIANT0 同一個場景)**:`town`
+   子指令全自動完成 chapter-jump patch(slot0 章節 byte→`0x01`)→啟動 instance→Escape
+   跳開場→Title→Down→Enter選LOAD→Enter選唯一存檔位(確認畫面文字為「第 二 章 羅德鎮」)→
+   輪詢 320×200 原生解析度出現→截圖,全程不需要人工介入或猜測 sleep 時長(用視窗幾何輪詢取代
+   固定延遲)。與 remake 側(`FD2_CAMP_NODE=town_ch02`、`FD2_SHOT_TOWN_STATE=0,<pulse>`)四個
+   候選 pulse 值逐一 diff,背景/帳篷造型顏色/柵欄/樹叢/「酒店」label 等絕大部分畫面達到
+   **99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45**(最佳 pulse 落在 2)。
+3. **誠實記錄:沒有達到 100% 全幀相同,而且這次的落差是真實發現,不是本工具的精度問題**——
+   diff heatmap 把差異精確定位在一塊 24×24px、369 個像素的小區域(角色胸口),裁圖比對後
+   確認是 remake 端在該場景多畫了一個 DOSBox-X 原版完全沒有的小紅色方塊(疑似某種 pulse/
+   selection 標記錯位),四個 pulse 候選值沒有一個能讓這塊區域消失。**這不是本工具的 bug**——
+   高精度的逐像素 diff 本來就應該比先前 variant1/2 用的「crop/resize 後肉眼+統計比對」更容易
+   抓到這種小範圍真實 compositor 差異;舊方法的統計數字(exact-pixel 35-51%)雜訊太大,反而
+   蓋掉了這種小範圍精確定位。已建議另開一個 worklist 項目追這個新發現的小紅方塊 discrepancy
+   (不在本工具的範圍內處理)。
+
+**已知限制(誠實列出)**:
+1. 本工具只自動化了「chapter-jump→LOAD→城鎮 hub」這一種 navigate 序列(`reach_town_hub()`)。
+   商店/教會/整備等其他場景需要各自的 navigate 序列,跟這個專案過去每一輪 E2 都需要各自的
+   按鍵序列一樣——`raw_screenshot`/`remake_shot`/`diff_frames`這些底層原語是通用的,但「怎麼
+   走到某個畫面」永遠是場景專屬的,不冒稱能自動走到任意畫面。
+2. remake 端的 pulse/tick 是`FD2_SHOT_TOWN_STATE`這個 screenshot-only 的**強制覆寫**鉤子,
+   不是模擬真實經過的時間;DOSBox-X 端擷取到的是某個真實時刻的動畫相位,兩者只能靠窮舉幾個
+   候選 pulse 值來對齊,不保證每個新場景都能找到 100% 吻合的候選(如上,這次就沒找到)。
+3. 尚未針對其他既有 E2 場景(商店、教會、整備、戰鬥)逐一重放驗證,只驗證了 title 與 ch02 城鎮
+   hub 兩個場景;下一輪若要用這個工具升級其他 variant1/2 等級的證據,應該先重複這裡的流程。
+
+完整 shell 腳本細節見 `tools/dosbox_diff_harness.sh` 檔頭註解;完整 CLI 用法/guarantee 邊界見
+`tools/dosbox_diff_harness.py` 模組 docstring。`docs/knowledge-base/48-dosbox-x-debugger-
+build.md`§11 有一個指向本節的簡短入口。
