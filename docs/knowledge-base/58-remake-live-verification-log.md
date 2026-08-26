@@ -8206,3 +8206,299 @@ campaign資產檔案。
 `.wsl_build/q1~q7.json`/`r1~r7.json`(Windows端暫存目錄,過程debug產物,
 非repo追蹤內容)。`91-worklist.md`同一條目待下一次commit時追加一行指向
 本節。
+
+## 續七十五:讀`dosbox-x`自己的`INT 16h AH=0x10h`實作原始碼(續七十四點名的
+下一步)——確認與`AH=0x00h`共用完全相同的緩衝區讀取函式,無任何鍵值差異化
+邏輯,`AH=0x10h`這條新線正面排除;意外在`IRQ1_Handler`寫入端(而非讀取端)
+發現Enter/Space與方向鍵確實走不同的switch分支,但無法解釋完全掉鍵,誠實
+記錄為排除法收尾而非新根因(2026-08-26)
+
+**任務背景**:接手續七十四的建議——`FD2.EXE`讀鍵確認呼叫的是BIOS
+`INT 16h AH=0x10h`(Read Extended Keystroke),而`dosbox-x`自己怎麼實作
+這個子功能,先前六輪(續五十四/五十五/七十一/七十二/七十三/七十四)都沒有
+讀過。本輪目標:讀`dosbox-x`原始碼裡`AH=0x10h`的實際實作,比對`AH=0x00h`/
+`0x01h`有無緩衝區消費/擴充旗標處理上的差異,並檢查是否有`core=normal`
+相依的可能性。
+
+### 1. 環境確認:doc48§8建置的原始碼樹確實還在
+
+```
+$ timeout 20 wsl -d Ubuntu bash -c "find ~/fd2-dosbox-build/dosbox-x/src \
+  -iname '*bios*keyb*' -o -iname '*int16*'"
+/home/kg701004/fd2-dosbox-build/dosbox-x/src/ints/bios_keyboard.cpp
+/home/kg701004/fd2-dosbox-build/dosbox-x/src/ints/.deps/bios_keyboard.Po
+/home/kg701004/fd2-dosbox-build/dosbox-x/src/ints/bios_keyboard.o
+```
+
+`INT 16h`全部子功能(含`AH=0x10h`)的實作確實集中在
+`src/ints/bios_keyboard.cpp`(1760行),不在續五十五讀過的
+`sdlmain.cpp`/`keyboard.cpp`——續七十四的推測正確。本輪全程透過Windows端
+`\\wsl.localhost\Ubuntu\...`路徑唯讀讀取原始碼,以及一次唯讀`find`,沒有
+啟動`dosbox-x`/`Xvfb`/`tmux`。
+
+### 2. `INT16_Handler`本體(`bios_keyboard.cpp:1319`起):`AH=0x00h`/
+`0x10h`/`0x01h`/`0x11h`四個子功能共用同兩個static函式`get_key()`/
+`check_key()`做緩衝區存取,`AH=0x10h`沒有自己的一套緩衝區邏輯
+
+逐行讀完`INT16_Handler`的`switch(reg_ah)`(`bios_keyboard.cpp:1319-1444`):
+
+```c
+case 0x00: /* GET KEYSTROKE */
+    ...
+    if ((get_key(temp)) && (!IsEnhancedKey(temp))) {
+        reg_ax=temp;
+    } else {
+        reg_ip+=1;   // 沒有key,或是key被判定為enhanced就整個丟棄,回小idle迴圈
+    }
+    break;
+case 0x10: /* GET KEYSTROKE (enhanced keyboards only) */
+    ...
+    if (get_key(temp)) {
+        if (!IS_PC98_ARCH && ((temp&0xff)==0xf0) && (temp>>8)) {
+            if(!IsKanjiCode(temp)) temp&=0xff00;
+        }
+        reg_ax=temp;
+    } else {
+        reg_ip+=1;
+    }
+    break;
+case 0x01:  /* CHECK FOR KEYSTROKE */
+    ...
+    for (;;) {
+        if (check_key(temp)) {
+            if (!IsEnhancedKey(temp)) { ...; break; }
+            else { get_key(temp); }   // enhanced key直接dequeue後丟棄,continue
+        } else { ...; break; }
+    }
+    break;
+case 0x11: /* CHECK FOR KEYSTROKE (enhanced keyboards only) */
+    ...
+    if (!check_key(temp)) { CALLBACK_SZF(true); }
+    else { ...; if (...==0xf0...) temp&=0xff00; reg_ax=temp; }
+    break;
+```
+
+四個分支呼叫的`get_key()`/`check_key()`是**同一組**兩個`static`函式
+(`bios_keyboard.cpp:463-516`與`522-542`),本身完全不知道呼叫方是哪個
+`AH`值。逐行核對這兩個函式:
+
+```c
+static bool get_key(uint16_t &code) {
+    ...
+    head =mem_readw(BIOS_KEYBOARD_BUFFER_HEAD);
+    tail =mem_readw(BIOS_KEYBOARD_BUFFER_TAIL);
+    if (head==tail) return false;
+    thead=head+2;
+    if (thead>=end) thead=start;
+    mem_writew(BIOS_KEYBOARD_BUFFER_HEAD,thead);
+    code = real_readw(0x40,head);
+    ...
+    return true;
+}
+static bool check_key(uint16_t &code) {
+    head =mem_readw(BIOS_KEYBOARD_BUFFER_HEAD);
+    tail =mem_readw(BIOS_KEYBOARD_BUFFER_TAIL);
+    if (head==tail) return false;
+    code = real_readw(0x40,head);   // 只peek,不移動head
+    return true;
+}
+```
+
+**結論**:`AH=0x10h`與`AH=0x00h`讀的是同一段BIOS Data
+Area(`0040:001A`/`001C`head/tail指標)、用同一個`mem_readw`/
+`real_readw`/`mem_writew`存取序列,沒有任何`AH=0x10h`專屬的緩衝區旗標、
+額外鎖定機制或不同的dequeue路徑。**唯一的差異在讀值成功之後的後處理**:
+`AH=0x00h`若判定`IsEnhancedKey(temp)`為真(`bios_keyboard.cpp:1269-1294`,
+條件是`scancode>0x84`或`0xf0`標記組合),會把已經被`get_key()`**吃掉**
+的鍵直接丟棄、不寫入`reg_ax`(這是真實PC BIOS的標準行為:舊式`AH=0x00h`
+本來就設計成看不到101鍵盤特有的按鍵);`AH=0x10h`則完全不做這個過濾,
+任何被`get_key()`吃到的值都無條件回傳(只在`0xf0`標記組合時清掉低位元組)。
+**這代表`AH=0x10h`在設計上是四個子功能裡「最不會遺失按鍵」的一個**,續
+七十四猜測的「`AH=0x10h`實作有沒有比`AH=0x00h`更容易丟鍵的機制」在讀完
+原始碼後方向是反過來的——如果`FD2.EXE`改用`AH=0x00h`,理論上更有可能因
+`IsEnhancedKey`過濾而丟鍵,而不是`AH=0x10h`。Enter(`0x1c`)、Space
+(`0x39`)、四個方向鍵(`0x48`/`0x50`/`0x4b`/`0x4d`)的scancode都遠低於
+`0x84`,`IsEnhancedKey()`對它們全部回傳`false`,這個過濾機制在本專案的
+症狀裡完全不會被觸發,對`AH=0x00h`與`AH=0x10h`都一樣不生效。
+
+**`INT16_Handler`全體(`bios_keyboard.cpp:1319`到函式結尾)裡,搜尋不到
+任何以`reg_al`/`temp`/`code`數值比對`0x1c`/`0x39`(Enter/Space的scancode)
+或`0x48`/`0x50`/`0x4b`/`0x4d`(方向鍵)做特殊分支的程式碼**——這是本輪
+對任務背景問題2第一小題(「`AH=0x10h`讀取緩衝區時是否對特定scancode有
+差異化處理」)的直接、明確負面答案。
+
+### 3. 核對是否有`core=normal`相依的可能性:架構上不可能,`get_key`/
+`check_key`/`INT16_Handler`是host端原生C++函式,不經過任何x86 CPU核心
+模擬
+
+`INT16_Handler`透過`CALLBACK_Setup`(`bios_keyboard.cpp`結尾,`SetupBIOS`
+一類函式)註冊成`INT 0x16`向量對應的callback,由`dosbox-x`的CPU模擬層在
+執行到`INT 16h`指令時,直接跳轉呼叫這個host端C++函式本體——**不是**
+被解讀/重新編譯成x86指令序列的DOS程式碼。`core=normal`/`core=dynamic`/
+`core=simple`這幾個设定改變的是「CPU模擬層怎麼執行客體(guest)的x86
+指令」,`INT16_Handler`/`get_key`/`check_key`不是客體指令,是`dosbox-x`
+自己的原生函式,**不受CPU核心模式影響**——這與doc48§8.3的850次量化測試
+(排除cycles相關假說)以及續五十四§4(在同一凍結CPU狀態下方向鍵成功、
+Enter/Space失敗,任何cycles/core層面的解釋都必須同時影響兩者)在架構
+層面完全吻合,是這次讀完原始碼後可以**確定排除**、不必再猜測的一個候選。
+這回答了任務背景問題2第三小題。
+
+### 4. 一個新發現,但發生在寫入端(IRQ1)而非讀取端(INT 16h),且無法解釋
+「完全沒被觀察到」的掉鍵:`IRQ1_Handler`裡Enter/Space走`default`通用
+分支,方向鍵(`0x48`/`0x4b`/`0x4d`/`0x50`)走專屬`case`區塊
+
+追出把原始scancode寫進BIOS鍵盤緩衝區(`BIOS_AddKeyToBuffer`,
+`bios_keyboard.cpp:370-457`,`get_key`/`check_key`讀的正是這個函式寫的
+同一段head/tail)的來源——`IRQ1_Handler`(`bios_keyboard.cpp:601-903`,
+硬體IRQ1觸發時執行,把`reg_al`裡的raw scancode轉譯成ASCII/擴充碼再呼叫
+`add_key()`寫入緩衝區)。這個switch裡:
+
+- `case 0x47`/`0x48`/`0x49`/`0x4b`/`0x4c`/`0x4d`/`0x4f`/`0x50`/`0x51`/
+  `0x52`/`0x53`(`bios_keyboard.cpp:778-812`,數字鍵台/方向鍵共用的
+  scancode範圍,依`flags3&0x02`擴充旗標與`flags1`的Alt/Ctrl/Shift/
+  NumLock狀態決定要不要走`add_key(...+0xe0/0x5000等)`的擴充編碼路徑)
+  是一個**專屬的case區塊**,方向鍵`Up`(`0x48`)/`Down`(`0x50`)/
+  `Left`(`0x4b`)/`Right`(`0x4d`)都落在這裡。
+- Enter(`0x1c`)與Space(`0x39`)**都不在**這個switch列出的任何具體
+  `case`裡,落入`default: /* Normal Key */`→`normal_key:`
+  (`bios_keyboard.cpp:814-861`)這個所有一般字母/數字鍵共用的通用路徑,
+  依`scan_to_scanascii[scancode]`查表決定`normal`/`shift`/`control`/
+  `alt`哪一欄,唯一額外分支是`flags3&0x02`(擴充前綴)時把
+  numpad-Enter/numpad-slash特別處理(`bios_keyboard.cpp:849-858`),與
+  一般Enter/Space完全無關。
+
+**這代表Enter/Space與方向鍵在`IRQ1_Handler`裡確實走的是不同的switch
+分支**——但誠實澄清三點,避免這被誤讀成新根因:
+
+1. 這是任何標準PC BIOS鍵盤中斷處理常式都會有的架構(數字鍵台雙功能鍵
+   需要額外的NumLock/Shift判斷邏輯,主鍵盤區的Enter/Space不需要),不是
+   `dosbox-x`專屬的怪癖或bug,也沒有任何註解/TODO暗示這裡曾經出過問題。
+2. 這是**寫入端**(硬體scancode→BIOS緩衝區)的分支,而續五十四§3的
+   對照組證據(同一個凍結的CPU狀態下,`Up`立即生效、Enter/Space完全沒被
+   `FUN_00012dac`的讀取迴圈觀察到)發生在**讀取端**——如果問題出在
+   `IRQ1_Handler`寫入端的分支選擇本身有bug,合理預期應該是「方向鍵和
+   Enter/Space都有各自的路徑,兩條路徑各自都可能出錯」,但續五十四的
+   對照組顯示的是「同一時刻兩種鍵完全相反的結果」,這與「兩條獨立路徑
+   各自偶爾出錯」的假說形狀對不上——更精確的解讀應該是:掉鍵發生在
+   scancode**還沒抵達`IRQ1_Handler`之前**(即SDL2/X11/Xvfb事件傳遞層,
+   已被續五十四/五十五/七十一/七十二/七十三窮盡排查),而不是抵達後被
+   這個switch用不同分支處理。
+3. 本輪額外檢查`IRQ1_Handler`兩條分支各自呼叫的`add_key()`
+   (`bios_keyboard.cpp:459-461`)全部指向同一個`BIOS_AddKeyToBuffer()`,
+   沒有分岔;`BIOS_AddKeyToBuffer`本身(§2引用的head/tail寫入邏輯)也不
+   區分scancode。**這代表即使承認switch分支不同,兩條分支最終殊途同歸
+   寫入同一個緩衝區、用同一套滿溢判斷,不構成兩種鍵可能被不同程度遺失
+   的機制性理由**。
+
+### 5. 順帶檢查的兩個相關但確認無關的機制
+
+- **`KEYBOARD_AddKey()`(`keyboard.cpp:1904-1928`,SDL鍵盤事件從
+  `sdlmain.cpp`呼叫進來的入口)**:唯一與鍵值相關的特例是
+  `if (!pressed && (keytype == KBD_space)) APM_Suspend_Wakeup_Key();`
+  ——與續五十五已記錄的發現完全一致(APM休眠喚醒鉤子,只在`Space`
+  **放開**時觸發,和一般按鍵傳遞無關),本輪重新核對過一次原始碼,沒有
+  找到新內容,確認續五十五這筆記錄準確。
+- **`KEYBOARD_AddBuffer()`(`keyboard.cpp:340-353`,PS/2控制器層級的
+  原始scancode環狀緩衝區,`KEYBUFSIZE=32*3=96`筆)**:確實存在真實的
+  「緩衝區滿就丟棄新code」機制(`LOG(...)("Buffer full, dropping
+  code")`),但這是**通用FIFO**,不分scancode種類,且96筆的容量遠超過
+  本專案自動化腳本一次操作會送出的按鍵數量(通常個位數),架構上不像是
+  本症狀(單一Enter/Space遺失、同session其餘按鍵正常)的成因,本輪判斷
+  優先度低,未做進一步live驗證。
+
+### 6. GitHub issue tracker + 論壇複查:沒有找到與`AH=0x10h`或本症狀
+精確特徵吻合的既有報告
+
+用`gh search issues --repo joncampbell123/dosbox-x`搜尋
+`"int16" "AH=0x10"`、`"extended keystroke"`、`"keyboard buffer"`
+三組查詢,加上網頁搜尋`"dosbox-x INT16 AH=10h Read Extended Keystroke
+bug"`與`"get_key OR check_key keyboard buffer drop scancode"`:
+
+- `#3157`(「右側數字鍵台整組不能用」)——根因是`output=ttf`+
+  `country=886,950`+`language=zh_TW`+`cycles=fixed 153600`這個特定
+  組合,與本專案的環境設定(非TTF輸出、非數字鍵台)不符,不適用。
+- VOGONS論壇`Dosbox dropping pressed keys?`討論串——根因是**SDL 1.2**
+  (非本專案使用的SDL2)在全螢幕模式下,X11事件處理有一個寫死的1500ms
+  timeout,導致「按住一鍵+按放另一鍵」時第一顆鍵被誤判成放開;這個bug
+  **對所有按鍵一視同仁**,不是選擇性只影響特定鍵,且SDL2已修正,均與本
+  專案的symptom特徵(選擇性、SDL2 build)不符。
+- 沒有找到任何issue或論壇討論明確提及`AH=0x10h`(Read Extended
+  Keystroke)子功能本身的bug,也沒有找到任何討論「Enter/Space選擇性掉、
+  方向鍵不受影響」這個精確特徵的既有報告——與續五十五/續七十三的搜尋
+  結果一致,誠實記錄查無新成果,沒有為了有產出而牽強附會不相關的issue。
+- 本輪判斷:`AH=0x10h`是一個非常具體、冷門的BIOS子功能,搜尋廣度已經
+  相當充分(issue tracker關鍵字+論壇+英文網頁搜尋),不像續五十五/
+  七十三覆蓋的X11/Xvfb/SDL2/xdotool那樣是有大量社群使用者基數的熱門
+  主題,查無成果本身也帶有一定資訊量(不是「還沒找到」,是「這個角度大概
+  率沒有已知的公開先例」)。
+
+### 7. 誠實結論
+
+1. **`AH=0x10h`這條線,本輪讀完`dosbox-x`原始碼後,結果是負面的
+   (dead end)**——`get_key()`/`check_key()`是`AH=0x00h`/`0x10h`/
+   `0x01h`/`0x11h`四個子功能共用的同一組緩衝區存取函式,沒有`AH=0x10h`
+   專屬的buffer邏輯;`INT16_Handler`裡沒有任何以Enter/Space/方向鍵
+   scancode做分支的程式碼;`get_key`/`check_key`是host端原生函式,
+   不受`core=normal`等CPU核心模式影響。續七十四§5第2點列出的「值得
+   排除的下一個候選」,本輪讀完原始碼後確認**可以排除**——不是查無所獲,
+   是查完之後確認這個機制在`dosbox-x`這一層同樣不存在。
+2. **唯一算得上新發現的事實**(§4):`IRQ1_Handler`寫入BIOS緩衝區時,
+   Enter/Space與方向鍵確實走不同的switch分支,這是本專案先前七輪都沒有
+   讀過的`IRQ1_Handler`原始碼才發現的架構細節。但這個發現**無法解釋
+   選擇性掉鍵本身**——它是標準BIOS架構的正常設計(數字鍵台雙功能鍵需要
+   額外判斷),兩條分支最終寫入同一個緩衝區,且發生在scancode**已經抵達
+   `dosbox-x`之後**的階段,與續五十四§3證實掉鍵發生在「連讀取端的輪詢
+   迴圈都完全沒觀察到」這個更早的時間點對不上。誠實記錄這是一個真實但
+   大概率無關的架構觀察,不是根因候選。
+3. **累計七輪(續五十四/五十五/七十一/七十二/七十三/七十四/本節)的
+   誠實總結**:X11/Xvfb/xdotool/SDL2傳遞層(續五十四/五十五/七十一/
+   七十二/七十三)與`dosbox-x`/`FD2.EXE`自己的BIOS鍵盤緩衝區模擬+讀鍵
+   邏輯(續七十四/本節)**兩側都已經被相當窮盡地讀過原始碼、排除過具體
+   候選機制**,依然沒有找到任何能解釋「Enter/Space選擇性掉、方向鍵不受
+   影響、同一存檔同一手法跨session時好時壞」這個精確特徵組合的具體
+   bug。**這不是「還差一點點」的狀態,是排除法已經覆蓋了這個症狀在
+   軟體層可以想像到的絕大多數候選位置**(SDL2事件生成/XTest合成/X11
+   傳遞/Xvfb已知限制/IME攔截/焦點分支/DOSBox-X BIOS緩衝區讀寫/CPU核心
+   模式)之後,依然是陰性結果。
+4. **給下一輪的誠實建議,包含明確喊停這個具體子方向**:
+   - **不建議繼續narrow「哪一個INT 16h子功能」這條線**——`AH=0x10h`
+     已經讀完,`AH=0x00h`/`0x01h`/`0x11h`作為對照也一併讀完,四者共用
+     同一組緩衝區函式,沒有子功能層級的差異可挖。
+   - 如果要繼續在`dosbox-x`原始碼裡找,誠實列出兩個本輪**沒有時間深入,
+     但架構上仍算未覆蓋**的角落,同時明確標註信心不高:(a)
+     `KEYBOARD_AddBuffer`往下一層,PS/2控制器8042模擬本身對keydown/
+     keyup**時序**(不是緩衝區容量)的模擬細節(`keyboard.cpp`裡
+     `KEYBOARD_TickHandler`/`repeat`相關邏輯,本輪只掃過函式名沒有讀
+     內容);(b)`CALLBACK_SIF`/`PIC_SetIRQMask`/IRQ1實際觸發時機與
+     DOS extender(`FUN_00046870`往下,續七十四明確標註「本輪未展開,
+     超出FD2.EXE自己的邏輯範圍」)之間,`int86x()`呼叫`INT 16h`當下
+     若IRQ1剛好在中斷向量表切換的極窄時間窗口觸發,是否存在理論上的
+     競態——這是本輪唯一想得到、還沒被任何一輪明確讀過原始碼排除的
+     機制,但誠實承認這是相當低機率、難以低成本驗證的猜測,不是有
+     具體證據支持的候選。
+   - **更誠實的整體判斷**:七輪過去,根因很可能不在「某一段特定程式碼
+     邏輯的bug」這個框架裡,而是這整個headless自動化環境(Xvfb+合成
+     事件+DOSBox-X客體模擬)本身,在某些難以復現的時序/資源競爭條件下
+     產生的湧現(emergent)行為,不是靠繼續讀原始碼、逐段排除就能收斂
+     到單一根因的那種問題。如果下一輪還要投入,建議調整策略——例如
+     改成長時間背景收集「掉鍵發生時的完整系統狀態快照」(CPU暫存器+
+     BIOS緩衝區內容+X11事件log三方比對,在**掉鍵當下**而非事後)的
+     量化資料收集,而不是再開一輪新的靜態原始碼審查或候選假說搜尋,
+     因為這兩類方法目前為止的邊際產出已經明顯遞減。
+
+### 8. 環境收尾
+
+本輪**沒有**啟動任何`dosbox-x`/`Xvfb`/`tmux`session,只透過
+`\\wsl.localhost\Ubuntu\...`路徑唯讀讀取`~/fd2-dosbox-build/dosbox-x/
+src/ints/bios_keyboard.cpp`與`src/hardware/keyboard.cpp`,加上一次
+唯讀`find`環境檢查,以及`gh search issues`/網頁搜尋。`~/fd2-run/`、
+`FD2.SAV`、`FD2.EXE`(WSL2端)均未被本輪讀寫。沒有修改`remake/`下任何
+原始碼或campaign資產檔案,沒有修改`dosbox-x`原始碼樹本身(純讀取)。
+
+### 9. 產出
+
+本文件本節(續七十五)。`91-worklist.md`同一條目已追加一行指向本節(見
+下一次commit)。`docs/data/verified_addresses.json`本輪未修改(本輪的
+發現是`dosbox-x`自己的原始碼行為,不是`FD2.EXE`位址,不屬於這份清單的
+記錄範圍)。無截圖(純原始碼審查+issue tracker/網頁搜尋,沒有進入遊戲
+畫面)。

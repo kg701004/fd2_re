@@ -2990,3 +2990,31 @@
   註記：`AH=0x10h`設計上是要讓方向鍵等擴充鍵被讀得更準，不是天生對
   Enter/Space有差別待遇的功能，這個新方向並非高機率候選，只是下一個可
   排除的起點。
+  **doc58續七十五（2026-08-26，讀`dosbox-x`原始碼實作`AH=0x10h`本身）**：
+  讀`src/ints/bios_keyboard.cpp`（1760行）確認`AH=0x00h`/`0x10h`/
+  `0x01h`/`0x11h`四個子功能共用同一組`get_key()`/`check_key()`
+  static函式做BIOS緩衝區（`0040:001A`/`001C`head/tail）存取，`AH=0x10h`
+  沒有自己的一套緩衝區邏輯，唯一差異是讀值成功**之後**的後處理
+  （`AH=0x00h`會把`IsEnhancedKey`判定為真的鍵直接丟棄，`AH=0x10h`
+  不丟棄——方向更像是`AH=0x10h`比`AH=0x00h`更不容易丟鍵，不是相反）。
+  `INT16_Handler`全體搜尋不到任何對Enter（`0x1c`）/Space（`0x39`）/方向鍵
+  scancode的差異化分支。`get_key`/`check_key`/`INT16_Handler`是host端
+  原生C++函式，不經過x86 CPU核心模擬，確認**不受`core=normal`等CPU核心
+  模式影響**。**`AH=0x10h`這條線讀完原始碼後結果是dead end，正面排除**。
+  意外在寫入端（`IRQ1_Handler`，`bios_keyboard.cpp:601-903`）發現Enter/
+  Space走`default`通用分支、方向鍵走`0x47-0x53`專屬case區塊，是本專案
+  先前七輪都沒讀過的細節，但這是標準BIOS架構設計（數字鍵台雙功能鍵需要
+  額外判斷），兩條分支最終寫入同一個緩衝區，且發生在scancode**已抵達**
+  `dosbox-x`之後，與續五十四§3證實掉鍵發生在「讀取端輪詢迴圈完全沒觀察
+  到」這個更早時間點對不上，誠實記錄為架構觀察而非根因候選。GitHub
+  issue tracker（`gh search issues`三組查詢）與VOGONS論壇複查均未找到
+  與`AH=0x10h`或本症狀精確特徵吻合的既有報告。**累計七輪總結**：
+  X11/Xvfb/xdotool/SDL2傳遞層與`dosbox-x`/`FD2.EXE`自己的BIOS鍵盤
+  緩衝區模擬+讀鍵邏輯兩側都已相當窮盡地讀過原始碼、排除過具體候選，
+  依然是陰性結果——**明確建議下一輪不要再narrow「哪一個INT 16h子功能」
+  這條線**，如果要繼續留在`dosbox-x`原始碼裡，唯二誠實列出、信心不高的
+  角落是PS/2控制器8042 keydown/keyup時序模擬細節與DOS
+  extender/`int86x()`呼叫當下IRQ1觸發時機的理論競態；更誠實的整體
+  判斷是根因可能是這個headless自動化環境本身的湧現行為，建議下一輪
+  改成「掉鍵當下」的系統狀態快照量化資料收集，而非再一輪靜態原始碼
+  審查或候選假說搜尋（兩者邊際產出已明顯遞減）。詳見doc58續七十五。
