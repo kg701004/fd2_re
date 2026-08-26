@@ -2994,6 +2994,21 @@ LEN: 802705
 
 **下一步（尚未執行）**：現在需要在這段戰前過場流程中，對 `0x24618`（`FUN_000336a0`，ch23戰前handler）等目標位址下live中斷點讀取EAX，這仍然需要解決先前記錄的中斷點時機bug（`-break-start`初始中斷點在real mode設定、對protected mode selector中斷點不生效的問題）——`BPINT 21`+重新設定的workaround方向理論上正確但尚未在這個新的、已知能穩定抵達戰前畫面的情境下重新實測。
 
+> **2026-08-26 前向指標**：續九～續十一這裡反組譯／live驗證的「目標人數15/19（file
+> offset `0x50f4e`）、`CMP EAX,EBP;JNZ`精確比對（`0x510f7`）、游標排除index
+> `roster_count-1`」這整套邏輯，一週後被`91-worklist.md` UI-VIS-PREPARATION
+> 2026-08-25「prepE2/writerfire」輪重新遇到同一個「19 vs 13」矛盾時**沒有被
+> 連結**（那幾輪只把這裡的續八～續十一當成「不符合法存檔驗收標準」略過）。
+> 2026-08-26續輪把這裡的結論與`docs/data/chapter_beats/ch{NN}_post.json`的
+> join op計數交叉核對，確認「僅13名可招募角色」只是機器上測試存檔（含這裡
+> 續十一土法煉鋼複製的13人存檔）的先天限制，不是遊戲結構性上限——真的照
+> 劇情推進、抵達23-31章的存檔理論上應有20+人的名冊，足以湊滿15/19。完整
+> 推導見`docs/knowledge-base/25-battle-event-system.md` §9.1同日新增段落。
+> 續十一「渲染迴圈固定畫12張portrait,不論真實隊伍人數多少」這句話是否字面
+> 成立（渲染上限硬編碼12 vs 動態=`roster_count-1`，本輪唯一測過的13人存檔
+> 兩者算出來的數字剛好相同,無法區分）仍是唯一開放問題，留給下一輪用
+> `roster_count≥15`的存檔實測分出勝負。
+
 ## 2026-08-18（續十二）#118 — 改用Alt+Pause＋live byte-signature/delta方法，成功抓到 `0x24618` 的即時EAX值
 
 放棄`-break-start`路線（real/protected mode時機bug從未真正解過），改用[[fd2-dosbox-live-memory-extraction]]記載的既有方法論（Alt+Pause進入除錯器＋`MEMDUMPBIN`比對byte-signature算delta）：

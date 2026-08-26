@@ -191,6 +191,22 @@
       "correction_doc": "docs/knowledge-base/35-battle-animation-rendering.md",
       "correction_section": "§9.12",
       "still_pending": "重要邊界(不要誤讀成『0x2bce5 不存在』):0x2bce5 本身作為結局 montage renderer 的既有反組譯(FDOTHER #0x36 frame decoder、palette timing 等,91-worklist.md #1226/#1354/#1570)未被本輪推翻,只有『0x2545d/0x25970 直接呼叫它』這條特定邊被推翻。0x2bce5 實際如何被觸發(若真的會被觸發)仍未知——doc35 §9.11.8 已記錄一個未驗證的間接呼叫/跳轉表線索(`CALL dword ptr [EBP*4+0x524c6]`),留給下一輪。doc58 續六十二(2026-08-24)真正打贏 ch27 後深入結局 montage 時,對 0x2bce5/0x2c548 下的斷點也從未命中——這與本勘誤完全吻合(不是新矛盾),但代表續六十二實際觀察到的『逐角色回顧卡』內容(萊汀/悠妮兩張卡)很可能走的是另一條路徑,值得下一輪核對是否與 §9.11 找到的『角色卡 renderer』(0x31c49,經 0x31529 的另一分支)或 table_post[30] 有關——本輪未驗證,不宣稱已定案。91-worklist.md L1179/L1898、doc39 L253、doc50 L655、SESSION-HANDOFF L221/443/452 的字面『0x2bce5』引用已在原地加註訂正(未刪除原文),doc58 續三十二~續六十四的原始記錄未改寫,已在文末追加續六十五訂正說明。"
+    },
+    {
+      "wrong_address": "0x318ad / 0x31e80 / 0x32004 / 0x320fc / 0x31d3c / 0x318c7 / 0x31a29 / 0x36d98",
+      "correct_address": "部分已定位:0x32004→0x32194(call_scan(0x10620)直接命中,非xref_to);0x318c7→0x31a57(delta+0x190套用後乾淨反組譯對齊,無misalignment)。其餘(0x318ad/0x31e80/0x320fc/0x31d3c/0x31a29/0x36d98)套用同一+0x190 delta後落在指令中段(misaligned),尚未定出真正入口,留待下一輪逐位元組回溯。",
+      "wrong_semantic_claimed": "56-fd2-remake-sdd.md UI-11 段落(L1647-1700)描述的『整備/選人畫面』完整位址串:0x318ad(facility入口/cap gate)、0x31e80(30-byte selection table渲染)、0x32004(input wait loop,輪詢0x10620)、0x320fc(選人reorder)、0x31d3c(最終確認)、0x318c7(zero 30 flags)、0x31a29(0x32004呼叫端)、0x36d98(兩byte按鍵record讀取helper)。",
+      "discovered_date": "2026-08-26",
+      "discovery_method": "`tools/ghidra_batch_probe.py` 對 FD2Analysis3 逐一 `function_bounds` 查詢全部 8 個位址,**全部回傳 `in_function:false`**(不在任何已知 function 邊界內),與 91-worklist.md 2026-08-25『writerfire』輪已發現的 doc56 存檔閘門位址(0x2cad7/0x2ccb6/0x2fd93)同一類問題相同手法確認。定位嘗試:已驗證『0x32004 輪詢 0x10620』這個行為特徵本身可信(writerfire輪live trace命中原生`0x10620`吞吐量最高位址,逐byte核對過),故對 `0x10620` 做 `call_scan`(非 `xref_to`,因為呼叫端本身不在已知function內、Ghidra base analysis 從未走到那裡)——在 `xref_to` 遺漏的候選外額外抓到 `0x32194`(`confirmed_call_instruction:true`,`in_function:null`),與舊位址 0x32004 的差值恰為 `+0x190`。將同一 `+0x190` 套用到 0x318c7 得到 0x31a57,`disasm` 顯示乾淨對齊的合法指令序列(`PUSH 0xa0000`直寫VGA framebuffer、經`0x111ba` helper 存取 FDOTHER/FDICON entry 3a/39、`JMP 0x31b57`);但套用到 0x318ad/0x31a29 得到的候選位址(0x31a3d/0x31bb9)反組譯要嘛落在指令中段(garbage opcode 但幾 byte 後自然resync到與0x31a57相同的合法序列)要嘛`end_of_code`(0 instructions),bytes dump 確認候選點確實落在鄰近真實指令的中段(例如 0x320fc+0x190=0x3228c 實際命中`89 d0`這條`MOV EAX,EDX`指令中間第2 byte,真正邊界在 5 byte 前的 0x32287)。結論:`+0x190` 是這個區塊局部有效但非精確到每個 sub-address 的 anchor,不是全域常數 delta——與本專案既有『code-vs-data delta不通用』的既知限制一致。",
+      "root_cause": "與 0x2cad7/0x2ccb6/0x2fd93/doc56整備UI章節同一類:FD2Analysis3 的 base analysis(-noanalysis 模式)從未走到這段只透過 DAT_00051d01 類函式指標表/computed call 間接抵達的程式碼,舊文件記錄的位址本身可能來自更早、未經同一嚴謹度覆核的手動反組譯或另一個 Ghidra session,值域邊界隨編譯輸出的細部差異(對齊/padding)局部飄移,不是簡單常數平移。",
+      "affected_docs": [
+        "docs/knowledge-base/56-fd2-remake-sdd.md",
+        "docs/knowledge-base/91-worklist.md",
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/25-battle-event-system.md",
+      "correction_section": "§9.1(2026-08-26續輪追加段落)",
+      "still_pending": "0x318ad(facility entry/cap gate 本體)、0x320fc(reorder)、0x31d3c(最終確認)三個對回答『部署上限』問題最關鍵的位址仍未在 FD2Analysis3 精確定位。但**這不影響本輪對部署上限問題本身的結論**——同一套 cap/confirm/cursor-skip 邏輯已由 docs/knowledge-base/58-remake-live-verification-log.md 2026-08-17/18(續九~續十一,task #118)透過完全獨立的路徑(即時記憶體 + 對照實際執行的 509158-byte FD2.EXE 做純檔案 byte-signature 搜尋,而非透過任何 Ghidra 專案)驗證過:file offset `0x50f4e`(cap 立即值,0x0f=15預設/chapter>26時0x13=19)、`0x510f7`(`CMP EAX,EBP;JNZ`精確比對,不是『選夠就好』)。該投資獨立於本次 FD2Analysis3 位址飄移問題,細節見 doc25 §9.1 本輪新增段落與 doc91 UI-VIS-PREPARATION 條目。"
     }
   ]
 }

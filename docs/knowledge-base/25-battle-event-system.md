@@ -892,6 +892,84 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 > [`writerfire-selection-ui-all-selected-remaining07.png`](../figures/writerfire-selection-ui-all-selected-remaining07.png)、
 > [`writerfire-selection-ui-delete-resets-to-empty.png`](../figures/writerfire-selection-ui-delete-resets-to-empty.png)。
 > 完整過程見 `91-worklist.md` UI-VIS-LOAD 條目。
+>
+> **2026-08-26 續輪：deploy cap「19 vs 13」矛盾——確認不是誤讀，找到既有的
+> 獨立驗證，19/15 門檻與「選滿才能過」都是真的，缺口在於測試存檔的
+> 招募進度而不是遊戲邏輯**。任務：re-derive writerfire 記錄的「結構性卡點」
+> ——選人畫面出戰上限 19、全遊戲僅 13 名可招募角色、Escape/Delete 只會
+> 重置——先重跑 `ghidra_batch_probe.py` 對 doc56 UI-11 段落引用的
+> `0x318ad/0x31e80/0x32004/0x320fc/0x31d3c/0x318c7/0x31a29/0x36d98`
+> 八個位址做 `function_bounds`：**全部回傳 `in_function:false`**，逐一確認
+> writerfire「doc56 整備 UI 位址也是舊版殘留」的猜測成立。嘗試重新定位：
+> 對已驗證行為特徵『輪詢 `0x10620`』的 `0x10620` 做 `call_scan`（`xref_to`
+> 在這類未分析區域會漏掉呼叫端，need call_scan 的 byte 級 E8 掃描），額外
+> 抓到 `0x32194`（`in_function:null`，`confirmed_call_instruction:true`），
+> 與舊位址 `0x32004` 差值 `+0x190`；套用同一 delta 到 `0x318c7` 得到
+> `0x31a57`，`disasm` 顯示乾淨對齊、無 misalignment 的合法指令序列
+> （`PUSH 0xa0000` 直寫 VGA framebuffer、經 `0x111ba` 存取 FDOTHER/FDICON
+> entry）——兩個獨立位址都符合同一 `+0x190`，但套用到 `0x318ad`/`0x31a29`/
+> `0x320fc`/`0x31d3c` 得到的候選點要嘛落在指令中段（bytes dump 逐一核對，
+> 例如 `0x320fc+0x190=0x3228c` 精確命中鄰近一條 `MOV EAX,EDX` 指令中間第2
+> byte，真正邊界在 5 byte 前）要嘛 `end_of_code`。**結論：`+0x190` 是這個
+> 區塊局部有效的 anchor，不是全域常數 delta**——facility 入口/reorder/
+> 最終確認三個對回答部署上限最關鍵的位址本輪未能精確定位，詳細記錄與
+> bytes dump 見 `known_address_errata.json` 新增條目。
+>
+> **關鍵轉折：這個問題其實已經在完全獨立的另一輪調查裡被解開過，只是從未
+> 被本節或 2026-08-25 這一批平行 harness 引用**。`docs/knowledge-base/
+> 58-remake-live-verification-log.md` 2026-08-17/18（續九～續十一，
+> task #118，比 writerfire 早了約一週）針對「ch23 選人畫面死結」做過同一個
+> 畫面的完整反組譯＋live 驗證，**且明確用純檔案 byte-signature 搜尋對照過
+> 目前實際在跑的 509158-byte `FD2.EXE`(MD5 `33464C81E6A364FD0660141139AA8E6E`，
+> 已用 `PUSH 0x164` 開頭序列在該檔案裡找到 `0x2ff01` 對應的唯一 file offset
+> `0x55f15`，確認就是本專案其餘各輪一直在用的同一份「真檔案」)，不是單靠
+> Ghidra 專案（那一輪自己也踩過『Ghidra 專案其實裝的是另一個 802705-byte
+> 版本』的坑，教訓記在該文件續十）**：
+> - file offset `0x50f4e`＝出戰目標人數的立即值：預設 `0x0f`(15)，章節
+>   `>26` 時改成 `0x13`(19)——與本文件（`[0x53c03]<=0x1a→15,>0x1a→19`）、
+>   `56-fd2-remake-sdd.md` UI-11（`NativePreparationPartyLimit`）、
+>   `91-worklist.md`「逐章旗標表」三份完全獨立的靜態/live 結論**三方一致**，
+>   19 這個數字對 raw chapter 27（顯示第二十八章，`>26` 那一臂）而言
+>   **不是誤讀**，是真實的目標值。
+> - file offset `0x510f7`＝`CMP EAX,EBP`＋`JNZ`（已選人數≠目標就重複迴圈，
+>   相等才真正離開）——**確認任務描述的解法(b)不成立**：這個畫面沒有
+>   「選不滿也能用別的鍵確認離開」的分支，必須精確湊滿 15／19 才會走到
+>   `0x320fc`/`0x31d3c`；Escape 對應的是該函式內另一個獨立、刻意寫死的
+>   「整批重置回 15/15」分支，不是被誤讀的確認鍵。
+> - **這輪也用即時 single-step 測試直接證實**（不是猜測）：Enter/方向鍵的
+>   游標移動被寫死排除陣列最後一個 index（`roster_count-1`）——13 人存檔
+>   時 index 12（隊伍第13人）**用任何輸入都無法到達**，讓已選人數永遠卡在
+>   12，湊不滿 15，所以畫面看似「無限循環＋Escape重置」，其實是遊戲邏輯
+>   本身正確地在等一個永遠不會出現的第13個可選欄位。
+>
+> **由此回答任務要求的四個解法選項**：(a) 不成立——章節>26 用 19 這個值
+> 本身是對的，不是該用更低值的誤讀。(b) 在指令層級確認不成立——`JNZ` 迴圈
+> 要求精確相等，沒有「選不滿也能確認」的隱藏路徑。**(c) 成立，且已有交叉
+> 證據**：「全遊戲僅 13 名可招募角色」這個結論只對**本輪與之前所有輪次
+> 測試用的存檔**成立（機器上僅有的 4 個真實存檔槽全是早期章節；writerfire
+> 用的 raw ch27 存檔是 `fd2save.py` 直接改章節 byte 的捷徑合成檔，沒有真的
+> 玩過中間章節），不是遊戲本身的結構性上限。獨立核對
+> `docs/data/chapter_beats/ch{NN}_post.json` 的 `"join"` op 數量：ch01-10
+> 共 9 次加入、**ch11-22 共 13 次加入**（與 doc58 續九引用的「背景 agent
+> 查證 ch11-22 之間共有13名角色加入」的數字**逐一吻合**，兩個完全獨立的
+> 資料來源給出同一個 13）、ch23-29 再 2 次。也就是說一個**真的照劇情打
+> 過來**（不是章節跳躍合成）的存檔，抵達顯示選人畫面的章節（23-25/
+> 28-31）時，隊伍規模粗估已在 20+ 人，遠超過 15／19 的目標，湊滿並不難；
+> 之所以每一輪都卡住，是因為測試用的存檔全部繞過了 ch11-22 這一段負責
+> 加人的劇情。
+>
+> **仍未解決、留給下一輪的具體問題**：doc58 續十一反組譯游標移動程式碼時
+> 另外記錄一句「畫面實際渲染迴圈固定只畫 `EBX=0xb..0`(12張portrait)，
+> 不論真實隊伍人數多少」——若這句話字面成立（渲染上限硬編碼 12，不隨
+> `roster_count` 縮放），則即使隊伍真的有 20+ 人，這個畫面本身也永遠只能
+> 顯示/選取 12 個欄位，19（或 15）的目標依然湊不滿，等於推翻上一段的
+> (c) 結論。但該輪唯一測試過的存檔 roster_count 剛好也是 13（`roster_count
+> -1=12`），跟「渲染固定 12」這個數字重合，**兩個假說（渲染上限=roster_count
+> -1 的動態值，恰好這次算出12；或渲染上限=硬編碼常數12）在單一資料點下無法
+> 區分**，doc58 本身從未在更大的 roster 上重測過。這是本輪認為唯一還沒閉合、
+> 且可用一次乾淨測試（合成或真玩一個 roster_count≥15 的存檔進同一畫面，看
+> 實際能否選超過 12 個）分出勝負的具體問題，本輪未嘗試 live 驗證（見
+> `91-worklist.md` UI-VIS-PREPARATION 條目的誠實記錄）。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

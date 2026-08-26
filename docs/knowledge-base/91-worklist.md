@@ -17,7 +17,7 @@
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
-26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。
+26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。**2026-08-26續輪(純靜態)重新derive「19 vs 13」矛盾**：確認doc56 UI-11引用的整備UI位址(0x318ad等8個)在FD2Analysis3全部`in_function:false`(舊版殘留)，但同一套cap/confirm/cursor-skip邏輯已由`58-remake-live-verification-log.md`續九～續十一(task #118,早於prepE2一週)對照實際509158-byte`FD2.EXE`做純檔案byte-signature驗證過：15/19門檻與「選滿才能離開」都是真的，不是誤讀；「僅13名可招募角色」這句話只對機器上現有的合成/早期存檔成立——獨立核對`docs/data/chapter_beats/ch{NN}_post.json`的join op數量，ch11-22共13次加入(與續九的獨立查證吻合)，真的照劇情推進的存檔抵達23-31章時名冊規模應在20+，並非結構性上限。仍待下一輪驗證的唯一開放問題：選人畫面渲染迴圈是否真的硬編碼上限12(不論roster多大)——若成立則推翻上述樂觀結論，需要`roster_count≥15`的存檔實測。詳見doc25§9.1與`known_address_errata.json`。
 45 - E - UI-VIS-LOAD自述成功native restore/delete/overwrite/roster ABI仍待E2。
 53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。
 54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
@@ -243,6 +243,46 @@
   同輪嘗試用 `fd2-preparation-oracle` 做同狀態 pixel diff，但這台機器**未安裝 Go
   工具鏈**（`go`/`golang` 全機找不到，需要下一輪先處理環境），故本輪僅完成
   逐格畫面的定性比對，未做位元組級差分。
+  **2026-08-26 續輪（純靜態，未碰 DOSBox-X）：re-derive「19 vs 13」矛盾，結論是
+  存檔進度缺口不是遊戲邏輯缺口**。先用 `ghidra_batch_probe.py` 對 doc56 UI-11
+  引用的 `0x318ad/0x31e80/0x32004/0x320fc/0x31d3c/0x318c7/0x31a29/0x36d98` 八個
+  位址逐一 `function_bounds`：**全部 `in_function:false`**，證實 writerfire「doc56
+  整備 UI 位址也是舊版殘留」的猜測；嘗試用 `call_scan(0x10620)`（`0x32004` 已知
+  行為特徵）重新定位，找到 `+0x190` 這個對 `0x32004→0x32194`／`0x318c7→0x31a57`
+  兩點都成立的局部 delta，但套用到 facility 入口 `0x318ad` 本身、`0x320fc`、
+  `0x31d3c` 都落在指令中段或 `end_of_code`，**這三個對回答部署上限最關鍵的位址
+  本輪仍未精確定位**，細節與 bytes dump 見 `known_address_errata.json`。
+  **關鍵發現**：這個「目標 15／19 vs 只有 13 人」矛盾其實已經在完全獨立的
+  `58-remake-live-verification-log.md` 續九～續十一（2026-08-17/18，task #118，
+  比 prepE2/writerfire 早約一週）被完整反組譯＋live 驗證過，且是直接對照
+  **實際在跑的 509158-byte `FD2.EXE`**（本輪用 `PUSH 0x164` 序列在該檔案裡
+  重新核對出 `0x2ff01` 對應唯一 file offset `0x55f15`，確認就是同一份「真檔案」，
+  不是任何 Ghidra 專案的鏡像）做純檔案 byte-signature 搜尋，不是猜測：file
+  offset `0x50f4e`＝目標人數立即值（15 預設／章節>26 時19，與本節逐章旗標表、
+  doc56 `NativePreparationPartyLimit`、doc25 §9.1 三方獨立吻合，19 本身不是
+  誤讀）；`0x510f7`＝`CMP EAX,EBP;JNZ`（選滿才能離開，沒有「選不滿也能確認」
+  的隱藏路徑，L232 起記錄的續八～續十一原本只把這段當成「不符合法存檔驗收標準」
+  略過，沒有進一步追問「19 這個數字本身為何存在」）；並用 live single-step
+  證實游標移動寫死排除陣列最後一個 index（`roster_count-1`），13 人存檔時
+  index 12 永遠無法到達，這正是「選人畫面卡死＋Escape 只會重置」的真正成因。
+  獨立核對 `docs/data/chapter_beats/ch{NN}_post.json` 的 `"join"` op 數量：
+  ch01-10 共 9 次、**ch11-22 共 13 次**（與續九引用的「背景 agent 查證 ch11-22
+  間共13名角色加入」逐一吻合，兩個獨立資料來源給出同一個 13）、ch23-29 再 2
+  次——代表一個真的照劇情打過來（不是章節跳躍合成）的存檔，抵達顯示選人畫面
+  的章節（23-25/28-31）時隊伍規模粗估已在 20+ 人，遠超過 15／19，湊滿並不難。
+  **也就是說「本作僅13名可招募角色，正常單周目名冊人數都不會超過15／19門檻」
+  這句 L235-236 的既有結論需要修正**：13 這個數字對「機器上現有的4個存檔＋
+  writerfire 用的 raw ch27 章節位元組合成捷徑存檔」成立，但不是遊戲本身的
+  結構性上限——這些存檔全部繞過了 ch11-22 這段負責加人的劇情，不代表劇情
+  正常推進時的名冊規模。**仍未解決、留給下一輪的具體問題**：續十一反組譯游標
+  程式碼時另記錄「渲染迴圈固定只畫 `EBX=0xb..0`(12張portrait)，不論真實隊伍
+  人數多少」——若這句話字面成立（渲染上限硬編碼12，不隨 `roster_count` 縮放），
+  即使隊伍真有20+人，這個畫面仍可能永遠只能選12個，推翻上面的樂觀結論；但
+  該輪唯一測過的存檔 `roster_count-1` 剛好也是12，兩個假說（動態上限恰好算出
+  12；或硬編碼常數12）在單一資料點下無法區分，需要下一輪拿一個 `roster_count
+  ≥15` 的存檔實測才能分出勝負。本輪判斷靜態證據已足夠支撐上述結論，未嘗試
+  live DOSBox-X 驗證（時間/風險考量，留給下一輪視情況決定）。完整推導過程見
+  `docs/knowledge-base/25-battle-event-system.md` §9.1 本輪新增段落。
 - [~] **UI-VIS-LOAD**：合法 IDA 9.4 證實 `0x25F48` 載入 FDOTHER #13，
   `0x30437` 使用 entry16（310×86）於 `(5,112)`，不是 FDOTHER #5
   對話框。production 已改走 FDTXT #0／原版字型／palette 的 indexed
