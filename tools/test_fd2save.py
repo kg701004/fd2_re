@@ -109,6 +109,75 @@ class FD2SaveTest(unittest.TestCase):
             fd2save.roster_inventory_items(bytes(plain), 0, 2), [0x1F, 0xA3, 0x5B]
         )
 
+    def test_build_join_record_matches_known_go_projection_for_char12(self):
+        """Cross-check against TestNativeJoinConstructorMaterializesKeliFromRawTables
+        (remake/internal/campaign/native_join_constructor_test.go): character id
+        12 ("凱麗") is known-answer Lv10/class8/MV5/MaxHP151/MaxMP0/BaseAP80/
+        BaseDP69/DX10. This Python port must reproduce those exact record bytes.
+        """
+        table = fd2save.load_join_constructor_table()
+        record = fd2save.build_join_record(12, table)
+        self.assertEqual(len(record), fd2save.UNIT_SIZE)
+        self.assertEqual(record[0x07], 12)
+        self.assertEqual(record[0x08], 12)
+        self.assertEqual(record[0x21], 10)  # level
+        self.assertEqual(record[0x20], 8)  # class
+        self.assertEqual(record[0x3B], 5)  # MV
+        self.assertEqual(struct.unpack_from("<H", record, 0x40)[0], 151)  # HP cur
+        self.assertEqual(struct.unpack_from("<H", record, 0x42)[0], 151)  # HP max
+        self.assertEqual(struct.unpack_from("<H", record, 0x44)[0], 0)  # MP cur
+        self.assertEqual(struct.unpack_from("<H", record, 0x46)[0], 0)  # MP max
+        self.assertEqual(struct.unpack_from("<H", record, 0x37)[0], 80)  # base AP
+        self.assertEqual(struct.unpack_from("<H", record, 0x39)[0], 69)  # base DP
+        self.assertEqual(struct.unpack_from("<H", record, 0x3E)[0], 10)  # DX
+        # Known inventory projection from the same Go test: flags
+        # [0x40,0x40,0x80,0x80,0x80,0x80,0x80,0x80], items [0x3e,0xac,...].
+        flags_items = [
+            (record[0x0A + 2 * i], record[0x0B + 2 * i]) for i in range(8)
+        ]
+        self.assertEqual(
+            [f for f, _ in flags_items],
+            [0x40, 0x40, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80],
+        )
+        self.assertEqual(flags_items[0][1], 0x3E)
+        self.assertEqual(flags_items[1][1], 0xAC)
+
+    def test_append_roster_members_extends_count_and_rejects_duplicates(self):
+        plain = bytearray(fd2save.FILE_SIZE)
+        start, _ = fd2save.slot_bounds(0)
+        meta_start = start + fd2save.ROSTER_SIZE
+        plain[meta_start] = 0x1A  # chapter
+        plain[meta_start + 1] = 3  # roster_count
+        for i, char_id in enumerate([0, 9, 4]):
+            plain[start + i * fd2save.UNIT_SIZE + fd2save.UNIT_CHARACTER_ID_OFFSET] = char_id
+        table = fd2save.load_join_constructor_table()
+        mutated = fd2save.append_roster_members(bytes(plain), 0, [30, 1, 8], table)
+        self.assertEqual(mutated[meta_start + 1], 6)
+        self.assertEqual(
+            fd2save.roster_character_ids(mutated, 0, count=6), [0, 9, 4, 30, 1, 8]
+        )
+        # original 3 records must be byte-identical (untouched)
+        self.assertEqual(
+            mutated[start:start + 3 * fd2save.UNIT_SIZE],
+            bytes(plain)[start:start + 3 * fd2save.UNIT_SIZE],
+        )
+        # duplicate id (already present) must be rejected
+        with self.assertRaisesRegex(ValueError, "already present"):
+            fd2save.append_roster_members(mutated, 0, [9], table)
+        # overflowing the 32-record buffer must be rejected
+        with self.assertRaises(ValueError):
+            fd2save.append_roster_members(bytes(plain), 0, list(range(31)), table)
+
+    def test_set_slot_chapter_only_touches_that_slot_metadata_byte(self):
+        plain = bytearray(fd2save.FILE_SIZE)
+        start0, _ = fd2save.slot_bounds(0)
+        start1, _ = fd2save.slot_bounds(1)
+        plain[start0 + fd2save.ROSTER_SIZE] = 0x0A
+        plain[start1 + fd2save.ROSTER_SIZE] = 0x05
+        mutated = fd2save.set_slot_chapter(bytes(plain), 0, 0x1B)
+        self.assertEqual(mutated[start0 + fd2save.ROSTER_SIZE], 0x1B)
+        self.assertEqual(mutated[start1 + fd2save.ROSTER_SIZE], 0x05)
+
 
 class FD2SaveRealFileTest(unittest.TestCase):
     """Optional live-data checks: only run when a real FD2.SAV is present on

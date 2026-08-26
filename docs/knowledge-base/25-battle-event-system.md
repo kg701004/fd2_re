@@ -970,6 +970,37 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 > 且可用一次乾淨測試（合成或真玩一個 roster_count≥15 的存檔進同一畫面，看
 > 實際能否選超過 12 個）分出勝負的具體問題，本輪未嘗試 live 驗證（見
 > `91-worklist.md` UI-VIS-PREPARATION 條目的誠實記錄）。
+>
+> **2026-08-26 續輪（`rostertest` harness，合成 26 人 roster，live DOSBox-X）：
+> 「硬編碼 12」假說已被推翻，選滿確認流程已 live 驗證關閉**。用
+> `tools/fd2save.py` 新增的 `build_join_record`/`append_roster_members`（逐位元組
+> 複刻 production-verified 的 `native_join_constructor.go`
+> `MaterializePersistentUnit`）把機器上真實 `~/fd2-run/FD2.SAV` slot0（13 真人
+> roster）擴充成 26 人（新增 13 個各自不同、欄位精確的角色 record，不是
+> record0 複製品——這正是 writerfire 輪「roster_count 硬改到 19 觸發疑似
+> 完整性檢查、靜默彈回標題」失敗手法的對照修正），chapter 設 raw `0x1b`(27，
+> `>0x1a`門檻，cap=19)。LOAD 該槽、FDTXT `0x19a` 按 **No**（見下方誠實限制）
+> 後直接進選人畫面：**25 個 portrait 全部渲染**（10+10+5 三列，
+> `roster_count-1=25`≠12），`roster_count-1` 動態上限假說證實成立，doc58
+> 續十一「渲染固定 12」的字面假說被推翻——該輪測到的 12 只是巧合等於當時
+> 唯一存檔的 `roster_count-1`。逐次 Enter 選取 5→12→19，每步「剩餘人數」
+> 正確遞減，**選滿 19 後畫面自動跳出全新「確定要進入戰場嗎？」YES/NO 最終
+> 確認框**，按 YES 正常進戰前過場對白（索爾「這裏就是黃金城嗎？」），沒有
+> 卡住/錯誤——選人核取/`0x320fc`重排/`0x31d3c`最終確認三段，選滿19人這條
+> 路徑本輪視為 E2 關閉。**誠實限制**：只測了 cap=19（raw>26）這一臂，cap=15
+> 臂未測；用同一份合成 roster 對「No」分支武裝的 300M 指令 LOGC 追蹤（涵蓋
+> No 確認到最終確認到過場對白全程）對 writer `0x2ff01`/`0x30012`/兩個已知
+> caller/其 dispatcher 依然**全部零命中**，這是本節「整備限定流程走 No 分支
+> 不呼叫 writer」結構性主張至今最乾淨的一次直接印證（不是像 writerfire 那輪
+> 連選人畫面本身能不能選滿都不確定）。另一輪按 Yes 分支則確實觸發真實磁碟
+> 寫入（slot1 變成 slot0 的逐位元組複製品），但遊戲隨後回到標題 LOAD 選單
+> （不是進選人畫面），推翻本節先前「Yes/No 兩臂都進 0x318ad」的假設——No 才是
+> 唯一通往選人畫面的分支；這個 Yes 分支的 LOGC 追蹤命中的是已知的 tavern
+> icon1 writer `0x2968d`，不是 `0x2ff01`，但因為按鍵序列本身混雜多次重試、
+> 不是乾淨單一路徑對照組，此一具體結論信心較低，留給下一輪用乾淨的單一動作
+> 序列重新驗證。完整過程、截圖與 `test_fd2save.py` 新增的 known-answer
+> regression 見 `91-worklist.md` UI-VIS-PREPARATION／UI-VIS-LOAD 兩個條目
+> 2026-08-26 續輪段落。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

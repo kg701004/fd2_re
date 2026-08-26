@@ -283,6 +283,60 @@
   ≥15` 的存檔實測才能分出勝負。本輪判斷靜態證據已足夠支撐上述結論，未嘗試
   live DOSBox-X 驗證（時間/風險考量，留給下一輪視情況決定）。完整推導過程見
   `docs/knowledge-base/25-battle-event-system.md` §9.1 本輪新增段落。
+  **2026-08-26 續輪（`rostertest` harness，合成 26 人 roster，live DOSBox-X）：
+  「渲染固定 12」假說已被推翻，選滿確認流程已 live 驗證關閉；writer 仍未命中，
+  但這次是有原因的（走了 No 分支）**。承接上一輪「需要 `roster_count≥15` 存檔
+  實測」的具體要求。**存檔合成方法**：新增 `tools/fd2save.py`
+  `build_join_record()`/`append_roster_members()`/`set_slot_chapter()`，逐位元組
+  複刻**已經 production-verified、有自己 known-answer test 的** Go
+  `native_join_constructor.go` `MaterializePersistentUnit`（角色 12「凱麗」
+  Lv10/MaxHP151/BaseAP80 等值，本輪新增的 `test_fd2save.py`
+  `test_build_join_record_matches_known_go_projection_for_char12` 已交叉核對逐位元組相同），
+  來源資料是同一份 exe-identity-checked
+  `remake/assets/data/native_join_constructor.json`。用機器上真實
+  `~/fd2-run/FD2.SAV` slot0（13 人真實 roster，chapter raw `0x1a`）當基底，
+  額外 append 13 個角色目錄（`14,17,3,15,18,16,21,7,25,28,24,23,22`，
+  `native_character_catalog.json` 收錄的 32 名角色裡尚未在該存檔出現的部分）
+  湊成 26 人合成 roster，chapter 改成 `0x1b`(27，`>0x1a`門檻，cap=19)。
+  **這次刻意避開上一輪 writerfire「複製 record0 湊 19」的失敗手法**——13 個新增
+  record 全部是不同、合法角色 id，各自完整欄位（HP/MP/AP/DP/DX/MV/inventory）
+  皆由建構子公式算出，不是欄位=0 的空殼或 record0 複製品；`go test`/
+  `python -m unittest test_fd2save` 全綠，`decode(encode(x))==x` round-trip 自檢
+  通過才寫出檔案。**Live 結果，載入完全成功，沒有重演 writerfire 的靜默彈回
+  LOAD 選單**：LOAD 選中該槽 → chapter 顯示「第二十八章」（=raw+1，公式吻合）→
+  跳過城鎮 hub 直接顯示 FDTXT `0x19a`「要記錄戰況嗎？」→ 本輪按 **No**（避開
+  另一個獨立發現的分支，見下）→ **直接進入選人畫面，25 個 icon 全部渲染**
+  （10+10+5 三列，`roster_count-1=25`，不是 12）——[`preparation-roster26-selection-screen-25-portraits.png`](../figures/preparation-roster26-selection-screen-25-portraits.png)。
+  **`roster-count-1` 動態上限假說證實成立，「硬編碼 12」假說被推翻**：doc58
+  續十一唯一測過的存檔剛好 `roster_count-1=12` 與硬編碼 12 混淆不清，這次
+  25≠12 直接分出勝負。逐次 Enter 選取（5→12→19，[`preparation-roster26-selection-progress-5of19.png`](../figures/preparation-roster26-selection-progress-5of19.png)），
+  每一步「剩餘人數」正確遞減（19→14→7→0），**選滿 19 後畫面自動跳出全新的
+  「確定要進入戰場嗎？」YES/NO 最終確認框**（[`preparation-roster26-final-confirm-dialog.png`](../figures/preparation-roster26-final-confirm-dialog.png)，
+  即 `0x31d3c` 這一段——本輪未重新定位其目前 build 的真實位址，但行為已 live
+  驗證）——這正是本項一直缺的「選滿後真的能不能走到最終確認」的答案：**能，
+  且是精確湊滿才觸發，不早不晚**。按 YES 後正常進入戰前過場對白（索爾：
+  「這裏就是黃金城嗎？好奇怪的建築...」，[`preparation-roster26-postconfirm-cutscene-dialogue.png`](../figures/preparation-roster26-postconfirm-cutscene-dialogue.png)），
+  沒有卡住或錯誤。**選人核取／`0x320fc` 重排／`0x31d3c` 最終確認三段，選滿19人
+  這條路徑本輪視為 E2 關閉**（合成但欄位精確、非 screenshot-only、有完整
+  live 互動與 LOGC ground-truth 交叉核對，見下）。
+  **意外的第二個發現，仍未解決，留給下一輪**：「要記錄戰況嗎？」這第一個
+  Yes/No 對話框，本輪証實 **Yes 和 No 走的不是 doc25 §9.1 原本假設的「兩臂都進
+  0x318ad整備」——No 才會進選人畫面；Yes 會觸發一次真實磁碟寫入
+  （用同一份 slot0 資料覆寫 slot1，`fd2save.py` 逐位元組核對 slot1==slot0），
+  然後**回到 LOAD 四槽選單**，不是進選人畫面**。這推翻了本節較早（2026-08-25
+  writerfire 附近）沿用的「兩臂都進整備」假設，屬於本輪意外校正，不是刻意
+  設計的測試，故只列為初步觀察，下一輪應該專門針對這個分支重新設計乾淨的
+  對照實驗。
+  **誠實限制／未完成**：(1) 本輪只完整測了 raw chapter 27（cap=19）這一臂，
+  cap=15 臂（raw chapter 22-24）沒有實測；(2) Yes 分支觸發的寫入用 LOGC
+  交叉核對，命中的是**已知的 tavern icon1 writer `0x2968d`**，不是
+  `0x2ff01`/`0x30012`——但這個 trial 的按鍵序列本身混雜了多次嘗試（含一次
+  instance 意外因 keepalive 逾時而死掉），不是乾淨的單一路徑對照組，這個
+  「Yes 分支寫入用的是 0x2968d」的具體結論**信心較低，僅供下一輪參考起點，
+  不當作已證實**；(3) 25 個 portrait 裡挑了個不連續發現：`0x32975..0x32998`
+  一帶在乾淨的 select19+confirm LOGC trace（見 UI-VIS-LOAD 條目下方 writer
+  分析）裡有命中，可能是 doc56 UI-11 已知過時的 `0x318ad`/`0x320fc`/`0x31d3c`
+  在目前 build 的真實位址鄰域，本輪未進一步反組譯確認，留給下一輪。
 - [~] **UI-VIS-LOAD**：合法 IDA 9.4 證實 `0x25F48` 載入 FDOTHER #13，
   `0x30437` 使用 entry16（310×86）於 `(5,112)`，不是 FDOTHER #5
   對話框。production 已改走 FDTXT #0／原版字型／palette 的 indexed
@@ -607,6 +661,43 @@
     [`writerfire-fdtxt-0x19a-record-battle-confirm.png`](../figures/writerfire-fdtxt-0x19a-record-battle-confirm.png)、
     [`writerfire-selection-ui-all-selected-remaining07.png`](../figures/writerfire-selection-ui-all-selected-remaining07.png)、
     [`writerfire-selection-ui-delete-resets-to-empty.png`](../figures/writerfire-selection-ui-delete-resets-to-empty.png)。
+  - **2026-08-26（`rostertest` harness）：writer 仍未在乾淨的單一路徑測試中命中，
+    但已排除「roster 完整性檢查拒絕」這個具體假說，且意外釐清了「要記錄戰況嗎？」
+    Yes/No 兩臂實際走向不同結局**。用 UI-VIS-PREPARATION 條目記錄的合成 26 人
+    roster（13 真實 record + 13 個各自不同角色 id、欄位由 production-verified
+    `native_join_constructor.go` 公式算出的新 record，`tools/fd2save.py`
+    `append_roster_members()`），chapter 設為 raw `0x1b`(27)。**No 分支**：LOAD →
+    FDTXT `0x19a` → 按 No → 直接進選人畫面（25 portrait 全渲染，見
+    UI-VIS-PREPARATION 條目）→ 選滿 19 人 → 自動跳出「確定要進入戰場嗎？」→
+    按 YES → 正常進戰前過場對白，全程順暢，**沒有**寫入時發生 roster 完整性
+    拒絕（也沒有靜默彈回標題 LOAD 選單，直接推翻 writerfire「roster_count 硬改
+    可能觸發完整性檢查失敗」的猜測——本輪的差異是新增 record 欄位精確而非
+    record0 複製品，但目前沒有進一步證據能區分「因為欄位精確所以沒觸發拒絕」
+    與「這個 build 根本沒有 writerfire 猜測的那種完整性檢查」兩種解釋）。武裝
+    `LOGC`(3 億指令，涵蓋 No 確認到選人畫面全程互動到最終確認到過場對白開場，
+    去重後 8008 個唯一 native 位址)對 writer 本體 `0x2ff01`／內部呼叫
+    `0x2d80d`／兩個已知 caller（`0x1d43c`/`0x15400`）／其外層 dispatcher
+    （`0x18890`/`0x18d8c`/`0x15311`/`0x1cff0`）**全部零命中**——這是本節至今
+    唯一一次「乾淨涵蓋完整選人→最終確認→過場」全程、且沒有中途死掉或分支混淆
+    的 LOGC 追蹤，比 writerfire 那輪（連選人畫面本身能不能選滿都不確定）更能
+    確認這條 No 分支路徑本身就是不呼叫 writer 的。**Yes 分支的意外發現，信心
+    較低，留給下一輪專門驗證**：另一輪嘗試（合成 roster、按 Left+Enter 想選
+    YES）**確實觸發了一次真實磁碟寫入**——`fd2save.py` 核對寫入前後的
+    `FD2.SAV`，slot1 變成與 slot0（剛才 LOAD 的來源槽）逐位元組相同的複製品，
+    checksum/mtime 都證實真寫入，**遊戲隨後回到標題 LOAD 四槽選單，不是進選人
+    畫面**——這推翻本節先前「Yes/No 兩臂都進 0x318ad」的既有假設，No 才是唯一
+    通往選人畫面的分支。但這輪的 LOGC 追蹤（涵蓋同一段互動）命中的不是
+    `0x2ff01`，而是**已由 savewriter 輪獨立確認過的 tavern icon1 writer
+    `0x2968d`**；由於這個 trial 的按鍵序列本身混雜了多次疊代嘗試（含中途
+    因 harness keepalive 逾時、instance 意外死掉的重來），不是像 No 分支那樣
+    乾淨的單一路徑對照組，**這個「Yes 分支寫入用的是 0x2968d 不是
+    0x2ff01/0x30012」的具體結論信心較低，不當作已證實**，只作為下一輪的
+    具體起點：重新設計一次乾淨、單一動作的 Yes 分支測試（從 title 開始、
+    只按一次 Down/Return/Return/Return，中途不重試不夾雜其他 slot 操作），
+    武裝 LOGC 全程，才能真正回答「Yes 分支的 checkpoint 寫入，走的是哪個
+    writer」。`tools/fd2save.py`／`test_fd2save.py` 本輪新增的
+    `build_join_record`/`append_roster_members`/`set_slot_chapter`
+    已成為這類測試可重複使用的基礎設施。完整過程見 UI-VIS-PREPARATION 條目。
 - [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
