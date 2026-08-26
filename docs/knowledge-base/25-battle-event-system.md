@@ -1083,6 +1083,55 @@ remake 內部畫布 640×400(2x hi-res,tile 維持原生 24px),map0(24×24 格)�
 > 儲存完畢！」文字且 `FD2.SAV` 這次真的改變）。**No 分支**維持
 > `rostertest` 輪已用同樣乾淨方法論確認的結論不變：直接進選人畫面，全程對
 > `0x2968d`/`0x2ff01` 兩條鏈皆零命中。
+>
+> **2026-08-26 續輪（`slotpick` harness，獨立全新 registry，啟動/結束前後
+> 都用 `ps`/`tmux ls` 核對無殘留 instance）：把上一輪「在選擇器上再按一次
+> Return 選 slot」的補測做掉，camp-exit 存檔路徑 end-to-end 確認會真的寫入
+> 磁碟，信心高**。存檔沿用 `cleanretest` 輪同一組合成 26 人 roster（真實
+> `~/fd2-run/FD2.SAV` slot0 疊加 13 個新角色 id）、chapter raw `0x1b`(27)。
+> 走完全相同的 title→LOAD→slot0→FDTXT `0x19a`→`Left`+`Return`(YES) 序列，
+> 抵達與 `cleanretest` 輪逐像素相同的目標槽選擇器畫面。記錄按鍵前 `FD2.SAV`
+> mtime 基準後，武裝 `LOGC`(3 億指令)，**只送一次 `Return`**（游標預設在
+> 項目1，選 slot0，即本次 session 剛 LOAD 進來的同一槽），不再送任何鍵。
+>
+> **結果**：
+> - `FD2.SAV` mtime 確實前進（`15:19:43`→`15:23:17`，按鍵/追蹤跑滿後三次
+>   採樣一致），checksum/md5 因為選的是「LOAD 來源同一槽、session 狀態未
+>   分歧」而維持不變——與本節上方 `savewriter`/`writerfire` 輪已記錄的
+>   idempotent write 現象一致，mtime 才是這裡唯一可信訊號。
+> - 去重後 6228 個唯一 native 位址交叉核對：**目標槽選擇器本體
+>   `0x29bcb..0x29da9` 密集命中**（游標/輸入處理迴圈逐指令執行過），**write-
+>   completion 段落（`0x2968d` offset `0x11a` 起、`0x297ae` 鄰域）密集
+>   命中**，**checksum(`0x4df09`) 與 transform/寫入 encode(`0x4df28`) 兩個
+>   既有記錄的函式本體也都密集命中**（各自數十個唯一位址，不是單一巧合
+>   位址）——選擇器收到輸入 → `0x2968d` 後段 checksum/transform/fwrite 真的
+>   被執行，這條鏈本輪是連續證據，不是分散猜測拼起來的。
+> - **意外但誠實記錄的差異**：畫面本輪沒有出現「記錄儲存完畢！」文字——
+>   `LOGC` 跑滿後、以及後續用 `tmux send-keys F5` 成功恢復真正執行（見下方
+>   方法論筆記）並等待數秒後，畫面都停在與按鍵前相同的四槽清單，未曾看到
+>   確認文字；追加一次 `Down` 證實游標確實移動到項目2（遊戲是活的，不是當
+>   機）。這與 `savewriter` 輪 tavern icon1 路徑「選 slot 後有顯示確認文字」
+>   不同——同一個 writer 函式，經 `0x26331`(camp-exit) 呼叫這次沒有觀察到
+>   確認文字，經 `0x2940e`(tavern icon1) 呼叫則有。這個 UI 反饋層面的差異
+>   不影響「是否真的寫入磁碟」這個核心結論（mtime + 四段 LOGC 命中已足夠
+>   確定），留給下一輪視需要再查其成因（例如確認文字的繪製是否是呼叫端
+>   自己接的、不在 `0x2968d` 本體內），不強行推論。
+> - **方法論筆記**：`dosbox_harness.sh enter-debugger`（Alt+Pause toggle）
+>   這次對「`LOGC` 跑滿後自動觸發的 debugger 重新進入」狀態連送兩次都沒有
+>   成功恢復執行（用 `debugger-cmd ... "D CS:EIP"`/`"HELP"` 確認 console
+>   仍在回應，證實真的還在 debugger 內，不是誤判）；改用
+>   `tmux -L fd2harness send-keys <session> F5`（不經過 xdotool/X11 視窗，
+>   直接把具名鍵送進 debugger console 所在的 tmux pane）才成功看到
+>   `(Running)` 狀態列。下一輪若也遇到 `enter-debugger` 對這種自動觸發的
+>   debugger 重新進入狀態不生效，可直接改用這個寫法，不必重試 Alt+Pause。
+>
+> **結論（信心高，本輪視為 camp-exit 存檔路徑 end-to-end 關閉）**：「要記錄
+> 戰況嗎？」Yes 分支的目標槽選擇器，選定槽位並確認後，**確實會完成一次真實
+> 磁碟寫入**——不是只讀不寫的裝飾畫面。完整鏈路
+> `0x26331`（town-hub 主迴圈）→`FUN_0002968d`（讀檔）→`FUN_00029bcb`
+> （目標槽選擇器）→選槽→checksum(`0x4df09`)/transform(`0x4df28`)/fwrite，
+> 本輪用單一乾淨動作＋LOGC ground-truth 直接連續證實。截圖見
+> `91-worklist.md` UI-VIS-LOAD 條目 2026-08-26（`slotpick` harness）段落。
 
 **原版機制**(既有證據見 doc23 §"save storage boundary"、`56-fd2-remake-sdd.md`
 UI-12、`91-worklist.md` L252/L260/L261/L1145)：

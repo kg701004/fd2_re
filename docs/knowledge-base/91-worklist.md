@@ -739,6 +739,72 @@
     等待進一步輸入。**誠實限制**：下一輪可低風險補測——在這個選擇器上再按
     一次 `Return` 選 slot，確認「記錄儲存完畢！」與 `FD2.SAV` 真的改變。
     doc25 §9.1 已同步更新此修正。
+  - **2026-08-26（`slotpick` harness，獨立全新 registry，啟動前 `ps`/`tmux ls`
+    確認無殘留 instance，結束後 `teardown slotpick`）：把 `cleanretest` 輪留下
+    的「在選擇器上再按一次 Return 選 slot，確認真的寫入」補測做掉，**camp-exit
+    存檔路徑（經 `0x26331`→`FUN_0002968d`）end-to-end 確認會完成真實磁碟
+    寫入**，「camp-exit 存檔路徑」問題視為關閉**。存檔沿用 `cleanretest` 輪
+    同一組 13 個新角色 id 疊加到真實 `~/fd2-run/FD2.SAV` slot0、chapter 設
+    raw `0x1b`(27)。全新 boot→title→`Down`→`Return`→`Return`(選 slot0)→
+    FDTXT `0x19a`→`Left`+`Return`(選 YES)，抵達與 `cleanretest` 輪逐像素
+    相同的內部目標槽選擇器畫面（外觀同標題 LOAD 選單）——
+    [`slotpick-yes-branch-slot-picker-before-final-pick.png`](../figures/slotpick-yes-branch-slot-picker-before-final-pick.png)。
+    先記錄按鍵前基準：`FD2.SAV` mtime `15:19:43`。武裝 `LOGC`(3 億指令)後
+    **只送一次 `Return`**(游標預設在項目1，選 slot0，即目前 session 剛
+    LOAD 進來的同一槽)，不再送任何鍵，等追蹤自動跑滿。**結果**：
+    - `FD2.SAV` mtime 由 `15:19:43` 前進到 `15:23:17`(按鍵+追蹤跑滿後三次
+      採樣一致)，**確認發生真實 write syscall**；checksum/md5
+      (`1499a9ad12877e83238162db6acff922`)維持不變——這正是本節前述
+      `savewriter`/`writerfire` 輪已記錄過的「idempotent write」情形(這次
+      選的 slot0 本來就是剛 LOAD 進來的同一槽，session 狀態未發生任何分歧，
+      寫回的 bytes 與磁碟既有內容逐位元組相同)，**不是**沒寫入，mtime 才是
+      這裡唯一可信的訊號，與既有方法論一致。
+    - 去重後的 6228 個唯一 `CS:EIP`(換算 native、`0170` 段)交叉核對：
+      **目標槽選擇器本體`0x29bcb..0x29da9`密集命中**(游標處理迴圈逐指令
+      執行過)；**write-completion 段落(`0x2968d`函式 offset `0x11a`起、
+      `0x297ae`鄰域)密集命中**；**checksum(`0x4df09`)與 transform/寫入
+      encode(`0x4df28`)兩個既有記錄的函式本體都密集命中**(數十個唯一位址
+      各自，不是單一巧合位址)——四段連續證據串起完整鏈路：選擇器收到輸入
+      →`0x2968d`後段的checksum/transform/fwrite真的被執行。
+    - **畫面沒有出現「記錄儲存完畢！」文字**：`LOGC`跑滿後畫面凍結在與
+      按鍵前相同的四槽清單(debugger 自動重新進入、CPU 當時剛好停在
+      BIOS idle loop `F000:CFCF`，這是三次不同時間點 debugger 重新進入都
+      落在同一位址的現象，因為這個 idle loop 本身佔用了大部分即時運行
+      期間的指令數，屬正常現象非異常)。用 `tmux -L fd2harness send-keys
+      <session> F5`(debugger console 內的「Run」鍵，`enter-debugger`
+      的 Alt+Pause toggle 這次沒有成功恢復執行，改用這個確認有效)恢復真正
+      執行，等待數秒後畫面依然是同一份四槽清單，未曾出現過確認文字；再送
+      一次 `Down` 確認游標真的移動到項目2(證實遊戲並未當機，是真的活著在
+      等待輸入)——[`slotpick-post-write-picker-idle-no-confirm-text.png`]
+      (../figures/slotpick-post-write-picker-idle-no-confirm-text.png)。
+      對照 `savewriter` 輪 tavern icon1 路徑選 slot 後**有**顯示「記錄儲存
+      完畢！」，這是兩條路徑一個尚未解釋的行為差異：**同一個 writer 函式，
+      經由 `0x26331`(camp-exit)呼叫時這次沒有觀察到確認文字，經由
+      `0x2940e`(tavern icon1)呼叫時有**——不影響本項「是否真的寫入磁碟」
+      這個核心問題的結論(mtime+四段 LOGC 命中已經足夠確定)，但是否代表
+      這條路徑上確認文字的繪製邏輯是另一個獨立分支(例如寫入是否成功、或
+      呼叫端沒有把訊息顯示步驟接進來)，留給下一輪視需要再查，不強行推論。
+    - 額外方法論筆記：`dosbox_harness.sh enter-debugger`(Alt+Pause toggle)
+      這次對「已經因為 `LOGC` 跑滿而自動重新進入 debugger」的狀態連送兩次
+      都沒有成功恢復執行(用 `debugger-cmd ... "D CS:EIP"`/`"HELP"` 驗證
+      console 仍在回應，證實真的還在 debugger 內，不是誤判)；改用
+      `tmux -L fd2harness send-keys <session> F5`(不經過 xdotool/X11 視窗，
+      直接把具名鍵送進 debugger console 所在的 tmux pane)才成功看到
+      `(Running)` 狀態列。下一輪如果也遇到 `enter-debugger` 對「LOGC 自動
+      觸發的 debugger 重新進入」狀態不生效，可以直接改用這個 `send-keys F5`
+      寫法，不必重試 Alt+Pause。
+    - 機器既有 `~/fd2-run/FD2.SAV` 全程只被讀取(harness `launch` 對
+      `~/fd2-run-harness-slotpick` 的隔離複本)，本輪結束前重新核對 md5/
+      mtime 均未變。
+    **結論(信心高)**：「要記錄戰況嗎？」Yes 分支的目標槽選擇器，選定一個
+    槽位並確認後，**確實會完成一次真實磁碟寫入**——`FD2.SAV` mtime 改變、
+    且 LOGC ground-truth 直接命中同一函式內選擇器→checksum→transform→
+    fwrite 完整鏈路，不是只讀不寫的裝飾畫面。整條「camp-exit 存檔路徑」
+    (`0x26331`→`FUN_0002968d`讀檔→開啟`FUN_00029bcb`選擇器→選槽→
+    checksum/transform/fwrite)本輪視為 end-to-end 關閉，唯一保留的開放
+    尾巴是「這條路徑上『記錄儲存完畢！』確認文字為何本輪沒有觀察到」，
+    影響範圍是 UI 反饋而非寫入機制本身，不擋 UI-VIS-LOAD 這個子問題關閉。
+    doc25 §9.1 已同步更新此修正。
 - [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
