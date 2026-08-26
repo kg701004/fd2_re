@@ -1219,6 +1219,37 @@ variant/selection coordinate tables rooted at `0x52635/0x52647`. The scene
 then copies only 312×192 to VGA `(4,4)` through `0x11eb0`; it is not a
 320×200 top-left present.
 
+> **Erratum (2026-08-26, `tools/dosbox_diff_harness.py` town-hub bug
+> investigation — see doc91 UI-VIS-TOWN)**: the two addresses this paragraph
+> is built on, `0x2cd16` and `0x2cf71`, do **not** point at town-hub code in
+> the currently-analyzed `FD2Analysis3` Ghidra project (verified via
+> `analyzeHeadless -readOnly` decompile/disassemble, see
+> `reference_fd2_live_ghidra_headless_probe.md`). `0x2cf71` disassembles as
+> an address *inside* `FUN_0002cf30` — the already-documented derived-strike
+> spell function (doc27 §6.5, body `0x2cf30..0x2d80c`). `0x2cd16` has no
+> function boundary at all and force-disassembling it lands in the same
+> combat SFX/icon-pulse code region immediately before `FUN_0002cf30`
+> (touches `0x540ee`, calls the SFX players `0x25a96`/`0x25b45`, calls
+> `0x2eb9f`), not town code. `0x526d7` ("three-entry resource table") is
+> referenced only from `FUN_0002ff01` (the command-presentation dispatcher),
+> never from any town function; `0x52635`/`0x52647` (the six-selection
+> coordinate tables) have **zero** references anywhere across all 976
+> auto-analyzed functions. In short: the "FDICON sprites `0,1,2,1`" claim
+> that justifies `native_town_scene.go`'s `bank.Sprites[:3]` raw-blit
+> implementation was never actually re-verified against this EXE build's
+> disassembly — it was most likely inherited unchanged from the old (舊版)
+> EXE documentation and never re-derived after the 2026-08-14 rebaseline
+> (see `project_fd2_re_exe_version_mismatch` memory / doc48's "old/new EXE
+> address instability" note). The real town-hub redraw function's address is
+> still unknown; a linear byte-range sweep or forward trace from the
+> chapter/node dispatcher's `type=="town"` branch is needed before this
+> paragraph's addresses can be trusted again. This does not by itself prove
+> `bank.Sprites[:3]` is the wrong sprite selection — doc91's 2026-08-26 entry
+> found no better-matching sprite anywhere in the 1680-sprite bank — but it
+> does mean the citation cannot currently back that claim, and the
+> "closed at E1/production level" status above is not reliable until the
+> real function is found.
+
 All 23 editable town nodes now carry the raw `native_town_variant` value
 0/1/2. `ComposeNativeTownFrame` consumes the original indexed resources and
 fails closed for any missing asset, invalid variant, selection outside 0..5,
