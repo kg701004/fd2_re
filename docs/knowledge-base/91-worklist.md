@@ -805,6 +805,22 @@
     尾巴是「這條路徑上『記錄儲存完畢！』確認文字為何本輪沒有觀察到」，
     影響範圍是 UI 反饋而非寫入機制本身，不擋 UI-VIS-LOAD 這個子問題關閉。
     doc25 §9.1 已同步更新此修正。
+  - **2026-08-26（純靜態 Ghidra，把 `slotpick` 輪留下的「camp-exit 路徑為何沒有『記錄儲存
+    完畢！』」尾巴徹底解掉）**：完整 `decompile` `FUN_0002968d`，找到先前各輪只做
+    disasm/xref 片段核對、從未看過的函式尾段——寫入(checksum/transform/fwrite/fclose)完全
+    無條件執行，但寫完後是否呼叫 `0x15f84` 顯示確認文字，由 `(&DAT_000523e7)[DAT_00053c03]`
+    (以章節為索引的 byte table)gate：`==0` 才顯示。`bytes` 逐位元組 dump 這張表(index
+    22/23/24=1、25/26=0、27/28/29=1)與本節既有「城鎮流程(raw ch 1..21/25..26)/整備限定流程
+    (raw ch 22..24/27..29)」分類精確吻合，確認就是同一張表(舊位址 `0x526b9` 已知是舊版殘留，
+    `0x523e7` 是目前 build 正確位址，已補進 `known_address_errata.json`)。反組譯
+    `FUN_00026152`(`0x26331` 呼叫點所在)顯示 `FUN_0002968d()` 只在該 table 值非零的分支裡
+    被呼叫——即經 `0x26331`(camp-exit)這條路徑時，`FUN_0002968d` 內部那個確認文字 gate
+    **結構上保證恆為 false**，不是測試章節湊巧落在哪裡；tavern icon1 路徑因為整備限定章節
+    根本進不了城鎮 hub/酒店，實務上只可能發生在 table 值為零的章節，gate 因此恆為 true。
+    **結論(信心高，本項視為完全關閉)**：這是寫入函式自帶的、刻意的章節相關設計差異——
+    整備限定流程存檔完直接接續進入部署/戰前過場，不顯示確認彈窗；城鎮流程裡玩家主動走
+    酒店選單存檔則會顯示——不是 trace 提早結束、UI 重繪時機、或按鍵序列漏看，純靜態證據
+    已足夠，未再重跑 DOSBox-X。詳細反組譯與 byte dump 見 doc25 §9.1 本輪新增段落。
 - [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
 - [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實

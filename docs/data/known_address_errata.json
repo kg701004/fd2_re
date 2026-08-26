@@ -207,6 +207,20 @@
       "correction_doc": "docs/knowledge-base/25-battle-event-system.md",
       "correction_section": "§9.1(2026-08-26續輪追加段落)",
       "still_pending": "0x318ad(facility entry/cap gate 本體)、0x320fc(reorder)、0x31d3c(最終確認)三個對回答『部署上限』問題最關鍵的位址仍未在 FD2Analysis3 精確定位。但**這不影響本輪對部署上限問題本身的結論**——同一套 cap/confirm/cursor-skip 邏輯已由 docs/knowledge-base/58-remake-live-verification-log.md 2026-08-17/18(續九~續十一,task #118)透過完全獨立的路徑(即時記憶體 + 對照實際執行的 509158-byte FD2.EXE 做純檔案 byte-signature 搜尋,而非透過任何 Ghidra 專案)驗證過:file offset `0x50f4e`(cap 立即值,0x0f=15預設/chapter>26時0x13=19)、`0x510f7`(`CMP EAX,EBP;JNZ`精確比對,不是『選夠就好』)。該投資獨立於本次 FD2Analysis3 位址飄移問題,細節見 doc25 §9.1 本輪新增段落與 doc91 UI-VIS-PREPARATION 條目。"
+    },
+    {
+      "wrong_address": "0x526b9",
+      "correct_address": "0x523e7",
+      "wrong_semantic_claimed": "doc25 §9.1『0x2cad7 gate table』段落引用的、以章節(`[0x53c03]`)為索引、用來分流『城鎮流程』(`==0`,raw ch 1..21/25..26)vs『整備限定流程』(`!=0`,raw ch 22..24/27..29)的 byte table 位址",
+      "discovered_date": "2026-08-26",
+      "discovery_method": "任務目標是反組譯 `FUN_0002968d`(存檔 writer)找出『記錄儲存完畢！』確認文字的顯示條件。`tools/ghidra_batch_probe.py` `decompile 0x2968d` 找到尾段 `if ((&DAT_000523e7)[DAT_00053c03]=='\\0'){...呼叫0x15f84...}` 這個先前輪次未讀到的 gate;懷疑與既有『0x526b9』分流表是同一張表,故用 `bytes` action 對 `0x523e7`/`0x526b9` 各 dump 32 bytes 比對:`0x523e7` 的 index 22/23/24=1、25/26=0、27/28/29=1,與本節既有『城鎮流程 raw ch 1..21/25..26 / 整備限定流程 raw ch 22..24/27..29』分類逐 index 精確吻合;`0x526b9` 的內容(`00 00 00 07 08 06 0d 06...`遞增序列,明顯不是 0/1 flag table)完全不符,證實是不相關的資料,舊位址錯誤。",
+      "root_cause": "與本檔案先前 `0x2cad7`/`0x2ccb6`/`0x2fd93`、doc56 整備 UI 位址集同一類問題:doc25 §9.1 早期(`saveE2`/`camproute` 輪之前)手動反組譯階段記下的位址對應到舊版/舊 Ghidra session,未隨 EXE rebaseline 或 FD2Analysis3 重新核對過。",
+      "affected_docs": [
+        "docs/knowledge-base/25-battle-event-system.md"
+      ],
+      "correction_doc": "docs/knowledge-base/25-battle-event-system.md",
+      "correction_section": "§9.1(2026-08-26『記錄儲存完畢！』確認文字 gate 段落)",
+      "still_pending": "已修正完成。`0x526b9` 這個舊位址字面引用只出現在 doc25 §9.1 本文(非本輪新增段落)裡,尚未逐一改寫成 `0x523e7`,但功能性結論(城鎮流程 vs 整備限定流程的 raw chapter 分類)本身完全不受影響。"
     }
   ]
 }
