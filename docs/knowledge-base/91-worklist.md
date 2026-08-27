@@ -1639,6 +1639,24 @@
   優先級更高,留給下一輪。完整寫法見`docs/knowledge-base/
   99-chapter-sweep-results.md`「2026-08-27 續輪(代號`ch2killgen`)」小節
   (含逐章結果表格)。
+  **2026-08-28 續輪(代號`ch11diag`)**:反組譯`0x51b19[10]`(table_idx10=玩家可見ch11)
+  專屬win-check handler,回應上一輪建議①。**結果**:直接讀`0x51b19`跳表原始bytes證實
+  ch11的handler(`0x205b4`)與已確認可用的ch03/04/07**位元組級別完全相同**(同一個函式
+  入口位址,執行同一段程式碼,無ch11專屬額外分支)——handler本身不是問題。接著用一輪全新
+  live診斷(instance`ch11diag`)直接讀值排查「上一層」的3個候選,**全部被排除**:
+  即時`[0x53c03]`(章節index)==10,dispatch沒走錯entry;即時`[0x53beb]`(native迴圈
+  上界)==38,與真實38筆record陣列(13隊友+25敵人)精確吻合,不是迴圈上界比掃描範圍大;
+  全量160格無條件掃描(繞過既有all-zero-skip heuristic)只多找到2個camp==0命中,但兩者
+  都落在真實陣列邊界之外、raw bytes明顯是雜訊記憶體,確認是偽陽性,不是真的漏看敵人。
+  把這2個偽陽性也一併mass-kill(連同25個真敵人共27格)重跑完整3回合等待+End-Turn確認,
+  `[0x53ecc]`依然15秒內全程讀0。**誠實結論**:本輪能直接驗證的4個假說(handler不同/
+  漏看敵人/迴圈上界過小/dispatch走錯index)全部被直接記憶體證據排除,是明確排除而非
+  「仍不確定」,但真正根因仍未定案——下一輪需要在native`0x1C05BE`(=`0x205be`
+  +`0x19C000`)搭配一個已知會贏的章節(如ch03)做對照組直接下斷點,才能判斷是`0x51b19`表
+  的呼叫本身沒被執行到(問題出在`0x117e7`的per-unit回合狀態機分支),還是別的原因。
+  M5仍是0 pass,未變動。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`
+  「2026-08-28 續輪(代號`ch11diag`)」小節與`docs/knowledge-base/
+  25-battle-event-system.md`§3.2。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

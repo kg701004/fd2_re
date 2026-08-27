@@ -1524,3 +1524,66 @@ handler(仿照`ch12diag`/`branchck`輪的方法論),找出卡住的具體額外�
 race條件調查線;④無論哪一章,doc25 §9.1的SAV writer gate才是真正擋住
 任何章節拿到`pass`的根本問題,是比逐章turn-count診斷更高槓桿的下一個
 目標。
+
+## 2026-08-28 續輪(代號 `ch11diag`):回應上一輪建議①,反組譯 + live 診斷 ch11 專屬 win-check handler——確認 handler 與 ch03/04/07 位元組級別完全相同,直接排除三個「上一層」假說,真正根因仍未解
+
+### 任務背景
+
+`ch2killgen`輪把「等N回合再mass-kill」的修法泛化到6章成功,唯獨ch11(幻之森林)——25個
+敵人(5×LV14獸人隊長+20×LV14獸人)全數確認mass-kill後**持久死亡**——`[0x53ecc]`依然卡在
+0,是本輪唯一的懸案。攻略(`28-chapter-objectives-and-recruits.md`)明確記載ch11勝利條件
+就是普通「敵全滅」,無額外護衛、無道具收集要求。本輪任務:反組譯`0x51b19[10]`(table_idx10
+=玩家可見ch11)專屬handler,判斷它是不是跟已確認可用章節的handler結構不同;若相同,則往
+更上層(dispatch/loop bound/chapter index)排查。
+
+### 方法與結果
+
+**① 靜態反組譯(`ghidra_batch_probe.py`)**:直接讀`0x51b19`跳表原始bytes(bytes action,
+不經反組譯),table_idx10原始值`b4 05 02 00`=`0x205b4`,與table_idx2(ch03)/table_idx3
+(ch04)/table_idx6(ch07)**逐byte完全相同**——不只是同一種pattern,是同一個函式入口位址,
+這三章都已在`ch2killgen`輪確認可用。反組譯`0x205b4`本體(8條指令),證實它就是`0x205be`
+本身多包一層10-byte外層prologue,執行的是完全同一段程式碼,沒有ch11專屬的額外分支。
+**結論:handler本身不是問題**,詳細反組譯與位址鏈見`docs/knowledge-base/
+25-battle-event-system.md`§3.2。
+
+**② live診斷(全新獨立instance `ch11diag`,`.wsl_build/chapter_sweep_ch11diag/
+probe_ch11_diag.py`,完整走`prepare_chapter_save→LOAD→attempt_camp_exit→settle
+loop`找到同一場25敵人戰鬥,與`sweep_chapter()`主流程同一套紀律)**——針對「上一層」的
+三個候選直接讀值:
+
+1. `[0x53c03]`(即時章節index)**==10**,與table_idx10精確吻合,dispatch沒有走錯entry。
+2. `[0x53beb]`(native win-check迴圈自己的上界)**==38**,與真實record陣列大小(13名
+   隊友+25名敵人=38)**精確吻合**——k=0..12是camp==2隊友,k=13..37是camp==0敵人(逐筆
+   byte-level核對),k=38起讀出的是無結構雜訊/非unit記憶體。排除「native迴圈上界比
+   掃描範圍大,漏看陣列尾端」的假說。
+3. 全量160格無條件掃描(繞過`scan_enemy_slots()`「前8 bytes全零跳過」的既有heuristic)
+   只多找到2個camp==0命中(k=96、k=148),但兩者都落在k=38真實陣列邊界**之外**,raw
+   bytes明顯不是unit record結構(不符k=13..37那25筆真敵人的規律pattern)——確認是雜訊
+   記憶體的偽陽性,不是heuristic真的漏看了什麼。
+4. 把這2個偽陽性位址也一併寫入死亡signature(連同25個真敵人,共27格),重跑一次完整的
+   3回合等待+mass-kill+End-Turn確認YES(與ch03/04/07同一套操作路徑),`[0x53ecc]`在
+   15秒輪詢窗口內**依然讀0**,一次都沒有讀到2。
+
+### 誠實結論
+
+本輪能直接用記憶體讀值驗證的4個「上一層」假說——**handler本身不同**、**掃描漏看真敵人**、
+**native迴圈上界比掃描範圍大**、**dispatch走錯章節index**——**全部被直接證據排除**,不是
+「仍然無法確認」,是明確排除。真正卡住的原因比這4個假說更深:`0x205be`第一條指令就是
+無條件`MOV [0x53ecc],0x2`,只要這個函式**曾經被呼叫過一次**,在「25個敵人全部持久死亡、
+無其他陣營record」的狀態下理論上不可能讓`[0x53ecc]`維持在0。15秒持續輪詢從未讀到2(哪怕
+瞬間),比較符合「這次呼叫`0x51b19[10]`在ch11的這個回合狀態下根本沒有被執行到」的**推論**
+（不是坐實結論)——需要下一輪直接在`0x205be`本體斷點驗證。
+
+verdict維持`ch2killgen`輪的`turn-wait無效(genuine anomaly)`,本輪**縮小了根因範圍**
+(排除handler/dispatch/loop-bound/掃描完整性四個候選)但**不宣稱已解開**。M5仍是0 pass,
+未變動。全程約723秒(1個live instance)。
+
+**下一輪建議**(取代上一輪建議①,已完成):在確認「End Turn→YES」之前,對native
+`0x1C05BE`(=`0x205be`+`0x19C000`)重新下斷點,直接觀察這次End-Turn操作是否真的命中過
+`0x205be`——**務必搭配一個已知會贏的章節(如ch03)做對照組**,因為`48-dosbox-x-debugger-
+build.md`§8.4第3點已經記錄過heavy debugger的`BP`/`BPM`在Normal core下「registered但
+從未命中」的個案不是100%解決,單一章節斷點沒命中不足以下結論。若ch03的斷點確實命中而
+ch11的斷點確實沒命中,才能把問題定位到`0x117e7`這個per-unit回合狀態機決定「要不要呼叫
+`0x51b19`表」的分支條件本身(`iVar2==0x39 || iVar2==0x1c`),而不是`0x51b19`表或它的
+handler。完整live log、逐格記憶體dump見`.wsl_build/chapter_sweep_ch11diag/`
+(未納入git,本機保留)。

@@ -141,6 +141,90 @@ handler 實際檢查的字面條件。
 > [native`0x205be`+`0x19C000`]重新下斷點)。詳細操作序列、截圖、與doc35§9結局montage
 > renderer的後續發現見doc58續六十二。
 
+### 3.2 章11(`0x51b19[10]=0x205b4`)診斷:handler 確認與 ch03/04/07 完全相同的共用 default routine,live 排除三個「上一層」假說,真正卡住原因仍未解[驗-部分]/[阻]
+
+> 任務背景:`docs/knowledge-base/99-chapter-sweep-results.md`「ch2killgen」輪對8個原本
+> 「卡在0」章節中的7章(排除ch02獨立線)全部套用「等N回合再mass-kill」的turn-count-gate
+> 修法,6章確認成功(ch03/04/07/15/19/20),唯獨ch11(幻之森林)——25個敵人(5×LV14獸人隊長+
+> 20×LV14獸人)全數確認mass-kill後**持久死亡**(rescan直接證實,非猜測)——`[0x53ecc]`依然
+> 卡在0。攻略(青衫圖文攻略,見`28-chapter-objectives-and-recruits.md`第40行)明確記載ch11
+> 勝利條件就是普通「敵全滅」,無額外護衛目標、無道具收集要求(「星之眼」寶物只影響後續章節,
+> 攻略沒有把它列為ch11自己的勝利條件)。本節用`ghidra_batch_probe.py`(靜態)+一輪全新
+> live 診斷(`.wsl_build/chapter_sweep_ch11diag/probe_ch11_diag.py`)回答「ch11的handler
+> 到底跟哪些章節共用、卡住原因是不是在handler本體或它的直接上游」。
+
+**位址鏈驗證(直接讀`0x51b19`跳表原始bytes,不經反組譯,`ghidra_batch_probe.py` `bytes`
+action,offset `0x51b19`起120 bytes涵蓋全部30個entry)**:table_idx10(對應玩家可見ch11,
+沿用§3.1已證實的`table_idx = 玩家章節-1`換算)原始4-byte little-endian值為
+`b4 05 02 00` = **`0x205b4`**——與table_idx0/2/3/4/5/6/7/8/13/23(即D=default的全部11個
+既有登記位置)逐byte完全相同,其中**table_idx2(ch03)/table_idx3(ch04)/table_idx6(ch07)
+三個位置的原始值同樣是`b4 05 02 00`**,與ch11**位元組級別完全一致**——這不只是「同一種
+pattern」,是**同一個函式入口位址**,三個章節(ch03/04/07)都已經在`ch2killgen`輪用
+turn-wait+mass-kill確認直接拿到engine-level win。
+
+**`0x205b4`本體反組譯**(`disasm` action,`FD2Analysis3`未把它登記成獨立function起點,
+`function_bounds`回傳`in_function:false`,與§3.1`0x20a87`當時的情形相同):
+
+```asm
+0x205b4  PUSH 0x4
+0x205b9  CALL 0x3702f          ; prologue(比0x205be早10 bytes進入,額外多包一層frame)
+0x205be  PUSH 0x8
+0x205c3  CALL 0x3702f          ; §4已記錄的0x205be自己的prologue
+0x205c8  PUSH EBX
+0x205c9  MOV [0x53ecc],0x2     ; 基準值:先假設「已勝利」(與§3.1核對過的0x205be開頭完全一致)
+0x205d3  XOR EDX,EDX
+0x205d5  JMP 0x2067e            ; 進迴圈(§3.1/§4已記錄的迴圈本體)
+```
+
+即`0x205b4`就是`0x205be`本身(只是多一層10-byte的外層prologue再落進同一段程式碼),**不是
+一個獨立的、內容不同的function**——default的18個「D」章節與`0x205be`的13個直接caller,
+最終執行的是同一份指令序列,沒有任何ch11專屬的額外分支或條件。**結論:ch11的handler本身
+與已確認可用的ch03/ch04/ch07在機器碼層級完全相同,問題不在handler本體。**
+
+**live 診斷(instance `ch11diag`,2026-08-28,全新獨立 harness instance,完整走
+`prepare_chapter_save→LOAD→attempt_camp_exit→settle loop`找到戰鬥,與`sweep_chapter()`
+主流程同一套紀律)**——針對派工單點名的「上一層」候選逐一直接讀值,不用猜測:
+
+1. **`[0x53c03]`(即時章節index)== 10**——與table_idx10精確吻合,證實 dispatch 沒有走錯
+   entry,`0x51b19[10]=0x205b4`確實是這場戰鬥實際會呼叫的那一個。
+2. **`[0x53beb]`(native win-check迴圈自己的迴圈上界)== 38**——與這場戰鬥真實的record
+   陣列大小**精確吻合**(k=0..12共13筆camp==2隊友、k=13..37共25筆camp==0敵人,逐筆
+   byte-level核對;k=38起讀出的內容明顯是無結構的雜訊/非unit記憶體,不是額外隱藏的敵人
+   record)。這排除了「native迴圈上界比這個工具的掃描範圍大,漏看了陣列尾端的敵人」的假說。
+3. **全量160格無條件掃描(繞過`scan_enemy_slots()`既有的「前8 bytes全零就跳過」判斷式)**
+   只找到2個額外的camp==0命中(k=96、k=148),但**兩者都落在k=38之後的真實陣列邊界之外**,
+   raw bytes(`e140000010000000`、`56c25750005000c4`)明顯不是unit record的結構(對照
+   k=13..37的25筆真敵人record,offset+0..+4是規律的等級/id/座標小整數,offset+7固定
+   `0x66`/`0x67`——k=96/148完全不符這個pattern),是雜訊記憶體偶然在offset+6讀到0的
+   **偽陽性**,不是「skip heuristic漏掉的真敵人」。
+4. **即使把這2個偽陽性位址也一併寫入死亡signature**(連同25個真敵人,共27格),重跑一次
+   完整的3回合等待+mass-kill+End-Turn確認YES(與ch03/04/07/15/19/20拿到即時win的同一套
+   操作路徑),`[0x53ecc]`在15秒輪詢窗口內**依然讀0**,一次都沒有讀到2(甚至沒有讀到瞬間
+   閃過的2)。
+
+**誠實結論**:這一輪能直接用記憶體讀值驗證的4個「上一層」假說(handler本身不同/掃描漏看
+真敵人/native迴圈上界比掃描範圍大/dispatch走錯章節index)**全部被直接證據排除**,不是
+「仍然無法確認」而是「明確排除」。真正卡住的原因比這4個假說更深——`0x205be`的第一條指令
+就是無條件`MOV [0x53ecc],0x2`,只要這個函式**曾經被呼叫過一次**,在目前「25個敵人全部
+持久死亡、無其他陣營record」的狀態下,理論上不可能讓`[0x53ecc]`維持在0(最壞情況也該是
+基準值2被寫入後再也沒被覆寫回0,因為迴圈找不到任何存活的`+6==0`敵人)。15秒持續輪詢
+從未讀到2(哪怕一瞬間),比較符合「`0x51b19[10]`這次呼叫在ch11的這個回合狀態下根本沒有被
+執行到」,而不是「執行了但被覆寫回0」——但這只是本輪基於現有證據的**推論**,不是直接在
+`0x205be`本體斷點命中坐實的結論。
+
+**下一輪建議(比照doc58續六十二自己留下的建議)**:在確認「End Turn→YES」之前,對native
+`0x1C05BE`(=`0x205be`+`0x19C000`)重新下斷點,直接觀察這次End-Turn操作是否真的命中過
+`0x205be`——並且**務必搭配一個已知會贏的章節(如ch03)做對照組**,因為本專案`48-dosbox-
+x-debugger-build.md`§8.4第3點已經記錄過heavy debugger的`BP`/`BPM`在Normal core下
+「registered但從未命中」的個案不是100%解決,單一章節斷點沒命中不足以下結論,需要與對照
+章節斷點確實命中做差異比較才能定案。若ch03的斷點確實命中而ch11的斷點確實沒命中,才能把
+問題定位到`0x117e7`這個per-unit回合狀態機決定「要不要呼叫`0x51b19`表」的分支條件本身
+（`iVar2==0x39 || iVar2==0x1c`那個判斷,見§6反組譯),而不是`0x51b19`表或它的handler。
+
+完整 live log、逐格記憶體 dump 見
+`.wsl_build/chapter_sweep_ch11diag/ch11_diag_result.json`與
+`ch11_diag_slotdump.json`(未納入git,本機保留)。
+
 ## 4. 事件原語(handler 共用的條件 / 動作函式)
 
 把 18 個 handler 呼叫的函式統計出來,扣掉 stack-probe(0x36cd7),得到事件系統的「指令集」——雖是函式呼叫形式:

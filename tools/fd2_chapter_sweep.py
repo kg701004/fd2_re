@@ -1385,6 +1385,37 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # [0x53ecc] -- ch11 is NOT in this dict; its blocker is something this
 # tool does not yet identify (see doc99's "ch2killgen" section, ch11
 # sub-section, for the live evidence and next-round suggestion).
+#
+# 2026-08-28 "ch11diag" round follow-up: ch11's win-check handler
+# (0x51b19 table_idx10) was confirmed, via direct table-byte read +
+# disasm, to be the LITERAL SAME shared default routine (0x205b4/0x205be)
+# as ch03/ch04/ch07 -- all three confirmed working with this exact
+# mass-kill+turn-wait mechanism -- so the handler itself is not the
+# problem. A dedicated live probe (.wsl_build/chapter_sweep_ch11diag/
+# probe_ch11_diag.py) then directly read the two "one level up"
+# candidates instead of guessing: live [0x53c03] (chapter index) == 10,
+# exactly matching this table slot, so dispatch is routing correctly; and
+# live [0x53beb] (the native win-check loop's own upper bound) == 38,
+# EXACTLY matching the true record array (13 allies at k=0..12 + 25
+# enemies at k=13..37, byte-verified -- everything from k=38 onward is
+# unstructured non-unit memory, not additional hidden records). An
+# unconditional 160-slot scan (bypassing this module's own
+# all-zero-skip heuristic) found zero legitimate extra camp==0 records;
+# the two raw hits it did turn up (k=96, k=148) sit well past the true
+# array bound and read as garbage/text data, not units -- confirmed false
+# positives, not a heuristic bug. Re-running the full turn-wait+mass-kill
+# (all 25 real enemies dead, plus the 2 garbage addresses for good
+# measure) still left [0x53ecc]==0 after a fresh 15s poll. All four
+# hypotheses this tool could test live (handler differs / missed enemy
+# record / loop-bound mismatch / wrong dispatch index) are therefore
+# RULED OUT with direct memory evidence, not just re-confirmed anomalous
+# -- ch11's real blocker is still unknown and is likely one level further
+# up than this tool can currently observe (e.g. the per-unit turn-state
+# machine at 0x117e7 may simply never reach the branch that calls the
+# 0x51b19 table at all for this chapter's specific turn state -- see
+# doc25 §3.2 for the full writeup and the suggested next step, a live
+# breakpoint at native 0x1C05BE with a known-working chapter as a
+# control).
 KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
