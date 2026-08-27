@@ -1607,6 +1607,27 @@
   (已知修改pad_ids不會解開這道門檻)。M5 仍是 0 pass,無章節轉為`pass`。完整
   截圖證據鏈與逐章預測表見`docs/knowledge-base/99-chapter-sweep-results.md`
   「2026-08-27 續輪(代號`cursorlive`)」小節。
+  **2026-08-27 續輪(代號`ch2killgen`)**:把`ch19banor`輪的「等N回合再
+  mass-kill」turn-count-gate假說泛化測試到剩餘7個「卡在0」章節中的
+  ch03/04/07/11/15/20(ch02 有獨立調查線,本輪排除)。先WebFetch核對
+  攻略取得每章精確的援軍時機,`KNOWN_MIN_TURNS_BEFORE_KILL`新增
+  `{3:3, 4:4, 15:9, 20:4}`。**結果:4/6 章確認**——ch03(turn-START觸發,
+  猜3回合)、ch04(turn-END+「殺一隻其餘逃跑」機制,猜4回合)、ch15
+  (兩波援軍turn7+9,猜9回合涵蓋兩者)、ch20(turn-END,猜4回合,**刻意
+  不排除沼澤怪物**)全部在turn-wait後**第一個kill-cycle**就直接讀到
+  `[0x53ecc]==2`,與ch19同一套機制。ch04的「殺一隻其餘逃跑」假說符合
+  預測(mass_kill_enemies直接debugger寫入,不經過AI戰鬥結算,逃跑邏輯
+  未觸發也無妨——17個敵人一次到位);ch20的「沼澤怪物除外」假說也符合
+  預測(58個敵人含沼澤怪物在內全部mass-kill,勝利判定依然正常翻2,精靈
+  全程未被觸碰因為mass_kill只動camp==0)。ch07/ch11(攻略文字看起來不是
+  單純turn-count閘門——ch07是移動位置觸發,ch11根因未知)用同一套機制加
+  猜測3回合等待做探索性測試,結果與後續診斷見doc99「ch2killgen」小節的
+  獨立段落(不在此重複,避免本條目在兩章仍在測試/診斷時寫下會過時的
+  結論)。累計:8個原「卡在0」章節中,至少5個(ch19/03/04/15/20)已直接
+  確認同一套turn-wait機制生效,ch02維持獨立調查線,ch07/ch11狀態見doc99。
+  所有本輪確認的章節磁碟存檔位元組依然沒有前進(同doc25 §9.1的SAV
+  writer gate開放問題),M5仍是0 pass。完整寫法見`docs/knowledge-base/
+  99-chapter-sweep-results.md`「2026-08-27 續輪(代號`ch2killgen`)」小節。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

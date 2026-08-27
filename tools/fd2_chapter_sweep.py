@@ -78,11 +78,32 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   multi-round (saveE2/savewriter/camproute/writerfire) investigation into
   when/whether the native SAV writer gate actually fires for a battle-win
   path; this is a genuinely open, project-wide question, not a bug in this
-  tool. The remaining 6/15 chapters (ch02/03/04/07/11/15) never reach the
-  engine-level win at all for a still-undiagnosed reason (ruled out so far
-  for ch02: an enemy-array scan gap, and a misread of unit5-10's override
-  condition -- see docs/knowledge-base/99-chapter-sweep-results.md's
-  "ch12diag" section for the full writeup and next-round suggestions).
+  tool. The remaining 6/15 chapters (ch02/03/04/07/11/15; ch20 joined this
+  club in a later sweep round) never reached the engine-level win at first
+  for a still-undiagnosed reason (ruled out so far for ch02: an enemy-array
+  scan gap, and a misread of unit5-10's override condition -- see
+  docs/knowledge-base/99-chapter-sweep-results.md's "ch12diag" section for
+  the full writeup and next-round suggestions).
+  **2026-08-27 "ch19banor"/"ch2killgen" rounds update**: this "stuck at 0"
+  club is now understood to be, for MOST of its members, a plain
+  TIMING/turn-count issue rather than a structural win-check mismatch --
+  KNOWN_MIN_TURNS_BEFORE_KILL (below) waits N real turns (via the same
+  End-Turn->YES shortcut, no mass-kill, no stat hacks) before the first
+  mass-kill, and this alone flipped [0x53ecc] to a confirmed engine win on
+  the very FIRST kill-cycle for ch19 (wait 6), ch03 (wait 3), ch04 (wait 4,
+  despite ch04's walkthrough-documented "kill one, others flee" mechanic --
+  see KNOWN_MIN_TURNS_BEFORE_KILL's module comment for why this tool's
+  direct-memory-write kill method is predicted to sidestep that AI-only
+  behavior), ch15 (wait 9, spanning two documented reinforcement waves), and
+  ch20 (wait 4, with NO swamp-monster exclusion or elf-protection logic
+  needed despite ch20's "victory excludes swamp monsters" / "elves must
+  survive" walkthrough text -- see sweep_chapter()'s ch20-specific comment
+  for why killing everything including swamp monsters was predicted to
+  still be safe, and was). ch02 (separate village-protection investigation
+  track, out of scope for this round) and ch07/ch11 (mechanism does not
+  look like a plain turn-count gate on paper -- ch07 is a position/movement
+  trigger, ch11 is undiagnosed) remain open; see doc99's "ch2killgen"
+  section for what was and was not tested for those two.
 - The generic advance-loop (step 6) has NO chapter-specific knowledge. Many
   chapters will very likely not fit it (unique scripted events, chapters
   that need specific items/state, chapters requiring more real roster
@@ -1310,7 +1331,38 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # on-disk FD2.SAV chapter byte never advances" question (doc25 §9.1) -- ch19
 # hit that exact same wall this round (chapter byte stayed 18, did not
 # advance to 19) despite the win-check itself resolving.
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6}
+#
+# 2026-08-27 "ch2killgen" round: testing whether the ch19 turn-count-gate
+# fix generalizes to the rest of the 7-chapter "stuck at 0" club
+# (ch02/03/04/07/11/15/20; ch02 has its own separate village-protection
+# investigation track and is out of scope this round). An external
+# walkthrough (chiuinan.github.io fd2, WebFetched) gives each remaining
+# chapter's specific reinforcement-wave timing:
+#   ch03: turn-3-START trigger ("第三回合開始時...出現") -- a turn-START
+#     trigger is a different shape than ch19's turn-END trigger, so this is
+#     an extrapolation, not a proven-identical mechanism. Guess: wait 3.
+#   ch04: turn-4-END trigger (4 beasts at 4 corners) PLUS a "kill one, other
+#     three flee" mechanic. Guess: wait 4. (mass_kill_enemies() writes the
+#     death signature directly via debugger, bypassing normal combat/AI
+#     resolution entirely -- it does not "kill one at a time" through the
+#     game's own turn loop, so there is no in-game moment where the flee
+#     mechanic's AI trigger condition should even fire; this is a reasoned,
+#     UNVERIFIED prediction that the flee mechanic is simply inapplicable to
+#     this tool's kill method, not a live-confirmed finding.)
+#   ch15: two waves, turn-7-END and turn-9-END. Guess: wait 9 (through both).
+#   ch20: turn-4-END trigger for the first (only unconditionally-described)
+#     wave. Guess: wait 4. ch20 also has a "沼澤怪物之外的敵人全滅" (all
+#     enemies EXCEPT swamp monsters) victory condition and a "精靈全滅"
+#     (all elves die) fail condition -- see sweep_chapter()'s ch20-specific
+#     comment for why this tool does not need bespoke swamp-monster/elf
+#     handling to test the turn-count-gate hypothesis itself.
+#   ch07 and ch11 have NO turn-count trigger in the walkthrough text (ch07 is
+#     a position/movement trigger past a specific map location; ch11's
+#     blocker is undiagnosed) -- deliberately NOT added here since a
+#     turn-count wait is not expected to fix either on mechanism grounds;
+#     see doc99's "ch2killgen" section for how those two were investigated
+#     instead.
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 15: 9, 20: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
@@ -1798,6 +1850,28 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             # normal mass-kill sequence below runs at all. Re-scan for enemies
             # afterward since the array can grow (reinforcement waves) during
             # the wait.
+            #
+            # ch20-specific note ("ch2killgen" round): the walkthrough gives
+            # ch20's victory condition as "沼澤怪物之外的敵人全滅" (all
+            # enemies EXCEPT swamp monsters) and a fail condition including
+            # "精靈全滅" (all elves die). This tool deliberately does NOT
+            # exclude any camp==0 record from mass_kill_enemies() below --
+            # the reasoning is that an "except swamp monsters" victory
+            # phrasing describes what is NOT REQUIRED to win, not something
+            # that is FORBIDDEN to kill; killing every camp==0 record
+            # (swamp monsters included) is expected to still satisfy "every
+            # non-swamp-monster enemy is dead" and should not itself trip
+            # the elf/Sol fail conditions, since mass_kill_enemies() only
+            # ever writes to camp==0 records and elves (if they are
+            # camp==1 NPC-allies or camp==2 roster members, matching this
+            # project's only two live-verified camp values for "not a
+            # plain enemy") would never be touched. This is a REASONED
+            # PREDICTION carried into the live test below, not a
+            # pre-verified fact -- if ch20 comes back with anything other
+            # than a clean engine win, check the result log/screenshots for
+            # evidence this assumption was wrong (e.g. an elf ally record
+            # showing camp==0) before assuming the turn-count-gate
+            # hypothesis itself failed.
             min_turns = KNOWN_MIN_TURNS_BEFORE_KILL.get(chapter_n, 0)
             if min_turns:
                 log.append(f"chapter {chapter_n} has a KNOWN_MIN_TURNS_BEFORE_KILL override "

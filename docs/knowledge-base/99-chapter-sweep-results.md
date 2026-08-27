@@ -1329,3 +1329,78 @@ fire了,磁碟存檔依然沒有前進(`anomaly_engine_win_no_disk_write`分類,
 回合「敵方全軍出動」這個更晚的援軍波觸發點,mass-kill後的單一
 kill-cycle就成功,代表ch19這49筆enemy record可能本來就是全部,而非
 分批出現——這點也值得下一輪獨立確認,不要想當然爾套用到其他章節。
+
+
+## 2026-08-27 續輪(代號 `ch2killgen`):把 ch19 的「等N回合再mass-kill」turn-count-gate假說泛化測試到剩餘7章「卡在0」俱樂部——ch03/ch15**確認**同機制生效,ch04/ch20 進行中,ch07/ch11 待測(不預期turn-wait生效)
+
+### 任務背景與方法
+
+延續 `ch19banor` 輪的下一輪建議①:對剩餘7個「卡在0」章節
+(ch02/03/04/07/11/15/20;ch02 有獨立的村莊保護race條件調查線,本輪
+派工單明確排除)逐一測試同樣的「先等N回合再mass-kill」`[0x53ecc]`
+能不能翻2。先 WebFetch 核對 `chiuinan.github.io fd2 walkthrough` 取得
+每章精確的援軍/勝利觸發時機(完整條件見本輪派工單/`tools/fd2_chapter_
+sweep.py`新版`KNOWN_MIN_TURNS_BEFORE_KILL`模組註解):
+
+- ch03:第三回合**開始**時敵方首領+援軍出現(turn-START觸發,與ch19的
+  turn-END不同形狀)——猜測等 3 回合。
+- ch04:第四回合己方結束時4隻獸人在四角出現,**打死其中一隻其餘三隻會
+  逃跑**——猜測等 4 回合;推理(未驗證):`mass_kill_enemies()`是直接
+  debugger寫入死亡signature,不經過遊戲AI的戰鬥結算迴圈,理論上不會
+  觸發「打死一隻→其餘逃跑」這個AI專屬反應,逃跑機制對這個殺法可能根本
+  不適用。
+- ch15:兩波援軍,第7/第9回合己方結束——猜測等 9 回合(兩波都等完)。
+- ch20:第4回合己方結束第一波敵人登場;勝利條件是「**沼澤怪物之外**的
+  敵人全滅」,失敗條件包含「精靈全滅」——猜測等 4 回合,**刻意不排除
+  沼澤怪物**(mass_kill_enemies只動camp==0記錄,推理:殺光包含沼澤怪物
+  在內的所有敵人應該仍滿足「沼澤怪物以外全滅」,「以外」是「不強制要求」
+  不是「禁止」;精靈若是camp==1/2 應該完全不會被mass_kill觸碰到)。
+- ch07(通道中特定水平位置的**移動位置觸發**)、ch11(未知根因)**刻意
+  不套用**turn-wait猜測值,因為機制形狀跟ch19不同,turn-wait在機制上
+  不預期有效——這兩章改用別的方法診斷(見下方)。
+
+實作:`KNOWN_MIN_TURNS_BEFORE_KILL`字典新增`{3: 3, 4: 4, 15: 9, 20: 4}`
+(ch19原有的`{19: 6}`不動),`sweep_chapter()`既有邏輯本來就是通用的
+(讀字典→有值就先跑N次`confirm_end_turn(enemy_addrs=None)`→重新掃描→
+mass-kill→bounded kill-cycle retry),不需要另外寫bespoke探針腳本,直接
+用`tools/fd2_chapter_sweep.py sweep --chapter N`CLI 逐章跑、每章獨立
+harness instance(`ck03`/`ck04`/`ck15`/`ck20`),ch03+ch15兩個先平行跑
+(harness 2-instance並行已多輪驗證安全)。
+
+### 結果:ch03、ch15 **確認**——turn-wait後第一次mass-kill就直接拿到
+`[0x53ecc]==2`(WIN),與ch19同一套機制,無需額外重試
+
+- **ch03**(等3回合,猜中turn-START觸發依然被涵蓋——因為`confirm_end_
+  turn(enemy_addrs=None)`本身跑的是End-Turn**結束**捷徑,3次End-Turn
+  結束會讓遊戲內部真實跨過3個完整回合邊界,turn-START觸發點自然包含在
+  內):`attempt_camp_exit`8 taps找到戰鬤、8個敵人,settle穩定,3回合
+  空轉全部`engine_code=0`(未提前觸發),回合3之後補掃描敵人數依然是8
+  (沒有觀察到陣列新增,與ch19banor輪的觀察一致——援軍可能本來就在初始
+  陣列裡),mass-kill+End-Turn**第一個kill-cycle**就讀到`engine_code=2`
+  (2.0s內),`sweep_chapter`確認`kill-cycle 1/4`即成功。全程784.7秒。
+- **ch15**(等9回合,涵蓋turn7+turn9兩波):`attempt_camp_exit`33 taps
+  找到戰鬥、**51個敵人**(遠比其他章節多,是這輪目前碰到的最大陣列),
+  settle穩定在51,9回合空轉全部`engine_code=0`,期間`find_empty_
+  adjacent_tile`兩次(turn5、turn9附近)在4個方向都找不到確定空地,
+  誠實記錄成`WARNING`並用最後手段直接在游標當前位置開環(這是既有機制,
+  不是本輪新bug)、依然順利送達End-Turn捷徑;`[0x53c03]`(章節index)
+  live值在turn1/turn3/turn6附近出現`14->0`/`0->14`的來回抖動(doc58
+  續二十八早就記錄過的「每次postbattle handler都會INC」現象在戰鬥**中**
+  也會抖動,不是本輪新發現,純粹記錄留存)。回合9之後補掃描敵人數依然是
+  51(同ch03,沒有觀察到陣列新增),mass-kill+End-Turn**第一個kill-cycle**
+  (1.8s內)就讀到`engine_code=2`。全程995.1秒。
+- 兩章磁碟存檔位元組都**沒有前進**(ch03維持`2`、ch15維持`14`),與
+  ch19banor輪、及`ch12diag`輪另外9章完全同一個doc25 §9.1 SAV writer
+  gate開放問題,不是ch03/ch15專屬新症狀。verdict都是
+  `anomaly_engine_win_no_disk_write`(不是`pass`)。
+
+### 誠實小結(ch03/ch15 部分)
+
+「等待夠久再mass-kill」這個turn-count-gate修法**確認可以泛化**,不是
+ch19單一章節的特例——目前4/8章(ch19/ch03/ch15,加上原本就沒卡住的其餘
+章節)用同一套`KNOWN_MIN_TURNS_BEFORE_KILL`機制拿到直接、可重現的
+engine-level win。ch03的turn-START觸發用turn-END捷徑照樣命中,說明這個
+工具目前唯一能操作的「回合推進」原語(`confirm_end_turn`的End-Turn->YES)
+本身跨過的回合邊界對turn-START觸發同樣有效,不需要額外分辨觸發時機的
+語意細節。ch04/ch20 sweep在背景執行中,結果與下一小節（ch07/ch11
+的替代診斷）待補。
