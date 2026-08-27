@@ -1619,15 +1619,26 @@
   預測(mass_kill_enemies直接debugger寫入,不經過AI戰鬥結算,逃跑邏輯
   未觸發也無妨——17個敵人一次到位);ch20的「沼澤怪物除外」假說也符合
   預測(58個敵人含沼澤怪物在內全部mass-kill,勝利判定依然正常翻2,精靈
-  全程未被觸碰因為mass_kill只動camp==0)。ch07/ch11(攻略文字看起來不是
-  單純turn-count閘門——ch07是移動位置觸發,ch11根因未知)用同一套機制加
-  猜測3回合等待做探索性測試,結果與後續診斷見doc99「ch2killgen」小節的
-  獨立段落(不在此重複,避免本條目在兩章仍在測試/診斷時寫下會過時的
-  結論)。累計:8個原「卡在0」章節中,至少5個(ch19/03/04/15/20)已直接
-  確認同一套turn-wait機制生效,ch02維持獨立調查線,ch07/ch11狀態見doc99。
-  所有本輪確認的章節磁碟存檔位元組依然沒有前進(同doc25 §9.1的SAV
-  writer gate開放問題),M5仍是0 pass。完整寫法見`docs/knowledge-base/
-  99-chapter-sweep-results.md`「2026-08-27 續輪(代號`ch2killgen`)」小節。
+  全程未被觸碰因為mass_kill只動camp==0)。ch07(攻略描述是移動位置觸發,
+  非turn-count)用同一套機制加猜測3回合等待做探索性測試,**意外也確認
+  成功**(第一次嘗試在battle-detection階段卡住,查明是本專案已知的間歇性
+  輸入/時序flake而非結構性問題,獨立乾淨重跑後23 taps找到戰鬥、25個敵人,
+  turn-wait後第一個kill-cycle同樣直接讀到`[0x53ecc]==2`)——但「為什麼一個
+  位置觸發機制會被純turn-wait解開」未獲解釋,見doc99「ch2killgen」小節
+  ch07子段落的推測與下一輪建議。ch11(根因未知)同樣測試猜測3回合等待,
+  **這是本輪唯一turn-wait假說沒有成立的章節**:第一次嘗試在更早的
+  camp-exit確認步驟卡住(同一類flake,獨立重跑排除),乾淨重跑後25個
+  敵人全數確認mass-kill後持久帶有死亡signature(rescan直接證實,不是
+  猜測),但`[0x53ecc]`依然卡在0——真正卡住原因本輪未能定案,留給下一輪
+  反組譯`0x51b19`跳表裡ch11專屬handler。**最終小結**:8個原「卡在0」
+  章節扣除ch02(獨立調查線)後剩下的7章,本輪加上`ch19banor`輪的ch19,
+  共6章(ch03/04/07/15/19/20)確認同一套turn-wait機制能讓`[0x53ecc]`翻2,
+  只剩ch11仍未解。所有確認的章節磁碟存檔位元組依然沒有前進(同doc25
+  §9.1的SAV writer gate開放問題),M5仍是0 pass——這個SAV writer gate
+  疑問才是真正擋住任何章節拿到`pass`的最終瓶頸,比逐章turn-count診斷
+  優先級更高,留給下一輪。完整寫法見`docs/knowledge-base/
+  99-chapter-sweep-results.md`「2026-08-27 續輪(代號`ch2killgen`)」小節
+  (含逐章結果表格)。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

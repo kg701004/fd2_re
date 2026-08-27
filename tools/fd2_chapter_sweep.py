@@ -99,11 +99,18 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   needed despite ch20's "victory excludes swamp monsters" / "elves must
   survive" walkthrough text -- see sweep_chapter()'s ch20-specific comment
   for why killing everything including swamp monsters was predicted to
-  still be safe, and was). ch02 (separate village-protection investigation
-  track, out of scope for this round) and ch07/ch11 (mechanism does not
-  look like a plain turn-count gate on paper -- ch07 is a position/movement
-  trigger, ch11 is undiagnosed) remain open; see doc99's "ch2killgen"
-  section for what was and was not tested for those two.
+  still be safe, and was), and -- somewhat surprisingly, since its
+  walkthrough-described trigger is positional, not turn-count-shaped --
+  ch07 (wait 3, once a battle-detection flake on the first attempt was
+  ruled out with a clean re-run). ch02 (separate village-protection
+  investigation track, out of scope for this round) remains open on its
+  own track. ch11 is the one chapter this round's turn-wait test was
+  cleanly, reproducibly negative for: 25 enemies found, all confirmed via
+  a post-kill rescan to persistently carry the death signature (no revival,
+  no new wave), yet [0x53ecc] never left 0 -- ch11's blocker is something
+  this tool does not yet identify; see doc99's "ch2killgen" section, ch11
+  sub-section, for the live evidence and next-round suggestion (decompile
+  ch11's own 0x51b19-table win-check handler rather than guess further).
 - The generic advance-loop (step 6) has NO chapter-specific knowledge. Many
   chapters will very likely not fit it (unique scripted events, chapters
   that need specific items/state, chapters requiring more real roster
@@ -1358,11 +1365,27 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 #     handling to test the turn-count-gate hypothesis itself.
 #   ch07 and ch11 have NO turn-count trigger in the walkthrough text (ch07 is
 #     a position/movement trigger past a specific map location; ch11's
-#     blocker is undiagnosed) -- deliberately NOT added here since a
-#     turn-count wait is not expected to fix either on mechanism grounds;
-#     see doc99's "ch2killgen" section for how those two were investigated
-#     instead.
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 15: 9, 20: 4}
+#     blocker is undiagnosed) -- so a turn-count wait was not expected to fix
+#     either on mechanism grounds.
+#
+# RESULT: ch03/ch04/ch15/ch20 all confirmed on the FIRST post-wait
+# kill-cycle, same as ch19 -- see doc99's "ch2killgen" section for the full
+# per-chapter writeup (enemy counts, screenshots, honest caveats on what was
+# and wasn't directly observed for the ch04 flee/ch20 swamp-monster
+# predictions). ch07 was ALSO tested (despite the mechanism-based
+# expectation it wouldn't help) as a cheap experiment and, once a battle-
+# detection flake on the first attempt was ruled out with a clean re-run,
+# ALSO confirmed on the first post-wait kill-cycle with a guessed 3-turn
+# wait -- so this dict entry should not be read as "this chapter's
+# walkthrough-documented trigger is turn-count-shaped", only as "waiting
+# turns before the first mass-kill empirically unblocks this chapter's
+# win-check". ch11 is the one chapter where this round's turn-wait test
+# was run cleanly (25 enemies found, all confirmed to persistently carry
+# the death signature after a rescan) and STILL did not unblock
+# [0x53ecc] -- ch11 is NOT in this dict; its blocker is something this
+# tool does not yet identify (see doc99's "ch2killgen" section, ch11
+# sub-section, for the live evidence and next-round suggestion).
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
