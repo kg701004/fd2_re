@@ -1549,6 +1549,22 @@
   (ch19)、ch27(+疑似ch29/30)雙結局分支終止。M5 仍是 0 pass。完整寫法見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(代號`r2`)」
   小節。
+  **2026-08-27 續輪(代號`ch19diag`)**:派工單假說「ch19入場過場比其他章節長/
+  有NPC登場,mass-kill搶跑在陣列穩定之前」**已用live數據直接推翻**——live重跑
+  顯示`attempt_camp_exit()`在僅9個tap(120預算內)就正確偵測到戰鬥,settle迴圈
+  6輪(15秒)期間base與49敵人數完全沒有變化,沒有任何陣列重配置跡象。真正根因是
+  `screen_shows_battle_hud()`/`screen_looks_like_dialogue()`兩個只對ch27校準過的
+  螢幕啟發式在ch19上假陰性(HUD小方框渲染在螢幕鏡像的右下角而非左下角;ch19地形
+  對比度偏低導致對話框變異數檢查誤判)——已修復(`BATTLE_HUD_BOX_REGION_R`雙側
+  檢查、移除冗餘的變異數閘門,並連帶修復`cursor_tile_is_empty()`同根因的縮圖
+  誤讀)。修復後ch19首次拿到真實戰鬥偵測+完整mass-kill(49敵)+End-Turn流程,
+  但**`[0x53ecc]`卡在0**,加入既有謎團俱樂部(7章擴大為8章:ch02/03/04/07/
+  11/15/20/19)。協調端提出「巴拿羅西亞護衛角色需先登場(約第6回合)否則不加入,
+  可能是ch19勝利判定卡住的專屬原因」——已用外部攻略核對確認遊戲設計事實存在,
+  但**未做live驗證區分**這是ch19專屬成因還是與其他7章共享的通用`0x205be`矛盾,
+  留給下一輪(建議:先空轉6輪End-Turn等她登場,再mass-kill,對照結果)。M5仍是
+  0 pass。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
+  續輪(instance `ch19diag`,代號`ch19diag`)」小節。
   **2026-08-27 續輪(代號`cursorlive`):上面「新卡點A」的描述已修正**——不是
   「synthetic roster member 不會被選人畫面視為可選」這種被動的灰階/不可選外觀
   問題(單步截圖重測證實 synthetic 記錄跟真實記錄一樣能被游標移動到、能被

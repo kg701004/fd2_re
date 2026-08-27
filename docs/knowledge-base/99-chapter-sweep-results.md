@@ -1062,3 +1062,136 @@ patch滿足,還是必須有真正的劇情JOIN事件觸發才能通過。
 +`cursor21_zoom_msg_nn.png`(「本章約定必須出場」訊息放大確認)→
 `c21b_00_title.png`→`c21b_01_camp.png`→`c21b_02_selscreen.png`→
 `c21b_sel_step11..15.png`(明確包含羅蘭/希爾法選取確認,仍然卡住)。
+
+## 2026-08-27 續輪(instance `ch19diag`,代號 `ch19diag`):新卡點B根因已找到——**不是時序/陣列重配置問題(假說已被live數據直接推翻),是`screen_shows_battle_hud()`/`screen_looks_like_dialogue()`兩個獨立的、只針對ch27校準過的螢幕啟發式假陰性**;修好後 ch19 首次拿到真實戰鬥偵測+完整mass-kill+End-Turn流程,但加入既有「`[0x53ecc]`卡在0」謎團俱樂部(現為8章)
+
+### 派工背景與待驗證假說
+
+派工單提出的假說:ch19 是否有比其他章節更長/不同的入場過場(可能涉及一個中立
+NPC「登場」),使得mass-kill/偵測邏輯在該NPC(或戰鬥狀態本身)真正初始化/穩定
+之前就搶跑——即已知並已修復的「陣列指標尚未穩定」問題的變體,但ch19的入場過場
+長/特殊到既有修復的時間餘裕不夠。中途協調端另外補充一個獨立事實(strategy guide
+逐字):**「第四回合己方結束時，敵方才會開始第一波攻擊」**,並提出「敵人存在但
+被動/未啟用直到第4回合」可能是偵測失敗的另一種解釋。
+
+### 方法
+
+`tools/dosbox_harness.sh launch ch19diag`(獨立instance,全程與另一個並行agent的
+`cursor21`/`cursor21b` instance互不干擾,`status`全程監控)。**分兩階段**:
+(1) 先只做靜態分析——直接讀取上一輪(`chapter_sweep_r2/ch19/shots/`)已經拍好的
+121張`attempt_camp_exit()`逐tap截圖與log,用Python重放`screen_shows_battle_hud()`/
+`screen_looks_like_dialogue()`兩個函式,量化比對ch19與ch27(校準基準章節)的實際
+畫面差異;(2) 找到根因後,對`tools/fd2_chapter_sweep.py`打patch,再live重新走一次
+完整ch19流程(`attempt_camp_exit()`→settle迴圈→mass-kill→`confirm_end_turn()`→
+postbattle montage→disk poll),驗證修復是否讓 ch19 真正拿到戰鬥偵測與完整流程。
+
+### 發現 1(靜態分析,推翻假說):ch19 的戰鬥地圖在 tap ~9-35 就已完全就緒,不是「來得太晚」
+
+直接检视 `chapter_sweep_r2/ch19/shots/campexit_*_dialogueNN.png` 全系列(dialogue01
+到dialogue121)發現:**tap 20-30 起,畫面已經是完整佈局的森林戰鬥地圖**——可移動
+游標、敵方單位(後續live驗證確認49隻)已在畫面上、甚至**系統指令環(攻擊/道具/
+狀態/END四宮格)在tap 50時已經能被自動送出的Return意外打開**,顯示玩家控制權
+在120-tap預算的前1/3以內就已經到位,遠早於預算耗盡。這與doc99「陣列指標會在
+過場動畫途中重新配置」的既有已修復現象是**不同性質**的問題——不是「太早偵測、
+陣列還沒配置好」,是「陣列/畫面早就緒了,偵測邏輯自己没抓到」。
+
+### 發現 2(根因,兩個獨立、只對ch27校準過的螢幕啟發式假陰性)
+
+用Python直接重放`screen_shows_battle_hud()`(含其内部呼叫的`screen_looks_like_
+dialogue()`)對照組:ch27自己已live確認的真正戰鬥偵測畫面(`chapter_sweep_v7/
+ch27/shots/campexit_046_dialogue41.png`,tap41偵測成功)、ch21/22/26出戰選人畫面
+(卡點A的已知假陽性樣本)、莎拉「要進入戰場嗎」對話框(另一已知假陽性樣本)、
+ch19本輪tap30/50/70/121的畫面。量化結果:
+
+1. **`screen_looks_like_dialogue()`(y=500橫條變異數檢查)在ch19的真實戰鬥畫面上
+   系統性誤判為「還是對話框」**:ch19確認為真實戰鬥的畫面在該橫條測得變異數僅
+   2200-11000,而ch27自己的真實戰鬥校準畫面是17870-20908——**兩者差距之大,連
+   這個函式當初要抓的「假陽性」範例(莎拉對話框)本身變異數都測到25994,超過
+   ch27的真實戰鬥讀值**,證明這個單一橫條變異數啟發式從未真正可靠地區分「戰鬥
+   地形」與「對話面板」,只是恰好對之前測過的章節管用,首次遇到色調/對比度較低
+   的章節(ch19森林地圖偏暗)就整批失效。
+2. **HUD小方框(doc58「NNN A+XX D+XX」格式)在ch19渲染於螢幕右下角,不是
+   `BATTLE_HUD_BOX_REGION`校準的左下角**——ch27校準畫面方框中心x≈275,ch19的
+   方框中心x≈750,恰好是1024px螢幕寬度的鏡像位置(275+750=1025≈1024),推測是
+   引擎依游標/隊伍目前所在螢幕的哪一半決定方框畫在對側以避免遮擋,ch27校準時隊伍
+   剛好在畫面左半、ch19則在右半。原本程式碼完全沒有考慮鏡像位置,即使`screen_
+   looks_like_dialogue()`那關通過,方框偵測本身在ch19上也永遠找不到。
+
+兩者是AND邏輯關係(`screen_looks_like_dialogue()`當閘門、方框比對在其後),
+任一項失效就導致整個`screen_shows_battle_hud()`對ch19恆為False——這正是120
+tap全部跑完、最後一張截圖(`campexit_126_dialogue121.png`)畫面明顯是「已佈局
+戰鬥地圖+右下角HUD方框」卻回報`hud_visible=False, base=None`的直接成因。
+
+### 修復(`tools/fd2_chapter_sweep.py`)
+
+1. `screen_shows_battle_hud()`:**移除**`screen_looks_like_dialogue()`硬性前置
+   閘門(已用回歸測試證明它在無其他保護時對ch27真實戰鬥、莎拉對話框、ch21/22/26
+   選人畫面等既有樣本冗餘——單靠方框藍色比例+緊鄰色帶檢查本身已足以正確排除全部
+   4個已知假陽性樣本,閘門存在反而造成ch19的新假陰性);改為左右對稱雙區域檢查
+   (新增`BATTLE_HUD_BOX_REGION_R`/`BATTLE_HUD_LEFT_STRIP_REGION_R`,螢幕寬度
+   1024px的鏡像座標),任一側通過即視為偵測到HUD。
+2. 同一根因也會咬到`cursor_tile_is_empty()`(`confirm_end_turn()`游標定位用):
+   該函式原本無條件從左側`BATTLE_HUD_THUMBNAIL_REGION`讀縮圖判斷游標格是否為
+   空地,即使`screen_shows_battle_hud()`已修好、正確判定HUD在右側,縮圖仍會讀到
+   左側(在ch19上恆為地形背景),導致誤判永遠"是空地"而不管游標實際在哪——新增
+   `_find_hud_box_side()`共用輔助函式與`BATTLE_HUD_THUMBNAIL_REGION_R`,讓縮圖
+   一律讀取HUD方框實際被偵測到的那一側。這個bug是本輪即時抓到、在真正咬到
+   ch19的`confirm_end_turn()`游標定位前主動修復,不是靠live失敗才發現。
+3. 修復後用回歸集(ch27真實戰鬥畫面、莎拉對話框、ch21/22/26選人畫面、ch19
+   tap30/50/70/95/121戰鬥畫面)重新驗證:全部符合預期(唯一的例外是陣營地圖上
+   `出口`標籤與ch19某一過場幀各觸發一次無害假陽性——這兩處呼叫點下游都還有
+   `REAL_BATTLE_MIN_ENEMIES>=2`真記憶體掃描把關,假陽性只浪費一次debugger輪詢,
+   不會造成錯誤verdict,已在程式碼註解中誠實記錄這個取捨)。
+
+### Live驗證(instance `ch19diag`,修復後端到端重跑)
+
+`attempt_camp_exit()`**在第9個tap(僅4次對話推進)就正確偵測到真實戰鬥**
+(`battle_base=0x26bfc0`,`steps_used=9`,遠低於120-tap預算)——**這直接證偽了
+派工單的時序/NPC登場假說**:陣列不是「太晚」配置好,是從一開始就緒,偵測邏輯
+自己一直沒抓到。settle迴圈6輪(15秒被動輪詢)期間base與敵人數(49)**完全沒有
+變化**,沒有觀察到doc99記錄過的「過渡性1筆記錄→重新配置」現象——ch19這次連
+陣列重配置的痕跡都沒有,進一步佐證原假說不適用。
+
+`mass_kill_enemies()`成功寫入49格死亡signature,`confirm_end_turn()`正確找到
+空地格、開環、END、YES,重掃確認49格全數持久死亡(無殘留/無援軍波)。但
+**`[0x53ecc]`在15秒輪詢視窗內始終讀0(既非2=勝利也非1=事件)**,postbattle
+montage advance按既有邏輯送出Return(含doc99「slowplay」輪記錄過的timer-gated
+2-state自動前進偵測與被動輪詢應對),`04_final.png`與`post_end_turn.png`兩張
+截圖顯示的仍是同一張森林戰鬥地圖+隊伍站位(而非ch27「13人圍站藍色房間」那種
+明確不同場景的真勝利轉場截圖),disk chapter byte全程維持在patch進去的18
+(0x12)不變。
+
+### 誠實結論:ch19 加入既有「敵人確認全滅但`[0x53ecc]`卡在0」謎團俱樂部,從7章擴大到8章
+
+本輪verdict是`anomaly`(非`needs_manual_followup`,不再是"找不到戰鬥"),與
+ch02/03/04/07/11/15/20共享**完全相同的症狀特徵**:敵人陣列掃描完整覆蓋(96格
+上限、無提早結束)、全數確認死亡且持久、End-Turn確認序列正確送出,`[0x53ecc]`
+卻不進入2(勝利)甚至不進入1(事件)。這個更深的根因目前仍是doc25 §4反組譯
+模型與引擎實際行為之間的矛盾,doc99「diag2」小節記錄的下一步建議(對native
+`0x1C05BE`直接下code breakpoint)同樣適用於ch19,本輪未做這一步。
+
+**協調端提出的「巴拿羅西亞需求」新假說,誠實記錄為未驗證但值得追蹤**:透過
+WebFetch核對外部攻略(chiuinan.github.io fd2 walkthrough)得到ch19具體條件——
+勝利=敵全滅,失敗=索爾死亡或**巴拿羅西亞**死亡,而**「若巴拿羅西亞尚未出現便
+消滅完敵人，則巴拿羅西亞不會加入」**(她約在第6回合才登場協助,第4回合敵方才
+開始主動攻擊,第10回合敵方才傾巢而出)。本輪的mass-kill在偵測到戰鬥後幾秒內
+(第9個tap,對話推進僅4次)就對49隻敵人全部下死亡signature並立即送出第一次
+End-Turn——這極可能發生在遊戲內部時間的第1回合,遠早於巴拿羅西亞登場的第6回合。
+**如果**ch19編譯後的勝利判定handler除了「敵全滅」還隱含要求「巴拿羅西亞的
+單位記錄存在於roster陣列」這類條件,她從未登場就會讓這個條件永遠無法滿足,
+可能是這個特定章節「卡在0」的獨立成因(而不只是與其他7章共享同一個尚未查明
+的通用根因)。**本輪未做live驗證去區分這兩種可能**(時間預算優先給了偵測bug
+本身的修復與確認)——下一輪如果要繼續深挖ch19,建議直接測試「先送6輪空白
+End-Turn(不下死亡signature、任由敵人被動不攻擊)等巴拿羅西亞登場,再mass-kill」
+是否能讓`[0x53ecc]`翻2,這會是區分「ch19專屬的护卫角色未登場」與「跨8章共享的
+`0x205be`通用矛盾」兩個假說的最直接方法。
+
+完整截圖證據鏈(`.wsl_build/ch19diag/shots/`,非repo追蹤產物):`01_title.png`→
+`02_post_load.png`→`campexit_000_cycle.png..009_dialogue04.png`(9-tap戰鬥確認)
+→`03_pre_end_turn.png`(mass-kill後、意外的劇情對話「真令人不舒服的森林」,
+與戰鬥結果無關的獨立劇情事件,非勝利跡象)→`findempty_000_start.png`+
+`findempty_clear_001..006.png`→`post_end_turn.png`→`montage_001..069.png`+
+`montage_passive_004s.png`(兩次timer-gated自動前進偵測)→`post_montage_
+advance.png`→`04_final.png`(仍是戰鬥地圖,非勝利場景)。程式碼修復見
+`tools/fd2_chapter_sweep.py`的`BATTLE_HUD_BOX_REGION_R`/`_find_hud_box_side()`
+及其呼叫點,所有變更均含「ch19diag」輪次標記的docstring/註解可供追溯。
