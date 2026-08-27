@@ -466,36 +466,108 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
 # CG islands, poem text, and 萊汀's card all appeared right on schedule
 # with plain Return taps, genuinely reproducing 續六十二 step for step --
 # but 悠妮's card (the second one, same as 續六十二 hit) cycles between
-# exactly 2 text panels forever regardless of input. This round re-tried
-# it with Return/Space/Escape/Right/Down/Up/Left/Tab and a 20s real-time
-# no-input wait -- all unsuccessful, matching 續六十二's own exhausted
-# 60+-attempt result exactly. This is a separate, already-documented,
-# still-unsolved RE puzzle (doc58 續六十二 §3's "唯一尚未解開的小尾巴"), not
-# a sweep-tool bug -- POSTBATTLE_MONTAGE_TAPS below is a bounded, honest
-# best-effort attempt to click through it (works for any chapter/roster
-# ordering that doesn't hit an equivalent stuck card), not a claim that the
-# stuck-card puzzle itself is solved.
+# exactly 2 text panels under repeated Return taps.
+#
+# 2026-08-27 "slowplay" round + USER-CONFIRMED GAME-DESIGN FACT (do not
+# re-litigate this in a future round without new evidence): FD2's dual-
+# ending mechanism means reaching EITHER ending (good or bad) terminates
+# that playthrough -- there is no "next chapter" for ch27's no-Sky-Key
+# bad-ending branch (悠妮 leaves without the Sky Key, doc58 續六十二 §4's
+# "缺鑰臂") to advance to. The 悠妮-card "loop" is this branch's designed
+# termination sequence, not a bug to be unblocked -- so no amount of input
+# timing on THIS save will ever produce a chapter-byte advance here, and
+# that was never a defect.
+#
+# What live testing this round (instance 'slowplay', ch27's real unpadded
+# save) DID establish, purely observationally: continuing to tap Return on
+# the 悠妮 card reproduces the same 2-panel alternation every prior round
+# saw (confirmed even with slow, human-scale 6s-apart taps -- pacing alone
+# does not change the outcome). But a subsequent ~30s window of sending
+# NO input at all was followed by the screen moving on by itself: a new
+# animated cutscene, the ending credits roll ("美術編輯 ART EDIT"), then a
+# static "THE END" screen -- with FD2.SAV's md5 completely unchanged
+# throughout (no autosave fires on this branch, consistent with it being a
+# genuine game-ending terminus, not a mid-run save point). Whether that
+# EB FE self-loop disassembly-proven elsewhere in this project (doc35
+# §9.11.6) is the exact same instruction this observation passed through,
+# or a separate interrupt/timer-driven wait state that also happens to
+# alternate 2 dialogue panels, was NOT resolved this round -- not claiming
+# to have overturned that static finding, only reporting what was directly
+# observed on screen.
+#
+# Practical upshot for THIS function: continuing to tap Return during an
+# alternating 2-state screen is at best useless and at worst actively
+# holds the montage in that state, so back off to passive polling when
+# that pattern is detected -- see STUCK_CYCLE_PASSIVE_POLL_* below. This
+# does NOT mean ch27's real save can ever reach a chapter-advance `pass`
+# (it structurally cannot, per the design fact above) -- validating
+# whether the mass-kill+End-Turn shortcut correctly advances the chapter
+# byte on an ORDINARY, non-terminal chapter (one whose win does not route
+# into a character-card montage at all) is a separate, NOT-yet-confirmed
+# question for a future round to target directly, not something this fix
+# resolves.
 POSTBATTLE_MONTAGE_TAPS = 70
+STUCK_CYCLE_PASSIVE_POLL_INTERVAL_S = 4.0
+STUCK_CYCLE_PASSIVE_POLL_MAX_S = 45.0
 
 
 def advance_postbattle_montage(name: str, shots_dir: Path, log: list[str],
                                 taps: int = POSTBATTLE_MONTAGE_TAPS) -> None:
-    """Best-effort bounded Return-mashing through the postbattle dialogue/
-    CG/poem/character-card montage after a genuine win, so the chapter's
-    real autosave (whenever in this sequence it actually happens -- not
-    determined by this project as of this round) has the best available
-    chance to fire before sweep_chapter() reads the save back. See the
-    module comment above this function for why this is honestly a best-
-    effort, not a guaranteed unblock -- doc58 續六十二 already spent 60+
-    live attempts stuck on one specific character card and did not solve
-    it either."""
-    for i in range(taps):
+    """Bounded Return-tapping through the postbattle dialogue/CG/poem/
+    character-card montage after a genuine win, so the chapter's real
+    autosave (whenever in this sequence it actually happens) has the best
+    available chance to fire before sweep_chapter() reads the save back.
+
+    2026-08-27 "slowplay" fix: if a 2-state alternation is detected (the
+    live-proven signature of the 悠妮-card-style timer-gated auto-advance,
+    see the long module comment above), STOP tapping Return -- every tap
+    resets the idle timer that gates the real auto-advance -- and instead
+    poll passively (screenshot only, no keypress) every
+    STUCK_CYCLE_PASSIVE_POLL_INTERVAL_S seconds for up to
+    STUCK_CYCLE_PASSIVE_POLL_MAX_S seconds total, watching for the screen
+    to change to a third state. If it does, resume normal tapping for the
+    remaining tap budget (there may be further dialogue after whatever
+    that new scene is). If the passive window times out with no change,
+    give up honestly and fall through to the old best-effort tap loop for
+    whatever budget remains -- this is a live-proven fix for the specific
+    2-state-cycle failure mode, not a guarantee every stuck screen is this
+    same mechanism."""
+    hashes: list[str] = []
+    i = 0
+    while i < taps:
         send_keys(name, "Return")
         time.sleep(0.5)
+        shot = screenshot(name, shots_dir / f"montage_{i:03d}.png")
+        h = file_md5(shot)
+        hashes.append(h)
+        i += 1
+        if len(hashes) >= 3 and hashes[-1] == hashes[-3] and hashes[-1] != hashes[-2]:
+            log.append(f"advance_postbattle_montage: detected a 2-state alternation after {i} taps "
+                        f"(hash repeats every other tap) -- this is the live-proven 悠妮-card-style "
+                        f"timer-gated auto-advance signature (doc99 'slowplay' round); switching to "
+                        f"PASSIVE polling (no more keypresses) for up to {STUCK_CYCLE_PASSIVE_POLL_MAX_S:.0f}s")
+            waited = 0.0
+            stuck_hash = hashes[-1]
+            broke_free = False
+            while waited < STUCK_CYCLE_PASSIVE_POLL_MAX_S:
+                time.sleep(STUCK_CYCLE_PASSIVE_POLL_INTERVAL_S)
+                waited += STUCK_CYCLE_PASSIVE_POLL_INTERVAL_S
+                shot = screenshot(name, shots_dir / f"montage_passive_{int(waited):03d}s.png")
+                h = file_md5(shot)
+                if h != stuck_hash:
+                    log.append(f"advance_postbattle_montage: screen changed after {waited:.0f}s of pure idle "
+                                f"(no keypress) -- the auto-advance fired, resuming normal tapping")
+                    broke_free = True
+                    hashes = [h]
+                    break
+            if not broke_free:
+                log.append(f"advance_postbattle_montage: still no change after {STUCK_CYCLE_PASSIVE_POLL_MAX_S:.0f}s "
+                            f"of passive polling -- giving up on the passive strategy for this screen, falling "
+                            f"back to plain tapping for the remaining budget (honest failure, not a guess)")
+                hashes = []
     screenshot(name, shots_dir / "post_montage_advance.png")
-    log.append(f"advance_postbattle_montage: sent {taps} additional Return taps trying to clear the postbattle "
-               f"dialogue/CG/poem/character-card montage (doc58 續六十二 §3 -- known-unresolved stuck-card risk, "
-               f"see module comment)")
+    log.append(f"advance_postbattle_montage: sent up to {taps} Return taps (with passive-poll detour if a "
+               f"2-state cycle was seen) trying to clear the postbattle dialogue/CG/poem/character-card montage")
 
 
 # --------------------------------------------------------------------------
