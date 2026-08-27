@@ -165,21 +165,39 @@ handler 實際檢查的字面條件。
 - **`[0x53ecc]`** = raw pending 輸出碼；0 表示掃描繼續，1／2 由外層
   不同分支消費，不在 handler 層命名中場或勝利。[驗]
 
-## 5. 實例:章 1 handler `0x206c5` [驗]
+## 5. 實例:章 1(table_idx1,玩家可見 ch02)handler `0x206c5` [驗]
+
+> **2026-08-27「ch12diag」續輪勘誤**:下面這段舊版反組譯把`0x206c5`本體(在
+> `0x20706`就`RET`結束,完整函式只有 66 bytes)跟緊接在後面的**下一個 handler**
+> (`0x20707`,table_idx9/玩家可見 ch10 的 handler `b`,doc26 §2 已收錄)的開頭
+> 誤合併成同一段——「另查單位#0x32(50)/#0x33(51)」那兩行其實屬於`0x20707`，
+> 不是`0x206c5`的一部分。已用`ghidra_batch_probe.py`對`0x206c5`(disasm 到
+> JMP 為止)+`0x206dd`(接續到迴圈與RET)+`bytes`(128 bytes 原始機器碼逐位元組
+> 核對)三條獨立管道重新確認,`0x206c5`的完整函式體如下,`0x20706 RET`後,
+> `0x20707`立刻是全新的`PUSH 0x8`(下一個 handler 的標準 prologue)：
 
 ```
-0x206d0  call 0x205be             ; 共用 raw 三值結果規則；不載入章節
-0x206d5  edx = 5                   ; 迴圈單位 5..10
-0x206dd  cmp edx,0xb; jge 0x206fb
-0x206ed  eax=[0x53a45]            ; 單位陣列
-0x206f2  test byte[ebx+eax+5],1    ; 查單位 #edx 狀態 bit0
-0x206f7  je 0x20705                ; 有一個不滿足 → 跳出
-0x206f9  (續迴圈)
-0x206fb  mov [0x53ecc],1           ;★ 單位 5..10 全滿足 → 觸發中途事件
-0x20718  push 0x32; call 0x3453e   ; 另查單位 #0x32(50)狀態
-0x2073...  push 0x33; call 0x3453e ; 查單位 #0x33(51)
+0x206c5  push 0x8 / call 0x3702f / push ebx     ; prologue
+0x206d0  call 0x205be             ; 共用 raw 三值結果規則
+0x206d5  edx = 5                   ; 迴圈單位 5..10(inclusive)
+0x206dc  inc edx                   ; ★迴圈真正入口(續迴圈的 jmp 落在這裡,不是0x206f9本身)
+0x206dd  cmp edx,0xb; jge 0x206fb  ; edx達到11(=6個單位5..10全部走完)→跳出迴圈,設1
+0x206e2..0x206ec  ebx = edx*5*16 = edx*0x50     ; record index → byte offset(stride 0x50)
+0x206ed  eax=[0x53a45]            ; 單位陣列基底
+0x206f2  test byte[ebx+eax+5],1    ; 查單位 #edx 的 raw +5 bit0
+0x206f7  jz 0x20705                ; 該單位是「活著」(bit0==0,ZF=1)→立刻跳出,***不覆寫[0x53ecc]***
+0x206f9  jmp 0x206dc                ; 該單位「已死」(bit0==1)→繼續下一個 edx
+0x206fb  mov [0x53ecc],1           ; ★只有單位 5..10 全部死亡才會執行到這裡,覆寫成 code1
+0x20705  pop ebx / ret
 ```
-即:**章 1 的腳本邏輯 = 「若單位 5–10 的 raw bit0 全部為 1→ 觸發劇情事件;再依單位 50/51 的 raw predicate 分支」**。
+即:**章 2(玩家可見,table_idx1)的腳本邏輯 = 「若單位 5–10 的 raw bit0 全部為
+1(全滅)→ 覆寫`[0x53ecc]`成 code1(中途事件,不是勝利);只要單位 5–10 之中有
+任何一個還活著,函式直接返回、完全不碰`[0x53ecc]`,讓`0x205be`剛剛設好的基準值
+(可能已經是 code2 勝利)原封不動保留」**。這代表**單位 5–10 存活與否,理論上不會
+擋住`0x205be`基準勝利判定**——`0x206c5`測試發現`[0x53ecc]`持續讀 0(既非
+code1 也非 code2)的真正成因**不是**這段被誤合併的單位 50/51 邏輯(那屬於另一
+個 handler),仍是本輪未解的開放問題,見 `docs/knowledge-base/99-chapter-sweep-
+results.md`「ch12diag」小節。
 這就是一條「事件指令」的真身——一段檢查單位狀態的硬編碼條件 + 設 `[0x53ecc]`。
 
 > 單位 byte(+5) 的 bit0／bit7 目前只作 raw mask；constructor、HP writer、`0x32975` 的寫入點不能自動推出所有 caller 的高階欄位語意。先前依「初始化=1」與使用者記憶寫成「bit0=存活」的說法已撤回。回合數 `[0x53bef]` 的 increment 已觀察，但 team-completion／換邊語意仍待完整 state-machine caller。

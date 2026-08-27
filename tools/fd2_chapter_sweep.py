@@ -63,16 +63,26 @@ this tool automates a best-effort structural pass/fail check:
 
 HONESTY / KNOWN LIMITS (read before trusting a "pass")
 --------------------------------------------------------------------
-- The battle-detection pointer (0x1EFA45) and the enemy-scan/death-signature
-  constants (stride 0x50, +5/+6) were derived and validated ONLY against
-  ch27 across many prior live rounds. This tool assumes -- UNVERIFIED for
-  any chapter but ch27 -- that the same global/layout is reused by every
-  chapter's battle. If a chapter's battle uses a different array or record
-  layout, the scan will most likely just find 0 enemy slots (visible in the
-  log as enemies_found=0) rather than corrupting anything, because writes
-  only happen to slots this tool itself classified camp==0 from a live read
-  -- but this has not been cross-checked against a second chapter's real
-  battle memory layout, only inferred to generalize.
+- 2026-08-27 "ch12diag" round update: the battle-detection pointer
+  (0x1EFA45), enemy-scan/death-signature constants (stride 0x50, +5/+6), and
+  the mass-kill+End-Turn win-check shortcut ARE now cross-chapter validated
+  -- a live sweep of ch02-ch16 (15 chapters) found 9/15 (ch05/06/08/09/10/
+  12/13/14/16) reach a directly-confirmed ENGINE-LEVEL win ([0x53ecc]
+  reading 2 via a debugger read, not a screenshot guess -- see
+  read_pending_result_code()/CHAPTER_INDEX_LIVE's module comment and
+  confirm_end_turn()'s docstring). This generalizes well beyond the
+  ch27-only evidence this paragraph used to describe. HOWEVER: even for
+  those 9 chapters, the ON-DISK FD2.SAV chapter byte has NEVER been
+  observed to advance (verdict "anomaly_engine_win_no_disk_write", not
+  "pass") -- see docs/knowledge-base/25-battle-event-system.md §9.1's own
+  multi-round (saveE2/savewriter/camproute/writerfire) investigation into
+  when/whether the native SAV writer gate actually fires for a battle-win
+  path; this is a genuinely open, project-wide question, not a bug in this
+  tool. The remaining 6/15 chapters (ch02/03/04/07/11/15) never reach the
+  engine-level win at all for a still-undiagnosed reason (ruled out so far
+  for ch02: an enemy-array scan gap, and a misread of unit5-10's override
+  condition -- see docs/knowledge-base/99-chapter-sweep-results.md's
+  "ch12diag" section for the full writeup and next-round suggestions).
 - The generic advance-loop (step 6) has NO chapter-specific knowledge. Many
   chapters will very likely not fit it (unique scripted events, chapters
   that need specific items/state, chapters requiring more real roster
@@ -135,6 +145,35 @@ CHAPTER_BEATS_DIR = REPO_ROOT / "docs" / "data" / "chapter_beats"
 # "續六十二"/"續六十三" and the surrounding 0x19C000 delta-derivation rounds) ---
 DATA_SELECTOR = "0178"
 BATTLE_ARRAY_PTR_LIVE = 0x1EFA45   # DAT_00053a45: pointer to the current battle unit-record array (0/garbage outside battle)
+# 2026-08-27 "ch12diag" round: the native+0x19C000 delta established elsewhere in this
+# project (doc58's repeated "續" derivations, and this module's own BATTLE_ARRAY_PTR_LIVE
+# above -- 0x53a45+0x19C000=0x1EFA45) also gives DIRECT, ground-truth debugger access to
+# the two globals doc25 §4/§6 document as the actual win-check state machine, instead of
+# guessing from screenshots alone:
+#   - [0x53ecc] (live 0x1EFECC): the "pending result code" 0x205be/the per-chapter
+#     0x51b19[] handler writes -- 0=still fighting, 1=mid-battle scripted event (NOT a
+#     win -- see doc25 §6's "==1 -> 固定0x22e5c資源#79呈現->清0"), 2=win (unconditionally
+#     dispatches the postbattle table 0x51de9[chapter], doc58 續二十八's fully-disassembled
+#     FUN_00025bf4 campaign loop).
+#   - [0x53c03] (live 0x1EFC03): the current chapter index (0-based) -- doc58 續二十八
+#     proved byte-for-byte that EVERY postbattle handler in the 0x51de9 table (ch24's
+#     0x24c1e was the fully-disassembled example) unconditionally INCs this exact global
+#     near its own end, and that native chapter-raw 23->24 was observed advancing on the
+#     REAL DISK FD2.SAV in an earlier live round of this project -- i.e. this in-memory
+#     advance is the SAME general mechanism that DOES eventually reach disk for at least
+#     one chapter, not a dead end invented by this tool.
+# Directly polling these two globals after End Turn is confirmed is a strictly stronger
+# ground-truth signal than this module's existing screenshot heuristics
+# (screen_shows_battle_hud/screen_looks_like_dialogue) for the specific question "did the
+# win-check actually fire" -- see confirm_end_turn()'s "2026-08-27 ch12diag" docstring
+# section for the live derivation (ch12, a genuinely different, non-default per-chapter
+# handler 0x2073d, confirmed reaching pending_code==2 and chapter_index 11->12 live for
+# the first time this project, generalizing beyond ch27's default/L-handler case).
+NATIVE_LIVE_DELTA = 0x19C000
+PENDING_RESULT_CODE_LIVE = 0x53ecc + NATIVE_LIVE_DELTA
+CHAPTER_INDEX_LIVE = 0x53c03 + NATIVE_LIVE_DELTA
+ENGINE_WIN_CODE = 2
+ENGINE_EVENT_CODE = 1
 UNIT_STRIDE = 0x50
 UNIT_ACTED_OFFSET = 0x05           # enemy death signature: write 0x01 here
 UNIT_CAMP_OFFSET = 0x06            # 2 = ally, 0 = enemy (doc58 續六十二 §2)
@@ -300,14 +339,61 @@ def read_battle_array_base(name: str) -> int | None:
     return None
 
 
+def read_pending_result_code(name: str) -> int | None:
+    """Read [0x53ecc] (live PENDING_RESULT_CODE_LIVE) -- see the module-level
+    comment above PENDING_RESULT_CODE_LIVE for provenance. 0=still fighting,
+    1=mid-battle scripted event (NOT a win), 2=win (ENGINE_WIN_CODE). Callers
+    MUST be inside an open debugger console (enter_debugger already called) --
+    same discipline as read_battle_array_base."""
+    raw = read_mem(name, PENDING_RESULT_CODE_LIVE, min_bytes=4)
+    if raw is None:
+        return None
+    return raw[0] | (raw[1] << 8) | (raw[2] << 16) | (raw[3] << 24)
+
+
+def read_chapter_index_live(name: str) -> int | None:
+    """Read [0x53c03] (live CHAPTER_INDEX_LIVE), the 0-based chapter index --
+    see the module-level comment above CHAPTER_INDEX_LIVE. Callers MUST be
+    inside an open debugger console, same discipline as read_battle_array_base."""
+    raw = read_mem(name, CHAPTER_INDEX_LIVE, min_bytes=1)
+    if raw is None:
+        return None
+    return raw[0]
+
+
 def scan_enemy_slots(name: str, base: int, log: list[str]) -> list[int]:
     """Sequentially read each candidate unit record's camp byte (+6) and
     return the linear addresses of every record classified as enemy
-    (camp==0). Ally records (camp==2) are read but never written. Stops
-    early once CONSECUTIVE_ZERO_STOP fully-zero (unpopulated) records are
-    seen in a row after at least one enemy has already been found."""
+    (camp==0). Ally records (camp==2) are read but never written.
+
+    2026-08-27 "ch12diag" round follow-up (ch02 live cross-check): this used
+    to stop early once CONSECUTIVE_ZERO_STOP consecutive fully-zero records
+    were seen after >=1 enemy had already been found. Live testing on ch02
+    (handler 0x206c5, doc25 §5) found the engine-level win-check
+    ([0x53ecc]) staying stuck at 0 through 4 full mass-kill/End-Turn retry
+    cycles (60s of direct debugger polling each cycle -- not a screenshot
+    guess) even though every camp==0 record this scan found (10 of them)
+    was correctly written with the death signature and confirmed via
+    read-back. The native win-check (0x205be) scans the FULL unit array
+    (0..[0x53beb], ch12 diag confirmed this bound live at 25, but it is not
+    assumed constant per chapter) with no early-exit of its own -- if this
+    tool's own scan stopped early past a >=4-zero-record gap and missed a
+    second, non-adjacent cluster of camp==0 records, mass_kill_enemies()
+    would never touch them and 0x205be would correctly, forever, keep seeing
+    a live enemy and never reach code 2. ch12's own array happened to have
+    no such gap (record[14] was non-zero, camp=1, so it never tripped the
+    zero-streak counter), which is why this generalization gap was invisible
+    there and only surfaced on ch02. FIX: always scan the full
+    MAX_ENEMY_SCAN_SLOTS range unconditionally -- no early exit. This costs
+    more debugger reads per call (worst case ~30-40s at MAX_ENEMY_SCAN_SLOTS
+    =96), but correctness matters far more than speed for a scan whose
+    entire purpose is "did we find every enemy record" -- a false-early-stop
+    here silently and permanently blocks the win-check for any chapter whose
+    live layout has a gap, which is a much worse failure mode than a slower
+    scan. CONSECUTIVE_ZERO_STOP is kept defined (used nowhere now) only so a
+    future round has the identifier available if a bounded variant is ever
+    reintroduced deliberately, with a documented trade-off."""
     enemies: list[int] = []
-    zero_streak = 0
     for k in range(MAX_ENEMY_SCAN_SLOTS):
         rec_addr = base + k * UNIT_STRIDE
         raw = read_mem(name, rec_addr, min_bytes=8)
@@ -316,15 +402,11 @@ def scan_enemy_slots(name: str, base: int, log: list[str]) -> list[int]:
             break
         camp = raw[UNIT_CAMP_OFFSET]
         if all(b == 0 for b in raw[:8]):
-            zero_streak += 1
-            if enemies and zero_streak >= CONSECUTIVE_ZERO_STOP:
-                log.append(f"scan slot{k}: {CONSECUTIVE_ZERO_STOP} consecutive zero records, stopping")
-                break
             continue
-        zero_streak = 0
         if camp == 0:
             enemies.append(rec_addr)
-    log.append(f"scan_enemy_slots: base={base:#x} scanned<= {MAX_ENEMY_SCAN_SLOTS} slots, enemies_found={len(enemies)}")
+    log.append(f"scan_enemy_slots: base={base:#x} scanned<= {MAX_ENEMY_SCAN_SLOTS} slots (unconditional, no "
+               f"early exit), enemies_found={len(enemies)}")
     return enemies
 
 
@@ -337,7 +419,16 @@ def mass_kill_enemies(name: str, enemy_addrs: list[int], log: list[str]) -> int:
     return written
 
 
-def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: list[int] | None = None) -> Path:
+ENGINE_WIN_POLL_MAX_S = 15.0  # 2026-08-27 "ch12diag": ch12 needed ~8s; leave headroom above that.
+POST_WIN_DISK_POLL_MAX_S = 60.0  # 2026-08-27 "ch12diag": bounded patience for the on-disk save write
+                                   # after an engine-level win is confirmed -- see sweep_chapter()'s comment.
+MAX_KILL_CYCLES = 4  # 2026-08-27 "ch12diag" follow-up: bounded mass-kill/End-Turn retry budget to absorb
+                      # reinforcement waves (turn-end- or kill-triggered per doc25 §6.1's turn_events
+                      # mechanism, cross-confirmed against an external strategy guide for ch12's specific
+                      # 2-wave pattern) -- see sweep_chapter()'s comment for the full derivation.
+
+
+def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: list[int] | None = None) -> dict:
     """Doc58 續六十二's proven End-Turn->YES shortcut: move the cursor to an
     empty tile, Enter opens the command ring, Down selects END, Enter
     confirms END, Enter confirms the Yes/No 'end this turn?' prompt (Yes is
@@ -427,6 +518,42 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
     probably-occupied tile the way the old code did for every chapter but
     ch27. See docs/knowledge-base/99-chapter-sweep-results.md's
     "endturngen" section for the live cross-chapter validation results.
+
+    2026-08-27 "ch12diag" round: after confirming YES, this function used to
+    just sleep(2.0) and take one screenshot, trusting the caller to notice a
+    visual win transition later. Live testing on ch12 (whose per-chapter
+    win-check handler 0x2073d is a genuinely DIFFERENT function from ch27's
+    default-plus-L path -- doc25 §3's handler table, table_idx 11, not a
+    screenshot-detection gap) found the engine's own pending-result-code
+    global ([0x53ecc], see PENDING_RESULT_CODE_LIVE's module comment) does
+    NOT flip 0->2 until ~8s after the YES keypress lands (repeated polling:
+    t=1.3s..6.3s still read 0, t=8.0s read 2, stayed 2 afterward) -- almost
+    4x longer than the old flat sleep(2.0) gave it. This function now polls
+    [0x53ecc] directly (ground truth, not a screenshot heuristic) for up to
+    ENGINE_WIN_POLL_MAX_S seconds after confirming YES, logging the exact
+    second it flips. This is a REAL, general fix (not a ch12-only hack): the
+    same live round also confirmed [0x53c03] (chapter index) advancing
+    11->12 in lockstep with [0x53ecc] hitting 2, which doc58 續二十八's full
+    disassembly of the campaign loop (FUN_00025bf4) already proved is the
+    SAME unconditional every-postbattle-handler behavior used for ch24
+    (whose raw 23->24 transition was separately observed reaching the real
+    on-disk FD2.SAV in an earlier round of this project) -- i.e. this
+    generalizes to any chapter using the 0x51b19/0x51de9 dispatch tables,
+    which per doc25 §3 is EVERY chapter, not just ch27.
+
+    2026-08-27 "ch12diag" round -- honest caveat: the SAME live session found
+    that after the engine-level win fires, further blind Return-tapping can
+    wander into an unrelated, genuinely stuck submenu (observed: a character
+    status/spell-list screen that stopped responding to ANY input, including
+    Escape, for 60+ taps and 24s of pure passive waiting) if
+    find_empty_adjacent_tile() failed to confirm an empty tile first (this
+    round hit exactly that fallback). This function's own ring-opening
+    fallback (log a WARNING and press on anyway) is UNCHANGED here -- the
+    fix below only makes win DETECTION reliable, it does not make the
+    ring-opening sequence itself immune to landing on a dead-end submenu for
+    every chapter's deployment layout. That remains an honest, unresolved
+    per-chapter risk -- see docs/knowledge-base/99-chapter-sweep-results.md's
+    "ch12diag" section.
     """
     found_empty, _ = find_empty_adjacent_tile(name, shots_dir, log)
     if not found_empty:
@@ -449,11 +576,59 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
         time.sleep(0.3)
         log.append(f"confirm_end_turn: re-wrote death signature to {rewritten} slot(s) while the 'end this turn?' "
                    f"prompt was up, per doc58 續六十二's exact sequence, before confirming YES")
+    enter_debugger(name)
+    time.sleep(0.3)
+    chapter_before = read_chapter_index_live(name)
+    debugger_cmd(name, "RUN")
+    time.sleep(0.2)
+
     send_keys(name, "Return")  # confirms YES
-    time.sleep(2.0)
+    # 2026-08-27 "ch12diag" fix: poll [0x53ecc] directly (ground truth) instead
+    # of a flat sleep(2.0) -- see this function's docstring for the live
+    # derivation (ch12 needed ~8s, not 2s, for the code to flip).
+    t_start = time.time()
+    engine_code = None
+    while time.time() - t_start < ENGINE_WIN_POLL_MAX_S:
+        time.sleep(0.7)
+        enter_debugger(name)
+        time.sleep(0.25)
+        engine_code = read_pending_result_code(name)
+        debugger_cmd(name, "RUN")
+        time.sleep(0.15)
+        if engine_code in (ENGINE_WIN_CODE, ENGINE_EVENT_CODE):
+            break
+    elapsed = time.time() - t_start
+    engine_win = engine_code == ENGINE_WIN_CODE
+    if engine_win:
+        log.append(f"confirm_end_turn: ENGINE-LEVEL WIN CONFIRMED -- [0x53ecc] flipped to "
+                    f"{ENGINE_WIN_CODE} (win) after {elapsed:.1f}s of polling (ground truth via "
+                    f"debugger read, not a screenshot guess)")
+    elif engine_code == ENGINE_EVENT_CODE:
+        log.append(f"confirm_end_turn: [0x53ecc] flipped to {ENGINE_EVENT_CODE} (mid-battle scripted "
+                    f"event, NOT a win -- doc25 §6) after {elapsed:.1f}s -- battle continues, this is "
+                    f"not the win-check firing")
+    else:
+        log.append(f"confirm_end_turn: [0x53ecc] never reached a resolved code ({ENGINE_WIN_CODE}=win/"
+                    f"{ENGINE_EVENT_CODE}=event) within {ENGINE_WIN_POLL_MAX_S:.0f}s of polling "
+                    f"(last read: {engine_code!r}) -- honestly inconclusive, not assumed to be a win")
+    enter_debugger(name)
+    time.sleep(0.3)
+    chapter_after = read_chapter_index_live(name)
+    debugger_cmd(name, "RUN")
+    time.sleep(0.2)
+    if chapter_after is not None and chapter_before is not None and chapter_after != chapter_before:
+        log.append(f"confirm_end_turn: [0x53c03] (chapter index) advanced live {chapter_before}->{chapter_after} "
+                    f"-- matches doc58 續二十八's proven every-postbattle-handler INC behavior")
     log.append(f"confirm_end_turn: find_empty_adjacent_tile(found={found_empty})->Enter(open ring)->"
-               f"Down(END)->Enter(confirm)->[re-kill]->Enter(YES)")
-    return screenshot(name, shots_dir / "post_end_turn.png")
+               f"Down(END)->Enter(confirm)->[re-kill]->Enter(YES)->poll[0x53ecc]")
+    shot = screenshot(name, shots_dir / "post_end_turn.png")
+    return {
+        "screenshot": shot,
+        "engine_win": engine_win,
+        "engine_code": engine_code,
+        "chapter_index_before": chapter_before,
+        "chapter_index_after": chapter_after,
+    }
 
 
 # 2026-08-27 "winverify" round, §3 of doc58 續六十二: confirming YES on a
@@ -1411,13 +1586,113 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             debugger_cmd(name, "RUN")
             time.sleep(0.5)
             screenshot(name, shots_dir / "03_pre_end_turn.png")
+            engine_win = False
             if enemy_addrs:
-                confirm_end_turn(name, shots_dir, log, enemy_addrs=enemy_addrs)
+                # 2026-08-27 "ch12diag" round follow-up (external strategy-guide
+                # cross-check, chiuinan.github.io fd2 walkthrough): several
+                # chapters (ch12 confirmed directly -- guide text: "第一回合己方
+                # 結束時,敵方第一波援軍出現在右上洞口"/turn-1-end wave, PLUS
+                # "獸人隊長陣亡時,敵方第二波援軍立即出現"/a kill-triggered second
+                # wave) script reinforcement waves via the SEPARATE FDFIELD
+                # turn_events/0x51b91 data-driven event table (doc25 §6.1) --
+                # NOT part of the compiled per-chapter win-check handler
+                # (0x51b19/0x205be) this tool's mass-kill/engine-win-poll logic
+                # already targets. A single mass-kill snapshot taken before the
+                # first End Turn cannot see a wave that only spawns AT that
+                # end-turn boundary or on a specific unit's death. Retry: if
+                # confirm_end_turn() does not confirm an engine-level win,
+                # re-scan the live enemy array for any newly-arrived camp==0
+                # records (a wave) and, if found, mass-kill and try End Turn
+                # again, up to MAX_KILL_CYCLES times. Bounded, not unbounded --
+                # a chapter needing more waves than this is expected to come
+                # back honestly reported as still-anomaly, not hang the sweep.
+                cycle = 0
+                end_turn_result = {"engine_win": False, "engine_code": None}
+                while cycle < MAX_KILL_CYCLES:
+                    cycle += 1
+                    end_turn_result = confirm_end_turn(name, shots_dir, log, enemy_addrs=enemy_addrs)
+                    engine_win = bool(end_turn_result.get("engine_win"))
+                    if engine_win:
+                        log.append(f"sweep_chapter: engine win confirmed on kill-cycle {cycle}/{MAX_KILL_CYCLES}")
+                        break
+                    enter_debugger(name)
+                    time.sleep(0.4)
+                    rescan_base = read_battle_array_base(name)
+                    rescan_enemies_all = scan_enemy_slots(name, rescan_base, log) if rescan_base is not None else []
+                    # 2026-08-27 "ch12diag" round follow-up: scan_enemy_slots classifies
+                    # by camp byte only (camp==0), NOT death status -- re-scanning after a
+                    # mass-kill will always re-find the SAME already-dead records (their
+                    # camp byte doesn't change when they die). Only records whose death bit
+                    # is STILL 0 are worth another kill+End-Turn cycle; re-"killing" already
+                    # -dead records wastes a full retry cycle (~15-20s) without changing
+                    # anything, and its log message would misleadingly look like a
+                    # reinforcement wave was found when it's really the same corpses.
+                    rescan_enemies = []
+                    for addr in rescan_enemies_all:
+                        b5 = read_mem(name, addr + UNIT_ACTED_OFFSET, min_bytes=1)
+                        if b5 is not None and (b5[0] & 1) == 0:
+                            rescan_enemies.append(addr)
+                    debugger_cmd(name, "RUN")
+                    time.sleep(0.2)
+                    if not rescan_enemies:
+                        log.append(f"sweep_chapter: kill-cycle {cycle}/{MAX_KILL_CYCLES} -- engine win not yet "
+                                   f"confirmed (code={end_turn_result.get('engine_code')!r}), re-scan found "
+                                   f"{len(rescan_enemies_all)} camp==0 record(s) but ALL already carry the death "
+                                   f"signature (no genuinely-alive enemy left to blame) -- stopping the retry "
+                                   f"loop honestly; this chapter's win-check is not simply gated on this array's "
+                                   f"enemies being dead (see doc25/26's per-chapter handler table for other "
+                                   f"possibilities)")
+                        break
+                    log.append(f"sweep_chapter: kill-cycle {cycle}/{MAX_KILL_CYCLES} -- engine win not yet "
+                               f"confirmed (code={end_turn_result.get('engine_code')!r}), re-scan found "
+                               f"{len(rescan_enemies)} live enemy record(s) (possible reinforcement wave per "
+                               f"doc25 §6.1's turn_events mechanism) -- mass-killing and retrying End Turn")
+                    enemy_addrs = rescan_enemies
+                    enter_debugger(name)
+                    time.sleep(0.3)
+                    mass_kill_enemies(name, enemy_addrs, log)
+                    debugger_cmd(name, "RUN")
+                    time.sleep(0.2)
                 # 2026-08-27 "winverify": a genuine win does not autosave
                 # immediately -- see advance_postbattle_montage()'s module
                 # comment. Best-effort attempt to clear the montage before
                 # reading the save back below.
                 advance_postbattle_montage(name, shots_dir, log)
+                # 2026-08-27 "ch12diag" round: confirm_end_turn() now proves
+                # the engine-level win via [0x53ecc]/[0x53c03] directly (see
+                # its docstring) -- when that fired, give the on-disk save
+                # writer (doc25 §9.1's gated 0x1cff0/0x15311 chain, or
+                # whatever path ch24's confirmed 23->24 disk transition used)
+                # a much more patient window than the old flat post-montage
+                # sleep(1.5) ever gave it, instead of silently giving up. This
+                # keeps tapping Return (safe -- established elsewhere in this
+                # module) and re-pulls the save periodically, stopping early
+                # the moment the disk byte actually advances. This does NOT
+                # guarantee a disk write (doc25 §9.1's own multi-round
+                # investigation never fully closed out when/whether the write
+                # gate opens for a battle-win path outside ch24's specific
+                # grind-verified case) -- it just gives it a fair, honestly
+                # bounded chance instead of the old ~1.5s.
+                if engine_win:
+                    log.append("sweep_chapter: engine-level win confirmed -- patiently polling the on-disk "
+                               f"save for up to {POST_WIN_DISK_POLL_MAX_S:.0f}s while continuing to tap Return")
+                    poll_t0 = time.time()
+                    poll_i = 0
+                    while time.time() - poll_t0 < POST_WIN_DISK_POLL_MAX_S:
+                        send_keys(name, "Return")
+                        time.sleep(0.8)
+                        poll_i += 1
+                        if poll_i % 5 == 0:
+                            probe_sav = pull_save(name, chapter_dir / "probe.SAV")
+                            probe_ch = read_slot_chapter(probe_sav, slot)
+                            if probe_ch is not None and probe_ch > (chapter_n - 1):
+                                log.append(f"sweep_chapter: on-disk save advanced to raw {probe_ch:#04x} after "
+                                           f"{time.time() - poll_t0:.1f}s of post-win polling ({poll_i} taps)")
+                                break
+                    else:
+                        log.append(f"sweep_chapter: on-disk save still not advanced after "
+                                   f"{POST_WIN_DISK_POLL_MAX_S:.0f}s of post-win polling ({poll_i} taps) -- "
+                                   f"giving up honestly, not assuming a write will eventually happen")
             else:
                 log.append("no enemy slots found by scan -- skipping End Turn shortcut, flagging as anomaly")
         else:
@@ -1434,9 +1709,16 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
         if final_chapter_raw is not None and final_chapter_raw > patched_chapter_raw:
             verdict = "pass"
             detail = f"chapter byte advanced {patched_chapter_raw:#04x} -> {final_chapter_raw:#04x} (native autosave confirmed clean transition)"
+        elif base is not None and enemy_addrs and engine_win:
+            verdict = "anomaly_engine_win_no_disk_write"
+            detail = ("battle detected, enemies mass-killed, End Turn confirmed, [0x53ecc]/[0x53c03] directly "
+                      "confirmed the engine-level win+chapter-advance fired (ground truth, not a screenshot "
+                      "guess), but the on-disk FD2.SAV chapter byte still did not advance within this run's "
+                      "patient polling window -- see doc25 §9.1's own open question about when the SAV writer "
+                      "gate (0x1cff0/0x15311) actually fires for a battle-win path")
         elif base is not None and enemy_addrs:
             verdict = "anomaly"
-            detail = "battle detected, enemies mass-killed, End Turn confirmed, but chapter byte did not advance (montage may not have autosaved within this run's window, or the win condition differs from ch27's)"
+            detail = "battle detected, enemies mass-killed, End Turn confirmed, but the engine-level win check ([0x53ecc]) never reached code 2 within the poll window, and chapter byte did not advance -- this chapter's win condition may genuinely differ from a plain full-roster kill (e.g. a specific must-survive/must-die unit check on top of the generic scan, per doc25/26's per-chapter handler table)"
         elif base is not None:
             verdict = "anomaly"
             detail = "battle detected but the enemy scan found 0 enemy slots (unexpected record layout for this chapter?) -- needs manual follow-up"

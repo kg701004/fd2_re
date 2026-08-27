@@ -1489,6 +1489,34 @@
   win-condition 常數能否泛化到其他章節(本輪首次拿到直接負面證據,未解)。
   完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
   續輪(instance `midtest`)」小節。
+  **2026-08-27 續輪(代號`ch12diag`)**:以 ch12 為範本徹底診斷「②死亡
+  signature/win-condition 常數能否泛化」——**結論:能泛化,②不是常數錯,
+  是`confirm_end_turn()`確認 YES 後只等 2 秒就放棄,但引擎自己的`[0x53ecc]`
+  勝負判定碼 live 實測要 1.8~8 秒才會翻成 2(勝利)**。反組譯 ch12 的
+  win-check handler`0x2073d`,證實結構跟 ch27 的`0x20a87`同一樣板(共用
+  `0x205be`基準全滅掃描+額外檢查一個特定 record 存活),且`record[14]`
+  (camp=1,mass-kill 不會誤殺)極可能就是外部攻略站(協調端交叉核對
+  `chiuinan.github.io`)記載的敗北條件角色「米亞斯多德」——反組譯結論與
+  外部資料完美互證。**已修復**`fd2_chapter_sweep.py`:①`confirm_end_turn()`
+  改直接輪詢`[0x53ecc]`(ground truth,非螢幕截圖猜測),②新增
+  `MAX_KILL_CYCLES=4`重試迴圈應對可能的援軍波次,③`scan_enemy_slots()`
+  移除提前中止邏輯(避免陣列 gap 漏掃),④`POST_WIN_DISK_POLL_MAX_S=60`
+  耐心輪詢磁碟存檔。修好後對 ch02-16(15 章)即時 live 掃描,**9/15 章節
+  (ch05/06/08/09/10/12/13/14/16)第一次拿到「引擎層級勝利」的直接證據**
+  (`[0x53ecc]`確實翻成2、`[0x53c03]`章節計數器確實在記憶體裡前進)——這是
+  本專案第一次證實 mass-kill+End-Turn 機制能泛化到 ch27 以外、非結局分支
+  的一般中途章節。**但 disk 上的`FD2.SAV`章節 byte 依然 0/15 前進**——
+  這坐實了`docs/knowledge-base/25-battle-event-system.md` §9.1 已經記錄
+  多輪(`saveE2`/`savewriter`/`camproute`/`writerfire`)、比 M5 這個條目
+  本身更早也更深的獨立開放問題:「戰鬥勝利後遊戲會不會真的呼叫`FD2.SAV`
+  writer」,這才是真正擋住 M5 全部驗收的最終瓶頸。另外 6/15 章節
+  (ch02/03/04/07/11/15)mass-kill+End-Turn 送達但`[0x53ecc]`從未翻盤,
+  真正根因本輪未定案(已排除「敵人陣列有 gap 被漏掃」與「單位5-10存活
+  擋住」兩個對 ch02 測過的假設,連帶修正了 doc25 §5 一段誤把兩個不同
+  handler 的機器碼合併在一起的舊反組譯記錄)。M5 仍是 0 pass,但未完成
+  原因從「懸而未決的大哉問」縮小成兩個具體、獨立、範圍分明的子問題。
+  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
+  續輪(代號`ch12diag`)」小節。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

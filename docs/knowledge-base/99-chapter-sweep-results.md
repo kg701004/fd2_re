@@ -532,3 +532,209 @@ M5 仍是 0 pass。本輪(依協調端指示,把驗證目標從「ch27 這份必
 確定死亡的單位(例如手動用戰鬥指令殺死一個敵人取得「真正死亡」的 record
 位元組模式)做逐 byte 對照,確認`+5=0x01`對 ch12 的敵方 record 是否真的等同
 遊戲引擎自己認定的「死亡」,而不是繼續假設 ch27 驗證過的常數放諸四海皆準。
+
+## 2026-08-27 續輪(代號 `ch12diag`):以 ch12 為範本徹底診斷「mass-kill+End-Turn 不能泛化」的根因——**不是死亡signature常數錯、也不是敵人陣列offset錯,是舊版`confirm_end_turn()`的偵測時機太短(只等2秒,實際需要~4-8秒)**;修好後用同一套邏輯對 15 個中途章節做即時 live 掃描,9/15 首次拿到「引擎層級勝利」直接證據(非螢幕截圖猜測),但**disk autosave 依然 0/15**,坐實這是本專案`doc25 §9.1`已經記錄多輪、比M5條目本身更早、更深的獨立開放問題
+
+### 任務背景與誠實結論先講
+
+派工單指定以 ch12 為範本徹底診斷「midtest」輪記錄的負面結果(11 隻敵人全數
+mass-kill+End-Turn 確認後,章節 byte 完全沒有前進),要求(1)live 核對死亡
+signature 對 ch12 是否真的等同遊戲引擎認定的死亡、(2)交叉核對 ch12 的
+win-check dispatch handler 本身、(3)修好通用性缺口、(4)套用到盡量多章節。
+
+**結論**:死亡 signature(`+5=0x01`)、camp byte(`+6==0`判定敵人)、陣列
+offset 全部正確無誤——問題完全出在`confirm_end_turn()`確認 YES 之後只
+`sleep(2.0)`就假設「沒反應=沒贏」,但引擎自己的`[0x53ecc]`(勝負判定碼)
+live 測試證實**需要 1.8~8 秒才會從 0 翻成 2(勝利)**,舊版 2 秒的等待窗口
+系統性地太短。改用直接輪詢`[0x53ecc]`(debugger 讀值,不是螢幕截圖猜測)
+取代盲等後,**9/15 個測過的中途章節第一次拿到「引擎層級勝利」的直接證據**
+(`[0x53ecc]`確實翻成 2、`[0x53c03]`章節計數器確實在記憶體裡+1),是本專案
+第一次證實 ch27 的 mass-kill+End-Turn 機制能泛化到非 ch27 的中途章節。**但
+disk 上的`FD2.SAV`章節 byte 依然 0/15 前進**——這不是這輪沒解決的缺陷,而是
+`docs/knowledge-base/25-battle-event-system.md` §9.1 這個專案自己已經
+多輪(`saveE2`/`savewriter`/`camproute`/`writerfire`)深挖過、仍未關閉的
+獨立問題:「戰鬥勝利路徑會不會真的呼叫`FD2.SAV`的 writer」。
+
+### 診斷方法(對應派工單步驟 1-2):live 逐 byte 核對 ch12 record 陣列 + 反組譯 win-check handler `0x2073d`
+
+用獨立`ch12diag`instance(`tools/dosbox_harness.sh`)重演到 mass-kill 前一刻,
+**寫入前**先逐筆 dump 敵人陣列(見下),避免重蹈「先寫入再猜測」的覆轍:
+
+- `base=0x26c600`(與先前`midtest`輪讀到的位址一致,同一份存檔/同一次 LOAD)。
+- **record[0..12]**:camp byte全部`=2`(我方,13 人滿編隊伍,與來源存檔吻合)。
+- **record[13]**:camp`=0`(敵方分類)但`+5=0x01`(死亡bit已經是1)、raw bytes
+  跟其餘正常單位長得完全不同(`01 fb 00 00 00 01 00 00...`)——判斷是一個
+  從一開始就死亡的「哨兵/佔位」record,不是真敵人,不影響勝負判定(見下)。
+- **record[14]**:camp`=1`——**這是本專案第一次觀察到的第三種camp值**(先前
+  只記錄過 0=敵/2=我方)。`+5=0x00`(存活)。
+- **record[15..24]**:camp`=0`,全部`+5=0x00`(存活)——這 10 筆才是真正的
+  敵人,加上已死的 record[13],`scan_enemy_slots`回報「11 隻敵人」與
+  `midtest`輪的數字完全吻合(證實舊輪的敵人偵測本身沒有錯)。
+- **`[0x53beb]`(loop bound,0x205be 掃描上限)live 讀值 `=25`**——與
+  record[0..24]共 25 筆完全對上,record[25]以後讀到的都是無法辨識的雜訊值
+  (112/117/132…,不是合法 camp byte),證實陣列邊界就在 25,不是掃描沒掃完。
+
+**反組譯`0x2073d`(ch12 的 win-check handler,`ghidra_batch_probe.py`
+disasm 全 10 條指令)**,證實它的結構跟 ch27 的`0x20a87`是同一個樣板:
+
+```
+0x2073d  push 0x8 / call 0x3702f          ; prologue
+0x20747  call 0x205be                      ; 共用基準勝負掃描(全部敵方死光才給 code2)
+0x2074c  push 0xe(=14) / call 0x34894      ; 查 record[14] 的 +5 bit0(死亡位)
+0x20756  test eax,eax / jz 0x20764         ; record[14] 存活(bit0==0)->跳過覆寫,直接 RET
+0x2075a  mov [0x53ecc],0x1                 ; record[14] 已死->強制覆寫成 code1(非勝利)
+0x20764  ret
+```
+
+即:ch12 的勝利條件 = 「敵方(camp==0)全部死亡」+「record[14] 必須存活」——
+與外部攻略站(`chiuinan.github.io`fd2 全章節攻略,協調端提供)記載的敗北條件
+「索爾死亡,**米亞斯多德死亡**」完美吻合:record[14](camp=1,不會被
+mass-kill 誤殺)極可能就是「米亞斯多德」,是一個獨立於敵我雙方的第三類
+劇情NPC,這個 handler 檢查的正是「米亞斯多德陣亡->中途事件」而非勝利。
+**這代表 mass-kill 只鎖定`camp==0`的既有安全設計,對 ch12 這種第三方NPC
+剛好是正確、安全的**——不會誤殺 record[14]。
+
+### 找到真正瓶頸:`confirm_end_turn()`的 2 秒等待窗口太短
+
+用不送任何額外按鍵、純被動輪詢`[0x53ecc]`(debugger read,每 0.25-0.4 秒
+一次)量測確認 YES 之後到底要多久才會翻成 2:
+
+| 時間點 | `[0x53ecc]` |
+|---|---|
+| t=1.3~6.3s | 0(仍是「戰鬥中」) |
+| **t=8.0s** | **2(勝利!)** |
+| t=9.6~11.2s | 2(維持) |
+
+舊版`confirm_end_turn()`只`sleep(2.0)`就截圖、從不重讀`[0x53ecc]`,永遠
+在勝負判定翻盤**之前**就已經放棄——這解釋了為什麼`midtest`輪(以及本文件
+所有更早輪次)觀察到的「mass-kill+End-Turn 送出但畫面/存檔毫無反應」,其實
+不是機制失效,是量測窗口系統性地太短。同一輪也順便量到`[0x53c03]`(章節
+計數器)live 從`11`(=ch12)跳到`12`,與`0x2073d`附近呼叫鏈完全獨立、但
+`docs/knowledge-base/58-remake-live-verification-log.md`續二十八已完整
+反組譯過的`FUN_00025bf4`戰役主迴圈(`[0x53ecc]==2`->無條件呼叫`0x51de9`
+[chapter]postbattle handler->該handler無條件`INC [0x53c03]`)完全吻合——
+這代表 ch12 這次觀察到的引擎層級章節前進,用的正是 doc58 續二十八已經對
+ch24 反組譯證實過的**同一套通用機制**,不是巧合或另一條路。
+
+### 修復:`fd2_chapter_sweep.py`四項改動
+
+1. **`confirm_end_turn()`改為直接輪詢`[0x53ecc]`**(新增
+   `read_pending_result_code()`/`read_chapter_index_live()`,常數
+   `ENGINE_WIN_POLL_MAX_S=15.0`,留了比實測 8 秒更寬裕的緩衝),取代舊版
+   盲目`sleep(2.0)`。回傳值也從單純截圖`Path`改成`dict`(含
+   `engine_win`/`engine_code`/`chapter_index_before/after`),讓
+   `sweep_chapter()`能拿到 ground-truth 訊號,不必再靠螢幕啟發式猜測。
+2. **`sweep_chapter()`新增`MAX_KILL_CYCLES=4`的 mass-kill/End-Turn 重試迴圈**
+   ——派工單引用協調端交叉核對的外部攻略站資料(ch12「第一回合己方結束時
+   敵方第一波援軍出現」「獸人隊長陣亡時第二波援軍立即出現」),指出部分
+   章節有回合觸發或擊殺觸發的援軍波次,單次 mass-kill 可能殺不完。重試迴圈
+   在確認勝利未觸發時重新掃描陣列,只對「camp==0 且死亡位仍是 0(真正還
+   活著)」的 record 才視為需要重殺的目標(避免把同一批已死 record 誤判成
+   新援軍、浪費重試次數——第一版有這個 bug,已修正)。**ch12 本身這輪
+   1 次循環就過(不需要用到重試),15 章節裡也只有 ch05 用了額外循環**,
+   代表援軍波次不是本輪測過的中途章節的主要卡點,但這個保險機制已就位。
+3. **`scan_enemy_slots()`移除`CONSECUTIVE_ZERO_STOP`提前中止邏輯,改成無條件
+   掃完整個`MAX_ENEMY_SCAN_SLOTS=96`範圍**——ch02 直接 live 測試踩到的
+   真實 gap 風險(舊版邏輯若敵人陣列中間出現>=4筆連續全0 record 就提前
+   停止,可能漏掉更後面的敵人),雖然最終證實 ch02 本身沒有這個 gap
+   (完整掃描依然只找到 10 筆,與舊版數字一致),但這是一個真實存在的
+   通用性缺口,修正後不再依賴「敵人陣列連續無空隙」這個未經驗證的假設。
+4. **新增`POST_WIN_DISK_POLL_MAX_S=60.0`**:引擎層級勝利確認後,不再只
+   `sleep(1.5)`就讀存檔,改成最多 60 秒、每 5 次 Return 之間重新拉存檔
+   核對章節 byte 是否前進的耐心輪詢迴圈——這是為了給 doc25 §9.1 記錄的
+   writer gate 一個誠實、充分的機會,不是假設它一定會觸發。
+
+### 修好後對 15 個中途章節即時 live 掃描:9/15 第一次拿到引擎層級勝利直接證據,0/15 拿到 disk pass
+
+用`tools/fd2_chapter_sweep.py sweep --from/--to`對 ch02-16(除 ch01,共 15 章,
+`--no-roster-pad`沿用機器上唯一真實存檔)逐章掃描,每章獨立`dosbox_harness.sh`
+instance,全數乾淨跑完(0 崩潰/0 掛起/0 tool_error),收尾`tmux -L
+fd2harness ls`/`ps aux | grep dosbox`確認乾淨:
+
+| 章節 | handler(doc25 §3) | verdict | 敵人數 | 引擎層級勝利 | 耗時(s) |
+|---|---|---|---|---|---|
+| ch02 | a(`0x206c5`) | anomaly | 10 | 否 | 617 |
+| ch03 | D(`0x205b4`預設) | anomaly | 8 | 否 | 832 |
+| ch04 | D | anomaly | 17 | 否 | 865 |
+| ch05 | D | **anomaly_engine_win_no_disk_write** | 30 | **是**(1.8s) | 678 |
+| ch06 | D | **anomaly_engine_win_no_disk_write** | 21 | **是**(3.7s) | 593 |
+| ch07 | D | anomaly | 25 | 否 | 604 |
+| ch08 | D | **anomaly_engine_win_no_disk_write** | 18 | **是**(3.8s) | 505 |
+| ch09 | D | **anomaly_engine_win_no_disk_write** | 23 | **是**(3.7s) | 588 |
+| ch10 | b(`0x20707`) | **anomaly_engine_win_no_disk_write** | 39 | **是**(3.8s) | 647 |
+| ch11 | D | anomaly | 25 | 否 | 561 |
+| ch12 | c(`0x2073d`) | **anomaly_engine_win_no_disk_write** | 11 | **是**(3.6s) | 575 |
+| ch13 | d(`0x20765`) | **anomaly_engine_win_no_disk_write** | 34 | **是** | 628 |
+| ch14 | D | **anomaly_engine_win_no_disk_write** | 54 | **是** | 588 |
+| ch15 | e(`0x20822`) | anomaly | 51 | 否 | 622 |
+| ch16 | f(`0x2084a`) | **anomaly_engine_win_no_disk_write** | 54 | **是** | 680 |
+
+**9/15 章節(ch05/06/08/09/10/12/13/14/16)第一次拿到直接、非螢幕截圖猜測
+的引擎層級勝利證據**(`[0x53ecc]`確實讀到 2,多數在確認 YES 後 2-8 秒內)。
+**6/15 章節(ch02/03/04/07/11/15)mass-kill+End-Turn 送達、敵人陣列正確
+清空,但`[0x53ecc]`從未翻成 2(也沒翻成 1)**——這 6 章目前**沒有**定案的
+根因(見下「未解問題」),誠實標記為 needs further diagnosis,不是本輪
+「修好的部分」。handler 類型(D/lettered)跟結果沒有簡單對應——D 跟 lettered
+各自都有成功跟失敗的例子(D:05/06/08/09/14成功,03/04/07/11失敗),排除了
+「只有 default handler 能贏、lettered handler 一定卡住」這個原本合理的猜測。
+
+### 意外發現並修正:doc25 §5 一段舊反組譯把兩個不同 handler 的機器碼誤合併
+
+原本記錄的「章 1(ch02)handler `0x206c5`」範例,結尾「另查單位#50/#51」
+那兩行其實屬於**下一個 handler**(`0x20707`,ch10 的`b`)——用
+`ghidra_batch_probe.py`對`0x206c5`(disasm)+`0x206dd`(續)+`bytes`(128
+bytes 原始機器碼)三條獨立管道重新核對,`0x206c5`本體在`0x20706`就`RET`
+結束,完整函式只有 66 bytes,`0x20707`緊接著是全新的`PUSH 0x8`(下一個
+handler 的標準 prologue)。已修正`docs/knowledge-base/25-battle-event-
+system.md` §5,連帶訂正了對 ch02 邏輯的理解:ch02 的 handler 只在「單位
+5-10 全部死亡」時覆寫成 code1(中途事件,不是敗北),單位 5-10 若有任何
+一個還活著則直接 RET、完全不碰`[0x53ecc]`,理論上**不應該**擋住`0x205be`
+的基準勝利判定——這代表 ch02 卡在`[0x53ecc]`永遠讀 0 的真正原因**不是**
+這段被誤合併的邏輯,依然是未解問題。
+
+### 未解問題(誠實記錄,本輪沒有牽強地套用猜測性修正)
+
+1. **ch02/03/04/07/11/15 為什麼 mass-kill 全部敵人後`[0x53ecc]`依然讀 0**:
+   ch02 已排除「單位 5-10 存活擋住」與「敵人陣列有 gap 被漏掃」兩個最可能
+   的假設(見上),真正原因未定案。合理但未驗證的候選:①`[0x53beb]`
+   (掃描上限)對這幾章可能大於`MAX_ENEMY_SCAN_SLOTS=96`,導致陣列尾端
+   還有我們沒掃到、也沒殺到的敵人;②`confirm_end_turn()`的 ring/END
+   確認序列對這幾章的部署佈局可能沒有真的送達(`find_empty_adjacent_tile`
+   有機制記錄失敗但目前的重試次數/方向搜尋範圍可能不夠);③這幾章的
+   `[0x53beb]`本身可能讀值異常(未逐章驗證,只驗證過 ch12=25)。下一輪
+   建議針對 ch02 或 ch03 做一輪比照本輪 ch12 的深度即時互動診斷(dump
+   `[0x53beb]`真實值+`find_empty_adjacent_tile`成功與否+End-Turn序列
+   是否真的送達),而非再猜測。
+2. **disk autosave 依然 0/15**:這不是本輪任務範圍要解的問題,是
+   `docs/knowledge-base/25-battle-event-system.md` §9.1 已經記錄過
+   `saveE2`/`savewriter`/`camproute`/`writerfire`四輪獨立調查、仍未完全
+   關閉的更深層問題——「戰鬥勝利後,遊戲會不會呼叫 writer 把`FD2.SAV`
+   寫回硬碟」這件事,這個專案至今只有一次(doc58續二十三/二十四/二十七
+   記錄的 ch24)間接證據(disk 章節 byte 23->24),從未有 live 斷點直接
+   命中 writer 本體。這才是真正擋住 M5 全部驗收的最終瓶頸,即使①項的
+   6 章也全部解開,沒有 disk write 機制,依然拿不到`pass`。
+
+### 對 M5 驗收的影響
+
+M5 仍是 0 pass(未變)。但本輪把 M5 未完成的原因,從先前輪次「mass-kill+
+End-Turn 是否能泛化到 ch27 以外的章節」這個懸而未決的大哉問,**縮小成兩個
+具體、獨立、範圍分明的子問題**:①9/15 已證實泛化成功(引擎層級),6/15
+仍不明原因失敗;②即使①全部成功,disk write gate 本身仍是全專案尚未關閉的
+獨立瓶頸。這是本輪最重要的誠實進展——不是產生新的`pass`,是把「不知道
+卡在哪」變成「知道卡在兩個具體、可以分別繼續攻的地方」。
+
+### 下一輪建議
+
+1. **最高投報率:對 ch02/ch03 做深度即時互動診斷**,仿照本輪對 ch12 的
+   方法(dump `[0x53beb]`真實值、逐步驗證 End-Turn 序列每一步是否真的
+   送達、record 陣列逐筆核對),搞清楚 6/15 失敗章節的真正共同根因。
+2. **次高投報率:針對 doc25 §9.1 的 writer gate 問題,專門做一輪 live
+   斷點追蹤**——`FUN_0002ff01`(`0x2ff01`)本體下斷點,搭配本輪已驗證能
+   可靠觸發引擎層級勝利的 ch05/ch06/ch08/ch09(任一皆可,4 章都是最快
+   3.7-3.8 秒就翻盤的 D 預設 handler,適合當作乾淨測試對象),在確認YES
+   後的完整 postbattle 流程(不只是本輪的 60 秒被動輪詢)全程掛
+   `LOGC`/`BPPM`追蹤,直接回答「writer 到底有沒有被呼叫、如果沒有,
+   是在哪個 gate 被擋下」——這比繼續盲目延長輪詢時間更有機會真正關閉
+   doc25 §9.1 這個開放問題。
+3. 剩餘 8 章(ch17-22、ch26、ch27)本輪未排入時間預算,可直接沿用已修好的
+   `fd2_chapter_sweep.py`(不需要再修改)繼續往下掃,擴大①項的樣本數。
