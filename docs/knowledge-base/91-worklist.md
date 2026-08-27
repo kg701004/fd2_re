@@ -1325,6 +1325,32 @@
   其餘章節。完整逐章分類表、方法論、已知限制、下一輪建議見
   `docs/knowledge-base/99-chapter-sweep-results.md`與
   `docs/knowledge-base/98-tooling-infrastructure.md`「全章節結構性掃描」一節。
+  **2026-08-27 續輪(camp-exit 導航診斷)**:派工單假設「22 章卡住是否只是已知的
+  Enter/Space 間歇丟失 bug(doc58 續五十四～續七十七)」，直接用獨立`campexit`
+  instance 重跑 doc91 本條目/UI-VIS-PREPARATION 2026-08-25 prepE2 輪已用真實
+  ch27 存檔證實可行的序列（`Right`×3 循環到出口→`Return`確認→`Return`「要進入
+  戰場嗎」YES）——**兩次 Return 都在第一次嘗試就註冊成功，零重試，證實不是輸入
+  丟失 bug**。真正成因是`fd2_chapter_sweep.py`的`advance_generic`從未實作這個
+  已知序列（21/22 章完全沒有 hint，一律落到會在預設 selection0/酒店誤觸 NPC
+  對話的通用按鍵迴圈），外加一個獨立發現的 debugger-state bug（`advance_generic`
+  逐步戰鬥偵測從未重新開啟 debugger console，第一步後永遠讀不到東西，連本來就
+  有 hint 的 ch27 也受影響）。**已修復**：新增`attempt_camp_exit()`取代 ch27
+  專屬 hint 成為全章節首選，22 個原本卡住的章節 + ch27 重跑，**23/23 全數從
+  `needs_manual_followup`（從未偵測到戰鬥）進步到`anomaly`（可靠走出軍營、
+  觸發確認框、偵測到戰鬥、掃描並標記敵方死亡、送出 End-Turn 捷徑）**。**意外
+  發現且誠實記錄未解的第二層問題**：戰鬥陣列指標會在戰前走位過場動畫途中被
+  重新配置（純被動時間閘門，非輸入閘門，已修正掃描邏輯正確重新讀取指標——ch12
+  修復後正確找到 11 個敵人而非先前的 1 個），但同一套修復套用到 ch27 時，15 秒
+  被動輪詢完全沒有變化、穩定只有 1 筆記錄，與 ch12 行為不同，且**連 ch27 本身都
+  沒有重現 doc58 續五十七～六十三人工操作記錄過的 63 個敵人**——這代表本行
+  「敵人掃描/死亡 signature/stride 只針對 ch27 驗證過」的既有誠實限制被進一步
+  坐實，且「敵人陣列/win-condition timing 因章節而異」是一個新的、需要放慢步調
+  真人即時互動驗證才能解的開放問題，本輪未強行套用猜測性修正。**因此 23 章仍
+  全部沒有拿到`pass`verdict**（新分布：0 pass / 23 anomaly / 6
+  needs_manual_followup(prep-select) / 1 needs_manual_followup(ch01)），M5
+  仍不能視為完成，但「camp-map 章節能否自動走出軍營觸發戰鬥」這個子問題已從
+  「未知/卡住」變成「可靠、可重現」。完整寫法見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪」小節。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

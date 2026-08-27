@@ -122,7 +122,103 @@ fd2harness ls`/`tmux ls`(default socket)收尾核對三方都乾淨,doc48 §8.4 
 - 每章`prepare_chapter_save()`的 round-trip 自檢(`fd2save.decode`)全程通過,沒有任何
   一章因為存檔編碼錯誤而提早失敗。
 
-## 下一輪建議
+## 2026-08-27 續輪:camp-exit 導航診斷(對應「下一輪建議」#2)
+
+### 誠實結論先講:不是輸入丟失,是工具從沒試過已知可行的序列
+
+派工單假設「camp-exit 是否只是已知的 Enter/Space 間歇丟失 bug」,直接用獨立
+`campexit` instance(WSL2,`tools/dosbox_harness.sh`)重跑 ch12(`town_ch12`,已在
+`91-worklist.md` UI-VIS-TOWN 條目驗證過是 variant1)驗證doc91 UI-VIS-PREPARATION
+2026-08-25 prepE2 輪已經用真實 ch27 存檔證實可行的序列——`Right`×3(從預設
+selection0/酒店 循環到 selection2/出口)→`Return`(離開確認)→`Return`(「要進入
+戰場嗎?」YES)。**結果:兩次 `Return` 都在第一次嘗試就註冊成功,全程沒有一次
+需要重送**——這代表舊有的、確實存在別處的 Enter/Space 間歇丟失 bug（doc58 續
+五十四～續七十七）**不是**這一輪 0/22 camp-map 掃描結果的成因。真正成因是
+`tools/fd2_chapter_sweep.py` 的 `advance_generic` 根本沒有實作這個已知序列——除
+ch27 外的 21 章完全沒有 hint,一律落到 `_ADVANCE_KEY_CYCLE`(以裸 `Return` 開
+頭,在預設 selection0/酒店就直接開啟酒店 NPC 對話/名冊瀏覽器,永遠走不到出口);
+就連 ch27 自己的 hint 也混入了會打斷戰前對白流程的多餘 `Escape`/`Down`。
+
+### 另外揪出一個獨立的 debugger-state bug
+
+驗證過程中發現 `advance_generic` 逐步迴圈裡呼叫 `read_battle_array_base()` 前
+從未重新 `enter_debugger`——這個函式底層送出的 `D` debugger console 指令只有在
+debugger TUI 真的開著時才有效,但 `sweep_chapter` 在進入這個迴圈前已經呼叫過
+一次 `debugger_cmd(name,"RUN")` 把它關閉並恢復模擬器。也就是說**這個迴圈自己的
+戰鬥偵測從第一步之後就沒再讀到過任何東西**——這解釋了為什麼就連本來就有 hint
+的 ch27,在完整 30 章掃描裡也一樣是 `needs_manual_followup`。已一併修正(逐步
+補上 enter_debugger/RUN 配對)。
+
+### 修復:`attempt_camp_exit()`,取代 ch27 專屬 hint 成為全章節首選
+
+新增 `attempt_camp_exit()`,對所有章節(不再只是 ch27)第一個嘗試:`Right`×3→
+`Return`(exit confirm,失敗重試至多 4 次,作為對別處確實存在的 Enter/Space bug
+的廉價保險,不代表本輪重現過這個 bug)→`Return`(YES confirm,同樣可重試)→
+最多 20 次 `Return` 逐步推進戰前對白,每步都正確地重新 `enter_debugger`/`RUN`
+檢查戰鬥陣列指標。`KNOWN_NAVIGATE_HINTS` 改為預設空字典,只作為未來個別章節
+真的需要不同序列時的 override 機制。
+
+**驗證:22 個原本卡住的章節(ch02-11/13-22/26)+ ch27 重跑,23/23 全數从
+`needs_manual_followup`(從未偵測到戰鬥)進步到 `anomaly`(可靠走出軍營、
+觸發「要進入戰場嗎?」確認框、偵測到戰鬥陣列指標、掃描並標記敵方死亡signature、
+送出 End-Turn 捷徑)**,每章耗時 146-200s(遠快於原本 124s/章 卻連戰鬥都沒找到的
+`advance_generic`)。完整結果見 `.wsl_build/chapter_sweep_v2/results_merged.json`。
+
+### 意外發現的第二層問題(超出本次派工單範圍,誠實記錄不強修)
+
+23/23 章的 `anomaly` verdict 都卡在同一句:「敵人已掃描/已標記死亡/End-Turn 已
+送出,但章節 byte 沒有前進」。追查後發現這其實是**兩層問題疊在一起**:
+
+1. **戰鬥陣列指標本身會在戰前走位過場動畫途中被重新配置**——一個過渡性的早期
+   配置(只有1筆記錄)幾秒後會被真正配置的完整陣列取代。用一支不送任何按鍵、
+   純被動輪詢的獨立探針(`campexit_probe3`,ch12)證實:t=0s 時 base 指標 A 只有
+   1 筆記錄,t=5s 起 base 指標**變成另一個位址** B,穩定 11 筆記錄,一路到
+   t=40s 都沒再變過——純粹是被動時間閘門,不是輸入閘門,不需要額外按鍵。第一版
+   修復只在**原始**指標上重掃、從未重新讀取指標本身,已修正為每輪都重新
+   `read_battle_array_base()`。ch12 用此修復重跑後正確找到 11 個敵人並全數標記
+   死亡(而非先前的 1 個)。
+2. **但同一套修復套用到 ch27 上,6 輪、每輪 2.5s(共 15s+)的被動輪詢裡指標
+   完全沒有變化,穩定只有 1 筆記錄**——與 ch12 的行為不同,顯示不同章節的戰鬥
+   陣列/敵人重生時機**不能一概而論**,doc98/`fd2_chapter_sweep.py`原有的誠實
+   限制(「敵人掃描/死亡 signature/stride 只針對 ch27 驗證過，未跨章節交叉核
+   對」)在这一輪被進一步坐實,而且連 ch27 本身用這條新的快速自動化路徑重新
+   驗證時,都**沒有**重現 doc58 續五十七～續六十三人工操作記錄過的 63 個敵人
+   ——很可能該輪人工操作在按 End-Turn 之前有花更長真實時間、或有额外走位/
+   互動步驟,不是單純的「送出確認鍵→等幾秒→End-Turn」。
+3. 這第二層問題不是本次派工單「camp-exit 導航是否可達」要回答的問題,且明顯
+   需要针对每章甚至 ch27 本身重新做一輪真正的即時互動式驗證(而非本輪這種快速
+   自動化 timing 探針)才能解——**誠實記錄為新開放項,本輪不強行套用猜測性修
+   正**。`sweep_chapter` 的敵人掃描 settle 迴圈已改為固定跑滿 6 輪(每輪 2.5s)
+   取最大敵人數,取代了曾經在 ch27 上過早判定「已穩定」而漏掉真實敵人陣列的
+   兩輪-連續-相同即視為穩定的邏輯——這只是讓「掃到什麼就如實回報什麼」更可靠,
+   不等於解決了第二層問題本身。
+
+### 影響 M5 驗收的結論
+
+camp-exit 導航本身(本次派工單的目標)**已解**,且证实根因是「工具從未實作
+已知可行序列」+「一個獨立的 debugger-state bug」,兩者皆與 doc58 記錄的
+Enter/Space 間歇丟失 bug 無關(本輪操作中一次都沒重現那個 bug)。但這代表
+`fd2_chapter_sweep.py` 的整體 verdict 分布從「0 pass / 0 anomaly / 30
+needs_manual_followup」變成「0 pass / 23 anomaly / 6 needs_manual_followup
+(prep-select) / 1 needs_manual_followup(ch01, 舊有 caveat)」——**沒有任何一
+章這輪拿到 `pass`**,因為第二層問題(敵人陣列/win-condition timing)阻擋了
+所有 23 章的最終章節 byte 前進確認。M5「正常玩法可達性驗證」因此仍不能視為
+完成,但「camp-map 章節能不能自動走出軍營觸發戰鬥」這個子問題已經從「未知/
+卡住」變成「可靠、可重現」。
+
+## 下一輪建議(2026-08-27 新增,取代原建議 #2)
+
+1. **最高投報率(新):追查「戰鬥陣列/敵人重生時機因章節而異」**——ch12 的完整
+   敵人陣列在 YES 確認後約 5 秒才配置好(之前是過渡性的 1 筆記錄陣列),但同一套
+   邏輯套到 ch27 上,15 秒被動輪詢完全沒有變化。需要對至少 2-3 個章節做一輪
+   真正放慢步調、每一步都截圖+讀記憶體核對的即時互動式驗證(不能只延長被動
+   sleep),搞清楚「End-Turn 確認鍵送出的時機」與「戰鬥陣列真正就緒的時機」
+   兩者的關係,以及 ch27 本身用新的快速路徑重跑為何沒重現 doc58 續五十七～
+   六十三記錄過的 63 個敵人。這是目前唯一擋住任何一章拿到真正 `pass` verdict
+   的問題。
+2. **camp-map 圍籬缺口本身已解**(見上方「2026-08-27 續輪」),不再是待辦。
+
+## 下一輪建議(原始,2026-08-27 之前)
 
 1. **最高投報率:先攻 6 章 prep-select 的選人門檻,而不是 camp-map 的圍籬缺口**——這 6
    章(ch23/24/25/28/29/30)已經結構性跳過了最難的營帳導航,只剩「送指定次數的確認鍵

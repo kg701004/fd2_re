@@ -366,33 +366,138 @@ def file_md5(path: Path) -> str:
 # roughly the middle/bottom/right of the visible map where prior live
 # rounds have found exits/fence-gaps -- rather than committing to only one,
 # since neither this tool nor any prior round has a reliable way to tell
-# which kind of node it landed on ahead of time.
+# which kind of node it landed on ahead of time. Kept ONLY as the last-
+# resort fallback after attempt_camp_exit() below has already failed --
+# see the 2026-08-27 "campexit" diagnostic round (docs/knowledge-base/99-
+# chapter-sweep-results.md) that found this fallback was doing ALL the
+# work for 22/30 chapters when it should never have needed to.
 _ADVANCE_KEY_CYCLE = ["Return", "Down", "Right", "Return", "Escape", "Right", "Down", "Return"]
 
-# Chapter-specific navigate hints: an explicit key list to try BEFORE
-# falling back to _ADVANCE_KEY_CYCLE, for the handful of chapters this
-# project has deep prior live-verification knowledge of. NOT a claim that
-# this generalizes -- exactly the same caveat as
-# tools/dosbox_diff_harness.py's reach_town_hub() (scene-specific, hand-
-# composed). ch27's post-load node has been observed as a WALKABLE camp
-# map (tents/fence, no text menu) in this tool's own 2026-08-27 validation
-# run -- pure directional taps (no Enter) for the first stretch, to avoid
-# what was observed to happen otherwise: an early Enter interacts with the
-# tavern (酒店) NPC and drops into its roster/character-sheet browser
-# instead of continuing toward the camp's exit gate.
-KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {
-    # doc58 續五十七/五十八/六十二's most-repeated working ch27 sequence for
-    # the icon-style camp menu variant ("軍營Right×3→出口→YES"), tried
-    # first; falls through to a walkable-map-style probe (several short
-    # directional bursts in different directions, since this tool's own
-    # 2026-08-27 validation runs observed the WALKABLE variant instead and
-    # a single fixed direction just walks into whichever NPC tent is
-    # nearest) if the icon sequence doesn't land in a battle.
-    27: ["Right", "Right", "Right", "Return", "Return"]
-        + ["Escape", "Down", "Down", "Right", "Right", "Return"]
-        + ["Escape", "Right", "Right", "Right", "Down", "Return"]
-        + ["Escape", "Down", "Down", "Down", "Return"],
-}
+# Chapter-specific navigate hints: an explicit key list that FULLY REPLACES
+# both attempt_camp_exit() and _ADVANCE_KEY_CYCLE for a given chapter, for
+# the rare case a chapter is known to need something genuinely different.
+# Empty by default as of the 2026-08-27 fix -- attempt_camp_exit() below is
+# now the general-purpose first attempt for every chapter (see that
+# function's docstring for why a single hard-coded ch27-only hint was
+# replaced instead of extended).
+KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
+
+# doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
+# town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
+# 酒店(tavern), 1 武器店(weapon shop), 2 出口(EXIT), 3 道具店(item shop),
+# 4 教會(church). The scene consistently loads with selection0 (酒店)
+# highlighted (confirmed fresh in the 2026-08-27 "campexit" diagnostic
+# round below, and matches every prior live round in doc91/doc58). Right
+# cycles DOWN through the index (0->4->3->2->1->0, per doc91's
+# "另實測Right 0→4"), so Right x3 from the default selection0 reaches
+# selection2 (出口) -- this is doc91 UI-VIS-PREPARATION's 2026-08-25 prepE2
+# round's exact, real-save-verified "Right×3 cycle到「出口」" sequence.
+CAMP_EXIT_CYCLE_KEYS = ["Right", "Right", "Right"]
+
+
+def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
+                       confirm_retries: int = 4, dialogue_steps: int = 20) -> dict | None:
+    """Try the doc91/doc58-established "town-hub camp -> exit -> battle"
+    sequence: cycle to the 出口 (EXIT) hotspot, confirm it, confirm the
+    resulting "要進入戰場嗎?" YES/NO prompt (YES is the default highlight),
+    then Enter-advance through however many lines of pre-battle dialogue
+    the chapter has (this varies per chapter and is NOT bounded by any
+    known constant, hence the bounded polling loop) until the engine-level
+    battle-array pointer (read_battle_array_base) goes live.
+
+    WHY THIS EXISTS (2026-08-27 fix): earlier rounds of this tool treated
+    "no reliable camp-exit sequence" as an open RE puzzle and fell back to
+    the generic, chapter-agnostic _ADVANCE_KEY_CYCLE for 22/30 chapters
+    (99-chapter-sweep-results.md's first-round sweep), which never once
+    found a battle. A direct diagnostic (instance 'campexit', ch12's
+    already-validated patched.SAV, docs/knowledge-base/99-chapter-sweep-
+    results.md's follow-up section) tested the ALREADY-DOCUMENTED doc91
+    UI-VIS-PREPARATION sequence directly, bypassing this tool's generic
+    loop entirely: it worked on the very FIRST attempt, both for the exit-
+    confirm Return and the YES-confirm Return -- no input-drop retries were
+    needed even once across a full run. So the dominant cause of the first
+    round's 0/22 camp-map pass rate was that _ADVANCE_KEY_CYCLE never tried
+    this sequence at all (it opens with a bare Return, which at the default
+    selection0/酒店 immediately drops into the tavern's roster/character
+    browser instead), NOT the documented Enter/Space input-drop bug (doc58
+    續五十四..續七十七) -- that bug is real and still documented elsewhere
+    in this project, just not what was biting this tool. The retries below
+    are kept anyway as cheap insurance against that known, separately-
+    confirmed flakiness, not because this round reproduced it.
+
+    Returns the same shape as advance_generic()'s success dict
+    ({"battle_base": int, "steps_used": int, "max_stall_seen": 0}) if a
+    battle was confirmed via the engine pointer, else None (caller should
+    fall back to the generic loop -- e.g. a prep-select chapter that skips
+    the camp entirely, where this sequence is a mostly-harmless no-op that
+    just wastes a handful of steps).
+    """
+    step = 0
+    for key in CAMP_EXIT_CYCLE_KEYS:
+        send_keys(name, key)
+        time.sleep(0.6)
+        screenshot(name, shots_dir / f"campexit_{step:03d}_cycle.png")
+        step += 1
+    log.append("attempt_camp_exit: sent Right x3 (default selection0/酒店 -> selection2/出口 per doc91)")
+
+    def _confirm_with_retry(label: str) -> bool:
+        nonlocal step
+        pre_hash = file_md5(screenshot(name, shots_dir / f"campexit_{step:03d}_pre_{label}.png"))
+        for attempt in range(1, confirm_retries + 1):
+            send_keys(name, "Return")
+            time.sleep(1.0)
+            shot = screenshot(name, shots_dir / f"campexit_{step:03d}_{label}_attempt{attempt}.png")
+            step += 1
+            post_hash = file_md5(shot)
+            if post_hash != pre_hash:
+                log.append(f"attempt_camp_exit: {label} confirm registered on attempt {attempt}/{confirm_retries}")
+                return True
+            log.append(f"attempt_camp_exit: {label} confirm attempt {attempt}/{confirm_retries} produced no visible "
+                        f"change, retrying (doc58 續五十四..續七十七 Enter/Space input-drop workaround)")
+        log.append(f"attempt_camp_exit: {label} confirm never registered after {confirm_retries} attempts, giving up")
+        return False
+
+    if not _confirm_with_retry("exit_confirm"):
+        return None
+    if not _confirm_with_retry("yes_confirm"):
+        return None
+
+    def _check_battle() -> int | None:
+        # read_battle_array_base's "D ..." debugger console command only
+        # reaches the debugger TUI while it's open -- MUST bracket every
+        # poll with enter_debugger (Alt+Pause open) / RUN (resume + close),
+        # same discipline as sweep_chapter's own first check. The original
+        # advance_generic loop polled without this bracketing (it relied on
+        # a single enter_debugger/RUN pair done ONCE by its caller before
+        # the loop started), which meant every poll after the first step
+        # was reading a closed/stale debugger console and could never
+        # observe a battle -- a second, independent bug from the missing
+        # navigate sequence, fixed here for this new polling loop and left
+        # documented for advance_generic below.
+        enter_debugger(name)
+        time.sleep(0.3)
+        b = read_battle_array_base(name)
+        debugger_cmd(name, "RUN")
+        time.sleep(0.2)
+        return b
+
+    for i in range(1, dialogue_steps + 1):
+        base = _check_battle()
+        if base is not None:
+            log.append(f"attempt_camp_exit: battle confirmed via engine pointer after {i - 1} dialogue-advance taps")
+            return {"battle_base": base, "steps_used": step + i, "max_stall_seen": 0}
+        send_keys(name, "Return")
+        time.sleep(0.8)
+        screenshot(name, shots_dir / f"campexit_{step + i:03d}_dialogue{i:02d}.png")
+    # One final check after the last tap, in case the battle state only
+    # becomes readable a beat after the last screen transition.
+    base = _check_battle()
+    if base is not None:
+        log.append(f"attempt_camp_exit: battle confirmed via engine pointer after final dialogue-advance tap")
+        return {"battle_base": base, "steps_used": step + dialogue_steps, "max_stall_seen": 0}
+    log.append(f"attempt_camp_exit: exit+YES confirmed but no battle detected within {dialogue_steps} "
+               f"dialogue-advance taps -- falling back to the generic loop")
+    return None
 
 
 def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int = 48,
@@ -410,7 +515,17 @@ def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int =
     if hint_keys:
         log.append(f"advance_generic: using a chapter-specific navigate hint ({len(hint_keys)} keys) before falling back to the generic cycle")
     for step in range(max_steps):
+        # See attempt_camp_exit()'s _check_battle() docstring comment: the
+        # debugger console must be (re)opened before every poll and closed
+        # (RUN) after, or this always reads a stale/closed console. Fixed
+        # here 2026-08-27 alongside attempt_camp_exit -- this loop is now
+        # only reached as a last-resort fallback, but should still report
+        # a battle correctly if it stumbles into one.
+        enter_debugger(name)
+        time.sleep(0.3)
         base = read_battle_array_base(name)
+        debugger_cmd(name, "RUN")
+        time.sleep(0.2)
         if base is not None:
             log.append(f"advance_generic: battle detected at step {step} (array base {base:#x})")
             return {"battle_base": base, "steps_used": step, "max_stall_seen": max_stall_seen}
@@ -555,16 +670,68 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
         time.sleep(0.3)
 
         if base is None:
-            log.append("post-load state: battle array pointer not plausible -> treating as story/town node, using generic advance loop")
+            log.append("post-load state: battle array pointer not plausible -> treating as story/town node")
             hint = KNOWN_NAVIGATE_HINTS.get(chapter_n) if use_navigate_hints else None
-            adv = advance_generic(name, shots_dir, log, hint_keys=hint)
-            base = adv["battle_base"]
+            if hint:
+                log.append(f"chapter {chapter_n} has an explicit KNOWN_NAVIGATE_HINTS override, skipping attempt_camp_exit")
+                adv = advance_generic(name, shots_dir, log, hint_keys=hint)
+                base = adv["battle_base"]
+            else:
+                log.append("trying attempt_camp_exit (doc91 town-hub Right x3 -> 出口 -> YES -> dialogue-advance sequence) first")
+                adv = attempt_camp_exit(name, shots_dir, log) if use_navigate_hints else None
+                base = adv["battle_base"] if adv else None
+                if base is None:
+                    log.append("attempt_camp_exit did not find a battle, falling back to the generic advance loop")
+                    adv = advance_generic(name, shots_dir, log, hint_keys=None)
+                    base = adv["battle_base"]
 
         if base is not None:
             log.append(f"battle confirmed, array base={base:#x}")
+            # 2026-08-27 two-part finding (ch12/ch27 live runs through
+            # attempt_camp_exit, then confirmed with a dedicated no-keypress
+            # timing probe -- docs/knowledge-base/99-chapter-sweep-
+            # results.md "campexit" section has the full writeup):
+            #   1. The battle-array POINTER ITSELF gets reassigned partway
+            #      through the walk-in/approach cutscene -- a transient
+            #      early allocation (1 stale/placeholder record) is replaced
+            #      by the real, fully-populated array a few seconds later
+            #      (observed: pointer 0x1fc6c0 with 1 record at t=0s, a
+            #      DIFFERENT pointer with 11 records by t=5s, stable through
+            #      t=40s). An earlier version of this settle loop kept
+            #      rescanning the ORIGINAL base and never re-fetched the
+            #      pointer, so it always saw the same stale 1-record
+            #      snapshot no matter how long it waited.
+            #   2. This is a pure passive TIME gate, not an input gate -- a
+            #      dedicated probe that sent zero extra keypresses after the
+            #      YES confirm still saw the count grow 1->11 by t=5s and
+            #      stay there through t=40s. No extra Enter taps needed.
+            # Fix: re-fetch read_battle_array_base() (not just rescan the
+            # old base) each settle round, and ALWAYS run the full settle
+            # budget rather than stopping at the first apparent plateau --
+            # an early-stop-on-2-matching-rounds version was tried and
+            # broke too early for ch27 (whose transient 1-enemy base
+            # stayed put for 2+ consecutive 2s rounds before the real
+            # array showed up), while it happened to work for ch12 (whose
+            # transient phase was shorter). Track the round with the most
+            # enemies found across the WHOLE fixed budget instead of
+            # guessing when it has "settled".
+            best_base, best_enemies = base, []
+            settle_rounds = 6
+            for settle_round in range(settle_rounds):
+                time.sleep(2.5)
+                enter_debugger(name)
+                time.sleep(0.4)
+                cur_base = read_battle_array_base(name)
+                cur_enemies = scan_enemy_slots(name, cur_base, log) if cur_base is not None else []
+                debugger_cmd(name, "RUN")
+                time.sleep(0.2)
+                log.append(f"settle round {settle_round + 1}/{settle_rounds}: base={cur_base}, enemies={len(cur_enemies)} "
+                            f"(best so far: base={best_base}, enemies={len(best_enemies)})")
+                if len(cur_enemies) >= len(best_enemies):
+                    best_base, best_enemies = cur_base, cur_enemies
+            base, enemy_addrs = best_base, best_enemies
             enter_debugger(name)
             time.sleep(0.5)
-            enemy_addrs = scan_enemy_slots(name, base, log)
             if enemy_addrs:
                 mass_kill_enemies(name, enemy_addrs, log)
             debugger_cmd(name, "RUN")
@@ -675,7 +842,9 @@ def build_parser():
                      help="keep the source save's roster as-is instead of padding with synthetic members "
                           "(use for a chapter whose real save already has a validated-working roster, e.g. ch27)")
     sp.add_argument("--no-navigate-hints", action="store_true",
-                     help="skip KNOWN_NAVIGATE_HINTS even for chapters that have one, and go straight to the generic advance loop")
+                     help="skip both KNOWN_NAVIGATE_HINTS overrides and attempt_camp_exit(), and go straight to the "
+                          "chapter-agnostic generic advance loop (useful for re-measuring how much attempt_camp_exit "
+                          "is actually contributing)")
     sp.set_defaults(func=cmd_sweep)
 
     return p
