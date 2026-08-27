@@ -406,18 +406,35 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
     camp/town scene, and only ch27 actually reached the documented "13-person
     party circle" victory scene. In other words, ch02/ch12 most likely never
     reached a genuine win via this function at all -- the single hardcoded
-    `Up` below is, by this docstring's own admission two paragraphs up, only
-    confirmed for ch27's specific unit cluster (very possibly compounded by
-    the roster-size-mismatch caveat in doc99: ch02/ch12's synthetic saves
-    keep the full late-game 13-person roster, which changes the deployment
-    cluster's shape from what a real ch02/ch12 save would have). This is a
-    real, still-open generalization gap in THIS function, not a save-
-    construction bug -- see doc99's "branchcheck" section for the full
-    writeup and suggested next steps (an adaptive multi-direction empty-tile
-    probe instead of a hardcoded `Up`).
+    `Up` used at the time was, by this docstring's own admission two
+    paragraphs up, only confirmed for ch27's specific unit cluster (very
+    possibly compounded by the roster-size-mismatch caveat in doc99: ch02/
+    ch12's synthetic saves keep the full late-game 13-person roster, which
+    changes the deployment cluster's shape from what a real ch02/ch12 save
+    would have). This was a real, still-open generalization gap in THIS
+    function, not a save-construction bug -- see doc99's "branchcheck"
+    section for the full writeup.
+
+    2026-08-27 "endturngen" round -- GENERALIZED, closing the gap flagged
+    directly above: the hardcoded `Up` is replaced with
+    find_empty_adjacent_tile() (see its own docstring), which checks the
+    live HUD thumbnail (doc58's actual documented empty-tile signal -- a
+    plain terrain thumbnail with no character portrait/HP digits, not a
+    guess) and tries Up/Down/Left/Right in turn, undoing each failed
+    attempt before trying the next, until it finds a tile the game itself
+    confirms is empty -- or honestly reports failure if none of the 4
+    adjacent tiles qualify, rather than blindly pressing Enter into a
+    probably-occupied tile the way the old code did for every chapter but
+    ch27. See docs/knowledge-base/99-chapter-sweep-results.md's
+    "endturngen" section for the live cross-chapter validation results.
     """
-    send_keys(name, "Up")  # move cursor off the unit cluster onto empty ground (fix #2 above)
-    time.sleep(0.5)
+    found_empty, _ = find_empty_adjacent_tile(name, shots_dir, log)
+    if not found_empty:
+        log.append("confirm_end_turn: WARNING -- find_empty_adjacent_tile did not confirm an empty tile "
+                    "within one step in any of the 4 directions; opening the ring anyway at the cursor's "
+                    "(likely still-occupied) position as a last-resort best-effort fallback -- this will "
+                    "probably select/act on a unit instead of opening the system ring, and is EXPECTED to "
+                    "fail honestly for this chapter's deployment layout rather than silently claim success")
     send_keys(name, "Return")  # open the command ring
     time.sleep(0.6)
     send_keys(name, "Down")
@@ -434,8 +451,8 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
                    f"prompt was up, per doc58 續六十二's exact sequence, before confirming YES")
     send_keys(name, "Return")  # confirms YES
     time.sleep(2.0)
-    log.append("confirm_end_turn: sent Up(empty tile)->Enter(open ring)->Down(END)->Enter(confirm)->"
-               "[re-kill]->Enter(YES)")
+    log.append(f"confirm_end_turn: find_empty_adjacent_tile(found={found_empty})->Enter(open ring)->"
+               f"Down(END)->Enter(confirm)->[re-kill]->Enter(YES)")
     return screenshot(name, shots_dir / "post_end_turn.png")
 
 
@@ -563,6 +580,30 @@ def screen_looks_like_dialogue(png_path: Path) -> bool:
 BATTLE_HUD_BOX_REGION = (205, 520, 345, 598)  # (left, top, right, bottom)
 BATTLE_HUD_BLUE_FRAC_THRESHOLD = 0.15
 
+# 2026-08-27 "endturngen" round: a THIRD false positive, found live via this
+# round's own find_empty_adjacent_tile() sanity checks on ch02 and ch27 --
+# a full-screen story/flashback dialogue box (e.g. ch02's throne-room
+# succession-dispute scene, and ch27's "這裡就是遺跡了嗎" ruins line) that
+# includes a large character portrait defeats BOTH existing checks at once:
+# the portrait's varied pixels push screen_looks_like_dialogue()'s strip
+# variance just over its 9000 threshold (14000+ measured), and the panel's
+# flat theme-blue background still reads as "HUD blue" inside
+# BATTLE_HUD_BOX_REGION -- so screen_shows_battle_hud() returned True for a
+# screen that was not remotely a real battle. THE FIX: the genuine HUD box
+# is small (~140x78) and floats over the map with visible terrain just past
+# its right edge; a full-screen dialogue panel keeps going well past that
+# edge. Sampling a strip just to the right of the box
+# (BATTLE_HUD_RIGHT_STRIP_REGION) and requiring it NOT be mostly the same
+# theme-blue distinguishes the two cleanly: live samples read 0.000-0.050
+# "blue" just right of a genuine HUD box (map terrain there) vs 0.906-0.930
+# for both flashback-dialogue false positives (panel still blue that far
+# right). Verified against all 6 samples collected so far (4 genuine
+# HUD-box screenshots across empty/occupied tiles, 2 flashback-dialogue
+# false positives) with zero misclassifications after this fix, vs 2/6
+# misclassified before it.
+BATTLE_HUD_RIGHT_STRIP_REGION = (350, 520, 420, 598)
+BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC = 0.3
+
 
 def _is_hud_blue(pixel: tuple[int, int, int]) -> bool:
     r, g, b = pixel
@@ -589,7 +630,15 @@ def screen_shows_battle_hud(png_path: Path) -> bool:
     battle-map HUD screen does NOT (its terrain view has high variance) --
     so AND-ing the two checks together clears both false positives while
     still passing every true-positive and cutscene-false-positive case
-    tried live this round (12/12 in the validation sweep that caught this)."""
+    tried live this round (12/12 in the validation sweep that caught this).
+
+    2026-08-27 "endturngen" round -- THIRD guard added (see
+    BATTLE_HUD_RIGHT_STRIP_REGION's module comment above): also require
+    that the strip just past the box's right edge is NOT still the same
+    theme-blue, which rules out full-screen story/flashback dialogue boxes
+    with a large character portrait (they defeated both earlier checks at
+    once -- portrait pixels push the dialogue-variance check over threshold,
+    and the panel's flat blue reads as "HUD blue" too)."""
     try:
         from PIL import Image
     except ImportError:
@@ -600,7 +649,185 @@ def screen_shows_battle_hud(png_path: Path) -> bool:
     box = im.crop(BATTLE_HUD_BOX_REGION)
     pixels = list(box.getdata())
     frac = sum(1 for p in pixels if _is_hud_blue(p)) / len(pixels)
-    return frac > BATTLE_HUD_BLUE_FRAC_THRESHOLD
+    if not (frac > BATTLE_HUD_BLUE_FRAC_THRESHOLD):
+        return False
+    right_pixels = list(im.crop(BATTLE_HUD_RIGHT_STRIP_REGION).getdata())
+    right_frac = sum(1 for p in right_pixels if _is_hud_blue(p)) / len(right_pixels)
+    return right_frac < BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC
+
+
+# 2026-08-27 "endturngen" round: a SECOND, finer-grained HUD read, used to
+# replace confirm_end_turn()'s old hardcoded single `Up` cursor move (see
+# that function's docstring history) with a chapter-general empty-tile
+# search. doc58's "續" log (e.g. the live screenshots behind aiE2_findempty*
+# vs aiE2_cursor2/3/s18_openground -- see docs/knowledge-base/99-chapter-
+# sweep-results.md's "endturngen" section for the calibration writeup) shows
+# the SAME small HUD box has a "thumbnail" sub-region in its top-left corner
+# that renders two distinct ways depending on what the browsing cursor is
+# currently over:
+#   - on a unit: a colorful character face PORTRAIT, with a bright white/
+#     light-blue HP NUMBER overlaid across its bottom (e.g. "860", "751").
+#   - on empty ground: a plain, muted terrain-tile texture (grass green /
+#     rock brown-gray) with NO overlaid digits at all -- only the "A+XX
+#     D+XX" terrain-bonus text to the box's right (present in BOTH cases,
+#     so it cannot be used to tell them apart; the thumbnail is the only
+#     distinguishing region).
+# This is a strictly finer signal than screen_shows_battle_hud() (which only
+# proves "a movable battle cursor exists right now", true in both cases) --
+# it answers "is the tile UNDER the cursor empty", the actual precondition
+# doc58 續六十二 established for Enter to open the system ring instead of
+# acting on a unit. Calibrated against 4 live screenshots this round (2
+# occupied thumbnails with real HP digits "860"/"751", 2 empty thumbnails):
+# occupied reads 0.030-0.044 bright-pixel fraction in the thumbnail crop,
+# empty reads 0.0013 both times -- better than a 20x gap, threshold set
+# well inside it.
+BATTLE_HUD_THUMBNAIL_REGION = (
+    BATTLE_HUD_BOX_REGION[0] + 3, BATTLE_HUD_BOX_REGION[1] + 3,
+    BATTLE_HUD_BOX_REGION[0] + 58, BATTLE_HUD_BOX_REGION[1] + 58,
+)
+HUD_THUMBNAIL_BRIGHT_FRAC_THRESHOLD = 0.01
+
+
+def _is_hp_digit_bright(pixel: tuple[int, int, int]) -> bool:
+    r, g, b = pixel
+    return r > 180 and g > 190 and b > 200
+
+
+def cursor_tile_is_empty(png_path: Path) -> bool | None:
+    """True if the HUD box's thumbnail sub-region shows a plain terrain
+    tile (no portrait, no HP digits) -- i.e. the browsing cursor currently
+    sits on empty ground and Enter will open the system ring rather than
+    select/act on whatever unit is there. False if a portrait+HP-number
+    thumbnail is showing (cursor is on a unit). None if the battle HUD box
+    itself isn't visible at all (screen_shows_battle_hud() false) -- callers
+    must not treat None as either True or False, it means "can't tell"."""
+    if not screen_shows_battle_hud(png_path):
+        return None
+    try:
+        from PIL import Image
+    except ImportError:
+        return None  # fail to "can't tell", same posture as screen_shows_battle_hud's ImportError path
+    im = Image.open(png_path).convert("RGB")
+    pixels = list(im.crop(BATTLE_HUD_THUMBNAIL_REGION).getdata())
+    frac = sum(1 for p in pixels if _is_hp_digit_bright(p)) / len(pixels)
+    return frac < HUD_THUMBNAIL_BRIGHT_FRAC_THRESHOLD
+
+
+_OPPOSITE_DIRECTION = {"Up": "Down", "Down": "Up", "Left": "Right", "Right": "Left"}
+EMPTY_TILE_SEARCH_ORDER = ["Up", "Down", "Left", "Right"]
+
+# 2026-08-27 "endturngen" round: bounded Return-tap budget for
+# find_empty_adjacent_tile()'s leading dialogue-clear step (see that
+# function's docstring for why it exists -- a lingering scripted dialogue
+# beat surviving the settle loop, reproduced 3/3 live chapters). Kept modest
+# (not POSTBATTLE_MONTAGE_TAPS-sized) because this runs BEFORE End Turn is
+# even attempted; a long-running scripted sequence here more likely means a
+# genuinely unusual chapter that should honestly fall through to
+# find_empty_adjacent_tile()'s own "found=False" reporting than that more
+# taps would have gotten through it.
+DIALOGUE_CLEAR_MAX_TAPS = 20
+
+
+def find_empty_adjacent_tile(name: str, shots_dir: Path, log: list[str]) -> tuple[bool, Path]:
+    """Generalized replacement for confirm_end_turn()'s old hardcoded
+    single `Up` tap (2026-08-27 "endturngen" round -- closes the gap
+    docs/knowledge-base/99-chapter-sweep-results.md's "branchcheck" section
+    flagged: a single ch27-calibrated `Up` does not generalize to other
+    chapters' deployment layouts, and ch02/ch12 never actually reached a
+    real win because of it).
+
+    Checks the CURRENT tile first via cursor_tile_is_empty() -- no keypress
+    needed if the cursor already happens to be over empty ground. Otherwise
+    tries each of EMPTY_TILE_SEARCH_ORDER (Up, Down, Left, Right) in turn:
+    tap the direction, screenshot, check cursor_tile_is_empty() against the
+    real doc58-documented signal (HUD thumbnail = plain terrain, not a
+    portrait) -- not a guess based on tap count or a fixed direction. If
+    that direction's tile is NOT confirmed empty, tap the OPPOSITE direction
+    to undo the move before trying the next candidate, so the cursor always
+    returns to its starting unit before each new attempt -- this keeps the
+    search local/adjacent to the selected unit's cluster (matching doc58's
+    own "移動游標到空地格" wording -- move ONE step to an empty tile -- not
+    an unbounded walk that might wander into scripted terrain/triggers).
+
+    Returns (found, last_screenshot_path). If found is True, the cursor is
+    left sitting on the confirmed-empty tile (net zero or one step from
+    wherever it started). If found is False, none of the 4 adjacent tiles
+    were confirmed empty and the cursor has been walked back to its
+    starting position -- callers must treat this as an honest, reportable
+    generalization gap for that chapter's specific deployment layout (e.g.
+    a fully boxed-in unit with no empty neighbor within one step), not
+    silently press on as if a tile had been found.
+
+    2026-08-27 "endturngen" round -- leading dialogue-clear step added after
+    live testing across ch02/ch12/ch27 (post BATTLE_HUD_RIGHT_STRIP_REGION
+    fix) hit the SAME pattern 3/3 times: sweep_chapter()'s settle-round loop
+    (6 rounds x 2.5s passive sleep, no keypresses, run to let the enemy
+    array finish populating -- see sweep_chapter()'s own long comment) is
+    also enough idle real time for an ordinary SCRIPTED DIALOGUE BEAT that
+    was already playing to keep going, so by the time this function's first
+    check runs, cursor_tile_is_empty() reads None (not True/False) --
+    genuinely can't tell, because the screen is mid-dialogue, not because
+    the tile classification is wrong. This was reproduced with three
+    completely different dialogue contents (ch27's 悠妮 flashback scene,
+    ch02's pirate/robot cutscene, ch12's forest-travel dialogue), so it is
+    chapter-general, not a single chapter's quirk -- and it is the SAME
+    underlying "cutscene can outlive the settle window" hazard doc99's
+    winverify round first flagged for ch27's boss intro specifically, now
+    confirmed to generalize. This function cannot fix that hazard (it is
+    sweep_chapter()'s settle loop that needs the real, deeper fix -- out of
+    this task's cursor-generalization scope), but it CAN stop wasting its
+    directional search on a screen it already knows isn't readable: if the
+    starting check is None, spend a bounded number of plain `Return` taps
+    (DIALOGUE_CLEAR_MAX_TAPS) trying to reach a readable state first, same
+    "keep tapping Return, it's always safe to advance dialogue with" logic
+    this module already relies on elsewhere (attempt_camp_exit,
+    advance_postbattle_montage) -- then run the normal search either way."""
+    shot = screenshot(name, shots_dir / "findempty_000_start.png")
+    state = cursor_tile_is_empty(shot)
+    log.append(f"find_empty_adjacent_tile: starting tile cursor_tile_is_empty={state}")
+    if state is True:
+        log.append("find_empty_adjacent_tile: cursor already on an empty tile, no movement needed")
+        return True, shot
+    if state is None:
+        for clear_tap in range(1, DIALOGUE_CLEAR_MAX_TAPS + 1):
+            send_keys(name, "Return")
+            time.sleep(0.6)
+            shot = screenshot(name, shots_dir / f"findempty_clear_{clear_tap:03d}.png")
+            state = cursor_tile_is_empty(shot)
+            if state is not None:
+                log.append(f"find_empty_adjacent_tile: cleared lingering dialogue/cutscene after "
+                           f"{clear_tap} Return tap(s), cursor_tile_is_empty={state}")
+                break
+        else:
+            log.append(f"find_empty_adjacent_tile: still no readable battle HUD after "
+                       f"{DIALOGUE_CLEAR_MAX_TAPS} dialogue-clear Return taps -- proceeding to the "
+                       f"directional search anyway, it will honestly report failure rather than guess")
+        if state is True:
+            log.append("find_empty_adjacent_tile: cursor on an empty tile after dialogue-clear, no movement needed")
+            return True, shot
+    step = 1
+    for direction in EMPTY_TILE_SEARCH_ORDER:
+        send_keys(name, direction)
+        time.sleep(0.5)
+        shot = screenshot(name, shots_dir / f"findempty_{step:03d}_{direction}.png")
+        state = cursor_tile_is_empty(shot)
+        log.append(f"find_empty_adjacent_tile: tried {direction}, cursor_tile_is_empty={state}")
+        step += 1
+        if state is True:
+            log.append(f"find_empty_adjacent_tile: found empty tile via {direction}")
+            return True, shot
+        # Not confirmed empty (occupied, or HUD unreadable) -- undo before
+        # trying the next direction so every attempt starts from the same
+        # origin tile.
+        opposite = _OPPOSITE_DIRECTION[direction]
+        send_keys(name, opposite)
+        time.sleep(0.5)
+        shot = screenshot(name, shots_dir / f"findempty_{step:03d}_undo_{opposite}.png")
+        step += 1
+    log.append("find_empty_adjacent_tile: none of Up/Down/Left/Right landed on a confirmed-empty tile -- "
+                "cursor walked back to its starting position; this is an honest generalization gap for this "
+                "chapter's deployment layout, not a bug to paper over")
+    return False, shot
 
 
 # A generic node this project has repeatedly found to be either a pure
@@ -643,7 +870,7 @@ CAMP_EXIT_CYCLE_KEYS = ["Right", "Right", "Right"]
 
 
 def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
-                       confirm_retries: int = 4, dialogue_steps: int = 60) -> dict | None:
+                       confirm_retries: int = 4, dialogue_steps: int = 120) -> dict | None:
     """Try the doc91/doc58-established "town-hub camp -> exit -> battle"
     sequence: cycle to the 出口 (EXIT) hotspot, confirm it, confirm the
     resulting "要進入戰場嗎?" YES/NO prompt (YES is the default highlight),
@@ -704,6 +931,27 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
     so the loop keeps sending Returns through the intervening screens
     instead of stopping dead on the very first one. dialogue_steps was
     also raised 20->60 to give this longer real sequence enough budget.
+
+    2026-08-27 "endturngen" round -- dialogue_steps raised again, 60->120:
+    fixing screen_shows_battle_hud()'s flashback-dialogue false positive
+    (see BATTLE_HUD_RIGHT_STRIP_REGION's module comment) removed an
+    unintended early exit that this function had been relying on without
+    anyone realizing it -- a dialogue frame with a large character portrait
+    was being misread as "real battle HUD visible", which combined with the
+    battle array often already holding >=2 records well before real player
+    control (documented above) let earlier rounds' ch27/ch02 runs report
+    "battle confirmed" after as few as 10-34 taps even though the player
+    did not actually have a movable cursor yet. With that false positive
+    closed, two independent live re-runs of ch27 this round both
+    genuinely exhausted the old 60-tap budget while still deep in ordinary
+    pre-battle dialogue (one of them visibly the same "回憶錄戰鬥"-style
+    extended flashback/side-dialogue doc58 續四十六 already flagged as a
+    real, separate hazard of advancing dialogue too eagerly) -- i.e. 60 was
+    only ever "enough" because of the bug, not because it was a correct
+    estimate of real dialogue length. doc58's own live rounds recorded
+    needing up to ~80-105 Return taps in some sessions even under manual,
+    careful play; 120 gives comfortable headroom above that documented
+    range now that the count has to be earned honestly.
 
     Returns the same shape as advance_generic()'s success dict
     ({"battle_base": int, "steps_used": int, "max_stall_seen": 0}) if a

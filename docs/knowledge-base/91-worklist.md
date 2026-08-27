@@ -1414,6 +1414,36 @@
   錯誤的假說,不是產生新的 pass。完整寫法見`docs/knowledge-base/99-chapter-
   sweep-results.md`「2026-08-27 續輪(instance `branchck02`/`branchck12`/
   `branchck27`)」小節,含下一輪建議(游標移動通用化,而非繼續懷疑存檔污染)。
+  **2026-08-27 續輪(instance 系列 `endturngen`..`endturngen6`,代號
+  `endturngen`)**:派工目標是解掉上一輪點名的通用化缺口——`confirm_end_turn()`
+  只送寫死的一次`Up`,只對 ch27 特定部署佈局校準過。**結論:已解,新增
+  `find_empty_adjacent_tile()`(先查目前格,再依 Up→Down→Left→Right 順序逐一
+  嘗試,失敗就送反方向鍵復原、用真實 HUD 縮圖判別「有角色頭像+HP數字」vs.「純
+  地形縮圖」)在 ch02/ch12/ch27 三章獨立 live 重跑裡 3/3 全數正確找到空地格、
+  成功開環、選 END、確認 YES,不再依賴任何寫死方向**。過程中意外揪出並修復
+  兩個更早、影響範圍更廣的既有 bug:①`screen_shows_battle_hud()`對「帶大幅
+  角色頭像的全螢幕劇情對白」畫面誤判(頭像像素變化騙過對話框變異數判定,對話
+  底色又符合 HUD 藍色範圍)——這連帶讓本輪最早兩次「ch27/ch02 起始格已經是
+  空地」的結果都是假陽性;修復方式是新增「HUD 框右側是否還是同一片對話藍」
+  的第三道判定(真 HUD 框只有 140×78 像素、右側該露出地形,假陽性對話框右側
+  還是同一片藍)。②修好①之後,`attempt_camp_exit()`的 60 次對話推進預算反而
+  變成不夠用(舊版「夠用」本身就是①的假象),`dialogue_steps`預設值提高到
+  120;③即使①②都修好,三章仍 3/3 在`find_empty_adjacent_tile()`起手就讀到
+  HUD 不存在——查明是`sweep_chapter()`敵人陣列被動 settle 迴圈(6 輪×2.5秒、
+  刻意不送按鍵)給了同時在播放的劇情演出(三章各自完全不同、互不相關的劇情
+  內容)足夠真實時間繼續推進,`find_empty_adjacent_tile()`因此加上起手若判定
+  不明,先花最多 20 次`Return`嘗試推進殘留劇情,再進方向搜尋。三章最終 live
+  驗證(套用全部三項修復後):ch02(42 taps 找到戰鬥、10 敵、方向`Up`找到空地)
+  /ch12(11 taps、11 敵、`Up`)/ch27(41 taps,與續六十二「約45次」相符、50 敵、
+  `Up`,`post_end_turn.png`逐像素比對吻合續六十二 13 人圍站勝利場景)——End-Turn
+  序列三章都完整送達,無崩潰無卡死。**章節 byte 依然沒有任何一章前進**(仍是
+  1→1/11→11/26→26),但`post_end_turn.png`證實三章各自觸發了合理、不同的章節
+  專屬後果(ch27 真勝利、ch02 回可操作地圖、ch12 觸發 NPC 劇情),證明擋住`pass`
+  的是已記錄多輪的獨立問題(悠妮角色卡循環/win-condition 因章節而異),**與游標
+  定位無關**——M5 整體 verdict 仍是 0 pass,但這正是本輪誠實範圍內能做到的最佳
+  結果:游標通用化子問題已解、且用三個獨立 bug 修復把整條鏈路的可信度大幅提升。
+  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪
+  (instance 系列 `endturngen`..`endturngen6`,代號 `endturngen`)」小節。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
