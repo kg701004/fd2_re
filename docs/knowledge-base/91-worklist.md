@@ -1549,6 +1549,26 @@
   (ch19)、ch27(+疑似ch29/30)雙結局分支終止。M5 仍是 0 pass。完整寫法見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(代號`r2`)」
   小節。
+  **2026-08-27 續輪(代號`cursorlive`):上面「新卡點A」的描述已修正**——不是
+  「synthetic roster member 不會被選人畫面視為可選」這種被動的灰階/不可選外觀
+  問題(單步截圖重測證實 synthetic 記錄跟真實記錄一樣能被游標移動到、能被
+  Return 選中變彩色、`剩餘人數`會正確遞減)。真正的機制是**選滿門檻後的確認時
+  驗證**:遊戲會檢查`docs/knowledge-base/28-chapter-objectives-and-recruits.md`
+  「額外護衛」欄記錄的該章story-mandated角色是否在已選roster裡,不滿足就彈出
+  「本章約定必須出場！」退回營地——即使用`fd2save.append_roster_members()`
+  合成、且明確補上正確角色id(ch21=羅蘭id23/希爾法id24)並在畫面上確認選中,
+  依然被拒絕,證明這道門檻需要的是roster陣列id存在+選取狀態**之外**的某個原生
+  狀態,synthetic記錄沒有提供(equip-recalc tail或某個獨立旗標,未反組譯確認)。
+  這也解開了`r2`輪與2026-08-25 rostertest輪(見本條目上方「26人合成roster」段落)
+  表面矛盾的謎團:ch27(raw26)的護衛角色是悠妮(id9),而悠妮剛好本來就是base
+  真實存檔13人名冊裡的真實成員——rostertest輪的成功從未實際測到synthetic角色
+  能否通過這道門檻,只是沒踩到而已。用base roster id集合比對doc28,預測
+  ch22/23/25/26會撞上同一道牆,ch24/28/29/30這道門檻不適用(`needs_manual_
+  followup`應另有原因)。`fd2_chapter_sweep.py`對`append_roster_members()`的
+  呼叫方式已核對與rostertest輪一致,**不是**工具呼叫bug,本輪未修改其呼叫邏輯
+  (已知修改pad_ids不會解開這道門檻)。M5 仍是 0 pass,無章節轉為`pass`。完整
+  截圖證據鏈與逐章預測表見`docs/knowledge-base/99-chapter-sweep-results.md`
+  「2026-08-27 續輪(代號`cursorlive`)」小節。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

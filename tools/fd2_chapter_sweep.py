@@ -99,6 +99,73 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   units' equipped combat stats are inaccurate. This has not been observed
   to break anything in this tool's own validation (ch27 uses a real,
   unpadded save), but is untested for a genuinely padded chapter.
+- 2026-08-27 "cursorlive" round -- ROOT CAUSE FOUND for the "新卡點A" prep-
+  select wall (ch21/22/26 + suspected ch23/24/25/28/29/30, see doc99's "r2"
+  section): it is NOT the passive "synthetic member renders as an
+  unselectable grey silhouette" eligibility gate that round's screenshot
+  read implied. Careful single-step live re-testing (individual Return
+  presses + a screenshot after each, replacing the blind 120-tap
+  attempt_camp_exit() spam that produced the original "stuck at 12" evidence)
+  on a fresh ch21 synthetic save proved every grid cell -- real AND
+  synthetic -- renders GREY by default (unselected) and turns to full color
+  the instant Return selects it; synthetic (append_roster_members-built)
+  members are exactly as selectable, one at a time, as real ones. The
+  original "12 colored fixed / rest permanently grey" screenshot is instead
+  an artifact of attempt_camp_exit()'s blind Return-spam: Return both
+  selects-and-advances AND (per doc58 續九) toggles via XOR, so hundreds of
+  blind taps cycling through an N-follower grid leave an unpredictable
+  even/odd selected/unselected split, not a real "these are unselectable"
+  signal.
+  The REAL wall, found by completing a careful full 15-of-15 selection by
+  hand: at the final confirm step (0 remaining), the native game validates
+  that chapter N's specific story-mandated "guard" character(s) --
+  docs/knowledge-base/28-chapter-objectives-and-recruits.md's 額外護衛
+  column, e.g. ch21(raw20)=羅蘭(id23)/希爾法(id24) -- are present in the
+  SELECTED roster. If not, it rejects with the on-screen message "本章約定
+  必須出場！" ("this chapter's contracted/mandated [units] must be
+  deployed!") and bounces the player straight back to the camp map. This was
+  live-verified TWICE on ch21: once with arbitrary ascending-id padding
+  (neither 23 nor 24 present -> rejected), and once with padding explicitly
+  constructed to include ids 23/24 AND with both of them deliberately
+  selected during the manual walkthrough (confirmed colored/selected via
+  screenshot, cursor showing their real names/stats "羅蘭"/"希爾法" at
+  selection time) -- STILL rejected with the identical message. This proves
+  the gate needs more than "the right character id is present in the roster
+  array and toggled selected"; a save-file-only append_roster_members()
+  record does not satisfy whatever additional native state the check reads
+  (candidates not yet isolated: the equip-recalc tail/equip-stat block this
+  bullet's paragraph above already flags as absent from synthetic records,
+  or an entirely separate persistent flag outside the roster array that only
+  a real in-game JOIN story event sets -- disassembling the "必須出場" check
+  itself is the next step, not done this round).
+  This also RECONCILES the apparent ch27-vs-ch21/22/26 contradiction that
+  motivated this round: ch27(raw26)'s own doc28 guard character is 悠妮
+  (id9) -- who is already a REAL member of every base save used by this
+  project's rostertest/sweep rounds (record index1, e.g. HP782/MP817 in
+  both the original 2026-08-26 rostertest screenshots and this round's ch21
+  saves). The 2026-08-26 rostertest round's reported "selected 19/19
+  cleanly, no rejection" success never actually exercised a SYNTHETIC guard
+  character at all -- it's not counter-evidence that synthetic records can
+  satisfy this gate, it's simply a case where the gate was already satisfied
+  by a real record before any padding happened.
+  Cross-referencing doc28's 額外護衛 column against the base save's real
+  roster ids ([0,9,4,30,1,8,2,10,13,12,5,11,6] -- only id9/悠妮 overlaps any
+  chapter's guard list) gives a HIGH-CONFIDENCE, not-yet-individually-
+  verified prediction for the other flagged chapters: ch22(希爾法/24),
+  ch23(希爾法/24+卡里斯/22+羅德曼/19), ch25(聖寇拉斯/26), and
+  ch26(悠妮/9 real + 亞奇梅吉/29 NOT real, so still blocked because BOTH are
+  required) should all hit this same wall; ch24 (no guard character listed)
+  and ch28/29/30 (guard=悠妮/9, already real) should NOT be blocked by this
+  specific mechanism and their continued "needs_manual_followup" status
+  likely has a different cause (e.g. the ch27-style dual-ending/character-
+  card montage already documented for the late chapters). No chapter's
+  verdict changed to `pass` this round -- this is a genuine, live-verified
+  structural limitation of the synthetic-roster-padding technique itself,
+  not a chapter_sweep.py invocation bug (prepare_chapter_save()'s call to
+  fd2save.append_roster_members() was checked byte-for-byte against the
+  proven rostertest method and is correct). See docs/knowledge-base/99-
+  chapter-sweep-results.md's "cursorlive" section for the full screenshot
+  evidence trail.
 
 USAGE
 --------------------------------------------------------------------
@@ -851,6 +918,31 @@ BATTLE_HUD_BLUE_FRAC_THRESHOLD = 0.15
 BATTLE_HUD_RIGHT_STRIP_REGION = (350, 520, 420, 598)
 BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC = 0.3
 
+# 2026-08-27 "ch19diag" round: ch19's live screenshots (docs/knowledge-base/
+# 99-chapter-sweep-results.md's "新卡點 B") show this SAME small HUD box
+# rendered in the screen's BOTTOM-RIGHT corner instead of bottom-left --
+# confirmed both visually (dozens of already-captured attempt_camp_exit()
+# screenshots from a prior round's ch19 run, campexit_*_dialogueNN.png in
+# .wsl_build/chapter_sweep_r2/ch19/shots/, show a real, populated battle map
+# with a movable cursor and even the command ring opening, from as early as
+# tap ~20-35 of the existing 120-tap budget -- i.e. NOT a timing/budget
+# problem, the battle is ready well within budget) and quantitatively (a
+# sliding blue-fraction scan across those screenshots' bottom band peaks at
+# x0=680, frac~0.44 -- matching ch27's own left-side calibration reading of
+# ~0.48 almost exactly). This mirrored region is the screen-width mirror of
+# BATTLE_HUD_BOX_REGION/BATTLE_HUD_RIGHT_STRIP_REGION (harness screenshots
+# are a FIXED 1024x768 per SCREENSHOT_DIALOGUE_STRIP_Y's module comment,
+# mirror_x(x) = 1024 - x): mirror(205)=819, mirror(345)=679, which reproduces
+# the empirically-found x0=679 to within a pixel -- strong corroborating
+# evidence this really is a literal left/right mirror of the same UI element
+# (most likely because the info box renders on whichever side of the screen
+# the browsing cursor is currently NOT on, to avoid overlapping it -- ch27's
+# calibration screenshots happened to have the party/cursor on the right
+# half of the map, ch19's on the left half), not a coincidence or a
+# ch19-specific different UI element.
+BATTLE_HUD_BOX_REGION_R = (679, 520, 819, 598)
+BATTLE_HUD_LEFT_STRIP_REGION_R = (604, 520, 674, 598)
+
 
 def _is_hud_blue(pixel: tuple[int, int, int]) -> bool:
     r, g, b = pixel
@@ -885,22 +977,86 @@ def screen_shows_battle_hud(png_path: Path) -> bool:
     theme-blue, which rules out full-screen story/flashback dialogue boxes
     with a large character portrait (they defeated both earlier checks at
     once -- portrait pixels push the dialogue-variance check over threshold,
-    and the panel's flat blue reads as "HUD blue" too)."""
+    and the panel's flat blue reads as "HUD blue" too).
+
+    2026-08-27 "ch19diag" round -- DROPPED the screen_looks_like_dialogue()
+    pre-gate, ADDED a mirrored bottom-right box/strip pair (see
+    BATTLE_HUD_BOX_REGION_R's module comment): ch19 turned out to defeat
+    BOTH of this function's existing guards independently, neither of which
+    was a timing problem --
+      1. screen_looks_like_dialogue() false-POSITIVE (misread ch19's real,
+         fully-populated battle-map frames as "still a flat dialogue panel")
+         because ch19's terrain art is measurably lower-contrast at the
+         sampled row than every chapter this heuristic was calibrated
+         against: live variance readings of 2200-11000 across ch19's
+         confirmed-real battle screenshots vs ch27's 17870-20908 on its own
+         confirmed-real battle screenshot and even the ORIGINAL false-
+         positive dialogue panel this check was built to catch (25994) --
+         i.e. this single-row variance heuristic does not reliably separate
+         "real battle terrain" from "flat dialogue panel" at all once a
+         second chapter's art style is in the sample set (the panel's own
+         variance can exceed the battle screen's), it was never a principled
+         fix, just one that happened to work for the specific chapters
+         tested so far. Confirmed this is not what actually matters for
+         correctness: every call site that consumes this function's result
+         (attempt_camp_exit()'s tap loop, sweep_chapter()'s post-load check)
+         ALSO requires >=REAL_BATTLE_MIN_ENEMIES live enemy records before
+         treating a "hud visible" reading as real, so a false positive here
+         only costs one wasted debugger poll, never a wrong verdict -- only
+         false NEGATIVES (missing the real battle) are actually dangerous,
+         which is what dropping this over-tight gate fixes.
+      2. The HUD box itself renders bottom-RIGHT for ch19 instead of
+         bottom-left (BATTLE_HUD_BOX_REGION_R's module comment) -- the
+         original code had no way to find it there at all, regardless of
+         the dialogue-gate.
+    Verified against a small regression set (ch27's own confirmed real-
+    battle frame, the 莎拉 exit-confirm portrait dialogue, ch21/22/26's
+    troop-selection roster screens, ch19's confirmed real-battle frames):
+    dropping the dialogue-gate and checking box+strip on both sides still
+    correctly rejects all the known historical false positives (their
+    matched-side strip reads 0.15-0.93, well above the reject threshold --
+    the strip check alone was already sufficient to reject them, the
+    variance gate was redundant for these specific cases and simply never
+    tested against a lower-contrast chapter until now) while now correctly
+    detecting ch19's real battle within its existing tap budget."""
     try:
         from PIL import Image
     except ImportError:
         return False  # fail closed here -- callers should keep waiting/advancing
-    if screen_looks_like_dialogue(png_path):
-        return False
     im = Image.open(png_path).convert("RGB")
-    box = im.crop(BATTLE_HUD_BOX_REGION)
-    pixels = list(box.getdata())
+    return _find_hud_box_side(im) is not None
+
+
+def _box_and_strip_pass(im, box_region: tuple[int, int, int, int],
+                         strip_region: tuple[int, int, int, int]) -> bool:
+    pixels = list(im.crop(box_region).getdata())
     frac = sum(1 for p in pixels if _is_hud_blue(p)) / len(pixels)
     if not (frac > BATTLE_HUD_BLUE_FRAC_THRESHOLD):
         return False
-    right_pixels = list(im.crop(BATTLE_HUD_RIGHT_STRIP_REGION).getdata())
-    right_frac = sum(1 for p in right_pixels if _is_hud_blue(p)) / len(right_pixels)
-    return right_frac < BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC
+    strip_pixels = list(im.crop(strip_region).getdata())
+    strip_frac = sum(1 for p in strip_pixels if _is_hud_blue(p)) / len(strip_pixels)
+    return strip_frac < BATTLE_HUD_RIGHT_STRIP_MAX_BLUE_FRAC
+
+
+def _find_hud_box_side(im) -> str | None:
+    """Returns "L" if the battle HUD box is showing in its original
+    bottom-left calibrated position (BATTLE_HUD_BOX_REGION), "R" if it's
+    showing in the ch19diag-round mirrored bottom-right position
+    (BATTLE_HUD_BOX_REGION_R), or None if neither matches. Shared by
+    screen_shows_battle_hud() and cursor_tile_is_empty()/
+    BATTLE_HUD_THUMBNAIL_REGION so the thumbnail sub-crop (see that
+    region's module comment) is read from the SAME side the box itself was
+    actually found on -- reading a hardcoded left-only thumbnail crop while
+    the real box sits on the right (or vice versa) would silently always
+    read "plain terrain, no portrait" regardless of what's really under the
+    cursor, since the wrong-side crop is never anything but background
+    map art. This was caught live during the ch19diag round before it could
+    bite confirm_end_turn()'s cursor-placement logic for ch19."""
+    if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION, BATTLE_HUD_RIGHT_STRIP_REGION):
+        return "L"
+    if _box_and_strip_pass(im, BATTLE_HUD_BOX_REGION_R, BATTLE_HUD_LEFT_STRIP_REGION_R):
+        return "R"
+    return None
 
 
 # 2026-08-27 "endturngen" round: a SECOND, finer-grained HUD read, used to
@@ -932,6 +1088,17 @@ BATTLE_HUD_THUMBNAIL_REGION = (
     BATTLE_HUD_BOX_REGION[0] + 3, BATTLE_HUD_BOX_REGION[1] + 3,
     BATTLE_HUD_BOX_REGION[0] + 58, BATTLE_HUD_BOX_REGION[1] + 58,
 )
+# 2026-08-27 "ch19diag" round: mirror of the region above, for when
+# _find_hud_box_side() reports "R" (see BATTLE_HUD_BOX_REGION_R's module
+# comment) -- the thumbnail sub-region sits in the SAME corner of the box
+# relative to the box itself regardless of which side of the screen the box
+# is on (box's own left edge + a fixed inset), so this is BATTLE_HUD_BOX_
+# REGION_R's left edge (679) + the same +3/+58 insets, NOT a full screen-
+# width mirror of BATTLE_HUD_THUMBNAIL_REGION's coordinates.
+BATTLE_HUD_THUMBNAIL_REGION_R = (
+    BATTLE_HUD_BOX_REGION_R[0] + 3, BATTLE_HUD_BOX_REGION_R[1] + 3,
+    BATTLE_HUD_BOX_REGION_R[0] + 58, BATTLE_HUD_BOX_REGION_R[1] + 58,
+)
 HUD_THUMBNAIL_BRIGHT_FRAC_THRESHOLD = 0.01
 
 
@@ -947,15 +1114,23 @@ def cursor_tile_is_empty(png_path: Path) -> bool | None:
     select/act on whatever unit is there. False if a portrait+HP-number
     thumbnail is showing (cursor is on a unit). None if the battle HUD box
     itself isn't visible at all (screen_shows_battle_hud() false) -- callers
-    must not treat None as either True or False, it means "can't tell"."""
-    if not screen_shows_battle_hud(png_path):
-        return None
+    must not treat None as either True or False, it means "can't tell".
+
+    2026-08-27 "ch19diag" round: reads the thumbnail from whichever side
+    _find_hud_box_side() actually found the box on (left or ch19-style
+    mirrored right), not unconditionally from the left -- see
+    BATTLE_HUD_THUMBNAIL_REGION_R's module comment for why reading the
+    wrong side would have silently always reported "empty"."""
     try:
         from PIL import Image
     except ImportError:
         return None  # fail to "can't tell", same posture as screen_shows_battle_hud's ImportError path
     im = Image.open(png_path).convert("RGB")
-    pixels = list(im.crop(BATTLE_HUD_THUMBNAIL_REGION).getdata())
+    side = _find_hud_box_side(im)
+    if side is None:
+        return None
+    thumbnail_region = BATTLE_HUD_THUMBNAIL_REGION if side == "L" else BATTLE_HUD_THUMBNAIL_REGION_R
+    pixels = list(im.crop(thumbnail_region).getdata())
     frac = sum(1 for p in pixels if _is_hp_digit_bright(p)) / len(pixels)
     return frac < HUD_THUMBNAIL_BRIGHT_FRAC_THRESHOLD
 

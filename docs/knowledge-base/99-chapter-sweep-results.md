@@ -938,3 +938,127 @@ sweep 資料點**,是這個掃描專案第一次做到「30 章扣掉 3 個結�
    優先度低於上面兩項——只有 1 章樣本,不確定是否有更廣泛的代表性。
 4. ch07/11/15 建議至少各花一輪`diag2`同款深度診斷驗證,確認真的與 ch02/03/04/20
    共享同一根因,而不是繼續依賴推測。
+
+## 2026-08-27 續輪(代號 `cursorlive`):新卡點A根因已找到——不是「synthetic不可選」,是一個真實的「本章約定必須出場」劇情護衛角色驗證,且與 ch27 rostertest 的表面矛盾已釐清
+
+### 背景與動機
+
+派工的任務明確指出一個矛盾:UI-VIS-PREPARATION 2026-08-26「rostertest」輪用
+`append_roster_members()`合成 26 人名冊,在 ch27 上完整選滿 19 人、成功走到
+「確定要進入戰場嗎?」最終確認;但同一天稍晚的`r2`輪在 ch21/22/26 上用同一套
+`fd2save.append_roster_members()`合成方法,卻在「出戰人數選人」畫面卡住,120次
+盲按 Return 後穩定停在「12格彩色可選、其餘灰色剪影不可選」,回報為新卡點A:
+「synthetic roster member 不會被選人畫面視為可選」。本輪奉命用
+`tools/dosbox_harness.sh`實機重現,判斷這是(a)真實的逐章資格限制,還是
+(b)`fd2_chapter_sweep.py`呼叫`append_roster_members()`的方式有 bug。
+
+### 方法與逐步證據
+
+**第一步,先確認`fd2_chapter_sweep.py`的呼叫方式本身**:逐讀
+`prepare_chapter_save()`/`estimate_roster_size()`,確認它呼叫
+`fd2save.append_roster_members(plain, slot, pad_ids)`的方式與參數,跟
+rostertest 輪手動呼叫的完全一致(同一份`fd2save.py`函式、同樣的
+`build_join_record()`建構邏輯);差異只在挑選哪些 char id 當 padding(ascending
+未使用 id vs. rostertest 手選的特定 13 個 id)。這排除了「呼叫方式本身有 bug」
+的可能性。
+
+**第二步,單步重現(取代`attempt_camp_exit()`的盲按 120 次)**:開一個獨立
+`cursor21` instance,用既有的`ch21`已合成 patched.SAV(19人名冊,raw chapter
+20),LOAD→跳過城鎮 hub 直接進帳篷營地→`Right`×3 切到「出口」→`Return`確認→
+`Return`確認「要進入戰場嗎?」YES→進選人畫面。**這時「出戰人數 X15/剩餘人數
+X15」,18 格全部渲染成統一灰階**(不分真實/synthetic)——這已經直接推翻「synthetic
+灰色=不可選」的原始讀法,因為 REAL 角色此刻也是灰的。
+
+逐次單按`Return`(不批次、每次都截圖):第1次選中格0(變彩色),`剩餘人數`14→
+13→...逐格精準遞減,到第12次選中格11(最後一個REAL跟隨者,`萊汀`)後`剩餘人數
+X03`。第12次Return後cursor停在格12(第一個synthetic角色,顯示「哈瓦特」
+LV.23/HP294,資料看起來完全合法可讀)。**第一次嘗試對格12按下第13個Return時,
+畫面直接跳回營地地圖**(不是變彩色選中,是整個選人畫面被取消退出)——這是本輪
+最初以為找到「synthetic真的不可選」直接證據的時刻。
+
+**第三步,懷疑是輸入時序假象,重跑一次確認可重現性**:退回營地、重新走一次
+出口→YES→12次Return,這次在格12上第13次Return**成功選中變彩色**(「蘇斯洛特」
+LV04/HP320),`剩餘人數`正確變02,cursor前進到格13。繼續選到第15個(`剩餘人數
+X00`)——**這次畫面同樣跳回營地**,並彈出對話框明確文字:「**本章約定必須出場
+！**」(截圖見`.wsl_build/cursor21_retry_after15.png`,放大確認見
+`.wsl_build/cursor21_zoom_msg_nn.png`)。這推翻了「格12=synthetic永遠不可選」
+的第一輪解讀——它確實可以被選中——但揭露了一個更深層、在選滿15人後才觸發的
+**確認時驗證失敗**,而不是選取時的直接拒絕。第一次「按第13個Return直接跳回營地」
+極可能是同一個「必須出場」驗證失敗的另一種觸發時機(該次可能有輸入重複註冊,見
+doc58 續五十四..續七十七已知的 Enter/Space input-drop/雙重觸發問題),不是獨立
+的、格12特有的拒絕。
+
+**第四步,交叉查證`docs/knowledge-base/28-chapter-objectives-and-recruits.md`,
+找出 ch21 真正的護衛角色並驗證「補上正確角色id是否解開這道門檻」**:doc28 第
+21列(攻略章21、bev ch20、raw20、「亞述森林」)列出「額外護衛(死亡=敗北)」=
+「羅蘭、希爾法」。查`docs/data/portrait_names.json`,羅蘭=id23、希爾法=id24
+——本輪一開始用的 ascending-id padding(`[3,7,14,15,16,17]`)**完全沒有包含
+23或24**。重新合成一份新的 ch21 存檔(`.wsl_build/ch21_with_required.SAV`),
+padding 明確改成`[23,24,3,7,14,15]`,在乾淨重開的`cursor21b` instance上重跑
+整套流程,這次**單步截圖確認格12(羅蘭)、格13(希爾法)都確實被選中變彩色**
+(截圖`c21b_sel_step13.png`顯示cursor停在格13、右側資訊面板顯示「希爾法
+LV.08 HP253/253 MP276/276」,格12`羅蘭`已彩色)。**但選滿15/15後,依然彈出
+一模一樣的「本章約定必須出場！」對話框,退回營地**(`c21b_sel_step15.png`)。
+
+### 結論:根因是一個真實的、比預期更深的「必須出場」驗證,不是id缺席
+
+這證明卡點A的真正機制**不是**「roster陣列裡有沒有正確id」這麼簡單——即使
+synthetic 記錄用的是doc28指名的正確角色id(羅蘭23/希爾法24),*而且*確實在
+選人畫面上被選中(彩色、剩餘人數正確遞減),**確認時驗證依然失敗**。這代表
+遊戲用來判斷「這個角色真的出場了」的依據,是roster陣列id存在+選取狀態**之外
+的某個額外原生狀態**——最可能的候選是`fd2save.append_roster_members()`已知
+不填的欄位(equip-recalc tail `+0x48/0x4a/0x4c/0x4e`、逐byte diff額外發現的
+`+0x28..0x36`裝備加成區塊全零),或是一個完全獨立、只有真正劇情JOIN事件觸發時
+才會設置的旗標(不在roster陣列裡)。**這輪未反組譯「必須出場」檢查本身,無法
+在這兩個候選之間分勝負**,留給下一輪。
+
+### 與 ch27 rostertest 表面矛盾的釐清
+
+doc28 第27列(bev ch26、raw26、「命運的交會點」)的額外護衛=「悠妮」,id=9。
+悠妮**剛好已經是機器上這份基底真實存檔(`~/fd2-run/FD2.SAV`)13人名冊裡的
+真實成員**(record index1,本輪與2026-08-26 rostertest輪的截圖都顯示同一組
+數值HP782/MP817,證實同一角色同一存檔)。這代表rostertest輪選滿19人成功走到
+最終確認,**從頭到尾都不需要靠synthetic記錄滿足「必須出場」門檻**——悠妮本來
+就是真的。rostertest輪的成功不是「synthetic角色能通過必須出場驗證」的反例,
+只是剛好沒有踩到這個門檻而已。兩輪結果現在完全一致,沒有真正的矛盾。
+
+### 對其餘章節的預測(未逐一實機驗證,留給下一輪)
+
+用base真實roster的id集合`{0,9,4,30,1,8,2,10,13,12,5,11,6}`(只有9/悠妮出現在
+任何doc28護衛清單裡)比對doc28逐章護衛欄:
+
+| 章節(raw) | doc28護衛角色(id) | 護衛角色已在base真實roster? | 預測 |
+|---|---|---|---|
+| ch21(20) | 羅蘭23、希爾法24 | 皆非 | **卡住**(本輪已實機確認) |
+| ch22(21) | 希爾法24 | 非 | 高信心卡住(未逐一重跑) |
+| ch23(22) | 希爾法24、卡里斯22、羅德曼19 | 皆非 | 高信心卡住(未逐一重跑) |
+| ch24(23) | (無) | — | 這道門檻不適用,`needs_manual_followup`應另有原因 |
+| ch25(24) | 聖寇拉斯26 | 非 | 高信心卡住(未逐一重跑) |
+| ch26(25) | 悠妮9、亞奇梅吉29 | 悠妮是,亞奇梅吉非 | 高信心卡住(需要「全部」護衛角色到齊,悠妮單獨不夠) |
+| ch28(27) | 悠妮9 | 是 | 這道門檻不適用,`needs_manual_followup`應另有原因(推測與ch27同款雙結局/悠妮卡montage有關) |
+| ch29(28) | 悠妮9 | 是 | 同上,這道門檻不適用 |
+| ch30(29) | 悠妮9 | 是 | 同上,這道門檻不適用 |
+
+### 誠實結論、對 M5 的影響
+
+**這是`fd2save.append_roster_members()`合成roster技術本身的一個真實、
+已live驗證的結構性限制,不是`fd2_chapter_sweep.py`呼叫方式的bug**——
+`prepare_chapter_save()`對`append_roster_members()`的呼叫已逐位元組核對與
+rostertest輪一致,本輪**未修改**其呼叫邏輯(修改pad_ids去優先包含doc28護衛
+角色id,在本輪的直接實機證據下已知**不會**解開這道門檻,強行加這個「修正」
+只會製造誤導性的虛假進度,故不採用)。M5 仍是 0 pass,沒有任何章節這輪從
+`needs_manual_followup`轉為`pass`。ch21/22/26(+高信心預測的ch23/25)的真正
+瓶頸,現在從「原因不明的選人卡點」精確縮小成「必須出場驗證讀取roster陣列id
+存在與選取狀態之外的某個原生狀態,synthetic記錄未提供」——這本身是一個新的、
+誠實的RE發現,下一輪如果要繼續解,建議直接反組譯選人確認流程裡呼叫「必須出場」
+檢查的那個函式(很可能就在doc91 UI-VIS-PREPARATION記錄的`0x31d3c`最終確認
+附近),鎖定它實際讀取的欄位/位址,才能判斷這道門檻是否有辦法用存檔層級的
+patch滿足,還是必須有真正的劇情JOIN事件觸發才能通過。
+
+完整截圖證據鏈(`.wsl_build/`下,非repo追蹤產物):`cursor21_01_title.png`→
+`cursor21_02_postload.png`→`cursor21_03_exit_sel.png`→`cursor21_04_exitconfirm.png`
+→`cursor21_05_selectscreen.png`→`cursor21_sel_step01..15.png`→
+`cursor21_retry_13th_0.5s.png`(第二次嘗試,無卡住)→`cursor21_retry_after15.png`
++`cursor21_zoom_msg_nn.png`(「本章約定必須出場」訊息放大確認)→
+`c21b_00_title.png`→`c21b_01_camp.png`→`c21b_02_selscreen.png`→
+`c21b_sel_step11..15.png`(明確包含羅蘭/希爾法選取確認,仍然卡住)。
