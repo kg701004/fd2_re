@@ -1195,3 +1195,137 @@ End-Turn(不下死亡signature、任由敵人被動不攻擊)等巴拿羅西亞�
 advance.png`→`04_final.png`(仍是戰鬥地圖,非勝利場景)。程式碼修復見
 `tools/fd2_chapter_sweep.py`的`BATTLE_HUD_BOX_REGION_R`/`_find_hud_box_side()`
 及其呼叫點,所有變更均含「ch19diag」輪次標記的docstring/註解可供追溯。
+
+## 2026-08-27 續輪(代號 `ch19banor`):「等 6 回合再 mass-kill」單一假說驗證——`[0x53ecc]`首次對 ch19 翻成 2(WIN),但巴拿羅西亞本人的加入**沒有**被直接觀測到,誠實結論是「turn-count gate 確認,角色專屬機制未證實」
+
+### 任務背景與方法
+
+延續 `ch19diag` 輪留下的具體、未驗證假說:先 WebFetch 核對
+`chiuinan.github.io fd2 walkthrough` 取得 ch19 精確條件——
+
+- 勝利:敵全滅。失敗:索爾死亡或**巴拿羅西亞**死亡。
+- 巴拿羅西亞(龍劍士)在「**第六回合己方結束後**」於下方登場協助。
+- 「**若巴拿羅西亞尚未出現便消滅完敵人，則巴拿羅西亞不會加入**」。
+- 第4回合敵方開始第一波攻擊,第10回合敵方全軍出動。
+
+派工單建議連帶套用一個「敵HP/MP/AP/DP=1、我方HP/MP/AP/DP/MV=999」的
+buff/nerf standing rule 讓存活變得trivial。**本輪刻意不採用這個建議**,
+原因是本文件更早的「diag2」小節已經用 live 證據明確評估並拒絕了同一個
+standing rule 建議:本專案目前只有 `+5`(acted/死亡signature)與
+`+6`(camp)兩個 unit record offset 是live驗證過的,HP/ATK/DEF 沒有任何
+已證實座標,盲寫有損毀record佈局的風險且對已知瓶頸無幫助(diag2 原文:
+「往敵我雙方 record 額外寫入 HP/ATK/DEF 不會改變這個判定碼的行為」)。
+本輪改用一個不需要任何 stat hack 的方法:直接呼叫既有
+`confirm_end_turn(name, shots_dir, log, enemy_addrs=None)`(不帶
+enemy_addrs 就完全不做mass-kill,純粹跑 Enter開環→Down(END)→Enter確認
+→Enter(YES) 這套已驗證的 End-Turn shortcut)連續 6 次讓 6 個真實回合
+過去,期間**不下達任何主動指令**,只被動吃傷害(依本章節既有難度曲線
+設計——攻略明載第4回合前敵人完全不主動攻擊,是本專案第一次直接測試
+「單純多等幾回合」這個變因,不靠任何未驗證的HP灌水)。每個回合結束後都
+對整個 unit record 陣列(base..scan bound,逐格讀 camp+`+5`)做一次
+完整dump,追蹤 ally(camp==2)記錄數量/索引是否出現新成員、以及既有
+ally是否有任何一筆出現死亡signature(用來偵測「派對團滅」這個本輪唯一
+需要提防的失敗模式,一旦偵測到就誠實中止,不假裝繼續)。6 回合跑完後才
+第一次呼叫`mass_kill_enemies()`+`confirm_end_turn(enemy_addrs=...)`,
+沿用`sweep_chapter()`既有的 bounded kill-cycle retry(`MAX_KILL_CYCLES
+=4`,吸收doc25 §6.1記錄過的回合觸發援軍波)。
+
+獨立 harness instance `ch19banor`(啟動前已核對 `ps`/`tmux ls`/
+`dosbox_harness.sh status`,環境乾淨,無殘留),完整腳本見
+`.wsl_build/chapter_sweep_ch19banor/probe_ch19_banoroshia.py`,原始log見
+同目錄`run_out.txt`/`probe_log.json`,截圖見`shots/`(`turn01..06_post_
+end_turn.png`為每回合結束當下畫面,`06_final.png`為postbattle montage
+結束後索爾的角色狀態畫面)。
+
+### 結果:6 回合期間陣列組成完全靜止(15 ally / 49 enemy,索引不變,無新
+記錄、無死亡),第 6 回合後第一次 mass-kill 就直接拿到 `[0x53ecc]==2`
+
+- **settle 迴圈**(mass-kill前,battle剛偵測到時):base 穩定在
+  `0x26bfc0`,連續 6 輪(每輪間隔 2.5s)都讀到 49 個 camp==0 enemy 記錄,
+  無任何陣列重配置跡象(排除「陣列還沒穩定」這個混淆變因)。
+- **turn0 baseline dump**(進入回合迴圈之前):15 個 ally(camp==2,
+  索引 0-14)、49 個 enemy(camp==0)、**0 個其他 camp 值**,bound=64。
+  所有 ally 的 `+5` 都是 0(存活)。
+- **turn1 到 turn6,每回合結束後**:dump 結果**逐字元完全相同**——
+  15 ally(索引集合永遠是`[0..14]`,無新增/無移除)、49 enemy、0 其他
+  camp值、ally 死亡集合永遠是空集合`[]`。`confirm_end_turn()`直接讀
+  `[0x53ecc]`(ground truth,非螢幕猜測)每回合都讀到`0`(仍在戰鬥中,
+  未達`ENGINE_EVENT_CODE=1`或`ENGINE_WIN_CODE=2`)。**沒有任何一個回合
+  的 15s 輪詢窗口內出現團滅或任何角色陣亡跡象**——這代表 ch19 這個
+  padded synthetic roster,即使沒有套用派工單建議的 HP/999 hack,單純
+  依靠原版難度曲線設計(第4回合前敵人不主動攻擊)也能安全撐過 6 回合,
+  驗證了本輪拒絕 standing rule 的判斷是對的:不套用也不會撞到存活問題。
+- **第 6 回合結束後**:重新掃描陣列(`base=0x26bfc0`不變,`scan_enemy_
+  slots()`重新確認 49 個 camp==0 記錄——與 turn0 baseline **完全相同的
+  49 筆**,沒有觀察到攻略提到的第 4/10 回合援軍波實際新增陣列記錄,可能
+  是因為這批「援軍」本來就已經在初始陣列裡以某種待命狀態存在,或者是
+  這個特定的 6 回合窗口還沒觸發到)。對這 49 筆執行**單一次**
+  `mass_kill_enemies()`+`confirm_end_turn(enemy_addrs=...)`——**第一個
+  kill-cycle(1/4)就直接讀到 `engine_code=2`、`engine_win=True`**,是
+  ch19 這個章節**史上第一次**達成引擎層級勝利確認,不需要任何額外的
+  kill-cycle重試。相較之下,`ch19diag`輪的mass-kill在戰鬥偵測後幾秒內
+  (估計遊戲內部仍在第1回合)就執行,`[0x53ecc]`跑完完整輪詢窗口後依然
+  是`0`。**本輪與`ch19diag`輪之間唯一的程序差異就是這 6 個真實回合的
+  等待**——settle迴圈、對話推進預算、harness啟動方式全部相同,構成一個
+  乾淨的單變因對照。
+- **postbattle**:`advance_postbattle_montage()`跑完 70 tap 的montage
+  tap-through,`montage_038..069.png`出現與ch27已知「悠妮卡片2態循環」
+  同一種3張截圖尺寸(12060/13803/21882 bytes)重複循環模式——這是本專案
+  已經記錄過的、跟win-check本身無關的montage卡關現象,不是新問題。最終
+  畫面`06_final.png`是索爾的角色狀態畫面(HP滿823/823、MP滿805/805)——
+  確認索爾全程存活、非死亡狀態,與陣列dump的「無死亡」結論一致。
+- **磁碟存檔位元組**:`final on-disk slot0 raw chapter byte = 18`
+  (patched in as `0x12`=18)——**沒有前進**,與另外 9 個「engine win
+  confirmed 但磁碟從未寫入」章節(doc25 §9.1 尚未解開的 SAV writer gate
+  疑問)完全同一個症狀,不是 ch19 專屬的新問題。
+
+### 誠實結論:「等待夠久再mass-kill」這件事本身直接、可重現地確認有效,但「巴拿羅西亞本人真的加入了roster」這個具體機制**沒有被觀測到**——兩者是不同的宣稱,不能混為一談
+
+**確認(強證據,ground-truth debugger讀值,非螢幕猜測)**:ch19 的
+`[0x53ecc]`卡在0**不是永久性根因矛盾**,至少對這一章而言是**時序問題**
+——延後mass-kill到第6回合之後執行,同一套`mass_kill_enemies()`+
+`confirm_end_turn()`機制第一次就成功讓引擎層級勝利判定fire。這是
+`tools/fd2_chapter_sweep.py`本輪新增的`KNOWN_MIN_TURNS_BEFORE_KILL=
+{19: 6}`機制的直接依據。
+
+**未確認(誠實記錄,不誇大)**:派工單提出的具體機制——「巴拿羅西亞加入
+roster陣列是勝利判定的隱含前提」——**沒有得到直接支持**。整個6回合
+期間,對陣列的逐格dump(camp+`+5`byte,bound=64,覆蓋全部45個以上的
+非零記錄)**沒有觀察到任何新記錄出現、沒有觀察到任何非{0,2}的camp值、
+ally索引集合`[0..14]`從頭到尾一格都沒變過**;`turn06_post_end_turn.png`
+截圖本身也沒有捕捉到任何介紹新角色的對話框或過場——跟`turn01`截圖同樣
+是純戰鬥地圖畫面。也就是說,依照這次直接的array-level觀測,巴拿羅西亞
+**沒有**以「新增一筆roster record」的方式登場。同樣合理、同樣未被排除
+的另一個解釋是:ch19(或共享的`0x51b19/0x205be`邏輯本身)的勝利判定就是
+單純的一個turn-count閘門,跟任何特定角色是否登場完全無關——本輪的
+單一對照實驗**無法區分**這兩種可能。
+
+**留一個誠實的偵測缺口給下一輪**:本探針只追蹤了`+5`(acted/死亡)與
+`+6`(camp)兩個byte,沒有讀取任何character-id欄位(本專案目前也沒有
+已證實的該欄位座標)。如果巴拿羅西亞的加入機制是「啟用一筆本來就已經
+配置好、camp已經是2、只是內容是placeholder的既有record」而不是「配置
+一筆全新record」,本輪的偵測方法**完全看不到**這種情況——15個ally
+索引全程不變並不能排除其中某一筆在turn6前後換了身份。要徹底釐清「她
+到底有沒有加入roster」,下一輪需要額外讀取某個character-id/name-hash
+欄位(座標未知,需要新的靜態或live derivation)逐回合比對這15筆record
+本身的內容是否有變化,而不只是camp/acted byte。
+
+### 對 M5 與後續的影響
+
+ch19 從「8章卡在0俱樂部裡原因未知的一員」重新分類為**已解決**(至少對
+這個具體機制而言):`KNOWN_MIN_TURNS_BEFORE_KILL={19: 6}`让`fd2_chapter_
+sweep.py`往後對ch19的sweep自動先等6回合再mass-kill。但即使win-check本身
+fire了,磁碟存檔依然沒有前進(`anomaly_engine_win_no_disk_write`分類,
+不是`pass`)——M5仍是0 pass,doc25 §9.1的SAV writer gate疑問依然是真正
+擋住驗收的瓶頸,ch19本輪的進展**不會**讓任何章節的verdict變成`pass`。
+
+**下一輪如果要繼續深挖(本輪依派工單指示刻意不做,保持任務窄範圍)**:
+①對剩餘7個「卡在0」章節(ch02/03/04/07/11/15/20)測試同樣的「先等N回合
+再mass-kill」是否也能讓`[0x53ecc]`翻2——如果泛化,代表這其實是一個
+跨章節共享的turn-count gate現象,不是ch19專屬的角色觸發機制,`ch19diag`
+輪與本輪的「8章俱樂部」分類都需要重新檢視;②如果想徹底釐清巴拿羅西亞
+本人是否真的加入,需要先找到character-id欄位的座標,再重新測一次同樣
+的6回合流程並逐格比對身份而不只是camp/acted。③本輪完全沒有驗證第10
+回合「敵方全軍出動」這個更晚的援軍波觸發點,mass-kill後的單一
+kill-cycle就成功,代表ch19這49筆enemy record可能本來就是全部,而非
+分批出現——這點也值得下一輪獨立確認,不要想當然爾套用到其他章節。

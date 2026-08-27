@@ -1565,6 +1565,28 @@
   留給下一輪(建議:先空轉6輪End-Turn等她登場,再mass-kill,對照結果)。M5仍是
   0 pass。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
   續輪(instance `ch19diag`,代號`ch19diag`)」小節。
+  **2026-08-27 續輪(代號`ch19banor`)**:針對上面的假說做了單一對照實驗——
+  先WebFetch核對攻略取得ch19精確條件(勝利=敵全滅,失敗=索爾/巴拿羅西亞死亡,
+  她在「第六回合己方結束後」登場,若敵人在此之前被消滅完她就不會加入),**刻意
+  不套用**派工單建議的HP/999 buff standing rule(本文件`diag2`小節已用live證據
+  評估並拒絕同一建議,本輪重申拒絕理由:HP/ATK/DEF在本專案沒有任何已證實的
+  record offset,盲寫有風險且對已知瓶頸沒幫助),改用純粹的「6次confirm_end_
+  turn(enemy_addrs=None)空轉6回合、不主動出手、只被動測試原版難度曲線是否
+  夠溫和以致不需要buff也能存活、每回合逐格dump陣列監控團滅」方法,最後才第一次
+  mass-kill+End-Turn。**結果:第6回合後的第一次mass-kill就直接讀到`[0x53ecc]
+  ==2`(WIN)**——ch19史上第一次達成引擎層級勝利確認,與`ch19diag`輪唯一的
+  程序差異就是這6個回合的等待(其餘完全相同,構成乾淨對照)。**但巴拿羅西亞
+  本人的加入沒有被直接觀測到**:6回合期間逐格dump顯示ally記錄數量/索引/camp值
+  從頭到尾一格都沒變過,turn6截圖也沒捕捉到任何介紹新角色的對話——所以「勝利
+  判定隱含要求她在roster裡」這個具體機制**未獲得直接支持**,同樣站得住腳的
+  另一解釋是ch19(或共享的`0x205be`邏輯本身)單純有一個跟角色無關的turn-count
+  閘門,本輪的單一對照實驗無法區分兩者。磁碟存檔位元組依然沒有前進(18不變),
+  與其他9章「engine win確認但磁碟從未寫入」是同一個doc25 §9.1開放問題,不是
+  ch19專屬新症狀。`tools/fd2_chapter_sweep.py`新增`KNOWN_MIN_TURNS_BEFORE_KILL
+  ={19: 6}`機制讓往後的ch19 sweep自動套用這個等待。M5仍是0 pass,ch19從「8章
+  卡在0俱樂部原因未知」重新分類為「至少對這個具體機制已解決,深層WHY與是否
+  泛化到其他7章仍未知」。完整寫法見`docs/knowledge-base/99-chapter-sweep-
+  results.md`「2026-08-27 續輪(代號`ch19banor`)」小節。
   **2026-08-27 續輪(代號`cursorlive`):上面「新卡點A」的描述已修正**——不是
   「synthetic roster member 不會被選人畫面視為可選」這種被動的灰階/不可選外觀
   問題(單步截圖重測證實 synthetic 記錄跟真實記錄一樣能被游標移動到、能被

@@ -1278,6 +1278,40 @@ _ADVANCE_KEY_CYCLE = ["Return", "Down", "Right", "Return", "Escape", "Right", "D
 # replaced instead of extended).
 KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 
+# Chapter-specific "wait this many real turns before the FIRST mass-kill"
+# override. 2026-08-27 "ch19banor" round: ch19 was previously one of an
+# 8-chapter club whose engine-level win-check ([0x53ecc]) never left 0 even
+# with every scan-found camp==0 enemy record correctly, persistently marked
+# dead (see docs/knowledge-base/99-chapter-sweep-results.md's "ch19diag"
+# section). A WebFetch of an external walkthrough (chiuinan.github.io fd2
+# walkthrough) gave ch19's specific mechanic: an ally, 巴拿羅西亞/Banoroshia,
+# joins "第六回合己方結束後" (after ally turn 6 concludes), and "若巴拿羅西亞
+# 尚未出現便消滅完敵人，則巴拿羅西亞不會加入" (killing all enemies before she
+# appears means she never joins). The prior ch19diag round's mass-kill fired
+# within seconds of battle detection -- almost certainly turn 1. A live
+# no-buff probe this round (passing 6 real turns via confirm_end_turn(...,
+# enemy_addrs=None) with NO mass-kill and NO stat hacks, then mass-killing
+# and running End-Turn exactly once) got [0x53ecc]==2 (ENGINE_WIN_CODE) on
+# the very first kill-cycle -- the FIRST time ch19 has ever reached a
+# confirmed engine-level win. IMPORTANT HONEST CAVEAT: the probe's own record
+# dump (camp+status byte on every slot, every turn) found NO new ally record
+# and NO non-{0,2} camp value ever appeared across all 6 turns -- i.e.
+# Banoroshia's literal roster join was NOT directly observed, so this is NOT
+# proof the win-check specifically requires her presence; an equally
+# consistent alternative is a plain turn-count gate in the win-check itself,
+# unrelated to any specific unit. What IS directly, reproducibly established
+# is the practical fix: for ch19, waiting turns before the first mass-kill
+# (instead of killing immediately) is necessary. See doc99's "ch19banor"
+# section for the full writeup, screenshots, and the not-yet-ruled-out
+# possibility that she joins via an in-place reactivation of an
+# already-allocated ally slot (this tool only tracks camp+status byte, not
+# a character-id field, so that specific case would not have been caught).
+# This does NOT change the separate, still-open "engine win confirmed but
+# on-disk FD2.SAV chapter byte never advances" question (doc25 §9.1) -- ch19
+# hit that exact same wall this round (chapter byte stayed 18, did not
+# advance to 19) despite the win-check itself resolving.
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6}
+
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
 # 酒店(tavern), 1 武器店(weapon shop), 2 出口(EXIT), 3 道具店(item shop),
@@ -1754,6 +1788,40 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                 if len(cur_enemies) >= len(best_enemies):
                     best_base, best_enemies = cur_base, cur_enemies
             base, enemy_addrs = best_base, best_enemies
+
+            # 2026-08-27 "ch19banor" round: some chapters' win-check does not
+            # resolve if every enemy is killed too early (see
+            # KNOWN_MIN_TURNS_BEFORE_KILL's module comment for the live
+            # derivation on ch19). If this chapter has an override, pass that
+            # many real turns FIRST -- no kill, no stat hacks, just the plain
+            # End-Turn->YES shortcut with enemy_addrs=None -- before the
+            # normal mass-kill sequence below runs at all. Re-scan for enemies
+            # afterward since the array can grow (reinforcement waves) during
+            # the wait.
+            min_turns = KNOWN_MIN_TURNS_BEFORE_KILL.get(chapter_n, 0)
+            if min_turns:
+                log.append(f"chapter {chapter_n} has a KNOWN_MIN_TURNS_BEFORE_KILL override "
+                           f"({min_turns} turns) -- passing turns with no mass-kill first")
+                for turn_i in range(1, min_turns + 1):
+                    wait_etr = confirm_end_turn(name, shots_dir, log, enemy_addrs=None)
+                    log.append(f"pre-kill wait turn {turn_i}/{min_turns}: engine_code="
+                               f"{wait_etr.get('engine_code')!r} engine_win={wait_etr.get('engine_win')}")
+                    if wait_etr.get("engine_win"):
+                        log.append("pre-kill wait: engine win fired WITHOUT any kill by this tool -- "
+                                   "unexpected, stopping the wait loop early")
+                        break
+                enter_debugger(name)
+                time.sleep(0.4)
+                rescan_base = read_battle_array_base(name)
+                rescan_enemies = scan_enemy_slots(name, rescan_base, log) if rescan_base is not None else []
+                debugger_cmd(name, "RUN")
+                time.sleep(0.2)
+                if rescan_base is not None:
+                    base = rescan_base
+                if rescan_enemies:
+                    enemy_addrs = rescan_enemies
+                log.append(f"post-wait rescan: base={base}, enemy_addrs={len(enemy_addrs)}")
+
             enter_debugger(name)
             time.sleep(0.5)
             if enemy_addrs:
