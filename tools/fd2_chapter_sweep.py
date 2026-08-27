@@ -144,6 +144,11 @@ PLAUSIBLE_PTR_MIN = 0x10000
 PLAUSIBLE_PTR_MAX = 0xFFFFFF
 MAX_ENEMY_SCAN_SLOTS = 96          # ch27 needed 63 (16..62 inclusive); generous headroom
 CONSECUTIVE_ZERO_STOP = 4          # stop scanning after this many all-zero records once >=1 enemy found
+REAL_BATTLE_MIN_ENEMIES = 2        # 2026-08-27 "winverify" round: the troop-selection screen that precedes
+                                    # the real battle already has a plausible battle-array pointer with a
+                                    # transient 1-record placeholder -- attempt_camp_exit() must not mistake
+                                    # that for the real battle (see its docstring). No FD2 battle in this
+                                    # project's records has ever had only 1 enemy, so >=2 is the threshold.
 
 
 def wsl_run(cmd: str, timeout: int = 60, check: bool = False) -> subprocess.CompletedProcess:
@@ -332,20 +337,105 @@ def mass_kill_enemies(name: str, enemy_addrs: list[int], log: list[str]) -> int:
     return written
 
 
-def confirm_end_turn(name: str, shots_dir: Path, log: list[str]) -> Path:
-    """Doc58 續六十二's proven End-Turn->YES shortcut: Enter opens the
-    command ring, Down selects END, Enter confirms END, Enter confirms the
-    Yes/No 'end this turn?' prompt (Yes is the default highlight)."""
-    send_keys(name, "Return")
+def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: list[int] | None = None) -> Path:
+    """Doc58 續六十二's proven End-Turn->YES shortcut: move the cursor to an
+    empty tile, Enter opens the command ring, Down selects END, Enter
+    confirms END, Enter confirms the Yes/No 'end this turn?' prompt (Yes is
+    the default highlight).
+
+    2026-08-27 "winverify" fix #1: 續六十二's own writeup explicitly redoes
+    the 47-slot death-signature write a SECOND time while sitting at the
+    "end this turn?" Yes/No prompt, immediately before confirming YES ("在
+    這個確認框停留的當下先進debugger補做一次kill_all.sh確保47格死亡signature
+    仍全部有效"). This tool's first version only wrote the signature once
+    (mass_kill_enemies(), before the ring was even opened) and never
+    reproduced 續六十二's positive result even after the camp-exit/dialogue
+    fix above got a genuine full-roster battle (ch27 live-verified: 50
+    enemy records mass-killed, End Turn confirmed, chapter byte still did
+    NOT advance -- .wsl_build/chapter_sweep_v3/ch27/result.json).
+
+    2026-08-27 "winverify" fix #2, found AFTER fix #1 still didn't work:
+    this function was missing 續六十二's FIRST step entirely -- "移動游標到
+    空地格" (move the cursor to an empty tile) BEFORE opening the ring. The
+    cursor defaults onto a party unit on this screen, and pressing Return
+    there does something else (its HP changed 823->990 in one live test,
+    i.e. it interacted with/selected a different unit) instead of opening
+    the system ring. Confirmed live (instance 'probe4', ch27): a single
+    `Up` reliably lands on empty ground one tile above the party cluster --
+    the HUD box goes blank (only "A+05 D+00" terrain bonus, no character
+    portrait/HP), matching doc58's documented empty-tile signal exactly --
+    and Enter from there opens the real 4-direction system ring. This is
+    genuinely chapter/deployment-layout-specific (a single `Up` happened to
+    work for ch27's specific unit cluster), but it is far closer to correct
+    than never moving the cursor at all, which guaranteed failure every
+    time. Also confirmed live: the ring does NOT default to END highlighted
+    (contradicts an earlier, less-careful doc58 round) -- Enter alone from
+    the freshly-opened ring opens the "UP" (system menu) suboption instead;
+    Down really is required first, exactly as 續六十二 documented.
+    """
+    send_keys(name, "Up")  # move cursor off the unit cluster onto empty ground (fix #2 above)
+    time.sleep(0.5)
+    send_keys(name, "Return")  # open the command ring
     time.sleep(0.6)
     send_keys(name, "Down")
     time.sleep(0.4)
-    send_keys(name, "Return")
+    send_keys(name, "Return")  # confirms END, opens the "end this turn?" Yes/No prompt
     time.sleep(0.6)
-    send_keys(name, "Return")
+    if enemy_addrs:
+        enter_debugger(name)
+        time.sleep(0.3)
+        rewritten = mass_kill_enemies(name, enemy_addrs, log)
+        debugger_cmd(name, "RUN")
+        time.sleep(0.3)
+        log.append(f"confirm_end_turn: re-wrote death signature to {rewritten} slot(s) while the 'end this turn?' "
+                   f"prompt was up, per doc58 續六十二's exact sequence, before confirming YES")
+    send_keys(name, "Return")  # confirms YES
     time.sleep(2.0)
-    log.append("confirm_end_turn: sent Enter(open ring)->Down(END)->Enter(confirm)->Enter(YES)")
+    log.append("confirm_end_turn: sent Up(empty tile)->Enter(open ring)->Down(END)->Enter(confirm)->"
+               "[re-kill]->Enter(YES)")
     return screenshot(name, shots_dir / "post_end_turn.png")
+
+
+# 2026-08-27 "winverify" round, §3 of doc58 續六十二: confirming YES on a
+# genuine win does NOT autosave immediately -- it opens a long postbattle
+# montage (party-circle dialogue -> 2 full-screen CG scenes -> scrolling
+# poem text -> one full-screen "character card" per roster member, in
+# recruitment order) that has to be clicked through with further Returns
+# before the chapter actually advances. Confirmed live (instance 'probe4',
+# ch27, --no-roster-pad real save): the win transition, party-circle scene,
+# CG islands, poem text, and 萊汀's card all appeared right on schedule
+# with plain Return taps, genuinely reproducing 續六十二 step for step --
+# but 悠妮's card (the second one, same as 續六十二 hit) cycles between
+# exactly 2 text panels forever regardless of input. This round re-tried
+# it with Return/Space/Escape/Right/Down/Up/Left/Tab and a 20s real-time
+# no-input wait -- all unsuccessful, matching 續六十二's own exhausted
+# 60+-attempt result exactly. This is a separate, already-documented,
+# still-unsolved RE puzzle (doc58 續六十二 §3's "唯一尚未解開的小尾巴"), not
+# a sweep-tool bug -- POSTBATTLE_MONTAGE_TAPS below is a bounded, honest
+# best-effort attempt to click through it (works for any chapter/roster
+# ordering that doesn't hit an equivalent stuck card), not a claim that the
+# stuck-card puzzle itself is solved.
+POSTBATTLE_MONTAGE_TAPS = 70
+
+
+def advance_postbattle_montage(name: str, shots_dir: Path, log: list[str],
+                                taps: int = POSTBATTLE_MONTAGE_TAPS) -> None:
+    """Best-effort bounded Return-mashing through the postbattle dialogue/
+    CG/poem/character-card montage after a genuine win, so the chapter's
+    real autosave (whenever in this sequence it actually happens -- not
+    determined by this project as of this round) has the best available
+    chance to fire before sweep_chapter() reads the save back. See the
+    module comment above this function for why this is honestly a best-
+    effort, not a guaranteed unblock -- doc58 續六十二 already spent 60+
+    live attempts stuck on one specific character card and did not solve
+    it either."""
+    for i in range(taps):
+        send_keys(name, "Return")
+        time.sleep(0.5)
+    screenshot(name, shots_dir / "post_montage_advance.png")
+    log.append(f"advance_postbattle_montage: sent {taps} additional Return taps trying to clear the postbattle "
+               f"dialogue/CG/poem/character-card montage (doc58 續六十二 §3 -- known-unresolved stuck-card risk, "
+               f"see module comment)")
 
 
 # --------------------------------------------------------------------------
@@ -354,6 +444,120 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str]) -> Path:
 
 def file_md5(path: Path) -> str:
     return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+# 2026-08-27 "winverify" round: doc58's dozens of "續" entries all describe
+# the SAME reliable visual signal for "real, interactive battle has begun"
+# -- a small HUD box in the screen's bottom-left corner showing the
+# selected unit's HP and terrain bonus (e.g. "823 A+05 D+00" for 索爾 in
+# ch27, reproduced live again this round). Every screen that is NOT yet
+# real battle -- pre-battle dialogue, the troop-selection roster grid, the
+# "end this turn?" Yes/No prompt, even a mid-battle boss-introduction
+# cutscene playing OVER an already-populated unit array (the false-positive
+# this round's live "winverify"/"probe3" instances both hit: the array can
+# read >=2 enemy records well before the player has any control) -- instead
+# shows a large, near-flat-colored dialogue/menu panel spanning most of the
+# screen width. `screen_looks_like_dialogue()` distinguishes the two
+# cheaply (no OCR) by sampling a horizontal strip through where that panel
+# always sits (SCREENSHOT_DIALOGUE_STRIP_Y, in the harness's fixed 1024x768
+# screenshot output) and checking its color variance: a flat dialogue/menu
+# panel reads under ~6000 in every live sample this round, the actual
+# terrain/unit battle-map view (or camp map) reads 16000-27000. The
+# threshold is set well inside that gap for margin.
+SCREENSHOT_DIALOGUE_STRIP_Y = 500
+SCREENSHOT_DIALOGUE_STRIP_X_RANGE = (250, 800, 10)  # start, stop, step
+DIALOGUE_VARIANCE_THRESHOLD = 9000
+
+
+def screen_looks_like_dialogue(png_path: Path) -> bool:
+    """True if the screenshot's bottom-strip looks like a flat dialogue/menu
+    panel (still need to keep sending Return), False if it looks like an
+    actual textured map/battle view (safe to stop advancing). See the
+    module-level comment above this function for the live-verified basis."""
+    try:
+        from PIL import Image
+    except ImportError:
+        # Pillow not available -- fail open (treat as "still dialogue") so
+        # callers keep advancing rather than declaring a false victory;
+        # this only degrades to the old tap-budget-only behavior.
+        return True
+    im = Image.open(png_path).convert("RGB")
+    x0, x1, step = SCREENSHOT_DIALOGUE_STRIP_X_RANGE
+    y = SCREENSHOT_DIALOGUE_STRIP_Y
+    pixels = [im.getpixel((x, y)) for x in range(x0, x1, step)]
+    vals = [sum(p) for p in pixels]
+    mean = sum(vals) / len(vals)
+    variance = sum((v - mean) ** 2 for v in vals) / len(vals)
+    return variance < DIALOGUE_VARIANCE_THRESHOLD
+
+
+# 2026-08-27 "winverify" round, follow-up to screen_looks_like_dialogue()
+# above: that check alone turned out to be NOT specific enough. Two
+# INDEPENDENT false positives were reproduced live in the same ch27
+# boss-introduction cutscene (instance 'probe3', then reproduced again by
+# sweep_chapter() itself via instance 'verify327' after the first fix
+# landed): a bare "camera cuts to the marching party, no textbox" beat
+# between two dialogue lines, and a second, different such beat later in
+# the same cutscene, BOTH read as "not dialogue" by the variance check
+# while the real battle (with player control) still hadn't started. So
+# "absence of a dialogue panel" is not proof of "presence of real control".
+#
+# doc58's "續" log has an actually-specific, well-documented positive
+# signal instead, reproduced across 40+ independent rounds (續四十四
+# through 續八十): a small HUD box in the screen's bottom-left corner
+# showing the selected unit's HP and terrain bonus, e.g. "823 A+05 D+00"
+# for 索爾 in ch27 (823 = his HP, reproduced live again this round at the
+# exact same value). That box only exists once the player has a movable
+# battle cursor -- i.e. once real, interactive battle has actually begun.
+# `screen_shows_battle_hud()` checks for it directly: crop the fixed
+# bottom-left region (BATTLE_HUD_BOX_REGION, calibrated against this
+# round's live screenshots) and measure what fraction of pixels are
+# "HUD blue" (blue channel clearly dominant, not too light/dark -- the
+# box's flat blue background, not the box's white/light digits or the
+# portrait icon). Live samples this round: the genuine HUD screen reads
+# ~0.48, every cutscene/dialogue/camp/troop-select frame tried reads
+# 0.00-0.04. The threshold is set well inside that gap.
+BATTLE_HUD_BOX_REGION = (205, 520, 345, 598)  # (left, top, right, bottom)
+BATTLE_HUD_BLUE_FRAC_THRESHOLD = 0.15
+
+
+def _is_hud_blue(pixel: tuple[int, int, int]) -> bool:
+    r, g, b = pixel
+    return b > r + 20 and 60 < b < 200 and r < 100
+
+
+def screen_shows_battle_hud(png_path: Path) -> bool:
+    """True if the screenshot shows doc58's "NNN A+XX D+XX" battle HUD box
+    in the bottom-left corner -- the specific, well-documented signal for
+    "the player has real control of a movable battle cursor right now", not
+    just "some non-dialogue frame" (see the module comment above this
+    function for why the weaker screen_looks_like_dialogue() check alone
+    was proven insufficient, live, twice).
+
+    2026-08-27 correction (same round): the HUD-blue color-fraction check
+    alone ALSO false-positived, on two different screens this time -- the
+    "要進入戰場嗎?" exit-confirm dialogue (莎拉's portrait includes a chunky
+    blue collar/headband right in BATTLE_HUD_BOX_REGION) and the troop-
+    selection roster screen (its "剩餘人數" side panel uses the EXACT same
+    (56,85,154) theme blue as the real HUD box's background -- apparently a
+    shared UI color, not a HUD-specific one). Both of those screens DO
+    register as "looks like a dialogue/menu panel" under
+    screen_looks_like_dialogue()'s variance check, though, and the genuine
+    battle-map HUD screen does NOT (its terrain view has high variance) --
+    so AND-ing the two checks together clears both false positives while
+    still passing every true-positive and cutscene-false-positive case
+    tried live this round (12/12 in the validation sweep that caught this)."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return False  # fail closed here -- callers should keep waiting/advancing
+    if screen_looks_like_dialogue(png_path):
+        return False
+    im = Image.open(png_path).convert("RGB")
+    box = im.crop(BATTLE_HUD_BOX_REGION)
+    pixels = list(box.getdata())
+    frac = sum(1 for p in pixels if _is_hud_blue(p)) / len(pixels)
+    return frac > BATTLE_HUD_BLUE_FRAC_THRESHOLD
 
 
 # A generic node this project has repeatedly found to be either a pure
@@ -396,14 +600,17 @@ CAMP_EXIT_CYCLE_KEYS = ["Right", "Right", "Right"]
 
 
 def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
-                       confirm_retries: int = 4, dialogue_steps: int = 20) -> dict | None:
+                       confirm_retries: int = 4, dialogue_steps: int = 60) -> dict | None:
     """Try the doc91/doc58-established "town-hub camp -> exit -> battle"
     sequence: cycle to the 出口 (EXIT) hotspot, confirm it, confirm the
     resulting "要進入戰場嗎?" YES/NO prompt (YES is the default highlight),
-    then Enter-advance through however many lines of pre-battle dialogue
-    the chapter has (this varies per chapter and is NOT bounded by any
-    known constant, hence the bounded polling loop) until the engine-level
-    battle-array pointer (read_battle_array_base) goes live.
+    then Enter-advance through the troop-selection screen (Return both
+    picks the highlighted roster member AND advances the cursor -- see
+    the 2026-08-27 "winverify" round below) and however many lines of
+    pre-battle dialogue the chapter has (this varies per chapter and is
+    NOT bounded by any known constant, hence the bounded polling loop)
+    until the engine-level battle-array pointer (read_battle_array_base)
+    goes live AND holds more than one unit record.
 
     WHY THIS EXISTS (2026-08-27 fix): earlier rounds of this tool treated
     "no reliable camp-exit sequence" as an open RE puzzle and fell back to
@@ -424,6 +631,36 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
     in this project, just not what was biting this tool. The retries below
     are kept anyway as cheap insurance against that known, separately-
     confirmed flakiness, not because this round reproduced it.
+
+    WHY THE STOPPING CONDITION CHANGED (2026-08-27 "winverify" follow-up,
+    see doc99's "camp-exit vs ch27 63-enemy discrepancy" section): the
+    original version of this loop stopped the instant
+    read_battle_array_base() returned ANY plausible-looking pointer, BEFORE
+    sending a single dialogue-advance Return. Live verification (instance
+    'winverify', ch27's already-patched save) proved this pointer goes
+    "plausible" the moment the "要進入戰場嗎?" YES confirm lands on the
+    troop-selection screen ("出戰人數"/"剩餘人數" counters + a roster grid)
+    -- it is a transient PLACEHOLDER array with exactly 1 record, not the
+    real battle. The old code declared victory here and returned with
+    "0 dialogue-advance taps" used, which is why sweep_chapter()'s
+    (passive, sleep-only) settle loop downstream could never see more than
+    1 "enemy": nothing had ever sent the ~15 Returns needed to fill the
+    troop quota (each Return both PICKS the highlighted candidate --
+    decrementing 剩餘人數 -- and advances the cursor; confirmed live, do
+    NOT treat this as a toggle/deselect), the Return that confirms the
+    resulting auto-popup "確定" dialog, or the further ~10-45 Returns
+    (doc58 續六十二's number, also reproduced live this round) needed to
+    click through pre-battle dialogue before the real, fully-populated
+    battle array (47 enemy records for ch27, matching 續六十二 exactly)
+    gets allocated. All of these screens accept plain Return, so the fix
+    is NOT a new key sequence -- it is to stop declaring "battle confirmed"
+    on a bare plausible pointer and instead require the enemy scan itself
+    to find more than 1 record (a real battle; the specific 1-record
+    placeholder pattern was reproduced twice now and is never how a real
+    FD2 battle actually starts) before treating the pointer as trustworthy,
+    so the loop keeps sending Returns through the intervening screens
+    instead of stopping dead on the very first one. dialogue_steps was
+    also raised 20->60 to give this longer real sequence enough budget.
 
     Returns the same shape as advance_generic()'s success dict
     ({"battle_base": int, "steps_used": int, "max_stall_seen": 0}) if a
@@ -462,7 +699,7 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
     if not _confirm_with_retry("yes_confirm"):
         return None
 
-    def _check_battle() -> int | None:
+    def _check_real_battle() -> tuple[int | None, list[int]]:
         # read_battle_array_base's "D ..." debugger console command only
         # reaches the debugger TUI while it's open -- MUST bracket every
         # poll with enter_debugger (Alt+Pause open) / RUN (resume + close),
@@ -474,29 +711,63 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
         # observe a battle -- a second, independent bug from the missing
         # navigate sequence, fixed here for this new polling loop and left
         # documented for advance_generic below.
+        #
+        # ALSO scans for enemy records (not just the bare pointer) -- see
+        # this function's 2026-08-27 "winverify" docstring section. A
+        # merely-plausible pointer is NOT sufficient: the troop-selection
+        # screen that comes BEFORE the real battle already has one live,
+        # holding a transient 1-record placeholder. Only treat the pointer
+        # as the real battle once it holds more than 1 record.
         enter_debugger(name)
         time.sleep(0.3)
         b = read_battle_array_base(name)
+        enemies = scan_enemy_slots(name, b, log) if b is not None else []
         debugger_cmd(name, "RUN")
         time.sleep(0.2)
-        return b
+        return b, enemies
+
+    def _check_screen(i: int) -> tuple[int | None, list[int], bool]:
+        # 2026-08-27 "winverify" round: gate the expensive memory scan on
+        # screen_shows_battle_hud() (doc58's "823 A+05 D+00"-style HUD box),
+        # NOT screen_looks_like_dialogue(). The weaker "screen doesn't look
+        # like a dialogue panel" check was tried first and produced two
+        # INDEPENDENT false positives live in this exact ch27 boss-intro
+        # cutscene (instance 'probe3', then again via sweep_chapter() as
+        # instance 'verify327') -- bare "camera cuts to the marching party"
+        # beats with no textbox that still aren't the real battle. The HUD
+        # box only exists once the player has a movable battle cursor, so
+        # it's the specific signal, not just an absence-of-dialogue guess.
+        shot = screenshot(name, shots_dir / f"campexit_{step + i:03d}_dialogue{i:02d}.png")
+        if not screen_shows_battle_hud(shot):
+            return None, [], True
+        base, enemies = _check_real_battle()
+        return base, enemies, False
 
     for i in range(1, dialogue_steps + 1):
-        base = _check_battle()
-        if base is not None:
-            log.append(f"attempt_camp_exit: battle confirmed via engine pointer after {i - 1} dialogue-advance taps")
+        base, enemies, no_hud = _check_screen(i)
+        if not no_hud and base is not None and len(enemies) >= REAL_BATTLE_MIN_ENEMIES:
+            log.append(f"attempt_camp_exit: real battle confirmed (battle HUD box visible + engine pointer + "
+                       f"{len(enemies)} enemy record(s)) after {i} taps")
             return {"battle_base": base, "steps_used": step + i, "max_stall_seen": 0}
+        if not no_hud:
+            # HUD box visible but the array doesn't look like a real battle
+            # yet -- shouldn't normally happen (the HUD box only appears
+            # once units are on the field), but if it does, log it plainly
+            # rather than silently retrying forever.
+            log.append(f"attempt_camp_exit: tap {i}/{dialogue_steps} -- HUD box visible but only {len(enemies)} "
+                       f"enemy record(s) (base={base}) -- continuing")
         send_keys(name, "Return")
         time.sleep(0.8)
-        screenshot(name, shots_dir / f"campexit_{step + i:03d}_dialogue{i:02d}.png")
     # One final check after the last tap, in case the battle state only
     # becomes readable a beat after the last screen transition.
-    base = _check_battle()
-    if base is not None:
-        log.append(f"attempt_camp_exit: battle confirmed via engine pointer after final dialogue-advance tap")
+    base, enemies, no_hud = _check_screen(dialogue_steps + 1)
+    if not no_hud and base is not None and len(enemies) >= REAL_BATTLE_MIN_ENEMIES:
+        log.append(f"attempt_camp_exit: real battle confirmed via engine pointer + {len(enemies)} enemy "
+                   f"record(s) after final dialogue-advance tap")
         return {"battle_base": base, "steps_used": step + dialogue_steps, "max_stall_seen": 0}
-    log.append(f"attempt_camp_exit: exit+YES confirmed but no battle detected within {dialogue_steps} "
-               f"dialogue-advance taps -- falling back to the generic loop")
+    log.append(f"attempt_camp_exit: exit+YES confirmed but no real battle (HUD box + enemy records) detected "
+               f"within {dialogue_steps} dialogue/selection-advance taps -- falling back to the generic loop "
+               f"(last seen: base={base}, enemies={len(enemies)}, hud_visible={not no_hud})")
     return None
 
 
@@ -514,6 +785,7 @@ def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int =
     max_stall_seen = 0
     if hint_keys:
         log.append(f"advance_generic: using a chapter-specific navigate hint ({len(hint_keys)} keys) before falling back to the generic cycle")
+    cur_shot = screenshot(name, shots_dir / "advance_pre000.png")
     for step in range(max_steps):
         # See attempt_camp_exit()'s _check_battle() docstring comment: the
         # debugger console must be (re)opened before every poll and closed
@@ -521,13 +793,28 @@ def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int =
         # here 2026-08-27 alongside attempt_camp_exit -- this loop is now
         # only reached as a last-resort fallback, but should still report
         # a battle correctly if it stumbles into one.
-        enter_debugger(name)
-        time.sleep(0.3)
-        base = read_battle_array_base(name)
-        debugger_cmd(name, "RUN")
-        time.sleep(0.2)
-        if base is not None:
-            log.append(f"advance_generic: battle detected at step {step} (array base {base:#x})")
+        #
+        # See attempt_camp_exit()'s docstring (2026-08-27 "winverify" round)
+        # for why a plausible pointer with a couple of enemy records is
+        # STILL not sufficient on its own -- it can be a placeholder or a
+        # boss-intro cutscene playing over an already-populated array, and
+        # "screen doesn't look like a dialogue panel" alone was tried and
+        # proven insufficient too (two independent live false positives).
+        # Gate the expensive scan on screen_shows_battle_hud() instead --
+        # doc58's actual "823 A+05 D+00"-style battle HUD box, the specific
+        # signal for "the player has a movable battle cursor right now".
+        has_hud = screen_shows_battle_hud(cur_shot)
+        base, enemies = None, []
+        if has_hud:
+            enter_debugger(name)
+            time.sleep(0.3)
+            base = read_battle_array_base(name)
+            enemies = scan_enemy_slots(name, base, log) if base is not None else []
+            debugger_cmd(name, "RUN")
+            time.sleep(0.2)
+        if has_hud and base is not None and len(enemies) >= REAL_BATTLE_MIN_ENEMIES:
+            log.append(f"advance_generic: real battle detected at step {step} (array base {base:#x}, "
+                       f"{len(enemies)} enemy records)")
             return {"battle_base": base, "steps_used": step, "max_stall_seen": max_stall_seen}
         if hint_keys and step < len(hint_keys):
             key = hint_keys[step]
@@ -536,6 +823,7 @@ def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int =
         send_keys(name, key)
         time.sleep(1.0)
         shot = screenshot(name, shots_dir / f"advance_{step:03d}.png")
+        cur_shot = shot
         h = file_md5(shot)
         if h == last_hash:
             stall_count += 1
@@ -658,16 +946,39 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
         time.sleep(2.0)
         send_keys(name, "Return")  # confirm the save slot (cursor defaults to slot 0)
         time.sleep(2.5)
-        screenshot(name, shots_dir / "02_post_load.png")
+        post_load_shot = screenshot(name, shots_dir / "02_post_load.png")
 
         enter_debugger(name)
         time.sleep(0.5)
         base = read_battle_array_base(name)
+        # 2026-08-27 "winverify" fix: a merely-plausible pointer is NOT
+        # sufficient proof of "already in battle" -- prep-select chapters
+        # (ch23/24/25/28/29/30, doc99) land DIRECTLY on the troop-selection
+        # screen after LOAD, which already has a plausible pointer holding a
+        # transient 1-record placeholder, AND (a second, independently-
+        # confirmed false positive, see attempt_camp_exit()'s docstring) a
+        # boss-introduction cutscene can play OVER an already-populated,
+        # >=2-enemy-record real battle array well before the player has any
+        # control -- even a screen with no dialogue box visible can still be
+        # a bare cutscene beat, not real control (screen_looks_like_dialogue
+        # alone was tried and produced two independent false positives
+        # live). Require BOTH >=2 enemy records AND doc58's actual "823
+        # A+05 D+00"-style battle HUD box (screen_shows_battle_hud()) here
+        # too, or this initial gate would wrongly skip straight to the
+        # passive settle-loop below and never send the Returns needed to
+        # actually pick troops / advance dialogue / clear the cutscene.
+        post_load_enemies = scan_enemy_slots(name, base, log) if base is not None else []
+        post_load_has_hud = screen_shows_battle_hud(post_load_shot)
         # Leave the debugger console and resume the emulator loop before
         # doing anything else -- RUN, not just closing the TUI overlay, per
         # doc48 §8.4's "confirm (Running) before sending game keys again".
         debugger_cmd(name, "RUN")
         time.sleep(0.3)
+
+        if base is not None and (len(post_load_enemies) < REAL_BATTLE_MIN_ENEMIES or not post_load_has_hud):
+            log.append(f"post-load state: pointer plausible but only {len(post_load_enemies)} enemy record(s) "
+                       f"and/or no battle HUD box visible (hud={post_load_has_hud}) -- treating as story/town node")
+            base = None
 
         if base is None:
             log.append("post-load state: battle array pointer not plausible -> treating as story/town node")
@@ -738,7 +1049,12 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             time.sleep(0.5)
             screenshot(name, shots_dir / "03_pre_end_turn.png")
             if enemy_addrs:
-                confirm_end_turn(name, shots_dir, log)
+                confirm_end_turn(name, shots_dir, log, enemy_addrs=enemy_addrs)
+                # 2026-08-27 "winverify": a genuine win does not autosave
+                # immediately -- see advance_postbattle_montage()'s module
+                # comment. Best-effort attempt to clear the montage before
+                # reading the save back below.
+                advance_postbattle_montage(name, shots_dir, log)
             else:
                 log.append("no enemy slots found by scan -- skipping End Turn shortcut, flagging as anomaly")
         else:
