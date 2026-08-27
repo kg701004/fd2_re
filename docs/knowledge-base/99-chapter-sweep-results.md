@@ -1586,4 +1586,73 @@ build.md`§8.4第3點已經記錄過heavy debugger的`BP`/`BPM`在Normal core下
 ch11的斷點確實沒命中,才能把問題定位到`0x117e7`這個per-unit回合狀態機決定「要不要呼叫
 `0x51b19`表」的分支條件本身(`iVar2==0x39 || iVar2==0x1c`),而不是`0x51b19`表或它的
 handler。完整live log、逐格記憶體dump見`.wsl_build/chapter_sweep_ch11diag/`
+
+## 2026-08-28 續輪(代號`ch11bp`):execution-trace首次直接坐實「dispatch沒被呼叫」,反組譯出完整三層gate條件,「星之眼」寶物假說已排除,根因窄化但仍未完全關閉
+
+### 任務背景
+
+回應上一輪(`ch11diag`)結尾建議,搭配ch03(已確認會贏的對照組)對native `0x205be`下斷點,
+直接觀察End-Turn確認是否真的命中過這個win-check handler,而不是只靠`[0x53ecc]`輪詢推論。
+**位址訂正**:上一輪與本文件自己留下的建議文字都寫`native 0x1C05BE(=0x205be+0x19C000)`
+——這是筆誤,正確的十六進位和是`0x1BC5BE`(已用已知值`0x53c03+0x19C000=0x1EFC03`與
+live讀到的Data view `0178:001EFC03`逐byte核對過delta公式本身沒問題,純粹是先前手算加法
+錯誤)。本輪全程使用訂正後的`0x1BC5BE`。
+
+### 方法與結果
+
+**① `BPM`斷點法(自我觸發artifact,不採信)**:對ch03/ch11分別下`BPM 0170 1BC5BE`後送出
+YES確認鍵,兩章在完全相同時間點(~1.1秒)、完全相同訊息(`Memory breakpoint : 0170:1BC5BE
+- 00 -> 68`)觸發,且都把同時armed的`LOGC`截斷成僅1行——贏的章節與卡住的章節行為完全
+相同,判定是dosbox-x對CODE address下`BPM`的自我觸發artifact,不採信其結果。
+
+**② 純`LOGC`execution trace(無斷點,本輪最終定論證據)**:`arm_trace`在打開指令環**之前**
+就開始錄,涵蓋開環→選END→確認END→Yes/No→確認YES整段,YES確認完後手動暫停讀取
+`LOGCPU.TXT`:
+
+| 章節 | 追蹤指令數 | `0170:001BC5BE`命中次數 |
+|---|---|---|
+| ch03(對照組,已知會贏) | 41,842,776 | **1** |
+| ch11(測試組) | 42,553,020 | **0** |
+
+同一harness instance、同一腳本、幾乎逐秒對齊的操作時間戳(`t=0.8s`開環/`t≈2.3s`確認
+END/`t≈2.5s`確認YES),ch03命中1次、ch11命中0次——**這是本專案在這個謎團上第一次拿到
+不依賴輪詢推論、直接看CPU執行軌跡的正/負對照證據**。
+
+**③ 反組譯`0x117e7`(真正呼叫`0x51b19`表的caller)找到完整三層gate條件**:`0x51b19`表
+呼叫`(**(code**)(&DAT_00051b19+DAT_00053c03*4))()`嚴格巢狀在:①`phase(0x11aa8)==0x39
+||0x1c`,②`0x12c0d`(找「游標目前座標」[0x53ab1]/[0x53ab5]對應的活著單位index,活著=
+`unit[+5]&1==0`,與win-check handler用同一個bit)`!=-1`,③`unit[+7]!='y' &&
+unit[+0x1f]!='\n'`——三層全部成立才會執行到win-check dispatch call。這證實`0x51b19`
+不是「每次End-Turn一次」被呼叫,而是`0x117e7`每個engine tick被主迴圈重呼叫一次、每次
+只處理「游標目前座標」上的(至多)一個活著單位。
+
+**④ 協調端追加假說(「星之眼」寶物是ch11自己的勝利條件)已直接live測試排除**:讀出
+map10戰鬥期間寶箱「已開啟」旗標heap block指標`[0x53AD5]`(live `0x1EFAD5`)實際值
+`0x1F6C5C`,依`map10.json` `treasure_slots`把星之眼(18,37)對應到slot0,對全部12個
+已知map10寶箱slot寫入`0x01`並readback驗證成功、撐過3回合turn-wait未被重置,重跑完整
+mass-kill+End-Turn→YES流程,`[0x53ecc]`依然卡在0——假說被直接記憶體證據排除,與③的
+handler反組譯(`0x205be`只查`+5`/`+6`,無任何inventory/寶箱查詢指令)互相印證。
+
+### 誠實結論
+
+本輪累計排除的候選(含前2輪):handler本體不同、掃描漏看敵人、native迴圈上界過小、
+dispatch走錯chapter index、`BPM`斷點結果不可信、星之眼寶物門檻——共6個。**新增的正面
+進展**:②首次拿到execution-trace直接證據(不只是輪詢推論),③完整反組譯出三層dispatch
+gate的具體條件。但根因仍未關閉——③的三層條件裡,ch03/ch11究竟在哪一層分道揚鑣本輪未
+驗證(最可能候選:`0x12c0d`的游標-座標匹配機制,因為ch11總record數(38)遠大於ch03,若
+這是「每tick處理一個座標」的機制,較大陣列理論上需要更多真實時間;但這個「純粹是時間
+不夠」的解釋與本專案至少4輪獨立測試——每輪對`[0x53ecc]`的輪詢/觀察視窗都有15秒以上,
+部分輪次累計60秒以上——卻從未看到翻2的紀錄不一致,不足以推翻「genuinely never
+dispatched」的結論,但也還沒有被100%排除)。M5仍是0 pass,未變動。全程約
+2400秒(4個顺序live instance:BPM輪2次+LOGC輪2次+treasure輪1次,實際5次chapter-level
+live驗證)。
+
+**下一輪建議**:(a)把②的`LOGC`觀察窗從6秒延長到60秒以上或讓100M指令budget自然跑完,
+直接排除「純粹需要更久真實時間」這個殘餘可能性;(b)對`0x12c0d`或`[0x53ab1]/[0x53ab5]`
+(游標XY)下`BPPM`(記憶體變更斷點,不是本輪已證實自我觸發的`BPM`)觀察END確認後游標的
+實際step序列,直接比對ch03/ch11兩者的游標是否真的走訪過all活著單位的座標。
+
+完整live log見本輪`.wsl_build/chapter_sweep_ch11bp/{control_ch03,test_ch11,
+control_ch03_logc,test_ch11_logc,control_ch03_logc2,test_ch11_logc2,
+treasure_ch11}/result.json`(未納入git,本機保留)。
 (未納入git,本機保留)。

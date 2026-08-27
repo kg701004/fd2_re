@@ -1416,6 +1416,32 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # doc25 §3.2 for the full writeup and the suggested next step, a live
 # breakpoint at native 0x1C05BE with a known-working chapter as a
 # control).
+# 2026-08-28 "ch11bp" round (doc25 §3.2.1, doc99's matching section): NOTE
+# the address above (0x1C05BE) is a TYPO carried over from an earlier
+# round -- 0x205be + NATIVE_LIVE_DELTA actually equals 0x1BC5BE (verified
+# both by hand and by cross-checking the same delta formula against the
+# already-confirmed 0x53c03+NATIVE_LIVE_DELTA=0x1EFC03 live read). Using
+# the corrected address, a bare BPM breakpoint there turned out to be an
+# unreliable/self-triggering channel (fired identically for ch03 and
+# ch11), but a from-before-the-ring LOGC full-instruction execution trace
+# gave the first direct (non-polling) ground truth: native 0x205be
+# executes exactly once for ch03 (control) and ZERO times for ch11 across
+# an equivalent ~42M-instruction window covering the whole End-Turn->YES
+# sequence -- i.e. the dispatch genuinely is never reached for ch11, not
+# just "reached but overwritten". Decompiling the actual caller (0x117e7)
+# found the call is nested inside THREE conditions (phase==0x39||0x1c,
+# then FUN_00012c0d()!=-1 -- "is there a still-alive unit at the CURSOR's
+# current [0x53ab1]/[0x53ab5] grid position", then a per-unit unit[+7]/
+# unit[+0x1f] check) -- which of these three is where ch03/ch11 diverge is
+# still unverified. A coordinator-proposed "does ch11 need the map's
+# Star's Eye (星之眼) chest opened too, not just all enemies dead" side
+# hypothesis was also tested directly this round (SMV-writing all 12 of
+# map10's known chest-opened flags at the [0x53AD5]-pointed heap block,
+# verified via readback and confirmed to survive the full turn-wait) and
+# came back negative -- still stuck at [0x53ecc]==0 either way. See doc25
+# §3.2.1 for the full writeup; no code fix was found this round, so
+# KNOWN_MIN_TURNS_BEFORE_KILL below is unchanged (ch11 deliberately has no
+# entry -- turn-wait alone was never the fix for this chapter).
 KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established

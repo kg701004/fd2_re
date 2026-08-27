@@ -1657,6 +1657,43 @@
   M5仍是0 pass,未變動。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`
   「2026-08-28 續輪(代號`ch11diag`)」小節與`docs/knowledge-base/
   25-battle-event-system.md`§3.2。
+  **2026-08-28 第3輪(代號`ch11bp`)**:回應上一輪建議,在native`0x1BC5BE`
+  (=`0x205be`+`0x19C000`;**訂正**：上一輪與doc99建議文字寫的`0x1C05BE`是筆誤,
+  正確算式結果是`0x1BC5BE`,已用同一個`0x53c03`→`0x1EFC03`delta換算對照驗證過)
+  對ch03(對照組)與ch11(測試組)雙雙下斷點+`LOGC`全指令execution trace。
+  **關鍵方法論教訓**:`BPM`斷點對兩章都在送出「YES」鍵後~1.1秒同址觸發同一個
+  `00->68`byte變化訊息,且都把LOGC截斷成僅1行——同一模式無論輸贏都出現,判定
+  是`BPM`對code address下記憶體斷點時的自我觸發artifact,不是真實訊號,棄用。
+  改良版**只用`LOGC`**(在打開指令環之前就開始錄、一路錄到YES確認完成再手動
+  暫停讀取)後拿到本專案這個謎團目前為止最乾淨的直接證據:**ch03在完整視窗內
+  (41.8M指令)命中`0170:001BC5BE`剛好1次;ch11在同一套操作、同一時間窗
+  (42.5M指令)命中0次**——這是直接執行軌跡層級的證據,不是輪詢推論,首次真正
+  坐實「dispatch沒被呼叫」假說(而非「呼叫了但被覆寫」)。**靜態反組譯補強**:
+  decompile`0x117e7`(真正的dispatch caller)證實它是個per-tick被主迴圈
+  重複呼叫的函式,`0x51b19`表呼叫嚴格巢狀在`phase(0x11aa8)==0x39||0x1c`→
+  `0x12c0d(游標XY==[0x53ab1]/[0x53ab5]的活著單位index,活著=+5 bit0==0,
+  `0x34894`確認)!=-1`→`unit[+7]!='y' && unit[+0x1f]!='\n'`三層條件全部成立才會
+  執行到。**協調端追加假說(戰役攻略「星之眼」寶物)已直接live測試排除**:讀出
+  map10戰鬥期間寶箱開啟旗標heap block指標`[0x53AD5]`(live`0x1EFAD5`)→
+  `0x1F6C5C`,把全部12個已知寶箱slot(含星之眼,slot0,座標(18,37))寫1(SMV
+  寫入後readback驗證成功、且撐過3回合等待未被重置),重跑完整mass-kill+
+  End-Turn流程,`[0x53ecc]`依然卡在0——「拿星之眼才能贏本章」的假說被直接
+  記憶體證據排除,`0x205be`handler本身反組譯也證實只查`+5/+6`,無任何inventory
+  查詢。**誠實現況**:根因窄化到`0x117e7`的三層巢狀條件之一(最可能是`0x12c0d`
+  的游標-位置匹配機制,因為ch11總record數(38)遠大於ch03(約8+),若這是逐單位
+  一次tick處理一筆的內部游標掃描,ch11要花更多真實時間掃完;但這個「純粹是
+  時間不夠」的解釋與本專案至少4輪獨立測試(`ch2killgen`/`ch11diag`/`ch11bp`
+  BPM/`ch11bp`treasure)、每輪都有15秒以上真實輪詢時間、部分輪次還有4次
+  kill-cycle重試(累計60秒+)卻始終讀0的紀錄不一致,不足以推翻「genuinely
+  never dispatched」的結論,但也還沒有完全排除),仍未定案到「哪一個具體
+  runtime狀態值」造成ch11卡住。M5仍是0 pass,未變動。**下一輪建議**:(a)
+  把LOGC觀察窗從6秒延長到60秒+/或錄到100M指令自然用盡,直接排除「純粹需要
+  更久真實時間才會dispatch」這個殘餘可能性;(b)對`0x12c0d`本身或
+  `[0x53ab1]/[0x53ab5]`(游標XY)下`BPPM`(protected-mode記憶體變更斷點,不是
+  這輪已證實對code address自我觸發的`BPM`)live觀察END確認後cursor座標的
+  實際step序列,比對ch03/ch11兩者是否真的走過所有活著單位的座標。完整寫法見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 續輪
+  (代號`ch11bp`)」小節與`docs/knowledge-base/25-battle-event-system.md`§3.2。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
