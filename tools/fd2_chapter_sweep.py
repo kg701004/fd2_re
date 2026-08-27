@@ -372,6 +372,49 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
     (contradicts an earlier, less-careful doc58 round) -- Enter alone from
     the freshly-opened ring opens the "UP" (system menu) suboption instead;
     Down really is required first, exactly as 續六十二 documented.
+
+    2026-08-27 "branchcheck" round -- IMPORTANT, read before suspecting save
+    contamination again: a dispatch this round hypothesized that ch02/ch12
+    landing on "the same 悠妮 character-card infinite loop" as ch27 (as
+    prepare_chapter_save() reused a single ch27-flavored source save for
+    every chapter) meant table_post[] dispatch was being routed with leaked
+    ch26/29-specific state. This was checked two ways and REFUTED both times:
+      1. Static: docs/data/fd2_native_chapter_slot_restore_ida.txt's "0x25EBB
+         的章節槽載入分支" section (already-proven IDA disassembly) shows LOAD
+         copying metadata+0 -- i.e. exactly the byte set_slot_chapter()
+         writes -- into `[0x53C03]`, and doc35 §9.11 already proved
+         `[0x53C03]` is the exact index into `table_post` (native 0x51de9,
+         32 4-byte handler pointers) that determines which postbattle
+         handler (including ch26/29's Yuni-card dead end) runs. There is no
+         separate "current chapter" global fed from anywhere else in this
+         path.
+      2. Live: a fresh dosbox_harness.sh instance per chapter (NOT reusing
+         one running instance across LOADs -- an earlier attempt this round
+         that reused one instance produced bogus stale-memory readings,
+         see docs/knowledge-base/99-chapter-sweep-results.md's "branchcheck"
+         section), LOAD immediately followed by a debugger read of live
+         0x1EFC03 (=native 0x53C03), for ch02/ch12/ch27's
+         prepare_chapter_save() output: readback was 1/11/26 respectively --
+         an EXACT match to the patched raw chapter byte every time. No
+         leakage.
+    So `[0x53C03]`/table_post dispatch is clean. The actual, DIFFERENT
+    explanation for why ch02/ch12 looked "stuck" in a prior round: inspecting
+    chapter_sweep_v7's actual post_end_turn.png screenshots shows ch02 and
+    ch12 did NOT reach the same screen as each other or as ch27 at all --
+    ch12's shows an ordinary mid-battle NPC-rescue dialogue box (still
+    in-battle, not even a win transition), ch02's shows an unrelated walkable
+    camp/town scene, and only ch27 actually reached the documented "13-person
+    party circle" victory scene. In other words, ch02/ch12 most likely never
+    reached a genuine win via this function at all -- the single hardcoded
+    `Up` below is, by this docstring's own admission two paragraphs up, only
+    confirmed for ch27's specific unit cluster (very possibly compounded by
+    the roster-size-mismatch caveat in doc99: ch02/ch12's synthetic saves
+    keep the full late-game 13-person roster, which changes the deployment
+    cluster's shape from what a real ch02/ch12 save would have). This is a
+    real, still-open generalization gap in THIS function, not a save-
+    construction bug -- see doc99's "branchcheck" section for the full
+    writeup and suggested next steps (an adaptive multi-direction empty-tile
+    probe instead of a hardcoded `Up`).
     """
     send_keys(name, "Up")  # move cursor off the unit cluster onto empty ground (fix #2 above)
     time.sleep(0.5)

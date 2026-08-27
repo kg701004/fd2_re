@@ -1385,6 +1385,35 @@
   「僅人工操作成功過一次」變成「自動化工具本身也能可靠重現」。完整寫法見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(instance
   `winverify`/`probe3`/`probe4`)」小節。
+  **2026-08-27 再續輪(instance `branchck02`/`branchck12`/`branchck27`,代號
+  `branchcheck`)**:派工單懷疑「ch02/ch12/ch27 全部卡在悠妮角色卡循環」是存檔
+  建構污染——`prepare_chapter_save()`反覆 patch 同一份「原本落在 ch27」的來源
+  存檔的 chapter byte 時,懷疑某個決定戰後分支(`table_post`)的旗標沒有跟著
+  正確路由,導致非 ch26/27/29 章節也錯誤地被路由進悠妮卡循環。**結論:徹底
+  排除,靜態+live 雙重證實 `[0x53C03]`/`table_post` 路由機制乾淨**——①靜態:
+  `docs/data/fd2_native_chapter_slot_restore_ida.txt`已證實 LOAD 會把
+  `set_slot_chapter()`patch 的那個 metadata byte 精確複製進`[0x53C03]`,而
+  doc35 §9.11 已獨立證實`[0x53C03]`正是索引`table_post`的那個全域變數,兩份
+  既有文件接起來看,中間沒有第二個「當前章節」來源;②live:改用**每章節
+  全新獨立 instance**(避免了第一次嘗試重用同一 instance 導致的 stale-memory
+  誤讀陷阱,已記錄在 doc99)LOAD 後立刻讀`[0x1EFC03]`,ch02/ch12/ch27 分別讀回
+  `1`/`11`/`26`,與 patch 進去的 raw chapter **100% 精確吻合**,沒有殘留舊值。
+  真正原因**不是路由污染**,是完全不同的另一個問題:回頭核對`chapter_sweep_v7`
+  的實際截圖,ch02/ch12/ch27 三章**根本沒有走到同一個畫面**——只有 ch27 真的
+  走到過續六十二記錄的「13人圍站」真實勝利轉場,ch12 的`post_end_turn.png`是
+  戰鬥仍在進行中的 NPC 對白(整場戰鬥根本沒結束),ch02 的則是一張無關的可行走
+  營帳/教會地圖——上一輪「三章全部卡在勝利後montage」的措辭並不精確,ch02/ch12
+  很可能從未真的走到過真實勝利,更談不上被路由到悠妮卡。根本原因是
+  `confirm_end_turn()`的`Up`游標移動 hack 只針對 ch27 特定部署佈局校準過,對
+  其他章節的佈局不通用(該函式自己的既有 docstring 早就承認這點,只是先前沒有
+  一輪用不同章節的截圖直接驗證後果),也不能排除 doc99 已記錄的「早章節+晚期
+  滿編隊伍」roster 大小不匹配 caveat 是部分成因。**沒有修改
+  `fd2_chapter_sweep.py`的存檔建構邏輯**(兩種方法都證實它沒問題),已在
+  `confirm_end_turn()`加註解記錄排除過程,防止未來輪次重複懷疑同一個已排除的
+  假說。M5 verdict 分布維持不變(仍是 0 pass)——本輪價值是排除一個看似合理但
+  錯誤的假說,不是產生新的 pass。完整寫法見`docs/knowledge-base/99-chapter-
+  sweep-results.md`「2026-08-27 續輪(instance `branchck02`/`branchck12`/
+  `branchck27`)」小節,含下一輪建議(游標移動通用化,而非繼續懷疑存檔污染)。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
