@@ -2367,3 +2367,123 @@ session及其他agent的instance無交集;本輪結束前兩次`teardown`都乾�
 1人版)存於`.wsl_build/ch01final_manual_shots/`與`.wsl_build/`(既有`.wsl_build/`
 git-ignore規則,未提交)。未觸碰`tools/fd2save.py`——roster裁減只是本輪一次性診斷腳本
 直接操作解碼後的plaintext buffer,不是對`fd2save.py`函式庫本身的修改。
+
+## 2026-08-28/29「`ch01newgame`」輪:**新假說直接證實——genuine New Game 完整走完 ch01 開場、進入真正可操作戰鬥、`[0x53ecc]` 引擎層級勝利確認拿到 2。M5 章節數 19→20/30**
+
+### 任務背景
+
+延續上一輪(「`ch01final`」)結尾的「新假說」與建議③:LOAD-into-ch01 可能結構上就不是
+這個章節的合法入口點(原版設計下,ch01 結束前完全沒有存檔點,`chapter byte=0` 的存檔
+本身就是一個沒有合法產生路徑的人工輸入)。本輪任務:**完全不 patch 任何存檔**,從標題
+畫面選真正的「START」(新遊戲),讓引擎用它原生預期的方式進入 ch01——如果這條路徑本身
+也卡住,新假說就被推翻,需要另尋根因;如果真的能到戰鬥,就證實 LOAD 不是合法入口。
+
+### Live 驗證方法與結果
+
+獨立`dosbox_harness.sh` instance `ch01newgame`(WSL2,啟動前`status`確認無殘留
+instance)。標題畫面確認完全渲染(`START`預設反白)後單純送`Return`選 START,之後
+**只用`send-keys`送一批批`Return`**(10~40 個一批,批次間穿插 15~30 秒被動等待+
+screenshot 核對進度,不是一次性盲送幾百次)推進整段開場,全程未進 debugger、未碰任何
+存檔或記憶體,直到接近戰鬥前才第一次進 debugger 做勝利確認。
+
+**結果:與`ch01final`輪的黑畫面完全不同,doc46 記錄的完整逐幕時間軸原樣重現**——王座廳
+(索爾/父王/王后對白)→索爾退朝走位轉場→郊外草地(亞雷斯撞見索爾)→後山密林(比劍邀約→
+蓋亞阻擋『不要再接近!否則我將照規定採取防衛行動!』→悠妮甦醒問答→決定護送悠妮回鄉)→
+無對白行軍蒙太奇(泥地+木箱補給區→碎石海岸小徑,『累死了,大家休息一下吧!』)→海島遇海盜
+(『瞧!竟有呆鳥在這小島上休息,真是天上掉下來的肥肉。』——與 doc91 第149行既有記錄的
+LOAD-path 那句海盜對白**逐字一致**,證實同一份劇本資料)→索爾嗆聲『要打架我奉陪,要搶劫
+嘛門都沒有。』→左下角戰鬥形勢面板(`042 A+05 D+00`)出現→**指令環 UI 出現**(劍+頭盔=
+攻擊/法杖=法術/袋子=道具/盾=待機四個圖示,像素級對應 doc58 續一路記錄的原版指令環設計)。
+每一幕都有截圖佐證(`.wsl_build/harness`未入庫,本輪截圖存於使用者本機
+`~/ch01ng_p1.png`~`p29.png`,WSL 端路徑,未搬進 repo)。**全程 30+ 次批次 Enter、
+20+ 次 screenshot checkpoint,畫面持續、平滑地推進穿越 doc46 記錄的全部 5 個場景,
+沒有任何一次卡在同一張截圖不動超過一輪**——這是與`ch01final`輪「60秒+15次額外Enter
+畫面逐位元組不變」最直接的對比,結構性地反駁了「LOAD 卡點只是這個工具方法論本身的
+假陰性」的可能性:同一個工具、同一份底層存檔資料、同一台環境,New Game 路徑完全正常。
+
+### 勝利確認(gate②+mass-kill+End-Turn,復用`tools/fd2_chapter_sweep.py`既有函式)
+
+指令環出現代表已進入可操作戰鬥,依任務指示套用標準 chapter-sweep 手法確認`[0x53ecc]`。
+**沒有另寫新工具**——寫了一支一次性 driver script(`.wsl_build/ch01newgame_winconfirm.py`,
+未入庫,`.wsl_build`既有 git-ignore)直接 `import fd2_chapter_sweep as fcs`,對存活的
+`ch01newgame` instance 依序呼叫`fcs.ensure_battle_hud()`→`fcs.read_battle_array_base()`
+→`fcs.scan_enemy_slots()`→`fcs.ensure_one_ally_acts()`(gate②)→`fcs.mass_kill_enemies()`
+→`fcs.confirm_end_turn()`,復用的是 ch02-20 已經交叉驗證過的同一套函式,不是重新發明。
+
+**第一輪自動化結果誠實記錄為失敗,但留下關鍵線索**:`battle_array_base=0x237a48`,
+`scan_enemy_slots`掃到 **59** 筆`camp==0`record(遠高於外部攻略記載的`ENEMY·07`,見
+`ch01final`輪留下的資料——這個數字落差本輪**沒有查明根因**,誠實列為未解,不排除掃到
+了戰鬥陣列之外的其他記憶體區塊,但寫入死亡 signature 本身沒有觀察到任何副作用);
+`ensure_one_ally_acts()`與`find_empty_adjacent_tile()`的方向鍵測試**全部 4 個方向都
+moved=False**——事後分析:這是因為執行 driver script 之前,先前手動批次 Enter 已經意外
+把指令環開在索爾身上(選到自己格直接 Enter,原地確認移動 0 格後指令環自動彈出,不是
+`ensure_battle_hud()`能偵測到的異常狀態,它只認畫面左下角藍色 HUD 框是否存在,不判斷
+指令環是否同時開著),導致腳本全程操作的是「困在指令環/單位動作子選單裡的游標」,不是
+自由地圖游標,`confirm_end_turn()`最終 15 秒輪詢`[0x53ecc]`仍讀到 0,誠實回報
+`engine_win=False`。
+
+**手動補救,直接證實勝利**:對指令環連送 4 次`Escape`完全取消當前選取後,screenshot
+意外顯示**戰後劇情已經開始**——一位村民(老爹)對白『多謝老爹和您公子的幫忙,我們才能
+順利打敗海盜。』(隨後續接『哎!老爹您這個請求當然是沒問題的啦!悠妮妳說是不是?』),
+與`mass_kill_enemies()`稍早寫入的 59 筆死亡 signature 完全吻合的因果關係(59 筆裡必然
+涵蓋了真正的海盜 record,即使確切筆數/根因未查明)。**立即進 debugger 直接讀
+`[0x53ecc]`(live `0x1EFECC`)ground-truth 確認**:
+
+```
+0178:001EFECC 02 00 00 00 ...
+```
+
+**`[0x53ecc]=2=ENGINE_WIN_CODE`,與 ch02-20 全數採用的同一個判定準則完全一致**——這是
+直接記憶體讀值,不是螢幕截圖推測。同時讀`[0x53c03]`(live `0x1EFC03`,章節索引)仍是
+`00 00 00 00`(=0,ch01 raw index 未變)——這**符合預期**,doc58 記錄過「確認 YES 不會
+立刻 autosave,要先播完戰後montage/對白才會真正 INC 章節 index」,恢復執行後續截圖確認
+村民對白持續自然推進(非卡死),與 ch02-20 通過驗收時觀察到的戰後montage行為一致。
+
+### 對 M5 與後續投入的誠實結論
+
+**genuine New Game 完整重現 doc46 記錄的整段開場,順利進入真正可操作戰鬥,`[0x53ecc]`
+直接記憶體讀值確認為 2(win)——ch01 正式加入引擎層級勝利確認章節清單,M5 tally
+由 19 章(ch02-20)增為 **20 章(ch01-20 全數連續達成)**。**
+
+這同時**完全證實**了`ch01final`輪結尾的「新假說」:LOAD-into-ch01(即
+`fd2save.set_slot_chapter(slot0, raw=0)` 產生的存檔)在結構上確實不是這個章節的合法
+引擎入口點,原生遊戲設計下玩家永遠只能透過完整 New Game 流程第一次進入 ch01,`chapter
+byte=0`的存檔本身沒有合法產生路徑,對應的黑畫面卡死是這個結構性缺口的直接後果,不是
+ch01 內容本身、或`tools/fd2_chapter_sweep.py`generic advance 方法論的缺陷。**這代表
+`tools/fd2_chapter_sweep.py`現有的`sweep --chapter N`路徑(chapter-jump-via-fd2save)
+對 ch01 是結構性不適用的,不是本輪修好的 bug**——ch01 的引擎層級勝利驗證完成方式跟其餘
+29 章不同,需要走 New-Game-only 的手動/半自動路徑,本輪已示範一次完整可重現的操作序列
+(標題→START→約 250-300 次批次 Return 推進開場→指令環出現後 4 次 Escape 清空選取→
+`fcs.ensure_battle_hud/scan_enemy_slots/mass_kill_enemies`→直接 debugger 讀
+`[0x53ecc]`),但**不建議**現階段把它強行塞進`fd2_chapter_sweep.py`的`sweep`子指令
+(該指令的整個 CLI 骨架都是圍繞`--source-sav`+ LOAD 設計的,ch01 沒有「來源存檔」這個
+概念),留給下一輪視需求決定是否要為 ch01 寫一個獨立的 New-Game 專屬子指令。
+
+**誠實揭露的未解問題(留給下一輪或標記為已知限制,不聲稱已解決)**:
+1. `scan_enemy_slots`在這個 New Game 戰鬥狀態下掃到 59 筆`camp==0`record,
+   遠高於外部攻略記載的`ENEMY·07`——根因未查明,不排除掃描範圍內混入了非戰鬥用途的
+   其他記憶體區塊;寫入死亡 signature 沒有觀察到任何負面副作用,且最終確實拿到
+   `[0x53ecc]=2`,但這個數字落差本身尚未被解釋,不應被視為「已驗證安全」的通用結論。
+2. `fcs.ensure_one_ally_acts()`與`fcs.confirm_end_turn()`的`find_empty_adjacent_tile()`
+   在這個 New Game 戰鬥的初始指令環已開啟狀態下**全部失敗**(4 方向都偵測不到游標移動)
+   ——本輪靠手動 4 次 Escape 繞過,不是這兩個函式本身修好的;它們原本假設呼叫時場面是
+   「自由地圖游標」,如果呼叫前指令環已經開著(例如前一輪操作意外選中了單位),兩者都會
+   誠實回報失敗而不是誤判成功,這次是函式的既有防呆設計正確運作,不是新 bug,但如果
+   未來要把 New Game 路徑自動化,呼叫這兩個函式前應該先確保沒有子選單/指令環開著。
+3. 為什麼手動 4 次 Escape 之後戰鬥就已經解決(村民感謝對白直接出現),而不是需要走
+   `confirm_end_turn()`那套「End-Turn→Yes」UI 序列——本輪沒有查明引擎具體是在哪個
+   input-dispatch 分支上重新跑了一次勝利判定(doc25 §6 提過的 Enter/Space 分支
+   `FUN_00012c0d()`是候選之一,但本輪沒有反組譯驗證是不是真的是這條路徑觸發的),
+   誠實列為機制上未解,不影響`[0x53ecc]=2`這個 ground-truth 結果的可信度。
+
+### 本輪產物與環境紀錄
+
+全程使用獨立`dosbox_harness.sh` instance `ch01newgame`(WSL2),啟動前後`status`都
+確認乾淨(啟動前「no harness instances registered」,結束後`teardown`成功、再次
+`status`確認清空)。截圖(標題→開場全部場景→戰鬥→戰後對白,約 29 張)存於 WSL 端使用者
+home目錄(`~/ch01ng_p*.png`,未搬進 repo);一次性 driver script
+`.wsl_build/ch01newgame_winconfirm.py`與其截圖輸出
+`.wsl_build/ch01newgame_shots/`(既有`.wsl_build/` git-ignore 規則,未提交)。全程
+使用真實 New Game 流程,未 patch 任何存檔、未複製既有`FD2.SAV`(`ch01newgame`是全新
+instance 自己的預設遊戲狀態),`tools/fd2save.py`與`tools/fd2_chapter_sweep.py`本身
+均未被本輪修改(只是被一支外部 driver script `import`復用其函式)。

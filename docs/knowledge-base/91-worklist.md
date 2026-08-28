@@ -1887,6 +1887,30 @@
   `ch01final`輪」小節。`tools/fd2_chapter_sweep.py`本輪未修改(`KNOWN_MIN_TURNS_BEFORE_
   KILL[1]=6`/`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`加入`1`已在文件中記錄為「若之後解開
   LOAD卡點才用得上的預備參數」,未寫入程式碼,因為連戰鬥都沒摸到,沒有依據能驗證它們)。
+- [x] **2026-08-28/29 `ch01newgame`輪:新假說直接證實,ch01改用genuine New Game路徑
+  進入真正可操作戰鬥,`[0x53ecc]`直接記憶體讀值確認為2(win)——M5引擎層級勝利確認
+  章節數由19章(ch02-20)增為**20章(ch01-20全數連續達成)**,tally 20/30**。完全不
+  patch任何存檔,從標題畫面選真正「START」,批次送Return推進整段開場——doc46記錄的
+  完整逐幕時間軸(王座廳→索爾退朝走位→郊外草地→後山密林比劍+蓋亞阻擋+悠妮甦醒→無對白
+  行軍蒙太奇→海島遇海盜→指令環出現)逐幕截圖核對,與`ch01final`輪的LOAD後純黑畫面
+  完全不同——**直接證實`ch01final`輪的新假說**:LOAD-into-ch01(`chapter byte=0`的
+  存檔)在結構上確實不是ch01的合法引擎入口點,原生設計下玩家永遠只能透過完整New Game
+  第一次進入ch01。指令環出現後復用`tools/fd2_chapter_sweep.py`既有函式(未新增/未修改
+  該檔案本身,只是外部一次性driver script `import`呼叫)`ensure_battle_hud`/
+  `scan_enemy_slots`/`ensure_one_ally_acts`(gate②)/`mass_kill_enemies`,最後手動
+  進debugger直接讀`[0x53ecc]`(live`0x1EFECC`)=`02 00 00 00`,與ch02-20全數採用的
+  同一個ground-truth判定準則完全一致。自動化`confirm_end_turn()`本身這次因為呼叫前
+  指令環已意外開啟(先前手動批次Enter選中索爾原地confirm)而未能正確找到自由地圖游標、
+  誠實回報`engine_win=False`,靠手動4次Escape清空選取後才觀察到戰後村民感謝對白+
+  `[0x53ecc]=2`確認——這是`ensure_one_ally_acts`/`find_empty_adjacent_tile`既有防呆
+  設計正確拒絕誤判成功,不是這兩個函式的新bug。誠實揭露:`scan_enemy_slots`本輪掃到
+  59筆`camp==0`record(外部攻略記載`ENEMY·07`),根因未查明;手動繞過的觸發機制
+  (為何4次Escape後勝利就已解決,不需要完整End-Turn UI序列)也未反組譯查明。`tools/
+  fd2_chapter_sweep.py`本輪未修改——ch01的New-Game-only路徑結構上不適用現有`sweep
+  --chapter N`(圍繞`--source-sav`+LOAD設計),留給下一輪視需求決定是否要寫獨立子指令。
+  完整寫法、逐幕截圖對照、三項誠實未解問題見`docs/knowledge-base/99-chapter-sweep-
+  results.md`「`ch01newgame`」輪小節;`docs/knowledge-base/46-ch1-opening-timeline.md`
+  §11 補了原生引擎live互動實測與錄影逐幀分析的交叉驗證記錄。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
