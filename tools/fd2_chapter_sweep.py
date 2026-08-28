@@ -726,6 +726,149 @@ def confirm_end_turn(name: str, shots_dir: Path, log: list[str], enemy_addrs: li
     }
 
 
+def ensure_battle_hud(name: str, shots_dir: Path, log: list[str], tag: str, max_clears: int = 40) -> tuple[bool, int]:
+    """Screenshot; if screen_shows_battle_hud() is False, send Return +
+    screenshot repeatedly (up to max_clears) until it is True (or budget
+    exhausted). Returns (ok, n_clears_used).
+
+    2026-08-28 "ch11chest" round (doc25 §3.2.4): promoted here from a
+    per-script local helper first written that round. This map (and
+    possibly others) keeps firing full-screen story dialogue even AFTER
+    attempt_camp_exit() has already declared "battle found" (its own
+    HUD-detection only needs the HUD box to have appeared ONCE + >=2 enemy
+    records, it does not guarantee no further dialogue afterward) -- blind
+    Escape/arrow-key presses sent while such a dialogue box is still up get
+    consumed as "advance dialogue text", not "move the map cursor",
+    producing erratic/oversized cursor-position reads that look like a
+    cursor-tracking bug but are actually a dialogue-vs-cursor-input
+    confusion. The fix is to treat screen_shows_battle_hud() as a gate
+    before EVERY cursor-trusting read or cursor-moving keypress, not just
+    once at the start of a movement sequence -- the same discipline
+    attempt_camp_exit() already applies to its own opening sequence,
+    applied continuously.
+    """
+    shot = shots_dir / f"hudcheck_{tag}.png"
+    screenshot(name, shot)
+    if screen_shows_battle_hud(shot):
+        return True, 0
+    log.append(f"[{tag}] no battle HUD visible -- clearing dialogue")
+    for i in range(max_clears):
+        send_keys(name, "Return")
+        time.sleep(0.9)
+        shot_i = shots_dir / f"hudcheck_{tag}_clear{i}.png"
+        screenshot(name, shot_i)
+        if screen_shows_battle_hud(shot_i):
+            log.append(f"[{tag}] battle HUD recovered after {i + 1} clear-Return(s)")
+            return True, i + 1
+    log.append(f"[{tag}] battle HUD NOT recovered after {max_clears} clear-Returns")
+    return False, max_clears
+
+
+def _read_cursor_xy(name: str) -> tuple[int | None, int | None]:
+    enter_debugger(name)
+    time.sleep(0.35)
+    raw = read_mem(name, 0x53ab1 + NATIVE_LIVE_DELTA, min_bytes=1)
+    cx = raw[0] if raw else None
+    raw = read_mem(name, 0x53ab5 + NATIVE_LIVE_DELTA, min_bytes=1)
+    cy = raw[0] if raw else None
+    debugger_cmd(name, "RUN")
+    time.sleep(0.2)
+    return cx, cy
+
+
+def ensure_one_ally_acts(name: str, shots_dir: Path, log: list[str]) -> bool:
+    """Select the first cycle-reachable, not-yet-acted ally, move it ONE
+    step to any adjacent tile the game accepts, and confirm "Wait" there.
+
+    2026-08-28 "ch11r8flag" round (doc25 §3.2.5, doc99's matching entry):
+    this is the generalized, chest-agnostic fix for the pattern round 7
+    ("ch11chest") first found and round 8 then re-attributed correctly.
+    `0x117e7`'s Enter/Space key-dispatch branch only calls the actual
+    per-chapter win-check table (`0x51b19[chapter_index]`) when
+    FUN_00012c0d() finds a still-alive unit sitting exactly under the
+    cursor -- but confirm_end_turn()'s own End-Turn sequence deliberately
+    parks the cursor on an EMPTY tile (find_empty_adjacent_tile()) before
+    opening the system ring, specifically so it does NOT interact with any
+    unit. That means the standard mass-kill+End-Turn recipe alone, no
+    matter how many times it is retried, can structurally never satisfy
+    that gate for a chapter whose win-check happens to depend on it having
+    been satisfied at least once. Round 7 stumbled into satisfying it as a
+    side effect of a real chest-open (select ally -> move onto the chest
+    tile -> confirm); round 8's `move_only_test.py` proved live that the
+    CHEST was never the active ingredient -- moving the SAME ally to an
+    ordinary adjacent non-chest tile and confirming "Wait" there ALSO
+    produced an engine-level win ([0x53ecc] -> 2), with the chest-opened
+    flag block ([0x53AD5]) provably untouched throughout. This function
+    packages that minimal, chest-free recipe: it does not attempt to reach
+    any specific tile, just ANY adjacent tile the game accepts, because the
+    live evidence is that "a unit was validly selected and acted on" is the
+    load-bearing event, not the destination.
+
+    Must be called with the battle HUD already confirmed visible (e.g.
+    right after the caller's own settle loop) -- this function HUD-gates
+    every step via ensure_battle_hud() but does not establish the initial
+    battle state itself. Returns True if a unit was successfully selected,
+    moved, and had its "Wait" confirmed; False (logged, non-fatal to the
+    caller) if any step could not be completed within its budget -- callers
+    should treat False as "this chapter still gets the plain mass-kill/
+    End-Turn attempt, just without this extra step", not as a hard failure.
+    """
+    ok, _ = ensure_battle_hud(name, shots_dir, log, "allyact_pre", max_clears=60)
+    if not ok:
+        log.append("ensure_one_ally_acts: battle HUD never recovered, aborting")
+        return False
+
+    # Cycle (Esc/Z/Numpad5 round-robin, doc25 §3.2.3) to the first
+    # not-yet-acted live ally and select it.
+    settled = False
+    for i in range(15):
+        send_keys(name, "Escape")
+        time.sleep(0.8)
+        ok, _ = ensure_battle_hud(name, shots_dir, log, f"allyact_cycle{i}", max_clears=20)
+        if not ok:
+            continue
+        cx, cy = _read_cursor_xy(name)
+        log.append(f"ensure_one_ally_acts: cycle[{i}] cursor=({cx},{cy})")
+        if cx is not None:
+            settled = True
+            break
+    if not settled:
+        log.append("ensure_one_ally_acts: could not settle on any ally via Escape-cycle")
+        return False
+
+    send_keys(name, "Return")  # select the unit
+    time.sleep(1.0)
+    ok, _ = ensure_battle_hud(name, shots_dir, log, "allyact_selected", max_clears=20)
+    start_xy = _read_cursor_xy(name)
+
+    landed = False
+    for key in ("Up", "Left", "Right", "Down"):
+        send_keys(name, key)
+        time.sleep(0.8)
+        ok, _ = ensure_battle_hud(name, shots_dir, log, f"allyact_move_{key}", max_clears=20)
+        new_xy = _read_cursor_xy(name) if ok else start_xy
+        moved = new_xy != start_xy and new_xy[0] is not None
+        log.append(f"ensure_one_ally_acts: tried {key}: {start_xy} -> {new_xy} moved={moved}")
+        if moved:
+            landed = True
+            break
+    if not landed:
+        log.append("ensure_one_ally_acts: unit did not move in any of 4 directions, giving up")
+        return False
+
+    send_keys(name, "Return")  # confirm the move onto the new tile
+    time.sleep(1.5)
+    screenshot(name, shots_dir / "allyact_after_move_confirm.png")
+    send_keys(name, "Down")  # select "Wait" in the ring (doc58's proven mapping)
+    time.sleep(1.0)
+    send_keys(name, "Return")  # confirm Wait
+    time.sleep(1.5)
+    screenshot(name, shots_dir / "allyact_after_wait_confirm.png")
+    ok, _ = ensure_battle_hud(name, shots_dir, log, "allyact_final", max_clears=30)
+    log.append(f"ensure_one_ally_acts: completed select->move->Wait, final HUD ok={ok}")
+    return True
+
+
 # 2026-08-27 "winverify" round, §3 of doc58 續六十二: confirming YES on a
 # genuine win does NOT autosave immediately -- it opens a long postbattle
 # montage (party-circle dialogue -> 2 full-screen CG scenes -> scrolling
@@ -1477,7 +1620,49 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # sufficient; the 3-turn wait used this round matched the recipe already
 # established for the other "stuck at 0" chapters out of consistency, not
 # because it was proven necessary for ch11 specifically.
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4}
+# 2026-08-28 "ch11r8flag" round: ch11 (11: 3) added here alongside
+# KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL below. A live smoke-test of
+# sweep_chapter() found ensure_one_ally_acts() ALONE (with no turn-wait
+# before mass-kill, since ch11 was not yet in this dict) still left ch11
+# stuck ("anomaly", [0x53ecc] never left 0) -- even though the standalone
+# move_only_test.py script that first validated the ally-action fix always
+# ran a 3-turn wait AFTER the ally-action and BEFORE mass-kill (inherited,
+# unexamined, from every earlier ch11 round's recipe). ch11 apparently
+# needs BOTH steps, in the order [ally-action] -> [3-turn wait] ->
+# [mass-kill + End-Turn], not the ally-action alone; sweep_chapter() now
+# runs ensure_one_ally_acts() before this dict's wait loop for exactly that
+# reason. The turn count (3) is carried over unexamined from the earlier
+# rounds' convention, same honest caveat as the other entries below -- it
+# was never isolated to confirm 3 is the true minimum vs. simply "enough".
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3}
+
+# 2026-08-28 "ch11r8ctrl"+"ch11r8flag" round (doc25 §3.2.5, doc99's matching
+# entry) FINAL WORD on ch11 (superseding the "ch11chest" note above): a
+# strict same-recipe "don't open any chest" control run reproduced round
+# 1-7's 0/N failure rate cleanly ([0x53ecc] stayed 0 after all 25 enemies
+# were mass-killed), confirming round 7's win was NOT just "better
+# automation". But a follow-up live test (move_only_test.py) then proved
+# round 7's own causal attribution ("opening a chest is what did it") was
+# ITSELF wrong: repeating round 7's exact select->move->confirm-Wait UI
+# chain but redirecting the move to an ORDINARY ADJACENT NON-CHEST tile
+# (confirmed via the [0x53AD5] flag block staying all-zero throughout) ALSO
+# produced an engine-level win. The real necessary condition, per doc25
+# §3.2.1's already-disassembled 0x117e7 gate structure, is almost certainly
+# that FUN_00012c0d() (gate②: cursor position == some still-alive unit's
+# position) must succeed at least once before the 0x51b19 win-check table
+# can ever be dispatched -- and confirm_end_turn()'s own End-Turn sequence
+# deliberately parks the cursor on an EMPTY tile before opening the ring,
+# so the plain mass-kill+End-Turn recipe alone can structurally never
+# satisfy this gate no matter how many retries. ensure_one_ally_acts()
+# (defined above, near confirm_end_turn()) packages the minimal fix: select
+# any not-yet-acted ally, move it one step to ANY adjacent tile, confirm
+# Wait -- no chest-specific logic needed. ch11 is the one chapter this has
+# been live-verified necessary for; KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL
+# below is deliberately just {11} until another stuck chapter is diagnosed
+# and found to need the same fix -- do not pre-emptively add chapters here
+# without their own live confirmation, per this project's culture of not
+# overclaiming a fix beyond what was actually tested.
+KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
@@ -1987,6 +2172,43 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             # evidence this assumption was wrong (e.g. an elf ally record
             # showing camp==0) before assuming the turn-count-gate
             # hypothesis itself failed.
+            # 2026-08-28 "ch11r8flag" round (doc25 §3.2.5): some chapters'
+            # win-check dispatch gate (0x117e7's cursor-on-a-live-unit gate,
+            # see ensure_one_ally_acts()'s docstring) never gets satisfied
+            # by the plain mass-kill+End-Turn recipe alone, no matter how
+            # many kill-cycles are retried, because confirm_end_turn()
+            # deliberately keeps the cursor off every unit. If this chapter
+            # is known to need it, do one real select->move->confirm-Wait
+            # unit action FIRST -- chest-agnostic, does not target any
+            # specific tile. Non-fatal if it fails (logged, falls through to
+            # the normal mass-kill attempt regardless). MUST run before any
+            # KNOWN_MIN_TURNS_BEFORE_KILL wait below, not after -- a live
+            # smoke-test this round (ch11, sweep_chapter() end to end) found
+            # that running it AFTER an (absent, for ch11) turn-wait and
+            # going straight to mass-kill produced "anomaly" (stuck at
+            # [0x53ecc]==0), even though the standalone move_only_test.py
+            # script (ally-action -> 3-turn wait -> mass-kill+End-Turn, in
+            # that order) reliably won -- ch11 apparently needs BOTH the
+            # ally-action AND the turn-wait, in that order, not just the
+            # ally-action alone. See KNOWN_MIN_TURNS_BEFORE_KILL's {11: 3}
+            # entry below, added together with this reordering.
+            if chapter_n in KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL:
+                log.append(f"chapter {chapter_n} has a KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL override -- "
+                           f"running ensure_one_ally_acts() before any turn-wait/mass-kill")
+                acted = ensure_one_ally_acts(name, shots_dir, log)
+                log.append(f"ensure_one_ally_acts() returned {acted}")
+                enter_debugger(name)
+                time.sleep(0.4)
+                rescan_base = read_battle_array_base(name)
+                rescan_enemies = scan_enemy_slots(name, rescan_base, log) if rescan_base is not None else []
+                debugger_cmd(name, "RUN")
+                time.sleep(0.2)
+                if rescan_base is not None:
+                    base = rescan_base
+                if rescan_enemies:
+                    enemy_addrs = rescan_enemies
+                log.append(f"post-ally-action rescan: base={base}, enemy_addrs={len(enemy_addrs)}")
+
             min_turns = KNOWN_MIN_TURNS_BEFORE_KILL.get(chapter_n, 0)
             if min_turns:
                 log.append(f"chapter {chapter_n} has a KNOWN_MIN_TURNS_BEFORE_KILL override "

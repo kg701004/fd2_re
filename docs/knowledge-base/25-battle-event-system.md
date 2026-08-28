@@ -686,6 +686,140 @@ SAV writer gate完全一致(ch03/04/07/15/19/20等其他6章engine-level win確�
 （含`real_open5/shots/`內完整的41/44/53/62/post_end_turn等關鍵截圖,未納入git,本機
 保留)。
 
+### 3.2.5 2026-08-28 第8輪(代號`ch11r8ctrl`/`ch11r8flag`,回應使用者派工「補嚴格對照組+找真正旗標」):**round7的「開寶箱」因果歸因被本輪直接推翻——真正必要條件是「至少一名我方單位在mass-kill+End-Turn前真的執行過一次Select→Move→Confirm(待機)」,寶箱本身不是必要條件**[驗]
+
+> 任務背景:回應round7(`ch11chest`)結尾建議①②:①補一次嚴格對照組(同存檔完全
+> 不開箱,其餘操作不變),把因果證據從「N=1+強烈間接證據」補到「有對照組」等級;
+> ②反組譯真正開箱事件的writer,找出round4誤判的`[0x53AD5]`真正語意。本輪兩部分
+> 都完成,但②的live驗證意外地讓①的「對照組」延伸出一個全新、更精確的因果模型,
+> 推翻了round7「是寶箱造成翻盤」的核心框架——不是round7的live證據本身有錯(3.9秒
+> 翻2、5000元畫面都是真的),而是round7從未把「開寶箱」與「移動並操作一個單位」
+> 這兩件同時發生的事拆開過,本輪拆開了。
+
+**Part 1(`ch11r8ctrl`,嚴格對照組):完全複製round7的setup+HUD-gate自動化,但
+刻意不碰任何寶箱,直接進標準3回合等待+mass-kill+End-Turn——`[0x53ecc]`確認維持
+`0`(`STILL_STUCK`)[驗]**
+
+新獨立harness instance,復用round7同一份`ch11bp`輪patched.SAV,setup階段逐字複製
+round7`real_open5.py`(escape-cycle boot→`attempt_camp_exit()`fallback→6輪settle→
+round7發現必要的「initial HUD-gate」,60次clear-Return預算),**但完全跳過選人/
+移動/寶箱互動**,直接進3回合wait+rescan+mass-kill(25個敵人)+最多4次kill-cycle的
+End-Turn重試迴圈(與round1-6、`finish_massKill.py`用的同一套配方逐行相同)。
+
+結果:25個敵人mass-kill後rescan確認全部死亡(`no living enemies left to
+re-kill`,只用了1個kill-cycle),但`engine_code_final=0`、`engine_win_final=false`
+——`[0x53ecc]`全程沒有翻過2,`[0x53AD5]`12格旗標區塊全程維持`[0,...,0]`(確認
+沒有意外側效應開到寶箱)。**這確認round7的win不是「round7自動化比round1-6更可靠」
+這個替代解釋造成的**——同一套(甚至更成熟的)HUD-gate自動化,不開寶箱依然重現
+round1-6的0/N失敗率,總耗時671秒、完整log見
+`.wsl_build/chapter_sweep_ch11r8ctrl/result.json`。
+
+**Part 2(`ch11r8flag`,找真正旗標):重讀doc25§3.2.1-3.2.3與doc11既有反組譯後,
+先用一個關鍵、之前被忽略的既有事實設計出決定性實驗——`0x117e7`的Enter/Space
+分支只有在`FUN_00012c0d()`(gate②:游標座標==某個活著單位的座標)找到匹配時才會
+呼叫`(**(code**)(&DAT_00051b19+DAT_00053c03*4))()`(即真正的勝負判定表);而
+`confirm_end_turn()`(round1-8全部章節掃描共用的既有自動化)為了打開系統環,
+**刻意**先用`find_empty_adjacent_tile()`把游標移到空地格才按Enter——也就是說,
+標準End-Turn配方本身,結構上就從未讓gate②有機會成立過。round7開寶箱的完整UI
+互動鏈("選人→移動→確認"),則必然包含至少一次「游標停在一個活著單位身上按
+Enter」(選取那個單位的當下)。這代表round7的win有兩個互相纏繞、從未被拆開驗證
+過的候選因:「開了寶箱」vs「操作了一個單位(讓gate②至少成立過一次)」。**
+
+**決定性實驗(`move_only_test.py`)**:複製round7選人(ally k=8,(16,13))→
+選取→移動→確認待機的完全相同UI互動鏈,**但刻意把移動目標從寶箱格(16,15)
+換成一個相鄰的空地格**(游標實測顯示這張地圖的方向鍵有時一次跳2格,`Up`從
+(16,13)直接跳到(16,11)——不是本輪bug,是round7自己記錄過的同一種游標跳動;
+確認(16,11)不在map10已知的12個寶箱座標清單裡),在該空地格上選「待機」確認
+(**全程沒有觸發、也不可能觸發任何寶箱對話框**),然後接標準3回合wait+mass-kill+
+End-Turn配方。
+
+**結果:`engine_win_final=true`、`engine_code_final=2`——`[0x53ecc]`翻成2
+(WIN),`[0x53AD5]`12格旗標區塊從頭到尾維持`[0,...,0]`(確認寶箱從未被觸碰,
+不是誤觸)。[驗]**
+
+**這直接推翻round7「是開寶箱造成翻盤」的因果歸因**:真正必要條件不是「寶箱
+opened旗標」,而是「至少一個我方單位在mass-kill+End-Turn之前真的完成過一次
+Select→Move→Confirm(待機)的完整UI互動」——round7的開寶箱操作恰好包含這個
+必要條件(選取→移動→確認待機,寶箱只是移動的目的地剛好是一個寶箱格),但
+寶箱事件本身(對話框、5000元、`[0x53AD5]`旗標)是**巧合伴隨**,不是因。round4
+「星之眼寶物假說已排除」與round7「星之眼不是必要條件」兩個結論依然成立
+(未被本輪推翻),但round7自己下的「開寶箱本身是原因」這個更強的因果宣稱,
+需要**撤回**,改為本輪這個更精確的「單位動作」模型。
+
+**對「為什麼」的最佳現有解釋(推論,非窮盡證明)**:結合doc25§3.2.1已反組譯出的
+`0x117e7`三層gate結構——gate②(`FUN_00012c0d`,游標座標比對活著單位)是`0x51b19`
+勝負判定表被呼叫的必要前提之一。標準`confirm_end_turn()`自動化為了穩定打開
+系統環,刻意把游標移到空地格,這個設計選擇本身讓gate②在End-Turn這個路徑上
+永遠不成立;round1-6與本輪Part1的對照組因此永遠不會走到`0x51b19`dispatch,
+無論mass-kill掉多少敵人都不會翻2。round7與本輪Part2能贏,最可能是因為「選取
+單位」這一步(游標當下確實停在一個活著單位身上按Enter)讓gate②/`0x51b19`
+dispatch至少成立過一次;至於這次成立**如何**讓後續End-Turn序列的行為改變
+(例如改變了`DAT_00053ae9`round-robin指標或`DAT_00051a83/DAT_00051aac`
+turn-flag的初始狀態,使得`FUN_00016f55`的END分支或`0x1d8a0/0x1d96c/0x1d9fc`
+逐單位掃描路徑間接把`0x51b19`帶進來),本輪**未**逐行反組譯坐實,是誠實保留
+的殘餘開放問題——但作為一個**可重複驗證、已排除寶箱這個混淆變因**的
+generalizable修法,「mass-kill+End-Turn前先讓至少一個我方單位做一次
+Select→Move→Confirm(待機)」已經足夠precise且已被本輪獨立驗證過一次
+(non-chest案例),已寫回`tools/fd2_chapter_sweep.py`(見下)。
+
+**修法接回`sweep_chapter()`主流程的過程本身也發現一個順序陷阱**:第一次
+把新增的`ensure_one_ally_acts()`接在既有`KNOWN_MIN_TURNS_BEFORE_KILL`的
+3回合等待迴圈**之後**(即「單位動作→直接mass-kill+End-Turn」,略過等待),
+live跑`sweep_chapter(11,...)`回來是`anomaly`(`[0x53ecc]`卡在0)——與
+`move_only_test.py`(單位動作→3回合等待→mass-kill+End-Turn,依round1-7
+一路沿用的既有順序)乾淨拿到WIN的結果矛盾。改成讓`ensure_one_ally_acts()`
+在等待迴圈**之前**執行(即完整還原`move_only_test.py`的順序),並把
+`11:3`補進`KNOWN_MIN_TURNS_BEFORE_KILL`後,重跑`sweep_chapter(11,...)`
+**乾淨拿到`[0x53ecc]`3.9秒翻2(WIN)**,與round7的原始翻盤時間點逐秒吻合,
+verdict是`anomaly_engine_win_no_disk_write`——與ch03/04/07/15/19/20/27等
+其餘已確認engine-level win章節完全相同的模式(doc25§9.1既有SAV writer
+gate問題,磁碟位元組不前進,不是ch11獨有也不是本輪新問題)。這代表ch11
+真正需要的是「單位動作**先**於3回合等待,3回合等待**先**於mass-kill」這個
+完整順序,不是單位動作單獨插入mass-kill前就夠——這個順序敏感性本身也是
+一個值得記錄的教訓,已寫進`ensure_one_ally_acts()`與
+`KNOWN_MIN_TURNS_BEFORE_KILL`兩處的程式碼註解。
+
+**寶箱writer本身:靜態反組譯已由doc11完整解出,live複驗本輪未能重現乾淨結果**
+——doc11§「單位行動模式的資料來源與分支」(2026-08-14既有反組譯,非本輪新工作)
+早就完整解出AI mode 5(`FUN_00013a9f`,寶箱=byte`+0x34&0xf==5`的「actor」)
+的完整open-chest邏輯:`0x15DF3(event_id, &out)`用地形控制旗標`&0x60==0x20`
+(=「寶箱/隱藏物品」)在地圖網格找到`event_id`(**讀自該record自己的`+0x3D`
+欄位,不是round4/round7假設的map.json`treasure_slots`序號**)對應的格子,
+抵達後在`[0x53a55+0x53+event_id*3]`(16槽reward表,`doc56`已記錄)讀
+kind/value,`kind<2`寫`record+0x31/+0x32`、`kind==0`額外呼叫`0x1BB8C`發放
+物品,最後**`*(byte*)(DAT_00053AD5+event_id)=1`**(即round4/round7一直在讀
+的那個旗標區塊,但**索引用的是原生`event_id`,不是map.json的slot序號**)並把
+`record+0x34`整個改寫成7。這已經是比round4/round7「假設index==slot序號」更
+精確的位址級解釋:**round4/round7讀到全部12格是0,极可能只是因為讀的index
+不是這次事件真正的`event_id`(而16槽reward表意味著`event_id`理論上可到15,
+已超出round4/round7讀的12格窗口)**,不代表`[0x53AD5]`這整個機制沒有被觸發。
+本輪嘗試用`chest_diff_test.py`重現一次「真開寶箱+全32-byte區塊逐byte diff」
+的live驗證(比round7多讀20 bytes,理論上足以涵蓋`event_id`到15甚至以上的
+margin),兩次嘗試中第二次的自動化游標移動再次出現本專案已知的「方向鍵跳2格」
+問題,`Down`x2從(16,13)最終落在(16,11)而非寶箱格(16,15),ally自己的record
+xy欄位讀回全程維持`(16,13)`未變——**這代表這次重試的移動實際上沒有真的走到
+寶箱格,寶箱極可能沒有被真正觸發**,因此`chest_block_diffs`全程無變化這個
+結果是**inconclusive**(移動失敗的合理後果,不是「機制不存在」的證據),誠實
+不採信為「32-byte窗口內也讀不到變化」的證據。**鑑於Part 2已經證明寶箱本身
+不是ch11勝負的必要條件,本輪判斷不值得再投入第3次live嘗試去單純追一個已經
+不影響核心結論的旁支數字**——doc11既有的靜態`event_id`機制已是目前最精確、
+可信的位址級解釋,足以支撐「round4/round7索引方式錯誤」這個結論,live byte-
+level複驗留給未來若有人真的需要修正remake寶箱系統時再做。
+
+**M5影響**:ch11本輪仍是0 pass(`91-worklist.md`既有SAV writer gate問題,非
+ch11專屬),但**ch11專屬謎團現在有一個乾淨、有對照組、可重複的因果模型**——
+不再是round7的「開寶箱」單點N=1敘事,而是「單位動作觸發gate②」這個更精確、
+且已排除寶箱混淆變因的機制。建議**不再對ch11開新一輪專門診斷**:累計8輪、
+排除的假說已超過12個,`0x51b19`dispatch條件本身已縮小到「gate②至少成立一次」
+這個精確、可重複驗證、已寫進自動化工具的necessary condition,再往下追
+(FUN_00016f55內部具體是哪一步真正呼叫到`0x51b19`)屬於錦上添花,不是解開
+謎團所必需。
+
+完整live log、逐步screenshot、result.json見本輪
+`.wsl_build/chapter_sweep_ch11r8ctrl/`(Part 1)與
+`.wsl_build/chapter_sweep_ch11r8flag/`(Part 2,含`move_only_result.json`、
+`chest_diff_result.json`)(未納入git,本機保留)。
+
 ## 4. 事件原語(handler 共用的條件 / 動作函式)
 
 把 18 個 handler 呼叫的函式統計出來,扣掉 stack-probe(0x36cd7),得到事件系統的「指令集」——雖是函式呼叫形式:

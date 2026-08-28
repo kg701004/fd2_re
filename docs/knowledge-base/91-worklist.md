@@ -1791,6 +1791,44 @@
   真正語意與開箱事件實際寫入的欄位;③用同一套HUD-gate移動+開箱方法論排查ch04/07/
   15/20攻略文字裡的「必須收集/取得」措辭是否也有被誤判為「與勝利無關」的收集類需求。
 
+  **2026-08-28 第8輪(代號`ch11r8ctrl`+`ch11r8flag`)——round7「開寶箱造成勝利」的
+  因果歸因被推翻,ch11謎團改用更精確的模型正式收斂**:回應round7建議①②。Part 1
+  (`ch11r8ctrl`)補完嚴格對照組:逐字複製round7自動化但完全不開寶箱,直接進標準
+  3回合wait+mass-kill+End-Turn,`[0x53ecc]`確認維持`STILL_STUCK`(25個敵人全滅
+  後仍是0)——排除「round7贏只是自動化更可靠」。Part 2(`ch11r8flag`)重讀
+  doc25§3.2.1既有反組譯發現關鍵事實:`0x51b19`勝負判定表只在`FUN_00012c0d()`
+  (gate②,游標比對到活著單位)成立時才會被呼叫,而標準`confirm_end_turn()`
+  自動化為了穩定開環刻意把游標移到空地格才按Enter,結構上永遠不會讓gate②
+  成立;round7的開寶箱UI鏈(選人→移動→確認)則必然包含一次「游標停在活著單位
+  上按Enter」。用`move_only_test.py`把round7的選人→移動→確認待機UI鏈複製到
+  一個**相鄰空地格**(非寶箱,全程無法觸發任何寶箱對話框)後接標準流程:
+  **`[0x53ecc]`同樣翻成2(WIN),且`[0x53AD5]`12格旗標全程維持`[0,...,0]`**——
+  直接推翻round7「是寶箱造成翻盤」的因果宣稱,真正必要條件是「至少一個我方
+  單位完成一次Select→Move→Confirm(待機)的UI互動」,寶箱只是巧合伴隨。順帶用
+  doc11既有反組譯(2026-08-14,非本輪新工作)確認`[0x53AD5]`真正索引是
+  record`+0x3D`的`event_id`(非round4/round7假設的map.json slot序號,16槽
+  reward表意味著index可到15,已超出round4/round7只讀12格的窗口)——這已解釋
+  「為何round4/round7讀到12格全0」,不需要再猜測旗標被引擎忽略。live
+  32-byte diff複驗(`chest_diff_test.py`)兩次嘗試都因本專案已知的游標跳格
+  問題未能乾淨重現(移動實際未到位,ally record xy全程未變),誠實記錄為
+  inconclusive、不採信,但不影響Part 2已confirmed的核心結論。**M5仍是0 pass
+  (SAV writer gate獨立問題),但ch11專屬謎團現在有乾淨、有對照組的因果模型,
+  不建議再開新一輪專門診斷**(累計8輪、12+個假說已排除)。已把「mass-kill+
+  End-Turn前先讓至少一個我方單位做一次Select→Move→Confirm」寫進
+  `tools/fd2_chapter_sweep.py`(`ensure_one_ally_acts()`+
+  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL={11}`+`KNOWN_MIN_TURNS_BEFORE_KILL`
+  補上`11:3`)作為generalizable的可選修法,**並用`python tools/
+  fd2_chapter_sweep.py sweep --chapter 11 ...`實際end-to-end重跑過一次
+  確認可行**(不是只停在手寫一次性腳本):`[0x53ecc]`3.9秒翻2(WIN),
+  verdict為`anomaly_engine_win_no_disk_write`,與其餘已確認章節同一種
+  SAV writer gate模式。過程中修正過一次順序陷阱(單位動作必須接在3回合
+  等待**之前**,不是mass-kill前隨便哪裡插入都行)。完整寫法見
+  `docs/knowledge-base/25-battle-event-system.md`§3.2.5與
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第8輪」小節,
+  live過程產物留存於`.wsl_build/chapter_sweep_ch11r8ctrl/`、
+  `.wsl_build/chapter_sweep_ch11r8flag/`與
+  `.wsl_build/chapter_sweep_ch11r8verify2/`(未納入git)。
+
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
 - [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)
