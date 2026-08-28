@@ -1461,6 +1461,41 @@ _ADVANCE_KEY_CYCLE = ["Return", "Down", "Right", "Return", "Escape", "Right", "D
 # now the general-purpose first attempt for every chapter (see that
 # function's docstring for why a single hard-coded ch27-only hint was
 # replaced instead of extended).
+#
+# ch01 is NOT in this dict, and should not be given a naive hint -- 2026-08-28
+# "ch01final" round (docs/knowledge-base/99-chapter-sweep-results.md, same
+# date heading) found this chapter's post-LOAD screen is not a dialogue/
+# navigation problem this dict's mechanism (a key sequence) can fix. LOADing
+# any save with slot0's raw chapter byte patched to 0 produces a solid-black
+# screen that is provably NOT frozen (the emulator's EIP keeps moving inside
+# a ~0x58-byte loop at 0x1EA9E3-0x1EAA4A across repeated debugger
+# pause/resume samples) but also provably never changes a single pixel
+# across 60s of untouched passive waiting AND 15 extra Return taps -- ruling
+# out both "just needs more patience" and "just needs more/different
+# keypresses". A live A/B test (13-member roster vs. a manually truncated
+# 1-member roster, otherwise identical save) produced byte-identical
+# behavior, which also rules out the older 2026-08-27 "late-game roster
+# patched onto ch01" caveat as the (sole) cause. Current best-supported,
+# UNVERIFIED hypothesis: docs/knowledge-base/46-ch1-opening-timeline.md's
+# ~6-minute native New-Game opening (throne room -> meadow -> forest -> march
+# montage -> island) is chapter-index-driven via cutscene handler 0x3231b
+# (see doc91's "新遊戲→開場對話→自動進戰場" entry) and LOAD-into-chapter-0
+# may try to re-enter that same dispatch WITHOUT the New-Game-only setup
+# (e.g. actor waypoint/camera-path tables) it expects, leaving it spinning in
+# a wait it can never satisfy. If true, ch01 is the one chapter where the
+# chapter-jump-via-fd2save approach this whole tool is built on does not
+# apply structurally (consistent with doc91's "no player can ever save with
+# chapter byte 0 -- saving only exists once the ch02 camp-map/tavern is
+# reached" observation: a raw_chapter=0 save is not just roster-mismatched,
+# it has no legitimate native origin at all). NOT confirmed -- see doc99's
+# "ch01final" round for the full writeup and next-round suggestions
+# (disassemble the loop's caller, or try a real New-Game boot as a control).
+# KNOWN_MIN_TURNS_BEFORE_KILL[1]=6 and adding 1 to
+# KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL are plausible follow-up values (ch01 is
+# a "D=default" 0x205be chapter like ch02/03/04/07/11/15/19/20, and the
+# walkthrough describes 4 reinforcement waves through turn 6) but are NOT
+# added below -- they are unverified guesses this round never got to test,
+# since battle was never even reached.
 KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 
 # Chapter-specific "wait this many real turns before the FIRST mass-kill"

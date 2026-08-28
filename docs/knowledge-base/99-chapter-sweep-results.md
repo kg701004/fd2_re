@@ -113,6 +113,15 @@ fd2harness ls`/`tmux ls`(default socket)收尾核對三方都乾淨,doc48 §8.4 
   標記為「工具已知限制導致的結果不可信,不是 ch01 本身結構異常的證據」,需要一份真正的
   早期進度存檔才能重新驗證。
 
+  **2026-08-28「`ch01final`」輪更新:上面「roster caveat 是主因」的推測本輪已被直接
+  live 證據排除**——把 roster 人數手動裁減成 1 人(僅留 record0/固定隊長)後,黑畫面
+  100% 原樣重現,與保留 13 人的原始版本逐位元組相同,詳見本文件下方「2026-08-28
+  `ch01final`輪」小節的完整寫法。ch01 卡住的真正性質也不是「工具的 generic advance
+  迴圈提前放棄」——這次確認 CPU 本身沒有當機(debugger 反覆暫停/RUN 之間 EIP 持續在
+  `0x1EA9E3~0x1EAA4A`一個窄範圍內移動,證實迴圈仍在執行),但 VGA 畫面輸出在 60 秒
+  連續被動等待、以及額外 15 次 Return/30 次 Escape 按鍵送達後,像素**零變化**
+  ——比舊有 11 步/10 秒的 stall 判定嚴謹得多的重現方式,結論相同但誠信度更高。
+
 ### 完整性/嚴謹度自我檢查
 
 - 用`hashlib.md5`對每章`advance_*.png`截圖序列去重,確認 ch01 是**唯一**一個「全部
@@ -2228,3 +2237,133 @@ tail」,但它跟`+8`(id)完全無關,不負責身分欄位。
    的死路**,doc91/`91-worklist.md`M5 對應段落需要更新這個結論,把後續嘗試導向
    FDFIELD.DAT模板本身的可修改性研究(全新、範圍更大的RE工作,超出本輪與這個
    worklist項目原本的存檔層級假設)。
+
+## 2026-08-28「`ch01final`」輪(回應派工單「用ch02/ch11的gate②/HUD修法收ch01」):**roster caveat 假說已排除,但 ch01 依然卡住——這次卡點是全新、比 gate②更早的一層(LOAD 後畫面在 CPU 持續執行的情況下對任何輸入 100% 無反應),誠實記錄為未解**
+
+### 任務背景
+
+延續使用者派工單:ch02/ch11 的謎團由`ensure_one_ally_acts()`(gate②)+
+`screen_shows_battle_hud()`(HUD-gating)+`KNOWN_MIN_TURNS_BEFORE_KILL`三項修法收關,
+這三項修法在2026-08-27原始ch01掃描**當時都還不存在**——本輪任務:重新用套上這三項
+修法之後的`tools/fd2_chapter_sweep.py`當前版本重跑 ch01,檢查舊有「全黑畫面」診斷是否
+其實跟ch02/ch11一樣只是舊版工具的假陰性。同時任務單特別要求「不要預設 chapter-jump-via-
+fd2save 的標準做法對 ch01 一定適用,直接查」——ch01 是遊戲最初章節,理論上有可能沒有
+camp-map/prep-select 這種其他章節共有的 LOAD 後中繼畫面。
+
+前置反組譯查核(doc25 §9.1 附近 table_idx 列表):ch01(raw chapter 0 / table_idx0)確認
+屬於「D=default」的11個共用`0x205be`基準三值規則的章節之一,與ch02/03/04/07/11/15/19/
+20結構上完全同款——這代表**如果**ch01真的能走到戰鬥,它在理論上應該一樣需要gate②修法。
+但這次真正的卡點出現得比gate②更早得多。
+
+外部攻略(`chiuinan.github.io`)查得的 ch01 資料(供之後真的走到戰鬥時使用):勝利=敵全滅,
+失敗=索爾死亡,4 波定時援軍(回合3尾/4尾/5尾/6尾陸續出現),初始我方只有「LV2士兵×4」。
+若之後解開LOAD卡點,建議`KNOWN_MIN_TURNS_BEFORE_KILL[1]=6`(等滿4波援軍全部出現,比照
+ch19的`{19:6}`先例)+ch01加入`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`(D=default家族目前
+100%都需要gate②)。**本輪未能驗證這兩個參數,因為連戰鬥都沒摸到，寫在這裡只是為下一輪
+先備好**。
+
+### Live 驗證方法與結果
+
+獨立`dosbox_harness.sh` instance `ch01final`(WSL2,proven-safe並行),真實存檔
+`/home/kg701004/fd2-run/FD2.SAV`(md5 `e6d9a35756cddfc2519969b10f039181`,doc98/`91-
+worklist.md`既有記錄的機器上唯一真實存檔)。`fd2save.set_slot_chapter(slot0, raw=0)`
+patch 出 ch01 存檔,30次Escape清片頭→Down→Return(LOAD)→Return(確認槽位0)——與
+`sweep_chapter()`當前程式碼完全同一序列,**先手動逐步跑一遍而非直接呼叫`sweep --chapter
+1`**,以便每一步都截圖比對,不重蹈舊有「假設某個中間態,結果其實截錯畫面」的錯。
+
+**結果:LOAD 後立刻全黑畫面(與2026-08-27原始診斷像素級一致),且本輪窮盡以下四種獨立
+方式都無法讓畫面產生任何變化**:
+
+1. **60秒完全不送任何按鍵、不進debugger的純被動等待**——LOAD後screenshot與60秒後
+   screenshot逐位元組相同(md5一致)。排除「其實是被動時間閘門,像campexit輪那種戰鬥
+   陣列指標重配置」的可能性——那種情況下畫面或至少底層指標會隨時間變化,這次完全沒有。
+2. **15次額外Return(逐次send-keys、每次間隔1.2秒送出並截圖)**——15張截圖md5全部相同,
+   與LOAD剛完成時的畫面一模一樣。排除「其實在等對話框輸入,只是需要送非常多次Enter才能
+   翻頁」的可能性(ch01按攻略描述本來就有全遊戲最長的開場——見下方「新假說」——如果只是
+   單純對話行數很多,持續送Enter應該至少會讓畫面內容改變,不會連續15次都是同一張)。
+3. **CPU liveness 檢查(debugger 交替 enter/RUN,連續6輪、每輪間隔2秒)**——EIP在
+   `0x1EA9E3`~`0x1EAA4A`這個約0x58 bytes的窄範圍內每輪都不同,證實模擬器CPU本身沒有
+   當機/掛起,確實在持續執行指令(不是進程凍結或debugger console卡死)。反組譯到的片段:
+   ```
+   0x1EAA36  or   bx,bx
+   0x1EAA39  jne  0x1EA9E3        (回到迴圈開頭)
+   0x1EAA3B  add  edi,edx
+   0x1EAA3D  dec  dword [0x1F47B6]
+   0x1EAA44  jne  0x1EA9DC        (也回跳)
+   0x1EAA46  pop ebx/esi/edi/ebp / ret
+   ```
+   `[0x1F47B6]`是一個遞減計數器,取樣時讀到約`0x3EA1`(15777)這個量級的值。這段程式碼
+   目前推測是引擎某種通用的畫面更新/延遲節奏子程式(vsync-wait 或 frame-pacing 類型的
+   utility),**不足以單獨當成「已卡死」或「一切正常只是還在播」的證據**——本輪沒有時間
+   完整反組譯這個函式與其呼叫端,誠實列為未解。
+4. **`[0x53c03]`(章節)持續讀 0(符合預期,ch01=raw 0)、battle array pointer
+   `[0x1EFA45]`全程未曾出現合理值**——確認全程真的沒有進入戰鬥,不是誤判。
+
+**排除「roster caveat 是主因」的直接對照實驗**:手動把同一份存檔的 roster_count byte
+從13裁減成1(只留 record0/固定隊長,不動其餘 roster bytes,round-trip `fd2save.decode`
+自檢通過),重新開一個乾淨的`ch01final`instance(先`teardown`舊的再`launch`,避免任何
+殘留狀態)LOAD這份「1人版」存檔——**畫面與CPU行為跟13人版逐位元組/逐EIP-取樣模式完全
+相同**(黑畫面、EIP同樣在`0x1EA9E3~0x1EAA36`附近游走)。這直接推翻2026-08-27輪「黑畫面
+很可能是roster過多這個未定義輸入組合造成」的推測——即使裁到「正常玩家此時應有的1人」,
+問題依然100%重現,roster大小不是(至少不是唯一)成因。
+
+### 新假說(未驗證,誠實列為待下一輪反組譯的方向)
+
+`docs/knowledge-base/46-ch1-opening-timeline.md`(使用者提供原版錄影逐幀分析)記錄
+**正常「New Game」流程下,ch01從選START到玩家第一次可操作戰鬥,中間有約6分14秒的多幕
+開場**(王座廳對白→索爾走位退場→郊外草地對白→後山密林比劍+遇悠妮蓋亞→無對白行軍蒙太奇→
+海島遇海盜對白→戰前UI→玩家可操作),途中至少4次淡出/淡入轉場+2段角色跨幀走位動畫。
+doc91「新遊戲→開場對話→自動進戰場」條目記錄這整段是由`[0x53c03]`章節值驅動、經
+cutscene handler `0x3231b`觸發,戰場地圖=章節*3+2。
+
+**本輪的LOAD操作,patch的正是同一個`[0x53c03]`章節byte(=0)**,如果LOAD分支與New Game
+分支共用同一個章節驅動的cutscene dispatch,理論上LOAD-into-ch01也會嘗試重播這整段開場
+——但這整段開場的第一幕(王座廳)理論上應該在LOAD後幾秒內就能在畫面上看到背景圖淡入,
+不該連續60秒+15次Return都維持純黑。**合理推測(未證實)**:New Game 流程在進入這段
+cutscene之前,可能有一段只有「開新遊戲」分支才會執行的初始化(例如場景/角色走位座標表、
+攝影機路徑表的初始賦值),而單純LOAD一份章節byte=0的存檔會跳過這段初始化,讓cutscene
+dispatch找不到它預期的資料而卡在某個等待迴圈裡(可能就是上面觀察到的`0x1EA9E3`窄範圍
+延遲迴圈,只是它在等待一個永遠不會被滿足的條件,而不是單純的固定幀數延遲)。
+
+**這代表 ch01 很可能是本專案唯一一個「chapter-jump-via-fd2save 標準做法從結構上就不
+適用」的章節**——不是像ch21-26/28那樣「同一套LOAD機制能到中繼畫面,只是選人門檻/roster
+guard另有問題」,而是LOAD本身可能從一開始就不是ch01能被外部觸發的合法入口點(原版遊戲設計
+下,真實玩家永遠是從「New Game」路徑第一次進入ch01,不會有任何存檔在打完開場前就存在
+——這與doc91「存檔只能在酒店進行」的既有結論一致:酒店要到ch02的camp-map才存在,玩家在
+ch01結束前完全沒有機會存檔,所以「chapter byte=0的存檔」這個輸入本身在原版設計下就沒有
+合法對應的產生路徑,不只是roster不對而已)。
+
+### 對M5與後續投入的誠實結論
+
+**ch01 本輪未能解開,M5引擎層級勝利確認章節數維持19章(ch02-20)不變,tally維持19/30**
+——但診斷精確度本輪有實質推進:(a)舊有「roster caveat是主因」的推測已被直接對照實驗
+排除;(b)舊有「工具的generic advance迴圈可能提前放棄了」的疑慮已被排除(本輪用遠超過
+舊版11步/10秒預算的60秒被動等待+15次主動按鍵,結果相同);(c)新增一個具體、可反組譯
+驗證的假說——LOAD-into-ch01可能結構上就不是這個章節的合法入口點,需要走完整New Game
+流程(或反組譯New Game專屬的初始化步驟,搬到LOAD路徑上手動補上)才可能解開。
+
+**下一輪建議(按投報率排序)**:
+1. 反組譯`0x1EA9E3`~`0x1EAA4A`這個延遲迴圈的呼叫端與再上一層呼叫端,搞清楚它在等待
+   什麼條件、這個條件正常應該由誰在什麼時機設置——這是判斷「新假說」是否成立的直接方法,
+   比下面的替代路徑更省時間。
+2. 若①證實是New-Game-only初始化缺失,嘗試找出New Game分支獨有的初始化函式(main
+   `0x25bf4`附近,doc91「頂層狀態機反組譯」條目已有的兩張章節跳表`0x51d71`戰前劇情/
+   `0x51de9`戰後可能是起點),評估能否在LOAD路徑上用debugger手動補寫等效狀態來繞過它
+   (不修改`fd2save.py`本身的存檔格式,只是本工具LOAD後、進入generic advance之前多一步
+   debugger寫入)。
+3. 替代路徑(不需要反組譯,但重跑成本高很多):完整走一次「New Game→6分鐘開場」的即時
+   互動流程(不patch任何存檔),讓引擎用它原生預期的方式進入ch01戰鬥,驗證battle array
+   pointer最終是否確實能在這條路徑下变得合理——如果New Game路徑本身也卡住,則新假說
+   不成立,需要另尋根因;如果New Game路徑真的能到戰鬥,則證實了「LOAD不是合法入口」,
+   可以把心力轉向①②的初始化補寫,或誠實把ch01標記為「需要New-Game-only驗證路徑,
+   chapter-jump-via-fd2save對它不適用」並就此打住,留給M6之後的正式remake驗收處理。
+
+### 本輪產物與環境紀錄
+
+全程使用獨立`dosbox_harness.sh` instance `ch01final`(WSL2),與canonical `dbg`/:99
+session及其他agent的instance無交集;本輪結束前兩次`teardown`都乾淨完成(`status`回報
+`no harness instances registered`)。截圖(title/post-load/15張key按壓/12張passive
+輪詢/60秒前後對照)與兩份中間存檔(`ch01final_manual.SAV`13人版、`ch01final_roster1.SAV`
+1人版)存於`.wsl_build/ch01final_manual_shots/`與`.wsl_build/`(既有`.wsl_build/`
+git-ignore規則,未提交)。未觸碰`tools/fd2save.py`——roster裁減只是本輪一次性診斷腳本
+直接操作解碼後的plaintext buffer,不是對`fd2save.py`函式庫本身的修改。

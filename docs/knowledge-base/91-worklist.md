@@ -1860,6 +1860,33 @@
   完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第9輪」小節，
   `tools/fd2_chapter_sweep.py`的`KNOWN_MIN_TURNS_BEFORE_KILL`/
   `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`已更新為ch02已驗證狀態。
+- [~] **2026-08-28 `ch01final`輪:ch01重新診斷,舊「roster caveat」假說已排除,但問題
+  未解——tally維持19/30不變**。回應派工單:ch02/ch11的gate②(`ensure_one_ally_acts()`)
+  +HUD-gating(`screen_shows_battle_hud()`)修法在2026-08-27原始ch01掃描時都還不存在,
+  本輪任務是重新確認舊「LOAD後全黑畫面」診斷是否只是同款假陰性。**結果:不是同款問題,
+  是更早、更根本的一層**——LOAD後黑畫面 100% 原樣重現,且窮盡60秒被動等待(不送任何鍵、
+  不進debugger)、15次額外Return按鍵、debugger交替enter/RUN連續6輪確認CPU仍在執行
+  (EIP在`0x1EA9E3~0x1EAA4A`一個約0x58 bytes的窄範圍內持續移動,不是進程凍結)三種獨立
+  方式,畫面像素**零變化**,battle array pointer全程未變合理值——確認真的卡住,不是舊版
+  工具11步/10秒的stall判定過早放棄。**直接對照實驗排除了roster caveat**:把同一份存檔
+  roster從13人裁減到1人(只留固定隊長)重新LOAD,黑畫面與CPU行為逐位元組/逐EIP-取樣
+  模式完全相同,即使裁到「正常玩家此時應有的1人」問題依然100%重現。**新假說(未驗證)**:
+  `docs/knowledge-base/46-ch1-opening-timeline.md`記錄正常New Game流程下ch01有約6分14秒
+  的多幕開場(王座廳/草地/密林/行軍蒙太奇/海島,由`[0x53c03]`章節值驅動的cutscene
+  handler`0x3231b`觸發);LOAD-into-ch01 patch的正是同一個章節byte,理論上可能嘗試重播
+  同一段開場,但王座廳背景理論上應該在LOAD後幾秒內就淡入畫面、不該連續60秒+15次Return
+  維持純黑——推測New Game分支可能有一段只有「開新遊戲」才會執行的初始化(場景/角色走位
+  座標表等),單純LOAD會跳過它,讓cutscene dispatch卡在某個等待迴圈(可能就是觀察到的
+  `0x1EA9E3`窄範圍延遲迴圈)裡永遠等不到條件成立。**這代表ch01可能是本專案唯一一個
+  chapter-jump-via-fd2save標準做法從結構上就不適用的章節**(不像ch21-26/28那樣LOAD機制
+  本身沒問題、只是選人門檻另有問題)——也與doc91既有「存檔只能在酒店進行,酒店要到ch02
+  camp-map才存在」的結論一致:玩家在原版設計下永遠不可能產生一份chapter byte=0的存檔,
+  這個輸入本身就沒有合法來源。**M5引擎層級勝利確認章節數維持19章(ch02-20)不變**,tally
+  維持19/30。完整寫法、四種獨立驗證方式的細節、下一輪建議(反組譯延遲迴圈呼叫端/嘗試
+  真正New Game路徑對照)見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28
+  `ch01final`輪」小節。`tools/fd2_chapter_sweep.py`本輪未修改(`KNOWN_MIN_TURNS_BEFORE_
+  KILL[1]=6`/`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`加入`1`已在文件中記錄為「若之後解開
+  LOAD卡點才用得上的預備參數」,未寫入程式碼,因為連戰鬥都沒摸到,沒有依據能驗證它們)。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
