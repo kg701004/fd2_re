@@ -2195,6 +2195,31 @@
   sweep pipeline確認`[0x53ecc]`/磁碟chapter byte)。完整反組譯逐行紀錄、live操作
   序列、screenshot清單見`docs/knowledge-base/99-chapter-sweep-results.md`
   「2026-08-29 續輪：8個`DAT_00053a45`WRITE xref逐一查明」小節。
+  **2026-08-29「guard-sweep」輪**：把guard-id表擴充到ch22/23/26/28全部反組譯驗證
+  (Ghidra自己的反組譯器逐指令核對，非猜測)、寫進`tools/fd2_chapter_sweep.py`的
+  新`GUARD_CHARACTER_IDS`/`guard_selection_threshold()`並接上`prepare_chapter_save()`
+  的roster-padding邏輯(guarded章節專屬，非guarded章節零行為變化)。**ch28的guard
+  id(=9悠妮)是本輪新結論**：`0x2b2eb`的`CMP+JLE`只在raw<=0x19時分流進逐章細查，
+  raw>0x19(含ch28=raw0x1b)直接落進與ch27共用的同一顆「PUSH 0x9」尾端——ch27的
+  真實13人存檔本來就含id9，這正是ch27從未被guard卡住的原因，不是它沒有guard。
+  逐章live測試(正式`fd2_chapter_sweep.py sweep --chapter N`CLI，非one-off腳本)：
+  **✅ch24拿到全專案史上第一個含磁碟寫入的字面`pass`**(chapter byte真的
+  `0x17→0x18`，5.1秒內)；**✅ch26`[0x53ecc]`1.8秒內乾淨翻2**(guard修正=補id29，
+  不需任何ally-action/turn-wait override，guard-id表正確性的第二次獨立live交叉
+  驗證)；**⚠️ch21**guard修正確實讓它可靠抵達真戰鬥(兩次live run皆重現，50/59敵人)，
+  但加了`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL[21]`與`KNOWN_MIN_TURNS_BEFORE_KILL
+  [21]=9`(呼應攻略站「回合2/4/6/8角落惡魔」)兩個既有機制、單獨與合併皆未能讓
+  `[0x53ecc]`翻2，根因仍未查明，9輪等待期間反覆出現對話清除逾時警告(疑似惡魔
+  出現公告拖慢`find_empty_adjacent_tile()`)；**❌ch22/ch25**LOAD後直接落在
+  酒店/商店選單而非camp地圖，`Right×3`序列完全無效(一次甚至被彈回標題畫面)，
+  獨立診斷腳本證實純Return可安全推進但300次後仍只停在NPC商人選單，guard check
+  從未被觸及；**❌ch23/ch28**確實有camp地圖且能抵達真正的選人畫面(截圖證實
+  「出戰人數/剩餘人數」正確)，但戰前對話+選人tap數run-to-run變異幅度極大
+  (200~450+不等，同一份存檔同一套程式碼)，固定budget調到420/480仍不收斂，
+  判斷是對話系統本身的即時性/動畫時序競態，不是單純「budget不夠大」。
+  **M5引擎層級勝利確認章節數由20章(ch01-20)增為22章(ch01-20+ch24+ch26)**。
+  完整guard-id對照表、逐章live log、下一輪建議見`docs/knowledge-base/99-chapter-
+  sweep-results.md`「2026-08-29『guard-sweep』輪」小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測

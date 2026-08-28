@@ -1526,7 +1526,69 @@ _ADVANCE_KEY_CYCLE = ["Return", "Down", "Right", "Return", "Escape", "Right", "D
 # walkthrough describes 4 reinforcement waves through turn 6) but are NOT
 # added below -- they are unverified guesses this round never got to test,
 # since battle was never even reached.
-KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
+# 2026-08-29 guard-chapter sweep round: ch22 (and, by the identical
+# symptom, ch25) do NOT land on the ordinary camp-map town hub after LOAD
+# -- attempt_camp_exit()'s opening "Right x3" cycle followed by its
+# exit_confirm Return produced ZERO visible screen change across all 4
+# retries for both chapters (see docs/knowledge-base/99-chapter-sweep-
+# results.md's matching entry), then generic key cycling (which mixes in
+# Down/Right/Escape) stalled or, in one ch22 run, ended up bounced all the
+# way back to the TITLE SCREEN. A standalone diagnostic driver
+# (.wsl_build/ch22diag.py, throwaway/not committed) that sent PLAIN Return
+# only -- no Right, no Escape, no debugger polling in between -- instead
+# made real progress (reached a character equipment/status screen by tap
+# 40, no title bounce). This suggests ch22/25's post-load screen reacts
+# badly specifically to "Right" (plausibly bound to some kind of "skip"
+# action that jumps somewhere unintended when LOADed via a chapter-jump
+# patch rather than reached through normal play), not that there is no
+# navigable sequence at all. NOT yet proven to reach a real battle -- the
+# diagnostic only ran 40 taps and stopped at a non-battle screen; this
+# hint is a follow-up bet on "more plain Return", not a confirmed fix.
+KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {
+    22: ["Return"] * 300,
+    25: ["Return"] * 300,
+}
+
+# 2026-08-29 guard-chapter sweep round: attempt_camp_exit()'s default
+# dialogue_steps=120 was tuned against ch02/ch12/ch27's observed pre-battle
+# dialogue length (doc58's up to ~80-105 taps). A first live run of ch21
+# (instance guard21_21, this round) exhausted the full 120-tap budget
+# still mid-dialogue (see docs/knowledge-base/99-chapter-sweep-results.md's
+# matching entry for screenshots) -- ch21's own pre-battle sequence is
+# longer, consistent with the "jonah21" round's own description of "a much
+# longer than expected pre-battle cutscene interleaving two scenes". Only
+# add a chapter here after it has actually been observed exhausting the
+# default budget short of battle -- do not pre-emptively pad every chapter.
+# ch23/ch28 added same round: both showed the identical "exit_confirm and
+# yes_confirm both register cleanly, but 120 taps runs out still mid pre-
+# battle dialogue/selection" symptom as ch21's first attempt (as opposed to
+# ch22/ch25's DIFFERENT "exit_confirm never registers at all" symptom,
+# which this budget bump does not address -- see this round's
+# docs/knowledge-base/99-chapter-sweep-results.md entry). ch28's roster is
+# also padded to 19 (guard_selection_threshold's raw>0x1a branch) instead
+# of 15, so its picking phase alone plausibly needs more taps than the
+# other chapters here.
+# Live-observed follow-up (same round): 220 got ch23/ch28 all the way to
+# the troop-selection screen (confirmed via screenshot -- "出戰人數
+# X15/剩餘人數 X12" for ch23, "X19/X14" for ch28) but ran out of budget
+# mid-picking (each Return both picks one candidate and advances the
+# cursor, one pick per tap -- doc91/attempt_camp_exit's docstring). ch23
+# needs ~218 dialogue taps + 15 picks; ch28's larger 19-person roster
+# (guard_selection_threshold's raw>0x1a branch) needs even more. Raised
+# with generous margin for the remaining picks plus any post-pick popup/
+# dialogue this round did not get to see.
+# Second live follow-up (same round): 260 got ch23 to "剩餘人數 X06" (only
+# 6 of 15 left to pick) but the pick rate had visibly slowed to ~6-7 taps
+# per pick near the end of the list (vs. ~1 tap/pick early on -- screenshot
+# comparison at tap 221 (12 remaining) vs tap 261 (6 remaining), 40 taps
+# for 6 picks) instead of the 1:1 rate doc91/ch27 established -- possibly a
+# scroll/second-row navigation cost this tool has not previously had to
+# pay with a 13-person unpadded roster. NOT diagnosed further this round;
+# raised with a large margin as a blunt mitigation, not a fix -- a future
+# round should look at the actual mid-picking screenshots
+# (.wsl_build/guardsweep9/ch23/shots/campexit_2*.png) to understand the
+# slowdown properly instead of just paying for more taps.
+CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 28: 480}
 
 # Chapter-specific "wait this many real turns before the FIRST mass-kill"
 # override. 2026-08-27 "ch19banor" round: ch19 was previously one of an
@@ -1741,7 +1803,21 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # ch03/04/07/15/20 showed -- the reinforcements were most likely already
 # present in the initial array, not a live spawn this tool's rescan would
 # catch). Full log: `.wsl_build/chapter_sweep/ch02/result.json`.
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3, 2: 3}
+# 2026-08-29 guard-chapter sweep round: ch21 tried ensure_one_ally_acts()
+# alone first (KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL) -- ally-action itself
+# completed cleanly (HUD ok=True) but [0x53ecc] still stayed at 0. The
+# external strategy guide (chiuinan.github.io) gives ch21 four corner-demon
+# reinforcement waves at turns 2/4/6/8 and a "second wave" starting turn 3;
+# this tool's initial mass-kill happens on turn 1 (immediately after
+# battle is confirmed), well before any of those waves exist in the array,
+# so a single kill-cycle can never touch them. 9 (one past the last known
+# wave at turn 8) mirrors ch15's existing precedent value for the same
+# "wait past the last known wave, then kill everything at once" pattern.
+# NOT YET live-confirmed for ch21 specifically (added together with this
+# round's ensure_one_ally_acts() entry, on the same "try the established
+# precedent, then verify" basis) -- see this dict's other per-chapter
+# comments above for the general derivation method.
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3, 2: 3, 21: 9}
 
 # 2026-08-28 "ch11r8ctrl"+"ch11r8flag" round (doc25 §3.2.5, doc99's matching
 # entry) FINAL WORD on ch11 (superseding the "ch11chest" note above): a
@@ -1774,7 +1850,25 @@ KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 2
 # (871.4s run, [0x53ecc] -> 2 on kill-cycle 1/4, `ensure_one_ally_acts()`
 # itself needed zero retries -- cycle[0] immediately landed on a live ally,
 # a single `Up` tap moved it, select->move->Wait completed cleanly).
-KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2}
+# 2026-08-29 guard-chapter sweep round: ch21 (instance g21b_21, dialogue
+# budget bumped to 220 via CAMP_EXIT_DIALOGUE_STEPS to actually reach
+# battle -- see that dict's comment) reproduced the EXACT ch02/ch11
+# symptom signature: real battle confirmed (50 enemy records), all 50
+# mass-killed and confirmed via read-back, End-Turn's Yes/No prompt
+# confirmed, yet [0x53ecc] stayed at 0 through the full retry budget (the
+# kill-cycle loop then honestly gave up early because every camp==0 record
+# already carried the death signature -- no genuinely-alive enemy left to
+# blame). confirm_end_turn()'s find_empty_adjacent_tile() by construction
+# parks the cursor on an EMPTY tile before opening the ring, so per gate②'s
+# already-disassembled 0x117e7 structure (see the long comment above this
+# dict) this chapter's win-check most likely needs the same fix. NOT YET
+# live-confirmed to be the actual fix for ch21 (a rerun with this entry
+# added was queued but not observed to complete before this round's time
+# budget ran out) -- added on the strength of the ch02/ch11 precedent
+# rather than a fresh independent confirmation; a future round should
+# verify this claim against the actual rerun result before treating ch21
+# as understood.
+KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2, 21}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
@@ -2053,6 +2147,54 @@ def advance_generic(name: str, shots_dir: Path, log: list[str], max_steps: int =
 # save preparation
 # --------------------------------------------------------------------------
 
+# 2026-08-29 "guard-character id table" -- roster-selection gate for
+# ch21-26/28 ("本章[X]必須出場！"). FUN_0002af28 (0x2af28..0x2b438) dispatches
+# on the raw (0-based) chapter byte [0x53c03] and pushes a specific
+# character id before calling the guard-check FUN_0002b439 (0x2b439); the
+# id is NOT the same as 28-chapter-objectives-and-recruits.md's "額外護衛"
+# column (confirmed to disagree for ch21: that doc column names Roland/
+# Sylph, but the actual disasm push is id21/約拿 Jonah -- see
+# docs/knowledge-base/99-chapter-sweep-results.md's 2026-08-29 rounds).
+# ch21's id was live-verified (instance `jonah21`) to clear the gate and
+# reach the real battle command-ring screen. ch22/23/26 were independently
+# re-derived this round via Ghidra's own disassembler (not manual byte
+# math) reading 0x2b2d0..0x2b352 end to end, matching the prior round's
+# results exactly (including ch26's literal match against doc28's "額外護衛"
+# column, which is a coincidence for that one chapter, not a validation of
+# the column as a general method). ch24/ch25 (raw 0x17/0x18) never hit any
+# CMP that matches in this chain -- confirmed again by this round's own
+# disasm, matching the 08-28 round's decompile-based finding.
+#
+# ch28 (raw 0x1b=27) is a NEW finding this round, not previously live-
+# tested: it falls into the same "raw chapter > 0x19" fallthrough bucket as
+# ch27/29/30 (0x2b2eb's CMP+JLE, taken only for raw<=0x19; not taken falls
+# straight into PUSH 0x9/id9 Yuni with no further CMP), which is exactly
+# why ch27's real 13-person roster (which already contains id9) was never
+# seen to be blocked by this gate in earlier rounds -- it always silently
+# already satisfied it.
+GUARD_CHARACTER_IDS: dict[int, list[int]] = {
+    21: [21],       # raw 0x14 -- 約拿 Jonah (live-verified, instance jonah21)
+    22: [24],       # raw 0x15 -- 希爾法 Sylph
+    23: [24],       # raw 0x16 -- 希爾法 Sylph
+    26: [9, 29],    # raw 0x19 -- 悠妮 Yuni, then 亞奇梅吉 Archmage (both required, in this order)
+    28: [9],        # raw 0x1b -- falls into the raw>0x19 catch-all -- 悠妮 Yuni
+}
+
+
+def guard_selection_threshold(chapter_n: int) -> int:
+    """The roster-selection screen's deploy-count parameter (EBP, passed as
+    param_1 into the guard-check FUN_0002b439) is 0xf(15) normally, but
+    0x13(19) once the raw chapter exceeds 0x1a -- see 0x2af52's
+    `CMP [0x53c03],0x1a; JLE +.. ; MOV EBP,0x13` in FUN_0002af28. Padding a
+    slot's roster_count to land EXACTLY on this threshold forces "select
+    everyone, no free choice" at that screen, sidestepping the need for
+    per-character cursor navigation there -- this is the same trick the
+    ch21 `jonah21` round used (roster_count padded to exactly 15), verified
+    live to work; generalized here with the correct per-chapter value."""
+    raw_chapter = chapter_n - 1
+    return 0x13 if raw_chapter > 0x1a else 0xf
+
+
 def estimate_roster_size(chapter_n: int) -> int:
     """Count cumulative `join` beats across ch01_post .. ch(N-1)_post, +1
     for the fixed leader (record0, never a join beat -- see
@@ -2083,24 +2225,59 @@ def prepare_chapter_save(source_sav: Path, chapter_n: int, out_sav: Path, slot: 
     start, _ = fd2save.slot_bounds(slot)
     meta_start = start + fd2save.ROSTER_SIZE
     current_count = plain[meta_start + 1]
-    wanted = estimate_roster_size(chapter_n)
+    guard_ids = GUARD_CHARACTER_IDS.get(chapter_n)
     if not pad_roster:
+        wanted = estimate_roster_size(chapter_n)
         log.append(f"prepare_chapter_save: --no-roster-pad, keeping source roster_count={current_count} unchanged "
                     f"(estimate_roster_size({chapter_n})={wanted})")
-    elif wanted > current_count:
+    elif guard_ids:
+        # This chapter has a live-verified/disasm-verified "本章[X]必須出場！"
+        # roster-selection gate (GUARD_CHARACTER_IDS above) -- pad to the
+        # chapter's exact selection threshold (guard_selection_threshold())
+        # instead of estimate_roster_size()'s join-beat count, and make sure
+        # the required guard id(s) are part of the padding (or already
+        # present in the source roster, in which case nothing needs adding
+        # for them specifically).
+        wanted = guard_selection_threshold(chapter_n)
         existing_ids = set(fd2save.roster_character_ids(plain, slot, current_count))
-        pad_ids = [cid for cid in range(32) if cid not in existing_ids][: wanted - current_count]
+        required_ids = [cid for cid in guard_ids if cid not in existing_ids]
+        already_present = [cid for cid in guard_ids if cid in existing_ids]
+        filler_needed = max(0, wanted - current_count - len(required_ids))
+        filler_ids = [cid for cid in range(32) if cid not in existing_ids and cid not in required_ids][:filler_needed]
+        pad_ids = required_ids + filler_ids
+        if current_count + len(pad_ids) > wanted:
+            log.append(f"prepare_chapter_save: WARNING source roster_count={current_count} + required guard "
+                        f"id(s) {required_ids} already exceeds selection threshold {wanted} for chapter {chapter_n} "
+                        f"-- padding anyway so the guard id(s) are present, selection screen may allow free choice")
         if pad_ids:
             try:
                 plain = fd2save.append_roster_members(plain, slot, pad_ids)
-                log.append(f"prepare_chapter_save: padded roster {current_count}->{current_count + len(pad_ids)} "
-                            f"with synthetic ids {pad_ids} (estimate_roster_size({chapter_n})={wanted})")
+                log.append(f"prepare_chapter_save: guard-gated chapter {chapter_n} -- padded roster "
+                            f"{current_count}->{current_count + len(pad_ids)} with ids {pad_ids} "
+                            f"(required guard ids {guard_ids}, already present {already_present}, "
+                            f"selection threshold {wanted})")
             except ValueError as e:
                 log.append(f"prepare_chapter_save: roster padding skipped ({e})")
         else:
-            log.append(f"prepare_chapter_save: wanted {wanted} roster members but no unused char ids available to pad with")
+            log.append(f"prepare_chapter_save: guard-gated chapter {chapter_n} -- guard id(s) {guard_ids} already "
+                        f"all present ({already_present}), roster_count={current_count} already >= threshold "
+                        f"{wanted}, no padding needed")
     else:
-        log.append(f"prepare_chapter_save: source roster_count={current_count} already >= estimate_roster_size({chapter_n})={wanted}, no padding")
+        wanted = estimate_roster_size(chapter_n)
+        if wanted > current_count:
+            existing_ids = set(fd2save.roster_character_ids(plain, slot, current_count))
+            pad_ids = [cid for cid in range(32) if cid not in existing_ids][: wanted - current_count]
+            if pad_ids:
+                try:
+                    plain = fd2save.append_roster_members(plain, slot, pad_ids)
+                    log.append(f"prepare_chapter_save: padded roster {current_count}->{current_count + len(pad_ids)} "
+                                f"with synthetic ids {pad_ids} (estimate_roster_size({chapter_n})={wanted})")
+                except ValueError as e:
+                    log.append(f"prepare_chapter_save: roster padding skipped ({e})")
+            else:
+                log.append(f"prepare_chapter_save: wanted {wanted} roster members but no unused char ids available to pad with")
+        else:
+            log.append(f"prepare_chapter_save: source roster_count={current_count} already >= estimate_roster_size({chapter_n})={wanted}, no padding")
 
     stored = fd2save.encode(plain)
     fd2save.decode(stored)  # round-trip self-check, same discipline as fd2save.py's own --out path
@@ -2196,11 +2373,17 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             hint = KNOWN_NAVIGATE_HINTS.get(chapter_n) if use_navigate_hints else None
             if hint:
                 log.append(f"chapter {chapter_n} has an explicit KNOWN_NAVIGATE_HINTS override, skipping attempt_camp_exit")
-                adv = advance_generic(name, shots_dir, log, hint_keys=hint)
+                # max_steps must cover the whole hint list -- advance_generic's
+                # default (48) silently truncates a longer hint otherwise (a
+                # latent bug noticed this round; KNOWN_NAVIGATE_HINTS had never
+                # been given an entry longer than 48 before, so it was never
+                # observed in practice).
+                adv = advance_generic(name, shots_dir, log, max_steps=max(48, len(hint)), hint_keys=hint)
                 base = adv["battle_base"]
             else:
                 log.append("trying attempt_camp_exit (doc91 town-hub Right x3 -> 出口 -> YES -> dialogue-advance sequence) first")
-                adv = attempt_camp_exit(name, shots_dir, log) if use_navigate_hints else None
+                camp_exit_steps = CAMP_EXIT_DIALOGUE_STEPS.get(chapter_n, 120)
+                adv = attempt_camp_exit(name, shots_dir, log, dialogue_steps=camp_exit_steps) if use_navigate_hints else None
                 base = adv["battle_base"] if adv else None
                 if base is None:
                     log.append("attempt_camp_exit did not find a battle, falling back to the generic advance loop")

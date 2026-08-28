@@ -2838,3 +2838,170 @@ roster能通過必須出場檢查」,把ch21從「已知結構性卡住原因,�
 才能讓M5從0 pass真正往前推進;③ 如果②發現磁碟仍不前進,doc25§9.1的SAV
 writer gate會重新變成最高優先級瓶頸,比guard-character本身更值得投入下一輪
 資源。
+
+## 2026-08-29「guard-sweep」輪:**guard-id表擴充到ch22/23/26/28全部反組譯驗證(非猜測)、寫進`tools/fd2_chapter_sweep.py`並接上roster-padding——ch24(無guard)/ch26(guard 9+29)兩章live確認引擎層級勝利,其中ch24是本專案第一次拿到磁碟真正前進的`pass`(不是`anomaly_engine_win_no_disk_write`);ch21已可靠抵達真戰鬥但win-check仍未解;ch22/23/25/28四章卡在全新的、彼此不同的導航瓶頸,誠實記錄未解**
+
+### 任務背景
+
+延續前一節「map-native guard」/「8個WRITE xref查明」兩輪的結論(ch21真正guard
+id=21約拿、live首次抵達戰鬥指令環,ch22/23/26 guard id理論預測但未live驗證,
+ch24/25不呼叫guard check),派工單要求:①用同一套disasm方法驗證ch22/23/26的
+guard id預測、②對ch28做同樣分析(先前完全沒碰過)、③把整條pipeline(guard-id
+roster修正→dosbox_harness→標準buff/nerf/mass-kill/End-Turn)接起來,對ch21-26/28
+七章逐一嘗試,誠實回報`[0x53ecc]`是否真的翻2。
+
+### 第一步:獨立重新反組譯`FUN_0002af28`(`0x2af28..0x2b438`)整段guard-id
+dispatch鏈(`0x2b2d0..0x2b352`),用Ghidra自己的反組譯器逐指令核對(非猜測、非
+複用前一輪快取)——**完整、逐章節guard-id對照表首次一次性建立**
+
+用`tools/ghidra_batch_probe.py`(確認`\U`跳脫bug修復依然有效)對`0x2b2d0`起
+200 bytes做`disasm`+`bytes`(hex dump),再手動逐byte核對一次可變長度x86指令
+邊界,最後用Ghidra自己的`disasm` action對`0x2b2eb`/`0x2b2f4`/`0x2b328`三個關鍵
+分支點分別重跑確認(不是只信手算結果)。完整、獨立重建的對照表:
+
+| raw chapter (`[0x53c03]`) | 對應章節 | guard id(s) | 對照上一輪/doc28 |
+|---|---|---|---|
+| `0x14`(20) | ch21 | `21`=約拿 | 與前輪一致,本輪未變 |
+| `0x15`(21) | ch22 | `24`=希爾法 | 與前輪一致 |
+| `0x16`(22) | ch23 | `24`=希爾法 | 與前輪一致 |
+| `0x17`(23) | ch24 | (無檢查) | 與前輪一致 |
+| `0x18`(24) | ch25 | (無檢查) | 與前輪一致 |
+| `0x19`(25) | ch26 | `9`=悠妮 → `29`=亞奇梅吉(兩者皆須通過,依序) | 與前輪一致,doc28「額外護衛」欄位巧合逐字吻合 |
+| `>0x19`(26+,含`0x1b`=27=**ch28**) | ch27/**ch28**/29/30 | `9`=悠妮 | **新發現**——`0x2b2eb`的`CMP+JLE`只在`raw<=0x19`時分流進細部個別檢查鏈,`raw>0x19`直接落進與ch18/ch20共用的同一顆「`PUSH 0x9`」共用尾端(`0x2b2f4`),完全沒有另外的CMP。ch27真實13人存檔本來就含id9(悠妮),這正是ch27從未在guard check上被卡住過的原因——不是ch27没有guard,是它一直悄悄過關。 |
+
+ch28的guard id(=9,悠妮)是本輪**新結論**,先前只預測「未知,理論不適用」;
+現在確認**適用**,且id剛好等於ch27的既有guard機制,不是獨立新id。
+
+### 第二步:把guard-id表 + selection threshold接進`tools/fd2_chapter_sweep.py`
+
+新增`GUARD_CHARACTER_IDS`(章節→必要id list)與`guard_selection_threshold()`
+(`0x2af52`的`CMP [0x53c03],0x1a`分支:raw<=0x1a門檻15、raw>0x1a門檻19,對應
+`0x28`章節roster需要padding到19人,不是既有`estimate_roster_size()`算出的
+其他數字)。`prepare_chapter_save()`改寫:guarded章節改用這個新邏輯——guard
+id若已在來源存檔中則不重複添加,否則優先塞進padding列表,再用其餘未用id補滿
+到門檻人數(重現`jonah21`輪「湊滿門檻=選人畫面無自由選擇」的技巧,推廣到每章
+各自正確的門檻值)。非guarded章節(ch01-20/24/25/27/29/30)行為完全不變,零
+回歸風險。
+
+### 第三步:逐章live測試——**ch24(pass,含磁碟寫入)、ch26(engine-win確認)
+兩章新增為M5「引擎層級勝利確認」章節,tally由20/30增為22/30**
+
+用`python tools/fd2_chapter_sweep.py sweep --chapter N --source-sav ...`(修改
+後的正式CLI路徑,非one-off腳本)逐一測試,以下按結果分類:
+
+**✅ ch24——`pass`,磁碟chapter byte真的從`0x17`前進到`0x18`(本專案史上第一次
+戰鬥勝利觸發磁碟自動存檔,不是`anomaly_engine_win_no_disk_write`)**:ch24不需要
+guard-id修正(本輪與前輪皆確認raw`0x17`不呼叫`FUN_0002b439`),用既有
+`estimate_roster_size()`padding(13→21人)。標準camp-exit(`Right×3`→出口確認→
+YES確認)在第41個tap找到真戰鬥(4個敵人record),mass-kill+`confirm_end_turn()`
+3.6秒內`[0x53ecc]`翻2,`advance_postbattle_montage()`清完戰後montage後,持續
+tap Return**5次、5.1秒內磁碟存檔真的前進**。這印證了`doc91`/`doc25§9.1`早先
+提到的「ch24的23→24磁碟轉換」既有備註確有其事,本輪是第一次用正式CLI端到端
+重現、非人工grind。**這是全專案30章裡第一個拿到字面意義`pass`verdict的章節**
+(先前20章全部只能拿到`anomaly_engine_win_no_disk_write`,因為doc91已確認的
+遊戲設計事實是「戰鬥勝利本身不自動存檔,只有酒店才存檔」——ch24顯然是這條
+一般規則的例外,原因未深究,留給下一輪:可能是ch24特有的「整備限定流程」
+劇本本身包含一次存檔呼叫,不是戰鬥勝利觸發的通用機制)。
+
+**✅ ch26——`anomaly_engine_win_no_disk_write`,`[0x53ecc]`1.8秒內翻2,乾淨、
+一次到位、不需任何ally-action或turn-wait override**:guard修正生效(`9`已在
+來源存檔,只需補`29`,13→15人);標準camp-exit在第5個tap即找到真戰鬥(42個
+敵人record,遠快於ch21/ch24);mass-kill+End-Turn**第一個kill-cycle**、1.8秒內
+`[0x53ecc]`翻2。磁碟chapter byte未前進(`anomaly_engine_win_no_disk_write`,
+與ch02-20同一類別,不是ch24那種例外)。這是guard-id表本身正確性的**第二次
+獨立live交叉驗證**(第一次是ch21的`jonah21`輪)——ch26的兩段式guard(先9後29)
+完全依disasm預測運作,無需任何額外修正。
+
+**⚠️ ch21——guard修正確實讓它可靠抵達真戰鬥(50/59個敵人record,兩次live
+run皆重現),但win-check本身仍未解開,4輪嘗試皆為`anomaly`**:
+- Round 1(預設120-tap camp-exit budget):未抵達戰鬥,`needs_manual_followup`
+  (見下方「camp-exit dialogue budget」發現)。
+- Round 2(budget提高到220):抵達戰鬥(50敵),mass-kill+End-Turn確認送出,
+  但`[0x53ecc]`維持0——與ch02/ch11的gate②症狀(`0x117e7`要求cursor曾停在
+  存活單位上按Enter)完全吻合的特徵,**但這是本輪首次對ch21測試這個假說**。
+- Round 3(加`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL[21]`,`ensure_one_ally_acts()`
+  本身完成得很乾淨,cycle[0]即成功):`[0x53ecc]`依然維持0,證明gate②修法
+  單獨不足以解開ch21。
+- Round 4(再加`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`,呼應攻略站「第2/4/6/8回合
+  各刷一隻角落惡魔、第3回合開始第二波攻擊」的描述,想讓所有波次先出現再一次
+  mass-kill):9輪等待期間**每一輪都出現「無法在20次Return內清掉對話/找不到
+  HUD」的警告**(疑似角落惡魔出現時觸發的公告對話框,本工具既有的
+  `find_empty_adjacent_tile()`對話清除預算不夠用),最終`[0x53ecc]`讀回一個
+  異常大的常數(`2059392`)且全程不變——這很可能是debugger讀取在HUD狀態不明
+  時讀到雜訊/陳舊值,不是真正的引擎回應,不應採信為任何結論。
+- **誠實結論**:ch21的guard-id修正本身(id=21約拿)高信心正確且已運作(抵達
+  戰鬥這件事兩輪live皆重現);win-check卡住的根因**仍未查明**,現有的
+  gate②/turn-wait兩個既有修法(對ch02/ch11/ch19有效)單獨或合併都未能解開
+  ch21,且ch21的多波次角落刷怪疑似對本工具的對話清除/HUD偵測預算構成額外
+  壓力,這是本輪新發現、值得下一輪專門對待的複雜度來源。
+
+**❌ ch22/ch25——LOAD後直接落在酒店/商店選單系統,不是camp地圖,`Right×3`
+序列對兩章都完全無效(4次重試皆「無視覺變化」)、且其中一次ch22嘗試甚至被彈回
+標題畫面**:一支獨立診斷腳本(`.wsl_build/ch22diag.py`,未提交,重用
+`fd2_chapter_sweep`函式庫但改用純Return、不先送任何`Right`)證實**純Return
+本身不會彈回標題**——40次Return後停在一個角色裝備/狀態查看畫面,證明LOAD後
+的畫面是可互動的,問題出在`Right`鍵本身在這個情境下觸發了非預期行為(推測是
+「略過」或選單快捷鍵,不是攻略導航)。本輪追加`KNOWN_NAVIGATE_HINTS`讓ch22/
+ch25跳過`attempt_camp_exit()`、改用300次純Return——**仍未抵達戰鬥**,300次
+Return後停在一個明確的**酒店/商店互動選單**(截圖:一位NPC商人+索爾/亞雷斯/
+哈諾/悠妮/蓋亞/希莉亞六人選單列表),證實`attempt_camp_exit()`docstring原本
+就提到的「預設selection0/酒店會直接落入酒店角色瀏覽」陷阱,對ch22/ch25是
+**真的**在發生,不是理論上的邊角案例。**這是與ch21/ch23/ch28完全不同性質的
+瓶頸**(不是「需要更多tap」,是「需要一套全新的、本專案還沒有的酒店/商店
+選單導航序列」),guard-id修正本身正確(roster padding邏輯已驗證會正確加入
+id24),但navigation從未抵達guard check會被觸發的畫面,所以連guard check本身
+是否正確都無法在本輪被live驗證。
+
+**❌ ch23/ch28——確實有camp地圖(`Right×3`+出口確認+YES確認三者皆live註冊
+成功),guard修正確實把玩家帶到真正的出戰人數/剩餘人數選人畫面,但戰前對話+
+選人tap數的run-to-run變異幅度極大(200~450+次不等),固定budget不收斂**:
+逐輪截圖直接證實選人畫面確實出現且roster正確(ch23「出戰人數X15/剩餘人數
+X12→X06」隨budget增加持續下降;ch28「X19/X14」同構),但**同一份存檔、同一套
+程式碼,不同次live run所需的戰前對話tap數彼此相差近一倍**(ch23三次嘗試
+分別在220/260/420budget下测得261/426次tap時仍未選完;ch21自己兩次battle-
+reach也分別在9/207 tap後才抵達,同樣量級的變異)——這代表這不是単純的
+「budget不夠大」問題,而是這個過場對話系統本身存在本專案先前未曾在這個
+規模上量化過的即時性/動畫時序竞态,固定次數的盲目tap預算原理上無法保證
+收斂。本輪把`CAMP_EXIT_DIALOGUE_STEPS`為ch23/ch28分別調到420/480仍未成功,
+不建議下一輪再單純加大這個數字(邊際效益已經很低,且每次重試耗時
+6-10分鐘),應該改為診斷「什麼觸發了對話系統的變異」(例如是否某些對話框
+需要等待動畫真正播完才能被Return跳過,而非固定sleep(0.6~1.0s)足夠)。
+
+### 對`tools/fd2_chapter_sweep.py`的程式碼變更(本輪,均含docstring記錄理由)
+
+- 新增`GUARD_CHARACTER_IDS`/`guard_selection_threshold()`,`prepare_chapter_save()`
+  接上(guarded章節專屬padding邏輯,非guarded章節零行為變化)。
+- 新增`CAMP_EXIT_DIALOGUE_STEPS`(ch21=220/ch23=420/ch28=480的per-chapter
+  `attempt_camp_exit()`dialogue tap預算override)。
+- 新增`KNOWN_NAVIGATE_HINTS`實際內容(先前一直是空dict)——ch22/ch25各300次
+  純Return,取代`attempt_camp_exit()`。
+- 修正一個既有但先前從未被觸發過的延伸bug:`KNOWN_NAVIGATE_HINTS`分支呼叫
+  `advance_generic()`時沒有把`max_steps`同步調大,長度>48的hint會被默默截斷
+  (先前`KNOWN_NAVIGATE_HINTS`一直是空dict,這個bug從未在實務上發作過)。
+- `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`加入`21`,`KNOWN_MIN_TURNS_BEFORE_KILL`
+  加入`21:9`——**兩者均試過,均未能單獨或合併解開ch21**,保留在程式碼中是
+  因為它們是曾經對ch02/ch11/ch15有效的既有機制、對ch21套用符合既定方法論,
+  不是因為它們被證實有效;下一輪如果要繼續解ch21,不必重複這兩個已排除的
+  簡單假說。
+
+### 誠實confidence與本輪未做的事
+
+- **高信心**(Ghidra反組譯,本輪獨立重跑並與前一輪比對一致):ch21/22/23/26
+  guard id與前一輪結論一致;ch28的guard id=9是本輪新反組譯出的結論
+  (`raw>0x19`共用尾端,同ch27機制)。
+- **高信心**(live debugger直接讀值,非螢幕截圖猜測):ch24磁碟chapter byte
+  真實前進(`0x17→0x18`);ch26`[0x53ecc]`真實翻2。
+- **中信心**:ch21能穩定抵達真戰鬥(guard修正生效)——兩次live run皆重現,
+  但敵人數量不同(50 vs 59),過場tap數也不同(9 vs 207),尚未排除是否有
+  「每次啟動隨機化」或本工具時序假設不牢靠的更深層因素。
+- **中信心**:ch22/ch25落在酒店/商店選單、非camp地圖——單次診斷腳本+一次
+  正式300-tap sweep皆一致觀察到,但從未實際找到通往真戰鬥的路徑,「酒店
+  選單」本身通往battle的正確按鍵序列完全未知,不排除還有其他更早的分岔點
+  本輪未發現。
+- **本輪未做**:ch22/ch23/ch25/ch28四章均未抵達真戰鬥,遑論mass-kill/
+  win-check;ch21的win-check根因未查明;完全沒有嘗試`0x205be`那條8-chapter
+  俱樂部式的深層反組譯(超出本輪時間預算);ch23/ch28的對話系統時序變異
+  未做根因分析,只做了「加大固定budget」這個已知邊際效益遞減的緩解嘗試。
+- **M5 tally**:引擎層級勝利確認章節數由20章(ch01-20)增為**22章
+  (ch01-20+ch24+ch26)**,其中ch24是本專案首次拿到含磁碟寫入的字面`pass`。
+  ch21/22/23/25/28五章仍未達成,各自的診斷細節與下一輪具體建議見上方各小節。
