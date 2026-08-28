@@ -1836,10 +1836,30 @@
   路線(酒店icon1、`0x2968d`writer)本來就是選單驅動、玩家主動操作，不是戰鬥勝利的副作用；
   camp-exit「要記錄戰況嗎？」提示雖然也呼叫同一個writer，但那依然是選單流程的一部分，
   不是戰鬥勝利直接觸發。**M5正確的完成判準因此改為「引擎自身的勝利判定旗標(`[0x53ecc]`)
-  是否確實翻成2」**，而不是繼續追一個原版設計上不會發生的磁碟寫入——這個判準18+個章節
-  (ch03/04/05/06/07/08/09/10/11/12/13/14/15/16/17/18/19/20)已經達成。若真的要驗證
+  是否確實翻成2」**，而不是繼續追一個原版設計上不會發生的磁碟寫入——這個判準19個章節
+  (ch02/03/04/05/06/07/08/09/10/11/12/13/14/15/16/17/18/19/20)已經達成。若真的要驗證
   「完整含存檔的可破關流程」，需要額外接一步「戰後回城鎮→進酒店→真正存檔互動」，這是
   對工具的功能擴充，不是修bug。詳見memory `project_fd2_save_only_at_tavern.md`。
+- [x] **2026-08-28 `ch02final`輪：ch02收關，19/19個非結局分支章節的引擎層級勝利確認
+  全數達成**——ch02先前被`ch2killgen`輪刻意排除、獨立標記為「村莊保護race條件」調查線；
+  `diag2`輪(2026-08-27)已用逐record硬證據排除「村民被mass-kill誤殺」假說本身（村民
+  camp==1、idx5-10，`mass_kill_enemies()`只寫camp==0，全程未觸碰），但沒解開「10個敵人
+  確認全滅、村民毫髮無傷，`[0x53ecc]`依然讀0」的核心矛盾。本輪複查`docs/knowledge-base/
+  25-battle-event-system.md`§5既有反組譯，證實ch02的特殊postbattle handler(`0x206c5`)
+  結構上就是先呼叫與ch03/04/07/11/15/19/20共用的`0x205be`基準規則，再疊加一層「村民全滅
+  才覆寫成code1」的checkpoint（村民存活時完全不碰`[0x53ecc]`）——即ch02依賴的是與ch11
+  完全相同的gate②（`0x117e7`要求游標曾停在活著單位上按Enter，`confirm_end_turn()`的
+  End-Turn自動化結構上永遠不滿足這點），不是任何村莊專屬機制。直接把`ch11r8flag`輪解開
+  ch11的兩個修法(`ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[2]=3`)原樣套用，
+  用`sweep --chapter 2`端到端live驗證：`ensure_one_ally_acts()`第一次嘗試即乾淨成功
+  （無需重試），3回合等待後mass-kill(10敵)+End-Turn**第一個kill-cycle**、2.0秒內
+  `[0x53ecc]`翻2(WIN)，871.4秒全程。磁碟chapter byte依然沒有前進（與SAV writer gate
+  獨立問題一致，不是新症狀），verdict為`anomaly_engine_win_no_disk_write`，與其餘18章
+  同一類別。**M5的引擎層級勝利確認章節數由18章增為19章（ch02-20全數達成）**，doc25§9.1
+  的SAV writer gate依然是擋住任何章節拿到真正`pass`的唯一剩餘瓶頸，M5仍是0 `pass`。
+  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第9輪」小節，
+  `tools/fd2_chapter_sweep.py`的`KNOWN_MIN_TURNS_BEFORE_KILL`/
+  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`已更新為ch02已驗證狀態。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

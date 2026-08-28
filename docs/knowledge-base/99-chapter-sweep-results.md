@@ -1986,3 +1986,95 @@ ch03/04/07/15/19/20/27等其餘已確認engine-level win章節完全相同的模
 `.wsl_build/chapter_sweep_ch11r8flag/`(Part 2)與
 `.wsl_build/chapter_sweep_ch11r8verify2/`(sweep_chapter()端到端驗證)
 (未納入git,本機保留)。
+
+## 2026-08-28 第9輪(代號`ch02final`,回應使用者派工「用ch11的解法收ch02」):**ch02謎團解開——把ch11的兩個修法(`ensure_one_ally_acts()`+3回合等待)原樣套用到ch02,`sweep_chapter()`端到端第一個kill-cycle就拿到`[0x53ecc]`==2(WIN)**,M5引擎層級勝利確認章節數由18章增為19章
+
+### 任務背景
+
+延續`ch11r8flag`輪結尾的建議③:回頭處理`ch2killgen`輪一開始就明確排除的ch02獨立
+「村莊保護race條件」調查線。`diag2`輪(2026-08-27)已經用逐record硬證據排除了「村民被
+mass-kill誤殺」這個假說本身(idx5-10的camp==1村民record在mass-kill前後、以及完整跑完
+`confirm_end_turn()`之後全程維持`+5=0x00`存活,`mass_kill_enemies()`只寫camp==0
+record,從未觸碰村民),但沒有解開「10個敵人確認全數持久死亡、村民毫髮無傷,`[0x53ecc]`
+卻依然讀0」這個和ch03/ch11完全同款的核心矛盾。`ch11r8flag`輪後來把ch11的真正根因定位到
+`0x117e7`的gate②(游標必須曾經停在一個活著的單位上按Enter,`confirm_end_turn()`本身的
+End-Turn自動化結構上永遠不會滿足這個條件),本輪任務:检查`docs/knowledge-base/
+25-battle-event-system.md`§5已有的ch02專屬handler(`0x206c5`)反組譯是否支持「ch02
+也依賴同一個gate②」這個推論,如果支持就直接把ch11的兩個修法(`ensure_one_ally_acts()`+
+`KNOWN_MIN_TURNS_BEFORE_KILL`)原樣套用到ch02做一次end-to-end live驗證。
+
+### 反組譯複查:ch02的特殊handler`0x206c5`证实与ch11共用同一個`0x205be`基準判定
+
+doc25§5(2026-08-14既有反組譯,`ch12diag`輪已勘誤過的版本)完整記載`0x206c5`(table_idx1,
+玩家可見ch02)的函式體:先無條件`call 0x205be`(與ch03/04/07/11/15/19/20共用的D=default
+基準三值規則完全同一份程式碼),然後才跑一個額外迴圈檢查單位5..10(村民)的raw `+5`
+bit0——**只有這6個單位全部死亡才會把`[0x53ecc]`覆寫成code1(中途事件,不是勝利);
+只要其中任何一個還活著,函式直接return,完全不碰`[0x53ecc]`,讓`0x205be`剛剛設好的基準值
+(可能已經是code2勝利)原封不動保留**。這代表ch02的村民存活與否理論上**不會**擋住
+`0x205be`本身的基準勝利判定——ch02對gate②的依賴,結構上與ch03/04/07/11/15/19/20這些
+「D=default」章節完全相同(`0x206c5`只是在`0x205be`之外多包一層村民checkpoint,不是
+換一套不同的win-check機制)。這個反組譯複查本身沒有新增反組譯內容(doc25§5的內容早就
+存在,只是`ch11r8flag`輪解開ch11時沒有回頭核對ch02自己的handler是否走同一條路徑),但
+直接支持「ch02應該套用與ch11相同的gate②修法」這個推論,不是憑空類比。
+
+### Live驗證:全新獨立instance`ch02final`→`ch02final02`(dosbox_harness.sh,proven-safe
+並行),`tools/fd2_chapter_sweep.py`程式碼層面新增`KNOWN_MIN_TURNS_BEFORE_KILL[2]=3`+
+`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`加入`2`後,直接用`sweep --chapter 2`端到端跑一次
+完整流程(不是一次性手寫腳本)
+
+（第一個harness instance `ch02final`因CLI `--instance-prefix`參數命名規則誤解,誤啟動
+了一個孤兒instance,發現後立即`teardown`乾淨收掉,不影響最終結果——`sweep --chapter N`
+本身會依`{instance_prefix}{chapter:02d}`自建`ch02final02`,不需要呼叫端另外手動
+`launch`。已記錄於此避免下一輪重複同一個誤解。）
+
+**結果(`result.json`,871.4秒)**:
+
+- `attempt_camp_exit`41 taps找到真戰鬥、10個敵人(與`diag2`輪的42 taps/10敵人幾乎一致,
+  同一份存檔佈局)。
+- settle 6輪穩定在10個敵人。
+- `ensure_one_ally_acts()`**第一次嘗試就乾淨成功**,不需要任何重試:Escape-cycle
+  `cycle[0]`立即停在游標`(20,14)`一個活著的單位上、`Up`一步移動到`(20,13)`、
+  select→move→Wait確認,全程一次到位。
+- 3回合等待(`KNOWN_MIN_TURNS_BEFORE_KILL[2]=3`):三回合的`confirm_end_turn(enemy_
+  addrs=None)`全部回報`engine_code=0`(沒有提前觸發),第二回合`find_empty_adjacent_
+  tile`需要14次Return清理殘留對話才能讀到空地格,是本專案已知的「settle window可能被
+  劇情對白蓋過」現象(non-fatal,已有既定的dialogue-clear fallback處理)。
+- 回合3之後補掃描敵人數依然是10(沒有觀察到新的援軍record出現在陣列裡——與ch03/04/07/
+  15/20當時「援軍很可能本來就在初始陣列裡」的觀察一致,攻略描述的「6隻援軍從上方出現」
+  這次live驗證沒有另外去確認這10筆敵人組成裡有沒有把這6隻援軍算進去,誠實列為未獨立
+  驗證,但不影響最終win-check結果)。
+- mass-kill(10筆)+End-Turn**第一個kill-cycle**:`confirm_end_turn`在「end this turn?」
+  確認框補做一次死亡signature複寫後確認YES,**`[0x53ecc]`在2.0秒內從0翻成2(WIN)**——
+  與`sweep_chapter: engine win confirmed on kill-cycle 1/4`一致,不需要任何額外重試。
+- `advance_postbattle_montage()`70次Return之後截圖(`post_montage_advance.png`)呈現
+  一個「酒館NPC對話+隊伍名冊清單」畫面,清單含索爾/亞雷斯/哈諾/悠妮/蓋亞/**希莉亞**——
+  希莉亞正是`docs/knowledge-base/28-chapter-objectives-and-recruits.md`記載的ch02
+  劇情加入角色,這張畫面本身就是視覺上與`[0x53ecc]`==2一致的獨立佐證(不是唯一判準,
+  判準仍是debugger直接讀值,只是額外的人眼可核對截圖)。
+- 磁碟存檔位元組**沒有前進**(`final slot0 raw chapter byte = 1`,即patched-in的
+  `0x01`原樣未變),與doc25§9.1既有的SAV writer gate開放問題完全一致,不是ch02專屬新
+  症狀。最終verdict:**`anomaly_engine_win_no_disk_write`**——與ch03/04/05/06/07/08/
+  09/10/11/12/13/14/15/16/17/18/19/20這18章完全同一個模式。
+
+### 對M5與後續投入的誠實結論
+
+**ch02正式解開,不再是「獨立村莊保護調查線」的開放項**——`diag2`輪已經排除的「村民被
+誤殺」假說,加上本輪反組譯複查確認的「ch02的特殊handler只是在共用`0x205be`基準規則外
+多包一層村民checkpoint,不換win-check機制」,加上本輪end-to-end live驗證的乾淨、
+第一次kill-cycle即成功的結果,三者一致收斂:**ch02卡住的真正原因與ch11完全相同
+(gate②從未被`confirm_end_turn()`的標準自動化滿足過),不是任何村莊/村民相關的特殊
+邏輯**。M5「正常玩法可達性驗證」的引擎層級勝利確認章節數由18章(ch03-20)增為**19章
+(ch02-20)**——doc25§9.1的SAV writer gate仍是擋住任何章節拿到真正`pass`的獨立、
+未解的最終瓶頸,本輪沒有、也不預期改變這一點。
+
+**下一輪建議**(優先序沿用`ch11r8flag`輪的既有結論,未變動):doc25§9.1的SAV writer
+gate分析(擋住*所有*已確認章節、不只ch02/ch11)依然是全專案最高槓桿的下一個目標,需要
+一輪專門的LOGC ground-truth工作重新定位doc56記錄的角色選人UI位址(`0x318ad`系列在目前
+build下`in_function:false`)。剩餘未覆蓋章節(ch01特殊/ch21-26+ch28的prep-select
+roster-guard問題/ch27+疑似ch29/30雙結局分支)各自的獨立問題本輪未觸碰,狀態不變。
+
+程式碼改動:`tools/fd2_chapter_sweep.py`的`KNOWN_MIN_TURNS_BEFORE_KILL`新增`2: 3`、
+`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`新增`2`,兩處對應module comment同步更新為
+「已live驗證」而非「待驗證的live test」。完整live log、screenshot、result.json見
+`.wsl_build/chapter_sweep/ch02/`(shots含195張截圖,`result.json`為本輪最終權威記錄,
+已納入現有`.wsl_build/`git-ignore規則,未提交)。

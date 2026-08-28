@@ -102,15 +102,29 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   still be safe, and was), and -- somewhat surprisingly, since its
   walkthrough-described trigger is positional, not turn-count-shaped --
   ch07 (wait 3, once a battle-detection flake on the first attempt was
-  ruled out with a clean re-run). ch02 (separate village-protection
-  investigation track, out of scope for this round) remains open on its
-  own track. ch11 is the one chapter this round's turn-wait test was
-  cleanly, reproducibly negative for: 25 enemies found, all confirmed via
-  a post-kill rescan to persistently carry the death signature (no revival,
-  no new wave), yet [0x53ecc] never left 0 -- ch11's blocker is something
-  this tool does not yet identify; see doc99's "ch2killgen" section, ch11
-  sub-section, for the live evidence and next-round suggestion (decompile
-  ch11's own 0x51b19-table win-check handler rather than guess further).
+  ruled out with a clean re-run). ch11 was this round's one cleanly,
+  reproducibly negative turn-wait result (25 enemies found, all confirmed
+  via a post-kill rescan to persistently carry the death signature, yet
+  [0x53ecc] never left 0) -- LATER RESOLVED (see below) once the real
+  blocker (a separate cursor/gate② dependency, not a turn-count issue at
+  all) was identified. ch02 was deliberately excluded from this round
+  pending its own dedicated village-protection check -- ALSO LATER
+  RESOLVED, see below.
+  2026-08-28 "ch11r8flag"+"ch02final" rounds: both ch11 and ch02's true
+  blocker turned out to be the SAME structural gate, not a turn-count issue
+  -- `0x117e7`'s Enter/Space dispatch only calls the real per-chapter
+  win-check table (`0x51b19[]`) when the cursor sits on a still-alive unit
+  (gate②, `FUN_00012c0d()`), but confirm_end_turn()'s own automation
+  deliberately parks the cursor on an EMPTY tile before opening the ring --
+  so the plain mass-kill+End-Turn recipe alone can structurally never
+  satisfy this gate for a chapter whose win-check depends on it, no matter
+  how many kill-cycles are retried. `ensure_one_ally_acts()` (defined below)
+  is the generalized fix: select any not-yet-acted ally, move it one step,
+  confirm Wait, BEFORE any turn-wait/mass-kill. Both ch11 (25 enemies) and
+  ch02 (10 enemies) reached a confirmed [0x53ecc]->2 engine win once this
+  was combined with their respective KNOWN_MIN_TURNS_BEFORE_KILL waits --
+  see KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL and KNOWN_MIN_TURNS_BEFORE_KILL's
+  own module comments for the full derivation of each.
 - The generic advance-loop (step 6) has NO chapter-specific knowledge. Many
   chapters will very likely not fit it (unique scripted events, chapters
   that need specific items/state, chapters requiring more real roster
@@ -1634,7 +1648,35 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # reason. The turn count (3) is carried over unexamined from the earlier
 # rounds' convention, same honest caveat as the other entries below -- it
 # was never isolated to confirm 3 is the true minimum vs. simply "enough".
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3}
+#
+# 2026-08-28 "ch02final" round (doc99's matching entry) CONFIRMED: ch02
+# (2: 3), combined with KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL below, is
+# LIVE-VERIFIED via a full end-to-end `sweep_chapter()` run (not a one-off
+# script) -- [0x53ecc] flipped to 2 (WIN) 2.0s into the very FIRST
+# mass-kill+End-Turn kill-cycle, 871.4s total, verdict
+# `anomaly_engine_win_no_disk_write` (same class as all other confirmed
+# chapters). ch02's "diag2" round (2026-08-27) had already found the
+# identical symptom ch11 had (all camp==0 enemy records mass-killed with a
+# persistent death signature, camp==1 records at idx5-10 -- the villagers
+# per the walkthrough's fail condition -- confirmed never touched, yet
+# [0x53ecc] stayed 0), and doc25 §5's disassembly of ch02's own special
+# postbattle handler (`0x206c5`, table_idx1) independently corroborates this:
+# it calls the shared `0x205be` base rule FIRST, then only OVERWRITES
+# [0x53ecc] to code1 if ALL of units 5-10 are dead (never blocks a code2 win
+# while any villager survives) -- i.e. ch02 depends on the exact same
+# gate②-gated `0x205be` dispatch ch11 needed, just wrapped in one extra
+# villager-survival check that is a no-op when the villagers are alive
+# (which mass_kill_enemies() never touches, confirmed both in "diag2" and
+# this round's own log). ch02 was deliberately EXCLUDED from the earlier
+# "ch2killgen" turn-wait generalization round pending its own dedicated
+# check; the walkthrough's ch02 reinforcement wave (6 bandit reinforcements
+# arrive from above at Turn 3 completion) independently motivated the same
+# turn count ch11 used, though this round's post-wait rescan still found
+# only the original 10 enemies (no observed array growth, same pattern
+# ch03/04/07/15/20 showed -- the reinforcements were most likely already
+# present in the initial array, not a live spawn this tool's rescan would
+# catch). Full log: `.wsl_build/chapter_sweep/ch02/result.json`.
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3, 2: 3}
 
 # 2026-08-28 "ch11r8ctrl"+"ch11r8flag" round (doc25 §3.2.5, doc99's matching
 # entry) FINAL WORD on ch11 (superseding the "ch11chest" note above): a
@@ -1656,13 +1698,18 @@ KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 2
 # satisfy this gate no matter how many retries. ensure_one_ally_acts()
 # (defined above, near confirm_end_turn()) packages the minimal fix: select
 # any not-yet-acted ally, move it one step to ANY adjacent tile, confirm
-# Wait -- no chest-specific logic needed. ch11 is the one chapter this has
-# been live-verified necessary for; KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL
-# below is deliberately just {11} until another stuck chapter is diagnosed
-# and found to need the same fix -- do not pre-emptively add chapters here
+# Wait -- no chest-specific logic needed. ch11 is the first chapter this was
+# live-verified necessary for; do not pre-emptively add chapters here
 # without their own live confirmation, per this project's culture of not
 # overclaiming a fix beyond what was actually tested.
-KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11}
+#
+# 2026-08-28 "ch02final" round: ch02 added as the SECOND chapter live-
+# verified to need this -- see KNOWN_MIN_TURNS_BEFORE_KILL's matching
+# comment above for the full derivation and end-to-end confirmation
+# (871.4s run, [0x53ecc] -> 2 on kill-cycle 1/4, `ensure_one_ally_acts()`
+# itself needed zero retries -- cycle[0] immediately landed on a live ally,
+# a single `Up` tap moved it, select->move->Wait completed cleanly).
+KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
