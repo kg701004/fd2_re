@@ -1442,6 +1442,41 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # §3.2.1 for the full writeup; no code fix was found this round, so
 # KNOWN_MIN_TURNS_BEFORE_KILL below is unchanged (ch11 deliberately has no
 # entry -- turn-wait alone was never the fix for this chapter).
+#
+# 2026-08-28 "ch11chest" round (doc25 §3.2.4, doc99's matching entry) SOLVED
+# ch11 and PARTIALLY RETRACTS the "Star's Eye" negative result directly
+# above: that test wrote 0x01 into all 12 known map10 chest-opened flags at
+# the [0x53AD5]-pointed heap block -- a *memory write*, not a real UI
+# interaction (same class of shortcut this project already knew can miss
+# event-chain side effects a real action triggers, per doc58's ch27
+# captain-hunt precedent). Redone via REAL movement (select ally -> move
+# onto a chest tile -> confirm -> ring opens -> "Wait" -> "found a chest,
+# open it?" YES/NO dialogue -> YES -> "opened the chest, found 5000 gold!",
+# all screenshot-verified) on map10 chest slot 10 ((16,15), hidden=true --
+# NOT the Star's Eye slot0 the earlier round focused on): the SAME
+# [0x53AD5] flag block still read all-zero afterward (round4's write target
+# was likely inert/wrong, not "set correctly but ignored"), but
+# [0x53ecc] flipped to 2 (WIN) 3.9s into the very next mass-kill+End-Turn
+# kill-cycle -- the first engine-level win this project has ever gotten for
+# ch11 across 7 rounds of dedicated diagnosis. Only ONE chest was opened
+# (not all 12), so the precise minimum requirement (any one chest? a
+# specific one? more than one?) is NOT yet nailed down, and no matched
+# "don't open a chest" control was rerun in the same session -- this is
+# strong (0/7+ prior identical attempts failed) but not airtight (N=1)
+# causal evidence. No generalized "walk to a chest" helper is added here
+# yet: the live movement sequence needed a real-time screenshot-gated
+# dialogue-clear loop at EVERY step (this map keeps firing story dialogue
+# even after attempt_camp_exit() already declared "battle found", which
+# silently ate blind arrow-key/Escape presses in 4 independent earlier
+# attempts this same round -- see doc25 §3.2.4 for the full trap writeup)
+# that is not yet packaged as a reusable function; treat any future
+# chest-walking code as needing the same HUD-gate discipline
+# attempt_camp_exit() itself already uses, not just a one-off tap budget.
+# ch11 itself does NOT need a KNOWN_MIN_TURNS_BEFORE_KILL entry to reach
+# this win -- the existing default (no wait) plus a real chest-open was
+# sufficient; the 3-turn wait used this round matched the recipe already
+# established for the other "stuck at 0" chapters out of consistency, not
+# because it was proven necessary for ch11 specifically.
 KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established

@@ -1769,6 +1769,27 @@
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第6輪
   (代號`ch11writer`)」小節,live過程產物留存於
   `.wsl_build/chapter_sweep_ch11writer/`(未納入git)。
+  **2026-08-28 第7輪(代號`ch11chest`)——ch11謎團解開**:回應使用者派工「round4測
+  「星之眼」寶物假說時用的是直接記憶體寫入`[0x53AD5]`旗標區塊,比照doc58續六十二/
+  續六十三ch27獵殺隊長章節先例,直接記憶體寫入不必然觸發真正UI互動才會走的事件鏈,
+  要求改用真正走位+開箱UI重測」。**結果:mass-kill+End-Turn的第一個kill-cycle,
+  3.9秒內`[0x53ecc]`從0翻成2(WIN)**——7輪以來第一次拿到engine-level win確認,而且
+  只真正開了一個寶箱(map10 slot10,(16,15),hidden=true,5000元;不是round4鎖定的
+  星之眼slot0)。過程踩到一個全新的自動化陷阱:`attempt_camp_exit()`宣告「已進入
+  戰鬥」後,這張地圖仍會繼續插播全螢幕劇情對白,先前3次移動嘗試的Escape/方向鍵其實
+  被對白框吃掉——用screenshot而非只信任記憶體讀值才抓到,修復方式是把
+  `screen_shows_battle_hud()`的HUD-gate邏輯延伸套用到移動序列的每一步。同時發現
+  round4結論需要**部分撤回**:真開箱前後`[0x53AD5]`旗標區塊全部12格依然讀0,代表
+  round4寫入的很可能是遊戲根本沒有讀取的欄位,不是「旗標設對了但被引擎忽略」。誠實
+  說明:N=1、未在同session重跑「不開箱」對照組,但與前6輪穩定的0/7+失敗率對比,是
+  極強的間接證據。磁碟存檔位元組依然沒有前進(doc25§9.1既有SAV writer gate問題,
+  非ch11專屬)。完整寫法見`docs/knowledge-base/25-battle-event-system.md`§3.2.4與
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第7輪(代號
+  `ch11chest`)」小節,live過程產物留存於`.wsl_build/chapter_sweep_ch11chest/`
+  (未納入git)。**下一輪建議**:①補一次嚴格對照組(同存檔完全不開箱)把因果證據
+  補強到有對照組等級;②反組譯真正開箱事件的writer,找出round4誤判的`[0x53AD5]`
+  真正語意與開箱事件實際寫入的欄位;③用同一套HUD-gate移動+開箱方法論排查ch04/07/
+  15/20攻略文字裡的「必須收集/取得」措辭是否也有被誤判為「與勝利無關」的收集類需求。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
