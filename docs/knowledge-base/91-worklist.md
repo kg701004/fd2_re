@@ -2171,6 +2171,30 @@
   不變。完整證據鏈（含chapter→guard-id對照表、跨33圖id掃描交叉驗證）見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『map-native guard』輪」
   小節。
+  **2026-08-29 續輪**：逐一查明上一輪留下的 8 個`DAT_00053a45`WRITE xref——**全部
+  是`DAT_00053a45`指標本身的暫存/歸還**(`FUN_00026152`/`FUN_0002670e`呼叫
+  `FUN_0002af28`前把`DAT_00053a45=DAT_00053bf7`、呼叫完清0)，不存在任何「選人時
+  把id寫進`+8`」的獨立程式碼路徑要找。`DAT_00053bf7`本身`xref_to`只有1筆WRITE
+  (`FUN_00025bf4`裡的`malloc()`，遊戲session全程只配置一次)，內容經比對正是
+  `tools/fd2save.py`模組docstring**已經獨立證實過**(2026-08-21「續三十四」，另一條
+  調查線)的持久化存檔roster陣列本尊(`SLOT_SIZE=0xA28`/`SLOT_OFFSET=0x312B`等常數
+  在`FUN_00025ebb`反組譯裡逐位元組吻合)——這代表`fd2save.py`從一開始就不需要修改。
+  獨立重跑`0x2b305`/`0x2b344`disasm二次確認ch21真正guard id=21(約拿)無誤後，
+  推論`cursorlive`輪(2026-08-27)「即使補上id23/24依然被拒絕」的結論很可能只是
+  「用錯id」的又一次體現(那輪合成roster從未包含21)。**用`tools/dosbox_harness.sh`
+  (instance`jonah21`)live驗證新假說**：合成一份roster_count剛好=15(=ch21選取
+  門檻)、明確含id21的存檔，LOAD ch21→camp出口→YES→約70次Return跑完一段比預期長
+  很多的戰前過場對話(劇情本身份量，非測試產物)→**首次抵達真正的戰鬥指令環畫面
+  (單位資訊面板+攻擊/道具/防禦/移動四圖示)，全程沒有被彈回營地，也沒有出現
+  「本章[約拿]必須出場！」**。**誠實限制**：這是行為證據(沒被拒絕)，不是debugger
+  直接讀記憶體確認`+8==21`的100%鐵證，也沒有在同一session內做差異對照組(對照組
+  依賴`cursorlive`輪既有的id23/24拒絕證據，不是本輪重新量測)；ch22/23/25/26等
+  其餘guard章節本輪完全未重新live驗證，`fd2_chapter_sweep.py`/`fd2save.py`程式碼
+  本輪均未修改(guard-id表只對4章有反組譯證據，貿然改自動化程式碼風險大於效益)。
+  M5 chapter-sweep tally維持19/30不變(本輪只confirm選人畫面能通過，未跑完整
+  sweep pipeline確認`[0x53ecc]`/磁碟chapter byte)。完整反組譯逐行紀錄、live操作
+  序列、screenshot清單見`docs/knowledge-base/99-chapter-sweep-results.md`
+  「2026-08-29 續輪：8個`DAT_00053a45`WRITE xref逐一查明」小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測

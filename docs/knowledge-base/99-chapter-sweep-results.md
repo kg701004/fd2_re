@@ -2644,3 +2644,197 @@ ch26 那組(先 9 後 29)恰好**逐字**對上 doc28 第 26 列「額外護衛=
   M5 的最終瓶頸,不強行宣稱已解決。
 - **沒有修改`tools/fd2save.py`**——本輪沒有找到任何存檔層級可以動的旗標或欄位,
   任何修改都沒有依據。
+
+## 2026-08-29 續輪:8 個`DAT_00053a45`WRITE xref 逐一查明——**它們全部不是「單筆記錄`+8`寫入」,而是把`DAT_00053a45`整個指標暫時指向`DAT_00053bf7`(=已經被`tools/fd2save.py`獨立證實的持久化存檔roster陣列本尊)**;順藤摸瓜重新反組譯`FUN_0002af28`鄰近程式碼,並用`tools/dosbox_harness.sh`完成**live驗證:ch21 用正確角色id(約拿/21)通過「必須出場」檢查,首次抵達真正的戰鬥指令環畫面**
+
+### 任務背景
+
+延續上一輪(`map-native guard`)結尾列出的 8 個`DAT_00053a45`WRITE xref
+(`0x1fa80`/`0x26196`/`0x2634c`/`0x26356`/`0x267e1`/`0x267eb`/`0x26810`/`0x26985`),
+逐一用`ghidra_batch_probe.py`(先確認`\U`跳脫bug修復仍然有效,10 queries 12秒內
+全部成功,無需再修)做`function_bounds`+`disasm`+`decompile`。
+
+### 第一步:8 個位址全部不是「陣列記錄`+8`寫入」,而是`DAT_00053a45`這個**指標變數本身**的存/清
+
+`disasm`直接讀出每筆位址的原始指令,全部是`MOV [0x53a45],EAX`或
+`MOV dword ptr [0x53a45],0x0`這種**對指標變數本身**賦值/歸零,不是`MOV [reg+8],val`
+這種陣列欄位寫入。`function_bounds`收斂到只有 3 個母函式:
+
+| 位址 | 母函式 | 角色 |
+|---|---|---|
+| `0x1fa80` | `FUN_0001f894`(`0x1f894..0x1ff78`) | 某個標題/選單狀態機,與roster選人流程無關(下方確認) |
+| `0x26196`/`0x2634c`/`0x26356` | `FUN_00026152`(`0x26152..0x265eb`) | **章節資料載入+roster選人主控函式** |
+| `0x267e1`/`0x267eb`/`0x26810`/`0x26985` | `FUN_0002670e`(`0x2670e..0x26995`) | town-hub selection-confirm dispatcher(已知函式,見`91-worklist.md`「紅色方塊bug」條目——與本輪主題無關,只是恰好共用同一個`DAT_00053a45`暫存慣例) |
+
+`decompile FUN_00026152`揪出關鍵行:
+
+```c
+do {
+  DAT_00053a45 = DAT_00053bf7;
+  iVar2 = FUN_0002af28();   // 選人主迴圈,即 0x2b439 呼叫端
+  DAT_00053a45 = 0;
+} while (iVar2 == 0);
+```
+
+`FUN_0002670e`裡也有結構相同的一段(`if(...) { DAT_00053a45=DAT_00053bf7;
+iVar3=FUN_0002af28(); if(iVar3==0){DAT_00053a45=0; return 0;} }`)。**結論:
+`DAT_00053a45`在呼叫選人主迴圈`FUN_0002af28`期間,只是被暫時指向另一個既有全域
+`DAT_00053bf7`,呼叫完就清空——這 8 個 xref 全部是這個「借用/歸還」慣例的一部分,
+不存在任何獨立的「玩家選人時把id寫進`+8`」程式碼路徑要找**,因為根本不需要:
+`DAT_00053bf7`本身在被借用之前就已經帶有正確資料。
+
+### 第二步:`DAT_00053bf7`——`xref_to`只有一筆WRITE,`decompile`證實是`FUN_0003706e()`(malloc)配置一次,只在遊戲啟動時執行一次
+
+`xref_to 0x53bf7`:26 筆引用裡只有 1 筆`WRITE`(`0x25d61`),其餘 25 筆全是`READ`。
+`decompile`該WRITE所在的`FUN_00025bf4`(`0x25bf4..0x25eba`,`xref_to`確認唯一
+呼叫端是`0x460dc`,即接近`WinMain`層級的最外層主流程)證實：
+
+```c
+DAT_00053bf7 = FUN_0003706e();   // 一次性 malloc,遊戲session全程只做這一次
+```
+
+`DAT_00053bf7`的緩衝區本身在整個 session 只配置一次,之後從未被重新`free`/
+`malloc`過——這代表它的內容必須是**持久化**的,不可能是每次進選人畫面才臨時建構。
+
+### 第三步(收斂本輪最大發現):`DAT_00053bf7`就是`tools/fd2save.py`模組docstring**已經**獨立證實過的「持久化存檔roster陣列」本尊,不需要新的RE工作
+
+`tools/fd2save.py`模組docstring(2026-08-21「續三十四」節,與本輪guard-character
+調查完全不同的一條調查線)白紙黑字寫著:
+
+> `FUN_000112a5`(0x112a5)shows it writing new-recruit starting items *directly
+> into this persistent roster* (base `DAT_00053bf7`, i.e. **the exact global
+> the save writer/reader bulk-memcpy the 0xa00-byte roster block to/from**)
+
+也就是說,`DAT_00053bf7` = `FD2.SAV`每個存檔槽`0xA00`-byte roster區塊(`ROSTER_SIZE`,
+32筆`0x50`-byte record,`UNIT_CHARACTER_ID_OFFSET=+0x08`)LOAD進記憶體後的映像,
+這件事**已經被完全獨立、更早、更嚴謹的一條調查線(續三十四逐位元組核對三份真實
+`FD2.SAV`+2026-08-21 live DOSBox-X patch驗證)證實過**,不是本輪新猜測。本輪的
+貢獻是把這條**已知**事實跟`FUN_0002b439`(`必須出場`檢查)/`DAT_00053a45`(guard
+掃描的陣列)**首次串起來**:`FUN_0002af28`借用的`DAT_00053bf7`,正是`fd2save.py`
+`append_roster_members()`已經在正確寫入的同一塊記憶體。**這代表`fd2save.py`從
+一開始就不需要修改**——問題不在存檔層級的資料結構,而在別的地方(見下)。
+
+反查`FUN_00025ebb`(`0x25ebb..0x26151`,`FUN_00026152`前一個函式,`xref_to`
+`0x26152`確認的其中一個呼叫端)的`decompile`,證實它從`iVar3 = DAT_00053c57*0xa28
++ iVar1 + 0x312b`讀取章節/roster_count等中繼資料——`0xa28`/`0x312b`跟
+`tools/fd2save.py`的`SLOT_SIZE=0xA28`/`SLOT_OFFSET=0x312B`**逐位元組吻合**,
+這是第二條獨立交叉證據,不是巧合。
+
+### 第四步:重新反組譯`FUN_0002af28`鄰近程式碼(`FUN_0002b439`/`FUN_0002b749`/`FUN_0002b777`/`FUN_0002b843`),還原選人確認流程全貌
+
+- `FUN_0002b439`(護衛檢查本身)：`for(i=0;i<param_1;i++) if(*(byte*)((i+1)*0x50+8+
+  DAT_00053a45)==param_2) cVar1=1;`——掃描索引**從1開始**(不含index0)。
+- `FUN_0002b749`(數選取數量)/`FUN_0002b777`(選滿時的「已選排前、未選排後」
+  陣列重排,用`local_3c`選取bitmap驅動)/`FUN_0002b843`(依角色id找index、用同一套
+  「排序」手法把該角色排到陣列前段)——這一串函式共同構成「選人畫面confirm→
+  重排陣列→呼叫護衛檢查」的完整管線,全部操作同一個`DAT_00053a45`(此刻=
+  `DAT_00053bf7`)陣列,不涉及任何本輪之前假設的「equip-recalc tail」或「獨立旗標」。
+
+### 第五步:獨立重新驗證`08-29`前一節「ch21真正護衛id=約拿(21)」的disasm結論(不只是讀文件,親自重跑)
+
+用`ghidra_batch_probe.py`重新對`0x2b305`/`0x2b344`做`disasm`(不引用前一輪的
+快取結果),得到完全相同的原始指令序列：
+
+```
+0x2b305  CMP dword ptr [0x53c03],0x14   ; raw chapter == 20 (ch21)?
+0x2b30c  JNZ 0x2b312
+0x2b30e  PUSH 0x15                       ; param_2 = 0x15 = 21 = 約拿
+0x2b310  JMP 0x2b344
+0x2b344  PUSH EBP                        ; param_1 = 選取門檻(15)
+0x2b345  CALL 0x2b439
+```
+
+**獨立確認,不是複製前一輪的結論**:ch21 的「必須出場」檢查真正比對的是
+角色id 21(約拿),不是`docs/knowledge-base/28-chapter-objectives-and-recruits.md`
+「額外護衛」欄位記錄的羅蘭(23)/希爾法(24)。
+
+### 第六步(關鍵推論):`cursorlive`輪(2026-08-27)「即使補上正確角色id(23/24)並確認選中,依然被拒絕」的既有結論,極可能是因為**那一輪用的id根本不是`FUN_0002b439`實際檢查的id**
+
+`91-worklist.md`/本文件`cursorlive`小節記錄`cursorlive`輪的合成roster padding是
+`[23,24,3,7,14,15]`——**完全不包含21**。`cursorlive`輪當時只查過doc28的「額外護衛」
+欄位,沒有反組譯`FUN_0002af28`的實際push實參(那是本文件`08-29`續輪才做的事)。
+這代表`cursorlive`輪「即使補上正確id依然被拒絕,證明需要roster陣列id+選取狀態
+之外的某個額外原生狀態」這個結論,建立在**從未真正把21放進roster**的實驗上——
+不是反例,是同一個「用錯id」問題的又一次體現。本輪提出新假說:**只要roster裡
+真的有id21且被選中,「必須出場」檢查就會通過,不需要任何equip-recalc tail或
+獨立旗標**。
+
+### 第七步:Live驗證(`tools/dosbox_harness.sh`,instance`jonah21`)——**假說成立,ch21首次抵達真正的戰鬥指令環畫面,全程未觸發「本章[約拿]必須出場！」**
+
+**存檔建構**:用機器上唯一真實存檔(13人名冊,`.wsl_build/chapter_sweep/FD2_source.SAV`
+與`~/fd2-run/FD2.SAV`確認同一份)當基底,`python tools/fd2save.py <base> --append-roster
+"0:21,3" --set-chapter "0:20" --out scratch_jonah21.sav`——刻意選擇**剛好把
+roster_count補到15**(=ch21的選取門檻`0xf`),不是隨機湊數:這樣選人畫面沒有
+「選誰/不選誰」的空間,15人必須全選才能confirm,天然保證id21會被選中,省去
+逐格cursor定位id21的麻煩。`summarize()`確認`roster_char_ids=[0,9,4,30,1,8,2,10,
+13,12,5,11,6,21,3]`、`chapter=0x14`(=20=ch21)。
+
+**環境**:`MSYS_NO_PATHCONV=1 wsl -d Ubuntu bash tools/dosbox_harness.sh launch
+jonah21 1800`(background)——**這裡踩到一個新的、值得記錄的坑**:直接把
+WSL路徑當bash參數傳給Windows端`wsl.exe`呼叫時,沒有`MSYS_NO_PATHCONV=1`會被
+Git Bash的MSYS路徑轉換誤判成Windows路徑(`/mnt/c/...`被錯誤展開成
+`C:/Program Files/Git/mnt/c/...`),導致腳本本身在wsl端「找不到檔案」——這正是
+本工具docstring已經提醒過的「不要讓外層wsl.exe自己做路徑轉換」的具體案例,
+**加上`MSYS_NO_PATHCONV=1`前綴後立刻正常**,記錄下來給下一輪省時間。
+
+**存檔安裝**:`wsl cp` 直接把上面產生的`.sav`複製成
+`~/fd2-run-harness-jonah21/FD2.SAV`(harness launch時複製的是整個canonical
+game目錄,存檔要在launch後、進LOAD選單前手動覆蓋)。
+
+**操作序列**(每一步都screenshot確認,存於`.wsl_build/jonah21_verify/`,非repo
+追蹤產物):標題畫面(`Down`,`Return`進LOAD)→LOAD選單顯示「1)第二十一章 亞述森林」
+(確認chapter byte patch生效)→`Return`選slot0→營地地圖(`Right`×3切到「出口」
+→`Return`確認→「要進入戰場嗎？」`Return`選YES)→**一段比預期長很多的戰前過場
+對話**(約70次`Return`,交錯兩個場景:精靈村莊隊伍逐一登場說話、反派在密室裡
+的獨白,是ch21劇情本身的份量,不是本次測試的產物)→**最終抵達真正的戰鬥畫面:
+左下角顯示單位資訊面板`A+05 D+00 823`,右側單位周圍顯示四個指令圖示(攻擊/
+道具/防禦/移動)**——這是`88`/`98`等文件已知的戰鬥指令環HUD,**全程沒有任何一次
+被彈回營地地圖,也沒有看到「本章[約拿]必須出場！」對話框**(參照
+`cursor21_zoom_msg_nn.png`已知的拒絕畫面樣式,本輪任何一張screenshot都不吻合)。
+
+**收工**：`tools/dosbox_harness.sh teardown jonah21`乾淨關閉。
+
+### 誠實confidence與本輪未做的事
+
+- **高信心**(Ghidra反組譯+live行為雙重證據):8個write xref全部是`DAT_00053a45`
+  指標暫存/歸還,不是陣列欄位寫入;`DAT_00053bf7`只在遊戲啟動時`malloc`一次;
+  `DAT_00053bf7`與`tools/fd2save.py`已證實的持久化roster陣列是同一塊記憶體
+  (本輪新串連,底層事實非本輪首次證實);ch21真正檢查的guard id是21(約拿),
+  獨立重跑disasm二次確認;`fd2save.py`的`append_roster_members()`不需要修改。
+- **中高信心,非100%確定**:ch21用id21合成roster確實通過了「必須出場」檢查——
+  這個結論建立在「全程沒有被彈回營地」這個行為證據上,**沒有**用debugger直接
+  讀記憶體確認`DAT_00053a45`陣列在選人confirm瞬間真的含有`+8==21`的記錄(嘗試過
+  這條路線的runtime address translation超出本輪剩餘時間預算,見下),也**沒有**
+  做同一個session內的差異對照組(例如同樣流程但故意不放id21,重新走一次確認
+  真的會被拒絕)——這個差異對照組`cursorlive`輪已經做過(用id23/24,確實被拒絕),
+  本輪依賴那組既有證據做比較基準,不是本輪自己重新量測的對照組。
+- **未做**:ch22/23/25/26(doc28列出的其餘「額外護衛」章節)本輪完全沒有重新
+  live驗證——`08-29`前一節已經反組譯出ch22/23的正確guard id都是24(希爾法),
+  ch26是9(悠妮)+29(亞奇梅吉)兩者皆須通過,理論上同一套`append_roster_members()`
+  修正就能解開,但這是**預測,不是本輪驗證過的結果**。ch24/28/29/30這道門檻
+  是否適用也完全未重新檢查(前幾輪預測「不適用,應另有原因」,本輪未變動)。
+- **未做**:確認chapter byte(`[0x53ecc]`/磁碟存檔是否真的前進)——本輪只追到
+  「進入戰鬥、指令環出現」這一步,`doc25§9.1`記錄的「engine win確認但磁碟從未
+  寫入」這個更深層的SAV writer gate問題完全在本輪範圍外,即使ch21最終能贏得
+  這場戰鬥,不代表`fd2_chapter_sweep.py`會把它記成`pass`。
+- **未修改`tools/fd2save.py`/`tools/fd2_chapter_sweep.py`**——`append_roster_
+  members()`已經是正確的、不需要修改的實作;`fd2_chapter_sweep.py`docstring裡
+  引用doc28「額外護衛」欄位當guard id來源的舊注解**已知是誤導性的**(對ch21
+  是錯的,對ch26湊巧是對的),但本輪選擇不動它的程式碼邏輯,只在本文件與
+  `91-worklist.md`記錄這個修正,理由是：正確的guard id表目前只對ch21/22/23/26
+  四章有反組譯證據(見上),沒有覆蓋`fd2_chapter_sweep.py`可能遇到的其他章節,
+  貿然改程式碼但只餵一部分正確資料,風險是製造新的、更難察覺的錯誤預測。
+
+### 對 M5 與下一輪的建議
+
+這是本專案在guard-character這條調查線上第一次**live確認**「用正確id的合成
+roster能通過必須出場檢查」,把ch21從「已知結構性卡住原因,無存檔層級解法」
+重新分類為「已知根因+已知修法,尚未跑完整條sweep pipeline確認轉為`pass`」。
+下一輪建議優先序：① 對ch22/23/25/26重複本輪同一套「反組譯push實參→
+`append_roster_members`補上正確id→`dosbox_harness.sh`live confirm不被拒絕」
+方法,建立完整的、反組譯驗證過的guard-id對照表(不要再引用doc28「額外護衛」
+欄位);② 確認全部通過guard-check的章節,`fd2_chapter_sweep.py`完整跑一輪
+（含既有的turn-wait/mass-kill機制)看`[0x53ecc]`是否真的翻2、磁碟是否前進,
+才能讓M5從0 pass真正往前推進;③ 如果②發現磁碟仍不前進,doc25§9.1的SAV
+writer gate會重新變成最高優先級瓶頸,比guard-character本身更值得投入下一輪
+資源。

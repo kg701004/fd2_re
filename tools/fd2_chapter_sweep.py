@@ -208,6 +208,36 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   proven rostertest method and is correct). See docs/knowledge-base/99-
   chapter-sweep-results.md's "cursorlive" section for the full screenshot
   evidence trail.
+- 2026-08-29 CORRECTION (see doc99's "map-native guard" and subsequent
+  "8 個 DAT_00053a45 WRITE xref" rounds): the "本章XX必須出場" check's actual
+  guard character id is NOT reliably doc28's 額外護衛 column -- that column
+  matches ch26 (id9 悠妮 + id29 亞奇梅吉, verified byte-for-byte against the
+  disassembled push args) but is WRONG for ch21 (doc28 says 羅蘭/id23 +
+  希爾法/id24; disassembling FUN_0002af28's actual `PUSH`es before its
+  `CALL 0x2b439` proves it checks id21/約拿 instead -- 23/24 are ch21's map-
+  template "own"-camp units, a completely different mechanism, see doc99).
+  The cursorlive round's "even with the doc28 ids present+selected, still
+  rejected" conclusion is now understood to be an artifact of testing the
+  wrong id (its padding was [23,24,3,7,14,15], never containing 21) -- a
+  fresh append_roster_members()-built roster containing id21, taken through
+  the same LOAD -> camp-exit -> prep-select flow via tools/dosbox_harness.sh,
+  reached a live battle command-ring screen for ch21 without ever being
+  bounced back to camp. append_roster_members() itself needed NO fix -- it
+  already targets DAT_00053bf7, the exact persistent-roster global
+  FUN_0002af28 temporarily aliases DAT_00053a45 to during roster-select
+  (independently corroborated against this module's own SLOT_SIZE/
+  SLOT_OFFSET constants inside FUN_00025ebb's disassembly). Disassembly-
+  verified guard ids so far (do not use doc28's 額外護衛 column for this
+  purpose): ch21(raw20)=[21], ch22(raw21)=[24], ch23(raw22)=[24],
+  ch26(raw25)=[9, 29] (both required, in that order). ch24/28/29/30's
+  needs_manual_followup status likely has an unrelated cause (no guard
+  check is even invoked for them, per FUN_0002af28's chapter dispatch).
+  This round did not modify prepare_chapter_save()/estimate_roster_size()
+  to special-case these ids -- only ch21 has a live-verified pass; wiring
+  the other three chapters' ids in without re-verifying each live risks a
+  false-positive `pass` classification. See doc99's "2026-08-29 續輪:8 個
+  DAT_00053a45 WRITE xref 逐一查明" section for the full disassembly +
+  live-verification writeup.
 
 USAGE
 --------------------------------------------------------------------
