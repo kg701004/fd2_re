@@ -1739,6 +1739,37 @@
   (代號`ch11cond`)」小節,live過程產物(screenshots/result.json)留存於
   `.wsl_build/chapter_sweep_ch11cond/`(未納入git)。
 
+  **2026-08-28 第6輪(代號`ch11writer`,ch11專屬診斷計畫中最後一輪)——
+  修正第5輪的錯誤框架,但根因回到未定案**:回應上一輪建議,完整反組譯
+  `[0x53a8e]`的讀取端`FUN_00011aa8`(上一輪被`max_bytes`截斷,只看過前
+  18條指令)與呼叫端`0x117e7`,發現**整個「gate①(phase)」框架是誤判**：
+  `[0x53a8e]`其實是**鍵盤scancode暫存器**(`FUN_00011aa8`是阻塞式讀鍵
+  函式,忙等BIOS鍵盤緩衝區`[0x41a]`/`[0x41c]`非空,讀到鍵後remap兩個
+  numpad特例後存進`[0x53a8e]`),`0x117e7`是**13+分支的鍵盤事件
+  dispatcher**(對照標準PC/XT scancode表:`0x39`/`0x1c`=Space/Enter、
+  `0x48`/`0x50`/`0x4b`/`0x4d`=方向鍵……),先前五輪追的「gate①②③」只是
+  Enter/Space分支內部的邏輯,`0x50`(Down鍵)是完全合法的另一個獨立分支
+  (移動游標Y),不是卡住的失敗值。**live burst test直接推翻「gate①擋住
+  ch11」**:複製ch11標準流程到「卡住」狀態後,連續送25次真實Enter鍵,
+  **`phase`全部25次精確讀回`0x1c`(gate①每次都通過)**,游標移動10次後
+  收斂凍結在`(18,10)`,但**`pending_code`全部25次都是`0`,從未觸發勝利**
+  ——證明滿足gate①不足以讓ch11獲勝,真正根因不在gate①,回到未定案狀態,
+  但候選範圍已收斂到gate②③、章節勝負表本身、或`FUN_00016f55`(gate②
+  找不到單位時進入的另一大函式,語意上更接近批次End-Turn處理,下一輪
+  優先目標)。**協調端追加的「ch11有2筆camp==1記錄(珊+貝克威)」假說**
+  用第5輪已有的完整單位陣列dump直接排除(ch03/ch11都只有1筆camp==1)。
+  SAV writer gate方面順便靜態複核`FUN_0001cff0`/`FUN_00018d8c`,結構與
+  既有文件吻合但沒有新發現,真正的角色選人UI位址重新定位不在本輪預算內。
+  M5仍是0 pass,未變動。**誠實建議**:ch11累計6輪專門診斷、10+個已排除
+  假說,應正式列為已充分記錄的已知開放項,**不建議立即開第7輪**;整體
+  優先序建議維持第5輪的結論——把資源轉向doc25§9.1的SAV writer gate
+  (擋住*所有*章節、不只ch11的更高優先級瓶頸),但那需要一輪獨立的LOGC
+  ground-truth工作重新定位選人UI位址。完整寫法、逐次按鍵記錄見
+  `docs/knowledge-base/25-battle-event-system.md`§3.2.3 與
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第6輪
+  (代號`ch11writer`)」小節,live過程產物留存於
+  `.wsl_build/chapter_sweep_ch11writer/`(未納入git)。
+
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
 - [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)

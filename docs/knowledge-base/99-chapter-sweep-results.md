@@ -1734,3 +1734,107 @@ ch11為已充分記錄的已知開放項**,把資源轉回doc25§9.1的SAV write
 control_bppm_ch03,test_bppm_ch11,control_settle_ch03,test_settle_ch11,
 control_gate3_ch03,test_gate3b_ch11,control_phase_ch03,test_phase_ch11}/
 result.json`(未納入git,本機保留)。
+
+## 2026-08-28 第6輪(代號`ch11writer`,ch11專屬診斷計畫中最後一輪):反組譯
+`[0x53a8e]`寫入端後發現§3.2.2整個「gate①(phase)」框架是誤判——它其實是
+鍵盤scancode暫存器,`0x117e7`是13+分支鍵盤dispatcher。live burst test直接
+推翻「gate①擋住ch11」,根因回到未定案,誠實建議收尾本章節、轉去SAV
+writer gate
+
+### 任務背景
+
+回應上一輪(`ch11cond`)建議:反組譯`[0x53a8e]`(phase byte)的寫入端——
+上一輪只反組譯過讀取端`FUN_00011aa8`的前18條指令(被`ghidra_batch_probe`
+的`max_bytes`參數截斷),從未看過完整函式體。同一task也帶了一個協調端
+追加問題:ch11是否有2筆camp==1記錄(對應珊/貝克威兩名中立角色),比
+ch03多1筆,可能是cursor卡住的原因。
+
+### 方法與結果
+
+**①完整反組譯`FUN_00011aa8`(不受`max_bytes`截斷)**,發現它根本不是
+「phase getter」,而是一個**阻塞式讀鍵函式**:忙等BIOS鍵盤緩衝區
+head/tail指標(`[0x41a]`/`[0x41c]`)非空(緩衝區空時跑調色盤輪轉動畫
+`FUN_0004e31c`等待),讀到鍵後呼叫`FUN_000370f0(&0x53a8d,&0x53a8d,0x16)`
+取raw scancode寫入`[0x53a8e]`,再做兩個numpad鍵相容remap
+(`0xE0`/`0x52`→`0x1C`,`0x53`→`0x01`)。對照標準PC/XT scancode表,
+`0x39`/`0x1c`=Space/Enter、`0x48`/`0x50`/`0x4b`/`0x4d`=方向鍵、`0x01`=
+Esc、`0x2c`='Z'、`0x4c`=Numpad5——精確對應`0x117e7`switch的每個case。
+
+**②完整反組譯`0x117e7`**,證實它是13+分支的鍵盤事件dispatcher,不是
+三層巢狀gate——`phase==0x39||0x1c`只是其中Enter/Space分支的內部邏輯
+(即先前五輪一直在追的「gate①②③」),`0x50`(Down鍵)是完全合法、獨立
+的另一個分支(`FUN_00025a96()`+`FUN_00011b9b()`,後者直接把游標Y+1),
+不是一個「卡住的失敗phase值」。§3.2.2記錄的「`[0x53a8e]`~200秒穩定停在
+`0x50`」,合理解釋是:阻塞式讀鍵函式沒有新鍵輸入時永遠卡在忙等迴圈,
+`[0x53a8e]`只是保留最後處理過的鍵不被覆寫——跟「引擎內部phase卡住」
+是兩回事。
+
+**③live burst test直接推翻「gate①是根因」**:用
+`.wsl_build/chapter_sweep_ch11writer/probe_ch11writer_unstick.py`複製
+ch11標準流程到§3.2.2的「卡住」狀態後主動送出額外按鍵——PRE-UNSTICK
+(僅等待8秒不送鍵)讀到`phase=0x1c`(**不是`0x50`**,見下方§3.2.2結論
+撤回);送6個額外鍵(Return/Down/Return/Return/Up/Return)後`phase`精確
+反映每個送出的鍵,但`pending_code`連續6次全部是`0`。接著用
+`probe_ch11writer_burst.py`送**連續25次純Return**:**`phase`全部25次
+都精確讀回`0x1c`**(gate①每次都確實通過),游標在前10次持續移動,**從
+第10次起收斂並凍結在`(18,10)`**(後15次完全不變),但**`pending_code`
+全部25次都是`0`,`chapter_index`全程`10`不變,從未觸發勝利**。
+
+**誠實結論**:gate①(`phase==0x39||0x1c`)**確實會被滿足**,甚至被連續
+25次真實Enter鍵重複滿足,但滿足它**不足以**讓ch11拿到勝利——真正根因
+不在gate①,回到**未定案**狀態,但排查範圍已顯著修正:候選收斂到gate②
+(游標-單位比對)、gate③(per-unit欄位比對)、章節勝負表本身、或
+`FUN_00016f55`(gate②找不到單位時進入的另一個大函式,本輪只反組譯出
+骨架,內部有自己的阻塞讀鍵迴圈+一個由`DAT_00053c57`(0~3)選擇的四路
+分支,`==1`分支會遍歷整個單位陣列處理所有未行動的活著我方單位,語意
+上更接近批次End-Turn處理,是下一輪最值得優先反組譯的目標)。游標25次
+Enter後收斂凍結在`(18,10)`且此後完全靜止是最值得追的新線索,但本輪
+未同步dump單位陣列確認`(18,10)`當下是什麼(空地/已行動我方單位/其他)。
+
+**§3.2.2三個結論需要撤回**:(1)「ch11卡住根因是gate①」——撤回,已被
+本輪live測試推翻;(2)「`[0x53a8e]`~200秒穩定不變證明是引擎狀態」——
+撤回,穩定只是阻塞讀鍵迴圈沒有新輸入的副作用;(3)「重跑同一存檔會讀到
+同一個值`0x50`」——本輪未能重現(PRE-UNSTICK讀到`0x1c`),佐證這是輸入
+時序的副產物而非穩定引擎狀態,不是矛盾。
+
+**協調端追加假說(camp==1記錄2筆)用既有資料直接排除,未消耗新live時間**:
+round 5(`ch11cond`)的`probe_ch11cond_settle_dump.py`已對兩章各dump過
+完整單位陣列(`.wsl_build/chapter_sweep_ch11cond/{control,test}_settle_
+ch{03,11}/result.json`,本機保留)。直接統計:**ch03(15筆記錄)只有1筆
+camp==1;ch11(39筆記錄)也只有1筆camp==1**——兩章camp==1記錄數量相同,
+「2個中立角色導致多1筆記錄、卡住cursor邏輯」這個具體假說被現有資料
+直接排除(不排除珊/貝克威其中一位在此時間點尚未經由`spawn_group`加入
+戰場陣列而看不到的可能性,但已超出本假說範圍)。
+
+**SAV writer gate(§9.1)回顧,未投入新live時間**:順便用`ghidra_batch_
+probe.py`重新核對`FUN_0001cff0`/`FUN_00018d8c`(§9.1「camproute」輪定位
+的第二個writer gate),結構與既有文件描述完全吻合,只是靜態複核沒有
+新發現。§9.1真正卡住的地方(角色選人UI位址doc56記錄的`0x318ad`系列在
+目前build下全部`in_function:false`,需要重新LOGC定位)不是本輪方法論的
+直接延伸,本輪剩餘預算不足以嚴謹完成,誠實地沒有嘗試,留給下一輪。
+
+### 本工具(`fd2_chapter_sweep.py`)改動
+
+**沒有改動**——本輪同樣是純診斷輪,推翻了一個先前的錯誤結論,但沒有
+產生一個已驗證、可安全實作的runtime work-around。`KNOWN_MIN_TURNS_
+BEFORE_KILL`等既有機制維持不動。
+
+### 誠實建議:ch11後續投入與整體優先序
+
+這是ch11專屬診斷第6輪(依原始派工規劃的最後一輪)。本輪最大價值是**修正
+了一個维持5輪的錯誤框架**(`[0x53a8e]`不是phase,是鍵盤scancode;
+`0x117e7`不是三層gate,是13+分支鍵盤dispatcher),並用live測試把
+「gate①是根因」這個具體結論證偽——這比繼續在錯誤框架內窄化更有價值,
+但代價是根因重新回到未定案狀態。**遵照派工的誠實準則**:ch11應該正式
+列為已充分記錄(6輪、10+個已排除假說,含本輪新增的「gate①」與「2個中立
+角色」兩項)的已知開放項,不建議立即開第7輪——下一輪如果要繼續,應該
+優先反組譯`FUN_00016f55`並在burst期間同步dump單位陣列確認`(18,10)`
+凍結點的真實語意,而不是重複本輪已經做過的phase/gate①分析。**整體
+優先序建議維持§3.2.2的結論**:把資源轉回doc25§9.1的SAV writer gate
+(擋住*所有*章節、不只ch11的更高優先級瓶頸),但這需要一輪專門的LOGC
+ground-truth工作重新定位角色選人UI的正確位址,不是本輪順手就能做完的
+延伸。
+
+完整live log、逐次按鍵/游標/pending_code記錄見本輪
+`.wsl_build/chapter_sweep_ch11writer/{test_ch11,test_burst_ch11}/
+result.json`與`run_unstick2.log`/`run_burst.log`(未納入git,本機保留)。
