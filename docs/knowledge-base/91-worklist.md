@@ -2078,6 +2078,26 @@
   PCM容器。仍缺:action_id↔招式中文名稱、池內sub-index觸發時機、id 12-21/25-27資源型態、id≥0x20分支
   (`FUN_0002d80d`)自己的index來源；remake `atkAnim`現有SFX hook仍用第10輪未證實候選池，未接上本輪
   驗證過的真實家族。「導出」部分關閉，「逐招對照」核心仍未完全關閉。
+  **2026-08-28 續輪**：純靜態(`ghidra_batch_probe.py`，未碰DOSBox-X)定位「本章XX必須出場！」
+  驗證函式本身，回應ch21-26/28 prep-select roster-guard問題。找到`FUN_0002b439`
+  (`0x2b439..0x2b4fa`)：掃描`DAT_00053a45`(每筆0x50 stride，`+8`=id byte，跟
+  `fd2save.py`的`UNIT_CHARACTER_ID_OFFSET`同offset慣例)找guard角色id，沒找到就顯示
+  FDTXT resource0 string657(`0x291`)=「本章[FFFC]必須出場！」(用`docs/data/glyph_map.json`
+  解包`FDTXT.DAT`找到，`[FFFC]`是名稱代入控制碼)。呼叫端`FUN_0002af28`(選人主迴圈)按
+  raw chapter分派，**訂正`cursorlive`輪的預測表**：raw 0x17/0x18(ch24/ch25)完全不呼叫
+  這個驗證，跟roster裡有沒有doc28列的護衛角色無關；raw 0x14/0x15/0x16/0x19/0x1b
+  (ch21/22/23/26/28)才會呼叫。**根因比預期更深**：追查`DAT_00053a45`的寫入端找到
+  `FUN_0001088d`(唯一呼叫端`0x205ff`)——它每章`free`+`malloc(0x1e00)`重新配置這個陣列，
+  逐筆單位資料主要來自`FDFIELD.DAT`(chapter*3+2號resource，6-byte stride模板)，**全程
+  沒有任何一行把`+8`(id)從持久化存檔`DAT_00053bf7`複製過來**(只有一個範圍極窄的
+  id==2/slot==6特例，不是通用機制)。這代表`append_roster_members()`卡住的真正原因，
+  很可能不是synthetic record缺了某個byte(equip-recalc tail候選假說優先度降低)，而是
+  `DAT_00053a45`這個執行期陣列的身分資料從一開始就不是持久化存檔的直接投影——**存檔
+  層級的修復是否可行本輪未能確認**，`+8`真正的賦值來源仍未定位(留給下一輪反組譯
+  `0x205ff`所在函式全context，見doc99本輪小節「下一輪建議」)。**誠實結論：本輪完全
+  未啟動DOSBox-X，ch21-26/28均無新live驗證，`tools/fd2save.py`未修改**(現有證據不足以
+  支持任何具體修改)，M5 chapter-sweep tally 維持19/30(ch02-20)不變。完整反組譯證據鏈
+  見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 續輪」小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測

@@ -61,6 +61,15 @@ action 說明(對應 ProbeBatch.java 的實作):
   - `-process "FD2.EXE"` 指的是 project 內部的 program 名稱,不是檔案路徑。
   - project owner 若卡 NotOwnerException,要先取得使用者同意修改
     `FD2Analysis3.rep/project.prp` 的 OWNER 欄位(這個 repo 已經改過,通常不會再遇到)。
+  - (2026-08-28新增)**必須用原生 Windows Python 執行,不能透過 WSL2 bash 呼叫**——
+    `--project-dir`/`--ghidra` 預設值都是 Windows 形式路徑(`C:/...`),`analyzeHeadless.bat`
+    本身也是 Windows batch。若在 WSL2 的 Python(POSIX `pathlib.Path`)下跑本工具,
+    `Path("C:/Users/.../FD2_ghidra_projects")` 會被當成*相對*路徑處理(不認得磁碟機代號),
+    `.exists()`檢查會在錯誤的目錄下找,產生誤導性的
+    `ProbeBatch.java not found in project dir C:/...`錯誤——這不是專案真的少了這支腳本
+    (它確實在`C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeBatch.java`),純粹是
+    WSL2 Python 路徑解讀方式不同造成的假錯誤。正確用法:在 PowerShell/cmd 下直接
+    `python tools\ghidra_batch_probe.py ...`。
 """
 from __future__ import annotations
 

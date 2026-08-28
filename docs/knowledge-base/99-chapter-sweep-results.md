@@ -2078,3 +2078,153 @@ roster-guard問題/ch27+疑似ch29/30雙結局分支)各自的獨立問題本輪
 「已live驗證」而非「待驗證的live test」。完整live log、screenshot、result.json見
 `.wsl_build/chapter_sweep/ch02/`(shots含195張截圖,`result.json`為本輪最終權威記錄,
 已納入現有`.wsl_build/`git-ignore規則,未提交)。
+
+## 2026-08-28 續輪:「本章XX必須出場！」驗證函式已靜態定位(`FUN_0002b439`/`0x2b439`),
+但根因比預期更深——擋住這道門檻的陣列不是簡單的存檔欄位缺失,而是整個陣列的資料來源
+本身就不是持久化存檔——**本輪純靜態,未碰 DOSBox-X,未修復,誠實記錄到此為止**
+
+### 方法
+
+本輪目標是`91-worklist.md`/本文件`cursorlive`輪留下的開放問題:「必須出場」驗證讀取
+的是roster陣列id存在+選取狀態之外的哪個原生狀態,`fd2save.py`的`append_roster_members()`
+沒有提供。派工單建議用`tools/ghidra_batch_probe.py`找到這個驗證函式本身。
+
+第一步:既有 doc56/doc91 記錄的選人 UI 位址(`0x318ad`/`0x320fc`/`0x31d3c`等)在目前
+build 下確認`in_function:false`(2026-08-26`writerfire`輪已排除),不可沿用。改用
+**文字反查**:用`docs/data/glyph_map.json`(glyph-id→字元對照表,免PIL)配合`01-container-
+and-asset-formats.md`記錄的`LLLLLL`通用容器格式,自行解包`FDTXT.DAT`全部35個資源、
+逐字串解碼,搜尋「必須出場」——命中**resource=0, string index=657(0x291)**:
+`本章[FFFC]必須出場！`(`[FFFC]`是既有`14-text-control-codes.md`已知的名稱代入控制碼,
+證實這句話原文本身就帶角色名代入,doc99先前記錄的「本章約定必須出場」是複述時的簡化
+措辭,不是逐字原文)。
+
+第二步:在原始`FD2.EXE`(509158 bytes,md5`72e36e47f1f7d77dc102839262956480`,與
+`~/fd2-run/FD2.EXE`一致)裡搜尋`68 91 02 00 00`(`PUSH 0x291`的位元組序列)找到2處候選,
+但**這個天真的位元組掃描踩到一個方法論陷阱**:兩處都不是真正的呼叫點(一處在資料段,
+另一處經Ghidra確認實際位元組其實是`PUSH 0x50291`而非`PUSH 0x291`,高16位差了整整
+`0x50000`,顯示`ghidra_batch_probe.py`的`FD2Analysis3` project 底下的程式映像,在這個
+局部區段跟目前`~/fd2-run/FD2.EXE`的原始位元組並不逐位元組相同——**這代表 project
+可能是用一份稍舊/不同的EXE快照分析出來的,不能單純假設「project 位址+固定delta＝目前
+檔案 file offset」在全檔案範圍內成立,即使`doc35`「obj1 linear=file offset」的既有
+慣例在某些已驗證範圍内確實成立**)。放棄位元組掃描,改用`function_bounds`/
+`decompile`直接在 Ghidra project 裡順著呼叫鏈往回找。
+
+### 找到的驗證函式:`FUN_0002b439`(`0x2b439..0x2b4fa`,194 bytes)
+
+```c
+char __stdcall FUN_0002b439(int param_1, byte param_2)
+{
+  char cVar1 = 0;
+  for (iVar2 = 0; iVar2 < param_1; iVar2++)
+    if (*(byte*)((iVar2+1)*0x50 + 8 + DAT_00053a45) == param_2) cVar1 = 1;
+  if (cVar1 == 0) {
+    FUN_0001956b();                 // 開框(6幀)
+    DAT_00053ad9 = param_2 + 1;     // 名稱代入用的角色id(對應[FFFC])
+    FUN_00015f84(); FUN_00016559();
+    DAT_00053a51 = 1; FUN_00016c57(); DAT_00053a51 = 0;   // 顯示FDTXT字串
+    FUN_00026996();
+  }
+  return cVar1;
+}
+```
+
+邏輯完全明確:掃描`DAT_00053a45`(每筆0x50 stride、`+8`是id byte,跟`fd2save.py`
+`UNIT_CHARACTER_ID_OFFSET`同一個offset慣例)的`iVar2=0..param_1-1`筆,任一筆id等於
+`param_2`(必須出場的guard角色id)就算通過;沒過就開框顯示`0x291`號字串(名稱代入
+`param_2+1`)。回傳值 0/1 最終決定`FUN_0002af28`(整個選人主迴圈)是否`return 1`
+(成功出戰)還是`return 0`(退回營地)。
+
+呼叫端(`FUN_0002af28`,`0x2af28..0x2b438`,即選人主迴圈本身,對應舊doc引用的
+`0x318ad`系列在目前build下的真正位址)按`DAT_00053c03`(raw chapter)分派:
+
+| raw chapter | 是否呼叫`FUN_0002b439` | 對應章節 |
+|---|---|---|
+| 0x10(16,有條件) / 0x11 / 0x12 / 0x13 / 0x14 / 0x15 / 0x16 (16-22) | 是,一次 | ch21=0x14,ch22=0x15,ch23=0x16 在此範圍內 |
+| 0x17 / 0x18 (23,24) | **否,完全跳過** | **ch24=0x17,ch25=0x18** |
+| 0x19 (25) | 是,且失敗會`goto`重試,最多呼叫兩次 | ch26=0x19 |
+| >0x19 (26+) | 是,一次 | ch28=0x1b 在此範圍內 |
+
+**這訂正了`cursorlive`輪原本的預測表**:doc99先前只憑`docs/knowledge-base/28-chapter-
+objectives-and-recruits.md`的「額外護衛」欄位猜測ch25(raw24)會被同一道門檻卡住(護衛
+=聖寇拉斯)——本輪反組譯直接證實raw chapter 0x17/0x18(ch24/ch25)**完全不會呼叫這個
+驗證函式**,不管roster裡有沒有聖寇拉斯都不會卡在這裡(如果ch25仍卡在
+`needs_manual_followup`,原因是別的,不是這道「必須出場」門檻)。ch21/22/23/26/28
+(raw 0x14/0x15/0x16/0x19/0x1b)則確認會呼叫,與`cursorlive`輪對ch21的live觀察一致。
+
+### 比預期更深的根因:`DAT_00053a45`本身不是持久化存檔陣列,而是每章重新配置、主要由
+FDFIELD.DAT地圖模板餵入的執行期陣列——這正是`fd2_chapter_sweep.py`自己拿來偵測「是否
+進入戰鬥」的同一個陣列(`read_battle_array_base()`)
+
+追查`DAT_00053a45`的寫入端(`xref_to`,200+筆讀取,聚焦WRITE類型)找到`FUN_0001088d`
+(`0x1088d..0x10b42`,唯一呼叫端`0x205ff`)。反組譯確認它會:
+
+1. `free()`舊的`DAT_00053a45`(若存在)、`malloc(0x1e00)`(7680 bytes = 96筆×0x50)
+   全新配置一份。
+2. 讀`FDFIELD.DAT`(descriptor字串`0x51a59`,已用`bytes`action直接讀出ASCII確認)
+   resource `chapter*3+1`(存進`DAT_00053a55`,其`+1`byte即`DAT_00053be7`=本場單位
+   總數)與`chapter*3+2`(存進`DAT_00053a59`,即下面`puVar5`的來源)。
+3. 主迴圈`for(iVar4=0; iVar4<DAT_00053be7; iVar4++)`:來源指標`puVar5`從
+   `DAT_00053a59`裡以**6-byte stride**逐筆前進,把`puVar5[0]`/`puVar5[2]`複製進
+   `DAT_00053a45`每筆記錄的`+0`/`+1`byte,`+2`byte另外呼叫`FUN_00011019()`填icon
+   key,`+6`固定寫`2`、`+0x31`固定寫`0xFF`(這兩個常數與`fd2save.py`
+   `build_join_record()`的`record[0x06]=2`/`record[0x31]=0xFF`剛好相同,兩處应该是
+   同一套「新建單位record」慣例,但無法反推出這就代表兩者完全同構)。**全程沒有任何
+   一行把`+8`(id byte)從持久化存檔`DAT_00053bf7`(`fd2save.py`的
+   `CURRENT_PERSISTENT_ROSTER_OFFSET`對應的live global)複製過來**——`DAT_00053bf7`
+   在這個函式裡唯一的用途,是一個範圍極窄的特例分支
+   (`if (param_1<0xd && iVar4==6 && *(char*)(iVar3+8)!=2) { 跳過這格,標記缺席 }`,
+   只對「章節<13、陣列第6格、持久化存檔第6筆角色id不是2」這個非常具體的組合生效,
+   看起來是某個早期角色(id=2)的專屬加入/缺席判定,不是通用機制)。
+
+換句話說:`DAT_00053a45`(=`FUN_0002b439`掃描的同一個陣列,=`fd2_chapter_sweep.py`
+自己拿來判斷「進入戰鬥」的`read_battle_array_base()`目標)**主要由每章固定的
+`FDFIELD.DAT`地圖模板資料建構,不是持久化存檔roster的直接投影**。`FUN_0001b750`
+(在`FUN_0001088d`每筆單位建構的最後被呼叫)本身也已反組譯確認:它是裝備加成重算式
+(讀`+0x37/+0x39/+0x3e`基礎值、掃8格裝備、寫回`+0x48/+0x4a/+0x4c`)——正是
+`fd2save.py`模組docstring早就承認`build_join_record()`故意跳過的「equip-recalc
+tail」,但它跟`+8`(id)完全無關,不負責身分欄位。
+
+**誠實結論**:本輪定位到「+8 id byte從未在這個路徑被賦值」這件事本身,但**沒有找到
+`+8`實際在哪裡被賦值**(可能在`FUN_0001088d`之外、選人畫面開啟前的另一個步驟,例如
+真正的劇情JOIN事件對這個陣列的即時寫入,或另一個本輪未觸及的函式)。這代表`cursorlive`
+輪原本懷疑的「equip-recalc tail或某個獨立旗標」兩個候選,現在都可以**降低優先度**——
+真正擋住`append_roster_members()`的,很可能不是持久化存檔record裡缺了哪個byte,而是
+`DAT_00053a45`這個執行期陣列從一開始就不是從持久化存檔複製出來的,想讓guard角色出現在
+這個陣列裡,合理的路徑不是「把正確的位元組寫進SAV的roster record」,而是要嘛(a)找到
+真正把持久化角色身分接進`DAT_00053a45`的那個步驟並研究能否透過存檔層級的旗標影響它,
+要嘛(b)這件事根本不是存檔層級能解的,需要真正觸發劇情JOIN事件(不在本輪範圍)。**這是
+比派工單原本假設(「missing byte on the synthetic record」)更深一層的結構性發現,本輪
+未能收斂成一個可行的存檔層級修復方案**,不強行宣稱已解決。
+
+### 本輪未做的事(誠實記錄範圍界線)
+
+- **完全沒有啟動 DOSBox-X**——本輪全程是`ghidra_batch_probe.py`純靜態分析(`python
+  tools/ghidra_batch_probe.py`需在原生 Windows Python 下執行,不能透過 WSL2 bash 呼叫
+  ——WSL2 下 Python 的`pathlib.Path`把`C:/...`當成相對路徑處理,會導致
+  `ProbeBatch.java not found`之類的假錯誤;這是這輪順便釘出的一個工具用法陷阱,記錄
+  於此供下一輪參考)。因此 ch21-26/28 均**沒有**任何新的live驗證,`[0x53ecc]`/存檔
+  byte前進與否完全未知,維持`99`文件既有的`needs_manual_followup`。
+- 沒有嘗試修改`tools/fd2save.py`——上面「根因比預期更深」的結論代表現階段任何對
+  `append_roster_members()`的修改都是**沒有依據的猜測**,不採用。
+- 沒有找到`DAT_00053a45`+8(id)真正的賦值來源,也沒有排查`FUN_0001088d`的唯一呼叫端
+  `0x205ff`所在函式的完整上下文(例如它是否在劇情JOIN事件之後才被呼叫、呼叫時機與
+  「持久化roster→執行期battle陣列」的另一個可能同步點的關係)。
+- 沒有觸碰 Part 2(ch01)。
+
+### 下一輪建議
+
+1. **最高投報率**:反組譯`0x205ff`所在函式的完整呼叫上下文(它呼叫`FUN_0001088d`
+   之前/之後做了什麼),以及`xref_to 0x53a45`裡本輪未逐一檢視的其餘WRITE位址
+   (`0x1fa80`/`0x26196`/`0x2634c`/`0x26356`/`0x267e1`/`0x267eb`/`0x26810`/
+   `0x26985`),找出`+8`(id)真正被寫入`DAT_00053a45`的那一行——這是收斂「存檔層級
+   能不能解」這個問題的唯一辦法。
+2. 若確認`+8`確實是從持久化存檔複製,只是複製時機/條件比預期複雜(例如只複製「劇情
+   JOIN旗標已設置」的角色),則需要進一步反組譯這個過濾條件,判斷`fd2save.py`能否
+   透過補寫某個持久化存檔旗標(不一定是roster record本身的欄位,可能是SAV別處的
+   全域狀態byte)來滿足它。
+3. 若確認`+8`根本不是從持久化存檔來(例如整個`DAT_00053a45`陣列的敵我單位都由
+   `FDFIELD.DAT`地圖模板`chapter*3+2`resource的固定內容決定,身分由某個class/type
+   碼透過另一張表間接解析),則`append_roster_members()`這條路線應該被視為**已排除
+   的死路**,doc91/`91-worklist.md`M5 對應段落需要更新這個結論,把後續嘗試導向
+   FDFIELD.DAT模板本身的可修改性研究(全新、範圍更大的RE工作,超出本輪與這個
+   worklist項目原本的存檔層級假設)。
