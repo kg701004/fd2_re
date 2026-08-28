@@ -1695,6 +1695,50 @@
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 續輪
   (代號`ch11bp`)」小節與`docs/knowledge-base/25-battle-event-system.md`§3.2。
 
+  **2026-08-28 第5輪(代號`ch11cond`)——根因定案**:回應上一輪建議(a)(b),
+  **①LOGC觀察窗從6秒延長到~200秒真實時間(600M指令budget,錄到自然用盡)**:
+  ch03維持命中1次,ch11維持命中0次——「純粹需要更久時間才dispatch」的殘餘
+  可能性**排除**,不是時間不夠。**②對`[0x53ab1]/[0x53ab5]`(游標XY)下`BPPM`**
+  (首次RUN的baseline假觸發陷阱已排除):意外發現ch03/ch11的戰鬥單位陣列
+  **都**多一筆先前完全沒記錄過的`camp==1`記錄,且**每次**End-Turn確認YES後
+  游標的最終停留位置精確落在這筆camp1記錄的座標上——即`0x12c0d`的「游標-
+  位置匹配」在兩章都成立(gate②通過)。**③直接讀該記錄的`+7`/`+0x1f`**(gate③
+  用到的欄位):ch03(off7=0x02,off1f=0x01)與ch11(off7=0x0e,off1f=0x02)
+  兩者的值都不等於`'y'`(0x79)/`'\n'`(0x0a),gate③的`!='y' && !='\n'`條件**兩章
+  都成立**。gate②③都不是分歧點,只剩gate①(phase)。**④直接讀phase getter
+  `FUN_00011aa8`的來源byte`[0x53a8e]`**(live`0x1EFA8E`):確認END前兩章都是
+  `0x1c`(通過);**確認YES後,ch03穩定維持`0x1c`(gate①持續通過,與觀察到的
+  dispatch一致),ch11穩定維持`0x50`(gate①持續不通過)**——同一個開環→END→
+  YES操作序列,兩章在按下YES後phase各自走向不同、且都穩定不變的終值,
+  分別橫跨~37秒即時取樣(本節)與~200秒`LOGC`視窗(①)全程未變。**這是本篇任務
+  五輪以來第一次把根因鎖定到單一、具體、可重複驗證的runtime狀態值差異**:
+  **ch11卡住的原因是gate①(phase)——`[0x53a8e]`在End-Turn確認YES之後停在
+  `0x50`而不是`0x39`/`0x1c`,导致`0x117e7`的三層巢狀條件在第一層就被擋下,
+  根本不會走到gate②③與`0x51b19`dispatch本身**(gate②③雖然本輪確認在ch11
+  也是「若走到就會通過」的狀態,但因為卡在gate①前面,實務上從未被真正求值到)。
+  **仍未解的下一層問題(誠實列出,非本輪範圍)**:`0x50`是什麼狀態、什麼
+  runtime邏輯把`[0x53a8e]`寫成`0x50`而非`0x1c`、以及它是否**理論上**會在
+  更久之後轉回`0x1c`(僅由①的~200秒LOGC窗口的觀察不足以完全排除「數分鐘
+  等級」的極端可能,但已經足以排除「幾十秒」等級)——這需要反組譯`0x53a8e`
+  的**寫入端**(不是已知的讀取端`FUN_00011aa8`),不在本輪範圍。**誠實建議**:
+  這是五輪對同一個章節的專門診斷,累計已排除的假說達到9個(handler本體不同/
+  掃描漏看敵人/native迴圈上界過小/dispatch走錯chapter index/`BPM`斷點結果
+  不可信/星之眼寶物門檻/「純粹時間不夠」/gate②游標不匹配/gate③per-unit
+  literal-byte不匹配),且本輪已經把根因窄化到單一具體runtime位址與具體數值
+  (`[0x53a8e]==0x50` vs `0x1c`)——這是目前為止最精確的定位,**但距離「找到
+  是什麼把它寫成0x50、以及有沒有辦法讓它變回0x1c」還需要至少一輪新的
+  callgraph/反組譯工作**(找`[0x53a8e]`所有寫入點,篩出哪些會在ch11這種
+  大型戰鬥(38+筆record)的End-Turn後路徑上執行)。**相對於本專案已經從
+  1/30章確認推進到17+/30章的整體進度,ch11這個單一章節目前已投入5輪專門
+  診斷**——如果下一輪的寫入端反組譯仍未能定案,建議**接受ch11為已充分記錄
+  的已知開放項**,把資源轉回`91-worklist.md`其他更高槓桿的項目(尤其
+  doc25§9.1的SAV writer gate,這是擋住*所有*章節拿到`pass`的更高優先級
+  瓶頸,不是ch11獨有)。完整寫法、逐步log、記錄dump見
+  `docs/knowledge-base/25-battle-event-system.md`§3.2.2 與
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第5輪
+  (代號`ch11cond`)」小節,live過程產物(screenshots/result.json)留存於
+  `.wsl_build/chapter_sweep_ch11cond/`(未納入git)。
+
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
 - [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)
