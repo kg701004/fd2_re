@@ -67,9 +67,9 @@ action 說明(對應 ProbeBatch.java 的實作):
     `Path("C:/Users/.../FD2_ghidra_projects")` 會被當成*相對*路徑處理(不認得磁碟機代號),
     `.exists()`檢查會在錯誤的目錄下找,產生誤導性的
     `ProbeBatch.java not found in project dir C:/...`錯誤——這不是專案真的少了這支腳本
-    (它確實在`C:\Users\kg701\Desktop\GAME\FD2_ghidra_projects\ProbeBatch.java`),純粹是
+    (它確實在`C:/Users/kg701/Desktop/GAME/FD2_ghidra_projects/ProbeBatch.java`),純粹是
     WSL2 Python 路徑解讀方式不同造成的假錯誤。正確用法:在 PowerShell/cmd 下直接
-    `python tools\ghidra_batch_probe.py ...`。
+    `python tools/ghidra_batch_probe.py ...`。
 """
 from __future__ import annotations
 

@@ -2149,6 +2149,28 @@
   未啟動DOSBox-X，ch21-26/28均無新live驗證，`tools/fd2save.py`未修改**(現有證據不足以
   支持任何具體修改)，M5 chapter-sweep tally 維持19/30(ch02-20)不變。完整反組譯證據鏈
   見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 續輪」小節。
+  **2026-08-29續輪**：測試「地圖模板已內建護衛角色」假說（`camp==1`村民/米亞斯多德
+  模式是否也適用於ch21-26/28的guard角色）。**假說對ch21本身被反駁，但確認機制真實
+  存在、用途不同**：修好`tools/ghidra_batch_probe.py`一個讓它完全無法執行的docstring
+  bug（`\U`跳脫序列語法錯誤，`08-28`輪自己commit引入、寫完就沒重跑過），反組譯出
+  `FUN_00010c50`(`0x10c50..0x11010`，經`FUN_00010b4e`從`FUN_0001088d`結尾呼叫，
+  兩顆`08-28`輪都沒碰過)：確認FDFIELD模板單位的`b1`同時寫入runtime`+7`/`+8`，
+  即地圖確實可以直接放好帶id的`camp==own`單位（ch21地圖=map20，實測有羅蘭/希爾法
+  兩筆own單位，id剛好23/24）。但**直接反組譯`FUN_0002af28`呼叫`FUN_0002b439`的
+  實際push參數**（Ghidra `disasm`逐指令核對，非猜測）發現ch21(raw0x14)真正檢查的
+  guard id是`0x15`=21=**約拿**，不是羅蘭/希爾法；約拿是ch18(map17)的地圖原生新加入
+  角色，不在ch21地圖模板裡，到ch21時必須是存檔裡的正常隊員並被玩家選入出戰陣容。
+  同一方法驗出ch22/23=希爾法(id24)、ch26=悠妮+亞奇梅吉(id9→id29，且ch26這組逐字
+  吻合doc28「額外護衛」欄，反證方法論本身正確，只是doc28欄位不能直接當
+  `FUN_0002b439`的檢查目標，兩者是不同的遊戲機制)。**M5真正的殘留瓶頸從「synthetic
+  record缺欄位」進一步收斂成「玩家選人畫面把約拿選進own_deploy欄位時，那格的`+8`
+  是被哪行程式碼寫入」**——`FUN_0001088d`/`FUN_00010b4e`/`FUN_00010c50`三顆本輪逐一
+  反組譯確認都不負責這件事（只處理地圖模板單位，不處理玩家選人）,`08-28`輪列出的
+  `DAT_00053a45`其餘WRITE xref本輪仍未逐一檢視，是下一輪最高投報率起點。本輪同樣
+  完全未啟動DOSBox-X，`tools/fd2save.py`未修改，M5 chapter-sweep tally維持19/30
+  不變。完整證據鏈（含chapter→guard-id對照表、跨33圖id掃描交叉驗證）見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『map-native guard』輪」
+  小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
