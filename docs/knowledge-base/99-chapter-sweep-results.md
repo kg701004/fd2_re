@@ -3166,3 +3166,180 @@ no_disk_write」(win-check已解開,只差磁碟寫入)這個更大、已知的�
   升級為「anomaly_engine_win_no_disk_write,與ch02-20/26同類,原因是
   已知的SAV writer gate,不是ch21特有的未解之謎」。22/23/25/28四章
   仍未達成,`--complete-roster`是否也能解開它們留給下一輪。
+
+## 2026-08-29「picklock」輪:**ch22用`--complete-roster`+新`KNOWN_MIN_TURNS_
+BEFORE_KILL[22]=8`拿到字面`pass`(含磁碟寫入,全專案第三個,M5引擎層級勝利
+確認章節數24→實為23→24,見下方tally)——但camp-exit導航本身run-to-run
+明顯不穩定(5次sweep只有1次抵達真戰鬥+成功win-check,其餘4次卡在不同
+早期階段)。ch23/25的「選人畫面」機制被完整反組譯層級精確定位:14個
+畫面可見/可達的候選格 vs 硬編碼15人門檻,差1人且forward-Enter-cycling
+結構性摸不到——新寫`adaptive_pick_roster()`修好了「盲按導致來回toggle」
+這個真bug,但「差1人如何解」本身**未解**(Escape的效果兩次獨立實測互相
+矛盾,誠實記錄,不採信任何一次)。ch28完全未深入診斷,仍`needs_manual_
+followup`**
+
+### 任務背景
+
+延續上一輪「full-roster」的誠實殘留項:ch22/23/25/28四章的`--complete-
+roster`live測試從未做過。使用者本輪派工的具體背景(上上輪「guard-sweep」
+留下的兩組獨立診斷)：ch22/ch25 LOAD後標準`Right×3`camp-exit序列疑似失效
+(一次甚至彈回title)；ch23/ch28能抵達真正選人畫面但戰前對話/選人tap數
+run-to-run變異200~450+，固定budget(調到420/480)不收斂。
+
+### 第一步:ch22/ch25——重新活體驗證「Right×3失效」，發現這其實是
+run-to-run flakiness，不是ch22/25特有的結構性導航bug
+
+用`tools/dosbox_harness.sh`開新instance(`diag22`)、放慢節奏(每個按鍵
+間隔1.2秒，而非既有`attempt_camp_exit()`預設的0.6秒)、逐步截圖重測
+`Right×3`：**第一次重測完全成功**——Right×1→教會、Right×2→道具店、
+Right×3→出口（角色sprite確實走到柵欄門口），跟doc91既有紀錄的
+`0→4→3→2→1`cycle完全吻合，**沒有**重現上一輪「零視覺變化/彈回title」
+的symptom。因此把`KNOWN_NAVIGATE_HINTS`裡`22`/`25`的`["Return"]*300`
+(上一輪的未驗證猜測，本輪證實是**錯的**——它讓遊戲直接走進酒店的角色/
+裝備瀏覽選單，離出口越走越遠，見`.wsl_build/round0829b/ch22/shots/
+advance_050.png`(角色清單)、`advance_100.png`(索爾的裝備/技能頁))整條
+刪除，讓ch22/25改用跟其他大多數章節相同的標準`attempt_camp_exit()`
+(`Right×3`→出口確認→YES確認/選人→對話推進)路徑。
+
+**但後續5次完整`sweep_chapter()`跑法(ch22×3次、ch25×2次)只有1次在
+這個階段順利過關**（其餘4次`exit_confirm`要嘛完全沒登記(4次retry全部
+「no visible change」)、要嘛登記了但後續對話/HUD偵測仍找不到真戰鬥）。
+誠實結論：`Right×3`序列本身**不是**結構性壞掉，是這個環境既有的、
+doc58已經記錄過的input-drop/timing race問題（同一份存檔、同一段程式碼，
+不同次執行結果不同），刪除錯誤hint是必要的修正，但不是ch22/25導航問題
+的完整解答——run-to-run可靠度仍待未來一輪處理（可能需要對
+`_confirm_with_retry()`加更長的retry視窗，或在Right cycle之間加額外
+settle time）。
+
+### 第二步:ch23/ch25——用像素鑑識精確定位「選人畫面」卡住的真正機制
+(比上一輪「6-7 taps/pick變慢」的模糊描述精確得多)
+
+對已完成的一次ch23完整420-tap `sweep_chapter()`跑法的**全部**截圖
+(`.wsl_build/round0829b/ch23/shots/campexit_*.png`)做程式化像素分析
+(對10+4的候選人頭像格取小patch的channel spread平均值，>15判定為
+「已選取(全彩)」、<15判定為「未選取(灰色剪影)」，用
+`campexit_356_dialogue351.png`的已知ground truth校準)，發現：
+
+1. **選人畫面在exit_confirm的Return生效**當下**就已經在畫面上**(不是
+   數十次對話之後才出現)——`campexit_003_exit_confirm_attempt1.png`
+   已顯示`出戰人數X15/剩餘人數X15`（0已選）；舊code接著呼叫的
+   `_confirm_with_retry("yes_confirm")`其實就是選人畫面的**第一次
+   toggle**（此後cursor前進到slot1），不是什麼「要進入戰場嗎」確認框。
+2. 剩餘人數在整個420-tap預算內持續**來回震盪**(最低見過X01/13已選，
+   最高見過X15/0已選)，從未穩定停在0——這證實舊有「加大budget」的修法
+   方向從根本上錯了：這是Enter鍵「toggle+cursor前進」造成的**純隨機
+   漫步**，budget再大也不會收斂，因為超過門檻後cursor會繞回slot0開始
+   取消已選的人。
+3. **實際候選人頭像格只有14個**(row1×10+row2×4)，box邊界緊貼row2，
+   沒有第三行、也沒有任何隱藏格；`出戰人數X15`的15人門檻(`guard_
+   selection_threshold(23)`)卻要求15次成功toggle才會歸零——**14個
+   可達格子對15人門檻，差1**。乾淨測試(`diag_ch23_onemore.py`)證實：
+   湊到14/14已選後，**下一次Return立刻讓slot0變回未選**(14→13)，不是
+   摸到某個隱藏的第15格——結構上就是摸不到。
+
+新增`tools/fd2_chapter_sweep.py`的`ROSTER_PICK_GRID_XS`/
+`screen_shows_roster_pick_grid()`/`count_picked_candidates()`/
+`adaptive_pick_roster()`：偵測選人畫面後，**每按一次Return就重新截圖
+確認已選數**，一旦達到`n_candidates`(=`guard_selection_threshold(chapter)
+-1`)立刻停手，不再多按。這修好了一個真bug（盲按導致的隨機震盪），
+live驗證(ch23/ch25兩次獨立`sweep_chapter()`跑法)都能穩定在**恰好
+14 tap**內達到14/14已選，不多不少，完全取代舊的隨機震盪行為。
+
+### 第三步:「差1人怎麼辦」——嘗試過兩個假說，一個造成未知的場景跳轉、
+一個給出兩次互相矛盾的結果，**誠實記錄，均未採信**
+
+- **假說A(cap=16，多留1個非leader候選人湊滿15)**：`build_complete_
+  roster_save(..., cap=16)`產生16人(leader+15人)存檔，預期grid會多出
+  第15格。**結果：LOAD後根本沒有進到帳篷營地地圖，而是直接落在一個完全
+  不同的「紅地毯+左右對稱守衛」室內場景**(`.wsl_build/round0829b/
+  diag23cap16b_shots/01_post_load.png`)，跟cap=15時的帳篷營地完全
+  不同，連續20次Return都沒有變化也沒有出現選人畫面。已排除是忘記patch
+  章節byte(`build_complete_roster_save()`內部本來就會呼叫
+  `set_slot_chapter()`)。真正原因未查明——可能是roster_count本身或
+  第16個角色id(17/米亞斯多德)觸發了完全不同的分支，不安全，本輪放棄
+  此假說，**不建議下一輪直接複用cap=16而不先查清楚原因**。
+- **假說B(在14/14已選時按Escape而非Return，呼應doc91/doc58「選滿才能
+  離開」的「離開」語意)**：獨立診斷腳本(`diag_ch23_escape.py`，
+  instance`diag23esc`)在14/14已選當下按一次Escape，緊接著讀記憶體：
+  `screen_shows_roster_pick_grid()`回False，且battle-array指標讀到
+  6筆敵人record，看起來像是成功離開並進入下個畫面。**但把完全相同的
+  程式碼路徑接進正式`sweep_chapter()`CLI重跑一次(instance`pl23c23`)，
+  同一個Escape呼叫卻讓畫面整個重置回`出戰人數X15/剩餘人數X15`(0已選)**
+  (`.wsl_build/round0829b/ch23/shots/campexit_005_post_pick_escape.png`)
+  ——兩次獨立測試、同一份存檔、同一段code，結果完全相反。合理懷疑
+  diag23esc那次讀到的「6筆敵人」其實是殘留/未初始化記憶體的假陽性
+  (這個class的假陽性本專案在別處已有documented前例，見
+  `attempt_camp_exit()`docstring的「winverify」段落)，但**未經第三次
+  獨立重測確認哪一個才是真的**。程式碼裡把這個Escape呼叫保留下來(不比
+  舊有的純Return震盪更差，兩者現況都是`needs_manual_followup`)，但用
+  大篇幅comment誠實標注這個矛盾，**明確要求下一輪不要在沒有重新驗證的
+  情況下就宣稱ch23/25/28修好了**。
+
+### 第四步:ch22最終戰果——`--complete-roster`+`KNOWN_MIN_TURNS_
+BEFORE_KILL[22]=8`拿到字面`pass`(含磁碟寫入)
+
+WebFetch外部攻略站(chiuinan.github.io)取得ch22具體機制：勝利條件
+「敵全滅」，回合3與回合7各有惡魔增援波，回合5有莎拉(Shara)加入。呼應
+ch21`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`(最後一波+1)的既有derivation
+方法，新增`KNOWN_MIN_TURNS_BEFORE_KILL[22]=8`(回合7最後一波+1)。
+
+第5次`sweep_chapter --chapter 22 --complete-roster`跑法(instance
+`pl22d22`)：Right×3→出口確認→YES確認在第5個tap就找到真戰鬥(51個敵人
+record)；套用8回合等待(每回合皆誠實輪詢`[0x53ecc]`，全部讀到0，且
+`find_empty_adjacent_tile()`從第4回合起就再也找不到空地——`confirm_
+end_turn()`自己的既有fallback邏輯誠實記錄這個generalization gap、
+仍照既定方式送出Enter，沒有假裝成功)；第8回合結束時**現場觀察到
+`[0x53c03]`(章節index)從21活著跳到19**(doc58續二十八已知的「每個
+postbattle handler都會INC」現象，非本輪新發現，但是第一次在ch22上
+親眼重現)；等滿8回合後mass-kill全部51個敵人+`confirm_end_turn()`第一個
+kill-cycle、**1.8秒內`[0x53ecc]`翻2**；`advance_postbattle_montage()`
+清完戰後montage後，**持續耐心輪詢磁碟存檔25.3秒、章節byte真的從
+`0x15`前進到`0x16`**——verdict是字面`pass`，不是`anomaly_engine_win_
+no_disk_write`，全專案第三個含磁碟寫入的字面pass(前兩個是ch24/本輪
+之前)。
+
+**同一份存檔、同一段code，另外4次跑法(pl2222初測/pl22b22/pl22c22/
+ch22b重測)有3次卡在導航階段從未抵達戰鬥**（見第一步）、1次抵達戰鬥但
+在加`KNOWN_MIN_TURNS_BEFORE_KILL`之前就跑完了、回合0直接mass-kill、
+`[0x53ecc]`維持0(這是本輪最早、還沒套用8回合等待前的探索性跑法，
+不算作「失敗的win-check嘗試」，只是還沒套修正)。**誠實統計：本輪對
+ch22總共跑了5次`sweep_chapter()`，1次拿到`pass`，其餘4次因導航階段
+run-to-run不穩定而未抵達戰鬥**——win-check修正(8回合等待)本身只被
+verify過1次，導航穩定性仍是ch22要穩定重現這個`pass`的主要瓶頸。
+
+### 第五步:ch28——完全未深入診斷，維持`needs_manual_followup`
+
+跑了1次`sweep_chapter --chapter 28 --complete-roster`(instance
+`pl28`，674.8秒)，結果`needs_manual_followup`(generic advance loop
+從未找到戰鬥)。本輪剩餘時間都花在ch22/23/25上，ch28完全沒有像ch23
+那樣的像素鑑識級診斷——猜測(未驗證)它可能跟ch23/25同一類「選人畫面
+候選格數對不上guard_selection_threshold(28)=19人門檻」的問題(cap=19
+理論上是18個非leader候選人，若同一個grid渲染上限規律成立，18個候選
+格可能同樣摸不到第19個)，但這只是類推，**沒有本輪的live證據支持**。
+
+### 誠實confidence與M5 tally
+
+- **高信心(ground truth，debugger直接讀值+磁碟位元組比對)**：ch22在
+  `--complete-roster`roster組成([0,24,1,4,9,30,23,28,25,7,21,16,18,
+  15,3])+`KNOWN_MIN_TURNS_BEFORE_KILL[22]=8`+標準mass-kill/End-Turn
+  code路徑下，**確實**能拿到含磁碟寫入的字面`pass`——這是一次獨立、
+  完整、端到端的CLI跑法，不是one-off腳本東拼西湊的結果。
+- **中信心**：這個`pass`可重現，但**不保證每次都重現**——同一份輸入
+  在另外4次跑法中，有3次連戰鬥都沒找到（純導航階段的run-to-run
+  flakiness，這個專案在別的章節也反覆記錄過同樣的symptom，不是ch22
+  特有）。下一輪若要提升ch22的可靠度，方向應該是`_confirm_with_
+  retry()`的重試視窗/等待時間，而不是roster組成或win-check邏輯本身
+  （這兩者已經被本輪的1次成功跑法驗證過是對的）。
+- **低信心/未解**：ch23/25「14 vs 15」候選格差1人的具體解法——
+  `adaptive_pick_roster()`修好了震盪bug本身(這部分高信心)，但差1人
+  之後怎麼真正離開畫面仍是未解問題，Escape假說的兩次矛盾結果誠實記錄、
+  不採信。ch28完全沒有本輪的live證據，維持open。
+- **M5 tally**：引擎層級勝利確認章節數由23章(ch01-21+ch24+ch26)增為
+  **24章(ch01-21+ch22+ch24+ch26)**，新增ch22，且是含磁碟寫入的字面
+  `pass`（不是`anomaly_engine_win_no_disk_write`），全專案第三個此類
+  章節。ch23/25/28三章仍未達成——ch23/25共享同一個已精確定位、但未解的
+  「選人畫面差1人」結構性瓶頸；ch28完全未深入診斷。下一輪建議：(a)不要
+  在沒有重新驗證Escape行為的情況下宣稱ch23/25修好；(b)ch22的重點應轉向
+  導航可靠度(`_confirm_with_retry`重試/等待參數)而非roster或win-check
+  邏輯；(c)ch28值得投入至少一輪跟ch23同等級的像素鑑識診斷，而不是繼續
+  複製貼上ch23的假設。

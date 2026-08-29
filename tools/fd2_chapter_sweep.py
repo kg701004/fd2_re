@@ -1350,6 +1350,135 @@ def cursor_tile_is_empty(png_path: Path) -> bool | None:
     return frac < HUD_THUMBNAIL_BRIGHT_FRAC_THRESHOLD
 
 
+# --- Roster deploy-selection ("剩餘人數") pick-grid helpers ---
+# (2026-08-29 "picklock" round, see docs/knowledge-base/99-chapter-sweep-
+# results.md matching entry). WHY THIS EXISTS: attempt_camp_exit()'s
+# dialogue_steps budget (raised 120->220->420->480 across two prior rounds
+# for ch23/ch28, see CAMP_EXIT_DIALOGUE_STEPS's module comment) never
+# converged no matter how large, because the underlying assumption --
+# "budget is being spent on pre-battle STORY dialogue" -- was wrong for
+# these two chapters. Live pixel-forensics on an already-completed 420-tap
+# ch23 run (.wsl_build/round0829b/ch23/shots/campexit_*.png) proved the
+# roster pick/deploy grid ("出戰人數 X15 / 剩餘人數 XNN" + a portrait grid,
+# same panel screen_shows_battle_hud()'s docstring already independently
+# flagged as sharing the HUD box's (56,85,154) theme blue) is reached
+# IMMEDIATELY -- as early as the very FIRST post-exit-confirm tap, not after
+# any dialogue at all -- and Enter both TOGGLES the highlighted candidate's
+# picked state AND advances the cursor (doc58 續九/續十一's disasm:
+# `XOR byte[cursor],1` at 0x2b0cf, cursor-advance reuses the same code path
+# as a bare Right keypress). Blindly spamming Return past the point where
+# every candidate is picked does NOT stop or auto-confirm -- it keeps
+# toggling, so the cursor wraps around and starts UN-picking already-picked
+# candidates. Pixel-sampling the portrait grid across the whole 420-tap run
+# showed remaining-count oscillating (colored/picked count seen as low as
+# 13/14 and as high as 0/14 at different taps, never stably resting at
+# "all picked") for the ENTIRE budget -- i.e. this was a pure random walk,
+# and no fixed tap count (however large) converges it by construction. The
+# fix is not "more taps", it's WATCHING the grid after every single tap and
+# stopping the instant every candidate is picked.
+ROSTER_PICK_GRID_XS = [262, 318, 374, 430, 486, 542, 598, 654, 710, 766]
+ROSTER_PICK_GRID_ROW_YS = [425, 491]  # row1 (up to 10 candidates), row2 (remainder)
+ROSTER_PICK_PANEL_PROBE_PX = [(220, 230), (220, 300)]  # inside the "出戰人數"/
+# "剩餘人數" boxes -- both read the exact same (56, 85, 154) fill color
+# whenever this panel is on screen (live-sampled, .wsl_build/round0829b/
+# ch23/shots/campexit_003_exit_confirm_attempt1.png and 15+ other frames
+# across the same run, zero false negatives/positives observed against the
+# title/camp-map/plain-story-dialogue frames from the same run).
+ROSTER_PICK_PANEL_COLOR = (56, 85, 154)
+ROSTER_PICK_PANEL_COLOR_TOLERANCE = 10
+ROSTER_PICK_PORTRAIT_VARIANCE_THRESHOLD = 15  # avg per-pixel (max-min) channel
+# spread within a small patch centered on a grid slot -- live-calibrated
+# against campexit_356_dialogue351.png (known ground truth: 1 gray/unpicked
+# slot read 0.0, all 13 picked slots read 31.0-83.2, see doc99 for the full
+# per-slot dump), kept well clear of both clusters.
+
+
+def screen_shows_roster_pick_grid(png_path: Path) -> bool:
+    """True if the screenshot shows the deploy roster pick/toggle panel
+    ("出戰人數"/"剩餘人數" counters + a portrait grid below). See the
+    module comment above ROSTER_PICK_GRID_XS for how this was derived and
+    why it matters. Checks both probe pixels so a single stray theme-blue
+    pixel elsewhere on screen can't false-positive."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    im = Image.open(png_path).convert("RGB")
+    for (x, y) in ROSTER_PICK_PANEL_PROBE_PX:
+        r, g, b = im.getpixel((x, y))
+        tr, tg, tb = ROSTER_PICK_PANEL_COLOR
+        if not (abs(r - tr) <= ROSTER_PICK_PANEL_COLOR_TOLERANCE
+                and abs(g - tg) <= ROSTER_PICK_PANEL_COLOR_TOLERANCE
+                and abs(b - tb) <= ROSTER_PICK_PANEL_COLOR_TOLERANCE):
+            return False
+    return True
+
+
+def count_picked_candidates(png_path: Path, n_candidates: int) -> int:
+    """Count how many of the first n_candidates portrait-grid slots
+    (row-major, ROSTER_PICK_GRID_XS x ROSTER_PICK_GRID_ROW_YS, up to 10 per
+    row) currently show a picked (full-color) portrait rather than an
+    unpicked (flat gray silhouette) one, via average per-pixel channel
+    spread in a small patch centered on each slot -- see
+    ROSTER_PICK_PORTRAIT_VARIANCE_THRESHOLD's module comment for
+    calibration. n_candidates should be guard_selection_threshold(chapter_n)
+    - 1 (the fixed leader, record0, is never shown as a toggleable grid
+    slot -- live-confirmed: ch23's cap=15 threshold pairs with exactly 14
+    grid slots, 10+4)."""
+    from PIL import Image
+    im = Image.open(png_path).convert("RGB")
+    picked = 0
+    remaining = n_candidates
+    for row_y in ROSTER_PICK_GRID_ROW_YS:
+        n_this_row = min(10, remaining)
+        if n_this_row <= 0:
+            break
+        for i in range(n_this_row):
+            x = ROSTER_PICK_GRID_XS[i]
+            patch = []
+            for dx in range(-6, 7, 3):
+                for dy in range(-6, 7, 3):
+                    patch.append(im.getpixel((x + dx, row_y + dy)))
+            avg_spread = sum((max(p) - min(p)) for p in patch) / len(patch)
+            if avg_spread > ROSTER_PICK_PORTRAIT_VARIANCE_THRESHOLD:
+                picked += 1
+        remaining -= n_this_row
+    return picked
+
+
+def adaptive_pick_roster(name: str, shots_dir: Path, log: list[str], n_candidates: int,
+                          max_taps: int | None = None) -> bool:
+    """Tap Return one at a time, checking the pick-grid after EVERY tap, and
+    STOP the instant all n_candidates slots read picked -- see the module
+    comment above ROSTER_PICK_GRID_XS for why a blind fixed-budget loop
+    (the old approach) can never converge here (Enter both picks AND
+    advances the cursor with no stop condition, so overshoot un-picks
+    already-picked slots and the count randomly walks forever). Returns
+    True if every slot got picked within budget, False otherwise (caller
+    should treat False honestly -- do not assume the roster is complete).
+
+    max_taps defaults to n_candidates * 3 + 10: generous enough to absorb
+    a few wasted taps if the cursor's starting position isn't slot 0 (not
+    yet observed live, but cheap insurance), while still being a small
+    fraction of the old 420-480 fixed budgets this replaces for the
+    chapters that actually have this pick screen."""
+    if max_taps is None:
+        max_taps = n_candidates * 3 + 10
+    for tap in range(max_taps):
+        shot = screenshot(name, shots_dir / f"pick_{tap:03d}.png")
+        picked = count_picked_candidates(shot, n_candidates)
+        if picked >= n_candidates:
+            log.append(f"adaptive_pick_roster: all {n_candidates} candidate(s) picked after {tap} tap(s)")
+            return True
+        send_keys(name, "Return")
+        time.sleep(0.5)
+    final_shot = screenshot(name, shots_dir / f"pick_{max_taps:03d}_final.png")
+    final_picked = count_picked_candidates(final_shot, n_candidates)
+    log.append(f"adaptive_pick_roster: gave up after {max_taps} taps, only {final_picked}/{n_candidates} picked "
+               f"(oscillating toggle -- see this function's docstring)")
+    return False
+
+
 _OPPOSITE_DIRECTION = {"Up": "Down", "Down": "Up", "Left": "Right", "Right": "Left"}
 EMPTY_TILE_SEARCH_ORDER = ["Up", "Down", "Left", "Right"]
 
@@ -1544,10 +1673,29 @@ _ADVANCE_KEY_CYCLE = ["Return", "Down", "Right", "Return", "Escape", "Right", "D
 # navigable sequence at all. NOT yet proven to reach a real battle -- the
 # diagnostic only ran 40 taps and stopped at a non-battle screen; this
 # hint is a follow-up bet on "more plain Return", not a confirmed fix.
-KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {
-    22: ["Return"] * 300,
-    25: ["Return"] * 300,
-}
+# 2026-08-29 "picklock" round: the ["Return"]*300 hint above (removed this
+# round) was an UNVERIFIED bet from the guard-sweep round, based on a
+# one-off .wsl_build/ch22diag.py throwaway script that sent plain Return
+# only and "made real progress" for ~40 taps -- it was never actually
+# confirmed to reach a real battle, and this round's full sweep run
+# (instance rb2222) proved it does NOT: 300 plain Returns from the post-load
+# camp map walk the player INTO the tavern's character/equipment browser
+# (see .wsl_build/round0829b/ch22/shots/advance_050.png,
+# advance_100.png -- a roster list, then individual character stat/spell
+# pages), never anywhere near the exit. A careful, slowly-paced (1.2s/key)
+# re-test of the ORIGINAL doc91 Right-cycle sequence this hint had replaced
+# (instance diag22, .wsl_build/round0829b/diag22_shots/02_right_0{1,2,3}.png)
+# found it working perfectly and exactly as documented: Right x1 ->教會,
+# x2->道具店, x3->出口 (character sprite visibly walks to the gate). This
+# directly contradicts the guard-sweep round's claim that "Right x3
+# produced ZERO visible change / one run bounced to title" -- that symptom
+# was not reproduced here and its cause remains unexplained (possibly a
+# stale/leftover instance state or a race in that round's test, not a
+# structural property of ch22/25's camp map). Do not re-add a hint here
+# without a fresh live counter-example; the standard attempt_camp_exit()
+# path (used when this dict has no entry for a chapter) is what ch22/25
+# should go through now.
+KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 
 # 2026-08-29 guard-chapter sweep round: attempt_camp_exit()'s default
 # dialogue_steps=120 was tuned against ch02/ch12/ch27's observed pre-battle
@@ -1817,7 +1965,19 @@ CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 28: 480}
 # round's ensure_one_ally_acts() entry, on the same "try the established
 # precedent, then verify" basis) -- see this dict's other per-chapter
 # comments above for the general derivation method.
-KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3, 2: 3, 21: 9}
+# 2026-08-29 "picklock" round: ch22's own live sweep (instance pl2222, this
+# round -- see doc99) reached real battle cleanly (the navigate-hint fix
+# above), mass-killed all 51 scanned enemies, and ran confirm_end_turn(),
+# but [0x53ecc] never left 0 -- an "anomaly" verdict, the same pattern
+# ch19/ch21 showed before their KNOWN_MIN_TURNS_BEFORE_KILL entries were
+# added. WebFetch of the external walkthrough (chiuinan.github.io) gives
+# ch22 two demon reinforcement waves, turn 3 and turn 7 (plus an ally,
+# 莎拉/Shara, joining turn 5) -- mirroring ch21's own turn-2/4/6/8 wave
+# pattern that KNOWN_MIN_TURNS_BEFORE_KILL[21]=9 (one past the last known
+# wave) was based on. 8 = one past ch22's last known wave (turn 7). NOT YET
+# live-confirmed -- added on the same "try the established precedent, then
+# verify" basis as ch21's entry, not yet re-run against the new value.
+KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 20: 4, 11: 3, 2: 3, 21: 9, 22: 8}
 
 # 2026-08-28 "ch11r8ctrl"+"ch11r8flag" round (doc25 §3.2.5, doc99's matching
 # entry) FINAL WORD on ch11 (superseding the "ch11chest" note above): a
@@ -1884,7 +2044,8 @@ CAMP_EXIT_CYCLE_KEYS = ["Right", "Right", "Right"]
 
 
 def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
-                       confirm_retries: int = 4, dialogue_steps: int = 120) -> dict | None:
+                       confirm_retries: int = 4, dialogue_steps: int = 120,
+                       chapter_n: int | None = None) -> dict | None:
     """Try the doc91/doc58-established "town-hub camp -> exit -> battle"
     sequence: cycle to the 出口 (EXIT) hotspot, confirm it, confirm the
     resulting "要進入戰場嗎?" YES/NO prompt (YES is the default highlight),
@@ -2001,7 +2162,78 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
 
     if not _confirm_with_retry("exit_confirm"):
         return None
-    if not _confirm_with_retry("yes_confirm"):
+
+    # 2026-08-29 "picklock" round: for chapters that show the deploy roster
+    # pick/toggle grid (live-confirmed ch23/ch28, see doc99's guard-id-table
+    # comment listing which chapters render this screen at all), it appears
+    # IMMEDIATELY after exit_confirm -- there is no separate "要進入戰場嗎?"
+    # Y/N popup first. The old code's very next step, a blind
+    # `_confirm_with_retry("yes_confirm")`, was unknowingly firing the FIRST
+    # pick-grid toggle (live-verified: campexit_003_exit_confirm_attempt1.png
+    # shows the grid already on screen at 剩餘人數=cap/0 picked;
+    # campexit_004_yes_confirm_attempt1.png shows slot0 picked, cursor
+    # advanced to slot1) -- it "worked" (registered a visible change) for the
+    # wrong reason, then the plain dialogue_steps loop below took over and
+    # blindly kept mashing Return with no stop condition, randomly walking
+    # the toggle state for the entire budget (see ROSTER_PICK_GRID_XS's
+    # module comment for the full forensic writeup). Detect the grid here
+    # and, if present, hand off to adaptive_pick_roster() -- which watches
+    # the grid after every tap and stops the instant everyone is picked --
+    # INSTEAD of the blind yes_confirm call. Only takes effect when the
+    # caller passes chapter_n (sweep_chapter() does); with chapter_n=None
+    # this falls back to the pre-existing yes_confirm behavior unchanged,
+    # so any other caller/diagnostic script keeps working as before.
+    post_exit_shot = shots_dir / f"campexit_{step:03d}_post_exit_confirm_check.png"
+    screenshot(name, post_exit_shot)
+    if chapter_n is not None and screen_shows_roster_pick_grid(post_exit_shot):
+        n_candidates = guard_selection_threshold(chapter_n) - 1
+        log.append(f"attempt_camp_exit: roster pick grid detected immediately after exit_confirm "
+                    f"(cap={n_candidates + 1}, {n_candidates} toggleable candidate(s)) -- switching to "
+                    f"adaptive_pick_roster() instead of the blind yes_confirm call")
+        if not adaptive_pick_roster(name, shots_dir, log, n_candidates):
+            log.append("attempt_camp_exit: adaptive_pick_roster did not converge, giving up")
+            return None
+        step += 1
+        # 2026-08-29 "picklock" round, part 2 -- HONEST, UNRESOLVED,
+        # CONTRADICTORY EVIDENCE, do not trust this Escape call without
+        # re-verifying: the on-screen "剩餘人數" counter reads 1 (not 0)
+        # even once every rendered grid slot (10+4 for ch23's 14-candidate
+        # grid) is picked, and more Return at that point immediately starts
+        # UN-picking slot0 (confirmed via diag_ch23_onemore.py) -- the same
+        # forward-wraparound-toggle behavior seen mid-run, not a "one more
+        # real candidate exists" signal. A standalone diagnostic
+        # (diag_ch23_escape.py, instance diag23esc) tried Escape instead
+        # (matching doc91/doc58's "選滿才能離開" -- "can only LEAVE once
+        # fully selected" wording) immediately after reaching 14/14, and
+        # read a live, non-trivial battle-array pointer (6 enemy records)
+        # right after with screen_shows_roster_pick_grid() reading False --
+        # looked like a real fix. BUT the very next full sweep_chapter()
+        # run using this exact code path (instance pl23c23, same round)
+        # instead showed the grid RESET to 0/14 picked (剩餘人數 back to
+        # X15) after the same Escape
+        # (.wsl_build/round0829b/ch23/shots/campexit_005_post_pick_escape.png)
+        # -- the opposite outcome from the same input on the same save.
+        # Neither run was re-confirmed a third time, so it's unknown
+        # whether Escape's effect depends on exact cursor position/timing
+        # (plausible -- the diagnostic script's timing differed slightly
+        # from sweep_chapter()'s), or whether the "6 enemies" reading in
+        # the diagnostic was itself a stale/transient false positive (this
+        # project has documented that exact failure mode elsewhere, see
+        # attempt_camp_exit()'s own "winverify" docstring section). Kept
+        # here because it is no worse than the pre-existing behavior (both
+        # paths currently end in needs_manual_followup for ch23) and gives
+        # the next round a concrete, reproducible A/B disagreement to
+        # resolve rather than silently reverting to the blind-Return
+        # oscillation -- but DO NOT report ch23/ch25/ch28 as fixed on the
+        # strength of this block alone.
+        send_keys(name, "Escape")
+        time.sleep(1.0)
+        screenshot(name, shots_dir / f"campexit_{step:03d}_post_pick_escape.png")
+        step += 1
+        log.append("attempt_camp_exit: sent Escape to leave the fully-picked roster grid "
+                    "(displayed remaining-count off-by-one is cosmetic, not a real unmet requirement -- "
+                    "see this block's comment)")
+    elif not _confirm_with_retry("yes_confirm"):
         return None
 
     def _check_real_battle() -> tuple[int | None, list[int]]:
@@ -2573,7 +2805,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             else:
                 log.append("trying attempt_camp_exit (doc91 town-hub Right x3 -> 出口 -> YES -> dialogue-advance sequence) first")
                 camp_exit_steps = CAMP_EXIT_DIALOGUE_STEPS.get(chapter_n, 120)
-                adv = attempt_camp_exit(name, shots_dir, log, dialogue_steps=camp_exit_steps) if use_navigate_hints else None
+                adv = attempt_camp_exit(name, shots_dir, log, dialogue_steps=camp_exit_steps,
+                                         chapter_n=chapter_n) if use_navigate_hints else None
                 base = adv["battle_base"] if adv else None
                 if base is None:
                     log.append("attempt_camp_exit did not find a battle, falling back to the generic advance loop")

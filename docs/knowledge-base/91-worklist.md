@@ -2253,6 +2253,41 @@
   完整join-beat彙整表、filename索引陷阱細節、兩次live log、下一輪建議見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『full-roster』輪」
   小節。
+  **2026-08-29「picklock」輪**：ch22/23/25/28四章首次套用`--complete-roster`
+  live測試。**✅ch22拿到字面`pass`(含磁碟寫入，全專案第三個)**：刪除上一輪
+  未驗證的`KNOWN_NAVIGATE_HINTS[22/25]=["Return"]*300`猜測(本輪證實是錯的，
+  它會把玩家帶進酒店角色瀏覽選單而非出口)，改回標準`attempt_camp_exit()`
+  (`Right×3`→出口→YES/選人→對話推進)；WebFetch外部攻略站取得ch22具體機制
+  (回合3/7惡魔增援波)，新增`KNOWN_MIN_TURNS_BEFORE_KILL[22]=8`；5次獨立
+  `sweep_chapter()`跑法中1次端到端成功：戰鬥於tap5找到(51個敵人)，等滿8回合
+  (誠實輪詢，`find_empty_adjacent_tile()`第4回合後就摸不到空地但仍誠實嘗試，
+  未偽裝成功)，mass-kill+End-Turn第一個kill-cycle`[0x53ecc]`1.8秒內翻2，
+  持續輪詢25.3秒後**磁碟chapter byte真的`0x15→0x16`**。其餘4次跑法中3次卡在
+  導航階段(`Right×3`/`exit_confirm`本身run-to-run不穩定，不是ch22特有的
+  結構性bug，這個環境已知的input-drop/timing race問題)，1次是加`MIN_TURNS`
+  修正前的探索性跑法——**這個`pass`可重現一次，但導航可靠度仍是穩定重現的
+  主要瓶頸**，不宣稱每次都能拿到。**⚠️ch23/ch25**用像素鑑識(對420-tap全部
+  截圖做程式化顏色分析)精確定位選人畫面卡住的真正機制(比上一輪「6-7 taps/
+  pick變慢」精確得多)：畫面在`exit_confirm`當下就已出現(不是數十次對話之後)，
+  舊code的`yes_confirm`呼叫其實是選人畫面的第一次toggle；剩餘人數在整個
+  budget內持續隨機震盪(Enter=toggle+cursor前進，超過門檻後cursor繞回slot0
+  取消已選)——新寫`adaptive_pick_roster()`(`tools/fd2_chapter_sweep.py`新增
+  `ROSTER_PICK_GRID_XS`/`screen_shows_roster_pick_grid()`/
+  `count_picked_candidates()`)每按一次Return就重新截圖確認已選數，達標立刻
+  停手，兩次獨立live測試(ch23/ch25)都能穩定在剛好14 tap內達到14/14已選——
+  但**畫面可見/可達的候選格只有14個(10+4)，15人門檻(`guard_selection_
+  threshold`)卻要求15次toggle才歸零，差1人且forward-cycling結構性摸不到**
+  (乾淨測試證實：14/14後下一次Return立刻取消slot0，不是摸到隱藏的第15格)。
+  嘗試兩個假說：cap=16(多留1人湊滿15)讓LOAD直接跳進一個完全不同的「紅地毯
+  守衛室」場景，原因未查明，本輪放棄；14/14時按Escape(而非Return)兩次獨立
+  測試給出**互相矛盾**的結果(一次像是成功離開、一次直接重置回0已選)，
+  **誠實記錄、均未採信**，程式碼保留Escape呼叫但大篇幅comment警告下一輪
+  不要在沒有重新驗證的情況下宣稱ch23/25修好。**❌ch28**只跑了1次(674.8秒，
+  `needs_manual_followup`)，完全沒有本輪這種深度診斷，猜測(未驗證)可能是
+  同一類「候選格數對不上19人門檻」問題。**M5引擎層級勝利確認章節數由23章
+  增為24章(ch01-21+ch22+ch24+ch26)**，新增ch22且是含磁碟寫入的字面`pass`。
+  完整像素鑑識細節、兩個假說的矛盾證據、下一輪建議見`docs/knowledge-base/
+  99-chapter-sweep-results.md`「2026-08-29『picklock』輪」小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
