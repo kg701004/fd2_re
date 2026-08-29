@@ -1970,6 +1970,51 @@ battleBoundary` 同構(拒絕存檔，不產生檔案)，而不是目前的「�
 「戰鬥迴圈內完全比照原版無存檔路徑」，同時關掉一個目前使用者不會被告知
 的資料遺失面。
 
+#### 2026-08-29 補充：商店分支(`0x2e341`)live 驗證——「商店家族」內部沒有任何存檔/記錄功能 [驗]
+
+**背景**：使用者質疑「存檔是不是也能在商店觸發」，`91-worklist.md`「2026-08-29 修正
+『存檔只能在酒店』」條目把它列為(c)「測試商店選單存檔功能」的獨立待辦——當時定性為
+「全新、未驗證的線索」。實際上本節§9.1 開頭那段既有結論（存檔 writer `0x30012` 全 EXE
+**只有兩個呼叫者**：`0x2ccb6`(城鎮 hub option2)與`0x2fd93`(酒店/整備`0x2fc85`分支)）本身
+已經是一個窮舉式的靜態否證——商店分支`0x2e341`不在這兩個呼叫者之列，加上
+`RE-TOWN-SHOP-SERVICE-2E341`(`91-worklist.md`)已完整反組譯`0x2e341`的全部 4 個
+service callee(`0x2f0b0`購入／`0x2f642`販售／`0x2f883`裝備／`0x2f8ea`道具轉移)，逐一
+核對過 writer(gold debit、item flag、equip flag 等)都不是`0x2968d`/`0x30012`的
+malloc(0x59cb)→memcpy→checksum→XOR→fwrite 特徵。本輪是在既有靜態證據之上補一輪
+真正的 live DOSBox-X 操作+畫面/檔案雙重佐證，不是從零開始的探索。
+
+**方法**：獨立 harness instance(`shopsave`，Xvfb`:499`，`~/fd2-run-harness-shopsave`，
+與同時段另一組`longpoll03/05/26`instance 各自獨立 registry/Xvfb/tmux server 互不干擾)。
+沿用`.wsl_build/branchcheck/ch02_patched.SAV`(既有、已驗證 chapter-jump 到 ch02 的存檔)，
+複製進 instance 工作目錄後 title→`Down`→`Return`(LOAD)→`Return`(槽0)直達城鎮 hub camp
+map，預設落在 selection0(酒店)，與`UI-08-TOWN-VARIANT0-SIX-SELECTION-E2`既有記錄完全
+一致。`Right`×2 依既有文件的`0→4→3→2→1→0`cycle 序列到 selection3(道具店)，`Return`確認
+進店。
+
+**結果——4 個 service icon，沒有第 5 個存檔 icon**：進店後畫面是店員「歡迎光臨，需要什麼
+嗎？」+右下角剛好 4 個 icon(`$→袋`購入／`袋→$`販售／盔甲人形裝備／遞交物品的轉移)，逐項
+`Return`進入確認：service0=藥草等購入清單(`+HP040 $00010`)、service1=索爾/亞雷斯/哈諾/
+悠妮/蓋亞/希莉亞六人 roster(販售來源選角)、service2=同一份六人 roster(裝備選角)、
+service3=「誰的東西呢？」(道具轉移來源選角，FDTXT512)——與`RE-TOWN-SHOP-SERVICE-2E341`
+的`0..3`分派逐項吻合，全程沒有出現任何文字或圖示提示存檔/記錄。
+
+**存檔檔案位元組層級對照**：LOAD 完成、進店前記錄`FD2.SAV`基準(`md5=de4f9848…`，
+`mtime=1787989664`)；逐一進出 4 個 service 畫面、回到城鎮 hub 後再量一次——**md5/mtime
+完全沒有變化**，證實不只是 UI 沒有存檔選項，磁碟上也確實沒有任何寫入。
+
+**額外交叉核對**：退出商店回到 hub 後再`Left`×1(對照鏡像方向，落在 selection4/教會)，
+畫面/label 正確切換，證實 hub 選單本身在這輪操作全程保持正常可控狀態，不是操作卡死或
+畫面凍結導致「看起來沒有存檔」的假陰性。
+
+逐步截圖(共 20 張，`01_title.png`..`20_hub_final.png`，含 icon 裁切放大
+`07_icons_zoom.png`)保留在`.wsl_build/shopcheck_prep/`(本機、非 repo 追蹤)。
+
+**結論**：商店分支(不論從道具店或武器店入口進入，兩者共用同一個`0x2e341`+4-service
+dispatcher，見`RE-HUB-SUBSCENE-CALLEES`)**沒有任何存檔/記錄功能**——這是一個誠實的乾淨
+負面結果，靜態(`0x30012`兩個呼叫者窮舉)與 live(畫面 4 icon 完整列舉+存檔檔案位元組級
+比對)兩條證據鏈互相印證，沒有矛盾。`91-worklist.md`「2026-08-29 修正『存檔只能在酒店』」
+條目(c)項視為已解決，不需要下一輪重新調查商店存檔這條線索。
+
 ### 9.2 寶箱持久化(chest)：戰鬥內部才存在的旗標，本來就不進 `FD2.SAV` [驗]
 
 **原版機制**(既有證據見 doc25 §6.3、`91-worklist.md` L453/L1619、

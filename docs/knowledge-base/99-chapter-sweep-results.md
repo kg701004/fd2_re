@@ -3619,3 +3619,288 @@ engine-win-confirmed-no-disk-write
   live驗證的條目(29/30)若真的要測試，應該改成驗證「roster-pick-grid本身能否
   被走完、能否進入戰鬥」這類不涉及「下一章」的問題，不是這份文件既有的
   chapter-byte-advance pass/fail框架。
+
+## 2026-08-29「商店選單存檔」專項live驗證（代號`shopsave`）：乾淨負面結果——商店家族內部沒有存檔功能
+
+回應上方「2026-08-29 修正『存檔只能在酒店』」條目(c)項待辦。獨立harness
+instance(`shopsave`，Xvfb`:499`，與同時段跑其他worklist項目的`longpoll03/05/26`
+互不干擾)，沿用既有`.wsl_build/branchcheck/ch02_patched.SAV`LOAD直達ch02城鎮hub
+camp map(不需要打任何戰鬥)，`Right`×2到道具店、`Return`進店，逐一核對4個service
+icon(購入/販售/裝備/道具轉移)與其子畫面，全程無存檔選項；`FD2.SAV`md5/mtime在整段
+操作前後完全沒有變化。完整寫法、截圖清單見
+`docs/knowledge-base/25-battle-event-system.md`§9.1「2026-08-29補充：商店分支
+(`0x2e341`)live驗證」小節（含與既有靜態證據——存檔writer`0x30012`全EXE只有兩個
+呼叫者、商店分支不在列——的交叉對照）。`91-worklist.md`該條目(c)項已標記解決。
+
+## 2026-08-29「post-handler-save-trigger」輪（純靜態Ghidra，代號無，回應上方(b)項）：ch22/23/24/28 沒有「自己專屬的存檔呼叫」——是既有`0x523e7` gate表被延遲一章讀取，根因是`table_post[chapter]`在`FUN_00026152`之前就已經把`[0x53c03]`遞增到下一章
+
+回應上方「2026-08-29 修正『存檔只能在酒店』」條目(b)項待辦：「反組譯ch22/23/24/28
+的postbattle handler找出實際存檔呼叫觸發點」。全程`tools/ghidra_batch_probe.py`
+`-readOnly -noanalysis`純靜態(`xref_to`/`call_scan`/`decompile`/`disasm`/`bytes`)，
+沒有碰任何DOSBox-X/emulator。**結論比派工單原本假設的更簡單、也更乾淨**：這4章
+**沒有**各自獨立長出一條新的存檔呼叫路徑；牽動的是`0x26331`（camp-exit）這個
+本節9.1早就記錄過的既有呼叫點，只是**呼叫當下`[0x53c03]`已經被「剛打贏的那一章
+自己」的postbattle handler遞增成了下一章**，導致`0x523e7` gate表在錯的（但一致的）
+索引上被讀取。派工單列出的三個假設，答案是**(b)的變體**——不是全新分流表，是
+既有表被延遲一格讀取；(a)已被窮舉排除；(c)有正面反證（見下）。
+
+### 方法與逐步證據
+
+1. **`0x2968d`（存檔writer）全EXE call site窮舉，確認方法論**：`xref_to`與
+   `call_scan`（後者是逐byte掃`E8`opcode、不依賴Ghidra`-noanalysis`既有分析範圍
+   的窮舉法，本專案已知比`xref_to`可靠）**兩種方法都只找到2個**：`0x26331`
+   （`FUN_00026152`內，即doc25§9.1的camp-exit路徑）與`0x2940e`（`FUN_00029300`
+   內，即酒店icon1路徑）——與doc25§9.1既有記錄完全吻合，methodology sanity
+   check通過。**這代表假設(a)「handler內有直接`CALL 0x2968d`」在全EXE範圍內
+   被排除**——不存在第三個呼叫點，ch22/23/24/28的handler本身不可能直接呼叫
+   存檔writer。
+2. **完整decompile `FUN_00025bf4`(`0x25bf4-0x25eba`，戰役主迴圈，`[0x53ecc]==2`
+   分支)**，拿到勝利後的精確呼叫順序（Ghidra decompiler原文，未改寫）：
+   ```c
+   else if (DAT_00053ecc == 2) {
+     DAT_00051aac = 0;
+     FUN_00025977();
+     (**(code **)(&DAT_00051de9 + DAT_00053c03 * 4))();  // table_post[chapter]() 先執行
+     iVar2 = FUN_00026152();                              // 緊接著執行，同一個 [0x53c03]
+     ...
+   }
+   ```
+   即`table_post[目前章節]()`一定在`FUN_00026152()`**之前**執行完畢並return，
+   兩者用的是**同一個全域變數**`[0x53c03]`。
+3. **完整decompile `FUN_00026152`**：確認其分流條件就是既有記錄的
+   `if ((&DAT_000523e7)[DAT_00053c03] == '\0')`——`==0`走城鎮hub（town flow，
+   需要玩家自己點酒店選單才會走到`0x2940e`），`!=0`走camp-exit分支，內含
+   `0x26331`呼叫`FUN_0002968d()`（存檔），且這次讀值本身**沒有**修改
+   `[0x53c03]`。**問題變成：`FUN_00026152`讀到的`[0x53c03]`，是「剛打贏的
+   那一章」還是「下一章」？**
+4. **關鍵發現**：`xref_to 0x53c03`只回報**8個**write-type引用（多數是LOAD存檔
+   /New Game reset相關，如`0x25ed6`/`0x26067`/`0x29991`），但forced disasm
+   （沿著各handler尾端的`JMP`鏈手動追，而非依賴Ghidra既有reference DB——本專案
+   `-noanalysis`模式下xref_to對未分析區域本來就不完整這件事，這次又獨立驗證了
+   一次）另外挖出**至少4個**`INC dword ptr [0x53c03]`：`0x239b1`（raw21鏈）、
+   `0x24957`（raw22鏈）、`0x24d18`（raw23鏈）、`0x231f2`（raw24鏈，raw27的
+   handler也JMP進同一個位址共用）、`0x25047`（raw25鏈）。**逐一追蹤6個目標
+   章節（raw21/22/23/24/25/27，即story ch22-26/28）各自從`table_post[N]`
+   入口開始的`JMP`鏈**（每章2-4段`JMP`不等，全部flow-directed disasm直接
+   反組譯，非猜測），**全部6章、無一例外，都在自己的handler body結尾執行
+   `CALL FUN_00011506(); INC dword ptr [0x53c03]; RET`**（`FUN_00011506`是
+   共用的收尾/清理helper，跟存檔無關，純粹是章節推進epilogue的固定搭配）。
+   逐章終點位址：
+   | raw章節 | story章節 | table_post入口 | 遞增`[0x53c03]`位址 |
+   |---|---|---|---|
+   | 21 | ch22（確認靜默存檔） | `0x244b6` | `0x239b1` |
+   | 22 | ch23（確認靜默存檔） | `0x24754` | `0x24957` |
+   | 23 | ch24（確認靜默存檔，即live記錄的raw`0x17→0x18`那次） | `0x24c1e` | `0x24d18` |
+   | 24 | ch25（對照組，確認無存檔） | `0x24df2` | `0x231f2`（與raw27共用） |
+   | 25 | ch26（對照組，確認無存檔） | `0x24e80` | `0x25047` |
+   | 27 | ch28（確認靜默存檔） | `0x25464` | `0x231f2`（與raw24共用） |
+
+   即：**章節推進（`[0x53c03]++`）是全部6章通用的行為，不是ch22/23/24/28
+   獨有**——真正差異不在「誰會推進章節」，而在推進後的**新章節值**餵給
+   `0x523e7` gate表得到什麼結果。
+5. **獨立重新dump `0x523e7`（不信任舊文件字面位址，直接重查）**：`bytes 0x523e7
+   32`回傳`00×22, 01 01 01, 00 00, 01 01 01, [0b 3d 鄰接資料非本表]`——index
+   22/23/24=1、25/26=0、27/28/29=1，與doc25§9.1既有記錄逐byte吻合，本輪視為
+   獨立複驗通過（不是單純複製舊文件）。
+
+### 統一規則與6/6資料點驗證
+
+**規則**：`table_post[N]`（打贏第N章即story章節N+1）結尾把`[0x53c03]`遞增為
+`N+1`，`FUN_00026152`緊接著用**這個新值**`N+1`查`0x523e7[N+1]`——也就是說，
+「打贏story章節X是否會靜默存檔」實際上問的是「**下一個story章節**（X+1）在
+`0x523e7`表裡的分類」，不是X自己的分類。這解釋了派工單特別點名的疑點——ch22
+（raw21）本身不在`0x523e7`原本記錄的「整備限定」raw22-24/27-29範圍內，但raw21+1
+=22正好落在範圍內：
+
+| 打贏story章 | raw(打贏當下) | 遞增後`[0x53c03]` | `0x523e7[遞增後]` | 預測 | 既有live結果 |
+|---|---|---|---|---|---|
+| ch22 | 21 | 22 | 1(整備限定) | 靜默存檔 | ✓ 確認（25.3秒） |
+| ch23 | 22 | 23 | 1 | 靜默存檔 | ✓ 確認 |
+| ch24 | 23 | 24 | 1 | 靜默存檔 | ✓ 確認（5.1秒，即raw`0x17→0x18`那次） |
+| ch25 | 24 | 25 | 0(城鎮流程) | 無靜默存檔 | ✓ 確認（60秒patient poll仍0） |
+| ch26 | 25 | 26 | 0 | 無靜默存檔 | ✓ 確認 |
+| ch28 | 27 | 28 | 1 | 靜默存檔 | ✓ 確認（5.1秒） |
+
+**6/6資料點精確吻合，且規則本身是從完整decompile的呼叫順序直接推出，不是先看
+結果再回頭湊表**。連帶產生一個尚未live驗證、可證偽的預測：打贏story ch27
+（raw26→遞增27，`0x523e7[27]=1`）與ch29（raw28→遞增29，`0x523e7[29]=1`）
+**理論上也應該有靜默存檔**，留給下一輪驗證（本輪未測試，誠實列為預測非結論）。
+
+### 對派工單假設(c)「只是poll時間不夠長」的正面排除
+
+不是「還沒等到」——ch25/ch26對照組這輪poll窗口（60秒）**比**4個確認靜默存檔的
+章節（5.1-25.3秒）**更長**，仍讀不到寫入；本輪同時提供了**結構性理由**：
+ch25/ch26遞增後落在`0x523e7==0`（城鎮流程），`FUN_00026152`走的是完全不同的
+分支（進城鎮hub互動迴圈，不含`FUN_0002968d()`呼叫），不是「同一條路徑、只是
+慢」，是**根本不會執行到存檔呼叫**的另一條分支，等多久都一樣。
+
+### 誠實confidence與邊界
+
+- **高信心**：`0x2968d`全EXE恰好2個call site（雙方法互證）、`FUN_00025bf4`/
+  `FUN_00026152`完整decompile的呼叫順序與分流條件、`0x523e7`表獨立複驗、6/6
+  資料點精確吻合——這幾項都是直接反組譯/decompile位元組級證據，不是推論。
+- **中高信心**：6個目標章節的`INC[0x53c03]`終點位址，是沿著`JMP`鏈forced
+  disasm一路追出來的（部分章節需要追2-4段跳轉），每一段都有明確反組譯輸出，
+  但**沒有**對每個中間跳轉點額外做xref反查「還有沒有別的地方也跳進來」——
+  不影響本節結論（結論只依賴「這6章各自的鏈路終點確實是INC」，不依賴「這條
+  鏈路是否被其他章節共用」），但如果未來要精確畫出全部30章的postbattle
+  handler CFG，這點需要更完整的窮舉。
+- **未驗證、誠實列為預測**：raw26(story ch27)與raw28(story ch29)是否真的
+  也會靜默存檔——邏輯上應該會（`0x523e7[27]=1`、`0x523e7[29]=1`），但本輪
+  純靜態，沒有live驗證這兩章的實際行為；且ch27/ch29本身在`ROSTER_PICK_GRID_
+  CHAPTERS`既有測試框架裡屬於「雙結局/終局」章節，過去輪次對「章節byte是否
+  前進」這個問題本身的適用性有過保留（見上方「第10輪」章節備註），下一輪測試
+  前應先確認這個問題對ch27/29仍然有意義。
+- **未展開**：`FUN_00011506`本身只確認是「每章推進前都會呼叫的共用helper」，
+  沒有反組譯其內部在做什麼（推測是UI/畫面狀態清理，與存檔邏輯無關，因為它在
+  ch25/ch26——不會存檔的兩章——一樣被呼叫），不影響本節結論。
+
+### 對91-worklist.md (b)項與memory的影響
+
+`91-worklist.md`「2026-08-29 修正『存檔只能在酒店』」條目的(b)項——「反組譯
+ch22/23/24/28的postbattle handler找出實際存檔呼叫觸發點」——**本輪視為已回答，
+但答案與原始措辭的預設不同**：不是這4章的handler裡长出一個新的、專屬的存檔
+呼叫，而是它們的handler跟其他章節一樣都會推進`[0x53c03]`，只是推進後的新章節
+值剛好落在既有`0x523e7`表的「整備限定」分類裡，經由**既有**的`0x26331`呼叫點
+觸發存檔。詳見下方(b)項更新。使用者memory `project_fd2_save_only_at_tavern.md`
+建議同步更新這個更精確的機制描述（「章節轉換觸發存檔」→「下一章`0x523e7`分類
+決定是否靜默存檔，機制與既有整備限定流程共用，非獨立新路徑」）。
+
+## 2026-08-29「longpoll」輪（回應上方(a)項）：把磁碟耐心輪詢窗口從60秒延長到180秒，對ch03/ch05/ch26重測——**ch03/ch26兩章180秒內依然0前進，與同輪已經解出的`0x523e7`根因規則逐位元組吻合，正面確認「不是poll不夠久」；ch05這次(含一次獨立重跑)兩次都連engine-level win都沒拿到，是`roster_mode="complete"`變成預設值之後的一個新的、獨立的run-to-run行為差異，不是本輪原本要測的disk-write timing問題**
+
+### 任務背景
+
+呼應上方「2026-08-29 修正『存檔只能在酒店』」條目(a)項待辦：「23個
+`anomaly_engine_win_no_disk_write`章節，很可能有一部分只是輪詢磁碟寫入的
+等待時間不夠長（ch22要等25.3秒才寫入）」——但本輪動工前，同一份文件裡
+稍早的「post-handler-save-trigger」輪其實已經用純靜態反組譯**正面排除**了
+ch25/ch26這兩個對照組的「poll不夠久」假說（見上方「對派工單假設(c)的正面
+排除」小節），並提出一條可證偽的規則：打贏story章X後`[0x53c03]`遞增為X+1，
+`0x523e7[X+1]`決定是否靜默存檔——這條規則當時只用raw21-28（story ch22-29）
+6個資料點驗證過。本輪目的：①用**明顯更長**的180秒窗口重新測ch26（原本的
+對照組，先前只測過60秒），看結論會不會翻盤；②挑一個**規則涵蓋範圍外**、
+從未測過的早期章節（ch03，index落在`0x523e7`table「00×22」那段全零區間）
+延伸驗證這條規則是否也適用於中途章節，不只是raw21-28那個窄範圍；③ch05
+陪測（doc99先前記錄過ch05在`ch12diag`輪1.8秒就拿到engine win，理論上是
+最快、最不該有時序疑慮的對照組）。
+
+### 工具修正：`--disk-poll-max-s`
+
+`sweep_chapter()`裡`POST_WIN_DISK_POLL_MAX_S`原本是寫死的模組常數（60.0），
+`sweep_chapter()`與CLI(`cmd_sweep`)都加了同名參數/`--disk-poll-max-s`旗標
+（預設值仍是舊常數，零回歸風險），這次3章全部帶`--disk-poll-max-s 180`。
+
+### 方法：3個獨立`dosbox_harness.sh`instance平行跑（`longpoll03`/`longpoll05`/`longpoll26`），事後對ch05單獨補一輪重跑（`longpollb05`）
+
+執行前依doc48§8.4/§9核對：`wsl -d Ubuntu bash -c "echo OK"`健康、`ps aux |
+grep dosbox`/`tmux -L fd2harness ls`確認機器上沒有殘留的dosbox-x/tmux
+server（本輪開始前是乾淨狀態，沒有其他agent的並行instance残留），3個
+instance用獨特前綴`longpoll`(`03`/`05`/`26`)，跟本專案過去所有輪次的
+instance命名（`sweep`/`pl22d22`/`g26_26`等）以及可能同時在跑的其他agent
+指定的不同instance完全不會撞名。`--complete-roster`是現行預設值，
+未加任何額外旗標覆寫（照著使用者派工單的「完整roster是預設」慣例）。
+
+### 結果
+
+**ch26**(`.wsl_build/round_longpoll/ch26/result.json`，`longpoll26`
+instance，694.5秒)：`complete_roster_ids(26)`→15人(含guard 9悠妮/29亞奇
+梅吉，5真實+10合成)，`attempt_camp_exit`5 tap找到真戰鬥(42敵)，settle
+6輪穩定；mass-kill 42敵+`confirm_end_turn()`**`[0x53ecc]`1.9秒內翻2
+（ENGINE-LEVEL WIN CONFIRMED，與doc99先前記錄的1.8秒完全吻合，重現一致）**；
+`advance_postbattle_montage`清完70 tap montage後，**180秒patient poll
+（177次tap）磁碟章節byte全程維持在raw0x19（patched值），沒有前進一絲一毫**
+——verdict`anomaly_engine_win_no_disk_write`，與先前60秒輪詢的結果完全
+一致，只是這次的耐心窗口整整長了3倍。
+
+**ch03**(`.wsl_build/round_longpoll/ch03/result.json`，`longpoll03`
+instance，842.0秒)：套用既有`KNOWN_MIN_TURNS_BEFORE_KILL[3]=3`等待3回合
+（`confirm_end_turn()`每回合都誠實輪詢`[0x53ecc]`，3次都讀0，符合預期），
+第4次mass-kill+End-Turn**`[0x53ecc]`1.8秒內翻2（ENGINE-LEVEL WIN
+CONFIRMED）**——與doc99「ch2killgen」輪先前記錄的ch03 engine-win確認完全
+吻合，這次用官方CLI（非手動腳本）獨立重現一次。`advance_postbattle_montage`
+清完montage後，**180秒patient poll（177次tap）磁碟章節byte全程維持在
+raw0x02（patched值），同樣沒有前進一絲一毫**——verdict
+`anomaly_engine_win_no_disk_write`。
+
+**ch05**(`.wsl_build/round_longpoll/ch05/result.json`，`longpoll05`
+instance，580.6秒；獨立重跑`.wsl_build/round_longpoll/ch05b(results_
+ch05b.json)`，`longpollb05`instance，565.0秒)：兩次跑法**roster組成完全
+相同**（`complete_roster_ids(5)`只湊到7個真實record`[0,1,4,9,30,2,8]`，
+cap=15但沒有補合成record——這代表ch05在遊戲劇情裡到這一章為止，真的只有
+這7個角色理論上已加入，`complete_roster_ids()`忠實反映這一點，不是bug），
+`attempt_camp_exit`都在4-5 tap內找到同一場戰鬥（`base=0x26be24`，30敵，
+與doc99先前記錄的「ch05 30敵」數字一致），mass-kill 30敵+`confirm_end_
+turn()`**兩次都是`[0x53ecc]`在15秒`ENGINE_WIN_POLL_MAX_S`輪詢窗口內維持
+在0，從未翻成2**，`sweep_chapter()`的4次kill-cycle重試迴圈也誠實確認
+「重掃到的30筆camp==0 record全部已經帶著死亡signature，沒有活著的敵人可以
+歸咎」而提前停止重試。verdict是`anomaly`（連engine-level win都沒有），
+**不是**`anomaly_engine_win_no_disk_write`——這代表本輪180秒磁碟輪詢的
+延長，對ch05這次的兩輪測試**完全沒有機會派上用場**，disk-write timing
+問題對ch05維持untested，不是本輪回答了「還是不行」。
+
+### 誠實分析：ch03/ch26的負面結果是「根因已解、結果如預期」，不是「還沒查明」；ch05是一個新的、獨立的roster-mode回歸疑點
+
+1. **ch26/ch03的180秒0前進，跟稍早「post-handler-save-trigger」輪反組譯
+   出的`0x523e7`規則逐位元組吻合，不是本輪的新發現，是對那條規則的
+   正面延伸驗證**：`0x523e7`32 bytes dump（index 0-21全部0、22-24=1、
+   25-26=0、27-29=1）套用「打贏story章X後查`0x523e7[X+1]`」——ch26贏
+   （story ch26→遞增raw26）查`0x523e7[26]=0`，預測無靜默存檔，這輪180秒
+   驗證**依然0/0符合**；ch03贏（story ch03→遞增raw3）查`0x523e7[3]=0`
+   （在index0-21的全零區間內，先前規則只用raw21-28驗證過，這是第一次
+   延伸到這個範圍外的資料點），預測同樣無靜默存檔，本輪**新驗證的資料點
+   同樣精確吻合**。這代表(a)項原本猜測的「23個anomaly章節可能只是poll
+   不夠久」在ch03/ch26這兩個資料點上**沒有得到支持**——真正原因是結構性
+   的分支選擇（走城鎮hub而非camp-exit存檔分支），不是耗時。合理外推
+   （**未逐一live驗證，誠實列為推論**）：`0x523e7`表index0-21全部是0，
+   代表**任何**打贏story ch01-21、下一章仍落在index1-21範圍內的章節，
+   理論上都會走同一條「無靜默存檔」的城鎮hub分支，不論poll多久——這解釋了
+   doc99先前「ch02-16批次9/15拿到engine win、0/15拿到disk pass」這個
+   舊資料為什麼是結構性的，不是那一輪的poll窗口（當時已經是60秒）系統性
+   不夠長。
+2. **ch05兩次都連engine-level win都沒拿到，是本輪意外發現、需要下一輪
+   獨立處理的新疑點，不要跟disk-write timing問題混為一談**：doc99「
+   ch12diag」輪先前記錄的「ch05 1.8秒engine win」，用的是`--no-roster-pad`
+   （沿用機器上唯一真實存檔本身的roster），跟本輪預設的`roster_mode=
+   "complete"`（`complete_roster_ids(5)`吐出的7人早期roster）**組成
+   很可能不同**（本輪未逐位元組比對兩者差異，這是誠實的推論而非結論）。
+   兩種可能：①`complete_roster_ids(5)`吐出的7人陣容缺少某個win-check
+   handler依賴的特定角色（例如某個必須存活/必須出手的NPC，比照ch02/11/
+   21/23已知的`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`模式，ch05目前不在
+   這個集合裡，但本輪兩次都沒有嘗試`ensure_one_ally_acts()`）；②純粹是
+   doc99反覆記錄過的run-to-run導航/戰鬥判定flakiness，剛好連續兩次都撞上。
+   **兩次獨立跑法（不同instance、同一份roster組成）結果完全一致**，比較
+   偏向①（結構性、可重現）而非②（純隨機flaky），但沒有第三次用舊
+   `--no-roster-pad`模式的對照組，不能下定論，留給下一輪。
+
+### 對M5 tally的影響：**無變動**
+
+3章全部維持既有verdict分類（ch03/ch26仍是`anomaly_engine_win_no_disk_
+write`，ch05從先前記錄的「有engine win」在本輪兩次獨立測試中都退化成
+`anomaly`）——**沒有任何一章從`anomaly_engine_win_no_disk_write`升級到
+`pass`**，M5引擎層級勝利確認章節數與磁碟`pass`章節數（4章：ch22/23/24/28）
+均維持不變。ch05的verdict退化**不代表**M5計數要往回扣（doc91既有的「27/30
+章engine-win確認」tally引用的是歷史上曾經拿到過的最佳結果，不是「這次
+重跑一定會重現」的保證——這正是doc99反覆強調的run-to-run flakiness的
+又一個例子），但下一輪如果要再引用「ch05是9/15批次的一員」這個既有
+結論，應該先用`--no-roster-pad`或補`ensure_one_ally_acts()`重新確認，
+不要預設本輪的`anomaly`負面結果只是雜訊。
+
+### 對91-worklist.md (a)項與memory的影響
+
+`91-worklist.md`「2026-08-29 修正『存檔只能在酒店』」條目(a)項——「23個
+anomaly章節需要用更長的耐心poll（建議至少60秒）重新驗證，不能直接沿用
+舊的『anomaly』判定」——**本輪視為已回答，結論是負面但明確**：把窗口從
+60秒延長到180秒（3倍），對ch03/ch26兩個獨立資料點**沒有讓任何一個從
+`anomaly_engine_win_no_disk_write`翻盤成`pass`**，且這個負面結果跟同一份
+文件裡「post-handler-save-trigger」輪的純靜態根因分析（`0x523e7`表index
+0-21全部是0）逐位元組吻合——**這代表(a)項原本的假說本身沒有錯（`0x523e7`
+規則之前也還沒有機會驗證超出raw21-28的資料點），但答案是否定的**：對
+`0x523e7[下一章]==0`的章節（story ch01-22絕大多數、ch25、ch26），不論
+poll多久都不會有磁碟寫入，因為根本不會執行到存檔呼叫這條分支，不是「這條
+路徑比較慢」。**下一輪不需要再對其餘21個尚未逐一live驗證的anomaly章節
+（ch02/04/06-20，排除已測的ch03/05）重複這個180秒poll實驗**——`0x523e7`
+表已經給出全部30章的預測，若要繼續驗證，正確的下一步是挑1-2個
+`0x523e7[下一章]==1`但目前仍是anomaly分類的章節（若有的話，本輪未逐一
+核對），而不是繼續延長poll窗口本身。使用者memory
+`project_fd2_save_only_at_tavern.md`建議同步更新：(a)項從「還開放」改為
+「已回答（否定）」，並記錄ch05這個新的、獨立的roster-mode回歸疑點。

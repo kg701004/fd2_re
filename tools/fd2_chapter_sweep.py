@@ -2873,7 +2873,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                    boot_wait_s: int = 12, escape_taps: int = 30,
                    keepalive: int = 1200, teardown_after: bool = True,
                    pad_roster: bool = True, use_navigate_hints: bool = True,
-                   roster_mode: str = "complete", roster_cap: int | None = None) -> dict:
+                   roster_mode: str = "complete", roster_cap: int | None = None,
+                   disk_poll_max_s: float = POST_WIN_DISK_POLL_MAX_S) -> dict:
     name = f"{instance_prefix}{chapter_n:02d}"
     chapter_dir = results_dir / f"ch{chapter_n:02d}"
     shots_dir = chapter_dir / "shots"
@@ -3202,10 +3203,10 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                 # bounded chance instead of the old ~1.5s.
                 if engine_win:
                     log.append("sweep_chapter: engine-level win confirmed -- patiently polling the on-disk "
-                               f"save for up to {POST_WIN_DISK_POLL_MAX_S:.0f}s while continuing to tap Return")
+                               f"save for up to {disk_poll_max_s:.0f}s while continuing to tap Return")
                     poll_t0 = time.time()
                     poll_i = 0
-                    while time.time() - poll_t0 < POST_WIN_DISK_POLL_MAX_S:
+                    while time.time() - poll_t0 < disk_poll_max_s:
                         send_keys(name, "Return")
                         time.sleep(0.8)
                         poll_i += 1
@@ -3218,7 +3219,7 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                                 break
                     else:
                         log.append(f"sweep_chapter: on-disk save still not advanced after "
-                                   f"{POST_WIN_DISK_POLL_MAX_S:.0f}s of post-win polling ({poll_i} taps) -- "
+                                   f"{disk_poll_max_s:.0f}s of post-win polling ({poll_i} taps) -- "
                                    f"giving up honestly, not assuming a write will eventually happen")
             else:
                 log.append("no enemy slots found by scan -- skipping End Turn shortcut, flagging as anomaly")
@@ -3309,7 +3310,8 @@ def cmd_sweep(args):
                                 pad_roster=not args.no_roster_pad,
                                 use_navigate_hints=not args.no_navigate_hints,
                                 roster_mode="pad" if args.no_complete_roster else "complete",
-                                roster_cap=args.roster_cap)
+                                roster_cap=args.roster_cap,
+                                disk_poll_max_s=args.disk_poll_max_s)
         append_results(results_path, result)
         print(f"ch{n:02d}: {result['verdict']} ({result['duration_s']}s) -- {result['detail']}")
 
@@ -3349,6 +3351,14 @@ def build_parser():
                           "leader is never a toggleable slot, so pass guard_selection_threshold(chapter_n)+1 here "
                           "to get a roster whose non-leader count actually matches the engine's EBP target "
                           "(ch23 live-confirmed 2026-08-29 'ch23retest' round, see doc99).")
+    sp.add_argument("--disk-poll-max-s", type=float, default=POST_WIN_DISK_POLL_MAX_S,
+                     help="how many seconds to patiently poll the on-disk save for a chapter-byte advance after "
+                          "an engine-level win, once advance_postbattle_montage() clears the postbattle montage "
+                          "(default: the module's POST_WIN_DISK_POLL_MAX_S constant, 60s). 2026-08-29 'longpoll' "
+                          "round: ch22 needed a full 25.3s of this window before its disk write landed, well past "
+                          "how long many earlier 'anomaly_engine_win_no_disk_write' verdicts were actually polled "
+                          "for -- raise this (e.g. 120-180) when re-testing a chapter that may just have been "
+                          "under-polled rather than genuinely lacking a disk-write path.")
     sp.set_defaults(func=cmd_sweep)
 
     return p
