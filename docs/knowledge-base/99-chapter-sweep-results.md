@@ -3343,3 +3343,156 @@ verify過1次，導航穩定性仍是ch22要穩定重現這個`pass`的主要瓶
   導航可靠度(`_confirm_with_retry`重試/等待參數)而非roster或win-check
   邏輯；(c)ch28值得投入至少一輪跟ch23同等級的像素鑑識診斷，而不是繼續
   複製貼上ch23的假設。
+
+## 2026-08-29「ch23retest」輪:**ch23「14 vs 15」謎團解開——不是UI渲染上限、也不是
+真實角色不夠(natural_join_order(23)有20個真實劇情角色，遠超需求)，是`complete_
+roster_ids()`自己的cap預設值少算了1(leader不算入可切換格)，加上上一輪(picklock)
+自己的cap=16診斷腳本忘記呼叫`fd2save.encode()`、寫出一份checksum壞掉的存檔，讓
+「cap=16會跳進完全不同場景」這個假陽性掩蓋了正確的修法。修好之後：`adaptive_pick_
+roster()`乾淨15 tap選滿、`確定`彈窗自然跳出、抵達50→24敵真戰鬥、`ensure_one_ally_
+acts()`+已死亡的24隻敵人讓`[0x53ecc]`直接翻2、磁碟章節byte在1.3秒內從raw0x16前進到
+raw0x17——**字面`pass`,含磁碟寫入,不是anomaly**。M5引擎層級勝利確認章節數由24章
+增為25章(ch01-21+ch22+ch23+ch24+ch26)**
+
+### 任務背景
+
+使用者派工重跑ch23，具體假說：picklock輪的複雜像素鑑識分析（14個可達候選格 vs
+15人門檻）本身沒有問題，但picklock輪測試用的roster本身可能仍不是「真正完整」——先
+重新核對ch01-22全部加入角色，用`--complete-roster`模式建構一份真正完整的roster，
+看這是否讓第15格自然出現。
+
+### 第一步:重讀doc58 2026-08-17（續九～續十一），發現這個「14 vs 15」機制早就有
+一次獨立、live驗證過的完整反組譯先例——ch24 patch
+
+在深入picklock輪的像素鑑識細節之前，先重讀`docs/knowledge-base/58-remake-live-
+verification-log.md`續九～續十一（比picklock輪早了12天，針對的是ch24而非ch23，但
+是**同一個畫面、同一個函式`FUN_0002af28`**）。已經ground-truth反組譯過的機制：
+
+- 目標人數存於`EBP`（`0x2af39: MOV EBP,0xf`＝15，超過raw0x1a門檻變19）。
+- 判斷式`0x2b0e3: CMP EAX,EBP`＋`JNZ`——已選人數（EAX，來自`FUN_0002b749`掃描
+  toggle陣列）必須**精確等於**EBP才會離開迴圈，不是「至少」。
+- **游標Right/Enter cycling結構性排除index `roster_count-1`**（即最後一個非
+  leader成員）——這在該輪用13人存檔（12個可切換候選人）live驗證過：目標若誤設
+  成13（等於roster_count本身），游標永遠碰不到index12，因為那個index根本不存在
+  （13人存檔只有12個非leader成員）。真正修法：EBP要設成`roster_count-1`（12），
+  不是`roster_count`（13）。
+
+這代表：**leader永遠不算進可切換候選人數**，這件事在ch24早就有一次獨立、live驗證
+過的確認（甚至直接binary patch EXE驗證成功：`0x50f4e`從`0x0f`改成`0x0c`，12人選滿
+順利進場）。但2026-08-29續的「fullroster21」／「picklock」兩輪重新設計
+`complete_roster_ids()`/`guard_selection_threshold()`時，**沒有連結到這個12天前的
+先例**——`complete_roster_ids()`預設`cap=guard_selection_threshold(chapter_n)`，
+把leader也算進threshold裡，導致任何用預設cap建構的roster，非leader候選人數永遠
+比threshold少1。ch21能成功純粹是因為ch21走的是完全不同的機制（`DAT_00053a45`陣列
+掃描的guard check，raw≤21根本不會顯示這個切換格畫面，見doc58續九的
+`DAT_000523e7`旗標表），不受這個off-by-one影響；ch22也是同一個「不顯示畫面」類別
+（raw21）。**ch23（raw22）是這兩輪第一個真正踩到這個screen off-by-one的guard-
+gated章節**，而`complete_roster_ids()`的cap預設值精確地重現了ch24輪已經修好過
+一次的同一個bug。
+
+### 第二步:確認picklock輪的cap=16假說（`diag_ch23_cap16b.py`）本身方向正確，但被
+自己腳本的一個bug（忘記`fd2save.encode()`）產生的假陰性給否決了
+
+比對`.wsl_build/round0829b/ch23_cap16.SAV`（picklock輪產生）與本輪重新產生的同一份
+roster：舊檔案`fd2save.decode()`直接**checksum mismatch**（`expected 0x9df85037,
+got 0x002cd1c9`）——`diag_ch23_cap16.py`/`diag_ch23_cap16b.py`兩支腳本都是直接呼叫
+`build_complete_roster_save()`拿到**明文(plaintext) buffer**後`out_sav.write_
+bytes(buf)`，从未呼叫`fd2save.encode()`。這與`prepare_chapter_save()`的正式
+`"complete"`路徑（一直都會`encode()`）不同——遊戲LOAD到一份checksum壞掉、事實上是
+明文誤當成加密格式讀取的存檔，落地在一個完全不相關、看起來像是記憶體隨機解讀出來的
+「紅地毯+左右對稱守衛」室內場景（`diag23cap16b_shots/01_post_load.png`），不是
+遊戲拒絕16人roster，是**存檔本身就是壞的**。這個假陰性讓picklock輪把cap=16假說
+標記為「原因未查明，不建議下一輪直接複用」，本輪確認：原因就是這個encode漏呼叫，
+cap=16本身完全沒問題。
+
+### 第三步:工具修正(`tools/fd2_chapter_sweep.py`)
+
+1. `ROSTER_PICK_GRID_CHAPTERS = {23, 24, 25, 28, 29, 30}`（doc58續九
+   `DAT_000523e7`旗標表：這些章節會顯示可切換候選格畫面，ch21/ch26不會，用的是
+   完全不同的`DAT_00053a45`陣列掃描guard機制）。
+2. `complete_roster_ids()`的cap預設值：`ROSTER_PICK_GRID_CHAPTERS`裡的章節自動變成
+   `guard_selection_threshold(chapter_n)+1`，其餘章節維持`threshold`本身不變
+   （ch21已live驗證這樣是對的，零回歸風險）。
+3. `prepare_chapter_save()`新增`roster_cap`參數，貫通到`build_complete_roster_
+   save(cap=roster_cap)`；CLI新增`--roster-cap`覆寫旗標。
+4. `attempt_camp_exit()`修好一個真bug：`n_candidates`原本無論roster實際大小，一律
+   用`guard_selection_threshold(chapter_n)-1`計算（14，永遠不變）——這代表就算
+   呼叫端已經建構了cap=16的存檔，`adaptive_pick_roster()`還是只會湊到14就停手，
+   悄悄丟掉cap=16帶來的修正。改成`attempt_camp_exit(..., roster_count=實際存檔
+   roster總數)`，`sweep_chapter()`已更新會自動算出並傳入這個值。
+5. 新增「精確命中門檻」分支：當`n_candidates==guard_selection_threshold(chapter_n)`
+   （即roster_cap修正生效的情況），選滿後**不再送出舊有、兩次獨立測試互相矛盾的
+   Escape workaround**，改成期待畫面透過引擎自己的`CMP EAX,EBP`自然關閉、跳出
+   `確定`彈窗後用正常`_confirm_with_retry()`按Return確認——這正是live驗證觀察到
+   的真實行為（見下方第四步)。舊Escape分支保留作為`roster_count`未知時的向下相容
+   fallback，不再是唯一路徑。
+6. `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`新增`23`（見第四步的live證據，ch02/11/21
+   同一個模式）。
+7. `roster_mode="complete"`改為`prepare_chapter_save()`/`sweep_chapter()`/CLI
+   （`--complete-roster`改名`--no-complete-roster`，預設關閉即用complete模式）的
+   **預設值**，不再是opt-in——依照使用者本輪明確的standing instruction。
+
+### 第四步:Live驗證(`tools/dosbox_harness.sh`，instance`ch23rt16`，逐步腳本+官方
+CLI雙重確認)
+
+用`complete_roster_ids(23)`（新預設，cap=16）建構roster：`[0, 24, 1, 4, 9, 30, 23,
+28, 25, 7, 21, 16, 18, 15, 3, 17]`——leader(索爾)+guard(希爾法)+4核心開場角色+10個
+真實劇情加入角色，**全部是真實、互不重複的角色id，不需要任何超出遊戲設計的填充**。
+`natural_join_order(23)`本身有20個真實劇情加入角色（加上5個core starter、1個
+leader＝ch23前理論上可用26人），15人deploy門檻只用掉其中一小部分，**角色池從頭到尾
+不是問題**。
+
+- **LOAD後場景正常**（要記錄戰況YES/NO畫面，跟cap=15完全一樣，不是壞掉的紅地毯
+  場景——直接證實第二步的encode診斷）。
+- `attempt_camp_exit()`：Right×3→出口確認→偵測到選人畫面（`roster_count=16`,
+  15個可切換候選格）→`adaptive_pick_roster()`**乾淨15 tap選滿**（不多不少，零
+  震盪）→`n_candidates(15)==guard_selection_threshold(23)(15)`精確命中→**不送
+  Escape**，直接偵測到`確定`彈窗（截圖`pick_015.png`，全新畫面，過去4輪從未見過）
+  →`battle_entry_confirm`第1次嘗試就確認→46 tap後抵達真戰鬥（50→settle後24個
+  敵方record，`base=0x2703b4`）。
+- `ensure_one_ally_acts()`+mass-kill 24隻敵人+`confirm_end_turn()`：**先mass-kill
+  +End-Turn（無ally-action）`[0x53ecc]`15秒輪詢維持0**；緊接著在同一個debugger
+  session呼叫`ensure_one_ally_acts()`（選中角色→Up移動→Wait），**`[0x53ecc]`立刻
+  讀到2**（ground truth debugger讀值，非螢幕截圖猜測）——ch23正式加入
+  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`（跟ch02/11/21同一個模式）。
+- `advance_postbattle_montage()`+磁碟輪詢：**1.3秒內磁碟存檔章節byte從raw0x16前進
+  到raw0x17**——字面`pass`，含磁碟寫入，不是`anomaly_engine_win_no_disk_write`。
+
+**獨立第二次確認：正式CLI端到端零額外旗標重跑（instance`ch23cli23`）,結果完全
+一致**——`python tools/fd2_chapter_sweep.py sweep --chapter 23 --source-sav
+.wsl_build/chapter_sweep/FD2_source.SAV --results-dir .wsl_build/round_
+ch23retest_cli`（本輪加的所有修正都已經是預設值，不需要`--complete-roster`或
+`--roster-cap`）：`complete-roster build has actual roster_count=16`→
+`adaptive_pick_roster`15 tap選滿→`picked-count matches guard_selection_
+threshold(chapter_n)exactly`→46 tap抵達真戰鬥(24敵)→
+`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`自動觸發`ensure_one_ally_acts()`→
+mass-kill 24隻+confirm_end_turn→**`[0x53ecc]`3.6秒內翻2**→
+`advance_postbattle_montage`→**5.1秒內磁碟chapter byte`raw0x16→0x17`**。
+最終CLI verdict：**`ch23: pass (705.6s) -- chapter byte advanced 0x16 -> 0x17
+(native autosave confirmed clean transition)`**，完整log見
+`.wsl_build/round_ch23retest_cli/results.json`。兩次獨立管道（手動逐步腳本、
+正式CLI）給出完全一致的結果，這是本輪確認等級最高的一項。
+
+### 誠實confidence與M5 tally
+
+- **高信心（ground truth，兩個獨立管道：手動逐步腳本+debugger直接讀值，另外用
+  正式CLI端到端重跑一次confirm一致）**：ch23的「14 vs 15」謎團是**工具own bug**
+  （`complete_roster_ids()`cap少算1＋picklock輪自己的encode漏呼叫造成的假陰性），
+  不是遊戲設計上限、不是UI渲染硬上限、也不是真實角色數不夠。ch23本身現在是**字面
+  `pass`**——交叉核對`.wsl_build/*/result.json`裡verdict確實是`"pass"`（不是
+  `anomaly_engine_win_no_disk_write`）的章節，目前只有`guardsweep2/ch24`與
+  `round0829b/ch22`兩筆，ch23是**全專案第3個**含磁碟寫入的literal pass。
+- **中信心，非100%確定**：`ROSTER_PICK_GRID_CHAPTERS`裡另外5個章節
+  （ch25/28/29/30，以及ch24——ch24本身透過完全不同的舊EXE-patch技巧已經另外
+  confirmed過，不需要這個新機制）沒有本輪的live證據，只是套用同一個
+  disassembled EBP/toggle-array邏輯做的合理推論，**不應該不經live驗證就宣稱它們
+  也修好了**。
+- **未查明**：camp-exit導航run-to-run穩定性（前幾輪反覆記錄的flakiness）本輪只跑
+  了1次乾淨成功（`ch23rt16`）+1次CLI重跑，沒有像ch22那樣做5次重複測試，ch23是否
+  也有導航階段的run-to-run不穩定，留給下一輪。
+- **M5 tally**：引擎層級勝利確認章節數由24章（ch01-21+ch22+ch24+ch26）增為
+  **25章（ch01-21+ch22+ch23+ch24+ch26）**，新增ch23，且是含磁碟寫入的字面
+  `pass`。下一輪建議：(a)用同一套`ROSTER_PICK_GRID_CHAPTERS`+1修正對ch25/28
+  live測試（ch25跟ch23同樣有像素鑑識證據顯示14候選格，理論上同一個修法適用）；
+  (b)ch29/30/31從未做過任何live測試，是全新領域；(c)ch23的導航穩定性值得多跑
+  幾次確認run-to-run一致性。

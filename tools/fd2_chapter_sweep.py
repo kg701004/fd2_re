@@ -2028,7 +2028,17 @@ KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 2
 # rather than a fresh independent confirmation; a future round should
 # verify this claim against the actual rerun result before treating ch21
 # as understood.
-KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2, 21}
+# ch23 added 2026-08-29 "ch23retest" round -- LIVE-CONFIRMED, not a
+# precedent-only guess like ch21's original entry above: a mass-kill (24
+# enemies) + End Turn with NO prior ally action left [0x53ecc] at 0 for a
+# full 15s poll (ground-truth debugger read); calling ensure_one_ally_acts()
+# immediately after (same battle, same instance, no re-kill needed since
+# every enemy already carried the death signature) flipped [0x53ecc] to 2
+# within the same debugger session, and advance_postbattle_montage() +
+# patient disk polling then confirmed the on-disk save advanced raw
+# 0x16->0x17 (a literal `pass`, not just anomaly_engine_win_no_disk_write).
+# See docs/knowledge-base/99-chapter-sweep-results.md's "ch23retest" round.
+KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2, 21, 23}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
@@ -2045,7 +2055,7 @@ CAMP_EXIT_CYCLE_KEYS = ["Right", "Right", "Right"]
 
 def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
                        confirm_retries: int = 4, dialogue_steps: int = 120,
-                       chapter_n: int | None = None) -> dict | None:
+                       chapter_n: int | None = None, roster_count: int | None = None) -> dict | None:
     """Try the doc91/doc58-established "town-hub camp -> exit -> battle"
     sequence: cycle to the 出口 (EXIT) hotspot, confirm it, confirm the
     resulting "要進入戰場嗎?" YES/NO prompt (YES is the default highlight),
@@ -2186,14 +2196,54 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
     post_exit_shot = shots_dir / f"campexit_{step:03d}_post_exit_confirm_check.png"
     screenshot(name, post_exit_shot)
     if chapter_n is not None and screen_shows_roster_pick_grid(post_exit_shot):
-        n_candidates = guard_selection_threshold(chapter_n) - 1
+        # 2026-08-29 "ch23retest" round: n_candidates MUST come from the
+        # ACTUAL deployed save's roster_count (roster_count - 1, leader
+        # excluded), not from guard_selection_threshold(chapter_n) -- those
+        # two numbers are only the same when the save happens to have been
+        # padded to exactly the threshold, which is off by one for the
+        # engine's real win condition (see prepare_chapter_save()'s
+        # roster_cap docstring). Using the wrong (threshold-based) count
+        # here made adaptive_pick_roster() stop ONE SLOT SHORT of a
+        # genuinely-completable grid when the caller had already built a
+        # roster_cap=threshold+1 save specifically to fix that gap -- this
+        # silently discarded the fix. Falls back to the old threshold-based
+        # estimate only when the caller doesn't know the real count.
+        n_candidates = (roster_count - 1) if roster_count is not None else guard_selection_threshold(chapter_n) - 1
         log.append(f"attempt_camp_exit: roster pick grid detected immediately after exit_confirm "
-                    f"(cap={n_candidates + 1}, {n_candidates} toggleable candidate(s)) -- switching to "
-                    f"adaptive_pick_roster() instead of the blind yes_confirm call")
+                    f"(roster_count={roster_count}, {n_candidates} toggleable candidate(s), "
+                    f"source={'live save' if roster_count is not None else 'guard_selection_threshold fallback'}) "
+                    f"-- switching to adaptive_pick_roster() instead of the blind yes_confirm call")
         if not adaptive_pick_roster(name, shots_dir, log, n_candidates):
             log.append("attempt_camp_exit: adaptive_pick_roster did not converge, giving up")
             return None
         step += 1
+
+        if n_candidates == guard_selection_threshold(chapter_n):
+            # 2026-08-29 "ch23retest" round: when the caller passed the
+            # TRUE roster_count (via roster_cap=threshold+1 at save-build
+            # time), n_candidates now equals the engine's EBP target
+            # exactly -- the CMP EAX,EBP check (0x2b0e3, doc58 2026-08-17
+            # 續九) should be satisfied for real, no Escape workaround
+            # needed. Confirm the grid actually closed on its own and, if
+            # a "確定要進入戰場嗎?" popup follows, take it with a plain
+            # Return -- the same _confirm_with_retry() semantics as the
+            # non-grid chapters use below.
+            log.append("attempt_camp_exit: picked-count matches guard_selection_threshold(chapter_n) exactly "
+                        "(roster built with roster_cap=threshold+1) -- expecting the grid to close naturally "
+                        "via the engine's own CMP EAX,EBP check, NOT sending the old off-by-one Escape workaround")
+            post_pick_shot = screenshot(name, shots_dir / f"campexit_{step:03d}_post_pick_natural.png")
+            step += 1
+            if screen_shows_roster_pick_grid(post_pick_shot):
+                log.append("attempt_camp_exit: WARNING grid still visible after reaching the exact threshold "
+                            "count (expected it to auto-close) -- sending one more Return, honestly logging this "
+                            "as an open discrepancy rather than assuming success")
+                if not _confirm_with_retry("post_exact_pick_retry"):
+                    return None
+            elif not _confirm_with_retry("battle_entry_confirm"):
+                return None
+            need_fallback_escape = False
+        else:
+            need_fallback_escape = True
         # 2026-08-29 "picklock" round, part 2 -- HONEST, UNRESOLVED,
         # CONTRADICTORY EVIDENCE, do not trust this Escape call without
         # re-verifying: the on-screen "剩餘人數" counter reads 1 (not 0)
@@ -2226,13 +2276,14 @@ def attempt_camp_exit(name: str, shots_dir: Path, log: list[str],
         # resolve rather than silently reverting to the blind-Return
         # oscillation -- but DO NOT report ch23/ch25/ch28 as fixed on the
         # strength of this block alone.
-        send_keys(name, "Escape")
-        time.sleep(1.0)
-        screenshot(name, shots_dir / f"campexit_{step:03d}_post_pick_escape.png")
-        step += 1
-        log.append("attempt_camp_exit: sent Escape to leave the fully-picked roster grid "
-                    "(displayed remaining-count off-by-one is cosmetic, not a real unmet requirement -- "
-                    "see this block's comment)")
+        if need_fallback_escape:
+            send_keys(name, "Escape")
+            time.sleep(1.0)
+            screenshot(name, shots_dir / f"campexit_{step:03d}_post_pick_escape.png")
+            step += 1
+            log.append("attempt_camp_exit: sent Escape to leave the fully-picked roster grid "
+                        "(displayed remaining-count off-by-one is cosmetic, not a real unmet requirement -- "
+                        "see this block's comment)")
     elif not _confirm_with_retry("yes_confirm"):
         return None
 
@@ -2412,6 +2463,29 @@ GUARD_CHARACTER_IDS: dict[int, list[int]] = {
     28: [9],        # raw 0x1b -- falls into the raw>0x19 catch-all -- 悠妮 Yuni
 }
 
+# 2026-08-17 doc58 續九 DAT_000523e7 flag table (ground truth, live debugger
+# reads across raw index 0-30): these chapters render the TOGGLEABLE
+# PORTRAIT-GRID roster-selection screen before battle (FUN_0002af28's main
+# loop, 出戰人數/剩餘人數 counters + a portrait grid) -- as opposed to
+# ch21/ch26's completely different guard mechanism (a silent DAT_00053a45
+# array scan via FUN_0002b439, no grid, no player interaction at all).
+# CRITICAL for complete_roster_ids()/build_complete_roster_save(): on this
+# grid screen the fixed leader (record0) is NEVER a toggleable slot, so a
+# roster of exactly guard_selection_threshold(chapter_n) TOTAL members
+# (leader included) only ever yields threshold-1 toggleable candidates --
+# one short of ever satisfying the engine's CMP EAX,EBP win condition
+# (EBP=threshold). Chapters in this set need roster_cap=threshold+1.
+# ch23 raw 0x16 is LIVE-VERIFIED (2026-08-29 "ch23retest" round, see doc99
+# -- roster_cap=16 [leader+15 real distinct non-leader recruits] converged
+# adaptive_pick_roster() in exactly 15 taps with zero oscillation, the grid
+# closed via a genuine "確定" popup with no Escape workaround needed, and
+# [0x53ecc]==2 + on-disk chapter-byte advance (raw 0x16->0x17) both
+# confirmed a literal `pass`). ch24/25/28/29/30(/31) are wired here by the
+# SAME disassembled flag + EBP/toggle-array mechanism but are NOT yet
+# live-tested with roster_cap=threshold+1 -- do not report them fixed
+# without actually running the sweep.
+ROSTER_PICK_GRID_CHAPTERS: set[int] = {23, 24, 25, 28, 29, 30}
+
 
 def guard_selection_threshold(chapter_n: int) -> int:
     """The roster-selection screen's deploy-count parameter (EBP, passed as
@@ -2471,13 +2545,22 @@ def estimate_roster_size(chapter_n: int) -> int:
 # roster. This is the first time this project got signal that composition
 # (not just count/threshold) matters for a guard-gated chapter's win-check.
 #
-# ONLY ch21 has a *live-verified* win with this method as of this round
-# (once, plus a same-round confirmatory re-run -- see doc99 for whether
-# that second run also passed). ch22/23/25/28 are wired below because the
-# construction is chapter-agnostic (same join-beats data, same
-# guard_selection_threshold()), but their win-checks have NOT been
-# live-tested with a complete roster -- do not upgrade their verdicts
-# without actually running the sweep against them.
+# UPDATE (2026-08-29 "picklock"/"ch23retest" rounds): ch22 also got a
+# live-verified, literal `pass` (disk write included) with this method,
+# and ch23 -- the chapter this comment originally flagged as untested --
+# is now ALSO live-verified, but needed one additional fix beyond plain
+# complete_roster_ids(): ch23 is a ROSTER_PICK_GRID_CHAPTERS chapter (shows
+# the toggleable portrait-grid screen, unlike ch21/22's silent guard-array
+# scan), so its roster needed cap=guard_selection_threshold(23)+1=16 (not
+# 15) -- the leader is never a toggleable grid slot, so a 15-total roster
+# only ever produces 14 real candidates, one short of the engine's
+# CMP EAX,EBP(15) check. complete_roster_ids() now defaults to this +1
+# automatically for any chapter in ROSTER_PICK_GRID_CHAPTERS -- see that
+# set's module comment for the full mechanism and which other chapters
+# (25/28/29/30) are wired the same way but NOT yet live-tested. ch23 also
+# needed KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL (added this round). ch25/28
+# remain untested with either fix -- do not upgrade their verdicts without
+# actually running the sweep against them.
 
 CORE_STARTER_IDS = [0, 1, 4, 9, 30]  # Sol/Hanaux/Ares/Yuni/Gaia -- present from
 # record index 0-4 in EVERY real FD2.SAV this project has examined
@@ -2554,11 +2637,22 @@ def natural_join_order(chapter_n: int) -> list[int]:
 
 def complete_roster_ids(chapter_n: int, cap: int | None = None) -> list[int]:
     """Build the most complete "naturally reached chapter_n by playing
-    ch01..chapter_n-1" roster that fits within `cap` (defaults to
-    guard_selection_threshold(chapter_n), the chapter's deploy-selection
-    quota -- padding to exactly this number keeps the already-proven
-    "no free choice, must select everyone" trick usable, see
-    guard_selection_threshold()'s docstring).
+    ch01..chapter_n-1" roster that fits within `cap`.
+
+    `cap` defaults to guard_selection_threshold(chapter_n) -- EXCEPT for
+    chapters in ROSTER_PICK_GRID_CHAPTERS, which default to
+    guard_selection_threshold(chapter_n)+1. See ROSTER_PICK_GRID_CHAPTERS'
+    module comment for why: on the toggleable portrait-grid selection
+    screen, the leader is never a toggleable slot, so a roster of exactly
+    `threshold` total members only yields threshold-1 real candidates --
+    one short of the engine's CMP EAX,EBP win condition. Chapters that use
+    the OTHER guard mechanism (silent DAT_00053a45 array scan, e.g. ch21/
+    ch26 -- not in ROSTER_PICK_GRID_CHAPTERS) have no such screen and no
+    off-by-one, so `threshold` alone is correct for them (live-verified,
+    ch21). ch23 is live-verified for the +1 case too (2026-08-29
+    "ch23retest" round, see doc99); the other ROSTER_PICK_GRID_CHAPTERS
+    entries are wired by the same mechanism but not yet live-tested this
+    way.
 
     Priority order when not everyone fits (id0/leader and the guard id(s)
     are never dropped): id0 (fixed leader) -> this chapter's required guard
@@ -2571,7 +2665,10 @@ def complete_roster_ids(chapter_n: int, cap: int | None = None) -> list[int]:
     -- recency-first maximizes new, previously-untested composition per
     slot spent. See this function's call site for the live-verified ch21
     result."""
-    cap = cap if cap is not None else guard_selection_threshold(chapter_n)
+    if cap is None:
+        cap = guard_selection_threshold(chapter_n)
+        if chapter_n in ROSTER_PICK_GRID_CHAPTERS:
+            cap += 1
     required_ids = GUARD_CHARACTER_IDS.get(chapter_n, [])
     recruits_recent_first = list(reversed(natural_join_order(chapter_n)))
     ordered: list[int] = [0]
@@ -2629,9 +2726,26 @@ def build_complete_roster_save(source_sav: Path, chapter_n: int, slot: int, log:
 
 
 def prepare_chapter_save(source_sav: Path, chapter_n: int, out_sav: Path, slot: int, log: list[str],
-                          pad_roster: bool = True, roster_mode: str = "pad") -> Path:
+                          pad_roster: bool = True, roster_mode: str = "complete",
+                          roster_cap: int | None = None) -> Path:
     if roster_mode == "complete":
-        plain = build_complete_roster_save(source_sav, chapter_n, slot, log)
+        # roster_cap defaults to None -> build_complete_roster_save() falls
+        # back to guard_selection_threshold(chapter_n) (the TOTAL roster
+        # size, leader included). 2026-08-29 "ch23retest" round: for any
+        # chapter whose roster-selection screen is the toggleable
+        # portrait-grid kind (not the map-native/DAT_00053a45 guard-scan
+        # kind -- see attempt_camp_exit()'s roster_count param docstring),
+        # this default is ONE TOO FEW -- the leader (record0) is never a
+        # toggleable grid slot, so a roster of exactly
+        # guard_selection_threshold(chapter_n) total members only ever
+        # yields threshold-1 toggleable candidates, which can never
+        # satisfy the engine's CMP EAX,EBP (EBP=threshold) win condition
+        # (ground-truth disasm, docs/knowledge-base/58-remake-live-
+        # verification-log.md 2026-08-17 續九/續十). Pass
+        # roster_cap=guard_selection_threshold(chapter_n)+1 explicitly for
+        # those chapters (ch23 live-confirmed, see doc99's "ch23retest"
+        # section) to get a full-quota-satisfying roster.
+        plain = build_complete_roster_save(source_sav, chapter_n, slot, log, cap=roster_cap)
         stored = fd2save.encode(plain)
         fd2save.decode(stored)
         out_sav.parent.mkdir(parents=True, exist_ok=True)
@@ -2724,7 +2838,7 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                    boot_wait_s: int = 12, escape_taps: int = 30,
                    keepalive: int = 1200, teardown_after: bool = True,
                    pad_roster: bool = True, use_navigate_hints: bool = True,
-                   roster_mode: str = "pad") -> dict:
+                   roster_mode: str = "complete", roster_cap: int | None = None) -> dict:
     name = f"{instance_prefix}{chapter_n:02d}"
     chapter_dir = results_dir / f"ch{chapter_n:02d}"
     shots_dir = chapter_dir / "shots"
@@ -2737,7 +2851,12 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
     try:
         patched_sav = chapter_dir / "patched.SAV"
         prepare_chapter_save(source_sav, chapter_n, patched_sav, slot, log, pad_roster=pad_roster,
-                              roster_mode=roster_mode)
+                              roster_mode=roster_mode, roster_cap=roster_cap)
+        actual_roster_count = None
+        if roster_mode == "complete":
+            actual_roster_count = len(complete_roster_ids(chapter_n, cap=roster_cap))
+            log.append(f"sweep_chapter: complete-roster build has actual roster_count={actual_roster_count} "
+                        f"(roster_cap={roster_cap}, guard_selection_threshold={guard_selection_threshold(chapter_n)})")
 
         launch_instance(name, keepalive=keepalive)
         time.sleep(boot_wait_s)
@@ -2806,7 +2925,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                 log.append("trying attempt_camp_exit (doc91 town-hub Right x3 -> 出口 -> YES -> dialogue-advance sequence) first")
                 camp_exit_steps = CAMP_EXIT_DIALOGUE_STEPS.get(chapter_n, 120)
                 adv = attempt_camp_exit(name, shots_dir, log, dialogue_steps=camp_exit_steps,
-                                         chapter_n=chapter_n) if use_navigate_hints else None
+                                         chapter_n=chapter_n,
+                                         roster_count=actual_roster_count) if use_navigate_hints else None
                 base = adv["battle_base"] if adv else None
                 if base is None:
                     log.append("attempt_camp_exit did not find a battle, falling back to the generic advance loop")
@@ -3153,7 +3273,8 @@ def cmd_sweep(args):
                                 keepalive=args.keepalive, teardown_after=not args.no_teardown,
                                 pad_roster=not args.no_roster_pad,
                                 use_navigate_hints=not args.no_navigate_hints,
-                                roster_mode="complete" if args.complete_roster else "pad")
+                                roster_mode="pad" if args.no_complete_roster else "complete",
+                                roster_cap=args.roster_cap)
         append_results(results_path, result)
         print(f"ch{n:02d}: {result['verdict']} ({result['duration_s']}s) -- {result['detail']}")
 
@@ -3179,13 +3300,20 @@ def build_parser():
                      help="skip both KNOWN_NAVIGATE_HINTS overrides and attempt_camp_exit(), and go straight to the "
                           "chapter-agnostic generic advance loop (useful for re-measuring how much attempt_camp_exit "
                           "is actually contributing)")
-    sp.add_argument("--complete-roster", action="store_true",
-                     help="build the roster via complete_roster_ids()/build_complete_roster_save() instead of the "
-                          "default minimal guard/threshold padding -- a chronologically-complete-as-fits "
+    sp.add_argument("--no-complete-roster", action="store_true",
+                     help="use the old minimal guard/threshold padding instead of the DEFAULT "
+                          "complete_roster_ids()/build_complete_roster_save() chronologically-complete-as-fits "
                           "'naturally reached this chapter' roster (CORE_STARTER_IDS + guard id(s) + most-recent "
-                          "story recruits first, capped at guard_selection_threshold()). Live-verified for ch21 "
-                          "only so far (2026-08-29 'fullroster21' round, see doc99) -- other chapters are wired "
-                          "but untested with this mode.")
+                          "story recruits first). 'complete' has been the default since the 2026-08-29 "
+                          "'ch23retest' round (live-verified for ch21/ch22/ch23, see doc99) -- this flag is an "
+                          "escape hatch for a chapter you specifically want the old minimal-padding behavior for.")
+    sp.add_argument("--roster-cap", type=int, default=None,
+                     help="override complete_roster_ids()'s cap (default guard_selection_threshold(chapter_n)). "
+                          "IMPORTANT for any chapter whose roster-selection screen is the toggleable portrait-grid "
+                          "kind (ch23/24/25/28/29/30 -- see attempt_camp_exit()'s roster_count docstring): the "
+                          "leader is never a toggleable slot, so pass guard_selection_threshold(chapter_n)+1 here "
+                          "to get a roster whose non-leader count actually matches the engine's EBP target "
+                          "(ch23 live-confirmed 2026-08-29 'ch23retest' round, see doc99).")
     sp.set_defaults(func=cmd_sweep)
 
     return p

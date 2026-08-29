@@ -2288,6 +2288,30 @@
   增為24章(ch01-21+ch22+ch24+ch26)**，新增ch22且是含磁碟寫入的字面`pass`。
   完整像素鑑識細節、兩個假說的矛盾證據、下一輪建議見`docs/knowledge-base/
   99-chapter-sweep-results.md`「2026-08-29『picklock』輪」小節。
+- [x] **2026-08-29「ch23retest」輪——ch23「14 vs 15」謎團解開，字面`pass`**：
+  picklock輪像素鑑識本身沒有錯（畫面確實只有14個可切換候選格），但兩個更早的
+  bug疊加造成假結論：(1)`complete_roster_ids()`cap預設值把leader也算進
+  threshold，導致非leader候選人數永遠比15人門檻少1——這個off-by-one機制其實
+  doc58 2026-08-17續九～續十一（ch24）早就反組譯+live驗證過（`CMP EAX,EBP`要求
+  精確相等，游標結構性排除index`roster_count-1`），只是fullroster21/picklock
+  兩輪重寫`complete_roster_ids()`時沒有連結到這個12天前的先例；(2)picklock輪
+  自己測試cap=16假說的診斷腳本忘記呼叫`fd2save.encode()`，寫出checksum壞掉的
+  存檔，讓遊戲LOAD進一個完全不相關的「紅地毯守衛室」場景，這個假陰性讓cap=16
+  假說被誤判為「原因未查明、不建議複用」而放棄。本輪修正：cap=16正確建構+
+  正確encode後，`adaptive_pick_roster()`乾淨15 tap選滿、`確定`彈窗自然跳出
+  （不需要picklock輪那個兩次互相矛盾的Escape workaround）、抵達真戰鬥(24敵)、
+  `ensure_one_ally_acts()`讓`[0x53ecc]`翻2（ch23新增進
+  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`）、磁碟chapter byte 1.3秒內
+  `raw0x16→0x17`——**字面`pass`，全專案第3個含磁碟寫入的literal pass**（前2個
+  是ch22/ch24）。`complete_roster_ids()`的cap修正已推廣成
+  `ROSTER_PICK_GRID_CHAPTERS={23,24,25,28,29,30}`自動+1（doc58續九
+  `DAT_000523e7`旗標表），且`roster_mode="complete"`已改為`prepare_chapter_
+  save()`/`sweep_chapter()`/CLI的**預設值**（不再是opt-in的`--complete-
+  roster`，現在是opt-out的`--no-complete-roster`）。**M5引擎層級勝利確認章節數
+  由24章增為25章(ch01-21+ch22+ch23+ch24+ch26)**。ch25/28/29/30套用同一個
+  `ROSTER_PICK_GRID_CHAPTERS`修正但**未經live驗證**，留給下一輪。完整寫法見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『ch23retest』
+  輪」小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
