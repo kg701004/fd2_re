@@ -1736,7 +1736,13 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # round should look at the actual mid-picking screenshots
 # (.wsl_build/guardsweep9/ch23/shots/campexit_2*.png) to understand the
 # slowdown properly instead of just paying for more taps.
-CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 28: 480}
+# 2026-08-29 "ch2528" round: ch25 had no entry (would have defaulted to the
+# too-small 120 that previously starved ch23/ch28's picking budget) -- it
+# shares ch23's guard_selection_threshold(15)/roster_cap(16), so seeded with
+# ch23's already-live-verified 420 as a same-cohort ESTIMATE, not itself
+# live-verified for ch25 specifically. Raise further if a live run shows the
+# picking/dialogue budget still runs out before "確定" appears.
+CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 25: 420, 28: 480}
 
 # Chapter-specific "wait this many real turns before the FIRST mass-kill"
 # override. 2026-08-27 "ch19banor" round: ch19 was previously one of an
@@ -2480,9 +2486,25 @@ GUARD_CHARACTER_IDS: dict[int, list[int]] = {
 # adaptive_pick_roster() in exactly 15 taps with zero oscillation, the grid
 # closed via a genuine "確定" popup with no Escape workaround needed, and
 # [0x53ecc]==2 + on-disk chapter-byte advance (raw 0x16->0x17) both
-# confirmed a literal `pass`). ch24/25/28/29/30(/31) are wired here by the
-# SAME disassembled flag + EBP/toggle-array mechanism but are NOT yet
-# live-tested with roster_cap=threshold+1 -- do not report them fixed
+# confirmed a literal `pass`). ch25 raw 0x18 and ch28 raw 0x1b are ALSO now
+# LIVE-VERIFIED (2026-08-29 "ch2528" round, see doc99): both converged
+# adaptive_pick_roster() with ZERO oscillation and an exact tap count
+# matching guard_selection_threshold(chapter_n) (ch25: cap=16, 15/15 taps;
+# ch28: cap=20, 19/19 taps -- ch28's threshold is 19, not 15, because its
+# raw chapter (0x1b=27) exceeds guard_selection_threshold()'s raw>0x1a
+# cutoff), neither needed the old off-by-one Escape workaround, and both
+# reached [0x53ecc]==2 (ENGINE-LEVEL WIN CONFIRMED, ground truth debugger
+# read). ch28 ALSO got the on-disk chapter-byte write (raw 0x1b->0x1c,
+# 5.1s post-win poll) -- a literal `pass`, the 4th in this project (after
+# ch22/23/24). ch25 did NOT get the disk write within this run's 60s
+# patient-poll window (verdict `anomaly_engine_win_no_disk_write`, the
+# same category most of ch02-20 landed in) -- the roster-pick-grid FIX
+# itself is confirmed working for ch25 (clean 15/15 picks), the disk-write
+# gate is a separate, still-open doc25 §9.1 question, not a regression of
+# this mechanism. ch24 (separately confirmed via an unrelated old EXE-patch
+# technique, does not need this mechanism) and ch29/30(/31) are wired here
+# by the SAME disassembled flag + EBP/toggle-array mechanism but are NOT
+# yet live-tested with roster_cap=threshold+1 -- do not report them fixed
 # without actually running the sweep.
 ROSTER_PICK_GRID_CHAPTERS: set[int] = {23, 24, 25, 28, 29, 30}
 
@@ -2558,9 +2580,21 @@ def estimate_roster_size(chapter_n: int) -> int:
 # automatically for any chapter in ROSTER_PICK_GRID_CHAPTERS -- see that
 # set's module comment for the full mechanism and which other chapters
 # (25/28/29/30) are wired the same way but NOT yet live-tested. ch23 also
-# needed KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL (added this round). ch25/28
-# remain untested with either fix -- do not upgrade their verdicts without
-# actually running the sweep against them.
+# needed KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL (added this round).
+#
+# UPDATE (2026-08-29 "ch2528" round): ch25 and ch28 are now ALSO
+# live-verified with the same fix, and NEITHER needed
+# KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL (plain mass-kill+End-Turn reached
+# [0x53ecc]==2 directly) -- ch23's need for that extra step does not
+# generalize to every ROSTER_PICK_GRID_CHAPTERS entry. ch25: 15/15 picks,
+# zero oscillation, ENGINE-LEVEL WIN CONFIRMED, but no on-disk write within
+# a 60s patient poll (`anomaly_engine_win_no_disk_write`). ch28: 19/19
+# picks (threshold=19, not 15 -- ch28's raw chapter is past the
+# guard_selection_threshold() raw>0x1a cutoff), zero oscillation, ENGINE-
+# LEVEL WIN CONFIRMED, AND a literal `pass` (on-disk chapter byte
+# raw 0x1b->0x1c within 5.1s). ch29/30 remain untested with either fix --
+# do not upgrade their verdicts without actually running the sweep against
+# them.
 
 CORE_STARTER_IDS = [0, 1, 4, 9, 30]  # Sol/Hanaux/Ares/Yuni/Gaia -- present from
 # record index 0-4 in EVERY real FD2.SAV this project has examined
@@ -2649,10 +2683,11 @@ def complete_roster_ids(chapter_n: int, cap: int | None = None) -> list[int]:
     the OTHER guard mechanism (silent DAT_00053a45 array scan, e.g. ch21/
     ch26 -- not in ROSTER_PICK_GRID_CHAPTERS) have no such screen and no
     off-by-one, so `threshold` alone is correct for them (live-verified,
-    ch21). ch23 is live-verified for the +1 case too (2026-08-29
-    "ch23retest" round, see doc99); the other ROSTER_PICK_GRID_CHAPTERS
-    entries are wired by the same mechanism but not yet live-tested this
-    way.
+    ch21). ch23/25/28 are live-verified for the +1 case too (2026-08-29
+    "ch23retest"/"ch2528" rounds, see doc99 -- ch28's threshold is 19, not
+    15, since its raw chapter exceeds the raw>0x1a cutoff); ch24 (separately
+    confirmed via an unrelated old EXE-patch technique) and ch29/30 are
+    wired by the same mechanism but not yet live-tested this way.
 
     Priority order when not everyone fits (id0/leader and the guard id(s)
     are never dropped): id0 (fixed leader) -> this chapter's required guard

@@ -3496,3 +3496,126 @@ mass-kill 24隻+confirm_end_turn→**`[0x53ecc]`3.6秒內翻2**→
   live測試（ch25跟ch23同樣有像素鑑識證據顯示14候選格，理論上同一個修法適用）；
   (b)ch29/30/31從未做過任何live測試，是全新領域；(c)ch23的導航穩定性值得多跑
   幾次確認run-to-run一致性。
+
+## 2026-08-29「ch2528」輪:**ch25/ch28 live驗證——roster-pick-grid修法乾淨generalize，
+ch28拿下全專案第4個含磁碟寫入的字面`pass`，ch25拿到engine-level win但disk-write
+gate這次沒開，兩者zero oscillation、零額外workaround**
+
+### 任務背景
+
+使用者派工延續ch23retest輪的建議：用已經修好、現在是預設值的
+`ROSTER_PICK_GRID_CHAPTERS`+1 cap修正（`complete_roster_ids()`自動套用
+`guard_selection_threshold(chapter_n)+1`），對ch25、ch28做live驗證。範圍明確排除
+ch27/29/30（本專案已確認的雙結局終局章節，「章節byte是否前進」對它們不是有意義的
+問題）。
+
+### 方法:直接用正式CLI，兩章平行跑(兩個獨立harness instance)
+
+`tools/dosbox_harness.sh`已證實2個instance平行跑安全(doc48§8.4)，且ch23retest輪
+已經證明正式CLI(`roster_mode="complete"`為預設值,不需要任何額外旗標)跟手動逐步腳本
+給出完全一致的結果，所以本輪跳過手動逐步診斷，直接用兩個獨立CLI process(不同
+`--instance-prefix`、不同`--results`/`--results-dir`避免JSON寫入衝突)平行跑:
+
+```
+python tools/fd2_chapter_sweep.py sweep --chapter 25 \
+    --source-sav .wsl_build/chapter_sweep/FD2_source.SAV \
+    --results-dir .wsl_build/round_ch2528 --results .wsl_build/round_ch2528/results_ch25.json \
+    --instance-prefix c25s
+python tools/fd2_chapter_sweep.py sweep --chapter 28 \
+    --source-sav .wsl_build/chapter_sweep/FD2_source.SAV \
+    --results-dir .wsl_build/round_ch2528 --results .wsl_build/round_ch2528/results_ch28.json \
+    --instance-prefix c28s
+```
+
+**啟動前置修正**:`CAMP_EXIT_DIALOGUE_STEPS`原本沒有ch25的條目(會落到120，比ch23
+需要的420小很多)，本輪先加`25: 420`(借用ch23同cohort的估計值——ch25跟ch23共用
+`guard_selection_threshold=15`/`roster_cap=16`，同量級的picking+對話量，非
+live驗證過的ch25專屬數字，只是合理起始預算)。事後證實這個預算足夠(ch25對話量
+遠低於420上限就找到戰鬥)。
+
+**WebFetch前置check**(`https://chiuinan.github.io/game/game/intro/ch/c31/fd2/fd2/fd2.htm`)：
+- ch25「火焰的審判」:勝利=**敵全滅**(不是特定單位存活/死亡的複雜條件)，失敗=索爾/
+  聖寇拉斯死亡。友軍援軍「聖寇拉斯」第6回合己方結束後才登場——但因為這個工具的
+  mass-kill+End-Turn捷徑一律在第1回合就結束戰鬥，聖寇拉斯根本還沒登場，不影響
+  「不可讓他死」的失敗條件，判斷**不需要**`KNOWN_MIN_TURNS_BEFORE_KILL`。
+- ch28「探索者們」:勝利=**擊毀機甲隊長**(不是單純敵全滅，是特定敵方單位類型)，
+  失敗=索爾/悠妮死亡。三波援軍依玩家位置觸發(踩到特定火線/擊殺特定單位/通過砲火線)
+  ——這個工具不移動地圖上的單位，援軍觸發條件很可能完全不會滿足，但**推論**(非
+  live驗證)只要初始就在場的敵方單位裡已經包含機甲隊長，全滅初始敵方陣列應該仍能
+  滿足勝利判定(跟ch20「排除沼澤怪物」的既有推論同一個邏輯)。
+
+### 結果:兩章都乾淨、zero-oscillation通過roster-pick-grid，一個literal pass、一個
+engine-win-confirmed-no-disk-write
+
+**ch25**(`.wsl_build/round_ch2528/ch25/result.json`，`c25s25`instance，609.0秒)：
+- `complete_roster_ids(25)`→cap=16(threshold15+1)，最終roster
+  `[0,1,4,9,30,19,22,23,24,28,25,7,21,16,18,15]`(5個真實record+11個合成record)。
+- `adaptive_pick_roster()`：**15 tap選滿15/15，零震盪**，`picked-count matches
+  guard_selection_threshold(chapter_n)exactly`——不需要Escape workaround。
+- `attempt_camp_exit`在48 tap後偵測到真戰鬥(38敵，`base=0x26ea0c`)，6輪settle
+  穩定在38敵。
+- **不需要`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`**：`find_empty_adjacent_tile`
+  (Up方向找到空地)→開指令環→END→mass-kill 38敵(含在確認框上重寫一次)→YES確認→
+  **`[0x53ecc]`3.6秒內翻2(ENGINE-LEVEL WIN CONFIRMED，debugger直接讀值)**，
+  kill-cycle 1/4就成功，不需要任何額外重試波次。
+- `advance_postbattle_montage`跑完70 tap，接著60秒patient post-win disk poll——
+  **60秒內磁碟章節byte維持在raw0x18(patched值)沒有前進**，verdict誠實記為
+  `anomaly_engine_win_no_disk_write`(不是字面`pass`，但跟ch02-20那批「engine
+  win有，disk write沒有」是同一個doc25§9.1尚未解開的SAV writer gate問題，不是
+  這個roster修法本身失敗——roster-pick-grid本身的表現是完美的，15/15零震盪)。
+
+**ch28**(`.wsl_build/round_ch2528/ch28/result.json`，`c28s28`instance，665.5秒)：
+- `complete_roster_ids(28)`→cap=20，**注意這裡threshold是19不是15**
+  (`guard_selection_threshold()`的raw>0x1a分支——ch28 raw=27>26觸發`0x13`(19)而非
+  `0xf`(15))，最終roster`[0,9,1,4,30,29,26,19,22,23,24,28,25,7,21,16,18,15,3,17]`
+  (5個真實record+15個合成record，含guard id9悠妮，來自`GUARD_CHARACTER_IDS[28]=[9]`
+  且本來就在`CORE_STARTER_IDS`裡，雙重保證在場)。
+- `adaptive_pick_roster()`：**19 tap選滿19/19，零震盪**，跟ch25同樣精確命中
+  threshold，不需要Escape workaround——這是本輪對「roster-pick-grid修法能否
+  generalize到threshold=19的大roster章節」的第一次live證據，先前只有threshold=15
+  的ch23/ch25驗證過。
+- `attempt_camp_exit`初期兩次tap(2、4、22)偵測到HUD但敵方陣列讀到0筆——場景仍在
+  戰前過場/對話中，戰鬥陣列指標還沒被真正配置——第25 tap後才穩定讀到14敵並確認為
+  真戰鬥(`base=0x26ea0c`)，6輪settle穩定在14敵。跟doc99先前記錄的「戰鬥陣列指標
+  在過場動畫途中被重新配置」同一個已知模式，`attempt_camp_exit`的既有邏輯正確處理。
+- **同樣不需要`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`**：mass-kill 14敵→確認框上
+  重寫一次→YES確認→**`[0x53ecc]`3.6秒內翻2(ENGINE-LEVEL WIN CONFIRMED)**，
+  kill-cycle 1/4成功——**間接證實WebFetch查到的「勝利=擊毀機甲隊長」這個看似
+  narrower的條件，被「全滅初始已在場的敵方陣列」滿足**(跟ch20「排除沼澤怪物」
+  假說同一個模式:全殺比精準排除更安全，這次也成立，但同樣是觀察到的結果而非
+  對機甲隊長specifically做了驗證，未進場的3波位置觸發式援軍全程沒有出現)。
+- `advance_postbattle_montage`跑完後，**post-win disk poll只用5.1秒(5次tap)就讀到
+  磁碟章節byte從raw0x1b前進到raw0x1c**——**字面`pass`，全專案第4個含磁碟寫入的
+  literal pass**(前3個是ch22/ch23/ch24)。
+
+### 誠實confidence與M5 tally
+
+- **高信心（ground truth，debugger直接讀值，正式CLI端到端跑出，非screenshot猜測）**：
+  `ROSTER_PICK_GRID_CHAPTERS`+1 cap修法對ch25(threshold15)/ch28(threshold19，
+  第一次驗證threshold≠15的大roster情境)都**乾淨generalize**——兩章adaptive_pick_
+  roster()都精確命中threshold、零震盪、不需要Escape workaround，這跟ch23的live
+  結果完全一致，進一步鞏固「這是工具修對了，不是ch23個案運氣好」的結論。
+- **高信心**：ch28拿到**字面`pass`**(含磁碟寫入，5.1秒完成)，且**不需要**
+  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`——跟ch23不同，plain mass-kill+End-Turn
+  直接命中win-check，代表ch23那個額外步驟需求是ch23專屬的(可能跟ch23特定的
+  win-check handler有關)，不是ROSTER_PICK_GRID_CHAPTERS這整批章節的通性。
+- **中信心**：ch28「勝利=擊毀機甲隊長」的WebFetch敘述被「全滅初始在場的14敵」
+  滿足，但這個工具從未針對「機甲隊長」這個特定單位類型做任何篩選或驗證——只是
+  觀察到全滅everyone也贏了，跟ch20一樣是個成功的推論，不是對這個特定victory
+  condition機制的反組譯級確認。
+- **誠實記錄，非負面結果**：ch25的disk-write gate這次60秒內沒開，這是doc25§9.1
+  記錄的既有開放問題(哪些battle-win路徑會觸發SAV writer)在ch25身上的又一個資料點，
+  不代表ch25的roster修法有任何問題——engine-level win本身(`[0x53ecc]`==2)是
+  ground truth確認過的，跟ch02-20那批`anomaly_engine_win_no_disk_write`章節同一個
+  類別，未來若有人專門解開doc25§9.1的SAV writer gate，ch25很可能不需要重跑roster
+  部分就能直接拿到`pass`。
+- **M5 tally**：引擎層級勝利確認章節數由25章（ch01-21+ch22+ch23+ch24+ch26）增為
+  **27章（ch01-21+ch22+ch23+ch24+ch25+ch26+ch28）**——這是本次派工單設定的
+  practical ceiling(30章扣掉ch27/29/30三個雙結局終局章節)全數達成。含磁碟寫入的
+  字面`pass`章節數由3章（ch22/ch23/ch24）增為**4章（+ch28）**。ch25維持
+  `anomaly_engine_win_no_disk_write`，不是字面`pass`。下一輪若要繼續往ch29/30
+  方向擴展，注意使用者已明確排除這兩章「章節byte是否前進」的驗證，因為它們是
+  終局章節，這個問題對它們沒有意義；`ROSTER_PICK_GRID_CHAPTERS`裡剩下唯二未
+  live驗證的條目(29/30)若真的要測試，應該改成驗證「roster-pick-grid本身能否
+  被走完、能否進入戰鬥」這類不涉及「下一章」的問題，不是這份文件既有的
+  chapter-byte-advance pass/fail框架。

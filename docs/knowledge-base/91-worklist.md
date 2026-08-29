@@ -2312,6 +2312,35 @@
   `ROSTER_PICK_GRID_CHAPTERS`修正但**未經live驗證**，留給下一輪。完整寫法見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『ch23retest』
   輪」小節。
+- [x] **2026-08-29「ch2528」輪——ch25/ch28 live驗證,roster-pick-grid修法乾淨
+  generalize,ch28拿下第4個字面`pass`**：延續ch23retest輪建議，對ch25、ch28
+  跑同一套`ROSTER_PICK_GRID_CHAPTERS`+1 cap修正的live驗證（範圍明確排除ch27/29/
+  30三個雙結局終局章節，「章節byte是否前進」對它們不是有意義的問題）。兩章用
+  正式CLI平行跑（兩個獨立harness instance，doc48§8.4已證實2 instance並行安全），
+  結果**兩章都乾淨命中threshold、零震盪**，不需要Escape workaround——`ch25`：
+  `complete_roster_ids`給出cap=16(threshold15+1)，`adaptive_pick_roster()`15
+  tap選滿15/15；`ch28`：cap=20(threshold19+1，**第一次驗證threshold≠15的大
+  roster情境**——ch28 raw chapter超過`guard_selection_threshold()`的raw>0x1a
+  分支門檻)，19 tap選滿19/19。兩章都**不需要**`KNOWN_NEEDS_ALLY_ACTION_BEFORE_
+  KILL`（跟ch23不同，plain mass-kill+End-Turn直接命中win-check，證明ch23那個
+  額外步驟需求是ch23專屬，不是整批`ROSTER_PICK_GRID_CHAPTERS`章節的通性），
+  `[0x53ecc]`都在3.6秒內翻2（ENGINE-LEVEL WIN CONFIRMED，debugger直接讀值）。
+  磁碟寫入結果分歧：`ch28`在post-win poll的5.1秒內磁碟章節byte
+  `raw0x1b→0x1c`——**字面`pass`，全專案第4個含磁碟寫入的literal pass**（前3個
+  是ch22/23/24），間接證實WebFetch查到的「勝利=擊毀機甲隊長」這個看似narrower
+  的條件被「全滅初始在場的14敵」滿足（跟ch20「排除沼澤怪物」同一個推論模式，
+  未做機甲隊長specifically的反組譯級確認）；`ch25`在60秒patient poll內磁碟
+  章節byte維持在patched值沒有前進，verdict誠實記為
+  `anomaly_engine_win_no_disk_write`（doc25§9.1既有的SAV writer gate開放問題，
+  不是roster修法本身的問題——roster-pick-grid表現本身是完美的）。**M5引擎層級
+  勝利確認章節數由25章增為27章(ch01-21+ch22+ch23+ch24+ch25+ch26+ch28)**——達成
+  本次派工單設定的practical ceiling（30章扣掉ch27/29/30三個雙結局終局章節）。
+  含磁碟寫入的字面`pass`章節數由3章增為**4章（+ch28）**。ch29/30仍是
+  `ROSTER_PICK_GRID_CHAPTERS`裡唯二未live驗證的條目，但因為是終局章節，
+  「章節byte前進」本身不是對它們有意義的驗收問題，若要測試應改問「roster-pick-
+  grid本身能否被走完」而非沿用這份既有框架。完整寫法見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『ch2528』輪」
+  小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
