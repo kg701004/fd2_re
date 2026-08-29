@@ -3005,3 +3005,164 @@ reach也分別在9/207 tap後才抵達,同樣量級的變異)——這代表這�
 - **M5 tally**:引擎層級勝利確認章節數由20章(ch01-20)增為**22章
   (ch01-20+ch24+ch26)**,其中ch24是本專案首次拿到含磁碟寫入的字面`pass`。
   ch21/22/23/25/28五章仍未達成,各自的診斷細節與下一輪具體建議見上方各小節。
+
+## 2026-08-29「full-roster」輪:**「roster不完整」假說對 ch21 win-check 獲得
+確認——用完整、以時序優先(離ch21最近的角色優先)湊滿15人deploy門檻的合成
+roster,同一套`ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`
+程式碼路徑,兩次獨立live run皆讓`[0x53ecc]`翻2(1.8s與3.6s)——ch21首次
+拿到`anomaly_engine_win_no_disk_write`,M5引擎層級勝利確認章節數由22章增為
+**23章(ch01-21+ch24+ch26)**。新增可重用的`complete_roster_ids()`/
+`build_complete_roster_save()`(`tools/fd2_chapter_sweep.py`,`--complete-roster`
+旗標),對ch22/23/25/28尚未live驗證**
+
+### 任務背景與前輪殘留的具體問題
+
+前一節「guard-sweep」輪誠實記錄:ch21用guard修正(id21=約拿)後能穩定抵達
+真戰鬥,但套用`ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`
+(呼應攻略站「回合2/4/6/8角落惡魔、回合3第二波攻擊」的描述)後
+`[0x53ecc]`依然維持0,根因**未查明**。使用者本輪派工的具體假說:先前4輪
+測試用的roster([0,9,4,30,1,8,2,10,13,12,5,11,6,21,3]——13個來自機器上
+唯一真實SAV`.wsl_build/chapter_sweep/FD2_source.SAV`的早期角色(凍結在約
+ch09-12的進度)+guard id21+1個任意遞增filler id3)**從未真正反映「玩過
+ch01-20後」的完整队伍**——它有id21(約拿,ch18加入)但完全跳過了14/17/15/
+18/16/7/25/28這8個時序上更早或同期加入、doc28/chapter_beats都證實存在的
+角色,是一個時序不連貫的縮影存檔。假說:這個不完整性(不只是guard id)
+本身可能是win-check卡住的原因。
+
+### 第一步:彙整 ch01-20 全部加入角色——`docs/data/chapter_beats/ch*_post.json`
+的`join` beat 比 doc28「加入角色」欄位更細、也抓出一處 doc28 遺漏
+
+用`docs/knowledge-base/28-chapter-objectives-and-recruits.md`第2節表格 +
+外部攻略站(`https://chiuinan.github.io/game/game/intro/ch/c31/fd2/fd2/fd2.htm`,
+本輪未另外WebFetch——doc28本身已是該攻略站整理的結構化版本,內容一致)
+交叉核對`docs/data/chapter_beats/ch00_post.json..ch19_post.json`的`join`
+beat(programmatic walk,含處理`ch06_post.json`用`char_id`欄位而非
+`args`陣列的格式差異)。**兩者高度吻合**,唯一差異:chapter_beats額外抓到
+`ch12_post.json`(raw12=game ch13「哈斯米爾之戰」)有`join(char_id:3)`=
+哈瓦特,而doc28該列「加入角色」欄位寫的是「—」(doc28的遺漏,不是
+chapter_beats的誤判——哈瓦特本輪納入roster)。
+
+**確認了一個容易踩到的filename索引陷阱**:`docs/data/chapter_beats/
+ch{NN}_post.json`用**raw chapter(0-indexed)**命名,`ch00_post.json`=
+raw0=game ch1自己的戰後,`ch20_post.json`=raw20=**game ch21自己**的戰後
+(交叉驗證:`ch17_post.json`的join id為`[21,7]`,與disasm證實的「約拿在
+raw17=game ch18地圖原生加入」完全吻合;`ch20_post.json`的join id為
+`[23,24]`,正是「map-native guard」輪證實的「羅蘭/希爾法是ch21本章新加入
+的地圖原生單位」)。這代表`tools/fd2_chapter_sweep.py`既有的
+`estimate_roster_size(chapter_n)`用`range(1, chapter_n)`讀
+`ch{ch:02d}_post.json`,對`chapter_n=21`會讀到`ch01..ch20`——**多算了
+ch21自己的戰後join(23、24)**。這個既有函式只產生一個count(給任意遞增
+id filler用),對它從未造成過可觀察的錯誤;但本輪新寫的
+`natural_join_order()`是**組成敏感**的,若原樣複製這個range會把ch21
+本章才加入的羅蘭/希爾法錯誤地當成「賽前已在隊」,所以刻意改用
+`range(0, chapter_n - 1)`,並在程式碼註解記錄這個既有函式的range差異
+原因,避免下一輪誤「修好」。
+
+### 第二步:建構完整roster,時序優先(離ch21最近者優先)填滿15人門檻,
+`tools/fd2save.py`零修改,`tools/fd2_chapter_sweep.py`新增可重用函式
+
+ch01-20共有5個「開場即在隊」核心角色(索爾0、哈諾1、亞雷斯4、悠妮9、
+蓋亚30——這5個id從不以`join` beat出現,而是每份真實SAV record0-4都已經
+是他們,見`tools/fd2save.py`docstring列的三份真實SAV交叉驗證)+18個
+`join` beat劇情角色(希莉亞8/鐵諾2/瑪琳10/貝克威13/凱麗12/洛娜5/索菲亞11/
+萊汀6/珊14/米亞斯多德17/哈瓦特3/賽可邦勒15/蜜蒂18/凱拉斯16/約拿21/
+蘭斯洛特7/謝多25/達克賽28)=**23人**,遠超過ch21的15人deploy門檻
+(`guard_selection_threshold(21)`)。15人塞不下23人,本輪選擇**時序優先
+(離ch21最近的角色優先保留)**而非時序上最早的角色,理由:先前4輪測試
+用的舊roster本來就已經包含全部8個最早期角色(它們是真實SAV白送的),
+唯一被跳過的是**晚期**角色——時序優先能最大化本輪相對於前4輪的新資訊量,
+也最貼近「玩家剛好在ch18/19取得約拿等人,還沒來得及讓最早期6人以外的
+隊友補滿」的說法沒有意義(不可能不補早期角色卻補到晚期角色)——但作為
+「不同於舊roster的獨立組成測試」是合理的下一步。
+
+最終15人組成(id):`0(索爾,固定leader)、21(約拿,guard必要)、
+1/4/9/30(核心開場角色)、28/25/7/16/18/15/3/17/14(9個最晚加入的劇情
+角色,ch11-19)`。**保留`.wsl_build/chapter_sweep/FD2_source.SAV`
+record索引0-4(id`[0,9,4,30,1]`)的真實位元組不變**(不用
+`build_join_record()`重建,直接複製原始SAV bytes),只有另外10個角色用
+`fd2save.build_join_record()`(既有、已被`native_join_constructor.go`
+known-answer test驗證過的構造公式)合成——與先前`jonah21`輪同樣的技巧
+(真實leader+真實早期角色+合成新角色),差別只在**合成的是哪些角色**。
+
+新增到`tools/fd2_chapter_sweep.py`(均含docstring記錄理由與本輪出處):
+- `CORE_STARTER_IDS = [0, 1, 4, 9, 30]`
+- `natural_join_order(chapter_n)`:第一步糾正過的正確range,回傳
+  chapter_n之前所有`join` beat角色id(時序,含`char_id`/`args`兩種格式)
+- `complete_roster_ids(chapter_n, cap=None)`:leader→guard id→
+  `CORE_STARTER_IDS`→晚期優先的劇情角色,截到`cap`(預設
+  `guard_selection_threshold(chapter_n)`)
+- `build_complete_roster_save(source_sav, chapter_n, slot, log, cap=None)`:
+  保留來源SAV裡target id的真實record bytes,其餘用`build_join_record()`
+  合成補齊,回傳plaintext buffer
+- `prepare_chapter_save(..., roster_mode="pad"|"complete")`:新增
+  `"complete"`模式呼叫上面的函式,預設仍是原本的`"pad"`(guard/threshold
+  padding),**零行為變化**給既有的ch01-20/24/26呼叫方式
+- CLI新增`--complete-roster`旗標(`sweep`子指令)
+
+獨立驗證:`complete_roster_ids(21)`程式化算出的15人集合與本輪手動建構、
+已live驗證過的roster**逐id比對完全相同**(僅record順序不同,對「剛好
+湊滿門檻=強制全選」機制不影響結果)。
+
+### 第三步:Live驗證(`tools/dosbox_harness.sh`,兩個獨立instance
+`fullroster21`/`fullroster221`)——**假說成立,兩次獨立run皆讓
+`[0x53ecc]`翻2**
+
+用`python tools/fd2_chapter_sweep.py sweep --chapter 21 --source-sav
+.wsl_build/ch21_full_roster.SAV`(第一次:手動腳本產生的存檔,組成與
+`build_complete_roster_save()`程式化產生的完全一致,已第二步交叉驗證)
+跑正式CLI pipeline(既有的`attempt_camp_exit`→`ensure_one_ally_acts()`→
+`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`→mass-kill→`confirm_end_turn()`,
+程式碼**完全未改**,只有roster組成不同):
+
+- **Run 1(`fullroster21`)**:8 taps抵達真戰鬥(50個敵人record),9輪
+  turn-wait全程乾淨(每輪dialogue清除最多9-10次Return,皆在既有預算內,
+  **沒有出現前一輪反覆出現的「無法在20次Return內清掉對話」警告**),
+  mass-kill+End-Turn第一個kill-cycle、**1.8秒內`[0x53ecc]`翻2**(debugger
+  直接讀值,非螢幕截圖猜測)。881秒完成。
+- **Run 2(`fullroster221`,獨立重跑,同一份`.SAV`,新instance)**:6 taps
+  抵達真戰鬥(同樣50個敵人record),9輪turn-wait同樣全程乾淨,
+  mass-kill+End-Turn第一個kill-cycle、**3.6秒內`[0x53ecc]`翻2**。883.6秒
+  完成。
+
+兩次verdict皆為`anomaly_engine_win_no_disk_write`(與ch02-20/26同一類別
+——engine-level win確認,但磁碟chapter byte在60秒耐心輪詢視窗內未前進,
+doc25 §9.1既有、未解的SAV writer gate問題,不是本輪新問題)。**ch21至此
+首次脫離「anomaly」(win-check從未解開)分類,加入「anomaly_engine_win_
+no_disk_write」(win-check已解開,只差磁碟寫入)這個更大、已知的類別**。
+
+### 誠實confidence與尚未排除的替代解釋
+
+- **高信心(ground truth,兩次獨立debugger記憶體讀值重現)**:這個特定
+  15人roster組成(`[0,1,3,4,7,9,14,15,16,17,18,21,25,28,30]`)搭配既有
+  `ensure_one_ally_acts()`+9輪turn-wait,能讓ch21的`[0x53ecc]`翻2。這是
+  本專案第一次拿到ch21的引擎層級勝利,兩次獨立live run皆重現,不是單次
+  僥倖。
+- **中高信心,非100%確定**:roster組成(而非單純guard id)是這次成功
+  的**因果**關�键。理由支持:前一輪「guard-sweep」用完全相同的
+  `ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`程式碼路徑
+  搭配舊roster(13真實早期角色+21+3)測試過,**明確失敗**(`[0x53ecc]`
+  維持0,且9輪等待期間反覆出現對話清除逾時警告)——本輪唯一改變的變數
+  就是roster組成,兩次結果從「失敗」變成「乾淨成功」。**未排除的替代
+  解釋**:doc99先前已記錄「ch21能穩定抵達真戰鬥,但敵人數量(50 vs 59)
+  與過場tap數(9 vs 207)run-to-run皆有差異」,暗示每次launch可能存在
+  某種隨機化或本工具時序假設不牢靠的因素——本輪兩次run剛好都是50個敵人
+  (與舊roster的兩次「guard-sweep」live run的50/59不同批次比較沒有嚴格
+  對照組:沒有在同一輪次「舊roster→新roster」直接AB測試,只是跨輪次
+  比較)。嚴格來說,不能100%排除「這次剛好連續兩次抽到會贏的隨機分支」
+  ,但兩次獨立run一致成功、且與舊roster「兩次獨立run一致失敗」形成鮮明
+  對比,這個機率遠低於組成才是原因。
+- **未查明**:roster組成具體透過什麼機制影響`[0x53ecc]`——是總人數
+  (15 vs 15,人數其實一樣,可排除純人數假說)、還是特定角色的persistent
+  roster狀態被某個win-check以外的分支讀取(例如某個護衛/存活檢查誤讀了
+  不在roster裡的角色而卡在非預期分支)、還是合成角色本身(`build_join_
+  record()`跳過equip-recalc尾段)剛好避開了某個舊roster觸發的邊界情況
+  ——本輪未反組譯`[0x53ecc]`寫入路徑本身去確認,只有行為證據。
+- **本輪未做**:ch22/23/25/28四章完全未套用`--complete-roster`測試
+  (`complete_roster_ids()`對它們已算出組成,見上方第一步的表,但零live
+  驗證);`0x205be`的LOGC execution-trace(任務單原本要求的備案)因為
+  第一個假說就成功,本輪未觸及;磁碟寫入gate(doc25 §9.1)依然完全開放。
+- **M5 tally**:引擎層級勝利確認章節數由22章(ch01-20+ch24+ch26)增為
+  **23章(ch01-21+ch24+ch26)**。ch21本身狀態從「win-check根因未查明」
+  升級為「anomaly_engine_win_no_disk_write,與ch02-20/26同類,原因是
+  已知的SAV writer gate,不是ch21特有的未解之謎」。22/23/25/28四章
+  仍未達成,`--complete-roster`是否也能解開它們留給下一輪。

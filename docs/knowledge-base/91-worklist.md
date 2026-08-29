@@ -2220,6 +2220,39 @@
   **M5引擎層級勝利確認章節數由20章(ch01-20)增為22章(ch01-20+ch24+ch26)**。
   完整guard-id對照表、逐章live log、下一輪建議見`docs/knowledge-base/99-chapter-
   sweep-results.md`「2026-08-29『guard-sweep』輪」小節。
+  **2026-08-29「full-roster」輪**：驗證「舊ch21 roster不完整(只有13個早期真實
+  角色+guard id21+1個任意filler id3，時序不連貫)可能是win-check卡住原因」這個
+  假說——彙整`docs/data/chapter_beats/ch*_post.json`的`join` beat(比doc28多抓到
+  1個遺漏：ch13「哈斯米爾之戰」實有join哈瓦特/id3，doc28該列寫「—」)，過程中
+  發現並修正一個filename索引陷阱(`ch{NN}_post.json`用raw chapter 0-indexed命名，
+  `ch20_post.json`其實是**ch21自己**的戰後join羅蘭/希爾法，不是ch21之前——照抄
+  既有`estimate_roster_size()`的`range(1,chapter_n)`會把這兩個角色錯當成賽前
+  已在隊，因為那個函式只算count、對此不敏感而從未暴露這個bug，本輪新寫的
+  組成敏感函式改用`range(0,chapter_n-1)`並在code comment記錄原因)。新增可重用
+  的`CORE_STARTER_IDS`/`natural_join_order()`/`complete_roster_ids()`/
+  `build_complete_roster_save()`(`tools/fd2_chapter_sweep.py`，`prepare_chapter_save`
+  新增`roster_mode="complete"`、CLI新增`--complete-roster`，預設行為對既有章節
+  零改變)，建構一個15人(=ch21 deploy門檻)、時序優先(離ch21最近的角色優先，
+  因為最早期角色已被舊roster白送過)的完整roster：`[0,1,3,4,7,9,14,15,16,17,18,
+  21,25,28,30]`，保留真實SAV的record0-4位元組不動、其餘10人用既有的
+  `build_join_record()`合成。**用`tools/dosbox_harness.sh`兩個獨立instance
+  (`fullroster21`/`fullroster221`)live驗證，兩次皆成功**：完全相同的
+  `ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[21]=9`程式碼路徑(前一輪
+  用舊roster測試時明確失敗過)，這次`[0x53ecc]`分別在1.8秒/3.6秒內乾淨翻2
+  (debugger直接讀值)，9輪turn-wait全程沒有再出現前一輪的對話清除逾時警告。
+  Verdict是`anomaly_engine_win_no_disk_write`(與ch02-20/26同類——engine-level
+  win已確認，只是doc25 §9.1既有、未解的SAV writer gate問題擋住磁碟寫入，不是
+  ch21特有的新問題)。**中高信心(非100%確定)roster組成是因果關鍵**：兩次獨立
+  run一致成功、與前一輪舊roster兩次獨立run一致失敗形成鮮明對比，但因為沒有在
+  同一輪次做嚴格的舊/新roster AB對照，不能完全排除ch21存在某種run-to-run
+  隨機性的替代解釋。**M5引擎層級勝利確認章節數由22章增為23章
+  (ch01-21+ch24+ch26)**，ch21從「win-check根因未查明」的anomaly升級為
+  「已知SAV-writer-gate問題」的anomaly_engine_win_no_disk_write，與ch02-20/26
+  同一類別。ch22/23/25/28四章的`complete_roster_ids()`組成已算出但完全未live
+  測試，任務單原本要求的`0x205be`備案LOGC trace因第一假說就成功而未觸及。
+  完整join-beat彙整表、filename索引陷阱細節、兩次live log、下一輪建議見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-29『full-roster』輪」
+  小節。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測

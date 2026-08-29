@@ -2216,8 +2216,196 @@ def estimate_roster_size(chapter_n: int) -> int:
     return count
 
 
+# --- "Complete natural roster" helper (2026-08-29 "fullroster21" round) ---
+#
+# Every prior chapter-sweep round's roster padding (the `guard_ids`/`else`
+# branches below) only ever added the bare-minimum synthetic ids needed to
+# satisfy a threshold or a guard check -- e.g. ch21's 4 separate win-check
+# attempts all used the SAME 15-member roster (13 real early-game members
+# frozen around ch09-12 + guard id21 + one arbitrary ascending-id filler,
+# id3), never anything resembling a genuine "reached ch21 by playing
+# through ch01-20" roster. This round tested the hypothesis that this
+# roster INCOMPLETENESS (not just the guard id) was blocking ch21's
+# win-check ([0x53ecc] never reaching 2) -- see docs/knowledge-base/99-
+# chapter-sweep-results.md's "2026-08-29 'full-roster' round" section for
+# the full writeup. Result: a 15-member roster built by
+# `complete_roster_ids()`/`build_complete_roster_save()` below --
+# CORE_STARTER_IDS + the guard id + the chronologically-CLOSEST-to-ch21
+# story recruits (recency-first, since not everyone who joined by ch19 fits
+# in a 15-slot deploy quota) -- got ENGINE-LEVEL WIN CONFIRMED
+# ([0x53ecc]==2, ground-truth debugger read) on the very first live run,
+# reproducing the exact same ensure_one_ally_acts()+KNOWN_MIN_TURNS_BEFORE_
+# KILL=9 code path that had failed 2 prior times with the old sparse
+# roster. This is the first time this project got signal that composition
+# (not just count/threshold) matters for a guard-gated chapter's win-check.
+#
+# ONLY ch21 has a *live-verified* win with this method as of this round
+# (once, plus a same-round confirmatory re-run -- see doc99 for whether
+# that second run also passed). ch22/23/25/28 are wired below because the
+# construction is chapter-agnostic (same join-beats data, same
+# guard_selection_threshold()), but their win-checks have NOT been
+# live-tested with a complete roster -- do not upgrade their verdicts
+# without actually running the sweep against them.
+
+CORE_STARTER_IDS = [0, 1, 4, 9, 30]  # Sol/Hanaux/Ares/Yuni/Gaia -- present from
+# record index 0-4 in EVERY real FD2.SAV this project has examined
+# (.wsl_build/chapter_sweep/FD2_source.SAV and others cited in
+# tools/fd2save.py's module docstring), i.e. these never show up as a `join`
+# beat because they are already in the party before ch01 -- see doc28 row 1
+# ("哈諾(出現前勿滅完)") and doc49 for identity. id0 (Sol) is always kept
+# separately as the fixed leader record, never dropped even under a tight cap.
+
+
+def _walk_join_beats(beats: list[dict], out: list[int]) -> None:
+    """Recursively collect `join` beat character ids (handles both the
+    `{"args": [id]}` and `{"char_id": id}` shapes seen across
+    docs/data/chapter_beats/ch*_post.json -- see the ch06_post.json
+    "join"/"char_id" outlier found while compiling this round's roster)."""
+    for b in beats:
+        if b.get("op") == "join":
+            cid = None
+            args = b.get("args")
+            if args:
+                cid = args[0]
+            elif "char_id" in b:
+                cid = b["char_id"]
+            if cid is not None:
+                out.append(cid)
+        for k in ("then", "else"):
+            if k in b:
+                _walk_join_beats(b[k], out)
+
+
+def natural_join_order(chapter_n: int) -> list[int]:
+    """Chronological (earliest-first), de-duplicated list of character ids
+    that joined via a scripted `join` beat in ch00_post.json..ch(N-2)_post.json
+    -- i.e. everyone who story-recruited before chapter_n opens.
+
+    IMPORTANT, found while building this (2026-08-29 "fullroster21" round):
+    docs/data/chapter_beats/ch{NN}_post.json is indexed by RAW chapter number
+    (0-based) -- ch00_post.json is raw chapter 0 = game ch01's own
+    post-battle, ch20_post.json is raw chapter 20 = game ch21's OWN
+    post-battle (confirmed both by cross-checking ch17_post.json's join ids
+    [21, 7] against the disassembly-proven ch21 guard id 21/約拿 joining in
+    raw17=game ch18, and by ch20_post.json containing join ids [23, 24] --
+    exactly the 羅蘭/希爾法 pair independently proven to be ch21's own
+    map-native "own"-camp units in the "map-native guard" round, not
+    pre-ch21 recruits). estimate_roster_size() above uses `range(1,
+    chapter_n)` reading ch{ch:02d}_post.json, which for chapter_n=21 reads
+    ch01_post.json..ch20_post.json -- that INCLUDES the target chapter's own
+    post-battle file. This is harmless for estimate_roster_size() (it only
+    ever produces a bare synthetic-filler COUNT, not specific ids), but
+    would be a real correctness bug here if copied verbatim: it would fold
+    a chapter's own new-this-chapter map-native joins into what's supposed
+    to be a "roster as it existed BEFORE this chapter's battle" snapshot.
+    Deliberately uses `range(0, chapter_n - 1)` instead -- do not "fix" this
+    to match estimate_roster_size()'s range without re-deriving which one is
+    actually wrong."""
+    ids: list[int] = []
+    seen: set[int] = set()
+    for ch in range(0, chapter_n - 1):
+        path = CHAPTER_BEATS_DIR / f"ch{ch:02d}_post.json"
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        found: list[int] = []
+        _walk_join_beats(data.get("beats", []), found)
+        for cid in found:
+            if cid not in seen:
+                seen.add(cid)
+                ids.append(cid)
+    return ids
+
+
+def complete_roster_ids(chapter_n: int, cap: int | None = None) -> list[int]:
+    """Build the most complete "naturally reached chapter_n by playing
+    ch01..chapter_n-1" roster that fits within `cap` (defaults to
+    guard_selection_threshold(chapter_n), the chapter's deploy-selection
+    quota -- padding to exactly this number keeps the already-proven
+    "no free choice, must select everyone" trick usable, see
+    guard_selection_threshold()'s docstring).
+
+    Priority order when not everyone fits (id0/leader and the guard id(s)
+    are never dropped): id0 (fixed leader) -> this chapter's required guard
+    id(s) (GUARD_CHARACTER_IDS) -> CORE_STARTER_IDS -> natural_join_order()
+    recruits taken MOST-RECENT-FIRST (i.e. closest chronologically to
+    chapter_n). Recency-first, not chronological/ascending order, was a
+    deliberate choice this round: the previously-tested ch21 roster already
+    over-represented the EARLIEST recruits (they came for free in the fixed
+    13-member real base save) and had never tried the LATE recruits at all
+    -- recency-first maximizes new, previously-untested composition per
+    slot spent. See this function's call site for the live-verified ch21
+    result."""
+    cap = cap if cap is not None else guard_selection_threshold(chapter_n)
+    required_ids = GUARD_CHARACTER_IDS.get(chapter_n, [])
+    recruits_recent_first = list(reversed(natural_join_order(chapter_n)))
+    ordered: list[int] = [0]
+    for cid in required_ids:
+        if cid not in ordered:
+            ordered.append(cid)
+    for cid in CORE_STARTER_IDS:
+        if cid not in ordered:
+            ordered.append(cid)
+    for cid in recruits_recent_first:
+        if cid not in ordered:
+            ordered.append(cid)
+    return ordered[:cap]
+
+
+def build_complete_roster_save(source_sav: Path, chapter_n: int, slot: int, log: list[str],
+                                cap: int | None = None) -> bytes:
+    """Return a new plaintext buffer whose slot's roster is complete_roster_ids()
+    (see above), preferring the source save's REAL, engine-produced record
+    bytes for any id it already has (byte-for-byte, not rebuilt) and only
+    falling back to fd2save.build_join_record()'s constructor-formula
+    synthetic records for ids the source save doesn't have. This is the
+    same technique the manual 2026-08-29 "fullroster21" round used by hand
+    (keep record indices 0-4 -- the real ids [0,9,4,30,1] -- from
+    .wsl_build/chapter_sweep/FD2_source.SAV untouched, append 10 synthetic
+    records for the rest), generalized to any source save/chapter."""
+    plain = fd2save.decode(source_sav.read_bytes())
+    plain = fd2save.set_slot_chapter(plain, slot, chapter_n - 1)
+    start, _ = fd2save.slot_bounds(slot)
+    meta_start = start + fd2save.ROSTER_SIZE
+    current_count = plain[meta_start + 1]
+    target_ids = complete_roster_ids(chapter_n, cap=cap)
+    target_set = set(target_ids)
+    source_ids = fd2save.roster_character_ids(plain, slot, current_count)
+
+    plain = bytearray(plain)
+    kept_ids: list[int] = []
+    write_at = 0
+    for i, cid in enumerate(source_ids):
+        if cid in target_set and cid not in kept_ids:
+            record = bytes(plain[start + i * fd2save.UNIT_SIZE: start + (i + 1) * fd2save.UNIT_SIZE])
+            plain[start + write_at * fd2save.UNIT_SIZE: start + (write_at + 1) * fd2save.UNIT_SIZE] = record
+            kept_ids.append(cid)
+            write_at += 1
+    plain[meta_start + 1] = write_at
+    log.append(f"build_complete_roster_save: kept {write_at} real record(s) from source ({kept_ids})")
+    plain = bytes(plain)
+
+    missing_ids = [cid for cid in target_ids if cid not in kept_ids]
+    if missing_ids:
+        plain = fd2save.append_roster_members(plain, slot, missing_ids)
+        log.append(f"build_complete_roster_save: appended {len(missing_ids)} synthetic record(s) ({missing_ids})")
+    log.append(f"build_complete_roster_save: final roster={target_ids} (cap={cap or guard_selection_threshold(chapter_n)})")
+    return plain
+
+
 def prepare_chapter_save(source_sav: Path, chapter_n: int, out_sav: Path, slot: int, log: list[str],
-                          pad_roster: bool = True) -> Path:
+                          pad_roster: bool = True, roster_mode: str = "pad") -> Path:
+    if roster_mode == "complete":
+        plain = build_complete_roster_save(source_sav, chapter_n, slot, log)
+        stored = fd2save.encode(plain)
+        fd2save.decode(stored)
+        out_sav.parent.mkdir(parents=True, exist_ok=True)
+        out_sav.write_bytes(stored)
+        return out_sav
+
     plain = fd2save.decode(source_sav.read_bytes())
     raw_chapter = chapter_n - 1
     plain = fd2save.set_slot_chapter(plain, slot, raw_chapter)
@@ -2303,7 +2491,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                    instance_prefix: str = "sweep", slot: int = 0,
                    boot_wait_s: int = 12, escape_taps: int = 30,
                    keepalive: int = 1200, teardown_after: bool = True,
-                   pad_roster: bool = True, use_navigate_hints: bool = True) -> dict:
+                   pad_roster: bool = True, use_navigate_hints: bool = True,
+                   roster_mode: str = "pad") -> dict:
     name = f"{instance_prefix}{chapter_n:02d}"
     chapter_dir = results_dir / f"ch{chapter_n:02d}"
     shots_dir = chapter_dir / "shots"
@@ -2315,7 +2504,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
 
     try:
         patched_sav = chapter_dir / "patched.SAV"
-        prepare_chapter_save(source_sav, chapter_n, patched_sav, slot, log, pad_roster=pad_roster)
+        prepare_chapter_save(source_sav, chapter_n, patched_sav, slot, log, pad_roster=pad_roster,
+                              roster_mode=roster_mode)
 
         launch_instance(name, keepalive=keepalive)
         time.sleep(boot_wait_s)
@@ -2729,7 +2919,8 @@ def cmd_sweep(args):
         result = sweep_chapter(n, source_sav, results_dir, instance_prefix=args.instance_prefix,
                                 keepalive=args.keepalive, teardown_after=not args.no_teardown,
                                 pad_roster=not args.no_roster_pad,
-                                use_navigate_hints=not args.no_navigate_hints)
+                                use_navigate_hints=not args.no_navigate_hints,
+                                roster_mode="complete" if args.complete_roster else "pad")
         append_results(results_path, result)
         print(f"ch{n:02d}: {result['verdict']} ({result['duration_s']}s) -- {result['detail']}")
 
@@ -2755,6 +2946,13 @@ def build_parser():
                      help="skip both KNOWN_NAVIGATE_HINTS overrides and attempt_camp_exit(), and go straight to the "
                           "chapter-agnostic generic advance loop (useful for re-measuring how much attempt_camp_exit "
                           "is actually contributing)")
+    sp.add_argument("--complete-roster", action="store_true",
+                     help="build the roster via complete_roster_ids()/build_complete_roster_save() instead of the "
+                          "default minimal guard/threshold padding -- a chronologically-complete-as-fits "
+                          "'naturally reached this chapter' roster (CORE_STARTER_IDS + guard id(s) + most-recent "
+                          "story recruits first, capped at guard_selection_threshold()). Live-verified for ch21 "
+                          "only so far (2026-08-29 'fullroster21' round, see doc99) -- other chapters are wired "
+                          "but untested with this mode.")
     sp.set_defaults(func=cmd_sweep)
 
     return p
