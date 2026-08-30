@@ -20,8 +20,11 @@
 //       固定 50% RNG gate,與 record[+2] 無關(id22 dump 值為 0,id26/27 為 50 純屬巧合,見
 //       docs/knowledge-base/32-item-combat-stats-re.md:442-483、native_item_marker_application.go)。
 //     - id24/28/29/30(劍技)、id31(未知)實際走 `0x2cf30` derived-strike,完全不呼叫任何命中判定,
-//       固定套用倍率傷害(對應 doc02「劍技恆中」),見 §6.5。這幾個 case 目前在 applySpell 仍是
-//       待實裝的 no-op,此處先修正以免日後實作傷害時重蹈方向錯誤的舊 bug。
+//       固定套用倍率傷害(對應 doc02「劍技恆中」),見 §6.5。
+//   - §4.2 劍技傷害:2026-08-30 續輪接上——`AP×倍率(15/20/12/18)/10 − DP` 已由 native 0x2cf30
+//     完整反組譯確認(§6.5),applySpell 直接呼叫既有、已測試的
+//     native_command24.go ResolveNativeCommandDerivedStrikeDamage,不重寫傷害公式,見
+//     derivedStrikeMultiplier 與 applySpell case 24/28/29/30/31 的註解、§6.6.1 收尾記錄。
 package battle
 
 import (
@@ -138,8 +141,8 @@ func randomizeAmount(max int, rng *rand.Rand) int {
 //     roll 套用三個狀態,這個簡化本輪不展開,只訂正其擲骰機率從 100% 改成正確的 50%。)
 //   - id24/28/29/30(破龍擊/淒煌斬/熾炎刀/音速刃劍技)、id31(未知)：實際呼叫 `0x2cf30`
 //     derived-strike 路徑,完全不呼叫任何命中判定函式,固定套用倍率傷害(對應 doc02「劍技恆中」
-//     攻略文字),見 §6.5。applySpell 對這些 case 目前仍是待實裝的 no-op,回傳值暫無可觀察差異,
-//     但先訂正以免日後接上傷害公式時重蹈本次修正前「方向錯誤」的舊 bug。
+//     攻略文字),見 §6.5。2026-08-30 續輪:applySpell 已接上對應的傷害公式(見 applySpell case
+//     24/28/29/30/31、derivedStrikeMultiplier),此 bypass 現在有真正可觀察的效果。
 func rollsHit(sp Spell, rng *rand.Rand) bool {
 	switch sp.ID {
 	case 22, 35:
@@ -151,6 +154,29 @@ func rollsHit(sp Spell, rng *rand.Rand) bool {
 		return false
 	}
 	return rng.Intn(100) < sp.Hit
+}
+
+// derivedStrikeMultiplier 劍技/derived-strike(id24/28/29/30/31)傷害加乘率,對映 native
+// 0x2cf30 反組譯結果(docs/knowledge-base/27-combat-rules-and-validation-checklist.md §6.5:
+// `if id==0x18(24) mult=15; elif id==0x1c(28) mult=20; elif id==0x1d(29) mult=12; else mult=18`,
+// else 分支同時覆蓋 id==0x1e(30) 與 id==0x1f(31))。
+//
+// 與 native_command24.go 的 nativeCommandDerivedStrikeMultiplier 刻意不共用同一張表:該函式
+// 服務「native command」cursor-driven 派送路徑,其 switch 故意不含 id30(id30 在該路徑有專屬
+// line-selector 入口 ExecuteNativeCommand30,由呼叫端另外硬編 18,不透過共用 lookup);這裡服務
+// spell.json/CastArea 的一般 Range/Dist AoE 施法路徑,id30 在這條路徑沒有特殊目標選取需求,故
+// 直接把 30 併入這張表,不強行複用另一邊為了保護其特例入口而刻意留空的 switch。
+func derivedStrikeMultiplier(id int) int {
+	switch id {
+	case 24:
+		return 15
+	case 28:
+		return 20
+	case 29:
+		return 12
+	default: // 30, 31
+		return 18
+	}
 }
 
 // isEnemyOf 施法目標的陣營判斷:Own 與 Ally 同一陣線,對 Enemy 互為敵方(涵蓋玩家/NPC/敵方任一方施法)。
@@ -270,8 +296,15 @@ func awardCastExp(caster *Unit, sp Spell, results []CastResult) float64 {
 		return sum
 	case 22, 34, 35: // 封咒術/破壞神/暗邪鬼:doc02 §4.5 未列公式,不編造,見函式註解
 		return 0
-	case 23, 24, 28, 29, 30, 31: // 傳送術(另有早退路徑處理)/劍技(待實裝加乘率)/未知法術
+	case 23: // 傳送術:早退路徑已在 CastArea 的特殊定位分支(sp.Target==3)處理並回傳,
+		// 這裡是防禦性保留,正常流程不會走到
 		return 0
+	// 24/28/29/30/31(劍技/未知,derived-strike)刻意不再列在這裡:2026-08-30 本輪
+	// applySpell 已接上 §6.5/§6.6.1 反組譯證實的傷害公式(見下方 case),與
+	// native_command24.go ExecuteNativeCommandDerivedStrike 的既有判斷一致——
+	// 「這些指令仍是透過同一個 0x1C81F 底層寫入核心造成的普通傷害,理應走一般攻擊經驗公式」
+	// (該檔案已承認這是 judgment call,非逐位元組證明),故讓它們落到下面的預設「一般攻擊型
+	// 法術」分支,不再特例回 0。
 	}
 	if sp.Target == 1 { // 一般治療:治療/回復/再生/神恩/風妖精(doc02 §4.4/§6.3)
 		sum := 0.0
@@ -353,11 +386,26 @@ func (s *State) applySpell(caster, tgt *Unit, sp Spell, rng *rand.Rand) CastResu
 		return CastResult{Target: tgt}
 	case 23: // 傳送術:目的地由地圖 UI 選取,battle 套件不處理定位——待實裝
 		return CastResult{Target: tgt}
-	case 24, 28, 29, 30: // 破龍擊/淒煌斬/熾炎刀/音速刃(劍技):AP×加乘率(doc02 §4.2/§6.2),
-		// 加乘率(1.2~2.0)未在 spell.json 欄位中,需另建劍技倍率表——待實裝
-		return CastResult{Target: tgt}
-	case 31: // spellNames[31]="?",語意未知(EXE dump 無對應攻略條目)——待 RE
-		return CastResult{Target: tgt}
+	case 24, 28, 29, 30, 31: // 破龍擊/淒煌斬/熾炎刀/音速刃(劍技)/31(spellNames[31]="?",語意未知
+		// 但已知傷害機制與其餘四招相同,見下方倍率表)。
+		// AP×加乘率−DP(doc02 §4.2「劍技:AP×劍技加乘」),native 0x2cf30 derived-strike 已用
+		// 位址級反組譯完整釘死(docs/knowledge-base/27-combat-rules-and-validation-checklist.md
+		// §6.5/§6.6.1):倍率 id24=15、id28=20、id29=12、id30/31 共用 18(§6.5「else 分支同時覆蓋
+		// id==0x1e(30) 與 id==0x1f(31)」訂正)。傷害本體與 0.9~max-1 亂數化沿用
+		// native_command24.go 的 ResolveNativeCommandDerivedStrikeDamage(該函式已服務
+		// ExecuteNativeCommandDerivedStrike/ExecuteNativeCommand30 兩條「native command」派送
+		// 路徑,本身已有測試覆蓋),此處直接呼叫同一個已驗證 helper,不重寫傷害公式。
+		// 命中已在上方 rollsHit 以 case 24/28/29/30/31 恆 true bypass(§6.6.1),此處不再擲骰。
+		// 目標選取沿用 CastArea 既有的 spell.json Range/Dist AoE 模型,不套用「native command」
+		// 系統 id30 專屬的 cursor line-selector(SelectionMode>=0x10)——兩套系統目標選取邏輯
+		// 本來就分開維護(見 derivedStrikeMultiplier 註解),此處不引入該特例。
+		mult := derivedStrikeMultiplier(sp.ID)
+		_, dmg, err := ResolveNativeCommandDerivedStrikeDamage(caster.AP, tgt.DP, mult, rng)
+		if err != nil {
+			return CastResult{Target: tgt}
+		}
+		tgt.ApplyHPDamage(dmg)
+		return CastResult{Target: tgt, Amount: dmg}
 	}
 
 	if sp.Target == 1 { // 一般治療:治療/回復/再生/神恩/風妖精(doc02 §4.4/§6.3)

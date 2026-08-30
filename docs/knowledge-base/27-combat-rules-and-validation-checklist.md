@@ -339,6 +339,20 @@ func rollsHit(sp Spell, rng *rand.Rand) bool {
 
 **實際遊戲行為變化**:id22(封咒術)、id35(暗邪鬼)兩招在 remake 裡從「每次施放保證生效」變成「50% 機率生效」(對映原生 0x22d1b 真實機率);id24/28/29/30/31 因目前仍是 no-op,行為無變化(但已排除未來實作傷害時重蹈方向錯誤的隱患);id25/26/27/34 本來就不受此 bug 影響,行為無變化。**此項現已關閉,不再是開放問題。**
 
+#### 6.6.2 id24/28/29/30/31 傷害實裝(2026-08-30 續輪)
+
+> 承接 §6.6.1「applySpell 對這些 case 目前仍是待實裝的 no-op」的遺留缺口。方法:先確認證據是否已足夠,不是重新反組譯——`native_command24.go`(§6.5 的落地產物)早已把 `0x2cf30` 的傷害公式(`trunc(actor.AP*mult/10)-DP`,經 `ResolveNativeCommandDerivedStrikeDamage` 隨機化)實作成一個獨立、已測試的 helper,只是服務「native command」cursor-driven 派送路徑(`ExecuteNativeCommandDerivedStrike`/`ExecuteNativeCommand30`),從未被 `magic.go` 的 `applySpell`(spell.json/`CastArea` 施法路徑)呼叫過。兩條路徑對應同一批遊戲指令(24/28/29/30/31),證據已經是位址級反組譯釘死的(§6.5「已用位址級反組譯完整釘死,不再是開放問題」),不是猜測,因此本輪判定**有充分證據可以實作**,不需要新的動態驗證或反組譯。
+
+**實際修正**(`remake/internal/battle/magic.go`):
+
+- 新增 `derivedStrikeMultiplier(id int) int`:24→15、28→20、29→12,其餘(30/31)→18,對映 §6.5 訂正後的倍率表。與 `native_command24.go` 的 `nativeCommandDerivedStrikeMultiplier` 刻意分開維護(該函式服務 id30 有專屬 line-selector 入口的 native command 路徑,故意不含 30;這裡服務沒有該特例需求的 `CastArea` AoE 路徑,直接把 30 併入)。
+- `applySpell` 的 `case 24, 28, 29, 30, 31` 從 `return CastResult{Target: tgt}`(no-op)改成呼叫既有、已測試的 `ResolveNativeCommandDerivedStrikeDamage(caster.AP, tgt.DP, derivedStrikeMultiplier(sp.ID), rng)`,套用傷害、回傳 `Amount`。命中沿用 §6.6.1 已修正的 `rollsHit` 恆 true bypass,不重複擲骰。目標選取沿用 `CastArea` 既有的 spell.json `Range`/`Dist` AoE 模型,不引入 native command 系統 id30 專屬的 cursor line-selector(兩套目標選取邏輯本來就分開維護,不強行合併)。
+- `awardCastExp` 把 24/28/29/30/31 從「特例回 0(注解:劍技待實裝加乘率)」移除,讓它們落到既有的「一般攻擊型法術」預設分支(`AttackExp`)——這與 `native_command24.go` `ExecuteNativeCommandDerivedStrike` 已經做出的判斷一致(該檔案函式註解自陳「這是 judgment call,不是逐位元組證明」:這些指令仍是透過同一個 `0x1C81F` 底層寫入核心造成的普通傷害,理應算一般攻擊經驗)。這不是本輪新增的 RE 結論,只是讓 `applySpell` 追上 sibling 子系統已經做出的既有決定,避免同一款遊戲機制在兩個子系統裡經驗值行為不一致。
+
+**測試**(`remake/internal/battle/magic_test.go`):新增 `TestApplySpell_DerivedStrikeDamage_MatchesNativeFormula`(對 24/28/29/30/31 逐 id 比對 `CastArea` 的傷害輸出與獨立呼叫 `ResolveNativeCommandDerivedStrikeDamage`(同一 AP/DP/倍率/RNG seed)完全一致)、`TestApplySpell_DerivedStrikeAwardsAttackExp`(Own 陣營造成傷害應取得 >0 經驗)、`TestDerivedStrikeMultiplier_MatchesDoc`(逐 id 核對倍率表);`TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck`/檔頭註解同步移除「仍是 no-op」的過期敘述。`go build ./...`、`go test ./...` 全綠。
+
+**仍未展開(誠實列出,非本輪範圍)**:derived-strike 自己的逐目標演出/hit-event SFX 迴圈(§6.5 已完整反組譯出機制,但 remake 未接線 renderer/SFX/UI)、id30 在「native command」系統的 cursor line-selector 特殊目標選取邏輯與 `applySpell` 的一般 AoE 目標選取邏輯不同步(兩套子系統維持各自的目標選取實作,不視為缺陷,只是分工邊界)、id31 的玩家可見名稱與確切遊戲定位仍未知(`command_labels.json` 該 slot label 為空字串,只知道它與其餘四招共用相同的傷害/命中機制)。此項(傷害實裝)本身視為已關閉。
+
 **`0x2d80d`(`FUN_0002d80d`,body `0x2d80d..0x2df00`,1780 bytes,ID32-35『四類特殊演出』)**——逐指令反組譯+decompile 確認內部依 `commandId` 精確分四支,對照 `docs/data/command_labels.json`(32=熾天使、33=風妖精、34=破壞神、35=暗邪鬼)與 `docs/knowledge-base/02-game-data-reference.md` 攻略文字逐支核對:
 
 | id | 名稱(`command_labels.json`) | `0x2d80d` 內呼叫的 callee | doc02 攻略文字 | 一致? |

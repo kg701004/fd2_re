@@ -321,8 +321,9 @@ func TestRollsHit_SealSpell_FiftyPercentGate(t *testing.T) {
 
 // TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck:id24/28/29/30(劍技)、
 // id31(未知)原生走 0x2cf30 derived-strike,完全不呼叫任何命中判定函式(對應 doc02「劍技恆中」),
-// 故 rollsHit 對這些 ID 應恆回傳 true,不受 Hit 欄值影響。applySpell 目前對這些 case 仍是
-// 待實裝的 no-op,此測試只鎖定 rollsHit 本身的行為,避免日後接上傷害公式時重蹈方向錯誤的舊 bug。
+// 故 rollsHit 對這些 ID 應恆回傳 true,不受 Hit 欄值影響。2026-08-30 續輪:applySpell 已接上
+// 對應傷害公式(見 TestApplySpell_DerivedStrikeDamage_MatchesNativeFormula),此測試仍單獨鎖定
+// rollsHit 本身的行為。
 func TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck(t *testing.T) {
 	rng := rand.New(rand.NewSource(7))
 	for _, id := range []int{24, 28, 29, 30, 31} {
@@ -331,6 +332,90 @@ func TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck(t *testing.T) {
 			if !rollsHit(sp, rng) {
 				t.Errorf("id%d 第 %d 次:應恆回傳 true(不經過命中判定),got false", id, i)
 			}
+		}
+	}
+}
+
+// TestApplySpell_DerivedStrikeDamage_MatchesNativeFormula:2026-08-30 續輪——applySpell 對
+// id24/28/29/30/31(劍技/未知)已接上 native 0x2cf30 反組譯證實的傷害公式
+// (docs/knowledge-base/27-combat-rules-and-validation-checklist.md §6.5/§6.6.1),不再是 no-op。
+// 驗證 CastArea 對這 5 個 id 的傷害輸出,與獨立呼叫 native_command24.go 既有、已測試的
+// ResolveNativeCommandDerivedStrikeDamage(同一組 AP/DP/倍率/RNG 序列)完全一致,且逐 id 使用
+// 的倍率符合 §6.5 訂正後的倍率表(24=15、28=20、29=12、30/31 共用 18)。施法者用 Enemy 陣營
+// 是刻意選擇:CastArea 只在 caster.Camp∈{Own,Ally} 才呼叫 GainExp 消耗額外 RNG 抽樣,用 Enemy
+// 可讓「傷害擲骰」是整個施法過程唯一的一次 RNG 消耗,兩邊序列才可逐值比對。
+func TestApplySpell_DerivedStrikeDamage_MatchesNativeFormula(t *testing.T) {
+	cases := []struct {
+		id   int
+		mult int
+	}{
+		{24, 15},
+		{28, 20},
+		{29, 12},
+		{30, 18},
+		{31, 18},
+	}
+	for _, c := range cases {
+		st := newTestState()
+		caster := mkUnit(Enemy, 0, 0, 100, 50)
+		caster.AP = 120
+		tgt := mkUnit(Own, 0, 0, 500, 0)
+		tgt.DP = 40
+		st.Units = []*Unit{caster, tgt}
+
+		sp := Spell{ID: c.id, Dmg: 0, Hit: 0, Dist: 5, Range: 0, MP: 10, Target: 0}
+		results := st.CastArea(caster, 0, 0, sp, rand.New(rand.NewSource(int64(100+c.id))))
+		if len(results) != 1 {
+			t.Fatalf("id%d: 命中數 = %d, want 1", c.id, len(results))
+		}
+		if results[0].Missed {
+			t.Fatalf("id%d: 不應 Miss(derived-strike 恆中)", c.id)
+		}
+
+		_, wantDmg, err := ResolveNativeCommandDerivedStrikeDamage(120, 40, c.mult, rand.New(rand.NewSource(int64(100+c.id))))
+		if err != nil {
+			t.Fatalf("id%d: ResolveNativeCommandDerivedStrikeDamage err=%v", c.id, err)
+		}
+		if results[0].Amount != wantDmg {
+			t.Errorf("id%d: CastResult.Amount = %d, want %d(native 公式 mult=%d)", c.id, results[0].Amount, wantDmg, c.mult)
+		}
+		if tgt.HP != 500-wantDmg {
+			t.Errorf("id%d: 目標 HP = %d, want %d", c.id, tgt.HP, 500-wantDmg)
+		}
+	}
+}
+
+// TestApplySpell_DerivedStrikeAwardsAttackExp:derived-strike 傷害不再特例回 0 經驗,而是落到
+// awardCastExp 底部「一般攻擊型法術」預設分支,採用與 native_command24.go
+// ExecuteNativeCommandDerivedStrike 相同的 AttackExp 判斷(該檔案函式註解已承認這是 judgment
+// call,非逐位元組證明;本測試只鎖定 remake 兩個子系統的一致性,不是新增獨立 RE 結論)。
+func TestApplySpell_DerivedStrikeAwardsAttackExp(t *testing.T) {
+	st := newTestState()
+	caster := mkUnit(Own, 0, 0, 100, 50)
+	caster.AP = 120
+	caster.Lv = 5
+	tgt := mkUnit(Enemy, 0, 0, 500, 0)
+	tgt.DP = 40
+	tgt.Lv = 3
+	tgt.ExpPerLevel = 10
+	st.Units = []*Unit{caster, tgt}
+
+	sp := Spell{ID: 28, Dmg: 0, Hit: 0, Dist: 5, Range: 0, MP: 10, Target: 0}
+	results := st.CastArea(caster, 0, 0, sp, rand.New(rand.NewSource(42)))
+	if len(results) != 1 {
+		t.Fatalf("命中數 = %d, want 1", len(results))
+	}
+	if results[0].ExpGained <= 0 {
+		t.Errorf("造成傷害的劍技應取得 >0 經驗(比照 native_command24.go 既有判斷),got %v", results[0].ExpGained)
+	}
+}
+
+// TestDerivedStrikeMultiplier_MatchesDoc:derivedStrikeMultiplier 逐 id 核對 §6.5 訂正後的倍率表。
+func TestDerivedStrikeMultiplier_MatchesDoc(t *testing.T) {
+	want := map[int]int{24: 15, 28: 20, 29: 12, 30: 18, 31: 18}
+	for id, mult := range want {
+		if got := derivedStrikeMultiplier(id); got != mult {
+			t.Errorf("derivedStrikeMultiplier(%d) = %d, want %d", id, got, mult)
 		}
 	}
 }

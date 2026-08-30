@@ -2160,7 +2160,14 @@
       `CastArea` AoE/命中擲骰與 normalized 輔助法術；2026-07-26 已由 SDD56/UI-03 取代為逐 command
       E0 matrix。native target/effect/transaction/presentation 未閉合者維持 fail-closed。
       (魔刃/魔鎧/風行 doc02 明文值)/毒麻封咒行動術/combo;13 單測;引擎:Buff 進 Attack、TickStatus、
-      AoE 指空地、FD2_SEED。缺口列冊:風妖精 dmg=0 矛盾、劍技倍率表、傳送 UI
+      AoE 指空地、FD2_SEED。缺口列冊:風妖精 dmg=0 矛盾、~~劍技倍率表~~、傳送 UI
+      （**2026-08-30 續輪已關閉**:`applySpell` id24/28/29/30/31 改呼叫既有
+      `native_command24.go ResolveNativeCommandDerivedStrikeDamage` + 新增
+      `magic.go derivedStrikeMultiplier`(24=15/28=20/29=12/30=18/31=18,對映 doc27§6.5 訂正後倍率
+      表),不再是 no-op;經驗值一併從特例回0改落到一般攻擊公式(比照
+      `ExecuteNativeCommandDerivedStrike` 既有判斷)。新增4個單測(`magic_test.go`)，
+      `go build ./...`/`go test ./...` 全綠。presentation/SFX 演出迴圈仍未接，非本輪範圍，
+      見 doc27§6.6.1）
 - [x] **全 33 戰場匯出**(haiku):remake/assets/maps/map1-32(96 檔,抽驗 3 圖合法);
       旗艦接線 loadMap(dir)+campaign battle.map 欄位(map3 實測換圖)
 - [x] **AI 行走+敵攻我演出**(旗艦):NextAIPlan 決策執行分離+aiStep;atkOwn 欄位按陣營
