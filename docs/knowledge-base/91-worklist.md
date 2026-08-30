@@ -199,6 +199,14 @@
 > 4. 本索引其餘164項分類（未觸及`FD2.SAV`/SAV writer gate/ch27/ch29勝利判定的項目）本輪**未逐項覆核**，
 >    暫視為原分類仍有效；如需精確現況，一律以`91-worklist.md`本文（依日期由新到舊）與
 >    `99-chapter-sweep-results.md`最新輪次為準，本索引僅供歷史快速掃描。
+> 7. **2026-08-30『anomaly-synthesis』輪補充**：上方第1點「SAV writer gate不是bug」與2026-08-29
+>    「`post-handler-save-trigger`」輪反組譯出的`0x523e7[下一章]`gate表，是**同一個底層機制**、
+>    精確度遞增的兩個描述（「只有酒店存檔」是通例描述，`0x523e7`表是位元組級的條件式機制），不是
+>    兩條獨立問題——後者能解釋為何ch22/23/24/27(好結局)/28/29六章**不經過酒店**也會靜默存檔（`0x523e7`
+>    [下一章]==1），而其餘中途章節查到0。任何輪次若看到「disk-write timing仍是開放問題」這類措辭
+>    （如本檔`CH05-ROSTER-MODE-REGRESSION`項曾經的收尾句），應視為未核對這個2026-08-29結論的過時
+>    用語，不代表真的有未解引擎機制。詳見`99-chapter-sweep-results.md`「2026-08-30
+>    『anomaly-synthesis』輪」整節。
 > 5. **2026-08-30『ch30disasm』輪（純靜態）補上story ch30（raw29，全遊戲最終章）的win-check/postbattle
 >    handler完整反組譯**：win-check（`0x51b19[29]=0x20bf5`）＝`record[20]`（四方交叉驗證即ASR-06
 >    「空魔神」本尊）死亡才算勝利，不是殲滅；postbattle（`0x51de9[29]=0x25757`）雖然會`INC[0x53c03]`
@@ -2766,6 +2774,14 @@
   收尾**——唯一仍開放的是與其他`anomaly_engine_win_no_disk_write`章節共通的
   disk-write timing問題，那是獨立於本項的既有開放問題，不影響本項關閉。**不
   影響M5既有tally**，理由同上。
+  **2026-08-30「anomaly-synthesis」輪勘誤**：上面這句「disk-write timing仍是
+  開放問題」是沿用最舊措辭、沒有核對中間輪次結論的過時說法——ch05的下一章
+  （story ch06/raw6）落在`post-handler-save-trigger`輪（2026-08-29，早於
+  `ch05regr`系列三輪）反組譯出的`0x523e7`表「index 0-21全部是0」區間內，
+  這代表ch05不寫入磁碟的原因**已經有位元組級反組譯解釋，不是timing問題，也
+  不是未解問題**——與ch03/ch26（同區間，180秒long-poll驗證過）同一類。詳見
+  `99-chapter-sweep-results.md`「2026-08-30『anomaly-synthesis』輪」小節
+  結論4。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測

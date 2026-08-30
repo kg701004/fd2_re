@@ -6302,3 +6302,116 @@ SAV`／`pre.SAV`／`final.SAV`三者md5相同，皆為過程副本），未觸�
 `identify`階段的record dump／`observe_passive`與`active_advance`系列）
 留存於`.wsl_build/round_ch30wf/`（`driver.py`、`state.json`、`shots/*.png`、
 `patched.SAV`/`pre.SAV`/`final.SAV`，均為過程debug產物，未納入git）。
+
+## 2026-08-30「anomaly-synthesis」輪（純文件整合稽核，交叉比對本檔全部`anomaly_engine_win_no_disk_write`出現處與91-worklist.md/25-battle-event-system.md§9.1，未做新live/靜態RE工作）：**這個verdict在全專案範圍內只有一個根因，就是`post-handler-save-trigger`輪反組譯出的`0x523e7[下一章]`gate表——不是tooling輪詢時限問題，也不是獨立於「SAV writer gate」的新機制；2026-08-28「只存在酒店」的粗略修正被隔天更精確的反組譯結果取代（不是推翻），而`ch05regr`系列殘留的「disk-write timing仍是開放問題」措辭是沒有跟上這個取代的過時用語，不代表ch05真的有未解之謎**
+
+### 背景與動機
+
+回應對「`anomaly_engine_win_no_disk_write`這個verdict在ch29/ch30被當成『預期』，
+但在ch05等章節被某些輪次描述成『可能是tooling限制或未解引擎謎題』」這個口徑落差
+的疑慮。逐一重讀本檔grep到的全部出現段落（首次出現於「2026-08-27續輪」表格
+`ch05/06/08/09/10/12/13/14/16/17/18`，`91-worklist.md`180-209行「2026-08-30更新
+註記」，以及`25-battle-event-system.md`§9.1）後，結論是：**本檔從未真正存在兩條
+獨立的調查線**，只是同一個機制在不同輪次被用了三種不同精確度的名字描述
+（「SAV writer gate」→「只有酒店存檔」→`0x523e7[下一章]`gate表），而部分較新
+的輪次（`ch05regr2`/`ch05regr3`，皆2026-08-30）在寫作時沿用了最舊的名字/框架，
+沒有回頭引用中間那個2026-08-29已經把機制講清楚的反組譯結果。
+
+### 結論1：`anomaly_engine_win_no_disk_write`章節清單與現況——全部已解釋，沒有一個是真正開放的引擎謎題
+
+- **ch02-21（story ch02-21/raw01-20，本檔「15章批次」`ch05/06/08/09/10/12/13/14/16`
+  ＋「r2續輪」`ch17/18`＋`ch2killgen`/`ch02final`等輪陸續補齊的ch03/04/07/11/15/
+  19/20/02，共19+章）**：engine-level win已確認，磁碟從未前進。根因：打贏後
+  `[0x53c03]`遞增到「下一章」（2-21範圍），`0x523e7[下一章]`查到`0`，
+  `FUN_00026152`走城鎮hub分支，結構上不含`0x2968d`存檔writer呼叫——**不論poll
+  多久都不會寫入**（`longpoll`輪180秒對ch03/ch26的直接驗證，比原本60秒視窗長
+  3倍，一絲一毫都沒有前進，逐位元組吻合預測）。**這是設計行為，不是bug，也不是
+  poll不夠久**。
+- **ch25/ch26（raw24/25）**：同一套`0x523e7[下一章]=0`機制，`post-handler-
+  save-trigger`輪的6個直接反組譯數據點之一，**唯二被明確排除是ch22/23/24/28那種
+  「整備限定」例外的對照組**。
+- **ch22/23/24/28（raw21/22/23/27）**：`0x523e7[下一章]=1`，走既有`0x26331`
+  camp-exit呼叫點，靜默存檔——這4章拿到字面`pass`，不是`anomaly_engine_win_
+  no_disk_write`。
+- **ch27（好結局分支）/ch29**：`ch2729-static`+`ch27win3`+`ch29wf`三輪確認
+  `0x523e7[下一章]=1`預測成立，皆live拿到磁碟真正前進的`pass`（ch27好結局
+  26→27、ch29 28→29）。ch27壞結局分支與ch30則是結構性`EB FE`自我跳轉死結，
+  執行路徑連`INC[0x53c03]`前的return都到不了，**根本沒有機會**碰到
+  `0x523e7`查表這一步——這是與「查到0」不同的另一種「無磁碟寫入」成因（死路
+  vs. 查到不存檔），`ch30wf`輪已用三次`pull_save()`md5比對正面確認。
+
+**換算下來：全部30個story章節裡，`anomaly_engine_win_no_disk_write`的成因只有
+兩種，且都已經有位元組級反組譯或live md5比對證據**——(a)贏了但下一章
+`0x523e7`分類為0（絕大多數中途章節，含ch05）；(b)贏了但postbattle handler走的
+是`EB FE`死路，連INC都到不了（ch30，及ch27壞結局分支）。沒有第三類「原因不明」
+的殘留分組。
+
+### 結論2：不是`fd2_chapter_sweep.py`的tooling/輪詢時限問題
+
+`sweep_chapter()`目前的流程（`tools/fd2_chapter_sweep.py`約3258-3297行）在
+`engine_win`確認後，會先呼叫`advance_postbattle_montage()`清完戰後過場，接著
+用`POST_WIN_DISK_POLL_MAX_S`（預設60秒，`--disk-poll-max-s`可調）持續tap
+Return並每5次重新pull存檔核對章節byte，直到前進或逾時才誠實放棄——**這個
+輪詢窗口本身從未是限制因素**：`longpoll`輪把它拉長到180秒（3倍），對ch03/ch26
+兩個「查到0」的對照組結果完全不變，且4個「查到1」的真陽性章節（ch22/23/24/28）
+全部在5.1-25.3秒內就寫入，遠低於預設60秒視窗。也不是「沒有走到camp-exit/存檔
+確認流程」——`attempt_camp_exit()`負責的是**戰前**從城鎮hub走出去進入戰鬥，
+不是戰後回城鎮／進酒店這件事；本專案至今**沒有**任何輪次讓harness在engine-win
+確認後主動導航「回城鎮→進酒店→選單存檔」這條路徑（91-worklist.md「SAV writer
+gate」條目(c)項的`shopsave`輪測試的是道具店而非酒店，且發生在贏之前的獨立
+verification，不是贏之後的接續流程）。**如果真的要驗證「完整含存檔的可破關
+流程」，需要替`fd2_chapter_sweep.py`新增一段贏後導航酒店存檔的功能，這是
+既有備註（`ch12diag`輪commit message、`project_fd2_save_only_at_tavern.md`）
+早就講過的「工具功能擴充」，不是本輪才發現的新缺口，也不會改變`0x523e7`查表
+本身的結果。**
+
+### 結論3：與「SAV writer gate」2026-08-28修正的關係——同一機制，後者是前者的精確化，不是另一條線
+
+`91-worklist.md`180-201行「2026-08-30更新註記」與1875-1886行「2026-08-28關鍵
+修正」把根因定調為「原版設計只有酒店主動存檔，戰鬥勝利本身不會觸發磁碟寫入」。
+這句話**對絕大多數章節成立**，但被隔天（2026-08-29）「`post-handler-save-
+trigger`」輪的完整decompile證明**不是全稱命題**——ch22/23/24/27(好結局)/28/29
+六章的postbattle handler，在**完全不經過酒店選單**的情況下，靠既有`0x26331`
+camp-exit呼叫點就會靜默存檔，機制是`0x523e7[下一章]==1`這個查表結果，不是
+「玩家主動走酒店選單」這個動作本身。**這不代表2026-08-28的修正是錯的**——它
+在「M5完成判準該用engine-level win而非磁碟位元組」這個實務結論上完全正確，
+且對「大多數」章節（`0x523e7`表裡0的那些）的描述也精確；只是它把「戰鬥勝利
+不會觸發存檔」講成通例，而`post-handler-save-trigger`輪證明這其實是**依下一章
+分類而定的條件式行為**，酒店只是其中一條（也是唯一玩家能主動觸發的）存檔
+路徑，不是唯一存在的路徑。**「SAV writer gate」（doc25§9.1原始命名）、「只有
+酒店存檔」（08-28修正）、`0x523e7[下一章]`gate表（08-29精確反組譯）三個名字
+描述的是同一個底層機制，隨時間精確度遞增，不是三條獨立問題**。
+
+### 結論4：`ch05regr`/`ch05regr2`/`ch05regr3`（皆2026-08-30）殘留的「disk-write
+timing仍是開放問題」措辭是過時用語，不是ch05真正未解
+
+`ch05regr3`輪（本檔前述章節）與`91-worklist.md`「CH05-ROSTER-MODE-REGRESSION」
+項收尾時都寫「唯一仍開放的是與其他`anomaly_engine_win_no_disk_write`章節共通
+的disk-write timing問題」。但ch05的下一章是story ch06（raw5+1=6），落在
+`0x523e7`表**index 0-21全部是0**的區間裡（`post-handler-save-trigger`輪
+獨立複驗過的32-byte dump），也就是說**ch05不寫入磁碟這件事，在`ch05regr`系列
+三輪跑之前一天就已經被靜態反組譯＋（透過ch03/ch26兩個同區間資料點的）180秒
+long-poll live驗證排除了「timing」這個候選解釋**——`ch05regr`系列三輪的真正
+貢獻（kill-cycle重試迴圈提前停止bug的識別與修正、`had_enemies`verdict分類
+bug的修正）完全成立且有效，但收尾時把「disk-write timing」重新標記為「開放
+問題」是沒有核對`post-handler-save-trigger`輪已有結論、單純沿用舊詞彙的
+結果，本輪判定這個殘留措辭本身應該修正（見下方對91-worklist.md的更新），
+但**不影響**`ch05regr`系列三輪本身的技術結論或M5 tally。
+
+### 對91-worklist.md的影響
+
+見`91-worklist.md`本輪對應更新：`CH05-ROSTER-MODE-REGRESSION`項收尾段落補一句
+指回`post-handler-save-trigger`輪與本節；180-201行「2026-08-30更新註記」補一條
+第7點，說明`0x523e7`gate表是「SAV writer gate/只存在酒店」修正的精確化版本，
+避免未來輪次繼續把兩者當成獨立問題交叉引用。
+
+### 收尾
+
+本輪純文件交叉比對，未啟動DOSBox-X、未修改`tools/fd2_chapter_sweep.py`，無
+live/靜態RE新工作，也沒有新的live證據——所有引用的技術結論（`0x523e7`表內容、
+6/6資料點、180秒long-poll結果、ch05的下一章index）均為既有輪次已記錄的事實，
+本輪只做了跨輪次的一致性核對與措辭修正建議。如果未來想把「絕大多數章節查到0」
+這個推論從「高信心外推」升級為「逐章驗證」，一個低優先度、可以很短的下一步是
+挑1-2個目前只有60秒（未曾180秒）驗證過的`0x523e7==0`章節（例如ch05/ch09/
+ch14任一）補跑一次180秒long-poll，純粹是把樣本數從2（ch03/ch26）擴大，不是
+因為現有結論有任何矛盾跡象。
