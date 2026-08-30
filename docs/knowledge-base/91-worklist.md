@@ -1214,7 +1214,7 @@
 - [x] **音樂預錄 OGG**(MT-32 音源):15 首 → 本機 `extracted/music_ogg/`;`tools/export_music_ogg.sh`
 - [x] **字型現代化規劃**(UTF-8 + TTF render)→ `18`(計畫:文字資料化 + TTF + 雙字型模式)
 - [x] **劇本/關卡腳本系統設計**(可分支節點圖/敗北路線/商店/旗標)→ `19` + `docs/data/campaign_sample.json`
-- [ ] 實作:`decode_story_text.py --script-json`(35 章 → UTF-8 script);重製文字層 TTF render
+- [x] 實作:`decode_story_text.py --script-json`(35 章 → UTF-8 script);重製文字層 TTF render——已解(2026-08-30稽核):字面上的`decode_story_text.py --script-json`旗標從未存在(該檔僅有stdout單章dump與`--all`合併Markdown兩種模式)，但這行要的實質產物(35章結構化UTF-8對話JSON,控制碼→結構)已透過**另一個工具**`tools/story_to_script.py`(commit`8215ecf6`,2026-07-03)產出並接線:`remake/assets/story/`現有35個`ch*.json`檔(`{chapter,title,source_dat,location,scenes:[{label,lines:[{speaker,speaker_name,text}]}]}`),由`main.go`(L5161/L2100)、`native_field_event61.go`、`campaign.go`的`Script`欄位實際讀取,並有`story_index_map.go`(對照原始FDTXT索引)與`audit_story_script_coverage.py`(campaign節點覆蓋稽核)佐證。`story_to_script.py`自身docstring說明:glyph-map自動解碼路線(即字面`--script-json`會做的事)因已知系統性offset不可靠問題被刻意放棄,改採現有架構,另有著作權考量對`ch01.json`做了逐字對白改寫為原創改述的處理——這是刻意的架構替代,不是遺漏的checkbox。文字層TTF render部分維持`[x]`(見上方L1215/`18`)不變。
 - [ ] 實作:從原版資料自動生成「線性 campaign.json」(parse_field + 劇情 + 商店)→ 原版模式
 - [x] 實作:引擎 ScenarioRunner 狀態機(節點/轉場/旗標)——已解:`doc19`(2026-08-19)逐一核對後確認:猜測的`handler_script.go`(postbattle/cutscene handler beat編譯schema)／`menu_state.go`(泛用選單游標)不是主要實作，但ScenarioRunner本身確實已在`remake/internal/campaign/campaign.go`(`Node`/`Campaign`/`Runner`，729行)＋`main.go`的`enterNode`/`campInput`實作，且超出原始設計新增`preparation`/`town`/`cutscene`/`inventory_gate`/`inventory_recipe`等節點型別，`Campaign.Flags`+`Node.SetFlags`對應旗標系統，`Runner.Advance(outcome)`對應轉場解析。**注意**:本篇原始設計的「勝利/失敗條件」組合式詞彙(`survive_turns`/`protect`/`turn_limit`等)仍完全未實作(見上方`winCondition`/`checkVictory`/`advanceTurn`純未實作項)，屬另一獨立技術債，不影響本項「節點/轉場/旗標」三部分狀態機本身已完成的判定。
 - [x] **第一性原理可行性確認** → `20`(9 項必要能力全具備,降為工程整合)
@@ -1290,7 +1290,7 @@
 
 ## M2 — 文字 / 對話層
 > 驗收:對話框能顯示 UTF-8 劇情、帶頭像、翻頁;字用 TTF render(不再靠點陣字模)。
-- [ ] 工具:`decode_story_text.py --script-json`(35 章 → UTF-8 `script.json`,控制碼→結構)
+- [x] 工具:`decode_story_text.py --script-json`(35 章 → UTF-8 `script.json`,控制碼→結構)——已解(2026-08-30稽核,與上方「重製前置」區塊同一項重複列出):字面旗標不存在,但由`tools/story_to_script.py`產出並已接線的`remake/assets/story/ch*.json`(35檔)達成同一實質目標,完整說明見本檔L1217。
 - [x] 引擎 TTF 文字渲染(接 `18` 字型現代化:資料化 + TTF + 雙字型模式)——2026-08-19稽核確認：`remake/cmd/fd2/font.go`已用`golang.org/x/image/font/opentype`實作CJK TTF渲染，並由`main.go`多處`loadFont()`接入正式畫面，僅本行未同步。
 - [x] 對話框 UI ✅(debd52d):原版框素材(LMI1 #21 310×99)+ orig 佈局(下框(5,112)@320/上框鏡射)+
       大側臉頭像(我方左面右/對方右鏡像面左,對映 0x4E8AF/0x4E8E1)+ 白字『』框內換行(≤3行);
