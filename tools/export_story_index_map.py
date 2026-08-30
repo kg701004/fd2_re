@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any
 
 
-OPEN_GLYPH = 557
+OPEN_GLYPH = 558
 CONTROL_MIN = 0xFF00
 STRING_END = 0xFFFF
 

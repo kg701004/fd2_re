@@ -4527,3 +4527,19 @@
   extracted/raw/FDTXT`,每章跑完都手動核對一次 diff(尤其留意像本輪「瞎睡/瞌睡」這種
   verbatim-vs人工校正的既有落差是否也出現在其他章,決定要不要保留人工校正版本的
   `text`)、並抽樣重拍畫面比對,不建議不看 diff 直接批次跑全部 34 章。
+- [x] **`export_story_index_map.py` OPEN_GLYPH 同款常數過期 bug 修正(2026-08-30,同日
+  後續輪,承接上一條 pilot bullet 點名的範圍外既有 bug)**:`tools/export_story_index_map.py`
+  的 `OPEN_GLYPH = 557` 改成 `558`(對照 `docs/data/glyph_map.json` 獨立重新核對:
+  `glyph_map["558"]="『"`、`glyph_map["561"]="』"`,跟 `decode_story_text.py` 那輪修正的
+  558/561 一致;這個檔案本來就沒有獨立的 `CLOSE_GLYPH` 常數,只有 `OPEN_GLYPH` 一個)。
+  修正後用同一組既有輸入重跑 `python3 tools/export_story_index_map.py extracted/raw/FDTXT
+  remake/assets/story <output>.json`,得到 **31 個 count-aligned script mappings、6 筆
+  diagnostics**,跟已提交的 `remake/assets/cutscenes/dialogue-index/count-aligned.json`
+  逐欄位比對(Python `json.load` 後整棵樹 `==`,排除 argv 回顯的 `raw_dir`/`story_dir` 這
+  兩個純路徑分隔符號差異——Windows `\` vs POSIX `/`,非內容差異)**完全一致**——`resources`
+  與 `diagnostics` 兩個陣列逐位元組相同。因此**沒有需要人工複核的差異**,已提交的
+  manifest 檔案本身早已是用正確常數生成的舊版產物,並非過期資料,**本輪未覆寫、未改動
+  該 committed 檔案**。`cd remake && go build ./... && go test ./...` 全綠,零回歸(該
+  manifest 本就只被 runtime 靜態讀取,未曾被本輪觸碰)。至此上一條 pilot bullet 點名的
+  「`OPEN_GLYPH` 既有 bug 阻擋工具重新產生 manifest」問題已解除,若後續要推廣
+  `--add-lines` 到其餘 34 章,可用這支修好的工具重新稽核/核對 count-aligned 覆蓋範圍。
