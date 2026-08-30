@@ -199,6 +199,27 @@
 > 4. 本索引其餘164項分類（未觸及`FD2.SAV`/SAV writer gate/ch27/ch29勝利判定的項目）本輪**未逐項覆核**，
 >    暫視為原分類仍有效；如需精確現況，一律以`91-worklist.md`本文（依日期由新到舊）與
 >    `99-chapter-sweep-results.md`最新輪次為準，本索引僅供歷史快速掃描。
+> 5. **2026-08-30『ch30disasm』輪（純靜態）補上story ch30（raw29，全遊戲最終章）的win-check/postbattle
+>    handler完整反組譯**：win-check（`0x51b19[29]=0x20bf5`）＝`record[20]`（四方交叉驗證即ASR-06
+>    「空魔神」本尊）死亡才算勝利，不是殲滅；postbattle（`0x51de9[29]=0x25757`）雖然會`INC[0x53c03]`
+>    （29→30），但**不會`RET`**，落入與ch27壞結局共用的同一個`CALL 0x31529`→`EB FE`硬鎖，結構上到
+>    不了`0x523e7`gate/存檔writer——ch30**沒有**其他7章那種靜默存檔路徑，是設計上的終局。M5 tally不受
+>    影響（純靜態），ch30/raw29仍是M5清單裡唯一從未live打贏過的story章節。詳見`99-chapter-sweep-
+>    results.md`「2026-08-30『ch30disasm』輪」小節。
+> 6. **✅ 2026-08-30『ch30wf』輪——ch30/raw29 live驗證完成，M5 chapter-sweep engine-win live驗證線
+>    正式收尾**：直接對`record[20]`做targeted死亡bit寫入（重用`mass_kill_enemies()`），live記憶體
+>    讀值獨立確認`record[20]`portrait=126/lv=40（ASR-06身分不再只是靜態資料交叉比對，`ch30disasm`輪
+>    的「中高信心」正式升級為live直讀）；win-check最終翻`[0x53ecc]=2`（過程中發現End-Turn確認本身
+>    不足以立刻觸發，需要額外約85次對白推進tap，與`ch29wf`輪的3.5秒直接翻2不同，誠實記錄為具體差異，
+>    不影響win-check公式本身正確的結論）；`[0x53c03]`確實29→30遞增，證實`ch30disasm`輪反組譯的
+>    `INC`指令會被執行到；持續460+次`Return`後畫面凍結在悠妮角色卡（`CALL 0x31529`結局renderer的
+>    self-loop，與ch27壞結局precedent同一函式但凍結畫面不同，差異推論為內部montage狀態機不同，非
+>    self-loop機制本身不同）；三次獨立`pull_save()`+decode確認`pre.SAV`＝`patched.SAV`＝`final.SAV`
+>    md5完全相同、raw chapter byte全程維持29——**無靜默存檔的預測完全確認**。**至此story ch21-30
+>    （raw20-29）全數完成靜態+live雙重確認，全遊戲30個story章節首度全數至少一次live確認engine-level
+>    win，chapter-sweep專案的M5 live驗證線正式完成**（「磁碟真正pass」與「no-save-by-design」兩類
+>    章節的區分仍維持既有分類，這個收尾指的是engine-win live確認覆蓋率達到30/30，不是所有章節都拿到
+>    磁碟`pass`）。詳見`99-chapter-sweep-results.md`「2026-08-30『ch30wf』輪」小節。
 
 ## Visual parity correction（2026-07-28）
 
@@ -4373,3 +4394,37 @@
   (a)(b)(c)的結論。整體判定：**Phase 6可視為條件式完成**——核心功能與最高風險的
   regression都已用真機截圖佐證，僅剩一個低優先權、範圍明確的可選檢查尚未執行，
   不建議為了這一項單獨開新一輪除非使用者認為必要。
+
+- [x] **CHAPTER-SWEEP-CH30-DISASM**（2026-08-30，代號`ch30disasm`，純靜態）：
+  補上story ch30（raw29，全遊戲最終章，`campaign_full.json`的`battle_ch30`，
+  `on_win`直接接`ending`）唯一還缺的win-check/postbattle handler完整反組譯。
+  **win-check**（`0x51b19[29]=0x20bf5`，32條指令，`RET`結尾，單一直線路徑）＝
+  `FUN_00034894(0x14)`（`record[20].+5&1`）非零→勝，`record[0]`(索爾)或
+  `record[1]`(悠妮)死亡→覆寫成敗，跟doc26既有自動化工具(`event_handler_dump.py`)
+  的既有一行摘要「單位20→2；單位→1」逐位元組吻合，獨立方法論交叉驗證。四方
+  資料交叉比對（`tools/parse_field.py`直讀原始FDFIELD `own_deploy=20`欄位、
+  `map29_units.json`的`units[0]`＝lv40/portrait126/全圖唯一最高等級、
+  `docs/knowledge-base/49-character-id-name-table.md`第80行「id126=ASR-06」、
+  `docs/knowledge-base/28-chapter-objectives-and-recruits.md`第59行攻略ground
+  truth「空魔神死亡」）**中高信心**確認`record[20]`就是ASR-06本尊——但這是靜態
+  資料比對，非live直讀，留待下一輪驗證。**postbattle**（`0x51de9[29]=0x25757`，
+  約130條指令完整trace到`0x25975`）確認會執行`INC[0x53c03]`（29→30）但**不會
+  `RET`**——緊接著呼叫`0x25970 CALL 0x31529`（`docs/knowledge-base/35-battle-
+  animation-rendering.md`§9.11-9.12已證實的角色卡/結局renderer，全EXE
+  call_scan窮舉僅2個呼叫端，另一個是ch27無天空之鑰壞結局分支`0x2545d`）後接
+  `bytes`直讀確認的`eb fe`（`JMP`自身)硬鎖——**結構上永遠到不了`FUN_00026152`/
+  `0x523e7`gate/`0x2968d`存檔writer**，與`campaign_full.json`的`battle_ch30.
+  on_win`直接接`ending`（無`preparation_ch31`）、`0x523e7`表index 30讀出不合理
+  雜訊值（`0x0b`）三者互相印證：**ch30沒有其他7章那種靜默存檔路徑，是設計上的
+  終局，不是缺陷**。這個self-loop本身「不會觸發autosave」的具體行為，先前只在
+  `2026-08-27續輪(instance slowplay)`對ch27壞結局分支（呼叫同一個`0x31529`）
+  live驗證過（THE END畫面+存檔md5不變）；本輪raw29分支結構類比但**未對這個
+  特定分支重新live驗證**，誠實列為中信心。全程純靜態（`tools/ghidra_batch_
+  probe.py -readOnly -noanalysis`，未碰DOSBox-X），**M5 tally不受影響**——
+  ch30/raw29維持M5清單裡唯一從未live打贏過的story章節。下一輪建議：比照
+  `ch29wf`輪的捷徑手法，直接記憶體寫入`record[20]`(=`[0x53a45]`+`20*0x50`+5)
+  死亡bit，輪詢`[0x53ecc]`——一次操作可同時驗證win-check公式、「record20=
+  ASR-06」推論（讀出該record槽當下portrait/lv欄位）與postbattle self-loop/
+  不存檔預測。完整反組譯逐指令記錄、confidence分級、四項交叉證據見
+  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-30『ch30disasm』
+  輪」小節。

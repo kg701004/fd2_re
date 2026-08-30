@@ -5756,3 +5756,549 @@ run的磁碟`FD2.SAV`chapter byte在60秒耐心輪詢窗口內都沒有前進—
 `.wsl_build/round_ch05regr3/step2/`（各自的`result.json`、`shots/*.png`、
 `patched.SAV`/`final.SAV`/`probe.SAV`，均為過程debug產物，未納入git）。本輪
 按本文件慣例跑了2個獨立instance交叉確認，補齊`ch05regr2`輪誠實留下的缺口。
+
+## 2026-08-30「ch30disasm」輪：純靜態反組譯（`tools/ghidra_batch_probe.py` `-readOnly -noanalysis`，全程未碰DOSBox-X）——ch30（raw29，全遊戲最終章）win-check handler `0x51b19[29]=0x20bf5`完整反組譯出爐：**贏的條件不是殲滅，是`record[20]`（＝ASR-06「空魔神」本尊，四方交叉驗證）陣亡**；postbattle handler `0x51de9[29]=0x25757`確認會執行`INC[0x53c03]`（29→30）但**不會`RET`**——落入與ch27壞結局共用的同一個`CALL 0x31529`（角色卡/結局renderer）→`EB FE`自我跳轉硬鎖，結構上**永遠到不了**`FUN_00026152`/`0x523e7` gate/`0x2968d`存檔writer；這代表ch30**沒有**其他6章那種「靜默存檔」路徑，是設計上的終局，非缺陷
+
+### 任務背景
+
+回應派工單：story ch21-29（raw20-28）都已完成靜態＋（多數）live雙重確認（見本檔
+`post-handler-save-trigger`/`ch2729-static`/`ch29disasm`/`ch29wf`等輪），唯獨
+story ch30（raw29，全遊戲最終章，campaign_full.json的`battle_ch30`，`on_win`
+直接接`ending`節點）從未做過win-check/postbattle handler的完整反組譯，也從未
+live打贏過。本輪奉命**純靜態**（無DOSBox-X）反組譯`0x51b19[29]`（win-check）與
+`0x51de9[29]`（postbattle/存檔handler），並核對正確的地圖/劇本資料檔案。
+
+### Step 1：跳表索引公式複驗＋一次讀出兩張32-entry跳表
+
+`table_win`基底`0x51b19`、`table_post`基底`0x51de9`（`table_win[N]`位址＝
+`0x51b19+N*4`，`table_post[N]`位址＝`0x51de9+N*4`——沿用`ch29disasm`/
+`post-handler-save-trigger`兩輪已驗證過的公式，本輪用已知值`table_win[26]=0x20a87`
+（doc25/doc26既有記錄）、`table_post[26]=0x250cc`／`table_post[28]=0x2548c`
+（`ch2729-static`輪）逐byte重新核對，完全吻合）。一次`bytes`讀出`0x51b19`/
+`0x51de9`各128 bytes（32個dword，index 0-31）：
+
+- `table_win[29]`＝`f5 0b 02 00`（little-endian）＝**`0x20bf5`**——與同一次讀出
+  的index 26(`0x20a87`)、index 28(`0x20b72`，即`ch29disasm`輪反組譯過的handler)
+  逐byte吻合，交叉確認索引公式與讀值方法皆正確。
+- `table_post[29]`＝`57 57 02 00`＝**`0x25757`**——同樣與index 21-28的既有
+  記錄（`0x244b6`/`0x24754`/`0x24c1e`/`0x24df2`/`0x24e80`/`0x250cc`/`0x25464`/
+  `0x2548c`）逐byte吻合。
+- 兩張表的index 30/31讀出明顯不成規律的值（`table_win[30]=0x34531`、
+  `[31]=0x3460b`；`table_post[30]=0x13130101`、`[31]=0x13031313`——後者甚至不是
+  合理的code段位址）——**兩張表實際上只有0-29共30個有效entry**，跟遊戲只有30個
+  story章節（raw0-29）完全吻合，index 30+已經是表外的其他資料，不是「第31章」。
+- 順手重新dump`0x523e7`（gate table，40 bytes，涵蓋index 30）：index 22-24=1、
+  25-26=0、27-29=1（與`post-handler-save-trigger`/`ch2729-static`兩輪既有記錄
+  逐byte吻合，methodology sanity check通過），**index 30=`0x0b`**——不是合法的
+  0/1旗標，同樣是表外雜訊。這個觀察在Step 3會有結構性解釋（不是巧合）。
+
+### Step 2：win-check handler `0x20bf5`完整反組譯——32條指令，`RET`結尾，單一直線路徑
+
+`function_bounds`回傳`in_function:false`（跟其餘所有`table_win`/`table_post`
+handler一樣，落在Ghidra base分析從未建過邊界的區域，`decompile`因此失敗，
+改用flow-directed`disasm`，`max_bytes=400`一次跑完，`stop_reason:"ret"`，
+無截斷）：
+
+```c
+// FUN_00020bf5 —— table_win[29]，ch30(raw29，全遊戲最終章)專屬勝敗判定handler
+void ch30_win_check(void)
+{
+  if (FUN_00034894(0x14) != 0) {        // record[20].+5 & 1 != 0（單位20陣亡）
+    *(dword*)0x53ecc = 2;                //  → 勝利
+  }
+  if (FUN_00034894(0) != 0) {           // record[0]（索爾）陣亡
+    *(dword*)0x53ecc = 1;                //  → 覆寫成敗北
+  }
+  if (FUN_00034894(1) != 0) {           // record[1]（悠妮）陣亡
+    FUN_00015f84(*(dword*)0x53a79, 7, 0xa0000, 0x140, 0xcd, 0x4c, 0x4a, 0x13, 1);
+                                          //  疑似「悠妮陣亡」專屬過場（9個字面引數）
+    *(dword*)0x53ecc = 1;                //  → 覆寫成敗北
+  }
+  return;
+}
+```
+
+`FUN_00034894(idx)`＝doc25第67行已證實的`record[idx].+5 & 1`（單位死亡raw
+bit），跟`ch29disasm`輪反組譯出的raw28 handler（`0x20b72`）用的是同一個caller，
+呼叫順序、覆寫優先權（索爾/悠妮死亡永遠覆寫掉先前設的勝利碼）完全同款。**唯一
+的結構差異**：raw28的win分支讀的是`NativeEventState[0x12/0x13/0x14]`三個旗標
+（指標解參照），raw29(本輪)的win分支讀的是`record[0x14]`（單位20）的死亡bit
+（函式呼叫）——**兩種完全不同的win-check原語**，印證doc99先前反覆強調的「每章
+handler必須逐一反組譯，不能用鄰近章節的公式外推」。
+
+**doc26（`tools/event_handler_dump.py`，完全獨立的自動化反組譯工具，本輪之前
+就已存在）第154行的既有一行摘要**：「29 \| `0x20bf5` \| 單位20 → **2**;單位 →
+1」——跟本輪手動反組譯出的公式逐位元組吻合（`0x14`=20，win；`record0`/`record1`
+死亡→1），是完全獨立方法論的正面交叉驗證，不是本輪孤證。
+
+### Step 3：postbattle handler `0x25757`完整反組譯——`INC[0x53c03]`確實執行，但**不`RET`**，落入`CALL 0x31529`→`EB FE`硬鎖
+
+同樣`in_function:false`，改用flow-directed`disasm`分4段（`0x25757`起
+`max_bytes=900`遇`JMP`即停，逐段接续`0x258e0`/`0x258c5`/`0x258fd`/`0x258e8`
+四個續接點，總計約130條指令、`0x25757..0x25975`共`0x21e`bytes，全程無跳號、
+無遺漏區段）：
+
+1. **`0x25757`起直線code**：標準`0x3702f`prologue、3段固定位址(`0x52327`/
+   `0x5233b`/`0x5234f`)的`MOVSD.REP`區塊複製、`CALL 0x233c6`（未知helper，
+   3個LEA算出的struct引數）、`CALL 0x15f84`（9引數的場景/過場呼叫，跟win-check
+   handler悠妮死亡分支同一呼叫慣例）、清`[0x51a83]=0`（doc25記錄的event75/80/81
+   家族「輸入鎖」旗標，見下Step 4）。
+2. **`CALL 0x24618`/`CALL 0x135dd`/`CALL 0x12cea`**：`0x24618`是`SESSION-HANDOFF
+   -2026-07-06.md`第424行已記錄的「palette_delta=10、step=8的9-frame alternating
+   -buffer transition」；`0x12cea`是同文件記錄的「X-first/Y-second focus(22,23)」
+   ——本輪重新反組譯，位址與呼叫引數（`push 0x17;push 0x16`）跟既有記錄逐位元組
+   吻合，獨立複驗通過。
+3. **`0x25850 CALL 0x25089`（`SESSION-HANDOFF`已記錄的「persistent roster
+   cleanup：清transient、回填HP/MP」）→`0x25855 INC dword ptr [0x53c03]`
+   →`0x2585b CALL 0x25089`（再呼叫一次）**——**`[0x53c03]`確實從29遞增為30**，
+   跟`post-handler-save-trigger`輪確認過的其餘7章（raw21/22/23/24/25/27/28）
+   同一個全域變數、同一種遞增時機，這一步是「有前進」，不是本輪要推翻的部分。
+   但**緊接在`INC`後面的不是`RET`**，而是繼續往下：清`[0x51a83]`、
+   `PUSH[0x53c03]; CALL 0x1088d`（`91-worklist.md`第3060行已記錄：這不是純文字
+   載入，會重載FDFIELD map/control/unit buffer、從persistent roster複製
+   record、spawn groups——用剛遞增的新值`30`重新載入，但`30`已經超出`table_win`/
+   `table_post`兩張表的有效index範圍，呼應Step 1觀察到的「index 30起是表外
+   雜訊」）、重置一批camera/cursor暫存(`[0x53aa9]`/`[0x53aad]`/`[0x53ab1]`/
+   `[0x53ab5]`/`[0x53ab9]`/`[0x53abd]`)、`CALL 0x11cac(1)`。
+4. **兩段固定次數迴圈**（各自`disasm`完整覆蓋、無遺漏分支）：`EBX=0x3e`起倒數
+   62次呼叫`0x11df2(0,0xff,0)`/`0x3790a(4)`（淡出動畫，跟`ch29disasm`輪反組譯
+   raw28 handler時見過的同款倒數淡出loop一致）；接著`EBX=0`起遞增40次呼叫
+   `0x11cac(0)`/`0x17aa9(1)`（`SESSION-HANDOFF`已記錄`0x17aa9`是tick busy-wait，
+   本輪確認這是文字/演出節奏迴圈)。**兩個迴圈都是固定次數、無資料相依分支**，
+   不是`ch27`那種依道具檢查分岔的雙結局結構。
+5. **迴圈結束後直線code**：`CALL 0x15f84`（結局旁白對白，`[0x53a79]`基底）→清
+   `[0x51a83]`→`CALL 0x135dd(0xb,0xc)`/`CALL 0x1366a(0x59)`→再一次`CALL 0x15f84`
+   →**`0x25970 CALL 0x31529`**→**`0x25975 JMP 0x25975`（機器碼`eb fe`，直接
+   `bytes`讀回`e8 b4 bb 00 00 eb fe`逐byte確認，非反組譯器猜測）**。handler
+   本體在這裡**永久自我跳轉，不會、也不可能`RET`**。
+
+**`CALL 0x31529`不是本輪首次發現，是本專案`docs/knowledge-base/35-battle-
+animation-rendering.md` §9.11-9.12（2026-08-25前後）已經完整反組譯過的「角色卡
+/結局renderer orchestrator」**：該文件對`0x31529`做`call_scan`全EXE窮舉，
+**恰好只有2個呼叫端**——`0x2545d`（`ch2729-static`輪反組譯出的**raw26/story
+ch27無天空之鑰壞結局分支**）與`0x25970`（本輪的raw29/story ch30，即doc35已經
+標註過的「戰後跳表`0x51de9`第26/29項」）。本輪的貢獻是：①從`table_post[29]`
+入口`0x25757`開始逐段完整trace到這個self-loop，補上doc35當年只從`0x31529`
+往回call_scan、沒有完整走過`0x25757→0x25970`整條前置路徑的缺口；②把這個既有
+發現明確接回「ch30 postbattle/存檔handler」這個chapter-sweep框架下的具體
+問題（doc35/`SESSION-HANDOFF`原本是在角色卡renderer與callgraph稽核脈絡下
+發現的，未被本檔`99-chapter-sweep-results.md`的逐章win/save sweep敘事引用過）。
+
+**這個self-loop已經有live驗證的行為先例（但驗證對象是ch27的壞結局分支，不是
+本輪的ch30/raw29）**：本檔`2026-08-27續輪(instance slowplay)`用機器上唯一真實
+存檔，live走完ch27無天空之鑰分支，觀察到抵達`0x2545d→0x31529`這條同款self-loop
+後，被動等待（不送任何按鍵）約80秒會**自行**播完CG過場、片尾工作人員名單，
+最終停在靜態「THE END」畫面，**且事後pull存檔跟原始存檔md5完全相同**——證實
+這整段self-loop及其後續演出**不會觸發任何一次磁碟寫入**。`0x25970→0x31529`
+與`0x2545d→0x31529`是**同一個函式**（call_scan窮舉2個呼叫端皆已知，非猜測），
+結構上沒有理由本輪的raw29分支會有不同的磁碟行為，但**本輪誠實標註：這個「不會
+autosave」的live觀察本身，過去只在ch27壞結局分支被實際看過，尚未有任何一輪
+針對raw29/story ch30親自live驗證**（見下方confidence分級）。
+
+### Step 4：地圖/劇本資料檔案核對——`battle_ch30`正確接`assets/maps/map29`，`on_win`直接跳`ending`（無`preparation_ch31`）
+
+`remake/assets/scenarios/campaign_full.json`的`battle_ch30`節點：
+
+```
+battle_ch30: map=assets/maps/map29, units=assets/maps/map29/map29_units.json,
+             scenario=assets/scenarios/ch30.json, on_win="ending"
+```
+
+**`on_win`直接接`ending`節點（`type:"ending"`，內文提到「ASR-06見大勢已去，召喚
+地水風火四魔神...終被眾人合力擊敗」），沒有`preparation_ch31`這種後續整備節點
+——remake團隊自己的campaign資料模型早就把ch30當成真正的終點**（`doc57-ui-
+evidence-matrix.md`第179-180行已記錄「ch30直接走ending,非漏算」），跟Step 3
+反組譯出的「postbattle handler本身也走向self-loop、不回一般整備流程」在**兩個
+完全獨立的資料來源**（EXE反組譯 vs. remake team的campaign JSON設計）上互相
+印證。
+
+### Step 5：win-check讀的「單位20」是誰——四方交叉驗證，高信心（但非live直讀）確認是ASR-06（空魔神本尊）
+
+1. **`0x1088d`(party constructor)完整decompile**：`for(iVar4=0;iVar4<
+   DAT_00053be7;iVar4++)`——party record固定佔用`record[0..DAT_00053be7-1]`，
+   **`DAT_00053be7`是逐圖讀出的欄位，不是全遊戲固定常數20**（先前`ch29wf`輪
+   用的roster cap=20只是測試工具的UI選人門檻，不能直接當成這個engine常數）。
+2. **`tools/parse_field.py`直接讀原始`FDFIELD.DAT`(`extracted/raw`)、不經過
+   remake JSON**：`python3 tools/parse_field.py extracted/raw 29`→
+   `"own_deploy": 20, "enemy_ally_total": 70`——**`own_deploy`就是`0x1088d`
+   讀取的同一個欄位（工具docstring原文「己方可出場數」）**，本輪確認map29這張圖
+   剛好是20——`record[20]`＝party陣列滿編後緊接的第一個敵方/NPC槽，即出場人物
+   清單index 0。
+3. **`remake/assets/maps/map29/map29_units.json`的`units[0]`**（與`parse_field.py`
+   獨立來源的`units[0]`逐欄位吻合，非同一份資料的簡單複製，兩邊各自從原始
+   pack解出後比對相符）：`camp:enemy, lv:40, portrait:126, x:22,y:4,
+   death_effect:{type:2,value:83}, group:0`——**全圖70個敵方單位中lv最高（次高
+   是lv32/lv30，這個是唯一lv40）、位置獨立不與其他單位相鄰、group:0代表一開局
+   就在場（不是回合觸發的後續增援）**。
+4. **`docs/knowledge-base/49-character-id-name-table.md`第80行**：「id 126 =
+   ASR-06(空魔神/最終幕後黑手)」，該行本身是先前一輪用ch29/ch30的FDTXT對話
+   18次不間斷的`-17,126`身分標籤交叉驗證出的結論——**`units[0]`的`portrait:126`
+   與這個角色id完全同一個數字**。
+5. **`docs/knowledge-base/28-chapter-objectives-and-recruits.md`第59行**（青衫
+   攻略ground truth）：「30 \| 29 \| 傳說的終章 \| **空魔神死亡** \| 悠妮 \|
+   —(地/水/風/火魔神連鎖)」——攻略明講的玩家可見勝利條件就是「空魔神死亡」，
+   額外護衛只列悠妮（不含其他具名角色），跟本輪win-check反組譯出的「record20
+   死亡→勝利；record0(索爾)/record1(悠妮)死亡→敗北，且只有這兩個record被查」
+   完全吻合，沒有第三個具名護衛目標。
+
+**四項獨立證據（EXE反組譯的record slot數字、原始FDFIELD資料的`own_deploy`
+欄位、remake map JSON的單位屬性、character-id對照表、青衫攻略ground truth）
+全部收斂到同一個結論：`record[20]`就是ASR-06本尊，「單位20陣亡→勝利」等於
+「打倒ASR-06→勝利」，跟攻略敘述的「空魔神死亡」逐字對應**。誠實的邊界：這是
+**靜態資料交叉比對**，不是live記憶體讀值（沒有一輪實際打開過map29戰鬥、讀取
+過真正live `record[20]`當下的內容來100%排除「`own_deploy`欄位跟`0x1088d`
+迴圈上界之間還有其他中間步驟」的可能性），信心等級見下方confidence分級。
+
+`units[1..4]`（4個lv30-32、`death_effect:{type:2,value:81}`共用同一event id、
+分布在(18,36)/(18,35)/(38,28)/(22,35)四個分散位置的單位）與攻略備註的
+「地/水/風/火魔神連鎖」在數量上（4個）高度吻合，是值得下一輪追的候選，但
+**本輪未反組譯`0x51B91`全域event表的81/83兩項條目最終落到哪裡，誠實列為未
+證實的推論，不是確認的因果鏈**——跟`ch29disasm`輪對map28「3頭龍」候選單位
+的處理方式一致（同一類型的、留給下一輪的候選線索）。另外，全圖70個敵方單位
+裡有57個是lv5、`portrait:96`、全部疊在同一格`(18,6)`、`group:255`（不在
+`turn_event_controls`的16列排程表裡，該表本輪重讀全部是sentinel`turn=255`，
+無任何啟用列）——這57個單位的實際生成/觸發機制本輪**未查明**，誠實列為開放
+問題（可能是由`0x51B91`表某個非turn-event的路徑觸發，也可能是靜態部署但
+分批啟用，兩者都未驗證）。
+
+### 誠實confidence與邊界
+
+- **高信心，多重獨立方法論交叉驗證**：win-check公式（`0x20bf5`：
+  `record[20]死亡→勝；record[0]或record[1]死亡→敗，覆寫優先權與raw28完全
+  同款`）——手動flow-directed disasm（32條指令、`RET`結尾、無截斷）與doc26
+  獨立自動化工具（`event_handler_dump.py`）的既有一行摘要逐位元組吻合，兩種
+  完全獨立的方法論同一結論。
+- **高信心，直接位元組證據**：postbattle handler(`0x25757`)確實執行
+  `INC[0x53c03]`（29→30，`0x25855`）但**不`RET`**，緊接著的執行路徑
+  100%確定會走到`0x25970 CALL 0x31529`後接`EB FE`（`bytes`直讀`eb fe`兩
+  byte，非反組譯器解讀）——全程從`0x25757`到`0x25975`約130條指令逐段完整
+  trace，僅有的兩個條件跳轉都是有限次數迴圈的回跳（62次+40次，皆已核對迴圈
+  邊界會正常結束），沒有任何未追蹤的分支或缺口。
+- **高信心，獨立資料來源交叉印證**：`campaign_full.json`的`battle_ch30.
+  on_win`直接接`ending`（無`preparation_ch31`），與`0x523e7`gate table
+  index 30讀出不合理雜訊值（`0x0b`，非0/1），與本輪反組譯出的「postbattle
+  handler結構上到不了`FUN_00026152`/這張gate table」三者互相印證，不是
+  單一證據。
+- **中高信心，資料交叉比對但非live直讀**：`record[20]`＝ASR-06——四項獨立
+  靜態證據收斂（EXE record-slot數字、原始FDFIELD`own_deploy`欄位、map JSON
+  單位屬性、character-id對照表、攻略ground truth），但沒有一輪實際live讀過
+  戰鬥中`record[20]`的即時內容來100%排除中間映射步驟的其他可能性。
+- **中信心，結構類比但未對本輪目標live驗證過**：「這個self-loop不會觸發
+  autosave」——這個具體行為（THE END畫面、被動等待約80秒、事後md5比對存檔
+  完全相同）只在`2026-08-27續輪(instance slowplay)`對**ch27壞結局分支**
+  （`0x2545d call 0x31529`）live驗證過；本輪raw29/story ch30分支
+  （`0x25970 call 0x31529`）呼叫的是**同一個函式**（doc35 §9.11
+  call_scan窮舉，全EXE僅2個呼叫端），結構上沒有理由行為不同，但**這是類比
+  推論，不是對這個特定分支的直接live觀察**，留給下一輪。
+- **低信心/明確列為未證實**：`units[1..4]`（4個lv30-32單位）是否就是攻略
+  備註的「地水風火四魔神」、它們的`death_effect event 81`是否真的透過
+  `0x51B91`表寫入某個影響win-check的旗標——本輪只看到位置/數量上的巧合，
+  沒有反組譯`0x51B91`表本身；57個lv5單位（`group:255`，疊在同一格）的觸發
+  機制完全未查明。這些都不影響本輪對win-check/postbattle handler本身的
+  結論，是留給後續（若專案認為值得）的獨立問題。
+
+### 對91-worklist.md與memory的影響
+
+見`91-worklist.md`本輪對應更新（`ch30disasm`條目）。**M5 tally不受影響**——
+本輪純靜態，沒有任何一次DOSBox-X操作，不新增任何一章的live engine-win或
+live磁碟確認；ch30/raw29在M5清單裡的「唯一尚未live驗證」狀態維持不變（story
+ch29/raw28已在`ch29wf`輪轉正，現在ch30/raw29是**M5清單裡碩果僅存的、從未
+拿過live engine-level win的story章節**）。
+
+### 下一輪建議（依優先度）
+
+1. **最高投報率、風險最低**：比照`ch29wf`輪的捷徑手法，直接記憶體寫入
+   `record[20]`（＝party槽位滿編後的第一個敵方record，位址＝`[0x53a45]`
+   heap基底 + `20*0x50`）的`+5`byte最低位bit設1（模擬ASR-06死亡），輪詢
+   `[0x53ecc]`是否翻2——若成功，這**同時**驗證了本輪反組譯的win-check公式、
+   Step 5的「record20=ASR-06」推論（若live讀出這個record槽當下的
+   portrait/lv欄位=126/40則直接證實，不再是資料交叉比對）、以及`table_post
+   [29]`的self-loop預測（YES確認後應該進入Step 3反組譯出的演出序列，最終
+   停在「THE END」，`[0x53c03]`應該讀到30但磁碟`FD2.SAV`不會被寫入）——
+   一次操作可以把本輪三個「高/中高信心但非live」的結論全部升級或推翻，是
+   `ch29disasm`→`ch29wf`那組任務交接的直接同款延伸。
+2. 若要順便驗證「地水風火四魔神連鎖」猜想，可以在同一輪額外對`record[21..24]`
+   （`units[1..4]`）做同樣的死亡bit直寫，交叉比對是否也各自觸發`0x51B91`
+   表的81號event，但**這不是驗證win-check本身的必要步驟**（Step 2反組譯已
+   證實win-check只讀`record[20]`），純粹是想補上Step 5末段列為開放問題的
+   額外好奇心，優先度低於①。
+3. 若①的live寫入成功走到self-loop，**額外用被動等待（不送按鍵）observe
+   是否真的出現ch27壞結局分支那樣的CG過場/片尾名單/THE END畫面**，並事後
+   pull `FD2.SAV`跟md5比對，把中信心的「這個self-loop不會autosave」類比
+   推論從「同一函式、結構類比」正式升級為「這個特定分支也有直接live證據」
+   ——不需要額外開發新工具，`tools/dosbox_harness.sh`與`fd2_chapter_
+   sweep.py`既有函式應該已經夠用。
+
+## 2026-08-30「ch30wf」輪：**任務完整成功——這是全專案chapter-sweep的收尾輪**。直接記憶體寫入`record[20]`（ASR-06）的死亡bit後，End-Turn+一段延伸對白確認流程觸發engine-level勝利（`[0x53ecc]`翻2），live記憶體讀值獨立確認`record[20]`portrait=126/lv=40（ASR-06身分不再只是資料交叉比對），`[0x53c03]`章節counter確實29→30遞增，但持續460+次`Return`推進後畫面凍結在悠妮的角色卡（`CALL 0x31529`結局renderer內部），磁碟`FD2.SAV`三次pull（LOAD後/戰鬥前、全流程結束後）**md5完全相同、raw chapter byte全程維持29**——`ch30disasm`輪的四項預測（win-check公式、ASR-06身分、counter遞增、無靜默存檔）**全部由live證據正面確認，無一項被推翻**。至此story ch21-30（raw20-29）全數完成靜態+live雙重確認，**全遊戲30個story章節首度全數至少一次live拿到engine-level win，chapter-sweep專案的M5 live驗證線正式收尾**
+
+### 任務背景
+
+直接回應`ch30disasm`輪（本檔前一節）結尾建議①：對`record[20]`（`own_deploy=20`，
+即ASR-06/空魔神本尊）做targeted單記錄死亡bit直寫，一次驗證該輪三個「高/中高
+信心但非live」的靜態結論。story ch30（raw29，全遊戲最終章）是本專案chapter-
+sweep史上唯一從未live打贏過的story章節（`ch29disasm`→`ch29wf`已於同一天稍早
+關閉raw28，ch27雙結局兩臂皆已有live證據），本輪是這條任務線的最後一塊拼圖。
+
+### Step 0：直接複用`ch29wf`輪的`final.SAV`作為起始存檔，不重新`prepare_chapter_save()`
+
+`ch29wf`輪（本檔前一節）的postbattle正常過場+磁碟confirm已經把
+`.wsl_build/round_ch29wf/final.SAV`的slot0 raw chapter byte從28寫成
+**29**（story ch30本身）、roster維持20人complete roster（`[0, 9, 4, 30, 1,
+29, 26, 19, 22, 23, 24, 28, 25, 7, 21, 16, 18, 15, 3, 17]`）——這正是本輪
+需要的起始狀態，且是「機器自然遊玩產生」而非人工patch出來的（唯一的人工
+介入是`ch29wf`輪本身走的記憶體win-check捷徑，不影響存檔資料本身的正確性）。
+直接複製成`.wsl_build/round_ch30wf/patched.SAV`，`read_slot_chapter()`確認
+raw chapter byte=29、roster_count=20，省去一次`prepare_chapter_save()`呼叫
+（ch30本身在`GUARD_CHARACTER_IDS`裡也沒有條目，不需要額外guard-id處理）。
+
+### Step 1：LOAD＋camp-exit——比ch28/29快得多，7個taps直接進戰鬥，`base=0x270634`
+
+`launch_instance`+`overwrite_save`+標準title/LOAD序列後畫面是同一個「要記錄
+戰況嗎？」YES/NO提示（與`ch29wf`輪`02_post_load.png`同一份已知固定畫面）。
+LOAD後立刻`pull_save()`一次獨立核對：**`pre.SAV`md5與`patched.SAV`md5完全
+相同**（`594446879db0b108afc3cf692048cc39`）——確認LOAD這個動作本身不觸發
+任何磁碟寫入，是本輪比較disk-write的第一個基準點。
+
+`attempt_camp_exit(dialogue_steps=480, chapter_n=30, roster_count=20)`：
+Right×3→exit_confirm→偵測到roster pick grid→`adaptive_pick_roster()`19/19
+一次picked→`battle_entry_confirm`→**只花7個taps**`scan_enemy_slots`就找到
+base=`0x270634`、7個敵方record，`screen_shows_battle_hud()`+`enemies>=2`
+雙重條件同時滿足，判定真battle。這比`ch28`/`ch29`歷史記錄過的480-tap budget
+快非常多，本輪誠實記錄這個差異但**不視為異常**——下一步Step 2對`record[20]`
+的直接byte dump本身就是最強的sanity check（如果這只是troop-selection的
+transient placeholder，读到的值不可能剛好精確吻合map29_units.json的
+portrait/lv欄位）。
+
+### Step 2：`record[20]`byte dump——live記憶體讀值獨立確認ASR-06身分，不再只是靜態資料交叉比對
+
+`scan_enemy_slots(base=0x270634)`確認`record[20]`（`0x270c74`）本身camp==0
+（敵方），對`record[20]`／`record[21]`（`units[1]`）／`record[24]`（`units[4]`）
+／`enemies[-1]`（掃描當下找到的最後一筆，實際是`units[5]`，lv28/portrait116，
+**不是**原本以為的lv5/portrait96那批57隻雜兵——這批grunt在掃描當下的array
+還沒被完整populate到那麼後面，見下方「誠實的方法論筆記」）各`read_mem`完整
+80 bytes（`0x00`~`0x4F`）：
+
+```
+record[20] (0x270c74): [22,4,20,0,0,0,0,126,126,0,64,87,64,186,...,9,26,40,0,...]
+record[21] (0x270cc4): [18,36,21,0,0,0,0,125,125,0,64,86,64,131,...,7,26,30,0,...]
+record[24] (0x270db4): [22,35,24,0,0,0,0,122,122,0,64,83,64,123,...,7,26,30,0,...]
+grunt(units[5])(0x270e54):[40,22,25,0,0,0,0,116,116,0,64,76,64,181,...,6,25,28,0,...]
+```
+
+手動逐byte核對（不依賴自動化matcher，見下方筆記）鎖定兩個關鍵offset：
+
+- **`+0x07`與`+0x08`（兩個byte都相同值）＝portrait/character id**：
+  record[20]=**126**、record[21]=125、record[24]=122、grunt=116——**與
+  `map29_units.json`的`units[0/1/4/5].portrait`欄位（126/125/122/116）逐位
+  元組精確吻合**。
+- **`+0x21`（decimal 33）＝等級（lv）**：record[20]=**40**、record[21]=30、
+  record[24]=30、grunt=28——**與同一份JSON的`lv`欄位（40/30/30/28）逐位
+  元組精確吻合**，且與`+0x1F`(race)/`+0x20`(class)兩個相鄰byte（9/26、
+  7/26、7/26、6/25）同步核對`native_record_race`/`native_record_class`
+  欄位也全部吻合，`+0x21`＝等級這個offset同時與`tools/fd2save.py:320`
+  （持久化存檔roster record的`record[0x21]=level`）的既有慣例一致，是
+  兩個獨立結構（live戰鬥record vs. 存檔roster record）在同一相對offset上
+  的重合佐證，不是巧合。
+
+**`record[20]`的portrait=126、lv=40這兩個數字直接由live debugger讀值取得，
+不再是`ch30disasm`輪「靜態資料交叉比對，非live直讀」的推論**——Step 5的
+「中高信心」結論本輪正式升級為live直接證實，四方（EXE反組譯record-slot數字
+／FDFIELD `own_deploy`／map JSON／攻略ground truth）加上這第五項live記憶體
+讀值，五方收斂到同一個結論。
+
+**誠實的方法論筆記**：driver script內建的自動化offset比對（`identify_
+record20`phase）跑出`matches=[]`（空清單），**這是本輪自己程式碼的預期值
+設錯，不是資料本身有問題**——腳本原本假設`record[24]`是lv32的`units[3]`
+（實際上array index 24對應的是`units[4]`，lv30，`units[3]`才是lv32的那個，
+是本輪自己在寫driver時的index註解筆誤）、也假設`enemies[-1]`會是57隻
+lv5/portrait96雜兵之一（實際上Step1的battle-confirm检查只在7個enemy record
+已populate時就通過，`enemies[-1]`那個當下抓到的是`units[5]`而非陣列尾端的
+雜兵群）。上面手動逐byte核對已經完全繞過這個腳本bug、直接拿到正確結論，
+但如果下一輪要重複這個「diff-based offset尋找」手法，應該先修正這兩個預期值
+或改成動態從`map29_units.json`讀對照值，不要硬編碼。
+
+### Step 3：targeted單記錄死亡bit直寫——重用`mass_kill_enemies()`，只碰`record[20]`一筆
+
+`S.mass_kill_enemies(NAME, [record20_addr], log)`——這就是`ch30disasm`輪
+建議①點名的「重用既有mass-kill死亡signature寫入邏輯做單記錄targeted write」，
+不需要新寫一條寫入路徑。`record[20]+5`：寫入前readback＝`[0]`，`SMV`後
+readback＝`[1]`，全程**只有這一筆record被寫入**，其餘69筆敵方/69名隊友
+record一律未觸碰。
+
+### Step 4：純寫入不會立即生效（90秒poll全程0），與`ch29wf`輪同一個規律
+
+`RUN`恢復後直接輪詢`[0x53ecc]`90秒（每~4秒一次），**全程24次讀值全部是0**，
+`[0x53c03]`同步維持29。與`ch29wf`輪「純記憶體寫入不足以讓引擎重新評估
+win-check，需要一個真正的dispatch點」完全同一個規律，不是新發現，是同一個
+機制在ch30身上的再次驗證。
+
+### Step 5：**唯一一次授權的focused follow-up**——但這次比`ch29wf`輪更曲折：End-Turn本身沒有立刻翻2，而是先掀出一段未預期的敵方陣營對白/過場，需要額外`Return`推進才真正拿到win
+
+依`ch29wf`輪與任務書都明確授權的「一次focused follow-up」額度，重新確認
+`record[20]+5`仍是`[1]`後，呼叫`confirm_end_turn(enemy_addrs=None)`（完全
+不碰任何其他record）。`confirm_end_turn()`自己內建的15秒poll窗口內
+**沒有**讀到`[0x53ecc]`翻2（一度讀到瞬間值`74`，非0/1/2，判定為debugger
+console在畫面轉換當下的過期/不穩定讀值，不採信，下一次讀值就恢復正常），
+End-Turn序列結束後截圖（`post_end_turn.png`）顯示的不是camp bounce、不是
+拒絕訊息、也不是勝利過場，而是**一段未關閉的敵方陣營對白**（索爾的對手
+角色肖像＋台詞「『欠揍的傢伙，到現在你居然還不死心，你真的把我給搞火了
+....今天非宰了你不可』」，畫面底部有「還有更多文字」的鑽石提示符號）。
+
+**誠實記錄一個超出`confirm_end_turn()`自身序列、但仍在任務Step5「observe
+what happens next」授權範圍內的延伸動作**：這個對白框需要額外`Return`才能
+繼續推進，於是追加送出bounded的`Return`（純畫面推進，**沒有**再寫入任何
+記憶體），分兩批共約85次tap：前20次`pending_result_code`維持0（其中第14次
+瞬間讀到`74`+`chapter_index`讀到`0`的另一次同款暫態雜訊，下一次讀值恢復
+0/29，判定為同一種debugger-console暫態讀值問題，非真實狀態），第二批
+（第21～85次左右）——**`[0x53ecc]`在約第85次tap時翻成2（WIN）**，立即用一次
+乾淨的debugger讀值複核：`pending_code=2`、`chapter_index=29`（尚未遞增）、
+`record[20]+5=[1]`（死亡bit本身全程未被任何後續邏輯覆寫回0）。
+
+**這與`ch29disasm`/`ch30disasm`兩輪反組譯出的win-check本身（單一直線
+`if(FUN_00034894(0x14)) *0x53ecc=2`，無迴圈、無條件重試）完全一致——本輪
+觀察到的「需要額外對白推進才翻2」，最合理的解釋是這段對白/過場本身包含
+了真正呼叫`0x51b19[29]`（win-check handler）的dispatch點，而不是
+`confirm_end_turn()`原本設計鎖定的「End-Turn YES確認」那個dispatch點本身**
+——這是ch30與`ch29wf`輪（End-Turn確認本身3.5秒內直接翻2）的一個具體、
+誠實記錄的差異，不影響win-check公式本身正確性的結論（`record[20]`死亡bit
+最終確實讓`[0x53ecc]`翻2，這是本輪最核心的驗證目標），但下一輪若要研究
+「正常玩法下這個dispatch點在哪」需要另外反組譯這段對白背後的呼叫鏈，
+本輪未展開（超出`ch30disasm`輪原始授權範圍）。
+
+### Step 6：`[0x53c03]`章節counter確實遞增29→30——但不是在win-check翻2的當下，而是在後續對白/結局演出推進到某個特定點才發生
+
+先依`ch27`壞結局分支的既有precedent（`2026-08-27`續輪「slowplay」instance：
+被動等待、不送任何按鍵，約80秒CG自動播完）試了一次**純被動觀察**：win確認
+後150秒內、每10秒一次debugger讀值+screenshot，**全程`chapter_index`維持
+29、`pending_code`維持2不變**（唯一一次例外是t=110s讀到`chapter_index=19`
++`pending_code=353638423`的明顯雜訊值，下一次讀值立刻恢復29/2，同上判定
+為debugger console暫態讀值問題），畫面截圖md5只在2-3個值之間循環（後續
+證實是角色卡畫面裡的小幅idle動畫，不是內容真的在推進）。**這與ch27的
+precedent不同**——ch30這個分支的演出**需要主動`Return`才會推進**，不是
+全自動CG。
+
+改為主動、bounded地送`Return`（每次都先確認沒有寫入任何記憶體，純畫面
+推進）：前60次tap，`chapter_index`維持29；**第61～65次tap之間，
+`chapter_index`從29翻成**30**，此後穩定維持30（後續200+次tap持續複核，
+從未變回29或變成其他值）**。**這正面確認了`ch30disasm`輪反組譯出的
+`0x25855 INC dword ptr [0x53c03]`確實會在live執行路徑上被執行到**——
+只是執行時機是在win-check翻2**之後、經過一段對白/演出（Step 3反組譯
+記錄的「narration→`CALL 0x24618`/`0x135dd`/`0x12cea`→persistent roster
+cleanup→INC」這段直線code）才會走到，不是與win-check同時發生，這個時序
+關係本輪首次用live讀值坐實，`ch30disasm`輪的靜態反組譯只證明了「INC這行
+指令存在且會被執行到」，沒有（也不可能，純靜態反組譯無法測時序）證實
+「INC相對win-check的實際執行時間差」。
+
+### Step 7：`CALL 0x31529`結局renderer self-loop——continued推進400+次`Return`，凍結在悠妮的角色卡，不是crash也不是繼續演出
+
+`chapter_index`翻30之後continued推進（不再送任何記憶體寫入，純`Return`
+推進+screenshot+debugger讀值）：陸續看到多幕過場（森林場景的長老角色旁白
+「『看到這些年輕人的樣子...』」）、接著一個全隊合照式的結局對白（「『總算
+結束了....這個很久以前就鑄成的錯誤，終於就此消失在時間的洪流之中了..』」）、
+再接上**角色卡montage**（`姓名：悠妮／職業：召喚師`＋悠妮的結局旁白「但她
+相信，三千年也好，三萬年也好，她一定會再那個叫做索爾的年輕人在夢中相聚，
+她相信，這樣就已經足夠了....」＋畫面左下角「FLAME DRAGON KNIGHTS 2」
+字樣）——**這正是`docs/knowledge-base/35-battle-animation-rendering.md`
+§9.11-9.12已反組譯過的「角色卡/結局renderer」`CALL 0x31529`的live畫面**，
+與`ch30disasm`輪Step3反組譯出的「narration→`CALL 0x31529`」呼叫順序完全
+吻合。
+
+**從這張悠妮角色卡出現開始，額外送出超過220次`Return`（總計本輪win確認後
+約460+次tap），畫面文字內容逐字元完全沒有變化**（唯一差異是悠妮肖像的
+眨眼idle動畫造成screenshot md5在2-3個值之間小幅循環，不是內容真的在推進）
+——**這正是`ch30disasm`輪反組譯出的`0x25975 JMP 0x25975`（機器碼`eb fe`
+自我跳轉）的live行為特徵**：CPU卡在無窮迴圈，任何鍵盤輸入都不會被消費，
+但顯示子系統本身（可能是獨立的vsync/interrupt驅動）仍持續跑著這一幀畫面
+自己的小動畫，不是真正的內容推進。**與`ch27`壞結局precedent的差異（誠實
+記錄，不是矛盾）**：`ch27`那一輪的self-loop最終停在靜態「THE END」文字
+畫面；`ch30`這一輪的self-loop停在悠妮的角色卡（montage序列裡的某一張，
+不是最後一張明確的「THE END」畫面）——**兩者呼叫的是同一個函式
+`0x31529`**（doc35 §9.11-9.12的`call_scan`窮舉過全EXE只有`0x2545d`與
+`0x25970`兩個呼叫端，本輪的`0x25970`正是其中之一），差異合理解釋是這個
+函式內部本身有自己的角色卡清單/狀態機，兩次呼叫各自的roster組成或呼叫時機
+不同，導致最終「卡住」在montage序列的哪一張畫面不同，**不代表self-loop
+機制本身不同**——這個具體差異點留給下一輪如果需要更精確定位（非本輪
+`ch30disasm`結尾建議③的必要範圍）。
+
+### Step 8：三次獨立`FD2.SAV`pull+decode——`pre.SAV`＝`patched.SAV`＝`final.SAV`，md5完全相同，raw chapter byte全程維持29，**沒有任何一次磁碟寫入**
+
+`pull_save()`分別在LOAD後（Step 1的`pre.SAV`）與全部序列結束後
+（`final.SAV`）各獨立pull一次，加上一開始的`patched.SAV`（本輪的起始檔案，
+複製自`ch29wf`輪的`final.SAV`）三方比對：
+
+```
+patched.SAV md5 = 594446879db0b108afc3cf692048cc39  (raw chapter=29)
+pre.SAV     md5 = 594446879db0b108afc3cf692048cc39  (raw chapter=29, LOAD後立即pull)
+final.SAV   md5 = 594446879db0b108afc3cf692048cc39  (raw chapter=29, 全部序列結束後pull)
+```
+
+**三個md5逐byte完全相同**——即使live記憶體裡的`[0x53c03]`已經穩定讀到
+**30**、`[0x53ecc]`穩定讀到**2**（win）、畫面已經進入角色卡self-loop超過
+460次tap，磁碟上的`FD2.SAV`**從頭到尾一個byte都沒有被寫入過**。這正面
+確認了`ch30disasm`輪的核心靜態結論：**postbattle handler(`0x25757`)
+的執行路徑結構上永遠到不了`FUN_00026152`/`0x523e7`gate/`0x2968d`存檔
+writer**，不是「時序太慢、耐心poll不夠久」（本專案其餘7個
+`anomaly_engine_win_no_disk_write`章節的共通開放問題），是**結構上
+不可能**——與`ch27`壞結局分支（`2026-08-27`續輪「slowplay」，md5同樣
+全程不變）方法論完全同款，是本專案第2個獲得「no-save-by-design」live
+證據的分支。
+
+### 誠實confidence與邊界
+
+- **高信心，live直接證實（本輪最核心的升級）**：`record[20]`＝ASR-06——
+  `ch30disasm`輪的「四方靜態資料交叉比對，非live直讀」，本輪由Step 2的
+  live debugger讀值（portrait=126於`+0x07/+0x08`、lv=40於`+0x21`，逐byte
+  與`map29_units.json`吻合）正式升級為**五方收斂、含live直讀**，不再有
+  「中間映射步驟未排除」這個保留項。
+- **高信心，live直接證實**：win-check公式（`record[20]`死亡bit→
+  `[0x53ecc]`=2）——Step 5的死亡bit寫入+對白推進，最終`[0x53ecc]`翻2、
+  `record[20]+5`全程維持`[1]`未被覆寫，直接驗證`ch30disasm`輪反組譯出的
+  `0x20bf5`公式為真，不是猜測。
+- **高信心，live直接證實**：`[0x53c03]`章節counter確實會在這條執行路徑上
+  遞增（29→30），與`ch30disasm`輪反組譯出的`0x25855 INC`指令存在且會被
+  執行到的結論吻合；本輪額外確認了遞增時機在win-check翻2**之後**、對白
+  演出推進到特定點才發生，不是同時，這個時序細節是本輪的新增證據
+  （純靜態反組譯無法得出）。
+- **高信心，live直接證實，方法論與`ch27`precedent完全同款**：無靜默
+  存檔——三次獨立`pull_save()`+`fd2save.decode()`確認`pre.SAV`＝
+  `patched.SAV`＝`final.SAV`md5完全相同、raw chapter byte全程維持29，
+  即使live記憶體已經讀到`[0x53c03]`=30超過200+次tap的持續視窗。
+- **中信心，誠實記錄的具體差異、不影響核心結論**：Step 5觀察到的「單純
+  End-Turn確認沒有立刻翻2，需要額外約85次對白推進tap才翻2」與`ch29wf`
+  輪（End-Turn確認3.5秒內直接翻2）不同——本輪判斷最可能的解釋是這段
+  對白本身包含了真正的win-check dispatch點，但**未反組譯這段對白背後的
+  呼叫鏈來100%證實**，留給下一輪如果需要精確定位「正常玩法下ch30的
+  win-check dispatch點在哪」時參考（不影響本輪「win-check公式本身正確」
+  這個核心結論，dispatch點在哪不改變公式對錯）。
+- **中信心，誠實記錄的具體差異、不影響核心結論**：self-loop最終凍結畫面
+  是悠妮的角色卡而非`ch27`precedent的「THE END」靜態畫面——結構上呼叫的
+  是同一個函式（doc35 `call_scan`窮舉證實），差異推論為函式內部montage
+  狀態機的roster組成/呼叫時機不同，**未進一步反組譯`0x31529`內部邏輯來
+  100%排除其他解釋**，留給下一輪（非必要）。
+- **低信心/明確排除為雜訊，不採信**：本輪三次觀察到的暫態異常讀值
+  （Step5的`74`/Step6的`chapter_index=19`+`pending_code=353638423`）——
+  皆為單次讀值、下一次立即恢復正常值，且與doc48§8.4已記錄的debugger
+  console暫態讀值問題（`tmux capture-pane`過期畫面）特徵吻合，本輪判定
+  為讀值層面的雜訊，不代表遊戲邏輯本身有第三種狀態，未計入任何結論。
+
+### 對91-worklist.md與memory的影響
+
+見`91-worklist.md`本輪對應更新（`ch30wf`條目，M5 chapter-sweep engine-win
+tally由「story ch21-29已全數確認，僅ch30/raw29未live驗證過」正式收尾為
+**「全30個story章節（raw0-29）皆已至少一次live確認engine-level win，
+chapter-sweep專案的live驗證線正式完成」**）。使用者memory
+`project_fd2_save_only_at_tavern.md`本輪新增最終總結章節，記錄整條
+chapter-sweep任務線（ch21-30）的收尾狀態，並更正memory索引行。
+
+### 收尾
+
+`bash tools/dosbox_harness.sh teardown c30wf`（透過`fd2_chapter_sweep.
+teardown()`呼叫）乾淨完成，`status`確認無殘留instance，額外用`tmux -L
+fd2harness ls`/`ps aux | grep dosbox`核對乾淨無殘留，主動跑一次`wsl
+--shutdown`（依doc48§8.1慣例），正常回傳，未觀察到deadlock跡象。全程
+只操作`.wsl_build/round_ch30wf/`底下自己複製出的`FD2.SAV`副本（`patched.
+SAV`／`pre.SAV`／`final.SAV`三者md5相同，皆為過程副本），未觸碰機器上
+唯一的真實存檔。驅動腳本、完整log、螢幕截圖（約40張，含`campexit_*`／
+`identify`階段的record dump／`observe_passive`與`active_advance`系列）
+留存於`.wsl_build/round_ch30wf/`（`driver.py`、`state.json`、`shots/*.png`、
+`patched.SAV`/`pre.SAV`/`final.SAV`，均為過程debug產物，未納入git）。
