@@ -1878,6 +1878,7 @@
    "map": "assets/maps/map9",
    "units": "assets/maps/map9/map9_units.json",
    "scenario": "assets/scenarios/ch10.json",
+   "protect_guards": ["索菲亞"],
    "on_win": "postbattle_ch10_persist",
    "on_lose": "retreat_ch10"
   },
@@ -2187,6 +2188,7 @@
    "map": "assets/maps/map11",
    "units": "assets/maps/map11/map11_units.json",
    "scenario": "assets/scenarios/ch12.json",
+   "protect_guards": ["米亞斯多德"],
    "on_win": "postbattle_ch12_persist",
    "on_lose": "retreat_ch12"
   },
@@ -2670,6 +2672,7 @@
    "map": "assets/maps/map14",
    "units": "assets/maps/map14/map14_units.json",
    "scenario": "assets/scenarios/ch15.json",
+   "protect_guards": ["賽可邦勒"],
    "on_win": "postbattle_ch15_persist",
    "on_lose": "retreat_ch15"
   },
@@ -2829,6 +2832,7 @@
    "map": "assets/maps/map15",
    "units": "assets/maps/map15/map15_units.json",
    "scenario": "assets/scenarios/ch16.json",
+   "protect_guards": ["蜜蒂"],
    "on_win": "postbattle_ch16_persist",
    "on_lose": "retreat_ch16"
   },
@@ -3171,6 +3175,7 @@
    "map": "assets/maps/map17",
    "units": "assets/maps/map17/map17_units.json",
    "scenario": "assets/scenarios/ch18.json",
+   "protect_guards": ["約拿", "蘭斯洛特"],
    "on_win": "postbattle_ch18_persist",
    "on_lose": "retreat_ch18"
   },
@@ -3350,6 +3355,7 @@
    "map": "assets/maps/map18",
    "units": "assets/maps/map18/map18_units.json",
    "scenario": "assets/scenarios/ch19.json",
+   "protect_guards": ["巴拿羅西亞"],
    "on_win": "postbattle_ch19_persist",
    "on_lose": "retreat_ch19"
   },
@@ -3535,6 +3541,7 @@
    "map": "assets/maps/map19",
    "units": "assets/maps/map19/map19_units.json",
    "scenario": "assets/scenarios/ch20.json",
+   "protect_guards": ["謝多"],
    "on_win": "postbattle_ch20_persist",
    "on_lose": "retreat_ch20"
   },
@@ -3719,6 +3726,7 @@
    "map": "assets/maps/map20",
    "units": "assets/maps/map20/map20_units.json",
    "scenario": "assets/scenarios/ch21.json",
+   "protect_guards": ["希爾法", "羅蘭"],
    "on_win": "story_ch21_post_sky_key_intro",
    "on_lose": "retreat_ch21"
   },
@@ -4040,6 +4048,7 @@
    "map": "assets/maps/map22",
    "units": "assets/maps/map22/map22_units.json",
    "scenario": "assets/scenarios/ch23.json",
+   "protect_guards": ["卡里斯", "羅德曼"],
    "on_win": "postbattle_ch23_persist",
    "on_lose": "retreat_ch23"
   },
@@ -4126,6 +4135,7 @@
    "map": "assets/maps/map24",
    "units": "assets/maps/map24/map24_units.json",
    "scenario": "assets/scenarios/ch25.json",
+   "protect_guards": ["聖寇拉斯"],
    "on_win": "postbattle_ch25_persist",
    "on_lose": "retreat_ch25"
   },
