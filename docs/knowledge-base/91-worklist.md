@@ -118,21 +118,21 @@
 853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。
 854 - E - 明文「仍缺未修改一般玩家/CONTINUE的同狀態E2」，需live DOSBox。
 857 - D - 剩餘「視覺/效果calls…資料化」屬RE工作（對話/gate本身已解，cf. 約1021行）。
-862 - D - 卡在`0x2bce5` ending renderer(party montage資產解碼)，與1017-1020同一鏈仍開放。
-863 - D - 同862之blocker(`0x2bce5` ending renderer)。
-864 - D - 同862之blocker。
-865 - D - 同862之blocker。
-866 - D - 同862之blocker。
-867 - D - 同862之blocker(terminal handler，此cluster的master item)。
+862 - D - 卡在`0x2bce5` ending renderer(party montage資產解碼)，與1017-1020同一鏈仍開放。**本行已過期，2026-08-30稽核補充**：literal `0x2bce5`位址本身依然不可達(doc35§9.1-9.9窮盡)，但功能性問題(montage怎麼畫出來)已於2026-08-27(doc35§9.22/§9.23)用live `BPPM`記憶體斷點正面解答——沿用既有`0x524c6` phase-table carousel引擎，經`FUN_0002eb9f`呼叫`FUN_0004e8d3`/`FUN_0004e98d`，見對應checkbox本體「重大進展(2026-08-27)」段落，不要再引用本行文字判斷此項現況。
+863 - D - 同862之blocker(`0x2bce5` ending renderer)。**本行已過期，同862 2026-08-30補充。**
+864 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
+865 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
+866 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
+867 - D - 同862之blocker(terminal handler，此cluster的master item)。**本行已過期，同862 2026-08-30補充。**
 874 - D - 項目自述「既有unit_present metadata不完整，維持fail-closed」，後續項目未完全關閉此缺口。
 897 - C - 剩餘工作純屬BIOS-tick clock adapter實作，非分析。
 898 - D - 可能已部分由`ComposeNativeTransitionFrame`覆蓋，但同性質的874仍明文fail-closed，保守留D而非冒進判A。
-899 - D - 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。
+899 - D - 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。**本行已過期，同862 2026-08-30補充：functional renderer已解，見doc35§9.22/§9.23。**
 966 - D - 項目自述準確反映現況(ch01已完成,ch02+逐章view/gate provenance仍缺)，非過時，可續靜態逐章RE。
-1017 - D - 卡在`0x2c548`後的party montage資產解碼(FDOTHER#56/TAI#3/FIGANI/DATO)，可續靜態RE。
-1018 - D - 同1017之montage解碼blocker。
-1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。
-1020 - D - editable IR已建，卡在同1017之montage renderer。
+1017 - D - 卡在`0x2c548`後的party montage資產解碼(FDOTHER#56/TAI#3/FIGANI/DATO)，可續靜態RE。**本行已過期，同862 2026-08-30補充：角色回顧卡背景圖渲染機制已於2026-08-27(doc35§9.23)用live BPPM定案，見對應checkbox本體。**
+1018 - D - 同1017之montage解碼blocker。**本行已過期，同上。**
+1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上。**
+1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上。**
 1038 - D - native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。
 1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。
 1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。
