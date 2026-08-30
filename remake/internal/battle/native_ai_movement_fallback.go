@@ -97,9 +97,14 @@ func newNativeAIMovementFallbackContext(s *State, actor *Unit) (nativeAIMovement
 // is a 0x14B78 argument, not a literal destination, so a target cell that's
 // occupied or out of movement range is approached, not landed on.
 func (ctx nativeAIMovementFallbackContext) moveToward(intended Cell) (Cell, bool) {
-	reach := ctx.s.Reachable(ctx.actor)
-	candidates := make([]Cell, 0, len(reach))
-	for c := range reach {
+	// sortedReachCells (combat.go) fixes Go's randomized map iteration order
+	// into a stable (Y,X) scan before this candidate list reaches
+	// SelectNativeMovementDestination's first-seen-wins tie-break -- see that
+	// function's doc comment for how this was found (a headless full-battle
+	// determinism test caught two runs from the same fixed RNG seed
+	// diverging here).
+	candidates := make([]Cell, 0, ctx.s.W*ctx.s.H)
+	for _, c := range sortedReachCells(ctx.s.Reachable(ctx.actor)) {
 		if ctx.s.UnitAt(c.X, c.Y) != nil {
 			continue
 		}

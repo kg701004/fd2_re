@@ -12,7 +12,10 @@
 // 演出動畫(FIGANI/移動)後補;此處先把邏輯層做對,讓第一關可玩。
 package battle
 
-import "math/rand"
+import (
+	"math/rand"
+	"sort"
+)
 
 // AttackResult 一次近戰攻擊的完整結算結果(doc02 §4.1)。
 type AttackResult struct {
@@ -118,6 +121,36 @@ func abs(v int) int {
 
 func manhattan(ax, ay, bx, by int) int { return abs(ax-bx) + abs(ay-by) }
 
+// sortedReachCells returns reach's cells in a fixed, deterministic (Y, X)
+// row-major order. Go's map iteration order is randomized by the runtime
+// (even across two `range` calls over an identical map within the same
+// process, not merely across process runs) -- any nearest-cell scan that
+// keeps the first-seen candidate on an exact tie (as several callers below
+// and in native_ai_movement_fallback.go's moveToward do, matching this
+// package's existing `for c := range reach { if d < best {...} }` pattern)
+// silently inherits that nondeterminism whenever more than one reachable
+// cell ties for best. Found via headless_battle_test.go's
+// TestHeadlessBattleDeterministic in cmd/fd2 (2026-08-30): two runs from an
+// identical fixed RNG seed produced different chapter-1 outcomes, traced to
+// exactly this pattern. Sorting first makes the scan order fixed and
+// reproducible; it does not change any comparison's outcome on a
+// non-tied cell, and on a tie it deterministically prefers the
+// lowest-Y-then-lowest-X cell rather than whichever cell the map happened
+// to yield first.
+func sortedReachCells(reach map[Cell]bool) []Cell {
+	cells := make([]Cell, 0, len(reach))
+	for c := range reach {
+		cells = append(cells, c)
+	}
+	sort.Slice(cells, func(i, j int) bool {
+		if cells[i].Y != cells[j].Y {
+			return cells[i].Y < cells[j].Y
+		}
+		return cells[i].X < cells[j].X
+	})
+	return cells
+}
+
 // estDamage 是 remake normalized AI 估值；舊 doc11 0x15140 反組譯地址已撤回，
 // 不把這個 helper 當作 native score proof：
 //
@@ -167,10 +200,9 @@ func (s *State) aiTargets(u *Unit) (attack, move *Unit) {
 }
 
 func (s *State) aiApproachPath(u, target *Unit) []Cell {
-	reach := s.Reachable(u)
 	dstX, dstY := u.X, u.Y
 	bestD := manhattan(u.X, u.Y, target.X, target.Y)
-	for c := range reach {
+	for _, c := range sortedReachCells(s.Reachable(u)) {
 		if s.UnitAt(c.X, c.Y) != nil {
 			continue
 		}
@@ -254,10 +286,9 @@ func (s *State) aiActUnit(u *Unit) {
 		_, nativeOK = s.ApplyNativeAIMode10MovementFallback(u)
 	}
 	if !nativeOK {
-		reach := s.Reachable(u)
 		var dstX, dstY = u.X, u.Y
 		bestD := manhattan(u.X, u.Y, best.X, best.Y)
-		for c := range reach {
+		for _, c := range sortedReachCells(s.Reachable(u)) {
 			if s.UnitAt(c.X, c.Y) != nil {
 				continue
 			}
@@ -472,10 +503,9 @@ func (s *State) NextAIPlan() *AIPlan {
 		if s.InAttackRange(u, best.X, best.Y) {
 			return &AIPlan{U: u, Target: best, SpellID: -1, ItemID: -1, NativeScoredCommands: s.nativeAIPlanScoredCommands(u)}
 		}
-		reach := s.Reachable(u)
 		dstX, dstY := u.X, u.Y
 		bestD := manhattan(u.X, u.Y, best.X, best.Y)
-		for c := range reach {
+		for _, c := range sortedReachCells(s.Reachable(u)) {
 			if s.UnitAt(c.X, c.Y) != nil {
 				continue
 			}
