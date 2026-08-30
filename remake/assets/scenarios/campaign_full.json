@@ -4015,6 +4015,8 @@
    "map": "assets/maps/map21",
    "units": "assets/maps/map21/map21_units.json",
    "scenario": "assets/scenarios/ch22.json",
+   "protect": "希爾法",
+   "force_deploy": ["希爾法"],
    "on_win": "postbattle_ch22_persist",
    "on_lose": "retreat_ch22"
   },
@@ -4057,7 +4059,8 @@
    "map": "assets/maps/map22",
    "units": "assets/maps/map22/map22_units.json",
    "scenario": "assets/scenarios/ch23.json",
-   "protect_guards": ["卡里斯", "羅德曼"],
+   "protect_guards": ["希爾法", "卡里斯", "羅德曼"],
+   "force_deploy": ["希爾法"],
    "on_win": "postbattle_ch23_persist",
    "on_lose": "retreat_ch23"
   },
@@ -4336,6 +4339,8 @@
    "native_map_hud_inherited": {
     "display_gate_b": 1
    },
+   "protect": "悠妮",
+   "force_deploy": ["悠妮"],
    "on_win": "postbattle_ch26_persist",
    "on_lose": "retreat_ch26"
   },
@@ -4517,6 +4522,8 @@
    "native_map_hud_inherited": {
     "display_gate_b": 1
    },
+   "protect": "悠妮",
+   "force_deploy": ["悠妮"],
    "on_win": "inventory_gate_ch27_sky_key",
    "on_lose": "retreat_ch27"
   },
@@ -4585,6 +4592,8 @@
    "map": "assets/maps/map27",
    "units": "assets/maps/map27/map27_units.json",
    "scenario": "assets/scenarios/ch28.json",
+   "protect": "悠妮",
+   "force_deploy": ["悠妮"],
    "on_win": "postbattle_ch28_persist",
    "on_lose": "retreat_ch28"
   },
@@ -4628,6 +4637,8 @@
    "map": "assets/maps/map28",
    "units": "assets/maps/map28/map28_units.json",
    "scenario": "assets/scenarios/ch29.json",
+   "protect": "悠妮",
+   "force_deploy": ["悠妮"],
    "on_win": "postbattle_ch29_persist",
    "on_lose": "retreat_ch29"
   },
@@ -4671,6 +4682,8 @@
    "map": "assets/maps/map29",
    "units": "assets/maps/map29/map29_units.json",
    "scenario": "assets/scenarios/ch30.json",
+   "protect": "悠妮",
+   "force_deploy": ["悠妮"],
    "on_win": "ending",
    "on_lose": "retreat_ch30"
   },

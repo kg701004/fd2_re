@@ -68,6 +68,71 @@ func TestBattleProtectTargetIsEditable(t *testing.T) {
 	}
 }
 
+// TestForceDeployResolvesStoryForcedGuardChapters is the data-integrity
+// check for 91-worklist.md's 2026-08-30 "story-forced deploy" entry:
+// ch22/23's 希爾法 and ch26-30's 悠妮 are recruited-but-excludable roster
+// members (see campaign.Node.ForceDeploy's comment for the full RE-evidence
+// disclaimer -- this is a remake-only convenience, not an original-game
+// mechanism), so their Protect/ProtectGuards entry must always be paired
+// with a matching ForceDeploy entry or checkResult() can spuriously fire a
+// turn-1 "lose". ch26's 亞奇梅吉 is deliberately excluded from both: she is
+// never wired into partyRoster by any existing JOIN path (no "op":"join"
+// beat, no join_party action, no native_field_event_rules id==61 entry
+// targets her), a separate and larger recruitment gap that ForceDeploy
+// cannot paper over.
+func TestForceDeployResolvesStoryForcedGuardChapters(t *testing.T) {
+	c, err := Load("../../assets/scenarios/campaign_full.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		node          string
+		wantProtect   string
+		wantGuards    []string
+		wantForceName string
+	}{
+		{"battle_ch22", "希爾法", nil, "希爾法"},
+		{"battle_ch23", "", []string{"希爾法", "卡里斯", "羅德曼"}, "希爾法"},
+		{"battle_ch26", "悠妮", nil, "悠妮"},
+		{"battle_ch27", "悠妮", nil, "悠妮"},
+		{"battle_ch28", "悠妮", nil, "悠妮"},
+		{"battle_ch29", "悠妮", nil, "悠妮"},
+		{"battle_ch30", "悠妮", nil, "悠妮"},
+	}
+	for _, tc := range cases {
+		n := c.Nodes[tc.node]
+		if n == nil {
+			t.Fatalf("%s missing", tc.node)
+		}
+		if n.Protect != tc.wantProtect {
+			t.Errorf("%s protect=%q, want %q", tc.node, n.Protect, tc.wantProtect)
+		}
+		if !reflect.DeepEqual(n.ProtectGuards, tc.wantGuards) {
+			t.Errorf("%s protect_guards=%#v, want %#v", tc.node, n.ProtectGuards, tc.wantGuards)
+		}
+		found := false
+		for _, name := range n.ForceDeploy {
+			if name == tc.wantForceName {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s force_deploy=%#v missing %q", tc.node, n.ForceDeploy, tc.wantForceName)
+		}
+	}
+	// ch26's 亞奇梅吉 stays honestly unresolved: no Protect/ProtectGuards
+	// entry for her (adding one today would spuriously lose the chapter
+	// every time, since she is never actually in partyRoster), and
+	// force_deploy for the two chapters above must not silently start
+	// listing her either.
+	ch26 := c.Nodes["battle_ch26"]
+	for _, name := range append(append([]string{ch26.Protect}, ch26.ProtectGuards...), ch26.ForceDeploy...) {
+		if name == "亞奇梅吉" {
+			t.Fatal("battle_ch26 references 亞奇梅吉 despite her having no JOIN wiring into partyRoster -- this would spuriously lose every ch26 attempt")
+		}
+	}
+}
+
 func TestLoseRouteAndFlags(t *testing.T) {
 	r := NewRunner(load(t))
 	r.Advance("")     // intro → b1

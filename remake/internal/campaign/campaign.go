@@ -480,6 +480,28 @@ type Node struct {
 	// ProtectGroups 目前只有 ch02(村民全滅)/ch13(精靈族全滅)/ch20(精靈全滅)
 	// 三章資料化,見 campaign_full.json 對應 battle_chNN 節點與 91-worklist.md
 	// 2026-08-30 group-wipe 條目的完整推導與證據。
+	//
+	// ForceDeploy 是**重製端自創的便利機制,無原版 RE 佐證**(見 91-worklist.md
+	// 2026-08-30「story-forced deploy」條目的完整推導)。§57/§25/§56 對原版選人
+	// 畫面(0x318ad/0x31e80/0x320fc)的反組譯只證實了一件事:persistent record0
+	// (固定隊長)被 sub_320FC 排除在可選旗標陣列之外、永遠出戰——這正是
+	// battlePartyMembers() 既有 `members[g.partyJoinOrder[0]] = true` 那行的
+	// 依據。反組譯**沒有**找到任何「原版對特定章節強制帶特定角色出戰」的機制;
+	// 玩家在 0x318ad 選人畫面上原本就能自由排除任何已招募的非隊長角色。
+	// ForceDeploy 單純延伸 record0 那個「無視玩家選擇、無條件加入 members」
+	// 的既有寫法給其他具名角色,目的是讓搭配的 Protect/ProtectGuards 條目不會
+	// 因為玩家在選人畫面漏選而在回合開始就被誤判秒敗(§2 附近已討論過這個
+	// regression)。只有 battlePartyMembers() 找得到同名 partyRoster 記錄時才
+	// 生效,找不到就是 no-op——不會憑空捏造一筆戰場記錄。目前只用於 ch22/23
+	// 的希爾法與 ch26-30 的悠妮(兩者都已透過既有 JOIN 機制真正進入
+	// partyRoster);ch26 的亞奇梅吉刻意不用這個欄位,因為她在目前這版重製裡
+	// 從未被任何 JOIN 路徑寫進 partyRoster(逐一核對 campaign_full.json 的
+	// "op":"join" beats、ch01.json 的 join_party、以及所有 mapN/map.json 的
+	// native_field_event_rules,全域只找到 3 筆真正生效的 JOIN:ch01 哈諾、
+	// ch21 希爾法+羅蘭、ch26 map25 event61 渥德——完全沒有亞奇梅吉,這是一個
+	// 比選人排除更早、更大的招募缺口,ForceDeploy 對「根本不在 partyRoster
+	// 裡」的角色無能為力)。
+	ForceDeploy       []string              `json:"force_deploy,omitempty"`        // battle:重製端便利機制(無 RE 佐證),見上方長註解;無條件加入 battlePartyMembers()
 	ItemID            *int                  `json:"item_id,omitempty"`             // inventory_gate:原版 unsigned-byte item identity
 	IfPresent         string                `json:"if_present,omitempty"`          // inventory_gate:全隊任一角色持有 ItemID
 	IfMissing         string                `json:"if_missing,omitempty"`          // inventory_gate:全隊皆未持有 ItemID

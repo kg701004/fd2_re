@@ -3003,9 +3003,66 @@ func (g *Game) battlePartyMembers() map[int]bool {
 		if len(g.partyJoinOrder) != 0 {
 			members[g.partyJoinOrder[0]] = true
 		}
+		g.addForceDeployedMembers(members)
 		return members
 	}
-	return g.partyMembers
+	if len(g.forceDeployNames()) == 0 {
+		return g.partyMembers
+	}
+	// A campaign.Node.ForceDeploy entry still has to win even on the
+	// auto-bypass path (roster count <= cap, so partyDeploy was never
+	// populated) -- copy instead of mutating the persistent partyMembers map
+	// in place, matching the copy-on-write shape of the branch above.
+	members := make(map[int]bool, len(g.partyMembers)+1)
+	for id, selected := range g.partyMembers {
+		if selected {
+			members[id] = true
+		}
+	}
+	g.addForceDeployedMembers(members)
+	return members
+}
+
+// forceDeployNames reads the current battle node's ForceDeploy list (see
+// campaign.Node.ForceDeploy for the full remake-convenience-not-RE
+// disclaimer). nil/empty whenever there is no active campaign node or it
+// carries no such list, which keeps every existing call site a no-op.
+func (g *Game) forceDeployNames() []string {
+	if g.camp == nil {
+		return nil
+	}
+	n := g.camp.Node()
+	if n == nil {
+		return nil
+	}
+	return n.ForceDeploy
+}
+
+// addForceDeployedMembers unconditionally adds any partyRoster member whose
+// Name matches a campaign.Node.ForceDeploy entry -- the same unconditional
+// "always in members" treatment battlePartyMembers already gives
+// partyJoinOrder[0] (the fixed leader), just extended by name instead of by
+// the record-zero position. It never fabricates a roster entry: a name with
+// no matching partyRoster unit is silently skipped (fail-closed, not a
+// synthesized spawn).
+func (g *Game) addForceDeployedMembers(members map[int]bool) {
+	if members == nil {
+		return
+	}
+	names := g.forceDeployNames()
+	if len(names) == 0 {
+		return
+	}
+	for _, name := range names {
+		if name == "" {
+			continue
+		}
+		for id, unit := range g.partyRoster {
+			if unit.Name == name {
+				members[id] = true
+			}
+		}
+	}
 }
 
 func (g *Game) setupPreparation(n *campaign.Node) {
