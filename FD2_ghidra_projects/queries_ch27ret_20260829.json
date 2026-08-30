@@ -1,0 +1,10 @@
+[
+  {"id": "fbounds_117e7", "address": "0x117e7", "action": "function_bounds"},
+  {"id": "decompile_117e7", "address": "0x117e7", "action": "decompile"},
+  {"id": "disasm_117e7", "address": "0x117e7", "action": "disasm", "max_bytes": 900},
+  {"id": "fbounds_16f55", "address": "0x16f55", "action": "function_bounds"},
+  {"id": "decompile_16f55", "address": "0x16f55", "action": "decompile"},
+  {"id": "disasm_16f55", "address": "0x16f55", "action": "disasm", "max_bytes": 1200},
+  {"id": "xrefto_53c57", "address": "0x53c57", "action": "xref_to"},
+  {"id": "bytes_53c57", "address": "0x53c57", "action": "bytes", "count": 4}
+]

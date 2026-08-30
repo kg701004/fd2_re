@@ -1,0 +1,9 @@
+[
+  {"id": "fbounds_12c0d", "address": "0x12c0d", "action": "function_bounds"},
+  {"id": "decompile_12c0d", "address": "0x12c0d", "action": "decompile"},
+  {"id": "fbounds_1741c", "address": "0x1741c", "action": "function_bounds"},
+  {"id": "decompile_1741c", "address": "0x1741c", "action": "decompile"},
+  {"id": "fbounds_177fc", "address": "0x177fc", "action": "function_bounds"},
+  {"id": "decompile_177fc", "address": "0x177fc", "action": "decompile"},
+  {"id": "xrefto_51a42", "address": "0x51a42", "action": "xref_to"}
+]

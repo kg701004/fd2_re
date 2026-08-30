@@ -1742,7 +1742,15 @@ KNOWN_NAVIGATE_HINTS: dict[int, list[str]] = {}
 # ch23's already-live-verified 420 as a same-cohort ESTIMATE, not itself
 # live-verified for ch25 specifically. Raise further if a live run shows the
 # picking/dialogue budget still runs out before "確定" appears.
-CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 25: 420, 28: 480}
+# 2026-08-29 "ch29live" round: ch29 had no entry either. guard_selection_
+# threshold(29): raw_chapter=28 > 0x1a(26), so threshold=0x13(19) -- the SAME
+# branch ch28 (raw=27, also >26) falls into, NOT ch23/ch25's raw<=26/
+# threshold=15 branch. Seeded with ch28's already-live-verified 480 as the
+# same-cohort ESTIMATE (bigger 19-slot roster => more picks than ch23/25's
+# 420), not itself live-verified for ch29 specifically. Raise further if a
+# live run shows the picking/dialogue budget still runs out before "確定"
+# appears.
+CAMP_EXIT_DIALOGUE_STEPS: dict[int, int] = {21: 220, 23: 420, 25: 420, 28: 480, 29: 480}
 
 # Chapter-specific "wait this many real turns before the FIRST mass-kill"
 # override. 2026-08-27 "ch19banor" round: ch19 was previously one of an
@@ -2045,6 +2053,31 @@ KNOWN_MIN_TURNS_BEFORE_KILL: dict[int, int] = {19: 6, 3: 3, 4: 4, 7: 3, 15: 9, 2
 # 0x16->0x17 (a literal `pass`, not just anomaly_engine_win_no_disk_write).
 # See docs/knowledge-base/99-chapter-sweep-results.md's "ch23retest" round.
 KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL: set[int] = {11, 2, 21, 23}
+
+# 2026-08-30 "ch05regr2" round: chapters whose mass-kill/End-Turn retry loop
+# hits the "re-scan found 0 genuinely-alive enemies -> nothing left to blame,
+# stop retrying" early-exit PREMATURELY -- their win-check does not actually
+# depend on any new/killable enemy record ever appearing (a live ch05 test
+# found ZERO new live enemy records across 3 forced-empty rescans, ruling out
+# a literal doc25 §6.1 turn_events reinforcement-wave mechanism as the
+# blocker even though ch05/map4's own turn_events table does script a real
+# enemy spawn at turn 7 -- that spawn was never reached, the win fired
+# earlier), it simply needs several more empty End-Turn cycles to elapse
+# before the win-check dispatch gate becomes satisfiable (closer to a
+# turn-count gate like KNOWN_MIN_TURNS_BEFORE_KILL's chapters, except ch05
+# is killed immediately at turn 1 rather than waiting unkilled first). Value
+# = the minimum force_cycles (see --force-cycles/confirm_end_turn's kill-
+# cycle loop) needed to keep the loop from stopping before the cycle that
+# actually wins. ch05's value (4) is the literal kill-cycle number the live
+# 'ch05regr2' round's engine win landed on (force_cycles=9/max_kill_cycles=12
+# were used as generous headroom in that test -- the win itself fired on
+# cycle 4, so force_cycles=4 is the exact floor implied by that one
+# observation, not a separate untested guess) -- NOT independently re-run at
+# exactly force_cycles=4 to confirm no off-by-one, and NOT extrapolated to
+# any other chapter without its own live confirmation (this project's
+# "不預先猜測" convention -- see doc99/91 for the repeated cost of skipping
+# this rule).
+KNOWN_NEEDS_FORCE_CYCLES: dict[int, int] = {5: 4}
 
 # doc91 UI-VIS-TOWN / UI-08-TOWN-VARIANT0-SIX-SELECTION-E2's established
 # town-hub hotspot order (5 selections, Left/Right cycles, wraps): index0
@@ -2874,7 +2907,8 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                    keepalive: int = 1200, teardown_after: bool = True,
                    pad_roster: bool = True, use_navigate_hints: bool = True,
                    roster_mode: str = "complete", roster_cap: int | None = None,
-                   disk_poll_max_s: float = POST_WIN_DISK_POLL_MAX_S) -> dict:
+                   disk_poll_max_s: float = POST_WIN_DISK_POLL_MAX_S,
+                   max_kill_cycles: int = MAX_KILL_CYCLES, force_cycles: int = 0) -> dict:
     name = f"{instance_prefix}{chapter_n:02d}"
     chapter_dir = results_dir / f"ch{chapter_n:02d}"
     shots_dir = chapter_dir / "shots"
@@ -3115,6 +3149,18 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
             time.sleep(0.5)
             screenshot(name, shots_dir / "03_pre_end_turn.png")
             engine_win = False
+            # 2026-08-30 "ch05regr2" round: remember whether this battle EVER had
+            # enemy records, independent of enemy_addrs' later value -- the
+            # force_cycles path below (see its comment) deliberately empties
+            # enemy_addrs to press empty End-Turns while waiting for a later
+            # turn-boundary reinforcement wave. Without this separate flag, a
+            # win reached via that path while enemy_addrs happened to be empty
+            # would wrongly fall through to the "0 enemy slots found" verdict
+            # branch below instead of "anomaly_engine_win_no_disk_write" --
+            # exactly the misleading verdict this round's live ch05 test hit
+            # before this fix (engine win WAS confirmed on kill-cycle 4, but
+            # the result verdict/detail said "0 enemy slots found").
+            had_enemies = bool(enemy_addrs)
             if enemy_addrs:
                 # 2026-08-27 "ch12diag" round follow-up (external strategy-guide
                 # cross-check, chiuinan.github.io fd2 walkthrough): several
@@ -3134,14 +3180,20 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                 # again, up to MAX_KILL_CYCLES times. Bounded, not unbounded --
                 # a chapter needing more waves than this is expected to come
                 # back honestly reported as still-anomaly, not hang the sweep.
+                if force_cycles == 0 and chapter_n in KNOWN_NEEDS_FORCE_CYCLES:
+                    force_cycles = KNOWN_NEEDS_FORCE_CYCLES[chapter_n]
+                    log.append(f"chapter {chapter_n} has a KNOWN_NEEDS_FORCE_CYCLES override -- forcing the "
+                               f"kill-cycle retry loop to keep pressing empty End-Turns through cycle "
+                               f"{force_cycles} even if a rescan finds 0 live enemies (2026-08-30 'ch05regr2' "
+                               f"round: live-confirmed for this chapter, see doc99)")
                 cycle = 0
                 end_turn_result = {"engine_win": False, "engine_code": None}
-                while cycle < MAX_KILL_CYCLES:
+                while cycle < max_kill_cycles:
                     cycle += 1
                     end_turn_result = confirm_end_turn(name, shots_dir, log, enemy_addrs=enemy_addrs)
                     engine_win = bool(end_turn_result.get("engine_win"))
                     if engine_win:
-                        log.append(f"sweep_chapter: engine win confirmed on kill-cycle {cycle}/{MAX_KILL_CYCLES}")
+                        log.append(f"sweep_chapter: engine win confirmed on kill-cycle {cycle}/{max_kill_cycles}")
                         break
                     enter_debugger(name)
                     time.sleep(0.4)
@@ -3163,7 +3215,29 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                     debugger_cmd(name, "RUN")
                     time.sleep(0.2)
                     if not rescan_enemies:
-                        log.append(f"sweep_chapter: kill-cycle {cycle}/{MAX_KILL_CYCLES} -- engine win not yet "
+                        if cycle < force_cycles:
+                            # 2026-08-30 "ch05regr2" round: force_cycles/--force-cycles is an
+                            # explicit override for testing the "delayed/turn-boundary-triggered
+                            # reinforcement wave" hypothesis (doc99 ch05regr section) -- a wave
+                            # scripted via doc25 §6.1's turn_events table to spawn on a LATER
+                            # turn boundary (e.g. ch05/map4's turn_events has an enemy group
+                            # spawn scripted for turn 7, per docs/data/turn_events.json) will
+                            # never appear in this rescan if the loop stops the moment it finds
+                            # 0 currently-alive enemies -- the loop needs to keep pressing empty
+                            # End-Turns (no kill target yet) to actually reach that later turn
+                            # boundary before the wave has any chance to show up in a rescan.
+                            # This is OFF by default (force_cycles=0) -- normal sweeps still stop
+                            # honestly on the first empty rescan, unchanged from ch12diag's
+                            # original behavior.
+                            log.append(f"sweep_chapter: kill-cycle {cycle}/{max_kill_cycles} -- engine win not yet "
+                                       f"confirmed (code={end_turn_result.get('engine_code')!r}), re-scan found "
+                                       f"{len(rescan_enemies_all)} camp==0 record(s), all already dead, but "
+                                       f"force_cycles={force_cycles} requires continuing anyway -- pressing an "
+                                       f"empty-kill End-Turn to advance toward a possible later turn-boundary "
+                                       f"reinforcement wave instead of stopping early")
+                            enemy_addrs = []
+                            continue
+                        log.append(f"sweep_chapter: kill-cycle {cycle}/{max_kill_cycles} -- engine win not yet "
                                    f"confirmed (code={end_turn_result.get('engine_code')!r}), re-scan found "
                                    f"{len(rescan_enemies_all)} camp==0 record(s) but ALL already carry the death "
                                    f"signature (no genuinely-alive enemy left to blame) -- stopping the retry "
@@ -3171,7 +3245,7 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
                                    f"enemies being dead (see doc25/26's per-chapter handler table for other "
                                    f"possibilities)")
                         break
-                    log.append(f"sweep_chapter: kill-cycle {cycle}/{MAX_KILL_CYCLES} -- engine win not yet "
+                    log.append(f"sweep_chapter: kill-cycle {cycle}/{max_kill_cycles} -- engine win not yet "
                                f"confirmed (code={end_turn_result.get('engine_code')!r}), re-scan found "
                                f"{len(rescan_enemies)} live enemy record(s) (possible reinforcement wave per "
                                f"doc25 §6.1's turn_events mechanism) -- mass-killing and retrying End Turn")
@@ -3237,14 +3311,14 @@ def sweep_chapter(chapter_n: int, source_sav: Path, results_dir: Path,
         if final_chapter_raw is not None and final_chapter_raw > patched_chapter_raw:
             verdict = "pass"
             detail = f"chapter byte advanced {patched_chapter_raw:#04x} -> {final_chapter_raw:#04x} (native autosave confirmed clean transition)"
-        elif base is not None and enemy_addrs and engine_win:
+        elif base is not None and had_enemies and engine_win:
             verdict = "anomaly_engine_win_no_disk_write"
             detail = ("battle detected, enemies mass-killed, End Turn confirmed, [0x53ecc]/[0x53c03] directly "
                       "confirmed the engine-level win+chapter-advance fired (ground truth, not a screenshot "
                       "guess), but the on-disk FD2.SAV chapter byte still did not advance within this run's "
                       "patient polling window -- see doc25 §9.1's own open question about when the SAV writer "
                       "gate (0x1cff0/0x15311) actually fires for a battle-win path")
-        elif base is not None and enemy_addrs:
+        elif base is not None and had_enemies:
             verdict = "anomaly"
             detail = "battle detected, enemies mass-killed, End Turn confirmed, but the engine-level win check ([0x53ecc]) never reached code 2 within the poll window, and chapter byte did not advance -- this chapter's win condition may genuinely differ from a plain full-roster kill (e.g. a specific must-survive/must-die unit check on top of the generic scan, per doc25/26's per-chapter handler table)"
         elif base is not None:
@@ -3311,7 +3385,9 @@ def cmd_sweep(args):
                                 use_navigate_hints=not args.no_navigate_hints,
                                 roster_mode="pad" if args.no_complete_roster else "complete",
                                 roster_cap=args.roster_cap,
-                                disk_poll_max_s=args.disk_poll_max_s)
+                                disk_poll_max_s=args.disk_poll_max_s,
+                                max_kill_cycles=args.max_kill_cycles,
+                                force_cycles=args.force_cycles)
         append_results(results_path, result)
         print(f"ch{n:02d}: {result['verdict']} ({result['duration_s']}s) -- {result['detail']}")
 
@@ -3359,6 +3435,18 @@ def build_parser():
                           "how long many earlier 'anomaly_engine_win_no_disk_write' verdicts were actually polled "
                           "for -- raise this (e.g. 120-180) when re-testing a chapter that may just have been "
                           "under-polled rather than genuinely lacking a disk-write path.")
+    sp.add_argument("--max-kill-cycles", type=int, default=MAX_KILL_CYCLES,
+                     help="override MAX_KILL_CYCLES (default 4) -- the mass-kill/End-Turn retry budget's cap. "
+                          "2026-08-30 'ch05regr2' round: raise this together with --force-cycles to test a "
+                          "chapter suspected of a later-turn-boundary reinforcement wave (see --force-cycles).")
+    sp.add_argument("--force-cycles", type=int, default=0,
+                     help="EXPERIMENTAL, off by default (0): force the kill-cycle retry loop to keep pressing "
+                          "empty End-Turns (no kill target) through this many cycles even when a rescan finds 0 "
+                          "currently-alive enemies, instead of stopping on the first empty rescan (ch12diag's "
+                          "original behavior, still the default when this is 0). Added to test the hypothesis "
+                          "that a chapter's real reinforcement wave is scripted for a LATER turn boundary than "
+                          "this tool's normal single-pass mass-kill+retry ever reaches -- see doc99's "
+                          "'ch05regr2' section and docs/data/turn_events.json's per-chapter turn_events table.")
     sp.set_defaults(func=cmd_sweep)
 
     return p

@@ -295,6 +295,42 @@ vmIdleTimeout=60000
    除錯器、或啟用 WSL 的 ETW tracing),這件事本身超出一般 session 的權限與時間範圍,建議
    當作一個獨立、需要使用者在場配合的專門任務,不要期待某次 live 驗證輪次能順便解決。
 
+### 8.1.1 2026-08-29 外部資料調查更新——修正「Restart-Service 已證實無效」的適用範圍
+
+`ch27win`/`ch27win2` 兩輪連續被同一個 deadlock 擋住之後,派了一次專門的網路調查(英文+中文
+來源,含 `microsoft/WSL` GitHub issues、CSDN、Zhihu、PTT)。結論分三點:
+
+1. **這是已知的一類 bug,不是本機獨有現象**。`microsoft/WSL` repo 上有多筆高度吻合的 issue,
+   例如 [#9534](https://github.com/microsoft/WSL/issues/9534)、
+   [#8529](https://github.com/microsoft/WSL/issues/8529)(明確指出跟**睡眠/喚醒循環**有關,
+   只有重開機能解)、[#9855](https://github.com/microsoft/WSL/issues/9855)(睡眠/休眠喚醒後
+   `wsl --shutdown` 本身也卡死,幾乎與本專案症狀一致)、
+   [#40994](https://github.com/microsoft/wsl/issues/40994)(分析指向虛擬化層的 handle
+   deadlock 卡住 WSLService 無法 unmount)、
+   [#8628](https://github.com/microsoft/WSL/issues/8628)(以系統管理員權限單獨砍
+   `wslservice.exe` 是唯一解法)。中文來源(CSDN等)多半只是「以管理員重開/重開機」這類通用
+   排除法,沒有更深入的根因分析,其中一篇 CSDN 提到的「Control Flow Guard 衝突」說法查無
+   可信佐證,不採信。
+2. **上面 §8.1 第 2 點「Restart-Service 已證實 100% 無效」需要修正適用範圍**——續三十五/
+   續四十九兩輪測試的是**非管理員權限**下的 `Restart-Service`,這類系統服務在非管理員權限下
+   本來就會直接被拒絕(Access Denied),根本沒有真的執行到重啟,所以那個「無效」的結論其實
+   只證明了「非管理員權限行不通」,並沒有真正驗證過「系統管理員權限的 targeted service
+   restart」這條路。外部多筆 issue 顯示,**管理員權限下單獨 `Restart-Service vmcompute`
+   (必要時加 `hns`、`LxssManager`)** 有機會比整個 `wsl --shutdown`/重開機更快清除卡死,
+   下次使用者要處理 deadlock 時值得優先一試,失敗再退回原本的 `wsl --shutdown`(admin)/
+   重開機。
+3. **可能的預防性措施(未在本機驗證,列為待測建議)**:
+   - 關閉 Windows 快速啟動(`powercfg /h off` 或控制台設定)——多篇 issue 指出快速啟動的
+     休眠式關機/開機路徑跟這類 VM 層卡死有關聯,對開發機沒有明顯壞處,值得直接關閉。
+   - 下次 deadlock 發生時,回溯是否剛好在一次睡眠/喚醒循環之後——如果每次都吻合,代表觸發
+     條件其實已知(避免在長時間 live 驗證任務期間讓機器進入睡眠),而不是真的無跡可尋。
+   - 確認 `wsl --update` 已更新到最新版(部分上述 issue 後續已被官方修過)。
+   - `.wslconfig` 的 `networkingMode=mirrored` 等調整目前**沒有找到直接證據**對這個特定
+     deadlock 有效,列為低優先、探索性選項,不是已知修復。
+
+這些都還沒有被官方確認為根因或正式修復(#2、#40994 在來源查詢當下都還是 open 狀態),
+§8.1 第1點「每輪結束主動 `wsl --shutdown`」的預防建議依然有效、繼續適用。
+
 ### 8.2 `/tmp/.X11-unix`——重開機後重新驗證:仍然是唯讀,證實是永久性 WSLg 行為,不是暫時性狀態
 
 續四十五(2026-08-22)第一次記錄這個問題時,只在同一個未重開機的 session 裡遇到,當時就懷疑
@@ -447,6 +483,22 @@ tcp` + `DISPLAY=127.0.0.1:99`,不要嘗試 unix socket。
    續五十反覆出現、時好時壞,§8.3 已經排除是通用鍵盤/cycles 問題,但真正根因(entry gate
    欄位在 ch27 這個特定存檔路徑上的寫入時序)仍未定案,留給下一輪純靜態反組譯攻堅
    (doc58 續五十結尾建議,查 `record[+6]`/`record[+5]`/`record[+0x26]` 的寫入端)。
+   **2026-08-29「ch27ret」輪追加**:`99-chapter-sweep-results.md`同日「ch27sky」輪
+   記錄過一次範圍更廣的變體——連本專案最可靠的「空地格 End-Turn」`Return`路徑都完全
+   無反應(不是本項原本記載的「有假畫面但不能互動」,是**完全沒有任何畫面變化**)。
+   `ch27ret`輪完整反組譯了`0x117e7`(Enter 分派入口)與其呼叫的`FUN_00016f55`(空地格
+   /系統環子系統),確認`0x117e7`在比對到游標下有一個活著單位時,`unit[+7]=='y'`或
+   `unit[+0x1f]==0x0a`任一成立會讓整段 Enter 處理(含本項①②③三個 entry gate 與後續
+   handler 呼叫鏈)完全跳過、直接無聲 return——這是目前反組譯庫裡唯一精確吻合「連
+   系統環都不開」症狀的已知程式碼路徑,與 doc58 續三十九/四十獨立發現的同一組前置
+   檢查互相印證,但**只是尚未證實的候選**:`ch27ret`輪用同一份真實存檔、同一批
+   record 位址,完整重演「ch27sky」輪的天空之鑰寫入+機甲隊長 teleport 操作後,live
+   測試中`Return`兩次都正常運作(第二次乾淨開出真正的系統環,截圖確認),未能重現
+   「完全無反應」的症狀,也確認過游標當下沒有落在任何活著記錄上(前置檢查分支未被
+   觸發)。**結論:這個更嚴重的變體根因仍未定案**,已排除是本輪測試的環境迴歸、也
+   排除是天空之鑰寫入或機甲隊長 teleport 這兩個操作本身的確定性後果,較可能是
+   「ch27sky」輪那次長 session 累積的暫態狀態,與本項原本記載的「時好時壞」屬同一
+   類別而非新增的獨立限制,不要假設已經解決。
 3. dosbox-x heavy debugger 的 `BP`/`BPM` 斷點在 Dynamic core 下對非分支目標(區塊中段)位址
    不可靠(已知官方限制,`core=normal`可解,見續四十三/四十四),但**即使在 Normal core
    下**,續四十八/續五十仍記錄過斷點「registered 但從未命中」的個案,不是 100% 徹底解決,

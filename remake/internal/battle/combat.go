@@ -84,9 +84,9 @@ func (s *State) AttackWithRNG(a, d *Unit, rng *rand.Rand) AttackResult {
 }
 
 // rollsHitPct 物理攻擊命中率擲骰(doc02 §4.1「命中率=(攻方HIT-守方EV)%」)。
-// 與 magic.go rollsHit 語意不同:那裡的 hit<=0 是資料矛盾下的「必中」特例(法術表 dump
-// 值本身有衝突,見該檔案檔頭說明);這裡 pct<=0 是公式算出來的合法結果(HIT 追不上 EV),
-// 依公式原意視為必定 miss,不套用那條特例。
+// 與 magic.go rollsHit 現行語意一致(hit/pct<=0 皆視為必定 miss,對映 native FUN_0001c75e
+// 的通則),但這裡 pct<=0 是公式算出來的合法結果(HIT 追不上 EV);magic.go 另外對 id22/35/
+// 24/28/29/30/31 這幾個經反組譯證實繞過 FUN_0001c75e 的 id 有個別特例,見該檔案 rollsHit 註解。
 func rollsHitPct(pct int, rng *rand.Rand) bool {
 	if pct <= 0 {
 		return false

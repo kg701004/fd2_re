@@ -1,0 +1,1314 @@
+[
+  {
+    "id": "fbounds_117e7",
+    "address": "0x117e7",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000117e7",
+      "start": "0x117e7",
+      "end": "0x11aa7",
+      "size": 698,
+      "entry_point": "0x117e7"
+    }
+  },
+  {
+    "id": "decompile_117e7",
+    "address": "0x117e7",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000117e7",
+      "entry_point": "0x117e7",
+      "signature": "undefined FUN_000117e7(void)",
+      "code": "\r\nint __stdcall FUN_000117e7(void)\r\n\r\n{\r\n  bool bVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  FUN_0003702f();\r\n  iVar2 = FUN_00011aa8();\r\n  if (((iVar2 == 1) || (iVar2 == 0x2c)) || (iVar2 == 0x4c)) {\r\n    bVar1 = false;\r\n    iVar2 = DAT_00053ae9;\r\n    for (iVar4 = 0; iVar4 < DAT_00053beb; iVar4 = iVar4 + 1) {\r\n      iVar3 = iVar2 * 0x50 + DAT_00053a45;\r\n      if ((((*(byte *)(iVar3 + 5) & 0x85) == 0) && (*(char *)(iVar3 + 6) == '\\x02')) && (!bVar1)) {\r\n        FUN_00012d7b();\r\n        DAT_00053ae9 = iVar2 + 1;\r\n        if (DAT_00053ae9 == DAT_00053beb) {\r\n          DAT_00053ae9 = 0;\r\n        }\r\n        bVar1 = true;\r\n      }\r\n      iVar2 = iVar2 + 1;\r\n      if (iVar2 == DAT_00053beb) {\r\n        iVar2 = 0;\r\n      }\r\n    }\r\nLAB_0001187a:\r\n    FUN_0004e381();\r\n    return 0;\r\n  }\r\n  if ((iVar2 == 0x39) || (iVar2 == 0x1c)) {\r\n    if (DAT_00051a42 != '\\0') {\r\n      DAT_00051a42 = DAT_00051a42 + -1;\r\n    }\r\n    iVar2 = FUN_00012c0d();\r\n    if (iVar2 == -1) {\r\n      do {\r\n        iVar2 = FUN_00016f55();\r\n      } while (iVar2 == 0);\r\n      if (iVar2 == 1) {\r\n        iVar2 = 0;\r\n      }\r\n      return iVar2;\r\n    }\r\n    iVar2 = iVar2 * 0x50 + DAT_00053a45;\r\n    DAT_00053ec8 = 0;\r\n    if ((*(char *)(iVar2 + 7) != 'y') && (*(char *)(iVar2 + 0x1f) != '\\n')) {\r\n      if ((*(char *)(iVar2 + 6) == '\\x02') &&\r\n         (((*(byte *)(iVar2 + 5) & 0x80) == 0 && (*(char *)(iVar2 + 0x26) == '\\0')))) {\r\n        FUN_00025a96();\r\n        do {\r\n          iVar2 = FUN_00018890();\r\n        } while (iVar2 == 0);\r\n      }\r\n      else {\r\n        FUN_00017aed();\r\n      }\r\n      FUN_00011cac();\r\n      if (99 < DAT_00053ec8) {\r\n        DAT_00053ec8 = 99;\r\n      }\r\n      FUN_0001e292();\r\n      (**(code **)(&DAT_00051b19 + DAT_00053c03 * 4))();\r\n      FUN_00013565();\r\n      if (DAT_00051a8f != 0xff) {\r\n        (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();\r\n      }\r\n      DAT_00051a8f = 0xff;\r\n      goto LAB_0001187a;\r\n    }\r\n  }\r\n  else if (iVar2 != 0x22) {\r\n    if ((iVar2 == 0x3b) || (iVar2 == 0x49)) {\r\n      FUN_0002000a();\r\n      return 0;\r\n    }\r\n    if ((iVar2 == 0x3c) || (iVar2 == 0x47)) {\r\n      iVar2 = FUN_00012c0d();\r\n      if ((iVar2 != -1) &&\r\n         ((iVar2 = DAT_00053a45 + iVar2 * 0x50, *(char *)(iVar2 + 7) != 'y' &&\r\n          (*(char *)(iVar2 + 0x1f) != '\\n')))) {\r\n        FUN_00017aed();\r\n        return 0;\r\n      }\r\n    }\r\n    else {\r\n      if (iVar2 == 0x48) {\r\n        FUN_00025a96();\r\n        FUN_00011b48();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x50) {\r\n        FUN_00025a96();\r\n        FUN_00011b9b();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4b) {\r\n        FUN_00025a96();\r\n        FUN_00011c59();\r\n        return 0;\r\n      }\r\n      if (iVar2 == 0x4d) {\r\n        FUN_00025a96();\r\n        FUN_00011bfa();\r\n      }\r\n    }\r\n  }\r\n  return 0;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "disasm_117e7",
+    "address": "0x117e7",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x117e7",
+          "mnemonic": "PUSH",
+          "operands": "0x18",
+          "bytes": "68 18 00 00 00"
+        },
+        {
+          "address": "0x117ec",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 3e 58 02 00"
+        },
+        {
+          "address": "0x117f1",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x117f2",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x117f3",
+          "mnemonic": "CALL",
+          "operands": "0x00011aa8",
+          "bytes": "e8 b0 02 00 00"
+        },
+        {
+          "address": "0x117f8",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x1",
+          "bytes": "83 f8 01"
+        },
+        {
+          "address": "0x117fb",
+          "mnemonic": "JZ",
+          "operands": "0x0001180b",
+          "bytes": "74 0e"
+        },
+        {
+          "address": "0x117fd",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x2c",
+          "bytes": "83 f8 2c"
+        },
+        {
+          "address": "0x11800",
+          "mnemonic": "JZ",
+          "operands": "0x0001180b",
+          "bytes": "74 09"
+        },
+        {
+          "address": "0x11802",
+          "mnemonic": "CMP",
+          "operands": "EAX,0x4c",
+          "bytes": "83 f8 4c"
+        },
+        {
+          "address": "0x11805",
+          "mnemonic": "JNZ",
+          "operands": "0x00011884",
+          "bytes": "0f 85 79 00 00 00"
+        },
+        {
+          "address": "0x1180b",
+          "mnemonic": "XOR",
+          "operands": "ECX,ECX",
+          "bytes": "31 c9"
+        },
+        {
+          "address": "0x1180d",
+          "mnemonic": "MOV",
+          "operands": "EBX,dword ptr [0x00053ae9]",
+          "bytes": "8b 1d e9 3a 05 00"
+        },
+        {
+          "address": "0x11813",
+          "mnemonic": "XOR",
+          "operands": "ESI,ESI",
+          "bytes": "31 f6"
+        },
+        {
+          "address": "0x11815",
+          "mnemonic": "JMP",
+          "operands": "0x00011818",
+          "bytes": "eb 01"
+        }
+      ],
+      "start": "0x117e7",
+      "end": "0x11815",
+      "count": 15,
+      "stop_reason": "jmp",
+      "truncated": false
+    }
+  },
+  {
+    "id": "fbounds_16f55",
+    "address": "0x16f55",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00016f55",
+      "start": "0x16f55",
+      "end": "0x1728b",
+      "size": 823,
+      "entry_point": "0x16f55"
+    }
+  },
+  {
+    "id": "decompile_16f55",
+    "address": "0x16f55",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00016f55",
+      "entry_point": "0x16f55",
+      "signature": "undefined FUN_00016f55(void)",
+      "code": "\r\nundefined4 __stdcall FUN_00016f55(void)\r\n\r\n{\r\n  undefined4 uVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  undefined4 *puVar4;\r\n  undefined4 *puVar5;\r\n  byte bVar6;\r\n  undefined4 local_2c [4];\r\n  undefined4 local_1c [4];\r\n  \r\n  bVar6 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00051e9f;\r\n  puVar5 = local_2c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  puVar4 = &DAT_00053ef2;\r\n  puVar5 = local_1c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar5 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar6 * -2 + 1;\r\n    puVar5 = puVar5 + (uint)bVar6 * -2 + 1;\r\n  }\r\n  DAT_00053c57 = 0;\r\n  FUN_0001741c();\r\n  do {\r\n    iVar3 = FUN_000177fc();\r\n  } while (iVar3 == 0);\r\n  FUN_000176b4();\r\n  FUN_00011cac();\r\n  if (iVar3 != -1) {\r\n    if (DAT_00053c57 == 0) {\r\n      uVar1 = FUN_00019df7();\r\n      return uVar1;\r\n    }\r\n    if (DAT_00053c57 == 1) {\r\n      FUN_0001956b();\r\n      FUN_00015f84();\r\n      FUN_00016559();\r\n      iVar3 = FUN_00019953();\r\n      FUN_000197e5();\r\n      if ((iVar3 == 1) && (DAT_00053c57 == 0)) {\r\n        FUN_00015f84();\r\n        thunk_FUN_0003e01d();\r\n        FUN_000196cb();\r\n        DAT_00051a83 = 0;\r\n        DAT_00051aac = 0;\r\n        for (iVar3 = 0; iVar3 < DAT_00053beb; iVar3 = iVar3 + 1) {\r\n          iVar2 = DAT_00053a45 + iVar3 * 0x50;\r\n          if (((*(byte *)(iVar2 + 5) & 0x85) == 0) && (*(char *)(iVar2 + 6) == '\\x02')) {\r\n            FUN_00012cea();\r\n            DAT_00051a8f = 0xff;\r\n            FUN_00014b78();\r\n            if (DAT_00051a8f != 0xff) {\r\n              (**(code **)(&DAT_00051b91 + DAT_00051a8f * 4))();\r\n            }\r\n            FUN_000134e4();\r\n            FUN_00013512();\r\n          }\r\n        }\r\n        FUN_00011cac();\r\n        FUN_0001a30b();\r\n        DAT_00051a83 = 1;\r\n        DAT_00051aac = 1;\r\n        return 1;\r\n      }\r\n    }\r\n    else {\r\n      if (DAT_00053c57 == 2) {\r\n        FUN_0001728c();\r\n        return 0;\r\n      }\r\n      if (DAT_00053c57 != 3) {\r\n        return 0;\r\n      }\r\n      FUN_0001956b();\r\n      FUN_00015f84();\r\n      FUN_00016559();\r\n      iVar3 = FUN_00019953();\r\n      FUN_000197e5();\r\n      if ((iVar3 == 1) && (DAT_00053c57 == 0)) {\r\n        FUN_00015f84();\r\n        thunk_FUN_0003e01d();\r\n        FUN_000196cb();\r\n        DAT_00051aac = 0;\r\n        FUN_0001a30b();\r\n        DAT_00051aac = 1;\r\n        return 1;\r\n      }\r\n    }\r\n    FUN_00015f84();\r\n    thunk_FUN_0003e01d();\r\n    FUN_000196cb();\r\n  }\r\n  return 1;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "disasm_16f55",
+    "address": "0x16f55",
+    "action": "disasm",
+    "ok": true,
+    "result": {
+      "instructions": [
+        {
+          "address": "0x16f55",
+          "mnemonic": "PUSH",
+          "operands": "0x54",
+          "bytes": "68 54 00 00 00"
+        },
+        {
+          "address": "0x16f5a",
+          "mnemonic": "CALL",
+          "operands": "0x0003702f",
+          "bytes": "e8 d0 00 02 00"
+        },
+        {
+          "address": "0x16f5f",
+          "mnemonic": "PUSH",
+          "operands": "EBX",
+          "bytes": "53"
+        },
+        {
+          "address": "0x16f60",
+          "mnemonic": "PUSH",
+          "operands": "ESI",
+          "bytes": "56"
+        },
+        {
+          "address": "0x16f61",
+          "mnemonic": "PUSH",
+          "operands": "EDI",
+          "bytes": "57"
+        },
+        {
+          "address": "0x16f62",
+          "mnemonic": "SUB",
+          "operands": "ESP,0x20",
+          "bytes": "83 ec 20"
+        },
+        {
+          "address": "0x16f65",
+          "mnemonic": "MOV",
+          "operands": "ECX,0x4",
+          "bytes": "b9 04 00 00 00"
+        },
+        {
+          "address": "0x16f6a",
+          "mnemonic": "MOV",
+          "operands": "EDI,ESP",
+          "bytes": "89 e7"
+        },
+        {
+          "address": "0x16f6c",
+          "mnemonic": "MOV",
+          "operands": "ESI,0x51e9f",
+          "bytes": "be 9f 1e 05 00"
+        },
+        {
+          "address": "0x16f71",
+          "mnemonic": "MOVSD.REP",
+          "operands": "ES:EDI,ESI",
+          "bytes": "f3 a5"
+        },
+        {
+          "address": "0x16f73",
+          "mnemonic": "MOV",
+          "operands": "ECX,0x4",
+          "bytes": "b9 04 00 00 00"
+        },
+        {
+          "address": "0x16f78",
+          "mnemonic": "LEA",
+          "operands": "EDI,[ESP + 0x10]",
+          "bytes": "8d 7c 24 10"
+        },
+        {
+          "address": "0x16f7c",
+          "mnemonic": "MOV",
+          "operands": "ESI,0x53ef2",
+          "bytes": "be f2 3e 05 00"
+        },
+        {
+          "address": "0x16f81",
+          "mnemonic": "MOVSD.REP",
+          "operands": "ES:EDI,ESI",
+          "bytes": "f3 a5"
+        },
+        {
+          "address": "0x16f83",
+          "mnemonic": "MOV",
+          "operands": "dword ptr [0x00053c57],0x0",
+          "bytes": "c7 05 57 3c 05 00 00 00 00 00"
+        },
+        {
+          "address": "0x16f8d",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x10]",
+          "bytes": "8d 44 24 10"
+        },
+        {
+          "address": "0x16f91",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16f92",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x4]",
+          "bytes": "8d 44 24 04"
+        },
+        {
+          "address": "0x16f96",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16f97",
+          "mnemonic": "CALL",
+          "operands": "0x0001741c",
+          "bytes": "e8 80 04 00 00"
+        },
+        {
+          "address": "0x16f9c",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x8",
+          "bytes": "83 c4 08"
+        },
+        {
+          "address": "0x16f9f",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x10]",
+          "bytes": "8d 44 24 10"
+        },
+        {
+          "address": "0x16fa3",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16fa4",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x4]",
+          "bytes": "8d 44 24 04"
+        },
+        {
+          "address": "0x16fa8",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16fa9",
+          "mnemonic": "CALL",
+          "operands": "0x000177fc",
+          "bytes": "e8 4e 08 00 00"
+        },
+        {
+          "address": "0x16fae",
+          "mnemonic": "MOV",
+          "operands": "EBX,EAX",
+          "bytes": "89 c3"
+        },
+        {
+          "address": "0x16fb0",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x8",
+          "bytes": "83 c4 08"
+        },
+        {
+          "address": "0x16fb3",
+          "mnemonic": "TEST",
+          "operands": "EAX,EAX",
+          "bytes": "85 c0"
+        },
+        {
+          "address": "0x16fb5",
+          "mnemonic": "JZ",
+          "operands": "0x00016f9f",
+          "bytes": "74 e8"
+        },
+        {
+          "address": "0x16fb7",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x10]",
+          "bytes": "8d 44 24 10"
+        },
+        {
+          "address": "0x16fbb",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16fbc",
+          "mnemonic": "LEA",
+          "operands": "EAX,[ESP + 0x4]",
+          "bytes": "8d 44 24 04"
+        },
+        {
+          "address": "0x16fc0",
+          "mnemonic": "PUSH",
+          "operands": "EAX",
+          "bytes": "50"
+        },
+        {
+          "address": "0x16fc1",
+          "mnemonic": "CALL",
+          "operands": "0x000176b4",
+          "bytes": "e8 ee 06 00 00"
+        },
+        {
+          "address": "0x16fc6",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x8",
+          "bytes": "83 c4 08"
+        },
+        {
+          "address": "0x16fc9",
+          "mnemonic": "PUSH",
+          "operands": "0x0",
+          "bytes": "6a 00"
+        },
+        {
+          "address": "0x16fcb",
+          "mnemonic": "CALL",
+          "operands": "0x00011cac",
+          "bytes": "e8 dc ac ff ff"
+        },
+        {
+          "address": "0x16fd0",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x4",
+          "bytes": "83 c4 04"
+        },
+        {
+          "address": "0x16fd3",
+          "mnemonic": "CMP",
+          "operands": "EBX,-0x1",
+          "bytes": "83 fb ff"
+        },
+        {
+          "address": "0x16fd6",
+          "mnemonic": "JNZ",
+          "operands": "0x00016fe4",
+          "bytes": "75 0c"
+        },
+        {
+          "address": "0x16fd8",
+          "mnemonic": "MOV",
+          "operands": "EAX,0x1",
+          "bytes": "b8 01 00 00 00"
+        },
+        {
+          "address": "0x16fdd",
+          "mnemonic": "ADD",
+          "operands": "ESP,0x20",
+          "bytes": "83 c4 20"
+        },
+        {
+          "address": "0x16fe0",
+          "mnemonic": "POP",
+          "operands": "EDI",
+          "bytes": "5f"
+        },
+        {
+          "address": "0x16fe1",
+          "mnemonic": "POP",
+          "operands": "ESI",
+          "bytes": "5e"
+        },
+        {
+          "address": "0x16fe2",
+          "mnemonic": "POP",
+          "operands": "EBX",
+          "bytes": "5b"
+        },
+        {
+          "address": "0x16fe3",
+          "mnemonic": "RET",
+          "operands": "",
+          "bytes": "c3"
+        }
+      ],
+      "start": "0x16f55",
+      "end": "0x16fe3",
+      "count": 47,
+      "stop_reason": "ret",
+      "truncated": false
+    }
+  },
+  {
+    "id": "xrefto_53c57",
+    "address": "0x53c57",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x16f83",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x16fe4",
+          "type": "READ"
+        },
+        {
+          "from": "0x16ff4",
+          "type": "READ"
+        },
+        {
+          "from": "0x1705c",
+          "type": "READ"
+        },
+        {
+          "from": "0x171b0",
+          "type": "READ"
+        },
+        {
+          "from": "0x171c3",
+          "type": "READ"
+        },
+        {
+          "from": "0x17223",
+          "type": "READ"
+        },
+        {
+          "from": "0x172ba",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1735b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1739c",
+          "type": "READ"
+        },
+        {
+          "from": "0x173b1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1783f",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17858",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17871",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1788a",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17a7d",
+          "type": "READ"
+        },
+        {
+          "from": "0x18f22",
+          "type": "READ"
+        },
+        {
+          "from": "0x19005",
+          "type": "READ"
+        },
+        {
+          "from": "0x1904c",
+          "type": "READ"
+        },
+        {
+          "from": "0x173f5",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x17407",
+          "type": "READ"
+        },
+        {
+          "from": "0x17410",
+          "type": "READ"
+        },
+        {
+          "from": "0x17401",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x19193",
+          "type": "READ"
+        },
+        {
+          "from": "0x192ef",
+          "type": "READ"
+        },
+        {
+          "from": "0x19314",
+          "type": "READ"
+        },
+        {
+          "from": "0x1932b",
+          "type": "READ"
+        },
+        {
+          "from": "0x19972",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19d16",
+          "type": "READ"
+        },
+        {
+          "from": "0x19dd0",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19de8",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x19efa",
+          "type": "READ"
+        },
+        {
+          "from": "0x19f0d",
+          "type": "READ"
+        },
+        {
+          "from": "0x19f6d",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a19d",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a1fd",
+          "type": "READ"
+        },
+        {
+          "from": "0x1a2ae",
+          "type": "READ"
+        },
+        {
+          "from": "0x1aad1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1aaf2",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ab01",
+          "type": "READ"
+        },
+        {
+          "from": "0x1b950",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1b9f2",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ba42",
+          "type": "READ"
+        },
+        {
+          "from": "0x1ba5d",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1ba7c",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1ba8b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1baa5",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1bac8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bad7",
+          "type": "READ"
+        },
+        {
+          "from": "0x1baf8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bb08",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bb18",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bb34",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1bb59",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bcd1",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bcf3",
+          "type": "READ"
+        },
+        {
+          "from": "0x1be3e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1be90",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf20",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf40",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf4e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf66",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bf77",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bfbc",
+          "type": "READ"
+        },
+        {
+          "from": "0x1bfdc",
+          "type": "READ"
+        },
+        {
+          "from": "0x1c018",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1c033",
+          "type": "READ"
+        },
+        {
+          "from": "0x1c06c",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d0be",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d167",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d199",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d28f",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d2fb",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d407",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d427",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d44b",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d461",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d532",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d579",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d594",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d5b3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d5c3",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d5dd",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x1d600",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d610",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d631",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d645",
+          "type": "READ"
+        },
+        {
+          "from": "0x1d665",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x1d68e",
+          "type": "READ"
+        },
+        {
+          "from": "0x1508b",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2600c",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2602c",
+          "type": "READ"
+        },
+        {
+          "from": "0x2630c",
+          "type": "READ"
+        },
+        {
+          "from": "0x267af",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b30",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27b51",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b88",
+          "type": "READ"
+        },
+        {
+          "from": "0x27b9f",
+          "type": "READ"
+        },
+        {
+          "from": "0x27bae",
+          "type": "READ"
+        },
+        {
+          "from": "0x26e66",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x26e6c",
+          "type": "READ"
+        },
+        {
+          "from": "0x26e75",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x26e98",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x26e9e",
+          "type": "READ"
+        },
+        {
+          "from": "0x26ea7",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x26f71",
+          "type": "READ"
+        },
+        {
+          "from": "0x270c8",
+          "type": "READ"
+        },
+        {
+          "from": "0x270e5",
+          "type": "READ"
+        },
+        {
+          "from": "0x2711b",
+          "type": "READ"
+        },
+        {
+          "from": "0x28830",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2885f",
+          "type": "READ"
+        },
+        {
+          "from": "0x28934",
+          "type": "READ"
+        },
+        {
+          "from": "0x289d1",
+          "type": "READ"
+        },
+        {
+          "from": "0x289e8",
+          "type": "READ"
+        },
+        {
+          "from": "0x28a6d",
+          "type": "READ"
+        },
+        {
+          "from": "0x28ada",
+          "type": "READ"
+        },
+        {
+          "from": "0x28af5",
+          "type": "READ"
+        },
+        {
+          "from": "0x2760f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2762d",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27633",
+          "type": "READ"
+        },
+        {
+          "from": "0x2765a",
+          "type": "READ"
+        },
+        {
+          "from": "0x27674",
+          "type": "READ"
+        },
+        {
+          "from": "0x27693",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27699",
+          "type": "READ"
+        },
+        {
+          "from": "0x276b9",
+          "type": "READ"
+        },
+        {
+          "from": "0x276d8",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x276e9",
+          "type": "READ"
+        },
+        {
+          "from": "0x27703",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x277d7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27dae",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27ddb",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e25",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e43",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27e49",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e6a",
+          "type": "READ"
+        },
+        {
+          "from": "0x27e82",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ea1",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27ea7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ec7",
+          "type": "READ"
+        },
+        {
+          "from": "0x27ee6",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27efc",
+          "type": "READ"
+        },
+        {
+          "from": "0x27f16",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x27fcf",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x27ffc",
+          "type": "READ"
+        },
+        {
+          "from": "0x28049",
+          "type": "READ"
+        },
+        {
+          "from": "0x28067",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2806d",
+          "type": "READ"
+        },
+        {
+          "from": "0x2808d",
+          "type": "READ"
+        },
+        {
+          "from": "0x280a8",
+          "type": "READ"
+        },
+        {
+          "from": "0x280c3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x280c9",
+          "type": "READ"
+        },
+        {
+          "from": "0x28da4",
+          "type": "READ"
+        },
+        {
+          "from": "0x28dc7",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x28e0a",
+          "type": "READ"
+        },
+        {
+          "from": "0x28e15",
+          "type": "READ"
+        },
+        {
+          "from": "0x28eba",
+          "type": "READ"
+        },
+        {
+          "from": "0x28f2a",
+          "type": "READ"
+        },
+        {
+          "from": "0x29086",
+          "type": "READ"
+        },
+        {
+          "from": "0x290a9",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x290ec",
+          "type": "READ"
+        },
+        {
+          "from": "0x29164",
+          "type": "READ"
+        },
+        {
+          "from": "0x29177",
+          "type": "READ"
+        },
+        {
+          "from": "0x291fe",
+          "type": "READ"
+        },
+        {
+          "from": "0x293ae",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x293cf",
+          "type": "READ"
+        },
+        {
+          "from": "0x293f2",
+          "type": "READ"
+        },
+        {
+          "from": "0x29405",
+          "type": "READ"
+        },
+        {
+          "from": "0x2941b",
+          "type": "READ"
+        },
+        {
+          "from": "0x29483",
+          "type": "READ"
+        },
+        {
+          "from": "0x29650",
+          "type": "READ"
+        },
+        {
+          "from": "0x29701",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29725",
+          "type": "READ"
+        },
+        {
+          "from": "0x298e2",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29909",
+          "type": "READ"
+        },
+        {
+          "from": "0x29c72",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d1d",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d3e",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x29d44",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d59",
+          "type": "READ"
+        },
+        {
+          "from": "0x29d7a",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x29ecc",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x29eed",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f10",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f20",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f2f",
+          "type": "READ"
+        },
+        {
+          "from": "0x29f3f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a533",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a5ab",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a322",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2a356",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3a1",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3ae",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a3b4",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3cd",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3eb",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a3f3",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a3f9",
+          "type": "READ"
+        },
+        {
+          "from": "0x2ab06",
+          "type": "READ"
+        },
+        {
+          "from": "0x2ab7d",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a8dc",
+          "type": "WRITE"
+        },
+        {
+          "from": "0x2a914",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a95f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a96c",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a972",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a98f",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a9ad",
+          "type": "READ"
+        },
+        {
+          "from": "0x2a9b5",
+          "type": "READ_WRITE"
+        },
+        {
+          "from": "0x2a9bb",
+          "type": "READ"
+        },
+        {
+          "from": "0x2b424",
+          "type": "READ"
+        }
+      ],
+      "count": 209
+    }
+  },
+  {
+    "id": "bytes_53c57",
+    "address": "0x53c57",
+    "action": "bytes",
+    "ok": true,
+    "result": {
+      "start": "0x53c57",
+      "length": 4,
+      "hex": "00 00 00 00"
+    }
+  }
+]

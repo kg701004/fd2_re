@@ -11,11 +11,17 @@
 //   - §6.4 輔助法術效果:魔刃 AP+15%、魔鎧 DP+15%、風行 HIT+15/EV+15,持續 2–4 回合(doc 原文;
 //     不是先前規格草案猜測的「風行 MV+2」,查得明確依據後改採 doc02 數字)。
 //     解毒/祛麻/封咒/行動術/毒擊/麻痺/傳送/破壞神/暗邪鬼依 doc02 §6.4 逐條实作,細節見 applySpell 內註解。
-//   - 命中率:doc02 §4.3「命中率=法術內定命中率」→ 用 spell.json 的 hit 欄擲骰。
-//     但 spell.json 對劍技(24/28/29/30)、封咒(22)、組合技(34/35)、傳送(23)dump 出 hit=0,
-//     與 doc02 §6.2「劍技恆中」及 §6.4 文字敘述「攻擊性輔助法術命中率均 50%」互相矛盾——
-//     判定為「這幾類法術的實際命中機制不由這個 7-byte 欄位表示」,故取「hit=0 一律視為必中」
-//     這條可由資料驗證的規則(rollsHit),不採用未被 dump 值印證的 50% 猜測值。此衝突見 CastArea/rollsHit 註解。
+//   - 命中率:doc02 §4.3「命中率=法術內定命中率」→ 用 spell.json 的 hit 欄擲骰
+//     (native FUN_0001c75e:`record[+2] <= roll(0..99)` 才 miss,hit=0 時恆進入 miss 分支——
+//     見 docs/knowledge-base/27-combat-rules-and-validation-checklist.md §6.6 逐位元組核對,
+//     2026-08-30 修正:此欄先前誤植為「hit<=0 一律視為必中」,方向與原生相反,已訂正,見 rollsHit)。
+//     少數 id 的原生命中判定完全不經過這個 7-byte hit 欄/FUN_0001c75e,細節見 rollsHit 函式註解:
+//     - id22(封咒術)、id35(暗邪鬼,內含封咒/毒擊/麻痺三重狀態)實際走 `0x22d1b` 狀態施加核心,
+//       固定 50% RNG gate,與 record[+2] 無關(id22 dump 值為 0,id26/27 為 50 純屬巧合,見
+//       docs/knowledge-base/32-item-combat-stats-re.md:442-483、native_item_marker_application.go)。
+//     - id24/28/29/30(劍技)、id31(未知)實際走 `0x2cf30` derived-strike,完全不呼叫任何命中判定,
+//       固定套用倍率傷害(對應 doc02「劍技恆中」),見 §6.5。這幾個 case 目前在 applySpell 仍是
+//       待實裝的 no-op,此處先修正以免日後實作傷害時重蹈方向錯誤的舊 bug。
 package battle
 
 import (
@@ -115,11 +121,34 @@ func randomizeAmount(max int, rng *rand.Rand) int {
 	return lo + rng.Intn(hi-lo+1)
 }
 
-// rollsHit 命中判定。spell.json 的 hit 欄=0 一律視為必中(劍技/封咒/傳送/組合技皆屬此類,
-// 見檔頭註解的資料矛盾說明);hit>0 才擲骰(rng.Intn(100) < hit)。
+// rollsHit 命中判定(2026-08-30 訂正方向,見檔頭註解與
+// docs/knowledge-base/27-combat-rules-and-validation-checklist.md §6.6)。
+//
+// 一般情況對映 native FUN_0001c75e:`record[+2] <= roll(0..99)` 才 miss,故 hit<=0
+// 時 roll∈[0,99] 恆滿足條件,恆進入 miss 分支——換言之 hit<=0 一律視為必不中(不是必中),
+// hit>0 才擲骰(rng.Intn(100) < hit)。
+//
+// 兩個 id 有實機反組譯佐證,證明它們的原生命中判定根本不經過 FUN_0001c75e/record[+2],
+// 故不適用上述通則,個別特例處理(不是猜測,是已知另一條命中機制的正確機率):
+//   - id22(封咒術)、id35(暗邪鬼組合技,內含封咒/毒擊/麻痺):實際呼叫 `0x22d1b` 狀態施加
+//     核心,該函式內建固定 50% RNG gate,與 record[+2] 完全無關(id22 的 hit 欄 dump 值是 0、
+//     id26/27 是 50,但 0x22d1b 用的是編譯期常數 50,不讀 record[+2],兩者數值巧合無因果關係)。
+//     見 docs/knowledge-base/32-item-combat-stats-re.md:442-483、native_item_marker_application.go。
+//     (id35 的三個狀態效果在原生端各自獨立擲骰;remake 現行 applySpell case 35 仍用單一共用
+//     roll 套用三個狀態,這個簡化本輪不展開,只訂正其擲骰機率從 100% 改成正確的 50%。)
+//   - id24/28/29/30(破龍擊/淒煌斬/熾炎刀/音速刃劍技)、id31(未知)：實際呼叫 `0x2cf30`
+//     derived-strike 路徑,完全不呼叫任何命中判定函式,固定套用倍率傷害(對應 doc02「劍技恆中」
+//     攻略文字),見 §6.5。applySpell 對這些 case 目前仍是待實裝的 no-op,回傳值暫無可觀察差異,
+//     但先訂正以免日後接上傷害公式時重蹈本次修正前「方向錯誤」的舊 bug。
 func rollsHit(sp Spell, rng *rand.Rand) bool {
-	if sp.Hit <= 0 {
+	switch sp.ID {
+	case 22, 35:
+		return rng.Intn(100) < 50
+	case 24, 28, 29, 30, 31:
 		return true
+	}
+	if sp.Hit <= 0 {
+		return false
 	}
 	return rng.Intn(100) < sp.Hit
 }

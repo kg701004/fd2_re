@@ -76,7 +76,7 @@
 | 5 | 武器命中後特殊效果(狀態附加/固定暴擊加成/未命名旗標) | 攻略未記載 | **本輪新發現**(`0x2f7b6` 內 `cVar4` 分支,來源 `FUN_0004e8bc()` 疑似武器/物品表 row,`+9`=type、`+10`=強度值):type4=固定加成暴擊率(`local_2c+=uVar9`);type2=命中後對目標套用 `+0x25` 狀態欄(值 2~5 其中一種,疑似異常狀態變體,且消耗一次額外 RNG);type3=設 `param_3[4]` 旗標(語意未定);type0/預設=無特殊效果 | ✗ 無對應機制(僅資料表 crit%,無武器 on-hit 狀態/加成) | ✗ **不一致——原生獨有機制,攻略未記載、remake 未實作,列入仍缺清單** |
 | 6 | 劍技傷害 AP×加乘率−DP | §4.2 | ✓ `0x276ec`(先前輪次已閉合):`trunc(actorAP*multiplier/10)-DP`,倍率 15/20/12/18 對應 command 24/28/29/31 | `native_command24.go ResolveNativeCommandDerivedStrikeDamage` | ✓ 一致 |
 | 7 | 法術/道具傷害 dmg×(1−魔抗) | §4.3 | ✓ `0x1c75e→0x1c81f`(先前輪次):`base=recordDmg*resist_raw/10`;`resist_raw` 表(`word_51f96`,loaded-view `0x51d96`)與 doc32 本輪驗證的職業魔法抗性表 `0x76FAA` 交叉核對一致 | `native_command_damage.go ResolveNativeCommandDamage` | ✓ 一致,本輪補上魔抗表↔resist_raw 表的交叉確認 |
-| 8 | 法術/道具命中率(內定命中率) | §4.3 | ✓ `0x1c7ed`→`0x4e893`:`RNG%100<record[+2]`(先前輪次) | `magic.go rollsHit`(spell.json hit 欄;hit=0 視為必中) | ◐ 部分一致——native 是「`rng%100<hit值`」通用機制,remake 對 `hit=0` 取特例必中(因 spell.json dump 值與攻略「劍技恆中/輔助 50%」矛盾);本輪未逐 ID 用 `record[+2]` 實際數值核對 spell.json 的 hit 欄,**仍缺** |
+| 8 | 法術/道具命中率(內定命中率) | §4.3 | ✓ `0x1c7ed`→`0x4e893`:`RNG%100<record[+2]`(先前輪次) | `magic.go rollsHit`(spell.json hit 欄;hit<=0 恆 Miss,id22/35 走 0x22d1b 固定 50% gate,id24/28/29/30/31 恆 bypass) | ✓ **2026-08-30(§6.6.1)已修正並關閉**——`hit<=0` 方向訂正為恆 Miss(對映 `FUN_0001c75e`),id22/35 改用反組譯證實的 `0x22d1b` 50% gate,id24/28/29/30/31(劍技/未知)改用反組譯證實的「不經過命中判定」恆 bypass;逐 ID 用 `record[+2]` 實際數值核對 spell.json 的 hit 欄已於 §6.6 完成(0/36 誤差) |
 | 9 | 恢復法術(HP) | §4.4 | ✓ `0x1c916`(先前輪次已閉合):90~99.9% 隨機化 | `native_item_hp_restore.go`/`magic.go randomizeAmount` | ✓ 一致 |
 | 10 | 恢復法術(MP) | 攻略未單列 | ✓ `0x1c9dd`(先前輪次) | `native_command_mp.go` | ✓ 一致(無獨立攻略公式列,沿用同一套 randomize) |
 | 11 | 輔助法術(魔刃 AP+15%/魔鎧 DP+15%/風行 HIT+15,EV+15) | §6.4 | ✓ `0x22721`/`0x22866`/`0x22997`(先前輪次) | `magic.go applySpell` buff 分支 | ✓ 一致 |
@@ -268,6 +268,76 @@ doc58 續五十九~六十一曾記錄「敵方 record 的 `+0x40` 是 LV 不是 
 - **倍率表訂正**:`if id==0x18(24) mult=15; elif id==0x1c(28) mult=20; elif id==0x1d(29) mult=12; else mult=18`。**`else` 分支同時覆蓋 `id==0x1e`(30,音速刃)與 `id==0x1f`(31,`command_labels.json` 該 slot label 為空字串)**——先前記錄「倍率 15/20/12/18 分別對應 24/28/29/31」的措辭會讓人誤以為 30 沒有倍率或另有分支,實際上 30/31 共用同一個「非 24/28/29」的預設值 18,已在 `verified_addresses.json` 訂正措辭。傷害本體 `trunc(actor.+0x48(AP,short)*mult/10)`,經已知的 `0x1c81f` HP writer 寫入(與法術/道具傷害共用同一個底層寫入核心,只是傷害數值來源不同)。
 - **derived-strike 有自己獨立的逐目標演出/SFX 迴圈,不是單純呼叫 `0x1c81f` 就結束**:對每個 target 呼叫完 `0x1c81f` 後,再走一個「hit-event 陣列回放」迴圈——陣列來源是 `FUN_000314de()`(先於主迴圈呼叫一次,回傳指標存入 `local_28`/`DAT_0005414b`),逐 event(`local_24` 從 `local_28[2]` 掃到 `*local_28`)檢查 `local_28[event+5]!=0` 才呼叫 `FUN_00025a96`(=已知 `play_sfx_a`,`0x25a96`)觸發音效,`local_28[event+4]==1` 時把這一步的 HP 顯示值分成 N 步遞減播放(`id==0x1c`(28,淒煌斬)用 8 步、其餘三招用 1 步——這是**淒煌斬相對其他三招唯一有實質差異的演出**,同時它在函式前段的資源載入區也多一次 `FUN_0002facd()` 繪製呼叫,其餘三招沒有)。event 陣列本身逐 byte 完整語意(哪個 event 對應揮擊/命中/爆擊等)未展開到 leaf level,但「呼叫 `0x1c81f` 算傷害→回放 hit-event 陣列觸發 `play_sfx_a`」這個機制結論已用位址級反組譯釘死。
 - 函式前段另外無條件載入 3 個資源(`DAT_0005413f`/`DAT_00054143`/`DAT_00054147`,各一次 `FUN_000111ba()`),四招共用,未鑑定型態,不影響上述結論。
+
+### 6.6 法術/道具命中率逐 ID 核對(2026-08-30)——關閉表第 8 項「仍缺清單」的最後一項
+
+> 回應 §5「仍缺清單」第 2 項、§6.1 結尾「逐 ID 用 `record[+2]` 實際數值核對 `spell.json` hit 欄仍未做」的遺留缺口,以及 `91-worklist.md` 第 1159 行、`32-item-combat-stats-re.md` 第 756 行同一項的稽核索引。方法:純靜態直接讀取 `FD2.EXE` 二進位位元組(Python `seek`/`read`),不需要 DOSBox-X 或 Ghidra live session。
+
+**基準版本確認**:對照 `docs/data/fd2-reference-files.json`,`C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE`(509158 bytes)的 MD5(`33464c81e6a364fd0660141139aa8e6e`)與記載的「新版(1998 重打包版)」canonical hash 完全吻合(`FD2_USB`、`FD2_APK` 兩份備份同大小同 hash,互為印證),確認用這份檔案逐 byte 核對即可,不需要額外版本判定。
+
+**核對結果:36 條記錄的 `hit` 欄與 `raw` dump 的實際數值 0/36 有誤,但 `spell.json` 的 `off` 欄位是舊版(357074 B,已遺失)位址,不是目前 `FD2.EXE` 的真實 file offset**——直接用 `off+2` 讀新版檔案,36 筆全部不吻合(讀到的是新版檔案裡完全無關的位元組);把每筆 `off` 加上 `03-exe-and-data-structures.md`/`tools/dump_exe_tables.py` 已定案的舊↔新版固定位移 `0x25214` 後(如 id0:`0x557fd`→`0x7aa11`),`off+2` 讀到的 byte 與 `spell.json` 的 `hit` 欄**36/36 完全一致**,`raw` 全 7-byte dump 也逐位元組吻合(用 `dmg`(u16 LE)/`dist`/`range`/`mp`/`target` 一併核對,全部相符)。換算後的位址與 `tools/dump_exe_tables.py` 目前寫死的 `ANCHORS["spell"] = (0x7AA11, ...)` 完全對上(id0 換算結果正是 `0x7aa11`),證實：
+
+- `spell.json` 的**資料值**(`hit`/`dmg`/`dist`/`range`/`mp`/`target`/`raw`)是從正確的新版 canonical `FD2.EXE` 位址正確 dump 出來的,不存在數值誤讀。
+- `spell.json` 的 **`off` 欄位字串**是這份檔案改版基準前(2026-08-14 之前)殘留的舊版位址標籤,`dump_exe_tables.py` 在 2026-08-20 已改成直接輸出新版 offset,但 `spell.json` 本身沒有跟著重新產生,所以檔案內文字上的 `off` 目前對不上現行工具會輸出的值——這是文件/產出物的標籤過期,不是萃取邏輯的錯誤,對 `hit`/`dmg` 等實際數值判讀無影響。留給下一輪:重跑 `tools/dump_exe_tables.py` 覆寫 `spell.json`(以及其他仍是舊版 `off` 標籤的表,若有)使 `off` 欄與現行工具輸出一致,純屬 housekeeping,不阻塞下面的語意結論。
+
+**hit=0 的原生語意——重新逐行核對 `FUN_0001c75e`(即 §6.1 已貼的反編譯),確認「hit=0 → 恆 miss」成立**:
+
+```c
+local_10 = *(byte*)(psVar2+1);        // record+2 命中率(0..100)
+iVar3 = FUN_0004ebe3();                // RNG
+if ((int)local_10 <= iVar3 % 100) return 0;   // miss:record[+2] <= roll(0..99)
+```
+
+`iVar3 % 100` 的結果域是 `[0, 99]`(§6.1 原文已標註,C 的 `%` 對正數/該 RNG 核心 `0x4e893` 的輸出恆為非負);當 `record[+2]==0` 時,`0 <= roll` 對 `roll∈[0,99]` **恆為真**,函式因此**恆進入 `return 0`(miss)分支,不可能進入下面呼叫 `FUN_0001c81f` 寫傷害的 hit 分支**。即:**native 端 `hit=0` = 恆 miss,不是恆 hit**。20 條 dump 值為 0 的記錄(id 13–25、28–31、33–35,共 20 筆,見上表)在原生引擎裡,只要真的透過這條 `FUN_0001c75e` 路徑判定命中,結果就是每次都不會命中。
+
+**與 `remake/internal/battle/magic.go` 比對——確認方向相反的 bug,本輪不修正**:
+
+```go
+// magic.go:120-125
+func rollsHit(sp Spell, rng *rand.Rand) bool {
+	if sp.Hit <= 0 {
+		return true   // ← 現況:hit<=0 視為「恆中」
+	}
+	return rng.Intn(100) < sp.Hit
+}
+```
+
+現況與原生邏輯**方向相反**:native `record[+2]==0` 恆 miss,remake `sp.Hit<=0` 恆 hit。`magic.go` 檔頭註解(1-18 行)與本函式註解(118-119 行)顯示這是**刻意的設計取捨**,不是疏忽:開發者觀察到這 20 條 hit=0 記錄裡包含攻略文字明確描述「劍技恆中(100%)」的 4 招(id24/28/29/30)與「攻擊性輔助法術命中率均 50%」的封咒/組合技類,兩者都與「hit=0 恆 miss」矛盾,因此選擇「hit=0 → 恆 hit」這條**可被資料驗證但語意仍是猜測**的折衷規則,而非採用未被 dump 值印證的「50%」猜測值。本輪的逐 ID 核對**沒有解開這個矛盾**,只是新增了一個獨立證據:至少在 `FUN_0001c75e` 這條命中判定路徑本身,`record[+2]=0` 的機器語意就是恆 miss,不支援「恆 hit」這個假設;矛盾的真正解法(這些法術/道具的命中判定是否根本不走 `FUN_0001c75e`、而是像劍技一樣有另一條獨立公式)仍待未來一輪反組譯 id24/28/29/30(劍技,已知另有 `0x2cf30` derived-strike 路徑,§6.5)與 id22/23/34/35(封咒/傳送/組合技)實際使用命令 dispatcher 的哪一條分支來釐清。
+
+**影響範圍(供下一輪抓 bug 用,本輪不修正程式碼)**:`applySpell`(`magic.go:278-332`)只在 `sp.Target==0`(第 280 行)才呼叫 `rollsHit`。20 筆 `hit=0` 記錄裡 `target=0` 的有 id24/25/26/27/28/29/30/31/34/35 共 10 筆;其餘 10 筆(`target=1` 的治療/輔助/清除狀態,以及 `target=3` 的傳送 id23)完全不經過 `rollsHit`,不受此 bug 影響。在這 10 筆裡:
+- **有實際遊戲效果、現在會被 bug 影響**:id25(行動術)、id26(毒擊)、id27(麻痺)、id34(破壞神)、id35(暗邪鬼)——`applySpell` 對這幾個 case 有真正的傷害/狀態寫入邏輯,目前因為「恆 hit」bug 而保證每次施放都生效,若日後照原生語意改成「恆 miss」,這幾招會變成永遠打不中/無效果(除非同時查清上一段提到的矛盾)。
+- **目前是 no-op,bug 暫時無感**:id24/28/29/30(劍技)、id31(未知)——`applySpell` 對應 case 直接 `return CastResult{Target: tgt}` 不做任何傷害/狀態(注解「待實裝加乘率」),不論 `rollsHit` 回傳 true/false 都沒有可觀察差異,但等這些 case 真正實作傷害後,同一個方向錯誤的 bug 會立刻變成有感。
+
+**結論**:`spell.json` 的 `hit`/`raw` 等實際資料值全部正確(0/36 誤差),`off` 欄位是需要 housekeeping 的過期標籤;`hit=0` 的原生機器語意是「恆 miss」而非「恆 hit」;`magic.go` 現行 `rollsHit` 對 `hit<=0` 的「恆 hit」處理與此相反,是一個已知、已在程式碼註解裡承認為刻意折衷、但今天的逐位元組核對確認其假設方向錯誤的 bug,標記為**未修正**,留待下一輪先解開「這些 id 是否真的走 `FUN_0001c75e`」這個前置問題後再動 `magic.go`。
+
+#### 6.6.1 修正落地(2026-08-30 續輪)
+
+> 承接上一節「未修正」的收尾:先重新核對「id25/26/27/34/35 受影響」這句話本身,再決定怎麼改 `magic.go`。
+
+**先訂正上一輪的一個錯誤**:直接重新讀 `spell.json` 逐 ID 核對(不只信任上一輪的文字敘述)發現,「hit=0 且 target=0(會呼叫 `rollsHit`)」的真正集合是 **id22/24/28/29/30/31/35(7 筆)**,不是上一輪寫的「id24/25/26/27/28/29/30/31/34/35(10 筆)」——id25 與 id34 實際 `target=1`(治療/輔助類,`applySpell` 的 `sp.Target==0` 前置條件不成立,完全不呼叫 `rollsHit`,不受此 bug 影響,不論修好前後都一樣);id26/id27 實際 `hit=50`(不是 0,走的是 `rng.Intn(100)<sp.Hit` 一般擲骰分支,同樣不受這個「hit<=0 特例」的方向 bug 影響)。7 筆真集合裡,`applySpell` 目前有實際效果(受此 bug 影響)的只有 **id22(封咒術)、id35(暗邪鬼組合技)**;id24/28/29/30(劍技)、id31(未知)`applySpell` 對應 case 仍是 `return CastResult{Target: tgt}` 的 no-op,無論 `rollsHit` 回什麼都無可觀察差異。
+
+**id22/id35 進一步查證後發現它們也不是單純的「hit<=0→miss」個案**:反組譯 `remake/internal/battle/native_item_marker_application.go`、`native_command_compound.go`、`native_raw_application.go`(既有的獨立 0x22d1b RE 產物,`docs/knowledge-base/32-item-combat-stats-re.md:442-483` 同步記錄)證實,封咒術(id22)與暗邪鬼(id35,內含封咒/毒擊/麻痺三重狀態,§6.5 已證實其 3 個子效果各自呼叫 `0x22d1b`)的原生命中判定完全**不經過** `FUN_0001c75e`/`record[+2]`,而是 `0x22d1b` 狀態施加核心內建的**編譯期常數 50% RNG gate**——`spell.json` 裡 id22 的 `hit` dump 值是 0、id26/27 是 50,這兩個數字都與 `0x22d1b` 的 50% gate 無因果關係(0x22d1b 不讀 `record[+2]`),純屬巧合式數值重合,不能拿 `hit` 欄位當這幾個 id 的命中率來源。
+
+**實際修正**(`remake/internal/battle/magic.go` `rollsHit`,約 118-146 行):
+```go
+func rollsHit(sp Spell, rng *rand.Rand) bool {
+	switch sp.ID {
+	case 22, 35:
+		return rng.Intn(100) < 50 // 0x22d1b 固定 50% gate,非 record[+2]
+	case 24, 28, 29, 30, 31:
+		return true // 0x2cf30 derived-strike 不呼叫命中判定,固定套用(劍技恆中)
+	}
+	if sp.Hit <= 0 {
+		return false // FUN_0001c75e:record[+2]<=roll(0..99) 恆真 → 恆 miss
+	}
+	return rng.Intn(100) < sp.Hit
+}
+```
+`combat.go` 的 `rollsHitPct` 檔頭註解同步更新(舊註解說 magic.go 是「必中特例」,現已不成立)。
+
+**測試**:`magic_test.go` 新增 `TestRollsHit_HitZero_AlwaysMisses`(通則:不在特例清單的假想 ID,hit<=0 對 100 次擲骰恆 Miss)、`TestRollsHit_SealSpell_FiftyPercentGate`(id22 對 60 次擲骰同時出現命中與 Miss)、`TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck`(id24/28/29/30/31 對 20×5 次擲骰恆 true);既有 `TestApplySpell_ComboSpells` 的暗邪鬼(id35)案例從「單一固定 seed 斷言命中」改成 40 次擲骰迴圈,驗證命中/Miss 皆出現且三個狀態恆同步(共用同一次擲骰,remake 既有簡化,本輪不展開)。`go build ./...`、`go test ./...` 全綠(`internal/battle` 526 個測試全過,含新增/調整的 4 個)。
+
+**實際遊戲行為變化**:id22(封咒術)、id35(暗邪鬼)兩招在 remake 裡從「每次施放保證生效」變成「50% 機率生效」(對映原生 0x22d1b 真實機率);id24/28/29/30/31 因目前仍是 no-op,行為無變化(但已排除未來實作傷害時重蹈方向錯誤的隱患);id25/26/27/34 本來就不受此 bug 影響,行為無變化。**此項現已關閉,不再是開放問題。**
 
 **`0x2d80d`(`FUN_0002d80d`,body `0x2d80d..0x2df00`,1780 bytes,ID32-35『四類特殊演出』)**——逐指令反組譯+decompile 確認內部依 `commandId` 精確分四支,對照 `docs/data/command_labels.json`(32=熾天使、33=風妖精、34=破壞神、35=暗邪鬼)與 `docs/knowledge-base/02-game-data-reference.md` 攻略文字逐支核對:
 

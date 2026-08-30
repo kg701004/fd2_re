@@ -17,7 +17,7 @@
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
-26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。**2026-08-26續輪(純靜態)重新derive「19 vs 13」矛盾**：確認doc56 UI-11引用的整備UI位址(0x318ad等8個)在FD2Analysis3全部`in_function:false`(舊版殘留)，但同一套cap/confirm/cursor-skip邏輯已由`58-remake-live-verification-log.md`續九～續十一(task #118,早於prepE2一週)對照實際509158-byte`FD2.EXE`做純檔案byte-signature驗證過：15/19門檻與「選滿才能離開」都是真的，不是誤讀；「僅13名可招募角色」這句話只對機器上現有的合成/早期存檔成立——獨立核對`docs/data/chapter_beats/ch{NN}_post.json`的join op數量，ch11-22共13次加入(與續九的獨立查證吻合)，真的照劇情推進的存檔抵達23-31章時名冊規模應在20+，並非結構性上限。仍待下一輪驗證的唯一開放問題：選人畫面渲染迴圈是否真的硬編碼上限12(不論roster多大)——若成立則推翻上述樂觀結論，需要`roster_count≥15`的存檔實測。詳見doc25§9.1與`known_address_errata.json`。
+26 - E - UI-VIS-PREPARATION已於2026-08-25用prepE2 harness以機器上唯一真實存檔(ch27)補上出發確認→bypass直達戰場的完整E2且與production邏輯吻合，但同時發現該存檔（及機器上其餘3槽）結構上無法觸及選人核取/0x320fc重排/0x31d3c最終確認三段（逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面，機器僅有的4槽全在略過區間，且全遊戲僅13名可招募角色永遠不超門檻），故仍標`[~]`。**2026-08-26續輪(純靜態)重新derive「19 vs 13」矛盾**：確認doc56 UI-11引用的整備UI位址(0x318ad等8個)在FD2Analysis3全部`in_function:false`(舊版殘留)，但同一套cap/confirm/cursor-skip邏輯已由`58-remake-live-verification-log.md`續九～續十一(task #118,早於prepE2一週)對照實際509158-byte`FD2.EXE`做純檔案byte-signature驗證過：15/19門檻與「選滿才能離開」都是真的，不是誤讀；「僅13名可招募角色」這句話只對機器上現有的合成/早期存檔成立——獨立核對`docs/data/chapter_beats/ch{NN}_post.json`的join op數量，ch11-22共13次加入(與續九的獨立查證吻合)，真的照劇情推進的存檔抵達23-31章時名冊規模應在20+，並非結構性上限。仍待下一輪驗證的唯一開放問題：選人畫面渲染迴圈是否真的硬編碼上限12(不論roster多大)——若成立則推翻上述樂觀結論，需要`roster_count≥15`的存檔實測。詳見doc25§9.1與`known_address_errata.json`。**本行已過期，2026-08-30稽核補充**：上述「唯一開放問題」已在緊接著的**同一天`rostertest`harness輪（live DOSBox-X，合成26人roster）用25≠12直接分出勝負而解答**——「硬編碼12」假說證偽，證實是`roster_count-1`動態上限；同輪並live驗證選人核取/`0x320fc`重排/`0x31d3c`最終確認三段選滿19人這條路徑完整可達、正確觸發最終確認並可繼續進入戰前過場，故本項目`[~]`狀態的核心疑問（部署上限機制本身）已收斂。剩餘缺口降級為次要：cap=15臂（raw chapter 22-24）未實測（只測過cap=19臂）、「要記錄戰況嗎」Yes/No分支語意（`0x2968d`寫入歸因信心較低）留待下一輪。完整過程見本文件下方`UI-VIS-PREPARATION`checkbox本體「2026-08-26續輪（`rostertest`harness…）」段落，不要再引用本行文字判斷此項現況。
 45 - E - UI-VIS-LOAD自述成功native restore/delete/overwrite/roster ABI仍待E2。
 53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。**已解(2026-08-26)**：`tools/dosbox_diff_harness.sh`+`.py`把整條live擷取／diff流程做成可重複呼叫的CLI並全自動重放通過，詳見該checkbox行與doc98。
 54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
@@ -176,6 +176,29 @@
 > player special route」／「native commands28/29/31 derived-strike siblings」兩項）；`13`/`37`/`56`三份文件的
 > 既有引用因數量多、風險高（怕破壞既有位址級 provenance 敘述），僅在`13`（已有完整勘誤章節）與`37`/`56`各自
 > 補一則簡短訂正註記，不逐一改寫每個引用點，讀者遇到`0x2a6bd`/`0x276ec`字面引用時請一律換算為`0x2ff01`/`0x2cf30`。
+
+> **2026-08-30 更新註記**：上方「稽核索引(2026-08-19)」凍結於2026-08-19，**預期不涵蓋**此後才展開的
+> ch21-30 chapter-sweep（M5里程碑）整條工作線與2026-08-28的SAV writer gate勘誤，讀者請勿把本索引的
+> A-F分類套用到下列項目：
+> 1. **「doc25§9.1 SAV writer gate」不是bug，是假問題**——本檔`2026-08-28 關鍵修正`條目（搜尋該字串，
+>    緊接在本稽核索引與`Visual parity correction`區塊之間）已澄清：原版設計本來就只在酒店主動存檔，
+>    戰鬥勝利本身不會觸發磁碟寫入；過去18+個章節條目（`saveE2`/`savewriter`/`camproute`/`writerfire`
+>    及後續`ch11r8*`/`ch02final`/`full-roster`/`picklock`等輪）用「SAV writer gate」這個名詞描述的
+>    現象，正確判準應是引擎自身勝利旗標`[0x53ecc]`而非磁碟位元組——本索引產出時這整條調查線尚未開始，
+>    索引裡任何觸及`FD2.SAV`/存檔/writer的分類（如下方`252`/`437`/`854`/`1150`/`1160`）都只反映
+>    2026-08-19當時對「存檔」議題的認知範圍，不代表現況判準。
+> 2. **ch27／ch29的engine-level勝利＋靜默存檔已live確認**，非本索引涵蓋範圍：`ch27win3`輪
+>    （好結局，3隻機甲隊長真實UI擊殺，磁碟章節byte`26→27`）與`ch29wf`輪（直接寫入三個win-check
+>    flag，磁碟章節byte`28→29`）皆已完整成功，詳見`docs/knowledge-base/99-chapter-sweep-results.md`
+>    「2026-08-29『ch27win3』輪」與「2026-08-30『ch29wf』輪」兩節；另`ch22`（picklock輪）也已拿到
+>    含磁碟寫入的字面`pass`。M5引擎層級勝利確認章節數截至`ch29wf`已遠超本索引存在時的任何統計。
+> 3. **不要與下列本索引仍在追蹤的、主題相近但不同的開放項混淆**：`26`（UI-VIS-PREPARATION，ch27存檔
+>    用來測試出發確認流程，議題是選人核取畫面門檻，非勝利/存檔機制本身）與`1314`（ch29/ch30**結局
+>    montage renderer**`0x2bce5`阻塞，議題是ending演出資產解碼，非勝利判定）——這兩項本身未被
+>    ch27win3/ch29wf推翻，仍應視為開放，不因鄰近的勝利/存檔確認而連帶關閉。
+> 4. 本索引其餘164項分類（未觸及`FD2.SAV`/SAV writer gate/ch27/ch29勝利判定的項目）本輪**未逐項覆核**，
+>    暫視為原分類仍有效；如需精確現況，一律以`91-worklist.md`本文（依日期由新到舊）與
+>    `99-chapter-sweep-results.md`最新輪次為準，本索引僅供歷史快速掃描。
 
 ## Visual parity correction（2026-07-28）
 
@@ -1133,7 +1156,7 @@
 
 ## 第 4 輪以後(暫定)
 - [x] 地圖格式完整解析(FDFIELD 三段)+ 渲染全 33 圖(見上)
-- [~] 反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證——大部分收口:`doc27 §5`(2026-08-19)20項三方一致性盤點,15項三方一致(物理/劍技/法術/恢復/命中/暴擊/AI評分);仍缺:經驗值公式攻守等級因子、武器命中特殊效果(0x2f7b6內cVar4分支)、6種傳送/魔刃等經驗公式、法術命中逐ID核對——本輪(2026-08-19續輪,`doc27`§5.1)推進:武器命中特殊效果`cVar4`分支來源鏈與全部15個觸發武器id解出(→完全閉合)；6種傳送/魔刃/魔鎧/風行/麻痺/毒擊/解毒/祛麻/行動術經驗公式全部找到並反組譯(→完全閉合)；職業等級上限特例封閉列舉(`0x1e292`只比對portrait是否為0x1e/0x1f，非職業，無第三分支→完全閉合)；經驗值攻守等級因子靠第二個獨立實作`0x1ecc7`佐證既有假設(仍為部分開放，未100%排除歧義)。仍缺:法術/道具命中率逐ID核對(`0x1c7ed`的`record[+2]`未逐一dump比對`spell.json`)——這是四項剩餘工作中唯一完全未觸碰的子項。
+- [~] 反組譯戰鬥/命中/傷害/AI 演算法(Ghidra)，與攻略公式交叉驗證——大部分收口:`doc27 §5`(2026-08-19)20項三方一致性盤點,15項三方一致(物理/劍技/法術/恢復/命中/暴擊/AI評分);仍缺:經驗值公式攻守等級因子、武器命中特殊效果(0x2f7b6內cVar4分支)、6種傳送/魔刃等經驗公式、法術命中逐ID核對——本輪(2026-08-19續輪,`doc27`§5.1)推進:武器命中特殊效果`cVar4`分支來源鏈與全部15個觸發武器id解出(→完全閉合)；6種傳送/魔刃/魔鎧/風行/麻痺/毒擊/解毒/祛麻/行動術經驗公式全部找到並反組譯(→完全閉合)；職業等級上限特例封閉列舉(`0x1e292`只比對portrait是否為0x1e/0x1f，非職業，無第三分支→完全閉合)；經驗值攻守等級因子靠第二個獨立實作`0x1ecc7`佐證既有假設(仍為部分開放，未100%排除歧義)。法術/道具命中率逐ID核對(`0x1c7ed`的`record[+2]`未逐一dump比對`spell.json`)——**本輪(2026-08-30,`doc27`§6.6)已收口**:純靜態直接讀取 canonical `FD2.EXE`(`C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE`,509158B,MD5對上`fd2-reference-files.json`記載值)逐 byte 核對 36 筆 spell 記錄,`hit`/`dmg`/`dist`/`range`/`mp`/`target`/`raw` 全部 0/36 誤差(`spell.json` 的 `off` 欄位是舊版殘留位址標籤、換算 `+0x25214` 後對得上,純 housekeeping,不影響資料值);同時重新核實 `FUN_0001c75e` 確認「`record[+2]=0` → 恆 miss」(`0<=roll(0..99)`恆真),**與 `magic.go rollsHit` 現行「`hit<=0`→恆 hit」邏輯方向相反**——找到一個已知、程式碼註解裡承認是刻意折衷、但本輪核對後確認假設方向有誤的 bug,影響 id25/26/27/34/35(現有實際效果,受影響)與 id24/28/29/30/31(劍技/未知,目前 no-op 未實裝故暫無感)。**本輪僅記錄不修正**,留待下一輪先解開「這些 id 是否真的走 `FUN_0001c75e`」再改 `magic.go`。**2026-08-30 續輪已修正並關閉**:重新核對 `spell.json` 發現上一輪這段文字裡「id25/26/27/34/35 受影響」的敘述有誤(id25/34 實際 `target=1`、id26/27 實際 `hit=50`,三者皆不經過 `rollsHit` 的 `hit<=0` 特例分支;真正受影響、且目前有實際效果的只有 id22 封咒術與 id35 暗邪鬼)。`remake/internal/battle/magic.go` 的 `rollsHit` 已改為:一般情況 `hit<=0` 恆 Miss(對映 `FUN_0001c75e`);id22/35 改用反組譯證實的 `0x22d1b` 固定 50% RNG gate(與 `record[+2]` 無關,見 `docs/knowledge-base/32-item-combat-stats-re.md:442-483`、`native_item_marker_application.go`);id24/28/29/30/31(劍技/未知)改為恆 bypass(對映 `0x2cf30` 完全不呼叫命中判定,目前仍是 no-op,先訂正避免未來實作時重蹈方向錯誤)。`combat.go` 的交叉參照註解同步更新。新增/調整 `magic_test.go` 測試(`TestRollsHit_HitZero_AlwaysMisses`/`TestRollsHit_SealSpell_FiftyPercentGate`/`TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck`,並強化 `TestApplySpell_ComboSpells` 的暗邪鬼案例為多次擲骰驗證兩種結果);`go build ./...`、`go test ./...` 全綠(battle package 526 個測試全過)。詳見 `docs/knowledge-base/27-combat-rules-and-validation-checklist.md` §6.6 追記。
 - [~] **物品系統反組譯**(M1 用)→ `32`:已確認物品表23B結構、roster 8裝備欄與 AP/DP raw temporary leads；舊 `0x15356` 傷害公式地址未由 canonical scan 證實。裝備加成精確累加點（夾攻擊大函式、表 base-relative）與使用效果碼待續。——本輪(2026-08-19續輪,`doc32`§4.2)大幅收口:裝備加成精確累加點早在§3.5已閉合(四條公式對截圖逐位吻合)；使用效果碼把`0x20c6f`的`cVar1`(row`+0xd`)dispatch從「部分覆蓋清單」補成0–24全25個值窮舉(20個有callee、5個是no-op)，武器on-hit特殊效果(`cVar4`)也解出來源鏈與全部15個觸發武器id。剩餘缺口只剩:type3旗標(僅1個道具id71)的下游消費者、幾個marker/狀態的玩家可見名稱。
 - [~] **轉職系統反組譯**(M4):轉職觸發(教會/道具)、職業數值替換、能力繼承、轉職後成長表切換 → 攻略道具表(勇者徽章→英雄…)交叉驗——機制已解:`doc32 §6`(2026-08-19),教會Lv≥20→查0x526a7道具→0x1e529五組growth累加(Lv保留EXP歸零HP/MP回滿),成長表切換證實=同一張68列表後半段(idx32-67);13/18道具吻合攻略。caveat:部分函式位址來自遺失舊版EXE,新版待重定位;class_change_targets.json portrait11/12/13疑輪轉錯位待查——本輪(2026-08-19續輪,`doc32`§6.6)推進:對第二個舊版位址`0x31793`在新版EXE做spot-check,確認該位址現在是無關的UI程式碼(呼叫`0x11eb0`/`0x11d40`/`0x2eb9f`,與轉職候選判定完全無關),強化(非首次證明)「同位址探測法已窮盡」的結論；portrait11-13輪轉錯位問題本身仍未解決,要解開需要全檔byte-signature重新定位轉職相關函式,超出可負擔的探測量,維持D(可續但需大量前置工程)。
 - [~] **角色名對應**:補全 portrait→角色名 → `49`。核實後「12 個」已過期,實際已定案 38 組
@@ -2408,6 +2431,313 @@
   下一輪。完整反組譯位址表、逐步證據見`99-chapter-sweep-results.md`
   「2026-08-29『post-handler-save-trigger』輪」小節。**(b)本輪視為關閉**；
   外層「(a)重新用長poll驗證23個anomaly章節」待辦本輪未觸及，仍待後續輪次。
+  **上述ch27/ch29預測的後續（2026-08-29「ch2729-static」輪，純靜態Ghidra，
+  單一turn內完成，沒有碰DOSBox-X）**：讀`table_post[26]`/`table_post[28]`
+  指標（`0x51e51`/`0x51e59`）分別得到入口`0x250cc`(raw26/ch27)與`0x2548c`
+  (raw28/ch29)，兩者皆為全新位址、不與既有6章入口重複。沿`JMP`鏈forced
+  disasm：**raw28(ch29)單一路徑**，`0x2574f`處`CALL FUN_00011506();
+  INC[0x53c03]; RET`，跟既有4個「確認靜默存檔」章節同一套樣板，**預測完全
+  靜態確認**。**raw26(ch27)則在`0x25191 JZ 0x25348`處分岔成兩條路**——這正是
+  `docs/knowledge-base/50-cutscene-script-system-design.md`第651-655行已記錄
+  過的天空之鑰inventory check(`0x25186 call FUN_00024b14(item 0x64)`)，本輪
+  反組譯位址與該文件逐位元組吻合：**有天空之鑰的好結局臂**在`0x25338`執行
+  `INC[0x53c03]`並經`0x1b5ea`真正return，**預測在這條分支上成立**；**無天空
+  之鑰的壞結局臂**跳到`0x25348`後在`0x25462`撞上`EB FE`（跟悠妮角色卡硬鎖
+  同一signature，`0x2545d call FUN_00031529`亦與doc50 2026-08-25勘誤逐位元組
+  吻合），**永遠不會執行到`INC`，`FUN_00026152`根本不會被呼叫**——不是預測
+  被推翻，是這條分支上「是否靜默存檔」這個問題的前提（handler會return）本身
+  不成立。**Live驗證建議**：ch29結構乾淨、方向明確，但受阻於本專案至今
+  還沒有任何一輪真正live打贏過ch29戰鬥（獨立於本存檔機制的既有缺口）；
+  ch27好結局臂的live驗證需要一份「已持有天空之鑰、卡在ch27戰前」的存檔，
+  但機器上唯一的真實存檔落在壞結局分支（無天空之鑰），要從頭收集六素材是
+  橫跨近10章的大工程，本輪不建議直接嘗試，除非使用者同意用記憶體寫入捷徑
+  跳過收集流程。完整證據、結果表、confidence見`99-chapter-sweep-results.md`
+  「2026-08-29『ch2729-static』輪」小節。
+  **後續live嘗試（2026-08-29「ch29live」輪）**：針對上面留下的「ch29結構乾淨、
+  方向明確」建議實際跑了一輪`tools/fd2_chapter_sweep.py sweep --chapter 29`
+  （WebFetch確認walkthrough勝利條件是「護送悠妮到石碑休息＋撐過3回合打三頭龍」
+  的escort腳本，非rout；56敵初始陣容與live掃描結果精確吻合）。**結果：連
+  engine-level win（`[0x53ecc]`==2）都沒拿到**——56個敵人全數被mass-kill且
+  End-Turn確認，win-check仍卡在0，verdict是`anomaly`（比先前`ch22/23/24/28`那個
+  `anomaly_engine_win_no_disk_write`類別更弱一級，因為連win本身都沒過）。這證實
+  「能不能live打贏ch29」這個前置障礙是**真正的結構性escort機制**擋住，不是
+  poll不夠久或cursor/turn-count這類已知gate，且目前工具沒有「移動悠妮到石碑
+  座標」的自動化，無法單靠既有override解開。ch29的靜默存檔預測（`0x523e7[29]
+  ==1`＋`table_post[28]`單一路徑）本身**維持靜態完全確認、仍未live驗證**——
+  本輪沒有推翻它，只是再次證實它目前打不到能被live觸發的前置條件。完整寫法、
+  WebFetch摘要、log見`99-chapter-sweep-results.md`「2026-08-29『ch29live』輪」
+  小節。
+  **針對「ch29live」輪的直接retry（2026-08-29「ch29tp」輪，代號`c29tp`，與
+  `c27sky`並行、`:299`/`:199`互不干擾）**：user明確指示改用直接記憶體teleport
+  悠妮座標,跳過專門移動自動化。悠妮record定位靠`CORE_STARTER_IDS`(id9)+
+  `native_join_constructor.go`的`record[7]=id`寫入規則,但live發現**這個
+  `+0x07`欄位對「從舊存檔直接搬移」的5筆真實record不可信**(讀出`[32,52,36,
+  30,33]`跟預期`[0,9,4,30,1]`對不上,只有第4筆巧合吻合),改用插入順序定位
+  (`slot1`=悠妮)。石碑/控制中心座標改用**靜態資料反推**（`map29/map.json`的
+  `native_field_event_slots`裡`x=17..27,y=0..15`一整塊164格指向`event_id
+  80`/`selector1`,對照doc25 event table是「給item 0x23+鎖輸入」,同一家族的
+  input-lock類事件),選`(22,8)`(區塊內、`cost==1`可通行走廊)當teleport目標。
+  **結果**:`SMV`寫入座標`(22,8)`readback確認成功,且**一次完整End-Turn循環後
+  再讀依然是`(22,8)`(持久,沒被引擎重置)**——證實teleport技巧本身對自己隊伍
+  NPC一樣有效、穩定。但接下來mass-kill 56敵+**連續4次**End-Turn循環（悠妮全程
+  停在石碑候選座標）,`[0x53ecc]`全部維持`0`,`[0x53c03]`全程停在raw28,畫面
+  沒有任何過場/對話跡象——**escort/rest觸發依然沒打通,engine-level win依然
+  拿不到**,跟「ch29live」輪同一大類`anomaly`結果。誠實列出3個未收斂候選假說
+  (①teleport繞過了真正呼叫field-event dispatcher的程式碼路徑;②`event_id
+  80`可能根本不是escort觸發本身,只是同一區域的另一個item-give事件,真正觸發
+  是`campaign_full.json`裡獨立於raw field-event的beat;③只試了164格裡的1格,
+  子區域/selector都可能選錯)——**沒有足夠時間排查是哪一個,留給下一輪**。
+  ch29的靜默存檔預測維持靜態完全確認、live仍未驗證,無變化。完整技巧細節、
+  假說推理、下一輪建議（優先反組譯`0x13a44`呼叫端）見`99-chapter-sweep-
+  results.md`「2026-08-29『ch29tp』輪」小節。
+  **回應上面優先度①②的後續（2026-08-30「ch29disasm」輪，純靜態，未碰
+  DOSBox-X）**：①`0x13a44`（格子事件寫入端`DAT_00051a8f`）全EXE只有5個呼叫端
+  （`call_scan`/`xref_to`一致），**全部落在`FUN_00018890`與其兩個子步驟
+  （`0x1300d`走位動畫、`0x13a9f`per-unit狀態機）構成的call chain上**，而
+  `0x18890`本身唯一呼叫端是鍵盤`Enter`/`Space`分派`0x11943`（`FUN_000117e7`
+  內）——**不是per-turn掃描，是UI-driven command-dispatch專屬**，`ch29tp`輪
+  候選假說①（teleport繞過了真正的dispatcher路徑）由「最可能但未證實」**升級
+  為反組譯直接證實**：悠妮座標teleport結構上永遠不可能觸發格子事件，不管等
+  幾輪。②`ch29tp`輪的164格escort候選矩形其實讀自**錯誤地圖**——
+  `campaign_full.json`確認`battle_ch29`用`map28`，不是`ch29tp`輪誤用的
+  `map29`（`map29`實為`battle_ch30`的地圖，md5不同、尺寸不同）。改讀正確的
+  `map28/map.json`，1984格裡**只有1格是真正的field-event槽**：`(15,21)`→
+  `event75`（給item+`[0x51A83]`輸入鎖+`NativeEventState[16]+=1`），不是先前
+  以為的164格矩形/event80。`ch29.json`的`events`陣列與`map28`的`turn_events`
+  都是空的，排除remake資料模型層級的「campaign-script beat」假說（但這只代表
+  重製管線沒擷取到，不代表原版binary沒有）。**意外的最高價值發現**：順著同
+  一批`0x51b19`章節跳表（win-check handler表，index=raw chapter，`index26=
+  0x20a87`與doc25既有ch27記錄逐byte吻合，交叉確認索引公式）直接讀出
+  `index28（raw28/ch29）=0x20b72`——**ch29專屬、先前未記錄過的win-check
+  handler**，完整disasm（34條指令）顯示勝利判定是`NativeEventState[0x12]&&
+  [0x13]&&[0x14]`（即event_id 18/19/20的「已觸發」旗標）三者同時非零，
+  **完全不檢查任何record陣列的camp/存活狀態或悠妮座標**——這才是`mass_kill_
+  enemies()`從未讓`[0x53ecc]`翻2的真正原因,跟field-event/teleport假說原本
+  設想的機制都不同。三個flag真正的觸發鏈本輪未追出（`map28_units.json`裡3筆
+  緊鄰LV30單位`(13,12)/(15,12)/(17,12)`的`kind=2`死亡效果指向全域event
+  73/77/78,疑似"3頭龍",但只是未證實的推論）。下一輪建議：優先全EXE
+  byte-pattern掃`[0x53AD5]+0x12/0x13/0x14`寫入端（同doc25對`+0x31~+0x33`
+  用過的稽核手法）；或用一輪live記憶體寫入直接把這3個byte設非零、輪詢
+  `[0x53ecc]`，一次驗證win-check公式與`table_post[28]`silent-save預測兩者。
+  ch29靜默存檔機制本身（`table_post[28]`）無變化，仍是靜態完全確認、live
+  未驗證。完整反組譯、地圖勘誤細節見`99-chapter-sweep-results.md`
+  「2026-08-30『ch29disasm』輪」小節。
+  **✅ ch29 engine-level win + 靜默存檔本輪LIVE確認完成（2026-08-30「ch29wf」
+  輪，代號`c29wf`）**：直接採用上面「ch29disasm」輪留下的優先度②（live記憶體
+  寫入捷徑）。進入戰場後解出`[0x53AD5]`（live`0x1EFAD5`）heap指標實際值
+  （`0x1f6c5c`），讀出`NativeEventState[0x10..0x17]`寫入前全為0，把`+0x12/
+  +0x13/+0x14`三個byte`SMV`寫成1並逐byte readback確認生效。**單純寫入後
+  poll`[0x53ecc]`60秒仍卡在0**——排除了「純記憶體寫入立即生效」的樂觀假設，
+  win-check handler顯然只在特定dispatch點才會被呼叫，不是每個引擎tick都重新
+  評估。**一次focused follow-up**（沿用`confirm_end_turn()`既有的
+  find-empty-tile→開環→END→YES序列，`enemy_addrs=None`完全不碰任何敵方
+  record，只是單純跑一次End-Turn確認）：3.5秒內`[0x53ecc]`翻成**2（WIN）**
+  ——**確認了`0x20b72`的反組譯公式完全正確，也確認了win-check handler的
+  dispatch點包含標準End-Turn確認流程**。畫面立即接上「成了!」對白（非黑屏/
+  死鎖），持續`Return`推進約120次後自動切到**LOAD選單**，slot1明確顯示
+  「**1)第三十章　傳說的終章**」（比開局patch進去的「第二十九章」前進整整
+  一章）。額外用`pull_save()`+`fd2save.decode()`獨立核對磁碟：**slot0 raw
+  chapter byte從開局的28變成29**（story ch29→ch30）——**與LOAD選單UI、live
+  `[0x53ecc]`==2、`[0x53c03]`推進三項證據完全吻合，磁碟位元組層級的ground
+  truth確認靜默存檔真的發生**。**ch29的靜默存檔預測（`0x523e7[29]==1`+
+  `table_post[28]`單一路徑）本輪由「靜態完全確認、live未驗證」正式升級為
+  「靜態+live+磁碟三重確認」，本項目至此正式關閉**。唯一誠實保留的未解問題
+  （不影響本項結論）：3個flag在**正常玩法**下真正由誰觸發（「3頭龍」假說）
+  本輪仍未追出，因為本輪走的是記憶體直寫捷徑，不是真實UI觸發——但這只是
+  「正常玩法可達性」這個獨立問題，不影響「ch29會不會靜默存檔」本身已經
+  確認的結論。完整逐步log、螢幕截圖對應、confidence見`99-chapter-sweep-
+  results.md`「2026-08-30『ch29wf』輪」小節。
+  **ch27好結局臂的後續live嘗試（2026-08-29「ch27sky」輪）**：user同意用記憶體
+  寫入捷徑跳過六素材收集流程，直接把天空之鑰(item 0x64)寫進真實存檔在battle
+  live記憶體上的Sol inventory（`FUN_00024b14`/`FUN_0002aedb`/`FUN_0001b8a6`/
+  `FUN_0001b722`完整反組譯出inventory欄位是`DAT_00053a45+char_idx*0x50+0xa/
+  0xb+slot*2`的flag/item byte pair，寫入後`D`讀回驗證生效）。3隻機甲隊長
+  也已在live記憶體上識別（enemy record `+0x42`(HPmax)=32、MV=5的3筆，跟
+  攻略「LV32/MV5」的MV數字吻合；HP3200等其他攻略數字在這個engine的跑階段
+  record上讀不到，判斷是攻略站另一套顯示慣例，不適用於這個記憶體模型）並
+  nerf到一擊必殺、readback逐項確認。**但真正的殺敵步驟——用真實UI攻擊指令
+  鏈擊殺這3隻隊長——完全無法執行**：對戰鬥地圖任何尚未行動單位送`Return`
+  完全沒有反應（不開狀態卡、不開移動範圍、不開指令環），且**這次連本專案
+  最可靠的「空地格→Return開系統環」End-Turn路徑都同樣失效**（比doc48§8.4
+  已知的「單位選取專屬」限制範圍更廣）。窮舉測試單發/連發/雙擊/長按/
+  `clearmodifiers`/Alt-keyup/NumLock切換/滑鼠點擊/完整重開環境兩次共12類
+  補救手段全部無效，方向鍵與`Escape`鍵全程正常，確認問題精確侷限在`Return`
+  鍵本身、不是通用鍵盤失效。**ch27好結局臂因此仍未live驗證，也還沒有機會
+  核對是否出現預測中的靜默存檔**——不是推翻靜態預測，是這次被一個新的、
+  範圍比先前記錄過的都廣的`Return`輸入問題擋在勝利判定之前。下一輪建議
+  優先反組譯`0x117e7`（Enter分派入口）在ch27這個deployment上實際檢查的
+  gate條件，而不是重複本輪已排除的按鍵節奏類補救；Sky Key寫入公式與3隻
+  隊長的識別方式已可直接重用。完整過程、逐項排除清單見
+  `99-chapter-sweep-results.md`「2026-08-29『ch27sky』輪」小節。
+  **後續「ch27ret」輪**：反組譯完`0x117e7`，找到一段確實會讓Enter完全靜默
+  無反應的前置檢查（`unit[+7]=='y'`或`unit[+0x1f]==0x0a`），但live重演時
+  游標實際落點沒有觸發這個分支，**乾淨、第一次嘗試就重現了系統環正常開啟**
+  ——`ch27sky`輪的`Return`完全失效根因依然未知（最可能是該輪長session本身
+  的暫態狀態，不是本輪任何寫入序列的必然結果），環境本身確認健康。收尾時
+  系統環是開啟狀態但主動選擇不繼續攻擊，本輪任務仍未推進到勝利。
+  **再後續「ch27win」輪（直接重跑到底的嘗試）**：任務**尚未能開始**——連
+  SOP第一步`dosbox_harness.sh status`都卡死，逐層排查（`wsl -l -v`/
+  `--status`/`--shutdown`全部逾時無回應，服務進程仍在跑但完全無反應）確認
+  是doc48§8.1已記錄的`WSLService` deadlock，非管理員權限session已知無法
+  修復，本輪確認症狀後即停止重試、未啟動任何DOSBox-X instance、未碰過真實
+  存檔，零遊戲狀態改變。**此follow-up項目仍未關閉**，需要使用者以系統管理員
+  權限跑`wsl --shutdown`（或重開機）後才能重試，屆時可直接沿用`ch27sky`/
+  `ch27ret`兩輪已備妥的全部技巧。詳見`99-chapter-sweep-results.md`「2026-08-29
+  『ch27ret』輪」與「『ch27win』輪」小節。
+  **直接retry「ch27win2」輪**：使用者回報已用系統管理員權限跑過
+  `wsl --shutdown`，但本輪SOP第一步重新驗證時`wsl --status`仍逾時無回應
+  （55秒以上零輸出），`Get-Process`更確認其中一批卡死`wsl.exe` process的
+  `StartTime`跟「ch27win」輪記錄的**完全相同**（`08:50:23`）——代表那次
+  `wsl --shutdown`並未清掉舊的殭屍process，deadlock實質上仍未解除。本輪同樣
+  在確認症狀後立即停止、零DOSBox-X操作、零遊戲狀態改變。詳見
+  `99-chapter-sweep-results.md`「2026-08-29『ch27win2』輪」小節。
+  **成功結案「ch27win3」輪（2026-08-29）**：deadlock經使用者以系統管理員權限
+  `wsl --shutdown`確認清除（獨立`Get-Process`/`wsl --status`健康檢查通過）後
+  直接重試，**任務完整成功**——沿用`ch27sky`/`ch27ret`兩輪已備妥的天空之鑰
+  寫入公式與3隊長識別/nerf技巧，解出新的、更簡單的開環手法（對尚未行動的
+  我方單位連續送兩次`Return`：第一次彈出固定狀態卡的已知症狀依舊出現，但
+  第二次`Return`會讓狀態卡消失、真正的4方向指令環正確展開，3個不同單位
+  3/3重現成功），3隻機甲隊長**全部經由真實UI攻擊指令鏈**（`Up`選攻擊→
+  `Return`鎖定目標→`Return`確認出手，逐一播放完整對決動畫，非
+  `mass_kill_enemies()`式的記憶體死亡signature直寫）擊殺，逐筆debugger
+  readback確認死亡（`+5=0x01,+0x40=0x0000`）。第3隻隊長死亡當下
+  `[0x53ecc]`已自動讀到`2`（engine-level win，不需顯式End-Turn/YES確認）；
+  postbattle過場正確播放莎拉/轉送站/黃金城劇情（逐句比對`doc58`續六十二/
+  六十三既有記錄吻合），**不是**悠妮`EB FE`壞結局死鎖；LOAD選單UI與獨立
+  `pull_save()`+`fd2save`解碼**雙重確認磁碟`FD2.SAV`slot0 raw chapter byte
+  從26前進到27**（story ch27→ch28）——`ch2729-static`輪純靜態預測「ch27
+  有天空之鑰分支會靜默存檔」至此**由live+磁碟證據正式確認**，本專案第5個
+  （加上ch22/23/24/28）確認靜默存檔的章節，也是本專案第一次對雙結局章節的
+  「好結局」分支拿到完整端到端live驗證。過程中另發現並修正一個本輪自己
+  引入的teleport座標與既有我方單位重疊之bug（已寫入下一輪checklist：
+  teleport前必須先掃描目標格是否已被己方record佔用）。唯一誠實留下的開放
+  問題：ch27真正的win-check判定邏輯是「殺3隻named隊長即可」還是「全滅」
+  還是兩者皆可的`OR`條件——本輪只有正面資料（殺3隊長後就贏了），沒有測試
+  只殺1、2隻隊長的對照組，留給下一輪如果要精確定位判定邏輯。**此follow-up
+  項目本輪正式關閉**。詳見`99-chapter-sweep-results.md`「2026-08-29
+  『ch27win3』輪」小節。
+- [x] **CH05-ROSTER-MODE-REGRESSION（項目名稱是歷史遺留——2026-08-30
+  「ch05regr2」輪已正面排除roster組成是根因，真根因是`sweep_chapter()`
+  kill-cycle重試迴圈的提前停止邏輯，與roster完全無關，詳見本項最下方補充；
+  沿用舊名只是為了保留既有交叉引用，不代表roster假說仍然成立。`tools/
+  fd2_chapter_sweep.py`自動化sweep harness的疑點，與下方`UI-VIS-PREPARATION`
+  （`#26`，玩家出發前的選人核取畫面）無關，兩者只是碰巧都用到「roster」
+  一詞，不要混淆——`#26`本身已於上方2026-08-30補充中收斂）**：源頭是
+  「2026-08-29『longpoll』輪」（見
+  `99-chapter-sweep-results.md`同名小節，回應本檔上方(a)項）附帶發現的一個
+  未預期負面結果，此前從未在本檔開過對應的追蹤項（僅有一個從未真正啟動
+  調查的background task chip）。**現象**：該輪對ch05用預設
+  `roster_mode="complete"`（`complete_roster_ids(5)`忠實吐出劇情推進到
+  ch05時理論上已加入的7人真實record`[0,1,4,9,30,2,8]`，cap=15但沒有補
+  合成record，這本身不是bug）合成存檔，兩個獨立instance（`longpoll05`／
+  `longpollb05`，roster組成完全相同）都在mass-kill 30敵+`confirm_end_
+  turn()`後、`[0x53ecc]`於15秒`ENGINE_WIN_POLL_MAX_S`窗口內**從未翻2**，
+  連engine-level win都沒拿到——這是從doc99先前記錄的「ch05在`ch12diag`輪
+  1.8秒即拿到engine win」**退化**而來的新結果。**變數未隔離**：先前1.8秒
+  成功的那次跑的是`--no-roster-pad`（沿用機器上唯一真實存檔本身的roster，
+  組成與`complete_roster_ids(5)`的7人合成roster很可能不同），本輪兩次
+  失敗跑的都是預設`roster_mode=complete`；兩者roster內容差異本身從未逐
+  位元組比對過，是誠實的推論而非結論。**兩個候選假說，均未證實**：
+  ①`complete_roster_ids(5)`合成的7人陣容缺少ch05 win-check handler依賴
+  的某個「必須先行動」角色，比照`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`
+  （`tools/fd2_chapter_sweep.py:2055`，目前登記`{11,2,21,23}`）已知的
+  gate②模式——`0x117e7`（`FUN_000117e7`）游標-座標比對活著單位這個gate，
+  已由`docs/knowledge-base/25-battle-event-system.md`§3.2.1完整反組譯
+  證實是**全域engine-tick機制**（主迴圈每個tick檢查，非per-chapter），
+  `confirm_end_turn()`固定把游標停在空地格再開環，結構上永遠無法滿足
+  這個gate；②純粹是doc99反覆記錄過的run-to-run導航/判定flakiness，剛好
+  連續兩次都撞上。兩次獨立instance得到完全一致的負面結果，比較偏向①
+  （結構性、可重現）而非②（純隨機），但沒有第三個對照組無法下定論——
+  doc99原文本身即誠實列為「留給下一輪」，不是本輪才發現的缺口。
+  **本輪（2026-08-30稽核）判斷**：這個問題的下一步驗證動作本質上需要
+  live DOSBox-X重跑（跟`--no-roster-pad`重測或補`ensure_one_ally_acts()`
+  這兩種排除法都要實際觀察`[0x53ecc]`是否翻2），屬於本輪應避免的
+  live-environment/WSL風險類工作，本輪**不嘗試**，只做精確scoping，留給
+  下一輪一個範圍明確、可以很短的驗證：(a)優先跑
+  `sweep --chapter 5 --no-roster-pad`——若重現1.8秒engine win，直接證實
+  純粹是roster組成差異，不代表任何回歸，本項可關閉；(b)若(a)仍失敗（排除
+  純roster組成差異），改用預設`roster_mode=complete`但在mass-kill前先呼叫
+  `ensure_one_ally_acts()`——若翻2即確認假說①，比照ch23的做法只在
+  live-confirmed後才把5加進`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`（不要
+  比照ch21的「precedent-only」方式預先加入未經確認的chapter，違反本檔既有
+  「不預先猜測」慣例）；(c)兩臂都失敗，才代表真正未知的新回歸，需要下一輪
+  再反組譯ch05專屬的`0x51b19`table entry（index4）本身找根因。**不影響
+  M5既有tally**：doc91「27/30章engine-win」引用的是歷史上曾經拿到過的
+  最佳結果，不是「這次重跑一定重現」的保證，ch05這次退化不代表要往回扣
+  計數，`99-chapter-sweep-results.md`本輪原文已有相同註記。
+  **2026-08-30「ch05regr」輪執行Step 1的結果：baseline sanity check本身
+  失敗，項目仍然open，範圍比原先設想的更廣**（詳見
+  `99-chapter-sweep-results.md`同名小節）。執行前先核對CLI旗標語意：字面的
+  `--no-roster-pad`單獨旗標在目前`roster_mode`預設值`"complete"`下會被
+  `prepare_chapter_save()`的`roster_mode=="complete"`分支完全忽略（「ch27ret」
+  輪已記錄的既有陷阱），照抄派工單字面指令會變成沒有意義地重跑一次
+  `complete_roster_ids(5)`合成roster（跟已經失敗兩次的「longpoll05」/
+  「longpollb05」條件相同），因此改用`--no-complete-roster --no-roster-pad`
+  兩個旗標並用，才是真正對應「ch12diag」輪原始1.8秒成功時的舊條件（機器上
+  唯一真實存檔的13人roster，不做任何合成填充）。用這個真正的舊旗標組合跑了
+  2個獨立instance（`ch05s105`/`ch05s1b05`），**兩次結果完全一致地負面**：
+  `roster_count=13`未padding、戰場位址`0x26be24`/30敵與doc99原始記錄逐項
+  吻合，mass-kill+End-Turn後`[0x53ecc]`15秒窗口內從未翻2，kill-cycle重試
+  迴圈第1輪即因「無活著敵人可歸咎」提前停止——**這排除了roster組成差異
+  假說本身**（連13人真實roster都不行，不是7人合成roster的問題），代表這是
+  比`roster_mode="complete"`默認值切換更廣泛的回歸。按派工單「若Step 1也
+  失敗，停下回報，不要盲目推進Step 2/3」的明確指示，本輪**未執行**Step 2
+  （`ensure_one_ally_acts()`）與Step 3（`0x51b19` index4反組譯）。**下一輪
+  建議的範圍**：①（優先，成本低，純靜態）重新檢視`tools/
+  fd2_chapter_sweep.py`的kill-cycle重試終止條件（`sweep_chapter()`裡「重掃到
+  的record全部已經帶著死亡signature就提前停止重試」這段邏輯）是否存在「過早
+  判定無活著敵人可歸咎」的缺口——doc99「ch12diag」輪原文明確記錄過ch05在
+  當時就是15章裡唯一需要額外kill-cycle重試才過關的章節，現在的終止邏輯
+  可能誤判了ch05需要的多輪重試場景（例如延遲spawn的援軍波次）；②若①排除，
+  才反組譯`0x51b19` index4（原Step 3）找ch05專屬handler的win-check依賴
+  條件。**仍不影響M5既有tally**，理由同上。
+  **2026-08-30「ch05regr2」輪執行①的結果：kill-cycle重試迴圈提前停止邏輯
+  正是真根因，已修正+live驗證，但具體的「延遲援軍波次」機制本身被明確排除**
+  （詳見`99-chapter-sweep-results.md`同名小節）。靜態檢查`docs/data/
+  turn_events.json`確認ch05（map4）確實有真實回合觸發劇本（turn7有一筆
+  `enemy`陣營group3的真實新增援兵事件），但live測試（新增
+  `--force-cycles`/`--max-kill-cycles`旗標，強制迴圈在rescan找不到活敵時
+  仍繼續、不提前break，用真正的舊旗標組合`--no-complete-roster
+  --no-roster-pad`）顯示：kill-cycle 1/2/3的rescan**從未**發現任何新的活敵
+  record（30筆全部持續帶著死亡signature），engine win是在kill-cycle 4**單純
+  多送了幾次空殺End-Turn之後**直接翻2的——turn7那筆真正的援兵事件從未被
+  實際到達過。**兩個假說分開判定**：「延遲援軍波次（新可殺record）」這個
+  具體機制→**駁回**；「kill-cycle重試迴圈的提前停止邏輯讓ch05從未真正用滿
+  `MAX_KILL_CYCLES=4`的既有預算」這個更廣義的假說→**正面確認**（`ch05regr`
+  輪兩次baseline失敗都是在kill-cycle**第1輪**就撞上這個提前停止，從未真正
+  跑到第4輪）。**已做的修正**：①`tools/fd2_chapter_sweep.py`新增
+  `--force-cycles`/`--max-kill-cycles`旗標（預設值與舊行為完全相同，零回歸
+  風險）；②新增`KNOWN_NEEDS_FORCE_CYCLES: dict[int,int] = {5: 4}`per-chapter
+  registry（比照`KNOWN_MIN_TURNS_BEFORE_KILL`慣例，數值4直接來自本輪live
+  觀察到的engine win kill-cycle編號，不外推到任何其他章節）；③順帶發現並
+  修正一個verdict分類bug——本輪win剛好落在`enemy_addrs`被force-continue分支
+  清空的那一輪，導致原始verdict誤判成「0 enemy slots found」而不是正確的
+  `anomaly_engine_win_no_disk_write`，已用獨立的`had_enemies`布林變數修正，
+  但**只做了`py_compile`+log手動核對，沒有再跑一次live DOSBox-X確認修好後的
+  verdict字串**，也**沒有用預設旗標（純靠新查表自動生效、不手動傳
+  `--force-cycles`）重新live驗證**，兩者都留給下一輪順手確認。**本輪只跑了
+  1個live instance**（不是慣例的2個獨立instance交叉確認），已在doc99同輪
+  誠實註記。此問題現在標記為「根因已識別+已做針對性修正，但修正本身的
+  verdict-classification細節與自動查表路徑尚未獨立re-verify」，不再是
+  「未知的更廣泛回歸」。**disk-write timing仍是開放問題**（跟其他
+  `anomaly_engine_win_no_disk_write`章節共通），不在本項範圍內。**不影響
+  M5既有tally**，理由同上。
+  **2026-08-30「ch05regr3」輪：補完`ch05regr2`輪誠實留下的兩個缺口，本項正式
+  收尾**（詳見`99-chapter-sweep-results.md`同名小節）。先逐行核對源碼確認
+  `KNOWN_NEEDS_FORCE_CYCLES`/`had_enemies`目前的接線方式與`ch05regr2`輪描述
+  一致，再用**2個獨立`dosbox_harness.sh`instance**（`ch05af05`/`ch05afb05`，
+  `--no-complete-roster --no-roster-pad`真實13人roster、**完全不傳
+  `--force-cycles`/`--max-kill-cycles`**）交叉確認：①`KNOWN_NEEDS_FORCE_CYCLES`
+  查表在零手動旗標下自動生效（log明文出現「chapter 5 has a
+  KNOWN_NEEDS_FORCE_CYCLES override」），kill-cycle 1/4-3/4持續送空殺
+  End-Turn，engine-level win在**kill-cycle 4/4**被正面確認——兩個instance
+  逐字一致（790.3秒/791.4秒，僅差1.1秒）；②`had_enemies`修正後，兩次run的
+  `result.json`頂層`verdict`都正確報`anomaly_engine_win_no_disk_write`，不再是
+  修正前那句錯誤的「0 enemy slots found」。**兩個缺口都已補齊**，2-instance
+  交叉確認也補上了`ch05regr2`輪唯一跑1個instance的落差。本項**正式標記為完全
+  收尾**——唯一仍開放的是與其他`anomaly_engine_win_no_disk_write`章節共通的
+  disk-write timing問題，那是獨立於本項的既有開放問題，不影響本項關閉。**不
+  影響M5既有tally**，理由同上。
 - [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。
 - [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。
 - [ ] UI 音效 index 2-0xb 語意畫面實測
@@ -3991,3 +4321,55 @@
   唯一還沒被排除法蓋到、有明確範圍的角落是DOSBox-X的SDL2事件迴圈本身
   （`sdlmain.cpp`裡`X11_HandleKeyEvent`到`KEYBOARD_AddKey()`前的邏輯），
   是否要為此開新一輪留給使用者自行決定。詳見doc58續七十七。
+
+## WIDEN-NATIVE-MAP-VIEWPORT Phase 6 — 實機驗收（2026-08-30）
+
+- [x] **戰鬥地圖視野加寬功能，Phase 6 live verification：PASS**。Phase 1-5（`94c039c4`/
+      `b73d49e3`/`5a450824`/`6b182205`，含 `TestNativeMapViewportReconstructsOriginalGeometry`/
+      `TestNativeMapViewportWiderPreset` 等既有單元測試）已完成並提交；本輪是計畫最後一步
+      ——真的編出 `remake/fd2.exe`（Windows native `go build -o fd2.exe ./cmd/fd2`，
+      零錯誤零警告）、用專案既有截圖 harness（`FD2_SHOT`/`FD2_SHOT_FRAME`/
+      `FD2_CAMP_PREP_BATTLE`/`FD2_SHOT_FULLSCREEN`/`FD2_SHOT_SKIP_STORY`/
+      `FD2_SHOT_DISMISS_DIALOG`）在真機（真實 2560×1600 螢幕，150% DPI 縮放，
+      `truePhysicalScreenSize()`經 ebiten DPI-aware 後正確讀回 2560×1600 物理像素）
+      實際跑一場 `battle_ch02` 互動戰鬥並截圖存證。
+
+  **踩到一個測試指令本身的陷阱（非本功能的 bug）**：一開始沒加
+  `FD2_CAMPAIGN=assets/scenarios/campaign_full.json`（MEMORY.md 已記錄的已知陷阱），
+  導致 `FD2_CAMP_PREP_BATTLE`/`FD2_CAMP_NODE` 完全沒生效、`battle_ch01`跟`battle_ch02`
+  兩次截圖拿到像素級完全相同的畫面（都靜默落回 `loadGame()` 開頭寫死的
+  `map0/map0_units.json`）。補上該環境變數後兩章截圖立刻分化成正確的不同地圖，
+  排除了「功能沒作用」的誤判。
+
+  **四項驗收標準結果**（截圖：`docs/figures/viewport-widen-ch02-battle-wide-hud.png`，
+  2560×1600 全圖；`docs/figures/viewport-widen-ch02-battle-hud-panel-closeup.png`／
+  `viewport-widen-ch02-battle-offrow-unit-closeup.png`為局部放大裁圖）：
+  - (a) **視野比原本固定13×8(640×400)大很多：PASS**——2560×1600全螢幕下實際渲染出
+    遠超過13欄×8列的地形（多棟建築、多個街區同時在畫面內），非單純字面數字驗證，
+    是真的看到更多地圖內容。
+  - (b) **HUD面板清晰、正確定位、沒被裁切：PASS**——`viewport-widen-ch02-battle-hud-panel-closeup.png`
+    裁圖清楚看到面板穩穩貼在畫面左下角（含黑邊留白，非貼死畫面邊緣被切），角色頭像
+    肖像圖、藍色外框、`A+05`/`D+00`文字全部清晰可讀，沒有錯位或裁切。
+  - (c) **camera row 0 以外的單位Y座標正確：PASS**——這是Phase 3那類hidden-coupling
+    bug（`fdicon.NativePlacementOffset`/`foreground_layer.go`的`0x8088`字面值繞過
+    stride參數）理論上會破壞的具體case。`viewport-widen-ch02-battle-offrow-unit-closeup.png`
+    裁圖顯示選中單位（游標框+「亞雷斯」名牌）明顯不在畫面頂端row，且與旁邊4個
+    單位一樣穩穩站在地面貼圖上、腳底對齊、無漂浮或錯位重疊——寬視野下的unit
+    layer合成用的是新stride算出的Y offset，不是舊的456，證明兩個Phase 3 bugfix
+    在寬視野下確實生效。
+  - (d) **scroll/transition frame不縮水：未驗證（non-blocking gap）**——嘗試找一個
+    容易觸發的`indexed_transition`beat作為截圖對象，但`campaign_full.json`目前所有
+    node的beat裡完全沒有任何一筆掛`indexed_transition`欄位（grep全檔零命中），
+    這個特效只綁在特定劇本beat（如ch27地圖淡出）身上，目前沒有現成、低成本的
+    截圖鉤子能單獨命中它。`ComposeNativeTransitionFrame`本身已由`b73d49e3`
+    generalize並有單元測試覆蓋，但這輪沒有拿到它在寬視野下的**真機截圖**證據。
+    如果要補這項，下一步是先在`ch27`或其他已知有`IndexedTransition`beat的節點上
+    重現該beat（可能需要走真實劇情推進而非`FD2_CAMP_PREP_BATTLE`捷徑，因為
+    beat執行本身可能就是這個handler的唯一觸發點），非本輪能低成本完成。
+
+  **結論**：(a)(b)(c) 三項核心驗收全部通過，寬視野渲染、HUD錨定、和最關鍵的
+  Y座標regression check都在真機截圖上得到正面證據；(d)是計畫文字裡「if you can
+  also check」的加分項，這輪未能觸發、誠實記錄為未驗證而非「已通過」，不影響
+  (a)(b)(c)的結論。整體判定：**Phase 6可視為條件式完成**——核心功能與最高風險的
+  regression都已用真機截圖佐證，僅剩一個低優先權、範圍明確的可選檢查尚未執行，
+  不建議為了這一項單獨開新一輪除非使用者認為必要。

@@ -184,16 +184,32 @@ func TestApplySpell_ComboSpells(t *testing.T) {
 			ally.BuffAPPct, ally.BuffDPPct, ally.BuffHit, ally.BuffEV)
 	}
 
-	st2 := newTestState()
-	caster2 := mkUnit(Own, 0, 0, 100, 200)
-	enemy := mkUnit(Enemy, 0, 0, 100, 0)
-	st2.Units = []*Unit{caster2, enemy}
+	// 暗邪鬼(id35)命中率:spell.json dump hit=0,但原生走 0x22d1b 固定 50% RNG gate(不是
+	// FUN_0001c75e/record[+2],見 rollsHit 註解),三個狀態共用同一次擲骰結果(remake 簡化,
+	// 本輪不展開)。用固定 seed 多次擲骰確認命中/Miss 兩種結果都會出現,且 Miss 時三個狀態
+	// 都不施加(不是各自獨立判定)。
+	rng := rand.New(rand.NewSource(12))
+	sawHit, sawMiss := false, false
+	for i := 0; i < 40; i++ {
+		st2 := newTestState()
+		caster2 := mkUnit(Own, 0, 0, 100, 200)
+		enemy := mkUnit(Enemy, 0, 0, 100, 0)
+		st2.Units = []*Unit{caster2, enemy}
 
-	spDark := Spell{ID: 35, Dmg: 0, Hit: 0, Dist: 4, Range: 0, MP: 36, Target: 0}
-	st2.CastArea(caster2, 0, 0, spDark, rand.New(rand.NewSource(12)))
-	if !enemy.Paralyzed || !enemy.Sealed || !enemy.Poisoned {
-		t.Errorf("暗邪鬼應同時施麻痺+封咒+毒擊,got Paralyzed=%v Sealed=%v Poisoned=%v",
-			enemy.Paralyzed, enemy.Sealed, enemy.Poisoned)
+		spDark := Spell{ID: 35, Dmg: 0, Hit: 0, Dist: 4, Range: 0, MP: 36, Target: 0}
+		st2.CastArea(caster2, 0, 0, spDark, rng)
+		switch {
+		case enemy.Paralyzed && enemy.Sealed && enemy.Poisoned:
+			sawHit = true
+		case !enemy.Paralyzed && !enemy.Sealed && !enemy.Poisoned:
+			sawMiss = true
+		default:
+			t.Errorf("第 %d 次:暗邪鬼三狀態應同時命中或同時 Miss(共用一次擲骰),got Paralyzed=%v Sealed=%v Poisoned=%v",
+				i, enemy.Paralyzed, enemy.Sealed, enemy.Poisoned)
+		}
+	}
+	if !sawHit || !sawMiss {
+		t.Errorf("40 次擲骰(暗邪鬼 0x22d1b 固定 50%% gate)應同時出現命中與 Miss,sawHit=%v sawMiss=%v", sawHit, sawMiss)
 	}
 }
 
@@ -268,6 +284,54 @@ func TestCast_BackwardCompat(t *testing.T) {
 	caster2 := mkUnit(Own, 0, 0, 100, 5)
 	if got := st.Cast(caster2, tgt, sp); got != -1 {
 		t.Errorf("MP 不足應回 -1,got %d", got)
+	}
+}
+
+// TestRollsHit_HitZero_AlwaysMisses:2026-08-30 訂正——spell.json hit<=0 且 ID 不在
+// id22/24/28/29/30/31/35 特例清單內時,對映 native FUN_0001c75e(record[+2] <= roll(0..99)
+// 恆成立)應恆為 Miss,而不是修正前的「恆中」。用一個不存在於原生表的假想 ID 驗證通則本身。
+func TestRollsHit_HitZero_AlwaysMisses(t *testing.T) {
+	sp := Spell{ID: 900, Hit: 0}
+	rng := rand.New(rand.NewSource(1))
+	for i := 0; i < 100; i++ {
+		if rollsHit(sp, rng) {
+			t.Fatalf("第 %d 次:hit<=0 應恆為 Miss(native FUN_0001c75e 語意),但 rollsHit 回傳 true", i)
+		}
+	}
+}
+
+// TestRollsHit_SealSpell_FiftyPercentGate:id22(封咒術)hit 欄 dump 值是 0,但原生走 0x22d1b
+// 固定 50% RNG gate(見 docs/knowledge-base/32-item-combat-stats-re.md:442-483),不是
+// FUN_0001c75e 通則、也不是修正前的「恆中」特例。
+func TestRollsHit_SealSpell_FiftyPercentGate(t *testing.T) {
+	sp := Spell{ID: 22, Hit: 0}
+	rng := rand.New(rand.NewSource(5))
+	sawHit, sawMiss := false, false
+	for i := 0; i < 60; i++ {
+		if rollsHit(sp, rng) {
+			sawHit = true
+		} else {
+			sawMiss = true
+		}
+	}
+	if !sawHit || !sawMiss {
+		t.Errorf("60 次擲骰(封咒術 0x22d1b 固定 50%% gate)應同時出現命中與 Miss,sawHit=%v sawMiss=%v", sawHit, sawMiss)
+	}
+}
+
+// TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck:id24/28/29/30(劍技)、
+// id31(未知)原生走 0x2cf30 derived-strike,完全不呼叫任何命中判定函式(對應 doc02「劍技恆中」),
+// 故 rollsHit 對這些 ID 應恆回傳 true,不受 Hit 欄值影響。applySpell 目前對這些 case 仍是
+// 待實裝的 no-op,此測試只鎖定 rollsHit 本身的行為,避免日後接上傷害公式時重蹈方向錯誤的舊 bug。
+func TestRollsHit_SwordTechniquesAndUnknown_AlwaysBypassHitCheck(t *testing.T) {
+	rng := rand.New(rand.NewSource(7))
+	for _, id := range []int{24, 28, 29, 30, 31} {
+		sp := Spell{ID: id, Hit: 0}
+		for i := 0; i < 20; i++ {
+			if !rollsHit(sp, rng) {
+				t.Errorf("id%d 第 %d 次:應恆回傳 true(不經過命中判定),got false", id, i)
+			}
+		}
 	}
 }
 
