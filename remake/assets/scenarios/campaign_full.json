@@ -1881,7 +1881,7 @@
    "map": "assets/maps/map9",
    "units": "assets/maps/map9/map9_units.json",
    "scenario": "assets/scenarios/ch10.json",
-   "protect_guards": ["索菲亞"],
+   "protect_guards": ["索菲亞", "卡納恩三世"],
    "on_win": "postbattle_ch10_persist",
    "on_lose": "retreat_ch10"
   },

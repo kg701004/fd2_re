@@ -6415,3 +6415,177 @@ live/靜態RE新工作，也沒有新的live證據——所有引用的技術結
 挑1-2個目前只有60秒（未曾180秒）驗證過的`0x523e7==0`章節（例如ch05/ch09/
 ch14任一）補跑一次180秒long-poll，純粹是把樣本數從2（ch03/ch26）擴大，不是
 因為現有結論有任何矛盾跡象。
+
+## 2026-08-30「ch10disasm」輪：純靜態反組譯（`tools/ghidra_batch_probe.py` `-readOnly -noanalysis`，全程未碰DOSBox-X）——story ch10（raw9）win-check handler `0x51b19[9]=0x20707`完整反組譯出爐：**除了索菲亞，handler確實還查第二個獨立單位（record[50]），OR邏輯二選一死即敗**；record[50]/record[51]經`own_deploy`偏移換算回`map9_units.json`後，record[51]=units[40]=已定案的索菲亞（portrait 11），record[50]=units[39]=先前只判定為「證據等級D、結構存疑」的portrait135候選——這是本專案首次用「機制本身直接點名」而非「肖像圖像比對」的方法論鎖定這個角色，回應上一輪（`91-worklist.md`「ch10 卡納恩三世再查」）結尾明確要求的下一步
+
+### 任務背景
+
+上一輪(`91-worklist.md` 2026-08-30「ch10 卡納恩三世再查」)用三種靜態證據(對話
+identity-tag反推、DATO圖像肉眼核對、`native_constructor.branch`結構性規律)
+仍無法對portrait135(map9 idx39)是否就是卡納恩三世下定論，甚至新增的
+branch/aux_record規律對這個候選提出反面懷疑(其餘4個已定案護衛全部
+`lower_class`+`aux_record`，portrait135卻是`high_class`+無`aux_record`)。
+該輪結尾明確指出：「要把這題徹底釐清，下一步需要反組譯ch10原生勝敗判定
+handler」。本輪奉命比照同一天稍早`ch29disasm`/`ch30disasm`兩輪已驗證過的
+方法論(`table_win[N]=0x51b19+N*4`跳表index公式)，純靜態完整反組譯ch10
+(story，raw9)的win-check handler，查除了索菲亞之外是否真有第二個獨立
+檢查點。
+
+### Step 1：跳表index公式複驗＋一次讀出`table_win`全部32個entry
+
+`bytes`一次讀出`0x51b19`起128 bytes(32個dword)：index 9＝`07 07 02 00`
+(little-endian)＝**`0x20707`**。同一次讀出的其餘31個entry與doc26(`tools/
+event_handler_dump.py`既有輸出)、`ch29disasm`/`ch30disasm`兩輪已記錄的
+index 21/26/27/28/29(`0x20a87`/`0x20a87`/`0x20a87`/`0x20b72`/`0x20bf5`)
+逐byte吻合，index 30/31同樣讀出`0x34531`/`0x3460b`表外雜訊——方法論
+sanity check三重通過(doc26獨立工具、`ch29disasm`/`ch30disasm`既有記錄、
+本輪自己的table dump互相印證)。
+
+### Step 2：win-check handler `0x20707`完整反組譯——15條指令，`RET`結尾，單一直線+兩層短路分支，無截斷
+
+`function_bounds`同樣回傳`in_function:false`(與其餘所有`table_win`handler
+一致，落在Ghidra base分析從未建過邊界的區域)，改用flow-directed`disasm`，
+`max_bytes=600`一次跑完，`stop_reason:"ret"`，`truncated:false`：
+
+```c
+// FUN_00020707 —— table_win[9]，story ch10(raw9)專屬勝敗判定handler
+void ch10_win_check(void)
+{
+  FUN_0003702f(8);           // 標準prologue(與ch30disasm輪postbattle handler
+                              //  開頭同款helper，引數8)
+  FUN_000205be();            // 呼叫default handler(0x205b4)的核心「raw三值
+                              //  規則」子入口，先算出殲滅based的預設結果碼
+  if (FUN_00034894(0x32) != 0) {      // record[50].+5 & 1 != 0（單位50陣亡）
+    *(dword*)0x53ecc = 1;              //  → 直接覆寫成敗北，短路，不查單位51
+  } else if (FUN_00034894(0x33) != 0) { // record[51].+5 & 1 != 0（單位51陣亡）
+    *(dword*)0x53ecc = 1;              //  → 同樣覆寫成敗北
+  }
+  return;                              // 兩者皆存活 → 保留default handler算出的結果
+}
+```
+
+逐指令原始bytes(`0x20707`起)：`68 08 00 00 00`(PUSH 8)`e8 1e 69 01 00`
+(CALL 0x3702f)`e8 a8 fe ff ff`(CALL 0x205be)`6a 32`(PUSH 0x32)`e8 77 41
+01 00`(CALL 0x34894)`83 c4 04`(ADD ESP,4)`85 c0`(TEST EAX,EAX)`75 0e`
+(JNZ 0x20732)`6a 33`(PUSH 0x33)`e8 69 41 01 00`(CALL 0x34894)`83 c4 04`
+`85 c0` `74 0a`(JZ 0x2073c)`c7 05 cc 3e 05 00 01 00 00 00`(MOV [0x53ecc],1)
+`c3`(RET)——15條指令、`0x20707..0x2073c`共`0x35`bytes，`bytes`直讀確認，
+非反組譯器猜測。
+
+`FUN_00034894(idx)`＝doc25/`ch29disasm`/`ch30disasm`三輪已反覆證實的
+`record[idx].+5 & 1`(單位死亡raw bit，doc26稱`NativeRecordByte5Bit0`)，
+呼叫序列(先50、後51，任一非0即寫敗北碼1，兩者皆0則保留呼叫`0x205be`算出
+的既有結果)與`ch30disasm`輪raw29 handler「索爾/悠妮death覆寫勝利碼」同一種
+「覆寫優先權」結構，但**目標record slot不同**(50/51，非固定0/1)——再次
+印證doc99先前反覆強調的「每章handler必須逐一反組譯，不能用鄰近章節公式
+外推」。**唯一與default handler的關聯**：本handler一開始就`CALL 0x205be`
+(doc26 line 131記錄的default handler`0x205b4`核心「raw三值規則」子入口)，
+先算出一個殲滅based的預設勝負碼，record 50/51 death check只是在這個
+基礎上疊加「這兩者任一死亡→無條件覆寫成敗北」，不是取代default handler，
+是聯集(OR)關係，與remake端`campaign.go`的`Protect`/`ProtectGuards`「聯集、
+不是取代」設計語意完全同構。
+
+doc26(`tools/event_handler_dump.py`，完全獨立的自動化反組譯工具)第139行
+的既有一行摘要：「9 \| `0x20707` \| 單位 50、51 \| 1」——跟本輪手動反組譯出
+的完整公式(50/51任一死亡→碼1，無碼2 branch)逐位元組吻合，是完全獨立方法論
+的正面交叉驗證，不是本輪孤證。
+
+### Step 3：record[50]/record[51]換算回map9_units.json——own_deploy=11，record[51]=索菲亞(已定案)，record[50]=portrait135候選
+
+`tools/parse_field.py extracted/raw 9`直接讀原始FDFIELD.DAT：
+`"own_deploy": 11`(=map9部署格陣列長度，與`map9_units.json`頂層
+`"own_deploy"`欄位11個座標物件逐項吻合)——與`ch30disasm`輪Step 5同一換算
+公式(`record[N] = own_deploy + map_units.json本地index`，該輪對map29/
+record20直接驗證過)：
+
+- `record[51] - own_deploy(11) = 40` → `map9_units.json units[40]`：
+  `camp:ally, name:"索菲亞"(已定案), portrait:11`——與doc49第49行
+  `id 11 = 索菲亞(grade A)`完全吻合，這是本輪對整套「record → own_deploy
+  偏移 → map_units.json index」換算公式的獨立sanity check(換算出的unit
+  剛好是唯一已知名字、唯一portrait能獨立核對的那一個)。
+- `record[50] - own_deploy(11) = 39` → `map9_units.json units[39]`：
+  `camp:ally, portrait:135, branch:"high_class"`(無`name`、無`aux_record`，
+  即上一輪「卡納恩三世再查」結尾點名、唯一還沒有主的候選)。
+
+**這是本輪的核心發現**：handler獨立查的兩個record slot，換算後**剛好**
+精確對應doc28 §2對ch10列出的兩個具名護衛(索菲亞＋卡納恩三世)——其中一個
+已經是無爭議的索菲亞，另一個在全map9 60個unit裡，除了portrait135以外，
+**上一輪已經窮舉排除了其他候選**(唯二`lower_class`的unit分別是索菲亞
+本人與萊汀，兩者都已有主)。用消去法：這個record slot如果不是卡納恩三世，
+doc28 §2對ch10的護衛列表本身就要整條被推翻(該列表在其餘10個已資料化章節
+上全部正確，見commit `645d5df5`)，但沒有任何獨立證據支持這種更激進的結論。
+
+### 這項證據與上一輪「branch/aux_record結構性反證」的關係——不是矛盾，是不同層次的證據
+
+上一輪指出portrait135的`native_constructor.branch`是`high_class`且無
+`aux_record`，不符合其餘4個已定案護衛(索菲亞/米亞斯多德/賽可邦勒/蜜蒂)
+全部`lower_class`+`aux_record`的既有規律，因此對這個候選提出合理懷疑。
+本輪的disasm證據**在完全不同的層次上**成立：`branch`/`aux_record`只是
+`map*_units.json`資料匯出時的**構造來源分類**(unit這個record初始化時
+從FDFIELD哪張表複製欄位)，而handler的`FUN_00034894(idx)`檢查是**執行期
+勝負判定邏輯**直接指名這個record slot——一個unit可以是`high_class`構造
+(可能因為卡納恩三世是「被監禁的人質」而非「可以完整成長的隊伍成員」，
+不需要`aux_record`這種通常給玩家可培養角色用的成長參數表)，但仍然是
+win-check handler明確保護的目標，兩者不是同一件事。本輪的發現**沒有
+推翻**上一輪branch規律本身的觀察(它作為「具名個體」的一種構造慣例仍然
+成立，只是不是唯一慣例)，而是提供了一種**直接、獨立、且證據等級更高**
+(引擎自己的勝負判定邏輯，而非圖像/構造欄位的間接推論)的定案路徑，
+繞過了portrait135在DATO全域肖像空間裡「evidence grade D」的僵局——本輪
+從未依賴portrait135的DATO id本身，是完全獨立的一條證據鏈。
+
+### 對91-worklist.md與remake資料的影響
+
+見`91-worklist.md`本輪對應更新(「ch10 卡納恩三世再查」條目後追加本輪結論)。
+資料變動：`remake/assets/maps/map9/map9_units.json` units[39]補上
+`"name":"卡納恩三世"`(緊接在`"camp"`欄位後，比照units[40]索菲亞既有寫法)；
+`remake/assets/scenarios/campaign_full.json`的`battle_ch10.protect_guards`
+從`["索菲亞"]`改成`["索菲亞","卡納恩三世"]`。比照commit`645d5df5`的既有
+驗證慣例，寫了一個throwaway test(`internal/battle/ch10_kanaan_throwaway_
+test.go`：獨立`battle.Load("map9_units.json")`確認新增的`卡納恩三世`
+unit存在、`Alive()`、camp為`Ally`，且`Result("索菲亞","卡納恩三世")`在
+戰鬥開局不會因為兩人都活著而誤判成`lose`——刻意不傳入「索爾」，因為
+map9獨立載入時沒有party roster、索爾本人不在`s.Units`裡，傳入會製造
+與本輪改動無關的假陽性)，跑過確認PASS後依慣例刪除，未留在repo裡。
+`cd remake && go build ./... && go test ./...`全綠，零回歸。
+
+### 誠實confidence與邊界
+
+- **高信心，多重獨立方法論交叉驗證**：win-check公式(`0x20707`：
+  `record[50]或record[51]死亡→覆寫成敗北碼1，皆存活則保留default handler
+  0x205be算出的結果`)——手動flow-directed disasm(15條指令、`RET`結尾、
+  無截斷)與doc26獨立自動化工具的既有一行摘要逐位元組吻合，兩種完全獨立
+  的方法論同一結論。
+- **高信心，直接位元組＋獨立sanity check雙重確認**：`record[50]/record[51]`
+  經`own_deploy=11`偏移換算，`record[51]`精確對應已定案的索菲亞(portrait
+  11與doc49 grade A記錄吻合)——這個獨立sanity check本身就證明了換算公式
+  在map9這張圖上是正確的，不是假設。
+- **中高信心，消去法+機制層級直接指名，非圖像比對**：`record[50]`(＝
+  `map9_units.json units[39]`，portrait135)就是卡納恩三世——證據鏈是
+  「handler明確保護兩個unit」+「doc28 §2對ch10只列兩個具名護衛」+
+  「上一輪已窮舉排除map9其餘候選」三者疊加的消去法結論，比上一輪任何
+  單一圖像/結構證據都更直接(直接查的是勝負判定邏輯本身，不是外觀或
+  構造欄位)，但**誠實的邊界**：這仍然不是「這個record slot的字面身分
+  標籤=卡納恩三世」這種一手鐵證(例如對話identity-tag直接印出這個record
+  index對應的角色名)，是消去法+機制層級證據的組合推論。若未來想把這個
+  結論再往上升一級信心，下一步是查ch10.json的劇本/scenario資料裡，是否
+  有任何地方用`unit index 39`或`record 50`這種原生索引方式(而非
+  portrait/identity-tag)直接指名這個角色，或者live記憶體讀取戰鬥中
+  `record[50]`當下的portrait/lv欄位是否=135(比照`ch30wf`輪對record[20]
+  的live直讀confirm手法，但本輪未做，純靜態)。
+- **未改動**：`docs/data/portrait_names.json`的portrait135條目本輪未
+  觸碰(仍維持上一輪的evidence grade D)——本輪的卡納恩三世身分判定完全
+  不依賴DATO全域肖像id這條證據鏈，是刻意繞過而非解決了portrait135本身
+  的DATO id歸屬問題，這兩者是各自獨立的問題，不應混為一談。
+
+### 下一輪建議(依優先度，皆非必要)
+
+1. 若想把「消去法」結論升級成一手證據：查`ch10.json`/`battle_events.json`
+   是否有任何native scenario資料直接用index 39/50這類原生數字指名這個
+   角色(而非本專案慣用的portrait/identity-tag匹配)。
+2. 若想要live直讀確認：比照`ch30wf`輪，開一局ch10戰鬥讀`record[50]`
+   當下的portrait/lv欄位是否=135——這只是錦上添花，不影響本輪win-check
+   handler本身的結論(那部分已經是`RET`結尾、無截斷的完整反組譯，高信心)。
+3. 不建議再投入portrait135的DATO全域id歸屬問題本身——上一輪已經用三種
+   獨立方法論走到頭，本輪的機制層級證據已經足以解決「卡納恩三世是否有
+   對應map9 unit」這個更上位的問題，DATO id本身的懸案不影響任何remake
+   功能正確性。

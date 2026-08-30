@@ -4640,3 +4640,32 @@
   HP/state 之外,是否**真的還有第二個獨立檢查點**;如果沒有,doc28 這一項就該直接
   在 doc28 本身註記「非機制性條件,不資料化」,而不是繼續留著等圖像證據——圖像/結構
   證據這條路本輪已經走到頭,再往下必須是反組譯,不是更多肉眼比對。
+- [x] **ch10 卡納恩三世反組譯定案(2026-08-30「ch10disasm」輪，回應上一條結尾「下一步需要
+  反組譯ch10原生勝敗判定handler」)**：純靜態(`tools/ghidra_batch_probe.py`
+  `-readOnly -noanalysis`，全程未碰DOSBox-X)完整反組譯`0x51b19[9]=0x20707`(story
+  ch10/raw9的win-check handler，15條指令、`RET`結尾、無截斷)：**除了default handler
+  (`0x205be`)算出的殲滅based結果，這個handler額外查兩個獨立record slot——`record[50]`
+  或`record[51]`任一死亡bit(`FUN_00034894`，doc25已證實的`+5&1`)成立就無條件覆寫成
+  敗北碼1**，是聯集(OR)關係，不是取代。經`own_deploy=11`(`tools/parse_field.py`直讀
+  FDFIELD.DAT確認)偏移換算回`map9_units.json`：`record[51]→units[40]`＝已定案的索菲亞
+  (`portrait:11`，與doc49 grade A記錄吻合，本身就是換算公式的獨立sanity check)；
+  `record[50]→units[39]`＝上一輪結尾唯一還沒有主的候選——`portrait:135`(先前只有
+  evidence grade D、且`native_constructor.branch`結構規律對它提出反面懷疑的那個)。
+  doc26(`tools/event_handler_dump.py`，獨立自動化工具)第139行既有摘要「9 \| `0x20707`
+  \| 單位50、51 \| 1」逐位元組吻合，非本輪孤證。
+  → **結論**：handler獨立查的兩個record slot，換算後精確對應doc28 §2對ch10列出的
+  兩個具名護衛(索菲亞＋卡納恩三世)，其中一個已無爭議，另一個在全map9 60個unit裡
+  上一輪已經窮舉排除了其他候選——**用消去法，這個record slot就是卡納恩三世**，本輪
+  已把`remake/assets/maps/map9/map9_units.json` units[39]補上`"name":"卡納恩三世"`、
+  `remake/assets/scenarios/campaign_full.json`的`battle_ch10.protect_guards`從
+  `["索菲亞"]`改成`["索菲亞","卡納恩三世"]`(比照commit`645d5df5`的驗證慣例，寫過
+  一個throwaway test確認新unit存在/存活/不會誤判成lose，PASS後依慣例刪除，未留在
+  repo)，`go build ./... && go test ./...`全綠零回歸。**誠實邊界**：這是「機制層級
+  直接指名＋消去法」的組合證據，比上一輪任何圖像/構造欄位證據都更直接(直接查的是
+  勝負判定邏輯本身)，但仍不是「這個record slot的字面身分標籤=卡納恩三世」這種
+  一手鐵證(例如原生scenario資料用index直接標名)；`docs/data/portrait_names.json`
+  的portrait135條目本輪**未觸碰**、仍維持evidence grade D——本輪的身分判定完全不
+  依賴DATO全域肖像id這條證據鏈，是繞過而非解決了portrait135本身的DATO id歸屬懸案，
+  兩者是各自獨立的問題。完整反組譯逐指令記錄、與上一輪branch/aux_record規律的
+  關係釐清、confidence分級見`99-chapter-sweep-results.md`「2026-08-30『ch10disasm』
+  輪」。
