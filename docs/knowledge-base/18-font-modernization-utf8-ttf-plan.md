@@ -52,6 +52,13 @@ FDTXT.DAT ─(glyph_map)→ 每章 script.json:
   或 4:3 的 640×480),底圖 nearest 放大保持銳利(CJK hi-res 原則:拉畫布、別縮字)。
 - **行寬 / 斷行**:
   - **方案 A(保留原排版)**:沿用原始 `0xFFFE` 換行點,維持「每框 3 行」的原汁版面;TTF 用接近全形的等寬字距。
+    **2026-08-30 已有 pilot(僅 ch00_palace 一章,非全 35 章)**:`tools/decode_story_text.py`
+    新增 `decode_string()` 的 box/line 分組(修正一併發現的 `OPEN/CLOSE` 常數 bug)+
+    `--add-lines` CLI、`campaign.Line`/`battle.DialogLine` 新增 `Lines []string`、
+    `dlgWrap` 在 `dl.Lines` 非空時直接照原生斷點分行、其餘 34 章 fallback 到原估算流排
+    不受影響。screenshot 比對確認 ch00_palace 的 13/12/9 原生斷行(先前的 13/13/8 落差)
+    已重現。詳細改動與「若要推廣到其他 34 章」的建議見
+    `91-worklist.md`「doc18 方案 A 原生斷行 pilot」條目。
   - **方案 B(重新流排)**:忽略原換行,依框寬自動 word-wrap;適合換長字型 / 翻譯後長度變動。
   - 建議:預設 A(忠於原版),翻譯 / 擴充模式用 B。
 - **全形 / 半形**:漢字與標點(`『』「」，。！？`)走全形;ASCII、機器人代號(`73`/`C2`/`A1`)、純數字字模

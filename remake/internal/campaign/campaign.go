@@ -13,10 +13,18 @@ import (
 // SpeakerSlot 保存原版 FFED/FFEC 的 runtime unit direct index，執行時必須
 // 從該 unit 的 Portrait 解析，不能把 slot 數字誤當全域角色 id。
 type Line struct {
-	Speaker     int    `json:"speaker"`
-	SpeakerSlot *int   `json:"speaker_slot,omitempty"`
-	Upper       *bool  `json:"upper,omitempty"`
-	Text        string `json:"text"`
+	Speaker     int      `json:"speaker"`
+	SpeakerSlot *int     `json:"speaker_slot,omitempty"`
+	Upper       *bool    `json:"upper,omitempty"`
+	Text        string   `json:"text"`
+	// Lines is an optional pre-broken native line-break array (0xFFFE box-relative
+	// line boundaries recovered verbatim from FDTXT by
+	// tools/decode_story_text.py; see docs/knowledge-base/18-font-modernization-utf8-ttf-plan.md
+	// Plan A). When present, dlgWrap renders these lines directly instead of
+	// recomputing a width-based wrap from Text, so the box matches the original
+	// DOSBox line breaks pixel-for-pixel. Absent (nil) on every chapter except
+	// the ch00_palace pilot; dlgWrap falls back to the computed wrap in that case.
+	Lines []string `json:"lines,omitempty"`
 }
 
 // Option choice 節點的選項;If 非空時需旗標為真才顯示。

@@ -177,6 +177,10 @@ type DialogLine struct {
 	Speaker int
 	Text    string
 	Upper   *bool // 對話框上下位置覆蓋(nil=沿用預設「id>=32 走上框」規則;見 campaign.Beat.Upper)
+	// Lines is an optional pre-broken native line-break array carried over from
+	// campaign.Line.Lines (see that field's doc comment). nil unless the source
+	// story JSON supplies it; dlgWrap falls back to its computed wrap when nil.
+	Lines []string
 }
 
 // LoadScenario 讀 scenario JSON。

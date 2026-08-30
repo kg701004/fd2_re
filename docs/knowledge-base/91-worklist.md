@@ -4461,3 +4461,69 @@
   不存檔預測。完整反組譯逐指令記錄、confidence分級、四項交叉證據見
   `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-30『ch30disasm』
   輪」小節。
+- [x] **doc18 方案 A 原生斷行 pilot（2026-08-30，僅 ch00_palace，非 35 章 rollout）**：
+  接續同日稍早 UI-05 upper/right 輪發現的「13/12/9 vs 13/13/8」換行落差（見上方該
+  bullet），只在**一章**上試做「保留原生 `0xFFFE` 斷點」的資料管線 + runtime 改動，
+  驗證方案 A 到底可不可行，刻意不擴到其餘 34 章。
+  **意外發現的獨立既有 bug（範圍外，未修）**：`tools/decode_story_text.py` 的
+  `OPEN, CLOSE = 557, 560` 常數已經跟現行 `docs/data/glyph_map.json` 對不上——直接查表
+  `glyph_map.json[558]='『'`、`[561]='』'`，而 557/560 現在分別是「值」「下」。這個常數
+  一樣被 `tools/export_story_index_map.py` 的 `OPEN_GLYPH=557` 使用；實測目前重跑
+  `export_story_index_map.py extracted/raw/FDTXT remake/assets/story` 對全部 35 章都只給
+  `utterance_count_mismatch`（如 ch00_palace 算出 raw=6 而非 41），**0 個 count-aligned
+  mapping**，跟已提交的 `remake/assets/cutscenes/dialogue-index/count-aligned.json`(32+
+  章 count-aligned)明顯對不上——後者顯然是常數還沒跑掉之前生成、之後沒再重新產生的舊檔。
+  這是先前輪次都沒踩到的既有問題,因為 `story_index_map.go` 在 runtime 只讀「已提交的
+  manifest 檔案」,不會重新對 FDTXT 解碼,所以舊 manifest 至今都還能正常用。已回報但**不在
+  本輪修**(超出 pilot 範圍)。
+  **本輪只在 `tools/decode_story_text.py` 內部局部修正**(不動
+  `export_story_index_map.py`,也沒有重新產生 `count-aligned.json`,所以上面這條既有
+  manifest 完全沒被本輪動到——用 `export_story_index_map.py` 重跑對 ch00_palace.json 的
+  診斷輸出(`raw_utterance_count`/`story_line_count`)本輪改動前後逐位元組相同,已實測
+  確認)：
+  1. 修正 `OPEN`/`CLOSE` 常數 557/560→558/561。
+  2. `decode_string()` 回傳形狀改成 `(speaker_or_None, lines)`——`lines` 是同一個對話框內
+     依開框碼(`0xFFEC..0xFFEF`)分組、`0xFFFE` 換行切開的原生斷行陣列,不再像舊版把「每個
+     控制碼」都當成獨立輸出項目丟出去。用修正後的常數對 `FDTXT_033`(ch00_palace 的
+     `source_dat`)全 6 個字串解碼,精準得到 **41 個對話框**,與 `ch00_palace.json` 現有
+     41 句對白**逐句對齊**(zip 比對内容,除了預期的全形/半形標點正規化與一處已知的
+     「打瞎睡」(原始 FDTXT)vs「打瞌睡」(人工校正,見下)差異外完全吻合)——證實這個
+     「一框=一句」的順序流跟 `export_story_index_map.py` 的 count-aligned 保守哲學一致。
+  3. 新增 `--add-lines <story.json> <FDTXT目錄>` CLI 模式(`add_lines_to_story()`):只有
+     解碼出的對話框「總數」跟 story JSON 的「總行數」完全相等才逐一配對寫入
+     `"lines": [...]`(新欄位,`"text"` 原樣保留),數量對不上就整個中止不寫檔——沿用
+     `export_story_index_map.py` 同一套「數量不對齊就不猜」的保守原則。已對
+     `remake/assets/story/ch00_palace.json` 實際跑過,41 句全部補上 `lines`,純新增欄位
+     (git diff 只新增 41 個 `"lines"` array,沒有動任何既有 key 的值)。
+  4. `remake/internal/campaign/campaign.go` 的 `Line` struct 新增 `Lines []string
+     json:"lines,omitempty"`;`remake/internal/battle/event.go` 的 `DialogLine` struct
+     同步新增 `Lines []string`;`main.go` 兩處建構 `DialogLine` 的地方
+     (`resolveCampaignDialogLine`、`story` 節點展開)都接上 `Lines: line.Lines`。
+  5. `main.go:dlgWrap`:`len(dl.Lines)>0` 時直接對每行套 `toFullWidth`、首行補『、末行補』
+     回傳,完全跳過原本的寬度估算換行;`dl.Lines` 為空(其餘 34 章)則**原封不動**落到既有
+     估算流排,新增 `TestDlgWrapUsesNativeLinesWhenPresent`/`TestDlgWrapFallsBackWithoutLines`
+     兩個回歸測試鎖住這個 additive-only 分岔。
+  **驗證結果**:`go build ./...`、`go vet ./...`、`go test ./...`(含 `remake/internal/
+  campaign`)全綠,零回歸。重建 `fd2.exe` 用同一組
+  `FD2_CAMPAIGN=assets/scenarios/campaign_full.json FD2_CAMP_NODE=story_ch01_palace_path
+  FD2_SHOT_FRAME=60` 重拍同一句對白,存為
+  [`ch01-dialogue-upper-box-ares-remake-pilot-lines.png`](../figures/ch01-dialogue-upper-box-ares-remake-pilot-lines.png)。
+  肉眼比對三張圖(原版 oracle／修改前 remake／本輪 pilot remake):**pilot 後的斷行從
+  「…真是一點都／不像你的作風」(13/13/8,舊)變成「…真是一點／都不像你的作風」
+  (13/12/9,含每個續行前導的全形空白縮排字元,與原版逐字逐行相同)**,原本點名的落差
+  已消除。這不是 pixel-exact 字型比對(TTF vs 原版點陣字模仍是兩套渲染器,doc18 本身也
+  還沒做雙字型模式),只確認「斷行位置」這一項與原版一致。
+  **已知、非 bug 的副作用**:pilot 這句話的 `lines[]` 是逐 byte 照抄 FDTXT 原始字模
+  (「打瞎睡」),而同一物件的 `text` 欄位仍是先前人工校正過的「打瞌睡」——兩個欄位並存、
+  故意不互相覆寫(`text` 保留供 fallback/其他消費者、`lines` 是本輪新增的 verbatim
+  斷行來源),兩者内容上有這一處已知落差,不影響本輪驗證的斷行位置結論。
+  **未做/建議**:只碰了 ch00_palace.json 一章,`assets/story/` 其餘 34 章的 story JSON
+  完全沒動(仍是舊 `text`-only schema,continues to fall back correctly——已用上面兩個
+  單元測試鎖住)。**若要推廣到其餘 34 章**,建議使用者先决定怎麼處理上面點名的
+  `export_story_index_map.py`/`OPEN_GLYPH` 既有 bug(不修就沒辦法用它重新產生
+  count-aligned manifest 來稽核;但這件事跟「能不能對其他章跑 `--add-lines`」是分開的
+  ——`--add-lines` 自己內建的數量比對已經足夠防呆),然後逐章跑
+  `python3 tools/decode_story_text.py --add-lines remake/assets/story/chNN.json
+  extracted/raw/FDTXT`,每章跑完都手動核對一次 diff(尤其留意像本輪「瞎睡/瞌睡」這種
+  verbatim-vs人工校正的既有落差是否也出現在其他章,決定要不要保留人工校正版本的
+  `text`)、並抽樣重拍畫面比對,不建議不看 diff 直接批次跑全部 34 章。

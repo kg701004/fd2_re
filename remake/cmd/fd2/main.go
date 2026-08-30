@@ -1621,7 +1621,7 @@ func (g *Game) resolveCampaignDialogLine(line campaign.Line, upperOverride *bool
 	if upperOverride != nil {
 		upper = upperOverride
 	}
-	return battle.DialogLine{Speaker: speaker, Text: line.Text, Upper: upper}, nil
+	return battle.DialogLine{Speaker: speaker, Text: line.Text, Upper: upper, Lines: line.Lines}, nil
 }
 
 func (g *Game) evalBeatCondition(condition *campaign.BeatCondition) (bool, error) {
@@ -1933,6 +1933,20 @@ func equalIntOrder(a, b []int) bool {
 // dlgWrap 把一句對白依框寬換行成顯示列(繪製與 Enter 分頁共用同一套,確保頁數一致)。
 // 換行寬度與繪製碼一致:下框到框右緣;上框(說話者 id>=32,頭像在右)止於頭像左緣前。
 func (g *Game) dlgWrap(dl battle.DialogLine) []string {
+	// 若來源 story JSON 已附帶原生斷行(dl.Lines,見 campaign.Line.Lines 與
+	// docs/knowledge-base/18-font-modernization-utf8-ttf-plan.md 方案 A),直接照原生
+	// 0xFFFE 斷點分行,不再用寬度估算重新流排——這是目前唯一能重現原版非等寬斷行
+	// (如 13/12/9 字)的方式,估算公式無法產生這種結果(見 91-worklist.md 2026-08-30 DATO
+	// 輪的量測結論)。其餘 34 章沒有 Lines,原樣落到下面既有的估算流排。
+	if len(dl.Lines) > 0 {
+		lines := make([]string, len(dl.Lines))
+		for i, l := range dl.Lines {
+			lines[i] = toFullWidth(l)
+		}
+		lines[0] = "『" + lines[0]
+		lines[len(lines)-1] = lines[len(lines)-1] + "』"
+		return lines
+	}
 	ps := 2.1
 	sourceWidth := 80.0
 	if fr := g.getPortraitFrames(dl.Speaker); len(fr) > 0 {
@@ -2105,7 +2119,7 @@ func (g *Game) enterNode() {
 		g.campLines = lines // cutscene dialog beat 依 Line/Count 取子段;story 節點也存一份備用
 		if n.Type == "story" {
 			for i := len(lines) - 1; i >= 0; i-- { // 反序堆疊:顯示取末端,Enter 逐句 pop
-				g.dialog = append(g.dialog, battle.DialogLine{Speaker: lines[i].Speaker, Text: lines[i].Text})
+				g.dialog = append(g.dialog, battle.DialogLine{Speaker: lines[i].Speaker, Text: lines[i].Text, Lines: lines[i].Lines})
 			}
 		}
 		// 2026-08-16: n.Map=="" 的純文字 story 節點(如 retreat_ch01)原本完全不碰

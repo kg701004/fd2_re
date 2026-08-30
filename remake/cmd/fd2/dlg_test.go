@@ -68,6 +68,51 @@ func TestDlgWrapDoesNotSplitASCIIWord(t *testing.T) {
 	}
 }
 
+// TestDlgWrapUsesNativeLinesWhenPresent 驗證 doc18 方案 A pilot(ch00_palace):
+// dl.Lines 非空時直接照原生 0xFFFE 斷點分行(只補 『』),不再用寬度估算重新流排——
+// 對應 91-worklist.md 2026-08-30 發現的「原生非等寬斷行(13/12/9)無法由任何等寬/精確
+// 寬度算式重現」結論。Text 仍在(供無 Lines 的 33 章走 fallback,見下一測試)。
+func TestDlgWrapUsesNativeLinesWhenPresent(t *testing.T) {
+	dl := battle.DialogLine{
+		Speaker: 4,
+		Text:    "哈!找你找了半天,居然是躲在這裡打瞌睡,真是一點都不像你的作風。",
+		Lines: []string{
+			"哈！找你找了半天，居然是",
+			"　躲在這裡打瞎睡，真是一點",
+			"　都不像你的作風。",
+		},
+	}
+	g := &Game{}
+	got := g.dlgWrap(dl)
+	want := []string{
+		"『哈！找你找了半天，居然是",
+		"　躲在這裡打瞎睡，真是一點",
+		"　都不像你的作風。』",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("行數不符: got=%v want=%v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("line %d: got=%q want=%q", i, got[i], want[i])
+		}
+	}
+}
+
+// TestDlgWrapFallsBackWithoutLines 驗證 dl.Lines 為空(其餘 34 章)時行為與修改前完全
+// 一致——沿用既有 TestDlgPaginationPreservesText 的長句,只是這裡直接比對 dlgWrap 輸出
+// 形狀,確保「有 Lines 才走新路徑」的判斷沒有意外連 nil-Lines 的路徑都改掉。
+func TestDlgWrapFallsBackWithoutLines(t *testing.T) {
+	dl := battle.DialogLine{Speaker: 4, Text: "哈!找你找了半天,居然是躲在這裡打瞌睡,真是一點都不像你的作風。"}
+	g := &Game{}
+	lines := g.dlgWrap(dl)
+	joined := strings.Join(lines, "")
+	want := "『" + toFullWidth(dl.Text) + "』"
+	if joined != want {
+		t.Fatalf("無 Lines 時應沿用估算流排全文保全:\n got=%q\nwant=%q", joined, want)
+	}
+}
+
 func TestDlgPaginationStartsSmoothScrollAndBlocksSkip(t *testing.T) {
 	long := battle.DialogLine{Speaker: 0, Text: "這是一段需要分頁顯示的長對白,按下確認後應該平滑往上捲動,並且要在第二頁完整顯示剩餘內容後才能換句。"}
 	g := Game{dialog: []battle.DialogLine{long}}
