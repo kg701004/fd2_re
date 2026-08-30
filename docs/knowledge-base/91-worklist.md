@@ -1301,8 +1301,8 @@
 > 驗收:戰鬥/城鎮/劇情切場景時 BGM 正確切換,用預錄 OGG(MT-32 音源)。
 - [x] OGG 串流播放(15 首,來源 `extracted/music_ogg/`)——2026-08-19稽核確認：`remake/cmd/fd2/audio.go`的`playBGM`已用`vorbis.DecodeWithSampleRate`+`audio.NewInfiniteLoop`完整實作OGG串流播放，僅本行未同步。
 - [x] 場景→曲號對映(對齊 `12`,play_bgm 邏輯)——2026-08-19稽核確認：`main.go`多處場景轉場點已呼叫`playBGM`並帶入正確track(如`title.go` FDMUS_018／`0x025db5`)，wiring已落地，僅本行未同步。
-- [ ] (選配)SoundFont/MT-32 版本切換開關 → `16`
-- [ ] 音效(SFX)接入
+- [x] (選配)SoundFont/MT-32 版本切換開關 → `16`——已解(2026-08-30稽核):`remake/cmd/fd2/settings.go`已實作完整持久化雙音源系統(`bgm_source`:`fm`/`mt32`)，F2熱鍵即時切換(`main.go:5722`)並強制重載當前曲目(`cycleBGMSource`)，存到`fd2_settings.json`；配套產線工具`tools/export_fm.sh`(SoundBlaster/AdLib,來源`SAMPLE.AD`)與`tools/export_mt32.sh`(真實MT-32 ROM合成,`gtl2wopl.py`)皆已存在並記錄於`16`，commits `a2bd1443`/`e3dc7546`/`eb7200ce`/`46c419dc`可查。僅本行未同步。
+- [x] 音效(SFX)接入——已解(2026-08-30稽核):`audio.go`有`loadSFX`/`playSFX`/`loadWav`/`playRaw`；已接線觸發點含游標移動(`main.go:6463`、`title.go`)、確認音效(`main.go:5456`、`title.go`)、戰鬥攻擊揮擊/命中/死亡音效池(依動畫幀進度驅動,`main.go:5804-5814`)、場景轉場與spawn-intro音效(`main.go:1559`、`native_spawn_intro.go:393`)，`remake/assets/sfx/`本地有35個從FDOTHER SFX pool反組譯提取的WAV(`actionid_82..90`/`battle_91..95`,commits `f8fffba1`/`17a1888c`/`c06070db`/`34ce1556`/`ba5fc4b2`/`14725f8e`)。誠實範圍:非每個原版action_id/事件都已確認對映，非窮舉完整，但已是可運作、接進遊戲流程的SFX引擎，不是「未接入」。**注意**:音樂OGG本身(不同於SFX WAV)未bundle在此checkout(`.gitignore`排除`*.ogg`/`music_ogg/`，屬刻意的著作權考量，README要求玩家自備原版本機渲染)，不影響本項判定(本項是SFX接入，音樂OGG播放已在上方項目確認完成)，僅記錄以免與「音檔缺失」混淆。
 
 ## M4 — 腳本系統 / 流程串接
 > 驗收:序章→商店→分支→下一關 能一條龍跑完;戰敗走不同路線而非 game over。
