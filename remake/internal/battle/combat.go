@@ -318,17 +318,27 @@ func (s *State) AITurn() {
 }
 
 // Result 勝負判定。回傳 "win"/"lose"/""。
-// 預設規則(可被 scenario 覆寫):敵全滅(且無待命援軍)→ win;指定要保護的單位死 → lose。
-func (s *State) Result(protect string) string {
-	if protect != "" {
-		dead := true
+// 預設規則(可被 scenario 覆寫):敵全滅(且無待命援軍)→ win;
+// 任一指定要保護的單位死亡 → lose。
+//
+// protect 可傳 0..N 個具名單位(空字串一律跳過,不計入判定)。呼叫端(main.go
+// checkResult)組合「索爾(通用預設,每章皆判定)」+ 章節額外護衛清單(doc28 §2,
+// 例如 ch10 需同時保護「索菲亞」與「卡納恩三世」)一起傳入——這是聯集
+// (OR:任一人死即敗),不是用某個名字取代索爾檢查(2026-08-30 前的舊行為是
+// 「有 protect 值就只查那一個名字」,會漏掉索爾死亡判定,已修正)。
+func (s *State) Result(protect ...string) string {
+	for _, name := range protect {
+		if name == "" {
+			continue
+		}
+		alive := false
 		for _, u := range s.Units {
-			if u.Name == protect && u.Alive() {
-				dead = false
+			if u.Name == name && u.Alive() {
+				alive = true
 				break
 			}
 		}
-		if dead {
+		if !alive {
 			return "lose"
 		}
 	}

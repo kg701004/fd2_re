@@ -451,7 +451,20 @@ type Node struct {
 	Next              string                `json:"next,omitempty"`                // story/event
 	OnWin             string                `json:"on_win,omitempty"`              // battle
 	OnLose            string                `json:"on_lose,omitempty"`             // battle(敗北路線;空=game over)
-	Protect           string                `json:"protect,omitempty"`             // battle:保護目標；空值沿用主角索爾
+	Protect           string                `json:"protect,omitempty"`             // battle:保護目標(單一名字,向下相容欄位)
+	ProtectGuards     []string              `json:"protect_guards,omitempty"`      // battle:額外保護目標清單(doc28 §2 多護衛章節,如 ch10/ch18/ch21/ch23/ch26)
+	// Protect/ProtectGuards 是聯集(OR),不是取代:索爾死亡永遠判敗(main.go
+	// checkResult 的通用預設),Protect/ProtectGuards 只是「額外」要保護的具名
+	// 單位——任一人死亡也判敗。兩欄位都可留空(=只判索爾死亡);Protect 留給只
+	// 需一個額外護衛的章節,ProtectGuards 給需要 2+ 個的章節,兩者可同時使用
+	// (main.go 會把兩者+索爾全部併成一個清單傳給 battle.State.Result)。
+	// ⚠ 陣營全滅類規則(doc28「村民全滅」ch02、「精靈族全滅」ch13、「精靈全滅」
+	// ch20)尚未有對應機制:目前 remake 的 mapN_units.json 沒有陣營/種族分組
+	// 可查的欄位(native_record_race 存在但語意未證實=可安全拿來當「精靈」判
+	// 定的依據),且更根本的是這些 NPC 護衛在任何一張地圖的 units.json 裡都還
+	// 沒有填 name(全 30 張地圖 name 欄位皆為空,見 91-worklist.md 2026-08-30 條
+	// 目),此欄目前刻意不填這些章節,見同條目說明,不要在沒有名字可查的前提
+	// 下硬填,否則會讓該章一進玩家回合就誤判敗北。
 	ItemID            *int                  `json:"item_id,omitempty"`             // inventory_gate:原版 unsigned-byte item identity
 	IfPresent         string                `json:"if_present,omitempty"`          // inventory_gate:全隊任一角色持有 ItemID
 	IfMissing         string                `json:"if_missing,omitempty"`          // inventory_gate:全隊皆未持有 ItemID

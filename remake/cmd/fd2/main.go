@@ -5650,18 +5650,25 @@ func (g *Game) confirm() {
 	}
 }
 
-// checkResult 檢查勝負(失敗條件:索爾死;勝利:敵全滅,doc28 第1章)。
+// checkResult 檢查勝負(失敗條件:索爾死 OR 任一章節額外護衛死亡;勝利:敵全
+// 滅,doc28 第1章)。索爾是每章通用預設,永遠檢查;node.Protect/ProtectGuards
+// 是「附加」的額外護衛(聯集,不是取代——2026-08-30 前的舊行為會在設了
+// Protect 後不再判定索爾死亡,已修正,見 combat.go Result 與 campaign.go
+// Node.Protect 的註解)。
 func (g *Game) checkResult() {
 	if g.result != "" || g.sc == nil {
 		return
 	}
-	protect := "索爾"
+	protect := []string{"索爾"}
 	if g.camp != nil {
-		if n := g.camp.Node(); n != nil && n.Protect != "" {
-			protect = n.Protect
+		if n := g.camp.Node(); n != nil {
+			if n.Protect != "" {
+				protect = append(protect, n.Protect)
+			}
+			protect = append(protect, n.ProtectGuards...)
 		}
 	}
-	if r := g.st.Result(protect); r != "" {
+	if r := g.st.Result(protect...); r != "" {
 		g.result = r
 	}
 }
