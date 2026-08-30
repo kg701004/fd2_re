@@ -650,6 +650,9 @@
    "map": "assets/maps/map1",
    "units": "assets/maps/map1/map1_units.json",
    "scenario": "assets/scenarios/ch02.json",
+   "protect_groups": [
+    {"camp": "ally", "portraits": [133, 134]}
+   ],
    "on_win": "story_ch02_post",
    "on_lose": "retreat_ch02"
   },
@@ -2354,6 +2357,9 @@
    "map": "assets/maps/map12",
    "units": "assets/maps/map12/map12_units.json",
    "scenario": "assets/scenarios/ch13.json",
+   "protect_groups": [
+    {"camp": "ally", "portraits": [72]}
+   ],
    "on_win": "postbattle_ch13_persist",
    "on_lose": "retreat_ch13"
   },
@@ -3542,6 +3548,9 @@
    "units": "assets/maps/map19/map19_units.json",
    "scenario": "assets/scenarios/ch20.json",
    "protect_guards": ["謝多"],
+   "protect_groups": [
+    {"camp": "ally", "portraits": [72]}
+   ],
    "on_win": "postbattle_ch20_persist",
    "on_lose": "retreat_ch20"
   },

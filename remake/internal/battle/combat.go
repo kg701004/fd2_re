@@ -317,6 +317,57 @@ func (s *State) AITurn() {
 	}
 }
 
+// ProtectGroup is a camp+portrait-set group whose complete death (every
+// matching unit dead) is a loss condition, in addition to (not instead of)
+// named Protect/ProtectGuards targets -- doc28 §2's "陣營全滅" rows
+// (村民全滅 ch02、精靈族全滅 ch13、精靈全滅 ch20). Unlike named guards,
+// mapN_units.json never populates Unit.Name for these NPCs (verified 0/30
+// maps, 91-worklist.md 2026-08-30), so the group has to be identified by
+// Camp+Portrait instead: for ch02 that's ally-camp portrait ids 133/134
+// (confirmed directly -- assets/story/ch02.json's "戰鬥受創短句" scene tags
+// speaker 133 and 134 with speaker_name "村民"); for ch13/ch20 it's
+// ally-camp portrait id 72 (native_record_race==2 in both maps, a value
+// used nowhere else in either map, and the same 72/race==2 signature also
+// tags the named elf characters 希爾法/羅蘭 in map20/ch21 -- story text for
+// both chapters narrates the elf-clan wipe by name: ch13.json "精靈族已全數
+// 犧牲", ch20.json "護送的九名精靈壯烈全滅"; map19's 8 matching units also
+// cluster spatially around 謝多's start position, matching that escort
+// narrative). See 91-worklist.md 2026-08-30 group-wipe entry for the full
+// derivation and why ch02/13/20 are the only three groups resolved.
+type ProtectGroup struct {
+	Camp      Camp
+	Portraits []int
+}
+
+// wiped reports whether every unit matching g (Camp + Portrait in g.Portraits)
+// is dead. It requires at least one matching unit to exist in s.Units --
+// zero matches (a misconfigured group) returns false rather than vacuously
+// "wiped", so a data mistake can never turn into an instant loss at battle
+// start.
+func (s *State) groupWiped(g ProtectGroup) bool {
+	found := false
+	for _, u := range s.Units {
+		if u.Camp != g.Camp {
+			continue
+		}
+		matched := false
+		for _, p := range g.Portraits {
+			if u.Portrait == p {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			continue
+		}
+		found = true
+		if u.Alive() {
+			return false
+		}
+	}
+	return found
+}
+
 // Result 勝負判定。回傳 "win"/"lose"/""。
 // 預設規則(可被 scenario 覆寫):敵全滅(且無待命援軍)→ win;
 // 任一指定要保護的單位死亡 → lose。
@@ -327,6 +378,13 @@ func (s *State) AITurn() {
 // (OR:任一人死即敗),不是用某個名字取代索爾檢查(2026-08-30 前的舊行為是
 // 「有 protect 值就只查那一個名字」,會漏掉索爾死亡判定,已修正)。
 func (s *State) Result(protect ...string) string {
+	return s.ResultWithGroups(protect, nil)
+}
+
+// ResultWithGroups is Result plus 0..N ProtectGroup checks (陣營全滅型敗北
+// 條件,見 ProtectGroup 註解)。同樣是聯集:named protect 清單與 groups 任一
+// 條件成立即敗,不影響彼此。
+func (s *State) ResultWithGroups(protect []string, groups []ProtectGroup) string {
 	for _, name := range protect {
 		if name == "" {
 			continue
@@ -339,6 +397,11 @@ func (s *State) Result(protect ...string) string {
 			}
 		}
 		if !alive {
+			return "lose"
+		}
+	}
+	for _, g := range groups {
+		if s.groupWiped(g) {
 			return "lose"
 		}
 	}

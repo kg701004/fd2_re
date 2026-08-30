@@ -925,6 +925,12 @@ func campFrom(s string) Camp {
 	}
 }
 
+// CampFromString exports campFrom's "own"/"ally"/else-enemy mapping (same
+// convention as mapN_units.json's camp field) for callers outside this
+// package that need to build a ProtectGroup from campaign JSON, e.g.
+// campaign.ProtectGroup.Camp in main.go's checkResult.
+func CampFromString(s string) Camp { return campFrom(s) }
+
 // Load 從 units.json 建出戰鬥初始狀態。我方(own)依序放到部署格。
 func Load(path string) (*State, error) {
 	raw, err := os.ReadFile(path)

@@ -128,4 +128,65 @@ func TestResult(t *testing.T) {
 			t.Fatalf("Result = %q, want \"lose\" (one of two extra guards died)", got)
 		}
 	})
+
+	// 2026-08-30 續輪:ch02(村民全滅)/ch13(精靈族全滅)/ch20(精靈全滅)是陣營
+	// 全滅型敗北條件,無法用具名單位表達(mapN_units.json 這些 NPC 全部沒有
+	// name),改用 Camp+Portrait 識別群組,見 ProtectGroup 的註解與
+	// 91-worklist.md 同日 group-wipe 條目。以下對應 ResultWithGroups。
+	t.Run("group wipe: some members alive is undecided even with sol/enemies present", func(t *testing.T) {
+		st := newTestState()
+		sol := mkUnit(Own, 0, 0, 50, 0)
+		sol.Name = "索爾"
+		villager1 := mkUnit(Ally, 1, 1, 50, 0)
+		villager1.Portrait = 133
+		villager2 := mkUnit(Ally, 2, 1, 0, 0) // 已死
+		villager2.Portrait = 134
+		enemy := mkUnit(Enemy, 3, 0, 50, 0)
+		st.Units = []*Unit{sol, villager1, villager2, enemy}
+		group := ProtectGroup{Camp: Ally, Portraits: []int{133, 134}}
+		if got := st.ResultWithGroups([]string{"索爾"}, []ProtectGroup{group}); got != "" {
+			t.Fatalf("ResultWithGroups = %q, want \"\" (villager1 still alive, group not wiped)", got)
+		}
+	})
+
+	t.Run("group wipe: all members dead loses even with sol and enemies alive", func(t *testing.T) {
+		st := newTestState()
+		sol := mkUnit(Own, 0, 0, 50, 0)
+		sol.Name = "索爾"
+		villager1 := mkUnit(Ally, 1, 1, 0, 0)
+		villager1.Portrait = 133
+		villager2 := mkUnit(Ally, 2, 1, 0, 0)
+		villager2.Portrait = 134
+		enemy := mkUnit(Enemy, 3, 0, 50, 0)
+		st.Units = []*Unit{sol, villager1, villager2, enemy}
+		group := ProtectGroup{Camp: Ally, Portraits: []int{133, 134}}
+		if got := st.ResultWithGroups([]string{"索爾"}, []ProtectGroup{group}); got != "lose" {
+			t.Fatalf("ResultWithGroups = %q, want \"lose\" (all matching villagers dead)", got)
+		}
+	})
+
+	t.Run("group wipe: no matching units in st.Units never triggers a loss (misconfigured group fails closed)", func(t *testing.T) {
+		st := newTestState()
+		sol := mkUnit(Own, 0, 0, 50, 0)
+		sol.Name = "索爾"
+		enemy := mkUnit(Enemy, 3, 0, 50, 0)
+		st.Units = []*Unit{sol, enemy}
+		group := ProtectGroup{Camp: Ally, Portraits: []int{133, 134}} // 該地圖根本沒有這個群組
+		if got := st.ResultWithGroups([]string{"索爾"}, []ProtectGroup{group}); got != "" {
+			t.Fatalf("ResultWithGroups = %q, want \"\" (zero matching units must not vacuously count as wiped -- would be an instant loss on any typo'd portrait id)", got)
+		}
+	})
+
+	t.Run("group wipe: named protect and group checks are a union, either alone can lose", func(t *testing.T) {
+		st := newTestState()
+		sol := mkUnit(Own, 0, 0, 0, 0) // 索爾已死
+		sol.Name = "索爾"
+		elf1 := mkUnit(Ally, 1, 1, 50, 0)
+		elf1.Portrait = 72
+		st.Units = []*Unit{sol, elf1}
+		group := ProtectGroup{Camp: Ally, Portraits: []int{72}}
+		if got := st.ResultWithGroups([]string{"索爾"}, []ProtectGroup{group}); got != "lose" {
+			t.Fatalf("ResultWithGroups = %q, want \"lose\" (sol died even though the elf group is untouched)", got)
+		}
+	})
 }

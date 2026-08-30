@@ -5650,25 +5650,34 @@ func (g *Game) confirm() {
 	}
 }
 
-// checkResult 檢查勝負(失敗條件:索爾死 OR 任一章節額外護衛死亡;勝利:敵全
-// 滅,doc28 第1章)。索爾是每章通用預設,永遠檢查;node.Protect/ProtectGuards
-// 是「附加」的額外護衛(聯集,不是取代——2026-08-30 前的舊行為會在設了
-// Protect 後不再判定索爾死亡,已修正,見 combat.go Result 與 campaign.go
-// Node.Protect 的註解)。
+// checkResult 檢查勝負(失敗條件:索爾死 OR 任一章節額外護衛死亡 OR 任一
+// 陣營全滅群組死絕;勝利:敵全滅,doc28 第1章)。索爾是每章通用預設,永遠
+// 檢查;node.Protect/ProtectGuards/ProtectGroups 都是「附加」的額外敗北
+// 條件(聯集,不是取代——2026-08-30 前的舊行為會在設了 Protect 後不再判定
+// 索爾死亡,已修正,見 combat.go Result 與 campaign.go Node.Protect 的
+// 註解)。ProtectGroups 是陣營全滅型(村民/精靈族),見 battle.ProtectGroup
+// 與 campaign.ProtectGroup 的註解。
 func (g *Game) checkResult() {
 	if g.result != "" || g.sc == nil {
 		return
 	}
 	protect := []string{"索爾"}
+	var groups []battle.ProtectGroup
 	if g.camp != nil {
 		if n := g.camp.Node(); n != nil {
 			if n.Protect != "" {
 				protect = append(protect, n.Protect)
 			}
 			protect = append(protect, n.ProtectGuards...)
+			for _, pg := range n.ProtectGroups {
+				groups = append(groups, battle.ProtectGroup{
+					Camp:      battle.CampFromString(pg.Camp),
+					Portraits: pg.Portraits,
+				})
+			}
 		}
 	}
-	if r := g.st.Result(protect...); r != "" {
+	if r := g.st.ResultWithGroups(protect, groups); r != "" {
 		g.result = r
 	}
 }
