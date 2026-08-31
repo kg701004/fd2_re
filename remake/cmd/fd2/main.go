@@ -2652,7 +2652,22 @@ func applyPersistentStats(dst, src *battle.Unit) {
 	if dst == nil || src == nil {
 		return
 	}
-	dst.Name, dst.ClsName, dst.ClassID, dst.Lv = src.Name, src.ClsName, src.ClassID, src.Lv
+	// Name is deliberately excluded from the persistent-state transplant: it
+	// is a static per-Fig identity already supplied correctly by every
+	// chapter's own scenario.PartyUnits() binding (doc "party" JSON), not
+	// runtime state that needs to survive across chapters like level/HP/
+	// equipment do. src here traces back to g.partyRoster entries seeded by
+	// materializeNativeJoinPersistentUnit()/native JOIN constructor
+	// reconstruction, which has no concept of a human-readable name and
+	// always leaves it "". Copying src.Name unconditionally used to stomp
+	// the correctly-named freshly-spawned unit with that empty string on
+	// every applyLoadCH after the first JOIN populated g.partyRoster --
+	// concretely: checkResult()'s hardcoded "索爾" protect-name lookup then
+	// never matched any Own unit, so the very first checkResult() call each
+	// battle (right at end-turn) returned "lose" regardless of Sol's actual
+	// HP, a false-positive defeat found via a genuine normal playthrough of
+	// ch01 (see docs/knowledge-base/9X-m5-normal-playthrough-log.md).
+	dst.ClsName, dst.ClassID, dst.Lv = src.ClsName, src.ClassID, src.Lv
 	dst.HP, dst.MaxHP, dst.MP, dst.MaxMP = src.HP, src.MaxHP, src.MP, src.MaxMP
 	dst.AP, dst.DP, dst.DX = src.AP, src.DP, src.DX
 	dst.HIT, dst.EV, dst.CritPct, dst.MV = src.HIT, src.EV, src.CritPct, src.MV
