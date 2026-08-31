@@ -181,7 +181,10 @@ func TestApplyClassChangeAddsGrowthAndConsumesItem(t *testing.T) {
 	if u.AP != 109 || u.DP != 108 || u.DX != 107 || u.MaxHP != 40 || u.HP != 40 || u.MaxMP != 50 || u.MP != 50 {
 		t.Fatalf("incremented stats AP/DP/DX=%d/%d/%d HP=%d/%d MP=%d/%d", u.AP, u.DP, u.DX, u.HP, u.MaxHP, u.MP, u.MaxMP)
 	}
-	if u.Lv != 27 || u.Exp != 0 || u.MV != 7 || u.Portrait != 0x34 || u.ClassID != 21 {
+	// 0x2aded unconditionally resets the persistent Lv byte to 1 (doc32
+	// §6.3.1) -- growth still accumulates onto pre-change AP/DP/DX/MaxHP/
+	// MaxMP/MV above, only Lv itself resets, alongside the EXP clear.
+	if u.Lv != 1 || u.Exp != 0 || u.MV != 7 || u.Portrait != 0x34 || u.ClassID != 21 {
 		t.Fatalf("metadata lv=%d exp=%v mv=%d portrait=%x class=%d", u.Lv, u.Exp, u.MV, u.Portrait, u.ClassID)
 	}
 	if u.Fig != 9 || u.BattleFig != 0x34 || !u.HasMapSelectorKey || u.MapSelectorKey != 0x34 || u.HasMapSelectorSlot {

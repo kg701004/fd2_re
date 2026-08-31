@@ -149,9 +149,11 @@ func rollClassChangeRange(r [2]int, rng *rand.Rand) (int, error) {
 
 // ApplyClassChange mirrors the proven 0x31602 state writes.  0x1e529 adds the
 // rolled row value to the existing raw AP/DP/DX/MaxHP/MaxMP words; it does not
-// replace them. The native routine leaves the level byte untouched and clears
-// EXP, then copies the new maxima to current HP/MP. The caller owns the
-// editable class-name lookup and subsequent 0x1b750-equivalent equipment
+// replace them. The native routine then unconditionally resets the level byte
+// to 1 (0x2aded, doc32 §6.3.1 -- corrects an earlier "level untouched"
+// assumption that never actually traced this write) and clears EXP, then
+// copies the new maxima to current HP/MP. The caller owns the editable
+// class-name lookup and subsequent 0x1b750-equivalent equipment
 // recomputation. removeItemIndex is the compact Inventory index returned by
 // the church item scan, or -1 when this branch consumed no item.
 func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, row ClassChangeGrowth, rng *rand.Rand, removeItemIndex int) error {
@@ -197,6 +199,12 @@ func ApplyClassChange(u *battle.Unit, targetPortrait, classID, growthGroup int, 
 	// The second byte returned by 0x4e48d is the class mobility increment;
 	// native unit+0x3b is the movement budget used by pathfinding.
 	u.MV += growthGroup
+	// 0x2aded: MOV byte ptr [ESI+0x21],0x1 -- native class-change unconditionally
+	// resets the persistent Lv byte to 1 (doc32 §6.3.1, 2026-08-31 Ghidra
+	// disassembly of FUN_0002ac7d). This runs immediately before the EXP clear
+	// below in the native instruction sequence; growth (AP/DP/DX/MaxHP/MaxMP/MV)
+	// still accumulates onto the pre-change values, it is only Lv that resets.
+	u.Lv = 1
 	u.Exp = 0
 	u.Portrait, u.ClassID = targetPortrait, classID
 	// 0x31571..0x3157a rewrites raw +0x20 and +7, but not +0x1f.
