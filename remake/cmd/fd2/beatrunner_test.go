@@ -688,6 +688,55 @@ func TestBeatJoinRejectsDuplicateNativeIdentityRecords(t *testing.T) {
 	}
 }
 
+// TestBeatJoinRecruitsCh25DefeatedEnemyAsPermanentAlly 驗證 ch25 postbattle
+// handler(0x24df2)實際編譯出的 join char_id=29(亞奇梅吉)拍是否真的可用——
+// 91-worklist.md ch26 亞奇梅吉條目一度誤判「partyRoster 完全沒有她的 JOIN
+// 路徑」，但 assets/cutscenes/handlers/ch25_post.json 其實從專案早期
+// (commit 9b68baef)就已編譯出這個 join 拍(0x237c8→0x112a5，與 doc28 §6
+// 這輪反組譯獨立重新推導出的位址完全相同)。這個測試直接餵她在
+// map24_units.json 裡的真實戰鬥記錄(camp:"enemy"、HP 已歸零、
+// native_record_byte8=29)進 join case，證明「敵人被擊敗」不會擋下
+// materialization，且是靠既有通用機制(NativeRecordByte8 比對)完成，不需要
+// 任何新的敵轉友專屬程式碼。
+func TestBeatJoinRecruitsCh25DefeatedEnemyAsPermanentAlly(t *testing.T) {
+	g := newBeatTestGame(t, []campaign.Beat{
+		{Op: "join", CharID: 26, Source: "0x24e6c"},
+		{Op: "join", CharID: 29, Source: "0x237c8"},
+	})
+	g.st = &battle.State{Units: []*battle.Unit{
+		{Camp: battle.Own, NativeRecordByte8: 26, HasNativeRecordByte8: true, HP: 36, MaxHP: 36, OnField: true},
+		// 聖寇拉斯:她本人在 map24 也在場,同一戰後 handler 先 JOIN 她。
+		{
+			Camp: battle.Enemy, NativeRecordByte8: 29, HasNativeRecordByte8: true,
+			HP: 0, MaxHP: 36, MaxMP: 0, AP: 20, DP: 12, DX: 10, MV: 6,
+			HIT: 124, EV: 14, Group: 2,
+		}, // 亞奇梅吉:map24_units.json units[54] 的真實欄位(camp enemy、被擊敗HP=0)。
+	}}
+	g.beatAdvance()
+	if g.loadErr != "" {
+		t.Fatalf("join 拍不應失敗:%q", g.loadErr)
+	}
+	if !g.partyMembers[29] {
+		t.Fatalf("亞奇梅吉未被登記為永久隊員:%#v", g.partyMembers)
+	}
+	arch, ok := g.partyRoster[29]
+	if !ok {
+		t.Fatalf("亞奇梅吉未被 materialize 進 partyRoster:%#v", g.partyRoster)
+	}
+	if !arch.HasNativeIdentity || arch.NativeIdentity != 29 {
+		t.Fatalf("native identity 未正確保存,原生UI(教會/商店/名冊)將無法正確顯示她的名字:%#v", arch)
+	}
+	if arch.MaxHP <= 0 || arch.Lv <= 0 {
+		t.Fatalf("constructor table 未正確套用等級/HP成長:%#v", arch)
+	}
+	// 她的戰場記錄本身 camp=enemy、HP=0(被擊敗),但這些都只是「戰鬥中當下」
+	// 欄位;materialize 出的 persistent 記錄必須是全新滿血個體,不是把戰場
+	// 上的死亡狀態原樣搬進永久名冊。
+	if arch.HP != arch.MaxHP {
+		t.Fatalf("新加入的永久隊員應滿血,不應繼承戰場上的擊敗HP:%#v", arch)
+	}
+}
+
 func TestBeatSyncPartyPersistsProgressAndClearsBattleState(t *testing.T) {
 	chapter := 1
 	g := newBeatTestGame(t, []campaign.Beat{{Op: "sync_party"}, {Op: "set_chapter", Chapter: &chapter}})

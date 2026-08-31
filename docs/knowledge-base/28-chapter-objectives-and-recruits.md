@@ -196,3 +196,21 @@ void ch25_post_handler(void)
 - **安全 wiring 方向(下一輪動手前的建議)**:亞奇梅吉的招募現在應該被當成**跟 ch16 JOIN(18)、ch00 序章 JOIN(0/9/4/0x1e) 同一類**的標準 scripted JOIN 事件，用 `remake/cmd/fd2/main.go` 既有的 `partyJoinOrder`/beat-driven JOIN 機制(`b.CharID` 出現時 `append` 進 `g.partyJoinOrder`)去表示，而不是等待任何新的「敵轉友」機制——只需要在 ch25 postbattle 對應的 story/scenario beat 腳本裡補一個 `JOIN(char_id=29)` beat(聖寇拉斯 id26 若尚未有對應 beat，應一併確認/補上，兩者證據等級相同)。**這是下一輪的實作範圍，本輪刻意不動 `campaign_full.json`/`partyRoster`/`ForceDeploy`**，留給使用者審閱本輪反組譯證據後再決定。
 
 > 本節新增位址:`0x20b14`(`table_win[24]`)、`0x24df2`(`table_post[24]`)、`0x237c8`(共用 JOIN tail-jump 片段)。方法論:純靜態 `tools/ghidra_batch_probe.py`(`-readOnly -noanalysis`)，`bytes`/`disasm`/`call_scan`/`function_bounds` 四種 action，全程未碰 DOSBox-X，比照同日 `ch10disasm`/`ch29disasm`/`ch30disasm` 既有方法論。
+
+### 續一(2026-08-31,回應上一輪「安全 wiring 方向」建議):**JOIN(26)/JOIN(29) 兩個 beat 其實從專案早期就已編譯進生產資料,不需要新寫**
+
+上一輪建議「在 ch25 postbattle 對應的 story/scenario beat 腳本裡補一個 `JOIN(char_id=29)` beat」——直接檢查 `remake/assets/cutscenes/handlers/ch25_post.json`(這份檔案早在 `9b68baef`「feat: export editable cutscene handler scripts」就已由既有的 handler-compile 工具鏈從原始反組譯自動產生,`git log --follow` 確認之後只被 `d5200aa0`「chapter handler manifest 系統性 off-by-one」動過,與本輪反組譯發現的內容完全無關)發現這兩個 beat **早就在裡面**:
+
+```json
+{ "op": "join", "char_id": 26, "source": { "addr": "0x24e6c", "target": "0x112a5" } },
+{ "op": "sync_party", "source": { "addr": "0x24e74", "target": "0x11506" } },
+{ "op": "join", "char_id": 29, "source": { "addr": "0x237c8", "target": "0x112a5" } }
+```
+
+位址(`0x24e6c`/`0x237c8`,皆 `target:0x112a5`)跟本輪反組譯獨立重新推導出的完全一致——這不是巧合,是同一套 handler-compile 工具鏈本來就會把 `0x24df2` 的原始位元組(含尾端 `JMP 0x237c8` 這種跨函式 tail-merge)正確編譯出對應 beat,只是這份輸出從產生以來從未被連結到「亞奇梅吉的招募機制」這個問題上,直到這兩輪(上一輪的反組譯 + 這輪的資料稽核)才把兩邊對上。
+
+**生產綁定鏈路已核實為現行有效,不是死資料**:`battle_ch25.on_win → postbattle_ch25_persist → handler_binding:"assets/cutscenes/bindings/ch24_post.json" → handler_script:"../handlers/ch25_post.json"`(`remake/assets/scenarios/campaign_full.json`/`remake/assets/cutscenes/bindings/ch24_post.json` 逐層核對);`python3 tools/audit_postbattle_binding_gates.py` 回報 `ACTIVE postbattle_ch25_persist`(非 `blocked`)。
+
+**新增回歸測試**`remake/cmd/fd2/beatrunner_test.go` 的 `TestBeatJoinRecruitsCh25DefeatedEnemyAsPermanentAlly`:直接餵 `map24_units.json` unit54 的真實戰場欄位(`camp:"enemy"`、`native_record_byte8:29`、擊敗後 `HP:0`)進 `{Op:"join", CharID:29}` 這條 production beat,證明:①「敵人陣營+HP歸零」不會擋下既有的 `NativeRecordByte8` 比對邏輯,不需要任何敵轉友專屬程式碼;② materialize 出的 persistent record 正確帶 `HasNativeIdentity/NativeIdentity=29`(原生教會/商店/名冊UI靠這個欄位查表顯示名字,不靠 Go `.Name` 字串,故不需要額外補 `map24_units.json` 的 `name` 欄位);③ 新隊員是滿血個體,不會繼承戰場上的擊敗狀態。`go build ./...`/`go test ./...` 全綠。
+
+**結論:上一輪建議的「wiring 下一步」已不需要執行,亞奇梅吉的招募機制在生產資料裡已經是完整、有效、現在也有回歸測試覆蓋的狀態**——`91-worklist.md` ch26 條目可以真正關閉,不再是「留給未來專門一輪」的開放項目。唯一保留的誠實邊界:`FUN_00015f84`/`0x1366a`/`0x231f2` 演出細節、`spawn_group(2)` 是否還有其他未掃到的 unit,兩點與上一輪相同,不影響本節結論。
