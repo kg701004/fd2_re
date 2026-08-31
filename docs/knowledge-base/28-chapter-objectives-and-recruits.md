@@ -107,3 +107,92 @@ predicate全域命名成「存活」。同樣地，result code 1/2 與玩家層�
 條件只能標為 authored approximation，不可當成原版等價規則。
 
 > 相關:doc 26(handler 條件→動作)· doc 25(事件系統)· doc 24(戰役迴圈碼分派)· doc 02(數值/公式)· doc 19(腳本系統)。資料:`docs/data/battle_events.json`、`references/text/fd2.md`(青衫攻略,本機)。
+
+## 6. ch25(raw24)「敵轉友」機制範圍確認——結論:不存在,亞奇梅吉是標準 JOIN,不是 record 轉換(2026-08-31)
+
+**背景**:`91-worklist.md`「ch26 亞奇梅吉(ii)範圍確認」上一輪(2026-08-30)把這題評估為「大/不確定範圍」，理由是「map24 unit54(亞奇梅吉)`camp:"enemy"`，doc28 卻說她會被招募——這個『敵人被擊敗後轉換成永久隊友』的原生轉換機制，本專案從未反組譯過」。本輪奉命純靜態反組譯 ch25(raw24)的 win-check(`table_win[24]`)與 postbattle(`table_post[24]`)handler，直接查證這個假設的轉換機制是否存在。
+
+**結論(高信心)**:**這個轉換機制根本不存在，也不需要存在**。亞奇梅吉的招募走的是本專案早已完整反組譯、記錄在 doc25 §9.3 的標準 `JOIN` constructor(`0x112a5(join_id)`/`MaterializePersistentUnit`)，跟 ch00 序章索爾/悠妮/亞雷斯/蓋亞、ch16 JOIN(18)是**同一支函式、同一種呼叫模式**，唯一差別只是這次的呼叫端位在 postbattle handler 尾端(用 tail-jump 共用程式碼），不是 dialogue beat 裡的直接 CALL。她 map24 的 `camp:"enemy"` 純粹是戰鬥本身的敵我旗標,跟她事後怎麼加入名冊(標準 JOIN)是兩件互不相關的事——不需要,也沒有,任何「把一筆敵方 record 原地改寫成己方 record」的特殊 writer。
+
+### Step 1:跳表 index 公式複驗(比照 `ch29disasm`/`ch30disasm`/`ch10disasm` 既有方法論)
+
+`tools/ghidra_batch_probe.py`一次 `bytes` 讀出 `0x51b19`(`table_win`)與 `0x51de9`(`table_post`)各 128 bytes(32 個 dword)。與既有文件記錄的 index 9/21/26/27/28/29/30/31 逐 byte 吻合(`ch10disasm`/`ch29disasm`/`ch30disasm`/`ch2729-static`四輪獨立記錄的既知值全部通過 sanity check)：
+
+- **`table_win[24]` = `0x20b14`**(raw24 = story ch25,依「玩家第 N 章 = raw(N-1)」慣例)
+- **`table_post[24]` = `0x24df2`**
+
+### Step 2:win-check `0x20b14` 完整反組譯——單一 record 死亡檢查,跟亞奇梅吉無關
+
+10 條指令,`RET` 結尾,`stop_reason:"ret"`,`truncated:false`：
+
+```c
+void ch25_win_check(void)
+{
+  FUN_0003702f(8);                 // 標準 prologue
+  FUN_000205be();                  // default handler(殲滅 based 預設結果)
+  if (FUN_00034894(0x10) != 0) {   // record[16].+5 & 1 != 0(單位16陣亡)
+    *(dword*)0x53ecc = 1;          //  → 覆寫成敗北
+  }
+  return;
+}
+```
+
+`record[16]` 換算:map24_units.json `own_deploy` 陣列長度 = 16(部署格 16 個),比照 `ch10disasm` 輪已驗證的 `record[N] = own_deploy_count + 本地 index` 公式，`record[16] - 16 = 0` → **`map24_units.json units[0]`**：`camp:"own", portrait:26, native_record_byte8:26, group:0`。doc28 §2 對 ch25(raw24)列的護衛欄位剛好是「聖寇拉斯」一人——本欄目換算結果與 doc28 護衛表精確吻合，win-check 只保護她，跟亞奇梅吉完全無關(她不是這個 handler 檢查的對象)。
+
+### Step 3:postbattle `0x24df2` 完整反組譯——40 條指令,直線+單一 tail-jump,零分支,零死亡檢查
+
+flow-directed `disasm`(`max_bytes=400`,`stop_reason:"jmp"`,`truncated:false`,`0x24df2..0x24e7b`共 137 bytes)。逐 byte 核對(`bytes` action 獨立讀出 142 bytes,與 disasm 結果逐位元組吻合)：
+
+```c
+void ch25_post_handler(void)
+{
+  FUN_0003702f(0x28);                          // 標準 prologue(引數 0x28=40)
+  FUN_00015f84(sel=6, [0x53a79], 0xa0000,       // 戰後對話/演出呼叫#1(9 引數)
+               0x140, 0xcd, 0x4c, 0x4a, 0x13, 1);
+  FUN_000135dd(4, 0x10);                        // 鏡頭微移(doc25/47 已知同款呼叫)
+  FUN_00010b4e(2);                              // spawn_group(2) —— 亞奇梅吉所在的 group!
+  FUN_0001366a(0x4b);                           // 已知 spawn_group_with_intro 尾段呼叫(doc25 §6.1)
+  FUN_00015f84(sel=7, [0x53a79], 0xa0000,       // 戰後對話/演出呼叫#2(selector 6→7)
+               0x140, 0xcd, 0x4c, 0x4a, 0x13, 1);
+  FUN_000112a5(0x1a);                           // JOIN(26) = 聖寇拉斯 直接 CALL
+  FUN_00011506();                               // persist-sync(doc56 已知:按 +8 比對,把完整 0x50-byte record 從 runtime 複製進 persistent roster)
+  // 尾端不是 RET，是帶引數的 tail-jump：
+  goto 0x237c8;  // 呼叫前先 PUSH 0x1d(=29)
+}
+```
+
+逐指令原始 bytes(節錄關鍵段，其餘見 raw disasm)：`6a 02`(PUSH 2)`e8 18 bd fe ff`(CALL 0x10b4e)…`6a 1a`(PUSH 0x1a)`e8 34 c4 fe ff`(CALL 0x112a5)`83 c4 04`(ADD ESP,4)`e8 8d c6 fe ff`(CALL 0x11506)`6a 1d`(PUSH 0x1d)`e9 48 e9 ff ff`(**JMP 0x237c8，不是 CALL/RET**)。
+
+**全程 137 bytes 內沒有任何一條指令呼叫 `FUN_00034894`(死亡位元檢查)，也沒有任何 `JZ`/`JNZ` 條件分支**——這代表 `table_post[24]` 對亞奇梅吉(或聖寇拉斯)是否在戰鬥中存活/死亡完全不查，是無條件直線執行。`table_post[chapter]` 本身也是 `FUN_00025bf4` 主迴圈在 `[0x53ecc]==2`(已判定獲勝)時無條件呼叫(doc25 §「戰場重設」行已記錄),因此只要贏了 ch25(即滿足 win-check 的「聖寇拉斯活著」條件),這整段「spawn_group(2) → JOIN(26) → JOIN(29)」序列就會無條件跑一次。
+
+### Step 4:`0x237c8` 尾跳目標——確認就是 `call_scan(0x112a5)` 命中的第 12 個 caller,`CALL 0x112a5` 緊接在跳入點
+
+先前對 `0x112a5` 做的 `call_scan`(全 EXE 窮舉,非 `xref_to`,回避 doc98 記載的「`-noanalysis` 下 `xref_to` 不可靠」已知盲點)命中 28 個真實 CALL 位址,其中 `0x237c8` 正是其一。直接對 `0x237c8` 反組譯(3 條指令,`stop_reason:"jmp"`)：
+
+```
+0x237c8  CALL 0x112a5     ; 消耗 table_post[24] 尾端 PUSH 進來的 0x1d(=29) 引數
+0x237cd  ADD  ESP,0x4
+0x237d0  JMP  0x231f2      ; 繼續跳往另一段共用尾段(未展開，非本輪範圍)
+```
+
+`0x237c8` 落在 `table_post[10]`(`0x23790`)與 `table_post[11]`(`0x237d5`)之間，是**另一章 postbattle handler 內部、被多章共用的一段 tail 程式碼**(Watcom 編譯器常見的 tail-merge，不代表跟 ch11 有劇情關聯)——`table_post[24]` 用 `JMP` 而非 `CALL` 跳進來，靠呼叫前 `PUSH 0x1d` 把引數留在堆疊上，讓共用的 `CALL 0x112a5` 直接讀到 `join_id=29`。**這條鏈路(`PUSH 0x1d; JMP 0x237c8` → `CALL 0x112a5`)就是 `JOIN(0x1d=29)` 的完整、無截斷證據**——`0x1d`=29(十進位)精確等於亞奇梅吉的 `native_record_byte8`/DATO id。
+
+### Step 5:交叉核對——`native_join_constructor.json` id29/id26 兩列都是已存在、已驗證的正式列,不是空表
+
+`remake/assets/data/native_join_constructor.json`(32-row 表,schema 綁定 FD2.EXE 精確 size/MD5/SHA256)：
+
+- **id 29**(`default_file_offset:0x55e59`,`growth_file_offset:0x55fe0`,對應 `0x55ba1+29*0x18`/`0x55ea1+29*0x0b` 公式)的 `default_raw`/`growth_raw` 十六進位值，逐 byte 展開後與 `map24_units.json` unit54(亞奇梅吉)的 `native_constructor.record`(24 bytes)/`aux_record`(11 bytes)**完全相同**——這不是巧合，是這個專案既有的資料匯出工具鏈本來就用同一份 `0x112a5` constructor 公式反推 `map*_units.json` 每個 unit 的 `native_constructor` 欄位，所以「map24 unit54 是從 join-table id29 這一列建構出來的」這件事，其實從資料匯出時就已經隱含證實了；本輪的貢獻是**找到原生程式碼裡真的有一條執行路徑對這個 id 呼叫 `0x112a5`**，把資料層的巧合升級成 handler 層的直接證據。
+- **id 26**(`0x55ba1+26*0x18`)同樣是已存在的正式列,對應 `map24_units.json` unit0(聖寇拉斯,`camp:"own"`,護衛目標)——她也在同一個 postbattle handler 裡被 `JOIN(26)` 直接 CALL 一次,doc28 §2 對 ch25 的 recruit 欄位本來就寫「亞奇梅吉、聖寇拉斯」兩人並列，本輪的 handler 證據精確對上這兩個名字，不多不少。
+
+### 對 91-worklist.md「敵轉友原生機制」假設的修正
+
+上一輪的假設前提是「她需要一個把 `camp:enemy` record 原地轉換成 `camp:own` 的特殊 writer」。本輪的完整反組譯(win-check 10 指令 + postbattle 40 指令，均 `RET`/`JMP` 收尾、無截斷)證明**這個特殊 writer 不存在，因為根本不需要**：`table_post[24]` 不去碰戰鬥用的 enemy record，而是直接呼叫跟其他任何一個 JOIN 角色(索爾/悠妮/哈諾/id18…)完全同款的 `0x112a5(29)`，從獨立的 join-table(而非戰鬥 record)重新生成一筆全新的 persistent roster record。她的 map24 `camp:"enemy"` 只是「這場戰鬥怎麼呈現/對待這個 unit」的旗標，跟「戰鬥結束後怎麼把她加進名冊」完全是兩條不相交的資料路徑——doc28 原本「先打後收」的敘述在效果上沒錯(玩家確實要先打贏 ch25 才會觸發這段 postbattle JOIN)，但機制上更精確的說法是「贏 ch25 觸發一段無條件 postbattle 演出，演出裡呼叫標準 JOIN，不是把她的戰鬥 record 轉換過去」。
+
+### 誠實邊界與下一步(供未來 wiring 輪參考,本輪不寫 campaign_full.json/partyRoster)
+
+- **未展開**:`FUN_00015f84`(戰後對話/演出呼叫，9 引數，selector 6→7)、`FUN_0001366a(0x4b)`、`0x231f2`(第二個 tail-jump 目標)本輪均只記位址/引數，未逐一反組譯內部——這些只影響演出呈現細節，不影響「JOIN(29) 確實被呼叫」這個核心結論的信心度。
+- **未查**:`spawn_group(2)` 召喚的 group2 除了亞奇梅吉(unit54)還有沒有其他 unit(`map24_units.json` 掃描只找到 unit54 一筆 `group==2`，本輪未擴大搜尋其餘章節/地圖是否有共用 group 編號的慣例陷阱，比照 doc99 反覆強調的「每章不可外推」原則，這點留給任何要動 map24 的後續輪自行複核)。
+- **未做但也不需要**:`0x55ba1`/`0x55ea1` 這兩個 join-table 基底位址本輪嘗試直接 `bytes` 讀取失敗(`MemoryAccessException`，這兩個位址在 `FD2Analysis3` project 裡目前對應到未映射/不可讀區段，可能是 file_offset 而非 loaded RAM 位址的既有落差，非本輪新發現的问题)——不影響結論，因為 `native_join_constructor.json` 本身已經是這個表格資料的既有驗證來源(schema 綁定 exe size/hash)，本輪只需要「原生程式碼有沒有呼叫 `0x112a5(29)`」這個 handler 層事實，不需要重新讀一次表格內容本身。
+- **安全 wiring 方向(下一輪動手前的建議)**:亞奇梅吉的招募現在應該被當成**跟 ch16 JOIN(18)、ch00 序章 JOIN(0/9/4/0x1e) 同一類**的標準 scripted JOIN 事件，用 `remake/cmd/fd2/main.go` 既有的 `partyJoinOrder`/beat-driven JOIN 機制(`b.CharID` 出現時 `append` 進 `g.partyJoinOrder`)去表示，而不是等待任何新的「敵轉友」機制——只需要在 ch25 postbattle 對應的 story/scenario beat 腳本裡補一個 `JOIN(char_id=29)` beat(聖寇拉斯 id26 若尚未有對應 beat，應一併確認/補上，兩者證據等級相同)。**這是下一輪的實作範圍，本輪刻意不動 `campaign_full.json`/`partyRoster`/`ForceDeploy`**，留給使用者審閱本輪反組譯證據後再決定。
+
+> 本節新增位址:`0x20b14`(`table_win[24]`)、`0x24df2`(`table_post[24]`)、`0x237c8`(共用 JOIN tail-jump 片段)。方法論:純靜態 `tools/ghidra_batch_probe.py`(`-readOnly -noanalysis`)，`bytes`/`disasm`/`call_scan`/`function_bounds` 四種 action，全程未碰 DOSBox-X，比照同日 `ch10disasm`/`ch29disasm`/`ch30disasm` 既有方法論。
