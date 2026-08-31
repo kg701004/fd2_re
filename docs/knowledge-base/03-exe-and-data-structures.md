@@ -153,6 +153,33 @@
 > `go test ./remake/...` 全綠(純數值變更，無需改任何既有測試)。map30-32(非戰鬥過場地點)
 > 依 M5 稽核範圍不在此次 patch 範圍內。
 >
+> **DX 缺口已解決,HIT/EV 已接上正確 base(2026-08-31,M5 Phase 3 後續)**：上面標的「留給後續
+> 一次單獨的 HIT/EV RE 工作」在這輪補上。第二輪、獨立於上方 doc 文字的 `ghidra_batch_probe.py`
+> `decompile 0x10c50` + `disasm 0x10d7f..0x10e23` 覆核(不是照抄 doc 文字假設),逐指令核對後
+> **doc 原文完全準確**：
+> - high branch(`raw_unit_key>=0x44`)：`0x10e09 MOVZX DX,byte ptr [EAX+0x7]` 接
+>   `0x10e19 MOV word ptr [EDX+0x3e],BX` —— 精確是 `table_byte[+7]*level`,緊接在
+>   AP(`+5`)/DP(`+6`)後面一個 byte,MV(`+8`)則跳過 `+7`,序列一致且無縫。
+> - low branch(`raw_unit_key<0x44`)：`sVar6 = *(short *)(puVar12 + 0x16)` 加
+>   `pbVar13[4]*uVar8` 寫入 `+0x3e` —— 精確是 `lower_aux_byte[+4]*level +
+>   lower_class_word[+0x16]`,跟 AP(aux`+0`/word`+0x12`)、DP(aux`+2`/word`+0x14`)
+>   同一組 stride-2 排列,DX 接續在後。
+>
+> 新增 `native_dx_for_raw_unit_key()`(mirror `native_ap/dp_for_raw_unit_key()`寫法)到
+> `tools/export_units.py`,`main()` 的 `hit_ev_for_unit()` 呼叫改吃這個新公式算出的 `base_dx`
+> (查不到 native provenance 才退回舊 `base_stats()` flat `dx`)。`tools/patch_units_hit_ev.py`
+> (原本只重算 hit/ev 但輸入仍是舊 flat dx,沒真的修好這個 bug)同步改用同一個
+> `native_dx_for_raw_unit_key()`,並補上原本缺的 `native_unit_tables.json` 參數。
+>
+> 驗算沿用同一隻 ch24 LV14 惡魔(`record=[5,26,40,0,5,30,18,6,6,180]`,`inventory_slots=
+> [81,183,255,...]`)：DX=`record[7]*14=6*14=84`；item 81 hit=110/ev=0,item 183
+> hit=0/ev=0(兩者皆在出場 inventory 前兩格,依 `spawn_equipped_item_ids()` 判定已裝備)；
+> `hit=84+110=194`,`ev=84+0=84`。與重新 patch 後 JSON 精確相符(舊值 `hit=114/ev=4`,對應舊
+> flat `dx=4`)。跨全部 30 個 `mapN_units.json`(map0-29,1826 個單位)重新 patch:**98.7%
+> 單位的 hit 與 ev 值都變了**,跟 AP/DP/MV 那輪 98%/98%/87% 同一量級,證實這也不是邊緣案例。
+> `go build ./remake/...`/`go test ./remake/...` 全綠(純數值變更,無需改任何既有測試)。
+> map30-32(非戰鬥過場地點)依 M5 稽核範圍不在此次 patch 範圍內。
+>
 > **`tools/dump_exe_tables.py` 的 `ANCHORS` dict 修正完成(2026-08-20，第 6 輪)**：上面第 82 行
 > 標的「需要先改成讀新版 offset」在這輪補上——全部 9 張表(item/shop/spell/char/growth/learn/
 > resist/crit/unit)的 `ANCHORS` 已改為第 60-70 行表格記載的新版(0x7xxxx)offset，並把兩處先前

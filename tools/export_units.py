@@ -18,7 +18,7 @@ hit/ev/crit(2026-08-14 依兩份反組譯證據取代 DEFAULT_HIT=90/DEFAULT_EV=
   - crit:職業暴擊率,查 docs/data/exe_tables/resist_crit.json(EXE 0x5219B 反組譯,已與
     doc02 §7.2 人物成長表交叉驗證吻合,如劍士5%/騎士3%/法師3%),查不到(單位表 cls 超出
     26 種玩家職業,如怪物專屬職業)一律 0(保守預設,非文件明確值)。
-  - hit/ev:兩段已證實的原生邏輯合起來算出完整值(不再只是 base 近似)——
+  - hit/ev:三段已證實的原生邏輯合起來算出完整值(不再只是 base 近似)——
     (1) native sub_1B750(0x1B750..0x1B83D,IDA Pro 9.4 + Capstone 雙工具反組譯,見
     docs/data/fd2_runtime_equipment_recalc_1b750_ida.txt)證實 HIT/EV 起始值共用同一個
     raw signed word +0x3e(=`dx`,doc32 已將 +0x37/+0x39/+0x3e 命名為 persistent base
@@ -26,7 +26,10 @@ hit/ev/crit(2026-08-14 依兩份反組譯證據取代 DEFAULT_HIT=90/DEFAULT_EV=
     IDA 9.4 pseudocode,見 docs/knowledge-base/56-fd2-remake-sdd.md「2026-07-27 —
     constructor inventory flag materialization」)證實出場 inventory 只有前兩個 raw slot
     會被自動判定為「已裝備」(flag 0x40),第 3 格以後一律只是持有(flag 0x00),不影響
-    HIT/EV。詳細算法見 spawn_equipped_item_ids()/hit_ev_for_unit()。不含 native command
+    HIT/EV;(3) 2026-08-31 補上 DX 本身的 growth×level 公式(同一輪 AP/DP/MV 反組譯已
+    順帶證實,這輪重新對 0x10d7f..0x10e23 獨立覆核並接線)——`+0x3e` 不再是 base_stats()
+    的 flat 近似值,見 native_dx_for_raw_unit_key()。詳細算法見
+    spawn_equipped_item_ids()/hit_ev_for_unit()。不含 native command
     19「速度術」+15 的戰鬥中暫時加成(那是回合內狀態,不屬於出場靜態值)。
 
 用法:
@@ -262,6 +265,36 @@ def native_mv_for_raw_unit_key(tables, raw_unit_key):
     return record[7]
 
 
+def native_dx_for_raw_unit_key(tables, raw_unit_key, level):
+    """Compute the constructor input copied to runtime record ``+0x3e`` (base DX).
+
+    Same ``0x10d7f..0x10e23`` disasm as ``native_ap_for_raw_unit_key()`` /
+    ``native_dp_for_raw_unit_key()`` -- re-disassembled directly (not assumed
+    from doc prose) for this HIT/EV follow-up (2026-08-31): high selectors
+    (``MOVZX DX, byte ptr [EAX + 0x7]`` at ``0x10e09``) use table byte ``+7``
+    times level; lower selectors (``pbVar13[4]*uVar8 + sVar6`` where
+    ``sVar6 = *(short *)(puVar12 + 0x16)`` at ``0x10dc3``/``0x10e19`` region)
+    use lower-aux byte ``+4`` times level plus lower-class word ``+0x16``.
+    DX has no independent export field of its own -- it only ever feeds
+    ``hit_ev_for_unit()``'s ``base_dx`` argument as the shared HIT/EV base.
+    """
+    if not tables or level <= 0:
+        return None
+    native = native_constructor_for_raw_unit_key(tables, raw_unit_key)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) <= 7:
+            return None
+        return record[7] * level
+    aux = native.get("aux_record")
+    if aux is None or len(record) < 0x18 or len(aux) < 5:
+        return None
+    base = record[0x16] | (record[0x17] << 8)
+    return aux[4] * level + base
+
+
 def crit_by_cls(resist_crit, cls):
     for e in resist_crit:
         if e.get("cls") == cls:
@@ -329,16 +362,24 @@ def main(argv):
         raw_unit_key = u["raw_unit_key"]
         bs = base_stats(exe, u["race"], u["cls"])
         cls_name = PORTRAIT_CLS_NAME.get(raw_unit_key, bs.get("cls_name", ""))
-        hit, ev = hit_ev_for_unit(bs["dx"], u.get("inventory_slots", []), items_by_id)
+        # base_dx: prefer the native constructor's growth*level DX (see
+        # native_dx_for_raw_unit_key(), same 0x10d7f..0x10e23 disasm as
+        # ap/dp/mv); fall back to the old flat base_stats() dx only when
+        # this unit has no proven native_constructor provenance.
+        native_dx = native_dx_for_raw_unit_key(native_tables, raw_unit_key, u["lv"])
+        base_dx = native_dx if native_dx is not None else bs["dx"]
+        hit, ev = hit_ev_for_unit(base_dx, u.get("inventory_slots", []), items_by_id)
         rec = {
             "camp": u["camp"], "cls": u["cls"], "cls_name": cls_name,
             # `portrait` remains a legacy editable-schema field. Its source is
             # the raw b1 key, not a universal DATO identity proof.
             "lv": u["lv"], "portrait": raw_unit_key, "group": u.get("group", 0),
             "hp": bs["hp"], "mp": bs["mp"], "ap": bs["ap"], "dp": bs["dp"], "mv": bs["mv"],
-            # HIT/EV = native sub_1B750 公式:base(=dx)+已裝備物品(出場 inventory 前兩格,
-            # 見 spawn_equipped_item_ids)的 item.json hit/ev word,兩份反組譯證據見
-            # hit_ev_for_unit() docstring。取代舊的 DEFAULT_HIT=90/DEFAULT_EV=5 近似值。
+            # HIT/EV = native sub_1B750 公式:base(=native_dx_for_raw_unit_key() 的
+            # growth×level DX,查不到 native provenance 才退回舊 base_stats() flat dx)
+            # +已裝備物品(出場 inventory 前兩格,見 spawn_equipped_item_ids)的 item.json
+            # hit/ev word,三份反組譯證據見 hit_ev_for_unit()/native_dx_for_raw_unit_key()
+            # docstring。取代舊的 DEFAULT_HIT=90/DEFAULT_EV=5 近似值。
             "hit": hit, "ev": ev, "crit": crit_by_cls(resist_crit, u["cls"]),
             "fig": raw_unit_key,  # legacy compatibility approximation; not native unit+2
             "map_selector_key": u["native_map_selector_key"],  # FDFIELD b0 -> 0x11019 -> unit+2 slot
