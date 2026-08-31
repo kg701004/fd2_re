@@ -1,7 +1,8 @@
 {
  "chapter": 33,
  "title": "第三十三章 — 番外:王座之秘,索爾的身世",
- "source_dat": "FDTXT_033",
+ "source_dat": "unverified (see source_dat_note)",
+ "source_dat_note": "勘誤(2026-08-31,M5 Phase1b):原標記 FDTXT_033 已證實錯誤——remake/assets/cutscenes/dialogue-index/count-aligned.json 顯示 FDTXT_033(41 raw utterances)與 ch00_palace.json 完全 count_aligned(41/41),且該工具自己對 FDTXT_033↔ch33.json 的嘗試比對回報 utterance_count_mismatch(41 raw vs 僅19 story lines,落差遠大於ch32那組)——雙重證據都指向 FDTXT_033 真正屬於 ch00_palace,不是本章。真正來源同 ch32.json 一樣極可能是已損毀的 FDTXT_034(見該檔 diagnostics「file is shorter than the first offset」),目前無法驗證;下方 notes 提到的「與FDTXT_032同屬」本身也是舊有、未經本輪重新核實的另一個引用，一併保留原文但不視為已驗證的來源證據。誠實記錄為未解問題，見 91-worklist.md M5 Phase1b。",
  "location": "另一段番外閃回:索爾奉召晉見父王,國王在寢宮私下向他透露一項驚人決定——欲立索爾(而非血親皇弟迪恩)為羅特帝亞王位繼承人,並暗示索爾其實並非國王的親生骨肉,而是被收養撫育長大的孩子。索爾震驚不已,國王給他三天時間考慮。",
  "notes": "本章與 FDTXT_032 同屬結局後的番外閃回,揭露索爾的身世之謎(非王室血親、被收養),與正篇尾聲「索爾繼任王位」的伏筆相互呼應。原始腳本此段全數使用代碼「0」交替代表索爾與父王二人對話,依內文語氣與稱謂(「兒臣」「父王」/「朕」「索爾」)逐句判別歸屬;另有兩句代碼「1」插話,內容以「我們」自稱與索爾、國王同席,依語境判斷應為母后,而非正篇代碼 1=哈諾(哈諾未曾在王室私下場合出現),已標記 [?] 並改列為推測稱呼「(母后)」。",
  "scenes": [

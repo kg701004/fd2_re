@@ -1,7 +1,8 @@
 {
  "chapter": 32,
  "title": "第三十二章 — 尾聲續篇與番外:索爾與悠妮的初遇",
- "source_dat": "FDTXT_032",
+ "source_dat": "unverified (see source_dat_note)",
+ "source_dat_note": "勘誤(2026-08-31,M5 Phase1b):原標記 FDTXT_032 已證實錯誤——remake/assets/cutscenes/dialogue-index/count-aligned.json 顯示 FDTXT_032(40 raw utterances)與 ch00_meadow.json 完全 count_aligned(40/40),且該工具自己對 FDTXT_032↔ch32.json 的嘗試比對回報 utterance_count_mismatch(40 raw vs 46 story lines)——雙重證據都指向 FDTXT_032 真正屬於 ch00_meadow,不是本章。本章真正來源極可能是 FDTXT_034(續篇/番外常見的後段容器),但該檔案已損毀(count-aligned.json diagnostics:「file is shorter than the first offset」),目前無法逐位元組驗證;下方 notes 提到的「前段緊接 FDTXT_031 結尾」則指向本章實際可能橫跨兩個原始 .DAT(FDTXT_031 尾端 + 另一段),不是單一來源——這是誠實記錄的未解問題,不是已解決,見 91-worklist.md M5 Phase1b。",
  "location": "承接前章「姓名:職業:」跑馬燈式旁白,交代惡魔族相關角色(達克塞、亞奇梅吉)以及蓋亞、渥德兩具機甲兵的戰後結局,並以悠妮的內心獨白總結全劇。其後附上一段番外閃回:多年前少年索爾與哈諾在羅特帝亞郊外救起一名失憶少女,少女自稱「悠妮」,身邊帶著一具會說話的機甲兵「蓋亞」——正是索爾與悠妮命運相遇的起點。",
  "notes": "本章前段旁白緊接 FDTXT_031 結尾,共用同一段跑馬燈文字,兩檔案在原始資料中屬同一敘事段落被拆分於相鄰 .DAT。後段番外閃回代碼為腳本本地重新指派:0=少年索爾、1=少年哈諾(與正篇的全域索引一致)、3=蓋亞(機甲兵,自稱「主人」稱呼悠妮)、4=少女悠妮——此處「4」與正篇全域表的「亞雷斯」無關,係依內文自稱「我叫..我叫..悠妮吧」點名判定,已標註於對應台詞;推測是因悠妮在此劇情時間點尚未取得正式肖像編號,暫用未分配的占位代碼。此番外首度揭露索爾與悠妮相識的原始場景,呼應正篇「送妳回家」的約定。",
  "scenes": [
