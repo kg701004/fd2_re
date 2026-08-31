@@ -351,6 +351,13 @@ func TestCampaignFullPrologueFollowsOriginalTextGroups(t *testing.T) {
 	if post14 == nil || post14.HandlerBinding != "assets/cutscenes/bindings/ch13_post.json" || post14.Next != "town_ch15" {
 		t.Fatalf("chapter 14 must execute zero-based ch13_post before town: %#v", post14)
 	}
+	post24 := c.Nodes["postbattle_ch24_persist"]
+	if post24 == nil || post24.Type != "cutscene" || post24.HandlerBinding != "assets/cutscenes/bindings/ch23_post.json" || post24.Next != "preparation_ch25" || len(post24.Beats) != 0 {
+		t.Fatalf("chapter 24 must execute the promoted ch23_post handler (M5 Phase 1, 0x24d22/0x11d40 resolved via doc58 續二十八): %#v", post24)
+	}
+	if beats, issues, err := CompileHandlerBinding("../../assets/cutscenes/bindings/ch23_post.json"); err != nil || len(issues) != 0 || len(beats) != 20 {
+		t.Fatalf("postbattle_ch24_persist handler_binding must compile clean: beats=%d issues=%#v err=%v", len(beats), issues, err)
+	}
 	battle2, post2 := c.Nodes["battle_ch02"], c.Nodes["story_ch02_post"]
 	if battle2 == nil || battle2.OnWin != "story_ch02_post" || post2 == nil || post2.Type != "cutscene" || post2.HandlerBinding != "assets/cutscenes/bindings/ch01_post.json" || post2.Next != "town_ch03" {
 		t.Fatalf("chapter2 battle must flow through editable post handler: battle=%#v post=%#v", battle2, post2)
@@ -494,7 +501,7 @@ func TestCampaignFullPostbattleBindingsUseVerifiedRawOwner(t *testing.T) {
 		"postbattle_ch20_persist": "assets/cutscenes/bindings/ch19_post.json",
 		"postbattle_ch22_persist": "",
 		"postbattle_ch23_persist": "",
-		"postbattle_ch24_persist": "",
+		"postbattle_ch24_persist": "assets/cutscenes/bindings/ch23_post.json",
 		"postbattle_ch25_persist": "assets/cutscenes/bindings/ch24_post.json",
 		"postbattle_ch26_persist": "assets/cutscenes/bindings/ch25_post.json",
 		"postbattle_ch28_persist": "assets/cutscenes/bindings/ch27_post.json",
@@ -789,11 +796,17 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 	wantIntermission[26] = "town_ch27"
 	wantIntermission[27] = "preparation_ch28"
 
-	countSync := func(nodeID string, n *Node) int {
+	// countSync takes the calling subtest's own *testing.T explicitly rather
+	// than closing over the enclosing test function's t: a closure-captured
+	// outer t would call FailNow on the parent test from inside a subtest
+	// goroutine, producing a panic(nil)/"FailNow on a parent test" instead of
+	// a clean per-subtest failure if a real compile regression ever occurs.
+	countSync := func(t *testing.T, nodeID string, n *Node) int {
 		t.Helper()
 		beats := n.Beats
 		if n.HandlerBinding != "" {
 			var issues []HandlerCompileIssue
+			var err error
 			beats, issues, err = CompileHandlerBinding(filepath.Join("../..", n.HandlerBinding))
 			if err != nil || len(issues) != 0 {
 				t.Fatalf("%s handler compile err=%v issues=%#v", nodeID, err, issues)
@@ -837,7 +850,7 @@ func TestEveryContinuingBattleSyncsBeforeOriginalIntermission(t *testing.T) {
 					}
 					return // runtime guard keeps this fail-closed before the intermission
 				}
-				syncs += countSync(current, n)
+				syncs += countSync(t, current, n)
 				switch n.Type {
 				case "town", "preparation":
 					if current != wantIntermission[chapter] {
@@ -959,7 +972,7 @@ func TestCampaignFullStoryScriptCoverageMatchesAudit(t *testing.T) {
 			generic++
 		}
 	}
-	if storyNodes != 121 || scripted != 9 || handlerBound != 49 || fallback != 63 || retreat != 30 || rumor != 23 || postbattle != 5 || generic != 5 {
+	if storyNodes != 121 || scripted != 9 || handlerBound != 50 || fallback != 62 || retreat != 30 || rumor != 23 || postbattle != 4 || generic != 5 {
 		t.Fatalf("campaign story coverage changed: nodes=%d scripted=%d handler_bound=%d fallback=%d retreat=%d rumor=%d postbattle=%d generic=%d; update the audit before changing claims", storyNodes, scripted, handlerBound, fallback, retreat, rumor, postbattle, generic)
 	}
 }

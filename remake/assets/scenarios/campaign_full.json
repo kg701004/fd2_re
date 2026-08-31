@@ -4109,6 +4109,7 @@
   },
   "postbattle_ch24_persist": {
    "type": "cutscene",
+   "handler_binding": "assets/cutscenes/bindings/ch23_post.json",
    "next": "preparation_ch25"
   },
   "retreat_ch24": {

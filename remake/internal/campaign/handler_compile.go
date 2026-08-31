@@ -725,6 +725,59 @@ func compileHandlerScript(script *HandlerScript, bindings HandlerBindings, activ
 				beats = append(beats, beat)
 				continue
 			}
+			// 0x24d22(tier) is ch24 postbattle's (0x24c1e) result-screen DAC-tier
+			// setter. Full static decompile (doc58 續二十八, 2026-08-19, commit
+			// 7093ca16) proved its body is `if(param!=0){DAT_00051a10=tier;
+			// return;} else{...copy/blit using DAT_00051a10...}` and that every
+			// one of 0x24c1e's 13 calls passes a nonzero loop counter (2..9 then
+			// 10..14) -- the copy/blit else-branch this setter feeds is never
+			// reached from this call site. The export's single representative
+			// beat per loop (register "edi", not a literal) matches the already
+			// established convention for other collapsed loop bodies in this
+			// same handler (e.g. the 0x17aa9 tick beats below); no exact tier
+			// value is recoverable or needed since the setter is provably inert
+			// here. Gate narrowly to ch24_post's two exact call sites, not a
+			// blanket 0x24d22 rule -- other chapters' callers are unverified.
+			if input.NativeTarget == "0x24d22" && (input.Source.Addr == "0x24c82" || input.Source.Addr == "0x24cf3") {
+				beats = append(beats, runtime(input, "native_result_tier_set"))
+				continue
+			}
+			// 0x11d40(start,end,delta) at ch24 postbattle's 0x24cc9 is a 60-step
+			// (5 outer x 12 inner) whole-DAC cross-fade between the two result-
+			// screen text frames, delta rising 0..59 (doc58 續二十八, 2026-08-19):
+			// FUN_00011d40(0,0xff,ESI) with ESI a monotonic 0..59 loop counter,
+			// never a runtime-dependent value. The remake's indexed-DAC ramp
+			// renderer (startNativePaletteRamp) only serves story-viewport scenes
+			// entered via loadch; this handler has no loadch beat (it continues
+			// directly from the just-finished battle's runtime roster), so that
+			// renderer's storyActors precondition cannot be satisfied here. The
+			// already-proven, already-wired battle-context primitive is the
+			// binary palette_update op (full-DAC white, PaletteDelta=255) used
+			// by the sibling 0x35822/0x35bba reinforcement helpers below. Delta
+			// 59 of 63 does not literally reach full saturation, so this is a
+			// documented approximation (near-white rendered as white), not an
+			// exact reproduction; the handler has no subsequent restore beat
+			// because the following set_chapter's node-entry transition already
+			// clears nativeFullDACWhite (main.go), matching native behavior
+			// leaving the DAC unrestored into the next scene. Exact source PUSH
+			// order [delta,end,start] mirrors the already-proven 0x23599 case.
+			if input.NativeTarget == "0x11d40" && input.Source.Addr == "0x24cc9" {
+				if len(input.RawArgs) != 3 {
+					issue(i, input, "0x24cc9 cross-fade requires exact source PUSH order [register delta, 255, 0]")
+					continue
+				}
+				end, okEnd := immediateHandlerInt(input.RawArgs, 1)
+				start, okStart := immediateHandlerInt(input.RawArgs, 2)
+				_, deltaIsRegister := input.RawArgs[0].(string)
+				if !okStart || !okEnd || !deltaIsRegister || start != 0 || end != 255 {
+					issue(i, input, "0x24cc9 cross-fade requires exact source PUSH order [register delta, 255, 0]")
+					continue
+				}
+				beat := runtime(input, "palette_update")
+				beat.PaletteStart, beat.PaletteEnd, beat.PaletteDelta = 0, 255, 255
+				beats = append(beats, beat)
+				continue
+			}
 			// 0x12cea(x,y) is the native X-first/Y-second camera focus loop.
 			// Handler exports preserve the source PUSH order (y,x), so reverse the
 			// two immediate arguments before lowering to the tile-step camera pan.

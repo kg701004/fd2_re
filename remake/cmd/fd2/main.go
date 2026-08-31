@@ -1486,6 +1486,11 @@ func (g *Game) beatStart(b campaign.Beat) {
 	case "reset_persistent_roster_state":
 		g.resetPersistentRosterState()
 		g.beatAdvance()
+	case "native_result_tier_set":
+		// 0x24d22(tier) writes DAT_00051a10 for a copy/blit branch that is
+		// provably unreachable from ch24 postbattle's 13 nonzero-arg call
+		// sites (doc58 續二十八, 2026-08-19). No runtime state to model.
+		g.beatAdvance()
 	case "set_chapter":
 		if b.Chapter == nil || *b.Chapter < 0 {
 			g.loadErr = "beat set_chapter:缺少有效章節"

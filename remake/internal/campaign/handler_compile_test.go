@@ -1525,6 +1525,10 @@ func TestCompileGeneratedHandlerBindingsCompletionFrontier(t *testing.T) {
 		"ch10_post.json": true, "ch18_post.json": true,
 		"ch27_post.json": true, "ch25_post.json": true,
 		"ch14_post.json": true,
+		// postbattle_ch24_persist: 0x24d22/0x11d40 lowered 2026-08-31 (M5
+		// Phase 1) via doc58 續二十八's exhaustive static decompile -- see
+		// handler_compile.go's "unknown" case for the exact evidence.
+		"ch23_post.json": true,
 	}
 	for _, path := range paths {
 		_, issues, err := CompileHandlerBinding(path)
