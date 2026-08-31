@@ -9202,3 +9202,119 @@ instance被誤殺(啟動前後都核對過,全程只有這兩個PID存在)。`re
 `save-load-gui-xvfb-state-b-retreat.png`、`save-load-gui-xvfb-state-c-reload.png`、
 `save-load-gui-xvfb-altf5-no-save.png`)。`remake/fd2-linux-verify`已用HEAD `8370046f`重建
 (binary本身不納入版控,僅本輪操作證據留存於此)。
+
+## 續八十二(2026-08-31):class-change 成長 roll 與 church revive 費用──首次真實 DOSBox-X
+數值回歸,收斂 `91-worklist.md` 5 個相關項目(`class-change data/UI bridge`「HIT/EV/DX 實機數值
+差分仍待」、兩條「戰後 town/整備流程」「尚待 indexed renderer 與原版數值對照」「尚待完整 xvfb 轉職
+操作」、兩條「class-change church」「待 raw race/multiplier 欄位與實機回歸」「仍需原版實機數值
+回歸」)
+
+> 任務範圍(明確界定):本輪只回答「remake 的 class-change AP/DP/DX/MaxHP/MaxMP 成長 roll 與
+> church revive 費用公式,有沒有拿真正的原版 DOSBox-X 對照過」——答案先前是**從未**。範圍**不**
+> 包含 indexed renderer/raw service0 status-command 的畫面像素級 parity(那是另一條獨立的視覺
+> 還原工作),也**不**包含 HIT/EV(這兩個是裝備 recompute 後的**衍生**戰鬥數值,`class_change_growth.json`
+> 的成長表本身沒有 HIT/EV 欄位,class-change roll 不直接寫它們,故它們沒有 `[min,max)` 可驗證的
+> range——doc91 `HIT/EV/DX` 那句提到的是 raw service0 renderer 顯示這些值的畫面,不是本輪要驗證的
+> 成長公式本身)。
+
+**驗證目標與已知資料(先於連線核對,避免對錯 row)**:fixture 場景是 Lv20+ 悠妮(portrait 9/
+ClassID5 法師)持有 item `0x5a`(精靈契印)。`remake/assets/data/class_change_targets.json`:
+current portrait 9 → `special_item=90(0x5a)`/`special_target=52(0x34)`(覆寫 optional
+`item_id=88`/`target=59`),`target_portraits` 裡 portrait `52(0x34)` → `class_id=21`
+(`ClassName(21)="召喚師"`)、`mobility_increment=2`。`remake/assets/data/class_change_growth.json`
+用 `LoadClassChangeGrowth` 的 `0x20+idx-32` 公式反推,target portrait `0x34` 對應 `idx=52` 那列:
+`AP[9,12) DP[6,9) DX[3,5) HP[12,18) MP[20,30)`。這是本輪唯一要驗證的 row。
+
+**存檔取得(比預期簡單——機器上已有現成的合法存檔,不需要 `fd2save.py` 從零合成)**:
+`~/fd2-run/FD2.SAV` 本身(非合成,真實 mid-campaign 進度)`summarize` 後發現 4 個 slot 裡
+**slot index 2**(LOAD 選單顯示「3) 第八章 王城前的戰鬥」,raw chapter `0x07`→`town_ch08`)剛好是
+一個尚未轉職、正確持有 item `0x5a` 的悠妮:`roster_char_ids[1]=9`(即角色 id 9=悠妮),用
+`remake/internal/fdsave/save.go` 的 `PersistentRecordView` offset 手動解出該 record:
+`level=40`(≥20 ✓)、`raw+7=9`(portrait<0x12 且 !=7 ✓)、`raw+0x20=5`(法師,符合
+`CanChangeClass`)、inventory `(flag=0,item=90)`(精靈契印,未裝備但存在即可觸發 special
+override)。`town_ch08` 的 `campaign_full.json` 節點本身有 `church_ch08` 選項,church 是每個
+town hub 的固定四選項之一,不限特定章節(town-hub cycle 順序`酒店→教會→道具店→出口→武器店`
+與既有 doc91 記錄一致)。金幣 `$10012093` 足夠覆蓋任何 revive fee。**5 次 class-change trial 全部
+直接重複使用這一個 slot**,因為每次都用 `tools/dosbox_harness.sh launch` 開一顆全新 instance(把
+`~/fd2-run` 完整複製到獨立 `~/fd2-run-harness-<name>` workdir),從未在遊戲內按過存檔,所以
+`~/fd2-run/FD2.SAV` 全程只被讀取、從未被 DOSBox-X 寫入——5 輪前後 `md5sum` 完全相同
+(`e6d9a35756cddfc2519969b10f039181`),`teardown`/`teardown-all` 後 `ps aux`/`tmux ls`
+確認乾淨,全程未使用、未干擾 doc48 §8.4 canonical `dbg`/`:99`。
+
+**操作序列(5 次一致)**:Title(`Down`+`Enter`選LOAD)→LOAD選單`Down×2`+`Enter`選第3項→
+town_ch08(游標預設在酒店)→`Right`進教會(`Enter`)→教會主選單`Right×3`進轉職服務(`Enter`)→
+候選清單載入需額外一次`Enter`(開場動畫 acknowledgement)→三列候選第一列固定是悠妮(同畫面另兩位
+候選瑪琳「僧侶轉職成聖者」、貝克威「弓兵轉職成神射手」,恰好交叉印證了 `class_change_targets.json`
+另外兩列 class_id 對映也正確,不只是悠妮這一列)→`Enter`選悠妮→確認框「悠妮要轉職嗎?」`Enter`
+(=YES)→**原版遊戲本身會逐行顯示每個 roll 到的數值**(`力量上升X點!`=AP、`耐力上升X點!`=DP、
+`速度上升X點!`=DX、`MHP上升X點!`、`MMP上升X點!`、`移動力增加X點!`=MV,每行 `Enter` 推進),
+不需要另外去讀 status screen 做 before/after 差分——這比原計畫的方法更直接、更不會引入讀值誤差。
+每輪結束後 `teardown` 該 instance(全部變更只存在 DOSBox-X 記憶體內,從未寫回磁碟),下一輪重新
+`launch` 一顆全新 instance(自動用乾淨的 `~/fd2-run/FD2.SAV` 複製一份)取得完全獨立的 RNG 起點。
+
+**5 次 trial 原始數值(`docs/figures/church-classchange-trial{1..5}-deltas.png`)**:
+
+| trial | AP | DP | DX | MHP | MMP | MV |
+|---|---|---|---|---|---|---|
+| 1 | 9 | 8 | 4 | 14 | 21 | 2 |
+| 2 | 9 | 8 | 4 | 14 | 24 | 2 |
+| 3 | 10 | 8 | 4 | 16 | 23 | 2 |
+| 4 | 10 | 8 | 4 | 16 | 23 | 2 |
+| 5 | 10 | 8 | 4 | 15 | 21 | 2 |
+
+**逐欄 range 判定(JSON `[min,max)`,即含 min 不含 max)**:
+- AP `[9,12)`={9,10,11}:實測 {9,9,10,10,10} 全部落在範圍內──**PASS(5/5)**
+- DP `[6,9)`={6,7,8}:實測全部是 8──**PASS(5/5)**(5 次都取到上界前一個值,樣本數不足以判斷
+  是否覆蓋到 6/7,但沒有任何一次超出宣稱範圍)
+- DX `[3,5)`={3,4}:實測全部是 4──**PASS(5/5)**(同上,5 次沒有取到 3,不構成違規,只是樣本
+  沒覆蓋到該值)
+- MaxHP `[12,18)`={12..17}:實測 {14,14,16,16,15} 全部落在範圍內──**PASS(5/5)**
+- MaxMP `[20,30)`={20..29}:實測 {21,24,23,23,21} 全部落在範圍內──**PASS(5/5)**
+- MV:不是 `[min,max)` range,是 `class_change_targets.json` 的固定 `mobility_increment=2`;
+  5 次全部精確等於 2──**PASS(5/5,exact match)**
+
+**item 消耗與職業標籤**:trial1 事先用 church 服務0(狀態查詢,`0x2ffa5`)截圖確認轉職前完整
+inventory 含「精靈契印 ???」(item `0x5a`)與另一個「領悟之書 ???」(item `0x5b`×2);轉職畫面
+顯示「職業轉成召喚師!」(法師→召喚師,即 class_id 5→21)。trial1 與 trial5 都額外核對:轉職完成
+後回到候選清單,悠妮不再出現(其餘章節同時符合 Lv≥20 條件的隊友仍在列)——證實 `+7`/`+0x20` 確實
+被寫回 `0x34`/`21`,不是畫面顯示了訊息但沒真的 mutate。
+
+**方法論副發現(誠實記錄,非本輪要解的 bug,但影響後續任何類似 RNG 抽樣工作的規劃)**:trial1 與
+trial2 的 AP/DP/DX/MHP **完全相同**(9/8/4/14),只有 MMP 不同(21 vs 24)。這代表這份原生 RNG
+的推進是跟「已執行的按鍵/tick 數」掛鉤,不是跟真實牆鐘時間掛鉤——用完全相同的腳本化按鍵序列、從
+完全相同的存檔起點重跑,前幾個 roll 有很高機率重複。trial3 起改用刻意加入的不規則等待與 town-hub
+內多餘方向鍵繞路(見本節「操作序列」未逐字重複的變體)去打亂輸入時序後,AP 確實從 9 變成 10(trial
+3/4/5 一致但不同於 1/2),證明**真正的隨機性存在**,只是「同一組腳本、同一個存檔、不同次
+launch」不足以保證獨立抽樣——下一輪如果要做更大樣本的原生 RNG 統計驗證,應該系統性地在每次
+launch 後插入不同長度的等待或按鍵繞路,而不是假設「不同 instance = 獨立抽樣」。
+
+**Church revive 費用公式(額外驗證,formula-based 非隨機)**:另建一份存檔副本
+(`~/fd2-run-revivesrc/FD2.SAV`,用 `tools/fd2save.py` 為底層 library 撰寫的一次性腳本,直接
+基於已證實的 `remake/internal/fdsave/save.go` `PersistentRecordView` offset 修改 slot2 record0
+(索爾,`level=4`/`raw class byte=9`)的 `raw+5 |= 0x01`(revive 候選 flag)與 `raw+0x40=0`
+(current HP),其餘欄位不動,`encode()`/`decode()` round-trip 自檢後寫出;這份副本只餵給
+harness 的 `FD2_HARNESS_SOURCE_DIR` override,`~/fd2-run/FD2.SAV` 本體全程不受影響)。用同一顆
+instance(`ct5`)先完成第5次 class-change trial,再回教會主選單導航到 revive 服務(**踩坑記錄**:
+從 class-change 服務位置用 `Right×2` 想抵達 revive 反而繞到「誰的東西呢?」item-transfer 服務,
+因為選單游標在多次進出子選單後**不會重置回索引0**,而是保留在上次離開的位置——改用先確認目前所在
+位置的畫面文字,再單步 `Left`/`Right` 並每步截圖驗證後,才正確抵達「誰要復活呢?」)。候選清單顯示
+「索爾 魔族 劍聖 $04800」——`revive_fee_rates.json` 的 `rates[9]=1200`(class_id 9,`ClassName(9)`
+="劍聖"與畫面顯示逐字吻合)乘以 `level=4` 恰好 `1200*4=4800`,與畫面數字**逐位元組相同**。選定
+確認框「索爾復活要4800元,好嗎?」YES 後:金幣由 `$10012093` 變成 `$10007293`(差額精確
+`4800`),候選清單清空為「隊伍中沒有須要復活的!」——`ReviveUnit` 的 `cost := feeRate * u.Lv`
+公式與扣款/清 flag 邏輯**完全對應原版行為,無偏差**。
+
+**結論:本輪未發現任何 bug**。AP/DP/DX/MaxHP/MaxMP 五個成長 roll 欄位、`mobility_increment`
+常數,以及 revive fee 公式,在 5 次 class-change 獨立 roll(其中 2 次因輸入時序巧合而彼此重複,
+不影響「未超出宣稱範圍」這個判定)與 1 次 revive 交易裡,全部與 `remake/assets/data/*.json` 的
+既有資料**逐項吻合**,沒有一項需要程式碼修正。indexed renderer/service0 status-command 視覺
+parity(doc91 提到的 raw service0)不在本輪範圍,仍待另一輪視覺回歸工作;HIT/EV 因不是成長表
+欄位,同樣不構成本輪的「待驗證 range」。
+
+**證據**:`docs/figures/church-classchange-trial1-status-before.png`(轉職前 status screen,
+含 LV40/DX107/HIT247/AP706/EV137/DP601/HP751/MP767 與完整 inventory)、
+`church-classchange-trial1-yuni-stats-before.png`、`church-classchange-trial1-candidate-list.png`
+(候選清單,含瑪琳/貝克威交叉印證)、`church-classchange-trial1-deltas.png`、
+`church-classchange-trial1-candidate-list-after.png`(悠妮從清單消失)、
+`church-classchange-trial{2..5}-deltas.png`、`church-revive-fee-candidate.png`($04800 候選列)、
+`church-revive-fee-confirm.png`(確認框)、`church-revive-fee-after.png`(扣款後金幣與清空候選)。
