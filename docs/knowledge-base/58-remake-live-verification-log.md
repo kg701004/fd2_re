@@ -9517,6 +9517,19 @@ flag)、`raw[+0x40]=0`(currentHP=0)，其餘全部不動，`encode()`/`decode()`
    找到。**這是一個新的、獨立的疑點，不在本輪範圍內深究或修復**，留給 class-change 相關欄位下一輪
    RE 工作參考。
 
+   **2026-08-31 純靜態後續輪已解**：見 `docs/knowledge-base/32-item-combat-stats-re.md` §6.3.1。
+   結論是 **(b)**，不是 (a)——新版 EXE(`FD2Analysis3`)反組譯直接找到轉職重算函式(新版位址
+   `FUN_0002ac7d`，`0x2ac7d`–`0x2ae0d`，是舊文件 `0x2a2e8` 的新版對應，靠 `xref_to 0x1e529`
+   沿呼叫圖回溯定位，不是位址平移假設)在 growth-add ×5／MV 累加／`0x1b750` 衍生重算之後，
+   有一行無條件 `MOV byte ptr [ESI+0x21], 0x1`(`0x2aded`，opcode `c6 46 21 01`)，緊接著才是
+   `record[+0x3c]=0`(EXP 歸零)與 HP/MP 回滿——四個動作是同一組無保護寫入序列。狀態面板渲染器
+   `FUN_00017fc0`(`0x180a2`：`MOVZX EAX, byte ptr [EBX+0x21]`)是對這個 offset 的直接讀取，
+   丟給共用 raw-number renderer(`0x187d6`)前不含任何 EXP 查表或計算，跟同函式裡讀 EXP 欄位
+   (`record+0x3c`)的呼叫模式完全一樣。也就是說：**原版轉職真的會把 Lv byte 寫死成 1**，doc91
+   L1316「保留 Lv」與本節上面的假說 (a) 都是錯的；AP/DP/DX/MaxHP/MaxMP 累加與 MV 累加的既有結論
+   不受影響、維持正確。remake 側建議(未實作，留給下一輪決定是否套用)：`ApplyClassChange` 應在
+   `u.Exp=0` 旁加一行 `u.Lv=1`。
+
    **remake 端 pixel-parity 嘗試與結果(部分閉合，誠實記錄)**：用 `remake/fd2-linux-verify`(既有
    2026-08-15 build)在獨立 Xvfb `:898`(1400×900，`-ac -nolisten local -listen tcp`，與
    canonical/harness/diffharness 的 port range 均不重疊)下以 `FD2_CAMPAIGN=campaign_full.json

@@ -629,6 +629,120 @@ regression test 覆蓋。外部佐證:[PTT 實測表](https://www.ptt.cc/bbs/Dyn
 與[轉職攻略](https://jaceju-favorite-games.gitbooks.io/fd2/content/walkthrough/INDEX.html)皆
 吻合「舊能力+新職成長」而非絕對重設。
 
+### 6.3.1 修正(2026-08-31)：「Lv 保留」是錯的——原版轉職會把 Lv byte 直接寫死成 1
+
+**背景**：doc58 續八十五(2026-08-31)在真實 DOSBox-X 上首次打開轉職後的 raw service0
+狀態畫面(此前續八十二只讀了逐行成長訊息，未讀 status 畫面)，悠妮(portrait9→target
+0x34/召喚師，轉職前 Lv40)畫面顯示 `LV·01`，但 HP 763/763、MP 796/796、AP715 等數量級
+明顯仍是高等級角色的數值——與上面 §6.3「Lv 保留」的結論矛盾。本節是純靜態反組譯(不靠
+live DOSBox-X 記憶體)對這個矛盾的解答。
+
+**方法論note**：§6.3 引用的舊版位址(`0x2a2e8`/`0x31571`/`0x31793`/`0x526a7`)已由 §6.6
+(2026-08-19)證實在目前唯一倖存的新版 EXE(`FD2Analysis3`)上位址不穩定——`0x2a2e8`/
+`0x3151a` 當時甚至沒有已反組譯的指令，`0x1e529` 落在無關函式開頭。本節**不假設任何舊位址
+在新版直接可用**，改用 `tools/ghidra_batch_probe.py`(`analyzeHeadless -readOnly
+-noanalysis`，方法同 doc28 §6 的 ch26 亞奇梅吉輪)先鎖定新版上已確認穩定的錨點
+(`0x17fc0` 道具/狀態面板渲染器、`0x1b750` 裝備重算)，再用 `call_scan`/`xref_to`
+沿呼叫圖回溯找出轉職重算與轉職服務入口在新版的實際位址——而不是套用舊位址。
+
+**新版位址現況**(全部由本輪 `function_bounds`/`decompile`/`disasm`/`call_scan` 實測)：
+
+| 函式 | 新版位址 | 大小 | 與舊版關係 |
+|---|---|---|---|
+| `FUN_00017fc0`(狀態/道具面板動態欄位渲染器) | `0x17fc0`–`0x182ac` | 749B | 與 §舊文件 `0x17fc0` 同址，**版本間穩定**(反組譯內容——2 bar/4 compared-number/8 raw-number/3 FDTXT——與既有 worklist `UI-ITEM-PANEL-DYNAMIC-17FC0` 逐項吻合) |
+| `FUN_0001875d`/`FUN_000187d6`(數值渲染 primitive) | `0x1875d`/`0x187d6` | 56B/186B | 同上，穩定 |
+| `FUN_0001e529`(單一 growth pair roll-and-**ADD**) | `0x1e529`–`0x1e5bf` | 137B | 與舊版同址，穩定；`decompile`：`*param_1 = *param_1 + (short)roll` ——**確認尾端是 ADD 不是覆寫**，與 §6.3 原始結論一致 |
+| `FUN_0001b750`(裝備/衍生數值重算) | `0x1b750`–`0x1b83c` | 237B | 與舊版同址，穩定；讀 `+0x37/+0x39/+0x3e`、寫 `+0x48/+0x4a/+0x4c`(+呼叫 `FUN_000114fb` 疑似寫 `+0x4e`)，與 §6.2/§6.3 描述逐位元組吻合 |
+| `FUN_0001e292`(一般戰後升級,非轉職) | `0x1e292`–`0x1e528` | 663B | **本輪新定位**，舊文件未載此位址；透過 `xref_to 0x1e529` 找到(見下) |
+| `FUN_0002ac7d`(轉職重算——舊文件 `0x2a2e8` 的新版對應) | `0x2ac7d`–`0x2ae0d` | 401B | 位移(相對舊位址 `0x2a2e8`)不是任何已知全域常數，符合既有 memory「fd2_re old/new EXE address instability」；本輪靠 `xref_to 0x1e529` 找到，不是位址平移猜測 |
+| `FUN_0002aa00`(church 轉職確認/target 寫回——舊文件 `0x31385`/`0x31571`/`0x3151a` 鏈的新版對應) | `0x2aa00`–`0x2ac7c` | 637B | 同上，靠 `xref_to 0x2ac7d` 找到 |
+
+**定位證據**：`xref_to 0x1e529` 回傳剛好兩個呼叫端，各呼叫 5 次——`FUN_0001e292`(舊版文件未載，一般戰後升級)在
+`0x1e45f/0x1e479/0x1e493/0x1e4ad/0x1e4c7` 呼叫 5 次，`FUN_0002ac7d`(轉職重算)在
+`0x2ad14/0x2ad2a/0x2ad40/0x2ad56/0x2ad6c` 呼叫 5 次——與 §6.3「對五組 growth pair…逐一
+roll」的既有敘述精確吻合(次數對得上，兩個呼叫端也分別對應「一般升級」與「轉職」兩種
+情境)。`FUN_0002ac7d` 的 5 次呼叫逐一傳入 `[ESI+0x37]`(AP)/`[ESI+0x39]`(DP)/
+`[ESI+0x3e]`(DX)/`[ESI+0x42]`(MaxHP)/`[ESI+0x46]`(MaxMP) 作為 target 指標——與 §6.3
+文字描述的五個 offset **逐一比對零誤差**，這是本輪判定「這就是轉職重算,只是換了位址」的
+直接依據，不是猜測。`xref_to 0x2ac7d` 只有一個呼叫端 `FUN_0002aa00`(`0x2ac63`)；後者
+`decompile` 顯示它讀 church 候選/確認流程結果後寫 `record[+0x20]=新職 class byte`、
+`record[+7]=local_14`(target portrait)，且用 `local_14==0x34`(悠妮限定召喚師 special
+override)與 `0x31<local_14`(optional override 門檻)兩個常數判斷——與 §6.2 描述的
+default/optional/special 三層覆寫序**逐值吻合**，確認這就是 church 轉職服務的目標寫回
+函式，只是位址從舊版 `0x31571`(等)平移到新版 `0x2aa00`。
+
+**核心發現：`FUN_0002ac7d` 反組譯(`0x2ac7d`–`0x2ae0d`)在 growth-add ×5、MV 累加、
+`FUN_0001b750` 衍生數值重算之後，緊接著四筆無條件寫入**：
+
+```
+0x2aded:  MOV byte ptr [ESI + 0x21], 0x1     ; c6 46 21 01   ← Lv byte 直接寫死成 1
+0x2adf1:  MOV byte ptr [ESI + 0x3c], 0x0     ; c6 46 3c 00   ← EXP 歸零(與既有結論一致)
+0x2adf5..0x2adf9:  AX = [ESI+0x42]; [ESI+0x40] = AX          ← HP = MaxHP(與既有結論一致)
+0x2adfd..0x2ae01:  AX = [ESI+0x46]; [ESI+0x44] = AX          ← MP = MaxMP(與既有結論一致)
+```
+
+`ESI` = `DAT_00053a45 + unit_index*0x50`，與 `FUN_00017fc0`(狀態面板渲染器)、
+`FUN_0001b750`(衍生數值重算)用的是**同一個** 80-byte stride 全域陣列，即 remake
+`NativeItemPanelRecordForUnit` 已經在用的那份 80-byte record layout(`+0x21`=Lv、
+`+0x3b`=MV、`+0x3c`=Exp、`+0x40/+0x42`=HP/MaxHP、`+0x44/+0x46`=MP/MaxMP、
+`+0x48/+0x4a/+0x4c/+0x4e`=AP/DP/HIT/EV)——不是巧合重疊，是同一個角色 record。
+
+`0x2aded` 這行**不含任何條件跳躍保護**，緊跟在 growth-add/MV/衍生重算之後、EXP 清零之前，
+且整段五個動作都包在 `FUN_0002aa00` 的 `if (使用者按 YES) { ... }` 分支內——換句話說，
+**任何一次成功(YES 確認)的轉職都會執行這行**，不是特定 target/portrait 才觸發的特例。
+
+**status 面板的 LV 欄位怎麼讀**：`FUN_00017fc0` 的反組譯(`0x180a2`)：
+```
+0x1809e: PUSH 0x2                        ; 2 位數字
+0x180a0: PUSH 0x2a                       ; 顏色/樣式常數
+0x180a2: MOVZX EAX, byte ptr [EBX + 0x21]  ; 直接讀 record+0x21，無任何轉換
+0x180a6: PUSH EAX
+0x180a7: PUSH 0x140                      ; 320(螢幕寬)
+0x180ac: LEA  EAX,[EDI + 0x29dd]         ; 目的座標(面板第一個數字欄位)
+0x180b3: CALL 0x187d6                    ; 共用的「N位數 raw-number」渲染 primitive
+```
+`FUN_000187d6` 內部只做 `if(value<0) value=0` 的 clamp 與依 digit-count 逐位畫字，**不含任何
+表格查詢或 EXP 相關運算**。同一函式往後緊接著用完全相同的呼叫模式讀 `record+0x3c`(EX，
+`0x180bf`)、`record+0x3b`(MV，`0x180dc`)、`record+0x48`(AP，`0x18109`)——LV 只是這一串
+「直接讀 record 某 offset→丟給共用 raw-number renderer」欄位清單裡最前面的一個，跟其他
+七個欄位待遇完全相同，沒有任何跡象顯示 LV 欄位走了不同的資料路徑。
+
+**獨立佐證 record+0x21 == Lv**：`FUN_0001e292`(一般戰後 EXP 溢位升級，非轉職路徑)的
+while 迴圈裡逐級 `*(char*)(iVar5+0x21) = *(char*)(iVar5+0x21) + 1`，並用同一 offset 的值
+跟 `'c'`(0x63=99)或 `'('`(0x28=40，依 class 而定)比較做升級上限 gate——這是與轉職完全
+無關的一般升級邏輯,卻獨立地把 `+0x21` 當「目前等級」在遞增與設上限，跟面板渲染器的用法
+互相印證，不是本輪唯一的證據來源。
+
+**結論**：
+- **原始問題的兩個假說中，(b) 成立、(a) 不成立**：原版轉職函式(新版位址
+  `FUN_0002ac7d`)**確實會把 `record+0x21`(Lv byte)無條件寫死成 1**,這不是「顯示邏輯從
+  EXP 查表算出」的畫面特例(反組譯 `0x17fc0`/`0x187d6` 找不到任何 EXP→Lv 查表或計算,
+  LV 欄位是對 `record+0x21` 的直接位元組讀取,跟 EXP 欄位是完全獨立的另一個 offset)。
+- **§6.3 原本「Lv 保留」的結論是錯的，需要修正**：不是本節推翻 2026-07-20 那批 IDA 反組譯
+  證據的可信度(growth-add 用 ADD 而非覆寫、EXP 歸零、HP/MP 回滿——這些本輪在新版上都
+  重新獨立確認、逐位元組吻合)，而是**當時的反組譯範圍沒有涵蓋到 `0x2aded` 這一行**(它在
+  `FUN_0001b750` 衍生重算呼叫「之後」，比較晚出現，猜測是 2026-07-20 那輪聚焦在「AP/DP/DX/HP/MP
+  是不是被覆寫」這個當時的 PTT 落差問題上,沒有把反組譯視窗延伸到 Lv 這個獨立欄位)。
+  AP/DP/DX/MaxHP/MaxMP 累加、MV 累加的既有結論**維持不變、不受本節影響**——只有 Lv 本身
+  這一項是新發現的例外：轉職既保留舊數值的成長基礎(累加),又把等級歸零重練,是本專案至今
+  沒讀出來過的一個獨立設計決定,並非互相矛盾。
+- **對 remake 的建議(僅建議，本輪未動 remake Go 原始碼)**：`remake/internal/campaign/
+  church.go` 的 `ApplyClassChange`(157–213行)目前完全不寫 `u.Lv`；應在既有的 `u.Exp=0`
+  旁邊加一行 `u.Lv = 1`，讓角色轉職後從 Lv1 重新用轉職後的成長表(§6.4 已證的
+  growth idx32–67 區段)爬升，同時維持既有的 AP/DP/DX/MaxHP/MaxMP 累加與 HP/MP 回滿不變。
+  是否套用、要不要同步補一條 regression test 鎖住「轉職後 Lv 必為 1」，留給本輪之後的
+  agent 決定。
+- **誠實邊界**：(1) 本輪未逐位元組核對 `FUN_000114fb`(疑似寫 `+0x4e` EV)與
+  `FUN_0004e7dd`/`FUN_0004e7f2`(MV 增量表查詢)的內部邏輯，兩者與 Lv 欄位問題無關,不影響
+  本節結論。(2) `DAT_00053a45` 陣列本身是不是就是存檔用的 FDFIELD roster,本節沿用既有
+  文件(doc45/doc31「`unit+7` 即 FDFIELD roster byte1」)的既有結論做交叉比對,不是本輪
+  重新從存檔格式獨立證明;但本輪找到的欄位配置(+0x21/+0x3b/+0x3c/+0x40/+0x42/+0x44/+0x46/
+  +0x48/+0x4a/+0x4c)跟 remake 既有的 `NativeItemPanelRecordForUnit` 逐 offset 全部對得上，
+  交叉驗證力足夠支撐本節結論。(3) 本輪純靜態，未用 live DOSBox-X 記憶體驗證新版位址
+  `0x2ac7d`/`0x2aa00` 在執行期確實被打到——但這些位址本身是由已確認穩定、且今天(續八十五)
+  live session 實際打到的 `0x17fc0` 系列 renderer 沿呼叫圖回溯找到，不是憑空猜測，可信度
+  應與其餘本專案「純靜態、待 live 交叉驗證」項目同級看待。
+
 ### 6.4 成長表切換 — 確認 7B215 起就是轉職後的 reroll/leveling 表
 
 任務背景問的是:轉職後升級改吃哪張表、是否就是 §3.6 驗證過的 `0x7B0B5` 66(實為 **68**,見下)列
