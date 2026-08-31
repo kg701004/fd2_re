@@ -678,3 +678,93 @@ live 交叉驗證;②`hashlib.md5`去重確認**唯一**提前 stall(全黑畫�
 於本工具唯一可用的真實存檔(晚期 13 人 roster)反向 patch 回最初章節產生的「早章節+晚期
 滿編隊伍」未定義組合,不代表 ch01 本身有結構缺陷。完整章節分類表、方法論、下一輪建議見
 doc99。
+
+## remake 側(`fd2-linux-verify`,Ebiten/GLFW)在無 WM 的 Xvfb 下的 xdotool 合成鍵盤輸入可靠性(2026-08-31)
+
+**背景/矛盾**:`docs/knowledge-base/58-remake-live-verification-log.md` 同一天出現兩個互相矛盾的
+結論。續八十一用`xdotool key --window <winid> <key>`對`fd2-linux-verify`(Ebiten/GLFW,無 WM 的
+Xvfb `:897`)完整跑完 F5/F9 快速存讀檔互動 session,證實輸入確實送達。續八十五(church3 remake側
+class-change pixel-parity 嘗試)用**看起來相同**的手法(`xdotool key --window <winid> <key>`,同樣
+無 WM 的 Xvfb `:898`)卻回報「這個 remake 視窗完全沒收到任何合成鍵盤事件」,連`keydown`+`keyup`、
+`mousemove`+`click`、`windowactivate`/`windowfocus`都全部失敗,並把根因推測為「GLFW 需要真正的
+X11 input focus 而非單純 XSendEvent」。本節目的是實際重現、而非只是理論推敲兩者的差異。
+
+**方法**:全新、獨立、與本專案其他任何 canonical/harness instance(`:99`/`dbg`/`diffharness`等)
+不重疊的 Xvfb `:955`(`Xvfb :955 -screen 0 1400x900x24 -ac -nolisten local -listen tcp`),先用
+`ensure_remake_xvfb()`同款`xdotool getdisplaygeometry`探測確認活著,再用續八十五回報失敗時**逐字
+相同**的環境變數組合啟動`fd2-linux-verify`(`FD2_CAMPAIGN=assets/scenarios/campaign_full.json
+FD2_MUTE=1 FD2_TITLE=0 FD2_CAMP_CLASS_FIXTURE=1 FD2_CAMP_NODE=church_ch02`+三個
+`FD2_ORIGINAL_*`),用同一個binary(今日重建,HEAD與go.mod/go.sum自2026-08-01起未變動過
+ebiten/glfw版本——即續八十五用的2026-08-15舊build與本輪binary在輸入處理相關的第三方函式庫層完全
+相同,排除「函式庫版本差異」這個假說)。全程用`run_in_background`+同一turn內同步輪詢(不背景丟給
+下一輪),`ps aux`核對啟動前後只有自己這兩個PID。
+
+**結論一:input 確實可靠送達,續八十五「GLFW 完全不接受合成事件」的結論不成立**——用完全相同的
+`xdotool key --window 0x200020 <key>`語法,在同一顆 bounded fixture 上重現出兩個真實、可截圖驗證
+的雙向狀態轉換:
+1. `Return`:教會主選單「有什麼事嗎?」→ raw index0 roster 畫面(悠妮 portrait+姓名),截圖
+   `docs/figures/xvfb-input-probe-church-menu-entry.png`→`xvfb-input-probe-church-roster-
+   select.png`,ImageMagick `compare -metric AE` 量出 392092 個像素真的改變(非雜訊/動畫)。
+2. `Escape`:roster 畫面→教會主選單,但這次對白文字正確從「有什麼事嗎?」變成「還有事嗎?」
+   (`docs/figures/xvfb-input-probe-church-menu-return.png`)——證明不只是「畫面變了」而是遊戲**狀態
+   機真的推進**(對白文字取決於是否已進過教會選單,不是重複畫面)。
+3. `keydown --window <id>`+`sleep 0.3`+`keyup --window <id>`(續八十五回報失敗的第二種手法)同樣
+   可靠重現①的轉換。
+4. `xdotool getwindowfocus`全程回報`2097184`(=`0x200020`,即遊戲視窗本身)——**X11 input focus
+   從頭到尾就在遊戲視窗上**,不需要任何 WM、也不需要`windowactivate`/`windowfocus`(這兩個指令因
+   `_NET_ACTIVE_WINDOW`不受支援而報錯是預期行為,是 doc98 續四十五已記錄的已知現象,但**這個報錯
+   對後續`key --window`不構成任何副作用**——本輪直接測試:故意跑一次失敗的`windowactivate`後,
+   `getwindowfocus`前後數值不變,緊接著的`Return`依然正確觸發畫面轉換)。
+
+**結論二:找到一個會製造出「完全靜默、無錯誤訊息、任何手法都無效」這個確切症狀的操作性錯誤,是
+續八十五案例最合理的解釋(誠實聲明:因無法取得續八十五當輪的原始逐行終端機記錄,以下是**目前
+唯一能重現出相同症狀的假說**,不是100%對到號的鐵證)**——`xdotool key --window <winid>`送到
+**錯誤的視窗 id**(例如 root window `0x21f`,或任何非目前遊戲視窗的舊/其他 id)時:
+- **不會**報任何錯誤(`exit=0`,無 stderr),與送到完全不存在的 id(`0x999999`)會噴
+  `X Error ... BadWindow`形成鮮明對比——這個「靜默成功但毫無效果」的訊號組合,與續八十五描述的
+  「指令都正常跑完、但畫面/存檔毫無反應」完全吻合。
+- 畫面**逐位元組零變化**(`md5sum`相同),與續八十五觀察到的「連無害的 F3 debug HUD 測試鍵都毫無
+  畫面變化」表面上一致。
+
+**結論三(額外發現,獨立於輸入問題本身,對下一輪嘗試 stretch goal 的人有直接參考價值)**:F3 debug
+HUD 鍵在**任何非戰鬥畫面**(包含教會這整條路徑)本來就不會產生可見變化——`cmd/fd2/main.go:7319`
+的`if g.debug {...ebitenutil.DebugPrintAt...}`外層包在`if g.st != nil && ...`(只有`g.st`非nil、
+也就是戰鬥畫面才會畫),church 場景`g.st`必為nil。**續八十五用 F3「零變化」當作「輸入完全沒送達」
+的獨立佐證,這個特定測試方法本身是偽陰性(false negative)**,F3 鍵事件即使正確送達也不會在church
+畫面產生任何像素差異,不能用來證明或否證輸入是否送達。另外,本輪深入重現時發現:即使用確認可靠
+送達的`Return`,`FD2_CAMP_CLASS_FIXTURE=1`這個「bounded headless oracle」(見
+`cmd/fd2/main.go:9029`附近註解「Bounded headless oracle only」)在 roster 畫面選取悠妮進入
+status/command panel 這一步**完全沒有反應**——連續多次、間隔拉長到 10 秒的`Return`都無效,但同一
+session 內`Return`(menu→roster)、`Escape`(roster→menu)前後都正常運作,排除「輸入間歇性失效」。
+對照`cmd/fd2/main.go:3672`附近`status_roster`模式的`enter && listLen > 0 && g.churchSel < listLen`
+判斷式,roster 畫面本身能顯示姓名代表`listLen>=1`,理論上該分支應該觸發——**這是一個獨立於輸入
+tooling 的、真正卡在應用層的行為,根因未查(本輪判斷範圍外,留給下一輪)**,但代表**即使把
+xdotool輸入問題完全解掉,續八十五當時用的這個特定 bounded fixture 路線也走不到 class-change
+status/command panel 深層畫面**——要重跑那個 pixel-parity stretch goal,建議改用續八十五三個
+church服務其中已成功的「真實存檔+正常 title→LOAD→church 互動路徑」(而非
+`FD2_CAMP_CLASS_FIXTURE`捷徑),見下方「可靠流程」。
+
+**可靠流程(供下一輪直接照抄)**:
+```
+# 1. 全新、獨立、確認未與其他 instance 衝突的 display
+Xvfb :<N> -screen 0 1400x900x24 -ac -nolisten local -listen tcp &
+xdotool getdisplaygeometry --display 127.0.0.1:<N>   # 確認活著才繼續
+
+# 2. 啟動 fd2-linux-verify(cwd=remake/),1400x900 screen 對應互動模式 1280x800 視窗
+#    (doc58續八十一已記錄的1024x768裁切陷阱,本輪沿用1400x900未再踩)
+DISPLAY=127.0.0.1:<N> FD2_CAMPAIGN=assets/scenarios/campaign_full.json FD2_MUTE=1 \
+  FD2_ORIGINAL_FDOTHER=$HOME/fd2-run/FDOTHER.DAT FD2_ORIGINAL_FDTXT=$HOME/fd2-run/FDTXT.DAT \
+  FD2_ORIGINAL_DATO=$HOME/fd2-run/DATO.DAT ./fd2-linux-verify &
+
+# 3. 每次都用 xwininfo 現查視窗 id,不要沿用/複製前一個 session 的數字
+#    ——這是本輪找到的、與症狀完全吻合的唯一失效模式
+DISPLAY=127.0.0.1:<N> xwininfo -root -tree   # 找 "GLFW-Application" 那個 child window id
+
+# 4. 直接送鍵,不需要任何 WM、不需要 windowactivate/windowfocus(會報錯但無害、可略過)
+DISPLAY=127.0.0.1:<N> xdotool key --window <該次真正查到的id> <KeyName>
+DISPLAY=127.0.0.1:<N> import -window <同一個id> out.png   # 截圖驗證
+```
+**Caveats**:①只在這台 WSL2 Ubuntu、這個 ebiten/glfw 版本上驗證過,未測試過有 WM 或原生 X.Org 的
+情境;②F3 debug HUD 測試鍵不能當作「輸入是否送達」的通用探針,見結論三;③`FD2_CAMP_CLASS_FIXTURE`
+捷徑本身有未查明的深層畫面卡住問題,與本節輸入結論無關,不要混為一談;④結論二的「wrong window
+id」只是目前唯一可重現同症狀的假說,不是對續八十五當輪逐指令的鐵證確認。

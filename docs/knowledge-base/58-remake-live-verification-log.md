@@ -9530,6 +9530,17 @@ flag)、`raw[+0x40]=0`(currentHP=0)，其餘全部不動，`encode()`/`decode()`
    不受影響、維持正確。remake 側建議(未實作，留給下一輪決定是否套用)：`ApplyClassChange` 應在
    `u.Exp=0` 旁加一行 `u.Lv=1`。
 
+   **後續更新(2026-08-31，另一輪)**：下方回報的「remake 視窗完全沒收到任何合成鍵盤事件」結論
+   **經獨立重現後不成立**——在同款無 WM 的 Xvfb 下用完全相同的 `xdotool key --window <winid>` 手法
+   確實能可靠驅動真實狀態轉換(church 主選單↔roster，含對白文字隨狀態正確變化)，詳見
+   `docs/knowledge-base/98-tooling-infrastructure.md`「remake 側(`fd2-linux-verify`，Ebiten/GLFW)
+   在無 WM 的 Xvfb 下的 xdotool 合成鍵盤輸入可靠性(2026-08-31)」一節——包含目前唯一能重現本節症狀
+   的假說(送到錯誤/舊的視窗 id 會靜默無反應且不報錯)、F3 debug HUD 測試鍵在非戰鬥畫面本來就不會
+   變化因此不能當輸入探針的說明，以及一個**獨立於輸入問題**、真正卡住 `FD2_CAMP_CLASS_FIXTURE`
+   這個 bounded fixture 深入 status/command panel 的應用層限制(根因未查)。下一輪若要重跑本節
+   stretch goal 的 pixel-parity 比對，建議改走該節建議的「真實存檔+正常互動路徑」而非這個 fixture
+   捷徑。
+
    **remake 端 pixel-parity 嘗試與結果(部分閉合，誠實記錄)**：用 `remake/fd2-linux-verify`(既有
    2026-08-15 build)在獨立 Xvfb `:898`(1400×900，`-ac -nolisten local -listen tcp`，與
    canonical/harness/diffharness 的 port range 均不重疊)下以 `FD2_CAMPAIGN=campaign_full.json
