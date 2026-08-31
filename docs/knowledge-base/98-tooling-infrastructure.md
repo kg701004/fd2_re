@@ -768,3 +768,31 @@ DISPLAY=127.0.0.1:<N> import -window <同一個id> out.png   # 截圖驗證
 情境;②F3 debug HUD 測試鍵不能當作「輸入是否送達」的通用探針,見結論三;③`FD2_CAMP_CLASS_FIXTURE`
 捷徑本身有未查明的深層畫面卡住問題,與本節輸入結論無關,不要混為一談;④結論二的「wrong window
 id」只是目前唯一可重現同症狀的假說,不是對續八十五當輪逐指令的鐵證確認。
+
+### 續一(2026-08-31)：③的「深層畫面卡住問題」已用純程式碼閱讀+既有測試證據解開，不是 bug，是動畫幀節流
+
+**結論**：`FD2_CAMP_CLASS_FIXTURE` 卡在教會 roster-select 這步，根因是 church UI 的開闔轉場**刻意**
+要求每一幀先被真的 `Draw()` 過一次(`job.drawn=true`)才會前進到下一幀——`inpututil` 按鍵在
+`nativeChurchUIBlocksInput()`(`native_church_ui.go:161`,`return g.nativeChurchUIJob != nil`)/
+`nativeClassUIBlocksInput()`(`native_class_ui_lifecycle.go:194`,同款)回傳 true 的整段期間會被
+`main.go:3592`直接吞掉，回傳`return true`但不做任何狀態轉換。這個「未真正 Draw 過的幀不會前進」
+行為本身**已有既有回歸測試鎖住**——`native_church_ui_test.go`的
+`TestNativeChurchUILifecycleCannotSkipUndrawnFrame`：連續呼叫兩次`stepNativeChurchUILifecycle`
+但都不先設`job.drawn=true`，斷言`job.frame`必須維持 0，不能前進。
+
+**卡住的完整幀數**：選教會選單case0(狀態/service0)這一步，實際要跑完兩段各自獨立節流的動畫才會
+真正進入`status_roster`模式並開始接受 Enter：`beginNativeChurchMenuClosing`(選單收合，
+`nativeChurchUIJob`，4幀)接著`beginNativeChurchRosterOpening`(名冊展開，改用**另一個**
+`nativeClassUIJob`，6幀)——合計10幀，每一幀都要求先有一次真正的`Draw()`呼叫才會前進。在真實
+DOSBox-X/`fd2-linux-verify`互動session(續八十一/church3等輪)裡，這件事在正常60fps遊戲迴圈下
+是自動、瞬間完成的(遠低於人類按鍵間隔)，從未被注意到是個「步驟」；但`FD2_CAMP_CLASS_FIXTURE`
+這類**bounded 一次性截圖工具**若在兩次按鍵之間沒有讓真實 Ebiten 主迴圈跑滿至少10幀(或用等效的
+screenshot-confirm節奏)，第二次(選悠妮的)Enter就會被前一段動畫還沒收尾的`nativeChurchUIJob`/
+`nativeClassUIJob`原封不動吞掉，症狀正是續八十五記錄的「卡在roster-select這步」。
+
+**這不是程式碼缺陷，不需要修**——跟 doc48 §8.4 反覆強調的「送鍵早於片頭動畫，要靠screenshot確認
+才送下一鍵」是同一類方法論教訓，只是這次的節流對象是 remake 自己的 indexed UI 轉場，不是 DOSBox-X
+的片頭動畫。**下一輪若要用`FD2_CAMP_CLASS_FIXTURE`類bounded工具重跑這條路徑**：兩次按鍵之間至少
+留出足以讓主迴圈跑滿10幀的真實wall-clock等待(60fps下理論值~167ms，Xvfb/WSL2下留更寬裕的
+300-500ms較保守)，或比照今天`church3`/續八十一輪的做法改用單發按鍵+screenshot確認再送下一鍵，
+不要批次/連續送鍵。

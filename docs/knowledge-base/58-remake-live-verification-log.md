@@ -9541,6 +9541,16 @@ flag)、`raw[+0x40]=0`(currentHP=0)，其餘全部不動，`encode()`/`decode()`
    stretch goal 的 pixel-parity 比對，建議改走該節建議的「真實存檔+正常互動路徑」而非這個 fixture
    捷徑。
 
+   **根因已解(2026-08-31，再另一輪，純程式碼閱讀+既有測試證據，未再開live session)**：不是 bug，
+   是 church UI 開闔轉場刻意的幀節流——選 case0 進 roster 這步要連續跑完兩段各自獨立、每幀都要求
+   先被真正`Draw()`過才前進的動畫(`nativeChurchUIJob`4幀選單收合+`nativeClassUIJob`6幀名冊展開，
+   合計10幀)，這個「未真正畫過的幀不前進」行為本身已有既有回歸測試鎖住
+   (`native_church_ui_test.go`的`TestNativeChurchUILifecycleCannotSkipUndrawnFrame`)。bounded
+   一次性工具若兩次按鍵之間沒有讓真實主迴圈跑滿這10幀，第二次Enter就會被還沒收尾的job吞掉——
+   跟doc48反覆強調的「送鍵早於片頭動畫」是同一類方法論教訓，不是remake的程式碼缺陷。完整說明與
+   下一輪建議(留寬裕wall-clock等待，或改用單發按鍵+screenshot確認)見
+   `docs/knowledge-base/98-tooling-infrastructure.md`「續一」。
+
    **remake 端 pixel-parity 嘗試與結果(部分閉合，誠實記錄)**：用 `remake/fd2-linux-verify`(既有
    2026-08-15 build)在獨立 Xvfb `:898`(1400×900，`-ac -nolisten local -listen tcp`，與
    canonical/harness/diffharness 的 port range 均不重疊)下以 `FD2_CAMPAIGN=campaign_full.json
