@@ -9318,3 +9318,89 @@ parity(doc91 提到的 raw service0)不在本輪範圍,仍待另一輪視覺回�
 `church-classchange-trial1-candidate-list-after.png`(悠妮從清單消失)、
 `church-classchange-trial{2..5}-deltas.png`、`church-revive-fee-candidate.png`($04800 候選列)、
 `church-revive-fee-confirm.png`(確認框)、`church-revive-fee-after.png`(扣款後金幣與清空候選)。
+
+## 續八十三(2026-08-31):item multiplier/效果碼與原版UI對照——真正的原版 DOSBox-X 道具面板首次截圖，內容與 remake 逐位元組吻合，但意外揪出一個無關的 MV 欄位真 bug
+
+回應`91-worklist.md` L1311 商店節點條目裡最後一個未閉合子句「待：完整 item multiplier/效果碼與
+原版 UI 對照」。同一行的附註（`已解(L366/L1354)`）先前只閉合了 static RE 側（215-row item table
+邊界、25 個 item-effect dispatch code 全部命名，見`doc32`§4.1/§4.2）；remake 側的
+`RenderNativeItemPanelRows`/`RenderNativeItemPanelData`（worklist `UI-ITEM-PANEL-DYNAMIC-17FC0`/
+`UI-ITEM-PANEL-ROWS-EBITEN`，皆`[x]`）也早就有 indexed-synthesis 級證據（`fd2-item-panel-oracle`
+合成 record）。**唯一真正缺的，是一張真實 DOSBox-X 道具使用面板截圖，跟 remake 的同一畫面直接
+比對**——這是本輪的目標，本輪也是`91-worklist.md`此條目第一次有這張截圖。
+
+**方法**：`tools/dosbox_harness.sh launch itempanel`起一顆隔離 instance（doc48§8 recipe，
+`core=normal`/`cycles=5000`），冷開機後等滿 45 秒截圖確認`START/LOAD/CONTINUE`標題畫面已顯示
+才送鍵（避免 doc58 續六十四記錄過的「送鍵早於片頭動畫」mis-boot）。預設游標在`START`，直接
+`Return`進新遊戲，接著分批送出約 800 次`Return`（20 鍵一批+screenshot 確認進度，逐步走完
+王座廳傳位→亞雷斯偶遇→草原遇悠妮蓋亞→「什麼是漂亮小妞」（與續一致的已知 fingerprint）→
+海盜遭遇對白），最終直接落在索爾自己的**全螢幕道具使用面板**（非先前多輪誤觸的`0x17aed`
+非互動狀態卡——這次上方有完整的 LV/EX/DX/MV/HIT/AP/EV/DP/HP/MP 欄位，下方是三格可讀的
+道具清單，跟 doc32 描述的`0x184c0`結構完全對得上）。
+
+**原版畫面內容**（`docs/figures/item-panel-original-dosbox.png`）：
+```
+索爾  人類 劍士   LV.01  EX.00
+DX.002 MV.04  HIT.097 AP.016  EV.002 DP.012
+HP 042/042  MP 000/000
+[劍圖示] 短劍   +AP 010
+[甲圖示] 皮甲   +DP 008
+[藥草圖示] 藥草  +HP 040
+```
+
+**remake 側**：不需要走 800 次 Enter，直接用既有的`FD2_CAMP_PREP_BATTLE`/`FD2_CAMP_NODE`/
+`FD2_SHOT_ITEM_FORCE`截圖鉤子（`main.go:9049`/`9076`/`6190`）headless 重現同一狀態：
+
+```
+FD2_CAMPAIGN=assets/scenarios/campaign_full.json \
+FD2_ORIGINAL_FDOTHER=$HOME/fd2-run/FDOTHER.DAT FD2_ORIGINAL_FDTXT=... FD2_ORIGINAL_DATO=... \
+FD2_CAMP_PREP_BATTLE=battle_ch01 FD2_CAMP_NODE=battle_ch01 FD2_SHOT_SKIP_STORY=1 \
+FD2_SHOT_ITEM_FORCE=192 FD2_SHOT=out.png ./fd2-linux-verify
+```
+`FD2_SHOT_ITEM_FORCE=192`刻意傳索爾 slot2 本來就有的道具 id（`ch01.json`
+`party[0].inventory:[0,132,192]`），只是把既有 raw slot 原值寫回去（no-op overwrite），不是
+合成假資料——slot0/slot1（0、132）維持`ch01.json`原生值不動。二進位重新從當前 HEAD
+（`a979f56a`）建置（`go build ./... `全綠），排除舊 binary 造成的偽陰性/偽陽性。
+
+**逐項比對結果**（`docs/figures/item-panel-original-vs-remake-ch01.png`為並排合成圖）：
+
+| 欄位 | 原版 DOSBox-X | remake | 結論 |
+|---|---|---|---|
+| 角色名/職業 | 索爾／人類 劍士 | 索爾／人類 劍士 | 一致 |
+| LV/EX | 01/00 | 01/00 | 一致 |
+| DX/HIT/AP/EV/DP | 002/097/016/002/012 | 002/097/016/002/012 | 一致 |
+| HP/MP | 042/042、000/000 | 042/042、000/000 | 一致 |
+| 短劍 | +AP 010 | +AP 010 | 一致（對應`item.json id=0, ap=10`） |
+| 皮甲 | +DP 008 | +DP 008 | 一致（對應`item.json id=132, dp=8`） |
+| 藥草 | +HP 040 | +HP 040 | 一致（對應`item.json id=192, K=[5,40,...]`，`K[1]=40`即畫面顯示的回復量） |
+| 版面 | icon→名稱→`+STAT VALUE`單欄三列 | icon→名稱→`+STAT VALUE`單欄三列 | 一致（`item-panel-native-indexed.png`舊 oracle 早已示範同一版面，非本輪新發現，只是首次有原版截圖對照） |
+| **MV** | **04** | **06** | **不一致，見下** |
+
+**item multiplier/效果碼本身（本 worklist 子句的真正主題）——完全通過**：三個道具的名稱、icon、
+`+AP/+DP/+HP`欄位標籤與數值，原版與 remake 逐字元、逐數字相同，不是「看起來差不多」。字型渲染
+本身不同（原版點陣字 vs remake 自繪字型）符合任務書「不要求 pixel-perfect，要求內容一致」的
+標準。
+
+**意外發現一個無關但真實的欄位 bug：索爾的 MV（移動力）**——原版畫面清楚顯示`MV.04`
+（放大截圖交叉核對見`docs/figures/item-panel-mv-mismatch-original-zoom.png`，非誤讀），
+remake 顯示`MV.06`（`docs/figures/item-panel-mv-mismatch-remake-zoom.png`）。
+逐項排查`ch01.json`：`party[0]`（索爾，portrait 0，LV1，本輪比對的正是這個 entry）明確寫
+`"mv": 6`；同檔案`map0_units.json`裡另外兩個「own」camp 模板 entry（portrait1/LV1、portrait3/LV3，
+皆`cls_name:"劍士"`）也同樣是`"mv":6`——不是單一 entry 的手誤，是這批索爾/劍士模板資料本身
+系統性地把 MV 記成 6，但原版實機在完全相同的 LV/HP/DX/HIT/AP/EV/DP 快照下顯示的是 4。這是
+**一個真正、獨立於本 worklist 子句的資料 bug**（角色基礎 MV 欄位，不是道具效果欄位），本輪
+**不修**（依任務規範，只有找到需要「文件化而非修復」的落差時才動source/資料，且這個修正涉及
+判斷是「這一個 entry 錯」還是「劍士職業 MV 基準值系統性錯」，需要另外對照更多 LV/職業樣本才能
+下修正結論，不適合本輪順手改掉）。已用`spawn_task`另外開一張獨立追蹤卡片。
+
+**環境收尾**：`tools/dosbox_harness.sh teardown itempanel`前後都用`ps aux | grep -iE
+"xvfb|dosbox"`核對，teardown 前只有本 instance 自己的`Xvfb :199`/`tmux -L fd2harness`/
+`dosbox-x`三個行程，teardown 後三者均清空、`tmux -L fd2harness ls`回報「no server running」，
+沒有動到 doc48 canonical`:99`或其他 harness instance。
+
+**產出**：本文件本節（續八十三）。`docs/figures/item-panel-original-dosbox.png`（原版截圖，
+已裁切至面板區域）、`item-panel-remake.png`（remake headless 截圖）、
+`item-panel-original-vs-remake-ch01.png`（並排合成對照圖）、
+`item-panel-mv-mismatch-original-zoom.png`/`item-panel-mv-mismatch-remake-zoom.png`（MV
+欄位放大對照，佐證上述 bug 發現）。`remake/fd2-linux-verify`已用 HEAD`a979f56a`重建（binary
+本身不納入版控）。
