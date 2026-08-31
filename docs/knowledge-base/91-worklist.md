@@ -2009,6 +2009,29 @@
   完整寫法、逐幕截圖對照、三項誠實未解問題見`docs/knowledge-base/99-chapter-sweep-
   results.md`「`ch01newgame`」輪小節;`docs/knowledge-base/46-ch1-opening-timeline.md`
   §11 補了原生引擎live互動實測與錄影逐幀分析的交叉驗證記錄。
+- [~] **remake 側正常玩法可達性驗證(Phase 4,真正對應 M5 驗收句)**——2026-08-31:
+  以上所有「正常玩法可達性驗證」條目都是對**原版 DOSBox-X**的掃描,本項才是第一次
+  真正對**remake 自己**、**完全不掛任何 `FD2_SHOT_*`/`FD2_CAMP_*` debug hook**、
+  100% 用 `xdotool` 合成鍵盤輸入從標題畫面開始玩的嘗試(方法沿用 doc98「remake 側
+  xdotool 合成鍵盤輸入可靠性」一節)。**誠實範圍**:只驗證了 ch01,尚未實際打贏——
+  但過程中找到並修好一個會擋住**每一章**開局的架構性 bug:`applyPersistentStats()`
+  把 `g.partyRoster`(native JOIN constructor 重建、天生沒有姓名概念)的空字串姓名
+  無條件覆寫回剛用 scenario 正確具名的單位,導致 `checkResult()` 寫死的
+  `u.Name=="索爾"` 存活判定永遠找不到人,**每場戰鬥第一次 Tab 結束回合就會誤判
+  敗北,與索爾實際 HP 無關**。修復(拿掉 `Name` 這個欄位的持久化轉移,commit
+  `faecef3e`)後,用同一套 no-debug-hook 流程重播確認:同一場 ch01 戰鬥連續存活
+  3 個完整回合(2 次真正 ENEMY PHASE+2 次敵方 AI 行動),零虛假敗北。也用真實
+  攻擊確認了戰鬥剪影動畫、傷害數字(「亞雷斯 攻擊 盜賊,造成 21 傷害」)、指令環
+  UI(含 native FDOTHER availability word 驅動的「此指令目前不可用」真實原版
+  行為)、Tab 結束回合/敵方 AI 回合、Escape 逐層取消——全部經真實輸入路徑確認
+  正常運作。**這個 bug 修復前,M5 milestone 的驗收句(無 debug hook 正常玩法可達)
+  理論上不可能通過**,因為序章對白流程本身就會觸發第一次 `applyLoadCH`、填入
+  `g.partyRoster`,讓每一章開局立即誤判——這正是為什麼這個專案史上從未真正做過
+  這件事的根本原因(所有先前驗證都繞過序章直接跳章節,從未走過會觸發這個 bug 的
+  路徑)。完整方法論、debug 追蹤鏈、逐項驗證清單、已知次要發現(指令環輸入節流、
+  視覺鄰格≠邏輯鄰格)、下一輪具體建議(已算好的 `own_deploy`/敵方座標表)見
+  `docs/knowledge-base/92-m5-normal-playthrough-log.md`。下一輪應直接延續打贏
+  ch01,驗證 postbattle 轉場(`on_win: story_ch02`)後繼續往後推進。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
