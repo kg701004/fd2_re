@@ -9444,3 +9444,64 @@ local minimum」陷阱——舊的MV6/5/6給了額外緩衝，剛好沒讓ch01�
 
 **產出**：本節（續八十四）。`remake/assets/scenarios/ch01.json`、
 `remake/cmd/fd2/beatrunner_test.go`、`remake/cmd/fd2/headless_battle_test.go`。
+
+### 續八十五(2026-08-31)：接手UI-VIS-SHOP/UI-SHOP-RECIPIENT-INPUT-E2剩餘gate——賣出/裝備UI DOSBox E2首次閉合，轉移child panel同步核實，no-recipient/full recipient-list edge case未能自然重現
+
+**背景**：這兩項worklist entry的四人以上recipient scroll已於2026-08-25閉合，本輪接手其餘四個
+open clause：(1) no-recipient/full-list edge case、(2) 賣出UI DOSBox E2、(3) 裝備UI DOSBox E2、
+(4) shop自己的轉移child panel。用平行harness獨立instance `shopE2b`（`:199`，另一agent同時在跑
+`church3`instance於`:299`，全程`ps aux`/`tmux -L fd2harness ls`核對未互相干擾），LOAD既有
+`~/fd2-run/FD2.SAV`真實ch06進度存檔（slot1，raw chapter=0x06，9人真實roster，與2026-08-25同一份
+存檔同一個slot）進`town_ch07`武器店，與先前scroll驗證輪同一個評證標準（真實campaign存檔，非
+chapter-jump合成、非screenshot-only bootstrap）。
+
+**(2)賣出UI——完整閉合**：service1(賣)→`Tab`風格角色roster→索爾的物品列表顯示`夜行裝`
+(原購入價3200)標價`2400`元。確認YES後金幣由`$10008593`→`$10010993`，差額精確等於`2400`；
+重新選索爾核對其物品列表，`夜行裝`已消失、只剩`淬毒刀`——slot清除、75折定價、金幣增量三項與
+remake `SellSlot`（75折鎖定原價、清除equipped flag）逐項吻合。截圖：
+[`shop-sell-confirm-75pct-original-dosbox.png`](../figures/shop-sell-confirm-75pct-original-dosbox.png)、
+[`shop-sell-gold-increase-original-dosbox.png`](../figures/shop-sell-gold-increase-original-dosbox.png)、
+[`shop-sell-slot-cleared-original-dosbox.png`](../figures/shop-sell-slot-cleared-original-dosbox.png)。
+
+**(3)裝備UI——完整閉合**：service2(裝備圖示)→角色roster→進入完整角色狀態面板（頭像/LV/EX/DX/
+MV/HIT/AP/EV/DP/HP-MP bar一次全顯示，非賣出流程的純物品列表），物品欄以紅框標示目前已裝備
+（本例`亞雷斯`的`長戟`/`鎖子甲`皆紅框）、橘框標示未裝備/非裝備類物品（`飛龍卵`消耗品）。選取
+已裝備物品：畫面原地無變化（與既有production RE記錄「相容item原地更新flags/能力並重畫」一致，
+本例已裝備故無delta可顯示）。選取`飛龍卵`（非裝備類消耗品，class/type白名單必然不相容）：
+畫面**完全無反應**、無錯誤訊息、無提示——與`UI-SHOP-STANDALONE-EQUIP-PRODUCTION`既有RE記錄的
+「incompatible無發明feedback」逐字吻合，這是本輪首次用DOSBox-X live操作而非Docker/Xvfb
+production regression驗證這個具體行為。另外，選取一件裝備類物品後緊接著會進入「要給誰呢？」
+的全roster目標選擇（不限於原owner，可跨角色equip-transfer一次到位），選取任一目標後即完成，
+迴圈回到「誰的東西呢？」讓玩家繼續操作下一位角色的物品——本輪對`索爾`的`淬毒刀`實測跨角色equip
+給`悠妮`成功（金幣不變，`索爾`物品列表變空並顯示「索爾沒東西了！」，`悠妮`物品列表新增`淬毒刀`）。
+截圖：[`shop-equip-status-panel-original-dosbox.png`](../figures/shop-equip-status-panel-original-dosbox.png)、
+[`shop-equip-incompatible-noop-original-dosbox.png`](../figures/shop-equip-incompatible-noop-original-dosbox.png)。
+
+**(4)shop轉移child panel——確認與教會共用同一流程，未重複church-side驗證**：`docs/knowledge-
+base/91-worklist.md`既有`UI-SHOP-TRANSFER-PRODUCTION`entry（RE層級，非本輪新增）已載明
+`0x2f8ea`同時由shop service3與church raw1呼叫，非任一場景專屬。本輪對shop service3(第4個圖示)
+做了一次完整live流程重放以取得DOSBox-X E2證據：「誰的東西呢？」(FDTXT512 source)→物品列表
+（本例`悠妮`的`僧侶袍`/`淬毒刀`/`巨鎚`）→「要給誰呢？」(FDTXT510 destination)→迴圈回
+source select。實測把`淬毒刀`從`悠妮`轉移回`索爾`：金幣不變（純轉移不收費），`索爾`物品列表
+重新出現`淬毒刀`，`悠妮`物品列表對應減少——與既有production記錄的FDTXT512→roster→FDTXT511→
+FDTXT510→roster流程逐階段吻合。因為底層callee與教會共用、且另一agent(`church3`instance)同一
+時段正在做church-side驗證，本輪**不重複**做shop側的empty/full/self-transfer edge case（避免
+重工），僅確認shop側能觸發同一段共用流程、行為與既有RE記錄一致即止。截圖：
+[`shop-transfer-source-prompt-original-dosbox.png`](../figures/shop-transfer-source-prompt-original-dosbox.png)、
+[`shop-transfer-destination-prompt-original-dosbox.png`](../figures/shop-transfer-destination-prompt-original-dosbox.png)、
+[`shop-transfer-result-verified-original-dosbox.png`](../figures/shop-transfer-result-verified-original-dosbox.png)。
+
+**(1)no-recipient/full-list edge case——誠實記錄未能自然重現，仍為open**：對`town_ch07`武器店
+完整商品目錄（`闊劍`/`騎槍`/`迴旋斧`/`長劍`/`長戟`/`戰斧`/`長弓`/`巨鎚`/`夜行裝`/`鎖子甲`共10項，
+另`釘頭鎚`因時間預算未測）逐一在購買流程按下Yes後檢視recipient清單，9人真實roster裡**每一項
+物品都至少有1名合格收件者**（`騎槍`/`迴旋斧`/`戰斧`分別僅1人合格，`闊劍`/`長劍`2人，`長弓`/
+`夜行裝`3人以上，`巨鎚`2人），zero-eligible（`no_recipient`模式）在這份真實存檔的完整商店目錄
+掃描中**不曾自然出現**。full-recipient-list（`recipient_full`模式，remake端指「選中的收件者自己
+inventory已滿8格」而非「合格收件者名單本身滿額」——見`remake/cmd/fd2/native_shop_recipient_ui.go`
+`nativeShopInventoryFull`/`composeNativeShopRecipientFull`實作，本輪讀碼後才釐清這個語意，見
+下方澄清）同樣不曾自然出現：這份存檔沒有任何一名隊員inventory恰好8格全滿。task brief原始措辭
+「recipient list is completely full」容易誤解為「合格收件者名單本身額滿」，但production程式碼
+唯一實作的「full」語意是「被選中的收件者個人欄位滿」，兩者是不同的edge case，此處一併澄清避免
+下一輪誤解。**未動用`tools/fd2save.py`合成roster/inventory狀態去強制重現**——本輪已用完合理的
+live探索預算（完整商店目錄逐項live試驗），該工具化合成roster/inventory留給下一輪視優先順序決定
+是否投入。故此子項維持`[ ]`open，不強行關閉。
