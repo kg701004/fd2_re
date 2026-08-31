@@ -1394,9 +1394,9 @@
 
 ## M5 — 內容完整化(原版可破關)
 > 驗收:從序章玩到結局,全 33 戰場 + 全劇情 + 商店,正常玩法可達(無 debug hook)。
-- [ ] 匯出全 33 戰場為引擎資產 + 全單位/數值表接入(對齊 EXE 表 `03`)
-- [ ] 全劇情/對話接入(35 章)
-- [ ] 完整性盤點:對照原版,缺漏列冊(`83` 完整性 > 投報)
+- [ ] 匯出全 33 戰場為引擎資產 + 全單位/數值表接入(對齊 EXE 表 `03`)——**規劃輪核實(2026-08-31)**:「33戰場」措辭本身過期,33是原版原始地圖總數(map0-32),其中map30-32是純過場非戰鬥地圖;真正範圍是30個戰役,`campaign_full.json`確認**30/30已完整接線**(map/units/scenario皆存在且非空)。真正缺口是**AP/DP/MV未隨等級縮放**(HP/MP已透過`NativeRecordWord42/46`正確縮放;`model.go`AP/DP/MV欄位直接讀JSON無override)——需要反組譯確認敵方/友方出場表的AP/DP/MV是否真的隨等級成長(不能假設跟HP/MP同公式),再比照`tools/patch_units_hit_ev.py`的模式接一支新patch工具。次要:`docs/data/exe_tables/unit.json`68列只對應29組(race,cls),`base_stats()`取第一筆造成少數單位職業名稱誤標(低影響,純顯示)。
+- [ ] 全劇情/對話接入(35 章)——**規劃輪核實(2026-08-31)**:「35章」本身是誤植,是FDTXT.DAT原始容器數(35個resource),不是章節數;真正戰役章節數是30,加ch00(2變體)+ch31-33(非戰鬥後日談)＝35個容器裡33個是真正敘事資源(FDTXT_000是共用字串池、FDTXT_034已損毀)。pre/post handler劇本反組譯**30/30章已完成**(60/60檔案，非佔位)。`bindings/`(campaign.go實際讀取的目錄)缺5個postbattle binding(`postbattle_ch17/22/23/24/29_persist`)，`bindings/generated/`已有對應檔案；**曾嘗試直接搬過去但被`go test`擋下**——`generated/`自己的`_diagnostics.json`只追蹤對話對應問題，沒追完整beat compile issue：實測4個候選檔用`CompileHandlerBinding`直接檢查，每一個都有真正未解決的issue(ch16→ch17_post 9個、ch21→ch22_post 6個、ch22→ch23_post 21個、ch23→ch24_post 3個，涵蓋`roster_has`/camera pan座標對映/`spawn`前置loadch/`layout_units`/`act`演出資源解碼/`deactivate_unit`/`load_res`/`prepare_chapter_aux_graphics`等尚無runtime lowering的op)，不是簡單複製檔案就能收工，已改列為獨立的中等規模工程階段(規模比照AP/DP/MV那項)，不併入快速小任務。另外`story_ch23/29/30`(9個「空節點」原始盤點裡的3個)其實**不是缺口**——`defaultChapterStoryScript()`既有fallback機制已正確接住，新增`TestStoryCh23Ch29Ch30ResolveViaDefaultFallback`鎖定驗證。`ch32/33`的`source_dat`跟`ch00`撞號(FDTXT_032/033)，屬資料標籤問題，不擋30章正式戰役。完整規劃見plan file `hazy-crunching-liskov.md`。
+- [ ] 完整性盤點:對照原版,缺漏列冊——**勘誤(2026-08-31)**:原引用文件`83`不存在(worklist L64已自我標記為懸空引用,見M5規劃輪三個Explore agent的重新核實),現行最接近本項目標的是`docs/knowledge-base/42-re-vs-remake-gap-audit.md`,但該文件截至今日已13天未更新,落後其他文件進度;本項待M5 Phase5(重新跑一遍doc42的既有方法論,以code為準逐項更新)完成後才算真正關閉,詳見M5規劃(plan file `hazy-crunching-liskov.md`)。
 - [~] 正常玩法可達性驗證(連通/可破關鏈,參考 skill 踩雷)——2026-08-27:新建
   `tools/fd2_chapter_sweep.py`,把「有沒有人整套玩過」從純人工遊玩降級成可重複呼叫的
   自動化結構性掃描(chapter-jump 存檔→LOAD→讀`DAT_00053a45`判斷戰鬥/劇情狀態→戰鬥中
