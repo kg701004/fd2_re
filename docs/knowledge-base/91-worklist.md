@@ -58,7 +58,7 @@
 407 - D - 段落本身已描述完整靜態結論，但未見獨立doc佐證已結案，保守留D（未深入查證）。
 408 - C - 剩餘工作是供xvfb驗證remake自身fixture行為，屬對重製引擎（非原版DOSBox）的工程QA。
 409 - D→已續靜態比對閉合(2026-08-30，見L1354)：doc28涵蓋30章但remake的`protect`資料實作率是0%(campaign_full.json全檔zero個"protect"欄位)，且`Node.Protect`單一string schema結構上裝不下doc28多目標/陣營全滅規則，需先擴schema才能補資料；retreat後整備語意已用code path(resetBattle同一段邏輯＋applyPersistentParty)+既有E1紀錄(58號文2026-08-16)靜態確認=與正常進戰鬥完全同語意，無需再排live驗證。
-410 - C - 完整GUI/Xvfb讀檔回歸是對重製自身存檔系統的工程測試，非原版RE。
+410 - C - 完整GUI/Xvfb讀檔回歸是對重製自身存檔系統的工程測試，非原版RE。**已解(2026-08-31)**：見`58-remake-live-verification-log.md`續八十一，真實X11按鍵路徑F5/F9存讀檔+modifier guard皆live驗證，逐像素diff確認reload與原狀態相同；未能自然抵達town_ch02（ch01戰鬥ambush式敵人分批進場與force-win鉤子時機不相容），改用`battle_ch01`↔`retreat_ch01`兩個真實節點驗證，shop/church情境仍待。
 414 - C - 匯出戰場資產+數值表接入屬內容/資產工程工作。
 415 - C - 全劇情/對話接入(35章)屬內容整合工程工作。
 416 - F - 引用文件`83`在現有`docs/knowledge-base`(僅到58號)中不存在，依賴尚未建立的更大範圍盤點文件。
@@ -1388,7 +1388,7 @@
   → 待辦收斂為:**doc28 §2 18 章額外護衛中,已資料化 10+7=17 章**;剩餘明確留白 2 項——(i) ch10 卡納恩三世(portrait id135 未定案,見上兩條);(ii) ch26 亞奇梅吉(partyRoster JOIN 路徑缺失,比選人排除更大的招募缺口,需要先確認她在原版對應哪個 map25 unit record 或哪個原生 JOIN handler,才能安全補)。另外,`ch02/13/20` 陣營全滅已用 `ProtectGroup` 機制解決(見上一條),不再計入留白。
   7. **ch10 卡納恩三世(i)已解**(見同日「ch10disasm」輪,`99-chapter-sweep-results.md`):反組譯`0x51b19[9]=0x20707`勝負判定handler,精確保護`record[50]`/`record[51]`兩筆(`FUN_00034894(0x32)/(0x33)`死亡位元OR判定),換算回`map9_units.json`後`record[51]→units[40]`=已確認索菲亞、`record[50]→units[39]`=先前存疑的portrait135;doc28恰好列2位守護者，消去法確認units[39]即卡納恩三世(機制層級證據,獨立於有爭議的DATO人像鏈)。`map9_units.json`/`campaign_full.json`已補上,測試通過。**至此18章中17章完整資料化,僅剩(ii)ch26亞奇梅吉**。
   8. **ch26 亞奇梅吉(ii)範圍確認(2026-08-30續輪)**:她確實是真實角色(doc49 grade A,id29,13句自我指涉對白),doc28敘述是「map24(ch25)以`camp:"enemy"`身分先打後收」——但**這個「敵人被擊敗後轉換成永久隊友」的原生轉換機制,本專案從未反組譯過**,跟約拿/希爾法/悠妮那種「地圖模板直接放置`camp:"own"`客座record」完全是不同機制,沒有任何既有追蹤可以沿用。全域搜尋確認`partyRoster`裡完全沒有她的JOIN路徑,ch26-30的`party`陣列裡雖有她的數值但只是遺留的逐戰定義,不算名冊成員。**評估為大/不確定範圍**,不是今天這種快速接力任務能解決的——需要先定位ch25戰鬥結束/勝利判定附近、執行敵轉友轉換的handler，才能安全授權JOIN事件。**建議列為已記錄、低優先的獨立開放項目**,留給未來專門的一輪，不安排立即後續。
-- [~] 存檔/讀檔(自有格式,非破解原版 `FD2.SAV`)：節點／旗標／金幣／道具／persistent party 已保存；2026-07-20 新增同目錄暫存檔+rename 原子寫入與清理測試，避免 town/shop/preparation 存檔被截斷。仍待完整 GUI/Xvfb 讀檔回歸。
+- [x] 存檔/讀檔(自有格式,非破解原版 `FD2.SAV`)：節點／旗標／金幣／道具／persistent party 已保存；2026-07-20 新增同目錄暫存檔+rename 原子寫入與清理測試，避免 town/shop/preparation 存檔被截斷。**完整 GUI/Xvfb 讀檔回歸已解(2026-08-31)**：`58-remake-live-verification-log.md`續八十一，真實 `fd2-linux-verify` binary 於 headless Xvfb 下用真正 X11 按鍵送達 F5/F9，`saveGame()`/`loadGame()`本尊、磁碟 `fd2_save.json`、`node`欄位持久化、modifier guard 均 live 驗證，逐像素 diff 確認 reload 與存檔前狀態相同；受限於 ch01 戰鬥ambush式敵人分批進場，未能自然抵達 town_ch02，改用 `battle_ch01`↔`retreat_ch01` 兩個真實非-cutscene節點完成驗證，shop/church 等 sub-screen 情境仍待未來一輪。
 
 ## M5 — 內容完整化(原版可破關)
 > 驗收:從序章玩到結局,全 33 戰場 + 全劇情 + 商店,正常玩法可達(無 debug hook)。

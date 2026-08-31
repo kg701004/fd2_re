@@ -9072,3 +9072,133 @@ campaign資產檔案。
 `ch27-postbattle-card-dragonrider-backdrop-midrender.png`)。完整技術細節見doc35 §9.23,
 不在此重複。過程debug產物(Ghidra批次查詢JSON/結果)留存於Windows端`.wsl_build/`與
 scratchpad暫存目錄,不納入repo版控。
+
+## 續八十一(2026-08-31):完整 GUI/Xvfb F5/F9 快速存讀檔回歸——首次對重製自身`fd2-linux-verify`
+Ebiten binary 在真實(headless Xvfb)display 下、透過真正的 OS/X11 按鍵送達路徑(不是
+`FD2_SHOT`/`FD2_CAMP_NODE`這類截圖-only 開發捷徑)驗證 F5/F9,回應`91-worklist.md` #410 與
+L1391「仍待完整 GUI/Xvfb 讀檔回歸」
+
+> 任務背景:`remake/cmd/fd2/save_test.go`與`campaign_test.go`的
+> `TestCampaignSaveLoadRestoresTownBoundaryAndParty`都是直接呼叫`g.saveGameToSlot()`/
+> `g.loadGameFromSlot()`這兩個 Go 函式本體,從未真正經過`inpututil.IsKeyJustPressed(ebiten.KeyF5)`
+> /`KeyF9`(main.go:6598-6603)這條真實輸入路徑,也從未在畫面上親眼看過`g.msg`顯示的
+> 「已存檔」/「已讀檔」文字。本輪要補的正是這個窄而具體的缺口。
+
+**1. 重建`fd2-linux-verify`**:既有binary停留在8/26,`main.go`最新改動是8/30(`a3f7c5c1`,
+commit HEAD `8370046f`)。`cd remake && GOFLAGS= ~/go/bin/go vet ./...`(WSL2 Ubuntu,Go 1.22.12,
+`~/go/bin/go`,非PATH預設的go)全綠;`go build ./...`全綠;`go test ./...`14個package全過
+(`cmd/fd2`56.6秒最久)。`rm -f fd2-linux-verify && GOOS=linux GOARCH=amd64 go build -o
+fd2-linux-verify ./cmd/fd2`,產出`14920864` bytes、mtime `2026-08-31 09:45`的新binary,確認比
+`main.go`(8/30)新鮮。
+
+**2. Xvfb 持久 display(沿用`tools/dosbox_diff_harness.py`的`ensure_remake_xvfb()`模式,未直接
+呼叫該函式,而是同原理手刻,因為這次要的是互動 session 不是單張截圖)**:`nohup Xvfb :897 -screen 0
+1400x900x24 -ac -nolisten local -listen tcp &`,一次啟動全程沿用,沒有中途pkill+重啟(doc98記錄的
+「重啟導致bind失敗」陷阱)。**踩坑並修正**:一開始用1024x768(doc98 town-hub截圖沿用的既有值),
+但`fd2-linux-verify`互動模式(非`FD2_SHOT`bounded)的視窗是`1280x800`,比螢幕大,導致視窗被硬擠到
+負座標(`+-256+-32`),`xdotool key --window`對這個視窗送鍵全部回`BadWindow`錯誤——**這是本輪新
+發現,doc98原本記錄的1024x768只驗證過screenshot-only用途,互動session需要更大的screen**。改用
+`1400x900`後視窗回到`+60+33`正座標,問題消失。
+
+**3. 啟動指令**(`fd2-linux-verify`,cwd=`remake/`):
+```
+DISPLAY=127.0.0.1:897 \
+FD2_CAMPAIGN=assets/scenarios/campaign_full.json \
+FD2_MUTE=1 \
+FD2_ORIGINAL_FDOTHER=$HOME/fd2-run/FDOTHER.DAT \
+FD2_ORIGINAL_FDTXT=$HOME/fd2-run/FDTXT.DAT \
+FD2_ORIGINAL_DATO=$HOME/fd2-run/DATO.DAT \
+FD2_CUTSCENE_SPEED=8 \
+./fd2-linux-verify
+```
+`FD2_CAMPAIGN`嚴守doc58開頭記載的正式流程慣例(不是`FD2_CAMPAIGN=1`那個小demo)。三個
+`FD2_ORIGINAL_*`確認必要——省略時native town/shop compositor會fail closed退回placeholder(doc98
+已記錄的既有結論,本輪重新確認)。`FD2_CUTSCENE_SPEED=8`只是把過場計時器倍率調快,不跳過任何beat
+本身(見`cutscene_speed.go`註解),不影響本輪要驗證的輸入路徑真實性。**未設**`XDG_DATA_HOME`,存檔
+確認落在預設路徑`~/.local/share/fd2_re/fd2_save.json`(slot 0)。按鍵一律用`xdotool key --window
+0x200020 <key>`(真實X11 KeyPress/KeyRelease,不是`FD2_SHOT`的一次性驅動)送達,截圖用`import
+-window 0x200020 <out>.png`。
+
+**4. 沿真實輸入路徑推進、真正發現的一個資產缺口(已修好,非程式bug)**:title畫面
+Escape×30跳過開場動畫後,連續送`Return`(每次批次50-500下、100-250ms間隔)真的走完序章對話鏈
+(王座廳傳位→王城偶遇亞雷斯→草原發現悠妮蓋亞→決定啟程→`join`×4→`loadch`進map0/ch01.json)。
+第一次嘗試在「海盜出現」ambush段落卡死不動——畫面持續顯示`loadErr: beat spawn_intro 0x3289b:
+native spawn-intro visual/audio assets unavailable`,遍尋不到Enter/Space能推進。追查
+`remake/cmd/fd2/native_spawn_intro.go:122`確認前置條件之一是`len(g.sfxSpawnIntro) == 0`,而
+`main.go:9001`載入的`assets/sfx/battle_95_00.wav`在這台機器的`remake/assets/sfx/`本地目錄裡
+根本不存在(`ls`直接`No such file`)。這不是程式碼bug,是這台機器的本地衍生資產(gitignore排除,
+需各自從`org_game/`原版檔案匯出)先前沒對`--battle`家族的`#95`資源跑過匯出——執行
+`python3 tools/export_sfx.py --battle`(讀本機`org_game/炎龍騎士團/FLAME2/FDOTHER.DAT`)後
+`battle_95_00.wav`(10444 bytes)產生,問題消失,序章對話鏈可以真正推進到底。**誠實記錄**:這代表
+任何全新環境要跑這條GUI互動路徑,`export_sfx.py --battle`是前置步驟之一,目前沒有文件明確要求過
+這件事——建議`91-worklist.md`或doc98補一筆環境前置清單提醒(本輪未去改動,留給下一輪或直接由
+使用者決定是否要記錄)。
+
+**5. 無法自然抵達`town_ch02`(誠實記錄,非隱瞞)**:`battle_ch01`的敵人以`spawn_intro`分批(本輪
+log顯示5個pending group)於ambush過場期間才逐步加入戰場,不是`loadch`當下就整批就位;debug-only
+的`FD2_SHOT_FORCE_WIN`鉤子(`shot_force_result.go`,`g.st != nil`後盡早觸發一次,清空所有敵方HP
+並呼叫真正的`checkResult()`/`Advance()`/`enterNode()`)在此圖上因為觸發時機早於玩家隊伍真正被
+spawn進`g.st.Units`,`checkResult()`的「索爾」protect check直接判定「索爾不在場」→回傳`lose`,
+不是`win`——這**不是**這個鉤子本身的bug(它的設計目的本就是驗證勝/敗轉場wiring本身,不是保證
+任意戰場能被跳過,見該檔案內註解),只是與ch01這種「敵人分批進場」結構不相容的一個已知限制,本輪
+順帶記錄下來給以後想用同一招的人參考。另外嘗試過`FD2_SHOT_AUTOPLAY=1`(逐幀自動選最近敵人移動/
+攻擊,真實combat code path)兩次獨立嘗試,均在數回合內因索爾陣亡而`lose`——同樣是真實combat結果,
+不是程式bug,只是這個簡化AI策略在此圖上不夠強。**因此本輪未能走到`town_ch02`/shop/church這類
+原本設想的sub-screen狀態**,改用一個同樣真實、同樣是`g.camp!=nil`且非`cutscene`型別的節點組合
+(`battle_ch01`↔`retreat_ch01`,兩者皆為doc campaign graph定義的正式節點,`retreat_ch01`
+type=`story`)驗證F5/F9,見下。
+
+**6. F5/F9 完整驗證(state A→F5→state B→F9→state C)**:
+- **State A**(`docs/figures/save-load-gui-xvfb-state-a-battle.png`):`battle_ch01`第二次進場的
+  互動部署畫面(第一次進場已被上一步的`FD2_SHOT_FORCE_WIN`嘗試消耗掉,一次性鉤子不會再觸發,這次
+  是純粹真人操作情境),游標可見、地形面板`A+05 D+00`,無dialog、無force-win干擾。
+- **F5**:送`xdotool key F5`。畫面左下即時顯示`已存檔(槽位1：battle_ch01)`
+  (`docs/figures/save-load-gui-xvfb-f5-saved-message.png`)。獨立核對WSL2檔案系統
+  `~/.local/share/fd2_re/fd2_save.json`:mtime與按鍵時間吻合、`"node":"battle_ch01"`與畫面
+  訊息/當前campaign node三方一致(不是只看畫面文字)。
+- **State B**(`docs/figures/save-load-gui-xvfb-state-b-retreat.png`):在同一次deployment畫面按
+  `Tab`(`main.go:6717`,`結束回合`,真實生產程式碼路徑,不是debug鉤子)結束玩家回合,敵方AI回合
+  後索爾陣亡判負(`敗北`畫面),`Return`確認後進入`retreat_ch01`(對白「累死了，大家休息一下吧！」)
+  ——`[cutscene] === node "retreat_ch01" ===`(`FD2_CUTSCENE_LOG=1`)佐證node確實變了,不是同一
+  畫面的錯覺。這是一次**真實戰鬥失敗**(非force-win),`node`欄位從`battle_ch01`變成
+  `retreat_ch01`,滿足「至少一個persisted欄位真的變了」的要求。
+- **F9**:送`xdotool key F9`。畫面左下顯示`已讀檔(槽位1：battle_ch01)`
+  (`docs/figures/save-load-gui-xvfb-state-c-reload.png`,即State C)。與State A做逐像素diff
+  (`PIL.ImageChops.difference`,`1280×800`):**diff bbox僅落在左下訊息文字區
+  `(8,336)-(484,401)`,整張1,024,000像素畫面裡只有2,689個非零像素、全部集中在該文字區塊**——
+  地圖/游標/索爾sprite/地形面板等遊戲世界本體逐位元組相同,不是「看起來差不多」。
+
+**7. 負面/邊界案例(modifier guard,`main.go:6598`的`!nativeModifierHeld()`)**:在State C畫面上
+按住`Alt`後送`F5`(`xdotool keydown alt; key F5; keyup alt`)。截圖
+(`docs/figures/save-load-gui-xvfb-altf5-no-save.png`)確認左下訊息**仍是**F9那次的舊
+「已讀檔」文字,沒有新的「已存檔」訊息;`stat`核對`fd2_save.json`的mtime**完全沒變**(與F9前
+一致)。`nativeModifierHeld()`(`native_town_secret_input.go:22`)守衛Shift/Control/Alt三鍵在
+F5/F9這個真實輸入路徑上確實有效,這是這個守衛第一次被live驗證,先前只有靜態程式碼審查。
+
+**8. 這個回合證明了什麼、沒有證明什麼(誠實邊界)**:
+   - **證明**:F5/F9從真實OS層級X11 `KeyPress`/`KeyRelease`(不是`inpututil`測試假輸入、也不是
+     `FD2_SHOT`/`FD2_CAMP_NODE`開發捷徑)一路送達`inpututil.IsKeyJustPressed`偵測、正確呼叫
+     `saveGame()`/`loadGame()`本尊、正確寫入/讀回磁碟上真實的`fd2_save.json`、UI訊息與畫面渲染
+     正確反映存讀檔結果、`node`欄位在save/load之間真的保存/還原、modifier guard在真實按鍵情境下
+     有效——這條「重製自身存讀檔系統的GUI-level工程測試」缺口(worklist #410/L1391)至此**完全
+     補上**。
+   - **沒有證明**:(a) Windows native(非Linux/Xvfb)下的同一套`ebiten`輸入API行為——理論上
+     `inpututil`/`ebiten`跨平台抽象一致,風險本應更低,但本輪**沒有**在Windows實機上重跑這個測試,
+     不應直接推論同樣成立;(b) `town_ch02`/shop/church這類原本設想的sub-screen存讀檔——本輪的
+     evidence全部發生在`battle_ch01`/`retreat_ch01`這兩個節點,雖然save.go的守衛邏輯對所有
+     非`cutscene`型別節點一視同仁(已讀原始碼確認,不是臆測),但「shop真的能存檔且金幣/道具正確
+     持久化」這個更貼近原worklist敘述的具體情境仍未有GUI-level實機證據,只有既有的Go單元測試
+     覆蓋;(c) 只測了slot 0/單一存檔格,未測multi-slot情境(本專案目前UI本來就只曝露quicksave
+     slot 0,非missing coverage,只是誠實範圍聲明)。
+
+**9. 環境收尾**:核對啟動的兩個PID(`Xvfb :897`=610、`fd2-linux-verify`=2020)`kill -9`後,
+`ps aux | grep -iE "xvfb|dosbox"`確認乾淨——沒有其他doc48`:99`canonical session或其他harness
+instance被誤殺(啟動前後都核對過,全程只有這兩個PID存在)。`remake/assets/sfx/battle_95_00.wav`
+等本輪`export_sfx.py --battle`重新匯出的43個檔案屬於既有`.gitignore`排除範圍(`git status
+--short`核對為空),不會被commit,純粹是本機衍生資產補齊,不影響其他機器/環境。
+
+**產出**:本文件本節(續八十一)。5張存證截圖存入`docs/figures/`
+(`save-load-gui-xvfb-state-a-battle.png`、`save-load-gui-xvfb-f5-saved-message.png`、
+`save-load-gui-xvfb-state-b-retreat.png`、`save-load-gui-xvfb-state-c-reload.png`、
+`save-load-gui-xvfb-altf5-no-save.png`)。`remake/fd2-linux-verify`已用HEAD `8370046f`重建
+(binary本身不納入版控,僅本輪操作證據留存於此)。
