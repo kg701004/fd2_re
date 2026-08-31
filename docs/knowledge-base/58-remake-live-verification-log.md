@@ -9445,6 +9445,120 @@ local minimum」陷阱——舊的MV6/5/6給了額外緩衝，剛好沒讓ch01�
 **產出**：本節（續八十四）。`remake/assets/scenarios/ch01.json`、
 `remake/cmd/fd2/beatrunner_test.go`、`remake/cmd/fd2/headless_battle_test.go`。
 
+## 續八十五(2026-08-31)：church revive/item-transfer/class-change 三項「待 DOSBox E2 visual/audio diff」——單一存檔一次涵蓋三個服務，revive 與 item-transfer 完整閉合，class-change 的 indexed renderer parity 因新發現的 remake-side X11 input-focus 缺口只能部分閉合
+
+> 任務範圍：`91-worklist.md` 三條分別掛在 `UI-CHURCH-REVIVE-30DC3`、`RE-CHURCH-RAW-SERVICE-LISTS-2E6B8`
+> 與 class-change cluster(L1351「raw service0 status/command renderer 畫面像素級parity、HIT/EV仍待」)
+> 的「仍待 DOSBox E2 視覺/輸入/音效 diff」子句。三者共用同一個 church raw selector(`0x2d7bd`，
+> `0x3072f` dispatch：0→狀態、1→轉交、2→復活、3→轉職)，本輪用同一顆隔離 harness instance 一次全部
+> 走過。
+
+**存檔準備**：直接使用機器上既有真實存檔 `~/fd2-run/FD2.SAV`(未經任何合成)。slot index2(LOAD選單
+「3)第八章 王城前的戰鬥」，raw chapter `0x07`)本身就同時滿足三個服務的前置條件：roster 10 人(索爾/
+悠妮/亞雷斯/蓋亞/哈諾/希莉亞/…)，足夠 item-transfer 的來源/目的清單；record1(id9=悠妮)`level+0x21=40`/
+`class+0x20=5`(法師)/`portrait+7=9`/inventory 含 item `0x5a`，符合續八十二已驗證的轉職 special-target
+fixture；record0(id0=索爾)`level+0x21=4`/`class+0x20=9`(劍聖)，只差 revive 候選 flag。用
+`tools/fd2save.py` 當函式庫寫一支一次性腳本，對 slot2 record0 執行 `raw[+5] |= 0x01`(revive 候選
+flag)、`raw[+0x40]=0`(currentHP=0)，其餘全部不動，`encode()`/`decode()` round-trip 自檢後另存為
+`FD2.SAV.church3`，複製進全新 `~/fd2-run-church3src` 來源目錄，經 `FD2_HARNESS_SOURCE_DIR` 餵給
+`tools/dosbox_harness.sh launch church3`(獨立 instance，display `:299`，未觸碰 canonical `:99`/`dbg`
+或當時仍在跑的另一個無關 instance `shopE2b`)。全程只讀取 `~/fd2-run/FD2.SAV` 本體，md5 前後不變
+(`e6d9a35756cddfc2519969b10f039181`)。
+
+**操作序列與結果(單一 instance 內連續完成，未拆分多輪)**：Title→Down+Enter(LOAD)→Down×2+Enter(選
+第3項)→town_ch08→Right(教會)→Enter(進教會，raw selector 預設在index0)。
+
+1. **item-transfer(raw index1，Right×1+Enter+Enter確認動畫)**：「誰的東西呢?」→來源 roster 兩欄清單
+   (索爾/亞雷斯/哈諾 | 悠妮/蓋亞/希莉亞，與 `roster_char_ids`=[0,9,4,30,1,8,...] 逐位對應)。像素 diff
+   確認 `Down`(索爾→亞雷斯，bbox y443→522)、`Right`(亞雷斯→蓋亞，bbox x272→597)兩次游標移動都在畫面
+   上產生對應的文字亮度變化，確認方向鍵在來源清單內確實移動游標。選索爾→他的物品清單(mode1：icon+
+   名稱+屬性加成+售價，「巨神戟 +AP320 $18000」「龍神鎧甲 +DP300 $00000」)→選巨神戟→「要給誰呢?」→
+   目的清單(同六人兩欄，**索爾自己也在列**，證實 `RE-CHURCH-RAW-SERVICE-LISTS-2E6B8` 已記錄的「目的
+   全party roster不排除source」)→`Right`游標移到悠妮(bbox x272→597,y443→470，同上方式驗證)→Enter完成
+   轉交(金幣全程 `$10012093` 不變，物品移動不影響金幣)→自動回到「誰的東西呢?」source list 迴圈起點
+   (6-open/5-close 的迴圈行為與既有 RE 記錄一致)。**視覺/輸入 diff 完整通過，`RE-CHURCH-RAW-SERVICE-
+   LISTS-2E6B8` 的 `[~]` 子句正式改 `[x]`**。
+2. **revive(raw index2，Escape回主選單後 Right×1+Enter+Enter確認動畫)**：「誰要復活呢?」→候選清單
+   「索爾 魔族 劍聖 $04800」(`revive_fee_rates.json` rates[9]=1200 × level4 = 4800，逐位元組吻合，
+   與續八十二的 revivesrc 副本測到的數字完全相同，本輪用同一顆真實存檔直接復現，不需另建副本)→
+   Enter選索爾→確認框「索爾復活要4800元，好嗎?」YES/NO→Enter(YES)→**成功開場動畫即時截圖**：教會
+   彩窗全開、聖女雙手合十禱告的滿版特寫，金幣同步降至 `$10007293`(差額精確4800)→動畫結束回列表，
+   顯示「隊伍中沒有須要復活的!」(索爾已從候選中消失，金幣維持 `$10007293`)。**BGM 音軌**：未接實機
+   音效擷取工具，改以原始碼核對——`remake/cmd/fd2/main.go:3868-3887` 在 `reviveChurchUnit` 成功後呼叫
+   `campaign.PlanNativeChurchReviveSuccess()`，`remake/internal/campaign/native_church_revive_success.go:36-39`
+   回傳 `StartMusicTrack:17`(開場動畫時)/`ReturnMusicTrack:11`(動畫結束回列表時)，`playBGMCount` 在動畫
+   前後各呼叫一次，與 doc13 `UI-CHURCH-REVIVE-30DC3` 記載的官方 `sub_25977(17)`/`(11)`(`play_bgm(track,
+   loop_count)`)逐值吻合。**視覺流程與音軌配線核對通過，`UI-CHURCH-REVIVE-30DC3` 的 `[~]` 子句正式改
+   `[x]`**。
+3. **class-change(raw index3)**：候選清單「悠妮 法師轉職成召喚師／瑪琳 僧侶轉職成聖者／貝克威 弓兵
+   轉職成神射手」→選悠妮→確認框「悠妮要轉職嗎?」YES/NO(此畫面本身不含 HIT/EV/DX，純 Yes/No，數值
+   顯示在後續逐行訊息與 raw service0 狀態畫面)→YES→逐行成長訊息(本輪只抽到「職業轉成召喚師!」/
+   「力量上升9點!」等，AP roll=9 落在 `class_change_growth.json` idx52 的 `[9,12)` 內，與續八十二
+   分佈一致)→回教會主選單→切到 raw index0(狀態/service0)→選悠妮→**首次即時截圖 raw service0 狀態面板
+   完整欄位**：LV·01／EX·00／DX·111／MV·31／HIT·251／AP·715／EV·141／DP·607，HP 763/763、MP 796/796，
+   portrait/職業標籤顯示「魔族 召喚師」；換頁(同一個 Escape 觸發 status↔command 面板切換)另截到8格
+   召喚師咒語清單(各自 MP 消耗)，證實這是 doc91 L1351 所指「raw service0 status/command renderer」
+   本尊。
+
+   **HIT/EV/DX 欄位本身**：三者皆清楚顯示且與轉職前後的成長趨勢一致(對照續八十二 trial1 轉職前
+   status「DX107/HIT247/AP706/EV137/DP601/HP751/MP767」，本輪轉職後「DX111/HIT251/AP715/EV141/
+   DP607/HP763/MP796」，DX+4/AP+9/DP+6/HIT+4/EV+4/HP+12/MP+29，量級與方向合理，HIT/EV 隨 AP/DP
+   growth 同步由 `0x1b750`/`RecomputeAfterClassChange` 重算)——**worklist 明確點名的 HIT/EV 欄位本身
+   在原版畫面上正確存在且有意義地隨轉職變動，這點本輪已用即時截圖直接證實**。
+
+   **新發現、誠實記錄、非本輪修復範圍的疑點**：轉職後 status 面板顯示 `LV·01`，但 `remake/internal/
+   campaign/church.go` 的 `ApplyClassChange`(157-213行)完全不寫 `u.Lv`，只清 `u.Exp = 0`——即 remake
+   的設計是「保留Lv、只清EXP」，這與 doc91 L1316 過去的 RE 結論一致。本輪是**第一次**有人在真實
+   DOSBox-X 上實際打開轉職後的 status 畫面看 LV 欄位(續八十二只讀了逐行成長訊息，未讀 status 畫面)，
+   而它顯示 `01` 而非預期的 `40`——同時 HP/MP/AP/DX 等數量級明顯仍是高等級角色的數值，不像真的重置
+   成 1 級。這與「保留Lv」的既有 RE 結論矛盾，可能是：(a) 原版此處 LV 顯示欄位其實是從 EXP 即時查表
+   算出而非讀存的 Lv byte(EXP 歸零→查表得1，但 raw Lv byte 可能仍是40，只是這個特定畫面顯示邏輯與
+   revive fee 公式讀的不是同一個欄位)，或 (b) 原版轉職真的會動到某個與此顯示相關的欄位而 RE 尚未
+   找到。**這是一個新的、獨立的疑點，不在本輪範圍內深究或修復**，留給 class-change 相關欄位下一輪
+   RE 工作參考。
+
+   **remake 端 pixel-parity 嘗試與結果(部分閉合，誠實記錄)**：用 `remake/fd2-linux-verify`(既有
+   2026-08-15 build)在獨立 Xvfb `:898`(1400×900，`-ac -nolisten local -listen tcp`，與
+   canonical/harness/diffharness 的 port range 均不重疊)下以 `FD2_CAMPAIGN=campaign_full.json
+   FD2_TITLE=0 FD2_CAMP_CLASS_FIXTURE=1 FD2_CAMP_NODE=church_ch02`(搭配 `FD2_ORIGINAL_FDOTHER/FDTXT/
+   DATO` 指向 `~/fd2-run`)真正互動式(非 `FD2_SHOT` 的 bounded 單幀模式)啟動，成功截到與原版逐項
+   對應的兩個畫面：教會主選單「有什麼事嗎?」(背景/聖女portrait/四icon排版與原版 `church3-menu-entry-
+   native.png` 結構一致，僅金幣顯示 `$00001000` 為 fixture 預設值，非比對對象)、raw service0 的悠妮
+   單人 roster 清單(fixture 只放1人，故只有單列，但 icon+姓名格式與原版兩欄清單的單格式一致)。**但
+   後續嘗試用 `xdotool key --window <winid> Return` 選取悠妮以深入 status/command 面板本體(HIT/EV/DX
+   逐欄位比對的關鍵畫面)完全沒有反應**——連續嘗試 `key --window`、`keydown`+`keyup`(300ms持續)、
+   `mousemove`+`click`後裸送 `key`、以及 `windowactivate`/`windowfocus`(皆因這個 Xvfb 沒有視窗管理器、
+   不支援 `_NET_ACTIVE_WINDOW` 而直接報錯)全部失敗，連無害的 `F3`(切換debug HUD)測試鍵都毫無畫面
+   變化，證實不是「這個特定畫面沒反應」而是**這個 remake 視窗完全沒收到任何合成鍵盤事件**——這是一個
+   新發現的 tooling 缺口：DOSBox-X(SDL2)在同樣無 WM 的 Xvfb 下用同一套 `xdotool key --window` 手法
+   全程正常(本輪三個服務的所有導覽都靠這個手法完成)，但 remake 的 Ebiten/GLFW 視窗不會。根因待查
+   (推測 GLFW 需要真正的 X11 input focus 而非單純 XSendEvent，SDL2 對此更寬容)，記錄於此供下一輪
+   若要做 remake 側互動式(非 `FD2_SHOT` bounded frame)截圖時參考，不在本輪修復。
+
+   **間接證據(部分彌補上述缺口)**：church 的 status/command 面板(`remake/cmd/fd2/
+   native_church_status_ui.go` `prepareNativeChurchStatus`)呼叫的正是 `battle.RenderNativeItemPanelResources`/
+   `RenderNativeItemPanelRows`——與 `91-worklist.md` L1311 今天稍早(續八十三)已經完成 DOSBox-X 逐位元組
+   pixel-parity 驗證的道具面板**同一份渲染函式**，字段版面(LV/EX/DX/MV/HIT/AP/EV/DP/HP/MP 這套排列)
+   完全相同，只是本輪呼叫時餵入的是 church 情境的 unit record 而非戰鬥道具情境。這不是本輪的直接
+   截圖比對，但為「renderer 本身版面正確」提供強力間接佐證。
+
+   **結論**：class-change 候選清單、確認框、逐行成長訊息、raw service0 狀態/指令面板的 HIT/EV/DX
+   欄位內容與趨勢，本輪皆已用真實 DOSBox-X 即時截圖直接證實存在且合理。remake 端只成功比對到教會
+   主選單與 roster 清單兩層，未能因上述新發現的 X11 input-focus 缺口而深入比對 status/command 面板
+   本身的 pixel-level parity；靠沿用同一份已驗證渲染函式作間接佐證。**`91-worklist.md` L1351 的
+   「raw service0 status/command renderer 畫面像素級parity、HIT/EV仍待」子句：HIT/EV 欄位存在性與
+   數值趨勢部分改 `[x]`(見上)，但 remake 端直接 pixel-level 截圖比對因 tooling 缺口未完成，保持
+   `[~]`，並在該子句補記本輪進度與缺口說明。**
+
+**證據**：`docs/figures/church3-menu-entry-native.png`、`church3-transfer-source-list-native.png`、
+`church3-transfer-item-list-native.png`、`church3-transfer-dest-list-native.png`、
+`church3-transfer-loop-return-native.png`、`church3-revive-candidate-native.png`、
+`church3-revive-confirm-native.png`、`church3-revive-success-anim-native.png`、
+`church3-revive-empty-after-native.png`、`church3-classchange-candidate-native.png`、
+`church3-classchange-confirm-native.png`、`church3-classchange-delta-native.png`、
+`church3-classchange-status-panel-native.png`、`church3-classchange-command-panel-native.png`、
+`church3-menu-entry-remake.png`、`church3-status-roster-remake.png`。
+
 ### 續八十五(2026-08-31)：接手UI-VIS-SHOP/UI-SHOP-RECIPIENT-INPUT-E2剩餘gate——賣出/裝備UI DOSBox E2首次閉合，轉移child panel同步核實，no-recipient/full recipient-list edge case未能自然重現
 
 **背景**：這兩項worklist entry的四人以上recipient scroll已於2026-08-25閉合，本輪接手其餘四個
