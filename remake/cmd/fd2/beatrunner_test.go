@@ -808,6 +808,48 @@ func TestCampaignPersistenceStubKeepsInventoryAfterBattleStateClears(t *testing.
 	}
 }
 
+// TestCh01PartyMVMatchesNativeJoinConstructor 是 doc58 續八十三(2026-08-31)真
+// DOSBox-X道具面板截圖意外揪出的MV欄位bug的回歸鎖定：原版索爾LV1快照(HP42/
+// DX2/HIT97/AP16/EV2/DP12,與 ch01.json 完全吻合)顯示 MV.04，但 ch01.json
+// party[0] 當時寫 mv:6；同批悠妮/蓋亞也各自錯了(5/6，應為4)，唯獨亞雷斯(7)
+// 本來就對。真正權威來源是 native_join_constructor.json(id0/4/9/30 的
+// default_raw byte7)——這正是 JOIN(main.go case "join")materialize
+// 永久隊員時唯一使用的來源(native_join_constructor.go:171
+// `unit.MV = int(row.defaults[7])`)，ch01.json 當初另外手動/工具填的 mv 欄位
+// 只是初次出場模板，兩者本該一致卻曾經分岔。這個測試直接用
+// MaterializePersistentUnit 重算四人 MV,逐一比對 ch01.json 現在的值,防止未來
+// 任何一邊漂移又不同步。
+func TestCh01PartyMVMatchesNativeJoinConstructor(t *testing.T) {
+	scenario, err := battle.LoadScenario(assetPath("assets/scenarios/ch01.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	joinTable, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	itemRows, err := battle.LoadNativeItemEffectRowPrefix(assetPath("assets/data/native_item_effect_rows.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(scenario.Party) != 4 {
+		t.Fatalf("ch01 party 應有4名初始成員,得 %d", len(scenario.Party))
+	}
+	for _, member := range scenario.Party {
+		if member.NativeIdentity == nil {
+			t.Fatalf("%s 缺 native_identity,無法對照 join constructor 表", member.Name)
+		}
+		want, err := joinTable.MaterializePersistentUnit(*member.NativeIdentity, battle.Unit{}, itemRows)
+		if err != nil {
+			t.Fatalf("%s(id%d) constructor 查表失敗:%v", member.Name, *member.NativeIdentity, err)
+		}
+		if member.MV != want.MV {
+			t.Fatalf("%s(id%d) ch01.json mv=%d 與 native_join_constructor.json 權威值 mv=%d 不符(對照真實DOSBox-X截圖,見doc58續八十三)",
+				member.Name, *member.NativeIdentity, member.MV, want.MV)
+		}
+	}
+}
+
 func TestScenarioJoinPersistsRecruitedAllyThroughPostBattleSync(t *testing.T) {
 	joinTable, err := campaign.LoadNativeJoinConstructorTable(assetPath("assets/data/native_join_constructor.json"))
 	if err != nil {

@@ -208,6 +208,12 @@
    用 `MV=6` 完全搆不到（0 個攻擊位置），要 `MV=7` 才行**。索爾 `MV=6`、亞雷斯 `MV=7`
    （`ch01.json` party 區塊）。結論：如果操作的單位剛好在部署格 1 且 `MV≤6`，這回合真的
    搆不到——這是部署位置離敵人遠近不均的正常 SRPG 設計，不是移動範圍算錯。
+   >
+   > **勘誤(續八十四,2026-08-31)**：此段引用的「索爾MV=6」是`ch01.json`當時的資料 bug，
+   > 真實原生值是`MV=4`(見續八十三/續八十四，與`native_join_constructor.json`byte7逐位吻合，
+   > 已修正)。本段「部署格1需要更高MV才搆得到」的結構性結論不變(部署位置離敵人遠近本來
+   > 就不均，是正常設計)，但若要重算部署格1在正確MV下的實際門檻，不能再引用這裡的舊MV=6/7
+   > 數字。
 2. **排查過程中確認了一個真實的結構性落差**：`internal/battle.Unit` 完全沒有「移動類型」
    （步行/騎兵/飛行）欄位，但 `docs/knowledge-base/02-game-data-reference.md` §3.1 明確
    記載原版地形成本依單位類型分三欄不同（森林:步行-1/騎兵-2/飛行-1；沼澤:步行-2/騎兵-3/
@@ -9404,3 +9410,37 @@ remake 顯示`MV.06`（`docs/figures/item-panel-mv-mismatch-remake-zoom.png`）�
 `item-panel-mv-mismatch-original-zoom.png`/`item-panel-mv-mismatch-remake-zoom.png`（MV
 欄位放大對照，佐證上述 bug 發現）。`remake/fd2-linux-verify`已用 HEAD`a979f56a`重建（binary
 本身不納入版控）。
+
+### 續八十四(2026-08-31)：修好續八十三揪出的索爾/悠妮/蓋亞 MV bug，順帶修掉一個被它掩蓋的既有 headless 測試移動陷阱
+
+**根因**：`ch01.json` `party` 區塊的 mv 欄位當初另外手動/工具填值，從未真的對照過權威來源。真正
+權威來源是 `remake/assets/data/native_join_constructor.json`（每個 `native_identity` 一列，
+`default_raw` byte7），這正是 `case "join":`（`main.go`）materialize 永久隊員時唯一使用的來源
+（`native_join_constructor.go:171` `unit.MV = int(row.defaults[7])`）——逐一核對四人：
+id0(索爾)權威值4／ch01.json舊值6（錯）、id4(亞雷斯)權威值7／ch01.json舊值7（本來就對）、
+id9(悠妮)權威值4／ch01.json舊值5（錯）、id30(蓋亞)權威值4／ch01.json舊值6（錯）。三人有錯，
+不是單一entry手誤，也不是「劍士職業MV基準值系統性錯」（`docs/data/exe_tables/unit.json`那張
+race/cls通用表是完全不同的資料來源，服務`map*_units.json`的匿名NPC模板，這次不動它）。
+
+**修正**：`ch01.json` party[0]/[2]/[3] 的 mv 改成 4（party[1]亞雷斯不動，本來就對）。新增
+`TestCh01PartyMVMatchesNativeJoinConstructor`（`remake/cmd/fd2/beatrunner_test.go`）直接用
+`MaterializePersistentUnit`重算四人MV跟`ch01.json`逐一比對，鎖住這個回歸。
+
+**意外連帶發現並修好一個被舊MV值掩蓋的既有測試陷阱**：改完MV後`TestHeadlessBattleDeterministic`
+從PASS(turns=16)變FAIL(200回合內都打不完)。加debug log後定位：最後一隻`盜賊`(hp28,靜止於(2,1))
+附近，己方單位在(2,3)-(4,3)一帶不斷繞圈子、HP從不變化，明顯卡住而非只是慢。根因是
+`moveTowardDeterministic`(headless測試自己的簡化玩家移動邏輯)用**單回合原始曼哈頓距離**選格子，
+這正是檔案自己 header comment 早就記錄過、導致ch20/ch30被排除當測試章節的同一種「地形擋路
+local minimum」陷阱——舊的MV6/5/6給了額外緩衝，剛好沒讓ch01踩到這個陷阱，MV改成真正正確的4之後
+緩衝消失，陷阱浮現。**這是test harness自己簡化heuristic的既有弱點，被MV修正意外揭露，不是MV
+修正本身引入新bug，也不是production的敵方AI(`aiApproachPath`)有問題**(那是完全獨立的函式，
+只驅動敵方，`TestSweepNativeAIWinnersAcrossAllChapters`早已證實其在全30章運作正常)。
+
+**修法**：新增`pathDistanceMap()`(同檔案)，對整張地圖跑一次不受單回合MV預算限制、依真實地形成本
+的Dijkstra，`moveTowardDeterministic`改用這個「真實路徑距離」而非曼哈頓距離排序候選格——找不到
+路徑時才退回舊的曼哈頓距離(保留原本對「目標真的無法抵達」情境的行為)。修好後
+`TestHeadlessBattleDeterministic`turns=22(比舊版16回合多，符合MV真的變低的預期)，`-count=8`
+重跑8次確認無flaky。`go build ./...`/`go vet ./...`/`go test ./...`全綠。
+
+**產出**：本節（續八十四）。`remake/assets/scenarios/ch01.json`、
+`remake/cmd/fd2/beatrunner_test.go`、`remake/cmd/fd2/headless_battle_test.go`。

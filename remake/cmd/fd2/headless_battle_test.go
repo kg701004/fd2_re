@@ -324,11 +324,28 @@ func nearestHostileHeadless(st *battle.State, u *battle.Unit, camp battle.Camp) 
 	return best
 }
 
-// moveTowardDeterministic picks the reachable, unoccupied cell closest to
-// (tx,ty), breaking ties by (X,Y) rather than map iteration order -- see the
-// file header's determinism note on why that matters here.
+// moveTowardDeterministic picks the reachable, unoccupied cell that makes the
+// most real progress toward (tx,ty), breaking ties by (X,Y) rather than map
+// iteration order -- see the file header's determinism note on why that
+// matters here.
+//
+// Ranking by raw Manhattan distance to the target (this function's original
+// implementation) has a real local-minimum trap: a cell can be Manhattan-closer
+// to the target while actually sitting behind terrain that forces a detour,
+// so a purely-greedy single-turn Manhattan pick can orbit forever without
+// making progress -- exactly the "flip-flopping"/"stuck in front of terrain"
+// failure mode the file header already documents for the rejected ch20/ch30
+// candidates. Correcting party MV to the real native value (91-worklist.md,
+// doc58 續八十三) removed the slack that had been hiding this same trap in
+// ch01 too (confirmed empirically: raising headlessTestMaxTurns to 200 still
+// never converges, so this is a genuine stall, not just "needs more turns").
+// This is a test-harness-only stand-in for a human player, who would never
+// hit this trap, so the fix belongs here -- not in production's aiApproachPath
+// (internal/battle/combat.go), which drives real enemy AI and is unaffected
+// by this test's own movement heuristic.
 func moveTowardDeterministic(st *battle.State, u *battle.Unit, tx, ty int) {
 	reach := st.Reachable(u)
+	dist := pathDistanceMap(st, u, tx, ty)
 	type candidate struct {
 		c battle.Cell
 		d int
@@ -338,7 +355,11 @@ func moveTowardDeterministic(st *battle.State, u *battle.Unit, tx, ty int) {
 		if st.UnitAt(c.X, c.Y) != nil {
 			continue
 		}
-		cells = append(cells, candidate{c, manhattanHeadless(c.X, c.Y, tx, ty)})
+		d, ok := dist[c]
+		if !ok { // target genuinely unreachable by any path; fall back to raw distance
+			d = manhattanHeadless(c.X, c.Y, tx, ty)
+		}
+		cells = append(cells, candidate{c, d})
 	}
 	if len(cells) == 0 {
 		return
@@ -354,6 +375,52 @@ func moveTowardDeterministic(st *battle.State, u *battle.Unit, tx, ty int) {
 	})
 	best := cells[0].c
 	u.SetMapPlacement(best.X, best.Y, dirToward(best.X, best.Y, tx, ty))
+}
+
+// pathDistanceMap computes the true terrain-cost shortest-path distance from
+// (tx,ty) to every cell on the map, ignoring any single turn's MV budget
+// (unlike battle.State.Reachable, which is intentionally bounded to one
+// turn) and ignoring current unit occupancy (units in the way this turn may
+// have moved by the time a multi-turn approach actually reaches them, so
+// blocking on transient occupancy here would create false dead ends). Naive
+// O(V^2) Dijkstra: the test maps involved (ch01's ~11x24 tiles) are small
+// enough that this is not a performance concern for a `go test` run.
+func pathDistanceMap(st *battle.State, u *battle.Unit, tx, ty int) map[battle.Cell]int {
+	dist := map[battle.Cell]int{{X: tx, Y: ty}: 0}
+	visited := map[battle.Cell]bool{}
+	for {
+		var cur battle.Cell
+		curD := 0
+		found := false
+		for c, d := range dist {
+			if visited[c] {
+				continue
+			}
+			if !found || d < curD {
+				cur, curD, found = c, d, true
+			}
+		}
+		if !found {
+			break
+		}
+		visited[cur] = true
+		for _, d := range [][2]int{{0, -1}, {0, 1}, {-1, 0}, {1, 0}} {
+			nx, ny := cur.X+d[0], cur.Y+d[1]
+			if nx < 0 || ny < 0 || nx >= st.W || ny >= st.H {
+				continue
+			}
+			cost := st.MoveCostFor(u, nx, ny)
+			if cost >= 99 { // impassable terrain, mirrors Reachable's blocking
+				continue
+			}
+			nc := battle.Cell{X: nx, Y: ny}
+			nd := curD + cost
+			if old, ok := dist[nc]; !ok || nd < old {
+				dist[nc] = nd
+			}
+		}
+	}
+	return dist
 }
 
 func manhattanHeadless(ax, ay, bx, by int) int {

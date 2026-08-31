@@ -23,7 +23,7 @@
       "hit": 97,
       "ev": 2,
       "crit": 5,
-      "mv": 6,
+      "mv": 4,
       "atk_min": 1,
       "atk_max": 1,
       "initial_command_mask": [
@@ -106,7 +106,7 @@
       "hit": 86,
       "ev": 1,
       "crit": 3,
-      "mv": 5,
+      "mv": 4,
       "atk_min": 1,
       "atk_max": 1,
       "spells": [
@@ -152,7 +152,7 @@
       "hit": 92,
       "ev": 2,
       "crit": 0,
-      "mv": 6,
+      "mv": 4,
       "atk_min": 1,
       "atk_max": 1,
       "initial_command_mask": [
