@@ -15,7 +15,7 @@
 
 目前不是「沒有程式」，而是「有一個可跑的垂直切片，尚未達 remake」：`remake/cmd/fd2/main.go` 仍承擔 scene state、輸入 dispatch、戰鬥 UI、對話、town、shop、church、preparation 與 Draw；`internal/battle`、`internal/campaign`、`internal/ending`、`internal/figani` 已有可測的部分 primitive。這些 primitive 不等於原版 UI 或完整 campaign。
 
-已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、可見的回合結束流程、武器射程、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。
+已存在但必須重新驗收：story/cutscene BeatRunner、dialog 分頁／捲動、campaign node、persistent roster、shop buy/sell/equip、church revive/class-change、preparation quota、indexed ending prefix。明確缺口包括：原版選單完整 dispatch、完整 spell effects/演出、HUD 避讓、完整 UI sprite/layout、所有 postbattle branch、native ending montage。**「可見的回合結束流程」／「武器射程」已於2026-08-31(M5規劃輪Phase2)核實移除**：Tab鍵結束回合(`main.go:6717-6718`)與per-unit `AtkMin/AtkMax`武器射程(`move.go:226-243`)皆已是正常玩法路徑的既有實作，非debug hook，詳見`docs/knowledge-base/51-remake-playtest-gaps-r2.md`項目1/2的勘誤。
 
 ### 1.3 進度停滯審計（2026-07-27）
 

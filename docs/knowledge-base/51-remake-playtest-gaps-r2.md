@@ -19,6 +19,12 @@
   (doc13 戰場選單狀態機有反組譯基礎,`Get_EasyMagic`/行動選單 0x18ED0/0x18890)。
 - **對策**:短解=我方單位全部 `Acted` 時自動 `endTurn()`(Update 內檢查);另在指令環/選單補「結束回合」顯式項。
 - **RE**:低。dosbox BP trace 原版「按什麼結束回合」確認 UX(選單項 vs 自動),再定短解/顯式二選一。
+- **勘誤(2026-08-31,M5規劃輪Phase2核實)**:這段是2026-07-04的歷史快照,現行code已確認Tab鍵
+  結束回合正常運作——`main.go:6717-6718`(戰場正常輸入路徑,無任何debug env var閘門)無條件呼叫
+  `g.endTurn()`;`remake/cmd/fd2/headless_battle_test.go`的`TestHeadlessBattleReachesConclusion`
+  已多回合驗證這條路徑。註解裡「正式版改我方全動完自動結束」的自動化短解**仍未實作**(目前只有
+  Tab手動一途,不影響「正常玩法可達」的驗收門檻,是額外UX打磨,非阻塞項)。此項不再視為M5開放
+  阻塞點。
 
 ## 2. 亞雷斯（騎士）無法兩格攻擊 — 攻擊距離取決於武器
 
@@ -34,6 +40,12 @@
   ①先查青衫武器表有無「攻擊範圍」欄(最快);②byte-diff:已知不同射程的兩把武器(騎槍 vs 劍)物品 bytes 對比,差異欄=射程;
   ③沿目前已證實的 `0x13A9F/0x14EF0/0x15B77` action/score boundaries 追射程檢查，看它讀物品結構哪個 byte。→ 更新 doc32。
   dosbox BP trace 僅在上述三路都對不上(靜態臆測屢錯)時才 fallback,不是首選。
+- **勘誤(2026-08-31,M5規劃輪Phase2核實)**:這段是2026-07-04的歷史快照,`move.go:59`寫死
+  `dx+dy==1`的舊程式碼已不存在。現行`InAttackRange`(`move.go:226-243`)讀真實per-unit
+  `u.AtkMin`/`u.AtkMax`(`0`才回退成`1`,不是永遠寫死1),已對照doc32物品表`weapon_range.json`
+  資料匯出接線;`assets/scenarios/ch01.json`的亞雷斯(騎士)本身就是`atk_min:1, atk_max:2`,證實
+  長槍類雙格攻擊確實有接進資料。此項不再視為M5開放阻塞點,doc56§1.2的對應「武器射程」已知缺口
+  行同步移除。
 
 ## 3. 法術路徑 partial（歷史試玩快照已修正）
 
