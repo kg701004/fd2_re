@@ -174,6 +174,94 @@ def native_record_word46_for_raw_unit_key(tables, raw_unit_key, level):
     return base + aux[8] * (level - 1)
 
 
+def native_ap_for_raw_unit_key(tables, raw_unit_key, level):
+    """Compute the constructor input copied to runtime record ``+0x37`` (base AP).
+
+    Full disasm of constructor ``0x10d7f..0x10e23`` (inside ``FUN_00010c50``,
+    body ``0x10c50..0x11010``, official IDA/Ghidra decompile,
+    2026-08-31): high selectors compute ``base_ap = table_byte[+5] * level``
+    -- the same 敵/友(10B) table AP-growth byte doc03 §「敵/友等級資訊表」
+    already documents (``docs/data/exe_tables/unit.json``'s flat ``ap`` field
+    *is* this raw growth-per-level byte, not a final value), now proven
+    multiplied by level exactly like the sibling ``+0x42``/``+0x46`` HP/MP
+    fields. Lower selectors (persistent-style 人物出場/24B + 升級成長/11B
+    tables) compute ``base_ap = lower_aux_byte[+0] * level +
+    lower_class_word[+0x12]`` -- note this is plain ``level``, not
+    ``level - 1`` like HP/MP's lower branch; confirmed directly from the
+    decompiled pseudocode, not assumed to match HP/MP's shape. Missing or
+    malformed provenance remains absent.
+    """
+    if not tables or level <= 0:
+        return None
+    native = native_constructor_for_raw_unit_key(tables, raw_unit_key)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) <= 5:
+            return None
+        return record[5] * level
+    aux = native.get("aux_record")
+    if aux is None or len(record) < 0x14 or len(aux) < 1:
+        return None
+    base = record[0x12] | (record[0x13] << 8)
+    return aux[0] * level + base
+
+
+def native_dp_for_raw_unit_key(tables, raw_unit_key, level):
+    """Compute the constructor input copied to runtime record ``+0x39`` (base DP).
+
+    Same ``0x10d7f..0x10e23`` disasm as ``native_ap_for_raw_unit_key()``:
+    high selectors use table byte ``+6`` times level; lower selectors use
+    lower-aux byte ``+2`` times level plus lower-class word ``+0x14``.
+    """
+    if not tables or level <= 0:
+        return None
+    native = native_constructor_for_raw_unit_key(tables, raw_unit_key)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) <= 6:
+            return None
+        return record[6] * level
+    aux = native.get("aux_record")
+    if aux is None or len(record) < 0x16 or len(aux) < 3:
+        return None
+    base = record[0x14] | (record[0x15] << 8)
+    return aux[2] * level + base
+
+
+def native_mv_for_raw_unit_key(tables, raw_unit_key):
+    """Compute the constructor input copied to runtime record ``+0x3b`` (MV).
+
+    Same ``0x10d7f..0x10e23`` disasm: unlike HP/MP/AP/DP, MV is a flat
+    per-(race,cls) value copied verbatim by the constructor with *no* level
+    multiplication in either branch (``puVar16[0x3b] = puVar12[8]`` on the
+    high-selector branch, ``puVar16[0x3b] = puVar12[7]`` on the lower
+    branch) -- confirmed directly from the decompiled pseudocode, so ``level``
+    is intentionally not a parameter here. The bug this closes is not level
+    scaling (there is none) but that the existing flat ``mv`` export came
+    from ``base_stats(exe, race, cls)`` keyed off FDFIELD's often-mismatched
+    narrative (race, cls) pair (see the ``PORTRAIT_CLS_NAME`` comment above)
+    rather than the raw-unit-key-indexed table the constructor actually
+    reads from.
+    """
+    if not tables:
+        return None
+    native = native_constructor_for_raw_unit_key(tables, raw_unit_key)
+    if native is None:
+        return None
+    record = native["record"]
+    if native["branch"] == "high_class":
+        if len(record) <= 8:
+            return None
+        return record[8]
+    if len(record) <= 7:
+        return None
+    return record[7]
+
+
 def crit_by_cls(resist_crit, cls):
     for e in resist_crit:
         if e.get("cls") == cls:
@@ -277,6 +365,22 @@ def main(argv):
             word46 = native_record_word46_for_raw_unit_key(native_tables, raw_unit_key, u["lv"])
             if word46 is not None:
                 rec["native_record_word46"] = word46
+            # AP/DP/MV: unlike HP/MP (kept flat + overridden at Go load time
+            # via native_record_word42/46, because HP needs a separate
+            # current/max split), these three have no such split -- overwrite
+            # the flat ap/dp/mv fields directly, matching how model.go reads
+            # them straight off the JSON with no override logic. See
+            # native_ap_for_raw_unit_key()/native_dp_for_raw_unit_key()/
+            # native_mv_for_raw_unit_key() docstrings for the disasm evidence.
+            ap = native_ap_for_raw_unit_key(native_tables, raw_unit_key, u["lv"])
+            if ap is not None:
+                rec["ap"] = ap
+            dp = native_dp_for_raw_unit_key(native_tables, raw_unit_key, u["lv"])
+            if dp is not None:
+                rec["dp"] = dp
+            mv = native_mv_for_raw_unit_key(native_tables, raw_unit_key)
+            if mv is not None:
+                rec["mv"] = mv
         if u.get("inventory"):
             rec["inventory"] = u["inventory"]
         if u.get("inventory_slots"):

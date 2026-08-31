@@ -119,6 +119,40 @@
 > 獨立反組譯證實(remake 匯出的 map JSON 目前 `ap`/`dp`/`mv` 欄位是每個單位相同的佔位值，不是
 > 真實算出值)，詳見 doc58「續二十五」。
 >
+> **AP/DP/MV 缺口已解決(2026-08-31，M5 Phase 3)**：對 constructor `0x10c50`(body
+> `0x10c50..0x11010`，含先前只驗過一半的 `0x10d7f..0x10e23` 這段)做官方 IDA/Ghidra 完整
+> decompile(`ghidra_batch_probe.py` `decompile` action)，一次看到 HP/MP 之外的 AP/DP/MV/DX
+> 全部寫入邏輯，答案是「growth×level，但跟 HP/MP 不是同一種形狀」：
+> - **AP(`+0x37`)/DP(`+0x39`)：確認也是 growth×level**，high branch(敵/友表,
+>   `raw_unit_key>=0x44`)公式跟 HP/MP 一模一樣——`base_ap = table_byte[+5]*level`、
+>   `base_dp = table_byte[+6]*level`(這正是 `docs/data/exe_tables/unit.json` 裡那個「每個單位
+>   相同」的 `ap`/`dp` 欄位本身──它從頭到尾就是這個 growth-per-level byte，只是從沒被乘上等級)。
+>   lower branch(角色出場式 24B+11B 表，`raw_unit_key<0x44`)則是
+>   `growth_byte*level + base_word`(注意**不是** `level-1`，跟 HP/MP 的 lower branch 形狀不同，
+>   直接讀 pseudocode 逐行核對過，不是套用假設)。
+> - **MV(`+0x3b`)：確認是 flat 值，完全沒有等級縮放**——high/low 兩個 branch 都是
+>   `puVar16[0x3b] = puVar12[8 或 7]` 直接複製，不涉及乘法。原本以為的「MV 缺口」其實不是
+>   縮放問題，而是舊 `base_stats(exe, race, cls)` 用 FDFIELD 的「敘事身分」race/cls 去查表，
+>   跟 constructor 實際用的 `raw_unit_key` 索引表常常對不上同一列(職業名顯示錯位那個已知
+>   bug的同一根因)，MV 因此常常也撈到錯的列，不是缺公式。
+> - **DX(`+0x3e`)**：附帶確認也是跟 AP/DP 同形狀的 growth×level(high:
+>   `table_byte[+7]*level`；low: `aux_growth*level + base_word`)，但 DX 沒有獨立匯出欄位
+>   (只間接餵給 HIT/EV 公式的 `bs["dx"]`)，這次沒有動它——`hit_ev_for_unit()` 目前仍吃舊的
+>   `base_stats()` flat `dx`，同樣的「race/cls 對錯列」+「沒乘等級」兩個問題大機率也存在，
+>   留給後續一次單獨的 HIT/EV RE 工作，不在本輪 AP/DP/MV 範圍內。
+>
+> 用 ch24 `map24_units.json` 那隻 LV14 惡魔(`native_constructor.record = [5,26,40,0,5,30,18,6,6,180]`)
+> 驗算：AP=30×14=420、DP=18×14=252、MV=6(flat)，跟修正後 JSON 完全相符。跨全部 30 個
+> `mapN_units.json`(map0-29)抽測：1818 個 high_class 單位裡，舊 flat 值與新公式值不同的比例
+> 高達 98%(AP)/98%(DP)/87%(MV)，證實這不是邊緣案例而是全面性的資料錯誤。已用
+> `tools/native_ap_for_raw_unit_key()`/`native_dp_for_raw_unit_key()`/`native_mv_for_raw_unit_key()`
+> (mirror 既有 `native_record_word42/46_for_raw_unit_key()`寫法)算出正確值，`tools/export_units.py`
+> 的 `main()` 生成流程與新的 `tools/patch_units_ap_dp_mv.py`(mirror 既有
+> `patch_units_hit_ev.py`寫法，只動 ap/dp/mv 三個 key)都已接上；30 個 `mapN_units.json` 已
+> 全部重新 patch(每份 100% 單位都有可信 native provenance，0 skipped)。`go build ./remake/...`
+> `go test ./remake/...` 全綠(純數值變更，無需改任何既有測試)。map30-32(非戰鬥過場地點)
+> 依 M5 稽核範圍不在此次 patch 範圍內。
+>
 > **`tools/dump_exe_tables.py` 的 `ANCHORS` dict 修正完成(2026-08-20，第 6 輪)**：上面第 82 行
 > 標的「需要先改成讀新版 offset」在這輪補上——全部 9 張表(item/shop/spell/char/growth/learn/
 > resist/crit/unit)的 `ANCHORS` 已改為第 60-70 行表格記載的新版(0x7xxxx)offset，並把兩處先前

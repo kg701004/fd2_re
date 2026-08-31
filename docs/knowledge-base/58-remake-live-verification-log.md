@@ -3321,7 +3321,9 @@ CS=0170 DS=0178 ES=0178 SS=0178
 | 7 | 0x1A | ？？？ | 19 | 1 | 140/25/24/9/4/4/250 | 2660 | 475 | 456 | 171 | 76 | (10,7) |
 | 1 | 0x07 | 盜賊(保留池) | 5 | 15 | 14/0/7/1/1/4/21 | 70 | 0 | 35 | 5 | 5 | (5,7)×15，group=255 |
 
-MaxHP/MaxMP兩欄是用`高分支公式 growth×LV`算出、並與`map24_units.json`裡已經算好的`native_record_word42`/`native_record_word46`逐一核對過的（9/9全部相符，見上）；AP/DP/DX三欄是**未證實的類比假設**，標記清楚供下一輪live capture直接對照驗證，不要當成已驗證數值使用。
+MaxHP/MaxMP兩欄是用`高分支公式 growth×LV`算出、並與`map24_units.json`裡已經算好的`native_record_word42`/`native_record_word46`逐一核對過的（9/9全部相符，見上）；AP/DP/DX三欄當時是**未證實的類比假設**，標記清楚供下一輪live capture直接對照驗證，不要當成已驗證數值使用。
+
+**AP/DP/DX 假設已由完整反組譯證實（2026-08-31，M5 Phase 3）**：對 constructor `0x10c50`(`0x10d7f..0x10e23`)完整 decompile 後確認，high branch 的 AP/DP/DX 確實也是 `growth×level`(跟 HP/MP 同形狀，只是 growth byte 是單 byte 不是 word)，本表當時用「類比假設」推算的數字**全部精確吻合**：大惡魔 LV13(growth 33/20/6)算出 AP=429/DP=260/DX=78，跟本表第 3319 行完全一致；惡魔 LV14(growth 30/18/6)算出 AP=420/DP=252/DX=84，跟本表第 3320 行完全一致。詳細 disasm 證據與 lower branch(`raw_unit_key<0x44`，公式形狀不同，是 `growth×level + base_word` 而非 `level-1`)見 doc03「AP/DP/MV 缺口已解決」段落；`tools/export_units.py`/`tools/patch_units_ap_dp_mv.py` 已據此修正全部 30 個 `mapN_units.json`。
 
 **idx16-19定位嘗試——誠實記錄未能鎖定**：續二十四提到的「大惡魔LV.12」與這次查到的「RA5/CL0x1A/LV13/AP33」（模板表倒數第3列）職業、AP量級都吻合，等級差1（12 vs 13）在可能是續二十四當下UI讀值時的口語化記憶誤差範圍內，是目前最接近的候選。但`map24_units.json`陣列順序（本輪用來分組的依據）**不等於**live DOSBox記憶體裡的runtime unit陣列順序（例如陣列第0筆是`own`、第1筆卻是奇怪的`high_class`分支`ally`而非預期的`lower_class`，順序明顯不是單純「我方全部在前」），所以無法從這份JSON可靠地推算出idx16/17/18/19在runtime陣列裡實際对应哪個(RA,CL,LV)組合。**建議下一輪直接在live session對idx16~19這4個record讀`+0x1F`(race)/`+0x20`(class)/`+0x21`(level)三個byte，回頭查表上面9列模板做比對**，而不是繼續用座標或擊殺順序猜。
 
