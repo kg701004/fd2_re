@@ -2054,6 +2054,36 @@
   92-m5-normal-playthrough-log.md` 2026-09-01 續二段落。下一輪建議**優先修
   悠妮的環卡死 bug**(直接影響她整場戰鬥能否出手,是打贏 ch01 的實質
   阻礙),再繼續清空剩餘敵人。
+- [~] **remake 側正常玩法可達性驗證(Phase 4)續三**——2026-09-01:用新建的
+  `tools/fd2_live_input_helper.py`(全程 `--settle` 逐鍵確認)重跑續二記錄的
+  「發現三」(悠妮環卡死)原始 repro,單次/三連/0.1秒間隔連續 Escape 都
+  **無法重現**,環每次都正常重開、`Acted` 從未被誤設。判定續二的「永久卡死」
+  是該輪 ad-hoc `xdotool key` 輸入不可靠的偽陽性,不是真實 code bug,**未
+  修改任何程式碼**。完整 repro 細節見 doc92 續三段落。
+- [~] **remake 側正常玩法可達性驗證(Phase 4)續四(★ 本輪最重大發現)**——
+  2026-09-01:**證實標準「buff/nerf JSON」測試捷徑(`ch01.json` 主角
+  hp/mp/ap/mv=9999、`map0_units.json` 敵方 hp/mp/ap/dp=1)對「真正走過
+  序章對白→LOADCH→戰鬥」這條 Phase 4 要求的路徑完全不生效**——不是本輪
+  操作失誤,是這個專案的 native record 重建系統(`applyPersistentStats`/
+  `MaterializeNativeJoinPersistentUnit` 處理主角隊,另一個目前未完全定位
+  呼叫點的類似機制處理敵方 group1/group2)在多個節點都會用 class/growth
+  table 重新算出 HP/MP/AP/DP/MV,無視 scenario/map JSON 宣告的數值。主角隊
+  失效的根因已完全釘死(`main.go:2651`);敵方 nerf 失效用臨時 debug print
+  追蹤到「LOADCH 當下正確(hp=1)、戰鬥開始前被還原成 vanilla(hp=28)」,
+  但確切覆寫點本輪未能完全定位(已排除 `AdoptHandlerBattleState`/
+  `materializeStoryGroup`/`AppendNativeMapSelectorBatch` 等候選)。**這代表
+  續一/續二/續三記錄的所有戰鬥數值其實全部都是 vanilla 難度**(沒人拿
+  9999/1 去對照過,回頭看是件好事——反而是更強的「無 debug hook 正常玩法
+  可達」證據,只是伴隨風險比原以為的高)。本輪同時修正了對指令環方向鍵的
+  誤解(不是「移動焦點」,是`main.go:4345`自己註解好的「↑攻擊/←法術/→物品/
+  ↓待機」直接映射),並首次完整驗證了「開環→選攻擊→目標選擇→confirm」
+  全流程在真人輸入下正確執行(命中 22 傷害、敵方反擊 17 傷害)。**誠實
+  範圍**:ch01 本輪仍未打贏,且過程中使用的除錯 instance 未能保留到本輪
+  結束(細節見 doc92),下一輪需要重新從序章開始。完整根因追查鏈、已排除
+  候選、給下一輪的具體 debug 建議見 `docs/knowledge-base/
+  92-m5-normal-playthrough-log.md` 2026-09-01 續四段落。**下一輪建議**:
+  直接放棄 buff/nerf 捷徑,vanilla 難度重打 ch01(一次命中約20-22傷害,
+  敵方反擊約17-18傷害,索爾/亞雷斯/悠妮/蓋亞 HP 分別42/48/28/50)。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。

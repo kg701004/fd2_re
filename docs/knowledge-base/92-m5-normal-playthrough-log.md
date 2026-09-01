@@ -386,3 +386,160 @@ campaign_full.json`+`FD2_MUTE=1`+三個 `FD2_ORIGINAL_*`),**完全沒有**
 內其實**沒有任何**canonical `:99`/`dbg` 等其他 instance 在跑,無需額外核對是否
 被誤動)。本輪截圖存於 `.wsl_build/live_input_helper/yunibug/`(工具預設路徑,
 非 `docs/figures/`——純過程驗證截圖,不promote 進正式文件)。
+
+## 2026-09-01 續四:重大發現——標準「buff/nerf JSON」捷徑在真正走過 campaign
+劇本路徑時對敵我雙方都**完全失效**;真實攻防機制本身首次被完整驗證正確
+
+**開場**:接續一個被 rate limit 中斷的既有嘗試,`fd2_live_input_helper.sh status`
+發現一個孤兒 instance `m5r4`(Xvfb/game 進程其實已死,只是 registry 殘留),
+`teardown-all` 清乾淨,`ps aux`/`tmux ls` 核對 WSL 內無殘留。確認交辦標準的
+「ch01.json 主角隊 hp/mp/ap/mv=9999、map0_units.json 敵方 hp/mp/ap/dp=1」
+buff/nerf 檔案處於標準的「已編輯未 commit」狀態,重新從當日 HEAD build 一份
+新鮮的 `fd2-linux-verify`。
+
+### 指令環方向鍵的真正語意——不是「移動焦點」,是「直接選指令」
+
+本輪一開始被指令環操作卡住多輪(以為方向鍵是在幾個圖示間移動反白焦點,結果
+Up/Right 怎麼按都「沒反應」)。回頭讀 `main.go:4345` 自己的既有註解才發現:
+**這根本不是需要「移動再確認」的選單,是直接映射**——`main.go:4540-4552`
+明寫「環導航(doc13 [0x3C57]:↑0攻擊/←1法術/→2物品/↓3待機)」,按哪個方向鍵
+就直接把 `g.ringSel` 設成對應指令,`Enter` 立刻執行那個方向代表的指令,不需要
+先移動反白再確認。**下一輪如果還要操作指令環,直接記「上攻擊/左法術/右物品/
+下待機」這個固定表,不要再嘗試用方向鍵在四個圖示間「移動選取」**——這是本輪
+自己走了不少冤枉路才確認的,純粹是沒有先讀 `main.go` 自己的中文註解就開始
+用視覺/像素判讀猜測。
+
+### 真實攻防機制首次完整驗證正確(無 debug hook、真人輸入路徑)
+
+用上面校正過的環操作,對 ch01 T1 的一隻「盜賊」完整跑過一次
+`移動→開環→按Up選攻擊→關環進入目標選擇→移動游標到敵人格→confirm`
+全流程,**成功命中,造成 22 傷害**,畫面正確顯示「亞雷斯 攻擊 盜賊,造成
+22 傷害」與戰鬥剪影動畫。Tab 結束玩家回合後,ENEMY PHASE 正確觸發,敵方
+AI 反擊亞雷斯,「盜賊 攻擊 亞雷斯,造成 17 傷害」同樣正確顯示全螢幕戰鬥
+演出。這是本專案第一次**完整**驗證「開環→選攻擊(非原地待命)→關環進入
+目標選擇→游標移到範圍內敵人→confirm 執行攻擊」這條完整互動鏈在真人輸入
+下運作正常(先前續一/續二/續三都只驗證到片段:續一只驗證過一次原地攻擊,
+續二驗證了雙向命中但操作细節記錄不完整,續三只驗證了法術目標選擇+Escape
+不涉及實際攻擊執行)。
+
+### ★ 重大發現:buff/nerf JSON 捷徑在真正走過 campaign 劇本路徑(序章對白→
+LOADCH→戰鬥)時,對主角隊與敵方**都完全不生效**——這不是本輪新引入的
+bug,是這個捷徑本身跟這個專案的「native record 重建」架構有結構性衝突
+
+**症狀**:本輪一開始沿用標準捷徑操作(`ch01.json` 主角 hp/mp/ap/mv 全部設
+9999、`map0_units.json` 24 隻敵方 hp/mp/ap/dp 全部設 1),照交辦程序重新
+build+啟動+走序章對白進 ch01 戰鬥。**選取亞雷斯後,角色資訊畫面顯示
+HP 048/048、AP 026、MV 07——與 vanilla(未 buff)數值完全吻合,9999 完全
+沒有生效**。移動到敵方單位旁開環選目標,敵方單位面板顯示 HP `028`——同樣
+是 vanilla 數值(盜賊原始 HP 就是 28),1 完全沒有生效。
+
+**根因追查(用臨時 `FD2_DEBUG_ENEMY_STATS` env var 插入的 debug print,
+非猜測——完整鏈路如下,修完後已全數 `git checkout` 撤銷,未進版控)**:
+
+1. **主角隊 buff 失效——根因已完全釘死,和續一記錄的
+   `applyPersistentStats` 是同一個機制的另一個面向**:`main.go:2651` 的
+   `applyPersistentStats(dst, src)` 在每次 `applyLoadCH`(包含序章對白本身
+   觸發的第一次)都會**無條件**把 `dst.HP/MaxHP/MP/MaxMP/AP/DP/MV` 等一整組
+   欄位用 `src`(`g.partyRoster[fig]`)覆寫。`g.partyRoster` 只在**第一次**
+   `seedPersistentPartyFromLoadCH` 時填入,來源是
+   `materializeNativeJoinPersistentUnit()` →
+   `NativeJoinConstructorTable.MaterializePersistentUnit()`
+   (`internal/campaign/native_join_constructor.go:108`)——這個函式**完全
+   不採用**傳入的 `base`(即 scenario JSON buff 過的單位)的 HP/MP/AP/DP/MV,
+   而是從 native class/growth table(`row.defaults`/`row.growth`,對應
+   原版 `sub_112A5` 的忠實重建)重新算出這些值。淨效果:`ch01.json` 的
+   `party` 陣列 buff 只在**該角色人生中第一次 JOIN**當下短暫存在,序章
+   對白一旦跑到任何一次 `applyLoadCH`,`g.partyRoster` 就會被填入 vanilla
+   數值,之後**每一章**開局的角色數值永遠是 vanilla,不是 buff 過的值。
+
+2. **敵方 nerf 失效——已用 debug print 追蹤到「LOADCH 當下正確、戰鬥開始
+   前被還原」這個現象,但**沒有在本輪時間內完全釘死是哪一行覆寫回去的**,
+   誠實記錄追查過程與已排除的候選,留給下一輪**:
+   - `applyLoadCH()`(`main.go:1830`)自己的 `roster, err :=
+     battle.Load(assetPath(state.Roster))` 這一步,debug print 證實**正確
+     讀到 hp=1**(對 ch01 用的 `assets/maps/map0/map0_units.json`,24 隻
+     敵方全部印出 `hp=1 ap=1 dp=1`)。
+   - 同一次呼叫接著把 `roster.Units` 逐一複製進
+     `g.storyRoster`(`main.go:1908-1918` 一帶)——debug print 證實**這裡
+     也仍然是 hp=1**,包含 `group=1`/`group=2` 等非 0 群組(盜賊群組本身的
+     JSON `"group"` 值)。
+   - 但當battle真正進入(`resetBattle()`,`main.go:2418`)、`adoptHandlerState`
+     判定為真、`g.storyActors`(這裡稱 `handlerActors`)被拿來取代這次
+     `resetBattle` 自己 fresh `battle.Load()` 出來的 `st.Units` 時——debug
+     print 顯示 `handlerActors` 裡的盜賊已經是 **hp=28 ap=24 dp=4(vanilla)**,
+     座標也和 LOADCH 當下的原始 JSON 座標有系統性偏移(y+1),說明這**不是
+     單純的複製殘留**,是某個真正的 native reconstruction 已經在中間跑過。
+   - 已排除的候選(讀過原始碼,確認**不是**這些):`AdoptHandlerBattleState`
+     (`event.go:407`,只處理 `PendingGroups`/事件 fired 旗標,不碰 HP)、
+     `materializeStoryGroup()`(`main.go:1803`,debug print 顯示**這次
+     戰鬥根本沒有呼叫到**——盜賊的 `group` 直接是 1,不是 0,理論上該由
+     這個函式在劇本觸發時才搬進 `g.storyActors`,但實際上 `resetBattle`
+     讀到 `g.storyActors` 時盜賊已經在裡面了,呼叫路徑仍不明)、
+     `AppendNativeMapSelectorBatch`/`MaterializeNativeMapSelectorSlots`/
+     `MaterializeNativeMapPresentation`(`model.go`/`native_map_presentation.go`,
+     讀過原始碼確認只碰 sprite selector/位置,不碰 HP/AP/DP)。
+   - **目前最佳假說(未證實)**:這個專案裡已知至少兩個「native
+     constructor 從 class/growth table 重新算 HP/AP/DP,無視傳入 base 的
+     欄位」的既有機制——`MaterializeNativeJoinPersistentUnit`(主角隊,已
+     證實是禍首)、`MaterializeNativeFutureConstructor`
+     (`native_future_constructor.go:87`,目前已知只用在
+     `on_turn_end`/`spawn_group` 觸發的**後續**援軍群組)。敵方 nerf 失效
+     很可能是**同一類機制的第三個、目前還沒定位呼叫點的變體**,專門處理
+     ch01 開局就在場的 group1/group2(不是後續 `spawn_group` 觸發的援軍),
+     但本輪沒有找到實際呼叫這個變體的程式碼位置。**下一輪如果要繼續釘
+     根因**,建議在 `resetBattle()` 內部,`battle.Load()` 呼叫完、
+     `adoptHandlerState` 判斷之前後,對 `st.Units`(fresh load,非
+     `handlerActors`)也印一次 debug,先確認是不是這個 fresh load 本身
+     就已經是 vanilla(如果是,問題出在 `battle.Load()` 內部某個我們還
+     沒追到的分支;如果 fresh load 也是 hp=1,那問題確定出在
+     `handlerActors`/`g.storyActors` 這條線,要繼續往回查是誰在
+     `materializeStoryGroup`/`STORYACTORLOOP`/`STORYROSTERBUILD` 三個
+     已知組裝點之外,還有第四個組裝點把 group1/group2 塞進
+     `g.storyActors`)。
+
+**結論與對整個 M5 Phase 4 專案的影響**:**這個標準 buff/nerf JSON 捷徑,
+對「真正走過序章對白→LOADCH→戰鬥」這條 Phase 4 要求的無 debug hook 正常
+玩法路徑,結構性地不生效**——不是本輪操作失誤,是這個專案的 native record
+重建系統(為了忠實還原原版存檔/JOIN/群組生成的位元組行為而設計)在多個
+節點都會用 class/growth table 重新算出 HP/MP/AP/DP/MV,無視 scenario/map
+JSON 宣告的數值。這個捷徑**只在繞過序章、直接用類似 `FD2_CAMP_*` debug
+hook 或孤立 harness 載入單場戰鬥時才會生效**(因為那種載入方式不會經過
+`g.partyRoster`/`g.storyActors` 這整條 persistent/story 狀態機),而這正好
+是 Phase 4 明確要排除的載入方式。**這代表過去幾輪(續一/續二/續三)記錄
+的所有戰鬥數值——索爾 HP42、亞雷斯 AP26 對盜賊 DP2 算出 21 傷害、盜賊
+HP28→8——全部其實都是 vanilla 數值,不是 buff/nerf 生效後的結果**,只是
+沒人拿「交辦要求的 9999/1」去對照過,回頭看反而是件好事:這代表續一到
+本輪為止,Phase 4 到目前為止測到的所有真實攻防數字,其實**從頭到尾都是
+貨真價實的 vanilla 難度驗證**,不是掛了捷徑的簡化版——對「證明無 debug
+hook 正常玩法可達」這個 M5 驗收句而言,反而是更強的證據,只是伴隨的風險
+(單位真的會受傷、真的可能死)比原本以為的高。
+
+**給下一輪的建議**:
+1. **不用再嘗試用 JSON 編輯 buff/nerf 之後才開始真人輸入 playthrough**——
+   已證實對這條路徑無效,徒然浪費一輪 build+序章對白的時間。標準捷竟仍然
+   對其他用途有效(例如繞過序章直接載入單場戰鬥的除錯情境),只是不適用
+   於 Phase 4 這種「一定要走過序章」的驗證方式。
+2. 若要繼續打 ch01(vanilla 難度),`m5r4`/`ch01run2` 這兩個先前 instance
+   都已消失(過程中被交錯的除錯 instance 或並行 session 動到,細節不明,
+   但收尾時 `ps aux` 確認 WSL 內無孤兒程序),下一輪需要從頭重新走序章
+   對白。
+3. vanilla 難度下已知：一次命中約 20-22 傷害、敵方一次命中約 17-18 傷害,
+   索爾/亞雷斯/悠妮/蓋亞 HP 分別 42/48/28/50——多打幾輪有真實被打死的
+   風險,不能再假設「敵人 AP=1 幾乎打不痛」。
+4. 如果要真的解開敵方 nerf 失效的根因,見上面「目前最佳假說」段落的具體
+   debug 建議(在 `resetBattle()` 的 fresh `battle.Load()` 之後立刻印一次
+   debug,先切開「fresh load 本身有沒有問題」跟「`g.storyActors` 這條線
+   有沒有問題」這兩種可能)。
+5. 全程使用的 debug instrumentation(`FD2_DEBUG_ENEMY_STATS` env var 觸發
+   的臨時 print)已經在本輪結束前用 `git checkout -- remake/cmd/fd2/main.go`
+   完整撤銷,未進版控,下一輪如果要重新插樁需要自己重新加。
+
+**清理**:本輪使用過的所有 instance(`ch01run`/`ch01run2`/`dbgcheck`/
+`dbg2`~`dbg6`)均已個別 `teardown`(`ch01run2` 的 teardown 呼叫遺失在
+交錯的除錯操作中,但收尾時用 `ps aux` 核對 WSL 內確實已無殘留的
+`Xvfb`/`fd2-linux-verify` 進程,不是孤兒)。開發過程中發現
+`tools/fd2_live_input_helper.py`/`.sh` 兩個檔案在本輪執行途中被**另一個
+並行 session** 修改(新增 raw/resized screenshot 分離輸出的功能,
+registry 裡也看得到 `livehelpertest1-3`/`probe1`/`rawviewcheck`/
+`resizecheck` 這些非本輪建立的 instance 殘留 log)——本輪未觸碰、未
+revert 這兩個檔案的變更,尊重並行 session 的工作。
