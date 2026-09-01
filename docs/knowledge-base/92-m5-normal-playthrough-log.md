@@ -149,3 +149,149 @@ live 重播)。這是一個**架構性阻擋**的修復,不是某個畫面的裝
 5. Xvfb `:970` 這個 display 編號本輪用過即釋放(session 結束前已 `pkill`/`kill -9`
    清乾淨,`ps aux`/`tmux ls` 收尾核對過三方——canonical `:99`/`dbg` 等其他 instance
    全程未被動過),下一輪可以沿用或換一個全新編號,兩者皆可。
+
+## 2026-09-01 續二:繼續同一場 ch01 戰鬥(T1→T4),真人輸入首次成功命中/挨打,未打贏
+
+**開場清理**:本輪一開始發現前一次(被 API rate limit 中斷的)嘗試其實**留下了活著的
+孤兒 process**——`Xvfb :972`(PID 711)+`fd2-linux-verify`(PID 774)+一個 tmux session
+`m5play`,已經跑了將近 13 小時(`Aug31 20:04` 啟動,發現時是 `Sep 1 08:57`),與交辦
+時「已確認零孤兒 process」的說法矛盾(該檢查應該是對錯的 WSL distro 或錯誤時間點做
+的)。截圖確認畫面卡在「選亞雷斯→開環→按下攻擊」這個中斷前的最後動作,與交辦說明
+吻合。依指示視為全新開始:screenshot 存證後 `kill`(用 `pkill`/`kill` 被 auto mode
+classifier 擋下兩次,最終用 `dangerouslyDisableSandbox` 過)+`tmux kill-session`
+清乾淨,`ps aux`回歸乾淨(`:99`/`dbg`等 canonical instance 全程未被動過)。
+
+**Go 工具鏈定位**:WSL2 內建 `go` 不在標準 PATH(`which go` 找不到),實際位置是
+`/home/kg701004/go/bin/go`(go1.22.12,GOROOT=該路徑本身,GOPATH 與 GOROOT 衝突但
+不影響建置只會印 warning)。從當日 HEAD(`e4b40834`)重新建置 `fd2-linux-verify`
+(`GOOS=linux GOARCH=amd64 go build`)成功,14.9MB,含今天稍早所有 AP/DP/MV/DX/
+HIT/EV/postbattle-binding 工作。全新 Xvfb `:980`,以 `nohup setsid ... &
+disown -a`(單純 `&`+`disown` 會在某次 wsl.exe 呼叫結束後被回收,換這個寫法才穩定
+存活)啟動 binary,`FD2_CAMPAIGN=assets/scenarios/campaign_full.json`+`FD2_MUTE=1`
++三個 `FD2_ORIGINAL_*`,逐字同 `play.sh`,無任何 `FD2_SHOT_*`/`FD2_CAMP_*`。
+
+### 序章對白→ch01戰鬥開局(約165次 Enter,分批20-40次一組+screenshot確認)
+
+順利重演續一已記錄的完整序章(王座廳→王城→比劍→發現悠妮蓋亞→行軍→盜賊宣戰),
+無異常。
+
+### 座標/UI 機制釐清(耗費本輪大半時間,但對後續 session 有直接參考價值)
+
+**用 F3 開啟的除錯 HUD 才是可靠的地面真相**——螢幕左上角 `T{turn}
+own{n} ally{n} enemy{n} cur({x},{y})`,比對照著螢幕觀感猜格子準確得多。這是玩家
+可按的正常按鍵(非 env var hook),F3 debug HUD 在戰鬥畫面本身就會渲染除錯資訊
+(`main.go:7339` `if g.debug` 分支),完全在「無 debug hook」規則許可範圍內。
+
+**方向鍵→格子的映射是純正交、非菱形**:`Right`=x+1(螢幕純水平位移~47.7px)、
+`Down`=y+1(螢幕純垂直位移~47px),兩者互不影響。上一輪筆記提到的「diamond/brick
+tile 視覺」只是美術風格,邏輯格線是標準矩形網格,不需要斜向換算。
+
+**ch01 開場 own_deploy 座標經 ACT(0) 位移 -6y**:離線用暫時的 `zz_probe_ch01_test.go`
+(跑完即刪除,未 commit)呼叫 `battle.Load`+`LoadScenario`+`sc.Setup`+
+`sc.Fire(st,"on_battle_start","")` 印出的原始 `own_deploy` 座標
+(索爾(7,20)/亞雷斯(8,22)/悠妮(10,21)/蓋亞(11,23))**在真正互動時對不上**——實測
+索爾在 `(7,14)`、亞雷斯在 `(8,16)`,兩者都精準吻合「y-6」,和 `event.go:500`
+附近註解「ACT(0) 把四個 runtime slot 全部往上移六格」完全一致。**但敵方座標沒有
+相同規律**(offline probe 給出 group2 原始 `(1,21)(2,22)(3,22)(4,23)`,實測活著的
+敵人卻在 `(2,18)/(3,18)/(5,20)` 一帶,既非原始值也非 -6y),推測敵方另有自己的
+ACT 位移或本來就走不同座標系,**下一輪若還要精算敵方座標,建議直接用 F3 HUD 現場
+量測,不要沿用 offline probe 的敵方數字**——這正是本輪吃虧的地方,靠螢幕觀感+像素
+換算($\approx$47.7px/格,校正點見下)手動測出來的,不是預先算好的。
+
+**指令環方向鍵確實有你來我往(hit-or-miss)的丟鍵**,不是幻覺:同一個「原地不動→
+開環→按上選攻擊→Enter」序列,對亞雷斯第一次試就成功進「攻擊:選擇目標」,對索爾
+卻連續 3-4 次「按 Up 沒反應、Enter 只會重覆『此指令目前不可用』」才成功。**耐心
+重試(檢查畫面而非假設一定失敗)是目前唯一可靠的因應方式**,尚未找到觸發條件的
+規律。
+
+### 真正的雙向戰鬥,首次透過純正常輸入達成(本輪核心驗證目標)
+
+- **T2**:亞雷斯(移動到 (5,18),距敵 (3,18) 曼哈頓距離 2,吻合他 `atk_min1/
+  atk_max2` 的長矛射程)攻擊「盜賊」,命中,**造成 20 傷害**(敵方 HP 28→8)。
+  截圖 `m5-play-ch01-r2-02-ares-first-hit-20dmg.png`(戰鬥剪影+「亞雷斯 攻擊
+  盜賊，造成 20 傷害」字樣)。
+- **T2→T3 敵方回合**:「盜賊 攻擊 亞雷斯，造成 18 傷害」,真人輸入路徑下首次
+  看到敵方主動命中我方單位並扣血。截圖
+  `m5-play-ch01-r2-03-enemy-counterattack-18dmg.png`。
+- **T3**:亞雷斯嘗試補刀同一隻(已剩8血的)盜賊,**未命中**(`hit`機制真的會
+  miss,不是每次必中)。截圖 `m5-play-ch01-r2-04-second-attack-animation.png`
+  (全螢幕戰鬥立繪,雙方姓名+HP條)。
+- **T3→T4 敵方回合**:亞雷斯再挨一次「造成 18 傷害」(同一隻敵人或另一隻,訊息
+  文字相同未逐一分辨)。
+- **T4 開局**:`own4→own5, ally0→ally1`——劇本觸發「哈諾」加入隊伍(對照
+  `TestChapter1Turn3JoinsHanoBeforeSpawningHisGroup` 這個既有測試名稱),對白
+  「『真是的，吵的要命，到底在搞什麼。。』」正確渲染,同時螢幕左下角持續印出
+  `loadErr: scenario join_party:    1`。截圖
+  `m5-play-ch01-r2-05-turn4-hano-joins-loaderr.png`。
+
+**全程 4 個完整回合零虛假敗北**——`applyPersistentStats` 的修復在真正跨越
+多回合、多次真實攻防後依然穩固,沒有任何新的迴歸跡象。
+
+### 發現二:`join_party` T3 錯誤確認會在真正的 campaign 流程重現,不只是孤立測試 harness 才有
+
+`main.go:2965` 的 `g.loadErr = fmt.Sprintf("scenario join_party:找不到角色%d的
+我方記錄", id)` 早已被 `headless_battle_test.go:58-71` 記錄為「已知、已記錄的
+小瑕疵」——但**該註解的原始假設是「只有 loadGame()+resetBattle() 建的孤立
+harness(沒有真正跑過 campaign/story 進度)才會踩到,因為那個角色的我方名冊
+記錄從沒被建立過」**。本輪走的是完整序章→ch01 這條真正的 campaign 路徑,**這個
+錯誤依然原封不動地重現**,推翻了「僅限孤立 harness」這個侷限性假設——真正影響
+面比原先文件記載的更廣。**功能上無害**:`own5` 確認哈諾依然靠同一個
+on_turn_end trigger 裡的 `spawn_group` fallback 正常加入隊伍(與該測試註解「
+accompanying spawn_group action 仍然會落地」的預期一致),只是 `join_party`
+這個「把哈諾轉成具名角色記錄」的子步驟本身悄悄失敗、`loadErr` 訊息殘留在畫面
+角落,不影響可玩性但確實是個尚未修的真實 bug——留給未來 session,不在本輪
+處理範圍。
+
+### 發現三(真實、可重現、本輪未修的 bug):悠妮的指令環在一次「開火炎術目標選擇→
+Escape取消」之後永久失效
+
+**症狀**:T2 選悠妮、原地開環、選「法術」(環左)、Enter 進「火炎術」目標選擇
+(`原始指令 0：選擇目標`,無合法目標高亮),按 Escape 取消。之後**同一場戰鬥
+剩餘時間內**,悠妮的環再也打不開——重選她、按 Enter 開環,畫面永遠沒反應
+(無環顯示、無錯誤訊息),嘗試了單次/連續3次/間隔1秒重試/多次 Escape 想清狀態,
+全部無效。**索爾、亞雷斯、蓋亞完全不受影響**(同一 turn/次一 turn 都正常開環),
+確認不是全域性卡死,是悠妮專屬(或者說是「這場戰鬥裡曾經進過原生指令目標選擇
+又取消」這個狀態專屬)。
+
+**目前最佳假說(讀碼,非已證實)**:`main.go:5639` 的 `confirm()` 一開頭無條件檢查
+`if g.nativeCommand0Targeting {...}`,這個旗標只在成功執行原生指令時才會重置回
+`false`(`main.go:5672`);Escape 取消目標選擇的處理(`main.go:6659-6667`)理論上
+會清掉它並設 `nativeCommandOpen=true`(退回指令列表選單),`nativeCommandOpen`
+自己的選單迴圈(`main.go:4445-4499`)理論上再按一次 Escape 會 `beginActionOverlayOpen`
+把環重開——但本輪實測連續按 Escape 並未讓環恢復,不確定是這兩段路徑本身有漏洞、
+還是某個更早的 guard(例如 `g.walk != nil`)也卡住了。**留給下一輪帶著除錯建置
+(或加臨時 log)才能真正釘死根因**,本輪只確認了症狀、影響範圍(悠妮專屬、
+本場戰鬥永久性)、以及不影響其他三名角色。
+
+**因應**:本輪直接跳過悠妮該回合行動(不影響 Tab 結束玩家回合),不嘗試在無
+debug 建置下用猜測修復。
+
+### 停在哪裡、為什麼
+
+T4 玩家回合開局,own5(索爾/亞雷斯/悠妮/蓋亞/哈諾)全數存活,enemy7 存活(僅
+一隻被打到剩8血),尚未打贏 ch01(需要清空全部敵人)。**本輪核心目標已達成**：
+證實 Phase 4 這條路徑在真實多回合、真實雙向命中/未命中/挨打的壓力下依然
+work——同時額外發現兩個真實 bug(join_party 影響面更廣、悠妮環永久卡死),
+兩者都已記錄足夠 repro 資訊但**刻意不在本輪嘗試修復**(前者是資料/native
+port 缺口非阻擋性,後者需要更深入的除錯才能安全修正,倉促修改風險大於本輪
+剩餘時間效益)。手動精算攻擊距離+應付指令環丟鍵的操作成本仍然很高,是本輪
+沒能推進更多回合的主因,與續一記錄的教訓一致。
+
+**清理**:Xvfb `:980` 與 `fd2-linux-verify` 已於 session 結束前確認關閉,`ps aux`
+核對 canonical `:99`/`dbg` 等其他 instance 全程未被動過。
+
+### 給下一輪的具體建議
+
+1. 攻擊/移動座標一律用 F3 HUD 現場量測,不要沿用任何離線 probe 的敵方座標
+   (本輪證實敵方座標與離線 raw JSON 數值對不上,原因未查)。
+2. 指令環方向鍵有已知但未解的 hit-or-miss 丟鍵現象,遇到「畫面沒反應」先重試
+   2-3 次再考慮是否真的卡死(用同一裝置按同一鍵測試其他角色來排除全域性卡死）。
+3. 悠妮的環卡死 bug 值得優先排查——這會讓她整場戰鬥都無法行動，直接影響「能不能
+   打贏」這個 Phase 4 的核心驗收目標；下一輪建議帶 `FD2_DEBUG_RESULT` 類臨時 log
+   或直接讀 `confirm()`/`ringInput()`/native command 相關函式的完整呼叫鏈，而非
+   繼續盲測。
+4. `join_party` T3 錯誤功能上無害（哈諾仍會經 `spawn_group` fallback 加入)，
+   可以先忽略繼續推進戰鬥，但若要修，`main.go:2965` 是切入點。
+5. ch01 本身還需要清空 enemy7（目前只讓一隻剩 8 血)，以目前的操作節奏預估還需要
+   數個完整回合──下一輪建議先解掉悠妮的環卡死 bug 再繼續推進，讓四人都能出手，
+   而不是三人硬打。

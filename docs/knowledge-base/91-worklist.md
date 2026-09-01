@@ -2032,6 +2032,28 @@
   視覺鄰格≠邏輯鄰格)、下一輪具體建議(已算好的 `own_deploy`/敵方座標表)見
   `docs/knowledge-base/92-m5-normal-playthrough-log.md`。下一輪應直接延續打贏
   ch01,驗證 postbattle 轉場(`on_win: story_ch02`)後繼續往後推進。
+- [~] **remake 側正常玩法可達性驗證(Phase 4)續二**——2026-09-01:同一場 ch01 戰鬥
+  繼續打(T1→T4),**誠實範圍**:仍未打贏(enemy7 只讓一隻剩8血),但首次透過
+  純真人輸入完成雙向真實命中/未命中/挨打(亞雷斯造成20傷害命中+一次未命中,
+  敵方兩度造成18傷害命中),T3→T4觸發「哈諾」入隊劇本(own4→own5,ally0→ally1)。
+  4 個完整回合零虛假敗北,`faecef3e` 修復依然穩固。**額外發現兩個真實 bug**(留
+  待未來 session 修):①`main.go:2965` 的 `join_party` T3 錯誤(`headless_battle_
+  test.go` 早已記錄為「已知瑕疵,只有孤立 headless harness 才會踩到」),本輪
+  用真正的完整 campaign 路徑走過去**依然重現**,推翻了「僅限孤立 harness」這個
+  侷限性假設——影響面比原記載更廣,但功能上無害(哈諾仍靠同 trigger 的
+  `spawn_group` fallback 正常入隊)。②悠妮(唯一走 native-command 路徑而非
+  legacy 法術系統的角色)一旦進過一次原生指令目標選擇(如嘗試施放火炎術)又用
+  Escape 取消,**她的指令環在同一場戰鬥剩餘時間內永久打不開**(索爾/亞雷斯/
+  蓋亞不受影響),懷疑是 `g.nativeCommand0Targeting`/`g.nativeCommandOpen` 這組
+  旗標的 Escape 復原路徑(`main.go:5639`/`6659-6667`/`4445-4499`)有漏洞,但本輪
+  只確認症狀未釘死根因。本輪同時發現並清理了一個**真正的孤兒 process**(前一次
+  被 API rate limit 中斷的嘗試留下活了近13小時的 `Xvfb :972`+`fd2-linux-verify`
+  +tmux session,與交辦時「已確認零孤兒」的說法矛盾,懷疑該檢查用錯 WSL
+  distro/時間點)。完整方法論、F3 debug HUD 用法(比螢幕觀感精準)、方向鍵→格子
+  純正交映射的釐清、兩個 bug 的完整 repro 細節見 `docs/knowledge-base/
+  92-m5-normal-playthrough-log.md` 2026-09-01 續二段落。下一輪建議**優先修
+  悠妮的環卡死 bug**(直接影響她整場戰鬥能否出手,是打贏 ch01 的實質
+  阻礙),再繼續清空剩餘敵人。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
