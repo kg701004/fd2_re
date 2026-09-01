@@ -2084,25 +2084,36 @@
   92-m5-normal-playthrough-log.md` 2026-09-01 續四段落。**下一輪建議**:
   直接放棄 buff/nerf 捷徑,vanilla 難度重打 ch01(一次命中約20-22傷害,
   敵方反擊約17-18傷害,索爾/亞雷斯/悠妮/蓋亞 HP 分別42/48/28/50)。
-- [~] **remake 側正常玩法可達性驗證(Phase 4)續五~七——3 個真實 remake bug
-  已用 DOSBox-X 原版交叉驗證確認,均未修復,使用者已暫停以 remake 輸出當
-  驗證依據**——2026-09-01:續五/續六發現 ch01 戰鬥中兩個 remake 專屬顯示
-  bug(攻擊選目標面板把敵方肖像畫成索爾;閒置戰場地圖把敵方單位畫成索爾,
-  選取別的單位觸發 range overlay 才暫時變對、取消又變錯)。續七用全新
-  隔離 DOSBox-X instance 逐項交叉驗證,**確認這兩個在原版完全不存在**,
-  同時意外多抓到第三個、範圍可能更廣的資料層 bug:ch01 盜賊真實 HP 是
-  2(原版狀態畫面兩隻獨立確認),但 `map0_units.json` 匯出成 28(14倍
-  落差)——根因是 `tools/export_units.py` 的 `base_stats()` 既有註解裡
-  已預告的 (race,cls) 碰撞問題(ch01 海盜/士兵撞到不相干的「黑暗殺手」
-  模板),先前只修了顯示的職業名稱,沒有連 hp/mp/ap/dp/mv 數值一起修正。
-  三個 bug 均未修復(確切覆寫/繪圖程式碼位置未釘死)。**使用者明確指示
-  「remake版本無法完全正常執行,不要用來做驗證使用」**——在這些 bug 修好
-  之前,remake 的即時輸出(截圖/HUD數值)不能當作驗證原版行為的依據,
-  需要原版佐證時改用 DOSBox-X 原版即時操作或已驗證的靜態資料
-  (`docs/data/exe_tables/*.json`)。完整證據鏈(含 3 組原版/remake 對照
-  截圖)見 `docs/knowledge-base/92-m5-normal-playthrough-log.md` 續五~七。
-  **下一輪建議**:優先修這 3 個 bug(尤其資料層那個,範圍可能不只 ch01),
-  而不是帶著已知不可靠的驗證基礎繼續往 ch02 打。
+- [~] **remake 側正常玩法可達性驗證(Phase 4)續五~八——2 個真實 remake
+  顯示 bug 已用 DOSBox-X 原版交叉驗證確認、均未修復,使用者已暫停以
+  remake 輸出當驗證依據;第 3 個原本以為的資料層 bug 當天已撤回**——
+  2026-09-01:續五/續六發現 ch01 戰鬥中兩個 remake 專屬顯示 bug(攻擊選
+  目標面板把敵方肖像畫成索爾;閒置戰場地圖把敵方單位畫成索爾,選取別的
+  單位觸發 range overlay 才暫時變對、取消又變錯)。續七一度誤判多抓到
+  第三個資料層 bug(盜賊真實 HP 疑似是 2,remake 匯出成 28),但續八
+  深入複查後**撤回這個結論**——完整反組譯覆核建構器
+  `0x10d7f..0x11018`、逐位元組核對 growth table,證實 `export_units.py`
+  的公式、索引、表格資料全部正確,28 才是對的。誤判根因:當時用來對照
+  的 DOSBox-X「原版」ground truth 檔案 `~/fd2-run/FD2.EXE` 本身是被污染
+  過的——2026-08-19 一個不相干的 ch24 調查留下未還原的 debug patch,把
+  68 筆 high_class 表格裡 52 筆(raw_unit_key 76-127,含盜賊96)的
+  HP/MP/AP/DP/DX 成長率位元組清成 1,導致真人在原版看到的是被竄改的假
+  數值,不是真正的原版行為(用 `cmp`+md5 比對 `FD2.EXE.pristine_bak` 與
+  另外兩份獨立備份確認,three-way 一致,`~/fd2-run/FD2.EXE` 是唯一不同
+  的那份)。**`~/fd2-run/FD2.EXE` 目前仍未還原**(它同時是另一條不相干
+  ch24/ch27 調查線的存檔checkpoint,還原前需要先確認不會弄丟那邊的進度)
+  ——下一輪任何要用 `~/fd2-run` 對 raw_unit_key 76-127 這個範圍做 HP/MP/
+  AP/DP/DX ground truth 核對的人,務必先跟 `pristine_bak`(或
+  `Desktop/GAME/FD2/FD2.EXE`)核對過,不要直接信 `~/fd2-run`。真正確認
+  未修復的只剩 2 個(肖像面板、地圖貼圖,兩者都跟數值資料無關,不受這次
+  撤回影響)。**使用者明確指示「remake版本無法完全正常執行,不要用來做
+  驗證使用」**——在這 2 個 bug 修好之前,remake 的即時輸出(截圖/HUD數值)
+  不能當作驗證原版行為的依據;原版佐證改用 DOSBox-X 即時操作或已驗證的
+  靜態資料時,也要記得原版來源檔案本身可能被污染,不能盲信。完整證據鏈
+  見 `docs/knowledge-base/92-m5-normal-playthrough-log.md` 續五~八。
+  **下一輪建議**:優先修那 2 個真正確認的顯示 bug,不需要再花時間查資料層
+  HP 問題(已排除);決定要不要還原 `~/fd2-run/FD2.EXE` 前,先確認 ch24/
+  ch27 那條調查線的狀態。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
