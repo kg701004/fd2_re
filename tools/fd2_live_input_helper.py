@@ -265,7 +265,8 @@ def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25
 # 4. Screenshot capture
 # --------------------------------------------------------------------------
 
-def screenshot(instance: str, out: Path, resize: str | None = DEFAULT_SCREENSHOT_RESIZE) -> Path:
+def screenshot(instance: str, out: Path, resize: str | None = DEFAULT_SCREENSHOT_RESIZE,
+               autocrop: bool = False) -> Path:
     """Fresh window-id lookup + `import -window <id>`, saved to a caller-
     specified path (default: a scratch dir under .wsl_build/, NOT
     docs/figures/ -- ad-hoc test-run screenshots shouldn't land in
@@ -276,9 +277,18 @@ def screenshot(instance: str, out: Path, resize: str | None = DEFAULT_SCREENSHOT
     preserves aspect -- not a crop), default DEFAULT_SCREENSHOT_RESIZE
     (the game's native 640x400 logical canvas). Pass None/"" for the raw,
     un-shrunk capture -- worth doing for a screenshot going into docs/a
-    commit as evidence, not for a routine in-the-loop decision check."""
+    commit as evidence, not for a routine in-the-loop decision check.
+
+    autocrop: `convert -fuzz 3% -trim +repage` after resize -- removes a
+    uniform-color (in practice: black) border, a safe no-op on a screen
+    that already fills the frame. CONFIRMED correct so far only for the
+    battle/map screen (2026-09-01: it genuinely renders into just ~79%
+    width x ~50% height of its own canvas, cross-checked at two capture
+    resolutions) -- NOT verified across every screen type (menus/shop/
+    dialogue), so default False; turn on deliberately once you know the
+    screen you're capturing has this margin, not as a blanket default."""
     out.parent.mkdir(parents=True, exist_ok=True)
-    sh_checked("screenshot", instance, to_wsl_path(out), resize or "", timeout=20)
+    sh_checked("screenshot", instance, to_wsl_path(out), resize or "", "1" if autocrop else "0", timeout=20)
     return out
 
 
@@ -390,7 +400,7 @@ def cmd_key(args):
 
 def cmd_screenshot(args):
     out = Path(args.out) if args.out else default_screenshot_path(args.instance, args.label)
-    screenshot(args.instance, out, resize=args.resize)
+    screenshot(args.instance, out, resize=args.resize, autocrop=args.autocrop)
     print(str(out))
 
 
@@ -511,6 +521,11 @@ def build_parser():
                      help=f"convert -resize geometry, fits-within/preserves aspect (default {DEFAULT_SCREENSHOT_RESIZE}, "
                           f"the game's own logical canvas -- cuts vision-token cost with no real detail lost since the "
                           f"window is normally an upscaled multiple of this); pass --resize '' for the raw full-res capture")
+    sp.add_argument("--autocrop", action="store_true",
+                     help="convert -fuzz 3%% -trim +repage after resize -- removes a uniform (black) border; "
+                          "safe no-op if the screen already fills the frame, but only CONFIRMED correct for the "
+                          "battle/map screen so far (~79%%w x ~50%%h content ratio, 2026-09-01) -- opt in "
+                          "deliberately per screen type, not as a blanket default")
     sp.set_defaults(func=cmd_screenshot)
 
     sp = sub.add_parser("wait-settle", help="standalone: poll until 2 consecutive screenshots match, or time out")

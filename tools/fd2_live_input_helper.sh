@@ -32,7 +32,7 @@
 #   fd2_live_input_helper.sh launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [KEY=VAL ...]
 #   fd2_live_input_helper.sh window-id <name>
 #   fd2_live_input_helper.sh send-key <name> <xdotool-key-name>
-#   fd2_live_input_helper.sh screenshot <name> <out_path> [resize_geometry]
+#   fd2_live_input_helper.sh screenshot <name> <out_path> [resize_geometry] [autocrop:0|1]
 #   fd2_live_input_helper.sh wait-settle <name> <tmp_prefix> <max_tries> <interval_seconds>
 #   fd2_live_input_helper.sh status
 #   fd2_live_input_helper.sh teardown <name>
@@ -258,8 +258,8 @@ cmd_send_key() {
 }
 
 cmd_screenshot() {
-    local name=${1:-}; local out=${2:-}; local resize=${3:-}
-    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path> [resize_geometry]"
+    local name=${1:-}; local out=${2:-}; local resize=${3:-}; local autocrop=${4:-}
+    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path> [resize_geometry] [autocrop:0|1]"
     load_state "$name"
     xvfb_alive "$XVFB_PID" || die "instance '$name' Xvfb is not alive"
     local win; win=$(find_window_id "$DISPLAY_PORT")
@@ -277,6 +277,23 @@ cmd_screenshot() {
     if [[ -n "$resize" ]]; then
         convert "$out" -resize "$resize" "$out" \
             || die "resize to '$resize' failed for $name screenshot $out"
+    fi
+    # Optional autocrop: 2026-09-01 measurement found the BATTLE/map screen
+    # genuinely only renders into ~79% width x ~50% height of its own logical
+    # canvas (cross-checked at two different capture resolutions, same ratio
+    # both times) -- the rest is a solid black margin, not information. `-trim`
+    # only removes a UNIFORM-color border, so it is a safe no-op on screens
+    # that already fill the frame (verified: the opening-cutscene screen has
+    # zero black margin and is untouched by trim) -- this is why it is opt-in
+    # rather than always-on: it has only been *confirmed* correct for the
+    # battle screen, not exhaustively checked against every screen type (menus/
+    # shop/dialogue), and a screen with a deliberately near-black scene could
+    # in principle get over-trimmed. `+repage` resets the PNG's canvas offset
+    # after trim (without it some viewers/tools keep the original canvas size
+    # with the image data shifted, which defeats the whole point here).
+    if [[ "$autocrop" == "1" ]]; then
+        convert "$out" -fuzz 3% -trim +repage "$out" \
+            || die "autocrop failed for $name screenshot $out"
     fi
     echo "$out"
 }
@@ -398,7 +415,7 @@ usage: $0 <command> [args]
   launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [K=V ...]
   window-id <name>                                   fresh xwininfo query, prints hex window id
   send-key <name> <xdotool-key-name>                 fresh window-id lookup + xdotool key --window
-  screenshot <name> <out_path> [resize_geometry]     fresh window-id lookup + import -window (+ optional convert -resize)
+  screenshot <name> <out_path> [resize_geom] [autocrop:0|1]   fresh window-id lookup + import -window (+ optional -resize, -trim)
   wait-settle <name> <tmp_prefix> [max_tries] [interval_s]   poll until 2 consecutive shots match
   status                                              list all fd2-live-helper instances
   teardown <name>                                     kill one instance (PID+name verified)
