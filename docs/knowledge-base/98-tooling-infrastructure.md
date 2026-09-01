@@ -908,3 +908,24 @@ commit `e576ad87`留下的舊戰鬥截圖(1280×800全解析度那組)一起量�
 吻合;人工檢視裁完的圖,地圖、單位、HP面板、底部戰鬥訊息文字全部完整保留,沒有任何真實內容被誤裁。
 `--resize`+`--autocrop`兩者疊加,戰鬥畫面的像素面積從原始1280×800降到508×198,約是原始的1/10,
 對應vision token大概也是同等級的降幅。
+
+### 續四(2026-09-01)：改正設計缺陷——`--resize`/`--autocrop`原本是就地覆寫原圖,原始檔案因此消失
+
+**問題(使用者發現)**:續二/續三的第一版實作是`convert "$out" ... "$out"`,直接把resize/autocrop的
+結果寫回同一個檔案——代表`screenshot`指令一存檔,原始未處理的截圖就已經被覆蓋消失,沒有留下任何
+可以回頭核對的原圖。這在平時看縮圖沒事,但萬一以後某種畫面類型的autocrop誤裁(續三已明講只驗證過
+戰鬥畫面,選單/商店/對話都還沒測),就完全沒有原圖可以拿來對照、判斷是裁切邏輯錯還是畫面本身就長
+那樣。
+
+**修法**:`cmd_screenshot`(`.sh`)簽名改成`<name> <out_path> [resize] [autocrop] [view_out_path]`——
+`import -window`永遠只寫到`out_path`,寫完立刻`echo`回報,之後**不再對`out_path`做任何修改**。若
+`resize`或`autocrop`任一個有值,才把`out_path`複製到呼叫方指定的`view_out_path`,resize/trim只動這
+份複本。Python側`screenshot()`回傳值改成`ScreenshotResult(raw, view)`具名tuple——`raw`永遠存在,
+`view`只有在確實做了resize/autocrop時才非`None`(自動命名規則:`<out_path去掉副檔名>_view<副檔名>`,
+或呼叫方自己用`--view-out`指定)。`cmd_screenshot`(CLI)輸出改成兩行`raw: <path>`/`view: <path>`
+(後者沒有就不印)。
+
+**驗證(獨立instance `rawviewcheck`,port :199,測完teardown乾淨)**:預設參數(`--resize`
+640x400、`--autocrop`關)下,`raw`確實停在1280×800原始解析度、`view`是縮小後的640×400,兩個檔案
+互不影響;另外測了`--resize ""`(resize跟autocrop都關)的情況,確認完全不會產生`_view`檔——沒有
+要求任何處理時,不會憑空多存一份沒用的複本。

@@ -32,7 +32,11 @@
 #   fd2_live_input_helper.sh launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [KEY=VAL ...]
 #   fd2_live_input_helper.sh window-id <name>
 #   fd2_live_input_helper.sh send-key <name> <xdotool-key-name>
-#   fd2_live_input_helper.sh screenshot <name> <out_path> [resize_geometry] [autocrop:0|1]
+#   fd2_live_input_helper.sh screenshot <name> <out_path> [resize_geometry] [autocrop:0|1] [view_out_path]
+#     -- <out_path> is always the raw untouched capture; if resize/autocrop is
+#        requested, the processed copy goes to <view_out_path> instead (never
+#        overwrites <out_path>). Prints <out_path> on its own line, then
+#        <view_out_path> on a second line if one was produced.
 #   fd2_live_input_helper.sh wait-settle <name> <tmp_prefix> <max_tries> <interval_seconds>
 #   fd2_live_input_helper.sh status
 #   fd2_live_input_helper.sh teardown <name>
@@ -258,15 +262,27 @@ cmd_send_key() {
 }
 
 cmd_screenshot() {
-    local name=${1:-}; local out=${2:-}; local resize=${3:-}; local autocrop=${4:-}
-    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path> [resize_geometry] [autocrop:0|1]"
+    local name=${1:-}; local out=${2:-}; local resize=${3:-}; local autocrop=${4:-}; local view_out=${5:-}
+    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path> [resize_geometry] [autocrop:0|1] [view_out_path]"
     load_state "$name"
     xvfb_alive "$XVFB_PID" || die "instance '$name' Xvfb is not alive"
     local win; win=$(find_window_id "$DISPLAY_PORT")
     [[ -n "$win" ]] || die "no GLFW window found for '$name'"
     mkdir -p "$(dirname "$out")"
+    # $out is ALWAYS the raw, untouched `import -window` capture and is never
+    # modified again after this line -- 2026-09-01 (2nd pass): an earlier
+    # version of this command resized/cropped $out IN PLACE, which meant the
+    # true original was silently gone the moment a screenshot was taken (no
+    # way to recover it for comparison if a resize/crop ever went wrong on an
+    # unverified screen type). If you need the raw capture for anything, this
+    # is the only file that is guaranteed to be it.
     DISPLAY="127.0.0.1:$DISPLAY_PORT" import -window "$win" "$out" \
         || die "import screenshot failed for $name (window $win)"
+    echo "$out"
+    [[ -n "$resize" || "$autocrop" == "1" ]] || return 0
+    [[ -n "$view_out" ]] || die "resize/autocrop requested but no view_out path given"
+    mkdir -p "$(dirname "$view_out")"
+    cp "$out" "$view_out" || die "could not copy $out to $view_out"
     # Optional downscale: the window is captured at its real (possibly 2x/3x-
     # scaled) size, but the game's own logical canvas is a fixed 640x400
     # (remake/cmd/fd2/main.go's defaultWindowSize) -- an unscaled shot is
@@ -275,8 +291,8 @@ cmd_screenshot() {
     # <geometry>` (no `!`) fits within the box preserving aspect, so passing
     # the native 640x400 on an already-1x window is a safe no-op, not a crop.
     if [[ -n "$resize" ]]; then
-        convert "$out" -resize "$resize" "$out" \
-            || die "resize to '$resize' failed for $name screenshot $out"
+        convert "$view_out" -resize "$resize" "$view_out" \
+            || die "resize to '$resize' failed for $name screenshot $view_out"
     fi
     # Optional autocrop: 2026-09-01 measurement found the BATTLE/map screen
     # genuinely only renders into ~79% width x ~50% height of its own logical
@@ -292,10 +308,10 @@ cmd_screenshot() {
     # after trim (without it some viewers/tools keep the original canvas size
     # with the image data shifted, which defeats the whole point here).
     if [[ "$autocrop" == "1" ]]; then
-        convert "$out" -fuzz 3% -trim +repage "$out" \
-            || die "autocrop failed for $name screenshot $out"
+        convert "$view_out" -fuzz 3% -trim +repage "$view_out" \
+            || die "autocrop failed for $name screenshot $view_out"
     fi
-    echo "$out"
+    echo "$view_out"
 }
 
 # Generic "wait until the UI settles" primitive (doc92/doc98's animation-
@@ -415,7 +431,7 @@ usage: $0 <command> [args]
   launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [K=V ...]
   window-id <name>                                   fresh xwininfo query, prints hex window id
   send-key <name> <xdotool-key-name>                 fresh window-id lookup + xdotool key --window
-  screenshot <name> <out_path> [resize_geom] [autocrop:0|1]   fresh window-id lookup + import -window (+ optional -resize, -trim)
+  screenshot <name> <out_path> [resize] [autocrop:0|1] [view_out]   raw capture always at <out_path>; -resize/-trim (if any) go to <view_out>
   wait-settle <name> <tmp_prefix> [max_tries] [interval_s]   poll until 2 consecutive shots match
   status                                              list all fd2-live-helper instances
   teardown <name>                                     kill one instance (PID+name verified)

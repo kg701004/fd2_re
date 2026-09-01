@@ -70,8 +70,11 @@ Window targeting + key delivery (always fresh, always confirmed):
     python tools/fd2_live_input_helper.py key --instance myrun confirm --wait 0.5
     python tools/fd2_live_input_helper.py key --instance myrun Down Down --settle
 
-Screenshot:
+Screenshot (--out is always the raw, untouched capture; --resize/--autocrop
+produce a SEPARATE, smaller "view" copy alongside it for cheaper LLM reads --
+see `screenshot`'s docstring for why the raw file is never modified in place):
     python tools/fd2_live_input_helper.py screenshot --instance myrun --label title
+    python tools/fd2_live_input_helper.py screenshot --instance myrun --label battle --autocrop
 
 Grid/range arithmetic (no live instance needed -- pure data lookup):
     python tools/fd2_live_input_helper.py grid distance --a 7,20 --b 10,21
@@ -93,6 +96,7 @@ import os
 import subprocess
 import sys
 import time
+from collections import namedtuple
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -265,31 +269,50 @@ def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25
 # 4. Screenshot capture
 # --------------------------------------------------------------------------
 
+ScreenshotResult = namedtuple("ScreenshotResult", ["raw", "view"])  # view is None if no resize/autocrop requested
+
+
 def screenshot(instance: str, out: Path, resize: str | None = DEFAULT_SCREENSHOT_RESIZE,
-               autocrop: bool = False) -> Path:
-    """Fresh window-id lookup + `import -window <id>`, saved to a caller-
-    specified path (default: a scratch dir under .wsl_build/, NOT
-    docs/figures/ -- ad-hoc test-run screenshots shouldn't land in
-    committed documentation by default; pass --out explicitly to promote
-    one into docs/figures/ once it's actually worth keeping).
+               autocrop: bool = False, view_out: Path | None = None) -> ScreenshotResult:
+    """Fresh window-id lookup + `import -window <id>`, saved to `out` (default:
+    a scratch dir under .wsl_build/, NOT docs/figures/ -- ad-hoc test-run
+    screenshots shouldn't land in committed documentation by default; pass
+    --out explicitly to promote one into docs/figures/ once it's actually
+    worth keeping).
+
+    `out` is ALWAYS the raw, unmodified capture -- 2026-09-01 (2nd pass): an
+    earlier version of this resized/cropped `out` IN PLACE, so the true
+    original was gone the moment a screenshot was taken, with no way to
+    recover it if a resize/crop ever went wrong on some not-yet-verified
+    screen type. If resize/autocrop is requested, the processed image goes to
+    a SEPARATE file (`view_out`, auto-derived as `<out stem>_view<out suffix>`
+    if not given explicitly) -- `out` itself is never touched past the initial
+    capture.
 
     resize: geometry string passed to `convert -resize` (fits within,
-    preserves aspect -- not a crop), default DEFAULT_SCREENSHOT_RESIZE
-    (the game's native 640x400 logical canvas). Pass None/"" for the raw,
-    un-shrunk capture -- worth doing for a screenshot going into docs/a
-    commit as evidence, not for a routine in-the-loop decision check.
+    preserves aspect -- not a crop) for the view copy, default
+    DEFAULT_SCREENSHOT_RESIZE (the game's native 640x400 logical canvas).
+    Pass None/"" to skip resizing (if autocrop is also off, no view copy is
+    made at all -- just the raw capture at `out`).
 
-    autocrop: `convert -fuzz 3% -trim +repage` after resize -- removes a
-    uniform-color (in practice: black) border, a safe no-op on a screen
-    that already fills the frame. CONFIRMED correct so far only for the
-    battle/map screen (2026-09-01: it genuinely renders into just ~79%
-    width x ~50% height of its own canvas, cross-checked at two capture
-    resolutions) -- NOT verified across every screen type (menus/shop/
-    dialogue), so default False; turn on deliberately once you know the
+    autocrop: `convert -fuzz 3% -trim +repage` on the view copy (after
+    resize) -- removes a uniform-color (in practice: black) border, a safe
+    no-op on a screen that already fills the frame. CONFIRMED correct so far
+    only for the battle/map screen (2026-09-01: it genuinely renders into
+    just ~79% width x ~50% height of its own canvas, cross-checked at two
+    capture resolutions) -- NOT verified across every screen type (menus/
+    shop/dialogue), so default False; turn on deliberately once you know the
     screen you're capturing has this margin, not as a blanket default."""
     out.parent.mkdir(parents=True, exist_ok=True)
-    sh_checked("screenshot", instance, to_wsl_path(out), resize or "", "1" if autocrop else "0", timeout=20)
-    return out
+    wants_view = bool(resize) or autocrop
+    view_path = None
+    args = ["screenshot", instance, to_wsl_path(out), resize or "", "1" if autocrop else "0"]
+    if wants_view:
+        view_path = view_out or out.with_name(f"{out.stem}_view{out.suffix}")
+        view_path.parent.mkdir(parents=True, exist_ok=True)
+        args.append(to_wsl_path(view_path))
+    sh_checked(*args, timeout=20)
+    return ScreenshotResult(raw=out, view=view_path)
 
 
 def default_screenshot_path(instance: str, label: str | None) -> Path:
@@ -400,8 +423,11 @@ def cmd_key(args):
 
 def cmd_screenshot(args):
     out = Path(args.out) if args.out else default_screenshot_path(args.instance, args.label)
-    screenshot(args.instance, out, resize=args.resize, autocrop=args.autocrop)
-    print(str(out))
+    view_out = Path(args.view_out) if args.view_out else None
+    result = screenshot(args.instance, out, resize=args.resize, autocrop=args.autocrop, view_out=view_out)
+    print(f"raw: {result.raw}")
+    if result.view:
+        print(f"view: {result.view}")
 
 
 def cmd_wait_settle(args):
@@ -513,19 +539,25 @@ def build_parser():
     sp.add_argument("--gap", type=float, default=DEFAULT_KEY_GAP_S, help="seconds between keys within this same call (doc92: 0.15-0.3s)")
     sp.set_defaults(func=cmd_key)
 
-    sp = sub.add_parser("screenshot", help="save a timestamped/labeled PNG (default under .wsl_build/, not docs/figures/)")
+    sp = sub.add_parser("screenshot", help="save a raw PNG (default under .wsl_build/, not docs/figures/); "
+                                            "--out is always the untouched raw capture")
     sp.add_argument("--instance", required=True)
-    sp.add_argument("--out", default=None, help="explicit output path (any dir); default: .wsl_build/live_input_helper/<instance>/<timestamp>[_label].png")
+    sp.add_argument("--out", default=None, help="explicit RAW output path (any dir); default: .wsl_build/live_input_helper/<instance>/<timestamp>[_label].png. "
+                                                 "Always the untouched capture -- never resized/cropped in place.")
     sp.add_argument("--label", default=None)
     sp.add_argument("--resize", default=DEFAULT_SCREENSHOT_RESIZE,
-                     help=f"convert -resize geometry, fits-within/preserves aspect (default {DEFAULT_SCREENSHOT_RESIZE}, "
-                          f"the game's own logical canvas -- cuts vision-token cost with no real detail lost since the "
-                          f"window is normally an upscaled multiple of this); pass --resize '' for the raw full-res capture")
+                     help=f"convert -resize geometry for a SEPARATE view copy, fits-within/preserves aspect (default "
+                          f"{DEFAULT_SCREENSHOT_RESIZE}, the game's own logical canvas -- cuts vision-token cost with "
+                          f"no real detail lost since the window is normally an upscaled multiple of this); pass "
+                          f"--resize '' to skip making a resized view copy")
     sp.add_argument("--autocrop", action="store_true",
-                     help="convert -fuzz 3%% -trim +repage after resize -- removes a uniform (black) border; "
-                          "safe no-op if the screen already fills the frame, but only CONFIRMED correct for the "
-                          "battle/map screen so far (~79%%w x ~50%%h content ratio, 2026-09-01) -- opt in "
-                          "deliberately per screen type, not as a blanket default")
+                     help="convert -fuzz 3%% -trim +repage on the view copy (after resize) -- removes a uniform "
+                          "(black) border; safe no-op if the screen already fills the frame, but only CONFIRMED "
+                          "correct for the battle/map screen so far (~79%%w x ~50%%h content ratio, 2026-09-01) -- "
+                          "opt in deliberately per screen type, not as a blanket default")
+    sp.add_argument("--view-out", default=None,
+                     help="explicit path for the resized/cropped view copy (only used if --resize/--autocrop "
+                          "produces one); default: <out stem>_view<out suffix> next to --out")
     sp.set_defaults(func=cmd_screenshot)
 
     sp = sub.add_parser("wait-settle", help="standalone: poll until 2 consecutive screenshots match, or time out")
