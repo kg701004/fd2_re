@@ -796,3 +796,65 @@ screenshot-confirm節奏)，第二次(選悠妮的)Enter就會被前一段動畫
 留出足以讓主迴圈跑滿10幀的真實wall-clock等待(60fps下理論值~167ms，Xvfb/WSL2下留更寬裕的
 300-500ms較保守)，或比照今天`church3`/續八十一輪的做法改用單發按鍵+screenshot確認再送下一鍵，
 不要批次/連續送鍵。
+
+## `tools/fd2_live_input_helper.{py,sh}` — M5 Phase 4 正常玩法機械化輔助工具(2026-09-01)
+
+**目的/範圍**：把上面兩節(以及`92-m5-normal-playthrough-log.md`)記錄的三個每輪都要重新解一次的
+機械問題——現查視窗id、節流動畫的wait/confirm、螢幕鄰格≠邏輯鄰格——包成可重複呼叫的原語，**刻意
+不做任何戰術判斷**(不選目標、不規劃移動、不決定攻擊時機)，純粹讓「如何可靠執行一個已決定好的動作」
+變便宜。細節與逐項對應doc92/doc98段落的說明見`fd2_live_input_helper.py`模組docstring本身,這裡只記錄
+建置過程中新發現、且會讓下一輪重蹈覆轍的兩個環境級陷阱。
+
+**用法**：`python tools/fd2_live_input_helper.py launch --instance <name>`(全新Xvfb+
+fd2-linux-verify、預設無任何`FD2_SHOT_*`/`FD2_CAMP_*`)、`window-id`/`key`(confirm/cancel別名、
+`--wait`固定等待或`--settle`輪詢畫面直到連續兩張截圖相同兩種模式擇一,拒絕在兩者都沒指定時真正的
+零等待送鍵)/`screenshot`/`status`/`teardown`(PID+process name驗證後才kill,絕不`pkill`)。`grid
+distance`/`grid range`/`grid dump-map`三個子指令是純資料查詢+算術,不連線任何live instance,直接讀
+`mapN_units.json`的`own_deploy`/`units[].atk_min/atk_max`,`range`子指令的預設規則(0視為1)逐行對應
+`remake/internal/battle/move.go`的`InAttackRange`。
+
+**陷阱一(新發現,已修正)：`wsl.exe`的`bash -c "多語句字串"`會靜默丟失語句間的shell變數狀態**——
+建置過程中用Python`subprocess.run(["wsl","-d","Ubuntu","bash","-c","x=hello; echo got:$x"])`(真正
+的argv list,不是shell字串,排除Windows/MSYS quoting層造成的可能性)重現:輸出`got:`(空字串),但
+`declare -p x`在**同一個**`-c`字串裡確實顯示`x`已正確賦值成`"hello"`——賦值本身成功,只是後面的
+「使用」丟失。改用stdin管線餵給不帶`-c`的`wsl -d Ubuntu bash`,或(本工具最終採用的作法,也是
+`dosbox_harness.sh`/`dosbox_diff_harness.sh`一直以來事實上依賴、但從未明講原因的作法)把腳本寫成
+真正的`.sh`檔案、用`wsl -d Ubuntu bash <script.sh> <arg1> <arg2> ...`這種單純argv呼叫,兩者都正常,
+包含真正的位置參數傳遞($1/$2/...)。根因未完全查明(可以確定不是bash本身的問題——同一段腳本貼進
+互動式bash session執行完全正常;推測與`wsl.exe`/interop層在bash真正看到`-c`參數前對其做的某種
+重新tokenize有關),但這是`fd2_live_input_helper.py`架構決策的直接依據——所有WSL側呼叫一律走
+`wsl_argv_run()`/`sh()`(真正argv list),`fd2_live_input_helper.sh`裡任何需要跨陳述式保留變數狀態
+的邏輯都活在這個`.sh`檔案本身裡,絕不會被壓縮回一個Python組出來的多語句`-c`字串。**下一個要在這個
+專案裡新增WSL側工具的人,請直接沿用「真.sh檔案+純argv呼叫」這個模式,不要假設`bash -c`字串可以
+安全攜帶跨陳述式的變數狀態。**
+
+**陷阱二(新發現,已修正)：`nohup cmd & disown`對`fd2-linux-verify`這個Ebiten/Go binary不夠,
+`setsid`才夠**——`launch`要啟動兩個長駐背景行程(Xvfb、fd2-linux-verify),第一版兩者都用
+`nohup ... & disown`(`dosbox_diff_harness.py`的`ensure_remake_xvfb()`已驗證過這個模式對Xvfb有效)。
+實測(本工具自己的第一輪live smoke test)發現:Xvfb在啟動它的`wsl.exe`/bash session關閉後確實存活,
+但`fd2-linux-verify`卻在session關閉後不久就消失,且自己的log裡沒有任何panic/crash trace——用一個
+獨立的對照腳本(同一組nohup+&語法,同時起兩個行程,session關閉後從**另一個**全新`wsl.exe`呼叫查
+`ps aux`)重現確認:Xvfb活著、fd2-linux-verify不見。換成`setsid cmd &`(讓行程開一個全新session,
+徹底脫離原session,而不只是忽略SIGHUP)後,同款對照測試下fd2-linux-verify在session關閉後依然存活
+(同樣用一個全新`wsl.exe`呼叫的`ps aux`確認)。根因(為什麼`nohup`對這個特定binary不夠、`Xvfb`卻夠)
+未深入查——不影響修法本身,`setsid`已經是更徹底的方案,不需要先查清楚`nohup`為何不夠才能採用它。
+`fd2_live_input_helper.sh`現在對Xvfb和game process都用`setsid ... & pid=$!`(`$!`在真正的`.sh`檔案
+裡是可靠的,陷阱一的`-c`字串問題不適用於這裡)。**下一輪任何要在這個環境背景啟動長駐GUI/game
+process的工具,請直接用`setsid`,不要只用`nohup`就假設夠了。**
+
+**驗證方式(誠實記錄)**:1-4號原語(launch/window-id/key/screenshot)全部live驗證過,見下方截圖
+序列——全新獨立instance(port :199,與另一個當時仍在跑的agent session `:980`/pid 9763完全不重疊,
+teardown前後都用`ps aux`核對過對方毫髮無傷)、`launch`成功、`window-id`回報`0x200020`、
+`screenshot`先拍到片頭前空白幀、`key`送5次Escape(`--wait 1.0`)後screenshot證實跳過片頭到達標題
+畫面(FLAME DRAGON 2 LOGO+START/LOAD/CONTINUE)、`key confirm --settle`送出後screenshot證實正確
+進入序章對白(索爾晉見父王),但`--settle`本身在這個持續有動畫/文字的畫面上如預期地TIMEOUT——這正是
+`wait_for_settle()`docstring裡誠實記錄的已知取捨(持續動畫的畫面永遠不會有連續兩張完全相同的截圖),
+不是bug。5號(grid distance/range/dump-map)全部單元驗證過,`dump-map`對`map0_units.json`的輸出與
+`92-m5-normal-playthrough-log.md`已手算記錄的`own_deploy=[(7,20)索爾,(10,21)亞雷斯,(8,22)悠妮,
+(11,23)蓋亞]`座標表逐一比對一致。teardown驗證了PID+process-name核對邏輯在「game process已提早
+結束、只有Xvfb還活著」這個部分失敗場景下確實正確分流(不誤殺、不誤報)。**未做的驗證**:沒有刻意
+建構「送到stale window id」的失敗案例(工具本身的設計——每次呼叫都現查——結構性排除了這個場景,
+沒有辦法在不繞過工具本身邏輯的前提下人工重現);沒有實際打過一場戰鬥去驗證`grid range`的輸出與
+真實UI「此指令目前不可用」訊息一致(`map0_units.json`裡的敵方單位`atk_min`/`atk_max`原始值都是
+0——doc32/model.go註解已說明這是舊版units.json的已知特徵,不代表工具本身有問題,只是這個特定地圖
+沒有非1的射程可供交叉驗證,下一輪若拿到`atk_min`/`atk_max`非零的地圖JSON值得補一次這個驗證)。
