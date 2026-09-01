@@ -542,4 +542,50 @@ hook 正常玩法可達」這個 M5 驗收句而言,反而是更強的證據,只
 並行 session** 修改(新增 raw/resized screenshot 分離輸出的功能,
 registry 裡也看得到 `livehelpertest1-3`/`probe1`/`rawviewcheck`/
 `resizecheck` 這些非本輪建立的 instance 殘留 log)——本輪未觸碰、未
+
+## 2026-09-01 續五:發現二額外證據——敵方目標面板的肖像圖也是錯的,不只是數值,強化「`g.storyActors`/`handlerActors` 整筆記錄被替換」假說,弱化「class/growth table 重算」假說
+
+**背景**:並行 session 用另一個獨立 instance(`ch01r3`,續四之後由背景 agent
+重新走過序章、真人輸入到 T3)做人物外型比對時,用 `tools/fd2_live_input_helper.py`
+的游標移動原語把 F3 除錯游標精確停在一隻盜賊身上(截圖見
+`.wsl_build/live_input_helper/ch01r3/20260901-190224_target2.png`,已知
+**這份截圖不在 git 版控內**,是本機 scratch 檔案,下一輪如果要重看需要
+自己重新走一次或請對方提供),發現「攻擊:選擇目標」狀態下左下角的單位
+面板:
+
+- **HP 數字 `028` 是對的**(盜賊原始 HP 就是 28,跟 vanilla 數值吻合,
+  跟續四記錄的「敵方 nerf 失效、vanilla 數值滲透」現象一致)。
+- **但面板肖像圖畫的是索爾的臉**(藍髮、紅頭巾、側臉造型)——直接跟
+  `remake/assets/portraits/DATO_000_m0.png`(已用 church_test.go 的
+  `{Fig: 0, Portrait: 0}` 對照表確認 portrait id 0 = 索爾)逐像素比對過,
+  确定不是眼花,是同一張圖。盜賊自己真正的 portrait 應該是 id 96
+  (`map0_units.json` 每筆盜賊記錄的 `"portrait":96` 欄位本身是對的,
+  `internal/battle/model.go:971` 的 fresh-load 路徑`Portrait: u.Portrait`
+  也是對的直接複製,沒有問題)。
+- 對照組:同一輪把游標停在蓋亞(自己隊上的機兵)身上時,面板肖像圖
+  正確畫成蓋亞自己的機兵造型,不是索爾——**只有敵方單位的肖像圖跑掉,
+  自己隊上的單位是對的**。
+
+**這條新證據跟續四「目前最佳假說」的關係——建議修正該假說的方向**:續四
+記錄的「敵方 nerf 失效」現象,原本傾向「跟主角隊 buff 失效同一類機制,
+某個 native constructor 用 class/growth table 從頭重算 HP/AP/DP」。但
+**growth table 重算函式没有理由會動到 `Portrait` 欄位**——`Portrait` 是
+角色身份欄位,不是靠等級/職業公式算出來的數值。如果敵方單位進入戰鬥後
+不只 HP/AP/DP 是 vanilla、連 `Portrait` 都變成另一個角色(索爾)的值,
+這比較像是**整個 `battle.Unit` 記錄被整包替換/錯位**(例如
+`g.storyActors`/`handlerActors` 這個陣列裡,原本該對應這隻盜賊的 slot
+被索爾的記錄覆蓋、或是查找時用了錯的 index/key),而不是「只有數值欄位
+被重算」。續四記錄的「座標也和 LOADCH 當下的原始 JSON 座標有系統性偏移
+(y+1)」這個既有觀察,現在看也更支持「整包記錄替換」而非「選擇性數值
+重算」——如果只是數值重算,座標不應該跟著變。
+
+**未做的事(誠實記錄,不是本輪重點,留給下一輪)**:沒有再往下追這個
+替換確切發生在哪一行——續四已經排除的三個候選(`AdoptHandlerBattleState`/
+`materializeStoryGroup`/`AppendNativeMapSelectorBatch` 系列)這個新證據
+沒有推翻,只是提供了新的排除線索(重算/替換函式必須同時碰
+`HP/AP/DP/MV`**和**`Portrait`**和**`X/Y`,範圍比單純的「數值重算」更廣,
+下一輪找候選函式時可以用「這個函式有沒有整包複製/覆寫 `Portrait` 欄位」
+當篩選條件,縮小搜尋範圍)。這是**真實、可重現、目前仍未修的 bug**,會讓
+玩家在攻擊選敵人時看到錯的臉——不只是內部除錯數值的問題,是會被玩家
+直接看到的視覺 bug,建議優先度高於單純數值正確性。
 revert 這兩個檔案的變更,尊重並行 session 的工作。
