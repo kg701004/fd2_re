@@ -105,6 +105,10 @@ DEFAULT_REMAKE_DIR = REPO_ROOT / "remake"
 DEFAULT_SHOT_DIR = REPO_ROOT / ".wsl_build" / "live_input_helper"
 DEFAULT_WAIT_S = 0.3  # doc92's general per-key gap floor; command-ring cases want 0.4-0.6s (caller's call, via --wait)
 DEFAULT_KEY_GAP_S = 0.15  # doc92: 0.15-0.3s between keys in a batch
+DEFAULT_SCREENSHOT_RESIZE = "640x400"  # the game's own logical canvas size (main.go's defaultWindowSize) --
+# the captured window is usually a 2x/3x upscale of this with zero added information, so shrinking back
+# down to native size cuts vision-token cost for whoever reads the PNG without losing any real detail.
+# Pass --resize "" to get the raw, un-shrunk capture (e.g. for a higher-fidelity doc/commit screenshot).
 
 
 # --------------------------------------------------------------------------
@@ -261,14 +265,20 @@ def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25
 # 4. Screenshot capture
 # --------------------------------------------------------------------------
 
-def screenshot(instance: str, out: Path) -> Path:
+def screenshot(instance: str, out: Path, resize: str | None = DEFAULT_SCREENSHOT_RESIZE) -> Path:
     """Fresh window-id lookup + `import -window <id>`, saved to a caller-
     specified path (default: a scratch dir under .wsl_build/, NOT
     docs/figures/ -- ad-hoc test-run screenshots shouldn't land in
     committed documentation by default; pass --out explicitly to promote
-    one into docs/figures/ once it's actually worth keeping)."""
+    one into docs/figures/ once it's actually worth keeping).
+
+    resize: geometry string passed to `convert -resize` (fits within,
+    preserves aspect -- not a crop), default DEFAULT_SCREENSHOT_RESIZE
+    (the game's native 640x400 logical canvas). Pass None/"" for the raw,
+    un-shrunk capture -- worth doing for a screenshot going into docs/a
+    commit as evidence, not for a routine in-the-loop decision check."""
     out.parent.mkdir(parents=True, exist_ok=True)
-    sh_checked("screenshot", instance, to_wsl_path(out), timeout=20)
+    sh_checked("screenshot", instance, to_wsl_path(out), resize or "", timeout=20)
     return out
 
 
@@ -380,7 +390,7 @@ def cmd_key(args):
 
 def cmd_screenshot(args):
     out = Path(args.out) if args.out else default_screenshot_path(args.instance, args.label)
-    screenshot(args.instance, out)
+    screenshot(args.instance, out, resize=args.resize)
     print(str(out))
 
 
@@ -497,6 +507,10 @@ def build_parser():
     sp.add_argument("--instance", required=True)
     sp.add_argument("--out", default=None, help="explicit output path (any dir); default: .wsl_build/live_input_helper/<instance>/<timestamp>[_label].png")
     sp.add_argument("--label", default=None)
+    sp.add_argument("--resize", default=DEFAULT_SCREENSHOT_RESIZE,
+                     help=f"convert -resize geometry, fits-within/preserves aspect (default {DEFAULT_SCREENSHOT_RESIZE}, "
+                          f"the game's own logical canvas -- cuts vision-token cost with no real detail lost since the "
+                          f"window is normally an upscaled multiple of this); pass --resize '' for the raw full-res capture")
     sp.set_defaults(func=cmd_screenshot)
 
     sp = sub.add_parser("wait-settle", help="standalone: poll until 2 consecutive screenshots match, or time out")

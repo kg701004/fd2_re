@@ -858,3 +858,31 @@ teardown前後都用`ps aux`核對過對方毫髮無傷)、`launch`成功、`win
 真實UI「此指令目前不可用」訊息一致(`map0_units.json`裡的敵方單位`atk_min`/`atk_max`原始值都是
 0——doc32/model.go註解已說明這是舊版units.json的已知特徵,不代表工具本身有問題,只是這個特定地圖
 沒有非1的射程可供交叉驗證,下一輪若拿到`atk_min`/`atk_max`非零的地圖JSON值得補一次這個驗證)。
+
+### 續二(2026-09-01)：`screenshot`加`--resize`降低LLM讀圖的vision token成本
+
+**動機**:這個工具本身解決的是「輸入送達可靠性」的問題,不是「呼叫代理人讀截圖要花多少token」的
+問題——`key --settle`/`wait-settle`的輪詢截圖只拿來做md5比對,從不餵給LLM,便宜;但`screenshot`
+指令產出的PNG,呼叫方(agent)每次都要真的Read進vision才能判斷畫面狀態,這部分token和像素面積成
+正比,是一輪即時playthrough token消耗的主要來源之一,不是工具設計缺陷,是即時視覺驗證這種做法本身
+的固有成本。
+
+**實測發現的具體浪費**:`fd2-linux-verify`的視窗大小是`defaultWindowSize()`依實際螢幕挑的640×400
+邏輯畫布整數倍——這個工具固定用1400×900的Xvfb screen(`fd2_live_input_helper.sh`的`launch`),
+實測跑出來的視窗是1280×800(2倍放大)。`import -window`直接存這個放大後的尺寸,對LLM來說,那多出來
+的2×2→1像素完全不含額外資訊,純粹是在為「被放大的像素」多付vision token。
+
+**修法**:`cmd_screenshot`(`.sh`)在`import`之後可選再跑一次`convert "$out" -resize "$geometry" "$out"`
+(不加`!`,fit-within、保比例,不是裁切);Python側`screenshot()`/`screenshot`子指令新增`--resize`,
+預設值`DEFAULT_SCREENSHOT_RESIZE = "640x400"`(遊戲自己的邏輯畫布尺寸,不是隨便選的縮放比例),
+傳空字串取消縮放拿原始解析度。這是純加法,舊呼叫(不帶`--resize`)行為改變僅限於「預設值從『無縮放』
+變成『縮到640×400』」,不影響任何既有選項的語意。
+
+**驗證(獨立instance `resizecheck`,port :299,與同一時間仍在跑的M5 Phase 4正式agent session完全
+隔離,teardown後清理乾淨)**:同一畫面分別存了`--resize`預設值與`--resize ""`兩張——確認
+1280×800(112092 bytes)→640×400(16233 bytes),面積4倍、檔案大小約7倍差距;縮小後的640×400畫面
+(片頭剪影畫面)人工檢視仍清晰可辨,因為這本來就是從整數倍(2x)放大回原生尺寸,是精確逆運算,不是
+有損壓縮或裁切,不會漏看任何遊戲原生解析度就有的細節。**未做的驗證**:沒有拿實際戰鬥畫面(含指令環
+文字、HP數字)在640×400下測試LLM讀圖是否仍能正確辨識細小文字——如果之後某輪發現640×400讀不清楚
+戰鬥UI的文字/數字,加大`--resize`(例如`960x600`,1.5倍)或針對特定截圖呼叫`--resize ""`保留全解析
+度,不要假設640×400在所有畫面類型下都夠用。

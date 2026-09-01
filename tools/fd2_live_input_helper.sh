@@ -32,7 +32,7 @@
 #   fd2_live_input_helper.sh launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [KEY=VAL ...]
 #   fd2_live_input_helper.sh window-id <name>
 #   fd2_live_input_helper.sh send-key <name> <xdotool-key-name>
-#   fd2_live_input_helper.sh screenshot <name> <out_path>
+#   fd2_live_input_helper.sh screenshot <name> <out_path> [resize_geometry]
 #   fd2_live_input_helper.sh wait-settle <name> <tmp_prefix> <max_tries> <interval_seconds>
 #   fd2_live_input_helper.sh status
 #   fd2_live_input_helper.sh teardown <name>
@@ -258,8 +258,8 @@ cmd_send_key() {
 }
 
 cmd_screenshot() {
-    local name=${1:-}; local out=${2:-}
-    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path>"
+    local name=${1:-}; local out=${2:-}; local resize=${3:-}
+    [[ -n "$name" && -n "$out" ]] || die "usage: screenshot <name> <out_path> [resize_geometry]"
     load_state "$name"
     xvfb_alive "$XVFB_PID" || die "instance '$name' Xvfb is not alive"
     local win; win=$(find_window_id "$DISPLAY_PORT")
@@ -267,6 +267,17 @@ cmd_screenshot() {
     mkdir -p "$(dirname "$out")"
     DISPLAY="127.0.0.1:$DISPLAY_PORT" import -window "$win" "$out" \
         || die "import screenshot failed for $name (window $win)"
+    # Optional downscale: the window is captured at its real (possibly 2x/3x-
+    # scaled) size, but the game's own logical canvas is a fixed 640x400
+    # (remake/cmd/fd2/main.go's defaultWindowSize) -- an unscaled shot is
+    # pure upscaling with zero added information, and every extra pixel is
+    # extra vision-token cost for whoever reads this PNG back. `-resize
+    # <geometry>` (no `!`) fits within the box preserving aspect, so passing
+    # the native 640x400 on an already-1x window is a safe no-op, not a crop.
+    if [[ -n "$resize" ]]; then
+        convert "$out" -resize "$resize" "$out" \
+            || die "resize to '$resize' failed for $name screenshot $out"
+    fi
     echo "$out"
 }
 
@@ -387,7 +398,7 @@ usage: $0 <command> [args]
   launch <name> <remake_dir> <campaign> <mute:0|1> <fdother|-> <fdtxt|-> <dato|-> [K=V ...]
   window-id <name>                                   fresh xwininfo query, prints hex window id
   send-key <name> <xdotool-key-name>                 fresh window-id lookup + xdotool key --window
-  screenshot <name> <out_path>                       fresh window-id lookup + import -window
+  screenshot <name> <out_path> [resize_geometry]     fresh window-id lookup + import -window (+ optional convert -resize)
   wait-settle <name> <tmp_prefix> [max_tries] [interval_s]   poll until 2 consecutive shots match
   status                                              list all fd2-live-helper instances
   teardown <name>                                     kill one instance (PID+name verified)
