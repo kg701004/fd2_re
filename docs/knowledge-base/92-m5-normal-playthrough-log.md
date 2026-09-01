@@ -717,3 +717,117 @@ session,在畫面(sprite fig)、面板(portrait)、數值(HP/AP/DP/MV)、
   截圖),足以支撐「這些是需要修的真實 bug」這個結論,不需要再懷疑是
   誤判或截圖工具問題。
 revert 這兩個檔案的變更,尊重並行 session 的工作。
+
+## 2026-09-01 續八:盜賊 HP 之謎完全反轉——native 公式與資料表本身沒有錯,
+續七的「原版 ground truth」是被本專案自己另一輪除錯 session 汙染過的
+`~/fd2-run/FD2.EXE`,不是真正的原版行為 [根因已定位、已獨立複驗]
+
+**任務背景**:orchestrating session 要求深入複查續七第 1 點——`native_record_word42_for_raw_unit_key()`(見
+`tools/export_units.py`)對 ch01 盜賊(`raw_unit_key`=96,`map0_units.json`
+`fig=96`,`lv=2`)算出 `word42=28`(=`high_class` 表 idx28 的 HP 成長值14×等級2),
+但續七記錄的 DOSBox-X 原版狀態畫面(`docs/figures/m5-ch01-original-thief-status-hp002.png`)
+顯示 HP 是 `002/002`,兩者差 14 倍。任務要求判斷:究竟是 `native_record_word42_for_raw_unit_key()`
+的公式/索引/table 提取有錯,還是另有解釋,並要求不能只憑這一個數字就動公式。
+
+**方法**:先重讀 `tools/export_units.py`/`tools/extract_native_unit_tables.py` 全部
+docstring 與 `docs/knowledge-base/56-fd2-remake-sdd.md`「2026-07-27」節、`03-exe-and-
+data-structures.md` 的既有反組譯證據(`docs/data/fd2_future_group_constructor_capstone.txt`,
+`0x10b4e..0x11018` 完整 Capstone 反組譯,MD5`b97caf...`357074B 舊版),確認：
+
+1. **constructor `0x10d7f..0x10e23`(high branch)的公式/索引本身完全正確,逐指令核對**:
+   `0x10da4` 讀 FDFIELD 控制列 `esi+1`(=`raw_unit_key`)、`sub eax,0x44`、`call 0x4e4ff`
+   取 `0x61af9+idx*0xA` 記錄;`0x10db4` 讀 `record+2`(u16)乘上 `esi+4`(=FDFIELD `lv`,
+   跟 `tools/parse_field.py` 的 `"lv": b[4]` 逐位元組吻合,`esi` base offset `0x83` 也跟
+   `parse_field.py` 算出的 `o=3+16*3+16*2+16*3=0x83` 完全一致);`0x10fe9`/`0x10fed` 把
+   結果同時寫進 runtime `+0x40`(當前HP)與`+0x42`(MaxHP)。`0x1b750`(HIT/EV/衍生AP重算)
+   反組譯全文沒有任何 `+0x40`/`+0x42` 寫入,不會事後覆寫 HP。
+2. **`high_class` 68 筆表本身也沒有錯**:`docs/data/exe_tables/unit.json`
+   (`tools/dump_exe_tables.py` 用 anchor-byte 掃描直接對「canonical 新版」FD2.EXE
+   逐byte驗證產出,見 `03-exe-and-data-structures.md` 2026-08-19 節「60列逐byte核對」)
+   跟 `docs/data/exe_tables/native_unit_tables.json` 的 `high_class` table **逐筆位元組
+   完全相同**(idx0/8/28/29/59/60-67 全部核對過),兩者是同一張表的獨立來源,互相印證。
+   idx28(=raw_unit_key96-0x44)= `race1 cls7(盜賊) HP成長14 MP成長0 AP成長7 DP成長1
+   DX成長1 MV4 EX21`,是合理、與其他67筆同型態的漸進數值(不是退化值)。
+
+**關鍵突破:直接用 WSL2 讀 `~/fd2-run/FD2.EXE` 原始 bytes,跟兩份靜態 JSON 比對**——
+`~/fd2-run/FD2.EXE`(md5`72e36e47f1f7d77dc102839262956480`,續七/所有近期 DOSBox-X
+session 用的「canonical」live 檔案)在 `high_class` 表偏移 `0x7AB0D+28*10` 讀出的是
+`01 07 01 00 01 01 01 01 04 15`——HP/MP/AP/DP/DX 全部被改成 **1**(RA/CL/MV/EX 不變),
+不是 JSON 裡的 `01 07 0e 00 00 07 01 01 04 15`(HP成長14)!用 `cmp -l` 對
+`~/fd2-run/FD2.EXE` 與同目錄下 **`FD2.EXE.pristine_bak`**(md5`33464c81e6a364fd
+0660141139aa8e6e`,與 `docs/data/fd2-reference-files.json` 記載的「canonical 新版」
+基準、`C:\...\GAME\FD2\FD2.EXE`/`FD2_USB`/`FD2_APK\FD2_old.EXE` 三份獨立備份的 hash
+完全一致)逐 byte diff:**精確 252 bytes,全部落在 `high_class` 表 `0x7AB6D..0x7ADA6`
+範圍內**(即表格第 8~59 筆,`raw_unit_key` 76~127),對應 `RA/CL/MV/EX` 不動、
+`HP/MP/AP/DP/DX` 全部壓成 1 的規律 patch。
+
+**根因 100% 定位**:這正是本文件 `docs/knowledge-base/58-remake-live-verification-log.md`
+第3461行已經自己記載過的**「續二十七」(2026-08-19)離線 patch**——當時為了驗證「ch24 敵人
+HP卡在1不動是(HIT-EV)確定性Miss、不是傷害公式清零」這個完全不相關的假說,使用者離線
+把 `~/fd2-run/FD2.EXE` 的 `0x7AB5D` 起 52 筆敵人成長表(=`high_class` idx8..59)逐筆改成
+HP/MP/AP/DP/DX成長值=1、保留RA/CL/MV/EX,並存了 `FD2.EXE.pristine_bak` 保留原始備份。
+該輪之後**至少數十輪(續二十八~續六十幾,見同文件 3480/3858/3880/3934/4190/4530/4652/
+4803/4838/4943/5130/5225/5340/5398/5512/5575/5727/5779/5909/6074/6138/6263/6414/6436
+等行)全部把「`FD2.EXE`與`.pristine_bak`diff維持精確252 bytes」當成正面確認(表示ch24/
+ch27追蹤用的 checkpoint 完整保留),從未把它復原成原版**——這個 patch 因此至今仍完整
+存在於共用的 `~/fd2-run/FD2.EXE` 裡,但它是為了另一條完全無關的 ch24 debugging 支線做的,
+從未被標記成「所有其他 session 借用 `~/fd2-run` 做 ground truth 驗證時要注意」的警告。
+**續七的 DOSBox-X「原版」HP=002 讀數,讀到的其實是這個已知、有意、但忘了註記適用範圍的
+debug patch,不是真正的原版行為。**
+
+**獨立原版複驗(不依賴 JSON,直接開一個全新隔離 DOSBox-X 實例驗證)**:用
+`tools/dosbox_harness.sh launch pristinecheck`、`FD2_HARNESS_SOURCE_DIR=$HOME/fd2run`
+覆寫成另一份**從未被續二十七碰過**的乾淨快照(`~/fd2run`,無連字號,md5同樣是
+`33464c81...`,與 `.pristine_bak`/三份 Windows 備份完全一致;補一個該快照唯一缺的
+`FDICON.B24` 資源檔,從 `~/fd2-run` 複製,不影響 FD2.EXE 本身),開新遊戲、mash Enter
+跑完序章對白(亞王城→練劍→發現悠妮→行軍→海盜宣戰)進入 ch01 戰鬥,把游標移到最左側單獨
+一隻盜賊(跟續七截圖同一隻「LV.02盜賊,獨立站位」)身上——**畫面左下角快速資訊面板清楚
+顯示 `028`**(跟 Sol 自己當時顯示 `042`=HP42/42 是同一種面板,已知是即時 HP 讀數),
+精確吻合 `native_record_word42_for_raw_unit_key()` 算出的 `14×2=28`,**不是** 續七讀到的
+`002`。此為本輪唯一新增的即時 DOSBox-X 證據,建立在乾淨快照上,teardown 已確認乾淨
+(`tmux`/`Xvfb`/`dosbox-x` 全部清除,`ps aux` 無殘留;隔離 workdir
+`~/fd2-run-harness-pristinecheck` 用畢即刪除)。**全程未寫入或修改 `~/fd2-run/FD2.EXE`
+或 `~/fd2-run/FD2.SAV`**(操作對象自始至終是獨立的 `~/fd2run`→隔離 workdir 複本),
+不影響任何借用 `~/fd2-run` 的其他並行 session(含 ch24/ch27 追蹤支線)。
+
+**結論**:
+- `native_record_word42_for_raw_unit_key()`/`native_record_word46_for_raw_unit_key()`
+  (以及同一輪反組譯出的 `native_ap/dp/mv/dx_for_raw_unit_key()`)**公式、索引、byte
+  offset 全部正確,不需要修改一行程式碼**。`docs/data/exe_tables/native_unit_tables.json`
+  的 `high_class`/`lower_class`/`lower_aux` 三張表**資料本身也是對的**(逐byte核對
+  過至少 idx0/8/28/29/59-67,跟獨立管道`dump_exe_tables.py`+使用者攻略雙重印證),
+  不需要重新萃取或重跑 patch pipeline。`tools/export_units.py` 產出的全部 30 張
+  `mapN_units.json` 也因此**已經是對的,不需要重新產生**。
+  `python3 tools/test_export_units.py`(7/7 綠)、`go build ./remake/...`、
+  `go vet ./remake/...`(皆在 `remake/` 目錄下執行,全綠)三項回歸確認過,純粹是
+  「這輪沒有動程式碼」的確認,不是因為有改動才重跑。
+- 續七第1點原文的結論(「remake 資料本身就是錯的,是 export 階段的資料錯誤」)**需要
+  更正**:HP 這條線索本身,問題不在 remake/export 這一側,而是續七借用的 DOSBox-X 環境
+  (`~/fd2-run/FD2.EXE`)恰好帶著另一條無關支線留下的 debug patch。續七其餘 3 點(面板
+  肖像 bug、地圖貼圖 bug、隊伍名字核對)不受影響,結論維持有效——那 3 點的原版截圖
+  對照對象都是 UI/貼圖渲染邏輯,不涉及這張成長表。
+- **範圍評估**(靜態掃描 30 張 `mapN_units.json`,只是量化風險,不是本輪發現新 bug)：
+  受這個 debug patch 影響的 `raw_unit_key` 範圍是 76~127(`high_class` idx8~59,共52筆
+  table row);全 30 張地圖裡帶 `native_record_word42` 的 1885 個敵我單位中,**1698 個
+  (90%)的 `raw_unit_key` 落在這個範圍內**——換句話說,如果誤信續七的「原版 HP=2」當
+  ground truth 去反向修正公式,會讓現在本來正確的 90% 單位全部改錯,包含前面 doc03/
+  doc32 引用驗證過的 ch24 LV14 惡魔(`raw_unit_key`=109,同樣落在 idx41,受影響範圍內;
+  該筆「驗算」本來就只是拿 JSON 自己算出的值互相對照,從未真正對過 DOSBox-X 原版畫面,
+  這次連帶釐清了它「尚未被獨立 ground-truth 驗證過」這件事,不是新退步)。
+- **後續建議(不在本輪動手,留給 orchestrating session 決定)**：
+  1. `~/fd2-run/FD2.EXE` 目前仍帶著續二十七的 52 筆 debug patch,且看起來是 ch24/ch27
+     追蹤支線刻意保留的工作 checkpoint(數十輪明確記錄「diff維持252 bytes,沒有本輪
+     修改」)——**不建議本輪或任何不了解該支線現況的 session 自行復原成 pristine**,
+     以免破壞正在進行中的另一條調查。但強烈建議在 `docs/knowledge-base/98-tooling-
+     infrastructure.md` 或 `tools/dosbox_harness.sh` 的說明裡明確加一條警語:
+     `~/fd2-run/FD2.EXE` 的 `raw_unit_key` 76~127 敵人成長數值不是原版數值,任何要用
+     它做「HP/MP/AP/DP/DX ground truth」驗證的 session,必須先 `cmp` 一下
+     `FD2.EXE.pristine_bak`,不一致就換一份乾淨快照(例如 `~/fd2run`,記得補
+     `FDICON.B24`)再測,不能直接假設 `~/fd2-run` 是原版。
+  2. 若 ch24/ch27 支線之後確認不再需要這個 debug checkpoint,可以考慮把
+     `~/fd2-run/FD2.EXE` 復原成 `.pristine_bak`,但那是那條支線自己的收尾決定,
+     不屬於本輪任務範圍。
+- **命名巧合提醒**：`~/fd2run`(無連字號,pristine,2026-08-14 快照)與
+  `~/fd2-run`(有連字號,canonical harness source,已被續二十七 patch)是兩個完全不同
+  的目錄,只差一個連字號,非常容易看錯——這也是本次調查耗費最多時間釐清的環節之一,
+  下一輪如果需要用 pristine 快照,務必先 `md5sum FD2.EXE` 確認,不要只憑目錄名判斷。
