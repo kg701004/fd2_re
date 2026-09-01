@@ -295,3 +295,94 @@ port 缺口非阻擋性,後者需要更深入的除錯才能安全修正,倉促�
 5. ch01 本身還需要清空 enemy7（目前只讓一隻剩 8 血)，以目前的操作節奏預估還需要
    數個完整回合──下一輪建議先解掉悠妮的環卡死 bug 再繼續推進，讓四人都能出手，
    而不是三人硬打。
+
+## 2026-09-01 續三:發現三復查——用新版 `fd2_live_input_helper` 全程 `--settle`
+確認後**未能重現**,判定原始發現是不可靠 raw xdotool 按鍵輸入的產物,不是真實 code bug
+
+**動機**:「發現三」（悠妮的指令環在一次「開火炎術目標選擇→Escape 取消」之後永久
+失效)記錄時明確標註「嘗試了單次/連續3次/間隔1秒重試/多次 Escape 想清狀態,全部
+無效」,但那一輪全程用的是 ad-hoc `xdotool key` 直接呼叫,沒有對每一次按鍵做
+settle 確認——與 doc98/本文件開頭都已經記錄過的「指令環方向鍵 hit-or-miss 丟鍵」
+是同一類已知風險。本輪的任務就是專門用新建的 `tools/fd2_live_input_helper.py`/`.sh`
+(這兩個檔案就是為了解決「按鍵送出後到底有沒有真的被吃到」這個不確定性而建的)
+重跑同一個 repro,每一鍵之後都用 `key ... --settle`(輪詢畫面直到連續兩張截圖
+完全相同才送下一鍵,而非固定等待),確認發現三是真 bug 還是輸入不可靠的偽陽性。
+
+**方法**:全新 WSL2 Ubuntu instance(`fd2_live_input_helper.py launch --instance
+yunibug`,Xvfb `:199`,與任何 canonical `:99`/`dbg` 等其他 session 不重疊)。
+`remake/fd2-linux-verify` 當場重新建置(WSL 內建 `$HOME/go/bin/go`,
+`GOOS=linux GOARCH=amd64 go build -o fd2-linux-verify ./cmd/fd2`,成功,
+14.9MB)。啟動指令沿用 `play.sh` 慣例(`FD2_CAMPAIGN=assets/scenarios/
+campaign_full.json`+`FD2_MUTE=1`+三個 `FD2_ORIGINAL_*`),**完全沒有**
+`FD2_SHOT_*`/`FD2_CAMP_*` debug hook。序章對白→ch01 戰前對白共約 220 次 Enter
+(分批 20-60 次一組送出,每批後截圖確認進度,batch 內部用 0.2-0.3s 固定間隔而非
+逐鍵 settle——這段純粹是翻對白,不涉及本次要驗證的狀態機,用固定間隔已足夠可靠
+且大幅省時間),順利進入 ch01 戰鬥 T1(F3 debug HUD 確認 `T1 own4 ally0 enemy7`)。
+
+**用移動範圍高亮+黃色姓名標籤現場確認單位身分**(不假設任何離線座標):游標
+`(10,15)` 的單位開環後畫面正確顯示黃字「悠妮」,ID 面板顯示 `028`——這正是續二
+筆記提到「跟索爾外觀神似的敵方 sprite `028`」的同一個數字,但這裡確認是**我方**
+悠妮本人(她跟某個敵方 sprite 共用了美術資源編號,純美術重用,不是同一個邏輯單位;
+下一輪若要用 ID 辨識單位,記得不能只看數字,要連同陣營色/選取後的姓名標籤一起看)。
+
+**逐鍵 `--settle` 重跑的完整原始 repro 序列**(對照「發現三」原敘述,一步不少):
+1. 悠妮原地開環(`confirm --settle`)——4 圖示環正常顯示,預設焦點在左側「法術」
+   (紅框高亮),與續一筆記「預設 index1」一致。
+2. `confirm --settle` 選法術——進入 `nativeCommandOpen` 原生指令列表,畫面左下角
+   顯示「火炎術」。
+3. `confirm --settle` 選火炎術——進入 `nativeCommand0Targeting`,畫面顯示
+   「原始指令 0：選擇目標」,與原始 bug 敘述逐字吻合。
+4. `cancel --settle`(**單次** Escape,對照原始「按 Escape 取消」這一步)——畫面
+   回到 `nativeCommandOpen` 選單狀態(「火炎術」字樣還在,`原始指令 0：選擇目標`
+   殘留訊息也還在,因為這個 ESC handler 沒有清 `g.msg`,純粹是視覺上的殘留字,
+   不是狀態卡死的證據)。
+
+**這一步之後,額外加了三組原始輪次沒有系統化測過的驗證(用 `--settle` 逐一確認每
+一鍵都真的被吃到,而非原輪的「連續3次/間隔1秒」這種盲重試)**:
+- **方向鍵測試**:在上述第4步的狀態按 `Down --settle`,F3 HUD 的 `cur(x,y)`
+  座標完全沒變——證實此刻方向鍵正確被 `nativeCommandOpen` 選單吃掉(單一法術,
+  選單環繞回自己),**不是**地圖游標移動,這是設計内的正常行為,不是 bug。
+- **單次 Escape 後直接 Enter**:再送 `confirm --settle`——正確地**重新**進入
+  `nativeCommand0Targeting`(畫面重現「原始指令 0：選擇目標」),沒有卡死、沒有
+  沉默無反應。
+- **完整三層 Escape 退回**:從 targeting 狀態連續 `cancel --settle` 三次(第1次
+  回 `nativeCommandOpen`;第2次回環本身,畫面正確播放開環動畫並穩定顯示四圖示環;
+  第3次因為悠妮本回合未移動過,直接完全取消選取,回到單純地圖游標,面板上的姓名
+  標籤與訊息都清空)——每一步畫面都如預期變化,無一次卡死。
+- **完全重選悠妮**:游標離開她的格子(`Left Left`)、確認 HUD 座標真的改變、
+  再移回她的格子(`Right Right`)、`confirm --settle` 重新選取(移動範圍正確重新
+  高亮)、`confirm --settle` 再次原地開環(四圖示環正常重新顯示)——**這證明
+  `!u.Acted` 這個重選 gate(`main.go:5541`)從頭到尾都是 `false`,`finishSelectedWait`
+  從未被誤觸發**,直接推翻「發現三」筆記寫的「目前最佳假說」(`confirm()` 的
+  `原地待命`分支被 stray Enter 誤觸,悄悄把 `Acted` 設成 `true`)。
+- **加壓測試(模擬原輪『連續按鍵』但這次全部走可靠送鍵管道)**:重新走一次
+  法術→火炎術→targeting,這次用 `cancel cancel cancel --gap 0.1`(3 次 Escape
+  之間只留 0.1 秒、且中途不逐鍵 settle,刻意貼近原輪「連續按 Escape」的操作節奏,
+  只是這次改用可靠的 `send-key` 而非原始 ad-hoc `xdotool key`)——最終 `--settle`
+  確認畫面乾淨地完全取消選取(跟前面單獨測的第三層 Escape 結果一致)。之後再
+  `confirm confirm --gap 0.3 --settle` 重選+開環,四圖示環第五次成功正常顯示
+  (`wait-settle` 這次逾時 timeout,但檢查截圖環本身渲染完全正常——逾時是因為
+  `g.ringPulse` 選中格的閃爍動畫本身就會讓連續截圖永遠不完全相同,`wait-settle`
+  「連續兩張畫面一致才算穩定」的判定方式對這種持續閃爍的畫面天生會 timeout,是
+  這個通用 primitive 面對「有意閃爍動畫」場景的已知限制,不是遊戲卡死——`fd2_live_
+  input_helper.sh` 的 `wait-settle` 文件已經點出這個 trade-off,這裡補一筆實測
+  案例存證)。
+
+**結論:發現三在本輪的嚴謹、逐鍵 settle 確認的真人輸入路徑下完全沒有重現**——同一
+套「開火炎術目標選擇→Escape 取消」序列,無論單次 Escape、完整三層 Escape、或
+0.1 秒間隔連續三次 Escape,悠妮的環事後都 100% 正常重新開啟,`Acted` 從未被
+意外設成 `true`。這代表上一輪記錄的「永久卡死」現象,最合理的解釋是**該輪使用
+的 ad-hoc `xdotool key` 呼叫本身丟了或誤判了按鍵**(doc98/本文件開頭已經記錄過
+同一類「指令環方向鍵 hit-or-miss 丟鍵」的風險),而不是 `confirm()`/
+`nativeCommandOpen`/`nativeCommand0Targeting` 這幾段狀態機邏輯本身有漏洞。
+**依交辦指示,本輪確認「不能重現」後即停止,未修改任何程式碼**——「發現三」原本
+記錄的「目前最佳假說」(`finishSelectedWait` 被 stray Enter 誤觸發)已被本輪的
+`!u.Acted` 重選成功這一步直接證偽,不需要下一輪再帶著這個假說去做 debug log
+追蹤。
+
+**清理**:`yunibug` instance(Xvfb `:199` + `fd2-linux-verify`)已用
+`fd2_live_input_helper.py teardown --instance yunibug` 正常關閉,`ps aux`
+核對 WSL 內完全沒有殘留的 `Xvfb`/`fd2-linux-verify` process(本輪執行前後 WSL
+內其實**沒有任何**canonical `:99`/`dbg` 等其他 instance 在跑,無需額外核對是否
+被誤動)。本輪截圖存於 `.wsl_build/live_input_helper/yunibug/`(工具預設路徑,
+非 `docs/figures/`——純過程驗證截圖,不promote 進正式文件)。
