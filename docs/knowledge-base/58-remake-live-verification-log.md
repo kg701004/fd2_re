@@ -9828,3 +9828,44 @@ sprite」對應關係的**原版直接證據**——先前remake那個`NativeSel
 `UI-VIS-TOWN`既有記錄一致——這條結論先前是靠remake對照得出的，現在有純原版證據獨立支撐。
 
 **清理**：`v1`/`v2`兩個instance已`teardown`、workdir已刪除，`status`確認清空。
+
+### 2026-09-03 三續：★ 秘密商店（selection5）成功開啟——解決`91-worklist.md` `UI-VIS-TOWN`
+標記為未解的 secret gate reveal
+
+**既有記錄的卡點**：`91-worklist.md` `UI-VIS-TOWN`條目（2026-08-25/26兩輪）記載
+「ch03的secret gate reveal（`native_secret_gate.scan_code=95`＝BIOS Ctrl+F2）依`selection=1`
+gate要求送出`ctrl+F2`兩次均未觀察到selection5出現，未排除是scan code換算錯誤或xdotool合成鍵
+不被BIOS層接受，此點誠實記錄為未解決」，同輪結尾也把它列為剩餘缺口。
+
+**本輪解法**：改用**遊戲自己的提示文字**。ch02城鎮初次進入時的NPC提示寫著
+「『聽說這裡有不擺在檯面上的好東西……（**酒店前按 Shift+F1 鍵**）』」——也就是
+(a)鍵位是`Shift+F1`不是`Ctrl+F2`，(b)要站在**selection0 酒店**前，不是selection1。
+照這兩點在ch02(variant0)實測：LOAD直接落在selection0酒店，送出`shift+F1`後
+**城鎮標籤立刻從「酒　店」變成「？　？　？」、隊長sprite也移到柵欄外新位置**
+（與base畫面mean-abs-diff僅1.36，因為只有標籤與角色位置變動，背景不變，故必須看標籤文字
+而不是整幀diff才判得出來——這也解釋了為何早期輪次若只看整幀差異容易誤判成「沒反應」）。
+
+**進入後確認是真的秘密商店**：店主是**灰皮膚、手臂有船錨刺青**的壯漢，與一般武器店的
+藍皮膚店主明顯不同；商品6項，含一般武器店沒有的高階品：
+
+| 品項 | 加成 | 價格 |
+|---|---|---|
+| 闊劍 | +AP020 | $00250 |
+| 長戟 | +AP050 | $01200 |
+| 釘頭鎚 | +AP025 | $00180 |
+| 藥草 | +HP040 | $00010 |
+| 回復劑 | +HP120 | $00080 |
+| 皮甲 | +DP008 | $00300 |
+
+三態MD5各異(`18533cde`/`520ddce7`/`f38d2f85`)。新圖：
+[`secret-shop-ch02-original-dosbox.png`](../figures/secret-shop-ch02-original-dosbox.png)
+
+**結論**：`UI-VIS-TOWN`的secret gate reveal缺口**已用純原版證據關閉**，且順帶修正了先前
+記錄裡的兩個錯誤前提（鍵位`Ctrl+F2`、位置`selection=1`）。先前歸因方向「scan code換算錯誤
+或xdotool不被BIOS層接受」也可以排除——`shift+F1`經由同一套`xdotool`送出完全正常生效，
+問題從頭到尾是鍵位與觸發位置記錯，不是輸入層。
+
+**誠實限制**：本輪只在ch02(variant0)驗證；ch03/ch12是否同樣用`Shift+F1`＋酒店觸發未測。
+秘密商店的實際購買流程也沒走。
+
+**清理**：`sec`instance已`teardown`、workdir已刪除，`status`確認清空。
