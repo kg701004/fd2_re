@@ -1309,3 +1309,46 @@ flakiness。因此**沒有貿然改用具名Enter鍵**（doc48§8.4明確記載�
 
 **Live重新驗證**：修好後在同一個(先前卡住的)instance上呼叫`resume --verify`，第一次呼叫就正確
 回報`OK: screen changed...(attempt 1/3)`，確認修法有效，沒有引入回歸。
+
+## `tools/fd2_original_verify.py` — 原版側「宣告式 / 平行 / 分層」驗證器(2026-09-03)
+
+**動機**：2026-09-02/03 那批「用原版補驗」的輪次全是手動驅動（launch→patch章節byte→猛按
+Enter→肉眼看截圖），慢，而且**「我到底走到哪個畫面」是靠人眼判斷的**——這正是歷史上產生
+錯標證據的同一個機制（見doc58同日「13/18張對照圖是自我複製」與「售出圖/轉移圖混用」兩節）。
+本工具把一輪驗證變成**資料**：scenario列出步驟與斷言，runner執行，report記錄哪條斷言在哪張
+截圖上通過。走錯畫面會**fail**，而不是被寫成看起來很有把握的結論。
+
+**分層斷言**：`L1 reach`（有沒有到達預期畫面，`assert_ref`比對參考圖）／`L2 content`
+（畫面內容對不對，`assert_distinct`等）／`L3 data`（跟非視覺來源交叉核對，`assert_save_field`
+回頭讀`fd2save.py`）。L1失敗會**中止該scenario後續步驟**——在未知畫面上繼續送鍵，正是產生
+「很有說服力但拍錯東西」的截圖的原因。
+
+**★ 平行化與一個實測出來的race（本工具最有複用價值的發現）**：`dosbox_harness.sh`本來就給
+每個instance獨立的Xvfb display／tmux socket／遊戲目錄，所以N個scenario**可以**真的同時跑。
+但`pick_display_port()`**不是concurrency-safe**——它靠掃registry與`ss -tln`挑port，而勝出的
+port要等Xvfb起來、`.state`寫檔後才對其他launcher可見；**同時發動的兩個launch會在任何一方
+留下宣告前就各自掃描完畢，於是挑到同一個display**。這不是推測，是實測：`--jobs 2`時兩個
+scenario都落在`127.0.0.1:199`，按鍵全進同一個視窗，兩邊都到不了title；同一個scenario
+`--jobs 1`卻全部通過。本工具的處置是用`LAUNCH_LOCK`**只序列化launch階段**，佔時間大宗的
+按鍵驅動仍完全平行。**真正的修法（lock file或顯式port參數）應該做在`dosbox_harness.sh`裡面**，
+本輪沒有動那支腳本。
+
+**另一個實測踩到的坑**：`launch`結尾是長時間keepalive sleep，**必須讓它活著**（腳本自己的
+header與doc48 §8.4都寫過）。第一版用`subprocess.run(..., timeout=25)`呼叫launch，timeout會
+**殺掉launcher**、連帶把整個instance收掉，症狀是framebuffer全黑＋20次title poll全失敗。
+現在改用`Popen`detached、永不timeout，並額外要求**畫面真的畫出非黑frame**才開始送鍵。
+
+**驗證成果（本輪實跑）**：4個scenario（town variant0/1/2＋secret_shop）`--jobs 3`全部PASS。
+平行隔離有硬證據：兩個並行run的`title_menu`截圖MD5相同（本來就是同一個畫面），但
+`slots`／`sel0`~`sel4`全部不同——證明兩個instance各自載入了自己的章節、各拍各的。
+`secret_shop` scenario也把doc58那個「酒店按Shift+F1」的秘密商店流程變成可重跑的自動驗證。
+
+**用法**：
+```
+python tools/fd2_original_verify.py --list
+python tools/fd2_original_verify.py --all --jobs 3
+python tools/fd2_original_verify.py --run secret_shop --keep   # 保留instance供人工檢查
+```
+參考圖放在`.wsl_build/verify_refs/`（`title.png`、`title_load_menu.png`），報告與逐張截圖
+輸出到`.wsl_build/original_verify/<timestamp>/`。scenario本身是**資料**（`SCENARIOS` dict），
+新增一個驗證項目不需要寫新的流程程式碼。
