@@ -9775,3 +9775,35 @@ remake**的直接原版live證據，可以放心引用。過程中意外確認`~
 
 **清理**：`townorig`/`shoporig`/`shop2`/`shop3`四個instance全部已`teardown`、workdir已刪除，
 `status`確認清空。本輪程式碼異動：無。文件異動：本節＋`README.md`。
+
+### 2026-09-03 續：道具店與教會補拍，並把「進title」改成可靠的輪詢流程
+
+**先解決上一輪記錄的操作面痛點**：上一輪吃了兩次虧（盲按Enter越過title、誤開新遊戲）。本輪
+改成**輪詢偵測title**：每按一次Enter就截一次圖，跟一張已知的title參考圖（裁遊戲區→縮到
+160×100→mean-abs-diff）比對，diff<12才判定到達title。實測4次Enter內命中（diff序列
+60.87→67.62→82.16→**0.4**），零誤判。到title後再按`Down`、把選單區(440,520)-(600,585)放大
+截圖**逐格確認橘色圓點marker真的移到`LOAD`那行**才按Enter——這條「先看到highlight再按」的
+規則是本輪唯一需要人眼確認的步驟，其餘全自動。此流程本輪一次成功，建議之後所有需要LOAD
+的原版輪次沿用。
+
+**道具店（ch02羅德鎮 selection3）**：藍髮精靈店主，商品只有一項
+**藥草 +HP040 / $00010**，另截店內、購買清單、服務選單三態，MD5各異
+(`5a04bda1`/`80131b0c`/`689d94ee`)。新圖：
+[`item-shop-ch02-original-dosbox.png`](../figures/item-shop-ch02-original-dosbox.png)
+
+**教會（selection4）**：白髮修女，招呼語「有什麼事」，Enter後進入名冊選擇畫面，可見
+**索爾／悠妮／亞雷斯／蓋亞／哈諾／希莉亞**六名＋右下角向下箭頭（表示還有更多，本輪未捲動）。
+兩態MD5各異(`9d90cdfb`/`e92ca83e`)。新圖：
+[`church-ch02-original-dosbox.png`](../figures/church-ch02-original-dosbox.png)
+
+**附帶價值**：教會名冊畫面每個名字左邊都帶該角色的地圖小圖示，這正是「角色身分→FDICON
+sprite」對應關係的**原版直接證據**——先前remake那個`NativeSelectorCache`用陣營碼當key、
+把敵人畫成索爾的bug（已隨`remake/`移除），其正確行為的ground truth就是這張畫面呈現的
+「每個角色有自己專屬圖示」。本輪未逐一比對圖示的FDICON group編號（需要另外解碼比對），
+只記錄這張畫面可作為日後該類驗證的原版基準。
+
+**誠實限制**：教會的復活／轉職實際流程、道具店的售出／裝備／轉移子流程本輪都沒走；
+名冊第二頁（箭頭指示的其餘成員）未捲動截圖；秘密商店（需Shift+F1）、整備、variant1/2
+城鎮仍未補。
+
+**清理**：`ui2`/`ui3`兩個instance已`teardown`、workdir已刪除，`status`確認清空。
