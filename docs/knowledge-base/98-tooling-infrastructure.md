@@ -932,6 +932,15 @@ commit `e576ad87`留下的舊戰鬥截圖(1280×800全解析度那組)一起量�
 
 ## `tools/fd2_dosbox_live_helper.{py,sh}` — 包裝`dosbox_harness.sh`的DOSBox-X即時操作便利工具(2026-09-02)
 
+> **⚠️ 操作前必讀(2026-09-02，用戶明確要求「未來不可再發生相同的狀況」)：判斷部署/戰鬥畫面上
+> 「游標框是否對準某個單位」時，絕對不要用截圖肉眼比對游標框跟角色立繪的畫面位置來下結論——
+> 這款遊戲的角色立繪比一格地圖磚高，會往上戳進實際站立格子正上方那一格的畫面空間，游標真的停在
+> 空地上時，畫面看起來也會像「剛好對準了角色頭部」，造成完全以假亂真的錯覺(完整成因見
+> `92-m5-normal-playthrough-log.md`續九，該輪連續兩次獨立誤判才抓到)。**唯一可靠的判斷依據是
+> 左下角迷你狀態卡的內容**：只顯示地形圖示+修正值(如`A+05 D+00`)＝空地；顯示角色頭像+HP數字＝
+> 游標真的在該單位的格子上。按Enter選取任何單位之前，先screenshot確認迷你狀態卡有頭像，不要只
+> 看游標框位置。詳見專案記憶`feedback_fd2_re_cursor_tile_verification`。**
+
 **目的/範圍**：`tools/fd2_live_input_helper.{py,sh}`(上面兩節)是remake側(`fd2-linux-verify`)的
 機械化輔助工具,這個工具是它在DOSBox-X側的對應物——包裝既有的`tools/dosbox_harness.sh`(N-way平行
 dosbox-x heavy-debugger harness,見本檔案「N-way 平行 dosbox-x live-verification harness」一節),
