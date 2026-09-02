@@ -529,7 +529,16 @@ def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
     code_dump = out_dir / "code_dump.bin"
     hits, delta = mem_find_signature(instance, selector, dump_linear, dump_bytecount,
                                       GATE_CHECK_SIGNATURE_HEX, GATE_CHECK_GHIDRA_ADDR, code_dump)
-    result: dict = {"signature_hits": [hex(h) for h in hits], "delta": hex(delta) if delta is not None else None}
+    # Cap this the same way cmd_mem_find_signature's own printer does (see
+    # its comment) -- the baked-in 34-byte signature makes a huge hit count
+    # very unlikely in practice, but the failure mode (flooding the caller's
+    # output) is the same shape if it ever happens, so guard it here too
+    # rather than assume it can't.
+    HIT_LIST_CAP = 20
+    hits_shown = [hex(h) for h in hits[:HIT_LIST_CAP]]
+    if len(hits) > HIT_LIST_CAP:
+        hits_shown.append(f"... and {len(hits) - HIT_LIST_CAP} more")
+    result: dict = {"signature_hits": hits_shown, "delta": hex(delta) if delta is not None else None}
     if delta is None:
         result["error"] = (f"signature search found {len(hits)} hits (need exactly 1) -- "
                             f"cannot compute a trustworthy delta; the baked-in signature/constants "
@@ -758,8 +767,16 @@ def cmd_mem_find_signature(args):
                                       args.hex_sig, int(args.ghidra_addr, 16), out)
     print(f"dump: {out}")
     print(f"hits: {len(hits)}")
-    for h in hits:
+    # Cap printed addresses -- a short/common signature (found live 2026-09-02
+    # testing with a 2-byte pattern: 65529 hits in a 10000-byte dump) can
+    # otherwise flood the caller's output with tens of thousands of lines.
+    # This does not affect correctness: delta is None for any count != 1
+    # regardless of how many addresses are shown.
+    HIT_PRINT_CAP = 20
+    for h in hits[:HIT_PRINT_CAP]:
         print(f"  {h:#x}")
+    if len(hits) > HIT_PRINT_CAP:
+        print(f"  ... and {len(hits) - HIT_PRINT_CAP} more (use a longer/more distinctive --hex-sig to narrow this down)")
     if delta is not None:
         print(f"delta: {delta:#x}  (= hit_addr - ghidra_addr, only trustworthy because exactly 1 hit)")
     else:

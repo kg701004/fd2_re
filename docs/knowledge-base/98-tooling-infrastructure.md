@@ -1253,4 +1253,32 @@ signature+算delta」邏輯收進工具本體，帶入signature/ghidra位址即�
 `resume()`/`mem_find_signature()`/`mem_resolve_ptr()`/`mem_read_unit_array()`四個函式+對應CLI
 handler與argparse子指令，模組docstring「USAGE」段落補充新指令範例。全部四個新指令都已個別live驗證
 過正常路徑，`find-signature`額外驗證過0-hit錯誤路徑，`resume`額外驗證過「已經在跑時重複呼叫仍然
-安全」——沒有只寫完沒測就收工的部分。
+安全」。
+
+### 續四 — 用戶追問「工具有完整自檢確認功能了嗎？」，逐一補測邊界情況，找到並修好一個真的洪水bug(2026-09-02)
+
+續三收工時的「沒有只寫完沒測就收工的部分」下得太早——逐一核對後，還有好幾個邊界情況沒測過。系統性
+補測：
+
+1. **`resume`/`mem resolve-ptr`/`mem read-unit-array`對不存在的instance**——三個都正確走到既有的
+   clean error path(`rc=1`，訊息完整，非traceback)。
+2. **`resolve-ptr`在debugger未啟動時**——正確繼承`mem dump`既有的警告+`#3629`已知bug錯誤訊息。
+3. **`resume`在debugger未啟動時**——正確判定為no-op，不誤送`RUN`。
+4. **`find-signature`多重命中(重大發現，已修)**：故意用一個很短、很常見的2-byte樣式("0000")去搜
+   一段10000-byte記憶體，命中**65529次**——修改前的程式碼會把每一個命中位址都印出來，造成768KB的
+   輸出洪水。**這是一個真的、會實際影響未來使用的bug，不是紙上談兵的邊界情況**。**修法**：命中清單
+   印出上限20筆，超過的部分改印「...and N more」摘要，`delta`判定邏輯完全不受影響(非剛好1次命中
+   一律回報N/A)。`mem_read_unit_array()`內部組`signature_hits`清單時發現同一個模式(雖然它固定用
+   34-byte內建簽章，現實中不太可能命中上萬次，但邏輯上是同一個洞)，順手用同一個上限修好，維持
+   一致性。修完後重新驗證：0-hit、正常1-hit、多重命中三條路徑都乾淨、正常路徑無回歸。
+5. **`read-unit-array --num-records`邊界值(0跟200)**——都正常，0給出空表格不當機，200正確dump/
+   decode 200筆。
+6. **`resolve-ptr --disp-offset`自訂值、`read-unit-array --out-dir`自訂路徑**——都正確運作，輸出
+   檔案確實寫到指定位置。
+
+**誠實留白一項**：`resume --verify`在「真的靜態畫面(無動畫)」下會不會正確印出`WARNING: screen
+unchanged`，這次沒有獨立live驗證——只在有動畫的標題畫面測過(正確回報`OK: changed`)。背後用的
+screenshot-diff機制跟`wait-settle`/`debugger-status --baseline`是同一套邏輯，那兩個先前已經在
+本專案於本次session內用真正靜態畫面驗證過兩種結果都正確，`resume --verify`是直接複用同一段邏輯、
+沒有新寫程式碼，風險判斷為低——但這是風險判斷，不是獨立驗證過的宣稱，如實記錄兩者的差別，避免
+未來誤讀成「已經測過」。
