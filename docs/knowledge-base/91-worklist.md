@@ -1394,6 +1394,15 @@
 
 ## M5 — 內容完整化(原版可破關)
 > 驗收:從序章玩到結局,全 33 戰場 + 全劇情 + 商店,正常玩法可達(無 debug hook)。
+>
+> **2026-09-02:`remake/` 整個原始碼已依使用者明確指示移除**(「remake驗證過的資料本身就
+> 有問題,驗出來的也會有問題」),連已 commit 的相關修復(如`faecef3e`假敗北修復、
+> `6eaf7fef`肖像/sprite索爾化修復)本身雖未被逐一 revert(移除整個`remake/`已涵蓋),
+> 一併視為移除。M5 驗收句本身要求「remake 正常玩法可達」,在`remake/`不存在的情況下
+> 已無任何達成路徑——本節以下所有 checkbox 反映的是移除前的歷史紀錄,不代表現況;
+> 若日後要重啟這個里程碑,需要使用者重新決定方向(是否重新開始 remake、或改變 M5
+> 定義本身),不是這份文件能單方面決定的事。詳見 README.md 頂端說明、plan file
+> `hazy-crunching-liskov.md`、memory `feedback_fd2_re_remake_verification_paused`。
 - [x] 匯出全 33 戰場為引擎資產 + 全單位/數值表接入(對齊 EXE 表 `03`)——**規劃輪核實(2026-08-31)**:「33戰場」措辭本身過期,33是原版原始地圖總數(map0-32),其中map30-32是純過場非戰鬥地圖;真正範圍是30個戰役,`campaign_full.json`確認**30/30已完整接線**(map/units/scenario皆存在且非空)。**AP/DP/MV未隨等級縮放缺口已解決(2026-08-31,M5 Phase 3)**:完整反組譯 constructor `0x10c50`(`0x10c50..0x11010`)後確認AP/DP兩者**都是**growth×level(high branch跟HP/MP同形狀`table_byte[+5]/[+6]*level`;lower branch是`growth*level+base_word`,注意不是HP/MP那種`level-1`形狀),MV則確認是flat值全程無等級縮放(兩個branch都是直接複製`table_byte[+8]/+7`,原本以為的MV缺口其實是`base_stats()`race/cls查表對錯列,不是缺公式)。新增`tools/export_units.py`的`native_ap/dp/mv_for_raw_unit_key()`(mirror既有word42/46寫法)+新`tools/patch_units_ap_dp_mv.py`(mirror`patch_units_hit_ev.py`,只動ap/dp/mv三個key),已對30個`mapN_units.json`(map0-29)全部重新patch(每份100%單位有可信native provenance),`go build`/`go test`全綠。詳見doc03「AP/DP/MV缺口已解決」段落。次要:`docs/data/exe_tables/unit.json`68列只對應29組(race,cls),`base_stats()`取第一筆造成少數單位職業名稱誤標(低影響,純顯示)。**HIT/EV的`dx`輸入缺口已解決(2026-08-31,M5 Phase 3後續)**:新增`native_dx_for_raw_unit_key()`(同一輪`0x10d7f..0x10e23`disasm,獨立覆核`ghidra_batch_probe.py decompile 0x10c50`+`disasm`確認doc文字準確——high `table_byte[+7]*level`,low `aux[+4]*level+word[+0x16]`),`export_units.py main()`與`patch_units_hit_ev.py`都已改吃這個公式算出的`base_dx`(查不到native provenance才退回舊flat`dx`)。ch24 LV14惡魔驗算`hit`從114→194、`ev`從4→84,跨30個`mapN_units.json`(map0-29)98.7%單位的hit/ev值改變,同AP/DP/MV量級。詳見doc03「DX缺口已解決,HIT/EV已接上正確base」段落。
 - [ ] 全劇情/對話接入(35 章)——**規劃輪核實(2026-08-31)**:「35章」本身是誤植,是FDTXT.DAT原始容器數(35個resource),不是章節數;真正戰役章節數是30,加ch00(2變體)+ch31-33(非戰鬥後日談)＝35個容器裡33個是真正敘事資源(FDTXT_000是共用字串池、FDTXT_034已損毀)。pre/post handler劇本反組譯**30/30章已完成**(60/60檔案，非佔位)。`bindings/`(campaign.go實際讀取的目錄)缺5個postbattle binding(`postbattle_ch17/22/23/24/29_persist`)，`bindings/generated/`已有對應檔案；**曾嘗試直接搬過去但被`go test`擋下**——`generated/`自己的`_diagnostics.json`只追蹤對話對應問題，沒追完整beat compile issue：實測4個候選檔用`CompileHandlerBinding`直接檢查，每一個都有真正未解決的issue(ch16→ch17_post 9個、ch21→ch22_post 6個、ch22→ch23_post 21個、ch23→ch24_post 3個，涵蓋`roster_has`/camera pan座標對映/`spawn`前置loadch/`layout_units`/`act`演出資源解碼/`deactivate_unit`/`load_res`/`prepare_chapter_aux_graphics`等尚無runtime lowering的op)，不是簡單複製檔案就能收工，已改列為獨立的中等規模工程階段(規模比照AP/DP/MV那項)，不併入快速小任務。另外`story_ch23/29/30`(9個「空節點」原始盤點裡的3個)其實**不是缺口**——`defaultChapterStoryScript()`既有fallback機制已正確接住，新增`TestStoryCh23Ch29Ch30ResolveViaDefaultFallback`鎖定驗證。`ch32/33`的`source_dat`跟`ch00`撞號(FDTXT_032/033)——**Phase1b已解(2026-08-31)**:雙重證據確認FDTXT_032/033真正屬於`ch00_meadow.json`/`ch00_palace.json`(count-aligned.json顯示兩者分別40/40、41/41完全count_aligned;工具自己對FDTXT_032↔ch32.json、FDTXT_033↔ch33.json的比對也各自回報`utterance_count_mismatch`，即40vs46、41vs19，雙向獨立佐證撞號的是ch32/33這邊而非ch00)。`ch32.json`/`ch33.json`(僅metadata欄位，runtime loader`loadStoryScriptAt`只讀`scenes[].lines`不讀`source_dat`，零風險)已改`source_dat: "unverified"`並新增`source_dat_note`誠實記錄：真正來源極可能是已損毀的`FDTXT_034`(`count-aligned.json`diagnostics:「file is shorter than the first offset」)，目前無法逐位元組驗證；`ch32.json`自己的notes還提到可能橫跨`FDTXT_031`尾端，屬更深的未解問題，本輪不臆測解答，只誠實標記。不擋30章正式戰役(ch31-33屬非戰鬥後日談)。完整規劃見plan file `hazy-crunching-liskov.md`。
 - [~] M5 Phase 1 執行輪(2026-08-31,承接上面「曾嘗試直接搬過去但被`go test`擋下」的規劃輪紀錄)：5個postbattle binding裡**1個(`postbattle_ch24_persist`)已真正收斂到compile-clean並promote**，另外4個誠實留列開放,逐一記錄具體卡點。
@@ -2151,6 +2160,32 @@
   玩法可達性」本身是否已完成仍取決於續四記錄的「LOADCH→戰鬥」路徑等其他
   未解問題,不因這輪修復自動視為 Phase 4 全部完成,但這 2 個曾經明確阻擋
   「remake 輸出可信」的顯示 bug 已不再是阻塞點。
+
+- [x] **remake 側正常玩法可達性驗證(Phase 4)——移除,非暫停(2026-09-02,使用者明確指示)**:
+  同一輪續九完成後,重新接續Phase4(打完ch01剩餘敵人),過程中用了一個新增的
+  `FD2_DEBUG_STATS=1`除錯熱鍵(F10全滿/F12即死全滅,目的是加速手動UI操作的戰鬥
+  ,因為單靠鍵盤模擬逐格操作耗時過長)。這個捷徑本身也意外發現一個真實的
+  remake bug:太早觸發F12即死(ch01第2回合)會跳過哈諾原本該在T3→T4觸發的
+  劇本入隊,導致下一個`loadch` beat因為`party JOIN chronology`跟binding預期
+  對不上而fail-closed卡死(`main.go:1178-1186`「fail closed rather than
+  continuing」是刻意設計,非crash)——這是使用者這次操作方式導致的,不是
+  remake本身的bug。使用者中途明確喊停:「已經命令你不准使用remake了」,
+  詢問後選擇「Phase 4整個先暫停」;隨後進一步明確要求**移除**這個項目:
+  「那就把這項移除 我不需要remake驗證過的資料 那本身就有問題 驗出來的也
+  會有問題」。**這不是暫停,是整個項目被使用者判定為不需要而移除**:
+  往後不得為了驗證目的執行/啟動remake(`fd2-linux-verify`/`remake/play.sh`/
+  `fd2_live_input_helper.py`/任何`go run`啟動`remake/cmd/fd2`皆算),除非
+  使用者明確要求恢復。純靜態的`go build`/`go vet`/`go test`不受影響。本輪
+  新增的`FD2_DEBUG_STATS=1`除錯熱鍵程式碼(`main.go`/`save.go`)未commit,
+  已用`git checkout --`還原,repo裡沒有殘留。**M5本身的驗收句「從序章玩到
+  結局...正常玩法可達(無 debug hook)」目前沒有任何替代達成路徑**——這不是
+  這個checkbox能單方面解決的事,需要使用者對M5驗收標準本身給出新方向才能
+  真正關閉這個里程碑;在那之前,M5視為擱置,不視為完成也不視為進行中。
+  完整决策過程見plan file `hazy-crunching-liskov.md`「Phase 4 — REMOVED」段落、
+  memory `feedback_fd2_re_remake_verification_paused`(2026-09-02 ESCALATION段落)。
+  已修復並已commit的既有成果(續一~續九的bug修復、Phase3的AP/DP/MV/DX修復)
+  不受影響、繼續有效——被移除的只是「用remake live output做驗證」這個做法
+  本身,不是回退任何已經合併的程式碼修復。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
