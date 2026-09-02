@@ -9869,3 +9869,38 @@ gate要求送出`ctrl+F2`兩次均未觀察到selection5出現，未排除是sca
 秘密商店的實際購買流程也沒走。
 
 **清理**：`sec`instance已`teardown`、workdir已刪除，`status`確認清空。
+
+### 2026-09-03 四續：ch02出口→戰場流程確認無整備畫面（符合既有旗標表），並把重複圖檔稽核
+擴大到全部212張figure
+
+**ch02出口流程（原版實測）**：城鎮`selection2 出口`→Enter→出現
+**「要進入戰場嗎？」YES/NO**確認框（紅髮少女立繪）→YES→直接進入ch02戰前劇情
+（羅德鎮教堂背景，接著盜賊群登場對白「我們照預告準時抵達！咦？居然還有不怕死的沒走？」）
+→戰鬥，**全程沒有出現整備／選人畫面**。這與`91-worklist.md` `UI-VIS-PREPARATION`條目既有的
+「逐章旗標表顯示僅23/24/25/28-31章顯示選人畫面」一致——ch02不在該清單內，所以沒有整備畫面是
+**正常原版行為**，不是流程走錯或漏截。要補整備畫面的原版基準必須用ch23-25/28-31的存檔，且會
+再撞上該條目記載的roster人數門檻問題（本機存檔`roster_count=0x0d`=13，低於門檻），本輪未投入。
+
+**全圖庫重複稽核（212張figure，201個相異RGB hash，10組重複）**：上一節只檢查了18張
+`*original-vs-remake*`；本輪把「同一份RGB bytes卻掛在不同檔名」的檢測擴大到`docs/figures/`
+全部212張。10組重複裡多數是同一輪調查內的別名（同一畫面存兩個檔名，無害），但有兩類值得記錄：
+
+1. **★ `shop-sell-slot-cleared-original-dosbox.png` 與
+   `shop-transfer-result-verified-original-dosbox.png` 逐位元組相同**——這兩張分別被本文件
+   shop驗證段落引用為**兩個不同結論**的證據（「售出後欄位清空」與「轉移結果已驗證」）。
+   同一張圖不可能同時是兩個不同狀態的證據。而且該圖內容是**商品列表中`淬毒刀 +AP050 $00900`
+   仍然存在、持有金錢`$10010993`**——列表裡有東西，表面上並不呈現「欄位已清空」。因此至少
+   「售出後欄位清空」這項的截圖引用是錯的；轉移那項的內容則與doc58原文描述
+   （把`淬毒刀`從悠妮轉移回索爾後索爾列表重新出現該item）吻合。**兩項結論本身未被推翻**
+   （文字敘述仍可能正確），但「售出欄位清空」目前**沒有有效截圖佐證**，需要時得重測。
+2. `church3-menu-entry-remake.png`＝`xvfb-input-probe-church-menu-entry.png`、
+   `church3-status-roster-remake.png`＝`xvfb-input-probe-church-roster-select.png`——remake側
+   同一張圖掛兩個檔名（兩者都標remake，不涉及原版/重製混淆，影響較小，僅記錄）。
+   另`church-classchange-trial3-deltas.png`＝`church-classchange-trial4-deltas.png`，兩次
+   「不同trial」的成長差異圖完全相同，可能是真的擲出相同成長值、也可能是存檔時覆蓋錯誤，
+   本輪未回頭重測轉職成長，僅標記待查。
+
+其餘6組（ch27過場CG兩組、教會復活費用兩組、slot picker三檔一組、酒店存檔兩組）都是同一畫面
+在同一輪調查內的別名，無結論衝突。
+
+**清理**：`prep`instance已`teardown`、workdir已刪除，`status`確認清空。
