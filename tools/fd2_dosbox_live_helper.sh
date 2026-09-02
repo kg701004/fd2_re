@@ -53,7 +53,7 @@
 #          fuzzy -trim (see cmd_screenshot below for the empirical reasoning
 #          -- doc98's dated 2026-09-02 section has the full writeup with
 #          concrete before/after numbers).
-#   fd2_dosbox_live_helper.sh wait-settle <name> <tmp_prefix> [max_tries] [interval_seconds]
+#   fd2_dosbox_live_helper.sh wait-settle <name> <tmp_prefix> [max_tries] [interval_seconds] [baseline_screenshot_path]
 #       -- NEW capability, not in dosbox_harness.sh: polls via repeated calls
 #          to dosbox_harness.sh screenshot, md5-compares each against the
 #          previous one, returns as soon as 2 CONSECUTIVE shots match (or
@@ -65,6 +65,14 @@
 #          not solved). Do not oversell what this does: it confirms the
 #          SCREEN stopped visibly changing, it does not confirm any specific
 #          keystroke was received.
+#          Optional [baseline_screenshot_path] (2026-09-02): a screenshot
+#          taken BEFORE the key was sent. If given, the settled frame's md5
+#          is compared against it and a `response=NO_RESPONSE`/`response=
+#          CHANGED` tag is appended to the SETTLED output line -- a
+#          best-effort "this key send produced literally zero visible
+#          change" flag, NOT proof the key was dropped (some keys legitimately
+#          produce no change, e.g. a movement key at a map edge). Callers
+#          should log/flag NO_RESPONSE, not auto-treat it as failure.
 #   fd2_dosbox_live_helper.sh debugger-status <name>
 #       -- NEW: best-effort check of whether the ncurses debugger TUI looks
 #          active in the instance's tmux pane (greps for "Code Overview",
@@ -276,9 +284,26 @@ cmd_screenshot() {
 # --------------------------------------------------------------------------
 
 cmd_wait_settle() {
-    local name=${1:-}; local tmp_prefix=${2:-}; local max_tries=${3:-40}; local interval=${4:-0.25}
-    [[ -n "$name" && -n "$tmp_prefix" ]] || die "usage: wait-settle <name> <tmp_prefix> [max_tries] [interval_seconds]"
+    local name=${1:-}; local tmp_prefix=${2:-}; local max_tries=${3:-40}; local interval=${4:-0.25}; local baseline=${5:-}
+    [[ -n "$name" && -n "$tmp_prefix" ]] || die "usage: wait-settle <name> <tmp_prefix> [max_tries] [interval_seconds] [baseline_screenshot_path]"
     mkdir -p "$(dirname "$tmp_prefix")"
+    # Optional no-response flag (2026-09-02): if a baseline screenshot (taken
+    # BEFORE the key was sent) is given, compare its md5 against the FINAL
+    # settled frame's md5. Equal => the screen never visibly changed across
+    # this whole key-send, which is the observable symptom this project's
+    # known input-reliability problem produces (doc58 續七十~續七十七) --
+    # surfaced as a `response=NO_RESPONSE` tag so a caller can flag/log it
+    # instead of silently treating "settled" as "the key worked". This is
+    # still a MITIGATION-level signal, not proof: some keys legitimately
+    # produce no visible change (e.g. a movement key at a map edge, or a key
+    # with no binding on the current screen) -- a caller must not treat
+    # NO_RESPONSE as an automatic failure, only as something worth a second
+    # look.
+    local baseline_md5=""
+    if [[ -n "$baseline" ]]; then
+        [[ -f "$baseline" ]] || die "baseline screenshot not found: $baseline"
+        baseline_md5=$(md5sum "$baseline" | awk '{print $1}')
+    fi
     local prev_md5="" cur_md5="" i shot
     for i in $(seq 1 "$max_tries"); do
         shot="${tmp_prefix}.${i}.png"
@@ -286,7 +311,15 @@ cmd_wait_settle() {
             || die "screenshot failed during settle-poll (instance $name)"
         cur_md5=$(md5sum "$shot" | awk '{print $1}')
         if [[ -n "$prev_md5" && "$cur_md5" == "$prev_md5" ]]; then
-            echo "SETTLED tries=$i shot=$shot"
+            local resp=""
+            if [[ -n "$baseline_md5" ]]; then
+                if [[ "$cur_md5" == "$baseline_md5" ]]; then
+                    resp=" response=NO_RESPONSE"
+                else
+                    resp=" response=CHANGED"
+                fi
+            fi
+            echo "SETTLED tries=$i shot=$shot${resp}"
             return 0
         fi
         prev_md5=$cur_md5
@@ -457,7 +490,7 @@ usage: $0 <command> [args]
   launch <name> [keepalive_seconds]        dosbox_harness.sh launch + non-blocking pristine-FD2.EXE warning
   key <name> <key> [key2 ...]              passthrough to dosbox_harness.sh send-keys
   screenshot <name> <out> [resize] [autocrop:0|1] [view_out]   raw always at <out>; window-bounds-crop (+optional fuzzy trim)/resize (if any) go to <view_out>
-  wait-settle <name> <tmp_prefix> [max_tries] [interval_s]     poll until 2 consecutive shots match (mitigation, not a fix, for known input-reliability issue)
+  wait-settle <name> <tmp_prefix> [max_tries] [interval_s] [baseline]   poll until 2 consecutive shots match (mitigation, not a fix, for known input-reliability issue); optional baseline screenshot adds response=NO_RESPONSE/CHANGED
   debugger-status <name>                    best-effort check of whether the ncurses debugger TUI is showing
   mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>   MEMDUMPBIN wrapper with known-footgun guards
   verify-canonical [path]                   md5 integrity check vs known-pristine FD2.EXE (default \$HOME/fd2-run); READ-ONLY, never restores

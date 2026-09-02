@@ -271,19 +271,35 @@ def send_keys(instance: str, keys: list[str]) -> str:
 
 
 def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25,
-                     tmp_prefix: Path | None = None) -> tuple[bool, str]:
+                     tmp_prefix: Path | None = None,
+                     baseline: Path | None = None) -> tuple[bool, str, bool | None]:
     """See fd2_dosbox_live_helper.sh's wait-settle: polls via repeated
     dosbox_harness.sh screenshot calls, stops when 2 CONSECUTIVE shots
     md5-match. MITIGATION for, not a fix to, the project's known input-
-    reliability problem -- see module docstring."""
+    reliability problem -- see module docstring.
+
+    If `baseline` (a screenshot taken BEFORE the key was sent) is given, the
+    .sh side compares it against the final settled frame and appends a
+    `response=NO_RESPONSE`/`response=CHANGED` tag, parsed here into the
+    third return value (None if no baseline was given). NO_RESPONSE means
+    "the screen looked identical before and after this key send" -- a
+    best-effort signal worth logging/flagging, NOT proof the key was
+    dropped (some keys legitimately produce no visible change)."""
     prefix = tmp_prefix or (DEFAULT_SHOT_DIR / instance / f"settle_{int(time.time() * 1000)}")
     max_tries = max(2, int(round(timeout / interval)))
-    r = sh("wait-settle", instance, to_wsl_path(prefix), str(max_tries), str(interval),
-           timeout=int(timeout) + 20)
+    args = ["wait-settle", instance, to_wsl_path(prefix), str(max_tries), str(interval)]
+    if baseline is not None:
+        args.append(to_wsl_path(baseline))
+    r = sh(*args, timeout=int(timeout) + 20)
     out = r.stdout.strip()
     if not out.startswith("SETTLED") and r.stderr.strip():
         out = f"{out} STDERR: {r.stderr.strip()}" if out else r.stderr.strip()
-    return out.startswith("SETTLED"), out
+    no_response = None
+    if "response=NO_RESPONSE" in out:
+        no_response = True
+    elif "response=CHANGED" in out:
+        no_response = False
+    return out.startswith("SETTLED"), out, no_response
 
 
 # --------------------------------------------------------------------------
@@ -444,11 +460,26 @@ def cmd_key(args):
     keys = [resolve_key(k) for k in args.keys]
     if not keys:
         raise SystemExit("no keys given")
+
+    if args.flag_no_response and not args.settle:
+        print("WARNING: --flag-no-response has no effect without --settle (there is no settled "
+              "'after' frame to compare against a baseline) -- ignoring.", file=sys.stderr)
+
+    baseline = None
+    if args.settle and args.flag_no_response:
+        baseline = DEFAULT_SHOT_DIR / args.instance / f"baseline_{int(time.time() * 1000)}.png"
+        screenshot(args.instance, baseline)
+
     print(send_keys(args.instance, keys))
 
     if args.settle:
-        settled, raw = wait_for_settle(args.instance, timeout=args.settle_timeout, interval=args.settle_interval)
+        settled, raw, no_response = wait_for_settle(args.instance, timeout=args.settle_timeout,
+                                                      interval=args.settle_interval, baseline=baseline)
         print(f"settle: {'OK' if settled else 'TIMEOUT'} ({raw})")
+        if no_response:
+            print("FLAG: NO_RESPONSE -- screen looked identical before and after this key send. "
+                  "Best-effort signal, not proof (some keys legitimately produce no visible change) "
+                  "-- worth a second look, don't auto-treat as failure.", file=sys.stderr)
         if not settled:
             raise SystemExit(2)
     else:
@@ -474,8 +505,13 @@ def cmd_screenshot(args):
 
 
 def cmd_wait_settle(args):
-    settled, raw = wait_for_settle(args.instance, timeout=args.timeout, interval=args.interval)
+    baseline = Path(args.baseline) if args.baseline else None
+    settled, raw, no_response = wait_for_settle(args.instance, timeout=args.timeout,
+                                                 interval=args.interval, baseline=baseline)
     print(f"{'SETTLED' if settled else 'TIMEOUT'}: {raw}")
+    if no_response:
+        print("FLAG: NO_RESPONSE -- screen looked identical before and after (vs --baseline). "
+              "Best-effort signal, not proof.", file=sys.stderr)
     if not settled:
         raise SystemExit(2)
 
@@ -555,6 +591,11 @@ def build_parser():
                      help="instead of a fixed wait, poll screenshots after sending until 2 consecutive match")
     sp.add_argument("--settle-timeout", type=float, default=10.0)
     sp.add_argument("--settle-interval", type=float, default=0.25)
+    sp.add_argument("--flag-no-response", action="store_true",
+                     help="requires --settle: capture a baseline screenshot before sending, and flag "
+                          "(stderr + exit unaffected) if the settled 'after' frame is pixel-identical "
+                          "to it -- a best-effort 'this key produced no visible change' signal, not "
+                          "proof the key was dropped (costs one extra screenshot per call)")
     sp.set_defaults(func=cmd_key)
 
     sp = sub.add_parser("screenshot", help="save a raw PNG (default under .wsl_build/, not docs/figures/); "
@@ -580,6 +621,9 @@ def build_parser():
     sp.add_argument("--instance", required=True)
     sp.add_argument("--timeout", type=float, default=10.0)
     sp.add_argument("--interval", type=float, default=0.25)
+    sp.add_argument("--baseline", default=None,
+                     help="path to a screenshot taken before the key send; if given, flags "
+                          "response=NO_RESPONSE when the settled frame matches it exactly")
     sp.set_defaults(func=cmd_wait_settle)
 
     mem = sub.add_parser("mem", help="live-memory-read primitives -- wraps the debugger's MEMDUMPBIN, "

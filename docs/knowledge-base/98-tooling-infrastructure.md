@@ -1035,6 +1035,24 @@ pane有沒有『曾經』畫過debugger TUI且之後沒有別的東西蓋過它�
 debugger裡；需要真的確定時,交叉核對一張screenshot(暫停中的畫面不會變、恢復執行的畫面會變)比單獨
 信任`debugger-status`可靠。
 
+### 續四(2026-09-02)：`key --flag-no-response`/`wait-settle --baseline`——「按鍵疑似沒反應」提示旗標
+
+使用者提議：既然`--settle`已經在做畫面截圖比對,能不能順便標記「送鍵前後畫面完全沒變」這件事,讓
+呼叫端至少能發現異常而不是靜默當成成功。實作方式：`key --settle --flag-no-response`在送鍵**之前**
+多截一張baseline截圖,`wait-settle`(`.sh`側)在settle成功後,把最終那張settled截圖的md5跟baseline
+md5比對,相同就在輸出多附一段`response=NO_RESPONSE`(不同則是`response=CHANGED`),Python側解析成
+`FLAG: NO_RESPONSE`印到stderr。獨立instance(`flagtest`)live測試：對著同一個當下畫面連送兩次
+Escape,第一次已回報`NO_RESPONSE`(畫面本來就是靜止的過場幀,Escape沒有可見效果)；接著送Return再送
+Down,兩次都正確回報`response=CHANGED`(畫面確實往前推進)——確認旗標在「真的沒變」與「真的有變」
+兩種情況下都給對答案,不是恆真或恆假。
+
+**刻意的設計邊界(如同建議時就先講清楚的)**：這仍然只是「螢幕像素沒變」這個弱信號,不是「按鍵被
+遊戲邏輯吃掉/沒吃掉」的直接證明——有些按鍵在特定畫面上本來就合法地不會造成任何可見變化(例如移動
+到地圖邊界後再按同方向)。因此`--flag-no-response`預設**關閉**(需要顯式加旗標,而且只有搭配
+`--settle`才有意義,單獨用`--wait`模式沒有可靠的「settle後那一幀」可比對,遇到這個組合會印警告並
+忽略旗標而不是報錯),多付出「送鍵前多一次截圖」的代價才啟用,不是`key`預設行為的一部分——呼叫端
+拿到`NO_RESPONSE`後應該視為「值得再看一眼」,不是自動判定失敗或自動重送。
+
 ### 誠實記錄：這個工具刻意沒有解決什麼
 
 **輸入可靠性問題**：`key --wait`/`key --settle`/`wait-settle`是`fd2_live_input_helper.{py,sh}`
