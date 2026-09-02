@@ -1269,3 +1269,72 @@ delta校準+指標解參照任務,不是本輪「找到符合HP數字的bytes就
    動態陣列base應該每次開機都不同(matches doc58續十三的warning)。
 3. 開環的Enter鍵送出後,建議先screenshot確認畫面真的變成4圖示環,
    確認無誤後才進debugger凍結——不要假設`--wait`過後鍵一定生效。
+
+## 2026-09-02 續六:先檢視工具本身——找到並修好一個真實、先前記過但從未套用的按鍵傳遞缺口;ring現在第一次嘗試就穩定打開
+
+用戶明確要求「是不是工具本身的問題？請先檢視工具」，暫停繼續往深處挖動態陣列,
+改為回頭逐行檢視`tools/fd2_dosbox_live_helper.py`/`.sh`跟底層
+`tools/dosbox_harness.sh`的按鍵傳遞路徑本身。
+
+**找到的具體缺口**:`dosbox_harness.sh`的`cmd_send_keys()`/`cmd_enter_debugger()`
+每次都是直接`xdotool key --window "$win" "$k"`,**從未**在送鍵前做任何focus
+動作。這件事doc58續七十三(7840-7947行)其實**已經發現並記錄過**:`xdotool key
+--window <win>`在`xdo.c`的`_xdo_send_key()`內部,依「當下查到的焦點是否剛好
+就是目標視窗」在`XTestFakeKeyEvent`(可靠、全域合成硬體級事件)與`XSendEvent`
+(不可靠、很多程式直接忽略)兩種完全不同機制間切換——這個Xvfb沒有window
+manager,沒有WM就沒有一致的焦點維護機制。當時的結論是「不是選擇性掉鍵
+(Enter/Space掉、方向鍵不掉)的根因」(因為同一瞬間的Up方向鍵測試沒事,若真的
+是焦點分支問題,方向鍵不該被單獨放過),但**留了一個從未真的套用的防禦性
+建議**:每次`xdotool key`前補一次`windowfocus --sync`——這個建議在dosbox_
+harness.sh裡放了將近三週都沒有寫進去。
+
+**在套用修法前先live驗證`windowfocus --sync`本身在這個環境下到底可不可行**
+(不是紙上推論):doc58同一份文件後段(續八十几,~9566行)記過`windowfocus`/
+`windowactivate`在同一個無WM的Xvfb下對**remake的GLFW視窗**會直接報錯——但
+那是測remake視窗,不是DOSBox-X的SDL視窗。實測(新開`toolcheck`instance)
+`xdotool windowfocus --sync <DOSBox視窗id>`回傳`rc=0`、無任何錯誤,且
+`getwindowfocus`在呼叫前後都回報該視窗已經有焦點——**跟remake/GLFW的情況
+不一樣,對DOSBox-X/SDL視窗這個防禦性修法完全可行**。
+
+**修法**:在`cmd_send_keys()`跟`cmd_enter_debugger()`裡,每次`xdotool key`
+前補一個新的`_focus_window_best_effort()`(呼叫`windowfocus --sync`,失敗
+只警告不中斷,因為doc58已證實不同視窗類型/toolkit可能表現不同)。
+
+**修法後的live驗證(新開`toolfix1` instance,`~/fd2-run-pristine`乾淨副本,
+用批次~960次Enter重演完整開場,同續一路徑走到ch01部署階段,索爾HP042/AP+05
+/DP+00跟先前輪次記錄完全吻合)**:
+
+1. **開環的Enter第一次嘗試就成功**——screenshot直接看到索爾身上四個圖示環
+   (上/左/右/下都是實體圖示方塊,不是先前那張固定的替代狀態卡),不像續四/
+   續五連續兩輪都懷疑Enter被吃掉。這是本專案5輪investigating以來第一次
+   確認ring在單次嘗試就真的打開。
+2. **意外發現一個新的、先前未記錄過的工具層限制**:`wait-settle`(2張連續
+   screenshot md5相同才判定settled)在部署/ring這類畫面上**永遠不會settle**
+   ——連續取樣同一批settle-poll的第30/32/34/36/38/40張screenshot,md5**全部
+   不同**,證實畫面上有持續跑的動畫(很可能是ring圖示本身的小動畫,或HP/MP
+   bar的呼吸效果),不是真的凍結。這代表先前任何一輪如果在這類畫面上依賴
+   `--settle`判斷「鍵有沒有生效」,拿到的TIMEOUT有可能是這個動畫假象造成的
+   假警報,不是真的掉鍵——**續四/續五當時改用`--wait`固定延遲+debugger凍結
+   的做法,某種程度上意外繞開了這個陷阱,但也代表`--settle`在這類動畫畫面上
+   目前是不可靠的訊號來源,需要在工具文件裡明確記下這個限制**(已在
+   `dosbox_harness.sh`原始碼註解記錄本次修法與驗證,doc98可再補一筆)。
+3. **Attack(上)+Enter確認後,畫面仍停在ring/看不出明顯進入目標選擇畫面**
+   ——跟續一/續三的症狀表面相符,但這次不能再歸咎於「Enter被吃掉」(ring
+   本身這次是確定成功打開的)。有嘗試zoom截圖判讀四個圖示的高亮狀態(左邊
+   圖示紅底、其餘藍底),但**沒有把這個當作定論**——本專案自己記過的教訓
+   (`feedback_verify_ui_slot_mapping_with_markers`)是小圖示不能用肉眼猜,
+   要換成純色標記物才能可靠判讀選取狀態,這裡沒有做到那個嚴謹度,故意留白。
+
+**結論(直接回答用戶的問題)**:「是不是工具本身的問題」——**部分是**。
+找到並修好一個真實、有原始碼佐證、doc58自己都已經建議過卻從未套用的按鍵
+傳遞缺口(`windowfocus --sync`),修好後ring開啟從「5輪都不確定/懷疑被吃」
+變成「第一次嘗試就穩定成功」,這本身就是有意義的修正。但這**不代表Attack/
+Spell/Item卡住的根本謎團已經解開**——這次ring確定開了,Attack確定還是沒有
+明顯進度,代表真正的謎團(可能是攻擊範圍gate的假陰性、可能是選取態的視覺
+判讀問題、也可能是另一層獨立的輸入問題)依然存在,只是可以確定**不再是
+「ring開啟的Enter被吃掉」這一個特定假設**。下一輪如果要繼續深挖Attack本身,
+建議先做`feedback_verify_ui_slot_mapping_with_markers`要求的markers驗證,
+而不是繼續肉眼判讀小圖示。
+
+**清理**:`toolcheck`/`toolfix1`皆已`teardown`,`status`確認清空。修法已
+commit到`tools/dosbox_harness.sh`並push到`fork`。

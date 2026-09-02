@@ -191,6 +191,30 @@ cmd_screenshot() {
     echo "$out"
 }
 
+# windowfocus --sync before every xdotool key send (2026-09-02): doc58
+# 續七十三(7840-7947行)found `xdotool key --window <win>` internally picks
+# between XTestFakeKeyEvent (reliable) and XSendEvent (many apps ignore it)
+# depending on whether the CURRENTLY-focused window happens to already be
+# <win> at the instant xdotool checks -- in this WM-less Xvfb (no
+# _NET_ACTIVE_WINDOW support, no click-to-focus maintenance) that can be
+# ambiguous. That round's own evidence ruled this out as the root cause of
+# the project's separately-tracked selective Enter/Space key-drop problem
+# (a same-instant control test showed Up unaffected, which this branch could
+# not explain), but it flagged forcing `windowfocus --sync` first as a
+# cheap, never-applied defensive fix to stop this real, sourced-code-backed
+# branch from adding noise to future input-reliability measurements.
+# CONFIRMED LIVE 2026-09-02 (this project's first actual test of it, not
+# just reading xdo.c): unlike the remake/GLFW window (doc58 續八十几, ~9566
+# 行), `windowfocus --sync` does NOT error for the DOSBox-X/SDL window in
+# this same WM-less Xvfb -- it returns rc=0 and getwindowfocus confirms the
+# window took focus. Kept non-fatal (warn, don't die) since a future
+# window/toolkit combination might still hit the GLFW-style failure.
+_focus_window_best_effort() {
+    local win=$1
+    DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool windowfocus --sync "$win" 2>/dev/null \
+        || echo "WARNING: windowfocus --sync failed for window $win (non-fatal, proceeding with the key send anyway -- see cmd_send_keys header comment)" >&2
+}
+
 cmd_send_keys() {
     local name=${1:-}; shift || true
     [[ -n "$name" && $# -gt 0 ]] || die "usage: send-keys <name> <key> [key2 ...]"
@@ -200,6 +224,7 @@ cmd_send_keys() {
     [[ -n "$win" ]] || die "no DOSBox window found for $name on 127.0.0.1:$DISPLAY_PORT"
     local k nkeys=$#
     for k in "$@"; do
+        _focus_window_best_effort "$win"
         DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool key --window "$win" "$k"
         sleep 0.1
     done
@@ -212,6 +237,7 @@ cmd_enter_debugger() {
     local win
     win=$(DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool search --name DOSBox 2>/dev/null | head -1)
     [[ -n "$win" ]] || die "no DOSBox window found for $name on 127.0.0.1:$DISPLAY_PORT"
+    _focus_window_best_effort "$win"
     DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool key --window "$win" alt+Pause
     echo "[$name] sent Alt+Pause (toggle debugger TUI) to window $win"
 }
