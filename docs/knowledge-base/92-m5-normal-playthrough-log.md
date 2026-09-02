@@ -831,3 +831,104 @@ debug patch,不是真正的原版行為。**
   `~/fd2-run`(有連字號,canonical harness source,已被續二十七 patch)是兩個完全不同
   的目錄,只差一個連字號,非常容易看錯——這也是本次調查耗費最多時間釐清的環節之一,
   下一輪如果需要用 pristine 快照,務必先 `md5sum FD2.EXE` 確認,不要只憑目錄名判斷。
+
+## 2026-09-02 續九:Bug A(目標面板肖像錯位)+ Bug B(地圖 sprite 索爾化)根因
+100% 定位並修復——`NativeSelectorCache` 誤用 FDFIELD b0(其實是陣營碼)當繪圖層
+raw key,跟索爾自己的 key 剛好撞號;兩個 bug 共用同一個根因,一次修復同時解決
+
+**任務背景**：orchestrating session 指派深入複查續五/續六記錄的兩個 remake 專屬
+bug(目標面板肖像畫成索爾的臉、地圖閒置畫面單位貼圖畫成索爾),要求找出真正根因、
+修掉、寫回歸測試、live 重新驗證兩個症狀。續四的「敵方 nerf 失效/整包記錄替換」
+假說已在同一 session 稍早被判定是另一件事(見文件開頭 orchestrating 指示引用的
+「contaminated test file」結論),本輪重新從程式碼讀起,不沿用舊假說。
+
+**根因(逐層定位)**：
+
+1. `drawUnitHUD`/`drawTerrainInfoPanel`(`remake/cmd/fd2/main.go:9155-9227`)本身
+   完全正確——直接讀傳入的 `u.Portrait`,沒有問題。真正產線用的面板是
+   `drawNativeMapHUD`/`composeNativeMapFrameAt`(native 完整 indexed frame 路徑,
+   ch01 這種有 `native_terrain_control` 的地圖一律走這條),前者只是 native
+   frame 缺資料時的 fallback,不是本輪要抓的路徑。
+2. `internal/fdicon/fdicon.go` 的 `NativeSelectorCache`(0x11019 的「process-global
+   raw-key→slot」cache 的 Go 重建)是唯一同時餵給地圖 sprite 繪製
+   (`BlitNativeUnitLayer`→`SpriteForNativeSlot`)**和** HUD 目標小圖示
+   (`BlitNativeMapHUDUnitIcon`)的資料源——這正是「兩個看起來獨立的 bug 其實同一個
+   底層問題」的關鍵:兩條繪圖路徑共用同一顆 cache。
+3. `MaterializeNativeMapSelectorSlots`(`internal/battle/model.go`)原本用
+   `u.MapSelectorKey`(=FDFIELD roster b0)當 cache key。用
+   `tools/fd2_live_input_helper.py grid dump-map` + 直接讀
+   `map0_units.json`/`tools/parse_field.py` 逐行核對後發現:**b0 其實就是陣營碼**——
+   `parse_field.py` 自己的解碼就是 `["enemy","ally","own"][b0]`,任何一張地圖上
+   同陣營的所有單位(不管長什麼樣)b0 全部相同(map0 的 8 隻初始盜賊全部
+   `map_selector_key=0`)。而玩家隊伍(`event.go` `PartyUnits()`)的 key 用的是
+   `pm.Fig`(索爾=0)——兩邊的「key namespace」原本不該互相比較,但因為共用同一顆
+   `map[byte]int` cache,加上「先建構的先拿到 slot、後面同 key 者共用同一 slot」
+   的 first-seen 規則,索爾(隊伍第一個構造、key=0)永遠先把 slot 0 綁定給 key=0,
+   之後任何 b0=0 的敵人(也就是這張地圖上*所有*敵方單位)都會撞進同一個 slot 0,
+   `KeyForSlot(0)` 永遠只回傳索爾的 key——這就是兩個 bug 的共同機制。
+4. **真正該用的 key 是 `BattleFig`(FDFIELD b1/`raw_unit_key`)**,獨立證據:
+   - `tools/export_sprites.py` 的 docstring 與程式碼本身,`fig_<grp>_f*.png` 的
+     `grp` 就是直接向 FDICON.B24 archive 要的 group index,不經過任何 cache;
+     已存在的 `assets/sprites/fig_096_f00.png`(本輪重新解碼 `FDICON.B24` 確認
+     archive 共 1680 張/140 組,140 遠大於陣營碼的 0~2 範圍,只有 b1 的值域對得上)
+     視覺上正是紅頭巾+黑色護目鏡的盜賊造型,`fig_000_*` 正是索爾;
+   - `internal/battle/model.go` 對 `Fig` 欄位的既有註解本身就寫著
+     「地圖 FDICON selector approximation;native source is unit+2」——即
+     Fig/BattleFig 一直被認為是 unit+2(native selector 的真正輸出)的近似值;
+   - `internal/campaign/church.go`(職業轉換,對 0x31571..0x3157a 有完整反組譯
+     佐證)明確寫「native unit+7 對玩家單位同時是 FIGANI selector**和**下一次
+     0x11019 的 raw key」——即玩家的「下一個 native key」本來就該等於他自己的
+     Fig/Portrait(跟 `event.go`/`native_join_constructor.go` 既有的
+     `MapSelectorKey: pm.Fig`/`MapSelectorKey: id` 用法完全一致,這兩處player-side
+     用法本身沒有錯);FDFIELD 這一側的 b0(陣營碼)從未被證明跟這個 unit+7/raw key
+     domain 是同一個可比較的數字空間,只是現有程式碼把兩者塞進同一顆 Go map 誤當
+     成同一件事。
+
+**修復**：`internal/battle/model.go`
+`MaterializeNativeMapSelectorSlots` 改成用 `u.BattleFig`/`u.HasBattleFig` 餵
+`cache.SlotFor()`,不再用 `u.MapSelectorKey`。`MapSelectorKey`/`NativeRecordByte6`
+兩個欄位維持原樣不動(它們對 runtime +6/陣營 provenance 仍然是對的,只是不該再
+拿來當繪圖 cache key)。commit `6eaf7fef`。
+
+**回歸測試**：`internal/battle/event_test.go` 新增
+`TestChapter1InitialThievesDoNotAliasSolsNativeMapSelectorSlot`——載入真實
+`map0_units.json`+`ch01.json`,斷言 ch01 初始盜賊群解析出的 native map key
+等於自己的 `BattleFig`、且不等於索爾的 key(revert 修復後手動確認此測試會
+如預期失敗,見下)。另外修正/補齊 7 個既有測試檔(`model_test.go`/
+`event_test.go`/`native_command_target_test.go`/`native_map_presentation_test.go`/
+`cmd/fd2/beatrunner_test.go`/`cmd/fd2/native_map_frame_input_test.go`)裡
+手工組出的 `battle.Unit`/`fdicon.Bank` fixture——這些 fixture 過去只帶
+`MapSelectorKey`(現在的 cache 不再讀它),需要補上 `BattleFig`/放大測試用
+sprite bank 才能繼續通過;其中 `event_test.go` 的
+`TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots` 原本斷言
+「native key == 陣營碼」,這其實是把 bug 現象寫死成期望值,已改成斷言
+「native key == 自己的 BattleFig」。`go build ./remake/...`、
+`go vet ./remake/...`、`go test ./remake/...` 全綠。
+
+**live 重新驗證(`tools/fd2_live_input_helper.py`,全新隔離 instance
+`bugfix_verify2`,先在 WSL2 側用 `$HOME/go/bin/go build -o fd2-linux-verify
+./cmd/fd2` 重新編譯——第一次忘記重build,拿舊 binary 驗證看到 bug 依舊存在,
+是這輪唯一的操作失誤,發現後立刻重編重跑)**：
+
+1. **Bug B(地圖閒置畫面）**:mash Enter 從新遊戲走完序章進 ch01 戰鬥,截圖後
+   PIL 放大裁切初始盜賊群(3+1 那組,跟續六截圖同一組單位)——修復前(未重build
+   的舊 binary)清楚是索爾造型(藍髮紅頭巾);重build 後同一組單位變成正確的
+   盜賊造型(暗紅頭巾+金屬護目鏡),閒置狀態、選取隊友顯示 range overlay 後、
+   取消選取後三個狀態都重新截圖確認過,全部一致正確,**沒有續六記錄的
+   A→B→A 切換行為**(因為根因已經在資料層修掉,不再是「native frame 是否
+   admit 成功」這種狀態相依的巧合正確)。
+2. **Bug A(攻擊選目標面板肖像)**:用 F3 debug 座標讀出單位精確座標,操作
+   亞雷斯移動到跟一隻盜賊相鄰的格子,開指令環按方向鍵選到「攻擊」
+   (`g.ringSel=0`,對應 D-pad 的「上」——原本誤以為預設高亮的紅色圖示就是攻擊,
+   試了幾輪才發現要按 Up 才會選到,純操作面的插曲,不是 bug),進入
+   「攻擊:選擇目標」狀態,游標移到盜賊身上,面板名稱正確顯示「盜賊」、HP
+   正確顯示 028,放大裁切肖像圖確認是盜賊自己的臉(暗紅頭巾+金屬護目鏡),
+   不是索爾。同時也確認己方單位(亞雷斯 HP048、悠妮 HP028——這位真正是悠妮
+   不是續六誤記的蓋亞,紅髮但跟蓋亞的機兵不同)的面板肖像全程維持正確,
+   沒有因為這次修改被連帶弄壞。
+3. teardown 已確認乾淨:`fd2_live_input_helper.py status` 顯示無殘留 instance,
+   `ps aux` 在 WSL2 側 grep `xvfb`/`fd2-linux-verify` 均無殘留行程。
+
+**結論**：Bug A、Bug B **兩個都已修復並經 live 重新驗證確認**,根因是同一個
+(`NativeSelectorCache` 誤用陣營碼當繪圖 raw key),已用單一 commit 一次解決;
+不是分開修的兩個 patch。`docs/knowledge-base/91-worklist.md` M5 Phase 4 一併更新。

@@ -2115,6 +2115,43 @@
   HP 問題(已排除);決定要不要還原 `~/fd2-run/FD2.EXE` 前,先確認 ch24/
   ch27 那條調查線的狀態。
 
+- [x] **remake 側正常玩法可達性驗證(Phase 4)續九——上面續五~八記錄的 2 個
+  remake 專屬顯示 bug(目標面板肖像索爾化、地圖 sprite 索爾化)已 100% 定位
+  根因並修復,live 重新驗證通過**——2026-09-02:兩個 bug 共用同一個根因:
+  `internal/battle/model.go` 的 `MaterializeNativeMapSelectorSlots` 把
+  `NativeSelectorCache`(0x11019 process-global raw-key→slot cache 的 Go 重建,
+  同時餵地圖 sprite 繪製與 HUD 目標小圖示兩條路徑)的 key 設成
+  `MapSelectorKey`(FDFIELD b0)——但 b0 逐行核對後證實只是陣營碼
+  (`parse_field.py` 自己就是 `["enemy","ally","own"][b0]` 解碼),同陣營所有
+  單位不管長相全部同一個 b0,而玩家隊伍的 key 用 `Fig`(索爾=0)——兩個不該
+  比較的 key namespace 被塞進同一顆 cache,加上「先建構者先拿到 slot、同 key
+  者共用 slot」的 first-seen 規則,索爾(隊伍永遠先構造)把 slot 0 綁定給
+  key=0,任何 b0=0 的敵人(map0 全部初始盜賊)afterwards 撞進同一個 slot,
+  兩條繪圖路徑因此都畫成索爾。修復:改用 `BattleFig`(FDFIELD b1/
+  `raw_unit_key`)當 cache key——獨立佐證:`tools/export_sprites.py` 直接用
+  這個值當 FDICON.B24 archive 的 group index(1680 張/140 組,只有 b1 值域
+  對得上),`fig_096_*.png` 視覺上正是盜賊造型;`Fig` 欄位既有註解本身寫著
+  「native source is unit+2」;`internal/campaign/church.go` 職業轉換的
+  既有反組譯佐證也明確寫「玩家 unit+7 同時是下一次 0x11019 raw key」,跟
+  player-side 既有 `MapSelectorKey: pm.Fig` 用法完全一致,證明問題只出在
+  FDFIELD 這一側被錯用了 b0。`MapSelectorKey`/`NativeRecordByte6` 兩個
+  provenance 欄位維持不動,只換掉繪圖 cache 的輸入。commit `6eaf7fef`
+  (`internal/battle/model.go` + 7 個測試檔案更新/新增回歸測試
+  `TestChapter1InitialThievesDoNotAliasSolsNativeMapSelectorSlot`)。
+  `go build`/`go vet`/`go test ./remake/...` 全綠。用
+  `tools/fd2_live_input_helper.py` 全新隔離 instance 重新走過序章進 ch01
+  戰鬥(WSL2 側 `$HOME/go/bin/go build` 重編二進位,第一次忘記重build拿舊
+  binary 驗證還看得到 bug,發現後重編重跑),截圖放大確認:地圖閒置畫面盜賊
+  群正確顯示自己的紅頭巾+黑護目鏡造型(不再是索爾的藍髮);攻擊選目標面板
+  對盜賊正確顯示自己的臉+HP028;己方單位(亞雷斯/悠妮)全程肖像/HP 正確,
+  無回歸;teardown 確認乾淨(`status`/`ps aux` 均無殘留)。完整根因鏈、
+  測試變更清單、live 驗證截圖細節見
+  `docs/knowledge-base/92-m5-normal-playthrough-log.md` 2026-09-02 續九。
+  **Phase 4 目前已知的 remake 顯示 bug 清單清空**;M5 驗收句要求的「正常
+  玩法可達性」本身是否已完成仍取決於續四記錄的「LOADCH→戰鬥」路徑等其他
+  未解問題,不因這輪修復自動視為 Phase 4 全部完成,但這 2 個曾經明確阻擋
+  「remake 輸出可信」的顯示 bug 已不再是阻塞點。
+
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
 - [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)
