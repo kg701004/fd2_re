@@ -656,21 +656,38 @@ def cmd_debugger_status(args):
 
 def cmd_resume(args):
     print(resume(args.instance))
-    if args.verify:
+    if not args.verify:
+        return
+    import hashlib
+    # Retry loop, not just a one-shot warning: live 2026-09-02 testing hit a
+    # case where the debugger console's RUN command silently failed to take
+    # (this project's long-documented tmux/xdotool key-delivery flakiness,
+    # doc58 續七十~續七十七 -- not specific to this command), leaving
+    # execution genuinely still paused. A screenshot-diff warning alone just
+    # tells the caller "something might be wrong" and makes them redo the
+    # work by hand; retrying (re-send resume, re-check) is cheap and turns
+    # a transient flake into a non-event most of the time.
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
         baseline = DEFAULT_SHOT_DIR / args.instance / f"resume_before_{int(time.time() * 1000)}.png"
         screenshot(args.instance, baseline)
         time.sleep(args.verify_wait)
         after = DEFAULT_SHOT_DIR / args.instance / f"resume_after_{int(time.time() * 1000)}.png"
         screenshot(args.instance, after)
-        import hashlib
         b_hash = hashlib.md5(baseline.read_bytes()).hexdigest()
         a_hash = hashlib.md5(after.read_bytes()).hexdigest()
-        if b_hash == a_hash:
-            print(f"WARNING: screen unchanged {args.verify_wait:.1f}s after resume -- may still be paused "
-                  f"(or a genuinely static screen with no idle animation; not proof either way on its own, "
-                  f"same caveat as wait-settle/debugger-status --baseline)", file=sys.stderr)
-        else:
-            print(f"OK: screen changed within {args.verify_wait:.1f}s after resume -- execution is genuinely running", file=sys.stderr)
+        if b_hash != a_hash:
+            print(f"OK: screen changed within {args.verify_wait:.1f}s after resume -- execution is genuinely "
+                  f"running (attempt {attempt}/{max_attempts})", file=sys.stderr)
+            return
+        if attempt < max_attempts:
+            print(f"screen unchanged on attempt {attempt}/{max_attempts} -- retrying resume "
+                  f"(best-effort signal, not proof; a genuinely static screen with no idle animation would "
+                  f"also look unchanged -- see module docstring)", file=sys.stderr)
+            print(resume(args.instance))
+    print(f"WARNING: screen still unchanged after {max_attempts} resume attempts ({args.verify_wait:.1f}s apart) "
+          f"-- may genuinely still be paused, or this is a static screen with no idle animation (not proof "
+          f"either way on its own, same caveat as wait-settle/debugger-status --baseline)", file=sys.stderr)
 
 
 def cmd_key(args):
@@ -865,9 +882,10 @@ def build_parser():
                                         "no-op if the pane doesn't currently look paused")
     sp.add_argument("--instance", required=True)
     sp.add_argument("--verify", action="store_true",
-                     help="take 2 screenshots --verify-wait apart after resuming and warn on stderr if "
-                          "they're pixel-identical (best-effort 'still looks paused' signal, not proof -- "
-                          "a genuinely static screen with no idle animation will also look unchanged)")
+                     help="take 2 screenshots --verify-wait apart after resuming; if pixel-identical, "
+                          "automatically RETRY resume (up to 3 attempts total) before warning on stderr -- "
+                          "best-effort signal, not proof (a genuinely static screen with no idle animation "
+                          "will also look unchanged, and would exhaust all retries without ever being 'wrong')")
     sp.add_argument("--verify-wait", type=float, default=1.5)
     sp.set_defaults(func=cmd_resume)
 

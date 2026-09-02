@@ -495,6 +495,20 @@ cmd_resume() {
     pane=$(tmux -L "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION" -p 2>/dev/null) \
         || die "could not capture tmux pane for $name (session $TMUX_SESSION, socket $TMUX_SOCKET) -- is the instance still alive? check 'dosbox_harness.sh status'"
     if echo "$pane" | grep -q "Code Overview"; then
+        # Clear-line first (Ctrl+U = 0x15) before typing: live 2026-09-02
+        # testing hit a case where two back-to-back `resume` calls left
+        # "RUNRUN" concatenated on one never-submitted console input line
+        # instead of each RUN being typed+Enter+processed separately --
+        # most likely this project's own long-documented tmux/xdotool
+        # key-delivery flakiness (doc58 續七十~續七十七) rather than a flaw
+        # specific to this exact send pattern (this is the SAME `-l text`
+        # then `-l $'\r'` pattern dosbox_harness.sh's own cmd_debugger_cmd
+        # uses successfully throughout this project, per doc48 §8.4's own
+        # "Enter must be sent as its own literal \r" note) -- but clearing
+        # any leftover partial input first is cheap, harmless, and removes
+        # the concatenation failure mode regardless of its root cause.
+        tmux -L "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION" -l $'\x15'
+        sleep 0.2
         tmux -L "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION" -l "RUN"
         sleep 0.3
         tmux -L "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION" -l $'\r'
