@@ -929,3 +929,136 @@ commit `e576ad87`留下的舊戰鬥截圖(1280×800全解析度那組)一起量�
 640x400、`--autocrop`關)下,`raw`確實停在1280×800原始解析度、`view`是縮小後的640×400,兩個檔案
 互不影響;另外測了`--resize ""`(resize跟autocrop都關)的情況,確認完全不會產生`_view`檔——沒有
 要求任何處理時,不會憑空多存一份沒用的複本。
+
+## `tools/fd2_dosbox_live_helper.{py,sh}` — 包裝`dosbox_harness.sh`的DOSBox-X即時操作便利工具(2026-09-02)
+
+**目的/範圍**：`tools/fd2_live_input_helper.{py,sh}`(上面兩節)是remake側(`fd2-linux-verify`)的
+機械化輔助工具,這個工具是它在DOSBox-X側的對應物——包裝既有的`tools/dosbox_harness.sh`(N-way平行
+dosbox-x heavy-debugger harness,見本檔案「N-way 平行 dosbox-x live-verification harness」一節),
+**不重建**它的launch/teardown/registry核心邏輯,只加上這個session實際做live驗證工作時發現缺少的
+四項便利/修法:screenshot resize/裁切、settle-confirmed送鍵、一鍵化的live memory read、canonical
+檔案完整性檢查。架構上延續`fd2_live_input_helper.py/.sh`已經寫入本檔案的「兩檔案分工+真.sh檔案+純
+argv呼叫,絕不用Python組出的多語句`bash -c`字串」設計——這裡不重複那段論證,只記錄這次新發現的坑。
+
+**用法**：
+```
+python tools/fd2_dosbox_live_helper.py launch --instance myrun --keepalive 3600   # 長駐前景呼叫,自己背景化
+python tools/fd2_dosbox_live_helper.py status / teardown --instance myrun / teardown-all
+python tools/fd2_dosbox_live_helper.py key --instance myrun Escape --wait 0.5
+python tools/fd2_dosbox_live_helper.py key --instance myrun Return --settle
+python tools/fd2_dosbox_live_helper.py screenshot --instance myrun --label title --autocrop --resize 320x260
+python tools/fd2_dosbox_live_helper.py enter-debugger --instance myrun
+python tools/fd2_dosbox_live_helper.py debugger-status --instance myrun
+python tools/fd2_dosbox_live_helper.py mem dump --instance myrun --selector 0170 --linear 1ADD73 --bytecount 20
+python tools/fd2_dosbox_live_helper.py mem read-unit-record --instance myrun --selector 0170 --linear 26DF88
+python tools/fd2_dosbox_live_helper.py verify-canonical [--path <windows或wsl路徑>]
+```
+
+### 發現一：`dosbox_harness.sh`的screenshot是`import -window root`,不是`import -window <dosbox-x視窗id>`
+
+這是這次任務brief原本假設「DOSBox-X視窗本身就等於模擬視訊模式的原生解析度、可能沒有letterbox可裁」
+(依據本檔案「DOSBox-vs-remake byte-exact pixel diff harness」一節的既有發現)的一個重要修正：那個
+既有發現是對的沒錯——**遊戲畫面內容本身**確實沒有letterbox(下面續一的3種畫面型態實測都印證這點)——
+但`dosbox_harness.sh`的`screenshot`子指令用`import -window root`,抓的是**整個Xvfb虛擬螢幕**
+(這個專案的launch設定是1024×768),不是只抓dosbox-x自己的視窗。原因是dosbox-x(heavy-debug build)
+視窗化SDL輸出本身固定會畫一條GUI選單列(`Main CPU Video Sound DOS Drive Capture Debug Help`,約
+17px高,不受`scaler`/`aspect`設定影響——這正是前述pixel-diff-harness那節的既有發現:同一組config
+套用在`dosbox-x`上視窗會是640×417,套用在套件版`dosbox`上才會是精確640×400),所以真實視窗本身就
+比模擬視訊模式的原生解析度多了這條選單列,而`import -window root`又比真實視窗本身還多了一圈周圍的
+Xvfb桌面背景。這代表這個工具的screenshot要處理的「無用像素」跟remake側template（`fd2_live_input_
+helper.sh`,裁的是遊戲自己邏輯畫布內的黑邊）**性質上是兩個不同的問題**,不能照搬同一套裁法。
+
+**實測(2026-09-02,獨立instance `dosboxtoolcheck`,port :199,全程無其他agent同時在跑)**：
+`xdotool getwindowgeometry`量到dosbox-x真實視窗是`640x417`、位置`Position: 192,184`——與
+`import -window root`存出來的`1024x768`原始截圖用`convert -fuzz 3% -trim +repage`得到的裁切結果
+`640x417`（crop offset`+192+184`,`identify`不加`+repage`直接印出`1024x768+192+184`）**完全吻合**,
+在片頭剪影畫面(`toolcheck_boot.png`)與剛進LOAD存檔清單畫面(`toolcheck_load.png`)兩張獨立截圖上都
+成立。但**同一組`-fuzz 3% -trim`在LOAD存檔清單畫面上量到的是`640x413`,不是`640x417`**——這揭露了
+一個真實的邊界案例:這台環境的Xvfb桌面背景實測是純黑`#000000`(用`convert -crop 10x10+0+0 txt:-`量
+過畫面左上角桌面背景與畫面內容黑色區域,兩者顏色bytes完全一致),跟遊戲畫面自己的黑色UI背景**同一個
+顏色**——純粹靠`-fuzz`色彩啟發式的`-trim`,沒辦法區分「視窗外的桌面」跟「視窗內、真的是黑色但屬於
+遊戲畫面自己的內容」,這次量到的差距(4px)沒有吃掉任何看得見的真實內容(存檔清單方塊、選單列文字都
+完整保留,人工核對截圖確認),但這只是運氣好,原則上不能保證每種畫面都這麼幸運。
+
+**修法**：`fd2_dosbox_live_helper.sh`的`--autocrop`改成兩步驟,不是remake template那種單一
+`-fuzz`+`-trim`：**第一步永遠是精確的視窗邊界裁切**——每次都現查`xdotool getwindowgeometry`(同一套
+「絕不快取視窗資訊,每次重查」紀律),用查到的`WxH+X+Y`做`convert -crop`,這是決定性的,不靠顏色猜測,
+不會有上面那種吃掉真實內容的風險；**第二步**才是選用性質、疊加在第一步結果上的`-fuzz 3% -trim`,用
+來額外裁掉dosbox-x自己畫的那條選單列(或任何畫面本身真的有的黑邊)——這步驟沿用remake template
+「只驗證過幾種畫面型態,預設不開,呼叫方自己判斷」的紀律,不是預設一定安全。`--resize`在這個工具上
+**沒有強制預設值**(remake template的640x400是遊戲自己固定的邏輯畫布尺寸,這裡沒有對應物——
+DOSBox-X同一個工具混合了320×200-mode被2倍放大成640×400的畫面跟原生640×400 SVGA過場畫面,兩者共用
+同一條不會跟著縮放的17px選單列,沒有單一「縮小2倍、零資訊損失」的操作對每種畫面都成立),要縮圖得
+自己指定geometry。
+
+### 續一(2026-09-02)：4種畫面型態實測,遊戲內容本身沒有letterbox的假說再次確認成立
+
+除了上面用來抓桌面邊界的片頭剪影/LOAD清單兩張,另外實測了標題logo選單畫面(`FLAME DRAGON 2 /
+LEGEND OF GOLDEN CASTLE / START LOAD CONTINUE`)、以及送出Escape+讀完存檔後意外停在的一張角色立繪
+過場畫面（頭髮藍色的男性角色半身立繪，佔滿畫面）——**4種畫面型態,`--autocrop`裁完後遊戲內容都填滿
+到選單列正下方的640×400,沒有一種在畫面內部另外找到黑邊**,與這次任務brief引用的既有pixel-diff-
+harness發現(dosbox-x/dosbox視訊模式輸出本身沒有letterbox)一致——`--autocrop`在這個工具上主要的
+價值是裁掉「視窗外的桌面」跟「選單列」這兩塊真正的無用像素,不是remake側那種「遊戲畫布內部本身有大
+片黑邊可裁」的情境,這點在Python CLI/`.sh`兩邊的docstring都已經寫清楚,不假裝這是同一種裁法。
+
+### 續二(2026-09-02)：`mem dump`/`mem read-unit-record`live驗證——dump出的bytes與debugger自己的
+Code Overview反組譯逐byte吻合
+
+`enter-debugger`進入ncurses debugger TUI後,Register Overview讀到`CS=0170 EIP=001ADD73`(保護模式,
+`Pr32`),Code Overview同一畫面列出`0170:001ADD73`起的反組譯(`68 C8 03 00 00`=`push 000003C8`、
+`E8 68 5D 02 00`=`call 001D3AE5`……)。用`mem dump --selector 0170 --linear 1ADD73 --bytecount 20`
+(內部走`MEMDUMPBIN 0170 1ADD73 20`)dump出的32-byte原始bytes(`68 c8 03 00 00 e8 68 5d 02 00 83 c4
+08 89 d8 c1 e0 02 29 d8 8b 15 65 fa 1e 00 0f b6 04 02 29 f0`)與Code Overview印出的反組譯bytes
+**逐byte完全一致**——這是一個獨立於MEMDUMPBIN本身之外的交叉核對(debugger自己的反組譯視窗是另一條
+完全不同的讀取路徑),不是「指令跑完沒報錯」這種弱驗證。`mem read-unit-record`(內部固定用0x32=50
+bytes,對應doc58續四十驗證過的完整戰鬥unit record大小)在同一位址上機械性測試通過,正確印出hexdump
+與doc58續四十記錄過的5個已知欄位(`+0x05`/`+0x06`/`+0x07`/`+0x1f`/`+0x26`)——**這個位址本身不是真實
+的unit record**(這次只是站在標題選單畫面,沒有進戰鬥),印出來的欄位值沒有RE意義,這裡只驗證了工具
+本身的資料通路正確,不是宣稱驗證了任何新的RE結論。selector`0`的拒絕guard也live測試過:
+`mem dump --selector 0 ...`確實在送出`MEMDUMPBIN`之前就被`fd2_dosbox_live_helper.sh`擋下,印出
+doc58引用的已知失敗模式說明,不會像人工誤傳一樣安靜地拿到一份看似成功、實際是垃圾資料的dump。
+
+### 續三(2026-09-02)：`debugger-status`的已知盲點——離開debugger後,tmux pane可能還顯示舊的
+「ACTIVE」內容(誠實記錄,不是解決)
+
+`debugger-status`用`tmux capture-pane`抓文字畫面,搜尋`Code Overview`字串來判斷debugger TUI是否
+正在顯示。實測(同一個`dosboxtoolcheck` instance)：第一次`enter-debugger`後`debugger-status`正確
+回報`ACTIVE`；**再送一次`enter-debugger`(理論上應該離開debugger、恢復執行)後,`debugger-status`
+依然回報`ACTIVE`**,而且pane裡的`EAX`/`EIP`/`cc=`數值跟離開前完全相同(凍結畫面,不是即時更新)。
+用`screenshot --autocrop`交叉核對SDL視窗本身,確認遊戲**真的已經恢復執行**(畫面從標題選單前的片頭
+剪影變成一張全新的角色立繪過場,不是同一張凍結畫面)——這證明debugger TUI恢復RUN之後,dosbox-x**不會
+主動重繪tmux pty這個畫面**(遊戲畫面走SDL/X11視窗那條完全獨立的路徑),`capture-pane`抓到的只是「
+上次debugger TUI畫過的內容還留在螢幕緩衝區裡」,不是「目前真的還在暫停」的可靠證據。這個發現已經
+寫進`fd2_dosbox_live_helper.sh`的`cmd_debugger_status`本身的註解與CLI輸出文字裡(`ACTIVE`那行現在
+附帶這個警語)——**這不是bug修復,是誠實記錄一個做不到的保證**：`debugger-status`只能可靠回答「這個
+pane有沒有『曾經』畫過debugger TUI且之後沒有別的東西蓋過它」,回答不了「現在」是否真的還暫停在
+debugger裡；需要真的確定時,交叉核對一張screenshot(暫停中的畫面不會變、恢復執行的畫面會變)比單獨
+信任`debugger-status`可靠。
+
+### 誠實記錄：這個工具刻意沒有解決什麼
+
+**輸入可靠性問題**：`key --wait`/`key --settle`/`wait-settle`是`fd2_live_input_helper.{py,sh}`
+同一套「settle-confirmed送鍵」模式的DOSBox-X版本,是**緩解**手段,不是修法——這個專案已經花了9輪
+獨立調查(`58-remake-live-verification-log.md`續七十~續七十七,關鍵字「xtrace」/「掉鍵」)在這個
+Xvfb/xdotool/DOSBox-X輸入層問題上,doc58自己的結論是「已重新定界的環境限制」，不是解決。這次live
+測試也印證了`--settle`誠實的定義邊界：在一張仍在動畫過場的畫面上送Escape後,`--settle`在極短時間內
+就回報`SETTLED`——螢幕截圖前後2次確實pixel-identical(角色立繪過場恰好停在同一張靜止幀上),`--settle`
+如實回報了它觀察到的事實,但這只證明「這段輪詢窗口內畫面沒有變」,不代表遊戲邏輯真的處理了那次
+Escape、也不代表畫面永遠不會再變——跟remake側template docstring裡「持續動畫的畫面永遠不會有連續
+兩張完全相同的截圖」的既有警語是同一個誠實邊界,這裡再次確認,沒有新解法。
+
+**MEMDUMPBIN已知upstream bug(#3629,回報成功卻不產生檔案)**：`mem-dump`只是在偵測到這個症狀時把
+它清楚標示出來、並在錯誤訊息裡指向`D`資料檢視指令這個既有workaround(`doc48`§4.2/§8.4),**沒有**
+自動切換去執行`D`指令再解析——這次任務brief明確劃定範圍是「把既有已證實的技巧包成好用的指令」,不是
+再開一條新的RE或環境調查支線,這次也確實沒遇到這個bug發生(所有`mem dump`呼叫都順利拿到檔案),沒有
+機會實測這個fallback路徑本身。
+
+### 產出/收尾
+
+Live測試全程使用獨立instance(`dosboxtoolcheck`/`dosboxtoolcheck2`/`dosboxtoolcheck3`,port
+`:199`/`:299`,期間`dosbox_harness.sh status`與`ps aux`都確認過沒有跟其他canonical session
+(`:99`/`dbg`/`~/fd2-run`)或其他agent的instance重疊)。全部測試結束後`teardown-all`+`ps aux`
+(`dosbox-x`/`Xvfb`/`tmux`都查無殘留)+手動清掉3個測試用workdir(共約426MB)收尾乾淨。全程沒有寫入
+或修改`~/fd2-run/FD2.EXE`——`verify-canonical`預設路徑跑出的`MISMATCH`結果(`72e36e47...`)與已知
+的ch27 debug-patch狀態(`docs/knowledge-base/92-m5-normal-playthrough-log.md`續八/續九)完全吻合,
+`--path`指向`C:\Users\kg701\Desktop\GAME\FD2`那份獨立乾淨備份時正確回報`OK`——兩種路徑都驗證過。
