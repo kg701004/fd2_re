@@ -1167,6 +1167,38 @@ SystemExit(2)`不受影響，因為`SystemExit`不是`RuntimeError`的子類別)
 `wsl bash -c`相關的MSYS路徑重寫問題同源)。價值：確認了這不需要在Python工具內修，但值得在這裡記一筆，
 避免未來有人被這個特定錯誤訊息誤導去改錯地方。
 
-**結論**：這一輪完整覆蓋所有子指令的正常+至少一個錯誤路徑，除了上述已修的traceback呈現問題之外，
-沒有找到其他功能性錯誤——`windowfocus`修法沒有引入任何回歸，工具本身現在的狀態是「機制正確、
-呈現乾淨」。commit `<見下方>`，push到`fork`。
+**結論(當時的自我評估，事後發現偏樂觀，見下方續二的誠實修正)**：這一輪覆蓋了大部分子指令的正常
+路徑跟部分錯誤路徑，除了已修的traceback呈現問題之外沒有找到其他功能性錯誤——`windowfocus`修法沒有
+引入任何回歸。commit `10c09678`，push到`fork`。
+
+### 續二 — 用戶追問「工具的所有功能都確認了嗎？」，誠實核對後發現續一其實沒有真的覆蓋到全部(2026-09-02)
+
+用戶這句追問本身就點出續一的結論下得太早——逐一比對子指令清單跟續一實際跑過的測試，發現至少5個
+先前沒測到的洞：
+
+1. **`key --settle --flag-no-response`——這個功能本身核心的`response=CHANGED`/`response=
+   NO_RESPONSE`輸出，先前兩輪都從沒真的看到過**（續六唯一一次呼叫因為畫面持續動畫而TIMEOUT，
+   TIMEOUT分支的`.sh`程式碼根本不會印`response=`這個tag；續一的完整測試裡這個旗標本身完全沒被叫
+   到過）。這是本輪認為最重要的一個洞——`--flag-no-response`是9/2當天新建的功能，先前的live驗證
+   全部間接依賴這個機制「應該」正常，但從沒真正逼出它的兩種輸出。
+2. `wait-settle --baseline`（獨立指令，不是透過`debugger-status`那條不同程式碼路徑）完全沒測過。
+3. 必要參數缺失的防呆（`key`不給任何鍵、`mem dump`缺`--selector`）、`teardown-all`對空registry
+   的行為——都沒測過。
+4. `screenshot --out`/`--view-out`自訂路徑（先前全部用預設路徑）沒測過。
+5. `--wait 0`的警告訊息路徑沒測過。
+
+**逐一補測，全部通過**：新開`flagtest` instance，等~35秒非skippable開場動畫播完到達靜態標題選單
+(START/LOAD/CONTINUE)。用`wait-settle --baseline`(獨立指令)在真的什麼都沒送的情況下確認先settle
+再正確判定`NO_RESPONSE`；接著用`key Down --settle --flag-no-response`(游標會移動)拿到真正的
+`settle: OK (...response=CHANGED)`；再用`key q --settle --flag-no-response`(標題選單沒綁定的鍵)
+拿到真正的`FLAG: NO_RESPONSE`+`response=NO_RESPONSE`——**這是這個旗標從被寫出來到現在，第一次
+兩種輸出都被真正逼出來確認過**。`key`缺鍵/`mem dump`缺selector正確走argparse自己的
+`required`檢查(乾淨的usage訊息，非追加的手寫防呆)；`teardown-all`對空registry印
+`(no harness instances registered, nothing to tear down)`+`rc=0`；`--out`/`--view-out`自訂
+路徑正確寫到指定位置；`--wait 0`正確印出doc58援引的掉鍵風險警告。全部teardown+`status`確認乾淨。
+
+**結論(修正後，這次才是誠實的完整版)**：工具的每一個子指令、每一個文件裡承諾過的旗標行為，現在
+都至少有一次end-to-end的live確認，沒有殘留「應該可以但沒測過」的角落。唯一仍然刻意留白、不是這次
+沒做到而是本來就超出這個工具audit範圍的：MEMDUMPBIN的upstream `#3629`空檔案fallback路徑(這次
+`mem dump`呼叫全部順利拿到檔案，沒機會踩到這個症狀，續一已誠實記錄過這一點)，以及Attack/Spell/
+Item卡在ring之後的深層RE謎團(那是遊戲邏輯本身的問題，不是這個工具的功能)。
