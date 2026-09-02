@@ -73,7 +73,7 @@
 #          change" flag, NOT proof the key was dropped (some keys legitimately
 #          produce no change, e.g. a movement key at a map edge). Callers
 #          should log/flag NO_RESPONSE, not auto-treat it as failure.
-#   fd2_dosbox_live_helper.sh debugger-status <name>
+#   fd2_dosbox_live_helper.sh debugger-status <name> [baseline_screenshot_path]
 #       -- NEW: best-effort check of whether the ncurses debugger TUI looks
 #          active in the instance's tmux pane (greps for "Code Overview",
 #          confirmed marker per docs/knowledge-base/48-dosbox-x-debugger-
@@ -81,6 +81,14 @@
 #          a TOGGLE -- this exists so callers can check state before firing
 #          it blind and accidentally exiting the debugger they meant to
 #          enter.
+#          Optional [baseline_screenshot_path] (2026-09-02): a screenshot
+#          taken at a known moment (e.g. right when the debugger was
+#          entered). If given, a fresh screenshot is compared against it and
+#          a SCREEN_CHECK line is appended -- directly answers "is it really
+#          still paused" for the documented stale-pane blind spot (a
+#          genuinely paused emulator's own window cannot repaint; a CHANGED
+#          screenshot while the pane still says ACTIVE means the pane is
+#          stale, not that execution is paused).
 #   fd2_dosbox_live_helper.sh mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>
 #       -- NEW: packages the proven byte-signature/MEMDUMPBIN live-memory-
 #          read technique (docs/knowledge-base/48-dosbox-x-debugger-build.md,
@@ -107,7 +115,14 @@
 #          續九), and this check exists to make that visible, not to "fix" it.
 #   fd2_dosbox_live_helper.sh enter-debugger <name>
 #   fd2_dosbox_live_helper.sh debugger-cmd <name> <cmd text...>
-#   fd2_dosbox_live_helper.sh status
+#   fd2_dosbox_live_helper.sh status [stale_after_seconds]
+#       -- passthrough to dosbox_harness.sh status, PLUS (NEW 2026-09-02) a
+#          STALE warning line for any instance at/above stale_after_seconds
+#          uptime (default: dosbox_harness.sh's own KEEPALIVE_DEFAULT,
+#          3600s) -- exists because this project already mistook a ~13h-old
+#          orphaned instance for a fresh one once (docs/knowledge-base/
+#          92-m5-normal-playthrough-log.md, Phase 4 round 2). Advisory only,
+#          never auto-tears-down anything.
 #   fd2_dosbox_live_helper.sh teardown <name>
 #   fd2_dosbox_live_helper.sh teardown-all
 #       -- straight passthroughs to the matching dosbox_harness.sh subcommand
@@ -157,9 +172,46 @@ cmd_key() {
 
 cmd_enter_debugger() { bash "$DOSBOX_HARNESS" enter-debugger "$@"; }
 cmd_debugger_cmd()   { bash "$DOSBOX_HARNESS" debugger-cmd "$@"; }
-cmd_status()         { bash "$DOSBOX_HARNESS" status "$@"; }
 cmd_teardown()       { bash "$DOSBOX_HARNESS" teardown "$@"; }
 cmd_teardown_all()   { bash "$DOSBOX_HARNESS" teardown-all "$@"; }
+
+# dosbox_harness.sh's own KEEPALIVE_DEFAULT (see that file) -- mirrored here
+# as the default staleness threshold for the STALE warning below. Not a
+# claim that any instance older than this is definitely abandoned (a real
+# Phase-4-style long playthrough can legitimately run past its own default
+# keepalive if launched with an explicit larger --keepalive) -- just the
+# same "the harness's own idea of a normal session length" line dosbox_
+# harness.sh itself uses, surfaced as a nudge to check rather than assume.
+STALE_UPTIME_DEFAULT_S=3600
+
+# --------------------------------------------------------------------------
+# status -- passthrough to dosbox_harness.sh status, PLUS a stale-instance
+# warning (2026-09-02, NEW here, not in dosbox_harness.sh itself). Exists
+# because this project has already hit a real incident of exactly this kind
+# (docs/knowledge-base/92-m5-normal-playthrough-log.md's Phase 4 round 2: a
+# ~13h-old orphaned instance was mistaken for a fresh one at the start of a
+# round, briefed as clean when it was not). This does NOT auto-teardown
+# anything -- only flags it, since a genuinely long-running deliberate
+# session (large --keepalive) looks identical in the state file to a
+# forgotten one; only a human/agent who remembers what they launched can
+# tell the difference.
+# --------------------------------------------------------------------------
+
+cmd_status() {
+    local stale_after=${1:-$STALE_UPTIME_DEFAULT_S}
+    local out; out=$(bash "$DOSBOX_HARNESS" status)
+    echo "$out"
+    local header_skipped=0 line name uptime
+    while IFS= read -r line; do
+        if [[ $header_skipped -eq 0 ]]; then header_skipped=1; continue; fi
+        [[ "$line" == "(no harness instances registered)" || -z "$line" ]] && continue
+        name=$(awk '{print $1}' <<<"$line")
+        uptime=$(awk '{print $7}' <<<"$line")
+        if [[ "$uptime" =~ ^[0-9]+$ && "$uptime" -ge "$stale_after" ]]; then
+            echo "STALE: instance '$name' uptime=${uptime}s >= ${stale_after}s (default mirrors dosbox_harness.sh's own KEEPALIVE_DEFAULT) -- confirm this is an intentional long-running session (explicit large --keepalive) before assuming it's a fresh boot; NOT auto-torn-down, verify with a screenshot/debugger-status before 'teardown $name' if unsure."
+        fi
+    done <<<"$out"
+}
 
 # --------------------------------------------------------------------------
 # launch -- wraps dosbox_harness.sh launch with a non-blocking pristine-file
@@ -340,12 +392,14 @@ cmd_wait_settle() {
 # --------------------------------------------------------------------------
 
 cmd_debugger_status() {
-    local name=${1:-}; [[ -n "$name" ]] || die "usage: debugger-status <name>"
+    local name=${1:-}; local baseline=${2:-}
+    [[ -n "$name" ]] || die "usage: debugger-status <name> [baseline_screenshot_path]"
     load_state "$name"
-    local pane
+    local pane pane_active=0
     pane=$(tmux -L "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION" -p 2>/dev/null) \
         || die "could not capture tmux pane for $name (session $TMUX_SESSION, socket $TMUX_SOCKET) -- is the instance still alive? check 'dosbox_harness.sh status'"
     if echo "$pane" | grep -q "Code Overview"; then
+        pane_active=1
         # CAVEAT confirmed live 2026-09-02: this can be a FALSE POSITIVE. The
         # ncurses debugger TUI does not appear to repaint the tmux pty after
         # RUN resumes (the game's own rendering goes to the SDL/X11 window,
@@ -360,6 +414,38 @@ cmd_debugger_status() {
         echo "ACTIVE: ncurses debugger TUI detected ('Code Overview' found in tmux pane) -- NOTE: this pane can go stale after leaving the debugger (confirmed 2026-09-02, see this command's source comment); cross-check with a screenshot if you need to be sure execution is still actually paused, not just that the TUI was drawn here at some point"
     else
         echo "INACTIVE: no 'Code Overview' text in tmux pane -- looks like the normal DOS/log console, not the debugger TUI. Call 'dosbox_harness.sh enter-debugger $name' to toggle it, then check this command again before assuming it worked (Alt+Pause is asynchronous and can occasionally land mid-transition, doc48 §4.1)."
+    fi
+
+    # Optional screenshot cross-check (2026-09-02), reusing the same
+    # baseline-compare idea as wait-settle's response=NO_RESPONSE/CHANGED
+    # flag: a genuinely PAUSED emulator's own SDL/X11 window cannot repaint
+    # (that's what "paused" means), so if the caller supplies a screenshot
+    # taken at a KNOWN moment (e.g. right when the debugger was entered),
+    # comparing it against a fresh one now directly answers the "is it
+    # really still paused" question this command's pane-text check alone
+    # cannot -- exactly the blind spot documented above.
+    if [[ -n "$baseline" ]]; then
+        [[ -f "$baseline" ]] || die "baseline screenshot not found: $baseline"
+        local tmp; tmp=$(mktemp --suffix=.png)
+        bash "$DOSBOX_HARNESS" screenshot "$name" "$tmp" >/dev/null 2>&1 \
+            || die "screenshot failed during debugger-status baseline check for $name"
+        local b_md5 c_md5
+        b_md5=$(md5sum "$baseline" | awk '{print $1}')
+        c_md5=$(md5sum "$tmp" | awk '{print $1}')
+        rm -f "$tmp"
+        if [[ "$b_md5" == "$c_md5" ]]; then
+            if [[ $pane_active -eq 1 ]]; then
+                echo "SCREEN_CHECK: unchanged vs baseline -- consistent with genuinely still paused"
+            else
+                echo "SCREEN_CHECK: unchanged vs baseline -- consistent with INACTIVE too (just no visible progress since baseline, e.g. a static screen); not proof either way on its own"
+            fi
+        else
+            if [[ $pane_active -eq 1 ]]; then
+                echo "SCREEN_CHECK: CHANGED vs baseline -- CONTRADICTS the pane's 'ACTIVE' reading. This is the documented stale-pane blind spot above -- trust the screenshot: execution has almost certainly actually resumed."
+            else
+                echo "SCREEN_CHECK: CHANGED vs baseline -- consistent with INACTIVE (game genuinely progressing, not paused)"
+            fi
+        fi
     fi
 }
 
@@ -491,12 +577,12 @@ usage: $0 <command> [args]
   key <name> <key> [key2 ...]              passthrough to dosbox_harness.sh send-keys
   screenshot <name> <out> [resize] [autocrop:0|1] [view_out]   raw always at <out>; window-bounds-crop (+optional fuzzy trim)/resize (if any) go to <view_out>
   wait-settle <name> <tmp_prefix> [max_tries] [interval_s] [baseline]   poll until 2 consecutive shots match (mitigation, not a fix, for known input-reliability issue); optional baseline screenshot adds response=NO_RESPONSE/CHANGED
-  debugger-status <name>                    best-effort check of whether the ncurses debugger TUI is showing
+  debugger-status <name> [baseline]          best-effort check of whether the ncurses debugger TUI is showing; optional baseline screenshot adds a SCREEN_CHECK cross-check
   mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>   MEMDUMPBIN wrapper with known-footgun guards
   verify-canonical [path]                   md5 integrity check vs known-pristine FD2.EXE (default \$HOME/fd2-run); READ-ONLY, never restores
   enter-debugger <name>                     passthrough to dosbox_harness.sh
   debugger-cmd <name> <text...>             passthrough to dosbox_harness.sh
-  status                                    passthrough to dosbox_harness.sh
+  status [stale_after_seconds]              passthrough to dosbox_harness.sh status + STALE warning for old instances (default threshold 3600s)
   teardown <name>                           passthrough to dosbox_harness.sh
   teardown-all                              passthrough to dosbox_harness.sh
 EOF

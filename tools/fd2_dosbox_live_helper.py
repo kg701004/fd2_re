@@ -226,8 +226,9 @@ def launch(instance: str, keepalive: int | None, on_line=None) -> int:
     return proc.wait()
 
 
-def status() -> str:
-    return sh("status", timeout=15).stdout.strip()
+def status(stale_after: int | None = None) -> str:
+    args = ["status"] + ([str(stale_after)] if stale_after is not None else [])
+    return sh(*args, timeout=15).stdout.strip()
 
 
 def teardown(instance: str) -> str:
@@ -246,8 +247,9 @@ def debugger_cmd(instance: str, text: str) -> str:
     return sh_checked("debugger-cmd", instance, text, timeout=15)
 
 
-def debugger_status(instance: str) -> str:
-    return sh_checked("debugger-status", instance, timeout=15)
+def debugger_status(instance: str, baseline: Path | None = None) -> str:
+    args = ["debugger-status", instance] + ([to_wsl_path(baseline)] if baseline is not None else [])
+    return sh_checked(*args, timeout=15)
 
 
 # --------------------------------------------------------------------------
@@ -433,7 +435,7 @@ def cmd_launch(args):
 
 
 def cmd_status(args):
-    print(status())
+    print(status(args.stale_after))
 
 
 def cmd_teardown(args):
@@ -453,7 +455,8 @@ def cmd_debugger_cmd(args):
 
 
 def cmd_debugger_status(args):
-    print(debugger_status(args.instance))
+    baseline = Path(args.baseline) if args.baseline else None
+    print(debugger_status(args.instance, baseline))
 
 
 def cmd_key(args):
@@ -559,7 +562,10 @@ def build_parser():
     sp.add_argument("--keepalive", type=int, default=None, help="seconds to hold the instance alive (default: dosbox_harness.sh's own default, 3600)")
     sp.set_defaults(func=cmd_launch)
 
-    sp = sub.add_parser("status", help="list all dosbox_harness.sh instances")
+    sp = sub.add_parser("status", help="list all dosbox_harness.sh instances, flagging stale-uptime ones")
+    sp.add_argument("--stale-after", type=int, default=None,
+                     help="seconds; flag instances at/above this uptime as STALE (default: dosbox_harness.sh's "
+                          "own KEEPALIVE_DEFAULT, 3600s) -- advisory only, never auto-tears-down anything")
     sp.set_defaults(func=cmd_status)
 
     sp = sub.add_parser("teardown", help="kill one instance (passthrough to dosbox_harness.sh)")
@@ -580,6 +586,9 @@ def build_parser():
 
     sp = sub.add_parser("debugger-status", help="best-effort check of whether the debugger TUI is currently showing")
     sp.add_argument("--instance", required=True)
+    sp.add_argument("--baseline", default=None,
+                     help="path to a screenshot taken at a known moment (e.g. when the debugger was entered); "
+                          "if given, adds a SCREEN_CHECK cross-check for the documented stale-pane blind spot")
     sp.set_defaults(func=cmd_debugger_status)
 
     sp = sub.add_parser("key", help="send one or more keys, confirmed by a wait or a settle-poll -- never blind")

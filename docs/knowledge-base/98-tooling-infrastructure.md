@@ -1053,6 +1053,42 @@ Down,兩次都正確回報`response=CHANGED`(畫面確實往前推進)——確�
 忽略旗標而不是報錯),多付出「送鍵前多一次截圖」的代價才啟用,不是`key`預設行為的一部分——呼叫端
 拿到`NO_RESPONSE`後應該視為「值得再看一眼」,不是自動判定失敗或自動重送。
 
+### 續五(2026-09-02)：3項新增測試功能——`debugger-status --baseline`、`status`孤兒偵測、
+`fd2_dual_verify.py`
+
+使用者要求評估還缺哪些測試功能,討論後核准3項,全部已實作並live測試通過:
+
+**1. `debugger-status <name> [baseline]`——把續三記錄的盲點變成可主動檢查的訊號**：沿用
+`--flag-no-response`同一套baseline比對手法——呼叫端在已知時刻(例如剛進debugger時)存一張截圖,
+之後`debugger-status`再比對現在的畫面跟這張baseline是否相同,印出`SCREEN_CHECK: unchanged`
+(與「真的還暫停」一致)或`SCREEN_CHECK: CHANGED`(與pane文字的`ACTIVE`矛盾→pane過期了,執行
+其實已經恢復)。獨立instance(`dv_dosbox`)live測試3種情境:進debugger前(pane INACTIVE)vs
+持續動畫中的過場畫面比對,正確印出`CHANGED`；剛進debugger後立刻比對,正確印出`unchanged`(此時
+畫面確實靜止,暫停生效)；離開debugger後拿舊baseline比對,印出`unchanged`——這次沒有重現續三
+記錄過的「pane過期」矛盾情境,獨立額外測試證實原因是當下遊戲片頭剛好停在靜止幀(前後4秒2次截圖
+md5完全相同),不是這個新功能本身的邏輯錯誤——`unchanged`跟`CHANGED`兩種輸出在各自對應的真實
+情境下都正確,只是這次沒有剛好撞上會製造矛盾的時間點。
+
+**2. `status [stale_after_seconds]`——孤兒instance偵測**：passthrough `dosbox_harness.sh status`
+的輸出後,對每個instance比對UPTIME_S欄位是否達到門檻(預設3600秒,鏡射`dosbox_harness.sh`自己的
+`KEEPALIVE_DEFAULT`),達到就多印一行`STALE:`警告——純提示,不會自動teardown。存在原因：Phase 4
+第2輪確實發生過「以為是新一輪,結果是13小時前忘記關的instance」(`92-m5-normal-playthrough-log.md`)。
+live測試：預設門檻(3600s)對一個剛啟動35秒的instance不觸發,`--stale-after 10`則正確觸發並印出
+警告文字。
+
+**3. `tools/fd2_dual_verify.py`——remake vs DOSBox-X雙邊同步截圖比對工具**：對兩個「已經各自啟動
+好」的instance(一個remake、一個DOSBox-X)送同一個按鍵、兩邊都截圖、寫一筆manifest.jsonl紀錄
+(index/label/key/兩邊screenshot路徑/settle狀態/no-response旗標)。存在原因：這個專案已經因為
+「兩邊分開跑、事後拼screenshot比對」反覆繞路過(索爾/盜賊誤判、`~/fd2-run/FD2.EXE`污染事件)——
+把「同一個按鍵送兩邊」這個動作本身變成一個機械化、逐步紀錄的原子操作,至少讓「兩邊到底是不是同一個
+時間點/同一個輸入」不再是要事後回憶的事。**刻意沒做的事**：不負責啟動/同步兩邊到同一個起始畫面
+(remake跟DOSBox-X的launch語意差太多,場景同步只能由呼叫端自己決定要不要先手動對齊)、不負責判斷
+兩張截圖是否「相同」(只負責配對存檔,比對仍是人/agent讀圖的工作)。獨立instance(`dv_remake`+
+`dv_dosbox`,各自單獨啟動、沒有刻意同步起始畫面)live測試`step`一次:manifest正確寫入、兩邊
+screenshot都是有效PNG(remake那張是索爾對父王對話的過場,dosbox那張是片頭鑰匙孔logo)——**兩邊
+畫面確實不同**,這正確反映了兩邊沒有被同步到同一個時間點的事實(這是預期行為,不是bug:這個工具
+本來就不負責同步起始狀態),也再次確認manifest/檔案配對的機制本身是對的。
+
 ### 誠實記錄：這個工具刻意沒有解決什麼
 
 **輸入可靠性問題**：`key --wait`/`key --settle`/`wait-settle`是`fd2_live_input_helper.{py,sh}`
