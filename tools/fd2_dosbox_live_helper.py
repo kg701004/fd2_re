@@ -683,7 +683,21 @@ def build_parser():
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    args.func(args)
+    # RuntimeError from sh_checked()/mem_dump() etc. already carries a full,
+    # specific explanation (the .sh script's own die() message, or an
+    # unexpected-empty-output diagnosis) -- print just that message and exit
+    # nonzero, instead of a raw Python traceback (found live 2026-09-02
+    # during a full tool audit: every error path DID surface the right
+    # information, just buried under traceback noise a caller has to scroll
+    # past). SystemExit is deliberately NOT caught here -- cmd_* functions
+    # that raise SystemExit directly (e.g. `key --settle` on TIMEOUT) already
+    # produce their own intentional message + exit code and must pass through
+    # unchanged.
+    try:
+        args.func(args)
+    except RuntimeError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
     return 0
 
 

@@ -1116,3 +1116,57 @@ Live測試全程使用獨立instance(`dosboxtoolcheck`/`dosboxtoolcheck2`/`dosbo
 或修改`~/fd2-run/FD2.EXE`——`verify-canonical`預設路徑跑出的`MISMATCH`結果(`72e36e47...`)與已知
 的ch27 debug-patch狀態(`docs/knowledge-base/92-m5-normal-playthrough-log.md`續八/續九)完全吻合,
 `--path`指向`C:\Users\kg701\Desktop\GAME\FD2`那份獨立乾淨備份時正確回報`OK`——兩種路徑都驗證過。
+
+### 續 — windowfocus修法後的完整迴歸測試(2026-09-02,用戶明確要求「完整檢測工具本身」)
+
+在92續六發現並修好`cmd_send_keys`/`cmd_enter_debugger`缺少`windowfocus --sync`的問題之後,
+用戶要求把整個工具(不只按鍵傳遞這一項)重新完整測過一輪。方法：全新instance
+(`fulltest`/`fulltest2`/`fulltest3`,對`~/fd2-run-pristine`),逐一測每個子指令的正常路徑
+跟至少一個錯誤路徑,不假設「先前測過一次就代表現在還是對的」。
+
+**全部驗證通過(正常路徑)**：
+- `verify-canonical`——預設路徑正確抓到`~/fd2-run/FD2.EXE`的已知污染狀態(MISMATCH,
+  `72e36e47...`)、`.pristine_bak`正確回報OK；`~/fd2-run-pristine`整份也正確回報OK(兩個檔案都
+  match pristine hash)。
+- `status`/`--stale-after`——預設3600秒不誤報剛開的instance；手動給極小門檻(`--stale-after 3`)
+  正確標出STALE警告,行為與原始碼邏輯一致。
+- `screenshot`——raw/`--autocrop`/`--resize`三種模式`identify`逐一核對維度：raw恆為1024x768
+  (整個Xvfb畫面,未被autocrop/resize動過,符合文件承諾)；autocrop view裁到640x415(符合doc記載的
+  640x417再扣掉fuzzy trim的幾px)；resize view精確縮放到指定的320x240,無變形。
+- `key`——別名(`confirm`/`up`/`down`/`left`/`right`/`space`)全部正確解析成xdotool key name；
+  `--flag-no-response`在沒有`--settle`時正確印警告並忽略,不會誤用。
+- `debugger-status`/`--baseline`——ACTIVE/INACTIVE偵測正確；baseline SCREEN_CHECK交叉比對機制
+  本身運作正常,但**再次現場驗證了原始碼註解裡已經記載的「pane文字離開debugger後可能不會即時更新」
+  這個已知限制**(連續3次Alt+Pause切換後,pane文字仍持續顯示ACTIVE、`Code Overview`字串仍在——用
+  原始`tmux capture-pane`直接讀Register Overview欄位交叉確認,這不是新bug,是已知caveat的再次
+  現場複現，不需要修）。
+- `wait-settle`獨立指令——在畫面確實靜止時2次輪詢內就正確settle,行為符合文件描述(先前續六發現的
+  「持續動畫畫面永遠不settle」不是這個指令本身壞掉,是特定畫面類型的固有限制,這裡在非動畫畫面上
+  驗證了正常情況也是對的)。
+- `mem dump`/`mem read-unit-record`——正常路徑成功寫出並hexdump；`read-unit-record`對超出
+  dump範圍的欄位正確印出`<out of range>`而非猜測或崩潰。
+- N-way隔離——同時起兩個instance(`fulltest`/`fulltest2`,各自獨立DISPLAY port `:199`/`:299`),
+  對`fulltest2`單獨送鍵後用md5確認`fulltest`的畫面完全不受影響(跟送鍵前byte-for-byte相同)——隔離
+  機制正常。
+- `teardown-all`——同時關閉兩個instance,`status`確認乾淨,無殘留Xvfb/tmux/dosbox-x行程。
+
+**錯誤路徑全部給出正確的診斷內容,但發現一個真實的呈現面缺口(已修)**：`mem dump --selector 0`
+(零selector防呆)、對不存在instance送`screenshot`——兩者底層`.sh`腳本回傳的錯誤訊息內容都完全正確
+且資訊充分,但`fd2_dosbox_live_helper.py`的`sh_checked()`是用`raise RuntimeError(...)`,而`main()`
+先前沒有包`try/except`，導致CLI使用者看到的是一整段Python traceback，真正有用的錯誤訊息被埋在
+traceback最底下。**這是本輪唯一找到、且確認修好的真實缺口**——在`main()`加一層`except RuntimeError`
+只印`ERROR: {e}`+`return 1`，不動`SystemExit`路徑(`key --settle`逾時等既有的直接`raise
+SystemExit(2)`不受影響，因為`SystemExit`不是`RuntimeError`的子類別)。修好後兩個錯誤路徑重測都變成
+乾淨的一行`ERROR: ...`+`rc=1`，`--help`跟其他既有成功路徑不受影響。
+
+**另一個確認：先前(92續六)提過的`verify-canonical --path`「WSL-style路徑」文件承諾的小陷阱**——
+測試時發現如果外層呼叫本身是Git Bash(這個Bash工具)又沒加`MSYS_NO_PATHCONV=1`，一個看似合法的
+`/home/.../fd2-run-pristine`路徑會在Python腳本收到參數之前就被Git Bash自己的MSYS轉換打亂，導致
+"not a directory"的誤導性錯誤——**這不是Python工具本身的bug**(工具收到什麼字串就如實使用什麼字串，
+逐字傳遞的承諾對它自己收到的argv是兌現的)，而是「呼叫者環境」這一層的既有已知陷阱(跟這個專案其他
+`wsl bash -c`相關的MSYS路徑重寫問題同源)。價值：確認了這不需要在Python工具內修，但值得在這裡記一筆，
+避免未來有人被這個特定錯誤訊息誤導去改錯地方。
+
+**結論**：這一輪完整覆蓋所有子指令的正常+至少一個錯誤路徑，除了上述已修的traceback呈現問題之外，
+沒有找到其他功能性錯誤——`windowfocus`修法沒有引入任何回歸，工具本身現在的狀態是「機制正確、
+呈現乾淨」。commit `<見下方>`，push到`fork`。
