@@ -1352,3 +1352,28 @@ python tools/fd2_original_verify.py --run secret_shop --keep   # 保留instance�
 參考圖放在`.wsl_build/verify_refs/`（`title.png`、`title_load_menu.png`），報告與逐張截圖
 輸出到`.wsl_build/original_verify/<timestamp>/`。scenario本身是**資料**（`SCENARIOS` dict），
 新增一個驗證項目不需要寫新的流程程式碼。
+
+### 附帶清理：269個殘留harness工作目錄佔用70GB，已備份獨特存檔後回收(2026-09-03)
+
+建`fd2_original_verify.py`時順手檢查WSL2側磁碟，發現`~/fd2-run-harness-*`累積了**269個**
+歷次輪次留下的工作目錄，合計**70GB**——佔該檔案系統當時已用78GB的**90%**。這是
+`dosbox_harness.sh`的**刻意設計**（teardown訊息就寫著「workdir left in place - delete
+manually if not needed」），不是bug，但沒有人回頭清過。
+
+**刪除前先做的事（重要，不要跳過）**：逐一比對每個工作目錄裡的`FD2.SAV`與canonical
+`~/fd2-run/FD2.SAV`的md5，結果**196個含有獨一無二的存檔**（`sweep16`~`sweep30`等章節掃描
+輪的真實進度、`townE2`/`tavernE2`/`writerfire`等專輪狀態）。這些如果直接`rm -rf`就永久消失。
+故先全部備份到`~/fd2-harness-saves-archive/<instance>.SAV`——**196個檔案總共只有4.6MB**，
+成本可以忽略，卻保住了所有不可重現的狀態。
+
+**刪除前的安全檢查**：harness `status`無註冊instance、`ps aux`確認0個live dosbox-x/Xvfb、
+確認canonical的`~/fd2-run`與`~/fd2-run-pristine`**不在**`fd2-run-harness-*` glob範圍內、
+備份檔案數與大小(22987 bytes envelope)全部正確。
+
+**結果**：269個目錄刪除，磁碟已用量 **78G → 8.0G**（回收70GB，可用空間878G→948G），
+`~/fd2-run`／`~/fd2-run-pristine`／存檔備份三者完好。刪除後立刻重跑
+`fd2_original_verify.py --run town_variant0` 仍然 **PASS**，確認環境未被破壞。
+
+**給後續輪次的建議**：每輪結束teardown後順手`rm -rf ~/fd2-run-harness-<instance>`
+（`fd2_original_verify.py`已內建這個清理），否則以每個目錄約260MB的速度，很快又會累積回去。
+真的需要保留某輪狀態時，保留`FD2.SAV`即可，不需要整個目錄。
