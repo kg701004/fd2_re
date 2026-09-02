@@ -360,6 +360,19 @@ KNOWN_UNIT_RECORD_FIELDS = {
     0x07: "pre-check byte -- must not equal 0x79 ('y') for the pre-check to pass",
     0x1f: "pre-check byte -- must not equal 0x0a ('\\n') for the pre-check to pass",
     0x26: "transient/gate3 byte -- entry gate 3; expect 0x00",
+    # +0x40..+0x4f added 2026-09-02 (92-m5-normal-playthrough-log.md 續四):
+    # live-verified via a 2MB MEMDUMPBIN + byte-signature search for an
+    # 8-byte HP/MP pattern, cross-checked field-by-field against the
+    # in-game character status card (all 8 matched exactly, e.g. Sol's
+    # displayed HP042/MP000/AP016/DP012/HIT097/DX002). Values are u16 LE.
+    0x40: "HPmax (u16 LE)",
+    0x42: "HPcur (u16 LE)",
+    0x44: "MPmax (u16 LE)",
+    0x46: "MPcur (u16 LE)",
+    0x48: "AP (u16 LE, base value before weapon bonus)",
+    0x4a: "DP (u16 LE)",
+    0x4c: "HIT (u16 LE)",
+    0x4e: "DX (u16 LE)",
 }
 
 
