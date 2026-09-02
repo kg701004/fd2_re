@@ -1,5 +1,10 @@
 # 42 — RE 已記錄 vs remake 已實作:落差稽核
 
+> **2026-09-02:`remake/` 已整個移除(使用者明確指示)。** 本檔逐項核對「remake 程式碼
+> 實際做了什麼」的方法論本身(讀 code、跑 remake 截圖佐證)已失去對象——`remake/internal/
+> battle`、`remake/cmd/fd2` 等路徑已不存在。本檔內容為移除前的歷史紀錄,不代表現況。
+> 詳見 `91-worklist.md` M5 段落、memory `feedback_fd2_re_remake_verification_paused`。
+
 > 目的:逐一核對「RE knowledge-base 已記錄的機制」與「remake 程式碼實際做了什麼」,列出落差與優先度。
 > 方法:每項機制先讀對應 doc,再 grep/讀 `remake/internal/battle`、`remake/cmd/fd2` 的實作,以 code 為準,不憑印象判定。
 > 2026-07-25 重新校正本表：撤回已被後續 code 推翻的「零命中／完全沒有」斷言。序章主角隊進場(staging)由另一 agent 處理,本篇不重複列。

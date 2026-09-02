@@ -1,5 +1,13 @@
 # 58 — Remake 全流程逐章即時操作驗證日誌
 
+> **2026-09-02:`remake/` 已整個移除(使用者明確指示:「remake驗證過的資料本身就有問題,
+> 驗出來的也會有問題」)。本檔絕大部分內容是 remake 實際執行的截圖/HUD 讀值驗證紀錄,
+> 其證據基礎已被使用者判定為不可信賴;連原本已 commit 的相關程式碼修復也一併隨
+> `remake/` 移除,未逐一個別 revert。本檔以下內容為移除前的歷史紀錄,不代表現況,也
+> 不應再被引用為「已驗證」的證據——若條目同時有 DOSBox-X 原版交叉驗證,那部分本身
+> 仍然有效,但涉及 remake 一側的部分需要之後改用原版重新驗證。詳見 README.md 頂端、
+> `91-worklist.md` M5 段落、memory `feedback_fd2_re_remake_verification_paused`。
+
 > 目的：用電腦操作能力真的打開 DOSBox 跑原版 `FD2.EXE` 和 remake `fd2.exe`（正式流程
 > `FD2_CAMPAIGN=assets/scenarios/campaign_full.json`，同 `play.sh`），逐章逐機制比對，
 > 記錄每一項確認結果、每一個發現的差異/bug、每一個修正與其驗證證據。

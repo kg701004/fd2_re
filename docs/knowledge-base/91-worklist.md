@@ -8,6 +8,16 @@
 > 不要再各寫一支 `Probe*.java` 各跑一次 `analyzeHeadless`——改用 `tools/ghidra_batch_probe.py`
 > 一次餵一份 queries.json,一次 JVM 啟動查完整批,細節見 `98-tooling-infrastructure.md`。
 
+> **2026-09-02:`remake/` 已整個移除(使用者明確指示,見 M5 段落與 README.md 頂端說明)。**
+> 本文件全篇任何引用 remake 實際執行輸出(`FD2_SHOT_*`截圖、remake HUD 讀值、remake live
+> playtest)作為證據的內容——包含但不限於下方 `UI-VIS-*`/`UI-VERTICAL-*`/`UI-SHOP-*`/
+> `UI-CHURCH-*` 系列 checkbox、`E`分類裡與 remake 截圖交叉比對的段落——均反映移除前的
+> 歷史紀錄,不代表現況,其證據基礎(remake 側)已不可信賴或不可重現。單純針對**原版
+> DOSBox-X**的 live 驗證(不涉及 remake 執行)不受影響。完整範圍盤點見 memory
+> `feedback_fd2_re_remake_verification_paused`,同樣的說明也已加到
+> `58-remake-live-verification-log.md`、`98-tooling-infrastructure.md`、
+> `42-re-vs-remake-gap-audit.md`、`51-remake-playtest-gaps-r2.md` 頂端。
+
 ## 稽核索引(2026-08-19)
 
 > 對稽核當時全部`[ ]`/`[~]`項目逐一分類，交叉核對`docs/knowledge-base/*.md`與`remake/`程式碼後產出，方便日後快速掃描而不必每次重讀全文。分類：**A**=已在別處完整解決只是狀態未同步（下方已直接改回`[x]`並附依據，不再重複列出）、**B**=需使用者本人（實聽/人眼校對/遊玩判斷）、**C**=純程式實作/資產/打包工作、**D**=真正開放、agent可續靜態分析的RE項目、**E**=需live DOSBox-X驗證、**F**=卡在外部限制（遺失素材/更大範圍重構前置）。稽核當時另發現2項（215、390）在稽核開始前就已是`[x]`（初次掃描誤判為開放項），未計入下方164項統計。標「未深入查證」者代表在合理時間內無法完全確認，已保守歸類，未來若要精查請優先看這些行。

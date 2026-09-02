@@ -1,5 +1,9 @@
 # 51 — remake 試玩落差 R2（歷史快照；戰棋機制+UI，2026-07-04 使用者實測)
 
+> **2026-09-02:`remake/` 已整個移除(使用者明確指示)。** `remake/play.sh` 已不存在,本檔
+> 全部內容為移除前的歷史紀錄。詳見 `91-worklist.md` M5 段落、memory
+> `feedback_fd2_re_remake_verification_paused`。
+
 > 使用者玩 `remake/play.sh` 回報 6 項與原版落差。本篇=記錄+對策分析,**尚未實作**。
 > **注意**：部分條目後來已實作或被新 RE 推翻；不要把本篇的「尚未實作」直接當成今日狀態，
 > 以 `42` gap audit 與 `91` worklist 逐項交叉核對。

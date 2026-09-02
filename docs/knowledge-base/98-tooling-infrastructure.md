@@ -2,6 +2,13 @@
 
 > 跟遊戲本體知識無關,記錄「怎麼更快做 RE 研究」本身的工具鏈,避免每個 session 重新發明。
 
+> **2026-09-02:`remake/` 已整個移除(使用者明確指示)。** 本檔裡任何以驅動 remake 實際
+> 執行為目的的工具章節(例如「remake 側 xdotool 合成鍵盤輸入可靠性」、
+> `tools/dosbox_diff_harness.*`、`tools/fd2_live_input_helper.*` 相關段落)描述的工具
+> 現已失去作用對象(remake 執行檔已不存在),內容保留作為移除前的歷史紀錄。與
+> Ghidra/DOSBox-X 原版相關的工具章節不受影響,正常適用。詳見 `91-worklist.md` M5 段落、
+> memory `feedback_fd2_re_remake_verification_paused`。
+
 ## Ghidra 批次探測工具(`ProbeBatch.java` + `tools/ghidra_batch_probe.py`)
 
 **問題**:過去每次要用 Ghidra headless 反組譯/decompile/查 xref/查 function bounds 某個位址,
