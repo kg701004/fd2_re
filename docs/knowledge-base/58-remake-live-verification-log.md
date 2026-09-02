@@ -9807,3 +9807,24 @@ sprite」對應關係的**原版直接證據**——先前remake那個`NativeSel
 城鎮仍未補。
 
 **清理**：`ui2`/`ui3`兩個instance已`teardown`、workdir已刪除，`status`確認清空。
+
+### 2026-09-03 再續：variant1/variant2 城鎮補拍，三個背景variant的原版基準全部到齊
+
+沿用上一小節的title輪詢流程（**兩輪都是第5次poll命中、diff=0.4；`Down`後LOAD highlight
+比對diff皆為0.00**，流程穩定可重複），分別把slot0章節byte patch成`0x0B`與`0x02`：
+
+- **variant1＝`town_ch12`（北山道）**：LOAD前截圖確認槽位文字為「第十二章　北山道」，
+  五個selection的MD5各不相同(`c6552e5c`/`d871ecc1`/`14b396c0`/`0d67ffad`/`afd4001d`)，
+  背景是條紋圓頂帳篷群，與variant0的素色帳篷明顯不同。新圖：
+  [`town-hub-ch12-variant1-five-selections-original-dosbox.png`](../figures/town-hub-ch12-variant1-five-selections-original-dosbox.png)
+- **variant2＝`town_ch03`（往塞拉村途中）**：槽位文字確認為「第 三 章　往塞拉村途中」，
+  五個selection MD5亦各不相同(`4fdb8adc`/`5d8bebcf`/`454e8185`/`8bfd01e6`/`c1c13ca1`)，
+  背景是石造房舍／村落。新圖：
+  [`town-hub-ch03-variant2-five-selections-original-dosbox.png`](../figures/town-hub-ch03-variant2-five-selections-original-dosbox.png)
+
+三個variant（0=ch02羅德鎮、1=ch12北山道、2=ch03往塞拉村途中）現在都有**純原版**的五選項
+基準圖，且三者背景明顯互異、每個variant內5格MD5互異，共15格全部是真實不同畫面。`Left`鍵
+循環順序在三個variant都是`0酒店→1武器店→2出口→3道具店→4教會`，與`91-worklist.md`
+`UI-VIS-TOWN`既有記錄一致——這條結論先前是靠remake對照得出的，現在有純原版證據獨立支撐。
+
+**清理**：`v1`/`v2`兩個instance已`teardown`、workdir已刪除，`status`確認清空。
