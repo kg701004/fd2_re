@@ -9663,3 +9663,47 @@ inventory已滿8格」而非「合格收件者名單本身滿額」——見`rem
 下一輪誤解。**未動用`tools/fd2save.py`合成roster/inventory狀態去強制重現**——本輪已用完合理的
 live探索預算（完整商店目錄逐項live試驗），該工具化合成roster/inventory留給下一輪視優先順序決定
 是否投入。故此子項維持`[ ]`open，不強行關閉。
+
+## 2026-09-02(remake移除後)：純DOSBox-X原版重新驗證ch01隊伍MV與盜賊HP——不依賴remake，補上
+被判定不可信的「remake驗證過的資料」缺口
+
+**背景**：`remake/`已於同日整個移除(commit`b090ddeb`，見本檔頂端說明)，使用者接著明確要求
+「用原版去驗證補上remake的部分」，優先處理資料/數值類（MV數值、HP等）。本輪的目的是**完全
+不依賴remake**，直接用DOSBox-X原版重新讀出這些數字，取代先前(續八十三/續八十四)remake截圖
+vs DOSBox-X截圖交叉比對得出的結論，讓這些數字的證據基礎回到純原版。
+
+**前置工作：`~/fd2-run/FD2.EXE`確認並還原污染**——`feedback_fd2_re_remake_verification_paused`
+memory與doc58續二十六一帶記錄過，這份WSL2側的「原版」拷貝從2026-08-19某次ch24調查後被一個
+未還原的debug patch污染(52筆敵人成長表HP/MP/AP/DP/DX全部清成1)。核對`project_fd2_ch24_
+register_capture_resolved`memory確認該調查已在同一天(2026-08-19)純靜態解決、不再需要這份
+live checkpoint，於是直接`cp FD2.EXE.pristine_bak FD2.EXE`還原，並跟`FD2.EXE.pristine_bak`
+與`C:\Users\kg701\Desktop\GAME\FD2\FD2.EXE`(第三份獨立備份)三方md5比對，三者一致
+(`33464c81e6a364fd0660141139aa8e6e`)，確認乾淨。
+
+**方法**：`tools/dosbox_harness.sh`全新隔離instance(`mvcheck`)，從title mash Enter走完整段
+序章對白到ch01部署畫面(無任何debug hook/記憶體patch，純鍵盤操作)。逐一對索爾/亞雷斯/悠妮/
+蓋亞用**Enter(選取單位)→Enter(開啟四icon環)→Enter(進入全螢幕能力卡)**的既有已驗證流程
+(doc58續八十見「4次結果完全一致」段落)開出每個角色的LV/EX/DX/MV/HIT/AP/EV/DP完整數值卡；
+盜賊HP則直接用cursor懸停讀迷你狀態卡取得(不需選取，敵方單位無法開啟指令環)。
+
+**結果(全部live截圖逐一確認，無remake涉入)**：
+
+| 單位 | 種族/職業 | MV(live讀值) | 備註 |
+|---|---|---|---|
+| 索爾 | 人類 劍士 | **04** | 與續八十三/八十四「remake ch01.json當時MV=6是bug、真實值4」的結論一致，這次是純原版重新確認，非交叉比對 |
+| 亞雷斯 | 人類 騎士 | **07** | 與續八十三/八十四「亞雷斯MV=7本來就正確」一致 |
+| 悠妮 | 人類 法師 | **04** | 首次純原版直接讀值(先前只有remake端bug記錄，未見過本輪這種完整能力卡截圖) |
+| 蓋亞 | 機械 機兵 | **04** | 同上，首次純原版直接讀值 |
+
+盜賊(ch01初始3隻可見單位之一，鄰接索爾部署位置那隻)：cursor懸停讀出**HP=028**，與
+`tools/export_units.py`匯出值、以及doc58續七/續八「完整反組譯覆核建構器`0x10d7f..0x11018`
+確認28正確」的靜態結論吻合，這次是live讀值第三方獨立佐證(前兩次分別是remake匯出值、靜態
+disasm，這次是純原版即時讀值)。
+
+**結論**：ch01隊伍(索爾/悠妮/蓋亞MV=04，亞雷斯MV=07)與盜賊HP=028兩項數值，現在都有**不依賴
+remake**的直接原版live證據，可以放心引用。過程中意外確認`~/fd2-run/FD2.EXE`的contamination
+問題已解決，往後任何raw_unit_key 76-127範圍的原版live讀值都可以直接信任這份拷貝，不需要再
+提醒「先跟pristine_bak核對」。
+
+**清理**：`mvcheck`instance已`teardown`，殘留workdir(`~/fd2-run-harness-mvcheck`)已手動刪除，
+`status`確認清空。本輪程式碼異動：無(純live操作+還原一個資料檔案)。文件異動：本節。
