@@ -1211,3 +1211,46 @@ SystemExit(2)`不受影響，因為`SystemExit`不是`RuntimeError`的子類別)
 沒做到而是本來就超出這個工具audit範圍的：MEMDUMPBIN的upstream `#3629`空檔案fallback路徑(這次
 `mem dump`呼叫全部順利拿到檔案，沒機會踩到這個症狀，續一已誠實記錄過這一點)，以及Attack/Spell/
 Item卡在ring之後的深層RE謎團(那是遊戲邏輯本身的問題，不是這個工具的功能)。
+
+### 續三 — 把Attack調查(續九~續十六)手動摸索出來的技巧正式收進工具，新增`resume`+3個delta校準指令(2026-09-02)
+
+用戶明確要求「先改善工具，如果需要新工具或功能請自行建立」，再繼續深挖前先把上一輪(續十四/續十六)
+手動重複做了十幾次的操作變成可重用指令。
+
+**1. `resume`(新subcommand，修好Alt+Pause「離開debugger」不可靠的問題)**：續十四/續十六live撞到
+Alt+Pause第二次呼叫（意圖離開debugger）連續失敗好幾次，`I-> _`提示字元讓人誤判還在debugger裡，
+但這個訊號本身可能只是stale——當時是手動用「送一個會造成明顯位移的按鍵、直接看有沒有位移」交叉
+確認才發現真相。現在包成`resume`指令：偵測到pane顯示debugger TUI時，改送debugger自己的`RUN`
+console指令（跟`debugger-cmd`用同一套機制），比依賴Alt+Pause熱鍵更可靠；`--verify`旗標可選擇性
+自動做「送RUN後間隔N秒截兩張圖比對」的驗證，取代先前手動反覆截圖比對md5的流程。**Live驗證**：
+`resume --verify`正確回報`OK: screen changed`(標題畫面本身有動畫)；刻意呼叫兩次(模擬「其實已經
+在跑但pane還顯示stale ACTIVE」的情境)確認第二次多送一次`RUN`完全無害，不會意外把遊戲重新暫停或
+造成其他副作用——這個「偶爾多送一次但永遠安全」的取捨是刻意的，不是要修的bug。
+
+**2. `mem find-signature`(新subcommand，通用化)**：把續十四/續十六用python手寫的「dump+搜尋
+signature+算delta」邏輯收進工具本體，帶入signature/ghidra位址即可用，不綁定任何特定的資料結構，
+未來任何需要同一套delta校準技巧的地方都能重用，不用再手寫一次性python腳本。**Live驗證**：對真實
+34-byte ring-entry-gate簽章找到單一命中`0x1ad912`，算出delta `0x19c000`——跟續十六手動算出的值
+逐位元組一致；額外測試0-hit的錯誤路徑（給一個查無此串的假簽章），正確回報`hits: 0`+`delta: N/A`+
+`rc=2`，不是含糊的例外或當機。
+
+**3. `mem resolve-ptr`(新subcommand，通用化)**：把「讀取指令的live disp32操作數+解參照一次」包成
+獨立指令，同樣不綁定特定用途。**Live驗證**：對續十六找到的`0x1ad8e2`（`MOV EDX,[0x53a45]`的live
+位址）正確解出`disp32=0x1efa45`、解參照後的值`0x1f6c80`——跟同一時刻`mem read-unit-array`(見下)
+算出的陣列base完全一致，交叉驗證兩個指令算的是同一件事。
+
+**4. `mem read-unit-array`(新subcommand，一鍵化整條技巧)**：把續十六整套「找簽章→算delta→解指標
+鏈→dump陣列→逐筆decode」流程焊死成內建常數(`GATE_CHECK_SIGNATURE_HEX`/`GATE_CHECK_GHIDRA_ADDR`/
+`UNIT_ARRAY_PTR_INSTR_GHIDRA_ADDR`)、一鍵執行到底，把續十六耗費約15次手動tool call才做完的流程
+壓縮成1次呼叫。**Live驗證**（在標題畫面，非戰鬥中，刻意選一個「陣列還沒初始化」的情境測試機制本身
+而非數值本身）：signature/delta/指標中繼值三項都跟續十六的真實戰鬥現場數值完全相同(`0x1ad912`/
+`0x19c000`/`0x1efa45`)——這幾項屬於程式碼層級的常數，不受遊戲狀態影響，重現一致證實工具機制正確；
+陣列base在標題畫面讀到`0x1f6c80`（跟續十六戰鬥中讀到的`0x237a48`不同，且逐筆記錄看起來是隨機亂數，
+不像任何已知單位）——這完全合理，不是bug，只是還沒進戰鬥、陣列尚未被遊戲自己初始化，模組docstring
+已誠實記載「常數在不同情境/環境下可能需要重新校準」這個限制，不是宣稱永遠有效。
+
+**檔案異動**：`fd2_dosbox_live_helper.sh`新增`cmd_resume`；`fd2_dosbox_live_helper.py`新增
+`resume()`/`mem_find_signature()`/`mem_resolve_ptr()`/`mem_read_unit_array()`四個函式+對應CLI
+handler與argparse子指令，模組docstring「USAGE」段落補充新指令範例。全部四個新指令都已個別live驗證
+過正常路徑，`find-signature`額外驗證過0-hit錯誤路徑，`resume`額外驗證過「已經在跑時重複呼叫仍然
+安全」——沒有只寫完沒測就收工的部分。

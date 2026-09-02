@@ -89,6 +89,14 @@
 #          genuinely paused emulator's own window cannot repaint; a CHANGED
 #          screenshot while the pane still says ACTIVE means the pane is
 #          stale, not that execution is paused).
+#   fd2_dosbox_live_helper.sh resume <name>
+#       -- NEW 2026-09-02: reliably resume execution from the debugger by
+#          typing its own "RUN" console command, instead of a second
+#          Alt+Pause toggle -- built after that toggle's "exit" direction
+#          was observed to fail silently several times in a row in a real
+#          session (see docs/knowledge-base/92-m5-normal-playthrough-log.md
+#          續十四/續十六). No-op (does not send RUN) if the pane doesn't
+#          currently look like the debugger TUI.
 #   fd2_dosbox_live_helper.sh mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>
 #       -- NEW: packages the proven byte-signature/MEMDUMPBIN live-memory-
 #          read technique (docs/knowledge-base/48-dosbox-x-debugger-build.md,
@@ -450,6 +458,53 @@ cmd_debugger_status() {
 }
 
 # --------------------------------------------------------------------------
+# resume -- reliably resume execution from the debugger. NEW 2026-09-02,
+# built live after Alt+Pause's "exit debugger" direction failed silently
+# several times in a row during a real investigation session (debugger TUI
+# stayed up -- `I->` prompt still showing in the tmux pane -- while its
+# "enter" direction stayed reliable throughout; see docs/knowledge-base/
+# 92-m5-normal-playthrough-log.md's 2026-09-02 續十四/續十六 sections for
+# the live incidents this was built to fix). The working alternative found
+# live: type the debugger's OWN "RUN" console command (the same mechanism
+# `debugger-cmd` already uses) instead of depending on the Alt+Pause hotkey
+# toggle a second time.
+#
+# Only acts when the pane currently looks like the debugger TUI ("Code
+# Overview" found) -- if it doesn't, assumes execution is already running
+# and does nothing (harmless either way: dosbox-x's normal DOS console pane
+# does not treat stray "RUN" text as a command outside the debugger, but
+# skipping it is still cleaner and faster, and avoids polluting the pane's
+# scrollback with a no-op).
+#
+# KNOWN LIMITATION, confirmed live 2026-09-02: the same stale-pane blind
+# spot documented on cmd_debugger_status above also affects THIS check --
+# "Code Overview" text can still be sitting in the pane's scrollback well
+# after execution has genuinely resumed, so this command can send a
+# redundant RUN even when already running. Confirmed harmless in practice
+# (sending RUN again while already running does not break or re-pause
+# anything, verified via `resume --verify` called twice in a row against a
+# live instance) -- the tradeoff (occasionally redundant but always safe)
+# is intentional, not a bug to fix.
+# --------------------------------------------------------------------------
+
+cmd_resume() {
+    local name=${1:-}
+    [[ -n "$name" ]] || die "usage: resume <name>"
+    load_state "$name"
+    local pane
+    pane=$(tmux -L "$TMUX_SOCKET" capture-pane -t "$TMUX_SESSION" -p 2>/dev/null) \
+        || die "could not capture tmux pane for $name (session $TMUX_SESSION, socket $TMUX_SOCKET) -- is the instance still alive? check 'dosbox_harness.sh status'"
+    if echo "$pane" | grep -q "Code Overview"; then
+        tmux -L "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION" -l "RUN"
+        sleep 0.3
+        tmux -L "$TMUX_SOCKET" send-keys -t "$TMUX_SESSION" -l $'\r'
+        echo "[$name] pane showed debugger TUI -- sent RUN console command to resume execution"
+    else
+        echo "[$name] pane does not show debugger TUI -- assuming already running, no action taken (if you suspect the pane is stale rather than genuinely running, screenshot-diff to confirm instead of forcing another RUN)"
+    fi
+}
+
+# --------------------------------------------------------------------------
 # mem-dump -- packages the proven byte-signature/MEMDUMPBIN live-memory-read
 # technique into one push-button call. See this file's header comment and
 # fd2_dosbox_live_helper.py's module docstring for the full citation trail.
@@ -563,6 +618,7 @@ main() {
         screenshot)         cmd_screenshot "$@" ;;
         wait-settle)        cmd_wait_settle "$@" ;;
         debugger-status)    cmd_debugger_status "$@" ;;
+        resume)             cmd_resume "$@" ;;
         mem-dump)           cmd_mem_dump "$@" ;;
         verify-canonical)   cmd_verify_canonical "$@" ;;
         enter-debugger)     cmd_enter_debugger "$@" ;;
@@ -578,6 +634,7 @@ usage: $0 <command> [args]
   screenshot <name> <out> [resize] [autocrop:0|1] [view_out]   raw always at <out>; window-bounds-crop (+optional fuzzy trim)/resize (if any) go to <view_out>
   wait-settle <name> <tmp_prefix> [max_tries] [interval_s] [baseline]   poll until 2 consecutive shots match (mitigation, not a fix, for known input-reliability issue); optional baseline screenshot adds response=NO_RESPONSE/CHANGED
   debugger-status <name> [baseline]          best-effort check of whether the ncurses debugger TUI is showing; optional baseline screenshot adds a SCREEN_CHECK cross-check
+  resume <name>                              reliably resume from the debugger via its own RUN console command (fixes Alt+Pause's flaky "exit" direction); no-op if pane doesn't look paused
   mem-dump <name> <selector_hex> <linear_hex> <bytecount_hex> <out_path>   MEMDUMPBIN wrapper with known-footgun guards
   verify-canonical [path]                   md5 integrity check vs known-pristine FD2.EXE (default \$HOME/fd2-run); READ-ONLY, never restores
   enter-debugger <name>                     passthrough to dosbox_harness.sh

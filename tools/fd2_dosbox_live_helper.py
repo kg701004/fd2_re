@@ -101,11 +101,23 @@ Key delivery + screenshot:
     python tools/fd2_dosbox_live_helper.py key --instance myrun Escape --settle
     python tools/fd2_dosbox_live_helper.py screenshot --instance myrun --label title --autocrop
 
-Live memory read (debugger must already be entered -- see debugger-status):
+Live memory read (debugger must already be entered -- see debugger-status;
+use `resume`, not a second `enter-debugger`, to reliably exit -- Alt+Pause's
+"exit" direction has been observed to fail silently, see module docstring
+section 5):
     python tools/fd2_dosbox_live_helper.py enter-debugger --instance myrun
     python tools/fd2_dosbox_live_helper.py debugger-status --instance myrun
     python tools/fd2_dosbox_live_helper.py mem dump --instance myrun --selector 0170 --linear 26DF88 --bytecount 32
     python tools/fd2_dosbox_live_helper.py mem read-unit-record --instance myrun --selector 0170 --linear 26DF88
+    python tools/fd2_dosbox_live_helper.py resume --instance myrun --verify
+
+Delta calibration + the ring-entry-gate dynamic unit array (see module
+docstring section 5 -- `read-unit-array` bakes in a proven-reproducible
+recipe as a one-shot; `find-signature`/`resolve-ptr` are generic building
+blocks for any future pointer-chase need):
+    python tools/fd2_dosbox_live_helper.py mem read-unit-array --instance myrun --selector 0170
+    python tools/fd2_dosbox_live_helper.py mem find-signature --instance myrun --selector 0170 --linear 100000 --bytecount 200000 --hex-sig "83fa02750e..." --ghidra-addr 11912
+    python tools/fd2_dosbox_live_helper.py mem resolve-ptr --instance myrun --selector 0170 --live-addr 1ad8e2
 
 Canonical-file integrity:
     python tools/fd2_dosbox_live_helper.py verify-canonical
@@ -250,6 +262,14 @@ def debugger_cmd(instance: str, text: str) -> str:
 def debugger_status(instance: str, baseline: Path | None = None) -> str:
     args = ["debugger-status", instance] + ([to_wsl_path(baseline)] if baseline is not None else [])
     return sh_checked(*args, timeout=15)
+
+
+def resume(instance: str) -> str:
+    """Reliably resume from the debugger via its own RUN console command --
+    see fd2_dosbox_live_helper.sh's cmd_resume docstring for why this exists
+    (Alt+Pause's "exit debugger" direction was found live to fail silently
+    several times in a row, 2026-09-02)."""
+    return sh_checked("resume", instance, timeout=15)
 
 
 # --------------------------------------------------------------------------
@@ -399,7 +419,160 @@ def format_hexdump(data: bytes, bytes_per_line: int = 16) -> str:
 
 
 # --------------------------------------------------------------------------
-# 5. Canonical-file integrity
+# 5. Delta calibration + dynamic-array pointer chase
+# --------------------------------------------------------------------------
+# Packages the byte-signature/delta technique from
+# docs/knowledge-base/reference (memory `fd2-dosbox-live-memory-extraction`)
+# and doc58's 續十三 pointer-dereference refinement into reusable, generic
+# commands, plus one domain-specific one-shot command for the specific
+# ring-entry-gate array this project has repeatedly needed. Built 2026-09-02
+# after manually repeating this exact multi-step recipe (dump, search,
+# compute delta, resolve a load-time-patched disp32, dereference, dump
+# records) across ~15 separate tool calls in one investigation round --
+# see docs/knowledge-base/92-m5-normal-playthrough-log.md's 續十四/續十六.
+#
+# `find-signature` and `resolve-ptr` are GENERIC: they take a hex signature/
+# ghidra address, or a live address/disp offset, as arguments -- they do not
+# know anything about unit records and can be reused for any future
+# delta-calibration need in this game, not just this one.
+#
+# `read-unit-array` is the DOMAIN-SPECIFIC one-shot: it bakes in the
+# specific signature/addresses for the ring-entry-gate array (proven
+# reproducible across 2 independent fresh boots 2026-09-02, see doc92
+# 續十四) as a starting point, and chains find-signature -> resolve-ptr ->
+# a final array dump + per-record decode into one call. If the baked-in
+# constants ever stop matching (0 or >1 signature hits, or decoded HP
+# fields don't match any known living unit), that means the recipe needs
+# recalibrating for a changed environment -- fall back to the generic
+# find-signature/resolve-ptr commands with a fresh signature, don't assume
+# the constants are eternal (doc58's own standing warning still applies in
+# principle, even though this project has now seen the SAME delta/pointer/
+# array-base values reproduce across 3 independent sessions total, spanning
+# weeks -- see doc92 續十四 for the full reproducibility discussion).
+
+# Ghidra-static-address anchor for the already-documented 34-byte
+# ring-entry-gate signature (docs/knowledge-base/13-battle-menu-system.md's
+# `0x117e7`/`0x11912` section; independently re-derived byte-for-byte via a
+# Ghidra headless probe 2026-09-02, see doc92 續十四). This is the START of
+# the CMP EDX,0x2 / gate-check sequence inside FUN_000117e7.
+GATE_CHECK_SIGNATURE_HEX = (
+    "83fa02750ef64005807508"       # CMP EDX,0x2; JNZ; TEST [EAX+5],0x80; JNZ
+    "0fb64026"                      # MOVZX EAX,byte ptr [EAX+0x26]
+    "85c0740b56e8c26100" "0083c404eb1f6a016a07"  # TEST EAX,EAX; JZ; ...; CALL 0x17aed; ...
+)
+GATE_CHECK_GHIDRA_ADDR = 0x11912
+# The nearer of the two `MOV EDX,[0x53a45]` sites found inside the same
+# function (ghidra 0x1182a and 0x118e2 both work equally well since both
+# are well within the same signature-matched code block/page; 0x118e2 is
+# used here because it sits immediately before the signature's own start).
+UNIT_ARRAY_PTR_INSTR_GHIDRA_ADDR = 0x118e2
+# `MOV EDX, dword ptr [imm32]` is opcode `8B 15` (2 bytes) then a 4-byte
+# little-endian disp32 -- the disp32 is what the loader may have patched
+# and what we need to read LIVE, not trust from the static file.
+MOV_ABS_DISP32_OFFSET = 2
+UNIT_RECORD_STRIDE = 0x50
+
+
+def mem_find_signature(instance: str, selector: str, linear: str, bytecount: str,
+                        hex_sig: str, ghidra_addr: int, out: Path) -> tuple[list[int], int | None]:
+    """Dump <bytecount> bytes at <selector>:<linear> and search for hex_sig
+    (a hex string, spaces ignored). Returns (list_of_live_hit_addresses,
+    delta) where delta = hit_address - ghidra_addr, only computed (non-None)
+    when exactly one hit was found -- a signature that hits 0 or >1 times
+    cannot yield a trustworthy delta, the caller must treat that as a
+    failed calibration attempt, not silently pick the first hit."""
+    path, _size = mem_dump(instance, selector, linear, bytecount, out)
+    data = path.read_bytes()
+    sig = bytes.fromhex(hex_sig.replace(" ", ""))
+    base = int(linear, 16)
+    hits: list[int] = []
+    idx = 0
+    while True:
+        idx = data.find(sig, idx)
+        if idx == -1:
+            break
+        hits.append(base + idx)
+        idx += 1
+    delta = (hits[0] - ghidra_addr) if len(hits) == 1 else None
+    return hits, delta
+
+
+def mem_resolve_ptr(instance: str, selector: str, live_addr: int, disp_offset: int,
+                     out: Path) -> tuple[int, int]:
+    """Read the instruction bytes at live_addr, extract its little-endian
+    disp32 operand at +disp_offset (the LIVE, possibly load-time-patched
+    value -- never trust the static file's own disp32 for this), then read
+    and return the 4-byte value stored AT that disp32 address (one pointer
+    dereference). Returns (disp32_address, pointed_value)."""
+    instr_path, _sz = mem_dump(instance, selector, f"{live_addr:x}", "10", out)
+    instr_bytes = instr_path.read_bytes()
+    if len(instr_bytes) < disp_offset + 4:
+        raise RuntimeError(f"only read {len(instr_bytes)} bytes at {live_addr:#x}, need at least {disp_offset + 4} to extract disp32")
+    disp32 = int.from_bytes(instr_bytes[disp_offset:disp_offset + 4], "little")
+    ptr_out = out.with_name(f"{out.stem}_ptrval{out.suffix}")
+    ptr_path, _sz2 = mem_dump(instance, selector, f"{disp32:x}", "4", ptr_out)
+    ptr_bytes = ptr_path.read_bytes()
+    value = int.from_bytes(ptr_bytes[:4], "little")
+    return disp32, value
+
+
+def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
+                         num_records: int = 20, dump_linear: str = "100000",
+                         dump_bytecount: str = "200000") -> dict:
+    """One-shot: run the full baked-in ring-entry-gate delta-calibration
+    recipe and return a dict with every intermediate value plus the decoded
+    records, so a caller can inspect where a failed calibration broke down
+    rather than just getting an opaque error. See module docstring section
+    5 for the full citation trail and the "constants may need recalibrating"
+    caveat."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    code_dump = out_dir / "code_dump.bin"
+    hits, delta = mem_find_signature(instance, selector, dump_linear, dump_bytecount,
+                                      GATE_CHECK_SIGNATURE_HEX, GATE_CHECK_GHIDRA_ADDR, code_dump)
+    result: dict = {"signature_hits": [hex(h) for h in hits], "delta": hex(delta) if delta is not None else None}
+    if delta is None:
+        result["error"] = (f"signature search found {len(hits)} hits (need exactly 1) -- "
+                            f"cannot compute a trustworthy delta; the baked-in signature/constants "
+                            f"may need recalibrating for this environment, see module docstring section 5")
+        return result
+
+    mov_live = UNIT_ARRAY_PTR_INSTR_GHIDRA_ADDR + delta
+    result["mov_edx_live_addr"] = hex(mov_live)
+    instr_dump = out_dir / "instr_dump.bin"
+    disp32, array_base = mem_resolve_ptr(instance, selector, mov_live, MOV_ABS_DISP32_OFFSET, instr_dump)
+    result["ptr_variable_addr"] = hex(disp32)
+    result["array_base"] = hex(array_base)
+
+    array_dump = out_dir / "array_dump.bin"
+    array_path, array_size = mem_dump(instance, selector, f"{array_base:x}",
+                                       f"{num_records * UNIT_RECORD_STRIDE:x}", array_dump)
+    data = array_path.read_bytes()
+    records = []
+    for i in range(num_records):
+        rec = data[i * UNIT_RECORD_STRIDE:(i + 1) * UNIT_RECORD_STRIDE]
+        if len(rec) < UNIT_RECORD_STRIDE:
+            break
+        records.append({
+            "index": i,
+            "acted": rec[0x05],
+            "camp": rec[0x06],
+            "gate3": rec[0x26],
+            "hp_cur": int.from_bytes(rec[0x42:0x44], "little"),
+            "hp_max": int.from_bytes(rec[0x40:0x42], "little"),
+            "mp_cur": int.from_bytes(rec[0x46:0x48], "little"),
+            "mp_max": int.from_bytes(rec[0x44:0x46], "little"),
+            "ap": int.from_bytes(rec[0x48:0x4a], "little"),
+            "dp": int.from_bytes(rec[0x4a:0x4c], "little"),
+            "hit": int.from_bytes(rec[0x4c:0x4e], "little"),
+            "dx": int.from_bytes(rec[0x4e:0x50], "little"),
+            "raw_hex": rec.hex(),
+        })
+    result["records"] = records
+    return result
+
+
+# --------------------------------------------------------------------------
+# 6. Canonical-file integrity
 # --------------------------------------------------------------------------
 
 def verify_canonical(path: str | None) -> tuple[str, int]:
@@ -470,6 +643,25 @@ def cmd_debugger_cmd(args):
 def cmd_debugger_status(args):
     baseline = Path(args.baseline) if args.baseline else None
     print(debugger_status(args.instance, baseline))
+
+
+def cmd_resume(args):
+    print(resume(args.instance))
+    if args.verify:
+        baseline = DEFAULT_SHOT_DIR / args.instance / f"resume_before_{int(time.time() * 1000)}.png"
+        screenshot(args.instance, baseline)
+        time.sleep(args.verify_wait)
+        after = DEFAULT_SHOT_DIR / args.instance / f"resume_after_{int(time.time() * 1000)}.png"
+        screenshot(args.instance, after)
+        import hashlib
+        b_hash = hashlib.md5(baseline.read_bytes()).hexdigest()
+        a_hash = hashlib.md5(after.read_bytes()).hexdigest()
+        if b_hash == a_hash:
+            print(f"WARNING: screen unchanged {args.verify_wait:.1f}s after resume -- may still be paused "
+                  f"(or a genuinely static screen with no idle animation; not proof either way on its own, "
+                  f"same caveat as wait-settle/debugger-status --baseline)", file=sys.stderr)
+        else:
+            print(f"OK: screen changed within {args.verify_wait:.1f}s after resume -- execution is genuinely running", file=sys.stderr)
 
 
 def cmd_key(args):
@@ -560,6 +752,53 @@ def cmd_mem_read_unit_record(args):
             print(f"  +0x{offset:02x} = <out of range, dump only covers 0x{len(data):x} bytes>  -- {label}")
 
 
+def cmd_mem_find_signature(args):
+    out = Path(args.out) if args.out else (DEFAULT_SHOT_DIR / args.instance / f"sigsearch_{int(time.time())}.bin")
+    hits, delta = mem_find_signature(args.instance, args.selector, args.linear, args.bytecount,
+                                      args.hex_sig, int(args.ghidra_addr, 16), out)
+    print(f"dump: {out}")
+    print(f"hits: {len(hits)}")
+    for h in hits:
+        print(f"  {h:#x}")
+    if delta is not None:
+        print(f"delta: {delta:#x}  (= hit_addr - ghidra_addr, only trustworthy because exactly 1 hit)")
+    else:
+        print(f"delta: N/A -- need exactly 1 hit to compute a trustworthy delta, got {len(hits)}", file=sys.stderr)
+        raise SystemExit(2)
+
+
+def cmd_mem_resolve_ptr(args):
+    out = Path(args.out) if args.out else (DEFAULT_SHOT_DIR / args.instance / f"resolveptr_{int(time.time())}.bin")
+    live_addr = int(args.live_addr, 16)
+    disp_offset = int(args.disp_offset, 16)
+    disp32, value = mem_resolve_ptr(args.instance, args.selector, live_addr, disp_offset, out)
+    print(f"instruction live addr: {live_addr:#x}")
+    print(f"disp32 (pointer variable addr): {disp32:#x}")
+    print(f"value at that address (dereferenced): {value:#x}")
+
+
+def cmd_mem_read_unit_array(args):
+    out_dir = Path(args.out_dir) if args.out_dir else (DEFAULT_SHOT_DIR / args.instance / f"unitarray_{int(time.time())}")
+    result = mem_read_unit_array(args.instance, args.selector, out_dir, num_records=args.num_records)
+    print(f"signature hits: {result['signature_hits']}")
+    print(f"delta: {result['delta']}")
+    if "error" in result:
+        print(f"ERROR: {result['error']}", file=sys.stderr)
+        raise SystemExit(2)
+    print(f"MOV EDX,[...] live addr: {result['mov_edx_live_addr']}")
+    print(f"pointer variable addr: {result['ptr_variable_addr']}")
+    print(f"array base: {result['array_base']}")
+    print()
+    print(f"{'idx':>3}  {'camp':>4}  {'acted':>5}  {'gate3':>5}  {'HP':>9}  {'MP':>9}  {'AP':>4}  {'DP':>4}  {'HIT':>4}  {'DX':>4}")
+    for rec in result["records"]:
+        hp = f"{rec['hp_cur']}/{rec['hp_max']}"
+        mp = f"{rec['mp_cur']}/{rec['mp_max']}"
+        print(f"{rec['index']:>3}  {rec['camp']:#04x}  {rec['acted']:#05x}  {rec['gate3']:#05x}  "
+              f"{hp:>9}  {mp:>9}  {rec['ap']:>4}  {rec['dp']:>4}  {rec['hit']:>4}  {rec['dx']:>4}")
+    print()
+    print(f"raw dump dir: {out_dir}")
+
+
 def cmd_verify_canonical(args):
     out, rc = verify_canonical(args.path)
     print(out)
@@ -603,6 +842,17 @@ def build_parser():
                      help="path to a screenshot taken at a known moment (e.g. when the debugger was entered); "
                           "if given, adds a SCREEN_CHECK cross-check for the documented stale-pane blind spot")
     sp.set_defaults(func=cmd_debugger_status)
+
+    sp = sub.add_parser("resume", help="reliably resume from the debugger via its own RUN console command "
+                                        "(fixes Alt+Pause's flaky 'exit' direction, see module docstring section 5); "
+                                        "no-op if the pane doesn't currently look paused")
+    sp.add_argument("--instance", required=True)
+    sp.add_argument("--verify", action="store_true",
+                     help="take 2 screenshots --verify-wait apart after resuming and warn on stderr if "
+                          "they're pixel-identical (best-effort 'still looks paused' signal, not proof -- "
+                          "a genuinely static screen with no idle animation will also look unchanged)")
+    sp.add_argument("--verify-wait", type=float, default=1.5)
+    sp.set_defaults(func=cmd_resume)
 
     sp = sub.add_parser("key", help="send one or more keys, confirmed by a wait or a settle-poll -- never blind")
     sp.add_argument("--instance", required=True)
@@ -670,6 +920,44 @@ def build_parser():
     sp.add_argument("--size", default=None, help=f"record size, hex, no leading 0x (default {DEFAULT_UNIT_RECORD_SIZE_HEX} = 50 bytes)")
     sp.add_argument("--out", default=None)
     sp.set_defaults(func=cmd_mem_read_unit_record)
+
+    sp = msub.add_parser("find-signature", help="generic delta calibration: dump a region, search for a hex "
+                                                  "byte signature, compute delta = hit_addr - ghidra_addr (only "
+                                                  "if exactly 1 hit) -- reusable for any future signature/delta "
+                                                  "need, not specific to the unit array")
+    sp.add_argument("--instance", required=True)
+    sp.add_argument("--selector", required=True, help="see `mem dump --selector`")
+    sp.add_argument("--linear", required=True, help="start of the region to dump, hex, no leading 0x")
+    sp.add_argument("--bytecount", required=True, help="how much to dump, hex, no leading 0x (e.g. 200000 for 2MB)")
+    sp.add_argument("--hex-sig", required=True, help="signature bytes as a hex string, spaces allowed, e.g. \"83fa02 750e\"")
+    sp.add_argument("--ghidra-addr", required=True, help="the signature's known static Ghidra address, hex, no leading 0x")
+    sp.add_argument("--out", default=None, help="output .bin path for the raw dump; default under .wsl_build/dosbox_live_helper/<instance>/")
+    sp.set_defaults(func=cmd_mem_find_signature)
+
+    sp = msub.add_parser("resolve-ptr", help="generic pointer chase: read an instruction's LIVE (load-time-"
+                                               "patched) disp32 operand and dereference it once -- reusable for "
+                                               "any future 'find the real base of a pointer-indirected structure' "
+                                               "need, not specific to the unit array")
+    sp.add_argument("--instance", required=True)
+    sp.add_argument("--selector", required=True, help="see `mem dump --selector`")
+    sp.add_argument("--live-addr", required=True, help="live address of the instruction (e.g. computed via "
+                                                         "find-signature's delta + a known Ghidra address), hex, no leading 0x")
+    sp.add_argument("--disp-offset", default="2", help="byte offset from --live-addr to the 4-byte little-endian "
+                                                         "disp32 operand, hex, no leading 0x (default 2 = opcode "
+                                                         "`8B 15` for MOV r32,[imm32])")
+    sp.add_argument("--out", default=None)
+    sp.set_defaults(func=cmd_mem_resolve_ptr)
+
+    sp = msub.add_parser("read-unit-array", help="domain-specific one-shot: runs the full baked-in ring-entry-"
+                                                   "gate delta-calibration recipe (find-signature -> resolve-ptr "
+                                                   "-> dump+decode N records) in a single call -- see module "
+                                                   "docstring section 5 for the citation trail and the "
+                                                   "'constants may need recalibrating' caveat")
+    sp.add_argument("--instance", required=True)
+    sp.add_argument("--selector", required=True, help="see `mem dump --selector`")
+    sp.add_argument("--num-records", type=int, default=20, help="how many 0x50-byte records to dump+decode from the array base (default 20)")
+    sp.add_argument("--out-dir", default=None, help="directory for the raw dump files; default under .wsl_build/dosbox_live_helper/<instance>/")
+    sp.set_defaults(func=cmd_mem_read_unit_array)
 
     sp = sub.add_parser("verify-canonical", help="read-only md5 check of FD2.EXE (+.pristine_bak) vs the known-pristine "
                                                   "hash -- NEVER writes/restores anything")
