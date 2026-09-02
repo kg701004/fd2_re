@@ -165,9 +165,9 @@ func TestLoadRejectsMalformedNativeDeathEffectTriple(t *testing.T) {
 
 func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 	units := []*Unit{
-		{MapSelectorKey: 2, HasMapSelectorKey: true},
-		{MapSelectorKey: 0, HasMapSelectorKey: true},
-		{MapSelectorKey: 2, HasMapSelectorKey: true},
+		{BattleFig: 2, HasBattleFig: true},
+		{BattleFig: 0, HasBattleFig: true},
+		{BattleFig: 2, HasBattleFig: true},
 	}
 	cache := &fdicon.NativeSelectorCache{}
 	if err := MaterializeNativeMapSelectorSlots(units, cache); err != nil {
@@ -186,8 +186,8 @@ func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 		t.Fatal("failed materialization must not mutate slots")
 	}
 	invalid := []*Unit{
-		{MapSelectorKey: 9, HasMapSelectorKey: true},
-		{MapSelectorKey: 0x100, HasMapSelectorKey: true},
+		{BattleFig: 9, HasBattleFig: true},
+		{BattleFig: 0x100, HasBattleFig: true},
 	}
 	cache = &fdicon.NativeSelectorCache{}
 	if err := MaterializeNativeMapSelectorSlots(invalid, cache); err == nil {
@@ -201,16 +201,16 @@ func TestMaterializeNativeMapSelectorSlotsRequiresExplicitKeys(t *testing.T) {
 func TestStateNativeMapSelectorCachePreservesConstructionOrder(t *testing.T) {
 	st := &State{}
 	party := []*Unit{
-		{MapSelectorKey: 9, HasMapSelectorKey: true},
-		{MapSelectorKey: 4, HasMapSelectorKey: true},
+		{BattleFig: 9, HasBattleFig: true},
+		{BattleFig: 4, HasBattleFig: true},
 	}
 	if err := st.AppendNativeMapSelectorBatch(party); err != nil {
 		t.Fatal(err)
 	}
 	scripted := []*Unit{
-		{MapSelectorKey: 0, HasMapSelectorKey: true},
-		{MapSelectorKey: 2, HasMapSelectorKey: true},
-		{MapSelectorKey: 0, HasMapSelectorKey: true},
+		{BattleFig: 0, HasBattleFig: true},
+		{BattleFig: 2, HasBattleFig: true},
+		{BattleFig: 0, HasBattleFig: true},
 	}
 	if err := st.AppendNativeMapSelectorBatch(scripted); err != nil {
 		t.Fatal(err)
@@ -233,7 +233,7 @@ func TestStateNativeMapSelectorCachePreservesConstructionOrder(t *testing.T) {
 
 func TestNativeMapSpriteKeyFailsClosedAfterLegacyFallback(t *testing.T) {
 	st := &State{}
-	valid := []*Unit{{MapSelectorKey: 7, HasMapSelectorKey: true}}
+	valid := []*Unit{{BattleFig: 7, HasBattleFig: true}}
 	st.AppendNativeMapSelectorBatchOrLegacy(valid)
 	if got, ok := st.NativeMapSpriteKey(valid[0]); !ok || got != 7 {
 		t.Fatalf("native map key=(%d,%v), want (7,true)", got, ok)

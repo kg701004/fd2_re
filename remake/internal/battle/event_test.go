@@ -250,6 +250,8 @@ func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
 		X: 1, Y: 1,
 		MapSelectorKey:           2,
 		HasMapSelectorKey:        true,
+		BattleFig:                2,
+		HasBattleFig:             true,
 		NativeMapPresentation:    NativeMapPresentationState{X: 1, Y: 1},
 		HasNativeMapPresentation: true,
 		NativeRecordByte5:        0,
@@ -262,6 +264,8 @@ func TestExecuteActionCheckedUsesNativeTurnSpawnPlacement(t *testing.T) {
 		Lv:                      2,
 		MapSelectorKey:          3,
 		HasMapSelectorKey:       true,
+		BattleFig:               3,
+		HasBattleFig:            true,
 		NativeRecordByte5:       0,
 		HasNativeRecordByte5:    true,
 		NativeRecordByte6:       1,
@@ -329,6 +333,68 @@ func TestExecuteActionCheckedFailsClosedBeforeNativeIntroMutation(t *testing.T) 
 	}
 	if len(st.Units) != 1 || st.Units[0] != active {
 		t.Fatalf("失敗前已改變 runtime roster：%#v", st.Units)
+	}
+}
+
+// TestChapter1InitialThievesDoNotAliasSolsNativeMapSelectorSlot is a
+// regression test for the remake-only bug documented in
+// docs/knowledge-base/92-m5-normal-playthrough-log.md (2026-09-01 續五/續六,
+// confirmed absent from the DOSBox-X original in 續七/續八): ch01's initial
+// thief group (map0_units.json, BattleFig=96) used to resolve to the exact
+// same NativeMapSelectorCache slot as party member 0 (索爾/Sol, BattleFig=0),
+// because MaterializeNativeMapSelectorSlots keyed the cache off
+// MapSelectorKey (raw FDFIELD b0), which is proven to be nothing more than
+// the camp byte (parse_field.py decodes it verbatim as
+// ["enemy","ally","own"][b0]) and is therefore 0 for every enemy on this map
+// regardless of species -- coincidentally colliding with Sol's own key
+// (his BattleFig, which is also 0). That collision made every enemy render
+// with Sol's portrait (attack-target HUD panel) and map sprite (idle battle
+// view) any time the shared cache resolved their slot back to key 0. The fix
+// keys the cache by BattleFig (raw FDFIELD b1 / the FDICON.B24 archive group
+// index -- independently confirmed by tools/export_sprites.py's group-indexed
+// PNG export matching the thief's own red-headband sprite) instead, so this
+// test asserts a thief unit's resolved native map-sprite key is its own
+// BattleFig and differs from Sol's.
+func TestChapter1InitialThievesDoNotAliasSolsNativeMapSelectorSlot(t *testing.T) {
+	st, err := Load("../../assets/maps/map0/map0_units.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc, err := LoadScenario("../../assets/scenarios/ch01.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc.Setup(st)
+	if st.NativeMapSelectorError != nil {
+		t.Fatalf("native selector construction failed: %v", st.NativeMapSelectorError)
+	}
+	if len(st.Units) == 0 || st.Units[0].Name != "索爾" {
+		t.Fatalf("expected 索爾 as runtime slot 0, got %#v", st.Units)
+	}
+	sol := st.Units[0]
+	solKey, ok := st.NativeMapSpriteKey(sol)
+	if !ok || solKey != 0 {
+		t.Fatalf("索爾 native map key=(%d,%v), want (0,true)", solKey, ok)
+	}
+	thieves := 0
+	for _, u := range st.Units {
+		if u == nil || u.Camp != Enemy || u.Fig != 96 {
+			continue
+		}
+		thieves++
+		key, ok := st.NativeMapSpriteKey(u)
+		if !ok {
+			t.Fatalf("thief unit lacks an enabled native map key: %#v", u)
+		}
+		if key != u.BattleFig {
+			t.Fatalf("thief native map key=%d, want its own BattleFig %d", key, u.BattleFig)
+		}
+		if key == solKey {
+			t.Fatalf("thief native map key=%d aliases 索爾's slot key=%d (Bug A/B regression)", key, solKey)
+		}
+	}
+	if thieves == 0 {
+		t.Fatal("no fig=96 enemy units were materialized by ch01 initial_groups")
 	}
 }
 
@@ -471,9 +537,13 @@ func TestChapter2RuntimeAppendOrderMatchesOriginalHandlerSlots(t *testing.T) {
 		if !ok {
 			t.Fatalf("runtime slot %d lacks an enabled native map key", slot)
 		}
-		want := map[Camp]int{Enemy: 0, Ally: 1, Own: 2}[u.Camp]
-		if key != want {
-			t.Fatalf("runtime slot %d native key=%d, want camp raw %d", slot, key, want)
+		// The cache key is BattleFig (the FDICON.B24 sprite/portrait group
+		// index), not the FDFIELD camp byte -- see MaterializeNativeMapSelectorSlots's
+		// doc comment. Asserting key==camp raw byte here would re-lock in the
+		// remake-only cross-unit sprite/portrait aliasing bug documented in
+		// docs/knowledge-base/92-m5-normal-playthrough-log.md (2026-09-01 續五/續六).
+		if key != u.BattleFig {
+			t.Fatalf("runtime slot %d native key=%d, want BattleFig %d", slot, key, u.BattleFig)
 		}
 	}
 	if len(st.Units) != 21 {

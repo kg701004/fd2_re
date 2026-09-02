@@ -118,6 +118,7 @@ func TestStateOwnsNativeMapCycleGlobalsAfterConstruction(t *testing.T) {
 	}
 	if err := st.AppendNativeMapSelectorBatch([]*Unit{{
 		X: 1, Y: 2, MapSelectorKey: 7, HasMapSelectorKey: true,
+		BattleFig: 7, HasBattleFig: true,
 	}}); err != nil {
 		t.Fatal(err)
 	}

@@ -74,7 +74,7 @@ func completeNativeMapFrameFixture(t *testing.T) (*nativeMapAssets, *MapData, *b
 		luts[i] = make([]byte, 256)
 	}
 	assets := &nativeMapAssets{
-		Terrain: nativeFrameTestBank(2, 1), Range: nativeFrameTestBank(20, 2), Units: nativeFrameTestBank(96, 3),
+		Terrain: nativeFrameTestBank(2, 1), Range: nativeFrameTestBank(20, 2), Units: nativeFrameTestBank(120, 3),
 		Controls: controls, LUTs: luts, Palette: make(color.Palette, 256), PaletteDAC: make([]byte, 256*3), Frames: nativeFrameTestHUDFrames(),
 	}
 	for i := range assets.Palette {

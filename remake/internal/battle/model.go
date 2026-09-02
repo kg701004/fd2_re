@@ -250,15 +250,37 @@ func (t *NativeConstructorTable) validate() error {
 // roster followed by scripted FDFIELD spawn groups); this function deliberately does not choose
 // that order or fall back to Fig/Portrait. It makes no partial mutation when
 // a key is absent or invalid.
+//
+// The cache key is BattleFig (raw FDFIELD b1 for scripted units, the JOIN
+// identity for player units) rather than MapSelectorKey (raw FDFIELD b0).
+// b0 is proven to be nothing more than the camp byte -- parse_field.py's own
+// decode uses it verbatim as ["enemy","ally","own"][b0], and every observed
+// FDFIELD roster shares one b0 value (0/1/2) across many visually distinct
+// units. Feeding that 0..2 range into the cache collapses every unit in a
+// camp onto the same first-seen slot, which is exactly the remake-only bug
+// documented in docs/knowledge-base/92-m5-normal-playthrough-log.md (2026-09-01
+// 續五/續六/續七/續八): enemy units rendered with the party's portrait/sprite
+// (party is always constructed first, so slot 0 = party member 0 = index key
+// 0, and camp byte 0 = enemy also resolves to key 0). BattleFig(b1) is
+// instead independently confirmed to be the true FDICON.B24 archive group
+// index: tools/export_sprites.py exports assets/sprites/fig_<grp>_f*.png by
+// requesting `grp` directly from the 1680-sprite/140-group bank, and
+// fig_096_f*.png (grp=96, this map's thief BattleFig) visually matches the
+// thief's own red-headband/black-eye-mask sprite while fig_000_f*.png (Sol)
+// is the blue-hair sprite -- exactly the classic renderer's own working
+// mapSpriteGroup()/drawUnitSprite() convention (u.Fig indexes assets/sprites
+// directly for every non-Own unit). MapSelectorKey/NativeRecordByte6 keep
+// carrying the real b0 camp byte unchanged; only the cache-slot input moves
+// to BattleFig.
 func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelectorCache) error {
 	if cache == nil {
 		return fmt.Errorf("native map selector: nil cache")
 	}
 	for i, u := range units {
-		if u == nil || !u.HasMapSelectorKey {
+		if u == nil || !u.HasBattleFig {
 			return fmt.Errorf("native map selector: unit %d has no explicit raw key", i)
 		}
-		if u.MapSelectorKey < 0 || u.MapSelectorKey > 0xff {
+		if u.BattleFig < 0 || u.BattleFig > 0xff {
 			return fmt.Errorf("native map selector: unit %d has invalid raw key", i)
 		}
 		if u.X < 0 || u.X > 0xff || u.Y < 0 || u.Y > 0xff {
@@ -267,7 +289,7 @@ func MaterializeNativeMapSelectorSlots(units []*Unit, cache *fdicon.NativeSelect
 	}
 	slots := make([]int, len(units))
 	for i, u := range units {
-		slot, err := cache.SlotFor(u.MapSelectorKey)
+		slot, err := cache.SlotFor(u.BattleFig)
 		if err != nil {
 			return fmt.Errorf("native map selector: unit %d: %w", i, err)
 		}
