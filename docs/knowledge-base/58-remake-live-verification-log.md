@@ -9707,3 +9707,71 @@ remake**的直接原版live證據，可以放心引用。過程中意外確認`~
 
 **清理**：`mvcheck`instance已`teardown`，殘留workdir(`~/fd2-run-harness-mvcheck`)已手動刪除，
 `status`確認清空。本輪程式碼異動：無(純live操作+還原一個資料檔案)。文件異動：本節。
+
+## 2026-09-03：續補UI/流程類——**發現13/18張「原版vs重製」對照圖是自我複製**，並用純原版
+重新擷取ch02城鎮五選項與武器店作為替代參考
+
+延續上一節（資料/數值類已補完），本輪處理UI/流程類。原本只打算重拍城鎮畫面，但先做了一次
+全面檢測後發現問題規模遠大於既有記錄。
+
+**★ 全面自我複製檢測（本輪最重要發現）**：對`docs/figures/`底下全部18張`*original-vs-remake*.png`
+逐張把圖切成上下兩半與左右兩半，各自算RGB MD5比對。真實的「原版vs重製」對照圖，兩側不可能
+逐位元組相同；相同即證明該圖其實是同一張畫面複製兩份。結果**13張是自我複製**：
+
+| 檔名 | 複製軸 | 半邊MD5(前12碼) |
+|---|---|---|
+| `secret-shop-ch02-original-vs-remake.png` | left==right | `f715c1299439` |
+| `secret-shop-ch02-services-return-original-vs-remake.png` | top==bottom | `f36ff2305746` |
+| `shop-equipment-recipient-ch02-original-vs-remake.png` | left==right | `28258fb3ce5b` |
+| `shop-equipment-recipient-selection1-original-vs-remake.png` | left==right | `b29a0fd51dca` |
+| `shop-purchase-ch02-selections-original-vs-remake.png` | top==bottom | `41c6e07256aa` |
+| `shop-purchase-confirm-ch02-original-vs-remake.png` | top==bottom | `2f9079237ab3` |
+| `shop-purchase-debit-ch02-original-vs-remake.png` | top==bottom | `604b845ad7a6` |
+| `shop-purchase-insufficient-ch02-original-vs-remake.png` | left==right | `6babcedfe201` |
+| `shop-purchase-success-ch02-original-vs-remake.png` | top==bottom | `be372f883a4e` |
+| `shop-variants-1-3-5-original-vs-remake.png` | top==bottom | `75e81936f586` |
+| `town-hub-original-vs-remake.png` | left==right | `8a6a4b03946d` |
+| `town-hub-selection1-original-vs-remake.png` | left==right | `60a4791d60b3` |
+| `town-hub-six-selections-original-vs-remake.png` | top==bottom | `d90d14e2afb7` |
+
+只有5張是真實兩側不同：`item-panel-original-vs-remake-ch01.png`、
+`town-hub-variant1/2-original-vs-remake.png`、`town-hub-variant1/2-bytexact-original-vs-remake.png`
+——**正好全部都是2026-08-25/26改用`tools/dosbox_diff_harness.py`之後才產生的**，與本文件
+既有記錄「早期截圖方法有問題、後期harness才可靠」的敘述一致。
+
+**與既有記錄的關係**：`91-worklist.md` `UI-VIS-TOWN`條目在2026-08-26已經撤回過其中1張
+(`town-hub-six-selections`)，當時的證據是「上下兩半diff=0，且`town-hub-original-dosbox.png`
+的MD5等同remake render」。本輪獨立重新驗證那張圖仍成立（兩半MD5皆`d90d14e2afb7...`），但
+**同時發現另外12張有完全相同的問題、從未被撤回**，其中`town-hub-original-vs-remake.png`的
+半邊MD5`8a6a4b03946d`正好等於`town-hub-original-dosbox.png`整張的MD5
+(`8a6a4b03946d1958d3af95fd4bd775c3`)，證實是同一條污染鏈上的產物。**注意界線**：兩半相同
+只證明「這張圖不構成原版vs重製對照」，不單獨證明哪一側才是真的；只有town-hub那組因為
+既有記錄已用remake render的MD5對上，才能斷定被複製的是remake側。其餘12張本輪未逐張追出
+被複製的是哪一側（remake已移除，無法再產生對照），一律降級為「非對照證據」。
+
+**純原版重新擷取（替代參考）**：`tools/dosbox_harness.sh`全新instance，`tools/fd2save.py
+--set-chapter 0:1`把slot0章節byte改成`0x01`，LOAD前先截圖確認槽位文字為「第 二 章　羅德鎮」
+（確認chapter-jump落點正確），再進城鎮。**操作面注意事項**：title選單的`Down`鍵送出後必須
+先截圖確認`LOAD`真的變成highlight（圓點marker移到LOAD那行）才能按Enter——本輪有兩次因為
+沒先確認就按Enter，結果都落在`START`開了新遊戲，浪費兩次instance。
+
+- **城鎮五選項**（ch02羅德鎮，variant0）：逐次`Left`鍵循環，截到
+  `0酒店→1武器店→2出口→3道具店→4教會`，五格RGB MD5各不相同
+  (`0d6847a7`/`d28d60e4`/`1de66aae`/`07d53707`/`f6e8110a`)，確認是五個真實不同畫面而非
+  複製；循環順序與`91-worklist.md`既有記錄的`0→1→2→3→4`(Left)一致。新圖：
+  [`town-hub-ch02-five-selections-original-dosbox.png`](../figures/town-hub-ch02-five-selections-original-dosbox.png)
+- **武器店**：店內畫面、購買清單（布衣+DP002/$50、皮甲+DP008/$300、旅行裝+DP010/$500、
+  法師袍+DP012/$750，持有金錢$10070183）、「還要什麼嗎？」四項服務選單，三張MD5各不相同
+  (`25ce9c72`/`6935c878`/`bf5130f0`)。新圖：
+  [`shop-ch02-weapon-original-dosbox.png`](../figures/shop-ch02-weapon-original-dosbox.png)
+
+兩張新圖都是**純原版、無remake側**——`remake/`已移除，往後不再產生對照圖，只留原版參考。
+`README.md`「可驗證畫面」章節的城鎮與商店兩段已改引用這兩張新圖，並各自加上勘誤說明。
+
+**誠實限制**：本輪只涵蓋ch02(variant0)的城鎮五選項與武器店三個狀態；道具店、教會、秘密商店
+(需Shift+F1 secret gate)、整備、以及variant1/2的城鎮都還沒重拍。上表13張被判定為自我複製的
+圖所對應的原始結論（購買/售出/裝備/轉移各edge case是否真的與原版一致）現在**全部失去對照
+證據**，需要時得逐項用原版重測，本輪沒有全部重做。
+
+**清理**：`townorig`/`shoporig`/`shop2`/`shop3`四個instance全部已`teardown`、workdir已刪除，
+`status`確認清空。本輪程式碼異動：無。文件異動：本節＋`README.md`。

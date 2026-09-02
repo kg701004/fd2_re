@@ -139,15 +139,39 @@ DOS 原生不能直接顯示中文。漢堂隨遊戲攜帶點陣字型，文字�
 
 ### 城鎮與商店
 
-ch02 城鎮六個選項：上排為原版 DOSBox，下排為重製；每格皆有整幀相同的
-對照結果。
+ch02 城鎮的五個選項（酒店／武器店／出口／道具店／教會），以下為 **2026-09-03
+用 DOSBox-X 原版重新擷取的純原版畫面**（`FD2.SAV` slot0 章節 byte patch 成
+`0x01` 直達「第二章　羅德鎮」，逐次 Left 鍵循環，五格 MD5 各不相同）。
 
-![ch02 城鎮六個選項原版與重製對照](docs/figures/town-hub-six-selections-original-vs-remake.png)
+![ch02 城鎮五個選項（原版 DOSBox-X）](docs/figures/town-hub-ch02-five-selections-original-dosbox.png)
 
-ch02 武器店、道具店與秘密商店：上排為原版，下排為重製；這只證明圖中三個
-商店主選單狀態。
+> **勘誤（2026-09-03）**：本節原本放的是
+> `town-hub-six-selections-original-vs-remake.png`，並宣稱「上排原版、下排重製、
+> 每格整幀相同」。該圖已於 2026-08-26 在
+> [`91-worklist.md`](docs/knowledge-base/91-worklist.md) `UI-VIS-TOWN` 條目中被撤回
+> ——它的上下兩半逐位元組完全相同（本次獨立重新驗證：兩半 RGB MD5 皆為
+> `d90d14e2afb76294a6d5c6b84225690d`），且同組的
+> `town-hub-original-dosbox.png` 之 RGB MD5（`8a6a4b03946d1958d3af95fd4bd775c3`）
+> 等同 remake 自己的 render，證實那組圖其實是 remake 自我複製、從未真的跑過原版
+> DOSBox-X，「整幀相同」的結論不成立。撤回的圖檔保留在 `docs/figures/` 供追溯，
+> 但不再作為證據引用。`remake/` 本身已於 2026-09-02 移除（見本檔頂端說明），因此
+> 不再產生新的原版／重製對照，只保留純原版參考畫面。
 
-![ch02 三種商店原版與重製對照](docs/figures/shop-variants-1-3-5-original-vs-remake.png)
+ch02 武器店（羅德鎮）：**2026-09-03 用 DOSBox-X 原版重新擷取的純原版畫面**，
+依序為店內、購買清單（布衣 +DP002/$50、皮甲 +DP008/$300、旅行裝 +DP010/$500、
+法師袍 +DP012/$750）、以及「還要什麼嗎？」四項服務選單。
+
+![ch02 武器店（原版 DOSBox-X）](docs/figures/shop-ch02-weapon-original-dosbox.png)
+
+> **勘誤（2026-09-03）**：本節原本放的是
+> `shop-variants-1-3-5-original-vs-remake.png`（宣稱上排原版、下排重製）。該圖的
+> 上下兩半逐位元組完全相同，是自我複製而非真實對照。**這不是單一個案**：對
+> `docs/figures/` 全部 18 張 `*original-vs-remake*.png` 逐張做「兩半是否逐位元組
+> 相同」檢測，**13 張是自我複製**（詳細清單與各自的半邊 MD5 見
+> [`58-remake-live-verification-log.md`](docs/knowledge-base/58-remake-live-verification-log.md)
+> 2026-09-03 段落），只有 5 張（`item-panel-*`、`town-hub-variant1/2*`）是真實
+> 兩側不同的對照——正好都是 2026-08-25/26 改用 `dosbox_diff_harness` 之後才做的。
+> 撤回的圖檔保留供追溯，但不再作為證據引用。
 
 ### 讀檔選單
 
