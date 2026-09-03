@@ -145,7 +145,7 @@
     {
       "command_id": 27,
       "string_index": 468,
-      "label": "麻庫術"
+      "label": "麻痺術"
     },
     {
       "command_id": 28,
@@ -214,11 +214,16 @@
       "label": "咒殺術",
       "raw_decode": "咒　殺",
       "reason": "glyph 181 的 16x16 bitmap 全零(見 commit a1851a76 結尾『Residual』段),raw decode 會把中間那個字解成空白;此處保留當時已確認正確的人工值。這是本檔唯一一處與 tools/export_command_labels.py 重跑結果不同的欄位。"
+    },
+    "27": {
+      "label": "麻痺術",
+      "raw_decode": "麻庫術",
+      "reason": "commit a1851a76 記載使用者裁決此法術名為「麻痺術」,不採 glyph 423 的原始像素解碼「庫」(diverging from the raw pixel-verified decode,per user request)。該覆寫當時只寫進 remake/assets/data/ 那份副本,remake/ 於 2026-09-02 移除後跟著消失;docs/data/ 這份因為原本就等於原始解碼值,2026-09-03 首次重生時比對不出差異、被誤判為一致,沒有補回覆寫。2026-09-03(續)發現並補回。glyph_map.json 的 423 本身維持像素解碼值「庫」不變——這是單一 command label 的覆寫,不是改 glyph 語意。"
     }
   },
   "regenerated": {
     "date": "2026-09-03",
     "tool": "tools/export_command_labels.py extracted/raw/FDTXT/FDTXT_000.bin",
-    "note": "2026-09-03 全工具驗證:本檔與自己的產生工具已不同步。commit a1851a76 修好 glyph_map 的 751 筆錯位後,只重生了 remake/assets/data/ 底下那份,docs/data/ 這份留在修正前的舊值;remake/ 於 2026-09-02 移除後,修正過的那份也一併消失。此次以現行 glyph_map 重生並回填,除 command_id 9 外全部與工具輸出逐字元一致。"
+    "note": "2026-09-03 全工具驗證:本檔與自己的產生工具已不同步。commit a1851a76 修好 glyph_map 的 751 筆錯位後,只重生了 remake/assets/data/ 底下那份,docs/data/ 這份留在修正前的舊值;remake/ 於 2026-09-02 移除後,修正過的那份也一併消失。此次以現行 glyph_map 重生並回填,除 command_id 9 外全部與工具輸出逐字元一致。2026-09-03(續)發現:command_id 27(麻痺術)的覆寫當時只在 remake/ 副本裡,docs/data/ 從未套用過,重生比對時因為兩邊剛好都是原始解碼值而被誤判一致。已補回,manual_overrides 現有 9、27 兩筆。"
   }
 }
