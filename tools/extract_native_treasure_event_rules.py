@@ -9,8 +9,14 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from le_xref import parse_le
 
-EXPECTED_SIZE = 357074
-EXPECTED_MD5 = "b97caf2239a27a896069d03549d96e1e"
+# 2026-09-03:改成同時支援兩個版本(見 extract_event_id_groups.py 的同名表)。
+# 位移是分區段常數:handler 本體 +0x356,而資料表 0x5274e 兩版**相同**。
+EDITIONS = {
+    "b97caf2239a27a896069d03549d96e1e": {
+        "label": "舊版(357074 B,已遺失)", "size": 357074, "handler_delta": 0},
+    "33464c81e6a364fd0660141139aa8e6e": {
+        "label": "新版(1998 重打包版,509158 B)", "size": 509158, "handler_delta": 0x356},
+}
 
 
 def linear_bytes(data, meta, address, size):
@@ -34,8 +40,12 @@ def main(argv):
         return 2
     data = open(argv[1], "rb").read()
     md5 = hashlib.md5(data).hexdigest()
-    if len(data) != EXPECTED_SIZE or md5 != EXPECTED_MD5:
-        raise SystemExit("FD2.EXE 版本不符，禁止沿用固定 handler/table 位址")
+    edition = EDITIONS.get(md5)
+    if edition is None or len(data) != edition["size"]:
+        raise SystemExit(
+            f"FD2.EXE 不是任何已知版本(md5={md5}, size={len(data)}),"
+            "禁止沿用固定 handler/table 位址;已知版本見本檔 EDITIONS")
+    delta = edition["handler_delta"]
     meta = parse_le(data)
     items = list(linear_bytes(data, meta, 0x5274E, 5))
     result = {
@@ -44,6 +54,8 @@ def main(argv):
             "size": len(data),
             "md5": md5,
             "sha256": hashlib.sha256(data).hexdigest(),
+            "edition": edition["label"],
+            "handler_delta": hex(delta),
         },
         "rules": [
             {
@@ -57,7 +69,7 @@ def main(argv):
                 # known static caller. "handler" below records where the logic body is, not
                 # a verified call target reachable from event_id 58 -- see doc25 §11.7.5 and
                 # 91-worklist.md L212 before changing this back.
-                "handler": "0x35854",
+                "handler": hex(0x35854 + delta),
                 "item_table_address": "0x5274e",
                 "item_by_slot": items,
                 "open_slots": [0, 1, 2, 3, 4],

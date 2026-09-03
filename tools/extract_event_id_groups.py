@@ -38,9 +38,33 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 EXE = "org_game/炎龍騎士團/FLAME2/FD2.EXE"
 CODE_BASE = 0x10000
-EXPECTED_SIZE = 357074
-EXPECTED_MD5 = "b97caf2239a27a896069d03549d96e1e"
-EXPECTED_SHA256 = "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+# 2026-09-03:改成同時支援兩個版本,而不是把舊版換掉。
+#
+# 舊版(357074 B)已從使用者機器上遺失,但既有 docs/data/event_id_groups.json 與整個
+# knowledge-base 都引用舊版位址,直接換掉會讓文件與資料脫節。新版(509158 B,1998
+# 重打包)是使用者手上唯一存在的一份。
+#
+# 兩版的位址差是**分區段常數**,不是全域常數——這點實測得到,不能假設:
+#   handler 本體(0x34xxx-0x35xxx)        +0x356
+#   spawn_group / spawn_group_with_intro   0(**沒有**移動)
+#   event_id 跳表 0x51b91                  0
+#   acting fn 0x1366a                      0
+#   staging helper 0x35822                 +0x356
+# 把沒移動的東西也加上位移,結果是抽到 0 筆 spawn——安靜的錯,不是崩潰。
+EDITIONS = {
+    "b97caf2239a27a896069d03549d96e1e": {
+        "label": "舊版(357074 B,已遺失)",
+        "size": 357074,
+        "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+        "handler_delta": 0,
+    },
+    "33464c81e6a364fd0660141139aa8e6e": {
+        "label": "新版(1998 重打包版,509158 B)",
+        "size": 509158,
+        "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+        "handler_delta": 0x356,
+    },
+}
 
 
 def load_code(d, meta):
@@ -84,9 +108,14 @@ def fixup_map(d, meta):
 
 
 d = open(EXE, 'rb').read()
-if (len(d) != EXPECTED_SIZE or hashlib.md5(d).hexdigest() != EXPECTED_MD5 or
-        hashlib.sha256(d).hexdigest() != EXPECTED_SHA256):
-    raise RuntimeError("FD2.EXE 與固定參考版本不符；禁止沿用 event handler 位址")
+_md5 = hashlib.md5(d).hexdigest()
+EDITION = EDITIONS.get(_md5)
+if (EDITION is None or len(d) != EDITION["size"]
+        or hashlib.sha256(d).hexdigest() != EDITION["sha256"]):
+    raise RuntimeError(
+        "FD2.EXE 不是任何一個已知版本(md5=%s, size=%d);禁止沿用 event handler 位址。"
+        "已知版本見本檔 EDITIONS。" % (_md5, len(d)))
+HANDLER_DELTA = EDITION["handler_delta"]
 meta = parse_le(d)
 code, base, vsize = load_code(d, meta)
 md = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -102,18 +131,21 @@ def insn_at(addr):
     return None
 
 
+# 這兩個在新版**沒有**移動(實測:新版 handler 內仍是 call 0x10b4e / call 0x32999)
 SPAWN_FNS = {0x10b4e: 'spawn_group', 0x32999: 'spawn_group_with_intro'}
-ACTING_FN = 0x1366a
-STAGING_HELPER = 0x35822
-STAGING_SHARED_TAIL = 0x35318
+ACTING_FN = 0x1366a                              # 同樣未移動
+STAGING_HELPER = 0x35822 + HANDLER_DELTA         # 與 handler 同區段,會移動
+STAGING_SHARED_TAIL = 0x35318 + HANDLER_DELTA
 
 # Complete [0x53AFA] writer set for global event handlers.  Official IDA Pro
 # 9.4 finds the single reader in 0x10C50 and all paired 1/0 writers; Docker
 # Capstone independently verifies each direct call sequence.  Calls not in
 # this set read zero, including the 0x32999 wrapper's internal 0x10B4E call.
 RAW_PLACEMENT_GATE_ONE_CALLS = {
-    0x34397, 0x3444C, 0x3464B, 0x34945,
-    0x34C95, 0x34D12, 0x34D45, 0x34D91,
+    a + HANDLER_DELTA for a in (
+        0x34397, 0x3444C, 0x3464B, 0x34945,
+        0x34C95, 0x34D12, 0x34D45, 0x34D91,
+    )
 }
 
 
@@ -246,13 +278,15 @@ def jtab(tab, count):
 
 
 if __name__ == '__main__':
-    handlers = jtab(0x51b91, 90)
+    handlers = jtab(0x51b91, 90)   # 跳表位址兩版相同
     results = {
         '_source': {
             'file': 'FD2.EXE',
-            'size': EXPECTED_SIZE,
-            'md5': EXPECTED_MD5,
-            'sha256': EXPECTED_SHA256,
+            'size': EDITION["size"],
+            'md5': _md5,
+            'sha256': EDITION["sha256"],
+            'edition': EDITION["label"],
+            'handler_delta': hex(HANDLER_DELTA),
             'tool': 'Capstone 5.0.3',
             'address_space': 'LE linear address',
         },

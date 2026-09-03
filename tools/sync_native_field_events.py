@@ -9,6 +9,12 @@
 * native_field_events：控制段 16 筆 (event_id, selector)
 
 既有地圖、成本、寶箱、手動修正與單位資料均不改動。
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 它寫入的 `<assets>/map*/map.json`
+> 與 `<assets>/native_turn_event_controls.json` 都是 remake 端資產,而 `remake/` 已於
+> 2026-09-02 依使用者指示整個移除。`assets` 是命令列參數(不是寫死路徑),所以工具
+> 本身還能對任意目錄跑,只是沒有東西在等它的產出。
+> EXE/FDFIELD 的身分驗證邏輯本身有效,已同步支援新舊兩版。
 """
 
 import argparse
@@ -24,11 +30,16 @@ FDFIELD_SOURCE = {
     "md5": "ecdb0436d26adfe5d107f2713fa7e9a2",
     "sha256": "b0cf75d94f58603f091c7462c0494f0e83bd6edfb04c1acbf83ed4d938c7a513",
 }
-FD2_SOURCE = {
-    "file": "FD2.EXE",
-    "size": 357074,
-    "md5": "b97caf2239a27a896069d03549d96e1e",
-    "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+# 2026-09-03:改成同時支援兩個版本(與 extract_native_field_event_rules.py 一致)。
+# 本工具只用 EXE 做身分驗證與讀取 round seed,不引用會隨版本移動的 handler 位址,
+# 所以不需要 handler_delta。
+FD2_EDITIONS = {
+    "b97caf2239a27a896069d03549d96e1e": {
+        "label": "舊版(357074 B,已遺失)", "size": 357074,
+        "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"},
+    "33464c81e6a364fd0660141139aa8e6e": {
+        "label": "新版(1998 重打包版,509158 B)", "size": 509158,
+        "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b"},
 }
 
 
@@ -120,12 +131,16 @@ def main():
         raise SystemExit("FDFIELD.DAT 與固定參考版本不符；禁止重生 native controls")
     with open(args.exe, "rb") as source:
         executable = source.read()
+    exe_md5 = hashlib.md5(executable).hexdigest()
+    exe_edition = FD2_EDITIONS.get(exe_md5)
     if (
-        len(executable) != FD2_SOURCE["size"]
-        or hashlib.md5(executable).hexdigest() != FD2_SOURCE["md5"]
-        or hashlib.sha256(executable).hexdigest() != FD2_SOURCE["sha256"]
+        exe_edition is None
+        or len(executable) != exe_edition["size"]
+        or hashlib.sha256(executable).hexdigest() != exe_edition["sha256"]
     ):
-        raise SystemExit("FD2.EXE 與固定參考版本不符；禁止重生 native round seed")
+        raise SystemExit(
+            f"FD2.EXE 不是任何已知版本(md5={exe_md5}, size={len(executable)});"
+            "禁止重生 native round seed;已知版本見本檔 FD2_EDITIONS")
     with open(args.rules, encoding="utf-8") as source:
         rules = json.load(source)["rules"]
 
@@ -189,7 +204,13 @@ def main():
         "round_seed": {
             "value": 1,
             "writer": "0x2066e",
-            "source": FD2_SOURCE,
+            "source": {
+                "file": "FD2.EXE",
+                "size": exe_edition["size"],
+                "md5": exe_md5,
+                "sha256": exe_edition["sha256"],
+                "edition": exe_edition["label"],
+            },
         },
         "maps": turn_control_maps,
     }
