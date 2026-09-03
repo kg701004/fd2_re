@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "source": {
+    "reference_file": "docs/data/fd2-reference-files.json",
+    "exe_size": 509158,
+    "exe_md5": "33464c81e6a364fd0660141139aa8e6e",
+    "exe_sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+    "ida_default_table": "0x61da1",
+    "ida_growth_table": "0x620a1",
+    "constructor": "0x112a5"
+  },
+  "evidence_level": "已證實",
+  "rows": [
+    {
+      "id": 0,
+      "default_file_offset": "0x7adb5",
+      "growth_file_offset": "0x7b0b5",
+      "default_raw": "0101012a00000004000000000084c0ffffff000000000000",
+      "growth_raw": "060804060203080c0000ff"
+    },
+    {
+      "id": 1,
+      "default_file_offset": "0x7adcd",
+      "growth_file_offset": "0x7b0c0",
+      "default_raw": "0102032400000004000000000080ffffffff000000000000",
+      "growth_raw": "070a040601030a0f0000ff"
+    },
+    {
+      "id": 2,
+      "default_file_offset": "0x7ade5",
+      "growth_file_offset": "0x7b0cb",
+      "default_raw": "0101042800000004000000000080ffffffff000000000000",
+      "growth_raw": "060904060203070c0000ff"
+    },
+    {
+      "id": 3,
+      "default_file_offset": "0x7adfd",
+      "growth_file_offset": "0x7b0d6",
+      "default_raw": "0102171e00000004000000002493ffffffff0c0000000800",
+      "growth_raw": "0608050701010c100000ff"
+    },
+    {
+      "id": 4,
+      "default_file_offset": "0x7ae15",
+      "growth_file_offset": "0x7b0e1",
+      "default_raw": "0103013000000007000000001480ffffffff000000000000",
+      "growth_raw": "060904050202080b0000ff"
+    },
+    {
+      "id": 5,
+      "default_file_offset": "0x7ae2d",
+      "growth_file_offset": "0x7b0ec",
+      "default_raw": "0103084800000007000000000081ffffffff000000000000",
+      "growth_raw": "06080507020306080000ff"
+    },
+    {
+      "id": 6,
+      "default_file_offset": "0x7ae45",
+      "growth_file_offset": "0x7b0f7",
+      "default_raw": "0103124600000006000000001787ffffffff000000000000",
+      "growth_raw": "070a050802030a0d0000ff"
+    },
+    {
+      "id": 7,
+      "default_file_offset": "0x7ae5d",
+      "growth_file_offset": "0x7b102",
+      "default_raw": "010b041901000008000000001e96ffffffffb9006e003000",
+      "growth_raw": "0d11090c03050d120000ff"
+    },
+    {
+      "id": 8,
+      "default_file_offset": "0x7ae75",
+      "growth_file_offset": "0x7b10d",
+      "default_raw": "0104032000000004000000002c81ffffffff000000000000",
+      "growth_raw": "05080204020306090000ff"
+    },
+    {
+      "id": 9,
+      "default_file_offset": "0x7ae8d",
+      "growth_file_offset": "0x7b118",
+      "default_raw": "0105011c000800040100000034a4ffffffff000000000000",
+      "growth_raw": "0306020501030509040800"
+    },
+    {
+      "id": 10,
+      "default_file_offset": "0x7aea5",
+      "growth_file_offset": "0x7b123",
+      "default_raw": "01060826000c0003000000000081ffffffff000000000000",
+      "growth_raw": "0305020601020408040701"
+    },
+    {
+      "id": 11,
+      "default_file_offset": "0x7aebd",
+      "growth_file_offset": "0x7b12e",
+      "default_raw": "0106101e001800030040400036a7d1ffffff000000000000",
+      "growth_raw": "0204030701020609030602"
+    },
+    {
+      "id": 12,
+      "default_file_offset": "0x7aed5",
+      "growth_file_offset": "0x7b139",
+      "default_raw": "01080a3400000005000000003eacffffffff000013000000",
+      "growth_raw": "080a050601040b0e0000ff"
+    },
+    {
+      "id": 13,
+      "default_file_offset": "0x7aeed",
+      "growth_file_offset": "0x7b144",
+      "default_raw": "0204082800000004000000000081ffffffff000000000000",
+      "growth_raw": "05070304020306090000ff"
+    },
+    {
+      "id": 14,
+      "default_file_offset": "0x7af05",
+      "growth_file_offset": "0x7b14f",
+      "default_raw": "02051042002800043200000037a8ffffffff000000000000",
+      "growth_raw": "0305020301030608040803"
+    },
+    {
+      "id": 15,
+      "default_file_offset": "0x7af1d",
+      "growth_file_offset": "0x7b15a",
+      "default_raw": "0308176400000005000000003faeffffffff280028000a00",
+      "growth_raw": "080c040601030a0c0000ff"
+    },
+    {
+      "id": 16,
+      "default_file_offset": "0x7af35",
+      "growth_file_offset": "0x7b165",
+      "default_raw": "040f024a0100000700000000108affffffffd200a0002800",
+      "growth_raw": "0a0f080d02040d110000ff"
+    },
+    {
+      "id": 17,
+      "default_file_offset": "0x7af4d",
+      "growth_file_offset": "0x7b170",
+      "default_raw": "0401154100000006000000000488ffffffff000000000e00",
+      "growth_raw": "070b05080203090d0000ff"
+    },
+    {
+      "id": 18,
+      "default_file_offset": "0x7af65",
+      "growth_file_offset": "0x7b17b",
+      "default_raw": "010901180108000500000000078affffffffaa0082002d00",
+      "growth_raw": "090f070b02040c10060805"
+    },
+    {
+      "id": 19,
+      "default_file_offset": "0x7af7d",
+      "growth_file_offset": "0x7b186",
+      "default_raw": "01090a1001000005000000000081ffffffffa0006e002800",
+      "growth_raw": "0a0f070a02030c100608ff"
+    },
+    {
+      "id": 20,
+      "default_file_offset": "0x7af95",
+      "growth_file_offset": "0x7b191",
+      "default_raw": "0113082201000009000000000081ffffffffb4006e002d00",
+      "growth_raw": "090f050702030b110000ff"
+    },
+    {
+      "id": 21,
+      "default_file_offset": "0x7afad",
+      "growth_file_offset": "0x7b19c",
+      "default_raw": "011605dc008c000400c17c0039a9ffffffff50004d002300",
+      "growth_raw": "080c070b02030a0c0c0fff"
+    },
+    {
+      "id": 22,
+      "default_file_offset": "0x7afc5",
+      "growth_file_offset": "0x7b1a7",
+      "default_raw": "01180c3c01000005000000000081ffffffffc8008c003c00",
+      "growth_raw": "0b0e0608020410140000ff"
+    },
+    {
+      "id": 23,
+      "default_file_offset": "0x7afdd",
+      "growth_file_offset": "0x7b1b2",
+      "default_raw": "021405eb00000005000000000081ffffffffaa0046003700",
+      "growth_raw": "090e04070205080c0000ff"
+    },
+    {
+      "id": 24,
+      "default_file_offset": "0x7aff5",
+      "growth_file_offset": "0x7b1bd",
+      "default_raw": "020e08be00960004000000000081ffffffff32003c002400",
+      "growth_raw": "060804070205090b1218ff"
+    },
+    {
+      "id": 25,
+      "default_file_offset": "0x7b00d",
+      "growth_file_offset": "0x7b1c8",
+      "default_raw": "0317057c01140007000000000081ffffffffb4006e003200",
+      "growth_raw": "0a0d060903060c0f0407ff"
+    },
+    {
+      "id": 26,
+      "default_file_offset": "0x7b025",
+      "growth_file_offset": "0x7b1d3",
+      "default_raw": "040f0f2601000007000000000081ffffffff72007a003c00",
+      "growth_raw": "0c110a0c020412190000ff"
+    },
+    {
+      "id": 27,
+      "default_file_offset": "0x7b03d",
+      "growth_file_offset": "0x7b1de",
+      "default_raw": "040f052c0100000700000000118bffffffffd20082002d00",
+      "growth_raw": "0a0f090d02040e120000ff"
+    },
+    {
+      "id": 28,
+      "default_file_offset": "0x7b055",
+      "growth_file_offset": "0x7b1e9",
+      "default_raw": "051c0a2c010a00050040020441b0ffffffff870064002a00",
+      "growth_raw": "0c0f080c02030f16040611"
+    },
+    {
+      "id": 29,
+      "default_file_offset": "0x7b06d",
+      "growth_file_offset": "0x7b1f4",
+      "default_raw": "050d1496003c0006001c020c3baaffffffff640046000000",
+      "growth_raw": "080e080c03060e160c1008"
+    },
+    {
+      "id": 30,
+      "default_file_offset": "0x7b085",
+      "growth_file_offset": "0x7b1ff",
+      "default_raw": "06190132000000040000000048b2ffffffff000000000000",
+      "growth_raw": "070e060d0204080f0000ff"
+    },
+    {
+      "id": 31,
+      "default_file_offset": "0x7b09d",
+      "growth_file_offset": "0x7b20a",
+      "default_raw": "0619190c00000004000000000081ffffffff000000000000",
+      "growth_raw": "080e070e02040c0f0000ff"
+    }
+  ],
+  "_regenerated": {
+    "date": "2026-09-03",
+    "why": "原檔在 remake/assets/data/native_join_constructor.json,隨 remake/ 於 2026-09-02 移除,fd2save.load_join_constructor_table() 自此不可用。本檔改由**現存的新版 EXE**(509158 B)重生,不是從 git 歷史還原舊版產物。",
+    "tool": "python tools/dump_exe_tables.py <FD2.EXE> <out> 產生 character_defaults.json/growth.json,再 python tools/sync_native_join_constructor.py docs/data/fd2-reference-files.json <defaults> <growth> docs/data/native_join_constructor.json --write",
+    "cross_check": "32 列的 default_raw + growth_raw 與 git 歷史中舊版(357074 B)抽出的那份**逐位元組相同(32/32)**,證明這張表與 EXE 版本無關。上游 dump_exe_tables 另有對照青衫攻略字面值的數值自驗。"
+  }
+}

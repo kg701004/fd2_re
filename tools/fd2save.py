@@ -225,15 +225,18 @@ def roster_inventory_items(plain: bytes, slot: int, unit_index: int) -> list[int
 # b97caf2239a27a896069d03549d96e1e) 32-row table LoadNativeJoinConstructorTable
 # validates in Go. That identity check is intentionally re-run here too.
 
+# 2026-09-03:路徑從 remake/assets/data/ 移到 docs/data/,並改成接受兩個 EXE 版本。
+# 原檔隨 remake/ 移除而消失;現在這份是用**現存的新版 EXE** 重生的,不是從 git 歷史
+# 還原舊版產物。重生後 32 列的 default_raw/growth_raw 與舊版那份**逐位元組相同**,
+# 證明這張表與 EXE 版本無關(表格內容相同,只是檔案位置不同)。
 JOIN_CONSTRUCTOR_TABLE_PATH = (
     Path(__file__).resolve().parent.parent
-    / "remake" / "assets" / "data" / "native_join_constructor.json"
+    / "docs" / "data" / "native_join_constructor.json"
 )
-JOIN_CONSTRUCTOR_EXE_SIZE = 357074
-JOIN_CONSTRUCTOR_EXE_MD5 = "b97caf2239a27a896069d03549d96e1e"
-JOIN_CONSTRUCTOR_EXE_SHA256 = (
-    "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
-)
+JOIN_CONSTRUCTOR_EDITIONS = {
+    357074: "b97caf2239a27a896069d03549d96e1e",   # 舊版,已遺失
+    509158: "33464c81e6a364fd0660141139aa8e6e",   # 新版(1998 重打包版)
+}
 
 
 def load_join_constructor_table(path: Path | None = None) -> dict[int, tuple[bytes, bytes]]:
@@ -246,30 +249,16 @@ def load_join_constructor_table(path: Path | None = None) -> dict[int, tuple[byt
     """
     path = path or JOIN_CONSTRUCTOR_TABLE_PATH
     if not path.exists():
-        # 2026-09-03 全工具驗證發現:這條路徑指向 remake/assets/data/,而
-        # remake/ 已於 2026-09-02 依使用者指示整個移除,所以本函式(以及
-        # --set-chapter/--set-currency 以外所有依賴 JOIN 建構器的功能)自那天
-        # 起就是壞的,只是沒有人跑到。這裡改成講清楚,而不是丟一個看不出原因的
-        # FileNotFoundError。
-        #
-        # 不直接從 git 歷史還原該檔:它是用「舊版」FD2.EXE(357074 B,已遺失)
-        # 的位址 0x61da1/0x620a1 抽出來的,而本 session 已實測證明舊版位址在
-        # 新版 EXE 上會讀到完全不同的資料(見 native_treasure_event_rules 的
-        # 對照),所以還原等於引入一份無法對現有 EXE 重新驗證的資料。要復原
-        # 必須先把 JOIN 表在新版 EXE 上重新錨定。
         raise FileNotFoundError(
-            f"{path} 不存在:remake/ 已於 2026-09-02 整個移除。"
-            "此表原本由已遺失的舊版 FD2.EXE(357074 B)抽出,需先在新版 EXE"
-            "(509158 B)上重新錨定 JOIN 表位址才能重建;在那之前 "
-            "load_join_constructor_table() 無法使用。"
+            f"{path} 不存在。這張表由 tools/sync_native_join_constructor.py 產生,"
+            "輸入是 tools/dump_exe_tables.py 從 FD2.EXE 抽出的 character_defaults.json "
+            "與 growth.json;產生方式見該檔的 _regenerated 欄位。"
         )
     wire = json.loads(path.read_text(encoding="utf-8"))
     source = wire.get("source", {})
     if (
         wire.get("schema_version") != 1
-        or source.get("exe_size") != JOIN_CONSTRUCTOR_EXE_SIZE
-        or source.get("exe_md5") != JOIN_CONSTRUCTOR_EXE_MD5
-        or source.get("exe_sha256") != JOIN_CONSTRUCTOR_EXE_SHA256
+        or JOIN_CONSTRUCTOR_EDITIONS.get(source.get("exe_size")) != source.get("exe_md5")
         or wire.get("evidence_level") != "已證實"
     ):
         raise ValueError(f"{path} native JOIN constructor manifest identity is invalid")

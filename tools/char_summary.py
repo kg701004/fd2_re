@@ -23,6 +23,18 @@ NAMES = {0: "索爾", 1: "哈諾", 2: "鐵諾", 3: "哈瓦特", 4: "亞雷斯", 
 
 
 def main(argv):
+    # 2026-09-03:兩個輸入目錄都不存在時直接報錯,而不是安靜產出一張只有標籤、
+    # 沒有任何 sprite/頭像的空表(每個 os.path.exists 都是 False,迴圈照跑,
+    # exit 0)。全工具驗證時就是靠「exit 0 但完全沒有輸出訊息」發現的。
+    missing = [d for d in ("extracted/fdicon", "extracted/portraits")
+               if not os.path.isdir(d)]
+    if len(missing) == 2:
+        print("缺少輸入目錄 " + str(missing) +
+              ";請先跑 decode_fdicon.py 與 decode_dato.py。", file=sys.stderr)
+        print(__doc__, file=sys.stderr)
+        return 1
+    if missing:
+        print(f"警告:{missing} 不存在,該欄會留白", file=sys.stderr)
     out = argv[1] if len(argv) > 1 else "extracted/remake_shots/character_summary.png"
     ngrp = int(argv[2]) if len(argv) > 2 else 140
     cols = int(argv[3]) if len(argv) > 3 else 10

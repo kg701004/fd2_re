@@ -126,6 +126,14 @@ def load_story(path: Path, story_root: Path) -> dict[str, Any]:
     """Load the minimal story shape used by the conservative mapper."""
 
     data = json.loads(path.read_text(encoding="utf-8"))
+    # 2026-09-03:餵進不是 story JSON 的目錄(例如誤指到 docs/data,裡面多半是
+    # list)時,原本會在下一行丟 `'list' object has no attribute 'get'`,
+    # 完全看不出是「參數給錯了」。改成講清楚。
+    if not isinstance(data, dict):
+        raise TypeError(
+            f"{path} 不是 story JSON:預期最外層是物件(含 source_dat / scenes),"
+            f"實得 {type(data).__name__}。story_json_dir 應指向逐章的 chNN.json 目錄。"
+        )
     source_dat = data.get("source_dat")
     scenes = data.get("scenes")
     if not isinstance(source_dat, str) or not source_dat:
