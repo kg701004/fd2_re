@@ -1,0 +1,169 @@
+{
+  "_comment": "2026-09-03:從 tools/gen_campaign.py 抽出並落地。該工具是 remake 端產生器,隨 remake/ 移除而刪除,但這三張表是原版反組譯結論,與 remake 無關,故保留。",
+  "battle_bgm_by_chapter": {
+    "source": "FD2.EXE 0x51e63,30 bytes,章節 0-29 直接索引(無偏移)",
+    "provenance": "doc12「結論一:戰鬥 BGM = 每章查表」;5 處 play_bgm 呼叫點全走 0x51e63,2026-08-18 以 Ghidra headless 唯讀重讀 getBytes(0x51e63,30) 逐位元組複核",
+    "note": "舊值 BGM_BATTLE=FDMUS_018 是誤用,018 已確認為標題曲(使用者實聽 2026-07-03)",
+    "chapters_0_based": [
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_004",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_019",
+      "FDMUS_004",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_004",
+      "FDMUS_019",
+      "FDMUS_003",
+      "FDMUS_019",
+      "FDMUS_004",
+      "FDMUS_019",
+      "FDMUS_019",
+      "FDMUS_008"
+    ],
+    "story_town_shop_track": "FDMUS_010"
+  },
+  "secret_shop_gates": {
+    "source": "FD2.EXE 0x6238d,每章 0x1f-byte record,consumed at 0x2cde0..0x2cef7",
+    "provenance": "doc58;BIOS scan:Shift+F1..F10=0x54..0x5D、Ctrl=0x5E..0x67、Alt=0x68..0x71",
+    "note": "key = 玩家面向的下一戰章節(shop_chNN);value = [可見選項, BIOS scan code]。8 章經原版實測確認,ch03/ch06 未觸發原因未解",
+    "by_chapter": {
+      "2": [
+        0,
+        84
+      ],
+      "3": [
+        1,
+        95
+      ],
+      "4": [
+        2,
+        106
+      ],
+      "5": [
+        3,
+        87
+      ],
+      "6": [
+        4,
+        98
+      ],
+      "7": [
+        0,
+        109
+      ],
+      "8": [
+        1,
+        90
+      ],
+      "9": [
+        2,
+        101
+      ],
+      "10": [
+        3,
+        112
+      ],
+      "11": [
+        4,
+        93
+      ],
+      "12": [
+        0,
+        94
+      ],
+      "13": [
+        1,
+        105
+      ],
+      "14": [
+        2,
+        86
+      ],
+      "15": [
+        3,
+        97
+      ],
+      "16": [
+        4,
+        108
+      ],
+      "17": [
+        0,
+        88
+      ],
+      "18": [
+        1,
+        100
+      ],
+      "19": [
+        2,
+        111
+      ],
+      "20": [
+        3,
+        92
+      ],
+      "21": [
+        4,
+        103
+      ],
+      "22": [
+        0,
+        104
+      ],
+      "26": [
+        4,
+        88
+      ],
+      "27": [
+        0,
+        99
+      ]
+    }
+  },
+  "town_variants": {
+    "source": "FD2.EXE 0x6238d record byte 0,consumed by 0x2cd16/0x2cd46,對應 FDOTHER 資源 {11,61,62}",
+    "provenance": "doc42/doc91 UI-VIS-TOWN;保留原始 0/1/2 discriminator,不自創語意化名稱",
+    "by_chapter": {
+      "2": 0,
+      "3": 2,
+      "4": 0,
+      "5": 0,
+      "6": 2,
+      "7": 2,
+      "8": 0,
+      "9": 0,
+      "10": 2,
+      "11": 2,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 2,
+      "20": 1,
+      "21": 1,
+      "22": 1,
+      "26": 0,
+      "27": 0
+    }
+  }
+}

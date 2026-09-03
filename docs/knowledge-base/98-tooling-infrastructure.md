@@ -2021,3 +2021,41 @@ harness 的 `structure` 層補上這個檢查(放這裡而不是 `syntax`,因為
 它寫 fixture 時用預設 newline,在 Windows 上一律寫成 CRLF,於是**陽性對照
 `good_tool.py` 自己就踩了這個新檢查**——fixture 改成明確 `newline=""`,
 只有 `crlf_shebang.py` 這個故障注入 fixture 才是 CRLF。selftest 20/20。
+
+### 追加 2:移除 12 支 remake 專用工具(使用者指示)
+
+使用者問「原先供 remake 的工具還有用嗎?如果沒用就移除吧」。判準定為
+**每一條程式路徑都需要 `remake/` 存在才有意義**才移除;只要有一半是從原版抽資料的就保留。
+
+**先把知識落地再刪。** `gen_campaign.py` 裡夾帶三張**原版反組譯結論**,其中
+`BGM_BATTLE_TABLE` 與 `MV_BY_CLASS` 在 `docs/` 底下是 0 筆引用——直接刪會連知識一起丟掉。
+已抽成 `docs/data/native_chapter_tables.json`(含出處與限制):
+
+| 表 | 筆數 | 出處 | 交叉驗證 |
+|---|---|---|---|
+| 戰鬥 BGM 章節表 | 30 | `0x51e63` | **與 doc12 用 Ghidra 獨立 dump 的 30 bytes 逐項相符** |
+| 秘密商店 gate | 23 | `0x6238d` record `+1`/`+2` | doc58 已有同一份表 |
+| 城鎮 variant | 23 | `0x6238d` record byte 0 | doc42/doc91 |
+
+`MV_BY_CLASS`／`AP_HP_RATIO_*` **刻意不保留**——該檔自己就註明「這段是近似值不是 RE 結果」,
+是為了填 remake 缺資料而推的比例,留著只會被後人誤當成原版數值。
+
+**移除清單(12 支)**:`apply_hd_assets.py`、`apply_hd_composite.py`、
+`realesrgan_batch_tilesets.py`、`audit_postbattle_binding_gates.py`、
+`audit_story_script_coverage.py`、`gen_campaign.py`＋`test_gen_campaign.py`、
+`story_to_script.py`、`fd2_live_input_helper.py`＋`.sh`、`fd2_dual_verify.py`、
+`export_runtime_roster.py`。
+
+**兩支原本要刪、查了引用鏈之後保留**:
+- `export_story_index_map.py` —— `export_command_labels.py` 真的 `from export_story_index_map
+  import parse_fdtxt_strings`,而後者正是今天重生 `command_labels.json` 的工具。刪了會斷。
+- `dosbox_diff_harness.py`／`.sh` —— 比對的另一半(remake)沒了,但原版側的
+  raw 320×200 擷取與 `lock_pulse_phase` 是可用技術,且 doc98 前面幾節都在引用。
+  功能已被 `fd2_original_verify.py` ＋ `dosbox_harness.sh` 取代,標記為待淘汰而非刪除。
+
+`fd2_dual_verify.py` 是連帶移除:它 `import fd2_live_input_helper as remake_tool`,
+本身就是 remake-vs-原版雙邊比對器,單獨留著不會動。
+
+**移除後全 10 層重跑:FAIL 從 3 降到 0**(PASS 367／WARN 64／SKIP 117),
+`refs` 層 90/90 全過。並確認被保留的相依鏈仍完好:`export_command_labels.py` 重跑後
+40 筆裡仍只有 command_id 9(已記錄的手工值)與檔案不同。

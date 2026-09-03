@@ -139,6 +139,11 @@
 | `tools/fd2_audio_probe.py` | **本次新建**：音訊擷取＋時序同步。**識別層經實測不可用**，見 §8 |
 | `tools/fd2save.py` | 新增 `--set-currency`，讓「錢不夠」這類分支變成可到達 |
 | `tools/decode_story_text.py` | 既有；本輪證實它已能完整解出全部劇情文字（§9） |
+| `tools/verify_all_tools.py` | **本次新建**：全 103 支工具的十層稽核（§12）。自身反向驗證 20/20 |
+| `tools/export_sfx.py` | **兩個 bug 已修**：輸入路徑少了 `raw/`；輸出目錄會重建 `remake/` 樹 |
+| `tools/font_grid.py` | 無參數時 IndexError → 改印用法 |
+| `tools/encode_text.py` | docstring 補上警告：`roundtrip` **不能**證明 glyph_map 正確（§12） |
+| 全部 `.sh`／`.py` | 換行已釘 LF；先前 6 支 `.sh` 在 Linux 無法執行、56 支 `.py` shebang 帶 CR 無法直接執行（§12） |
 
 ### `fd2_original_verify.py` 的斷言原語（**選對原語比多加斷言重要**）
 
@@ -178,6 +183,16 @@
 8. **音訊識別層不可用（已實測，非未調好）**：以記憶體讀取為 ground truth 評分，
    平均頻譜與 chroma 的同曲／異曲區間**都重疊**。`fd2_audio_probe.py` 定位為擷取與時序同步載具。
 9. 整備（選人）畫面尚無原版基準（成本高、價值低，未做）。
+10. **兩套 Python 環境不等價**:WSL 的 `python3` **沒有** PIL／numpy／capstone／torch,
+    25 支工具只能用 Windows python 跑;而 DOSBox-X harness 在 WSL。
+    `python3 tools/x.py` 的 ModuleNotFoundError 是**用錯直譯器**,不是工具壞掉。
+11. **三支抽取工具被遺失的舊版 EXE 擋住**(`extract_event_id_groups`／
+    `extract_native_field_event_rules`／`extract_native_treasure_event_rules`)。
+    這些 gate **不能放寬**:實測繞過後會安靜產生看起來合法的錯資料(§12)。
+    連帶 `fd2save.load_join_constructor_table()` 目前不可用。
+12. **`encode_text.py roundtrip` 不是正確性證據**,只是可逆性證據(§12)。
+13. **`docs/data/` 的產物可能與產生工具不同步**——本輪抓到兩份(§12)。
+    引用任何生成資料前,先重跑一次產生工具並 diff。
 
 ---
 
@@ -193,6 +208,9 @@ M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清�
 - 字模表 10 組重複對映的目視確認（清單見 doc98）
 - 轉職成長 range 的大樣本（去相關手法已知：**走不同的前置交易**，不是多按方向鍵）
 - `ch03`／`ch06` 秘密商店組合鍵（已排除 5 個假說，見 doc58 續五~續七）
+- **在新版 EXE 上重新錨定 JOIN 建構器表位址**(目前 `fd2save` 的名冊操作因此不可用)
+- 字模表 10 組重複對映(同一字對到兩個 glyph index)的目視確認——與上面那項是同一份清單
+- `apply_hd_composite`／`char_summary` 無參數時安靜 exit 0(沒做事卻像成功),可加用法守衛
 
 **同一個瓶頸擋住 6 項**：M5-F 有六項全都需要「**穩定進到戰鬥或推進到結局**」——
 戰鬥/勝利曲、自動結束回合、治療咒視覺、移動確認輸入丟失、ending 演出、ch27 玩家路徑。
@@ -225,6 +243,9 @@ M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清�
 | `b78b2faf` | 23 章城鎮曲號全測；秘密商店 8/8；**更正我自己的效能誤判** |
 | `c80d4eae` | 測試「是工具問題」假說——兩個修法都**沒有**修好，據此處置 |
 | `207110fb` | **反向驗證**：陽性對照、故障注入找到守衛漏洞、3 個崩潰處理器 |
+| `263fc607` | 交接文件全面更新（本檔 §7~§11） |
+| `fdd348fb` | **全工具十層驗證**：新建 harness；修 6 支死掉的 `.sh`、`export_sfx`、`font_grid`；重生 2 份走鐘的 `docs/data/` 產物 |
+| `8360d287` | `*.py` 釘 LF——56 支帶 shebang 的工具原本**完全無法直接執行** |
 
 ---
 
@@ -241,3 +262,13 @@ M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清�
 4. **「範圍檢查足以擋住錯誤讀值」** → 故障注入證明讀到零會變成合法的「track 0」通過。
    先前那次 250 只是**剛好**超出範圍。
 5. **陽性對照缺席** → ch06 四格全陰性，我一度直接採信；補了 ch02 對照（4/4 觸發）才站得住。
+6. **「12 支 `.sh` 全部正常」** → 那是在 Windows 用 Git Bash 掃的,而
+   **Git Bash 的 `bash -n` 會接受 CRLF 腳本**。把同樣的位元組餵給真正的 bash,
+   6 支當場失敗。**在哪個環境驗證,決定了結論是否成立。**
+7. **「注入了故障但檢查沒反應 ⇒ 檢查是瞎的」** → 第一次我改的是
+   `unicode_to_glyph.json`,而被測的 `roundtrip` **根本不讀那個檔**。
+   注入沒生效與檢查失效長得一模一樣。**先確認注入真的改到被檢查的東西。**
+   (改對目標之後 roundtrip 仍然全過,那才是真的自我參照——見 §12。)
+8. **對照組比真實訊號簡單,等於沒有對照組** → harness 的 `good.sh` 一開始只有
+   `echo ok` 一行,而 `echo ok` 在 bash 裡完全合法,所以它擋不住把全部腳本
+   轉成 CRLF 的那個 bug。對照組必須用真實訊號會用到的結構。
