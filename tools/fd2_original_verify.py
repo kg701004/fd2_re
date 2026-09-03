@@ -506,8 +506,22 @@ class Runner:
                      "--verify-suffix", st.get("verify_suffix",
                                                "0500000000000000fbfffffffbffff"),
                      "--bytecount", "16"]
-        cp = subprocess.run(argv, capture_output=True, text=True,
-                            timeout=st.get("timeout", 420))
+        # Short default timeout ON PURPOSE. Measured 2026-09-03: every calibration path
+        # -- including the full 2MB code-signature search -- completes in about one
+        # second once the debugger is actually up. So a read that takes minutes is not
+        # slow, it is STUCK (almost always the debugger toggle not landing), and a long
+        # timeout just turns one stuck read into a stalled batch. Fail fast and report.
+        try:
+            cp = subprocess.run(argv, capture_output=True, text=True,
+                                timeout=st.get("timeout", 90))
+        except subprocess.TimeoutExpired:
+            subprocess.run([sys.executable, helper, "resume", "--instance", self.instance],
+                           capture_output=True, text=True, timeout=120)
+            self.result.measurements.append(
+                {"name": st.get("name", "bgm_track"), "result": "STUCK", "kind": "bgm",
+                 "detail": f"read exceeded {st.get('timeout', 90)}s; measured normal cost is "
+                           f"~1s, so this is a stuck debugger toggle, not slowness"})
+            return
         out = cp.stdout or ""
         track = None
         raw = ""
