@@ -898,7 +898,7 @@
     酒店選單存檔則會顯示——不是 trace 提早結束、UI 重繪時機、或按鍵序列漏看，純靜態證據
     已足夠，未再重跑 DOSBox-X。詳細反組譯與 byte dump 見 doc25 §9.1 本輪新增段落。
 - [x] **UI-VIS-DIFF-HARNESS**：2026-08-26新增`tools/dosbox_diff_harness.sh`（WSL端，`dosbox_harness.sh`姊妹腳本，獨立registry/tmux/Xvfb port range不互相干擾）＋`tools/dosbox_diff_harness.py`（Windows端單一CLI），把「固定同一FD2.SAV／選定城鎮hub／擷取DOSBox與remake 320×200 pair／pixel diff」整條流程接成可重複呼叫的工具，不再需要每輪手刻。**關鍵發現**：variant0當年byte-exact rigor其實來自套件版plain `dosbox`（非`dosbox-x`）配`[sdl]output=surface`+`[render]scaler=none aspect=false`；同一組config套在dosbox-x上因為固定多畫一條GUI選單列，視窗仍會比原生解析度大——純截圖工作用不到debugger，改用plain dosbox後視窗精確等於320×200，`raw-screenshot`量到尺寸不對就fail closed不偷偷crop/resize。remake側沿用既有`fd2-linux-verify`（Docker移除前建置，WSL2-native下可直接執行免重建），640×400邏輯畫布用2×2區塊取樣無損還原320×200。**驗證**：①對已閉合的UI-01 title-screen oracle重放，`raw-screenshot`的rgb_md5與`docs/figures/title-original-dosbox.png`（舊Docker pipeline產物）逐位元組相同（`d05b5e19806e5dc3d3e78d199eb74168`）；②`python tools/dosbox_diff_harness.py town --chapter-byte 0x01 --node town_ch02 --selection 0 --pulses 0,1,2,3`全自動（chapter-jump patch→LOAD→城鎮hub→兩側擷取→diff）重放UI-08-TOWN-VARIANT0同一場景，99.3-99.4% exact-pixel-match、mean-abs-diff 0.34-0.45（最佳pulse=2），精確定位出一個先前variant1/2用crop/resize+統計比對方法沒抓到的小範圍（24×24px/369像素，角色胸口一塊remake多畫的紅色方塊）真實compositor差異，已另開追蹤（非本項範圍）。**誠實限制**：只自動化了「chapter-jump→LOAD→城鎮hub」一種navigate序列，其他場景（商店/教會/整備/戰鬥）仍需各自的按鍵序列；沒有達到100%全幀相同且這是真實發現不是工具精度問題；尚未拿去重放升級UI-VIS-TOWN variant1/2本身的證據等級（下一輪可做）。完整設計/踩坑見`docs/knowledge-base/98-tooling-infrastructure.md`「DOSBox-vs-remake byte-exact pixel diff harness」節，pointer見`docs/knowledge-base/48-dosbox-x-debugger-build.md`§11。
-- [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直
+- [ ] **ENGINE-REPOSITORY-EXTRACTION-GATE**：待 FD2 忠實模式的核心垂直  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
   路徑穩定後，建立獨立 GitHub 引擎倉庫。抽離範圍只包含可由第二個真實
   戰役消費的網格、回合排程、事件虛擬機、索引色渲染、輸入、存檔介面與
   跨平台層；FDFIELD／FD2.SAV、handler ABI、原版戰役、位址證據與
@@ -1518,6 +1518,42 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       真正會換值的是**走過不同的前置交易／對白**。大樣本 range 驗證因此**仍未做**，
       但下一輪的正確做法已經指出來了。詳見 doc58「2026-09-03 續五」。
 
+### M5-F 由 remake 時代項目轉換而來的原版側驗證（使用者指示 2026-09-03）
+
+使用者指示：**「remake 時代項目全部都以原版進行驗證」**。
+
+逐項檢視 worklist 上 26 個未完成項後，**誠實的結論是它們並非同一類**：
+
+- **14 項沒有原版側命題**（跨平台打包／WASM／Android／玩家向 README／EventSystem 實作／
+  自創戰場與多結局／中文回寫工具／四個編輯器／引擎倉庫抽離／story 節點接線）。
+  這些的主詞是「**建造或擴充 remake**」，不是「原版怎麼運作」——**沒有東西可以拿原版去驗**。
+  硬替它們編一個驗證任務等於造假，所以就地標記為失效，理由寫在該項後面。
+- **12 項有真正的原版側命題**，列於下表。其中 3 項本來就寫著要用原版驗
+  （`2592` 明文「需先 RE 原版治療咒視覺」、`3753` 本來就是 DOSBox 原版的輸入問題、
+  `2900` 的靜態 RE 已在 `doc11` 閉合、只差原版實測）。
+
+| 原項目 | 轉換後的**原版側**命題 | 可行性 |
+|---|---|---|
+| 自動結束回合 | **原版在全員行動完畢後會不會自動換邊？**還是也要玩家手動結束？ | 需進到戰鬥；靜態 RE 已閉合三個入口 |
+| 法術特效時序 #9 | 原版**治療系法術**的視覺演出是什麼（閃光／數字浮現／僅改血條） | 需進到戰鬥且有治療角色 |
+| `MAP26-EVENT63-E2-PLAYER-PATH` | ch27 一般玩家路徑（未修改存檔）能否走完 | 高成本，已知多輪未解 |
+| `REAL-UI-...-INPUT-DROP` | `0x115b6` mode 4 移動確認的 `Enter`/`Space` 間歇性丟失是否可重現 | 需進到戰鬥移動確認 |
+| SDD-4 native renderer re-audit | 原版 finale figure-fade／ending 演出的**實際畫面**為何 | 需推進到結局 |
+| 下一個 ending gate | 原版 ending 的 party cycle／FDOTHER#56 backdrop／dialogue-frame grid 實際畫面 | 同上 |
+| UI 音效 index 2-0xb 語意畫面實測（×2 筆） | 每個 SFX index 實際在**哪個畫面**播放 | **缺音訊擷取基礎設施**（harness 目前只擷取畫面） |
+| 戰鬥曲／勝利曲／開場配樂聽辨（×3 筆） | 各曲號實際對應哪一首 | **需要使用者本人聽辨**，工具無法代勞 |
+| ch04-33 劇情文本精校 | 原版逐章對白文字逐字校對 | 需人眼逐頁轉錄，量大 |
+
+**共通阻塞**：上表前 6 項都要求**進到戰鬥或推進到結局**，而
+「通用地走到戰場」正是本專案自己都尚未解出的開放問題
+（`tools/fd2_chapter_sweep.py` 對全 30 章的結論全部是 `needs_manual_followup`）。
+所以這些項目不是「還沒做」，而是**卡在同一個前置條件上**——
+在那個前置解開之前，逐項硬推只會重複已知的失敗。
+
+**因此本項的下一步不是逐項驗證，而是先解「如何穩定進到戰鬥」**；
+一旦解開，上表前 6 項可以一次全部變成可執行。
+本輪把分類與阻塞點寫清楚，不假裝它們是各自獨立的待辦。
+
 ### M5-E 不屬於本里程碑（明確排除）
 
 - 「無 debug hook 的正常玩法通關」——那是 remake 的驗收語意，隨 remake 移除而失效。
@@ -1527,17 +1563,17 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
-- [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)
-- [ ] WASM 上網頁(資產載入 + `index.html` 完整化)
-- [ ] Android:`ebitenmobile bind` → `.aar` → Gradle APK(觸控已支援)
-- [ ] 玩家向 README(圖文並茂,突顯貢獻)+ 工程文件分離
+- [ ] 桌面交叉編譯 + 打包(Windows `.exe` / macOS `.app` / Linux AppImage)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] WASM 上網頁(資產載入 + `index.html` 完整化)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] Android:`ebitenmobile bind` → `.aar` → Gradle APK(觸控已支援)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] 玩家向 README(圖文並茂,突顯貢獻)+ 工程文件分離  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
 
 ## 擴充(M4 之後,擺脫原版固定 33 路線)
 - [x] **可擴展事件系統規劃** → `29`:trigger/when/do DSL + 文本事件控制碼 `{{}}`;條件/動作 Registry 可註冊;原版 30 關可表達+自創戰役
-- [ ] 實作 EventSystem(ConditionRegistry/ActionRegistry)+ DialoguePlayer 解析 `{{}}`
-- [ ] 自創戰場 + 自訂劇本(用 `19`+`29` 系統)
-- [ ] 多分支劇情線 / 多結局
-- [ ] 編碼器回寫中文(`encode_text.py`)做在地化/二創
+- [ ] 實作 EventSystem(ConditionRegistry/ActionRegistry)+ DialoguePlayer 解析 `{{}}`  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] 自創戰場 + 自訂劇本(用 `19`+`29` 系統)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] 多分支劇情線 / 多結局  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] 編碼器回寫中文(`encode_text.py`)做在地化/二創  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
 
 ## 第 5 輪 ✅(開場流程反組譯 — 使用者指定)
 - [x] **建反組譯器** `tools/disasm_le.py`(capstone 解 DOS4GW LE,docker)+ 確認 entry/main/狀態機
@@ -2406,11 +2442,11 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       不做 Ebiten 內建=避免編輯器複雜度混入引擎/不外包 Tiled=劇情事件無對應工具);
       MVP=戰場編輯(產物零轉換直接引擎載入);地基發現:MoveCost 未接地形、
       event.go 實作僅 doc29 願景子集(表單以實作為準+--dump-registry 同步)
-- [ ] **戰場編輯器 MVP**:網頁單檔 HTML/JS,tile 繪製+單位擺放+部署格;FSA API 讀寫 assets/maps;
+- [ ] **戰場編輯器 MVP**:網頁單檔 HTML/JS,tile 繪製+單位擺放+部署格;FSA API 讀寫 assets/maps;  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
       驗收=引擎零轉換載入(細節 `38`)
-- [ ] 劇情編輯器:對白+事件表單+商店(下拉=event.go 現行能力,`38` §3.3)
-- [ ] 編輯器能力清單同步:Go --dump-registry
-- [ ] campaign 節點圖編輯器(拖線/旗標/敗北路線可視化)
+- [ ] 劇情編輯器:對白+事件表單+商店(下拉=event.go 現行能力,`38` §3.3)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] 編輯器能力清單同步:Go --dump-registry  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
+- [ ] campaign 節點圖編輯器(拖線/旗標/敗北路線可視化)  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
 - [x] **地形屬性接線**:地形控制表 per-tile 確認(300~400 格不等,非固定 300;
       `tools/dump_terrain_table.py` → `docs/data/exe_tables/terrain.json`,33 tileset 全 dump)。
       移動代碼(byte1,0-5)語意用 references/text/notes.md 玩家攻略「地形移動力/攻防影響」表
@@ -2534,7 +2570,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       (誤判無效);換更小的 curY(如 15)才看出真的有作用——clamp 邊界會讓「看似無效的截圖測試」
       其實只是撞到同一個 clamp 上限,不是機制真的沒用,下次遇到「怎麼測都一樣」先檢查 clamp 範圍。
       → doc44 §2.5 定案(信心分級:格子=FDFIELD 直讀高信心,逐人配對=影片外觀反推中高信心非鐵證)。
-- [ ] ch02-33 全章 story 節點接 script(gen_campaign 修+重生成)— 等 ch01 落地後做
+- [ ] ch02-33 全章 story 節點接 script(gen_campaign 修+重生成)— 等 ch01 落地後做  →【**remake 專案建置項目，無原版側命題**；隨 `remake/` 移除失效，2026-09-03】
 - [~] ch02-33 全章 story fallback：runtime 對精確 `story_chNN` generic node 自動掛 `assets/story/chNN.json`，讓已匯出的可編輯完整劇本取代節點短 fallback lines；named/pre/post cutscene 不套用此 heuristic，避免重播整章。ch02/03 handler 仍待逐段 beats 接線。
 - 🟡 **ch01 開場 Phase 2 實作(doc46 D1-D6,2026-07-04,待使用者驗收才打勾)**:使用者三輪回報後
       team-lead 先做「原版開場逐幕時間軸」(doc46)才動手,這輪照時間軸把 D1-D6 全部實作:
