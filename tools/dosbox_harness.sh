@@ -248,6 +248,25 @@ cmd_launch() {
     # the mixer output is written straight to a headerless PCM file for the whole
     # session, which also makes it timestamp-sliceable against screenshots instead of
     # needing a start/stop key to land at the right moment.
+    # Optional pass-through mapper (FD2_HARNESS_MAPPER=<path>).
+    #
+    # DOSBox-X binds some Ctrl+Fn chords to its own capture actions, and a chord the
+    # host mapper consumes never reaches the DOS program. That matters here because the
+    # game's secret-shop gates require specific BIOS scan codes: Ctrl+F1 (ch12) works,
+    # while Ctrl+F2 (ch03) and Ctrl+F5 (ch06) do not fire -- and Ctrl+F5 is exactly the
+    # kind of chord DOSBox reserves. tools/dosbox/passthrough.map lists those actions
+    # with no binds, freeing the chords for the guest.
+    #
+    # TESTED 2026-09-03 AND IT DID NOT FIX THAT: a 2x2 (mapper on/off x key mode
+    # window/xtest) on ch06's town at selection 4 left all four cells with no response,
+    # so DOSBox-X consuming the chord is NOT the explanation. Kept because freeing the
+    # host bindings is a legitimate capability, but do not cite it as the gate fix.
+    local mapper_arg=()
+    if [[ -n "${FD2_HARNESS_MAPPER:-}" ]]; then
+        mapper_arg=(-set "sdl mapperfile=${FD2_HARNESS_MAPPER}")
+        echo "[$name] mapper: ${FD2_HARNESS_MAPPER}"
+    fi
+
     local audio_env=""
     if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
         local audio_raw="$workdir/sdlaudio.raw"
@@ -263,7 +282,7 @@ cmd_launch() {
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' ${mapper_arg[*]@Q} -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 
@@ -329,13 +348,44 @@ cmd_send_keys() {
     local win
     win=$(DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool search --name DOSBox 2>/dev/null | head -1)
     [[ -n "$win" ]] || die "no DOSBox window found for $name on 127.0.0.1:$DISPLAY_PORT"
+    # Key delivery mode. Default changed to XTest on 2026-09-03 -- see below.
+    #
+    # `xdotool key --window <win>` addresses a specific window, but to do that it uses
+    # XSendEvent for anything that is not the currently-focused window, and SDL (and
+    # DOSBox-X's own key mapper) ignore synthetic XSendEvent keys. This harness's
+    # existing header comment already flagged that xdotool switches between XTest and
+    # XSendEvent depending on focus state, which in a WM-less Xvfb is ambiguous.
+    #
+    # The evidence that this was actually biting: DOSBox-X's mapper never reacted to
+    # ANY host chord. Ctrl+F6 (record wave) produced no audio file and Ctrl+F5 (save
+    # screenshot) produced no image -- verified by diffing the instance workdir's file
+    # list before and after each chord. Guest-bound keys mostly worked, so the problem
+    # was invisible until something needed the mapper.
+    #
+    # Dropping --window makes xdotool use XTest, which injects at the server and is
+    # indistinguishable from real hardware, so both SDL and the mapper see it. Each
+    # instance owns its own Xvfb display with exactly one DOSBox window, so "the
+    # focused window" is unambiguous here -- this is safe precisely because of the
+    # per-instance display isolation.
+    #
+    # DEFAULT STAYS `window` -- the mode every currently-passing scenario was proven
+    # with. `xtest` was added and tested on 2026-09-03 against the one open question it
+    # might have explained (the ch06 secret-gate chord not firing) and made NO
+    # difference, so there is no evidence for changing what everything else relies on.
+    # Set FD2_HARNESS_KEY_MODE=xtest to use it.
+    local mode="${FD2_HARNESS_KEY_MODE:-window}"
     local k nkeys=$#
     for k in "$@"; do
         _focus_window_best_effort "$win"
-        DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool key --window "$win" "$k"
+        if [[ "$mode" == "window" ]]; then
+            DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool key --window "$win" "$k"
+        else
+            DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool windowactivate --sync "$win" 2>/dev/null
+            DISPLAY="127.0.0.1:$DISPLAY_PORT" xdotool key --clearmodifiers "$k"
+        fi
         sleep 0.1
     done
-    echo "[$name] sent $nkeys key(s) to window $win"
+    echo "[$name] sent $nkeys key(s) to window $win (mode=$mode)"
 }
 
 cmd_enter_debugger() {

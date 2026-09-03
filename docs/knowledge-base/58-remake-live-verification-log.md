@@ -10527,3 +10527,52 @@ M5-D 的第四項是「原 5 次 trial 因 RNG 綁按鍵/tick 而非獨立，需
 
 **教訓**：把「慢」與「卡住」分開之前，不要為效能做設計決策——
 我為此白繞了兩輪（縮小掃描窗、加候選清單），而兩者都沒解決真正的問題。
+
+### 2026-09-03 續七：把「ch03／ch06 是工具問題」當假說去測 —— 兩個工具修法都**沒有**修好它
+
+使用者判斷這是工具端(按鍵送不進去)的問題並要求修工具。本輪照這個方向做了兩個具體修改，
+**並且都實測了**：
+
+#### 修法一：改用 XTest 送鍵（不帶 `--window`）
+
+`xdotool key --window <win>` 對非焦點視窗會走 XSendEvent，而 SDL 與 DOSBox-X 的 mapper
+常忽略合成事件（harness 自己的 header 早就記過 xdotool 會在兩者間搖擺）。
+改成 `windowactivate --sync` ＋ 不帶 `--window` 的 `xdotool key`，讓 X server 注入真實事件。
+
+#### 修法二：pass-through mapper，解除 DOSBox-X 自己的 Ctrl+Fn 綁定
+
+二進位檔裡有 `cap_video`／`cap_audio`／`cap_opl`／`cap_mtaudio` 等 mapper 動作，
+且機器上**沒有 .map 檔**（走內建預設）。若 DOSBox-X 吃掉 `Ctrl+F5`，遊戲就永遠收不到——
+這正好能解釋 ch06。新增 `tools/dosbox/passthrough.map` 把那些動作列出但不綁任何鍵，
+harness 加 `FD2_HARNESS_MAPPER=<path>`（透過 `-set "sdl mapperfile=…"`）。
+
+#### 實測：**ch06 的 town、selection 4、`Ctrl+F5`，2×2 四格全部無反應**
+
+| mapper | 送鍵模式 | 結果 |
+|---|---|---|
+| off | window（原本的設定） | 無反應 |
+| off | xtest | 無反應 |
+| on | window | 無反應 |
+| on | xtest | 無反應 |
+
+**兩個工具假說都被推翻。** 「DOSBox-X 吃掉組合鍵」不成立；XSendEvent／XTest 的差別也不是原因。
+
+#### 因此如何處置這兩個改動（重要）
+
+- **送鍵模式的預設值改回 `window`**——也就是目前所有通過中的 scenario 當初被驗證的那個模式。
+  `xtest` 保留為選項。**沒有證據支持就不該更動全體共用的預設值**，
+  尤其它已經被實測證明對這個問題沒有幫助。
+- **pass-through mapper 保留**（opt-in、預設關閉、不影響既有行為），
+  因為「能解除宿主熱鍵」本身是合理的能力，但**註解裡明寫它沒有修好 gate**，
+  以免日後有人把它當成解法引用。
+
+**回歸驗證**：改完後 `--all --jobs 3` **16/16 全部 PASS**、port 回歸測試 21/21、環境零殘留。
+
+#### 附帶更正我自己前一輪的另一個錯誤結論
+
+續六說「mapper 根本沒收到任何組合鍵」。**這是錯的**——
+`enter-debugger` 用的 `Alt+Pause` 就是 mapper 綁定，而它一直都成功。
+所以 mapper 收得到鍵；`Ctrl+F5`／`Ctrl+F6` 沒有產生截圖／音訊檔，
+只代表**那兩個綁定不是我以為的那樣**，不代表按鍵遺失。
+
+**ch03／ch06 至此仍未解**，但已排除的清單又多了兩項（宿主熱鍵攔截、送鍵方式）。
