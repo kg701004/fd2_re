@@ -1345,9 +1345,11 @@ header與doc48 §8.4都寫過）。第一版用`subprocess.run(..., timeout=25)`
 
 **用法**：
 ```
+python tools/fd2_original_verify.py --selftest          # 離線自檢，不啟動DOSBox
 python tools/fd2_original_verify.py --list
 python tools/fd2_original_verify.py --all --jobs 3
-python tools/fd2_original_verify.py --run secret_shop --keep   # 保留instance供人工檢查
+python tools/fd2_original_verify.py --all --jobs 3 --repeat 3   # 重複跑並檢查跨run穩定性
+python tools/fd2_original_verify.py --run secret_shop --keep    # 保留instance供人工檢查
 ```
 參考圖放在`.wsl_build/verify_refs/`（`title.png`、`title_load_menu.png`），報告與逐張截圖
 輸出到`.wsl_build/original_verify/<timestamp>/`。scenario本身是**資料**（`SCENARIOS` dict），
@@ -1377,3 +1379,48 @@ manually if not needed」），不是bug，但沒有人回頭清過。
 **給後續輪次的建議**：每輪結束teardown後順手`rm -rf ~/fd2-run-harness-<instance>`
 （`fd2_original_verify.py`已內建這個清理），否則以每個目錄約260MB的速度，很快又會累積回去。
 真的需要保留某輪狀態時，保留`FD2.SAV`即可，不需要整個目錄。
+
+### 2026-09-03 續：優化與反覆驗證結果
+
+使用者要求「優化工具並反覆驗證、確認無異常再繼續」，本輪做了四件事並實測：
+
+**1. 效能**：`mean_abs_diff`（`poll_title`每次迭代都會呼叫的熱點）原本是純Python雙層迴圈，
+每次比較約48k個直譯運算。改成numpy向量化並保留一份**dependency-free參考實作**
+（`_mad_reference`，改用`tobytes()`避開Pillow 14要移除的`getdata()`）。實測
+**87.0ms → 5.2ms / 50次呼叫（17倍）**，且`--selftest`會強制斷言兩條路徑數值相同——
+快速路徑不可能悄悄偏離參考路徑。
+
+**2. 截圖round-trip減半**：harness的`screenshot`本來就吃目的路徑，所以直接寫進
+`/mnt/c/...`的run目錄，省掉原本「先寫`/tmp`再`cp`」的第二次`wsl.exe`呼叫。同時加上
+**重試**（`import`偶爾會跟模式切換搶輸出而產生空檔，屬transient），但**永不偽造frame**：
+三次都失敗就丟例外。內部探針（`_boot`/`_poll`）改用`_`前綴並排除在report的frame清單外。
+
+**3. `--selftest`（離線自檢，不啟動DOSBox）**：22項檢查，涵蓋影像運算正確性（相同幀diff=0、
+純黑vs純白=255、md5穩定性）、兩條diff實作一致性、「畫面是否已渲染」的黑幀gate、以及
+**scenario靜態檢查**（op是否都已實作、`assert_ref`/`assert_distinct`指向的label是否真的有被
+`shot`拍過、參考圖是否存在）。這類typo以前只會在跑到一半時變成靜默no-op。
+以`-W error::DeprecationWarning`執行仍全綠。
+
+**4. `--repeat N` 跨run穩定性檢查（本輪最有價值的新增）**：同一個scenario從同一份存檔重播，
+理論上該產生完全相同的frame。實測`--all --jobs 3 --repeat 3`（共12次scenario執行）**斷言
+全部PASS**，但frame hash**不穩定**——這正是這個功能要抓的東西。逐一量化後確認：
+
+> 每一個不穩定的frame，差異都是**0.54~0.57%的像素、且全部落在單一48×48px方框內**
+> （＝24×24的FDICON sprite在2倍擷取比例下的大小），位置隨selection移動而移動。
+
+這與doc58 `UI-VIS-TOWN`條目**早就獨立記錄過**的現象完全吻合（「362/64000像素(0.57%)差異
+全部集中在隊長站立sprite的24×24px範圍…根因是擷取時機沒有釘住待機動畫相位」）——本工具
+等於獨立重新發現了同一件事，是對工具正確性的一個好佐證。
+
+因此把不穩定**分類**而不是壓平：符合動畫特徵者（像素比例≤1%且差異框≤64×64，門檻取自實測值
+略上方，不是隨手取的整數）標為`ANIMATION`不算失敗；更大或更分散者標為`STRUCTURAL`並讓
+exit code為非0。分類後重跑`--repeat 3`：**12/12 PASS、全部ANIMATION、零STRUCTURAL、
+exit code 0**，另外也抓到商店店主自己的待機動畫（`shop_interior` 0.12% / 20×32px）。
+
+**結論**：工具本身無異常。**frame MD5不能單獨當作畫面identity**（含動畫sprite的畫面本來就
+會變），要嘛比對排除sprite區域，要嘛沿用`dosbox_diff_harness.py`既有的`lock_pulse_phase()`
+思路先釘住動畫相位——本工具選擇「量化後分類」，因為驗證關心的是畫面**語意**是否正確，
+而不是逐位元組相同。
+
+**清理**：24次scenario執行後，harness `status`無殘留instance、`ps aux`零個live程序、
+`~/fd2-run-harness-*`工作目錄0個（工具每輪自動刪），磁碟維持8.0G。

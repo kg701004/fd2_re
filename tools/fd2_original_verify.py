@@ -101,6 +101,11 @@ except ImportError:  # pragma: no cover - Pillow is present in this repo's tooli
     print("ERROR: Pillow required (pip install pillow)", file=sys.stderr)
     raise
 
+try:
+    import numpy as _np
+except ImportError:  # optional: only accelerates mean_abs_diff, never changes its result
+    _np = None
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -156,16 +161,76 @@ def md5_of(png: Path, box=GAME_BOX) -> str:
 
 
 def mean_abs_diff(a_png: Path, b_png: Path, box=GAME_BOX, size=(160, 100)) -> float:
+    """Mean absolute per-channel difference of two crops, 0..255.
+
+    Vectorised via numpy when available: this runs on every poll_title
+    iteration, and the original pure-Python double loop cost ~48k interpreted
+    operations per comparison. The fallback keeps the tool usable in a bare
+    environment; both paths are exercised by --selftest, which asserts they
+    agree, so the fast path can never silently drift from the reference one.
+    """
     a = crop_rgb(a_png, box).resize(size)
     b = crop_rgb(b_png, box).resize(size)
-    ap, bp = a.load(), b.load()
-    total = 0
-    w, h = size
-    for y in range(h):
-        for x in range(w):
-            pa, pb = ap[x, y], bp[x, y]
-            total += abs(pa[0] - pb[0]) + abs(pa[1] - pb[1]) + abs(pa[2] - pb[2])
-    return total / (w * h * 3)
+    return _mad_fast(a, b) if _np is not None else _mad_reference(a, b)
+
+
+def _mad_reference(a: Image.Image, b: Image.Image) -> float:
+    """Dependency-free reference implementation; --selftest pins the fast path to it.
+
+    Works on the raw RGB byte stream rather than getdata() -- same arithmetic (both
+    are a mean over every channel value), but avoids materialising a tuple per pixel
+    and avoids getdata(), which Pillow 14 removes.
+    """
+    ab, bb = a.tobytes(), b.tobytes()
+    return sum(abs(x - y) for x, y in zip(ab, bb)) / len(ab)
+
+
+def _mad_fast(a: Image.Image, b: Image.Image) -> float:
+    return float(abs(_np.asarray(a, dtype=_np.int16) - _np.asarray(b, dtype=_np.int16)).mean())
+
+
+# A frame whose cross-run difference is at most this fraction of pixels, and whose
+# differing pixels all fit inside a box this size, is the party leader's unlocked
+# idle-animation phase rather than a real change. Both numbers come from measuring
+# this capture geometry (0.54-0.57% of pixels, always a single 48x48 box = the 24x24
+# FDICON sprite at 2x scale), and agree with doc58's independently recorded 0.57%.
+# They are deliberately just above the measured values, not round guesses.
+ANIM_MAX_PIXEL_FRACTION = 0.01
+ANIM_MAX_BOX = 64
+
+
+def classify_instability(paths: list[Path], box=GAME_BOX) -> tuple[str, str]:
+    """Decide whether frames that differ across runs differ only by animation phase.
+
+    Returns ("animation"|"structural"|"unknown", human-readable detail). Comparisons
+    are made against the first frame, and the worst case decides -- one structural
+    difference in a set is enough to disqualify the whole label.
+    """
+    if len(paths) < 2:
+        return "unknown", "fewer than two frames to compare"
+    if _np is None:
+        return "unknown", "numpy unavailable; cannot localise the difference"
+    ref = _np.asarray(crop_rgb(paths[0], box), dtype=_np.int16)
+    worst_frac, worst_dims, verdict = 0.0, (0, 0), "animation"
+    for p in paths[1:]:
+        cur = _np.asarray(crop_rgb(p, box), dtype=_np.int16)
+        if cur.shape != ref.shape:
+            return "structural", f"frame size changed: {ref.shape} vs {cur.shape}"
+        mask = abs(cur - ref).sum(axis=2) > 30
+        n = int(mask.sum())
+        if n == 0:
+            continue
+        frac = n / mask.size
+        ys, xs = _np.nonzero(mask)
+        w, h = int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)
+        if frac > worst_frac:
+            worst_frac, worst_dims = frac, (w, h)
+        if frac > ANIM_MAX_PIXEL_FRACTION or w > ANIM_MAX_BOX or h > ANIM_MAX_BOX:
+            verdict = "structural"
+    if worst_frac == 0.0:
+        return "animation", "no pixel differed by more than the noise threshold"
+    return verdict, (f"max {worst_frac * 100:.2f}% of pixels differ, "
+                     f"confined to {worst_dims[0]}x{worst_dims[1]}px")
 
 
 # --------------------------------------------------------------------------
@@ -188,6 +253,7 @@ class RunResult:
     assertions: list[Assertion] = field(default_factory=list)
     shots: dict[str, str] = field(default_factory=dict)  # label -> md5
     error: str = ""
+    duration_s: float = 0.0
 
 
 class Runner:
@@ -204,16 +270,38 @@ class Runner:
         self.last_shot: Path | None = None
 
     # -- primitives ------------------------------------------------------
-    def shot(self, label: str) -> Path:
-        remote = f"/tmp/vf_{self.instance}.png"
-        harness("screenshot", self.instance, remote, timeout=90)
+    def shot(self, label: str, attempts: int = 3) -> Path:
+        """Capture one frame straight into the run directory.
+
+        The harness's `screenshot` subcommand takes the destination path, so it
+        can write to the /mnt/c view of the run directory directly -- the earlier
+        version wrote to /tmp and then shelled out a second time to copy it,
+        doubling the wsl.exe round-trips on the hottest primitive in the tool
+        (poll_title captures a frame per iteration).
+
+        Retries: `import` occasionally loses a race with a mode switch and yields
+        nothing. That is transient, so a failed capture is retried rather than
+        failing a scenario for an infrastructure hiccup -- but it never fabricates
+        a frame: if every attempt fails the caller gets an exception.
+
+        Labels starting with '_' are internal (boot/poll probes) and are kept out
+        of the report's frame list so a later assert_distinct or a cross-repeat
+        stability comparison only ever sees frames a scenario deliberately named.
+        """
         local = self.dir / f"{label}.png"
-        wsl_argv(["bash", "-lc", f"cp {remote} {to_wsl_path(local)}"], timeout=60)
-        if not local.exists():
-            raise RuntimeError(f"screenshot '{label}' did not materialise at {local}")
-        self.result.shots[label] = md5_of(local)
-        self.last_shot = local
-        return local
+        last_err = ""
+        for i in range(1, attempts + 1):
+            if local.exists():
+                local.unlink()
+            cp = harness("screenshot", self.instance, to_wsl_path(local), timeout=90)
+            if local.exists() and local.stat().st_size > 0:
+                if not label.startswith("_"):
+                    self.result.shots[label] = md5_of(local)
+                self.last_shot = local
+                return local
+            last_err = (cp.stderr or cp.stdout or "").strip()[-160:]
+            time.sleep(1.0 * i)
+        raise RuntimeError(f"screenshot '{label}' failed after {attempts} attempts: {last_err}")
 
     def keys(self, keys: list[str], wait: float) -> None:
         for k in keys:
@@ -344,6 +432,13 @@ class Runner:
         return False
 
     def run(self) -> RunResult:
+        started = time.time()
+        try:
+            return self._run()
+        finally:
+            self.result.duration_s = time.time() - started
+
+    def _run(self) -> RunResult:
         # Serialise the launch phase only. dosbox_harness.sh's pick_display_port()
         # chooses a port by scanning the registry for live instances, but it writes
         # the winning port to its own .state file only *after* the Xvfb starts -- so
@@ -453,14 +548,92 @@ SCENARIOS = {
 # CLI
 # --------------------------------------------------------------------------
 
+def selftest() -> int:
+    """Validate the tool's own image/assertion logic without launching anything.
+
+    This exists because every other check in this file depends on mean_abs_diff
+    and md5_of being right; if the fast (numpy) path silently disagreed with the
+    reference path, every L1 gate in every scenario would be quietly wrong.
+    """
+    import tempfile
+    failures: list[str] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        print(f"  [{'ok ' if ok else 'FAIL'}] {name}{(' -- ' + detail) if detail and not ok else ''}")
+        if not ok:
+            failures.append(name)
+
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        black = Image.new("RGB", (900, 700), (0, 0, 0))
+        white = Image.new("RGB", (900, 700), (255, 255, 255))
+        grey = Image.new("RGB", (900, 700), (10, 10, 10))
+        pb, pw, pg = tmp / "b.png", tmp / "w.png", tmp / "g.png"
+        black.save(pb); white.save(pw); grey.save(pg)
+
+        check("identical frames -> diff 0", mean_abs_diff(pb, pb) == 0.0)
+        check("black vs white -> diff 255", abs(mean_abs_diff(pb, pw) - 255.0) < 0.01,
+              f"got {mean_abs_diff(pb, pw)}")
+        check("near-black diff is small", mean_abs_diff(pb, pg) < 12.0)
+        check("md5 stable for same image", md5_of(pb) == md5_of(pb))
+        check("md5 differs for different images", md5_of(pb) != md5_of(pw))
+
+        if _np is not None:
+            # The whole point of having two implementations: they must agree, or every
+            # L1 gate in every scenario is silently running on unvalidated arithmetic.
+            for name, (x, y) in {"black/grey": (pb, pg), "black/white": (pb, pw)}.items():
+                ia = crop_rgb(x).resize((160, 100))
+                ib = crop_rgb(y).resize((160, 100))
+                fast, slow = _mad_fast(ia, ib), _mad_reference(ia, ib)
+                check(f"numpy path == reference path ({name})", abs(fast - slow) < 1e-9,
+                      f"{fast} vs {slow}")
+        else:
+            print("  [skip] numpy not installed; only the reference path is in use")
+
+        # The blackness gate that decides "the game is actually drawing".
+        check("black frame fails the rendering gate",
+              sum(hi for _lo, hi in crop_rgb(pb).getextrema()) <= 60)
+        check("bright frame passes the rendering gate",
+              sum(hi for _lo, hi in crop_rgb(pw).getextrema()) > 60)
+
+        # Scenario specs must only use implemented ops, or a typo silently no-ops.
+        known = set(Runner.STEPS)
+        for sname, spec in SCENARIOS.items():
+            bad = [s["op"] for s in spec["steps"] if s["op"] not in known]
+            check(f"scenario '{sname}' ops implemented", not bad, f"unknown: {bad}")
+            labels = {s["label"] for s in spec["steps"] if s["op"] == "shot"}
+            refs = [s for s in spec["steps"] if s["op"] == "assert_ref"]
+            missing = [s["label"] for s in refs if s["label"] not in labels]
+            check(f"scenario '{sname}' assert_ref targets a captured frame", not missing,
+                  f"no shot for: {missing}")
+            dis = [s for s in spec["steps"] if s["op"] == "assert_distinct"]
+            missing2 = sorted({lb for s in dis for lb in s["labels"] if lb not in labels})
+            check(f"scenario '{sname}' assert_distinct targets captured frames", not missing2,
+                  f"no shot for: {missing2}")
+
+        for ref in {s["ref"] for sp in SCENARIOS.values() for s in sp["steps"] if s["op"] == "assert_ref"}:
+            check(f"reference image present: {ref}", (REF_DIR / ref).exists(), str(REF_DIR / ref))
+
+    print(f"\nselftest: {'PASS' if not failures else 'FAIL -- ' + ', '.join(failures)}")
+    return 0 if not failures else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--list", action="store_true", help="list scenario names and exit")
+    ap.add_argument("--selftest", action="store_true",
+                    help="validate the tool's own logic offline (no DOSBox), then exit")
     ap.add_argument("--run", action="append", default=[], metavar="NAME", help="run one scenario (repeatable)")
     ap.add_argument("--all", action="store_true", help="run every scenario")
     ap.add_argument("--jobs", type=int, default=2, help="how many scenarios to run concurrently (default 2)")
+    ap.add_argument("--repeat", type=int, default=1, metavar="N",
+                    help="run the whole set N times and report per-frame hash stability across runs "
+                         "(a scenario that passes but renders differently each time is a real finding)")
     ap.add_argument("--keep", action="store_true", help="do not tear instances down (for inspection)")
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
 
     if args.list:
         for k, v in SCENARIOS.items():
@@ -474,36 +647,102 @@ def main() -> int:
     if unknown:
         ap.error(f"unknown scenario(s): {', '.join(unknown)}")
 
-    out_dir = OUT_ROOT / time.strftime("%Y%m%d-%H%M%S")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[verify] {len(names)} scenario(s), jobs={args.jobs}, out={out_dir}")
+    base_dir = OUT_ROOT / time.strftime("%Y%m%d-%H%M%S")
+    base_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[verify] {len(names)} scenario(s) x{args.repeat}, jobs={args.jobs}, out={base_dir}")
 
-    results: list[RunResult] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
-        futs = {pool.submit(Runner(SCENARIOS[n], out_dir, args.keep).run): n for n in names}
-        for fut in concurrent.futures.as_completed(futs):
-            r = fut.result()
-            results.append(r)
-            mark = "PASS" if r.ok else "FAIL"
-            print(f"[{mark}] {r.scenario} ({len(r.assertions)} assertions)"
-                  + (f" -- {r.error}" if r.error else ""))
-            for a in r.assertions:
-                if not a.ok:
-                    print(f"        {a.layer} {a.name}: {a.detail}")
+    passes: list[list[RunResult]] = []
+    for rep in range(1, max(1, args.repeat) + 1):
+        out_dir = base_dir if args.repeat == 1 else base_dir / f"run{rep}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        if args.repeat > 1:
+            print(f"--- run {rep}/{args.repeat} ---")
+        results: list[RunResult] = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
+            futs = {pool.submit(Runner(SCENARIOS[n], out_dir, args.keep).run): n for n in names}
+            for fut in concurrent.futures.as_completed(futs):
+                r = fut.result()
+                results.append(r)
+                mark = "PASS" if r.ok else "FAIL"
+                print(f"[{mark}] {r.scenario} ({len(r.assertions)} assertions, {r.duration_s:.0f}s)"
+                      + (f" -- {r.error}" if r.error else ""))
+                for a in r.assertions:
+                    if not a.ok:
+                        print(f"        {a.layer} {a.name}: {a.detail}")
+        passes.append(results)
+
+    # Cross-run stability: the same scenario replayed from the same save should
+    # render the same frames. A scenario that passes every time but hashes
+    # differently is not automatically "fine" -- it can mean the captured state is
+    # nondeterministic, which is the class of thing that made earlier rounds'
+    # screenshots disagree with each other.
+    #
+    # But one source of frame-hash churn here is known, measured and benign: the
+    # party leader's idle animation is not phase-locked at capture time, so a frame
+    # containing that sprite can legitimately land on a different animation frame.
+    # Measured on this exact capture geometry, that difference is 0.54-0.57% of
+    # pixels confined to a single 48x48 box (the 24x24 FDICON sprite at 2x capture
+    # scale) -- matching what doc58's UI-VIS-TOWN entry independently recorded
+    # (362/64000 px = 0.57%, all inside the leader sprite) before adding
+    # lock_pulse_phase() to dosbox_diff_harness.py.
+    #
+    # So instability is classified rather than flattened: differences that fit the
+    # animation profile are reported as ANIMATION and do not fail the run; anything
+    # larger or spread wider is STRUCTURAL and does.
+    stability: dict[str, dict[str, object]] = {}
+    if len(passes) > 1:
+        print("\n[stability] frame hashes across runs:")
+        for name in names:
+            per_label: dict[str, set[str]] = {}
+            for results in passes:
+                r = next((x for x in results if x.scenario == name), None)
+                if r is None:
+                    continue
+                for lb, h in r.shots.items():
+                    per_label.setdefault(lb, set()).add(h)
+            unstable = sorted(lb for lb, hs in per_label.items() if len(hs) > 1)
+            animation, structural, detail = [], [], {}
+            for lb in unstable:
+                paths = [base_dir / f"run{i}" / name / f"{lb}.png" for i in range(1, len(passes) + 1)]
+                paths = [p for p in paths if p.exists()]
+                kind, info = classify_instability(paths)
+                detail[lb] = info
+                (animation if kind == "animation" else structural).append(lb)
+            stability[name] = {"labels": len(per_label), "unstable": unstable,
+                               "animation": animation, "structural": structural,
+                               "detail": detail}
+            if not unstable:
+                print(f"  {name:16s} {len(per_label)} frames, all identical across runs")
+            else:
+                bits = []
+                if animation:
+                    bits.append(f"ANIMATION(ok): {', '.join(animation)}")
+                if structural:
+                    bits.append(f"STRUCTURAL: {', '.join(structural)}")
+                print(f"  {name:16s} {len(per_label)} frames, " + " | ".join(bits))
+                for lb in unstable:
+                    print(f"      {lb}: {detail[lb]}")
 
     report = {
         "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "scenarios": [
-            {"name": r.scenario, "instance": r.instance, "ok": r.ok, "error": r.error,
-             "shots": r.shots,
-             "assertions": [{"layer": a.layer, "name": a.name, "ok": a.ok, "detail": a.detail}
-                            for a in r.assertions]}
-            for r in sorted(results, key=lambda x: x.scenario)
+        "repeat": args.repeat,
+        "jobs": args.jobs,
+        "runs": [
+            [{"name": r.scenario, "instance": r.instance, "ok": r.ok, "error": r.error,
+              "duration_s": round(r.duration_s, 1), "shots": r.shots,
+              "assertions": [{"layer": a.layer, "name": a.name, "ok": a.ok, "detail": a.detail}
+                             for a in r.assertions]}
+             for r in sorted(results, key=lambda x: x.scenario)]
+            for results in passes
         ],
+        "stability": stability,
     }
-    (out_dir / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"[verify] report -> {out_dir / 'report.json'}")
-    return 0 if all(r.ok for r in results) else 1
+    (base_dir / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"[verify] report -> {base_dir / 'report.json'}")
+    all_ok = all(r.ok for results in passes for r in results)
+    # Only STRUCTURAL instability is a failure; measured animation-phase churn is not.
+    unstable_any = any(v["structural"] for v in stability.values())
+    return 0 if (all_ok and not unstable_any) else 1
 
 
 if __name__ == "__main__":
