@@ -31,6 +31,7 @@ provenance，不降成一般 spawn_group，
     python3 tools/extract_event_id_groups.py [out.json]
 """
 import hashlib
+import os
 import sys, struct, json
 sys.path.insert(0, "/work/tools")
 from le_xref import parse_le
@@ -107,6 +108,13 @@ def fixup_map(d, meta):
     return fx
 
 
+# 2026-09-03:EXE 是相對路徑,從 repo 根目錄以外執行會丟裸的 FileNotFoundError,
+# 看不出是「請從 repo 根目錄跑」還是「工具壞了」。
+if not os.path.exists(EXE):
+    raise SystemExit(
+        f"找不到 {EXE}。本工具用的是相對路徑,請從 repo 根目錄執行,"
+        "例如 `python tools/extract_event_id_groups.py out.json`。"
+        "(原版遊戲資產不入版控,見 .gitignore)")
 d = open(EXE, 'rb').read()
 _md5 = hashlib.md5(d).hexdigest()
 EDITION = EDITIONS.get(_md5)

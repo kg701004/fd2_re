@@ -530,12 +530,17 @@ def layer_invoke(rep: Report, pys: list[Path], tmp: Path,
         after = state_fn()
         touched = sorted(set(after) - set(baseline))
         if touched:
-            rep.add(p.name, "invoke", "WARN",
-                    f"wrote into the repo despite an empty cwd: {', '.join(touched[:4])}")
             baseline = after
+        # 記成旗標而不是另開一筆:同一個 (tool, layer) 出現兩列時,後寫的那列會
+        # 蓋掉前一列,於是「逃出 cwd」這個警告在工具其他方面通過的那一刻就消失了。
+        escaped = (f";而且寫到 cwd 之外:{', '.join(touched[:4])}" if touched else "")
+
+        def verdict(status, detail):
+            rep.add(p.name, "invoke", "WARN" if touched else status, detail + escaped)
+
         blob = out + err
         if rc == -9:
-            rep.add(p.name, "invoke", "FAIL", "hung with no arguments")
+            verdict("FAIL", "hung with no arguments")
         elif "Traceback (most recent call last)" in blob:
             last = [l for l in blob.strip().splitlines() if l.strip()]
             tail = last[-1] if last else ""
@@ -545,17 +550,27 @@ def layer_invoke(rep: Report, pys: list[Path], tmp: Path,
             # positive against every tool that must run from the repo root.
             # Any other exception type is a genuine front-door defect.
             if re.search(r"(FileNotFoundError|IsADirectoryError|NotADirectoryError)", tail):
-                rep.add(p.name, "invoke", "WARN",
-                        "no usage guard: crashes on a missing input instead of printing usage")
+                verdict("WARN", "no usage guard: crashes on a missing input instead of printing usage")
             else:
-                rep.add(p.name, "invoke", "FAIL", f"traceback: {tail[:140]}")
+                verdict("FAIL", f"traceback: {tail[:140]}")
         elif _USAGE_HINT.search(blob):
-            rep.add(p.name, "invoke", "PASS", "prints usage")
+            verdict("PASS", "prints usage")
         elif rc != 0:
             last = [l for l in blob.strip().splitlines() if l.strip()]
-            rep.add(p.name, "invoke", "PASS", f"exits {rc}: {last[-1][:100] if last else 'no output'}")
+            verdict("PASS", f"exits {rc}: {last[-1][:100] if last else 'no output'}")
+        elif blob.strip():
+            # Exit 0 with real output and no usage banner: a tool whose documented
+            # default is to just do its job (tools/export_sfx.py extracts the UI SFX
+            # pool with no arguments). Reporting that as "no error" was misleading —
+            # it printed 17 lines of results.
+            last = [l for l in blob.strip().splitlines() if l.strip()]
+            verdict("PASS", f"ran with no args: {last[-1][:100]}")
         else:
-            rep.add(p.name, "invoke", "WARN", "exit 0 with no usage text and no error")
+            # Exit 0 and *silent*. This is the real defect shape, and the reason the
+            # check exists: char_summary.py used to build a sheet with nothing on it
+            # and save it without printing a single line, so success and doing
+            # nothing were indistinguishable.
+            verdict("WARN", "exit 0 with no output at all — cannot tell success from doing nothing")
 
 
 # --------------------------------------------------------------------------- #
@@ -989,6 +1004,25 @@ _FIXTURES: dict[str, str] = {
             print(TEMPLATE)
         """
     ),
+    # invoke layer must WARN: succeeds silently, so "worked" and "did nothing"
+    # look identical from outside.
+    "silent_success.py": textwrap.dedent(
+        """
+        import sys
+
+        if __name__ == "__main__":
+            sys.exit(0)
+        """
+    ),
+    # paired control: same exit code, but it says what it did -> PASS.
+    # Without the pair, a rule keyed on exit status alone would treat both the
+    # same and this layer would be measuring nothing.
+    "loud_success.py": textwrap.dedent(
+        """
+        if __name__ == "__main__":
+            print("wrote 3 files to ./out")
+        """
+    ),
     # invoke layer must WARN: writes outside its cwd, via a __file__-relative
     # path, exactly like tools/export_sfx.py did when it recreated remake/.
     "writes_outside.py": textwrap.dedent(
@@ -1111,6 +1145,10 @@ def selftest() -> int:
         _expect(results, "dead_ref.py", "refs", "FAIL", failures, "opens a path in a removed tree")
         _expect(results, "mentioned_ref.py", "refs", "WARN", failures,
                 "paired control: same path, only mentioned -> WARN not FAIL")
+        _expect(results, "silent_success.py", "invoke", "WARN", failures,
+                "exit 0 with no output is indistinguishable from doing nothing")
+        _expect(results, "loud_success.py", "invoke", "PASS", failures,
+                "paired control: same exit code, but it reports what it did")
         _expect(results, "writes_outside.py", "invoke", "WARN", failures,
                 "a tool writing outside its cwd must be attributed to that tool")
         _expect(results, "test_failing.py", "tests", "FAIL", failures, "failing test must fail")
@@ -1134,7 +1172,7 @@ def selftest() -> int:
         if rc != 0:
             failures.append("control: a trivial command should succeed under _run")
 
-        total = 20
+        total = 22
         print(f"checks: {total - len(failures)}/{total} passed")
         for f in failures:
             print("  FAIL  " + f)
