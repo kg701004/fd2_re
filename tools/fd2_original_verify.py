@@ -338,6 +338,23 @@ class Runner:
                      "wrote" in (cp.stdout or ""),
                      f"chapter byte -> {st['value']}: {(cp.stdout or cp.stderr or '').strip().splitlines()[-1:]}")
 
+    def step_patch_currency(self, st: dict) -> None:
+        """Set the slot's currency so money-dependent branches become reachable.
+
+        The only real save on this machine holds $10,070,183, which makes the shop's
+        "not enough money" branch unreachable by playing -- every item costs at most
+        $1200. Writes only the PROVEN per-slot currency u32, in the instance's own
+        workdir copy; ~/fd2-run is never touched.
+        """
+        save = f"~/fd2-run-harness-{self.instance}/FD2.SAV"
+        cmd = (f"cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re && python3 {FD2SAVE_WSL} "
+               f"{save} --set-currency 0:{st['value']} --out {save}")
+        cp = wsl_argv(["bash", "-lc", cmd], timeout=120)
+        self.assert_("L3", "patch_currency",
+                     "wrote" in (cp.stdout or ""),
+                     f"currency -> {st['value']}: "
+                     f"{(cp.stdout or cp.stderr or '').strip().splitlines()[-1:]}")
+
     def step_poll_title(self, st: dict) -> None:
         """Pitfall 1: press Enter one at a time until the title matches, never blind-mash."""
         ref = REF_DIR / "title.png"
@@ -469,6 +486,7 @@ class Runner:
 
     STEPS = {
         "patch_chapter": step_patch_chapter,
+        "patch_currency": step_patch_currency,
         "poll_title": step_poll_title,
         "keys": step_keys,
         "shot": step_shot,

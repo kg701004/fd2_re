@@ -392,6 +392,23 @@ def set_slot_chapter(plain: bytes, slot: int, raw_chapter: int) -> bytes:
     return bytes(plain)
 
 
+def set_slot_currency(plain: bytes, slot: int, value: int) -> bytes:
+    """Return a new plaintext buffer with slot's currency u32 set.
+
+    Same PROVEN per-slot metadata block as set_slot_chapter (it is the u32 at
+    +2, reported as `currency=` by summarize()); this writes it rather than
+    only reading it. Added 2026-09-03 to reach shop states that are otherwise
+    unreachable on this machine's saves -- the "not enough money" branch needs
+    currency < price, and the only real save here holds over ten million.
+    """
+    if not 0 <= value <= 0xFFFFFFFF:
+        raise ValueError(f"currency must fit in a u32, got {value}")
+    start, _ = slot_bounds(slot)
+    plain = bytearray(plain)
+    struct.pack_into("<I", plain, start + ROSTER_SIZE + 2, value)
+    return bytes(plain)
+
+
 def summarize(plain: bytes) -> str:
     """Print only fixed raw mappings; do not assign unproven gameplay names."""
     lines = [
@@ -462,6 +479,13 @@ def main() -> int:
         default=[],
         help="set a slot's raw chapter metadata byte, e.g. --set-chapter 0:27. Repeatable.",
     )
+    parser.add_argument(
+        "--set-currency",
+        metavar="SLOT:VALUE",
+        action="append",
+        default=[],
+        help="set a slot's currency u32, e.g. --set-currency 0:30. Repeatable.",
+    )
     parser.add_argument("--out", type=Path, help="write the modified, re-encoded FD2.SAV here")
     args = parser.parse_args()
     plain = decode(args.save.read_bytes())
@@ -474,6 +498,9 @@ def main() -> int:
     for spec in args.set_chapter:
         slot_str, chapter_str = spec.split(":", 1)
         mutated = set_slot_chapter(mutated, int(slot_str), int(chapter_str, 0))
+    for spec in args.set_currency:
+        slot_str, value_str = spec.split(":", 1)
+        mutated = set_slot_currency(mutated, int(slot_str), int(value_str, 0))
 
     print(summarize(mutated))
     if args.write_plain:

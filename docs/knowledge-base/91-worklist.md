@@ -1469,19 +1469,22 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 
 | # | 被證偽的圖 | 原版側命題 | 狀態 |
 |---|---|---|---|
-| 1 | `secret-shop-ch02` | ch02 存在秘密商店揭示 | ✅ 已重測（並補測適用範圍） |
-| 2 | `secret-shop-ch02-services-return` | 秘密商店內 4 服務 `Right 0→1→2→3→0`／`Left 0→3`；Escape 回 town 隱藏 selection5 | ⬜ 待測 |
-| 3 | `shop-equipment-recipient-ch02` | 裝備收受者清單內容（商品/價格/三列 window/FDICON cycle） | 🟡 清單內容與職業過濾已測；**三列 window 捲動**與 FDICON cycle 未測 |
-| 4 | `shop-equipment-recipient-selection1` | selection1 的收受者清單 | ⬜ 待測 |
-| 5 | `shop-purchase-ch02-selections` | 購買清單 `Right 0→1`／`Down 1→3`／`Left 3→2` | ✅ 已重測（與本次網格對應一致） |
-| 6 | `shop-purchase-confirm-ch02` | 「布衣／50元／要不要啊？」；`Right`→No、`Left`→Yes | 🟡 對白文字已重測；**Yes/No 切換**未測 |
-| 7 | `shop-purchase-debit-ch02` | 購買扣款 | ✅ 已重測（精確 −300） |
-| 8 | `shop-purchase-insufficient-ch02` | `gold<price` 顯示「錢不夠！」＋等待標記 | ⬜ 待測（本機存檔 $10M，需先製造買不起的狀態） |
-| 9 | `shop-purchase-success-ch02` | 購買成功 | ✅ 已重測 |
-| 10 | `shop-variants-1-3-5` | selection1→武器店 variant1、selection3→道具店 variant3、variant5 | ⬜ 待測 |
-| 11 | `town-hub` | ch02 城鎮 hub | ✅ 已重測 |
-| 12 | `town-hub-selection1` | selection1 | ✅ 已重測 |
-| 13 | `town-hub-six-selections` | selection 0–5（含隱藏 5） | 🟡 0–4 已重測；隱藏 selection5 併入 #2 |
+| 1 | `secret-shop-ch02` | ch02 存在秘密商店揭示 | ✅ 成立（並補測適用範圍只有 ch02） |
+| 2 | `secret-shop-ch02-services-return` | 秘密商店 4 服務 `Right 0→1→2→3→0`／`Left 0→3`；Escape 回隱藏 selection5 | ✅ 全部成立 |
+| 3 | `shop-equipment-recipient-ch02` | 收受者清單三列 window | ✅ 成立，並解出捲動規則 |
+| 4 | `shop-equipment-recipient-selection1` | good index 1 的收受者清單 | ✅ 成立 |
+| 5 | `shop-purchase-ch02-selections` | 購買格 `Right 0→1`／`Down 1→3`／`Left 3→2` | ✅ 成立 |
+| 6 | `shop-purchase-confirm-ch02` | 「布衣／50元／要不要啊？」；`Right`→No、`Left`→Yes | ✅ 全部成立 |
+| 7 | `shop-purchase-debit-ch02` | 購買扣款 | ✅ 成立（精確 −300） |
+| 8 | `shop-purchase-insufficient-ch02` | `gold<price` →「錢不夠！」＋等待標記＋**不扣金** | ✅ 全部成立 |
+| 9 | `shop-purchase-success-ch02` | 購買成功 | ✅ 成立 |
+| 10 | `shop-variants-1-3-5` | selection1→武器店 variant1、selection3→道具店 variant3、variant5 | ✅ 成立 |
+| 11 | `town-hub` | ch02 城鎮 hub | ✅ 成立 |
+| 12 | `town-hub-selection1` | selection1 | ✅ 成立 |
+| 13 | `town-hub-six-selections` | selection 0–5（含隱藏 5） | ✅ 成立 |
+
+**13/13 全部成立（2026-09-03 完成）**。結論：**那批圖是壞的，但它們支撐的原版側事實本身沒有錯**。
+與「售出→欄位清空」那條情形相同——**證據被撤回 ≠ 結論被推翻**。詳見 doc58「2026-09-03 續四」。
 
 **方法要求**（不只是「再看一次」）：每一項重測都要落成
 `fd2_original_verify.py` 的 scenario，且畫面身分由**畫面自身的文字**判定，
@@ -1491,8 +1494,13 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 ### M5-D 其他原版側缺口
 
 - [ ] 服務的實際執行：**轉移**（裝備已完成；復活／轉職在更早輪次已有各自的執行紀錄）
-- [ ] `$0` 售價品項能否售出
-- [ ] 收受者清單職業過濾的**完整對照表**（目前只讀了各清單前 3 列，結論是方向性的）
+- [x] **`$0` 售價品項能否售出（2026-09-03）**：可以。索爾的龍神鎧甲售價就是 `$00000`，
+      「這個龍神鎧甲，0元，賣不賣啊？」→ YES → 品項消失、金錢完全不變。
+      **且賣掉的是他身上裝備中的那件**，EV·212→192、DP·724→424，與該裝備的加成吻合——
+      順帶證實裝備中品項可被售出，並用不同路徑再次驗證「標籤未列出的 +20 EV」。
+- [x] **收受者清單的三列 window 捲動規則（2026-09-03）**：window 固定 3 列，
+      前 3 次 `Down` 是游標在窗內移動，第 4 次起窗格每次捲一列，捲動箭頭同步變化。
+- [ ] 收受者清單**職業過濾**的完整對照表（各清單只讀了前 3 列，結論仍是方向性的）
 - [ ] variant1／variant2 是否有各自的隱藏觸發鍵（本輪只測了 ch02 那一組鍵，未做按鍵空間搜尋）
 - [ ] 轉職成長 range 的**獨立樣本**重驗（原 5 次 trial 因 RNG 綁按鍵/tick 而非獨立，
       原記的「PASS(5/5)」高估了證據力）
