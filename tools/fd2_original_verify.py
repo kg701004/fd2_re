@@ -459,6 +459,50 @@ class Runner:
         self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}",
                      kind in ("animation", "unknown"), info)
 
+    def step_read_bgm_track(self, st: dict) -> None:
+        """Record which BGM track is playing right now, as a number, not by ear.
+
+        doc12 disassembled play_bgm (0x25977) and proved [0x51a11] holds the
+        currently-playing track (== the FDMUS.DAT resource index, no lookup). Reading
+        it live turns "which music plays on this screen" from a listening judgement
+        into a measurement -- which is what doc12 itself asks for: 「曲號→場景必須溯源
+        到呼叫點，不能憑曲風印象」, recorded after two scene labels derived from
+        listening impressions turned out to be wrong.
+
+        Validated end to end on the title screen, where doc12's independently proven
+        answer is track 18: the read returned exactly 18.
+
+        Needs the debugger TUI, so this enters it, reads, and resumes.
+        """
+        helper = str(REPO_ROOT / "tools" / "fd2_dosbox_live_helper.py")
+        addr = st.get("ghidra_addr", "51a11")
+        harness("enter-debugger", self.instance, timeout=60)
+        time.sleep(3)
+        argv = [sys.executable, helper, "mem", "read-global",
+                "--instance", self.instance, "--selector", st.get("selector", "0170"),
+                "--ghidra-addr", addr, "--bytecount", "4"]
+        # Without a pinned delta every read re-dumps 200KB through the paused debugger
+        # TUI. Measured: that is several minutes per instance and worse in parallel --
+        # it timed out on all six scenarios of the first batch. With the delta pinned
+        # this reads 4 bytes. See the helper's --delta docstring for why a batch that
+        # pins it must also carry a known-value control.
+        if st.get("delta"):
+            argv += ["--delta", st["delta"]]
+        cp = subprocess.run(argv, capture_output=True, text=True,
+                            timeout=st.get("timeout", 420))
+        out = cp.stdout or ""
+        track = None
+        for line in out.splitlines():
+            if line.startswith("u8="):
+                track = int(line.split("=")[1].split()[0])
+        subprocess.run([sys.executable, helper, "resume", "--instance", self.instance],
+                       capture_output=True, text=True, timeout=120)
+        self.result.measurements.append(
+            {"name": st.get("name", "bgm_track"), "result": "unknown" if track is None else str(track),
+             "kind": "bgm", "detail": f"[0x{addr}] = {track} " +
+                                      (f"(FDMUS_{track:03d})" if track is not None else
+                                       f"-- read failed: {(cp.stderr or out).strip()[:160]}")})
+
     def step_assert_signature(self, st: dict) -> None:
         """Assert the captured frame shows a named screen, by its own text region.
 
@@ -588,6 +632,7 @@ class Runner:
         "assert_ref": step_assert_ref,
         "assert_distinct": step_assert_distinct,
         "assert_same_as": step_assert_same_as,
+        "read_bgm_track": step_read_bgm_track,
         "assert_signature": step_assert_signature,
         "assert_not_signature": step_assert_not_signature,
         "assert_ref_differs": step_assert_ref_differs,

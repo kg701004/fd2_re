@@ -239,9 +239,31 @@ cmd_launch() {
     trap - EXIT
     sleep 3
 
+    # Optional continuous audio capture (FD2_HARNESS_AUDIO_DISK=1).
+    #
+    # DOSBox-X's own wave capture is a HOST hotkey (Ctrl+F6) handled by its internal
+    # mapper, not a key passed to the DOS program -- measured 2026-09-03: game-bound
+    # chords like Ctrl+F1 are delivered fine by xdotool, but Ctrl+F6 produced no
+    # capture directory at all. SDL's disk audio driver sidesteps the mapper entirely:
+    # the mixer output is written straight to a headerless PCM file for the whole
+    # session, which also makes it timestamp-sliceable against screenshots instead of
+    # needing a start/stop key to land at the right moment.
+    local audio_env=""
+    if [[ "${FD2_HARNESS_AUDIO_DISK:-0}" != "0" ]]; then
+        local audio_raw="$workdir/sdlaudio.raw"
+        # Do NOT set SDL_DISKAUDIODELAY=0: that removes the driver's real-time
+        # throttle, so it writes as fast as the disk allows. Measured 2026-09-03:
+        # 4.3 GB in ~75 seconds, and -- worse than the size -- the audio timeline
+        # then bears no relation to wall-clock, which destroys the whole point of
+        # syncing clips against timestamped screenshots. Leaving it unset keeps the
+        # driver pacing at roughly real time.
+        audio_env="SDL_AUDIODRIVER=disk SDL_DISKAUDIOFILE='$audio_raw' "
+        echo "[$name] audio: SDL disk driver -> $audio_raw (real-time paced)"
+    fi
+
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
     DISPLAY="127.0.0.1:$port" tmux -L "$TMUX_SOCKET" new-session -d -s "$session" -x 200 -y 50 \
-        "cd '$workdir' && DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
+        "cd '$workdir' && ${audio_env}DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
 

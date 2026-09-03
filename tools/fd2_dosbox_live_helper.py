@@ -811,6 +811,78 @@ def cmd_mem_resolve_ptr(args):
     print(f"value at that address (dereferenced): {value:#x}")
 
 
+def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: int,
+                    out_dir: Path, delta: int | None = None) -> dict:
+    """Read any documented global by its Ghidra address, via signature delta.
+
+    The executable is flat, so code and data share one load-time delta: calibrate it
+    once with the already-proven ring-entry-gate signature, then any global documented
+    as a Ghidra/linear address is readable at `ghidra_addr + delta`. That turns every
+    address the docs already record into something a live run can check, instead of
+    each one needing its own bespoke pointer chase.
+
+    Motivating case (2026-09-03): doc12 disassembled `play_bgm` (0x25977) and proved
+    `[0x51a11]` holds the currently-playing track. Reading it live answers "which track
+    plays on this screen" as a measurement -- a question doc12 itself flags as unsafe
+    to answer by ear ("曲號→場景必須溯源到呼叫點，不能憑曲風印象"), having twice
+    recorded a wrong scene label that came from a listening impression.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if delta is None:
+        # Calibrate: dumps 200KB through the paused debugger TUI, which is by far the
+        # slowest part of this call (minutes, and it gets slower with instances running
+        # in parallel).
+        code_dump = out_dir / "code_dump.bin"
+        hits, delta = mem_find_signature(instance, selector, "100000", "200000",
+                                         GATE_CHECK_SIGNATURE_HEX, GATE_CHECK_GHIDRA_ADDR, code_dump)
+        result: dict = {"signature_hits": [hex(h) for h in hits[:20]],
+                        "delta": hex(delta) if delta is not None else None,
+                        "delta_source": "calibrated"}
+        if delta is None:
+            result["error"] = (f"signature search found {len(hits)} hits (need exactly 1); "
+                               f"cannot compute a trustworthy delta")
+            return result
+    else:
+        # Caller supplied a previously calibrated delta, so this reads only `bytecount`
+        # bytes. That is the difference between a multi-minute call and a quick one, and
+        # it is what makes reading a global at many screens practical.
+        #
+        # A pinned delta is an ASSUMPTION (that every instance of this binary loads at
+        # the same address), so a caller using it MUST include a control whose correct
+        # value is already known independently -- e.g. read the BGM track on the title
+        # screen, where doc12 proves it is 18. A wrong delta yields garbage, not 18, so
+        # the control fails loudly instead of the batch quietly reporting wrong numbers.
+        result = {"delta": hex(delta), "delta_source": "pinned"}
+    live = ghidra_addr + delta
+    result["ghidra_addr"] = hex(ghidra_addr)
+    result["live_addr"] = hex(live)
+    path, _ = mem_dump(instance, selector, f"{live:x}", f"{bytecount:x}",
+                       out_dir / "global_dump.bin")
+    raw = path.read_bytes()[:bytecount]
+    result["raw_hex"] = raw.hex()
+    result["u8"] = raw[0] if raw else None
+    if len(raw) >= 4:
+        result["u32"] = int.from_bytes(raw[:4], "little")
+    return result
+
+
+def cmd_mem_read_global(args):
+    out_dir = Path(args.out_dir) if args.out_dir else (
+        DEFAULT_SHOT_DIR / args.instance / f"global_{int(time.time())}")
+    r = mem_read_global(args.instance, args.selector, int(args.ghidra_addr, 16),
+                        args.bytecount, out_dir,
+                        delta=int(args.delta, 16) if args.delta else None)
+    if "signature_hits" in r:
+        print(f"signature hits: {r['signature_hits']}")
+    print(f"delta: {r['delta']} ({r['delta_source']})")
+    if "error" in r:
+        print(f"ERROR: {r['error']}", file=sys.stderr)
+        raise SystemExit(2)
+    print(f"ghidra {r['ghidra_addr']} -> live {r['live_addr']}")
+    print(f"raw: {r['raw_hex']}")
+    print(f"u8={r['u8']}" + (f"  u32={r['u32']}" if "u32" in r else ""))
+
+
 def cmd_mem_read_unit_array(args):
     out_dir = Path(args.out_dir) if args.out_dir else (DEFAULT_SHOT_DIR / args.instance / f"unitarray_{int(time.time())}")
     result = mem_read_unit_array(args.instance, args.selector, out_dir, num_records=args.num_records)
@@ -982,6 +1054,24 @@ def build_parser():
                                                          "`8B 15` for MOV r32,[imm32])")
     sp.add_argument("--out", default=None)
     sp.set_defaults(func=cmd_mem_resolve_ptr)
+
+    sp = msub.add_parser("read-global", help="read any documented global by its Ghidra address: calibrates the "
+                                              "load-time delta with the proven ring-entry-gate signature, then "
+                                              "dumps <bytecount> bytes at ghidra_addr+delta. Turns every address "
+                                              "the docs already record into something a live run can check, e.g. "
+                                              "doc12's [0x51a11] = currently-playing BGM track")
+    sp.add_argument("--instance", required=True)
+    sp.add_argument("--selector", required=True, help="see `mem dump --selector`")
+    sp.add_argument("--ghidra-addr", required=True, help="hex, e.g. 51a11")
+    sp.add_argument("--bytecount", type=int, default=4)
+    sp.add_argument("--delta", default=None,
+                    help="hex load-time delta from a previous calibration; skips the 200KB "
+                         "signature dump, turning a multi-minute call into a quick one. It is "
+                         "an ASSUMPTION that instances share a load address, so any batch using "
+                         "it must include a control read whose correct value is known "
+                         "independently (e.g. BGM track on the title screen is 18, doc12)")
+    sp.add_argument("--out-dir", default=None)
+    sp.set_defaults(func=cmd_mem_read_global)
 
     sp = msub.add_parser("read-unit-array", help="domain-specific one-shot: runs the full baked-in ring-entry-"
                                                    "gate delta-calibration recipe (find-signature -> resolve-ptr "
