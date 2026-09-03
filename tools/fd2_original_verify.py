@@ -488,6 +488,15 @@ class Runner:
         # pins it must also carry a known-value control.
         if st.get("delta"):
             argv += ["--delta", st["delta"]]
+        elif st.get("window_start"):
+            # Narrow search for the variable's own byte signature: no candidate delta
+            # needed, and the delta is not constant across chapters so candidates
+            # silently fall back to the 2MB search on a miss.
+            argv += ["--window-start", st["window_start"],
+                     "--window-len", st.get("window_len", "60000"),
+                     "--verify-suffix", st.get("verify_suffix",
+                                               "0500000000000000fbfffffffbffff"),
+                     "--bytecount", "16"]
         elif st.get("candidates"):
             # Verify a short list of known deltas against the variable's own byte
             # signature instead of searching 2 MB for the code signature: the search

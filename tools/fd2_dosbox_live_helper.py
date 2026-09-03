@@ -814,7 +814,8 @@ def cmd_mem_resolve_ptr(args):
 def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: int,
                     out_dir: Path, delta: int | None = None,
                     candidates: list[int] | None = None,
-                    verify_suffix: str | None = None) -> dict:
+                    verify_suffix: str | None = None,
+                    search_window: tuple[int, int] | None = None) -> dict:
     """Read any documented global by its Ghidra address, via signature delta.
 
     The executable is flat, so code and data share one load-time delta: calibrate it
@@ -830,6 +831,37 @@ def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: i
     recorded a wrong scene label that came from a listening impression.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # FASTEST PATH: search a NARROW window for the variable's own byte signature.
+    #
+    # Candidate deltas only work if the right delta is on the list, and it is not
+    # constant -- it moves with game state and with how much data a chapter has loaded.
+    # A batch across 23 chapters silently fell back to the 2 MB code-signature search on
+    # every miss and made no progress in 8 minutes. Searching for the DATA signature
+    # needs no candidates at all, and a window around where the variable has actually
+    # been observed (0x1ec311, 0x1eda11) is a fraction of 2 MB.
+    if delta is None and verify_suffix and search_window:
+        w_start, w_len = search_window
+        win_dump = out_dir / "win_dump.bin"
+        try:
+            path, _ = mem_dump(instance, selector, f"{w_start:x}", f"{w_len:x}", win_dump)
+            blob = path.read_bytes()
+            sig = bytes.fromhex(verify_suffix)
+            hits = []
+            off = blob.find(sig)
+            while off != -1:
+                hits.append(off)
+                off = blob.find(sig, off + 1)
+            if len(hits) == 1:
+                # The signature starts one byte AFTER the variable.
+                delta = (w_start + hits[0] - 1) - ghidra_addr
+                result_note = "data-signature"
+            else:
+                result_note = f"data-signature found {len(hits)} hits"
+        except Exception as e:  # noqa: BLE001
+            result_note = f"data-signature search failed: {e}"
+        if delta is not None:
+            result = {"delta": hex(delta), "delta_source": result_note}
 
     # FAST PATH: verify candidate deltas against a known byte signature of the variable
     # itself, instead of searching for the code signature.
@@ -921,7 +953,9 @@ def cmd_mem_read_global(args):
     r = mem_read_global(args.instance, args.selector, int(args.ghidra_addr, 16),
                         args.bytecount, out_dir,
                         delta=int(args.delta, 16) if args.delta else None,
-                        candidates=cands, verify_suffix=args.verify_suffix)
+                        candidates=cands, verify_suffix=args.verify_suffix,
+                        search_window=(int(args.window_start, 16), int(args.window_len, 16))
+                        if args.window_start else None)
     if "signature_hits" in r:
         print(f"signature hits: {r['signature_hits']}")
     print(f"delta: {r['delta']} ({r['delta_source']})")
@@ -1129,6 +1163,10 @@ def build_parser():
     sp.add_argument("--verify-suffix", default=None,
                     help="hex bytes the read must show AFTER the first byte, identifying the "
                          "variable itself (BGM global: 0500000000000000fbfffffffbffff)")
+    sp.add_argument("--window-start", default=None,
+                    help="hex live address to start a NARROW search for --verify-suffix; needs "
+                         "no candidate deltas and is far cheaper than the 2MB code search")
+    sp.add_argument("--window-len", default="60000", help="hex length of that window")
     sp.add_argument("--out-dir", default=None)
     sp.set_defaults(func=cmd_mem_read_global)
 

@@ -33,21 +33,32 @@ STATUS -- READ THIS BEFORE USING THE SIMILARITY NUMBERS
 CAPTURE and TIME SYNC are verified working (2026-09-03): real audio, 48kHz stereo,
 14s slices bracketed by screenshots, screen-change detection live.
 
-The IDENTIFICATION layer is NOT yet good enough, and its own control says so. Two
-consecutive captures of the SAME screen playing the SAME music scored 0.917, while
-that same clip scored 0.944 and 0.945 against two DIFFERENT screens. The
-same-track baseline sits inside the different-track range, so a score here cannot
-currently decide whether two screens share a track. Do not report these numbers as
-track identity.
+The IDENTIFICATION layer DOES NOT WORK on this material, and that is now a measured
+result rather than a suspicion, because ground truth arrived from the other path:
+reading [0x51a11] established that title=18, town=10 and weapon shop=14 -- three
+genuinely different tracks -- and two clip pairs are known-same-track.
 
-Why the offline selftest did not catch it: it compares synthetic pure tones, which
-are trivially separable. Real FM/OPL music shares one instrument set, so different
-tunes have similar average spectra, and a 14s window samples only part of a longer
-piece. A selftest has to be as hard as the real signal or it validates nothing.
+Scored against that ground truth, over 14-second windows:
 
-Fixing it needs a more discriminative feature (pitch-class/chroma profile, or
-matching against the actual FDMUS_NNN tracks) and/or windows long enough to cover a
-full loop. Until then this tool is a capture-and-sync rig, not an identifier.
+    band spectrum   within-track 0.883..0.945   between-track 0.772..0.944  OVERLAP
+    chroma          within-track 0.933..0.993   between-track 0.911..0.952  OVERLAP
+
+Neither separates. Chroma (pitch-class profile, which discards the timbre these tunes
+share and keeps the harmony they do not) is tighter but still overlaps. So a score
+here cannot decide whether two screens play the same track, and must not be reported
+as if it could.
+
+Why the offline selftest passes anyway: it compares synthetic pure tones, which are
+trivially separable. A selftest has to be as hard as the real signal or it validates
+nothing.
+
+WHERE THIS LEAVES THE TOOL: the question it was built for -- which track plays on
+which screen -- is already answered exactly, and far more cheaply, by reading the
+game's own track global (see fd2_dosbox_live_helper.py `mem read-global`, and doc12's
+2026-09-03 section). This tool is therefore a capture-and-time-sync rig, useful when
+you need the actual audio, and NOT an identifier. Anyone reviving the identification
+idea should change the approach rather than the threshold: windows long enough to
+cover a full loop, or direct comparison against rendered FDMUS_NNN tracks.
 
 WHAT IT DELIBERATELY DOES NOT CLAIM
 -----------------------------------
@@ -165,9 +176,50 @@ def fingerprint(path: Path) -> dict:
             "bands": (bands / norm if norm > 0 else bands)}
 
 
+def chroma(path: Path) -> np.ndarray:
+    """Pitch-class profile: energy folded into the 12 semitones, octave-invariant.
+
+    The band-average spectrum failed on real game music -- two captures of the SAME
+    screen scored 0.917 while different screens scored 0.944/0.945 -- because FM/OPL
+    tunes all share one instrument set, so their average spectra look alike. What
+    actually differs between tunes is which NOTES they use. Folding spectral peaks into
+    12 pitch classes throws away timbre (the part that is common) and keeps harmony
+    (the part that is not).
+    """
+    a, rate = read_wav_mono(path)
+    win, hop = 8192, 4096
+    w = np.hanning(win)
+    acc = np.zeros(12, dtype=np.float64)
+    freqs = np.fft.rfftfreq(win, 1 / rate)
+    # Only bins in a musical range map to a pitch class; below ~55Hz and above ~4kHz
+    # the mapping is dominated by noise and harmonics rather than played notes.
+    ok = (freqs >= 55) & (freqs <= 4000)
+    midi = np.zeros_like(freqs)
+    midi[ok] = 69 + 12 * np.log2(freqs[ok] / 440.0)
+    pc = np.zeros(freqs.shape, dtype=int)
+    pc[ok] = np.round(midi[ok]).astype(int) % 12
+    n = max(1, (a.size - win) // hop)
+    for i in range(n):
+        seg = a[i * hop:i * hop + win]
+        if seg.size < win:
+            break
+        mag = np.abs(np.fft.rfft(seg * w))
+        # Per-frame normalisation stops loud frames from dominating the profile.
+        s = mag[ok].sum()
+        if s <= 0:
+            continue
+        np.add.at(acc, pc[ok], mag[ok] / s)
+    nrm = np.linalg.norm(acc)
+    return acc / nrm if nrm > 0 else acc
+
+
 def similarity(fa: dict, fb: dict) -> float:
     a, b = fa["bands"], fb["bands"]
     return float(np.dot(a, b))          # both unit-normalised -> cosine
+
+
+def chroma_similarity(pa: Path, pb: Path) -> float:
+    return float(np.dot(chroma(pa), chroma(pb)))
 
 
 # --------------------------------------------------------------------------
