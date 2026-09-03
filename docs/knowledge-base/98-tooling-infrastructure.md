@@ -1333,6 +1333,11 @@ scenario都落在`127.0.0.1:199`，按鍵全進同一個視窗，兩邊都到不
 按鍵驅動仍完全平行。**真正的修法（lock file或顯式port參數）應該做在`dosbox_harness.sh`裡面**，
 本輪沒有動那支腳本。
 
+> **後續（2026-09-03）：這個race已經修在`dosbox_harness.sh`本身**（`reserve_display_port`
+> ＋flock＋reservation狀態檔，回歸測試`tools/test_dosbox_harness_ports.sh`）。本工具的
+> `LAUNCH_LOCK`已解除，預設launch真正平行，`--serial-launch`保留為退路。
+> 見本文件最後一節。以上這段保留為當時的觀察紀錄。
+
 **另一個實測踩到的坑**：`launch`結尾是長時間keepalive sleep，**必須讓它活著**（腳本自己的
 header與doc48 §8.4都寫過）。第一版用`subprocess.run(..., timeout=25)`呼叫launch，timeout會
 **殺掉launcher**、連帶把整個instance收掉，症狀是framebuffer全黑＋20次title poll全失敗。
@@ -1424,3 +1429,108 @@ exit code 0**，另外也抓到商店店主自己的待機動畫（`shop_interio
 
 **清理**：24次scenario執行後，harness `status`無殘留instance、`ps aux`零個live程序、
 `~/fd2-run-harness-*`工作目錄0個（工具每輪自動刪），磁碟維持8.0G。
+
+---
+
+## `dosbox_harness.sh` display port 分配的 TOCTOU race —— 真正修好(2026-09-03)
+
+前一輪把這個race**繞過**（`fd2_original_verify.py`用一把python端的`LAUNCH_LOCK`把launch階段
+序列化），並誠實記為「真正的修法尚未做，屬於harness本身」。本輪把它修在來源。
+
+### 病灶
+
+舊的`pick_display_port()`只是「掃描registry找活著的instance＋`ss -tln`」然後**回傳**一個port。
+問題在於：這個選擇要等到`.state`檔寫出去才對其他launcher可見，而寫檔發生在
+**複製工作目錄→啟動Xvfb→sleep 3→開tmux→sleep 2**之後，中間有5~10秒的空窗。
+兩個同時開始的launch都在空窗內掃到「沒人佔用」，於是都選了`:199`。
+
+`ss -tln`那道「保險」也補不到：它要等Xvfb真的開始listen才會回報，而那已經是視窗都開了之後。
+
+**實測病徵**（前一輪記錄）：`--jobs 2`時兩個scenario都落在`127.0.0.1:199`，按鍵全部進到同一個
+視窗，兩邊都到不了title；同樣的scenario在`--jobs 1`則通過。
+
+### 修法：把「選擇」與「公告」變成同一個原子動作
+
+- `reserve_display_port()`在持有`flock`（`$REGISTRY_DIR/.portlock`）的期間**同時**完成掃描與
+  **寫出reservation狀態檔**（`XVFB_PID=`空、`STATUS=reserving`），釋放鎖時選擇已經對所有人可見。
+- **佔用判定改成兩段式**：還沒起Xvfb的reservation由**launcher程序的存活**持有；Xvfb起來之後
+  同一個檔案被改寫成正式entry，改由**Xvfb的存活**持有。
+  這兩段分開的理由是實際語意不同：setup中途死掉的launcher應該**自動釋放**它的port（不然
+  每次失敗都漏掉一個slot），而keepalive還活著但Xvfb已經死掉的instance**不該**繼續佔著port。
+- **正式entry改成Xvfb一起來就寫**（原本要等tmux開完、晚約5秒）。理由是修這個race時才看清楚
+  的一個既有隱患：那5秒內若launcher因任何原因死掉，Xvfb會變成**沒有registry entry的孤兒**，
+  `teardown-all`永遠找不到它。現在「port的持有者」與「teardown找得到它」這兩件事同時成立。
+- 配套的`trap ... EXIT`只在**還沒有Xvfb的那一小段**有效（寫入正式entry後立刻`trap - EXIT`），
+  這樣setup中途失敗不會留下stub，但**已經起了Xvfb之後絕不刪entry**——刪掉才會真的漏掉程序。
+  `launch`結尾是`exec sleep`，會整個換掉process image，所以trap不可能在成功路徑上誤觸發。
+- 順帶修掉的兩個小問題：原本掃描迴圈**沒有上界**（找不到就無限迴圈），現在有`DISPLAY_MAX`
+  並以明確錯誤結束；`launch`對「同名instance已存在」的判定原本只看Xvfb，會讓兩個同名的並行
+  launch互刪對方的registry entry，現在也認得live reservation。
+- 每個instance的session名/工作目錄/log路徑改由`instance_session()`等單一來源產生，避免
+  reservation stub跟正式entry漂移。
+
+### 回歸測試：`tools/test_dosbox_harness_ports.sh`
+
+完全離線（不開Xvfb、不開DOSBox、不碰遊戲檔），用暫時registry與一段確定沒人用的display範圍，
+所以**可以在真的instance跑著的時候安全執行**——這點不是宣稱而是實測過的：本輪就是在三個真
+instance跑`--all --jobs 3`的同時執行它，21項全過、兩邊互不影響。其中兩項是重點：
+
+| 檢查 | 意義 |
+|---|---|
+| `control: 5 unlocked scans all collide` | 5條並行的**裸掃描**必定全部回傳同一個port——**這就是修好前的行為**，證明這個測試真的抓得到該bug，而不是一個永遠會過的空測試 |
+| `concurrent reserve: all ports distinct` | 同樣5條並行，改走`reserve_display_port`後拿到5個**互異**的port |
+
+並行測試用`FD2_HARNESS_PORT_RESERVE_DELAY`把scan→publish的空窗**故意撐開成1秒**，
+所以結果是決定性的，不是靠時序運氣。
+
+其餘檢查覆蓋：空registry、live reservation佔用、**死掉的launcher會釋放**、
+**live Xvfb佔用**、**死掉的Xvfb即使keepalive還活著也要釋放**、reservation檔的欄位內容、
+**reservation與正式entry兩種形狀都能在`set -u`下被`source`**（少一個欄位就會讓
+`status`/`teardown`因unbound variable中斷）、以及範圍用盡時清楚報錯不無限迴圈。
+
+寫測試時自己踩到、值得記下的兩個bash坑：
+- `spawn_fake_xvfb`這類「背景起一個程序並回傳pid」的helper若在`$(...)`裡呼叫，
+  背景子程序會**繼承那個command substitution的pipe**，於是`$(...)`會一直等到子程序結束才回傳
+  ——測試因此整個掛住。必須把背景程序的stdout/stderr導掉。
+- 不帶參數的`wait`會等**所有**背景job，包括前面幾個case刻意留著的`sleep 300`假程序。
+  併發case一定要`wait`明確的pid清單。
+
+### 整合驗證（真的開三個instance）
+
+繞過python端的鎖，直接從Windows端同時發三個`launch`：
+
+```
+race1  display=:199  dosbox_windows=1  1024x768  mean=0.0087  md5=c1f7d072c222
+race2  display=:299  dosbox_windows=1  1024x768  mean=0.0044  md5=015d8ebe6dce
+race3  display=:399  dosbox_windows=1  1024x768  mean=0.0652  md5=6703a221818b
+```
+
+三個互異display、各自1個DOSBox視窗、3個Xvfb、3個各自掛在自己工作目錄的dosbox-x程序，
+三張截圖**內容互不相同**（＝真的是三個獨立framebuffer，不是同一個畫面被拍了三次）。
+
+### 連帶：`fd2_original_verify.py`的workaround解除
+
+`LAUNCH_LOCK`改成`LAUNCH_GATE`，預設是`contextlib.nullcontext()`（launch真正平行），
+保留`--serial-launch`作為退路。`--selftest`加兩項斷言確認這個gate真的會切換（24項全過）。
+
+`--serial-launch`本身也實測過而不是「加了就算」：serial模式下三個instance的uptime是
+26/20/14秒（相差約6秒＝一個接一個起），parallel模式下則是22/22/22秒。
+
+**效能：實測而非宣稱，而且結論是「差不多」**。同一組12個scenario、`--jobs 3`：
+
+| 模式 | 耗時 | 結果 |
+|---|---|---|
+| `--serial-launch` | **171s** | 12/12 PASS |
+| 預設（平行launch） | **155s** | 12/12 PASS |
+
+只快了約9%。原因很單純：launch階段大約只佔一個scenario（約40秒）的6秒，而pool只有3寬。
+**所以這次修正的價值在正確性，不在速度**——它消除的是「兩個instance搶同一個display」造成的
+偽失敗，順帶讓提高`--jobs`時launch不再變成序列化瓶頸。不要把它當成效能優化來引用。
+
+### 誠實邊界
+
+- 修的是**本harness自己的**分配。`ss -tln`那道保險仍然只在對方已經listen後才有效，所以若有
+  完全不透過本harness、又剛好同一瞬間搶同一個port的外部程序，仍可能相撞——實務上不存在，
+  但不宣稱已解決。
+- `flock`需要util-linux的`flock`（WSL2 Ubuntu預設就有）。若缺，`reserve_display_port`會
+  明確報錯而不是靜默退化成舊行為。

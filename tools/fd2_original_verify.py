@@ -17,23 +17,23 @@ assertions, the runner executes them, and the report says which assertion passed
 captured frame. Re-running a scenario months later reproduces the same evidence, and a
 scenario that silently lands on the wrong screen fails instead of being written up.
 
-PARALLELISM -- and the one race that makes it non-trivial
----------------------------------------------------------
+PARALLELISM
+-----------
 `tools/dosbox_harness.sh` gives every instance its own Xvfb TCP display, its own tmux
 socket-session and its own copy of the game directory, so N scenarios can genuinely run at
 once. (Historic precedent: doc91's UI-VIS-TOWN entry ran a `townE2` instance on `:299`
 alongside a concurrent `loadE2` instance.)
 
-**But `pick_display_port()` is not concurrency-safe**, and this was measured here, not
-assumed: it picks a port by scanning the registry for a live conflicting instance and by
-checking `ss -tln`, yet the winning port only becomes visible to other launchers once the
-Xvfb is actually up and the .state file written. Two launches fired simultaneously both scan
-before either records a claim, so both choose the same display -- observed directly, with
-`--jobs 2` putting both scenarios on `127.0.0.1:199`, their keystrokes going to a single
-window, and both failing to reach the title, while the identical scenario passes at
-`--jobs 1`. This module therefore serialises just the launch phase behind LAUNCH_LOCK and
-runs the long key-driving part fully in parallel. Fixing the race properly (a lock file or
-an explicit port argument) belongs in dosbox_harness.sh itself.
+This used to require serialising the launch phase here, because the harness's old
+`pick_display_port()` was not concurrency-safe: it chose a port but only published that
+choice ~5-10s later when the .state file was finally written, so simultaneous launches both
+picked the same display -- measured here, with `--jobs 2` putting both scenarios on
+`127.0.0.1:199` while `--jobs 1` passed. **Fixed at the source on 2026-09-03**: the harness
+now chooses and publishes a reservation atomically under an flock
+(`reserve_display_port`), covered by `tools/test_dosbox_harness_ports.sh` and confirmed
+live with three genuinely concurrent launches landing on :199/:299/:399. Launches
+therefore run in parallel by default; `--serial-launch` restores the old one-at-a-time
+behaviour if a host ever needs it.
 
 Threads, not processes: every step is a `wsl.exe` subprocess call, so the work is I/O-bound
 and the GIL is irrelevant.
@@ -85,6 +85,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import contextlib
 import hashlib
 import json
 import os
@@ -116,9 +117,15 @@ FD2SAVE_WSL = "/mnt/c/" + str(REPO_ROOT / "tools" / "fd2save.py").replace("\\", 
 OUT_ROOT = REPO_ROOT / ".wsl_build" / "original_verify"
 REF_DIR = REPO_ROOT / ".wsl_build" / "verify_refs"
 
-# Serialises the launch phase across scenario threads -- see Runner.run() for the
-# dosbox_harness.sh pick_display_port() race this exists to work around.
-LAUNCH_LOCK = threading.Lock()
+# Launch-phase gate. The harness allocates displays atomically as of 2026-09-03, so this
+# is a no-op by default and launches run in parallel; --serial-launch swaps in a real Lock
+# as an escape hatch (see the PARALLELISM section of the module docstring).
+LAUNCH_GATE: "contextlib.AbstractContextManager" = contextlib.nullcontext()
+
+
+def set_serial_launch(enabled: bool) -> None:
+    global LAUNCH_GATE
+    LAUNCH_GATE = threading.Lock() if enabled else contextlib.nullcontext()
 
 # The DOSBox-X window is a fixed 1024x768 capture; the game canvas sits in this box.
 # Established by bounding-box scan of a real capture (doc58 2026-09-03).
@@ -460,17 +467,9 @@ class Runner:
             self.result.duration_s = time.time() - started
 
     def _run(self) -> RunResult:
-        # Serialise the launch phase only. dosbox_harness.sh's pick_display_port()
-        # chooses a port by scanning the registry for live instances, but it writes
-        # the winning port to its own .state file only *after* the Xvfb starts -- so
-        # two launches started at the same moment both scan before either records a
-        # claim and both pick the same display. Observed directly: with --jobs 2 both
-        # scenarios landed on 127.0.0.1:199, their keystrokes went to one window and
-        # both failed to reach the title, while the identical scenario passes at
-        # --jobs 1. Holding this lock until the instance is up and registered makes
-        # the claim visible to the next launcher; the long part of a scenario (driving
-        # keys) still runs fully in parallel.
-        with LAUNCH_LOCK:
+        # LAUNCH_GATE is a nullcontext unless --serial-launch was passed: the harness
+        # now reserves its display port atomically, so concurrent launches are safe.
+        with LAUNCH_GATE:
             harness("teardown", self.instance, timeout=60)
             self._proc = self._launch_detached()
             up = self._wait_until_rendering()
@@ -690,6 +689,15 @@ def selftest() -> int:
         for ref in {s["ref"] for sp in SCENARIOS.values() for s in sp["steps"] if s["op"] == "assert_ref"}:
             check(f"reference image present: {ref}", (REF_DIR / ref).exists(), str(REF_DIR / ref))
 
+        # The launch gate must actually switch, and must be re-entrant-safe as a
+        # nullcontext -- a broken gate would either serialise everything silently
+        # or deadlock the pool.
+        set_serial_launch(False)
+        check("default launch gate does not serialise", isinstance(LAUNCH_GATE, contextlib.nullcontext))
+        set_serial_launch(True)
+        check("--serial-launch installs a real lock", isinstance(LAUNCH_GATE, type(threading.Lock())))
+        set_serial_launch(False)
+
     print(f"\nselftest: {'PASS' if not failures else 'FAIL -- ' + ', '.join(failures)}")
     return 0 if not failures else 1
 
@@ -706,6 +714,9 @@ def main() -> int:
                     help="run the whole set N times and report per-frame hash stability across runs "
                          "(a scenario that passes but renders differently each time is a real finding)")
     ap.add_argument("--keep", action="store_true", help="do not tear instances down (for inspection)")
+    ap.add_argument("--serial-launch", action="store_true",
+                    help="launch one instance at a time (pre-2026-09-03 workaround for the "
+                         "harness display-port race; only needed if that fix is unavailable)")
     args = ap.parse_args()
 
     if args.selftest:
@@ -723,9 +734,12 @@ def main() -> int:
     if unknown:
         ap.error(f"unknown scenario(s): {', '.join(unknown)}")
 
+    set_serial_launch(args.serial_launch)
+
     base_dir = OUT_ROOT / time.strftime("%Y%m%d-%H%M%S")
     base_dir.mkdir(parents=True, exist_ok=True)
-    print(f"[verify] {len(names)} scenario(s) x{args.repeat}, jobs={args.jobs}, out={base_dir}")
+    print(f"[verify] {len(names)} scenario(s) x{args.repeat}, jobs={args.jobs}, "
+          f"launch={'serial' if args.serial_launch else 'parallel'}, out={base_dir}")
 
     passes: list[list[RunResult]] = []
     for rep in range(1, max(1, args.repeat) + 1):

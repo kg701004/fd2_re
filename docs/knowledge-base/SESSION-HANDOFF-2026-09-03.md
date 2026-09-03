@@ -119,7 +119,8 @@
 
 | 工具 | 狀態 |
 |---|---|
-| `tools/dosbox_harness.sh` | 原版 DOSBox-X 隔離 instance，正常使用 |
+| `tools/dosbox_harness.sh` | 原版 DOSBox-X 隔離 instance，正常使用；display port 分配的 race **已於 2026-09-03 修復** |
+| `tools/test_dosbox_harness_ports.sh` | **本次新建**：上述 port 分配器的離線回歸測試（19 項，可與真 instance 併行執行） |
 | `tools/fd2save.py` | 存檔解析／章節 patch，正常 |
 | `tools/fd2_original_verify.py` | **本次新建**：宣告式／平行／分層的原版驗證器 |
 | `tools/fd2_live_input_helper.*` | 驅動 remake 用，**已失去對象** |
@@ -135,10 +136,15 @@
 
 ## 8. 已知限制與風險
 
-1. **`dosbox_harness.sh` 的 `pick_display_port()` 不是 concurrency-safe**
-   （TOCTOU：勝出 port 要等 `.state` 寫檔才對其他 launcher 可見）。同時 launch
-   兩個 instance 會撞同一個 display。目前由 `fd2_original_verify.py` 的 launch lock
-   繞過；**真正的修法（lock file 或顯式 port 參數）尚未做**。
+1. ~~**`dosbox_harness.sh` 的 `pick_display_port()` 不是 concurrency-safe**~~
+   → **已修復（2026-09-03）**。改為 `reserve_display_port()`：在 flock 保護下
+   「選擇 + 寫出 reservation」是同一個原子動作，選擇釋放鎖前就對其他 launcher 可見。
+   回歸測試 `tools/test_dosbox_harness_ports.sh`（19 項全過，含一項**證明測試本身有效**的
+   control：5 條並行裸掃描必定全部相撞＝修好前的行為）；整合實測三個並行 launch 落在
+   :199/:299/:399，三張截圖內容互異。`fd2_original_verify.py` 的 workaround 鎖已解除
+   （預設平行，`--serial-launch` 為退路）。詳見 doc98 同日段落。
+   **殘留邊界**：只保證本 harness 自己的分配；完全不透過本 harness 的外部程序同瞬間搶
+   同一 port 仍可能相撞（實務上不存在，但不宣稱已解決）。
 2. **frame MD5 不能單獨當畫面 identity**：含待機動畫 sprite 的畫面本來就會變
    （實測 0.54~0.57% 像素、單一 48×48 框）。
 3. **`launch` 必須保持存活**：用 `subprocess.run(timeout=...)` 呼叫會殺掉 launcher
@@ -158,7 +164,7 @@
 - 秘密商店在 ch03／ch12 是否同樣以 `Shift+F1`＋酒店觸發
 - `$0` 售價品項能否售出等邊角
 - 轉職 trial3／trial4 差異圖相同一事的重測
-- 修 `pick_display_port()` 的 race（建議獨立一輪，含回歸測試）
+- ~~修 `pick_display_port()` 的 race~~ → **已完成（2026-09-03）**，見 §8 第 1 項
 
 **需要使用者決定，文件不能單方面決定**：
 - M5 里程碑的去留：驗收對象已不存在，是要重啟 remake、改寫 M5 定義、還是正式關閉
@@ -185,3 +191,5 @@
 | `290d836f` | 70GB 工作目錄清理（先備份 196 份獨特存檔） |
 | `5919238a` | 工具優化＋`--selftest`＋跨 run 穩定性分類 |
 | `3b0fd83c` | 商店／教會 8 個服務完整對應表 |
+| `7acd1073` | 本交接文件 |
+| （本次） | **修好 `dosbox_harness.sh` 的 display port TOCTOU race**＋離線回歸測試＋解除 python 端 workaround |

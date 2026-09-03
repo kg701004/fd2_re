@@ -36,6 +36,11 @@
 # and the whole tree gets reaped).
 #
 # All other subcommands are quick one-shot calls, safe to invoke normally.
+#
+# The display-port allocator has an offline regression test:
+#   bash tools/test_dosbox_harness_ports.sh
+# It uses a throwaway registry and an unused display range, so it is safe to
+# run even while real instances are live.
 
 set -uo pipefail
 
@@ -47,10 +52,19 @@ TMUX_SOCKET="${FD2_HARNESS_TMUX_SOCKET:-fd2harness}"
 SOURCE_GAME_DIR="${FD2_HARNESS_SOURCE_DIR:-$HOME/fd2-run}"
 DOSBOX_BIN="${FD2_HARNESS_DOSBOX_BIN:-$HOME/fd2-dosbox-build/dosbox-x/src/dosbox-x}"
 SCREENSHOT_DIR="${FD2_HARNESS_SHOT_DIR:-$REPO_ROOT/.wsl_build/harness}"
-DISPLAY_BASE=199
-DISPLAY_STEP=100
+# Overridable so the offline port-allocator regression test
+# (tools/test_dosbox_harness_ports.sh) can run in a display range that is
+# guaranteed unused on the host instead of fighting real instances on :199.
+DISPLAY_BASE="${FD2_HARNESS_DISPLAY_BASE:-199}"
+DISPLAY_STEP="${FD2_HARNESS_DISPLAY_STEP:-100}"
+DISPLAY_MAX="${FD2_HARNESS_DISPLAY_MAX:-1999}"
 KEEPALIVE_DEFAULT=3600
 RESERVED_NAMES=("dbg")
+PORT_LOCK="$REGISTRY_DIR/.portlock"
+PORT_LOCK_TIMEOUT_S="${FD2_HARNESS_PORT_LOCK_TIMEOUT:-60}"
+# Test-only hook: artificially widens the scan->reserve window so the
+# concurrency regression test is deterministic rather than timing-dependent.
+PORT_RESERVE_DELAY="${FD2_HARNESS_PORT_RESERVE_DELAY:-0}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -62,7 +76,12 @@ validate_name() {
     done
 }
 
-state_file() { echo "$REGISTRY_DIR/$1.state"; }
+# Single source of truth for every per-instance path/name, so the reservation
+# stub and the final registry entry can never drift apart.
+state_file()      { echo "$REGISTRY_DIR/$1.state"; }
+instance_session() { echo "harness-$1"; }
+instance_workdir() { echo "$HOME/fd2-run-harness-$1"; }
+instance_xvfblog() { echo "$REGISTRY_DIR/$1.xvfb.log"; }
 
 # Sources a state file into the CURRENT shell. Caller should run this in a
 # subshell/function scope where clobbering NAME/DISPLAY_PORT/etc is fine.
@@ -78,34 +97,91 @@ xvfb_alive() { local pid=$1; kill -0 "$pid" 2>/dev/null && ps -p "$pid" -o args=
 launcher_alive() { local pid=$1; kill -0 "$pid" 2>/dev/null; }
 session_alive() { local session=$1; tmux -L "$TMUX_SOCKET" has-session -t "$session" 2>/dev/null; }
 
-pick_display_port() {
-    mkdir -p "$REGISTRY_DIR"
+# --- display-port allocation -------------------------------------------------
+#
+# 2026-09-03: this used to be a single `pick_display_port` that scanned the
+# registry and returned a port, with the caller only publishing that choice
+# ~5-10s later (workdir copy + Xvfb spawn + two sleeps) when it finally wrote
+# the .state file. That is a TOCTOU race: two launches started at the same
+# instant both scanned an empty registry, both took :199, and the second
+# Xvfb failed while xdotool keystrokes went to whichever window won -- observed
+# as `fd2_original_verify.py --jobs 2` failing where --jobs 1 passed.
+# The `ss -tln` check did not close it either; it only starts reporting once
+# Xvfb is already listening, which is after the window opens.
+#
+# Fixed by making scan+publish atomic: the port is chosen and a RESERVATION
+# state file is written while holding an exclusive flock, so the choice is
+# visible to every other launcher before the lock is released. A reservation
+# holds its port for as long as its launcher process is alive; once Xvfb is up
+# the same state file is rewritten with XVFB_PID and the port is then held by
+# Xvfb's liveness instead (a launcher that dies mid-setup therefore frees its
+# port automatically, and a keepalive that outlives a dead Xvfb does not
+# wrongly keep holding one).
+
+# True if `port` is held by a running instance, a live reservation, or any
+# process outside our registry (e.g. doc48 §8's canonical :99 recipe).
+port_in_use() {
+    local port=$1 f p xpid lpid
+    for f in "$REGISTRY_DIR"/*.state; do
+        [[ -e "$f" ]] || continue
+        p=$(grep -oP '^DISPLAY_PORT=\K.*' "$f")
+        [[ "$p" == "$port" ]] || continue
+        xpid=$(grep -oP '^XVFB_PID=\K.*' "$f")
+        lpid=$(grep -oP '^LAUNCHER_PID=\K.*' "$f")
+        # Launched: held by Xvfb. Reservation (no XVFB_PID yet): held by the
+        # launcher that is still setting it up.
+        if [[ -n "$xpid" ]]; then
+            xvfb_alive "$xpid" && return 0
+        elif [[ -n "$lpid" ]] && launcher_alive "$lpid"; then
+            return 0
+        fi
+    done
+    ss -tln 2>/dev/null | grep -q ":$((6000 + port)) " && return 0
+    return 1
+}
+
+scan_free_display_port() {
     local port=$DISPLAY_BASE
-    while true; do
-        local conflict=0
-        local f
-        for f in "$REGISTRY_DIR"/*.state; do
-            [[ -e "$f" ]] || continue
-            local p pid
-            p=$(grep -oP '^DISPLAY_PORT=\K.*' "$f")
-            pid=$(grep -oP '^XVFB_PID=\K.*' "$f")
-            if [[ "$p" == "$port" ]] && xvfb_alive "$pid"; then
-                conflict=1
-                break
-            fi
-        done
-        # Belt-and-suspenders: also check nothing is actually listening on
-        # the X TCP port already (covers the canonical :99 recipe and any
-        # stray process not in our registry).
-        if ss -tln 2>/dev/null | grep -q ":$((6000 + port)) "; then
-            conflict=1
-        fi
-        if [[ $conflict -eq 0 ]]; then
-            echo "$port"
-            return
-        fi
+    while (( port <= DISPLAY_MAX )); do
+        port_in_use "$port" || { echo "$port"; return 0; }
         port=$((port + DISPLAY_STEP))
     done
+    die "no free display port in [$DISPLAY_BASE, $DISPLAY_MAX] step $DISPLAY_STEP (stale state files in $REGISTRY_DIR?)"
+}
+
+# Writes the registry entry for <name>. XVFB_PID empty => reservation.
+write_state_file() {
+    local name=$1 port=$2 xvfb_pid=$3 status=$4
+    cat >"$(state_file "$name")" <<EOF
+NAME=$name
+DISPLAY_PORT=$port
+TMUX_SESSION=$(instance_session "$name")
+WORKDIR=$(instance_workdir "$name")
+XVFB_PID=$xvfb_pid
+XVFB_LOG=$(instance_xvfblog "$name")
+LAUNCHER_PID=$$
+START_TIME=$(date +%s)
+STATUS=$status
+EOF
+}
+
+# Atomically claims a free port for <name> and publishes the reservation.
+# Sets RESERVED_PORT (a global, because a command substitution would put the
+# flock in a subshell that exits before the caller can use the reservation).
+RESERVED_PORT=""
+reserve_display_port() {
+    local name=$1
+    mkdir -p "$REGISTRY_DIR"
+    : >>"$PORT_LOCK" || die "cannot create port lock file: $PORT_LOCK"
+    exec 9<>"$PORT_LOCK"
+    flock -w "$PORT_LOCK_TIMEOUT_S" 9 \
+        || die "timed out after ${PORT_LOCK_TIMEOUT_S}s waiting for the display-port lock ($PORT_LOCK)"
+    local port; port=$(scan_free_display_port) || { flock -u 9; exec 9>&-; exit 1; }
+    [[ "$PORT_RESERVE_DELAY" == "0" ]] || sleep "$PORT_RESERVE_DELAY"
+    write_state_file "$name" "$port" "" reserving
+    flock -u 9
+    exec 9>&-
+    RESERVED_PORT=$port
 }
 
 cmd_launch() {
@@ -115,17 +191,34 @@ cmd_launch() {
 
     local sf; sf=$(state_file "$name")
     if [[ -f "$sf" ]]; then
+        # A live reservation counts as "already running" too, otherwise two
+        # concurrent launches of the SAME name would each delete the other's
+        # registry entry and leak an instance.
         # shellcheck disable=SC1090
-        ( source "$sf"; xvfb_alive "$XVFB_PID" ) && die "instance '$name' already running (state file $sf); teardown first"
+        ( source "$sf"
+          if [[ -n "$XVFB_PID" ]]; then xvfb_alive "$XVFB_PID"
+          else launcher_alive "$LAUNCHER_PID"; fi
+        ) && die "instance '$name' already running or being launched (state file $sf); teardown first"
         rm -f "$sf"
     fi
 
-    local port; port=$(pick_display_port)
-    local session="harness-$name"
-    local workdir="$HOME/fd2-run-harness-$name"
-
+    # Validate the environment BEFORE reserving, so a misconfigured host does
+    # not leave reservation stubs behind.
     [[ -d "$SOURCE_GAME_DIR" ]] || die "canonical game dir not found: $SOURCE_GAME_DIR"
     [[ -x "$DOSBOX_BIN" ]] || die "dosbox-x binary not found/executable: $DOSBOX_BIN"
+
+    reserve_display_port "$name"
+    # Drop the reservation if setup dies before Xvfb exists, so a failed launch
+    # does not leave a stale stub behind. Cleared as soon as XVFB_PID is
+    # recorded -- from that point the entry MUST survive, or teardown would lose
+    # track of a live Xvfb/tmux tree.
+    # $sf expanded now, not at trap time: it is a function-local and may already
+    # be out of scope when an EXIT trap actually runs.
+    trap "rm -f '$sf'" EXIT
+    local port=$RESERVED_PORT
+    local session; session=$(instance_session "$name")
+    local workdir; workdir=$(instance_workdir "$name")
+    echo "[$name] reserved display :$port (registry entry published before setup starts)"
 
     echo "[$name] preparing isolated workdir: $workdir"
     rm -rf "$workdir"
@@ -133,11 +226,17 @@ cmd_launch() {
     cp -r "$SOURCE_GAME_DIR"/. "$workdir"/
 
     mkdir -p "$REGISTRY_DIR" "$SCREENSHOT_DIR"
-    local xvfblog="$REGISTRY_DIR/$name.xvfb.log"
+    local xvfblog; xvfblog=$(instance_xvfblog "$name")
 
     echo "[$name] starting Xvfb on :$port (tcp-reachable as 127.0.0.1:$port)"
     Xvfb ":$port" -screen 0 1024x768x24 -ac -nolisten local -listen tcp >"$xvfblog" 2>&1 &
     local xvfb_pid=$!
+    # Upgrade the reservation to a real entry the instant Xvfb exists, so the
+    # port is never held by anything that teardown cannot find: from here on it
+    # is held by Xvfb's liveness rather than the launcher's, and this process
+    # dying no longer orphans an unregistered Xvfb.
+    write_state_file "$name" "$port" "$xvfb_pid" starting
+    trap - EXIT
     sleep 3
 
     echo "[$name] starting dosbox-x in tmux session '$session' (socket $TMUX_SOCKET)"
@@ -145,20 +244,6 @@ cmd_launch() {
         "cd '$workdir' && DISPLAY=127.0.0.1:$port '$DOSBOX_BIN' -c 'MOUNT C $workdir' -c 'C:' -c 'config -set core=normal' -c 'config -set cycles=5000' -c 'FD2.EXE'"
     sleep 2
     tmux -L "$TMUX_SOCKET" set-option -t "$session" remain-on-exit on
-
-    # Write state BEFORE the long keepalive sleep so other subcommands can
-    # see this instance immediately.
-    cat >"$sf" <<EOF
-NAME=$name
-DISPLAY_PORT=$port
-TMUX_SESSION=$session
-WORKDIR=$workdir
-XVFB_PID=$xvfb_pid
-XVFB_LOG=$xvfblog
-LAUNCHER_PID=$$
-START_TIME=$(date +%s)
-STATUS=starting
-EOF
 
     echo "[$name] waiting for DOSBox window on display 127.0.0.1:$port ..."
     local winid="" i
@@ -358,4 +443,9 @@ EOF
     esac
 }
 
-main "$@"
+# Only dispatch when executed. Sourcing this file (as
+# tools/test_dosbox_harness_ports.sh does) gets the functions without running
+# any command.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
