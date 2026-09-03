@@ -310,6 +310,19 @@ def analyse_structure(path: Path) -> tuple[str, str]:
 def layer_structure(rep: Report, pys: list[Path]) -> dict[str, str]:
     verdicts: dict[str, str] = {}
     for p in pys:
+        raw = p.read_bytes()
+        # A shebang line ending in CR is not a shebang: Linux reports
+        # `env: 'python3<CR>': No such file or directory` and the tool cannot
+        # be run directly at all, even though `python3 tools/x.py` still works
+        # and every syntax check passes. 56 of this repo's 82 shebanged tools
+        # were in that state until 2026-09-03. Checked here rather than in
+        # `syntax` because the file is perfectly valid Python either way.
+        first_line = raw.split(b"\n", 1)[0]
+        if raw.startswith(b"#!") and first_line.endswith(b"\r"):
+            rep.add(p.name, "structure", "FAIL",
+                    "shebang line ends with CR — cannot be executed directly under Linux")
+            verdicts[p.name] = "UNPARSEABLE"
+            continue
         v, detail = analyse_structure(p)
         verdicts[p.name] = v
         if v == "IMPORT_SAFE":
@@ -987,6 +1000,17 @@ _FIXTURES: dict[str, str] = {
         print("wrote next to myself")
         """
     ),
+    # structure layer must FAIL: valid Python, but its shebang ends with CR so
+    # Linux cannot exec it. Written as CRLF bytes by the selftest, not here.
+    "crlf_shebang.py": textwrap.dedent(
+        """
+        #!/usr/bin/env python3
+        \"\"\"Valid Python whose shebang is unusable.\"\"\"
+
+        if __name__ == "__main__":
+            pass
+        """
+    ),
     # tests layer must FAIL
     "test_failing.py": "import sys\nsys.exit(1)\n",
     # tests layer must PASS
@@ -1037,7 +1061,14 @@ def selftest() -> int:
         fx = Path(td) / "tools"
         fx.mkdir()
         for name, body in _FIXTURES.items():
-            (fx / name).write_text(body.lstrip("\n"), encoding="utf-8")
+            # newline="" is load-bearing: without it, Windows writes every
+            # fixture as CRLF, which made the good_tool.py positive control trip
+            # the shebang check the moment that check was added. Only
+            # crlf_shebang.py is supposed to have CR line endings.
+            text = body.lstrip("\n")
+            if name == "crlf_shebang.py":
+                text = text.replace("\n", "\r\n")
+            (fx / name).write_text(text, encoding="utf-8", newline="")
         for name, body in _FIXTURE_SH.items():
             (fx / name).write_bytes(body.encode("utf-8"))
         # Regression fixture for a bug this harness actually had: it used to
@@ -1072,6 +1103,8 @@ def selftest() -> int:
         _expect(results, "broken_syntax.py", "syntax", "FAIL", failures, "SyntaxError must not be silent")
         _expect(results, "broken.sh", "syntax", "FAIL", failures, "bash -n must catch it")
         _expect(results, "no_guard.py", "structure", "WARN", failures, "unguarded module work")
+        _expect(results, "crlf_shebang.py", "structure", "FAIL", failures,
+                "a CR-terminated shebang is not executable on Linux")
         _expect(results, "no_guard.py", "imports", "SKIP", failures, "must decline to import it")
         _expect(results, "no_guard.py", "deps", "PASS", failures, "deps still checked statically")
         _expect(results, "missing_dep.py", "imports", "WARN", failures, "optional dep != broken tool")
@@ -1103,7 +1136,7 @@ def selftest() -> int:
         if rc != 0:
             failures.append("control: a trivial command should succeed under _run")
 
-        total = 19
+        total = 20
         print(f"checks: {total - len(failures)}/{total} passed")
         for f in failures:
             print("  FAIL  " + f)

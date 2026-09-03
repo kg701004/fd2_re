@@ -17,3 +17,11 @@ remake/assets/maps/native_turn_event_controls.json -text
 # checkout 的,index 是 LF、working tree 仍是 CRLF,規則從未對它們生效——已用
 # `git add --renormalize` + 重新 checkout 修正。
 *.sh text eol=lf
+
+# 2026-09-03:同樣的問題也發生在 .py。tools/ 底下 82 支有 shebang、
+# 且 executable bit 已設的 Python 工具,其中 56 支的 working tree 是 CRLF,
+# 在 WSL 下直接執行(`./tools/x.py`)會得到
+# `env: 'python3': No such file or directory`——只有寫成 `python3 tools/x.py`
+# 才會動。Python 直譯器本身吃 CRLF 沒問題,壞的是 shebang 那一行。
+# 這個 repo 的工具是給 WSL 跑的,所以一律 LF checkout。
+*.py text eol=lf

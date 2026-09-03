@@ -1996,3 +1996,28 @@ harness 自身 `19/19`、port 回歸 `21/21`、audio selftest `11/11`。
 並且不要為了讓它們跑起來而復原 remake/。同類的 `apply_hd_assets.py`、
 `apply_hd_composite.py`、`story_to_script.py`、`gen_campaign.py` 也一併標註
 (後兩支的預設輸出目錄在 remake/ 之下,執行會把該樹長回來)。
+
+### 追加:同一個換行問題,`.py` 側更嚴重(64/91)
+
+修完 6 支 `.sh` 之後回頭掃 `.py`,發現**同一個根因影響範圍大得多**:
+`tools/` 底下 91 支 Python 有 82 支帶 shebang 且已設 executable bit,
+其中 **56 支的 shebang 行以 CR 結尾**,在 WSL 下直接執行會得到:
+
+```
+env: 'python3\r': No such file or directory
+```
+
+也就是這 56 支「可執行檔」其實一支都不能直接執行,只有寫成 `python3 tools/x.py`
+才會動。這件事之所以能長期潛伏,是因為**每一種現有檢查都看不到它**:
+Python 直譯器本身完全接受 CRLF、`ast.parse` 過、`--help` 過、單元測試也過——
+壞的只有 shebang 那一行。
+
+`.gitattributes` 加上 `*.py text eol=lf` 並重新 checkout 後,
+82/82 exec+shebang 工具在 WSL 下直接執行皆正常(以 `./tools/fd2save.py --help`
+與 `./tools/unpack_dat.py` 實測)。
+
+harness 的 `structure` 層補上這個檢查(放這裡而不是 `syntax`,因為檔案在語法上
+完全有效)。加上之後 selftest 立刻抓到 harness 自己的一個問題:
+它寫 fixture 時用預設 newline,在 Windows 上一律寫成 CRLF,於是**陽性對照
+`good_tool.py` 自己就踩了這個新檢查**——fixture 改成明確 `newline=""`,
+只有 `crlf_shebang.py` 這個故障注入 fixture 才是 CRLF。selftest 20/20。
