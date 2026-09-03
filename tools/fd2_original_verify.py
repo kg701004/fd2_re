@@ -259,6 +259,8 @@ class RunResult:
     ok: bool
     assertions: list[Assertion] = field(default_factory=list)
     shots: dict[str, str] = field(default_factory=dict)  # label -> md5
+    # Open-question measurements: recorded, never pass/fail. See step_measure_change.
+    measurements: list[dict] = field(default_factory=list)
     error: str = ""
     duration_s: float = 0.0
 
@@ -402,6 +404,34 @@ class Runner:
         self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}",
                      kind in ("animation", "unknown"), info)
 
+    def step_measure_change(self, st: dict) -> None:
+        """Record whether two frames are structurally different -- WITHOUT asserting it.
+
+        For an open question ("does Shift+F1 do anything in this chapter?") both answers
+        are legitimate findings, so gating on one would turn a real result into a tool
+        failure. The L1 steps still gate that we actually reached the screen; this only
+        reports what happened once we were there.
+
+        Uses classify_instability rather than assert_distinct's MD5 equality on purpose:
+        MD5 cannot answer this question at all. Any screen carrying an idle-animation
+        sprite differs run to run (measured 0.54-0.57% of pixels in a <=48x48 box), so
+        "nothing happened" would come back as "the frames are distinct" -- exactly the
+        kind of evidence that cannot tell the two outcomes apart.
+        """
+        a, b = self.dir / f"{st['a']}.png", self.dir / f"{st['b']}.png"
+        if not (a.exists() and b.exists()):
+            self.result.measurements.append(
+                {"name": st["name"], "result": "missing_frame", "detail": f"{st['a']} / {st['b']}"})
+            return
+        kind, info = classify_instability([a, b])
+        # structural => the screen genuinely changed; animation => it did not. "unknown"
+        # means classify_instability could not localise the difference at all (no numpy),
+        # which must NOT be reported as "unchanged" -- that would be an unmeasured claim.
+        result = {"structural": "changed", "animation": "unchanged"}.get(kind, "indeterminate")
+        self.result.measurements.append(
+            {"name": st["name"], "a": st["a"], "b": st["b"],
+             "result": result, "kind": kind, "detail": info})
+
     def step_assert_save_field(self, st: dict) -> None:
         save = f"~/fd2-run-harness-{self.instance}/FD2.SAV"
         cmd = f"cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re && python3 {FD2SAVE_WSL} {save}"
@@ -419,6 +449,7 @@ class Runner:
         "assert_ref": step_assert_ref,
         "assert_distinct": step_assert_distinct,
         "assert_same_as": step_assert_same_as,
+        "measure_change": step_measure_change,
         "assert_save_field": step_assert_save_field,
     }
 
@@ -558,10 +589,53 @@ SCENARIOS = {
             {"op": "keys", "keys": ["Return"], "wait": 2.5},
             {"op": "shot", "label": "stock"},
             {"op": "assert_distinct", "labels": ["tavern", "revealed", "shop_interior", "stock"]},
+            # Same measurement the two other chapters take, so ch02 acts as the positive
+            # control for them: if this one ever reports "unchanged", the probe itself is
+            # broken and the other chapters' results mean nothing.
+            {"op": "measure_change", "name": "shift_f1_at_tavern", "a": "tavern", "b": "revealed"},
             {"op": "assert_save_field", "contains": "roster_count=0x0d"},
         ],
     },
 }
+
+
+def _secret_shop_probe(name: str, chapter: int) -> dict:
+    """Does the ch02 secret-shop input generalise to the other two town variants?
+
+    Deliberately makes NO assertion about the outcome -- "Shift+F1 does nothing here" is
+    a perfectly good answer, and asserting either way would report a finding as a failure.
+    The L1 title gate still fails loudly if we never reached the town at all, so an
+    "unchanged" result cannot be confused with a scenario that went off the rails.
+    """
+    return {
+        "name": name,
+        "chapter": chapter,
+        "steps": [
+            {"op": "patch_chapter", "value": chapter},
+            {"op": "poll_title"},
+            {"op": "keys", "keys": ["Down"], "wait": 1.0},
+            {"op": "shot", "label": "title_menu"},
+            {"op": "assert_ref", "label": "title_menu", "ref": "title_load_menu.png",
+             "box": list(TITLE_MENU_BOX), "max_diff": 3.0, "layer": "L1"},
+            {"op": "keys", "keys": ["Return"], "wait": 3.5},
+            {"op": "keys", "keys": ["Return"], "wait": 5.0},
+            {"op": "shot", "label": "tavern"},
+            {"op": "keys", "keys": ["shift+F1"], "wait": 1.5},
+            {"op": "shot", "label": "revealed"},
+            {"op": "measure_change", "name": "shift_f1_at_tavern", "a": "tavern", "b": "revealed"},
+            # If it did open something, walking in should reach a shop interior; if it
+            # did not, this Enter just enters the tavern. Both are captured, neither
+            # asserted -- the frames themselves say which happened.
+            {"op": "keys", "keys": ["Return"], "wait": 3.5},
+            {"op": "shot", "label": "after_enter"},
+            {"op": "measure_change", "name": "enter_after_shift_f1", "a": "revealed", "b": "after_enter"},
+        ],
+    }
+
+
+# ch02 = raw 1 (already covered above), ch12 = raw 11, ch03 = raw 2.
+SCENARIOS["secret_shop_v1"] = _secret_shop_probe("secret_shop_v1", 11)
+SCENARIOS["secret_shop_v2"] = _secret_shop_probe("secret_shop_v2", 2)
 
 
 # Probing the hidden service selector: one index per scenario/instance.
@@ -685,6 +759,10 @@ def selftest() -> int:
             missing2 = sorted({lb for s in dis for lb in s["labels"] if lb not in labels})
             check(f"scenario '{sname}' assert_distinct targets captured frames", not missing2,
                   f"no shot for: {missing2}")
+            meas = [s for s in spec["steps"] if s["op"] == "measure_change"]
+            missing3 = sorted({s[k] for s in meas for k in ("a", "b") if s[k] not in labels})
+            check(f"scenario '{sname}' measure_change targets captured frames", not missing3,
+                  f"no shot for: {missing3}")
 
         for ref in {s["ref"] for sp in SCENARIOS.values() for s in sp["steps"] if s["op"] == "assert_ref"}:
             check(f"reference image present: {ref}", (REF_DIR / ref).exists(), str(REF_DIR / ref))
@@ -759,6 +837,10 @@ def main() -> int:
                 for a in r.assertions:
                     if not a.ok:
                         print(f"        {a.layer} {a.name}: {a.detail}")
+                # Measurements are the answer to an open question, not a pass/fail --
+                # print them on PASS runs too or the result would be invisible.
+                for m in r.measurements:
+                    print(f"        MEASURED {m['name']}: {m['result']} ({m.get('detail', '')})")
         passes.append(results)
 
     # Cross-run stability: the same scenario replayed from the same save should
@@ -820,6 +902,7 @@ def main() -> int:
         "runs": [
             [{"name": r.scenario, "instance": r.instance, "ok": r.ok, "error": r.error,
               "duration_s": round(r.duration_s, 1), "shots": r.shots,
+              "measurements": r.measurements,
               "assertions": [{"layer": a.layer, "name": a.name, "ok": a.ok, "detail": a.detail}
                              for a in r.assertions]}
              for r in sorted(results, key=lambda x: x.scenario)]
