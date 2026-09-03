@@ -375,6 +375,26 @@ class Runner:
         self.assert_(st.get("layer", "L2"), "distinct_frames", not dupes,
                      "all distinct" if not dupes else "duplicates: " + ", ".join(dupes))
 
+    def step_assert_same_as(self, st: dict) -> None:
+        """Assert two captured frames are the same screen, tolerating idle animation.
+
+        Used to re-establish a known state mid-scenario: after probing one branch and
+        escaping back, confirm we really are back on the expected menu before probing
+        the next one. Without this, one wrong Escape depth silently shifts every later
+        probe onto a different screen -- the exact way a mapping gets recorded wrong.
+
+        Animation tolerance reuses classify_instability, so the leader/shopkeeper idle
+        sprite (measured at 0.54-0.57% of pixels in a <=48x48 box) does not count as a
+        difference, while a genuinely different screen does.
+        """
+        a, b = self.dir / f"{st['a']}.png", self.dir / f"{st['b']}.png"
+        if not (a.exists() and b.exists()):
+            self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}", False, "missing frame")
+            return
+        kind, info = classify_instability([a, b])
+        self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}",
+                     kind in ("animation", "unknown"), info)
+
     def step_assert_save_field(self, st: dict) -> None:
         save = f"~/fd2-run-harness-{self.instance}/FD2.SAV"
         cmd = f"cd /mnt/c/Users/kg701/Desktop/GAME/fd2_re && python3 {FD2SAVE_WSL} {save}"
@@ -391,6 +411,7 @@ class Runner:
         "shot": step_shot,
         "assert_ref": step_assert_ref,
         "assert_distinct": step_assert_distinct,
+        "assert_same_as": step_assert_same_as,
         "assert_save_field": step_assert_save_field,
     }
 
@@ -542,6 +563,61 @@ SCENARIOS = {
         ],
     },
 }
+
+
+# Probing the hidden service selector: one index per scenario/instance.
+#
+# The first attempt probed all four indices inside one instance, escaping back to the
+# service menu between probes. The assert_same_as gate caught that Escape x3 does not
+# return to the service menu at all -- it leaves the venue entirely for the town map
+# (97% of pixels differ), so every probe after the first was on a drifting screen, and
+# two probes duly captured identical frames. Rather than tune an Escape depth that has
+# no reason to be stable across venues and depths, each index now gets a fresh instance
+# and a fresh navigation. Costs nothing but wall-clock, which the thread pool absorbs.
+
+_TO_TOWN = [
+    {"op": "patch_chapter", "value": 1},
+    {"op": "poll_title"},
+    {"op": "keys", "keys": ["Down"], "wait": 1.0},
+    {"op": "shot", "label": "title_menu"},
+    {"op": "assert_ref", "label": "title_menu", "ref": "title_load_menu.png",
+     "box": list(TITLE_MENU_BOX), "max_diff": 3.0, "layer": "L1"},
+    {"op": "keys", "keys": ["Return"], "wait": 3.5},
+    {"op": "keys", "keys": ["Return"], "wait": 5.0},
+]
+
+# Reaching each venue's service menu from the town's landing selection (sel0 酒店).
+_ENTER_SHOP = [
+    {"op": "keys", "keys": ["Left"], "wait": 0.9},        # sel0 -> sel1 武器店
+    {"op": "keys", "keys": ["Return"], "wait": 3.5},      # shopkeeper
+    {"op": "keys", "keys": ["Return"], "wait": 2.5},      # first service screen
+    {"op": "keys", "keys": ["Escape"], "wait": 1.5},      # -> service menu
+]
+_ENTER_CHURCH = [
+    {"op": "keys", "keys": ["Left", "Left", "Left", "Left"], "wait": 0.8},  # sel0 -> sel4 教會
+    {"op": "keys", "keys": ["Return"], "wait": 3.5},      # greeting / service menu
+]
+
+
+def _service_scenario(venue: str, enter: list[dict], idx: int) -> dict:
+    steps = _TO_TOWN + list(enter) + [{"op": "shot", "label": "service_menu"}]
+    if idx:
+        steps += [{"op": "keys", "keys": ["Right"] * idx, "wait": 0.7}]
+    steps += [
+        {"op": "keys", "keys": ["Return"], "wait": 3.0},
+        {"op": "shot", "label": "opened"},
+        {"op": "keys", "keys": ["Return"], "wait": 2.5},
+        {"op": "shot", "label": "opened_next"},
+        # The selector is invisible, so the only honest evidence that this index does
+        # something distinct is that its screens differ from the menu we came from.
+        {"op": "assert_distinct", "labels": ["service_menu", "opened"], "layer": "L2"},
+    ]
+    return {"name": f"{venue}_svc{idx}", "steps": steps}
+
+
+for _i in range(4):
+    SCENARIOS[f"shop_svc{_i}"] = _service_scenario("shop", _ENTER_SHOP, _i)
+    SCENARIOS[f"church_svc{_i}"] = _service_scenario("church", _ENTER_CHURCH, _i)
 
 
 # --------------------------------------------------------------------------
