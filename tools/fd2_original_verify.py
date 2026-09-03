@@ -138,6 +138,39 @@ GAME_BOX = (192, 205, 832, 595)
 # Title-screen menu rows (START/LOAD/CONTINUE) -- the only place the selection marker shows.
 TITLE_MENU_BOX = (440, 520, 600, 585)
 
+# --- named screen signatures -------------------------------------------------
+#
+# This project's core discipline is "identify a screen by its own text, never by the
+# keypresses used to reach it" -- but until 2026-09-03 the tool had no way to express
+# that: assert_ref needs a whole pre-captured frame, so every text identification was
+# still done by a human looking at a picture. That is precisely the step this tool
+# exists to remove, and it kept costing rounds: in one session three separate runs
+# silently captured the wrong screen (an Escape depth that left the venue, a service
+# cursor that does not reset, and a dialogue advanced one Enter too far) and each was
+# only caught later, by eye, when a control frame looked implausible.
+#
+# A signature is a NAMED, tightly-cropped region that carries the distinguishing text,
+# stored next to the reference frames with its box. Scenarios then say
+#   {"op": "assert_signature", "label": "...", "name": "money_not_enough"}
+# and a run that lands somewhere else fails at that step instead of producing a
+# convincing-looking screenshot of the wrong thing.
+#
+# Deliberately NOT OCR: the game's text is a Chinese bitmap font, and character
+# recognition would add an unreliable dependency to answer a question that a cropped
+# region hash answers exactly.
+SIG_INDEX = REF_DIR / "signatures.json"
+
+
+def load_signatures() -> dict:
+    if not SIG_INDEX.exists():
+        return {}
+    return json.loads(SIG_INDEX.read_text(encoding="utf-8"))
+
+
+def crop_box(png: Path, box) -> "Image.Image":
+    """Crop a captured frame to a signature box, in GAME_BOX-relative coordinates."""
+    return crop_rgb(png).crop(tuple(box))
+
 
 # --------------------------------------------------------------------------
 # WSL plumbing -- real argv only (see module docstring, pitfall 5)
@@ -426,6 +459,68 @@ class Runner:
         self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}",
                      kind in ("animation", "unknown"), info)
 
+    def step_assert_signature(self, st: dict) -> None:
+        """Assert the captured frame shows a named screen, by its own text region.
+
+        Layer defaults to L1 because this is a "did we actually get there" gate: a
+        scenario that fails it must not keep pressing keys.
+        """
+        sigs = load_signatures()
+        sig = sigs.get(st["name"])
+        layer = st.get("layer", "L1")
+        if sig is None:
+            self.assert_(layer, f"sig:{st['name']}", False,
+                         f"no signature named '{st['name']}' in {SIG_INDEX}")
+            return
+        ref = REF_DIR / sig["file"]
+        cur = self.dir / f"{st['label']}.png"
+        if not ref.exists():
+            self.assert_(layer, f"sig:{st['name']}", False, f"missing signature image {ref}")
+            return
+        try:
+            a = crop_box(cur, sig["box"])
+        except Exception as e:  # noqa: BLE001 - a malformed box must fail loudly
+            self.assert_(layer, f"sig:{st['name']}", False, f"cannot crop {cur}: {e}")
+            return
+        b = Image.open(ref).convert("RGB")
+        if a.size != b.size:
+            self.assert_(layer, f"sig:{st['name']}", False,
+                         f"box/reference size mismatch {a.size} vs {b.size}")
+            return
+        d = _mad_fast(a, b) if _np is not None else _mad_reference(a, b)
+        limit = st.get("max_diff", sig.get("max_diff", 3.0))
+        self.assert_(layer, f"sig:{st['name']}", d <= limit,
+                     f"{st['label']} vs signature '{st['name']}' diff={d:.2f} (max {limit})")
+
+    def step_assert_not_signature(self, st: dict) -> None:
+        """Assert the frame is NOT a named screen.
+
+        Needed when the thing being measured is the screen's own numbers: a positive
+        signature would encode those numbers and so fail whenever the value under test
+        changes -- it cannot gate a measurement of itself. The useful gate is the
+        negative one: "we have not fallen off the end of this dialogue and back onto
+        the prompt", which is exactly the over-advance that silently produced eight
+        identical-looking-but-wrong captures on 2026-09-03.
+        """
+        sigs = load_signatures()
+        sig = sigs.get(st["name"])
+        layer = st.get("layer", "L1")
+        if sig is None:
+            self.assert_(layer, f"notsig:{st['name']}", False,
+                         f"no signature named '{st['name']}'")
+            return
+        ref = REF_DIR / sig["file"]
+        cur = self.dir / f"{st['label']}.png"
+        if not ref.exists():
+            self.assert_(layer, f"notsig:{st['name']}", False, f"missing {ref}")
+            return
+        a = crop_box(cur, sig["box"])
+        b = Image.open(ref).convert("RGB")
+        d = _mad_fast(a, b) if _np is not None else _mad_reference(a, b)
+        limit = st.get("min_diff", sig.get("max_diff", 3.0))
+        self.assert_(layer, f"notsig:{st['name']}", d > limit,
+                     f"{st['label']} vs '{st['name']}' diff={d:.2f} (must exceed {limit})")
+
     def step_assert_ref_differs(self, st: dict) -> None:
         """The mirror of assert_ref: this frame must NOT be the reference state.
 
@@ -493,6 +588,8 @@ class Runner:
         "assert_ref": step_assert_ref,
         "assert_distinct": step_assert_distinct,
         "assert_same_as": step_assert_same_as,
+        "assert_signature": step_assert_signature,
+        "assert_not_signature": step_assert_not_signature,
         "assert_ref_differs": step_assert_ref_differs,
         "measure_change": step_measure_change,
         "assert_save_field": step_assert_save_field,
@@ -877,6 +974,14 @@ def selftest() -> int:
             missing2 = sorted({lb for s in dis for lb in s["labels"] if lb not in labels})
             check(f"scenario '{sname}' assert_distinct targets captured frames", not missing2,
                   f"no shot for: {missing2}")
+            sg = [s for s in spec["steps"]
+                  if s["op"] in ("assert_signature", "assert_not_signature")]
+            missing4 = sorted({s["label"] for s in sg if s["label"] not in labels})
+            check(f"scenario '{sname}' assert_signature targets captured frames", not missing4,
+                  f"no shot for: {missing4}")
+            unknown_sigs = sorted({s["name"] for s in sg if s["name"] not in load_signatures()})
+            check(f"scenario '{sname}' assert_signature names are registered", not unknown_sigs,
+                  f"unregistered: {unknown_sigs}")
             meas = [s for s in spec["steps"] if s["op"] == "measure_change"]
             missing3 = sorted({s[k] for s in meas for k in ("a", "b") if s[k] not in labels})
             check(f"scenario '{sname}' measure_change targets captured frames", not missing3,
@@ -901,6 +1006,30 @@ def selftest() -> int:
                 same = a.exists() and b.exists() and md5_of(a) == md5_of(b)
                 check(f"scenario '{sname}' ref pair for '{lb}' are different images", not same,
                       f"{want[lb]} and {notw[lb]} are the same image")
+
+        # Signatures are only worth anything if they DISCRIMINATE. Two signatures that
+        # match each other would let a scenario "confirm" it reached the wrong screen --
+        # the same class of unfalsifiable evidence as a comparison figure whose halves
+        # are the same image. Every pair must differ by more than any single one's
+        # tolerance, and every signature must of course match itself.
+        sigs = load_signatures()
+        check("signature registry is present", bool(sigs), str(SIG_INDEX))
+        imgs = {}
+        for name, sig in sigs.items():
+            p = REF_DIR / sig["file"]
+            if p.exists():
+                imgs[name] = Image.open(p).convert("RGB")
+            else:
+                check(f"signature image present: {name}", False, str(p))
+        names = sorted(imgs)
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                if imgs[a].size != imgs[b].size:
+                    continue  # different boxes cannot be confused
+                d = _mad_fast(imgs[a], imgs[b]) if _np is not None else _mad_reference(imgs[a], imgs[b])
+                limit = max(sigs[a].get("max_diff", 3.0), sigs[b].get("max_diff", 3.0))
+                check(f"signatures '{a}' and '{b}' are distinguishable", d > limit,
+                      f"diff={d:.2f} is within tolerance {limit}")
 
         # The launch gate must actually switch, and must be re-entrant-safe as a
         # nullcontext -- a broken gate would either serialise everything silently
@@ -927,6 +1056,17 @@ def main() -> int:
                     help="run the whole set N times and report per-frame hash stability across runs "
                          "(a scenario that passes but renders differently each time is a real finding)")
     ap.add_argument("--keep", action="store_true", help="do not tear instances down (for inspection)")
+    ap.add_argument("--make-signature", nargs=6,
+                    metavar=("NAME", "FRAME_PNG", "X0", "Y0", "X1", "Y1"),
+                    help="mint a named screen signature from a captured frame: crops that "
+                         "box (GAME_BOX-relative) and registers it, so scenarios can say "
+                         "assert_signature instead of relying on a human reading the screen")
+    ap.add_argument("--list-signatures", action="store_true", help="show the signature registry")
+    ap.add_argument("--recon", nargs=2, metavar=("CHAPTER", "KEYS"),
+                    help="drive a comma-separated key sequence from the title, capturing a "
+                         "frame after EVERY key and asserting nothing. Replaces hand-written "
+                         "one-off recon scripts; use it to learn a flow before writing a "
+                         "scenario that asserts anything about it")
     ap.add_argument("--serial-launch", action="store_true",
                     help="launch one instance at a time (pre-2026-09-03 workaround for the "
                          "harness display-port race; only needed if that fix is unavailable)")
@@ -934,6 +1074,52 @@ def main() -> int:
 
     if args.selftest:
         return selftest()
+
+    if args.list_signatures:
+        sigs = load_signatures()
+        if not sigs:
+            print(f"(no signatures registered in {SIG_INDEX})")
+        for name, sig in sorted(sigs.items()):
+            print(f"{name:24s} box={sig['box']} file={sig['file']} note={sig.get('note', '')}")
+        return 0
+
+    if args.make_signature:
+        name, frame, x0, y0, x1, y1 = args.make_signature
+        box = [int(x0), int(y0), int(x1), int(y1)]
+        crop = crop_box(Path(frame), box)
+        REF_DIR.mkdir(parents=True, exist_ok=True)
+        fn = f"sig_{name}.png"
+        crop.save(REF_DIR / fn)
+        sigs = load_signatures()
+        sigs[name] = {"file": fn, "box": box, "max_diff": 3.0, "source_frame": str(frame)}
+        SIG_INDEX.write_text(json.dumps(sigs, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[signature] {name} -> {REF_DIR / fn} box={box} size={crop.size}")
+        return 0
+
+    if args.recon:
+        chapter, keys = args.recon
+        seq = [k for k in keys.split(",") if k]
+        steps = [{"op": "patch_chapter", "value": int(chapter)}, {"op": "poll_title"},
+                 {"op": "keys", "keys": ["Down"], "wait": 1.0},
+                 {"op": "shot", "label": "title_menu"},
+                 {"op": "assert_ref", "label": "title_menu", "ref": "title_load_menu.png",
+                  "box": list(TITLE_MENU_BOX), "max_diff": 3.0, "layer": "L1"}]
+        for i, k in enumerate(seq):
+            wait = 4.0 if k == "Return" and i < 2 else 2.2
+            steps += [{"op": "keys", "keys": [k], "wait": wait},
+                      {"op": "shot", "label": f"r{i:02d}_{k.replace('+', '_')}"}]
+        out_dir = OUT_ROOT / ("recon-" + time.strftime("%Y%m%d-%H%M%S"))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        print(f"[recon] chapter={chapter} keys={seq}\n[recon] out={out_dir}")
+        r = Runner({"name": "recon", "chapter": int(chapter), "steps": steps},
+                   out_dir, args.keep).run()
+        print(f"[{'PASS' if r.ok else 'FAIL'}] recon ({r.duration_s:.0f}s)")
+        for a in r.assertions:
+            if not a.ok:
+                print(f"   {a.layer} {a.name}: {a.detail}")
+        for lb, md5 in r.shots.items():
+            print(f"   {lb:24s} {md5[:12]}")
+        return 0 if r.ok else 1
 
     if args.list:
         for k, v in SCENARIOS.items():

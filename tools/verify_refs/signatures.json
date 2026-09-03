@@ -1,0 +1,46 @@
+{
+  "money_not_enough": {
+    "file": "sig_money_not_enough.png",
+    "box": [
+      20,
+      215,
+      430,
+      345
+    ],
+    "max_diff": 3.0,
+    "source_frame": ".wsl_build/original_verify/retest2-20260903-101331//r_insufficient/d2_after_yes.png"
+  },
+  "whose_item": {
+    "file": "sig_whose_item.png",
+    "box": [
+      20,
+      215,
+      430,
+      345
+    ],
+    "max_diff": 3.0,
+    "source_frame": ".wsl_build/original_verify/m5d-20260903-105745//r_transfer/t0_whose.png"
+  },
+  "who_class_change": {
+    "file": "sig_who_class_change.png",
+    "box": [
+      20,
+      215,
+      430,
+      345
+    ],
+    "max_diff": 3.0,
+    "source_frame": ".wsl_build/original_verify/ccrecon-20260903-110654//cc_recon/c01_svc3.png"
+  },
+  "class_growth_lines": {
+    "file": "sig_class_growth_lines.png",
+    "box": [
+      20,
+      215,
+      430,
+      345
+    ],
+    "max_diff": 3.0,
+    "source_frame": ".wsl_build/original_verify/ccdisc-20260903-111755//d_plain/growth_a.png"
+  }
+}
