@@ -1534,3 +1534,46 @@ race3  display=:399  dosbox_windows=1  1024x768  mean=0.0652  md5=6703a221818b
   但不宣稱已解決。
 - `flock`需要util-linux的`flock`（WSL2 Ubuntu預設就有）。若缺，`reserve_display_port`會
   明確報錯而不是靜默退化成舊行為。
+
+---
+
+## `fd2_original_verify.py` 2026-09-03 續二：兩個新斷言原語，與一個「參考圖根本沒進版」的缺陷
+
+### 新增 `measure_change`：記錄但不判定
+
+用於**兩個答案都合法**的開放問題（本輪的「秘密商店在其他章節有沒有效」）。
+對這種問題斷言任一方，都會把真正的發現變成「工具失敗」。
+
+而且**不能用既有的 `assert_distinct`（MD5 相等）來問這類問題**：任何含待機動畫 sprite 的
+畫面本來就 run-to-run 不同（0.54~0.57% 像素、≤48×48），所以「什麼都沒發生」會被判成
+「兩張圖不同」——那個工具根本沒有鑑別力。改用 `classify_instability` 分 STRUCTURAL／ANIMATION。
+
+（附帶收穫：這個分類讓「畫面沒變」與「模擬器當掉了」也能分開——秘密商店那輪的 null 結果
+量到的正是動畫 sprite 的特徵，等於同時證明了遊戲當下仍在運行。）
+
+### 新增 `assert_ref_differs`：必須**不**等於某個參考狀態
+
+`assert_ref` 只能斷言「等於預期的 after」，那只是半個論證。
+**如果兩張參考圖哪天變成同一個檔案，只有等式的檢查會繼續通過，卻什麼都沒證明**——
+這正是本專案在 18 張對照圖裡抓到 13 張的那個缺陷。把「等於 after」與「不等於 before」
+成對使用，那個不可證偽的組合就不可能成立。
+
+`--selftest` 另加一條靜態檢查：**同一個 label 上成對使用的兩張參考圖必須真的是不同影像**
+（直接比 MD5）。等於把那個歷史缺陷寫成一條會自己失敗的規則。
+
+### 找到並修好：參考圖從來沒有進版
+
+`REF_DIR` 原本是 `.wsl_build/verify_refs/`，而 `.gitignore:66` 排除了整個 `.wsl_build/`。
+也就是說**每個 scenario 的 `assert_ref` 都指向一個從未被 commit 的檔案**，在乾淨 clone 上
+`--selftest` 會直接失敗、所有 scenario 都過不了 L1。這是既有缺陷（`title.png` 早就如此），
+本輪新增兩張參考圖時才暴露出來。
+
+參考圖是**fixture 不是 build 產物**，所以改放 `tools/verify_refs/`（4 張共 84KB，已進版）。
+另外 `title.png` 是被 `step_poll_title` 直接引用、不出現在任何 scenario step 裡，
+原本的存在性掃描**掃不到它**——已明確加入必要清單。
+
+### 本輪回歸
+
+`--selftest` 80 項全過；`--all --jobs 3` **16/16 PASS**（含新增的 `equip_control`／
+`equip_execute`）；改完 `REF_DIR` 後再單獨重跑兩個 equip scenario 仍全過。
+環境零殘留、磁碟維持 8.0G。

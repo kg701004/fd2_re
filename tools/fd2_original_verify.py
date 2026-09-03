@@ -46,7 +46,8 @@ Each assertion declares a layer, so a report can distinguish "we never got there
   L1 reach    -- did we arrive at the expected screen at all?
                  (`assert_ref`: mean-abs-diff of a crop against a reference PNG)
   L2 content  -- does the screen show what it should?
-                 (`assert_distinct` / `assert_changed` / `assert_unchanged`)
+                 (`assert_distinct`; `assert_ref_differs` for "this must NOT be the old
+                 state"; `measure_change` records an open question without judging it)
   L3 data     -- does the captured state agree with an independent, non-visual source?
                  (`assert_save_field`: read the same slot back through tools/fd2save.py)
 
@@ -115,7 +116,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 HARNESS_WSL = "/mnt/c/" + str(REPO_ROOT / "tools" / "dosbox_harness.sh").replace("\\", "/").split(":", 1)[1].lstrip("/")
 FD2SAVE_WSL = "/mnt/c/" + str(REPO_ROOT / "tools" / "fd2save.py").replace("\\", "/").split(":", 1)[1].lstrip("/")
 OUT_ROOT = REPO_ROOT / ".wsl_build" / "original_verify"
-REF_DIR = REPO_ROOT / ".wsl_build" / "verify_refs"
+# Reference frames are FIXTURES, not build output, so they live under tools/ and are
+# tracked. They used to sit in .wsl_build/, which .gitignore excludes -- meaning every
+# scenario's assert_ref pointed at a file that was never committed, and --selftest would
+# fail on a fresh clone. Found while adding the equip references (2026-09-03).
+REF_DIR = REPO_ROOT / "tools" / "verify_refs"
 
 # Launch-phase gate. The harness allocates displays atomically as of 2026-09-03, so this
 # is a no-op by default and launches run in parallel; --serial-launch swaps in a real Lock
@@ -404,6 +409,27 @@ class Runner:
         self.assert_(st.get("layer", "L1"), f"same:{st['a']}~{st['b']}",
                      kind in ("animation", "unknown"), info)
 
+    def step_assert_ref_differs(self, st: dict) -> None:
+        """The mirror of assert_ref: this frame must NOT be the reference state.
+
+        Exists because "matches the expected after-state" is only half an argument. If
+        the two reference images ever became the same file -- the exact defect this
+        project found in 13 of 18 comparison figures -- an equality-only check would
+        keep passing while proving nothing. Pairing the two makes that unfalsifiable
+        combination impossible.
+        """
+        ref = REF_DIR / st["ref"]
+        if not ref.exists():
+            self.assert_(st.get("layer", "L2"), f"differs:{st['ref']}", False,
+                         f"missing reference {ref}")
+            return
+        cur = self.dir / f"{st['label']}.png"
+        box = tuple(st["box"]) if "box" in st else GAME_BOX
+        d = mean_abs_diff(cur, ref, box=box)
+        floor = st.get("min_diff", 1.0)
+        self.assert_(st.get("layer", "L2"), f"differs:{st['ref']}", d > floor,
+                     f"{st['label']} vs {st['ref']} diff={d:.2f} (must exceed {floor})")
+
     def step_measure_change(self, st: dict) -> None:
         """Record whether two frames are structurally different -- WITHOUT asserting it.
 
@@ -449,6 +475,7 @@ class Runner:
         "assert_ref": step_assert_ref,
         "assert_distinct": step_assert_distinct,
         "assert_same_as": step_assert_same_as,
+        "assert_ref_differs": step_assert_ref_differs,
         "measure_change": step_measure_change,
         "assert_save_field": step_assert_save_field,
     }
@@ -638,6 +665,8 @@ SCENARIOS["secret_shop_v1"] = _secret_shop_probe("secret_shop_v1", 11)
 SCENARIOS["secret_shop_v2"] = _secret_shop_probe("secret_shop_v2", 2)
 
 
+
+
 # Probing the hidden service selector: one index per scenario/instance.
 #
 # The first attempt probed all four indices inside one instance, escaping back to the
@@ -691,6 +720,77 @@ def _service_scenario(venue: str, enter: list[dict], idx: int) -> dict:
 for _i in range(4):
     SCENARIOS[f"shop_svc{_i}"] = _service_scenario("shop", _ENTER_SHOP, _i)
     SCENARIOS[f"church_svc{_i}"] = _service_scenario("church", _ENTER_CHURCH, _i)
+
+# --------------------------------------------------------------------------
+# Weapon-shop purchase + equip, executed for real (mutates the instance's save).
+#
+# The key sequence below is NOT assumed: it was mapped by a recon pass that captured a
+# frame after every single keypress and asserted nothing, then read back which item and
+# which recipient each step had actually selected from the screens' own text (the
+# confirm prompt names the item, the status panel names the character). Only once the
+# flow was known was it written down as an asserting scenario. Details in doc58
+# 2026-09-03 續三.
+#
+# Purchase grid is 2x2 and, unlike the service selector, does draw a cursor:
+#   (none)=布衣 $50 +DP2   Right=旅行裝 $500 +DP10
+#   Down=皮甲 $300 +DP8    Right+Down=法師袍 $750 +DP12
+
+_TO_SHOP_GRID = _TO_TOWN + [
+    {"op": "keys", "keys": ["Left"], "wait": 0.9},      # sel0 -> sel1 武器店
+    {"op": "keys", "keys": ["Return"], "wait": 3.5},    # shopkeeper
+    {"op": "keys", "keys": ["Return"], "wait": 2.5},    # purchase grid
+]
+
+# Escape once from the grid returns to the service menu; service 2 = 裝備; the roster's
+# second entry is 亞雷斯.
+_TO_ARES_PANEL = [
+    {"op": "keys", "keys": ["Escape"], "wait": 1.5},
+    {"op": "keys", "keys": ["Right", "Right"], "wait": 0.8},
+    {"op": "keys", "keys": ["Return"], "wait": 2.2},
+    {"op": "keys", "keys": ["Down"], "wait": 0.8},
+    {"op": "keys", "keys": ["Return"], "wait": 2.2},
+    {"op": "shot", "label": "ares_panel"},
+]
+
+# Control: same walk, no purchase. Pins the pre-equip state so the executing scenario's
+# result cannot be confused with "that is just what the panel always looked like".
+SCENARIOS["equip_control"] = {
+    "name": "equip_control",
+    "steps": _TO_SHOP_GRID + _TO_ARES_PANEL + [
+        {"op": "assert_ref", "label": "ares_panel", "ref": "ares_panel_before.png",
+         "max_diff": 3.0, "layer": "L2"},
+    ],
+}
+
+
+# Executes the purchase and the equip, then reads the real status panel. The reference
+# frame encodes the verified outcome: DP 642->350, EV 186->166, 龍神鎧甲 +DP300 dropping
+# to unequipped (orange) while 皮甲 +DP008 becomes equipped (red).
+SCENARIOS["equip_execute"] = {
+    "name": "equip_execute",
+    "steps": _TO_SHOP_GRID + [
+        {"op": "keys", "keys": ["Down"], "wait": 0.8},        # 皮甲
+        {"op": "keys", "keys": ["Return"], "wait": 2.0},
+        {"op": "shot", "label": "confirm_item"},
+        {"op": "keys", "keys": ["Return"], "wait": 2.5},      # YES -> recipient list
+        {"op": "keys", "keys": ["Down"], "wait": 0.8},        # 亞雷斯
+        {"op": "shot", "label": "recipient_preview"},
+        {"op": "keys", "keys": ["Return"], "wait": 2.0},
+        {"op": "shot", "label": "equip_prompt"},
+        {"op": "keys", "keys": ["Return"], "wait": 2.5},      # YES -> equip
+        {"op": "shot", "label": "money_after"},
+        {"op": "assert_distinct",
+         "labels": ["confirm_item", "recipient_preview", "equip_prompt", "money_after"]},
+    ] + _TO_ARES_PANEL + [
+        {"op": "assert_ref", "label": "ares_panel", "ref": "ares_panel_after_leather.png",
+         "max_diff": 3.0, "layer": "L2"},
+        # The whole point: the panel must NOT still look like the pre-equip one. Without
+        # this, a scenario that silently failed to equip anything would still pass its
+        # equality check if the two references were ever accidentally the same file.
+        {"op": "assert_ref_differs", "label": "ares_panel", "ref": "ares_panel_before.png",
+         "min_diff": 1.0, "layer": "L2"},
+    ],
+}
 
 
 # --------------------------------------------------------------------------
@@ -764,8 +864,25 @@ def selftest() -> int:
             check(f"scenario '{sname}' measure_change targets captured frames", not missing3,
                   f"no shot for: {missing3}")
 
-        for ref in {s["ref"] for sp in SCENARIOS.values() for s in sp["steps"] if s["op"] == "assert_ref"}:
+        ref_ops = ("assert_ref", "assert_ref_differs")
+        # title.png is referenced by step_poll_title rather than by a scenario step, so
+        # the scan below would miss it -- and without it every scenario fails at L1.
+        needed = {"title.png"}
+        needed |= {s["ref"] for sp in SCENARIOS.values() for s in sp["steps"] if s["op"] in ref_ops}
+        for ref in needed:
             check(f"reference image present: {ref}", (REF_DIR / ref).exists(), str(REF_DIR / ref))
+
+        # Any pair of references used as "must match" / "must differ" on the same label
+        # must actually be different images, or the pair proves nothing (the 13-of-18
+        # self-copy defect, encoded as a check).
+        for sname, spec in SCENARIOS.items():
+            want = {s["label"]: s["ref"] for s in spec["steps"] if s["op"] == "assert_ref"}
+            notw = {s["label"]: s["ref"] for s in spec["steps"] if s["op"] == "assert_ref_differs"}
+            for lb in set(want) & set(notw):
+                a, b = REF_DIR / want[lb], REF_DIR / notw[lb]
+                same = a.exists() and b.exists() and md5_of(a) == md5_of(b)
+                check(f"scenario '{sname}' ref pair for '{lb}' are different images", not same,
+                      f"{want[lb]} and {notw[lb]} are the same image")
 
         # The launch gate must actually switch, and must be re-entrant-safe as a
         # nullcontext -- a broken gate would either serialise everything silently
