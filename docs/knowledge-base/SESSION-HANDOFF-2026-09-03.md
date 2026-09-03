@@ -41,8 +41,12 @@
 **同一天的稽核結果支持了這個判斷**（見 §4）：`docs/figures/` 裡 18 張
 「原版 vs 重製」對照圖中有 **13 張是自我複製**，兩側逐位元組相同，根本不構成對照。
 
-**影響**：M5 的驗收句（「正常玩法可達、無 debug hook」）目前**沒有任何達成路徑**，
-因為要驗收的對象已不存在。要重啟需要使用者重新決定方向，不是文件能單方面決定的。
+**影響（已於 2026-09-03 由使用者決定並執行）**：M5 原本的驗收句
+（「正常玩法可達、無 debug hook」）驗收對象已不存在。使用者指示
+**「M5 里程碑以原版驗證為主，remake 移除也一併移除 remake 版的 M5 里程碑」**，
+`91-worklist.md` 的 M5 已整段改寫為 M5-A~M5-F（舊的 795 行留在
+`git show 5f699146:docs/knowledge-base/91-worklist.md`）。新驗收刻意收窄成**可重現性**：
+原版基準要有 scenario 斷言涵蓋才算數。
 
 **復原方式**：程式碼完整保留在 git 歷史，`git log --all -- remake/`。
 
@@ -92,7 +96,7 @@
 | 城鎮三個 variant | ch02 羅德鎮／ch12 北山道／ch03 往塞拉村途中，各 5 選項共 15 格 MD5 全異 |
 | 循環順序 | 三個 variant 皆為 `0酒店→1武器店→2出口→3道具店→4教會` |
 | 武器店／道具店／教會 | 店內、商品清單（含真實品項/數值/價格）、服務選單、名冊 |
-| **秘密商店** | **解決 doc91 長期未解項**：正確操作是**在 selection0 酒店按 `Shift+F1`**（非先前記錄的 ch03 `Ctrl+F2`＋selection1）。**適用範圍已測定：只有 ch02 有效**，ch12／ch03 按同一組鍵無反應（含 6s／12s 長等待、且畫面待機動畫證明未凍結） |
+| **秘密商店** | **解決 doc91 長期未解項**：正確操作是**在 selection0 酒店按 `Shift+F1`**（非先前記錄的 ch03 `Ctrl+F2`＋selection1）。**後續更正（同日稍晚）：組合鍵是每章不同的**，`gen_campaign.py` 的 `NATIVE_SECRET_GATES` 已是從 EXE 抽出的 23 章完整表。實測 **8 章成立**（ch02 `Shift+F1`／ch04 `Alt+F3`／ch05 `Shift+F4`／ch07 `Alt+F6`／ch12 `Ctrl+F1`／ch13 `Alt+F2`／ch19 `Alt+F8`／ch20 `Shift+F9`），涵蓋三種修飾鍵族與三種 variant。**ch03／ch06 仍不觸發**，已排除 5 個假說（修飾鍵送達／selection 索引／town variant／宿主熱鍵攔截／送鍵方式）。「ch12/ch03 對 `Shift+F1` 無反應」是**正確的**——那是 ch02 的鍵 |
 | 教會名冊全 13 人 | 與存檔 `roster_char_ids` 人數與順序完全一致（`record+0x08` 語意的第三條獨立證據） |
 | 售出流程 | 巨神戟 $18000 → 金錢 +18000 且欄位清空（補回 §4 失去佐證的那條結論） |
 | **服務選單完整對應表** | 見 §6 |
@@ -124,91 +128,116 @@
 
 ---
 
-## 7. 工具現況
+## 7. 工具現況（2026-09-03 下半場大幅擴充）
 
 | 工具 | 狀態 |
 |---|---|
-| `tools/dosbox_harness.sh` | 原版 DOSBox-X 隔離 instance，正常使用；display port 分配的 race **已於 2026-09-03 修復** |
-| `tools/test_dosbox_harness_ports.sh` | **本次新建**：上述 port 分配器的離線回歸測試（21 項，可與真 instance 併行執行） |
-| `tools/fd2save.py` | 存檔解析／章節 patch，正常 |
-| `tools/fd2_original_verify.py` | **本次新建**：宣告式／平行／分層的原版驗證器 |
-| `tools/fd2_live_input_helper.*` | 驅動 remake 用，**已失去對象** |
-| `tools/dosbox_diff_harness.*` | 原版 vs remake 對照用，**remake 側已失去對象** |
+| `tools/dosbox_harness.sh` | display port TOCTOU race **已修**；新增 `FD2_HARNESS_AUDIO_DISK`（SDL disk 音訊）、`FD2_HARNESS_MAPPER`（pass-through mapper）、`FD2_HARNESS_KEY_MODE`（預設仍是已驗證的 `window`） |
+| `tools/test_dosbox_harness_ports.sh` | port 分配器離線回歸測試，**21 項**，含證明測試有效的相撞對照 |
+| `tools/fd2_original_verify.py` | 宣告式／平行／分層原版驗證器（下詳） |
+| `tools/fd2_dosbox_live_helper.py` | 新增 **`mem read-global`**：任何文件記錄過的全域位址都能活體讀取 |
+| `tools/fd2_audio_probe.py` | **本次新建**：音訊擷取＋時序同步。**識別層經實測不可用**，見 §8 |
+| `tools/fd2save.py` | 新增 `--set-currency`，讓「錢不夠」這類分支變成可到達 |
+| `tools/decode_story_text.py` | 既有；本輪證實它已能完整解出全部劇情文字（§9） |
 
-### `fd2_original_verify.py` 重點
-- scenario 是**資料**；斷言分 L1 reach／L2 content／L3 data；L1 失敗會中止該 scenario
-- `--selftest` 24 項離線自檢（含兩條 diff 實作一致性、scenario 靜態檢查、launch gate 切換）
-- `--repeat N` 跨 run 穩定性比對，並**分類** ANIMATION／STRUCTURAL
-- `--serial-launch` 退路（實測 serial 171s／parallel 155s，兩者皆 12/12 PASS）
-- 實測：12/12 斷言 PASS、8 個服務探測全 PASS、環境零殘留
+### `fd2_original_verify.py` 的斷言原語（**選對原語比多加斷言重要**）
+
+| 原語 | 用途 |
+|---|---|
+| `assert_ref` | 到達某畫面（整幀或裁切） |
+| `assert_ref_differs` | **不**得等於某狀態——與 `assert_ref` 成對使用 |
+| `assert_signature` / `assert_not_signature` | 用**具名文字區域**判定畫面身分（非 OCR，裁切區雜湊） |
+| `assert_distinct` | 多幀互異（MD5） |
+| `measure_change` | **記錄但不判定**——用於兩個答案都合法的開放問題 |
+| `assert_save_field` | L3：回讀存檔 |
+| `read_bgm_track` | 讀 `[0x51a11]` 得到目前曲號 |
+| `patch_chapter` / `patch_currency` | 製造原本到不了的狀態 |
+
+**三條選型規則（都是踩過才寫下的）**：
+1. 兩個答案都合法的問題**必須**用 `measure_change`，斷言任一方會把發現變成工具失敗。
+2. `assert_distinct`（MD5）**無法**回答「有沒有變」——待機動畫本身就會讓 MD5 不同。
+3. 被量測的若是畫面上的數字，**不能**用正向簽章（它會把數字一起編進去，無法為自己把關），要用 `assert_not_signature`。
+
+`--selftest` 現含簽章互相可區分、成對參考圖必須不同影像等規則；`--recon` 取代手寫一次性偵察腳本。
 
 ---
 
 ## 8. 已知限制與風險
 
-1. ~~**`dosbox_harness.sh` 的 `pick_display_port()` 不是 concurrency-safe**~~
-   → **已修復（2026-09-03）**。改為 `reserve_display_port()`：在 flock 保護下
-   「選擇 + 寫出 reservation」是同一個原子動作，選擇釋放鎖前就對其他 launcher 可見。
-   回歸測試 `tools/test_dosbox_harness_ports.sh`（21 項全過，含一項**證明測試本身有效**的
-   control：5 條並行裸掃描必定全部相撞＝修好前的行為）；整合實測三個並行 launch 落在
-   :199/:299/:399，三張截圖內容互異。`fd2_original_verify.py` 的 workaround 鎖已解除
-   （預設平行，`--serial-launch` 為退路）。詳見 doc98 同日段落。
-   **殘留邊界**：只保證本 harness 自己的分配；完全不透過本 harness 的外部程序同瞬間搶
-   同一 port 仍可能相撞（實務上不存在，但不宣稱已解決）。
-2. **frame MD5 不能單獨當畫面 identity**：含待機動畫 sprite 的畫面本來就會變
-   （實測 0.54~0.57% 像素、單一 48×48 框）。
-3. **`launch` 必須保持存活**：用 `subprocess.run(timeout=...)` 呼叫會殺掉 launcher
-   並連帶收掉 instance（症狀是全黑畫面）。
-4. **章節 patch 只改章節 byte，名冊維持原存檔狀態**：用 ch26 存檔跳到 ch02 時，
-   角色數值是 ch26 的，不是 ch02 真實值。要真實值必須開新遊戲。
-5. ~~§4 那 13 張被證偽圖背後的原始結論，目前**沒有對照證據**~~
-   → **已於 2026-09-03 逐項用原版重測，13/13 原版側命題全部成立**（見 §9 與 M5-C）。
-   保留的教訓：**證據被撤回 ≠ 結論被推翻**，兩者要分開講。
-6. 整備（選人）畫面尚無原版基準：只有 ch23-25/28-31 會顯示，且會撞既有記載的
-   人數門檻（本機存檔 13 人不足）。評估為**成本高、價值低**，未做。
+1. ~~`pick_display_port()` 不是 concurrency-safe~~ → **已修**（flock ＋ reservation），
+   回歸測試 21 項。殘留邊界：只保證本 harness 自己的分配。
+2. **frame MD5 不能單獨當畫面 identity**（待機動畫 0.54~0.57%／48×48 框）。
+3. **`classify_instability` 對小型 UI 狀態變化門檻太粗**：YES/NO 選取標記只有 0.06~0.16%、
+   ≤100×14px，會被判成 ANIMATION（＝把真的狀態改變報成「沒變」）。這類判定要用緊裁切參考圖。
+4. **`launch` 必須保持存活**；`subprocess.run(timeout=)` 會殺掉它。
+5. **章節 patch 只改章節 byte**，名冊維持原存檔狀態。
+6. **Alt+Pause 間歇性掉鍵**（長期未解）。工具現在會確認 debugger 真的起來、最多重試 3 次，
+   否則回報 **`NO_DEBUGGER`** 並標明**這不是 null 結果**——「沒讀到」與「讀到沒有」是兩件事。
+7. **載入 delta 不是常數**：同一次執行內從 `0x19a900`（標題）變成 `0x19c000`（遊戲內），
+   也隨章節載入資料量而變。**每次讀取都要重新校準**；pin 只可用於單一不變狀態。
+8. **音訊識別層不可用（已實測，非未調好）**：以記憶體讀取為 ground truth 評分，
+   平均頻譜與 chroma 的同曲／異曲區間**都重疊**。`fd2_audio_probe.py` 定位為擷取與時序同步載具。
+9. 整備（選人）畫面尚無原版基準（成本高、價值低，未做）。
 
 ---
 
 ## 9. 剩餘工作（誠實列表）
 
-**未做但可做**：
-- 服務的**實際執行**：**裝備已於 2026-09-03 完成**（見 §5），**轉移**仍未實際執行
-  （復活／轉職在更早的輪次各有執行紀錄，不在此列）
-- `$0` 售價品項能否售出等邊角
-- 收受者清單的職業過濾**完整對照表**（本輪只讀了各清單前 3 列，沒有捲完）
-- variant1／variant2 是否有**各自**的隱藏觸發鍵（本輪只驗了 ch02 那一組鍵，沒做按鍵空間搜尋）
-- 用「每次 launch 後插入不同長度按鍵繞路」取得真正獨立的轉職成長樣本，重驗 range
-- ~~修 `pick_display_port()` 的 race~~ → **已完成（2026-09-03）**，見 §8 第 1 項
-- ~~秘密商店在 ch03／ch12 是否同樣以 `Shift+F1`＋酒店觸發~~ → **已完成：否，只有 ch02 有效**
-- ~~轉職 trial3／trial4 差異圖相同一事的重測~~ → **已完成：非檔案錯誤**，見 §4
+**M5 的狀態**：M5-A（基礎設施）、M5-B（原版基準）、M5-C（13 張圖重測 **13/13**）已完成；
+M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清單。
 
-**使用者已決定（2026-09-03）**：
-- **M5 里程碑**：「以原版驗證為主，remake 移除也一併移除 remake 版的 M5 里程碑」。
-  已照辦——`91-worklist.md` 的 M5 整段改寫為 M5-A~M5-E，舊的 795 行 remake 版留在
-  git 歷史（`git show 5f699146:docs/knowledge-base/91-worklist.md`）。
-- **那 13 張被證偽圖**：「要逐項用原版重測」。已完成，**13/13 原版側命題全部成立**——
-  圖是壞的，但它們支撐的事實沒有錯。詳見 doc58「2026-09-03 續四」與 M5-C 表。
+**可以做**
+- 曲號量測擴大到戰鬥／勝利曲（**卡在「進到戰鬥」**，見下）
+- UI 音效 index：與 BGM **不同**，音效 fire-and-forget、沒有「目前音效」全域，
+  要在 `0x026896` 下斷點讀參數
+- 字模表 10 組重複對映的目視確認（清單見 doc98）
+- 轉職成長 range 的大樣本（去相關手法已知：**走不同的前置交易**，不是多按方向鍵）
+- `ch03`／`ch06` 秘密商店組合鍵（已排除 5 個假說，見 doc58 續五~續七）
+
+**同一個瓶頸擋住 6 項**：M5-F 有六項全都需要「**穩定進到戰鬥或推進到結局**」——
+戰鬥/勝利曲、自動結束回合、治療咒視覺、移動確認輸入丟失、ending 演出、ch27 玩家路徑。
+`fd2_chapter_sweep` 對全 30 章的結論都是 `needs_manual_followup`。
+**它們不是六個獨立待辦，是同一個前置條件。**
+
+**已失效，不必再做**
+- 14 項 remake 建置類項目（打包／WASM／Android／編輯器／引擎抽離等），已在 worklist 就地標記
+- 「30 章 PNG 人眼轉錄」——35 個 FDTXT **全數解碼、未對映字元 0**，前提不成立
 
 ---
 
-## 10. 本次 session 的 commit 序列
+## 10. 本次 session 的 commit 序列（下半場）
+
+上半場（`b090ddeb`~`7acd1073`）見 git log。下半場：
 
 | commit | 內容 |
 |---|---|
-| `b090ddeb` | 移除 `remake/`（911 檔）＋失效的 macOS CI workflow |
-| `f8b44e68` | doc58／91／98／42／51 加上移除說明 |
-| `ade1cedf` | 純原版重驗 ch01 MV／盜賊 HP；還原 `~/fd2-run/FD2.EXE` |
-| `d028d896` | 13/18 自我複製稽核；城鎮與武器店純原版補拍 |
-| `9cbf61ef` | 道具店／教會補拍；title 輪詢流程 |
-| `0f6f1ce1` | 城鎮 variant1／variant2 補拍 |
-| `d0ee0eb1` | **秘密商店開啟成功**，解決 UI-VIS-TOWN 長期未解項 |
-| `18d9b0e9` | ch02 出口流程確認無整備畫面；212 張圖重複稽核 |
-| `6c583645` | 售出→欄位清空 重新驗證 |
-| `31c2633b` | 服務選單無可見選取標示 |
-| `99aac204` | 教會名冊全 13 人＋`record+0x08` 對照表 |
-| `13d459e0` | 新增 `fd2_original_verify.py` |
-| `290d836f` | 70GB 工作目錄清理（先備份 196 份獨特存檔） |
-| `5919238a` | 工具優化＋`--selftest`＋跨 run 穩定性分類 |
-| `3b0fd83c` | 商店／教會 8 個服務完整對應表 |
-| `7acd1073` | 本交接文件 |
-| `4e495fd7` | **修好 `dosbox_harness.sh` 的 display port TOCTOU race**＋離線回歸測試＋解除 python 端 workaround |
+| `4e495fd7` | 修 harness display port TOCTOU race ＋ 21 項回歸測試 |
+| `a055193a` | 秘密商店適用範圍（只 ch02）＋ 轉職 trial3/4 查明 |
+| `a6f31559` | 裝備服務**實際執行**＋計算式；`assert_ref_differs`；參考圖進版 |
+| `464367b8` | **M5 改以原版驗證為主**（使用者指示） |
+| `735476eb` | **13 張被證偽圖逐項重測，13/13 成立** |
+| `5f2507fa` | M5-D 四項；`assert_signature`／`--recon` |
+| `95a98cd1` | remake 時代 26 項分類處置（14 失效／12 轉 M5-F） |
+| `866f7ff4` | `mem read-global`；音訊擷取；曲號讀取方法建立 |
+| `1f8da6ea` `e0b7eb0e` | 場景→曲號實測＋不同路徑交叉驗證 |
+| `73c81bb2` | 三個「聽辨」項目不再需要使用者 |
+| `b9bed327` | chroma；音訊識別的確定性否定；字模表稽核 |
+| `b78b2faf` | 23 章城鎮曲號全測；秘密商店 8/8；**更正我自己的效能誤判** |
+| `c80d4eae` | 測試「是工具問題」假說——兩個修法都**沒有**修好，據此處置 |
+| `207110fb` | **反向驗證**：陽性對照、故障注入找到守衛漏洞、3 個崩潰處理器 |
+
+---
+
+## 11. 本次 session 我下錯又自行更正的結論（給後續接手者的警示）
+
+這些都不是筆誤，是**看起來成立、實測才推翻**的判斷。留在這裡是因為它們的形狀會重複出現：
+
+1. **「MEMDUMPBIN 走 debugger 很慢，7 分鐘/次」** → 實測 512KB 只要 **0.6 秒**，
+   是固定成本。真相是「**卡住**」不是「慢」，而我為此白繞了兩輪效能設計。
+   **分不清「慢」與「卡住」之前，不要做效能決策。**
+2. **「mapper 根本收不到組合鍵」** → `Alt+Pause` 就是 mapper 綁定且一直成功。
+   Ctrl+F5/F6 沒產生檔案只代表**綁定不是我以為的那樣**。
+3. **「ch03 是孤立特例」→「是 variant 2 的問題」** → ch07／ch19 同為 variant 2 且都成功。
+4. **「範圍檢查足以擋住錯誤讀值」** → 故障注入證明讀到零會變成合法的「track 0」通過。
+   先前那次 250 只是**剛好**超出範圍。
+5. **陽性對照缺席** → ch06 四格全陰性，我一度直接採信；補了 ch02 對照（4/4 觸發）才站得住。
