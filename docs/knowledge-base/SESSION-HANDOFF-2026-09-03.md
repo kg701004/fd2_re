@@ -120,7 +120,7 @@
 | 工具 | 狀態 |
 |---|---|
 | `tools/dosbox_harness.sh` | 原版 DOSBox-X 隔離 instance，正常使用；display port 分配的 race **已於 2026-09-03 修復** |
-| `tools/test_dosbox_harness_ports.sh` | **本次新建**：上述 port 分配器的離線回歸測試（19 項，可與真 instance 併行執行） |
+| `tools/test_dosbox_harness_ports.sh` | **本次新建**：上述 port 分配器的離線回歸測試（21 項，可與真 instance 併行執行） |
 | `tools/fd2save.py` | 存檔解析／章節 patch，正常 |
 | `tools/fd2_original_verify.py` | **本次新建**：宣告式／平行／分層的原版驗證器 |
 | `tools/fd2_live_input_helper.*` | 驅動 remake 用，**已失去對象** |
@@ -128,8 +128,9 @@
 
 ### `fd2_original_verify.py` 重點
 - scenario 是**資料**；斷言分 L1 reach／L2 content／L3 data；L1 失敗會中止該 scenario
-- `--selftest` 22 項離線自檢（含兩條 diff 實作一致性、scenario 靜態檢查）
+- `--selftest` 24 項離線自檢（含兩條 diff 實作一致性、scenario 靜態檢查、launch gate 切換）
 - `--repeat N` 跨 run 穩定性比對，並**分類** ANIMATION／STRUCTURAL
+- `--serial-launch` 退路（實測 serial 171s／parallel 155s，兩者皆 12/12 PASS）
 - 實測：12/12 斷言 PASS、8 個服務探測全 PASS、環境零殘留
 
 ---
@@ -139,7 +140,7 @@
 1. ~~**`dosbox_harness.sh` 的 `pick_display_port()` 不是 concurrency-safe**~~
    → **已修復（2026-09-03）**。改為 `reserve_display_port()`：在 flock 保護下
    「選擇 + 寫出 reservation」是同一個原子動作，選擇釋放鎖前就對其他 launcher 可見。
-   回歸測試 `tools/test_dosbox_harness_ports.sh`（19 項全過，含一項**證明測試本身有效**的
+   回歸測試 `tools/test_dosbox_harness_ports.sh`（21 項全過，含一項**證明測試本身有效**的
    control：5 條並行裸掃描必定全部相撞＝修好前的行為）；整合實測三個並行 launch 落在
    :199/:299/:399，三張截圖內容互異。`fd2_original_verify.py` 的 workaround 鎖已解除
    （預設平行，`--serial-launch` 為退路）。詳見 doc98 同日段落。
