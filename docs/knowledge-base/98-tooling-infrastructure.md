@@ -2505,3 +2505,71 @@ DX·192 MV·30 HIT·292 AP·938 EV·212 DP·724
 最可靠的做法是**繞過按鍵**:在 `0x1b3aed` 下斷點、或直接把 `EIP` 設到那裡
 (DOSBox-X debugger 支援改暫存器),帶著已 patch 的遮罩讓它渲染一次,即可取得截圖。
 這條路完全不需要確認鍵送達,把本輪唯一真正卡住的環節整個移除。
+
+---
+
+## 2026-09-04 稽核:哪些結論是「用 remake 驗證的」(`audit_evidence_provenance.py`)
+
+使用者的判準是「remake 驗證過的資料本身就有問題」。`remake/` 已移除,但**文件裡仍留著
+以 remake 為證據來源的結論**,與原版側驗證的混在一起,肉眼分不出來。新建
+`tools/audit_evidence_provenance.py` 把這件事變成可重跑的清單。
+
+做法刻意保守:只用**明確標記**分類(REMAKE:`fd2-linux-verify`/`drawNative*`/`.go`/
+`go test`/`cmd/fd2`/`remake/`/`FD2_SHOT_*`/`FD2_CAMP_*`;ORIGINAL:DOSBox-X/MEMDUMPBIN/
+debugger/Ghidra/反組譯/攻略/原版資產容器/`FD2.EXE`/**裸的 EXE linear 位址**),
+不做自然語言推論。工具**不宣稱** REMAKE_ONLY 的結論是錯的,只宣稱它的證據來源是 remake。
+
+### 結果
+
+| 分類 | 筆數 |
+|---|---|
+| `ORIGINAL`(只有原版標記) | 2857 |
+| `MIXED`(兩者都有,需人讀) | 96 |
+| `REMAKE_ONLY` | **174** |
+| `NO_MARKER`(有驗證語言但出處不明) | 4128 |
+| 總計 | 7255 |
+
+174 筆 REMAKE_ONLY 裡,**148 筆在本質上就是 remake 側紀錄的文件**
+(doc58 remake 實機驗證記錄 61 筆、doc91 worklist 37 筆、doc56 SDD、doc92 playthrough log
+等)——那些文件的工作對象就是 remake,remake-only 是預期的,而且 doc91 的 M5 remake 項目
+已於 2026-09-03 就地標記失效。
+
+**剩下 26 筆落在「應該存放原版知識」的文件裡**,逐筆讀完分成三類:
+
+**(A) 19 筆其實是在敘述 remake 實作/測試,不是在宣稱原版事實** —— 例如 doc27 的
+`magic.go rollsHit` bug 討論(原版側結論來自 `spell.json` 逐 byte 核對)、doc13 的
+remake fallback 與 `go test`、doc26 的 remake 測試覆蓋、doc25 修正 remake 註解引用鏈
+(而且內容是誠實撤回「無世界地圖佐證」)。這類不是問題。
+
+**(B) 2 筆是誠實標記「尚未驗證」** —— doc11:787/812 明寫「**尚未做的是實機驗證**」、
+「還沒有用 `FD2_SHOT_AI=1` 截圖確認」。這類是好紀錄,不是問題。
+
+**(C) 5 筆是真正要留意的**——原版事實,但引用的證據是 remake:
+
+| 位置 | 內容 | 備註 |
+|---|---|---|
+| `11-enemy-ai.md:456` | 「live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01`…)」 | 用 remake debug hook 做的「live 驗證」 |
+| `11-enemy-ai.md:860` | `FD2_CAMP_PREP_BATTLE=battle_ch08`「**ch01 驗證一路在用的捷徑**」 | 自陳這條捷徑是 AI 驗證的常用路徑 |
+| `09-story-and-dialogue.md:108` | 「驗證法:`FD2_CAMPAIGN=… FD2_SHOT=…`」 | 劇情/對話的**驗證方法本身**就是 remake headless 截圖 |
+| `55-meadow-walk-staging.md:30` | `campaign.go` 註解「影片證實…」與逐幀量測矛盾 | 已標「應更正」,但那個「影片證實」來源不明 |
+| `99-chapter-sweep-results.md:4365` | 「確認悠妮的 character id 是 `9`」引用 `remake/internal/campaign/` | **2026-09-04 已用原版獨立確認**:`characters.json` 與活體記憶體 `+0x08` 都是 9,結論正確,只是原引用是 remake |
+
+### 判讀
+
+**主要模式是:知識庫文件裡出現 remake,絕大多數是「實作對照欄」而不是證據本身。**
+7255 筆驗證主張裡,真正「原版事實 + 只有 remake 證據」的是 5 筆,其中 1 筆今天已補上原版證據。
+
+需要注意的反而是 `NO_MARKER` 那 4128 筆——**有驗證語言但沒有任何來源標記**。工具無法
+判斷它們的出處,這是比 remake 汙染更大的一片灰色地帶,但性質不同(是紀錄習慣問題,
+不是證據錯誤),不在本次稽核的處理範圍。
+
+### 工具自己的缺陷(第一版真的錯過一批)
+
+第一版把 doc27 的驗證表**整批誤報成 remake-only** —— 那張表的證據欄位是
+`0x2f7b6`/`0x276ec`/`0x1c75e` 這類反組譯位址,而第一版的 ORIGINAL 標記表只認
+「反組譯/Ghidra」這類**字詞**,沒把裸的 EXE 位址算成原版證據。補上該規則後
+REMAKE_ONLY 從 199 降到 174、「真正要處理」從 35 降到 26。
+
+selftest 9 項,含兩個配對對照:一個是 `a1851a76` 的**真實措辭**(必須被抓出來)、
+一個是 doc27 那種「原版位址 + remake 實作」的列(必須判 MIXED 而非 REMAKE_ONLY),
+以及一個空掃防護(若實際掃描少於 50 筆或完全找不到 REMAKE_ONLY 就視為工具失效)。
