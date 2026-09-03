@@ -74,19 +74,8 @@ class LinearImage:
     @classmethod
     def load(cls, raw: bytes) -> "LinearImage":
         meta = parse_le(raw)
-        # 分頁區起點:由**檔尾**回推 (pages-1)*page_size + last_page_size。
-        #
-        # 這是本工具最關鍵的一行,前兩種寫法都錯:
-        #   * `data_off` 當絕對值(le_xref 既有使用者的寫法)→ 0x10e00,錯
-        #   * `le + data_off`(LE 規格字面解讀)→ 0x388cc,也錯
-        #   * 由檔尾回推 → 0x36014,**正確**
-        # 判準是可否證的:用它映射時,寶物物品表 [29,43,51,61,71] 落在
-        # linear 0x5274e——與舊版記載的 item_table_address **完全相同**。
-        # 前兩種寫法分別給出 0x4ee96 與落在分頁區外,都對不上任何已知值。
-        last_page = struct.unpack_from("<I", raw, meta["le"] + 0x2c)[0]
-        npages = sum(o["pages"] for o in meta["objs"])
-        psize = meta["page_size"]
-        doff = len(raw) - ((npages - 1) * psize + last_page)
+        # 分頁區起點現在由 le_xref.parse_le 直接給出絕對值(2026-09-03 修正)。
+        psize, doff = meta["page_size"], meta["data_off"]
         img = cls()
         pg = 0
         for ob in meta["objs"]:

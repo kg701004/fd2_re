@@ -22,7 +22,8 @@ def parse_le(d):
     le = d.find(b"LE\x00\x00", 0x2000)
     g = lambda o: struct.unpack_from("<I", d, le + o)[0]
     page_size = g(0x28)
-    data_off = g(0x80)
+    data_off_field = g(0x80)
+    last_page_size = g(0x2c)
     obj_cnt = g(0x44)
     obj_tab = le + g(0x40)
     page_cnt = g(0x14)
@@ -31,7 +32,27 @@ def parse_le(d):
         o = obj_tab + i * 24
         vsize, base, flags, pmidx, pcnt = struct.unpack_from("<IIIII", d, o)[:5]
         objs.append({"base": base, "vsize": vsize, "first": pmidx, "pages": pcnt})
-    return {"le": le, "page_size": page_size, "data_off": data_off,
+
+    # 2026-09-03:`data_off` 現在是**分頁區在檔案裡的絕對起點**,不再是 header
+    #   欄位的原值。所有既有使用者(page_file()、callgraph_le、disasm_le、
+    #   extract_event_id_groups、extract_native_unit_tables、
+    #   extract_native_treasure_event_rules)本來就把它當絕對值用,原值對這份
+    #   新版 EXE 是錯的,分頁區會整段錯位。
+    #
+    # 三個候選只有一個對得上已知答案:
+    #   header 原值 0x10e00          → 錯
+    #   le + header 值 0x388cc        → 也錯(且分頁區會超出檔尾)
+    #   由檔尾回推 0x36014            → **正確**
+    # 判準可否證:用它映射時寶物物品表落在 linear 0x5274e,與獨立來源記載的
+    # item_table_address 完全相同;另外兩者對不上任何已知值。
+    # 假設:分頁區延伸到檔尾(LE 通常如此)。若某個 LE 在分頁後還附加資料,
+    # 這個推導會失準——`data_off_field` 保留原值供比對。
+    npages = sum(o["pages"] for o in objs)
+    derived = len(d) - ((npages - 1) * page_size + last_page_size)
+
+    return {"le": le, "page_size": page_size,
+            "data_off": derived, "data_off_field": data_off_field,
+            "last_page_size": last_page_size,
             "objs": objs, "page_cnt": page_cnt,
             "fixpage": le + g(0x68), "fixrec": le + g(0x6c)}
 
