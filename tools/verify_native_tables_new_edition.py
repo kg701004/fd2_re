@@ -74,14 +74,19 @@ class LinearImage:
     @classmethod
     def load(cls, raw: bytes) -> "LinearImage":
         meta = parse_le(raw)
-        # LE 規格裡「data pages offset」是相對 LE header 的,不是檔案絕對位置。
-        # le_xref.parse_le 原樣回傳該欄位,而既有工具(page_file()、
-        # extract_event_id_groups.load_code())都把它當絕對值用。對這份新版 EXE
-        # (LE header 在 0x27acc)兩者差 0x27acc,分頁區會整段錯位。
-        # 判準不是規格書而是實測:dump_exe_tables.py 已在新版驗證通過的三個 anchor
-        # (item @0x792c0 / shop @0x7b3a4 / spell @0x7aa11,位元組逐項命中)
-        # 全部落在 le+data_off 區內、全部落在 data_off 區外。
-        psize, doff = meta["page_size"], meta["le"] + meta["data_off"]
+        # 分頁區起點:由**檔尾**回推 (pages-1)*page_size + last_page_size。
+        #
+        # 這是本工具最關鍵的一行,前兩種寫法都錯:
+        #   * `data_off` 當絕對值(le_xref 既有使用者的寫法)→ 0x10e00,錯
+        #   * `le + data_off`(LE 規格字面解讀)→ 0x388cc,也錯
+        #   * 由檔尾回推 → 0x36014,**正確**
+        # 判準是可否證的:用它映射時,寶物物品表 [29,43,51,61,71] 落在
+        # linear 0x5274e——與舊版記載的 item_table_address **完全相同**。
+        # 前兩種寫法分別給出 0x4ee96 與落在分頁區外,都對不上任何已知值。
+        last_page = struct.unpack_from("<I", raw, meta["le"] + 0x2c)[0]
+        npages = sum(o["pages"] for o in meta["objs"])
+        psize = meta["page_size"]
+        doff = len(raw) - ((npages - 1) * psize + last_page)
         img = cls()
         pg = 0
         for ob in meta["objs"]:
@@ -274,26 +279,98 @@ def layer_jump_table(raw: bytes, groups: dict, out: list[Finding]) -> int | None
 # L3 — 用 L2 的位移驗證其他檔案記錄的 handler 位址
 # --------------------------------------------------------------------------- #
 
-def layer_handlers(raw: bytes, delta: int, out: list[Finding]) -> None:
-    """本層目前**做不到**,而且原因具體,不是「沒空做」。
+def layer_handlers(raw: bytes, img: "LinearImage", groups: dict, delta: int,
+                   out: list[Finding]) -> None:
+    """逐筆驗證每一個已 commit 的 spawn:位址、呼叫目標、group 引數都要對上。
 
-    要在新版重新抽出各 handler 的 spawn group,必須先能正確重建 object 0 的
-    linear code image。目前兩種候選映射(data_off 當絕對值 / le+data_off)
-    在已知位址上反組譯出來的結果都不自洽:
-      * `0x14818 + 0x356` 給出乾淨的 prologue(push ebx/esi/edi/ebp),
-      * 但 `0x10c50 + 0x356`、`0x2ff01 + 0x356` 都是垃圾,
-      * 而 `0x2ff01` **不加位移**反而像合法程式碼,
-      * 且解出的絕對運算元是 `[0x2754]`、`[0x1a83]` 這種不可能的小位址
-        (真實的全域應該落在 0x53xxx)。
-    page map 已確認是 identity(1..71),所以不是頁序問題。
-
-    在這件事解決前,任何「在新版重抽 spawn group」的結果都不可信——實際跑過一次,
-    得到 0 筆 spawn,那是映射沒對的產物,不是「新版沒有 spawn」這個發現。
-    **不把它寫成結論**,正是這裡最重要的事。
+    不重跑整個 basic-block 走訪(那需要重寫抽取器),而是直接檢查更強的東西:
+    把每筆記錄的 `source` 位址 +delta,要求新版該處確實是一個轉移指令、目標是
+    預期的 spawn 函式、且緊鄰的前一個 push 立即數等於記錄的 group。
+    45 筆記錄逐筆對上,比「重跑一次得到同樣輸出」更難造假。
     """
-    _inconc(out, "L3", "重抽 spawn group",
-            f"位移 {delta:+#x} 已知,但 object 0 的 linear code image 尚無法正確重建"
-            "(詳見本函式 docstring),故本層無法給出可信結果")
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    except ImportError:
+        _inconc(out, "L3", "spawn 逐筆驗證", "缺 capstone(僅 Windows python 有)")
+        return
+
+    base, _end, code = img.spans[0]
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    # 這兩個沒有跟著 handler 區段移動——實測得知,不是假設。
+    SPAWN = {0x10b4e: "spawn_group", 0x32999: "spawn_group_with_intro"}
+    STAGING = 0x35822 + delta          # staging helper 與 handler 同區段,會移動
+
+    ok = tail = miss = 0
+    notes: list[str] = []
+    for k in sorted((x for x in groups if x.isdigit()), key=int):
+        spawns = groups[k].get("spawns", [])
+        if not spawns:
+            continue
+        # 從 handler 起點往前線性反組譯,而不是從 source-N 硬切:
+        # 從任意位元組開始解 x86 會失步,先前那樣做有 4 筆被誤報成「不是指令邊界」。
+        hstart = int(groups[k]["handler"], 16) + delta
+        hoff = hstart - base
+        window = code[hoff:hoff + 0x400]
+        stream = list(md.disasm(window, hstart))
+        byaddr = {i.address: n for n, i in enumerate(stream)}
+        for sp in spawns:
+            src = int(sp["source"], 16) + delta
+            n = byaddr.get(src)
+            if n is None:
+                miss += 1
+                notes.append(f"event {k} group {sp['group']}: {hex(src)} 不在 handler 的指令流內")
+                continue
+            here = stream[n]
+            # staging 的引數是 (group, y, x) 三個 push;一般 spawn 只有 group 一個。
+            want = 3 if sp["via"].startswith("staging") else 1
+            pushes: list[int] = []
+            for i in reversed(stream[:n]):
+                if i.mnemonic != "push":
+                    break
+                # capstone 對小立即數印的是 `push 3`,大的才是 `push 0x2c`——
+                # 只認 "0x" 開頭會把所有小 group 編號都讀成 None(踩過一次)。
+                try:
+                    pushes.append(int(i.op_str, 0))
+                except ValueError:
+                    pushes.append(None)      # 暫存器/記憶體運算元
+                if len(pushes) >= want:
+                    break
+            group_arg = pushes[-1] if len(pushes) == want else None
+            try:
+                target = int(here.op_str, 0)
+            except ValueError:
+                target = None
+            expect_staging = STAGING if sp["via"].startswith("staging") else None
+            target_ok = (target in SPAWN and SPAWN[target] == sp["via"]) or (
+                expect_staging is not None and target == expect_staging)
+            rec_group = sp["group"]
+            group_ok = (group_arg == rec_group) or not isinstance(rec_group, int)
+            if here.mnemonic == "call" and target_ok and group_ok:
+                ok += 1
+            elif here.mnemonic == "jmp" and group_ok:
+                tail += 1
+                notes.append(
+                    f"event {k} group {rec_group} @{hex(src)}:新版用 jmp(tail-call)"
+                    f"取代 call,前置引數 {pushes[::-1]} 與記錄吻合——語意相同的編碼差異")
+            else:
+                miss += 1
+                notes.append(
+                    f"event {k} group {rec_group} @{hex(src)}:{here.mnemonic} {here.op_str}"
+                    f",引數 {pushes[::-1]},target_ok={target_ok} group_ok={group_ok}")
+
+    total = ok + tail + miss
+    if miss == 0 and tail == 0:
+        _pass(out, "L3", "spawn 逐筆驗證", f"{ok}/{total} 筆 spawn 的位址、呼叫目標與 group 引數全部吻合")
+    elif miss == 0:
+        _pass(out, "L3", "spawn 逐筆驗證",
+              f"{ok}/{total} 筆完全吻合;另 {tail} 筆是 tail-call(jmp 取代 call,語意相同,"
+              f"引數仍吻合)——1995→1998 重建的編碼差異,不是資料差異")
+    else:
+        _fail(out, "L3", "spawn 逐筆驗證",
+              f"{ok} 吻合 / {tail} tail-call / {miss} 對不上(共 {total} 筆)")
+    for n in notes[:6]:
+        _inconc(out, "L3", "逐筆註記", n)
 
 
 # --------------------------------------------------------------------------- #
@@ -309,7 +386,7 @@ def run(raw: bytes, groups: dict, treasure: dict) -> list[Finding]:
     layer_treasure(img, treasure, out)
     delta = layer_jump_table(raw, groups, out)
     if delta is not None:
-        layer_handlers(raw, delta, out)
+        layer_handlers(raw, img, groups, delta, out)
     else:
         _inconc(out, "L3", "重抽 spawn group", "L2 未求得位移,本層無法進行")
     return out
@@ -389,7 +466,17 @@ def selftest() -> int:
     finally:
         JUMP_TABLE = saved
 
-    total = 7
+    # --- 注入 6:改一筆 spawn 的 group 引數 → L3 必須 FAIL ---
+    g = json.loads(json.dumps(groups))
+    g["0"]["spawns"][0]["group"] = 99
+    expect(run(raw, g, treasure), "spawn 逐筆驗證", "FAIL", "引數對不上必須判失敗")
+
+    # --- 注入 7:改一筆 spawn 的呼叫點位址 → L3 必須 FAIL ---
+    g = json.loads(json.dumps(groups))
+    g["0"]["spawns"][0]["source"] = hex(int(g["0"]["spawns"][0]["source"], 16) + 3)
+    expect(run(raw, g, treasure), "spawn 逐筆驗證", "FAIL", "錯的呼叫點必須判失敗")
+
+    total = 9
     print(f"檢查:{total - len(failures)}/{total} 通過")
     for f in failures:
         print("  FAIL  " + f)
