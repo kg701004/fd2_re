@@ -114,6 +114,12 @@ Usage
 See docs/knowledge-base/98-tooling-infrastructure.md for the full design
 writeup and docs/knowledge-base/48-dosbox-x-debugger-build.md §11 for a
 pointer from the DOSBox-X operating doc.
+
+> **2026-09-03 全工具驗證:待淘汰(deprecated),但保留。**
+> 它的比對對象 remake 已於 2026-09-02 移除,所以「DOSBox-X vs remake」這個主要用途沒有對象了。
+> 保留的理由是原版側那一半仍然可用且被 doc98 前面幾節引用:raw 320×200 擷取、
+> `wait-pixel`、`lock_pulse_phase`(待機動畫相位鎖定)。
+> **新工作請改用 `tools/fd2_original_verify.py` ＋ `tools/dosbox_harness.sh`**,它們已取代本檔。
 """
 from __future__ import annotations
 

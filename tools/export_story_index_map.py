@@ -23,6 +23,13 @@ The output has one ``script_mappings`` entry for each count-aligned story
 file.  A mapping's ``targets`` is normally one scene, but remains a list so a
 raw string which naturally crosses a scene boundary remains lossless.  Script
 paths are relative to the supplied story directory.
+
+> **2026-09-03 全工具驗證:本工具的 `story_json_dir` 參數指向 remake 的 story JSON 目錄,
+> 該目錄已隨 `remake/` 於 2026-09-02 移除,所以完整流程目前無法執行。**
+> 但本檔**不可刪除**:`tools/export_command_labels.py` 真的
+> `from export_story_index_map import parse_fdtxt_strings`,而那支是重生
+> `docs/data/command_labels.json` 的工具。FDTXT 側的解析邏輯與 remake 無關,可單獨引用。
+> 已知粗糙處:餵進不符格式的目錄會丟 `AttributeError`,而不是講清楚的錯誤訊息。
 """
 
 from __future__ import annotations

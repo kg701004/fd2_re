@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# 2026-09-03 全工具驗證:待淘汰(deprecated),但保留。比對對象 remake 已於
+# 2026-09-02 移除,「DOSBox-X vs remake」這個主要用途沒有對象了;原版側的
+# raw 320x200 擷取與 pulse 相位鎖定仍可用。新工作請改用
+# tools/fd2_original_verify.py + tools/dosbox_harness.sh。
 # Byte-exact DOSBox-X raw-framebuffer capture harness, WSL side.
 #
 # Backs the UI-VIS-DIFF-HARNESS tool (docs/knowledge-base/91-worklist.md):
