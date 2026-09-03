@@ -66,7 +66,8 @@ ENCODED PITFALLS (each of these cost a round to learn -- see doc58 2026-09-03)
    the service from the resulting screen's own text. `assert_distinct` over the captured frames
    is the cheap version of that check.
 4. wsl.exe is an unreliable narrator of its own exit code (already noted in
-   fd2_live_input_helper.py and dosbox_diff_harness.py), so success is judged from stdout
+   fd2_live_input_helper.py and dosbox_diff_harness.py, both since removed),
+   so success is judged from stdout
    content, never the return code alone.
 5. Paths crossing the Windows/WSL boundary need MSYS_NO_PATHCONV=1 and real argv, never a
    joined shell string.
@@ -1316,7 +1317,8 @@ def main() -> int:
     # pixels confined to a single 48x48 box (the 24x24 FDICON sprite at 2x capture
     # scale) -- matching what doc58's UI-VIS-TOWN entry independently recorded
     # (362/64000 px = 0.57%, all inside the leader sprite) before adding
-    # lock_pulse_phase() to dosbox_diff_harness.py.
+    # lock_pulse_phase(), which lived in the since-removed dosbox_diff_harness.py
+    # (technique preserved in docs/knowledge-base/98-tooling-infrastructure.md 的 2026-08-26 段落).
     #
     # So instability is classified rather than flattened: differences that fit the
     # animation profile are reported as ANIMATION and do not fail the run; anything

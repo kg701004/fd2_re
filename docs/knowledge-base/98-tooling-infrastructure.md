@@ -2049,9 +2049,12 @@ harness 的 `structure` 層補上這個檢查(放這裡而不是 `syntax`,因為
 **兩支原本要刪、查了引用鏈之後保留**:
 - `export_story_index_map.py` —— `export_command_labels.py` 真的 `from export_story_index_map
   import parse_fdtxt_strings`,而後者正是今天重生 `command_labels.json` 的工具。刪了會斷。
-- `dosbox_diff_harness.py`／`.sh` —— 比對的另一半(remake)沒了,但原版側的
-  raw 320×200 擷取與 `lock_pulse_phase` 是可用技術,且 doc98 前面幾節都在引用。
-  功能已被 `fd2_original_verify.py` ＋ `dosbox_harness.sh` 取代,標記為待淘汰而非刪除。
+- ~~`dosbox_diff_harness.py`／`.sh`~~ —— 當時標記待淘汰、暫留;**2026-09-03 依使用者
+  指示刪除**。刪除前確認過三件事:全部 5 處引用都是註解/docstring 提及、**沒有任何
+  import**;它獨有的技術(`lock_pulse_phase` 待機動畫相位鎖定、raw 320×200 擷取、
+  `wait-pixel`)在本文件 2026-08-26 段落已有完整記錄含驗證數字;功能已被
+  `fd2_original_verify.py` ＋ `dosbox_harness.sh` 取代。那 5 處註解已改指本文件,
+  不留指向已刪檔案的死引用。
 
 `fd2_dual_verify.py` 是連帶移除:它 `import fd2_live_input_helper as remake_tool`,
 本身就是 remake-vs-原版雙邊比對器,單獨留著不會動。

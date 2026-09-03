@@ -97,8 +97,6 @@ ALL_LAYERS = ["syntax", "structure", "imports", "deps", "cli", "invoke", "env", 
 # They are still covered by syntax/structure/refs; only execution is withheld.
 NO_EXEC = {
     "dosbox_harness.sh",
-    "dosbox_diff_harness.sh",
-    "dosbox_diff_harness.py",
     "dosbox_exec_trace.sh",
     "fd2_dosbox_live_helper.sh",
     "fd2_live_input_helper.sh",

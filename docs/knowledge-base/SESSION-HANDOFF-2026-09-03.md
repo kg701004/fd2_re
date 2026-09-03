@@ -144,7 +144,7 @@
 | `tools/font_grid.py` | 無參數時 IndexError → 改印用法 |
 | `tools/encode_text.py` | docstring 補上警告：`roundtrip` **不能**證明 glyph_map 正確（§12） |
 | 全部 `.sh`／`.py` | 換行已釘 LF；先前 6 支 `.sh` 在 Linux 無法執行、56 支 `.py` shebang 帶 CR 無法直接執行（§12） |
-| **工具總數 101 → 89** | 12 支 remake 專用工具已移除；判準是「每一條路徑都需要 `remake/` 才有意義」。`export_story_index_map.py`（被 `export_command_labels.py` 真的 import）與 `dosbox_diff_harness.*`（原版側擷取仍可用，標記待淘汰）保留 |
+| **工具總數 101 → 89** | 12 支 remake 專用工具已移除；判準是「每一條路徑都需要 `remake/` 才有意義」。`export_story_index_map.py`（被 `export_command_labels.py` 真的 import）保留；`dosbox_diff_harness.*` 隨後於同日依指示刪除（技術已記於 doc98，5 處註解引用已改指文件） |
 
 ### `fd2_original_verify.py` 的斷言原語（**選對原語比多加斷言重要**）
 

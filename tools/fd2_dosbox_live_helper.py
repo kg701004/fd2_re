@@ -25,7 +25,8 @@ between statements, even though the assignment itself demonstrably succeeds
 inside that same `-c` string (`declare -p` proves it) -- only the later USE
 of the variable is lost. A real `.sh` file invoked with plain positional
 argv does not have this problem (same pattern tools/dosbox_harness.sh and
-tools/dosbox_diff_harness.sh already used, incidentally, before it was ever
+tools/dosbox_diff_harness.sh (removed 2026-09-03; see docs/knowledge-base/98-tooling-infrastructure.md 的 2026-08-26 段落)
+already used, incidentally, before it was ever
 written up). This module's sh()/wsl_argv_run() always use that real-argv
 form for exactly that reason -- do not "simplify" a future change back into
 an inline -c string.

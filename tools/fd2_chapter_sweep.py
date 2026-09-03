@@ -47,7 +47,8 @@ this tool automates a best-effort structural pass/fail check:
      battle to appear or for the screen to stall) -- there is no established,
      chapter-general "reach the battle" input sequence in this project's
      knowledge base (every documented navigate sequence, e.g.
-     reach_town_hub() in tools/dosbox_diff_harness.py, is scene-specific),
+     reach_town_hub(), which lived in the since-removed tools/dosbox_diff_harness.py
+     -- see docs/knowledge-base/98-tooling-infrastructure.md 的 2026-08-26 段落 -- was scene-specific),
      so this is deliberately the weakest, most heuristic part of the tool.
   7. THE PRIMARY PASS SIGNAL is read back from disk, not inferred from
      pixels: after the sequence, this tool copies the harness workdir's
@@ -330,7 +331,7 @@ REAL_BATTLE_MIN_ENEMIES = 2        # 2026-08-27 "winverify" round: the troop-sel
 
 
 def wsl_run(cmd: str, timeout: int = 60, check: bool = False) -> subprocess.CompletedProcess:
-    """See tools/dosbox_diff_harness.py's wsl_run docstring: wsl.exe's own
+    """See docs/knowledge-base/98-tooling-infrastructure.md 的 2026-08-26 段落 (wsl_run 段;該檔已於 2026-09-03 移除): wsl.exe's own
     return code is not trustworthy, callers check stdout content instead."""
     env = dict(os.environ)
     env["MSYS_NO_PATHCONV"] = "1"
