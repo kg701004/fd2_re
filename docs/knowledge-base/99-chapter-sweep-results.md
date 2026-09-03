@@ -5192,7 +5192,7 @@ win-check`0x20b72`完全不讀record陣列或悠妮座標，只讀`NativeEventSt
 `attempt_camp_exit`/`enter_debugger`/`read_mem`/`write_byte`/`debugger_cmd`/
 `read_pending_result_code`/`read_chapter_index_live`/`confirm_end_turn`/`pull_save`
 等）寫成一支phase-based驅動腳本（`.wsl_build/round_ch29wf/driver.py`，未納入git，
-沿用`c29_teleport_driver.py`的既有慣例），單一連續turn內反覆呼叫、每次推進一個phase，
+沿用`c29_teleport_driver.py`的既有慣例；該檔是 ch29tp 輪的一次性 driver，調查結案後已於 2026-09-03 移除，此處保留當時行文），單一連續turn內反覆呼叫、每次推進一個phase，
 不背景化、全程同步輪詢。
 
 直接複用`ch29tp`輪已產出、已驗證過的`patched.SAV`（20人roster、chapter patch到

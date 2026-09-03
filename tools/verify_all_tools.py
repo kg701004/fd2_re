@@ -43,6 +43,18 @@ LAYERS (each independently selectable with --layer)
   tests      Run every tools/test_*.py.
   selftest   Run every tool advertising a --selftest mode.
 
+STATUSES
+--------
+  FAIL  something is broken.
+  WARN  a person should look at this.
+  INFO  worth being visible, but nobody needs to act — e.g. "this tool only runs
+        under Windows Python", or "this tool does work at import, so the harness
+        declines to import it". Hidden unless -v. Split out from WARN on
+        2026-09-03 because 31 of 32 warnings had no action attached, and a report
+        that always shows 31 warnings teaches its reader to skip the warning
+        section — including the one entry that mattered.
+  SKIP  not applicable to this tool.
+
 REVERSE VERIFICATION
 --------------------
 `--selftest` builds a throwaway tool directory containing deliberately broken
@@ -101,8 +113,6 @@ NO_EXEC = {
     "fd2_dosbox_live_helper.sh",
     "fd2_live_input_helper.sh",
     "fd2_chapter_sweep.py",
-    "c29_teleport_driver.py",
-    "c29_teleport_driver2.py",
     "export_fm.sh",
     "export_mt32.sh",
     "export_music_ogg.sh",
@@ -129,7 +139,7 @@ REF_IGNORE = re.compile(
 class Check:
     tool: str
     layer: str
-    status: str          # PASS | FAIL | SKIP | WARN
+    status: str          # PASS | FAIL | WARN | INFO | SKIP
     detail: str = ""
 
 
@@ -201,6 +211,23 @@ def _run(argv: list[str], timeout: int, cwd: Path | None = None,
 # --------------------------------------------------------------------------- #
 # layer: syntax
 # --------------------------------------------------------------------------- #
+
+def _info(rep: "Report", tool: str, layer: str, detail: str) -> None:
+    """記錄一個「需要被看見、但沒有人該去做什麼」的事實。
+
+    2026-09-03:env 與 structure 兩層原本發 WARN,合計 31 筆,而其中沒有一筆是誰
+    該去修的:
+      * env —— 「這支只能用 Windows python 跑」是環境事實。在 WSL 裝 Pillow 不會
+        讓任何東西更正確,只會多一份要維護的環境。
+      * structure —— 該做的處置本來就已經自動完成了(本 harness 正是據此拒絕
+        import 它們),人不必介入。
+    留在 WARN 的代價很具體:一份長期有 31 筆警告的報表會訓練讀的人略過警告區,
+    於是**真正的那一筆也一起被略過**。
+    判準是「有沒有人該採取行動」,不是嚴重度:WARN 給該有人看一眼的事,
+    INFO 給該被看見但不必動手的事。
+    """
+    rep.add(tool, layer, "INFO", detail)
+
 
 def layer_syntax(rep: Report, pys: list[Path], shs: list[Path]) -> None:
     for p in pys:
@@ -357,7 +384,8 @@ def layer_structure(rep: Report, pys: list[Path]) -> dict[str, str]:
         elif v == "UNPARSEABLE":
             rep.add(p.name, "structure", "FAIL", detail)
         else:
-            rep.add(p.name, "structure", "WARN", f"runs work on import — {detail}")
+            _info(rep, p.name, "structure",
+                  f"runs work on import(harness 已據此不 import 它)— {detail}")
     return verdicts
 
 
@@ -664,11 +692,11 @@ def layer_env(rep: Report, pys: list[Path], tmp: Path) -> None:
         miss_win = [m for m in mods if not win.get(m, False)]
         miss_wsl = [m for m in mods if not wsl.get(m, False)] if wsl else None
         if not miss_win and miss_wsl:
-            rep.add(name, "env", "WARN",
-                    f"Windows-python only — WSL lacks {', '.join(miss_wsl)}")
+            _info(rep, name, "env",
+                  f"Windows-python only — WSL lacks {', '.join(miss_wsl)}")
         elif miss_win and miss_wsl is not None and not miss_wsl:
-            rep.add(name, "env", "WARN",
-                    f"WSL-python only — Windows lacks {', '.join(miss_win)}")
+            _info(rep, name, "env",
+                  f"WSL-python only — Windows lacks {', '.join(miss_win)}")
         elif miss_win:
             rep.add(name, "env", "FAIL",
                     f"runnable nowhere: missing {', '.join(sorted(set(miss_win) | set(miss_wsl or [])))}")
@@ -930,7 +958,7 @@ def run_layers(layers: list[str], tools_dir: Path, only: str | None = None,
 
 
 def print_report(rep: Report, verbose: bool) -> None:
-    order = {"FAIL": 0, "WARN": 1, "SKIP": 2, "PASS": 3}
+    order = {"FAIL": 0, "WARN": 1, "INFO": 2, "SKIP": 3, "PASS": 4}
     for layer in ALL_LAYERS:
         rows = [c for c in rep.checks if c.layer == layer]
         if not rows:
@@ -938,12 +966,13 @@ def print_report(rep: Report, verbose: bool) -> None:
         counts: dict[str, int] = {}
         for c in rows:
             counts[c.status] = counts.get(c.status, 0) + 1
-        summary = "  ".join(f"{k}={counts[k]}" for k in ("PASS", "WARN", "SKIP", "FAIL") if k in counts)
+        summary = "  ".join(f"{k}={counts[k]}"
+                            for k in ("PASS", "WARN", "INFO", "SKIP", "FAIL") if k in counts)
         print(f"\n=== {layer}  ({summary}) ===")
         for c in sorted(rows, key=lambda c: (order[c.status], c.tool)):
             if c.status == "PASS" and not verbose:
                 continue
-            if c.status == "SKIP" and not verbose:
+            if c.status in ("SKIP", "INFO") and not verbose:
                 continue
             print(f"  {c.status:4}  {c.tool:38}  {c.detail}")
     print("\n" + "=" * 72)
@@ -1167,7 +1196,10 @@ def selftest() -> int:
         # --- fault injection: each layer must detect its own fault -----------
         _expect(results, "broken_syntax.py", "syntax", "FAIL", failures, "SyntaxError must not be silent")
         _expect(results, "broken.sh", "syntax", "FAIL", failures, "bash -n must catch it")
-        _expect(results, "no_guard.py", "structure", "WARN", failures, "unguarded module work")
+        # INFO 而非 WARN:harness 對它的處置(拒絕 import)是自動完成的,
+        # 沒有人該去做什麼——WARN 保留給該有人看一眼的事。
+        _expect(results, "no_guard.py", "structure", "INFO", failures,
+                "unguarded module work — 記錄但不需人介入")
         _expect(results, "crlf_shebang.py", "structure", "FAIL", failures,
                 "a CR-terminated shebang is not executable on Linux")
         _expect(results, "no_guard.py", "imports", "SKIP", failures, "must decline to import it")
