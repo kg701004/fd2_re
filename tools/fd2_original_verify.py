@@ -167,6 +167,25 @@ def load_signatures() -> dict:
     return json.loads(SIG_INDEX.read_text(encoding="utf-8"))
 
 
+def _run_soft(argv: list[str], timeout: int) -> tuple[str, str, bool]:
+    """Run a subprocess that must never raise into a measurement step.
+
+    Every external call inside step_read_bgm_track had the same failure shape: a probe
+    or a recovery call timing out and propagating, which turned a cleanly-reportable
+    condition into a crashed scenario. Found three times by fault injection before it
+    was fixed in one place instead of three.
+
+    Returns (stdout, stderr, ok).
+    """
+    try:
+        cp = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+        return (cp.stdout or ""), (cp.stderr or ""), cp.returncode == 0
+    except subprocess.TimeoutExpired:
+        return "", f"timed out after {timeout}s", False
+    except Exception as e:  # noqa: BLE001
+        return "", f"{type(e).__name__}: {e}", False
+
+
 def crop_box(png: Path, box) -> "Image.Image":
     """Crop a captured frame to a signature box, in GAME_BOX-relative coordinates."""
     return crop_rgb(png).crop(tuple(box))
@@ -476,11 +495,31 @@ class Runner:
         """
         helper = str(REPO_ROOT / "tools" / "fd2_dosbox_live_helper.py")
         addr = st.get("ghidra_addr", "51a11")
-        harness("enter-debugger", self.instance, timeout=60)
-        time.sleep(3)
+        st_name = st.get("name", "bgm_track")
+        # Alt+Pause is intermittently dropped (this project's long-standing, unresolved
+        # input-reliability problem). Confirm the TUI is actually up before reading
+        # instead of assuming the toggle landed: a missed toggle otherwise shows up as
+        # a read that hangs until its timeout, which is what made a fault-injection run
+        # report STUCK for BOTH the injected fault and its control -- and an
+        # inconclusive control means the injection tested nothing.
+        debugger_up = False
+        for attempt in range(3):
+            harness("enter-debugger", self.instance, timeout=60)
+            time.sleep(3)
+            sout, _serr, _ok = _run_soft([sys.executable, helper, "debugger-status",
+                                          "--instance", self.instance], 90)
+            if "ACTIVE" in sout:
+                debugger_up = True
+                break
+        if not debugger_up:
+            self.result.measurements.append(
+                {"name": st_name, "result": "NO_DEBUGGER", "kind": "bgm",
+                 "detail": "debugger TUI never came up after 3 Alt+Pause attempts; "
+                           "the read was not attempted (so this is not a null result)"})
+            return
         argv = [sys.executable, helper, "mem", "read-global",
                 "--instance", self.instance, "--selector", st.get("selector", "0170"),
-                "--ghidra-addr", addr, "--bytecount", "4"]
+                "--ghidra-addr", addr, "--bytecount", "16"]
         # Without a pinned delta every read re-dumps 200KB through the paused debugger
         # TUI. Measured: that is several minutes per instance and worse in parallel --
         # it timed out on all six scenarios of the first batch. With the delta pinned
@@ -511,18 +550,14 @@ class Runner:
         # second once the debugger is actually up. So a read that takes minutes is not
         # slow, it is STUCK (almost always the debugger toggle not landing), and a long
         # timeout just turns one stuck read into a stalled batch. Fail fast and report.
-        try:
-            cp = subprocess.run(argv, capture_output=True, text=True,
-                                timeout=st.get("timeout", 90))
-        except subprocess.TimeoutExpired:
-            subprocess.run([sys.executable, helper, "resume", "--instance", self.instance],
-                           capture_output=True, text=True, timeout=120)
+        out, err, ok = _run_soft(argv, st.get("timeout", 90))
+        if not ok and "timed out" in err:
+            _run_soft([sys.executable, helper, "resume", "--instance", self.instance], 60)
             self.result.measurements.append(
                 {"name": st.get("name", "bgm_track"), "result": "STUCK", "kind": "bgm",
                  "detail": f"read exceeded {st.get('timeout', 90)}s; measured normal cost is "
                            f"~1s, so this is a stuck debugger toggle, not slowness"})
             return
-        out = cp.stdout or ""
         track = None
         raw = ""
         for line in out.splitlines():
@@ -530,15 +565,28 @@ class Runner:
                 track = int(line.split("=")[1].split()[0])
             if line.startswith("raw:"):
                 raw = line.split(":", 1)[1].strip()
-        subprocess.run([sys.executable, helper, "resume", "--instance", self.instance],
-                       capture_output=True, text=True, timeout=120)
+        _run_soft([sys.executable, helper, "resume", "--instance", self.instance], 120)
         # Plausibility bound, independent of the reader: FDMUS.DAT holds 21 resources
         # (000-020), so anything above 20 is not a track and the read is void. This is
         # what exposed a stale load-time delta silently pointing at a string table --
         # the number came back looking perfectly ordinary (250).
         max_track = st.get("max_track", 20)
+        # The range bound alone is NOT sufficient, proven by fault injection: pinning a
+        # deliberately wrong delta read all-zero bytes, giving u8=0, which is a
+        # perfectly legal track number and sailed through the <=20 check. The earlier
+        # real incident (250) was caught only because it happened to exceed the range.
+        # So also require the variable's own signature: a genuine read is
+        # NN 05 00 00 00 00 00 00 00 fb ff ff ff fb ff ff, where only NN varies.
+        sig = st.get("verify_suffix", "0500000000000000fbfffffffbffff")
+        sig_ok = len(raw) >= 2 + len(sig) and raw[2:2 + len(sig)].lower() == sig.lower()
         if track is None:
-            res, detail = "unknown", f"read failed: {(cp.stderr or out).strip()[:160]}"
+            res, detail = "unknown", f"read failed: {(err or out).strip()[:160]}"
+        elif not sig_ok:
+            res = "INVALID_SIGNATURE"
+            detail = (f"[0x{addr}] read raw={raw} -- the bytes after the track do not match "
+                      f"the variable's signature ({sig}), so this is not that variable. "
+                      f"u8 would have been {track}, which the range check alone would have "
+                      f"accepted. Re-calibrate the delta.")
         elif track > max_track:
             res = "IMPLAUSIBLE"
             detail = (f"[0x{addr}] = {track}, but FDMUS.DAT has only {max_track + 1} "
