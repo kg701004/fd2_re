@@ -192,4 +192,4 @@
 | `5919238a` | 工具優化＋`--selftest`＋跨 run 穩定性分類 |
 | `3b0fd83c` | 商店／教會 8 個服務完整對應表 |
 | `7acd1073` | 本交接文件 |
-| （本次） | **修好 `dosbox_harness.sh` 的 display port TOCTOU race**＋離線回歸測試＋解除 python 端 workaround |
+| `4e495fd7` | **修好 `dosbox_harness.sh` 的 display port TOCTOU race**＋離線回歸測試＋解除 python 端 workaround |
