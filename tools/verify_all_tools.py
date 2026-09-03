@@ -256,15 +256,58 @@ def _is_main_guard(node: ast.stmt) -> bool:
     )
 
 
+# 模組層級「不算做事」的呼叫。判準是:**不改變程式外部可觀察的狀態**——
+# 路徑/常數準備、sys.path 設定、stdout 編碼設定都算 inert。
+#
+# 這份清單是 2026-09-03 量出來的,不是猜的:當時 38 支被判 NOT_IMPORT_SAFE 的工具裡,
+# 22 支根本沒有任何副作用,其餘大多只是 `sys.path.insert(0, __file__.rsplit(...))`
+# 或 `if hasattr(sys.stdout, "reconfigure")`。把那些算成「做事」會讓報表出現 38 筆
+# 看似待辦、實則無事可辦的 WARN——而一份充滿假警報的報表,真警報就沒人看了。
+_INERT_CALLS = {
+    # 路徑與集合建構
+    "Path", "resolve", "parent", "dirname", "abspath", "basename", "join",
+    "expanduser", "normpath", "realpath", "getenv", "environ", "get",
+    "dict", "set", "list", "tuple", "frozenset", "range", "len", "sorted",
+    "bytes", "str", "int", "float", "namedtuple", "compile", "dedent",
+    # 字串處理(常用於從 __file__ 推路徑、或建常數表)
+    "split", "rsplit", "strip", "replace", "sub", "format", "upper", "lower",
+    "fromhex", "encode", "decode",
+    # 直譯器自身設定,不影響外部
+    "insert", "append", "reconfigure", "hasattr", "setrecursionlimit",
+}
+
+
+def _is_optional_dep_guard(node: ast.Try) -> bool:
+    """`try: import X / except ImportError: print(...); sys.exit(...)` 這個慣用法。
+
+    它確實會 print,但只在相依缺席時,而那正是它存在的理由;把它算成
+    「import 時做事」等於處罰正確的錯誤處理。
+    """
+    if not all(isinstance(n, (ast.Import, ast.ImportFrom)) for n in node.body):
+        return False
+    return bool(node.handlers)
+
+
 def analyse_structure(path: Path) -> tuple[str, str]:
     """Return (verdict, detail). verdict in IMPORT_SAFE / NOT_IMPORT_SAFE / UNPARSEABLE."""
     try:
-        tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"), filename=str(path))
+        src = path.read_text(encoding="utf-8", errors="replace")
+        tree = ast.parse(src, filename=str(path))
     except SyntaxError as e:
         return "UNPARSEABLE", f"line {e.lineno}: {e.msg}"
 
+    is_host_plugin = bool(HOST_PLUGINS.match(path.name))
     has_guard = any(_is_main_guard(n) for n in tree.body)
     risky: list[str] = []
+
+    def calls_in(node) -> set[str]:
+        out = set()
+        for x in ast.walk(node):
+            if isinstance(x, ast.Call):
+                out.add(x.func.attr if isinstance(x.func, ast.Attribute)
+                        else x.func.id if isinstance(x.func, ast.Name) else "?")
+        return out
+
     for n in tree.body:
         if _is_main_guard(n):
             continue
@@ -272,36 +315,22 @@ def analyse_structure(path: Path) -> tuple[str, str]:
                           ast.ClassDef, ast.AnnAssign, ast.Pass)):
             continue
         if isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant):
-            continue  # docstring
-        if isinstance(n, ast.Assign):
-            # A plain constant/collection assignment is inert; a call is not.
-            if not any(isinstance(x, ast.Call) for x in ast.walk(n.value)):
-                continue
-            # Common inert calls used to build module constants.
-            calls = [x for x in ast.walk(n.value) if isinstance(x, ast.Call)]
-            names = {
-                (x.func.attr if isinstance(x.func, ast.Attribute)
-                 else x.func.id if isinstance(x.func, ast.Name) else "?")
-                for x in calls
-            }
-            if names <= {"Path", "resolve", "parent", "compile", "dict", "set", "list",
-                         "tuple", "frozenset", "range", "len", "sorted", "getenv",
-                         "environ", "get", "join", "dirname", "abspath", "namedtuple",
-                         "bytes", "str", "int", "float", "sub", "split", "strip"}:
-                continue
-            risky.append(f"line {n.lineno}: module-level call in assignment")
+            continue                                    # docstring
+        if isinstance(n, ast.Try) and _is_optional_dep_guard(n):
             continue
-        if isinstance(n, (ast.If, ast.Try)):
-            # A module-level try/except around imports is the usual optional-dep
-            # pattern; only flag if it contains a call statement.
-            if any(isinstance(x, ast.Expr) and isinstance(x.value, ast.Call)
-                   for x in ast.walk(n)):
-                risky.append(f"line {n.lineno}: conditional module-level call")
+        names = calls_in(n)
+        if not names or names <= _INERT_CALLS:
+            continue                                    # 純準備工作
+        # IDA/Ghidra plugin 由宿主直接執行整個檔案,module level 呼叫 main() 是
+        # 那個平台的正確寫法,不是缺陷。
+        if is_host_plugin and names <= {"main"} | _INERT_CALLS:
             continue
-        risky.append(f"line {getattr(n, 'lineno', '?')}: {type(n).__name__} at module level")
+        seg = (ast.get_source_segment(src, n) or "").strip().splitlines()
+        risky.append(f"line {getattr(n, 'lineno', '?')}: "
+                     f"{seg[0][:60] if seg else type(n).__name__}")
 
     if not risky:
-        return "IMPORT_SAFE", "guarded" if has_guard else "no work at module level"
+        return "IMPORT_SAFE", "guarded" if has_guard else "no observable work at module level"
     return "NOT_IMPORT_SAFE", "; ".join(risky[:3]) + (f" (+{len(risky)-3} more)" if len(risky) > 3 else "")
 
 
@@ -345,6 +374,10 @@ _IMPORT_SNIPPET = textwrap.dedent(
     sys.path.insert(0, os.path.dirname(os.path.abspath(sys.argv[1])))
     spec = importlib.util.spec_from_file_location("_probe_mod", sys.argv[1])
     mod = importlib.util.module_from_spec(spec)
+    # 必須先註冊進 sys.modules 再 exec:dataclasses 會查
+    # sys.modules.get(cls.__module__).__dict__,沒註冊就拿到 None,任何用
+    # @dataclass 的模組都會炸成 AttributeError——那是探針的錯,不是被測工具的錯。
+    sys.modules["_probe_mod"] = mod
     try:
         spec.loader.exec_module(mod)
     except ModuleNotFoundError as e:
