@@ -14,6 +14,10 @@ cols*tileW at load time instead, so no JSON edit is needed or wanted here.
 
 Both live asset trees are gitignored (player-derived, not checked in), so
 this only touches local working files.
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 它寫入的 `remake/assets/sprites`
+> 已隨 `remake/` 移除(2026-09-02)。fd2_re 的 HD 素材流程(Real-ESRGAN)本身仍有效,
+> 但沒有 remake 端可以套用。
 """
 import pathlib
 import shutil

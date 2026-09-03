@@ -95,17 +95,17 @@
     {
       "command_id": 17,
       "string_index": 458,
-      "label": "魔刃術"
+      "label": "攻擊術"
     },
     {
       "command_id": 18,
       "string_index": 459,
-      "label": "魔鎧術"
+      "label": "防禦術"
     },
     {
       "command_id": 19,
       "string_index": 460,
-      "label": "風行術"
+      "label": "速度術"
     },
     {
       "command_id": 20,
@@ -140,7 +140,7 @@
     {
       "command_id": 26,
       "string_index": 467,
-      "label": "毒擊術"
+      "label": "施毒術"
     },
     {
       "command_id": 27,
@@ -208,5 +208,17 @@
       "label": "道具滿了！"
     }
   ],
-  "semantic_status": "raw native labels only; a label does not prove a slot is reachable or define its gameplay effect"
+  "semantic_status": "raw native labels only; a label does not prove a slot is reachable or define its gameplay effect",
+  "manual_overrides": {
+    "9": {
+      "label": "咒殺術",
+      "raw_decode": "咒　殺",
+      "reason": "glyph 181 的 16x16 bitmap 全零(見 commit a1851a76 結尾『Residual』段),raw decode 會把中間那個字解成空白;此處保留當時已確認正確的人工值。這是本檔唯一一處與 tools/export_command_labels.py 重跑結果不同的欄位。"
+    }
+  },
+  "regenerated": {
+    "date": "2026-09-03",
+    "tool": "tools/export_command_labels.py extracted/raw/FDTXT/FDTXT_000.bin",
+    "note": "2026-09-03 全工具驗證:本檔與自己的產生工具已不同步。commit a1851a76 修好 glyph_map 的 751 筆錯位後,只重生了 remake/assets/data/ 底下那份,docs/data/ 這份留在修正前的舊值;remake/ 於 2026-09-02 移除後,修正過的那份也一併消失。此次以現行 glyph_map 重生並回填,除 command_id 9 外全部與工具輸出逐字元一致。"
+  }
 }

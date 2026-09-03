@@ -87,6 +87,13 @@ Grid/range arithmetic (no live instance needed -- pure data lookup):
 See docs/knowledge-base/98-tooling-infrastructure.md for the full design
 writeup and docs/knowledge-base/92-m5-normal-playthrough-log.md for the
 playthrough round this tool exists to make repeatable.
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 它驅動的是 remake 的
+> `fd2-linux-verify` 執行檔,而 `remake/` 已於 2026-09-02 依使用者指示整個移除;
+> `--campaign` 的預設值 `assets/scenarios/campaign_full.json` 也隨之消失。
+> 檔內的純算術格距 / 武器射程 helper 仍然正確且與原版 RE 結論一致,可單獨引用;
+> 但「開 session、送鍵、截圖」那一層沒有東西可以驅動。原版側的等價工具是
+> `tools/fd2_original_verify.py` + `tools/dosbox_harness.sh`。
 """
 from __future__ import annotations
 

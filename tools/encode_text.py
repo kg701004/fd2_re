@@ -16,6 +16,19 @@
     python3 encode_text.py revtable                       # 產生反向表 JSON
     python3 encode_text.py encode "中文字串"               # 印 glyph 索引序列
     python3 encode_text.py roundtrip <FDTXT_NNN.bin>       # 驗證可逆性
+
+> **2026-09-03 全工具驗證:`roundtrip` 不能用來證明 glyph_map 是對的。**
+> 它用同一份 glyph_map 同時建 g2c(解碼)與 c2g(編碼),所以「解碼→再編碼→再解碼」
+> 這個恆等式在任何**自洽**的表上都成立,包含錯的表。實測:把 glyph 500-599 的
+> 值整段輪轉一格後,decode_story_text 的劇情文字明顯壞掉(「很快就到了。」變成
+> 「很快就到了極」、「帶著我」變成「帶著們」),但 35 個 FDTXT 資源的 roundtrip
+> 仍然全數回報一致(35/35)。
+>
+> 它真正證明的是「這份表在 encode/decode 之間可逆」,不是「這份表對應到正確的字」。
+> 要驗證正確性,只能回到字模點陣本身(見 commit a1851a76 的 pixel-IoU 方法)或
+> 外部 ground truth。同理,`revtable` 產生的 unicode_to_glyph.json 也不被本檢查覆蓋
+> ——它根本不讀那個檔;那份反向表要另外與 glyph_map 逐條比對(2026-09-03 已修:
+> 該檔停留在 a1851a76 修正前的舊值,751 條索引錯位)。
 """
 import sys
 import os

@@ -6,10 +6,25 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(__file__))
-import extract_event_id_groups as extractor
+# extract_event_id_groups 在 module level 就對 FD2.EXE 做身分檢查,而它釘的是
+# 已遺失的「舊版」(357074 B)。使用者手上只有新版(509158 B),所以這個 import
+# 一定 raise。2026-09-03 全工具驗證期間實測過:把該檢查改成新版雜湊後強行執行,
+# 抽出來的資料與既有 docs/data 版本不同(treasure 表整組物品編號都變了),
+# 證明那些位址在新版上指到別的東西——所以這個 gate 是對的,不能放寬。
+# 這裡改成 skip,讓這條已知的永久缺口不會偽裝成「測試壞掉」。
+_IMPORT_ERROR = None
+try:
+    import extract_event_id_groups as extractor
+except Exception as exc:  # RuntimeError(版本不符) / FileNotFoundError(無 EXE)
+    extractor = None
+    _IMPORT_ERROR = exc
 
 
 class EventIDGroupExtractorTest(unittest.TestCase):
+    def setUp(self):
+        if extractor is None:
+            self.skipTest(f"extract_event_id_groups 無法載入:{_IMPORT_ERROR}")
+
     def test_event63_preserves_both_staging_calls(self):
         self.assertEqual(
             extractor.walk_handler(0x358C7),

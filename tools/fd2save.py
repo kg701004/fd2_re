@@ -245,6 +245,24 @@ def load_join_constructor_table(path: Path | None = None) -> dict[int, tuple[byt
     of silently producing wrong records.
     """
     path = path or JOIN_CONSTRUCTOR_TABLE_PATH
+    if not path.exists():
+        # 2026-09-03 全工具驗證發現:這條路徑指向 remake/assets/data/,而
+        # remake/ 已於 2026-09-02 依使用者指示整個移除,所以本函式(以及
+        # --set-chapter/--set-currency 以外所有依賴 JOIN 建構器的功能)自那天
+        # 起就是壞的,只是沒有人跑到。這裡改成講清楚,而不是丟一個看不出原因的
+        # FileNotFoundError。
+        #
+        # 不直接從 git 歷史還原該檔:它是用「舊版」FD2.EXE(357074 B,已遺失)
+        # 的位址 0x61da1/0x620a1 抽出來的,而本 session 已實測證明舊版位址在
+        # 新版 EXE 上會讀到完全不同的資料(見 native_treasure_event_rules 的
+        # 對照),所以還原等於引入一份無法對現有 EXE 重新驗證的資料。要復原
+        # 必須先把 JOIN 表在新版 EXE 上重新錨定。
+        raise FileNotFoundError(
+            f"{path} 不存在:remake/ 已於 2026-09-02 整個移除。"
+            "此表原本由已遺失的舊版 FD2.EXE(357074 B)抽出,需先在新版 EXE"
+            "(509158 B)上重新錨定 JOIN 表位址才能重建;在那之前 "
+            "load_join_constructor_table() 無法使用。"
+        )
     wire = json.loads(path.read_text(encoding="utf-8"))
     source = wire.get("source", {})
     if (

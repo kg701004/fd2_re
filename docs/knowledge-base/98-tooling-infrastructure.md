@@ -1846,3 +1846,153 @@ Alt+Pause 是間歇性會掉的（本專案長期未解的輸入可靠性問題�
 ### 回歸
 
 `--all --jobs 3` **16/16 PASS**、port 回歸 **21/21**、audio selftest **11/11**、環境零殘留。
+
+---
+
+## 2026-09-03(續)全工具多重驗證(`tools/verify_all_tools.py`)
+
+使用者要求「針對所有工具進行全面多重驗證,必須詳細驗證確保功能完整及正確」。
+`tools/` 底下有 91 個 `.py` + 12 個 `.sh`,過去從來沒有整體被檢查過一次。
+新建 `tools/verify_all_tools.py`,把「一支工具還能不能用」拆成 10 個獨立層,
+每層各自出一份判決表(`--layer` 可單選,`--json` 出機器可讀報告)。
+
+### 為什麼要分層
+
+因為「壞掉」在本專案有好幾種完全不同的長相,混在一起就會互相掩蓋:
+
+| 層 | 檢查什麼 | 抓到的真實問題 |
+|---|---|---|
+| `syntax` | `.py` 能 parse、`.sh` 能過 `bash -n` **且不是 CRLF** | **6 支 shell 工具在 Linux bash 下完全無法執行** |
+| `structure` | module level 有沒有直接做事(決定下一層能不能 import) | 41 支 import 即執行,故意不 import |
+| `imports` | 真的 import 一次(隔離 cwd + timeout) | — |
+| `deps` | 不能 import 的,至少靜態解析它 import 的模組存不存在 | — |
+| `cli` | 有 argparse 的跑 `--help` | — |
+| `invoke` | 沒有 argparse 的(65 支,過去零執行覆蓋)空目錄無參數執行 | `font_grid.py` 直接 IndexError;**`export_sfx.py` 把已刪除的 `remake/` 樹長回來** |
+| `env` | 每支工具的第三方相依在 Windows python / WSL python3 各自能不能滿足 | **25 支只能在 Windows python 跑**(WSL 沒有 PIL/numpy/capstone/torch) |
+| `refs` | 路徑字面值是否指向已不存在的樹,並區分「會開啟」與「只是提到」 | 3 支開啟 `remake/` 下的檔 |
+| `tests` | 所有 `test_*.py` + `test_*.sh`(shell 測試走 WSL) | 3 個測試套件失敗 |
+| `selftest` | 有 `--selftest` / `selftest` 子命令的工具 | — |
+
+### 修掉的東西
+
+1. **6 支 `.sh` 是 CRLF,Linux bash 直接 syntax error**(`export_fm` / `export_mt32` /
+   `export_music_ogg` / `extract_fd2_video_frame` / `docker/fd2-dosbox-screenshot` /
+   `docker/fd2-ida-entrypoint`)。根因有兩層:`.gitattributes` 的 pattern 寫成
+   `tools/*.sh` **不遞迴**,`tools/docker/` 兩支從來沒被涵蓋;另外 4 支雖然有規則,
+   但檔案是規則加入(2026-08-24)之前 checkout 的,index 是 LF 而 working tree 還是
+   CRLF,規則對它們從未生效。pattern 放寬成 `*.sh` + 重新 checkout,現在 WSL 下
+   12/12 全過。
+   **注意:Git Bash 的 `bash -n` 會接受 CRLF 腳本**,所以在 Windows 端手動掃一遍
+   會得到「全部正常」的假結果——本次就先踩過這個假 PASS,是把腳本以二進位餵給
+   真正的 bash 才顯形的。
+2. **`export_sfx.py` 兩個 bug**:輸入路徑寫成 `extracted/FDOTHER/`(實際是
+   `extracted/raw/FDOTHER/`),所以用預設參數從來沒跑起來過;修好之後它又用
+   `__file__` 相對路徑把 13 個 WAV 寫進 `remake/assets/sfx`,**把已依使用者指示刪除
+   的 remake/ 樹重新建立**(已刪除,輸出改到 `extracted/sfx`)。
+   `invoke` 層因此加了 worktree 前後指紋比對,把任何工作區變動歸屬到剛剛跑的那支工具。
+3. **`font_grid.py`** 無參數執行時 `argv[1]` IndexError,改成印用法。
+4. **3 個測試套件的失敗全部來自 remake/ 移除**,不是迴歸:`test_fd2save`(2)、
+   `test_gen_campaign`(1)、`test_extract_event_id_groups`(import 就爆)。
+   改成帶理由的 `skipTest`,讓真正的迴歸不會被永久性缺口蓋掉。現在 11/11 全過
+   (含 6 個標明理由的 skip)。
+
+### 兩份 `docs/data/` 產物與自己的產生工具已不同步
+
+這是本輪最有價值的發現,而且是**用工具重跑一次、跟已 commit 的檔案逐欄比對**才看見的:
+
+- **`command_labels.json`:40 筆裡有 5 筆與重跑結果不同。** commit `a1851a76` 修好
+  glyph_map 的 751 筆錯位之後,只重生了 `remake/assets/data/` 底下那一份,`docs/data/`
+  這份留在修正前的舊值(id17 魔刃術 / id18 魔鎧術 / id19 風行術 / id26 毒擊術);
+  remake/ 於 2026-09-02 移除後,修正過的那份也一起消失了。已用現行 glyph_map 重生,
+  40 筆裡 39 筆與工具輸出逐字元一致,唯一例外 id9 是有理由的人工值
+  (glyph 181 的點陣全零,raw decode 會解成空白),連同理由寫進檔案的
+  `manual_overrides` 欄位。
+- **`unicode_to_glyph.json`:1812 筆裡有 751 筆索引錯位。** 同一個根因——
+  `a1851a76` 之後沒有重生。錯位分佈與該 commit 自述的損壞完全對上:
+  722 筆 +1(對應「443-1168 這 725 筆整體 offset 1」)、16 筆 +4 與 5 筆 +3
+  (對應「423-441 這 19 筆 offset 3-4」)、6 筆零散值(對應「418-422/1163/1198」),
+  範圍 418..1198。用 `encode_text.py revtable` 重生後與 glyph_map 完全互為反表
+  (不一致 0 筆),另外補回 2 個原本整個漏掉的字(掌、擴)。
+  **這張表有真正的消費者**(`tools/encode_text.py` 的中文化重打流程),所以錯位不是
+  純文件問題。
+
+### `encode_text.py roundtrip` 不能當作 glyph_map 正確性的證據
+
+驗證上面那份反向表時順手做了故障注入,結果推翻了一個看起來很合理的前提:
+
+把 glyph 500-599 的值整段輪轉一格,`decode_story_text` 的劇情文字明顯壞掉
+(「很快就到了。」→「很快就到了極」、「帶著我」→「帶著們」),
+**但 35 個 FDTXT 資源的 roundtrip 仍然全數回報一致(35/35)。**
+
+原因是它用同一份 glyph_map 同時建解碼表與編碼表,「解碼→再編碼→再解碼」這個恆等式
+在任何**自洽**的表上都成立,包含錯的表。它證明的是可逆性,不是正確性。
+(第一次注入我還打錯了目標——改的是 `unicode_to_glyph.json`,而 roundtrip 根本不讀
+那個檔;「注入沒反應」當下看起來像「檢查是瞎的」,實際上是**注入沒生效**。
+先確認注入真的改到被檢查的東西,再談結論。)
+已把這段寫進 `encode_text.py` 的 docstring,避免以後有人引用「roundtrip 35/35」。
+
+### 舊版 EXE 的三支工具:gate 是對的,而且是必要的
+
+`extract_event_id_groups.py` / `extract_native_field_event_rules.py` /
+`extract_native_treasure_event_rules.py` 都對 FD2.EXE 做身分檢查,而釘的是已遺失的
+**舊版**(357074 B)。使用者手上只有新版(509158 B),所以三支都跑不起來。
+
+把 gate 換成新版雜湊強行執行(只在 scratchpad,未進 repo),結果證明這些 gate
+不能放寬:treasure 表的物品編號從 `[29,43,51,61,71]` 變成 `[54,1,0,0,199]`,
+field 規則少掉一整條 event_id 62。也就是**舊版位址在新版 EXE 上指到別的東西**,
+這與 memory `fd2-old-new-exe-address-instability` 一致,並把它從「不是常數 delta」
+推進到「會安靜地產生看起來合法的錯資料」。
+
+連帶影響:`fd2save.load_join_constructor_table()` 依賴的
+`remake/assets/data/native_join_constructor.json` 同時踩到兩件事(檔案隨 remake/ 消失、
+且是舊版位址抽出的),**不從 git 歷史還原**,改成丟出講清楚原因的錯誤;
+兩條相關測試改 skip。要復原必須先在新版 EXE 上重新錨定 JOIN 表位址。
+
+### 功能面真的跑過的部分(不只是「能啟動」)
+
+- `unpack_dat.py`:10 個容器全部重新解包,**970/970 個 sub-resource 與已 commit 的
+  `extracted/raw/` 逐位元組相同**。
+- `hash_fd2_reference.py`:13 個原版檔案的 size/md5/sha256 **13/13 與
+  `docs/data/fd2-reference-files.json` 完全吻合**——同時也再確認手上這份就是新版基準。
+- `dump_exe_tables.py`:錨定特徵全部對上新版、內建的數值自驗(對照青衫攻略字面值)
+  全數通過、而且 Windows 與 WSL 兩邊產出的 10 個 JSON 在正規化換行後**逐位元組相同**。
+  (它在 Windows console 會因 cp950 印不出 ✓ 而 UnicodeEncodeError——是 console 的問題
+  不是工具的問題,harness 因此統一給子行程 `PYTHONIOENCODING=utf-8`。)
+- `extract_all.py`:end-to-end 跑完,33/33 地圖、1005 個 sub-resource、124 張圖、
+  136 個頭像、15 首 MIDI、1824 字模 atlas;各項數字與各容器單獨解包的結果互相吻合。
+- `dump_native_ai_modes.py`:輸出與 `docs/data/fdfield_native_ai_modes.json` 除了
+  `--source` provenance 區塊(那是選用參數)之外完全相同。
+- 其餘 decoder(`decode_ani/lmi/figani/fdicon/sprite/dato/image/text/story_text`、
+  `dump_remap`、`render_map`、`render_story`、`parse_field`、`extract_maps`、
+  `font_grid`、`dump_terrain_table`、`extract_native_unit_tables`、`le_xref`)
+  逐一用真實輸入跑過,輸出內容合理。
+
+### harness 自己的反向驗證(19 項)
+
+`python tools/verify_all_tools.py --selftest` 在暫存目錄裡放一組**故意壞掉的**假工具,
+要求 harness 對每一種故障都判 FAIL,同時放一組**同組態的陽性對照**要求判 PASS。
+建這支工具的過程中,它的對照組抓到了它自己的兩個 bug:
+
+1. **`bash -n` 拿到的是 Windows 路徑**——`good.sh` 對照組先失敗才發現。
+2. **改用 stdin 之後,Windows 的 text-mode stdin 把 `\n` 換成 `\r\n`**,於是 12 支
+   `.sh` 全部被誤判成 CRLF 壞檔。這個假失敗一開始沒被對照組擋下來,因為當時的
+   `good.sh` 只有 `echo ok` 一行——**對照組比真實訊號簡單**,CRLF 對它無害。
+   把對照組改成含 brace function 與 `for/do/done`(真實腳本用的結構)才成立,
+   並補上一個 CRLF 版的配對對照,兩者必須一個 PASS 一個 FAIL。
+
+另外兩個值得記的:`no_guard.py` 這個 fixture 被執行時會寫一個 sentinel 檔,
+selftest 斷言**該檔從未出現**——證明 harness 真的「拒絕 import」,而不是
+「import 了但剛好沒事」;`writes_outside.py` 則驗證工作區變動能被歸屬到正確的工具。
+
+### 最終數字
+
+`syntax 103/103`、`tests 11/11`(含 6 個標明理由的 skip)、`selftest 2/2`、
+harness 自身 `19/19`、port 回歸 `21/21`、audio selftest `11/11`。
+全 10 層總計 **PASS 413 / FAIL 3 / WARN 73 / SKIP 126**。
+
+剩下的 3 個 FAIL 全部是同一件事:`audit_postbattle_binding_gates.py`、
+`audit_story_script_coverage.py`、`fd2_live_input_helper.py` 開啟的是 `remake/` 底下的
+檔案。它們不是壞掉,是**沒有作用對象**;已在各自 docstring 開頭標明狀態,
+並且不要為了讓它們跑起來而復原 remake/。同類的 `apply_hd_assets.py`、
+`apply_hd_composite.py`、`story_to_script.py`、`gen_campaign.py` 也一併標註
+(後兩支的預設輸出目錄在 remake/ 之下,執行會把該樹長回來)。

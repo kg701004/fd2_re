@@ -13,6 +13,12 @@ remake/assets/scenarios/ch01.json 的 chapter 欄位),非 0-index。
 speaker 對映:角色名 → face_portrait,來源 docs/data/exe_tables/characters.json
 (32 筆,index==face_portrait)。查不到的 speaker(NPC/敵人/場景旁白)給 -1,
 引擎不畫頭像,並列入缺口清單回報。
+
+> **2026-09-03 全工具驗證:本工具的預設輸出目錄已隨 remake/ 消失。**
+> `OUT_DIR = <repo>/remake/assets/story` 會被 `makedirs` 自動建立,等於在
+> remake/ 已依使用者指示移除(2026-09-02)之後又把它長回來——本次驗證中
+> tools/export_sfx.py 就真的發生過一次(已刪除並改輸出到 extracted/)。
+> 除非使用者明確要求重建 remake,否則不要執行本工具。
 """
 import json
 import re

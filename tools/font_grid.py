@@ -28,6 +28,11 @@ def render_glyph(font, idx, scale):
 
 
 def main(argv):
+    # 沒帶參數時印用法,而不是讓 argv[1] 直接 IndexError——這是本 repo 其他
+    # 同類工具一致的行為(2026-09-03 全工具驗證時發現只有本檔漏了)。
+    if len(argv) < 5:
+        print(__doc__)
+        return 1
     font = open(argv[1], "rb").read()
     start = int(argv[2]); count = int(argv[3]); out = argv[4]
     scale = int(argv[5]) if len(argv) > 5 else 3

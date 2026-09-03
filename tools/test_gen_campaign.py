@@ -72,6 +72,13 @@ class NativeSpawnMergeTest(unittest.TestCase):
 
     def test_versioned_scenarios_match_turn_schedule_and_handler_calls(self):
         root = Path(campaign.ROOT)
+        # 這條檢查的是「已產生的 remake scenario JSON」是否與 docs/data 的
+        # turn_events/event_id_groups 一致。remake/ 於 2026-09-02 整個移除後
+        # scenario_root 是空的,glob 出 0 個檔 -> actual={} 而 expected 有 30+ 章,
+        # 於是它從「一致性檢查」變成必定失敗。標成 skip,讓 gen_campaign 其餘
+        # 3 條真正的單元檢查不被這個已知缺口淹掉(2026-09-03 全工具驗證)。
+        if not (root / "remake/assets/scenarios").is_dir():
+            self.skipTest("remake/assets/scenarios 隨 remake/ 移除,無產生物可比對")
         schedules = json.loads((root / "docs/data/turn_events.json").read_text())
         handlers = json.loads((root / "docs/data/event_id_groups.json").read_text())
         expected = {}

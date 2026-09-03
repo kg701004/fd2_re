@@ -18,6 +18,10 @@ cmd/compose-map-image + tools/realesrgan_batch.py.
 
 Live asset trees are gitignored (player-derived, not checked in), so this
 only touches local working files.
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 它讀寫的
+> `remake/assets/maps_native_composite_hd/` 與 `remake/assets/maps/` 已隨 `remake/`
+> 移除(2026-09-02)。無參數執行會安靜地 exit 0(glob 到 0 個檔),不是成功。
 """
 import pathlib
 import shutil

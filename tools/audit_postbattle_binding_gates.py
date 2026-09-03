@@ -7,6 +7,12 @@ the audit also rejects an active binding whose raw handler index does not
 match that relation.  It compares each handler beat's original call-site
 address with the address-keyed fields in the generated binding, so the
 remaining work is explicit and reviewable.
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 它稽核的
+> `remake/assets/scenarios/campaign_full.json` 與 `remake/assets/cutscenes/bindings/`
+> 已隨 `remake/` 於 2026-09-02 依使用者指示整個移除,預設參數必然 FileNotFoundError。
+> 保留原始碼作為稽核邏輯的紀錄;除非使用者明確要求重建 remake,否則不要復原
+> remake/ 來讓它跑起來。見 `docs/knowledge-base/91-worklist.md` M5 段落。
 """
 from __future__ import annotations
 

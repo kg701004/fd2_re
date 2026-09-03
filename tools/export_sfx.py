@@ -3,7 +3,7 @@
 
 FDOTHER.DAT 資源 #31 是巢狀 `LLLLLL` 容器(見 docs/knowledge-base/36-sfx-audio-data.md),
 內含 14 個子樣本,格式為 8-bit unsigned mono raw PCM(無檔頭)。本工具解開巢狀容器,
-逐個子樣本補上標準 44-byte RIFF/WAV 檔頭,輸出到 remake/assets/sfx/。
+逐個子樣本補上標準 44-byte RIFF/WAV 檔頭,輸出到 extracted/sfx/。
 
 取樣率:反組譯未找到 AIL_set_sample_type/set_sample_playback_rate 立即數呼叫點
 (見 docs/knowledge-base/36 待辦),沿用文件既有推定值 11025Hz ── 1995 年 AIL 遊戲常見預設值。
@@ -11,12 +11,12 @@ FDOTHER.DAT 資源 #31 是巢狀 `LLLLLL` 容器(見 docs/knowledge-base/36-sfx-
 第 10 輪新增 `--battle` 模式:戰鬥音效走另一批 FDOTHER.DAT 子資源；其中
 `#48/#49/#50/#51/#52/#53/#64/#78/#88` 是動態候選池，`#95` 是 0x32999
 第 1 次呈現直接使用的固定資源（見 docs/knowledge-base/36），
-用同一個巢狀 LLLLLL 解包邏輯,輸出到 remake/assets/sfx/battle_<資源號>_<子序>.wav。
+用同一個巢狀 LLLLLL 解包邏輯,輸出到 extracted/sfx/battle_<資源號>_<子序>.wav。
 
 第 12 輪新增 `--actionid` 模式:玩家選定的物理攻擊類指令(action_id 0-9)經
 `FUN_0002ff01`(linear 0x2ff01)動態載入的真實 SFX 池家族 `#82-90`(見 doc36 第12輪,
 Ghidra headless 反組譯+ decompile 動態追出,逐一驗證為合法 LLLLLL 容器),輸出到
-remake/assets/sfx/actionid_<資源號>_<子序>.wav。與 `--battle` 家族相鄰但不同,僅 #88 重疊。
+extracted/sfx/actionid_<資源號>_<子序>.wav。與 `--battle` 家族相鄰但不同,僅 #88 重疊。
 
 用法:
     python3 tools/export_sfx.py                # UI 音效池(資源 #31)→ sfx_NN.wav
@@ -34,8 +34,15 @@ from unpack_dat import parse_directory, NotAContainer
 
 FDOTHER_DAT = os.path.join(
     os.path.dirname(__file__), "..", "org_game", "炎龍騎士團", "FLAME2", "FDOTHER.DAT")
-SRC = os.path.join(os.path.dirname(__file__), "..", "extracted", "FDOTHER", "FDOTHER_031.bin")
-OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "remake", "assets", "sfx")
+# 2026-09-03 全工具驗證修正:原本寫 extracted/FDOTHER/,但 unpack_dat.py 產出的
+# (也是 repo 裡實際存在的)路徑是 extracted/raw/FDOTHER/,所以這支工具從來沒辦法
+# 用預設路徑跑起來,一執行就 FileNotFoundError。
+SRC = os.path.join(os.path.dirname(__file__), "..", "extracted", "raw", "FDOTHER", "FDOTHER_031.bin")
+# 2026-09-03:輸出目錄從 remake/assets/sfx 改成 extracted/sfx。remake/ 已於
+# 2026-09-02 依使用者指示整個移除,而本工具會自己 makedirs,實測會把 remake/
+# 樹重新長回來(本次驗證就發生過,已刪除)。extracted/ 本來就是本 repo 放
+# 原版衍生資產的地方,且已被 .gitignore 排除。
+OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "extracted", "sfx")
 SAMPLE_RATE = 11025  # 推定值,見 docs/knowledge-base/36-sfx-audio-data.md 待辦
 
 # 戰鬥音效候選池:PCM 特徵(值集中 0x80 附近、std 窄)比對確認,見 doc36 第 10 輪。

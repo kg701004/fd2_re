@@ -9,4 +9,11 @@ remake/assets/maps/native_turn_event_controls.json -text
 # core.autocrlf 問題:Windows checkout 會把 LF 轉成 CRLF,WSL bash 遇到 CRLF 腳本
 # 會直接 syntax error(shebang 行、heredoc 都會壞)。強制這個目錄下的 .sh 一律用
 # LF checkout,不受使用者 autocrlf 設定影響。
-tools/*.sh text eol=lf
+#
+# 2026-09-03:pattern 從 `tools/*.sh` 放寬成 `*.sh`。原本的 pattern 不遞迴,
+# `tools/docker/*.sh` 兩支完全沒被涵蓋,實測在 WSL bash 下 syntax error。
+# 另外 `tools/*.sh` 底下 4 支(export_fm/export_mt32/export_music_ogg/
+# extract_fd2_video_frame)雖然有這條規則,但檔案是在規則加入(2026-08-24)之前
+# checkout 的,index 是 LF、working tree 仍是 CRLF,規則從未對它們生效——已用
+# `git add --renormalize` + 重新 checkout 修正。
+*.sh text eol=lf

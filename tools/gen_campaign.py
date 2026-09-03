@@ -104,6 +104,11 @@ scenario stub(chNN.json,ch2-30 本輪新生成,見 build_scenario_stub()):
     remake/assets/scenarios/campaign_full.json(battle 節點含 scenario 欄位)
     remake/assets/scenarios/ch02.json ~ ch30.json(新生成)
     + 終端列印驗證結果(節點數/轉場完整性/資產檔案存在性/scenario 資料來源統計)
+
+> **2026-09-03 全工具驗證:本工具產出的是 remake 端資產,目前無作用對象。**
+> `REMAKE = <repo>/remake` 之下的 scenarios/ 於 2026-09-02 隨 remake/ 移除,
+> 執行它會把該樹重新建立。原始碼保留作為「章節圖如何由已 RE 資料組出來」的
+> 紀錄(內含 NATIVE_SECRET_GATES 等原版 RE 結論,可單獨引用),但不要執行。
 """
 from __future__ import annotations
 

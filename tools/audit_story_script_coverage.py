@@ -5,6 +5,10 @@ This is intentionally read-only. A chapter-number match is not enough to
 choose a scene: one story JSON can contain pre-battle, post-battle, and branch
 scenes. The tool reports coverage and leaves unresolved nodes for evidence
 review.
+
+> **2026-09-03 全工具驗證:本工具目前無作用對象。** 同 audit_postbattle_binding_gates.py,
+> 它讀的 `remake/assets/scenarios/campaign_full.json` 已隨 `remake/` 移除(2026-09-02)。
+> 保留原始碼作為稽核邏輯的紀錄,不要為了讓它跑起來而復原 remake/。
 """
 from __future__ import annotations
 
