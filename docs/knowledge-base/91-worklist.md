@@ -1416,800 +1416,93 @@
   9. [~] **ch26 亞奇梅吉(ii)機制定位完成(2026-08-31續輪)——上一條「敵轉友轉換 handler」假設被推翻,不是找不到,是根本不存在**:純靜態反組譯`table_win[24]=0x20b14`(10指令,只保護`record[16]`=聖寇拉斯,跟亞奇梅吉無關)與`table_post[24]=0x24df2`(40指令,137 bytes全程零分支、零`FUN_00034894`死亡檢查),證實贏 ch25 後無條件執行`spawn_group(2)`(亞奇梅吉所在group)→`JOIN(0x1a=26)`直接CALL(聖寇拉斯)→`persist-sync 0x11506`→`PUSH 0x1d(=29); JMP 0x237c8`尾跳進另一章postbattle handler內共用的`CALL 0x112a5;ADD ESP,4;JMP 0x231f2`片段,精確等於`JOIN(29)`(即doc25§9.3已完整記錄多輪的標準JOIN constructor`0x112a5`/`MaterializePersistentUnit`,跟ch00序章索爾/悠妮/亞雷斯/蓋亞、ch16 JOIN(18)同一支函式)。交叉核對`native_join_constructor.json`id29/id26兩列早已存在且與`map24_units.json`unit54/unit0的`native_constructor.record`/`aux_record`逐byte相同。**結論:不存在「敵人record原地轉換成己方」的特殊writer,亞奇梅吉的camp:"enemy"只是戰鬥旗標,她的招募走的是跟其他所有角色完全相同的標準JOIN路徑,只是呼叫端位在postbattle handler尾端(tail-jump共用程式碼)而非dialogue beat**。詳細disasm見`28-chapter-objectives-and-recruits.md`§6。→ 未標`[x]`是因為本輪刻意不寫`campaign_full.json`/`partyRoster`(比照ch10precedent「先定位機制,下一輪才接線」的紀律)——安全wiring方向已明確:比照`partyJoinOrder`既有beat-driven JOIN機制(`main.go`的`b.CharID`→`append(g.partyJoinOrder,...)`),在ch25 postbattle對應的story/scenario beat腳本補`JOIN(char_id=29)`(聖寇拉斯id26若尚無對應beat應一併確認/補上),下一輪直接可動手,不再是「大/不確定範圍」。
 - [x] 存檔/讀檔(自有格式,非破解原版 `FD2.SAV`)：節點／旗標／金幣／道具／persistent party 已保存；2026-07-20 新增同目錄暫存檔+rename 原子寫入與清理測試，避免 town/shop/preparation 存檔被截斷。**完整 GUI/Xvfb 讀檔回歸已解(2026-08-31)**：`58-remake-live-verification-log.md`續八十一，真實 `fd2-linux-verify` binary 於 headless Xvfb 下用真正 X11 按鍵送達 F5/F9，`saveGame()`/`loadGame()`本尊、磁碟 `fd2_save.json`、`node`欄位持久化、modifier guard 均 live 驗證，逐像素 diff 確認 reload 與存檔前狀態相同；受限於 ch01 戰鬥ambush式敵人分批進場，未能自然抵達 town_ch02，改用 `battle_ch01`↔`retreat_ch01` 兩個真實非-cutscene節點完成驗證，shop/church 等 sub-screen 情境仍待未來一輪。
 
-## M5 — 內容完整化(原版可破關)
-> 驗收:從序章玩到結局,全 33 戰場 + 全劇情 + 商店,正常玩法可達(無 debug hook)。
+## M5 — 原版側行為基準完整化
+
+> **2026-09-03：本里程碑已依使用者明確指示重新定義。**
+> 原本的 M5 是「remake 版內容完整化（原版可破關）」，驗收句是
+> 「從序章玩到結局、全戰場＋全劇情＋商店，**正常玩法可達（無 debug hook）**」——
+> 那個驗收對象（`remake/`）已於 2026-09-02 整個移除。使用者指示：
+> **「M5 里程碑以原版驗證為主，remake 移除也一併移除 remake 版的 M5 里程碑」**。
 >
-> **2026-09-02:`remake/` 整個原始碼已依使用者明確指示移除**(「remake驗證過的資料本身就
-> 有問題,驗出來的也會有問題」),連已 commit 的相關修復(如`faecef3e`假敗北修復、
-> `6eaf7fef`肖像/sprite索爾化修復)本身雖未被逐一 revert(移除整個`remake/`已涵蓋),
-> 一併視為移除。M5 驗收句本身要求「remake 正常玩法可達」,在`remake/`不存在的情況下
-> 已無任何達成路徑——本節以下所有 checkbox 反映的是移除前的歷史紀錄,不代表現況;
-> 若日後要重啟這個里程碑,需要使用者重新決定方向(是否重新開始 remake、或改變 M5
-> 定義本身),不是這份文件能單方面決定的事。詳見 README.md 頂端說明、plan file
-> `hazy-crunching-liskov.md`、memory `feedback_fd2_re_remake_verification_paused`。
-- [x] 匯出全 33 戰場為引擎資產 + 全單位/數值表接入(對齊 EXE 表 `03`)——**規劃輪核實(2026-08-31)**:「33戰場」措辭本身過期,33是原版原始地圖總數(map0-32),其中map30-32是純過場非戰鬥地圖;真正範圍是30個戰役,`campaign_full.json`確認**30/30已完整接線**(map/units/scenario皆存在且非空)。**AP/DP/MV未隨等級縮放缺口已解決(2026-08-31,M5 Phase 3)**:完整反組譯 constructor `0x10c50`(`0x10c50..0x11010`)後確認AP/DP兩者**都是**growth×level(high branch跟HP/MP同形狀`table_byte[+5]/[+6]*level`;lower branch是`growth*level+base_word`,注意不是HP/MP那種`level-1`形狀),MV則確認是flat值全程無等級縮放(兩個branch都是直接複製`table_byte[+8]/+7`,原本以為的MV缺口其實是`base_stats()`race/cls查表對錯列,不是缺公式)。新增`tools/export_units.py`的`native_ap/dp/mv_for_raw_unit_key()`(mirror既有word42/46寫法)+新`tools/patch_units_ap_dp_mv.py`(mirror`patch_units_hit_ev.py`,只動ap/dp/mv三個key),已對30個`mapN_units.json`(map0-29)全部重新patch(每份100%單位有可信native provenance),`go build`/`go test`全綠。詳見doc03「AP/DP/MV缺口已解決」段落。次要:`docs/data/exe_tables/unit.json`68列只對應29組(race,cls),`base_stats()`取第一筆造成少數單位職業名稱誤標(低影響,純顯示)。**HIT/EV的`dx`輸入缺口已解決(2026-08-31,M5 Phase 3後續)**:新增`native_dx_for_raw_unit_key()`(同一輪`0x10d7f..0x10e23`disasm,獨立覆核`ghidra_batch_probe.py decompile 0x10c50`+`disasm`確認doc文字準確——high `table_byte[+7]*level`,low `aux[+4]*level+word[+0x16]`),`export_units.py main()`與`patch_units_hit_ev.py`都已改吃這個公式算出的`base_dx`(查不到native provenance才退回舊flat`dx`)。ch24 LV14惡魔驗算`hit`從114→194、`ev`從4→84,跨30個`mapN_units.json`(map0-29)98.7%單位的hit/ev值改變,同AP/DP/MV量級。詳見doc03「DX缺口已解決,HIT/EV已接上正確base」段落。
-- [ ] 全劇情/對話接入(35 章)——**規劃輪核實(2026-08-31)**:「35章」本身是誤植,是FDTXT.DAT原始容器數(35個resource),不是章節數;真正戰役章節數是30,加ch00(2變體)+ch31-33(非戰鬥後日談)＝35個容器裡33個是真正敘事資源(FDTXT_000是共用字串池、FDTXT_034已損毀)。pre/post handler劇本反組譯**30/30章已完成**(60/60檔案，非佔位)。`bindings/`(campaign.go實際讀取的目錄)缺5個postbattle binding(`postbattle_ch17/22/23/24/29_persist`)，`bindings/generated/`已有對應檔案；**曾嘗試直接搬過去但被`go test`擋下**——`generated/`自己的`_diagnostics.json`只追蹤對話對應問題，沒追完整beat compile issue：實測4個候選檔用`CompileHandlerBinding`直接檢查，每一個都有真正未解決的issue(ch16→ch17_post 9個、ch21→ch22_post 6個、ch22→ch23_post 21個、ch23→ch24_post 3個，涵蓋`roster_has`/camera pan座標對映/`spawn`前置loadch/`layout_units`/`act`演出資源解碼/`deactivate_unit`/`load_res`/`prepare_chapter_aux_graphics`等尚無runtime lowering的op)，不是簡單複製檔案就能收工，已改列為獨立的中等規模工程階段(規模比照AP/DP/MV那項)，不併入快速小任務。另外`story_ch23/29/30`(9個「空節點」原始盤點裡的3個)其實**不是缺口**——`defaultChapterStoryScript()`既有fallback機制已正確接住，新增`TestStoryCh23Ch29Ch30ResolveViaDefaultFallback`鎖定驗證。`ch32/33`的`source_dat`跟`ch00`撞號(FDTXT_032/033)——**Phase1b已解(2026-08-31)**:雙重證據確認FDTXT_032/033真正屬於`ch00_meadow.json`/`ch00_palace.json`(count-aligned.json顯示兩者分別40/40、41/41完全count_aligned;工具自己對FDTXT_032↔ch32.json、FDTXT_033↔ch33.json的比對也各自回報`utterance_count_mismatch`，即40vs46、41vs19，雙向獨立佐證撞號的是ch32/33這邊而非ch00)。`ch32.json`/`ch33.json`(僅metadata欄位，runtime loader`loadStoryScriptAt`只讀`scenes[].lines`不讀`source_dat`，零風險)已改`source_dat: "unverified"`並新增`source_dat_note`誠實記錄：真正來源極可能是已損毀的`FDTXT_034`(`count-aligned.json`diagnostics:「file is shorter than the first offset」)，目前無法逐位元組驗證；`ch32.json`自己的notes還提到可能橫跨`FDTXT_031`尾端，屬更深的未解問題，本輪不臆測解答，只誠實標記。不擋30章正式戰役(ch31-33屬非戰鬥後日談)。完整規劃見plan file `hazy-crunching-liskov.md`。
-- [~] M5 Phase 1 執行輪(2026-08-31,承接上面「曾嘗試直接搬過去但被`go test`擋下」的規劃輪紀錄)：5個postbattle binding裡**1個(`postbattle_ch24_persist`)已真正收斂到compile-clean並promote**，另外4個誠實留列開放,逐一記錄具體卡點。
-  - **`postbattle_ch24_persist`(`bindings/ch23_post.json`,對應`handlers/ch24_post.json`)——已收工**:原本3個issue全部是`0x24d22`(2次呼叫)/`0x11d40`(1次呼叫)這兩個位址,而這兩個位址在`58-remake-live-verification-log.md`續二十八(2026-08-19,`7093ca16`)早就被完整靜態反組譯解開過(見`project_fd2_ch24_register_capture_resolved`記憶)——不是新RE。`0x24d22`：在這個handler裡的13次呼叫參數永遠非0,只會走`DAT_00051a10=tier`這個setter分支,唯一會讀取它的else分支(只給參數0的caller用)在此呼叫情境下證實無法到達,故新增一個文件化的no-op beat op`native_result_tier_set`。`0x11d40`：原生是60步(5外×12內)全DAC delta 0..59的漸層cross-fade,但remake目前唯一支援平滑indexed DAC ramp的runtime機制(`startNativePaletteRamp`/`ensureNativePaletteFrame`)只服務「有loadch」的story-viewport場景,這個postbattle handler沒有loadch(直接沿用剛打完那場戰鬥的runtime roster)，前置條件無法滿足；改用已經在production驗證過的二元`palette_update`(全白閃爍,`0x35822`/`0x35bba`增援揭幕已在用同一個primitive)近似,並在code comment誠實記錄這是近似(delta 59/63未達真正全白)非精確重現。驗證：`go build`/`go test`全綠;新增`TestPostbattleCh24BindingRendersRealDialogueAndCrossfade`用真實compile出的20個beat逐拍跑完整個BeatRunner(對白pop+delay tick),確認`native_result_tier_set`/`palette_update`兩個新lowering都真的執行到底、不出錯；另外用重建的原生Windows `fd2` binary實跑`FD2_CAMPAIGN=assets/scenarios/campaign_full.json FD2_CAMP_NODE=postbattle_ch24_persist FD2_SHOT=<path> FD2_SHOT_FRAME=30`截圖,螢幕上真的顯示出FDTXT_024對應的繁體中文對白(「敵軍似乎是負責鎮守這一帶的空域…」),不只是graph resolve成功。同時extend了`campaign_test.go`既有的binding-check table(`TestCampaignFullPostbattleBindingsUseVerifiedRawOwner`)、story coverage數字鎖定(`TestCampaignFullStoryScriptCoverageMatchesAudit`)、`TestEveryContinuingBattleSyncsBeforeOriginalIntermission`(現在ch24真的走`countSync`路徑而非unbound-node fallback)。commit `76690ceb`。
-  - **附帶修好`TestEveryContinuingBattleSyncsBeforeOriginalIntermission`的`countSync`outer-`t`閉包bug**(規劃輪筆記提到的低優先項):原本`countSync`直接捕捉外層測試函式的`t`,若某個subtest真的compile失敗會觸發`panic(nil)`/「FailNow on a parent test」而非乾淨的per-subtest failure；現在改成`countSync(t *testing.T, ...)`,每個subtest傳自己的`t`。同commit `76690ceb`。
-  - **`postbattle_ch29_persist`(候選`bindings/generated/ch28_post.json`,對應`handlers/ch29_post.json`)——部分進展,誠實留開**:規劃輪筆記引用的「FDTXT_029 text_index 10-15屬於`ambiguous_source_dat`」這個判斷,直接查`count-aligned.json`發現已經**過期**——該資源對`ch29.json`只有唯一一個`status:"count_aligned"`的`script_mapping`,完整覆蓋string_index 0-15(其中index 11合法橫跨兩個scene,編譯器既有`HandlerDialogSegment`機制本來就支援這種情況)。9個issue裡6個dialog issue的真正成因只是這個候選檔的`dialogue_contexts`欄位是空的(`{}`),從未被填過。已補上6筆對應的`dialogue_contexts`項(直接複製自旁邊已驗證的`bindings/ch29_post.json`同款`{"source_dat":"FDTXT_029","script":"ch29.json"}`格式),issue數9→3,commit `81387465`。**剩下3個issue是真正的阻塞,本輪誠實留開**：①`spawn`(group 9,`0x25505`)缺`runtime_context`——`map28_units.json`裡group 9恰好只有1個單位(對照劇本對白「ASR-06現身,黑暗中被驚動起飛」,應該就是這隻boss揭幕),推測slot_count該用map28全部76個單位、`spawn_groups:{"9":1}`(同`postbattle_ch25`的`slot_count:70`+`spawn_groups:{"2":1}`慣例),但本輪未實際寫入這個未經驗證的數字,因為即使補上也無法讓這個chapter收斂到zero issue(下面②是硬阻塞),不想為了湊issue數而寫入未驗證資料。②`pan`(`0x25511`,grid_x=9,grid_y=8)缺camera mapping——`campaign.go`對Beat.X/Y欄位的既有文件明確警告「grid→px 未逐點驗證,不自行換算,見 rulebook 62」,即pan像素座標必須是「已由畫面回饋校準」的實測值,不能像`0x12cea`那個特例一樣直接假設`grid*24`公式;沒有真正的screenshot對照就不該自己套公式。③`unknown`(native_target=`0x22253`,`0x25535`)——這正是`handler_compile.go`裡`case "unit_present"`已經明文記載、**deliberately blocked**的同一個原生呼叫(「later direct trace found 11+6+10 presentation phases...Reject it until that full ABI is represented」),不是這個候選檔獨有的新缺口,而是整個engine目前都還沒做的既有已知缺口(`native_staging_present`同樣因為它而卡住)。**這個chapter要收斂到zero issue,前提是先做0x22253完整11+6+10 choreography的獨立RE工程,規模明顯超出本輪**，留給未來專門一輪。
-  - **`postbattle_ch17_persist`(候選`bindings/generated/ch16_post.json`)——9個issue,本輪未動,盤點如下**：`roster_has`(1)是**編譯器層**缺口——raw handler把它匯出成頂層Beat.Op(不是包在`if`condition裡),而`handler_compile.go`目前只支援`roster_has`當`if`的condition op,沒有頂層op case,需要先確認這個裸op在原始語意上到底該不該被理解成「隱含包住後續同scope beats的if」,是compiler語法層調查,不是單純複製欄位。`pan`×2缺camera mapping(同上,需真正screenshot校準,非自算)。`spawn`×2缺`runtime_context`(這個handler同樣沒有loadch,需要類似ch24/ch29的slot_count+spawn_groups)。`layout_units`(1)需要對它自己的呼叫位址(非`ch17_post.json`/`postbattle_ch18`已經反組譯過的那個位址)重新做一次獨立的layout table反組譯。`act`×3全部需要真正解碼出新的acting resource(現有`tools/export_acting_resource_set.py`吃的是`decode_acting.py`對DOSBox-X live memory dump的輸出,這3個ID目前都沒有dump過,屬於live capture工作量,不是靜態可解)。
-  - **`postbattle_ch22_persist`(候選`bindings/generated/ch21_post.json`)——6個issue,本輪未動**：`layout_units`(1)+`act`×2(同上,需live capture)+`pan`×2(需screenshot校準)+1個`unknown`(`0x24618`,「binding lacks recovered 9-frame/500ms/palette timing」——這個op本身編譯器已支援且有明確proven timing常數,但`tile_x`/`tile_y`/`radial_radius`/`radial_radius_step`這4個per-call-site參數裡有2個是暫存器(`raw_args=[8,10,"eax","dword ptr [0x3ab9]"]`),需要對這個位址獨立做「往回找eax在這個呼叫點的即時值」的Ghidra反組譯,同`postbattle_ch30_persist`裡`0x25848`那個已經解過的姊妹位址是**不同**呼叫點,不能直接套用同一組`tile_x/tile_y=6`常數)。
-  - **`postbattle_ch23_persist`(候選`bindings/generated/ch22_post.json`)——21個issue,規模最大,本輪未動**：除了`layout_units`/`act`×5/`pan`×2(同上述類別)之外,還有6個`unknown`(尚無proven lowering的裸op,需逐一反組譯確認語意)、`load_res`×3(缺resource binding,需要決定這3個原生resource handle對映到哪個editable asset)、`deactivate_unit`×2(「slot 17 is outside active loadch slot_count=0」——同`spawn`一樣是缺`runtime_context`的症狀,不是`deactivate_unit`本身邏輯錯)、以及`prepare_chapter_aux_graphics`——這個op**在`handler_compile.go`裡完全没有對應的case**(不像`unit_present`至少有一個明文reject的case),是徹底未實作的全新primitive,需要從頭反組譯它的原生語意才能決定要不要新增engine支援。這個檔案規模+新op密度都遠超本輪合理範圍,誠實列為獨立後續工程項目,不建議下一輪從這個開始。
-- [x] doc51「無法結束回合」/「攻擊距離寫死相鄰」兩項已解(2026-08-31,M5規劃輪Phase2)：兩者皆是2026-07-04的歷史快照，現行code已核實不成立——Tab鍵結束回合(`main.go:6717-6718`，戰場正常輸入路徑，無debug env var閘門)與per-unit `AtkMin/AtkMax`武器射程(`move.go:226-243`，`InAttackRange`讀真實裝備射程非寫死`dx+dy==1`)皆已是正常玩法既有實作。`go test ./...`全綠；`docs/knowledge-base/51-remake-playtest-gaps-r2.md`項目1/2、`docs/knowledge-base/56-fd2-remake-sdd.md`§1.2已同步勘誤，不再列為M5開放阻塞點。
-- [ ] 完整性盤點:對照原版,缺漏列冊——**勘誤(2026-08-31)**:原引用文件`83`不存在(worklist L64已自我標記為懸空引用,見M5規劃輪三個Explore agent的重新核實),現行最接近本項目標的是`docs/knowledge-base/42-re-vs-remake-gap-audit.md`,但該文件截至今日已13天未更新,落後其他文件進度;本項待M5 Phase5(重新跑一遍doc42的既有方法論,以code為準逐項更新)完成後才算真正關閉,詳見M5規劃(plan file `hazy-crunching-liskov.md`)。
-- [~] 正常玩法可達性驗證(連通/可破關鏈,參考 skill 踩雷)——2026-08-27:新建
-  `tools/fd2_chapter_sweep.py`,把「有沒有人整套玩過」從純人工遊玩降級成可重複呼叫的
-  自動化結構性掃描(chapter-jump 存檔→LOAD→讀`DAT_00053a45`判斷戰鬥/劇情狀態→戰鬥中
-  則寫死亡 signature+End-Turn 捷徑,否則 bounded 按鍵探索→讀回存檔章節 byte 是否前進
-  作為主要 pass 訊號),對機器上唯一真實存檔(原生 ch27 進度)完整跑過全 30 章
-  (ch01-30),**零腳本崩潰/掛起,收尾三方乾淨**。**誠實範圍限定**:這是對**原版
-  DOSBox-X**(非 remake)、**含 debug hook**(記憶體讀寫)的結構性完整度掃描,不是 M5
-  驗收句要求的「remake 無 debug hook 正常玩法可達」,故不視為 M5 完成,只是提供了
-  「原版 33 戰場/劇情是否至少結構完整、可被機器觸及」的獨立佐證與可重用工具。30 章
-  verdict 全部是`needs_manual_followup`(通用「走到戰場」導航是這個專案自己都尚未解出的
-  開放問題,doc58 續五十七~六十三記錄過單一 ch27 章節就需要多輪人工試錯),但掃描本身
-  帶出兩個有具體後續行動價值的新發現:①post-load 節點分類顯示 6 章(ch23/24/25/28/29/
-  30)精確、零例外對應`25-battle-event-system.md` §9.1 先前僅靜態反組譯推導的「整備限定
-  流程跳過城鎮 hub」結構性主張,是這個推論的第一次 live 交叉驗證;②22 章共用同一套
-  「營帳」樣板場景(逐位元組/視覺比對確認),代表解開任一章節的圍籬缺口座標即可能推廣到
-  其餘章節。完整逐章分類表、方法論、已知限制、下一輪建議見
-  `docs/knowledge-base/99-chapter-sweep-results.md`與
-  `docs/knowledge-base/98-tooling-infrastructure.md`「全章節結構性掃描」一節。
-  **2026-08-27 續輪(camp-exit 導航診斷)**:派工單假設「22 章卡住是否只是已知的
-  Enter/Space 間歇丟失 bug(doc58 續五十四～續七十七)」，直接用獨立`campexit`
-  instance 重跑 doc91 本條目/UI-VIS-PREPARATION 2026-08-25 prepE2 輪已用真實
-  ch27 存檔證實可行的序列（`Right`×3 循環到出口→`Return`確認→`Return`「要進入
-  戰場嗎」YES）——**兩次 Return 都在第一次嘗試就註冊成功，零重試，證實不是輸入
-  丟失 bug**。真正成因是`fd2_chapter_sweep.py`的`advance_generic`從未實作這個
-  已知序列（21/22 章完全沒有 hint，一律落到會在預設 selection0/酒店誤觸 NPC
-  對話的通用按鍵迴圈），外加一個獨立發現的 debugger-state bug（`advance_generic`
-  逐步戰鬥偵測從未重新開啟 debugger console，第一步後永遠讀不到東西，連本來就
-  有 hint 的 ch27 也受影響）。**已修復**：新增`attempt_camp_exit()`取代 ch27
-  專屬 hint 成為全章節首選，22 個原本卡住的章節 + ch27 重跑，**23/23 全數從
-  `needs_manual_followup`（從未偵測到戰鬥）進步到`anomaly`（可靠走出軍營、
-  觸發確認框、偵測到戰鬥、掃描並標記敵方死亡、送出 End-Turn 捷徑）**。**意外
-  發現且誠實記錄未解的第二層問題**：戰鬥陣列指標會在戰前走位過場動畫途中被
-  重新配置（純被動時間閘門，非輸入閘門，已修正掃描邏輯正確重新讀取指標——ch12
-  修復後正確找到 11 個敵人而非先前的 1 個），但同一套修復套用到 ch27 時，15 秒
-  被動輪詢完全沒有變化、穩定只有 1 筆記錄，與 ch12 行為不同，且**連 ch27 本身都
-  沒有重現 doc58 續五十七～六十三人工操作記錄過的 63 個敵人**——這代表本行
-  「敵人掃描/死亡 signature/stride 只針對 ch27 驗證過」的既有誠實限制被進一步
-  坐實，且「敵人陣列/win-condition timing 因章節而異」是一個新的、需要放慢步調
-  真人即時互動驗證才能解的開放問題，本輪未強行套用猜測性修正。**因此 23 章仍
-  全部沒有拿到`pass`verdict**（新分布：0 pass / 23 anomaly / 6
-  needs_manual_followup(prep-select) / 1 needs_manual_followup(ch01)），M5
-  仍不能視為完成，但「camp-map 章節能否自動走出軍營觸發戰鬥」這個子問題已從
-  「未知/卡住」變成「可靠、可重現」。完整寫法見
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪」小節。
-  **2026-08-27 再續輪（`winverify`/`probe3`/`probe4`）**：派工單指出更深的疑點——
-  即使敵人已掃描/標記死亡/End-Turn 已送出，**沒有任何一章真的觸發過 live 勝利**，
-  連 doc58 續六十二（本專案唯一一次人工即時操作到真正勝利的紀錄）驗證過的 ch27，
-  自動化路徑重跑也從未重現過 47 個敵人（一直卡在 1 個）。逐行比對本工具與續六十二
-  的真實操作序列後，**找到並修復 3 個真正的邏輯 bug**：①「偵測到戰鬥」判定太早鬆手
-  ——出戰人數選人畫面本身就有一個只含 1 筆暫存記錄的合理指標，被誤判成「已進戰鬥」，
-  改為要求敵人掃描`>=2`筆記錄；②`>=2`敵人記錄仍不夠——一段完整的 BOSS 開場過場
-  （敵方喊話+攻擊特效+我方反應）會播放在一個早已配置好的 47～50 筆敵人陣列之上，
-  「畫面不像對話框」的啟發式判定會在過場的無文字框鏡頭切換瞬間誤判，改用 doc58
-  大量記錄過的正牌訊號——畫面左下角「NNN A+XX D+XX」戰鬥 HUD 小框（`screen_shows
-  _battle_hud()`，經 14 張正/負樣本截圖校準/驗證）；③`confirm_end_turn()`漏了
-  續六十二的第一步「移動游標到空地格」——原本直接對著站在單位上的游標按`Return`，
-  不會打開系統選單環（live 觀察到 HUD 血量從 823 變成 990，證明選到了別的單位），
-  修復後先送一次`Up`。**三個修復合起來，用修好的`fd2_chapter_sweep.py`本身（非人工
-  操作）重新掃 ch27，41 taps 後（非常接近續六十二的「約45次」）透過 HUD 偵測+50 筆
-  敵人記錄確認進入真正戰鬥，mass-kill 後 End-Turn 送出，畫面真的跳轉到續六十二 §3
-  記錄的 13 人圍站勝利場景，並繼續逐項截圖比對吻合 CG 天空島嶼、詩句捲動文字、
-  萊汀角色卡文字——這是本專案第一次用全自動化工具重現這個結果**。但**發現一個更深、
-  doc58 續六十二自己也沒解開的獨立卡關點**：確認 YES 之後不會立即存檔，要繼續送
-  Return 推進一段完整的勝利後 montage（隊伍對話→CG→詩句→逐位角色回顧卡），推進到
-  悠妮角色卡時重現了續六十二早就記錄過、標記為「唯一尚未解開的小尾巴」的同一個
-  症狀——文字只在 2 段之間無限循環，本輪額外測試的`Right`/`Down`/`Up`/`Left`/
-  `Tab`+20秒被動等待全部無效，與續六十二「60+次嘗試無效」獨立吻合。已加上
-  `advance_postbattle_montage()`（70 次 best-effort Return）讓工具對不卡在悠妮
-  這張卡的章節/名冊組合保留拿到`pass`的機會，但**這不是本工具的 bug，是這個專案
-  尚未解開的開放 RE 問題**。重新驗證 ch02/ch12/ch27 三章：全部從「敵人數卡在 1、
-  從未重現真戰鬥」進步到「HUD 正確偵測、敵人數合理（10/11/50）、mass-kill 正確、
-  End-Turn 正確送出、勝利轉場真的觸發」，但**依然全部卡在勝利後 montage，0 章拿到
-  `pass`**——根因已從「工具邏輯錯誤/從未真正觸發過勝利」變成「勝利轉場已真正觸發，
-  卡在一個已知、獨立、doc58 自己都沒解開的 montage 卡關點」。M5 仍不能視為完成，
-  但「mass-kill+End-Turn 快捷法能不能端到端觸發 live 勝利」這個更基礎的問題已從
-  「僅人工操作成功過一次」變成「自動化工具本身也能可靠重現」。完整寫法見
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(instance
-  `winverify`/`probe3`/`probe4`)」小節。
-  **2026-08-27 再續輪(instance `branchck02`/`branchck12`/`branchck27`,代號
-  `branchcheck`)**:派工單懷疑「ch02/ch12/ch27 全部卡在悠妮角色卡循環」是存檔
-  建構污染——`prepare_chapter_save()`反覆 patch 同一份「原本落在 ch27」的來源
-  存檔的 chapter byte 時,懷疑某個決定戰後分支(`table_post`)的旗標沒有跟著
-  正確路由,導致非 ch26/27/29 章節也錯誤地被路由進悠妮卡循環。**結論:徹底
-  排除,靜態+live 雙重證實 `[0x53C03]`/`table_post` 路由機制乾淨**——①靜態:
-  `docs/data/fd2_native_chapter_slot_restore_ida.txt`已證實 LOAD 會把
-  `set_slot_chapter()`patch 的那個 metadata byte 精確複製進`[0x53C03]`,而
-  doc35 §9.11 已獨立證實`[0x53C03]`正是索引`table_post`的那個全域變數,兩份
-  既有文件接起來看,中間沒有第二個「當前章節」來源;②live:改用**每章節
-  全新獨立 instance**(避免了第一次嘗試重用同一 instance 導致的 stale-memory
-  誤讀陷阱,已記錄在 doc99)LOAD 後立刻讀`[0x1EFC03]`,ch02/ch12/ch27 分別讀回
-  `1`/`11`/`26`,與 patch 進去的 raw chapter **100% 精確吻合**,沒有殘留舊值。
-  真正原因**不是路由污染**,是完全不同的另一個問題:回頭核對`chapter_sweep_v7`
-  的實際截圖,ch02/ch12/ch27 三章**根本沒有走到同一個畫面**——只有 ch27 真的
-  走到過續六十二記錄的「13人圍站」真實勝利轉場,ch12 的`post_end_turn.png`是
-  戰鬥仍在進行中的 NPC 對白(整場戰鬥根本沒結束),ch02 的則是一張無關的可行走
-  營帳/教會地圖——上一輪「三章全部卡在勝利後montage」的措辭並不精確,ch02/ch12
-  很可能從未真的走到過真實勝利,更談不上被路由到悠妮卡。根本原因是
-  `confirm_end_turn()`的`Up`游標移動 hack 只針對 ch27 特定部署佈局校準過,對
-  其他章節的佈局不通用(該函式自己的既有 docstring 早就承認這點,只是先前沒有
-  一輪用不同章節的截圖直接驗證後果),也不能排除 doc99 已記錄的「早章節+晚期
-  滿編隊伍」roster 大小不匹配 caveat 是部分成因。**沒有修改
-  `fd2_chapter_sweep.py`的存檔建構邏輯**(兩種方法都證實它沒問題),已在
-  `confirm_end_turn()`加註解記錄排除過程,防止未來輪次重複懷疑同一個已排除的
-  假說。M5 verdict 分布維持不變(仍是 0 pass)——本輪價值是排除一個看似合理但
-  錯誤的假說,不是產生新的 pass。完整寫法見`docs/knowledge-base/99-chapter-
-  sweep-results.md`「2026-08-27 續輪(instance `branchck02`/`branchck12`/
-  `branchck27`)」小節,含下一輪建議(游標移動通用化,而非繼續懷疑存檔污染)。
-  **2026-08-27 續輪(instance 系列 `endturngen`..`endturngen6`,代號
-  `endturngen`)**:派工目標是解掉上一輪點名的通用化缺口——`confirm_end_turn()`
-  只送寫死的一次`Up`,只對 ch27 特定部署佈局校準過。**結論:已解,新增
-  `find_empty_adjacent_tile()`(先查目前格,再依 Up→Down→Left→Right 順序逐一
-  嘗試,失敗就送反方向鍵復原、用真實 HUD 縮圖判別「有角色頭像+HP數字」vs.「純
-  地形縮圖」)在 ch02/ch12/ch27 三章獨立 live 重跑裡 3/3 全數正確找到空地格、
-  成功開環、選 END、確認 YES,不再依賴任何寫死方向**。過程中意外揪出並修復
-  兩個更早、影響範圍更廣的既有 bug:①`screen_shows_battle_hud()`對「帶大幅
-  角色頭像的全螢幕劇情對白」畫面誤判(頭像像素變化騙過對話框變異數判定,對話
-  底色又符合 HUD 藍色範圍)——這連帶讓本輪最早兩次「ch27/ch02 起始格已經是
-  空地」的結果都是假陽性;修復方式是新增「HUD 框右側是否還是同一片對話藍」
-  的第三道判定(真 HUD 框只有 140×78 像素、右側該露出地形,假陽性對話框右側
-  還是同一片藍)。②修好①之後,`attempt_camp_exit()`的 60 次對話推進預算反而
-  變成不夠用(舊版「夠用」本身就是①的假象),`dialogue_steps`預設值提高到
-  120;③即使①②都修好,三章仍 3/3 在`find_empty_adjacent_tile()`起手就讀到
-  HUD 不存在——查明是`sweep_chapter()`敵人陣列被動 settle 迴圈(6 輪×2.5秒、
-  刻意不送按鍵)給了同時在播放的劇情演出(三章各自完全不同、互不相關的劇情
-  內容)足夠真實時間繼續推進,`find_empty_adjacent_tile()`因此加上起手若判定
-  不明,先花最多 20 次`Return`嘗試推進殘留劇情,再進方向搜尋。三章最終 live
-  驗證(套用全部三項修復後):ch02(42 taps 找到戰鬥、10 敵、方向`Up`找到空地)
-  /ch12(11 taps、11 敵、`Up`)/ch27(41 taps,與續六十二「約45次」相符、50 敵、
-  `Up`,`post_end_turn.png`逐像素比對吻合續六十二 13 人圍站勝利場景)——End-Turn
-  序列三章都完整送達,無崩潰無卡死。**章節 byte 依然沒有任何一章前進**(仍是
-  1→1/11→11/26→26),但`post_end_turn.png`證實三章各自觸發了合理、不同的章節
-  專屬後果(ch27 真勝利、ch02 回可操作地圖、ch12 觸發 NPC 劇情),證明擋住`pass`
-  的是已記錄多輪的獨立問題(悠妮角色卡循環/win-condition 因章節而異),**與游標
-  定位無關**——M5 整體 verdict 仍是 0 pass,但這正是本輪誠實範圍內能做到的最佳
-  結果:游標通用化子問題已解、且用三個獨立 bug 修復把整條鏈路的可信度大幅提升。
-  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪
-  (instance 系列 `endturngen`..`endturngen6`,代號 `endturngen`)」小節。
-  **2026-08-27 續輪(instance `slowplay`,測試「快速腳本按鍵跳過真人節奏會滿足的
-  時序/狀態依賴」假說)**:派工單假說是悠妮角色卡「無限循環」會不會其實是一個
-  動畫完成檢查/settle 旗標之類的時序閘門,被腳本的快速連續按鍵跳過,但真人較慢、
-  節奏不規則的操作卻能滿足。**使用者確認的既有遊戲設計事實(記錄於此,未來輪次
-  不需要重新質疑)**:《炎龍騎士團2》是雙結局機制——不論好結局或壞結局,抵達
-  任一結局都會終止該輪遊戲流程。ch27 這份存檔(悠妮無天空之鑰、獨自離隊的
-  「缺鑰臂」分支,doc58 續六十二 §4)走到的就是這條分支**設計上的終點**,本來
-  就沒有「下一章」可以前進——不論輸入時序怎麼調,這份存檔的章節 byte 都不會
-  前進,這從一開始就不是缺陷,是正確的遊戲行為。**現場觀察(不推翻上述設計
-  事實,只是如實記錄畫面上看到的東西)**:在悠妮卡畫面上用 6 秒間隔慢速送
-  `Return`(比 doc58 續六十二/續六十四的即時手動操作更慢),連續 6 次依然精確
-  重現同一個「2 段文字來回切換」症狀——單純拉長按鍵間隔本身沒有改變結果。但
-  緊接著改成**完全不送任何按鍵、純被動等待約 30 秒**後,畫面自行推進到一段
-  全新的動畫過場,接著自動播完**片尾工作人員名單**(「美術編輯 ART EDIT 侯麗君」
-  等,捲動約 1 分鐘),最終停在靜態的**「THE END」畫面**——全程沒有再送出任何
-  一次按鍵。拉出的存檔(`FD2.SAV`)md5 全程(含抵達「THE END」之後)與原始存檔
-  **完全相同,一個位元組都沒變**,與「這是設計好的結局終止,不是會 autosave 的
-  中途過場」完全吻合。doc35 §9.11.6 已用反組譯證實的`EB FE`死迴圈是否就是本輪
-  畫面上經過的同一條指令,或是另一個也會呈現 2 段文字交替、由中斷/計時器驅動的
-  獨立等待狀態,本輪**沒有**釐清,不宣稱推翻該項既有反組譯結論。**已修復**
-  `advance_postbattle_montage()`(偵測連續截圖 hash 呈 2 態交替時,停止送
-  `Return`改成被動輪詢,逾時則誠實回退成原本的按鍵迴圈)——按`Return`在這個
-  畫面上於本輪觀察下沒有幫助、微觀上甚至可能持續阻斷推進,故切換成被動等待是
-  合理修正,但**這不會、也不能讓 ch27 這份存檔拿到`pass`**,因為這條分支本來
-  就不會 autosave。修好的自動化版本本輪**沒有**重新針對 ch27 端到端 live 驗證
-  過(核心機制是手動操作直接證實的,自動化版本是照這個已驗證機制忠實改寫,但
-  改寫後的程式碼本身這輪未重跑),留給下一輪核對。**下一輪正確的驗證目標**
-  (取代原本「繼續在 ch27 這份存檔上重試」的方向):挑一個真正的中途章節(例如
-  ch02-ch20 之間、且推定不是另一個結局分支的章節)測試 mass-kill+End-Turn
-  捷徑後章節 byte 會不會正確前進——正常中途戰鬥的勝利理論上不會經過角色卡
-  montage,直接跳普通的下一章/城鎮過場,這才是這個 worklist 條目真正該驗證的
-  情境。M5 仍是 0 pass(維持不變)。完整寫法、截圖序列見
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(instance
-  `slowplay`)」小節。**同輪後段(instance `midtest`)直接照此建議測試 ch12**:
-  `attempt_camp_exit()`/戰鬥偵測/mass-kill/`confirm_end_turn()`全部正常運作
-  （11 taps 找到戰鬥、11 敵全數寫入死亡 signature、開環選 END 確認 YES 序列
-  完整送達,連跑 2 輪 End-Turn 循環都一樣)，但**沒有出現任何勝利轉場,章節 byte
-  維持`0xb`不變**——與 ch27 送出 YES 後立刻跳轉勝利轉場的行為明顯不同。這證實
-  「mass-kill+End-Turn 捷徑」本身**不能直接泛化到 ch12**,坐實了工具模組
-  docstring 從一開始就誠實列出的限制(死亡 signature 常數`+5=0x01`/`stride
-  0x50`/`camp+6`只對 ch27 live 驗證過)。M5 未完成的原因因此拆成兩個獨立問題:
-  ①ch27 特定的雙結局分支終止(已定案,設計行為,非缺陷);②死亡signature/
-  win-condition 常數能否泛化到其他章節(本輪首次拿到直接負面證據,未解)。
-  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
-  續輪(instance `midtest`)」小節。
-  **2026-08-27 續輪(代號`ch12diag`)**:以 ch12 為範本徹底診斷「②死亡
-  signature/win-condition 常數能否泛化」——**結論:能泛化,②不是常數錯,
-  是`confirm_end_turn()`確認 YES 後只等 2 秒就放棄,但引擎自己的`[0x53ecc]`
-  勝負判定碼 live 實測要 1.8~8 秒才會翻成 2(勝利)**。反組譯 ch12 的
-  win-check handler`0x2073d`,證實結構跟 ch27 的`0x20a87`同一樣板(共用
-  `0x205be`基準全滅掃描+額外檢查一個特定 record 存活),且`record[14]`
-  (camp=1,mass-kill 不會誤殺)極可能就是外部攻略站(協調端交叉核對
-  `chiuinan.github.io`)記載的敗北條件角色「米亞斯多德」——反組譯結論與
-  外部資料完美互證。**已修復**`fd2_chapter_sweep.py`:①`confirm_end_turn()`
-  改直接輪詢`[0x53ecc]`(ground truth,非螢幕截圖猜測),②新增
-  `MAX_KILL_CYCLES=4`重試迴圈應對可能的援軍波次,③`scan_enemy_slots()`
-  移除提前中止邏輯(避免陣列 gap 漏掃),④`POST_WIN_DISK_POLL_MAX_S=60`
-  耐心輪詢磁碟存檔。修好後對 ch02-16(15 章)即時 live 掃描,**9/15 章節
-  (ch05/06/08/09/10/12/13/14/16)第一次拿到「引擎層級勝利」的直接證據**
-  (`[0x53ecc]`確實翻成2、`[0x53c03]`章節計數器確實在記憶體裡前進)——這是
-  本專案第一次證實 mass-kill+End-Turn 機制能泛化到 ch27 以外、非結局分支
-  的一般中途章節。**但 disk 上的`FD2.SAV`章節 byte 依然 0/15 前進**——
-  這坐實了`docs/knowledge-base/25-battle-event-system.md` §9.1 已經記錄
-  多輪(`saveE2`/`savewriter`/`camproute`/`writerfire`)、比 M5 這個條目
-  本身更早也更深的獨立開放問題:「戰鬥勝利後遊戲會不會真的呼叫`FD2.SAV`
-  writer」,這才是真正擋住 M5 全部驗收的最終瓶頸。另外 6/15 章節
-  (ch02/03/04/07/11/15)mass-kill+End-Turn 送達但`[0x53ecc]`從未翻盤,
-  真正根因本輪未定案(已排除「敵人陣列有 gap 被漏掃」與「單位5-10存活
-  擋住」兩個對 ch02 測過的假設,連帶修正了 doc25 §5 一段誤把兩個不同
-  handler 的機器碼合併在一起的舊反組譯記錄)。M5 仍是 0 pass,但未完成
-  原因從「懸而未決的大哉問」縮小成兩個具體、獨立、範圍分明的子問題。
-  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
-  續輪(代號`ch12diag`)」小節。
-  **2026-08-27 續輪(代號`diag2`)**:對 6 個卡住章節(ch02/03/04/07/11/15)中的
-  ch02/ch03 做逐 record 深度即時診斷,排除協調端提出的「村民被本工具誤殺」與「陣列
-  重配置導致死亡 signature 寫入丟失」兩個假說(硬證據:村民實際是`camp=1`,mass-kill
-  只動`camp=0`,全程未被觸碰;敵人死亡 signature 寫入後不論立即讀回或跑完整個 End-Turn
-  確認序列都持久有效;`[0x53beb]`掃描邊界遠低於 96,無漏掃)。**但確認一個更深的矛盾
-  依然存在**:掃描邊界完整覆蓋、敵人全數確認死亡且持久、村民毫髮無傷的情況下,
-  `[0x53ecc]`live 讀值依然是 0,與 doc25 §4 反組譯的`0x205be`模型矛盾。也連帶發現
-  ch03 這次乾淨重現「死亡 signature 持久有效」,與先前`ch12diag`輪 log 記錄的「ch03
-  每輪重試都讀到 8 筆敵人依然存活」不一致,**很可能是陣列重配置時間點敏感的非決定性
-  假陽性,不是 ch03 固定行為**——原本歸類的「ch03/ch04 是另一種失敗模式」應視為未定案。
-  協調端建議的「敵我雙方一律寫入 HP=1/999 作為 standing rule」評估後**不採用**(不對症,
-  且引用了一個 memory 裡實際不存在的條目作為依據,見 doc99 該小節)。ch04(用同一套
-  深度診斷重新驗證)結果與 ch02/ch03 完全一致(掃描邊界完整覆蓋、17 敵全數確認持久
-  死亡、`[0x53ecc]`依然卡在 0)。ch07/11/15 本輪未逐一重複這套深度診斷,推測共享同一
-  根因但未獨立驗證。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`
-  「2026-08-27 續輪(代號`diag2`)」小節。
-  **2026-08-27 續輪(代號`r2`)**:掃描剩餘 7 個未測章節(ch17-22、ch26;ch27/29/30依
-  雙結局事實跳過),**27 個非結局分支章節(ch01-26、28)本輪起全數至少有一次 sweep
-  資料點**,是這個專案第一次做到「30 章扣掉 3 個結局分支後全數覆蓋」。結果:ch17/18
-  新拿到引擎層級勝利(該子類別擴大到 11 章);ch20 加入「敵人確認全滅但`[0x53ecc]`
-  卡在 0」謎團(該子類別擴大到 7 章:ch02/03/04/07/11/15/20);**ch21/22/26 用截圖
-  確認一個全新、獨立的卡點**:出戰人數選人門檻(15)超過可選角色數(12),
-  `fd2save.append_roster_members()`合成的 synthetic roster member 會出現在 roster
-  陣列裡但**不會**被選人畫面視為可選,導致門檻結構性湊不滿(不是按鍵預算問題)——
-  高度疑似同時解釋了最早一輪記錄的 ch23/24/25/28/29/30 六章 prep-select 為何持續
-  卡住(同一種選人畫面),但本輪未重新驗證這個推論;ch19 是另一個獨立、未解的現象
-  (畫面像是已進入有站位的地圖,但戰鬥陣列指標/HUD偵測都判定尚未偵測到,三種可能
-  成因都合理,未定案)。**累計統計**:11 章引擎層級勝利、7 章「卡在0」謎團、至少
-  3 章(疑似再加6章)選人門檻卡點、1 章早期roster caveat(ch01)、1 章未解新現象
-  (ch19)、ch27(+疑似ch29/30)雙結局分支終止。M5 仍是 0 pass。完整寫法見
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27 續輪(代號`r2`)」
-  小節。
-  **2026-08-27 續輪(代號`ch19diag`)**:派工單假說「ch19入場過場比其他章節長/
-  有NPC登場,mass-kill搶跑在陣列穩定之前」**已用live數據直接推翻**——live重跑
-  顯示`attempt_camp_exit()`在僅9個tap(120預算內)就正確偵測到戰鬥,settle迴圈
-  6輪(15秒)期間base與49敵人數完全沒有變化,沒有任何陣列重配置跡象。真正根因是
-  `screen_shows_battle_hud()`/`screen_looks_like_dialogue()`兩個只對ch27校準過的
-  螢幕啟發式在ch19上假陰性(HUD小方框渲染在螢幕鏡像的右下角而非左下角;ch19地形
-  對比度偏低導致對話框變異數檢查誤判)——已修復(`BATTLE_HUD_BOX_REGION_R`雙側
-  檢查、移除冗餘的變異數閘門,並連帶修復`cursor_tile_is_empty()`同根因的縮圖
-  誤讀)。修復後ch19首次拿到真實戰鬥偵測+完整mass-kill(49敵)+End-Turn流程,
-  但**`[0x53ecc]`卡在0**,加入既有謎團俱樂部(7章擴大為8章:ch02/03/04/07/
-  11/15/20/19)。協調端提出「巴拿羅西亞護衛角色需先登場(約第6回合)否則不加入,
-  可能是ch19勝利判定卡住的專屬原因」——已用外部攻略核對確認遊戲設計事實存在,
-  但**未做live驗證區分**這是ch19專屬成因還是與其他7章共享的通用`0x205be`矛盾,
-  留給下一輪(建議:先空轉6輪End-Turn等她登場,再mass-kill,對照結果)。M5仍是
-  0 pass。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-27
-  續輪(instance `ch19diag`,代號`ch19diag`)」小節。
-  **2026-08-27 續輪(代號`ch19banor`)**:針對上面的假說做了單一對照實驗——
-  先WebFetch核對攻略取得ch19精確條件(勝利=敵全滅,失敗=索爾/巴拿羅西亞死亡,
-  她在「第六回合己方結束後」登場,若敵人在此之前被消滅完她就不會加入),**刻意
-  不套用**派工單建議的HP/999 buff standing rule(本文件`diag2`小節已用live證據
-  評估並拒絕同一建議,本輪重申拒絕理由:HP/ATK/DEF在本專案沒有任何已證實的
-  record offset,盲寫有風險且對已知瓶頸沒幫助),改用純粹的「6次confirm_end_
-  turn(enemy_addrs=None)空轉6回合、不主動出手、只被動測試原版難度曲線是否
-  夠溫和以致不需要buff也能存活、每回合逐格dump陣列監控團滅」方法,最後才第一次
-  mass-kill+End-Turn。**結果:第6回合後的第一次mass-kill就直接讀到`[0x53ecc]
-  ==2`(WIN)**——ch19史上第一次達成引擎層級勝利確認,與`ch19diag`輪唯一的
-  程序差異就是這6個回合的等待(其餘完全相同,構成乾淨對照)。**但巴拿羅西亞
-  本人的加入沒有被直接觀測到**:6回合期間逐格dump顯示ally記錄數量/索引/camp值
-  從頭到尾一格都沒變過,turn6截圖也沒捕捉到任何介紹新角色的對話——所以「勝利
-  判定隱含要求她在roster裡」這個具體機制**未獲得直接支持**,同樣站得住腳的
-  另一解釋是ch19(或共享的`0x205be`邏輯本身)單純有一個跟角色無關的turn-count
-  閘門,本輪的單一對照實驗無法區分兩者。磁碟存檔位元組依然沒有前進(18不變),
-  與其他9章「engine win確認但磁碟從未寫入」是同一個doc25 §9.1開放問題,不是
-  ch19專屬新症狀。`tools/fd2_chapter_sweep.py`新增`KNOWN_MIN_TURNS_BEFORE_KILL
-  ={19: 6}`機制讓往後的ch19 sweep自動套用這個等待。M5仍是0 pass,ch19從「8章
-  卡在0俱樂部原因未知」重新分類為「至少對這個具體機制已解決,深層WHY與是否
-  泛化到其他7章仍未知」。完整寫法見`docs/knowledge-base/99-chapter-sweep-
-  results.md`「2026-08-27 續輪(代號`ch19banor`)」小節。
-  **2026-08-27 續輪(代號`cursorlive`):上面「新卡點A」的描述已修正**——不是
-  「synthetic roster member 不會被選人畫面視為可選」這種被動的灰階/不可選外觀
-  問題(單步截圖重測證實 synthetic 記錄跟真實記錄一樣能被游標移動到、能被
-  Return 選中變彩色、`剩餘人數`會正確遞減)。真正的機制是**選滿門檻後的確認時
-  驗證**:遊戲會檢查`docs/knowledge-base/28-chapter-objectives-and-recruits.md`
-  「額外護衛」欄記錄的該章story-mandated角色是否在已選roster裡,不滿足就彈出
-  「本章約定必須出場！」退回營地——即使用`fd2save.append_roster_members()`
-  合成、且明確補上正確角色id(ch21=羅蘭id23/希爾法id24)並在畫面上確認選中,
-  依然被拒絕,證明這道門檻需要的是roster陣列id存在+選取狀態**之外**的某個原生
-  狀態,synthetic記錄沒有提供(equip-recalc tail或某個獨立旗標,未反組譯確認)。
-  這也解開了`r2`輪與2026-08-25 rostertest輪(見本條目上方「26人合成roster」段落)
-  表面矛盾的謎團:ch27(raw26)的護衛角色是悠妮(id9),而悠妮剛好本來就是base
-  真實存檔13人名冊裡的真實成員——rostertest輪的成功從未實際測到synthetic角色
-  能否通過這道門檻,只是沒踩到而已。用base roster id集合比對doc28,預測
-  ch22/23/25/26會撞上同一道牆,ch24/28/29/30這道門檻不適用(`needs_manual_
-  followup`應另有原因)。`fd2_chapter_sweep.py`對`append_roster_members()`的
-  呼叫方式已核對與rostertest輪一致,**不是**工具呼叫bug,本輪未修改其呼叫邏輯
-  (已知修改pad_ids不會解開這道門檻)。M5 仍是 0 pass,無章節轉為`pass`。完整
-  截圖證據鏈與逐章預測表見`docs/knowledge-base/99-chapter-sweep-results.md`
-  「2026-08-27 續輪(代號`cursorlive`)」小節。
-  **2026-08-27 續輪(代號`ch2killgen`)**:把`ch19banor`輪的「等N回合再
-  mass-kill」turn-count-gate假說泛化測試到剩餘7個「卡在0」章節中的
-  ch03/04/07/11/15/20(ch02 有獨立調查線,本輪排除)。先WebFetch核對
-  攻略取得每章精確的援軍時機,`KNOWN_MIN_TURNS_BEFORE_KILL`新增
-  `{3:3, 4:4, 15:9, 20:4}`。**結果:4/6 章確認**——ch03(turn-START觸發,
-  猜3回合)、ch04(turn-END+「殺一隻其餘逃跑」機制,猜4回合)、ch15
-  (兩波援軍turn7+9,猜9回合涵蓋兩者)、ch20(turn-END,猜4回合,**刻意
-  不排除沼澤怪物**)全部在turn-wait後**第一個kill-cycle**就直接讀到
-  `[0x53ecc]==2`,與ch19同一套機制。ch04的「殺一隻其餘逃跑」假說符合
-  預測(mass_kill_enemies直接debugger寫入,不經過AI戰鬥結算,逃跑邏輯
-  未觸發也無妨——17個敵人一次到位);ch20的「沼澤怪物除外」假說也符合
-  預測(58個敵人含沼澤怪物在內全部mass-kill,勝利判定依然正常翻2,精靈
-  全程未被觸碰因為mass_kill只動camp==0)。ch07(攻略描述是移動位置觸發,
-  非turn-count)用同一套機制加猜測3回合等待做探索性測試,**意外也確認
-  成功**(第一次嘗試在battle-detection階段卡住,查明是本專案已知的間歇性
-  輸入/時序flake而非結構性問題,獨立乾淨重跑後23 taps找到戰鬥、25個敵人,
-  turn-wait後第一個kill-cycle同樣直接讀到`[0x53ecc]==2`)——但「為什麼一個
-  位置觸發機制會被純turn-wait解開」未獲解釋,見doc99「ch2killgen」小節
-  ch07子段落的推測與下一輪建議。ch11(根因未知)同樣測試猜測3回合等待,
-  **這是本輪唯一turn-wait假說沒有成立的章節**:第一次嘗試在更早的
-  camp-exit確認步驟卡住(同一類flake,獨立重跑排除),乾淨重跑後25個
-  敵人全數確認mass-kill後持久帶有死亡signature(rescan直接證實,不是
-  猜測),但`[0x53ecc]`依然卡在0——真正卡住原因本輪未能定案,留給下一輪
-  反組譯`0x51b19`跳表裡ch11專屬handler。**最終小結**:8個原「卡在0」
-  章節扣除ch02(獨立調查線)後剩下的7章,本輪加上`ch19banor`輪的ch19,
-  共6章(ch03/04/07/15/19/20)確認同一套turn-wait機制能讓`[0x53ecc]`翻2,
-  只剩ch11仍未解。所有確認的章節磁碟存檔位元組依然沒有前進(同doc25
-  §9.1的SAV writer gate開放問題),M5仍是0 pass——這個SAV writer gate
-  疑問才是真正擋住任何章節拿到`pass`的最終瓶頸,比逐章turn-count診斷
-  優先級更高,留給下一輪。完整寫法見`docs/knowledge-base/
-  99-chapter-sweep-results.md`「2026-08-27 續輪(代號`ch2killgen`)」小節
-  (含逐章結果表格)。
-  **2026-08-28 續輪(代號`ch11diag`)**:反組譯`0x51b19[10]`(table_idx10=玩家可見ch11)
-  專屬win-check handler,回應上一輪建議①。**結果**:直接讀`0x51b19`跳表原始bytes證實
-  ch11的handler(`0x205b4`)與已確認可用的ch03/04/07**位元組級別完全相同**(同一個函式
-  入口位址,執行同一段程式碼,無ch11專屬額外分支)——handler本身不是問題。接著用一輪全新
-  live診斷(instance`ch11diag`)直接讀值排查「上一層」的3個候選,**全部被排除**:
-  即時`[0x53c03]`(章節index)==10,dispatch沒走錯entry;即時`[0x53beb]`(native迴圈
-  上界)==38,與真實38筆record陣列(13隊友+25敵人)精確吻合,不是迴圈上界比掃描範圍大;
-  全量160格無條件掃描(繞過既有all-zero-skip heuristic)只多找到2個camp==0命中,但兩者
-  都落在真實陣列邊界之外、raw bytes明顯是雜訊記憶體,確認是偽陽性,不是真的漏看敵人。
-  把這2個偽陽性也一併mass-kill(連同25個真敵人共27格)重跑完整3回合等待+End-Turn確認,
-  `[0x53ecc]`依然15秒內全程讀0。**誠實結論**:本輪能直接驗證的4個假說(handler不同/
-  漏看敵人/迴圈上界過小/dispatch走錯index)全部被直接記憶體證據排除,是明確排除而非
-  「仍不確定」,但真正根因仍未定案——下一輪需要在native`0x1C05BE`(=`0x205be`
-  +`0x19C000`)搭配一個已知會贏的章節(如ch03)做對照組直接下斷點,才能判斷是`0x51b19`表
-  的呼叫本身沒被執行到(問題出在`0x117e7`的per-unit回合狀態機分支),還是別的原因。
-  M5仍是0 pass,未變動。完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`
-  「2026-08-28 續輪(代號`ch11diag`)」小節與`docs/knowledge-base/
-  25-battle-event-system.md`§3.2。
-  **2026-08-28 第3輪(代號`ch11bp`)**:回應上一輪建議,在native`0x1BC5BE`
-  (=`0x205be`+`0x19C000`;**訂正**：上一輪與doc99建議文字寫的`0x1C05BE`是筆誤,
-  正確算式結果是`0x1BC5BE`,已用同一個`0x53c03`→`0x1EFC03`delta換算對照驗證過)
-  對ch03(對照組)與ch11(測試組)雙雙下斷點+`LOGC`全指令execution trace。
-  **關鍵方法論教訓**:`BPM`斷點對兩章都在送出「YES」鍵後~1.1秒同址觸發同一個
-  `00->68`byte變化訊息,且都把LOGC截斷成僅1行——同一模式無論輸贏都出現,判定
-  是`BPM`對code address下記憶體斷點時的自我觸發artifact,不是真實訊號,棄用。
-  改良版**只用`LOGC`**(在打開指令環之前就開始錄、一路錄到YES確認完成再手動
-  暫停讀取)後拿到本專案這個謎團目前為止最乾淨的直接證據:**ch03在完整視窗內
-  (41.8M指令)命中`0170:001BC5BE`剛好1次;ch11在同一套操作、同一時間窗
-  (42.5M指令)命中0次**——這是直接執行軌跡層級的證據,不是輪詢推論,首次真正
-  坐實「dispatch沒被呼叫」假說(而非「呼叫了但被覆寫」)。**靜態反組譯補強**:
-  decompile`0x117e7`(真正的dispatch caller)證實它是個per-tick被主迴圈
-  重複呼叫的函式,`0x51b19`表呼叫嚴格巢狀在`phase(0x11aa8)==0x39||0x1c`→
-  `0x12c0d(游標XY==[0x53ab1]/[0x53ab5]的活著單位index,活著=+5 bit0==0,
-  `0x34894`確認)!=-1`→`unit[+7]!='y' && unit[+0x1f]!='\n'`三層條件全部成立才會
-  執行到。**協調端追加假說(戰役攻略「星之眼」寶物)已直接live測試排除**:讀出
-  map10戰鬥期間寶箱開啟旗標heap block指標`[0x53AD5]`(live`0x1EFAD5`)→
-  `0x1F6C5C`,把全部12個已知寶箱slot(含星之眼,slot0,座標(18,37))寫1(SMV
-  寫入後readback驗證成功、且撐過3回合等待未被重置),重跑完整mass-kill+
-  End-Turn流程,`[0x53ecc]`依然卡在0——「拿星之眼才能贏本章」的假說被直接
-  記憶體證據排除,`0x205be`handler本身反組譯也證實只查`+5/+6`,無任何inventory
-  查詢。**誠實現況**:根因窄化到`0x117e7`的三層巢狀條件之一(最可能是`0x12c0d`
-  的游標-位置匹配機制,因為ch11總record數(38)遠大於ch03(約8+),若這是逐單位
-  一次tick處理一筆的內部游標掃描,ch11要花更多真實時間掃完;但這個「純粹是
-  時間不夠」的解釋與本專案至少4輪獨立測試(`ch2killgen`/`ch11diag`/`ch11bp`
-  BPM/`ch11bp`treasure)、每輪都有15秒以上真實輪詢時間、部分輪次還有4次
-  kill-cycle重試(累計60秒+)卻始終讀0的紀錄不一致,不足以推翻「genuinely
-  never dispatched」的結論,但也還沒有完全排除),仍未定案到「哪一個具體
-  runtime狀態值」造成ch11卡住。M5仍是0 pass,未變動。**下一輪建議**:(a)
-  把LOGC觀察窗從6秒延長到60秒+/或錄到100M指令自然用盡,直接排除「純粹需要
-  更久真實時間才會dispatch」這個殘餘可能性;(b)對`0x12c0d`本身或
-  `[0x53ab1]/[0x53ab5]`(游標XY)下`BPPM`(protected-mode記憶體變更斷點,不是
-  這輪已證實對code address自我觸發的`BPM`)live觀察END確認後cursor座標的
-  實際step序列,比對ch03/ch11兩者是否真的走過所有活著單位的座標。完整寫法見
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 續輪
-  (代號`ch11bp`)」小節與`docs/knowledge-base/25-battle-event-system.md`§3.2。
+> 因此本節整段改寫。**舊的 remake 版 M5（含 Phase 1~5 的完整逐項紀錄、
+> postbattle binding 盤點、AP/DP/MV/DX 反組譯成果等約 795 行）不再列於此，
+> 但沒有消失**——完整內容保存在 git 歷史：
+> `git show 5f699146:docs/knowledge-base/91-worklist.md`（本次改寫前的最後一版）。
+> 其中**與 remake 無關的 RE 成果**（AP/DP/MV/DX 的等級縮放公式、章節/劇情容器盤點、
+> `0x24d22`/`0x11d40` 反組譯等）本來就記在 `doc03`／`doc58` 等專題文件裡，不受影響。
 
-  **2026-08-28 第5輪(代號`ch11cond`)——根因定案**:回應上一輪建議(a)(b),
-  **①LOGC觀察窗從6秒延長到~200秒真實時間(600M指令budget,錄到自然用盡)**:
-  ch03維持命中1次,ch11維持命中0次——「純粹需要更久時間才dispatch」的殘餘
-  可能性**排除**,不是時間不夠。**②對`[0x53ab1]/[0x53ab5]`(游標XY)下`BPPM`**
-  (首次RUN的baseline假觸發陷阱已排除):意外發現ch03/ch11的戰鬥單位陣列
-  **都**多一筆先前完全沒記錄過的`camp==1`記錄,且**每次**End-Turn確認YES後
-  游標的最終停留位置精確落在這筆camp1記錄的座標上——即`0x12c0d`的「游標-
-  位置匹配」在兩章都成立(gate②通過)。**③直接讀該記錄的`+7`/`+0x1f`**(gate③
-  用到的欄位):ch03(off7=0x02,off1f=0x01)與ch11(off7=0x0e,off1f=0x02)
-  兩者的值都不等於`'y'`(0x79)/`'\n'`(0x0a),gate③的`!='y' && !='\n'`條件**兩章
-  都成立**。gate②③都不是分歧點,只剩gate①(phase)。**④直接讀phase getter
-  `FUN_00011aa8`的來源byte`[0x53a8e]`**(live`0x1EFA8E`):確認END前兩章都是
-  `0x1c`(通過);**確認YES後,ch03穩定維持`0x1c`(gate①持續通過,與觀察到的
-  dispatch一致),ch11穩定維持`0x50`(gate①持續不通過)**——同一個開環→END→
-  YES操作序列,兩章在按下YES後phase各自走向不同、且都穩定不變的終值,
-  分別橫跨~37秒即時取樣(本節)與~200秒`LOGC`視窗(①)全程未變。**這是本篇任務
-  五輪以來第一次把根因鎖定到單一、具體、可重複驗證的runtime狀態值差異**:
-  **ch11卡住的原因是gate①(phase)——`[0x53a8e]`在End-Turn確認YES之後停在
-  `0x50`而不是`0x39`/`0x1c`,导致`0x117e7`的三層巢狀條件在第一層就被擋下,
-  根本不會走到gate②③與`0x51b19`dispatch本身**(gate②③雖然本輪確認在ch11
-  也是「若走到就會通過」的狀態,但因為卡在gate①前面,實務上從未被真正求值到)。
-  **仍未解的下一層問題(誠實列出,非本輪範圍)**:`0x50`是什麼狀態、什麼
-  runtime邏輯把`[0x53a8e]`寫成`0x50`而非`0x1c`、以及它是否**理論上**會在
-  更久之後轉回`0x1c`(僅由①的~200秒LOGC窗口的觀察不足以完全排除「數分鐘
-  等級」的極端可能,但已經足以排除「幾十秒」等級)——這需要反組譯`0x53a8e`
-  的**寫入端**(不是已知的讀取端`FUN_00011aa8`),不在本輪範圍。**誠實建議**:
-  這是五輪對同一個章節的專門診斷,累計已排除的假說達到9個(handler本體不同/
-  掃描漏看敵人/native迴圈上界過小/dispatch走錯chapter index/`BPM`斷點結果
-  不可信/星之眼寶物門檻/「純粹時間不夠」/gate②游標不匹配/gate③per-unit
-  literal-byte不匹配),且本輪已經把根因窄化到單一具體runtime位址與具體數值
-  (`[0x53a8e]==0x50` vs `0x1c`)——這是目前為止最精確的定位,**但距離「找到
-  是什麼把它寫成0x50、以及有沒有辦法讓它變回0x1c」還需要至少一輪新的
-  callgraph/反組譯工作**(找`[0x53a8e]`所有寫入點,篩出哪些會在ch11這種
-  大型戰鬥(38+筆record)的End-Turn後路徑上執行)。**相對於本專案已經從
-  1/30章確認推進到17+/30章的整體進度,ch11這個單一章節目前已投入5輪專門
-  診斷**——如果下一輪的寫入端反組譯仍未能定案,建議**接受ch11為已充分記錄
-  的已知開放項**,把資源轉回`91-worklist.md`其他更高槓桿的項目(尤其
-  doc25§9.1的SAV writer gate,這是擋住*所有*章節拿到`pass`的更高優先級
-  瓶頸,不是ch11獨有)。完整寫法、逐步log、記錄dump見
-  `docs/knowledge-base/25-battle-event-system.md`§3.2.2 與
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第5輪
-  (代號`ch11cond`)」小節,live過程產物(screenshots/result.json)留存於
-  `.wsl_build/chapter_sweep_ch11cond/`(未納入git)。
+> **新驗收**：原版側的行為與數值基準，都有**可重跑的證據**——
+> 由 `tools/fd2_original_verify.py` 的 scenario 斷言涵蓋，而不是靠人眼看截圖。
+> 「可重跑」是關鍵：這個專案的歷史缺陷不是驗得不夠多，而是**驗過的東西無法再現、
+> 且錯了不會有人發現**（18 張對照圖中 13 張是自我複製，見 §4 稽核）。
 
-  **2026-08-28 第6輪(代號`ch11writer`,ch11專屬診斷計畫中最後一輪)——
-  修正第5輪的錯誤框架,但根因回到未定案**:回應上一輪建議,完整反組譯
-  `[0x53a8e]`的讀取端`FUN_00011aa8`(上一輪被`max_bytes`截斷,只看過前
-  18條指令)與呼叫端`0x117e7`,發現**整個「gate①(phase)」框架是誤判**：
-  `[0x53a8e]`其實是**鍵盤scancode暫存器**(`FUN_00011aa8`是阻塞式讀鍵
-  函式,忙等BIOS鍵盤緩衝區`[0x41a]`/`[0x41c]`非空,讀到鍵後remap兩個
-  numpad特例後存進`[0x53a8e]`),`0x117e7`是**13+分支的鍵盤事件
-  dispatcher**(對照標準PC/XT scancode表:`0x39`/`0x1c`=Space/Enter、
-  `0x48`/`0x50`/`0x4b`/`0x4d`=方向鍵……),先前五輪追的「gate①②③」只是
-  Enter/Space分支內部的邏輯,`0x50`(Down鍵)是完全合法的另一個獨立分支
-  (移動游標Y),不是卡住的失敗值。**live burst test直接推翻「gate①擋住
-  ch11」**:複製ch11標準流程到「卡住」狀態後,連續送25次真實Enter鍵,
-  **`phase`全部25次精確讀回`0x1c`(gate①每次都通過)**,游標移動10次後
-  收斂凍結在`(18,10)`,但**`pending_code`全部25次都是`0`,從未觸發勝利**
-  ——證明滿足gate①不足以讓ch11獲勝,真正根因不在gate①,回到未定案狀態,
-  但候選範圍已收斂到gate②③、章節勝負表本身、或`FUN_00016f55`(gate②
-  找不到單位時進入的另一大函式,語意上更接近批次End-Turn處理,下一輪
-  優先目標)。**協調端追加的「ch11有2筆camp==1記錄(珊+貝克威)」假說**
-  用第5輪已有的完整單位陣列dump直接排除(ch03/ch11都只有1筆camp==1)。
-  SAV writer gate方面順便靜態複核`FUN_0001cff0`/`FUN_00018d8c`,結構與
-  既有文件吻合但沒有新發現,真正的角色選人UI位址重新定位不在本輪預算內。
-  M5仍是0 pass,未變動。**誠實建議**:ch11累計6輪專門診斷、10+個已排除
-  假說,應正式列為已充分記錄的已知開放項,**不建議立即開第7輪**;整體
-  優先序建議維持第5輪的結論——把資源轉向doc25§9.1的SAV writer gate
-  (擋住*所有*章節、不只ch11的更高優先級瓶頸),但那需要一輪獨立的LOGC
-  ground-truth工作重新定位選人UI位址。完整寫法、逐次按鍵記錄見
-  `docs/knowledge-base/25-battle-event-system.md`§3.2.3 與
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第6輪
-  (代號`ch11writer`)」小節,live過程產物留存於
-  `.wsl_build/chapter_sweep_ch11writer/`(未納入git)。
-  **2026-08-28 第7輪(代號`ch11chest`)——ch11謎團解開**:回應使用者派工「round4測
-  「星之眼」寶物假說時用的是直接記憶體寫入`[0x53AD5]`旗標區塊,比照doc58續六十二/
-  續六十三ch27獵殺隊長章節先例,直接記憶體寫入不必然觸發真正UI互動才會走的事件鏈,
-  要求改用真正走位+開箱UI重測」。**結果:mass-kill+End-Turn的第一個kill-cycle,
-  3.9秒內`[0x53ecc]`從0翻成2(WIN)**——7輪以來第一次拿到engine-level win確認,而且
-  只真正開了一個寶箱(map10 slot10,(16,15),hidden=true,5000元;不是round4鎖定的
-  星之眼slot0)。過程踩到一個全新的自動化陷阱:`attempt_camp_exit()`宣告「已進入
-  戰鬥」後,這張地圖仍會繼續插播全螢幕劇情對白,先前3次移動嘗試的Escape/方向鍵其實
-  被對白框吃掉——用screenshot而非只信任記憶體讀值才抓到,修復方式是把
-  `screen_shows_battle_hud()`的HUD-gate邏輯延伸套用到移動序列的每一步。同時發現
-  round4結論需要**部分撤回**:真開箱前後`[0x53AD5]`旗標區塊全部12格依然讀0,代表
-  round4寫入的很可能是遊戲根本沒有讀取的欄位,不是「旗標設對了但被引擎忽略」。誠實
-  說明:N=1、未在同session重跑「不開箱」對照組,但與前6輪穩定的0/7+失敗率對比,是
-  極強的間接證據。磁碟存檔位元組依然沒有前進(doc25§9.1既有SAV writer gate問題,
-  非ch11專屬)。完整寫法見`docs/knowledge-base/25-battle-event-system.md`§3.2.4與
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第7輪(代號
-  `ch11chest`)」小節,live過程產物留存於`.wsl_build/chapter_sweep_ch11chest/`
-  (未納入git)。**下一輪建議**:①補一次嚴格對照組(同存檔完全不開箱)把因果證據
-  補強到有對照組等級;②反組譯真正開箱事件的writer,找出round4誤判的`[0x53AD5]`
-  真正語意與開箱事件實際寫入的欄位;③用同一套HUD-gate移動+開箱方法論排查ch04/07/
-  15/20攻略文字裡的「必須收集/取得」措辭是否也有被誤判為「與勝利無關」的收集類需求。
+### M5-A 基礎設施
 
-  **2026-08-28 第8輪(代號`ch11r8ctrl`+`ch11r8flag`)——round7「開寶箱造成勝利」的
-  因果歸因被推翻,ch11謎團改用更精確的模型正式收斂**:回應round7建議①②。Part 1
-  (`ch11r8ctrl`)補完嚴格對照組:逐字複製round7自動化但完全不開寶箱,直接進標準
-  3回合wait+mass-kill+End-Turn,`[0x53ecc]`確認維持`STILL_STUCK`(25個敵人全滅
-  後仍是0)——排除「round7贏只是自動化更可靠」。Part 2(`ch11r8flag`)重讀
-  doc25§3.2.1既有反組譯發現關鍵事實:`0x51b19`勝負判定表只在`FUN_00012c0d()`
-  (gate②,游標比對到活著單位)成立時才會被呼叫,而標準`confirm_end_turn()`
-  自動化為了穩定開環刻意把游標移到空地格才按Enter,結構上永遠不會讓gate②
-  成立;round7的開寶箱UI鏈(選人→移動→確認)則必然包含一次「游標停在活著單位
-  上按Enter」。用`move_only_test.py`把round7的選人→移動→確認待機UI鏈複製到
-  一個**相鄰空地格**(非寶箱,全程無法觸發任何寶箱對話框)後接標準流程:
-  **`[0x53ecc]`同樣翻成2(WIN),且`[0x53AD5]`12格旗標全程維持`[0,...,0]`**——
-  直接推翻round7「是寶箱造成翻盤」的因果宣稱,真正必要條件是「至少一個我方
-  單位完成一次Select→Move→Confirm(待機)的UI互動」,寶箱只是巧合伴隨。順帶用
-  doc11既有反組譯(2026-08-14,非本輪新工作)確認`[0x53AD5]`真正索引是
-  record`+0x3D`的`event_id`(非round4/round7假設的map.json slot序號,16槽
-  reward表意味著index可到15,已超出round4/round7只讀12格的窗口)——這已解釋
-  「為何round4/round7讀到12格全0」,不需要再猜測旗標被引擎忽略。live
-  32-byte diff複驗(`chest_diff_test.py`)兩次嘗試都因本專案已知的游標跳格
-  問題未能乾淨重現(移動實際未到位,ally record xy全程未變),誠實記錄為
-  inconclusive、不採信,但不影響Part 2已confirmed的核心結論。**M5仍是0 pass
-  (SAV writer gate獨立問題),但ch11專屬謎團現在有乾淨、有對照組的因果模型,
-  不建議再開新一輪專門診斷**(累計8輪、12+個假說已排除)。已把「mass-kill+
-  End-Turn前先讓至少一個我方單位做一次Select→Move→Confirm」寫進
-  `tools/fd2_chapter_sweep.py`(`ensure_one_ally_acts()`+
-  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL={11}`+`KNOWN_MIN_TURNS_BEFORE_KILL`
-  補上`11:3`)作為generalizable的可選修法,**並用`python tools/
-  fd2_chapter_sweep.py sweep --chapter 11 ...`實際end-to-end重跑過一次
-  確認可行**(不是只停在手寫一次性腳本):`[0x53ecc]`3.9秒翻2(WIN),
-  verdict為`anomaly_engine_win_no_disk_write`,與其餘已確認章節同一種
-  SAV writer gate模式。過程中修正過一次順序陷阱(單位動作必須接在3回合
-  等待**之前**,不是mass-kill前隨便哪裡插入都行)。完整寫法見
-  `docs/knowledge-base/25-battle-event-system.md`§3.2.5與
-  `docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第8輪」小節,
-  live過程產物留存於`.wsl_build/chapter_sweep_ch11r8ctrl/`、
-  `.wsl_build/chapter_sweep_ch11r8flag/`與
-  `.wsl_build/chapter_sweep_ch11r8verify2/`(未納入git)。
-- [~] **2026-08-28 關鍵修正：doc25§9.1「SAV writer gate」從一開始就是假問題，不是bug**——
-  使用者直接確認遊戲設計事實：**存檔只能在酒店進行，打贏戰鬥本身完全不會觸發自動存檔**。
-  這代表過去多輪(`saveE2`/`savewriter`/`camproute`/`writerfire`及本節18+個章節條目)
-  一直在追查的「為何磁碟chapter byte從沒前進」，前提本身就錯了——不是遺漏的writer呼叫、
-  不是時序問題、不是位址錯誤，是原版遊戲根本沒有戰鬥勝利後自動存檔這回事。已知的唯一存檔
-  路線(酒店icon1、`0x2968d`writer)本來就是選單驅動、玩家主動操作，不是戰鬥勝利的副作用；
-  camp-exit「要記錄戰況嗎？」提示雖然也呼叫同一個writer，但那依然是選單流程的一部分，
-  不是戰鬥勝利直接觸發。**M5正確的完成判準因此改為「引擎自身的勝利判定旗標(`[0x53ecc]`)
-  是否確實翻成2」**，而不是繼續追一個原版設計上不會發生的磁碟寫入——這個判準19個章節
-  (ch02/03/04/05/06/07/08/09/10/11/12/13/14/15/16/17/18/19/20)已經達成。若真的要驗證
-  「完整含存檔的可破關流程」，需要額外接一步「戰後回城鎮→進酒店→真正存檔互動」，這是
-  對工具的功能擴充，不是修bug。詳見memory `project_fd2_save_only_at_tavern.md`。
-- [x] **2026-08-28 `ch02final`輪：ch02收關，19/19個非結局分支章節的引擎層級勝利確認
-  全數達成**——ch02先前被`ch2killgen`輪刻意排除、獨立標記為「村莊保護race條件」調查線；
-  `diag2`輪(2026-08-27)已用逐record硬證據排除「村民被mass-kill誤殺」假說本身（村民
-  camp==1、idx5-10，`mass_kill_enemies()`只寫camp==0，全程未觸碰），但沒解開「10個敵人
-  確認全滅、村民毫髮無傷，`[0x53ecc]`依然讀0」的核心矛盾。本輪複查`docs/knowledge-base/
-  25-battle-event-system.md`§5既有反組譯，證實ch02的特殊postbattle handler(`0x206c5`)
-  結構上就是先呼叫與ch03/04/07/11/15/19/20共用的`0x205be`基準規則，再疊加一層「村民全滅
-  才覆寫成code1」的checkpoint（村民存活時完全不碰`[0x53ecc]`）——即ch02依賴的是與ch11
-  完全相同的gate②（`0x117e7`要求游標曾停在活著單位上按Enter，`confirm_end_turn()`的
-  End-Turn自動化結構上永遠不滿足這點），不是任何村莊專屬機制。直接把`ch11r8flag`輪解開
-  ch11的兩個修法(`ensure_one_ally_acts()`+`KNOWN_MIN_TURNS_BEFORE_KILL[2]=3`)原樣套用，
-  用`sweep --chapter 2`端到端live驗證：`ensure_one_ally_acts()`第一次嘗試即乾淨成功
-  （無需重試），3回合等待後mass-kill(10敵)+End-Turn**第一個kill-cycle**、2.0秒內
-  `[0x53ecc]`翻2(WIN)，871.4秒全程。磁碟chapter byte依然沒有前進（與SAV writer gate
-  獨立問題一致，不是新症狀），verdict為`anomaly_engine_win_no_disk_write`，與其餘18章
-  同一類別。**M5的引擎層級勝利確認章節數由18章增為19章（ch02-20全數達成）**，doc25§9.1
-  的SAV writer gate依然是擋住任何章節拿到真正`pass`的唯一剩餘瓶頸，M5仍是0 `pass`。
-  完整寫法見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28 第9輪」小節，
-  `tools/fd2_chapter_sweep.py`的`KNOWN_MIN_TURNS_BEFORE_KILL`/
-  `KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`已更新為ch02已驗證狀態。
-- [~] **2026-08-28 `ch01final`輪:ch01重新診斷,舊「roster caveat」假說已排除,但問題
-  未解——tally維持19/30不變**。回應派工單:ch02/ch11的gate②(`ensure_one_ally_acts()`)
-  +HUD-gating(`screen_shows_battle_hud()`)修法在2026-08-27原始ch01掃描時都還不存在,
-  本輪任務是重新確認舊「LOAD後全黑畫面」診斷是否只是同款假陰性。**結果:不是同款問題,
-  是更早、更根本的一層**——LOAD後黑畫面 100% 原樣重現,且窮盡60秒被動等待(不送任何鍵、
-  不進debugger)、15次額外Return按鍵、debugger交替enter/RUN連續6輪確認CPU仍在執行
-  (EIP在`0x1EA9E3~0x1EAA4A`一個約0x58 bytes的窄範圍內持續移動,不是進程凍結)三種獨立
-  方式,畫面像素**零變化**,battle array pointer全程未變合理值——確認真的卡住,不是舊版
-  工具11步/10秒的stall判定過早放棄。**直接對照實驗排除了roster caveat**:把同一份存檔
-  roster從13人裁減到1人(只留固定隊長)重新LOAD,黑畫面與CPU行為逐位元組/逐EIP-取樣
-  模式完全相同,即使裁到「正常玩家此時應有的1人」問題依然100%重現。**新假說(未驗證)**:
-  `docs/knowledge-base/46-ch1-opening-timeline.md`記錄正常New Game流程下ch01有約6分14秒
-  的多幕開場(王座廳/草地/密林/行軍蒙太奇/海島,由`[0x53c03]`章節值驅動的cutscene
-  handler`0x3231b`觸發);LOAD-into-ch01 patch的正是同一個章節byte,理論上可能嘗試重播
-  同一段開場,但王座廳背景理論上應該在LOAD後幾秒內就淡入畫面、不該連續60秒+15次Return
-  維持純黑——推測New Game分支可能有一段只有「開新遊戲」才會執行的初始化(場景/角色走位
-  座標表等),單純LOAD會跳過它,讓cutscene dispatch卡在某個等待迴圈(可能就是觀察到的
-  `0x1EA9E3`窄範圍延遲迴圈)裡永遠等不到條件成立。**這代表ch01可能是本專案唯一一個
-  chapter-jump-via-fd2save標準做法從結構上就不適用的章節**(不像ch21-26/28那樣LOAD機制
-  本身沒問題、只是選人門檻另有問題)——也與doc91既有「存檔只能在酒店進行,酒店要到ch02
-  camp-map才存在」的結論一致:玩家在原版設計下永遠不可能產生一份chapter byte=0的存檔,
-  這個輸入本身就沒有合法來源。**M5引擎層級勝利確認章節數維持19章(ch02-20)不變**,tally
-  維持19/30。完整寫法、四種獨立驗證方式的細節、下一輪建議(反組譯延遲迴圈呼叫端/嘗試
-  真正New Game路徑對照)見`docs/knowledge-base/99-chapter-sweep-results.md`「2026-08-28
-  `ch01final`輪」小節。`tools/fd2_chapter_sweep.py`本輪未修改(`KNOWN_MIN_TURNS_BEFORE_
-  KILL[1]=6`/`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`加入`1`已在文件中記錄為「若之後解開
-  LOAD卡點才用得上的預備參數」,未寫入程式碼,因為連戰鬥都沒摸到,沒有依據能驗證它們)。
-- [x] **2026-08-28/29 `ch01newgame`輪:新假說直接證實,ch01改用genuine New Game路徑
-  進入真正可操作戰鬥,`[0x53ecc]`直接記憶體讀值確認為2(win)——M5引擎層級勝利確認
-  章節數由19章(ch02-20)增為**20章(ch01-20全數連續達成)**,tally 20/30**。完全不
-  patch任何存檔,從標題畫面選真正「START」,批次送Return推進整段開場——doc46記錄的
-  完整逐幕時間軸(王座廳→索爾退朝走位→郊外草地→後山密林比劍+蓋亞阻擋+悠妮甦醒→無對白
-  行軍蒙太奇→海島遇海盜→指令環出現)逐幕截圖核對,與`ch01final`輪的LOAD後純黑畫面
-  完全不同——**直接證實`ch01final`輪的新假說**:LOAD-into-ch01(`chapter byte=0`的
-  存檔)在結構上確實不是ch01的合法引擎入口點,原生設計下玩家永遠只能透過完整New Game
-  第一次進入ch01。指令環出現後復用`tools/fd2_chapter_sweep.py`既有函式(未新增/未修改
-  該檔案本身,只是外部一次性driver script `import`呼叫)`ensure_battle_hud`/
-  `scan_enemy_slots`/`ensure_one_ally_acts`(gate②)/`mass_kill_enemies`,最後手動
-  進debugger直接讀`[0x53ecc]`(live`0x1EFECC`)=`02 00 00 00`,與ch02-20全數採用的
-  同一個ground-truth判定準則完全一致。自動化`confirm_end_turn()`本身這次因為呼叫前
-  指令環已意外開啟(先前手動批次Enter選中索爾原地confirm)而未能正確找到自由地圖游標、
-  誠實回報`engine_win=False`,靠手動4次Escape清空選取後才觀察到戰後村民感謝對白+
-  `[0x53ecc]=2`確認——這是`ensure_one_ally_acts`/`find_empty_adjacent_tile`既有防呆
-  設計正確拒絕誤判成功,不是這兩個函式的新bug。誠實揭露:`scan_enemy_slots`本輪掃到
-  59筆`camp==0`record(外部攻略記載`ENEMY·07`),根因未查明;手動繞過的觸發機制
-  (為何4次Escape後勝利就已解決,不需要完整End-Turn UI序列)也未反組譯查明。`tools/
-  fd2_chapter_sweep.py`本輪未修改——ch01的New-Game-only路徑結構上不適用現有`sweep
-  --chapter N`(圍繞`--source-sav`+LOAD設計),留給下一輪視需求決定是否要寫獨立子指令。
-  完整寫法、逐幕截圖對照、三項誠實未解問題見`docs/knowledge-base/99-chapter-sweep-
-  results.md`「`ch01newgame`」輪小節;`docs/knowledge-base/46-ch1-opening-timeline.md`
-  §11 補了原生引擎live互動實測與錄影逐幀分析的交叉驗證記錄。
-- [~] **remake 側正常玩法可達性驗證(Phase 4,真正對應 M5 驗收句)**——2026-08-31:
-  以上所有「正常玩法可達性驗證」條目都是對**原版 DOSBox-X**的掃描,本項才是第一次
-  真正對**remake 自己**、**完全不掛任何 `FD2_SHOT_*`/`FD2_CAMP_*` debug hook**、
-  100% 用 `xdotool` 合成鍵盤輸入從標題畫面開始玩的嘗試(方法沿用 doc98「remake 側
-  xdotool 合成鍵盤輸入可靠性」一節)。**誠實範圍**:只驗證了 ch01,尚未實際打贏——
-  但過程中找到並修好一個會擋住**每一章**開局的架構性 bug:`applyPersistentStats()`
-  把 `g.partyRoster`(native JOIN constructor 重建、天生沒有姓名概念)的空字串姓名
-  無條件覆寫回剛用 scenario 正確具名的單位,導致 `checkResult()` 寫死的
-  `u.Name=="索爾"` 存活判定永遠找不到人,**每場戰鬥第一次 Tab 結束回合就會誤判
-  敗北,與索爾實際 HP 無關**。修復(拿掉 `Name` 這個欄位的持久化轉移,commit
-  `faecef3e`)後,用同一套 no-debug-hook 流程重播確認:同一場 ch01 戰鬥連續存活
-  3 個完整回合(2 次真正 ENEMY PHASE+2 次敵方 AI 行動),零虛假敗北。也用真實
-  攻擊確認了戰鬥剪影動畫、傷害數字(「亞雷斯 攻擊 盜賊,造成 21 傷害」)、指令環
-  UI(含 native FDOTHER availability word 驅動的「此指令目前不可用」真實原版
-  行為)、Tab 結束回合/敵方 AI 回合、Escape 逐層取消——全部經真實輸入路徑確認
-  正常運作。**這個 bug 修復前,M5 milestone 的驗收句(無 debug hook 正常玩法可達)
-  理論上不可能通過**,因為序章對白流程本身就會觸發第一次 `applyLoadCH`、填入
-  `g.partyRoster`,讓每一章開局立即誤判——這正是為什麼這個專案史上從未真正做過
-  這件事的根本原因(所有先前驗證都繞過序章直接跳章節,從未走過會觸發這個 bug 的
-  路徑)。完整方法論、debug 追蹤鏈、逐項驗證清單、已知次要發現(指令環輸入節流、
-  視覺鄰格≠邏輯鄰格)、下一輪具體建議(已算好的 `own_deploy`/敵方座標表)見
-  `docs/knowledge-base/92-m5-normal-playthrough-log.md`。下一輪應直接延續打贏
-  ch01,驗證 postbattle 轉場(`on_win: story_ch02`)後繼續往後推進。
-- [~] **remake 側正常玩法可達性驗證(Phase 4)續二**——2026-09-01:同一場 ch01 戰鬥
-  繼續打(T1→T4),**誠實範圍**:仍未打贏(enemy7 只讓一隻剩8血),但首次透過
-  純真人輸入完成雙向真實命中/未命中/挨打(亞雷斯造成20傷害命中+一次未命中,
-  敵方兩度造成18傷害命中),T3→T4觸發「哈諾」入隊劇本(own4→own5,ally0→ally1)。
-  4 個完整回合零虛假敗北,`faecef3e` 修復依然穩固。**額外發現兩個真實 bug**(留
-  待未來 session 修):①`main.go:2965` 的 `join_party` T3 錯誤(`headless_battle_
-  test.go` 早已記錄為「已知瑕疵,只有孤立 headless harness 才會踩到」),本輪
-  用真正的完整 campaign 路徑走過去**依然重現**,推翻了「僅限孤立 harness」這個
-  侷限性假設——影響面比原記載更廣,但功能上無害(哈諾仍靠同 trigger 的
-  `spawn_group` fallback 正常入隊)。②悠妮(唯一走 native-command 路徑而非
-  legacy 法術系統的角色)一旦進過一次原生指令目標選擇(如嘗試施放火炎術)又用
-  Escape 取消,**她的指令環在同一場戰鬥剩餘時間內永久打不開**(索爾/亞雷斯/
-  蓋亞不受影響),懷疑是 `g.nativeCommand0Targeting`/`g.nativeCommandOpen` 這組
-  旗標的 Escape 復原路徑(`main.go:5639`/`6659-6667`/`4445-4499`)有漏洞,但本輪
-  只確認症狀未釘死根因。本輪同時發現並清理了一個**真正的孤兒 process**(前一次
-  被 API rate limit 中斷的嘗試留下活了近13小時的 `Xvfb :972`+`fd2-linux-verify`
-  +tmux session,與交辦時「已確認零孤兒」的說法矛盾,懷疑該檢查用錯 WSL
-  distro/時間點)。完整方法論、F3 debug HUD 用法(比螢幕觀感精準)、方向鍵→格子
-  純正交映射的釐清、兩個 bug 的完整 repro 細節見 `docs/knowledge-base/
-  92-m5-normal-playthrough-log.md` 2026-09-01 續二段落。下一輪建議**優先修
-  悠妮的環卡死 bug**(直接影響她整場戰鬥能否出手,是打贏 ch01 的實質
-  阻礙),再繼續清空剩餘敵人。
-- [~] **remake 側正常玩法可達性驗證(Phase 4)續三**——2026-09-01:用新建的
-  `tools/fd2_live_input_helper.py`(全程 `--settle` 逐鍵確認)重跑續二記錄的
-  「發現三」(悠妮環卡死)原始 repro,單次/三連/0.1秒間隔連續 Escape 都
-  **無法重現**,環每次都正常重開、`Acted` 從未被誤設。判定續二的「永久卡死」
-  是該輪 ad-hoc `xdotool key` 輸入不可靠的偽陽性,不是真實 code bug,**未
-  修改任何程式碼**。完整 repro 細節見 doc92 續三段落。
-- [~] **remake 側正常玩法可達性驗證(Phase 4)續四(★ 本輪最重大發現)**——
-  2026-09-01:**證實標準「buff/nerf JSON」測試捷徑(`ch01.json` 主角
-  hp/mp/ap/mv=9999、`map0_units.json` 敵方 hp/mp/ap/dp=1)對「真正走過
-  序章對白→LOADCH→戰鬥」這條 Phase 4 要求的路徑完全不生效**——不是本輪
-  操作失誤,是這個專案的 native record 重建系統(`applyPersistentStats`/
-  `MaterializeNativeJoinPersistentUnit` 處理主角隊,另一個目前未完全定位
-  呼叫點的類似機制處理敵方 group1/group2)在多個節點都會用 class/growth
-  table 重新算出 HP/MP/AP/DP/MV,無視 scenario/map JSON 宣告的數值。主角隊
-  失效的根因已完全釘死(`main.go:2651`);敵方 nerf 失效用臨時 debug print
-  追蹤到「LOADCH 當下正確(hp=1)、戰鬥開始前被還原成 vanilla(hp=28)」,
-  但確切覆寫點本輪未能完全定位(已排除 `AdoptHandlerBattleState`/
-  `materializeStoryGroup`/`AppendNativeMapSelectorBatch` 等候選)。**這代表
-  續一/續二/續三記錄的所有戰鬥數值其實全部都是 vanilla 難度**(沒人拿
-  9999/1 去對照過,回頭看是件好事——反而是更強的「無 debug hook 正常玩法
-  可達」證據,只是伴隨風險比原以為的高)。本輪同時修正了對指令環方向鍵的
-  誤解(不是「移動焦點」,是`main.go:4345`自己註解好的「↑攻擊/←法術/→物品/
-  ↓待機」直接映射),並首次完整驗證了「開環→選攻擊→目標選擇→confirm」
-  全流程在真人輸入下正確執行(命中 22 傷害、敵方反擊 17 傷害)。**誠實
-  範圍**:ch01 本輪仍未打贏,且過程中使用的除錯 instance 未能保留到本輪
-  結束(細節見 doc92),下一輪需要重新從序章開始。完整根因追查鏈、已排除
-  候選、給下一輪的具體 debug 建議見 `docs/knowledge-base/
-  92-m5-normal-playthrough-log.md` 2026-09-01 續四段落。**下一輪建議**:
-  直接放棄 buff/nerf 捷徑,vanilla 難度重打 ch01(一次命中約20-22傷害,
-  敵方反擊約17-18傷害,索爾/亞雷斯/悠妮/蓋亞 HP 分別42/48/28/50)。
-- [~] **remake 側正常玩法可達性驗證(Phase 4)續五~八——2 個真實 remake
-  顯示 bug 已用 DOSBox-X 原版交叉驗證確認、均未修復,使用者已暫停以
-  remake 輸出當驗證依據;第 3 個原本以為的資料層 bug 當天已撤回**——
-  2026-09-01:續五/續六發現 ch01 戰鬥中兩個 remake 專屬顯示 bug(攻擊選
-  目標面板把敵方肖像畫成索爾;閒置戰場地圖把敵方單位畫成索爾,選取別的
-  單位觸發 range overlay 才暫時變對、取消又變錯)。續七一度誤判多抓到
-  第三個資料層 bug(盜賊真實 HP 疑似是 2,remake 匯出成 28),但續八
-  深入複查後**撤回這個結論**——完整反組譯覆核建構器
-  `0x10d7f..0x11018`、逐位元組核對 growth table,證實 `export_units.py`
-  的公式、索引、表格資料全部正確,28 才是對的。誤判根因:當時用來對照
-  的 DOSBox-X「原版」ground truth 檔案 `~/fd2-run/FD2.EXE` 本身是被污染
-  過的——2026-08-19 一個不相干的 ch24 調查留下未還原的 debug patch,把
-  68 筆 high_class 表格裡 52 筆(raw_unit_key 76-127,含盜賊96)的
-  HP/MP/AP/DP/DX 成長率位元組清成 1,導致真人在原版看到的是被竄改的假
-  數值,不是真正的原版行為(用 `cmp`+md5 比對 `FD2.EXE.pristine_bak` 與
-  另外兩份獨立備份確認,three-way 一致,`~/fd2-run/FD2.EXE` 是唯一不同
-  的那份)。**`~/fd2-run/FD2.EXE` 目前仍未還原**(它同時是另一條不相干
-  ch24/ch27 調查線的存檔checkpoint,還原前需要先確認不會弄丟那邊的進度)
-  ——下一輪任何要用 `~/fd2-run` 對 raw_unit_key 76-127 這個範圍做 HP/MP/
-  AP/DP/DX ground truth 核對的人,務必先跟 `pristine_bak`(或
-  `Desktop/GAME/FD2/FD2.EXE`)核對過,不要直接信 `~/fd2-run`。真正確認
-  未修復的只剩 2 個(肖像面板、地圖貼圖,兩者都跟數值資料無關,不受這次
-  撤回影響)。**使用者明確指示「remake版本無法完全正常執行,不要用來做
-  驗證使用」**——在這 2 個 bug 修好之前,remake 的即時輸出(截圖/HUD數值)
-  不能當作驗證原版行為的依據;原版佐證改用 DOSBox-X 即時操作或已驗證的
-  靜態資料時,也要記得原版來源檔案本身可能被污染,不能盲信。完整證據鏈
-  見 `docs/knowledge-base/92-m5-normal-playthrough-log.md` 續五~八。
-  **下一輪建議**:優先修那 2 個真正確認的顯示 bug,不需要再花時間查資料層
-  HP 問題(已排除);決定要不要還原 `~/fd2-run/FD2.EXE` 前,先確認 ch24/
-  ch27 那條調查線的狀態。
+- [x] **宣告式／平行／分層驗證器** `tools/fd2_original_verify.py`（2026-09-03）：
+  scenario 是資料；斷言分 L1 reach／L2 content／L3 data；L1 失敗即中止該 scenario，
+  不會繼續在未知畫面上按鍵。`--selftest` 80 項離線自檢。
+- [x] **harness 可真正平行**：`dosbox_harness.sh` 的 display port TOCTOU race 已修在來源
+  （`reserve_display_port`＋flock），回歸測試 `tools/test_dosbox_harness_ports.sh` 21 項，
+  含一項「證明測試本身抓得到該 bug」的相撞對照組。
+- [x] **參考圖進版**：`REF_DIR` 原本指向被 `.gitignore` 排除的 `.wsl_build/`，
+  等於所有 `assert_ref` 都指向未 commit 的檔案；已移至 `tools/verify_refs/`。
 
-- [x] **remake 側正常玩法可達性驗證(Phase 4)續九——上面續五~八記錄的 2 個
-  remake 專屬顯示 bug(目標面板肖像索爾化、地圖 sprite 索爾化)已 100% 定位
-  根因並修復,live 重新驗證通過**——2026-09-02:兩個 bug 共用同一個根因:
-  `internal/battle/model.go` 的 `MaterializeNativeMapSelectorSlots` 把
-  `NativeSelectorCache`(0x11019 process-global raw-key→slot cache 的 Go 重建,
-  同時餵地圖 sprite 繪製與 HUD 目標小圖示兩條路徑)的 key 設成
-  `MapSelectorKey`(FDFIELD b0)——但 b0 逐行核對後證實只是陣營碼
-  (`parse_field.py` 自己就是 `["enemy","ally","own"][b0]` 解碼),同陣營所有
-  單位不管長相全部同一個 b0,而玩家隊伍的 key 用 `Fig`(索爾=0)——兩個不該
-  比較的 key namespace 被塞進同一顆 cache,加上「先建構者先拿到 slot、同 key
-  者共用 slot」的 first-seen 規則,索爾(隊伍永遠先構造)把 slot 0 綁定給
-  key=0,任何 b0=0 的敵人(map0 全部初始盜賊)afterwards 撞進同一個 slot,
-  兩條繪圖路徑因此都畫成索爾。修復:改用 `BattleFig`(FDFIELD b1/
-  `raw_unit_key`)當 cache key——獨立佐證:`tools/export_sprites.py` 直接用
-  這個值當 FDICON.B24 archive 的 group index(1680 張/140 組,只有 b1 值域
-  對得上),`fig_096_*.png` 視覺上正是盜賊造型;`Fig` 欄位既有註解本身寫著
-  「native source is unit+2」;`internal/campaign/church.go` 職業轉換的
-  既有反組譯佐證也明確寫「玩家 unit+7 同時是下一次 0x11019 raw key」,跟
-  player-side 既有 `MapSelectorKey: pm.Fig` 用法完全一致,證明問題只出在
-  FDFIELD 這一側被錯用了 b0。`MapSelectorKey`/`NativeRecordByte6` 兩個
-  provenance 欄位維持不動,只換掉繪圖 cache 的輸入。commit `6eaf7fef`
-  (`internal/battle/model.go` + 7 個測試檔案更新/新增回歸測試
-  `TestChapter1InitialThievesDoNotAliasSolsNativeMapSelectorSlot`)。
-  `go build`/`go vet`/`go test ./remake/...` 全綠。用
-  `tools/fd2_live_input_helper.py` 全新隔離 instance 重新走過序章進 ch01
-  戰鬥(WSL2 側 `$HOME/go/bin/go build` 重編二進位,第一次忘記重build拿舊
-  binary 驗證還看得到 bug,發現後重編重跑),截圖放大確認:地圖閒置畫面盜賊
-  群正確顯示自己的紅頭巾+黑護目鏡造型(不再是索爾的藍髮);攻擊選目標面板
-  對盜賊正確顯示自己的臉+HP028;己方單位(亞雷斯/悠妮)全程肖像/HP 正確,
-  無回歸;teardown 確認乾淨(`status`/`ps aux` 均無殘留)。完整根因鏈、
-  測試變更清單、live 驗證截圖細節見
-  `docs/knowledge-base/92-m5-normal-playthrough-log.md` 2026-09-02 續九。
-  **Phase 4 目前已知的 remake 顯示 bug 清單清空**;M5 驗收句要求的「正常
-  玩法可達性」本身是否已完成仍取決於續四記錄的「LOADCH→戰鬥」路徑等其他
-  未解問題,不因這輪修復自動視為 Phase 4 全部完成,但這 2 個曾經明確阻擋
-  「remake 輸出可信」的顯示 bug 已不再是阻塞點。
+### M5-B 已建立的原版基準
 
-- [x] **remake 側正常玩法可達性驗證(Phase 4)——移除,非暫停(2026-09-02,使用者明確指示)**:
-  同一輪續九完成後,重新接續Phase4(打完ch01剩餘敵人),過程中用了一個新增的
-  `FD2_DEBUG_STATS=1`除錯熱鍵(F10全滿/F12即死全滅,目的是加速手動UI操作的戰鬥
-  ,因為單靠鍵盤模擬逐格操作耗時過長)。這個捷徑本身也意外發現一個真實的
-  remake bug:太早觸發F12即死(ch01第2回合)會跳過哈諾原本該在T3→T4觸發的
-  劇本入隊,導致下一個`loadch` beat因為`party JOIN chronology`跟binding預期
-  對不上而fail-closed卡死(`main.go:1178-1186`「fail closed rather than
-  continuing」是刻意設計,非crash)——這是使用者這次操作方式導致的,不是
-  remake本身的bug。使用者中途明確喊停:「已經命令你不准使用remake了」,
-  詢問後選擇「Phase 4整個先暫停」;隨後進一步明確要求**移除**這個項目:
-  「那就把這項移除 我不需要remake驗證過的資料 那本身就有問題 驗出來的也
-  會有問題」。**這不是暫停,是整個項目被使用者判定為不需要而移除**:
-  往後不得為了驗證目的執行/啟動remake(`fd2-linux-verify`/`remake/play.sh`/
-  `fd2_live_input_helper.py`/任何`go run`啟動`remake/cmd/fd2`皆算),除非
-  使用者明確要求恢復。純靜態的`go build`/`go vet`/`go test`不受影響。本輪
-  新增的`FD2_DEBUG_STATS=1`除錯熱鍵程式碼(`main.go`/`save.go`)未commit,
-  已用`git checkout --`還原,repo裡沒有殘留。**M5本身的驗收句「從序章玩到
-  結局...正常玩法可達(無 debug hook)」目前沒有任何替代達成路徑**——這不是
-  這個checkbox能單方面解決的事,需要使用者對M5驗收標準本身給出新方向才能
-  真正關閉這個里程碑;在那之前,M5視為擱置,不視為完成也不視為進行中。
-  完整决策過程見plan file `hazy-crunching-liskov.md`「Phase 4 — REMOVED」段落、
-  memory `feedback_fd2_re_remake_verification_paused`(2026-09-02 ESCALATION段落)。
-  已修復並已commit的既有成果(續一~續九的bug修復、Phase3的AP/DP/MV/DX修復)
-  不受影響、繼續有效——被移除的只是「用remake live output做驗證」這個做法
-  本身,不是回退任何已經合併的程式碼修復。
+- [x] ch01 隊伍 MV／盜賊 HP（新遊戲 LV.01 實讀，三方一致）
+- [x] 城鎮三個 variant（ch02／ch12／ch03）各 5 個 selection，15 格 MD5 全異
+- [x] 商店／教會 8 個服務的完整對應表（**服務選單無可見選取標示**，只能由畫面文字判定）
+- [x] 教會名冊全 13 人，與存檔 `roster_char_ids` 順序一致
+- [x] 秘密商店：`Shift+F1` @ selection0 酒店；**適用範圍只有 ch02**（ch12／ch03 無反應，
+      含 6s／12s 長等待，且待機動畫證明未凍結）
+- [x] 售出流程（+18000 且欄位清空）
+- [x] **購買＋裝備實際執行**：`after = base − 目前護甲 + 新品`（替換非疊加），
+      12 筆觀測交叉一致；物品標籤**不是**其效果的完整清單
+
+### M5-C 被證偽圖的原版側命題，逐項重測（使用者指示）
+
+2026-09-03 使用者指示：**「那 13 張被證偽圖對應的結論要逐項用原版重測」**。
+
+這 13 張圖的原始命題都是「remake 與原版一致」，**parity 那一半已隨 `remake/` 移除而失去
+意義**；但每個對應的 worklist 條目裡都還包含一個**純原版側的可驗事實**（例如「原版
+service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重測的是那一半。**
+
+| # | 被證偽的圖 | 原版側命題 | 狀態 |
+|---|---|---|---|
+| 1 | `secret-shop-ch02` | ch02 存在秘密商店揭示 | ✅ 已重測（並補測適用範圍） |
+| 2 | `secret-shop-ch02-services-return` | 秘密商店內 4 服務 `Right 0→1→2→3→0`／`Left 0→3`；Escape 回 town 隱藏 selection5 | ⬜ 待測 |
+| 3 | `shop-equipment-recipient-ch02` | 裝備收受者清單內容（商品/價格/三列 window/FDICON cycle） | 🟡 清單內容與職業過濾已測；**三列 window 捲動**與 FDICON cycle 未測 |
+| 4 | `shop-equipment-recipient-selection1` | selection1 的收受者清單 | ⬜ 待測 |
+| 5 | `shop-purchase-ch02-selections` | 購買清單 `Right 0→1`／`Down 1→3`／`Left 3→2` | ✅ 已重測（與本次網格對應一致） |
+| 6 | `shop-purchase-confirm-ch02` | 「布衣／50元／要不要啊？」；`Right`→No、`Left`→Yes | 🟡 對白文字已重測；**Yes/No 切換**未測 |
+| 7 | `shop-purchase-debit-ch02` | 購買扣款 | ✅ 已重測（精確 −300） |
+| 8 | `shop-purchase-insufficient-ch02` | `gold<price` 顯示「錢不夠！」＋等待標記 | ⬜ 待測（本機存檔 $10M，需先製造買不起的狀態） |
+| 9 | `shop-purchase-success-ch02` | 購買成功 | ✅ 已重測 |
+| 10 | `shop-variants-1-3-5` | selection1→武器店 variant1、selection3→道具店 variant3、variant5 | ⬜ 待測 |
+| 11 | `town-hub` | ch02 城鎮 hub | ✅ 已重測 |
+| 12 | `town-hub-selection1` | selection1 | ✅ 已重測 |
+| 13 | `town-hub-six-selections` | selection 0–5（含隱藏 5） | 🟡 0–4 已重測；隱藏 selection5 併入 #2 |
+
+**方法要求**（不只是「再看一次」）：每一項重測都要落成
+`fd2_original_verify.py` 的 scenario，且畫面身分由**畫面自身的文字**判定，
+不得由按鍵次數推論。重測完成的項目要同時把原 worklist 條目標註為
+「parity 命題已失效／原版側命題已重測」。
+
+### M5-D 其他原版側缺口
+
+- [ ] 服務的實際執行：**轉移**（裝備已完成；復活／轉職在更早輪次已有各自的執行紀錄）
+- [ ] `$0` 售價品項能否售出
+- [ ] 收受者清單職業過濾的**完整對照表**（目前只讀了各清單前 3 列，結論是方向性的）
+- [ ] variant1／variant2 是否有各自的隱藏觸發鍵（本輪只測了 ch02 那一組鍵，未做按鍵空間搜尋）
+- [ ] 轉職成長 range 的**獨立樣本**重驗（原 5 次 trial 因 RNG 綁按鍵/tick 而非獨立，
+      原記的「PASS(5/5)」高估了證據力）
+
+### M5-E 不屬於本里程碑（明確排除）
+
+- 「無 debug hook 的正常玩法通關」——那是 remake 的驗收語意，隨 remake 移除而失效。
+  原版側已有 `tools/fd2_chapter_sweep.py` 的**結構性**掃描（含 debug hook，
+  30 章零崩潰、全部 `needs_manual_followup`），該工具與結論保留在
+  `docs/knowledge-base/99-chapter-sweep-results.md`，但**不再作為 M5 的驗收條件**。
 
 ## M6 — 跨平台打包(回頭做網頁/手機)
 > 驗收:Windows/macOS/Linux 桌面包 + 網頁 + Android APK。
