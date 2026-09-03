@@ -812,7 +812,9 @@ def cmd_mem_resolve_ptr(args):
 
 
 def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: int,
-                    out_dir: Path, delta: int | None = None) -> dict:
+                    out_dir: Path, delta: int | None = None,
+                    candidates: list[int] | None = None,
+                    verify_suffix: str | None = None) -> dict:
     """Read any documented global by its Ghidra address, via signature delta.
 
     The executable is flat, so code and data share one load-time delta: calibrate it
@@ -828,8 +830,37 @@ def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: i
     recorded a wrong scene label that came from a listening impression.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # FAST PATH: verify candidate deltas against a known byte signature of the variable
+    # itself, instead of searching for the code signature.
+    #
+    # Full calibration dumps 2 MB (0x100000..0x300000) through the paused ncurses
+    # debugger a chunk at a time: measured at 7+ minutes per read, and it timed out six
+    # scenarios at 900s each. But the delta only ever takes a handful of values, and a
+    # correct read is recognisable on sight -- the BGM global reads
+    # `NN 05 00 00 00 00 00 00 00 fb ff ff ff fb ff ff`, where only NN varies. Checking
+    # one candidate is a 16-byte read, i.e. seconds. Search is kept as the fallback for
+    # when no candidate fits.
+    if delta is None and candidates and verify_suffix:
+        for cand in candidates:
+            probe = out_dir / f"probe_{cand:x}.bin"
+            try:
+                path, _ = mem_dump(instance, selector, f"{ghidra_addr + cand:x}",
+                                   f"{max(bytecount, len(verify_suffix) // 2 + 1):x}", probe)
+            except Exception:  # noqa: BLE001 - a bad candidate must not abort the rest
+                continue
+            raw = path.read_bytes()
+            if raw[1:1 + len(verify_suffix) // 2].hex() == verify_suffix.lower():
+                delta = cand
+                break
+        if delta is None:
+            return {"delta": None, "delta_source": "candidates-exhausted",
+                    "error": f"none of the candidate deltas {[hex(c) for c in candidates]} "
+                             f"produced the expected signature; re-run without "
+                             f"--candidates to do a full search"}
+
     if delta is None:
-        # Calibrate: dumps 200KB through the paused debugger TUI, which is by far the
+        # Calibrate: dumps 2 MB through the paused debugger TUI, which is by far the
         # slowest part of this call (minutes, and it gets slower with instances running
         # in parallel).
         code_dump = out_dir / "code_dump.bin"
@@ -844,15 +875,24 @@ def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: i
             return result
     else:
         # Caller supplied a previously calibrated delta, so this reads only `bytecount`
-        # bytes. That is the difference between a multi-minute call and a quick one, and
-        # it is what makes reading a global at many screens practical.
+        # bytes instead of dumping 200KB.
         #
-        # A pinned delta is an ASSUMPTION (that every instance of this binary loads at
-        # the same address), so a caller using it MUST include a control whose correct
-        # value is already known independently -- e.g. read the BGM track on the title
-        # screen, where doc12 proves it is 18. A wrong delta yields garbage, not 18, so
-        # the control fails loudly instead of the batch quietly reporting wrong numbers.
-        result = {"delta": hex(delta), "delta_source": "pinned"}
+        # *** DANGEROUS ACROSS GAME STATES -- measured 2026-09-03. ***
+        # The delta is NOT constant within a single run: at the title it was 0x19a900,
+        # and after LOADing into the game the SAME instance calibrated to 0x19c000
+        # (0x1700 higher). Reading the BGM global with the title's delta while in-game
+        # returned bytes that decode as the ASCII "AIL_DEBUG" -- a completely different
+        # region -- yet nothing errored; the value simply looked like a number.
+        #
+        # A control does NOT rescue this unless it is taken in the SAME state as the
+        # measurement. The batch that hit this had one (title must read 18) and it
+        # passed, because the title is exactly where the delta had been calibrated --
+        # a degenerate control that could only ever confirm itself.
+        #
+        # So: pin a delta only for repeated reads within ONE unchanging state, and
+        # re-calibrate after anything that changes what the program has loaded.
+        result = {"delta": hex(delta),
+                  "delta_source": "verified-candidate" if candidates else "pinned"}
     live = ghidra_addr + delta
     result["ghidra_addr"] = hex(ghidra_addr)
     result["live_addr"] = hex(live)
@@ -860,6 +900,14 @@ def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: i
                        out_dir / "global_dump.bin")
     raw = path.read_bytes()[:bytecount]
     result["raw_hex"] = raw.hex()
+    # Cheap wrong-address detector: printable ASCII across the read is a strong sign
+    # the delta put us in a string table rather than the variable we asked for. This
+    # is how the stale-delta reads announced themselves once the bytes were looked at
+    # instead of just the first one.
+    printable = sum(1 for b in raw if 32 <= b < 127)
+    if len(raw) >= 8 and printable >= len(raw) * 0.6:
+        result["warning"] = (f"read looks like ASCII text ({raw[:16]!r}) -- the delta is "
+                             f"probably wrong for this state; re-calibrate")
     result["u8"] = raw[0] if raw else None
     if len(raw) >= 4:
         result["u32"] = int.from_bytes(raw[:4], "little")
@@ -869,9 +917,11 @@ def mem_read_global(instance: str, selector: str, ghidra_addr: int, bytecount: i
 def cmd_mem_read_global(args):
     out_dir = Path(args.out_dir) if args.out_dir else (
         DEFAULT_SHOT_DIR / args.instance / f"global_{int(time.time())}")
+    cands = [int(c, 16) for c in args.candidates.split(",")] if args.candidates else None
     r = mem_read_global(args.instance, args.selector, int(args.ghidra_addr, 16),
                         args.bytecount, out_dir,
-                        delta=int(args.delta, 16) if args.delta else None)
+                        delta=int(args.delta, 16) if args.delta else None,
+                        candidates=cands, verify_suffix=args.verify_suffix)
     if "signature_hits" in r:
         print(f"signature hits: {r['signature_hits']}")
     print(f"delta: {r['delta']} ({r['delta_source']})")
@@ -881,6 +931,8 @@ def cmd_mem_read_global(args):
     print(f"ghidra {r['ghidra_addr']} -> live {r['live_addr']}")
     print(f"raw: {r['raw_hex']}")
     print(f"u8={r['u8']}" + (f"  u32={r['u32']}" if "u32" in r else ""))
+    if "warning" in r:
+        print(f"WARNING: {r['warning']}", file=sys.stderr)
 
 
 def cmd_mem_read_unit_array(args):
@@ -1070,6 +1122,13 @@ def build_parser():
                          "an ASSUMPTION that instances share a load address, so any batch using "
                          "it must include a control read whose correct value is known "
                          "independently (e.g. BGM track on the title screen is 18, doc12)")
+    sp.add_argument("--candidates", default=None,
+                    help="comma-separated hex deltas to TRY, each validated by --verify-suffix. "
+                         "Turns a 7-minute 2MB search into a few seconds. Falls back to a full "
+                         "search only if none match")
+    sp.add_argument("--verify-suffix", default=None,
+                    help="hex bytes the read must show AFTER the first byte, identifying the "
+                         "variable itself (BGM global: 0500000000000000fbfffffffbffff)")
     sp.add_argument("--out-dir", default=None)
     sp.set_defaults(func=cmd_mem_read_global)
 

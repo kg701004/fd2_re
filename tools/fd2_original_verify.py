@@ -488,20 +488,43 @@ class Runner:
         # pins it must also carry a known-value control.
         if st.get("delta"):
             argv += ["--delta", st["delta"]]
+        elif st.get("candidates"):
+            # Verify a short list of known deltas against the variable's own byte
+            # signature instead of searching 2 MB for the code signature: the search
+            # takes 7+ minutes through the paused debugger and timed out an entire
+            # six-scenario batch, while a candidate check is one 16-byte read.
+            argv += ["--candidates", st["candidates"],
+                     "--verify-suffix", st.get("verify_suffix",
+                                               "0500000000000000fbfffffffbffff"),
+                     "--bytecount", "16"]
         cp = subprocess.run(argv, capture_output=True, text=True,
                             timeout=st.get("timeout", 420))
         out = cp.stdout or ""
         track = None
+        raw = ""
         for line in out.splitlines():
             if line.startswith("u8="):
                 track = int(line.split("=")[1].split()[0])
+            if line.startswith("raw:"):
+                raw = line.split(":", 1)[1].strip()
         subprocess.run([sys.executable, helper, "resume", "--instance", self.instance],
                        capture_output=True, text=True, timeout=120)
+        # Plausibility bound, independent of the reader: FDMUS.DAT holds 21 resources
+        # (000-020), so anything above 20 is not a track and the read is void. This is
+        # what exposed a stale load-time delta silently pointing at a string table --
+        # the number came back looking perfectly ordinary (250).
+        max_track = st.get("max_track", 20)
+        if track is None:
+            res, detail = "unknown", f"read failed: {(cp.stderr or out).strip()[:160]}"
+        elif track > max_track:
+            res = "IMPLAUSIBLE"
+            detail = (f"[0x{addr}] = {track}, but FDMUS.DAT has only {max_track + 1} "
+                      f"resources -- this is not a track. raw={raw}. Almost certainly a "
+                      f"stale delta for this game state; re-calibrate (do not pin).")
+        else:
+            res, detail = str(track), f"[0x{addr}] = {track} (FDMUS_{track:03d})  raw={raw}"
         self.result.measurements.append(
-            {"name": st.get("name", "bgm_track"), "result": "unknown" if track is None else str(track),
-             "kind": "bgm", "detail": f"[0x{addr}] = {track} " +
-                                      (f"(FDMUS_{track:03d})" if track is not None else
-                                       f"-- read failed: {(cp.stderr or out).strip()[:160]}")})
+            {"name": st.get("name", "bgm_track"), "result": res, "kind": "bgm", "detail": detail})
 
     def step_assert_signature(self, st: dict) -> None:
         """Assert the captured frame shows a named screen, by its own text region.
