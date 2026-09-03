@@ -1540,9 +1540,9 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 | `REAL-UI-...-INPUT-DROP` | `0x115b6` mode 4 移動確認的 `Enter`/`Space` 間歇性丟失是否可重現 | 需進到戰鬥移動確認 |
 | SDD-4 native renderer re-audit | 原版 finale figure-fade／ending 演出的**實際畫面**為何 | 需推進到結局 |
 | 下一個 ending gate | 原版 ending 的 party cycle／FDOTHER#56 backdrop／dialogue-frame grid 實際畫面 | 同上 |
-| UI 音效 index 2-0xb 語意畫面實測（×2 筆） | 每個 SFX index 實際在**哪個畫面**播放 | **缺音訊擷取基礎設施**（harness 目前只擷取畫面） |
-| 戰鬥曲／勝利曲／開場配樂聽辨（×3 筆） | 各曲號實際對應哪一首 | **需要使用者本人聽辨**，工具無法代勞 |
-| ch04-33 劇情文本精校 | 原版逐章對白文字逐字校對 | 需人眼逐頁轉錄，量大 |
+| UI 音效 index 2-0xb 語意畫面實測（×2 筆） | 每個 SFX index 實際在**哪個畫面**播放 | 音訊擷取已解決（`FD2_HARNESS_AUDIO_DISK=1` ＋ `fd2_audio_probe.py`），但 **SFX 與 BGM 不同**：音效是 fire-and-forget，沒有「目前音效」全域，要在 `0x026896` 下斷點讀參數 |
+| 戰鬥曲／勝利曲／開場配樂聽辨（×3 筆） | 各曲號實際對應哪一首 | **已解決方法，不需人耳**：讀 `[0x51a11]`。6 個畫面已實測；戰鬥／勝利曲仍待（卡在同一個「進到戰鬥」前置條件） |
+| ch04-33 劇情文本精校 | 原版逐章對白文字逐字校對 | **前提已過時**：`decode_story_text.py` 對 35 個 FDTXT 全數解碼成功、2260 行、**未對映字元 0 個**（唯一 0 行的是早已記錄損毀的 FDTXT_034）。無未知字需人眼轉錄；剩下的是抽樣核對「每個 glyph id 對到正確的字」 |
 
 **共通阻塞**：上表前 6 項都要求**進到戰鬥或推進到結局**，而
 「通用地走到戰場」正是本專案自己都尚未解出的開放問題
@@ -2397,7 +2397,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 - [x] **派工 SOP 入 rule**:rulebook/45 新節(haiku=資料/sonnet=RE·套件/旗艦=架構·把關;prompt 要素;把關不可省)
 - [x] **每章 scenario stub**(ch2-30「能玩」關鍵):party 延續+deploy_cells+initial_groups 全開——2026-08-19稽核確認：本檔第11輪(608-611行)「ch2-30 scenario stub(sonnet):29個chNN.json(party延續/deploy_cells/initial_groups全開)」已完成此項，僅本行未同步。
       (gen_campaign 擴充,回合增援事件之後疊)← 下輪首位
-- [ ] 戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12
+- [ ] 戰鬥曲號聽辨(使用者)+ 各 track 逐曲實聽修正 doc12  →【**2026-09-03：不再需要人耳**。`[0x51a11]` 是目前播放曲號（doc12 已反組譯 `play_bgm` 0x25977），`fd2_dosbox_live_helper.py mem read-global` 可活體讀出；已實測 6 個畫面（標題18／城鎮10／武器店14／道具店15／教會11／秘密商店14），標題值與既有證實結論一致。**仍需人耳的只剩「這首曲子叫什麼」這種命名**，對應關係本身已是量測。見 doc12 同日段落】
 - [~] 戰鬥 SFX:index 陣列填值上游、#48-64 逐招對照、remake 接入(atkAnim 命中掛 battle 池)——本輪
   (2026-08-19第12輪,`doc36`)推進:「index陣列填值上游」對action_id 0-9已完整解出(全域表`0x0526bc`，
   見上一行)；`#48-64`候選池(第10輪PCM特徵掃描)與本輪動態追出的真實家族`#82-90`是兩個不同、相鄰的
@@ -2416,7 +2416,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       **意外收穫:0x1c269 從 unit+0x1a 起掃描 5 bytes/40 bits 並輸出 byte index；欄位語意尚未定案**；`+0x22..+0x24` 是另一路 raw transient/modifier bytes;
       battle_sfx_map.json 骨架。依「夠用就停」:+0xd0 續追降低優先(共用音已可用)
 - [x] 聽辨清單(extracted/music_ogg/聽辨清單.md,待使用者逐曲填)
-- [ ] 戰鬥曲/勝利曲聽辨(使用者)
+- [ ] 戰鬥曲/勝利曲聽辨(使用者)  →【**2026-09-03：不再需要人耳**。`[0x51a11]` 是目前播放曲號（doc12 已反組譯 `play_bgm` 0x25977），`fd2_dosbox_live_helper.py mem read-global` 可活體讀出；已實測 6 個畫面（標題18／城鎮10／武器店14／道具店15／教會11／秘密商店14），標題值與既有證實結論一致。**仍需人耳的只剩「這首曲子叫什麼」這種命名**，對應關係本身已是量測。見 doc12 同日段落】
 - [x] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub——2026-08-19稽核確認：本檔第12輪(625行)「gen_campaign v3招募累積+成長」與第13輪(665行)「gen v4增援疊入:18章35筆spawn_group」合計完成本項兩子句，僅本行未同步。
 - [x] ch10 等圖少數 tile 雜色查因——查無異常:`doc05`(2026-08-18)複核,FDSHAP RLE解碼0邊界異常,視覺比對只是原版手繪高對比dither,非bug,維持07-03non-bug結論
 - [x] unit+0x1a vs +0x22 offset：constructor trace 已定案為 initial command mask vs raw transient/modifier bytes（舊稱 `magic_raw` 已撤回）
@@ -2480,7 +2480,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       `tools/decode_ani.py`;9 資源逐一視覺比對 doc23 §2.4③ 分鏡全數命中(守護者/索爾/拔劍/
       騎馬夜行/明月/合照/金鎖);**「2」logo 縮放亦由 ANI.DAT(資源#1)驅動**,更正 doc23 猜測。
       見 doc39。待補:⑥浮空城/⑨惡魔臉未逐幀窮舉、轉場閃光呼叫端排程。
-- [ ] 開場配樂曲號實聽驗證(容器 nosound 無法驗;使用者聽辨)
+- [ ] 開場配樂曲號實聽驗證(容器 nosound 無法驗;使用者聽辨)  →【**2026-09-03：不再需要人耳**。`[0x51a11]` 是目前播放曲號（doc12 已反組譯 `play_bgm` 0x25977），`fd2_dosbox_live_helper.py mem read-global` 可活體讀出；已實測 6 個畫面（標題18／城鎮10／武器店14／道具店15／教會11／秘密商店14），標題值與既有證實結論一致。**仍需人耳的只剩「這首曲子叫什麼」這種命名**，對應關係本身已是量測。見 doc12 同日段落】
 - [x] ch21/22 \$reg_or_mem 增援 eax 來源 RE(6 筆)——已解:`doc25 §6.1.1` [驗],event_id 47/49 同構公式 `group_id = turn_counter DIV 2`,6/6 對照 map roster 全部吻合
 - [x] ch09-33 文本(批次進行中:09-13 執行中)——2026-08-19稽核確認：本檔697行「全33章劇情文本完成(sonnet流水線6批):ch01-33共1452句」已涵蓋ch09-33轉錄，僅本行未同步（接線入遊戲是另一獨立仍開放議題，見707-721「誠實揭露」段落）。
 
