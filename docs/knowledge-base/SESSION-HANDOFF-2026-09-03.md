@@ -144,6 +144,7 @@
 | `tools/font_grid.py` | 無參數時 IndexError → 改印用法 |
 | `tools/encode_text.py` | docstring 補上警告：`roundtrip` **不能**證明 glyph_map 正確（§12） |
 | 全部 `.sh`／`.py` | 換行已釘 LF；先前 6 支 `.sh` 在 Linux 無法執行、56 支 `.py` shebang 帶 CR 無法直接執行（§12） |
+| **工具總數 101 → 89** | 12 支 remake 專用工具已移除；判準是「每一條路徑都需要 `remake/` 才有意義」。`export_story_index_map.py`（被 `export_command_labels.py` 真的 import）與 `dosbox_diff_harness.*`（原版側擷取仍可用，標記待淘汰）保留 |
 
 ### `fd2_original_verify.py` 的斷言原語（**選對原語比多加斷言重要**）
 
@@ -246,6 +247,7 @@ M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清�
 | `263fc607` | 交接文件全面更新（本檔 §7~§11） |
 | `fdd348fb` | **全工具十層驗證**：新建 harness；修 6 支死掉的 `.sh`、`export_sfx`、`font_grid`；重生 2 份走鐘的 `docs/data/` 產物 |
 | `8360d287` | `*.py` 釘 LF——56 支帶 shebang 的工具原本**完全無法直接執行** |
+| `94b35e5e` | 移除 12 支 remake 專用工具;先把 `gen_campaign.py` 夾帶的 3 張原版 RE 表落地成 `docs/data/native_chapter_tables.json` |
 
 ---
 
@@ -270,5 +272,6 @@ M5-D 四項完成三項半；M5-F 是由 remake 時代項目轉換而來的清�
    注入沒生效與檢查失效長得一模一樣。**先確認注入真的改到被檢查的東西。**
    (改對目標之後 roundtrip 仍然全過,那才是真的自我參照——見 §12。)
 8. **對照組比真實訊號簡單,等於沒有對照組** → harness 的 `good.sh` 一開始只有
-   `echo ok` 一行,而 `echo ok` 在 bash 裡完全合法,所以它擋不住把全部腳本
+   `echo ok` 一行,而 `echo ok
+` 在 bash 裡完全合法,所以它擋不住把全部腳本
    轉成 CRLF 的那個 bug。對照組必須用真實訊號會用到的結構。
