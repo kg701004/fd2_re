@@ -2183,3 +2183,92 @@ L3 已完成,doc25 的結論**已確認對新版成立**。剩下的是**選做*
 handler 區段常數 `+0x356`、`SPAWN_FNS` 不動),以及修 `le_xref.parse_le` 的
 `data_off`——後者會牽動整個 LE 工具家族,要一併回歸測試。
 沒有人在等這些產出,所以優先度低;真正的問題(資料能不能信)已經回答了。
+
+---
+
+## 2026-09-03(續四)把剩下的未完項全部收掉
+
+### `le_xref.parse_le` 的分頁映射:一支工具一直在安靜地產生垃圾
+
+前一節只把這個 bug 記下來、沒有修(理由是會牽動整個 LE 工具家族)。這輪修了。
+
+`data_off` 現在是**分頁區的絕對起點**,由檔尾回推
+`len(raw) - ((npages-1)*page_size + last_page_size)` = `0x36014`;header 原值保留成
+`data_off_field` 讓落差可見。6 支使用者(`page_file`、`callgraph_le`、`disasm_le`、
+`extract_event_id_groups`、`extract_native_unit_tables`、
+`extract_native_treasure_event_rules`)本來就把它當絕對值用,所以一處修完全部受益。
+
+**後果不是崩潰,是安靜的錯。** `extract_native_unit_tables.py` 照常執行、照常印
+「68 records × 10 bytes」、照常寫出格式正確的 JSON,內容卻是從錯誤位置讀來的 x86
+指令位元組。repo 裡沒有任何檢查會發現。
+
+用**獨立路徑**判定對錯:`dump_exe_tables.py` 走 raw file offset + 錨定特徵(與 le_xref
+完全不同的實作),而且內建自驗會對照青衫攻略字面值。修後 `high_class[0]` =
+`0102120000050201041e`,正是那份自驗通過的 `unit.json` 第 0 列(戰士/hp18/ap5/dp2/dx1/
+mv4/ex30);修前是 `9af8feff83c40485c075`。`lower_aux[0]` 同樣對上成長表第 0 列。
+
+新增 `tools/test_le_xref.py`(5 項),含**故障注入**:用修正前的 offset 重讀同一個
+linear 位址,位元組必須不同——沒有這一項,一個「全檔搜尋」式的檢查在兩種映射下都會通過。
+
+### 四支被舊版 EXE 擋住的工具:改成同時支援兩版
+
+不是把版本釘換掉(既有資料與整個 knowledge-base 都引用舊版位址,換掉會脫節),
+而是各自加一張 `EDITIONS` 表。位移是**分區段常數**:
+
+| 區段 | 位移 |
+|---|---|
+| handler 本體 | `+0x356` |
+| `spawn_group` `0x10b4e` / `spawn_group_with_intro` `0x32999` / acting `0x1366a` | **`0`** |
+| event_id 跳表 `0x51b91`、寶物物品表 `0x5274e` | **`0`** |
+| staging helper `0x35822`、`STAGING_SHARED_TAIL` `0x35318` | `+0x356` |
+
+每支都用「重跑並與已 commit 資料逐項比對」驗收:
+
+- `extract_event_id_groups`:**90/90 完全相同**(handler、group、via、呼叫點、gate、
+  staging 座標、following_acting 全部),含 event 63 那筆 tail-call——工具本來就用
+  `STAGING_SHARED_TAIL` 處理它,只是那個常數也要跟著移。
+- `extract_native_treasure_event_rules`:完全相同。
+- `extract_native_field_event_rules`:補一條規則後完全相同(見下)。
+- `sync_native_field_events`:版本閘通過,改為回報真實目標狀態。
+
+### 第三次同一種模式:`native_field_event_rules.json` 的 event 62
+
+commit `c39db56b`「接通 event62 休眠回合列啟用」把 event 62 寫進 **JSON 但沒寫進產生器**,
+該檔自此無法由自己的工具重現。(前兩次:`command_labels.json`、`unicode_to_glyph.json`。)
+
+補進工具時逐條反組譯核對新版 handler `0x35bee`:
+`cmp byte ptr [eax+0x11], 0` → `once_state_index = 17`;`mov dl,[0x3bef]; inc dl` →
+`turn_delta = 1`;`mov [eax+3], dl` 寫回合欄位;`mov byte ptr [eax+0x11], 1` 標記已觸發。
+
+**誠實記錄兩件搆不到的事**:`event_id: 63` 與 `raw_camp: 0` **不是程式碼常數**——
+handler 只改寫 turn 那個 byte,63/0 是 FDFIELD.DAT 裡既有的槽位資料;以及寫入位置是
+`[base+3]` 而本欄記為 `slot 0`,若 turn_events 是 3B/筆則 `+3` 會是 slot 1,
+**沒有把握之前不改值,先標記**。
+
+`test_extract_event_id_groups` 也解除 skip:原本斷言絕對的舊版位址,現在對輸入位址與
+預期值同時套工具自己的 `HANDLER_DELTA`,**斷言的是資料內容而不是程式碼位置**——
+那才是這幾條測試真正要守的東西。4/4 通過。
+
+### `fd2save` 的 JOIN 表:用現存 EXE 重生,不是從歷史還原
+
+`load_join_constructor_table()` 自 remake 移除後就是壞的。這輪**不從 git 歷史還原舊版
+產物**,而是用現存的新版 EXE 重生(這在 `le_xref` 修好之後才可信),
+落地到 `docs/data/native_join_constructor.json`。
+
+雙重驗證:32 列的 `default_raw`/`growth_raw` 與 git 歷史中舊版抽出的那份
+**逐位元組相同(32/32)**,證明這張表與 EXE 版本無關;`test_fd2save` 那條用已知答案
+(角色 12 凱麗 Lv10/class8/MV5/MaxHP151/MaxMP0/BaseAP80/BaseDP69/DX10,與 Go 端測試對照)
+的檢查也通過。**14/14,零 skip。**
+
+### 兩個小的
+
+- `char_summary.py` 在兩個輸入目錄都不存在時 exit 0 並產出一張只有標籤的空表
+  (每個 `os.path.exists` 都 False,迴圈照跑,檔案照寫)。改成兩個都缺就拒絕、缺一個就警告。
+- `export_story_index_map.py` 對非 story JSON 目錄丟 `'list' object has no attribute 'get'`,
+  看不出是參數給錯。改成講清楚預期什麼、實得什麼。
+
+### 現況
+
+全 10 層 **FAIL 0**(PASS 377 / WARN 66 / SKIP 120),11 個測試套件、3 個 selftest 全過。
+剩下的 2 個 invoke WARN 都是良性的(`export_sfx` 會正常輸出結果、
+`extract_event_id_groups` 的守衛就是版本閘)。
