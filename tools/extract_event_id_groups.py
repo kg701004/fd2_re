@@ -305,7 +305,17 @@ if __name__ == '__main__':
     for eid, h in enumerate(handlers):
         spawns = walk_handler(h)
         results[eid] = {'handler': hex(h), 'spawns': spawns}
+    if len(sys.argv) > 1 and sys.argv[1] in ('-h', '--help'):
+        print(__doc__ or '')
+        print('用法: extract_event_id_groups.py [輸出.json]  (預設 docs/data/event_id_groups.json)')
+        raise SystemExit(0)
     out = sys.argv[1] if len(sys.argv) > 1 else 'docs/data/event_id_groups.json'
+    # 2026-09-04:argv[1] 是**輸出**路徑。先前目錄不存在時直接 FileNotFoundError
+    # traceback(verify_all_tools 的 invoke 層抓到),改成明確訊息。
+    parent = os.path.dirname(os.path.abspath(out))
+    if not os.path.isdir(parent):
+        print(f'輸出目錄不存在: {parent}', file=sys.stderr)
+        raise SystemExit(2)
     with open(out, 'w', encoding='utf-8') as output:
         json.dump(results, output, indent=1, ensure_ascii=False)
         output.write('\n')

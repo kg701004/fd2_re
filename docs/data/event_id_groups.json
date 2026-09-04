@@ -1,501 +1,503 @@
 {
  "_source": {
   "file": "FD2.EXE",
-  "size": 357074,
-  "md5": "b97caf2239a27a896069d03549d96e1e",
-  "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+  "size": 509158,
+  "md5": "33464c81e6a364fd0660141139aa8e6e",
+  "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+  "edition": "新版(1998 重打包版,509158 B)",
+  "handler_delta": "0x356",
   "tool": "Capstone 5.0.3",
   "address_space": "LE linear address"
  },
  "0": {
-  "handler": "0x341db",
+  "handler": "0x34531",
   "spawns": [
    {
     "group": 3,
     "via": "spawn_group",
-    "source": "0x341f2",
+    "source": "0x34548",
     "raw_placement_gate": 0
    },
    {
     "group": 7,
     "via": "spawn_group",
-    "source": "0x3425c",
+    "source": "0x345b2",
     "raw_placement_gate": 0
    }
   ]
  },
  "1": {
-  "handler": "0x342b5",
+  "handler": "0x3460b",
   "spawns": [
    {
     "group": 4,
     "via": "spawn_group_with_intro",
-    "source": "0x342ce",
+    "source": "0x34624",
     "raw_placement_gate": 0,
     "following_acting": {
      "resource": 3,
-     "source": "0x342e7"
+     "source": "0x3463d"
     }
    }
   ]
  },
  "2": {
-  "handler": "0x3431d",
+  "handler": "0x34673",
   "spawns": [
    {
     "group": 5,
     "via": "spawn_group_with_intro",
-    "source": "0x34336",
+    "source": "0x3468c",
     "raw_placement_gate": 0,
     "following_acting": {
      "resource": 4,
-     "source": "0x3434f"
+     "source": "0x346a5"
     }
    }
   ]
  },
  "3": {
-  "handler": "0x34377",
+  "handler": "0x346cd",
   "spawns": [
    {
     "group": 6,
     "via": "spawn_group",
-    "source": "0x34397",
+    "source": "0x346ed",
     "raw_placement_gate": 1
    }
   ]
  },
  "4": {
-  "handler": "0x343e2",
+  "handler": "0x34738",
   "spawns": []
  },
  "5": {
-  "handler": "0x34d68",
+  "handler": "0x350be",
   "spawns": []
  },
  "6": {
-  "handler": "0x34422",
+  "handler": "0x34778",
   "spawns": [
    {
     "group": 3,
     "via": "spawn_group",
-    "source": "0x3444c",
+    "source": "0x347a2",
     "raw_placement_gate": 1
    }
   ]
  },
  "7": {
-  "handler": "0x34d72",
+  "handler": "0x350c8",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34d91",
+    "source": "0x350e7",
     "raw_placement_gate": 1
    }
   ]
  },
  "8": {
-  "handler": "0x34dcd",
+  "handler": "0x35123",
   "spawns": []
  },
  "9": {
-  "handler": "0x344c2",
+  "handler": "0x34818",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x344dc",
+    "source": "0x34832",
     "raw_placement_gate": 0
    }
   ]
  },
  "10": {
-  "handler": "0x34e3b",
+  "handler": "0x35191",
   "spawns": []
  },
  "11": {
-  "handler": "0x34565",
+  "handler": "0x348bb",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34571",
+    "source": "0x348c7",
     "raw_placement_gate": 0
    }
   ]
  },
  "12": {
-  "handler": "0x34594",
+  "handler": "0x348ea",
   "spawns": []
  },
  "13": {
-  "handler": "0x34e90",
+  "handler": "0x351e6",
   "spawns": []
  },
  "14": {
-  "handler": "0x345ea",
+  "handler": "0x34940",
   "spawns": []
  },
  "15": {
-  "handler": "0x3462e",
+  "handler": "0x34984",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x3464b",
+    "source": "0x349a1",
     "raw_placement_gate": 1
    }
   ]
  },
  "16": {
-  "handler": "0x34696",
+  "handler": "0x349ec",
   "spawns": [
    {
     "group": 3,
     "via": "spawn_group",
-    "source": "0x346a2",
+    "source": "0x349f8",
     "raw_placement_gate": 0
    }
   ]
  },
  "17": {
-  "handler": "0x346c8",
+  "handler": "0x34a1e",
   "spawns": []
  },
  "18": {
-  "handler": "0x34f02",
+  "handler": "0x35258",
   "spawns": []
  },
  "19": {
-  "handler": "0x34716",
+  "handler": "0x34a6c",
   "spawns": []
  },
  "20": {
-  "handler": "0x347b1",
+  "handler": "0x34b07",
   "spawns": []
  },
  "21": {
-  "handler": "0x347d9",
+  "handler": "0x34b2f",
   "spawns": []
  },
  "22": {
-  "handler": "0x34819",
+  "handler": "0x34b6f",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x34837",
+    "source": "0x34b8d",
     "raw_placement_gate": 0
    }
   ]
  },
  "23": {
-  "handler": "0x34844",
+  "handler": "0x34b9a",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34892",
+    "source": "0x34be8",
     "raw_placement_gate": 0
    }
   ]
  },
  "24": {
-  "handler": "0x348fc",
+  "handler": "0x34c52",
   "spawns": []
  },
  "25": {
-  "handler": "0x34924",
+  "handler": "0x34c7a",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34945",
+    "source": "0x34c9b",
     "raw_placement_gate": 1
    }
   ]
  },
  "26": {
-  "handler": "0x3499b",
+  "handler": "0x34cf1",
   "spawns": []
  },
  "27": {
-  "handler": "0x349d9",
+  "handler": "0x34d2f",
   "spawns": [
    {
     "group": "$turn_counter[0x53bef]",
     "via": "spawn_group",
-    "source": "0x349ff",
+    "source": "0x34d55",
     "raw_placement_gate": 0
    }
   ]
  },
  "28": {
-  "handler": "0x34a0e",
+  "handler": "0x34d64",
   "spawns": []
  },
  "29": {
-  "handler": "0x34a3c",
+  "handler": "0x34d92",
   "spawns": []
  },
  "30": {
-  "handler": "0x34a7a",
+  "handler": "0x34dd0",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x34b19",
+    "source": "0x34e6f",
     "raw_placement_gate": 0
    }
   ]
  },
  "31": {
-  "handler": "0x34b5d",
+  "handler": "0x34eb3",
   "spawns": [
    {
     "group": "$reg_or_mem(eax)",
     "via": "spawn_group",
-    "source": "0x34b71",
+    "source": "0x34ec7",
     "raw_placement_gate": 0
    }
   ]
  },
  "32": {
-  "handler": "0x34be2",
+  "handler": "0x34f38",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x34bee",
+    "source": "0x34f44",
     "raw_placement_gate": 0
    }
   ]
  },
  "33": {
-  "handler": "0x34c1e",
+  "handler": "0x34f74",
   "spawns": []
  },
  "34": {
-  "handler": "0x34c6c",
+  "handler": "0x34fc2",
   "spawns": []
  },
  "35": {
-  "handler": "0x34c76",
+  "handler": "0x34fcc",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34c95",
+    "source": "0x34feb",
     "raw_placement_gate": 1
    }
   ]
  },
  "36": {
-  "handler": "0x34cb3",
+  "handler": "0x35009",
   "spawns": []
  },
  "37": {
-  "handler": "0x34ccc",
+  "handler": "0x35022",
   "spawns": [
    {
     "group": 3,
     "via": "spawn_group",
-    "source": "0x34d12",
+    "source": "0x35068",
     "raw_placement_gate": 1
    },
    {
     "group": 4,
     "via": "spawn_group",
-    "source": "0x34d45",
+    "source": "0x3509b",
     "raw_placement_gate": 1
    }
   ]
  },
  "38": {
-  "handler": "0x34f42",
+  "handler": "0x35298",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x34f4e",
+    "source": "0x352a4",
     "raw_placement_gate": 0
    }
   ]
  },
  "39": {
-  "handler": "0x34f74",
+  "handler": "0x352ca",
   "spawns": []
  },
  "40": {
-  "handler": "0x34fcb",
+  "handler": "0x35321",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x34fd7",
+    "source": "0x3532d",
     "raw_placement_gate": 0
    }
   ]
  },
  "41": {
-  "handler": "0x34ff0",
+  "handler": "0x35346",
   "spawns": []
  },
  "42": {
-  "handler": "0x3505f",
+  "handler": "0x353b5",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x3506b",
+    "source": "0x353c1",
     "raw_placement_gate": 0
    }
   ]
  },
  "43": {
-  "handler": "0x35091",
+  "handler": "0x353e7",
   "spawns": []
  },
  "44": {
-  "handler": "0x350a4",
+  "handler": "0x353fa",
   "spawns": []
  },
  "45": {
-  "handler": "0x350b9",
+  "handler": "0x3540f",
   "spawns": []
  },
  "46": {
-  "handler": "0x350cc",
+  "handler": "0x35422",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x350d8",
+    "source": "0x3542e",
     "raw_placement_gate": 0
    }
   ]
  },
  "47": {
-  "handler": "0x35112",
+  "handler": "0x35468",
   "spawns": [
    {
     "group": "$reg_or_mem(eax)",
     "via": "spawn_group",
-    "source": "0x3512b",
+    "source": "0x35481",
     "raw_placement_gate": 0
    }
   ]
  },
  "48": {
-  "handler": "0x351c6",
+  "handler": "0x3551c",
   "spawns": []
  },
  "49": {
-  "handler": "0x351e9",
+  "handler": "0x3553f",
   "spawns": [
    {
     "group": "$reg_or_mem(eax)",
     "via": "spawn_group",
-    "source": "0x35202",
+    "source": "0x35558",
     "raw_placement_gate": 0
    }
   ]
  },
  "50": {
-  "handler": "0x35261",
+  "handler": "0x355b7",
   "spawns": [
    {
     "group": 2,
     "via": "spawn_group",
-    "source": "0x3526d",
+    "source": "0x355c3",
     "raw_placement_gate": 0
    }
   ]
  },
  "51": {
-  "handler": "0x3529a",
+  "handler": "0x355f0",
   "spawns": []
  },
  "52": {
-  "handler": "0x352e2",
+  "handler": "0x35638",
   "spawns": []
  },
  "53": {
-  "handler": "0x35321",
+  "handler": "0x35677",
   "spawns": []
  },
  "54": {
-  "handler": "0x3535d",
+  "handler": "0x356b3",
   "spawns": [
    {
     "group": "$turn_counter[0x53bef]",
     "via": "spawn_group",
-    "source": "0x3536d",
+    "source": "0x356c3",
     "raw_placement_gate": 0
    }
   ]
  },
  "55": {
-  "handler": "0x353da",
+  "handler": "0x35730",
   "spawns": []
  },
  "56": {
-  "handler": "0x35487",
+  "handler": "0x357dd",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x3549f",
+    "source": "0x357f5",
     "raw_placement_gate": 0
    }
   ]
  },
  "57": {
-  "handler": "0x354dd",
+  "handler": "0x35833",
   "spawns": [
    {
     "group": "$turn_counter[0x53bef]",
     "via": "spawn_group",
-    "source": "0x354ed",
+    "source": "0x35843",
     "raw_placement_gate": 0
    }
   ]
  },
  "58": {
-  "handler": "0x354fe",
+  "handler": "0x35854",
   "spawns": []
  },
  "59": {
-  "handler": "0x35641",
+  "handler": "0x35997",
   "spawns": []
  },
  "60": {
-  "handler": "0x35675",
+  "handler": "0x359cb",
   "spawns": []
  },
  "61": {
-  "handler": "0x356b7",
+  "handler": "0x35a0d",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x357e6",
+    "source": "0x35b3c",
     "raw_placement_gate": 0
    }
   ]
  },
  "62": {
-  "handler": "0x35898",
+  "handler": "0x35bee",
   "spawns": []
  },
  "63": {
-  "handler": "0x358c7",
+  "handler": "0x35c1d",
   "spawns": [
    {
     "group": 1,
     "via": "staging_helper_0x35822",
-    "source": "0x358d7",
+    "source": "0x35c2d",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -507,7 +509,7 @@
    {
     "group": 2,
     "via": "staging_helper_0x35822",
-    "source": "0x358e5",
+    "source": "0x35c3b",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -519,12 +521,12 @@
   ]
  },
  "64": {
-  "handler": "0x358ea",
+  "handler": "0x35c40",
   "spawns": [
    {
     "group": 3,
     "via": "staging_helper_0x35822",
-    "source": "0x3592d",
+    "source": "0x35c83",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -536,7 +538,7 @@
    {
     "group": 4,
     "via": "staging_helper_0x35822",
-    "source": "0x3593b",
+    "source": "0x35c91",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -548,7 +550,7 @@
    {
     "group": 5,
     "via": "staging_helper_0x35822",
-    "source": "0x35949",
+    "source": "0x35c9f",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -560,16 +562,16 @@
   ]
  },
  "65": {
-  "handler": "0x3599b",
+  "handler": "0x35cf1",
   "spawns": []
  },
  "66": {
-  "handler": "0x359c8",
+  "handler": "0x35d1e",
   "spawns": [
    {
     "group": 1,
     "via": "staging_helper_0x35822",
-    "source": "0x359ff",
+    "source": "0x35d55",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -581,16 +583,16 @@
   ]
  },
  "67": {
-  "handler": "0x35a2f",
+  "handler": "0x35d85",
   "spawns": []
  },
  "68": {
-  "handler": "0x35a48",
+  "handler": "0x35d9e",
   "spawns": [
    {
     "group": 2,
     "via": "staging_helper_0x35822",
-    "source": "0x35a7f",
+    "source": "0x35dd5",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -602,16 +604,16 @@
   ]
  },
  "69": {
-  "handler": "0x35ab8",
+  "handler": "0x35e0e",
   "spawns": []
  },
  "70": {
-  "handler": "0x35b05",
+  "handler": "0x35e5b",
   "spawns": [
    {
     "group": 3,
     "via": "staging_helper_0x35822",
-    "source": "0x35b4a",
+    "source": "0x35ea0",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -623,7 +625,7 @@
    {
     "group": 4,
     "via": "staging_helper_0x35822",
-    "source": "0x35b58",
+    "source": "0x35eae",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -635,16 +637,16 @@
   ]
  },
  "71": {
-  "handler": "0x35b6b",
+  "handler": "0x35ec1",
   "spawns": []
  },
  "72": {
-  "handler": "0x35bf2",
+  "handler": "0x35f48",
   "spawns": [
    {
     "group": 2,
     "via": "staging_helper_0x35822",
-    "source": "0x35c02",
+    "source": "0x35f58",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -656,7 +658,7 @@
    {
     "group": 3,
     "via": "staging_helper_0x35822",
-    "source": "0x35c10",
+    "source": "0x35f66",
     "raw_placement_gate": 0,
     "staging": {
      "helper": "0x35822",
@@ -668,85 +670,85 @@
   ]
  },
  "73": {
-  "handler": "0x35c23",
+  "handler": "0x35f79",
   "spawns": []
  },
  "74": {
-  "handler": "0x35c32",
+  "handler": "0x35f88",
   "spawns": []
  },
  "75": {
-  "handler": "0x35c79",
+  "handler": "0x35fcf",
   "spawns": []
  },
  "76": {
-  "handler": "0x35d60",
+  "handler": "0x360b6",
   "spawns": [
    {
     "group": 1,
     "via": "spawn_group",
-    "source": "0x35dce",
+    "source": "0x36124",
     "raw_placement_gate": 0
    }
   ]
  },
  "77": {
-  "handler": "0x35ebe",
+  "handler": "0x36214",
   "spawns": []
  },
  "78": {
-  "handler": "0x35ed2",
+  "handler": "0x36228",
   "spawns": []
  },
  "79": {
-  "handler": "0x35ee6",
+  "handler": "0x3623c",
   "spawns": []
  },
  "80": {
-  "handler": "0x35f5a",
+  "handler": "0x362b0",
   "spawns": []
  },
  "81": {
-  "handler": "0x35f6f",
+  "handler": "0x362c5",
   "spawns": []
  },
  "82": {
-  "handler": "0x35f92",
+  "handler": "0x362e8",
   "spawns": [
    {
     "group": "$reg_or_mem(eax)",
     "via": "spawn_group",
-    "source": "0x3601c",
+    "source": "0x36372",
     "raw_placement_gate": 0
    }
   ]
  },
  "83": {
-  "handler": "0x36088",
+  "handler": "0x363de",
   "spawns": []
  },
  "84": {
-  "handler": "0x360c0",
+  "handler": "0x36416",
   "spawns": []
  },
  "85": {
-  "handler": "0x360d8",
+  "handler": "0x3642e",
   "spawns": []
  },
  "86": {
-  "handler": "0x360e3",
+  "handler": "0x36439",
   "spawns": []
  },
  "87": {
-  "handler": "0x360ea",
+  "handler": "0x36440",
   "spawns": []
  },
  "88": {
-  "handler": "0x360f1",
+  "handler": "0x36447",
   "spawns": []
  },
  "89": {
-  "handler": "0x360f8",
+  "handler": "0x3644e",
   "spawns": []
  }
 }

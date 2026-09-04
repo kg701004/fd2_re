@@ -13,6 +13,13 @@ import re
 import subprocess
 import sys
 
+if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    # 2026-09-04:少了這道 guard 時,無參數呼叫會直接 IndexError 崩潰,
+    # 而 verify_all_tools 的 invoke 層就是這樣抓到它的。
+    print(__doc__)
+    print("用法: fd2_in_battle_check.py <instance>")
+    sys.exit(2)
+
 INST = sys.argv[1]
 H = [sys.executable, "tools/fd2_dosbox_live_helper.py"]
 
