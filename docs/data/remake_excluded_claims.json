@@ -11,10 +11,10 @@
     },
     {
       "file": "09-story-and-dialogue.md",
-      "kind": "original_fact_excluded",
+      "kind": "original_method_replaced",
       "excerpt_sha1": "8bb7162ca5d464fc2874e8b5c0917629e2d8cd85",
       "excerpt": "- **驗證法**:`FD2_CAMPAIGN=… FD2_CAMP_NODE=<node> FD2_SHOT=out.png FD2_SHOT_FRAME=N`(headless,host xvfb+llvmpipe);",
-      "note": "劇情/對話的『驗證法』本身就是 remake headless 截圖 → 依此法得出的對話結論一律不成立,需改用 DOSBox-X 原版重驗",
+      "note": "劇情/對話的『驗證法』本身就是 remake headless 截圖 → 依此法得出的對話結論一律不成立,需改用 DOSBox-X 原版重驗  ||  2026-09-04 進展:原版側替代驗證法已建立並實跑(DOSBox-X 固定等待截圖 + decode_story_text.py 比對),ch01 王宮三句與 FDTXT_033 逐字吻合 3/3;同時抓到解碼器的說話者標記在該段是錯的(國王的台詞標成索爾),以本文件自己的上/下框+頭像側規則佐證。文字管線已有原版證據;說話者欄位改列為不可信,待查。",
       "first_line_seen": 108
     },
     {
