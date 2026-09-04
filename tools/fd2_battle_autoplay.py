@@ -222,11 +222,21 @@ def main() -> int:
 
     if a.clear_enemy_bit0:
         H.enter_debugger(a.instance)
-        for u in units:
-            if u["camp"] == 0x00 and u["acted"] & 0x01:
-                H.debugger_cmd(a.instance, f"SMV {base + u['idx']*0x50 + 5:08x} 00")
+        targets = [u["idx"] for u in units if u["camp"] == 0x00 and u["acted"] & 0x01]
+        for idx in targets:
+            H.debugger_cmd(a.instance, f"SMV {base + idx*0x50 + 5:08x} 00")
+        # 寫後回讀。2026-09-04:此前這裡直接印「已清除」,SMV 靜默失敗時
+        # 訊息一模一樣——講的是送出了指令,不是值真的改了。
+        bad = []
+        for idx in targets:
+            got = H.mem_read_global(a.instance, a.selector, base + idx*0x50 + 5, 1,
+                                    H.DEFAULT_SHOT_DIR / a.instance / "bit0verify",
+                                    delta=0).get("u8")
+            if got is None or got & 0x01:
+                bad.append((idx, got))
         H.resume(a.instance)
-        print("已清除敵方 +5 bit0")
+        print(f"敵方 +5 bit0:嘗試 {len(targets)} 筆,回讀確認 {len(targets)-len(bad)} 筆"
+              + ("" if not bad else f";未生效 {[i for i, _ in bad]}"))
         base, snap = snapshot(a.instance, a.selector, a.count)
         units = snap[1:]
 

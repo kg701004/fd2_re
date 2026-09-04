@@ -457,9 +457,18 @@ def read_mem(name: str, addr: int, min_bytes: int = 16, retries: int = 2) -> byt
     return None
 
 
-def write_byte(name: str, addr: int, value: int) -> None:
+def write_byte(name: str, addr: int, value: int) -> bool:
+    """寫一個 byte 並**回讀確認**。回傳是否確實寫進去。
+
+    2026-09-04:此前這裡只送 SMV 就回傳,呼叫端因而無從分辨「寫成功」與
+    「靜默失敗」。SMV 在本專案有靜默失敗的前科(見 fd2_stat_override 的說明),
+    而 mass_kill_enemies 的計數器是無條件累加的,所以 log 上的
+    「wrote death signature to N slots」記的是**嘗試次數**,不是確認數。
+    """
     debugger_cmd(name, f"SMV {addr:X} {value:02X}")
     time.sleep(0.1)
+    got = read_mem(name, addr, 1)
+    return bool(got) and got[0] == value
 
 
 # --------------------------------------------------------------------------
@@ -551,12 +560,21 @@ def scan_enemy_slots(name: str, base: int, log: list[str]) -> list[int]:
 
 
 def mass_kill_enemies(name: str, enemy_addrs: list[int], log: list[str]) -> int:
-    written = 0
+    """回傳**確認寫入**的槽數,不是嘗試數——兩者不同,而且只有前者能支撐結論。"""
+    confirmed, failed = 0, []
     for addr in enemy_addrs:
-        write_byte(name, addr + UNIT_ACTED_OFFSET, ENEMY_DEATH_VALUE)
-        written += 1
-    log.append(f"mass_kill_enemies: wrote death signature to {written} slot(s)")
-    return written
+        if write_byte(name, addr + UNIT_ACTED_OFFSET, ENEMY_DEATH_VALUE):
+            confirmed += 1
+        else:
+            failed.append(addr)
+    log.append(f"mass_kill_enemies: attempted {len(enemy_addrs)} slot(s), "
+               f"read-back CONFIRMED {confirmed}")
+    if failed:
+        log.append("mass_kill_enemies: NOT confirmed at " +
+                   ", ".join(f"{a:#x}" for a in failed[:8]) +
+                   (" ..." if len(failed) > 8 else "") +
+                   " -- 這些槽的寫入沒有生效,任何『已全滅』的結論不成立")
+    return confirmed
 
 
 ENGINE_WIN_POLL_MAX_S = 15.0  # 2026-08-27 "ch12diag": ch12 needed ~8s; leave headroom above that.
