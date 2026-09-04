@@ -49,6 +49,66 @@ def snapshot(inst: str, sel: str, n: int) -> tuple[int, list[dict]]:
     return base, [{"cursor": (cx, cy)}] + units
 
 
+BP_MOVE_SELECT = 0x18890 + 0x19C000   # 0x1B4890
+BP_RING = 0x18D8C + 0x19C000          # 0x1B4D8C
+
+
+def _pane(inst: str) -> str:
+    import subprocess
+    return subprocess.run(["wsl", "-d", "Ubuntu", "tmux", "-L", "fd2harness",
+                           "capture-pane", "-t", f"harness-{inst}", "-p"],
+                          capture_output=True, text=True, encoding="utf-8",
+                          errors="replace").stdout
+
+
+def _halted(inst: str) -> bool:
+    return not any("(Running)" in ln for ln in _pane(inst).splitlines()[-3:])
+
+
+def _eip(inst: str) -> int | None:
+    if not _halted(inst):
+        return None
+    for ln in _pane(inst).splitlines()[:8]:
+        if "EIP=" in ln:
+            return int(ln.split("EIP=")[1].split()[0], 16)
+    return None
+
+
+def ensure_browse(inst: str, max_escapes: int = 6) -> bool:
+    """把 UI 帶回**瀏覽游標層**,並且**證明**它真的在那一層。
+
+    為什麼需要:本專案反覆踩到「以為在瀏覽層、其實在子畫面」。讀游標全域
+    `[0x53ab1]/[0x53ab5]` **不能**判定層級——移動選格層用的是同一組全域,
+    而 `DAT_00053c57` 是不會重置的殘留值。2026-09-04 有一整輪 25 次試驗
+    因此全部作廢(見 doc48 §10)。
+
+    判定方式是**自證**的:在 `0x18890`(移動選格入口)下斷點後按 Enter,
+    只有從瀏覽層按才會進到那裡。命中即證明按之前在瀏覽層;隨後 Escape 一次
+    退回,層級即為已知。
+
+    回傳 True 表示已確定停在瀏覽游標層。
+    """
+    # 順序很重要:**先退到底,再測一次**。
+    # 第一版寫成「先按 Enter 測、再按 Escape 退」,從指令環裡開始時會原地震盪——
+    # 每次 Enter 又鑽進子畫面、每次 Escape 又退回環,永遠出不去(2026-09-04 實測)。
+    H.enter_debugger(inst)
+    H.debugger_cmd(inst, "BPDEL *")
+    H.resume(inst)
+    for _ in range(max_escapes):              # 無條件往外退;在瀏覽層 Escape 是 no-op
+        press(inst, "cancel", 1.2)
+    H.enter_debugger(inst)
+    H.debugger_cmd(inst, f"BP 0170:{BP_MOVE_SELECT:08X}")
+    H.resume(inst)
+    press(inst, "confirm", 2.2)
+    hit = _eip(inst) == BP_MOVE_SELECT
+    H.enter_debugger(inst)
+    H.debugger_cmd(inst, "BPDEL *")
+    H.resume(inst)
+    if hit:
+        press(inst, "cancel", 1.5)            # 從移動選格退回瀏覽層
+    return hit
+
+
 def press(inst: str, key: str, wait: float = 1.1) -> None:
     H.send_keys(inst, [H.resolve_key(key)])
     time.sleep(wait)
@@ -97,11 +157,18 @@ def main() -> int:
     ap.add_argument("--selector", default="0170")
     ap.add_argument("--count", type=int, default=12)
     ap.add_argument("--turns", type=int, default=1, help="要跑幾個我方回合")
+    ap.add_argument("--ensure-browse", action="store_true",
+                    help="只做一件事:把 UI 帶回瀏覽游標層並證明之,然後結束")
     ap.add_argument("--attack", action="store_true",
                     help="相鄰有存活敵方時改為攻擊(ring index 0)而不是原地結束")
     ap.add_argument("--clear-enemy-bit0", action="store_true",
                     help="把敵方 record[+5] 清 0(還原先前實驗寫入的 raw bit0)")
     a = ap.parse_args()
+
+    if a.ensure_browse:
+        ok = ensure_browse(a.instance)
+        print("已確定在瀏覽游標層" if ok else "無法確定層級(已退到底仍未命中 0x18890)")
+        return 0 if ok else 1
 
     base, snap = snapshot(a.instance, a.selector, a.count)
     units = snap[1:]
