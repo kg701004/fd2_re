@@ -1537,7 +1537,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 | ~~自動結束回合~~ **已解 2026-09-04** | **原版會自動換邊**,不需玩家手動結束。ch01 讓我方四人依序行動後零輸入,我方 `+5` bit7 全部由 `0x80` 清回 `0x00`、7 個敵方單位移動、6 個 acted=0x80。見 doc13 該日段落 | ✅ 原版實機 |
 | 法術特效時序 #9 | 原版**治療系法術**的視覺演出是什麼（閃光／數字浮現／僅改血條） | 需進到戰鬥且有治療角色 |
 | `MAP26-EVENT63-E2-PLAYER-PATH` | ch27 一般玩家路徑（未修改存檔）能否走完 | 高成本，已知多輪未解 |
-| `REAL-UI-...-INPUT-DROP` | `0x115b6` mode 4 移動確認的 `Enter`/`Space` 間歇性丟失是否可重現 | 需進到戰鬥移動確認 |
+| ~~`REAL-UI-...-INPUT-DROP`~~ **現行環境不可重現 2026-09-04** | 用它自己的判準(`BP 0x11719` 是否命中)量化重測:ch01 全新遊戲 Enter 20/20、Space 20/20;**ch27 前輪那份存檔(md5 逐位元組相符)Enter 20/20、Space 15/15**,合計 94/94 零失敗。本輪並找出三個與「掉鍵」表象相同的非輸入成因(游標停空地、命中判定過嚴、失敗分支忘了 resume)。見 doc48 §10 | ⚠ 不宣稱前輪觀察為假,環境不同 |
 | SDD-4 native renderer re-audit | 原版 finale figure-fade／ending 演出的**實際畫面**為何 | 需推進到結局 |
 | 下一個 ending gate | 原版 ending 的 party cycle／FDOTHER#56 backdrop／dialogue-frame grid 實際畫面 | 同上 |
 | UI 音效 index 2-0xb 語意畫面實測（×2 筆） | 每個 SFX index 實際在**哪個畫面**播放 | 音訊擷取已解決（`FD2_HARNESS_AUDIO_DISK=1` ＋ `fd2_audio_probe.py`），但 **SFX 與 BGM 不同**：音效是 fire-and-forget，沒有「目前音效」全域，要在 `0x026896` 下斷點讀參數 |
