@@ -1,0 +1,28 @@
+[
+  {
+    "id": "dec_10c50",
+    "address": "0x10c50",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00010c50",
+      "entry_point": "0x10c50",
+      "signature": "undefined FUN_00010c50(void)",
+      "code": "\r\nvoid __stdcall FUN_00010c50(int param_1)\r\n\r\n{\r\n  undefined1 uVar1;\r\n  byte bVar2;\r\n  byte bVar3;\r\n  short sVar4;\r\n  short sVar5;\r\n  short sVar6;\r\n  undefined1 uVar7;\r\n  ushort uVar8;\r\n  int iVar9;\r\n  int iVar10;\r\n  int iVar11;\r\n  undefined1 *puVar12;\r\n  byte *pbVar13;\r\n  short sVar14;\r\n  short sVar15;\r\n  undefined1 *puVar16;\r\n  int iVar17;\r\n  int local_24;\r\n  int local_1c;\r\n  int local_14;\r\n  \r\n  FUN_0003702f();\r\n  local_14 = 0xff;\r\n  puVar16 = (undefined1 *)(DAT_00053a45 + DAT_00053beb * 0x50);\r\n  iVar9 = DAT_00053a59 + param_1 * 6;\r\n  uVar1 = *(undefined1 *)(iVar9 + 2);\r\n  uVar7 = *(undefined1 *)(iVar9 + 4);\r\n  FUN_000145cd();\r\n  FUN_000145cd();\r\n  if (DAT_00053afa == '\\0') {\r\n    iVar9 = 0;\r\n    while( true ) {\r\n      uVar1 = (undefined1)local_24;\r\n      uVar7 = (undefined1)local_1c;\r\n      if (DAT_00053ac5 <= iVar9) break;\r\n      for (iVar17 = 0; iVar17 < DAT_00053ac1; iVar17 = iVar17 + 1) {\r\n        if ((*(byte *)((DAT_00053ac1 * iVar9 + iVar17) * 4 + 6 + DAT_00053a51) & 0x40) == 0) {\r\n          iVar10 = FUN_00037932();\r\n          iVar11 = FUN_00037932();\r\n          if (iVar11 + iVar10 <= local_14) {\r\n            local_14 = FUN_00037932();\r\n            iVar10 = FUN_00037932();\r\n            local_14 = local_14 + iVar10;\r\n            local_24 = iVar17;\r\n            local_1c = iVar9;\r\n          }\r\n        }\r\n      }\r\n      iVar9 = iVar9 + 1;\r\n    }\r\n  }\r\n  local_1c._0_1_ = uVar7;\r\n  local_24._0_1_ = uVar1;\r\n  FUN_0004df4c();\r\n  iVar9 = param_1 * 0x1a + DAT_00053a55;\r\n  bVar2 = *(byte *)(iVar9 + 0x84);\r\n  bVar3 = *(byte *)(iVar9 + 0x87);\r\n  uVar8 = (ushort)bVar3;\r\n  uVar1 = *(undefined1 *)(iVar9 + 0x83);\r\n  if (bVar2 < 0x44) {\r\n    puVar12 = (undefined1 *)FUN_0004e838();\r\n    pbVar13 = (byte *)FUN_0004e821();\r\n    sVar15 = *(short *)(puVar12 + 3) + (ushort)pbVar13[6] * (uVar8 - 1);\r\n    sVar14 = *(short *)(puVar12 + 5) + (uVar8 - 1) * (ushort)pbVar13[8];\r\n    sVar4 = *(short *)(puVar12 + 0x12);\r\n    sVar5 = *(short *)(puVar12 + 0x14);\r\n    sVar6 = *(short *)(puVar12 + 0x16);\r\n    puVar16[0x1f] = *puVar12;\r\n    puVar16[0x20] = puVar12[1];\r\n    *(ushort *)(puVar16 + 0x37) = *pbVar13 * uVar8 + sVar4;\r\n    *(ushort *)(puVar16 + 0x39) = (ushort)pbVar13[2] * (ushort)bVar3 + sVar5;\r\n    puVar16[0x3b] = puVar12[7];\r\n    *(ushort *)(puVar16 + 0x3e) = (ushort)pbVar13[4] * (ushort)bVar3 + sVar6;\r\n  }\r\n  else {\r\n    puVar12 = (undefined1 *)FUN_0004e84f();\r\n    sVar15 = uVar8 * *(short *)(puVar12 + 2);\r\n    sVar14 = uVar8 * (byte)puVar12[4];\r\n    puVar16[0x1f] = *puVar12;\r\n    puVar16[0x20] = puVar12[1];\r\n    *(ushort *)(puVar16 + 0x37) = (ushort)bVar3 * (ushort)(byte)puVar12[5];\r\n    *(ushort *)(puVar16 + 0x39) = (ushort)bVar3 * (ushort)(byte)puVar12[6];\r\n    *(ushort *)(puVar16 + 0x3e) = (ushort)bVar3 * (ushort)(byte)puVar12[7];\r\n    puVar16[0x3b] = puVar12[8];\r\n  }\r\n  *puVar16 = (undefined1)local_24;\r\n  puVar16[1] = (undefined1)local_1c;\r\n  uVar7 = FUN_00011019();\r\n  puVar16[2] = uVar7;\r\n  puVar16[3] = 0;\r\n  puVar16[4] = 0;\r\n  puVar16[5] = 0;\r\n  puVar16[6] = uVar1;\r\n  puVar16[7] = bVar2;\r\n  puVar16[8] = bVar2;\r\n  puVar16[9] = 0;\r\n  if (*(char *)(iVar9 + 0x88) == -1) {\r\n    puVar16[10] = 0x40;\r\n    puVar16[0xb] = *(undefined1 *)(iVar9 + 0x89);\r\n    puVar16[0xc] = 0x80;\r\n  }\r\n  else {\r\n    puVar16[10] = 0x40;\r\n    puVar16[0xb] = *(undefined1 *)(iVar9 + 0x88);\r\n    puVar16[0xc] = 0x40;\r\n    puVar16[0xd] = *(undefined1 *)(iVar9 + 0x89);\r\n  }\r\n  for (iVar17 = 0; iVar17 < 6; iVar17 = iVar17 + 1) {\r\n    if (*(char *)(iVar9 + 0x8a + iVar17) == -1) {\r\n      puVar16[iVar17 * 2 + 0xe] = 0x80;\r\n    }\r\n    else {\r\n      puVar16[iVar17 * 2 + 0xe] = 0;\r\n    }\r\n    puVar16[iVar17 * 2 + 0xf] = *(undefined1 *)(iVar9 + 0x8a + iVar17);\r\n  }\r\n  FUN_00037910();\r\n  FUN_0003771c();\r\n  puVar16[0x1e] = 0;\r\n  puVar16[0x21] = bVar3;\r\n  puVar16[0x31] = *(undefined1 *)(iVar9 + 0x99);\r\n  *(undefined2 *)(puVar16 + 0x32) = *(undefined2 *)(iVar9 + 0x9a);\r\n  puVar16[0x34] = *(undefined1 *)(iVar9 + 0x94);\r\n  puVar16[0x35] = *(undefined1 *)(iVar9 + 0x95);\r\n  puVar16[0x36] = *(undefined1 *)(iVar9 + 0x96);\r\n  puVar16[0x3d] = *(undefined1 *)(iVar9 + 0x85);\r\n  if (puVar16[6] == '\\x02') {\r\n    puVar16[0x3c] = 0;\r\n  }\r\n  else {\r\n    puVar16[0x3c] = 0xff;\r\n  }\r\n  *(short *)(puVar16 + 0x40) = sVar15;\r\n  *(short *)(puVar16 + 0x42) = sVar15;\r\n  *(short *)(puVar16 + 0x44) = sVar14;\r\n  *(short *)(puVar16 + 0x46) = sVar14;\r\n  FUN_0001b750();\r\n  DAT_00053beb = DAT_00053beb + 1;\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_10c50",
+    "address": "0x10c50",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00010c50",
+      "start": "0x10c50",
+      "end": "0x11010",
+      "size": 961,
+      "entry_point": "0x10c50"
+    }
+  }
+]

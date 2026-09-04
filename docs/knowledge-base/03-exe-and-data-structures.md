@@ -221,3 +221,50 @@
 肖像編號(0x00–0x41)、職業編號(0x00–0x1A)、法術編號(0x00–0x23)、人物升級成長 64 列、
 敵我單位約 70 列 — 完整數值見 `references/text/memory.md` 與 `references/text/modify2.md`，
 結構化版本見 `02-game-data-reference.md`。
+
+### 2026-09-04 勘誤:`+0x37` 與 `+0x48` **不是矛盾,是兩組不同欄位**
+
+本文件與 `fd2_dosbox_live_helper.py` 的欄位表長期互相衝突:本文件說 AP 在 `+0x37`、
+DP `+0x39`、MV `+0x3b`、DX `+0x3e`(constructor `0x10c50` 反組譯),欄位表卻說
+AP 在 `+0x48`(實機對狀態卡驗證)。因為這個衝突,`fd2_stat_override.py` 一直不敢碰 MV。
+
+重解 constructor 後答案很單純:**它對同一筆記錄寫入兩組欄位**。
+
+```c
+*(ushort *)(puVar16 + 0x37) = ...   // 基礎 AP(growth×level)
+*(ushort *)(puVar16 + 0x39) = ...   // 基礎 DP
+puVar16[0x3b]               = ...   // MV,u8,直接複製,無等級縮放
+*(ushort *)(puVar16 + 0x3e) = ...   // 基礎 DX
+*(short  *)(puVar16 + 0x40) = sVar15  // HP
+*(short  *)(puVar16 + 0x42) = sVar15  // HP —— 同一個值
+*(short  *)(puVar16 + 0x44) = sVar14  // MP
+*(short  *)(puVar16 + 0x46) = sVar14  // MP —— 同一個值
+```
+
+`puVar16` 宣告為 `undefined1 *`(byte 指標),所以 `[0x3b]` 就是位元組偏移 0x3b,
+`(puVar16 + 0x37)` 也是位元組偏移——**不涉及指標型別縮放**。
+
+| 偏移 | 內容 |
+|---|---|
+| `+0x37`/`+0x39`/`+0x3e`(u16)、`+0x3b`(u8) | **基礎** AP/DP/DX/MV,constructor 依 growth×level 寫入 |
+| `+0x48`/`+0x4a`/`+0x4c`/`+0x4e`(u16) | **生效值**,狀態卡顯示的是這一組 |
+
+**算術佐證(三個獨立來源)**:索爾 `+0x37`=6、卡片上短劍寫 `+AP 010`、`+0x48`=16、
+畫面顯示 `AP·016`。**6 + 10 = 16**。
+
+因此 `fd2_dosbox_live_helper.py` 原本把 `+0x48` 註記成
+「base value before weapon bonus」**是反的**——它是**加成之後**的值,加成前的在 `+0x37`。
+已更正。
+
+### 附帶:這解釋了為什麼 HP 的 cur/max 會被標反兩天
+
+constructor **把同一個值 `sVar15` 同時寫進 `+0x40` 與 `+0x42`**(MP 的 `+0x44`/`+0x46`
+亦然)。單位出生時 cur == max 是**設計如此**,所以任何拿新生/滿血單位做的欄位對照
+都**不可能**分辨這兩個 offset。這是 2026-09-04「退化樣本」診斷的獨立佐證
+(見 `13-battle-menu-system.md` 該日段落)。
+
+### MV 解除封鎖
+
+`+0x3b` 已確認:讀到索爾 = 4,與狀態卡 `MV·04` 相符;寫入 20 後讀回 20。
+`fd2_stat_override.py` 新增 `--ours-mv`,並把上限夾在 60——可移動格是 flood fill,
+地圖才 ~20×60,設上萬沒有意義且有風險。

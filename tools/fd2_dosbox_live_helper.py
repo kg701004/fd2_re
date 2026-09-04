@@ -472,10 +472,18 @@ KNOWN_UNIT_RECORD_FIELDS = {
     0x42: "HPmax (u16 LE)",
     0x44: "MPcur (u16 LE)",
     0x46: "MPmax (u16 LE)",
-    0x48: "AP (u16 LE, base value before weapon bonus)",
-    0x4a: "DP (u16 LE)",
+    # 2026-09-04 修正:這裡原本註記「base value before weapon bonus」,**是反的**。
+    # constructor 0x10c50 對同一筆記錄寫的是兩組欄位:
+    #   +0x37/+0x39/+0x3b/+0x3e = 基礎 AP/DP/MV/DX(growth×level,MV 為 flat byte)
+    #   +0x48/+0x4a/+0x4c/+0x4e = 生效值,狀態卡顯示的就是這一組
+    # 實測索爾:+0x37=6、短劍卡片寫 +AP 010、+0x48=16、畫面顯示 AP·016 → 6+10=16。
+    # 所以 +0x48 是**加上武器加成之後**的值。
+    0x48: "AP (u16 LE, 生效值 = 基礎 +0x37 + 裝備加成)",
+    0x4a: "DP (u16 LE, 生效值;基礎在 +0x39)",
     0x4c: "HIT (u16 LE)",
-    0x4e: "DX (u16 LE)",
+    0x4e: "DX (u16 LE, 生效值;基礎在 +0x3e)",
+    # constructor 直接複製、不做等級縮放的 flat byte
+    0x3b: "MV (u8, flat -- constructor 0x10c50 寫 puVar16[0x3b] = puVar12[7 或 8])",
 }
 
 

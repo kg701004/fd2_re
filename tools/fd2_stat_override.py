@@ -92,6 +92,8 @@ def main() -> int:
     ap.add_argument("--ours-mp", type=int, default=9999)
     ap.add_argument("--ours-ap", type=int, default=9999)
     ap.add_argument("--enemy-hp", type=int, default=1)
+    ap.add_argument("--ours-mv", type=int, default=0,
+                    help="我方 MV(+0x3b,u8);0 = 不動。建議 20-30,不要設更大")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -117,12 +119,17 @@ def main() -> int:
         return 2
     print(f"array base = {base:#x},記錄 {len(recs)} 筆")
 
+    if not 0 <= a.ours_mv <= 60:
+        raise SystemExit(f"MV={a.ours_mv} 超出合理範圍(0-60);可移動格是 flood fill")
     plan: list[tuple[int, int, int, str]] = []   # (rec, offset, value, label)
+    mv_plan: list[tuple[int, int]] = []          # (rec, mv) —— MV 是 u8,單獨處理
     for r in recs[:n]:
         i, camp = r["index"], r["camp"]
         if r["hp_max"] == 0:
             continue                              # 空槽,跳過
         if camp == OURS:
+            if a.ours_mv:
+                mv_plan.append((i, a.ours_mv))
             plan += [(i, F_HPMAX, a.ours_hp, "HPmax"), (i, F_HPCUR, a.ours_hp, "HPcur"),
                      (i, F_MPMAX, a.ours_mp, "MPmax"), (i, F_MPCUR, a.ours_mp, "MPcur"),
                      (i, F_AP, a.ours_ap, "AP")]
@@ -140,6 +147,8 @@ def main() -> int:
 
     for rec, off, val, _ in plan:
         write_u16(a.instance, base + rec * STRIDE + off, val)
+    for rec, mv in mv_plan:
+        H.debugger_cmd(a.instance, f"SMV {base + rec * STRIDE + 0x3b:08x} {mv:02x}")
 
     # 寫後驗證:重讀並逐欄比對。沒有這一步,靜默失敗看起來就是成功。
     _, recs2 = read_array(a.instance, a.selector, n)
