@@ -80,6 +80,27 @@ def main() -> int:
     for addr, what in sorted(NEIGHBOURS.items()):
         print(f"  0x{addr:x}  {what}")
 
+    # ---- 位址自我檢查:先證明這一段真的讀得到,再談測量 ----------------------
+    # 2026-09-04 第一次跑就踩到:`mem_read_global` 用程式碼校準出的 delta,其
+    # docstring 宣稱「executable is flat, so code and data share one load-time
+    # delta」——**對 0x60xxx 不成立**。當時 0x60068/0x60069 讀到 0/0(真實地圖是
+    # 24×24),整段 dump 全 0,於是「兩次 dump 完全相同」看起來像是「flood-fill
+    # 沒用到軟堆疊」。正對照:同一時刻 0x53xxx 的全域(BGM/單位數/陣列指標)全部正確,
+    # 所以問題只在這個區段的位址對映,不是 debugger 壞了。
+    H.enter_debugger(a.instance)
+    w = H.mem_read_global(a.instance, a.selector, 0x60068, 1,
+                          H.DEFAULT_SHOT_DIR / a.instance / "ffstack").get("u8")
+    h = H.mem_read_global(a.instance, a.selector, 0x60069, 1,
+                          H.DEFAULT_SHOT_DIR / a.instance / "ffstack").get("u8")
+    H.resume(a.instance)
+    if not (w and h and 4 <= w <= 64 and 4 <= h <= 64):
+        print(f"\n位址自我檢查失敗:[0x60068]/[0x60069] 讀到 {w}/{h},不是合理的格陣列尺寸。")
+        print("**這代表 0x60xxx 的位址對映不成立,不是「軟堆疊沒被用到」。**")
+        print("要用這支工具,得先用簽章搜尋(例如在活體記憶體裡找該地圖的寬高位元組組合)")
+        print("為這個區段獨立求出 delta;`mem_read_global` 的程式碼 delta 在此不適用。")
+        return 2
+    print(f"位址自我檢查通過:格陣列 {w}×{h}")
+
     H.enter_debugger(a.instance)
     before = dump(a.instance, a.selector, SOFT_STACK_GHIDRA, n, "before")
     H.resume(a.instance)
