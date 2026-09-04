@@ -270,6 +270,36 @@ def is_halted(instance: str) -> bool:
     return not any("(Running)" in ln for ln in _pane_tail(instance))
 
 
+# 「遊戲還在不在」的判別門檻。取自 2026-09-04 實測的 5 張截圖:
+#   遊戲畫面 3 張:相異顏色 103/139/144,非黑像素比 0.306/0.310/0.307
+#   DOS 提示字元 2 張:相異顏色 5/5,非黑像素比 0.016/0.016
+# 兩類完全不重疊,門檻取中間並偏保守。
+ALIVE_MIN_COLORS = 20
+ALIVE_MIN_NONBLACK = 0.05
+
+
+def game_alive(instance: str, shot: "Path | None" = None) -> tuple[bool, dict]:
+    """FD2.EXE 是否還在跑。**用畫面判斷,不用記憶體。**
+
+    為什麼一定要用畫面:退回 DOS 之後,`[0x53a45]`/`[0x53beb]`/`[0x51a11]` 都還留著
+    舊值,而單位陣列會讀成全 0——**與「暫時性壞讀」在記憶體上完全無法分辨**。
+    2026-09-04 我被這件事騙了兩次:一次把離開後的殘留 `255` 當成曲號,
+    一次把壞讀當成「崩潰已重現」(截圖一看,遊戲和狀態卡都好端端的)。
+
+    回傳 (是否存活, 量測值)。量測值一起回傳,才能在判斷可疑時自己覆核,
+    而不是只拿到一個布林。
+    """
+    from PIL import Image                                   # noqa: PLC0415
+    shot = Path(shot) if shot else (DEFAULT_SHOT_DIR / instance / "alive.png")
+    screenshot(instance, shot)
+    im = Image.open(shot).convert("RGB")
+    cols = im.getcolors(maxcolors=1_000_000) or []
+    nonblack = sum(c for c, rgb in cols if sum(rgb) > 60) / (im.width * im.height)
+    m = {"distinct_colors": len(cols), "nonblack_ratio": round(nonblack, 4),
+         "shot": str(shot)}
+    return (len(cols) >= ALIVE_MIN_COLORS and nonblack >= ALIVE_MIN_NONBLACK), m
+
+
 def wait_halted(instance: str, timeout: float = 6.0, gap: float = 0.4) -> bool:
     """等到 debugger 真的停住。回傳是否成功。
 
