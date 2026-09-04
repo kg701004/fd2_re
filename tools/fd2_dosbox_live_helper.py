@@ -460,10 +460,18 @@ KNOWN_UNIT_RECORD_FIELDS = {
     # 8-byte HP/MP pattern, cross-checked field-by-field against the
     # in-game character status card (all 8 matched exactly, e.g. Sol's
     # displayed HP042/MP000/AP016/DP012/HIT097/DX002). Values are u16 LE.
-    0x40: "HPmax (u16 LE)",
-    0x42: "HPcur (u16 LE)",
-    0x44: "MPmax (u16 LE)",
-    0x46: "MPcur (u16 LE)",
+    # 2026-09-04 修正:HP/MP 的 cur/max 原本標反了。原始驗證(2026-09-02)雖然
+    # 「逐欄對過狀態卡」,但用的樣本是索爾的 **HP 042/042**——滿血,cur == max,
+    # 那個對照**在該狀態下無法分辨這兩個 offset**,是一個退化樣本。
+    # 本輪用兩個**不同**的值判定:寫 +0x40=500 / +0x42=300,強制重繪後畫面顯示
+    # 「500/300」,且 HP 條呈滿(現值 500 > 上限 300 被夾住),兩個讀法互相印證。
+    # MP 同法:寫 +0x44=400 / +0x46=200,畫面顯示「400/200」。
+    # 這也與 doc13 §2 的中毒反組譯一致(傷害=word[+0x42]/10 即 maxHP/10,
+    # 扣在 word[+0x40] 即現值上)——先前兩份文件互相矛盾,現在收口。
+    0x40: "HPcur (u16 LE)",
+    0x42: "HPmax (u16 LE)",
+    0x44: "MPcur (u16 LE)",
+    0x46: "MPmax (u16 LE)",
     0x48: "AP (u16 LE, base value before weapon bonus)",
     0x4a: "DP (u16 LE)",
     0x4c: "HIT (u16 LE)",
@@ -641,10 +649,10 @@ def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
             "acted": rec[0x05],
             "camp": rec[0x06],
             "gate3": rec[0x26],
-            "hp_cur": int.from_bytes(rec[0x42:0x44], "little"),
-            "hp_max": int.from_bytes(rec[0x40:0x42], "little"),
-            "mp_cur": int.from_bytes(rec[0x46:0x48], "little"),
-            "mp_max": int.from_bytes(rec[0x44:0x46], "little"),
+            "hp_cur": int.from_bytes(rec[0x40:0x42], "little"),
+            "hp_max": int.from_bytes(rec[0x42:0x44], "little"),
+            "mp_cur": int.from_bytes(rec[0x44:0x46], "little"),
+            "mp_max": int.from_bytes(rec[0x46:0x48], "little"),
             "ap": int.from_bytes(rec[0x48:0x4a], "little"),
             "dp": int.from_bytes(rec[0x4a:0x4c], "little"),
             "hit": int.from_bytes(rec[0x4c:0x4e], "little"),

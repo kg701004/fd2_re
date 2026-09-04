@@ -17,8 +17,11 @@
 只用 2026-09-02 逐欄對過遊戲自己狀態卡的那一組(doc92 續四),
 2026-09-04 在 ch27 又獨立對上一次(悠妮畫面 HP782/MP817 = 記憶體讀值):
 
-    +0x40 HPmax  +0x42 HPcur  +0x44 MPmax  +0x46 MPcur
+    +0x40 HPcur  +0x42 HPmax  +0x44 MPcur  +0x46 MPmax
     +0x48 AP     +0x4a DP     +0x4c HIT    +0x4e DX
+
+(cur/max 的順序於 2026-09-04 用兩個不同值 + 強制重繪實測更正;先前標反,
+ 因為原始驗證用的是滿血單位,cur == max 無法分辨。)
 
 **MV 不在這組裡,本工具不碰。** 計畫檔記的 MV=`+0x3b` 來自 constructor 反組譯,
 但同一份來源把 AP 記成 `+0x37`,而實測 AP 在 `+0x48`——兩套偏移互相矛盾,
@@ -54,8 +57,8 @@ import fd2_dosbox_live_helper as H  # noqa: E402
 
 STRIDE = 0x50
 CAMP = 0x06
-F_HPMAX, F_HPCUR = 0x40, 0x42
-F_MPMAX, F_MPCUR = 0x44, 0x46
+F_HPCUR, F_HPMAX = 0x40, 0x42  # 2026-09-04 實測更正:cur 在前
+F_MPCUR, F_MPMAX = 0x44, 0x46
 F_AP = 0x48
 OURS, ENEMY = 0x02, 0x00
 
