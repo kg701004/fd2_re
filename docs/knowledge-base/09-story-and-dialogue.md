@@ -105,6 +105,11 @@ python3 tools/render_story.py --all extracted/raw/FDTXT \
   其餘丟棄 → 後半永遠看不到**(使用者實玩抓到)。回歸測試 `cmd/fd2/dlg_test.go`(需 xvfb 跑,ebiten init 要顯示器)。
 - **面向**:cutscene 角色 dir 預設 0(下,面向玩家);走位者走完面向 actor 目標 dir(進場走位=`a.Dir`,
   如亞雷斯走到索爾旁面向他);詳見 doc47 §11 面向通用規則。
+> ⛔ **[remake 證據排除]**(2026-09-04):以下「驗證法」整套建立在 remake 的 headless
+> debug hook 上,依現行判準**不構成原版事實的證據**。凡是靠這條路徑得出的劇情/對白
+> /走位結論一律視為未驗證,需改以 DOSBox-X 原版實機重做。此段保留供追溯,不得引用
+> 為既定事實。見 `docs/data/remake_excluded_claims.json`。
+
 - **驗證法**:`FD2_CAMPAIGN=… FD2_CAMP_NODE=<node> FD2_SHOT=out.png FD2_SHOT_FRAME=N`(headless,host xvfb+llvmpipe);
   長對白翻頁用 xdotool 送 Enter。⚠ 軟體渲染 fps≠60,`FD2_SHOT_FRAME`(遊戲幀)與 wall-clock 送鍵易對不上,
   優先 Go 測試(確定性)驗邏輯、截圖驗版面(見記憶 [[fd2-goal-and-no-speculation-rule]] 採樣率不準)。

@@ -453,6 +453,10 @@ fail-closed 的並聯,不是替換:`NextAIPlan` 每個單位先呼叫
 路徑時沿用同一套邏輯)也在 `combat.go` 的 `aiActUnit` 開頭接了
 `ApplyNativeAI14237PhysicalAttack`。
 
+> ⛔ **[remake 證據排除]**(2026-09-04):以下這次「live 驗證」是透過 remake 的
+> `FD2_CAMP_PREP_BATTLE` debug hook 取得的,依現行判準不構成原版 AI 行為的證據。
+> 它觀察到的資料缺口可作為線索,但結論需以 DOSBox-X 原版重驗才算數。
+
 **live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01
 FD2_SHOT_AI=1 FD2_SHOT_TURN=1`,配合新增的 `AI決策: ... native=%v` 除錯輸出
 逐幀觀察)發現一個真實、與本次 composer 工作無關的既有資料缺口**:
@@ -857,6 +861,9 @@ Dockerfile 還在),編出 Linux 版 `fd2-linux`,以 `xvfb-run` + 既有的
 - `FD2_CAMP_NODE=battle_ch08`(走完整的 `g.enterNode()` 節點分派)截圖出來是一張
   **正確算繪、乾淨的隊伍部署畫面**(地圖、建物、寶箱、游標都對,玩家隊伍聚在
   出生點,尚未各自展開到戰術位置)——證明 harness 本身、地圖算繪都沒問題。
+> ⛔ **[remake 證據排除]**(2026-09-04):本行自陳這條 remake 捷徑是「ch01 驗證一路
+> 在用的」——依現行判準,凡以它為基礎的 AI 結論一律視為未驗證,需 DOSBox-X 原版重驗。
+
 - `FD2_CAMP_PREP_BATTLE=battle_ch08`(ch01 驗證一路在用的捷徑,`resetBattle()`
   之後仍會被隨後的 `g.enterNode()` 對「當時 `g.camp.Cur`」重跑一次節點設定)
   截圖出來卻是**明顯損壞的畫面**(紅色色塊、單位貼圖比例錯亂/被裁切)——這是

@@ -83,6 +83,19 @@
 
 ## 證據規則
 
+- **（2026-09-04，使用者判準，優先於本節其餘各條）無條件排除以 remake 為證據
+  來源的結論；判定一律以 DOSBox-X 原版實機與原版 `FD2.EXE` 靜態反組譯為準。**
+  remake 產出的畫面、`go test` 結果、`FD2_SHOT_*`／`FD2_CAMP_*` debug hook 取得的
+  「live 驗證」，一律**不構成原版事實的證據**，不論當時記錄得多完整。既有結論若
+  只有 remake 證據，視為未驗證，必須用原版重驗才能恢復;引用 remake 檔名或函式
+  作為「實作對照」是可以的，但那是敘述 remake 的狀態，不得寫成原版結論。
+  - 已列管清單：[`docs/data/remake_excluded_claims.json`](docs/data/remake_excluded_claims.json)
+  - 閘門：`python tools/audit_evidence_provenance.py --gate`。落在原版知識文件裡、
+    證據來源為 remake 的主張若未列管，回傳非 0。新增這類敘述時必須同時登錄，並
+    註明它是 remake 實作敘述（`remake_artifact`）還是需要原版重驗的原版事實
+    （`original_fact_excluded`）。
+  - 這條規則的來由：remake 本身就是依既有結論實作的，用它回頭驗證那些結論是
+    自我參照，不會發現錯誤；`remake/` 已於 2026-09-02 整個移除。
 - 所有 `FD2.EXE` 位址、資料表偏移與反組譯結論，都必須綁定
   [`docs/data/fd2-reference-files.json`](docs/data/fd2-reference-files.json)
   中的執行檔大小、MD5 與 SHA-256。雜湊不同時，位址不可直接沿用，必須

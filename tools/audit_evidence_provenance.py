@@ -45,6 +45,7 @@ actual drawNativeCommandGrid render」——`drawNativeCommandGrid` 是 remake �
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -164,6 +165,12 @@ REMAKE_SIDE_DOCS = {
 }
 
 
+# 排除註記本身會提到 remake、也會帶「驗證」字樣,若不排掉就會被自己當成新的主張
+# (而且是 REMAKE_ONLY),閘門會擋住自己的註記。帶這個標籤的行視為註記,不是主張。
+# 標籤刻意寫得長而具體,避免誤傷正常敘述。
+EXCLUSION_TAG = "[remake 證據排除]"
+
+
 @dataclass
 class Claim:
     file: str
@@ -206,7 +213,7 @@ def scan(kb: Path) -> list[Claim]:
         for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace")
                                  .splitlines(), start=1):
             s = line.strip()
-            if len(s) < 30:
+            if len(s) < 30 or EXCLUSION_TAG in s:
                 continue
             got = classify(s)
             if got is None:
@@ -216,6 +223,33 @@ def scan(kb: Path) -> list[Claim]:
                                 addr_only=(status == "ORIGINAL"
                                            and not _hits(s, ORIGINAL_MARKERS_NAMED))))
     return claims
+
+
+REGISTRY = REPO / "docs" / "data" / "remake_excluded_claims.json"
+
+
+def _sha(excerpt: str) -> str:
+    return hashlib.sha1(excerpt.encode("utf-8")).hexdigest()
+
+
+def gate(claims: list[Claim], registry: Path = REGISTRY) -> tuple[list[Claim], list[dict]]:
+    """2026-09-04 使用者判準:無條件排除 remake 證據的結論,以 DOSBox-X 原版為準。
+
+    光把判準寫進文件擋不住下一輪再寫一筆進去,所以做成閘門:落在原版知識文件裡的
+    REMAKE_ONLY 主張**必須**列管在 `docs/data/remake_excluded_claims.json`,否則
+    `--gate` 失敗。
+
+    以 excerpt 的 sha1 為鍵而不是行號:行號會因為任何一次插入而整份漂移,行號式登錄
+    表會在無人察覺的情況下對錯行;文字被改動時 sha1 不合,反而正是需要重新判定的時候。
+
+    回傳 (未列管的主張, 登錄表裡已找不到的條目)。
+    """
+    reg = json.loads(registry.read_text(encoding="utf-8"))["claims"]
+    known = {(e["file"], e["excerpt_sha1"]) for e in reg}
+    _, actionable = stratify(claims)
+    seen = {(c.file, _sha(c.excerpt)) for c in actionable}
+    return ([c for c in actionable if (c.file, _sha(c.excerpt)) not in known],
+            [e for e in reg if (e["file"], e["excerpt_sha1"]) not in seen])
 
 
 def stratify(claims: list[Claim]) -> tuple[list[Claim], list[Claim]]:
@@ -347,6 +381,17 @@ def selftest() -> int:
     if classify("E2E 測試已通過,全鏈路無誤") is None:
         fails.append("修 E2 的同時把真正的 E2E 主張也擋掉了(過度修正)")
 
+    # --- 排除註記不可被當成新主張(否則閘門會擋住自己的註記)。
+    #     配對對照:拿掉標籤的同一句話**必須**照樣被收進來,證明是標籤在作用,
+    #     不是這句話剛好不像主張。---
+    _tag = (f"> ⛔ **{EXCLUSION_TAG}**(2026-09-04):本節結論的證據來自 "
+            "`remake/internal/battle`,依現行判準視為未驗證")
+    checks += 2
+    if classify(_tag) is None or EXCLUSION_TAG not in _tag:
+        fails.append("測資本身就不是主張,這組對照沒有鑑別力")
+    if classify(_tag.replace(EXCLUSION_TAG, "備註")) is None:
+        fails.append("配對對照:拿掉標籤後這句話也不算主張,無法證明是標籤在作用")
+
     # --- 對照組:確認掃描器真的掃得到東西(避免空掃過關)---
     real = scan(KB)
     checks += 2
@@ -384,6 +429,22 @@ def selftest() -> int:
         fails.append("真值錨點:doc58(remake 實機驗證記錄)被判為『要處理』——"
                      "這正是密度指標答錯的那一題")
 
+    # --- 閘門:真實語料必須全數列管(現狀),而**故障注入必須讓它失敗**。
+    #     一個永遠通過的閘門擋不住任何東西,兩個方向都要驗。---
+    checks += 3
+    unreg, stale = gate(real)
+    if unreg:
+        fails.append(f"閘門:真實語料有 {len(unreg)} 筆未列管,"
+                     f"首筆 {unreg[0].file}:{unreg[0].line}")
+    if stale:
+        fails.append(f"閘門:登錄表有 {len(stale)} 筆已找不到對應主張(文字被改過?),"
+                     f"首筆 {stale[0]['file']}")
+    _fake = Claim("11-enemy-ai.md", 1, "REMAKE_ONLY", ["remake 路徑"], [],
+                  "本輪已確認此結論,證據為 `remake/internal/battle/model.go`")
+    if not gate(real + [_fake])[0]:
+        fails.append("故障注入:塞進一筆未列管的 remake 證據主張,閘門竟然放行——"
+                     "這個閘門擋不住任何東西")
+
     total = checks
     print(f"檢查:{total - len(fails)}/{total} 通過")
     for f in fails:
@@ -401,10 +462,30 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=25)
     ap.add_argument("--json")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--gate", action="store_true",
+                    help="落在原版知識文件的 remake 證據主張必須已列管,否則回傳非 0")
     args = ap.parse_args()
 
     if args.selftest:
         return selftest()
+
+    if args.gate:
+        unreg, stale = gate(scan(KB))
+        expected, actionable = stratify(scan(KB))
+        print(f"閘門:原版知識文件裡的 remake 證據主張 {len(actionable)} 筆,"
+              f"已列管 {len(actionable) - len(unreg)} 筆")
+        for e in stale:
+            print(f"  ⚠ 登錄表條目已找不到(文字被改過或已刪除,需重新判定):"
+                  f"{e['file']}  {e['excerpt'][:70]}")
+        for c in unreg:
+            print(f"  FAIL 未列管:{c.file}:{c.line}\n       {c.excerpt[:110]}")
+        if unreg:
+            print(f"\n未列管 {len(unreg)} 筆。依 2026-09-04 判準,remake 證據的結論一律"
+                  "排除;新增這類主張必須同時登錄到 docs/data/remake_excluded_claims.json,"
+                  "並註明它是 remake 實作敘述還是需要原版重驗的原版事實。")
+            return 1
+        print("通過。")
+        return 0
 
     if not KB.is_dir():
         print(f"找不到知識庫目錄:{KB}", file=sys.stderr)

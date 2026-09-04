@@ -1,0 +1,213 @@
+{
+  "_policy": "2026-09-04 使用者判準:無條件排除 remake 證據的結論,以 DOSBox-X 原版為主要判定依據。本表列管所有落在原版知識文件裡、證據來源為 remake 的主張。以 excerpt_sha1 為鍵(行號會漂移);tools/audit_evidence_provenance.py --gate 會擋下未列管的新違規。",
+  "claims": [
+    {
+      "file": "05-image-compression-format.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "87651bf369e17e809f4db3e487cbf1d42344188c",
+      "excerpt": "**1. 確認 ch10 戰鬥地圖資產**：`remake/assets/scenarios/campaign_full.json` 第 1878-1880 行，",
+      "note": "以 remake campaign_full.json 當索引找 ch10 資產;索引來源排除,資產本身需改由原版容器定位",
+      "first_line_seen": 107
+    },
+    {
+      "file": "09-story-and-dialogue.md",
+      "kind": "original_fact_excluded",
+      "excerpt_sha1": "8bb7162ca5d464fc2874e8b5c0917629e2d8cd85",
+      "excerpt": "- **驗證法**:`FD2_CAMPAIGN=… FD2_CAMP_NODE=<node> FD2_SHOT=out.png FD2_SHOT_FRAME=N`(headless,host xvfb+llvmpipe);",
+      "note": "劇情/對話的『驗證法』本身就是 remake headless 截圖 → 依此法得出的對話結論一律不成立,需改用 DOSBox-X 原版重驗",
+      "first_line_seen": 108
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "cff0edf0c5ce33a1d3c16430aecd48cd23a1baaf",
+      "excerpt": "`ApplyNativeRuntimeEquipmentRecalc`(既有,`native_equipment.go`)已證實",
+      "note": "ApplyNativeRuntimeEquipmentRecalc 是 remake 函式,『已證實』指的是 remake 實作行為",
+      "first_line_seen": 337
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "original_fact_excluded",
+      "excerpt_sha1": "ec7ec3aff4af0a13b695148c45707d601c4d6aee",
+      "excerpt": "**live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01",
+      "note": "敵方 AI 的『live 驗證』透過 remake FD2_CAMP_PREP_BATTLE hook 取得 → 排除,AI 行為需 DOSBox-X 原版重驗",
+      "first_line_seen": 456
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "honest_not_verified",
+      "excerpt_sha1": "3bdcbedb7b81498abc9d3233fa2b549b8e9ea6f4",
+      "excerpt": "composer)下物理仍正確獲勝」。**尚未做的是實機驗證**(`FD2_SHOT_AI=1` 截圖確認 AI",
+      "note": "原文已自陳『尚未做的是實機驗證』,無需撤回,列管以免日後被誤讀為已驗",
+      "first_line_seen": 787
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "honest_not_verified",
+      "excerpt_sha1": "775e12437fdbff989f50905a381a4a529f0f9546",
+      "excerpt": "正確性,還沒有用 `FD2_SHOT_AI=1` 截圖確認 AI 在真實戰鬥中會選擇施法/用道具",
+      "note": "原文已自陳還沒截圖確認",
+      "first_line_seen": 812
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "original_fact_excluded",
+      "excerpt_sha1": "6f7e7243d610189dbff6164d58b4ddaeadaf0e29",
+      "excerpt": "- `FD2_CAMP_PREP_BATTLE=battle_ch08`(ch01 驗證一路在用的捷徑,`resetBattle()`",
+      "note": "自陳 ch01 驗證『一路在用』這條 remake 捷徑 → 以它為基礎的 AI 結論全部排除",
+      "first_line_seen": 860
+    },
+    {
+      "file": "11-enemy-ai.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "164a8d26d682a0cf6cc55f13c19ac92b13ecfc16",
+      "excerpt": "- 物理分支的地形百分比表數值已確認(見上一節,`terrain.go` 既有 + 三個獨立來源交叉驗證)，",
+      "note": "terrain.go 是 remake 實作;該行同時聲稱有三個獨立來源交叉驗證,原版側部分需單獨確認",
+      "first_line_seen": 893
+    },
+    {
+      "file": "12-music-playback-and-scene.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "f756b4fe9b6cf7e259ccf256226c58b17dfa09c3",
+      "excerpt": "`remake/cmd/fd2/title.go` 開場 BGM 應改用 **`FDMUS_018`**(對應 boot 鏈唯一確認呼叫);",
+      "note": "對 remake title.go 的修正指示,remake 已移除,指示失效",
+      "first_line_seen": 225
+    },
+    {
+      "file": "13-battle-menu-system.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "3666d62ea4d4c5bbc350f363c751530ab060178f",
+      "excerpt": "ExecuteNativeCommandDerivedStrike` 選擇改用已驗證的一般攻擊經驗公式(`growth.go AttackExp`,",
+      "note": "remake 實作選擇(改用 growth.go AttackExp)",
+      "first_line_seen": 722
+    },
+    {
+      "file": "13-battle-menu-system.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "251b6012869837afeb51f5d3bbdac50b573aab9a",
+      "excerpt": "main.go L4400-4407 的既有 fallback(「目標／效果尚未驗證」訊息,不執行、不消耗回合)**,",
+      "note": "remake main.go 的 fallback 行為",
+      "first_line_seen": 743
+    },
+    {
+      "file": "13-battle-menu-system.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "6f98815c2af3382487ff311eb2fb0a9dc9ca13d1",
+      "excerpt": "新增/擴充 regression test(`go test ./...` 全綠,含既有 test 未受影響的驗證):",
+      "note": "remake go test 覆蓋率敘述",
+      "first_line_seen": 750
+    },
+    {
+      "file": "25-battle-event-system.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "4f4bc1d1942c984a778c9189a542c1fe872e99e8",
+      "excerpt": "3. 先前 event.go 註解一度誤引「doc 25 §7.5.1 dosbox 實機證實[世界地圖走位]」,但該小節當時並不存在——本節即補上正確內容並修正該註解的引用鏈(§7.5.1 = 本節,無世界地圖佐證)。此點不受本次修正影響。",
+      "note": "修正 remake event.go 註解的引用鏈;內容本身是誠實撤回『無世界地圖佐證』",
+      "first_line_seen": 1324
+    },
+    {
+      "file": "25-battle-event-system.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "5385fd56beeac3fd17b00f2618d98ab24486bc13",
+      "excerpt": "> 複刻 production-verified 的 `native_join_constructor.go`",
+      "note": "複刻 remake native_join_constructor.go",
+      "first_line_seen": 1674
+    },
+    {
+      "file": "26-per-chapter-event-handlers.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "a42b5436323e8f064cef71211214e17f351b2817",
+      "excerpt": "- **回歸覆蓋**：`native_join_constructor_test.go` 的 `TestNativeJoinConstructorMaterializesAllKnownRows` 對 id=0..31 全掃一遍(含18)，斷言每個 row 都能無誤產出完整 record(`NativeIdentity",
+      "note": "remake 回歸測試覆蓋敘述",
+      "first_line_seen": 281
+    },
+    {
+      "file": "26-per-chapter-event-handlers.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "af1017a689925934a28df15e30888cfd555bb94a",
+      "excerpt": "- **通用機制已驗**：`remake/cmd/fd2/save.go` 把 `g.partyRoster`(`map[int]battle.Unit`)與 `g.handlerChapter` 原樣塞進存檔 JSON(`PartyRoster`/`Chapter` 欄位)；`battle.Unit` 內 `Nati",
+      "note": "remake save.go 的存檔機制,非原版存檔機制",
+      "first_line_seen": 298
+    },
+    {
+      "file": "26-per-chapter-event-handlers.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "b2b006cc4c48bf5033ce0423aee0ea7f5c9d9cef",
+      "excerpt": "範圍內，其演算法是否也是同一套 roster/count 查詢仍待下一輪確認；`handler_compile.go`",
+      "note": "remake handler_compile.go;原文亦自陳『仍待下一輪確認』",
+      "first_line_seen": 345
+    },
+    {
+      "file": "27-combat-rules-and-validation-checklist.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "6a3fc7a8919d223aeb86f4f186fb2208035d2929",
+      "excerpt": "**與 `remake/internal/battle/magic.go` 比對——確認方向相反的 bug,本輪不修正**:",
+      "note": "與 remake magic.go 比對;原版側結論來自 spell.json 逐 byte 核對,不受影響",
+      "first_line_seen": 293
+    },
+    {
+      "file": "27-combat-rules-and-validation-checklist.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "4dd892b536f3fb220462c0f04dce71c59827ba59",
+      "excerpt": "**結論**:`spell.json` 的 `hit`/`raw` 等實際資料值全部正確(0/36 誤差),`off` 欄位是需要 housekeeping 的過期標籤;`hit=0` 的原生機器語意是「恆 miss」而非「恆 hit」;`magic.go` 現行 `rollsHit` 對 `hit<=0` 的「恆 h",
+      "note": "結論的原版側部分(hit=0 恆 miss)來自逐 byte 核對;magic.go 反向 bug 的敘述隨 remake 失效",
+      "first_line_seen": 311
+    },
+    {
+      "file": "27-combat-rules-and-validation-checklist.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "a5f17071ba03e316bb523dfff78ae41680f9c1ef",
+      "excerpt": "**測試**:`magic_test.go` 新增 `TestRollsHit_HitZero_AlwaysMisses`(通則:不在特例清單的假想 ID,hit<=0 對 100 次擲骰恆 Miss)、`TestRollsHit_SealSpell_FiftyPercentGate`(id22 對 60 次擲骰同時出",
+      "note": "remake magic_test.go 新增測試",
+      "first_line_seen": 338
+    },
+    {
+      "file": "27-combat-rules-and-validation-checklist.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "280bcbed79c060a55d2ae58bcb08f454ac24be0b",
+      "excerpt": "`remake/internal/battle` 已有三個各自獨立、有測試覆蓋的 raw-ABI primitive,逐位元組對映上述三段",
+      "note": "remake internal/battle 的 raw-ABI primitive",
+      "first_line_seen": 421
+    },
+    {
+      "file": "32-item-combat-stats-re.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "05a207ad970ba065da3c9b230cc414a49cd1f66a",
+      "excerpt": "**2026-08-30 更新**:此項已由 `doc27 §6.6` 收口——36 筆逐 byte 核對 0 誤差,並確認 `magic.go rollsHit` 的",
+      "note": "引用 doc27 §6.6;36 筆逐 byte 核對屬原版側,magic.go 部分排除",
+      "first_line_seen": 871
+    },
+    {
+      "file": "32-item-combat-stats-re.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "6238052688b910e0c4c661386683e06c35cda01e",
+      "excerpt": "→raw slot scan 的 count-sized prefix 搜尋,不驗證 compactness,與原生行為一致。`main.go:2683-2690`",
+      "note": "remake main.go 的 slot scan 行為",
+      "first_line_seen": 895
+    },
+    {
+      "file": "55-meadow-walk-staging.md",
+      "kind": "original_fact_excluded",
+      "excerpt_sha1": "44b5b5b06290a431b6d23bb794633579e08756e6",
+      "excerpt": "`campaign.go:118` 現有註解「影片證實…兩人一起走離,非單人」**與本輪逐幀量測結果矛盾,應更正**",
+      "note": "campaign.go 註解的『影片證實』來源不明且與逐幀量測矛盾 → 排除,以逐幀量測為準",
+      "first_line_seen": 30
+    },
+    {
+      "file": "99-chapter-sweep-results.md",
+      "kind": "reverified_original",
+      "excerpt_sha1": "5261f095ac87da30566c1cfa4d09086636e82742",
+      "excerpt": "Ares/Yuni/Gaia）確認悠妮的character id是`9`；`remake/internal/campaign/",
+      "note": "悠妮 character id=9 原引用 remake,2026-09-04 已用原版獨立確認(characters.json + 活體記憶體 +0x08),結論成立",
+      "first_line_seen": 4365
+    },
+    {
+      "file": "99-chapter-sweep-results.md",
+      "kind": "remake_artifact",
+      "excerpt_sha1": "28885e082549af523338ce914df87600e38149d6",
+      "excerpt": "test.go`：獨立`battle.Load(\"map9_units.json\")`確認新增的`卡納恩三世`",
+      "note": "remake test.go 載入 map9_units.json",
+      "first_line_seen": 6544
+    }
+  ]
+}
