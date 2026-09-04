@@ -43,6 +43,34 @@ def load_map() -> dict[int, list[int]]:
     return {int(k): [int(x, 16) for x in v] for k, v in d.items()}
 
 
+def load_verification() -> tuple[dict[int, int], dict[int, dict]]:
+    """回傳 (已活體確認的 site→index, 已知歸屬錯誤的 site→細節)。
+
+    **這一層是必要的,不是裝飾**:`index_to_callers` 是靜態貪婪解析的產物,
+    對「被跳進的 call」會歸屬錯誤且毫無徵兆(見資料檔 `_meta.caveat`)。
+    2026-09-04 實測:probe 命中 `0x32307` 時,工具照靜態表印出「index 11」,
+    而該呼叫點的活體值是 9——**工具給了一個看起來正常的錯數字**。
+    """
+    meta = json.load(CALLERS.open(encoding="utf-8")).get("_meta", {})
+    ok = {int(k, 16): v for k, v in meta.get("live_verified", {}).items()}
+    bad = {int(k, 16): v for k, v in meta.get("known_misattributed", {}).items()}
+    return ok, bad
+
+
+def describe_hit(site: int, static_idx: int) -> str:
+    """命中一個呼叫點時該怎麼講。**未經活體確認就不給裸數字。**"""
+    ok, bad = load_verification()
+    if site in bad:
+        e = bad[site]
+        return (f"呼叫點 0x{site:x} —— ⚠ **已知靜態歸屬為錯**:靜態表寫 index "
+                f"{e['static_index']},活體讀到 **{e['live_index']}**。{e.get('note', '')}")
+    if site in ok:
+        return f"**index {ok[site]}**(已活體確認)  呼叫點 0x{site:x}"
+    return (f"呼叫點 0x{site:x} —— 靜態表歸為 index {static_idx},"
+            f"**但此呼叫點未經活體確認,不可當成已確認的 index**"
+            f"(見 sfx_index_callers.json 的 `_meta`)")
+
+
 def pane(inst: str) -> str:
     r = subprocess.run(["wsl", "-d", "Ubuntu", "tmux", "-L", "fd2harness",
                         "capture-pane", "-t", f"harness-{inst}", "-p"],
@@ -148,7 +176,7 @@ def main() -> int:
         for off in range(0, 8):
             s = live - off - DELTA
             if s in site2idx:
-                print(f"{a.probe}: **index {site2idx[s]}**  呼叫點 0x{s:x}  (EIP={e}, 步過 {off} bytes)")
+                print(f"{a.probe}: {describe_hit(s, site2idx[s])}  (EIP={e}, 步過 {off} bytes)")
                 H.resume(a.instance)
                 return 0
         print(f"{a.probe}: 未命中任何已武裝的呼叫點 (EIP={e})")
