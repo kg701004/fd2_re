@@ -20,8 +20,10 @@ H="python tools/fd2_dosbox_live_helper.py"
 I="$1"
 [ "$2" = "boot" ] && { sleep 70; $H key --instance $I confirm --wait 3 >/dev/null 2>&1; }
 # 探測的代價遠高於按鍵:一次 ensure_browse 要 BPDEL/下斷點/送鍵/讀 EIP,約 30-60 秒,
-# 而一次確認只要 1.3 秒。2026-09-04 五次實測(sfx2/win3/ctl1/ctl2/ctl3/dbg1/rv1)
-# **全部都在第 7-9 批才成立**,所以前 6 次探測是穩定的浪費——那才是 10 分鐘裡的大頭。
+# 而一次確認只要 1.3 秒。2026-09-04 八次實測(sfx2/win3/ctl1/ctl2/ctl3/dbg1/rv1/lad1):
+# **最早也要第 7 批才成立**(觀察到的落點是 7、9、11——上限比我第一次寫的「7-9」寬,
+# 第 8 個樣本就跑到 11 了,所以這裡只用**下界**做最佳化,不假設上界)。
+# 前 6 次探測是穩定的浪費,那才是 10 分鐘裡的大頭。
 # 改成:前 60 次確認完全不探測,之後每 10 次探一次。省下約 6 次探測。
 SKIP_PROBE_UNTIL=${FD2_DRIVE_SKIP_PROBE_UNTIL:-6}
 for r in $(seq 1 20); do

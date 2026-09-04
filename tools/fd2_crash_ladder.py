@@ -78,11 +78,50 @@ def stage_d(inst: str) -> None:
     A.press(inst, "confirm", 2.5)
 
 
+def stage_e(inst: str) -> None:
+    """D + **在瀏覽層跨地圖移動游標**。
+
+    2026-09-04:A-D 各跑到 16 輪都不死,而同一個實例緊接著跑一次
+    `autoplay --attack` 就退回 DOS(正對照,證明實例本身有能力死)。
+    所以死因在 autoplay 做、階梯沒做的事,而 `move_cursor` 是其中最明顯的一項——
+    階梯永遠只操作游標當下那個單位,autoplay 則會把游標移到指定單位。
+    """
+    A.ensure_browse(inst)
+    for _ in range(4):                     # 跨地圖移動游標(autoplay 的 move_cursor)
+        A.press(inst, "right", 0.7)
+    for _ in range(3):
+        A.press(inst, "down", 0.7)
+    A.press(inst, "confirm", 1.6)
+    A.press(inst, "right", 0.8)
+    A.press(inst, "confirm", 2.2)
+    A.select_ring(inst, A.RING_ATTACK, "up")
+    A.press(inst, "confirm", 2.5)
+    A.press(inst, "confirm", 2.5)
+
+
+def stage_f(inst: str) -> None:
+    """E + **每個動作前後讀單位陣列**(autoplay 的 snapshot)。
+
+    autoplay 每個單位動作前後都會 enter_debugger → mem_read_unit_array → resume。
+    階梯只在 ensure_browse 裡進出 debugger,次數少得多。
+    """
+    stage_e(inst)
+    for _ in range(3):
+        H.enter_debugger(inst)
+        H.wait_halted(inst)
+        H.mem_read_unit_array(inst, "0170",
+                              H.DEFAULT_SHOT_DIR / inst / "ladder", num_records=12)
+        H.resume(inst)
+        time.sleep(0.3)
+
+
 STAGES = [
     ("A  ensure_browse 單獨", stage_a),
     ("B  + 原地確認 + 休息(已知會活,正對照)", stage_b),
     ("C  + 移動到新格 + 確認落點(不碰環)", stage_c),
     ("D  + 指令環 ↑ + 確認 ×2(全套)", stage_d),
+    ("E  + 瀏覽層跨地圖移動游標", stage_e),
+    ("F  + 反覆讀單位陣列(autoplay 的 snapshot)", stage_f),
 ]
 
 
