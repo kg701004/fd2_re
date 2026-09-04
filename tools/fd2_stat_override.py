@@ -154,13 +154,20 @@ def main() -> int:
         if r["hp_max"] == 0:
             continue                              # 空槽,跳過
         if camp == OURS:
+            # 0 = 不動,與 --ours-mv 一致。2026-09-04 補:先前只有 MV 有這個逃生口,
+            # 其餘三項的**預設值是 9999**,所以想「只改敵方」而單下 --enemy-hp 時,
+            # 我方也會被一起灌大——正好毀掉那種對照組要隔離的變因。
             if a.ours_mv:
                 mv_plan.append((i, a.ours_mv))
-            plan += [(i, F_HPMAX, a.ours_hp, "HPmax"), (i, F_HPCUR, a.ours_hp, "HPcur"),
-                     (i, F_MPMAX, a.ours_mp, "MPmax"), (i, F_MPCUR, a.ours_mp, "MPcur"),
-                     (i, F_AP, a.ours_ap, "AP")]
+            if a.ours_hp:
+                plan += [(i, F_HPMAX, a.ours_hp, "HPmax"), (i, F_HPCUR, a.ours_hp, "HPcur")]
+            if a.ours_mp:
+                plan += [(i, F_MPMAX, a.ours_mp, "MPmax"), (i, F_MPCUR, a.ours_mp, "MPcur")]
+            if a.ours_ap:
+                plan += [(i, F_AP, a.ours_ap, "AP")]
         elif camp == ENEMY:
-            plan += [(i, F_HPMAX, a.enemy_hp, "HPmax"), (i, F_HPCUR, a.enemy_hp, "HPcur")]
+            if a.enemy_hp:
+                plan += [(i, F_HPMAX, a.enemy_hp, "HPmax"), (i, F_HPCUR, a.enemy_hp, "HPcur")]
 
     print(f"預定寫入 {len(plan)} 個 u16 欄位({len(plan)*2} 次 SMV)")
     if a.dry_run:
