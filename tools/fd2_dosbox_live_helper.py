@@ -278,26 +278,50 @@ ALIVE_MIN_COLORS = 20
 ALIVE_MIN_NONBLACK = 0.05
 
 
-def game_alive(instance: str, shot: "Path | None" = None) -> tuple[bool, dict]:
-    """FD2.EXE 是否還在跑。**用畫面判斷,不用記憶體。**
-
-    為什麼一定要用畫面:退回 DOS 之後,`[0x53a45]`/`[0x53beb]`/`[0x51a11]` 都還留著
-    舊值,而單位陣列會讀成全 0——**與「暫時性壞讀」在記憶體上完全無法分辨**。
-    2026-09-04 我被這件事騙了兩次:一次把離開後的殘留 `255` 當成曲號,
-    一次把壞讀當成「崩潰已重現」(截圖一看,遊戲和狀態卡都好端端的)。
-
-    回傳 (是否存活, 量測值)。量測值一起回傳,才能在判斷可疑時自己覆核,
-    而不是只拿到一個布林。
-    """
+def _frame_looks_alive(path: "Path") -> dict:
     from PIL import Image                                   # noqa: PLC0415
-    shot = Path(shot) if shot else (DEFAULT_SHOT_DIR / instance / "alive.png")
-    screenshot(instance, shot)
-    im = Image.open(shot).convert("RGB")
+    im = Image.open(path).convert("RGB")
     cols = im.getcolors(maxcolors=1_000_000) or []
     nonblack = sum(c for c, rgb in cols if sum(rgb) > 60) / (im.width * im.height)
-    m = {"distinct_colors": len(cols), "nonblack_ratio": round(nonblack, 4),
-         "shot": str(shot)}
-    return (len(cols) >= ALIVE_MIN_COLORS and nonblack >= ALIVE_MIN_NONBLACK), m
+    return {"distinct_colors": len(cols), "nonblack_ratio": round(nonblack, 4),
+            "alive": len(cols) >= ALIVE_MIN_COLORS and nonblack >= ALIVE_MIN_NONBLACK}
+
+
+def game_alive(instance: str, shot: "Path | None" = None,
+               samples: int = 3, gap: float = 0.6) -> tuple[bool, dict]:
+    """FD2.EXE 是否還在跑。**用畫面判斷,不用記憶體;而且要多幀。**
+
+    為什麼一定要用畫面:退回 DOS 之後,`[0x53a45]`/`[0x53beb]`/`[0x51a11]` 都還留著
+    舊值,單位陣列有時讀成全 0、有時讀出**成功但是垃圾**的 12 筆記錄——
+    兩種都與「暫時性壞讀」在記憶體上無法分辨。2026-09-04 我被騙了兩次。
+
+    **為什麼要多幀(這一版的修正)**:第一版單幀判斷,當場就出了假陰性——
+    轉場中的黑畫面同樣「顏色少、幾乎全黑」,被判成已離開,兩分鐘後同一個實例
+    又量到 102 色。當初的「5/5 驗證」全部用靜態截圖,**沒有一張是轉場畫面**,
+    所以看不出這個失敗模式(退化的驗證樣本)。
+
+    判別依據是**持續性**:DOS 提示字元會一直在,轉場黑畫面是短暫的。
+    因此取 `samples` 幀、間隔 `gap` 秒,**任一幀看起來像遊戲就算存活**。
+
+    回傳 (是否存活, 量測值)。量測值含每一幀的數字,可疑時可自行覆核。
+    """
+    shot = Path(shot) if shot else (DEFAULT_SHOT_DIR / instance / "alive.png")
+    frames = []
+    for i in range(max(1, samples)):
+        p = shot if i == 0 else shot.with_name(f"{shot.stem}_{i}{shot.suffix}")
+        screenshot(instance, p)
+        f = _frame_looks_alive(p)
+        f["shot"] = str(p)
+        frames.append(f)
+        if f["alive"]:
+            break                                    # 已經確定活著,不必再等
+        if i + 1 < max(1, samples):
+            time.sleep(gap)
+    alive = any(f["alive"] for f in frames)
+    return alive, {"alive": alive, "frames": frames,
+                   "distinct_colors": frames[-1]["distinct_colors"],
+                   "nonblack_ratio": frames[-1]["nonblack_ratio"],
+                   "shot": frames[-1]["shot"]}
 
 
 def wait_halted(instance: str, timeout: float = 6.0, gap: float = 0.4) -> bool:
