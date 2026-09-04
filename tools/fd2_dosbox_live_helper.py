@@ -293,9 +293,46 @@ def send_keys(instance: str, keys: list[str]) -> str:
     return sh_checked("key", instance, *keys, timeout=15)
 
 
+def screen_is_animated(instance: str, samples: int = 3) -> bool:
+    """Is this screen animating on its own, with no input at all?
+
+    2026-09-04. The battle map is: unit idle-animation cycles redraw it
+    constantly. Three screenshots taken inside the same second came back with
+    three different md5s. That breaks BOTH screenshot-based key-confirmation
+    methods at once, in opposite directions:
+
+      * `wait-settle` can never settle -> it always TIMEOUTs (measured: 80/80
+        tries), which reads like a tooling hiccup rather than "this method
+        does not apply here".
+      * `--flag-no-response`'s baseline pixel-identity test can never be true
+        -> a key that did nothing looks exactly like a key that worked.
+
+    So on the battle map neither "it settled" nor "the frame changed" carries
+    any information about whether a key was delivered. That is almost certainly
+    the root of this project's long-running "confirm keys never reach the
+    battle input loop" conclusion: the instrument could not measure the thing
+    it was being asked about, on precisely the screen where it was asked.
+
+    Use fixed waits plus a semantic check (read live memory, or identify the
+    screen by its own content) on any animated screen -- never settle.
+    """
+    import hashlib
+    seen = set()
+    for i in range(max(2, samples)):
+        p = DEFAULT_SHOT_DIR / instance / f"animprobe_{int(time.time() * 1000)}_{i}.png"
+        screenshot(instance, p)
+        try:
+            seen.add(hashlib.md5(Path(p).read_bytes()).hexdigest())
+        except OSError:
+            return False          # can't tell; don't claim animated
+    return len(seen) == max(2, samples)
+
+
 def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25,
                      tmp_prefix: Path | None = None,
-                     baseline: Path | None = None) -> tuple[bool, str, bool | None]:
+                     baseline: Path | None = None,
+                     require_change: bool = False,
+                     change_rounds: int = 4) -> tuple[bool, str, bool | None]:
     """See fd2_dosbox_live_helper.sh's wait-settle: polls via repeated
     dosbox_harness.sh screenshot calls, stops when 2 CONSECUTIVE shots
     md5-match. MITIGATION for, not a fix to, the project's known input-
@@ -307,22 +344,59 @@ def wait_for_settle(instance: str, timeout: float = 10.0, interval: float = 0.25
     third return value (None if no baseline was given). NO_RESPONSE means
     "the screen looked identical before and after this key send" -- a
     best-effort signal worth logging/flagging, NOT proof the key was
-    dropped (some keys legitimately produce no visible change)."""
+    dropped (some keys legitimately produce no visible change).
+
+    `require_change` (2026-09-04) fixes a REAL false-negative this function
+    produced, and it is the likely origin of this project's long-standing
+    "confirm keys never reach the battle input loop" diagnosis:
+
+      settle stops as soon as two consecutive frames match. When a key starts
+      a TRANSITION (dialogue advance, scene change, animation) the screen is
+      still showing the OLD frame for the first few polls, so settle returns
+      `SETTLED tries=2` on the pre-transition image, and with a baseline it
+      then reports `response=NO_RESPONSE`. Observed directly this session:
+      Enter on the title menu returned SETTLED tries=2 still showing the
+      title, while the game had in fact already accepted START -- the next
+      capture showed the opening dialogue.
+
+      This bites confirm keys much harder than arrow keys, because an arrow's
+      effect (cursor moves) is immediate while a confirm's effect is a delayed
+      transition. That asymmetry is exactly the shape of the original
+      "arrows arrive, confirm keys do not" finding.
+
+    With `require_change` and a baseline, a settle that matches the baseline
+    is retried up to `change_rounds` times before being believed, so a slow
+    transition is given a chance to start. A genuine no-op key still reports
+    NO_RESPONSE, just after a longer look."""
     prefix = tmp_prefix or (DEFAULT_SHOT_DIR / instance / f"settle_{int(time.time() * 1000)}")
     max_tries = max(2, int(round(timeout / interval)))
-    args = ["wait-settle", instance, to_wsl_path(prefix), str(max_tries), str(interval)]
-    if baseline is not None:
-        args.append(to_wsl_path(baseline))
-    r = sh(*args, timeout=int(timeout) + 20)
-    out = r.stdout.strip()
-    if not out.startswith("SETTLED") and r.stderr.strip():
-        out = f"{out} STDERR: {r.stderr.strip()}" if out else r.stderr.strip()
-    no_response = None
-    if "response=NO_RESPONSE" in out:
-        no_response = True
-    elif "response=CHANGED" in out:
-        no_response = False
-    return out.startswith("SETTLED"), out, no_response
+
+    def _once(tag: str) -> tuple[bool, str, bool | None]:
+        args = ["wait-settle", instance, to_wsl_path(Path(f"{prefix}{tag}")),
+                str(max_tries), str(interval)]
+        if baseline is not None:
+            args.append(to_wsl_path(baseline))
+        r = sh(*args, timeout=int(timeout) + 20)
+        out = r.stdout.strip()
+        if not out.startswith("SETTLED") and r.stderr.strip():
+            out = f"{out} STDERR: {r.stderr.strip()}" if out else r.stderr.strip()
+        nr = None
+        if "response=NO_RESPONSE" in out:
+            nr = True
+        elif "response=CHANGED" in out:
+            nr = False
+        return out.startswith("SETTLED"), out, nr
+
+    settled, out, no_response = _once("")
+    if require_change and baseline is not None:
+        rounds = 0
+        while no_response is True and rounds < change_rounds:
+            rounds += 1
+            settled, out, no_response = _once(f".rc{rounds}")
+        if rounds:
+            out = (f"{out} [require-change: re-looked {rounds}x, "
+                   f"{'change appeared' if no_response is False else 'still unchanged'}]")
+    return settled, out, no_response
 
 
 # --------------------------------------------------------------------------
@@ -709,8 +783,16 @@ def cmd_key(args):
 
     if args.settle:
         settled, raw, no_response = wait_for_settle(args.instance, timeout=args.settle_timeout,
-                                                      interval=args.settle_interval, baseline=baseline)
+                                                      interval=args.settle_interval, baseline=baseline,
+                                                      require_change=not args.no_require_change)
         print(f"settle: {'OK' if settled else 'TIMEOUT'} ({raw})")
+        if not settled and screen_is_animated(args.instance):
+            print("ANIMATED: this screen redraws on its own (3 no-input samples, 3 different "
+                  "md5s) -- e.g. the battle map's unit idle-animation cycle. settle can NEVER "
+                  "succeed here and --flag-no-response can never be true, so NEITHER says "
+                  "anything about whether the key was delivered. Use a fixed --wait plus a "
+                  "semantic check (live memory read, or identify the screen by its own content). "
+                  "See this tool's screen_is_animated() docstring.", file=sys.stderr)
         if no_response:
             print("FLAG: NO_RESPONSE -- screen looked identical before and after this key send. "
                   "Best-effort signal, not proof (some keys legitimately produce no visible change) "
@@ -1062,6 +1144,15 @@ def build_parser():
                           "(stderr + exit unaffected) if the settled 'after' frame is pixel-identical "
                           "to it -- a best-effort 'this key produced no visible change' signal, not "
                           "proof the key was dropped (costs one extra screenshot per call)")
+    sp.add_argument("--no-require-change", action="store_true",
+                     help="disable the 2026-09-04 false-negative guard. By default, when "
+                          "--flag-no-response supplies a baseline, a settle whose frame still "
+                          "matches that baseline is re-looked up to 4 more times before being "
+                          "believed -- because settle otherwise stops on the PRE-transition frame "
+                          "and reports NO_RESPONSE for a key that was in fact accepted (observed "
+                          "directly: Enter on the title menu settled at tries=2 still showing the "
+                          "title, while START had already been taken). Pass this only if you "
+                          "specifically want the old, faster, false-negative-prone behaviour.")
     sp.set_defaults(func=cmd_key)
 
     sp = sub.add_parser("screenshot", help="save a raw PNG (default under .wsl_build/, not docs/figures/); "
