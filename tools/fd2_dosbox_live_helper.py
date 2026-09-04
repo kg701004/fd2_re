@@ -132,6 +132,7 @@ verification rounds this tool packages proven techniques from.
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -141,8 +142,71 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+def _to_wsl_path(p: Path) -> str:
+    """把路徑轉成 WSL 看得懂的形式。**兩種輸入都要處理**,不能假設只有一種。
+
+    2026-09-04:`fd2_trial_runner.py` 用 `subprocess.run(["bash", ...])` 呼叫
+    `fd2_drive_to_playable.sh`,而在那個呼叫環境下 `bash` 解析到的是 Windows 內建的
+    WSL 轉接器(`C:\\Windows\\System32\\bash.exe`),不是 Git Bash——於是接下來的
+    `python tools/...` 跑的是 **WSL 自己的 python3**,`Path(__file__).resolve()`
+    給出的是**已經是原生 POSIX 路徑**的 `/mnt/c/Users/...`,完全沒有磁碟機代號的冒號。
+
+    舊版寫死假設一定是 Windows 路徑(`C:\\...`)、用 `.split(":", 1)[1]` 剝掉磁碟機代號,
+    在這種情況下**每次都會**丟 `IndexError`(不是機率性的,只是我先前都用互動式
+    Bash 工具手動重現,那條路徑解析到 Git Bash,所以一直測不出來)。
+
+    真正的修法是兩種輸入都認得:已經是 POSIX 路徑就直接用,是 Windows 路徑才轉換。
+    """
+    s = str(p).replace("\\", "/")
+    if ":" not in s:               # 已經是 POSIX 路徑(這個程序本身就在 WSL 裡跑)
+        return s
+    drive, rest = s.split(":", 1)
+    return "/mnt/" + drive.lower() + rest
+
+
+def _find_git_bash() -> str:
+    """回傳**保證是 Git Bash**的執行檔路徑,不靠裸 `"bash"` 讓 PATH 決定。
+
+    2026-09-04 這是這一整輪 IndexError/ValueError 追查的真正根因,不是 EIP 解析、
+    也不是「並行導致的脆弱性」(那個修正本身沒錯,只是不是這次的成因)。
+
+    `subprocess.run(["bash", ...])` 從 Windows python.exe 呼叫時,在這台機器上
+    解析到的是 `C:\\Windows\\System32\\bash.exe`(WSL 轉接器),**不是 Git Bash**。
+    互動式 shell 的 `where bash`/`which bash` 會顯示 Git Bash 排第一,那是因為
+    互動式 shell 自己的 PATH 在啟動時被 Git Bash 的 profile 改過;`subprocess.run`
+    用的是**未經修改的原始環境 PATH**,順序不同。於是實際跑的是 **WSL 自己的
+    bash + WSL 自己的 python3**(`Path(__file__).resolve()` 給出 `/mnt/c/...`,
+    連 `SH_SCRIPT_WSL`/`to_wsl_path` 假設一定有磁碟機代號冒號的邏輯都跟著炸)。
+
+    而且就算把那兩處路徑轉換修好,**更深的問題還在**:WSL 裡面根本沒有 `wsl` 這個
+    指令(`which wsl` 空手而回),這個模組幾乎每個函式都靠 `wsl -d Ubuntu ...`
+    往外呼叫——一旦自己已經身處 WSL,這整條鏈路就是死路,不是修哪一行路徑轉換能解的。
+
+    唯一可靠的修法是**不讓 PATH 決定**,明確指到一個帶 `Git`、不含 `System32` 的
+    `bash.exe`。這是本機的工具鏈假設(如同 `PRISTINE_FD2_EXE_MD5` 之類的常數),
+    不是要做到別台機器可攜。
+    """
+    candidates = [
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files\Git\usr\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\bash.exe",
+    ]
+    for c in candidates:
+        if Path(c).is_file():
+            return c
+    for d in os.environ.get("PATH", "").split(os.pathsep):
+        exe = Path(d) / "bash.exe"
+        if exe.is_file() and "system32" not in d.lower():
+            return str(exe)
+    raise RuntimeError(
+        "找不到 Git Bash——已知路徑都不存在,PATH 掃描排除 System32 後也沒有候選。"
+        "裸用 \"bash\" 在這台機器上會解析到 WSL 轉接器,見本函式說明。")
+
+
+GIT_BASH = _find_git_bash()
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SH_SCRIPT_WSL = "/mnt/c/" + str(REPO_ROOT / "tools" / "fd2_dosbox_live_helper.sh").replace("\\", "/").split(":", 1)[1].lstrip("/")
+SH_SCRIPT_WSL = _to_wsl_path(REPO_ROOT / "tools" / "fd2_dosbox_live_helper.sh")
 DEFAULT_SHOT_DIR = REPO_ROOT / ".wsl_build" / "dosbox_live_helper"
 DEFAULT_WAIT_S = 0.5  # doc48 §8.3's measured-safe general floor for a single confirmed keypress
 DEFAULT_UNIT_RECORD_SIZE_HEX = "32"  # 50 bytes -- the size doc58 續四十 dumped and validated a full battle-unit record at
@@ -154,9 +218,12 @@ DEFAULT_UNIT_RECORD_SIZE_HEX = "32"  # 50 bytes -- the size doc58 續四十 dump
 # --------------------------------------------------------------------------
 
 def to_wsl_path(windows_path: Path) -> str:
-    p = str(windows_path.resolve()).replace("\\", "/")
-    drive, rest = p.split(":", 1)
-    return f"/mnt/{drive.lower()}{rest}"
+    """同一個坑的第二個實例——`mem_dump`/`screenshot`/`wait-settle` 等一大批呼叫點
+    都經過這裡。修好 `SH_SCRIPT_WSL`(見上面 `_to_wsl_path` 的說明)只解開第一顆地雷;
+    這支才是整條試驗流程裡真正會反覆炸的,因為它在**每一次**記憶體讀取/截圖都會被呼叫。
+    這裡表現成 `ValueError: not enough values to unpack`,不是 `IndexError`,
+    但根因相同:都假設輸入一定是帶磁碟機代號冒號的 Windows 路徑。改用同一支健壯轉換。"""
+    return _to_wsl_path(windows_path.resolve())
 
 
 def wsl_argv_run(argv: list[str], timeout: int = 60, env_extra: dict | None = None) -> subprocess.CompletedProcess:

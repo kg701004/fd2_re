@@ -89,7 +89,14 @@ def teardown(inst: str) -> None:
 
 
 def drive(inst: str, log: Path) -> bool:
-    r = subprocess.run(["bash", "tools/fd2_drive_to_playable.sh", inst, "boot"],
+    # 2026-09-04:**根因,不是 EIP 解析或並行本身**。裸 `"bash"` 從 Windows python.exe
+    # 用 subprocess.run 呼叫時,在這台機器上解析到 `C:\Windows\System32\bash.exe`
+    # (WSL 轉接器),不是 Git Bash——互動式 shell 的 PATH 被 Git Bash 改過,
+    # subprocess.run 用的是未改過的原始 PATH。於是整條驅動流程跑進 WSL 自己的
+    # python3,而 WSL 裡沒有 `wsl` 指令能再往外呼叫,`fd2_dosbox_live_helper.py`
+    # 幾乎每個函式都靠它——這就是 10 次試驗全滅、且每次都在第一次探測時死在同一行的
+    # 真正原因(見 H._find_git_bash 的完整說明)。用明確定位的 Git Bash,不靠 PATH 賭。
+    r = subprocess.run([H.GIT_BASH, "tools/fd2_drive_to_playable.sh", inst, "boot"],
                        cwd=REPO, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=1800)
     # **stderr 也要寫進 log**。第一版只寫 stdout,結果 6 次 drive_failed 的原因
@@ -100,10 +107,16 @@ def drive(inst: str, log: Path) -> bool:
 
 
 def run_condition(inst: str, args: list[str], log: Path) -> None:
+    # 2026-09-04:漏了 encoding="utf-8" 的那一版,`text=True` 落回系統預設 codepage
+    # (這台機器是 cp950),而子行程輸出的中文訊息一遇到不吻合的 byte 序列就在
+    # subprocess 內部的 reader thread 裡丟 UnicodeDecodeError——不會終止主執行緒,
+    # 但會在 stderr 印出一整段看起來像崩潰的雜訊。旁邊的 battle_autoplay 呼叫
+    # 已經有 encoding="utf-8",這裡漏了,補上保持一致。
     subprocess.run([sys.executable, "-u", "tools/fd2_stat_override.py",
                     "--instance", inst, "--ours-hp", "0", "--ours-mp", "0",
                     "--ours-ap", "0", "--ours-mv", "0", "--enemy-hp", "1"],
-                   cwd=REPO, capture_output=True, text=True, timeout=900)
+                   cwd=REPO, capture_output=True, text=True,
+                   encoding="utf-8", errors="replace", timeout=900)
     r = subprocess.run([sys.executable, "-u", "tools/fd2_battle_autoplay.py",
                         "--instance", inst] + args,
                        cwd=REPO, capture_output=True, text=True,
