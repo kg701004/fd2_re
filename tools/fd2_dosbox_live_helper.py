@@ -256,6 +256,39 @@ def enter_debugger(instance: str) -> str:
     return sh_checked("enter-debugger", instance, timeout=15)
 
 
+def _pane_tail(instance: str, n: int = 3) -> list[str]:
+    import subprocess
+    r = subprocess.run(["wsl", "-d", "Ubuntu", "tmux", "-L", "fd2harness",
+                        "capture-pane", "-t", f"harness-{instance}", "-p"],
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
+    return r.stdout.splitlines()[-n:]
+
+
+def is_halted(instance: str) -> bool:
+    """debugger 是否真的停住(pane 尾端沒有 `(Running)`)。"""
+    return not any("(Running)" in ln for ln in _pane_tail(instance))
+
+
+def wait_halted(instance: str, timeout: float = 6.0, gap: float = 0.4) -> bool:
+    """等到 debugger 真的停住。回傳是否成功。
+
+    **為什麼需要**:`enter_debugger()` 只是把指令送出去就返回,不保證此刻已經停住。
+    2026-09-04 實測:緊接著下 `MEMDUMPBIN` 會拿到整段全 0——看起來像「單位陣列是空的」,
+    而幾秒後同樣的呼叫完全正常。這是本場「靜默壞讀」的直接成因之一,
+    先前只用重試去掩蓋它;重試 3 次仍會失敗,因為問題不是運氣而是時序。
+
+    形狀與本專案早先在 SFX 探測學到的一模一樣:**送出指令 ≠ 狀態已改變**,
+    要讀就要先證明自己在該狀態裡。
+    """
+    end = time.time() + timeout
+    while time.time() < end:
+        if is_halted(instance):
+            return True
+        time.sleep(gap)
+    return is_halted(instance)
+
+
 def debugger_cmd(instance: str, text: str) -> str:
     return sh_checked("debugger-cmd", instance, text, timeout=15)
 
@@ -621,6 +654,11 @@ def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
     5 for the full citation trail and the "constants may need recalibrating"
     caveat."""
     out_dir.mkdir(parents=True, exist_ok=True)
+    # 2026-09-04:讀之前先證明真的停住了。呼叫端的 enter_debugger() 只是送出指令,
+    # 沒停住就 dump 會拿到整段全 0,而那看起來與「陣列是空的」無法分辨。
+    if not wait_halted(instance):
+        return {"error": "debugger 未在時限內停住,拒絕讀取"
+                          "(未停住時 MEMDUMPBIN 會回傳全 0,與『陣列是空的』無法分辨)"}
     code_dump = out_dir / "code_dump.bin"
     hits, delta = mem_find_signature(instance, selector, dump_linear, dump_bytecount,
                                       GATE_CHECK_SIGNATURE_HEX, GATE_CHECK_GHIDRA_ADDR, code_dump)
