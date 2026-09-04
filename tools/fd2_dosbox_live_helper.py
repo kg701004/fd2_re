@@ -644,9 +644,31 @@ def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
     result["array_base"] = hex(array_base)
 
     array_dump = out_dir / "array_dump.bin"
+    # 2026-09-04:先刪掉舊檔。MEMDUMPBIN 失敗時不一定會寫檔,而 read_bytes()
+    # 讀到上一輪殘留的內容看起來與成功一模一樣。
+    try:
+        array_dump.unlink()
+    except FileNotFoundError:
+        pass
     array_path, array_size = mem_dump(instance, selector, f"{array_base:x}",
                                        f"{num_records * UNIT_RECORD_STRIDE:x}", array_dump)
-    data = array_path.read_bytes()
+    data = array_path.read_bytes() if array_path.exists() else b""
+
+    # 2026-09-04:**這一層是實測補的,不是預防性的。** 同一場 ch01 戰鬥、指令環
+    # 開在畫面上、pane 顯示 (Running) 且 MEMDUMPBIN 回報 success 的情況下,
+    # 這支函式回傳過 12 筆全 0(camp/HP/acted 皆 0)且 `error=None`;
+    # 幾秒後同樣的呼叫又完全正常。呼叫端無從分辨,而
+    # fd2_game_state 會把「沒有非空槽」判成 NOT_IN_BATTLE——
+    # 戰鬥中報告不在戰鬥,正是 autoplay「等不到可操作狀態」的形狀。
+    expected = num_records * UNIT_RECORD_STRIDE
+    if len(data) < expected:
+        result["error"] = (f"array dump 只拿到 {len(data)}/{expected} bytes——"
+                            f"讀取失敗,不是「陣列是空的」")
+        return result
+    if not any(data):
+        result["error"] = ("array dump 全為 0:指標有效時單位陣列不可能整段是 0,"
+                            "這是靜默壞讀,**不可當成 NOT_IN_BATTLE**。稍後重試。")
+        return result
     records = []
     for i in range(num_records):
         rec = data[i * UNIT_RECORD_STRIDE:(i + 1) * UNIT_RECORD_STRIDE]

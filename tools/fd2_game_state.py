@@ -84,16 +84,23 @@ def _press(inst: str, key: str, wait: float) -> None:
     time.sleep(wait)
 
 
-def read_units(inst: str, selector: str = "0170") -> tuple[int | None, list[dict], str]:
-    """回傳 (array_base, records, 診斷)。不做狀態判斷,只負責讀。"""
+def read_units(inst: str, selector: str = "0170"
+               ) -> tuple[int | None, list[dict], str, bool]:
+    """回傳 (array_base, records, 診斷, 是否為讀取失敗)。不做狀態判斷,只負責讀。
+
+    **最後那個布林值是必要的**:「讀到的資料說不在戰鬥」與「這次根本沒讀到」
+    是兩件事,前者是結論、後者只是要重試。2026-09-04 實測到 `mem_read_unit_array`
+    會間歇性回傳全 0 記錄(當時指令環就開在畫面上),若把它當成 NOT_IN_BATTLE,
+    呼叫端就會在戰鬥進行中放棄——正是 autoplay「等不到可操作狀態」的形狀。
+    """
     d = H.DEFAULT_SHOT_DIR / inst / "gamestate"
     cnt = H.mem_read_global(inst, selector, UNIT_COUNT, 1, d).get("u8") or 0
     if not 1 <= cnt <= 96:
-        return None, [], f"[0x53beb]={cnt} 不在合理範圍"
+        return None, [], f"[0x53beb]={cnt} 不在合理範圍", False
     res = H.mem_read_unit_array(inst, selector, d, num_records=min(cnt, 32))
     if res.get("error"):
-        return None, [], f"校準失敗:{res['error']}"
-    return int(res["array_base"], 16), res["records"][:cnt], ""
+        return None, [], f"讀取失敗:{res['error']}", True
+    return int(res["array_base"], 16), res["records"][:cnt], "", False
 
 
 def classify_units(recs: list[dict]) -> tuple[GameState, str]:
@@ -108,10 +115,15 @@ def classify_units(recs: list[dict]) -> tuple[GameState, str]:
                 f"所有 {len(live)} 個非空槽的 +6 都是 {camps.pop():#04x} —— 轉換窗口,讀值不可信")
     if not camps <= {0x00, 0x01, 0x02}:
         return GameState.NOT_IN_BATTLE, f"camp 值超出列舉:{[hex(c) for c in camps]}"
-    bad = [r for r in live if not (0 < r["hp_max"] <= 9999 and r["hp_cur"] <= r["hp_max"])]
+    # HP 界線刻意放寬到 u16 上限:原本的 `<= 9999` 是用來擋壞讀的,但它與本專案
+    # 自己的 fd2_stat_override 工作流相衝突——覆寫寫入 9999 之後只要單位升級
+    # (2026-09-04 實測:idx2 擊殺後 hp_max 變 10016)整場就會被誤判成 NOT_IN_BATTLE。
+    # 擋壞讀的工作已經由更強的檢查接手:mem_read_unit_array 的全零/短讀防護,
+    # 加上下面 camp 值域與 cur<=max 的內部一致性——那些是壞讀真正過不了的關卡。
+    bad = [r for r in live if not (0 < r["hp_max"] <= 0xFFFF and r["hp_cur"] <= r["hp_max"])]
     if bad:
         return (GameState.NOT_IN_BATTLE,
-                f"{len(bad)}/{len(live)} 筆 HP 欄位超界,例 idx{bad[0]['index']} "
+                f"{len(bad)}/{len(live)} 筆 HP 欄位不自洽,例 idx{bad[0]['index']} "
                 f"{bad[0]['hp_cur']}/{bad[0]['hp_max']}")
     return GameState.IN_BATTLE_NOT_PLAYABLE, f"陣列可信:{len(live)} 個單位,雙陣營齊全"
 
@@ -120,8 +132,11 @@ def probe(inst: str, selector: str = "0170", prove_browse: bool = True
           ) -> tuple[GameState, str]:
     """回傳 (狀態, 證據)。`prove_browse=False` 時只做讀值層級的判斷(較快、無副作用)。"""
     H.enter_debugger(inst)
-    base, recs, err = read_units(inst, selector)
+    base, recs, err, read_failed = read_units(inst, selector)
     H.resume(inst)
+    if read_failed:
+        # 讀不到 ≠ 不在戰鬥。回 UNKNOWN,讓 wait_playable 繼續等而不是直接放棄。
+        return GameState.UNKNOWN, err
     if err:
         return GameState.NOT_IN_BATTLE, err
     st, why = classify_units(recs)
