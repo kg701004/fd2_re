@@ -141,7 +141,7 @@
   {
    "call": "0x1d50a",
    "push": "0x1d502",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {
@@ -339,7 +339,7 @@
   {
    "call": "0x2d770",
    "push": "0x2d768",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {
@@ -357,25 +357,25 @@
   {
    "call": "0x2dd9e",
    "push": "0x2dd96",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {
    "call": "0x2e284",
    "push": "0x2e27c",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {
    "call": "0x2e918",
    "push": "0x2e910",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {
    "call": "0x30d1b",
    "push": "0x30d13",
-   "index": -1,
+   "index": 255,
    "intruding_targets": []
   },
   {

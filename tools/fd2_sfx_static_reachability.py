@@ -116,7 +116,12 @@ def find_push_and_call_sites(md: Cs, code: bytes, base: int) -> list[dict]:
         while j >= 0 and ins.address - seq[j].address <= MAX_LOOKBACK:
             p = seq[j]
             if p.mnemonic == "push" and p.operands and p.operands[0].type == X86_OP_IMM:
-                push_addr, push_val = p.address, p.operands[0].imm
+                imm = p.operands[0].imm
+                # `push -1`(`6A FF`)是 sign-extended imm8,capstone 給 -1,
+                # 而資料表記的是 255。同一個值、兩種表示——不正規化的話,
+                # 6 筆會被報成「不一致」,而且正對照可能因此誤判失敗。
+                push_addr = p.address
+                push_val = imm & 0xFF if -128 <= imm < 0 else imm
                 break
             j -= 1
         out.append({"call": ins.address, "push": push_addr, "index": push_val})
