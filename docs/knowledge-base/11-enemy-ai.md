@@ -333,7 +333,11 @@ HP8/8，裝備 `巨劍`+`鎖子甲`，slot11，位址 `0x26C7F4`）。End Turn �
 保留先出現者的選擇順序。兩者沒有接入目前正規化 `NextAIPlan`，也沒有替
 `0x1DEBE`、raw `+8` 或兩個 `word` 欄位擴張語意。
 
-**2026-08-14 欄位語意交叉確認 + `0x1DEBE` 補完**：`ApplyNativeEquipmentRecalc`/
+**2026-08-14 欄位語意交叉確認 + `0x1DEBE` 補完**(2026-09-05 補注:這幾個 offset 當時
+只靠 remake 的 `native_equipment.go`/`tryIdleRecovery` 佐證,依現行判準不構成原版事實
+的獨立證據;但同一組 offset 後來已經被**原版側** live 記憶體讀取獨立重新對過——見
+`tools/fd2_stat_override.py` 檔頭 2026-09-02/2026-09-04 的逐欄對狀態卡記錄,結論一致,
+故下面的公式推論仍然成立,只是引用鏈這裡補上原版側的獨立佐證):`ApplyNativeEquipmentRecalc`/
 `ApplyNativeRuntimeEquipmentRecalc`(既有,`native_equipment.go`)已證實
 `record+0x48/+0x4A/+0x4C/+0x4E` 分別是裝備結算後的 AP/DP/HIT/EV;
 `tryIdleRecovery`(本次 session 稍早,mode 0/1 移動 fallback)已證實

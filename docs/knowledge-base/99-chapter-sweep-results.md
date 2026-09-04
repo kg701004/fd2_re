@@ -4363,9 +4363,11 @@ escort-and-defend腳本，因為悠妮從未被移動到石碑——本輪依照
 **悠妮record定位——過程中發現+0x07 charid欄位對「真實」5筆roster record不可信**：
 `tools/fd2_chapter_sweep.py`的`CORE_STARTER_IDS = [0, 1, 4, 9, 30]`（Sol/Hanaux/
 Ares/Yuni/Gaia）確認悠妮的character id是`9`；`remake/internal/campaign/
-native_join_constructor.go`的`MaterializePersistentUnit()`証實native battle unit
-record在`+0x07`（及`+0x08`重複一次）寫入`byte(id)`——這是這次用來定位悠妮record的
-依據。但live驗證發現一個新坑：`build_complete_roster_save()`從真實存檔「保留」的
+native_join_constructor.go`的`MaterializePersistentUnit()`記載 native battle unit
+record在`+0x07`（及`+0x08`重複一次）寫入`byte(id)`——這只是這次用來定位悠妮record的
+**工作假設**來源(remake 程式碼本身不構成原版事實的證據,依 2026-09-02 起的排除政策,
+見 `docs/data/remake_excluded_claims.json` 的判準),真正的驗證是下面這段 live 記憶體讀取。
+live驗證發現一個新坑:`build_complete_roster_save()`從真實存檔「保留」的
 5筆真實record（log：`kept 5 real record(s) from source ([0, 9, 4, 30, 1])`）在戰場
 記憶體裡讀出的`+0x07`是`[32, 52, 36, 30, 33]`，跟預期的`[0, 9, 4, 30, 1]`**對不上**
 （只有第4筆30=30巧合吻合）——反而是另外15筆「合成」record（走同一個
