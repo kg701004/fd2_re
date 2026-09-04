@@ -1,0 +1,38 @@
+[
+  {
+    "id": "dec_26896",
+    "address": "0x26896",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_0002670e",
+      "entry_point": "0x2670e",
+      "signature": "undefined FUN_0002670e(void)",
+      "code": "\r\nundefined4 __stdcall FUN_0002670e(void)\r\n\r\n{\r\n  byte bVar1;\r\n  byte *pbVar2;\r\n  int iVar3;\r\n  undefined4 uVar4;\r\n  int iVar5;\r\n  int iVar6;\r\n  int iVar7;\r\n  undefined4 uVar8;\r\n  \r\n  FUN_0003702f();\r\n  uVar8 = 0;\r\n  pbVar2 = (byte *)FUN_0004e809();\r\n  bVar1 = *pbVar2;\r\n  FUN_00025977();\r\n  if (DAT_00053f4a == 2) {\r\n    FUN_0001956b();\r\n    FUN_00015f84();\r\n    DAT_00053a51 = 1;\r\n    FUN_00016559();\r\n    iVar3 = FUN_00019953();\r\n    FUN_000197e5();\r\n    DAT_00053a51 = 0;\r\n    FUN_00026996();\r\n    if ((iVar3 == -1) || (DAT_00053c57 != 0)) {\r\n      return 0;\r\n    }\r\n    if (((DAT_00053c03 < 0x1b) && (0x10 < DAT_00053bfb)) ||\r\n       ((0x1a < DAT_00053c03 && (0x14 < DAT_00053bfb)))) {\r\n      DAT_00053a45 = DAT_00053bf7;\r\n      iVar3 = FUN_0002af28();\r\n      if (iVar3 == 0) {\r\n        DAT_00053a45 = 0;\r\n        return 0;\r\n      }\r\n    }\r\n    uVar8 = 1;\r\n  }\r\n  DAT_00053a45 = DAT_00053bf7;\r\n  uVar4 = FUN_0003706e();\r\n  FUN_0003771c();\r\n  for (iVar3 = 1; iVar3 < 0xb; iVar3 = iVar3 + 1) {\r\n    iVar6 = DAT_00053f4a + (uint)bVar1 * 6;\r\n    iVar7 = ((byte)(&DAT_00052363)[iVar6] - 0x96) * iVar3;\r\n    iVar5 = (iVar7 / 10) * 0x80 + 0x5000;\r\n    FUN_0002921a(iVar5,iVar7 % 10,iVar6,iVar5,\r\n                 ((int)(((byte)(&DAT_00052375)[iVar6] - 100) * iVar3) / 10) * 0x80 + 0x3200,uVar4,\r\n                 iVar3 * -9 + 0x80);\r\n    FUN_0003771c();\r\n    FUN_00011d40();\r\n  }\r\n  FUN_00011d40();\r\n  FUN_00037910();\r\n  if (DAT_00053f4a == 0) {\r\n    FUN_00025977();\r\n    uVar8 = FUN_00029300();\r\n  }\r\n  else if (DAT_00053f4a == 4) {\r\n    FUN_00025977();\r\n    uVar8 = FUN_00029daa();\r\n  }\r\n  else {\r\n    if (DAT_00053f4a == 2) goto LAB_0002697c;\r\n    FUN_00025977();\r\n    uVar8 = FUN_000279bc();\r\n  }\r\n  FUN_00025977();\r\nLAB_0002697c:\r\n  FUN_0003776e();\r\n  DAT_00053a45 = 0;\r\n  return uVar8;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "fb_26896",
+    "address": "0x26896",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0002670e",
+      "start": "0x2670e",
+      "end": "0x26995",
+      "size": 648,
+      "entry_point": "0x2670e"
+    }
+  },
+  {
+    "id": "xref_26896",
+    "address": "0x26896",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [],
+      "count": 0
+    }
+  }
+]

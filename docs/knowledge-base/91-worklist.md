@@ -1540,7 +1540,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 | ~~`REAL-UI-...-INPUT-DROP`~~ **現行環境不可重現 2026-09-04** | 用它自己的判準(`BP 0x11719` 是否命中)量化重測:ch01 全新遊戲 Enter 20/20、Space 20/20;**ch27 前輪那份存檔(md5 逐位元組相符)Enter 20/20、Space 15/15**,合計 94/94 零失敗。本輪並找出三個與「掉鍵」表象相同的非輸入成因(游標停空地、命中判定過嚴、失敗分支忘了 resume)。見 doc48 §10 | ⚠ 不宣稱前輪觀察為假,環境不同 |
 | SDD-4 native renderer re-audit | 原版 finale figure-fade／ending 演出的**實際畫面**為何 | 需推進到結局 |
 | 下一個 ending gate | 原版 ending 的 party cycle／FDOTHER#56 backdrop／dialogue-frame grid 實際畫面 | 同上 |
-| UI 音效 index 2-0xb 語意畫面實測（×2 筆） | 每個 SFX index 實際在**哪個畫面**播放 | 音訊擷取已解決（`FD2_HARNESS_AUDIO_DISK=1` ＋ `fd2_audio_probe.py`），但 **SFX 與 BGM 不同**：音效是 fire-and-forget，沒有「目前音效」全域，要在 `0x026896` 下斷點讀參數 |
+| UI 音效 index 2-0xb 語意畫面實測（×2 筆）**2026-09-04 部分進展:index 0 = 戰場游標移動(呼叫端 `0x117a1`)已原版實機閉合;方法與位址已修正,見 doc36 該日段落** | 每個 SFX index 實際在**哪個畫面**播放 | 音訊擷取已解決（`FD2_HARNESS_AUDIO_DISK=1` ＋ `fd2_audio_probe.py`），但 **SFX 與 BGM 不同**：音效是 fire-and-forget，沒有「目前音效」全域，要在 `play_sfx_a` 下斷點讀參數。**⚠ 2026-09-04 更正:本列原寫的 `0x026896` 是 doc36 第 8 輪的誤記(file offset 誤當 linear,固定偏差 +0xE00),doc36 第 9 輪已勘誤為 `0x25a96`,但本列沒有跟著改。本輪用 Ghidra 獨立確認 `0x26896` 在新版 EXE 既不是函式入口、xref 數也是 0(它落在 `FUN_0002670e` 中間)。正確位址:`play_sfx_a=0x25a96`、`play_sfx_b=0x25b45`** |
 | 戰鬥曲／勝利曲／開場配樂聽辨（×3 筆） | 各曲號實際對應哪一首 | 讀 `[0x51a11]`。**2026-09-04:ch01 戰鬥曲實測 = track 19**(見 doc12 該日段落);**勝利曲仍待**——需打贏一場戰鬥 |
 | ch04-33 劇情文本精校 | 原版逐章對白文字逐字校對 | **前提已過時**：`decode_story_text.py` 對 35 個 FDTXT 全數解碼成功、2260 行、**未對映字元 0 個**（唯一 0 行的是早已記錄損毀的 FDTXT_034）。無未知字需人眼轉錄；剩下的是抽樣核對「每個 glyph id 對到正確的字」 |
 

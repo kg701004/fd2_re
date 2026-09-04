@@ -51,14 +51,25 @@ for ln in out.splitlines():
 if not rows:
     print("NOT_IN_BATTLE: 讀不到單位陣列"); sys.exit(1)
 
-# 界線取得寬鬆,只求排除殘值;真實 ch01 值(HP 28-50、AP 11-26、HIT 86-97)離界很遠。
+# 2026-09-04 修正:第一版把 AP/DP/HIT 當 byte(<=255)、HP/MP 上限 999。
+# 那是**假設,不是不變量**,而且是錯的:在 ch27 的測試存檔上,單位真的有
+# AP 938 / MP 817 / HP 782,於是這支檢查把一場**真的正在進行的戰鬥**judge 成
+# NOT_IN_BATTLE。它錯得很有說服力(數字看起來就是垃圾),直到畫面上的狀態卡
+# 顯示「悠妮 LV-02 HP 782 MP 817」與記憶體逐欄吻合,才證明讀取一直是對的。
+#
+# 改成只用**結構性**不變量,不再對遊戲數值大小做假設:
+#   * maxHP 必須為正(殘值常是 0 或極大)
+#   * HP <= maxHP(欄位錯位時幾乎必然違反)
+#   * camp 必須是小列舉值(0/1/2)
+# maxHP 仍保留一個很鬆的上限,只為了擋掉像 42421 這種明顯的殘值。
 def why(r):
-    if not 0 < r["mhp"] <= 999: return f"maxHP={r['mhp']}"
-    if r["hp"] > r["mhp"]:      return f"HP{r['hp']}>maxHP{r['mhp']}"
-    if r["mp"] > 999:           return f"MP={r['mp']}"
-    if r["ap"] > 255:           return f"AP={r['ap']}"
-    if r["dp"] > 255:           return f"DP={r['dp']}"
-    if r["hit"] > 255:          return f"HIT={r['hit']}"
+    # maxHP==0 是**未使用的空槽**,不是損毀:`[0x53beb]` 的計數會涵蓋空槽
+    # (ch27 實測 63 槽裡就有數個)。把空槽算成錯誤會再次誤判整場戰鬥。
+    if r["mhp"] == 0 and r["hp"] == 0 and r["mp"] == 0:
+        return None
+    if not 0 < r["mhp"] <= 9999: return f"maxHP={r['mhp']}"
+    if r["hp"] > r["mhp"]:       return f"HP{r['hp']}>maxHP{r['mhp']}"
+    if r["camp"] not in (0x00, 0x01, 0x02): return f"camp={r['camp']:#04x}"
     return None
 
 rows = rows[:count]

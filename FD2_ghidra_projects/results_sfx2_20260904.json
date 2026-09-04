@@ -1,0 +1,382 @@
+[
+  {
+    "id": "fb_25a96",
+    "address": "0x25a96",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00025a96",
+      "start": "0x25a96",
+      "end": "0x25b44",
+      "size": 175,
+      "entry_point": "0x25a96"
+    }
+  },
+  {
+    "id": "xref_25a96",
+    "address": "0x25a96",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x1193a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x11a33",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x11a54",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x11a75",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x11a96",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x16546",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x17495",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x176d3",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x17b2e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x17c56",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x17d26",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x17ede",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x117a1",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1403d",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a3df",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ba55",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ba72",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ba9d",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1babe",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1baee",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1bb2a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d50a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d58c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d5a9",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d5d5",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d5f6",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d627",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d65b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1d6e2",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ddaa",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ea20",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1c309",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1c65c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2232b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1fbd1",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1fe7c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1fe9c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1fedb",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1ff5e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2054d",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x20595",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26504",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26536",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x265a7",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26e5e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26e90",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x27625",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2768b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x276d0",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x276fb",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x27e3b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x27e99",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x27ede",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x27f0e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2805f",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x280bb",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x29c8a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x29d30",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x29d6c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b08a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b106",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b12c",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b155",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b17b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b1f1",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2e1c6",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2e284",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2e918",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2ee2f",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2ef0b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2f004",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x30d1b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2d535",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2d770",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2db80",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2dc85",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2dd9e",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x30f74",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x31015",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x32307",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x32bcf",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 81
+    }
+  },
+  {
+    "id": "xref_25b45",
+    "address": "0x25b45",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x191a9",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x13d13",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1fd24",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2b0c7",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2db01",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 5
+    }
+  }
+]

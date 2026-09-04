@@ -1,0 +1,5 @@
+[
+  {"id": "dec_26896", "address": "0x26896", "action": "decompile"},
+  {"id": "fb_26896", "address": "0x26896", "action": "function_bounds"},
+  {"id": "xref_26896", "address": "0x26896", "action": "xref_to"}
+]

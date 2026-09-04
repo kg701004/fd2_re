@@ -1,0 +1,5 @@
+[
+  {"id": "fb_25a96", "address": "0x25a96", "action": "function_bounds"},
+  {"id": "xref_25a96", "address": "0x25a96", "action": "xref_to"},
+  {"id": "xref_25b45", "address": "0x25b45", "action": "xref_to"}
+]
