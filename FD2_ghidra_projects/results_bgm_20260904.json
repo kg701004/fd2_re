@@ -1,0 +1,143 @@
+[
+  {
+    "id": "fb_25977",
+    "address": "0x25977",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00025977",
+      "start": "0x25977",
+      "end": "0x25a95",
+      "size": 287,
+      "entry_point": "0x25977"
+    }
+  },
+  {
+    "id": "xref_25977",
+    "address": "0x25977",
+    "action": "xref_to",
+    "ok": true,
+    "result": {
+      "refs": [
+        {
+          "from": "0x25db5",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x25e16",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x25e4f",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a249",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a2e7",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1047b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a51d",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a582",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a5c7",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x1a618",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x22e6b",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x25f26",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2610a",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26128",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26144",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x263af",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x264e8",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26737",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26914",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26931",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2695d",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x26974",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2a670",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2a681",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2abbf",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x2abd8",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x323e1",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x32417",
+          "type": "UNCONDITIONAL_CALL"
+        },
+        {
+          "from": "0x327bb",
+          "type": "UNCONDITIONAL_CALL"
+        }
+      ],
+      "count": 29
+    }
+  }
+]
