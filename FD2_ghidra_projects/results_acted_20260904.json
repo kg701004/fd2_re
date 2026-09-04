@@ -1,0 +1,38 @@
+[
+  {
+    "id": "dec_13512",
+    "address": "0x13512",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00013512",
+      "entry_point": "0x13512",
+      "signature": "undefined FUN_00013512(void)",
+      "code": "\r\nvoid __stdcall FUN_00013512(int param_1)\r\n\r\n{\r\n  byte *pbVar1;\r\n  \r\n  FUN_0003702f();\r\n  pbVar1 = (byte *)(DAT_00053a45 + 5 + param_1 * 0x50);\r\n  *pbVar1 = *pbVar1 | 0x80;\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "dec_190ac",
+    "address": "0x190ac",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_000190ac",
+      "entry_point": "0x190ac",
+      "signature": "undefined FUN_000190ac(void)",
+      "code": "\r\nvoid __stdcall FUN_000190ac(void)\r\n\r\n{\r\n  char cVar1;\r\n  int iVar2;\r\n  uint uVar3;\r\n  int iVar4;\r\n  short local_22;\r\n  byte local_20;\r\n  \r\n  FUN_0003702f();\r\n  FUN_00012e38();\r\n  iVar4 = (int)local_22;\r\n  if ((local_20 & 0x60) == 0) {\r\n    return;\r\n  }\r\n  if (*(char *)(iVar4 + DAT_00053ad5) != '\\0') {\r\n    return;\r\n  }\r\n  FUN_0004e381();\r\n  FUN_0001956b();\r\n  FUN_00015f84();\r\n  FUN_00016559();\r\n  iVar2 = FUN_00019953();\r\n  FUN_000197e5();\r\n  if ((iVar2 == 1) && (DAT_00053c57 == 0)) {\r\n    FUN_00025b45();\r\n    thunk_FUN_0003e01d();\r\n    uVar3 = (uint)*(ushort *)(DAT_00053a55 + 0x54 + iVar4 * 3);\r\n    cVar1 = *(char *)(DAT_00053a55 + 0x53 + iVar4 * 3);\r\n    if (cVar1 == '\\0') {\r\n      DAT_00053ad9 = uVar3 + 0xb5;\r\n      FUN_00015f84();\r\n      iVar2 = FUN_0001bb8c();\r\n      if (iVar2 == -1) {\r\n        FUN_00016559();\r\n        FUN_00016c57();\r\n        FUN_000196cb();\r\n        thunk_FUN_0003e01d();\r\n        FUN_0001956b();\r\n        FUN_00015f84();\r\n        FUN_00016559();\r\n        iVar2 = FUN_00019953();\r\n        FUN_000197e5();\r\n        if ((iVar2 == 1) && (DAT_00053c57 == 0)) {\r\n          FUN_000196cb();\r\n          iVar2 = FUN_0001b932();\r\n          if (iVar2 != 0) {\r\n            iVar2 = FUN_0001b722();\r\n            FUN_0001b8e7();\r\n            FUN_0001bb8c();\r\n            *(short *)(iVar4 * 3 + DAT_00053a55 + 0x54) = (short)iVar2;\r\n            thunk_FUN_0003e01d();\r\n            FUN_0001956b();\r\n            DAT_00053add = iVar2 + 0xb5;\r\n            FUN_00015f84();\r\n            FUN_00016559();\r\n            FUN_00016c57();\r\n            goto LAB_00019561;\r\n          }\r\n          thunk_FUN_0003e01d();\r\n          FUN_0001956b();\r\n        }\r\n        FUN_00015f84();\r\n        thunk_FUN_0003e01d();\r\n        goto LAB_00019561;\r\n      }\r\n      *(undefined1 *)(iVar4 + DAT_00053ad5) = 1;\r\n      FUN_00016559();\r\n      FUN_00016c57();\r\n      FUN_000196cb();\r\n    }\r\n    else {\r\n      if (cVar1 != '\\x01') {\r\n        thunk_FUN_0003e01d();\r\n        FUN_000196cb();\r\n        (**(code **)(&DAT_00051b91 + uVar3 * 4))();\r\n        return;\r\n      }\r\n      if (uVar3 == 0) {\r\n        uVar3 = DAT_00053ae1;\r\n      }\r\n      DAT_00053ae1 = uVar3;\r\n      FUN_00015f84();\r\n      FUN_00016559();\r\n      FUN_00016c57();\r\n      FUN_000196cb();\r\n      DAT_00053bf3 = DAT_00053bf3 + DAT_00053ae1;\r\n      *(undefined1 *)(iVar4 + DAT_00053ad5) = 1;\r\n    }\r\n    FUN_00012263();\r\n  }\r\n  else {\r\n    thunk_FUN_0003e01d();\r\n    FUN_00015f84();\r\n    thunk_FUN_0003e01d();\r\nLAB_00019561:\r\n    FUN_000196cb();\r\n  }\r\n  return;\r\n}\r\n\r\n"
+    }
+  },
+  {
+    "id": "dec_18890",
+    "address": "0x18890",
+    "action": "decompile",
+    "ok": true,
+    "result": {
+      "function_name": "FUN_00018890",
+      "entry_point": "0x18890",
+      "signature": "undefined FUN_00018890(void)",
+      "code": "\r\nint __stdcall FUN_00018890(int param_1)\r\n\r\n{\r\n  char cVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  undefined4 *puVar4;\r\n  undefined1 *puVar5;\r\n  undefined4 *puVar6;\r\n  byte bVar7;\r\n  undefined4 local_3c;\r\n  undefined4 local_38;\r\n  int local_2c;\r\n  int local_28;\r\n  uint local_24;\r\n  undefined4 local_20;\r\n  undefined4 local_1c;\r\n  undefined4 local_18;\r\n  undefined4 local_14;\r\n  \r\n  bVar7 = 0;\r\n  FUN_0003702f();\r\n  puVar4 = &DAT_00053f12;\r\n  puVar6 = &local_3c;\r\n  for (iVar3 = 4; iVar3 != 0; iVar3 = iVar3 + -1) {\r\n    *puVar6 = *puVar4;\r\n    puVar4 = puVar4 + (uint)bVar7 * -2 + 1;\r\n    puVar6 = puVar6 + (uint)bVar7 * -2 + 1;\r\n  }\r\n  DAT_00053c53 = 0;\r\n  DAT_00051a8f = 0xff;\r\n  iVar3 = DAT_00053a45 + param_1 * 0x50;\r\n  local_24 = (uint)*(byte *)(iVar3 + 0x3b);\r\n  FUN_0001f183();\r\n  FUN_0004e8a5();\r\n  local_20 = FUN_0003706e();\r\n  local_1c = local_20;\r\n  FUN_000145cd();\r\n  FUN_0004e390();\r\n  FUN_000146d1();\r\n  local_14 = DAT_00053ab1;\r\n  local_18 = DAT_00053ab5;\r\n  FUN_00018b84();\r\n  local_2c = FUN_000115b6();\r\n  FUN_0004df4c();\r\n  if (local_2c == -1) {\r\n    FUN_00012cea();\r\nLAB_000189b6:\r\n    FUN_0003776e();\r\nLAB_00018b77:\r\n    iVar3 = 1;\r\n  }\r\n  else {\r\n    FUN_000145cd();\r\n    iVar2 = FUN_0004e4f6();\r\n    local_28 = iVar2;\r\n    FUN_0004df4c();\r\n    DAT_00051a83 = 0;\r\n    FUN_00012cea();\r\n    DAT_00051a83 = 1;\r\n    if ((iVar2 == 0) || (iVar2 == 0xff)) {\r\n      if (local_28 != 0) goto LAB_00018b77;\r\n      do {\r\n        iVar3 = FUN_00018d8c();\r\n      } while (iVar3 == 0);\r\n      if (iVar3 != -1) {\r\n        FUN_00013a44();\r\n        goto LAB_000189b6;\r\n      }\r\n      FUN_0003776e();\r\n      if (DAT_00053c53 == 0) {\r\n        return 0;\r\n      }\r\n    }\r\n    else {\r\n      FUN_00013488();\r\n      FUN_000134e4();\r\n      cVar1 = *(char *)(iVar3 + 7);\r\n      if (((cVar1 != '\\x12') && (cVar1 != '\\x13')) && (cVar1 != '\\\"')) {\r\n        local_38 = 1;\r\n      }\r\n      do {\r\n        iVar3 = FUN_00018d8c();\r\n      } while (iVar3 == 0);\r\n      if (iVar3 != -1) {\r\n        FUN_00013a44();\r\n        FUN_0003776e();\r\n        return iVar3;\r\n      }\r\n      FUN_0003776e();\r\n      if (DAT_00053c53 == 0) {\r\n        puVar5 = (undefined1 *)(DAT_00053a45 + param_1 * 0x50);\r\n        *puVar5 = (undefined1)local_14;\r\n        puVar5[1] = (undefined1)local_18;\r\n        FUN_00012cea();\r\n        return DAT_00053c53;\r\n      }\r\n    }\r\n    FUN_00013512();\r\n    FUN_00013a44();\r\n    iVar3 = DAT_00053c53;\r\n  }\r\n  return iVar3;\r\n}\r\n\r\n"
+    }
+  }
+]
