@@ -730,3 +730,50 @@ par2 那次的存活之所以不算乾淨重複,正是因為戰場已被前一�
 Xvfb 分別在 `:199`/`:299`/`:399`,互不干擾。
 
 **下一步應該是:兩個條件各跑 5 次全新實例,比較死亡率**,而不是再堆單次對照。
+
+## C.15 更正:昨晚提交的「EIP 修正解決了 10 次全滅」是誤判因果
+
+`d3cb3e10` 把 `H.read_eip()` 的一致化寫成「修好了 10 次試驗全滅的成因」。
+**那不是真的**——`read_eip` 的修正是真實且值得保留的(它防的是一個真的存在的脆弱模式),
+但**不是**這次全滅的原因。修好之後重跑,10 次試驗**一模一樣地全滅**,同一個 IndexError。
+
+### 真正的根因:裸 `"bash"` 解析到 WSL 轉接器,不是 Git Bash
+
+驅動腳本自己的 `2>&1 | tail -1` 把每一份 Python traceback 都截成一行,所以先前
+只看得到 `IndexError: list index out of range`,看不出從哪裡丟的。做一份不截斷的
+副本重現,traceback 顯示 `File "/mnt/c/Users/kg701/.../fd2_dosbox_live_helper.py"`
+——那個 `/mnt/c/` 開頭代表跑這段的是 **WSL 自己的 python3**,不是 Windows python.exe。
+
+直接測試證實:`subprocess.run(["bash", ...])` 從 Windows python.exe 呼叫時,
+在這台機器上解析到 `C:\Windows\System32\bash.exe`(WSL 轉接器),不是 Git Bash——
+即使互動式 shell 的 `where bash` 顯示 Git Bash 排第一。那個排序只在**互動式 shell**
+裡成立(PATH 被 Git Bash 的啟動腳本改過);`subprocess.run` 繼承的是未經修改的
+原始環境 PATH,System32 在那裡排更前面。**這是確定性的,不是機率性的**——只是
+我先前手動用互動式 Bash 工具重現時,那條路徑天生解析到 Git Bash,一直測不出來。
+
+而且這不只是路徑轉換寫錯:**WSL 裡面根本沒有 `wsl` 這個指令**(`which wsl` 空手而回)。
+一旦執行流跑進 WSL,`fd2_dosbox_live_helper.py` 幾乎每個函式都靠 `wsl -d Ubuntu ...`
+往外呼叫——這條鏈路結構性地走不通,不是修一行路徑轉換就夠。
+
+### 處置
+
+* `_to_wsl_path()`/`to_wsl_path()` 改成兩種輸入(Windows 路徑、已經是 POSIX 路徑)
+  都認得,不假設只有一種。
+* 新增 `H.GIT_BASH`:明確定位、排除 System32,`fd2_trial_runner.py` 的 `drive()`
+  改用它,不再賭 PATH 的解析順序。
+* 順帶修掉冒煙測試揭露的第二個獨立問題:`run_condition()` 有一處 `subprocess.run`
+  漏了 `encoding="utf-8"`,在這台機器的 cp950 系統語系下丟 `UnicodeDecodeError`
+  (不致命,但會印出一整段看起來像崩潰的雜訊)。
+
+### 驗證,包含一次失敗的驗證嘗試
+
+冒煙測試(每條件 1 次)拿到這整個調查以來**第一次**真正的 `survived`/`survived`
+結果,不是 `drive_failed`。
+
+新增的回歸測試第一版**沒有鑑別力**:`Path.resolve()` 在 Windows python.exe 下永遠會
+補回磁碟機代號,天生造不出讓舊版 `to_wsl_path` 崩潰的輸入,所以故障注入舊版程式碼
+時全部測試照樣通過。改用 monkeypatch 模擬 WSL python 會給的無冒號路徑,
+這次注入正確地讓測試以 `ValueError: not enough values to unpack` 失敗
+(與 2026-09-04 實際崩潰的錯誤訊息逐字相符),還原後全部通過。
+
+487 pass、0 fail;83 個單元測試綠燈。**下一步:真正的 10 次試驗(5/條件)終於可以跑了。**
