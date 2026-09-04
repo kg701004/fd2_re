@@ -2574,3 +2574,72 @@ inventory check／`0x5274E` 五槽表／`0x1BB8C` 寫入／五槽共用旗標）
 `0x354FE`」與「透過全域 event_id 58 觸發」兩個歸因需要撤回。
 
 > 相關:doc 23(三大狀態 + 兩跳表)· doc 24(戰役迴圈 + [0x53ecc] 狀態機)· doc 19(腳本系統設計)· doc 11(AI)。工具:`tools/callgraph_le.py`、`tools/disasm_le.py`、`tools/ghidra_batch_probe.py`、`FD2_ghidra_projects/ProbeGlobalEvents16BBWalk.java`、`ProbeGlobalEventsRawBytes.java`、`ProbeExtra.java`、`ProbeEvent67Walk.java`、`ProbeEvent84Walk.java`。
+
+## 12. 2026-09-05:`fd2_sfx_static_reachability.py --target 35b78` 的 2 筆存疑重新盤點
+
+### 12.1 背景
+
+`docs/knowledge-base/SESSION-HANDOFF-2026-09-04.md` 附錄 C 交接清單把
+`python tools/fd2_sfx_static_reachability.py --target 35b78` 標出的 2 個「存疑」呼叫點
+(`call 0x3566e`、`call 0x35d55`)列為「需活體確認」。重新執行該工具、並對兩筆逐一往回
+flow-directed 反組譯後,發現:**兩筆都是同一種結構**(尾呼叫落在另一個 `call 0x35b78`
+指令本身、跳過它緊鄰的 push 序列),而且**其中一筆(`0x35d55`)其實就是 §11.4 已經完整
+記錄過的 event77 尾呼叫**,不是新問題;另一筆(`0x3566e`)是結構相同、但先前完全沒有
+記錄過的第二個實例。兩者的引數值都是**純立即數**,不牽涉間接定址或執行期資料,所以
+「存疑」的成因(往回貪婪掃描 push 只看得到 fall-through 那條路徑,看不到尾呼叫帶來的
+第二條路徑)本身**用靜態證據就能完全定案**——活體驗證剩下能加的只有「這條尾呼叫路徑
+在真實遊戲中是否真的被踩到」,不會改變引數值本身。
+
+### 12.2 `call 0x35d55` —— 與 §11.4 同一筆,重新確認一致
+
+```
+0x35d4f  push 1,0x12,0x11 ; call 0x35b78 ; add esp,0xc        ; fall-through 路徑
+0x35eb6  push 5,7,0
+0x35ebc  jmp 0x35d55                                          ; tail-call 路徑(§11.4 already documented)
+```
+
+`fd2_sfx_static_reachability.py` 把 `call 0x35d55` 標存疑的理由,就是偵測到
+`0x35ebc: jmp 0x35d55` 這個分支目標剛好落在 `(push@0x35d53, call@0x35d55]` 區間裡——這正是
+§11.4 用人工反組譯找到的同一件事。往回貪婪掃描(`sfx_index_callers.json`/
+`extract_event_id_groups.py` 用的方法)只會取到 fall-through 路徑的 `(1, 0x12, 0x11)`,
+漏掉尾呼叫路徑真正的 `(5, 7, 0)`。**結論:此筆不是新的存疑,是既有 §11.4 結論被工具重新
+偵測到,維持原判定,不需要額外活體工作。**
+
+### 12.3 `call 0x3566e` —— 新發現,結構相同的第二個 tail-call 共用引數區塊
+
+往回追出兩個獨立函式,皆以標準序頭(`push N; call 0x3702f`)起始、`ret` 結尾、且
+`call_scan`(逐一比對整段程式碼所有 `E8 xx xx xx xx` 直接呼叫的立即運算元)對兩者的入口
+位址都是 **0 命中**——與 §11.4 event77 外層函式「找不到已知呼叫者」同款,只能靠全域事件
+表間接抵達,靜態範圍內查不到呼叫者:
+
+```
+0x35642  mov al,[0x3bef] ; sub al,0xe ; add al,al ; movzx eax,al ; push eax
+0x35651  push 0xb ; push 2 ; call 0x35b78 ; add esp,0xc         ; 第一次呼叫,引數 (dyn, 0xb, 2)
+0x3565b  mov al,[0x3bef] ; sub al,0xe ; add al,al ; inc al ; movzx eax,al ; push eax
+0x3566a  push 0xb ; push 0x1a
+0x3566e  call 0x35b78 ; add esp,0xc ; ret                       ; fall-through 路徑,引數 (dyn', 0xb, 0x1a)
+
+0x35c1d  push 0x10 ; call 0x3702f                                ; 獨立函式,標準序頭
+0x35c27  push 1,0x1b,3 ; call 0x35b78 ; add esp,0xc              ; 第一次呼叫,引數 (1, 0x1b, 3)
+0x35c35  push 2,0x1b,0xf
+0x35c3b  jmp 0x3566e                                             ; tail-call 路徑,引數 (2, 0x1b, 0xf)
+```
+
+`0x35c3b: jmp 0x3566e` 的分支目標剛好等於 `call 0x35b78` 指令本身的位址——與 §11.4 的
+`0x35ebc: jmp 0x35d55` 一模一樣的形狀:尾呼叫完全跳過緊鄰的 `push eax; push 0xb; push 0x1a`
+三行,改用自己前面剛 push 的 `(2, 0x1b, 0xf)` 當引數。往回貪婪掃描會取到
+`(dyn', 0xb, 0x1a)`,漏掉尾呼叫路徑真正的 `(2, 0x1b, 0xf)`。
+
+**與哪個全域事件編號對應**:兩個函式(`0x35642`、`0x35c1d`)在 `xref_to`/`call_scan` 下都
+沒有已知呼叫者,本節未回溯到全域事件表本身核對哪個 entry 的 table byte 剛好落在
+`0x3566e`(依 §11.5 的方法論,這需要另外做一次「table 項是否恰好落在某條指令中段」的邊界
+檢查)——**這個歸屬本節刻意不猜**,留給後續有精力做 §11.7 那種 raw table bytes 逐 byte
+核對的人。
+
+### 12.4 結論
+
+兩筆「存疑」都已用純靜態證據(具體 bytes、無間接定址、`call_scan` 0 命中)定案是什麼結構、
+引數是什麼——不是「靜態解不出來,需要活體補」的那種盲區。`SESSION-HANDOFF-2026-09-04.md`
+交接清單中「`0x3566e`/`0x35d55` 需活體確認」一項可以視為**已由本節靜態分析取代**;若之後
+真要活體確認,唯一還有價值的問題是「這兩條尾呼叫路徑在正常遊戲流程中會不會被踩到」,
+而不是引數值本身——引數值本節已經寫死。
