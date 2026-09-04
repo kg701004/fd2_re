@@ -1,6 +1,6 @@
 # 炎龍騎士團2 逆向工程知識庫 — 索引(問題導向路由)
 
-> ## ⚠ 先讀這個：[`SESSION-HANDOFF-2026-09-03.md`](SESSION-HANDOFF-2026-09-03.md)
+> ## ⚠ 先讀這個：[`SESSION-HANDOFF-2026-09-04.md`(最新)／`SESSION-HANDOFF-2026-09-03.md`](SESSION-HANDOFF-2026-09-03.md)
 >
 > **2026-09-02 `remake/` 已依使用者指示整個移除**（commit `b090ddeb`）。本索引與下列
 > 所有文件裡「remake 實作／parity／M1-M6 里程碑」相關的敘述，除非標註在該日之後，
