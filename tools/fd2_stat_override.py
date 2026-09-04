@@ -23,10 +23,15 @@
 (cur/max 的順序於 2026-09-04 用兩個不同值 + 強制重繪實測更正;先前標反,
  因為原始驗證用的是滿血單位,cur == max 無法分辨。)
 
-**MV 不在這組裡,本工具不碰。** 計畫檔記的 MV=`+0x3b` 來自 constructor 反組譯,
-但同一份來源把 AP 記成 `+0x37`,而實測 AP 在 `+0x48`——兩套偏移互相矛盾,
-在 MV 被獨立定位之前寫 `+0x3b` 有寫壞別的欄位的風險。要動 MV 請先實測定位。
-(而且就算定位到也不該設上萬:可移動格是 flood fill,地圖才 ~20×60。)
+**MV = `+0x3b`(u8),`--ours-mv` 會寫它。** 早先本節寫著「不碰 MV」,理由是
+constructor 那份來源把 AP 記成 `+0x37` 而實測 AP 在 `+0x48`,兩套偏移看似矛盾。
+A.1 已解開:那不是矛盾,是**兩組不同欄位**(`+0x37/+0x39/+0x3b/+0x3e` 是基礎值,
+`+0x48/…` 是生效值),`+0x3b` 讀到索爾=4 與狀態卡 `MV·04` 相符,寫入 20 後
+畫面顯示 `MV·20`。上限夾 60:可移動格是 flood fill,地圖才 ~20×60,設上萬沒有意義。
+
+⚠ MV 是 u8,**不在 `read_array()` 的回傳欄位裡**,所以寫後驗證要單獨重讀 `+0x3b`。
+2026-09-04 之前漏了這一步:MV 照寫,但驗證迴圈只跑 u16 欄位,而輸出的
+「36/36 吻合」看起來像全部都驗過了。已補上,現在輸出會分別列出 u16 與 MV 的筆數。
 
 陣營
 ----
@@ -158,7 +163,19 @@ def main() -> int:
         got = by_idx.get(rec, {}).get(FIELD_BY_OFFSET[off])
         if got != val:
             bad.append(f"idx{rec} {lab}: 期望 {val},實得 {got}")
-    print(f"驗證:{len(plan)-len(bad)}/{len(plan)} 個欄位吻合")
+    # MV 是 u8,不在 read_array 的回傳欄位裡,**必須單獨重讀**。
+    # 2026-09-04:此前這裡只驗 u16 的 plan,MV 寫了卻從不驗證——一支賣點就是
+    # 「寫後自驗」的工具漏驗自己寫的欄位,而輸出的 "36/36 吻合" 讀起來像全部都驗過了。
+    for rec, mv in mv_plan:
+        addr = base + rec * STRIDE + 0x3B
+        got = H.mem_read_global(a.instance, a.selector, addr, 1,
+                                H.DEFAULT_SHOT_DIR / a.instance / "statverify",
+                                delta=0).get("u8")
+        if got != mv:
+            bad.append(f"idx{rec} mv: 期望 {mv},實得 {got}")
+    total = len(plan) + len(mv_plan)
+    print(f"驗證:{total-len(bad)}/{total} 個欄位吻合"
+          f"(u16 {len(plan)} 筆 + MV u8 {len(mv_plan)} 筆)")
     for b in bad[:10]:
         print("  FAIL " + b)
     H.resume(a.instance)
