@@ -27,10 +27,10 @@
     },
     {
       "file": "11-enemy-ai.md",
-      "kind": "original_fact_excluded",
+      "kind": "refuted_by_original_data",
       "excerpt_sha1": "ec7ec3aff4af0a13b695148c45707d601c4d6aee",
       "excerpt": "**live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01",
-      "note": "敵方 AI 的『live 驗證』透過 remake FD2_CAMP_PREP_BATTLE hook 取得 → 排除,AI 行為需 DOSBox-X 原版重驗",
+      "note": "2026-09-04 重驗:整段的主體是 remake 自己的型別與函式(NativeAIScoringRecords/nativeAI14237Plan/ScoreNativeAI14237),沒有任何一句宣稱原版 AI 行為,remake 已於 2026-09-02 移除 → 主體不存在,無可重驗。但其中唯一可用原版資料查證的子事實已被**推翻**:原文稱 ch01 那 8 個敵人「inventory_slots[0] 全部是 0(FD2 的空占位 item ID)」,直接讀 FDFIELD_000(parse_field)可見他們是 slots=[0,128,255,...];item.json 中 item 0 是真實武器(type1/ap10/hit95)、item 128 是防具(type21/dp2),而 255 根本不在 0..214 的物品表內——**空槽標記是 0xFF,不是 0**。因此「這些敵人沒武器所以 composer 正確回傳無候選」的解釋不成立,HasWinner=false 的真正原因未知(且因 remake 已移除而無實益)。",
       "first_line_seen": 456
     },
     {
@@ -51,10 +51,10 @@
     },
     {
       "file": "11-enemy-ai.md",
-      "kind": "original_fact_excluded",
+      "kind": "void_subject_removed",
       "excerpt_sha1": "6f7e7243d610189dbff6164d58b4ddaeadaf0e29",
       "excerpt": "- `FD2_CAMP_PREP_BATTLE=battle_ch08`(ch01 驗證一路在用的捷徑,`resetBattle()`",
-      "note": "自陳 ch01 驗證『一路在用』這條 remake 捷徑 → 以它為基礎的 AI 結論全部排除",
+      "note": "2026-09-04 重驗:本段描述的是 remake harness 的畫面損壞 bug(FD2_CAMP_PREP_BATTLE 與 enterNode 重跑節點設定),完全沒有對原版行為的宣稱。remake 已移除 → 無可重驗對象,結案為 void,不再列入「待原版重驗」清單。",
       "first_line_seen": 860
     },
     {

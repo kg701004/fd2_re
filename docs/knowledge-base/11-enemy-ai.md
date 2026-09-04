@@ -456,6 +456,20 @@ fail-closed 的並聯,不是替換:`NextAIPlan` 每個單位先呼叫
 > ⛔ **[remake 證據排除]**(2026-09-04):以下這次「live 驗證」是透過 remake 的
 > `FD2_CAMP_PREP_BATTLE` debug hook 取得的,依現行判準不構成原版 AI 行為的證據。
 > 它觀察到的資料缺口可作為線索,但結論需以 DOSBox-X 原版重驗才算數。
+>
+> **2026-09-04(續)結案:主體不存在,且其中可查的子事實已被原版資料推翻。**
+> 整段的主體是 remake 自己的型別與函式(`NativeAIScoringRecords`/`nativeAI14237Plan`/
+> `ScoreNativeAI14237`),**沒有任何一句宣稱原版 AI 行為**;remake 已於 2026-09-02
+> 移除,所以沒有「重驗」的對象。唯一能用原版資料查證的子事實則是**錯的**:
+> 原文稱 ch01 那 8 個敵人「`inventory_slots[0]` 全部是 `0`(FD2 的「空」占位 item ID)」,
+> 但直接讀 `FDFIELD_000`(`tools/parse_field.py`)得到的是 `slots=[0,128,255,255,…]`,
+> 而 `exe_tables/item.json` 裡 **item 0 是真實武器**(type 1 / ap 10 / hit 95,最弱的一把)、
+> **item 128 是防具**(type 21 / dp 2),**item 255 根本不在 0..214 的物品表內**——
+> 空槽標記是 `0xFF` 而不是 `0`(`parse_field` 自己的過濾條件也是 `!= 0xFF`)。
+> 全 30 張地圖的 slot0/slot1 值分布同樣是「武器 id / 防具 id」兩群,不是稀疏的 0。
+> 因此「這些敵人手上沒武器,composer 正確判斷打不了」的解釋**不成立**;
+> `HasWinner=false` 的真正原因未知(且因 remake 已移除而無實益)。
+> 見 `docs/data/remake_excluded_claims.json` 的 `refuted_by_original_data`。
 
 **live 驗證(2026-08-14,`FD2_CAMPAIGN=1 FD2_CAMP_PREP_BATTLE=battle_ch01
 FD2_SHOT_AI=1 FD2_SHOT_TURN=1`,配合新增的 `AI決策: ... native=%v` 除錯輸出
@@ -863,6 +877,11 @@ Dockerfile 還在),編出 Linux 版 `fd2-linux`,以 `xvfb-run` + 既有的
   出生點,尚未各自展開到戰術位置)——證明 harness 本身、地圖算繪都沒問題。
 > ⛔ **[remake 證據排除]**(2026-09-04):本行自陳這條 remake 捷徑是「ch01 驗證一路
 > 在用的」——依現行判準,凡以它為基礎的 AI 結論一律視為未驗證,需 DOSBox-X 原版重驗。
+>
+> **2026-09-04(續)結案為 void:無可重驗對象。** 本段描述的是 remake harness 自己的
+> 畫面損壞 bug(`FD2_CAMP_PREP_BATTLE` 與 `enterNode()` 重跑節點設定的交互),
+> 通篇沒有對原版行為的任何宣稱。remake 已移除,該 bug 連同程式碼一起消失,
+> **不再列入「待原版重驗」清單**。見 `remake_excluded_claims.json` 的 `void_subject_removed`。
 
 - `FD2_CAMP_PREP_BATTLE=battle_ch08`(ch01 驗證一路在用的捷徑,`resetBattle()`
   之後仍會被隨後的 `g.enterNode()` 對「當時 `g.camp.Cur`」重跑一次節點設定)
