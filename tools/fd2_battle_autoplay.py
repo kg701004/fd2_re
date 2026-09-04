@@ -26,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fd2_dosbox_live_helper as H  # noqa: E402
+import fd2_game_state as GS  # noqa: E402
 
 CUR_X, CUR_Y = 0x53AB1, 0x53AB5
 
@@ -75,19 +76,14 @@ def _eip(inst: str) -> int | None:
 
 
 def wait_playable(inst: str, tries: int = 8, gap: float = 4.0) -> bool:
-    """等到玩家真的可以操作為止。
+    """等到玩家真的可以操作為止——**改由 `fd2_game_state` 神諭判定**。
 
-    2026-09-04:`ensure_browse` 失敗有兩種完全不同的意義——
-    「回不去」與「**現在還輪不到你**」(敵方回合、動作演出進行中)。
-    呼叫端把後者也當硬錯誤,於是整輪中止;但那只是還沒輪到,等就好。
-    這個包裝把「等」明確化,並在真的等不到時才回報失敗。
+    本檔原本自己實作這個判斷,踩過三次坑(先測後退會在指令環震盪、拿
+    `in_battle` 當可操作、把「還輪不到你」當成「回不去」)。狀態判斷現在集中在
+    神諭一處,這裡只負責等。
     """
-    import time
-    for i in range(tries):
-        if ensure_browse(inst):
-            return True
-        time.sleep(gap)
-    return False
+    st, _ = GS.wait_playable(inst, timeout=tries * gap, gap=gap)
+    return st is GS.GameState.BROWSE_CURSOR
 
 
 def ensure_browse(inst: str, max_escapes: int = 6) -> bool:
@@ -230,6 +226,17 @@ def main() -> int:
                     _, snap3 = snapshot(a.instance, a.selector, a.count)
                     move_cursor(a.instance, snap3[0]["cursor"], (tgt["x"], tgt["y"]))
                     rest_unit(a.instance)
+        # 回合結尾統計必須避開轉換窗口:2026-09-04 實測,`+6` 陣營位元組在回合翻轉
+        # 瞬間會全部讀成同一值,舊版因此把我方 idx3 印成敵方。神諭會明確回報
+        # TRANSITION_UNREADABLE,此時**不報數字**,等到可讀再報。
+        for _ in range(6):
+            st, why = GS.probe(a.instance, prove_browse=False)
+            if st is not GS.GameState.TRANSITION_UNREADABLE:
+                break
+            time.sleep(3.0)
+        else:
+            print(f"回合 {t}:轉換窗口持續中,本回合不報統計({why})")
+            continue
         base, snap = snapshot(a.instance, a.selector, a.count)
         units = snap[1:]
         left = sum(1 for u in units if u["camp"] == 0x02 and not (u["acted"] & 0x80))
