@@ -148,6 +148,39 @@ def attack_unit(inst: str) -> None:
     press(inst, "confirm", 3.5)   # 確認目標
 
 
+def nearest_foe(u: dict, units: list[dict]) -> dict | None:
+    foes = [v for v in units if v["camp"] == 0x00 and not (v["acted"] & 0x01) and v["hp"] > 0]
+    if not foes:
+        return None
+    return min(foes, key=lambda v: abs(v["x"] - u["x"]) + abs(v["y"] - u["y"]))
+
+
+def approach_then_act(inst: str, me: dict, foe: dict, mv: int) -> None:
+    """進移動選格 → 朝敵人移動到相鄰格 → 確認落點 → 攻擊。
+
+    2026-09-04:舊版的 `--attack` 只在**已經相鄰**時攻擊,否則原地休息。
+    結果是四回合都「四人全動」但敵方數字不動——單位在原地休息,永遠靠不近。
+    這一版在移動選格階段主動接近(手動實測可行:idx2 由 (8,16) 移到 (4,18)
+    與敵 (3,18) 相鄰後成功攻擊)。
+    """
+    press(inst, "confirm", 1.8)          # → 移動選格
+    # 目標:敵人的相鄰格(優先同列/同行,少一步算一步)
+    tx = foe["x"] + (1 if me["x"] > foe["x"] else -1 if me["x"] < foe["x"] else 0)
+    ty = foe["y"] if tx != foe["x"] else foe["y"] + (1 if me["y"] > foe["y"] else -1)
+    dx, dy = tx - me["x"], ty - me["y"]
+    if abs(dx) + abs(dy) > mv:           # 超出移動力就盡量靠近
+        scale = mv / max(1, abs(dx) + abs(dy))
+        dx, dy = int(dx * scale), int(dy * scale)
+    for _ in range(abs(dx)):
+        press(inst, "right" if dx > 0 else "left", 0.8)
+    for _ in range(abs(dy)):
+        press(inst, "down" if dy > 0 else "up", 0.8)
+    press(inst, "confirm", 2.2)          # 確認落點 → 環
+    press(inst, "up", 1.2)               # ring index 0 = 攻擊
+    press(inst, "confirm", 3.0)          # 執行 → 目標選擇
+    press(inst, "confirm", 3.0)          # 確認目標
+
+
 def adjacent_foe(u: dict, units: list[dict]) -> bool:
     return any(v["camp"] == 0x00 and not (v["acted"] & 0x01)
                and abs(v["x"] - u["x"]) + abs(v["y"] - u["y"]) == 1
@@ -171,6 +204,8 @@ def main() -> int:
     ap.add_argument("--turns", type=int, default=1, help="要跑幾個我方回合")
     ap.add_argument("--ensure-browse", action="store_true",
                     help="只做一件事:把 UI 帶回瀏覽游標層並證明之,然後結束")
+    ap.add_argument("--mv", type=int, default=30,
+                    help="接近時假定的移動力(需與 fd2_stat_override --ours-mv 一致)")
     ap.add_argument("--attack", action="store_true",
                     help="相鄰有存活敵方時改為攻擊(ring index 0)而不是原地結束")
     ap.add_argument("--clear-enemy-bit0", action="store_true",
@@ -196,14 +231,30 @@ def main() -> int:
         units = snap[1:]
 
     for t in range(1, a.turns + 1):
+        proved_this_turn = False
         for _ in range(12):                     # 上限,避免卡住無限迴圈
             # 2026-09-04 修正:每個單位動作前都**先證明**在瀏覽游標層。
             # 舊版直接依 snapshot 的游標值就開始送方向鍵,但游標全域在
             # 移動選格層是同一組,層級判斷不了——結果整輪「我方未行動 N」,
             # 一個單位都沒動(doc48 §5 記錄的已知問題)。
-            if not wait_playable(a.instance):
-                print("  等不到可操作狀態(敵方回合/演出未結束?),中止本回合")
-                break
+            # 成本考量:神諭的**自證**路徑很貴(完整陣列讀取 + 6 次 Escape + BP 武裝/解除,
+            # 約 20 秒),每個單位都跑一次會讓一回合超過 30 分鐘而逾時(2026-09-04 實測)。
+            # 策略:**每回合只自證一次**;同回合的後續單位改用便宜的唯讀探測,
+            # 只在偵測到 TRANSITION/NOT_IN_BATTLE 時才等,而動作是否成功仍由
+            # 事後的 Acted 位元驗證把關——那個檢查便宜且已經存在。
+            if proved_this_turn:
+                st, why = GS.probe(a.instance, prove_browse=False)
+                if st is GS.GameState.TRANSITION_UNREADABLE:
+                    time.sleep(3.0)
+                    continue
+                if st is GS.GameState.NOT_IN_BATTLE:
+                    print(f"  已不在戰鬥中({why}),結束")
+                    break
+            else:
+                if not wait_playable(a.instance):
+                    print("  等不到可操作狀態(敵方回合/演出未結束?),中止本回合")
+                    break
+                proved_this_turn = True
             base, snap = snapshot(a.instance, a.selector, a.count)
             cur, units = snap[0]["cursor"], snap[1:]
             todo = [u for u in units
@@ -214,6 +265,8 @@ def main() -> int:
             move_cursor(a.instance, cur, (tgt["x"], tgt["y"]))
             if a.attack and adjacent_foe(tgt, units):
                 attack_unit(a.instance)
+            elif a.attack and nearest_foe(tgt, units):
+                approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv)
             else:
                 rest_unit(a.instance)
             # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。
@@ -222,7 +275,9 @@ def main() -> int:
             done = next((u for u in snap2[1:] if u["idx"] == tgt["idx"]), None)
             if done and not (done["acted"] & 0x80):
                 print(f"  idx{tgt['idx']} 行動未生效(acted 仍為 {done['acted']:#04x}),重試一次")
+                proved_this_turn = False
                 if wait_playable(a.instance):
+                    proved_this_turn = True
                     _, snap3 = snapshot(a.instance, a.selector, a.count)
                     move_cursor(a.instance, snap3[0]["cursor"], (tgt["x"], tgt["y"]))
                     rest_unit(a.instance)
