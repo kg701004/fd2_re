@@ -55,7 +55,18 @@ from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 from capstone.x86 import X86_OP_IMM  # noqa: E402
 
 import safe_output  # noqa: E402
-from extract_event_id_groups import base, code, end  # noqa: E402  (共用已驗證的 LE 載入)
+
+
+def load_code_region():
+    """延遲載入程式碼區。
+
+    `extract_event_id_groups` **在模組層就載入 EXE**,所以在 import 那一行做
+    `from ... import base, code, end` 會讓本工具在缺少原版檔時**於 import 期間**炸掉——
+    verify_all_tools 從空目錄執行時的 imports/cli 兩層都會 FAIL(2026-09-04 實測)。
+    改成用到才載入,並把「請從 repo 根目錄執行」講清楚。
+    """
+    from extract_event_id_groups import base, code, end   # noqa: PLC0415
+    return base, code, end
 
 REPO = Path(__file__).resolve().parent.parent
 CALLERS = REPO / "docs" / "data" / "sfx_index_callers.json"
@@ -70,7 +81,7 @@ BRANCH_MNEMONICS = {"jmp", "je", "jne", "jz", "jnz", "ja", "jae", "jb", "jbe",
 MAX_LOOKBACK = 0x40          # 往回找 push 的視窗;與原表產生器同量級
 
 
-def collect_branch_targets(md: Cs) -> tuple[set[int], int]:
+def collect_branch_targets(md: Cs, code: bytes, base: int) -> tuple[set[int], int]:
     """線性反組譯整段程式碼,收集所有**靜態可解**的分支目標。
 
     回傳 (targets, indirect_count)。`indirect_count` 是算不出目標的分支數量——
@@ -89,7 +100,7 @@ def collect_branch_targets(md: Cs) -> tuple[set[int], int]:
     return targets, indirect
 
 
-def find_push_and_call_sites(md: Cs) -> list[dict]:
+def find_push_and_call_sites(md: Cs, code: bytes, base: int) -> list[dict]:
     """找出所有 `call play_sfx_a`,以及各自往回最近的 `push imm`。"""
     seq = list(md.disasm(code, base))
     by_addr = {ins.address: i for i, ins in enumerate(seq)}
@@ -118,15 +129,23 @@ def main() -> int:
     ap.add_argument("--json", help="輸出分流結果到 JSON")
     a = ap.parse_args()
 
+    try:
+        base, code, end = load_code_region()
+    except FileNotFoundError as exc:
+        print(f"{exc}", file=sys.stderr)
+        print("用法: 從 repo 根目錄執行 python tools/fd2_sfx_static_reachability.py",
+              file=sys.stderr)
+        return 2
+
     md = Cs(CS_ARCH_X86, CS_MODE_32)
     md.detail = True
     print(f"程式碼區:{base:#x}..{end:#x}({len(code)} bytes)")
 
-    targets, indirect = collect_branch_targets(md)
+    targets, indirect = collect_branch_targets(md, code, base)
     print(f"靜態可解的分支目標 {len(targets)} 個;**目標算不出來的分支 {indirect} 個**"
           f"(這是本方法的盲區,見檔頭限制 1)")
 
-    all_sites = find_push_and_call_sites(md)
+    all_sites = find_push_and_call_sites(md, code, base)
     doc = json.loads(CALLERS.read_text(encoding="utf-8"))
     documented = {int(x, 16) for v in doc["index_to_callers"].values() for x in v}
     site2idx = {int(x, 16): int(k) for k, v in doc["index_to_callers"].items() for x in v}
