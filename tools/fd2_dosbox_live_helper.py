@@ -563,6 +563,10 @@ UNIT_ARRAY_PTR_INSTR_GHIDRA_ADDR = 0x118e2
 MOV_ABS_DISP32_OFFSET = 2
 UNIT_RECORD_STRIDE = 0x50
 
+# 單位陣列 dump 的暫時性失敗重試(2026-09-04 實測:同一場戰鬥內數秒後即恢復)。
+ARRAY_DUMP_RETRIES = 3
+ARRAY_DUMP_RETRY_DELAY_S = 1.5
+
 
 def mem_find_signature(instance: str, selector: str, linear: str, bytecount: str,
                         hex_sig: str, ghidra_addr: int, out: Path) -> tuple[list[int], int | None]:
@@ -643,32 +647,47 @@ def mem_read_unit_array(instance: str, selector: str, out_dir: Path,
     result["ptr_variable_addr"] = hex(disp32)
     result["array_base"] = hex(array_base)
 
-    array_dump = out_dir / "array_dump.bin"
-    # 2026-09-04:先刪掉舊檔。MEMDUMPBIN 失敗時不一定會寫檔,而 read_bytes()
-    # 讀到上一輪殘留的內容看起來與成功一模一樣。
-    try:
-        array_dump.unlink()
-    except FileNotFoundError:
-        pass
-    array_path, array_size = mem_dump(instance, selector, f"{array_base:x}",
-                                       f"{num_records * UNIT_RECORD_STRIDE:x}", array_dump)
-    data = array_path.read_bytes() if array_path.exists() else b""
-
     # 2026-09-04:**這一層是實測補的,不是預防性的。** 同一場 ch01 戰鬥、指令環
     # 開在畫面上、pane 顯示 (Running) 且 MEMDUMPBIN 回報 success 的情況下,
     # 這支函式回傳過 12 筆全 0(camp/HP/acted 皆 0)且 `error=None`;
     # 幾秒後同樣的呼叫又完全正常。呼叫端無從分辨,而
     # fd2_game_state 會把「沒有非空槽」判成 NOT_IN_BATTLE——
     # 戰鬥中報告不在戰鬥,正是 autoplay「等不到可操作狀態」的形狀。
+    #
+    # 這是**暫時性**故障(同一場戰鬥內數秒後即恢復,已實地重現兩次),所以在這裡
+    # 重試,而不是把它丟給每一個呼叫端各自處理——2026-09-04 第一版只回報不重試,
+    # 結果 autoplay 在第 2 回合打到一半直接中止。
+    array_dump = out_dir / "array_dump.bin"
     expected = num_records * UNIT_RECORD_STRIDE
-    if len(data) < expected:
-        result["error"] = (f"array dump 只拿到 {len(data)}/{expected} bytes——"
-                            f"讀取失敗,不是「陣列是空的」")
+    data = b""
+    attempts: list[str] = []
+    for attempt in range(1, ARRAY_DUMP_RETRIES + 1):
+        # 先刪掉舊檔:MEMDUMPBIN 失敗時不一定會寫檔,而 read_bytes() 讀到上一輪
+        # 殘留的內容看起來與成功一模一樣。
+        try:
+            array_dump.unlink()
+        except FileNotFoundError:
+            pass
+        array_path, array_size = mem_dump(instance, selector, f"{array_base:x}",
+                                           f"{expected:x}", array_dump)
+        data = array_path.read_bytes() if array_path.exists() else b""
+        if len(data) < expected:
+            attempts.append(f"第{attempt}次:只拿到 {len(data)}/{expected} bytes")
+        elif not any(data):
+            attempts.append(f"第{attempt}次:整段全 0")
+        else:
+            break
+        time.sleep(ARRAY_DUMP_RETRY_DELAY_S)
+    else:
+        result["error"] = (
+            "array dump 連續 " + str(ARRAY_DUMP_RETRIES) + " 次讀取失敗("
+            + ";".join(attempts) + ")。可能有三種:(a) 暫時性壞讀,(b) **FD2.EXE 已結束**"
+            "(離開到 DOS 後這些位址讀到的是殘留值,2026-09-04 實地遇過:陣列全 0、"
+            "指標與 [0x53beb] 卻仍是舊值,而畫面已是 `C:\\>`),(c) 真的不在戰鬥。"
+            "**先截圖確認遊戲還在,再解讀任何數值**——不要把殘留值當成狀態。")
         return result
-    if not any(data):
-        result["error"] = ("array dump 全為 0:指標有效時單位陣列不可能整段是 0,"
-                            "這是靜默壞讀,**不可當成 NOT_IN_BATTLE**。稍後重試。")
-        return result
+    if attempts:
+        result["dump_retries"] = attempts
     records = []
     for i in range(num_records):
         rec = data[i * UNIT_RECORD_STRIDE:(i + 1) * UNIT_RECORD_STRIDE]
