@@ -55,6 +55,7 @@ class GameState(enum.Enum):
     IN_BATTLE_NOT_PLAYABLE = "IN_BATTLE_NOT_PLAYABLE"  # 在戰鬥但現在輪不到/演出中
     TRANSITION_UNREADABLE = "TRANSITION_UNREADABLE"    # 轉換窗口,讀值不可信
     NOT_IN_BATTLE = "NOT_IN_BATTLE"
+    GAME_NOT_RUNNING = "GAME_NOT_RUNNING"              # FD2.EXE 已退回 DOS(畫面判定)
     UNKNOWN = "UNKNOWN"
 
 
@@ -131,6 +132,15 @@ def classify_units(recs: list[dict]) -> tuple[GameState, str]:
 def probe(inst: str, selector: str = "0170", prove_browse: bool = True
           ) -> tuple[GameState, str]:
     """回傳 (狀態, 證據)。`prove_browse=False` 時只做讀值層級的判斷(較快、無副作用)。"""
+    # 2026-09-04:先確認遊戲還在。退回 DOS 後這些位址仍留著舊值,單位陣列有時讀成
+    # 全 0、有時讀出**成功但是垃圾**的 12 筆——兩種都與「暫時性壞讀」在記憶體上無法分辨。
+    # 「讀不到」不等於「不在戰鬥」(見 read_units),而「讀得到」也不等於「遊戲還在」。
+    alive, meas = H.game_alive(inst)
+    if not alive:
+        return (GameState.GAME_NOT_RUNNING,
+                f"畫面判定 FD2.EXE 已不在執行(相異顏色 {meas['distinct_colors']}、"
+                f"非黑 {meas['nonblack_ratio']});記憶體讀值是殘留,不可解讀")
+
     H.enter_debugger(inst)
     base, recs, err, read_failed = read_units(inst, selector)
     H.resume(inst)

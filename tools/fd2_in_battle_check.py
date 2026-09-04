@@ -23,6 +23,23 @@ if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
 INST = sys.argv[1]
 H = [sys.executable, "tools/fd2_dosbox_live_helper.py"]
 
+# 2026-09-04:先確認遊戲還在,再解讀任何記憶體值。
+# FD2.EXE 退回 DOS 之後,這些位址仍留著舊值,而單位陣列**不一定讀失敗**——
+# 實測到過「讀取成功、12 筆、內容是垃圾」。本檔的陣營值域與 HP 界線檢查那次擋住了,
+# 但那是殘留內容剛好夠亂;落在合法範圍的殘留值會讓它對著一個已死的遊戲回報 IN_BATTLE。
+# 「讀得到」從來就不等於「遊戲活著」,這道閘門才是。
+import os  # noqa: E402
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fd2_dosbox_live_helper as _H  # noqa: E402
+
+_alive, _meas = _H.game_alive(INST)
+if not _alive:
+    print(f"GAME_NOT_RUNNING: 畫面判定 FD2.EXE 已不在執行"
+          f"(相異顏色 {_meas['distinct_colors']}、非黑 {_meas['nonblack_ratio']});"
+          f"此時的記憶體讀值是殘留,**不可解讀為戰鬥狀態**")
+    sys.exit(3)
+
 
 def run(*a):
     return subprocess.run(H + list(a), capture_output=True, text=True,

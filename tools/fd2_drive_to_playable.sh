@@ -19,8 +19,17 @@ export PYTHONIOENCODING=utf-8
 H="python tools/fd2_dosbox_live_helper.py"
 I="$1"
 [ "$2" = "boot" ] && { sleep 70; $H key --instance $I confirm --wait 3 >/dev/null 2>&1; }
+# 探測的代價遠高於按鍵:一次 ensure_browse 要 BPDEL/下斷點/送鍵/讀 EIP,約 30-60 秒,
+# 而一次確認只要 1.3 秒。2026-09-04 五次實測(sfx2/win3/ctl1/ctl2/ctl3/dbg1/rv1)
+# **全部都在第 7-9 批才成立**,所以前 6 次探測是穩定的浪費——那才是 10 分鐘裡的大頭。
+# 改成:前 60 次確認完全不探測,之後每 10 次探一次。省下約 6 次探測。
+SKIP_PROBE_UNTIL=${FD2_DRIVE_SKIP_PROBE_UNTIL:-6}
 for r in $(seq 1 20); do
   for i in $(seq 1 10); do $H key --instance $I confirm --wait 1.3 >/dev/null 2>&1; done
+  if [ "$r" -lt "$SKIP_PROBE_UNTIL" ]; then
+    echo "第 $r 批(累計 $((r*10)) 次確認): 略過探測(實測最早也要第 7 批才成立)"
+    continue
+  fi
   out=$(python tools/fd2_battle_autoplay.py --instance $I --ensure-browse 2>&1 | tail -1)
   echo "第 $r 批(累計 $((r*10)) 次確認): $out"
   case "$out" in *已確定*) echo "READY"; break;; esac
