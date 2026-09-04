@@ -33,6 +33,30 @@ PORT = {0: "索爾", 1: "哈諾", 2: "鐵諾", 3: "哈瓦特", 4: "亞雷斯", 5
         0x16: "卡里斯", 0x17: "羅蘭", 0x18: "希爾法", 0x19: "謝多", 0x1A: "聖寇拉斯",
         0x1B: "巴拿羅西亞", 0x1C: "達克賽", 0x1D: "亞奇梅吉", 0x1E: "蓋亞", 0x1F: "渥德"}
 
+# 開框碼分兩類,operand 的語意**完全不同**(doc09「控制碼語意」節):
+#   0xFFEF/0xFFEE — 開上/下框 + 載入 DATO;operand 走 0x12C60 身分查找 → 靜態可解。
+#   0xFFED/0xFFEC — 開上/下框 + runtime unit lookup;operand 是**執行期 unit index**,
+#                   最後讀該 record +7 當 DATO selector → 靜態**不可解**。
+# 2026-09-04 之前這裡不看開框碼,四種一律查 PORT。doc09 用原版截圖抓到 ch01 王宮
+# 兩句被標成索爾、實際是國王;全 FDTXT 量測顯示這種框有 273/1450(18.8%)。
+IDENTITY_BOX = {0xFFEE, 0xFFEF}
+RUNTIME_BOX = {0xFFEC, 0xFFED}
+
+
+def resolve_speaker(leading, operand):
+    """依開框碼解說話者。**靜態不可知時回報不可知,不猜名字。**
+
+    這是本工具最容易產生「看起來正常的錯值」的地方:runtime-unit 框的 operand
+    是小整數,拿去查 PORT 一定查得到某個角色名,結果毫無徵兆地錯。
+    """
+    if leading in RUNTIME_BOX:
+        return f"unit#{operand}(執行期決定)"
+    if leading in IDENTITY_BOX:
+        return PORT.get(operand, g2s([operand]))
+    # 前導控制碼不是開框碼(實測全 35 個 FDTXT 沒有這種框,但不假設它不會出現)
+    return f"?#{operand}(開框碼 {'None' if leading is None else hex(leading)})"
+
+
 sys.path.insert(0, os.path.dirname(__file__))
 from decode_text import parse_strings
 
@@ -83,7 +107,7 @@ def decode_string(codes):
         is_box_open = leading is None or leading in OPEN_BOX
         if is_box_open and len(seg) >= 2 and seg[1] == OPEN:
             spk = seg[0]
-            name = PORT.get(spk, g2s([spk]))
+            name = resolve_speaker(leading, spk)
             body = [c for c in seg[2:] if c not in (OPEN, CLOSE)]
             if cur_lines is not None:
                 out.append((cur_speaker, cur_lines))
