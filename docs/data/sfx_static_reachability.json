@@ -1,0 +1,407 @@
+{
+ "_meta": {
+  "method": "收集全部靜態可解分支目標,檢查有無落在 (push, call] 區間",
+  "limitation": "間接分支 0 個目標未知,故『可信』是過濾不是證明",
+  "self_check": "A.4 已知反例 0x32307 被正確標成存疑",
+  "exe_md5": "33464c81e6a364fd0660141139aa8e6e"
+ },
+ "trusted": [
+  {
+   "call": "0x117a1",
+   "push": "0x11799",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1193a",
+   "push": "0x11932",
+   "index": 7,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x11a33",
+   "push": "0x11a2b",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x11a54",
+   "push": "0x11a4c",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x11a75",
+   "push": "0x11a6d",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x11a96",
+   "push": "0x11a8e",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1403d",
+   "push": "0x14035",
+   "index": 4,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x16546",
+   "push": "0x1653e",
+   "index": 2,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x17495",
+   "push": "0x1748d",
+   "index": 8,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x176d3",
+   "push": "0x176cb",
+   "index": 8,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x17b2e",
+   "push": "0x17b26",
+   "index": 6,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x17c56",
+   "push": "0x17c4e",
+   "index": 5,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x17d26",
+   "push": "0x17d1e",
+   "index": 6,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x17ede",
+   "push": "0x17ed6",
+   "index": 5,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1a3df",
+   "push": "0x1a3d7",
+   "index": 4,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1ba55",
+   "push": "0x1ba4d",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1ba72",
+   "push": "0x1ba6a",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1ba9d",
+   "push": "0x1ba95",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1babe",
+   "push": "0x1bab6",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1baee",
+   "push": "0x1bae6",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1bb2a",
+   "push": "0x1bb22",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1c309",
+   "push": "0x1c301",
+   "index": 1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d50a",
+   "push": "0x1d502",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d58c",
+   "push": "0x1d584",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d5a9",
+   "push": "0x1d5a1",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d5d5",
+   "push": "0x1d5cd",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d5f6",
+   "push": "0x1d5ee",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d627",
+   "push": "0x1d61f",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d65b",
+   "push": "0x1d653",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1d6e2",
+   "push": "0x1d6da",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x1ddaa",
+   "push": "0x1dda2",
+   "index": 3,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x26504",
+   "push": "0x264fc",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x26536",
+   "push": "0x2652e",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x265a7",
+   "push": "0x2659f",
+   "index": 1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x26e5e",
+   "push": "0x26e56",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x26e90",
+   "push": "0x26e88",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x27625",
+   "push": "0x2761d",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2768b",
+   "push": "0x27683",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x276d0",
+   "push": "0x276c8",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x276fb",
+   "push": "0x276f3",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x27e3b",
+   "push": "0x27e33",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x27e99",
+   "push": "0x27e91",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x27ede",
+   "push": "0x27ed6",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x27f0e",
+   "push": "0x27f06",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2805f",
+   "push": "0x28057",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x280bb",
+   "push": "0x280b3",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x29c8a",
+   "push": "0x29c82",
+   "index": 5,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x29d30",
+   "push": "0x29d28",
+   "index": 7,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x29d6c",
+   "push": "0x29d64",
+   "index": 7,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b08a",
+   "push": "0x2b082",
+   "index": 5,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b106",
+   "push": "0x2b0fe",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b12c",
+   "push": "0x2b124",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b155",
+   "push": "0x2b14d",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b17b",
+   "push": "0x2b173",
+   "index": 0,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2b1f1",
+   "push": "0x2b1e9",
+   "index": 6,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2d770",
+   "push": "0x2d768",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2db80",
+   "push": "0x2db78",
+   "index": 1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2dc85",
+   "push": "0x2dc7d",
+   "index": 1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2dd9e",
+   "push": "0x2dd96",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2e284",
+   "push": "0x2e27c",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x2e918",
+   "push": "0x2e910",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x30d1b",
+   "push": "0x30d13",
+   "index": -1,
+   "intruding_targets": []
+  },
+  {
+   "call": "0x31015",
+   "push": "0x3100d",
+   "index": 0,
+   "intruding_targets": []
+  }
+ ],
+ "suspect": [
+  {
+   "call": "0x1ea20",
+   "push": "0x1ea18",
+   "index": 4,
+   "intruding_targets": [
+    "0x1ea1a"
+   ]
+  },
+  {
+   "call": "0x32307",
+   "push": "0x322ff",
+   "index": 11,
+   "intruding_targets": [
+    "0x32301"
+   ]
+  }
+ ],
+ "no_push_found": []
+}
