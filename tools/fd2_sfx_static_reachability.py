@@ -100,7 +100,8 @@ def collect_branch_targets(md: Cs, code: bytes, base: int) -> tuple[set[int], in
     return targets, indirect
 
 
-def find_push_and_call_sites(md: Cs, code: bytes, base: int) -> list[dict]:
+def find_push_and_call_sites(md: Cs, code: bytes, base: int,
+                             target: int = PLAY_SFX_A) -> list[dict]:
     """找出所有 `call play_sfx_a`,以及各自往回最近的 `push imm`。"""
     seq = list(md.disasm(code, base))
     by_addr = {ins.address: i for i, ins in enumerate(seq)}
@@ -109,7 +110,7 @@ def find_push_and_call_sites(md: Cs, code: bytes, base: int) -> list[dict]:
         if ins.mnemonic != "call":
             continue
         ops = ins.operands
-        if not (ops and ops[0].type == X86_OP_IMM and ops[0].imm == PLAY_SFX_A):
+        if not (ops and ops[0].type == X86_OP_IMM and ops[0].imm == target):
             continue
         push_addr = push_val = None
         j = i - 1
@@ -132,6 +133,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", help="輸出分流結果到 JSON")
+    ap.add_argument("--target", action="append", metavar="HEX",
+                    help="要檢查的被呼叫函式位址(可重複)。預設 play_sfx_a。"
+                         "其他目標只做可達性分流,不做 SFX 表的交叉核對")
     a = ap.parse_args()
 
     try:
@@ -149,6 +153,25 @@ def main() -> int:
     targets, indirect = collect_branch_targets(md, code, base)
     print(f"靜態可解的分支目標 {len(targets)} 個;**目標算不出來的分支 {indirect} 個**"
           f"(這是本方法的盲區,見檔頭限制 1)")
+
+    targets_to_check = [int(t, 16) for t in (a.target or [])] or [PLAY_SFX_A]
+    if targets_to_check != [PLAY_SFX_A]:
+        # 泛用模式:同一個「被跳進的 call」盲點對任何用 `push imm; call` 往回解析的表
+        # 都成立。2026-09-04 查到 extract_event_id_groups.py 用的是完全相同的模式
+        # (spawn_group 0x10b4e / spawn_group_with_intro 0x32999 / staging 0x35822),
+        # 而 event_id_groups.json 撐著 doc25/26/28 的結論,從沒被這樣檢查過。
+        for tgt in targets_to_check:
+            sites = [s for s in find_push_and_call_sites(md, code, base, tgt)
+                     if s["push"] is not None]
+            sus = [s for s in sites
+                   if any(s["push"] < t <= s["call"] for t in targets)]
+            print(f"\n目標 {tgt:#x}:呼叫點 {len(sites)} 個(找得到 push),"
+                  f"**存疑 {len(sus)}**")
+            for s in sus[:12]:
+                intr = sorted(t for t in targets if s["push"] < t <= s["call"])
+                print(f"  call {s['call']:#x}  push@{s['push']:#x} 值={s['index']}"
+                      f"  闖入目標={[hex(t) for t in intr][:3]}")
+        return 0
 
     all_sites = find_push_and_call_sites(md, code, base)
     doc = json.loads(CALLERS.read_text(encoding="utf-8"))
