@@ -1,0 +1,296 @@
+[
+  {
+    "id": "fb_0x16546",
+    "address": "0x16546",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000164e8",
+      "start": "0x164e8",
+      "end": "0x16558",
+      "size": 113,
+      "entry_point": "0x164e8"
+    }
+  },
+  {
+    "id": "fb_0x1ddaa",
+    "address": "0x1ddaa",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001db65",
+      "start": "0x1db65",
+      "end": "0x1debd",
+      "size": 857,
+      "entry_point": "0x1db65"
+    }
+  },
+  {
+    "id": "fb_0x1403d",
+    "address": "0x1403d",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00013fd4",
+      "start": "0x13fd4",
+      "end": "0x14120",
+      "size": 333,
+      "entry_point": "0x13fd4"
+    }
+  },
+  {
+    "id": "fb_0x1a3df",
+    "address": "0x1a3df",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001a30b",
+      "start": "0x1a30b",
+      "end": "0x1a7bc",
+      "size": 1202,
+      "entry_point": "0x1a30b"
+    }
+  },
+  {
+    "id": "fb_0x1ea20",
+    "address": "0x1ea20",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001e98c",
+      "start": "0x1e98c",
+      "end": "0x1eb04",
+      "size": 377,
+      "entry_point": "0x1e98c"
+    }
+  },
+  {
+    "id": "fb_0x17c56",
+    "address": "0x17c56",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00017aed",
+      "start": "0x17aed",
+      "end": "0x17d6e",
+      "size": 642,
+      "entry_point": "0x17aed"
+    }
+  },
+  {
+    "id": "fb_0x17ede",
+    "address": "0x17ede",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00017e0b",
+      "start": "0x17e0b",
+      "end": "0x17eee",
+      "size": 228,
+      "entry_point": "0x17e0b"
+    }
+  },
+  {
+    "id": "fb_0x29c8a",
+    "address": "0x29c8a",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00029bcb",
+      "start": "0x29bcb",
+      "end": "0x29da9",
+      "size": 479,
+      "entry_point": "0x29bcb"
+    }
+  },
+  {
+    "id": "fb_0x2b08a",
+    "address": "0x2b08a",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0002af28",
+      "start": "0x2af28",
+      "end": "0x2b438",
+      "size": 1297,
+      "entry_point": "0x2af28"
+    }
+  },
+  {
+    "id": "fb_0x17b2e",
+    "address": "0x17b2e",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00017aed",
+      "start": "0x17aed",
+      "end": "0x17d6e",
+      "size": 642,
+      "entry_point": "0x17aed"
+    }
+  },
+  {
+    "id": "fb_0x17d26",
+    "address": "0x17d26",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00017aed",
+      "start": "0x17aed",
+      "end": "0x17d6e",
+      "size": 642,
+      "entry_point": "0x17aed"
+    }
+  },
+  {
+    "id": "fb_0x2b1f1",
+    "address": "0x2b1f1",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0002af28",
+      "start": "0x2af28",
+      "end": "0x2b438",
+      "size": 1297,
+      "entry_point": "0x2af28"
+    }
+  },
+  {
+    "id": "fb_0x1193a",
+    "address": "0x1193a",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000117e7",
+      "start": "0x117e7",
+      "end": "0x11aa7",
+      "size": 698,
+      "entry_point": "0x117e7"
+    }
+  },
+  {
+    "id": "fb_0x29d30",
+    "address": "0x29d30",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00029bcb",
+      "start": "0x29bcb",
+      "end": "0x29da9",
+      "size": 479,
+      "entry_point": "0x29bcb"
+    }
+  },
+  {
+    "id": "fb_0x29d6c",
+    "address": "0x29d6c",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00029bcb",
+      "start": "0x29bcb",
+      "end": "0x29da9",
+      "size": 479,
+      "entry_point": "0x29bcb"
+    }
+  },
+  {
+    "id": "fb_0x17495",
+    "address": "0x17495",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001741c",
+      "start": "0x1741c",
+      "end": "0x175a8",
+      "size": 397,
+      "entry_point": "0x1741c"
+    }
+  },
+  {
+    "id": "fb_0x176d3",
+    "address": "0x176d3",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000176b4",
+      "start": "0x176b4",
+      "end": "0x177fb",
+      "size": 328,
+      "entry_point": "0x176b4"
+    }
+  },
+  {
+    "id": "fb_0x32307",
+    "address": "0x32307",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00032230",
+      "start": "0x32230",
+      "end": "0x3231a",
+      "size": 235,
+      "entry_point": "0x32230"
+    }
+  },
+  {
+    "id": "fb_0x1c309",
+    "address": "0x1c309",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_0001c2da",
+      "start": "0x1c2da",
+      "end": "0x1c4cb",
+      "size": 498,
+      "entry_point": "0x1c2da"
+    }
+  },
+  {
+    "id": "fb_0x265a7",
+    "address": "0x265a7",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_00026152",
+      "start": "0x26152",
+      "end": "0x265eb",
+      "size": 1178,
+      "entry_point": "0x26152"
+    }
+  },
+  {
+    "id": "fb_0x117a1",
+    "address": "0x117a1",
+    "action": "function_bounds",
+    "ok": true,
+    "result": {
+      "in_function": true,
+      "name": "FUN_000115b6",
+      "start": "0x115b6",
+      "end": "0x117e6",
+      "size": 561,
+      "entry_point": "0x115b6"
+    }
+  }
+]
