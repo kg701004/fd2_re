@@ -67,12 +67,10 @@ def _halted(inst: str) -> bool:
 
 
 def _eip(inst: str) -> int | None:
-    if not _halted(inst):
-        return None
-    for ln in _pane(inst).splitlines()[:8]:
-        if "EIP=" in ln:
-            return int(ln.split("EIP=")[1].split()[0], 16)
-    return None
+    """改用 helper 的 read_eip。原本這裡自己解析,pane 被截斷成 `EIP=` 時會丟
+    IndexError——並行跑三個實例時 tmux capture 就會出現這種截斷,
+    2026-09-04 因此讓 10 次試驗全部驅動失敗(見 helper.read_eip 的說明)。"""
+    return H.read_eip(inst)
 
 
 def wait_playable(inst: str, tries: int = 8, gap: float = 4.0) -> bool:

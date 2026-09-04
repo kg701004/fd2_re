@@ -256,6 +256,17 @@ def enter_debugger(instance: str) -> str:
     return sh_checked("enter-debugger", instance, timeout=15)
 
 
+def _pane_lines(instance: str) -> list[str]:
+    """整個 pane 的內容。register view 在**開頭**、`(Running)` 在**尾端**,
+    兩者需要的方向不同,所以底層取全部,由呼叫端決定切哪一端。"""
+    import subprocess
+    r = subprocess.run(["wsl", "-d", "Ubuntu", "tmux", "-L", "fd2harness",
+                        "capture-pane", "-t", f"harness-{instance}", "-p"],
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
+    return r.stdout.splitlines()
+
+
 def _pane_tail(instance: str, n: int = 3) -> list[str]:
     import subprocess
     r = subprocess.run(["wsl", "-d", "Ubuntu", "tmux", "-L", "fd2harness",
@@ -322,6 +333,36 @@ def game_alive(instance: str, shot: "Path | None" = None,
                    "distinct_colors": frames[-1]["distinct_colors"],
                    "nonblack_ratio": frames[-1]["nonblack_ratio"],
                    "shot": frames[-1]["shot"]}
+
+
+def read_eip(instance: str) -> int | None:
+    """讀 register view 的 EIP。停不住或讀不到就回 None,**不丟例外**。
+
+    2026-09-04:三支工具(autoplay / game_state / sfx_screen_map)各自實作了
+    `ln.split("EIP=")[1].split()[0]`,而那在 pane 被截斷成 `EIP=`(後面沒東西)時
+    會丟 `IndexError`。並行跑三個實例時 tmux capture 就會出現這種截斷,
+    於是 trial runner 的 10 次試驗**全部驅動失敗**,而錯誤只顯示成一行
+    `IndexError: list index out of range`,看不出來源。
+
+    單機順序執行時幾乎不會遇到,所以這個脆弱性一直藏著——直到並行把它逼出來。
+    收進 helper 一次修好,不要再讓三份實作各壞各的。
+    """
+    if not is_halted(instance):
+        return None
+    # EIP 在 register view 的**開頭**,不是尾端——三份原始實作用的都是 `[:8]`。
+    # 我第一版誤用 `_pane_tail()`(取尾端),那會永遠找不到 EIP 而**安靜地**
+    # 一律回報「沒命中」,比原本的例外更糟。
+    for ln in _pane_lines(instance)[:8]:
+        if "EIP=" not in ln:
+            continue
+        tail = ln.split("EIP=", 1)[1].split()
+        if not tail:                 # `EIP=` 後面被截斷
+            continue
+        try:
+            return int(tail[0], 16)
+        except ValueError:           # 截到一半的十六進位字串
+            continue
+    return None
 
 
 def wait_halted(instance: str, timeout: float = 6.0, gap: float = 0.4) -> bool:
