@@ -198,7 +198,8 @@ def nearest_foe(u: dict, units: list[dict]) -> dict | None:
     return min(foes, key=lambda v: abs(v["x"] - u["x"]) + abs(v["y"] - u["y"]))
 
 
-def approach_then_act(inst: str, me: dict, foe: dict, mv: int) -> None:
+def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
+                      dest_mode: str = "computed") -> None:
     """進移動選格 → 朝敵人移動到相鄰格 → 確認落點 → 攻擊。
 
     2026-09-04:舊版的 `--attack` 只在**已經相鄰**時攻擊,否則原地休息。
@@ -208,12 +209,26 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int) -> None:
     """
     press(inst, "confirm", 1.8)          # → 移動選格
     # 目標:敵人的相鄰格(優先同列/同行,少一步算一步)
-    tx = foe["x"] + (1 if me["x"] > foe["x"] else -1 if me["x"] < foe["x"] else 0)
-    ty = foe["y"] if tx != foe["x"] else foe["y"] + (1 if me["y"] > foe["y"] else -1)
-    dx, dy = tx - me["x"], ty - me["y"]
-    if abs(dx) + abs(dy) > mv:           # 超出移動力就盡量靠近
-        scale = mv / max(1, abs(dx) + abs(dy))
-        dx, dy = int(dx * scale), int(dy * scale)
+    if dest_mode == "fixed":
+        # 差分測試用:移動同樣的**步數**,但落點不是算出來朝向敵人的。
+        #
+        # 2026-09-04:六個手寫階梯階段、三個實例、上百輪都殺不死遊戲,而**真正的
+        # autoplay 加 `--mv 0`(等於關掉移動)一次就活了下來**——同一支程式、
+        # 同樣的 --attack、同樣的快照密度,只差移動。所以移動被指認。
+        # 但階梯的 C/E 也移動並確認落點卻活著,長距離版(10 格)同樣活著,
+        # 差別在於階梯是往固定方向亂移,autoplay 是**算出朝向敵人的落點**
+        # (可能被佔據、不可達、或落在敵方身上)。
+        #
+        # 這個模式把「移動」與「算出來的落點」分開:兩者步數相同,只有目的地不同。
+        # 手寫階梯做不到這件事,因為它一開始就不是真正的 autoplay。
+        dx, dy = min(mv, 2), 0
+    else:
+        tx = foe["x"] + (1 if me["x"] > foe["x"] else -1 if me["x"] < foe["x"] else 0)
+        ty = foe["y"] if tx != foe["x"] else foe["y"] + (1 if me["y"] > foe["y"] else -1)
+        dx, dy = tx - me["x"], ty - me["y"]
+        if abs(dx) + abs(dy) > mv:           # 超出移動力就盡量靠近
+            scale = mv / max(1, abs(dx) + abs(dy))
+            dx, dy = int(dx * scale), int(dy * scale)
     for _ in range(abs(dx)):
         press(inst, "right" if dx > 0 else "left", 0.8)
     for _ in range(abs(dy)):
@@ -253,6 +268,10 @@ def main() -> int:
                     help="只做一件事:把 UI 帶回瀏覽游標層並證明之,然後結束")
     ap.add_argument("--mv", type=int, default=30,
                     help="接近時假定的移動力(需與 fd2_stat_override --ours-mv 一致)")
+    ap.add_argument("--dest", choices=("computed", "fixed"), default="computed",
+                    help="approach 的落點:computed=算出朝向敵人(預設)、"
+                         "fixed=同步數但固定方向。**差分測試用**:讓程式碼決定變因,"
+                         "而不是另外手寫一個模擬品(見 approach_then_act 的說明)")
     ap.add_argument("--attack", action="store_true",
                     help="相鄰有存活敵方時改為攻擊(ring index 0)而不是原地結束")
     ap.add_argument("--clear-enemy-bit0", action="store_true",
@@ -323,7 +342,7 @@ def main() -> int:
             if a.attack and adjacent_foe(tgt, units):
                 attack_unit(a.instance)
             elif a.attack and nearest_foe(tgt, units):
-                approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv)
+                approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv, a.dest)
             else:
                 rest_unit(a.instance)
             # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。
