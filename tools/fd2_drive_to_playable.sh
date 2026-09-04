@@ -1,5 +1,12 @@
 #!/bin/bash
 # 驅動到「玩家真的可以操作」為止。
+#
+# ⚠ 不要串在 launch 後面:`fd2_dosbox_live_helper.sh launch <name> <keepalive>`
+#    會**佔住那個 keepalive 秒數不返回**(它就是 keepalive 的持有者),所以
+#    `launch ... && drive ...` 的第二段永遠不會執行,而實例其實早就起來了。
+#    2026-09-04 因此空等了半小時,現象是「實例在跑、log 檔卻始終不存在」。
+#    正確做法:launch 自己一個背景工作(別殺它,殺了會連帶拆掉實例),
+#    確認 tmux session 出現後,再另外跑這支腳本。
 # 判準用 ensure_browse(以 0x18890 斷點自證在瀏覽游標層),**不是** in_battle ——
 # 單位陣列在戰前演出期間就已存在,in_battle 會提早成立,導致後續操作全部送錯層。
 cd /c/Users/kg701/Desktop/GAME/fd2_re || exit 1
