@@ -92,7 +92,10 @@ def drive(inst: str, log: Path) -> bool:
     r = subprocess.run(["bash", "tools/fd2_drive_to_playable.sh", inst, "boot"],
                        cwd=REPO, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=1800)
-    log.write_text(r.stdout or "", encoding="utf-8")
+    # **stderr 也要寫進 log**。第一版只寫 stdout,結果 6 次 drive_failed 的原因
+    # (`cd: /c/...: No such file or directory`)完全看不到——log 是空的。
+    log.write_text(f"{r.stdout or ''}\n--- stderr ---\n{r.stderr or ''}",
+                   encoding="utf-8")
     return "READY" in (r.stdout or "")
 
 
@@ -105,7 +108,8 @@ def run_condition(inst: str, args: list[str], log: Path) -> None:
                         "--instance", inst] + args,
                        cwd=REPO, capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=1800)
-    log.write_text(r.stdout or "", encoding="utf-8")
+    log.write_text(f"{r.stdout or ''}\n--- stderr ---\n{r.stderr or ''}",
+                   encoding="utf-8")
 
 
 def one_trial(cond_name: str, cond_args: list[str], out_dir: Path,
@@ -177,14 +181,27 @@ def main() -> int:
 
     print("\n===== 結果 =====")
     summary = {}
+    total_counted = 0
     for name, _ in conds:
         rs = [r for r in results if r["condition"] == name]
         counted = [r for r in rs if r["outcome"] in ("survived", "exited")]
         died = sum(1 for r in counted if r["outcome"] == "exited")
         excluded = len(rs) - len(counted)
+        total_counted += len(counted)
         summary[name] = {"died": died, "counted": len(counted), "excluded": excluded}
         print(f"  {name}: 退回 DOS {died}/{len(counted)}"
               + (f"(另有 {excluded} 次未計入:驅動失敗或起點就已離開)" if excluded else ""))
+
+    # 分母為 0 時**拒絕給結果摘要**。第一版在全部 6 次 drive_failed 之後照樣印出
+    # 「0/0」與判讀提醒,看起來像跑完了一輪——那正是本專案反覆踩的
+    # 「檢查跑不起來 ≠ 檢查通過」。沒有量到任何東西時要說沒量到,而不是報 0。
+    if total_counted == 0:
+        print("\n⛔ **一次有效試驗都沒有**——上面的 0/0 不是結果,是「什麼都沒量到」。")
+        print("   先看各試驗 log 的 `--- stderr ---` 段找出失敗原因,修好再跑。")
+        (out_dir / "results.json").write_text(
+            json.dumps({"summary": summary, "trials": results, "valid": False},
+                       ensure_ascii=False, indent=1), encoding="utf-8")
+        return 2
 
     # 刻意不做顯著性宣告,只給一個保守的可讀性提示。
     print("\n判讀提醒:**本工具不宣告哪個條件比較危險。**")

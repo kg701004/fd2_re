@@ -14,7 +14,11 @@
 #    要改就先讓它跑完,或改完再重跑。
 # 判準用 ensure_browse(以 0x18890 斷點自證在瀏覽游標層),**不是** in_battle ——
 # 單位陣列在戰前演出期間就已存在,in_battle 會提早成立,導致後續操作全部送錯層。
-cd /c/Users/kg701/Desktop/GAME/fd2_re || exit 1
+# 用腳本自身位置定位,不要寫死 `/c/...`——那是 Git Bash 的掛載,
+# 從 Python subprocess 呼叫時解析到的 bash 可能沒有它(2026-09-04 實測:
+# `cd: /c/Users/...: No such file or directory`,而 stdout 是空的,
+# 於是 trial runner 六次試驗全部 drive_failed 卻看不出原因)。
+cd "$(dirname "$0")/.." || exit 1
 export PYTHONIOENCODING=utf-8
 H="python tools/fd2_dosbox_live_helper.py"
 I="$1"
