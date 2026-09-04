@@ -74,6 +74,22 @@ def _eip(inst: str) -> int | None:
     return None
 
 
+def wait_playable(inst: str, tries: int = 8, gap: float = 4.0) -> bool:
+    """等到玩家真的可以操作為止。
+
+    2026-09-04:`ensure_browse` 失敗有兩種完全不同的意義——
+    「回不去」與「**現在還輪不到你**」(敵方回合、動作演出進行中)。
+    呼叫端把後者也當硬錯誤,於是整輪中止;但那只是還沒輪到,等就好。
+    這個包裝把「等」明確化,並在真的等不到時才回報失敗。
+    """
+    import time
+    for i in range(tries):
+        if ensure_browse(inst):
+            return True
+        time.sleep(gap)
+    return False
+
+
 def ensure_browse(inst: str, max_escapes: int = 6) -> bool:
     """把 UI 帶回**瀏覽游標層**,並且**證明**它真的在那一層。
 
@@ -184,7 +200,14 @@ def main() -> int:
         units = snap[1:]
 
     for t in range(1, a.turns + 1):
-        for _ in range(8):                      # 上限,避免卡住無限迴圈
+        for _ in range(12):                     # 上限,避免卡住無限迴圈
+            # 2026-09-04 修正:每個單位動作前都**先證明**在瀏覽游標層。
+            # 舊版直接依 snapshot 的游標值就開始送方向鍵,但游標全域在
+            # 移動選格層是同一組,層級判斷不了——結果整輪「我方未行動 N」,
+            # 一個單位都沒動(doc48 §5 記錄的已知問題)。
+            if not wait_playable(a.instance):
+                print("  等不到可操作狀態(敵方回合/演出未結束?),中止本回合")
+                break
             base, snap = snapshot(a.instance, a.selector, a.count)
             cur, units = snap[0]["cursor"], snap[1:]
             todo = [u for u in units
@@ -197,6 +220,16 @@ def main() -> int:
                 attack_unit(a.instance)
             else:
                 rest_unit(a.instance)
+            # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。
+            # 沒有這一步,失敗會安靜地累積成「跑了 N 回合、什麼都沒發生」。
+            _, snap2 = snapshot(a.instance, a.selector, a.count)
+            done = next((u for u in snap2[1:] if u["idx"] == tgt["idx"]), None)
+            if done and not (done["acted"] & 0x80):
+                print(f"  idx{tgt['idx']} 行動未生效(acted 仍為 {done['acted']:#04x}),重試一次")
+                if wait_playable(a.instance):
+                    _, snap3 = snapshot(a.instance, a.selector, a.count)
+                    move_cursor(a.instance, snap3[0]["cursor"], (tgt["x"], tgt["y"]))
+                    rest_unit(a.instance)
         base, snap = snapshot(a.instance, a.selector, a.count)
         units = snap[1:]
         left = sum(1 for u in units if u["camp"] == 0x02 and not (u["acted"] & 0x80))
