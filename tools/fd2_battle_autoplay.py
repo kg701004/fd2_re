@@ -134,18 +134,61 @@ def move_cursor(inst: str, cur: tuple[int, int], dst: tuple[int, int]) -> None:
         press(inst, "down" if dy > 0 else "up", 0.9)
 
 
-def attack_unit(inst: str) -> None:
-    """已對準單位、且射程內有敵方候選時,原地攻擊。
+RING_SEL = 0x53C57          # 指令環目前選到第幾項(doc11 §環項 index)
+RING_ATTACK = 0
+RING_REST = 3
 
-    ring index 0 = 攻擊(doc13 §1)。射程內沒有候選時該方向會被 disable,
-    按 ↑ 完全沒有反應(不是沒送到鍵),此時本函式等同白按,靠呼叫端用
-    record[+5] bit0 是否新增來判斷有沒有真的打到。
+
+def ring_selection(inst: str, selector: str = "0170") -> int | None:
+    """讀指令環目前選到哪一項。讀不到回 None(不猜)。"""
+    H.enter_debugger(inst)
+    v = H.mem_read_global(inst, selector, RING_SEL, 1,
+                          H.DEFAULT_SHOT_DIR / inst / "ringsel").get("u8")
+    H.resume(inst)
+    return v
+
+
+def select_ring(inst: str, want: int, key: str, selector: str = "0170") -> bool:
+    """按方向鍵選環項,**回讀確認真的選中了才回 True**。
+
+    方向鍵是絕對設值但**受該項的 enable gate 管**(doc13:834)。項目不可用時
+    按鍵毫無作用,而環的選擇維持原值——後面若照樣按確認,執行的就是別的指令。
+    這是整個 autoplay 裡唯一還沒被排除的「盲按」,見 attack_unit 的說明。
+    """
+    press(inst, key, 1.2)
+    sel = ring_selection(inst, selector)
+    if sel == want:
+        return True
+    print(f"    環選擇是 {sel}(期望 {want})——按鍵未生效,**不盲按確認**")
+    return False
+
+
+def attack_unit(inst: str, selector: str = "0170") -> bool:
+    """已對準單位時嘗試原地攻擊。**確認環真的選在「攻擊」才按下去。**
+
+    doc13 §「指令環4選項的動態 enable gate」記載的真實程式碼:
+
+        if (scancode==0x48 && enableFlags[0]==0) DAT_00053c57 = 0;   // ↑ → 攻擊
+        else if (scancode==0x50 && enableFlags[3]==0) DAT_00053c57 = 3; // ↓ → 待機
+
+    ↑ 是**絕對設值**,但**有前提**:`enableFlags[0]==0`(攻擊可用)。射程內沒有候選時
+    ↑ 完全不生效,`[0x53c57]` 維持原值——而舊版在這之後直接連按兩次確認,
+    等於**閉著眼睛執行環裡當時選著的任何一項**。
+
+    2026-09-04:`--attack` 的兩次執行都以 FD2.EXE 退回 DOS 收場,而
+    (a) 只套用數值覆寫、零輸入靜置 3 分鐘,以及 (b) 不含 `--attack` 的完整一回合
+    (四人全動),兩者都不會。成因未確定,但盲按序列是唯一還沒被排除的差異,
+    所以這裡改成先驗證再按。回傳是否真的送出了攻擊。
     """
     press(inst, "confirm", 1.8)   # → 移動選格
-    press(inst, "confirm", 2.2)   # 確認原地
-    press(inst, "up", 1.2)        # ring index 0 = 攻擊
+    press(inst, "confirm", 2.2)   # 確認原地 → 開環
+    if not select_ring(inst, RING_ATTACK, "up", selector):
+        # 不按確認。取消退出環,把單位留給後續邏輯,而不是執行未知指令。
+        press(inst, "cancel", 1.0)
+        return False
     press(inst, "confirm", 3.5)   # 執行 → 目標選擇
     press(inst, "confirm", 3.5)   # 確認目標
+    return True
 
 
 def nearest_foe(u: dict, units: list[dict]) -> dict | None:
@@ -176,7 +219,9 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int) -> None:
     for _ in range(abs(dy)):
         press(inst, "down" if dy > 0 else "up", 0.8)
     press(inst, "confirm", 2.2)          # 確認落點 → 環
-    press(inst, "up", 1.2)               # ring index 0 = 攻擊
+    if not select_ring(inst, RING_ATTACK, "up"):
+        press(inst, "cancel", 1.0)
+        return
     press(inst, "confirm", 3.0)          # 執行 → 目標選擇
     press(inst, "confirm", 3.0)          # 確認目標
 
@@ -191,7 +236,9 @@ def rest_unit(inst: str) -> None:
     """已對準單位時,讓它原地結束行動。"""
     press(inst, "confirm", 1.8)   # → 移動選格
     press(inst, "confirm", 2.2)   # 確認原地
-    press(inst, "down", 1.2)      # ring index 3
+    if not select_ring(inst, RING_REST, "down"):
+        press(inst, "cancel", 1.0)
+        return
     press(inst, "confirm", 3.0)
 
 
