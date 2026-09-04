@@ -6,6 +6,9 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import safe_output  # noqa: E402
+
 # 2026-09-03:改成同時支援兩個版本(見 extract_event_id_groups.py 的同名表)。
 # 位移是分區段常數:handler 本體 +0x356,而資料表 0x5274e 兩版**相同**。
 EDITIONS = {
@@ -107,6 +110,14 @@ def main(argv):
             },
         ],
     }
+    # 2026-09-04:argv[2] 是任意輸出路徑,寫入前不讀它——與 extract_event_id_groups
+    # 同一個危險形狀(當天真的因此覆寫掉參考 FD2.EXE)。
+    try:
+        safe_output.guard_json_output(argv[2])
+    except safe_output.UnsafeOutputPath as exc:
+        print(f"{exc}\n用法: extract_native_field_event_rules.py <FD2.EXE> <輸出.json>",
+              file=sys.stderr)
+        return 2
     with open(argv[2], "w", encoding="utf-8") as output:
         json.dump(result, output, ensure_ascii=False, indent=2)
         output.write("\n")

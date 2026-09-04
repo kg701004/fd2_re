@@ -1,7 +1,7 @@
 [
  {
   "idx": 0,
-  "off": "0x558f9",
+  "off": "0x7ab0d",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -16,7 +16,7 @@
  },
  {
   "idx": 1,
-  "off": "0x55903",
+  "off": "0x7ab17",
   "race": 1,
   "cls": 3,
   "cls_name": "騎士",
@@ -31,7 +31,7 @@
  },
  {
   "idx": 2,
-  "off": "0x5590d",
+  "off": "0x7ab21",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -46,7 +46,7 @@
  },
  {
   "idx": 3,
-  "off": "0x55917",
+  "off": "0x7ab2b",
   "race": 3,
   "cls": 8,
   "cls_name": "武者",
@@ -61,7 +61,7 @@
  },
  {
   "idx": 4,
-  "off": "0x55921",
+  "off": "0x7ab35",
   "race": 2,
   "cls": 12,
   "cls_name": "狙擊手",
@@ -76,7 +76,7 @@
  },
  {
   "idx": 5,
-  "off": "0x5592b",
+  "off": "0x7ab3f",
   "race": 4,
   "cls": 15,
   "cls_name": "龍劍士",
@@ -91,7 +91,7 @@
  },
  {
   "idx": 6,
-  "off": "0x55935",
+  "off": "0x7ab49",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -106,7 +106,7 @@
  },
  {
   "idx": 7,
-  "off": "0x5593f",
+  "off": "0x7ab53",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -121,7 +121,7 @@
  },
  {
   "idx": 8,
-  "off": "0x55949",
+  "off": "0x7ab5d",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -136,7 +136,7 @@
  },
  {
   "idx": 9,
-  "off": "0x55953",
+  "off": "0x7ab67",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -151,7 +151,7 @@
  },
  {
   "idx": 10,
-  "off": "0x5595d",
+  "off": "0x7ab71",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -166,7 +166,7 @@
  },
  {
   "idx": 11,
-  "off": "0x55967",
+  "off": "0x7ab7b",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -181,7 +181,7 @@
  },
  {
   "idx": 12,
-  "off": "0x55971",
+  "off": "0x7ab85",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -196,7 +196,7 @@
  },
  {
   "idx": 13,
-  "off": "0x5597b",
+  "off": "0x7ab8f",
   "race": 1,
   "cls": 2,
   "cls_name": "戰士",
@@ -211,7 +211,7 @@
  },
  {
   "idx": 14,
-  "off": "0x55985",
+  "off": "0x7ab99",
   "race": 1,
   "cls": 3,
   "cls_name": "騎士",
@@ -226,7 +226,7 @@
  },
  {
   "idx": 15,
-  "off": "0x5598f",
+  "off": "0x7aba3",
   "race": 1,
   "cls": 3,
   "cls_name": "騎士",
@@ -241,7 +241,7 @@
  },
  {
   "idx": 16,
-  "off": "0x55999",
+  "off": "0x7abad",
   "race": 1,
   "cls": 11,
   "cls_name": "聖騎士",
@@ -256,7 +256,7 @@
  },
  {
   "idx": 17,
-  "off": "0x559a3",
+  "off": "0x7abb7",
   "race": 1,
   "cls": 3,
   "cls_name": "騎士",
@@ -271,7 +271,7 @@
  },
  {
   "idx": 18,
-  "off": "0x559ad",
+  "off": "0x7abc1",
   "race": 1,
   "cls": 19,
   "cls_name": "龍騎士",
@@ -286,7 +286,7 @@
  },
  {
   "idx": 19,
-  "off": "0x559b7",
+  "off": "0x7abcb",
   "race": 1,
   "cls": 4,
   "cls_name": "弓兵",
@@ -301,7 +301,7 @@
  },
  {
   "idx": 20,
-  "off": "0x559c1",
+  "off": "0x7abd5",
   "race": 1,
   "cls": 4,
   "cls_name": "弓兵",
@@ -316,7 +316,7 @@
  },
  {
   "idx": 21,
-  "off": "0x559cb",
+  "off": "0x7abdf",
   "race": 1,
   "cls": 12,
   "cls_name": "狙擊手",
@@ -331,7 +331,7 @@
  },
  {
   "idx": 22,
-  "off": "0x559d5",
+  "off": "0x7abe9",
   "race": 1,
   "cls": 5,
   "cls_name": "法師",
@@ -346,7 +346,7 @@
  },
  {
   "idx": 23,
-  "off": "0x559df",
+  "off": "0x7abf3",
   "race": 1,
   "cls": 5,
   "cls_name": "法師",
@@ -361,7 +361,7 @@
  },
  {
   "idx": 24,
-  "off": "0x559e9",
+  "off": "0x7abfd",
   "race": 1,
   "cls": 13,
   "cls_name": "大法師",
@@ -376,7 +376,7 @@
  },
  {
   "idx": 25,
-  "off": "0x559f3",
+  "off": "0x7ac07",
   "race": 1,
   "cls": 6,
   "cls_name": "僧侶",
@@ -391,7 +391,7 @@
  },
  {
   "idx": 26,
-  "off": "0x559fd",
+  "off": "0x7ac11",
   "race": 1,
   "cls": 6,
   "cls_name": "僧侶",
@@ -406,7 +406,7 @@
  },
  {
   "idx": 27,
-  "off": "0x55a07",
+  "off": "0x7ac1b",
   "race": 1,
   "cls": 14,
   "cls_name": "祭師",
@@ -421,7 +421,7 @@
  },
  {
   "idx": 28,
-  "off": "0x55a11",
+  "off": "0x7ac25",
   "race": 1,
   "cls": 7,
   "cls_name": "盜賊",
@@ -436,7 +436,7 @@
  },
  {
   "idx": 29,
-  "off": "0x55a1b",
+  "off": "0x7ac2f",
   "race": 1,
   "cls": 7,
   "cls_name": "盜賊",
@@ -451,7 +451,7 @@
  },
  {
   "idx": 30,
-  "off": "0x55a25",
+  "off": "0x7ac39",
   "race": 1,
   "cls": 7,
   "cls_name": "盜賊",
@@ -466,7 +466,7 @@
  },
  {
   "idx": 31,
-  "off": "0x55a2f",
+  "off": "0x7ac43",
   "race": 1,
   "cls": 1,
   "cls_name": "劍士",
@@ -481,7 +481,7 @@
  },
  {
   "idx": 32,
-  "off": "0x55a39",
+  "off": "0x7ac4d",
   "race": 1,
   "cls": 8,
   "cls_name": "武者",
@@ -496,7 +496,7 @@
  },
  {
   "idx": 33,
-  "off": "0x55a43",
+  "off": "0x7ac57",
   "race": 1,
   "cls": 16,
   "cls_name": "鬥士",
@@ -511,7 +511,7 @@
  },
  {
   "idx": 34,
-  "off": "0x55a4d",
+  "off": "0x7ac61",
   "race": 8,
   "cls": 2,
   "cls_name": "戰士",
@@ -526,7 +526,7 @@
  },
  {
   "idx": 35,
-  "off": "0x55a57",
+  "off": "0x7ac6b",
   "race": 8,
   "cls": 2,
   "cls_name": "戰士",
@@ -541,7 +541,7 @@
  },
  {
   "idx": 36,
-  "off": "0x55a61",
+  "off": "0x7ac75",
   "race": 10,
   "cls": 26,
   "cls_name": "？？？",
@@ -556,7 +556,7 @@
  },
  {
   "idx": 37,
-  "off": "0x55a6b",
+  "off": "0x7ac7f",
   "race": 10,
   "cls": 26,
   "cls_name": "？？？",
@@ -571,7 +571,7 @@
  },
  {
   "idx": 38,
-  "off": "0x55a75",
+  "off": "0x7ac89",
   "race": 4,
   "cls": 2,
   "cls_name": "戰士",
@@ -586,7 +586,7 @@
  },
  {
   "idx": 39,
-  "off": "0x55a7f",
+  "off": "0x7ac93",
   "race": 4,
   "cls": 5,
   "cls_name": "法師",
@@ -601,7 +601,7 @@
  },
  {
   "idx": 40,
-  "off": "0x55a89",
+  "off": "0x7ac9d",
   "race": 5,
   "cls": 26,
   "cls_name": "？？？",
@@ -616,7 +616,7 @@
  },
  {
   "idx": 41,
-  "off": "0x55a93",
+  "off": "0x7aca7",
   "race": 5,
   "cls": 26,
   "cls_name": "？？？",
@@ -631,7 +631,7 @@
  },
  {
   "idx": 42,
-  "off": "0x55a9d",
+  "off": "0x7acb1",
   "race": 5,
   "cls": 26,
   "cls_name": "？？？",
@@ -646,7 +646,7 @@
  },
  {
   "idx": 43,
-  "off": "0x55aa7",
+  "off": "0x7acbb",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -661,7 +661,7 @@
  },
  {
   "idx": 44,
-  "off": "0x55ab1",
+  "off": "0x7acc5",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -676,7 +676,7 @@
  },
  {
   "idx": 45,
-  "off": "0x55abb",
+  "off": "0x7accf",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -691,7 +691,7 @@
  },
  {
   "idx": 46,
-  "off": "0x55ac5",
+  "off": "0x7acd9",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -706,7 +706,7 @@
  },
  {
   "idx": 47,
-  "off": "0x55acf",
+  "off": "0x7ace3",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -721,7 +721,7 @@
  },
  {
   "idx": 48,
-  "off": "0x55ad9",
+  "off": "0x7aced",
   "race": 6,
   "cls": 25,
   "cls_name": "機兵",
@@ -736,7 +736,7 @@
  },
  {
   "idx": 49,
-  "off": "0x55ae3",
+  "off": "0x7acf7",
   "race": 1,
   "cls": 7,
   "cls_name": "盜賊",
@@ -751,7 +751,7 @@
  },
  {
   "idx": 50,
-  "off": "0x55aed",
+  "off": "0x7ad01",
   "race": 1,
   "cls": 3,
   "cls_name": "騎士",
@@ -766,7 +766,7 @@
  },
  {
   "idx": 51,
-  "off": "0x55af7",
+  "off": "0x7ad0b",
   "race": 1,
   "cls": 10,
   "cls_name": "聖戰士",
@@ -781,7 +781,7 @@
  },
  {
   "idx": 52,
-  "off": "0x55b01",
+  "off": "0x7ad15",
   "race": 1,
   "cls": 10,
   "cls_name": "聖戰士",
@@ -796,10 +796,10 @@
  },
  {
   "idx": 53,
-  "off": "0x55b0b",
+  "off": "0x7ad1f",
   "race": 9,
   "cls": 28,
-  "cls_name": "?",
+  "cls_name": "？？？",
   "hp": 42,
   "mp": 0,
   "ap": 31,
@@ -811,7 +811,7 @@
  },
  {
   "idx": 54,
-  "off": "0x55b15",
+  "off": "0x7ad29",
   "race": 7,
   "cls": 26,
   "cls_name": "？？？",
@@ -826,7 +826,7 @@
  },
  {
   "idx": 55,
-  "off": "0x55b1f",
+  "off": "0x7ad33",
   "race": 7,
   "cls": 26,
   "cls_name": "？？？",
@@ -841,7 +841,7 @@
  },
  {
   "idx": 56,
-  "off": "0x55b29",
+  "off": "0x7ad3d",
   "race": 7,
   "cls": 26,
   "cls_name": "？？？",
@@ -856,7 +856,7 @@
  },
  {
   "idx": 57,
-  "off": "0x55b33",
+  "off": "0x7ad47",
   "race": 7,
   "cls": 26,
   "cls_name": "？？？",
@@ -871,7 +871,7 @@
  },
  {
   "idx": 58,
-  "off": "0x55b3d",
+  "off": "0x7ad51",
   "race": 9,
   "cls": 26,
   "cls_name": "？？？",
@@ -886,7 +886,7 @@
  },
  {
   "idx": 59,
-  "off": "0x55b47",
+  "off": "0x7ad5b",
   "race": 10,
   "cls": 26,
   "cls_name": "？？？",
@@ -901,7 +901,7 @@
  },
  {
   "idx": 60,
-  "off": "0x55b51",
+  "off": "0x7ad65",
   "race": 9,
   "cls": 26,
   "cls_name": "？？？",
@@ -916,7 +916,7 @@
  },
  {
   "idx": 61,
-  "off": "0x55b5b",
+  "off": "0x7ad6f",
   "race": 9,
   "cls": 26,
   "cls_name": "？？？",
@@ -931,7 +931,7 @@
  },
  {
   "idx": 62,
-  "off": "0x55b65",
+  "off": "0x7ad79",
   "race": 9,
   "cls": 26,
   "cls_name": "？？？",
@@ -946,7 +946,7 @@
  },
  {
   "idx": 63,
-  "off": "0x55b6f",
+  "off": "0x7ad83",
   "race": 9,
   "cls": 26,
   "cls_name": "？？？",
@@ -961,7 +961,7 @@
  },
  {
   "idx": 64,
-  "off": "0x55b79",
+  "off": "0x7ad8d",
   "race": 1,
   "cls": 22,
   "cls_name": "聖者",
@@ -976,10 +976,10 @@
  },
  {
   "idx": 65,
-  "off": "0x55b83",
+  "off": "0x7ad97",
   "race": 1,
   "cls": 27,
-  "cls_name": "?",
+  "cls_name": "　　",
   "hp": 12,
   "mp": 0,
   "ap": 1,
@@ -991,10 +991,10 @@
  },
  {
   "idx": 66,
-  "off": "0x55b8d",
+  "off": "0x7ada1",
   "race": 1,
   "cls": 27,
-  "cls_name": "?",
+  "cls_name": "　　",
   "hp": 14,
   "mp": 0,
   "ap": 1,
@@ -1006,10 +1006,10 @@
  },
  {
   "idx": 67,
-  "off": "0x55b97",
+  "off": "0x7adab",
   "race": 1,
   "cls": 27,
-  "cls_name": "?",
+  "cls_name": "　　",
   "hp": 33,
   "mp": 0,
   "ap": 1,

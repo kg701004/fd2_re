@@ -34,6 +34,7 @@ import hashlib
 import os
 import sys, struct, json
 sys.path.insert(0, "/work/tools")
+import safe_output
 from le_xref import parse_le
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
@@ -310,11 +311,14 @@ if __name__ == '__main__':
         print('用法: extract_event_id_groups.py [輸出.json]  (預設 docs/data/event_id_groups.json)')
         raise SystemExit(0)
     out = sys.argv[1] if len(sys.argv) > 1 else 'docs/data/event_id_groups.json'
-    # 2026-09-04:argv[1] 是**輸出**路徑。先前目錄不存在時直接 FileNotFoundError
-    # traceback(verify_all_tools 的 invoke 層抓到),改成明確訊息。
-    parent = os.path.dirname(os.path.abspath(out))
-    if not os.path.isdir(parent):
-        print(f'輸出目錄不存在: {parent}', file=sys.stderr)
+    # 2026-09-04:argv[1] 是**輸出**路徑,與本目錄「第一個位置參數是輸入」的慣例相反。
+    # 同日確實因此把參考 FD2.EXE 覆寫掉(靠 ~/fd2-run 的 pristine 備份才救回),
+    # 所以改由 safe_output 擋:寫 JSON 到既有檔案時,該檔案本來就必須是 JSON。
+    try:
+        safe_output.guard_json_output(out)
+    except safe_output.UnsafeOutputPath as exc:
+        print(f'{exc}\n用法: extract_event_id_groups.py [輸出.json]  '
+              f'(本工具**不吃輸入路徑**,EXE 位置寫死在檔案上方常數)', file=sys.stderr)
         raise SystemExit(2)
     with open(out, 'w', encoding='utf-8') as output:
         json.dump(results, output, indent=1, ensure_ascii=False)

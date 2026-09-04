@@ -181,8 +181,8 @@ void ch25_post_handler(void)
 
 `remake/assets/data/native_join_constructor.json`(32-row 表,schema 綁定 FD2.EXE 精確 size/MD5/SHA256)：
 
-- **id 29**(`default_file_offset:0x55e59`,`growth_file_offset:0x55fe0`,對應 `0x55ba1+29*0x18`/`0x55ea1+29*0x0b` 公式)的 `default_raw`/`growth_raw` 十六進位值，逐 byte 展開後與 `map24_units.json` unit54(亞奇梅吉)的 `native_constructor.record`(24 bytes)/`aux_record`(11 bytes)**完全相同**——這不是巧合，是這個專案既有的資料匯出工具鏈本來就用同一份 `0x112a5` constructor 公式反推 `map*_units.json` 每個 unit 的 `native_constructor` 欄位，所以「map24 unit54 是從 join-table id29 這一列建構出來的」這件事，其實從資料匯出時就已經隱含證實了；本輪的貢獻是**找到原生程式碼裡真的有一條執行路徑對這個 id 呼叫 `0x112a5`**，把資料層的巧合升級成 handler 層的直接證據。
-- **id 26**(`0x55ba1+26*0x18`)同樣是已存在的正式列,對應 `map24_units.json` unit0(聖寇拉斯,`camp:"own"`,護衛目標)——她也在同一個 postbattle handler 裡被 `JOIN(26)` 直接 CALL 一次,doc28 §2 對 ch25 的 recruit 欄位本來就寫「亞奇梅吉、聖寇拉斯」兩人並列，本輪的 handler 證據精確對上這兩個名字，不多不少。
+- **id 29**(`default_file_offset:0x7b06d`,`growth_file_offset:0x7b1f4`,對應 `0x7adb5+29*0x18`/`0x7b0b5+29*0x0b` 公式)的 `default_raw`/`growth_raw` 十六進位值，逐 byte 展開後與 `map24_units.json` unit54(亞奇梅吉)的 `native_constructor.record`(24 bytes)/`aux_record`(11 bytes)**完全相同**——這不是巧合，是這個專案既有的資料匯出工具鏈本來就用同一份 `0x112a5` constructor 公式反推 `map*_units.json` 每個 unit 的 `native_constructor` 欄位，所以「map24 unit54 是從 join-table id29 這一列建構出來的」這件事，其實從資料匯出時就已經隱含證實了；本輪的貢獻是**找到原生程式碼裡真的有一條執行路徑對這個 id 呼叫 `0x112a5`**，把資料層的巧合升級成 handler 層的直接證據。
+- **id 26**(`0x7adb5+26*0x18`=`0x7b025`)同樣是已存在的正式列,對應 `map24_units.json` unit0(聖寇拉斯,`camp:"own"`,護衛目標)——她也在同一個 postbattle handler 裡被 `JOIN(26)` 直接 CALL 一次,doc28 §2 對 ch25 的 recruit 欄位本來就寫「亞奇梅吉、聖寇拉斯」兩人並列，本輪的 handler 證據精確對上這兩個名字，不多不少。
 
 ### 對 91-worklist.md「敵轉友原生機制」假設的修正
 
@@ -193,6 +193,10 @@ void ch25_post_handler(void)
 - **未展開**:`FUN_00015f84`(戰後對話/演出呼叫，9 引數，selector 6→7)、`FUN_0001366a(0x4b)`、`0x231f2`(第二個 tail-jump 目標)本輪均只記位址/引數，未逐一反組譯內部——這些只影響演出呈現細節，不影響「JOIN(29) 確實被呼叫」這個核心結論的信心度。
 - **未查**:`spawn_group(2)` 召喚的 group2 除了亞奇梅吉(unit54)還有沒有其他 unit(`map24_units.json` 掃描只找到 unit54 一筆 `group==2`，本輪未擴大搜尋其餘章節/地圖是否有共用 group 編號的慣例陷阱，比照 doc99 反覆強調的「每章不可外推」原則，這點留給任何要動 map24 的後續輪自行複核)。
 - **未做但也不需要**:`0x55ba1`/`0x55ea1` 這兩個 join-table 基底位址本輪嘗試直接 `bytes` 讀取失敗(`MemoryAccessException`，這兩個位址在 `FD2Analysis3` project 裡目前對應到未映射/不可讀區段，可能是 file_offset 而非 loaded RAM 位址的既有落差，非本輪新發現的问题)——不影響結論，因為 `native_join_constructor.json` 本身已經是這個表格資料的既有驗證來源(schema 綁定 exe size/hash)，本輪只需要「原生程式碼有沒有呼叫 `0x112a5(29)`」這個 handler 層事實，不需要重新讀一次表格內容本身。
+  - **勘誤(2026-09-04)**:上面這兩個基底位址是**舊版 EXE**(357074 B,已遺失)的 file offset。現行參考 EXE 的
+    對應基底是 `0x7adb5`(defaults)/`0x7b0b5`(growth),固定位移 `+0x25214`(見 `docs/data/known_address_errata.json`)。
+    這使本段對讀取失敗的歸因多了一個未排除的候選(位址屬舊版),原文的「file_offset vs loaded RAM 落差」
+    推測**未經驗證**,兩者皆未分離——本輪不猜,只記錄位址本身已勘誤。
 - **安全 wiring 方向(下一輪動手前的建議)**:亞奇梅吉的招募現在應該被當成**跟 ch16 JOIN(18)、ch00 序章 JOIN(0/9/4/0x1e) 同一類**的標準 scripted JOIN 事件，用 `remake/cmd/fd2/main.go` 既有的 `partyJoinOrder`/beat-driven JOIN 機制(`b.CharID` 出現時 `append` 進 `g.partyJoinOrder`)去表示，而不是等待任何新的「敵轉友」機制——只需要在 ch25 postbattle 對應的 story/scenario beat 腳本裡補一個 `JOIN(char_id=29)` beat(聖寇拉斯 id26 若尚未有對應 beat，應一併確認/補上，兩者證據等級相同)。**這是下一輪的實作範圍，本輪刻意不動 `campaign_full.json`/`partyRoster`/`ForceDeploy`**，留給使用者審閱本輪反組譯證據後再決定。
 
 > 本節新增位址:`0x20b14`(`table_win[24]`)、`0x24df2`(`table_post[24]`)、`0x237c8`(共用 JOIN tail-jump 片段)。方法論:純靜態 `tools/ghidra_batch_probe.py`(`-readOnly -noanalysis`)，`bytes`/`disasm`/`call_scan`/`function_bounds` 四種 action，全程未碰 DOSBox-X，比照同日 `ch10disasm`/`ch29disasm`/`ch30disasm` 既有方法論。

@@ -1,14 +1,16 @@
 {
   "source": {
     "file": "FD2.EXE",
-    "size": 357074,
-    "md5": "b97caf2239a27a896069d03549d96e1e",
-    "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    "size": 509158,
+    "md5": "33464c81e6a364fd0660141139aa8e6e",
+    "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+    "edition": "新版(1998 重打包版,509158 B)",
+    "handler_delta": "0x356"
   },
   "rules": [
     {
       "event_id": 59,
-      "handler": "0x35641",
+      "handler": "0x35997",
       "selector": 0,
       "trigger_gate": "record_byte6_nonzero",
       "set_mode_ranges": [
@@ -21,7 +23,7 @@
     },
     {
       "event_id": 60,
-      "handler": "0x35675",
+      "handler": "0x359cb",
       "selector": 0,
       "trigger_gate": "record_byte6_nonzero",
       "set_mode_ranges": [
@@ -39,7 +41,7 @@
     },
     {
       "event_id": 61,
-      "handler": "0x356b7",
+      "handler": "0x35a0d",
       "selector": 1,
       "once_state_index": 12,
       "required_item": 208,
@@ -65,7 +67,7 @@
     },
     {
       "event_id": 62,
-      "handler": "0x35898",
+      "handler": "0x35bee",
       "selector": 0,
       "once_state_index": 17,
       "turn_activation": {

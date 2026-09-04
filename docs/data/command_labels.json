@@ -217,8 +217,8 @@
     },
     "27": {
       "label": "麻痺術",
-      "raw_decode": "麻庫術",
-      "reason": "commit a1851a76 記載使用者裁決此法術名為「麻痺術」,不採 glyph 423 的原始像素解碼「庫」(diverging from the raw pixel-verified decode,per user request)。該覆寫當時只寫進 remake/assets/data/ 那份副本,remake/ 於 2026-09-02 移除後跟著消失;docs/data/ 這份因為原本就等於原始解碼值,2026-09-03 首次重生時比對不出差異、被誤判為一致,沒有補回覆寫。2026-09-03(續)發現並補回。glyph_map.json 的 423 本身維持像素解碼值「庫」不變——這是單一 command label 的覆寫,不是改 glyph 語意。"
+      "raw_decode": "麻痺術",
+      "reason": "commit a1851a76 記載使用者裁決此法術名為「麻痺術」。**2026-09-04 全工具重驗:本筆覆寫已不再覆寫任何值** —— a73158c6(2026-09-03)依三個互相獨立且非 remake 的來源(社群攻略的亞奇梅吉技能列表、原生反組譯把 command 27 綁到 `+0x26` 麻痺旗標、該角色 initial_command_mask 恰含 26+27)把 glyph 423 由像素解碼值「庫」改為「痺」,工具現在自行解碼即得「麻痺術」,與本 label 相同。原文所述「glyph_map 的 423 維持『庫』不變」已不符現況,故更正。保留本筆是為了留住使用者裁決紀錄與來源鏈,不是因為仍有值需要覆寫;a73158c6 明載**未取得原版標籤截圖**。"
     }
   },
   "regenerated": {

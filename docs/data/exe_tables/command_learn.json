@@ -1,7 +1,7 @@
 [
  {
   "idx": 0,
-  "off": "0x564b3",
+  "off": "0x7b6c7",
   "entries": [
    {
     "required_level": 5,
@@ -28,7 +28,7 @@
  },
  {
   "idx": 1,
-  "off": "0x564bf",
+  "off": "0x7b6d3",
   "entries": [
    {
     "required_level": 7,
@@ -55,7 +55,7 @@
  },
  {
   "idx": 2,
-  "off": "0x564cb",
+  "off": "0x7b6df",
   "entries": [
    {
     "required_level": 18,
@@ -74,7 +74,7 @@
  },
  {
   "idx": 3,
-  "off": "0x564d7",
+  "off": "0x7b6eb",
   "entries": [
    {
     "required_level": 20,
@@ -89,7 +89,7 @@
  },
  {
   "idx": 4,
-  "off": "0x564e3",
+  "off": "0x7b6f7",
   "entries": [
    {
     "required_level": 4,
@@ -100,7 +100,7 @@
  },
  {
   "idx": 5,
-  "off": "0x564ef",
+  "off": "0x7b703",
   "entries": [
    {
     "required_level": 2,
@@ -111,7 +111,7 @@
  },
  {
   "idx": 6,
-  "off": "0x564fb",
+  "off": "0x7b70f",
   "entries": [
    {
     "required_level": 4,
@@ -122,7 +122,7 @@
  },
  {
   "idx": 7,
-  "off": "0x56507",
+  "off": "0x7b71b",
   "entries": [
    {
     "required_level": 3,
@@ -145,7 +145,7 @@
  },
  {
   "idx": 8,
-  "off": "0x56513",
+  "off": "0x7b727",
   "entries": [
    {
     "required_level": 4,
@@ -164,7 +164,7 @@
  },
  {
   "idx": 9,
-  "off": "0x5651f",
+  "off": "0x7b733",
   "entries": [
    {
     "required_level": 3,
@@ -187,7 +187,7 @@
  },
  {
   "idx": 10,
-  "off": "0x5652b",
+  "off": "0x7b73f",
   "entries": [
    {
     "required_level": 4,
@@ -218,7 +218,7 @@
  },
  {
   "idx": 11,
-  "off": "0x56537",
+  "off": "0x7b74b",
   "entries": [
    {
     "required_level": 3,
@@ -245,7 +245,7 @@
  },
  {
   "idx": 12,
-  "off": "0x56543",
+  "off": "0x7b757",
   "entries": [
    {
     "required_level": 3,
@@ -272,7 +272,7 @@
  },
  {
   "idx": 13,
-  "off": "0x5654f",
+  "off": "0x7b763",
   "entries": [
    {
     "required_level": 4,
@@ -299,7 +299,7 @@
  },
  {
   "idx": 14,
-  "off": "0x5655b",
+  "off": "0x7b76f",
   "entries": [
    {
     "required_level": 3,
@@ -326,7 +326,7 @@
  },
  {
   "idx": 15,
-  "off": "0x56567",
+  "off": "0x7b77b",
   "entries": [
    {
     "required_level": 4,
@@ -345,7 +345,7 @@
  },
  {
   "idx": 16,
-  "off": "0x56573",
+  "off": "0x7b787",
   "entries": [
    {
     "required_level": 3,
@@ -364,7 +364,7 @@
  },
  {
   "idx": 17,
-  "off": "0x5657f",
+  "off": "0x7b793",
   "entries": [
    {
     "required_level": 15,
@@ -383,7 +383,7 @@
  },
  {
   "idx": 18,
-  "off": "0x5658b",
+  "off": "0x7b79f",
   "entries": [
    {
     "required_level": 4,
@@ -406,7 +406,7 @@
  },
  {
   "idx": 19,
-  "off": "0x56597",
+  "off": "0x7b7ab",
   "entries": [
    {
     "required_level": 2,

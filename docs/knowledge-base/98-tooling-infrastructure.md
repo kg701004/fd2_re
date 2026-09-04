@@ -2717,3 +2717,78 @@ REMAKE_ONLY 主張,而它當然沒被列管——**閘門會擋住自己的註�
 一個永遠通過的閘門擋不住任何東西,所以兩個方向都驗:真實語料必須 26/26 全數列管
 (現況通過),而**故障注入**塞進一筆未列管的 remake 證據主張時閘門必須失敗。
 selftest 檢查數 20 → 25,全數通過。
+
+
+## 2026-09-04(續)— 全工具「答案正確性」重驗
+
+前一輪的十層 harness 檢查的是**工具能不能跑**。本輪針對**工具給的答案對不對**,
+方法是**重跑每個可離線執行的產生器,與已提交產物逐位元組比對**。
+
+### 盤點:84 支工具裡只有 14 支有 selftest 或專屬測試
+
+其餘 70 支的正確性完全靠「被使用時沒出事」。這是本專案目前最大的未檢驗面。
+`python -m unittest discover -s tools -p "test_*.py" -t tools` 收集 52 個測試、
+10 個測試檔全部收集到(有確認過收集數,沒有靜默漏載),全數通過。
+
+### 發現一:`docs/data/exe_tables/*.json` 的 `off` 全部是舊版位址
+
+9/10 檔與重跑結果不一致。**遊戲數值完全相同**,差的是 `off` 欄位——679 列全部
+差同一個常數 `+0x25214`,正是已知的舊↔新版位移。
+
+時間線:產物停在 2026-07-30,工具的 ANCHORS 在 2026-08-20(`4d5638fb`)才修正。
+**工具修好了,產物從沒重跑過。**
+
+判別性測試(不靠位移推論):拿 `native_item_effect_rows.json` 每列的 `raw`,
+用兩邊的 `off` 各去現行 EXE 讀同樣長度——**重跑 off 215/215 命中,已提交 off 0/215**
+(舊 off 讀到的是程式碼)。已重生,10/10 與 pristine EXE 的輸出逐位元組一致。
+
+另有 4 列連 `cls_name` 都不同:`98e375a6` 把 `CLASS_NAMES` 補到 29 筆之後,
+產物還留著修正前的 `?` 佔位。同一個形狀。
+
+連帶更正:doc26/doc28 把舊基底 `0x55ba1`/`0x55ea1` 當**現況**陳述(現行為
+`0x7adb5`/`0x7b0b5`,對全 32 列成立),`weapon_range.json` 的 provenance 欄位 116 處
+`EXE 0x540ac起` → `0x792c0`。doc03/27/32 與 `known_address_errata.json`/
+`verified_addresses.json` 裡的舊值是**刻意的勘誤紀錄**,維持不動——查證過才沒改。
+
+### 發現二:`native_field_event_rules.json` 整份出自舊版 EXE
+
+它自己的 `source` 欄位就寫著 `size: 357074` / `md5: b97caf22…`(舊版,已遺失)。
+4 個 handler 位址全差 `0x356`,正是工具內建的 `handler_delta`。語意內容相同。已重生。
+
+**這兩筆都是同一課:產物帶了 provenance 卻沒人回頭比對。重跑並 diff 才會發現。**
+
+### 發現三(事故):`extract_event_id_groups.py` 的 `argv[1]` 是輸出路徑
+
+本輪以 `<EXE> <輸出>` 呼叫它,把 509158 B 的參考 `FD2.EXE` 覆寫成 12 KB 的 JSON。
+`org_game/` 是 gitignore,沒有 git 副本。**能救回來純粹是因為
+`fd2_dosbox_live_helper.sh` 另外留了 `~/fd2-run/FD2.EXE.pristine_bak` 並寫死了
+pristine md5**;還原後 md5 與該常數相符,重跑 exe_tables 也 10/10 一致,確認倉庫內容未受污染。
+
+根因不是打錯字,是**參數慣例不一致**:這個目錄下幾乎每支工具第一個位置參數都是
+*輸入*,只有它是*輸出*。慣例不一致沒辦法靠記憶避免。
+
+新增 `tools/safe_output.py`(`guard_json_output`),規則刻意只有一條:
+**要把 JSON 寫進一個已存在的檔案時,該檔案本來就必須是 JSON。**
+在 `open(..., "w")` 截斷之前擋下。7 項自驗含一組對照(同一路徑內容由 JSON 改成
+二進位後判定必須翻面)。已接上兩支「任意使用者路徑 + 寫入前不讀」的工具
+(`extract_event_id_groups.py`、`extract_native_field_event_rules.py`),
+兩支都以**故障注入**驗過:指向 EXE 副本時離開碼 2、副本 md5 未變,正常路徑仍輸出一致。
+
+AST 掃描確認這個危險形狀就只有那兩支:`patch_units_*.py` 在寫入前先 `json.load`
+同一個路徑(自我保護),其餘幾支是在使用者**目錄**內寫固定檔名,炸不到別的東西。
+
+### 未修的兩個 WARN(查證後判定不該修)
+
+* `extract_event_id_groups.py`「沒有 usage guard」:它用 `FileNotFoundError` 而非
+  `SystemExit` 是**刻意的**——`test_extract_event_id_groups.py:19` 的載入保護寫的是
+  `except Exception`,而 `SystemExit` 繼承 `BaseException`,改了會讓那條保護失效。
+  已確認測試碼確實如此。harness 誤報。
+* `audit_evidence_provenance.py` 提到 `FD2\.EXE`:那是它 ORIGINAL 標記表裡的**正規表示式**,不是路徑。
+
+### 順帶記錄的狀態事實
+
+`map*_units.json` 已不存在於倉庫任何位置(隨 `remake/` 於 2026-09-02 移除)。
+因此 `export_units.py`、`patch_units_ap_dp_mv.py`、`patch_units_hit_ev.py`、
+`sync_native_treasures.py` 目前**沒有可作用的資料集**,只有純函式部分還被測試覆蓋。
+doc56:1083 的 `0x356bc` 是舊版位址且被當成現況陳述,因該文描述的是已移除的 remake
+子系統,本輪未動,列為已知待辦。
