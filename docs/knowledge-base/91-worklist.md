@@ -23,6 +23,8 @@
 > 對稽核當時全部`[ ]`/`[~]`項目逐一分類，交叉核對`docs/knowledge-base/*.md`與`remake/`程式碼後產出，方便日後快速掃描而不必每次重讀全文。分類：**A**=已在別處完整解決只是狀態未同步（下方已直接改回`[x]`並附依據，不再重複列出）、**B**=需使用者本人（實聽/人眼校對/遊玩判斷）、**C**=純程式實作/資產/打包工作、**D**=真正開放、agent可續靜態分析的RE項目、**E**=需live DOSBox-X驗證、**F**=卡在外部限制（遺失素材/更大範圍重構前置）。稽核當時另發現2項（215、390）在稽核開始前就已是`[x]`（初次掃描誤判為開放項），未計入下方164項統計。標「未深入查證」者代表在合理時間內無法完全確認，已保守歸類，未來若要精查請優先看這些行。
 >
 > **統計（164項，扣除215/390誤判）**：A=18（已在下方對應行改回`[x]`）、B=7、C=38、D=67、E=29、F=5。
+>
+> **2026-09-05複核**：D類67項中有6項（212、366、368、389、660、1354）行內文字本身早已標註「已解」/「checkbox可視為此項本身已閉合」，是稽核後才解決、只是D標籤與統計數字未同步更新——逐一核對其引用的底層checkbox/證據（`RE-ITEM-EFFECT-ROW-4E56C`已`[x]`、doc27§8/doc50/doc35§10/doc25§11.7的結論均可在文件本體找到)後確認屬實，不是新增RE工作。改標為A，計入下方「已改標」清單。**複核後統計**：A=24、D=61（其餘62項狀態未變，未逐一重新複核）。
 
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
@@ -35,16 +37,16 @@
 145 - D - doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。
 155 - E - RE-BATTLE-AI-SPECIAL-TOPIC自述下一步需固定存檔trace驗證實際選中command/畫面順序，需DOSBox。
 210 - D - REMAKE-AI-MODE-RUNTIME剩餘模式玩法名稱/event82觸發/回合orchestration可續靜態RE。
-212 - D - REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。**大幅推進(2026-08-24,doc25§11)**:32個handler全部取得明確狀態(22個具體行為描述、10個確認table artifact)，但event58/76/78三個既有「[驗]乾淨」結論被新發現的指令邊界疑慮動搖、尚未re-verify，checkbox維持`[~]`。——**re-verify完成(2026-08-24續輪,doc25§11.7)**:找到第二條獨立管道(直接讀`0x51b91`跳表原始bytes，用4個既驗錨點(event0/59/77/82)校準出一致的relocation偏移量`0x356`)，逐byte確認event58/76/78三個table槽位的原始值**precisely等於**既有登記位址(`0x354fe`/`0x35d60`/`0x35ed2`)，排除誤讀；再交叉指令邊界回溯(58新補、76/78重驗)確認三者皆落在鄰居handler(58→event57`0x354dd`、76/78→§11.5已找到的`0x35d5d`/`0x35ec1`)中段，無獨立語意。**三者definitively確認為table artifact**，58..89最終統計更正為18個具體行為描述/14個table artifact。副作用：doc25§6.3「event58:map25五選一寶物」的入口位址`0x354FE`與「透過event_id58觸發」歸因已撤回(邏輯描述本身不受影響)，該寶物邏輯真正的runtime觸發路徑變成新的未解問題，見doc25§11.7.5。**checkbox可視為此項本身已閉合**；剩餘的「各dispatcher selector生產路徑」與新開的「map25 event58真正觸發路徑」屬另外的開放項，不影響本項58..89 handler語意的收斂結論。
+212 - A（2026-09-05由D複核關閉，見行內既有「checkbox可視為此項本身已閉合」）- REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。**大幅推進(2026-08-24,doc25§11)**:32個handler全部取得明確狀態(22個具體行為描述、10個確認table artifact)，但event58/76/78三個既有「[驗]乾淨」結論被新發現的指令邊界疑慮動搖、尚未re-verify，checkbox維持`[~]`。——**re-verify完成(2026-08-24續輪,doc25§11.7)**:找到第二條獨立管道(直接讀`0x51b91`跳表原始bytes，用4個既驗錨點(event0/59/77/82)校準出一致的relocation偏移量`0x356`)，逐byte確認event58/76/78三個table槽位的原始值**precisely等於**既有登記位址(`0x354fe`/`0x35d60`/`0x35ed2`)，排除誤讀；再交叉指令邊界回溯(58新補、76/78重驗)確認三者皆落在鄰居handler(58→event57`0x354dd`、76/78→§11.5已找到的`0x35d5d`/`0x35ec1`)中段，無獨立語意。**三者definitively確認為table artifact**，58..89最終統計更正為18個具體行為描述/14個table artifact。副作用：doc25§6.3「event58:map25五選一寶物」的入口位址`0x354FE`與「透過event_id58觸發」歸因已撤回(邏輯描述本身不受影響)，該寶物邏輯真正的runtime觸發路徑變成新的未解問題，見doc25§11.7.5。**checkbox可視為此項本身已閉合**；剩餘的「各dispatcher selector生產路徑」與新開的「map25 event58真正觸發路徑」屬另外的開放項，不影響本項58..89 handler語意的收斂結論。
 245 - D - doc27§5已列明確剩餘清單(經驗值攻守等級因子/0x2f7b6內cVar4分支/6種傳送魔刃經驗公式/法術命中逐ID核對)，可續靜態分析。
 246 - D - 物品系統裝備加成精確累加點與使用效果碼仍未反組譯。
-247 - D - 核對doc32 L271/411-435，class_change_targets.json portrait11-13輪轉錯位仍「待查」，未被其他doc解決。
+247 - D - 核對doc32 L271/411-435，class_change_targets.json portrait11-13輪轉錯位仍「待查」，未被其他doc解決。**2026-09-05複核**：doc32§L878(2026-08-30)已更新此項現況——舊版位址`0x31793`重新spot-check確認新版EXE同位址已是無關UI程式碼，同位址探測法已走到頭；要解開輪轉需全檔byte-signature重新定位轉職相關函式，doc32自己的結論是「維持D(可續但需大量前置工程)」。**維持D不變**，但下輪不必重複同位址探測，應直接規劃byte-signature重定位。
 248 - D - 角色名對應需逐圖解FDFIELD roster才能繼續補，屬可離線靜態分析。
 252 - E - FD2.SAV剩餘主要gate為一般玩家有效槽E2與current-battle restore，需DOSBox。
 264 - B - SoundFont試聽+TIMB配器對映屬人耳判斷，agent無法自主完成。
 272 - C - 讀`tools/decode_story_text.py`確認無`--script-json`旗標，純未實作。
 273 - C - `gen_campaign.py`自動生成campaign.json仍是純implementation，且本檔74行已將其降級為candidate scaffold。
-274 - D - `remake/internal/campaign`已有`handler_script.go`/`menu_state.go`等疑似涵蓋ScenarioRunner需求，但未逐一核對是否等同完整需求，保守標D（A傾向強，建議下輪覆核）。
+274 - D - `remake/internal/campaign`已有`handler_script.go`/`menu_state.go`等疑似涵蓋ScenarioRunner需求，但未逐一核對是否等同完整需求，保守標D（A傾向強，建議下輪覆核）。**2026-09-05複核**：`remake/`已於2026-09-02整個移除(使用者指示，見`feedback_fd2_re_remake_verification_paused`)，本項核對對象已不存在，**目前無法覆核**，非本輪能處理，維持D並標註阻塞原因供下次跳過重複嘗試。
 302 - C - Grep `remake/internal/battle`與`main.go`均無戰場選單狀態機(移動/攻擊/待機/道具/結束)對應實作，純未做。
 304 - D - 敵方AI回合完整權重/target selection仍缺，可續靜態分析（runtime execution另偏E）。
 305 - E - 敵方AI雙預選bridge自述尚缺同一原版runtime動態trace，需DOSBox。
@@ -56,14 +58,14 @@
 360 - C - SFX接入是把已抽取音效資產接進引擎，屬工程實作。
 364 - C - 自動生成campaign.json工具屬工具鏈實作。
 365 - C - ScenarioRunner狀態機屬引擎實作。
-366 - D - 核對doc32 L150-186，0x602ad table base/stride/215-row prefix仍未閉合，可續靜態RE。**已解(2026-08-24,doc32§1.3)**:base`0x602ad`/stride`0x17`/215列(ID0..214)/與相鄰table零間隙邊界，獨立覆核`FUN_0004e8bc`四項核對全數byte級吻合。
+366 - A（2026-09-05由D複核關閉，底層checkbox `RE-ITEM-EFFECT-ROW-4E56C` 已`[x]`）- 核對doc32 L150-186，0x602ad table base/stride/215-row prefix仍未閉合，可續靜態RE。**已解(2026-08-24,doc32§1.3)**:base`0x602ad`/stride`0x17`/215列(ID0..214)/與相鄰table零間隙邊界，獨立覆核`FUN_0004e8bc`四項核對全數byte級吻合。
 367 - E - doc58 L560明載church僅60-70%完成度且無DOSBox逐幀比對(未達E2)。
-368 - D - 剩餘+0x22/+0x23/+0x24 DX/race/multiplier欄位資料化屬靜態RE工作。**已勘誤+已解(2026-08-24,doc27§8)**:這三個offset根本不是DX/race/multiplier，是指令17/18/19暫時buff持續時間byte，2026-08-19已逐指令反組譯完成，剩下只是remake工程接線非RE缺口。
+368 - A（2026-09-05由D複核關閉，見行內既有「已勘誤+已解」）- 剩餘+0x22/+0x23/+0x24 DX/race/multiplier欄位資料化屬靜態RE工作。**已勘誤+已解(2026-08-24,doc27§8)**:這三個offset根本不是DX/race/multiplier，是指令17/18/19暫時buff持續時間byte，2026-08-19已逐指令反組譯完成，剩下只是remake工程接線非RE缺口。
 369 - E - 明文「raw race/multiplier欄位與實機回歸」需DOSBox對照。
 370 - D - 未見殘留任務語句但也未找到其他doc明示已結案，保守留D（未深入查證）。
 371 - E - 明文「仍需原版實機數值回歸」，需DOSBox驗證。
 372 - D - 外部攻略頁交叉盤點需持續以EXE table/campaign_full.json靜態核對，不能由攻略頁直接推論。
-389 - D - 核對doc50 L35/288與doc56 L1104，`0x3241f` raw FDICON key producer仍未追出，可續靜態RE。**已解(2026-08-24,doc50)**:完整鏈`0x205da→0x1088d`(無條件`SPAWN(0)`)`→0x10b4e→0x10c50→0x11019`已用`call_scan`窮舉caller並反編譯確認。
+389 - A（2026-09-05由D複核關閉，見行內既有「已解」）- 核對doc50 L35/288與doc56 L1104，`0x3241f` raw FDICON key producer仍未追出，可續靜態RE。**已解(2026-08-24,doc50)**:完整鏈`0x205da→0x1088d`(無條件`SPAWN(0)`)`→0x10b4e→0x10c50→0x11019`已用`call_scan`窮舉caller並反編譯確認。
 406 - E - 明文「HIT/EV/DX實機數值差分仍待」，需DOSBox對照。
 407 - D - 段落本身已描述完整靜態結論，但未見獨立doc佐證已結案，保守留D（未深入查證）。
 408 - C - 剩餘工作是供xvfb驗證remake自身fixture行為，屬對重製引擎（非原版DOSBox）的工程QA。
@@ -114,7 +116,7 @@
 643 - C - 編輯器能力清單同步(Go --dump-registry)屬工具維護工作。
 644 - C - campaign節點圖編輯器(拖線/旗標/敗北路線可視化)屬實作工作。
 659 - B - round14(本檔約697行)已完成全33章自動轉錄，但緊接段落指出未經人工精確校對，本項要求的人眼精校性質仍需使用者。
-660 - D - 視窗縮放filter查證(可能linear暈染)未見他doc解決，可續靜態code inspection，不需DOSBox（未深入查證）。**已解(2026-08-24,doc35§10)**:交叉核對既有反組譯證據(`0x4e63d` blit無任何imul/fild/fmul縮放運算、present routine`0x11eb0`是逐列320-byte memcpy、標題「2」logo zoom是AFM VM直寫`0xA0000`的預繪幀非runtime resample、VGA mode13h+DOS/4GW純記憶體extender)顯示原版EXE完全沒有數位縮放/內插碼，只在原生320×200渲染；「640-wide work buffer」是離屏scroll-prep區非2x顯示縮放。無原版filter可比對，remake現有`Scale(2,2)`(Ebiten預設`FilterNearest`)即為忠實選擇，不需改動。
+660 - A（2026-09-05由D複核關閉，見行內既有「已解」，且與2487行`[x]`項為同一結論）- 視窗縮放filter查證(可能linear暈染)未見他doc解決，可續靜態code inspection，不需DOSBox（未深入查證）。**已解(2026-08-24,doc35§10)**:交叉核對既有反組譯證據(`0x4e63d` blit無任何imul/fild/fmul縮放運算、present routine`0x11eb0`是逐列320-byte memcpy、標題「2」logo zoom是AFM VM直寫`0xA0000`的預繪幀非runtime resample、VGA mode13h+DOS/4GW純記憶體extender)顯示原版EXE完全沒有數位縮放/內插碼，只在原生320×200渲染；「640-wide work buffer」是離屏scroll-prep區非2x顯示縮放。無原版filter可比對，remake現有`Scale(2,2)`(Ebiten預設`FilterNearest`)即為忠實選擇，不需改動。
 678 - B - 明文「容器nosound無法驗;使用者聽辨」。
 768 - C - ch02-33全章story節點接script(gen_campaign修+重生成)屬campaign製作工作，非分析。
 769 - C - runtime fallback heuristic wiring屬實作工作，項目自述ch02/03 handler beats仍待接線。
@@ -161,10 +163,10 @@
 1314 - D - doc56 L2064-2069(2026-08-02)記載幾乎逐字相同的未解狀態，確認仍未解，需更多靜態反組譯把ch29/ch30結局流程接起來。
 1318 - C - 項目自陳剩餘缺口是item selector UI/indexed presentations/engine integration，`0x20c6f`本身RE已關閉。
 1344 - C - 項目自陳仍未完成全roster/save/export的raw record接線，raw identity byte本身RE已由前一項關閉，剩下為工程接線。
-1354 - D - 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
+1354 - A（2026-09-05由D複核關閉，與366為同一底層項目，已由`RE-ITEM-EFFECT-ROW-4E56C`/doc32§1.3閉合）- 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
 1509 - E - doc58(約L2219-3451)記載此位址跨十餘輪live DOSBox-X session追至2026-08-19仍未解，使用者已決定暫緩，確屬需live驗證。
 1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。
-1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。
+1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。**2026-09-05複核**：`remake/`已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 1578 - C - 成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE。
 1604 - F - 明文卡在動態turn-writer/group-formula通用pending-group binding及`battle.State`→`Game`/controller的原子handoff，屬更大範圍重構前置依賴。
 1630 - F - 與1604同一家族/blocker(`ReadyForContinue=false`)，子項仍`[~]`，同樣卡在controller handoff重構。
@@ -172,6 +174,8 @@
 1828 - E - 明文要求「DOSBox同camera/roster/tick逐幀比對」，依定義需live驗證。
 
 已改標`[x]`的18項A類（依據見各行內文）：265、303、349、357、358、384、585、586、601、619、680、844、901、959、960、1053、1385、1431。
+
+2026-09-05複核，從D改標A的6項（依據見各行內文，均為稽核後既有「已解」註記，非新RE）：212、366、368、389、660、1354。
 
 > **⚠ 位址勘誤總註記(2026-08-19/20，兩個獨立批次交叉印證)**：`0x2a6bd`與`0x276ec`這兩個在`13-battle-menu-system.md`／
 > `37-spell-effect-figani.md`／`56-fd2-remake-sdd.md`／本檔多處被引用為「native command 大型 presentation/state
