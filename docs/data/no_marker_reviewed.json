@@ -13984,6 +13984,78 @@
    "excerpt": "2. 若想要live直讀確認：比照`ch30wf`輪，開一局ch10戰鬥讀`record[50]`",
    "verdict": "benign",
    "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "19-scenario-script-system-design.md",
+   "line": 84,
+   "excerpt_sha1": "920e2a410af9db483f5ed591f40b24d602d8111e",
+   "excerpt": "自動證實的逐章handler CFG、postbattle、town/preparation、persistence或E2，",
+   "verdict": "benign",
+   "note": "延續句，描述remake端尚未自動證實的項目清單，非原版證據聲明"
+  },
+  {
+   "file": "19-scenario-script-system-design.md",
+   "line": 110,
+   "excerpt_sha1": "c1b087778c38750d8aeb8df289eee43f5f863eda",
+   "excerpt": "- **忠實 + 擴充並存（目標）**：忠實圖須逐章證據閉合；擴充圖可自由創作。",
+   "verdict": "benign",
+   "note": "remake設計目標宣告，明確保留用語「須逐章證據閉合」"
+  },
+  {
+   "file": "19-scenario-script-system-design.md",
+   "line": 113,
+   "excerpt_sha1": "1863ff9c3f5ebbc155f1b9fb9aa3bec20225154f",
+   "excerpt": "匯出；handler語意與runtime owner仍需工程與驗證，不是只剩排列。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍需工程與驗證，不是只剩排列」"
+  },
+  {
+   "file": "38-editor-design.md",
+   "line": 154,
+   "excerpt_sha1": "b022967eb58d50864ccc8cc011b87d8ba21caafb",
+   "excerpt": "remake的editable schema，不是已證實的原版祕密商店按鍵gate；full campaign",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是已證實的原版祕密商店按鍵gate」，正確區分remake schema與原版機制"
+  },
+  {
+   "file": "38-editor-design.md",
+   "line": 268,
+   "excerpt_sha1": "4a49203c21f5f5558320dbe8979b310cdcab4099",
+   "excerpt": "但長期應該考慮從 Go struct 自動產生 JSON Schema 給編輯器端做表單驗證,而不是永遠手動對照。",
+   "verdict": "benign",
+   "note": "remake端工具未來式設計建議"
+  },
+  {
+   "file": "41-packaging.md",
+   "line": 101,
+   "excerpt_sha1": "6659c5974f101d976e94fc7075dd40844bc63835",
+   "excerpt": "非 Debian 系發行版(如 Arch/Fedora)上實測執行。",
+   "verdict": "benign",
+   "note": "描述remake打包測試狀態延續句"
+  },
+  {
+   "file": "41-packaging.md",
+   "line": 116,
+   "excerpt_sha1": "69528a274ea43e6d1ef44c361b018ddd432aee75",
+   "excerpt": "- `file fd2.exe` 確認 `PE32+ executable (GUI) x86-64, for MS Windows`——交叉編譯產物格式正確。",
+   "verdict": "benign",
+   "note": "描述remake交叉編譯產物格式驗證，正確歸屬remake端"
+  },
+  {
+   "file": "41-packaging.md",
+   "line": 121,
+   "excerpt_sha1": "915fc8f82baf8b88425c4986bc702a9aaf3a1eb2",
+   "excerpt": "`windows-latest` runner)跑一次 headless 截圖驗證,補齊這塊證據缺口。",
+   "verdict": "benign",
+   "note": "未來式計畫，補齊remake打包證據缺口"
+  },
+  {
+   "file": "41-packaging.md",
+   "line": 154,
+   "excerpt_sha1": "6a0ec57fa646b2a6506fb650478089829ec2ceb7",
+   "excerpt": "乾淨過關——只是沿用 Go 官方文件記載的已知模式,沒有實測。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有實測」，誠實揭露remake打包未測試項目"
   }
  ]
 }
