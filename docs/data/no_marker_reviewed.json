@@ -14456,6 +14456,302 @@
    "excerpt": "驗證不能只信process exit：還要查mtime、尺寸並人工看圖，否則README很容易長期",
    "verdict": "benign",
    "note": "方法論教訓，否定式聲明「不能只信」(同feedback_wal_sqlite_mtime_not_a_change_signal同類教訓)"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 14,
+   "excerpt_sha1": "e860584e340f46cb5ea0f8306170b44eda462914",
+   "excerpt": "| title/main menu | 60–70% | runtime 使用原始 title/menu 圖與接近原座標；但 README 的 `title.png` 只是錯色盤的 raw 解碼產物，並非目前 runtime screenshot。四槽讀檔畫面與 LOAD restore owner 已接；畫面仍加了非原版 F2 提示，logozoom 是近似，CONTINUE current-b",
+   "verdict": "benign",
+   "note": "表格row，明確標示部分完成狀態與具體限制(非runtime screenshot、非原版F2提示)"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 69,
+   "excerpt_sha1": "09cd20100052d257979c305f686b73ae30fd66fc",
+   "excerpt": "(ebiten.WindowResizingModeEnabled)`（9736 行）證實視窗確實可被玩家自由拖曳成**任意非整數",
+   "verdict": "benign",
+   "note": "延續句，描述remake端(ebiten)行為，引用remake程式碼行號"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 100,
+   "excerpt_sha1": "741b4c46b374c925049ec15ec6c02067f0e3b10c",
+   "excerpt": "| UI-07 postbattle | `campInput` battle result 約 2394；campaign node 可表達 post node；`campaign_full` 30 戰 transition matrix 已逐列展開。主迴圈直接指令、scenario `chNN→map(N-1)` 與 handler `chNN_post→set_chapter(N+1)` 共",
+   "verdict": "benign",
+   "note": "表格row，描述remake接線狀態"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 106,
+   "excerpt_sha1": "0c1fbede3c6803037a2bbbbadffcbf6417292224",
+   "excerpt": "的實際填充狀態)，如實維持 unbound fail-closed 等待 live 驗證，**不代表整個 ch16 節點仍",
+   "verdict": "benign",
+   "note": "明確保留用語「fail-closed等待live驗證」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 116,
+   "excerpt_sha1": "eb1234f7b19f244d4ebe49b344aeed74dcccbce0",
+   "excerpt": "本節只做**現況核對與跨文件盤點**，逐項確認自 2026-07-26（本檔上次逐行更新）以來",
+   "verdict": "benign",
+   "note": "延續句，本節方法論說明(現況核對與跨文件盤點)"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 120,
+   "excerpt_sha1": "dda76bfb859141c4b40cfb6199bd203bd84ba21b",
+   "excerpt": "12 行**全部**仍是 `partial`，沒有任何一行能升級成 `verified`／`closed`。逐行殘留缺口摘要",
+   "verdict": "benign",
+   "note": "明確否定式聲明「全部仍是partial,沒有任何一行能升級」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 143,
+   "excerpt_sha1": "b0cd624535bea787ae4efaeccd3956228c95cbc2",
+   "excerpt": "或 normalized `AtkMin/AtkMax`」），remake 目前改用獨立驗證的 `weapon_range.json`，不讀",
+   "verdict": "benign",
+   "note": "延續句，交叉參照weapon_range.json"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 144,
+   "excerpt_sha1": "7f29c05d8c4e5b0a12cff4acd5106b1acb5ecc3b",
+   "excerpt": "raw `+0x0b/+0x0c`。本輪重新確認這個撤回仍然是目前最後結論，沒有新證據能重新命名這兩個",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有新證據能重新命名」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 145,
+   "excerpt_sha1": "f222aa2aa20fdc1018c1aa7a44bb2141aff919a3",
+   "excerpt": "byte。**2026-08-20 更新——AOE／LOS／不可用目標灰化三項已全數閉合，不再是開放問題**：",
+   "verdict": "benign",
+   "note": "延續句，進度更新標記"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 153,
+   "excerpt_sha1": "6eaee01f60dd52203793a995c69fe8efea5a4e17",
+   "excerpt": "5 個 caller 皆為 doc11 已證實的敵方 AI 決策路徑、無玩家可見 UI）全部匯流到同一個互動",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc11既有結論"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 157,
+   "excerpt_sha1": "8881fe6964bcf69252223fac39960a3d10b4340f",
+   "excerpt": "確認被靜默拒絕（跳回同一個「讀下一個輸入」入口，跟按任何其他鍵一樣，沒有專屬分支）。",
+   "verdict": "benign",
+   "note": "UI行為發現延續句"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 158,
+   "excerpt_sha1": "5431bf7bea79a2b29a7e14785c6d60d5cdb1cc55",
+   "excerpt": "**結論：原版沒有灰化這個 UI 元素**，合法性只在出手確認當下判定一次。",
+   "verdict": "benign",
+   "note": "否定式結論「原版沒有灰化這個UI元素」，證據context在鄰近段落"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 160,
+   "excerpt_sha1": "c39bf0767ed2b15b0e2d06480154de68ced56857",
+   "excerpt": "**L1138 — UI-03 end-turn entry**：`91-worklist.md` 稽核記錄與 doc58 都指向同一個未閉合點——",
+   "verdict": "benign",
+   "note": "延續句，交叉參照91-worklist.md與doc58"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 167,
+   "excerpt_sha1": "4ac070c983b09023157e8aabe1e1281499e94151",
+   "excerpt": "走取消，但這是「selector 內部確認/取消」而不是「D8/END 選單本身怎麼呼叫到回合結算」。",
+   "verdict": "benign",
+   "note": "延續句，區分selector內部確認與選單層級"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 193,
+   "excerpt_sha1": "873be1c25f9a87d840080823d8180aac36646625",
+   "excerpt": "`+4=1`。前兩個 raw precondition 已閉合，三個 caller-visible flags 對應哪個可見 action／disabled",
+   "verdict": "benign",
+   "note": "延續句，offset(+4)低於門檻，開放問題標示"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 223,
+   "excerpt_sha1": "74526bc0ceeae959d8eaf4584f0c6224ba97cffb",
+   "excerpt": "`[+0x8e8,+6,−6,−0x8e8]`。這證實十字狀 indexed overlay、方向與節奏。asset provenance 現已閉合：boot",
+   "verdict": "benign",
+   "note": "延續句，offset低於門檻，進度標記「現已閉合」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 227,
+   "excerpt_sha1": "05962a4b19bfc3fefd2be3e2b786e1c3b7282204",
+   "excerpt": "實測為 74 個 24×20、4 個 24×16 cells，strict `fdother.ParseRawCellBank` 與 player asset regression 已覆蓋。",
+   "verdict": "benign",
+   "note": "延續句，測試覆蓋描述"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 249,
+   "excerpt_sha1": "995c26de9a2d7fdf9d799fba94fcbe9bb986b1f3",
+   "excerpt": "item effect 仍未閉合，因此這不是 native gate 全等價。",
+   "verdict": "benign",
+   "note": "明確保留用語「item effect仍未閉合」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 253,
+   "excerpt_sha1": "58c3ecf4606111b2c431e2aedf3ddbb03fb45c65",
+   "excerpt": "sequence 是 E0，但每一幀應停留多少 presentation ticks 尚未由這兩個函式證實；remake 不得自行把",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未由這兩個函式證實」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 264,
+   "excerpt_sha1": "57f98b80fe99d1e3c316900540d0a33a3e306399",
+   "excerpt": "record `+5` 的 MP gate 再確認一次。這閉合 layout/input ABI，但不命名 `+5` 以外的 command effect，也不使",
+   "verdict": "benign",
+   "note": "延續句，offset(+5)低於門檻，明確保留用語「不命名+5以外」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 281,
+   "excerpt_sha1": "42a8c3f6d322e5f6621fb8126e0f61b2eeeefa37",
+   "excerpt": "fifth byte。這只閉合 raw availability bridge，不以 normalized `Spells` 填補，也不證明 command effect、frame",
+   "verdict": "benign",
+   "note": "明確保留用語「不以normalized Spells填補,也不證明」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 288,
+   "excerpt_sha1": "fa72f1452a99ad765988de45693ccd32955b126b",
+   "excerpt": "語意未證實」；`fdother.ActionOverlayOrigin` 已把命名後的 byte-address expression 獨立測試。剩餘的是",
+   "verdict": "benign",
+   "note": "明確保留用語「語意未證實」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 297,
+   "excerpt_sha1": "df69f959c28b8c232a6fc9a4964854bac36bb3af",
+   "excerpt": "- battle `Tab` 可結束回合是現有配置，不代表已證實原版是 Tab 或可見選單；需 E0/E2。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不代表已證實原版是Tab」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 312,
+   "excerpt_sha1": "7c5806ddddc1c22aed8652c811bd8674d44af55f",
+   "excerpt": "`docs/figures/title-original-dosbox.png`（320×200 crop）。畫面直接證實 title 的 START／LOAD／CONTINUE",
+   "verdict": "benign",
+   "note": "引用具體原版截圖檔案(title-original-dosbox.png)佐證，dosbox小寫嵌於檔名(既有低頻邊界案例)"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 348,
+   "excerpt_sha1": "240d6ba8606e6a02385b3ec492191d05c414501b",
+   "excerpt": "indexed cell/座標/節奏，不足以命名 MAP/TURN 欄位或確認其為「行軍確認圖」，故 UI-11",
+   "verdict": "benign",
+   "note": "明確保留用語「不足以命名...或確認其為」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 363,
+   "excerpt_sha1": "7e1764210004c4a50781aa0138bca3b4cd5bf1e1",
+   "excerpt": "證實的一層幾何：以 source cell `(cx,cy)` 掃全格、",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 392,
+   "excerpt_sha1": "ae06bc15afb0e47f7a66af03f09d5d15373a9804",
+   "excerpt": "第 5 byte 由後續流程擴充；source record 的遊戲語意仍不可未證實地命名。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍不可未證實地命名」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 395,
+   "excerpt_sha1": "ca7e145dea377c41ce257175db59104e7522295c",
+   "excerpt": "`+5`，僅當該 byte `<= word[unit+0x44]` 時保留；`+0x44` 已由 battle HUD 證實為 current MP。",
+   "verdict": "benign",
+   "note": "延續句，offset(+5/+0x44)低於門檻"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 397,
+   "excerpt_sha1": "1676a93dbdd1fb54feb4a8dda425fe46bb2a6742",
+   "excerpt": "producer、每個 ID 的名稱與其他 enable gate 尚未閉合。",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未閉合」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 401,
+   "excerpt_sha1": "8aa23b7bb5202bf302d5e7c6e47c49327df76010",
+   "excerpt": "`0x4b/0x4d` 分別在 index >=4 時 -4、在 index+4<count 時 +4；renderer 座標證實每欄四列（不是四欄）。",
+   "verdict": "benign",
+   "note": "延續句，十六進位值低於門檻"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 407,
+   "excerpt_sha1": "b6fdf355902a726fdd34d0d3ef7b23b4f36ab364",
+   "excerpt": "系統訊息 slot 證實文字不等於可達指令；cursor cell／不可用 command 的可見表現仍待 resource／實機畫面，",
+   "verdict": "benign",
+   "note": "明確保留用語「仍待resource/實機畫面」"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 411,
+   "excerpt_sha1": "a028dd9af7b905d2d13e14c66e98be7285ea29e0",
+   "excerpt": "所以 command record 的 `+3/+4/+5/+6` 可分別沿用 spell row `dist/range/mp/target` 的已證實欄位；資料掃描中",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 469,
+   "excerpt_sha1": "7703b11404bef2c13129d75aae456e3c7f5dc5b9",
+   "excerpt": "游標/確認迴圈**，是回答「合法目標怎麼呈現給玩家」的正確位置。",
+   "verdict": "benign",
+   "note": "延續句，UI流程描述"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 485,
+   "excerpt_sha1": "75bb5731770a12f10eb5fe23f53f09d9b069db24",
+   "excerpt": "- **確認鍵（scancode `0x39` 空白鍵／`0x1c` Enter）**：`targetCode==5` 一律直接拒絕；",
+   "verdict": "benign",
+   "note": "描述確認鍵行為，鍵碼(0x39/0x1c)低於門檻"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 507,
+   "excerpt_sha1": "0aaffd46a331d1e286ce5cd2b67cb785de6135df",
+   "excerpt": "任何特殊呈現；玩家按下確認鍵時若目標不合法，畫面上什麼都不會發生，只是迴圈繼續等待",
+   "verdict": "benign",
+   "note": "UI行為描述延續句"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 517,
+   "excerpt_sha1": "1ca4d74114503524cf8d38d3e1f911e60dd2da78",
+   "excerpt": "選目標合法性是在確認出手那一刻才判定，玩家可以自由把游標移到任何格子，選到非法",
+   "verdict": "benign",
+   "note": "UI合法性判定發現延續句"
+  },
+  {
+   "file": "57-ui-evidence-matrix.md",
+   "line": 523,
+   "excerpt_sha1": "d260fde93274b1abf9754bb7269f7dfba9a0ae5d",
+   "excerpt": "白卷）——原版沒有灰化機制，legality gate 只在確認時判定一次。連帶地，AOE（doc27",
+   "verdict": "benign",
+   "note": "否定式聲明「原版沒有灰化機制」"
   }
  ]
 }
