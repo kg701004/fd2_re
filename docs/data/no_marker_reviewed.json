@@ -1424,6 +1424,262 @@
    "excerpt": "已在 2026-08-19 完整閉合(見 `doc13`、`doc32` §4.3),靜態角色資料上的值也已確認恆為 0。唯一仍待的",
    "verdict": "benign",
    "note": "交叉參照doc13/doc32 §4.3既有閉合結論"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 15,
+   "excerpt_sha1": "7196a4ce83de264534cc36cda84238c04c47572d",
+   "excerpt": "| 0x0D | raw / 未重判 | 舊 AA 行動狀態標記未通過 current constructor/caller trace；已驗證的 inactive/action bits 位於 byte `+5`（bit0 / bit7） |",
+   "verdict": "benign",
+   "note": "表格row，位址(0x0D)僅2位十六進位未達ADDR_MARKER門檻，含明確保留用語「未通過...trace」"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 21,
+   "excerpt_sha1": "de97916339523db2c9d05330ae580423d4455963",
+   "excerpt": "| 0x22 | raw modifier bytes | constructor 先清零；後續 writer／AI score 會讀取這段 raw bytes，但 derived-stat/property/status 名稱尚未由完整 caller、equipment recompute 與 presentation 證實；並非法術 bitfield |",
+   "verdict": "benign",
+   "note": "同15，位址(0x22)僅2位，含明確保留用語「尚未由完整caller...證實」"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 45,
+   "excerpt_sha1": "eb8ebcfc6615afe5e7939797fd6e79eafe4bcd85",
+   "excerpt": "> | 表 | offset(本版) | 結構 | 列數 | 驗證 |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 76,
+   "excerpt_sha1": "a560187e6bc4986fa968a3c5581d4e8a63c49ff2",
+   "excerpt": "> 已在使用者機器上遺失(含隨身碟備份也是同一份跟不上的拷貝)，經確認手上唯一可用的是這份",
+   "verdict": "benign",
+   "note": "描述舊版EXE遺失的歷史背景事實，延續句"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 79,
+   "excerpt_sha1": "dacbb8ba272b77c16c14e8263e426280b0816e6a",
+   "excerpt": "> 證實這份新版確實就是本表原始記載的版本，不是第三個未知版本。`docs/data/fd2-reference-files.json`",
+   "verdict": "benign",
+   "note": "延續句，引用docs/data/fd2-reference-files.json追蹤檔"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 83,
+   "excerpt_sha1": "3fc52cfe029f6312ffabfeeadb2d9f350cb23eb8",
+   "excerpt": "> 或用錨定特徵自動定位，再逐表跑一次自驗證。這僅限「表 B」的**資料表**(0x5xxxx-0x7xxxx 範圍),",
+   "verdict": "benign",
+   "note": "方法論描述，0x5xxxx為範圍佔位符非實際位址(含x萬用字元)"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 96,
+   "excerpt_sha1": "735bae698db956ae9dbe0d353a9a987acae6aff2",
+   "excerpt": "> **第 39-73 行「資料表」offset 首次對新版逐表逐列驗證(2026-08-19，第 5 輪)**：上面第 81 行標的",
+   "verdict": "benign",
+   "note": "小標摘要句，證據在鄰近行"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 126,
+   "excerpt_sha1": "3e4dd4bf13bd6ee66d9e95bf70f8cc1d255b8c7f",
+   "excerpt": "> - **AP(`+0x37`)/DP(`+0x39`)：確認也是 growth×level**，high branch(敵/友表,",
+   "verdict": "benign",
+   "note": "AP/DP欄位offset(+0x37/+0x39)僅2位十六進位未達門檻，屬M5計畫Phase3已完整Ghidra反組譯的延續句"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 133,
+   "excerpt_sha1": "fc744ae4dad923ea6126fab3382bbf0df3e7a636",
+   "excerpt": "> - **MV(`+0x3b`)：確認是 flat 值，完全沒有等級縮放**——high/low 兩個 branch 都是",
+   "verdict": "benign",
+   "note": "同126，MV欄位(+0x3b)"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 138,
+   "excerpt_sha1": "dbb5e21350ccf1daff9a3759a8c26bf7bc3a295d",
+   "excerpt": "> - **DX(`+0x3e`)**：附帶確認也是跟 AP/DP 同形狀的 growth×level(high:",
+   "verdict": "benign",
+   "note": "同126，DX欄位(+0x3e)"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 147,
+   "excerpt_sha1": "1f26bb4b67d6b2dc47b72aea09b103819b7843d9",
+   "excerpt": "> 高達 98%(AP)/98%(DP)/87%(MV)，證實這不是邊緣案例而是全面性的資料錯誤。已用",
+   "verdict": "benign",
+   "note": "統計摘要延續句(98%/98%/87%)"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 179,
+   "excerpt_sha1": "875f1096db7fe60a0be8a76a7705bfe954b04068",
+   "excerpt": "> 單位的 hit 與 ev 值都變了**,跟 AP/DP/MV 那輪 98%/98%/87% 同一量級,證實這也不是邊緣案例。",
+   "verdict": "benign",
+   "note": "同147，hit/ev統計延續句"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 213,
+   "excerpt_sha1": "7490eb70dd6795898f38e7c5b2da9e044660e529",
+   "excerpt": "> 可能 100 個 offset 即 ~33 張地圖 × 3 段。第 2 輪用 unpacker 拆出後逐一驗證。",
+   "verdict": "benign",
+   "note": "延續句，非獨立新主張"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 229,
+   "excerpt_sha1": "9744848fa853fab4f113cefdaa7c8d2588dc1900",
+   "excerpt": "AP 在 `+0x48`(實機對狀態卡驗證)。因為這個衝突,`fd2_stat_override.py` 一直不敢碰 MV。",
+   "verdict": "benign",
+   "note": "引用「實機」驗證+offset(+0x48)低於門檻，屬同段落算術佐證敘事延續"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 252,
+   "excerpt_sha1": "69e81669a4fb2ff74e8349ce8c02a201f3a767b6",
+   "excerpt": "**算術佐證(三個獨立來源)**:索爾 `+0x37`=6、卡片上短劍寫 `+AP 010`、`+0x48`=16、",
+   "verdict": "benign",
+   "note": "算術佐證資料列舉，offset皆低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 263,
+   "excerpt_sha1": "17b8ccbff0a521ef576105e60d21839a37fef4a2",
+   "excerpt": "都**不可能**分辨這兩個 offset。這是 2026-09-04「退化樣本」診斷的獨立佐證",
+   "verdict": "benign",
+   "note": "交叉參照2026-09-04「退化樣本」既有診斷結論"
+  },
+  {
+   "file": "03-exe-and-data-structures.md",
+   "line": 268,
+   "excerpt_sha1": "1e430980a5c583993cd9caa8134c8a6355cb63e7",
+   "excerpt": "`+0x3b` 已確認:讀到索爾 = 4,與狀態卡 `MV·04` 相符;寫入 20 後讀回 20。",
+   "verdict": "benign",
+   "note": "offset(+0x3b)低於門檻，屬同段落live寫入/讀回驗證敘事延續"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 3,
+   "excerpt_sha1": "1bda9f646de6eaa974890b232306a1a8e25558ca",
+   "excerpt": "> story 文本管線(6 個 sonnet agent 分批精校 ch01-33)累積出三條「靜態截圖反推、無 EXE 佐證」的推論",
+   "verdict": "benign",
+   "note": "明確標示「無EXE佐證」的推論，本身是誠實揭露待驗證項，非過度宣稱"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 77,
+   "excerpt_sha1": "4dfd9611a5a1196dfadfc123575761ccc3b1ceab",
+   "excerpt": "在場單位的旁白」的特殊值(本輪未窮舉驗證,標「靜態可查但未展開」)。",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未窮舉驗證」「未展開」"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 112,
+   "excerpt_sha1": "5ff01167cfd1225298e2394086ed458c74b2682b",
+   "excerpt": "**裁決（限已驗證scene/constructor）**：部分已入隊角色的 `byte[+8]`",
+   "verdict": "benign",
+   "note": "明確保留用語「限已驗證」，offset(+8)低於門檻"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 156,
+   "excerpt_sha1": "70a52d023333a706fade096fced77fc25753d32f",
+   "excerpt": "`docs/data/glyph_map.json` 證實:glyph `0-9`='0'-'9',`10-35`='A'-'Z',`36+`=漢字(依首次出現順序",
+   "verdict": "benign",
+   "note": "引用docs/data/glyph_map.json衍生資料檔佐證"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 213,
+   "excerpt_sha1": "55dbc3a743ecdc10f3b1071ddfb3405189bc8227",
+   "excerpt": "重新填入,才造成同一數字在不同章節指向不同角色的現象。已有位址佐證(見上)。",
+   "verdict": "benign",
+   "note": "延續句，「已有位址佐證(見上)」指向本文件上方"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 289,
+   "excerpt_sha1": "3dc74912f18e041af8b1425b024b43e8e0765c98",
+   "excerpt": "### ② `tag==0x27` sentinel —— **全程式窮舉掃描,確認唯一、且不與 -18 共用**",
+   "verdict": "benign",
+   "note": "小標，offset(0x27)低於門檻，「全程式窮舉掃描」方法論，證據在節內文"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 309,
+   "excerpt_sha1": "ad843954fd1e82cc8aa9b9cf2917082ec6a5c39b",
+   "excerpt": "39 在指令流裡只是一個裸立即數,沒有任何字串/常數表把它標成「畫外音」或其他語意;要驗證 doc40 原本的",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有任何字串/常數表把它標成」"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 311,
+   "excerpt_sha1": "c2fc70fe0406706303ab8b393124f1d98af74b76",
+   "excerpt": "**誠實標記**:sentinel 觸發條件與唯一性已窮舉確認[驗];「39 選這個數字的敘事/資產理由」仍需活體或",
+   "verdict": "benign",
+   "note": "[驗]標記+明確保留用語「仍需活體或...」"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 362,
+   "excerpt_sha1": "9ac8742bf9f5b7f59903e5366e4c207324bc2300",
+   "excerpt": "由上述三條獨立證據鏈確認,不影響結論;個別 caller 的欄位級細節(doc40 原「待辦」第 4 項,",
+   "verdict": "benign",
+   "note": "延續句，指向「上述」證據鏈+保留用語「待辦」"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 370,
+   "excerpt_sha1": "87db4f1f4ba22db89565f491cc84109482137a99",
+   "excerpt": "- [x] `tag==0x27` sentinel 語意——**2026-08-19 已窮舉確認**觸發條件與唯一性(全程式僅一處,且",
+   "verdict": "benign",
+   "note": "checklist項目，延續289/311同一發現"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 384,
+   "excerpt_sha1": "f3a9c5fbe00a57fc1bec8c5d11aff11f30501bd0",
+   "excerpt": "單位陣列(重用 `fd2_dosbox_live_helper.mem_read_unit_array()` 已經驗證過的",
+   "verdict": "benign",
+   "note": "引用專案自有工具fd2_dosbox_live_helper.mem_read_unit_array()，函式名內嵌小寫dosbox無連字號，屬既有低頻邊界案例"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 405,
+   "excerpt_sha1": "719fec553be0e10f6269c5b8ec8569e41739acca",
+   "excerpt": "| 0 | `0x30` | NPC(PORT 查無對應,依對話內容「父王」「朕」推測是國王——**跟 doc09 原本只用 2 句截圖判定的「ch01 王宮兩句被標成索爾、實際是國王」完全吻合,這次是全 32 句規模的獨立活體交叉驗證**) |",
+   "verdict": "benign",
+   "note": "表格row，交叉參照doc09既有結論，offset(0x30)低於門檻，屬fd2_speaker_capture.py活體驗證段落延續(見project memory)"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 416,
+   "excerpt_sha1": "e101189614250b1e47d53ab92166776bb3a48a47",
+   "excerpt": "從開場動畫一路確認過 033 全部對話,再繼續往下按,想在後山/草地場景抓到 032。",
+   "verdict": "benign",
+   "note": "活體試玩敘事延續句，非獨立新主張"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 423,
+   "excerpt_sha1": "1d5783e41ba5d8e7ae4762d8caf0a74809863dfd",
+   "excerpt": "出現在這兩者之間、被本輪的確認鍵批次(10 個一批送、批次間才截圖)跳過而沒看到",
+   "verdict": "benign",
+   "note": "同416敘事延續"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 438,
+   "excerpt_sha1": "5dabb32e065aeaf3f17932340461169212657538",
+   "excerpt": "逐字對得上——**那些片段其實就是 032 本身,只是本節一開始沒認出來**。",
+   "verdict": "benign",
+   "note": "FDTXT_032解析敘事的結論延續句"
   }
  ]
 }
