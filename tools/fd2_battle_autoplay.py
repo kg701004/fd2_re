@@ -207,13 +207,26 @@ def nearest_foe(u: dict, units: list[dict]) -> dict | None:
 
 
 def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
-                      dest_mode: str = "computed", blind: bool = False) -> None:
-    """進移動選格 → 朝敵人移動到相鄰格 → 確認落點 → 攻擊。
+                      dest_mode: str = "computed", blind: bool = False,
+                      selector: str = "0170", count: int = 12) -> None:
+    """進移動選格 → 朝敵人移動到相鄰格 → 確認落點 → 攻擊(若移動後真的相鄰)。
 
     2026-09-04:舊版的 `--attack` 只在**已經相鄰**時攻擊,否則原地休息。
     結果是四回合都「四人全動」但敵方數字不動——單位在原地休息,永遠靠不近。
     這一版在移動選格階段主動接近(手動實測可行:idx2 由 (8,16) 移到 (4,18)
     與敵 (3,18) 相鄰後成功攻擊)。
+
+    2026-09-05:發現並修正一個真的 bug(見 doc13 §12/§13,`fd2_crash_capture.py`
+    多輪「環選擇是2/3(期望0)」都是它的症狀,不是輸入不可靠)——當敵人距離超過
+    `mv`,下面 §237-239 只會**按比例**移動(`scale = mv / 距離`),不保證移動後
+    真的落在敵人相鄰格。舊版在這裡**不管有沒有真的靠近就直接嘗試攻擊**
+    (`select_ring(..., RING_ATTACK, ...)`),遊戲的 `enableFlags[0]` 正確判定
+    「射程內無候選」而 disable 攻擊(doc13 `0x18d8c`/`FUN_000173e7` 已反組譯的
+    邏輯:環自動選第一個 enabled 項,不是 0),`select_ring()` 讀到非預期值後
+    正確拒絕盲按——但呼叫端把這個正確的拒絕誤判成「按鍵沒生效」,回傳 False,
+    單位因此**留在原地、行動未生效**,而不是乾淨地待機結束回合。這一版在移動後
+    重新讀一次單位陣列,若真的還不相鄰,直接走待機(不開攻擊環),避免留下一個
+    「行動未生效」的髒單位。
     """
     press(inst, "confirm", 1.8)          # → 移動選格
     # 目標:敵人的相鄰格(優先同列/同行,少一步算一步)
@@ -241,7 +254,33 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
         press(inst, "right" if dx > 0 else "left", 0.8)
     for _ in range(abs(dy)):
         press(inst, "down" if dy > 0 else "up", 0.8)
-    press(inst, "confirm", 2.2)          # 確認落點 → 環
+    press(inst, "confirm", 2.2)          # 確認落點 → 環(此時單位已經真的移動到新位置)
+
+    # 2026-09-05:移動後、開環前,重新讀一次單位陣列確認真的落在敵人相鄰格。
+    # `dx,dy` 是**算出來**的落點,不是移動後的**實測**結果——mv 縮放(見上)只保證
+    # 「盡量靠近」,不保證真的相鄰;地形/佔位擋路也可能讓實際落點跟算出來的不同。
+    # 不做這一步的舊版直接嘗試攻擊,遊戲的 enableFlags[0] 正確 disable(doc13
+    # `0x18d8c`/`FUN_000173e7`),`select_ring()` 正確拒絕盲按,但呼叫端誤判成
+    # 「按鍵沒生效」——單位因此卡在原地、行動未生效,不是乾淨地待機結束回合。
+    if blind:
+        # blind 模式本來就跳過所有回讀驗證(doc13 §8/§9 的因果排除實驗用途),
+        # 這裡也不例外——維持舊行為,不额外插入一次 enter_debugger。
+        still_adjacent = True
+    else:
+        _, post_snap = snapshot(inst, selector, count)
+        post_units = post_snap[1:]           # [0] 是 {"cursor": (cx,cy)},無 "idx" 鍵
+        post_me = next((u for u in post_units if u["idx"] == me["idx"]), None)
+        still_adjacent = post_me is not None and adjacent_foe(post_me, post_units)
+
+    if not still_adjacent:
+        print(f"    idx{me['idx']} 移動後仍不相鄰(算出的落點未必等於實際落點),"
+              f"改走待機,不嘗試攻擊")
+        if not select_ring(inst, RING_REST, "down", blind=blind):
+            press(inst, "cancel", 1.0)
+        else:
+            press(inst, "confirm", 3.0)
+        return
+
     if not select_ring(inst, RING_ATTACK, "up", blind=blind):
         press(inst, "cancel", 1.0)
         return
@@ -357,7 +396,7 @@ def main() -> int:
                 attack_unit(a.instance, blind=a.blind)
             elif a.attack and nearest_foe(tgt, units):
                 approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv, a.dest,
-                                  blind=a.blind)
+                                  blind=a.blind, selector=a.selector, count=a.count)
             else:
                 rest_unit(a.instance, blind=a.blind)
             # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。

@@ -99,7 +99,7 @@ def run_one_round(inst: str, selector: str, count: int, mv: int) -> bool:
         if foe is None:
             AP.rest_unit(inst)
         else:
-            AP.approach_then_act(inst, tgt, foe, mv, "computed")
+            AP.approach_then_act(inst, tgt, foe, mv, "computed", selector=selector, count=count)
     return True
 
 

@@ -31968,6 +31968,78 @@
    "excerpt": "沒有這一輪自己新做 live 驗證去核對某一次具體失敗案例的 `enableFlags` 實際值**,但已經",
    "verdict": "benign",
    "note": "延續句(本輪剛新增)，明確保留用語「沒有這一輪自己新做live驗證」"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2319,
+   "excerpt_sha1": "e6e879aee13d4975f38da19a75993a7e121616e8",
+   "excerpt": "但當時明說「沒有這一輪自己新做 live 驗證」。這一節補上那個驗證,並直接修掉根因。",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，回顧§12上文既有保留用語，非新結論"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2331,
+   "excerpt_sha1": "14a81478b2190ad600658f1a0d8337921414cf5f",
+   "excerpt": "**不驗證縮放後的落點是否真的與任何存活敵人相鄰**,就直接呼叫 `select_ring(RING_ATTACK)`。",
+   "verdict": "benign",
+   "note": "描述真實原版程式碼 approach_then_act() 呼叫端的既有邏輯缺陷（呼叫真實 EXE 的 select_ring/RING_ATTACK），不是remake側敘述，僅缺乏正規marker關鍵字"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2333,
+   "excerpt_sha1": "ee66f1ce2f407d58c1b44580688fb11a9125a5db",
+   "excerpt": "待機=3),`select_ring()` 的「讀值核對,不盲按確認」保護正確拒絕確認——但呼叫端沒有任何",
+   "verdict": "benign",
+   "note": "描述 select_ring() 對真實原版 DOSBox-X live 讀值的核對保護機制，同節既有反組譯證據延伸，僅缺乏正規marker關鍵字"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2340,
+   "excerpt_sha1": "41cfca7aa89b3e60874fd4b55e58aeaf1aa0dd44",
+   "excerpt": "(`blind=True` 時略過,維持原行為);若確認移動後仍不相鄰,改選 `RING_REST`(待機)",
+   "verdict": "benign",
+   "note": "描述本輪對 tools/fd2_battle_autoplay.py 這支驗證工具本身的程式碼修改，非原版/remake證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2348,
+   "excerpt_sha1": "ca363b4eaaff08ae2f0a66f80d4278b438c36e08",
+   "excerpt": "cursor dict,導致真實測試時 `KeyError: 'idx'`。改成 `post_snap` 並 `post_snap[1:]`",
+   "verdict": "benign",
+   "note": "描述修 fix 過程中自己引入又修掉的一個 KeyError bug，工具開發記錄，非證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2351,
+   "excerpt_sha1": "f8987e12dbcf3da8a6c334d801e47d906b6e8ad3",
+   "excerpt": "**live 驗證(負向案例/回歸測試,已完成)**:`fd2_battle_autoplay.py --instance ringtest1",
+   "verdict": "benign",
+   "note": "live 驗證：對真實 DOSBox-X instance ringtest1（跑真實 FD2.EXE）重跑 fd2_battle_autoplay.py 的回歸測試結果，僅缺乏正規marker關鍵字"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2355,
+   "excerpt_sha1": "b9126e20afc95e315f6544ba3b3908c13422d03d",
+   "excerpt": "**尚未完成、明確不宣稱已驗證的部分**:同一輪嘗試接一個多回合測試,想確認「真的走到相鄰格",
+   "verdict": "benign",
+   "note": "明確標示「尚未完成、明確不宣稱已驗證」，誠實邊界語句，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2357,
+   "excerpt_sha1": "f98671fe4298a6fca9c15a4c0b43b85e487ed24a",
+   "excerpt": "逾時到期(`status` 確認是逾時,不是遊戲崩潰),測試被打斷,只留下負向分支又正確觸發一次",
+   "verdict": "benign",
+   "note": "描述測試instance因keepalive逾時被打斷，環境事實記錄，非原版/remake證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2358,
+   "excerpt_sha1": "69cc9a6f096d90f29f3dda219849e17d9fe89c9a",
+   "excerpt": "的結果(idx1/idx3 都乾淨落到待機分支)。**正向案例(相鄰時攻擊確實成功)這一輪沒有驗證",
+   "verdict": "benign",
+   "note": "明確標示「這一輪沒有驗證到」，誠實邊界語句，非證據宣稱"
   }
  ]
 }
