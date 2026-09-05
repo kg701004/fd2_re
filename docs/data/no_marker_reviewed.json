@@ -1952,6 +1952,174 @@
    "excerpt": "「原生引擎即時互動實測」兩種獨立證據來源互相印證,不再只依賴使用者提供的影片。",
    "verdict": "benign",
    "note": "描述兩獨立證據來源互相印證的方法論總結，非新主張"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 19,
+   "excerpt_sha1": "bedf3abc1246d5ef24841706ca3a48223dc1aa56",
+   "excerpt": "| 5 | t≈201.6–203.0s(最後一句「這是小事一椿!我們現在就走吧!」講完後) | **索爾才動**,從 (4,46) 走向 (~7.6,47),抵達亞雷斯身旁 | ~2.9 格,約 1.4s | 高(x 座標乾淨單調,可見影格 §4 驗證) |",
+   "verdict": "benign",
+   "note": "表格row，video frame時間戳+座標量測結果，屬既有影片oracle證據類型，交叉參照§4"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 31,
+   "excerpt_sha1": "9a7cf373bf19afd11ead31f6a6133cbb44f8e2a1",
+   "excerpt": "> remake,其「影片證實」來源不明且與逐幀量測矛盾;依現行判準該註解不構成證據。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不構成證據」，正是誠實排除弱證據的示範"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 49,
+   "excerpt_sha1": "df76a3eac8f86d46c5e77ac46d956922ef3a94f2",
+   "excerpt": "4. **交叉驗證**:t=128.0s(幕剛淡入,尚未有任何走位)量出索爾 (4.53,46.18)、亞雷斯 (12.5–12.64,47.16–47.20)",
+   "verdict": "benign",
+   "note": "交叉驗證延續句，video frame時間戳量測"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 70,
+   "excerpt_sha1": "7e71bf1850269875b85119b024646ca232ed2e0e",
+   "excerpt": "| 144.5 | (10.85,47.20) | 第二段起點(與上段終點相同,確認中間確實沒動) |",
+   "verdict": "benign",
+   "note": "表格row，同19類型"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 125,
+   "excerpt_sha1": "5654a1f7c3e6ae289d6f5c62cd5938a3ba7581ea",
+   "excerpt": "量級上與本輪影片實測**吻合**,速度常數不必大改,要改的是**順序與目的地/時機**)。",
+   "verdict": "benign",
+   "note": "「影片實測」片語，既有可接受設計取捨類別"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 127,
+   "excerpt_sha1": "70fd883e0414c883fd7ff4060039b194ef1b2a3f",
+   "excerpt": "視覺確認(截幀序列,t=201.6/201.9/202.2/202.5/202.8,見 `sol_walk_seq.png`):索爾清楚沿地面",
+   "verdict": "benign",
+   "note": "引用具體截幀序列檔案(sol_walk_seq.png)佐證"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 146,
+   "excerpt_sha1": "254827d405e52e16f610e4ba035bb1b090008079",
+   "excerpt": "**結論(原判,已被上方更正)**:「帶他離開」在本幕**沒有可驗證的視覺畫面**,合理解讀是:**用淡出/場景切換本身代表「兩人",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有可驗證的視覺畫面」，且標明是先前結論已被更正"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 163,
+   "excerpt_sha1": "c847dfffb38f24dee90d0a7bf6f6a45f50336d1f",
+   "excerpt": "4. **速度常數大致可留用**:現有 `frames:60`(對角線 2 格)換算出的每秒移動格數與本輪影片實測",
+   "verdict": "benign",
+   "note": "「影片實測」片語延續句"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 166,
+   "excerpt_sha1": "c8b42535546fe3f4581cbe09fa806086a2e16a3b",
+   "excerpt": "`frames≈84`(3.0格/1.4s)。**這些 frames 數字是本輪影片實測換算,不是原版程式碼參數**,",
+   "verdict": "benign",
+   "note": "明確保留用語「不是原版程式碼參數」，誠實區分推導值與原始碼參數"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 186,
+   "excerpt_sha1": "344ae536272df711822449f7a72fde875d9cd78e",
+   "excerpt": "## 7. 第三輪複核:王座前終點(修正 doc48 §7)+ 草地會合終點再確認(2026-07-05)",
+   "verdict": "benign",
+   "note": "章節標題，交叉參照doc48 §7，證據在節內文"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 188,
+   "excerpt_sha1": "ee27f6834b20d3245fe5dbc7d41a5ff10e67cd97",
+   "excerpt": "> team-lead 指派:使用者實測發現兩個走位終點「差一點點」,需要精確量兩個終點。同樣模板匹配,",
+   "verdict": "benign",
+   "note": "「使用者實測」片語+模板匹配方法論描述"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 197,
+   "excerpt_sha1": "4a5a0cdd8bd44ac28dbb41ffb8318c8074ecbcb2",
+   "excerpt": "證實這不是單一場景的巧合,是本篇模板匹配方法**共用的系統性 col 偏差**(bbox 中心到 tile 錨點的",
+   "verdict": "benign",
+   "note": "模板匹配系統性偏差發現的延續句"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 214,
+   "excerpt_sha1": "d8e2c1c334f9b55c68084504e3436b089af2c323",
+   "excerpt": "(194,440)),證實**到這句台詞時鏡頭已經定格不再平移**——之後索爾應該也已走到終點(follow-cam",
+   "verdict": "benign",
+   "note": "座標引用延續句，video frame分析"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 227,
+   "excerpt_sha1": "2a6c8f46cc541585d315d22df46e1049917e8b59",
+   "excerpt": "信心:中高(四幀獨立收斂到整數格,但只有 col 有 King/Queen 錨點驗證過修正量,row 修正量沒有",
+   "verdict": "benign",
+   "note": "信心評級含明確保留用語「row修正量沒有[驗證]」"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 230,
+   "excerpt_sha1": "3f5122ad92360a49e2922ed60af9af04aa4e3353",
+   "excerpt": "### 8.3 終點 B:草地會合終點——確認「同格」是誤判,真值兩人**相鄰但不同格**,索爾在亞雷斯正下方一格",
+   "verdict": "benign",
+   "note": "章節標題，標明先前「同格」判斷是誤判並已更正，證據在節內文"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 243,
+   "excerpt_sha1": "e339b711100e1438072d710e3918aaee3a4911e3",
+   "excerpt": "**相對位置確認(不受 col 偏差影響,因為同一幀內兩人共用同一個偏差量,相減會抵消)**:",
+   "verdict": "benign",
+   "note": "方法論說明(相對位置抵消偏差)，非獨立驗證聲明"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 254,
+   "excerpt_sha1": "b1249142cab795898e7e7e4cd02cd7ec178f6362",
+   "excerpt": "碰撞判定用現值 8,視覺上會比真實影片「差一點點」)。**不排除另一種可能**(本輪未驗證):",
+   "verdict": "benign",
+   "note": "明確保留用語「不排除另一種可能」「本輪未驗證」"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 262,
+   "excerpt_sha1": "a013e188671ae0c8f54b2412fa881f71deb04195",
+   "excerpt": "複現同方向同量級的 col 偏差,才確認這是**系統性**偏差而非單一雜訊,回頭修正了草地幕的終點判讀。",
+   "verdict": "benign",
+   "note": "系統性偏差發現延續句，含自我修正說明"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 263,
+   "excerpt_sha1": "4d139ca4c4067c813794506734be2f31320e082d",
+   "excerpt": "**教訓:只要有第二個已知真值可以交叉驗證,就該做,不要只信一次自我校準的殘差說「在誤差範圍內」",
+   "verdict": "benign",
+   "note": "方法論教訓總結，非獨立驗證聲明"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 272,
+   "excerpt_sha1": "49205c04de72405b741c65f59c1025bdef5f0b3f",
+   "excerpt": "- `sol_walk_seq.png`(索爾走位視覺確認序列,t=201.6/201.9/202.2/202.5/202.8)",
+   "verdict": "benign",
+   "note": "引用具體截圖檔案清單"
+  },
+  {
+   "file": "55-meadow-walk-staging.md",
+   "line": 278,
+   "excerpt_sha1": "f8efa4305a5ef1647dcdc283178129de69d6b1a0",
+   "excerpt": "若後續實作輪次需要重新驗證,以上 ffmpeg 指令與校準參數(pitch=108,viewport `[107:974,17:1424]`)",
+   "verdict": "benign",
+   "note": "未來式保留用語「若後續實作輪次需要重新驗證」，記錄可重現參數"
   }
  ]
 }
