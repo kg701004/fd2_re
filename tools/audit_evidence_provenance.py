@@ -354,30 +354,72 @@ def split_reviewed(claims: list[Claim],
     return seen, unseen
 
 
+def _build_review_entry(file: str, line: int, verdict: str, note: str,
+                        claims_by_key: dict[tuple[str, int], Claim],
+                        already: set[tuple[str, str]]) -> tuple[dict | None, str | None]:
+    """算出一筆審閱登錄項,或回傳失敗原因(不寫檔——寫檔是呼叫端的事,拆開是為了
+    讓 `--mark-reviewed-batch` 能一次驗證整批、只成功寫入一次檔案)。"""
+    if verdict not in NO_MARKER_VERDICTS:
+        return None, f"verdict 必須是 {sorted(NO_MARKER_VERDICTS)} 之一,收到 {verdict!r}"
+    match = claims_by_key.get((file, line))
+    if match is None:
+        return None, (f"{file}:{line} 不是目前掃描結果裡的 NO_MARKER 主張——"
+                      "行號可能已經漂移(檔案被改過),重新掃一次確認正確行號再登錄。")
+    sha = _sha(match.excerpt)
+    if (file, sha) in already:
+        return None, f"{file}:{line} 已經登錄過,不重複新增(如果判定要改,先手動刪除舊條目)。"
+    return {"file": file, "line": line, "excerpt_sha1": sha,
+            "excerpt": match.excerpt, "verdict": verdict, "note": note}, None
+
+
 def mark_reviewed(file: str, line: int, verdict: str, note: str,
                   claims: list[Claim], registry: Path = NO_MARKER_REGISTRY) -> int:
     """把 `file:line` 對應的 NO_MARKER 主張登錄進審閱表。回傳 0 成功、非 0 失敗。"""
-    if verdict not in NO_MARKER_VERDICTS:
-        print(f"verdict 必須是 {sorted(NO_MARKER_VERDICTS)} 之一,收到 {verdict!r}",
-              file=sys.stderr)
-        return 2
-    match = next((c for c in claims if c.file == file and c.line == line
-                 and c.status == "NO_MARKER"), None)
-    if match is None:
-        print(f"{file}:{line} 不是目前掃描結果裡的 NO_MARKER 主張——行號可能已經漂移"
-              "(檔案被改過),重新掃一次確認正確行號再登錄。", file=sys.stderr)
-        return 2
     reg = json.loads(registry.read_text(encoding="utf-8"))
-    sha = _sha(match.excerpt)
-    if any(r["file"] == file and r["excerpt_sha1"] == sha for r in reg["reviews"]):
-        print(f"{file}:{line} 已經登錄過,不重複新增(如果判定要改,先手動刪除舊條目)。",
-              file=sys.stderr)
+    already = {(r["file"], r["excerpt_sha1"]) for r in reg["reviews"]}
+    claims_by_key = {(c.file, c.line): c for c in claims if c.status == "NO_MARKER"}
+    entry, err = _build_review_entry(file, line, verdict, note, claims_by_key, already)
+    if err:
+        print(err, file=sys.stderr)
         return 2
-    reg["reviews"].append({"file": file, "line": line, "excerpt_sha1": sha,
-                           "excerpt": match.excerpt, "verdict": verdict, "note": note})
+    reg["reviews"].append(entry)
     registry.write_text(json.dumps(reg, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(f"已登錄 {file}:{line} verdict={verdict}")
     return 0
+
+
+def mark_reviewed_batch(items: list[dict], claims: list[Claim],
+                        registry: Path = NO_MARKER_REGISTRY) -> int:
+    """一次登錄多筆(`{file, line, verdict, note}` 的清單)。
+
+    2026-09-05:1782 筆待審閱、單筆 CLI 一次一筆效率太低,加這個是為了讓一次審完
+    一整份文件(甚至好幾份)能一次寫檔,而不是每筆都重讀重寫 JSON。**每一筆各自
+    獨立驗證**(verdict 合法、行號存在、沒有重複),失敗的印出來但不中止其餘筆——
+    一批 50 筆裡有 1 筆行號漂移,不該讓另外 49 筆全部作廢重來。**只有全部驗證過
+    的那些筆會被寫進檔案**,失敗的完全不寫入(不會半套)。
+    """
+    reg = json.loads(registry.read_text(encoding="utf-8"))
+    already = {(r["file"], r["excerpt_sha1"]) for r in reg["reviews"]}
+    claims_by_key = {(c.file, c.line): c for c in claims if c.status == "NO_MARKER"}
+    ok, fails = [], []
+    seen_this_batch: set[tuple[str, str]] = set()
+    for it in items:
+        entry, err = _build_review_entry(it["file"], it["line"], it["verdict"],
+                                         it.get("note", ""), claims_by_key,
+                                         already | seen_this_batch)
+        if err:
+            fails.append(f"{it['file']}:{it['line']}  {err}")
+            continue
+        seen_this_batch.add((entry["file"], entry["excerpt_sha1"]))
+        ok.append(entry)
+    if ok:
+        reg["reviews"].extend(ok)
+        registry.write_text(json.dumps(reg, ensure_ascii=False, indent=1) + "\n",
+                            encoding="utf-8")
+    print(f"批次登錄:成功 {len(ok)} 筆、失敗 {len(fails)} 筆")
+    for f in fails:
+        print(f"  FAIL  {f}")
+    return 0 if not fails else 1
 
 
 def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
@@ -791,6 +833,56 @@ def selftest() -> int:
             if rc4 == 0:
                 fails.append("mark_reviewed 負對照失敗:對不到主張的行號竟然被接受")
 
+        # --- mark_reviewed_batch:正對照,混合成功+失敗的一批,成功的要真的寫入、
+        #     失敗的不能拖累成功的那些(部分失敗不是全部作廢) ---
+        checks += 1
+        _others = [c for c in real if c.status == "NO_MARKER"][:3]
+        if len(_others) < 2:
+            fails.append("找不到至少 2 筆真實 NO_MARKER 主張測 mark_reviewed_batch")
+        else:
+            tmp_reg2 = Path(tmpdir) / "no_marker_reviewed_batch_test.json"
+            tmp_reg2.write_text(json.dumps({"_policy": "test", "reviews": []}),
+                               encoding="utf-8")
+            batch = [
+                {"file": _others[0].file, "line": _others[0].line,
+                 "verdict": "benign", "note": "batch selftest ok #1"},
+                {"file": "不存在的檔案.md", "line": 1,
+                 "verdict": "benign", "note": "batch selftest 故意失敗"},
+                {"file": _others[1].file, "line": _others[1].line,
+                 "verdict": "benign", "note": "batch selftest ok #2"},
+            ]
+            rc5 = mark_reviewed_batch(batch, real, registry=tmp_reg2)
+            if rc5 == 0:
+                fails.append("mark_reviewed_batch 負對照失敗:批次裡混了一筆對不到的"
+                             "項目,整體回傳碼卻是 0(該回報有失敗)")
+            written = load_no_marker_reviews(tmp_reg2)
+            written_keys = {(r["file"], r["line"]) for r in written}
+            if (_others[0].file, _others[0].line) not in written_keys:
+                fails.append("mark_reviewed_batch 正對照失敗:批次裡合法的第 1 筆沒有"
+                             "被寫入")
+            if (_others[1].file, _others[1].line) not in written_keys:
+                fails.append("mark_reviewed_batch 正對照失敗:批次裡合法的第 3 筆沒有"
+                             "被寫入(前面那筆失敗不該拖累它)")
+            if len(written) != 2:
+                fails.append(f"mark_reviewed_batch 正對照失敗:應該只寫入 2 筆合法項目,"
+                             f"實際寫入 {len(written)} 筆——失敗項目可能被誤寫入了")
+
+            # --- 負對照:同一批裡兩筆指向同一筆主張(重複),第二筆該被拒絕 ---
+            checks += 1
+            tmp_reg3 = Path(tmpdir) / "no_marker_reviewed_batch_dup_test.json"
+            tmp_reg3.write_text(json.dumps({"_policy": "test", "reviews": []}),
+                               encoding="utf-8")
+            dup_batch = [
+                {"file": _others[0].file, "line": _others[0].line,
+                 "verdict": "benign", "note": "第一次"},
+                {"file": _others[0].file, "line": _others[0].line,
+                 "verdict": "benign", "note": "同一批裡的重複,該被拒絕"},
+            ]
+            mark_reviewed_batch(dup_batch, real, registry=tmp_reg3)
+            if len(load_no_marker_reviews(tmp_reg3)) != 1:
+                fails.append("mark_reviewed_batch 負對照失敗:同一批裡對同一筆主張"
+                             "登錄兩次,應該只留 1 筆卻沒有")
+
         # --- 對真實登錄表的合理性檢查:不能有重複鍵(同一個 file+sha1 出現兩次) ---
         checks += 1
         real_reviews = load_no_marker_reviews()
@@ -833,6 +925,11 @@ def main() -> int:
                          "docs/data/no_marker_reviewed.json,VERDICT 為 benign/"
                          "marker_added/needs_verification 之一,NOTE 是判讀理由。"
                          "登錄過的主張之後 --no-marker-worklist 不會再列入'還沒審閱'。")
+    ap.add_argument("--mark-reviewed-batch", metavar="JSON",
+                    help="一次登錄多筆:JSON 檔內容是"
+                         "`[{\"file\":..,\"line\":..,\"verdict\":..,\"note\":..}, ...]`。"
+                         "每筆各自驗證,失敗的印出來但不影響其餘筆,只有驗證過的會寫入。"
+                         "審一整份文件時比逐筆呼叫 --mark-reviewed 快很多。")
     args = ap.parse_args()
 
     if args.selftest:
@@ -846,6 +943,10 @@ def main() -> int:
             print(f"LINE 必須是整數,收到 {line_s!r}", file=sys.stderr)
             return 2
         return mark_reviewed(file, line, verdict, note, scan(KB))
+
+    if args.mark_reviewed_batch:
+        items = json.loads(Path(args.mark_reviewed_batch).read_text(encoding="utf-8"))
+        return mark_reviewed_batch(items, scan(KB))
 
     if args.diff is not None:
         new_claims = scan_diff(args.diff)
