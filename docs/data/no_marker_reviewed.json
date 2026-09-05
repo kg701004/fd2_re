@@ -2120,6 +2120,190 @@
    "excerpt": "若後續實作輪次需要重新驗證,以上 ffmpeg 指令與校準參數(pitch=108,viewport `[107:974,17:1424]`)",
    "verdict": "benign",
    "note": "未來式保留用語「若後續實作輪次需要重新驗證」，記錄可重現參數"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 4,
+   "excerpt_sha1": "14b47d3885105cd302c9208afb2381bde1458cf0",
+   "excerpt": "> handler 共享一組原語子集，但不同 caller 仍可能有未閉合的 layout、branch、resource 或",
+   "verdict": "benign",
+   "note": "明確保留用語「仍可能有未閉合的layout/branch/resource」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 23,
+   "excerpt_sha1": "0379d918669567e6c618f25dca95770b29f3e41c",
+   "excerpt": "原語指令集(= 已驗證 handler 可共用的「組合語言」子集；不是所有 handler 的完整語意):",
+   "verdict": "benign",
+   "note": "明確保留用語「不是所有handler的完整語意」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 83,
+   "excerpt_sha1": "5a434c31fe67a5f5613092becdc70b684dea65c2",
+   "excerpt": "map32 時，王座廳 21 名單位(國王/王后/索爾×2/亞雷斯/守衛×16，doc47 §8 dosbox 實測序列)的",
+   "verdict": "benign",
+   "note": "「dosbox」小寫無連字號屬既有低頻邊界案例，交叉參照doc47 §8"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 151,
+   "excerpt_sha1": "36644183fb7c2e68f7032daedb6e63c6edbfe685",
+   "excerpt": "實機佐證：草地末段對 slot3 X 設保護模式寫入中斷，捕到 `4→5`；堆疊回溯到正常模式",
+   "verdict": "benign",
+   "note": "「實機佐證」描述保護模式寫入中斷(write breakpoint)場景，未用「斷點」字面但屬同類低頻邊界案例"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 188,
+   "excerpt_sha1": "6cd8a9193edfde180881c041db8e6722ec665c7f",
+   "excerpt": "- beats 序列直接照抄章 handler 轉錄(doc47 §3/§7 即 ch1 的 beats 來源),**參數用 handler 實值/dosbox 實測,不外推**。",
+   "verdict": "benign",
+   "note": "「dosbox」小寫同83，交叉參照doc47，含明確保留用語「不外推」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 224,
+   "excerpt_sha1": "52e017945dea1529c8cb648e28259f2d2a97bd6d",
+   "excerpt": "runtime 也驗證實際 roster 長度，避免沉默略過。map32 的 99..105（slot ≤4）均可安全播放；",
+   "verdict": "benign",
+   "note": "描述remake端runtime驗證邏輯，非原版證據聲明"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 272,
+   "excerpt_sha1": "fc447b549f22ae1a4763fabd7e32441310be6b6d",
+   "excerpt": "100/120 個確認點截圖均已是 map31 密林（第 140 個則已進 map0），故場景時點不含糊。在第 100 點以",
+   "verdict": "benign",
+   "note": "引用截圖確認點作場景時點佐證"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 326,
+   "excerpt_sha1": "c87970e811ecc9782da2ae9b774d434e41456cbe",
+   "excerpt": "尚未證實的 native call **保留為 `unknown`**，不可靜默丟失或猜譯。ch0(序章)仍逐項",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未證實」「不可靜默丟失或猜譯」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 335,
+   "excerpt_sha1": "1ce64961979bd2f4e73ef6d4359cf2c965de21a1",
+   "excerpt": "2. 編譯層：`campaign.CompileHandlerScript` 將 editable handler script + 已驗證的章文本／",
+   "verdict": "benign",
+   "note": "描述remake編譯層(CompileHandlerScript)設計，交叉參照已驗證章文本"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 339,
+   "excerpt_sha1": "91a860676355bcae8d9ad3885be7d82c58a8d655",
+   "excerpt": "`Beat.LoadCH`。BeatRunner 先驗證名冊／文本，再切圖；若 binding 有 `party_scenario`，先依 JOIN",
+   "verdict": "benign",
+   "note": "描述remake BeatRunner行為，非獨立原版驗證聲明"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 374,
+   "excerpt_sha1": "ac96cc503c696a456ecb3f23ae96f1bd2fec68ef",
+   "excerpt": "JSON 表示；其 override 以 call-site 位址為 key。`ch00_pre.json` 已收入已驗證的王座／草地",
+   "verdict": "benign",
+   "note": "描述設計(call-site位址為key)，交叉參照已驗證資料"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 391,
+   "excerpt_sha1": "27e5f7151ec8c86612c9bbcf6f801eeaaf2da898",
+   "excerpt": "**73** 個 call-site 因 source context／唯一 mapping 未證實而只列 diagnostics、不得猜補。映射 key 是",
+   "verdict": "benign",
+   "note": "明確保留用語「未證實」「不得猜補」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 405,
+   "excerpt_sha1": "cb01a582858debd5c4da2af992d586f18f508689",
+   "excerpt": "3. 引擎 BeatRunner：依序執行已證實的 runtime beats",
+   "verdict": "benign",
+   "note": "描述remake引擎行為，交叉參照已證實beats"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 409,
+   "excerpt_sha1": "7085e8bce3bcc4e53195b3cc543a8c3152d39425",
+   "excerpt": "loader test 驗證 60 份腳本全可讀取、每一筆均帶 source address。",
+   "verdict": "benign",
+   "note": "描述remake loader測試結果，非原版證據"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 419,
+   "excerpt_sha1": "87e9820bcd6c4921ea2228ec0eda88b3a902f57b",
+   "excerpt": "是已驗證的空 handler，仍保留檔案與 handler metadata。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照已驗證結論"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 494,
+   "excerpt_sha1": "f7f480c43258764337d67c3c067c6c6f2718d464",
+   "excerpt": "resolve **兩臂**，任一臂缺 binding 就整個 branch fail closed。runtime 先驗證所有指定 slots 都存在，",
+   "verdict": "benign",
+   "note": "描述remake fail-closed runtime驗證邏輯設計"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 537,
+   "excerpt_sha1": "660eac52c495a62247159a1367255f01ec5679cc",
+   "excerpt": "切到原版 13×8 的 story viewport；compiler 由這個 count 驗證 branch/ACT，在 SPAWN4 後把可用 slot",
+   "verdict": "benign",
+   "note": "描述remake compiler驗證邏輯，引用已知原版13×8 viewport尺寸"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 543,
+   "excerpt_sha1": "298fc6dd6ccd3fa930e04c464335ccbe469621ad",
+   "excerpt": "這兩點仍以 address-keyed binding 保存；沒有把所有章節未驗證座標改成全域猜測公式。ACT14 使 slot27",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有把所有章節未驗證座標改成全域猜測公式」"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 579,
+   "excerpt_sha1": "fa1234a0de2e5d99698a1ade4bab5d87cfea0bb9",
+   "excerpt": "320×200（13×8格）離屏視野再放大2倍，Xvfb frame120 已確認第二個 PAN 後畫面無寬視野黑區且先播",
+   "verdict": "benign",
+   "note": "描述remake自身Xvfb headless渲染測試結果，屬remake端自我驗證，未混淆為原版證據"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 602,
+   "excerpt_sha1": "3af7f79e84f407d3af5933f1c66483551284f9ec",
+   "excerpt": "frontier 15 驗證 layout 的 slots0..6。campaign 現已接成",
+   "verdict": "benign",
+   "note": "描述remake campaign wiring測試延續句"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 645,
+   "excerpt_sha1": "8e94d3e88c93604616d42e8b4382e2297791ea66",
+   "excerpt": "只對目前authored campaign graph驗證已編碼的章表／hub contract：商店章集合為",
+   "verdict": "benign",
+   "note": "明確保留用語「只對目前authored campaign graph驗證」，限定claim範圍"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 716,
+   "excerpt_sha1": "ac7caf19f1a7c18164ee7e9d0bec6d5d676fec7c",
+   "excerpt": "並以 EXE `item.json` 價格交叉驗證，generator 也拒絕缺 ID 的新增品項。較早「337 筆品項」說法與",
+   "verdict": "benign",
+   "note": "交叉驗證延續句，並標明先前「337筆品項」說法已被更正"
+  },
+  {
+   "file": "50-cutscene-script-system-design.md",
+   "line": 745,
+   "excerpt_sha1": "17fcf25400bfd2d6f93c24a4766e414806ad94f3",
+   "excerpt": "不足以定性，extractor 只收已由 callee body 證實的名稱。",
+   "verdict": "benign",
+   "note": "明確保留用語「不足以定性」，限定claim範圍至callee body已證實部分"
   }
  ]
 }
