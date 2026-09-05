@@ -17000,6 +17000,1814 @@
    "excerpt": "Docker驗證已通過882個JSON解析、17 active／7 blocked戰後稽核、故事覆蓋",
    "verdict": "benign",
    "note": "延續句，描述remake端Docker測試基礎設施結果"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1,
+   "excerpt_sha1": "3b5f9308906e670128887d6ae822576fa0160710",
+   "excerpt": "# 92 — M5 正常玩法(無 debug hook)多章節逐章驗證紀錄",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 3,
+   "excerpt_sha1": "da719497cfb49f9984fa74806ef5f26c6729e5a3",
+   "excerpt": "> 對應 `docs/knowledge-base/91-worklist.md` M5「正常玩法可達性驗證」項目與",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 6,
+   "excerpt_sha1": "5903fba9780906ffbab66556649e8d61cc3ca759",
+   "excerpt": "> `FD2_SHOT_*`/`FD2_CAMP_*` debug 捷徑**的驗證 session。方法論與工具沿用",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 19,
+   "excerpt_sha1": "6a269d4a76bc5e9a63036dce241e4c6e714542bb",
+   "excerpt": "吞鍵」陷阱本輪確認未再踩,全程單發按鍵+screenshot 確認再送下一鍵,批次時每鍵間隔",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 23,
+   "excerpt_sha1": "382b5ff273fded1d2926d4d39f665ef022d64ba7",
+   "excerpt": "## ch01(初試身手)——本輪逐章驗證的唯一一章,但過程中發現並修復一個會擋住*每一章*的真實 bug",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 30,
+   "excerpt_sha1": "584049a5765ad58ca8bcbdd77db6f79b4ceb988b",
+   "excerpt": "`m5-play-ch01-04-combat-animation.png`(真實攻擊確認:亞雷斯 vs 盜賊戰鬥剪影動畫)→",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 33,
+   "excerpt_sha1": "cc1795d62036a3cec658493001f285aa4fe80a60",
+   "excerpt": "`m5-play-ch01-07-turn3-survived-postfix.png`(**修復後**:連續存活到第 3 回合,證實非單次僥倖)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 35,
+   "excerpt_sha1": "38191c51768d43b7512ec8f16bc918b555decd47",
+   "excerpt": "### 系統性驗證清單(全部透過真實 xdotool 按鍵確認,非程式碼閱讀猜測)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 47,
+   "excerpt_sha1": "9fa3d299354ff27d68026efb2cc94f7e92c31d90",
+   "excerpt": "| 真實攻擊(移動到鄰格→開環→攻擊→選目標→確認) | 成功一次:亞雷斯(Ares)攻擊「盜賊」,螢幕正確顯示戰鬥剪影動畫(雙方 HP 條+姓名)與「亞雷斯 攻擊 盜賊,造成 21 傷害」——AP26 vs DP2 敵人算出 21 點傷害,數值合理,證實 Phase 3 的 AP/DP 修正在真實戰鬥中確實生效 |",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 48,
+   "excerpt_sha1": "2dc815f2fc7a1174927f32c302b92ddd7c708c4d",
+   "excerpt": "| Escape 逐層退回 | 確認:環→取消攻擊目標選擇回環;已移動的單位環→退回移動前位置;未移動的單位選取→取消選取 |",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 49,
+   "excerpt_sha1": "e9b30553139b6b670b927e72fd5d470d29960115",
+   "excerpt": "| 撤退/重試迴圈(敗北後) | 修 bug 前驗證了 3 次:「撤退!先回頭整頓,再找機會反攻……」對白播完後乾淨重跑整個 ch01 開場(含序章對白),無崩潰無卡死 |",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 58,
+   "excerpt_sha1": "081f55ef28216e69fdaf95460f9a628d4f7d5074",
+   "excerpt": "出 `Name:\"索爾\"` 等 4 個具名單位(log 證實)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 69,
+   "excerpt_sha1": "8f1f0458206d2bf9473e7ba296866dcd666109fd",
+   "excerpt": "查表結果覆寫回去。矛盾點:log 證實 `g.partyRoster` 裡對應 fig=0/4/9/30 的 entry 其實",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 75,
+   "excerpt_sha1": "1b25e8f9e58b144cc791b9e4e4f812ad789715df",
+   "excerpt": "立刻回傳 `\"lose\"`,**與索爾實際 HP 完全無關**(debug log 直接證實:索爾當時",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 85,
+   "excerpt_sha1": "2ab62c42998d673242b152814de52d424545044f",
+   "excerpt": "- **修復後用同一套全新 no-debug-hook 流程重播確認**:同一場 ch01 戰鬥,同樣的部署,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 86,
+   "excerpt_sha1": "b9250ddae7ea10d4c81a4a0a8ba04a6cef490efe",
+   "excerpt": "按 Tab 結束玩家回合後**不再誤判敗北**——連續驗證 3 個完整回合(2 次 ENEMY PHASE",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 112,
+   "excerpt_sha1": "62accf4772692dd75f584f53a29adf01ccdf8c32",
+   "excerpt": "51-remake-playtest-gaps-r2.md`/Phase 2 已確認 `InAttackRange` 讀的是真實",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 127,
+   "excerpt_sha1": "d7f3ae40c701ba7fc967effd95804ad32228260c",
+   "excerpt": "成功執行了 1 次真正的攻擊確認傷害數字),但本輪的核心目標——**證實 Phase 4",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 143,
+   "excerpt_sha1": "d8c5bea7d624c5a8a9703828072c07b70b9fa4e6",
+   "excerpt": "已提交、已 live 驗證,下一輪可以直接假設「Tab 不會再誤判敗北」這個前提成立。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 147,
+   "excerpt_sha1": "5ddee42ebf2b476974b436bf928306cf03fc15b1",
+   "excerpt": "4. 目標是先打贏 ch01(驗證 postbattle 轉場+`on_win: story_ch02`),再視session",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 158,
+   "excerpt_sha1": "5161c9d51445476e8aeae81b8528b86a55de727c",
+   "excerpt": "時「已確認零孤兒 process」的說法矛盾(該檢查應該是對錯的 WSL distro 或錯誤時間點做",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 159,
+   "excerpt_sha1": "78ad9424e011a937f40941ba7a1609444b03d0ae",
+   "excerpt": "的)。截圖確認畫面卡在「選亞雷斯→開環→按下攻擊」這個中斷前的最後動作,與交辦說明",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 173,
+   "excerpt_sha1": "9fe4b4210834f26832c53b3aa765a19b23c43239",
+   "excerpt": "### 序章對白→ch01戰鬥開局(約165次 Enter,分批20-40次一組+screenshot確認)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 192,
+   "excerpt_sha1": "81cd8173f10f6a2d585adb5681dc99f02cd37b35",
+   "excerpt": "(索爾(7,20)/亞雷斯(8,22)/悠妮(10,21)/蓋亞(11,23))**在真正互動時對不上**——實測",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 195,
+   "excerpt_sha1": "98caffdeac45132a001947e4a0f918a5c7b1e4ea",
+   "excerpt": "相同規律**(offline probe 給出 group2 原始 `(1,21)(2,22)(3,22)(4,23)`,實測活著的",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 207,
+   "excerpt_sha1": "645ef410f58de30250069efae1218b444e634217",
+   "excerpt": "### 真正的雙向戰鬥,首次透過純正常輸入達成(本輪核心驗證目標)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 230,
+   "excerpt_sha1": "3fe2c17f14f7af2bf3b80c2b91bc4ad76893f5b8",
+   "excerpt": "### 發現二:`join_party` T3 錯誤確認會在真正的 campaign 流程重現,不只是孤立測試 harness 才有",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 238,
+   "excerpt_sha1": "0a3531cbf80818a0ad75817e80e6410e0a721269",
+   "excerpt": "面比原先文件記載的更廣。**功能上無害**:`own5` 確認哈諾依然靠同一個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 253,
+   "excerpt_sha1": "ab8eebb26a1851aa872e5f0481e6ffb6abfab3c0",
+   "excerpt": "確認不是全域性卡死,是悠妮專屬(或者說是「這場戰鬥裡曾經進過原生指令目標選擇",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 261,
+   "excerpt_sha1": "fb81fcfaef3fb412b8905f2314aad254dab095a8",
+   "excerpt": "把環重開——但本輪實測連續按 Escape 並未讓環恢復,不確定是這兩段路徑本身有漏洞、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 263,
+   "excerpt_sha1": "f2e02b9cfd7aacd8805009a84ce76ae380d5b29a",
+   "excerpt": "(或加臨時 log)才能真正釘死根因**,本輪只確認了症狀、影響範圍(悠妮專屬、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 273,
+   "excerpt_sha1": "2ce533fe972e138a35f7fb9c48b1dd4e59d01678",
+   "excerpt": "證實 Phase 4 這條路徑在真實多回合、真實雙向命中/未命中/挨打的壓力下依然",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 286,
+   "excerpt_sha1": "89c20c7c32d89ca326dc93689522def91afd1520",
+   "excerpt": "(本輪證實敵方座標與離線 raw JSON 數值對不上,原因未查)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 300,
+   "excerpt_sha1": "a69f4eb00df7465241d12a8eded73b5d11b1ba04",
+   "excerpt": "確認後**未能重現**,判定原始發現是不可靠 raw xdotool 按鍵輸入的產物,不是真實 code bug",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 305,
+   "excerpt_sha1": "d30746691f53f5847e7c6308db56c13326eba5ab",
+   "excerpt": "settle 確認——與 doc98/本文件開頭都已經記錄過的「指令環方向鍵 hit-or-miss 丟鍵」",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 309,
+   "excerpt_sha1": "32129b6a66d9d4b2b2a07009b72c12b254c0edd8",
+   "excerpt": "完全相同才送下一鍵,而非固定等待),確認發現三是真 bug 還是輸入不可靠的偽陽性。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 318,
+   "excerpt_sha1": "192fd93d84b0844c2acb3a5ae877a171e66d45ab",
+   "excerpt": "(分批 20-60 次一組送出,每批後截圖確認進度,batch 內部用 0.2-0.3s 固定間隔而非",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 319,
+   "excerpt_sha1": "2060e376fc8db22b9ff60ca7334276eb126fa7dc",
+   "excerpt": "逐鍵 settle——這段純粹是翻對白,不涉及本次要驗證的狀態機,用固定間隔已足夠可靠",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 320,
+   "excerpt_sha1": "97d4a78e9884de640f793adffdda77e30ae212a5",
+   "excerpt": "且大幅省時間),順利進入 ch01 戰鬥 T1(F3 debug HUD 確認 `T1 own4 ally0 enemy7`)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 322,
+   "excerpt_sha1": "129c560095dff9b59d90bd4c3844ed8a59349a8b",
+   "excerpt": "**用移動範圍高亮+黃色姓名標籤現場確認單位身分**(不假設任何離線座標):游標",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 324,
+   "excerpt_sha1": "4b3aaecbc3eac51ce2a797cffb78c76be9158485",
+   "excerpt": "筆記提到「跟索爾外觀神似的敵方 sprite `028`」的同一個數字,但這裡確認是**我方**",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 340,
+   "excerpt_sha1": "6c7fbdb7740867f34068975964f7610294a32254",
+   "excerpt": "**這一步之後,額外加了三組原始輪次沒有系統化測過的驗證(用 `--settle` 逐一確認每",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 343,
+   "excerpt_sha1": "3b7492e73f856f8c645270b935cd960e2cb90f27",
+   "excerpt": "座標完全沒變——證實此刻方向鍵正確被 `nativeCommandOpen` 選單吃掉(單一法術,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 352,
+   "excerpt_sha1": "b0ea7131f6a62ceda133b49d6019ccc5db88aec8",
+   "excerpt": "- **完全重選悠妮**:游標離開她的格子(`Left Left`)、確認 HUD 座標真的改變、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 362,
+   "excerpt_sha1": "70e4a19e7df173adfa8d259e79a8d1094eda061e",
+   "excerpt": "確認畫面乾淨地完全取消選取(跟前面單獨測的第三層 Escape 結果一致)。之後再",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 368,
+   "excerpt_sha1": "dbddd5e44f762020d1b5562e8f64d27ff18004e0",
+   "excerpt": "input_helper.sh` 的 `wait-settle` 文件已經點出這個 trade-off,這裡補一筆實測",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 371,
+   "excerpt_sha1": "e3a32de3a9f43e5871d45a655c70dd68900a6dd1",
+   "excerpt": "**結論:發現三在本輪的嚴謹、逐鍵 settle 確認的真人輸入路徑下完全沒有重現**——同一",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 378,
+   "excerpt_sha1": "f5fc106a87b188be9d3ccb186a44f4717d80f795",
+   "excerpt": "**依交辦指示,本輪確認「不能重現」後即停止,未修改任何程式碼**——「發現三」原本",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 388,
+   "excerpt_sha1": "2f1640a16154e70dea243849bc7726f27b6eda52",
+   "excerpt": "非 `docs/figures/`——純過程驗證截圖,不promote 進正式文件)。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 391,
+   "excerpt_sha1": "15c4d66ed40f0d6aec6240f652e6e47c4d97bb97",
+   "excerpt": "劇本路徑時對敵我雙方都**完全失效**;真實攻防機制本身首次被完整驗證正確",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 395,
+   "excerpt_sha1": "ffbec2e427f4f2d858f960897b5542890b73e959",
+   "excerpt": "`teardown-all` 清乾淨,`ps aux`/`tmux ls` 核對 WSL 內無殘留。確認交辦標準的",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 407,
+   "excerpt_sha1": "40c9162db2563fee42b031f04607a0252c3674a8",
+   "excerpt": "先移動反白再確認。**下一輪如果還要操作指令環,直接記「上攻擊/左法術/右物品/",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 412,
+   "excerpt_sha1": "984eae71fbc157de2ebe56d608c71ef4b8e4f748",
+   "excerpt": "### 真實攻防機制首次完整驗證正確(無 debug hook、真人輸入路徑)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 419,
+   "excerpt_sha1": "b29df9ccbd46adc9baf8cedad9d3dcdfff752ca3",
+   "excerpt": "演出。這是本專案第一次**完整**驗證「開環→選攻擊(非原地待命)→關環進入",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 421,
+   "excerpt_sha1": "ded2874f4e4aa28d5c032794f2431625375c4422",
+   "excerpt": "下運作正常(先前續一/續二/續三都只驗證到片段:續一只驗證過一次原地攻擊,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 422,
+   "excerpt_sha1": "9237d28df2e3b36e1764aca802154bc37c724f93",
+   "excerpt": "續二驗證了雙向命中但操作细節記錄不完整,續三只驗證了法術目標選擇+Escape",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 459,
+   "excerpt_sha1": "db79981134a3840512af0b647a72149f1243fd45",
+   "excerpt": "battle.Load(assetPath(state.Roster))` 這一步,debug print 證實**正確",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 472,
+   "excerpt_sha1": "24dea0b78ba210d13bc766d47d4777e9e3e6ae81",
+   "excerpt": "- 已排除的候選(讀過原始碼,確認**不是**這些):`AdoptHandlerBattleState`",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 480,
+   "excerpt_sha1": "3356399361171094349b0a42a0a93367e3cdcbe9",
+   "excerpt": "讀過原始碼確認只碰 sprite selector/位置,不碰 HP/AP/DP)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 481,
+   "excerpt_sha1": "8a0f870120ffd70f086e253d012f5b9c580e036a",
+   "excerpt": "- **目前最佳假說(未證實)**:這個專案裡已知至少兩個「native",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 484,
+   "excerpt_sha1": "8ed01c131f0eaf7c63f15eb3cf7d851062a4a830",
+   "excerpt": "證實是禍首)、`MaterializeNativeFutureConstructor`",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 492,
+   "excerpt_sha1": "4a67425301441d901add11c19270d25a1305826f",
+   "excerpt": "`handlerActors`)也印一次 debug,先確認是不是這個 fresh load 本身",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 513,
+   "excerpt_sha1": "4bd0d71a2433fbf1db6ef2ab8930c6a01e1e80e8",
+   "excerpt": "貨真價實的 vanilla 難度驗證**,不是掛了捷徑的簡化版——對「證明無 debug",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 519,
+   "excerpt_sha1": "f73e99321e890f758381186740af8187cfc65e88",
+   "excerpt": "已證實對這條路徑無效,徒然浪費一輪 build+序章對白的時間。標準捷竟仍然",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 524,
+   "excerpt_sha1": "4b2aec3861f5f67460cc4d441968374c78ab7a89",
+   "excerpt": "但收尾時 `ps aux` 確認 WSL 內無孤兒程序),下一輪需要從頭重新走序章",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 560,
+   "excerpt_sha1": "7dfe44c028ab8b137d040bde5372cde1eaee210d",
+   "excerpt": "`{Fig: 0, Portrait: 0}` 對照表確認 portrait id 0 = 索爾)逐像素比對過,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 596,
+   "excerpt_sha1": "b40b5134477fd3cd310d706dd6e07997c2b9e3a6",
+   "excerpt": "**背景**:在已確認是今天 19:48 build(`faecef3e`,見上方使用者提問的驗證)",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 635,
+   "excerpt_sha1": "1e5087f9a6b4852ef33233c31542d898a805a3c3",
+   "excerpt": "關,尚未實際 grep 確認)有沒有分「有無 range overlay 顯示中」兩條路徑,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 638,
+   "excerpt_sha1": "08c5aa80a194dd546b1b1b7e61947a5f499f380c",
+   "excerpt": "盜賊,或 boss 盜賊頭目)是否也有一樣的行為,只驗證了這組 3+1 的集群。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 652,
+   "excerpt_sha1": "4b7130e1c22a6676e570baa578c7f05cb9f33819",
+   "excerpt": "發現——2/3 確認是 remake 專屬 bug,另外多抓到一個更大範圍的資料層問題",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 655,
+   "excerpt_sha1": "184aea0dffc6af98f0e4a87edba3603c9c867b84",
+   "excerpt": "確認」。派工用 `tools/dosbox_harness.sh` 全新隔離 instance(`verify4pt`)、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 664,
+   "excerpt_sha1": "27ee7c795ce553db83b3dd7e1d2c9fb6a604be20",
+   "excerpt": "LV.02)狀態畫面清楚顯示 `HP 002/002`,兩隻獨立盜賊單位重複確認同一個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 671,
+   "excerpt_sha1": "d3549771bb52d531098b3ce3185ff93162132093",
+   "excerpt": "既有註解裡講清楚**:「map0 實測第一章海盜/士兵的 (race,cls) 甚至是",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 679,
+   "excerpt_sha1": "483cad7d695e1f2bf67aaef6253ecefb49b2915b",
+   "excerpt": "**已經在程式碼註解裡被預告、現在用原版即時操作實測確認、範圍可能不只",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 680,
+   "excerpt_sha1": "0a67a6ca78f8c69412f6e7fb96d3a6c4f7dce08e",
+   "excerpt": "ch01 一張地圖**的資料正確性問題(註解自己也講「其餘怪物尚未逐一閉合",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 683,
+   "excerpt_sha1": "8da176669f4553d06ddd5a9aa82818aa77eb7979",
+   "excerpt": "2. **攻擊選目標面板的肖像——確認是 remake 專屬 bug,原版沒有這個問題**:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 687,
+   "excerpt_sha1": "c1b5fc34a94e699ac62e4eb8fea76784970ed227",
+   "excerpt": "對應現象,確認是 remake 自己的 bug,不是原版本來就有、remake 只是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 689,
+   "excerpt_sha1": "9f03d7c1889f1746062aab110ca3f21b3b2c4c8e",
+   "excerpt": "3. **閒置戰場畫面敵人貼圖——同樣確認是 remake 專屬 bug**:原版連續截圖",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 693,
+   "excerpt_sha1": "c35c33b7f3fd8d008a53f3527b38440819ec3454",
+   "excerpt": "短暫變對」在原版**完全不存在這個切換行為**,同樣確認是 remake 專屬。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 694,
+   "excerpt_sha1": "272b704c49d0a4c49c2301deef4339b215581120",
+   "excerpt": "4. **隊伍成員對應——3/4 直接確認,悠妮未能在這場戰鬥取得戰鬥內名牌",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 695,
+   "excerpt_sha1": "85910d514251881118f89aca6aa867d42b87b0ef",
+   "excerpt": "(不算矛盾,誠實記錄為未確認而非湊成全部相符)**:原版戰鬥內狀態畫面",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 696,
+   "excerpt_sha1": "cfa8532c1623b83667a6ee933c9ee9ce718e9e64",
+   "excerpt": "直接確認索爾(HP42人類劍士)、亞雷斯(HP48人類騎士)、蓋亞(HP50機械",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 704,
+   "excerpt_sha1": "63deb40115eed92a9249fc1a861cd00afdfc6dd4",
+   "excerpt": "- 續五(面板肖像)、續六(地圖貼圖)兩個 bug **確認是 remake 專屬**,原版",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 740,
+   "excerpt_sha1": "825d36eb028182c0ca519adfd3a310de2a0a0507",
+   "excerpt": "跟 `tools/parse_field.py` 的 `\"lv\": b[4]` 逐位元組吻合,`esi` base offset `0x83` 也跟",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 746,
+   "excerpt_sha1": "b6966225f4c58a9049ede8331aa38d504a489c7d",
+   "excerpt": "逐byte驗證產出,見 `03-exe-and-data-structures.md` 2026-08-19 節「60列逐byte核對」)",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 765,
+   "excerpt_sha1": "4c3a4b15cf5032dece46d40d2c31dec32668057b",
+   "excerpt": "第3461行已經自己記載過的**「續二十七」(2026-08-19)離線 patch**——當時為了驗證「ch24 敵人",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 774,
+   "excerpt_sha1": "21845bf7b2d5c17c2fc67057cae5bc5c9f1cc274",
+   "excerpt": "從未被標記成「所有其他 session 借用 `~/fd2-run` 做 ground truth 驗證時要注意」的警告。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 814,
+   "excerpt_sha1": "20736d89abaafc62bdf40778f901a1a997b554fe",
+   "excerpt": "doc32 引用驗證過的 ch24 LV14 惡魔(`raw_unit_key`=109,同樣落在 idx41,受影響範圍內;",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 816,
+   "excerpt_sha1": "6dcb8ca98dec008cb9264e17e69a97ad94f25046",
+   "excerpt": "這次連帶釐清了它「尚未被獨立 ground-truth 驗證過」這件事,不是新退步)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 824,
+   "excerpt_sha1": "e7a6b760a27952e07cb245a90ed13305ab6de69e",
+   "excerpt": "它做「HP/MP/AP/DP/DX ground truth」驗證的 session,必須先 `cmp` 一下",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 827,
+   "excerpt_sha1": "9076af2a245e0a21e32c45b0a682bdd024968a1c",
+   "excerpt": "2. 若 ch24/ch27 支線之後確認不再需要這個 debug checkpoint,可以考慮把",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 841,
+   "excerpt_sha1": "bc70c3a4aedbb4f79159b96b383c0338304d6449",
+   "excerpt": "修掉、寫回歸測試、live 重新驗證兩個症狀。續四的「敵方 nerf 失效/整包記錄替換」",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 879,
+   "excerpt_sha1": "f88fce858c91b49e4b5b94549db4f15d7d8bba79",
+   "excerpt": "佐證)明確寫「native unit+7 對玩家單位同時是 FIGANI selector**和**下一次",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 896,
+   "excerpt_sha1": "3a76c232854826a65e28ecc8fd8ae60a403053f8",
+   "excerpt": "等於自己的 `BattleFig`、且不等於索爾的 key(revert 修復後手動確認此測試會",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 908,
+   "excerpt_sha1": "7cc4613170b1c5ee5339533d5b3700d434844b47",
+   "excerpt": "**live 重新驗證(`tools/fd2_live_input_helper.py`,全新隔離 instance",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 917,
+   "excerpt_sha1": "9c1dffc7d8b48a9922a2205d4f4d0c23735d49e2",
+   "excerpt": "取消選取後三個狀態都重新截圖確認過,全部一致正確,**沒有續六記錄的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 925,
+   "excerpt_sha1": "8fd0f1d407fc1064672627d25eb715f3a9a3c05a",
+   "excerpt": "正確顯示 028,放大裁切肖像圖確認是盜賊自己的臉(暗紅頭巾+金屬護目鏡),",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 926,
+   "excerpt_sha1": "604d108af77f623e9a40667d39eed88ac933d539",
+   "excerpt": "不是索爾。同時也確認己方單位(亞雷斯 HP048、悠妮 HP028——這位真正是悠妮",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 929,
+   "excerpt_sha1": "a9310987977bb2e16500cf5d7892614f9527576f",
+   "excerpt": "3. teardown 已確認乾淨:`fd2_live_input_helper.py status` 顯示無殘留 instance,",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 932,
+   "excerpt_sha1": "27f462fd11da4666d9e201092378e97791724895",
+   "excerpt": "**結論**：Bug A、Bug B **兩個都已修復並經 live 重新驗證確認**,根因是同一個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 962,
+   "excerpt_sha1": "152504f735cd6edb6846032d0380ed9b4ede8881",
+   "excerpt": "30-60 次一組+截圖確認進度,同續一/續二記錄的原版逐字對白比 remake 慢約",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 966,
+   "excerpt_sha1": "6358e700d24d67a83800a04ce4f4a433259a2206",
+   "excerpt": "**HP/AP 數值交叉確認(★核心結果,兩項都精確吻合)**:",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 979,
+   "excerpt_sha1": "7ddfabe67fe0cd66fb794e035cdd322cb9bbce7f",
+   "excerpt": "Enter進入目的地預覽游標→移到空格Enter確認移動→自動跳指令環,範圍內有敵人",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 980,
+   "excerpt_sha1": "eb418dbd07d7fafa413ffa5e7a9b877ce4e99e8b",
+   "excerpt": "時攻擊圖示會自動預設→Enter確認攻擊→目標游標自動吸附最近敵人→再Enter出手)",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 998,
+   "excerpt_sha1": "d9555f82072b7c96a162ffabb504ab2693630dfc",
+   "excerpt": "操作深度前也花了續一→續四共4輪才第一次「完整」驗證成功一次攻擊",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 999,
+   "excerpt_sha1": "d468bb0f715e8cf1079a6ed216c78d3d29fc8cdf",
+   "excerpt": "(續四自述「先前續一/續二/續三都只驗證到片段」),而且 remake 有 F3",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1008,
+   "excerpt_sha1": "ad7a1d832758fac3bd288676050bc9165768b051",
+   "excerpt": "1. **不要在有樹木/地形阻隔視線的位置試攻擊**——下一輪選一個目標時,先確認",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1011,
+   "excerpt_sha1": "cf3f3ee9c3b474511201ecc49147684aa64e352e",
+   "excerpt": "2. **一次只送一個方向鍵+單獨截圖確認**,不要像本輪一些步驟圖省事batch了",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1024,
+   "excerpt_sha1": "0b7dde319ac31f6730479ba0332912e7f458661c",
+   "excerpt": "再確認一項HP數值(悠妮028),但傷害數字依然沒能拿到,且證實問題不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1031,
+   "excerpt_sha1": "087adc8e67db4d3782c3d3365914629e53268c39",
+   "excerpt": "目的地預覽游標的方法——**這是錯的**。本輪逐鍵確認:狀態卡顯示時**直接按",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1034,
+   "excerpt_sha1": "d1c20578034fc8d0c3400f0c6f7dfa7e1dc9a070",
+   "excerpt": ".png`用同一招在Ares身上成功重現移動,證實方向鍵直接有效,先前的誤判是",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1039,
+   "excerpt_sha1": "ae2178ed61b40c642bb983105be2358269b6a230",
+   "excerpt": "**HP再確認**:Tab鍵在這個情境下是「切換瀏覽游標到下一個單位」(不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1047,
+   "excerpt_sha1": "cc28e2465c9ce1d15f8df4c82a74cadf842295dd",
+   "excerpt": "到敵人正上方1格,同樣無樹,單鍵單截圖確認每一步)各試一次,**兩次都是",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1052,
+   "excerpt_sha1": "f67a37d4bad9a84d1b6accbaab246908cfc2b93c",
+   "excerpt": "的問題**(本輪已經用最嚴謹的單鍵確認流程,結果仍然一樣)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1054,
+   "excerpt_sha1": "527611d0a2f6dd87f42fdd8679d04fdd4b2ba5db",
+   "excerpt": "**新假說(未驗證,留給下一輪)**:戰鬥開場的「瀏覽游標選單位→狀態卡→",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1057,
+   "excerpt_sha1": "bd12cfad7d51be09ce29853ff36695080a73a256",
+   "excerpt": "「部署完成」的觸發(可能是每個單位都要先過一輪待機/移動確認,或者需要",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1060,
+   "excerpt_sha1": "ae37c091a0f17a45c44e1a8a9b3693c1b5963206",
+   "excerpt": "明確的部署確認步驟,T1一開始就能直接攻擊)——如果原版真的有這個額外",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1062,
+   "excerpt_sha1": "19bf9b76e1d309150dea79a99f667d2399902101",
+   "excerpt": "而不是操作失誤。這個假說本輪沒有時間驗證(需要嘗試找出「部署完成」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1066,
+   "excerpt_sha1": "28bdba37071c3d8370013797fae9a3a5d7ffa954",
+   "excerpt": "**清理**:`origverify2` instance 已 `teardown`,`status`確認清空。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1069,
+   "excerpt_sha1": "30b080bc75ede5e2414533fadc058703c4f59029",
+   "excerpt": "1. **優先驗證「部署階段」假說**——嘗試對所有4名隊員都先做一次移動/待機",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1074,
+   "excerpt_sha1": "31193d7a56f1ea5692e686319e2a3d9b894c4a5a",
+   "excerpt": "enable gate」記載的三個byte(`+6`/`+5&0x80`/`+0x26`),確認到底是",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1089,
+   "excerpt_sha1": "9f5f568dc7b2cbae0fcfc0b4c5c21972cc192344",
+   "excerpt": "ring,不經過真正的移動確認)跟「真正移動確認」(狀態卡→方向鍵移動游標",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1090,
+   "excerpt_sha1": "b842f5c339aeed30d634f09bfe11871187e061a2",
+   "excerpt": "→Enter確認,哪怕淨位移是0)得到的ring**不是同一個東西**——本輪對索爾",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1091,
+   "excerpt_sha1": "a1a4b8fcaaf34089accc3536b2895653e8d06d46",
+   "excerpt": "實測:用Escape捷徑開的ring,連「待機」都會卡進替代畫面失敗;退出來改用",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1092,
+   "excerpt_sha1": "cbdf896ac7582bdcb4a2038ab4f5f392322e84ef",
+   "excerpt": "「方向鍵右→左(淨位移0)→Enter確認」重新開ring,**同一個「待機」指令這次",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1096,
+   "excerpt_sha1": "314e13350861545a11bafca7a8102d3a5da5cf63",
+   "excerpt": "**第二個發現:即使用「真正移動確認」的乾淨路徑,Attack/法術/道具三個指令",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1097,
+   "excerpt_sha1": "1f5149f9d0600155074f1a9861936790f2ac936f",
+   "excerpt": "依然全部失敗,只有待機成功**——對亞雷斯用同樣乾淨的移動確認流程(移到",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1108,
+   "excerpt_sha1": "3b3b9eaff34948f6361dde536114bf71742de438",
+   "excerpt": "**整個session只對索爾做一次移動確認、然後第一次也是唯一一次按Attack**",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1110,
+   "excerpt_sha1": "c4d553126aade9e135dcff0825b572e69a486f90",
+   "excerpt": "(第二次Enter確認)結果相同。這是本輪能做到最乾淨的測試條件(零污染、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1111,
+   "excerpt_sha1": "70e7a6f1405c8321a86df833b5d881bd9b8d8963",
+   "excerpt": "真正移動確認路徑、目標無樹阻隔),Attack依然不通,**排除了「反覆污染",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1112,
+   "excerpt_sha1": "ea26d12d8038556aaef29e9af35c7c74e56ca716",
+   "excerpt": "global state」這個解釋**——剩下最合理的解釋回到這個專案自己反覆驗證過",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1119,
+   "excerpt_sha1": "6a9e2ea97249a68ae4648cb59df7e2fea48f2bda",
+   "excerpt": "**清理**:`origverify3`/`origverify4`均已`teardown`,`status`確認清空。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1122,
+   "excerpt_sha1": "1ebd5a9b27e932b53f59bb45f510a16722303346",
+   "excerpt": "1. **部署階段假說已被推翻,不用再驗證**——問題已釐清是操作路徑(Escape",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1123,
+   "excerpt_sha1": "1e45c3d04a9e39dfe300582155a630f18d93191b",
+   "excerpt": "捷徑 vs 真正移動確認)+可能的座標誤判,不是遊戲機制本身鎖定指令。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1130,
+   "excerpt_sha1": "7f79a8f96ba356c0a716d6682aa71ef69ccb4a87",
+   "excerpt": "3. **操作紀律**:移動確認一律用「方向鍵移動+Enter」的真正路徑,絕對不要",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1132,
+   "excerpt_sha1": "3f4bdce979a3f33235b90dee49a656544c9b38f5",
+   "excerpt": "「方向鍵移0格再Enter」,因為兩者不等價,已用實測證實)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1142,
+   "excerpt_sha1": "048141c5ed219c3ad3b17b48050151e13e4e0734",
+   "excerpt": "再按Enter#2)——確認**不需要移動也能開出4圖示指令環**,推翻「一定要先移動",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1143,
+   "excerpt_sha1": "096371402cb67c46217504b508664c154f0532b5",
+   "excerpt": "確認才能開真正的環」這個(續三留下的)隱性假設,但這個更乾淨的路徑一樣試了",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1171,
+   "excerpt_sha1": "a88450dacc77b2595cb04a8050e595a42379fc85",
+   "excerpt": "實測確認了`+0x40`起這一串u16欄位的完整語意**,跟doc58續十三舊記錄的「敵我",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1207,
+   "excerpt_sha1": "0b7124af9068b424d8a7e7bf6841149d5b0b0855",
+   "excerpt": "2. 已經有本輪驗證過的offset表(`+0x40`起8個欄位)可以直接用來**在記憶體",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1253,
+   "excerpt_sha1": "1d34acde16a89b3a36a7e3cb660e398cfe74494f",
+   "excerpt": "**清理**:`origverify6`已`teardown`,`status`確認清空。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1257,
+   "excerpt_sha1": "1506d85ba74feaa8509cddeb86b157faa5ae75f0",
+   "excerpt": "本身很重要,避免未來繼續在同一個錯誤的位址上打轉。已驗證的`+0x40..+0x4f`",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1259,
+   "excerpt_sha1": "a8508f043f867060b96ff40f3c503a8a61232e8b",
+   "excerpt": "只是「用HP數字當簽章搜到的第一個命中」不能假設就是動態陣列,還需要驗證",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1266,
+   "excerpt_sha1": "85af157edfa3097f5058dac440c4f77027a1f85b",
+   "excerpt": "2. 有一個簡單的判斷法可以事先驗證候選位址是靜態還是動態,不需要完整",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1270,
+   "excerpt_sha1": "f38d78de24db552bf65272a13ed51262781ebc61",
+   "excerpt": "3. 開環的Enter鍵送出後,建議先screenshot確認畫面真的變成4圖示環,",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1291,
+   "excerpt_sha1": "4e1f7297d6003c2d3832a80045df85c0d0e7f931",
+   "excerpt": "**在套用修法前先live驗證`windowfocus --sync`本身在這個環境下到底可不可行**",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1301,
+   "excerpt_sha1": "2092e67db97a32715c9352a13402ad80f7725946",
+   "excerpt": "只警告不中斷,因為doc58已證實不同視窗類型/toolkit可能表現不同)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1303,
+   "excerpt_sha1": "2b19ede8103f59f0071a0272a80b0e8bd8e6168c",
+   "excerpt": "**修法後的live驗證(新開`toolfix1` instance,`~/fd2-run-pristine`乾淨副本,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1314,
+   "excerpt_sha1": "079a90fa90e2ca818df64774ec53f0dbf69a85aa",
+   "excerpt": "不同**,證實畫面上有持續跑的動畫(很可能是ring圖示本身的小動畫,或HP/MP",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1320,
+   "excerpt_sha1": "512a6d02bd46d7481b7f2ed9daf7a8a5ad2b9345",
+   "excerpt": "`dosbox_harness.sh`原始碼註解記錄本次修法與驗證,doc98可再補一筆)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1321,
+   "excerpt_sha1": "ffc25ad6b17510d50149cda8fcd76e92dfebd9e3",
+   "excerpt": "3. **Attack(上)+Enter確認後,畫面仍停在ring/看不出明顯進入目標選擇畫面**",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1329,
+   "excerpt_sha1": "2e6f8e7c6e8398e05acb9c50d98d27a7bd7d0be6",
+   "excerpt": "找到並修好一個真實、有原始碼佐證、doc58自己都已經建議過卻從未套用的按鍵",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1336,
+   "excerpt_sha1": "b2f8e82fd2eaa4277673a330a557dc795922df3d",
+   "excerpt": "建議先做`feedback_verify_ui_slot_mapping_with_markers`要求的markers驗證,",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1339,
+   "excerpt_sha1": "5351103f7fd4412d3b2ff252e018eca4df60afbc",
+   "excerpt": "**清理**:`toolcheck`/`toolfix1`皆已`teardown`,`status`確認清空。修法已",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1342,
+   "excerpt_sha1": "dfabb31e67cbd53bcf25297179dfa3ec48fb4f3a",
+   "excerpt": "## 2026-09-02 續七:用戶要求「再重新驗證之前發生錯誤的部分」——在完整驗證過的工具上重測Attack/Wait,重大進展:Wait確定可用,問題重新定位到「亞雷斯選單根本不是戰鬥指令環」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1356,
+   "excerpt_sha1": "23f812e792772b88d9be8a77c4b96ba1b7e1a4ea",
+   "excerpt": "1. 用doc13記載的流程(第一次Enter→HP/MP狀態卡+移動範圍十字；第二次Enter於原地確認→開啟指令環)，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1369,
+   "excerpt_sha1": "7c254e57ffc8c958eeb973a5322fb4e5459aebbb",
+   "excerpt": "確認框「要結束本回合的行動嗎?」——按NO正確取消、按YES的路徑沒測(避免真的消耗亞雷斯回合)。按",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1392,
+   "excerpt_sha1": "0b4b672c280909e581e08c1b69e71c2da5d935f6",
+   "excerpt": "**清理**：`reverify1`已`teardown`，`status`確認清空。本輪沒有程式碼異動，純調查+文件記錄。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1405,
+   "excerpt_sha1": "4e76ecf7f3e912f75a8613d4abcf570861364bdb",
+   "excerpt": "沒有角色頭像——**證實游標當時真的不在任何單位身上**，Enter跳出的「記錄/道具庫/設定/END」選單",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1408,
+   "excerpt_sha1": "4bd5cf3d897225bdf0c350c7f92a06c2bc03f85f",
+   "excerpt": "確認是悠妮)。對悠妮按Enter，得到跟索爾一模一樣的HP/MP狀態卡+移動範圍流程(悠妮LV.01/HP028/",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1409,
+   "excerpt_sha1": "eaaaf2f33015abb1f0b44851898b9300fe0fc599",
+   "excerpt": "MP008)，開ring後外觀跟索爾的略有不同(圖示形狀因單位/職業而異)但結構相同，「下」+Enter確認Wait",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1417,
+   "excerpt_sha1": "859cb05afb18559f20e5c1587f61e9ad545adeaf",
+   "excerpt": "兩個獨立單位上都乾淨、明確地確認可以正常執行；Attack/Spell/Item真正的可用性仍未在「確定選中",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1419,
+   "excerpt_sha1": "de1395e41f5f9ed434a0a7221e0647e4977daac9",
+   "excerpt": "繼續深挖攻擊功能時，第一件要重做的事——先確認迷你狀態卡有角色頭像再操作，不要只看游標框位置。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1421,
+   "excerpt_sha1": "6cf8bdcc05d26efb759e78bab5cd1dcedf76ee5f",
+   "excerpt": "**清理**：`cursorcheck`已`teardown`，`status`確認清空。本輪沒有程式碼異動。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1423,
+   "excerpt_sha1": "11dc0ed55494a3d5809b67b5d91f28cc651d6956",
+   "excerpt": "## 2026-09-02 續九：用戶要求「先確認為何之前會發生錯誤」——找到續八誤判背後真正的視覺機制",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1426,
+   "excerpt_sha1": "bbd62c20a603597969e6a483501cea6beb3ea3e3",
+   "excerpt": "是亞雷斯)/`step_down`(確認悠妮)三張截圖的同一塊畫面座標疊在一起比對(背景像素完全對齊，因為",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1429,
+   "excerpt_sha1": "21d794de7249380788479e8a99268daae35550aa",
+   "excerpt": "1. `step2`→`step3`只按了一次「右」，游標框水平右移整整一格、**垂直高度完全沒變**——證實「右」",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1444,
+   "excerpt_sha1": "9820bf0c9f4c4951ca720c7f00c993e9a78ba4ca",
+   "excerpt": "**未來任何需要確認「游標/選取框是否對準特定單位」的操作，都應該優先看迷你狀態卡或等效的遊戲內",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1448,
+   "excerpt_sha1": "6d21b3b26797095d4d196f62f9b5dbb229d61c7a",
+   "excerpt": "## 2026-09-02 續十：用戶要求「請接續測試下去」——在完全確認過的條件下正式測Attack，乾淨的新結果：不是Attack本身壞了，是亞雷斯這個單位全部卡住",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1455,
+   "excerpt_sha1": "2e6f216de8616055c0c946a72804b39187d3079e",
+   "excerpt": "1. 選中亞雷斯(狀態卡顯示`亞雷斯 LV.01 HP048/048`，姓名文字直接確認，不是猜)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1457,
+   "excerpt_sha1": "9dd30039bf449e92ac86cd67bf0ab87bbc8c9152",
+   "excerpt": "底邊對齊敵人腳底，不是斜對角，確認是真正的上下左右相鄰(這次特別避開續九發現的「立繪戳上一格」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1461,
+   "excerpt_sha1": "62d1fdfcbf7f27e31dfa0ff30975497a28268fb1",
+   "excerpt": "不會繼續前進，Enter第三次同一張卡，畫面完全靜止不變——即使在確認過真的相鄰、真的是本人、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1469,
+   "excerpt_sha1": "f3a85cb53b108fef94d00441a9789ae8b77d08d3",
+   "excerpt": "這個方向本身有問題」或「距離不夠」——這次確認距離、身分都對，Attack還是卡住，但更關鍵的是連",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1471,
+   "excerpt_sha1": "72934f847209a4ca9156c93f52b23f8744458222",
+   "excerpt": "的所有已測方向都正常運作(至少Wait乾淨確認過)；亞雷斯這一個單位，不論按哪個方向，一律卡在同一張",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1475,
+   "excerpt_sha1": "8797f4623050318039add5fb0ea926261f3d418d",
+   "excerpt": "裡，第三個gate(`+0x26`)本來就是本專案先前(續四/續五)一直懷疑但無法live驗證到的候選——這次的",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1480,
+   "excerpt_sha1": "c3aee24d20213a44d3e4814ca92dcd7feb1d62dd",
+   "excerpt": "**清理**：`attacktest`已`teardown`，`status`確認清空。本輪沒有程式碼異動，純調查+文件記錄。真正",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1481,
+   "excerpt_sha1": "ea484d980bfdc8d4bde493922338f726b6423e01",
+   "excerpt": "驗證這個假說需要doc58續十三那套完整的delta校準+指標解參照技巧去讀亞雷斯真正的動態unit record，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1484,
+   "excerpt_sha1": "bacf1bc764f16c0b17049a625bc1a7b0adf994b3",
+   "excerpt": "## 2026-09-02 續十一：用戶追問「周邊確認有敵人嗎？」——用同一套迷你狀態卡方法雙重核對，確認續十的相鄰判斷成立",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1488,
+   "excerpt_sha1": "7e392e743c32f8caba8f30e497c2f3bd45dc0e08",
+   "excerpt": "(不是續九發現的「立繪戳上一格」那種空地錯覺)——**確認這格真的是一個真實敵人，不是空地或視覺",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1490,
+   "excerpt_sha1": "75211061f486713ea830930c8b9b01d59f689937",
+   "excerpt": "攻擊的那一格**——雙重確認亞雷斯當時的位置真的緊鄰(正左方，非斜對角)這個敵人。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1496,
+   "excerpt_sha1": "4aa16d7dd5658eb81c2d5cc96d13dbb9e3d18f83",
+   "excerpt": "**清理**：`enemycheck`已`teardown`，`status`確認清空。本輪沒有程式碼異動。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1505,
+   "excerpt_sha1": "cb9a82769f931da05ea073ae30dba0148ec565a4",
+   "excerpt": "敵人旁邊(緊鄰關係已用迷你狀態卡方法確認)，按「上」(攻擊)+Enter+再Enter：卡在裝備狀態卡，跟",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1509,
+   "excerpt_sha1": "7480441cb100cd6a147553e5790fea0ef8beaa06",
+   "excerpt": "**關鍵對照組**：同一個instance，Escape取消移動(亞雷斯彈回原位，確認取消機制)，改選**索爾**，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1510,
+   "excerpt_sha1": "fee5ed5f2c93a426dfd381582cd6e3c42db1f569",
+   "excerpt": "這次讓他**真的移動2格**(不是原地確認)，再測待機：**成功**，索爾正確變灰階石化。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1515,
+   "excerpt_sha1": "e02ce6a2d724a879486f6a55c66d9e39738125c2",
+   "excerpt": "2. 這個單位這一回合**真的移動過**(非原地確認)——亞雷斯原地不動時一切正常，索爾/悠妮不論有沒有",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1524,
+   "excerpt_sha1": "0142c826fbcfe5a32289a3dd965db1d945466c0e",
+   "excerpt": "`+0x26`欄位移動前後的值)才能證實，這仍然是續五已經標記的獨立future task範圍，本輪透過純live操作",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1527,
+   "excerpt_sha1": "d4ff3ee2d0884f8ecb5b138034ce22a73692edf2",
+   "excerpt": "**清理**：`ordertest`/`ordertest2`皆已`teardown`，`status`確認清空。本輪沒有程式碼異動。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1529,
+   "excerpt_sha1": "bbbf5b64eb930e05be314989a26556e4b8f49f65",
+   "excerpt": "## 2026-09-02 續十三：嘗試HP-signature捷徑讀「亞雷斯剛移動完」那一刻的記憶體——再次確認(不是新發現)撞到續五已知的靜態模板牆",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1544,
+   "excerpt_sha1": "bcb7ed57c645e15d4432663e9b3267218daa59f4",
+   "excerpt": "「通過」，但畫面上亞雷斯的ring明明卡住**，這個矛盾直接證實讀到的不是他真正移動後的動態狀態，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1548,
+   "excerpt_sha1": "1a9e72d95d8fcbbf06f908e235dc1497a994162c",
+   "excerpt": "是續五已經預期、這次直接驗證確認的已知限制——**再次確認不需要在未來任何一輪重複嘗試這個捷徑**，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1552,
+   "excerpt_sha1": "bed7910044fe33c971d321ab58d6d2ce2f1d7185",
+   "excerpt": "**清理**：`memcheck`已`teardown`，`status`確認清空。本輪沒有程式碼異動。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1578,
+   "excerpt_sha1": "f0037a4fc99d67b009b78658362f75adefa69d24",
+   "excerpt": "**驗證這真的是動態陣列，不是續五誤判的靜態模板**：dump陣列前4筆記錄，逐一核對HP數值：",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1601,
+   "excerpt_sha1": "701ae71e0994c298bf491abafec25d91a5ef536b",
+   "excerpt": "靜態模板的捷徑——這個方法本身現在被證實在這個環境下高度可重現（兩個獨立開機、同一個delta、",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1615,
+   "excerpt_sha1": "ad7090872d2da67769ce9e74fd21c7f603f48cd3",
+   "excerpt": "失敗（連續按2-3次都沒有真的恢復執行，只有`I-> _`提示字元這個已知會stale的訊號誤導判斷）——**確認",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1619,
+   "excerpt_sha1": "f727a580c5e035d0d48fd1fb227f88565d23054c",
+   "excerpt": "方法在這類畫面上比在ring畫面上更適用需要靠「送一個會造成明顯位移的按鍵、直接看有沒有位移」交叉確認)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1621,
+   "excerpt_sha1": "5697b9073fb2aae1947e0e5bc98d01134d378196",
+   "excerpt": "**清理**：`deltachase`/`deltachase2`皆已`teardown`，`status`確認清空。本輪沒有程式碼異動，純調查+",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1637,
+   "excerpt_sha1": "91b97cdc126451a7ba41cc9e9e3482cfb4d64f68",
+   "excerpt": "「事後比對記憶體快照」的方式，直接證實**Attack分支真的被dispatch、真的執行到候選掃描這一步**，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1647,
+   "excerpt_sha1": "b88349109e297d96fb142a27d71e2cd21df40adb",
+   "excerpt": "偶發的按鍵時序問題從「需要人工介入」變成「大多數時候自己就恢復」。修好後live重新驗證：同一個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1656,
+   "excerpt_sha1": "1298b77a89929ca1aee5d8e5d9220b609c606c81",
+   "excerpt": "依然全部「通過」，跟續十六完全一致，再次獨立確認gate3假說不成立。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1663,
+   "excerpt_sha1": "b88539775b40b3fbffca1267233e2047787ef941",
+   "excerpt": "**清理**：`bpchase`已`teardown`，`status`確認清空。程式碼異動：`fd2_dosbox_live_helper.sh`/`.py`",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1666,
+   "excerpt_sha1": "52d6f80a9000516fdb52cb58ceccf8edcf0ed205",
+   "excerpt": "## 2026-09-02 續十六：用戶要求「自動繼續進行後續所有測試」——重大轉折：確認裝備卡完全不經過doc13記載的任何一個已知函式",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1670,
+   "excerpt_sha1": "5d0c77de55d14583cedf96720997fdfabfebbf22",
+   "excerpt": "每加一個就完整重測一次「按Enter確認攻擊」，全程用screenshot-diff(而非tmux pane文字)判斷真假暫停：",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1702,
+   "excerpt_sha1": "1eddfe97c112f8e53151e0ff3c4b7fffd29afb79",
+   "excerpt": "非ring-specific的成功路徑——這一點本輪沒有機會驗證(嘗試導覽到索爾時畫面卡住不動，可能是這個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1706,
+   "excerpt_sha1": "319d56691eb06dfca9f837837a8b6f9f10740a16",
+   "excerpt": "**清理**：`tracechase`已`teardown`，`status`確認清空。本輪沒有程式碼異動，純調查+文件記錄。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1734,
+   "excerpt_sha1": "74cf5ca042cac5def74036bad7a95a054a2c333a",
+   "excerpt": "**清理**：`controltest`已`teardown`，`status`確認清空。本輪沒有程式碼異動，純調查+文件記錄，但這是",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1735,
+   "excerpt_sha1": "50da12617a3b4a31e45adc9e07837d131f50f522",
+   "excerpt": "整個Attack調查(續九~續十七)第一次拿到「方法論被獨立驗證為正確」的堅實結論。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1743,
+   "excerpt_sha1": "7884be5b7d3f69d777d12bce6562da5f03049faf",
+   "excerpt": "**發現先前所有輪次(續一~續十七)的「Enter→方向鍵→Enter確認移動」操作，在這次逐鍵+screenshot確認",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1748,
+   "excerpt_sha1": "1b2181bec48c743755f53bd82371b81bf4d48af6",
+   "excerpt": "2. **直接接著送方向鍵(不要再按第二次Enter)**：這次確認方向鍵真的會移動一個獨立的「目的地預覽",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1750,
+   "excerpt_sha1": "cd030152413880bb381dbce997ddbcbb7c2c1fc1",
+   "excerpt": "3. 移到敵人相鄰格、按Enter確認：**這次亞雷斯真的移動了**(先前很多輪因為多按了一次不必要的",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1752,
+   "excerpt_sha1": "afcbc299626df69ac7e9009b2bb13d1e1e2b69f9",
+   "excerpt": "移動普通瀏覽游標，最後的Enter落在空地上觸發「要結束本回合的行動嗎?」而非確認移動——這個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1753,
+   "excerpt_sha1": "eeb58cefd922332d5ec79da29c850c3924fcfcde",
+   "excerpt": "誤觸的YES/NO對話框本身也是本輪意外發現，已用Escape安全取消，確認「那麼就不要了」的取消文字)。",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1762,
+   "excerpt_sha1": "5d3df517c882637ecb63184b7d60ade94a0e795a",
+   "excerpt": "**★ 核心結果**：resume後對亞雷斯送「上(攻擊方向)+Enter」，screenshot-diff確認真的暫停了——",
+   "verdict": "benign",
+   "note": "延續句，screenshot/像素比對驗證描述，證據context在同段落既有DOSBox-X marker"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1771,
+   "excerpt_sha1": "c5c3d42c04cfc608d79e7c9fe3e59774030a69dc",
+   "excerpt": "`0x02`且送出Left後值沒變**，不足以確認語意，判斷是本輪還沒抓對觸發子選單重繪的確切時間點，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1778,
+   "excerpt_sha1": "85460dd8a67ddc53dd98169f85da2132bcbad428",
+   "excerpt": "4次重現全部沒命中的真正原因，本輪懷疑(未證實)是續十六的移動流程本身可能也踩到同一個",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1779,
+   "excerpt_sha1": "ff277451eab2f37b9f6d49bce5ff44155b54a7be",
+   "excerpt": "「移動預覽狀態提前逾時→方向鍵變成瀏覽游標→最後Enter沒有真的確認移動」陷阱，導致「移動」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1781,
+   "excerpt_sha1": "e4dd8e4bbf967b1841d10e4120c9aa0e67c38d9e",
+   "excerpt": "反覆記錄的「移動後才會卡」現象並不矛盾(因為續十/續十二用迷你狀態卡等其他方式間接確認過確實",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1782,
+   "excerpt_sha1": "e55dbfb27bce95c9845ed6936ae64382447223ca",
+   "excerpt": "移動成功)，但續十六本身沒有針對「這次移動是否真的生效」做同等嚴格的確認，值得懷疑。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，M5正常玩法逐章驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1787,
+   "excerpt_sha1": "ac8ccedbb13ea27f9a7c2750e3bc0fe169e0b582",
+   "excerpt": "3. 下一輪的優先任務：(a)用這輪修正過的、確認可靠的移動+ring操作流程，刻意重新嘗試多次「上/左/",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1793,
+   "excerpt_sha1": "07ccd0c911d316400a915e332a24d5971a6a49ea",
+   "excerpt": "**清理**：`aresleadtest`已`teardown`，`status`確認清空。本輪程式碼異動：無。文件異動：本節。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1798,
+   "excerpt_sha1": "b967f1e7fbf5c7e808bc07fd51b3178368d62bc4",
+   "excerpt": "新開`stuckretest`，重演到部署，用續十八修正過、確認可靠的流程移動亞雷斯到敵人相鄰格(這次一次",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1799,
+   "excerpt_sha1": "ceb199a72bd31ccad619a86afef74388fe0b9602",
+   "excerpt": "`send-keys`批次送出`Return Right Right Down Return`就順利成功，ring正確在新位置自動開啟，證實",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1802,
+   "excerpt_sha1": "dad9bf420dc8c148592b1785550a4c270292cd7d",
+   "excerpt": "**★ 卡死bug確認真的重現**：按「上」+Enter，畫面先短暫顯示一個全藍4圖示子選單(頭盔/上半身盔甲/",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1806,
+   "excerpt_sha1": "6f486d7cd14b03760a0ef2d71e570c12f592df6c",
+   "excerpt": "確認卡死**。這是本次整個調查第一次在「確認移動流程本身正確」的前提下，乾淨地重現原始bug，",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1825,
+   "excerpt_sha1": "6068ff9ac33fb910856308f03cf4761f4f7694bb",
+   "excerpt": "兩個——**確實被呼叫，且順序符合續十七研究agent的分析**，這證實「卡死卡」畫面的內容真的是",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1853,
+   "excerpt_sha1": "09702caf0abe628a504832a679deaba0d72a24a7",
+   "excerpt": "**清理**：`stuckretest`已`teardown`，`status`確認清空。本輪程式碼異動：無。文件異動：本節。",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "92-m5-normal-playthrough-log.md",
+   "line": 1916,
+   "excerpt_sha1": "00adac098f6e604ca108c4aa62128201ef9b2168",
+   "excerpt": "3. 對Sol/Yuni也測一次「物品」指令，確認他們是否也會因為消耗品清單為空而看到同樣的裝備後備卡",
+   "verdict": "benign",
+   "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
   }
  ]
 }
