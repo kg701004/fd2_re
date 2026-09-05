@@ -146,14 +146,24 @@ def ring_selection(inst: str, selector: str = "0170") -> int | None:
     return v
 
 
-def select_ring(inst: str, want: int, key: str, selector: str = "0170") -> bool:
+def select_ring(inst: str, want: int, key: str, selector: str = "0170",
+                blind: bool = False) -> bool:
     """按方向鍵選環項,**回讀確認真的選中了才回 True**。
 
     方向鍵是絕對設值但**受該項的 enable gate 管**(doc13:834)。項目不可用時
     按鍵毫無作用,而環的選擇維持原值——後面若照樣按確認,執行的就是別的指令。
     這是整個 autoplay 裡唯一還沒被排除的「盲按」,見 attack_unit 的說明。
+
+    2026-09-05:`blind=True` 時完全跳過這個回讀(不呼叫 `ring_selection()`,即不
+    `enter_debugger`)——doc13 2026-09-05 §8 的假說是「debugger 反覆下斷點/讀值」
+    本身才是 C.16 DOS-exit 的變因,不是遊戲邏輯。這個旗標讓 `fd2_trial_runner.py`
+    能做一次正規配對試驗:固定攻擊語意,只切換「這裡要不要真的進 debugger 讀值」。
+    盲模式下永遠回傳 `True`(假設按鍵生效)——**這比原本更不可靠**,只用於這個特定
+    的因果排除實驗,不要在別的地方預設用它。
     """
     press(inst, key, 1.2)
+    if blind:
+        return True
     sel = ring_selection(inst, selector)
     if sel == want:
         return True
@@ -161,7 +171,7 @@ def select_ring(inst: str, want: int, key: str, selector: str = "0170") -> bool:
     return False
 
 
-def attack_unit(inst: str, selector: str = "0170") -> bool:
+def attack_unit(inst: str, selector: str = "0170", blind: bool = False) -> bool:
     """已對準單位時嘗試原地攻擊。**確認環真的選在「攻擊」才按下去。**
 
     doc13 §「指令環4選項的動態 enable gate」記載的真實程式碼:
@@ -180,7 +190,7 @@ def attack_unit(inst: str, selector: str = "0170") -> bool:
     """
     press(inst, "confirm", 1.8)   # → 移動選格
     press(inst, "confirm", 2.2)   # 確認原地 → 開環
-    if not select_ring(inst, RING_ATTACK, "up", selector):
+    if not select_ring(inst, RING_ATTACK, "up", selector, blind=blind):
         # 不按確認。取消退出環,把單位留給後續邏輯,而不是執行未知指令。
         press(inst, "cancel", 1.0)
         return False
@@ -197,7 +207,7 @@ def nearest_foe(u: dict, units: list[dict]) -> dict | None:
 
 
 def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
-                      dest_mode: str = "computed") -> None:
+                      dest_mode: str = "computed", blind: bool = False) -> None:
     """進移動選格 → 朝敵人移動到相鄰格 → 確認落點 → 攻擊。
 
     2026-09-04:舊版的 `--attack` 只在**已經相鄰**時攻擊,否則原地休息。
@@ -232,7 +242,7 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
     for _ in range(abs(dy)):
         press(inst, "down" if dy > 0 else "up", 0.8)
     press(inst, "confirm", 2.2)          # 確認落點 → 環
-    if not select_ring(inst, RING_ATTACK, "up"):
+    if not select_ring(inst, RING_ATTACK, "up", blind=blind):
         press(inst, "cancel", 1.0)
         return
     press(inst, "confirm", 3.0)          # 執行 → 目標選擇
@@ -245,11 +255,11 @@ def adjacent_foe(u: dict, units: list[dict]) -> bool:
                for v in units)
 
 
-def rest_unit(inst: str) -> None:
+def rest_unit(inst: str, blind: bool = False) -> None:
     """已對準單位時,讓它原地結束行動。"""
     press(inst, "confirm", 1.8)   # → 移動選格
     press(inst, "confirm", 2.2)   # 確認原地
-    if not select_ring(inst, RING_REST, "down"):
+    if not select_ring(inst, RING_REST, "down", blind=blind):
         press(inst, "cancel", 1.0)
         return
     press(inst, "confirm", 3.0)
@@ -274,6 +284,12 @@ def main() -> int:
                     help="相鄰有存活敵方時改為攻擊(ring index 0)而不是原地結束")
     ap.add_argument("--clear-enemy-bit0", action="store_true",
                     help="把敵方 record[+5] 清 0(還原先前實驗寫入的 raw bit0)")
+    ap.add_argument("--blind", action="store_true",
+                    help="環選擇(select_ring)跳過 debugger 回讀驗證,盲按之後假設生效。"
+                         "2026-09-05 doc13 §8 因果排除實驗用:測試 C.16 的 DOS-exit 是否"
+                         "其實是 debugger 反覆進出造成的工具假象,不是遊戲邏輯本身。"
+                         "只影響 select_ring 這一個讀值點,不影響本工具其餘的 snapshot 驗證"
+                         "(那些是判斷「動作有沒有生效」用的,拿掉會讓工具失去糾錯能力)。")
     a = ap.parse_args()
 
     if a.ensure_browse:
@@ -338,11 +354,12 @@ def main() -> int:
             tgt = min(todo, key=lambda u: abs(u["x"] - cur[0]) + abs(u["y"] - cur[1]))
             move_cursor(a.instance, cur, (tgt["x"], tgt["y"]))
             if a.attack and adjacent_foe(tgt, units):
-                attack_unit(a.instance)
+                attack_unit(a.instance, blind=a.blind)
             elif a.attack and nearest_foe(tgt, units):
-                approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv, a.dest)
+                approach_then_act(a.instance, tgt, nearest_foe(tgt, units), a.mv, a.dest,
+                                  blind=a.blind)
             else:
-                rest_unit(a.instance)
+                rest_unit(a.instance, blind=a.blind)
             # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。
             # 沒有這一步,失敗會安靜地累積成「跑了 N 回合、什麼都沒發生」。
             _, snap2 = snapshot(a.instance, a.selector, a.count)
@@ -354,7 +371,7 @@ def main() -> int:
                     proved_this_turn = True
                     _, snap3 = snapshot(a.instance, a.selector, a.count)
                     move_cursor(a.instance, snap3[0]["cursor"], (tgt["x"], tgt["y"]))
-                    rest_unit(a.instance)
+                    rest_unit(a.instance, blind=a.blind)
         # 回合結尾統計必須避開轉換窗口:2026-09-04 實測,`+6` 陣營位元組在回合翻轉
         # 瞬間會全部讀成同一值,舊版因此把我方 idx3 印成敵方。神諭會明確回報
         # TRANSITION_UNREADABLE,此時**不報數字**,等到可讀再報。
