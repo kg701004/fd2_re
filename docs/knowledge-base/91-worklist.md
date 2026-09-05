@@ -1512,6 +1512,25 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
       負對照 ch02 按 `Ctrl+F1` 無反應。
       **ch03（`Ctrl+F2`）仍不觸發，但已大幅收窄**：不是修飾鍵送不進去（三族都成功過），
       也不是 selection 索引對不上（5 個 selection 逐一測過）。剩餘可能為表格值有誤或另有前置條件。
+      **2026-09-05 純靜態複查（`ghidra_batch_probe.py` bytes action，未碰 DOSBox-X）：
+      「表格值有誤」這個候選已被排除**——重新對 `0x6238d`+`(chapter-2)*0x1f` 逐章 `bytes`
+      讀出 ch03/ch04/ch05/ch06/ch07/ch13 六筆 record（含一次位移公式的自我更正：
+      base `0x6238d` 本身對應的是 ch02，不是 ch01，記錄陣列從 ch02 開始編號，先前
+      `(chapter-1)*0x1f` 的算法會系統性抓到「下一章」的 record，本輪用已知的 ch04/ch05/
+      ch06/ch07/ch13 五筆全部命中做交叉核對，逐位元組精確吻合 `docs/data/
+      native_chapter_tables.json` 記載的 `[selection, scan_code]`，才回頭發現舊算法的
+      off-by-one）：ch03 record `+1/+2` = `01 5f`（selection=1、scan=0x5f=95，逐位元組
+      對上既有表格值，不是誤植）。**因此剩餘假說收斂為「另有前置條件」，不是表格資料本身
+      的問題**。順帶發現:31-byte record 的 `+0` 恰好等於 `town_variants` 記載的同一章
+      discriminator（ch03 `+0=0x02`，與既有表格 `town_variants.ch03=2` 一致）——證實這是
+      一個被 `0x2cd16`(town variant)與 `0x2cde0`(secret gate)兩個消費端共用的單一
+      per-chapter record，不是兩張獨立的表。**未查完的線索（留給下一輪）**：record `+3`
+      起是一串以 `0xff` 結尾的 byte 序列（ch03 例：`00 01 20 84 a5 ff...ff c0 ff...ff c1 ce
+      ff...`），數值範圍(0x20/0x84/0xa5/0xc0/0xc1/0xce)落在 `item.json` id 範圍內，形狀像
+      「這一章解鎖的商品/道具 id 清單」——如果秘密商店的觸發除了 selection+scan code 之外
+      還需要某個道具/旗標存在於玩家 inventory 或 persistent state 才會 reveal，這串位元組
+      可能就是答案，但本輪只讀出位元組，未反組譯 `0x2cde0..0x2cef7` 消費端邏輯確認語意，
+      也沒有做任何 DOSBox-X 活體測試去驗證「補上這個道具/旗標後 ch03 是否真的能觸發」。
 - [~] **轉職成長的獨立取樣（2026-09-03，部分完成）**——**隨機性已確認**
       （同角色同轉職觀測到 MHP 14／15／16），但**原本設想的去相關手法實測無效**：
       進教會前多按 0~45 個城鎮方向鍵，六個樣本值完全相同 → 這個 RNG 不是被 hub 按鍵推進的。

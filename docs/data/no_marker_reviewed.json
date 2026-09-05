@@ -31896,6 +31896,30 @@
    "excerpt": "`fd2_stat_override.py` 先套用預設值),下一輪如果要繼續追,建議先確認前幾輪 rest_unit()",
    "verdict": "benign",
    "note": "延續句(本輪剛新增)，未來式建議下一輪核對動作序列"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1520,
+   "excerpt_sha1": "4a7d3dfc234e8e565410c4b82d8201f2e672a239",
+   "excerpt": "ch06/ch07/ch13 五筆全部命中做交叉核對，逐位元組精確吻合 `docs/data/",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，交叉核對過程描述，逐位元組吻合的具體證據在鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1522,
+   "excerpt_sha1": "25455da379920c01a7bc2d5aee3e46e5ea8e9cf7",
+   "excerpt": "off-by-one）：ch03 record `+1/+2` = `01 5f`（selection=1、scan=0x5f=95，逐位元組",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，byte級核對結果，offset(+1/+2)低於門檻"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1525,
+   "excerpt_sha1": "46296bb741ac59153463d3d9e8f203ddca7b63b4",
+   "excerpt": "discriminator（ch03 `+0=0x02`，與既有表格 `town_variants.ch03=2` 一致）——證實這是",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，交叉參照town_variants既有表格"
   }
  ]
 }
