@@ -48,6 +48,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
@@ -303,6 +304,101 @@ def report(claims: list[Claim], only: str | None, limit: int) -> None:
             print(f"    {c.excerpt[:170]}")
 
 
+def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
+    """把 NO_MARKER 存量按檔案分組、**依筆數由少到多排序**印出來。
+
+    2026-09-05:3987+ 筆 NO_MARKER 本身不是能一次做完的量,但它不是均勻分布在
+    35 個文件裡的——先前的「文件層級標記密度」自動分類已被本檔上方負對照否決
+    (量不出「這份文件本質上是不是 remake 紀錄」),但**單純數筆數**是另一回事,
+    不涉及任何猜測來源的判斷,只是把「一次做完 3987 筆」重新框成「依序做完
+    N 份文件,每份幾筆到幾十筆不等」——跟 2026-09-05 稍早那次 27 筆
+    REMAKE_ONLY 逐筆複核走的是同一個「先讓範圍變得可管理」的做法,不是新招。
+
+    不猜測、不分類來源,只排序——真正的人工判讀(這句話到底該補 ORIGINAL 還是
+    REMAKE_ONLY 依據,還是根本沒有問題只是漏標)留給實際讀那份文件的人或後續任務。
+    """
+    import collections
+    nm = [c for c in claims if c.status == "NO_MARKER"]
+    # 沿用 REMAKE_ONLY 已經驗過的 REMAKE_SIDE_DOCS 名單(人工判斷、附理由,不是新猜測)——
+    # 這些文件本身就是 remake 側紀錄,裡面的 NO_MARKER 多半只是「沒有重複標記」,
+    # 不是「藏著一個只靠 remake 撐住的原版事實」那種真正的風險案例。分開統計,
+    # 不是說這些文件裡的 NO_MARKER 保證沒問題,而是**優先度**遠低於原版知識文件裡的。
+    on_remake_side = [c for c in nm if c.file in REMAKE_SIDE_DOCS]
+    needs_review = [c for c in nm if c.file not in REMAKE_SIDE_DOCS]
+    print(f"\n=== NO_MARKER 分層(沿用 REMAKE_SIDE_DOCS 名單)===")
+    print(f"  落在 remake 側紀錄文件(優先度低)     {len(on_remake_side):5}")
+    print(f"  落在原版知識文件(**真正待處理**)      {len(needs_review):5}")
+
+    per_doc: dict[str, list[Claim]] = collections.defaultdict(list)
+    for c in needs_review:
+        per_doc[c.file].append(c)
+    ordered = sorted(per_doc.items(), key=lambda kv: len(kv[1]))
+    print(f"\n=== 原版知識文件裡的 NO_MARKER 待辦清單(依檔案筆數由少到多,"
+          f"共 {len(needs_review)} 筆、{len(ordered)} 份文件)===")
+    running = 0
+    for f, cs in ordered:
+        running += len(cs)
+        print(f"  {len(cs):4}  {f}  (累計 {running}/{len(nm)})")
+    if out_dir:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for f, cs in ordered:
+            payload = [{"file": c.file, "line": c.line, "excerpt": c.excerpt} for c in cs]
+            (out_dir / f"{f}.json").write_text(
+                json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+        (out_dir / "_order.json").write_text(
+            json.dumps([{"file": f, "count": len(cs)} for f, cs in ordered],
+                      ensure_ascii=False, indent=1),
+            encoding="utf-8")
+        print(f"\n已匯出 {len(ordered)} 份審閱包到 {out_dir}"
+              "(每份文件一個 JSON,`_order.json` 是建議處理順序——由少到多)。")
+
+
+def scan_diff(base: str = "HEAD") -> list[Claim]:
+    """只掃 `git diff <base>` 裡**新增**的 knowledge-base 行,不重掃全庫。
+
+    2026-09-05:3987 筆 NO_MARKER 是存量問題(見 SESSION-HANDOFF 的討論——文字層級的
+    自動分類已經被本檔上方兩個負對照否決,不重做),但**新增的**沒有標記的驗證主張
+    是可以在源頭擋下來的存量控制,跟修好水管漏水與擦掉已經漏出來的水是兩件事。
+    這個函式只服務後者:讓 `--diff` 模式能當 pre-commit 檢查用,而不必每次都掃
+    全庫的 6700+ 筆主張。
+
+    解析 unified diff 的加號行 + `@@ ... +start,count @@` 追蹤新檔案的行號——
+    不能只用行序號累加,因為一個 hunk 可能不是從檔案開頭起算。
+    """
+    r = subprocess.run(["git", "diff", "--unified=0", base, "--",
+                        "docs/knowledge-base/*.md"],
+                       cwd=REPO, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    claims: list[Claim] = []
+    cur_file = None
+    cur_line = None
+    for raw in (r.stdout or "").splitlines():
+        if raw.startswith("+++ b/"):
+            cur_file = Path(raw[6:]).name
+            continue
+        m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", raw)
+        if m:
+            cur_line = int(m.group(1))
+            continue
+        if raw.startswith("+++") or raw.startswith("---"):
+            continue
+        if raw.startswith("+"):
+            if cur_file is not None and cur_line is not None:
+                s = raw[1:].strip()
+                if len(s) >= 30 and EXCLUSION_TAG not in s:
+                    got = classify(s)
+                    if got is not None:
+                        status, hr, ho = got
+                        claims.append(Claim(cur_file, cur_line, status, hr, ho, s[:200],
+                                            addr_only=(status == "ORIGINAL"
+                                                       and not _hits(s, ORIGINAL_MARKERS_NAMED))))
+            if cur_line is not None:
+                cur_line += 1
+        elif raw.startswith("-"):
+            pass  # 刪除行不佔用新檔案的行號
+    return claims
+
+
 def scan_text_one(text: str) -> Claim:
     """把單行文字走完 scan() 的同一條路(含 addr_only 判定),給 selftest 用。"""
     status, r, o = classify(text)
@@ -464,10 +560,40 @@ def main() -> int:
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--gate", action="store_true",
                     help="落在原版知識文件的 remake 證據主張必須已列管,否則回傳非 0")
+    ap.add_argument("--diff", metavar="BASE", nargs="?", const="HEAD",
+                    help="只檢查 `git diff BASE`(預設 HEAD,即目前未提交的變更)新增的"
+                         "knowledge-base 行——擋新增的 NO_MARKER/未列管 REMAKE_ONLY,"
+                         "不重掃存量。適合當 pre-commit 用,比 --gate 快很多。")
+    ap.add_argument("--no-marker-worklist", action="store_true",
+                    help="把既有 NO_MARKER 存量依檔案分組、由少到多排序印出來,"
+                         "把「3987 筆」重新框成一份可管理的文件待辦清單。"
+                         "不猜測來源分類,純粹排序。")
+    ap.add_argument("--export-worklist", metavar="DIR",
+                    help="配合 --no-marker-worklist,把每份文件的 NO_MARKER 明細"
+                         "(file/line/excerpt)寫成 DIR/<檔名>.json,供逐份審閱或委派。")
     args = ap.parse_args()
 
     if args.selftest:
         return selftest()
+
+    if args.diff is not None:
+        new_claims = scan_diff(args.diff)
+        bad = [c for c in new_claims if c.status == "NO_MARKER"]
+        unreg_remake = [c for c in new_claims if c.status == "REMAKE_ONLY"
+                        and c.file not in REMAKE_SIDE_DOCS]
+        if not bad and not unreg_remake:
+            print(f"diff 檢查通過:新增 {len(new_claims)} 筆驗證主張,"
+                  "沒有 NO_MARKER 或未預期的 REMAKE_ONLY。")
+            return 0
+        for c in bad:
+            print(f"  FAIL NO_MARKER(新增):{c.file}:{c.line}\n       {c.excerpt}")
+        for c in unreg_remake:
+            print(f"  FAIL REMAKE_ONLY(新增,不在 REMAKE_SIDE_DOCS 名單):"
+                  f"{c.file}:{c.line}\n       {c.excerpt}")
+        print(f"\n{len(bad)} 筆缺來源標記、{len(unreg_remake)} 筆疑似只有 remake 證據。"
+              "補上原版側依據(位址/DOSBox-X/攻略等),或如果確實只有 remake 證據,"
+              "登錄到 docs/data/remake_excluded_claims.json。")
+        return 1
 
     if args.gate:
         unreg, stale = gate(scan(KB))
@@ -492,6 +618,8 @@ def main() -> int:
         return 2
     claims = scan(KB)
     report(claims, args.status, args.limit)
+    if args.no_marker_worklist:
+        no_marker_worklist(claims, Path(args.export_worklist) if args.export_worklist else None)
     if args.json:
         Path(args.json).write_text(
             json.dumps([asdict(c) for c in claims], ensure_ascii=False, indent=2),
