@@ -32672,6 +32672,86 @@
    "excerpt": "3. **一個值得記住的新線索**:idx1連續9輪的「攻擊確認未生效」結果完全一致",
    "verdict": "benign",
    "note": "新線索分析，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2842,
+   "excerpt_sha1": "3b57cef3f48fe9f4abb940a8c1f29ca2ec65a28a",
+   "excerpt": "`select_ring()`的驗證層,單純逐鍵送、每按一鍵截一次圖),對照§25確認過的",
+   "verdict": "benign",
+   "note": "live測試方法描述，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2846,
+   "excerpt_sha1": "0ce5f9f7a0b769999848963b67a1f8d90ca66748",
+   "excerpt": "1. 選取idx1、原地確認(零移動,§25的恢復路徑):**截圖看到的是指令環**,",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE指令環畫面的截圖觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2849,
+   "excerpt_sha1": "514d64d6b73fa686f11df3380d3f08121efce73c",
+   "excerpt": "2. 對高亮的「上」選項按確認:**畫面切成單位資訊卡**——「悠妮」LV.01、",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE法術清單畫面的截圖觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2851,
+   "excerpt_sha1": "213b58c1101658c63c6a58818b8feaba7f699999",
+   "excerpt": "**MV.004**(這裡順便確認了她真實的移動力就是4,呼應§23/§24用mv=4/6測試",
+   "verdict": "benign",
+   "note": "live測試確認角色真實MV數值的觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2858,
+   "excerpt_sha1": "555445e12b5a1bdd479ba68b5aa74450759c1593",
+   "excerpt": "3. 對唯一列出的「火炎術」按確認:**畫面直接跳回瀏覽游標畫面**,cursor剛好停在",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE法術選擇取消行為的觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2871,
+   "excerpt_sha1": "58a435e4cb28cf8f59b968cfa48ee3f69258f1c8",
+   "excerpt": "無條件送兩次confirm(執行→目標選擇、確認目標),這個假設對「有近戰武器的單位",
+   "verdict": "benign",
+   "note": "分析舊版邏輯假設與實際不符的說明，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2880,
+   "excerpt_sha1": "0476f0d5e35f6327e9a699f1e0eb011c48099d67",
+   "excerpt": "反覆看到的「攻擊確認未生效」,至少在idx1(悠妮)這個案例上,現在有了具體、",
+   "verdict": "benign",
+   "note": "結論性說明，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2881,
+   "excerpt_sha1": "e4d1f7d557e96ef884a82fca84d5029e9bc2a744",
+   "excerpt": "可驗證的解釋:**不是「攻擊執行了但沒效果」,是「這兩次confirm根本沒有真的",
+   "verdict": "benign",
+   "note": "同上，接續結論"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2886,
+   "excerpt_sha1": "0c65836618ff32a2179cd627ec85384e5ccc5a1c",
+   "excerpt": "(沒近戰武器),適合測的是法術命中,不是攻擊確認的正向案例。",
+   "verdict": "benign",
+   "note": "對下一輪的具體建議事項，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2887,
+   "excerpt_sha1": "544ceafb46e289103349c60f381d94ddc798f6d5",
+   "excerpt": "2. 正向案例的驗證,應該挑一個**確定有近戰武器的單位**(例如idx0,已知的",
+   "verdict": "benign",
+   "note": "同上，接續建議事項"
   }
  ]
 }
