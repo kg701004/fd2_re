@@ -304,6 +304,18 @@ def report(claims: list[Claim], only: str | None, limit: int) -> None:
             print(f"    {c.excerpt[:170]}")
 
 
+def stratify_no_marker(claims: list[Claim]) -> tuple[list[Claim], list[Claim]]:
+    """把 NO_MARKER 分成「落在 remake 側紀錄文件」與「落在原版知識文件,要處理」。
+
+    跟 `stratify()`(REMAKE_ONLY 版)共用同一份 `REMAKE_SIDE_DOCS` 人工名單,拆成
+    獨立函式是為了讓 `no_marker_worklist()`(純印報表)跟這個判斷邏輯分開,才能
+    不用捕捉 stdout 就測試分層對不對。
+    """
+    nm = [c for c in claims if c.status == "NO_MARKER"]
+    return ([c for c in nm if c.file in REMAKE_SIDE_DOCS],
+            [c for c in nm if c.file not in REMAKE_SIDE_DOCS])
+
+
 def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
     """把 NO_MARKER 存量按檔案分組、**依筆數由少到多排序**印出來。
 
@@ -318,13 +330,7 @@ def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
     REMAKE_ONLY 依據,還是根本沒有問題只是漏標)留給實際讀那份文件的人或後續任務。
     """
     import collections
-    nm = [c for c in claims if c.status == "NO_MARKER"]
-    # 沿用 REMAKE_ONLY 已經驗過的 REMAKE_SIDE_DOCS 名單(人工判斷、附理由,不是新猜測)——
-    # 這些文件本身就是 remake 側紀錄,裡面的 NO_MARKER 多半只是「沒有重複標記」,
-    # 不是「藏著一個只靠 remake 撐住的原版事實」那種真正的風險案例。分開統計,
-    # 不是說這些文件裡的 NO_MARKER 保證沒問題,而是**優先度**遠低於原版知識文件裡的。
-    on_remake_side = [c for c in nm if c.file in REMAKE_SIDE_DOCS]
-    needs_review = [c for c in nm if c.file not in REMAKE_SIDE_DOCS]
+    on_remake_side, needs_review = stratify_no_marker(claims)
     print(f"\n=== NO_MARKER 分層(沿用 REMAKE_SIDE_DOCS 名單)===")
     print(f"  落在 remake 側紀錄文件(優先度低)     {len(on_remake_side):5}")
     print(f"  落在原版知識文件(**真正待處理**)      {len(needs_review):5}")
@@ -338,7 +344,7 @@ def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
     running = 0
     for f, cs in ordered:
         running += len(cs)
-        print(f"  {len(cs):4}  {f}  (累計 {running}/{len(nm)})")
+        print(f"  {len(cs):4}  {f}  (累計 {running}/{len(needs_review)})")
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
         for f, cs in ordered:
@@ -369,10 +375,22 @@ def scan_diff(base: str = "HEAD") -> list[Claim]:
                         "docs/knowledge-base/*.md"],
                        cwd=REPO, capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
+    return parse_diff_claims(r.stdout or "")
+
+
+def parse_diff_claims(diff_text: str) -> list[Claim]:
+    """`scan_diff()` 的純解析部分,拆出來是為了能不碰真實 git/檔案系統就測試。
+
+    2026-09-05:使用者要求「新建工具請正反向驗證」——`scan_diff()` 直接呼叫
+    `subprocess.run(["git", "diff", ...])`,測試若要驗證「多個 hunk」「刪除行
+    不佔行號」這類邏輯,勢必要嘛真的改檔案跑 git diff(慢、會弄髒工作區、
+    測試失敗時還要確保還原),要嘛把「解析 unified diff 文字」單獨拆成純函式、
+    餵合成的 diff 字串進去。選後者。
+    """
     claims: list[Claim] = []
     cur_file = None
     cur_line = None
-    for raw in (r.stdout or "").splitlines():
+    for raw in diff_text.splitlines():
         if raw.startswith("+++ b/"):
             cur_file = Path(raw[6:]).name
             continue
@@ -540,6 +558,118 @@ def selftest() -> int:
     if not gate(real + [_fake])[0]:
         fails.append("故障注入:塞進一筆未列管的 remake 證據主張,閘門竟然放行——"
                      "這個閘門擋不住任何東西")
+
+    # ======================================================================= #
+    # 2026-09-05 新增:`--diff`/`--no-marker-worklist` 的正反向驗證
+    # (使用者明確要求「新建工具請正反向驗證」)
+    # ======================================================================= #
+
+    # --- parse_diff_claims:負對照,新增 NO_MARKER 行必須被抓出來 ---
+    checks += 1
+    diff_no_marker = (
+        "diff --git a/docs/knowledge-base/99-fake.md b/docs/knowledge-base/99-fake.md\n"
+        "--- a/docs/knowledge-base/99-fake.md\n"
+        "+++ b/docs/knowledge-base/99-fake.md\n"
+        "@@ -10,0 +11,1 @@\n"
+        "+這條結論已經確認無誤,但完全沒有寫出任何來源標記,占滿三十字元測試用。\n"
+    )
+    got = parse_diff_claims(diff_no_marker)
+    if not (len(got) == 1 and got[0].status == "NO_MARKER"
+            and got[0].file == "99-fake.md" and got[0].line == 11):
+        fails.append(f"parse_diff_claims 負對照失敗:應抓到 99-fake.md:11 的 NO_MARKER,"
+                     f"實得 {got}")
+
+    # --- 正對照:同一個位置換成有原版位址的行,`parse_diff_claims` 本身仍會把它列進
+    #     回傳值(它跟 `scan()` 一樣回傳全部有驗證語言的主張,不只是「有問題」的)——
+    #     正對照驗的是**分類結果是 ORIGINAL**,不是「完全不出現」;真正決定要不要
+    #     攔下來是 `main()` 的 `--diff` 分支自己再過濾一次 status,這裡不重覆呼叫
+    #     CLI 入口,只驗證 parse_diff_claims 給的分類是對的。 ---
+    checks += 1
+    diff_original = diff_no_marker.replace(
+        "這條結論已經確認無誤,但完全沒有寫出任何來源標記,占滿三十字元測試用。",
+        "這條結論已經用 DOSBox-X 反組譯確認,位址 0x12345,應該被放行測試用。")
+    got = parse_diff_claims(diff_original)
+    if not (len(got) == 1 and got[0].status == "ORIGINAL"):
+        fails.append(f"parse_diff_claims 正對照失敗:帶原版標記的新增行該分類成 ORIGINAL,"
+                     f"實得 {got}")
+
+    # --- 負對照:REMAKE_ONLY 新增行,且不在 REMAKE_SIDE_DOCS,main() 該視為 FAIL ---
+    checks += 1
+    diff_remake_only = diff_no_marker.replace(
+        "這條結論已經確認無誤,但完全沒有寫出任何來源標記,占滿三十字元測試用。",
+        "這條結論已經用 fd2-linux-verify 跑過 go test 確認,drawNativeCommandGrid 正常。")
+    got = parse_diff_claims(diff_remake_only)
+    if not (len(got) == 1 and got[0].status == "REMAKE_ONLY"
+            and got[0].file not in REMAKE_SIDE_DOCS):
+        fails.append(f"parse_diff_claims 負對照失敗:REMAKE_ONLY 新增行該被抓到"
+                     f"且該檔不在 REMAKE_SIDE_DOCS,實得 {got}")
+
+    # --- 正對照:同一種 REMAKE_ONLY 措辭,但落在 REMAKE_SIDE_DOCS 名單裡的文件——
+    #     main() 的 --diff 邏輯必須認得這是「預期」,不能一律當成新增問題攔下來。
+    #     這裡直接檢查 main() 用的判斷式本身(REMAKE_SIDE_DOCS 成員檢查),
+    #     不重跑一次 main()(CLI 進入點不適合在 selftest 裡呼叫)。 ---
+    checks += 1
+    diff_remake_side = diff_remake_only.replace(
+        "docs/knowledge-base/99-fake.md", "docs/knowledge-base/58-remake-live-verification-log.md")
+    got = parse_diff_claims(diff_remake_side)
+    unreg_here = [c for c in got if c.status == "REMAKE_ONLY" and c.file not in REMAKE_SIDE_DOCS]
+    if unreg_here or not got or got[0].file not in REMAKE_SIDE_DOCS:
+        fails.append(f"parse_diff_claims 正對照失敗:REMAKE_SIDE_DOCS 名單內文件的新增"
+                     f"REMAKE_ONLY 行,--diff 的『未預期』過濾不該把它算進去,實得 {got}")
+
+    # --- 多個 hunk:行號要各自從自己的 @@ 起算,不能整份檔案累加 ---
+    checks += 1
+    diff_multi_hunk = (
+        "+++ b/docs/knowledge-base/99-fake.md\n"
+        "@@ -1,0 +2,1 @@\n"
+        "+這條結論已經確認無誤,但完全沒有寫出任何來源標記,占滿三十字元測試用一。\n"
+        "@@ -50,0 +80,1 @@\n"
+        "+這條結論也已經確認無誤,同樣沒有來源標記,占滿三十字元測試用二號內容。\n"
+    )
+    got = sorted(parse_diff_claims(diff_multi_hunk), key=lambda c: c.line)
+    if [c.line for c in got] != [2, 80]:
+        fails.append(f"parse_diff_claims 多 hunk 失敗:期望行號 [2, 80],"
+                     f"實得 {[c.line for c in got]}——代表行號被跨 hunk 累加而非各自起算")
+
+    # --- 刪除行:context 裡混雜「-」行時,不能讓它偷佔掉新檔案的行號計數 ---
+    checks += 1
+    diff_with_deletion = (
+        "+++ b/docs/knowledge-base/99-fake.md\n"
+        "@@ -5,2 +5,2 @@\n"
+        "-這是被刪掉的舊行,內容不重要,只是要佔一行測試刪除不影響行號一二三四五。\n"
+        "-這也是被刪掉的舊行,同樣不重要,純粹佔位測試刪除不影響行號一二三四五六。\n"
+        "+這條結論已經確認無誤,但完全沒有寫出任何來源標記,占滿三十字元測試用。\n"
+        "+這條結論已經確認無誤,同上,依然沒有任何來源標記,占滿三十字元測試二。\n"
+    )
+    got = sorted(parse_diff_claims(diff_with_deletion), key=lambda c: c.line)
+    if [c.line for c in got] != [5, 6]:
+        fails.append(f"parse_diff_claims 刪除行失敗:期望新增的兩行落在 [5, 6],"
+                     f"實得 {[c.line for c in got]}——代表『-』行被誤算進新檔案行號")
+
+    # --- stratify_no_marker:負對照,原版知識文件裡的 NO_MARKER 必須落在「要處理」---
+    checks += 1
+    _nm_fake_review = Claim("11-enemy-ai.md", 1, "NO_MARKER", [], [], "測試用")
+    _nm_fake_remake_side = Claim("58-remake-live-verification-log.md", 1, "NO_MARKER", [], [],
+                                 "測試用")
+    on_side, review = stratify_no_marker([_nm_fake_review, _nm_fake_remake_side])
+    if _nm_fake_review not in review or _nm_fake_review in on_side:
+        fails.append("stratify_no_marker 負對照失敗:原版知識文件的 NO_MARKER "
+                     "沒有被分進『要處理』")
+
+    # --- stratify_no_marker:正對照,REMAKE_SIDE_DOCS 文件的 NO_MARKER 必須落在
+    #     「remake 側」,不能混進『要處理』膨脹待辦清單 ---
+    checks += 1
+    if _nm_fake_remake_side not in on_side or _nm_fake_remake_side in review:
+        fails.append("stratify_no_marker 正對照失敗:REMAKE_SIDE_DOCS 文件的 NO_MARKER "
+                     "跑進了『要處理』清單")
+
+    # --- 對真實語料的合理性檢查:兩層加起來要等於全部 NO_MARKER,不能漏筆或重複算 ---
+    checks += 1
+    real_on_side, real_review = stratify_no_marker(real)
+    real_nm_total = sum(1 for c in real if c.status == "NO_MARKER")
+    if len(real_on_side) + len(real_review) != real_nm_total:
+        fails.append(f"stratify_no_marker 對真實語料算不平:on_side={len(real_on_side)} + "
+                     f"review={len(real_review)} != 全部 NO_MARKER {real_nm_total}")
 
     total = checks
     print(f"檢查:{total - len(fails)}/{total} 通過")
