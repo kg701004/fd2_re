@@ -14752,6 +14752,334 @@
    "excerpt": "白卷）——原版沒有灰化機制，legality gate 只在確認時判定一次。連帶地，AOE（doc27",
    "verdict": "benign",
    "note": "否定式聲明「原版沒有灰化機制」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 4,
+   "excerpt_sha1": "a70a45ece237ff7842fff6e93c1c89753d113e35",
+   "excerpt": "> 本檔 §9 對「確認鍵送不進戰鬥輸入迴圈」的描述**已被否證**(94/94 重測),",
+   "verdict": "benign",
+   "note": "自我修正延續句，「已被否證」+重測數據"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 14,
+   "excerpt_sha1": "fa327ec8ee5a0908d26a394462a282e17f5117f4",
+   "excerpt": "> （專案知識應保存在文件而非對話歷史；需涵蓋現況、決策、驗證狀態、剩餘工作、",
+   "verdict": "benign",
+   "note": "方法論備註延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 39,
+   "excerpt_sha1": "d197aef5cd406e9ffb4e03ae41b8503ff072d55c",
+   "excerpt": "3. 「那就把這項移除 **我不需要remake驗證過的資料 那本身就有問題 驗出來的也會有問題**」",
+   "verdict": "benign",
+   "note": "直接引用使用者原話(remake驗證移除指示)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 40,
+   "excerpt_sha1": "ab2ce338e06980e28688c1d30542f8cf68e04563",
+   "excerpt": "4. 「remake驗到的問題都先移除 把remake驗過的都改用原版驗證」",
+   "verdict": "benign",
+   "note": "同39，使用者原話引用"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 43,
+   "excerpt_sha1": "76737910c8e9da36a78bae396fb7c405f808ce10",
+   "excerpt": "**核心理由**：使用者判定「以 remake 執行結果作為驗證來源」這件事本身不可信，",
+   "verdict": "benign",
+   "note": "延續句，解釋決策理由"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 44,
+   "excerpt_sha1": "b3515ccdf7ec38a150b902ad24f75fd25dd848c7",
+   "excerpt": "因此由它產出的結論也不可信。**被否定的是驗證方法，不是 RE 知識本身**。",
+   "verdict": "benign",
+   "note": "延續句，澄清「被否定的是驗證方法,不是RE知識本身」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 47,
+   "excerpt_sha1": "ed741b959fbf1ef91934a5bb5f21cdc0e8bcee00",
+   "excerpt": "「原版 vs 重製」對照圖中有 **13 張是自我複製**，兩側逐位元組相同，根本不構成對照。",
+   "verdict": "benign",
+   "note": "自我複製圖片發現(同feedback_verify_evidence_is_not_self_comparison)，否定式聲明「根本不構成對照」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 51,
+   "excerpt_sha1": "776991844e80466cefddc7f6bb8ea69f6ec3b4a3",
+   "excerpt": "**「M5 里程碑以原版驗證為主，remake 移除也一併移除 remake 版的 M5 里程碑」**，",
+   "verdict": "benign",
+   "note": "引用決策內容延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 63,
+   "excerpt_sha1": "893ea7b8464f1b9af15e8d8d2d6f1ac5362c5ee0",
+   "excerpt": "2. `58-remake-live-verification-log.md` 的 **2026-09-02 起**各節 — 純原版重新驗證的結果",
+   "verdict": "benign",
+   "note": "交叉參照doc58延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 76,
+   "excerpt_sha1": "e574deb7428cdc8566e6966714496dd1fcef67e4",
+   "excerpt": "- **18 張 `*original-vs-remake*` 中，13 張兩半逐位元組相同** → 是自我複製，",
+   "verdict": "benign",
+   "note": "延續句，同47自我複製發現"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 80,
+   "excerpt_sha1": "8ebebb716fd6bbd8573fdfa73b4b2e8f8ccd8a22",
+   "excerpt": "`shop-transfer-result-verified-original-dosbox.png` **逐位元組相同**，卻被引用為",
+   "verdict": "benign",
+   "note": "檔名含小寫dosbox(既有低頻邊界案例)，逐位元組相同的否定式發現"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 84,
+   "excerpt_sha1": "1e7b775cdb690c13bbac3425ae3ebac3410e74e9",
+   "excerpt": "成長欄位完全相同，而該畫面經 5 張圖兩兩差分證實是**完全確定性**的（所有差異都只落在同一個",
+   "verdict": "benign",
+   "note": "延續句，確定性成長欄位發現說明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 85,
+   "excerpt_sha1": "cce81672919d19da039607199b94c1b963817a0e",
+   "excerpt": "28×68px 數字欄位內，沒有動畫／游標／時序雜訊），故數值相同必然逐位元組相同。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 87,
+   "excerpt_sha1": "bd05b16a309b0cfa40feb1dfef7c471cc7f2929e",
+   "excerpt": "時間），所以原記的「range PASS(5/5)」不應被引用為「已用 5 個獨立樣本驗證」。詳見 doc58。",
+   "verdict": "benign",
+   "note": "退化樣本發現(同feedback_degenerate_verification_sample)，交叉參照doc58"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 104,
+   "excerpt_sha1": "0a48c372dc104955a7070a0a13c0f4e89d33fe71",
+   "excerpt": "| **秘密商店** | **解決 doc91 長期未解項**：正確操作是**在 selection0 酒店按 `Shift+F1`**（非先前記錄的 ch03 `Ctrl+F2`＋selection1）。**後續更正（同日稍晚）：組合鍵是每章不同的**，`gen_campaign.py` 的 `NATIVE_SECRET_GATES` 已是從 EXE 抽出的 23 章完整表。實測 **8 章成立",
+   "verdict": "benign",
+   "note": "表格row，秘密商店組合鍵修正+EXE抽出表格交叉驗證"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 106,
+   "excerpt_sha1": "b926919efa4a872425dc72d5d442ae17e3a93c82",
+   "excerpt": "| 售出流程 | 巨神戟 $18000 → 金錢 +18000 且欄位清空（補回 §4 失去佐證的那條結論） |",
+   "verdict": "benign",
+   "note": "表格row，售出流程測試結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 109,
+   "excerpt_sha1": "f8cefd4d4f2ec915a9ec58f5c3d30e7918331a29",
+   "excerpt": "| **裝備計算式** | `after = base − 目前護甲加成 + 新品加成`。12 筆觀測全數吻合；索爾／悠妮／亞雷斯各由**3 件不同商品**交叉驗證（反推同為 DP300／EV20），索菲亞反推為 DP60／EV5，排除「常數」解釋 |",
+   "verdict": "benign",
+   "note": "表格row，裝備計算式12筆觀測交叉驗證"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 111,
+   "excerpt_sha1": "e324dab01d0e9c233a056291274e0294fda59a9c",
+   "excerpt": "| 購買 2×2 商品格 | 無鍵＝布衣／`Right`＝旅行裝／`Down`＝皮甲／`Right+Down`＝法師袍（**由確認框自己念出的品名**判定）；與服務選單不同，商品格**有**可見游標 |",
+   "verdict": "benign",
+   "note": "表格row，購買流程測試結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 132,
+   "excerpt_sha1": "c746c6a5b7c949cf580ff1afe8fee41c27ed1f4b",
+   "excerpt": "商店 ×1／×2 第一個畫面逐位元組相同，只能靠第二個畫面分辨。",
+   "verdict": "benign",
+   "note": "延續句，逐位元組相同發現(同自我複製類別)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 140,
+   "excerpt_sha1": "90ad23dace4f0afba9e413678f1f7affe7d29b85",
+   "excerpt": "| `tools/dosbox_harness.sh` | display port TOCTOU race **已修**；新增 `FD2_HARNESS_AUDIO_DISK`（SDL disk 音訊）、`FD2_HARNESS_MAPPER`（pass-through mapper）、`FD2_HARNESS_KEY_MODE`（預設仍是已驗證的 `window`） |",
+   "verdict": "benign",
+   "note": "表格row，工具修正記錄(TOCTOU race)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 142,
+   "excerpt_sha1": "82ec72322a469435d73c4d30d0eeebeb0fa9d333",
+   "excerpt": "| `tools/fd2_original_verify.py` | 宣告式／平行／分層原版驗證器（下詳） |",
+   "verdict": "benign",
+   "note": "表格row，工具描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 144,
+   "excerpt_sha1": "f61834810d767d1583c64482c5e77cd3e1f976a5",
+   "excerpt": "| `tools/fd2_audio_probe.py` | **本次新建**：音訊擷取＋時序同步。**識別層經實測不可用**，見 §8 |",
+   "verdict": "benign",
+   "note": "表格row，新建工具+否定式發現「識別層經實測不可用」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 146,
+   "excerpt_sha1": "950917f08bee25ce4b52c3b48c44d15914840448",
+   "excerpt": "| `tools/decode_story_text.py` | 既有；本輪證實它已能完整解出全部劇情文字（§9） |",
+   "verdict": "benign",
+   "note": "表格row，工具能力延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 147,
+   "excerpt_sha1": "9dcc55add2c896ec079d20b215e28fa56c105bbf",
+   "excerpt": "| `tools/verify_all_tools.py` | **本次新建**：全 103 支工具的十層稽核（§12）。自身反向驗證 20/20 |",
+   "verdict": "benign",
+   "note": "表格row，工具自我驗證20/20"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 189,
+   "excerpt_sha1": "94afaa26bdc84a8e7db32fa2c3e3fbd8e72c1c28",
+   "excerpt": "8. **音訊識別層不可用（已實測，非未調好）**：以記憶體讀取為 ground truth 評分，",
+   "verdict": "benign",
+   "note": "否定式發現「音訊識別層不可用（已實測，非未調好）」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 197,
+   "excerpt_sha1": "8be68a89415f97286d8b04bb15d7263fec984156",
+   "excerpt": "這些 gate **不能放寬**:實測繞過後會安靜產生看起來合法的錯資料(§12)。",
+   "verdict": "benign",
+   "note": "否定式聲明「這些gate不能放寬」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 213,
+   "excerpt_sha1": "5db0572e94e9921ca7396a0f47e13f447c4bd516",
+   "excerpt": "> `wait-settle` 會停在**轉場開始之前**的舊畫面(對確認鍵的傷害遠大於方向鍵,正好造出",
+   "verdict": "benign",
+   "note": "wait-settle bug發現延續句(同feedback_settle_cannot_measure_animated_screens)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 214,
+   "excerpt_sha1": "99b30ff05724764ef19a5a0a11574856a5d8a6b3",
+   "excerpt": "> 「方向鍵會到、確認鍵不會到」的假象),而戰場畫面**永遠不會靜止**(單位待機動畫;同一秒",
+   "verdict": "benign",
+   "note": "同213延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 229,
+   "excerpt_sha1": "3574fd252ea83f1fdff38aa9de1a894b9f9cdfbb",
+   "excerpt": "**不是「送鍵整體失效」,而是方向鍵會到、確認鍵不會到**,且與 window/xtest 模式、",
+   "verdict": "benign",
+   "note": "否定式聲明「不是...而是」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 234,
+   "excerpt_sha1": "3a0ccf6c8264f67eb8f537b7d72a1c1032c00fd1",
+   "excerpt": "(本輪就是「珊」,狀態卡 HP 150 對不上我方任何人),那種情況按確認鍵當然沒反應,",
+   "verdict": "benign",
+   "note": "誤診敘事延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 235,
+   "excerpt_sha1": "78217682474fa0ceba5e2d0c09b91288eddb8266",
+   "excerpt": "極易誤記成輸入層失效。**先用狀態卡 HP 與記憶體對照確認游標在誰身上再下判斷。**",
+   "verdict": "benign",
+   "note": "延續句，方法論教訓"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 236,
+   "excerpt_sha1": "b34d3c2ce034b40eeb280e70240d1b1812945a46",
+   "excerpt": "本輪已移到索爾(卡片 823 與 `+0x40` 吻合)確認後仍開不了環,所以混淆已排除。",
+   "verdict": "benign",
+   "note": "延續句，混淆已排除"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 240,
+   "excerpt_sha1": "17f46ed54fb4b258d597b01cdcfd3454b080becf",
+   "excerpt": "- M5-F 六項:戰鬥/勝利曲、自動結束回合、治療咒視覺、移動確認輸入丟失、",
+   "verdict": "benign",
+   "note": "M5-F開放項目清單延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 252,
+   "excerpt_sha1": "8b4bf0697f3cc089cab4ab3470bb98eab56a1be2",
+   "excerpt": "(方法:文本上下文為主,pixel-IoU 經校準證實在此無鑑別力;詳見 doc98 續五)",
+   "verdict": "benign",
+   "note": "方法論校準發現，交叉參照doc98"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 278,
+   "excerpt_sha1": "6533d96654b963bf393866edfd814693cf4a4f69",
+   "excerpt": "| `464367b8` | **M5 改以原版驗證為主**（使用者指示） |",
+   "verdict": "benign",
+   "note": "commit log表格row"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 283,
+   "excerpt_sha1": "3c624b583b616156c9be08d10e198c0409a01c71",
+   "excerpt": "| `1f8da6ea` `e0b7eb0e` | 場景→曲號實測＋不同路徑交叉驗證 |",
+   "verdict": "benign",
+   "note": "commit log表格row"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 288,
+   "excerpt_sha1": "8021f310b01cfac224556ccedb38c38baf0a2970",
+   "excerpt": "| `207110fb` | **反向驗證**：陽性對照、故障注入找到守衛漏洞、3 個崩潰處理器 |",
+   "verdict": "benign",
+   "note": "commit log表格row，反向驗證描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 290,
+   "excerpt_sha1": "f5488bd4e40c1c09e9ad95c0cd45110f163e23ad",
+   "excerpt": "| `fdd348fb` | **全工具十層驗證**：新建 harness；修 6 支死掉的 `.sh`、`export_sfx`、`font_grid`；重生 2 份走鐘的 `docs/data/` 產物 |",
+   "verdict": "benign",
+   "note": "commit log表格row，十層工具驗證"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 298,
+   "excerpt_sha1": "dadb96e5e104cf7ef4ba1b22388a41d428d4efe4",
+   "excerpt": "這些都不是筆誤，是**看起來成立、實測才推翻**的判斷。留在這裡是因為它們的形狀會重複出現：",
+   "verdict": "benign",
+   "note": "元評論延續句，否定式聲明「都不是筆誤」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 311,
+   "excerpt_sha1": "d70858dbeeb7b82a79378ffe7235e215e7531f97",
+   "excerpt": "6 支當場失敗。**在哪個環境驗證,決定了結論是否成立。**",
+   "verdict": "benign",
+   "note": "方法論教訓延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-03.md",
+   "line": 314,
+   "excerpt_sha1": "ecb662bf72afd868cb3f309d9389117b7cf5f8b2",
+   "excerpt": "注入沒生效與檢查失效長得一模一樣。**先確認注入真的改到被檢查的東西。**",
+   "verdict": "benign",
+   "note": "方法論教訓(同feedback_verify_that_the_verification_ran)"
   }
  ]
 }
