@@ -99,7 +99,7 @@ REMAKE_MARKERS = [
 ]
 
 ORIGINAL_MARKERS = [
-    (r"DOSBox-X|dosbox-x|DOSBox", "原版模擬器實機"),
+    (r"DOSBox-X|dosbox-x|DOSBox|原版實機", "原版模擬器實機"),
     (r"MEMDUMPBIN", "活體記憶體讀取"),
     (r"Alt\+Pause|debugger|斷點|BPLIST|SMV ", "原版 debugger"),
     (r"Ghidra|ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
@@ -662,6 +662,14 @@ def selftest() -> int:
            "正對照:ANI.DAT 是本專案定案的原版資產容器名,必須命中容器標記")
     expect("這件事已經確認跟ANI.DAT無關而已", "ORIGINAL",
            "回歸:CJK 緊貼(無空格)一樣要命中,跟其他容器名的既有行為一致")
+
+    # --- 2026-09-05 補(第六輪NO_MARKER審閱掃出):「原版實機」是本專案在
+    # doc36 等文件裡常用的證據來源標籤(等同 DOSBox-X 實機測試,只是用中文說法
+    # 而不點名工具),原本清單只收工具名沒收這個中文說法。5 處語料庫命中,注意
+    # 「原版」單字本身太常見不適合收(先前已判斷過),但「原版實機」這個四字
+    # 複合詞夠specific,風險低。
+    expect("已確認這段是原版實機驗證過的結果", "ORIGINAL",
+           "正對照:「原版實機」是DOSBox-X實機測試的中文說法,必須命中")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
