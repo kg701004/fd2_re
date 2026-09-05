@@ -31920,6 +31920,46 @@
    "excerpt": "discriminator（ch03 `+0=0x02`，與既有表格 `town_variants.ch03=2` 一致）——證實這是",
    "verdict": "benign",
    "note": "延續句(本輪剛新增)，交叉參照town_variants既有表格"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2275,
+   "excerpt_sha1": "a15dc65bd162a0a31dc9dd608c62be5394ab8b0d",
+   "excerpt": "`select_ring()` 印出「環選擇是 2/3(期望 0)——按鍵未生效,不盲按確認」,兩輪都直接",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，背景描述，引用工具實際印出訊息"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2287,
+   "excerpt_sha1": "477557733937eb021c86d5f6f531fe52cdba447f",
+   "excerpt": "select_ring() 驗證機制運作正常(它如實回讀並拒絕盲按),但**呼叫端「這格可以攻擊」",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，明確保留用語「可能」，非確定結論"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2289,
+   "excerpt_sha1": "8409a816f130e8719c1623acc08876c84243b8ee",
+   "excerpt": "`fd2_battle_autoplay.py` 大多數輪次可能根本沒有真正測到 C.16 想測的「確認一個算出來",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，明確保留用語「可能根本沒有」"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2295,
+   "excerpt_sha1": "96ab58ae8d869b3ca9e525edd60f74a58a2f0f95",
+   "excerpt": "不是逐位元組核對過的結論。**給下一輪的具體建議**:在下一次呼叫 `select_ring()` 前,",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，明確標示「不是逐位元組核對過的結論」，誠實邊界"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2298,
+   "excerpt_sha1": "7eb2f2b598b9b1034bbd529b47e6792db065d80f",
+   "excerpt": "確認兩者是否經常不一致——如果確實常常不一致,修法在呼叫端(改用跟遊戲一致的射程/",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，未來式建議下一輪核對"
   }
  ]
 }
