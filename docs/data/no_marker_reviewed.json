@@ -880,6 +880,246 @@
    "excerpt": "command 0 的 single-target numeric resolver 已獨立閉合，但 target geometry／完整 effect family 尚未閉合，",
    "verdict": "benign",
    "note": "明確否定式聲明「尚未閉合」"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 119,
+   "excerpt_sha1": "2e64bbd815c6dff1f4780d1862aa1fecf68f1f19",
+   "excerpt": "## 2026-09-04:原版側驗證法(取代被排除的 remake 截圖法),以及一個被它抓出來的缺陷",
+   "verdict": "benign",
+   "note": "章節標題，本節內文含DOSBox-X實機截圖+FDTXT_033比對等完整證據(行127/130/132)"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 121,
+   "excerpt_sha1": "896610a5e591481b2186ffe2845b781128c634f5",
+   "excerpt": "本文件開頭那套「驗證法」是 remake headless 截圖,已依 2026-09-04 判準排除",
+   "verdict": "benign",
+   "note": "描述已被排除的舊remake截圖法(見remake_excluded_claims.json)，非新主張"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 142,
+   "excerpt_sha1": "218c2518014c546b744c6c296da86df00e0dd9a9",
+   "excerpt": "**文字管線(容器→解碼→字模)在原版側得到 3/3 驗證。**",
+   "verdict": "benign",
+   "note": "「原版側3/3驗證」總結句，具體證據(DOSBox-X實機截圖、FDTXT_033逐字比對表)就在同節上方(行127-140)"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 154,
+   "excerpt_sha1": "63ef4497a631af1ee23102e6048951437da4d165",
+   "excerpt": "**第二個獨立佐證,而且來自本文件自己**:上方「remake 對話框渲染規則」一節記載",
+   "verdict": "benign",
+   "note": "指向本文件自己上方另一節的既有規則，非獨立新主張"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 172,
+   "excerpt_sha1": "f01a8524ce1280849718717048a2040340e4c370",
+   "excerpt": "在至少 ch01 王宮這一段是錯的,不可當作已驗證資料使用。** 根因(名字索引解析,",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不可當作已驗證資料使用」，根因「未查,不猜」"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 175,
+   "excerpt_sha1": "ece2a8e2c96b730a5500f01c41af1d522b612816",
+   "excerpt": "> 這正是排除 remake 驗證法的價值所在:remake 是**照著同一份解碼結果**畫的,",
+   "verdict": "benign",
+   "note": "方法論價值說明，非新驗證聲明"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 228,
+   "excerpt_sha1": "a999a205409c3a38135a61b0a73bf831df2d6aac",
+   "excerpt": "**文字內容不受影響**(已於前一段用原版 3/3 逐字驗證),只有說話者欄位需要修。",
+   "verdict": "benign",
+   "note": "同142的「原版3/3驗證」總結句，證據在同節上方"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 250,
+   "excerpt_sha1": "38fbd2451b0f13e6c8469434b5e43a2e08a6e1c8",
+   "excerpt": "的個案擴大成全域數字。實測也確認**沒有任何一個框沒有前導開框碼**,",
+   "verdict": "benign",
+   "note": "全域統計延續句，具體開框碼統計表在鄰近行(240-247)"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 265,
+   "excerpt_sha1": "3d3924b626e01dd0432f9e5574159f756aebff25",
+   "excerpt": "**獨立佐證(不靠我改的那段程式碼)**:被改標的那些框,內容自稱「朕」、說",
+   "verdict": "benign",
+   "note": "獨立佐證延續句，具體對照表在鄰近行(257-263)"
+  },
+  {
+   "file": "09-story-and-dialogue.md",
+   "line": 267,
+   "excerpt_sha1": "a1e5d23a4306e05bb99979b19b739ac0c1fadebc",
+   "excerpt": "說「我們一家人」——是王后。文字內容本身早已用原版逐字驗證過 3/3,",
+   "verdict": "benign",
+   "note": "同142/228「原版逐字驗證3/3」總結句，證據在同節上方"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 37,
+   "excerpt_sha1": "1833a3124b8554e844ba26604f8eac74be8c0117",
+   "excerpt": "> postbattle/cutscene handlers：ch14/ch15 post 已直接證實含 layout、dialog、acting、sync、JOIN",
+   "verdict": "benign",
+   "note": "章節摘要句，具體handler反組譯證據在本節內文"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 79,
+   "excerpt_sha1": "30476683837697d87b15f179cf0691ad40e5f8e3",
+   "excerpt": "| +5 | **raw mask byte**：已驗證 caller 讀取 `bit0`／`bit7(0x80)`；不得直接命名成死亡、存活或已行動 | [驗] |",
+   "verdict": "benign",
+   "note": "表格row，本文件自訂[驗]/[部分驗]標記慣例，且含明確保留用語「不得直接命名成」"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 88,
+   "excerpt_sha1": "a5bd0aa437d4c7315ea6d539cb1b6963c3d1aec6",
+   "excerpt": "| +0x37..+0x4E | 基礎／有效能力、HP/MP 等 word 與 byte 欄位；目前 typed view 保留已證實 offsets | [部分驗] |",
+   "verdict": "benign",
+   "note": "同79，[部分驗]標記"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 156,
+   "excerpt_sha1": "daed2aa73a2cf8fab4efedff0928cfc6e87f4fb6",
+   "excerpt": "**讀法**：特殊章的共同結構只證實「查特定單位或單位群的 raw 狀態，",
+   "verdict": "benign",
+   "note": "明確保留用語「只證實...」限定claim範圍"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 160,
+   "excerpt_sha1": "9207a49b873b0724c833b790f60cc85e3a758ad6",
+   "excerpt": "（護衛目標／主將／其他章節條件）仍須逐章配合原版一般玩家路徑驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍須逐章配合原版一般玩家路徑驗證」"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 177,
+   "excerpt_sha1": "84a4a93e729ad614862ac70e2ecd11f9f6b9d12e",
+   "excerpt": "尚未逐caller閉合前，不得由 ScenarioRunner 自動視為原版語意：",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不得由ScenarioRunner自動視為原版語意」"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 192,
+   "excerpt_sha1": "cea6e0ae587967dbc7d9e50fdff0172996443c5b",
+   "excerpt": "- 18 個非default章 → 可先填candidate `events`，但仍須逐caller/章驗證",
+   "verdict": "benign",
+   "note": "明確保留用語「仍須逐caller/章驗證」"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 207,
+   "excerpt_sha1": "3fb427f5e13f349255574f3282e75296c4ec42b0",
+   "excerpt": "regression。資料驅動是目標架構，不是目前已證實所有事件語意都在資料內。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是目前已證實所有事件語意都在資料內」"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 272,
+   "excerpt_sha1": "baf2968bb9ee7aa7c9cb8d5d68f3ad6da0581b88",
+   "excerpt": "> predicate，語意由 caller 決定」的既有原則一致，不影響本文件已閉合的 `RE-RAW-BYTE5-BIT0-3453E` 結論。",
+   "verdict": "benign",
+   "note": "交叉參照本文件自身既有結論標籤(RE-RAW-BYTE5-BIT0-3453E)，非獨立新主張"
+  },
+  {
+   "file": "26-per-chapter-event-handlers.md",
+   "line": 283,
+   "excerpt_sha1": "a2ad31f8aeb5d9e6581987d2c24ad81d0add2b1a",
+   "excerpt": "### 7.3 `battle_ch16 → postbattle_ch16_persist → town_ch17` 鏈路確認 [驗]",
+   "verdict": "benign",
+   "note": "章節標題+[驗]標記，具體證據在節內文"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 58,
+   "excerpt_sha1": "8d88c14cafc3114e5437a749c3a16cc2b5c6abcf",
+   "excerpt": "- 引擎 `loadSprites()` 載 `fig_<grp>_f*.png` 分組;`drawUnitSprite()` 用 `(g.frame/12)%3` 循環待機幀,**24×24 直貼格**(略上移讓單位站在格上),陣營色腳標 + HP bar,已行動套灰（對映原版已驗證 record `+5 bit7=0x80`，不是舊 AA `+0x0D` 標記；§6 / doc 27）。",
+   "verdict": "benign",
+   "note": "remake實作對映原版已驗證欄位(record+5 bit7)，交叉參照doc27既有結論，非獨立新主張"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 60,
+   "excerpt_sha1": "beca3f8671f4ce7a9c80cc14d6cdb3cb5b83a73b",
+   "excerpt": "走另一條已閉合的 `unit+7×3` 路徑（doc06）。",
+   "verdict": "benign",
+   "note": "交叉參照doc06既有閉合結論"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 62,
+   "excerpt_sha1": "23ecc0c97458d0fb09e6a7ebc68429c6e7ddd954",
+   "excerpt": "## 6. sprite index 公式（已驗證）；source identity 待閉合",
+   "verdict": "benign",
+   "note": "章節標題，含「已驗證」+「待閉合」保留用語，證據在節內文"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 99,
+   "excerpt_sha1": "1aa270da1f5a695a26bd1f0d283d0c915f541fd4",
+   "excerpt": "| runtime byte | 已證實的狹窄意義 | evidence |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 109,
+   "excerpt_sha1": "a80bcadd5d430cef00b271d858db5484c2c1007a",
+   "excerpt": "> battle roster，並把觀察到的相等值升格為欄位 alias。今後僅以以上直接讀寫為準；未閉合欄位不另命名。",
+   "verdict": "benign",
+   "note": "明確保留用語「未閉合欄位不另命名」"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 133,
+   "excerpt_sha1": "6ac85da39452065755abe2fdb151a444473e0439",
+   "excerpt": "- **角色總覽**:`tools/char_summary.py` → 本機 character_summary.png(140 組 sprite+face 並排,統一編號全圖佐證、加新人看缺號)。",
+   "verdict": "benign",
+   "note": "描述本機衍生視覺化工具輸出(character_summary.png)，非獨立新原版證據"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 201,
+   "excerpt_sha1": "0d75e4dc8aa3f80637ecbc4f2d8510ace988f395",
+   "excerpt": "證實真實結構是三段、each 段有各自 present 數與延遲單位(ms vs tick),`Frames/FrameDelayMs/TailTicks` 三個",
+   "verdict": "benign",
+   "note": "延續句，具體結構欄位證據在鄰近段落"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 248,
+   "excerpt_sha1": "020777db99b53f7760f1ef0ed7fc795eb7fcd36b",
+   "excerpt": "`stagingPresent`/`unitPresentJob` 之類的結構或呼叫。這確認了「個別 caller 視覺語意 / descriptor buffer",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段反組譯結論的一部分"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 263,
+   "excerpt_sha1": "c9d4a19bc46bd4744adaf183939375d470d00403",
+   "excerpt": "閉合觸發條件——**戰鬥中道具 ID101** 的效果,gate 是目標 raw identity `+8==24` 且 max MP `+0x46>=20`,",
+   "verdict": "benign",
+   "note": "延續句，具體raw identity欄位/位址證據在同段落"
+  },
+  {
+   "file": "31-map-unit-sprites-fdicon.md",
+   "line": 280,
+   "excerpt_sha1": "6d53edf76bb6e3f4bbd6d9db9db2c574a0563c89",
+   "excerpt": "`0xff/0xff` 當「離場態」),證實 §9.1 提到的「演出態與最終邏輯態分離」不是巧合,而是這條 native",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.1既有結論"
   }
  ]
 }
