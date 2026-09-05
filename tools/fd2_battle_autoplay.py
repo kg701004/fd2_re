@@ -277,6 +277,26 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
         _, post_snap = snapshot(inst, selector, count)
         post_units = post_snap[1:]           # [0] 是 {"cursor": (cx,cy)},無 "idx" 鍵
         post_me = next((u for u in post_units if u["idx"] == me["idx"]), None)
+
+        # 2026-09-05(續十):doc13 §22 現場逐步截圖找到真正根因——如果算出來的
+        # 落點超出這個單位**真實的移動力**(不是我們外部給的 `--mv` 參數,那只是
+        # 我們自己算縮放用的上限,不代表遊戲真的允許走那麼遠),遊戲對「確認落點」
+        # 的反應是**整個取消單位選擇、悄悄退回自由瀏覽游標**——不是停在移動選格
+        # 畫面,也沒有開任何環。舊版完全沒檢查這件事,直接往下走
+        # `select_ring(RING_ATTACK)`,結果是在自由瀏覽狀態下亂送方向鍵/確認鍵,
+        # 讀到的`[0x53c57]`是殘留值或別的單位的環狀態,不是這個單位的攻擊結果——
+        # 這正是 §17-§21 一連串「環選對了、確認送了,但完全沒有效果」的根因。
+        # 判定方式:如果本來就打算移動(dx或dy非0),但移動後座標跟移動前一模
+        # 一樣,幾乎可以確定落點被拒絕、單位選擇已經被取消,不能再假設環是開著的。
+        moved = post_me is not None and (post_me["x"], post_me["y"]) != (me["x"], me["y"])
+        if (dx or dy) and not moved:
+            print(f"    idx{me['idx']} 確認落點後座標完全沒變(dx={dx},dy={dy})"
+                  f"——落點很可能超出這個單位真實的移動力,遊戲已經悄悄取消單位選擇、"
+                  f"退回自由瀏覽游標,不是停在移動/環畫面。不再假設環是開著的,"
+                  f"直接放棄這個單位這一輪的行動(不嘗試攻擊/待機,避免對自由瀏覽"
+                  f"狀態亂送按鍵)")
+            return
+
         still_adjacent = post_me is not None and adjacent_foe(post_me, post_units)
     if not still_adjacent:
         print(f"    idx{me['idx']} 用 adjacent_foe() 的簡化格距判定移動後不相鄰"

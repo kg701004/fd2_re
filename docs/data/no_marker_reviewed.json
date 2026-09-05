@@ -32424,6 +32424,86 @@
    "excerpt": "這條線,必須先確認`move_cursor()`真的把游標移到了目標單位身上、且第一次`confirm`",
    "verdict": "benign",
    "note": "對下一輪的具體建議事項，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2689,
+   "excerpt_sha1": "b6941643657e1b60c2fcdf4c5c059a865773066c",
+   "excerpt": "2. 按一次確認:出現「悠妮 LV.01 HP028/MP008」狀態卡,**同時地圖出現淡化十字形",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的逐步截圖觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2697,
+   "excerpt_sha1": "99096ec432ceae3169e3f2ea18b2e79fbd02cc10",
+   "excerpt": "5. **在這個超出範圍的格子按確認**:畫面上完全沒有任何反應(不是錯誤訊息、",
+   "verdict": "benign",
+   "note": "同上，接續描述超範圍確認的觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2700,
+   "excerpt_sha1": "23494a50dd353c22a3d2b81a6bc2d6d0b64df4fa",
+   "excerpt": "`(10,15)`,也不是我們剛剛按確認的那個超範圍格子),悠妮(idx1)本身",
+   "verdict": "benign",
+   "note": "debugger回讀確認的live觀察結果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2701,
+   "excerpt_sha1": "6368235891fb6e41b7c137cef77cf0882687a622",
+   "excerpt": "座標**完全沒變、acted仍是0**。這證明**確認一個超出真實移動力的落點,",
+   "verdict": "benign",
+   "note": "同上，接續描述驗證結論"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2705,
+   "excerpt_sha1": "35b2c145443ed84f9fede91b0ac167db2ee0eedb",
+   "excerpt": "**這就是§17-§21一連串「環選對了、確認也送了,但完全沒有效果」的真正根因**:舊版",
+   "verdict": "benign",
+   "note": "根因分析總結，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2708,
+   "excerpt_sha1": "e39af1e7b34bad76b9dfd4c4ff691e6aa67fa35f",
+   "excerpt": "但這個縮放後的落點依然可能超出**遊戲真正認定的移動範圍**——確認這種落點會讓",
+   "verdict": "benign",
+   "note": "同上，接續根因分析"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2716,
+   "excerpt_sha1": "7331fa238b36163690c0864f570bea3778e2d105",
+   "excerpt": "在「確認落點」之後,若本來就打算移動(`dx`或`dy`非0)但移動後座標跟移動前完全",
+   "verdict": "benign",
+   "note": "描述本輪對tools/fd2_battle_autoplay.py的程式碼修改，工具開發記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2723,
+   "excerpt_sha1": "5f78d57e91123c5a164cddee117ca011d94e7b07",
+   "excerpt": "live測試驗證**(語法/90項unittest都過,但沒有另開instance測`--mv`設小一點",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示還沒重新live驗證修法"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2728,
+   "excerpt_sha1": "eb21d7e487dd4d0b607e31d4205660c49dc7ea0c",
+   "excerpt": "(§13正向案例測試除外,那次mv=8且確認過移動軌跡合理;§17/§19/§20/§21全部",
+   "verdict": "benign",
+   "note": "對舊有live測試結果重新解讀的說明，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2735,
+   "excerpt_sha1": "5bbb2d4d8a4a17fb333f54748886c00a3412a897",
+   "excerpt": "(都涉及對「已經不在原本假設的畫面」送出按鍵),但這輪沒有時間展開驗證。",
+   "verdict": "benign",
+   "note": "對C.16候選機制的推測性連結，明確標示這輪沒有時間展開驗證"
   }
  ]
 }
