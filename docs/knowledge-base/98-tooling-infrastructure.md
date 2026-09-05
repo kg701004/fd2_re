@@ -2968,3 +2968,29 @@ Speaker-resolution 這類工作過去的做法是每按一次確認鍵就手動�
 能碰到——後續改用 `fd2_battle_autoplay.py --turns N` 真的推進戰鬥回合）。
 但工具本身的三個方向驗證都通過，是本專案「新工具需多重驗證」標準下第一個
 從一開始就內建 `--selftest` 的活體操作類工具，往後解剩下的 FDTXT 可以重複用。
+
+## 2026-09-06(續)：新工具`fd2_env_healthcheck.py`——直接回應本輪C.16調查裡三度重演的
+「先teardown、後才發現摧毀了關鍵證據」問題，端對端驗證抓到一個真實bug
+
+**動機**：本輪C.16調查裡，`spk6`/`spk7`/`spk8`三個獨立instance都重現了同一種「視窗從
+X server window tree消失，但process仍回應」的環境問題，每次都得手動做「tmux
+list-sessions→capture-pane→xwininfo -root -tree」三個步驟才能正確分類（而不是誤判成
+C.16真的發生）。這支工具把這個手動序列封裝成一次呼叫，回傳五種明確分類之一：
+`healthy`/`xio_display_collision`/`window_vanished`/`clean_dos_exit`/`no_tmux_session`，
+且**刻意不做teardown**——診斷跟處置分開，避免重蹈「還沒讀證據就先銷毀」的覆轍。
+
+**多重驗證，過程中真的抓到一個bug，不是走過場**：
+1. `--selftest`（純函式，6個合成案例）：第一次就全過，包含驗證XIO字樣的判斷優先權
+   高於window-vanished（兩者訊號同時出現時，該分類成XIO而非較不明確的window_vanished）。
+2. **端對端對一個真正健康的活體instance測試，抓到一個真實bug**：對`hctest`（剛啟動、
+   截圖確認真的在跑遊戲畫面）跑healthcheck，得到`verdict=unknown`而不是預期的
+   `healthy`——根因是`xwininfo`自己的輸出格式不對稱：`0 children.`(句點，0個時)vs
+   `1 child:`(冒號，>=1個時，後面接子視窗清單)。原本的parser只認句點結尾，完全漏掉
+   `>=1`的冒號情形，等於**healthcheck工具本身把所有健康的instance都誤判成unknown**。
+   修好後，把這段真實截取到的xwininfo原始輸出逐字存成回歸測資
+   (`REAL_XWININFO_ONE_CHILD`)，跟`--selftest`合成案例分開一組跑，確保這個bug不會
+   再犯——**這正是端對端測試比純合成self-test更重要的示範**，純函式測試永遠不會自己
+   想到這個格式不對稱的邊界情形。
+3. 對一個真的不存在的instance名稱測試`no_tmux_session`路徑，也正確回報。
+
+修好後重新對同一個`hctest`instance跑，正確回報`verdict=healthy`/`window_child_count=1`。
