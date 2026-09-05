@@ -32144,6 +32144,46 @@
    "excerpt": "結構對稱性支持這個結論,但**這輪沒有做新的 live 測試去正面確認**(需要先解決前述",
    "verdict": "benign",
    "note": "誠實現況邊界，明確標示「這輪沒有做新的live測試」，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2486,
+   "excerpt_sha1": "e95e19b9fd659b2ca88fb824cd5ec9fc9524e1d9",
+   "excerpt": "### 16. 2026-09-05(續四):針對上面第2點,`select_ring()` 加了重試——**已實作,這輪沒有live驗證**",
+   "verdict": "benign",
+   "note": "章節標題，非證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2490,
+   "excerpt_sha1": "12801b7eed4b523749f1d237872ab92b7c163f61",
+   "excerpt": "只要中途對過一次就回`True`。**不會**因為重試次數用完就放寬驗證標準——3次都不符,",
+   "verdict": "benign",
+   "note": "描述本輪對tools/fd2_battle_autoplay.py的程式碼修改行為，工具開發記錄非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2491,
+   "excerpt_sha1": "47e6e238faa4874bcbb95c50c1ee6a8202305a10",
+   "excerpt": "一樣老實印出失敗訊息、回`False`,呼叫端仍要自己決定退路,不會在這裡改成盲按確認。",
+   "verdict": "benign",
+   "note": "同上，接續描述retry邏輯的失敗處理方式"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2497,
+   "excerpt_sha1": "f9db2254e0f706ed5a639c4efce41a35895b1891",
+   "excerpt": "tools -p \"test_*.py\"`)。**誠實邊界:這輪只做了語法/單元測試層級的驗證，沒有另開",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示「沒有另開live instance實際測試」，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2498,
+   "excerpt_sha1": "34c12f4dcf4db14b48e7c8f2e63ecd85dd08c8f9",
+   "excerpt": "live instance 實際測試這個retry是否真的解決§14看到的選擇失敗**——下一輪若要驗證，",
+   "verdict": "benign",
+   "note": "同上，接續誠實邊界說明"
   }
  ]
 }

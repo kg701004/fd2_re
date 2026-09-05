@@ -147,7 +147,7 @@ def ring_selection(inst: str, selector: str = "0170") -> int | None:
 
 
 def select_ring(inst: str, want: int, key: str, selector: str = "0170",
-                blind: bool = False) -> bool:
+                blind: bool = False, retries: int = 3) -> bool:
     """按方向鍵選環項,**回讀確認真的選中了才回 True**。
 
     方向鍵是絕對設值但**受該項的 enable gate 管**(doc13:834)。項目不可用時
@@ -160,14 +160,27 @@ def select_ring(inst: str, want: int, key: str, selector: str = "0170",
     能做一次正規配對試驗:固定攻擊語意,只切換「這裡要不要真的進 debugger 讀值」。
     盲模式下永遠回傳 `True`(假設按鍵生效)——**這比原本更不可靠**,只用於這個特定
     的因果排除實驗,不要在別的地方預設用它。
+
+    2026-09-05(續):新增 `retries`(預設 3 次)。§14 的 live 測試發現 `RING_REST`
+    (`want=3`)偶爾單次按鍵沒有讓 `[0x53c57]` 變成 3——doc13 §15 完整反組譯
+    `0x18d8c` 之後確認 slot 3 本身**結構上從不 gate-disable**(不像攻擊/法術會被
+    `enableFlags` 擋下),所以單次按鍵沒生效比較像是輸入時序的偶發問題,不是遊戲邏輯
+    拒絕——這跟 `0x18d8c` 本體處理按鍵輸入自己也是 `do { iVar1 = FUN_000177fc(); }
+    while (iVar1 == 0);`(讀不到有效輸入就重讀)的重試精神一致。同一個方向鍵最多重按
+    `retries` 次,每次都重新回讀確認;只要曾經對過一次就回 `True`。**不會**因為重試
+    次數用完就放寬驗證標準——用完仍不符,還是老實印出失敗、回 `False`,呼叫端一樣要
+    自己決定退路,不會在這裡改成盲按確認。
     """
-    press(inst, key, 1.2)
-    if blind:
-        return True
-    sel = ring_selection(inst, selector)
-    if sel == want:
-        return True
-    print(f"    環選擇是 {sel}(期望 {want})——按鍵未生效,**不盲按確認**")
+    for attempt in range(1, retries + 1):
+        press(inst, key, 1.2)
+        if blind:
+            return True
+        sel = ring_selection(inst, selector)
+        if sel == want:
+            return True
+        if attempt < retries:
+            print(f"    環選擇是 {sel}(期望 {want})——第 {attempt}/{retries} 次未生效,重按同方向")
+    print(f"    環選擇是 {sel}(期望 {want})——重按 {retries} 次仍未生效,**不盲按確認**")
     return False
 
 
