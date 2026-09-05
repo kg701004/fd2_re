@@ -104,6 +104,7 @@ ORIGINAL_MARKERS = [
     (r"Alt\+Pause|debugger|斷點|BPLIST|SMV ", "原版 debugger"),
     (r"Ghidra|ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
     (r"FUN_[0-9a-fA-F]{4,8}\b", "Ghidra 自動函式名(反組譯位址)"),
+    (r"sub_[0-9a-fA-F]{4,8}\b", "IDA 自動函式名(反組譯位址)"),
     (r"反組譯|反編譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
@@ -682,6 +683,12 @@ def selftest() -> int:
            "正對照:FUN_XXXXXXXX 是 Ghidra 自動函式名,必須命中反組譯標記")
     expect("已確認這個函式呼叫跟 FUNCTIONXYZ 完全無關", "NO_MARKER",
            "負對照:FUN_ 後面沒接十六進位(FUNCTIONXYZ 只是巧合開頭一樣的字)不該誤放行")
+
+    # --- 2026-09-05 補(第八輪NO_MARKER審閱掃出):`sub_XXXXXXXX` 是 IDA Pro 對
+    # 未命名函式的預設自動命名,跟 Ghidra 的 `FUN_XXXXXXXX` 是同一類問題,同樣的
+    # 修法。6 處語料庫命中,風險同樣接近零。
+    expect("已確認這段呼叫走的是 sub_1A813 這個函式", "ORIGINAL",
+           "正對照:sub_XXXXXXXX 是 IDA 自動函式名,必須命中反組譯標記")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
