@@ -32504,6 +32504,46 @@
    "excerpt": "(都涉及對「已經不在原本假設的畫面」送出按鍵),但這輪沒有時間展開驗證。",
    "verdict": "benign",
    "note": "對C.16候選機制的推測性連結，明確標示這輪沒有時間展開驗證"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2749,
+   "excerpt_sha1": "e59edc6d36a088594a78eba1aa4dd6ca8fc62c12",
+   "excerpt": "(移動→確認落點→ring→REST fallback)全程乾淨。",
+   "verdict": "benign",
+   "note": "live測試結果小結，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2751,
+   "excerpt_sha1": "ceb2357e15b0f401a2d0feff07c757dc70c254a0",
+   "excerpt": "**回合結束後截圖確認遊戲繼續正常運作,而且看到真實的雙向傷害交換**:自動進入",
+   "verdict": "benign",
+   "note": "截圖確認真實原版EXE戰鬥傷害交換的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2757,
+   "excerpt_sha1": "28e8a8795d83027283a45c986df41d8db80e2cbd",
+   "excerpt": "**這輪確認的範圍**:用真實mv時,§16(retry)、§19(攻擊優先判定)、§22(落點",
+   "verdict": "benign",
+   "note": "本輪確認範圍小結，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2759,
+   "excerpt_sha1": "7df4e3621a81d36ab34ce9c5fbcfae6ac069a06e",
+   "excerpt": "無崩潰**;戰鬥系統本身(含敵方AI攻擊、傷害計算)透過截圖確認正常運作。**仍然",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示「仍然沒有直接確認」"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2760,
+   "excerpt_sha1": "5dea65886af33ba17ff42d1b41e616d1da0efebc",
+   "excerpt": "沒有直接確認**:我方單位主動發起攻擊、成功命中敵人的正向案例(這回合4個單位",
+   "verdict": "benign",
+   "note": "同上，接續誠實邊界說明"
   }
  ]
 }
