@@ -64,7 +64,7 @@
 369 - E - 明文「raw race/multiplier欄位與實機回歸」需DOSBox對照。
 370 - D - 未見殘留任務語句但也未找到其他doc明示已結案，保守留D（未深入查證）。
 371 - E - 明文「仍需原版實機數值回歸」，需DOSBox驗證。
-372 - D - 外部攻略頁交叉盤點需持續以EXE table/campaign_full.json靜態核對，不能由攻略頁直接推論。
+372 - D - 外部攻略頁交叉盤點需持續以EXE table/campaign_full.json靜態核對，不能由攻略頁直接推論。**2026-09-05複核**：`campaign_full.json`屬`remake/`，已於2026-09-02整個移除；EXE table那一半(原版反組譯/資料表)仍可獨立進行，僅campaign_full.json交叉核對那一半目前無法覆核。
 389 - A（2026-09-05由D複核關閉，見行內既有「已解」）- 核對doc50 L35/288與doc56 L1104，`0x3241f` raw FDICON key producer仍未追出，可續靜態RE。**已解(2026-08-24,doc50)**:完整鏈`0x205da→0x1088d`(無條件`SPAWN(0)`)`→0x10b4e→0x10c50→0x11019`已用`call_scan`窮舉caller並反編譯確認。
 406 - E - 明文「HIT/EV/DX實機數值差分仍待」，需DOSBox對照。
 407 - D - 段落本身已描述完整靜態結論，但未見獨立doc佐證已結案，保守留D（未深入查證）。
@@ -124,8 +124,8 @@
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
-849 - D - 核對`campaign_full.json`，`story_ch23`節點無`handler_binding`，「不能僅因renderer存在就接story_ch23」現況仍真，可續靜態Docker Capstone。
-851 - D - doc58續十六(約L3072-3089,2026-08-18)證實`0x24d22`/`0x11d40`實屬ch24 handler非ch23，項目位址前提有誤，但`postbattle_ch23_persist`在`campaign_full.json`仍是無`handler_binding`的空placeholder，實質缺口仍開放。
+849 - D - 核對`campaign_full.json`，`story_ch23`節點無`handler_binding`，「不能僅因renderer存在就接story_ch23」現況仍真，可續靜態Docker Capstone。**2026-09-05複核**：`remake/`(含`campaign_full.json`)已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
+851 - D - doc58續十六(約L3072-3089,2026-08-18)證實`0x24d22`/`0x11d40`實屬ch24 handler非ch23，項目位址前提有誤，但`postbattle_ch23_persist`在`campaign_full.json`仍是無`handler_binding`的空placeholder，實質缺口仍開放。**2026-09-05複核**：`remake/`(含`campaign_full.json`)已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 852 - D - 剩餘「indexed double-buffer visual adapter」屬渲染管線RE缺口，可續靜態分析。
 853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。
 854 - E - 明文「仍缺未修改一般玩家/CONTINUE的同狀態E2」，需live DOSBox。
@@ -138,7 +138,7 @@
 867 - D - 同862之blocker(terminal handler，此cluster的master item)。**本行已過期，同862 2026-08-30補充。**
 874 - D - 項目自述「既有unit_present metadata不完整，維持fail-closed」，後續項目未完全關閉此缺口。
 897 - C - 剩餘工作純屬BIOS-tick clock adapter實作，非分析。
-898 - D - 可能已部分由`ComposeNativeTransitionFrame`覆蓋，但同性質的874仍明文fail-closed，保守留D而非冒進判A。
+898 - D - 可能已部分由`ComposeNativeTransitionFrame`覆蓋，但同性質的874仍明文fail-closed，保守留D而非冒進判A。**2026-09-05複核**：`ComposeNativeTransitionFrame`屬`remake/`程式碼，已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 899 - D - 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。**本行已過期，同862 2026-08-30補充：functional renderer已解，見doc35§9.22/§9.23。**
 966 - D - 項目自述準確反映現況(ch01已完成,ch02+逐章view/gate provenance仍缺)，非過時，可續靜態逐章RE。
 1017 - D - 卡在`0x2c548`後的party montage資產解碼(FDOTHER#56/TAI#3/FIGANI/DATO)，可續靜態RE。**本行已過期，同862 2026-08-30補充：角色回顧卡背景圖渲染機制已於2026-08-27(doc35§9.23)用live BPPM定案，見對應checkbox本體。**
