@@ -15832,6 +15832,1174 @@
    "excerpt": "重算後 AP／DP／HIT／EV 為 `100/79/110/15`。這仍只保存已證實交易欄位，",
    "verdict": "benign",
    "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 11,
+   "excerpt_sha1": "0d2e7efdea79f78f92347f0a7b211f065312e43c",
+   "excerpt": "新增 `campaign.MaterializeNativeContinueRuntimeUnits`，承接已驗證且已安裝",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 12,
+   "excerpt_sha1": "31e29b62689ba5439f84be59c19ff2d0de82810d",
+   "excerpt": "live field boundary 的 saved `0x50` runtime records。整批先驗證 native",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 25,
+   "excerpt_sha1": "5ce126970ed85dde82627789b648afd1eebc2f52",
+   "excerpt": "2026-08-02 紀錄已閉合 map timing 與 future-group transaction。** 正式",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 32,
+   "excerpt_sha1": "ef902247198981773b89067e4460dfddce2f6d1e",
+   "excerpt": "`sync_native_selector_fields.py --check` 驗證零 pending。scenario party",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 52,
+   "excerpt_sha1": "7aa93e57decdc4101c4f069d95d009eeca085f0e",
+   "excerpt": "分支，33圖1,885筆 race/class/HP/MP 投影驗證通過。table dump 現自帶",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 72,
+   "excerpt_sha1": "17d19002426815fb7b4d3f92ca408bb58f5f37fa",
+   "excerpt": "依使用者要求本輪先建立 `56-fd2-remake-sdd.md`，暫停新增 handler／renderer。盤點確認目前已有 Ebiten battle/story/cutscene、shop、church、preparation、save 與部分 native ending primitive，但原版 menu dispatch、完整 postbattle town/rest flow、w",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 100,
+   "excerpt_sha1": "16b5afb033a8127de016210d1e060b5691238bd2",
+   "excerpt": "> 與 full campaign 目前保存的是 215 個 EXE 原版 unsigned-byte `id`（0..214），逐筆以 `item.json` 的價格交叉驗證；",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 102,
+   "excerpt_sha1": "9899598955a69154a669699558525abf637a330b",
+   "excerpt": "> generator 會拒絕缺 ID 商品。原版購買順序已 RE 為「確認→金錢檢查→選收件者→8格容量→插入首空槽→",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 111,
+   "excerpt_sha1": "54ec4b1b10f23a8a0665be5bfe8d718ef34a99dd",
+   "excerpt": "> Escape 可從收件者返回商品清單，商品頁再回原 town。已編譯驗證並推送 `39817dc`。尚待原版「要裝備上去嗎？」",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 128,
+   "excerpt_sha1": "670ffc59d99eb3b68efdaac1bb59f5f66d2ba469",
+   "excerpt": "> 王座、草地、map31 全段並進入 map0 第一段對白；frame220 抓圖亦確認 ACT99+scroll 後索爾在",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 168,
+   "excerpt_sha1": "dc097bf2fd6564bae8ce6a440c7a7e9d8f0a0128",
+   "excerpt": "> postbattle context 驗證 slot frontier，PAN 定案為 `(336,48)/(336,24)`，ACT14/15/16 直接作用於",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 182,
+   "excerpt_sha1": "02d5f1cf643593831df4b1e64dde4bd87fda6273",
+   "excerpt": "> 尚未閉合，所以不再冒充 campaign complete consumer。詳見 `doc50 §3`。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 201,
+   "excerpt_sha1": "444b06b28ffe006151dbee96b8810df8cc882f0a",
+   "excerpt": "> **2026-07-16 第十三次 Codex 更新（ch02 post 完整閉合）**：extractor 已以通用指令形狀",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 220,
+   "excerpt_sha1": "c2ebafc8248c10967e23551668664e8401eb2707",
+   "excerpt": "> 尚未閉合的原版分支是玩家第27章戰後：天空之鑰 `0x64` 存在才增章進第28章，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 301,
+   "excerpt_sha1": "405f5f05bb21252fc651833df4426a6a53bfd8fb",
+   "excerpt": "- **狀態欄位置**(HUD 擋單位,doc51)、**哈諾父子死亡→暴走**驗證、**export_units.py 全 33 章敵人數值**套合成公式。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 305,
+   "excerpt_sha1": "ac177e78c86b164bccd03533f840e39d92c7d5b6",
+   "excerpt": "驗收=對 reference 實測(原版截圖/影片),不是「測試綠」或「看起來像」。(記憶 `fd2-goal-and-no-speculation-rule`)",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 308,
+   "excerpt_sha1": "df6085dd75030d9fd58321a99c0f5a1f15d53727",
+   "excerpt": "截圖判讀也會幻覺(回報「視覺達標」實測沒有)。派 sonnet 實作後,「像不像/算不算完成」旗艦親自截圖親看。",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 318,
+   "excerpt_sha1": "43519f21871b003c65f4fadd976c06a8162e1128",
+   "excerpt": "- **草地影片量測**:`doc55`;**remake↔文件溯源+落差**:`doc44 §5`;**dosbox 實測**:`doc48`。",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 407,
+   "excerpt_sha1": "009f24d4ea216b9f7dc6bfac9d2ebbc6f4be8136",
+   "excerpt": "- 2026-07-20 save durability slice：save JSON 改以同目錄暫存檔後 `rename` 原子替換，避免戰後 town／商店／整備節點存檔時因程序中斷留下半份 JSON；新增完整內容與暫存檔清理 regression test。campaign/battle 核心測試通過；GUI package 測試在目前容器缺少 ALSA/X11 headers，需用含圖形",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 481,
+   "excerpt_sha1": "3dd4083f2ee54490370248026ed2414a6e8e9969",
+   "excerpt": "- 2026-07-25 type-0x17 item callee audit（後續已 superseded）：當時只確認",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 484,
+   "excerpt_sha1": "711c21d2fecee4fe79df7c74fcc75e4eff812652",
+   "excerpt": "relocation transaction 已於本文件尾端閉合。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 499,
+   "excerpt_sha1": "c457b9e0e4c861f469052f37299dc1f4a94f56f0",
+   "excerpt": "- 2026-07-25 title screenshot oracle：新增 repo-maintained `tools/docker/fd2-dosbox-screenshot.*`，以 SVGA/Xvfb/xdotool 對 `/tmp` FD2 sandbox 跑可編輯 timeline；原始 FLAME2 不掛載。連續 Escape 跳 opening 的真實 320×200 crop",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Docker測試基礎設施結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 500,
+   "excerpt_sha1": "45abc8ff200a336677cd2c6c2057877b146680c8",
+   "excerpt": "- 2026-07-25 empty LOAD oracle：原版 title→LOAD 在 empty sandbox 直接得到 `docs/figures/load-empty-original-dosbox.png`，證實 4-slot 縱列、空記錄文字與 row1 outline；僅為 UI-12 empty-state E2，沒有有效 FD2.SAV，故不對 save record、覆寫",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 524,
+   "excerpt_sha1": "667449fc3399e8a637265b67e411ced44b529aab",
+   "excerpt": "- 2026-07-26 raw command UI fail-closed correction：撤回 native command grid「有同 ID `spells.json` row 就可進 legacy `CastArea`」的暫接。這會跳過已證實的 actor `+3`→cursor confirm→cursor `+4` target pipeline，且 table ident",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 537,
+   "excerpt_sha1": "6cff801f9aab9f8d8befc6cb8d494ad4bc54453e",
+   "excerpt": "當時把 argument10 誤寫成 fixed-10 damage；後續完整 trace 證實它是",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 556,
+   "excerpt_sha1": "5abb2ed57354ee8d7cae028edf7b5a5737d9e38e",
+   "excerpt": "- 2026-07-27 expansion-document assertion audit：撤回 `17-scenario-expansion-evaluation.md` 的「原版評分式 AI 已還原、可照搬」；現以 `11` raw dispatcher/candidate/score slices、完整 AI runtime 未閉合為準。另將 `50` 的 persistence cla",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 700,
+   "excerpt_sha1": "8974867a60a3de558e98a1179d14e8fc1885b65d",
+   "excerpt": "- 2026-07-26 editable constructor raw field：`export_units.py` 可選讀 raw-table JSON，依已證實 portrait selector 輸出 `native_constructor` branch/index/record/aux_record；`battle.Load` 嚴格驗證 record 尺寸並保留舊 JSON 相容。",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 746,
+   "excerpt_sha1": "ca042b6fc1bcdc4b77ed0b14488dc6bd4b05ca6a",
+   "excerpt": "map。當時只保存 topology；後續 5/13 與 8–10 已分別閉合 HP restore",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 772,
+   "excerpt_sha1": "201d774d006351f6be98d33b0ca6b4f6c763efe1",
+   "excerpt": "- 2026-08-02 postbattle 索引系統性稽核：`audit_postbattle_binding_gates.py` 現會把 active binding 與 `battle N→raw ch(N-1)_post` 比對，不再以欄位非空代表正確；現行 ch04/05/08/09/10/11/12/13/18/19/24/25/29 共13個同號 binding 被標為 `acti",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 773,
+   "excerpt_sha1": "48e7757aa817b253044c1f73e2a7be9526adb47d",
+   "excerpt": "- 2026-08-02 postbattle 索引清理完成：scenario `chNN.json` 的 raw map `NN-1`、所有 raw post handler 的 `set_chapter(N+1)` 與主迴圈 dispatch 交叉確認零起算 owner。13個同號錯接中，ch04/05/09/11/12/19/25 已移接到完整 authored 前一號 binding；ch",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 782,
+   "excerpt_sha1": "68105571c415066c4223428920402286cf0ad7cf",
+   "excerpt": "count/list 與 row `+0x0e` amount。後續 dispatcher-tail 複核已證實這兩條",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 785,
+   "excerpt_sha1": "6ef2228182916f3300cc1797c8dcd891c2b213af",
+   "excerpt": "的 HP restore/consumption contract 已閉合。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 790,
+   "excerpt_sha1": "f6f9757306cfdad7edadc58c7b97e0be18880e0f",
+   "excerpt": "shared primitive；後續 type5/13 caller 已閉合 item scope，UI 仍未接。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 794,
+   "excerpt_sha1": "23ddcae56be35a0f53d62dfc08b9ab4b6c6ef3b8",
+   "excerpt": "type11 caller 已閉合為 consumable MP restore，見本檔尾端。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 807,
+   "excerpt_sha1": "2e5fc2cf541802b71c2e28ea9db498fde7a220c8",
+   "excerpt": "- 2026-07-27 item type 8/9/0xa route（後續已閉合欄位）：",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 811,
+   "excerpt_sha1": "df9eaf411bd5a719bb4688c37efde1183c4055bb",
+   "excerpt": "cross-check 已定案三者為 base AP/DP/DX，見本檔尾端 type8–10",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 819,
+   "excerpt_sha1": "eb297fdd9c1b3f13ac172999d5abf7e6f0bdd9fc",
+   "excerpt": "當時 adapter 誤建 caller-owned parallel flags；完整 trace 證實 marker 是",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 833,
+   "excerpt_sha1": "7a4a6927afd32dc5ccfa856a08f19421295d8db1",
+   "excerpt": "accumulator。後續 equipment cross-check 已定案 destinations 為",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 852,
+   "excerpt_sha1": "c0b4e74d9054ab1760332fdcd14f736a4023dc53",
+   "excerpt": "- 2026-07-27 README/KB review：補上原版與 remake 對話成果圖，並把 README 的跨平台、EXE 表完整性、SDL2 runtime 等強斷言降級為已驗證切片／長期目標；`08-text-and-font-format.md` 兩個圖片連結修正為 `../figures/...`。文件不做大合併：`56`/`57`/`42`/`91` 是現行裁決入口，`90`",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 858,
+   "excerpt_sha1": "b443e9e4c3c04c1e76ad97ea4925f069d6fe9669",
+   "excerpt": "後續 dispatcher caller 已獨立閉合 type5/13 的 HP restore/consumption；",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 868,
+   "excerpt_sha1": "fbb139b6ad05902cfa6e31aca923b0a33e329983",
+   "excerpt": "- 2026-07-27 UI-07/08 campaign menu trace：新增 `campaign.MenuState`，把 `choice/town` hub 的 bounded cursor、空選項 fail-closed 與 confirm→`optN` transition 接到 `campInput`；internal/campaign 與 Docker/Xvfb focuse",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 874,
+   "excerpt_sha1": "1f439f66ecab3a91e29cb13f7af7f3ea872f8ae6",
+   "excerpt": "- 2026-07-27 save/load boundary vertical trace：新增 `TestCampaignSaveLoadRestoresTownBoundaryAndParty`，驗證 town 節點 F5 存檔→清除 transient runtime→F9 讀檔後恢復 campaign cursor、gold、items、party roster/deploy/join ",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 896,
+   "excerpt_sha1": "3520d2df5a6a15ac6c9a9222a7e3ce3f52eff4cc",
+   "excerpt": "- 2026-07-27 native item-row producer closure：逐 byte 比對 EXE 證實",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 904,
+   "excerpt_sha1": "7129ff699de6a40715eaa0294969aeb4085bbb07",
+   "excerpt": "- 2026-07-27 equipment word cross-check：以新 raw fixture 對 215 個已知",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 905,
+   "excerpt_sha1": "2fe3b6d4ed59bbecdc6210eac6ea9a30e91aeba8",
+   "excerpt": "selector 全表驗證，runtime row `+1/+3/+5/+7` little-endian words 與",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 915,
+   "excerpt_sha1": "35f8cd04368b483016aca755abd55241fe94b37f",
+   "excerpt": "producer/consumer 閉合，見本文件尾端 type17–19 項目。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 992,
+   "excerpt_sha1": "b1d26b6ad01d595f205ae4ee42b976d752d7d0f6",
+   "excerpt": "與 `NativeRelocationDestinationAllowed` regression完成。這閉合 legality",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1069,
+   "excerpt_sha1": "a34e0aacf81ddff303185371f3bc1048a2e7d6b7",
+   "excerpt": "projections，經兩段target planner驗證self-target後，處理raw base",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1077,
+   "excerpt_sha1": "c153e7c6a295313e2d5c4fda20b550297439bed1",
+   "excerpt": "item row先進兩階段target planner，確認後才atomic建立所有runtime raw",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1089,
+   "excerpt_sha1": "afccbec9e2535a9279d288880965bbdcb5d3ccef",
+   "excerpt": "- 2026-07-27 type23 runtime closure：item101 first-target確認後現進獨立",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1090,
+   "excerpt_sha1": "2f01bf39dad2764c89d7b15aa9abe694ca94b8c3",
+   "excerpt": "destination cursor，不把角色確認誤當目的地確認。每格以raw roster",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1092,
+   "excerpt_sha1": "6b762d2cdc1b62cae330a103fb22a4dba6019f47",
+   "excerpt": "`NativeRelocationDestinationAllowed`；合法確認才由",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1120,
+   "excerpt_sha1": "488726400b709c77153a4f710f1e738b67cc782a",
+   "excerpt": "object redraw→direct rows接成transaction，並驗證不會誤做full viewport",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1196,
+   "excerpt_sha1": "0e2e26523339e6d7ddd1b0aee2ec1a2dbdc06c06",
+   "excerpt": "HUD gateA。player FD2.SAV真實decode/checksum驗證通過；這提供後續",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1224,
+   "excerpt_sha1": "65672f3ecb19d9d053a41f4f76752602a877cd0a",
+   "excerpt": "correction 取代；動態target/flash仍未閉合，不宣稱完整battle UI parity。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1239,
+   "excerpt_sha1": "6597660c8d2eacbe541abdbb514b7afb4f3c1f70",
+   "excerpt": "roster count，count非零才確認。code6維持既有relocation branch。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1275,
+   "excerpt_sha1": "e6a93cd7f16aad35121f92fb993f1cc281de543f",
+   "excerpt": "remake現保存panel/effect-table以支援取消後重新確認，並在success/cancel",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1276,
+   "excerpt_sha1": "f70191f2b768e14161eb2990ed07826292cb36e5",
+   "excerpt": "reset field與selector。`ComposeFrame`另依已證實scheduler在terrain後、",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1282,
+   "excerpt_sha1": "e5db2a96ff6c52d083ab8a27be0369c295f445a4",
+   "excerpt": "`BlitNativeMapHUD→ComposeNativeFrame`早已接入完整已證實subpasses。",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1297,
+   "excerpt_sha1": "ee5d6f382bf2708c3162d30db58a1ba66d891623",
+   "excerpt": "cursor `(8,15)`／visible `(7,2)`可由terrain與cursor格交叉驗證。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1304,
+   "excerpt_sha1": "e8042b721abcaddff0910d0d9a6053c150a672fd",
+   "excerpt": "audit確認remake圖只見一個party不是`NativeMapFrameRoster`漏畫；direct",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1350,
+   "excerpt_sha1": "9d8bc2956ccbe44d5a06f98db70ddcb8db20016b",
+   "excerpt": "battle UI畫面交叉確認。結論分三層：asset/codec約75–85%、可操作state",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1396,
+   "excerpt_sha1": "8de8c1ec1e32844048a2d4684ac993fe514a1d97",
+   "excerpt": "（item0–5 deterministic fixture）。這閉合stable child target，不代表",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1478,
+   "excerpt_sha1": "3c2e0295f4dd763a24d42b0bacd15045dc4e4f31",
+   "excerpt": "selected pulse。production regression會確認原版節點被native owner接管、",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1492,
+   "excerpt_sha1": "9060cbb02171bbc08575a59155910f8e28ef713d",
+   "excerpt": "或空inventory確認才以0→11關閉並restore shop，再回角色roster。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1554,
+   "excerpt_sha1": "3f64e1d64c494fa8724aa133997e1d0a4dff18ad",
+   "excerpt": "`MatchNativeTownSecret`揭露、`ConfirmNativeTownSecret`確認兩階段，並以",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1571,
+   "excerpt_sha1": "b8afdc78686c888bf47d65009a79a7184b878e93",
+   "excerpt": "寫法會因按鍵落在錯誤 phase 而不穩定。CONTINUE 後共有20次戰後對話確認，",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1572,
+   "excerpt_sha1": "dfdaee0eab44004e9bc317eb4270221f14a44a9d",
+   "excerpt": "第21次確認後得到 ch02 variant0／selection0 原版 town hub。",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1603,
+   "excerpt_sha1": "6674e178b1c1c7269eb41706439dd5c672bdbe8e",
+   "excerpt": "尚未閉合 variant1/2、selection2–5、Right/wrap、secret reveal/confirm。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1615,
+   "excerpt_sha1": "2b196b36f594ff8c5af35c878a379ab3ad9cbed5",
+   "excerpt": "本輪另建 `/tmp/fd2-town-e2g`，從原始 FLAME2 全新複製後只重套三個已驗證",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1628,
+   "excerpt_sha1": "a112735bd4cea50bed230e258610fa8e4d10ad7f",
+   "excerpt": "- 原版 input trace另外實測 Right `0→4`、Left `4→0`，以及 ch02",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1635,
+   "excerpt_sha1": "e8f5520548385a66eee22e01b26995341ae65d94",
+   "excerpt": "normal wrap與hidden reveal E2已閉合；仍待variant1/2及selection5後續",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1662,
+   "excerpt_sha1": "9d45a6a6f1c0d9c897cc292283db011b8bb586b7",
+   "excerpt": "gate 原為service1–3與Escape return；下節已閉合。variant1/3也已由後續",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1669,
+   "excerpt_sha1": "3814d897715b41f231e7f0bfe5fc2abc513f5f7a",
+   "excerpt": "AE=0。這同時驗證四項service icon anchors、wrap與input後pulse reset結果。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1680,
+   "excerpt_sha1": "a3a71dfb4a989e22e66608b3254f293d1b5f5041",
+   "excerpt": "每一格全幀AE=0。下一gate原改為ordinary shop variant1/3；下節已閉合，",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1697,
+   "excerpt_sha1": "f339f7d19719dfa50ae4c4db9ab14c88d19d7843",
+   "excerpt": "pulse gate已閉合；不能把此證據推廣成purchase/sell/equip/transfer child",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1709,
+   "excerpt_sha1": "342241fc18d3f25bd0d91fa2cacea55aa0e545e2",
+   "excerpt": "實送Right `0→1`、Down `1→3`、Left `3→2`，證實兩欄input mapping。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1742,
+   "excerpt_sha1": "71b9071a756b796feab7599ff9da140e6828c12d",
+   "excerpt": "- 原版由已閉合的weapon purchase list selection0再送Return，經list close與",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1750,
+   "excerpt_sha1": "c30fcf0550c4d4827764931fd19f5072d5c88caf",
+   "excerpt": "- 原版高頻sample證實normal與selected pulse交替。selected Yes raw RGB MD5",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1757,
+   "excerpt_sha1": "0240bbd2ea5c956ad612ca8486574b64b3e1b955",
+   "excerpt": "insufficient；該分支已由下節閉合。recipient／no-recipient／full／success",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1766,
+   "excerpt_sha1": "5c9a55bc45980da81e7e14a9d671342012ad4b45",
+   "excerpt": "- 原版gold0由布衣good0確認Yes後顯示「錢不夠！」及mode-one等待標記。最初",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1817,
+   "excerpt_sha1": "4882b62a807a030852ed272a9da91760b7b7b4ce",
+   "excerpt": "- regression以ch00真實scenario/order `[0,9,4,30]`驗證raw inventory、",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1825,
+   "excerpt_sha1": "285fbb8350454f6f6e82c8b9b7647a46949bed45",
+   "excerpt": "- 原版由已閉合的裝備收件者selection0按Down可到selection1，按Up回selection0；",
+   "verdict": "benign",
+   "note": "延續句，原版側像素/截圖/MD5級實測描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1842,
+   "excerpt_sha1": "1d927afa1ea308332445611966cef5ecce8bb3a1",
+   "excerpt": "不能以固定sleep、忽略兩像素或猜測renderer語意閉合。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1856,
+   "excerpt_sha1": "3ab016a602fce9348c21191d8667df6ffde95fea",
+   "excerpt": "悠妮。`spawn_march`仍只留schema示意，不代表原版進場owner已證實。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1910,
+   "excerpt_sha1": "01affd86ae6b32aff2baf28686cd2fe427a1dd6b",
+   "excerpt": "`/tmp/fd2-town-e2g`的verified三處route-patched EXE，建立新的disposable",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1923,
+   "excerpt_sha1": "ad6b3ce203a7e46a08fd3334491961ace969c90d",
+   "excerpt": "opening/closing timing、交易提交與正常campaign/native save lifecycle仍未閉合，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1951,
+   "excerpt_sha1": "58d88e56dbef4b168c3609ee0b8a3e45346a831c",
+   "excerpt": "此句是當輪狀態；扣款由下一節閉合，success人物兩點則由本檔稍後的",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1973,
+   "excerpt_sha1": "0b28dff8084f4a571fc29c0a9b05870cdb3580ec",
+   "excerpt": "25個原子樣本整幀AE=0。整條route仍使用三處verified battle-skip patch，",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1985,
+   "excerpt_sha1": "fbdb903dfa64dd15efa3262f2006fac3db64f742",
+   "excerpt": "`docker ps -a`確認無FD2 container。以後one-shot一律`--rm`、Xvfb用trap，",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Docker測試基礎設施結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1991,
+   "excerpt_sha1": "89e32fe0cbaa4da79d6d7a5ad75727d2797dd771",
+   "excerpt": "- repo-wide斷言續審確認多數2026-07-28高風險句已收窄；補修",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1993,
+   "excerpt_sha1": "4af73d45a8ad1ae2b4db5949549698954cb26254",
+   "excerpt": "可獨立播放的開場流程。caller／章節／title sequence仍須逐一驗證。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 1998,
+   "excerpt_sha1": "662211770707c5c0cc30aafd888d2e522f9fb7ce",
+   "excerpt": "在`fd2-cap-local`重讀購買呼叫者；命令結束後以`docker ps -a`確認沒有",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Docker測試基礎設施結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2016,
+   "excerpt_sha1": "0f2c6d1ce45d3b00945a8e8f66b03b9efd274e49",
+   "excerpt": "成功動畫合成切片可升E2；正常未修改玩家路徑與其他商店子面板仍未閉合。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2023,
+   "excerpt_sha1": "c197a2b6a55a4de09dcc5e30b52c9509f7542674",
+   "excerpt": "戰場。程式已修正位元組正規化；當時暫接的「小隊不足仍進確認」已由",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2024,
+   "excerpt_sha1": "0e147ac47d67c640839fdd2a7d557a9845b6e654",
+   "excerpt": "下一段外層呼叫端證據撤回。確認框文字與外觀仍是重製介面，不宣稱原版視覺一致。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2025,
+   "excerpt_sha1": "f596ccd80b32cce8666c35e7dda7bf84492834b0",
+   "excerpt": "- 2026-07-29 整備外層呼叫端勘誤（取代上一段「小隊不足仍進最終確認」）：",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2032,
+   "excerpt_sha1": "dc590d6e43f6f2289a947ccc79dc982f5a7fe31c",
+   "excerpt": "23個城鎮整備節點新增可編輯 `cancel→town_chNN`；流程改為出發確認→",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2033,
+   "excerpt_sha1": "5cc799042ee32473e4593c6cd5bf137f9dc2abf5",
+   "excerpt": "小名冊直接出發／大名冊全零選人→選滿後最終確認，任何取消回城。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2130,
+   "excerpt_sha1": "248fa26c51fe7cf04336ec26d546782a9a91cebc",
+   "excerpt": "還原，只有 Draw 確認還原幀後才轉場或重選。真實資源測試固定",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2168,
+   "excerpt_sha1": "9c63daa22868ab5e16c6bef049a022625736dd1d",
+   "excerpt": "與已知 writer 已由下一節繼續閉合；其餘模式仍不能猜值硬接。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2218,
+   "excerpt_sha1": "2f5cf1613c8052528e06dbd88adbc8e34610b5b8",
+   "excerpt": "## 2026-07-29：map25 event58 五選一寶物閉合",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2229,
+   "excerpt_sha1": "170098ca6d1c092c489d3a39245fa686dc97f5c6",
+   "excerpt": "## 2026-07-29：map25 field events 59／60／61 閉合",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2241,
+   "excerpt_sha1": "b4db11701c77164afb1f98c58855ee8e1ce2008c",
+   "excerpt": "preflight 與原子 mode-range 寫入；上層尚未證實 selector 時機，所以沒有",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2244,
+   "excerpt_sha1": "4721f2c6c65ca298ffe6b6ef267d5f1ce1f3d9c7",
+   "excerpt": "## 2026-07-29：selector0 向左格步驟時機閉合",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2320,
+   "excerpt_sha1": "6be7bebd5b1b8e149da83b304f73c3b2d45353d4",
+   "excerpt": "`MaterializeNativePersistentPartyRecord`。它只投影 record 已證實欄位；",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2375,
+   "excerpt_sha1": "297d78f89a0e522134ab868c7ae3525502c268c5",
+   "excerpt": "決定是否離開。這三者先前已閉合，不是本輪新增的未知 callback。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2414,
+   "excerpt_sha1": "7e9c9af7e34e3f6ac68c1963e345ffb71c387d6d",
+   "excerpt": "驗證 identity103 actor 在 `(23,14)` 命中 ally index。仍未接",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2438,
+   "excerpt_sha1": "516dd59f0c191214d9b50540faef2ca0b656bf7c",
+   "excerpt": "尚未由 caller／prologue 證實。因此下一步可以接非負數值最大值與非零勝者，",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2507,
+   "excerpt_sha1": "0e75f4545e3e01b2217f9da147d3b1e3d0b1f40a",
+   "excerpt": "code 的共同驗證；正式 `NextAIPlan` 維持未接。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2598,
+   "excerpt_sha1": "63bb8bfd56afa28205cfd98a60eaf0a4d3aa1453",
+   "excerpt": "與 production title owner。完整驗證 chapter、node type、catalog、",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2624,
+   "excerpt_sha1": "e9e78dde84bf56d0264575845277ef5888270a28",
+   "excerpt": "**此為當時狀態；較晚的 2026-08-02 交易已閉合 control、runtime unit 與",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2638,
+   "excerpt_sha1": "bccacc7110331fab202611f354dcd1c5c35c6cd3",
+   "excerpt": "閉合的 structured branches 降回暫存器形式，已撤回該批意外差異；",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2651,
+   "excerpt_sha1": "9cde52aae25b067a409e84b3f27a3fb7c99eefda",
+   "excerpt": "新 `BuildContinueRuntimeInput` 原子驗證 resource context、counts、",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2716,
+   "excerpt_sha1": "e16bca41f9c0e754819e5f2f5cf6d59c953f0e6c",
+   "excerpt": "## 2026-07-29：讀檔空槽 production／E2 閉合",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2735,
+   "excerpt_sha1": "cb4befa599aa827215a6ff4e9fdc91ef5d454643",
+   "excerpt": "尚未閉合，UI-VIS-LOAD 維持部分完成。詳細直接指令見",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2738,
+   "excerpt_sha1": "300549cb51fc2d50220f772442ec83032b5a25c6",
+   "excerpt": "已證實 metadata 改為 chapter1／count1／currency1000，重新計算 native",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2739,
+   "excerpt_sha1": "e495dce9ba8334608e547d5f78b1bcdc96873fd4",
+   "excerpt": "checksum／rolling XOR；分段 Escape 後進 title→LOAD，但未確認槽位。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2750,
+   "excerpt_sha1": "eb576822cc21d137b162593801b3f79025508074",
+   "excerpt": "全部 `0x28` metadata 與已證實 header，空槽／count > 32 失敗即關閉；",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2755,
+   "excerpt_sha1": "7742fd038a4e0c7fe27427ca8261532fbfbf936c",
+   "excerpt": "已證實 metadata 呈現四槽；tamper regression 會拒絕整份檔案。確認空槽",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2756,
+   "excerpt_sha1": "1c4293887925d943c99bb408346970734bfaff1f",
+   "excerpt": "會留在 selector；確認有效 native 槽也會明示 roster restore 尚未完成，",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2762,
+   "excerpt_sha1": "5152ba6c2ca36a95ce65fcd0f778fd7edcb5324b",
+   "excerpt": "identity/race/class。新增 `fdsave.PersistentRecord.View` 保存已證實",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2813,
+   "excerpt_sha1": "2b409512f32c9d1a2b91fd6e053ecd94d9dab724",
+   "excerpt": "ch02 turn3/event6 的版本化 action 已驗證六名 group3 友軍逐筆採 gate=1",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2820,
+   "excerpt_sha1": "e3cd6d725101188b2eb7ce7ed7b4ad5a75dbef7c",
+   "excerpt": "- 再次實測 `gen_campaign.py` 預設總表輸出會把權威 `campaign_full.json`",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2825,
+   "excerpt_sha1": "67c9a8b6564317f5e1229da478ecd44059a68351",
+   "excerpt": "語意都要帶已證實／強推論／假說／未知與來源；工具內改名不能取代 raw",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2855,
+   "excerpt_sha1": "76b72ad4ec70f8cff2b29c456bf0cc8e5964ee8f",
+   "excerpt": "不改世界座標。任何驗證失敗都不修改 caller buffers。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2857,
+   "excerpt_sha1": "1c88d5ec0cc4bcc5343cc411c71c5b275a528a93",
+   "excerpt": "預檢，全部成功後才發布新增群組。每個 pass 必須經 `Draw` 確認才前進；完成",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2875,
+   "excerpt_sha1": "473099e382d8a8eb8567639b4a77d9b7c4982d30",
+   "excerpt": "`assets/cutscenes/acting/map32.json`；runtime 在任何 constructor commit 前驗證",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2885,
+   "excerpt_sha1": "43c96491337a0ad7ed19aa530d24fcef22f94ec0",
+   "excerpt": "驗證 units／roster／selector cache／turn continuation 全不變。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2909,
+   "excerpt_sha1": "9e13f9d73facae0baedd33414b8200567c3def88",
+   "excerpt": "- 這關閉 future-group append 的具型別交易，不宣稱完整 0x50-byte 逐位元組一致，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 2939,
+   "excerpt_sha1": "e8d491ceebf7df8dcf2deeb2940cce5d6b5af90b",
+   "excerpt": "evidence；歷史段落保留時間序列，但明示已被較晚結論取代。Docker 驗證結果：",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3005,
+   "excerpt_sha1": "753b13f41e3d8215a31c6905c206018a27e2f13a",
+   "excerpt": "group2@(15,27)；這個 via 未被一般 spawn consumer 接受，因此尚未閉合畫面",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3006,
+   "excerpt_sha1": "d1391dba0da7e31a491111f07276be6c9a53dd4a",
+   "excerpt": "owner 時仍保持失敗即關閉。同輪也機械閉合 event64／66／68／70／72 的",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3017,
+   "excerpt_sha1": "2f2756616002865b3a04aab666cf8a315fc3cf11",
+   "excerpt": "下方較晚勘誤已閉合並接線 ch27 精確 native view 與 selector0；當時尚未閉合",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，remake開發期交接文件一貫的fail-closed證據分級敘事延伸"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3027,
+   "excerpt_sha1": "979e2d0128a8dde25557c69da599a8589726d9f6",
+   "excerpt": "已閉合 ch26_pre 返回 battle_ch27 時的 camera `(9,49)`、absolute cursor",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3032,
+   "excerpt_sha1": "20c2b623c03704f69633af09659d92f87932aaa9",
+   "excerpt": "現允許具直接證據的 view 在 HUD 未閉合時獨立存在，節點入口只接受已證實的",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3034,
+   "excerpt_sha1": "eb80409e67bf9ea597d3b388611cfd1696196265",
+   "excerpt": "- 不建立 ch27 `native_map_hud`（歷史狀態；已由檔末「HUD 持續擁有者閉合」",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3042,
+   "excerpt_sha1": "a5291c692a49b244e44c69b652533fa4cc3ee7d9",
+   "excerpt": "## 2026-08-02：HUD 持續擁有者閉合與 JOIN raw record 勘誤",
+   "verdict": "benign",
+   "note": "自我修正/勘誤延續句，remake開發期交接文件記錄的更正過程"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3077,
+   "excerpt_sha1": "64a51d2a44e3c4c48b4c0cafa93ab4cb4070ad2c",
+   "excerpt": "roster 時才以 scenario unit 提供姓名等顯示 base，再由 raw table 覆寫已閉合的",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3093,
+   "excerpt_sha1": "193cfea848603d7d7a7394e5cb48460e82345ac3",
+   "excerpt": "`battle.ApplyNativeEquipmentRecalc`、215 列 item row cross-check 與 raw",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3094,
+   "excerpt_sha1": "7afae26880d1efd0c14d715a502609a7e4ec5613",
+   "excerpt": "regression 證實八格 `flag&0x40`、row `+1/+5/+3/+7`、signed 16-bit",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3107,
+   "excerpt_sha1": "333932117eb7346589673bf6e097248be8ab895d",
+   "excerpt": "`+0x48..+0x4E` 改依已證實 signed word 解碼，負值不再顯示成巨大正數。",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3176,
+   "excerpt_sha1": "f2d4593e9bdc985efeef6c871d306d73f9f11e54",
+   "excerpt": "寫入已轉成 address-keyed `direct_record_patch`。執行期先驗證全部 slot、",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3193,
+   "excerpt_sha1": "a4ee28c5865fcababd18738449d131754ca05124",
+   "excerpt": "- Docker 驗證通過：583個 JSON 可解析、handler extractor 重新讀得",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Docker測試基礎設施結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3196,
+   "excerpt_sha1": "f21a23809d4e81b7cfc6fb2eeb6b59518b7ed9c0",
+   "excerpt": "另實際呼叫 indexed palette Draw path，確認六位元 DAC palette 與呈現",
+   "verdict": "benign",
+   "note": "延續句，remake開發期交接文件對native/raw欄位證據分級的敘事延伸，多數offset低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-07-06.md",
+   "line": 3229,
+   "excerpt_sha1": "30588181771834a7a72391c8eef8df145c9bb14e",
+   "excerpt": "Docker驗證已通過882個JSON解析、17 active／7 blocked戰後稽核、故事覆蓋",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Docker測試基礎設施結果"
   }
  ]
 }
