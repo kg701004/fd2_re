@@ -102,7 +102,7 @@ ORIGINAL_MARKERS = [
     (r"DOSBox-X|dosbox-x|DOSBox", "原版模擬器實機"),
     (r"MEMDUMPBIN", "活體記憶體讀取"),
     (r"Alt\+Pause|debugger|斷點|BPLIST|SMV ", "原版 debugger"),
-    (r"Ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
+    (r"Ghidra|ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
     (r"反組譯|反編譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
@@ -644,6 +644,15 @@ def selftest() -> int:
     expect("這件事已經確認跟反編譯完全無關,只是隨口提一下", "ORIGINAL",
            "回歸:即使是否定語氣,marker 只看字面出現與否(與既有其他 marker 一致的設計),"
            "不做語意否定判斷——這是既有規則,不是本次新增的行為")
+
+    # --- 2026-09-05 補(第四輪NO_MARKER審閱掃出):`tools/ghidra_batch_probe.py`/
+    # `FD2_ghidra_projects/` 這類本專案自己的檔名/路徑一律用小寫 ghidra,但原本
+    # marker 只收大寫 `Ghidra`(Python re 預設大小寫敏感)——12 處語料庫命中全部
+    # 是貨真價實的靜態反組譯證據,只是引用自己的工具檔名而非產品全名。
+    expect("已確認這段呼叫走的是 tools/ghidra_batch_probe.py 這條路徑", "ORIGINAL",
+           "正對照:小寫 ghidra(本專案工具檔名的常見寫法)必須跟大寫 Ghidra 一樣命中")
+    expect("已確認這段呼叫走的是 tools/Ghidra_batch_probe.py 這條路徑", "ORIGINAL",
+           "回歸:大寫開頭的既有寫法不能被這次修正弄壞")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
