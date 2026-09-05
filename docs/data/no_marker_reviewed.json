@@ -5176,6 +5176,782 @@
    "excerpt": "這比現有 `--blind` 的改動大得多,建議先確認有沒有更值得追的角度再投入。",
    "verdict": "benign",
    "note": "未來式建議"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 4,
+   "excerpt_sha1": "7109917f93a85bd212c97e8dddf7df638040dff0",
+   "excerpt": "> 延後,每一項標註**驗證等級**,不把未驗證的寫成已驗證。",
+   "verdict": "benign",
+   "note": "方法論宣告，明確保留用語「不把未驗證的寫成已驗證」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 43,
+   "excerpt_sha1": "ac6f08a165af7d589851a49dfc0903c30853074c",
+   "excerpt": "全庫 6779 筆驗證主張:ORIGINAL 2598、MIXED 92、REMAKE_ONLY 171、NO_MARKER 3918。",
+   "verdict": "benign",
+   "note": "全庫統計摘要，本身就是NO_MARKER統計數字的自我報告"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 67,
+   "excerpt_sha1": "2921c9d51a5abeaae955ceea3fe3765fc0b53c2e",
+   "excerpt": "| helper 欄位表 | HP/MP 的 cur/max 標反 | 實測更正,工具與文件同步 |",
+   "verdict": "benign",
+   "note": "表格row，工具修正記錄"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 75,
+   "excerpt_sha1": "23541c436bd5771907925191268a1b8c6aeb8910",
+   "excerpt": "| `audit_evidence_provenance.py` | 依證據來源分類驗證主張 + `--gate` 閘門 |",
+   "verdict": "benign",
+   "note": "表格row，描述audit_evidence_provenance.py本身"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 78,
+   "excerpt_sha1": "85dfc32a3c992a41080e43fb295087e7d4f2da6a",
+   "excerpt": "| `fd2_stat_override.py` | 活體數值覆寫(寫後自動驗證) |",
+   "verdict": "benign",
+   "note": "表格row，描述fd2_stat_override.py工具"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 87,
+   "excerpt_sha1": "79244d931bb8f055091de1cfd870bb4f1a9aba02",
+   "excerpt": "| 確認鍵選擇性掉鍵(scancode 層) | **否決**,94/94 |",
+   "verdict": "benign",
+   "note": "表格row，否決結論(94/94)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 92,
+   "excerpt_sha1": "0bf1497e964a6a4bcfb6bd4eb7f25e3a823bed1c",
+   "excerpt": "| `+5` bit0 = 陣亡/失效 | **確認** |",
+   "verdict": "benign",
+   "note": "表格row，offset(+5)低於門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 103,
+   "excerpt_sha1": "d11e8c7bf482892731fcc7dccd1e401e9bd5771f",
+   "excerpt": "| **`wait-settle` 假陰性** | 停在轉場開始前的舊畫面,回報 `SETTLED tries=2` | 對確認鍵傷害遠大於方向鍵,會製造「掉鍵」假象 | 已加 `require_change` 預設開啟;戰場一律用固定等待 |",
+   "verdict": "benign",
+   "note": "表格row，工具假陰性修正記錄"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 108,
+   "excerpt_sha1": "ee21a359315f34dc58015a7da67c2376fd7b9f2d",
+   "excerpt": "| ~~**MV 偏移未定位**~~ | —— | —— | **附錄 A.1 已解**:`+0x37` 與 `+0x48` 是兩組欄位不是矛盾;MV=`+0x3b` 已實測(畫面顯示 `MV·20`),`--ours-mv` 已加入 |",
+   "verdict": "benign",
+   "note": "表格row，刪除線+已解，offset低於門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 116,
+   "excerpt_sha1": "03a1191b219350508b7509741591c841738a61f3",
+   "excerpt": "| **勝利曲** | 打贏一場戰鬥 | 數值覆寫已可用(我方999/敵HP1,已驗證存活進戰鬥);缺穩定的行動自動化 |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「缺穩定的行動自動化」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 120,
+   "excerpt_sha1": "2a44e19d33ce7b3c0ad2ebceb9d65bed6cc99b7a",
+   "excerpt": "| **glyph 423 麻痺術原版截圖** | **資料可得性**(附錄 A.6 更新) | 路徑已證可達,但法術列表卡需足夠法術;手上兩份存檔角色 mask 第 27 位皆為 0,需更後期存檔或人為寫入 mask(後者證據等級較低,須註明) |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「證據等級較低,須註明」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 123,
+   "excerpt_sha1": "5d6c5ce667293ea2dc86750348c99d2986e7335e",
+   "excerpt": "| doc09 舊結論 | 驗證法已替換,舊結論仍需逐條重驗 | 文字管線本身已 3/3 |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「舊結論仍需逐條重驗」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 124,
+   "excerpt_sha1": "219ae8b567ca75d1824fab95a6451a78bbf428a8",
+   "excerpt": "| **3918 筆 `NO_MARKER`** | 有驗證語言、無來源標記 | 比 remake 汙染範圍大;性質是紀錄習慣問題 |",
+   "verdict": "benign",
+   "note": "表格row，本身就是NO_MARKER統計的自我描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 143,
+   "excerpt_sha1": "9720df8e12a0584e380112c23486fabed0d59264",
+   "excerpt": "> 本附錄涵蓋 §1-§6 寫成之後的 13 個 commit。體例同前:標註驗證等級,",
+   "verdict": "benign",
+   "note": "方法論宣告，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 152,
+   "excerpt_sha1": "0fc129e1b067709c4779577c237c22e6fe74f395",
+   "excerpt": "**算術佐證(三個獨立來源)**:索爾 `+0x37`=6、卡片短劍 `+AP 010`、`+0x48`=16、畫面 `AP·016`。",
+   "verdict": "benign",
+   "note": "算術佐證延續句，offset低於門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 215,
+   "excerpt_sha1": "ef6ce1d3476be525b92c0b2aba832c01f7c55560",
+   "excerpt": "**處置**:表降級為候選清單;已活體確認的 6 筆維持成立;其餘 64 筆**未受檢驗**。",
+   "verdict": "benign",
+   "note": "明確保留用語「其餘64筆未受檢驗」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 229,
+   "excerpt_sha1": "4026b758505911790fab9030661f98f8173badf1",
+   "excerpt": "sfx probe 讀 EIP(沒確認停住)、回合統計讀陣營位元組(轉換窗口)。",
+   "verdict": "benign",
+   "note": "延續句，描述工具行為"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 243,
+   "excerpt_sha1": "688b79d0356dca09774c1f47806728b58e91aac2",
+   "excerpt": "| 攻擊音效的 index | 已確認**不在** 1/3/6;真實 index 未定(疑為 16 個動態呼叫點之一) |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「真實index未定」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 252,
+   "excerpt_sha1": "a12ef1c8fc04f2d2fbea82e646609e02abed16ed",
+   "excerpt": "| `decode_story_text` 說話者根因 | 事實已雙重佐證,**根因未查** |",
+   "verdict": "benign",
+   "note": "表格row，明確標示「根因未查」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 260,
+   "excerpt_sha1": "0f543b1cf1b47bccde2e13ef8b8062cc06c41149",
+   "excerpt": "3. **重複量測得到相同答案,在有自走呼叫點時不構成佐證**——它會穩定地給出同一個錯值。",
+   "verdict": "benign",
+   "note": "方法論警示延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 273,
+   "excerpt_sha1": "fc03bd4be7aca8844ddb203f590c7d091f42a5cd",
+   "excerpt": "1. **剩餘敵人停在距離 2 不再前進**。實測座標:敵方 idx4/5/6/7 由北方 (1,4) 一帶推進到",
+   "verdict": "benign",
+   "note": "活體測試觀察記錄延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 277,
+   "excerpt_sha1": "41f6065ecf3b8cc82d5a57a9bbcbae8180aa9870",
+   "excerpt": "2. **`--attack` 的「主動接近」無效,原因待查**。手動逐步驗證:對 idx0 按 Enter 後",
+   "verdict": "benign",
+   "note": "明確標示「原因待查」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 290,
+   "excerpt_sha1": "5b8ed21ac935991b2d52412eef01862de1068f2a",
+   "excerpt": "(落點不可達?移動選格游標未接受方向鍵?確認被退回原格?)**尚未查明**,",
+   "verdict": "benign",
+   "note": "明確標示「尚未查明」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 296,
+   "excerpt_sha1": "c740797d2528ead5f2389ae8c4c062f927c448de",
+   "excerpt": "(四人全動、統計乾淨、覆寫 46/46 驗證吻合),**但目標沒有進展**。",
+   "verdict": "benign",
+   "note": "延續句，明確標示「目標沒有進展」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 297,
+   "excerpt_sha1": "f747da816123ce81595954cc68a7d5886b156d42",
+   "excerpt": "「動作成功」與「戰鬥推進」是兩件事,而我加的事後驗證只檢查了前者。",
+   "verdict": "benign",
+   "note": "自我反思延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 303,
+   "excerpt_sha1": "4b78469946098d49dc20e3933d55302d5f3866e2",
+   "excerpt": "> 起點是使用者的一句要求:**「請把全部工具重新驗證檢查確認工具的功能正確及精確度高」**。",
+   "verdict": "benign",
+   "note": "引用使用者原話，方法論宣告"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 305,
+   "excerpt_sha1": "2c678d1639af2172f19b42baa530244b81489c6e",
+   "excerpt": "> 體例同前:標註驗證等級,明確區分已完成/未完成,不把未驗證的寫成已驗證。",
+   "verdict": "benign",
+   "note": "同4，方法論宣告"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 315,
+   "excerpt_sha1": "db4fd54fef63e9fedd8004d365d706f33a666ebc",
+   "excerpt": "`python -m unittest discover -s tools -p \"test_*.py\" -t tools`:10 個測試檔全部確認**被收集到**",
+   "verdict": "benign",
+   "note": "描述測試套件執行結果延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 343,
+   "excerpt_sha1": "b57cac733ad310e780cc14aa35d5b4aa48b498fc",
+   "excerpt": "AST 掃描確認沒有第三支。兩支都以故障注入驗過(指向 EXE 副本→離開碼 2、md5 未變)。",
+   "verdict": "benign",
+   "note": "延續句，故障注入驗證方法"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 348,
+   "excerpt_sha1": "517119839958687c3e9067472fe5cbfb0ab93688",
+   "excerpt": "資料檔**完全沒有驗證狀態欄位**,A.4 的降級只寫在文件裡。已補 `_meta`",
+   "verdict": "benign",
+   "note": "工具修正說明延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 349,
+   "excerpt_sha1": "e42f8204aed9c9d5c04e9f598f76338b798fd02e",
+   "excerpt": "(10 個已活體確認 + `known_misattributed`),工具改成三種回報,未確認者不給裸 index。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 350,
+   "excerpt_sha1": "260b9d2fd7f3a614ed7ccaf6c1fa2af4d9f9310b",
+   "excerpt": "2. **`fd2_stat_override` 驗證 36 個欄位、寫了 40 個**——MV 是 u8,不在 `read_array()`",
+   "verdict": "benign",
+   "note": "工具bug發現延續句(MV欄位漏驗證)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 351,
+   "excerpt_sha1": "7cb349d8185d502509bf92ec0f529a8eb420e8d9",
+   "excerpt": "回傳裡,驗證迴圈從沒看過它,而輸出「36/36 吻合」讀起來像全部驗過。已補,故障注入確認。",
+   "verdict": "benign",
+   "note": "延續句，故障注入確認"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 353,
+   "excerpt_sha1": "4ee2d8ac2f67a861561e1c903c9d7fa793e043e2",
+   "excerpt": "靜默失敗時 log 一模一樣,而「章節已清」的結論就建立在這些擊殺上。已改回讀確認。",
+   "verdict": "benign",
+   "note": "工具修正延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 380,
+   "excerpt_sha1": "2a166572c4a2a23e8efd277d9663bc164f183148",
+   "excerpt": "截圖判定的三句)兩個方向都測,佐證獨立於我改的程式碼(被改標的內容自稱「朕」)。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc09場景"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 407,
+   "excerpt_sha1": "6e0ab3f58b59db1b9de6a92561ca4a5732447309",
+   "excerpt": "**目前狀態**:數值量級、攻擊執行、回合數、移動確認**都已排除**;",
+   "verdict": "benign",
+   "note": "延續句，排除清單"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 411,
+   "excerpt_sha1": "8486a4ec526e9b1aa73a0515ec3767d6fe49ebb1",
+   "excerpt": "> 「某條件跑了幾次沒死」,而退回 DOS 後來被證實是**機率性**的——沒死只代表**該次取樣",
+   "verdict": "benign",
+   "note": "延續句，機率性發現說明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 415,
+   "excerpt_sha1": "a07f54b76461585bb7a18ed596af1702afed31a3",
+   "excerpt": "但受 enable gate 管——項目不可用時按鍵完全無效、環維持原值,而舊碼照樣連按兩次確認。",
+   "verdict": "benign",
+   "note": "延續句，工具行為描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 416,
+   "excerpt_sha1": "af9d1caf5cf047acf1b5c8b662a74312c0c9ab4b",
+   "excerpt": "實測證實環真的停在 index 2。已改成 `select_ring()` 先回讀確認才按。",
+   "verdict": "benign",
+   "note": "延續句，工具修正"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 473,
+   "excerpt_sha1": "37d2f15bef3a9ef75126c8b58a897cd659ef0690",
+   "excerpt": "> 使用者問「有重新驗證確認嗎?」。本附錄逐項回答**哪些真的驗過、哪些只是提案**。",
+   "verdict": "benign",
+   "note": "引用使用者問題，章節目的宣告"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 475,
+   "excerpt_sha1": "926529d9280f650afa1960ffa022abc44d9e120b",
+   "excerpt": "## C.1 SFX 分流 —— 已重新驗證(獨立重推 + 兩個對照)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 482,
+   "excerpt_sha1": "0830fc8764f0176f8a74bc98255297c4cc17527e",
+   "excerpt": "(順帶:若某個已活體確認的呼叫點剛好是 `push -1`,舊版的正對照會**誤判失敗**;已修。)",
+   "verdict": "benign",
+   "note": "延續句，工具修正說明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 486,
+   "excerpt_sha1": "c34952e17d7d09591bb0f20cbb6ece5c0f28b1fb",
+   "excerpt": "## C.2 `BPINT 21 4C` —— 指令已驗證可用,**但尚未驗證會在結束當下觸發**",
+   "verdict": "benign",
+   "note": "章節標題，明確標示「尚未驗證會在結束當下觸發」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 491,
+   "excerpt_sha1": "a420e99a033f05d7c937dc18a3082687eff83c7b",
+   "excerpt": "| 遊戲結束時它會不會響? | ❌ **未驗證——因為崩潰沒有重現** |",
+   "verdict": "benign",
+   "note": "表格row，明確標示「未驗證——因為崩潰沒有重現」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 498,
+   "excerpt_sha1": "76aaffdecf0067ea6437d949f7cc209342a386d9",
+   "excerpt": "武裝 `BPINT` 之後,手動重跑攻擊路徑的按鍵序列(選單位 → 方向 → 確認落點 → ↑ → 確認 ×2)",
+   "verdict": "benign",
+   "note": "描述測試按鍵序列延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 513,
+   "excerpt_sha1": "139609d163622cd0fae372c96475ab559503a476",
+   "excerpt": "## C.4 靜默壞讀捕捉工具 —— 工具已驗證可跑,**尚未抓到實例**",
+   "verdict": "benign",
+   "note": "章節標題，明確標示「尚未抓到實例」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 528,
+   "excerpt_sha1": "1a11985693432f924b195ec79873be2fa7ea9604",
+   "excerpt": "| `BPINT` 會在結束時觸發 | ❌ 崩潰未重現,無從驗證 |",
+   "verdict": "benign",
+   "note": "表格row，明確標示「崩潰未重現,無從驗證」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 535,
+   "excerpt_sha1": "2c61da3f523f151803a7d95dc12184f62a3d4bbb",
+   "excerpt": "C.3 把嫌疑指向 `ensure_browse`。隨後我重跑它的按鍵序列(取消 ×6 → 確認),",
+   "verdict": "benign",
+   "note": "調查過程延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 539,
+   "excerpt_sha1": "1346ab05dded5685432316045df88e89b19b63dc",
+   "excerpt": "犯的正是那支工具自己的錯誤訊息警告過的事:「先截圖確認遊戲還在,再解讀任何數值」。",
+   "verdict": "benign",
+   "note": "誠實記錄自身犯錯延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 541,
+   "excerpt_sha1": "0df58800a0903230e7fe6b30d3498e33783c3262",
+   "excerpt": "**所以 `ensure_browse` 這條線索沒有被證實**,它仍然只是「所有崩潰案例都經過 autoplay」",
+   "verdict": "benign",
+   "note": "明確標示「這條線索沒有被證實」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 542,
+   "excerpt_sha1": "45521c2a73f3e0929b71e8fa9b4f56549690681c",
+   "excerpt": "的相關性。(先前那四次退回 DOS **都有截圖佐證**,崩潰本身是真的。)",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 574,
+   "excerpt_sha1": "a80db5dfb896f2f740b7526083d510fdd5548143",
+   "excerpt": "門檻 `>=20 色` 且 `>=5%` 非黑。**雙向驗證:5/5 全部分類正確**(3 存活、2 已離開),",
+   "verdict": "benign",
+   "note": "雙向驗證結果延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 579,
+   "excerpt_sha1": "e1644ac85567663a3f911bfe424eaef606a8ec50",
+   "excerpt": "**問題確認:遊戲退回 DOS 之後,單位陣列讀取不一定失敗。** 實測到的是",
+   "verdict": "benign",
+   "note": "問題確認延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 596,
+   "excerpt_sha1": "4f48b557fa736a24dedc9535cac8f729664d673d",
+   "excerpt": "根因是驗證樣本退化:當初的「5/5 正確」用的全是**靜態截圖**,",
+   "verdict": "benign",
+   "note": "退化樣本根因發現延續句(同feedback_degenerate_verification_sample)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 597,
+   "excerpt_sha1": "dac9e735084561811c818177d604e1e60e34abf9",
+   "excerpt": "**沒有一張是轉場畫面**,所以那個失敗模式在驗證裡根本不可能出現。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 613,
+   "excerpt_sha1": "f59c403f535373a81e74a3c01d01d50afea40174",
+   "excerpt": "B.7 那張崩潰對照表的「活」全部是用記憶體判的,**沒有一列有截圖交叉確認**。",
+   "verdict": "benign",
+   "note": "明確標示「沒有一列有截圖交叉確認」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 650,
+   "excerpt_sha1": "e47e628cb4c17a739f4c45eec831ecabf0df28fe",
+   "excerpt": "驅動腳本原本每 10 次確認就做一次 `ensure_browse` 探測,而一次探測要 30-60 秒",
+   "verdict": "benign",
+   "note": "工具效能分析延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 653,
+   "excerpt_sha1": "48400d22b0ccfaa9ef0f8674940207d254ebd67f",
+   "excerpt": "——那才是 10 分鐘裡的大頭。改成前 60 次確認不探測,可省約 6 次探測(**約 3-6 分鐘**)。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 703,
+   "excerpt_sha1": "924390fd2e5e9235ba6a4809cb5e08905c491432",
+   "excerpt": "* 從原始碼確認格式(這個 build 連 SDL2):`<事件名> \"key <SDL2 scancode>\"`,F7=64、F8=65。",
+   "verdict": "benign",
+   "note": "延續句，鍵碼低於門檻"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 705,
+   "excerpt_sha1": "e1492f4645aa0e6eb846d1181f6edbb0a3b503a0",
+   "excerpt": "* **確認檔案真的被載入**(命令列有 `-set sdl mapperfile=...`,pane 有 mapper 初始化訊息)",
+   "verdict": "benign",
+   "note": "延續句，工具配置驗證"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 726,
+   "excerpt_sha1": "3466b6a296a50a0beccf3d13a7c7d97abe7fd15d",
+   "excerpt": "並行已於本輪實測可行:三個實例同時運作,`scan_free_display_port` 用 `flock` 互斥配置,",
+   "verdict": "benign",
+   "note": "延續句，並行測試方法"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 744,
+   "excerpt_sha1": "28ad880c995fbf9872d2af04ccd384c29bc311e8",
+   "excerpt": "直接測試證實:`subprocess.run([\"bash\", ...])` 從 Windows python.exe 呼叫時,",
+   "verdict": "benign",
+   "note": "延續句，subprocess測試發現(同feedback_windows_subprocess_bash_resolves_to_wsl)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 774,
+   "excerpt_sha1": "870b14295db16a33f067a3dd84db61877a10e39c",
+   "excerpt": "(與 2026-09-04 實際崩潰的錯誤訊息逐字相符),還原後全部通過。",
+   "verdict": "benign",
+   "note": "延續句，錯誤訊息比對"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 792,
+   "excerpt_sha1": "a0302b35b0442d1e94ee3dcdd9d052f59c507d9d",
+   "excerpt": "存活那五筆各自在第一幀就短路確認(64-140 色不等,都是遊戲畫面的量級)。原始明細見",
+   "verdict": "benign",
+   "note": "延續句，測試結果"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 805,
+   "excerpt_sha1": "daf47231f443c8139ea232aa508e69099d20672b",
+   "excerpt": "**可以講**:移動(更精確地說,是 `approach_then_act` 裡「確認一個算出來朝向敵人的",
+   "verdict": "benign",
+   "note": "延續句，因果分析"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 815,
+   "excerpt_sha1": "d40afc8410d79828bbe5944bdda35173de3f2507",
+   "excerpt": "有了 p<0.01 的因果訊號、且已知是「確認落點」這個動作在起作用,下一步該轉成**靜態**",
+   "verdict": "benign",
+   "note": "延續句，p<0.01因果訊號描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 826,
+   "excerpt_sha1": "4fbe6aa18093a6a1dc813ea311b173f01c2b1f24",
+   "excerpt": "> 不把未驗證的寫成已驗證。這是這一整輪的收攏,細節見上面各節,這裡只記結論與現況。",
+   "verdict": "benign",
+   "note": "明確保留用語「不把未驗證的寫成已驗證」，本輪總結"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 830,
+   "excerpt_sha1": "5921402ea92254a79eaf28f1eb12eb002095164c",
+   "excerpt": "從「全部工具重新驗證」出發,一路查到「遊戲退回 DOS」這個長期未解的現象,",
+   "verdict": "benign",
+   "note": "總結敘事延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 839,
+   "excerpt_sha1": "53f21d62ba760198aef6aee067a8ec2b268ef6bf",
+   "excerpt": "* **`H.game_alive()` 多幀畫面存活判定**:5/5 已知樣本雙向驗證正確,已接進兩支工具。",
+   "verdict": "benign",
+   "note": "工具驗證結果延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 841,
+   "excerpt_sha1": "2dc7319da4f6623ed32eaa63262a2cbef553a65d",
+   "excerpt": "* **C.16:mv4 5/5 死、mv0 0/5 死,p≈0.008**——移動(更精確地說是「確認算出來的落點」",
+   "verdict": "benign",
+   "note": "p≈0.008統計結果延續句(C.16 DOS-exit發現)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 862,
+   "excerpt_sha1": "eb551cde6364c0bbc8353e140dec9b4a03400433",
+   "excerpt": "prose/文件編輯不因為沒有測試套件就可以不驗證自己寫的東西。",
+   "verdict": "benign",
+   "note": "方法論宣告延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 870,
+   "excerpt_sha1": "e7df9eb10ecb1c96536d464a1654ac6f46af4c24",
+   "excerpt": "* ~~直接可做:`fd2_sfx_static_reachability.py --target 35b78` 存疑的 2 筆需活體確認~~ ——",
+   "verdict": "benign",
+   "note": "刪除線(已解決項)延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 874,
+   "excerpt_sha1": "a6bcbf39b0051d71a9621b708931c25e75e3e4b7",
+   "excerpt": "皆為純立即數,不需要活體驗證來解出數值——剩下唯一有價值的活體問題只是「這兩條路徑在",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 879,
+   "excerpt_sha1": "25f0b84f178975f4ab0bbfddf8ed5dd64054468d",
+   "excerpt": "`fd2_battle_autoplay.py --attack --mv 4`。第 1 回合 4 個單位的移動+落點確認都成功",
+   "verdict": "benign",
+   "note": "工具使用記錄延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 898,
+   "excerpt_sha1": "df0e74186f9d63d9a4dc51bd9dafa16fad1f9c1d",
+   "excerpt": "**第二輪(同批同時跑 verified+blind 各 N=5)兩組完全打平(4/5 死 vs 4/5 死,",
+   "verdict": "benign",
+   "note": "第二輪試驗結果延續句(Fisher's exact test相關)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 923,
+   "excerpt_sha1": "11737500c0eb41cc5ac4a0caf3b19140032d4655",
+   "excerpt": "盲區未被證明不存在)——如果要更高信心,可以逐一活體確認,但這不是本輪認知裡的",
+   "verdict": "benign",
+   "note": "明確保留用語「盲區未被證明不存在」"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 943,
+   "excerpt_sha1": "4b01765ee04aec36596a354f9120fdc1b97ea69c",
+   "excerpt": "(結果一致,算是一次意外的雙重確認,但效率上是繞遠路)。`tools/audit_evidence_provenance.py",
+   "verdict": "benign",
+   "note": "延續句，交叉驗證描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 954,
+   "excerpt_sha1": "53cff6778e52b334e2e908cf05d668def8627b2c",
+   "excerpt": "| 需要小修正,已處理 | 2 | doc11:337(`record+0x48..+0x4E` 欄位語意當時只靠 remake 佐證——補上 2026-09-05 交叉引用:同一組 offset 已被 `fd2_stat_override.py` 的原版側 live 讀值獨立重驗過);doc99:4365(措辭從「証實」改成「記載」,避免對 remake 程式碼過度宣稱,並註明真正的驗證是下一句",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc11/doc99修正記錄"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 964,
+   "excerpt_sha1": "8e9825e0641729a0d0e62afb3c161b700c2f69b7",
+   "excerpt": "REMAKE_ONLY 判定,因為補注句裡用了「佐證」這個詞——好笑但合理,已登錄,`--gate`",
+   "verdict": "benign",
+   "note": "延續句，描述本工具自己的誤判案例(佐證字眼導致誤分類)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 973,
+   "excerpt_sha1": "e49ee2d92b6422bdef377b1e9f6b66a6e4d46691",
+   "excerpt": "> 使用者直接問:「規模大不能做的部分,可以新建多項工具進行驗證輔助」。這裡不是要",
+   "verdict": "benign",
+   "note": "引用使用者原話"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 979,
+   "excerpt_sha1": "af4d01d69fe99fc380018fe3c2faae6ff23eac7d",
+   "excerpt": "27/27,新功能各自另外用故障注入 + 正對照驗證過,見下):",
+   "verdict": "benign",
+   "note": "延續句，統計數字+故障注入驗證方法"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 984,
+   "excerpt_sha1": "9ce2a9630167c6d443fd8d945e3bdff9a7087af9",
+   "excerpt": "是同一個道理。故障注入驗證:分別塞一行 NO_MARKER 形狀、一行未列管 REMAKE_ONLY",
+   "verdict": "benign",
+   "note": "延續句，故障注入驗證描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1015,
+   "excerpt_sha1": "b6069b7daa6025e4d90618646627a82b2dcab9ae",
+   "excerpt": "32 筆**全部解完**,內容連貫,獨立佐證 doc09 原本只用 2 句話截圖判定的",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc09"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1016,
+   "excerpt_sha1": "a0bb891f0b2c2d14a5d333aa94e3174a4f12794d",
+   "excerpt": "「王宮場景被誤標成索爾、實際是國王」——這次是全 32 句規模的交叉驗證。",
+   "verdict": "benign",
+   "note": "同1015延續句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1040,
+   "excerpt_sha1": "6004f2aa3b86b60f4f0ad4549cec31967b49b3bf",
+   "excerpt": "方法已經反覆驗證可行——**而且不一定要靠活體**,先查既有文件可能比蓋新工具",
+   "verdict": "benign",
+   "note": "延續句，方法論建議(先查既有文件)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1055,
+   "excerpt_sha1": "217cd2255630d855705c804300eb7d447c865fb3",
+   "excerpt": "| `54-acting-pose-semantics.md:9` | 一個表格的**表頭列**(「已證實的狹窄意義」),真正的證據位址在表頭**下面**的資料列裡 | **假警報**:逐行掃描的已知限制,表頭本身沒有位址是正常的,不是缺標記的問題 |",
+   "verdict": "benign",
+   "note": "本工具自身「假警報」分類的說明文字，這正是元文件描述分類器已知限制的部分，非新的獨立驗證聲明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1079,
+   "excerpt_sha1": "dfbcbb0262b766f975c3f82ea3ec5914d654e4de",
+   "excerpt": "本質上都是**規劃/評估文件**(擴充評估、技術選型驗證報告、待核對清單、重製路線圖),",
+   "verdict": "benign",
+   "note": "延續句，描述文件性質(規劃/評估文件)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1082,
+   "excerpt_sha1": "632e7ace2bd6e4d28bfca52d7679698a906b85d3",
+   "excerpt": "- `52:65`「**需驗證**實際觸發+對白框顯示」——`VERIFY_LANG` 抓「驗證」這個字根,分不出",
+   "verdict": "benign",
+   "note": "同1055，元文件描述分類器已知限制"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1084,
+   "excerpt_sha1": "6767945c1a01daecd506827fcba9e53d0bca6e59",
+   "excerpt": "- `52:71`「行軍**確認**」——這裡「確認」是 UI 功能名稱的一部分(名詞),不是動詞「已確認」。",
+   "verdict": "benign",
+   "note": "同上"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1085,
+   "excerpt_sha1": "ab84b63ff1d3a14c165434ed685bb4d78ce1f63b",
+   "excerpt": "- `90:22`「6. 驗證 | ... | **⬜**」——路線圖表格的**未勾選**待辦列,`⬜` 本身就是「還沒做」",
+   "verdict": "benign",
+   "note": "同上"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1087,
+   "excerpt_sha1": "45045caa7f14ea130a5702bbc86e3dabb84979f2",
+   "excerpt": "- `90:31`「即時可視=強驗證信號」——描述**之後要做的方法為什麼有效**(規劃理由),不是",
+   "verdict": "benign",
+   "note": "同上"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1094,
+   "excerpt_sha1": "e22a8b728cde818c75f3829d63500736c8b268c0",
+   "excerpt": "形狀(「需驗證」vs「已驗證」的時態、「確認」當名詞用)**需要語意判斷,不是字面規則",
+   "verdict": "benign",
+   "note": "同上，總結分類器限制"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1102,
+   "excerpt_sha1": "5318b232305e9753cf4950c78fe479d7764ce2d3",
+   "excerpt": "`99-chapter-sweep-results.md` 這種),那裡的「已驗證」語氣才比較可能是真的完成式主張。",
+   "verdict": "benign",
+   "note": "延續句，指出99-chapter-sweep-results.md的「已驗證」語氣較可能是真完成式主張(該文件另行審閱)"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1116,
+   "excerpt_sha1": "92fcf36831da476f0458e7e352061af071f30f40",
+   "excerpt": "(2026-08-31)已經確認「真正屬於 `ch00_meadow.json`/`ch00_palace.json`」的檔案,",
+   "verdict": "benign",
+   "note": "延續句，交叉參照ch00判定"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1129,
+   "excerpt_sha1": "db8fe78e9f133b17057152030a88eb3654f832f8",
+   "excerpt": "回應 C.2/C.3 留下的「`BPINT` 會不會在崩潰當下真的觸發」這個從未驗證過的問題。",
+   "verdict": "benign",
+   "note": "延續句，未驗證問題描述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1132,
+   "excerpt_sha1": "1caba5a1f4f6fc8420598d1982371a0708fed50f",
+   "excerpt": "已行動單位上,沒有真的重跑移動+確認流程。改版後**每一輪都跟",
+   "verdict": "benign",
+   "note": "延續句，測試改版說明"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1135,
+   "excerpt_sha1": "4f8b7e5c977aa6cefe52f68035fec9758d0fbf22",
+   "excerpt": "**都沒有重現崩潰**——工具本身邏輯正確(按鍵序列、環選擇驗證訊息都跟",
+   "verdict": "benign",
+   "note": "延續句，明確標示「沒有重現崩潰」"
   }
  ]
 }
