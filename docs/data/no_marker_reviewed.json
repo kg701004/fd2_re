@@ -32944,6 +32944,14 @@
    "excerpt": "對應道具,需要額外的 inventory patch 才能實測。",
    "verdict": "benign",
    "note": "同上"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 506,
+   "excerpt_sha1": "b7be7b5c80e4447bd4da04bf1ab1206c9890c64f",
+   "excerpt": "(ch01海盜遭遇戰的登場台詞)。這段文字逐字對到`runtime_speaker_todo.json`裡",
+   "verdict": "benign",
+   "note": "承接同段DOSBox-X live驗證敘述結尾"
   }
  ]
 }

@@ -4,8 +4,9 @@
   "method_FDTXT_033": "tools/fd2_speaker_capture.py --resolve-todo，讀活體單位陣列 [0x53a45]+idx*0x50+7 (doc40:27-28)，用 --confirm-text 核對目前畫面內容跟目標 FDTXT 一致才允許執行(見 2026-09-05 教訓：沒有這道檢查會把別的場景的陣列套用到錯的 FDTXT 上，結果看起來正常但全錯)。",
   "method_FDTXT_032": "2026-09-05 追加：本來想比照 033 用活體工具解，途中才發現 `docs/knowledge-base/scene-decode/ch1-forest.md`(2026-08-20 既有文件)早就用**完全不同、更早的方法**解完了——FDFIELD map31 的 spawn 群組(0x10b4e)直接記載哪個 slot 是誰(slot0=索爾/slot1=亞雷斯/slot3=蓋亞/slot4=悠妮)，不需要活體讀記憶體。這裡的 40 筆是拿 decode_story_text.py --runtime-todo 的 box_index/operand 清單，套用 ch1-forest.md 已經驗證過的 slot 對照表算出來的，不是新的活體結果——**教訓見下方 process_note**。",
   "process_note": "本輪一開始沒有先查 docs/knowledge-base/scene-decode/ 就直接建活體工具、跑真的 DOSBox-X 去找 032 的畫面（見 40-speaker-portrait-mapping.md 2026-09-05『假設被推翻』那段，白跑了一次活體嘗試），是本專案自己反覆記過的『先查既有證據再動手』教訓（feedback_check_existing_evidence_before_disasm）又犯了一次——不是說活體方法錯，是這一筆其實不需要活體就已經有人解過。下一輪要解剩下的 FDTXT 之前，先 grep scene-decode/、doc47、doc50 有沒有現成答案，再決定要不要動用 fd2_speaker_capture.py。",
-  "date": "2026-09-05",
-  "resolved_count": 72,
+  "method_FDTXT_001": "2026-09-06:新開一局(非讀檔),快轉ch00開場劇情到ch01海盜遭遇戰,螢幕文字核對到box_index=13('乖乖的把身上的錢財和')後立刻對活體單位陣列跑--resolve-todo。5筆(idx9/10/11,box5/6/13/17/18)解出皆為DATO=0x60(泛用盜賊,PORT查無對應,與2026-09-06稍早的roster組成調查完全吻合);另2筆(idx15/16,box31/32,援軍台詞)在這個時間點讀到DATO=0xff(空格)——這2格援軍要打到戰鬥後段才會出現,需要之後再跑一次真的推進到那個時間點的--resolve-todo才能解,本輪誠實只登記解出的5筆。",
+  "date": "2026-09-06",
+  "resolved_count": 77,
   "total_unresolved": 273
  },
  "FDTXT_033": {
@@ -416,5 +417,63 @@
    }
   ],
   "note": "40 筆全解，來源是 FDFIELD map31 spawn 群組(0x10b4e)已經記載的 slot 分配，跟對話內容(比劍鬥嘴→發現蓋亞悠妮→決定同行)完全吻合。"
+ },
+ "FDTXT_001": {
+  "confirm_text_used": "乖乖的把身上的錢財和",
+  "confirmed_on_screen_box_index": 13,
+  "roster_snapshot": {
+   "idx9": {"dato": "0x60", "name": "NPC/敵(泛用盜賊，PORT查無對應)"},
+   "idx10": {"dato": "0x60", "name": "NPC/敵(泛用盜賊，PORT查無對應)"},
+   "idx11": {"dato": "0x60", "name": "NPC/敵(泛用盜賊，PORT查無對應)"},
+   "idx15": {"dato": "0xff", "name": "空格(援軍尚未出現)"},
+   "idx16": {"dato": "0xff", "name": "空格(援軍尚未出現)"}
+  },
+  "entries": [
+   {
+    "box_index": 5,
+    "operand": 10,
+    "resolved": "NPC(泛用盜賊)",
+    "text": "瞧！竟有呆鳥在這小島上休息，真是天上掉下來的肥肉。"
+   },
+   {
+    "box_index": 6,
+    "operand": 9,
+    "resolved": "NPC(泛用盜賊)",
+    "text": "就是說嘛！俺去通報老大支援，你們趕快把這些小伙子擺平。"
+   },
+   {
+    "box_index": 13,
+    "operand": 11,
+    "resolved": "NPC(泛用盜賊)",
+    "text": "喂！小子們，乖乖的把身上的錢財和那個漂亮小妞交出來，我們就在老大面前說說好話保你們一命！不然‥"
+   },
+   {
+    "box_index": 17,
+    "operand": 10,
+    "resolved": "NPC(泛用盜賊)",
+    "text": "啊呀，看來他們想抵抗呢！"
+   },
+   {
+    "box_index": 18,
+    "operand": 11,
+    "resolved": "NPC(泛用盜賊)",
+    "text": "那就殺無赦！上啊！"
+   }
+  ],
+  "still_open": [
+   {
+    "box_index": 31,
+    "operand": 15,
+    "text": "咦，弟兄們好像陷入苦戰呢！",
+    "reason": "本輪讀到的時間點(box13,戰鬥剛開始)這格是DATO=0xff(空格)，援軍要打到戰鬥後段觸發才會填入，需要之後再推進到那個時間點重新--resolve-todo。"
+   },
+   {
+    "box_index": 32,
+    "operand": 16,
+    "text": "那還等什麼！我們上吧！",
+    "reason": "同上"
+   }
+  ],
+  "note": "5/7解出，皆為同一種泛用盜賊(DATO 0x60)，不是命名角色——這是誠實、正確的答案，不是失敗。剩2筆(援軍台詞)需要真的打到戰鬥後段才能解，本輪未達成，誠實記錄為still_open而非勉強套用同一份陣列。"
  }
 }
