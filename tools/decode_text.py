@@ -49,7 +49,8 @@ def render_glyph(font, idx):
 
 
 def parse_strings(path):
-    d = open(path, "rb").read()
+    with open(path, "rb") as f:
+        d = f.read()
     if len(d) < 2:
         return []
     first = struct.unpack_from("<H", d, 0)[0]
