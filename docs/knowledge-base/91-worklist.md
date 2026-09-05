@@ -59,6 +59,14 @@ verdict(「部分關閉,非完全關閉」),確認584維持D正確**,非過期�
 「結構性理解視為已關閉」等verdict，索引標籤未同步**，改標A。**第八輪複核後統計**：
 A=35、D=50。
 
+> **2026-09-06第九輪**：862/863/864/865/866/867/899 這 7 項早在 2026-08-30 稽核就已附註
+「本行已過期，見doc35§9.22/§9.23」，但header標籤從未真正同步成A——doc35§9.23.6給出高信心
+verdict(live BPPM雙層命中+三重靜態交叉核對+獨立截圖佐證)，逐一改標A。同一批annotation也
+覆蓋1017-1020，但**這4項維持D不變**：1017明文列出的範圍(FDOTHER#56/TAI#3/FIGANI/DATO)比
+862-867/899更具體，doc35§9.23.6與checkbox本體都誠實排除了FIGANI立繪/portrait框/這幾個
+具體資產索引，套用「已解」標籤到1017會over-claim，已在1017-1020行內新增說明避免下一輪誤判。
+**第九輪複核後統計**：A=42、D=46。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -208,21 +216,28 @@ per-chapter客製化，不太可能藏著一個通用的D8畫面。**本輪累�
 853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。
 854 - E - 明文「仍缺未修改一般玩家/CONTINUE的同狀態E2」，需live DOSBox。
 857 - D - 剩餘「視覺/效果calls…資料化」屬RE工作（對話/gate本身已解，cf. 約1021行）。
-862 - D - 卡在`0x2bce5` ending renderer(party montage資產解碼)，與1017-1020同一鏈仍開放。**本行已過期，2026-08-30稽核補充**：literal `0x2bce5`位址本身依然不可達(doc35§9.1-9.9窮盡)，但功能性問題(montage怎麼畫出來)已於2026-08-27(doc35§9.22/§9.23)用live `BPPM`記憶體斷點正面解答——沿用既有`0x524c6` phase-table carousel引擎，經`FUN_0002eb9f`呼叫`FUN_0004e8d3`/`FUN_0004e98d`，見對應checkbox本體「重大進展(2026-08-27)」段落，不要再引用本行文字判斷此項現況。
-863 - D - 同862之blocker(`0x2bce5` ending renderer)。**本行已過期，同862 2026-08-30補充。**
-864 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
-865 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
-866 - D - 同862之blocker。**本行已過期，同862 2026-08-30補充。**
-867 - D - 同862之blocker(terminal handler，此cluster的master item)。**本行已過期，同862 2026-08-30補充。**
+862 - A（2026-09-06由D複核關閉，2026-08-30稽核早已附註「已過期」並指向doc35§9.22/§9.23，只是header標籤從未同步更新）- 卡在`0x2bce5` ending renderer(party montage資產解碼)，與1017-1020同一鏈仍開放。**本行已過期，2026-08-30稽核補充**：literal `0x2bce5`位址本身依然不可達(doc35§9.1-9.9窮盡)，但功能性問題(montage怎麼畫出來)已於2026-08-27(doc35§9.22/§9.23)用live `BPPM`記憶體斷點正面解答——沿用既有`0x524c6` phase-table carousel引擎，經`FUN_0002eb9f`呼叫`FUN_0004e8d3`/`FUN_0004e98d`，見對應checkbox本體「重大進展(2026-08-27)」段落，不要再引用本行文字判斷此項現況。**2026-09-06複核**：doc35§9.23.6「誠實整體結論」給出高信心verdict(live斷點雙層命中+三重靜態交叉核對+獨立截圖佐證)，機制性問題已解，改標A；FIGANI立繪/portrait框繪製機制本輪明確排除在外(§9.23.6第4點誠實列出)，不屬於862-867/899這批「montage背景渲染」範圍。
+863 - A（同862，2026-09-06由D複核關閉）- 同862之blocker(`0x2bce5` ending renderer)。**本行已過期，同862 2026-08-30補充；2026-09-06比照862改標A。**
+864 - A（同862，2026-09-06由D複核關閉）- 同862之blocker。**本行已過期，同862 2026-08-30補充；2026-09-06比照862改標A。**
+865 - A（同862，2026-09-06由D複核關閉）- 同862之blocker。**本行已過期，同862 2026-08-30補充；2026-09-06比照862改標A。**
+866 - A（同862，2026-09-06由D複核關閉）- 同862之blocker。**本行已過期，同862 2026-08-30補充；2026-09-06比照862改標A。**
+867 - A（同862，2026-09-06由D複核關閉）- 同862之blocker(terminal handler，此cluster的master item)。**本行已過期，同862 2026-08-30補充；2026-09-06比照862改標A——master item跟著同一個cluster一起關閉。**
 874 - D - 項目自述「既有unit_present metadata不完整，維持fail-closed」，後續項目未完全關閉此缺口。
 897 - C - 剩餘工作純屬BIOS-tick clock adapter實作，非分析。
 898 - D - 可能已部分由`ComposeNativeTransitionFrame`覆蓋，但同性質的874仍明文fail-closed，保守留D而非冒進判A。**2026-09-05複核**：`ComposeNativeTransitionFrame`屬`remake/`程式碼，已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
-899 - D - 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。**本行已過期，同862 2026-08-30補充：functional renderer已解，見doc35§9.22/§9.23。**
+899 - A（同862，2026-09-06由D複核關閉）- 鏈條延續至1017-1020(仍為`[~]`，party-montage renderer未完成)。**本行已過期，同862 2026-08-30補充：functional renderer已解，見doc35§9.22/§9.23。2026-09-06比照862改標A。**
 966 - D - 項目自述準確反映現況(ch01已完成,ch02+逐章view/gate provenance仍缺)，非過時，可續靜態逐章RE。
 1017 - D - 卡在`0x2c548`後的party montage資產解碼(FDOTHER#56/TAI#3/FIGANI/DATO)，可續靜態RE。**本行已過期，同862 2026-08-30補充：角色回顧卡背景圖渲染機制已於2026-08-27(doc35§9.23)用live BPPM定案，見對應checkbox本體。**
-1018 - D - 同1017之montage解碼blocker。**本行已過期，同上。**
-1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上。**
-1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上。**
+**2026-09-06複核，維持D，不比照862-867/899關閉**：862-867/899的原始文字只問「party montage
+資產怎麼解碼/渲染出來」這個一般性問題，doc35§9.23已經正面答完；但**1017本身明文列出的範圍更窄
+更具體**——`FDOTHER#56/TAI#3/FIGANI/DATO`——而doc35§9.23.6/91-worklist.md本體「indexed ending
+compositor core」checkbox自己的「誠實範圍」都明確排除這幾項：「FIGANI立繪本體、portrait框、
+`native_2c548.json`描述的細部資產索引(FDOTHER#56/TAI#3/DATO)本輪**未逐項查證**」。套用862的
+「已解」標籤到1017會over-claim，1017正確維持D；下一輪若要關閉1017，需要針對FIGANI立繪與這幾個
+具體資產索引各自重複一次862-867那套「live BPPM+三重靜態交叉核對」方法論，目前尚未進行。
+1018 - D - 同1017之montage解碼blocker。**本行已過期，同上；2026-09-06比照1017維持D，理由同1017新增段落。**
+1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上；2026-09-06比照1017維持D。**
+1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上；2026-09-06比照1017維持D。**
 1038 - A（2026-09-06由D複核關閉，見91-worklist.md本體「自動結束回合」項2026-08-20段落）- native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。**2026-09-06複核**：本文件自己的checkbox段落已結論「靜態RE前提已閉合(doc11)」——三個入口(`0x13565`自動判定、`0x16F55`selector1/selector3)與`0x1A30B`本體完整回答caller/team predicate/AI completion timing三個子問題，本項D-index點名的RE缺口已閉合。checkbox本身維持`[ ]`是因為剩下的是remake端工程接線(非新RE缺口)，以及`0x1728C`selector2子選單的獨立語意缺口(已由項目145追蹤，不重複列在這裡)。
 1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。
 1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。
