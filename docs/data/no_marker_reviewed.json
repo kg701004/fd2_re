@@ -33016,6 +33016,14 @@
    "excerpt": "從未在目前 project 上重新驗證過)。**91-worklist.md L541 因此維持 D，不採信本段落這個",
    "verdict": "benign",
    "note": "L541獨立驗證警告段落，承接上文type23 relocation claim"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 483,
+   "excerpt_sha1": "5648c1adb21094e03a8fd733c0b0f79d68ebc4be",
+   "excerpt": "地形 cost table，而是兩層**都已在別處閉合**的既有機制：①目標單位資格閘門——",
+   "verdict": "benign",
+   "note": "L541真正legality機制段落，承接同段DOSBox-X/Ghidra反組譯核對"
   }
  ]
 }

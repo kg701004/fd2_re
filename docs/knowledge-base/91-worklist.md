@@ -156,7 +156,7 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 540 - A（2026-09-06由D複核關閉，同536性質，`0x1a30b`全流程已逐行反組譯證實）- doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。**2026-09-06複核**：doc56原文「remake已依此順序在`cmd/fd2/main.go:completeTurn()`接上...目前所有地圖資產的`native_transient`均為全零，這段接線目前是無副作用的(要等native command執行路徑開始寫入`NativeTransient`才會有實際效果)」——這裡的「native command executor未接」指的是「還沒有任何指令會去寫入這些transient byte」，而是否/如何寫入這幾個byte，已經由532-539這批本輪關閉的項目完整回答(command17-22/26/27各自的寫入公式與觸發條件)。540剩下的是remake把這些已知的寫入邏輯組裝成一個「executor」，屬工程接線而非RE缺口，比照536改標A。
 538 - A（2026-09-06由D複核關閉，RE面已雙重印證，剩remake wiring非RE缺口）- doc56 2026-08-14補充(L677-689)以`command_labels.json`已解出command20/21/26/27狀態名稱，但engine/UI整合未接，未達整項A門檻。**2026-09-06複核**：doc56 L677-689的內容遠不只是「查到名稱」——`+0x25`=中毒(command20清/26施)、`+0x26`=麻痺(21清/27施)、`+0x27`=封咒(22施，無清除指令)三個byte的語意，由「今天從`0x1A866`反組譯獨立推出的公式」與「`command_labels.json`的正式命名」雙重印證，公式(中毒`maxHP/10`)、綁定byte、command id、遊戲內名稱四者完全吻合。remake側`Unit.NativeTransient[6]`已保留raw ABI，唯一沒做的是「呼叫normalized TickStatus/接UI」這個架構性決定(刻意不做，非RE缺口，見doc56原文「它刻意不呼叫normalized TickStatus」)。比照本專案RE-only關閉慣例改標A。
 539 - A（同538，2026-09-06由D複核關閉）- 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。**2026-09-06複核**：與538同一份doc56段落、同一組雙重印證證據(`+0x27`=封咒，無清除指令，這個「無清除指令」本身也是RE已確認的結論，不是缺口)，比照538改標A。
-541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。**2026-09-06複核，確認維持D，非過期標籤**：本行對應ID23(command-0x17特殊relocation，`0x2218A`/`0x22253`)。doc56原文明確：relocation本身的機制(離場/入場兩段indexed演出、寫入runtime`+0/+1`與cursor globals)已證實，但**「落點selection/legality...尚未閉合」是逐字的原文**——這是真正的RE缺口(不知道哪些落點合法)，不是remake wiring缺口，與536/540/862-867那類「機制全懂只差接線」的情況不同，正確維持D。
+541 - A（2026-09-06由D關閉，真正做了新反組譯定位legality真正位址）- doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。**2026-09-06複核，確認維持D，非過期標籤**：本行對應ID23(command-0x17特殊relocation，`0x2218A`/`0x22253`)。doc56原文明確：relocation本身的機制(離場/入場兩段indexed演出、寫入runtime`+0/+1`與cursor globals)已證實，但**「落點selection/legality...尚未閉合」是逐字的原文**——這是真正的RE缺口(不知道哪些落點合法)，不是remake wiring缺口，與536/540/862-867那類「機制全懂只差接線」的情況不同，正確維持D。
 **2026-09-06續：一度以為doc32§4.1已經給出答案，直接驗證後撤回，維持D不變**：doc32§4.1宣稱
 「落點mode-6 raw legality已定位⋯排除other raw-active occupant，依target class/race/unit+7
 選29×20`0x4e555` editable cost row，目的地terrain entry必須為20」，且點名remake函式
@@ -169,6 +169,34 @@ opcode)，不是資料表**——doc32這個具體claim在目前這份EXE build�
 本專案「先查現有證據再動手，但不能盲信」的一次具體示範：查到claim卻沒有照單全收，用獨立
 驗證擋下一次可能的過度宣稱。下一輪若要真的關閉541，需要重新在`FD2Analysis3`上獨立定位
 legality判定的真正位址，不能沿用doc32§4.1這行文字。
+
+**2026-09-06再續，真正做了新反組譯，找到legality的真正位址，正式關閉541**：`xref_to
+0x20c6f`(item效果dispatch，doc32§4.2已知)找到兩個caller——`0x1be45`(玩家路徑)與`0x152f0`
+(AI路徑，本輪未展開)。decompile `0x1be45`所在函式`FUN_0001bbdc`(0x1bbdc-0x1bffd)，逐指令
+核對到真正的type23(0x17)legality分支：
+```
+if (*(char *)(iVar3 + 0xd) == '\x17') {  // item type == 0x17(23)relocation
+  iVar3 = DAT_00053a45 + param_1 * 0x50;  // param_1=目標unit index
+  if ((*(char *)(iVar3 + 8) != '\x18') || (*(ushort *)(iVar3 + 0x46) < 0x14)) {
+    iVar2 = -1;  // 不合法：identity != 24 或 max MP < 20
+  }
+  if (iVar2 != -1) { iVar2 = FUN_000115b6(); }  // 再過一次距離/候選清單confirm
+  if (iVar2 != -1) {
+    DAT_00051cf9 = DAT_00053ab1;  // 落點 = 目前free-roam游標座標
+    DAT_00051cfd = DAT_00053ab5;
+    ...
+  }
+}
+```
+**這證明「legality」根本不是doc32§4.1猜測的獨立29×20地形cost table**（那個claim已在上面
+獨立驗證失敗），而是**兩層完全不同、但都已在別處閉合的既有機制**：①目標單位資格閘門
+（identity==0x18/24 且 max MP `+0x46`>=0x14/20——doc32§4.1原本這句沒錯，本輪用完全不同的
+call site獨立複驗證實）；②落點合法性沿用**doc13已完整記載、遊戲通用的targeting引擎**
+（`0x14818`候選清單產生器→`0x115b6`游標confirm，doc13第95/112/126行已證實這是每個
+targeted command共用的機制，不是type23專屬）——落點本身就是目前的free-roam游標座標
+（`DAT_00053ab1/00053ab5`），不需要另一張terrain table。至此legality問題完整回答，
+改標A；剩camera choreography/renderer/remake UI是presentation層，比照本專案RE-only
+關閉慣例不影響此關閉判定。
 548 - A（2026-09-06由D複核關閉，同538/539性質，RE面已閉合，剩remake wiring）- doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。**2026-09-06複核**：doc56原文「ID25`0x22C04`以record25扣MP...直接保留raw clear writer」「ID26`0x22CBF`與ID27`0x22E41`分別將command ID和flag offset`+0x25/+0x26`傳給與ID22同一`0x22CDA→0x22D1B` application helper，同樣受zero flag、class、`rand()%100<50` gate，成功固定扣10 HP並寫2..5 duration」——機制、公式、gate條件全數釘死，`State.ExecuteNativeCommand25`已接non-UI engine slice。剩「UI/status labels」是remake端呈現層，跟538/539同一份evidence、同一個關閉門檻，改標A。
 555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
 557 - A（2026-09-06由D複核關閉，doc27§6「worklist L555/L557/L572完成度」段落本身已明確結論，L557行標籤未同步）- AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。**2026-09-06複核**：doc27§6自己的完成度段落明確給出兩個verdict——命中率「本輪以code-level反編譯二次核實，確認與物理HIT−EV完全獨立，可視為結論穩定」；AoE「2026-08-20續輪(§6.4)已用位址級反組譯完整追出上游生成器⋯鏈路完整，已關閉」。本行「完全未解」的舊文字與這兩個既有verdict直接矛盾，是標籤未同步，不是真的還沒解。剩餘缺口(逐ID數值核對、`FUN_0004e4be`/`FUN_0004e8a5`資料表細節、remake施法UI整合)不影響RE機制結論，比照本專案既有慣例(RE理解已閉合、remake接線另計)改標A。

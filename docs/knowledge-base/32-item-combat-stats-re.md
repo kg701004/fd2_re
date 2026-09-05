@@ -470,14 +470,26 @@ remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用
   `0x4e555` editable cost row，目的地 terrain entry 必須為20。完整
   indexed renderer/Ebiten selector仍未接。
 
-  **⚠ 2026-09-06 未通過獨立驗證，本段落上面這個 `0x4e555` claim 暫不可信**：對現有
+  **⚠ 2026-09-06 未通過獨立驗證，`0x4e555` claim 不可信**：對現有
   `FD2Analysis3` project 直接 `xref_to 0x4e555` 得零筆引用，且該位址原始 bytes 是合法
   x86 指令(`A3`/`33 C0`/`8B E8` 等)，不是資料表——與本段落宣稱的「29×20 editable cost
   row」矛盾。懷疑是舊版 EXE 位址平移問題(`NativeRelocationDestinationAllowed` 這個
   remake 函式已隨 2026-09-02 remake 移除，其常數是否真的對應到這份 EXE 的 `0x4e555`
-  從未在目前 project 上重新驗證過)。**91-worklist.md L541 因此維持 D，不採信本段落這個
-  具體位址**，下一輪若要處理 L541 需要重新獨立定位。上面「actor gate/16-bit subtract/
-  destination cursor bytes寫入target+0/+1」等其餘敘述本輪未重新查證，暫時保留原判斷。
+  從未在目前 project 上重新驗證過)。
+
+  **2026-09-06 續，真正的 legality 機制已重新獨立定位，跟這個 `0x4e555` claim 完全無關**：
+  `xref_to 0x20c6f` 找到玩家路徑 caller `0x1be45`，逐指令核對其所在函式
+  `FUN_0001bbdc`(0x1bbdc-0x1bffd)的 type23 分支，證實「落點legality」根本不是獨立的
+  地形 cost table，而是兩層**都已在別處閉合**的既有機制：①目標單位資格閘門——
+  `identity==0x18(24)` 且 `max MP +0x46 >= 0x14(20)`，這點跟上面「actor gate/max MP
+  `+0x46`>=20」的敘述互相印證(用完全不同的 call site 獨立複驗成立，這部分沒錯)；
+  ②落點本身沿用**doc13 已完整記載的通用 targeting 引擎**(`0x14818` 候選清單→`0x115b6`
+  游標confirm，doc13 第95/112/126行，每個targeted command共用，非type23專屬)，落點就是
+  confirm當下的free-roam游標座標(`DAT_00053ab1/00053ab5`)，寫進`0x51CF9/0x51CFD`，跟
+  §6.2「destination cursor bytes寫入target+0/+1」的敘述吻合。**結論：本段落「actor gate/
+  16-bit subtract/destination cursor bytes寫入target+0/+1」等其餘敘述獨立複驗成立，唯獨
+  `0x4e555`這個29×20地形表是錯誤的多餘假設——原生機制根本不需要它**。91-worklist.md L541
+  已據此關閉為A，見該行「2026-09-06再續」段落完整反組譯過程。
 
 ### 4.2 2026-08-19 續輪:`0x20c6f` type dispatch 全 25 種 case 窮舉閉合 + 武器命中特殊效果來源鏈(回應 worklist L246)
 
