@@ -7264,6 +7264,1470 @@
    "excerpt": "真要活體確認,唯一還有價值的問題是「這兩條尾呼叫路徑在正常遊戲流程中會不會被踩到」,",
    "verdict": "benign",
    "note": "延續句，剩餘活體驗證價值評估"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 46,
+   "excerpt_sha1": "d9452e896939c04d7d5abb62e802887c98e8a4ff",
+   "excerpt": "確認了既有結論「FIGANI = sprite組 × 3」。",
+   "verdict": "benign",
+   "note": "延續句，確認既有結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 107,
+   "excerpt_sha1": "fe616fcb8d8d92e184446fc414a65744dc8f1167",
+   "excerpt": "這也證實兩張 table 不是 figure direction/pose 微調表。",
+   "verdict": "benign",
+   "note": "延續句，否定式發現"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 109,
+   "excerpt_sha1": "1c4320d98ad86b3acbf71ebf1262cbd33f9a0a6f",
+   "excerpt": "unit fields 算出的 presentation 用量。它不輸出或讀取已證實的 figure screen coordinate。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 122,
+   "excerpt_sha1": "a1ce250d6961ea6a1b66ff2f0128fa594455aa54",
+   "excerpt": "### 2.3 翻轉 / 左右:**沒有 runtime 水平翻轉**,靠 `byte[unit+6]` 選合成路徑(已確認)",
+   "verdict": "benign",
+   "note": "小標，offset(unit+6)低於門檻，「已確認」總結，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 131,
+   "excerpt_sha1": "da5ea36c3ca674bd15914b8043fe32e2e7a60fd7",
+   "excerpt": "(remake 量攻方腳 y≈175 / 守方 y≈150:一方錨在 157、一方走 frame dy;非統一 Y)。確切「哪邊是攻、哪邊 frame-dy 落在 150」需 runtime `byte[unit+6]` 對照,**機制已定、配對待確認**。",
+   "verdict": "benign",
+   "note": "明確保留用語「機制已定、配對待確認」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 156,
+   "excerpt_sha1": "cd309f08cd2fe222d86997753acec77a2ae6bd04",
+   "excerpt": "由TAI selector與`unit+6` writer驗證。",
+   "verdict": "benign",
+   "note": "延續句，offset低於門檻"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 176,
+   "excerpt_sha1": "e67c51b17b9a533cc62bbf52a5a03b2cca0715fe",
+   "excerpt": "**TAI 確切 entry / 顏色 / 對齊位置待 decode 驗證**(worklist 第 6 輪步驟 1)。",
+   "verdict": "benign",
+   "note": "明確保留用語「待decode驗證」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 178,
+   "excerpt_sha1": "0705b872decc37e80feb3fef3824296061c96ac5",
+   "excerpt": "### 3.4 攻擊白斬擊弧 = FIGANI 攻擊幀自帶,非程式畫(視覺確認)",
+   "verdict": "benign",
+   "note": "小標，「視覺確認」，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 201,
+   "excerpt_sha1": "a3188891f2606f08c201649765544b4c01ff93d3",
+   "excerpt": "### 4.-1 [z-order] 狀態欄先畫、figure 後畫 → figure 蓋住狀態欄(已確認)",
+   "verdict": "benign",
+   "note": "小標，「已確認」，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 272,
+   "excerpt_sha1": "2dc281e69bb4013ca22ec17eb20f467ee86cded6",
+   "excerpt": "- **\"HP\" / \"MP\" / \"LV\" 標籤字**:內含在 ① 的面板底圖 sprite 裡(已視覺確認:框圖 #22 自帶 HP/MP/LV‧ 標籤,見 §4.2.5)。",
+   "verdict": "benign",
+   "note": "延續句，視覺確認框圖標籤"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 293,
+   "excerpt_sha1": "61d0f0fc23d9c1ff1aa4fdb8407d470454ed4e9b",
+   "excerpt": "- **狀態欄用到的 sub-resources(視覺+模板匹配驗證,err=0 像素全等)**:",
+   "verdict": "benign",
+   "note": "延續句，模板匹配驗證err=0"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 317,
+   "excerpt_sha1": "0a6ca3bffb66f0279b3de596e679a597fb27dded",
+   "excerpt": "- **⚠ 框 bevel 來源未 RE 確認**：§4 已證實名字走 glyph、數值走 digit cell、",
+   "verdict": "benign",
+   "note": "明確保留用語「未RE確認」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 320,
+   "excerpt_sha1": "8216aa4ce9e83f43b3de250fa896e1c6fdd0c7a9",
+   "excerpt": "remake 暫用程式 bevel(`drawBattlePanel`:深藍底 + 左上亮 / 右下暗 2px 邊 + 暗槽=色暗版)近似 orig 視覺;bevel 規則純色非紋理,屬合理近似,**確認是素材後再換素材**。",
+   "verdict": "benign",
+   "note": "延續句，remake近似說明，明確標示待換素材"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 358,
+   "excerpt_sha1": "717e57998965dbe9ed16d81196940dc2d37804cd",
+   "excerpt": "具體用途待確認,但「**work stride 640、可視 320**」這條已確認 → remake 若用單寬 buffer 要注意座標換算。",
+   "verdict": "benign",
+   "note": "延續句，明確保留用語「具體用途待確認」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 606,
+   "excerpt_sha1": "84483de4e20c4af6a9a7e4df58724c4f4fe6c4e9",
+   "excerpt": "### 9.5.1 先定位兩個候選檔案,確認 `FD2Analysis3` 實際分析的是哪一份",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 619,
+   "excerpt_sha1": "8636df8f92c92359df7e571a527eb957e7fc2e3a",
+   "excerpt": "### 9.5.2 重新逐 byte diff,確認落差內容 + 修正 doc11 的 2 個 hex 位址誤植",
+   "verdict": "benign",
+   "note": "小標，修正hex位址誤植，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 703,
+   "excerpt_sha1": "d2596aa3ce1ad2e3a5a4c4f9468d2a5f94fce608",
+   "excerpt": "確認的**linear 位址**,不是從任何 raw 檔案 byte 位移直接算出來的——這些既有結論本身沒有",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 724,
+   "excerpt_sha1": "2c08fcbd97851c1d704b6059e41d7d5cfb351e66",
+   "excerpt": "9.5.4 已證實這份 EXE 沒有可用的全域 file-offset↔linear 換算常數,這條路完全走不通,無論",
+   "verdict": "benign",
+   "note": "延續句，證實此路不通"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 780,
+   "excerpt_sha1": "be10350b2b14a668b78e25493e575adafdbb19b7",
+   "excerpt": "函式,結果**確認是數值巧合,不是版本位移後的真正對應**:",
+   "verdict": "benign",
+   "note": "延續句，排除數值巧合"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 807,
+   "excerpt_sha1": "cbd601727bb5ed3bb5db84f594c7722cb61a29ee",
+   "excerpt": "9.2 的窮舉裡已經獨立確認**目前在 `FD2Analysis3`(post-rebaseline)裡完全有效**、doc13/doc91",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc13/91"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 815,
+   "excerpt_sha1": "c354e8a705e7dd861ef94389dbbd4ba96bc4e042",
+   "excerpt": "(`D:\\` 在這台機器上不存在,`Test-Path` 確認)做大小篩選(300000~600000 bytes,涵蓋新舊版兩種",
+   "verdict": "benign",
+   "note": "延續句，檔案存在性檢查"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 857,
+   "excerpt_sha1": "013c284e5ad37b11f253cd8106cae18d6efccdbc",
+   "excerpt": "`FD2_old.EXE` 與所有其他候選保留的原始 1995-07-07 時間戳),與 9.5 已證實的「同尺寸、2 處",
+   "verdict": "benign",
+   "note": "延續句，時間戳比對"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 871,
+   "excerpt_sha1": "13307c62f1238aa3e0327dbdf459aa08b30140fc",
+   "excerpt": "canonical baseline」這個落差,到這裡可以確認**與本輪要解的位址對不上問題完全無關**(9.5.3",
+   "verdict": "benign",
+   "note": "延續句，排除無關問題"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 879,
+   "excerpt_sha1": "5c068c5ed2d98392fc1adcbb60b5139c35a861d5",
+   "excerpt": "1. **不要再花時間找「原始 byte context」**——9.6.1 已確認這批位址從一開始就只以「互動式工具",
+   "verdict": "benign",
+   "note": "延續句，方法論調整建議"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 882,
+   "excerpt_sha1": "2efa4913fddc874667e49d6425e4058ae520b7b4",
+   "excerpt": "9.6.2 也已證實舊版 EXE 在這台機器上真的完全找不到,連驗證這個假說的材料都沒有。",
+   "verdict": "benign",
+   "note": "延續句，證實舊版EXE遺失"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 897,
+   "excerpt_sha1": "7d37d3c3cf3a88c73b6bde2b33796760b434cd38",
+   "excerpt": "> 動機:9.1/9.5/9.6 三輪都是「先假設一批位址是對的,再想辦法在 `FD2Analysis3` 裡驗證/换算它」,",
+   "verdict": "benign",
+   "note": "延續句，方法論反思"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 919,
+   "excerpt_sha1": "e264b5a46d2f3797cb7be2b3cd77c21c7afca35d",
+   "excerpt": "**在把這個結果當結論之前先做二次確認**(參照 memory「檢查現有證據」與「驗證資料來源」習慣):",
+   "verdict": "benign",
+   "note": "延續句，二次確認方法論(交叉參照project memory)"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 934,
+   "excerpt_sha1": "7127d2c7729c81d61e3b096eeb3fbf765d8f06d1",
+   "excerpt": "### 9.7.3 第二輪:改用純指令層級(CALL flow target + PUSH 立即數回溯),用已知 ground truth 驗證方法本身正確",
+   "verdict": "benign",
+   "note": "小標，方法本身驗證，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 955,
+   "excerpt_sha1": "cd8f5e74f7101445fea69c3aa8c99aa700ef3799",
+   "excerpt": "index=54)全域 0 命中,且這次的方法已經用已知正確答案驗證過可信,不是方法失效**。",
+   "verdict": "benign",
+   "note": "延續句，方法可信驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 963,
+   "excerpt_sha1": "dcb5585908f405b66eb419521101e7db54486731",
+   "excerpt": "### 9.7.4 對 6 個 score=2 候選逐一人工複核:全部確認屬於已有文件記錄的其他子系統,無一是 ending renderer",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1024,
+   "excerpt_sha1": "e739a980a68cafc47f42483145275108a9ed2035",
+   "excerpt": "是一次獨立、方法論完全不同的加強佐證,但仍不是證明(57 個迴圈/表格驅動的呼叫點沒有徹底解開,",
+   "verdict": "benign",
+   "note": "明確保留用語「仍不是證明」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1041,
+   "excerpt_sha1": "aeafe847673483b3c57b929540f68965f4726127",
+   "excerpt": "單趟暫存器歷史追蹤,見 9.7.5)是目前唯一驗證過在這個 project 上可信的替代方法。",
+   "verdict": "benign",
+   "note": "延續句，方法可信性評估"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1047,
+   "excerpt_sha1": "150de72077149231f7f1e48dad06ffb430f8fa61",
+   "excerpt": "已用 boot loader ground truth 驗證)、`GlobalBehaviorScanV3.java`(v3,加一層單趟暫存器歷史",
+   "verdict": "benign",
+   "note": "延續句，boot loader ground truth驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1061,
+   "excerpt_sha1": "8a8d884b6689283fce8287eaad6f48cf237347fd",
+   "excerpt": "signature(`+5=0x01`)，並在真實 UI 的「End Turn 確認 YES」操作點上觸發了一次真正的",
+   "verdict": "benign",
+   "note": "延續句，offset低於門檻"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1112,
+   "excerpt_sha1": "21f5fbe5db46378d367c62b612b0a2f4d1b96e66",
+   "excerpt": "查詢均回傳「資料庫裡沒有記錄」——這是全新位址,不在既有 `verified_addresses.json`/",
+   "verdict": "benign",
+   "note": "延續句，資料庫缺口發現"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1127,
+   "excerpt_sha1": "c0b9af8a79a339156d33fb3d22ac7bf1ee8cab12",
+   "excerpt": "不需要额外校正——這是本專案第 N 次獨立交叉驗證這個 delta(見 doc58 續四十~續六十二的完整歷史),",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc58續四十~續六十二"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1287,
+   "excerpt_sha1": "6ed02f75e4967e90fb641a76ae33c11f75380319",
+   "excerpt": "悠妮卡兩張不同角色卡上——證實是「角色卡共用 renderer」",
+   "verdict": "benign",
+   "note": "延續句，共用renderer證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1317,
+   "excerpt_sha1": "dd4f4fc36b02ad59681268467a801eca783d78f8",
+   "excerpt": "End Turn 確認的整套流程就能重現視覺/文字內容,但本輪**未查證**戰前/戰後兩條路徑是否共用",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未查證」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1367,
+   "excerpt_sha1": "5f360d46c7ad87f08c1a4e9b2fe32a4fabf4d1bc",
+   "excerpt": "完全對上,這是本輪第一個「純靜態複現 live 發現」的交叉驗證。",
+   "verdict": "benign",
+   "note": "延續句，純靜態複現live發現的交叉驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1382,
+   "excerpt_sha1": "dc17380b4c33963b87a7e01d4457aad6815d788d",
+   "excerpt": "`confirmed_call_instruction: true`**——這是全 exe 範圍(`.object1/2/3`,`E8` opcode 逐 byte",
+   "verdict": "benign",
+   "note": "延續句，全exe範圍逐byte confirmed"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1432,
+   "excerpt_sha1": "83b6f3947588a306e55921f1f2f39f25073c0e14",
+   "excerpt": "│  (兩處呼叫端皆用 call_scan 全域窮舉confirmed,無第三個呼叫端)",
+   "verdict": "benign",
+   "note": "延續句，call_scan窮舉confirmed"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1452,
+   "excerpt_sha1": "91d50cc0cdae3b0671426f3f39ddb48551aef407",
+   "excerpt": "`byte[EAX+5]` 的 bit(`0x24-battle-input-dispatch` 已證實的 `Acted` 旗標)——這是**戰鬥開打前",
+   "verdict": "benign",
+   "note": "延續句，offset低於門檻"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1470,
+   "excerpt_sha1": "eb5de0d262e0799859466e0daeb308f13d18ed44",
+   "excerpt": "戰後真實 montage(續六十二)與這次證實其實是「ch26 戰後」的路徑(續六十四)都卡在悠妮卡,",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續六十二/六十四"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1483,
+   "excerpt_sha1": "62f62ce4a366ae2d59a98cc3a9781f0163d1be20",
+   "excerpt": "判定的「有 specific、findable 的 caller」現在有了精確、窮舉驗證的座標。",
+   "verdict": "benign",
+   "note": "延續句，窮舉驗證座標"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1496,
+   "excerpt_sha1": "862649ccaa90ca2cebec53cbd96344729f455785",
+   "excerpt": "**未驗證**,留給下一輪)。**因此本輪不更新 `91-worklist.md` 那 11 個項目**——它們描述的問題",
+   "verdict": "benign",
+   "note": "明確保留用語「未驗證,留給下一輪」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1510,
+   "excerpt_sha1": "701a3da52fc8f228a4928a0ffc570f7b0cc333a6",
+   "excerpt": "`known_address_errata.json`,並訂正 doc58 續三十二~續六十四整條 ch27 live 驗證任務的前提",
+   "verdict": "benign",
+   "note": "延續句，交叉參照known_address_errata.json"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1540,
+   "excerpt_sha1": "f2affb2cdf72d9eaa4a45e231da1475a59fa2135",
+   "excerpt": "`confirmed_call_instruction: true`——與 §9.11.3 的結果逐位址相同。",
+   "verdict": "benign",
+   "note": "延續句，confirmed_call_instruction比對"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1555,
+   "excerpt_sha1": "c2a5a986ca844cf165b4b11b42cf734a0b9477ce",
+   "excerpt": "91-worklist 輾轉引用,最終成為 doc58 續三十二~續六十四(10+ 輪)ch27 live 驗證任務的核心前提",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc58續三十二~續六十四"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1583,
+   "excerpt_sha1": "abfcc6a653b251526c8ffb641dafc38723303311",
+   "excerpt": "在這條呼叫路徑上**physically 不可能被執行到**——不是「live 驗證還沒抓到對的時機」,是",
+   "verdict": "benign",
+   "note": "延續句，物理不可達結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1588,
+   "excerpt_sha1": "3ae6455982e7ad70f1d3fe076c9e4f38abac592d",
+   "excerpt": "**重要邊界,避免誤讀**:這**不代表** doc58 續三十二~續六十四的 live 驗證工作是無意義的——",
+   "verdict": "benign",
+   "note": "明確保留用語「重要邊界,避免誤讀」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1602,
+   "excerpt_sha1": "33b60fffc557c6d9a9b537a3fa7a0fbc7f39fcfe",
+   "excerpt": "位址查 `query_verified_address.py` 完全沒有記錄,是本輪任務起點發現的資料庫缺口)。",
+   "verdict": "benign",
+   "note": "延續句，資料庫缺口"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1798,
+   "excerpt_sha1": "beb9614aaa2c7f45d6710b40b3fc6b41c650aba1",
+   "excerpt": "高信心確認「位址重疊是巧合、兩者是不同子系統」,但不撤回 party montage 本身的既有記錄",
+   "verdict": "benign",
+   "note": "延續句，高信心確認位址重疊是巧合"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1821,
+   "excerpt_sha1": "692440d89acff35273640ccd4704a7f396a96767",
+   "excerpt": "doc98 記錄的驗證案例)才會持久存在。**這是這個 project 已知、記錄在案的限制,不是新問題**——",
+   "verdict": "benign",
+   "note": "明確保留用語「已知、記錄在案的限制」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1845,
+   "excerpt_sha1": "10bd0d0a2f9d2305080640af1949d480d5cddd8c",
+   "excerpt": "4 元素 rotation」需要的整數除法運算相容(未逐位元組證實是同一段,但模式一致)。",
+   "verdict": "benign",
+   "note": "明確保留用語「未逐位元組證實是同一段」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1850,
+   "excerpt_sha1": "421bb8fd0732c54cace4ae73e622f344fc2fde6a",
+   "excerpt": "問題)。這一筆**沒有**得到正面確認,誠實列為未解——但即使排除這一筆,其餘 3+4=7 個 cluster",
+   "verdict": "benign",
+   "note": "明確保留用語「誠實列為未解」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1854,
+   "excerpt_sha1": "09468232bcd6305138e7b86461b0c17346d91aff",
+   "excerpt": "**小結**:8 個 cluster 位址中,7 個(§9.13 的 4 個+本節新驗證的 3 個)都得到「冷啟動可能需要",
+   "verdict": "benign",
+   "note": "小結延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1882,
+   "excerpt_sha1": "a1d0afce7890042c4c6db309d7a539ee6b8a5791",
+   "excerpt": "### 9.14.4 綜合判讀:高信心確認「位址重疊是巧合」,但明確**不撤回** `91-worklist.md` 既有的",
+   "verdict": "benign",
+   "note": "小標，「不撤回」既有記錄，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1899,
+   "excerpt_sha1": "a5337fb202258403fbf21415b5e1b2e39857c3a5",
+   "excerpt": "「舊/新版位址不能直接套用同一常數位移」)、以及 §9.5.4 這一輪才確認的「這份 EXE 沒有可用的",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.5.4"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1940,
+   "excerpt_sha1": "34d3fdcc8f7e502a657b10334f77315bd56cf87d",
+   "excerpt": "**高信心排除**(五輪以上獨立方法論、含本輪新增的 3 個 cluster 位址驗證與 7 項具體訴求逐一核對,",
+   "verdict": "benign",
+   "note": "延續句，高信心排除結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1949,
+   "excerpt_sha1": "f972a9975fba01cf60597b7d88d8d4bb42bf61fb",
+   "excerpt": "一致證實這條路已經走到底,§9.14.4 給出的「不同 EXE build/位址空間」假說才是下一步該查的",
+   "verdict": "benign",
+   "note": "延續句，下一步建議"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 1977,
+   "excerpt_sha1": "5f9efa35765e90d585a83bc06601cce119888656",
+   "excerpt": "是最輕量的變體。已用真實操作驗證(續六十六 §2):武裝 `LOGC` 之後遊戲畫面持續渲染、持續接受",
+   "verdict": "benign",
+   "note": "延續句，真實操作驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2004,
+   "excerpt_sha1": "c03c6f850cae2ce2562d9502ed2629a8d7d4a327",
+   "excerpt": "這條路徑(camp exit 確認 YES 之後、抵達戰場之前的劇情演出,續六十四首次發現),不是續六十二",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續六十四"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2005,
+   "excerpt_sha1": "bbca6aa20ebc379b8bbc57a43e87e0b8178cc605",
+   "excerpt": "用 47 格死亡 signature+End Turn 確認觸發的**戰後真實 montage**路徑;追蹤方法本身是**窮舉",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續六十二"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2014,
+   "excerpt_sha1": "6b586c6a7c628df994fc4ad8ecda96b6f9ba7799",
+   "excerpt": "不宣稱已定案」。本輪雖然走的是戰前路徑而非續六十二的戰後路徑,但**兩條路徑呈現逐字相同的",
+   "verdict": "benign",
+   "note": "延續句，明確保留用語「不宣稱已定案」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2015,
+   "excerpt_sha1": "86b6446d483d130dcc3a81702998053056f6bcc8",
+   "excerpt": "角色卡文字內容**(續六十四 §2 已核對過),加上本輪的 ground-truth 執行證據確認戰前路徑確實",
+   "verdict": "benign",
+   "note": "延續句，ground-truth執行證據"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2045,
+   "excerpt_sha1": "18a630810f0948f10d4dea4afa0df1bf80f10050",
+   "excerpt": "capture 裡命中數最高的未記錄函式)。對它額外查 `xref_to`/`call_scan`:**找到 1 個確認的",
+   "verdict": "benign",
+   "note": "延續句，xref_to/call_scan查詢"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2061,
+   "excerpt_sha1": "3c2a7967d4aa9a48a08e41f8fc0698254397716e",
+   "excerpt": "2. 本節的「疑似 palette/RGB 處理」「疑似 PCM 音訊混音」「疑似 RLE 解壓縮」「確認是 PIC EOI",
+   "verdict": "benign",
+   "note": "延續句，候選機制列舉"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2066,
+   "excerpt_sha1": "590cab4ebf21b670be4b40cd001bbf345c80cc85",
+   "excerpt": "3. **沒有**證實這 13 個新候選裡任何一個就是 `91-worklist.md` 那 11 個項目要找的 party montage",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有證實」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2080,
+   "excerpt_sha1": "2bb5847c1503f821bf66911ae886b3f36a21d004",
+   "excerpt": "3. 若要更進一步接上這批新候選的呼叫鏈,可複用續六十六驗證過的方法:在已知會執行到這塊區域的",
+   "verdict": "benign",
+   "note": "未來式建議延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2082,
+   "excerpt_sha1": "0093c984fd147e8199f9f5ede16b4acb4604df63",
+   "excerpt": "比純靜態 `call_scan`/`xref_to` 更可靠(這是 §9.10-§9.11 已經驗證過對這類「未分析區域」",
+   "verdict": "benign",
+   "note": "延續句，方法論比較"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2091,
+   "excerpt_sha1": "6338a7baa6042b5927eb7ed9c6dcd0cfc20f4d13",
+   "excerpt": "第二輪擴大 `LOGC` capture(10 億指令,獨立於續六十六的觸發/按鍵節奏)交叉確認上述判定並多找到",
+   "verdict": "benign",
+   "note": "延續句，第二輪LOGC capture交叉確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2161,
+   "excerpt_sha1": "9869ad4642a39fb26e29e692ff24fadb2c3891e2",
+   "excerpt": "**同一個欄位**——上面確認過的「3-byte 事件游標」)、讀 `EAX[0]/EAX[1]/EAX[2]` 三個 byte 組",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2171,
+   "excerpt_sha1": "96ebf46389d133d479973dabd81e03b78e60c0b7",
+   "excerpt": "逐通道呼叫已註冊的 callback 函式指標——確認是**跟畫面內容完全無關、全程持續運作**的計時基礎設施",
+   "verdict": "benign",
+   "note": "延續句，計時基礎設施確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2200,
+   "excerpt_sha1": "cca4c53038bc682d8a0eaaa5033db1935e75c027",
+   "excerpt": "wrapper,無獨立語意)——維持 §9.15.4 定性,補一點佐證",
+   "verdict": "benign",
+   "note": "延續句，維持既有定性"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2234,
+   "excerpt_sha1": "a0f69e5d8a1a965f8bd1c7abf805e05b230211e6",
+   "excerpt": "RLE handler)本輪**沒有逐格全部核對**(只驗證了 `table[1]`/`table[6]` 這兩個跟 §9.15.4 候選",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪沒有逐格全部核對」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2242,
+   "excerpt_sha1": "38388f1c0662f501be2fac62d6c210d5ed0cc6ce",
+   "excerpt": "### 9.16.7 小結:13 個全新候選,11 個確認/高度疑似音訊驅動內部程式碼,2 個是既有 AFM VM",
+   "verdict": "benign",
+   "note": "小標，統計摘要，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2264,
+   "excerpt_sha1": "95d3019b2bd6171d3c6885fd46bef8d3cca9f30d",
+   "excerpt": "交叉確認 §9.16.1-9.16.6 判定)——技術上達成「往後延伸捕捉」但**沒有**乾淨捕捉到悠妮卡本身",
+   "verdict": "benign",
+   "note": "延續句，明確標示「沒有」乾淨捕捉"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2283,
+   "excerpt_sha1": "f2d903908cc1b641eedb7147d85abab68f9506c9",
+   "excerpt": "萊汀卡)的第二次交叉驗證**,強化 §9.16.1-9.16.5「這些是全程持續運作的音訊驅動,跟畫面",
+   "verdict": "benign",
+   "note": "延續句，第二次交叉驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2288,
+   "excerpt_sha1": "d3bff1477fc34410b3c505dd7837a41b1cb9a6c7",
+   "excerpt": "可能跳過或加速通過了 CG 播放本身」的推測一致(§9.16.6 已確認這兩個位址只在**實際執行到",
+   "verdict": "benign",
+   "note": "延續句，推測一致性"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2289,
+   "excerpt_sha1": "1dd7035c3c88e52b4e14c67c8aa72c73aab5ca8c",
+   "excerpt": "CG 調色盤特效**時才會被 trace 到),是這次「按太快漏看 CG」的側面佐證,不是矛盾。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2302,
+   "excerpt_sha1": "2475b9ead3de3e507aefaa50f8e2ed21e33b3157",
+   "excerpt": "被直接 `CALL` 呼叫。`call_scan` 全域掃描 0 筆命中,無法進一步確認呼叫端語意。",
+   "verdict": "benign",
+   "note": "明確保留用語「無法進一步確認」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2306,
+   "excerpt_sha1": "1527635c52b7aa8cb389dc6d40d20155bf5a355c",
+   "excerpt": "VGA framebuffer 位址、沒有調色盤/sprite 相關運算),且緊鄰 §9.16.1-9.16.2 已經確認的音訊",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.16.1-9.16.2"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2309,
+   "excerpt_sha1": "7636a597225efa907ae6239caaa89770db03dd1e",
+   "excerpt": "CALL 型呼叫端可以證實**,不排除是其他用途(如鍵盤輸入緩衝、序列埠 I/O)的通用工具——誠實",
+   "verdict": "benign",
+   "note": "明確保留用語「不排除是其他用途」，誠實標記"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2313,
+   "excerpt_sha1": "50d0f6815ea1e9c5201c7961270b14d59a8a3e23",
+   "excerpt": "渲染碼;不修改 `91-worklist.md` 任何項目;`LOGC` 方法論本身的一個重要限制被具體案例證實",
+   "verdict": "benign",
+   "note": "延續句，方法論限制被具體案例證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2320,
+   "excerpt_sha1": "b3fa200503062c94b475114421d2ef0129eb4a08",
+   "excerpt": "切換 API——確認**不是** montage 專屬,是這次追蹤窗口背景音樂持續播放留下的副產品。",
+   "verdict": "benign",
+   "note": "延續句，排除誤判"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2326,
+   "excerpt_sha1": "29f37da3ba707b10a544984d4c7004b72a868ef5",
+   "excerpt": "3. **對 `LOGC` 方法論本身的重要限制,本輪首次用具體案例證實**(§9.15.5 原本只是理論上列出",
+   "verdict": "benign",
+   "note": "延續句，方法論限制首次案例證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2327,
+   "excerpt_sha1": "db0e1db4910e2c95bcb19d914418d152a383d5a5",
+   "excerpt": "這個限制,沒有案例佐證):**「執行過」不等於「跟目標場景語意相關」**——背景音樂/計時器",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2339,
+   "excerpt_sha1": "c0b30dbb1a9a0d8d9f5c9cec5deda9e9777bdf84",
+   "excerpt": "generic 原語是否也在這個場景被呼叫」做逆向 `call_scan`——排除 sprite-blit 家族、確認未分析區塊",
+   "verdict": "benign",
+   "note": "延續句，逆向call_scan方法"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2387,
+   "excerpt_sha1": "0bf15bd2df55be6dae602f8e229259c6681c08d4",
+   "excerpt": "——過去分別記錄成兩個不同「原語」,現在確認是同一支函式裡的兩個內部位址,不是兩支獨立函式。",
+   "verdict": "benign",
+   "note": "延續句，自我修正(同一函式兩內部位址)"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2417,
+   "excerpt_sha1": "e1a132c6336a8e8e690b328dd376f2a55f07d3bc",
+   "excerpt": "的引擎通用 primitive,`13-battle-menu-system.md` 已證是「action-ring dispatcher」的一部分)。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc13"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2544,
+   "excerpt_sha1": "7c80f0851937e0d8e4a701b0edc3740a8393f127",
+   "excerpt": "這批 confirmed CALL 位址提供了密集(每 60-90 bytes 一個)、逐 byte 驗證過的合法邊界網,足以支撐",
+   "verdict": "benign",
+   "note": "延續句，密集confirmed CALL位址網"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2686,
+   "excerpt_sha1": "75e5a49e0d75d89a6543b39d951a546cf3f67904",
+   "excerpt": "trace(正確涵蓋 CG 顯示窗口)裡有 **61 個不重複位址命中**,證實這段程式碼確實在真正的 CG 顯示",
+   "verdict": "benign",
+   "note": "延續句，61個不重複位址命中"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2710,
+   "excerpt_sha1": "ea12f6dc21c87cfbd95a28e23d5e7b26ae416809",
+   "excerpt": "carousel 系統的既有結論(「完整可驗證的 phase-table 演出引擎,靠資料索引驅動共用原語,不是",
+   "verdict": "benign",
+   "note": "延續句，既有結論引用"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2716,
+   "excerpt_sha1": "41db24b3f97c3bb24c26e2994ac6443ea9938206",
+   "excerpt": "的指標實際指向哪個資源、是否真的分別對應 CG1/CG2)本節**沒有**逐一 dump 出來確認——只確認了",
+   "verdict": "benign",
+   "note": "明確保留用語「本節沒有逐一dump出來確認」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2717,
+   "excerpt_sha1": "0356fd9b6d995a0f79a9f1201519c44cf39a2d10",
+   "excerpt": "「用一個遞減計數器在至少 2 個 slot 之間切換」這個控制流結構,沒有確認資料語意。",
+   "verdict": "benign",
+   "note": "延續句，明確標示「沒有確認資料語意」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2747,
+   "excerpt_sha1": "2c62f2fa0ce4ce906289c9f70982e90b4b67aa03",
+   "excerpt": "`internal/afm`/`internal/fdother` 之類的 palette 轉換工具轉成 PNG 視覺比對,直接肉眼確認",
+   "verdict": "benign",
+   "note": "延續句，PNG視覺比對肉眼確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2765,
+   "excerpt_sha1": "cc6ec505153b15660d37f1a0ec4b7a0690e4bdbc",
+   "excerpt": "signature + End Turn 確認,兩輪獨立重開機都精確命中同一句台詞",
+   "verdict": "benign",
+   "note": "延續句，兩輪獨立重開機精確命中"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2770,
+   "excerpt_sha1": "6080ca41529d6fb278ce2189be152913cefecebb",
+   "excerpt": "出口確認YES→逐句 `Return` 推進戰前對白抵達戰場(`823 A+05 D+00` HUD fingerprint)。",
+   "verdict": "benign",
+   "note": "延續句，HUD fingerprint確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2772,
+   "excerpt_sha1": "333540c514730491e4b9cc469acc10517085a84d",
+   "excerpt": "**新方法論確認(比續六十四/六十六的「隨機 Escape 亂按」更可控)**:複用續六十二已驗證的",
+   "verdict": "benign",
+   "note": "延續句，方法論可控性比較"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2779,
+   "excerpt_sha1": "2bb7db4c624ebcfdae36a8a8b651b8596679b369",
+   "excerpt": "`Down` 選 `END`→`Return`→「要結束本回合的行動嗎?」確認框→`Return`(YES)——**兩次獨立重開機",
+   "verdict": "benign",
+   "note": "延續句，操作序列描述"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2780,
+   "excerpt_sha1": "473728d2604dd565f23f871fbfde0a78f546632b",
+   "excerpt": "都在確認 YES 後立刻精確重現同一句台詞**(莎拉「就是這個了,轉送站..好久沒看到這種東西了....」),",
+   "verdict": "benign",
+   "note": "延續句，兩次重開機精確重現"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2783,
+   "excerpt_sha1": "81d2e8c933aed4ac34f88efeb2218bb102f3efc6",
+   "excerpt": "沒有觸發,證實這條「戰前 vision」捷徑本身確實跟先前記錄的一樣不穩定;47 格死亡 signature+End Turn",
+   "verdict": "benign",
+   "note": "延續句，不穩定性證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2794,
+   "excerpt_sha1": "5557516584c9085c8cd4c9517e6eb131d18fc5f2",
+   "excerpt": "**這證實 CG1 不是單張靜態全螢幕圖,懸浮小島本身是會淡入/淡出(出現又消失)的一段小動畫**,疊在",
+   "verdict": "benign",
+   "note": "延續句，CG1動畫性質證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2814,
+   "excerpt_sha1": "f78870fa16c575118867a86eb1600fe6a724a446",
+   "excerpt": "### 9.19.3 修正位址後重測:`BP 0170:1CE05F` 精確命中,引數與資料格式逐位元組核對,",
+   "verdict": "benign",
+   "note": "小標，位址修正重測，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2824,
+   "excerpt_sha1": "3759039bf7073bea2c13420714e9fb0cdf2f7907",
+   "excerpt": "stride = 0x00000140  (=320,螢幕寬度,與 §9.18.3 的 PUSH 0x140 逐位元組吻合)",
+   "verdict": "benign",
+   "note": "延續句，stride逐位元組吻合"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2834,
+   "excerpt_sha1": "ba91979aa8768316982199f9255cacf6ade8345b",
+   "excerpt": "CG1 那種 320×200 全螢幕圖。第 5 byte 起 `C8 4A C1 FE C2 3F ...` 逐位元組核對 §9.18.3 記錄的",
+   "verdict": "benign",
+   "note": "延續句，位元組核對"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2845,
+   "excerpt_sha1": "2e422d2989c3a8c3caf51421a37e45e8e1baa9ab",
+   "excerpt": "RLE 解碼器怎麼運作)**完全禁得起 live 驗證**,沒有任何一步被推翻。",
+   "verdict": "benign",
+   "note": "延續句，完全禁得起live驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2852,
+   "excerpt_sha1": "06cc765a2c1b5abc1af07ae97cfbda3c492028c6",
+   "excerpt": "都在「確認 YES」之後**立刻**用修正後的 `BP 0170:1CE05F` 掛著 `RUN`,逐句 `Return` 推進對白,",
+   "verdict": "benign",
+   "note": "延續句，修正後BP掛RUN推進"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2865,
+   "excerpt_sha1": "258bb0e78293cdcb3f0ec1e8ba8ac0f6d715f7c0",
+   "excerpt": "且這份 trace 正確涵蓋 CG 顯示窗口」——本輪認為這個交叉驗證**方法論上有一個沒有意識到的缺口**:",
+   "verdict": "benign",
+   "note": "延續句，方法論缺口反思"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2867,
+   "excerpt_sha1": "d15bd33bef717bb18324cc3e2875b96d57d1c183",
+   "excerpt": "**整整一段連續過程**,§9.18.5 只確認了這兩個函式的位址範圍在**這整段窗口內**命中過 61 次,",
+   "verdict": "benign",
+   "note": "延續句，61次命中說明"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2874,
+   "excerpt_sha1": "c1cacdb5c458f00198f2f50903babe7407393a8c",
+   "excerpt": "### 9.19.5 CG1「出現又消失」的懸浮小島動畫,**逐 pixel diff 已實測證實**是一個獨立的局部小型",
+   "verdict": "benign",
+   "note": "小標，逐pixel diff實測證實，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2875,
+   "excerpt_sha1": "9d70f8fd160d46cfdc411ace2950604736e97f4d",
+   "excerpt": "精靈動畫疊在靜態天空背景上,不是單一張 320×200 全螢幕 RLE 圖重繪——這個假說本輪已完成驗證,",
+   "verdict": "benign",
+   "note": "延續句，假說完成驗證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2897,
+   "excerpt_sha1": "ce7312311f422ecada7a9f1374f7efc80c466208",
+   "excerpt": "**結論(高信心,live 逐 pixel 實測直接證據)**:CG1 的懸浮小島**確認是一個獨立的局部",
+   "verdict": "benign",
+   "note": "延續句，高信心結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2916,
+   "excerpt_sha1": "1d0ce94db1f448df425865af13c2e47834910658",
+   "excerpt": "VGA 內容。**這證實了任務描述裡「work buffer 比 VGA framebuffer 更適合當 dump 目標」這個判斷",
+   "verdict": "benign",
+   "note": "延續句，任務判斷證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2932,
+   "excerpt_sha1": "09a9d2130d8dbacc0db6585bd3730c3bcd15d36c",
+   "excerpt": "觸發手法**——47 格死亡 signature + End Turn 確認,兩輪獨立重開機都精確重現同一句台詞,",
+   "verdict": "benign",
+   "note": "延續句，穩定觸發手法"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2941,
+   "excerpt_sha1": "65b038b7cf8e496ae930d493b8666888f4ca9467",
+   "excerpt": "判斷的「只差影像級驗證」倒退了一步:不是「機制已知、只差肉眼比對」,而是「機制本身的候選",
+   "verdict": "benign",
+   "note": "延續句，判斷倒退說明"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2955,
+   "excerpt_sha1": "e8245ed25ed8f7784276180313068f4d10efa4cc",
+   "excerpt": "更新):確認是局部 sprite,不是全螢幕重繪。下一輪應直接從第 2 點開始。",
+   "verdict": "benign",
+   "note": "延續句，確認局部sprite"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2965,
+   "excerpt_sha1": "5094357740199f6d1e49b7a6f682db5a5bc24871",
+   "excerpt": "4. **重用本輪找到的穩定觸發手法**(47 格死亡 signature+End Turn 確認)取代續六十四/六十六的",
+   "verdict": "benign",
+   "note": "延續句，重用穩定觸發手法"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2984,
+   "excerpt_sha1": "159c3e527ec7291d16217f671b512ac254d152df",
+   "excerpt": "> `.wsl_build/trace_unique_cseip.txt`(12,297 筆,§9.17 開頭已確認這份快取檔案本身沒被刪除),",
+   "verdict": "benign",
+   "note": "延續句，快取檔案確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2992,
+   "excerpt_sha1": "4d326d7270d1c600898dce57eb9f68b766d0ee22",
+   "excerpt": "驗證:`python3` 逐行讀入、把 `0170:XXXXXXXX` 轉成整數位址,檢查整份 12,297 筆是否照位址遞增排序",
+   "verdict": "benign",
+   "note": "延續句，驗證方法描述"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 2996,
+   "excerpt_sha1": "ebf5327d25a0d19465ff56a2b079bc69d50a2a86",
+   "excerpt": "個位數到十位數),證實這份去重後的清單確實保留了原始執行順序的骨架,可以用來做「哪個呼叫端在",
+   "verdict": "benign",
+   "note": "延續句，執行順序骨架保留證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3032,
+   "excerpt_sha1": "11cf7ca9c63a614c5ed22e7ded92014d5e0a2651",
+   "excerpt": "從未按位址分桶過的舊 trace 資料,獨立重新驗證了 §9.19 用全新 live session 才拿到的結論**,兩種",
+   "verdict": "benign",
+   "note": "延續句，獨立重新驗證結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3141,
+   "excerpt_sha1": "74735de146e84a440e77451b2c919157075a5424",
+   "excerpt": "第一次確認的、屬於「劇情演出」脈絡的呼叫端。這跟 §9.18.6/§10 已經反覆印證的「這個引擎是通用共用",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.18.6/§10"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3165,
+   "excerpt_sha1": "ebb934f6987d8a2c568b1f0c03de79f2a2ff6fca",
+   "excerpt": "不像會被許多不同呼叫端共用的通用特效),但**未驗證**,誠實列為開放問題。",
+   "verdict": "benign",
+   "note": "明確保留用語「未驗證,誠實列為開放問題」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3168,
+   "excerpt_sha1": "6c0a5c25f117ed809769216f88203ce389625017",
+   "excerpt": "RLE 內容,本輪因為沒有重開 live 環境,無法做同等級的資料格式驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語「無法做同等級的資料格式驗證」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3176,
+   "excerpt_sha1": "3397c61819927cc4a0d415db104551a852b0e8aa",
+   "excerpt": "是兩個獨立問題,§9.18.8/§9.19.8 已反覆確認過這個框架邊界,本節同樣不影響那 11 個項目。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.18.8/§9.19.8"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3180,
+   "excerpt_sha1": "52277b6b501459f0765005ade61b50922402c8ce",
+   "excerpt": "1. **最高優先、成本可控**:重用 §9.19.1 已驗證穩定的「47 格死亡 signature+End Turn 確認」觸發",
+   "verdict": "benign",
+   "note": "延續句，重用已驗證穩定觸發"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3186,
+   "excerpt_sha1": "28f3d8d51cd0a128f9a7da266f8779e2634c581b",
+   "excerpt": "§9.20.7 point 2 的開放問題與完成資料格式驗證。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.20.7"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3189,
+   "excerpt_sha1": "e35fd7c76b2dac76c3f7f8c8a13f21b1bf5ed3dd",
+   "excerpt": "什麼,若這個計數是 0 則這步驟在 CG1 情境下是 no-op,值得確認)。",
+   "verdict": "benign",
+   "note": "延續句，待確認項"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3210,
+   "excerpt_sha1": "ce9e346fdb3efc1da7fb153ca72a9263ba955739",
+   "excerpt": "依 doc48 §8.4 recipe(`core=normal`+`cycles=5000`)啟動,確認片頭跑完、`START/LOAD/CONTINUE`",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc48 §8.4 recipe"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3211,
+   "excerpt_sha1": "61c0ff81a40115830ba9ec80ad5012e7bf72204d",
+   "excerpt": "選單完整顯示後才送鍵。`LOAD`→存檔格1(「第二十七章 命運的交會點」,確認正是 ch27)→軍營內",
+   "verdict": "benign",
+   "note": "延續句，操作序列描述"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3212,
+   "excerpt_sha1": "b806fbb69fc03ffe97fea26d8f8ddf15020275ac",
+   "excerpt": "`Right×3`→`Return`確認「要進入戰場嗎?YES/NO」→`YES`。之後改用純 `Escape` 單鍵連續推進約",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3264,
+   "excerpt_sha1": "32c8d4c8121e1e8e9790f5939538c1d5ed2589e0",
+   "excerpt": "11 楨全程尺寸維持在 12×21 到 24×23px 之間,**遠小於** §9.19.5 pixel-diff 實測的懸浮小島",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.19.5 pixel-diff"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3301,
+   "excerpt_sha1": "c032a64919ed3787382f4a5b5d9e9fd5ec8d36b3",
+   "excerpt": "30個body bytes,兩者都對得剛剛好——演算法確認正確,不是巧合湊數。",
+   "verdict": "benign",
+   "note": "延續句，演算法確認正確"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3320,
+   "excerpt_sha1": "1d0a783f15074fc4da1fea00e4240e7c3f67cf3f",
+   "excerpt": "同一個 function 邊界,doc 文字也沒有逐位元組列舉範圍內每個位址,所以字串比對誤判成「新」。",
+   "verdict": "benign",
+   "note": "延續句，字串比對誤判說明"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3344,
+   "excerpt_sha1": "cba15347da1e8488f0f1d8c88c06aa4f0b936a1c",
+   "excerpt": "負面結果,ch27 戰前 CG1 顯示問題本身仍無專屬 worklist 項目追蹤(續七十已確認過這點),與",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續七十"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3353,
+   "excerpt_sha1": "9bf8ef4ff63fee697a21c323f7f45c58c9b3fc2d",
+   "excerpt": "(呼叫鏈、引數 ABI、RLE 格式全部驗證為真),live 像素證據顯示它畫的不是 CG1。**誠實信心等級**:",
+   "verdict": "benign",
+   "note": "延續句，明確標示「誠實信心等級」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3355,
+   "excerpt_sha1": "5aa816a0a3d26729175122c6759334f63872a505",
+   "excerpt": "逐位元組資料格式核對+像素還原三重證據);對「CG1 真正的繪製機制是什麼」仍是**未知**——本輪",
+   "verdict": "benign",
+   "note": "延續句，明確標示「仍是未知」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3377,
+   "excerpt_sha1": "46c1d5a3f638b335e7dacc35206caa306eeed605",
+   "excerpt": "消失)完整閉環驗證——本篇任務(續三十二起,20+ 輪)第一次正面解封",
+   "verdict": "benign",
+   "note": "小標，20+輪首次正面解封，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3385,
+   "excerpt_sha1": "1374d7709e9c53e3fc1e2c11a0dcc664deb6b7a2",
+   "excerpt": "### 9.22.1 方法論驗證:本輪 live session 裡 `D 0178:A0000` 直接讀出真實、非零的 VGA 內容,",
+   "verdict": "benign",
+   "note": "小標，方法論驗證，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3395,
+   "excerpt_sha1": "b75bc9206c6462014196f2b6993e87bde4f38e12",
+   "excerpt": "本輪判斷:不是重新推翻 §9.19.6 這筆負面記錄本身(那一輪的操作與截圖佐證都完整,沒有理由懷疑",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.19.6"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3402,
+   "excerpt_sha1": "31d933b1383be9ceaea81315615ddb7d6a4a8193",
+   "excerpt": "### 9.22.2 重現路徑:「LOAD→軍營出口確認YES→純 Escape 逐句推進」這條 §9.21.1 用過的路徑,",
+   "verdict": "benign",
+   "note": "小標，重現路徑描述，證據在節內文"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3404,
+   "excerpt_sha1": "59349e380300819039e39878d8d196812ba07e10",
+   "excerpt": "故事對白沒有繼續推進到轉送站幻象——改用 §9.19 的「47 格死亡 signature + End Turn 確認」捷徑,",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.19"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3414,
+   "excerpt_sha1": "4d4dd0301952fa98215387b654103b7b7471ef79",
+   "excerpt": "第三次(`cg1v3`)改用 §9.19 已驗證兩次成功的「47 格死亡 signature + End Turn 確認」捷徑:進",
+   "verdict": "benign",
+   "note": "延續句，第三次改用已驗證捷徑"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3419,
+   "excerpt_sha1": "996aacc285d32f72c3efaefcd545c19be2a63aa9",
+   "excerpt": "`91-worklist.md`/doc35 §9.20.5 已經確認「ch26 戰後 handler 尾段的『轉送站』幻象」與「戰鬥勝利後",
+   "verdict": "benign",
+   "note": "延續句，交叉參照91-worklist/doc35 §9.20.5"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3420,
+   "excerpt_sha1": "a5f06be2251a25cfedf9b4f593c5e92b1cc0a68d",
+   "excerpt": "的真實 postbattle montage」共用同一份底層渲染內容(悠妮告白、CG1、CG2、詩句、角色卡逐字相同)——",
+   "verdict": "benign",
+   "note": "延續句，共用渲染內容證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3421,
+   "excerpt_sha1": "751a9e817ebf0305303dcf4340107f947482a23d",
+   "excerpt": "本輪的路徑進一步證實**兩者的觸發入口本身可能也是同一段程式碼**(不只是共用 renderer,連「怎麼",
+   "verdict": "benign",
+   "note": "延續句，觸發入口共用推論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3443,
+   "excerpt_sha1": "7ba1a9226daa1c055a1cfe614552ef1a3ccfe621",
+   "excerpt": "逐 byte 讀出小島邊緣的色彩轉換（`B7`=天空藍 → `BF/BD/CD/...`=小島岩石色），證實 VGA",
+   "verdict": "benign",
+   "note": "延續句，逐byte色彩讀出證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3450,
+   "excerpt_sha1": "fe24113e82a683ccb143bfa9cb6d4a96e7350d6d",
+   "excerpt": "小島輪廓精確吻合**，證實這次 VGA 讀取是真實、可信的資料，不是殘留雜訊。",
+   "verdict": "benign",
+   "note": "延續句，VGA讀取真實可信"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3459,
+   "excerpt_sha1": "de5256b19948d8eb65b92350433f524498578d02",
+   "excerpt": "初始化成目前真實記憶體內容**（原始碼確認：只有 `SetType`/`SetAddress`，沒有呼叫 `SetValue()`，",
+   "verdict": "benign",
+   "note": "延續句，原始碼確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3482,
+   "excerpt_sha1": "952e0b8fe6b1f98881b860fd3ae846d2a9e24e40",
+   "excerpt": "**LUT 重映射正是淡入/淡出效果的機制本身**，逐位元組跟 live 命中位置吻合",
+   "verdict": "benign",
+   "note": "延續句，LUT重映射機制吻合"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3545,
+   "excerpt_sha1": "3004249d65f7c7fcdc86fd508dc51a479587b36f",
+   "excerpt": "逐字一致。三張截圖（可見／淡出中／消失）+ 中間那次 `BPPM` 命中，構成本篇任務 20+ 輪以來第一次",
+   "verdict": "benign",
+   "note": "延續句，三張截圖+BPPM命中構成首次證據"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3560,
+   "excerpt_sha1": "095d06a1e683b1ff414044048410ff8ccbd0e6d2",
+   "excerpt": "3. **§9.19.6 記錄的「VGA framebuffer 全部讀零」限制，本輪未能重現、也未能證實是恆定限制**——",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未能重現、也未能證實」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3570,
+   "excerpt_sha1": "ea4ecbb85eb0967ccb11497ac42bb35897e61e6f",
+   "excerpt": "两個獨立問題（§9.18.8/§9.19.8/§9.20.8/§9.21.8 已反覆確認的框架邊界，本節不變動）。**這是",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§9.18.8等"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3571,
+   "excerpt_sha1": "4a0d7ed11cf021ed289026b065eaa9416d597f1f",
+   "excerpt": "ch27 戰前 CG1 顯示問題第一次有了正面、已驗證的技術結論**，如果之後要開一個新的追蹤項目",
+   "verdict": "benign",
+   "note": "延續句，首次正面已驗證技術結論"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3582,
+   "excerpt_sha1": "e8bb7bc90bfd7dfdad3d0e6c0e7da58714f42b80",
+   "excerpt": "3. CG2（索爾與獨眼巨大人形角色對峙那張圖）本輪未重現到、未驗證是否走同一條",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未重現到、未驗證」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3584,
+   "excerpt_sha1": "3dbe34692336c35e5082c1fdded9bd8d79c58c0c",
+   "excerpt": "硬編碼，是資料驅動的），但沒有 live 驗證過，優先度低，僅供有餘裕時參考。",
+   "verdict": "benign",
+   "note": "明確保留用語「沒有live驗證過,優先度低」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3598,
+   "excerpt_sha1": "c3452e423e883c6c68b6921bdf1816f6097f022d",
+   "excerpt": "> 已經證實這段內容經由「47 格死亡 signature + End Turn 確認」可以真正觸發戰鬥勝利、深入結局",
+   "verdict": "benign",
+   "note": "延續句，觸發手法證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3599,
+   "excerpt_sha1": "c87adef1c9013723f218d4dd804fc682e44abd5e",
+   "excerpt": "> montage(戰後對話→CG1→CG2→詩句捲動文字→逐角色回顧卡),且證實這段內容與 ch27 戰前的「轉送站」",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3608,
+   "excerpt_sha1": "d884e5f4aac2f84ac4399abebee00db15bdf92c8",
+   "excerpt": "三選單畫面(screenshot 確認)才開始送鍵。LOAD→存檔格1(「第二十七章 命運的交會點」)→軍營",
+   "verdict": "benign",
+   "note": "延續句，screenshot確認操作序列"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3609,
+   "excerpt_sha1": "0546886e6ed5c86a545fa1ea2c79f3c9e055a98c",
+   "excerpt": "`Right×3`→出口確認 YES→約 15 次 `Return` 推進戰前對白抵達戰場(`823 A+05 D+00` HUD fingerprint",
+   "verdict": "benign",
+   "note": "延續句，HUD fingerprint"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3622,
+   "excerpt_sha1": "9da1f22d9a60af13e22ce62a7d5e1bb3349aaf6f",
+   "excerpt": "`docs/figures/ch27-postbattle-card-laiting-backdrop.png`)——版面與 doc58 續六十二記錄逐字",
+   "verdict": "benign",
+   "note": "延續句，引用具體截圖檔案佐證"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3635,
+   "excerpt_sha1": "60d56490afb4eee8a45124b3a6666667258cb2cb",
+   "excerpt": "核對灰階雲霧漸層(`0x60-0x64` 索引值範圍),確認落點正是螢幕上背景區",
+   "verdict": "benign",
+   "note": "延續句，灰階值範圍核對"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3640,
+   "excerpt_sha1": "e4dd1a345fcbcb32acd0d887848a32e334f1d62f",
+   "excerpt": "`0x60-0x64` 灰階漸層,與畫面上該處的雲霧背景色澤精確對應,證實這個 VGA 位址範圍確實是背景圖",
+   "verdict": "benign",
+   "note": "延續句，VGA位址範圍證實"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3660,
+   "excerpt_sha1": "d368ca995f8610111f456b9dee17c450a065adef",
+   "excerpt": "作為目標**,確認要往更上游(work buffer 的內容來源)追。",
+   "verdict": "benign",
+   "note": "延續句，下一步方向確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3708,
+   "excerpt_sha1": "60e487165f5f6fe2000fde97ea4a78f815c11de1",
+   "excerpt": "——本輪首次確認它是一個 2 行、66 bytes 的極小 wrapper:先呼叫已知的清/staging 原語",
+   "verdict": "benign",
+   "note": "延續句，wrapper函式首次確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3733,
+   "excerpt_sha1": "ea33dad652995a69356d432947f34a93db679d26",
+   "excerpt": "未完成的幾何色塊)獨立佐證了「這張卡片背景是逐 byte RLE 解碼、非一次性 blit」的機制判斷,與",
+   "verdict": "benign",
+   "note": "延續句，獨立佐證機制判斷"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3744,
+   "excerpt_sha1": "b7f03ac763308ad44b93b60c8db4361e4d31915e",
+   "excerpt": "加上一張獨立的「中途渲染」截圖佐證解碼機制,四條證據線一致。",
+   "verdict": "benign",
+   "note": "延續句，四條證據線一致"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3747,
+   "excerpt_sha1": "7034c6c60b41fdac5cd8d5fc10550be037bba740",
+   "excerpt": "方法確認在目前 `FD2Analysis3` project 裡不是任何有效指令/資料邊界(很可能是版本不同的",
+   "verdict": "benign",
+   "note": "延續句，版本落差確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3760,
+   "excerpt_sha1": "91be0f65b8ebb1a5e72c1b32b5d36ef25fc49597",
+   "excerpt": "只確認了「屬於這 15 個裡的其中之一,不是憑空冒出的新呼叫端」;(b) 沒有 dump 第三張(飛龍",
+   "verdict": "benign",
+   "note": "延續句，明確保留用語限定claim範圍"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3762,
+   "excerpt_sha1": "a3d2d3e019d6dc2b0ddc313b720ea841eed3c269",
+   "excerpt": "小圖那樣的完整格式驗證),`0xC0` 這個數值本輪未對應到明確的畫面內容;(c) FIGANI 立繪本體",
+   "verdict": "benign",
+   "note": "延續句，明確標示「未觸及」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3763,
+   "excerpt_sha1": "5fb26da9ca0538848bb248c754d4ca2085dadd2a",
+   "excerpt": "(角色全身像)與 portrait 框(左上角小頭像)的繪製機制本輪**未觸及**,只確認了背景圖層;",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3774,
+   "excerpt_sha1": "5c08a5c7efe17b32e5ccfe3476a76a3b66fbf711",
+   "excerpt": "的派工單——文件覆核確認此任務已在 §9.22/§9.23(2026-08-27)用完全相同的方法論正面解決,本輪未重開",
+   "verdict": "benign",
+   "note": "延續句，文件覆核確認已解決"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3784,
+   "excerpt_sha1": "3eae0595be39095953e49fafc7fcfa39f77ae938",
+   "excerpt": "`known_address_errata.json` 交叉核對,確認任務要求的「live 記憶體攻堅」是否已經做過,而不是預設",
+   "verdict": "benign",
+   "note": "延續句，交叉核對已做過的工作"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3794,
+   "excerpt_sha1": "0c1f27e74ade21c3f8c118a2ccac88ef79c1c707",
+   "excerpt": "`91-worklist.md` 862-867/899/1017-1020 各項目下方,確認已在 2026-08-27 同步附上「重大進展」段落",
+   "verdict": "benign",
+   "note": "延續句，交叉參照91-worklist.md項目"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3807,
+   "excerpt_sha1": "3116d38a7ffa7501d6f37af5de290684de86818b",
+   "excerpt": "`BPPM` 追出的真正呼叫鏈裡也完全沒有出現這批位址)兩條路徑下都從未被證實可達**,根因(轉錄自",
+   "verdict": "benign",
+   "note": "延續句，明確標示「從未被證實可達」"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3827,
+   "excerpt_sha1": "b185c0dc2234a798eaa627afce48c9d0d9d54787",
+   "excerpt": "新資訊(`ch27win3`/`ch30wf`)經核對後屬於另一個獨立 worklist 項目(M5 全章節可達性驗證,見",
+   "verdict": "benign",
+   "note": "延續句，獨立worklist項目分類"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3831,
+   "excerpt_sha1": "0caf9c762b8eb702c93ed6763a433193165c6c69",
+   "excerpt": "`known_address_errata.json` 確認兩份文件是否已同步 §9.22/§9.23 的結論(發現前者已同步、後者",
+   "verdict": "benign",
+   "note": "延續句，同步狀態確認"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3832,
+   "excerpt_sha1": "35944b6dc042fd7bd816c9cd6d0c929f3fb96650",
+   "excerpt": "遺漏,見下)、確認 `ch27win3`/`ch30wf` 兩個任務提示的日期(2026-08-29/08-30,晚於 §9.23)與內容",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3833,
+   "excerpt_sha1": "b1d78a3a0fca47fd097138470add02f7eea2f6bf",
+   "excerpt": "（M5 章節可達性,非 montage renderer)、`grep`確認 doc35/doc91 裡沒有任何 2026-08-27 之後、",
+   "verdict": "benign",
+   "note": "延續句，grep確認排查"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3842,
+   "excerpt_sha1": "c581269e6eed146ea10881a75028540500eaf622",
+   "excerpt": "正面完成,結論穩定,3 天內無任何新證據推翻或補充。**本輪的實質產出是文件層級的**:確認",
+   "verdict": "benign",
+   "note": "延續句，文件層級產出說明"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3844,
+   "excerpt_sha1": "1d78e5069824854e0914b4700916f64d9209f529",
+   "excerpt": "`known_address_errata.json` 一處尚未回填的伏筆、並在此新增本節作為「已核對過、確認不需要重工」",
+   "verdict": "benign",
+   "note": "延續句，追蹤文件補齊"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3849,
+   "excerpt_sha1": "5b0bfd983c70518af29eb7425fbf30b8c2683394",
+   "excerpt": "2026-08-27 已經完成,本輪只是確認並補齊追蹤文件,未新增或撤回任何技術結論。",
+   "verdict": "benign",
+   "note": "延續句，明確標示「未新增或撤回任何技術結論」"
   }
  ]
 }
