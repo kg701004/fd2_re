@@ -158,6 +158,17 @@ xref 掃描額外發現 `0x1ecc7`(body `0x1ecc7..0x1f049`)也會寫 `DAT_00053ec
 
 **worklist 稽核索引 L245 完成度**:高。cVar4 分支、六種經驗公式、等級上限枚舉三項全部由本輪位址級證據閉合;法術命中率逐 ID 核對本輪未動,仍是唯一真正「完全未觸碰」的子項。
 
+**2026-09-06 補完,法術命中率逐 ID 核對——完全閉合,`spell.json` 全數吻合原版 EXE**:
+直接讀 pristine `FD2.EXE`(md5 `33464c81e6a364fd0660141139aa8e6e`,跟
+`fd2_dosbox_live_helper.sh` 釘死的版本一致)在 `spell.json` 每一筆的 `off`
+位址,對照 §6.1 反組譯出的 `*(byte*)(psVar2+1)` 語意(`psVar2` 是 `short*`,
+`+1` 指標運算跳 2 bytes,落在 record byte offset `+2`,取單一 byte,不是
+word)——**36 筆全部吻合,0 筆不一致**。第一次嘗試誤把 `+2` 讀成 2-byte word
+(`raw[2]|raw[3]<<8`),得到 31/36「不符」,回頭核對 §6.1 的 decompile 才發現是
+自己讀取寬度算錯,不是資料真的不符;改成單 byte 讀取後,dmg(`+0`,2-byte
+word)與 hit(`+2`,1-byte)兩個欄位對全部 36 筆spell都 100% 吻合。**worklist
+L245 四項剩餘清單至此全部收口**,可以整項改標 A。
+
 ## 6. 法術 AoE / 命中率 / native command 大型 dispatcher 位址勘誤(2026-08-19,回應 worklist 稽核索引 L555/L557/L572)
 
 > 方法:純靜態 Ghidra headless(`FD2Analysis3`,`-readOnly -noanalysis`,唯讀),沿 doc37 已知的 `0x1cff0`(玩家 command confirm dispatcher)往下追,對 `0x2a6bd`(doc13/37/56/91 多處引用的「native command 大型 presentation/state dispatcher」)做位址邊界檢查時發現該位址從未真正被使用——詳見 §6.3。連帶重新反組譯出真正的 dispatcher 位址 `0x2ff01`,並在其內找到 AoE 的實際套用迴圈(§6.2)。命中率部分則是把既有 `0x1c7ed→0x4e893` 結論(表第 8 項)用即時反編譯 `FUN_0001c75e`/`FUN_0001c81f` 重新逐行核實(§6.1)。腳本:`ProbeMagicAoE0820.java`、`Probe2a6bd0820.java`、`Probe2a694Disasm.java`、`ProbeScan28784Calls.java`、`ProbeFuncs2ac25.java`、`ProbeSanity1cff0.java`、`ProbeNearest.java`、`ProbeDecompile1cff0.java`、`ProbeDecompile2ff01.java`(皆存於 `FD2_ghidra_projects/`,對應 `probe_*_out.txt` 原始輸出)。

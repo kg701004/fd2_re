@@ -32824,6 +32824,14 @@
    "excerpt": "狀態送確認鍵」問題的又一個潛在來源,雖然這輪沒有直接證據說這個特定誤判",
    "verdict": "benign",
    "note": "誠實邊界，明確標示這輪沒有直接證據，非證據宣稱"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 161,
+   "excerpt_sha1": "f1dd55496dee1d73fdbfcfcdbcf480535f12d8b3",
+   "excerpt": "**2026-09-06 補完,法術命中率逐 ID 核對——完全閉合,`spell.json` 全數吻合原版 EXE**:",
+   "verdict": "benign",
+   "note": "章節標題，本輪對pristine FD2.EXE的真實靜態核對記錄，內文已含md5/位址等具體證據"
   }
  ]
 }
