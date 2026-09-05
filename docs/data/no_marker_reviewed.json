@@ -2304,6 +2304,254 @@
    "excerpt": "不足以定性，extractor 只收已由 callee body 證實的名稱。",
    "verdict": "benign",
    "note": "明確保留用語「不足以定性」，限定claim範圍至callee body已證實部分"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 73,
+   "excerpt_sha1": "48128b8175a5a12fc98aaf7fce74f7faff91c0ea",
+   "excerpt": "### 場景 → 曲號(實測 32 處 `play_bgm` 呼叫的 track 立即數)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文(32處play_bgm呼叫)"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 85,
+   "excerpt_sha1": "1ef96e7edcf62d097046adca412c35064b564762",
+   "excerpt": "> play_bgm(18,0) 在進標題 driver 前設定、全開場路徑不再換曲(bgm-title);使用者實聽確認=記憶中",
+   "verdict": "benign",
+   "note": "「使用者實聽確認」片語，屬既有「使用者實測/實玩」可接受設計取捨類別"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 91,
+   "excerpt_sha1": "bd0bdae7261351aee41ad2855ffed13dedc2290c",
+   "excerpt": "> 短曲(勝利 / 事件提示)應以非迴圈方式播放(loop_count=1),待確認。",
+   "verdict": "benign",
+   "note": "明確保留用語「待確認」"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 115,
+   "excerpt_sha1": "7204c872194fe52bc5d8d1a2f3cab84a9616c728",
+   "excerpt": "> / `00025dba ADD ESP,0x8` / `00025dbd CALL 0x00025ebb`——**與上表逐位元組吻合,無漂移**。",
+   "verdict": "benign",
+   "note": "位址引用未加0x前綴(00025dba/00025dbd/00025ebb，屬本文件反組譯工具輸出格式)，逐位元組吻合的原版證據，格式差異不值得為此擴大ADDR_MARKER(裸8位數字風險過高)"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 189,
+   "excerpt_sha1": "29f1ca231531b243bfa512854d84b81b6d4c1007",
+   "excerpt": "不是對照到一個已驗證的商店呼叫點——換言之是憑印象判斷曲風,不是溯源驗證。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是溯源驗證」，誠實揭露弱推論"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 270,
+   "excerpt_sha1": "bbc07efe313ba8a92ca53d68d31844d21a9d24d5",
+   "excerpt": "> 30 bytes 逐位元組相同(`13 13 13 13 03 13 13 13 03 04 13 13 13 13 03 13 04 13 13 03 13 03 04",
+   "verdict": "benign",
+   "note": "原始位元組資料延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 332,
+   "excerpt_sha1": "e672f03ad7bf138e614f3d5ccb79443f919a52e4",
+   "excerpt": "證實**混音裡確實有殘響尾音**,不是漏開。原始 XMI 轉出的 MIDI 也完全沒有 CC91(reverb send)",
+   "verdict": "benign",
+   "note": "音訊分析發現延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 421,
+   "excerpt_sha1": "f484af71c105ad81fea83ed59ac4a7a1e484bca8",
+   "excerpt": "- 確認短曲(勝利/事件)是否 loop_count=1(播一次)。",
+   "verdict": "benign",
+   "note": "待辦項，明確保留用語"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 440,
+   "excerpt_sha1": "c695c650f4f1656e0e8d3506bd0e8987ceffa3a4",
+   "excerpt": "| 畫面（由畫面自身內容確認） | 實測 track | 與本文件既有記載的關係 |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 443,
+   "excerpt_sha1": "358f5a69c69b15ef544a82ed533940aa0077e5f7",
+   "excerpt": "| ch02 城鎮 hub | **10** | ✅ **證實**「10 = 城鎮／劇情」這個推定 |",
+   "verdict": "benign",
+   "note": "表格row，實測track確認結果，屬同節較大實測表格的一部分"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 461,
+   "excerpt_sha1": "ae75163ca08e707fffcc6d1ce03a769cbecd3eda",
+   "excerpt": "追查後確認：**載入 delta 不是常數，同一次執行內就會變**——",
+   "verdict": "benign",
+   "note": "技術發現延續句(delta非常數)"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 467,
+   "excerpt_sha1": "76ad2f8fa376d2fdfbc2dd1412d3c3023d65bbaf",
+   "excerpt": "因為標題正是 delta 被校準出來的那個狀態，**那是一個只能確認自己的退化控制組**。",
+   "verdict": "benign",
+   "note": "延續句，描述退化控制組發現(與feedback_degenerate_verification_sample同類)"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 473,
+   "excerpt_sha1": "0fed6e821571106a9e70b8eabf0d041e84c9fa53",
+   "excerpt": "曾讓六個場景整批在 900 秒逾時。改成**用變數自己的位元組指紋驗證候選 delta**",
+   "verdict": "benign",
+   "note": "方法論修正延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 477,
+   "excerpt_sha1": "700efb2e062398b76b5b07d394068b7aeb494c00",
+   "excerpt": "### 反驗證：快速路徑 vs 完整掃描（2026-09-03，補完）",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 479,
+   "excerpt_sha1": "2509a607ecc658adc12df2f8b71336f93c56705f",
+   "excerpt": "快速路徑是靠**變數自己的位元組型態**去驗證候選 delta，所以理論上可能落在",
+   "verdict": "benign",
+   "note": "方法論說明延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 492,
+   "excerpt_sha1": "9cc702c2e63451f93845287755d8d6aa90bbc931",
+   "excerpt": "### 全 23 個城鎮章節實測：**一律 track 10**（2026-09-03）",
+   "verdict": "benign",
+   "note": "章節標題，「實測」，證據在節內文"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 506,
+   "excerpt_sha1": "54d62f882b826b2f0dff1779bf4eec1f97531e7d",
+   "excerpt": "本文件早先「10 = 城鎮／劇情」的推定，現在是**全覆蓋實測**而非推定。",
+   "verdict": "benign",
+   "note": "自我修正:從推定升級為全覆蓋實測"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 513,
+   "excerpt_sha1": "1783ba9220dac8aef980751c7965ca99d1f6f0c8",
+   "excerpt": "上一輪(2026-09-03)六個畫面實測時,「戰鬥曲/勝利曲」因為卡在「進不到戰鬥」而留空。",
+   "verdict": "benign",
+   "note": "描述前次實測遇到的限制"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 516,
+   "excerpt_sha1": "5371debd63704cb911430255b80aa9e6fe8ef428",
+   "excerpt": "| 畫面(由活體狀態確認,非畫面比對) | 實測 track |",
+   "verdict": "benign",
+   "note": "表格標題，「活體狀態確認」描述live記憶體讀取方法"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 546,
+   "excerpt_sha1": "fe407994eb9dd9cbe547aae58f6a33d436e53022",
+   "excerpt": "| 推進約 13 次確認後 | **10** | 與上表「10 = 城鎮/劇情」一致 |",
+   "verdict": "benign",
+   "note": "表格row，與已建立結論一致"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 564,
+   "excerpt_sha1": "a885cb5b35eb4400cc83ea0410c239c0fb952f0f",
+   "excerpt": "使用者問「勝利曲的部分是 remake 版本驗證結果嗎?」——**不是**。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是」remake驗證結果，正確澄清證據歸屬"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 569,
+   "excerpt_sha1": "fc6bbf040485637e81cb472392a8b5085c53a53b",
+   "excerpt": "**所以「存在一首勝利曲」是一個繼承下來、從未被任一側驗證過的前提**,",
+   "verdict": "benign",
+   "note": "明確否定式聲明「從未被任一側驗證過」，誠實揭露未驗證假設"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 591,
+   "excerpt_sha1": "f991d592ecb38f779eb90e1b37a01792ff63ecb9",
+   "excerpt": "1. **沒有任何常數呼叫點推 track 19**,而 ch01 戰鬥曲實測就是 19 →",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有任何常數呼叫點」"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 665,
+   "excerpt_sha1": "2c391855496792a70ab5940a56cb6b3dda085ba7",
+   "excerpt": "本輪查明該前提來自 `91-worklist.md` 的**使用者聽辨任務**,從未被任一側驗證。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「從未被任一側驗證」，交叉參照91-worklist.md"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 666,
+   "excerpt_sha1": "51da8129ab553df240646e91930f746f9a94fbb6",
+   "excerpt": "現在應改記為:**該曲不存在**(靜態四證 + 實測一證)。",
+   "verdict": "benign",
+   "note": "結論摘要，具體「靜態四證+實測一證」細節在鄰近段落"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 678,
+   "excerpt_sha1": "273bad2e91ac2b6f48f1b0dbeeb43c737c4745c6",
+   "excerpt": "只把敵方 HP 寫成 1;獲勝路徑改用記憶體寫入死亡簽章(逐筆回讀確認 5/5)+ 指令環 END,",
+   "verdict": "benign",
+   "note": "描述活體記憶體寫入方法論(死亡簽章逐筆回讀確認)"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 709,
+   "excerpt_sha1": "90b181b66b55488d3a83554af3c4e8f8cfda23d0",
+   "excerpt": "**實測(ctl3,ch01 戰後對白 → ch02)**:",
+   "verdict": "benign",
+   "note": "小標，DOSBox-X實例命名(ctl3)+「實測」，證據在節內文"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 730,
+   "excerpt_sha1": "e518f35e13a95806a2f51f70ae222aeff4f6e5c9",
+   "excerpt": "⚠ 一個差點犯的錯:第一次嘗試 12 次確認都沒命中,我的第一個假設是「delta 寫死了、",
+   "verdict": "benign",
+   "note": "誠實記錄差點犯的錯誤，過程說明"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 744,
+   "excerpt_sha1": "a77c0de470fe52e9df0f227fb97e3cade4805e7c",
+   "excerpt": "* 之後驅動結束回合(取消 ×4 → 上 → 確認 → 下 → 確認 ×2 → 確認 ×6),",
+   "verdict": "benign",
+   "note": "描述活體按鍵驅動序列，延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 747,
+   "excerpt_sha1": "df9203cb5d953126dd1a2e455892e19c7ff07368",
+   "excerpt": "**結果**:整個過程 `play_bgm` **只命中一次**,在第 9 步的確認鍵上:",
+   "verdict": "benign",
+   "note": "活體測試結果延續句"
+  },
+  {
+   "file": "12-music-playback-and-scene.md",
+   "line": 770,
+   "excerpt_sha1": "ea6dfa755f2e81635a2dbd7b3abf8cd889bec27d",
+   "excerpt": "(該前提的來源見續三:它從來不是 remake 結論,也從未被任何一側驗證過。)",
+   "verdict": "benign",
+   "note": "明確否定式聲明，交叉參照本文件續三"
   }
  ]
 }
