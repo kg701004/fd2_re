@@ -32976,6 +32976,38 @@
    "excerpt": "的驗證或反駁**,該問題仍然開放,維持 worklist 原本「需要大量前置工程」的判定不變。",
    "verdict": "benign",
    "note": "同上，段落結尾誠實範圍句"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1182,
+   "excerpt_sha1": "b6e4c6215a88abd76752ba3cccd73ee51393da01",
+   "excerpt": "| **新工具`fd2_dialogue_walker.py`** | 螢幕變化偵測式劇情推進工具，自帶`--selftest`；selftest本身抓到一個真實的截圖管線間歇雜訊bug並修好(debounce) | 工具自我驗證 |",
+   "verdict": "benign",
+   "note": "2026-09-06段落，原版實機驗證表格行"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1185,
+   "excerpt_sha1": "102e1f3c8f126dcb40b7da429b33628222ca1fa4",
+   "excerpt": "| **worklist正確維持D(避免誤關)** | L1017-1020(FIGANI/portrait未驗證，不能套用862-867的closure)、L541(ID23落點legality是真RE缺口非wiring缺口)、L584(範圍比604/622更廣) | 靜態核對 |",
+   "verdict": "benign",
+   "note": "同上，表格續行"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1193,
+   "excerpt_sha1": "b9671c71f9a50f1bd5e9394da180d93a4fe3b11f",
+   "excerpt": "DOS-exit發生」並立刻`teardown`——**從未在teardown前先讀tmux pane內容確認真正發生了什麼**。",
+   "verdict": "benign",
+   "note": "C.16方法論修正段落敘述"
+  },
+  {
+   "file": "SESSION-HANDOFF-2026-09-04.md",
+   "line": 1221,
+   "excerpt_sha1": "502eaa89e5ea24b1103caf22f9008b8315a0cee2",
+   "excerpt": "4. **C.16**：需要重新開始，第一步應該是先確認「乾淨的」重現方法(避開XIO/xdotool假警報",
+   "verdict": "benign",
+   "note": "對下一輪建議段落"
   }
  ]
 }

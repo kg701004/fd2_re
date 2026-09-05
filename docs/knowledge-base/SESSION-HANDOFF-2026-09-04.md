@@ -1166,3 +1166,61 @@ roster slot**,不是角色 id;`box_index` 是該 FDTXT 內第幾個非空對話�
 `REMAKE_SIDE_DOCS` 裡約 2300 筆 NO_MARKER(先前已定調優先度低,這次沒有
 明確被排除在 goal 文字之外,但也沒有動——下一輪若要繼續,建議先跟使用者
 確認這批是否也算在「全部審閱完成」範圍內)。
+
+## 2026-09-06：class-change 機制關閉、FDTXT_001 首批 speaker、新工具、C.16 方法論修正、worklist 18 項 D→A
+
+commit 範圍 `c49d3f85..1363806a`（19 個 commit），全部已推送至 `fork remaster-local`。
+
+### 完成
+
+| 項目 | 結果 | 等級 |
+|---|---|---|
+| **轉職(class-change)觸發機制** | 教會第4個icon＝轉職選單("誰要轉職呢？")，前一輪誤判為武器店；`FUN_00029daa`/`0002aa00`/`0002ae0e`/`0002ac7d`（新版EXE位址，用`xref_to`/`call_scan`重新定位，非位址平移假設）全鏈路反組譯+活體確認 | 原版實機+靜態RE |
+| **轉職RNG決定性** | 兩次完全獨立reboot、逐鍵重播相同輸入序列，roll結果bit-for-bit相同；插入一次真實商店交易後3/5項數值改變——證實既有decorrelation假說可行 | 原版實機（3次獨立trial） |
+| **`class_change_targets.json`交叉驗證** | portrait5→37(聖騎士)、portrait12→44(武聖)兩筆default_target與活體觀察逐字吻合 | 原版實機 |
+| **FDTXT_001 speaker** | 5/7解出(idx9/10/11＝DATO 0x60泛用盜賊)，2筆(idx15/16援軍台詞)因兩次嘗試都在抵達turn4前遇到環境問題而未解，已記錄靜態預測(doc25§7.5：DATO應為0x4c非0x61) | 原版實機(5筆)+靜態預測(2筆) |
+| **新工具`fd2_dialogue_walker.py`** | 螢幕變化偵測式劇情推進工具，自帶`--selftest`；selftest本身抓到一個真實的截圖管線間歇雜訊bug並修好(debounce) | 工具自我驗證 |
+| **`decode_text.py`兩處file handle洩漏** | 修復，90個tools測試全綠、無ResourceWarning | 靜態+測試 |
+| **worklist 18項D→A** | L246/557/572/862-867/899(7項)/532/533/534/536/538/539/540 | 靜態交叉核對既有doc verdict |
+| **worklist正確維持D(避免誤關)** | L1017-1020(FIGANI/portrait未驗證，不能套用862-867的closure)、L541(ID23落點legality是真RE缺口非wiring缺口)、L584(範圍比604/622更廣) | 靜態核對 |
+
+worklist第七輪到第十一輪複核統計：A從33→49、D從52→39（本輪淨變化+16A/-15D）。
+
+### C.16 DOS-exit 調查——重大方法論修正，非新機制發現
+
+**本輪最重要的產出，不是新的C.16線索，而是發現先前(含本輪早段)對C.16的判定方法本身有漏洞**：
+過去每次看到`fd2_dosbox_live_helper.py status`顯示`LAUNCHER no`+黑畫面截圖，就直接判定「C.16
+DOS-exit發生」並立刻`teardown`——**從未在teardown前先讀tmux pane內容確認真正發生了什麼**。
+
+本輪某次「crash」在teardown前先做了`tmux capture-pane`，讀到真相是`XIO: fatal IO error ...
+on X server "127.0.0.1:199"`——這是`13-battle-menu-system.md`2026-09-05已經記載過的、與C.16
+完全無關的Xvfb display碰撞bug，不是DOS層級的`INT 21h AH=4Ch`退出，BPINT斷點原理上不可能
+攔到這個。**這代表本輪稍早記錄的幾次「新C.16線索」(zero-attack仍崩潰、疑似聚焦在turn4附近)
+都無法排除其實是這個環境bug，不能當作C.16的新證據，已在memory裡明確標註retracted，不再
+沿用**。修正方法論後(teardown前一律先capture-pane)，同一輪內立刻抓到兩次原本會被誤判成
+「崩潰」的假警報(一次是`(Running)`狀態下的暫時性讀取失敗、一次是xdotool window-search
+漏抓)，證實新方法論確實在防止證據污染。
+
+**C.16機制本身：回到真正未知，不是被推翻或被縮小範圍，是被誠實重置**。下一輪要重新開始
+累積乾淨的證據，不能沿用本輪(或更早)任何「zero-attack仍會崩潰」「聚焦在turn4附近」這類
+結論——那些結論的證據鏈已被污染，需要重新驗證。
+
+### 對下一輪的建議
+
+1. **speaker resolution**：剩餘~195筆散布在24個FDTXT檔案，本輪逐一檢查發現全部都是敵方
+   死亡/敗北台詞(需要真的在戰鬥裡殺死特定單位才會觸發)，沒有「免費」的純過場對話可解——
+   FDTXT_001的2筆援軍台詞是其中最接近解開的一個，doc25§7.5已給出falsifiable predict
+   (DAT_00053ecc應為0x4c)，下次live嘗試若能乾淨地(teardown前先capture-pane)推進到turn4，
+   應該優先處理這個。
+2. **item 791**(D8戰前MAP/TURN資訊畫面)：11個函式已排除(0x1a30b全部呼叫樹+outer loop
+   win/lose分支)，被動反組譯這個方法論本身在這個item上已達報酬遞減——下一輪建議改用
+   live memory-write主動破壞測試(把懷疑的函式patch成立即return，觀察畫面是否消失)，
+   或者承認這是需要專門開一輪、有充裕預算的深度item。
+3. **item 541**(ID23落點legality)：真正的RE缺口，已精確定位到`0x2218A`/`0x22253`——
+   下一輪可以直接針對這兩個位址窮舉legality判定邏輯。
+4. **C.16**：需要重新開始，第一步應該是先確認「乾淨的」重現方法(避開XIO/xdotool假警報
+   干擾)，再談任何攻擊/回合相關性假說。
+
+詳見對應的memory檔案：`project_fd2_re_classchange_savefile_shortcut`（已RESOLVED）、
+`project_fd2_re_speaker_resolution_start`、`project_fd2_re_dos_exit_p_lt_01`
+（CAUTION，多筆線索已retracted）、`reference_fd2_dialogue_walker_tool`。
