@@ -137,7 +137,7 @@ A=32、D=53。
 678 - B - 明文「容器nosound無法驗;使用者聽辨」。
 768 - C - ch02-33全章story節點接script(gen_campaign修+重生成)屬campaign製作工作，非分析。
 769 - C - runtime fallback heuristic wiring屬實作工作，項目自述ch02/03 handler beats仍待接線。
-791 - D - 緊接的`[x]`項重申MAP/TURN/ENEMY/FRIEND/NPC資源與YES/NO input仍未證實，確實仍開放，可續靜態Capstone/IDA。
+791 - D - 緊接的`[x]`項重申MAP/TURN/ENEMY/FRIEND/NPC資源與YES/NO input仍未證實，確實仍開放，可續靜態Capstone/IDA。**2026-09-06嘗試，無進展，誠實記錄**：decompile了`0x1f1cc`/`0x1f30a`(D8滑入動畫本體，只有sprite/RLE blit呼叫，沒有任何文字渲染呼叫)跟原本猜測「後續dispatch」的`0x1a813`/`0x1a866`——後兩者實際上是**每回合狀態異常(中毒等)tick處理**，不是D8畫面的一部分，方向錯了。4個函式都排除掉了，但沒找到MAP/TURN/ENEMY/FRIEND/NPC欄位真正的文字渲染呼叫點在哪，維持D，下一輪需要換個切入點(可能是`0x1a30b`的直接caller`0x135c5/0x17154/0x17272`本體，而不是它們呼叫的子函式)。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
