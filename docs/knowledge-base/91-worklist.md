@@ -170,7 +170,7 @@ opcode)，不是資料表**——doc32這個具體claim在目前這份EXE build�
 本專案「先查現有證據再動手，但不能盲信」的一次具體示範：查到claim卻沒有照單全收，用獨立
 驗證擋下一次可能的過度宣稱。下一輪若要真的關閉541，需要重新在`FD2Analysis3`上獨立定位
 legality判定的真正位址，不能沿用doc32§4.1這行文字。
-548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
+548 - A（2026-09-06由D複核關閉，同538/539性質，RE面已閉合，剩remake wiring）- doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。**2026-09-06複核**：doc56原文「ID25`0x22C04`以record25扣MP...直接保留raw clear writer」「ID26`0x22CBF`與ID27`0x22E41`分別將command ID和flag offset`+0x25/+0x26`傳給與ID22同一`0x22CDA→0x22D1B` application helper，同樣受zero flag、class、`rand()%100<50` gate，成功固定扣10 HP並寫2..5 duration」——機制、公式、gate條件全數釘死，`State.ExecuteNativeCommand25`已接non-UI engine slice。剩「UI/status labels」是remake端呈現層，跟538/539同一份evidence、同一個關閉門檻，改標A。
 555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
 557 - A（2026-09-06由D複核關閉，doc27§6「worklist L555/L557/L572完成度」段落本身已明確結論，L557行標籤未同步）- AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。**2026-09-06複核**：doc27§6自己的完成度段落明確給出兩個verdict——命中率「本輪以code-level反編譯二次核實，確認與物理HIT−EV完全獨立，可視為結論穩定」；AoE「2026-08-20續輪(§6.4)已用位址級反組譯完整追出上游生成器⋯鏈路完整，已關閉」。本行「完全未解」的舊文字與這兩個既有verdict直接矛盾，是標籤未同步，不是真的還沒解。剩餘缺口(逐ID數值核對、`FUN_0004e4be`/`FUN_0004e8a5`資料表細節、remake施法UI整合)不影響RE機制結論，比照本專案既有慣例(RE理解已閉合、remake接線另計)改標A。
 564 - E - doc56 L1354明文sell/equip/transfer仍需own same-state DOSBox traces。
