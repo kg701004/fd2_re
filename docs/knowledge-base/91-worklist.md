@@ -28,6 +28,8 @@
 
 > **2026-09-06複核**：item 1118同樣是「文件本身早已標註已解，D標籤未同步」的案例(doc32 L346-351/L888「懸念已釐清」)，改標為A。item 1139的舉例從已解的ch16更新成仍blocked的ch17/22/23/24/29，維持D不變，只是描述更新。**item 245這輪做了真正的新靜態驗證**(不是單純同步標籤)：直接讀pristine`FD2.EXE`核對`spell.json`全部36筆法術的hit欄位跟原始byte，0筆不符，L245四項剩餘清單至此全部收口，改標A。**再次複核後統計**：A=26、D=59。
 
+> **2026-09-06第三輪複核**：對剩餘48項D類做了一次全面分類掃描，找到2項同樣的「文件本身已結論關閉，D標籤未同步」案例——145(91-worklist.md本體「敵人/NPC戰場AI」項「回應L145尾巴」段落已明確結論「兩個尾巴缺口不再是開放問題」)、1038(同文件「自動結束回合」項已結論「靜態RE前提已閉合」，剩下的是remake工程接線非RE缺口)。其餘46項掃描結果：35項確認仍是真正需要新反組譯/live驗證的開放工作(210/446/447/510/532-541/548/555/557/572/584/604/622/791/848/852/862-867/874/899/966/1017-1020/1065/1117/1138/1314)，11項D-index文字本身過於籠統、沒有具體位址/文件可查證(246/248/304/370/407/575/857)。**第三輪複核後統計**：A=28、D=57。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -36,7 +38,7 @@
 53 - E - UI-VIS-DIFF-HARNESS本質即輸出DOSBox與remake pixel diff，需live擷取。**已解(2026-08-26)**：`tools/dosbox_diff_harness.sh`+`.py`把整條live擷取／diff流程做成可重複呼叫的CLI並全自動重放通過，詳見該checkbox行與doc98。
 54 - F - ENGINE-REPOSITORY-EXTRACTION-GATE明文待核心垂直路徑穩定＋授權/貢獻規範等前置決策才啟動。
 69 - C - 文件維護政策宣告（專題文件不合併），非可關閉的分析任務。
-145 - D - doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。
+145 - A（2026-09-06由D複核關閉，見91-worklist.md本體「敵人/NPC戰場AI」項2026-08-20續輪段落）- doc11已閉合部分(0x14237/0x15AD8→0x15B77)，候選格順序/turn-camp/runtime execution仍待靜態RE。**2026-09-06複核**：本文件自己的checkbox段落(「回應L145尾巴」，2026-08-20續輪)已明確結論「L145兩個尾巴缺口不再是開放問題」——`0x14818`完整480-byte函式本體反組譯確認無額外LOS判定子函式；`0x1728C`子選單機制層已閉合(4旗標結構、對應存檔metadata、確認鍵動作皆已查證)，僅剩「這些旗標控制什麼玩法行為」語意層誠實維持fail-closed，不影響本項RE缺口本身已閉合的判定。
 155 - E - RE-BATTLE-AI-SPECIAL-TOPIC自述下一步需固定存檔trace驗證實際選中command/畫面順序，需DOSBox。
 210 - D - REMAKE-AI-MODE-RUNTIME剩餘模式玩法名稱/event82觸發/回合orchestration可續靜態RE。
 212 - A（2026-09-05由D複核關閉，見行內既有「checkbox可視為此項本身已閉合」）- REMAKE-GLOBAL-EVENT-DISPATCH的58..89 handler高階語意仍待逐一靜態反組譯。**大幅推進(2026-08-24,doc25§11)**:32個handler全部取得明確狀態(22個具體行為描述、10個確認table artifact)，但event58/76/78三個既有「[驗]乾淨」結論被新發現的指令邊界疑慮動搖、尚未re-verify，checkbox維持`[~]`。——**re-verify完成(2026-08-24續輪,doc25§11.7)**:找到第二條獨立管道(直接讀`0x51b91`跳表原始bytes，用4個既驗錨點(event0/59/77/82)校準出一致的relocation偏移量`0x356`)，逐byte確認event58/76/78三個table槽位的原始值**precisely等於**既有登記位址(`0x354fe`/`0x35d60`/`0x35ed2`)，排除誤讀；再交叉指令邊界回溯(58新補、76/78重驗)確認三者皆落在鄰居handler(58→event57`0x354dd`、76/78→§11.5已找到的`0x35d5d`/`0x35ec1`)中段，無獨立語意。**三者definitively確認為table artifact**，58..89最終統計更正為18個具體行為描述/14個table artifact。副作用：doc25§6.3「event58:map25五選一寶物」的入口位址`0x354FE`與「透過event_id58觸發」歸因已撤回(邏輯描述本身不受影響)，該寶物邏輯真正的runtime觸發路徑變成新的未解問題，見doc25§11.7.5。**checkbox可視為此項本身已閉合**；剩餘的「各dispatcher selector生產路徑」與新開的「map25 event58真正觸發路徑」屬另外的開放項，不影響本項58..89 handler語意的收斂結論。
@@ -147,7 +149,7 @@
 1018 - D - 同1017之montage解碼blocker。**本行已過期，同上。**
 1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上。**
 1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上。**
-1038 - D - native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。
+1038 - A（2026-09-06由D複核關閉，見91-worklist.md本體「自動結束回合」項2026-08-20段落）- native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。**2026-09-06複核**：本文件自己的checkbox段落已結論「靜態RE前提已閉合(doc11)」——三個入口(`0x13565`自動判定、`0x16F55`selector1/selector3)與`0x1A30B`本體完整回答caller/team predicate/AI completion timing三個子問題，本項D-index點名的RE缺口已閉合。checkbox本身維持`[ ]`是因為剩下的是remake端工程接線(非新RE缺口)，以及`0x1728C`selector2子選單的獨立語意缺口(已由項目145追蹤，不重複列在這裡)。
 1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。
 1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。
 1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。
@@ -180,6 +182,8 @@
 2026-09-05複核，從D改標A的6項（依據見各行內文，均為稽核後既有「已解」註記，非新RE）：212、366、368、389、660、1354。
 
 2026-09-06複核，再從D改標A的2項：1118（稽核後既有「已解」註記同步標籤）、245（這輪新完成的靜態驗證，見doc27§5「2026-09-06補完」段落）。
+
+2026-09-06第三輪複核，全面掃描剩餘48項後再從D改標A的2項（均為文件本身已結論關閉、D標籤未同步的案例）：145、1038。
 
 > **⚠ 位址勘誤總註記(2026-08-19/20，兩個獨立批次交叉印證)**：`0x2a6bd`與`0x276ec`這兩個在`13-battle-menu-system.md`／
 > `37-spell-effect-figani.md`／`56-fd2-remake-sdd.md`／本檔多處被引用為「native command 大型 presentation/state
