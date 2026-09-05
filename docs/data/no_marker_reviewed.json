@@ -14056,6 +14056,62 @@
    "excerpt": "乾淨過關——只是沿用 Go 官方文件記載的已知模式,沒有實測。",
    "verdict": "benign",
    "note": "明確否定式聲明「沒有實測」，誠實揭露remake打包未測試項目"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 46,
+   "excerpt_sha1": "bf22e53b8d5723efa882c85b43febd1f07275638",
+   "excerpt": "| native IDs32–35 compound | SDD56 UI-03 | ❌ | static helper order 已知，但 MP transaction、rollback、UI/SFX 未閉合；禁止以 legacy combo 實作宣稱完成 | 高 |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「禁止以legacy combo實作宣稱完成」"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 78,
+   "excerpt_sha1": "4a577fdf6e15b1f87f26abcd3e71aa315c655b1d",
+   "excerpt": "**2026-08-14 已接線+live 驗證**:`ScoreNativeAI14237` 已 fail-closed 並聯進真正驅動",
+   "verdict": "benign",
+   "note": "描述remake接線+live驗證延續句，引用remake函式名"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 99,
+   "excerpt_sha1": "1b160f93a3694d0c0a3212cafef3b91bb6755f1b",
+   "excerpt": "既有 `NextAIPlan`/`AttackWithRNG` 接線覆蓋(未 100% 端到端證實)。**2026-08-15 道具執行鏈",
+   "verdict": "benign",
+   "note": "延續句，明確保留用語「未100%端到端證實」"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 101,
+   "excerpt_sha1": "6d7eab780aa0caf53b35e774fca23dd7d1117ece",
+   "excerpt": "讀 overlay 區),確認後半段幾乎全是朝向計算/screen blit/timer delay 等演出邏輯,已逐一排除",
+   "verdict": "benign",
+   "note": "反組譯發現延續句"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 114,
+   "excerpt_sha1": "4f3d30f6977b455611bc34026d84e33463a43547",
+   "excerpt": "一個頂層 dispatcher。3 個機制證實語意未定(0x11,0x12,0x13)、1 個結構不同未追(0x17)",
+   "verdict": "benign",
+   "note": "延續句，十六進位值(0x11-0x17)低於門檻，明確保留用語「語意未定」「未追」"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 133,
+   "excerpt_sha1": "fa4c20642e19a97c7248a9db35f5bec2843bab07",
+   "excerpt": "| 商店賣出(原價 75 折) | doc02 §4.6、native shop callee audit | 🟡 | `campInput` shop sell mode、`campaign.SellSlot`、price×3/4 與 inventory/equipment recompute 已實作；這只證明 normalized transaction，原版 service callee、i",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「這只證明normalized transaction,原版...未證實/未閉合」"
+  },
+  {
+   "file": "42-re-vs-remake-gap-audit.md",
+   "line": 144,
+   "excerpt_sha1": "11e85c22aa2f2c64681a9f2b10199a6971610878",
+   "excerpt": "是執行消費端。兩者不能共用未證實的 ranking 或槽／command 身分。",
+   "verdict": "benign",
+   "note": "明確保留用語「不能共用未證實的」"
   }
  ]
 }
