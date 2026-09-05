@@ -32184,6 +32184,38 @@
    "excerpt": "live instance 實際測試這個retry是否真的解決§14看到的選擇失敗**——下一輪若要驗證，",
    "verdict": "benign",
    "note": "同上，接續誠實邊界說明"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2504,
+   "excerpt_sha1": "d5241627e2a804e917cc1471008ea6a7e375a711",
+   "excerpt": "按§16自己列的驗證步驟做:單一乾淨instance(`rv2`,全程沒碰過其他instance)、乾淨跑到",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的instance rv2執行記錄，缺乏正規marker關鍵字但是真實原版live測試描述"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2505,
+   "excerpt_sha1": "8f78328c00fcb887889210089a77ba70fb0fafb1",
+   "excerpt": "瀏覽游標層(第11批,110次確認,截圖確認畫面正常)、`fd2_battle_autoplay.py --instance",
+   "verdict": "benign",
+   "note": "同上，接續描述驅動到戰鬥瀏覽游標層的過程"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2521,
+   "excerpt_sha1": "5190a85a6b3c3fa279751becb8700e16355843e4",
+   "excerpt": "確認畫面是`C:\\>`,遊戲真的已經退回DOS**。這是本輪(2026-09-05)第一次在單一次",
+   "verdict": "benign",
+   "note": "截圖確認真實原版EXE崩潰回到DOS的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2540,
+   "excerpt_sha1": "de94aab9139d9789328e9f964cdbace90d882e6f",
+   "excerpt": "跟既有90項unittest相容),但**不宣稱已驗證安全**——下次有人要跑大量`--attack`",
+   "verdict": "benign",
+   "note": "誠實現況小結，明確標示「不宣稱已驗證安全」，非證據宣稱"
   }
  ]
 }
