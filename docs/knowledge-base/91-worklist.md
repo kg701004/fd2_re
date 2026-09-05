@@ -130,7 +130,7 @@ item 246(裝備加成累加點+使用效果碼)其實是同一份claim在本檔�
 564 - E - doc56 L1354明文sell/equip/transfer仍需own same-state DOSBox traces。
 572 - D - doc37結論與worklist一致(spell id不選FIGANI已定論)，`0x2a6bd` command-specific presentation/SFX/命中分支仍待，可續靜態RE。**大幅推進(2026-08-24,doc27§6.5)**:真正位址`0x2cf30`(ID24/28-31)與`0x2d80d`(ID32-35四大絕招)已完整反組譯，倍率/傷害/buff/異常與SFX來源全數釘死；剩逐command命中率數值核對與remake presentation/SFX接線，checkbox維持`[~]`。
 575 - D - 歷史snapshot澄清note列出的3個缺口未查到專門解決文件，可續靜態RE（未深入查證每一子項）。
-584 - D - round10(本檔約595行)已解決「導出」半部(FDOTHER戰鬥音效池匯出)，但「逐招對照」核心未解，與604/622重複未閉合。
+584 - D - round10(本檔約595行)已解決「導出」半部(FDOTHER戰鬥音效池匯出)，但「逐招對照」核心未解，與604/622重複未閉合。**2026-09-06複核，維持D，非同一件事**：604/622這輪已改標A，但那是「index陣列填值上游」這個較窄問題(`FUN_0001d51d`透過`FUN_0001c269`寫入buffer的機制)；本行584引用的doc36「逐招對照」是較寬的任務，doc36第12輪自己的結論是**「部分關閉,非完全關閉」**——資源層級index對照已解出，但玩家可讀招式名稱、sub-index觸發時機、id12-21/25-27資源型態、id10/11/22/23表缺口這4項仍缺。604/622的改標不能自動帶動584關閉，584維持D正確，非過期標籤。
 587 - E - UI音效index 2-0xb語意畫面實測需要逐項操作介面聽測對應畫面，需live(DOSBox或使用者)驗證。
 603 - B - 使用者聽辨任務；本檔約599行僅解出FDMUS_018=商店，戰鬥曲聽辨本身仍待使用者。
 604 - A（2026-09-06由D關閉，見doc36「2026-09-06」段落找到`FUN_0001d51d`確認鍵分支透過`FUN_0001c269(unitIdx, bufPtr=目前ESP)`即時填值的完整鏈路）- 核心「index陣列填值上游、#48-64逐招對照」可續靜態RE，remake接入為次要工程部分。**2026-09-06複核，語意層級收斂為已解**：逐指令反組譯`FUN_0001d51d`確認鍵分支，找到`0x1d67b..0x1d698`的完整序列——`MOV EAX,ESP; PUSH EAX; PUSH unitIdx; CALL 0x1c269`把目前ESP當輸出緩衝區、寫進該單位已知法術/道具id清單，緊接著同一位址`[ESP+DAT_00053c57]`讀出commandId查record。這是`FUN_0001c269`通用bitfield掃描語意(doc36第11輪已證實過的同一函式)的第二個實例，`FUN_0001cff0`的`local_20`本質上是`FUN_0001d51d`借用caller已保留stack空間當scratch buffer，不是獨立具名陣列。填值鏈路語意自洽、可信度高，改標A；唯一保留邊界：兩邊stack offset的byte-exact算術吻合沒有逐一算完，不宣稱到那個精確度(不影響「填值來源找到了」這個結論)。
