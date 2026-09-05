@@ -66,14 +66,6 @@
    "first_line_seen": 893
   },
   {
-   "file": "12-music-playback-and-scene.md",
-   "kind": "remake_artifact",
-   "excerpt_sha1": "f756b4fe9b6cf7e259ccf256226c58b17dfa09c3",
-   "excerpt": "`remake/cmd/fd2/title.go` 開場 BGM 應改用 **`FDMUS_018`**(對應 boot 鏈唯一確認呼叫);",
-   "note": "對 remake title.go 的修正指示,remake 已移除,指示失效",
-   "first_line_seen": 225
-  },
-  {
    "file": "13-battle-menu-system.md",
    "kind": "remake_artifact",
    "excerpt_sha1": "3666d62ea4d4c5bbc350f363c751530ab060178f",

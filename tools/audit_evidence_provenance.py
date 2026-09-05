@@ -96,7 +96,20 @@ ORIGINAL_MARKERS = [
     (r"反組譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
-    (r"\bFDTXT\b|\bFDOTHER\b|\bFDFIELD\b|\bFDSHAP\b|\bFDMUS\b|\bDATO\b|FDICON",
+    # 2026-09-05 修正:原本的 `\bFDTXT\b` 這類寫法,`\b` 是「\w 字元 ↔ 非 \w 字元」
+    # 的邊界,而底線 `_` **本身也是 \w**——所以 `FDTXT_033` 這種本專案最常見的
+    # 具體資源檔名寫法(`FDTXT_NNN`/`FDMUS_NNN` 等),結尾的 `\b` 在 `T` 跟 `_`
+    # 之間**找不到邊界,整條規則不會命中**。實測:`re.search(r"\bFDTXT\b",
+    # "FDTXT_033")` 是 `None`。這代表全庫任何一句「只提到 FDTXT_033 之類具體
+    # 檔名、沒有另外寫出裸字 FDTXT」的主張,先前都被漏判成 NO_MARKER——方向上
+    # 只會讓 ORIGINAL 主張被低估(漏判成 NO_MARKER),不會讓 REMAKE_ONLY 或
+    # NO_MARKER 被誤判成 ORIGINAL,是安全方向的修正(跟 `ADDR_MARKER` 那種
+    # 「裸位址可能只是巧合」的風險方向相反,這裡的容器檔名是本專案自訂的具體
+    # 原版資源命名,不是巧合數字)。改成 `(?:_\d+)?` 選擇性尾綴,讓
+    # `FDTXT`/`FDTXT_033` 都能命中,但仍然不會誤吃 `FDTXTFOO` 這種真正黏在
+    # 別的詞裡的情況(見 selftest 的正反向驗證)。
+    (r"\bFDTXT(?:_\d+)?\b|\bFDOTHER(?:_\d+)?\b|\bFDFIELD(?:_\d+)?\b|"
+     r"\bFDSHAP(?:_\d+)?\b|\bFDMUS(?:_\d+)?\b|\bDATO(?:_\d+)?\b|FDICON",
      "原版資產容器"),
     (r"FD2\.EXE", "原版執行檔"),
 ]
@@ -525,6 +538,16 @@ def selftest() -> int:
     # --- 有驗證語言但無來源標記 → NO_MARKER ---
     expect("這條結論已經確認無誤,細節見上文", "NO_MARKER",
            "出處不明本身也要被看見")
+
+    # --- 2026-09-05 補:`\bFDTXT\b` 這類容器名標記漏判具體檔名的故障注入 ---
+    expect("這段對話已經確認來自 FDTXT_033 的原始位元組", "ORIGINAL",
+           "正對照:FDTXT_033 這種具體檔名(底線+數字)必須命中容器標記,"
+           "先前 \\bFDTXT\\b 版本在 T 與 _ 之間找不到邊界,整條規則會漏判")
+    expect("這段對話已經確認來自裸字 FDTXT 容器格式", "ORIGINAL",
+           "回歸:沒有底線數字尾綴的原始寫法也不能被這次修正弄壞")
+    expect("這件事已經確認跟 FDTXTFOOBAR 完全無關", "NO_MARKER",
+           "負對照:FDTXT 黏在別的詞中間(FDTXTFOOBAR)不該被新的選擇性尾綴"
+           "誤放行——尾綴只接受底線+數字,不接受任意字母")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:

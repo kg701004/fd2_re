@@ -208,6 +208,142 @@
    "excerpt": "> 相關:doc 21(架構)· 22(技術驗證)· 19/29(腳本/事件)· 26/28(事件/關卡資料)· 02/03(數值)· worklist M0–M6。",
    "verdict": "benign",
    "note": "文件結尾的相關文件索引，doc22的標題含『技術驗證』字樣，是文件名稱不是驗證聲明"
+  },
+  {
+   "file": "21-go-ebiten-remake-plan.md",
+   "line": 11,
+   "excerpt_sha1": "d715d7cdfc458cea0516387c290e3dc501a9250f",
+   "excerpt": "- **已證可行**:魔法大帝(同型策略遊戲)已用 Ebiten 做成跨桌面/Web/Android。",
+   "verdict": "benign",
+   "note": "已證可行指的是第三方遊戲（魔法大帝）用Ebiten的先例，跟FD2原版事實無關"
+  },
+  {
+   "file": "21-go-ebiten-remake-plan.md",
+   "line": 69,
+   "excerpt_sha1": "cad1b2b4660d4304e25759756241deb12a07999b",
+   "excerpt": "抽象成動作(上下左右/確認/取消/選單),三種輸入映射到同一套動作:",
+   "verdict": "benign",
+   "note": "確認是抽象動作名稱（confirm/cancel），設計詞彙不是驗證聲明"
+  },
+  {
+   "file": "21-go-ebiten-remake-plan.md",
+   "line": 71,
+   "excerpt_sha1": "3824fc4d50cb266a0f13f14e61a28d63e4062a9a",
+   "excerpt": "- 手機:**on-screen 控制**(方向鍵盤 + 確認/取消鈕)或直接點格移動;對話點擊推進。",
+   "verdict": "benign",
+   "note": "確認是UI按鈕名稱的一部分，同上"
+  },
+  {
+   "file": "21-go-ebiten-remake-plan.md",
+   "line": 77,
+   "excerpt_sha1": "0357b9690ff853f132ed284fb2062e7666fab0a5",
+   "excerpt": "先證「Go/Ebiten 跑得起來 + 讀得到我們的資料」。WASM build 確認可上網頁。",
+   "verdict": "benign",
+   "note": "MVP階段的規劃敘述（先證...確認可上網頁），是尚未執行的里程碑目標"
+  },
+  {
+   "file": "29-remake-extensible-event-system.md",
+   "line": 49,
+   "excerpt_sha1": "8612e134f9fb825b4a8783d6fc289e64e79c9bec",
+   "excerpt": "| `unit_alive(id)` / `unit_dead(id)` | remake 高階條件；原版 record `+5` bit 的意義依 caller、camp 與 lifecycle 而異，不能全域等同存活/死亡 | **remake projection；native 待逐 caller 驗證** |",
+   "verdict": "benign",
+   "note": "『待逐caller驗證』是明確未來式待辦，不是完成聲明"
+  },
+  {
+   "file": "29-remake-extensible-event-system.md",
+   "line": 153,
+   "excerpt_sha1": "4f49d277261765d2ae614d968b70789ecf0e6b02",
+   "excerpt": "screenshot hooks與未閉合handler，不能宣稱所有差異都已移到資料。",
+   "verdict": "benign",
+   "note": "『不能宣稱所有差異都已移到資料』是明確否定式聲明"
+  },
+  {
+   "file": "29-remake-extensible-event-system.md",
+   "line": 157,
+   "excerpt_sha1": "e04357057ee66fb3bcb991f94ca807c1dc738895",
+   "excerpt": "- `tools/`:原版 `battle_events.json`(doc 26)+ 關卡目標(doc 28)→ 自動生成原版 30 關 campaign(驗證 DSL 表達力)。",
+   "verdict": "benign",
+   "note": "描述工具鏈設計用途（驗證DSL表達力），是規劃敘述不是完成聲明"
+  },
+  {
+   "file": "29-remake-extensible-event-system.md",
+   "line": 226,
+   "excerpt_sha1": "8074c7224835092312cd2e8e046397b83f9e7290",
+   "excerpt": "規劃器讀取；`berserk` 也不是已證實的原版 `record+0x34` 低四位名稱。",
+   "verdict": "benign",
+   "note": "『不是已證實的原版名稱』是明確否定式聲明"
+  },
+  {
+   "file": "06-animation-format.md",
+   "line": 36,
+   "excerpt_sha1": "1d7dec414a44d61bc3165f35583e9cc3c804e08f",
+   "excerpt": "frameCount = (offsets[0] - 8) / 4   ← 自洽驗證",
+   "verdict": "benign",
+   "note": "格式自洽公式推導，真正證據在3行後的第39行（第3輪反組譯+視覺驗證），逐行掃描漏看鄰近上下文"
+  },
+  {
+   "file": "06-animation-format.md",
+   "line": 80,
+   "excerpt_sha1": "65205cf5cf54632e45e9de1f7daf4cf902803725",
+   "excerpt": "**驗證(視覺)**:`FIGANI_000` 解出 4 幀皆為「持劍騎士(藍灰盔甲 + 紅披風)」連續動作,",
+   "verdict": "benign",
+   "note": "視覺驗證解碼出的PNG幀，證據來源是tools/decode_figani.py（2行後提到），對原版FIGANI.DAT resource解碼結果的視覺確認，屬原版側但本行缺標記"
+  },
+  {
+   "file": "06-animation-format.md",
+   "line": 88,
+   "excerpt_sha1": "a7eb5b8afcf5fa0963daaa853f1d74d2d7c19b76",
+   "excerpt": "1. 純資料靜態猜測(~8 種 RLE 假設)全失敗 → 確認「byte 消耗對齊 ≠ 解碼正確」需視覺驗證。",
+   "verdict": "benign",
+   "note": "破解歷程敘述一般方法論教訓，具體反組譯證據在下一行（capstone/docker）"
+  },
+  {
+   "file": "06-animation-format.md",
+   "line": 110,
+   "excerpt_sha1": "93c6be4d3551eb13d4986a88760ca0783ab26595",
+   "excerpt": "- 索爾的已驗證 battle value 0→FIGANI0、亞雷斯4→12、**盜賊96→FIGANI288**(實測 FIGANI_288/289=盜賊,對上 orig_05 守方)。",
+   "verdict": "benign",
+   "note": "已驗證/實測的具體例子是套用上一行(107)已有完整hex位址反組譯佐證的公式(FIGANI index=unit[+7]×3)，非獨立新主張"
+  },
+  {
+   "file": "06-animation-format.md",
+   "line": 117,
+   "excerpt_sha1": "973b9ff7e94c2d5a799801d3df27049b24045c2b",
+   "excerpt": "## 全螢幕戰鬥演出 → 已驗證邊界見 [doc 35](35-battle-animation-rendering.md)",
+   "verdict": "benign",
+   "note": "章節標題，引用另一份文件（doc35），不是驗證聲明本身"
+  },
+  {
+   "file": "45-class-name-mapping.md",
+   "line": 8,
+   "excerpt_sha1": "5a4fc8f26eda200760a828c72748b9a0d7678cfe",
+   "excerpt": "> 起因:實測回報「原版海盜 → remake 顯示劍士、原版士兵 → remake 顯示聖騎士」。與另一線(ch1-verify,",
+   "verdict": "benign",
+   "note": "『實測』觸發字在此行，但實際證據（反組譯/青衫攻略）在下一行(9)——markdown原始檔把同一句話拆成多個實體行，逐行掃描碰到的另一種形狀"
+  },
+  {
+   "file": "45-class-name-mapping.md",
+   "line": 10,
+   "excerpt_sha1": "2987cc5e852c6b557a0d48bb95e937f1387b5e7d",
+   "excerpt": "> 供之後補其他章節怪物 portrait 對照時參照。方法遵守 `rulebook/62`(靜態溯源、描述前先驗證)。",
+   "verdict": "benign",
+   "note": "『描述前先驗證』是引用rulebook/62方法論規則，不是具體驗證聲明"
+  },
+  {
+   "file": "45-class-name-mapping.md",
+   "line": 31,
+   "excerpt_sha1": "cd76bcbeccc759a3a7c81c4caf5e0924cb7ca5d7",
+   "excerpt": "### 2. map0 實測:四個不同角色共用 `(race,cls)=(1,1)`",
+   "verdict": "benign",
+   "note": "章節標題（map0實測），描述小節內容不是驗證聲明本身"
+  },
+  {
+   "file": "45-class-name-mapping.md",
+   "line": 48,
+   "excerpt_sha1": "330abb2331b77a1272d1f1d1d5b23d865cf813cd",
+   "excerpt": "`CLASS_NAMES[cls=1]=\"劍士\"` 填的(這張表驗證用途本來是給**玩家轉職**,26 筆對 modify2.md §7",
+   "verdict": "benign",
+   "note": "跟modify2.md參考表26筆數值逐一吻合的內部一致性檢查"
   }
  ]
 }
