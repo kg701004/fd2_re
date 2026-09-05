@@ -143,8 +143,8 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 430 - C - 多分支劇情線/多結局屬功能實作工作。
 431 - C - 中文編碼回寫工具屬工具開發工作。
 437 - E - 剩餘核心「未修改一般玩家有效槽E2」，需DOSBox驗證CONTINUE/delete-overwrite語意。
-446 - D - 剩餘「補zero-HP初始record／所有LOADCH分支」屬靜態RE延續工作。
-447 - D - 剩餘「完成LOADCH raw record materialization」屬靜態資料抽取延續工作。
+446 - D - 剩餘「補zero-HP初始record／所有LOADCH分支」屬靜態RE延續工作。**2026-09-06複核**：對應本檔案1779行「handler raw-byte5 runtime bridge」，該行明確指出剩餘工作是讓`cmd/fd2`的`any_unit_inactive`在strict binding缺raw時fail-closed——這是remake Go程式碼(`cmd/fd2`)本身的邏輯，不是RE缺口；靜態RE的那一半(JOIN default/growth公式、identity/race/class資料)已由`native_join_constructor.json`+`tools/sync_native_join_constructor.py`完整解出且獨立於remake存在(檔案仍在，未隨2026-09-02 remake移除而消失)。比照本檔案898行「`ComposeNativeTransitionFrame`屬remake/程式碼，已移除，核對對象已不存在，目前無法覆核」的既有處理方式，本行「可續靜態RE」的框架已經不準確——**不是還能做更多RE去關閉它，是關閉它需要的remake consumer已經不存在**。標籤維持D，但阻塞原因改記為「remake consumer已移除，非RE缺口」。
+447 - D - 剩餘「完成LOADCH raw record materialization」屬靜態資料抽取延續工作。**2026-09-06複核，同446**：對應本檔案1780行「persistent raw-byte5 bridge」，剩餘工作是`syncPartyFromBattle`/`applyPersistentStats`(remake Go函式)移除E1 projection fallback——同樣是remake consumer端的工作，RE面(raw byte5/6語意、資料來源)已經解出。比照898的既有先例，維持D，阻塞原因改記為「remake consumer已移除，非RE缺口」，不再框架成「靜態資料抽取延續工作」誤導未來輪次以為還有新資料要挖。
 458 - E - 自述剩餘門檻是同roster/event/tick的未修改DOSBox一般玩家比較，須live DOSBox。
 463 - F - 完整逐欄佈局已由項目自身標記為[阻]設計面擱置(remake用自有struct，不需)。
 510 - D - 「0x1cff0 command table」部分已由524-531等[x]項與doc56閉合，但「完整native演出」子句仍未解，整項未達完整A門檻，保守留D。
