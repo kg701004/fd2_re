@@ -37,6 +37,12 @@
 
 > **2026-09-06第五輪**：item 1138(UI-03 end-turn entry)發現答案其實已經在doc11「0x16F55」節裡(2026-08-20,回應L145/L1038時順帶完整反組譯了END選單的呼叫鏈)，只是沒有交叉引用回L1138，本行因此誤以為還沒解——見doc57「2026-09-06補完」段落。改標A。**第五輪複核後統計**：A=31、D=54。
 
+> **2026-09-06第六輪**：item 852(indexed double-buffer visual adapter)真正做了新反組譯——
+逐指令追出`0x24b4d(N)`的完整迴圈邏輯(兩個相隔456 bytes的緩衝區依奇偶交替blit到VGA固定
+位置，每次間隔20 tick，共N次)，見doc31「2026-09-06補完」段落。RE這一半完全收斂，remake端
+Ebiten實作是另一回事(且已因remake移除無法查證)，不影響RE結論。改標A。**第六輪複核後統計**：
+A=32、D=53。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -137,7 +143,7 @@
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
 849 - D - 核對`campaign_full.json`，`story_ch23`節點無`handler_binding`，「不能僅因renderer存在就接story_ch23」現況仍真，可續靜態Docker Capstone。**2026-09-05複核**：`remake/`(含`campaign_full.json`)已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 851 - D - doc58續十六(約L3072-3089,2026-08-18)證實`0x24d22`/`0x11d40`實屬ch24 handler非ch23，項目位址前提有誤，但`postbattle_ch23_persist`在`campaign_full.json`仍是無`handler_binding`的空placeholder，實質缺口仍開放。**2026-09-05複核**：`remake/`(含`campaign_full.json`)已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
-852 - D - 剩餘「indexed double-buffer visual adapter」屬渲染管線RE缺口，可續靜態分析。
+852 - A（2026-09-06由D關閉RE這半邊，見doc31「2026-09-06補完」段落）- 剩餘「indexed double-buffer visual adapter」屬渲染管線RE缺口，可續靜態分析。**2026-09-06複核，RE機制已完整找到**：逐指令反組譯`0x24b4d(N)`(呼叫端傳入次數N，call_scan找到15個呼叫點)——一次性背景重繪+present後，迴圈N次依迭代奇偶在兩個相隔0x1c8(456 bytes)的相鄰緩衝區之間交替blit到VGA固定位置`0xa0504`，每次alternate間隔20 tick。「兩張畫面來回閃爍N次」的效果引擎機制已完全收斂。remake端把這個邏輯接成Ebiten job driver是工程工作(且`main.go`現況已因`remake/`移除無法查證)，不影響RE結論本身，改標A。
 853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。
 854 - E - 明文「仍缺未修改一般玩家/CONTINUE的同狀態E2」，需live DOSBox。
 857 - D - 剩餘「視覺/效果calls…資料化」屬RE工作（對話/gate本身已解，cf. 約1021行）。
@@ -195,6 +201,8 @@
 2026-09-06第四輪，真正做了新反組譯後從D改標A的2項：604、622（找到`FUN_0001d51d`確認鍵分支的即時填值鏈路，見doc36「2026-09-06」段落）。
 
 2026-09-06第五輪，發現既有doc11反組譯早已回答但未交叉引用而從D改標A的1項：1138（見doc57「2026-09-06補完」段落）。
+
+2026-09-06第六輪，真正做了新反組譯後從D改標A的1項：852（找到`0x24b4d`雙緩衝交替present迴圈，見doc31「2026-09-06補完」段落）。
 
 > **⚠ 位址勘誤總註記(2026-08-19/20，兩個獨立批次交叉印證)**：`0x2a6bd`與`0x276ec`這兩個在`13-battle-menu-system.md`／
 > `37-spell-effect-figani.md`／`56-fd2-remake-sdd.md`／本檔多處被引用為「native command 大型 presentation/state

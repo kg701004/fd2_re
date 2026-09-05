@@ -307,6 +307,28 @@ routine 刻意支援「離場」與「進場/就地」兩種語意的共用機�
   `0x22046`/`0x22253`)。查證 `cmd/fd2/main.go` 的 `"transition_reveal"` case(約 1532 行)目前只建立
   `transitionRevealJob{remaining,delay,then}`——純**計時骨架**,沒有任何真實 indexed 緩衝區交替寫入;
   真正的「雙緩衝視覺內容」仍未實作。本輪未觸碰此項,如實維持 D。
+
+  **2026-09-06補完,`0x24b4d`原生邏輯已完整反組譯(remake那半邊`main.go`現況已因
+  `remake/`於2026-09-02整個移除而無法覆核,但RE這半邊完全獨立、不受影響)**:
+  `0x24b4d(N)`(`N`是呼叫端傳入的參數,決定alternate幾次,call_scan找到15個呼叫點)結構是:
+  ```c
+  FUN_00011eee([0x53a49]+0x8088, 0x1c8, 0xd, 0x9, [0x53aa9], [0x53aad]);  // 一次性背景/tile重繪
+  FUN_00011cac(0);                                                        // 一次性present(翻頁)
+  for (EBX = 0; EBX < N; EBX++) {
+      EDX = (EBX & 1) * 0x1c8;                    // 依奇偶交替0/0x1c8(456)這個offset
+      EAX = [0x53a49] + 0x8088 + EDX;             // 交替指向兩個相隔456 bytes的來源緩衝區
+      FUN_00011eb0(0xa0504, 0x140, EAX, 0x1c8, 0x138, 0xc0);  // VGA blit(既有已知的
+                                                    // 「逐列320-byte memcpy」present routine)
+      FUN_0003790a(0x14);                          // 每次alternate之間等20 tick
+  }
+  ```
+  **這就是「indexed double-buffer visual adapter」的完整原生機制**:先畫一次背景並present,
+  接著在**兩個相隔0x1c8(456) bytes的相鄰緩衝區之間,依迭代次數的奇偶交替讀取來源、blit到
+  VGA固定位置`0xa0504`,每次alternate間隔20 tick**,共跑`N`次(由呼叫端決定次數,15個呼叫點
+  分布在多個章節的pre-handler)——是一個「兩張畫面來回閃爍N次」的效果引擎,不是單純的雙緩衝
+  render pipeline。**RE這一半已經完全收斂**;剩下真正沒做的只有remake端把這個邏輯實作成
+  Ebiten job driver(工程工作,且`main.go`現況已經因remake移除而無法查證),不影響本項RE
+  結論已經找到答案。
 - **L874(`unit_present` metadata 不完整,fail-closed)**:本輪**已找出精確根因**(§9.2:舊六幀 schema
   對不上真實 11+6+10 鏈路,已被新 schema 取代但兩者在 runtime 端都被硬性擋下)並補上三個 caller 的
   視覺語意(§9.4)。但 fail-closed 本身**未解除**——沒有寫任何新的 Ebiten job driver 代碼(本輪任務
