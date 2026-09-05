@@ -2552,6 +2552,358 @@
    "excerpt": "(該前提的來源見續三:它從來不是 remake 結論,也從未被任何一側驗證過。)",
    "verdict": "benign",
    "note": "明確否定式聲明，交叉參照本文件續三"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 45,
+   "excerpt_sha1": "978a853b7b807f72831c0b4fac6c6c113f93062d",
+   "excerpt": "**呼叫端內嵌函式名確認鏈**(每個 `AIL_*` wrapper 內都有 debug-trace,push 一個字串位址再呼叫",
+   "verdict": "benign",
+   "note": "反組譯發現延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 56,
+   "excerpt_sha1": "4a22d2bf3fbb8e105e245a8c901deff089917792",
+   "excerpt": "其餘樣本 API 字串,證實 EXE 內確有完整 AIL digital-sample 呼叫鏈,而非只有驅動殼子。)",
+   "verdict": "benign",
+   "note": "延續句，引用EXE通用詞非FD2.EXE字面"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 130,
+   "excerpt_sha1": "f1960989c29c56233bfb3c7a8eb72f87726ce992",
+   "excerpt": "其立即數,取樣率待後輪用實機錄音比對確認,推定 11025Hz ── 1995 年 AIL 遊戲常見預設值)。",
+   "verdict": "benign",
+   "note": "明確保留用語「待後輪...確認」「推定」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 169,
+   "excerpt_sha1": "c423dfedfcc3ef0db9cd4e629f4d9de910bfef75",
+   "excerpt": "- [x] 取樣率呼叫端已追蹤(見下方「取樣率:負向證據」),**確認遊戲程式碼從未呼叫**",
+   "verdict": "benign",
+   "note": "checklist項目，負向發現「從未呼叫」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 179,
+   "excerpt_sha1": "0d21a9f66b4eae3d373fdc43557519b36e0540ef",
+   "excerpt": "(sub#13 是 0 bytes 的目錄結尾哨兵,不輸出)。用 Python `wave` 模組開啟驗證皆合法:",
+   "verdict": "benign",
+   "note": "描述Python wave模組驗證方法延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 201,
+   "excerpt_sha1": "7f14ff847cb16509f432ed253e54653106a5be20",
+   "excerpt": "(該位址範圍實際是別的函式)。追查後確認:這批位址是**檔案偏移(file offset)誤當成 linear 位址**沿用",
+   "verdict": "benign",
+   "note": "自我修正說明(file offset誤當linear位址)"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 257,
+   "excerpt_sha1": "6641a620eb5a26f3dfdb58761cc2296fc88c51b3",
+   "excerpt": "僅 index 0(游標移動)有多重獨立證據(5 個方向鍵分支 × 波形長度吻合)可視為確認;其餘 index 已列出",
+   "verdict": "benign",
+   "note": "明確保留用語「僅...可視為確認;其餘...」限定claim範圍"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 258,
+   "excerpt_sha1": "ca45153d913421b13d3414772041f21b95800054",
+   "excerpt": "確切呼叫端位址與上下文,但語意需要配合畫面實測(第 10 輪待辦)才能升級為確認,此處不臆測標籤。",
+   "verdict": "benign",
+   "note": "明確保留用語「才能升級為確認」「不臆測標籤」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 346,
+   "excerpt_sha1": "0959374f7ace142bfc9aaa45b3c0ed726b2eb863",
+   "excerpt": "載的資源存進 `edi`,不是 SFX table_ptr,用途待確認(疑為招式動畫/特效資料,非本篇範圍)。",
+   "verdict": "benign",
+   "note": "明確保留用語「待確認」「非本篇範圍」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 365,
+   "excerpt_sha1": "e09ac42a70c79e037734255acbce6a5d7726f80b",
+   "excerpt": "| #88 | 3(2 有效) | **唯一有固定 index 佐證**(見下) |",
+   "verdict": "benign",
+   "note": "表格row，指向下方佐證"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 367,
+   "excerpt_sha1": "c4f3791fd2e4ce78a6d9a8361abe8bab1db2cfcd",
+   "excerpt": "**關鍵佐證**:`#48`/`#49`/`#50`/`#51`/`#52`/`#53`/`#64` 這 7 個資源的 **sub0 完全逐位元組相同**",
+   "verdict": "benign",
+   "note": "位元組層級比對證據延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 415,
+   "excerpt_sha1": "a80fc3ad487cdc3cfb5394b41ca487c298c4c0c1",
+   "excerpt": "寫入呼叫端緊密陣列；輸出究竟是 spell、move 或其他 command inventory 仍未證實。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍未證實」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 434,
+   "excerpt_sha1": "09036d8239dff3935f9f47fa71ad9b1b5c6f9a1a",
+   "excerpt": "**先驗證再信任**:`FD2Analysis3` 專案內部實際載入的 EXE 是 802705 bytes、MD5 `a6e341a8decc6ebf7f4872076d9cf161`",
+   "verdict": "benign",
+   "note": "描述EXE hash驗證方法論延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 481,
+   "excerpt_sha1": "e03081c7844edae670f98b6f7fe6e68d01d3e3fb",
+   "excerpt": "`0496698f0ac67a3ff2448d8c7d80113f`,與現行基準檔一致)驗證資源型態:",
+   "verdict": "benign",
+   "note": "MD5雜湊值延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 512,
+   "excerpt_sha1": "55e30cc57718be2da9751fa9929d87e23633cb60",
+   "excerpt": "全部是巢狀 `LLLLLL` 容器、逐項 8-bit unsigned PCM(值域集中 0x80 附近),且 **sub0 對這 9 個資源逐位元組",
+   "verdict": "benign",
+   "note": "容器格式分析延續句，十六進位(0x80)低於門檻"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 515,
+   "excerpt_sha1": "f50c27a8cdfa03d2b94714edd219bd11402d00a5",
+   "excerpt": "範圍)逐一檢查皆**不是** `LLLLLL` 容器(不同 magic bytes),證實這個 id 範圍載入的不是音效資源。",
+   "verdict": "benign",
+   "note": "否定式發現延續句「不是LLLLLL容器」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 524,
+   "excerpt_sha1": "bf9e3255bdbe9bf0bac22d5fcdbd7b59e70e3c25",
+   "excerpt": "`:420`,揮擊/命中/陣亡播放點 `:5794-5800`)**已經**掛了 SFX,但用的是第10輪未證實載入點的候選池",
+   "verdict": "benign",
+   "note": "明確保留用語「未證實載入點的候選池」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 528,
+   "excerpt_sha1": "7e93380f500d8087115fa6536644394de5a27fd9",
+   "excerpt": "(9 個真正動態驗證過、逐 action_id 對應的池)尚**未**接進 remake ── 要接上仍缺「action_id 從哪個",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未接進remake」「仍缺」，正確標示remake端缺口"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 542,
+   "excerpt_sha1": "818d090f3708670ec308a33b61bc73709368f703",
+   "excerpt": "> 逐一解包驗證:四個都是合法巢狀 `LLLLLL` SFX 容器(91/94 各 4 個 sub-sample、92/93 各 3 個,sub0 皆為",
+   "verdict": "benign",
+   "note": "解包驗證方法延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 565,
+   "excerpt_sha1": "2b548eac7a8e0309052b9176fa9fec9de318e0b9",
+   "excerpt": "皆逐一解包驗證為合法 PCM SFX 池,且 sub0 共用機制與第10輪推論吻合,25 個 WAV 已匯出。",
+   "verdict": "benign",
+   "note": "解包驗證結果延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 567,
+   "excerpt_sha1": "0f4680b1f762eba701efbbf1ddeaf42b4d70136d",
+   "excerpt": "WAV 已驗證匯出),見上方引述段落與 doc27 §6.5。",
+   "verdict": "benign",
+   "note": "交叉參照doc27 §6.5"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 570,
+   "excerpt_sha1": "98d2286499e132c8b9364f2f88cb9bc455114236",
+   "excerpt": "- **綜合判斷**:三項從「核心完全未解」推進到「資源層級 index 對照已完整解出且逐一驗證,語意標籤與",
+   "verdict": "benign",
+   "note": "進度總結延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 593,
+   "excerpt_sha1": "296636b7e5bd65d58c35f4e1e54fc9d580030f86",
+   "excerpt": "`91-worklist.md` 的 M5-F「UI 音效 index 2-0xb 語意畫面實測」那一列**沒有跟著改**,",
+   "verdict": "benign",
+   "note": "交叉參照91-worklist.md，誠實標示文件未同步更新"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 633,
+   "excerpt_sha1": "29ba6f587bce0da396e63396f336bbd682406851",
+   "excerpt": "剩下的是把呼叫端函式對應到玩家看得到的畫面。本輪只閉合了 index 0 這一筆。",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪只閉合了index 0這一筆」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 651,
+   "excerpt_sha1": "d8d17e1fd544f0a564a5325d97c7a5feb0e663b6",
+   "excerpt": "| index | 呼叫端數 | 呼叫端所屬函式(專案既有識別) | 佐證等級 |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 669,
+   "excerpt_sha1": "54efa6a867614c8bb113bdeade6706aa4e22f28f",
+   "excerpt": "「該函式在本專案既有文件中的身分」推得的**強推論**,不是實機驗證。要收口需要對每個",
+   "verdict": "benign",
+   "note": "明確保留用語「強推論,不是實機驗證」，誠實區分推論與直接驗證"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 674,
+   "excerpt_sha1": "f6ebaf898a9758a542f6b9602fd79539ccb4d639",
+   "excerpt": "### 2026-09-04 續:index→畫面的實測方法(**兩個對照缺一不可**),以及對前一段的限縮",
+   "verdict": "benign",
+   "note": "章節標題，含保留用語「限縮」，證據在節內文"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 743,
+   "excerpt_sha1": "0db0eca13120c644113fc229e8f71a47ad05380a",
+   "excerpt": "index 應該會被擋掉而不重播——**未證實,不宣稱**。)",
+   "verdict": "benign",
+   "note": "明確否定式聲明「未證實,不宣稱」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 753,
+   "excerpt_sha1": "406bb05080ee6bcee35a55dc8fb05c798cca571b",
+   "excerpt": "第一個呼叫,但我從未確認在 ch27 的那個狀態下有沒有別的呼叫點同時在跑。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「從未確認」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 773,
+   "excerpt_sha1": "a7683a3dfc5a9b12da074a131bc5b48db416f9d1",
+   "excerpt": "前兩段留下兩個未確認項:ch01 的游標移動實際播什麼、以及 ch27 那筆 index 0 是否也是汙染。",
+   "verdict": "benign",
+   "note": "明確標示「兩個未確認項」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 782,
+   "excerpt_sha1": "65d5e3a0037e6069214c4819e6332ffc439a171a",
+   "excerpt": "先前觀察到它 5/5 自走時,UI 其實在環裡(事後截圖證實)。在確認過的瀏覽層它不會自己命中。",
+   "verdict": "benign",
+   "note": "截圖確認方法延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 784,
+   "excerpt_sha1": "08207e3fa890fbe0e6f2181ee12f25676376c732",
+   "excerpt": "#### 結果(基準乾淨 + 層級已證 + 同組態內含陽性對照)",
+   "verdict": "benign",
+   "note": "小標，含「同組態內含陽性對照」方法論標記，證據在節內文"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 811,
+   "excerpt_sha1": "1f1c4f98ed2e68fa234cac4d740b112b6ae745a2",
+   "excerpt": "**因此 ch27 的 index 0 不再可疑**:index 0 = 游標移動已由 ch01 的四個方向獨立確認,",
+   "verdict": "benign",
+   "note": "結論延續句，交叉參照ch01已獨立確認發現"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 824,
+   "excerpt_sha1": "5937bfcf2e838241dbdbe5745418beb325c6ee9b",
+   "excerpt": "### 2026-09-04 續四:環層與資訊卡的 index,以及一次三重確認的截圖",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 844,
+   "excerpt_sha1": "57b39c7370c0f397275d7d5bd0a6d373c2490379",
+   "excerpt": "再走環內 ↓ + 確認。結果:index 4 命中,且**回復後讀到 HP 28/42**。",
+   "verdict": "benign",
+   "note": "活體測試結果延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 848,
+   "excerpt_sha1": "0f1a6ff835803b6ebfe19610a790b6f3c782beb8",
+   "excerpt": "讀法完全獨立**,HPcur/HPmax 的指派因此有兩個互不相關的佐證。",
+   "verdict": "benign",
+   "note": "獨立佐證交叉驗證延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 854,
+   "excerpt_sha1": "b43349e18a05e37c2e85536aba3045f4cc1cc321",
+   "excerpt": "- **`MV·20`** —— 稍早寫進 `+0x3b` 的值真的顯示出來了,補上 MV 偏移先前缺的畫面佐證;",
+   "verdict": "benign",
+   "note": "活體寫入後顯示驗證延續句，offset(+0x3b)低於門檻"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 870,
+   "excerpt_sha1": "f7895060696f8a4668857059791554df1aef4f48",
+   "excerpt": "實測(ch01,悠妮已行動、MP 8/8、`+0x1a..+0x1e` mask = `0100000000`):",
+   "verdict": "benign",
+   "note": "活體測試設定延續句，offset低於門檻"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 892,
+   "excerpt_sha1": "95a025a1576fd29a2efc82c281bf37ce73dfd877",
+   "excerpt": "(mask 的位元對映本身也尚未獨立驗證,上面第 3 點應視為強推論而非已證。)",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未獨立驗證」「強推論而非已證」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 933,
+   "excerpt_sha1": "3f9bbdc42b70a252cf1dc340be4346858ac5e650",
+   "excerpt": "一次完整的「選取 → 移動 → 落點 → 環選攻擊 → 執行 → 確認目標」全程武裝 `play_sfx_a`",
+   "verdict": "benign",
+   "note": "活體測試序列描述延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 964,
+   "excerpt_sha1": "245eceb95a4aa36f4dc6781c17f20bb0e7643846",
+   "excerpt": "目前無法判定哪一邊錯,**兩個值都不採信**。可能方向(皆未驗證):",
+   "verdict": "benign",
+   "note": "明確否定式聲明「目前無法判定」「兩個值都不採信」「皆未驗證」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 968,
+   "excerpt_sha1": "b4fe7bbfd2ed5ae143d4b01cd80d584a528d644f",
+   "excerpt": "**因此靜態全表(65/81)至少有一筆與活體不符,不應被當成已驗證資料整批引用。**",
+   "verdict": "benign",
+   "note": "明確保留用語「不應被當成已驗證資料整批引用」"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1001,
+   "excerpt_sha1": "1460e825c980baa650813ba6ce5cc12f5ddf4341",
+   "excerpt": "**兩個值都不採信,此列標為未解。** 這也是為什麼靜態全表(65/81)不應被整批當成已驗證:",
+   "verdict": "benign",
+   "note": "同968，延續句"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1048,
+   "excerpt_sha1": "912e31bb6ceff9a3517026c822bbed8326b1f59a",
+   "excerpt": "**修正後的立場:靜態表是候選清單,不是已驗證資料。** 每一列都要有活體命中才算數。",
+   "verdict": "benign",
+   "note": "結論，明確否定式聲明「不是已驗證資料」"
   }
  ]
 }
