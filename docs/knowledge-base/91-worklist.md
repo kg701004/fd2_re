@@ -35,6 +35,8 @@
 「2026-09-06」段落)，回答了本輪一開始列為「35項真正開放」清單裡的604/622兩項。
 **第四輪複核後統計**：A=30、D=55。
 
+> **2026-09-06第五輪**：item 1138(UI-03 end-turn entry)發現答案其實已經在doc11「0x16F55」節裡(2026-08-20,回應L145/L1038時順帶完整反組譯了END選單的呼叫鏈)，只是沒有交叉引用回L1138，本行因此誤以為還沒解——見doc57「2026-09-06補完」段落。改標A。**第五輪複核後統計**：A=31、D=54。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -160,7 +162,7 @@
 1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。
 1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。**2026-09-06複核**：doc57自己的row其實AOE/LOS/灰化三項已於2026-08-20閉合(本行文字未同步)，真正剩下的只有「native argument↔weapon min/max mapping」與「indexed item/effect presentation」、「global selector6 production owner」三個子項——維持D，範圍已收斂。順帶核對`item.json`的`range`欄位(215筆)跟pristine EXE逐byte吻合(見doc32「2026-09-06補記」)，證明資料抄寫沒錯，但**這個欄位名本身在doc32已被撤回「等於武器射程」的解讀**，不構成本項答案，只是排除了一種可能的資料錯誤來源。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
-1138 - D - doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。
+1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
 1148 - E - 項目自陳仍待DOSBox E2 visual/input diff；doc57 UI-10 church row同樣列此為唯一剩餘缺口。
 1150 - E - 項目自陳仍需DOSBox E2視聽diff，doc57同章節row確認此為唯一阻擋點。
@@ -191,6 +193,8 @@
 2026-09-06第三輪複核，全面掃描剩餘48項後再從D改標A的2項（均為文件本身已結論關閉、D標籤未同步的案例）：145、1038。
 
 2026-09-06第四輪，真正做了新反組譯後從D改標A的2項：604、622（找到`FUN_0001d51d`確認鍵分支的即時填值鏈路，見doc36「2026-09-06」段落）。
+
+2026-09-06第五輪，發現既有doc11反組譯早已回答但未交叉引用而從D改標A的1項：1138（見doc57「2026-09-06補完」段落）。
 
 > **⚠ 位址勘誤總註記(2026-08-19/20，兩個獨立批次交叉印證)**：`0x2a6bd`與`0x276ec`這兩個在`13-battle-menu-system.md`／
 > `37-spell-effect-figani.md`／`56-fd2-remake-sdd.md`／本檔多處被引用為「native command 大型 presentation/state

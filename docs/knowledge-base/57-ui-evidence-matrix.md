@@ -168,6 +168,18 @@ input）已確認呼叫 `0x36d98` 讀 scancode，Enter/Space/`0xe0`/`0x52` 走�
 維持 partial，worklist 判定（D，可續靜態，非必須 live）不變；本輪未新增反組譯（時間分配到
 其他優先項目，未深挖）。
 
+**2026-09-06 補完：答案其實已經在 `doc11` 裡，本行當時沒有查到——完全靜態閉合**。
+`docs/knowledge-base/11-enemy-ai.md`「`0x16F55`：手動強制結束回合」一節(2026-08-20，同一天
+的另一輪工作，回應的是worklist L145/L1038而非L1138，所以沒有交叉引用回這裡)已經完整反組譯
+**正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」**：`0x117E7`在游標下沒有可行動己方
+單位時呼叫`0x16F55()`，這是一個0..3四項ring，selector3(「結束回合」/END)的完整呼叫鏈是
+`0x1956B(0x4B)`(Yes/No對話框)→`0x19953`確認→若Yes且`[0x53C57]`仍為0：等待200 tick
+(`0x3790A`)→`0x196CB`(收尾動畫)→**直接**呼叫`0x1A30B()`(回合orchestrator)，不跑任何
+單位移動迴圈。FDTXT字串核對：`0x1A3`＝「要結束本回合的行動嗎？」，確認後`0x1A4`＝「好的，
+就結束本回合的行動吧！」，两者都已用FDOTHER_004字型渲染目視確認，不是猜測。**這條鏈路
+完全靜態，不需要活體DOSBox-X驗證**(本行原本卡住的「先下斷點再結束回合讀EAX」那條路徑已經
+不需要了)。UI-03 end-turn entry至此收斂為已解，可改標A。
+
 **L1139 — UI-07 postbattle，哪些章節仍 fail-closed（現況已與本表文字有落差）**：
 `tools/audit_postbattle_binding_gates.py` 目前輸出 `postbattle_nodes=24
 status={'active': 19, 'blocked': 5}`——**與本表 UI-07 行文字「17 active／7 blocked」不同，
