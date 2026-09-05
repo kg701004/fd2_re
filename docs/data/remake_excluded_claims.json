@@ -140,14 +140,6 @@
   {
    "file": "27-combat-rules-and-validation-checklist.md",
    "kind": "remake_artifact",
-   "excerpt_sha1": "4dd892b536f3fb220462c0f04dce71c59827ba59",
-   "excerpt": "**結論**:`spell.json` 的 `hit`/`raw` 等實際資料值全部正確(0/36 誤差),`off` 欄位是需要 housekeeping 的過期標籤;`hit=0` 的原生機器語意是「恆 miss」而非「恆 hit」;`magic.go` 現行 `rollsHit` 對 `hit<=0` 的「恆 h",
-   "note": "結論的原版側部分(hit=0 恆 miss)來自逐 byte 核對;magic.go 反向 bug 的敘述隨 remake 失效",
-   "first_line_seen": 311
-  },
-  {
-   "file": "27-combat-rules-and-validation-checklist.md",
-   "kind": "remake_artifact",
    "excerpt_sha1": "a5f17071ba03e316bb523dfff78ae41680f9c1ef",
    "excerpt": "**測試**:`magic_test.go` 新增 `TestRollsHit_HitZero_AlwaysMisses`(通則:不在特例清單的假想 ID,hit<=0 對 100 次擲骰恆 Miss)、`TestRollsHit_SealSpell_FiftyPercentGate`(id22 對 60 次擲骰同時出",
    "note": "remake magic_test.go 新增測試",

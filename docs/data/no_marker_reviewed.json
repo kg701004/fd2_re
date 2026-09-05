@@ -2,14 +2,6 @@
  "_policy": "2026-09-05:登錄已經人工讀過、判定過的 NO_MARKER 主張,讓 tools/audit_evidence_provenance.py --no-marker-worklist 能把「已審閱」跟「還沒讀過」分開算,不會每次重跑都把同一批已經處理過的主張再報一次。以 excerpt_sha1 為鍵(行號會漂移)。verdict 只有三種:benign(不是原版事實的完成式驗證主張,不需要來源標記——工具自我檢查/表格標題/規劃未來式語氣皆屬此類)、marker_added(判定是真的缺標記,已經在文件裡補上 ORIGINAL/MIXED 依據)、needs_verification(真的是缺乏來源的原版事實主張,但本輪沒有能力補證據,留待後續)。",
  "reviews": [
   {
-   "file": "07-music-xmidi-format.md",
-   "line": 60,
-   "excerpt_sha1": "7b4e7ecf311749c4dfaf2d9665ff35b1aa143d6e",
-   "excerpt": "**驗證**:輸出 SMF 經回讀,**note-on 與 note-off 完全平衡**(如 FDMUS_008:2846 = 2846);",
-   "verdict": "benign",
-   "note": "xmi2mid.py 自己的 round-trip note-on/off 平衡檢查，是轉檔工具自我驗證，不是原版遊戲事實"
-  },
-  {
    "file": "18-font-modernization-utf8-ttf-plan.md",
    "line": 59,
    "excerpt_sha1": "fe76f5bb8a1247da86e73fff51967bb31a48e3ac",
@@ -1400,14 +1392,6 @@
    "excerpt": "**2026-08-24 live 交叉驗證補充(doc58 續六十二)**:上面 `+0x40`(HP)、以及 `+0x44/+0x46`(MP)、",
    "verdict": "benign",
    "note": "交叉參照doc58續六十二，欄位offset(+0x40等)僅3位十六進位未達ADDR_MARKER門檻"
-  },
-  {
-   "file": "27-combat-rules-and-validation-checklist.md",
-   "line": 375,
-   "excerpt_sha1": "0141d7c01dc8f4308350016f3f9fdba0be3fdb00",
-   "excerpt": "- **L555**(doc56 L600:scroll/composite/專用演出/SFX/UI 未接):`FUN_0002ff01` 的逐目標迴圈證實了 scroll/composite 的原生結構(`FUN_00011eb0`/`FUN_0002eb9f`/`FUN_000311e5` 等 step 呼叫,HP 從 `iStack_38` 動畫過渡到 `iStack_50`),但 rend",
-   "verdict": "benign",
-   "note": "延續句，具體函式位址證據在同段落"
   },
   {
    "file": "27-combat-rules-and-validation-checklist.md",

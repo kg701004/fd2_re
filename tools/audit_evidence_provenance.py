@@ -103,6 +103,7 @@ ORIGINAL_MARKERS = [
     (r"MEMDUMPBIN", "活體記憶體讀取"),
     (r"Alt\+Pause|debugger|斷點|BPLIST|SMV ", "原版 debugger"),
     (r"Ghidra|ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
+    (r"FUN_[0-9a-fA-F]{4,8}\b", "Ghidra 自動函式名(反組譯位址)"),
     (r"反組譯|反編譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
@@ -670,6 +671,17 @@ def selftest() -> int:
     # 複合詞夠specific,風險低。
     expect("已確認這段是原版實機驗證過的結果", "ORIGINAL",
            "正對照:「原版實機」是DOSBox-X實機測試的中文說法,必須命中")
+
+    # --- 2026-09-05 補(第七輪NO_MARKER審閱掃出):`FUN_XXXXXXXX` 是 Ghidra 對
+    # 未命名函式的預設自動命名(十六進位位址,無 0x 前綴),本專案大量文件直接引用
+    # 這個名字(如 `FUN_00015055`)當函式識別,但先前只收 `Ghidra` 這個工具名本身,
+    # 沒收它的輸出命名慣例——73 處語料庫命中,是本輪影響範圍最大的一次修正。
+    # 風險評估:`FUN_` 接 4-8 位十六進位是 Ghidra 專屬且極specific 的字面,一般文字
+    # 幾乎不可能巧合寫出這個樣式,誤報風險接近零。
+    expect("已確認這段呼叫走的是 FUN_00015055 這個函式", "ORIGINAL",
+           "正對照:FUN_XXXXXXXX 是 Ghidra 自動函式名,必須命中反組譯標記")
+    expect("已確認這個函式呼叫跟 FUNCTIONXYZ 完全無關", "NO_MARKER",
+           "負對照:FUN_ 後面沒接十六進位(FUNCTIONXYZ 只是巧合開頭一樣的字)不該誤放行")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
