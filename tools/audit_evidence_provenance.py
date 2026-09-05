@@ -103,7 +103,7 @@ ORIGINAL_MARKERS = [
     (r"MEMDUMPBIN", "活體記憶體讀取"),
     (r"Alt\+Pause|debugger|斷點|BPLIST|SMV ", "原版 debugger"),
     (r"Ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
-    (r"反組譯|decompile|disasm|逐指令", "反組譯"),
+    (r"反組譯|反編譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
     # 2026-09-05 修正(第一輪):原本的 `\bFDTXT\b` 這類寫法,`\b` 是「\w 字元 ↔
@@ -635,6 +635,15 @@ def selftest() -> int:
     expect("這裡已經確認跟FDOTHERADJACENT無關而已", "NO_MARKER",
            "負對照:容器名黏在另一個英文詞中間(FDOTHERADJACENT),前瞻/後顧"
            "修正不能讓這種情況被誤判成命中")
+
+    # --- 2026-09-05 補(第三輪NO_MARKER審閱掃出):「反編譯」是「反組譯」的常見
+    # 同義詞(decompile 的另一種中文譯法),語料庫裡有 5 處只用這個詞卻沒有命中
+    # 任何 marker——原本清單只收「反組譯」,漏收「反編譯」。
+    expect("這段邏輯已經完整反編譯,確認結論可信", "ORIGINAL",
+           "正對照:「反編譯」是「反組譯」的同義詞,必須命中靜態反組譯標記")
+    expect("這件事已經確認跟反編譯完全無關,只是隨口提一下", "ORIGINAL",
+           "回歸:即使是否定語氣,marker 只看字面出現與否(與既有其他 marker 一致的設計),"
+           "不做語意否定判斷——這是既有規則,不是本次新增的行為")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
