@@ -165,7 +165,7 @@
 1344 - C - 項目自陳仍未完成全roster/save/export的raw record接線，raw identity byte本身RE已由前一項關閉，剩下為工程接線。
 1354 - A（2026-09-05由D複核關閉，與366為同一底層項目，已由`RE-ITEM-EFFECT-ROW-4E56C`/doc32§1.3閉合）- 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
 1509 - E - doc58(約L2219-3451)記載此位址跨十餘輪live DOSBox-X session追至2026-08-19仍未解，使用者已決定暫緩，確屬需live驗證。
-1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。
+1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。**2026-09-05複核，部分進展但未解**：`ghidra_batch_probe.py`確認`0x24838`的`CALL 0x24bde`(bytes `e8 a1 03 00 00`)byte級屬實，且`0x24bde`不在Ghidra自動分析辨識的任何function邊界內、xref_to回傳0筆——這正是本專案已知的`.object1`(disasm_le.py/預設分析範圍)盲區，不是不存在。手動反組譯確認`0x24bde`本體是`PUSH 0x8; CALL 0x3702f; ...`，`0x3702f`的decompile是`LOCK();UNLOCK();FUN_00037042(param_4);return param_1;`——鎖定/解鎖包一個helper呼叫再回傳原值的樣式，疑似DOS/4GW critical-section包裝，未能進一步定名。呼叫端(`0x24838`)本身的行為模式已確認:呼叫後`TEST EAX,EAX；JZ 0x248b5`，若非零才接著跑`dialog(target=0x15f84)`(對照同檔已有的dialog op，args pattern吻合)+`act(target=0x1366a)`+另一個`dialog`——**功能上這是一個條件閘門(gate)**，語意類似其他chapter handler已知的`roster_has`類gate op，但`0x24bde`內部呼叫鏈的最終語意(到底在檢查什麼條件)仍未定名，未解。下一輪建議:反組譯`FUN_00037042`本體，並用`args:[18]`這個呼叫端傳入值反推18代表的資源/索引種類。
 1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。**2026-09-05複核**：`remake/`已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 1578 - C - 成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE。
 1604 - F - 明文卡在動態turn-writer/group-formula通用pending-group binding及`battle.State`→`Game`/controller的原子handoff，屬更大範圍重構前置依賴。
