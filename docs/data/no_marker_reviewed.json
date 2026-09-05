@@ -1680,6 +1680,278 @@
    "excerpt": "逐字對得上——**那些片段其實就是 032 本身,只是本節一開始沒認出來**。",
    "verdict": "benign",
    "note": "FDTXT_032解析敘事的結論延續句"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 58,
+   "excerpt_sha1": "3934b7d7c28c013e8fb02926ffe806bfc1ef2401",
+   "excerpt": "**驗證方式**:對 resource #0(96 幀)逐筆累加 `8 + compSize` 剛好等於",
+   "verdict": "benign",
+   "note": "描述驗證方法(逐筆累加校驗)，延續至下行(59)的具體算式"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 59,
+   "excerpt_sha1": "29aea86dee03e0495f0a364d114b76355c76aba8",
+   "excerpt": "`資源總長 - 0xAD`(1,002,800 − 173 = 1,002,627,實測完全吻合),對其餘 8 個資源同樣核算通過——",
+   "verdict": "benign",
+   "note": "算術核算延續句，位址(0xAD)低於門檻"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 146,
+   "excerpt_sha1": "f64ff881bd537882972931dc0edf44a9de0f9cf0",
+   "excerpt": "或 ANI_007 較晚幀的延伸內容,本輪未逐幀窮盡掃描全部 26/17 幀確認)、⑨ 紅光惡魔臉特寫轉紅閃光",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未逐幀窮盡掃描...確認」"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 169,
+   "excerpt_sha1": "f30d1dbb4ba6e8238e484d49efc849b392801b40",
+   "excerpt": "sequence，仍須逐一以 call graph 與實機驗證，不能把它們直接當成 9 段已完成的獨立開場流程。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍須逐一...驗證」+否定「不能把...當成」"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 179,
+   "excerpt_sha1": "0f894869ecaacbe53b7a085130c9cc6d11a7a933",
+   "excerpt": "- ~~**[待補]** doc23 §2.4③ 分鏡⑥(浮空城)、⑨(惡魔臉特寫)未逐幀窮盡確認落在哪個資源。~~",
+   "verdict": "benign",
+   "note": "刪除線(已解決項)，明確保留用語「未逐幀窮盡確認」"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 314,
+   "excerpt_sha1": "5df866e055e6043433f8e5ec21e60177ef3f1d7b",
+   "excerpt": "**移除 index=2**(非開場資源,§10.4/10.5 已證實)。**每段各自的 delay 不同**,不是全域常數",
+   "verdict": "benign",
+   "note": "交叉參照§10.4/10.5既有證實結論，延續句"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 346,
+   "excerpt_sha1": "47d0809d542ed409256e8921e4fd29be57467bb9",
+   "excerpt": "### 10.8 屠龍幕「揮劍小閃光」即時播放驗證(第N輪,dosbox 即時錄影對照)[驗]",
+   "verdict": "benign",
+   "note": "章節標題含[驗]標記，「dosbox」小寫無連字號屬既有低頻邊界案例"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 351,
+   "excerpt_sha1": "1f413ed54135814938b2a93ee0238e2b3c4220cb",
+   "excerpt": "> 交叉驗證,結論兩者皆不成立,但**額外抓到一個真實的結構性時序落差**(見下)。",
+   "verdict": "benign",
+   "note": "描述已refute的假說，指向下文證據"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 370,
+   "excerpt_sha1": "bac317f2861de7de24abc3b70f9b50d0b834d407",
+   "excerpt": "DOS 原版從開場到揮劍閃光實測 **~14.7s**(video frame441/30fps),remake 只要 **~5.0s**",
+   "verdict": "benign",
+   "note": "引用video frame量測時間，屬既有「影片oracle」證據類型(00-index.md已載明的證據來源之一)"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 423,
+   "excerpt_sha1": "8e41e0b841032801750f3b9b1a64fd4d2dfbd2ed",
+   "excerpt": "; 確認 esi==0x1c2/esi==0xa 共用同一條 CALL,與 doc23 §2.4⑥",
+   "verdict": "benign",
+   "note": "暫存器值(esi==0x1c2/0xa)低於ADDR_MARKER門檻，交叉參照doc23 §2.4⑥"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 502,
+   "excerpt_sha1": "5354405e33b7ce1b1a5f056dddb2dea92cc7a4fe",
+   "excerpt": "`h=0xc8=200`、`w=0x140=320` 確認每輪呼叫都是把來源緩衝區(高 735、esi 控制窗口起始列)",
+   "verdict": "benign",
+   "note": "十六進位參數(0xc8/0x140)低於門檻，屬反組譯參數分析延續句"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 537,
+   "excerpt_sha1": "214f194058283859e38bdab5d1ff84d3ac4f130d",
+   "excerpt": "位元組層級直接證實 `push 0x1e`=等 30ms、`push 0x3e8`=等 1000ms 的判讀正確,不是量級猜測**。",
+   "verdict": "benign",
+   "note": "位元組層級驗證延續句，十六進位(0x1e/0x3e8)低於門檻，含否定「不是量級猜測」"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 579,
+   "excerpt_sha1": "c4fdb9d51eef2f904063ca4674b503b1572eb0ad",
+   "excerpt": "使用者實測「~5.0s vs ~14.7s(到屠龍閃光為止)、開場 5s vs 14.7s」的落差——**§10.8「捲動",
+   "verdict": "benign",
+   "note": "「使用者實測」片語，既有可接受設計取捨類別，交叉參照§10.8"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 580,
+   "excerpt_sha1": "d73eacfc6c08b65b8f77944b7917c1193d810207",
+   "excerpt": "沒有跟 AFM 幕交錯播放」的定性判斷,本節用逐幕耗時表證實是主要且唯一需要的量化解釋**,",
+   "verdict": "benign",
+   "note": "延續句，屬同一已證實段落的量化解釋部分"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 597,
+   "excerpt_sha1": "5f8ef2737e5d9c63ac372cf37ed8581c19aa7623",
+   "excerpt": "發現 A 已證實原版每輪也是整窗重繪同一張大圖,remake 現有「平移大圖視窗」畫法機制對等,",
+   "verdict": "benign",
+   "note": "延續句，反組譯發現的延伸推論"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 607,
+   "excerpt_sha1": "9b38d82c43f13c945c999258abd3965b990f4fd9",
+   "excerpt": "穿插延遲(12.75s)並把僅存一段壓縮成原版的 23%,兩者相加即是使用者實測 ~3x 落差的完整",
+   "verdict": "benign",
+   "note": "「使用者實測」片語延續句"
+  },
+  {
+   "file": "39-ani-afm-format.md",
+   "line": 612,
+   "excerpt_sha1": "471dc1018ab4d97f4e74c998d9402fa7519fd964",
+   "excerpt": "`cutScript` 並跑一次 remake 錄影 vs DOS 對照複驗(本節不含程式碼改動與活體驗證,依任務範圍",
+   "verdict": "benign",
+   "note": "明確保留用語「本節不含程式碼改動與活體驗證」，未來式待辦項"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 62,
+   "excerpt_sha1": "ea446640e0cbcb1bff3b0703b00bb10e91cefbb6",
+   "excerpt": "(發現地點)——兩組座標相距甚遠,**直接證實§4 提到的「索爾+亞雷斯要跨多幀走過去」不是錯覺**,",
+   "verdict": "benign",
+   "note": "交叉參照§4既有結論的延續句"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 87,
+   "excerpt_sha1": "bcae90635bd733a1d06ae4e87ec281c48e1ea14c",
+   "excerpt": "| D5 | **全部台詞一次播完才進戰場** | 對白在**多個場景間分批播放**,中間穿插沉默行軍、退場走位、戰鬥前 UI(MAP/TURN 畫面、行軍確認) | `story_ch01_palace`→`meadow`→`ch01` 三節點的台詞會一次性、無中斷地連續播完,才進 `battle_ch01` | #2(使用者原話「一口氣播完才進戰場」) |",
+   "verdict": "benign",
+   "note": "落差追蹤表格row(比照doc51模式)，描述使用者原話對照remake現況，非過度宣稱"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 89,
+   "excerpt_sha1": "ceb0b13c4c87e4d43214f02168c0f092d992d23a",
+   "excerpt": "| D7 | **開戰位置**(逐人分配) | map0 出場位置(x,y)固定,索爾(7,20)/亞雷斯(8,22)/悠妮(10,21)/蓋亞(11,23)——**本輪模板匹配結果的 x 座標序列(7,8,10,11)跟這組完全吻合**,見 §4 | 已於前一輪修正 `ch01.json` `deploy_cells` 為 `[[7,20],[8,22],[10,21],[11,23]]` | ",
+   "verdict": "benign",
+   "note": "同87，模板匹配方法論table row，交叉參照§4"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 90,
+   "excerpt_sha1": "a7819e2e4d51f0450ae121d0afdb969f08283fa2",
+   "excerpt": "| D8 | **戰前 UI 缺失**(非三個抱怨之一,附帶發現) | 進戰場前有「MAP·01 TURN·001,勝利/失敗條件,ENEMY/FRIEND/NPC 數」資訊畫面 + 「決定要行軍嗎?YES/NO」確認 | 沒有這兩個畫面,`resetBattle` 直接進場 | 附帶(低優先) |",
+   "verdict": "benign",
+   "note": "同87，缺失追蹤table row，標「附帶(低優先)」"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 119,
+   "excerpt_sha1": "5f25cc9a0c27679e0f924a68337f140a66fa36c8",
+   "excerpt": "`deploy_cells[1]`/`[2]`」的修正在本輪獨立方法(模板匹配)下**再次驗證成立,不需要再動**。",
+   "verdict": "benign",
+   "note": "獨立方法(模板匹配)再驗證延續句"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 145,
+   "excerpt_sha1": "67222afe2201bfc65f9d9ca724a26509dc0deb68",
+   "excerpt": "- `story_ch01` 維持指到 map0(D7 已驗證正確),但建議在其前面插一個**無對白、鏡頭跟隨的",
+   "verdict": "benign",
+   "note": "交叉參照D7(同文件表格內已驗證項)"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 157,
+   "excerpt_sha1": "fd2bf5e614bcb03f3f24feb031b0269e0d8783f0",
+   "excerpt": "持續 0.5–1 秒(對照 §1 時間軸「約 1–3 秒」,remake 可以先做較快版本再依實測調整)。",
+   "verdict": "benign",
+   "note": "未來式保留用語「先做快版再依實測調整」"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 179,
+   "excerpt_sha1": "ce9bb6d51ec1d3e1c14b5695e88812df58a2077f",
+   "excerpt": "`map32_mid700_1000.png`(map32 中段確認無密林)。這些是分析證據,不建議入庫(video 本身也不入庫)。",
+   "verdict": "benign",
+   "note": "引用具體extracted PNG檔案作分析證據，附帶「不建議入庫」說明"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 184,
+   "excerpt_sha1": "ff0269f59b8c5c78951b7838fd3edc1f8a0c0ac6",
+   "excerpt": "出場座標(19,46-47 / 5,43-44),Phase 2 實作時需要換算成 remake 的 cam_x/cam_y 並截圖驗證。",
+   "verdict": "benign",
+   "note": "未來式保留用語「Phase 2實作時需要...驗證」"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 198,
+   "excerpt_sha1": "9730876c92f4f447a1abda817ec4c64e51a16443",
+   "excerpt": "NPC，依指示**不擺放**，只放已確認的索爾／亞雷斯／悠妮／蓋亞 4 人。",
+   "verdict": "benign",
+   "note": "設計決策否定聲明「不擺放」，交叉參照doc49已確認角色"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 212,
+   "excerpt_sha1": "affe16d85a9f26cba2459564a702692079169d7c",
+   "excerpt": "- **淡出/淡入時長**:採 0.6 秒/次(共 1.2 秒),在 team-lead 指示的「先做快版,面向實測再調」範圍內",
+   "verdict": "benign",
+   "note": "未來式保留用語「先做快版,面向實測再調」"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 219,
+   "excerpt_sha1": "450e56d020f60b316621dfc962256925d4c3eaa9",
+   "excerpt": "使用者實測打回:「一開始索爾有從皇宮底下往王位走,這一段沒有發生」+ 建議「按下 START 後",
+   "verdict": "benign",
+   "note": "「使用者實測」片語，既有可接受設計取捨類別"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 237,
+   "excerpt_sha1": "2e91607087f2cf9841df2fc568b19fc7a4917add",
+   "excerpt": "驗證:frame30(紅毯底+雕像+守衛,對影片 w_36)/frame240(長廊石柱段運鏡,對 w_40)/",
+   "verdict": "benign",
+   "note": "引用video frame量測，屬既有影片oracle證據類型"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 239,
+   "excerpt_sha1": "8ef7f3730d087b5603fb0d4aec417a99cd889a5b",
+   "excerpt": "近似待調:對白逐字打字機、王座前定格取景微調、forest/march/island cam 為粗調(該幕保真",
+   "verdict": "benign",
+   "note": "明確保留用語「近似待調」「粗調」"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 251,
+   "excerpt_sha1": "eb18a274da18ebf25e176d3a04aae09444d4a6fd",
+   "excerpt": "## 11. 逐幕時間軸與原生引擎 live 互動實測交叉驗證(2026-08-28/29,`ch01newgame` 輪)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 260,
+   "excerpt_sha1": "97f078ce3b5eebafdb54233573a4f2655e502cd0",
+   "excerpt": "既有記錄的另一條路徑(chapter-jump-via-fd2save 卡住之前)逐字一致,證實同一份底層劇本",
+   "verdict": "benign",
+   "note": "延續句，引用fd2save工具交叉核對"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 262,
+   "excerpt_sha1": "329ab914e3fdc09310779374a231f3a65d0df63c",
+   "excerpt": "「原生引擎即時互動實測」兩種獨立證據來源互相印證,不再只依賴使用者提供的影片。",
+   "verdict": "benign",
+   "note": "描述兩獨立證據來源互相印證的方法論總結，非新主張"
   }
  ]
 }
