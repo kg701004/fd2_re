@@ -8728,6 +8728,5262 @@
    "excerpt": "2026-08-27 已經完成,本輪只是確認並補齊追蹤文件,未新增或撤回任何技術結論。",
    "verdict": "benign",
    "note": "延續句，明確標示「未新增或撤回任何技術結論」"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3,
+   "excerpt_sha1": "da719497cfb49f9984fa74806ef5f26c6729e5a3",
+   "excerpt": "> 對應 `docs/knowledge-base/91-worklist.md` M5「正常玩法可達性驗證」項目與",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 13,
+   "excerpt_sha1": "4e3efa88cc9b5f5d99e6da05dc83c15f07b98cf2",
+   "excerpt": "送出續六十二證實過的 End-Turn→YES 捷徑;若否則用通用 bounded 按鍵迴圈嘗試推進。跑完後",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 23,
+   "excerpt_sha1": "d5caf2955eb6a5e5673dc617d724a757336049aa",
+   "excerpt": "判別方式能事先預測。本工具的 Phase 1 驗證(見 doc98)已經誠實記錄了對 ch27 本身重跑",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 38,
+   "excerpt_sha1": "8cb6db285c9b0cc42b7449bcfa1c6f5878729873",
+   "excerpt": "目前選擇「保留源存檔不裁減」而非嘗試移除角色(移除持久化 roster record 目前沒有已驗證的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 85,
+   "excerpt_sha1": "26515744e27130b7a1293fb0794831558ca002a0",
+   "excerpt": "用每章`02_post_load.png`截圖(LOAD 選存檔位確認後、generic advance 迴圈開始前的那一刻)",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 90,
+   "excerpt_sha1": "2df52d7d4d08ffe5843a424c36ce0b7e57f8f347",
+   "excerpt": "UI 型態一致。**ch02 與多個其他章節(如 ch09)的這張截圖逐位元組核對後其實是同一張圖",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 92,
+   "excerpt_sha1": "ded9b838ff3e5d55a09debda4f29c35502bedbe0",
+   "excerpt": "花紋的帳篷,肉眼比對佈局與互動熱點完全相同)——證實這是全遊戲共用的通用樣板場景,不是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 99,
+   "excerpt_sha1": "3d0ac1042c80d1a38588521666e9eb1f76e17b18",
+   "excerpt": "hub」結構性主張——零例外精確吻合**,是本輪掃描對這個既有推論的第一次 live 交叉驗證",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 100,
+   "excerpt_sha1": "14aa4a5e8fe7c576fdfcdad22459df56eda0d14d",
+   "excerpt": "(先前該推論本身標記為「尚待驗證」)。這 6 章雖然仍是`needs_manual_followup`(選人畫面",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 103,
+   "excerpt_sha1": "163e2b945e63a9a08d4dd569191b3d0b0922fc39",
+   "excerpt": "應該先攻這 6 章的選人邏輯(比破解 camp-map 的圍籬缺口簡單——只需要送指定次數的確認鍵",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 118,
+   "excerpt_sha1": "6ae701d49f4c69fbf8ad998ea832dc87c616a88e",
+   "excerpt": "100% 原樣重現,與保留 13 人的原始版本逐位元組相同,詳見本文件下方「2026-08-28",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 127,
+   "excerpt_sha1": "cad48e53f511e3b0f05116d534dcfd0a663050b1",
+   "excerpt": "- 用`hashlib.md5`對每章`advance_*.png`截圖序列去重,確認 ch01 是**唯一**一個「全部",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 129,
+   "excerpt_sha1": "f043c436f7251964d9099fcbe131cfb7c4ec911f",
+   "excerpt": "(48 步預算內),證實 generic advance 迴圈的按鍵確實送達且畫面確實隨之變化——`0/30`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 140,
+   "excerpt_sha1": "32a6a5b6c024b14b074de524a0e26bce35bee6d1",
+   "excerpt": "`91-worklist.md` UI-VIS-TOWN 條目驗證過是 variant1)驗證doc91 UI-VIS-PREPARATION",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 141,
+   "excerpt_sha1": "05da6a32595f9fce8343cb3d7a672f1274bf013d",
+   "excerpt": "2026-08-25 prepE2 輪已經用真實 ch27 存檔證實可行的序列——`Right`×3(從預設",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 142,
+   "excerpt_sha1": "874d3efd31ecb94557c4044bd94fcb6efc6fdf8c",
+   "excerpt": "selection0/酒店 循環到 selection2/出口)→`Return`(離開確認)→`Return`(「要進入",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 153,
+   "excerpt_sha1": "dd3ffe4a5f288e7ad97761211ae2f065854209b2",
+   "excerpt": "驗證過程中發現 `advance_generic` 逐步迴圈裡呼叫 `read_battle_array_base()` 前",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 170,
+   "excerpt_sha1": "8b941261b31b1ff7b70c340828b89fcb82b1e279",
+   "excerpt": "**驗證:22 個原本卡住的章節(ch02-11/13-22/26)+ ch27 重跑,23/23 全數从",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 172,
+   "excerpt_sha1": "de57a08b0c8da0106721bd47484e4f2c760663dd",
+   "excerpt": "觸發「要進入戰場嗎?」確認框、偵測到戰鬥陣列指標、掃描並標記敵方死亡signature、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 183,
+   "excerpt_sha1": "1c96cd9cebd5eae41789934f003658d144ef6cfe",
+   "excerpt": "純被動輪詢的獨立探針(`campexit_probe3`,ch12)證實:t=0s 時 base 指標 A 只有",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 192,
+   "excerpt_sha1": "aa428495e7fb1e68aa53866d6eaf8a57df37b154",
+   "excerpt": "限制(「敵人掃描/死亡 signature/stride 只針對 ch27 驗證過，未跨章節交叉核",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 194,
+   "excerpt_sha1": "a45dac6eeeebf6493ee14b8256d800479270343e",
+   "excerpt": "驗證時,都**沒有**重現 doc58 續五十七～續六十三人工操作記錄過的 63 個敵人",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 196,
+   "excerpt_sha1": "74da029b8f612d612233bf404c546d690ca05788",
+   "excerpt": "互動步驟,不是單純的「送出確認鍵→等幾秒→End-Turn」。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 198,
+   "excerpt_sha1": "4ca1256febc72eb174c311c6645f3be2206ca0c4",
+   "excerpt": "需要针对每章甚至 ch27 本身重新做一輪真正的即時互動式驗證(而非本輪這種快速",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 214,
+   "excerpt_sha1": "3bf2960afdcd0d394d11c8143e4456b368c6ab40",
+   "excerpt": "所有 23 章的最終章節 byte 前進確認。M5「正常玩法可達性驗證」因此仍不能視為",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 221,
+   "excerpt_sha1": "b28e65fa472d3c0f944e9a92d087f7c2c4903b89",
+   "excerpt": "敵人陣列在 YES 確認後約 5 秒才配置好(之前是過渡性的 1 筆記錄陣列),但同一套",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 223,
+   "excerpt_sha1": "81449d1abdb89570f66ede1a752b0f864924d1ff",
+   "excerpt": "真正放慢步調、每一步都截圖+讀記憶體核對的即時互動式驗證(不能只延長被動",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 224,
+   "excerpt_sha1": "f9fd52c69d407e988f734bd0adafb6d33ece6f72",
+   "excerpt": "sleep),搞清楚「End-Turn 確認鍵送出的時機」與「戰鬥陣列真正就緒的時機」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 233,
+   "excerpt_sha1": "e7ed469e2e09d9fbff1e90d54d5c5d8eaff05579",
+   "excerpt": "章(ch23/24/25/28/29/30)已經結構性跳過了最難的營帳導航,只剩「送指定次數的確認鍵",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 238,
+   "excerpt_sha1": "ace848f9784538ef58d4cf29b1905dceaef39647",
+   "excerpt": "營帳地圖截圖逐位元組相同,其餘章節則是同一套機制的不同美術 skin,證實這是全遊戲共用的",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 248,
+   "excerpt_sha1": "0656adcfcb866f63045875563c13ccf454320989",
+   "excerpt": "Phase 1 驗證(ch02/ch27/以及新解開的章節),確認 mass-kill+End-Turn 核心邏輯真的能",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 255,
+   "excerpt_sha1": "edefb46f84a97d27e649d181137324e096c841b2",
+   "excerpt": "派工單指出一個深刻矛盾:即使 camp-exit 導航已解、敵人已掃描/標記死亡/End-Turn 已送出,**沒有任何一章真的觸發過勝利轉場**,連 doc58 續六十二(這個專案唯一一次人工即時操作到真正勝利+深入結局montage的紀錄)最佳驗證過的 ch27,自動化路徑重跑也從未重現過 47 個敵人。本輪目標:逐行比對本工具實作與續六十二的真實操作序列,找出差異。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 257,
+   "excerpt_sha1": "3aa4c19471708b4c51f7ece83215e1a4603fc099",
+   "excerpt": "**結論:找到 3 個真正的邏輯 bug,全部修復並 live 驗證;修復後 ch27 用全自動路徑(而不是人工逐鍵)真的複製出續六十二 §3 記錄的完整勝利後 montage 場景(13 人隊伍圍站藍色房間+CG 天空島嶼+詩句捲動文字+萊汀角色卡,逐項截圖比對吻合)——這是本專案第一次用全自動化工具(而非人工即時操作)重現這個此前只有續六十二一次成功記錄的結果。但 chapter byte 依",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 261,
+   "excerpt_sha1": "1d3566e589453f81689cd3be9540c21369d291f2",
+   "excerpt": "1. **`attempt_camp_exit()` 的「偵測到戰鬥」判定太早鬆手**:原本邏輯是`read_battle_array_base()`一讀到「看起來合理」的指標就視為「已進戰鬥」,結果即時 log 顯示 ch27 在送出「要進入戰場嗎?YES」確認後,**送出 0 次額外 Return 就宣稱找到戰鬥**——因為出戰人數選人畫面(「出戰人數 X15/剩餘人數 X15」+ roste",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 262,
+   "excerpt_sha1": "ee0a2b579f9d6e1ee8a767b89f7c9b948e3c14a8",
+   "excerpt": "2. **`>=2`敵人記錄仍然不夠,找到第二個假陽性**:live 重現(instance `probe3`,ch27)證實出戰人數選人畫面之後還有一段完整的 BOSS 開場過場(敵方機甲喊話「命令確認,目標位置標定...2秒後動作」→攻擊特效→我方角色慘叫反應→敵方繼續喊話「制御及管理中樞」→鏡頭切到部隊行軍畫面→……),而**戰鬥陣列在這整段過場開始前就已經完整配置好(47~50筆記錄)**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 263,
+   "excerpt_sha1": "c38ae28efba0dcffa150f633b7cf4f40e09d30a3",
+   "excerpt": "3. **`confirm_end_turn()` 漏了續六十二紀錄的第一步「移動游標到空地格」**:原本直接送`Return`開啟指令環,但游標預設停在部隊某個單位身上,`Return`會對該單位做別的操作(live 觀察到 HUD 血量從 823 變成 990,證明選到了不同單位),不會開啟系統選單環。**修復**:先送一次`Up`(live 驗證在 ch27 這個部署佈局下,單一次`Up`就",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 265,
+   "excerpt_sha1": "8fe8b0fb0f4d9f27588cfcf8a2e96ae0a4c9640f",
+   "excerpt": "修復 1+2 用`tools/dosbox_harness.sh`獨立 instance(`winverify`)逐步截圖驗證,修復 3 用另一個獨立 instance(`probe4`)手動重播「移到空地→開環→Down→Enter→YES」全程截圖佐證,最後用**修好的`fd2_chapter_sweep.py`本身**(不是手動操作)重新掃 ch27,log 顯示`attempt_camp_",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 269,
+   "excerpt_sha1": "bc2869a35d3f3e4682d8a3d4c704b02ba26ee62a",
+   "excerpt": "`confirm_end_turn()`確認 YES 之後**不會立即存檔**——會進入續六十二 §3 記錄過的完整勝利後 montage(隊伍對話→2 張全螢幕 CG→詩句捲動文字→逐位角色回顧卡,依加入順序一張一張)。本輪用`probe4` instance 逐步推進,**逐項截圖比對跟續六十二完全吻合**(隊伍圍站場景→天空島嶼CG→詩句文字→萊汀角色卡文字逐字相同)。但推進到**悠妮的角色",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 271,
+   "excerpt_sha1": "b2e2c13fb1d84e452b01e8d1d72542f8ae5b0a47",
+   "excerpt": "### 修復後重新驗證:3 章(ch02/ch12/ch27)全部從「連戰鬥都偵測不到」進步到「HUD 正確偵測、敵人數合理(10/11/50)、mass-kill 正確、End-Turn 正確送出」,但依然卡在勝利後 montage,0 章拿到 `pass`",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 273,
+   "excerpt_sha1": "2882000f92fe7f8ba8f9218fe635d39c5c5e67c3",
+   "excerpt": "| 章節 | 舊 verdict(修復前) | 新 verdict(修復後) | 敵人數(HUD 確認為真戰鬥後) | 備註 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 283,
+   "excerpt_sha1": "69ad3434e874f2c6b3cf6697ac94e6aa107a0133",
+   "excerpt": "M5「正常玩法可達性驗證」依然**沒有**任何一章拿到`pass`,維持不完成。但「mass-kill+End-Turn 快捷法能不能端到端觸發 live 勝利」這個更基礎的問題,已經從「doc98/99 先前只在人工操作(續六十二)成功過一次,自動化工具從未重現」變成「自動化工具本身也能可靠重現」——這對整個`fd2_chapter_sweep.py`方法論的可信度是重要的正面進展,即使還沒轉化",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 289,
+   "excerpt_sha1": "67a8947cd8b017738b68ac35b8c9bbcf8f1e9f3e",
+   "excerpt": "3. 建議挑一個**不含悠妮**的章節(若存在這種章節/roster 組合)重跑本工具,驗證「勝利轉場+完整 montage+chapter byte 前進」在沒有悠妮卡關點干擾時是否能端到端拿到真正的`pass`——這能把「工具本身邏輯正確」與「悠妮卡關點是唯一障礙」這個推論做一次獨立正面驗證,而不只是本輪的間接推論。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 323,
+   "excerpt_sha1": "b1a538a6bfd7552510eccb01029f2f13a50f7fa0",
+   "excerpt": "派工單引用的「三章重新驗證後全部卡在勝利後 montage」出自本文件上一節,對應`.wsl_build/chapter_sweep_v7/`(2026-08-27 11:25-11:36,`9e1557d0`修復後的最新一輪)。本輪重新逐張比對該輪的`post_end_turn.png`/`post_montage_advance.png`(不是重新跑,是回頭核對既有證據),發現三章**並沒有*",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 333,
+   "excerpt_sha1": "b4ca9203f4c788514af26c90340872acd9dee1d8",
+   "excerpt": "`confirm_end_turn()`自己的 docstring 早就承認這一點(「這是章節/佈局相關的座標,不是通解」),但先前沒有一輪用不同章節的真實截圖直接驗證後果。本輪(見上表)第一次直接對照 ch12/ch02 的`post_end_turn.png`,證實**後果就是整個 End-Turn 確認序列在 ch27 以外的章節會走偏**,不會真的打開指令環、選 END、確認 YES——遑",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 337,
+   "excerpt_sha1": "09e49770f75bd4a83aaf313c6c3b8a951b9c9c75",
+   "excerpt": "**沒有修改`fd2_chapter_sweep.py`的存檔建構邏輯**——因為兩種獨立方法都證實它沒有問題,強行「修復」一個不存在的 bug只會混淆之後的除錯。已在`confirm_end_turn()`加上一段長註解記錄本輪的排除結果與正確診斷,防止未來輪次重複懷疑同一個已排除的假說。M5 的整體 verdict 分布**維持不變**(0 pass,`chapter_sweep_v7`的既有",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 339,
+   "excerpt_sha1": "79c426ff02be7d2d777a99c2caa260061a0f9363",
+   "excerpt": "### 下一輪建議(取代派工單原本「驗證 ch02/ch12 win 路由到正常轉場」的目標——那個目標的前提假設已被排除,不再適用)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 341,
+   "excerpt_sha1": "b22a5efa3eeac2d004b5fad38510f36cdcce53d5",
+   "excerpt": "1. **最高投報率:讓`confirm_end_turn()`的游標移動通用化**——不要繼續寫死`Up`,改成對 4 個方向逐一嘗試(送方向鍵→截圖→用 HUD 框「有沒有角色頭像/HP 數字」而不僅是「有沒有 HUD 藍色」做更細的分類,空地格應該只有地形加成數字、沒有頭像跟 HP)找到第一個「確認是空地格」的方向,而不是假設任何單一方向對所有章節都成立。這需要至少 2-3 章的即時互動式校",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 349,
+   "excerpt_sha1": "7c4c8d9f675a5c24137af6bf5bd89241b5c121c4",
+   "excerpt": "派工單目標是解掉上一輪(`branchcheck`)結尾點名的通用化缺口:`confirm_end_turn()`只會送寫死的一次`Up`,只對 ch27 特定部署佈局校準過。**結論:游標移動本身已完全通用化並三章 live 驗證通過**——新的`find_empty_adjacent_tile()`(檢查目前格→依序試`Up`/`Down`/`Left`/`Right`,每次失敗都送反方向鍵復",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 365,
+   "excerpt_sha1": "199600f5e7dad38d37f9baa6bbe33347206de51e",
+   "excerpt": "即使`dialogue_steps`提高到 120、bug 1 也修好了,ch02/ch12/ch27 三章重跑**仍然 3/3 在`find_empty_adjacent_tile()`一開始就讀到`cursor_tile_is_empty()=None`**(HUD 框根本不存在,螢幕在演別的東西)。逐張核對截圖證實三章各自卡在完全不同、但都是**正常的劇情演出**:ch27 是續四十六記錄過",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 367,
+   "excerpt_sha1": "59e6e61b8927c43367fcbe00bbdefe7ca29f8a63",
+   "excerpt": "### 三章最終 live 驗證(`endturngen5`/`endturngen6`,套用全部三項修復後):3/3 乾淨成功",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 377,
+   "excerpt_sha1": "f97532336bdbcf0859e7ea9e977e5120a10d806c",
+   "excerpt": "### 章節 byte 依然沒有前進——但現在能明確證實跟游標定位無關",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 379,
+   "excerpt_sha1": "679cd62404e3a095d5f6a7bc5104a7f41b323b4d",
+   "excerpt": "三章 chapter byte 依舊`1→1`/`11→11`/`26→26`,沒有任何一章拿到`pass`。但`post_end_turn.png`證實三章的 End-Turn 確認序列本身都確實送達且產生了三種不同、各自合理的章節專屬後果(ch27 進真勝利、ch02 回到可操作地圖、ch12 觸發劇情事件)——這代表**游標定位/開環/選 END/確認 YES 這條鏈路本身現在對三章都是可靠",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 383,
+   "excerpt_sha1": "94163b3c29cbee282e585b4908b49b68e62d7952",
+   "excerpt": "M5 仍然沒有任何一章拿到`pass`(未變)。但本輪把`confirm_end_turn()`從「只對 ch27 有效的寫死 hack」**真正變成了通用邏輯**,並在過程中修復了兩個原本會讓任何跨章節驗證都不可信的既有 bug(HUD 誤判、settle 迴圈放任劇情繼續播放)——這些修復讓`fd2_chapter_sweep.py`整體的可信度明顯提升,不只是這次任務範圍內的收穫。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 389,
+   "excerpt_sha1": "f60415f3f7725ca0ea385512a79e00dd053e2e7e",
+   "excerpt": "3. **ch02/ch12 的`post_end_turn.png`各自代表什麼、是否也存在「悠妮式」卡關卡片,值得下一輪針對這兩章的 postbattle 內容單獨深挖**——ch02 回到可行走地圖、ch12 觸發 NPC 對話,都不是 ch27 的「13 人圍站」模式,合理懷疑`table_post`確實依章節路由到不同 handler(與`branchcheck`輪的靜態證據一致),但這",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 392,
+   "excerpt_sha1": "66dcaa9b9243a78418991174fa1f02fe8135e440",
+   "excerpt": "## 2026-08-27 續輪(instance `slowplay`,代號 `slowplay`):測試「快速腳本按鍵跳過真人節奏會滿足的時序依賴」假說——按鍵間隔本身不是關鍵變因,但「完全不送按鍵、被動空等」確實讓畫面自行推進到片尾名單與「THE END」;**使用者確認的既有遊戲設計事實**:這是雙結局機制下 ch27 無天空之鑰分支設計好的終點,不是會 autosave 的中途過場,不應",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 401,
+   "excerpt_sha1": "1e0a16939ac9ef0cae96a38cd47a3f812bf3edbc",
+   "excerpt": "End-Turn 確認完成、勝利轉場出現、以及後續每個畫面轉場前後的節奏。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 403,
+   "excerpt_sha1": "a3da7caac9f2c84ed62b5a1981f5411282d6ea39",
+   "excerpt": "### 使用者確認的既有遊戲設計事實(記錄於此,未來輪次不需要重新質疑)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 416,
+   "excerpt_sha1": "a7271333ab31491edb89137a103f151eb695a94f",
+   "excerpt": "人數選人畫面都沒出現(YES 確認後直接進對白,推測是因為出戰門檻剛好等於",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 421,
+   "excerpt_sha1": "5c54e1a7573350accefde46688a5183455f749e5",
+   "excerpt": "YES 確認後 8+4 秒被動等待,`04_post_yes_B.png`確認正確抵達續六十二記錄的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 427,
+   "excerpt_sha1": "18ca849ce7527c87a4421d541c48129b4fe1b369",
+   "excerpt": "裏……」)——每一句都與 doc58 續六十二/續八十記錄的內容逐字吻合,證實這正是",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 444,
+   "excerpt_sha1": "59bfdf24d1c2f3c647080a69031e8643da748db4",
+   "excerpt": "(`e6d9a35756cddfc2519969b10f039181`)——確認這整段「THE END」序列**沒有**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 457,
+   "excerpt_sha1": "5825b474f241d3d3ca0514ee58aae2c99e765879",
+   "excerpt": "(doc35 §9.20-§9.23 已示範過的方法)去確認,但**不影響**本節其餘觀察結果的",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 466,
+   "excerpt_sha1": "a7c90e77c13d832189318cdb2280f36a225376df",
+   "excerpt": "修復本輪沒有用改寫後的自動化程式碼重新對 ch27 端到端 live 驗證過**(核心",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 467,
+   "excerpt_sha1": "fd29222e75f57ee7d995e93aea5b04dae74d2bd6",
+   "excerpt": "機制是這輪手動操作直接證實的,程式碼是照這個已驗證機制忠實改寫,但改寫後的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 477,
+   "excerpt_sha1": "b5cf6f0fa3bd9eb896c658e10ff029234b4f2c82",
+   "excerpt": "幫助),即使這次沒有機會驗證它在正常章節上的效果;③最重要的是**排除了「用",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 479,
+   "excerpt_sha1": "d6c50d67f7225cc081fd83f2e8e96027443bbf09",
+   "excerpt": "就不會有下一章可以前進,不是測試方法或工具的問題。**下一輪正確的驗證目標**:",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 484,
+   "excerpt_sha1": "c04658e93c43d32230c880b9879c044ba471cb7f",
+   "excerpt": "## 2026-08-27 續輪(instance `midtest`,同一輪的後段):照上一節建議,直接測試中途章節(ch12)——mass-kill+End-Turn 找到真實戰鬥(11 敵)並可靠完成整套確認序列,但**兩輪 End-Turn 之後依然沒有任何視覺勝利轉場、章節 byte 也沒有前進**——這是本工具首次在非 ch27 章節上完整跑完整條鏈路後得到的誠實負面結果,不是新 bu",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 491,
+   "excerpt_sha1": "cafcb5f567fe3d2f7a19b4853eb6f493d5014847",
+   "excerpt": "驗證過的`attempt_camp_exit()`(不是重新手動摸索)。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 496,
+   "excerpt_sha1": "1a63f51e00f7771e0663ad8053d8216b3af93f83",
+   "excerpt": "正確確認進入真實戰鬥,`scan_enemy_slots`找到 11 筆敵方 record",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 515,
+   "excerpt_sha1": "479f655eff9ae7bf52b56e816975301eec2800d3",
+   "excerpt": "### 誠實結論:這不是「另一個悠妮式卡關」,是一個全新、未曾在非 ch27 章節驗證過的生成落差",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 522,
+   "excerpt_sha1": "8ad7f7414a139b3409f8bebe47f929435cbd9e4c",
+   "excerpt": "②`UNIT_STRIDE=0x50`/`+5`死亡offset/`+6`camp offset 這組只對 ch27 live 驗證過",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 527,
+   "excerpt_sha1": "31fd56fec503c71fb81ba767308a6a8ee3ebd05c",
+   "excerpt": "——「戰鬥偵測指標與死亡 signature 常數只對 ch27 驗證過,其他章節未交叉核對」",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 533,
+   "excerpt_sha1": "07cfde92adced9346f4b26d8e58532ff70a683c9",
+   "excerpt": "M5 仍是 0 pass。本輪(依協調端指示,把驗證目標從「ch27 這份必然壞結局的存檔」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 542,
+   "excerpt_sha1": "be16f556e7e455e1ad9294fbf56c18153985f790",
+   "excerpt": "位元組模式)做逐 byte 對照,確認`+5=0x01`對 ch12 的敵方 record 是否真的等同",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 543,
+   "excerpt_sha1": "1826937ef5460df08d08081856e64af08992a40b",
+   "excerpt": "遊戲引擎自己認定的「死亡」,而不是繼續假設 ch27 驗證過的常數放諸四海皆準。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 550,
+   "excerpt_sha1": "9009c06309b63a74e4920577781b57d127d9b3f4",
+   "excerpt": "mass-kill+End-Turn 確認後,章節 byte 完全沒有前進),要求(1)live 核對死亡",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 555,
+   "excerpt_sha1": "e95c3a9bd486d4f8ec67e570d68ba9776065c770",
+   "excerpt": "offset 全部正確無誤——問題完全出在`confirm_end_turn()`確認 YES 之後只",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 557,
+   "excerpt_sha1": "a60a4ec1d69a3f57f6416bd6fa4936047023c426",
+   "excerpt": "live 測試證實**需要 1.8~8 秒才會從 0 翻成 2(勝利)**,舊版 2 秒的等待窗口",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 561,
+   "excerpt_sha1": "fae7e5b175cf6de680f47959d5c6a34896c9113d",
+   "excerpt": "第一次證實 ch27 的 mass-kill+End-Turn 機制能泛化到非 ch27 的中途章節。**但",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 581,
+   "excerpt_sha1": "8cf3c386825d011a2198bd104ff3b8c4b4516baa",
+   "excerpt": "`midtest`輪的數字完全吻合(證實舊輪的敵人偵測本身沒有錯)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 584,
+   "excerpt_sha1": "0ca54beea1bc5e2099e96d9a161a020ad4f3ac61",
+   "excerpt": "(112/117/132…,不是合法 camp byte),證實陣列邊界就在 25,不是掃描沒掃完。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 632,
+   "excerpt_sha1": "0203a9173c1d1ca439fbd550d8e8cbbb91fec28a",
+   "excerpt": "`ENGINE_WIN_POLL_MAX_S=15.0`,留了比實測 8 秒更寬裕的緩衝),取代舊版",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 640,
+   "excerpt_sha1": "8cce26f4917399668ad8608c67d3858493956b08",
+   "excerpt": "在確認勝利未觸發時重新掃描陣列,只對「camp==0 且死亡位仍是 0(真正還",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 648,
+   "excerpt_sha1": "a4f244355b863b76ab01ef97910e07cb4066d833",
+   "excerpt": "停止,可能漏掉更後面的敵人),雖然最終證實 ch02 本身沒有這個 gap",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 650,
+   "excerpt_sha1": "4418ac9b6aef7761e9ab521aab92cf1583c6b5c3",
+   "excerpt": "通用性缺口,修正後不再依賴「敵人陣列連續無空隙」這個未經驗證的假設。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 651,
+   "excerpt_sha1": "ce08a052301bfcdb39c9f50f878bef8397940198",
+   "excerpt": "4. **新增`POST_WIN_DISK_POLL_MAX_S=60.0`**:引擎層級勝利確認後,不再只",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 661,
+   "excerpt_sha1": "1a386c08a424cc5ad8cd512907910c30952f3a2d",
+   "excerpt": "fd2harness ls`/`ps aux | grep dosbox`確認乾淨:",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 711,
+   "excerpt_sha1": "41d13eee17d07b2cc4f3b88360d50cd7b7be8cdf",
+   "excerpt": "確認序列對這幾章的部署佈局可能沒有真的送達(`find_empty_adjacent_tile`",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 730,
+   "excerpt_sha1": "69e99a1658108b630671e144dba669da8631067a",
+   "excerpt": "具體、獨立、範圍分明的子問題**:①9/15 已證實泛化成功(引擎層級),6/15",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 743,
+   "excerpt_sha1": "737a597e32efb48750fa7b982a44c51879b435ee",
+   "excerpt": "3.7-3.8 秒就翻盤的 D 預設 handler,適合當作乾淨測試對象),在確認YES",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 762,
+   "excerpt_sha1": "6a6e964120541cf982cf10b2c67bcaad9ee23f4e",
+   "excerpt": "本專案一貫做法(live 直接量測)驗證假說本身是否成立,而不是先斬後奏套用一個未經驗證、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 782,
+   "excerpt_sha1": "b37d01dd7bf4bcb4b7bbe37dd590cddab2c34317",
+   "excerpt": "signature**——逐筆核對確認 idx5-10(camp=1 的疑似村民)的 `+5` byte 在 mass-kill",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 783,
+   "excerpt_sha1": "f602bc64042a80cec14407ee1a6a740e469c6005",
+   "excerpt": "後、以及完整跑完 `confirm_end_turn()`(含開環/END/YES確認)之後,**全程維持",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 787,
+   "excerpt_sha1": "858a89afb54d952d59860111295b218fbe56af5b",
+   "excerpt": "`+5=0x01`(bit0=1,死亡),完整跑完 End-Turn 確認序列後**再次讀回依然全部",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 793,
+   "excerpt_sha1": "3a51bb21bc1d641a578848122846dbab79821bd1",
+   "excerpt": "在**掃描邊界完整覆蓋、10 筆敵人全數確認死亡且持久、村民毫髮無傷**的前提下,這個結果",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 806,
+   "excerpt_sha1": "4ebfa60176bcc33f729637ba2450b45cc9bf925f",
+   "excerpt": "live 測試同一章節,結果卻是**乾淨的、持久的死亡確認**,一次都沒重現「重新掃描後讀回",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 812,
+   "excerpt_sha1": "a0894fd80d675f5e333396c8b1268b909fcace6f",
+   "excerpt": "(陣列一直重新出現存活敵人)」這個分類本輪沒有被獨立驗證支持,應該視為未定案,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 825,
+   "excerpt_sha1": "6fb1e48c5ad2600907cb7ef6e07d792723c822dc",
+   "excerpt": "多引入一個**尚未驗證過的 unit-record HP/ATK/DEF offset**(這個位置這個專案目前",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 826,
+   "excerpt_sha1": "30c938e9961a62803a562a39d57456cf78fad413",
+   "excerpt": "沒有已證實的座標,盲目寫入有損毀存檔/record 佈局的風險)。基於此,本輪**不採用**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 837,
+   "excerpt_sha1": "5d21948c9cb6e53100f56861b972ada8116daea5",
+   "excerpt": "在一場真實戰鑙中實際被呼叫的頻率/時機」完全吻合。**下一輪最高投報率**:在確認 YES",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 843,
+   "excerpt_sha1": "61b74e2151ab222e6b1bb2344b422e601523c7e9",
+   "excerpt": "但鑑於 ch02/ch03 兩個獨立樣本已經一致收斂到同一個矛盾,合理但**未獨立驗證**地推測",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 846,
+   "excerpt_sha1": "df71fee5b03f7696514e01ff10c30f4b79412536",
+   "excerpt": "## 2026-08-27 續輪(代號 `r2`):掃描尚未測過的 7 章(ch17-22、ch26,ch27/29/30 依既有事實#1跳過)——2 章新拿到引擎層級勝利、1 章加入「卡在0」的謎團俱樂部(共7章)、3 章找到並確認一個全新、獨立的卡點:「出戰人數選人門檻超過可選角色數,永遠湊不滿」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 863,
+   "excerpt_sha1": "72ccc983af667e6cec7d81b9df15e6b52263a6a3",
+   "excerpt": "| ch21 | needs_manual_followup | 見下「新卡點A」(已截圖確認) | 248.7 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 864,
+   "excerpt_sha1": "3f31306f996546bc4a9c2358d31583c96079655a",
+   "excerpt": "| ch22 | needs_manual_followup | 見下「新卡點A」(已截圖確認) | 246.0 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 865,
+   "excerpt_sha1": "020c6fbf8c8bd971df769c033720b95cb98de1c9",
+   "excerpt": "| ch26 | needs_manual_followup | 見下「新卡點A」(已截圖確認) | 249.5 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 868,
+   "excerpt_sha1": "776052865a467f0e5eeab07383de40a0657668dc",
+   "excerpt": "子類別從 9 章擴大到 11 章;ch20 加入 ch02/03/04/07/11/15,讓「敵人確認全滅但",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 871,
+   "excerpt_sha1": "e7c5e17e5577e9e0f5934392dc08db166ca05496",
+   "excerpt": "### 新卡點 A(ch21/22/26,已用截圖逐一核對確認同一現象):出戰人數選人門檻(15)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 890,
+   "excerpt_sha1": "59d6f3585670c0581981e8a9d9f915fe9b0641bc",
+   "excerpt": "截圖驗證這個推論,誠實列為待證,但高度合理,值得下一輪優先核對。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 908,
+   "excerpt_sha1": "71f79adfa9add36cbb3f9abf942b3679288665a1",
+   "excerpt": "站位動畫,陣列指標confirmed 要更晚才配置(需要更多 taps,>120預算)、還是(c)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 921,
+   "excerpt_sha1": "e5ad10441c0cb53aca0979a5333e9bc1d77f64f9",
+   "excerpt": "- **引擎層級勝利確認**:11 章(ch05/06/08/09/10/12/13/14/16 + 本輪新增 ch17/18)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 925,
+   "excerpt_sha1": "fff51e95119e83be716f2d26d30d6960ec93ec52",
+   "excerpt": "ch07/11/15 未在`diag2`輪或本輪重新深度驗證,是基於原始`ch12diag`輪的相同",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 927,
+   "excerpt_sha1": "a8240e2d6032ff84a8be5d96859c555561ae1e61",
+   "excerpt": "- **出戰人數選人門檻結構性湊不滿(新卡點A)**:至少 3 章確認(ch21/22/26),",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 928,
+   "excerpt_sha1": "0605148a980bfa9becc4e1112b811e68a70a10e0",
+   "excerpt": "高度疑似再加 6 章(ch23/24/25/28/29/30,未重新驗證)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 948,
+   "excerpt_sha1": "aa066f61be96b8a10f351ff3044ea11b84a7060b",
+   "excerpt": "4. ch07/11/15 建議至少各花一輪`diag2`同款深度診斷驗證,確認真的與 ch02/03/04/20",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 951,
+   "excerpt_sha1": "c70614b70485c7ea82f271830fec77480366d80e",
+   "excerpt": "## 2026-08-27 續輪(代號 `cursorlive`):新卡點A根因已找到——不是「synthetic不可選」,是一個真實的「本章約定必須出場」劇情護衛角色驗證,且與 ch27 rostertest 的表面矛盾已釐清",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 957,
+   "excerpt_sha1": "ebf372f35572a9b899a960c471cb9f56964f1768",
+   "excerpt": "「確定要進入戰場嗎?」最終確認;但同一天稍晚的`r2`輪在 ch21/22/26 上用同一套",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 966,
+   "excerpt_sha1": "89c53f3cd26bdd7f6c9813770facd99b74efef59",
+   "excerpt": "**第一步,先確認`fd2_chapter_sweep.py`的呼叫方式本身**:逐讀",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 967,
+   "excerpt_sha1": "fc41918e82e91e61635c66f82536b83baa9dacac",
+   "excerpt": "`prepare_chapter_save()`/`estimate_roster_size()`,確認它呼叫",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 976,
+   "excerpt_sha1": "f2865b39e84c1f25c2d8cf794087f82ceabab6c8",
+   "excerpt": "20),LOAD→跳過城鎮 hub 直接進帳篷營地→`Right`×3 切到「出口」→`Return`確認→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 977,
+   "excerpt_sha1": "9f7a2a80a119be5ae54b1859c7649b73f79cad10",
+   "excerpt": "`Return`確認「要進入戰場嗎?」YES→進選人畫面。**這時「出戰人數 X15/剩餘人數",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 988,
+   "excerpt_sha1": "ba3a151b5e8e96be469427064b3df22dbdf79b3e",
+   "excerpt": "**第三步,懷疑是輸入時序假象,重跑一次確認可重現性**:退回營地、重新走一次",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 992,
+   "excerpt_sha1": "c6c2e262f1e630bbf9ac6fe5eef86cc2b7d7e8ea",
+   "excerpt": "！**」(截圖見`.wsl_build/cursor21_retry_after15.png`,放大確認見",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 995,
+   "excerpt_sha1": "bfb0522aca4e3445913ff3b5ef5a531c6c03af29",
+   "excerpt": "**確認時驗證失敗**,而不是選取時的直接拒絕。第一次「按第13個Return直接跳回營地」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 996,
+   "excerpt_sha1": "de4a6148491ecbeac659de6df4983d50c9e5b1b1",
+   "excerpt": "極可能是同一個「必須出場」驗證失敗的另一種觸發時機(該次可能有輸入重複註冊,見",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1001,
+   "excerpt_sha1": "8e576d9776793a8750b7f61a88c6154da6c69a71",
+   "excerpt": "找出 ch21 真正的護衛角色並驗證「補上正確角色id是否解開這道門檻」**:doc28 第",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1007,
+   "excerpt_sha1": "55c0234fcfd364f71cacc075c205e48253d98f87",
+   "excerpt": "整套流程,這次**單步截圖確認格12(羅蘭)、格13(希爾法)都確實被選中變彩色**",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1012,
+   "excerpt_sha1": "6966ed356a53e491686e620c93a8e315019e30f5",
+   "excerpt": "### 結論:根因是一個真實的、比預期更深的「必須出場」驗證,不是id缺席",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1016,
+   "excerpt_sha1": "e498e65bbd768a0e79204900a20de6c020736a5f",
+   "excerpt": "選人畫面上被選中(彩色、剩餘人數正確遞減),**確認時驗證依然失敗**。這代表",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1029,
+   "excerpt_sha1": "620c1e0bcfd37f17ebaab29b50f9a933bcd27915",
+   "excerpt": "數值HP782/MP817,證實同一角色同一存檔)。這代表rostertest輪選滿19人成功走到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1030,
+   "excerpt_sha1": "c6ba19ec7d95c854ca517bcf8f05b84cf7343de4",
+   "excerpt": "最終確認,**從頭到尾都不需要靠synthetic記錄滿足「必須出場」門檻**——悠妮本來",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1031,
+   "excerpt_sha1": "a057b64a72b2535ac685d52381c5a100dc948667",
+   "excerpt": "就是真的。rostertest輪的成功不是「synthetic角色能通過必須出場驗證」的反例,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1041,
+   "excerpt_sha1": "0c2b842e640f545e8d0a949f3b55923a9754f15f",
+   "excerpt": "| ch21(20) | 羅蘭23、希爾法24 | 皆非 | **卡住**(本輪已實機確認) |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1054,
+   "excerpt_sha1": "a019687f7a2a6be5c46c21a9d424380ec23e3f01",
+   "excerpt": "已live驗證的結構性限制,不是`fd2_chapter_sweep.py`呼叫方式的bug**——",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1055,
+   "excerpt_sha1": "ecf5318ebc6fa3439ee79c4a21d24d97304d5a25",
+   "excerpt": "`prepare_chapter_save()`對`append_roster_members()`的呼叫已逐位元組核對與",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1060,
+   "excerpt_sha1": "07b5f97d1e8f3d248dc1034e1b91d7b188299e10",
+   "excerpt": "瓶頸,現在從「原因不明的選人卡點」精確縮小成「必須出場驗證讀取roster陣列id",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1071,
+   "excerpt_sha1": "2ef48a0a4214ef121aba8d78bbf9e645b24de73f",
+   "excerpt": "+`cursor21_zoom_msg_nn.png`(「本章約定必須出場」訊息放大確認)→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1073,
+   "excerpt_sha1": "2244eeefef0cdffd5437372d30cf6dfe708dfb3f",
+   "excerpt": "`c21b_sel_step11..15.png`(明確包含羅蘭/希爾法選取確認,仍然卡住)。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1083,
+   "excerpt_sha1": "c28a345c5816c7ee65550cdacab9c5674622df50",
+   "excerpt": "逐字):**「第四回合己方結束時，敵方才會開始第一波攻擊」**,並提出「敵人存在但",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1095,
+   "excerpt_sha1": "78efd3573f6d775094f721a3b300bc2bcaf8fd4e",
+   "excerpt": "postbattle montage→disk poll),驗證修復是否讓 ch19 真正拿到戰鬥偵測與完整流程。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1101,
+   "excerpt_sha1": "6c012436f275af32c6fcd102a2b96c3e9239a3e5",
+   "excerpt": "游標、敵方單位(後續live驗證確認49隻)已在畫面上、甚至**系統指令環(攻擊/道具/",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1110,
+   "excerpt_sha1": "5ced2b6e6caeb1673bf90d3b423d7ce57c5615f3",
+   "excerpt": "dialogue()`)對照組:ch27自己已live確認的真正戰鬥偵測畫面(`chapter_sweep_v7/",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1116,
+   "excerpt_sha1": "46a714115cffc498db56f58aa40c19461ae3d6af",
+   "excerpt": "系統性誤判為「還是對話框」**:ch19確認為真實戰鬥的畫面在該橫條測得變異數僅",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1150,
+   "excerpt_sha1": "d0d1eaf6ccb43bb7e7f525d9cafd7bec80bee5c3",
+   "excerpt": "tap30/50/70/95/121戰鬥畫面)重新驗證:全部符合預期(唯一的例外是陣營地圖上",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1155,
+   "excerpt_sha1": "26aa51ed80fd0392794791c47dee2166f549f900",
+   "excerpt": "### Live驗證(instance `ch19diag`,修復後端到端重跑)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1165,
+   "excerpt_sha1": "35114e56c778db9b49fbd8f2682d484ab72632c2",
+   "excerpt": "空地格、開環、END、YES,重掃確認49格全數持久死亡(無殘留/無援軍波)。但",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1182,
+   "excerpt_sha1": "0b8a2652138af36fef39a4300606e901672fa29c",
+   "excerpt": "**協調端提出的「巴拿羅西亞需求」新假說,誠實記錄為未驗證但值得追蹤**:透過",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1192,
+   "excerpt_sha1": "93b2d8d6ca0bfdc8febef2815cafa0cfc1459876",
+   "excerpt": "的通用根因)。**本輪未做live驗證去區分這兩種可能**(時間預算優先給了偵測bug",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1193,
+   "excerpt_sha1": "33e333358a0a48bdd626d7a4a95a8fba3d6e49dc",
+   "excerpt": "本身的修復與確認)——下一輪如果要繼續深挖ch19,建議直接測試「先送6輪空白",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1199,
+   "excerpt_sha1": "71fc5d2e6c52706647fd3c710d556f8c088a8a40",
+   "excerpt": "`02_post_load.png`→`campexit_000_cycle.png..009_dialogue04.png`(9-tap戰鬥確認)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1212,
+   "excerpt_sha1": "065e3d1bd4c4c4ab9cf47e1bc15d3735b50f6807",
+   "excerpt": "延續 `ch19diag` 輪留下的具體、未驗證假說:先 WebFetch 核對",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1224,
+   "excerpt_sha1": "c2bbd07c4f75d02ea15fe94cc1902c2cc2d7c9ce",
+   "excerpt": "`+6`(camp)兩個 unit record offset 是live驗證過的,HP/ATK/DEF 沒有任何",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1225,
+   "excerpt_sha1": "cf5e6f9376694acadc19043dba84daf179d3c53a",
+   "excerpt": "已證實座標,盲寫有損毀record佈局的風險且對已知瓶頸無幫助(diag2 原文:",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1229,
+   "excerpt_sha1": "ac122f9723ec3c2dba3ac344816ac27742d506f7",
+   "excerpt": "enemy_addrs 就完全不做mass-kill,純粹跑 Enter開環→Down(END)→Enter確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1230,
+   "excerpt_sha1": "432d87566452c97ac43555e8a245f5baf864f948",
+   "excerpt": "→Enter(YES) 這套已驗證的 End-Turn shortcut)連續 6 次讓 6 個真實回合",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1233,
+   "excerpt_sha1": "b00b02c9a5dd55b4c9a67a34eed830f7ca2cd966",
+   "excerpt": "「單純多等幾回合」這個變因,不靠任何未驗證的HP灌水)。每個回合結束後都",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1258,
+   "excerpt_sha1": "925782215f0212c7643b2bfa83b6cd60bacd9537",
+   "excerpt": "- **turn1 到 turn6,每回合結束後**:dump 結果**逐字元完全相同**——",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1266,
+   "excerpt_sha1": "298860edf9faf8febd4a5aea73437ae249629e12",
+   "excerpt": "驗證了本輪拒絕 standing rule 的判斷是對的:不套用也不會撞到存活問題。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1268,
+   "excerpt_sha1": "2d6c13263f19eeb252f8735c3164e657fc2433e2",
+   "excerpt": "slots()`重新確認 49 個 camp==0 記錄——與 turn0 baseline **完全相同的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1274,
+   "excerpt_sha1": "72140bc03ef5c53ff748a9640b8afd7722c9d5da",
+   "excerpt": "ch19 這個章節**史上第一次**達成引擎層級勝利確認,不需要任何額外的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1285,
+   "excerpt_sha1": "0c9ce4611b879491cb7aef9f95874fb927be375a",
+   "excerpt": "確認索爾全程存活、非死亡狀態,與陣列dump的「無死亡」結論一致。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1288,
+   "excerpt_sha1": "f580438875f7e1ea53d81ed690a85e9a64f237a3",
+   "excerpt": "confirmed 但磁碟從未寫入」章節(doc25 §9.1 尚未解開的 SAV writer gate",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1291,
+   "excerpt_sha1": "91697128ab3b6f67147ca90aa1d8b500683ef4c3",
+   "excerpt": "### 誠實結論:「等待夠久再mass-kill」這件事本身直接、可重現地確認有效,但「巴拿羅西亞本人真的加入了roster」這個具體機制**沒有被觀測到**——兩者是不同的宣稱,不能混為一談",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1300,
+   "excerpt_sha1": "fbee02493a3f8ac6a3e7ab6d5de397f1ebeb8049",
+   "excerpt": "**未確認(誠實記錄,不誇大)**:派工單提出的具體機制——「巴拿羅西亞加入",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1314,
+   "excerpt_sha1": "7bf57ad58f98400dfa574da48d7a50dcada5de99",
+   "excerpt": "已證實的該欄位座標)。如果巴拿羅西亞的加入機制是「啟用一筆本來就已經",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1337,
+   "excerpt_sha1": "4e1a01d1a4619e67d54fafef3fe47dbdb5243629",
+   "excerpt": "的6回合流程並逐格比對身份而不只是camp/acted。③本輪完全沒有驗證第10",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1340,
+   "excerpt_sha1": "eb5ab7e6911d017a5c087d3e64bb71bf820e8a5e",
+   "excerpt": "分批出現——這點也值得下一輪獨立確認,不要想當然爾套用到其他章節。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1343,
+   "excerpt_sha1": "e05fb257a46bcf436878ce6549e0de65bdc114bf",
+   "excerpt": "## 2026-08-27 續輪(代號 `ch2killgen`):把 ch19 的「等N回合再mass-kill」turn-count-gate假說泛化測試到剩餘7章「卡在0」俱樂部——ch03/ch15**確認**同機制生效,ch04/ch20 進行中,ch07/ch11 待測(不預期turn-wait生效)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1357,
+   "excerpt_sha1": "1c6b1b302efd152c64cd6413f7534f92009d5bf8",
+   "excerpt": "逃跑**——猜測等 4 回合;推理(未驗證):`mass_kill_enemies()`是直接",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1377,
+   "excerpt_sha1": "2ba6bbe7dd8fdf47f63c5b8037a4dfbf876d23af",
+   "excerpt": "(harness 2-instance並行已多輪驗證安全)。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1379,
+   "excerpt_sha1": "1a7367b1060b2dbc095bec56d9afccd30dbb8dce",
+   "excerpt": "### 結果:ch03、ch15 **確認**——turn-wait後第一次mass-kill就直接拿到",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1389,
+   "excerpt_sha1": "05ac04c96d0b6670e8a4dfe87a74c7e4bf05b4a6",
+   "excerpt": "(2.0s內),`sweep_chapter`確認`kill-cycle 1/4`即成功。全程784.7秒。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1408,
+   "excerpt_sha1": "bef78725db63da58f6f3ec50cb9e53c60daf52ee",
+   "excerpt": "「等待夠久再mass-kill」這個turn-count-gate修法**確認可以泛化**,不是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1418,
+   "excerpt_sha1": "fd892891571835f3cfa5a1f76cddb1b30c507d99",
+   "excerpt": "### ch04、ch20 補充結果:同樣在turn-wait後第一個kill-cycle就確認engine win,兩個章節專屬假說都獲得間接支持",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1444,
+   "excerpt_sha1": "4f6c48eed656ffadb679d0c759d849f8b11ba9af",
+   "excerpt": "(character-id座標本項目至今都沒有已證實座標),所以嚴格來說沒有直接",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1445,
+   "excerpt_sha1": "7296504f6bb7968d1424883607abed2d9c38370c",
+   "excerpt": "證實「這58筆確實包含沼澤怪物」或「精靈確實存在於陣列裡但camp值不是0」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1459,
+   "excerpt_sha1": "4fa5d498cdd1af2c0fa12ca6a48b1102b8ed02c2",
+   "excerpt": "畫面停滯——這個症狀（首次嘗試就在最早的Right×3→Return確認這一步失敗）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1466,
+   "excerpt_sha1": "21998044a4d635c7a937a346218258d48b51f60f",
+   "excerpt": "的既有邏輯**重新掃描**確認這25筆記錄**全部依然帶有死亡signature**(沒有",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1487,
+   "excerpt_sha1": "ae3e40fe31d64dca0fe4aa842bab11b94c813f00",
+   "excerpt": "根本不會透過標準的「出戰口出戰」流程觸發。**獨立驗證性補測**:寫一支",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1490,
+   "excerpt_sha1": "a0f0834e88e7cfe8a95a7ae07e6ae477acf79a38",
+   "excerpt": "taps就找到戰鬥,25個敵人,遠低於120 taps的原始預算**。這證實第一次",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1500,
+   "excerpt_sha1": "5036f25a66e681c092d0965615bde70cc250e8f4",
+   "excerpt": "迴圈本身就順帶讓某個單位跨過了觸發位置,兩者都未被本輪直接證實),",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1504,
+   "excerpt_sha1": "1672418cdfff5db2a47c347e52077548f355cff0",
+   "excerpt": "純粹的回合等待迴圈解開」**沒有得到解釋**——最可能的推測(未證實)是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1507,
+   "excerpt_sha1": "1bdfbb7803a5f0c775095b69cfc6722da7f940fe",
+   "excerpt": "的觸發位置,但本輪沒有去讀取游標的座標欄位(未知座標)驗證這個推測,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1510,
+   "excerpt_sha1": "b7989a8dfb15f71306f96fa59362f8acbdcae354",
+   "excerpt": "### 本輪(`ch2killgen`)最終小結:6章目標裡5章確認、1章確認排除turn-wait假說",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1514,
+   "excerpt_sha1": "672d774b53231d73ab2f3368ec16e9de43ed5929",
+   "excerpt": "| ch03 | 3 | **engine win確認** | 8 | 是 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1515,
+   "excerpt_sha1": "837577033b9d27b5fbf14938baa1404a46e9a278",
+   "excerpt": "| ch04 | 4 | **engine win確認** | 17 | 是 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1516,
+   "excerpt_sha1": "0f6c67a57e14462bf2fe5338cb9d4c98c301313a",
+   "excerpt": "| ch07 | 3(意外有效) | **engine win確認** | 25 | 是 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1518,
+   "excerpt_sha1": "f2285439a88e83920376755d6b9577acd0515a5c",
+   "excerpt": "| ch15 | 9 | **engine win確認** | 51 | 是 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1519,
+   "excerpt_sha1": "df30c362330803687d7ee0cb2fe7c1d689324fd1",
+   "excerpt": "| ch20 | 4 | **engine win確認** | 58 | 是 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1522,
+   "excerpt_sha1": "76abf681a020301e48bac44b46d5ab228ffd81f0",
+   "excerpt": "0俱樂部」的章節拿到確認的engine-level win——原本8章俱樂部",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1524,
+   "excerpt_sha1": "f0148839be83b13de913d17eec5d7293db814846",
+   "excerpt": "仍未解),剩下6章全部確認。所有確認的章節磁碟存檔位元組依然沒有前進",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1531,
+   "excerpt_sha1": "730aec8a506664460937782dc9fe5fb262eb44c8",
+   "excerpt": "②ch07——如果有空,讀取/推導游標座標欄位,驗證「turn-wait期間的游標",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1545,
+   "excerpt_sha1": "9fee83b15c4578fdf76c17d41ad0ebf9000b74d4",
+   "excerpt": "=玩家可見ch11)專屬handler,判斷它是不是跟已確認可用章節的handler結構不同;若相同,則往",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1570,
+   "excerpt_sha1": "8a0c5b5156471ebce966c25ec00b0e843c5f4b74",
+   "excerpt": "bytes明顯不是unit record結構(不符k=13..37那25筆真敵人的規律pattern)——確認是雜訊",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1578,
+   "excerpt_sha1": "d131bd2dd9c423f125800166d59f8fb0e9ddd86b",
+   "excerpt": "本輪能直接用記憶體讀值驗證的4個「上一層」假說——**handler本身不同**、**掃描漏看真敵人**、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1590,
+   "excerpt_sha1": "0246f3c81fffd3378c22a533bfb804769add4f77",
+   "excerpt": "**下一輪建議**(取代上一輪建議①,已完成):在確認「End Turn→YES」之前,對native",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1613,
+   "excerpt_sha1": "c1d5c7f100cedbff7d125390c92d796b18fb677d",
+   "excerpt": "YES確認鍵,兩章在完全相同時間點(~1.1秒)、完全相同訊息(`Memory breakpoint : 0170:1BC5BE",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1618,
+   "excerpt_sha1": "16a885b9fb0365baff4312f20d382fe431564bf7",
+   "excerpt": "就開始錄,涵蓋開環→選END→確認END→Yes/No→確認YES整段,YES確認完後手動暫停讀取",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1626,
+   "excerpt_sha1": "102a68f400258a031e3e920731a62e4b6d723386",
+   "excerpt": "同一harness instance、同一腳本、幾乎逐秒對齊的操作時間戳(`t=0.8s`開環/`t≈2.3s`確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1627,
+   "excerpt_sha1": "ed681f7c28c2810a75885b04eb8135c975c7f0d2",
+   "excerpt": "END/`t≈2.5s`確認YES),ch03命中1次、ch11命中0次——**這是本專案在這個謎團上第一次拿到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1641,
+   "excerpt_sha1": "602f5fdf2659e8177f5361020ba1e07e75ba7eda",
+   "excerpt": "已知map10寶箱slot寫入`0x01`並readback驗證成功、撐過3回合turn-wait未被重置,重跑完整",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1697,
+   "excerpt_sha1": "86e6a1e0b2f0f820ff57907cbd1c909348713127",
+   "excerpt": "測試:兩章在確認END之前都是`0x1c`(基準相同),但**確認YES之後**,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1714,
+   "excerpt_sha1": "a48368bf3c1486fefb9d1b7b2399dd56bbf32eb5",
+   "excerpt": "才能回答,不在本輪範圍。有根據的下一輪假說(未驗證):ch11 mass-kill後",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1722,
+   "excerpt_sha1": "5df21f745efcc3db599f09c7b98ec53ac99edea6",
+   "excerpt": "**沒有改動核心邏輯**——本輪是純診斷輪,沒有找到一個可驗證、可安全實作",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1736,
+   "excerpt_sha1": "6536e7e16a6bbdd213cb4a281319c76dd18d101a",
+   "excerpt": "回合走完」更簡單的work-around)。相對於本專案整體已從1/30章確認推進到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1801,
+   "excerpt_sha1": "afb91a00f976ee015c296f6db9d8f74a2f46b937",
+   "excerpt": "未同步dump單位陣列確認`(18,10)`當下是什麼(空地/已行動我方單位/其他)。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1806,
+   "excerpt_sha1": "b28bb3f628bb8cd011a5245f3a413fae95682805",
+   "excerpt": "同一個值`0x50`」——本輪未能重現(PRE-UNSTICK讀到`0x1c`),佐證這是輸入",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1828,
+   "excerpt_sha1": "2dbeae180b6e05f7505d2bf9aaf110dd59054229",
+   "excerpt": "產生一個已驗證、可安全實作的runtime work-around。`KNOWN_MIN_TURNS_",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1861,
+   "excerpt_sha1": "f3881c4fae60fee513c29c702fcb4f4ea77a528b",
+   "excerpt": "(WIN)**——ch11專屬診斷7輪以來第一次拿到engine-level win確認,而且只真正開了**一個**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1866,
+   "excerpt_sha1": "ee8a32457acf6a286f571a4d5e3d11ee6096c18d",
+   "excerpt": "逐步screenshot佐證(選人→移動→指令環→「發現寶箱，要打開嗎？」YES/NO對話框→",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1885,
+   "excerpt_sha1": "53bd698363f004c0c07b69cf283d76ebeeeebb1a",
+   "excerpt": "(至少)一個寶箱,且必須透過真正的開箱互動——尚未證實是否每個寶箱都能觸發、是否",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1886,
+   "excerpt_sha1": "8161bb616a3f64ec0b527903089a74f42e23952a",
+   "excerpt": "必須是特定寶箱、或1個是否為精確的最低需求數,不宣稱已窮盡證實「ch11需要恰好N個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1892,
+   "excerpt_sha1": "e4a1b161c4dfae07e50531dd01c833fa66e27217",
+   "excerpt": "SAV writer gate完全一致(其餘6章engine-level win確認後同樣沒有寫入磁碟),不是本輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1898,
+   "excerpt_sha1": "120303486456fe1d111b9555a334fc9785a4541c",
+   "excerpt": "與勝利無關」。M5「正常玩法可達性驗證」依然是0 pass(SAV writer gate這個影響全部章節",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1920,
+   "excerpt_sha1": "3cde6eb38926d71a540f2a1dcf8f2ce918d8d8b3",
+   "excerpt": "live驗證過程中,意外用一個決定性實驗把①的對照組再往前推一步,**推翻了round7",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1925,
+   "excerpt_sha1": "fde9bbe063c490abcde537ae65ff567f2de86e16",
+   "excerpt": "新獨立harness instance,逐字複製round7`real_open5.py`的setup(escape-cycle",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1930,
+   "excerpt_sha1": "e17e1fc4a1a03a345f40ad36d2307ae2bf89ea3f",
+   "excerpt": "**結果**:25個敵人全部確認死亡(1個kill-cycle即rescan到0隻存活),但",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1941,
+   "excerpt_sha1": "dd3aca6fa060a2176ad5dfeae1f0181fe6f795da",
+   "excerpt": "(選人→移動→確認)必然包含至少一次「游標停在活著單位上按Enter」,這代表",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1942,
+   "excerpt_sha1": "009742eeac5f0cf2d6288687de2b56833f8f6f58",
+   "excerpt": "round7的win其實有兩個從未拆開驗證過的候選因:「開了寶箱」vs「操作了一個",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1945,
+   "excerpt_sha1": "12ba8a86eda642d76786f05f90ab538299a7f47d",
+   "excerpt": "用`move_only_test.py`複製round7選人(ally k=8,(16,13))→選取→移動→確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1947,
+   "excerpt_sha1": "a4e12df68592003b229747f796398afd3efd8de7",
+   "excerpt": "確認不在map10已知12個寶箱座標內,全程沒有觸發也不可能觸發任何寶箱對話框),",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1951,
+   "excerpt_sha1": "429ee203be54676dc608d205c999539c6fc69c2e",
+   "excerpt": "12格旗標全程維持`[0,...,0]`(確認寶箱從未被觸碰)。**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1968,
+   "excerpt_sha1": "7585f580a5f77cabab4724db49c822e09f76e0d7",
+   "excerpt": "(16,13)未變,證實移動未真正發生),`chest_block_diffs`全程無變化這個結果",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1970,
+   "excerpt_sha1": "c696193360234a75898aa639506e9bc01403fd2d",
+   "excerpt": "Part 2已證明寶箱不是勝負必要條件,判斷不值得再投入第3次live嘗試——doc11",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1981,
+   "excerpt_sha1": "6dc63658eba424f46327b1c7419a9636c3debd89",
+   "excerpt": "**修法已接回`sweep_chapter()`主流程並end-to-end驗證通過**:新增",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1987,
+   "excerpt_sha1": "a09073a02460bf3c33cda3609806452bbd304992",
+   "excerpt": "ch03/04/07/15/19/20/27等其餘已確認engine-level win章節完全相同的模式",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 1996,
+   "excerpt_sha1": "2b04950d3a66e5d8f3389d273e137a1778f811dc",
+   "excerpt": "`.wsl_build/chapter_sweep_ch11r8verify2/`(sweep_chapter()端到端驗證)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2013,
+   "excerpt_sha1": "6944a1d1206804b4871af72dc55776dca7252ec3",
+   "excerpt": "`KNOWN_MIN_TURNS_BEFORE_KILL`)原樣套用到ch02做一次end-to-end live驗證。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2029,
+   "excerpt_sha1": "72c6b6c39172d2911fd9329b4e01242434db0517",
+   "excerpt": "### Live驗證:全新獨立instance`ch02final`→`ch02final02`(dosbox_harness.sh,proven-safe",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2053,
+   "excerpt_sha1": "7f38e6c42954d9af55b4aee34abd601c80161320",
+   "excerpt": "這次live驗證沒有另外去確認這10筆敵人組成裡有沒有把這6隻援軍算進去,誠實列為未獨立",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2057,
+   "excerpt_sha1": "84825a697370e9c7a9fca7c9191d1e803399a4c2",
+   "excerpt": "與`sweep_chapter: engine win confirmed on kill-cycle 1/4`一致,不需要任何額外重試。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2072,
+   "excerpt_sha1": "fa154c931a89e99f2312f1b6f7e4199daf6b6618",
+   "excerpt": "多包一層村民checkpoint,不換win-check機制」,加上本輪end-to-end live驗證的乾淨、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2075,
+   "excerpt_sha1": "d9549f9e31fcf58493f4b2463e67482347f15d4d",
+   "excerpt": "邏輯**。M5「正常玩法可達性驗證」的引擎層級勝利確認章節數由18章(ch03-20)增為**19章",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2080,
+   "excerpt_sha1": "0ae1c53c970ea1f665ab3c52f356b20081b9aa18",
+   "excerpt": "gate分析(擋住*所有*已確認章節、不只ch02/ch11)依然是全專案最高槓桿的下一個目標,需要",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2087,
+   "excerpt_sha1": "b2bf2c076bdb7fa19ad7d98404e20974ee37f63e",
+   "excerpt": "「已live驗證」而非「待驗證的live test」。完整live log、screenshot、result.json見",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2097,
+   "excerpt_sha1": "64bede2f3e368ef84b5765d6c22f98cc080c0b2d",
+   "excerpt": "本輪目標是`91-worklist.md`/本文件`cursorlive`輪留下的開放問題:「必須出場」驗證讀取",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2102,
+   "excerpt_sha1": "37da8d40c37a08c40fb649ffff385f400226e2fb",
+   "excerpt": "build 下確認`in_function:false`(2026-08-26`writerfire`輪已排除),不可沿用。改用",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2105,
+   "excerpt_sha1": "5c227a3a84a23fa698e0cb8825a01fca85df8c0b",
+   "excerpt": "逐字串解碼,搜尋「必須出場」——命中**resource=0, string index=657(0x291)**:",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2107,
+   "excerpt_sha1": "aa25a5ef2927c41d367bd8236eb5f859f759123f",
+   "excerpt": "證實這句話原文本身就帶角色名代入,doc99先前記錄的「本章約定必須出場」是複述時的簡化",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2118,
+   "excerpt_sha1": "219a57971aee9ace6f8f29cb136cf802a0c81a67",
+   "excerpt": "慣例在某些已驗證範圍内確實成立**)。放棄位元組掃描,改用`function_bounds`/",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2159,
+   "excerpt_sha1": "60fcf92ce65455973bad4d9c1f0b7eee1b9a2141",
+   "excerpt": "驗證函式**,不管roster裡有沒有聖寇拉斯都不會卡在這裡(如果ch25仍卡在",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2161,
+   "excerpt_sha1": "a0cc398c39da4c9efa7048227588acd82f8d5ec7",
+   "excerpt": "(raw 0x14/0x15/0x16/0x19/0x1b)則確認會呼叫,與`cursorlive`輪對ch21的live觀察一致。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2230,
+   "excerpt_sha1": "75ea8a703df82ecc38a5aab1952690c7350d60ab",
+   "excerpt": "2. 若確認`+8`確實是從持久化存檔複製,只是複製時機/條件比預期複雜(例如只複製「劇情",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2262,
+   "excerpt_sha1": "79b12e28b67c5d46c2c4e40ee2f1b2584cf60303",
+   "excerpt": "100%都需要gate②)。**本輪未能驗證這兩個參數,因為連戰鬥都沒摸到，寫在這裡只是為下一輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2270,
+   "excerpt_sha1": "d2dd59866c9b16c4749794481f32ecdd566f4d17",
+   "excerpt": "patch 出 ch01 存檔,30次Escape清片頭→Down→Return(LOAD)→Return(確認槽位0)——與",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2278,
+   "excerpt_sha1": "f5cb25a6a7554991d770df3ba743c36e56db36ab",
+   "excerpt": "screenshot逐位元組相同(md5一致)。排除「其實是被動時間閘門,像campexit輪那種戰鬥",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2305,
+   "excerpt_sha1": "2b7018d9b5ab033f5f0c2ba70a891813c6d12b0d",
+   "excerpt": "殘留狀態)LOAD這份「1人版」存檔——**畫面與CPU行為跟13人版逐位元組/逐EIP-取樣模式完全",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2322,
+   "excerpt_sha1": "fc3565527b869679d054e0eadb7a848201d7ccc3",
+   "excerpt": "不該連續60秒+15次Return都維持純黑。**合理推測(未證實)**:New Game 流程在進入這段",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2338,
+   "excerpt_sha1": "9328ce1e3c582576ed60ef424249444b2a683989",
+   "excerpt": "**ch01 本輪未能解開,M5引擎層級勝利確認章節數維持19章(ch02-20)不變,tally維持19/30**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2342,
+   "excerpt_sha1": "9437a7e0a905ec381cfdf57739c3cf159f959bc8",
+   "excerpt": "驗證的假說——LOAD-into-ch01可能結構上就不是這個章節的合法入口點,需要走完整New Game",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2349,
+   "excerpt_sha1": "ea2df43714cb1316e3749d4a1e44b8cca41e259e",
+   "excerpt": "2. 若①證實是New-Game-only初始化缺失,嘗試找出New Game分支獨有的初始化函式(main",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2355,
+   "excerpt_sha1": "c5db1a93e75b3a51ed0a191d5c69855c16591071",
+   "excerpt": "互動流程(不patch任何存檔),讓引擎用它原生預期的方式進入ch01戰鬥,驗證battle array",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2357,
+   "excerpt_sha1": "e4de17b2a7429fd5dd7e529dd17fa6ed71ee1ffb",
+   "excerpt": "不成立,需要另尋根因;如果New Game路徑真的能到戰鬥,則證實了「LOAD不是合法入口」,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2358,
+   "excerpt_sha1": "f6bb14bf71b22588cdfb3604c8c55b4c9591399f",
+   "excerpt": "可以把心力轉向①②的初始化補寫,或誠實把ch01標記為「需要New-Game-only驗證路徑,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2379,
+   "excerpt_sha1": "1919e99c3ae8cb1675c00eb01513f55d005d9396",
+   "excerpt": "也卡住,新假說就被推翻,需要另尋根因;如果真的能到戰鬥,就證實 LOAD 不是合法入口。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2383,
+   "excerpt_sha1": "ae97ac3b268111dd5267677a76e987610e905b79",
+   "excerpt": "獨立`dosbox_harness.sh` instance `ch01newgame`(WSL2,啟動前`status`確認無殘留",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2384,
+   "excerpt_sha1": "0461ea4ab373289409ec2ba6ff340582576f6460",
+   "excerpt": "instance)。標題畫面確認完全渲染(`START`預設反白)後單純送`Return`選 START,之後",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2394,
+   "excerpt_sha1": "f8ad2d968e1913731700de11a66e73226cd5041f",
+   "excerpt": "LOAD-path 那句海盜對白**逐字一致**,證實同一份劇本資料)→索爾嗆聲『要打架我奉陪,要搶劫",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2397,
+   "excerpt_sha1": "b2b78862643fe928f9f7e6c690b76e0d35d1d35b",
+   "excerpt": "每一幕都有截圖佐證(`.wsl_build/harness`未入庫,本輪截圖存於使用者本機",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2401,
+   "excerpt_sha1": "e0dd2407b3e1ddb88532d62ec70444bc927f8b54",
+   "excerpt": "畫面逐位元組不變」最直接的對比,結構性地反駁了「LOAD 卡點只是這個工具方法論本身的",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2404,
+   "excerpt_sha1": "435bf645a71e07a61335cef7cccac6549291bad1",
+   "excerpt": "### 勝利確認(gate②+mass-kill+End-Turn,復用`tools/fd2_chapter_sweep.py`既有函式)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2411,
+   "excerpt_sha1": "d1277949cd2e11610267cb48989439e7720526f1",
+   "excerpt": "→`fcs.confirm_end_turn()`,復用的是 ch02-20 已經交叉驗證過的同一套函式,不是重新發明。",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2419,
+   "excerpt_sha1": "f78254f11eef1fb418289310931d4f5e478bd69a",
+   "excerpt": "把指令環開在索爾身上(選到自己格直接 Enter,原地確認移動 0 格後指令環自動彈出,不是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2425,
+   "excerpt_sha1": "663f6b59586d2da32d0bacba6762004757093942",
+   "excerpt": "**手動補救,直接證實勝利**:對指令環連送 4 次`Escape`完全取消當前選取後,screenshot",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2438,
+   "excerpt_sha1": "dc58f281375fee1f04a88bb45fcef618d7f65bcc",
+   "excerpt": "`00 00 00 00`(=0,ch01 raw index 未變)——這**符合預期**,doc58 記錄過「確認 YES 不會",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2439,
+   "excerpt_sha1": "91037c7b6c4fad3f9de7f141dea7c66999b06820",
+   "excerpt": "立刻 autosave,要先播完戰後montage/對白才會真正 INC 章節 index」,恢復執行後續截圖確認",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2445,
+   "excerpt_sha1": "3f072ef6b1135dd0106352ec08c9f0b50d6297e0",
+   "excerpt": "直接記憶體讀值確認為 2(win)——ch01 正式加入引擎層級勝利確認章節清單,M5 tally",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2448,
+   "excerpt_sha1": "63184c57f1271f4d613398ee1ea2abd92204e41e",
+   "excerpt": "這同時**完全證實**了`ch01final`輪結尾的「新假說」:LOAD-into-ch01(即",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2454,
+   "excerpt_sha1": "ec6ddbdc187f9a138c0a0478c1b13131295f9b2e",
+   "excerpt": "對 ch01 是結構性不適用的,不是本輪修好的 bug**——ch01 的引擎層級勝利驗證完成方式跟其餘",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2482,
+   "excerpt_sha1": "eece9e20986be6f35affb54c4a22e8222656deb0",
+   "excerpt": "確認乾淨(啟動前「no harness instances registered」,結束後`teardown`成功、再次",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2483,
+   "excerpt_sha1": "1d3bb480550052315ca1ee20ff105d06f41a4531",
+   "excerpt": "`status`確認清空)。截圖(標題→開場全部場景→戰鬥→戰後對白,約 29 張)存於 WSL 端使用者",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2507,
+   "excerpt_sha1": "7cd33846c0934e815e9b4cccaa9655535c22c53f",
+   "excerpt": "Python(本輪用 PowerShell 直接確認)下,整支工具在 import 階段就直接掛掉,完全無法執行**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2508,
+   "excerpt_sha1": "cff44f8f290c4a783a478ef9d5b0f9c041a43633",
+   "excerpt": "(`git blame`確認這段文字正是`08-28`輪自己的 commit `9be5eaada`引入,該輪應該是寫完文件就",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2516,
+   "excerpt_sha1": "20ab6bfd74ef12f5c4dfdc740308c3dfb46cbfe3",
+   "excerpt": "### 第一步:靜態確認 ch21 地圖模板(map20)確實有 id23/24 的「own」單位——假說看似成立",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2522,
+   "excerpt_sha1": "56a456315dc8f7a5581dea0fbaead43f419234db",
+   "excerpt": "`campaign_full.json`的`battle_ch21`節點確認`map: assets/maps/map20`)dump 出 96 筆單位,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2581,
+   "excerpt_sha1": "3f53419d8bfb4495cec2b54052f010888d1bed5f",
+   "excerpt": "ch26 那組(先 9 後 29)恰好**逐字**對上 doc28 第 26 列「額外護衛=悠妮、亞奇梅吉」,證明",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2587,
+   "excerpt_sha1": "b4cbfabe58d8605902124e1b07f2661e4474aaec",
+   "excerpt": "### 交叉驗證:「約拿」在 ch21 的地圖上完全不存在(掃過全部 33 張地圖確認)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2595,
+   "excerpt_sha1": "0c058a3dfd5b6d1d5c1785befc8efd996c447db3",
+   "excerpt": "| 20 | own | 24 | 希爾法 | ch21 地圖原生(本輪第一步已確認) |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2605,
+   "excerpt_sha1": "0bffd46710c585d9f711907d36477b3b121b753e",
+   "excerpt": "### 結論:假說對 ch21 本身**已反駁**,但確認了一個真實存在、只是跟 ch21 無關的平行機制",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2623,
+   "excerpt_sha1": "ae1abd1194c77899ffa40568ea2c516fcd5702cd",
+   "excerpt": "確認都不負責這件事,他們只處理地圖模板單位,不處理玩家在選人畫面挑選的己方欄位)。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2633,
+   "excerpt_sha1": "c29c706c1b1b9998e6c5d6199d78deb33ee12562",
+   "excerpt": "“ch26 逐字吻合 doc28”是這條方法論本身正確性的獨立交叉驗證,不是巧合。",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2710,
+   "excerpt_sha1": "896ba19e2dbc111f874a05e53f32000a03d4ac53",
+   "excerpt": "這件事**已經被完全獨立、更早、更嚴謹的一條調查線(續三十四逐位元組核對三份真實",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2747,
+   "excerpt_sha1": "d386e637fff95bfa806723b427c9bc237e7ea073",
+   "excerpt": "**獨立確認,不是複製前一輪的結論**:ch21 的「必須出場」檢查真正比對的是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2762,
+   "excerpt_sha1": "ddc5119dc7c0545db7bb9448fd7f0632135f01df",
+   "excerpt": "### 第七步:Live驗證(`tools/dosbox_harness.sh`,instance`jonah21`)——**假說成立,ch21首次抵達真正的戰鬥指令環畫面,全程未觸發「本章[約拿]必須出場！」**",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2765,
+   "excerpt_sha1": "2e7b48feab5348c70b58ab05f609b2dbdfaa54d4",
+   "excerpt": "與`~/fd2-run/FD2.SAV`確認同一份)當基底,`python tools/fd2save.py <base> --append-roster",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2769,
+   "excerpt_sha1": "23af3d510bd73b63b4937776b08c749d5cbea023",
+   "excerpt": "逐格cursor定位id21的麻煩。`summarize()`確認`roster_char_ids=[0,9,4,30,1,8,2,10,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2784,
+   "excerpt_sha1": "3c5bf532ed8702b5b75bd88f0f7e823b088ac390",
+   "excerpt": "**操作序列**(每一步都screenshot確認,存於`.wsl_build/jonah21_verify/`,非repo",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2786,
+   "excerpt_sha1": "352b9f2d8f1b5641eaed9a10a32c7689e7234982",
+   "excerpt": "(確認chapter byte patch生效)→`Return`選slot0→營地地圖(`Right`×3切到「出口」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2787,
+   "excerpt_sha1": "69567db9cf0d28d9918d3dd8d48c2acf131dd5ae",
+   "excerpt": "→`Return`確認→「要進入戰場嗎？」`Return`選YES)→**一段比預期長很多的戰前過場",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2802,
+   "excerpt_sha1": "f9172fc19651f93c2e7e96407caa812dc31d47a0",
+   "excerpt": "(本輪新串連,底層事實非本輪首次證實);ch21真正檢查的guard id是21(約拿),",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2808,
+   "excerpt_sha1": "56f67f98dbfb804ee0c35d0c262fa852a3513571",
+   "excerpt": "做同一個session內的差異對照組(例如同樣流程但故意不放id21,重新走一次確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2814,
+   "excerpt_sha1": "b513af06c1d2777eee969d18f6183651e33c6f62",
+   "excerpt": "修正就能解開,但這是**預測,不是本輪驗證過的結果**。ch24/28/29/30這道門檻",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2817,
+   "excerpt_sha1": "38f4abc328cf5914052b28ec070c6026c79f5096",
+   "excerpt": "「進入戰鬥、指令環出現」這一步,`doc25§9.1`記錄的「engine win確認但磁碟從未",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2830,
+   "excerpt_sha1": "1123c22e5e0f82fc8d3c7a584b92e4f6c2ded0be",
+   "excerpt": "這是本專案在guard-character這條調查線上第一次**live確認**「用正確id的合成",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2832,
+   "excerpt_sha1": "43aec5d007d2fb0b847870df5b8c62c45676cd97",
+   "excerpt": "重新分類為「已知根因+已知修法,尚未跑完整條sweep pipeline確認轉為`pass`」。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2836,
+   "excerpt_sha1": "fcc7f54c7469914f814c8d6ade1ae67f32242a9e",
+   "excerpt": "欄位);② 確認全部通過guard-check的章節,`fd2_chapter_sweep.py`完整跑一輪",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2847,
+   "excerpt_sha1": "03a7cf4a1cc15f961459d58bdb5c484637517af4",
+   "excerpt": "id=21約拿、live首次抵達戰鬥指令環,ch22/23/26 guard id理論預測但未live驗證,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2860,
+   "excerpt_sha1": "5f03d4105dec83145099358d18ec7241ec130c86",
+   "excerpt": "分支點分別重跑確認(不是只信手算結果)。完整、獨立重建的對照表:",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2869,
+   "excerpt_sha1": "fcf7fcc1b62b8945f963172ff47ab63d64d8f9fa",
+   "excerpt": "| `0x19`(25) | ch26 | `9`=悠妮 → `29`=亞奇梅吉(兩者皆須通過,依序) | 與前輪一致,doc28「額外護衛」欄位巧合逐字吻合 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2873,
+   "excerpt_sha1": "5a4d03829e638f28013d7290a8ba8e32300c1d2c",
+   "excerpt": "現在確認**適用**,且id剛好等於ch27的既有guard機制,不是獨立新id。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2886,
+   "excerpt_sha1": "feab559c0531cacc18850661118292604ad26819",
+   "excerpt": "### 第三步:逐章live測試——**ch24(pass,含磁碟寫入)、ch26(engine-win確認)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2887,
+   "excerpt_sha1": "16da072005301025ebcb124f0bc82b32c4043f2b",
+   "excerpt": "兩章新增為M5「引擎層級勝利確認」章節,tally由20/30增為22/30**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2895,
+   "excerpt_sha1": "02b7d80513dcbb8927289fd3d347246b9e97ab92",
+   "excerpt": "`estimate_roster_size()`padding(13→21人)。標準camp-exit(`Right×3`→出口確認→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2896,
+   "excerpt_sha1": "959ec6973cbd549f9446ba73bfe890c8e81f9015",
+   "excerpt": "YES確認)在第41個tap找到真戰鬥(4個敵人record),mass-kill+`confirm_end_turn()`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2901,
+   "excerpt_sha1": "cef7d99ebb84a936bad0170f62bb3f91b71ae3af",
+   "excerpt": "(先前20章全部只能拿到`anomaly_engine_win_no_disk_write`,因為doc91已確認的",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2912,
+   "excerpt_sha1": "0524104f354a037e6e5b600c99b5e93eb9f5ac58",
+   "excerpt": "獨立live交叉驗證**(第一次是ch21的`jonah21`輪)——ch26的兩段式guard(先9後29)",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2919,
+   "excerpt_sha1": "9b757f726ca3a6c3015222c1a44874f20869f91a",
+   "excerpt": "- Round 2(budget提高到220):抵達戰鬥(50敵),mass-kill+End-Turn確認送出,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2941,
+   "excerpt_sha1": "3819f36a153c83a378fe9950bca75a7eacdbfd49",
+   "excerpt": "`fd2_chapter_sweep`函式庫但改用純Return、不先送任何`Right`)證實**純Return",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2947,
+   "excerpt_sha1": "b6c159586f2efe024823ee0faaa3ef2ea915c27b",
+   "excerpt": "哈諾/悠妮/蓋亞/希莉亞六人選單列表),證實`attempt_camp_exit()`docstring原本",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2951,
+   "excerpt_sha1": "9402c4b7a573175f30ea86decd4c3123fadbaf44",
+   "excerpt": "選單導航序列」),guard-id修正本身正確(roster padding邏輯已驗證會正確加入",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2955,
+   "excerpt_sha1": "ec37ff86f434a72b6326281781ee45ffb05ef0dc",
+   "excerpt": "**❌ ch23/ch28——確實有camp地圖(`Right×3`+出口確認+YES確認三者皆live註冊",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2958,
+   "excerpt_sha1": "f726ae68cb2e215d754136f926bc56b42e701c5b",
+   "excerpt": "逐輪截圖直接證實選人畫面確實出現且roster正確(ch23「出戰人數X15/剩餘人數",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 2984,
+   "excerpt_sha1": "83d1a82d9ef3a7ca3b604ccc68c61b2f9e7f1133",
+   "excerpt": "不是因為它們被證實有效;下一輪如果要繼續解ch21,不必重複這兩個已排除的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3005,
+   "excerpt_sha1": "550663ec797d9999e43508ec2de0fa0773eb00fd",
+   "excerpt": "- **M5 tally**:引擎層級勝利確認章節數由20章(ch01-20)增為**22章",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3010,
+   "excerpt_sha1": "67c8fe5dc5e63a9aab5e715e14da35c58f1e0014",
+   "excerpt": "確認——用完整、以時序優先(離ch21最近的角色優先)湊滿15人deploy門檻的合成",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3013,
+   "excerpt_sha1": "8206cffdb795ac53f9dd0fafd71b32943c22abf2",
+   "excerpt": "拿到`anomaly_engine_win_no_disk_write`,M5引擎層級勝利確認章節數由22章增為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3028,
+   "excerpt_sha1": "570cd61442a2b5d9a0bd80143d553fe237693fdc",
+   "excerpt": "18/16/7/25/28這8個時序上更早或同期加入、doc28/chapter_beats都證實存在的",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3045,
+   "excerpt_sha1": "fc0b1d007dafa09000ed0d4c18f3d20669051729",
+   "excerpt": "**確認了一個容易踩到的filename索引陷阱**:`docs/data/chapter_beats/",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3050,
+   "excerpt_sha1": "38d5c0120825045ca6dc343ece2bf488abce51ed",
+   "excerpt": "`[23,24]`,正是「map-native guard」輪證實的「羅蘭/希爾法是ch21本章新加入",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3066,
+   "excerpt_sha1": "aac040e338a90fe26e8a9d2afa46707b0a3efe3e",
+   "excerpt": "是他們,見`tools/fd2save.py`docstring列的三份真實SAV交叉驗證)+18個",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3084,
+   "excerpt_sha1": "377d9f623a40294a9eadae10cc7c918eb1242de3",
+   "excerpt": "known-answer test驗證過的構造公式)合成——與先前`jonah21`輪同樣的技巧",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3102,
+   "excerpt_sha1": "d9d6ec9c6f9028cfab8bad647d3ef54686dc430e",
+   "excerpt": "獨立驗證:`complete_roster_ids(21)`程式化算出的15人集合與本輪手動建構、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3103,
+   "excerpt_sha1": "16bb09669ca4424fc90a50a8f648c163207c16f4",
+   "excerpt": "已live驗證過的roster**逐id比對完全相同**(僅record順序不同,對「剛好",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3106,
+   "excerpt_sha1": "b8bbb51581191b53d2f1f34c3e24ce6e1c6ab4d1",
+   "excerpt": "### 第三步:Live驗證(`tools/dosbox_harness.sh`,兩個獨立instance",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3112,
+   "excerpt_sha1": "82b1271f41361748fe9a4b001ad5bfeede1cc0bb",
+   "excerpt": "`build_complete_roster_save()`程式化產生的完全一致,已第二步交叉驗證)",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3128,
+   "excerpt_sha1": "a95b2c65af7ccbd277729f934f70273890377d23",
+   "excerpt": "——engine-level win確認,但磁碟chapter byte在60秒耐心輪詢視窗內未前進,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3164,
+   "excerpt_sha1": "1de03b4e637dc15f012c50fb840e1393f20cbf0e",
+   "excerpt": "- **M5 tally**:引擎層級勝利確認章節數由22章(ch01-20+ch24+ch26)增為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3172,
+   "excerpt_sha1": "df0a5a7fd44b8fd7d0a7c4fb9d095cff6bccd11f",
+   "excerpt": "確認章節數24→實為23→24,見下方tally)——但camp-exit導航本身run-to-run",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3177,
+   "excerpt_sha1": "f2d8b4e688b62633e0432b07e7ea6c88091e37ec",
+   "excerpt": "這個真bug,但「差1人如何解」本身**未解**(Escape的效果兩次獨立實測互相",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3189,
+   "excerpt_sha1": "9c8e4a55df51396a414bbf11eb9bfaf2379e2618",
+   "excerpt": "### 第一步:ch22/ch25——重新活體驗證「Right×3失效」，發現這其實是",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3198,
+   "excerpt_sha1": "e5b8d5fb99317446cd2e044031932190d5965e65",
+   "excerpt": "(上一輪的未驗證猜測，本輪證實是**錯的**——它讓遊戲直接走進酒店的角色/",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3202,
+   "excerpt_sha1": "d337b3adce26e9795a2ef6617d03553bac0fdd2f",
+   "excerpt": "(`Right×3`→出口確認→YES確認/選人→對話推進)路徑。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3227,
+   "excerpt_sha1": "5f4b18e98623f5b8d73bb7b6c3d583200ba64898",
+   "excerpt": "toggle**（此後cursor前進到slot1），不是什麼「要進入戰場嗎」確認框。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3229,
+   "excerpt_sha1": "a900b555329a33b61bc62a7f2ce90c7cae8b5750",
+   "excerpt": "最高見過X15/0已選)，從未穩定停在0——這證實舊有「加大budget」的修法",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3236,
+   "excerpt_sha1": "8d0eef64e3406fdee103f0592324e3da7820d27a",
+   "excerpt": "可達格子對15人門檻，差1**。乾淨測試(`diag_ch23_onemore.py`)證實：",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3243,
+   "excerpt_sha1": "01202ba25c4fed717da77a77921b3cee5e147ff1",
+   "excerpt": "確認已選數**，一旦達到`n_candidates`(=`guard_selection_threshold(chapter)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3245,
+   "excerpt_sha1": "9b6d130224a370d8a8e2c76bfbf018f7a5dbfdf0",
+   "excerpt": "live驗證(ch23/ch25兩次獨立`sweep_chapter()`跑法)都能穩定在**恰好",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3273,
+   "excerpt_sha1": "05ee94f1b2e71f87ff7968bef2e5ce03ba8e429d",
+   "excerpt": "獨立重測確認哪一個才是真的**。程式碼裡把這個Escape呼叫保留下來(不比",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3275,
+   "excerpt_sha1": "48e0707bedaeefd89a67295191e47dc57b96bd67",
+   "excerpt": "大篇幅comment誠實標注這個矛盾，**明確要求下一輪不要在沒有重新驗證的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3287,
+   "excerpt_sha1": "d7b31d951f182c55d5f56714d6b6555587726d3d",
+   "excerpt": "`pl22d22`)：Right×3→出口確認→YES確認在第5個tap就找到真戰鬥(51個敵人",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3315,
+   "excerpt_sha1": "247d5dc93d0822cbd1822196b3d04c861c364e5b",
+   "excerpt": "那樣的像素鑑識級診斷——猜測(未驗證)它可能跟ch23/25同一類「選人畫面",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3337,
+   "excerpt_sha1": "827c76f8f2a80e51908164ed96e81379854606b5",
+   "excerpt": "- **M5 tally**：引擎層級勝利確認章節數由23章(ch01-21+ch24+ch26)增為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3342,
+   "excerpt_sha1": "7e2d5a367cb1a0beebd73ff5d6ffd4ab52ef7595",
+   "excerpt": "在沒有重新驗證Escape行為的情況下宣稱ch23/25修好；(b)ch22的重點應轉向",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3354,
+   "excerpt_sha1": "542d5e7e3300ee425dbf56799df9141cf16900c9",
+   "excerpt": "raw0x17——**字面`pass`,含磁碟寫入,不是anomaly**。M5引擎層級勝利確認章節數由24章",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3375,
+   "excerpt_sha1": "ab7d54006516999dfda40c24f6ef8c520a3b9551",
+   "excerpt": "leader成員）——這在該輪用13人存檔（12個可切換候選人）live驗證過：目標若誤設",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3380,
+   "excerpt_sha1": "2c77439fc9fc162ee8c86a97b37caf773e7480ff",
+   "excerpt": "這代表：**leader永遠不算進可切換候選人數**，這件事在ch24早就有一次獨立、live驗證",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3393,
+   "excerpt_sha1": "d84d43b4cfaed7a51a659a2191bd3ac563080bc0",
+   "excerpt": "### 第二步:確認picklock輪的cap=16假說（`diag_ch23_cap16b.py`）本身方向正確，但被",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3405,
+   "excerpt_sha1": "2aa7e0cf5c915cdc71d10b897983414d496b3861",
+   "excerpt": "標記為「原因未查明，不建議下一輪直接複用」，本輪確認：原因就是這個encode漏呼叫，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3426,
+   "excerpt_sha1": "a743224ab3427e9a22382d339a26a72da01df42a",
+   "excerpt": "`確定`彈窗後用正常`_confirm_with_retry()`按Return確認——這正是live驗證觀察到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3435,
+   "excerpt_sha1": "67c06caaa5e805d8a62931b25315391c98a20743",
+   "excerpt": "### 第四步:Live驗證(`tools/dosbox_harness.sh`，instance`ch23rt16`，逐步腳本+官方",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3447,
+   "excerpt_sha1": "a8e38db249e7056fd67a1b3cac18c3234f60d2b7",
+   "excerpt": "- `attempt_camp_exit()`：Right×3→出口確認→偵測到選人畫面（`roster_count=16`,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3451,
+   "excerpt_sha1": "d076bd59cbd1bc312f28f21341e5a7709580f1b8",
+   "excerpt": "→`battle_entry_confirm`第1次嘗試就確認→46 tap後抵達真戰鬥（50→settle後24個",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3461,
+   "excerpt_sha1": "5c2e774c251f73c1605eff68a5409f94ba61815a",
+   "excerpt": "**獨立第二次確認：正式CLI端到端零額外旗標重跑（instance`ch23cli23`）,結果完全",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3472,
+   "excerpt_sha1": "0f07946a7bc765352e646fff382b37962d6fbadd",
+   "excerpt": "(native autosave confirmed clean transition)`**，完整log見",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3474,
+   "excerpt_sha1": "cc5a83e1ce92f99c1b1563b63349f42d1a362aca",
+   "excerpt": "正式CLI）給出完全一致的結果，這是本輪確認等級最高的一項。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3487,
+   "excerpt_sha1": "61091ea65810aa28a2e129f6b08f5f2947212f50",
+   "excerpt": "confirmed過，不需要這個新機制）沒有本輪的live證據，只是套用同一個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3488,
+   "excerpt_sha1": "e18ae64750b54c4db72cc47aec7de23455174280",
+   "excerpt": "disassembled EBP/toggle-array邏輯做的合理推論，**不應該不經live驗證就宣稱它們",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3493,
+   "excerpt_sha1": "35a34f805bce27ba9b92141f151b6979fb345d39",
+   "excerpt": "- **M5 tally**：引擎層級勝利確認章節數由24章（ch01-21+ch22+ch24+ch26）增為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3500,
+   "excerpt_sha1": "6f6995c3658adf49ec98ab080f5a05f46647e1cc",
+   "excerpt": "## 2026-08-29「ch2528」輪:**ch25/ch28 live驗證——roster-pick-grid修法乾淨generalize，",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3508,
+   "excerpt_sha1": "8f3eb5dfce3b635052eb49aeed76955a15192826",
+   "excerpt": "`guard_selection_threshold(chapter_n)+1`），對ch25、ch28做live驗證。範圍明確排除",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3509,
+   "excerpt_sha1": "c2dcb22382ee2c2a2003deb012202b5869dc38e3",
+   "excerpt": "ch27/29/30（本專案已確認的雙結局終局章節，「章節byte是否前進」對它們不是有意義的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3514,
+   "excerpt_sha1": "7ccb19db25e87e1d959c56de5cf6ec3279c1ec9b",
+   "excerpt": "`tools/dosbox_harness.sh`已證實2個instance平行跑安全(doc48§8.4)，且ch23retest輪",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3533,
+   "excerpt_sha1": "048f1fb01ae36275b47a823b151224d800b8a0fe",
+   "excerpt": "live驗證過的ch25專屬數字，只是合理起始預算)。事後證實這個預算足夠(ch25對話量",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3544,
+   "excerpt_sha1": "7b2555ace21bcdf539fda202a4737aab6be4543c",
+   "excerpt": "live驗證)只要初始就在場的敵方單位裡已經包含機甲隊長，全滅初始敵方陣列應該仍能",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3548,
+   "excerpt_sha1": "92c15454bcf126090723ac9c7a9936e9d9cd16ee",
+   "excerpt": "engine-win-confirmed-no-disk-write",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3558,
+   "excerpt_sha1": "8c46ff48e4cd2fb07f0afb0ad0a7ffd79b5a820c",
+   "excerpt": "(Up方向找到空地)→開指令環→END→mass-kill 38敵(含在確認框上重寫一次)→YES確認→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3578,
+   "excerpt_sha1": "e81686a9e3d290e1469f4ad2d58d3cdb4540164f",
+   "excerpt": "戰前過場/對話中，戰鬥陣列指標還沒被真正配置——第25 tap後才穩定讀到14敵並確認為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3581,
+   "excerpt_sha1": "b52da26a9c868e5beba4529f8fc9fdb4b1743fb8",
+   "excerpt": "- **同樣不需要`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`**：mass-kill 14敵→確認框上",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3583,
+   "excerpt_sha1": "5c69c526c5b86f683d0f128843f404b01ed30f2f",
+   "excerpt": "kill-cycle 1/4成功——**間接證實WebFetch查到的「勝利=擊毀機甲隊長」這個看似",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3586,
+   "excerpt_sha1": "5132c79ed319a3743c9cbadf1e0d99658c698c20",
+   "excerpt": "對機甲隊長specifically做了驗證，未進場的3波位置觸發式援軍全程沒有出現)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3595,
+   "excerpt_sha1": "255c0954c6d5bc4d5e7618c37b55868b76027438",
+   "excerpt": "第一次驗證threshold≠15的大roster情境)都**乾淨generalize**——兩章adaptive_pick_",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3603,
+   "excerpt_sha1": "a09c669a97aab1aafa8fc58f6b74b4f4c76316dc",
+   "excerpt": "滿足，但這個工具從未針對「機甲隊長」這個特定單位類型做任何篩選或驗證——只是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3609,
+   "excerpt_sha1": "f03b03c238952bccf7ec65bd7156e9582477ed0d",
+   "excerpt": "ground truth確認過的，跟ch02-20那批`anomaly_engine_win_no_disk_write`章節同一個",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3612,
+   "excerpt_sha1": "88e4d95321234024c8d668dc0780d26b3f816e74",
+   "excerpt": "- **M5 tally**：引擎層級勝利確認章節數由25章（ch01-21+ch22+ch23+ch24+ch26）增為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3617,
+   "excerpt_sha1": "51a0ac14d81e841b3b0385ebadcb781d4c63d792",
+   "excerpt": "方向擴展，注意使用者已明確排除這兩章「章節byte是否前進」的驗證，因為它們是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3619,
+   "excerpt_sha1": "08273757277ab34712075f929da8d8b752012d82",
+   "excerpt": "live驗證的條目(29/30)若真的要測試，應該改成驗證「roster-pick-grid本身能否",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3623,
+   "excerpt_sha1": "e0dd19f31d3603c1147338ac4faa5eb116aabc24",
+   "excerpt": "## 2026-08-29「商店選單存檔」專項live驗證（代號`shopsave`）：乾淨負面結果——商店家族內部沒有存檔功能",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3679,
+   "excerpt_sha1": "86f2e4abdca255dc3eae3c2ceef6aef61e7d4397",
+   "excerpt": "`-noanalysis`模式下xref_to對未分析區域本來就不完整這件事，這次又獨立驗證了",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3717,
+   "excerpt_sha1": "70feaefb5256bd594e4e5789212ba2d1a2574b1d",
+   "excerpt": "| ch22 | 21 | 22 | 1(整備限定) | 靜默存檔 | ✓ 確認（25.3秒） |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3718,
+   "excerpt_sha1": "80e7f7e7dff8e8f3f95c61eeb38803fe080d3b59",
+   "excerpt": "| ch23 | 22 | 23 | 1 | 靜默存檔 | ✓ 確認 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3719,
+   "excerpt_sha1": "0dbc93ea5057e8f4c20a0820df588768031b4145",
+   "excerpt": "| ch24 | 23 | 24 | 1 | 靜默存檔 | ✓ 確認（5.1秒，即raw`0x17→0x18`那次） |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3720,
+   "excerpt_sha1": "217eaa931bc8cd63ce0d5435dd55bbae10a829ed",
+   "excerpt": "| ch25 | 24 | 25 | 0(城鎮流程) | 無靜默存檔 | ✓ 確認（60秒patient poll仍0） |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3721,
+   "excerpt_sha1": "011b3a31e505e50699ecd6f73e3903f5b7746fd6",
+   "excerpt": "| ch26 | 25 | 26 | 0 | 無靜默存檔 | ✓ 確認 |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3722,
+   "excerpt_sha1": "ca2564007345a42a00e79676ce3482f7c162fdf1",
+   "excerpt": "| ch28 | 27 | 28 | 1 | 靜默存檔 | ✓ 確認（5.1秒） |",
+   "verdict": "benign",
+   "note": "表格row，屬chapter-sweep逐章驗證追蹤表的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3725,
+   "excerpt_sha1": "88789f1763009237c3ea4c67d5fe566513ff898f",
+   "excerpt": "結果再回頭湊表**。連帶產生一個尚未live驗證、可證偽的預測：打贏story ch27",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3727,
+   "excerpt_sha1": "d5af5cf9f28aa665a531c9f001893e396a664293",
+   "excerpt": "**理論上也應該有靜默存檔**，留給下一輪驗證（本輪未測試，誠實列為預測非結論）。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3731,
+   "excerpt_sha1": "cacaa7cd86afdf84ae8709b7330187d9818480c6",
+   "excerpt": "不是「還沒等到」——ch25/ch26對照組這輪poll窗口（60秒）**比**4個確認靜默存檔的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3748,
+   "excerpt_sha1": "62f41d14af02facac055b52e934a42fa39f48358",
+   "excerpt": "- **未驗證、誠實列為預測**：raw26(story ch27)與raw28(story ch29)是否真的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3750,
+   "excerpt_sha1": "efb88efdd60a2900cd6976537798661645dc3df9",
+   "excerpt": "純靜態，沒有live驗證這兩章的實際行為；且ch27/ch29本身在`ROSTER_PICK_GRID_",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3804,
+   "excerpt_sha1": "0a6f1e0dbb825f8669cec4b8bbcaf335e870da8d",
+   "excerpt": "POP EBX; RET`——真正的函式返回（trampoline式共用收尾，不是斷尾），確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3869,
+   "excerpt_sha1": "13ad6f48f2d8256844f0bee1344768c2aaa32eaa",
+   "excerpt": "「post-handler-save-trigger」輪已經6/6驗證過的**同一條**因果鏈（INC後",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3879,
+   "excerpt_sha1": "23a53d08e727bb71388fb969ed1ad0327ca07d4a",
+   "excerpt": "（靜態完全確認，跟既有4個「確認靜默存檔」章節同一套機制）；ch27的預測需要",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3888,
+   "excerpt_sha1": "30ce0dada413d4cb906b6d5617c666bfdee9c02b",
+   "excerpt": "- **ch29**：結構跟既有4個「確認靜默存檔」章節（raw21/22/23/27）完全同款，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3889,
+   "excerpt_sha1": "c479825cf39547546ec2ecefa78705afbc3f0bbe",
+   "excerpt": "沒有雙結局或其他已知複雜因素，**live驗證方向明確、值得嘗試**。唯一的前置",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3892,
+   "excerpt_sha1": "aa79ddaa584dcb6c7124483b6de07f0ebf9aa47b",
+   "excerpt": "`ROSTER_PICK_GRID_CHAPTERS`裡「唯二未live驗證的條目」，且過去輪次特別",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3893,
+   "excerpt_sha1": "e230ee720c891f0650f5241ba9098d6c5722f519",
+   "excerpt": "排除終局章節不測「章節byte是否前進」這個問題）——換句話說，要驗證ch29的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3896,
+   "excerpt_sha1": "d73ae57e344309eda423eb09dd9606b83f4629be",
+   "excerpt": "- **ch27好結局臂**：**目前不建議直接嘗試**。要live驗證這條分支，需要一份",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3902,
+   "excerpt_sha1": "a441020d01ec8d2a5c77cff53ccab2921d8f9210",
+   "excerpt": "驗證範圍。**若專案真的想要live驗證這條分支而不想跑完整收集流程**，比照",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3904,
+   "excerpt_sha1": "b6a1c1daaff7140e0cb82d2c3a5029a7192fe42c",
+   "excerpt": "「fd2_re stat-buff shortcut」慣例（用直接記憶體寫入跳過與驗證目標無關的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3921,
+   "excerpt_sha1": "205d6c68a3525a1639d6d1bb561017bfb007b96d",
+   "excerpt": "6個資料點驗證過。本輪目的：①用**明顯更長**的180秒窗口重新測ch26（原本的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3924,
+   "excerpt_sha1": "8799ae2af4f834e95ffdea628f48d85f1ffc7afc",
+   "excerpt": "延伸驗證這條規則是否也適用於中途章節，不只是raw21-28那個窄範圍；③ch05",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3950,
+   "excerpt_sha1": "907767f21dc6312d46a20dc55c62c755ea49d421",
+   "excerpt": "（ENGINE-LEVEL WIN CONFIRMED，與doc99先前記錄的1.8秒完全吻合，重現一致）**；",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3960,
+   "excerpt_sha1": "87881159bfd4ba764b7596cbd9275b372effd036",
+   "excerpt": "CONFIRMED）**——與doc99「ch2killgen」輪先前記錄的ch03 engine-win確認完全",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3975,
+   "excerpt_sha1": "c8526a1cb7e098287671e81a2856f556fd7ed3a5",
+   "excerpt": "在0，從未翻成2**，`sweep_chapter()`的4次kill-cycle重試迴圈也誠實確認",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3990,
+   "excerpt_sha1": "d0e68af5383cea18a6f07048f3e36fc1e4416d9b",
+   "excerpt": "（在index0-21的全零區間內，先前規則只用raw21-28驗證過，這是第一次",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 3991,
+   "excerpt_sha1": "32f52e2c764f1781d3e102ade910c654182f171c",
+   "excerpt": "延伸到這個範圍外的資料點），預測同樣無靜默存檔，本輪**新驗證的資料點",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4006,
+   "excerpt_sha1": "3d3014aea6808bab383ff54a6ea570ede83d60b9",
+   "excerpt": "很可能不同**（本輪未逐位元組比對兩者差異，這是誠實的推論而非結論）。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4021,
+   "excerpt_sha1": "f5c874a337d329dd7126f5a3fef6a2c83e1b09c7",
+   "excerpt": "`pass`**，M5引擎層級勝利確認章節數與磁碟`pass`章節數（4章：ch22/23/24/28）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4023,
+   "excerpt_sha1": "58fc96525d134935593128f0758cbf86a1058e90",
+   "excerpt": "章engine-win確認」tally引用的是歷史上曾經拿到過的最佳結果，不是「這次",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4026,
+   "excerpt_sha1": "3f863c423459ae7fa096af0c0c02cfc892d65a8e",
+   "excerpt": "結論，應該先用`--no-roster-pad`或補`ensure_one_ally_acts()`重新確認，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4032,
+   "excerpt_sha1": "350887df16f1f159c57d8ec3f39fc7ea7ad51ca0",
+   "excerpt": "anomaly章節需要用更長的耐心poll（建議至少60秒）重新驗證，不能直接沿用",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4038,
+   "excerpt_sha1": "1e61f6c65aa9ffdd0bb7f8d79af100a617ef6f34",
+   "excerpt": "規則之前也還沒有機會驗證超出raw21-28的資料點），但答案是否定的**：對",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4041,
+   "excerpt_sha1": "9d069d56860100712ca77100b4caac4ef7d00ea7",
+   "excerpt": "路徑比較慢」。**下一輪不需要再對其餘21個尚未逐一live驗證的anomaly章節",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4043,
+   "excerpt_sha1": "36dfc590a7a704f01c9fca5e8caa79bdfbf62f13",
+   "excerpt": "表已經給出全部30章的預測，若要繼續驗證，正確的下一步是挑1-2個",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4049,
+   "excerpt_sha1": "6b57d822cec65e6f017373d8bd6d1fbfe9af4b0e",
+   "excerpt": "## 2026-08-29「ch29live」輪：ch29 本專案首次live嘗試——連engine-level win都拿不到，「post-handler-save-trigger」/「ch2729-static」輪對ch29的靜默存檔預測**仍未能驗證**（不是推翻，是前置條件本身不成立）",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4051,
+   "excerpt_sha1": "61c3ca753d9eba40cdce4aa9c3addad3c85c9216",
+   "excerpt": "回應「ch2729-static」輪明確留下的live驗證建議：「ch29結構乾淨、方向明確，但受阻於",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4052,
+   "excerpt_sha1": "a23cea577f7ba5b5f888dcb3bed3a7b14e5c91c7",
+   "excerpt": "本專案至今還沒有任何一輪真正live打贏過ch29戰鬥」。本輪就是那個嘗試——結果證實這個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4068,
+   "excerpt_sha1": "cfd7ccd0ba0ba0c0815ff53ff52ed50ffe6f1b3e",
+   "excerpt": "ch23/ch25的`raw<=26`/門檻15分支。因此以ch28已live驗證的480作同cohort估計新增",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4087,
+   "excerpt_sha1": "96a3b4f0ce452248bc201071033eb104ccf7aa04",
+   "excerpt": "- `attempt_camp_exit()`一次到位：出口確認、`adaptive_pick_roster()`19/19全部選中",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4088,
+   "excerpt_sha1": "275c1d384b5beb54130273c0d5d31a3013ef46ae",
+   "excerpt": "（只花19次tap，遠低於480的預算，沒有耗盡跡象），戰鬥入場確認、37 taps內偵測到",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4091,
+   "excerpt_sha1": "78e168f1060ebc8eaeec55bf441d3f7998eb16f0",
+   "excerpt": "（3+5+13+23+6+6=56）精確吻合**——獨立佐證這個工具的敵人陣列掃描機制讀對了",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4106,
+   "excerpt_sha1": "4d4f872caacfb9b1cae8ef97871b2965211f767c",
+   "excerpt": "描述——包括ch07/ch20/ch19這些「敘述聽起來像positional/exclude/protect」但實測",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4123,
+   "excerpt_sha1": "482ce1e4e954e241ed487db8df58f4c938fd9956",
+   "excerpt": "### 對「post-handler-save-trigger」/「ch2729-static」輪ch29預測的影響：**仍未能驗證，維持靜態預測不變**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4127,
+   "excerpt_sha1": "966fcceef34f0b712b0d471d764560c4dcddf6d0",
+   "excerpt": "handler表的前置條件不成立）。ch29的靜默存檔預測狀態維持**「靜態完全確認，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4128,
+   "excerpt_sha1": "a899bb931224b984f07570ef7c5e84668f499cc4",
+   "excerpt": "未live驗證」**，跟輪次之前完全一樣；差別只在於現在有了**明確的live資料**證實",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4135,
+   "excerpt_sha1": "5a153ff66d922ce2ffe3bf2915ca0c471973617a",
+   "excerpt": "的「Live驗證建議」小結需要更新：ch29「結構乾淨、方向明確」這句話依然成立",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4137,
+   "excerpt_sha1": "b44ed0ec38b1cf93b060866d24c5676fc264d2b2",
+   "excerpt": "這個前置障礙**本輪嘗試過、仍未解開**，且現在確認原因是escort機制而非泛用捷徑",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4145,
+   "excerpt_sha1": "7c023194eccc34129683d1e54fc81fa0f7914c18",
+   "excerpt": "回應上方「ch2729-static」輪留下的後續動作：那一輪純靜態確認了`table_post[26]`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4155,
+   "excerpt_sha1": "b868c9ee811862f8d4c9ffe407367990f77d9a4c",
+   "excerpt": "已在更早的輪次被證實對「勝利判定本身」無效，但這裡是刻意排除，不是重測）；",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4191,
+   "excerpt_sha1": "07cc9d1e9b72026531f8117e5448556a8322ec31",
+   "excerpt": "`tools/fd2_chapter_sweep.py`早就驗證過的`BATTLE_ARRAY_PTR_LIVE`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4195,
+   "excerpt_sha1": "7614f6e123008cc18155d28c7063d80612dda8a5",
+   "excerpt": "的搜尋則假設有效槽從index 0開始緊密排列——這點在本輪live讀值中獲得獨立佐證，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4199,
+   "excerpt_sha1": "523769a877b8400858d74fab199d981e0dcffd34",
+   "excerpt": "證實適用於**存檔檔案內**的persistent roster record（只證實了runtime battle",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4200,
+   "excerpt_sha1": "0bdd007e3c9f50ff329e754509603d817eec5fab",
+   "excerpt": "record），本輪的寫入是在battle live記憶體上直接進行，屬於doc58已驗證過的",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4201,
+   "excerpt_sha1": "d759d4c6e923989a8336dab71090909ef190bb9a",
+   "excerpt": "同一類情境，不是把它套用到未驗證的存檔binary layout上。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4209,
+   "excerpt_sha1": "f3fbdf58884518348eba56a2a9fcf5e3269ca03e",
+   "excerpt": "### Step 1 live驗證：讀出Sol（隊伍0號位）真實inventory，證實上述模型100%吻合",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4231,
+   "excerpt_sha1": "40d837d2eccf885249f4b1bbd481c089ae9c5c39",
+   "excerpt": "相同），交叉確認這次讀到的record base/offset全部正確、不是巧合。",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4236,
+   "excerpt_sha1": "d6d2edb81e767dd2b390c49df6878b99ed5c8851",
+   "excerpt": "後用`D`指令逐byte讀回驗證：`flag=0x00 item=0x64`確認生效。**這是本輪唯一",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4237,
+   "excerpt_sha1": "d075a9fbb40e2bf59360661808a3440b16285ff4",
+   "excerpt": "真正需要判斷的「minimal正確寫入」決策點，結論：技術上完全正確、live驗證",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4240,
+   "excerpt_sha1": "21906860c696f6a6b48777dabd6ab937ec31b660",
+   "excerpt": "### 3隻機甲隊長的識別與nerf——同樣live驗證通過",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4246,
+   "excerpt_sha1": "4e3d1fe99df2b23186054617797cc76c63d80788",
+   "excerpt": "**推翻那個懷疑，確認15/23/32其實正是真正的機甲名冊，只是這個engine把「LV.」",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4253,
+   "excerpt_sha1": "a22cfcbdb1ef61ccd53cca0728ff77f544b25b7d",
+   "excerpt": "58-...`已經證實過的「敵人growth×level」公式（ch24輪的量化驗證）同一套機制，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4262,
+   "excerpt_sha1": "f1a7e6320e842ede3d07a64ffb1a598266d187b5",
+   "excerpt": "每筆寫入都用`D`讀回驗證，**9個欄位×3隻隊長=27筆寫入全部驗證通過**。EV特別",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4267,
+   "excerpt_sha1": "ea09640c598fe90d04442ccf8ef3eb1dcb80bfa0",
+   "excerpt": "另外驗證了一個**先前只在ch24輪用過的技巧，這次是第一次對ch27驗證**：直接",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4269,
+   "excerpt_sha1": "37b489468f04fa5b29b7bbc4c6050c55b9ecd12c",
+   "excerpt": "單位緊鄰的空地格——截圖確認渲染正確（機甲sprite即時出現在隊伍旁邊），完全",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4308,
+   "excerpt_sha1": "afe7f63d810b6c6b24c67830761cbca1c6f19081",
+   "excerpt": "在ch01/ch12/ch24/ch26等多個chapter反覆驗證過、公認最穩固的輸入路徑，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4319,
+   "excerpt_sha1": "5e73aa8e1d0756157403f6265eeed44fb341886b",
+   "excerpt": "**對照組確認鍵盤輸入層本身正常**：方向鍵（`Up`/`Down`/`Left`/`Right`）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4322,
+   "excerpt_sha1": "e10cb8f5108b4ee95836678e820165f666f41ee0",
+   "excerpt": "既有記錄完全吻合，證實這條路徑的鍵盤輸入完全正常）。**問題精確侷限在",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4326,
+   "excerpt_sha1": "283d00f1b2675990f80600a5a9a7e1139e71916c",
+   "excerpt": "§8.4已誠實列為未解的「移動確認Enter」/「指令環無法開啟」問題，本輪的症狀",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4332,
+   "excerpt_sha1": "29275eacd67854a09e84ae0437007428aaab53de",
+   "excerpt": "驗證通過，但這些準備工作最終沒有機會被實際使用來驗證好結局分支。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4341,
+   "excerpt_sha1": "c04d944fa97d2028ecea781c062f2b326a24e884",
+   "excerpt": "專屬」限制範圍不同——下一輪可以先確認這是「ch27這個特定deployment/",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4346,
+   "excerpt_sha1": "38567d095b479e576d23593d95e2baa7823eb080",
+   "excerpt": "（enemy record掃描`+0x42`找HPmax=32、MV=5的3筆）都已經live驗證正確，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4350,
+   "excerpt_sha1": "a078df5f494ba790aa2f4ba68ed5f485c9b3541b",
+   "excerpt": "## 2026-08-29「ch29tp」輪：直接記憶體teleport悠妮到石碑區——teleport機制本身live驗證成功，但escort/rest觸發仍未打通，engine-level win依然拿不到",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4357,
+   "excerpt_sha1": "824ce9a136101112fe52556de2fcacfb3561654c",
+   "excerpt": "**並行安全**：開跑前用`dosbox_harness.sh status`確認當時`c27sky`（另一個並行round）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4360,
+   "excerpt_sha1": "6fb1b75e62dbe7fa7712f1e75879c9561b9a3a42",
+   "excerpt": "「已驗證2-3顆並行上限」）。收尾時複查`status`，`c27sky`已經自行跑完並teardown，本輪的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4369,
+   "excerpt_sha1": "cd700e00ae0695a400cec65b943a87713233dda2",
+   "excerpt": "見 `docs/data/remake_excluded_claims.json` 的判準),真正的驗證是下面這段 live 記憶體讀取。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4370,
+   "excerpt_sha1": "e207bd9e1d5c6ec9d9c8f83b49450459a95498b0",
+   "excerpt": "live驗證發現一個新坑:`build_complete_roster_save()`從真實存檔「保留」的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4380,
+   "excerpt_sha1": "bbccb14919b2c92e01b95e85e0c7dfedf8e5e12f",
+   "excerpt": "交叉驗證順序假設成立），非本輪主要目標但值得記錄給下一輪：**任何要用`+0x07`辨識角色",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4381,
+   "excerpt_sha1": "05afaf676645931340e947f2eea88596acd018b2",
+   "excerpt": "的未來任務，先確認該record是本場戰鬥新合成的還是從舊存檔直接搬移的，兩者不能一視",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4391,
+   "excerpt_sha1": "b125b8a046cf89ac7d0b13ecf6f77700ed7b7acb",
+   "excerpt": "的候選,不是逆向確認\"這就是escort-rest觸發碼\"本身**（誠實列為本輪最大的未證實假設，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4402,
+   "excerpt_sha1": "9ab1d7a0d480e2e84a47f6fb45d316bb49488e67",
+   "excerpt": "readback確認寫入成功（含Sol/悠妮，滿足NPC-protection慣例）。",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4403,
+   "excerpt_sha1": "dc70457801f9ba0e3e35fd7ecce61c103d51203b",
+   "excerpt": "- 悠妮座標`SMV`寫入：`(15,60)`→`(22,8)`，立即readback確認`(22,8)`；**一次完整",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4404,
+   "excerpt_sha1": "333414b7be194428ecb2a56c6483a299814eb42c",
+   "excerpt": "End-Turn循環之後再讀一次，座標仍是`(22,8)`，沒有被引擎重置或clamp回去**——證實",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4417,
+   "excerpt_sha1": "91c078978975a6efbe50124eff9e48e0c99c0490",
+   "excerpt": "已經證實座標teleport對「渲染」「target-resolve」有效（敵人正確顯示、正確被",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4418,
+   "excerpt_sha1": "eff20db35b68ecdfa858b5a056c4e4bc61932c09",
+   "excerpt": "選中/攻擊），但從未證實對「格子事件觸發」也有效；若native引擎的field-event",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4424,
+   "excerpt_sha1": "beb1f68e745d526684178f1f3e777711d7baef08",
+   "excerpt": "item 0x23數量4或14＋鎖輸入」，語意更像戰利品/劇情鎖，不是逆向證實的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4433,
+   "excerpt_sha1": "854a6e190ce58820548521007474902bbc16449f",
+   "excerpt": "**對ch29靜默存檔預測的影響：無變化，依然完全未live驗證**——本輪連engine-level win",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4436,
+   "excerpt_sha1": "72bfb375a9442f42cbb22ae0885b082d862fe185",
+   "excerpt": "相對於「ch29live」輪的實質進展**：(a) 獨立證實了「敵人座標teleport技巧」可以原樣",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4444,
+   "excerpt_sha1": "3a2f3e11258f9ea6212a26b75a67a96eb4a9054e",
+   "excerpt": "②搜尋`campaign_full.json`裡ch29對應的beat定義，確認有沒有獨立於raw field-event",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4445,
+   "excerpt_sha1": "5faa1c184264ae6b4c7b5c44f5ac5e75df945160",
+   "excerpt": "之外的escort/rest腳本節點；③若①證實是「移動指令完成才觸發」，唯一路徑就是繞不開",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4464,
+   "excerpt_sha1": "e56e91fbb9241bf10d95059112e11965ec96038e",
+   "excerpt": "（Enter分派入口）找出這個特定deployment上的gate條件，並先確認這是ch27專屬問題",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4467,
+   "excerpt_sha1": "b4e33111bc1754db213d3fb3fce407df2c14c60a",
+   "excerpt": "### Step 1：環境/範圍排除——用ch24（近期已確認`Return`全流程可靠的章節）做對照組",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4469,
+   "excerpt_sha1": "6241b591570512df31412b8766394e383e4c4b2a",
+   "excerpt": "`tools/dosbox_harness.sh status`確認開跑前沒有殘留instance，用全新",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4475,
+   "excerpt_sha1": "3d495479bcd29065d14e30ab0c5b0c3d37832bea",
+   "excerpt": "`FD2.SAV`章節byte`0x17→0x18`原生autosave確認寫入——**`Return`鍵驅動的整條",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4528,
+   "excerpt_sha1": "ce18b273c7a9929c6e57ee15fda046f331067c3c",
+   "excerpt": "// 選項後仍回0(繼續等)；Enter/Space回1(確認)；",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4549,
+   "excerpt_sha1": "9aeca357eed8569fa083321da12fde0df185561a",
+   "excerpt": "**選中一個真實單位**（不是空地格）時，即使3層entry gate全部live驗證乾淨，畫面仍",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4555,
+   "excerpt_sha1": "4093e4a8e4e531920bb35e25fda4246f3dd59c0d",
+   "excerpt": "### Step 3：Live驗證——完整重演`ch27sky`輪的天空之鑰寫入+機甲隊長識別+teleport，",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4560,
+   "excerpt_sha1": "26200a5726298554b44308fcddbca67957a28e3a",
+   "excerpt": "Step 1發現的CLI旗標陷阱，確認log顯示`roster_count=13`原樣保留），複製",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4566,
+   "excerpt_sha1": "ecc0646edbe205f539b79ee9c8d95c284f3ca944",
+   "excerpt": "逐位元組吻合），寫入slot2（`base+0xe`/`+0xf`）`flag=0x00,item=0x64`，readback",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4567,
+   "excerpt_sha1": "1887e31f10eb4ca1b7b10d3e69338ab7511d47a8",
+   "excerpt": "確認`0064`——與`ch27sky`輪的寫入完全一致的技巧與結果。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4575,
+   "excerpt_sha1": "9062737fb606d07f05c315ee793061db5366fa7a",
+   "excerpt": "roster同樣的判讀盲點，證實這是佈局無關、`find_empty_adjacent_tile`本身在ch27",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4576,
+   "excerpt_sha1": "4ddad069dbce2c6fa82f7ff6b26a3069d34cbe4d",
+   "excerpt": "這張地圖上的既有弱點，不是本輪新問題），但送出`Return`後**截圖確認畫面確實有",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4577,
+   "excerpt_sha1": "ea7af0038fc387549820f93c0f5001d414c40002",
+   "excerpt": "變化**（`skykey_only_return_no_effect=False`）——證實輸入鏈在這個階段仍然存活",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4582,
+   "excerpt_sha1": "a883a51c8bf4b2a4c8535094cc0d697cc0ade3b9",
+   "excerpt": "`SMV`寫入`+0/+1`，逐筆readback確認），`find_empty_adjacent_tile`這次**乾淨",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4591,
+   "excerpt_sha1": "fcbde667df48a92bf97d4d1a4a98f0ad2e80c553",
+   "excerpt": "**送出`Return`：`post_return_full_repro.png`截圖確認系統環正確開啟**（畫面",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4610,
+   "excerpt_sha1": "c96bc6af9f20887b4150b58b85861122e80e6bf4",
+   "excerpt": "系統環都不開」這個症狀唯一精確吻合的已知程式碼路徑——但本輪live驗證時游標",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4612,
+   "excerpt_sha1": "5a13775c4472b7e0eb2879542cb59a51d5a2387d",
+   "excerpt": "本輪沒有被證實，也沒有被推翻**，只是誠實地沒有機會被live資料驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4617,
+   "excerpt_sha1": "9d66c77c4fe7d176158584cc6db9cd7bcf06f231",
+   "excerpt": "`+5`/`+6`/`+0x26`任何gate相關byte，理論上不該有影響，但未實測，是本輪唯一",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4623,
+   "excerpt_sha1": "75106ef51a0c0e2824f2cf45b7c0a301a7d51d0e",
+   "excerpt": "能單獨重演的確定性bug。**沒有找到可驗證的根因，也沒有嘗試宣稱一個未經驗證",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4637,
+   "excerpt_sha1": "3bc3dd094b09dfb4c2de7cfa3d89b7d279deaa37",
+   "excerpt": "teardown前確認`c27diag`已乾淨關閉，不留殘留instance。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4676,
+   "excerpt_sha1": "13ad986d2a9260ecf9d7e9dba7ac586bd7d9479c",
+   "excerpt": "任務開始前依SOP先跑`tools/dosbox_harness.sh status`確認沒有殘留instance——這個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4687,
+   "excerpt_sha1": "122e647cbf80a3570859e54ae6726ca5ba895e73",
+   "excerpt": "在`Ubuntu`已被觸發啟動之後執行）——**也逾時、無輸出**，證實不是`-d Ubuntu`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4692,
+   "excerpt_sha1": "a7ebe2c78e570cbc7bd4a1997f4fee878d3462be",
+   "excerpt": "6. PowerShell `Get-Process`確認`vmmemWSL`、`wslservice`、`vmcompute`都仍在",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4701,
+   "excerpt_sha1": "16d8bff48d01ad1c22897e9198de92fdd54d862d",
+   "excerpt": "doc48§8.1明確記錄「續三十五/續四十九兩輪獨立驗證過非管理員權限的殭屍process",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4706,
+   "excerpt_sha1": "f1713351eeb0f3c3d560ea62bd4455b85bd04b61",
+   "excerpt": "因此在確認症狀後即停止進一步的非管理員層級重試，沒有浪費時間複測doc48已經",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4719,
+   "excerpt_sha1": "021cf41bc3acdb2bbf8373e1ef93fb701856e3c0",
+   "excerpt": "3. 呼應doc48§8.1既有建議：下一輪live驗證結束時應主動`wsl --shutdown`一次",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4730,
+   "excerpt_sha1": "69d619dd4682b7cb0a534b36852210c171530b14",
+   "excerpt": "先獨立驗證deadlock確實已清除（`wsl --status`或`wsl -l -v`應在~30秒內正常",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4732,
+   "excerpt_sha1": "61e289f46629e4469ebf499b65c8238fd34508a9",
+   "excerpt": "nerf+teleport→真實UI攻擊擊殺→End-Turn→確認好結局→輪詢靜默存檔」全鏈路。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4739,
+   "excerpt_sha1": "476e7ee8a551cd7729fdbc3692aae455fb214ee2",
+   "excerpt": "2. `Get-Process wsl,wslhost,vmmemWSL,vmcompute,wslservice`——確認`vmcompute`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4750,
+   "excerpt_sha1": "a02438930f9c9139ff47c4c96495d93a40e4ee6b",
+   "excerpt": "### 誠實結論：deadlock未被使用者的`wsl --shutdown`清除，本輪依SOP在確認症狀",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4762,
+   "excerpt_sha1": "81951ffeca951502ad6e446bb3af54dae141b418",
+   "excerpt": "1. **仍然需要使用者以系統管理員權限確認`wsl --shutdown`真正執行成功**（例如",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4763,
+   "excerpt_sha1": "7edff9aaec5f1989e9746a88842d3081c68dbcd6",
+   "excerpt": "先手動確認`08:50:23`那批殭屍`wsl.exe` PID已消失，必要時可能要先手動",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4767,
+   "excerpt_sha1": "0f3933bc53387db8dbeeae25c104cce36272b6f4",
+   "excerpt": "2. 一旦確認`wsl --status`能在~30秒內正常回傳，`ch27sky`/`ch27ret`兩輪已備妥",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4771,
+   "excerpt_sha1": "a96f369f4f83359b1a229fd5456eab83af0bb64d",
+   "excerpt": "3. 這是同一個deadlock連續第二輪把任務擋在第一步，值得考慮把「先確認deadlock",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4775,
+   "excerpt_sha1": "b0b7a4f3badac769bde501ccd1be59b9530e8fc3",
+   "excerpt": "## 2026-08-29「ch27win3」輪：**任務完整成功——ch27好結局（有天空之鑰）3隻機甲隊長全部經由真實UI攻擊指令鏈擊殺，engine-level勝利自動觸發，好結局過場（莎拉/轉送站/黃金城劇情，非悠妮`EB FE`壞結局死鎖）正確播放，`FD2.SAV`磁碟章節byte當場live確認`26→27`——這是`ch2729-static`輪純靜態預測「有天空之鑰分支會靜默存檔",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4782,
+   "excerpt_sha1": "a6a335261d4993e7b9cf0f5e1109bf0030263fda",
+   "excerpt": "`08:50:23`殭屍process確認消失），`wsl --status`在約35秒內正常回傳（`exit 0`），",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4784,
+   "excerpt_sha1": "63179641489211318cd7b31a3a83dd77ed9ac1de",
+   "excerpt": "registered」——三項獨立健康檢查全部通過，環境確認已恢復，可以直接沿用",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4799,
+   "excerpt_sha1": "4c905e3404cd636b52c9d8d4f3e08716dcbf776b",
+   "excerpt": "確認`slot0`raw chapter byte=26（story ch27），`attempt_camp_exit()`一次到位找到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4803,
+   "excerpt_sha1": "85160a820c2bb143a3a81a84003cf2e1fba0da90",
+   "excerpt": "### Step 2：天空之鑰寫入＋3隊長識別＋nerf——與`ch27sky`/`ch27ret`兩輪逐位元組",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4807,
+   "excerpt_sha1": "7968d8e31ed3c44e80f3dfdf6b4786316b11855b",
+   "excerpt": "item=163`、`slot2起flag=0x80`（空）——與`ch27sky`輪記錄逐位元組吻合。寫入",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4808,
+   "excerpt_sha1": "538416a0298bf29e83fa57d6c48c32510bee594b",
+   "excerpt": "`slot2`（`base+0xe`=flag、`base+0xf`=item）`flag=0x00, item=0x64`，readback確認",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4814,
+   "excerpt_sha1": "1ee58d8680fb522d07d77edcd61ff2319d4d7968",
+   "excerpt": "readback驗證，27筆寫入全部確認生效——這是`ch27ret`輪明確跳過、留給下一輪的",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4816,
+   "excerpt_sha1": "793477a2ff3796a594b4c67d59d139b818ecd47f",
+   "excerpt": "**確認nerf寫入本身同樣不是`ch27sky`輪`Return`失效之謎的根因**（見下方Step 3）。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4819,
+   "excerpt_sha1": "3a6d53ac80b77534c1eda597b6436e9503570c57",
+   "excerpt": "——沿用`ch27sky`輪技巧，`SMV`寫`+0x00`/`+0x01`，逐筆readback確認生效。清",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4821,
+   "excerpt_sha1": "e57ca469bb4a73ab7ff07859f62cfd1bf61ae369",
+   "excerpt": "`campexit`系列輪次已記錄過的同款節奏）後`screen_shows_battle_hud()`確認進入",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4836,
+   "excerpt_sha1": "e6c324e9e1fd0c89f08d7dec3b3e5ec81e084d41",
+   "excerpt": "100%重現成功（**3/3獨立驗證，不是單次僥倖**）。這是本專案第一次記錄",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4838,
+   "excerpt_sha1": "444f6cefbc2eaf986c554eaa6db526134a622f25",
+   "excerpt": "兩輪各自記載的更複雜/更難重現的序列不同——**留給下一輪交叉驗證這個手法是否",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4839,
+   "excerpt_sha1": "f08249039ad4662ab20a24bff1caf2847ddb928b",
+   "excerpt": "比既有序列更穩定、能否推廣到其他章節**，本輪誠實只驗證了ch27這一個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4842,
+   "excerpt_sha1": "e2961fb5220314ac6b65fad9225fc6feff995e21",
+   "excerpt": "**指令環4個icon**：zoom截圖二次獨立確認（蓋亞的環、亞雷斯的環，兩張畫面",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4844,
+   "excerpt_sha1": "1d4a5501e99ec9203953552603ed8320a67bb93b",
+   "excerpt": "無目標時紅色不可用）、左＝法術（zoom確認選左會開出完整法術清單）、右＝道具",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4846,
+   "excerpt_sha1": "7cef1004ac3a5f73f17d65d15dec0b213e86ed07",
+   "excerpt": "續六十三輪zoom驗證過的「上=攻擊、左=法術、右=道具、下=未知」逐一吻合，",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4851,
+   "excerpt_sha1": "8aaaded3a8582e68a08ac6eafb06ca0c83266b79",
+   "excerpt": "`HP=001`確認鎖到的是nerf過的隊長本人→`Return`執行攻擊，播放對決動畫→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4852,
+   "excerpt_sha1": "d7e7905864c8d0bb789a30c34fe486914391ad6d",
+   "excerpt": "`Return`確認出手→擊殺訊息「得到經驗99點！等級上升了！！」）：",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4856,
+   "excerpt_sha1": "0d4f2dd70a5769fe2305c6b66cc6605c0f0344cc",
+   "excerpt": "死亡signature，與`doc58`續六十三輪記錄的死亡signature逐位元組一致。",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4882,
+   "excerpt_sha1": "98d6a0d8ff12fec6f190509bfc3deeb71e8498c2",
+   "excerpt": "把隊長3重新teleport到`(13,53)`（`scan_all.py`確認這格沒有任何己方單位",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4890,
+   "excerpt_sha1": "54b4f89b086ac7660f6faa1c39fb971cbc07d175",
+   "excerpt": "### Step 4：Engine-level勝利**自動**觸發——不需要顯式End-Turn/YES確認，",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4908,
+   "excerpt_sha1": "23038a21ab8a196a6e1ffe6ab6c8145df5e08b48",
+   "excerpt": "scan剩餘47筆敵方record確認；**兩種假說本輪都沒有資料可以裁定，留給下一輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4913,
+   "excerpt_sha1": "5342b8e46c51117fe7720ec4f03fa306b75d76fc",
+   "excerpt": "`EB FE`壞結局死鎖，逐字比對`docs/knowledge-base/58-...`續六十二/六十三",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4931,
+   "excerpt_sha1": "589801ff7a5cf384d49b5d0a8499d35df503fe08",
+   "excerpt": "### Step 6：磁碟`FD2.SAV`章節byte**確認26→27**——`ch2729-static`輪的「有",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4943,
+   "excerpt_sha1": "87c5c909212d8183a89c5b30fb8d7d1ff3174127",
+   "excerpt": "`ch28`四章「確認靜默存檔」使用的同一套ground-truth驗證方法（獨立pull+decode",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4952,
+   "excerpt_sha1": "5b3f81af2e5a364125b75001a48d4c86cf0d8b61",
+   "excerpt": "獨立pull+decode確認`slot0`raw chapter byte=27——五項獨立證據全部指向同一個",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4956,
+   "excerpt_sha1": "b2563b32ba0b2fdb9d89e791e31ec99cf38225b7",
+   "excerpt": "teleport技巧全部與`ch27sky`/`ch27ret`兩輪逐位元組吻合——這些子技巧本輪",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4963,
+   "excerpt_sha1": "5c6a3dab9cdd3d0e18780e9aaad1b8fa305a67f7",
+   "excerpt": "其他章節/其他deployment同樣可靠，本輪只驗證了ch27這一個場景，樣本數3。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4971,
+   "excerpt_sha1": "68a8d80d7048f955f7180b292f227b75cc205549",
+   "excerpt": "`ch2729-static`輪對ch27好結局分支的靜態預測（**確認，但只限有天空之鑰這條",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4972,
+   "excerpt_sha1": "4a974409d566dc62b5e313e0bb74f455b13fadee",
+   "excerpt": "分支**）本輪**由live+磁碟雙重證據正式升級為「確認」**，`91-worklist.md`",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4979,
+   "excerpt_sha1": "5bdd94485701aa27c3c81e5555ec1051e0df26b7",
+   "excerpt": "`bash tools/dosbox_harness.sh teardown ch27win3`乾淨完成（`status`確認無殘留",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 4980,
+   "excerpt_sha1": "efcb0c3e6936dcd7a25060cc68edb3b9d8af6987",
+   "excerpt": "instance），收尾後主動跑一次`wsl --shutdown`（依`doc48§8.1`「下一輪live驗證",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5056,
+   "excerpt_sha1": "710561fdeeca62c4855b9e8a2986ae67a6e44c9f",
+   "excerpt": "的地圖，不是ch29的**。用`md5sum`確認`map28/map.json`（48652 bytes）與`map29/map.json`",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5059,
+   "excerpt_sha1": "d73836ed07403cdffff643d79aac87a2d32a914e",
+   "excerpt": "改讀**正確**的`map28/map.json`（`w=31,h=64`，跟`map29`的45×40完全不同尺寸，再次確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5139,
+   "excerpt_sha1": "1fa0414d3778221058fc65236a769c4bdc21281d",
+   "excerpt": "值得下一輪優先追的強烈候選，但**本輪誠實列為未證實的推論，不是確認的因果鏈**。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5158,
+   "excerpt_sha1": "71143f9a1517fd0f74a0e33230454c1d4c48eac2",
+   "excerpt": "2. **若優先度1耗時過長，一輪live記憶體寫入測試可以更快驗證整條假說鏈**：讀出live",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5161,
+   "excerpt_sha1": "b502a6bc40de1320a66b4c184cc5aaf3061ac5a8",
+   "excerpt": "`table_post[28]`會如預期被dispatch（一次操作驗證兩個先前分開的靜態預測，不需要",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5176,
+   "excerpt_sha1": "58cad7965aeaf3afef3c45cc2b8ad934fbd8203c",
+   "excerpt": "靜態完全確認、live仍未驗證**——本輪的全部新發現都在\"win-check之前\"這一層（勝利",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5191,
+   "excerpt_sha1": "3b5cb6bea784761f90a544ca404f5caf43dd7ac9",
+   "excerpt": "### Step 1：複用既有патched save、重新走一次已驗證的campexit序列",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5200,
+   "excerpt_sha1": "6e1fc801e5055c1da11bcf1e5cb22abe52cf6169",
+   "excerpt": "直接複用`ch29tp`輪已產出、已驗證過的`patched.SAV`（20人roster、chapter patch到",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5203,
+   "excerpt_sha1": "78e4824eaa59c295bfc81c6df796ad307365c92d",
+   "excerpt": "`ch29tp`輪`02_post_load.png`逐pixel一致，確認是這份存檔載入時的已知固定畫面，非新",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5243,
+   "excerpt_sha1": "588d54c387ce8be65e62f90294242248f65065ce",
+   "excerpt": "重新讀回`NativeEventState[0x10..0x17]`確認寫入的flag沒有被任何背景邏輯重置（仍是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5246,
+   "excerpt_sha1": "6ec577e95e1cbdc34413d7b1e828f4a84430318f",
+   "excerpt": "`find_empty_adjacent_tile()`→開環→`Down`(END)→`Return`確認→`Return`(YES)的標準",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5247,
+   "excerpt_sha1": "d5a542e0fce8de627505ce7b0b097c55a9d99d79",
+   "excerpt": "流程，藉此隔離「是不是End-Turn確認本身重新觸發了win-check」這個變因：",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5258,
+   "excerpt_sha1": "d457bdebc8a5cfa3f0a751a777316c3cbfc0f53d",
+   "excerpt": "確認流程，不需要真的打死任何敵人或滿足escort/rest條件——**這代表`ch29live`/`ch29tp`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5288,
+   "excerpt_sha1": "665b9f8475471b2574cdd00e31eb87d3c57f9cd0",
+   "excerpt": "### Step 6：磁碟`FD2.SAV`獨立pull+decode確認——`raw28→raw29`",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5294,
+   "excerpt_sha1": "dd0c3561b2baf0724db37079fd33acb1c1e0a6f3",
+   "excerpt": "五章「確認靜默存檔」使用的同一套ground-truth驗證方法（獨立pull+decode存檔檔案）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5303,
+   "excerpt_sha1": "2612cf29aa8173ebef9bd44ba1b682f7a17aa5a7",
+   "excerpt": "LOAD選單UI截圖明確顯示「第三十章」；(5) 磁碟`FD2.SAV`獨立pull+decode確認",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5313,
+   "excerpt_sha1": "a436b60a3e0b5b32ff5bbdd4d7cfb741a49a45ff",
+   "excerpt": "捷徑以求最快驗證存檔機制本身，不是要解「正常玩法可達性」這個獨立問題。這個問題",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5314,
+   "excerpt_sha1": "f1bac1650cba12e3cb9120a23aa8159f659e0f29",
+   "excerpt": "留給`91-worklist.md`「正常玩法可達性驗證」(M5)項目的後續輪次,不影響本輪「ch29",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5316,
+   "excerpt_sha1": "edb9a53510f54117ef4a21a094448038f264901b",
+   "excerpt": "- **低信心/不宣稱**：本輪的win-check dispatch驗證只證實「End-Turn確認流程是其中一個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5324,
+   "excerpt_sha1": "f762854686fc092bdf1a51edd99b9485659e2d24",
+   "excerpt": "預測正式從「靜態完全確認、live未驗證」升級為「靜態+live+磁碟三重確認，項目關閉」**。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5326,
+   "excerpt_sha1": "99a4645069975ab5429ddf4581f3bc9fca58c7ff",
+   "excerpt": "是繼ch22/23/24/27/28之後第6個獲得live+磁碟雙重確認的章節，且是本專案唯一一個透過",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5332,
+   "excerpt_sha1": "435967d33f9390b09d08f4c7feef20721d3bbb71",
+   "excerpt": "`bash tools/dosbox_harness.sh teardown c29wf`乾淨完成（`status`確認無殘留instance），",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5340,
+   "excerpt_sha1": "516e7e1247442ca7532b1e3d38f93a6b06e24825",
+   "excerpt": "## 2026-08-30「ch05regr」輪：回應`91-worklist.md`「CH05-ROSTER-MODE-REGRESSION」項的Step 1——**baseline sanity check本身失敗，2個獨立instance在真正的「舊旗標組合」（真實13人未padding roster）下都連engine-level win都拿不到，證實這不是`roster_mode=\"co",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5344,
+   "excerpt_sha1": "bc1046d7de1067f0180c6ccff9fb953964ffa0c7",
+   "excerpt": "`91-worklist.md`「CH05-ROSTER-MODE-REGRESSION」項留下一個範圍明確的3步驟驗證計畫",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5346,
+   "excerpt_sha1": "d31ea656d26d996fd6f937394240e55156aa2f81",
+   "excerpt": "`sweep --chapter 5 --no-roster-pad`確認舊的1.8秒engine win是否仍能重現；(b)若(a)",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5368,
+   "excerpt_sha1": "0cbb83a4eafbf4848a3fed878595c7e9f8127760",
+   "excerpt": "（派工單本身的措辭是「確認舊的1.8秒win是否仍能重現」，字面指令若因為這個已知陷阱",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5378,
+   "excerpt_sha1": "67949f8a16eb2ef61713fcd4c02996e17e79399d",
+   "excerpt": "確認`tmux -L fd2harness ls`/`ps aux | grep dosbox`乾淨無殘留）：",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5381,
+   "excerpt_sha1": "124f20407297bde541a17c1e81b050fec6440512",
+   "excerpt": "`prepare_chapter_save`確認`roster_count=13`保持不變（未padding），",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5418,
+   "excerpt_sha1": "7a1586098d5c317914f73b1440c587f117bda7d0",
+   "excerpt": "終止邏輯可能過早放棄了本該繼續的重試。這只是一個**未驗證的候選解釋**，本輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5446,
+   "excerpt_sha1": "af6f5d90083401d191dd8733fb4be3c3014d8b7e",
+   "excerpt": "`ps aux | grep dosbox`確認乾淨無殘留後，主動跑一次`wsl --shutdown`（依doc48§8.1",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5453,
+   "excerpt_sha1": "4965aafb0ef4ff9205c11a612710d28b5630b9d6",
+   "excerpt": "## 2026-08-30「ch05regr2」輪：驗證「延遲援軍波次」假說——**具體機制（新的可掃描活敵record）被live測試明確排除，但更廣義的「kill-cycle重試迴圈提前放棄」假說被live確認為真根因；已加`--force-cycles`/`--max-kill-cycles`旗標+`KNOWN_NEEDS_FORCE_CYCLES`per-chapter registry（",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5464,
+   "excerpt_sha1": "6394f3134479ea1cd9b5a7216b34fe24a35252ca",
+   "excerpt": "### 靜態檢查：`docs/data/turn_events.json`證實ch05（map4）確實有真實的turn-based",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5491,
+   "excerpt_sha1": "96733532fa217e251709ee85a07cfd8d4a9fff54",
+   "excerpt": "`confirm_end_turn()`(送出Enter開環→Down選END→Enter確認→[若enemy_addrs非空,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5528,
+   "excerpt_sha1": "7f644c3dbb8c337aebd15c89b75c3ef497987d94",
+   "excerpt": "- `prepare_chapter_save`確認`roster_count=13`（`--no-roster-pad`未padding），",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5545,
+   "excerpt_sha1": "ec42b6f282075fc980bb64193d205ca0d4884a31",
+   "excerpt": "**這正面確認了「kill-cycle重試迴圈提前放棄」是ch05baseline sanity check失敗的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5552,
+   "excerpt_sha1": "78e22abb0d1ead89bc4e4e862c3784ede29b4a91",
+   "excerpt": "派工單原本要驗證的具體機制是：doc25§6.1`turn_events`的一個延遲/回合觸發援軍波次",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5569,
+   "excerpt_sha1": "229443c987c4aa45e91bbb1d252e329903ee18a9",
+   "excerpt": "被過早的提前停止邏輯擋住」這個更廣義的候選假說則被本輪**正面確認**。兩者不是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5570,
+   "excerpt_sha1": "c782f6cf7254e600aa4fc4cdd7cf8ebc1d8d02f9",
+   "excerpt": "同一件事，本輪誠實地把兩個假說分開判定，不合併成一個籠統的「確認」。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5577,
+   "excerpt_sha1": "6b018540cb2b27656ab51b84bb65aa8f07cfb9da",
+   "excerpt": "mass-kill、以及kill-cycle 4的engine win confirmed。根因：本輪新增的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5586,
+   "excerpt_sha1": "00600516d30d44fdb93fff41bb514bf8f0d636dd",
+   "excerpt": "`python -m py_compile`與對照本輪`result.json`實際log手動逐行核對verified**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5600,
+   "excerpt_sha1": "c41eb54c716e75af1e4e63b0caecde04381a92b1",
+   "excerpt": "目前只有ch05一筆,其他任何章節需要類似機制都必須先有自己的live確認才能加入,",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5602,
+   "excerpt_sha1": "059ad76e97c2413b79cc93ca46b7137d260fb14a",
+   "excerpt": "（預設關閉）的舊路徑重新live驗證回歸**（理論上zero-risk，因為ch05是目前唯一",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5609,
+   "excerpt_sha1": "033820dd90148b2ef5df65fe3d9cb00b7b5f0447",
+   "excerpt": "該項的根因從「未知的更廣泛回歸」，**收斂為已識別、已修正、已live驗證的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5615,
+   "excerpt_sha1": "b6bf1c49df46b50f190612e0902f27b8cc29d9d8",
+   "excerpt": "同時確認`had_enemies`修正後的verdict字串正確顯示`anomaly_engine_win_no_disk_write`；",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5625,
+   "excerpt_sha1": "3e6c7de25cb2ad374d23eede657043a2e0edd767",
+   "excerpt": "dosbox`/`tmux -L fd2harness ls`確認乾淨無殘留後，主動跑一次`wsl --shutdown`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5631,
+   "excerpt_sha1": "1f2b2834bd06d9a83ffe4ff187b020a42d65d975",
+   "excerpt": "只跑了1個live instance（不是慣例的2個獨立instance交叉確認）——工具本身這次",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5635,
+   "excerpt_sha1": "da0e9cf8e871bd8c88c7fc727a3ec63bef911b60",
+   "excerpt": "強度足夠支持上面的結論，但誠實記錄這裡沒有做到本文件慣例的2-instance交叉確認。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5639,
+   "excerpt_sha1": "f5d8b391d6890deff8fdaefd337a2e0e8b244820",
+   "excerpt": "查表自動生效）的自動路徑，用2個獨立instance交叉確認**live測試通過**；②`had_",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5640,
+   "excerpt_sha1": "8ff517c0336612dfc017bfc9f96fdc5fcea603db",
+   "excerpt": "enemies`verdict分類修正**live確認正確**顯示`anomaly_engine_win_no_disk_write`**，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5648,
+   "excerpt_sha1": "dc1612c1e593de8d16ab6133d9235cbc67b49c96",
+   "excerpt": "的re-verify：(1) 沒有用純預設旗標（不手動傳`--force-cycles`）重新live驗證",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5651,
+   "excerpt_sha1": "f52e94ceab93a07d5c03c7e34faa6a8f2e02a52b",
+   "excerpt": "兩者都留給「下一輪如果剛好重跑ch05可以順便確認」。同時本文件與`91-worklist.md`",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5652,
+   "excerpt_sha1": "8d04ad3d9000798509ac7bc41f8f2a6c973f3e38",
+   "excerpt": "一貫的慣例是2個獨立instance交叉確認，`ch05regr2`輪只跑了1個。本輪任務：用2個",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5679,
+   "excerpt_sha1": "a062d120af70c548582b9cf2122d1ea6a4d9bff7",
+   "excerpt": "出發前先跑`dosbox_harness.sh status`確認機器上無殘留instance（乾淨），指令：",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5695,
+   "excerpt_sha1": "ac858aa00f965df5d98fb7e76f0264cb9d13e3ef",
+   "excerpt": "- `prepare_chapter_save`確認`roster_count=13`（未padding）；`scan_enemy_slots`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5700,
+   "excerpt_sha1": "920d8dc14617cbed87f0c6d029f39c52d940da1d",
+   "excerpt": "出現，且本次呼叫沒有傳任何`--force-cycles`旗標，證實是純自動路徑觸發，不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5704,
+   "excerpt_sha1": "2c866e247e5b959a19f4ae7a28e6aad0f0847eda",
+   "excerpt": "End-Turn繼續，逐字與`ch05regr2`輪`--force-cycles`顯式旗標跑出的log一致。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5705,
+   "excerpt_sha1": "ef0f445c290d8c7c22a44d56a4dea80174fd9283",
+   "excerpt": "- **kill-cycle 4/4：`sweep_chapter: engine win confirmed on kill-cycle 4/4`**——",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5710,
+   "excerpt_sha1": "88c7e43fcccafd4c022f1d4a81071d98fc5d60f5",
+   "excerpt": "修正前那句錯誤的「the enemy scan found 0 enemy slots」，`had_enemies`修正確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5718,
+   "excerpt_sha1": "aa69b9e0eac49c968a9ed91a0028c8d234c44697",
+   "excerpt": "的「30筆全死+force繼續」訊息、**`engine win confirmed on kill-cycle 4/4`**——",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5719,
+   "excerpt_sha1": "c959493498aba36840653d537310357df54bd96a",
+   "excerpt": "與instance 1**逐字一致**（唯一差異是各自的instance-prefix字串本身與時間戳），",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5725,
+   "excerpt_sha1": "491cbca4b24e37eecea98f3208243d739a9343f2",
+   "excerpt": "**兩個獨立instance完全一致地正面確認**：①`KNOWN_NEEDS_FORCE_CYCLES`查表在",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5741,
+   "excerpt_sha1": "6590505145854f455ad616678ef7e583ae442400",
+   "excerpt": "該項的根因識別+修正+live驗證，經本輪2-instance交叉確認後**可視為完全收尾**：",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5745,
+   "excerpt_sha1": "47978569f4e80800182188b678befe3e3c89d229",
+   "excerpt": "2-instance交叉確認修正本身有效且verdict分類正確）。**唯一仍然開放的**是與其他",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5754,
+   "excerpt_sha1": "1d4387a6e35745d260b2506d6d645d0d117374f8",
+   "excerpt": "逐一核對兩次（instance 2啟動前、兩個instance都結束後）確認乾淨無殘留，主動跑",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5760,
+   "excerpt_sha1": "44c9ad5388ceb9c6a298bc77c5adf19c2be80a26",
+   "excerpt": "按本文件慣例跑了2個獨立instance交叉確認，補齊`ch05regr2`輪誠實留下的缺口。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5766,
+   "excerpt_sha1": "4f4d6f71349d4948ba0cb52f23f5d4280e3e29cb",
+   "excerpt": "回應派工單：story ch21-29（raw20-28）都已完成靜態＋（多數）live雙重確認（見本檔",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5856,
+   "excerpt_sha1": "f6e4497b6d75f14650645c9fb4417d54bca4e53a",
+   "excerpt": "跟`post-handler-save-trigger`輪確認過的其餘7章（raw21/22/23/24/25/27/28）",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5869,
+   "excerpt_sha1": "1e84f474d9746d0bcdf85d9d52b4385ba770d22c",
+   "excerpt": "本輪確認這是文字/演出節奏迴圈)。**兩個迴圈都是固定次數、無資料相依分支**，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5889,
+   "excerpt_sha1": "7b50cbea8469314a5177854fdc7b7cc7180a60f0",
+   "excerpt": "**這個self-loop已經有live驗證的行為先例（但驗證對象是ch27的壞結局分支，不是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5893,
+   "excerpt_sha1": "96e9832cc9b7840ee58c14cad434beadbd6dd69d",
+   "excerpt": "最終停在靜態「THE END」畫面，**且事後pull存檔跟原始存檔md5完全相同**——證實",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5898,
+   "excerpt_sha1": "cf7106c5cb113d60884a32ad787d89f14cf312d5",
+   "excerpt": "針對raw29/story ch30親自live驗證**（見下方confidence分級）。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5917,
+   "excerpt_sha1": "4b48c71bac1c37942b69734601e13d30f0d71df6",
+   "excerpt": "### Step 5：win-check讀的「單位20」是誰——四方交叉驗證，高信心（但非live直讀）確認是ASR-06（空魔神本尊）",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5926,
+   "excerpt_sha1": "43fd05419a46f2656582f161b3f0296d79f3f783",
+   "excerpt": "讀取的同一個欄位（工具docstring原文「己方可出場數」）**，本輪確認map29這張圖",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5937,
+   "excerpt_sha1": "672b36539819de554f57572c107c3c043ea01607",
+   "excerpt": "18次不間斷的`-17,126`身分標籤交叉驗證出的結論——**`units[0]`的`portrait:126`",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5971,
+   "excerpt_sha1": "51bae69b06eb8cfd3eb8b2d67f07cd88f658cc73",
+   "excerpt": "獨立自動化工具（`event_handler_dump.py`）的既有一行摘要逐位元組吻合，兩種",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 5988,
+   "excerpt_sha1": "51e2741a00f77e6d147ef2d8c9c70dbfe65a910b",
+   "excerpt": "- **中信心，結構類比但未對本輪目標live驗證過**：「這個self-loop不會觸發",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6006,
+   "excerpt_sha1": "ea4ab47aac5e9bf56174329a1eefe720f4949c6c",
+   "excerpt": "live磁碟確認；ch30/raw29在M5清單裡的「唯一尚未live驗證」狀態維持不變（story",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6017,
+   "excerpt_sha1": "a12e4d34f79385212cd7e55b7530bde0646fdb65",
+   "excerpt": "portrait/lv欄位=126/40則直接證實，不再是資料交叉比對）、以及`table_post",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6022,
+   "excerpt_sha1": "0d8bcd5abc523a5cd4f5d51648882cc88a3c9327",
+   "excerpt": "2. 若要順便驗證「地水風火四魔神連鎖」猜想，可以在同一輪額外對`record[21..24]`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6025,
+   "excerpt_sha1": "e65a3cf7643018476eec9e7471f678aaf0a2a91a",
+   "excerpt": "證實win-check只讀`record[20]`），純粹是想補上Step 5末段列為開放問題的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6039,
+   "excerpt_sha1": "c2866d68512d293f70b5b52df43a75ecf64aeaa5",
+   "excerpt": "即ASR-06/空魔神本尊）做targeted單記錄死亡bit直寫，一次驗證該輪三個「高/中高",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6052,
+   "excerpt_sha1": "2cb6ef5b750c7709895004144c5e56ebfea907fa",
+   "excerpt": "直接複製成`.wsl_build/round_ch30wf/patched.SAV`，`read_slot_chapter()`確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6061,
+   "excerpt_sha1": "def1cca95d3586403b644f765d75a0da2cafa820",
+   "excerpt": "相同**（`594446879db0b108afc3cf692048cc39`）——確認LOAD這個動作本身不觸發",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6074,
+   "excerpt_sha1": "edaffc55099db31b83626088c8f608f31f8a15cb",
+   "excerpt": "### Step 2：`record[20]`byte dump——live記憶體讀值獨立確認ASR-06身分，不再只是靜態資料交叉比對",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6139,
+   "excerpt_sha1": "88871fc9fdcd34a6e0f58ab8236d4118f05f5034",
+   "excerpt": "依`ch29wf`輪與任務書都明確授權的「一次focused follow-up」額度，重新確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6163,
+   "excerpt_sha1": "f4c4e949b077b7c698bf5504b198322c67046a89",
+   "excerpt": "`confirm_end_turn()`原本設計鎖定的「End-Turn YES確認」那個dispatch點本身**",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6164,
+   "excerpt_sha1": "57cd50b8c6b06fbb335f8d47be627f988b483044",
+   "excerpt": "——這是ch30與`ch29wf`輪（End-Turn確認本身3.5秒內直接翻2）的一個具體、",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6173,
+   "excerpt_sha1": "c5a1b73768f62603561c7c06d7e3b34b8f46f007",
+   "excerpt": "被動等待、不送任何按鍵，約80秒CG自動播完）試了一次**純被動觀察**：win確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6178,
+   "excerpt_sha1": "2d8f09536be85d2621c2d7075e69e9dc115fd519",
+   "excerpt": "證實是角色卡畫面裡的小幅idle動畫，不是內容真的在推進）。**這與ch27的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6182,
+   "excerpt_sha1": "0c433074ae5bbef502068e87a3c716d441ae0bd7",
+   "excerpt": "改為主動、bounded地送`Return`（每次都先確認沒有寫入任何記憶體，純畫面",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6208,
+   "excerpt_sha1": "ec30df01199297bcf2ca3099a41e80800a19694c",
+   "excerpt": "**從這張悠妮角色卡出現開始，額外送出超過220次`Return`（總計本輪win確認後",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6209,
+   "excerpt_sha1": "6605d6292581e424f35beceb70bbea764d92642d",
+   "excerpt": "約460+次tap），畫面文字內容逐字元完全沒有變化**（唯一差異是悠妮肖像的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6250,
+   "excerpt_sha1": "e53fe2f4f75cd10b0180e6c519bcacd60cff49b2",
+   "excerpt": "- **高信心，live直接證實（本輪最核心的升級）**：`record[20]`＝ASR-06——",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6255,
+   "excerpt_sha1": "0e70ef93873ad964ca2959458fdb0035124bfcd9",
+   "excerpt": "- **高信心，live直接證實**：win-check公式（`record[20]`死亡bit→",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6261,
+   "excerpt_sha1": "01ee657a16e9c8b0fe83e8d734974ed6742ff810",
+   "excerpt": "執行到的結論吻合；本輪額外確認了遞增時機在win-check翻2**之後**、對白",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6264,
+   "excerpt_sha1": "1c0c9f9ddbd3a0ce8ef1fac972a65ef4582af995",
+   "excerpt": "- **高信心，live直接證實，方法論與`ch27`precedent完全同款**：無靜默",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6265,
+   "excerpt_sha1": "83f8bce9026cbc41273d7faf3a40c842420e8a65",
+   "excerpt": "存檔——三次獨立`pull_save()`+`fd2save.decode()`確認`pre.SAV`＝",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6269,
+   "excerpt_sha1": "2be949d9f49d0c0d41a7687e9e6e72fed9e14882",
+   "excerpt": "End-Turn確認沒有立刻翻2，需要額外約85次對白推進tap才翻2」與`ch29wf`",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6270,
+   "excerpt_sha1": "5be44b00cc352f5983f277adcf2d90a92173e7ad",
+   "excerpt": "輪（End-Turn確認3.5秒內直接翻2）不同——本輪判斷最可能的解釋是這段",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6272,
+   "excerpt_sha1": "baabbd93cdcc2eb124d35bfab3c9e7bed4551cbc",
+   "excerpt": "呼叫鏈來100%證實**，留給下一輪如果需要精確定位「正常玩法下ch30的",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6277,
+   "excerpt_sha1": "9224d87e3bcf38abf0306c2bd1c06d740ec9545e",
+   "excerpt": "是同一個函式（doc35 `call_scan`窮舉證實），差異推論為函式內部montage",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6289,
+   "excerpt_sha1": "d0333eca0a82841a6dceba492654cc4d356b3b30",
+   "excerpt": "tally由「story ch21-29已全數確認，僅ch30/raw29未live驗證過」正式收尾為",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6290,
+   "excerpt_sha1": "7ba9a312291237a410f8308abcefea1b719d5ca2",
+   "excerpt": "**「全30個story章節（raw0-29）皆已至少一次live確認engine-level win，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6291,
+   "excerpt_sha1": "f538b24235180b6542a9e72266f07ca703211bc6",
+   "excerpt": "chapter-sweep專案的live驗證線正式完成」**）。使用者memory",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6298,
+   "excerpt_sha1": "69a64a650a540b6d7fe57c4717997802e29020d9",
+   "excerpt": "teardown()`呼叫）乾淨完成，`status`確認無殘留instance，額外用`tmux -L",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6326,
+   "excerpt_sha1": "12497cebe827be02ec9bf1b1911706ccc3c196c9",
+   "excerpt": "19/20/02，共19+章）**：engine-level win已確認，磁碟從未前進。根因：打贏後",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6329,
+   "excerpt_sha1": "0a9934b5fa91835fb1c00bbbad72519322ed8762",
+   "excerpt": "多久都不會寫入**（`longpoll`輪180秒對ch03/ch26的直接驗證，比原本60秒視窗長",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6330,
+   "excerpt_sha1": "c0c6270563d41aa8b00e32c00f46c0597a71b815",
+   "excerpt": "3倍，一絲一毫都沒有前進，逐位元組吻合預測）。**這是設計行為，不是bug，也不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明，屬chapter-sweep專案一貫的誠實邊界標註慣例"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6338,
+   "excerpt_sha1": "d8e5deb196bc5f1af0bb3eb555c157409d7fa85c",
+   "excerpt": "- **ch27（好結局分支）/ch29**：`ch2729-static`+`ch27win3`+`ch29wf`三輪確認",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6343,
+   "excerpt_sha1": "9c702d6e1e43ef82aad1cc074f74da357ea5474f",
+   "excerpt": "vs. 查到不存檔），`ch30wf`輪已用三次`pull_save()`md5比對正面確認。",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6354,
+   "excerpt_sha1": "4859d917625ac84074f15cce6e3251f45ad29a5d",
+   "excerpt": "`engine_win`確認後，會先呼叫`advance_postbattle_montage()`清完戰後過場，接著",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6360,
+   "excerpt_sha1": "d11407a043e5bf0ff59febedcb8e0b4df508f617",
+   "excerpt": "確認流程」——`attempt_camp_exit()`負責的是**戰前**從城鎮hub走出去進入戰鬥，",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6362,
+   "excerpt_sha1": "6cb64afe1dd8019eb6d837e449e092fb2fe8079f",
+   "excerpt": "確認後主動導航「回城鎮→進酒店→選單存檔」這條路徑（91-worklist.md「SAV writer",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6364,
+   "excerpt_sha1": "3c074e137e006fdc62f50d287083a88550b31e82",
+   "excerpt": "verification，不是贏之後的接續流程）。**如果真的要驗證「完整含存檔的可破關",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6396,
+   "excerpt_sha1": "77411ef2df1401d478de00aef3b0005575aa34a5",
+   "excerpt": "long-poll live驗證排除了「timing」這個候選解釋**——`ch05regr`系列三輪的真正",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6416,
+   "excerpt_sha1": "5fc72a1c1208c57fc92379595588e0b8a4fac5dc",
+   "excerpt": "這個推論從「高信心外推」升級為「逐章驗證」，一個低優先度、可以很短的下一步是",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6492,
+   "excerpt_sha1": "cf1439aa8c6d05e0d235084816598e356d64732e",
+   "excerpt": "的完整公式(50/51任一死亡→碼1，無碼2 branch)逐位元組吻合，是完全獨立方法論",
+   "verdict": "benign",
+   "note": "延續句，位元組/像素級live驗證證據在同段落"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6545,
+   "excerpt_sha1": "11b1e563f3d453b3980b999d5838ea629f985ab8",
+   "excerpt": "驗證慣例，寫了一個throwaway test(`internal/battle/ch10_kanaan_throwaway_",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6550,
+   "excerpt_sha1": "29a4ea4edc18892ccccfb510f9cb1ef88d661308",
+   "excerpt": "與本輪改動無關的假陽性)，跑過確認PASS後依慣例刪除，未留在repo裡。",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6558,
+   "excerpt_sha1": "4f56cad5d25680194552e53aa50df05d64a0ff94",
+   "excerpt": "無截斷)與doc26獨立自動化工具的既有一行摘要逐位元組吻合，兩種完全獨立",
+   "verdict": "benign",
+   "note": "交叉參照既有輪次/文件結論的延續句"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6560,
+   "excerpt_sha1": "5bb1a017a9bbcac2d4b7a5216cbea214858ebdeb",
+   "excerpt": "- **高信心，直接位元組＋獨立sanity check雙重確認**：`record[50]/record[51]`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
+  },
+  {
+   "file": "99-chapter-sweep-results.md",
+   "line": 6587,
+   "excerpt_sha1": "a33f02082eb16494fb6ec78b58632138b72899a9",
+   "excerpt": "2. 若想要live直讀確認：比照`ch30wf`輪，開一局ch10戰鬥讀`record[50]`",
+   "verdict": "benign",
+   "note": "延續句，屬同一大段live記憶體驗證敘事的一部分"
   }
  ]
 }
