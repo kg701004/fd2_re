@@ -52,6 +52,13 @@ item 246(裝備加成累加點+使用效果碼)其實是同一份claim在本檔�
 用「找主文件交叉核對」的方法快速判定是否過期，維持保守D，留給有更多上下文的未來輪次。
 **第七輪複核後統計**：A=33、D=52。
 
+> **2026-09-06第八輪**：檢查L584是否比照本輪L604/622關閉——**經核對doc36第12輪自己的
+verdict(「部分關閉,非完全關閉」),確認584維持D正確**,非過期標籤,只是更新說明避免
+下一輪重複調查。接著檢查L555/L557/L572：555維持D正確(doc27§6完成度段落verdict是
+「部分推進,未關閉」)；**L557、L572兩項doc27§6完成度段落本身早已給出「已關閉」/
+「結構性理解視為已關閉」等verdict，索引標籤未同步**，改標A。**第八輪複核後統計**：
+A=35、D=50。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -126,9 +133,9 @@ item 246(裝備加成累加點+使用效果碼)其實是同一份claim在本檔�
 541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。
 548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
 555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
-557 - D - AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。
+557 - A（2026-09-06由D複核關閉，doc27§6「worklist L555/L557/L572完成度」段落本身已明確結論，L557行標籤未同步）- AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。**2026-09-06複核**：doc27§6自己的完成度段落明確給出兩個verdict——命中率「本輪以code-level反編譯二次核實，確認與物理HIT−EV完全獨立，可視為結論穩定」；AoE「2026-08-20續輪(§6.4)已用位址級反組譯完整追出上游生成器⋯鏈路完整，已關閉」。本行「完全未解」的舊文字與這兩個既有verdict直接矛盾，是標籤未同步，不是真的還沒解。剩餘缺口(逐ID數值核對、`FUN_0004e4be`/`FUN_0004e8a5`資料表細節、remake施法UI整合)不影響RE機制結論，比照本專案既有慣例(RE理解已閉合、remake接線另計)改標A。
 564 - E - doc56 L1354明文sell/equip/transfer仍需own same-state DOSBox traces。
-572 - D - doc37結論與worklist一致(spell id不選FIGANI已定論)，`0x2a6bd` command-specific presentation/SFX/命中分支仍待，可續靜態RE。**大幅推進(2026-08-24,doc27§6.5)**:真正位址`0x2cf30`(ID24/28-31)與`0x2d80d`(ID32-35四大絕招)已完整反組譯，倍率/傷害/buff/異常與SFX來源全數釘死；剩逐command命中率數值核對與remake presentation/SFX接線，checkbox維持`[~]`。
+572 - A（2026-09-06由D複核關閉，doc27§6完成度段落verdict與行內既有進度描述其實已達本專案RE-only關閉門檻，標籤未同步）- doc37結論與worklist一致(spell id不選FIGANI已定論)，`0x2a6bd` command-specific presentation/SFX/命中分支仍待，可續靜態RE。**大幅推進(2026-08-24,doc27§6.5)**:真正位址`0x2cf30`(ID24/28-31)與`0x2d80d`(ID32-35四大絕招)已完整反組譯，倍率/傷害/buff/異常與SFX來源全數釘死；剩逐command命中率數值核對與remake presentation/SFX接線，checkbox維持`[~]`。**2026-09-06複核**：doc27§6「worklist完成度」段落給572的verdict是「位址勘誤、大方向分支、兩個callee內部邏輯與逐command SFX index均已解；仍未展開的只剩hit-event陣列leaf-level語意與remake演出/SFX接線，**結構性理解視為已關閉**，執行層SFX/renderer/UI完整presentation contract仍未展開」。這正是本專案一貫用來判定A的門檻(RE機制理解已閉合，remake工程接線是另一類、不影響RE結論的後續工作)，改標A。
 575 - D - 歷史snapshot澄清note列出的3個缺口未查到專門解決文件，可續靜態RE（未深入查證每一子項）。
 584 - D - round10(本檔約595行)已解決「導出」半部(FDOTHER戰鬥音效池匯出)，但「逐招對照」核心未解，與604/622重複未閉合。**2026-09-06複核，維持D，非同一件事**：604/622這輪已改標A，但那是「index陣列填值上游」這個較窄問題(`FUN_0001d51d`透過`FUN_0001c269`寫入buffer的機制)；本行584引用的doc36「逐招對照」是較寬的任務，doc36第12輪自己的結論是**「部分關閉,非完全關閉」**——資源層級index對照已解出，但玩家可讀招式名稱、sub-index觸發時機、id12-21/25-27資源型態、id10/11/22/23表缺口這4項仍缺。604/622的改標不能自動帶動584關閉，584維持D正確，非過期標籤。
 587 - E - UI音效index 2-0xb語意畫面實測需要逐項操作介面聽測對應畫面，需live(DOSBox或使用者)驗證。
