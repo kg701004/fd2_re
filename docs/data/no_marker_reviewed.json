@@ -32544,6 +32544,94 @@
    "excerpt": "沒有直接確認**:我方單位主動發起攻擊、成功命中敵人的正向案例(這回合4個單位",
    "verdict": "benign",
    "note": "同上，接續誠實邊界說明"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2764,
+   "excerpt_sha1": "6cc7815e480da034b59d6f428982eafb5d96fb0e",
+   "excerpt": "### 24. 2026-09-06(續):**追正向案例,`--mv 6`跑3回合——§22的落點合法性檢查正確攔下2個真的超出範圍的單位,但第3個單位落點合法、環開了、確認也送了,依然沒有效果,而且又撞到一次DOS-exit**",
+   "verdict": "benign",
+   "note": "章節標題，非證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2770,
+   "excerpt_sha1": "ddbd5de2faffd0a6b2edb4695c29277cb12ba649",
+   "excerpt": "都被新加的落點合法性檢查正確攔下(「確認落點後座標完全沒變」),乾淨放棄那個",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的落點合法性檢查驗證觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2777,
+   "excerpt_sha1": "2009ba485a555393f3aa573996fd3b74547338d3",
+   "excerpt": "**§20加的立即回讀還是回報「攻擊確認未生效」**——acted未設、無敵方HP下降。",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的攻擊確認未生效觀察結果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2782,
+   "excerpt_sha1": "c1af836ff373a5751ddfd457a30e8513211ce1ba",
+   "excerpt": "**緊接著又是array dump連續3次全0,這次也截圖確認是真的DOS-exit**(`C:\\>`)。",
+   "verdict": "benign",
+   "note": "截圖確認真實原版EXE崩潰回到DOS的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2784,
+   "excerpt_sha1": "4c98228c25902c7fb443650e7189835285f886d9",
+   "excerpt": "idx2「攻擊確認未生效」之後立刻發生——跟前幾次崩潰的觸發時機(都緊跟在一次",
+   "verdict": "benign",
+   "note": "分析崩潰時機模式的推論，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2785,
+   "excerpt_sha1": "50e4b111fa03c0bff222cccd5d6187f31a85d7bf",
+   "excerpt": "「確認送出但沒有效果」的攻擊嘗試之後)是同一種模式,進一步支持doc13",
+   "verdict": "benign",
+   "note": "同上，接續分析"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2787,
+   "excerpt_sha1": "4d0990771ee54a08b07108f4106f9f2a1ebc4192",
+   "excerpt": "呼叫端假設的畫面狀態送出確認鍵」可能跟C.16的觸發有關,但這仍然只是同一個",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示這仍然只是觀察不是證明"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2794,
+   "excerpt_sha1": "15d9032c954625d225e4244d399e2cd29adb81b1",
+   "excerpt": "(30、30、4、6)的live測試,一次都沒有乾淨確認過**——不是因為單位卡住,",
+   "verdict": "benign",
+   "note": "誠實現況總結第2點"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2795,
+   "excerpt_sha1": "08c4aaf2a450cd151619352ebfa6f0246ea6ff6a",
+   "excerpt": "就是因為落點不合法被正確攔下,就是因為攻擊確認送出後依然沒有效果。",
+   "verdict": "benign",
+   "note": "同上，接續總結"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2796,
+   "excerpt_sha1": "b11f2fc8d909203ee89742631cf3778fda0af157",
+   "excerpt": "3. §20定位的「環開成功、確認送出、卻無效果」這個問題,獨立於§22修的落點",
+   "verdict": "benign",
+   "note": "誠實現況總結第3點，明確標示問題依然完全未解"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2801,
+   "excerpt_sha1": "8df90c981364cf52db9574ff30e9c941349473e7",
+   "excerpt": "刻意設計成「落點合法但確認後依然無效」的重現條件去追,而不是繼續盲測。",
+   "verdict": "benign",
+   "note": "對下一輪的具體建議事項，非證據宣稱"
   }
  ]
 }
