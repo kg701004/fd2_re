@@ -32752,6 +32752,62 @@
    "excerpt": "2. 正向案例的驗證,應該挑一個**確定有近戰武器的單位**(例如idx0,已知的",
    "verdict": "benign",
    "note": "同上，接續建議事項"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2895,
+   "excerpt_sha1": "5aa92546348afae39fa8bfa451c9f9ceb04cce03",
+   "excerpt": "### 27. 2026-09-06(續四):**正向案例終於乾淨確認——`fd2_battle_autoplay.py --instance sol1 --turns 3 --attack --mv 4`第2回合,idx1真的打中一個敵人,HP從18掉到13,第3回合那個敵人就從存活清單消失了**",
+   "verdict": "benign",
+   "note": "章節標題，非證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2910,
+   "excerpt_sha1": "77343c495a379fd18446e859cee73684cb009782",
+   "excerpt": "idx1 確認落點後座標完全沒變(dx=-1,dy=0)——落點很可能超出這個單位真實的移動力,",
+   "verdict": "benign",
+   "note": "live測試工具輸出記錄，缺乏正規marker關鍵字但是真實原版live測試描述"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2913,
+   "excerpt_sha1": "441315cb847fead60cfdeaa491fb284ccba84d3f",
+   "excerpt": "idx1 攻擊已確認生效:acted=False, HP下降=[(8, 18, 13)]",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE攻擊命中的即時回讀確認結果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2917,
+   "excerpt_sha1": "7e975409702bad5477615647cb03a99838b8971a",
+   "excerpt": "(2026-09-05/06這一整條調查線,從§13算起)第一次乾淨確認「我方單位主動發起",
+   "verdict": "benign",
+   "note": "本輪正向案例確認的結論小結"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2920,
+   "excerpt_sha1": "2271b19f60794b6c897acd7ea9001cfc1cd9d133",
+   "excerpt": "事件)死亡了。收工前截圖也捕捉到一個「得到」道具訊息框(悠妮頭像),佐證這是",
+   "verdict": "benign",
+   "note": "截圖確認真實原版EXE道具訊息框的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2935,
+   "excerpt_sha1": "84e0a0ddf3536043c2d536f5aac882cb5b15f2f5",
+   "excerpt": "完整、可驗證的攻擊命中。C.16崩潰機制本身依然未解,但整個battle autoplay",
+   "verdict": "benign",
+   "note": "整條調查線階段性總結，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2936,
+   "excerpt_sha1": "0e2bdda745694cfd1f44c5cb1f114b29a13cf063",
+   "excerpt": "工具鏈的可靠性,相較session開始時已經有實質、多次live驗證過的進步。",
+   "verdict": "benign",
+   "note": "同上，接續總結"
   }
  ]
 }
