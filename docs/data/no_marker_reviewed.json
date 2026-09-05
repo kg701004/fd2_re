@@ -344,6 +344,542 @@
    "excerpt": "`CLASS_NAMES[cls=1]=\"劍士\"` 填的(這張表驗證用途本來是給**玩家轉職**,26 筆對 modify2.md §7",
    "verdict": "benign",
    "note": "跟modify2.md參考表26筆數值逐一吻合的內部一致性檢查"
+  },
+  {
+   "file": "01-container-and-asset-formats.md",
+   "line": 3,
+   "excerpt_sha1": "5b20d5299d46258952ce8dd24f1dff34f0bdfd0c",
+   "excerpt": "> 第 1 輪逆向工程成果(2026-06-28)。所有結論皆以原版實檔解碼驗證。",
+   "verdict": "benign",
+   "note": "文件開頭方法論宣告（第1輪逆向工程成果...皆以原版實檔解碼驗證），本身不指涉特定事實，真正證據在各節內文有位址標記"
+  },
+  {
+   "file": "01-container-and-asset-formats.md",
+   "line": 102,
+   "excerpt_sha1": "f97409798f3e5b2c8e538c1155a2a1a71c2218c3",
+   "excerpt": "實測前段多為 `00 00 04 00`(無寶箱、正常地形、背景#4)，與格式相符。",
+   "verdict": "benign",
+   "note": "實測結果描述，證據上下文（FDSHAP.DAT）在鄰近行104"
+  },
+  {
+   "file": "01-container-and-asset-formats.md",
+   "line": 106,
+   "excerpt_sha1": "e7cce04b81405e57440c25ca125d75f0bbfe03cd",
+   "excerpt": "(實測 map0 每個出現過的 tile index 查表值都與圖上看到的地形吻合——水域邊界=move 1、中央",
+   "verdict": "benign",
+   "note": "同上，FDSHAP.DAT在鄰近行104"
+  },
+  {
+   "file": "01-container-and-asset-formats.md",
+   "line": 170,
+   "excerpt_sha1": "d1c339dffcfe7ef238129feee9c905979b9f9c03",
+   "excerpt": "`tools/render_map.py` 已可把任一地圖渲染成 PNG。實測序章小島(map 0,24×24)、城鎮(map 1)等皆正確還原",
+   "verdict": "benign",
+   "note": "render_map.py渲染結果視覺驗證，FDFIELD.DAT在鄰近行167"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 3,
+   "excerpt_sha1": "0a14a245ab4a8c0dee2243c0417e3f06d4e58c30",
+   "excerpt": "> 《炎龍騎士團2》(漢堂國際, 1995) 的圖像壓縮格式，由本專案第 2 輪逆向工程還原並驗證。",
+   "verdict": "benign",
+   "note": "文件開頭方法論宣告，同01:3模式"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 50,
+   "excerpt_sha1": "b8c4d6014dc8270b28c4edc5e418ab92233627c6",
+   "excerpt": "**判定強約束(驗證用)**：正確的解碼器對任一圖必輸出**剛好 `width × height`** 個像素;",
+   "verdict": "benign",
+   "note": "句子被markdown源檔換行拆成多個實體行，TITLE_000/BG_*/FDOTHER等實際證據在下一行(51)"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 110,
+   "excerpt_sha1": "d584bee93be7c304d7fe5ae85162e5c23fc5d79a",
+   "excerpt": "36 = 2×9+... 實測即 `2N` 規則的第 9 張)。tileset 為地底洞穴主題(火把/岩壁/寶箱)，非草原。",
+   "verdict": "benign",
+   "note": "ch10地圖資產確認，FDFIELD_027.bin等具體檔名在鄰近行108"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 120,
+   "excerpt_sha1": "f1d0ee88af637a49a603c307099658d21e2c4ad6",
+   "excerpt": "第 4 byte(= event 欄位高位)實測**全部是 `0x00`，沒有一格是 `0xff`**。按 `56-fd2-remake-sdd.md`",
+   "verdict": "benign",
+   "note": "FDFIELD_027.bin實測結果，檔名在鄰近行119"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 132,
+   "excerpt_sha1": "dfbe163c501a45e568810b3dee398d3265222f99",
+   "excerpt": "`58-remake-live-verification-log.md` 第 801-804 行記錄為「正確渲染、地城類型地圖首次確認」)",
+   "verdict": "benign",
+   "note": "視覺複查描述，remake/58-remake-live-verification-log.md等在同一段落鄰近行"
+  },
+  {
+   "file": "05-image-compression-format.md",
+   "line": 138,
+   "excerpt_sha1": "b27b3f8c10ddbcbf534da391bcfd78e1e0d6e929",
+   "excerpt": "確認 non-bug，可視同與同檔第 634 行「tile 雜色結案」合併結案；若日後有人能指出具體「哪一格」",
+   "verdict": "benign",
+   "note": "結案總結，引用文件內部行號交叉參照，非新的獨立主張"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 1,
+   "excerpt_sha1": "ef8c4269cf215b37a811780b48043e91c953265a",
+   "excerpt": "# 20 — 第一性原理:重製可行性再確認（能力盤點，不是完成宣稱）",
+   "verdict": "benign",
+   "note": "標題本身明確聲明「不是完成宣稱」"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 3,
+   "excerpt_sha1": "d9cfb4546c067d8724ecf5ab9bc11da169a1c9ce",
+   "excerpt": "> 設計完成後,用第一性原理把「能不能做出可玩的 FD2 重製」拆到不可再分的事實逐一確認。",
+   "verdict": "benign",
+   "note": "文件方法論說明（用第一性原理逐一確認），非具體驗證聲明"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 18,
+   "excerpt_sha1": "7170af8e9d08ab6dc470ba5740b55f68437c8f88",
+   "excerpt": "| 6 | **戰鬥邏輯** | 移動/攻擊/施法/勝敗/AI | 🟡 移動、基本攻擊、部分 AI/command 已有；native effect、target/UI、AI spell runtime 尚未全閉合 | `11`/`13`/`56` |",
+   "verdict": "benign",
+   "note": "能力盤點表格行，🟡標記明確表示部分完成未全閉合"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 29,
+   "excerpt_sha1": "612397d7fecb08e7682abf624ac159c0178decaf",
+   "excerpt": "compositor、handler dataflow、音訊／DOS timing仍有未閉合黑箱。不能把",
+   "verdict": "benign",
+   "note": "明確否定式聲明（不能把檔案可讀寫成所有資料已完整還原）"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 31,
+   "excerpt_sha1": "4a208c3fda6d17051abd163bf33a934fdeded70e",
+   "excerpt": "2. **可驗證性**:每個格式都用「強約束 + 視覺/聽覺/數值對照」驗證過(解碼必為 W×H、地圖渲染正確、",
+   "verdict": "benign",
+   "note": "總結性論證引用其他文件已有的驗證方法，非新主張"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 37,
+   "excerpt_sha1": "dc37ae0c0cfaf38063c0aade6f52f8a3212aa927",
+   "excerpt": "→ 結論:**資料與工具已證明工程可行；剩下仍包含 native dataflow／renderer 的研究與 campaign 整合，",
+   "verdict": "benign",
+   "note": "結論段落，明確聲明不能宣稱全部完成"
+  },
+  {
+   "file": "20-first-principles-feasibility.md",
+   "line": 59,
+   "excerpt_sha1": "9d28d4e3a439d0e721672f5309915cc44a087c83",
+   "excerpt": "從第一性原理看,**重製的每一塊地基都已驗證存在**:資料解得開、規則查得到、引擎做得出、流程設計得了。",
+   "verdict": "benign",
+   "note": "總結性論證，同31"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 3,
+   "excerpt_sha1": "d7c3bd9a8cc5f893821024245952de5a5369ea10",
+   "excerpt": "> 任務:確認施法演出時「法術 id → FIGANI 特效動畫 id」的對映公式或表。",
+   "verdict": "benign",
+   "note": "任務目標描述，非完成聲明"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 4,
+   "excerpt_sha1": "7618c1abd2dbfeedae75c5b5f1e7475ae31ae51e",
+   "excerpt": "> 結論(附位址,已視覺驗證):目前沒有證據顯示 spell id 會挑選另一段 FIGANI「特效」動畫；施法演出會播放施法者自身的職業/角色動畫(doc 06 公式 `unit[+7]×3`/`×3+1`)。",
+   "verdict": "benign",
+   "note": "結論摘要，具體位址證據在下方0. 節（行10-24）"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 24,
+   "excerpt_sha1": "ef9b34b077333dda63bacad315f7b652756bd3b1",
+   "excerpt": "**三處都不含 FIGANI 載入**,佐證 spell_id 在全程式碼中從未流向 FIGANI 索引運算。",
+   "verdict": "benign",
+   "note": "同一bullet內總結句，位址/工具證據在同bullet前段(行22)"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 26,
+   "excerpt_sha1": "8ba3d545ece6298c8a1df04ce5caecb18fff60ee",
+   "excerpt": "## 1. 視覺驗證:施法動畫是「通用施法手勢」,不是法術專屬特效",
+   "verdict": "benign",
+   "note": "章節標題"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 39,
+   "excerpt_sha1": "d6c3014487a0791863a8426c3893e565abd93f20",
+   "excerpt": "（若要驗證另一名施法者也一樣，可用同一公式 `sprite_group×3(+1)` 解任一法師/僧侶/召喚師角色，結論同構，因為",
+   "verdict": "benign",
+   "note": "「若要驗證」是條件式/未來式建議，不是完成聲明"
+  },
+  {
+   "file": "37-spell-effect-figani.md",
+   "line": 73,
+   "excerpt_sha1": "e65c3b9ce1ed1c4b95de47f0f64a8e1545f54b9a",
+   "excerpt": "- **尚未證實**：每個 command ID 的完整 FIGANI／SFX mapping、ID24 的 multi-hit presentation 與其可編輯 remake contract。",
+   "verdict": "benign",
+   "note": "「尚未證實」明確否定式聲明"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 61,
+   "excerpt_sha1": "91bf6635f41b15c324dc71dba3a4729b68952516",
+   "excerpt": "| 戰前UI(MAP/TURN+行軍確認) | 有 | 影片 doc46 D8 ✅ | 無 | ⚠須加(低優先) |",
+   "verdict": "benign",
+   "note": "表格row，remake現況=「無」且判定⚠須加(低優先)，明確標示未完成，非過度宣稱"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 71,
+   "excerpt_sha1": "9cdb6b9bc9cfb9d11b85e17f43e6351796dfa18a",
+   "excerpt": "| 第一回合玩家操作 | 選單:移動(行軍確認YES/NO)/攻擊/待機/END | doc13戰場選單 ✅ | 指令環部分 | ⚠見doc51(結束回合/武器射程/法術/狀態欄) |",
+   "verdict": "benign",
+   "note": "彙總row，指向doc51逐項細節(已審閱)，非獨立新主張"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 73,
+   "excerpt_sha1": "dc28d0b68bccfb301abc701e8da980bea4926b6c",
+   "excerpt": "| 哈諾父子登場 | **第三回合**己方結束(青衫確認turn3) | 青衫 ✅ | ch01 hano turn3 ✅ | ✅ |",
+   "verdict": "benign",
+   "note": "引用「青衫」(玩家攻略，非「青衫攻略」四字連續)作為來源；語料庫僅2處此模式，風險低，不值得為此擴大regex(可能誤吃「不採用青衫」等否定句)"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 80,
+   "excerpt_sha1": "b13d73bcbc0e2e4bfb03b3e8a8c918dbafe8dfc7",
+   "excerpt": "live 為 slot2 下行十格；兩段 scroll_step 實測 `Y36→21→8`，每格七 ticks。map31 ACT90..98 的",
+   "verdict": "benign",
+   "note": "句子被markdown源檔換行拆成多個實體行，同段落開頭(行79「✅ 2026-07-15 補齊」)已含證據語境，屬同一延續句"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 93,
+   "excerpt_sha1": "f4c4c1135b183151393184e99560f0ade803f96e",
+   "excerpt": "scene-decode 文件**——確認密林段(campaign 節點 `forest_duel`/`forest_discover`)仍是",
+   "verdict": "benign",
+   "note": "明確否定式聲明(沒有ch1-forest.md對應文件、密林段仍是partial狀態、尚未有其他doc補齊)"
+  },
+  {
+   "file": "53-start-to-ch1-turn1-re-source-table.md",
+   "line": 109,
+   "excerpt_sha1": "3b388acae90648e450cb0b12a77afca5830eaee6",
+   "excerpt": "live 實測)；remake 端 `forest_duel`/`forest_discover` 兩節點的 beat 排列本身尚未重排，仍是",
+   "verdict": "benign",
+   "note": "明確否定式聲明(尚未重排)，且與前一行(108,含dosbox)為同一延續句"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 18,
+   "excerpt_sha1": "7ac96aa8e51507bb2847e4c8a728a560edae4011",
+   "excerpt": "| 非default勝利branches | 「消滅卡特那／擊毀機甲隊長／解除防衛系統」 | 玩家可見目標可信；native slot、predicate及後續流程仍逐章驗證 |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「仍逐章驗證」，非完成聲明"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 22,
+   "excerpt_sha1": "e1654297d36716ce87c234c1096c7cd5cc57d9e2",
+   "excerpt": "> handler／event dispatcher逐branch閉合。",
+   "verdict": "benign",
+   "note": "同一否定式聲明句的延續(20-22跨行，「不得直接寫成...須逐branch閉合」)"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 67,
+   "excerpt_sha1": "145a93e4742ed9c36390076549c7031dedd30209",
+   "excerpt": "玩家可見對照，不能取代 raw camp／bit 的逐關驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語「不能取代raw camp/bit的逐關驗證」"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 97,
+   "excerpt_sha1": "8a45e06c83b85bda15b7fdd6ec12762771fb7933",
+   "excerpt": "勝敗分支、招募、獎勵、戰後流程或存檔邊界的章節仍須逐章閉合，未閉合者fail closed。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「未閉合者fail closed」"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 111,
+   "excerpt_sha1": "a5c94d570a419c3f8384f5a20f66d79aca3f0ba7",
+   "excerpt": "## 6. ch25(raw24)「敵轉友」機制範圍確認——結論:不存在,亞奇梅吉是標準 JOIN,不是 record 轉換(2026-08-31)",
+   "verdict": "benign",
+   "note": "章節標題摘要結論，實際反組譯位址證據(0x20b14/0x24df2等)在本節內文各行"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 180,
+   "excerpt_sha1": "82cb92c4cc3c5e6f70242810f317ec81a2f8751a",
+   "excerpt": "### Step 5:交叉核對——`native_join_constructor.json` id29/id26 兩列都是已存在、已驗證的正式列,不是空表",
+   "verdict": "benign",
+   "note": "「Step 5」小標+摘要句，具體位址/檔案證據(native_join_constructor.json/0x7b06d等)在鄰近行"
+  },
+  {
+   "file": "28-chapter-objectives-and-recruits.md",
+   "line": 199,
+   "excerpt_sha1": "b2e66b84757cf4ca11d67d720f9664adf1485261",
+   "excerpt": "推測**未經驗證**,兩者皆未分離——本輪不猜,只記錄位址本身已勘誤。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「推測未經驗證...本輪不猜」"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 10,
+   "excerpt_sha1": "dfdd137670db5f94b9e8781abd7e35d670f9cb05",
+   "excerpt": "> 其他章仍須逐支驗證，不能由序章自動生成其branch/layout/persistence語意。",
+   "verdict": "benign",
+   "note": "明確保留用語「其他章仍須逐支驗證，不能由序章自動生成」"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 26,
+   "excerpt_sha1": "f81534ce209aa234fdfa3b1a2790194fb3fe801a",
+   "excerpt": "| 位址 | 身分(本輪確認) | 關鍵證據 | 舊誤判 |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 110,
+   "excerpt_sha1": "839ba08e9271c3c8e53d967c4a639e06baf7fd14",
+   "excerpt": "b(便宜假說)→掃直方圖 30 分鐘證偽→a(handler 轉錄)。原語身分靠「參數模式+資料側交叉驗證」",
+   "verdict": "benign",
+   "note": "方法論摘要句，非具體驗證聲明"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 115,
+   "excerpt_sha1": "dbcb1704a1e7281b4c5d570430667b9d04409e2d",
+   "excerpt": "## 7. 機械抽取完整 call 序列(2026-07-04 二次驗證,修正 §3 部分缺漏)",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 229,
+   "excerpt_sha1": "1f1a4c51db0f3bd67a66946067ae0cbedce373a6",
+   "excerpt": "索爾生成 **(8,42)** → 第一次對話停 **(8,21)** → 最終停 **(8,8)**,對原版兩張截圖驗證即是真值。",
+   "verdict": "benign",
+   "note": "「對原版兩張截圖驗證」片語引用原版證據但無精確regex marker字面匹配(「原版」單字過於常見不適合當marker，與既有47/49審閱結論一致的設計取捨)"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 241,
+   "excerpt_sha1": "cdb5633d694b12025185a6d0665100d1bb88ab78",
+   "excerpt": "### remake 還原(campaign_full.json,已實測對齊原版)",
+   "verdict": "benign",
+   "note": "章節標題，「已實測對齊原版」同上類別"
+  },
+  {
+   "file": "47-intro-handler-full-transcript.md",
+   "line": 244,
+   "excerpt_sha1": "bde6b0482a3fe741a7d1f38de6847894301e7c8e",
+   "excerpt": "均被使用者實玩 + 地標三角測量推翻(見 rulebook 65:驗收對 reference 實測、勿信內部訊號)。",
+   "verdict": "benign",
+   "note": "「使用者實玩」片語，同上類別"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 5,
+   "excerpt_sha1": "f9822ed8a090e6d5d7c083b49e9922c451f5e45d",
+   "excerpt": "> `PORTRAIT_CLS_NAME`(68/96/97)+ 先前 RE 對圖確認的國王(48)/王后(66),**光是已定案的就有 38 組**,",
+   "verdict": "benign",
+   "note": "總結性摘要句，引用characters.json既有結論，非獨立新主張"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 6,
+   "excerpt_sha1": "22564a06792ee4c11c5529fe49e1d5e7ac1344ae",
+   "excerpt": "> 不是 12 組。本輪在既有基礎上新增 **1 組**(id 126 = ASR-06),並用獨立方法交叉驗證既有結論。",
+   "verdict": "benign",
+   "note": "同上延續句"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 14,
+   "excerpt_sha1": "0a2b005bd7ffb4e2cb888878155fcd01c411eae6",
+   "excerpt": "index)按 `40-speaker-portrait-mapping.md` 已證實的結論,**同一數字在不同場景可能指不同人,不可",
+   "verdict": "benign",
+   "note": "交叉參照doc40已證實結論的延續句"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 15,
+   "excerpt_sha1": "d41499ac856dc13d11de64fa1f202a8848405ea9",
+   "excerpt": "單獨採信**。全數 0-31 既有結論獲得交叉驗證(無一衝突),另確認 id 126 = 最終魔王 ASR-06。",
+   "verdict": "benign",
+   "note": "同上延續句"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 38,
+   "excerpt_sha1": "6bf05e484bb2294d6d362d1615c240b171447809",
+   "excerpt": "| 0 | 索爾 | A | `characters.json` + 對話 `-18,4` 218 次(自稱句「兒臣索爾」進一步佐證) |",
+   "verdict": "benign",
+   "note": "表格資料row，方法論(SOP:-17/-18 operand交叉驗證)已於文件開頭段落說明，本行僅為套用結果"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 91,
+   "excerpt_sha1": "0bc7da06618cd3170c82edadd6e4dbba0e0762af",
+   "excerpt": "| 悠妮(少女) | 9(不確定) | 對話 operand 全為 `-19,4`(場景 index,不可靠),無法用本方法確認;肖像是否與成年悠妮共用待圖像核對 |",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不可靠」「無法用本方法確認」"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 103,
+   "excerpt_sha1": "78418299f05e017cf42d03118d07f2e7bf9d996d",
+   "excerpt": "index)**,而非 `-17/-18`。`40-speaker-portrait-mapping.md` 已證實這條路徑的數字**隨地圖/場景",
+   "verdict": "benign",
+   "note": "交叉參照doc40已證實結論的延續句"
+  },
+  {
+   "file": "49-character-id-name-table.md",
+   "line": 104,
+   "excerpt_sha1": "e340828b433f241faafe3a341a89898b1c37e5ea",
+   "excerpt": "重新填入,同一數字在不同章可能指向完全不同的單位**——這正是本輪重新驗證到的萊汀入隊前後案例。",
+   "verdict": "benign",
+   "note": "同上延續句"
+  },
+  {
+   "file": "00-index.md",
+   "line": 15,
+   "excerpt_sha1": "e70ab98568186aac957258cd19cd7000e01b6d30",
+   "excerpt": "> **🎯 目標 + [HARD] 鐵則**:用 Go/Ebiten + RE 原版 DOS，逐步收斂到可驗證的 remake parity；",
+   "verdict": "benign",
+   "note": "目標宣示句，非完成聲明"
+  },
+  {
+   "file": "00-index.md",
+   "line": 16,
+   "excerpt_sha1": "28ce133c2ce955ed6d8b543b2c1123441179795b",
+   "excerpt": "> 「目標是一模一樣」不是目前完成宣稱，所有未閉合部分都必須保持 fail-closed。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是目前完成宣稱」"
+  },
+  {
+   "file": "00-index.md",
+   "line": 19,
+   "excerpt_sha1": "189009175e55ce4fa228188e3e93613305807f12",
+   "excerpt": "> (BeatRunner 外推 pan 值→越改越偏的教訓;驗收對 reference 實測非「測試綠」,規則 65。)",
+   "verdict": "benign",
+   "note": "教訓/規則備註，非具體驗證聲明"
+  },
+  {
+   "file": "00-index.md",
+   "line": 45,
+   "excerpt_sha1": "e63a25c07d849da7d6acb6fab9f081f38f06746e",
+   "excerpt": "| acting 機制(正常 frame 逐格移動；特殊 frame 原地姿態) | **`50` §1.2**(`54` 僅存 dosbox 實測原始記錄) |",
+   "verdict": "benign",
+   "note": "路由表cell，指向doc50/54；「dosbox 實測原始記錄」用小寫無連字號，未達marker字面(語料庫低頻邊界案例，不值得擴大regex)"
+  },
+  {
+   "file": "00-index.md",
+   "line": 81,
+   "excerpt_sha1": "33497c1d734c2416f1b555168ec0496942809f2a",
+   "excerpt": "| 重製架構 / 三平台 / 工作拆解 | `21` + `30` + `22`(技術驗證) |",
+   "verdict": "benign",
+   "note": "純路由表cell，指向其他文件編號"
+  },
+  {
+   "file": "00-index.md",
+   "line": 112,
+   "excerpt_sha1": "007a3a6f50e4a33d38d0168312b4eed2d75adb30",
+   "excerpt": "`19`劇本系統設計 · `20`第一性原理可行性 · `21`Go/Ebiten架構 · `22`技術驗證 · `23`開機/標題/過場流程 ·",
+   "verdict": "benign",
+   "note": "純文件編號索引列表"
+  },
+  {
+   "file": "00-index.md",
+   "line": 113,
+   "excerpt_sha1": "c39c63e21fa5b904c1adb7b0bd348144bac116ce",
+   "excerpt": "`24`callgraph紀錄 · `25`戰場事件系統 · `26`逐關事件handler · `27`戰鬥規則+驗證清單 · `28`全30關目標 ·",
+   "verdict": "benign",
+   "note": "同上"
+  },
+  {
+   "file": "00-index.md",
+   "line": 140,
+   "excerpt_sha1": "d31fca8c23d4dfec1613e4d9d3cfc33efe4b831a",
+   "excerpt": "- `dosbox_dump/out/*.bin` — 單位陣列槽 dump、acting 資源原始 bytes、鏡頭/單位數快照(`47`/`48` 實測證據)",
+   "verdict": "benign",
+   "note": "引用「dosbox_dump」目錄路徑作為佐證來源，同45行的低頻邊界案例"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 1,
+   "excerpt_sha1": "f350bd5eb1b6be999876802d5821cba10a59210f",
+   "excerpt": "# 51 — remake 試玩落差 R2（歷史快照；戰棋機制+UI，2026-07-04 使用者實測)",
+   "verdict": "benign",
+   "note": "標題，本身標明「歷史快照」性質"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 25,
+   "excerpt_sha1": "2c9a7aa525948de35187ef1c38aff853549968ac",
+   "excerpt": "- **RE**:低。dosbox BP trace 原版「按什麼結束回合」確認 UX(選單項 vs 自動),再定短解/顯式二選一。",
+   "verdict": "benign",
+   "note": "「RE:低」建議段，未來式(dosbox BP trace確認UX)，非完成聲明"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 26,
+   "excerpt_sha1": "7bd6a7d4187624efa39558984386e01e9f691ff5",
+   "excerpt": "- **勘誤(2026-08-31,M5規劃輪Phase2核實)**:這段是2026-07-04的歷史快照,現行code已確認Tab鍵",
+   "verdict": "benign",
+   "note": "勘誤段落開頭句，實際證據引用(main.go:6717-6718、TestHeadlessBattleReachesConclusion)在下一行(27)"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 29,
+   "excerpt_sha1": "b0b7989423052390842dd5a2037d63b614dc418a",
+   "excerpt": "已多回合驗證這條路徑。註解裡「正式版改我方全動完自動結束」的自動化短解**仍未實作**(目前只有",
+   "verdict": "benign",
+   "note": "同一勘誤段落延續句，含明確否定「仍未實作」"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 50,
+   "excerpt_sha1": "b72f17d4881bde5bd3dba9226c57ac9f015f77bb",
+   "excerpt": "資料匯出接線;`assets/scenarios/ch01.json`的亞雷斯(騎士)本身就是`atk_min:1, atk_max:2`,證實",
+   "verdict": "benign",
+   "note": "同一勘誤段落延續句(47-52)，實際證據引用(move.go:226-243)在鄰近行(48)"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 56,
+   "excerpt_sha1": "31c8faede133d46819d049ed1448b096cab87e5c",
+   "excerpt": "- **歷史症狀**:法術打不出來。現行 code 已接 `spellOpen`/`castSp`/指令環 case 1 法術/`drawSpellMenu`/`InCastRange`，但 native command/effect 仍未閉合。",
+   "verdict": "benign",
+   "note": "引用remake函式名(spellOpen/castSp/drawSpellMenu/InCastRange)描述已接線功能，但句尾明確否定「native command/effect仍未閉合」，非過度宣稱"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 61,
+   "excerpt_sha1": "55f01c39db5563528c84d4294e88ed17053fc18e",
+   "excerpt": "command inventory、record `+5` MP gate、部分 target/effect routes 已閉合。`spell.json` 是可編輯",
+   "verdict": "benign",
+   "note": "同段落，含明確保留用語「部分...已閉合」，下一行(62)進一步明確否定「不是...完成證明」"
+  },
+  {
+   "file": "51-remake-playtest-gaps-r2.md",
+   "line": 64,
+   "excerpt_sha1": "d066343d5b19588ad11fd3ea03613162ec823b21",
+   "excerpt": "command 0 的 single-target numeric resolver 已獨立閉合，但 target geometry／完整 effect family 尚未閉合，",
+   "verdict": "benign",
+   "note": "明確否定式聲明「尚未閉合」"
   }
  ]
 }
