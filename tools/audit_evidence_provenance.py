@@ -316,6 +316,57 @@ def stratify_no_marker(claims: list[Claim]) -> tuple[list[Claim], list[Claim]]:
             [c for c in nm if c.file not in REMAKE_SIDE_DOCS])
 
 
+NO_MARKER_REGISTRY = REPO / "docs" / "data" / "no_marker_reviewed.json"
+NO_MARKER_VERDICTS = {"benign", "marker_added", "needs_verification"}
+
+
+def load_no_marker_reviews(registry: Path = NO_MARKER_REGISTRY) -> list[dict]:
+    return json.loads(registry.read_text(encoding="utf-8"))["reviews"]
+
+
+def split_reviewed(claims: list[Claim],
+                   registry: Path = NO_MARKER_REGISTRY) -> tuple[list[Claim], list[Claim]]:
+    """把一批 NO_MARKER 主張分成「已登錄審閱過」與「還沒審閱」。
+
+    2026-09-05:沒有這一層,`--no-marker-worklist` 每次重跑都會把已經讀過、判定過
+    benign/marker_added 的主張跟真正沒動過的混在一起,讓人分不出這一輪實際上還
+    剩多少要看——跟 REMAKE_ONLY 那邊 `gate()`/`remake_excluded_claims.json` 是
+    同一個道理,只是這裡不是硬性閘門(NO_MARKER 本來就不是「必須列管才能過關」的
+    性質),純粹是進度追蹤。
+    """
+    reviewed_keys = {(r["file"], r["excerpt_sha1"]) for r in load_no_marker_reviews(registry)}
+    seen, unseen = [], []
+    for c in claims:
+        (seen if (c.file, _sha(c.excerpt)) in reviewed_keys else unseen).append(c)
+    return seen, unseen
+
+
+def mark_reviewed(file: str, line: int, verdict: str, note: str,
+                  claims: list[Claim], registry: Path = NO_MARKER_REGISTRY) -> int:
+    """把 `file:line` 對應的 NO_MARKER 主張登錄進審閱表。回傳 0 成功、非 0 失敗。"""
+    if verdict not in NO_MARKER_VERDICTS:
+        print(f"verdict 必須是 {sorted(NO_MARKER_VERDICTS)} 之一,收到 {verdict!r}",
+              file=sys.stderr)
+        return 2
+    match = next((c for c in claims if c.file == file and c.line == line
+                 and c.status == "NO_MARKER"), None)
+    if match is None:
+        print(f"{file}:{line} 不是目前掃描結果裡的 NO_MARKER 主張——行號可能已經漂移"
+              "(檔案被改過),重新掃一次確認正確行號再登錄。", file=sys.stderr)
+        return 2
+    reg = json.loads(registry.read_text(encoding="utf-8"))
+    sha = _sha(match.excerpt)
+    if any(r["file"] == file and r["excerpt_sha1"] == sha for r in reg["reviews"]):
+        print(f"{file}:{line} 已經登錄過,不重複新增(如果判定要改,先手動刪除舊條目)。",
+              file=sys.stderr)
+        return 2
+    reg["reviews"].append({"file": file, "line": line, "excerpt_sha1": sha,
+                           "excerpt": match.excerpt, "verdict": verdict, "note": note})
+    registry.write_text(json.dumps(reg, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"已登錄 {file}:{line} verdict={verdict}")
+    return 0
+
+
 def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
     """把 NO_MARKER 存量按檔案分組、**依筆數由少到多排序**印出來。
 
@@ -330,16 +381,18 @@ def no_marker_worklist(claims: list[Claim], out_dir: Path | None) -> None:
     REMAKE_ONLY 依據,還是根本沒有問題只是漏標)留給實際讀那份文件的人或後續任務。
     """
     import collections
-    on_remake_side, needs_review = stratify_no_marker(claims)
+    on_remake_side, needs_review_all = stratify_no_marker(claims)
+    already_reviewed, needs_review = split_reviewed(needs_review_all)
     print(f"\n=== NO_MARKER 分層(沿用 REMAKE_SIDE_DOCS 名單)===")
     print(f"  落在 remake 側紀錄文件(優先度低)     {len(on_remake_side):5}")
-    print(f"  落在原版知識文件(**真正待處理**)      {len(needs_review):5}")
+    print(f"  落在原版知識文件,已登錄審閱過        {len(already_reviewed):5}")
+    print(f"  落在原版知識文件,**還沒審閱**          {len(needs_review):5}")
 
     per_doc: dict[str, list[Claim]] = collections.defaultdict(list)
     for c in needs_review:
         per_doc[c.file].append(c)
     ordered = sorted(per_doc.items(), key=lambda kv: len(kv[1]))
-    print(f"\n=== 原版知識文件裡的 NO_MARKER 待辦清單(依檔案筆數由少到多,"
+    print(f"\n=== 原版知識文件裡還沒審閱的 NO_MARKER 待辦清單(依檔案筆數由少到多,"
           f"共 {len(needs_review)} 筆、{len(ordered)} 份文件)===")
     running = 0
     for f, cs in ordered:
@@ -671,6 +724,57 @@ def selftest() -> int:
         fails.append(f"stratify_no_marker 對真實語料算不平:on_side={len(real_on_side)} + "
                      f"review={len(real_review)} != 全部 NO_MARKER {real_nm_total}")
 
+    # ======================================================================= #
+    # 2026-09-05 新增:NO_MARKER 審閱登錄表(`no_marker_reviewed.json`)的正反向驗證
+    # ======================================================================= #
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_reg = Path(tmpdir) / "no_marker_reviewed_test.json"
+        tmp_reg.write_text(json.dumps({"_policy": "test", "reviews": []}), encoding="utf-8")
+
+        _target = next((c for c in real if c.status == "NO_MARKER"), None)
+        checks += 1
+        if _target is None:
+            fails.append("找不到任何真實 NO_MARKER 主張可以拿來測 mark_reviewed,"
+                         "語料可能整個變了")
+        else:
+            # --- 正對照:合法登錄應該成功,而且 split_reviewed 要把它分進『已審閱』 ---
+            checks += 1
+            rc = mark_reviewed(_target.file, _target.line, "benign", "selftest",
+                               real, registry=tmp_reg)
+            if rc != 0:
+                fails.append(f"mark_reviewed 正對照失敗:合法輸入卻回傳非 0({rc})")
+            seen, unseen = split_reviewed([_target], registry=tmp_reg)
+            if _target not in seen or _target in unseen:
+                fails.append("split_reviewed 正對照失敗:剛登錄的主張沒有被分進『已審閱』")
+
+            # --- 負對照:重複登錄同一筆必須拒絕,不能靜默疊加或覆寫 ---
+            checks += 1
+            rc2 = mark_reviewed(_target.file, _target.line, "benign", "selftest 第二次",
+                               real, registry=tmp_reg)
+            if rc2 == 0:
+                fails.append("mark_reviewed 負對照失敗:重複登錄同一筆竟然成功了")
+
+            # --- 負對照:非法 verdict 必須拒絕 ---
+            checks += 1
+            rc3 = mark_reviewed(_target.file, _target.line, "not_a_real_verdict", "x",
+                               real, registry=tmp_reg)
+            if rc3 == 0:
+                fails.append("mark_reviewed 負對照失敗:非法 verdict 竟然被接受")
+
+            # --- 負對照:file:line 對不上任何 NO_MARKER 主張(行號漂移/打錯)必須拒絕 ---
+            checks += 1
+            rc4 = mark_reviewed(_target.file, 999999, "benign", "x", real, registry=tmp_reg)
+            if rc4 == 0:
+                fails.append("mark_reviewed 負對照失敗:對不到主張的行號竟然被接受")
+
+        # --- 對真實登錄表的合理性檢查:不能有重複鍵(同一個 file+sha1 出現兩次) ---
+        checks += 1
+        real_reviews = load_no_marker_reviews()
+        real_keys = [(r["file"], r["excerpt_sha1"]) for r in real_reviews]
+        if len(real_keys) != len(set(real_keys)):
+            fails.append("docs/data/no_marker_reviewed.json 裡有重複的 (file, excerpt_sha1) 鍵")
+
     total = checks
     print(f"檢查:{total - len(fails)}/{total} 通過")
     for f in fails:
@@ -701,10 +805,24 @@ def main() -> int:
     ap.add_argument("--export-worklist", metavar="DIR",
                     help="配合 --no-marker-worklist,把每份文件的 NO_MARKER 明細"
                          "(file/line/excerpt)寫成 DIR/<檔名>.json,供逐份審閱或委派。")
+    ap.add_argument("--mark-reviewed", nargs=4, metavar=("FILE", "LINE", "VERDICT", "NOTE"),
+                    help="把 FILE:LINE 這筆 NO_MARKER 主張登錄進"
+                         "docs/data/no_marker_reviewed.json,VERDICT 為 benign/"
+                         "marker_added/needs_verification 之一,NOTE 是判讀理由。"
+                         "登錄過的主張之後 --no-marker-worklist 不會再列入'還沒審閱'。")
     args = ap.parse_args()
 
     if args.selftest:
         return selftest()
+
+    if args.mark_reviewed:
+        file, line_s, verdict, note = args.mark_reviewed
+        try:
+            line = int(line_s)
+        except ValueError:
+            print(f"LINE 必須是整數,收到 {line_s!r}", file=sys.stderr)
+            return 2
+        return mark_reviewed(file, line, verdict, note, scan(KB))
 
     if args.diff is not None:
         new_claims = scan_diff(args.diff)

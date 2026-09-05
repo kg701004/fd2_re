@@ -1,0 +1,213 @@
+{
+ "_policy": "2026-09-05:登錄已經人工讀過、判定過的 NO_MARKER 主張,讓 tools/audit_evidence_provenance.py --no-marker-worklist 能把「已審閱」跟「還沒讀過」分開算,不會每次重跑都把同一批已經處理過的主張再報一次。以 excerpt_sha1 為鍵(行號會漂移)。verdict 只有三種:benign(不是原版事實的完成式驗證主張,不需要來源標記——工具自我檢查/表格標題/規劃未來式語氣皆屬此類)、marker_added(判定是真的缺標記,已經在文件裡補上 ORIGINAL/MIXED 依據)、needs_verification(真的是缺乏來源的原版事實主張,但本輪沒有能力補證據,留待後續)。",
+ "reviews": [
+  {
+   "file": "07-music-xmidi-format.md",
+   "line": 60,
+   "excerpt_sha1": "7b4e7ecf311749c4dfaf2d9665ff35b1aa143d6e",
+   "excerpt": "**驗證**:輸出 SMF 經回讀,**note-on 與 note-off 完全平衡**(如 FDMUS_008:2846 = 2846);",
+   "verdict": "benign",
+   "note": "xmi2mid.py 自己的 round-trip note-on/off 平衡檢查，是轉檔工具自我驗證，不是原版遊戲事實"
+  },
+  {
+   "file": "18-font-modernization-utf8-ttf-plan.md",
+   "line": 59,
+   "excerpt_sha1": "fe76f5bb8a1247da86e73fff51967bb31a48e3ac",
+   "excerpt": "不受影響。screenshot 比對確認 ch00_palace 的 13/12/9 原生斷行(先前的 13/13/8 落差)",
+   "verdict": "needs_verification",
+   "note": "screenshot 比對 remake 斷行 pilot 的結果，用了 campaign.Line/dlgWrap 等 remake 識別碼，但這些不在既有 REMAKE_MARKERS 正則裡——本身是 remake 自我描述不是原版事實主張，判 benign 傾向，但正則表有漏洞值得記錄，故標 needs_verification 供後續評估是否修正則表"
+  },
+  {
+   "file": "54-acting-pose-semantics.md",
+   "line": 9,
+   "excerpt_sha1": "982744ae6a325a49272d3c4747ab7a77c9ea215f",
+   "excerpt": "| byte | 已證實的狹窄意義 | direct evidence |",
+   "verdict": "benign",
+   "note": "表格標題列（已證實的狹窄意義），真正證據在下面的資料列（含位址），逐行掃描的已知限制"
+  },
+  {
+   "file": "17-scenario-expansion-evaluation.md",
+   "line": 42,
+   "excerpt_sha1": "7b8c365dbe60aae485d46d8bddd4d27e21890d73",
+   "excerpt": "- **AI**：原版 raw dispatcher／candidate／score slices 已定位（`11`），但完整權重、turn/camp、target transaction 與 runtime execution 尚未閉合；重製只能先保留 fail-closed raw bridge。待 SDD evidence gate 關閉後，才可把已證實片段接成原版模式；擴充模式仍可另用明確",
+   "verdict": "benign",
+   "note": "指向 doc11 既有證據的前瞻參考（AI raw dispatcher 已定位），本身不是新的驗證主張"
+  },
+  {
+   "file": "17-scenario-expansion-evaluation.md",
+   "line": 59,
+   "excerpt_sha1": "9eab454bfc6a85f62fadf47c13fb8aef9f9eaabc",
+   "excerpt": "落點／評分規則可當局部基準，但完整回合決策尚未閉合，不能宣稱已整套還原。",
+   "verdict": "benign",
+   "note": "明確的謹慎用語（不能宣稱已整套還原），是風險提示不是完成式驗證主張"
+  },
+  {
+   "file": "22-remake-tech-validation.md",
+   "line": 4,
+   "excerpt_sha1": "94e0bf5a2b696c288712367acee1df5167b9c3a9",
+   "excerpt": "> 本文記錄三項驗證的做法、證據與結論。優先順序:**本機桌面執行檔 > 跨平台(Web/手機)**。",
+   "verdict": "benign",
+   "note": "文件開頭的結構性自我介紹（本文記錄三項驗證的做法），不是具體驗證聲明"
+  },
+  {
+   "file": "22-remake-tech-validation.md",
+   "line": 59,
+   "excerpt_sha1": "690b4af7f084123c1d7ee897002b93b16c04ff3a",
+   "excerpt": "**為什麼中間格式而非引擎直接讀 `.DAT`**:解耦。`.DAT` 格式考證是 Python 工具的強項(快速迭代、可視化驗證);",
+   "verdict": "benign",
+   "note": "解釋為什麼採用中間格式的設計理由，可視化驗證指的是 Python 工具開發迭代過程，非原版事實"
+  },
+  {
+   "file": "52-ch1-battle-storyboard-and-two-systems.md",
+   "line": 65,
+   "excerpt_sha1": "55b71b61fb3cd982026233621032b7742a669a80",
+   "excerpt": "| 戰鬥對白沒交錯 | 系統 B 逐回合觸發 | 機制在(Fire on_turn_end),需驗證實際觸發+對白框顯示 | 驗證 turn 3/5/6 事件對白真的跳出;開場 cutscene 只播系統 A(海島對白),不含哈諾等 |",
+   "verdict": "benign",
+   "note": "『需驗證』是未來式待辦，VERIFY_LANG 抓到『驗證』字根但這是尚未完成的驗證請求，不是完成式主張"
+  },
+  {
+   "file": "52-ch1-battle-storyboard-and-two-systems.md",
+   "line": 71,
+   "excerpt_sha1": "100b622b3cfa28d8f39631901df3307ed04b391e",
+   "excerpt": "- 戰前 UI(MAP/TURN + 行軍確認)是否納入 remake(doc46 D8,低優先)。",
+   "verdict": "benign",
+   "note": "『行軍確認』的確認是UI功能專有名詞的一部分（名詞），不是動詞已確認"
+  },
+  {
+   "file": "90-re-plan.md",
+   "line": 22,
+   "excerpt_sha1": "e5387a268aa91046464f960f1a2c844bab438955",
+   "excerpt": "| 6. 驗證 | headless 確定性回歸 + **正常玩家路徑可玩性** | ⬜ |",
+   "verdict": "benign",
+   "note": "路線圖表格的未勾選(⬜)待辦列，驗證是任務類別名稱不是完成聲明"
+  },
+  {
+   "file": "90-re-plan.md",
+   "line": 31,
+   "excerpt_sha1": "3749e470b596f7d365781c7c4a1b922b0823f0a2",
+   "excerpt": "先把標題圖、戰鬥背景、24×24 圖塊集跑出來(即時可視 = 強驗證信號)。",
+   "verdict": "benign",
+   "note": "規劃階段對『為什麼採用這個方法』的理由說明（即時可視=強驗證信號），是前瞻規劃不是已完成驗證"
+  },
+  {
+   "file": "02-game-data-reference.md",
+   "line": 443,
+   "excerpt_sha1": "13b992dab67c00365fdc80636dbac3dd250dcb19",
+   "excerpt": "### 5.14 商店「最強武器/防具」對照（item.md 開頭表，用於交叉驗證編號）",
+   "verdict": "benign",
+   "note": "章節標題，敘述用途（用於交叉驗證編號），不是驗證聲明本身"
+  },
+  {
+   "file": "02-game-data-reference.md",
+   "line": 457,
+   "excerpt_sha1": "b1c866ce1bef69da79c40859532e6a1730f9c0d7",
+   "excerpt": "> 此表所有編號與 5.1–5.13 主表**完全一致**（見第 8 章交叉驗證）。",
+   "verdict": "benign",
+   "note": "文件內部兩張表格編號一致性的自我檢查，非外部原版事實主張，屬於文件自洽性檢查"
+  },
+  {
+   "file": "02-game-data-reference.md",
+   "line": 741,
+   "excerpt_sha1": "7d92bfd0b4b9a2320bf6b58b9a6d800275e898b1",
+   "excerpt": "5. **公式自洽**：notes.md 傷害公式中的「實際傷害 = 最大傷害×0.9 ～ 最大傷害-1」與 spell.md 各法術「實際傷害」欄位的數字區間完全吻合（例：天火術最大 500 → 450–499）。可作為公式正確性的交叉驗證。",
+   "verdict": "benign",
+   "note": "同上，公式與資料欄位的內部自洽檢查（notes.md vs spell.md），不需要外部來源標記"
+  },
+  {
+   "file": "14-text-control-codes.md",
+   "line": 138,
+   "excerpt_sha1": "39019647eadbf9351e2fa37ff704a18b7219beec",
+   "excerpt": "⚠ **修正**:過場以「整段顯示」為主,**非逐字打字機**(實機觀察);嘴型開合存在(上述 RE 碼)但**很細微**(開嘴僅 1 tick,靜態截圖不易捕捉)。",
+   "verdict": "needs_verification",
+   "note": "『實機觀察』是本專案常見的原版驗證用語但『實機』二字不在既有 ORIGINAL_MARKERS 正則裡，是分類器的潛在漏洞，值得記錄供後續評估是否加入標記表（安全方向：只會把 NO_MARKER 移到 ORIGINAL，不會誤傷）"
+  },
+  {
+   "file": "14-text-control-codes.md",
+   "line": 139,
+   "excerpt_sha1": "f7cd39e5de360f774308ff44902df20e201435c5",
+   "excerpt": "- **彈出效果**(使用者述「跳出來」):實機未細捕捉到漸變幀,待 `autolock=false` 慢速錄影確認;remake 暫用簡單淡入/瞬開,確認後再校。",
+   "verdict": "benign",
+   "note": "明確待辦用語（實機未細捕捉到、待...確認），是尚未完成的驗證計畫不是完成聲明"
+  },
+  {
+   "file": "14-text-control-codes.md",
+   "line": 147,
+   "excerpt_sha1": "c448a9273589850f80ff0bd522b03b8f7b7bed3b",
+   "excerpt": "- 重製對話系統:state machine = 開框(載頭像)→ 逐字 → 軟換行(3 行捲動)→ 翻頁等鍵 → 收框。",
+   "verdict": "benign",
+   "note": "『逐字』在此處是描述對話渲染機制（一個字一個字顯示），跟 VERIFY_LANG 想抓的『逐字核對』是同詞不同義的誤觸發"
+  },
+  {
+   "file": "15-how-fd2-was-made-1995.md",
+   "line": 80,
+   "excerpt_sha1": "37ccac909c487561793ff4dc80f71dce6658fe43",
+   "excerpt": "其 command／spell 對照尚未閉合；`+0x22..+0x24` 是 raw transient/modifier bytes，並非法術 bitfield，不能由此命名高階 stat/status。",
+   "verdict": "benign",
+   "note": "『尚未閉合』是否定式（還沒完成），VERIFY_LANG 抓到『閉合』字根但這是明確的未完成聲明"
+  },
+  {
+   "file": "15-how-fd2-was-made-1995.md",
+   "line": 83,
+   "excerpt_sha1": "e3a5ef0983e1419acedc1e733025c36a5a9c0950",
+   "excerpt": "- **選單**:方向鍵游標、Enter/Space 確認、ESC 取消等 input fragments 已有證據；全員 end-turn／換邊流程仍未閉合；",
+   "verdict": "benign",
+   "note": "同上，『仍未閉合』是否定式未完成聲明"
+  },
+  {
+   "file": "15-how-fd2-was-made-1995.md",
+   "line": 97,
+   "excerpt_sha1": "dedc6a10ef78241f20f933b6ba254f100ea3f2c9",
+   "excerpt": "> 裝下一個有劇情、有戰棋、有動畫與配樂的世界。本知識庫把這套做法逐一拆解、驗證、留存下來。",
+   "verdict": "benign",
+   "note": "文件結尾對整份知識庫方法論的總結性描述（逐一拆解、驗證、留存），不是針對特定事實的驗證主張"
+  },
+  {
+   "file": "24-callgraph-analysis-log.md",
+   "line": 14,
+   "excerpt_sha1": "7b506391783b27abf239de05cd781aedfe3a0a29",
+   "excerpt": "線性 sweep 從某位址逐位元組解碼,遇到資料(跳表、字串、對齊填充)會把它當指令,產生「偽 call」。",
+   "verdict": "benign",
+   "note": "說明線性 sweep 反組譯的一般方法論問題，非具體驗證聲明"
+  },
+  {
+   "file": "24-callgraph-analysis-log.md",
+   "line": 43,
+   "excerpt_sha1": "34d29e5d62dda087d379f7dcf169d6935373f5d8",
+   "excerpt": "→ caller 集合本身已閉合；它只證明 call-site 可達，不能證明不同條件分支",
+   "verdict": "benign",
+   "note": "『已閉合』的實際證據在往上兩段的 callgraph_le.py 工具輸出（步驟1/2），只是逐行掃描沒抓到附近上下文——這正是本工具已知的限制，內容本身有原版工具佐證，判 benign 不需要另外補標記"
+  },
+  {
+   "file": "24-callgraph-analysis-log.md",
+   "line": 86,
+   "excerpt_sha1": "ae0760e5dbc70b48a6940fa0cfcd21e2e8df0ac9",
+   "excerpt": "## 步驟 5 — 獨立驗證章節跳表(修了一個工具 bug)",
+   "verdict": "benign",
+   "note": "章節標題，描述接下來要做的事，不是驗證聲明本身"
+  },
+  {
+   "file": "30-remake-work-breakdown.md",
+   "line": 93,
+   "excerpt_sha1": "ef895cf024f3cc27e0c4fe4c7af50f9e63f4fc0c",
+   "excerpt": "| M5-4 | 正常玩法可達性驗證 | 無 debug hook 可從序章破到結局 |",
+   "verdict": "benign",
+   "note": "路線圖表格的任務項目，『驗證』是任務類別名稱（正常玩法可達性驗證），不是完成聲明"
+  },
+  {
+   "file": "30-remake-work-breakdown.md",
+   "line": 133,
+   "excerpt_sha1": "9819a2992c69398a4b0835a1a43a9fdefe6e67f1",
+   "excerpt": "| 正常玩法不可達(soft-lock) | M5-4 無 debug hook 全程驗證(retro skill 踩雷) |",
+   "verdict": "benign",
+   "note": "風險緩解表格條目，同樣是任務類別名稱不是完成聲明"
+  },
+  {
+   "file": "30-remake-work-breakdown.md",
+   "line": 136,
+   "excerpt_sha1": "9896f02793c005cef9fc743bee8881c72036bc90",
+   "excerpt": "> 相關:doc 21(架構)· 22(技術驗證)· 19/29(腳本/事件)· 26/28(事件/關卡資料)· 02/03(數值)· worklist M0–M6。",
+   "verdict": "benign",
+   "note": "文件結尾的相關文件索引，doc22的標題含『技術驗證』字樣，是文件名稱不是驗證聲明"
+  }
+ ]
+}
