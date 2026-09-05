@@ -32040,6 +32040,86 @@
    "excerpt": "的結果(idx1/idx3 都乾淨落到待機分支)。**正向案例(相鄰時攻擊確實成功)這一輪沒有驗證",
    "verdict": "benign",
    "note": "明確標示「這一輪沒有驗證到」，誠實邊界語句，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2383,
+   "excerpt_sha1": "51b3138c61156a353988f1b3d07d44a214be125e",
+   "excerpt": "instance 送出重複的按鍵序列**。兩邊最後都跑完(背景那個 200 次確認後放棄「無法確定",
+   "verdict": "benign",
+   "note": "描述雙重驅動測試環境問題的過程記錄，非原版/remake證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2384,
+   "excerpt_sha1": "f339ad4630bc185c6b29277b4d43653aedc8bb01",
+   "excerpt": "層級」,前景那個 180 次確認後成功判定「已確定在瀏覽游標層」),截圖確認畫面是合理的",
+   "verdict": "benign",
+   "note": "同上，接續描述雙重驅動測試結果截圖確認"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2386,
+   "excerpt_sha1": "58a157a5c7db875fb92ddef953b62f63f592daf2",
+   "excerpt": "一個 driver 呼叫,要嘛先用 `ps`/`status` 確認前一個真的結束再開新的。",
+   "verdict": "benign",
+   "note": "對下一輪操作方式的建議，非證據語句"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2392,
+   "excerpt_sha1": "bc6f80c6e205547602f775eb388596fc8fe818c1",
+   "excerpt": "的環選擇也失敗了**,`select_ring()` 正確拒絕盲按確認,退回 `cancel`。idx0/idx2 兩個",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的select_ring()回退分支失敗記錄，缺乏正規marker關鍵字但是真實原版行為描述"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2397,
+   "excerpt_sha1": "55af1fcb268ebe3de7a96f51a5f767c464828ba1",
+   "excerpt": "同一種截圖前不要輕信讀值的已知模式,截圖確認後排除崩潰假說)。",
+   "verdict": "benign",
+   "note": "明確引用同文件已知的read-failure模式，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2402,
+   "excerpt_sha1": "fb9a0a1d7159b57208c4f1f349a83b802541efa1",
+   "excerpt": "(格子互動/寶物檢查),**不是「待機」**,而且實測「滿血站空地」的情況下確認 slot 3",
+   "verdict": "benign",
+   "note": "回顧本文件2026-08-22既有反組譯證據（RING slot 3語意），非本輪新宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2403,
+   "excerpt_sha1": "509bc398dc6393c6b15ae847df9db53985beae51",
+   "excerpt": "之後 **Acted 沒有被設起來**——該節結論明講:「`[3]`=『待機』應視為假說,不是已證",
+   "verdict": "benign",
+   "note": "同上，引用既有章節結論"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2415,
+   "excerpt_sha1": "66c4acd27d87861e7a55235a900dd6ecfb2a0273",
+   "excerpt": "2. 但 `RING_REST` 回退分支本身**不能視為已驗證能可靠結束單位行動**——這一輪的",
+   "verdict": "benign",
+   "note": "誠實現況小結，明確標示「不能視為已驗證」，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2418,
+   "excerpt_sha1": "927dab4a9ec093ffb9e95c6a1a27a20c162a85fb",
+   "excerpt": "3. **「正向案例(真的相鄰時攻擊成功)」這一輪依然沒有取得乾淨驗證**——三個雙重驅動+",
+   "verdict": "benign",
+   "note": "誠實現況小結，明確標示「依然沒有取得乾淨驗證」，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2421,
+   "excerpt_sha1": "e55cf45289f6b49731adc47017f51b48c46a89f0",
+   "excerpt": "`RING_REST` 回退分支,先做小範圍實測回答「index 3 在各種 HP/腳下地形組合下,",
+   "verdict": "benign",
+   "note": "對下一輪的具體建議事項，非證據宣稱"
   }
  ]
 }
