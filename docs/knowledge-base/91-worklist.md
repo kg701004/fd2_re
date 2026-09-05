@@ -265,6 +265,21 @@ per-chapter客製化，不太可能藏著一個通用的D8畫面。**本輪累�
 不同的方法——例如live memory-write主動破壞測試(把懷疑的函式體patch成立即return，
 觀察D8畫面是否消失)，而不是繼續被動反組譯猜測；或是先承認這是一個需要專門開一輪
 新session、有充裕預算專門處理的深度item，不要再用零碎時間片段式嘗試。
+
+**2026-09-06再續，用541關閉成功的同一套方法(`xref_to`從已知anchor找新caller)再試3個
+方向，全部落空，累計排除14個函式**：①檢查`0x25dce`所在函式`FUN_00025bf4`(main loop)
+呼叫的`0x25ebb`——結果是標題選單dispatcher(new game/load/continue三分支，跟doc23既有
+理解完全吻合)，不是D8。②追進new-game分支呼叫的chapter pre-handler table
+(`0x51d71[0]=0x3231b`)——結果是純劇情/spawn/join handler(串起ch32/31/0三段開場對白，
+呼叫已知的`0x205da`LOADCH/`0x10b4e`SPAWN/`0x112a5`JOIN四次)，也不是D8內容組裝點。
+③`xref_to 0x15f84`(已知的文字/label渲染呼叫)找到**107個caller**——這是全遊戲共用的
+對話框開啟原語(呼應doc09「0xFFEE/0xFFED全域共用」的既有結論)，caller數量太多，這條線索
+本身不夠窄，無法當作有效的下一步切入點。**這確認了「541能用xref_to方法快速關閉」是因為
+它剛好有一個窄、乾淨的anchor(`0x20c6f`只有2個caller)，791沒有這種運氣**——D8畫面的內容
+組裝點目前所有已知的路徑(每回合orchestrator、outer loop、標題選單、chapter pre-handler、
+通用文字原語)都排除了，如果真的存在，可能藏在一個目前完全沒有被xref鏈接過來的孤立呼叫路徑，
+被動搜尋很難再進一步——**維持先前建議：需要live memory-write主動破壞測試，或一整輪專門
+預算，不建議下一輪再用零碎時間片段嘗試被動反組譯。**
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
