@@ -132,7 +132,8 @@ ORIGINAL_MARKERS = [
      rf"{_ASCII_WORD_START}FDFIELD(?:_\d+)?{_ASCII_WORD_END}|"
      rf"{_ASCII_WORD_START}FDSHAP(?:_\d+)?{_ASCII_WORD_END}|"
      rf"{_ASCII_WORD_START}FDMUS(?:_\d+)?{_ASCII_WORD_END}|"
-     rf"{_ASCII_WORD_START}DATO(?:_\d+)?{_ASCII_WORD_END}|FDICON",
+     rf"{_ASCII_WORD_START}DATO(?:_\d+)?{_ASCII_WORD_END}|FDICON|"
+     rf"ANI\.DAT",
      "原版資產容器"),
     (r"FD2\.EXE", "原版執行檔"),
 ]
@@ -653,6 +654,14 @@ def selftest() -> int:
            "正對照:小寫 ghidra(本專案工具檔名的常見寫法)必須跟大寫 Ghidra 一樣命中")
     expect("已確認這段呼叫走的是 tools/Ghidra_batch_probe.py 這條路徑", "ORIGINAL",
            "回歸:大寫開頭的既有寫法不能被這次修正弄壞")
+
+    # --- 2026-09-05 補(第五輪NO_MARKER審閱掃出):`ANI.DAT` 是本專案早已定案的
+    # 原版資產容器名(doc39 開場動畫格式,見 doc06/doc23),但原本容器名清單只收
+    # FDTXT/FDOTHER/FDFIELD/FDSHAP/FDMUS/DATO/FDICON,漏了它——7 處語料庫命中。
+    expect("已確認這段序列是 ANI.DAT 播放,不是別的資源", "ORIGINAL",
+           "正對照:ANI.DAT 是本專案定案的原版資產容器名,必須命中容器標記")
+    expect("這件事已經確認跟ANI.DAT無關而已", "ORIGINAL",
+           "回歸:CJK 緊貼(無空格)一樣要命中,跟其他容器名的既有行為一致")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
