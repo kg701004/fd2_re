@@ -32120,6 +32120,30 @@
    "excerpt": "`RING_REST` 回退分支,先做小範圍實測回答「index 3 在各種 HP/腳下地形組合下,",
    "verdict": "benign",
    "note": "對下一輪的具體建議事項，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2463,
+   "excerpt_sha1": "515d2b20c1087e092fdeab6db02a6852e1f820b9",
+   "excerpt": "確認後,索爾的 `+5` 仍為 `0x00`,重讀單位陣列兩次皆然」。這輪靜態證據強烈指向 case 3",
+   "verdict": "benign",
+   "note": "回顧本文件2026-08-22既有live測試結論並提出新解釋，屬本輪靜態複核推論，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2473,
+   "excerpt_sha1": "5c2900299c0dd50556170cbb951943d87f2a5117",
+   "excerpt": "live 測試裡,環選擇本身就沒有成功landing在 3,所以從來沒有真的確認過 case 3,",
+   "verdict": "benign",
+   "note": "對§14既有live測試結果的重新歸因，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2478,
+   "excerpt_sha1": "b51ba9bdccac4b3c5190b7d1f916bfc689f810ab",
+   "excerpt": "結構對稱性支持這個結論,但**這輪沒有做新的 live 測試去正面確認**(需要先解決前述",
+   "verdict": "benign",
+   "note": "誠實現況邊界，明確標示「這輪沒有做新的live測試」，非證據宣稱"
   }
  ]
 }
