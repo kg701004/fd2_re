@@ -32872,6 +32872,22 @@
    "excerpt": "remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用,重蹈本節已經",
    "verdict": "benign",
    "note": "對資料衛生風險的分析說明，非新原版證據宣稱"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1061,
+   "excerpt_sha1": "47911bb12c69b251ca8105799f2ae4ae836c8088",
+   "excerpt": "(30)特殊處理),證實doc27§6.4「`local_20[選定索引]=commandId`」的語意判讀是對的,",
+   "verdict": "benign",
+   "note": "本輪對FUN_0001cff0的完整decompile分析，回顧既有doc27§6.4結論"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1070,
+   "excerpt_sha1": "c0f0fabc46ccff6ede3286152ad0e58af4b8c84f",
+   "excerpt": "當作已知法術/道具數量做邊界判斷)跟按確認鍵時的MP足夠判定,**同樣沒有直接寫",
+   "verdict": "benign",
+   "note": "本輪對FUN_0001d51d/FUN_00018409的排除性分析，非新原版證據宣稱，是分析推論"
   }
  ]
 }
