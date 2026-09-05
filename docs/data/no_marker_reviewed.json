@@ -18808,6 +18808,2062 @@
    "excerpt": "3. 對Sol/Yuni也測一次「物品」指令，確認他們是否也會因為消耗品清單為空而看到同樣的裝備後備卡",
    "verdict": "benign",
    "note": "延續句，M5正常玩法逐章live測試敘事延伸，屬同一大段DOSBox-X/xdotool操作紀錄的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 38,
+   "excerpt_sha1": "8e6bff62b5a538803fb55628f57e93311fc00f41",
+   "excerpt": "**驗證(2026-08-20)**:用它重跑 3 個本 session 已知答案的位址,結果與既有文件記錄逐位元組吻合:",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 46,
+   "excerpt_sha1": "29b1bd693a03d31acc9250abf344228f7188e43c",
+   "excerpt": "輸出的 C 偽代碼也逐字元相同;`xref_to` 找到的 31 個呼叫端位址與清單順序也完全一致。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 58,
+   "excerpt_sha1": "ffdd6c8747280768e7285a1f5f72a5a84806976d",
+   "excerpt": "## 已驗證位址資料庫(`docs/data/verified_addresses.json` + `known_address_errata.json`)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 69,
+   "excerpt_sha1": "779d324db9274dcf30aaa665e4a03817218326ba",
+   "excerpt": "- `docs/data/verified_addresses.json` — 結構化的位址清單,每筆條目含 `address`(位址字面值)、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 73,
+   "excerpt_sha1": "4d6b1b181be18d2cbe2cc9c0dbc6c949d409697c",
+   "excerpt": "`disputed`=文件間有矛盾)、`source_doc`/`source_section`/`verified_date`/`notes`。截至",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 82,
+   "excerpt_sha1": "5221b10ed4b893f41aadc6e790acf627baaacb25",
+   "excerpt": "- `tools/query_verified_address.py` — 查詢 CLI,不依賴第三方套件:",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 85,
+   "excerpt_sha1": "5548eabef32cb5262a5cd8dd53c3ccd354605a72",
+   "excerpt": "python tools/query_verified_address.py --search \"AoE\"  # 關鍵字模糊搜尋 semantic/notes",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 90,
+   "excerpt_sha1": "1764114508f3ce469005b852194c55657110bbba",
+   "excerpt": "**怎麼維護**:未來每次訂正/新增一個位址語意時,在 `verified_addresses.json` 追加或更新一筆",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 139,
+   "excerpt_sha1": "b801a3de7b778765f3939ad1fc2e305a2931473a",
+   "excerpt": "目錄 `~/fd2-run`),多個互不相關的待驗證項目只能排隊一個一個做。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 166,
+   "excerpt_sha1": "c3ad7243f402a93b7fbe3128a20c1c5b46c20737",
+   "excerpt": "`ss -tln` 實際監聽中的 port,雙重確認不撞號——不只避開彼此,也避開 doc48 §8.4 canonical",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 182,
+   "excerpt_sha1": "e4665e70ceec6a1090d72110aab1ad4fe6e875f7",
+   "excerpt": "是這次重新包裝成參數化腳本時手滑弄反了兩者。已修正並重新實測通過。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 196,
+   "excerpt_sha1": "33d7f3f55ecad8dd591330b7a49eaa3fc8ec1d26",
+   "excerpt": "跑完——doc48 既有的「送鍵前先 screenshot 確認畫面」原則對每個 harness instance 依然",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 201,
+   "excerpt_sha1": "718d76f0f5d675ef8b55bc6665d28f02a5dc623a",
+   "excerpt": "**2026-08-24 實測驗證(不是紙上談兵,是真的並行跑過)**:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 203,
+   "excerpt_sha1": "71071467e88f968a1b8100751c2ec9cd1afbfb7e",
+   "excerpt": "- 驗證前用 `ps aux`/`tmux ls` 確認 doc58 續五十九/續六十的 canonical session(`dbg`、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 204,
+   "excerpt_sha1": "fc8c74437c51ac6a97bfc81d69208fd3bee945c9",
+   "excerpt": "`:99`、`~/fd2-run`)當時確實正在跑,harness 全程避開這三個名字,測完再次確認它完全沒被動過。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 229,
+   "excerpt_sha1": "e13cf84c04e5cb6e7864e69e32e1aad6653a1cf3",
+   "excerpt": "instance 之上)。**2 顆是這次直接實測驗證過的**(如上);3 顆是根據觀察到的資源餘裕(3 顆",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 260,
+   "excerpt_sha1": "cc8d7aa66e3d053b6abf614635cd53f45a3cc6b8",
+   "excerpt": "二進位檔案確認全部存在(2026-08-25 對這個專案實際用的 build 二進位親自驗證,不是查文件猜的)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 268,
+   "excerpt_sha1": "6ea51be66bbdfb9061029a8f495ab3e54c3235ad",
+   "excerpt": "**LOGC 的關鍵行為(全部是本輪 live 實測驗證,不是讀 source 猜的)**:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 276,
+   "excerpt_sha1": "108dcc5f909ba6accfadb6ef917b5bd3ef844587",
+   "excerpt": "實測發現,不是理所當然的事(原本擔心 LOGC 是一個會凍結整個模擬器的同步阻塞操作)。實測",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 279,
+   "excerpt_sha1": "b7e94f495237d789a6d24e294bbb7073798c91f1",
+   "excerpt": "過場→詩句捲動→角色卡),證實 LOGC 不是需要「先跑完、再操作」的阻塞式操作,可以邊記錄",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 281,
+   "excerpt_sha1": "5325a7c3a764550ceea7b29bdea1d1f08f428986",
+   "excerpt": "3. **吞吐量**(這台專案 WSL2 VM 實測,2026-08-25):10,000,000 instructions ≈ 3.8 秒 wall",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 289,
+   "excerpt_sha1": "63a40f5af288052a81723a007889f651bb81a6f6",
+   "excerpt": "的大數字(例如 `600000000` 對應本輪實測涵蓋了從戰前對白到角色卡渲染的完整轉場)。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 295,
+   "excerpt_sha1": "ca004a5b6834622f4ecfd11ddb537b2535576b12",
+   "excerpt": "(8,727 筆查詢實測 6.6 秒跑完,見下)。`awk` 去重本身(不是 `sort -u`,那個量級會太慢)",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 325,
+   "excerpt_sha1": "980ca25ace9518b70493f5a1131a2139a67180fa",
+   "excerpt": "調查線反覆踩過的「位址巧合重疊」陷阱的同一個坑,只是這次是文件比對版本**,不是 live 驗證版本",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 328,
+   "excerpt_sha1": "ed564376d7f40d554f4bfb93ef9246735b2d4b1a",
+   "excerpt": "確認不是更長十六進位字串/URL/hash 的子字串),不能只做裸子字串搜尋。修正後重新核對過幾個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 347,
+   "excerpt_sha1": "fdabebafcecac6cfb75cd214e7844be088e1f9a3",
+   "excerpt": "5. 本工具驗證了「600M 指令、8700+ 唯一位址、批次比對 6.6 秒」這個量級可行,**沒有**測試更大",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 370,
+   "excerpt_sha1": "05a83101e4e58af2c4d0a5ceed40e32d427c783f",
+   "excerpt": "這一層)才確認:它的 config 用了 `[sdl] output=surface` + `[render] scaler=none aspect=false`,",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 376,
+   "excerpt_sha1": "baeb3b808d7e3ba6dab55145e47845f5c7eabd94",
+   "excerpt": "`/usr/bin/dosbox`,`apt list --installed`確認)後,同一組 config 讓視窗**精確**等於當前模擬",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 400,
+   "excerpt_sha1": "f7b47590b5035a5044992a5b2dcb3df7b4397aaf",
+   "excerpt": "Xvfb screen 用 1024×768(不能比開場動畫的最大視窗小,否則視窗被裁切/位移,本輪實測踩過)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 404,
+   "excerpt_sha1": "cb15a38d7ee38970bdba1db818fd6ecef4bdb958",
+   "excerpt": "# chapter-jump патch 一份真實 FD2.SAV 的 slot0 章節 byte(沿用 UI-VIS-TOWN variant1/2 已驗證",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 433,
+   "excerpt_sha1": "f5a8296272bf8851b17312cab8bbdb740efd6e53",
+   "excerpt": "`xdotool getdisplaygeometry`重新驗證連線)判斷成敗,不要相信 subprocess 的 returncode。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 437,
+   "excerpt_sha1": "95d9e87d3b0c0cd3ea3b901c21e2528962bea817",
+   "excerpt": "快取「這個 display 已確認可用」,首次呼叫才真的探測(`xdotool getdisplaygeometry`成功才算",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 442,
+   "excerpt_sha1": "85b1a56922881105e31015a475ebb96b2024eebc",
+   "excerpt": "一個不做這層檢查的畫面種類,可能會安靜地截到不代表 native UI 的畫面——新場景務必先確認",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 449,
+   "excerpt_sha1": "abf59fdb54ce035bfd841087af8de3cd10281db3",
+   "excerpt": "1. **對已閉合的 UI-01 title-screen oracle 重放,取得逐位元組相同的結果**:用本工具的",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 453,
+   "excerpt_sha1": "64522a63e8db0ae2d77abcd3f7ba918025bcaf0c",
+   "excerpt": "byte-exact 這個維度上跟舊 Docker pipeline **等價**,不是「看起來差不多」而是逐位元組雜湊",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 457,
+   "excerpt_sha1": "a7d1bac0cd4f1000ed4b5e152c19e45b0d3ad9c1",
+   "excerpt": "跳開場→Title→Down→Enter選LOAD→Enter選唯一存檔位(確認畫面文字為「第 二 章 羅德鎮」)→",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 479,
+   "excerpt_sha1": "91b23f8a98eb6696ee30c2cd6698a086a032958e",
+   "excerpt": "3. 尚未針對其他既有 E2 場景(商店、教會、整備、戰鬥)逐一重放驗證,只驗證了 title 與 ch02 城鎮",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 502,
+   "excerpt_sha1": "69f47179711e628a119c5908fcc43dc023962235",
+   "excerpt": "`ch{chapter_byte:02d}_pre.json`(驗證依據:`ch01_pre.json`的`loadch.chapter`欄位確實是",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 510,
+   "excerpt_sha1": "5feb3cd33a2098b7299cc7a70840d09343ffc933",
+   "excerpt": "- **live 驗證(2026-08-26,全新 instance,非紙上談兵)**:未修前重放`town_ch02`/",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 515,
+   "excerpt_sha1": "8b86afc4aac8d49284d82b2431656d03095e1ac7",
+   "excerpt": "2026-08-26首次驗證記錄的 99.3-99.4% 同一量級——證實這不只是「有畫面就好」,是真的",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 524,
+   "excerpt_sha1": "846cfaffcff1fb73562206cc35187732527f0259",
+   "excerpt": "各自走`reach_town_hub()`→`raw_screenshot()`,4 次拿到相同`rgb_md5`,1 次不同——確認這是",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 528,
+   "excerpt_sha1": "7cfe8d55cba9d8360b4a064904bada59ffae73d8",
+   "excerpt": "一塊 24×24px 的小範圍內,精確對應**隊伍隊長的站立 sprite**——放大比對後確認是同一個",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 534,
+   "excerpt_sha1": "160ad7cd1f1e45d82b5e17347cf052bccd33f074",
+   "excerpt": "*緩解(已驗證有效,範圍有限)*:新增`lock_pulse_phase()`——重用既有的`wait-pixel`原語",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 537,
+   "excerpt_sha1": "cb7d4f15bc9dfd6eb63c76d44297143a5711f807",
+   "excerpt": "`town_ch02`/`selection0`實測找到`(x=40,y=57)=(142,0,0)`,是隊長紅領巾的一小塊像素),",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 540,
+   "excerpt_sha1": "6f9f4d5804727b9e9719c53d5268fa037a3d48b8",
+   "excerpt": "可關閉)。**效果實測**:同樣連續 5 個全新獨立 instance,加鎖後**5/5 次`rgb_md5`完全相同**",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 555,
+   "excerpt_sha1": "d3c8cdeac10717d2d9088e40a2915507467fe315",
+   "excerpt": "那個是輸入傳遞層(未解),這個是擷取時機對到即時動畫相位(已定位、已驗證緩解),兩者",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 565,
+   "excerpt_sha1": "60387b3c34f7b7b470f770bd1ec10e4e501eb132",
+   "excerpt": "(`default_party_binding_for_chapter`/`lock_pulse_phase`/`reach_town_hub`),含完整驗證",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 570,
+   "excerpt_sha1": "f2955336d0d1d4e2efcb7e4f2273496aec5f7399",
+   "excerpt": "**目標**:`docs/knowledge-base/91-worklist.md` M5 的「正常玩法可達性驗證」項目(30 章",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 585,
+   "excerpt_sha1": "3297ec7b2591eceb0b7b03d6d82b9df3388d65f5",
+   "excerpt": "`append_roster_members()`補足合成隊員,`--no-roster-pad`可關閉(驗證已知存檔如",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 597,
+   "excerpt_sha1": "34f4203357a3b0ef4b99f421f8d2a500b523cc18",
+   "excerpt": "2=我方/0=敵方,續六十二/續六十三已證實),對每個敵方 slot 寫入死亡 signature",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 599,
+   "excerpt_sha1": "9440f8a9c3fcbb626825dfcd68fb0d4c21ad2c30",
+   "excerpt": "接著送出續六十二證實過的 End-Turn→YES 捷徑(`Enter`開指令環→`Down`選 END→`Enter`",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 604,
+   "excerpt_sha1": "b307d521b431205153f14df8380bf07e5faf5f1c",
+   "excerpt": "五十八/六十二記錄的兩種變體嘗試),但**這是本工具驗證過程中最弱的一環**,見下。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 613,
+   "excerpt_sha1": "d83259da1da48bae3f0494680624224468bed70f",
+   "excerpt": "**2026-08-27 Phase 1 驗證(ch27/ch02,誠實記錄,包含一個未解的已知限制)**:",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 615,
+   "excerpt_sha1": "834433dfae7e50232c8404c0a6be122da56183c6",
+   "excerpt": "- **基礎設施面(harness 層)驗證乾淨**:對 ch27 連續跑了 3 輪(含 2 輪調整導航策略後重測)",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 621,
+   "excerpt_sha1": "f316bc82a9a6fa251617a349b0f3b6da4edcff68",
+   "excerpt": "- **戰鬥偵測機制的「陰性」訊號驗證正確**:ch02(真的沒有戰鬥可觸發)與 ch27 的多次嘗試裡,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 623,
+   "excerpt_sha1": "0e008bd916f89e0404ce843927810da795a41808",
+   "excerpt": "成戰鬥——這是這個機制在真實資料上的第一次正面驗證(先前只在文件記錄的位址推導上驗證過)。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 624,
+   "excerpt_sha1": "250b8ad4981e6da54d02f7ac2d003e1fb56a90f6",
+   "excerpt": "- **章節跳轉與 roster 估算邏輯驗證正確**:`prepare_chapter_save()`對 ch02(估算 2 人,",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 629,
+   "excerpt_sha1": "9c6b633b1092d8dc396385ced8b781941e56f8a1",
+   "excerpt": "(`0x1a`),所以對 ch27 的驗證其實是拿續五十七到續六十三**同一份、位元組不變**的存檔在測,",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 630,
+   "excerpt_sha1": "9856a4a996a45d6425bc9b47bb97c2ecf44705e6",
+   "excerpt": "不是另一份「看起來像」的存檔——這讓 ch27 的驗證比預期更貼近既有 live 紀錄的基準線。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 642,
+   "excerpt_sha1": "92d4119911e9d90bfb07f3271e123f091afe9c45",
+   "excerpt": "完全相同**(同一套帳篷佈局、同一組 4 個商店熱點:酒店/道具店/武器店/教會),證實這是",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 648,
+   "excerpt_sha1": "2f1d67dd763b7e7a6c29f2b37c028b7e7e899305",
+   "excerpt": "**戰鬥處理核心邏輯的驗證方式**:由於上述導航限制,無法在本輪端到端觸發一次真正的戰鬥掃描/",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 649,
+   "excerpt_sha1": "86659d02acf1b20c99b4731275127525965777fa",
+   "excerpt": "mass-kill/End-Turn 呼叫鏈並觀察其效果。這部分改用**靜態核對**驗證——`BATTLE_ARRAY_PTR_LIVE`",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 653,
+   "excerpt_sha1": "b3eb133aa68dcfa987c0af51b4da6b05e5eeaf50",
+   "excerpt": "log.md`續六十二/續六十三的原始記錄,確認是逐字抄錄既有已用真實勝利驗證過的數值,不是重新",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 655,
+   "excerpt_sha1": "788a63e834a2760da03b2d325b72511d9ce9186a",
+   "excerpt": "應該優先重跑一次端到端驗證取得真正的 live 交叉核對,而不是繼續信賴這次的靜態核對。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 661,
+   "excerpt_sha1": "7b2b0e4a60914e81e0401f4e6bf0a483a43fe25a",
+   "excerpt": "2. 戰鬥偵測與死亡 signature/enemy scan 只在 ch27 一個章節被 live 驗證過(續六十二/",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 663,
+   "excerpt_sha1": "c1537db9cfc0408fd0499a19b2c22d6a28ab80b2",
+   "excerpt": "這個假設**尚未跨章節交叉驗證**——如果某章戰鬥用不同陣列/layout,最壞情況是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 683,
+   "excerpt_sha1": "a3d1978c28999be2037369584810b98a674081fe",
+   "excerpt": "驗證」的「raw chapter 22/23/24/27/28/29 是整備限定流程」結構性主張**,是這個推論的第一次",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 684,
+   "excerpt_sha1": "0ff6ec2c8c201f27b2526e830f551982e553fe12",
+   "excerpt": "live 交叉驗證;②`hashlib.md5`去重確認**唯一**提前 stall(全黑畫面卡住)的是 ch01,可歸因",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 693,
+   "excerpt_sha1": "9b383fcf6d0000a274380f9fd629442c0dc0239a",
+   "excerpt": "Xvfb `:897`)完整跑完 F5/F9 快速存讀檔互動 session,證實輸入確實送達。續八十五(church3 remake側",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 701,
+   "excerpt_sha1": "3aba13508de2d07ffd09e9825a0fe3ee7256eb93",
+   "excerpt": "`ensure_remake_xvfb()`同款`xdotool getdisplaygeometry`探測確認活著,再用續八十五回報失敗時**逐字",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 733,
+   "excerpt_sha1": "0eecfb8b418983e922ba47f4bdaf7308bcf3e90e",
+   "excerpt": "- 畫面**逐位元組零變化**(`md5sum`相同),與續八十五觀察到的「連無害的 F3 debug HUD 測試鍵都毫無",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 740,
+   "excerpt_sha1": "4520e69cd5fe28c7ce2177c4cad2f9271de91f4b",
+   "excerpt": "的獨立佐證,這個特定測試方法本身是偽陰性(false negative)**,F3 鍵事件即使正確送達也不會在church",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 741,
+   "excerpt_sha1": "459f3dfee602095dc8f3398de30593a57879dba4",
+   "excerpt": "畫面產生任何像素差異,不能用來證明或否證輸入是否送達。另外,本輪深入重現時發現:即使用確認可靠",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 756,
+   "excerpt_sha1": "47652f74fb8aaf4f89e40dc78a7db9da6eb56fa5",
+   "excerpt": "# 1. 全新、獨立、確認未與其他 instance 衝突的 display",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 758,
+   "excerpt_sha1": "437d507d3942244b611ee644d279a103decb3c95",
+   "excerpt": "xdotool getdisplaygeometry --display 127.0.0.1:<N>   # 確認活著才繼續",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 772,
+   "excerpt_sha1": "b3a775b53480872b68b604329c64d667ef04237b",
+   "excerpt": "DISPLAY=127.0.0.1:<N> import -window <同一個id> out.png   # 截圖驗證",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 774,
+   "excerpt_sha1": "8c37463dd4d660746aadf735cb9a225ea4c0e445",
+   "excerpt": "**Caveats**:①只在這台 WSL2 Ubuntu、這個 ebiten/glfw 版本上驗證過,未測試過有 WM 或原生 X.Org 的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 800,
+   "excerpt_sha1": "6816f33959dabdf873ebf73b1183e202663b08f6",
+   "excerpt": "**這不是程式碼缺陷，不需要修**——跟 doc48 §8.4 反覆強調的「送鍵早於片頭動畫，要靠screenshot確認",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 804,
+   "excerpt_sha1": "786b68a62615187fe87cc4397c879b57dd0203ba",
+   "excerpt": "300-500ms較保守)，或比照今天`church3`/續八十一輪的做法改用單發按鍵+screenshot確認再送下一鍵，",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 818,
+   "excerpt_sha1": "9348e49a5601d050a7de1840e742f458cc3f020d",
+   "excerpt": "零等待送鍵)/`screenshot`/`status`/`teardown`(PID+process name驗證後才kill,絕不`pkill`)。`grid",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 840,
+   "excerpt_sha1": "36b9f0e6ecd76ad6134bfdbd4c5b8d35cbec067f",
+   "excerpt": "`nohup ... & disown`(`dosbox_diff_harness.py`的`ensure_remake_xvfb()`已驗證過這個模式對Xvfb有效)。",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 841,
+   "excerpt_sha1": "f4cf6a0c8036f6523c5446e9909f95d6874cfc35",
+   "excerpt": "實測(本工具自己的第一輪live smoke test)發現:Xvfb在啟動它的`wsl.exe`/bash session關閉後確實存活,",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 846,
+   "excerpt_sha1": "917c60998387afa12e5ec538b565a34c8538598d",
+   "excerpt": "(同樣用一個全新`wsl.exe`呼叫的`ps aux`確認)。根因(為什麼`nohup`對這個特定binary不夠、`Xvfb`卻夠)",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 852,
+   "excerpt_sha1": "4731138e29c165f44bfe3cab5d375cdda7745583",
+   "excerpt": "**驗證方式(誠實記錄)**:1-4號原語(launch/window-id/key/screenshot)全部live驗證過,見下方截圖",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 855,
+   "excerpt_sha1": "0e49c6f083d83f36c6bcf235a1abbdf8800d6501",
+   "excerpt": "`screenshot`先拍到片頭前空白幀、`key`送5次Escape(`--wait 1.0`)後screenshot證實跳過片頭到達標題",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 856,
+   "excerpt_sha1": "615b204813568fba5a3961e15b0350d66bf751ac",
+   "excerpt": "畫面(FLAME DRAGON 2 LOGO+START/LOAD/CONTINUE)、`key confirm --settle`送出後screenshot證實正確",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 859,
+   "excerpt_sha1": "024ce536e8104b5a0907d8d98074238566d0eb3e",
+   "excerpt": "不是bug。5號(grid distance/range/dump-map)全部單元驗證過,`dump-map`對`map0_units.json`的輸出與",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 861,
+   "excerpt_sha1": "2160397fe6daa28a17380a22811ea3c5f8461277",
+   "excerpt": "(11,23)蓋亞]`座標表逐一比對一致。teardown驗證了PID+process-name核對邏輯在「game process已提早",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 862,
+   "excerpt_sha1": "ee553fc026aee3bf039f140c97a8813185e16764",
+   "excerpt": "結束、只有Xvfb還活著」這個部分失敗場景下確實正確分流(不誤殺、不誤報)。**未做的驗證**:沒有刻意",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 864,
+   "excerpt_sha1": "6b40c38aa2b21f8dd691131771898eac81c8cf0c",
+   "excerpt": "沒有辦法在不繞過工具本身邏輯的前提下人工重現);沒有實際打過一場戰鬥去驗證`grid range`的輸出與",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 867,
+   "excerpt_sha1": "28a9a909d62b916d2fc408a74cf9ded0b65e65cf",
+   "excerpt": "沒有非1的射程可供交叉驗證,下一輪若拿到`atk_min`/`atk_max`非零的地圖JSON值得補一次這個驗證)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 874,
+   "excerpt_sha1": "b83f848dd46173762f53dbc6f1b5b0dedd40c085",
+   "excerpt": "正比,是一輪即時playthrough token消耗的主要來源之一,不是工具設計缺陷,是即時視覺驗證這種做法本身",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 879,
+   "excerpt_sha1": "29f68c4c1dac3025fd058be9e25f1d0157081816",
+   "excerpt": "實測跑出來的視窗是1280×800(2倍放大)。`import -window`直接存這個放大後的尺寸,對LLM來說,那多出來",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 888,
+   "excerpt_sha1": "b8664b5e33680b4dda85e0dfebc738c8b7dcede2",
+   "excerpt": "**驗證(獨立instance `resizecheck`,port :299,與同一時間仍在跑的M5 Phase 4正式agent session完全",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 889,
+   "excerpt_sha1": "bee44a465a78fbedd3eaf7507049c1a5d13c181d",
+   "excerpt": "隔離,teardown後清理乾淨)**:同一畫面分別存了`--resize`預設值與`--resize \"\"`兩張——確認",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 892,
+   "excerpt_sha1": "cec8480010c65ac1b8eb4079d6d3a5b65cbacf05",
+   "excerpt": "有損壓縮或裁切,不會漏看任何遊戲原生解析度就有的細節。**未做的驗證**:沒有拿實際戰鬥畫面(含指令環",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 909,
+   "excerpt_sha1": "dcfc01c018d61b6a87fac33b5281437819af758e",
+   "excerpt": "無黑邊畫面是no-op,但目前只驗證過戰鬥畫面這一種情境,還沒有把選單/商店/對話等每種畫面都實際截圖",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 910,
+   "excerpt_sha1": "d1ecbab71d3ffc3fa97accc6a3d4036c30397aa8",
+   "excerpt": "驗證過,遵循這個專案一貫的「沒驗證過的視覺假設不能當預設」紀律,先做成需要呼叫方自己判斷、主動加",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 913,
+   "excerpt_sha1": "5885cdcf61fbdce243331c1dbe7a9b1d13f15e07",
+   "excerpt": "**驗證(用`ch01run`已經存的真實戰鬥截圖複製出一份測試,沒有動到agent自己在用的原始檔)**:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 923,
+   "excerpt_sha1": "1088ac94a89c218605b4228fbb1c3710a899779d",
+   "excerpt": "可以回頭核對的原圖。這在平時看縮圖沒事,但萬一以後某種畫面類型的autocrop誤裁(續三已明講只驗證過",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 935,
+   "excerpt_sha1": "630d1802efb0bd0d06abbe67666cdb17f4b39a03",
+   "excerpt": "**驗證(獨立instance `rawviewcheck`,port :199,測完teardown乾淨)**:預設參數(`--resize`",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 937,
+   "excerpt_sha1": "e40e45f0c72fecb84d6b31ff30f419a0b3b9a044",
+   "excerpt": "互不影響;另外測了`--resize \"\"`(resize跟autocrop都關)的情況,確認完全不會產生`_view`檔——沒有",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 948,
+   "excerpt_sha1": "6ec395501b4d695f49c56f9961dbea8737165272",
+   "excerpt": "> 游標真的在該單位的格子上。按Enter選取任何單位之前，先screenshot確認迷你狀態卡有頭像，不要只",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 954,
+   "excerpt_sha1": "4279d6484844837b2040c10ae3ecaeadb4628ec9",
+   "excerpt": "**不重建**它的launch/teardown/registry核心邏輯,只加上這個session實際做live驗證工作時發現缺少的",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 955,
+   "excerpt_sha1": "4875c3859514c9cde6d3198bc3d759c5f656cc60",
+   "excerpt": "四項便利/修法:screenshot resize/裁切、settle-confirmed送鍵、一鍵化的live memory read、canonical",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 977,
+   "excerpt_sha1": "4a8f7c8421141fdc6264bd475a6f45ed7e37b336",
+   "excerpt": "既有發現是對的沒錯——**遊戲畫面內容本身**確實沒有letterbox(下面續一的3種畫面型態實測都印證這點)——",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 987,
+   "excerpt_sha1": "c855a8582eeeb237bea600b8be4d1ce79917dec1",
+   "excerpt": "**實測(2026-09-02,獨立instance `dosboxtoolcheck`,port :199,全程無其他agent同時在跑)**：",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 993,
+   "excerpt_sha1": "6c98e704c21e209cdc6d928637aeab35417e0505",
+   "excerpt": "一個真實的邊界案例:這台環境的Xvfb桌面背景實測是純黑`#000000`(用`convert -crop 10x10+0+0 txt:-`量",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 997,
+   "excerpt_sha1": "daee21e5f467af2f6732f90141e61b5d46badfc2",
+   "excerpt": "完整保留,人工核對截圖確認),但這只是運氣好,原則上不能保證每種畫面都這麼幸運。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1004,
+   "excerpt_sha1": "e24a5a36c7ba076798fad5c7ac8dc166d7e16305",
+   "excerpt": "「只驗證過幾種畫面型態,預設不開,呼叫方自己判斷」的紀律,不是預設一定安全。`--resize`在這個工具上",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1010,
+   "excerpt_sha1": "828edc9aaffca8c65b0fa88993f2dd0aa2775af9",
+   "excerpt": "### 續一(2026-09-02)：4種畫面型態實測,遊戲內容本身沒有letterbox的假說再次確認成立",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1012,
+   "excerpt_sha1": "e1602468021dadea7d91294dfc346f78fb136d56",
+   "excerpt": "除了上面用來抓桌面邊界的片頭剪影/LOAD清單兩張,另外實測了標題logo選單畫面(`FLAME DRAGON 2 /",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1029,
+   "excerpt_sha1": "5e0e5ed597eb839cdd59a58451613e23a19951c7",
+   "excerpt": "完全不同的讀取路徑),不是「指令跑完沒報錯」這種弱驗證。`mem read-unit-record`(內部固定用0x32=50",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1030,
+   "excerpt_sha1": "81886499048b6bb57e5f9101a0132de7634c94ef",
+   "excerpt": "bytes,對應doc58續四十驗證過的完整戰鬥unit record大小)在同一位址上機械性測試通過,正確印出hexdump",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1032,
+   "excerpt_sha1": "27d6614f0033f5b581c9430ace1d6bf1e3880169",
+   "excerpt": "的unit record**(這次只是站在標題選單畫面,沒有進戰鬥),印出來的欄位值沒有RE意義,這裡只驗證了工具",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1033,
+   "excerpt_sha1": "c550f57354c12d5eeada7c33bf1b59dc269a927e",
+   "excerpt": "本身的資料通路正確,不是宣稱驗證了任何新的RE結論。selector`0`的拒絕guard也live測試過:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1044,
+   "excerpt_sha1": "78189e9139432adc64abe0fc5e14988563b17ada",
+   "excerpt": "用`screenshot --autocrop`交叉核對SDL視窗本身,確認遊戲**真的已經恢復執行**(畫面從標題選單前的片頭",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1062,
+   "excerpt_sha1": "a1c0f824fb52c7ec2902d52ab5831481fcdd9cfb",
+   "excerpt": "Down,兩次都正確回報`response=CHANGED`(畫面確實往前推進)——確認旗標在「真的沒變」與「真的有變」",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1084,
+   "excerpt_sha1": "d7bdb1ba37ea554c4441d9d2964a8cb47642a853",
+   "excerpt": "記錄過的「pane過期」矛盾情境,獨立額外測試證實原因是當下遊戲片頭剛好停在靜止幀(前後4秒2次截圖",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1106,
+   "excerpt_sha1": "46bb1ba4845db7ad1008a170efb37f685528599e",
+   "excerpt": "本來就不負責同步起始狀態),也再次確認manifest/檔案配對的機制本身是對的。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1118,
+   "excerpt_sha1": "a645843b211c3aaefca18034a175de68199a246b",
+   "excerpt": "兩張完全相同的截圖」的既有警語是同一個誠實邊界,這裡再次確認,沒有新解法。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1122,
+   "excerpt_sha1": "fb60b1866e96a28df500337985558f3de23fa317",
+   "excerpt": "自動切換去執行`D`指令再解析——這次任務brief明確劃定範圍是「把既有已證實的技巧包成好用的指令」,不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1129,
+   "excerpt_sha1": "87b03bc2d0c25a2e2587ed3452e1c666a281d5f5",
+   "excerpt": "`:199`/`:299`,期間`dosbox_harness.sh status`與`ps aux`都確認過沒有跟其他canonical session",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1134,
+   "excerpt_sha1": "24a561f71a8fd0c7b1b55b98f4f30586f707ac6c",
+   "excerpt": "`--path`指向`C:\\Users\\kg701\\Desktop\\GAME\\FD2`那份獨立乾淨備份時正確回報`OK`——兩種路徑都驗證過。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1157,
+   "excerpt_sha1": "82008fea54825aabbc6c21678eade1a96c23d424",
+   "excerpt": "原始`tmux capture-pane`直接讀Register Overview欄位交叉確認,這不是新bug,是已知caveat的再次",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1165,
+   "excerpt_sha1": "412b09a249606fec7c5623b440cbb577c7f1f447",
+   "excerpt": "對`fulltest2`單獨送鍵後用md5確認`fulltest`的畫面完全不受影響(跟送鍵前byte-for-byte相同)——隔離",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1173,
+   "excerpt_sha1": "dde66562aa74eb4b2f2cfe45fc336c281179926a",
+   "excerpt": "traceback最底下。**這是本輪唯一找到、且確認修好的真實缺口**——在`main()`加一層`except RuntimeError`",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1178,
+   "excerpt_sha1": "8c2061b447a1680adc2c1277dabe3be2d9ae1b87",
+   "excerpt": "**另一個確認：先前(92續六)提過的`verify-canonical --path`「WSL-style路徑」文件承諾的小陷阱**——",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1182,
+   "excerpt_sha1": "721ff8f9ef41b30a7508de797ac1877c4cb8fb95",
+   "excerpt": "逐字傳遞的承諾對它自己收到的argv是兌現的)，而是「呼叫者環境」這一層的既有已知陷阱(跟這個專案其他",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1183,
+   "excerpt_sha1": "6fda305164acfb870a1f9b5a44f7936b1fbf1c6c",
+   "excerpt": "`wsl bash -c`相關的MSYS路徑重寫問題同源)。價值：確認了這不需要在Python工具內修，但值得在這裡記一筆，",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1190,
+   "excerpt_sha1": "e3cdd1e47d5031b7f4960248bd2a04b80b49b144",
+   "excerpt": "### 續二 — 用戶追問「工具的所有功能都確認了嗎？」，誠實核對後發現續一其實沒有真的覆蓋到全部(2026-09-02)",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1198,
+   "excerpt_sha1": "a93154c3ff80fc472c796d10774ca433664e50b0",
+   "excerpt": "到過）。這是本輪認為最重要的一個洞——`--flag-no-response`是9/2當天新建的功能，先前的live驗證",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1207,
+   "excerpt_sha1": "40ce6bac2504f2392a54f95280e50d2e504b5f64",
+   "excerpt": "(START/LOAD/CONTINUE)。用`wait-settle --baseline`(獨立指令)在真的什麼都沒送的情況下確認先settle",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1211,
+   "excerpt_sha1": "02d1264451444300356decb1c99f254151a612b3",
+   "excerpt": "兩種輸出都被真正逼出來確認過**。`key`缺鍵/`mem dump`缺selector正確走argparse自己的",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1214,
+   "excerpt_sha1": "2823407d60f885bffee8cafa194f70e922fdf667",
+   "excerpt": "路徑正確寫到指定位置；`--wait 0`正確印出doc58援引的掉鍵風險警告。全部teardown+`status`確認乾淨。",
+   "verdict": "benign",
+   "note": "工具/DOSBox-X live測試instance收尾清理記錄，屬本文件一貫的環境衛生慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1217,
+   "excerpt_sha1": "dcb727e90d6a95ea197b59fc95f46b4bb6f92e73",
+   "excerpt": "都至少有一次end-to-end的live確認，沒有殘留「應該可以但沒測過」的角落。唯一仍然刻意留白、不是這次",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1232,
+   "excerpt_sha1": "9509b591d0b45534e676e4a321f85107a8ccb4f3",
+   "excerpt": "自動做「送RUN後間隔N秒截兩張圖比對」的驗證，取代先前手動反覆截圖比對md5的流程。**Live驗證**：",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1234,
+   "excerpt_sha1": "0554b2216b40995d3ca2508abc0e291c5256b2f5",
+   "excerpt": "在跑但pane還顯示stale ACTIVE」的情境)確認第二次多送一次`RUN`完全無害，不會意外把遊戲重新暫停或",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1239,
+   "excerpt_sha1": "346f4351133336ee7b452e37b9fa6c20dadff0f0",
+   "excerpt": "未來任何需要同一套delta校準技巧的地方都能重用，不用再手寫一次性python腳本。**Live驗證**：對真實",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1241,
+   "excerpt_sha1": "4cdba7a9ab2a5e06d7a3f145345c6812d28a5cb1",
+   "excerpt": "逐位元組一致；額外測試0-hit的錯誤路徑（給一個查無此串的假簽章），正確回報`hits: 0`+`delta: N/A`+",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1247,
+   "excerpt_sha1": "13787a3ab4f125c687aff977586e7fb5c4a856eb",
+   "excerpt": "算出的陣列base完全一致，交叉驗證兩個指令算的是同一件事。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1252,
+   "excerpt_sha1": "866bdf304902a84dbbb9a1de7afe2fbd31a766ba",
+   "excerpt": "壓縮成1次呼叫。**Live驗證**（在標題畫面，非戰鬥中，刻意選一個「陣列還沒初始化」的情境測試機制本身",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1261,
+   "excerpt_sha1": "da7d48df1f4c288f78d102e24855d093c0bf1063",
+   "excerpt": "handler與argparse子指令，模組docstring「USAGE」段落補充新指令範例。全部四個新指令都已個別live驗證",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1262,
+   "excerpt_sha1": "8c33d42d8ddf2de720f8117b2040e4eb10e82d95",
+   "excerpt": "過正常路徑，`find-signature`額外驗證過0-hit錯誤路徑，`resume`額外驗證過「已經在跑時重複呼叫仍然",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1265,
+   "excerpt_sha1": "22eebc7477e8a55d65f05a468ff3fbd47dc4b800",
+   "excerpt": "### 續四 — 用戶追問「工具有完整自檢確認功能了嗎？」，逐一補測邊界情況，找到並修好一個真的洪水bug(2026-09-02)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1280,
+   "excerpt_sha1": "d3c74c7a7ec27a01020b01f908e55b75e4c707eb",
+   "excerpt": "一致性。修完後重新驗證：0-hit、正常1-hit、多重命中三條路徑都乾淨、正常路徑無回歸。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1287,
+   "excerpt_sha1": "92c6d74873d81de2ab76a79041cd274b8158d2ce",
+   "excerpt": "unchanged`，這次沒有獨立live驗證——只在有動畫的標題畫面測過(正確回報`OK: changed`)。背後用的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1289,
+   "excerpt_sha1": "e9cf41e2623707613eb16d38abdb16c7c26550e5",
+   "excerpt": "本專案於本次session內用真正靜態畫面驗證過兩種結果都正確，`resume --verify`是直接複用同一段邏輯、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1290,
+   "excerpt_sha1": "137312c2f0c53b63dc2f0b47b4d513f1a2ef263a",
+   "excerpt": "沒有新寫程式碼，風險判斷為低——但這是風險判斷，不是獨立驗證過的宣稱，如實記錄兩者的差別，避免",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1310,
+   "excerpt_sha1": "08fcc05b59d185f2d103ffb503cafbf4738012d3",
+   "excerpt": "**Live重新驗證**：修好後在同一個(先前卡住的)instance上呼叫`resume --verify`，第一次呼叫就正確",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1311,
+   "excerpt_sha1": "eb2dca7c1e5c0d49a8a479321960aadff195d2c1",
+   "excerpt": "回報`OK: screen changed...(attempt 1/3)`，確認修法有效，沒有引入回歸。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1313,
+   "excerpt_sha1": "f7d5299d84b35390d5cef5a2909d227e045834b3",
+   "excerpt": "## `tools/fd2_original_verify.py` — 原版側「宣告式 / 平行 / 分層」驗證器(2026-09-03)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1318,
+   "excerpt_sha1": "b4a08eb57584af7af0b1f383b7a848bb35018393",
+   "excerpt": "本工具把一輪驗證變成**資料**：scenario列出步驟與斷言，runner執行，report記錄哪條斷言在哪張",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1326,
+   "excerpt_sha1": "5d8d32d6befbe6683c7d19ec4b9e8ef01439c631",
+   "excerpt": "**★ 平行化與一個實測出來的race（本工具最有複用價值的發現）**：`dosbox_harness.sh`本來就給",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1330,
+   "excerpt_sha1": "02e99026f1e57083b2f3822ca24bac94397f7453",
+   "excerpt": "留下宣告前就各自掃描完畢，於是挑到同一個display**。這不是推測，是實測：`--jobs 2`時兩個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1341,
+   "excerpt_sha1": "9ff582ff229be62b5c0ed8404a8a3e75c47d5760",
+   "excerpt": "**另一個實測踩到的坑**：`launch`結尾是長時間keepalive sleep，**必須讓它活著**（腳本自己的",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1346,
+   "excerpt_sha1": "155acc09b1f2466e1b30ec9c61a4cc19dc7ff177",
+   "excerpt": "**驗證成果（本輪實跑）**：4個scenario（town variant0/1/2＋secret_shop）`--jobs 3`全部PASS。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1349,
+   "excerpt_sha1": "34140148fc73981bce7724d98d505b33562f1ddb",
+   "excerpt": "`secret_shop` scenario也把doc58那個「酒店按Shift+F1」的秘密商店流程變成可重跑的自動驗證。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1377,
+   "excerpt_sha1": "923460cac067372b4892ea5acb1f6e85c663019d",
+   "excerpt": "確認canonical的`~/fd2-run`與`~/fd2-run-pristine`**不在**`fd2-run-harness-*` glob範圍內、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1382,
+   "excerpt_sha1": "8a5f67ad280c59405dacc527ea1ea359dde8912e",
+   "excerpt": "`fd2_original_verify.py --run town_variant0` 仍然 **PASS**，確認環境未被破壞。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1390,
+   "excerpt_sha1": "9a8cf9c155bfc345f891f118973b1a88e2661089",
+   "excerpt": "使用者要求「優化工具並反覆驗證、確認無異常再繼續」，本輪做了四件事並實測：",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1394,
+   "excerpt_sha1": "625500a5db8721518d1f87a41e39dea7947b996a",
+   "excerpt": "（`_mad_reference`，改用`tobytes()`避開Pillow 14要移除的`getdata()`）。實測",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1410,
+   "excerpt_sha1": "871373053b77ae354319d2033f17e84c925e0cc9",
+   "excerpt": "理論上該產生完全相同的frame。實測`--all --jobs 3 --repeat 3`（共12次scenario執行）**斷言",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1411,
+   "excerpt_sha1": "a8683a9e5aaee4c63e38eb11f00ee24fe6a450e1",
+   "excerpt": "全部PASS**，但frame hash**不穩定**——這正是這個功能要抓的東西。逐一量化後確認：",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1420,
+   "excerpt_sha1": "32521c2be8c574fa3ff05615725f74e2257a9660",
+   "excerpt": "因此把不穩定**分類**而不是壓平：符合動畫特徵者（像素比例≤1%且差異框≤64×64，門檻取自實測值",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1427,
+   "excerpt_sha1": "93807ce6d4b5fee7a24c9cb65fa720976e882a50",
+   "excerpt": "思路先釘住動畫相位——本工具選擇「量化後分類」，因為驗證關心的是畫面**語意**是否正確，",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1449,
+   "excerpt_sha1": "645cb3ef252218f763198de1bb775d513558becd",
+   "excerpt": "**實測病徵**（前一輪記錄）：`--jobs 2`時兩個scenario都落在`127.0.0.1:199`，按鍵全部進到同一個",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1475,
+   "excerpt_sha1": "bf26842adffd377ac28b6d7badc546a3b09091c3",
+   "excerpt": "所以**可以在真的instance跑著的時候安全執行**——這點不是宣稱而是實測過的：本輪就是在三個真",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1514,
+   "excerpt_sha1": "c23ac7a426ec1811caf7d9f11ce76eb45462cfb0",
+   "excerpt": "保留`--serial-launch`作為退路。`--selftest`加兩項斷言確認這個gate真的會切換（24項全過）。",
+   "verdict": "benign",
+   "note": "延續句，描述本文件所記工具的故障注入/正反向驗證方法論"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1516,
+   "excerpt_sha1": "fb356f981a9e89b645df1f2479800bd0ee4777e3",
+   "excerpt": "`--serial-launch`本身也實測過而不是「加了就算」：serial模式下三個instance的uptime是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1519,
+   "excerpt_sha1": "339bc9bee54fd776e81dbe0a71392658c94fd971",
+   "excerpt": "**效能：實測而非宣稱，而且結論是「差不多」**。同一組12個scenario、`--jobs 3`：",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1591,
+   "excerpt_sha1": "90828560e00af6df725f88b24d4dee1706ec6d00",
+   "excerpt": "代價是實測到的：**同一天有三次跑完後才發現拍錯畫面**——",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1622,
+   "excerpt_sha1": "167ddcb85f508a5cbdd3ce027a478d1b6f97f74b",
+   "excerpt": "兩個互相匹配的簽章，會讓 scenario「確認」自己到了錯的畫面——",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1637,
+   "excerpt_sha1": "3d30f8f6e7de43b949f24c5258200540cd333743",
+   "excerpt": "- `classify_instability` 的門檻對**小型 UI 狀態變化太粗**：實測 YES/NO 選取標記變化只有",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1647,
+   "excerpt_sha1": "8cc55bb8210c54692e41a1a9401e371a50d7550d",
+   "excerpt": "使用者指示「remake 時代項目全部以原版驗證」，其中三筆是",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1657,
+   "excerpt_sha1": "1b5c8d6892b863b3001c155d35698994e4803e07",
+   "excerpt": "**驗收錨點選得好，一次就驗證了整套方法**：標題畫面讀出 **18**，",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1676,
+   "excerpt_sha1": "080bfed1a8563f8dce6b470b969381392d07ec30",
+   "excerpt": "不是送給 DOS 程式的按鍵——實測完全沒有產生 capture 目錄",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1686,
+   "excerpt_sha1": "e368ae4fe0ae0bd26e6d6c209f262bcec88a2e01",
+   "excerpt": "2. `dd bs=1 skip=<數百萬>` 是逐位元組跳過，等同掛住。改 `bs=1M iflag=skip_bytes`。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1692,
+   "excerpt_sha1": "2c50333211294df02729024cbebffeb5be2ac032",
+   "excerpt": "實測擷取成功：48kHz 立體聲、14.2 秒切片、rms 0.09~0.11（非靜音）、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1741,
+   "excerpt_sha1": "ffa6b8d7561f4612dfcbc7a7f3c90839fd6895d1",
+   "excerpt": "| 候選 delta ＋位元組驗證（16 bytes） | **秒級** | 6 個已知畫面成功（22~39 秒／場景） |",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1749,
+   "excerpt_sha1": "388b5cc51f2d876b48b4873ca6365132890c40b2",
+   "excerpt": "六個已量測的畫面（標題／城鎮／武器店／道具店／教會／秘密商店）仍然有效且已交叉驗證。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1756,
+   "excerpt_sha1": "24531b3eb738dceb52e8b3cfac837d8d21d55129",
+   "excerpt": "`fd2_audio_probe.py` 的擷取與時序同步已驗證可用。識別層則因為有了 ground truth",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1783,
+   "excerpt_sha1": "9580e4683d7817b07755b425c2dbb4e6595e437b",
+   "excerpt": "**這給出一份 10 項的具體待目視確認清單，取代「校對 30 章」這個量級的描述。**",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1787,
+   "excerpt_sha1": "3d303892ec6a7726fdce8f8f605a0d5b2abc75fb",
+   "excerpt": "## 2026-09-03 續六：**反向驗證**（使用者要求）—— 找到 1 個守衛漏洞、3 個崩潰路徑",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1789,
+   "excerpt_sha1": "5828da5d0f1b68845e78771adb375c8624098edf",
+   "excerpt": "前面幾輪一直在用「正向」方式驗證工具（有沒有給出預期答案）。使用者要求**反向驗證**：",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1828,
+   "excerpt_sha1": "160f70c2876be13e086bab1ebbf62dc8f875daa7",
+   "excerpt": "### C. 反向驗證順帶抓出的 3 個崩潰路徑（全是同一個形狀）",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1852,
+   "excerpt_sha1": "3e0845f5061088b36f670d7a8aa4c65f66c02c70",
+   "excerpt": "## 2026-09-03(續)全工具多重驗證(`tools/verify_all_tools.py`)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1854,
+   "excerpt_sha1": "4a533db5fbfc2c9823f71e01ab5160d49a3462b8",
+   "excerpt": "使用者要求「針對所有工具進行全面多重驗證,必須詳細驗證確保功能完整及正確」。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1907,
+   "excerpt_sha1": "f29a5a3c5863d2f65aa21f489d6cdcb4ca0a663e",
+   "excerpt": "40 筆裡 39 筆與工具輸出逐字元一致,唯一例外 id9 是有理由的人工值",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1921,
+   "excerpt_sha1": "d8af3f3f77d7f0932e5c391436516e296736410c",
+   "excerpt": "驗證上面那份反向表時順手做了故障注入,結果推翻了一個看起來很合理的前提:",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1956,
+   "excerpt_sha1": "5edfb68b189e3af0c2ff02d6a0c98d6df6523158",
+   "excerpt": "`docs/data/fd2-reference-files.json` 完全吻合**——同時也再確認手上這份就是新版基準。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1958,
+   "excerpt_sha1": "be0a7a1a9c1f559e29510c3e327dee8a78c8126b",
+   "excerpt": "全數通過、而且 Windows 與 WSL 兩邊產出的 10 個 JSON 在正規化換行後**逐位元組相同**。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 1985,
+   "excerpt_sha1": "7a9fa70f8da66abeb16512203281e6cd12f07664",
+   "excerpt": "「import 了但剛好沒事」;`writes_outside.py` 則驗證工作區變動能被歸屬到正確的工具。",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2017,
+   "excerpt_sha1": "6d8417bf677987f64a1e2b1622b4bb84a66272ff",
+   "excerpt": "與 `./tools/unpack_dat.py` 實測)。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2053,
+   "excerpt_sha1": "5c509a9234bd26416cdc29a27ce6c57ed7fda030",
+   "excerpt": "指示刪除**。刪除前確認過三件事:全部 5 處引用都是註解/docstring 提及、**沒有任何",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2055,
+   "excerpt_sha1": "c2ca7723ffca189e731ac941935364cd52fcbc60",
+   "excerpt": "`wait-pixel`)在本文件 2026-08-26 段落已有完整記錄含驗證數字;功能已被",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2063,
+   "excerpt_sha1": "09a4a93328592871e8e02e199c985c7563be1532",
+   "excerpt": "`refs` 層 90/90 全過。並確認被保留的相依鏈仍完好:`export_command_labels.py` 重跑後",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2106,
+   "excerpt_sha1": "ec3ccaba917883282c5f99a5a728af2d35ac9f3a",
+   "excerpt": "這種不可能的小位址(真實全域在 `0x53xxx`)。page map 已確認是 identity(1..71),",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2118,
+   "excerpt_sha1": "98dcfe345d11bc74cfa19936a14317953f4bb20e",
+   "excerpt": "判準不是規格書而是實測:`dump_exe_tables.py` 已在新版逐位元組驗證通過的三個 anchor",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2147,
+   "excerpt_sha1": "c863baa4029b873ba9daadde7b73a2761ed7d2c2",
+   "excerpt": "**最終結果:45 筆 spawn 記錄逐筆驗證,44 筆完全吻合、1 筆是編碼差異。**",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2179,
+   "excerpt_sha1": "b6e7ca58a7467e2c8f6f82667fc02543f4dac736",
+   "excerpt": "反向驗證加到 **9 項**,新增兩項針對 L3:改一筆 spawn 的 group 引數、改一筆呼叫點位址,",
+   "verdict": "benign",
+   "note": "延續句，描述本文件所記工具的故障注入/正反向驗證方法論"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2184,
+   "excerpt_sha1": "a09d74f97b6fbc31698f1083f5c9645c31b83d55",
+   "excerpt": "L3 已完成,doc25 的結論**已確認對新版成立**。剩下的是**選做**的工程工作:",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2261,
+   "excerpt_sha1": "c680b1ff194649d2ae63095c07d58171657fb641",
+   "excerpt": "雙重驗證:32 列的 `default_raw`/`growth_raw` 與 git 歷史中舊版抽出的那份",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2262,
+   "excerpt_sha1": "7377a574cf4e400fb8dc3280777461527426500c",
+   "excerpt": "**逐位元組相同(32/32)**,證明這張表與 EXE 版本無關;`test_fd2save` 那條用已知答案",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2305,
+   "excerpt_sha1": "9b9444264bac75ae9576b73a49317ce5560894d6",
+   "excerpt": "訊號是聚合的),不是逐字裁決。同一個方法用在單一字元上就失效了。**不要把它當通用工具。**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2349,
+   "excerpt_sha1": "706bee3ed943f14a0d9a482509ed6b705c65f878",
+   "excerpt": "已裁決該法術應為「**麻痺術**」,並註明那是「diverging from the raw pixel-verified",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2369,
+   "excerpt_sha1": "a44e7c092eb75fce3dfb5f9b84e3b3f85b0b55b2",
+   "excerpt": "等級全部合理**(索爾 6、悠妮 2、蓋亞 40、索菲亞 16…),證實 `+0x21` 就是等級欄位",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2370,
+   "excerpt_sha1": "43873081ffc6be3ddef5187b9dfb8de82c62cbdf",
+   "excerpt": "- 用 `SMV` 把索爾與悠妮的指令遮罩 `+0x1d` bit `0x08`(=command 27)打開,**回讀確認生效**",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2389,
+   "excerpt_sha1": "14bb95a7617e40fd3d469b67c15095f4f0997730",
+   "excerpt": "而是**方向鍵會到、確認鍵不會到**,且與 window/xtest 模式、瞬按/長按都無關。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2397,
+   "excerpt_sha1": "918c0c7ce9a91f3d03daf6c216f885193cfc4a73",
+   "excerpt": "我方是 camp `0x002`。**先用狀態卡的 HP 與記憶體對照確認游標在誰身上,再判斷按鍵有沒有效**,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2400,
+   "excerpt_sha1": "e41cee60a831d6b06e0a3ed7953539211efc7727",
+   "excerpt": "2. **`+0x21` = 等級欄位在我方 record 上得到獨立佐證**(13 人姓名/等級全部合理),",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2402,
+   "excerpt_sha1": "07ac632e1c02e2557f377a315134dc0ddca1318e",
+   "excerpt": "3. **本輪修的 glyph 585 得到原版側附帶確認**:戰前對話「呼‥知道這裡有寶物的…」由原版",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2417,
+   "excerpt_sha1": "f5dddf2f0848ef0a5ce68e607547d5d8db043551",
+   "excerpt": "**確實是 remake 端的渲染驗證**(函式名就是 remake 的),只證明該字串在 remake 字型管線",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2425,
+   "excerpt_sha1": "6d9850bf33f43cd4c12d3891ba45fd6d65c37adb",
+   "excerpt": "## 2026-09-04 攻那道「確認鍵送不進戰鬥」的牆:沒有完全解決,但把它從「輸入不可靠」改寫成 5 個具體事實",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2436,
+   "excerpt_sha1": "63ea6eb02830e7992861270e88b30af0121e8286",
+   "excerpt": "**所以按鍵確實送達戰鬥迴圈。** 失效範圍只有確認鍵(`Return`/`space`),不是整個輸入層。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2439,
+   "excerpt_sha1": "14d4503fd36cdb7685d0b5af9ec3e90dcd36e4e1",
+   "excerpt": "### 2. 釋放 Alt 之後,`Return` 曾經真的走進確認路徑(有暫存器證據)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2450,
+   "excerpt_sha1": "37d7b30bb1b261d497f006893b1e89796e99e1b7",
+   "excerpt": "(移動確認函式)的入口——**確認鍵真的走進了指令環路徑**",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2493,
+   "excerpt_sha1": "e0f8891fe7425de1096483464e364f951f0ec2e3",
+   "excerpt": "——數量精確吻合,證實這張卡就是照 `+0x1a..+0x1e` 遮罩列的。**",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2496,
+   "excerpt_sha1": "ea45b7c737f57a458fed030c67d27123a6758aec",
+   "excerpt": "只要 (a) 用 `SMV` 把 command 27 的 bit 打進遮罩(本輪已多次成功並回讀驗證)、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2507,
+   "excerpt_sha1": "8a4c499529b2173c2d07da39f0894a384eeaa88d",
+   "excerpt": "這條路完全不需要確認鍵送達,把本輪唯一真正卡住的環節整個移除。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2511,
+   "excerpt_sha1": "b664e335cf7f43320fc0729bef80bb7197a25e18",
+   "excerpt": "## 2026-09-04 稽核:哪些結論是「用 remake 驗證的」(`audit_evidence_provenance.py`)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2514,
+   "excerpt_sha1": "274fc2f9e37d345d35f937e5477dcb41eacb1911",
+   "excerpt": "以 remake 為證據來源的結論**,與原版側驗證的混在一起,肉眼分不出來。新建",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2529,
+   "excerpt_sha1": "71a1b69cb880aaec7e832373fed252c372380edf",
+   "excerpt": "| `NO_MARKER`(有驗證語言但出處不明) | 4128 |",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄audit_evidence_provenance.py工具自身的開發過程，屬工具開發史的自我描述"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2533,
+   "excerpt_sha1": "d79bc4bd66b70c36c961c9041f9e5081132749be",
+   "excerpt": "(doc58 remake 實機驗證記錄 61 筆、doc91 worklist 37 筆、doc56 SDD、doc92 playthrough log",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2544,
+   "excerpt_sha1": "bf27d469f85e097a13c048ce301ef329710bc69f",
+   "excerpt": "**(B) 2 筆是誠實標記「尚未驗證」** —— doc11:787/812 明寫「**尚未做的是實機驗證**」、",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2553,
+   "excerpt_sha1": "c429f8421267d49e5b94f3135356bc7f406125fd",
+   "excerpt": "| `09-story-and-dialogue.md:108` | 「驗證法:`FD2_CAMPAIGN=… FD2_SHOT=…`」 | 劇情/對話的**驗證方法本身**就是 remake headless 截圖 |",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2560,
+   "excerpt_sha1": "6f06e852a989ea48b8bb4a46706e9b68ce49c6f9",
+   "excerpt": "7255 筆驗證主張裡,真正「原版事實 + 只有 remake 證據」的是 5 筆,其中 1 筆今天已補上原版證據。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2562,
+   "excerpt_sha1": "7f61038af75e0105e0d959bc4569080a98183636",
+   "excerpt": "需要注意的反而是 `NO_MARKER` 那 4128 筆——**有驗證語言但沒有任何來源標記**。工具無法",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2568,
+   "excerpt_sha1": "1d24fb300c65bdf259124834e45b895c1f768f1e",
+   "excerpt": "第一版把 doc27 的驗證表**整批誤報成 remake-only** —— 那張表的證據欄位是",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2581,
+   "excerpt_sha1": "340a6f6ef4cbe7915fb2d115a84465a882a2e921",
+   "excerpt": "使用者問「是不是要先確認工具有沒有問題」。答案是要,而且量出來的問題比預期多。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2586,
+   "excerpt_sha1": "4f6803e3a70b650e91c658931d96f8d6eadf3c83",
+   "excerpt": "`VERIFY_LANG` 裡有一個裸的 `E2`(原意是收「E2E 驗證」),但整個 regex 帶 `re.I`,",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄audit_evidence_provenance.py工具自身的開發過程，屬工具開發史的自我描述"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2590,
+   "excerpt_sha1": "2d9bf538c4282fc3ec182df1913fbeb6ea33455d",
+   "excerpt": "迴歸檢查兩條:`FLAME2` 那行不可再被收進來,真正的「E2E 測試已通過」不可被擋掉。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2599,
+   "excerpt_sha1": "b408705192ef20a10174f22dd5555b067177f7e0",
+   "excerpt": "沒有硬拿掉那條規則(拿掉之後 doc27 那類驗證表又會整批誤報),改成保留但另記",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2633,
+   "excerpt_sha1": "a40b082f3ca9664ffa65bd5b6a5a2c6c66859da2",
+   "excerpt": "`58-remake-live-verification-log.md`——**這份文件本身就是 remake 實機驗證記錄**——",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2673,
+   "excerpt_sha1": "0fce658b2227360c7ab72a59d167053a1575ad8f",
+   "excerpt": "`FD2_SHOT_*`／`FD2_CAMP_*` hook 取得的「live 驗證」,一律不構成原版事實的證據,",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2674,
+   "excerpt_sha1": "c29a693182f28385439067e86ba574c8bb6b6312",
+   "excerpt": "不論當時記錄得多完整;只有 remake 證據的既有結論視為未驗證,須原版重驗才恢復。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2686,
+   "excerpt_sha1": "84a8d0b68cd03df03498413826ea78158ebc5274",
+   "excerpt": "| `honest_not_verified` | 2 | 原文已自陳「尚未實機驗證」,列管以免日後被誤讀為已驗 |",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2687,
+   "excerpt_sha1": "1b87c688e76ad9c4029d5fd8f4c13e0513b55eb9",
+   "excerpt": "| `reverified_original` | 1 | 悠妮 char_id=9,2026-09-04 已用原版獨立補證,結論成立 |",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2701,
+   "excerpt_sha1": "7d0bcd0fad6314f3fbf480be0c51b33823ea2021",
+   "excerpt": "- `09-story-and-dialogue.md` —— 劇情/對白的**整套「驗證法」**就是 remake headless",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2704,
+   "excerpt_sha1": "2bb6e6eb92f98f00fb7b3303bb3f796341274fe5",
+   "excerpt": "hook 取得,其中一處還自陳這是「ch01 驗證一路在用的捷徑」。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2710,
+   "excerpt_sha1": "166ccee7d7f0aa9ade645f386de933cbfea256b4",
+   "excerpt": "排除註記本身會提到 `remake`、也會帶「驗證」字樣,於是它會被掃描器當成一筆新的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2725,
+   "excerpt_sha1": "a6592535d6e12d2011f7455afd2ca2961bd861ba",
+   "excerpt": "方法是**重跑每個可離線執行的產生器,與已提交產物逐位元組比對**。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2731,
+   "excerpt_sha1": "b6b7d92a0d7eb7ad12a5e2d5e92f244630323d76",
+   "excerpt": "10 個測試檔全部收集到(有確認過收集數,沒有靜默漏載),全數通過。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2743,
+   "excerpt_sha1": "931ad3571aee360b6378acb6430d6ff8ac36606d",
+   "excerpt": "(舊 off 讀到的是程式碼)。已重生,10/10 與 pristine EXE 的輸出逐位元組一致。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2751,
+   "excerpt_sha1": "ec9fe6538f392eab772dbe289bccda69a286f68e",
+   "excerpt": "`verified_addresses.json` 裡的舊值是**刻意的勘誤紀錄**,維持不動——查證過才沒改。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2765,
+   "excerpt_sha1": "bf9c37ce641875347224bcf7fc7b5e1e736693d1",
+   "excerpt": "pristine md5**;還原後 md5 與該常數相符,重跑 exe_tables 也 10/10 一致,確認倉庫內容未受污染。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2777,
+   "excerpt_sha1": "801caad2bb9712e9eed7c8b77e49ad3e415b05da",
+   "excerpt": "AST 掃描確認這個危險形狀就只有那兩支:`patch_units_*.py` 在寫入前先 `json.load`",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2836,
+   "excerpt_sha1": "47919b8358d04b01e8938401dac7b6625a74996c",
+   "excerpt": "* `unicode_to_glyph.json`:重生後與已提交檔**逐位元組一致**。順帶發現 `a73158c6`",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2867,
+   "excerpt_sha1": "64b00d351e44905c05d6ca9a2c8a6eb3b02b9a6a",
+   "excerpt": "`docs/data/sfx_index_callers.json` **完全沒有驗證狀態欄位**;A.4 的「降級為候選清單」",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，本文件記錄工具開發過程一貫的誠實邊界慣例"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2868,
+   "excerpt_sha1": "89f7fc72afb3f057cef81cd03bcd486dfc798bae",
+   "excerpt": "只寫在文件裡,檔案本身看起來仍然權威。已補 `_meta`:10 個已活體確認的呼叫點、",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2870,
+   "excerpt_sha1": "23f4c98b179b47eb4f859e3ebc7474199d352593",
+   "excerpt": "`fd2_sfx_screen_map.py` 改成三種回報,未經確認的呼叫點**不給裸 index**。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級驗證描述，證據context在同段落既有DOSBox-X/工具marker"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2874,
+   "excerpt_sha1": "cdec3175449696555d999af4aa40b07c1eb985cf",
+   "excerpt": "### 2. `fd2_stat_override` 驗證了 36 個欄位,寫了 40 個",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2876,
+   "excerpt_sha1": "2fbde47355bfa145e48e58028e057e11f9aa8f03",
+   "excerpt": "MV 是 u8 `+0x3b`,不在 `read_array()` 的回傳欄位裡,所以驗證迴圈(只跑 u16 的 `plan`)",
+   "verdict": "benign",
+   "note": "延續句，引用本專案工具/remake原始碼符號名，描述工具或remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2877,
+   "excerpt_sha1": "ce6e60ff0f77175930184a3163f12b46241ed89c",
+   "excerpt": "從來沒看過它。輸出「驗證:36/36 個欄位吻合」讀起來像全部都驗過了。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2879,
+   "excerpt_sha1": "f09fa7f7918710af775716cb12870476473b9c0d",
+   "excerpt": "故障注入(把 MV 寫到 `+0x3c`)確認新檢查會失敗。",
+   "verdict": "benign",
+   "note": "延續句，描述本文件所記工具的故障注入/正反向驗證方法論"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2885,
+   "excerpt_sha1": "12571b563634890ffd6a0dc3f36b66d7d7bf26de",
+   "excerpt": "而「章節已清」的結論就建立在這些擊殺上。已改成回讀確認,並分開報 attempted / CONFIRMED。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 2910,
+   "excerpt_sha1": "294bf4c4c5e289c6d30e270f3142547281d53f91",
+   "excerpt": "單位擊殺後升級 hp_max 變 10016(實測 idx2),整場戰鬥就被判成 NOT_IN_BATTLE。",
+   "verdict": "benign",
+   "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
   }
  ]
 }
