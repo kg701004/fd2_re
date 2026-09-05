@@ -297,6 +297,25 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
     if select_ring(inst, RING_ATTACK, "up", blind=blind):
         press(inst, "confirm", 3.0)          # 執行 → 目標選擇
         press(inst, "confirm", 3.0)          # 確認目標
+        # 2026-09-05(續八):doc13 §19 發現事後補按確認去補測不可靠(時機/次數
+        # 都可能不對),改成攻擊序列一送完立刻回讀確認——不是「以為成功」,是真的
+        # 讀 acted 位元跟敵方 HP 有沒有變。`blind` 模式維持舊行為(不驗證)。
+        if not blind:
+            _, verify_snap = snapshot(inst, selector, count)
+            verify_units = verify_snap[1:]
+            verify_me = next((u for u in verify_units if u["idx"] == me["idx"]), None)
+            acted_now = verify_me is not None and (verify_me["acted"] & 0x80) != 0
+            hp_before = {u["idx"]: u["hp"] for u in post_units if u["camp"] == 0x00}
+            hurt = [(u["idx"], hp_before.get(u["idx"]), u["hp"]) for u in verify_units
+                    if u["camp"] == 0x00 and u["idx"] in hp_before
+                    and u["hp"] < hp_before[u["idx"]]]
+            if acted_now or hurt:
+                print(f"    idx{me['idx']} 攻擊已確認生效:acted={acted_now}, "
+                      f"HP下降={hurt if hurt else '無(可能miss)'}")
+            else:
+                print(f"    idx{me['idx']} 攻擊確認**未生效**(acted仍未設、無敵方HP"
+                      f"下降)——可能還卡在目標選擇畫面,呼叫端不應該假設這個單位"
+                      f"已經完成行動")
         return
 
     print(f"    idx{me['idx']} 遊戲自己的 enable gate 判定不能攻擊,改走待機")

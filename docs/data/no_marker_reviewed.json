@@ -32320,6 +32320,86 @@
    "excerpt": "單位陣列確認acted跟敵方HP,把整個攻擊序列的每一步都插入即時回讀,而不是像這次事後",
    "verdict": "benign",
    "note": "同上，接續建議事項"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2614,
+   "excerpt_sha1": "eafcba6b9705bd71c7997c214050ca4c4508cd9f",
+   "excerpt": "是否比攻擊前(移動後那次快照)低,兩者都沒有才印「攻擊確認**未生效**」。",
+   "verdict": "benign",
+   "note": "描述本輪對tools/fd2_battle_autoplay.py新增即時回讀邏輯，工具開發記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2620,
+   "excerpt_sha1": "ccf68840c5ad7931b7372a2b9b152589d8d2bdaf",
+   "excerpt": "兩次confirm送出,**立即回讀確認「攻擊確認未生效」**——acted沒設、沒有敵方HP下降。",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的即時回讀觀察結果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2624,
+   "excerpt_sha1": "ae495530f6f29adc56235763c9319a71615c4c65",
+   "excerpt": "- **idx2**:跟idx3一樣的模式——環開成功、兩次confirm送出、立即回讀確認「未生效」。",
+   "verdict": "benign",
+   "note": "同上，接續描述idx2的live觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2625,
+   "excerpt_sha1": "d7f2260f28aacaf58fdbaed7eae81f48d1feb68b",
+   "excerpt": "- 之後又是array dump連續3次全0,**這次截圖確認是真的DOS-exit crash**(`C:\\>`)。",
+   "verdict": "benign",
+   "note": "截圖確認真實原版EXE崩潰回到DOS的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2627,
+   "excerpt_sha1": "e3d25e8e0dcdf4727b679719f3f6d21a2e733df5",
+   "excerpt": "**這一輪把問題精確定位了**:2/2確認案例(idx3、idx2)都是「`select_ring(RING_ATTACK)`",
+   "verdict": "benign",
+   "note": "分析本輪定位問題範圍的推論，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2630,
+   "excerpt_sha1": "921db30c6891dc9d243db583cdc383eef38bdb21",
+   "excerpt": "(§16/§19的修法已經解決那一層),而是在「確認目標」之後的某個環節**:可能是目標",
+   "verdict": "benign",
+   "note": "同上，接續問題定位分析"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2637,
+   "excerpt_sha1": "8a71e04e232596018bee7340c360de1bd294f792",
+   "excerpt": "連跑8輪、8輪log逐字相同、8輪都存活,當時把這個結果解讀為「弱支持retry補丁不是",
+   "verdict": "benign",
+   "note": "自我修正§18先前解讀的說明，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2638,
+   "excerpt_sha1": "fa028bbd00491b789689a2c1221481812ab3a1ac",
+   "excerpt": "崩潰系統性成因」。**現在回頭看,那個解讀站不住腳**——8輪log逐字相同代表8輪其實",
+   "verdict": "benign",
+   "note": "同上，接續自我修正說明"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2649,
+   "excerpt_sha1": "cd3b2006077d038b0a5a2e85a8e24aeb193f4d64",
+   "excerpt": "90項unittest都沒問題,而且live測試證實**確實讓環選擇/攻擊嘗試比修法前更常成功",
+   "verdict": "benign",
+   "note": "誠實現況小結第1點，總結live測試改善成果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2651,
+   "excerpt_sha1": "09643d5f12d3d565e8f68c376587505e02d47519",
+   "excerpt": "2. 但「確認目標」之後的完整攻擊生效鏈,到目前為止**連續3輪live測試(§17、§19這輪",
+   "verdict": "benign",
+   "note": "誠實現況小結第2點，明確標示問題仍未解決範圍"
   }
  ]
 }
