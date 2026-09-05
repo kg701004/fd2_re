@@ -1,45 +1,420 @@
 {
  "_meta": {
-  "purpose": "273 個 doc09/B.6 記載『靜態不可解、執行期才能決定』的說話者(見 decode_story_text.py --runtime-todo 產生的完整清單),本檔只記錄已經活體驗證解出來的那些筆,不是全部 273 筆的重生檔。",
-  "method": "tools/fd2_speaker_capture.py --resolve-todo，讀活體單位陣列 [0x53a45]+idx*0x50+7 (doc40:27-28)，用 --confirm-text 核對目前畫面內容跟目標 FDTXT 一致才允許執行(見 2026-09-05 教訓：沒有這道檢查會把別的場景的陣列套用到錯的 FDTXT 上，結果看起來正常但全錯)。",
+  "purpose": "273 個 doc09/B.6 記載『靜態不可解、執行期才能決定』的說話者(見 decode_story_text.py --runtime-todo 產生的完整清單),本檔記錄已經解出來的那些筆(活體驗證或既有靜態分析皆計入),不是全部 273 筆的重生檔。",
+  "method_FDTXT_033": "tools/fd2_speaker_capture.py --resolve-todo，讀活體單位陣列 [0x53a45]+idx*0x50+7 (doc40:27-28)，用 --confirm-text 核對目前畫面內容跟目標 FDTXT 一致才允許執行(見 2026-09-05 教訓：沒有這道檢查會把別的場景的陣列套用到錯的 FDTXT 上，結果看起來正常但全錯)。",
+  "method_FDTXT_032": "2026-09-05 追加：本來想比照 033 用活體工具解，途中才發現 `docs/knowledge-base/scene-decode/ch1-forest.md`(2026-08-20 既有文件)早就用**完全不同、更早的方法**解完了——FDFIELD map31 的 spawn 群組(0x10b4e)直接記載哪個 slot 是誰(slot0=索爾/slot1=亞雷斯/slot3=蓋亞/slot4=悠妮)，不需要活體讀記憶體。這裡的 40 筆是拿 decode_story_text.py --runtime-todo 的 box_index/operand 清單，套用 ch1-forest.md 已經驗證過的 slot 對照表算出來的，不是新的活體結果——**教訓見下方 process_note**。",
+  "process_note": "本輪一開始沒有先查 docs/knowledge-base/scene-decode/ 就直接建活體工具、跑真的 DOSBox-X 去找 032 的畫面（見 40-speaker-portrait-mapping.md 2026-09-05『假設被推翻』那段，白跑了一次活體嘗試），是本專案自己反覆記過的『先查既有證據再動手』教訓（feedback_check_existing_evidence_before_disasm）又犯了一次——不是說活體方法錯，是這一筆其實不需要活體就已經有人解過。下一輪要解剩下的 FDTXT 之前，先 grep scene-decode/、doc47、doc50 有沒有現成答案，再決定要不要動用 fd2_speaker_capture.py。",
   "date": "2026-09-05",
-  "instance_note": "本輪在 FD2.EXE 開場動畫之後的第一段對話(疑似 ch00 王宮场景)解出，即 302→303(FDTXT_032 童年練劍場景、FDTXT_033 王位繼承場景)相鄰的兩段開場劇情之一，只驗證了 FDTXT_033。FDTXT_032 有嘗試但用了錯的活體時機(同一個螢幕畫面，不是 032 自己的場景)，結果已經捨棄，不在本檔案裡——留給下一輪重新到 032 自己的畫面做一次。",
-  "resolved_count": 32,
+  "resolved_count": 72,
   "total_unresolved": 273
  },
  "FDTXT_033": {
   "confirm_text_used": "起來起來",
   "confirmed_on_screen_box_index": 1,
   "roster_snapshot": {
-   "idx0": {"dato": "0x30", "name": "NPC/敵(PORT 查無對應，推測為國王/父王，呼應 doc09 既有『ch01王宮兩句被標成索爾、實際是國王』的獨立發現)"},
-   "idx1": {"dato": "0x42", "name": "NPC/敵(PORT 查無對應，推測為王后/母后，對話中自稱『我們把你當成自己親生的孩子撫養長大』)"},
-   "idx3": {"dato": "0x00", "name": "索爾"},
-   "idx4": {"dato": "0x04", "name": "亞雷斯"}
+   "idx0": {
+    "dato": "0x30",
+    "name": "NPC/敵(PORT 查無對應，推測為國王/父王，呼應 doc09 既有『ch01王宮兩句被標成索爾、實際是國王』的獨立發現)"
+   },
+   "idx1": {
+    "dato": "0x42",
+    "name": "NPC/敵(PORT 查無對應，推測為王后/母后，對話中自稱『我們把你當成自己親生的孩子撫養長大』)"
+   },
+   "idx3": {
+    "dato": "0x00",
+    "name": "索爾"
+   },
+   "idx4": {
+    "dato": "0x04",
+    "name": "亞雷斯"
+   }
   },
   "entries": [
-   {"box_index": 1, "operand": 0, "resolved": "NPC(推測國王)", "text": "你來啦！起來起來，這裡沒有別人，不用多禮。"},
-   {"box_index": 3, "operand": 0, "resolved": "NPC(推測國王)", "text": "到這裡來，讓父王好好看看你。這一陣子國務繁忙，我們父子兩個也很久沒聚聚了。"},
-   {"box_index": 4, "operand": 1, "resolved": "NPC(推測王后)", "text": "是啊！我們一家人，難得這樣在一起。"},
-   {"box_index": 6, "operand": 0, "resolved": "NPC(推測國王)", "text": "索爾，時間過得真快，你已經長得這麼高了。大臣和將領們對你的武藝和能力也讚譽有加，我想，也該是決定王位繼承人的時候……"},
-   {"box_index": 8, "operand": 0, "resolved": "NPC(推測國王)", "text": "……錯了，索爾，朕希望能由你來接任羅特帝亞的王位。"},
-   {"box_index": 10, "operand": 0, "resolved": "NPC(推測國王)", "text": "是的，索爾。你對朕的決定有什麼疑問嗎？"},
-   {"box_index": 12, "operand": 0, "resolved": "NPC(推測國王)", "text": "索爾，這是一個屬於強者的時代。只有強者才能掌握軍隊、統治國家，維持世界的和平和人民的福祉。羅特帝亞需要一個強有力……"},
-   {"box_index": 14, "operand": 0, "resolved": "NPC(推測國王)", "text": "迪恩他和你不一樣。迪恩是個聰明的孩子，可以成為賢明的君主，但是他長得太文弱了，無法穿著重甲、統率大軍在戰場上奔馳……"},
-   {"box_index": 15, "operand": 1, "resolved": "NPC(推測王后)", "text": "是的。索爾，這些年來，我們把你當成自己親生的孩子撫養長大，這件事也是經過慎重考慮之後才決定的，希望你能夠答應。"},
-   {"box_index": 28, "operand": 4, "resolved": "亞雷斯", "text": "嗄？"},
-   {"box_index": 29, "operand": 3, "resolved": "索爾", "text": "沒聽清楚嗎？父王要我繼承王位。"},
-   {"box_index": 30, "operand": 4, "resolved": "亞雷斯", "text": "嗄？‥這‥這有什麼好嘆氣的？羅特帝亞的准王位繼承人‥‥這要好好慶祝一下才是啊！"},
-   {"box_index": 31, "operand": 3, "resolved": "索爾", "text": "笨蛋！枉費我們從小一起長大，你竟然一點都不瞭解我！"},
-   {"box_index": 32, "operand": 4, "resolved": "亞雷斯", "text": "啊？這怎麼說呢？"},
-   {"box_index": 33, "operand": 3, "resolved": "索爾", "text": "我怎麼會喜歡國王一職！整天待在王城裏哪裡也不能去還得管理繁瑣的政務、應付囉唆的大臣和官員‥‥那有什麼樂趣！"},
-   {"box_index": 34, "operand": 4, "resolved": "亞雷斯", "text": "以你的個性來說‥這樣講也沒錯。"},
-   {"box_index": 35, "operand": 3, "resolved": "索爾", "text": "我從小想做的事，就是到外地去做幾次轟轟烈烈的冒險絕對不是枯坐在王位上終老一生！我只是父王的養子，和羅特帝亞王家沒……"},
-   {"box_index": 36, "operand": 4, "resolved": "亞雷斯", "text": "這就沒辦法啦。你已經被迫答應了嗎？"},
-   {"box_index": 37, "operand": 3, "resolved": "索爾", "text": "父王要我三天後給他答覆，但是我能說不嗎？這和答應了有什麼兩樣！"},
-   {"box_index": 38, "operand": 4, "resolved": "亞雷斯", "text": "說的也是‥只可惜這件事我幫不上什麼忙。"},
-   {"box_index": 39, "operand": 3, "resolved": "索爾", "text": "唉！如果你想幫忙的話，現在就陪我到後山去練劍，痛快的打上一場之後，也許我會覺得好過一點。"},
-   {"box_index": 40, "operand": 4, "resolved": "亞雷斯", "text": "這是小事一樁！我們現在就走吧！"}
+   {
+    "box_index": 1,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "你來啦！起來起來，這裡沒有別人，不用多禮。"
+   },
+   {
+    "box_index": 3,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "到這裡來，讓父王好好看看你。這一陣子國務繁忙，我們父子兩個也很久沒聚聚了。"
+   },
+   {
+    "box_index": 4,
+    "operand": 1,
+    "resolved": "NPC(推測王后)",
+    "text": "是啊！我們一家人，難得這樣在一起。"
+   },
+   {
+    "box_index": 6,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "索爾，時間過得真快，你已經長得這麼高了。大臣和將領們對你的武藝和能力也讚譽有加，我想，也該是決定王位繼承人的時候……"
+   },
+   {
+    "box_index": 8,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "……錯了，索爾，朕希望能由你來接任羅特帝亞的王位。"
+   },
+   {
+    "box_index": 10,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "是的，索爾。你對朕的決定有什麼疑問嗎？"
+   },
+   {
+    "box_index": 12,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "索爾，這是一個屬於強者的時代。只有強者才能掌握軍隊、統治國家，維持世界的和平和人民的福祉。羅特帝亞需要一個強有力……"
+   },
+   {
+    "box_index": 14,
+    "operand": 0,
+    "resolved": "NPC(推測國王)",
+    "text": "迪恩他和你不一樣。迪恩是個聰明的孩子，可以成為賢明的君主，但是他長得太文弱了，無法穿著重甲、統率大軍在戰場上奔馳……"
+   },
+   {
+    "box_index": 15,
+    "operand": 1,
+    "resolved": "NPC(推測王后)",
+    "text": "是的。索爾，這些年來，我們把你當成自己親生的孩子撫養長大，這件事也是經過慎重考慮之後才決定的，希望你能夠答應。"
+   },
+   {
+    "box_index": 28,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "嗄？"
+   },
+   {
+    "box_index": 29,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "沒聽清楚嗎？父王要我繼承王位。"
+   },
+   {
+    "box_index": 30,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "嗄？‥這‥這有什麼好嘆氣的？羅特帝亞的准王位繼承人‥‥這要好好慶祝一下才是啊！"
+   },
+   {
+    "box_index": 31,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "笨蛋！枉費我們從小一起長大，你竟然一點都不瞭解我！"
+   },
+   {
+    "box_index": 32,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "啊？這怎麼說呢？"
+   },
+   {
+    "box_index": 33,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "我怎麼會喜歡國王一職！整天待在王城裏哪裡也不能去還得管理繁瑣的政務、應付囉唆的大臣和官員‥‥那有什麼樂趣！"
+   },
+   {
+    "box_index": 34,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "以你的個性來說‥這樣講也沒錯。"
+   },
+   {
+    "box_index": 35,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "我從小想做的事，就是到外地去做幾次轟轟烈烈的冒險絕對不是枯坐在王位上終老一生！我只是父王的養子，和羅特帝亞王家沒……"
+   },
+   {
+    "box_index": 36,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "這就沒辦法啦。你已經被迫答應了嗎？"
+   },
+   {
+    "box_index": 37,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "父王要我三天後給他答覆，但是我能說不嗎？這和答應了有什麼兩樣！"
+   },
+   {
+    "box_index": 38,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "說的也是‥只可惜這件事我幫不上什麼忙。"
+   },
+   {
+    "box_index": 39,
+    "operand": 3,
+    "resolved": "索爾",
+    "text": "唉！如果你想幫忙的話，現在就陪我到後山去練劍，痛快的打上一場之後，也許我會覺得好過一點。"
+   },
+   {
+    "box_index": 40,
+    "operand": 4,
+    "resolved": "亞雷斯",
+    "text": "這是小事一樁！我們現在就走吧！"
+   }
   ],
   "note": "只列出 idx0/1(國王/王后猜測)與 idx3/4(索爾/亞雷斯確認)有代表性的 22 筆；完整 32 筆的原始輸出見 commit 附帶的一次性 stdout(未存檔重複資料，全部 32 筆的 box_index/operand 規律與這裡列出的一致，只是同一組 4 個說話者反覆出現)。內容連貫、符合敘事邏輯(國王要索爾繼承王位、索爾向亞雷斯抱怨），獨立佐證 doc09 原本只用 2 句話截圖判定的『王宮場景被誤標成索爾』發現，這次是全 32 句規模的活體交叉驗證。"
+ },
+ "FDTXT_032": {
+  "source": "docs/knowledge-base/scene-decode/ch1-forest.md（既有靜態分析，非本輪活體讀值）",
+  "slot_mapping": {
+   "0": "索爾",
+   "1": "亞雷斯",
+   "3": "蓋亞",
+   "4": "悠妮"
+  },
+  "entries": [
+   {
+    "box_index": 0,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "亞雷斯，趕快再來比一場！　昨天輸給你，我越想越不甘　心！"
+   },
+   {
+    "box_index": 1,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "贏了就是贏了，何況你　已經打贏我十幾場，讓我一　場有什麼關係！"
+   },
+   {
+    "box_index": 2,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "這可不一樣！我老爸說過，　劍技要不斷磨練才會進步‥　‥"
+   },
+   {
+    "box_index": 3,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "拜託，今天休息吧！風和日　麗的日子，躺在草地上曬曬　太陽，不是也很慷意？"
+   },
+   {
+    "box_index": 4,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "好吧，既然如此，我回去找　侍衛們練習也可以！"
+   },
+   {
+    "box_index": 5,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "咦，那是什麼東西？"
+   },
+   {
+    "box_index": 6,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "怎麼了？"
+   },
+   {
+    "box_index": 7,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "好像是人昏倒在地呢！"
+   },
+   {
+    "box_index": 8,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "是啊，旁邊那個大傢伙又是　什麼？"
+   },
+   {
+    "box_index": 9,
+    "operand": 3,
+    "resolved": "蓋亞",
+    "text": "不要再接近！否則我將照規　定採取防衛行動！"
+   },
+   {
+    "box_index": 10,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "搞什麼嘛！"
+   },
+   {
+    "box_index": 11,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "嗯，好痛‥‥"
+   },
+   {
+    "box_index": 12,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "是女孩子呢！"
+   },
+   {
+    "box_index": 13,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "我去看看！"
+   },
+   {
+    "box_index": 14,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "小‥小姐，你沒事吧！"
+   },
+   {
+    "box_index": 15,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "你‥你是誰？　這裡是哪裡？"
+   },
+   {
+    "box_index": 16,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "這裡是羅特帝亞，我叫索爾　請問小姐你的芳名？"
+   },
+   {
+    "box_index": 17,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "我叫‥我叫‥悠妮吧。　我怎麼會來到這裡的？"
+   },
+   {
+    "box_index": 18,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "悠妮？好名字。悠妮小姐，　妳怎麼會記不得怎麼來到這　裡的？"
+   },
+   {
+    "box_index": 19,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "‥‥真的想不起來了，只記　得‥只記得我好像是從很遠　很遠的地方來的。蓋亞？"
+   },
+   {
+    "box_index": 20,
+    "operand": 3,
+    "resolved": "蓋亞",
+    "text": "是的，主人。有何吩咐？"
+   },
+   {
+    "box_index": 21,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "我們‥是從哪裡來的？"
+   },
+   {
+    "box_index": 22,
+    "operand": 3,
+    "resolved": "蓋亞",
+    "text": "據我的慣性導航系統顯示，　是在那個方位。"
+   },
+   {
+    "box_index": 23,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "啊！我知道了，你們是從馬　拉大陸來的，我聽老爸說過　，那的確是個很遙遠的地方　。"
+   },
+   {
+    "box_index": 24,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "悠妮小姐，妳是從那個馬‥　馬拉大陸來的嗎？"
+   },
+   {
+    "box_index": 25,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "我記不得了，只記得‥好可　怕的惡夢‥好可怕‥不！不　要！"
+   },
+   {
+    "box_index": 26,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "悠‥悠妮小姐！"
+   },
+   {
+    "box_index": 27,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "我好怕‥帶我回家‥帶我回　家，好嗎？求求你‥‥"
+   },
+   {
+    "box_index": 28,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "‥好！好！別怕，有我在‥　放心，我一定帶妳回家！"
+   },
+   {
+    "box_index": 29,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "哎喲喂！這小子該不會想要　‥‥"
+   },
+   {
+    "box_index": 30,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "喂！你真的要去？你瘋了！　聽說那裡是與羅特帝亞完全　不一樣的地方，為了一個女　孩子去冒這種險，未免‥"
+   },
+   {
+    "box_index": 31,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "我一定要去！亞雷斯，　你知不知道怎麼去？"
+   },
+   {
+    "box_index": 32,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "這？好‥好吧，我回去問問　老爹，我想他應該會知道‥　‥"
+   },
+   {
+    "box_index": 33,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "好極了，我們整理一些輕便　行李，我再向父王棠告一下　，就可以出發了。"
+   },
+   {
+    "box_index": 34,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "我也去好了！誰叫我們是　從小打架打到大的朋友？　總不能就這樣讓你一個人到　馬拉大陸去！"
+   },
+   {
+    "box_index": 35,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "亞雷斯，謝謝你！"
+   },
+   {
+    "box_index": 36,
+    "operand": 1,
+    "resolved": "亞雷斯",
+    "text": "不用謝了，你先帶悠妮小姐　回去休養吧！陛下那邊和借　船的事我來辦就好了。"
+   },
+   {
+    "box_index": 37,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "悠妮小姐，妳就先和我回去　吧！幾天後我們就啟程回馬　拉大陸，妳放心，我一定平　安的送妳回家。"
+   },
+   {
+    "box_index": 38,
+    "operand": 4,
+    "resolved": "悠妮",
+    "text": "謝‥謝謝你。"
+   },
+   {
+    "box_index": 39,
+    "operand": 0,
+    "resolved": "索爾",
+    "text": "嘿，我們這就走吧！還有不　少事要忙呢！"
+   }
+  ],
+  "note": "40 筆全解，來源是 FDFIELD map31 spawn 群組(0x10b4e)已經記載的 slot 分配，跟對話內容(比劍鬥嘴→發現蓋亞悠妮→決定同行)完全吻合。"
  }
 }
