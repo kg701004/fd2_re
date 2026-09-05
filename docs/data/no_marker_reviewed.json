@@ -1120,6 +1120,310 @@
    "excerpt": "`0xff/0xff` 當「離場態」),證實 §9.1 提到的「演出態與最終邏輯態分離」不是巧合,而是這條 native",
    "verdict": "benign",
    "note": "延續句，交叉參照§9.1既有結論"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 46,
+   "excerpt_sha1": "9079712d9d9d72db1123241ea068f7a7b55c5eca",
+   "excerpt": "## 敵 / 我方與狀態的「顏色」差異:調色 remap [已驗證]",
+   "verdict": "benign",
+   "note": "章節標題含[已驗證]標記，證據在節內文"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 56,
+   "excerpt_sha1": "149a2257c4f69c5e4ec29d1dcffa5e01e99d9cb0",
+   "excerpt": "**實測套用效果**(把同一騎士 sprite 套不同 LUT,`tools/dump_remap.py`):",
+   "verdict": "benign",
+   "note": "描述工具實測方法(tools/dump_remap.py)，具體LUT資料表在鄰近行"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 65,
+   "excerpt_sha1": "54f349dd6d63ef427d2485ff5bfda60e36338dcf",
+   "excerpt": "> [已驗證] remap 機制 + 23 張 LUT 資料 + LUT 索引來源(全域狀態表)。",
+   "verdict": "benign",
+   "note": "總結句含[已驗證]標記"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 75,
+   "excerpt_sha1": "0bcbb7faf6e83fb932704adc04d6cdd840a77b9a",
+   "excerpt": "[推定] 待確認:各角色的 24×24 場景 sprite 是否每方向各存一組幀(對照 FIGANI / 場景 sprite 容器數量)。",
+   "verdict": "benign",
+   "note": "明確標示[推定]待確認，非完成聲明"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 80,
+   "excerpt_sha1": "5293a62cb07e332f113c409354d6e5a31232a617",
+   "excerpt": "- **陰影**:RLE **mode 01(dither)**——隔位寫、佔 2×count 寬,半透明點陣(地面影子,已於騎士動畫驗證)。",
+   "verdict": "benign",
+   "note": "「已於騎士動畫驗證」，RLE格式方法論已於doc05等處建立"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 102,
+   "excerpt_sha1": "15c33816c4586364a279c44cee5eb08f752ef8ab",
+   "excerpt": "> 本身(panel/terrain/AP/DP/icon/HP)之前已在 `91-worklist.md` 與 `56-fd2-remake-sdd.md` 閉合,不重複。",
+   "verdict": "benign",
+   "note": "交叉參照91-worklist.md與56-fd2-remake-sdd.md既有閉合結論，「不重複」"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 150,
+   "excerpt_sha1": "fd66c2f6d8abe02b45e410bfbd8feae7de697748",
+   "excerpt": "與地圖 HUD 共用,佐證它是引擎層通用工具,不是為某一章或某個畫面寫的專屬碼。",
+   "verdict": "benign",
+   "note": "推論延續句，非獨立新驗證聲明"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 196,
+   "excerpt_sha1": "d6c7fb0b8d1adc42d51fa06618ed38865c8fb41c",
+   "excerpt": "**初值**仍需要對每章分別確認其來源(繼承自 `FD2.SAV`、或由該章 pre-handler 顯式寫入),",
+   "verdict": "benign",
+   "note": "明確保留用語「仍需要...確認」"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 199,
+   "excerpt_sha1": "dd22f1a9ae29e113697796d3079ba71fbfc95ad6",
+   "excerpt": "逐章截圖核對,原文早已標註此限制仍未解除);已確認的三章(ch01/ch26/ch27)之外,其餘 27 章",
+   "verdict": "benign",
+   "note": "明確保留用語「其餘27章...仍待」"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 200,
+   "excerpt_sha1": "2368999f4bce8495bdc3e0bf25c9e11826155d84",
+   "excerpt": "的「初值 from save vs from pre-handler」仍待後續個別確認,但已知**不必再懷疑「是否存在另一套",
+   "verdict": "benign",
+   "note": "明確保留用語「仍待後續個別確認」"
+  },
+  {
+   "file": "10-sprite-rendering-camp-and-state.md",
+   "line": 205,
+   "excerpt_sha1": "3f81affd8055a4d7efa830f581de324d0843cebc",
+   "excerpt": "- 「其餘 ch02+ 缺逐章 view/gates/anchor 來源」→ **通用機制已確認存在**(gate 寫入端與",
+   "verdict": "benign",
+   "note": "延續句，具體gate證據在鄰近行"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 86,
+   "excerpt_sha1": "906fc3ed565e6c78def5354c91385b312b4c20a5",
+   "excerpt": "### 2.2 視覺驗證(規則 64:解碼器當 oracle)[驗]",
+   "verdict": "benign",
+   "note": "章節標題含[驗]標記，證據在節內文"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 105,
+   "excerpt_sha1": "e7250a1ee0057b30c2274c31dcda592dd1506469",
+   "excerpt": "> 方法:docker `dq3-dosbox`(Xvfb+dosbox 0.74-3+xdotool+import),`machine=svga_s3`,視窗 640×480(≈遊戲座標,org_play_notes.md 已驗證的換算)。",
+   "verdict": "benign",
+   "note": "方法論宣告，「dosbox」小寫無連字號未達marker字面(既有低頻邊界案例，同00-index.md:45/140)"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 108,
+   "excerpt_sha1": "bf0f3a6f12f805ff5697aa9c72b809b1f987644b",
+   "excerpt": "> 容器內 dosbox 手動啟動確認:`MIXER:Can't open audio: No available audio device, running in nosound mode`——**容器完全沒有音訊裝置(不只是聽不到,是 dosbox 根本沒建虛擬音效輸出)**,所以配樂時機本輪**無法驗證**,如實標注,不腦補。",
+   "verdict": "benign",
+   "note": "明確誠實限制聲明「無法驗證,如實標注,不腦補」"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 126,
+   "excerpt_sha1": "0bec1cc6cf6db3393f45ba89b6f7808f5bd7a67e",
+   "excerpt": "- 縮放期間**看不到透視變形/傾斜/翻轉**(「2」的鉤爪筆畫形狀在 188→191 全程一致),所以**視覺證據支持「縮放(zoom)」,不支持「旋轉(rotate)」**。使用者記憶的「由螢幕外旋轉縮到螢幕內」——「由外而內縮小」的部分**證實成立**,但「旋轉」的部分**這次沒有拍到證據**,如實回報而非附和。",
+   "verdict": "benign",
+   "note": "明確誠實回報「沒有拍到證據」，非過度宣稱"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 163,
+   "excerpt_sha1": "b25190b72e99006c75aef5ada0a038e23bded8db",
+   "excerpt": "- 未測試方向鍵/確認鍵行為(容器本輪只做被動觀察,未輸入按鍵驗證游標移動——與 doc23 §3 的動態行為描述無衝突,亦未新增驗證)。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「未測試」「未新增驗證」"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 167,
+   "excerpt_sha1": "424fd24df3468692270e81fd50b5eb27e38e1721",
+   "excerpt": "不是漸變淡出淡入的柔和轉場,是**兩段硬切閃光**:故事過場最後一幕(紅光惡魔臉特寫)**直接切成全螢幕純紅色**(frame_185–186,無漸變過程,一幀之內從有內容變全紅),隔一幀黑幀後「2」開始縮放進場(見①),縮放定位完成後**再一次全螢幕泛白閃光**(frame_192,bloom 效果),然後色板才收斂到最終橘紅漸層畫面。兩次閃光(紅/白)夾住 logo 縮放動作,是典型「衝擊感」",
+   "verdict": "benign",
+   "note": "畫面觀察描述延續句，屬同一大段dosbox截圖分析的一部分"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 211,
+   "excerpt_sha1": "0792bca32523aa84ab30928d84803f708d4efc31",
+   "excerpt": "- `idxB=0x4b/#75` + `idxA=0x4c/#76` 調色盤 → 解出**滿月前浮空城剪影**(`extracted/title_re/fdother_static/fdother075_floating_castle_pal076.png`,本機)。與 dosbox `frame_168–173`(§2.4③ item⑥「浮空城剪影疊在滿月前」)**逐像素構圖/配色吻合**(月",
+   "verdict": "benign",
+   "note": "「dosbox」小寫無連字號，同105的低頻邊界案例"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 215,
+   "excerpt_sha1": "adc5c4cdb06465dae06386f0c5ed10ae7644d50d",
+   "excerpt": "(守護者 #100、浮空城 #75)。**item⑨「惡魔臉特寫」(dosbox frame_184)不是這兩幕之一**——實測解出的",
+   "verdict": "benign",
+   "note": "同211"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 282,
+   "excerpt_sha1": "384568f9c4424e2992ce864f7842ee8f66962717",
+   "excerpt": "| Enter / Space / 0xe0 / 0x52 | 0x0d/0x20 | 確認(選中項閃爍 4 次 → 回傳 `ebp`) |",
+   "verdict": "benign",
+   "note": "按鍵對照表row，十六進位皆為2位數(0xe0/0x52/0x0d/0x20)，未達ADDR_MARKER的4-6位數門檻，屬既有設計"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 285,
+   "excerpt_sha1": "228867b23d11fa7b04b003d2ec800f528e32d63e",
+   "excerpt": "- **此主選單迴圈未見 ESC 分支**(只有移動 + 確認)[驗];ESC 取消是戰場/子選單的行為(見 doc 13),非主選單。",
+   "verdict": "benign",
+   "note": "含[驗]標記+明確否定式聲明「未見ESC分支」"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 334,
+   "excerpt_sha1": "322677f3ae2a49c39fee105d6ec0f64a4fd28f03",
+   "excerpt": "> 系統。已渲染驗證(`extracted/maps/map32.png`,432×1224)逐像素對齊 dosbox 參考圖 `extracted/remake_shots/",
+   "verdict": "benign",
+   "note": "引用extracted/maps/map32.png具體檔案佐證，「dosbox」小寫同105的低頻邊界案例"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 356,
+   "excerpt_sha1": "4becf71666e395130273674b8ded27de8ab93e6b",
+   "excerpt": "> **國王(portrait48)@(7,5)、王后(portrait66)@(10,5)**——兩張並排的王座,列印驗證 portrait48/66 頭像",
+   "verdict": "benign",
+   "note": "交叉參照doc49已證實的portrait48/66結論"
+  },
+  {
+   "file": "23-boot-title-and-scenario-flow.md",
+   "line": 392,
+   "excerpt_sha1": "d97ddd9a6f4119f342fb3c407b8427f1469ff209",
+   "excerpt": "town/shop/preparation/ending 與完整勝敗分歧仍待逐條 E0／E2 驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍待逐條E0/E2驗證」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 28,
+   "excerpt_sha1": "31a11c071fa34400e934c6f93ae722d2ec1f464f",
+   "excerpt": "→ 這些是數值與公式 baseline；完整戰鬥仍需 native command inventory、target selector、item action、AI spell runtime 與 UI input 的 E0/E1/E2 驗證，不能宣稱只靠表格即可完成。",
+   "verdict": "benign",
+   "note": "明確保留用語「不能宣稱只靠表格即可完成」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 30,
+   "excerpt_sha1": "9968810da5dd03f1ca29c7ec2259ed268024ea98",
+   "excerpt": "## 3. 需動態驗證的清單 —— 經使用者領域知識,**多數已定案**(2026-06-28)",
+   "verdict": "benign",
+   "note": "章節標題，「多數已定案」為部分保留用語"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 42,
+   "excerpt_sha1": "94fa3173c8aaecb3184d6b3a4ac554c0f9272a71",
+   "excerpt": "| 9–10 | `roster byte[+8]`、單位完整佈局 | normalized engine 可用自有 `Unit` projection；但 raw persistence／handler path 仍需對齊已證實的 `0x50B` slot、`+8` identity 與必要欄位，不能宣稱整體不需要。 |",
+   "verdict": "benign",
+   "note": "表格row，0x50B僅3位十六進位未達ADDR_MARKER門檻，且含明確保留用語「不能宣稱整體不需要」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 47,
+   "excerpt_sha1": "9c26380dc4f57577f958a53c7405fa3610e3ccd8",
+   "excerpt": "### 已閉合的單位 raw predicates `byte[+5]`",
+   "verdict": "benign",
+   "note": "章節標題，證據(位址)在節內文"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 57,
+   "excerpt_sha1": "73f498c4e55d8d26cfc0ae32e4867e0e8d60922a",
+   "excerpt": "`tools/fd2save.py` 解碼的 **存檔差分** 比對 `FD2.SAV`；其 envelope 已閉合為 rolling-XOR/checksum，record",
+   "verdict": "benign",
+   "note": "描述工具(tools/fd2save.py)+存檔差分方法論，延續句"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 60,
+   "excerpt_sha1": "10c7bfc6893faf53f2935f6e63946f24b0e5fa92",
+   "excerpt": "- 有界、可重現:每項驗證設計成「明確操作 → 觀察特定位址/畫面 → 記錄」,不漫無目的跑(對齊 rulebook 35/64)。",
+   "verdict": "benign",
+   "note": "方法論描述，非具體驗證聲明"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 91,
+   "excerpt_sha1": "9ceae778c5e5578235a39110104f6aee6c2ac90c",
+   "excerpt": "| 20 | AI 移動 fallback(mode 0/1/2/3/4/5/7/8/9/10) | doc11 | ✓ 多輪已閉合,覆蓋 33 張地圖約 58% AI 單位 | `ApplyNativeAIMovementFallback` 系列 | ✓ 一致(mode 6 未見記載,可能不存在或未覆蓋,待查證) |",
+   "verdict": "benign",
+   "note": "表格row，交叉參照doc11，含明確保留用語「mode 6...待查證」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 100,
+   "excerpt_sha1": "95a9ffbb9c03518d150f7e888fef21bb93b206e8",
+   "excerpt": "6. **AI mode 6 移動 fallback**:未見於任何已閉合文件,不確定原版是否存在此 mode 或本專案尚未覆蓋。**本輪未展開**。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「未見」「不確定」「未展開」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 159,
+   "excerpt_sha1": "27b66339b434db4a939f3a1c69310f527e956c44",
+   "excerpt": "**worklist 稽核索引 L245 完成度**:高。cVar4 分支、六種經驗公式、等級上限枚舉三項全部由本輪位址級證據閉合;法術命中率逐 ID 核對本輪未動,仍是唯一真正「完全未觸碰」的子項。",
+   "verdict": "benign",
+   "note": "總結句，明確保留用語「未動」「完全未觸碰」，具體位址證據在本文件鄰近段落"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 183,
+   "excerpt_sha1": "66c52e5ab2c70bd0d3de8073b32eea560a210bd6",
+   "excerpt": "### 6.2 AoE 目標迴圈——確認位置,上游目標產生器仍未追完",
+   "verdict": "benign",
+   "note": "章節標題，明確保留用語「仍未追完」"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 209,
+   "excerpt_sha1": "0502cee2e71222ef00bb074583415cf0200d7368",
+   "excerpt": "**2026-08-24 live 交叉驗證補充(doc58 續六十二)**:上面 `+0x40`(HP)、以及 `+0x44/+0x46`(MP)、",
+   "verdict": "benign",
+   "note": "交叉參照doc58續六十二，欄位offset(+0x40等)僅3位十六進位未達ADDR_MARKER門檻"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 375,
+   "excerpt_sha1": "0141d7c01dc8f4308350016f3f9fdba0be3fdb00",
+   "excerpt": "- **L555**(doc56 L600:scroll/composite/專用演出/SFX/UI 未接):`FUN_0002ff01` 的逐目標迴圈證實了 scroll/composite 的原生結構(`FUN_00011eb0`/`FUN_0002eb9f`/`FUN_000311e5` 等 step 呼叫,HP 從 `iStack_38` 動畫過渡到 `iStack_50`),但 rend",
+   "verdict": "benign",
+   "note": "延續句，具體函式位址證據在同段落"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 407,
+   "excerpt_sha1": "11c0f79fb8c2e5014e77275dd416b9a4e18b8829",
+   "excerpt": "record 佈局裡本來就不重疊,「DX/race/multiplier」的舊猜測沒有位址證據支持。`doc32` §4.3 額外確認過",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc32 §4.3既有結論"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 444,
+   "excerpt_sha1": "28e09bfdb1c704562203972f9897f4617a745694",
+   "excerpt": "已在 2026-08-19 完整閉合(見 `doc13`、`doc32` §4.3),靜態角色資料上的值也已確認恆為 0。唯一仍待的",
+   "verdict": "benign",
+   "note": "交叉參照doc13/doc32 §4.3既有閉合結論"
   }
  ]
 }
