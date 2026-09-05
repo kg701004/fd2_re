@@ -3320,6 +3320,542 @@
    "excerpt": "gate minor 殘留範圍)：**已核對,確認完整、無需修改**。`FindNativeInventoryItemInUnit`/",
    "verdict": "benign",
    "note": "延續句，描述remake端Go函式核對結果"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 26,
+   "excerpt_sha1": "9c3c6ce36c569a7bb2388b4dbb37f0dffaf0b3df",
+   "excerpt": "目前只閉合部分原始呼叫拓撲與評分分支，尚未還原完整決策規則。重製端的",
+   "verdict": "benign",
+   "note": "明確保留用語「只閉合部分...尚未還原完整決策規則」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 68,
+   "excerpt_sha1": "b2a310a2f57b81431de55d55eb230ad1c1bb4a16",
+   "excerpt": "但各 handler 的高階效果仍須逐筆閉合；raw pending 碼 1／2 也不可在",
+   "verdict": "benign",
+   "note": "明確保留用語「仍須逐筆閉合」+否定「也不可在」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 190,
+   "excerpt_sha1": "fac1ecfd93824644615894ca4a493712ec740032",
+   "excerpt": "現行 509158-byte「新版」參考檔**——實測用位元組特徵搜尋確認,dispatcher 本體",
+   "verdict": "benign",
+   "note": "描述EXE參考檔+位元組特徵搜尋方法論延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 294,
+   "excerpt_sha1": "3415866afbc40b2a1ca6c76970172de44ff3b92e",
+   "excerpt": "1. 兩隻法師的 MP 都從 `011/011` 降到 `009/011`（逐一 `D` 讀 record 交叉確認，",
+   "verdict": "benign",
+   "note": "活體記憶體讀取(D command)交叉確認延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 296,
+   "excerpt_sha1": "8f5918b1887596aba793ea1d9ed6a3a75354db7e",
+   "excerpt": "降到 `705`（-97），MP 全滿不變，證實是物理系以外的手段命中，兩隻法師都",
+   "verdict": "benign",
+   "note": "活體資料分析延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 303,
+   "excerpt_sha1": "093bfba7bb7f25138f3bf087d57925ce938e22e9",
+   "excerpt": "`0x40`（`0x80` 位元清除＝非空）＋item id `3`，**武器欄位確認非空**，",
+   "verdict": "benign",
+   "note": "offset低於門檻，延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 304,
+   "excerpt_sha1": "f6a2aa97e61320e8330820ce6ff93202eb011909",
+   "excerpt": "與角色資訊畫面顯示的「巨劍」逐位元組吻合，直接**推翻**這個個案的",
+   "verdict": "benign",
+   "note": "延續句，自我修正(推翻先前個案結論)"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 314,
+   "excerpt_sha1": "607f4390e5fb22d2fc2e36ec4dcc2a6e0fa45c7e",
+   "excerpt": "`AP·922`/`DP·711` 逐位元組吻合）：`73 − 711 = −638`，遠低於 `<=2`",
+   "verdict": "benign",
+   "note": "算術驗證延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 328,
+   "excerpt_sha1": "c56280b34703b792a765b25f0c7f7817ab5c2bd0",
+   "excerpt": "但這點仍是推論，未對該特定個體做過位元組級驗證，保留為待補。截圖：",
+   "verdict": "benign",
+   "note": "明確保留用語「仍是推論,未對該特定個體做過位元組級驗證,保留為待補」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 340,
+   "excerpt_sha1": "a1169fab5ab1224a939b86e6579b00c5ab923482",
+   "excerpt": "故下面的公式推論仍然成立,只是引用鏈這裡補上原版側的獨立佐證):`ApplyNativeEquipmentRecalc`/",
+   "verdict": "benign",
+   "note": "延續句，「推論仍然成立」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 343,
+   "excerpt_sha1": "c683074e38e26d84313f073875123cc2bd662c79",
+   "excerpt": "`tryIdleRecovery`(本次 session 稍早,mode 0/1 移動 fallback)已證實",
+   "verdict": "benign",
+   "note": "同session內交叉參照延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 348,
+   "excerpt_sha1": "c64edf2f9d7f7b2e20986806b208fcd912a33014",
+   "excerpt": "本身(doc91 `RE-ITEM-ADJACENCY-GATE-1DEBE` 條目,前次 session 已閉合)現已補上",
+   "verdict": "benign",
+   "note": "交叉參照doc91 worklist條目"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 354,
+   "excerpt_sha1": "5eb470e77139ff9e0cb5319ca513d62e4dc5f267",
+   "excerpt": "查表,mode5 investigation 已確認的通用函式),以 `ebx*4` 索引一張 6 筆",
+   "verdict": "benign",
+   "note": "延續句，暫存器參照(ebx)非位址"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 361,
+   "excerpt_sha1": "b5bb98cb671a7a5300e08a54c918d90c997027db",
+   "excerpt": "的遊戲記憶體獨立重新驗證過一次(方法:對照檔案裡已知的函式 prologue 位元組特徵,",
+   "verdict": "benign",
+   "note": "描述活體記憶體重新驗證方法論延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 364,
+   "excerpt_sha1": "4a1df29b3d3a427031b677442bd09e6cd63cdda9",
+   "excerpt": "會讀到垃圾),讀出的數值逐項相同;也用戰場游標實測的地形 UI 面板",
+   "verdict": "benign",
+   "note": "活體驗證延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 365,
+   "excerpt_sha1": "ca0a4cf7d0bf3ea0e02851fa096e06997503d284",
+   "excerpt": "(平地 A+05/D+00、樹林 A−05/D+10)獨立交叉驗證,同樣吻合——UI 面板顯示的正是",
+   "verdict": "benign",
+   "note": "同364延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 393,
+   "excerpt_sha1": "9af06fb16a14faba5487d90881e34139b010697b",
+   "excerpt": "這兩個欄位是「caller-specific geometry inputs」,現在確認 caller 正是",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 398,
+   "excerpt_sha1": "ae2e4342408d5697dfa625e1dea12c4bec3aa2bb",
+   "excerpt": "flood-fill,尚未展開)產生的——證實 `battle.NativeAIPhysicalDestinations`",
+   "verdict": "benign",
+   "note": "明確保留用語「尚未展開」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 445,
+   "excerpt_sha1": "f1f6174c39b5e3f1aed6139dc746a012868ab1eb",
+   "excerpt": "端到端測試(含 1DEBE 加成、raw+8 三分之二乘數同時觸發的完整公式路徑,驗證",
+   "verdict": "benign",
+   "note": "描述remake端端到端測試延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 453,
+   "excerpt_sha1": "78288a85a26ce67962327a42641e23fd5558a751",
+   "excerpt": "`AIPlan.NativeSourced=true`,純除錯/驗證用欄位,遊戲邏輯不應依賴它);",
+   "verdict": "benign",
+   "note": "描述remake除錯欄位，明確保留用語「不應依賴它」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 503,
+   "excerpt_sha1": "eb4ddd6202ae28085b4f186d86f0fd8e1ff4ee95",
+   "excerpt": "**加碼驗證(同日,臨時 debug-only 補丁,已完全復原不留痕跡)**:為了分清",
+   "verdict": "benign",
+   "note": "誠實記錄臨時debug補丁已完全復原不留痕跡"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 508,
+   "excerpt_sha1": "5834483446c1933678ddb5188214614484e70ebe",
+   "excerpt": "- `NativeAIScoringRecords` 對整個 roster 編碼成功,不再報錯——證實先前",
+   "verdict": "benign",
+   "note": "remake端測試結果延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 517,
+   "excerpt_sha1": "25473171d3669370402a3eb86750dfef8b0f654c",
+   "excerpt": "- 進一步想找一個真的有武器的敵人強制站到玩家單位旁邊驗證「真的會選中",
+   "verdict": "benign",
+   "note": "未來式探索性註記"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 522,
+   "excerpt_sha1": "661e94ce7663897305e3e28f33ee2f4c1e8caaa4",
+   "excerpt": "這個情境需要額外接增援出場邏輯,已超出「驗證接線是否正確」的範圍,",
+   "verdict": "benign",
+   "note": "明確保留用語「已超出...範圍」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 548,
+   "excerpt_sha1": "d582a34e76bbb48eb5d20eb8bb2ab04a36cd0f3e",
+   "excerpt": "也證實它從未寫入這三個位元組——也就是說原始二進位下,新加入隊伍的",
+   "verdict": "benign",
+   "note": "否定式發現延續句「從未寫入」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 552,
+   "excerpt_sha1": "b98a932bbf8748202fde08ef3d830e49f1f05913",
+   "excerpt": "`+0x42`(最大HP)寫入同一個計算值,`+0x44`/`+0x46` 同理——證實",
+   "verdict": "benign",
+   "note": "offset低於門檻，延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 567,
+   "excerpt_sha1": "8c80e85bce3ce6c9e418e3eb3d357f95bc5f447a",
+   "excerpt": "live 驗證,`NativeAIScoringRecords` 不再對整個 roster 報錯——先前擋住",
+   "verdict": "benign",
+   "note": "live驗證+remake測試結果延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 569,
+   "excerpt_sha1": "284b16742503091adf127a17a25cb9e1518f84f1",
+   "excerpt": "`HasWinner=false`,但原因跟前面確認過的完全一致(它裝備的是 item ID 0,",
+   "verdict": "benign",
+   "note": "交叉參照前文延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 592,
+   "excerpt_sha1": "b72f26a4bb8f29688d7a2c5f125851d45fd4cece",
+   "excerpt": "確認的結構（呼叫端已知全等於 `actor,selector` 兩參數）：",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 620,
+   "excerpt_sha1": "1adbb811bf7c553acfb17f89b4b2ac7ea11e7c0c",
+   "excerpt": "法術或道具」,逐行核對組語後確認**三者完全相等(physical==spell==item)會落到",
+   "verdict": "benign",
+   "note": "描述逐行核對組語驗證方法延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 679,
+   "excerpt_sha1": "d389c1c350425cca5064c5e5d7f0e33e299f95ac",
+   "excerpt": "的 `+0xd` byte,`+0xe` 是伴隨的 16-bit payload word)**——目前已個別確認呼叫目標",
+   "verdict": "benign",
+   "note": "offset低於門檻，延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 680,
+   "excerpt_sha1": "948c591affaa0d6a98c9d9403a2331a6d70e49c1",
+   "excerpt": "的 kind 值(**目標函式位址已確認,個別函式內部語意大多還沒追,除了特別註記的",
+   "verdict": "benign",
+   "note": "明確保留用語「大多還沒追」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 703,
+   "excerpt_sha1": "e13e83c3047e336842af6eeae960dd06441c1116",
+   "excerpt": "共 20 個已定位的 kind 分支。**11 個完整證實**(5/0xd, 8, 9, 0xa, 0xb, 0xc, 0xe/0x16,",
+   "verdict": "benign",
+   "note": "統計摘要延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 704,
+   "excerpt_sha1": "e4a911b018004f0bbf585011af00cbe53396eded",
+   "excerpt": "0xf, 0x10),**4 個結構證實但確切語意未 100% 閉合**(6,7,14,15,18),**3 個機制證實、",
+   "verdict": "benign",
+   "note": "明確保留用語「未100%閉合」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 707,
+   "excerpt_sha1": "55ed9beae5d530bdf497fc0d4c54e8abea90450e",
+   "excerpt": "3. **共用 primitive 目錄(這輪新確認)**:",
+   "verdict": "benign",
+   "note": "小標，證據在延續段落"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 725,
+   "excerpt_sha1": "a460d699510654beea6bcd2254200bc8651b2776",
+   "excerpt": "目前唯一一個從「選中道具」到「record 被寫入新值」全程證實的分支:",
+   "verdict": "benign",
+   "note": "延續句，全程證實的分支描述"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 764,
+   "excerpt_sha1": "747e20d8d6ceaaf63c84aa1823de629e6bc43db5",
+   "excerpt": "kind0xe 實際 SET 的欄位——offset 落點待確認是否真的跟指令遮罩衝突或只是巧合",
+   "verdict": "benign",
+   "note": "明確保留用語「待確認」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 767,
+   "excerpt_sha1": "344baa35cff87f3bda7f9f7f95b58c264e4378fd",
+   "excerpt": "0xf,0x10,0xe,0x16——比原本數字還多,因為訂正後把 0xe/0x16 也算進「效果+公式都閉合」",
+   "verdict": "benign",
+   "note": "自我修正說明延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 835,
+   "excerpt_sha1": "875acce683423f957049736ada73a3453c81bd92",
+   "excerpt": "(2026-08-15 續嘗試過,原生 Windows 從未跑過這條 headless 驗證路徑——過去都是",
+   "verdict": "benign",
+   "note": "描述remake端headless測試基礎設施歷史，否定「從未跑過」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 846,
+   "excerpt_sha1": "9548726ce6f3784af76d59d354781d081c3da2f4",
+   "excerpt": "- **確認的部分**:整條新管線(`nativeAIThreeScorePlan`→三個 `Score*` 呼叫→",
+   "verdict": "benign",
+   "note": "小標，證據在延續段落"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 853,
+   "excerpt_sha1": "113a6f5b085fedb0d71546271a76caeb5e8e77fa",
+   "excerpt": "- **沒有確認的部分**:battle_ch01 這個場景本身沒能重現「AI 真的選擇施法/用道具」",
+   "verdict": "benign",
+   "note": "明確否定式聲明「沒有確認的部分」「沒能重現」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 868,
+   "excerpt_sha1": "60572c301bf6f95779875d3bd11d1a043303e491",
+   "excerpt": "資料缺失還是真的沒候選」花了不少時間才分清楚後,決定留下來給下一次驗證用的,",
+   "verdict": "benign",
+   "note": "描述調查過程，未來式「留下來給下一次驗證用」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 899,
+   "excerpt_sha1": "7e77caa6c121bf1da685f8594593bc550d7f1475",
+   "excerpt": "是 ch08 的部署→開戰這段流程本身還沒被驗證/接上 headless 操作腳本**——這其實",
+   "verdict": "benign",
+   "note": "明確保留用語「還沒被驗證」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 902,
+   "excerpt_sha1": "c64d32537f843722274c3838ac7347b9ef72d2a1",
+   "excerpt": "**最終決定(這次不繼續追,誠實記錄邊界)**:再往下走(寫腳本模擬部署確認+",
+   "verdict": "benign",
+   "note": "誠實邊界記錄「不繼續追」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 908,
+   "excerpt_sha1": "d8e3917e5c68b831e413bda3e6a994d5d735d5cb",
+   "excerpt": "(task #74 系列)才有辦法達成,不建議為了這一個驗證畫面去搶跑那塊工作。",
+   "verdict": "benign",
+   "note": "未來式建議"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 917,
+   "excerpt_sha1": "7876595099b815e9cf5fcb76aa2559bef240adc1",
+   "excerpt": "呼叫點,不是 100% 端到端證實),但足以認為**物理執行鏈目前已被既有接線",
+   "verdict": "benign",
+   "note": "明確保留用語「不是100%端到端證實」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 975,
+   "excerpt_sha1": "49811a1b71f516ffcbc3bcbb6bdf344a53b67202",
+   "excerpt": "及 map raw flags 的 Docker regression，已確認 identity 103 的 enemy actor",
+   "verdict": "benign",
+   "note": "描述remake端Docker regression測試結果，正確歸屬remake端"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 986,
+   "excerpt_sha1": "c04238c36eb13ade9602c4ca6c7e8aeb8aa7eb5b",
+   "excerpt": "item-command producer 已由後述具型別解碼器分別閉合；不得再把靜態 producer",
+   "verdict": "benign",
+   "note": "明確保留用語「不得再把靜態producer」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1001,
+   "excerpt_sha1": "160de8746ecf9dade07fd9e5e4a684ddc011e8b6",
+   "excerpt": "`+6` 的 raw camp code 已由 constructor 與 target-code 消費端閉合；兩張",
+   "verdict": "benign",
+   "note": "offset低於門檻，延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1157,
+   "excerpt_sha1": "ffc9914429ee91a411ebde39fd9d45eaaa8dfc27",
+   "excerpt": "score、Cast 或 effect；36..39 仍因沒有已驗證 command record 而省略。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍因沒有已驗證...而省略」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1183,
+   "excerpt_sha1": "80c5f386f7121d58aa2108cfb38cbc41719bcab4",
+   "excerpt": "最大值由零開始，因此可安全重現數值比較；但在確認該區域變數前，不能把",
+   "verdict": "benign",
+   "note": "明確保留用語「在確認...之前,不能把」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1186,
+   "excerpt_sha1": "fc82083ca218dbe91c58babf84efc2eef05fc600",
+   "excerpt": "數值結果；只在分數大於零時輸出可證實的勝者。它會交叉檢查 actor 的命令",
+   "verdict": "benign",
+   "note": "延續句，描述remake邏輯"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1188,
+   "excerpt_sha1": "ee5c89e885a5001838b2b687d93193d1d0f2913d",
+   "excerpt": "加入已證實 command0 後，固定得到 `(23,14)`、分數96；全零分 fixture",
+   "verdict": "benign",
+   "note": "測試結果延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1199,
+   "excerpt_sha1": "07eae7fe4036a606a8932b193bea606d23a7d872",
+   "excerpt": "33 張 map 現均逐位元組同步為 `native_composition_event_bytes`；原版",
+   "verdict": "benign",
+   "note": "位元組同步驗證延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1267,
+   "excerpt_sha1": "78e0fc9639ffd67b1f72e4e75446235ec5ea3a0b",
+   "excerpt": "的正是 doc11 本文早已各自獨立證實的兩個敵我 AI 掃描函式**，寫成一條連續呼叫鏈（非",
+   "verdict": "benign",
+   "note": "自我參照本文件既有結論延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1316,
+   "excerpt_sha1": "98f05c774b211d6bf7839de9434842fb11c122bd",
+   "excerpt": "這證實原版有**兩個語意不同的手動結束回合入口**，不是同一個「結束回合」按鈕的兩種措辭：",
+   "verdict": "benign",
+   "note": "延續句，否定「不是同一個」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1342,
+   "excerpt_sha1": "35fac56d657b66e31af4f51476c2d14ac58470a5",
+   "excerpt": "orchestration」）**：「回合 orchestration」子項**本輪已閉合**（見上方主鏈與",
+   "verdict": "benign",
+   "note": "延續句，指向上方主鏈"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1344,
+   "excerpt_sha1": "e6fa0499564bd224efbb9d4b5730e95869a10c04",
+   "excerpt": "已窮盡（見 doc25 §6.3 附記，本文件不重複）；**唯獨「剩餘模式玩法名稱」仍未閉合**——",
+   "verdict": "benign",
+   "note": "明確保留用語「仍未閉合」，交叉參照doc25 §6.3"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1361,
+   "excerpt_sha1": "57e97f340377c4f88b2e6a2c52781c51d614c4ed",
+   "excerpt": "再以固定原版存檔動態比對已閉合的候選落點、方向陣列與實際選定結果。",
+   "verdict": "benign",
+   "note": "描述方法論(固定存檔動態比對)延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1362,
+   "excerpt_sha1": "112ac6514897a4a635b20a47ebc69fda3cb8cc8c",
+   "excerpt": "3. 先證實單位掃描順序、候選數與選定結果的資料來源，再命名剩餘 raw 欄位；",
+   "verdict": "benign",
+   "note": "未來式計畫項目"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1402,
+   "excerpt_sha1": "6668bd9f89bd8550a2f19e78969cd98a6e37df68",
+   "excerpt": "> 精確吻合，可視為同一函式在不同 session、不同工具鏈下的獨立交叉驗證。",
+   "verdict": "benign",
+   "note": "跨工具鏈交叉驗證延續句"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1471,
+   "excerpt_sha1": "a2f405f0ac5d2da5dee25a3a040f442d9bdd2804",
+   "excerpt": "與逐字文字紀錄 [`fd2_1728c_submenu_strings_2026-08-20.txt`](../data/fd2_1728c_submenu_strings_2026-08-20.txt)）：",
+   "verdict": "benign",
+   "note": "引用具體逐字文字紀錄檔案佐證"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1500,
+   "excerpt_sha1": "b8bd341ace85024d12766f885b66e04267a196bd",
+   "excerpt": "orchestrator」一節已閉合的 AI 掃描 resource setup／release 包裹函式）",
+   "verdict": "benign",
+   "note": "延續句，交叉參照"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1524,
+   "excerpt_sha1": "647128d8c922b49e59d759da8294bc9ce7cb3b1e",
+   "excerpt": "用途）仍未閉合**——doc23 對同一組欄位「玩法名稱仍不猜」的立場沒有被",
+   "verdict": "benign",
+   "note": "明確保留用語「仍未閉合」，交叉參照doc23"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1534,
+   "excerpt_sha1": "3204ecac804a5c0ea7d0415c7858f3589f285456",
+   "excerpt": "本體後確認：除既有已知的 Manhattan（`mode<0x10`，含可選內圈排除）／",
+   "verdict": "benign",
+   "note": "延續句，mode值低於門檻"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1537,
+   "excerpt_sha1": "42a22f20c2fb16413629db98ddae01ebca97a7e7",
+   "excerpt": "已閉合）之外，函式本體不呼叫任何額外的視線/阻擋子函式；`mode>=0x10`",
+   "verdict": "benign",
+   "note": "否定式聲明「不呼叫任何額外的...子函式」"
+  },
+  {
+   "file": "11-enemy-ai.md",
+   "line": 1538,
+   "excerpt_sha1": "1ca2c70829408fd7c24681109931dd9b25bd26a8",
+   "excerpt": "的十字分支甚至完全沒有阻擋判斷。這是明確、可驗證的「沒有」結論，不是",
+   "verdict": "benign",
+   "note": "明確否定式聲明「完全沒有阻擋判斷」，明確標示這是可驗證的『沒有』結論"
   }
  ]
 }
