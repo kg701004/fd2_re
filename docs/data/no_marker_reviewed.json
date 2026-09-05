@@ -32248,6 +32248,78 @@
    "excerpt": "確認」,連續8次一模一樣。這代表`fd2_crash_capture.py`的`run_one_round()`(每輪重新",
    "verdict": "benign",
    "note": "同上，接續描述迴圈bug成因"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2582,
+   "excerpt_sha1": "0d93c1831152b0262a9f013e4b4e9dd10dfe3a36",
+   "excerpt": "落差),§17/§18的live測試證實了這個落差真的會導致誤判——`adjacent_foe()`說不相鄰,",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的落差驗證描述，缺乏正規marker關鍵字"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2585,
+   "excerpt_sha1": "433a192d3fd539e61479348c3888d1ec2161a495",
+   "excerpt": "**Live驗證(單一乾淨instance `cc2`,同樣先跑`fd2_drive_to_playable.sh`到瀏覽游標層,",
+   "verdict": "benign",
+   "note": "live測試instance cc2執行記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2591,
+   "excerpt_sha1": "b4370e8df410d0040485bd3febef707c8970cf5b",
+   "excerpt": "確認目標」的兩次confirm。跟§17/§18那種「連續8輪同一個單位卡在REST選擇失敗」的",
+   "verdict": "benign",
+   "note": "接續描述live測試正向訊號觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2593,
+   "excerpt_sha1": "dd88cace29eae04202e836bbfff5bf6989c2acfd",
+   "excerpt": "- **後續無法完全確認**:round1之後的array dump又是連續3次全0(這次截圖確認**不是",
+   "verdict": "benign",
+   "note": "描述array dump讀值失敗但截圖確認非崩潰的live觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2595,
+   "excerpt_sha1": "1da5f342657fdddaf794398512b9a795d6755338",
+   "excerpt": "手動額外補送2次confirm(2.5s、3.5s wait)後,直接讀單位陣列確認:**idx1的acted",
+   "verdict": "benign",
+   "note": "描述手動補測confirm後讀取單位陣列的live觀察結果"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2600,
+   "excerpt_sha1": "a1d3d085025931d60f8f340c665c3849e2c384da",
+   "excerpt": "**誠實結論**:這次的重構**解決了「不相鄰就整個跳過攻擊」這個已確認的邏輯錯誤**,",
+   "verdict": "benign",
+   "note": "誠實結論小結，非新證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2603,
+   "excerpt_sha1": "0a5ca6d57d288950c605acca92ed6dfc9a7c6788",
+   "excerpt": "行動」這條鏈,這一輪仍然沒有乾淨驗證到底**——目標選擇之後的畫面卡住的原因待查,",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示「仍然沒有乾淨驗證到底」"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2606,
+   "excerpt_sha1": "505c3994f17a67c59ade35aba7f11e9b5276cfef",
+   "excerpt": "在`attack_unit()`/`approach_then_act()`確認目標之後,立刻(不要等待其他輪次)重讀",
+   "verdict": "benign",
+   "note": "對下一輪的具體建議事項，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2607,
+   "excerpt_sha1": "fc1e2f8ffa7c7904e867ffcce4144d0c3368cf7b",
+   "excerpt": "單位陣列確認acted跟敵方HP,把整個攻擊序列的每一步都插入即時回讀,而不是像這次事後",
+   "verdict": "benign",
+   "note": "同上，接續建議事項"
   }
  ]
 }

@@ -269,36 +269,41 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
         press(inst, "down" if dy > 0 else "up", 0.8)
     press(inst, "confirm", 2.2)          # 確認落點 → 環(此時單位已經真的移動到新位置)
 
-    # 2026-09-05:移動後、開環前,重新讀一次單位陣列確認真的落在敵人相鄰格。
-    # `dx,dy` 是**算出來**的落點,不是移動後的**實測**結果——mv 縮放(見上)只保證
-    # 「盡量靠近」,不保證真的相鄰;地形/佔位擋路也可能讓實際落點跟算出來的不同。
-    # 不做這一步的舊版直接嘗試攻擊,遊戲的 enableFlags[0] 正確 disable(doc13
-    # `0x18d8c`/`FUN_000173e7`),`select_ring()` 正確拒絕盲按,但呼叫端誤判成
-    # 「按鍵沒生效」——單位因此卡在原地、行動未生效,不是乾淨地待機結束回合。
+    # 2026-09-05:移動後、開環前,重新讀一次單位陣列,**只用來印診斷訊息**,
+    # 不再拿來決定要不要嘗試攻擊(見下方 2026-09-05 續七的更正)。
     if blind:
-        # blind 模式本來就跳過所有回讀驗證(doc13 §8/§9 的因果排除實驗用途),
-        # 這裡也不例外——維持舊行為,不额外插入一次 enter_debugger。
         still_adjacent = True
     else:
         _, post_snap = snapshot(inst, selector, count)
         post_units = post_snap[1:]           # [0] 是 {"cursor": (cx,cy)},無 "idx" 鍵
         post_me = next((u for u in post_units if u["idx"] == me["idx"]), None)
         still_adjacent = post_me is not None and adjacent_foe(post_me, post_units)
-
     if not still_adjacent:
-        print(f"    idx{me['idx']} 移動後仍不相鄰(算出的落點未必等於實際落點),"
-              f"改走待機,不嘗試攻擊")
-        if not select_ring(inst, RING_REST, "down", blind=blind):
-            press(inst, "cancel", 1.0)
-        else:
-            press(inst, "confirm", 3.0)
+        print(f"    idx{me['idx']} 用 adjacent_foe() 的簡化格距判定移動後不相鄰"
+              f"(不代表遊戲的真實射程判定 0x14818 也這樣認為,見下方註解),"
+              f"仍然照樣先試攻擊")
+
+    # 2026-09-05(續七,修正上面舊邏輯的錯誤):**不再用 `adjacent_foe()` 的結果
+    # 決定要不要嘗試攻擊**。舊版在這裡先判斷 `still_adjacent`,不相鄰就直接跳過
+    # 攻擊、改試 RING_REST——但 `adjacent_foe()` 只是格子曼哈頓距離的簡化近似,
+    # 不是遊戲真正的射程判定(`0x14818`,doc13 §12 已指出兩者可能不一致)。§17/§18
+    # 的 live 測試證實了這個落差:`adjacent_foe()` 判定不相鄰、程式碼因此跳過攻擊
+    # 直接試 REST,但環實際開啟後卻自動落在 slot 0(攻擊,enabled)——代表遊戲自己
+    # 的射程判定其實認為可以攻擊,是我們自己的簡化判定錯誤攔住了一次原本會成功的
+    # 攻擊。改成:一律先讓 `select_ring(RING_ATTACK)` 自己去問遊戲的 enable gate
+    # (`FUN_000173e7`/`enableFlags[0]`)——這才是唯一可信的權威來源,不是我們自己
+    # 算出來的距離。只有當遊戲自己也判定不能攻擊(`select_ring` 回 `False`)時,
+    # 才落到 RING_REST 待機分支。
+    if select_ring(inst, RING_ATTACK, "up", blind=blind):
+        press(inst, "confirm", 3.0)          # 執行 → 目標選擇
+        press(inst, "confirm", 3.0)          # 確認目標
         return
 
-    if not select_ring(inst, RING_ATTACK, "up", blind=blind):
+    print(f"    idx{me['idx']} 遊戲自己的 enable gate 判定不能攻擊,改走待機")
+    if not select_ring(inst, RING_REST, "down", blind=blind):
         press(inst, "cancel", 1.0)
         return
-    press(inst, "confirm", 3.0)          # 執行 → 目標選擇
-    press(inst, "confirm", 3.0)          # 確認目標
+    press(inst, "confirm", 3.0)
 
 
 def adjacent_foe(u: dict, units: list[dict]) -> bool:
