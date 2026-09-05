@@ -30,7 +30,8 @@ STR_END = 0xFFFF
 
 
 def load_font(path):
-    raw = open(path, "rb").read()
+    with open(path, "rb") as f:
+        raw = f.read()
     return raw, len(raw) // GLYPH_BYTES
 
 
