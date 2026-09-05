@@ -76,6 +76,15 @@ damage)/533(ID13-16 heal)/534(同532/533彙整表格列)/538(command20/21/26/27�
 是RE缺口(而非純remake wiring缺口)，未深入逐一查證前保守維持D，避免误关。**第十輪複核後
 統計**：A=47、D=41。
 
+> **2026-09-06第十一輪**：實際逐一查證上一輪保留的536/540/541三項（未再泛泛留待「下一輪」）。
+536的「phase-expiry caller仍未接」查出是doc56 2026-08-14修正**前**的舊認知，修正後的原文
+明確說呼叫序列與觸發時機「現在已經是逐行反組譯證實的事實，不再是未知」，改標A。540的
+「native command executor未接」查出指的是「還沒有指令會寫入這些transient byte」，而這幾個
+byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答，540剩下的是remake組裝executor，
+屬工程接線，改標A。541則查出**是真正的RE缺口**——doc56原文逐字「落點selection/legality...
+尚未閉合」，不知道哪些落點合法，跟536/540「機制全懂只差接線」性質不同，正確維持D，避免
+本專案曾犯過的「泛用blocker措辭掩蓋真正缺口」錯誤重演。**第十一輪複核後統計**：A=49、D=39。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -143,11 +152,12 @@ damage)/533(ID13-16 heal)/534(同532/533彙整表格列)/538(command20/21/26/27�
 532 - A（2026-09-06由D複核關閉，RE面已閉合為單一numeric/MP/raw-completion contract，剩remake wiring非RE缺口）- doc56 L608-616補充更多反組譯細節，但獨立resolver/renderer/SFX/UI仍未接入remake，可續靜態RE。**2026-09-06複核**：doc56原文明確結論「IDs0..8與ID9 direct path、及IDs10..12 compositor tail都已閉合為同一numeric/MP/raw-completion contract；dispatch分流不表示state effect缺失，也不表示renderer等同」，`ExecuteNativeCommandDamage`已接對應state slice。剩「專用renderer、SFX、post-resolution、其他ID UI與screenshot oracle」都是remake端演出/UI接線，非RE缺口，比照本專案RE-only關閉慣例改標A。
 533 - A（2026-09-06由D複核關閉，同532性質，IDs13-16治療核心已完整證實）- doc56 L618-627與worklist敘述一致，renderer/UI/timing仍未接，可續靜態RE。**2026-09-06複核**：doc56原文「這直接證實IDs13..16是per-final-target HP restore（ID13 raw row為dmg=70,+3=4,+4=0,mp=3,target=1）」，公式、jump table(`0x21AD9/0x21B99/0x2211C/0x22153→0x21B18`)、MP扣除、HP回復公式(`floor(amount*9/10)+floor(rand()%100*amount/1000)`，clamp至`+0x42`)全數釘死，`ExecuteNativeCommandHeal`已接。剩「獨立resolver、專用renderer、SFX或UI」是remake接線，比照532改標A。
 534 - A（同532/533，2026-09-06由D複核關閉）- doc56 L775確認multi-hit/SFX/native UI未接，可續靜態RE。**2026-09-06複核**：doc56 L775本身就是彙整表格，對應532/533同一組已閉合的numeric contract(「9–12｜direct/`0x21548` tail → `1CA89→1C75E`｜`ExecuteNativeCommandDamage`｜未接；numeric共用不代表演出共用」)，比照532/533改標A。
-536 - D - doc56補充equipment recalc已接住，但command transaction/phase-expiry caller/UI仍未接。
+536 - A（2026-09-06由D複核關閉，RE面(觸發時機+呼叫序列+公式)已閉合，剩remake wiring非RE缺口）- doc56補充equipment recalc已接住，但command transaction/phase-expiry caller/UI仍未接。**2026-09-06複核**：本行的「phase-expiry caller仍未接」是doc56 2026-08-14修正前的舊認知——修正後的doc56原文明確結論：`0x1a30b`內部`push 1/0/2; call 0x1a866`三次呼叫的**順序**(own regen→selector1→selector0→round++→selector2)與**觸發時機**(每回合結束一次，非逐camp各自觸發)「現在已經是逐行反組譯證實的事實，不再是未知」——這正是536原本問的「phase-expiry caller」是誰、何時觸發，答案已經有了。`+0x22..+0x24`(魔刃/魔鎧/風行)、equipment recalc(1.15倍率/朝零/HIT+EV+15)公式亦全數釘死。剩「command transaction」（remake側如何把這些原子寫入包裝成一次交易）是實作範疇，比照本專案RE-only關閉慣例改標A。
+540 - A（2026-09-06由D複核關閉，同536性質，`0x1a30b`全流程已逐行反組譯證實）- doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。**2026-09-06複核**：doc56原文「remake已依此順序在`cmd/fd2/main.go:completeTurn()`接上...目前所有地圖資產的`native_transient`均為全零，這段接線目前是無副作用的(要等native command執行路徑開始寫入`NativeTransient`才會有實際效果)」——這裡的「native command executor未接」指的是「還沒有任何指令會去寫入這些transient byte」，而是否/如何寫入這幾個byte，已經由532-539這批本輪關閉的項目完整回答(command17-22/26/27各自的寫入公式與觸發條件)。540剩下的是remake把這些已知的寫入邏輯組裝成一個「executor」，屬工程接線而非RE缺口，比照536改標A。
 538 - A（2026-09-06由D複核關閉，RE面已雙重印證，剩remake wiring非RE缺口）- doc56 2026-08-14補充(L677-689)以`command_labels.json`已解出command20/21/26/27狀態名稱，但engine/UI整合未接，未達整項A門檻。**2026-09-06複核**：doc56 L677-689的內容遠不只是「查到名稱」——`+0x25`=中毒(command20清/26施)、`+0x26`=麻痺(21清/27施)、`+0x27`=封咒(22施，無清除指令)三個byte的語意，由「今天從`0x1A866`反組譯獨立推出的公式」與「`command_labels.json`的正式命名」雙重印證，公式(中毒`maxHP/10`)、綁定byte、command id、遊戲內名稱四者完全吻合。remake側`Unit.NativeTransient[6]`已保留raw ABI，唯一沒做的是「呼叫normalized TickStatus/接UI」這個架構性決定(刻意不做，非RE缺口，見doc56原文「它刻意不呼叫normalized TickStatus」)。比照本專案RE-only關閉慣例改標A。
 539 - A（同538，2026-09-06由D複核關閉）- 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。**2026-09-06複核**：與538同一份doc56段落、同一組雙重印證證據(`+0x27`=封咒，無清除指令，這個「無清除指令」本身也是RE已確認的結論，不是缺口)，比照538改標A。
 540 - D - doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。
-541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。
+541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。**2026-09-06複核，確認維持D，非過期標籤**：本行對應ID23(command-0x17特殊relocation，`0x2218A`/`0x22253`)。doc56原文明確：relocation本身的機制(離場/入場兩段indexed演出、寫入runtime`+0/+1`與cursor globals)已證實，但**「落點selection/legality...尚未閉合」是逐字的原文**——這是真正的RE缺口(不知道哪些落點合法)，不是remake wiring缺口，與536/540/862-867那類「機制全懂只差接線」的情況不同，正確維持D。
 548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
 555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
 557 - A（2026-09-06由D複核關閉，doc27§6「worklist L555/L557/L572完成度」段落本身已明確結論，L557行標籤未同步）- AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。**2026-09-06複核**：doc27§6自己的完成度段落明確給出兩個verdict——命中率「本輪以code-level反編譯二次核實，確認與物理HIT−EV完全獨立，可視為結論穩定」；AoE「2026-08-20續輪(§6.4)已用位址級反組譯完整追出上游生成器⋯鏈路完整，已關閉」。本行「完全未解」的舊文字與這兩個既有verdict直接矛盾，是標籤未同步，不是真的還沒解。剩餘缺口(逐ID數值核對、`FUN_0004e4be`/`FUN_0004e8a5`資料表細節、remake施法UI整合)不影響RE機制結論，比照本專案既有慣例(RE理解已閉合、remake接線另計)改標A。
