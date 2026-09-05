@@ -266,6 +266,19 @@ compositor core」checkbox自己的「誠實範圍」都明確排除這幾項：
 `native_2c548.json`描述的細部資產索引(FDOTHER#56/TAI#3/DATO)本輪**未逐項查證**」。套用862的
 「已解」標籤到1017會over-claim，1017正確維持D；下一輪若要關閉1017，需要針對FIGANI立繪與這幾個
 具體資產索引各自重複一次862-867那套「live BPPM+三重靜態交叉核對」方法論，目前尚未進行。
+**2026-09-06續，嘗試用純靜態方法補位，發現doc35引用的位址本身可能已經跟541的0x4e555一樣
+失真**：doc35「finale `0x2c548` first party-cycle map」段落引用`0x29164`為FIGANI/TAI
+composite的呼叫點(「`0x29164`後先有`0x2b9a1`的20×1 BIOS-tick loop」)。本輪對現有
+`FD2Analysis3`直接decompile `0x29164`，得到的是`FUN_00028f65`(0x28f65-0x29219)——**一個
+逐8格inventory slot掃描、item count==8判斷、呼叫`0x1b722/0x1b8e7/0x1bb8c/0x1b750`的道具
+使用/移除函式**，跟FIGANI/party montage完全無關。這代表doc35這段引用的`0x29164`很可能也是
+舊版EXE位址平移問題(與541的`0x4e555`同一類陷阱)，doc35§9.1-9.14自己也已經記載過同一cluster
+內`0x2bce5`/`0x2c548`本身「窮盡三種獨立靜態方法後驗證為不可達」——`0x29164`這個衍生引用
+沒有被獨立複驗過。**結論**：1017-1020要真正關閉，不能沿用doc35裡任何具體位址(`0x2c548`/
+`0x29164`/`0x2b9a1`等)，需要比照本輪對class-change機制的做法——用`xref_to`/`call_scan`
+從已確認可信的錨點(例如已知的`0x524c6` phase-table carousel引擎或`internal/figani`模組
+描述的decoder特徵)重新定位，而不是相信任何舊文件裡的字面位址。這是一個規模與本輪
+class-change調查相當的獨立任務，不在本輪範圍內完成。
 1018 - D - 同1017之montage解碼blocker。**本行已過期，同上；2026-09-06比照1017維持D，理由同1017新增段落。**
 1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上；2026-09-06比照1017維持D。**
 1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上；2026-09-06比照1017維持D。**
