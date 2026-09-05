@@ -31960,6 +31960,14 @@
    "excerpt": "確認兩者是否經常不一致——如果確實常常不一致,修法在呼叫端(改用跟遊戲一致的射程/",
    "verdict": "benign",
    "note": "延續句(本輪剛新增)，未來式建議下一輪核對"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2313,
+   "excerpt_sha1": "179820a5c60bd6d9e695f2047f7286b5185a4d02",
+   "excerpt": "沒有這一輪自己新做 live 驗證去核對某一次具體失敗案例的 `enableFlags` 實際值**,但已經",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，明確保留用語「沒有這一輪自己新做live驗證」"
   }
  ]
 }
