@@ -5952,6 +5952,1318 @@
    "excerpt": "**都沒有重現崩潰**——工具本身邏輯正確(按鍵序列、環選擇驗證訊息都跟",
    "verdict": "benign",
    "note": "延續句，明確標示「沒有重現崩潰」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 11,
+   "excerpt_sha1": "9658a5aa9f19e89e8f279337bfa74fab551ed508",
+   "excerpt": "| 跳表 | linear | 用途 | dispatch 點(已驗證) |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 32,
+   "excerpt_sha1": "4c466f9863d9b9a470f22fe7213cfc932b2855a6",
+   "excerpt": "落入共用 raw 三值結果規則；玩家可見勝敗名稱須由逐關與外層路徑驗證。",
+   "verdict": "benign",
+   "note": "明確保留用語「須由逐關與外層路徑驗證」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 70,
+   "excerpt_sha1": "23511c197b42679ea7eca4d0ee2aefbf7c2ddd72",
+   "excerpt": "就是悠妮的固定record槽位——**但這個身份對應本節未獨立核實角色名稱**，只確認了「check record[1]",
+   "verdict": "benign",
+   "note": "明確保留用語「本節未獨立核實角色名稱」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 133,
+   "excerpt_sha1": "f7b60d7ef6c4b13d042146af700fdefbb0824ce8",
+   "excerpt": "> **2026-08-24 同日 live 驗證更新(doc58 續六十二)**：(b)項捷徑**已 live 測試成立**——把",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc58續六十二live測試"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 135,
+   "excerpt_sha1": "78e8b89cd158a0400ab2bda854d6b596043f4717",
+   "excerpt": "> 維持`record0`(索爾)存活，再透過真實UI「移到空地格→開系統選單環→END→確認YES結束本回合」",
+   "verdict": "benign",
+   "note": "延續句，描述真實UI操作路徑"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 137,
+   "excerpt_sha1": "a981d3eb5043c790130d79e9184520dd4d67f5a5",
+   "excerpt": "> 結局詩句文字→逐角色回顧卡)。同時補上「未驗證」的觸發時機證據：**純被動輪詢(idle等待",
+   "verdict": "benign",
+   "note": "延續句，補上未驗證觸發時機的證據"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 139,
+   "excerpt_sha1": "dd93bafa2abcad97e5169556ad7519b1b527d095",
+   "excerpt": "> 檢查，而是綁定在「End Turn確認YES」這個具體UI操作路徑上(嚴格說是行為證據，非直接在",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 148,
+   "excerpt_sha1": "edf92c6a7ab27a02c4df8e5a276d8e93e495f80e",
+   "excerpt": "> 修法,6章確認成功(ch03/04/07/15/19/20),唯獨ch11(幻之森林)——25個敵人(5×LV14獸人隊長+",
+   "verdict": "benign",
+   "note": "延續句，6章確認成功清單"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 158,
+   "excerpt_sha1": "a662c38bcffeed8a72c111231bcd4859ef474e8c",
+   "excerpt": "沿用§3.1已證實的`table_idx = 玩家章節-1`換算)原始4-byte little-endian值為",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§3.1"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 163,
+   "excerpt_sha1": "a741552e61be3c2d5f89f1ffac57b69d81844fc7",
+   "excerpt": "turn-wait+mass-kill確認直接拿到engine-level win。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 182,
+   "excerpt_sha1": "713c14fd6524f69d22b9ca315ceb8181a619a2cd",
+   "excerpt": "與已確認可用的ch03/ch04/ch07在機器碼層級完全相同,問題不在handler本體。**",
+   "verdict": "benign",
+   "note": "延續句，機器碼層級比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 201,
+   "excerpt_sha1": "64f3ea5cf453aca874a47900d922e6e4b099d888",
+   "excerpt": "完整的3回合等待+mass-kill+End-Turn確認YES(與ch03/04/07/15/19/20拿到即時win的同一套",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 205,
+   "excerpt_sha1": "22b995b8bfd5d0108a23e4169440fcddfac1d96e",
+   "excerpt": "**誠實結論**:這一輪能直接用記憶體讀值驗證的4個「上一層」假說(handler本身不同/掃描漏看",
+   "verdict": "benign",
+   "note": "誠實結論標題延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 215,
+   "excerpt_sha1": "7db0204f6e8f00609b9fc7e8f434938505fc8b57",
+   "excerpt": "**下一輪建議(比照doc58續六十二自己留下的建議)**:在確認「End Turn→YES」之前,對native",
+   "verdict": "benign",
+   "note": "未來式建議延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 234,
+   "excerpt_sha1": "0caabd8d9896e84f222be0d49204988731ddae7f",
+   "excerpt": "> `0178:001EFC03`逐byte吻合——驗證過這個delta公式本身沒有問題,只是先前手動加法算錯)。",
+   "verdict": "benign",
+   "note": "延續句，位址無0x前綴格式，delta公式驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 241,
+   "excerpt_sha1": "55b59c49708bdb9ec523e609952f719065a715f7",
+   "excerpt": "`BPM 0170 1BC5BE`後送出「YES」確認鍵,兩章**在完全相同的時間點(~1.1秒後)、完全相同的",
+   "verdict": "benign",
+   "note": "延續句，時間戳記比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 250,
+   "excerpt_sha1": "7a9440f7a5e6c9890a754fd4e9d52c02bfba6621",
+   "excerpt": "層級的正/負對照證據**——`arm_trace`在**打開指令環之前**就開始錄(涵蓋開環→選END→確認",
+   "verdict": "benign",
+   "note": "延續句，arm_trace方法描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 251,
+   "excerpt_sha1": "edde11c2ed4e319647d61edf37b85b7906fb5b5d",
+   "excerpt": "END→Yes/No提示→確認YES整段,不是只錄YES之後那一小段),YES確認完後手動暫停讀取",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 260,
+   "excerpt_sha1": "2a9defb0cb0eaa1f58184eb780dc637311af4002",
+   "excerpt": "確認END、`t≈2.5s`確認YES,兩章的時間戳記幾乎逐秒對齊),ch03命中1次、ch11命中0次——",
+   "verdict": "benign",
+   "note": "延續句，時間戳記對齊發現"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 294,
+   "excerpt_sha1": "248897b82d64ffe672a4b9e7a16f4536de0ce112",
+   "excerpt": "既有欄位表未收錄`+7`/`+0x1f`),只確認它們是這條路徑上**第三層**的額外必要條件。",
+   "verdict": "benign",
+   "note": "延續句，offset低於門檻"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 308,
+   "excerpt_sha1": "c91966230c70dde34580fce4ca5c008d06584c93",
+   "excerpt": "執行`SMV`寫入`0x01`並readback驗證成功(`[0,0,...]`→`[1,1,...,1]`),**撐過完整3回合",
+   "verdict": "benign",
+   "note": "延續句，SMV寫入readback驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 317,
+   "excerpt_sha1": "e89f2fe91e8e9c1994a64fe8132673e3b48b46d9",
+   "excerpt": "(④)。但**根因仍未關閉**——③找到的三層條件裡,ch03/ch11實際在哪一層分道揚鑣仍未驗證",
+   "verdict": "benign",
+   "note": "明確保留用語「根因仍未關閉」「仍未驗證」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 334,
+   "excerpt_sha1": "9eb83770deb7e6afe75d7f91ed01010858c63bc9",
+   "excerpt": "觸發的`BPM`),live觀察「確認END」之後游標座標的實際step序列,直接比對ch03/ch11",
+   "verdict": "benign",
+   "note": "延續句，live觀察方法"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 345,
+   "excerpt_sha1": "fcda3fdc4978fb102a31fdfbf2f9f24719f121d3",
+   "excerpt": "### 3.2.2 2026-08-28 第5輪(代號`ch11cond`):根因定案——三層 gate 中確認是①phase",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 362,
+   "excerpt_sha1": "18d4f86cb89ae16332ff26f5912dff1ce131f403",
+   "excerpt": "確認`BPPM`的「第一次RUN一定觸發baseline假訊號、第二次RUN起才是真變化」",
+   "verdict": "benign",
+   "note": "延續句，BPPM行為確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 391,
+   "excerpt_sha1": "e552e751761431a4f7cb230dbf095e8e3a0cca29",
+   "excerpt": "| 章節 | 確認END前(phase_pre) | 確認YES後,~0.2s~20s(13個取樣點,~5-37秒實際經過時間) |",
+   "verdict": "benign",
+   "note": "表格標題列"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 396,
+   "excerpt_sha1": "d7a60a84ffce3bcc6edb7d66ed044c0da7a8947a",
+   "excerpt": "兩章在**確認END之前**的phase都是`0x1c`(基準狀態相同),但**確認YES這個",
+   "verdict": "benign",
+   "note": "延續句，phase值比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 404,
+   "excerpt_sha1": "35d1108b6f06027a649389f2ed45e1e4a39b43d1",
+   "excerpt": "End-Turn確認YES之後停在`0x50`而不是`0x39`/`0x1c`,導致三層條件在**第一層**",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 407,
+   "excerpt_sha1": "f9a78f203f95bbd8ce44c31187d2b9c516e3a917",
+   "excerpt": "重複驗證的runtime狀態值差異,不再是「窄化到候選之一」的推論層級。",
+   "verdict": "benign",
+   "note": "延續句，狀態值差異結論"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 432,
+   "excerpt_sha1": "4f4aaf925a0844e7dc2e17633801a63fadda1514",
+   "excerpt": "寫入端與轉換條件、進而修正或確認`fd2_chapter_sweep.py`能否用軟性",
+   "verdict": "benign",
+   "note": "延續句，修正確認方法"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 436,
+   "excerpt_sha1": "69bca715d9643f3158ba2bc697957ae51f289842",
+   "excerpt": "更簡單的解法)。相對於本專案已經從1/30章確認推進到17+/30章的整體進度,",
+   "verdict": "benign",
+   "note": "延續句，進度統計"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 561,
+   "excerpt_sha1": "ac2a9d44733d044c41a7fba53c3fd7ea44f4a2ce",
+   "excerpt": "但這已經超出「camp==1記錄數量差異解釋卡住」這個具體、可驗證假說的",
+   "verdict": "benign",
+   "note": "明確保留用語「已超出...範圍」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 603,
+   "excerpt_sha1": "f2821c8f546e689be8341b7d94c033f3b206bdac",
+   "excerpt": "(WIN)——這是本專案對ch11這個謎團7輪以來第一次拿到真正的引擎級勝利確認**,而且只開了",
+   "verdict": "benign",
+   "note": "延續句，引擎級勝利確認描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 612,
+   "excerpt_sha1": "7858491e06335da7b8ae68c29b2823fdc3e0fe37",
+   "excerpt": "新獨立instance `ch11chest`,復用`ch11bp`輪已驗證的ch11 patched.SAV。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照ch11bp輪"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 633,
+   "excerpt_sha1": "41252d71244c1626e515d0be0a918c79524d79d8",
+   "excerpt": "- **修復**:每一步(cycle選人、移動、確認)之前都先screenshot、跑既有",
+   "verdict": "benign",
+   "note": "延續句，修復方法描述(截圖確認)"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 637,
+   "excerpt_sha1": "c51c18593bcb5319c84d947e26bc0b73b75b1dcf",
+   "excerpt": "3. **真實移動+開箱(全程screenshot佐證,非只靠記憶體讀值)**:HUD-gate修復後,Esc循環",
+   "verdict": "benign",
+   "note": "延續句，全程screenshot佐證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 639,
+   "excerpt_sha1": "d4695e25afd3bf4f099c23217ce6e2a02dbcadee",
+   "excerpt": "確認是選取狀態而非站在單位上)→`Down`×2把游標移到(16,15)(逐步screenshot,清楚看到",
+   "verdict": "benign",
+   "note": "延續句，逐步screenshot"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 640,
+   "excerpt_sha1": "5aeb609317df9b8ec092461e962e2a5e9178796b",
+   "excerpt": "螢幕上寶箱圖示疊在目標格上)→`Enter`確認移動→指令環在寶箱格原地彈開(HUD變成",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 641,
+   "excerpt_sha1": "33423da5c0edae09e1b08d346e9fac0e9a70935f",
+   "excerpt": "「862 A+05 D+00」,真實單位HP)→選「待機」(下方向,doc58 Bug5已證實的環位對應)→",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc58 Bug5"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 645,
+   "excerpt_sha1": "d89067c924221b0b93b1aeb411d687e492bc601b",
+   "excerpt": "確認對話框、`62_final.png`開箱結果文字)依序完整佐證整條真實UI互動鏈,不是單一",
+   "verdict": "benign",
+   "note": "延續句，截圖佐證UI互動鏈"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 675,
+   "excerpt_sha1": "afb47353712e69baac93a091e28727e818cb9146",
+   "excerpt": "「開寶箱本身跟勝利無關」——本輪證實**真正**開寶箱(即使只開1個、且不是round4鎖定的",
+   "verdict": "benign",
+   "note": "延續句，本輪證實真正開寶箱"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 681,
+   "excerpt_sha1": "d9972e99a7bda938e58cfcea1fd5fa926f75d9fd",
+   "excerpt": "SAV writer gate完全一致(ch03/04/07/15/19/20等其他6章engine-level win確認後同樣沒有",
+   "verdict": "benign",
+   "note": "延續句，其他6章一致性比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 694,
+   "excerpt_sha1": "fadf47b038df9efd757ed031444f80d3f871a18b",
+   "excerpt": "> 都完成,但②的live驗證意外地讓①的「對照組」延伸出一個全新、更精確的因果模型,",
+   "verdict": "benign",
+   "note": "延續句，因果模型描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 703,
+   "excerpt_sha1": "ab554e276406a863608a0fdb446a9ee2c20b63de",
+   "excerpt": "新獨立harness instance,復用round7同一份`ch11bp`輪patched.SAV,setup階段逐字複製",
+   "verdict": "benign",
+   "note": "延續句，harness instance設置描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 709,
+   "excerpt_sha1": "7febfb4c9de2a9462e1020e22113be8ecdb144d1",
+   "excerpt": "結果:25個敵人mass-kill後rescan確認全部死亡(`no living enemies left to",
+   "verdict": "benign",
+   "note": "延續句，mass-kill rescan結果"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 712,
+   "excerpt_sha1": "324a2974275a34d521b8d2f3c9553c3b3801b1e7",
+   "excerpt": "沒有意外側效應開到寶箱)。**這確認round7的win不是「round7自動化比round1-6更可靠」",
+   "verdict": "benign",
+   "note": "延續句，否定式發現"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 724,
+   "excerpt_sha1": "097c71c3037f3e6ea4086ae45c2a15843b9e88cc",
+   "excerpt": "互動鏈(\"選人→移動→確認\"),則必然包含至少一次「游標停在一個活著單位身上按",
+   "verdict": "benign",
+   "note": "延續句，推論分析"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 725,
+   "excerpt_sha1": "3d13159684cd6d3f219617571568bc2ab595411e",
+   "excerpt": "Enter」(選取那個單位的當下)。這代表round7的win有兩個互相纏繞、從未被拆開驗證",
+   "verdict": "benign",
+   "note": "延續句，「從未被拆開驗證」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 729,
+   "excerpt_sha1": "8ce55d0e62f20f2f13e44c607ec72be4df54b7e0",
+   "excerpt": "選取→移動→確認待機的完全相同UI互動鏈,**但刻意把移動目標從寶箱格(16,15)",
+   "verdict": "benign",
+   "note": "延續句，測試設計描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 730,
+   "excerpt_sha1": "08645e569684092fa344e408cdc6bc09b0adf9e2",
+   "excerpt": "換成一個相鄰的空地格**(游標實測顯示這張地圖的方向鍵有時一次跳2格,`Up`從",
+   "verdict": "benign",
+   "note": "延續句，游標實測發現"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 732,
+   "excerpt_sha1": "6ec4ae173b32f4b006761afebb6ca5e05e18915a",
+   "excerpt": "確認(16,11)不在map10已知的12個寶箱座標清單裡),在該空地格上選「待機」確認",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 743,
+   "excerpt_sha1": "8b72583c550ede29df9da7e66e7f7c3408013c35",
+   "excerpt": "必要條件(選取→移動→確認待機,寶箱只是移動的目的地剛好是一個寶箱格),但",
+   "verdict": "benign",
+   "note": "延續句，必要條件分析"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 760,
+   "excerpt_sha1": "288198cbe9d4020275ce5dd0b2b47c1f82f7bd1f",
+   "excerpt": "的殘餘開放問題——但作為一個**可重複驗證、已排除寶箱這個混淆變因**的",
+   "verdict": "benign",
+   "note": "延續句，可重複驗證描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 762,
+   "excerpt_sha1": "ee325595145974b4eeff12be14ecf2160c0555e6",
+   "excerpt": "Select→Move→Confirm(待機)」已經足夠precise且已被本輪獨立驗證過一次",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 775,
+   "excerpt_sha1": "2975aef9914fe37f989bf5c4dcea66e1b627536b",
+   "excerpt": "其餘已確認engine-level win章節完全相同的模式(doc25§9.1既有SAV writer",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc25§9.1"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 797,
+   "excerpt_sha1": "46def836b0f3aa24d764877ab0e0cfcc10b810a5",
+   "excerpt": "的live驗證(比round7多讀20 bytes,理論上足以涵蓋`event_id`到15甚至以上的",
+   "verdict": "benign",
+   "note": "延續句，live驗證讀取範圍"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 814,
+   "excerpt_sha1": "14a56abeaf527e9552b25edfd4b24ef30837419e",
+   "excerpt": "這個精確、可重複驗證、已寫進自動化工具的necessary condition,再往下追",
+   "verdict": "benign",
+   "note": "延續句，必要條件描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 838,
+   "excerpt_sha1": "1a775239fddba4568635151d918b046eed0230f4",
+   "excerpt": "> post 已證實含 dialog、acting、sync、JOIN 等動作，必須按 caller CFG 保存。",
+   "verdict": "benign",
+   "note": "延續句，交叉參照handler CFG"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 954,
+   "excerpt_sha1": "66534698629c82bc0a5972a4bba9585bbc59da97",
+   "excerpt": "`row+5` 在直接指令中只證實是供三個 caller 比對的 raw camp byte；不能僅依",
+   "verdict": "benign",
+   "note": "明確保留用語「只證實是...不能僅依」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 974,
+   "excerpt_sha1": "8e70553914b6f627155bd75ac536e0eccd43f3fe",
+   "excerpt": "palette 與 redraw owner 閉合前仍不能降成一般 `spawn_group`。輸出",
+   "verdict": "benign",
+   "note": "明確保留用語「閉合前仍不能降成」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1060,
+   "excerpt_sha1": "84650e725cf9b601c68381492a4675faa8825e08",
+   "excerpt": "doc26 單位結構表已標注「`+0x34` low nibble 的 dispatch 已閉合」的那個",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc26單位結構表"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1062,
+   "excerpt_sha1": "d4a91eb4d0a87860724e20875e85e983b10d779b",
+   "excerpt": "本身已閉合，未把它的 `case 5` 分支交叉核對進本節的 event82 producer",
+   "verdict": "benign",
+   "note": "明確保留用語「未把它的case5分支交叉核對進」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1117,
+   "excerpt_sha1": "3bf1a6a2fae70db1a0e8d5fb114713635dcee717",
+   "excerpt": "均不可達 payload82」的結論，但按規範不升級為「證實死碼」的滿分結論，",
+   "verdict": "benign",
+   "note": "明確保留用語「不升級為證實死碼的滿分結論」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1348,
+   "excerpt_sha1": "82f0c4701068930d713ef88b4dff489fb5baffa0",
+   "excerpt": "- **驗證:原版全 34 張地圖沒有一張窄於視窗**(`extracted/maps/maps_metadata.json` 全量掃描:",
+   "verdict": "benign",
+   "note": "延續句，全量掃描驗證，引用maps_metadata.json"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1355,
+   "excerpt_sha1": "1e703eedc5bcde2de59eba60a530913336687d09",
+   "excerpt": "黑色純粹是視覺乾淨的預設,非「原版就是這樣填」)。已截圖確認(`extracted/remake_shots/map0_edge_test.png`)",
+   "verdict": "benign",
+   "note": "延續句，截圖確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1395,
+   "excerpt_sha1": "79343fc6d898cb1a875d534a010111900995dc80",
+   "excerpt": "> infrastructure.md`)重新走一次「town hub 出口→YES確認」的 live 路徑",
+   "verdict": "benign",
+   "note": "延續句，live路徑重測描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1404,
+   "excerpt_sha1": "cada19f19899f33fb19dee09f443f5649ae602cf",
+   "excerpt": "> 應視為待覆核，不要當成已定案的 live-verified 事實直接引用。完整過程",
+   "verdict": "benign",
+   "note": "明確保留用語「應視為待覆核,不要當成已定案」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1412,
+   "excerpt_sha1": "4c09445c651e3e9bf0f5706dc7b7e97915494cbc",
+   "excerpt": "> `91-worklist.md` UI-VIS-LOAD 記載的「tavernE2」輪已 live 驗證會真的",
+   "verdict": "benign",
+   "note": "延續句，交叉參照91-worklist.md"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1414,
+   "excerpt_sha1": "a6fc3371311383eec56c8cb7bea24852b604b01b",
+   "excerpt": "> 儲存完畢！」全程，事後用`FD2.SAV`的`stat`確認`mtime`從harness",
+   "verdict": "benign",
+   "note": "延續句，存檔mtime確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1429,
+   "excerpt_sha1": "1e2f21ac6e128dd2fefee51c7d72fc95b57507d4",
+   "excerpt": ">   (=**22987 十進位，與 harness `FD2.SAV`實際檔案大小逐位元組相同**)",
+   "verdict": "benign",
+   "note": "延續句，檔案大小逐位元組比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1442,
+   "excerpt_sha1": "8531af8601f7b2de30c92b1fc77a3bf4834be6c4",
+   "excerpt": ">   對函式起點做`bytes`批次掃描逐位元組確認`b4 40`opcode)；另外找到兩個",
+   "verdict": "benign",
+   "note": "延續句，opcode確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1457,
+   "excerpt_sha1": "f51a09ef24acef53497459d924da165a80b99718",
+   "excerpt": ">   都在本輪 `LOGC` 追蹤的 9960 個唯一命中位址集合裡被直接確認執行過，",
+   "verdict": "benign",
+   "note": "延續句，LOGC追蹤命中集合"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1463,
+   "excerpt_sha1": "2a6ea40547e4bcfcb10f4c46ea8bfcb98fc0510b",
+   "excerpt": ">   另一條從未被 live 觸發過的死碼，**仍未證實**，需要另一輪針對",
+   "verdict": "benign",
+   "note": "明確保留用語「仍未證實」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1466,
+   "excerpt_sha1": "ae175817227ea530ba6bd0be986aa788e92e4831",
+   "excerpt": ">   [`tavern-icon1-save-writer-logc-trace-confirmed.png`](../figures/tavern-icon1-save-writer-logc-trace-confirmed.png)。",
+   "verdict": "benign",
+   "note": "引用具體截圖檔案佐證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1480,
+   "excerpt_sha1": "8e86f1cad2a62ef3506c42d9c1a46d03d0520f0d",
+   "excerpt": "> 存檔閘門完全無關的位址**，不是真的驗證了「城鎮 hub 出口流程沒有走存檔",
+   "verdict": "benign",
+   "note": "延續句，否定式發現"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1483,
+   "excerpt_sha1": "99896e9e65dc1c00d4cc4cfd1cc3123e1f687e19",
+   "excerpt": "> **修正後的靜態證據**(`xref_to` 與 `call_scan` 兩種獨立方法交叉確認，",
+   "verdict": "benign",
+   "note": "延續句，兩獨立方法交叉確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1517,
+   "excerpt_sha1": "174fc700b06a2899f6a09614fa7e8098a9aec9bf",
+   "excerpt": ">   個唯一位址集合裡直接確認)，證實這條 live 路徑確實會執行到修正後的",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1563,
+   "excerpt_sha1": "665bb43e75599fa112f228c1b2d29653785dc007",
+   "excerpt": "> 整備限定路徑連 dispatcher 本身都沒進去過。**方法論已交叉驗證無誤**：",
+   "verdict": "benign",
+   "note": "延續句，方法論已交叉驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1576,
+   "excerpt_sha1": "5837cdf52e098ec0dcd07d4375b7d39e61357a97",
+   "excerpt": "> raw scancode 分析選出的兩個候選「確認」鍵)都只會把選取重置回全空，",
+   "verdict": "benign",
+   "note": "延續句，候選鍵分析"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1580,
+   "excerpt_sha1": "f522d04e8784b6adeadc328a36f2885ab6a875f5",
+   "excerpt": "> record0 填補空位)以求選滿，但這樣改完後遊戲在 YES 確認後直接靜默彈回",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1583,
+   "excerpt_sha1": "51146a4d08746015b64bf1993b4251f18e8d20f6",
+   "excerpt": "> 沒有能夠證實或推翻 writer 在整備限定流程真的會被呼叫；反而讓本節「Yes",
+   "verdict": "benign",
+   "note": "明確保留用語「沒有能夠證實或推翻」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1593,
+   "excerpt_sha1": "03dc4343eea325b8119897a74315aaa92989a321",
+   "excerpt": "> **2026-08-26 續輪：deploy cap「19 vs 13」矛盾——確認不是誤讀，找到既有的",
+   "verdict": "benign",
+   "note": "延續句，矛盾排查"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1594,
+   "excerpt_sha1": "626dd9b0f9b6411e3c1f93e2d4a7264e33ece1a0",
+   "excerpt": "> 獨立驗證，19/15 門檻與「選滿才能過」都是真的，缺口在於測試存檔的",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1599,
+   "excerpt_sha1": "95a68ced839902e0f18b60ba69e8a80deb20270c",
+   "excerpt": "> 八個位址做 `function_bounds`：**全部回傳 `in_function:false`**，逐一確認",
+   "verdict": "benign",
+   "note": "延續句，function_bounds查詢結果"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1612,
+   "excerpt_sha1": "d9c95a89ee3a9bcda0c7b453d7b4be1a87cfe4c0",
+   "excerpt": "> 最終確認三個對回答部署上限最關鍵的位址本輪未能精確定位，詳細記錄與",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未能精確定位」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1632,
+   "excerpt_sha1": "8c8d555ead66af4ad14e0872293c5384b6ed605e",
+   "excerpt": ">   相等才真正離開）——**確認任務描述的解法(b)不成立**：這個畫面沒有",
+   "verdict": "benign",
+   "note": "延續句，任務描述確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1633,
+   "excerpt_sha1": "18330b6482515cca1161e73c1df1d4e9ba5f0bc4",
+   "excerpt": ">   「選不滿也能用別的鍵確認離開」的分支，必須精確湊滿 15／19 才會走到",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1635,
+   "excerpt_sha1": "145de4c8bd24c53d5df37d2cb44274b9de916645",
+   "excerpt": ">   「整批重置回 15/15」分支，不是被誤讀的確認鍵。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1636,
+   "excerpt_sha1": "00af5ff5664c9d9d3b13e0789eeb0621c30cf0b6",
+   "excerpt": "> - **這輪也用即時 single-step 測試直接證實**（不是猜測）：Enter/方向鍵的",
+   "verdict": "benign",
+   "note": "延續句，即時single-step測試"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1643,
+   "excerpt_sha1": "64198d83b5eb699666c48c5af75eb58fdfd28539",
+   "excerpt": "> 本身是對的，不是該用更低值的誤讀。(b) 在指令層級確認不成立——`JNZ` 迴圈",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1644,
+   "excerpt_sha1": "6ef009ffa7d65292d4852d2c5f1bd3e3b515ddbb",
+   "excerpt": "> 要求精確相等，沒有「選不滿也能確認」的隱藏路徑。**(c) 成立，且已有交叉",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1666,
+   "excerpt_sha1": "1d5a18abcb8884705cc1d69139187f8a23689ab2",
+   "excerpt": "> 區分**，doc58 本身從未在更大的 roster 上重測過。這是本輪認為唯一還沒閉合、",
+   "verdict": "benign",
+   "note": "明確保留用語「doc58本身從未...重測過」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1668,
+   "excerpt_sha1": "d3f51e48cfb6d1b2713ece0953bf59a478f273d3",
+   "excerpt": "> 實際能否選超過 12 個）分出勝負的具體問題，本輪未嘗試 live 驗證（見",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未嘗試live驗證」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1672,
+   "excerpt_sha1": "fe6fa91fa50ecf1f6dee5ad0918a2d89dd47b23a",
+   "excerpt": "> 「硬編碼 12」假說已被推翻，選滿確認流程已 live 驗證關閉**。用",
+   "verdict": "benign",
+   "note": "延續句，假說被推翻+已live驗證關閉"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1673,
+   "excerpt_sha1": "fe11dc32c7e355404aa957658de07f50db4f37c3",
+   "excerpt": "> `tools/fd2save.py` 新增的 `build_join_record`/`append_roster_members`（逐位元組",
+   "verdict": "benign",
+   "note": "延續句，交叉參照fd2save.py"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1681,
+   "excerpt_sha1": "9ceb309e1c85c2a5cb8fe57c57cb3ba6b193125e",
+   "excerpt": "> `roster_count-1=25`≠12），`roster_count-1` 動態上限假說證實成立，doc58",
+   "verdict": "benign",
+   "note": "延續句，假說成立確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1685,
+   "excerpt_sha1": "91569243172ab664350984cec813116b027103cd",
+   "excerpt": "> 確認框**，按 YES 正常進戰前過場對白（索爾「這裏就是黃金城嗎？」），沒有",
+   "verdict": "benign",
+   "note": "延續句，測試流程描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1693,
+   "excerpt_sha1": "d4bc618f9396d850e48ece241b5b110f6c1ec295",
+   "excerpt": "> 寫入（slot1 變成 slot0 的逐位元組複製品），但遊戲隨後回到標題 LOAD 選單",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1698,
+   "excerpt_sha1": "f4534391b4b305ff0100022a11510df89c3c20f9",
+   "excerpt": "> 序列重新驗證。完整過程、截圖與 `test_fd2save.py` 新增的 known-answer",
+   "verdict": "benign",
+   "note": "延續句，交叉參照test_fd2save.py"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1705,
+   "excerpt_sha1": "014a7ce2df943ea13121e7b785aabad98ac9fa4d",
+   "excerpt": "> 啟動前用 `tmux ls`/`ps` 確認無殘留 instance，結束後 teardown 乾淨）：",
+   "verdict": "benign",
+   "note": "延續句，測試環境清理描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1712,
+   "excerpt_sha1": "3a0738ffb7523bffbfdde6f67497e1b7aef50bdc",
+   "excerpt": "> 確認狀態（title→`Down`→`Return`（開 LOAD）→`Return`（選 slot0，清單顯示",
+   "verdict": "benign",
+   "note": "延續句，測試流程描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1723,
+   "excerpt_sha1": "55704f8045760c8063c3425bd2d3404a7e2cc8cb",
+   "excerpt": ">   savewriter 輪已記錄的 tavern icon1 writer 讀取序列逐位元組相同結構",
+   "verdict": "benign",
+   "note": "延續句，交叉參照savewriter輪"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1732,
+   "excerpt_sha1": "5dfea9841e04a9fa7edc31d8ab2444b6b3e17b7d",
+   "excerpt": ">   `rostertest`/`camproute`/`writerfire` 歷輪一致，再次確認舊假設在這條路徑",
+   "verdict": "benign",
+   "note": "延續句，歷輪一致性確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1741,
+   "excerpt_sha1": "91ab7d5d7c271c7855b640b615a4991557eb21ed",
+   "excerpt": ">   定位、先前未記錄的第二條路徑）**。本輪 LOGC 命中集合直接證實走的是",
+   "verdict": "benign",
+   "note": "延續句，LOGC命中集合證實"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1764,
+   "excerpt_sha1": "a41a5ce538ae993f34d62702a63bd7180a4682fc",
+   "excerpt": ">   選擇**才會執行到——本輪刻意只送一次 Yes 確認鍵、不再送任何後續鍵，所以",
+   "verdict": "benign",
+   "note": "延續句，按鍵序列描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1767,
+   "excerpt_sha1": "404e8d6c44c6f6a6a53b29cbe18df44454aff885",
+   "excerpt": ">   上一輪按鍵序列混雜多次嘗試，很可能除了選 Yes 之外還額外按了一次確認鍵",
+   "verdict": "benign",
+   "note": "延續句，推測前輪按鍵混雜"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1779,
+   "excerpt_sha1": "56992da919aabb6924741ae3b6db32dd7dfd337f",
+   "excerpt": "> 補測的下一步：在這個選擇器上再按一次 `Return` 選 slot，確認出現「記錄",
+   "verdict": "benign",
+   "note": "未來式補測計畫"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1781,
+   "excerpt_sha1": "0b054397d502ecba64063bfb79a30be355aabd42",
+   "excerpt": "> `rostertest` 輪已用同樣乾淨方法論確認的結論不變：直接進選人畫面，全程對",
+   "verdict": "benign",
+   "note": "延續句，交叉參照rostertest輪"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1786,
+   "excerpt_sha1": "e718b3fc154e3d27f2df9f098a016a4889e7c6b7",
+   "excerpt": "> Return 選 slot」的補測做掉，camp-exit 存檔路徑 end-to-end 確認會真的寫入",
+   "verdict": "benign",
+   "note": "延續句，補測計畫描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1809,
+   "excerpt_sha1": "69d2a582d102b5b9d1fc5955b7a0b94798e88250",
+   "excerpt": ">   確認文字；追加一次 `Down` 證實游標確實移動到項目2（遊戲是活的，不是當",
+   "verdict": "benign",
+   "note": "延續句，游標移動確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1810,
+   "excerpt_sha1": "d00f76a74511b03ca7f8727aa43fe39f405ab7bc",
+   "excerpt": ">   機）。這與 `savewriter` 輪 tavern icon1 路徑「選 slot 後有顯示確認文字」",
+   "verdict": "benign",
+   "note": "延續句，交叉參照savewriter輪"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1814,
+   "excerpt_sha1": "8b9d0354178f6124c1935ba6cf9bac812b5c82a0",
+   "excerpt": ">   確定），留給下一輪視需要再查其成因（例如確認文字的繪製是否是呼叫端",
+   "verdict": "benign",
+   "note": "未來式待查項"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1826,
+   "excerpt_sha1": "ea3fed40817bdc902d91e06f8df6973fc4d05860",
+   "excerpt": "> 戰況嗎？」Yes 分支的目標槽選擇器，選定槽位並確認後，**確實會完成一次真實",
+   "verdict": "benign",
+   "note": "延續句，槽位選擇確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1830,
+   "excerpt_sha1": "1f0bfa2aa67761bb86e31d8c213395fc7190ddc9",
+   "excerpt": "> 本輪用單一乾淨動作＋LOGC ground-truth 直接連續證實。截圖見",
+   "verdict": "benign",
+   "note": "延續句，LOGC ground-truth驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1834,
+   "excerpt_sha1": "b6d2d5dd055306a2ed26a5c492b7d907d31f0a4f",
+   "excerpt": "> `slotpick` 輪留下的開放尾巴）：確認是程式碼層級、刻意的設計差異，不是 trace 提早結束或",
+   "verdict": "benign",
+   "note": "延續句，程式碼層級刻意差異確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1895,
+   "excerpt_sha1": "a9af410942cc905f1292130b874a4e9ff57b6164",
+   "excerpt": "> 選人畫面或戰前過場，遊戲流程立刻往下走)的存檔**不顯示**確認彈窗，而「城鎮流程」裡玩家",
+   "verdict": "benign",
+   "note": "延續句，存檔行為比對"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1904,
+   "excerpt_sha1": "2fd744c483fe827ed7fa6bcab5cdaef26e596593",
+   "excerpt": "> 重測而改變結論——`slotpick` 輪觀察到的「camp-exit 路徑沒有確認文字」本身**完全正確**，",
+   "verdict": "benign",
+   "note": "延續句，先前觀察結論確認正確"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1933,
+   "excerpt_sha1": "88698d9320bfe224250a2c6f6e276cf78eb96033",
+   "excerpt": "或整備——回讀路徑本身也不繞過「戰間」邊界，證實存檔內容本來就只代表",
+   "verdict": "benign",
+   "note": "延續句，存檔內容邊界確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1938,
+   "excerpt_sha1": "2a9867e51afa3b0d950c9143418c0be8062f9b52",
+   "excerpt": "讓玩家能在戰鬥中或任何畫面觸發存檔的 patch；這反向證實原版預設規則正是",
+   "verdict": "benign",
+   "note": "延續句，反向驗證原版預設規則"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1988,
+   "excerpt_sha1": "80fe223a9c22f499679b6f1dd3c3ea558529dc00",
+   "excerpt": "沿用`.wsl_build/branchcheck/ch02_patched.SAV`(既有、已驗證 chapter-jump 到 ch02 的存檔)，",
+   "verdict": "benign",
+   "note": "延續句，交叉參照既有已驗證存檔"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1991,
+   "excerpt_sha1": "ce1e778aabed05fdb3acbf8dbac7119eb47942e8",
+   "excerpt": "一致。`Right`×2 依既有文件的`0→4→3→2→1→0`cycle 序列到 selection3(道具店)，`Return`確認",
+   "verdict": "benign",
+   "note": "延續句，cycle序列確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 1996,
+   "excerpt_sha1": "79d7ef83c383b3e4e64463458e07916bf0e673e3",
+   "excerpt": "`Return`進入確認：service0=藥草等購入清單(`+HP040 $00010`)、service1=索爾/亞雷斯/哈諾/",
+   "verdict": "benign",
+   "note": "延續句，商店介面確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2003,
+   "excerpt_sha1": "a993a796d01f3cbdfaa8925cc44f17ab305e098f",
+   "excerpt": "完全沒有變化**，證實不只是 UI 沒有存檔選項，磁碟上也確實沒有任何寫入。",
+   "verdict": "benign",
+   "note": "延續句，磁碟寫入確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2006,
+   "excerpt_sha1": "609da0961bbbf457540a7974a8cf2bada311d813",
+   "excerpt": "畫面/label 正確切換，證實 hub 選單本身在這輪操作全程保持正常可控狀態，不是操作卡死或",
+   "verdict": "benign",
+   "note": "延續句，hub選單狀態確認"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2068,
+   "excerpt_sha1": "1bf34e69c1a12ca4738e8a7f14e910fc30e54faf",
+   "excerpt": "regression `TestMap25NativeEventTreasureUsesEditableEvent58Rule` 驗證",
+   "verdict": "benign",
+   "note": "延續句，交叉參照remake regression test"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2092,
+   "excerpt_sha1": "bb4a3a2a3a2977d0aa7e46d40eac275becc39972",
+   "excerpt": "重新初始化 32 bytes」的事實提升成可重複驗證的回歸，防止未來有人為了",
+   "verdict": "benign",
+   "note": "延續句，回歸測試描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2115,
+   "excerpt_sha1": "c60ced425193a5ea72fbf0e151444cb9093960cb",
+   "excerpt": "**仍未閉合的是「哪一章、哪個 handler 呼叫哪個 join_id」這個逐章 ID/條件表**——",
+   "verdict": "benign",
+   "note": "明確保留用語「仍未閉合的是...」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2140,
+   "excerpt_sha1": "7567589e3129e6606e4814bf270d0a4d6127b6bb",
+   "excerpt": "> §6.1.1／本文件其他小節已個別閉合 58／59／60／61／63／82（見上方各節）；本節對其餘",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§6.1.1"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2141,
+   "excerpt_sha1": "2edd9efbc5551fd8d466aaf389b2bce6cc441deb",
+   "excerpt": "> 26 個 handler（62／64..81／83..89，扣掉已閉合的 6 個）做第一輪嘗試，方法與誠實的",
+   "verdict": "benign",
+   "note": "延續句，第一輪嘗試描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2183,
+   "excerpt_sha1": "85550f8805487e9d7555a60e0f0f57aaf7420738",
+   "excerpt": "與 event84 第 4 次觸發前分支的最後兩行幾乎逐字相同——很可能 90-entry 跳表裡這幾個",
+   "verdict": "benign",
+   "note": "延續句，推論觀察"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2185,
+   "excerpt_sha1": "695865838aff9e9bc785c68f87cf11ee5e3931ee",
+   "excerpt": "觀察推論，**未經 basic-block walk 或 xref 交叉確認，不升級為結論**。",
+   "verdict": "benign",
+   "note": "明確保留用語「未經basic-block walk或xref交叉確認,不升級為結論」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2187,
+   "excerpt_sha1": "e838407ce26b2bd6f3f54fdf6d48bf6046982177",
+   "excerpt": "### 10.4 2026-08-20 第二輪：basic-block walk 逐位元組定位（回應 §10.3 遺留的 16 個）[驗]/[推]",
+   "verdict": "benign",
+   "note": "章節標題含[驗]/[推]標記，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2204,
+   "excerpt_sha1": "ca8d3aeda2bbe36a87ca427f1025a4aebaa78644",
+   "excerpt": "驗證用腳本：`ProbeGlobalEvents16BBWalk.java`(BFS walk)、`ProbeGlobalEventsRawBytes.java`／",
+   "verdict": "benign",
+   "note": "延續句，驗證用腳本列表"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2209,
+   "excerpt_sha1": "45b7750058c152c66a123d6d66dfb09debfc85fb",
+   "excerpt": "#### 10.4.1 證實「落在鄰居 handler 內部、無獨立語意」（byte 級比對，[驗]）",
+   "verdict": "benign",
+   "note": "小標含[驗]標記，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2228,
+   "excerpt_sha1": "6c804f1150ff4fb024d409969b7aef0f360aeebb",
+   "excerpt": "共用尾段但未確認」的推論更進一步：不只是**推論**，是**證實**（byte 級逐一比對，附精確",
+   "verdict": "benign",
+   "note": "延續句，byte級逐一比對升級為證實"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2243,
+   "excerpt_sha1": "dd7c4bae7285adb72a8ba96fe2c8bf9fae5c461c",
+   "excerpt": "handler 的真正起點多半只往回追了幾十 byte（未逐一重新驗證是否又落在「更前一個」",
+   "verdict": "benign",
+   "note": "明確保留用語「未逐一重新驗證」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2257,
+   "excerpt_sha1": "1db022df30722b962b51d31d4f1fd9447ab97bcc",
+   "excerpt": "- **9 個（68／70／71／81／85／86／87／88／89）**：以 byte 級 hex dump + 已驗證鄰居的",
+   "verdict": "benign",
+   "note": "延續句，byte級hex dump驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2258,
+   "excerpt_sha1": "9586fac9fba70d45d6c39955a81264543b1bca20",
+   "excerpt": "basic-block walk **證實**它們的 table 位址落在鄰居 handler 內部某條指令中段，不是獨立",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2264,
+   "excerpt_sha1": "3272d8477f614ce552de45ec38796d5c4ad65837",
+   "excerpt": "- **1 個（77）**：確認「非獨立進入點」但外層 handler 真正入口未定位，仍列未解。",
+   "verdict": "benign",
+   "note": "延續句，明確標示「仍列未解」"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2268,
+   "excerpt_sha1": "69884cd65e3c060842b193649ddbba5fc6caf697",
+   "excerpt": "（62／72／73／79／80／83）= **20 個有具體位址佐證的行為描述**；另有 **9 個",
+   "verdict": "benign",
+   "note": "延續句，統計摘要"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2269,
+   "excerpt_sha1": "fa05e68fdaee77ac308635d83cf41de457245690",
+   "excerpt": "（68／70／71／81／85／86／87／88／89）證實為共用鄰居代碼、無獨立語意**（這 9 個「解決」",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2277,
+   "excerpt_sha1": "720c78dfc143ec92e22217a1a675fe2bc2cb60eb",
+   "excerpt": "對它們各自緊鄰的「上一個」handler 也做一次乾淨 basic-block walk 加以交叉確認（方法與",
+   "verdict": "benign",
+   "note": "未來式建議延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2283,
+   "excerpt_sha1": "0c6a2db68805c80fde3e30cf4835138c4ae77f46",
+   "excerpt": "> 回應 worklist L212 剩餘部分。§10 已處理 58..89 中 30 個(20 個有具體行為描述 + 9 個證實",
+   "verdict": "benign",
+   "note": "延續句，交叉參照worklist L212"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2289,
+   "excerpt_sha1": "2b13b44201261fda94f9d9d036d8949c4d16cd59",
+   "excerpt": "### 11.1 event64：證實落在 event62 所屬大函式的尾端 tail-jump 位移運算元內 [驗]",
+   "verdict": "benign",
+   "note": "小標含[驗]標記，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2311,
+   "excerpt_sha1": "fd1489109d60d7deec96b5ba076efae1267558ef",
+   "excerpt": "併入 §10.4.1「無獨立語意，byte 級證實」名單，成為第 10 個成員。",
+   "verdict": "benign",
+   "note": "延續句，併入既有名單"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2348,
+   "excerpt_sha1": "53bfe457c7790a29023a49f81deaf182f819278b",
+   "excerpt": "自洽入口。這是可重現、逐 byte 驗證過的執行路徑(非猜測)，故標 [推] 而非「無語意」：",
+   "verdict": "benign",
+   "note": "延續句，明確標示[推]非[已證實]"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2357,
+   "excerpt_sha1": "726fbe389cf9a0c9142619f245e4b5abbb5d4b6c",
+   "excerpt": "證實是普通 in-segment 函式，本體用 tail-jump 共用實作：",
+   "verdict": "benign",
+   "note": "延續句，證實普通函式結論"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2426,
+   "excerpt_sha1": "3ba6907be89179407c0767c161c525f5db181cb1",
+   "excerpt": "本節在核對 event77 上下文時，連帶用「回溯確認上一條指令是否恰好在表項位址結束」的方式，",
+   "verdict": "benign",
+   "note": "延續句，邊界檢查方法描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2441,
+   "excerpt_sha1": "d3efb5ffeb4b886e4be9b45d7670a5f2579a1159",
+   "excerpt": "完全實錘——嘗試過直接讀表，但讀出的值與本文件其他已高度驗證的表項(event0、event82)對不",
+   "verdict": "benign",
+   "note": "延續句，讀值不吻合的排查過程"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2446,
+   "excerpt_sha1": "84ba488e55a279f6c721c4f600bcbf9b48d56366",
+   "excerpt": "**額外**做一次「往回確認上一條指令是否恰好在表項位址結束」的邊界檢查(本節示範的方法)，",
+   "verdict": "benign",
+   "note": "延續句，方法示範描述"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2453,
+   "excerpt_sha1": "4aa01c135f9b7e9829bb7781ec6ec933709c39f3",
+   "excerpt": "- **22 個有具體位址佐證的行為描述**：58/59/60/61/63/65/67/69/74/75/76/78/82/84(既有14) +",
+   "verdict": "benign",
+   "note": "延續句，統計清單"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2455,
+   "excerpt_sha1": "265c9f1636904c376d84c2c79eb1e71d03fe6349",
+   "excerpt": "- **11 個證實為表項落在鄰居 handler 中段、無獨立語意**：68/70/71/81/85/86/87/88/89(既有9)+",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2466,
+   "excerpt_sha1": "56bd71b4e9ae49e8f47e3840efdb4b7d3cacb815",
+   "excerpt": "### 11.7 2026-08-24(續輪)：event58／76／78 re-verify definitively 收斂——三者皆確認為 table artifact",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2472,
+   "excerpt_sha1": "662d52896cb14b19d82ef4352a7fd6b0418e5c59",
+   "excerpt": "> 這條路，但「讀出的值與已驗證表項(event0、event82)對不上」而放棄；本輪的差異是**先找出",
+   "verdict": "benign",
+   "note": "延續句，先前放棄原因說明"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2473,
+   "excerpt_sha1": "e22d53536577663be7c1d83ee1db696b72927e09",
+   "excerpt": "> 一致的偏移量、並用 4 個獨立錨點交叉驗證，而非只試一次就放棄**。",
+   "verdict": "benign",
+   "note": "延續句，4個獨立錨點交叉驗證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2478,
+   "excerpt_sha1": "2bb6c78f1921768927b1b4fe81a078a805b8bd37",
+   "excerpt": "用 4 個**已經由其他方式高度驗證過**的 entry 當錨點：",
+   "verdict": "benign",
+   "note": "延續句，已驗證錨點使用說明"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2489,
+   "excerpt_sha1": "35df2e5c01dfb80e04c119f6bb3ea738f51048d3",
+   "excerpt": "只是把同一招用夠多錨點驗證到能信任為止（4/4 命中，零反例）。這個偏移量很可能是 LE",
+   "verdict": "benign",
+   "note": "延續句，4/4命中零反例"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2494,
+   "excerpt_sha1": "dd4490b9c9de9bfbb5bd41a126477077bf9d376f",
+   "excerpt": "#### 11.7.2 用驗證過的偏移量，直接讀出 event58／76／78 的真實 table 值",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2526,
+   "excerpt_sha1": "fa7b9753f815a774c4bce966f27e7e898f618344",
+   "excerpt": "#### 11.7.4 指令邊界佐證(第二條獨立管道，與 §11.5 方法相同但補齊 event58)",
+   "verdict": "benign",
+   "note": "小標，第二條獨立管道佐證"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2553,
+   "excerpt_sha1": "5cebccf0f797a682f1c0a9965afdf58922ab79e2",
+   "excerpt": "三者**全部確認為 table artifact，沒有獨立語意，也沒有屬於自己的函式入口**——先前",
+   "verdict": "benign",
+   "note": "延續句，全部確認為table artifact"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2560,
+   "excerpt_sha1": "634423a8216d4a481e3af47753d3dbeee87708ac",
+   "excerpt": "- 14 個確認為 table artifact 無獨立語意：`58/64/68/70/71/76/77/78/81/85/86/87/88/89`。",
+   "verdict": "benign",
+   "note": "延續句，統計清單"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2570,
+   "excerpt_sha1": "43332f88255aca27c40e25cea03bfc41ed78d999",
+   "excerpt": "今天這輪同等程度的驗證）。**因此「map25 `{type:2,value:58}` 寶物 slot 在 runtime 究竟怎麼",
+   "verdict": "benign",
+   "note": "延續句，同等驗證程度比較"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2590,
+   "excerpt_sha1": "441271f483d5bda199a71da6d591c94bf61d87b3",
+   "excerpt": "第二條路徑)本身**用靜態證據就能完全定案**——活體驗證剩下能加的只有「這條尾呼叫路徑",
+   "verdict": "benign",
+   "note": "延續句，靜態證據已完全定案"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2644,
+   "excerpt_sha1": "1ac3e853ef12e1e28396b3a04b8dc77ea40156d0",
+   "excerpt": "真要活體確認,唯一還有價值的問題是「這兩條尾呼叫路徑在正常遊戲流程中會不會被踩到」,",
+   "verdict": "benign",
+   "note": "延續句，剩餘活體驗證價值評估"
   }
  ]
 }
