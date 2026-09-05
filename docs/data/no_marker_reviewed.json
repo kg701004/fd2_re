@@ -32400,6 +32400,30 @@
    "excerpt": "2. 但「確認目標」之後的完整攻擊生效鏈,到目前為止**連續3輪live測試(§17、§19這輪",
    "verdict": "benign",
    "note": "誠實現況小結第2點，明確標示問題仍未解決範圍"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2665,
+   "excerpt_sha1": "158f87ce59804465a121b4b8e6875b7303b21a3d",
+   "excerpt": "一次確認後,高亮消失,游標留在原地,但**讀單位陣列確認完全沒有變化**(沒有HP下降、",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的手動診斷觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2674,
+   "excerpt_sha1": "8360f50d2e2b8b8bb208717e8396fc51cd88ae4e",
+   "excerpt": "attack target-select 畫面**,不能拿來確認或推翻「攻擊執行鏈哪裡卡住」這個問題。",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示這輪結果不能拿來確認或推翻，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2678,
+   "excerpt_sha1": "2c8dad9742da13bd938126411b4bb8798badcbf1",
+   "excerpt": "這條線,必須先確認`move_cursor()`真的把游標移到了目標單位身上、且第一次`confirm`",
+   "verdict": "benign",
+   "note": "對下一輪的具體建議事項，非證據宣稱"
   }
  ]
 }
