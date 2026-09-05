@@ -105,6 +105,7 @@ ORIGINAL_MARKERS = [
     (r"Ghidra|ghidra|IDA|capstone|Capstone", "靜態反組譯工具"),
     (r"FUN_[0-9a-fA-F]{4,8}\b", "Ghidra 自動函式名(反組譯位址)"),
     (r"sub_[0-9a-fA-F]{4,8}\b", "IDA 自動函式名(反組譯位址)"),
+    (r"DAT_[0-9a-fA-F]{4,8}\b", "Ghidra 自動全域資料名(反組譯位址)"),
     (r"反組譯|反編譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
@@ -689,6 +690,12 @@ def selftest() -> int:
     # 修法。6 處語料庫命中,風險同樣接近零。
     expect("已確認這段呼叫走的是 sub_1A813 這個函式", "ORIGINAL",
            "正對照:sub_XXXXXXXX 是 IDA 自動函式名,必須命中反組譯標記")
+
+    # --- 2026-09-05 補(第九輪NO_MARKER審閱掃出):`DAT_XXXXXXXX` 是 Ghidra 對
+    # 未命名全域資料(而非函式)的預設自動命名,跟 `FUN_`/`sub_` 同一類問題。34 處
+    # 語料庫命中(doc13 大量反組譯 pseudocode 引用如 `DAT_00053c57`)。
+    expect("已確認這段讀的是 DAT_00053c57 這個全域變數", "ORIGINAL",
+           "正對照:DAT_XXXXXXXX 是 Ghidra 自動全域資料名,必須命中反組譯標記")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
