@@ -15080,6 +15080,758 @@
    "excerpt": "注入沒生效與檢查失效長得一模一樣。**先確認注入真的改到被檢查的東西。**",
    "verdict": "benign",
    "note": "方法論教訓(同feedback_verify_that_the_verification_ran)"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 43,
+   "excerpt_sha1": "9532426473b2c8066a072cf7a9181cce8cf69692",
+   "excerpt": "`battle.NativeAvailableAICommandIDs` 另保存 dispatcher 前置 gate：raw `+0x27` 非零時不產生任何 AI command IDs；為避免把第五 command byte 的未知 physical IDs36..39 當可執行命令，仍只回傳已驗證的 0..35 records。",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 75,
+   "excerpt_sha1": "9c39642abafd65bf423cf80bf52e96f8231be02f",
+   "excerpt": "敵方行動迴圈。兩張表的結構、索引與呼叫順序已閉合，不代表 90／30 個",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 76,
+   "excerpt_sha1": "f4f7dfaa40e538ac97c59386421a4ce8d828d642",
+   "excerpt": "handler 的玩家可見效果全部閉合；pending 碼在本層也只保留 raw 數值。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 214,
+   "excerpt_sha1": "3472042bbd3797367cbd3b4bc06429ddbb6e7a52",
+   "excerpt": "這份 report 可作 call-graph E0 交叉驗證，但不自行證明遊戲語意；語意仍須由指令與資料流佐證。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 247,
+   "excerpt_sha1": "980bd4f6d089cda264c92d61f2644218601167fa",
+   "excerpt": "| UI-01 | Title/main menu | 上下選擇、確認、取消、save/load、游標音效與 focus state | partial；`TitleMenuState`／`TitleSlotState` 已與 Ebiten 輸入共用並有 deterministic trace，仍缺原版逐幀 E2 對照與完整 boot/campaign 接線 |",
+   "verdict": "benign",
+   "note": "表格row，remake SDD的UI/native command證據分級表"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 248,
+   "excerpt_sha1": "997844520b60ece39aadab6a37ea98f62a84f4b4",
+   "excerpt": "| UI-02 | Battle field | 游標格、鏡頭、可移動格、高亮、單位 HUD、方向／面向 | partial；HUD 固定錨點與完整 native sprite 未閉合 |",
+   "verdict": "benign",
+   "note": "表格row，remake SDD的UI/native command證據分級表"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 265,
+   "excerpt_sha1": "d196583eb80badde142bff309a60c74f9c620bf0",
+   "excerpt": "`fdsave.PersistentRecord.View` 只投影這些已證實欄位並保存 signed word；",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 295,
+   "excerpt_sha1": "acbe3f64cbae7abc4e5ae5deb1a2f1610268c779",
+   "excerpt": "稽核工具不再把非空 binding 視為正確，而會比對這個已證實的零基索引關係；截至本輪，",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 322,
+   "excerpt_sha1": "1e6bfb137e12bad12f54829010633004fb653b6b",
+   "excerpt": "boundary 尚未全部閉合，因此 `postbattle_ch16_persist` 仍維持 unbound，不宣稱已還原。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 345,
+   "excerpt_sha1": "bbf0f276539729de849f1ec331eaebf672423990",
+   "excerpt": "已閉合的 `native_round_gt` 與 `native_inactive_count_gt` 子條件；runtime 在任一 raw 子條件",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 346,
+   "excerpt_sha1": "0f3edf8da09da9322708aaad118357456ab93765",
+   "excerpt": "已證實為真時才回 true，所有子條件都無法取得 provenance 時仍回 error。這是 compound gate",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 359,
+   "excerpt_sha1": "b6d08326a4ac2ab3a1ad4455234b0e3d6788b353",
+   "excerpt": "資料與直接指令的靜態閉合，尚非一般玩家 E2；JOIN-time persistent record、branch trace 與",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 360,
+   "excerpt_sha1": "07da136d124f5d32cb5beb39ffc8c1e1e9c1a023",
+   "excerpt": "campaign consumer 尚未閉合前，原始 `ch15_post.json` 與 `postbattle_ch16_persist` 都維持",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 375,
+   "excerpt_sha1": "27b71278479bbea438da94ed0ffee9fbafe3645c",
+   "excerpt": "input/layout evidence 接入同一個 modal state stack；native target/effect 未閉合前 confirm",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 403,
+   "excerpt_sha1": "ac08b5843cbeb32a279bab2eb7ee9c45679de0c2",
+   "excerpt": "`ch01..ch30.json`，且不覆寫既有手工驗證的 scenario 欄位。ch01 的悠妮為 `[1,0,0,0]`，其餘初始三人為全零，均直接來自",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 408,
+   "excerpt_sha1": "dd63dec4baf069295cc33c8b555466edaf92295f",
+   "excerpt": "已證實範圍的 record layout 可共用 `dmg:u16, hit:u8, dist:u8, range:u8, mp:u8, target:u8`；MP gate 是其",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 411,
+   "excerpt_sha1": "33d63f495e106d1e030ba7642049d6a87152e8b1",
+   "excerpt": "36..39 加進 `SpellBook` 或宣稱第五 byte 的 dynamic path 已被實機素材證實。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 535,
+   "excerpt_sha1": "f22ea2588937c1bf37b9e005c5894c26dcb2e83b",
+   "excerpt": "Scenario generation now projects the 32 cross-checked JOIN rows, persistent",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 543,
+   "excerpt_sha1": "202dd8e3a40cd5bdfa9f4cdd31b152c9885e5ad9",
+   "excerpt": "runtime still validates the actor as the confirmed candidate through",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 575,
+   "excerpt_sha1": "19d079c8bbb4a154159fcf1ec1119ee27236925c",
+   "excerpt": "command 22 已證實會寫入此 duration byte；其遊戲名稱與所有 producer 尚未閉合，故 remake 只以",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 587,
+   "excerpt_sha1": "18f5fec2087f57d1323f732294f36602831ed248",
+   "excerpt": "拒絕非零 disabled word，避免「灰色 cell 仍可 Enter 執行」。攻擊 geometry 與 item selector/effect 仍未閉合，native",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 597,
+   "excerpt_sha1": "f81efd89b06d59506ab7e781fdb0a615e1c4fd81",
+   "excerpt": "將 target `unit+0x40` 減去 damage，並 clamp 至 0，直接證實 `+0x40=current HP`、`+0x42=max HP`。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 599,
+   "excerpt_sha1": "29782780a5dac70f20f458ac44c993e325978d80",
+   "excerpt": "低 byte 是 `resist_raw`（法師=7 即 30% magic resistance）。因此這個乘數的 raw ABI 與玩法名稱都已閉合，",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 602,
+   "excerpt_sha1": "a7477720786107057f147ca64e4053ece908c50e",
+   "excerpt": "geometry、動畫及 post-resolution 仍未閉合，故 UI 不得把已知數值公式誤擴張成完整 native effect。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 607,
+   "excerpt_sha1": "bfe06e488c25cdcd788314396a7c7ba6b2ce5658",
+   "excerpt": "IDs10..12 compositor tail 都已閉合為同一 numeric/MP/raw-completion contract；dispatch 分流不表示 state effect",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 615,
+   "excerpt_sha1": "5e7aab60bc5d17446bb010c009c9c04f6fa34cf1",
+   "excerpt": "IDs13..16 是另一條已閉合的治療核心，不能併入上面的 damage route。其 jump-table handlers",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 642,
+   "excerpt_sha1": "fbc300ad34672a3ed340833136e3c19ae08839f3",
+   "excerpt": "remake state/UI 仍未閉合，不能據此補出 gameplay names。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 646,
+   "excerpt_sha1": "7762f1084907ab7b1afc60ec026b88706c90d400",
+   "excerpt": "`00 00 00 04 02 05 01`。因此目前只可證實兩者在這個版本有相同 MP debit；不得從 wrapper index",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 679,
+   "excerpt_sha1": "cdb2ea8fc2d644c7e606f9b0237bd13b2370a391",
+   "excerpt": "byte 本身(遞減是第二個迴圈的事)。這證實 `+0x25`(index 3)就是「中毒」：legacy `TickStatus`",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 711,
+   "excerpt_sha1": "7d4736a30eeb15b3f5cee87cbd22365f8f03dda5",
+   "excerpt": "`fdother.NativeBattleEntryStep` 已證實的公式，額外閘門 `+0x25==0` 且 `+0x26==0`——",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 735,
+   "excerpt_sha1": "ea764c4c109d8f2ef736df015fdeb943e469b382",
+   "excerpt": "落點 selection/legality、camera choreography、renderer 與 remake UI 尚未閉合，不能把它泛化成普通 move 或 generic",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 743,
+   "excerpt_sha1": "8964a037ba90b456fa109630b7a7a84514103ba6",
+   "excerpt": "apply 成為 direct code-pairs；仍不以此取代 UI/status icon 的獨立驗證。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 783,
+   "excerpt_sha1": "820b1b57c50e72c1718f8cde9e1aa3dad8150812",
+   "excerpt": "| 30 | `1CFF0→14818→115B6` 先確認 record+3 candidate；再以 saved cursor→confirmed cursor 進 `149F8`，`count=record+3-16`、X-first cardinal line、只收 enemy，最後 `2A6BD→276EC` default倍率18 | `ExecuteNativeCommand30`（",
+   "verdict": "benign",
+   "note": "表格row，remake SDD的UI/native command證據分級表"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 825,
+   "excerpt_sha1": "d547d38a234665c49db8f97e9fbaf6269b6d17b7",
+   "excerpt": "`battle.BuildNativeAIPhaseDiagnosticPlan` 現將這段已證實、無副作用的資料流",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 862,
+   "excerpt_sha1": "0e56623753d32cdd83ba645b136d3ef3efa7ff33",
+   "excerpt": "因此可證實這些**玩家可達 class-19 路徑不經已知 MP debit sink**，即使 record `+5` 的 selector gate 仍要求",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 864,
+   "excerpt_sha1": "855ae61add134b904bf0de2ea88b82cbaa0c051d",
+   "excerpt": "visual group、其他 MP writer 與 compound effect ordering 仍未閉合，engine 保持 fail-closed。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 871,
+   "excerpt_sha1": "99ab67a55f841f1d9c8d8cd592ac635390174559",
+   "excerpt": "`battle.NativeCompoundCommandPlan` exposes only this verified order and raw",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 910,
+   "excerpt_sha1": "4fa4a0c5193bae9b45e4caffac1b2a0914756402",
+   "excerpt": "selection stage (`actor,+3`) 或 confirmed effect stage (`cursor,+4`)。它覆蓋 four-way flood-fill、bit40/bit80、",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 911,
+   "excerpt_sha1": "e77148978e98e1f2fc6d08fb759b85b7c4d23e12",
+   "excerpt": "cross branch 與四個 camp predicates。`NativeCommandEffectTargets` 進一步要求 confirmed unit 確在 first candidate",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 952,
+   "excerpt_sha1": "3f1b1a2f478ddbb8b5bc4fb1e7465b1a4717ed8d",
+   "excerpt": "### Native command MP transaction（E0 verified, UI unbound）",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 958,
+   "excerpt_sha1": "1f47591500498e862fae9961f23fb833a68978b1",
+   "excerpt": "native candidate confirm、command 0 effect sequence 與原版 renderer 都能一起驗證。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1010,
+   "excerpt_sha1": "b5fc99ac323c7ce113937f98bea33ee7baa03c30",
+   "excerpt": "只保存已證實的 MP/HP/raw-byte mutation，不能因此推導 command 名稱，也不代表 indexed effect",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1092,
+   "excerpt_sha1": "52970f5e7bc7b540e60991744f50b4c8c96a7e34",
+   "excerpt": "執行器：先驗證 selector、trigger byte6 provenance、完整目標範圍與每筆",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1096,
+   "excerpt_sha1": "e9a914a8eabf94f47568eca6ad2db0d297b297c9",
+   "excerpt": "`x + mapWidth*y` 交叉確認座標順序。`stepBattleWalk` 因此只在向左格",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1167,
+   "excerpt_sha1": "c533006a37c25c73a61d1b98e898b427c4d4d9cf",
+   "excerpt": "時序仍待 E2；不得把已證實的 hub／prepare 分支壓成直接下一戰。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1239,
+   "excerpt_sha1": "5d76221acd146b30055fedd2716382cd727ce7b4",
+   "excerpt": "> implementation was never actually re-verified against this EXE build's",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1257,
+   "excerpt_sha1": "e2c944478c9f4206fa2e7a0f78f2a49552183715",
+   "excerpt": "> (itself independently confirmed elsewhere, unaffected by the erratum above).",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1295,
+   "excerpt_sha1": "5648173b2c1a285f618ed2fe41466d9f35704b88",
+   "excerpt": "> root cause is still unconfirmed.** An unverified lead for the next round:",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1304,
+   "excerpt_sha1": "4d1037b0ff287f5f6b24582483bfc2c13f85c53b",
+   "excerpt": "> inspection + Go-verified real-palette rendering): root cause found and",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1373,
+   "excerpt_sha1": "f3b51fbc26e92fce5a6b287eac7b1007b0bdfeec",
+   "excerpt": "> *Confirmed on real data, not just statically.* Three real `FD2.SAV` files",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 1737,
+   "excerpt_sha1": "74d49c709f3b2da1fcf0e04ad1f88dc0d8123946",
+   "excerpt": "E2-constrained projections obtained by cross-checking visible HIT/EV against",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2104,
+   "excerpt_sha1": "ec0600b7ba4ee9ec51b4f6cfd61846249747ac80",
+   "excerpt": "節點前保留明確的戰後處理器／選單 gate，即使高階節點名稱仍未閉合。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2228,
+   "excerpt_sha1": "391f36594a24c82f7389750f9c0086837d83c9dc",
+   "excerpt": "可編輯單位邊界：`tools/export_units.py` 接受可選的原始表 JSON，在建構器公式來源完整時可寫出 `native_constructor:{branch,index,record,aux_record}`、`native_record_word42` 與 `native_record_word46`。為避免每列複製完整表格，`tools/sync_native_select",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2261,
+   "excerpt_sha1": "5efdeba3f36ca54de8a918b566c97505f6891c0d",
+   "excerpt": "`NativeMapPresentationState` (`+0/+1/+3/+4`) together with each verified",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2300,
+   "excerpt_sha1": "bc1cae3175b30b351675d5c3d6ef124bca11d76c",
+   "excerpt": "必須和第30戰結局流程另行閉合，不能用已恢復函式本身推定 campaign 接點。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2324,
+   "excerpt_sha1": "4074d3e74da0c605b5dffcc8e72eb778099faaa4",
+   "excerpt": "3) 在沒有逐位址 xref 證實「raw ch28_post 確實是主迴圈為第29戰選中的那個 handler」之前",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2329,
+   "excerpt_sha1": "64bf28a337fe1d490db14e984fb0facf9dc59477",
+   "excerpt": "（直接指令級 xref，不是 stem 猜測）驗證它就是主迴圈選中的 raw handler。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2572,
+   "excerpt_sha1": "374bf474f4db2f04b28cb8123fc36cc6079f9b31",
+   "excerpt": "verified lifecycle is process start at zero, then continuous mutation for the",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2650,
+   "excerpt_sha1": "fca4e38af65b0c02a732f684fc6e2a0ec8425a1f",
+   "excerpt": "does preserve the separately verified global-selector-6 mutation primitive",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2677,
+   "excerpt_sha1": "1b5d904e6800f88d7109410ce0a655a05576abe6",
+   "excerpt": "cross-check identifies persistent offsets `+0x37/+0x39/+0x3e` as base",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2719,
+   "excerpt_sha1": "5c8087ec54ccde87938bc80c110ceee7361f84d1",
+   "excerpt": "`battle.ApplyNativeRawHPRestore`: it advances the Docker-verified 16-bit RNG,",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2804,
+   "excerpt_sha1": "5f6e6035a1765f588fdce5b422f3a2473c6d9639",
+   "excerpt": "0、1、2、3、4、5、7、8、9、10。這項閉合只讓原始行為節點可編輯、",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2828,
+   "excerpt_sha1": "82742e7ea711b78d3a3ca7febb7711ffa894891d",
+   "excerpt": "後續 writer 尚未閉合，SDD 仍將 event 82 標成未知可達性，而非 dead code。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2867,
+   "excerpt_sha1": "054c614946525baf88fb65a2c8fa690284cf4be2",
+   "excerpt": "checksum-valid 的未修改快照實測得到 persistent identity",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2870,
+   "excerpt_sha1": "aa143282104c8678ba0693ea2c80074c2366601f",
+   "excerpt": "catalog 與正式 party materialization 已由下一段閉合。控制映像、runtime",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2872,
+   "excerpt_sha1": "01da2c38d448b96e2dfed127ad2ba660f075cd44",
+   "excerpt": "下文閉合；整組 `battle.State` 到正式控制器的原子交接仍未閉合。",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2880,
+   "excerpt_sha1": "29a1ad6a77cf21981eba1b763af289e42054360c",
+   "excerpt": "下述具型別 adapters 現已分別閉合控制映像、runtime units、timing 與",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2882,
+   "excerpt_sha1": "fd5169cd7d62e3ce17ff56c1ad3b74af7b0ca3c1",
+   "excerpt": "pending-group 綁定及原版快照測試。尚未閉合的是 handler 改寫 turn byte 後的",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2943,
+   "excerpt_sha1": "36834dc6a2890a2e05d87150cd9692fa40043230",
+   "excerpt": "順序就是 current runtime list；存檔內舊 `+2` 不是可驗證真值，也不能",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 2978,
+   "excerpt_sha1": "dd2b76e417f6a06bb22c4c087c60ae0b19cb9ef7",
+   "excerpt": "同輪 timing data-xref 又把 `map_timing` 拆成「已閉合種子」與「未接",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3001,
+   "excerpt_sha1": "26e7c42f25521626e3f43780694a5f822aff0ad1",
+   "excerpt": "後續完整 data-xref 與直接 writer 又證實這份 control 不是載入後的靜態",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3004,
+   "excerpt_sha1": "135424b27c5d19e8d96c693e1440cd88dac59d36",
+   "excerpt": "原始 resource 只能驗證身份與靜態來源，不能覆寫 current snapshot 的",
+   "verdict": "benign",
+   "note": "remake SDD文件自身E0/E1/E2證據分級慣例，含明確保留用語，描述remake端實作邊界"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3038,
+   "excerpt_sha1": "e224024c063aa20b27f9d3d995cbeafce40e082d",
+   "excerpt": "record、key、slot 仍與驗證輸入全同；接著先在 detached roster 完整驗證",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3046,
+   "excerpt_sha1": "cc28874968acf39633307391afc5cf2cbcc57865",
+   "excerpt": "- 所有已證實 signed stat words，及由 `+7` 在原順序重建的 selector slot。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3107,
+   "excerpt_sha1": "0169a0a2d3fa2e098d19fad7dd8e2e0c3bc74abb",
+   "excerpt": "全章機械式盤點確認46個 `spawn_group` action 均有排程來源，但只有",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3114,
+   "excerpt_sha1": "22578c350ce5129ff3fc8647d3e2349cce967a2b",
+   "excerpt": "`pending_group_binding` owner。現行適配器是可驗證的靜態排程垂直切片，",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3144,
+   "excerpt_sha1": "cf3a511116f4047af123eb9490acc178151814d3",
+   "excerpt": "1,885筆 selected records 寫入33張 map，並逐筆驗證 race/class/HP/MP。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3146,
+   "excerpt_sha1": "26947746971040b137bc413c56cce5a4f559f134",
+   "excerpt": "必須先與 `fd2-reference-files.json` 相符，且由原版重生的 JSON 已逐位元組",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3178,
+   "excerpt_sha1": "90731cce19d86ab3ee5f4950b95ccbd157f3106f",
+   "excerpt": "版本化 ch02 的 turn3/event6 已由真實 scenario action 驗證六名 group3 友軍",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3188,
+   "excerpt_sha1": "f0d556c36ca4bdefa15ae3636c2401728bf96cdb",
+   "excerpt": "成功後才發布名冊。每次呈現都必須經過 `Draw` 確認，完成後才進入 caller 的",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3191,
+   "excerpt_sha1": "eab6f874b232912732becde73b2d9bb1bb2cd17d",
+   "excerpt": "executor 之前辨識兩個已證實 caller；它以保留當下 selector cache 與動畫週期的",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3205,
+   "excerpt_sha1": "1236c64930c53b73bbec36d1262fb817cd4cac8c",
+   "excerpt": "逐位元組一致、其他 caller 與正式 CONTINUE handoff 仍維持失敗即關閉。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3207,
+   "excerpt_sha1": "b2a146669fb18881e2dff5681d257fabd61d61cd",
+   "excerpt": "`gen_campaign.py` 的總戰役拓撲仍落後人工閉合的權威",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3208,
+   "excerpt_sha1": "a9f18ebde664def61805a33e2066c3a5864aa578",
+   "excerpt": "`campaign_full.json`；本輪實測直接重生會把299節點降成293並遺失 handler／",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3240,
+   "excerpt_sha1": "93190021055a701442255daf2a31255dc11d6511",
+   "excerpt": "資料；`BuildNativeChapterSlotRestorePlan` 在任何 runtime mutation 前驗證",
+   "verdict": "benign",
+   "note": "延續句，引用remake原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3245,
+   "excerpt_sha1": "3e7fdd7de41337ebb0cb02619bcec2835628e369",
+   "excerpt": "已驗證成功與錯誤無部分 mutation，完整 `campaign_full` raw1..29 逐筆",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3265,
+   "excerpt_sha1": "2c387d3ea24ab38be10168ae488222fb6cf7d4ea",
+   "excerpt": "正式 `Game.stepBattleWalk` 現在只在原版已證實的向左一步第七拍座標提交後，",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3267,
+   "excerpt_sha1": "a562d070bbcc04206debecf1e60cc27aef0464c2",
+   "excerpt": "則寫入既有 `loadErr` 並停止動作。Xvfb 回歸證實前六拍不改 row/state，第七拍",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3277,
+   "excerpt_sha1": "f1d9cae22b781ad9a4864e4b090505248a2d5e90",
+   "excerpt": "這只閉合 event62 所需的回合來源，不單獨提升事件63畫面到 E2。直接證據見",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3308,
+   "excerpt_sha1": "7c1db5d01bfaa67e4b6e4a46b44f37d58c984a5e",
+   "excerpt": "visible cursor `(5,5)` 與 selector 0 閉合，並以 view-only 設定接入正式節點。",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3309,
+   "excerpt_sha1": "0eeeacdeb0d7485ad592b5b23d8ae02ebf98618b",
+   "excerpt": "HUD 的持續擁有者已在 E1 閉合：main 返回後的 gate B 由 controller 以1進場；",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3321,
+   "excerpt_sha1": "0917c3550ef9a522b5d71939a87b75f1e7a8c2f4",
+   "excerpt": "已證實的 view 可獨立存在，HUD 不可脫離 view；節點入口只接受已有直接證據的",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3322,
+   "excerpt_sha1": "5182ce5e863065b642b9f1f7e517500895b71e69",
+   "excerpt": "selector 0／1。執行期先在私人候選狀態驗證 view、selector 與可選 HUD，再",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "56-fd2-remake-sdd.md",
+   "line": 3336,
+   "excerpt_sha1": "f85a5b3837091e27063af4ddf48dc0d09ea72dcf",
+   "excerpt": "重算後 AP／DP／HIT／EV 為 `100/79/110/15`。這仍只保存已證實交易欄位，",
+   "verdict": "benign",
+   "note": "延續句，remake SDD文件內對native/raw欄位證據分級的敘事延伸，offset多低於ADDR_MARKER門檻"
   }
  ]
 }
