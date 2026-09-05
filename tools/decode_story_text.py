@@ -18,11 +18,13 @@
     python3 decode_story_text.py <FDTXT_NNN.bin>                       # 印單章
     python3 decode_story_text.py --all <FDTXT目錄> <out.md>             # 全章合一檔
     python3 decode_story_text.py --add-lines <story.json> <FDTXT目錄>   # 補 lines[](見下)
+    python3 decode_story_text.py --runtime-todo <FDTXT目錄> <out.json>  # 273 筆待解清單(見下)
 """
 import sys
 import os
 import json
 import glob
+import re
 
 OPEN, CLOSE, END = 558, 561, 0xFFFF
 OPEN_BOX = {0xFFEC, 0xFFED, 0xFFEE, 0xFFEF}  # 開對話框控制碼;0xFFFE(換行)、0xFFFD(翻頁)不開新框
@@ -126,6 +128,36 @@ def decode_string(codes):
     return out
 
 
+_RUNTIME_SPK_RE = re.compile(r"^unit#(\d+)\(執行期決定\)$")
+
+
+def find_runtime_todo(path):
+    """列出這個 FDTXT 裡**說話者靜態不可解**的框(即 §doc09/B.6 記錄的 273/1450)。
+
+    2026-09-05:為了讓 273 筆「靜態不可解」變成一份可以交給活體工具逐一解的清單,
+    不重寫 `decode_string()`/`resolve_speaker()` 的判斷邏輯(核心解碼路徑不動,
+    降低改壞既有 273/1450 統計的風險),只對 `render_chapter()` 已經產生的
+    `unit#N(執行期決定)` 字串做後處理——這個字串格式本身就是 `resolve_speaker()`
+    唯一的「不可解」輸出,拿它當比對目標不會漏判也不會多判。
+
+    `box_index` 是這個 FDTXT 檔內、非空白框的 0-based 順序位置(跟 `render_chapter()`
+    輸出的行序一致)——活體工具要靠這個序號在播放時數到第幾個對話框才是這一筆。
+    """
+    todo = []
+    for idx, ln in enumerate(render_chapter(path)):
+        # 每一行輸出剛好對應一個非空框(見 render_chapter 的 `if not text.strip(): continue`),
+        # 所以用列舉序號當 box_index 不會因為跳過非說話者行而錯位——**不能**只對
+        # 「- **」開頭的行計數,那樣會把純續行/無說話者框漏掉,box_index 就對不齊了。
+        if not ln.startswith("- **"):
+            continue
+        m = _RUNTIME_SPK_RE.match(ln[4:].split("**：", 1)[0])
+        if m:
+            snippet = ln.split("：", 1)[1] if "：" in ln else ln
+            todo.append({"box_index": idx, "operand": int(m.group(1)),
+                        "text_snippet": snippet[:60]})
+    return todo
+
+
 def render_chapter(path):
     lines = []
     for codes in parse_strings(path):
@@ -178,6 +210,21 @@ def main(argv):
     if argv[1] == "--add-lines":
         story_path, raw_dir = argv[2], argv[3]
         add_lines_to_story(story_path, raw_dir)
+        return 0
+    if argv[1] == "--runtime-todo":
+        src, out = argv[2], argv[3]
+        todo = []
+        for p in sorted(glob.glob(os.path.join(src, "*.bin"))):
+            base = os.path.splitext(os.path.basename(p))[0]
+            for entry in find_runtime_todo(p):
+                todo.append({"fdtxt": base, **entry})
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"total": len(todo),
+                                 "note": "operand 是執行期 unit roster slot,不是角色 id;"
+                                         "box_index 是該 FDTXT 內第幾個非空對話框(0-based),"
+                                         "須配合實際遊玩對到第幾框才能解出真正說話者"},
+                      "todo": todo}, f, ensure_ascii=False, indent=1)
+        print(f"{len(todo)} 筆執行期說話者待解 -> {out}")
         return 0
     if argv[1] == "--all":
         src, out = argv[2], argv[3]
