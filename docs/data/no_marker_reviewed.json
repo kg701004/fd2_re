@@ -32832,6 +32832,22 @@
    "excerpt": "**2026-09-06 補完,法術命中率逐 ID 核對——完全閉合,`spell.json` 全數吻合原版 EXE**:",
    "verdict": "benign",
    "note": "章節標題，本輪對pristine FD2.EXE的真實靜態核對記錄，內文已含md5/位址等具體證據"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 485,
+   "excerpt_sha1": "e7ce363271a5dcfea6d86a3585ee59cb06cca442",
+   "excerpt": "螢幕上,這輪沒有真的打過去(§13-§28那條調查線雖然已經證實能打出真實傷害,",
+   "verdict": "benign",
+   "note": "誠實邊界，說明這輪沒有真的打過去觸發死亡台詞，非證據宣稱"
+  },
+  {
+   "file": "40-speaker-portrait-mapping.md",
+   "line": 496,
+   "excerpt_sha1": "92c3520d973d97e5574bde640bb3a98d70d85ed9",
+   "excerpt": "的盜賊,截圖確認死亡台詞出現在螢幕上,用`--confirm-text`比對文字後才能記錄——",
+   "verdict": "benign",
+   "note": "對下一輪需要的驗證步驟建議，非證據宣稱"
   }
  ]
 }

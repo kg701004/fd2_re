@@ -458,3 +458,43 @@ slot3=蓋亞、slot4=悠妮」。該文件已經逐句解出全部 11 條字串�
 2. idx0/1(FDTXT_033 的國王/王后)目前只是「依對話內容推測」,不是靠 DATO 值
    本身查出真名(`PORT` 查無對應)——如果要坐實真名,需要另外找這個 NPC 的
    DATO id 有沒有在別處(例如戰鬥中的敵方單位表,或美術資源)有對應紀錄。
+
+## 2026-09-06:`fd2_speaker_capture.py`真的一支bug(`enter_debugger`漏呼叫)修好,FDTXT_002 roster組成初步摸清——但這輪沒有真正解出任何一筆,誠實記錄
+
+跟隨 §「利用今天已修好的battle autoplay改善,嘗試恢復 FDTXT_002」的計畫,新開一個
+乾淨instance(`spk6`)、乾淨跑到ch01戰鬥瀏覽游標層,想針對box_index 55-60(敵方死亡
+台詞,operand 5-10)跟部分17-31(operand含11)試著解。
+
+**先修了一個真bug**:`fd2_speaker_capture.py`的`read_roster_datos()`直接呼叫
+`H.mem_read_unit_array()`,**沒有先呼叫`H.enter_debugger()`**(`fd2_battle_autoplay.py`
+的`snapshot()`早就有這一步,這支工具當初漏寫)——導致`--dump-roster`/`--resolve-todo`
+兩條路徑一律回報「debugger未在時限內停住,拒絕讀取」,完全無法使用。補上跟`snapshot()`
+同款的`enter_debugger()`→讀→`resume()` bracket後,`--dump-roster`正常運作。
+
+**roster組成(戰鬥開始當下,count=24)**:idx0=索爾、idx1=悠妮(DATO 0x09)、
+idx2=亞雷斯、idx3=蓋亞;idx4-11全部是DATO=0x60(**同一種泛用「盜賊」,PORT查無對應,
+也沒有在doc40/doc49任何既有表找到0x60的怪物名**);idx12-23全部是DATO=0xff(空格,
+代表援軍要到戰鬥後段才會出現)。
+
+**為什麼這輪沒有真正登記任何一筆到`runtime_speaker_resolved.json`**:
+1. operand 5-10(box_index 55-60,死亡台詞)跟operand 11(box_index 17/19)雖然
+   現在都能查到「DATO=0x60,泛用盜賊」,但**這只回答了「這個roster slot裡站的是
+   誰」,回答不了「這句死亡台詞真的是這個slot死掉時觸發的」**——本工具的
+   `--confirm-text`安全機制正是為了擋這種落差(FDTXT_032/033曾經因為沒做這一步
+   誤判過),而box_index 55-60的台詞需要**真的在戰鬥裡打死那個單位**才會出現在
+   螢幕上,這輪沒有真的打過去(§13-§28那條調查線雖然已經證實能打出真實傷害,
+   但這輪沒有把兩者接起來,單純只是dump了開場roster)。
+2. operand 0x60沒有名字可查(不在PORT的0x00-0x1F英雄範圍,doc40/doc49也沒有
+   泛用怪物名字表涵蓋這個id)——就算box_index跟roster slot對得上,能記錄的也只是
+   「某個沒有名字的盜賊」,不是一個具體人名,價值有限。
+
+**誠實現況**:這輪的**唯一確定成果是修好`fd2_speaker_capture.py`的debugger初始化
+bug**,現在這支工具真的能用了。roster組成的觀察(idx4-11皆泛用盜賊、idx12-23是
+援軍空位)是有效資訊,但**不構成「解出FDTXT_002任何一筆說話者」的證據**,沒有
+寫入`runtime_speaker_resolved.json`,避免重蹈FDTXT_032/033那次「看起來解出來但
+其實搞錯場景」的錯誤。下一輪如果要真的解box_index 55-60,需要真的打死一個idx4-11
+的盜賊,截圖確認死亡台詞出現在螢幕上,用`--confirm-text`比對文字後才能記錄——
+而且既然DATO=0x60沒有名字,記錄下來的價值也有限,可能不值得為了「泛用盜賊」
+花一整輪去打真實戰鬥;操作4-13(box_index 4-13,疑似盜賊登場台詞)可能更值得
+優先,因為這些不需要殺死敵人,可能在戰鬥剛開始的演出階段就會出現,只是這輪
+沒有嘗試捕捉。

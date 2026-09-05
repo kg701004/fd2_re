@@ -62,8 +62,16 @@ def read_roster_datos(instance: str, selector: str, num_records: int,
     重用 `mem_read_unit_array()` 已經驗證過的訊號校準+重試邏輯,不重寫一次
     定址——它已經把 array_dump 寫到磁碟,這裡直接重讀那個檔案切出 byte[+7],
     不需要再對活體多做一次記憶體存取。
+
+    2026-09-06:原本沒有先呼叫 `enter_debugger()`——`mem_read_unit_array()`
+    要求 debugger 已經停住才讀,不然為了不把「沒停住」跟「陣列真的是空的」
+    混為一談,直接拒絕讀取(`fd2_battle_autoplay.py` 的 `snapshot()` 早就有
+    這一步,這支工具當初漏寫)。補上跟 `snapshot()` 同款的
+    `enter_debugger()`→讀→`resume()` bracket。
     """
+    H.enter_debugger(instance)
     result = H.mem_read_unit_array(instance, selector, out_dir, num_records=num_records)
+    H.resume(instance)
     if result.get("error"):
         return result, None
     array_dump = out_dir / "array_dump.bin"
