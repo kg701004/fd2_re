@@ -75,16 +75,26 @@ VERIFY_LANG = re.compile(
     re.I,
 )
 
+# 2026-09-05:同一個 CJK 邊界問題(見下面 ORIGINAL_MARKERS 註解)也影響這裡所有
+# 用 `\b` 收尾的 pattern——中文技術文件常見「英文詞緊貼中文字,中間沒有空格」
+# (例如 `cmd/fd2主程式`、`main.go裡面`),Python `re` 預設 Unicode 模式下 CJK
+# 字元本身算 `\w`,所以 `\b` 在「英文最後一個字元」跟「緊接的中文字」之間一樣
+# 找不到邊界。用 `_ASCII_WORD_END`(負向前瞻:後面不能是另一個 ASCII 英數字)
+# 取代 `\b` 收尾,前面留 `\b`(開頭前面若緊貼中文一樣有問題,但這幾條 pattern
+# 的開頭本身是英文符號如 `/`、標點,風險小於收尾;為一致性一併修正)。
+_ASCII_WORD_START = r"(?<![A-Za-z0-9])"
+_ASCII_WORD_END = r"(?![A-Za-z0-9])"
+
 REMAKE_MARKERS = [
     (r"fd2-linux-verify", "remake 執行檔"),
     (r"drawNative\w*", "remake 渲染函式"),
-    (r"\bcmd/fd2\b", "remake 主程式"),
-    (r"\bgo test\b", "remake Go 測試"),
+    (rf"{_ASCII_WORD_START}cmd/fd2{_ASCII_WORD_END}", "remake 主程式"),
+    (rf"{_ASCII_WORD_START}go test{_ASCII_WORD_END}", "remake Go 測試"),
     (r"remake/", "remake 路徑"),
-    (r"\bplay\.sh\b", "remake 啟動腳本"),
+    (rf"{_ASCII_WORD_START}play\.sh{_ASCII_WORD_END}", "remake 啟動腳本"),
     (r"FD2_SHOT_\w+", "remake debug hook"),
     (r"FD2_CAMP_\w+", "remake debug hook"),
-    (r"\w+\.go\b", "remake Go 原始碼"),
+    (rf"\w+\.go{_ASCII_WORD_END}", "remake Go 原始碼"),
     (r"[-\w]*remake[-\w]*\.png", "remake 截圖"),
 ]
 
@@ -96,20 +106,33 @@ ORIGINAL_MARKERS = [
     (r"反組譯|decompile|disasm|逐指令", "反組譯"),
     (r"青衫攻略|攻略", "外部攻略(玩家社群)"),
     (r"org_game", "原版遊戲檔"),
-    # 2026-09-05 修正:原本的 `\bFDTXT\b` 這類寫法,`\b` 是「\w 字元 ↔ 非 \w 字元」
-    # 的邊界,而底線 `_` **本身也是 \w**——所以 `FDTXT_033` 這種本專案最常見的
-    # 具體資源檔名寫法(`FDTXT_NNN`/`FDMUS_NNN` 等),結尾的 `\b` 在 `T` 跟 `_`
-    # 之間**找不到邊界,整條規則不會命中**。實測:`re.search(r"\bFDTXT\b",
-    # "FDTXT_033")` 是 `None`。這代表全庫任何一句「只提到 FDTXT_033 之類具體
-    # 檔名、沒有另外寫出裸字 FDTXT」的主張,先前都被漏判成 NO_MARKER——方向上
-    # 只會讓 ORIGINAL 主張被低估(漏判成 NO_MARKER),不會讓 REMAKE_ONLY 或
-    # NO_MARKER 被誤判成 ORIGINAL,是安全方向的修正(跟 `ADDR_MARKER` 那種
-    # 「裸位址可能只是巧合」的風險方向相反,這裡的容器檔名是本專案自訂的具體
-    # 原版資源命名,不是巧合數字)。改成 `(?:_\d+)?` 選擇性尾綴,讓
-    # `FDTXT`/`FDTXT_033` 都能命中,但仍然不會誤吃 `FDTXTFOO` 這種真正黏在
-    # 別的詞裡的情況(見 selftest 的正反向驗證)。
-    (r"\bFDTXT(?:_\d+)?\b|\bFDOTHER(?:_\d+)?\b|\bFDFIELD(?:_\d+)?\b|"
-     r"\bFDSHAP(?:_\d+)?\b|\bFDMUS(?:_\d+)?\b|\bDATO(?:_\d+)?\b|FDICON",
+    # 2026-09-05 修正(第一輪):原本的 `\bFDTXT\b` 這類寫法,`\b` 是「\w 字元 ↔
+    # 非 \w 字元」的邊界,而底線 `_` **本身也是 \w**——所以 `FDTXT_033` 這種
+    # 本專案最常見的具體資源檔名寫法(`FDTXT_NNN`/`FDMUS_NNN` 等),結尾的 `\b`
+    # 在 `T` 跟 `_` 之間**找不到邊界,整條規則不會命中**。實測:
+    # `re.search(r"\bFDTXT\b", "FDTXT_033")` 是 `None`。
+    #
+    # 2026-09-05 修正(第二輪,範圍更大):第一輪只加了 `(?:_\d+)?` 選擇性尾綴,
+    # 但同一個「CJK 也算 \w」的問題在**中文緊貼在容器名兩側、沒有空格**時一樣
+    # 會發作——例如「FDOTHER背景上」或「讀取FDOTHER容器」,Python `re` 預設
+    # Unicode 模式下中文字屬於 \w,所以 `\b` 在 ASCII 字母跟緊接的中文字之間
+    # 一樣找不到邊界。實測:`re.search(r"\bFDOTHER\b", "FDOTHER背景上")` 也是
+    # `None`——這是中文技術文件裡英文詞緊貼中文、中間沒空格的**常見寫法**,
+    # 不是邊界案例,影響範圍比第一輪的底線問題更廣。
+    #
+    # 兩輪都是同一個方向的安全修正:只會把先前漏判的 ORIGINAL 主張(容器檔名是
+    # 本專案自訂的具體原版資源命名,不是巧合數字)從 NO_MARKER 移回 ORIGINAL,
+    # 不會讓 REMAKE_ONLY/NO_MARKER 被誤判成 ORIGINAL(跟 `ADDR_MARKER` 那種
+    # 「裸位址可能只是巧合」的風險方向相反)。改用 `_ASCII_WORD_START`/
+    # `_ASCII_WORD_END`(負向前瞻/後顧:只檔真正黏在另一個 ASCII 英數字的情況,
+    # 例如 `FDOTHERFOO`,不擋 CJK 或底線+數字)取代 `\b`,見 selftest 的
+    # 正反向驗證(含 CJK 緊鄰、底線數字尾綴、真正黏字三種案例)。
+    (rf"{_ASCII_WORD_START}FDTXT(?:_\d+)?{_ASCII_WORD_END}|"
+     rf"{_ASCII_WORD_START}FDOTHER(?:_\d+)?{_ASCII_WORD_END}|"
+     rf"{_ASCII_WORD_START}FDFIELD(?:_\d+)?{_ASCII_WORD_END}|"
+     rf"{_ASCII_WORD_START}FDSHAP(?:_\d+)?{_ASCII_WORD_END}|"
+     rf"{_ASCII_WORD_START}FDMUS(?:_\d+)?{_ASCII_WORD_END}|"
+     rf"{_ASCII_WORD_START}DATO(?:_\d+)?{_ASCII_WORD_END}|FDICON",
      "原版資產容器"),
     (r"FD2\.EXE", "原版執行檔"),
 ]
@@ -128,7 +151,12 @@ ORIGINAL_MARKERS = [
 # 折衷:位址仍算 ORIGINAL 標記(否則 doc27 那類表又壞掉),但單獨記一個
 # `addr_only` 旗標,讓報告能把「由具名原版工具支撐的 ORIGINAL」與「只有一個裸位址的
 # ORIGINAL」分開,不把兩者混為同一種可信度。
-ADDR_MARKER = (r"\b0x[0-9a-fA-F]{4,6}\b", "原版 EXE 位址")
+#
+# 2026-09-05:同樣套用 CJK 邊界修正(`0x12345附近` 這種位址緊貼中文、沒有空格
+# 的寫法一樣會被 `\b` 漏判)——這不影響上面「裸位址證據強度較弱」的既有結論
+# (那是靠 `addr_only` 旗標另外處理的信心分級,不是這裡的邊界正確性問題),
+# 純粹是讓漏判的案例正確歸類,不新增或減少「裸位址算不算強證據」的判斷。
+ADDR_MARKER = (rf"{_ASCII_WORD_START}0x[0-9a-fA-F]{{4,6}}{_ASCII_WORD_END}", "原版 EXE 位址")
 ORIGINAL_MARKERS.append(ADDR_MARKER)
 ORIGINAL_MARKERS_NAMED = [m for m in ORIGINAL_MARKERS if m is not ADDR_MARKER]
 
@@ -590,6 +618,23 @@ def selftest() -> int:
     expect("這件事已經確認跟 FDTXTFOOBAR 完全無關", "NO_MARKER",
            "負對照:FDTXT 黏在別的詞中間(FDTXTFOOBAR)不該被新的選擇性尾綴"
            "誤放行——尾綴只接受底線+數字,不接受任意字母")
+
+    # --- 2026-09-05 補:CJK 緊貼英文標記,兩側都沒有空格(中文技術文件常見寫法)---
+    # Python `re` 預設 Unicode 模式下 CJK 字元算 `\w`,原本 `\b` 版本在這種情況
+    # 一樣找不到邊界,是比底線問題影響範圍更大的同一類錯誤。
+    expect("已經確認來自FDOTHER背景資源沒有問題", "ORIGINAL",
+           "正對照:容器名前後直接接中文(無空格),CJK 算 \\w 導致舊版 \\b 抓不到")
+    expect("讀取DATO資料已經證實正確", "ORIGINAL",
+           "正對照:同一個問題但換一個容器名+中文在前面")
+    expect("這個修正已經確認在0x1a2b3附近生效", "ORIGINAL",
+           "正對照:十六進位位址緊貼中文一樣要能命中(不是新增裸位址證據力,"
+           "只是修正邊界)")
+    expect("已經確認跟cmd/fd2主程式沒有關係", "REMAKE_ONLY",
+           "正對照:remake 標記(cmd/fd2)緊貼中文同樣要能命中")
+    # --- 負對照:CJK 修正不能反過來讓真正黏在別的英文詞裡的情況被誤放行 ---
+    expect("這裡已經確認跟FDOTHERADJACENT無關而已", "NO_MARKER",
+           "負對照:容器名黏在另一個英文詞中間(FDOTHERADJACENT),前瞻/後顧"
+           "修正不能讓這種情況被誤判成命中")
 
     # --- 2026-09-04 補:反方向對照。第一版的 6 個對照**全部**在防「不該被誤報成
     # REMAKE_ONLY」,一個都沒防「不該被誤報成 ORIGINAL」——而後者才是危險方向:
