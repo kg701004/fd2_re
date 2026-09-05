@@ -31864,6 +31864,38 @@
    "excerpt": "**回歸驗證**：改完後 `--all --jobs 3` **16/16 全部 PASS**、port 回歸測試 21/21、環境零殘留。",
    "verdict": "benign",
    "note": "延續句，本文件(remake實機驗證記錄)逐輪操作敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2252,
+   "excerpt_sha1": "231274b8cb6539160da195fc804f7dcd90e576a1",
+   "excerpt": "| 1 | 未捕捉、未崩潰 | 環選擇連續落在 index 2/3(期望 0),`select_ring()` 的安全機制正確拒絕盲按確認——這一輪**幾乎沒有真的執行到攻擊動作**,不構成有效樣本 |",
+   "verdict": "benign",
+   "note": "表格row(本輪剛新增)，明確標示「不構成有效樣本」，誠實排除無效輪次"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2253,
+   "excerpt_sha1": "6f0030833e174f6dbc744df6bd24b504e37c69af",
+   "excerpt": "| 2 | 疑似崩潰,經截圖確認**是假警報** | 第 3 輪後 array dump 連續 3 次全 0,觸發 `game_alive()==False` 判定;截圖顯示遊戲其實仍在戰鬥中(索爾 048,移動範圍高亮清晰可見)——這是本專案自己記過的「read failure 不是 negative result」教訓(見 `feedback_read_failure_is_not_a_neg",
+   "verdict": "benign",
+   "note": "表格row(本輪剛新增)，明確標示「假警報」+截圖確認，交叉參照既有read-failure教訓"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2255,
+   "excerpt_sha1": "1e8ad4d2c7ba7ce3c19e230e805398c0f51ffdab",
+   "excerpt": "| 4 | 疑似崩潰,再次**確認是假警報** | 第 14 輪後同一種 array-dump-全0 症狀,截圖再次證實遊戲仍在同一場戰鬥中(索爾 048,同一張地圖畫面)——這是本節第二次遇到同一個假警報樣式,兩次都在畫面高度相似的時刻觸發,值得記錄成一個新的候選觀察(未證實):**這個讀取失敗可能跟畫面上某個特定動畫/捲動狀態相關,不是隨機時機**,但本輪未做進一步隔離 |",
+   "verdict": "benign",
+   "note": "表格row(本輪剛新增)，明確標示「未證實」的候選觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2267,
+   "excerpt_sha1": "f01685c72d721f8e3dc91f7b245c4d861672ee48",
+   "excerpt": "`fd2_stat_override.py` 先套用預設值),下一輪如果要繼續追,建議先確認前幾輪 rest_unit()",
+   "verdict": "benign",
+   "note": "延續句(本輪剛新增)，未來式建議下一輪核對動作序列"
   }
  ]
 }
