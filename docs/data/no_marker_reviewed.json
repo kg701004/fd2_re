@@ -32216,6 +32216,38 @@
    "excerpt": "跟既有90項unittest相容),但**不宣稱已驗證安全**——下次有人要跑大量`--attack`",
    "verdict": "benign",
    "note": "誠實現況小結，明確標示「不宣稱已驗證安全」，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2546,
+   "excerpt_sha1": "a64abc7405a6cd8a6814d7b8a06f4fff772c9f89",
+   "excerpt": "(第11批、110次確認)。用`fd2_crash_capture.py --instance cc1 --rounds 8 --mv 30`",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的instance cc1執行記錄，缺乏正規marker關鍵字但是真實原版live測試描述"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2550,
+   "excerpt_sha1": "3b3a937d7d4d70e1084aa8bd923219d4e4c88abd",
+   "excerpt": "不是誤報——收工前有截圖確認遊戲仍在正常戰鬥畫面,不是殘留值。",
+   "verdict": "benign",
+   "note": "截圖確認遊戲存活的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2552,
+   "excerpt_sha1": "9479c22e60a8b9467587136df2b6da029e1612c8",
+   "excerpt": "**但8輪的log本身暴露了一個新問題,不是原本要找的崩潰**:8輪內容**逐字重複**——",
+   "verdict": "benign",
+   "note": "分析8輪log內容重複的觀察，屬本輪新發現的獨立bug記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2554,
+   "excerpt_sha1": "b420a1ce01e4e91f4a4a290d83d95d08a58669b2",
+   "excerpt": "確認」,連續8次一模一樣。這代表`fd2_crash_capture.py`的`run_one_round()`(每輪重新",
+   "verdict": "benign",
+   "note": "同上，接續描述迴圈bug成因"
   }
  ]
 }
