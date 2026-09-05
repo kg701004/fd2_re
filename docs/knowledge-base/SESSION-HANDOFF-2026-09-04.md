@@ -1143,3 +1143,26 @@ roster slot**,不是角色 id;`box_index` 是該 FDTXT 內第幾個非空對話�
 
 已在該條目記錄:首戰解出 `FDTXT_033` 全部 32 筆,過程中修好一個工具自己的
 假陽性風險(`--confirm-text` 強制核對)。`FDTXT_032` 留待下一輪。
+
+## 2026-09-05(續):`/goal 全部審閱完成`——原版側 NO_MARKER 待辦清單已清空(0/0)
+
+依使用者設定的 goal,把 `tools/audit_evidence_provenance.py --no-marker-worklist`
+報告的原版側(非 `REMAKE_SIDE_DOCS`)NO_MARKER 待審閱清單,從約 1782 筆(28 份
+文件)逐筆讀完、逐筆判定、登錄進 `docs/data/no_marker_reviewed.json`,現在
+是 **0 筆、0 份文件**。約 1748 筆全部判定為 `benign`(表格標題/split-sentence
+續行/明確保留用語或否定式聲明/交叉參照既有結論/remake 端描述未被誤植成原版
+證據)。
+
+**過程中連帶修好 6 個真的 marker 遺漏**(每個都補了正反向 selftest 對照,
+每次都重跑 `--gate` 確認沒有因此新增 stale registry 條目):`反編譯`(5 處)、
+`原版實機`(5 處)、`ANI.DAT`(7 處)、`FUN_XXXXXXXX`(Ghidra 自動函式名,
+**73 處**,本輪最大宗)、`sub_XXXXXXXX`(IDA 版,6 處)、`DAT_XXXXXXXX`
+(Ghidra 自動全域資料名,34 處)。判斷過但**不值得修**的低頻邊界案例(2-6 處,
+且都有落在否定句裡被誤判的風險):裸「青衫」(無「攻略」)、裸「dosbox」
+(無「-x」)、裸「PTT」、`LAB_XXXXXXXX`、無 `0x` 前綴的位址格式、短於 4 位數
+的十六進位值(這條門檻本身是刻意設計,不是缺口)。
+
+詳見 memory `project_fd2_re_no_marker_sweep_complete`。**未涵蓋**:
+`REMAKE_SIDE_DOCS` 裡約 2300 筆 NO_MARKER(先前已定調優先度低,這次沒有
+明確被排除在 goal 文字之外,但也沒有動——下一輪若要繼續,建議先跟使用者
+確認這批是否也算在「全部審閱完成」範圍內)。
