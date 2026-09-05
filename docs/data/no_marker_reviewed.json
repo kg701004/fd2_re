@@ -3856,6 +3856,630 @@
    "excerpt": "的十字分支甚至完全沒有阻擋判斷。這是明確、可驗證的「沒有」結論，不是",
    "verdict": "benign",
    "note": "明確否定式聲明「完全沒有阻擋判斷」，明確標示這是可驗證的『沒有』結論"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 11,
+   "excerpt_sha1": "8198c54a513ca181adfd2f35edf86f7c2b7ac5be",
+   "excerpt": "> **§8 是這條 WSL2-native 路線的完整稽核總結與目前已驗證最穩定的啟動 recipe,新 session 應該",
+   "verdict": "benign",
+   "note": "章節摘要句，指向§8完整稽核總結，證據在該節"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 62,
+   "excerpt_sha1": "676b7e2a9e23b10724d6394d2edfb6a079bce176",
+   "excerpt": "驗證過皆存在),另加 `libsdl2-dev`(讓建置腳本偵測到系統 `sdl2-config`,跳過內建重編 SDL2,加速建置)、",
+   "verdict": "benign",
+   "note": "建置腳本套件清單延續句，交叉參照dq3專案"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 63,
+   "excerpt_sha1": "7bbdf3a3536bc8a4822cb72b48c4411954d0db91",
+   "excerpt": "`xvfb`/`x11-apps`/`imagemagick`/`xdotool`(headless 開圖 + 截圖 + 送鍵,沿用 dq3 專案已驗證的",
+   "verdict": "benign",
+   "note": "headless工具鏈延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 66,
+   "excerpt_sha1": "78afaba2800dac1ace4d464009d3c80ccbcac668",
+   "excerpt": "`git clone`,理由:①docker build 內 `git clone` 該 repo 曾在此環境實測逾時(repo 含大量歷史",
+   "verdict": "benign",
+   "note": "描述docker build逾時問題延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 82,
+   "excerpt_sha1": "fe73cab15a2c8f7da9f597de82e244fd3e753d12",
+   "excerpt": "啟動 FD2(掛載唯讀遊戲目錄,`-c` 疊加 autoexec;實測用的完整指令):",
+   "verdict": "benign",
+   "note": "描述啟動指令延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 142,
+   "excerpt_sha1": "2191c46c16937aa307018b1e1876750617ebb006",
+   "excerpt": "`ls -l MEMDUMP.BIN` 驗證大小，再把 dump 當證據。",
+   "verdict": "benign",
+   "note": "描述dump驗證方法延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 144,
+   "excerpt_sha1": "62fd1f8ccfc59cc6bfb28a3651e08d1214ebe744",
+   "excerpt": "### 4.3 headless 自動化(本輪已實測跑通,沿用 dq3 專案模式,見 `docs/29-dosbox-oracle.md`)",
+   "verdict": "benign",
+   "note": "章節標題，交叉參照dq3專案doc29，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 146,
+   "excerpt_sha1": "6c99104a258a49ebf2e617388d4c1f50b1bc87d7",
+   "excerpt": "**雙通道輸入**——這是本輪最重要的釐清,兩者不能混用,且已用真實流程驗證(§3):",
+   "verdict": "benign",
+   "note": "小標延續句，交叉參照§3"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 150,
+   "excerpt_sha1": "cad03cc5496fe5e874933c576ca9a148f60427e7",
+   "excerpt": "dq3 專案的 `tools/dosbox_run.sh` 已驗證同一模式,FD2 可直接照搬。",
+   "verdict": "benign",
+   "note": "交叉參照dq3專案既有驗證模式"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 177,
+   "excerpt_sha1": "525566031329b585d2e157561ee74e81db80c3cf",
+   "excerpt": "沒有更捷徑的原生批次介面——但這條路本身已完整驗證可行,不是空想。",
+   "verdict": "benign",
+   "note": "延續句，「已完整驗證可行」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 228,
+   "excerpt_sha1": "2a368e895016cb7c26db3d263c9931de497f8e95",
+   "excerpt": "**⚠再更正(doc47 §11,2026-07-05 RE handler call序列 + 原版截圖驗證)**:(8,21) 不是「中途快照」而是**第一次對話的停位**——handler `STEP×15 → 對話#0(line0索爾晉見) → STEP×13 → 對話#1(line1+父王)`;索爾在 (8,21) 停下播 line0(此時被守衛 (5,21)/(12,21) 左右緊鄰,原",
+   "verdict": "benign",
+   "note": "更正段落，交叉參照doc47 §11+原版截圖驗證"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 231,
+   "excerpt_sha1": "7ca4608513b85bb31f86b06634c3b29c2a6af8e0",
+   "excerpt": "slot3=(4,46) path 幕站位),非「多場景混放」異常——roster 順序=槽序再次驗證。",
+   "verdict": "benign",
+   "note": "延續句，再次驗證"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 238,
+   "excerpt_sha1": "0905b0d65d747a8ba2efcbbaa41a9ce971258d58",
+   "excerpt": "doc58 十幾個不同「續X」小節裡,沒有一份集中、系統性驗證過的總結。本節是一次專門的基礎設施",
+   "verdict": "benign",
+   "note": "描述本節目的(系統性重新驗證)延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 239,
+   "excerpt_sha1": "089ad9a336078227d21b4f29fb2c30cc18801ac1",
+   "excerpt": "稽核(不繼續 ch27 RE 進度),目的是把散落的問題逐一重新驗證(不是重述舊記錄),並產出一份",
+   "verdict": "benign",
+   "note": "同238延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 242,
+   "excerpt_sha1": "6f484730492d262b68d3db14c1b4b375bd08b25b",
+   "excerpt": "開機狀態下驗證的,不是延續某個已經跑了很久的 session。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 268,
+   "excerpt_sha1": "fa781cb958365c22f55890df8b93bccbf1aa445f",
+   "excerpt": "VM 預設可用到 host 記憶體的 50%(約 15.7GB)。沒有直接證據(event log 空白)證實 deadlock",
+   "verdict": "benign",
+   "note": "明確保留用語「沒有直接證據」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 269,
+   "excerpt_sha1": "9bd46226e27e0c103c94a13f5a301cd00a51b21b",
+   "excerpt": "跟記憶體壓力有關,但作為「降低發生機率」的預防性措施(不是已證實的根因修復),已在",
+   "verdict": "benign",
+   "note": "明確保留用語「不是已證實的根因修復」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 280,
+   "excerpt_sha1": "cb4fe54ae1c2c8a865b9eef6d941a2b1565d34bf",
+   "excerpt": "**已驗證**:`wsl --shutdown` 套用新設定後,`wsl -d Ubuntu -- free -h`/`nproc` 確認實際生效",
+   "verdict": "benign",
+   "note": "WSL2設定驗證延續句(基礎設施而非原版證據，但描述已驗證生效)"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 286,
+   "excerpt_sha1": "a2e780b39a2b475b5b75567321ba9472c48b542d",
+   "excerpt": "續四十九已經證實這些手段全部無效,不用再重複測試同一組),更務實的做法是**每一輪 live",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續四十九"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 287,
+   "excerpt_sha1": "66e9138a52f184d59eb485ac5dc2ea7641b2b3a6",
+   "excerpt": "驗證結束時都主動 `wsl --shutdown` 一次**(不是只在出問題時才做),把 WSL2 VM 的存活時間",
+   "verdict": "benign",
+   "note": "同286延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 292,
+   "excerpt_sha1": "1042228d8a8419e5e5eba03640b7cb94240b19b2",
+   "excerpt": "跟續四十九兩輪獨立驗證過這些手段 100% 無效,不是「這次可能運氣好」的問題。",
+   "verdict": "benign",
+   "note": "延續句，兩輪獨立驗證交叉確認"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 296,
+   "excerpt_sha1": "ba7aa9d451e7a5e3b21afa87a734570f99e5b1a4",
+   "excerpt": "當作一個獨立、需要使用者在場配合的專門任務,不要期待某次 live 驗證輪次能順便解決。",
+   "verdict": "benign",
+   "note": "延續句，未來式建議"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 298,
+   "excerpt_sha1": "cca99223921011b77fd052e6841d7518a295bdbd",
+   "excerpt": "### 8.1.1 2026-08-29 外部資料調查更新——修正「Restart-Service 已證實無效」的適用範圍",
+   "verdict": "benign",
+   "note": "章節標題，自我修正說明，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 314,
+   "excerpt_sha1": "ee8366fc0b88e69a691d7799624775ff2293b70d",
+   "excerpt": "2. **上面 §8.1 第 2 點「Restart-Service 已證實 100% 無效」需要修正適用範圍**——續三十五/",
+   "verdict": "benign",
+   "note": "自我修正延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 317,
+   "excerpt_sha1": "d4b650d96e6a7a2bb4285282797a0db486ca1f30",
+   "excerpt": "只證明了「非管理員權限行不通」,並沒有真正驗證過「系統管理員權限的 targeted service",
+   "verdict": "benign",
+   "note": "明確保留用語「並沒有真正驗證過」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 322,
+   "excerpt_sha1": "57ccb2e5f1d23d0d47d60ca62ad02e2913215bd0",
+   "excerpt": "3. **可能的預防性措施(未在本機驗證,列為待測建議)**:",
+   "verdict": "benign",
+   "note": "明確標示「未在本機驗證,列為待測建議」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 326,
+   "excerpt_sha1": "3dbe23f3bbc2fe24a4ed2a5bf92b837adf3c1aba",
+   "excerpt": "條件其實已知(避免在長時間 live 驗證任務期間讓機器進入睡眠),而不是真的無跡可尋。",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 327,
+   "excerpt_sha1": "10ef919246655dcefb57ee7d08c5c4d8e38e4c52",
+   "excerpt": "- 確認 `wsl --update` 已更新到最新版(部分上述 issue 後續已被官方修過)。",
+   "verdict": "benign",
+   "note": "延續句，待辦項"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 331,
+   "excerpt_sha1": "ff4d2cfb6e4080ffe0703a9a40e432c4bfde4cf3",
+   "excerpt": "這些都還沒有被官方確認為根因或正式修復(#2、#40994 在來源查詢當下都還是 open 狀態),",
+   "verdict": "benign",
+   "note": "明確保留用語「都還沒有被官方確認」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 334,
+   "excerpt_sha1": "9660524f5e2fadac62696f18811442a219d44166",
+   "excerpt": "### 8.2 `/tmp/.X11-unix`——重開機後重新驗證:仍然是唯讀,證實是永久性 WSLg 行為,不是暫時性狀態",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 337,
+   "excerpt_sha1": "95fe741da6f26c26bcfbfd8a0b39c3c495b97f21",
+   "excerpt": "「可能只是這次 session 的暫時狀態」。**這輪在使用者已重開機的乾淨環境下重新驗證**:",
+   "verdict": "benign",
+   "note": "延續句，重新驗證方法論"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 351,
+   "excerpt_sha1": "54046229ae3344a871ab95df47fe9688269a13f9",
+   "excerpt": "`sudo -n mount -o remount,rw ...`確認**沒有 passwordless sudo**(`sudo: a password is",
+   "verdict": "benign",
+   "note": "延續句，否定「沒有passwordless sudo」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 362,
+   "excerpt_sha1": "25067468e7dd23af31e1443b5e035c0cecf2a149",
+   "excerpt": "假說從未被量化驗證過(只有零星的「這次按鍵沒反應」軼事記錄)。這輪設計了一個可重複、程式化",
+   "verdict": "benign",
+   "note": "明確保留用語「從未被量化驗證過」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 363,
+   "excerpt_sha1": "5db3b71feba554c3a139d23df486ea91623e28c4",
+   "excerpt": "驗證的測試:標題畫面 `START/LOAD/CONTINUE` 是一個 3 選項、`Down` 鍵可自由 wrap 的選單(已用",
+   "verdict": "benign",
+   "note": "描述可重複測試設計延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 364,
+   "excerpt_sha1": "b7f6fbe5763c8692b15c62f64505d4ed871bf542",
+   "excerpt": "逐格測試確認:`START→LOAD→CONTINUE→START` 循環,不是 clamp)。用 ImageMagick 對固定像素座標",
+   "verdict": "benign",
+   "note": "測試結果延續句(ImageMagick像素比對)"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 405,
+   "excerpt_sha1": "52a0b2f3c15b3981725ea4e69f0021e59af6ac01",
+   "excerpt": "排除「純粹是連續重啟太快」的替代解釋,確認崩潰跟 cycles 過低本身相關,不是重啟節奏問題。",
+   "verdict": "benign",
+   "note": "排除替代解釋延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 411,
+   "excerpt_sha1": "87986adae9dedf4628673c77ea7f6af50060c777",
+   "excerpt": "2. `cycles` 真正的風險不是「掉鍵率上升」,而是**低於某個門檻(這次驗證的 `1000`/`3000` 兩個",
+   "verdict": "benign",
+   "note": "延續句，量測門檻描述"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 427,
+   "excerpt_sha1": "420e279b2446ceb7f84e947a5cb7c724d0dbec6d",
+   "excerpt": "### 8.4 最終建議:已驗證穩定的完整啟動 + 操作 recipe",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 443,
+   "excerpt_sha1": "231f61f7a2bcf4ff1272930e2e150fd7579aaeb2",
+   "excerpt": "- `core=normal` + `cycles=5000`:§8.3 重新驗證過的安全下限,不要低於這個值(會導致開場動畫",
+   "verdict": "benign",
+   "note": "延續句，§8.3重新驗證的安全下限"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 453,
+   "excerpt_sha1": "8660d427495e70f8eb06689a5b76cbc39119736b",
+   "excerpt": "**X11**:這台機器 `/tmp/.X11-unix` 已確認是永久唯讀(§8.2),固定用 `-nolisten local -listen",
+   "verdict": "benign",
+   "note": "延續句，交叉參照§8.2"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 460,
+   "excerpt_sha1": "f3cbb75cbce253d86d4481d621a08d74e290b29b",
+   "excerpt": "- §8.3 證實 `cycles=5000` 下**沒有量化到任何掉鍵**,單發按鍵不需要額外的人工延遲補償;但",
+   "verdict": "benign",
+   "note": "延續句，§8.3證實結果"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 461,
+   "excerpt_sha1": "4403831efcf9b73ac397db35c7d51f53f19f4790",
+   "excerpt": "如果操作的是戰鬥地圖(移動確認/指令環),續四十七/四十八記錄過該路徑本身有獨立於輸入時序",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續四十七/四十八"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 465,
+   "excerpt_sha1": "3a1f7464d95dbc39d1e616cc4714b1280051f714",
+   "excerpt": "'<指令文字>'`,**獨立**一次 `tmux send-keys -t dbg -l $'\\r'`(續四十四驗證,`-l` literal",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續四十四驗證的按鍵格式"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 476,
+   "excerpt_sha1": "861c81680c9e9f06fe4fd21cb114ed3b2832eeab",
+   "excerpt": "自動化流程,建議在關鍵結論前**用一個已知會改變狀態的對照組指令**驗證 pane 是不是真的更新",
+   "verdict": "benign",
+   "note": "方法論建議延續句(對照組指令驗證)"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 494,
+   "excerpt_sha1": "46981ceff918ee8c642dc87279abb38a80039858",
+   "excerpt": "檢查互相印證,但**只是尚未證實的候選**:`ch27ret`輪用同一份真實存檔、同一批",
+   "verdict": "benign",
+   "note": "明確保留用語「只是尚未證實的候選」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 496,
+   "excerpt_sha1": "588bce237c8b357dd3255d230fa50b15bfa913b8",
+   "excerpt": "測試中`Return`兩次都正常運作(第二次乾淨開出真正的系統環,截圖確認),未能重現",
+   "verdict": "benign",
+   "note": "測試結果延續句，截圖確認"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 497,
+   "excerpt_sha1": "13f9917bf33c62574d12c8b4c9a58722e72455e2",
+   "excerpt": "「完全無反應」的症狀,也確認過游標當下沒有落在任何活著記錄上(前置檢查分支未被",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 507,
+   "excerpt_sha1": "69583d0809978ef634142aa82037630438da16d2",
+   "excerpt": "`ydotool`(Linux kernel `uinput` 注入)**——doc58 續七十二(2026-08-26)已實測排除:",
+   "verdict": "benign",
+   "note": "交叉參照doc58續七十二已排除的候選"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 513,
+   "excerpt_sha1": "dacd956942c82b803c9f1f75f94e9089a2181ba7",
+   "excerpt": "architecturally 無法送達」的確定性結論,不需要重新驗證,除非未來環境改用真正支援",
+   "verdict": "benign",
+   "note": "延續句，確定性結論"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 516,
+   "excerpt_sha1": "10dde3b4381869240dc5181347be9b8c4c4cb6f8",
+   "excerpt": "續五十五指認的 `XTestFakeKeyEvent`/Xvfb 一般性不可靠候選被推翻或證實——本輪 `xdotool`",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續五十五"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 517,
+   "excerpt_sha1": "8cc5bc796912187edb19fbd046adcd24f34a99c7",
+   "excerpt": "全程 100% 成功,沒有復現任何掉鍵,也沒有對那個候選做任何新測試;戰鬥地圖 Enter 確認",
+   "verdict": "benign",
+   "note": "測試結果延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 519,
+   "excerpt_sha1": "3c04a86061f7fd1f0d125db66fd37fb8fe0d5ba3",
+   "excerpt": "5. **需要用 `xtrace` 做 X11 協定層封包擷取時,固定用法**(doc58 續七十七,2026-08-26 驗證):",
+   "verdict": "benign",
+   "note": "交叉參照doc58續七十七既有驗證方法"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 531,
+   "excerpt_sha1": "55802c7bbfd332a7d09c34fac6381b769510f8ff",
+   "excerpt": "行程樹被 SIGKILL(逐行 bisect 確認是 `setsid` 本身觸發,拿掉它、其餘完全不變的",
+   "verdict": "benign",
+   "note": "bisect排錯過程延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 536,
+   "excerpt_sha1": "5779011f96fbbbabbc25b09b780cfe9c7573c249",
+   "excerpt": "## 9. N-way 平行驗證 harness(`tools/dosbox_harness.sh`,2026-08-24)",
+   "verdict": "benign",
+   "note": "章節標題，描述工具(dosbox_harness.sh)，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 549,
+   "excerpt_sha1": "1c4bf86831910f4867bdabf88b548fef8fa1c445",
+   "excerpt": "完整用法、已驗證的並行上限(2-3 顆)、建置過程中踩到的坑(含一個真的 bug:Xvfb 的顯示器參數",
+   "verdict": "benign",
+   "note": "延續句，已驗證並行上限"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 559,
+   "excerpt_sha1": "a00cc3bd14c9bb66b4dd5e262cb4efdf4c6fef0d",
+   "excerpt": "§8 沿用至今的建置)都已 2026-08-25 直接核對確認存在,不是猜測。`LOGC` 只印 `CS:EIP`(最輕量,",
+   "verdict": "benign",
+   "note": "延續句，直接核對確認"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 563,
+   "excerpt_sha1": "931b156da9b4c8fed3c4a31f2bdd8277abf33d83",
+   "excerpt": "已驗證(不是紙上談兵):武裝 `LOGC` 之後遊戲畫面持續渲染、持續接受 `xdotool` 按鍵——不是",
+   "verdict": "benign",
+   "note": "延續句，「已驗證(不是紙上談兵)」"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 569,
+   "excerpt_sha1": "b02a13bb49a3a6ddedb853ffb38e79f869267454",
+   "excerpt": "完整用法、內部行為的 `debug.cpp` 依據、吞吐量實測數字、一個文件比對假陽性的教訓(位址字串比對",
+   "verdict": "benign",
+   "note": "延續句，含一個文件比對假陽性教訓"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 596,
+   "excerpt_sha1": "e24514bd07ea1c963ad55a46dd10a8bf0911facc",
+   "excerpt": "統計/視覺化全部接成一條 CLI 指令。2026-08-26 已驗證:①對既有 UI-01 title-screen oracle 重放",
+   "verdict": "benign",
+   "note": "延續句，逐位元組相同的raw RGB MD5驗證"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 597,
+   "excerpt_sha1": "1facc0a391e832e4d15380a605d3c5d95da59639",
+   "excerpt": "取得逐位元組相同的 raw RGB MD5;②全自動重放 ch02 城鎮 hub selection0(UI-08-TOWN-VARIANT0",
+   "verdict": "benign",
+   "note": "同596延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 605,
+   "excerpt_sha1": "2188dac2fa37a808ef8dc3af6f1b46c0981eeb3a",
+   "excerpt": "對應 `docs/knowledge-base/91-worklist.md` M5「正常玩法可達性驗證」項目:把 §9 的",
+   "verdict": "benign",
+   "note": "交叉參照91-worklist.md M5項目"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 610,
+   "excerpt_sha1": "542a4b3e76744d690e43bbbf2844e46b77406579",
+   "excerpt": "陣列寫入敵方死亡 signature+送出續六十二證實過的 End-Turn→YES 捷徑,若否則用通用",
+   "verdict": "benign",
+   "note": "延續句，交叉參照續六十二證實的捷徑"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 614,
+   "excerpt_sha1": "f6d9f62010595aee6bb50a98c914f31ebb2c338d",
+   "excerpt": "與戰鬥偵測的「陰性」判斷(正確認出「不在戰鬥中」,從未誤判)都乾淨驗證通過,但**通用",
+   "verdict": "benign",
+   "note": "延續句，含明確保留用語(通用xxx未完)"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 617,
+   "excerpt_sha1": "e5291439a04d7563318ccecafac1cbca82ef9fb2",
+   "excerpt": "即時試錯,且同一存檔在不同 session 觀察到至少兩種不同 UI 型態)。完整驗證記錄、已知限制、",
+   "verdict": "benign",
+   "note": "延續句，描述觀察限制"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 623,
+   "excerpt_sha1": "6ba94dcdc46c482dafcf22068250d8c90de3ef53",
+   "excerpt": "## 9. 2026-09-04:「確認鍵送不進戰鬥輸入迴圈」——**這道牆不是輸入問題,是量測工具問題**",
+   "verdict": "benign",
+   "note": "章節標題，自我修正(這道牆不是輸入問題)，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 642,
+   "excerpt_sha1": "53b218d1f500b61dca8044573732e2ea438b201f",
+   "excerpt": "這對**確認鍵的傷害遠大於方向鍵**:方向鍵的效果(游標移動)是**立即**的,確認鍵的效果",
+   "verdict": "benign",
+   "note": "延續句，診斷推論"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 643,
+   "excerpt_sha1": "4f854b7139a867b737062bdede5b1206c273093e",
+   "excerpt": "是**延遲的轉場**。**這正好就是原始診斷「方向鍵會到、確認鍵不會到」的形狀。**",
+   "verdict": "benign",
+   "note": "同642延續句"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 646,
+   "excerpt_sha1": "fb5167baaa83741ce361ad1289d3110206a6451d",
+   "excerpt": "單位有待機動畫循環,畫面持續重繪。實測:**同一秒內連拍三張,三個不同的 md5**。",
+   "verdict": "benign",
+   "note": "延續句，實測md5差異"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 649,
+   "excerpt_sha1": "63a49dac88c3d15b5580454c096fe793c1008260",
+   "excerpt": "- `wait-settle` **不可能成功**——實測 80/80 次全部 TIMEOUT,而 TIMEOUT 讀起來像",
+   "verdict": "benign",
+   "note": "延續句，實測80/80次TIMEOUT"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 697,
+   "excerpt_sha1": "4252645caa9f3c468c53bc5d19267dfee2284c34",
+   "excerpt": "所以這道牆的形狀從「確認鍵送不進戰鬥輸入迴圈」改成:**遊戲根本還沒進到戰鬥輸入迴圈,",
+   "verdict": "benign",
+   "note": "延續句，診斷結論修正"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 730,
+   "excerpt_sha1": "83e3fb2af25c3e5128638ba81147b1a23a27da14",
+   "excerpt": "單位陣列解出的座標證實游標 (10,15) 正好落在 idx1(`char_id=9`=悠妮,camp 0x02,acted 0)。",
+   "verdict": "benign",
+   "note": "延續句，單位陣列座標驗證結果"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 733,
+   "excerpt_sha1": "fceb219ab3c3245f073a7d02df0d486b541d21a6",
+   "excerpt": "**重做的乾淨測試(這才是一開始就該做的):** 先按 Escape 退回**瀏覽游標**狀態(截圖確認",
+   "verdict": "benign",
+   "note": "延續句，重做測試方法描述，截圖確認"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 780,
+   "excerpt_sha1": "ed88bfc126efb9733053c8c4b8167800596a5cab",
+   "excerpt": "| **ch27(前輪那份存檔,`FD2.SAV` md5 `e6d9a35756cddfc2519969b10f039181`,已逐位元組確認相符)** | Enter | **20/20** |",
+   "verdict": "benign",
+   "note": "表格row，存檔MD5已逐位元組確認相符"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 816,
+   "excerpt_sha1": "31f4e9167ee0b6d4d1bb7155af0710b78e435c40",
+   "excerpt": "## 11. 2026-09-04:活體數值覆寫加速驗證(`tools/fd2_stat_override.py`)",
+   "verdict": "benign",
+   "note": "章節標題，描述工具(fd2_stat_override.py)，證據在節內文"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 818,
+   "excerpt_sha1": "3e7df9aa44546095758abd7e1eff47db8952797f",
+   "excerpt": "把我方 HP/MP/AP 拉高、敵方 HP 壓到 1,讓一場戰鬥能在幾回合內結束,用來驗證",
+   "verdict": "benign",
+   "note": "延續句，描述活體數值覆寫方法"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 828,
+   "excerpt_sha1": "4ec0d800cdc1cc40404d637858b358e7c8819bca",
+   "excerpt": "而實測 AP 在 `+0x48`——兩套偏移互相矛盾,在 MV 被獨立定位之前寫 `+0x3b` 有風險。",
+   "verdict": "benign",
+   "note": "延續句，offset(+0x48)低於門檻"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 835,
+   "excerpt_sha1": "9ddc3311019f0882ca1e6d75b8fddaf508b75ffe",
+   "excerpt": "再推進 20 次確認鍵進入可操作戰鬥後重讀,**數值完整存活**",
+   "verdict": "benign",
+   "note": "延續句，數值完整存活測試結果"
+  },
+  {
+   "file": "48-dosbox-x-debugger-build.md",
+   "line": 847,
+   "excerpt_sha1": "4c38f7a0aca683a64bed17f520cacbc7880317a8",
+   "excerpt": "999 已實測正常顯示;對 ch01 仍是無敵(敵人約 20 傷害)。這與專案記憶裡記載的",
+   "verdict": "benign",
+   "note": "延續句，交叉參照專案記憶"
   }
  ]
 }
