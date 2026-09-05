@@ -20864,6 +20864,3014 @@
    "excerpt": "單位擊殺後升級 hp_max 變 10016(實測 idx2),整場戰鬥就被判成 NOT_IN_BATTLE。",
    "verdict": "benign",
    "note": "延續句，本文件記錄專案工具鏈開發/驗證過程的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 45,
+   "excerpt_sha1": "09880b6f5177cc86751124018cb7b4c74206cae1",
+   "excerpt": "272 - C - 讀`tools/decode_story_text.py`確認無`--script-json`旗標，純未實作。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 68,
+   "excerpt_sha1": "8b1ecf4435f274de974733aa288e1f0349657cc1",
+   "excerpt": "407 - D - 段落本身已描述完整靜態結論，但未見獨立doc佐證已結案，保守留D（未深入查證）。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 70,
+   "excerpt_sha1": "9a7439de9889a38ec4ff38a0d480dc00ba938fe1",
+   "excerpt": "409 - D→已續靜態比對閉合(2026-08-30，見L1354)：doc28涵蓋30章但remake的`protect`資料實作率是0%(campaign_full.json全檔zero個\"protect\"欄位)，且`Node.Protect`單一string schema結構上裝不下doc28多目標/陣營全滅規則，需先擴schema才能補資料；retreat後整備語意已用code path",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 71,
+   "excerpt_sha1": "6a3e28ada9a328c58d9f03c066d19004025491cb",
+   "excerpt": "410 - C - 完整GUI/Xvfb讀檔回歸是對重製自身存檔系統的工程測試，非原版RE。**已解(2026-08-31)**：見`58-remake-live-verification-log.md`續八十一，真實X11按鍵路徑F5/F9存讀檔+modifier guard皆live驗證，逐像素diff確認reload與原狀態相同；未能自然抵達town_ch02（ch01戰鬥ambush式敵人",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 75,
+   "excerpt_sha1": "e9237bc49700c0129894cadd4976be57f4014550",
+   "excerpt": "417 - B - 正常玩法可達性驗證需實際完整遊玩破關鏈，屬人類體驗判斷工作。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 93,
+   "excerpt_sha1": "2db5e7b1340ad3c67ba51432968ca986327c17b0",
+   "excerpt": "534 - D - doc56 L775確認multi-hit/SFX/native UI未接，可續靜態RE。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 99,
+   "excerpt_sha1": "dbd316a978c55601b9ed9c08ff91fb609af76c42",
+   "excerpt": "548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 100,
+   "excerpt_sha1": "9204d152bdb4f8b24efbdf949d13e95170e13edb",
+   "excerpt": "555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 109,
+   "excerpt_sha1": "7b71150d38aff0ecb7727f11e349311b2b658250",
+   "excerpt": "605 - E - 與587同一項目(UI音效index 2-0xb語意畫面實測)，同理需live驗證。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 128,
+   "excerpt_sha1": "eb44dce388d57d6ad38219c50011eee620f44a53",
+   "excerpt": "853 - E - 自述mapping僅關閉文字索引非event61玩家路徑；本檔約966行確認ch26 event61僅達E1，完整玩家路徑驗證需live E2。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 149,
+   "excerpt_sha1": "6e0544cefa3c0ee8511e1fba0e58142ada0f5a6d",
+   "excerpt": "1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 158,
+   "excerpt_sha1": "e4703a33399c5114239842f34658f1208c15106c",
+   "excerpt": "1183 - C - 防呆性宣告，其要求的resource provenance與indexed buffer contract實質已由後續`[x]`項閉合，剩下是組裝成完整renderer的工程整合。",
+   "verdict": "benign",
+   "note": "稽核索引條目(C/D/E優先度標記)，本文件自身worklist審閱慣例，含明確保留用語"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 200,
+   "excerpt_sha1": "11b5ed891a0275de50e23b4c9fbf2b2afd6ab835",
+   "excerpt": "> 2. **ch27／ch29的engine-level勝利＋靜默存檔已live確認**，非本索引涵蓋範圍：`ch27win3`輪",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 204,
+   "excerpt_sha1": "cd516958f7813100ea3945d9680b47a5bce96ef6",
+   "excerpt": ">    含磁碟寫入的字面`pass`。M5引擎層級勝利確認章節數截至`ch29wf`已遠超本索引存在時的任何統計。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 206,
+   "excerpt_sha1": "45e70f1df5a8d06d8488b3391334eb48d70ed769",
+   "excerpt": ">    用來測試出發確認流程，議題是選人核取畫面門檻，非勝利/存檔機制本身）與`1314`（ch29/ch30**結局",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 208,
+   "excerpt_sha1": "33b535d4eadfe45f2018f4cbfd4db81eab9aae5e",
+   "excerpt": ">    ch27win3/ch29wf推翻，仍應視為開放，不因鄰近的勝利/存檔確認而連帶關閉。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 227,
+   "excerpt_sha1": "f37cdc4a21a5ab3443218806b5379127088e79ac",
+   "excerpt": "> 6. **✅ 2026-08-30『ch30wf』輪——ch30/raw29 live驗證完成，M5 chapter-sweep engine-win live驗證線",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 235,
+   "excerpt_sha1": "8db884bd10771f0503adfd172cd173a242e8789b",
+   "excerpt": ">    self-loop機制本身不同）；三次獨立`pull_save()`+decode確認`pre.SAV`＝`patched.SAV`＝`final.SAV`",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 236,
+   "excerpt_sha1": "37d1dd93a3d4142f66292d23710fc776426f55f9",
+   "excerpt": ">    md5完全相同、raw chapter byte全程維持29——**無靜默存檔的預測完全確認**。**至此story ch21-30",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 237,
+   "excerpt_sha1": "0378f7e18fadc96c91ce21cda2680a26c52876ab",
+   "excerpt": ">    （raw20-29）全數完成靜態+live雙重確認，全遊戲30個story章節首度全數至少一次live確認engine-level",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 238,
+   "excerpt_sha1": "1480ffbd442af67efc9ee7cf4c2079e0c76a3f52",
+   "excerpt": ">    win，chapter-sweep專案的M5 live驗證線正式完成**（「磁碟真正pass」與「no-save-by-design」兩類",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 239,
+   "excerpt_sha1": "818a787289249c9602baa7ef7350ff5f9a0a96bd",
+   "excerpt": ">    章節的區分仍維持既有分類，這個收尾指的是engine-win live確認覆蓋率達到30/30，不是所有章節都拿到",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 263,
+   "excerpt_sha1": "bd725a6b805c52be5026a6c26bd42d8d1b357917",
+   "excerpt": "ch03 `Ctrl+F2`＋`selection=1`；實測label立刻變「？？？」並可進入秘密商店（灰皮膚船錨刺青店主，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 270,
+   "excerpt_sha1": "3d9a7b26721a3c5b624a3386f5af5c85fd2102b5",
+   "excerpt": "- [x] **CAMPAIGN-JOIN-LOADCH-PERSISTENT-PARTY-BOOTSTRAP**：修正正常ch00 JOIN只記`partyMembers/partyJoinOrder`、首次LOADCH未建`partyRoster`，導致帶native identity的第一個`sync_party`因找不到既有record而全數skip。`applyLoadCH`現只在已有J",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 279,
+   "excerpt_sha1": "7fab98ec6458f331e9f03b5997665fa817566c0a",
+   "excerpt": "30個全零選取旗標。城鎮重製流程已改為出發確認→按名冊門檻略過或選人→最終",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 307,
+   "excerpt_sha1": "55c94a28290f6e9f69b29a42433304ca422d3a40",
+   "excerpt": "（3 格：YES/NO確認→對白開場→部隊已部署的戰鬥地圖）。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 325,
+   "excerpt_sha1": "b081198c5b6b480a501fd7215c4a5723f065afe1",
+   "excerpt": "位址逐一 `function_bounds`：**全部 `in_function:false`**，證實 writerfire「doc56",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 342,
+   "excerpt_sha1": "1f0772dc501ee04bcb8e5a63b20b22d848e2f39c",
+   "excerpt": "證實游標移動寫死排除陣列最後一個 index（`roster_count-1`），13 人存檔時",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 359,
+   "excerpt_sha1": "3855314ebc7b8cae4b99e9f93a53951facc0f9e4",
+   "excerpt": "≥15` 的存檔實測才能分出勝負。本輪判斷靜態證據已足夠支撐上述結論，未嘗試",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 363,
+   "excerpt_sha1": "12d49db8da1dc0755e37e1be81e67d1efa4f2647",
+   "excerpt": "「渲染固定 12」假說已被推翻，選滿確認流程已 live 驗證關閉；writer 仍未命中，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 365,
+   "excerpt_sha1": "53e512e79503a82324aca2f9624d9398e25fcfbf",
+   "excerpt": "實測」的具體要求。**存檔合成方法**：新增 `tools/fd2save.py`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 366,
+   "excerpt_sha1": "1f35911be83e22fb29b3368a74e5387c778d0791",
+   "excerpt": "`build_join_record()`/`append_roster_members()`/`set_slot_chapter()`，逐位元組",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 367,
+   "excerpt_sha1": "9ff8a519266e4a5097793f9034149f85e271ce7e",
+   "excerpt": "複刻**已經 production-verified、有自己 known-answer test 的** Go",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 370,
+   "excerpt_sha1": "64ca1401c81674073014a4af830b848f0718e664",
+   "excerpt": "`test_build_join_record_matches_known_go_projection_for_char12` 已交叉核對逐位元組相同），",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 386,
+   "excerpt_sha1": "dd4d1682ca0cedfdbd74ca7c6eed251df0f26418",
+   "excerpt": "**`roster-count-1` 動態上限假說證實成立，「硬編碼 12」假說被推翻**：doc58",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 390,
+   "excerpt_sha1": "d289eb90ef0a83072c738d9377950af4f2b2eb1b",
+   "excerpt": "「確定要進入戰場嗎？」YES/NO 最終確認框**（[`preparation-roster26-final-confirm-dialog.png`](../figures/preparation-roster26-final-confirm-dialog.png)，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 392,
+   "excerpt_sha1": "4697325b1af53738c8c6086ffa68826890f35a49",
+   "excerpt": "驗證）——這正是本項一直缺的「選滿後真的能不能走到最終確認」的答案：**能，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 401,
+   "excerpt_sha1": "8915549c630d00728c00d97d36c13ab24d793fb0",
+   "excerpt": "（用同一份 slot0 資料覆寫 slot1，`fd2save.py` 逐位元組核對 slot1==slot0），",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 407,
+   "excerpt_sha1": "fe3e76474ad6d8869b2bc2176dfec623c54b599a",
+   "excerpt": "cap=15 臂（raw chapter 22-24）沒有實測；(2) Yes 分支觸發的寫入用 LOGC",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 426,
+   "excerpt_sha1": "0afb4603b6a3beb1d98ce76824308901717fb9ef",
+   "excerpt": "確認全幀渲染後，↓ 選 LOAD，四槽畫面（`1)第二十七章…2)第七章…3)第",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 443,
+   "excerpt_sha1": "689ba0ac63dd229c58c1fb119173374107051860",
+   "excerpt": "Enter/Space 確認、Escape 取消`——沒有第五個「刪除」分支。本輪 live",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 445,
+   "excerpt_sha1": "7e75dad8169f667bb3de382458e219ec29706f2d",
+   "excerpt": "原生 LOAD 四槽畫面不存在刪除功能，這是可關閉的結論，不是尚待驗證的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 447,
+   "excerpt_sha1": "1a30428a5ba5149eaecdc1c6f8217f5c5f4bc959",
+   "excerpt": "現在確認是**行為一致（都沒有），不是 remake 的缺失**。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 459,
+   "excerpt_sha1": "65822eebf24140351f8251c053b88802539cd785",
+   "excerpt": "（`0x002777a7`）與四槽內容全程逐位元組未變、mtime 也未更新（同目錄",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 467,
+   "excerpt_sha1": "ebde9901aaa17277385d5ec65842b27fe964638e",
+   "excerpt": "哪一槽、是否有覆寫前確認）**這輪未能實測到**。酒店 NPC 對話框",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 474,
+   "excerpt_sha1": "6b2bda091dc8d3a7452cc906b77e59b30cba077a",
+   "excerpt": "且順帶 live 驗證出一條目前唯一已知「確實會寫入 FD2.SAV」的路徑**：",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 478,
+   "excerpt_sha1": "5f90664ca21acbcc330c43c7be3e592e23e39556",
+   "excerpt": "在按鍵前後各截一張 320×200 全幀比對）證實：**Up/Down/Tab/數字鍵/",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 486,
+   "excerpt_sha1": "d4341956dfa161d9c35a7ba9c4188777e7fef78f",
+   "excerpt": "逐格驗證，確認游標是 **bounded 不 wrap 的 3 格**（index 0..2，即使",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 492,
+   "excerpt_sha1": "9e38cbbb5444a872a38ef55fdaf16f3a741fa941",
+   "excerpt": "`roster_char_ids` 交叉驗證過的同一個 widget）。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 493,
+   "excerpt_sha1": "57a1f491e255c6ca0893369c027623f42b8092d5",
+   "excerpt": "- **index1（磁片+左箭頭）＝存檔，本輪 live 寫入成功並完整驗證**：",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 502,
+   "excerpt_sha1": "bf00682c4f0ff6822af34bde3f57151692d1334c",
+   "excerpt": "`0x0098b811`）逐位元組相同，證實這是把**目前 session 的即時進度",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 507,
+   "excerpt_sha1": "264cededb51df655b8b48ff76a2e7d8d45ef24f9",
+   "excerpt": "**live 實測「按了之後 FD2.SAV 真的改變」的存檔路徑**，可以拿來",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 508,
+   "excerpt_sha1": "a25b8589927697769c6a2d09c1fa6aa87fc6ec2b",
+   "excerpt": "跟同輪 `saveE2` 用 `LOGC` 追蹤過、確認**不會**寫入的 town-hub",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 529,
+   "excerpt_sha1": "21d8860ea468b699d817c7abf36a8df4bebc67f9",
+   "excerpt": "在戰鬥地圖移動確認時「時好時壞」，方向鍵不受影響；這裡剛好相反且",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 531,
+   "excerpt_sha1": "5e0188f679b4a658e5118bafaff87fa96581682f",
+   "excerpt": "多個非方向鍵，經測試全部殊途同歸地等同「確認目前游標位置」）本輪",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 543,
+   "excerpt_sha1": "3237d949c4399d4b730df49a7cb00aaed7685464",
+   "excerpt": "`BP 0170:1B1F84`（`TXT`直譯器，296 呼叫點，doc35 §9.9 已驗證的通用",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 548,
+   "excerpt_sha1": "cb80df8ee504f9ed205367a7f1cb82f8e3283464",
+   "excerpt": "`LOGC`追蹤裡確實有命中，交叉證實不是 delta 算錯，是 BP 機制本身的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 567,
+   "excerpt_sha1": "7eadf3756c2c2aa2498857be6aff0a5f44984bdf",
+   "excerpt": "- 工作目錄逐檔案 mtime 稽核（`find -newermt`）確認整個 session 期間",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 584,
+   "excerpt_sha1": "75aa88da48b9863e009c6e5dbf4825d66ac0578f",
+   "excerpt": "- 過程中意外驗證一個有實用價值的方法論教訓：**比較存檔『有沒有被",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 596,
+   "excerpt_sha1": "27783e3f7194374f0db05716beae5ca08f1b29b0",
+   "excerpt": "（YES confirm 之後正常推進到「這裡就是遺跡了嗎？」過場對白，證實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 610,
+   "excerpt_sha1": "c9b58f5dea16e0eb234d6f4828cba6b4dc6a72d9",
+   "excerpt": "的 writer 位址」的待辦做掉，真正的存檔 writer 已定位並完整靜態驗證**：",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 616,
+   "excerpt_sha1": "fec8bd2ea09b89d01a5df20d8a5df010ad39b51b",
+   "excerpt": "`Birth`(20:54:07)前進到`Modify`(21:00:08)，確認真的有write",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 642,
+   "excerpt_sha1": "382585e7dc21d43a1259e364f425059fe149d4fa",
+   "excerpt": "個trace命中位址裡被直接確認執行過，不是靜態推論。截圖：",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 643,
+   "excerpt_sha1": "0b68f6063bfd157150e25732b3ba04bcbc45be37",
+   "excerpt": "[`tavern-icon1-save-writer-logc-trace-confirmed.png`](../figures/tavern-icon1-save-writer-logc-trace-confirmed.png)。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 644,
+   "excerpt_sha1": "7bb062f53a8b92605ff9fe4c8918356668e27aae",
+   "excerpt": "**誠實限制**：這條鏈只證實tavern icon1這一條路徑的writer，**不是**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 651,
+   "excerpt_sha1": "59f1d1cad5ddae31916458aa5c53d00cb6305227",
+   "excerpt": "隔離複本），本輪結束前重新核對 md5 與 mtime 均未變，其他驗證回合",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 666,
+   "excerpt_sha1": "83119cdfb5101f625db98dec2f17c325c4b9c9df",
+   "excerpt": "改用`xref_to`+`call_scan`兩種獨立方法交叉確認writer",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 692,
+   "excerpt_sha1": "1be4218ce94226f9716f615955632ec78d70f160",
+   "excerpt": "剛實測命中），不是從未接進任何狀態機的孤立函式；但也尚未被live",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 726,
+   "excerpt_sha1": "bf7cd11ff4f7cf85d1bc1b2ecb15beb761318f1a",
+   "excerpt": "`Escape`/`Delete`（doc56 raw scancode分析選出的兩個候選確認鍵）都只會",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 729,
+   "excerpt_sha1": "70fc6419ec6b9bc04deaac3e8feac18b6c85f39b",
+   "excerpt": "（複製record0填補空位）求選滿，但改完後遊戲在YES確認後直接靜默彈回",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 732,
+   "excerpt_sha1": "8d7349e9b08f77e104eafdd018de2e241a41cde4",
+   "excerpt": "證實或推翻writer在整備限定流程真的會被呼叫；反而讓doc25§9.1「Yes才呼",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 743,
+   "excerpt_sha1": "3cac582b7a8d435f36395d6aca84fa86036bb934",
+   "excerpt": "roster（13 真實 record + 13 個各自不同角色 id、欄位由 production-verified",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 753,
+   "excerpt_sha1": "773ef21d9849f45f8a16cab82b7c3025ff37ea2b",
+   "excerpt": "`LOGC`(3 億指令，涵蓋 No 確認到選人畫面全程互動到最終確認到過場對白開場，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 757,
+   "excerpt_sha1": "ab3203654c9c3abb3cb234d182c467f28497bbdb",
+   "excerpt": "唯一一次「乾淨涵蓋完整選人→最終確認→過場」全程、且沒有中途死掉或分支混淆",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 759,
+   "excerpt_sha1": "c2dbdb73d384f31c4944e844dc45fc650a7503f2",
+   "excerpt": "確認這條 No 分支路徑本身就是不呼叫 writer 的。**Yes 分支的意外發現，信心",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 760,
+   "excerpt_sha1": "890cd187bd64a4aa0a7742eaa068a4ae963179eb",
+   "excerpt": "較低，留給下一輪專門驗證**：另一輪嘗試（合成 roster、按 Left+Enter 想選",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 762,
+   "excerpt_sha1": "edfc784c0ef90207777ed46f5f158dcec57b61b1",
+   "excerpt": "`FD2.SAV`，slot1 變成與 slot0（剛才 LOAD 的來源槽）逐位元組相同的複製品，",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 763,
+   "excerpt_sha1": "798c7acb40fc520ec4d1ab346fe32ffe69be5035",
+   "excerpt": "checksum/mtime 都證實真寫入，**遊戲隨後回到標題 LOAD 四槽選單，不是進選人",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 780,
+   "excerpt_sha1": "92896387ce1b18384d58d9ddbb1ecfcc00db87e9",
+   "excerpt": "`tmux ls`/`ps` 確認無殘留 instance，結束後乾淨 teardown）：用乾淨單一",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 811,
+   "excerpt_sha1": "f8f4fcb6a2fedaa32d7f793cb4730e25d7cfbc8b",
+   "excerpt": "確認鍵落進這個選擇器並選中某槽，兩輪其實是同一函式的不同階段。**結論",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 816,
+   "excerpt_sha1": "bc27ef9afea052794b457f618169ecd76ab8d9cb",
+   "excerpt": "一次 `Return` 選 slot，確認「記錄儲存完畢！」與 `FD2.SAV` 真的改變。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 819,
+   "excerpt_sha1": "7053ac75e4e0540d1c90418718b3b03977ed0279",
+   "excerpt": "確認無殘留 instance，結束後 `teardown slotpick`）：把 `cleanretest` 輪留下",
+   "verdict": "benign",
+   "note": "DOSBox-X live測試instance收尾清理記錄"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 820,
+   "excerpt_sha1": "db123a37a287175976febfafb9acc50a14ad44f2",
+   "excerpt": "的「在選擇器上再按一次 Return 選 slot，確認真的寫入」補測做掉，**camp-exit",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 832,
+   "excerpt_sha1": "2e05239a5a07a7304edb13a0cd25e5713a5984bd",
+   "excerpt": "採樣一致)，**確認發生真實 write syscall**；checksum/md5",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 836,
+   "excerpt_sha1": "904efa92ec0b72efa584f0c39a76eef5a670f5b8",
+   "excerpt": "寫回的 bytes 與磁碟既有內容逐位元組相同)，**不是**沒寫入，mtime 才是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 852,
+   "excerpt_sha1": "47f7d9509e30c9e05cd5dcb346d8f984b7516198",
+   "excerpt": "執行，等待數秒後畫面依然是同一份四槽清單，未曾出現過確認文字；再送",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 853,
+   "excerpt_sha1": "fe9ef1ab6b26b18737666f396864c80458bba59c",
+   "excerpt": "一次 `Down` 確認游標真的移動到項目2(證實遊戲並未當機，是真的活著在",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 861,
+   "excerpt_sha1": "485d0d1b5bcfc57ffa7b9263c33edc36cc9bc0d8",
+   "excerpt": "這條路徑上確認文字的繪製邏輯是另一個獨立分支(例如寫入是否成功、或",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 876,
+   "excerpt_sha1": "511e8222f0f51c79f764945a204f733e533075e5",
+   "excerpt": "槽位並確認後，**確實會完成一次真實磁碟寫入**——`FD2.SAV` mtime 改變、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 881,
+   "excerpt_sha1": "88081ef25ae69ff2938824bef56b2f1343433456",
+   "excerpt": "尾巴是「這條路徑上『記錄儲存完畢！』確認文字為何本輪沒有觀察到」，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 888,
+   "excerpt_sha1": "d381511109efe99431be055891eb564b94aeaf30",
+   "excerpt": "(以章節為索引的 byte table)gate：`==0` 才顯示。`bytes` 逐位元組 dump 這張表(index",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 897,
+   "excerpt_sha1": "50ca619f5f8d184f7d341b7326ad9199f2b008ef",
+   "excerpt": "整備限定流程存檔完直接接續進入部署/戰前過場，不顯示確認彈窗；城鎮流程裡玩家主動走",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 913,
+   "excerpt_sha1": "f47945162aefd06ef01eaed205d7a31c5ef225f5",
+   "excerpt": "- [x] 根目錄 `README.md` 改為「資產／RE／引擎切片／原版差距」四欄狀態表，加入已驗證成果圖片；不再宣稱全 30 章 parity。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 917,
+   "excerpt_sha1": "e69ff91026bc34ed082dc7ca5075591df8a94028",
+   "excerpt": "- [x] 2026-07-27 README/KB review：README 改正「跨平台已完成」「EXE 全部表已閉合」「SDL2 第二條 runtime」等過強敘述，補上原版／重製對話圖與可驗證差距說明；`00-index` 明列 README→56→57→42→91 裁決順序；`08` 修正兩個圖片相對路徑。`90`、`30`、`51`、`SESSION-HANDOFF-*` 不合併，保",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 920,
+   "excerpt_sha1": "17f0667d17702b144e0ad42f99c3c7422a3f8172",
+   "excerpt": "- [x] 2026-07-27 expansion-doc assertion audit：`17-scenario-expansion-evaluation.md` 原稱「原版評分式 AI 已還原、可照搬」已撤回，改以 `11` 的 raw dispatcher/candidate/score slices 與完整 runtime 未閉合為準；`50` 的 persistence 句也限定為 ",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 928,
+   "excerpt_sha1": "6fca7c1aca363931e76ed0e4ca352fde090f6508",
+   "excerpt": "`fd2-go-test-local` containers，確認沒有FD2 container殘留，並刪除已被",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 950,
+   "excerpt_sha1": "81cc3614f82a6fb519fd93494a384037ddd6491a",
+   "excerpt": "- [x] **UI-08-TOWN-VARIANT0-SIX-SELECTION-E2**：以新 `waittown0:key,delay,max` 背景簽章同步避免固定 Return 次數過按，原版依 input 到達0酒店、1武器店、2出口、3道具店、4教會、5「???」；六幀各自與 deterministic remake pulse 做320×200 raw RGB全幀hash相同。另實",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 962,
+   "excerpt_sha1": "71e3108b455452245d0703812547d3b09a574587",
+   "excerpt": "- [x] **UI-VERTICAL-CH02-TOWN-CHURCH-CLASS-CHANGE**：`Game.applyChurchClassChange` 與 `TestCampaignTownChurchClassChangeReturnTrace` 驗證悠妮（native identity/portrait09）依 special override 解析唯一 portrait34/cl",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 963,
+   "excerpt_sha1": "d4d31b5f1aa489882aa9215f6afa8a4356079a06",
+   "excerpt": "- [x] **UI-VERTICAL-CH02-SAVE-LOAD-BOUNDARY**：新增 `TestCampaignSaveLoadRestoresTownBoundaryAndParty`，驗證 town 節點 F5 存檔→清除 transient runtime→F9 讀檔後恢復 campaign cursor、gold、items、party roster/deploy/join o",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 980,
+   "excerpt_sha1": "5956ef060c7535527e9b8f731b660fa11b043937",
+   "excerpt": "- [x] **圖像解壓**:破解 RLE(c≥0x80 literal / c<0x80 run),`tools/decode_image.py` 渲染標題+背景驗證 → `05-image-compression-format.md`",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 981,
+   "excerpt_sha1": "6b367cc2b187eb352db0a5775253986cd4ed2561",
+   "excerpt": "- [x] **音樂解析**:確認 XMIDI,`tools/xmi2mid.py` 轉 15 首標準 MIDI(note 平衡、tempo 直通)→ `07-music-xmidi-format.md`",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 987,
+   "excerpt_sha1": "8e5eb420efee5c6c0598113481eab9978af9da99",
+   "excerpt": "4 模式 RLE → `tools/decode_figani.py` 把 **264 動畫 2118 幀**全部解出(騎士揮劍動畫視覺驗證)← 使用者明確要求,完成",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 994,
+   "excerpt_sha1": "5e7ca86bf315fd7c773398b8c2e6a1dc80fed7f2",
+   "excerpt": "仍需閉合候選格順序、raw helper 語意、turn/camp 與 runtime execution → `11-…`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1002,
+   "excerpt_sha1": "e0dc005399197c230ceb7b1770258c63f78eb7ce",
+   "excerpt": "doc13已閉合)之外,函式本體不呼叫任何額外視線/阻擋子函式;`mode>=0x10`十字分支甚至完全沒有阻擋判斷,",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1007,
+   "excerpt_sha1": "e65ee948fe13edcd93cdd2078c5e390e3733e4ff",
+   "excerpt": "查證;但這四個旗標實際控制遊戲裡什麼行為(是否為recruit/上場二選一或純UI選項)仍未閉合,doc23原本",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1025,
+   "excerpt_sha1": "b87b8bcd89c993240434c10c349dd1180341b9b8",
+   "excerpt": "每筆均依序走結構已閉合的 90 筆全域事件表、30 筆章節戰場事件 handler 表與",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1033,
+   "excerpt_sha1": "9e4c99d277918e25dc0119446b0d618f542d1bb6",
+   "excerpt": "尚未接 production `NextAIPlan`。下一步以固定存檔 trace 驗證實際選中",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1040,
+   "excerpt_sha1": "40875748a9e23d43ac717362dad4cab5964d8c08",
+   "excerpt": "→END→YES 確認，成功觸發「ENEMY PHASE」演出（鏡頭依序掃過營寨守衛×2、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1041,
+   "excerpt_sha1": "2110736a9434717484876d3cb2b60befbe597ef1",
+   "excerpt": "橋上守衛×3、開戰全景等多個定點鏡頭），驗證 doc58 記載的 End Turn 操作",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1049,
+   "excerpt_sha1": "e3b94e5467f15d721595d6bc07d894916373d7df",
+   "excerpt": "反向驗證：主動選取索爾開指令環，「攻擊」圖示對這隻鄰接守衛顯示為",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1051,
+   "excerpt_sha1": "aa7d1693a16ca6b6ed4f1741008b1adb8e7ad2f2",
+   "excerpt": "不是座標誤判。**誠實結論（部分閉合，非完整 E2 confirm）**：第一輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1054,
+   "excerpt_sha1": "d8e0b7037ca8f6625a65c6fe599739c31dc28917",
+   "excerpt": "記憶體，所以無法排除／證實最可能的解釋（doc11 2026-08-14 記載 ch01",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1057,
+   "excerpt_sha1": "0918cd85418346d4ac42ca8ec5379d64b3f6f5aa",
+   "excerpt": "未經 live record 驗證，仍是推論）。全程沒有一次真正的攻擊發生，因此",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1059,
+   "excerpt_sha1": "288b37335c97e26f413c90b720a175bf6f16e628",
+   "excerpt": "這個原始子題目標。下一步（真正閉合需要）：對此守衛的 raw record",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1061,
+   "excerpt_sha1": "7b6c49e7bd7afedd5e03e2d0556b0231f95398c4",
+   "excerpt": "live 記憶體讀取確認是否為空武器欄位；若確認，執行順序子題可視為驗證",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1077,
+   "excerpt_sha1": "e5e989d3a3cb8d2503178390d0fe8a4da8fbf013",
+   "excerpt": "（武器item id），武器欄位確認非空**，與角色資訊畫面顯示的「巨劍」",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1078,
+   "excerpt_sha1": "bc0c167d5baa097958d14e4346dc4789b51a55c3",
+   "excerpt": "逐位元組吻合——**直接推翻這個個案的 empty-weapon fail-closed 假說**。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1081,
+   "excerpt_sha1": "cd9a9a6139bc95daf7c7cc51a6b5758444101953",
+   "excerpt": "`922`/`711`，與畫面 UI 逐位元組吻合)`＝`−638`，遠低於文件既記載的",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1085,
+   "excerpt_sha1": "a185bbb8ebff14d4f667a776af989c105e440bcc",
+   "excerpt": "`802→705`（-97），證實**至少一隻法師確實出手攻擊**（走的是法術評分",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1088,
+   "excerpt_sha1": "3ec99be4e2c364ad2a0efa55203ba98910338b5d",
+   "excerpt": "（比原訂目標更精確、已達 record 位元組級驗證）**：doc91上一輪138HP",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1095,
+   "excerpt_sha1": "255bca055e5e8b528a1cfc5bc0a955badcb45989",
+   "excerpt": "位元組驗證，留待下一輪視需要補上。詳細位元組證據與交叉驗證見doc11",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1140,
+   "excerpt_sha1": "02d7622726953c7c243e1447ae38ab8b3231a4d9",
+   "excerpt": "**9個(68/70/71/81/85/86/87/88/89)證實([驗])落在鄰居handler(多為event67/84)內部指令中段的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1143,
+   "excerpt_sha1": "d184f539a777967fa0903b677509dece2e7f72a5",
+   "excerpt": "(給予item 0x1B/0x23家族)/event78·79(條件繪圖)家族**；**1個(77)確認非獨立進入點(落在一個先前未",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1146,
+   "excerpt_sha1": "51790a98c587a8abb7f87693e91d9f2e2d52b4ab",
+   "excerpt": "78/82/84 + 本輪新增62/72/73/79/80/83)；另9個證實為共用鄰居代碼無獨立語意；1個(77)落點性質已知但",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1148,
+   "excerpt_sha1": "05d22f023a6532ec098e0bae5df1e1520a563869",
+   "excerpt": "仍有77的外層handler、62/72/73/79/80/83升級為[驗]的交叉驗證、64/66兩個遺漏entry，以及各",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1149,
+   "excerpt_sha1": "a4897241535773eb8aa257ab1e551dbc888771f4",
+   "excerpt": "dispatcher的selector生產路徑尚未逐一閉合。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1160,
+   "excerpt_sha1": "c90a9ebaed18d2dbe42983ec61921c97b1af1568",
+   "excerpt": "re-verify**。32個entry最終統計：22個有具體行為描述、10個確認為table artifact無獨立語意。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1161,
+   "excerpt_sha1": "6b8792bdc6f1cb969ef083cce7e465ba670f426a",
+   "excerpt": "**checkbox仍維持`[~]`**：剩event58/76/78的re-verify、各dispatcher selector生產路徑未逐一閉合。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1165,
+   "excerpt_sha1": "94eda5463ab28544b999299a6908244944a0f7e0",
+   "excerpt": "relocation偏移`0x356`(4/4錨點命中,零反例)，逐byte確認event58/76/78三個table槽位的原始值",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1170,
+   "excerpt_sha1": "4c9d009c7903e917ffd701629f274c1827f9cf4d",
+   "excerpt": "的PUSH/CMP運算元中段。**三者definitively確認為table artifact，無獨立語意**——與64/66/77/68/70/",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1234,
+   "excerpt_sha1": "1c579c4c0199e5636bb415e938c540fcf6fcca02",
+   "excerpt": "- [x] 選定首個重製技術棧做「讀真資料 → 畫面」垂直切片——2026-08-19稽核確認：本檔第277行「重製MVP垂直切片」與289-294行「M0引擎骨架✅」已證實Go/Ebiten技術棧選定與垂直切片皆已完成，僅本行未同步。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1244,
+   "excerpt_sha1": "e84a75593a36a193ee9809f020a8cba6bb7159f8",
+   "excerpt": "- [x] **第一性原理可行性確認** → `20`(9 項必要能力全具備,降為工程整合)",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1247,
+   "excerpt_sha1": "0eec88908a34b68244934060220b5f13c418319e",
+   "excerpt": "- [x] **技術驗證報告** → `22`(桌面 ELF 10.8MB + WASM 10.5MB + 資產管線,三項全通)",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1255,
+   "excerpt_sha1": "093659ca8852fcea306063025995f5422ff6c857",
+   "excerpt": "> 策略:**先把本機桌面執行檔做成能完整玩,再回頭處理網頁/手機打包**(`22` 已證三平台都可建)。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1272,
+   "excerpt_sha1": "e974e256f7148cac8179e008a8a6c3d7e8e3bba9",
+   "excerpt": "- [x] 攻擊結算:套**青衫公式**(物理/劍技/法術/恢復+命中+暴擊+經驗,doc 02 §4 = 實作依據)+ EXE 數值表(`03`)——2026-08-19稽核確認：`docs/knowledge-base/27-combat-rules-and-validation-checklist.md`§5三方一致性表(物理/地形/命中/法術傷害/恢復/AI評分)均已標記remake實作並",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1279,
+   "excerpt_sha1": "994d568d8021bcfb9e6da6fd422c5190ba573bca",
+   "excerpt": "E0 交叉夾具固定96／8並保留第二遍，且驗證輸入記錄不變。它不執行",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1354,
+   "excerpt_sha1": "ff61615cba665131d61f33e32b8bea7b35a4c16d",
+   "excerpt": "- [x] **ch14/ch15 postbattle campaign index correction**：撤回「同號 postbattle node 對同號 raw post handler」的錯誤斷言；目前已驗證並回歸 `postbattle_ch14_persist→ch13_post→town_ch15`、`postbattle_ch15_persist→ch14_post→town",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1364,
+   "excerpt_sha1": "b65a7c46952d8c2466a16c4370627530d7c3c894",
+   "excerpt": "- [x] **ch15 compound predicate primitive**：新增受限 `native_any_of`，只接受已驗證的 raw round／inactive-count 子條件；任一子條件可證實為真才通過，全部缺 provenance 仍 fail-closed。尚未改寫 immutable `ch15_post.json` 或解除 campaign binding。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1382,
+   "excerpt_sha1": "88270794bc36a403350c902dea4c511d677787ea",
+   "excerpt": "→ 待辦收斂為：(a) 把 `Node.Protect` 從單一 string 升級成可承接「索爾(恆定)＋0..N 具名護衛＋可選陣營全滅」的資料結構；(b) 有了新 schema 之後，才逐章把 doc28 §2 的 18 章額外護衛資料化進 `campaign_full.json`（資料化前仍須注意 doc28 本身是 authored candidate，非逐章 handler/E2 已閉",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1389,
+   "excerpt_sha1": "c90d0bda83dea9675347acd45eb0731cae4684ae",
+   "excerpt": "2. **兩種安全形態**:(i) `camp:\"ally\"` 的 NPC(該角色當章結尾才招募,戰鬥中仍是非玩家可控 NPC,如米亞斯多德/賽可邦勒/蜜蒂/約拿/蘭斯洛特/索菲亞);(ii) `camp:\"own\"` 但是**靜態寫死在 `units[]` 陣列裡**、獨立於 `own_deploy`(玩家可選部隊)的「劇情客座單位」(巴拿羅西亞/謝多/羅蘭+希爾法(ch21當章)/卡里斯+羅德",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1392,
+   "excerpt_sha1": "8ed8bc81e88a46c4428475ce439759caf73c52eb",
+   "excerpt": "- **ch02/ch13 村民全滅/精靈族全滅**:任務既定範圍排除(見上一條,需要獨立的陣營/群組判定機制,`native_record_race` 語意未證實,不強行套用具名 unit)。ch20 的「精靈全滅」附加條件同理留空,但 ch20 的具名護衛「謝多」已填。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1393,
+   "excerpt_sha1": "194364296c8fd34106d44ee81c5e56f3c0f490ca",
+   "excerpt": "- **ch10 卡納恩三世**:doc49 的 0-31/48/66/68/96/97/126 表都沒有這個名字;story `ch10.json` 交叉確認他是**希莉亞的父親、亞克斯王國國王**(「身為王國第一公主」自述),與 id48「父王/羅特帝亞國王」是**不同國王、不同 id**,不可混用。`map9_units.json` 裡唯一疑似候選(idx39,`camp:ally`,por",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1394,
+   "excerpt_sha1": "55c1ca6c9acca2d420f32df2ca2cbbfe0ddf8bb0",
+   "excerpt": "- **ch22 希爾法、ch23 希爾法**(ch23 的卡里斯/羅德曼已填,唯獨希爾法留空):她在 ch21 當章結尾已招募(doc28 recruit 欄),ch22/23 時已是玩家常駐可選角色,`map21_units.json`/`map22_units.json` 都**沒有**額外靜態 `camp:\"own\"` 客座 record(逐筆掃描 0 match)——她的存在與否完全取決",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1395,
+   "excerpt_sha1": "39a235f51ef9f86afbd82889a3a8fe29394a6023",
+   "excerpt": "- **ch26/27/28/29/30 悠妮(+ch26 亞奇梅吉)**:`grep` `assets/scenarios/ch01.json` 的 `party` 陣列證實悠妮從**第 1 章**就是靜態常駐隊員(`name:\"悠妮\"`,`portrait:9`),遠早於 ch26-30；且她不是 `setupPreparation()` 的 fixed leader(fixed leader",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1398,
+   "excerpt_sha1": "13a2b7cf71415ab2d4bd1fccc5ea8a6506952c0f",
+   "excerpt": "- [x] 陣營全滅群組(faction-wipe)機制(2026-08-30 續輪,回應上一條 ch02/13 陣營全滅留白)：**ch02/ch13/ch20 三章全部解決,零筆猜測——上一輪判定「native_record_race 語意未證實」是對的(那題本身仍未答),但這輪找到一條不靠 race 語意也能定案的獨立證據鏈**。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1402,
+   "excerpt_sha1": "95bd479f688abbbd487e00e5f3580e18af9979b8",
+   "excerpt": "- **ch13/ch20 精靈族全滅/精靈全滅**:`map12_units.json`(ch13)與 `map19_units.json`(ch20)分別掃出 12 筆與 8 筆 `camp:\"ally\", native_record_race:2, portrait:72, group:0` 單位——這是這兩張圖裡**唯一**用到 `portrait:72` 的單位(逐圖比對全部 units",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1412,
+   "excerpt_sha1": "38cf38d06c775d57da30d1485f4f4532ca896773",
+   "excerpt": "→ 待辦收斂為:**doc28 §2 18 章額外護衛中,已資料化 10+7=17 章**;剩餘明確留白 2 項——(i) ch10 卡納恩三世(portrait id135 未定案,見上兩條);(ii) ch26 亞奇梅吉(partyRoster JOIN 路徑缺失,比選人排除更大的招募缺口,需要先確認她在原版對應哪個 map25 unit record 或哪個原生 JOIN handler,才",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1425,
+   "excerpt_sha1": "54123037d5527390df9b866fdaafae75c0b23c79",
+   "excerpt": "> **「M5 里程碑以原版驗證為主，remake 移除也一併移除 remake 版的 M5 里程碑」**。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1441,
+   "excerpt_sha1": "3727ae7508af18916b55ced5e18a7b046456b52c",
+   "excerpt": "- [x] **宣告式／平行／分層驗證器** `tools/fd2_original_verify.py`（2026-09-03）：",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1501,
+   "excerpt_sha1": "b942993a1a4fb308e699d621c04dfcd4ff2be701",
+   "excerpt": "順帶證實裝備中品項可被售出，並用不同路徑再次驗證「標籤未列出的 +20 EV」。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1510,
+   "excerpt_sha1": "9ac2620f7dbc0e6cc0717f15b69a34a8b56e2597",
+   "excerpt": "（`+1`＝所需 selection、`+2`＝BIOS scan code）。實測 ch02 `Shift+F1`／ch04 `Alt+F3`／",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1511,
+   "excerpt_sha1": "f755621e4758d60fce83989d716ebb934da7d532",
+   "excerpt": "ch05 `Shift+F4`／ch12 `Ctrl+F1` **全部成立**（ch02 那筆與本輪先前的獨立實測一致），",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1515,
+   "excerpt_sha1": "30f1f13b770408a7219b2282a0cec206b02a97ee",
+   "excerpt": "- [~] **轉職成長的獨立取樣（2026-09-03，部分完成）**——**隨機性已確認**",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1516,
+   "excerpt_sha1": "26644da0cc35199a137273b74d685f3c475d7e27",
+   "excerpt": "（同角色同轉職觀測到 MHP 14／15／16），但**原本設想的去相關手法實測無效**：",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1518,
+   "excerpt_sha1": "7e690105126ede6f67e32dabed61d4fff68db08c",
+   "excerpt": "真正會換值的是**走過不同的前置交易／對白**。大樣本 range 驗證因此**仍未做**，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1521,
+   "excerpt_sha1": "13abe56b3464e03a84a95469e36f2757b205165b",
+   "excerpt": "### M5-F 由 remake 時代項目轉換而來的原版側驗證（使用者指示 2026-09-03）",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1523,
+   "excerpt_sha1": "2c411aa3bb97941fb41cc6d6568dee17dcb8e03b",
+   "excerpt": "使用者指示：**「remake 時代項目全部都以原版進行驗證」**。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1530,
+   "excerpt_sha1": "932d6115d9589272aa5767809105eb69cffdaec2",
+   "excerpt": "硬替它們編一個驗證任務等於造假，所以就地標記為失效，理由寫在該項後面。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1533,
+   "excerpt_sha1": "561c435cd1fb486a540d132102fbbdb0c73fe014",
+   "excerpt": "`2900` 的靜態 RE 已在 `doc11` 閉合、只差原版實測）。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1556,
+   "excerpt_sha1": "f21ed4cc53fbcb70a8e3674eee5004a5bfd28a82",
+   "excerpt": "**因此本項的下一步不是逐項驗證，而是先解「如何穩定進到戰鬥」**；",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1604,
+   "excerpt_sha1": "3bd1c277058f77e29259047f4b4b00c6cbaf0cc7",
+   "excerpt": "- [x] **RE-FIELD-EVENT59/60**：map25 y36/y22 selector0 邊界及 trigger record byte6 非零 gate 已閉合；分別把 ranges39..44、23..24+53..56 低四位模式設0，規則已嵌入 editable map asset。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1617,
+   "excerpt_sha1": "c1d20d31abe4eb39a9af1a92e424736b37cadd5a",
+   "excerpt": "- [x] **figure 幀/姿態**:我方亞雷斯=攻擊動作1 `FIGANI_013_f01`(組×3+1,人眼確認);幀序播放;守方不翻轉(FIGANI_288 原圖面右)",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1619,
+   "excerpt_sha1": "b3a12c8f9398f297d748462aa90e1a06486c4a6f",
+   "excerpt": "- [x] **[設計鐵則] 我方=背影+腳下台座 / 敵方=正面**(使用者確認,與攻守無關純陣營)→ `35`§3.2.5",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1629,
+   "excerpt_sha1": "8b5e8003c5d9eab415286c47879a33e45f4ad96e",
+   "excerpt": "- [x] **④ BG 草地延伸到 figure 腳下** ✅(2026-07-05 使用者確認 `docs/figures/battle_restore_grid.png` 網格對照:左原版/右 remake 兩邊草地都延伸到 figure 腳下、台座疊綠草非黑底,一致)",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1644,
+   "excerpt_sha1": "7d08337f403661b59d6c4dab914b3a4bdb47d06d",
+   "excerpt": "battle_restore_grid.png(網格驗證);新增「戰鬥演出:像素級 1:1 還原」節",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1659,
+   "excerpt_sha1": "da7579f1ac9e211d7286dc56ccadb5fbd4a10c9f",
+   "excerpt": "不存在獨立 spell-id→FIGANI 特效索引（doc37）；僅已證實施法者自身 FIGANI 組動畫，其他 spell runtime 保持 partial",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1673,
+   "excerpt_sha1": "0dd39eaf2d076fa3fdedcdb9d75f53df6487b377",
+   "excerpt": "- [x] **native command record loader**：`NativeCommandRecord` 明確表示 verified IDs 0..35 的 raw `+3/+4/+5/+6` 為 selection/effect mode、MP cost、target code；從現有 physical `spells.json` 讀取時逐 row 重解 `raw` 七 byte",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1674,
+   "excerpt_sha1": "c7e6d76f9bb318096a417abff89496a57cf2d43a",
+   "excerpt": "- [x] **SDD native command family matrix**：`56` 現以 IDs 0..35 的 dataflow、strict engine slice、UI/renderer gate 三欄固定已證實 family 與 fail-closed 邊界；不得以 label、raw record 或 generic dispatch 把未知 ID 借接 legacy `C",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1735,
+   "excerpt_sha1": "251cc177348a91ad74693880f5eb63bc1a51d1cb",
+   "excerpt": "閉合**，故本compound bullet整體checkbox維持`[~]`，僅AoE子項可視為done。**L572位址勘誤(本輪最主要",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1752,
+   "excerpt_sha1": "c6d8e4cb9f72d6c8d5c3573c78fe6f6c8a08f080",
+   "excerpt": "(91-94號)，緊接已知#82-90音效池，已用`export_sfx.py --res`驗證四者皆為合法容器。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1756,
+   "excerpt_sha1": "0062a5e1eeead69b1012c7f32711afbafa129794",
+   "excerpt": "- [~] **商店+祕密商店**: 69個shop節點已用`native_hub_variant` 1/3/5啟用indexed production owner；四項service與23筆secret chord gate已接。`found_secret_ch*`／legacy `SecretIf`只保留editable擴充，不再當原版gate。sell高階adapter仍會canonical",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1769,
+   "excerpt_sha1": "7650f44b7e13cef834961607bcb7513a8f68d5c5",
+   "excerpt": "E0 matrix。native target/effect/transaction/presentation 未閉合者維持 fail-closed。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1780,
+   "excerpt_sha1": "d011ef97b6ed64d8070e5939b8caa42c50bae9a5",
+   "excerpt": "旗艦接線 loadMap(dir)+campaign battle.map 欄位(map3 實測換圖)",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1782,
+   "excerpt_sha1": "dc3b2ab411b192fc437052501bc476b799dab940",
+   "excerpt": "- [x] **SFX 引擎接入**(旗艦):loadSFX/playSFX+游標/確認/命中掛點(命中暫代,待戰鬥池)",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1790,
+   "excerpt_sha1": "883f83630e9c4d844284583d6d7211127e881f9a",
+   "excerpt": "驗證過的真實家族。「導出」部分關閉，「逐招對照」核心仍未完全關閉。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1798,
+   "excerpt_sha1": "102415df3d3e88af3bcd001dbfb01c6a935a36c6",
+   "excerpt": "這個驗證，跟roster裡有沒有doc28列的護衛角色無關；raw 0x14/0x15/0x16/0x19/0x1b",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1812,
+   "excerpt_sha1": "0237ff5ca7d384066e54683fe0a2f3423be44e09",
+   "excerpt": "模式是否也適用於ch21-26/28的guard角色）。**假說對ch21本身被反駁，但確認機制真實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1817,
+   "excerpt_sha1": "13db16e0af8317f0150ad80ca054f8c3f7d7f054",
+   "excerpt": "即地圖確實可以直接放好帶id的`camp==own`單位（ch21地圖=map20，實測有羅蘭/希爾法",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1822,
+   "excerpt_sha1": "85573bc94521cdbad1483aa48e6723b9d35f9deb",
+   "excerpt": "同一方法驗出ch22/23=希爾法(id24)、ch26=悠妮+亞奇梅吉(id9→id29，且ch26這組逐字",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1830,
+   "excerpt_sha1": "85aaf2dea82a835085344e7b69d880a39bad3248",
+   "excerpt": "不變。完整證據鏈（含chapter→guard-id對照表、跨33圖id掃描交叉驗證）見",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1838,
+   "excerpt_sha1": "e3a47db4efd07b848b1f5dc8095abf134f9fca7d",
+   "excerpt": "`tools/fd2save.py`模組docstring**已經獨立證實過**(2026-08-21「續三十四」，另一條",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1844,
+   "excerpt_sha1": "057e7471a1293707348143eb0f1248737d019a05",
+   "excerpt": "(instance`jonah21`)live驗證新假說**：合成一份roster_count剛好=15(=ch21選取",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1849,
+   "excerpt_sha1": "a31cc054d59b1ca4d60bd97e50e470f9b35a821d",
+   "excerpt": "直接讀記憶體確認`+8==21`的100%鐵證，也沒有在同一session內做差異對照組(對照組",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1851,
+   "excerpt_sha1": "d3865770bc95547a7b815f317f3281e368c5574e",
+   "excerpt": "其餘guard章節本輪完全未重新live驗證，`fd2_chapter_sweep.py`/`fd2save.py`程式碼",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1868,
+   "excerpt_sha1": "1a27d17ec504c95880d9dd6e4e73d9ae69d4132f",
+   "excerpt": "驗證)；**⚠️ch21**guard修正確實讓它可靠抵達真戰鬥(兩次live run皆重現，50/59敵人)，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1874,
+   "excerpt_sha1": "24180c3649832f2bc7e131404084b5b20706406c",
+   "excerpt": "獨立診斷腳本證實純Return可安全推進但300次後仍只停在NPC商人選單，guard check",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1875,
+   "excerpt_sha1": "0333de6d56fc7064aa3e5191a46f50e6097e0e66",
+   "excerpt": "從未被觸及；**❌ch23/ch28**確實有camp地圖且能抵達真正的選人畫面(截圖證實",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1879,
+   "excerpt_sha1": "936dc112f90d8f65c273dd7778c46708cb9fcbdc",
+   "excerpt": "**M5引擎層級勝利確認章節數由20章(ch01-20)增為22章(ch01-20+ch24+ch26)**。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1882,
+   "excerpt_sha1": "531d044de62baa22e622337ad88a4087d15ea661",
+   "excerpt": "**2026-08-29「full-roster」輪**：驗證「舊ch21 roster不完整(只有13個早期真實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1898,
+   "excerpt_sha1": "278f6a83f3f6a05e93ddd827c3df4e391de1cae0",
+   "excerpt": "(`fullroster21`/`fullroster221`)live驗證，兩次皆成功**：完全相同的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1903,
+   "excerpt_sha1": "a45db15fcd40c8f7727c82249d16b967610596c2",
+   "excerpt": "win已確認，只是doc25 §9.1既有、未解的SAV writer gate問題擋住磁碟寫入，不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1907,
+   "excerpt_sha1": "6201caabd648293299ba379a3c0297e1f94b0c3e",
+   "excerpt": "隨機性的替代解釋。**M5引擎層級勝利確認章節數由22章增為23章",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1917,
+   "excerpt_sha1": "290ed2eddbc966bf52a6b35135601d611597bcbd",
+   "excerpt": "未驗證的`KNOWN_NAVIGATE_HINTS[22/25]=[\"Return\"]*300`猜測(本輪證實是錯的，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1935,
+   "excerpt_sha1": "bf783beb5a9716d9c556329bc49f2dba431dd0c5",
+   "excerpt": "`count_picked_candidates()`)每按一次Return就重新截圖確認已選數，達標立刻",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1939,
+   "excerpt_sha1": "181b8ef7d2c8f51ccad01d371ff6b45648d92024",
+   "excerpt": "(乾淨測試證實：14/14後下一次Return立刻取消slot0，不是摸到隱藏的第15格)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1944,
+   "excerpt_sha1": "7d36c0aa56d05baa4d237ae0b32386a2ff001ead",
+   "excerpt": "不要在沒有重新驗證的情況下宣稱ch23/25修好。**❌ch28**只跑了1次(674.8秒，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1945,
+   "excerpt_sha1": "95045d95d8501637ee9e9e4f0ef3689fa0434f13",
+   "excerpt": "`needs_manual_followup`)，完全沒有本輪這種深度診斷，猜測(未驗證)可能是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1946,
+   "excerpt_sha1": "8f43d98bc6cb15558c978a4d622e6b050c4feb9e",
+   "excerpt": "同一類「候選格數對不上19人門檻」問題。**M5引擎層級勝利確認章節數由23章",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1969,
+   "excerpt_sha1": "1b8f9e6fa21b345fb01ed19eca06bebae5a766a5",
+   "excerpt": "roster`，現在是opt-out的`--no-complete-roster`）。**M5引擎層級勝利確認章節數",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1971,
+   "excerpt_sha1": "4d4bc7114d674656008e57e91e5eec65d1adb1ac",
+   "excerpt": "`ROSTER_PICK_GRID_CHAPTERS`修正但**未經live驗證**，留給下一輪。完整寫法見",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1974,
+   "excerpt_sha1": "76139ebd84617b5b39015f2e6ec76dd8d9e24c9f",
+   "excerpt": "- [x] **2026-08-29「ch2528」輪——ch25/ch28 live驗證,roster-pick-grid修法乾淨",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1976,
+   "excerpt_sha1": "67fca0644a550bfe7b29dc2248fccc3e1b4506fe",
+   "excerpt": "跑同一套`ROSTER_PICK_GRID_CHAPTERS`+1 cap修正的live驗證（範圍明確排除ch27/29/",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1978,
+   "excerpt_sha1": "7b8e1af147534c9d956d71e255bd9d51b845a0ea",
+   "excerpt": "正式CLI平行跑（兩個獨立harness instance，doc48§8.4已證實2 instance並行安全），",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1981,
+   "excerpt_sha1": "2a208b781aa584ad3f3b77d84da5e069d5060f2d",
+   "excerpt": "tap選滿15/15；`ch28`：cap=20(threshold19+1，**第一次驗證threshold≠15的大",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1989,
+   "excerpt_sha1": "0de1643df0dd0a040cc9b2f44651f935c38276e2",
+   "excerpt": "是ch22/23/24），間接證實WebFetch查到的「勝利=擊毀機甲隊長」這個看似narrower",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1995,
+   "excerpt_sha1": "497e43e50cf9f318465e9ad3910848ef55af4239",
+   "excerpt": "勝利確認章節數由25章增為27章(ch01-21+ch22+ch23+ch24+ch25+ch26+ch28)**——達成",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 1998,
+   "excerpt_sha1": "51a7f6f853f4c2e957cb472b7385dfcd4ff110c1",
+   "excerpt": "`ROSTER_PICK_GRID_CHAPTERS`裡唯二未live驗證的條目，但因為是終局章節，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2015,
+   "excerpt_sha1": "f59b3d6728fb8e2023d536ec2147019163f5d536",
+   "excerpt": "裡的呼叫路徑確認**。另外，過去23個標記為`anomaly_engine_win_no_disk_write`的章節，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2018,
+   "excerpt_sha1": "a409071ba1b61159c3307fb1152b1d9cf575b9d0",
+   "excerpt": "標準）重新驗證，不能直接沿用舊的「anomaly」判定**。使用者另提到「商店」也可能是存檔",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2019,
+   "excerpt_sha1": "2a2109a893ab19537081c59da2cf37f330229b19",
+   "excerpt": "來源之一：`docs/knowledge-base/25-battle-event-system.md`確認城鎮hub選單",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2021,
+   "excerpt_sha1": "09a3dc084f3352859fe2be66fb211da73796b829",
+   "excerpt": "任何一輪測試過商店選單內部是否也有存檔功能**——這是全新、未驗證的線索，不是既有證據的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2022,
+   "excerpt_sha1": "b0e996d5a0fc242952ac93c13dac8faa30725ef7",
+   "excerpt": "重新詮釋，需要專門的live round進商店選單逐項確認。**M5的完成判準維持「引擎勝利判定",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2035,
+   "excerpt_sha1": "0eac005e02cab234f081bdf669bc875fe2fd1d37",
+   "excerpt": "靜默存檔」且都被驗證命中。**結論：(a)項的「poll不夠久」假說本身沒有錯（",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2051,
+   "excerpt_sha1": "78415eb80d013192347cf11f6511fbcd077e4345",
+   "excerpt": "ch22/23/24/28**沒有**各自專屬的存檔呼叫——`call_scan`+`xref_to`雙證確認",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2062,
+   "excerpt_sha1": "c4ccc35a31e628c951dbca83b96e5c92288fe43f",
+   "excerpt": "「只是這4章剛好poll得比較久」：ch25/ch26對照組poll窗口(60秒)比4個確認章節",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2066,
+   "excerpt_sha1": "6dee8a746271bcb1f56b34559962b1dca4d43c78",
+   "excerpt": "未live驗證的預測：ch27(raw26→27)/ch29(raw28→29)理論上也該有靜默存檔，留給",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2069,
+   "excerpt_sha1": "40c83eca6ca6ba379249c0d75c329d62d0c73546",
+   "excerpt": "外層「(a)重新用長poll驗證23個anomaly章節」待辦本輪未觸及，仍待後續輪次。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2085,
+   "excerpt_sha1": "8130d588063a2f146d42b6409c22f1eb27dbe849",
+   "excerpt": "不成立。**Live驗證建議**：ch29結構乾淨、方向明確，但受阻於本專案至今",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2087,
+   "excerpt_sha1": "9b0817b4847faf75126240115814c0d0d4a09282",
+   "excerpt": "ch27好結局臂的live驗證需要一份「已持有天空之鑰、卡在ch27戰前」的存檔，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2094,
+   "excerpt_sha1": "f710b8ef877dc95815dbfd4f527731a004a2ccce",
+   "excerpt": "（WebFetch確認walkthrough勝利條件是「護送悠妮到石碑休息＋撐過3回合打三頭龍」",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2097,
+   "excerpt_sha1": "54817ff6f8cd5048abb2a7c01085c134ad0e2310",
+   "excerpt": "End-Turn確認，win-check仍卡在0，verdict是`anomaly`（比先前`ch22/23/24/28`那個",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2098,
+   "excerpt_sha1": "03dcf6458b6e68c4c3ed20363297ed9ae5e7d7ff",
+   "excerpt": "`anomaly_engine_win_no_disk_write`類別更弱一級，因為連win本身都沒過）。這證實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2102,
+   "excerpt_sha1": "7d5397280de326e170b047378b975e67f0c5d435",
+   "excerpt": "==1`＋`table_post[28]`單一路徑）本身**維持靜態完全確認、仍未live驗證**——",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2103,
+   "excerpt_sha1": "1c1869b2106660b38ab73dc2743322647c4b5897",
+   "excerpt": "本輪沒有推翻它，只是再次證實它目前打不到能被live觸發的前置條件。完整寫法、",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2116,
+   "excerpt_sha1": "1d44f8013081cff4857014ab8709fc68ab1c4b03",
+   "excerpt": "**結果**:`SMV`寫入座標`(22,8)`readback確認成功,且**一次完整End-Turn循環後",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2117,
+   "excerpt_sha1": "517fb0b798ebf77b2a264b6a22e792207e86be34",
+   "excerpt": "再讀依然是`(22,8)`(持久,沒被引擎重置)**——證實teleport技巧本身對自己隊伍",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2126,
+   "excerpt_sha1": "11622cf32fd9599050735da05147223ea05a1710",
+   "excerpt": "ch29的靜默存檔預測維持靜態完全確認、live仍未驗證,無變化。完整技巧細節、",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2135,
+   "excerpt_sha1": "6dd19c3c7883918e23fcf0fc78bb620c319213e2",
+   "excerpt": "候選假說①（teleport繞過了真正的dispatcher路徑）由「最可能但未證實」**升級",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2138,
+   "excerpt_sha1": "c9dd6d8da276d614fa041bd306a64130a2605524",
+   "excerpt": "`campaign_full.json`確認`battle_ch29`用`map28`，不是`ch29tp`輪誤用的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2154,
+   "excerpt_sha1": "6854df5a9b36d76f6f5880d68fdf6e6b1adaf97c",
+   "excerpt": "73/77/78,疑似\"3頭龍\",但只是未證實的推論）。下一輪建議：優先全EXE",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2158,
+   "excerpt_sha1": "08700acf3844bbc78fce9aab5c667665a57cd424",
+   "excerpt": "ch29靜默存檔機制本身（`table_post[28]`）無變化，仍是靜態完全確認、live",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2161,
+   "excerpt_sha1": "04a19e30d36494f5205b0d46f13945d6ba541fe0",
+   "excerpt": "**✅ ch29 engine-level win + 靜默存檔本輪LIVE確認完成（2026-08-30「ch29wf」",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2165,
+   "excerpt_sha1": "f8db5441bfd9260fb6148b6cf9a4235022a89ac7",
+   "excerpt": "+0x13/+0x14`三個byte`SMV`寫成1並逐byte readback確認生效。**單純寫入後",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2172,
+   "excerpt_sha1": "faf9caa9f1e49042e0f999982d31f60e1be7615e",
+   "excerpt": "dispatch點包含標準End-Turn確認流程**。畫面立即接上「成了!」對白（非黑屏/",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2179,
+   "excerpt_sha1": "afaaddce2efd49b2dcd626fb2cbcaf2876f3c0e8",
+   "excerpt": "`table_post[28]`單一路徑）本輪由「靜態完全確認、live未驗證」正式升級為",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2180,
+   "excerpt_sha1": "c7745410da04d336cde35aec73a09dd6f41fa071",
+   "excerpt": "「靜態+live+磁碟三重確認」，本項目至此正式關閉**。唯一誠實保留的未解問題",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2184,
+   "excerpt_sha1": "4da531e6cee7865346fa58e9a1228423d438737b",
+   "excerpt": "確認的結論。完整逐步log、螢幕截圖對應、confidence見`99-chapter-sweep-",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2190,
+   "excerpt_sha1": "c7c494107774131e3adfffa3d3b0b2fa69df8db5",
+   "excerpt": "0xb+slot*2`的flag/item byte pair，寫入後`D`讀回驗證生效）。3隻機甲隊長",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2194,
+   "excerpt_sha1": "aff5c10094453759d684b0ae59e4570ec9969f15",
+   "excerpt": "nerf到一擊必殺、readback逐項確認。**但真正的殺敵步驟——用真實UI攻擊指令",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2200,
+   "excerpt_sha1": "b0726d995b4df0d2c22e8c5e25ef30094551b4a2",
+   "excerpt": "補救手段全部無效，方向鍵與`Escape`鍵全程正常，確認問題精確侷限在`Return`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2201,
+   "excerpt_sha1": "11aa2da1b959d9fb38c9de2b87f407330cd3fdf0",
+   "excerpt": "鍵本身、不是通用鍵盤失效。**ch27好結局臂因此仍未live驗證，也還沒有機會",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2212,
+   "excerpt_sha1": "99acbaae31932765aa2c7c0264d4b9c9cdd6ec15",
+   "excerpt": "的暫態狀態，不是本輪任何寫入序列的必然結果），環境本身確認健康。收尾時",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2216,
+   "excerpt_sha1": "dca382de43141296cd12843793d8451b90f4841e",
+   "excerpt": "`--status`/`--shutdown`全部逾時無回應，服務進程仍在跑但完全無反應）確認",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2224,
+   "excerpt_sha1": "7466ab23a9599455d6747082091fd29306a96377",
+   "excerpt": "`wsl --shutdown`，但本輪SOP第一步重新驗證時`wsl --status`仍逾時無回應",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2225,
+   "excerpt_sha1": "876ad1fc47464cfa9c84a3104e5e86a7cb18fec5",
+   "excerpt": "（55秒以上零輸出），`Get-Process`更確認其中一批卡死`wsl.exe` process的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2231,
+   "excerpt_sha1": "724bdd4ead233887032ace53533f6785929e19e8",
+   "excerpt": "`wsl --shutdown`確認清除（獨立`Get-Process`/`wsl --status`健康檢查通過）後",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2237,
+   "excerpt_sha1": "c1bd2925357c9bea78f2bc1a7d4924a4961b088b",
+   "excerpt": "`Return`鎖定目標→`Return`確認出手，逐一播放完整對決動畫，非",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2243,
+   "excerpt_sha1": "e31e2350d7ba3b4b0b5d61f729bfb0d7cdabf217",
+   "excerpt": "`pull_save()`+`fd2save`解碼**雙重確認磁碟`FD2.SAV`slot0 raw chapter byte",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2245,
+   "excerpt_sha1": "4670738089e610d08e6f6953108fb1996924b82f",
+   "excerpt": "有天空之鑰分支會靜默存檔」至此**由live+磁碟證據正式確認**，本專案第5個",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2246,
+   "excerpt_sha1": "59c3f0a15b9ac21d13c64038d5bae6005f2fb964",
+   "excerpt": "（加上ch22/23/24/28）確認靜默存檔的章節，也是本專案第一次對雙結局章節的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2247,
+   "excerpt_sha1": "3d8fc5c3c686c18fd63b8bb10c93f38615288811",
+   "excerpt": "「好結局」分支拿到完整端到端live驗證。過程中另發現並修正一個本輪自己",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2276,
+   "excerpt_sha1": "d0560c580a788c9ca50113a58caa01c4a27f798d",
+   "excerpt": "位元組比對過，是誠實的推論而非結論。**兩個候選假說，均未證實**：",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2282,
+   "excerpt_sha1": "11c4505dbc533ff273d9cb989ac6660b4235459a",
+   "excerpt": "證實是**全域engine-tick機制**（主迴圈每個tick檢查，非per-chapter），",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2288,
+   "excerpt_sha1": "b96befbab685fcc27dc1d8227462fc147ac62b36",
+   "excerpt": "**本輪（2026-08-30稽核）判斷**：這個問題的下一步驗證動作本質上需要",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2293,
+   "excerpt_sha1": "7bd5800d748a039ec81fa4b01354b0e2c6b2861d",
+   "excerpt": "`sweep --chapter 5 --no-roster-pad`——若重現1.8秒engine win，直接證實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2296,
+   "excerpt_sha1": "083c52cb899fefd7430b93440bdf3b385fbcf29b",
+   "excerpt": "`ensure_one_ally_acts()`——若翻2即確認假說①，比照ch23的做法只在",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2297,
+   "excerpt_sha1": "89a7976dd47fa41c461af6fdd605fa69e9e2fbdd",
+   "excerpt": "live-confirmed後才把5加進`KNOWN_NEEDS_ALLY_ACTION_BEFORE_KILL`（不要",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2298,
+   "excerpt_sha1": "26ea88bfd1ab55ec04adca90871fb170cd1ce2ed",
+   "excerpt": "比照ch21的「precedent-only」方式預先加入未經確認的chapter，違反本檔既有",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2331,
+   "excerpt_sha1": "afab3d3a047fae9d78d5ed12420c114ca0cabe77",
+   "excerpt": "正是真根因，已修正+live驗證，但具體的「延遲援軍波次」機制本身被明確排除**",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2333,
+   "excerpt_sha1": "2fd77a784cf7a1d46df40a35b4b3bed5fc99c1d3",
+   "excerpt": "turn_events.json`確認ch05（map4）確實有真實回合觸發劇本（turn7有一筆",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2342,
+   "excerpt_sha1": "2840fb179d682bea77025e75cd9cf280883704d8",
+   "excerpt": "`MAX_KILL_CYCLES=4`的既有預算」這個更廣義的假說→**正面確認**（`ch05regr`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2354,
+   "excerpt_sha1": "30537cef5f127efe213a8f8a63cef7a8dd0ff731",
+   "excerpt": "`--force-cycles`）重新live驗證**，兩者都留給下一輪順手確認。**本輪只跑了",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2355,
+   "excerpt_sha1": "74772931a77d48d990bba2ab1c568a2883360ec7",
+   "excerpt": "1個live instance**（不是慣例的2個獨立instance交叉確認），已在doc99同輪",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2362,
+   "excerpt_sha1": "77ddea77e36947fdc29858186bcf9377d73f85c9",
+   "excerpt": "收尾**（詳見`99-chapter-sweep-results.md`同名小節）。先逐行核對源碼確認",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2366,
+   "excerpt_sha1": "c8579d30a23739c6c300e8eded9a7547390b4e66",
+   "excerpt": "`--force-cycles`/`--max-kill-cycles`**）交叉確認：①`KNOWN_NEEDS_FORCE_CYCLES`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2369,
+   "excerpt_sha1": "c71d065ad2e51d21cf90cba8b57396d52736147d",
+   "excerpt": "End-Turn，engine-level win在**kill-cycle 4/4**被正面確認——兩個instance",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2370,
+   "excerpt_sha1": "2fd94923d65dc6ab1451504fececa51650ba5f31",
+   "excerpt": "逐字一致（790.3秒/791.4秒，僅差1.1秒）；②`had_enemies`修正後，兩次run的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2373,
+   "excerpt_sha1": "9a2fafd8bc98deffc86bfb07b718517e63c3196f",
+   "excerpt": "交叉確認也補上了`ch05regr2`輪唯一跑1個instance的落差。本項**正式標記為完全",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2382,
+   "excerpt_sha1": "66153902433db9e3b4a1b08e0f0df6ffbf4bf1b8",
+   "excerpt": "不是未解問題**——與ch03/ch26（同區間，180秒long-poll驗證過）同一類。詳見",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2385,
+   "excerpt_sha1": "8d51fdfbeb030eedf8d1ee04260e3ebf6e764e8f",
+   "excerpt": "- [x] 非 map0 角色 sprite 組匯出(換圖後 fallback 色塊)——2026-08-19稽核確認：本檔第10輪(593-594行)「sprite/頭像滿覆蓋(haiku):96組×12幀sprite(全33圖需求);map3實測全真sprite」已完成此項，僅本行未同步。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2386,
+   "excerpt_sha1": "63ae944a4204c5057ad7ce2c8784f3ea785a9216",
+   "excerpt": "- [x] 33 關 campaign 自動生成(parse_field+劇情+商店串鏈,M4 工具)——2026-08-19稽核確認：本檔第10輪(590-592行)「全30章campaign生成器」與第11輪(608-611行)「ch2-30 scenario stub…全30章一條龍可玩」合計完成此項，僅本行未同步。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2387,
+   "excerpt_sha1": "d6ed69374f95b5457b6656ce241bcf2456c9adf9",
+   "excerpt": "- [ ] UI 音效 index 2-0xb 語意畫面實測",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2391,
+   "excerpt_sha1": "11978a6c70b797a3e3807d8386dd1b29da54f6f4",
+   "excerpt": "雙重驗證 python+真 campaign.Load;章→map 順序對應依據誠實);旗艦修 resetBattle fallback",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2392,
+   "excerpt_sha1": "665983930f2786d4aaac70b22dbf981da2c05e07",
+   "excerpt": "(scenario 空不再錯載 ch01 → roster 全員登場);ch02/map1 實測 33 單位 ✓",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2401,
+   "excerpt_sha1": "6a9ed1dc9632b6b2092b1b20f958fbff4fef423d",
+   "excerpt": "- [x] **每章 scenario stub**(ch2-30「能玩」關鍵):party 延續+deploy_cells+initial_groups 全開——2026-08-19稽核確認：本檔第11輪(608-611行)「ch2-30 scenario stub(sonnet):29個chNN.json(party延續/deploy_cells/initial_groups全開)」已完成此項",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2407,
+   "excerpt_sha1": "b64884871b26045c942ca98b2be6b4d58c70c3aa",
+   "excerpt": "資源家族，僅`#88`重疊，`#48-64`維持「候選、未證實載入點」狀態不因本輪升級。remake接入仍未做——",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2408,
+   "excerpt_sha1": "9d871078180192836a0004cece7769d587462051",
+   "excerpt": "atkAnim現有hook用的是候選池，非本輪驗證過的真實家族。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2414,
+   "excerpt_sha1": "d48cf12ff9fc4a0d4faa9892a380833b3ce5da71",
+   "excerpt": "掛 scenario(含修 ch01 campaign 模式沒主角隊的壞點);三層驗證+3 章實跑",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2423,
+   "excerpt_sha1": "97d7aa8a2e960234a47b3a80e2eb456a5e3c2253",
+   "excerpt": "- [x] party 數值成長/招募(doc28 加入條件)、回合增援事件疊到 stub——2026-08-19稽核確認：本檔第12輪(625行)「gen_campaign v3招募累積+成長」與第13輪(665行)「gen v4增援疊入:18章35筆spawn_group」合計完成本項兩子句，僅本行未同步。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2453,
+   "excerpt_sha1": "99952adf408e24c8e28c1210639f71c74bca8277",
+   "excerpt": "- [x] **地形屬性接線**:地形控制表 per-tile 確認(300~400 格不等,非固定 300;",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2456,
+   "excerpt_sha1": "dce4c98d2acc324b63c6a66891966492d1e539cc",
+   "excerpt": "交叉驗證 AP/DP 數值全吻合(森林 code2/3 = -5%/+10%、沼澤 code4 = -5%/-5%)。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2478,
+   "excerpt_sha1": "17af005b02947bbbd3644db3691327a4c59af5a3",
+   "excerpt": "- [x] **dosbox 開場實機裁決**(sonnet):logo=縮放進場(使用者記憶證實,推翻 doc23 [驗]);",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2488,
+   "excerpt_sha1": "bb36127a170f8500a99451dc28ab69f467fdf10f",
+   "excerpt": "- [x] ch09-33 文本(批次進行中:09-13 執行中)——2026-08-19稽核確認：本檔697行「全33章劇情文本完成(sonnet流水線6批):ch01-33共1452句」已涵蓋ch09-33轉錄，僅本行未同步（接線入遊戲是另一獨立仍開放議題，見707-721「誠實揭露」段落）。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2504,
+   "excerpt_sha1": "225e1229ea939157cdfee8ef26e8b8fe93cd66ef",
+   "excerpt": "- [x] **開場過場插 2 靜態幕**(旗艦):cutScript AFM+static 交錯腳本;frame165 守護者/frame645 浮空城驗證",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2529,
+   "excerpt_sha1": "c37e92ef39fe7594bccda78e7cd3dd1ce6dc7d16",
+   "excerpt": "- [x] **story-script coverage audit tool**：`tools/audit_story_script_coverage.py` 以唯讀方式列出 story/cutscene、coverage role、script、scene、handler、generated skeleton 與 next。2026-08-02 實測為121個 story/cutscene、",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2541,
+   "excerpt_sha1": "d556853efbfcfb93ae722d1ca061ede38bdb9bdb",
+   "excerpt": "- [x] **ch01 開場三幕背景圖 RE+接線**(使用者實測發現對白疊在戰場地圖上,非王座廳/草地,2026-07-04):",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2544,
+   "excerpt_sha1": "f709866e15f59b08ad763431a2624d9c3350bec8",
+   "excerpt": "草地),與戰場同一 tile 渲染器;已渲染驗證(`extracted/maps/map32.png`)逐像素對齊 dosbox 參考圖",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2548,
+   "excerpt_sha1": "c3dd36be81490ca50670a16098e9ab2f9cb8b8ad",
+   "excerpt": "pirate→map0)。截圖驗證王城幕=雙王座紅毯廳(對照 orig_02_dialog_02_king.png)。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2550,
+   "excerpt_sha1": "db64a78d08922e8ea7d3554908aead3d0948ecad",
+   "excerpt": "無王座/紅毯任何痕跡)證偽——套用前先驗證,不可盲信「已抽出」的斷言(rulebook 62)。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2595,
+   "excerpt_sha1": "64bac07bc6b2b2b98c899d9aaef3e66798e74bdb",
+   "excerpt": "驗證:每幕獨立截圖 + 相鄰幕轉場(throne→path 含退場走位+淡出淡入全程截圖)+",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2597,
+   "excerpt_sha1": "9653b36a42f5399a9a2921dfe94b478063cbcca0",
+   "excerpt": "build+test 綠、gofmt 乾淨。**D8(戰前 MAP/TURN 資訊畫面+行軍確認 UI)不在本輪範圍,已登記獨立項**。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2606,
+   "excerpt_sha1": "6e00fccf1251ce9b2becb304dff487278465171b",
+   "excerpt": "證實不是 `resetBattle` 直接跳過的空白階段。仍待釘死",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2616,
+   "excerpt_sha1": "46b836e70b8c38bf2785d6ace7e178e8d706f21b",
+   "excerpt": "## 待辦:實測回饋(使用者 playtest,2026-07-03)",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2659,
+   "excerpt_sha1": "b8c36f8bd5e3ef008dbe89e4716397d395ff8105",
+   "excerpt": "做成通過回歸測試的可編輯規則；仍未閉合的是「哪一章、哪個handler呼叫哪個join_id」逐章ID/條件表，這不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2662,
+   "excerpt_sha1": "b3d01baffda9465c76f9f03fd50c603d055e17cb",
+   "excerpt": "否則`40上限`——`doc27`§5.1(本輪，見上方L245附註)已進一步確認這是封閉列舉(比對portrait非職業，函式內無",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2758,
+   "excerpt_sha1": "9b12810891faad1642a5717798ad4526a4d1b1dd",
+   "excerpt": "——本輪(2026-08-19,`doc31`§9.3/9.6)修正:確認§9.3列出的幾何/緩衝區交易(`fdother`/`indexedmap`兩package)",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2832,
+   "excerpt_sha1": "87e2b197ea0fd87de7294756b9a07f300cc619fd",
+   "excerpt": "`KeyForSlot`／`SpriteForNativeSlot` 已閉合 slot→raw B24 key→`key×12+pose×3+cycle` 的 pointer-block lookup；runtime materialization 仍待。",
+   "verdict": "benign",
+   "note": "延續句，引用remake/工具原始碼符號名，描述remake端實作，非獨立原版證據聲明"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2854,
+   "excerpt_sha1": "3d2d3b2b862d8528527d59dec3ac72552f9f5079",
+   "excerpt": "helpers證實absolute cursor、camera及visible cursor identity。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2861,
+   "excerpt_sha1": "003259326bf7d0130b589a76fabf0c15d6184c89",
+   "excerpt": "ch26／ch27 各自使用 pre-handler 閉合的 view。三者都由",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2900,
+   "excerpt_sha1": "a8251b08e5fe0ae1d9999bad72704e69f9e0388a",
+   "excerpt": "本輪窮盡三種獨立靜態方法後驗證為不可達，montage renderer仍未解；意外發現的資源載入序列(BG.DAT→",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2902,
+   "excerpt_sha1": "92941dca54bedceb2f12160ddbe06d2c6d9bfc82",
+   "excerpt": "值得下一輪重新獨立核對舊位址後比對是否為同一函式在不同EXE版本的位移結果，但本輪未能證實，不可當結論",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2906,
+   "excerpt_sha1": "2cedadb69db6442871992fa6e38f49aee82d8a5e",
+   "excerpt": "重現路徑:doc58續六十二的「47格死亡signature+End Turn確認」)，找到角色回顧卡背景圖的真正",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2933,
+   "excerpt_sha1": "80d6fe626251851d56b9f927cd2926932d3da23c",
+   "excerpt": "- [x] **對話分頁捲動動畫**(2026-07-20)：原版確認有文字往上捲；remake 已實作 10 幀上捲（舊頁上移、新頁由底部進入、框內 clip），Enter 於動畫期間不跳頁，並有 dlg regression。GUI 實機截圖待補圖形依賴容器。",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2940,
+   "excerpt_sha1": "8dc3eca681d6019c40299af4c6d7c2fd6c614db4",
+   "excerpt": "native end-turn 的完整 caller／team predicate／AI completion timing 尚未閉合。`+5 bit7` 只能作 raw",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2952,
+   "excerpt_sha1": "a28d964c289d723c450c862a54b07695229e57a9",
+   "excerpt": "scene-decode文件**——確認密林段(campaign節點`forest_duel`/`forest_discover`)仍是partial狀態，尚未",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2968,
+   "excerpt_sha1": "1ec19a39ba3e0d8c5d13f8996ee3aeec77777761",
+   "excerpt": "全部資產格式可解(解包+解壓+轉現代格式)、核心數值表全 dump 並驗證、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2974,
+   "excerpt_sha1": "11bed7034ea5725fe678cf2633a76d3d0b4cb701",
+   "excerpt": "- [x] **UI-01 original title screenshot oracle**：新增隔離 `fd2-dosbox-screenshot-local` runner（SVGA/Xvfb/xdotool，原始 FLAME2 不掛載、只用 `/tmp` sandbox），連續 Escape 跳過 opening 後得到 320×200 `docs/figures/title-origi",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2985,
+   "excerpt_sha1": "d57ee229fa5453a382d8bc41eaf39a75b55dbcd9",
+   "excerpt": "- **2026-08-30 upper/right 補完**：復用既有`ch01newgame`輪(2026-08-28/29,見`99-chapter-sweep-results.md`)產生、尚未搬進 repo 的原版 New Game 連拍(`~/ch01ng_p1~p29.png`,WSL 端)，其中 `ch01ng_p6.png` 正好定格在 `story_ch01_palace_pa",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2994,
+   "excerpt_sha1": "d096a16ba1acf097c0b6179bd056301c4c4f2cfd",
+   "excerpt": "**未做**：只精確核對了 upper 分支；lower 分支沿用既有 UI-05 oracle(索爾晉見句)。King 那句(`ch01ng_p4.png`)只用來佐證預設 heuristic 分支的畫面觀感，未產生對應 remake screenshot 做逐像素比對(override 案例已是更嚴格的測試，判定不需要重複)。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 2998,
+   "excerpt_sha1": "995c45a72a66c9e997338750fc710c059cfcd04b",
+   "excerpt": "doc57「現有runtime evidence」表12行**全部**仍是`partial`，沒有任何一行升級成`verified`/`closed`。逐行殘留",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3001,
+   "excerpt_sha1": "b3dfb8a962b7edd3eeeb9512618e4477a0b66d99",
+   "excerpt": "- [x] **SDD-1 baseline matrix**：新增 `57-ui-evidence-matrix.md`，以目前 runtime 行號把 UI-01…UI-12 的 partial/missing 與下一個 E0/E1/E2 問題固定下來；這不是原版 verified。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3030,
+   "excerpt_sha1": "f4a75ba5bae0c8b7ec55b64e3cbb7355b3694995",
+   "excerpt": "action chooser 本體亦已完成 E0：availability=0 才可用 ↑/←/→/↓ 選 action 0/1/2/3，Enter/Space 確認、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3056,
+   "excerpt_sha1": "42f79734e017059524579ca7311c014e21c3ddb3",
+   "excerpt": "camp selector 輸出 slot；mode>=`0x10` 有另一路十字 clear。這只證實其中的曼哈頓幾何，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3069,
+   "excerpt_sha1": "9071f375951256e63a15299c3460ea4630672aa0",
+   "excerpt": "spell table的`dist/range/mp/target`欄位(IDs 0-35，逐byte核對)已閉合，但這是法術/指令command的",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3071,
+   "excerpt_sha1": "a73c997487d5c2c35c9048de1c21be4432ddda82",
+   "excerpt": "明確撤回過一次「range_min/range_max」命名(remake改用獨立驗證的`weapon_range.json`)，本輪重新確認",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3084,
+   "excerpt_sha1": "4ff27263fb5a35e08a2c53765d8bb3d7754bea3f",
+   "excerpt": "type17–19 已由下方獨立 producer/consumer 證據閉合。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3086,
+   "excerpt_sha1": "f2821daa27fea8d51d1d134be4f6489348eb3f89",
+   "excerpt": "續輪,`doc25`§批次盤點,L1138)複核:`91-worklist.md`稽核記錄與doc58都指向同一個未閉合點——doc58「續N」",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3122,
+   "excerpt_sha1": "95615f4b7d4f65625bb1cb12a6ea24e7cc95036a",
+   "excerpt": "`FD2.SAV` 證據。游標角色的右上狀態已直接重用既有、真實資源驗證的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3152,
+   "excerpt_sha1": "025c90c3eda667820a5d0b1c01f0085ccffc0e67",
+   "excerpt": "- [x] **native text gate resume**：對話所有頁／句皆完成後，preview 只可呼叫 `ResumeBlockedDialogue()` 恢復該一個 `native_text_branch_opaque` segment；任何 composite 或其他 opaque gate 都被拒絕，避免 UI 誤跳過未 RE renderer。每次成功resume會清除pre",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3186,
+   "excerpt_sha1": "703909ad046a4792c5a458ec06e7b196c80072f5",
+   "excerpt": "- [x] **RE-UNIT-RAW-SCHEMA**：`export_units.py` 與 `battle.NativeConstructorTable` 已保存已證實 branch/index/raw records，嚴格拒絕 malformed dimensions；此項只完成資料邊界，不代表 renderer/gameplay 已接通。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3235,
+   "excerpt_sha1": "730d1429c125ddb066931a2c8c9b887e40c62d39",
+   "excerpt": "ch01改走已證實party-first、initial-groups-append constructor順序。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3290,
+   "excerpt_sha1": "4428e5f9851d5a56da15152d1648b4a99edb6bd0",
+   "excerpt": "wrap/marked skip/preflight。後續 equipment cross-check 已將兩 words",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3318,
+   "excerpt_sha1": "0669a898400a6c90587db194aeb1f8a952032b1c",
+   "excerpt": "table真正終點與215列範圍已閉合，未命名欄位語意/normalized equipment",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3332,
+   "excerpt_sha1": "af0f00e8a2448cca8ac3cef376893504bd7c57ee",
+   "excerpt": "caller 閉合的 type5/13 HP restore/consumption；opaque caller 的上層語意",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3359,
+   "excerpt_sha1": "a8a6738d8c8b0c62a8aaa190ad4506fcce959f13",
+   "excerpt": "compositor閉合，GUI animation adapter仍待。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3367,
+   "excerpt_sha1": "51ce0ecca6f9fa4903225c53287ba7aede15d0f9",
+   "excerpt": "尚未證實的 raw offsets 不命名；下一步是 indexed renderer/Ebiten bridge。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3403,
+   "excerpt_sha1": "226755c6d3654ee3e50f91bb4645de518f6c288e",
+   "excerpt": "self-target驗證、raw base AP/DP/DX或MaxHP/MaxMP/MV加值、compact消耗、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3405,
+   "excerpt_sha1": "6a1df76cf121cb3c54695bad3a8ab630fbdcdf48",
+   "excerpt": "transaction仍fail-closed。——2026-08-19稽核確認：本檔後續`[x]`項「REMAKE-ITEM-HP-MP-TARGET-TRANSACTION」(types5/13/11)、「REMAKE-ITEM-TARGETED-EFFECT-BATCH-2」(types6/7/12/14-16/20-24)、「REMAKE-ITEM-TYPE23-DESTINATION-C",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3411,
+   "excerpt_sha1": "42c360c4d52a13401d8aabeb88f4fd94c982960d",
+   "excerpt": "閉合成 HP restore。UI/presentation 仍未完成。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3572,
+   "excerpt_sha1": "49fc0cb23b706fa241098ab719c98404a69f88fe",
+   "excerpt": "實測 persistent identities `[0,9,4,30]`。strict identity/class",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3583,
+   "excerpt_sha1": "572004b6182e4f17beb0f6a5435bbc85ced02440",
+   "excerpt": "與 future-group constructor 已由下列具型別交易分別閉合；chapter0 未改寫",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3602,
+   "excerpt_sha1": "0351d4d559e8f8a65e20ad42702fb0d2b39cce91",
+   "excerpt": "future-group constructor transaction 均已閉合；chapter0 靜態 live",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3624,
+   "excerpt_sha1": "925f5768c1110b0cce320e5f29002ec94bc981b0",
+   "excerpt": "raw data 證實 cycles／terrain phase／兩組 binary latch 初值全零，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3637,
+   "excerpt_sha1": "faad5382cecd130ea2332db5fed9e6988a4268dd",
+   "excerpt": "count-delimited 26-byte unit rows，並驗證 caller mutation 不會別名",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3670,
+   "excerpt_sha1": "194037bc0898c9ccb1ca34e5af6a9659314f12c1",
+   "excerpt": "live field boundary；先在 detached roster 驗證 raw camp 0/1/2、",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3699,
+   "excerpt_sha1": "6fd281a903215ed77d45164bf6fa8e7fcc0d2a80",
+   "excerpt": "分支，33圖1,885筆 record 的 race/class/HP/MP 交叉驗證通過。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3701,
+   "excerpt_sha1": "d6ee4ebaae16e0eaadd51966ccade7872ed2dfd4",
+   "excerpt": "reference manifest；Docker 重生檔與版本化 JSON 逐位元組相同。",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3714,
+   "excerpt_sha1": "b9fb08d134a35d52f1b4f28d49efbab020affda0",
+   "excerpt": "權威 `campaign_full.json`。ch02 turn3/event6 的版本化 action 已驗證六名",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3721,
+   "excerpt_sha1": "6f7f770881f2c43c2a2f74f4f144f54b14bb1731",
+   "excerpt": "每次 Draw 確認後才前進，再由下一個 beat 執行 caller ACTING。ch00 真實",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3722,
+   "excerpt_sha1": "7bbbe66fd06506483b2dfdaafc024cfc01b8bc33",
+   "excerpt": "handler 回歸已驗證兩次各12幀後仍進入 battle_ch01、戰後、城鎮與整備。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3741,
+   "excerpt_sha1": "e838e72bd83473795a0429cf28e9dca923bcabfa",
+   "excerpt": "暴露 exporter 尚無法重建 ch14/ch16/ch25 後續人工閉合的 structured",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3744,
+   "excerpt_sha1": "5447499df012d29a24b2fdcc302187a9f1b0b863",
+   "excerpt": "- [x] **HANDLER-LOADCH-OBSOLETE-NAME-GATE**：全量機械重生確認",
+   "verdict": "benign",
+   "note": "worklist checkbox項目(已完成/部分/未完成)，證據context在同一bullet或鄰近行"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3759,
+   "excerpt_sha1": "162629d87e66172da3c44613a9d62589054ea361",
+   "excerpt": "下一步是閉合上述 current battle runtime；目前不接 CONTINUE。四槽 LOAD",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3790,
+   "excerpt_sha1": "4d7e6d8666a9a968ba5021db57e248ba360eb7a2",
+   "excerpt": "閉合並接線，persistent HUD 擁有者也已達 E1；本項剩餘該時點真實 roster",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3805,
+   "excerpt_sha1": "a5f815552838374590e94b470451823a7b78c345",
+   "excerpt": "`Up`，畫面立即正確反應(游標位移)——證實問題精確收斂在 `Enter`/`Space`",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3817,
+   "excerpt_sha1": "1cfdc7fdef85ec9f41088701b1ad1edb2f63bc7c",
+   "excerpt": "`keyboard.cpp`，確認是 SDL2 build)與 xdotool 原始碼(`xdo.c`)均未找到",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3823,
+   "excerpt_sha1": "093d00859eb947545099319067d7ba06744d00ce",
+   "excerpt": "證偽**，不只是未驗證；freedesktop #4761 這類一般性 Xvfb 不可靠即使真實",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3826,
+   "excerpt_sha1": "d94f0125fedc325414dcd1dd0ed00f780abcde7f",
+   "excerpt": "(b) 用 `xev` 等工具在 X11 層獨立驗證 KeyPress/KeyRelease 事件本身有無",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3831,
+   "excerpt_sha1": "1a22fd9e39d421eeee2da234e214a3029e02d004",
+   "excerpt": "二十四已驗證過的手法相同，非新發明)，不是真正解法；攻擊執行本身已在此",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3835,
+   "excerpt_sha1": "a995bd19120f6db46e91f7bf6e17ec450e3ddebf",
+   "excerpt": "確認移動會間歇性失效」本身，不是攻擊邏輯，也不是這個存檔/章節專屬的問題。",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3847,
+   "excerpt_sha1": "9832a2aedeba757a5838f63a6709b346aaa199ed",
+   "excerpt": "本輪驗證後接上`YDOTOOL_SOCKET=/tmp/.ydotool_socket`+`wsl -u root`成功執行",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3854,
+   "excerpt_sha1": "2fce9a41d63de9cca2e67ce266e1cd8f5d1c04bf",
+   "excerpt": "control（真`xdotool Return`讓畫面立即劇烈變化，證實pipeline與遊戲本身",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3895,
+   "excerpt_sha1": "6e0d43ae590dfaf03be5a851fe7a1c75ef9d61a8",
+   "excerpt": "讀`src/ints/bios_keyboard.cpp`（1760行）確認`AH=0x00h`/`0x10h`/",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3903,
+   "excerpt_sha1": "cb2a0ccd480314686f6f975fd4ae157fd235a1d0",
+   "excerpt": "原生C++函式，不經過x86 CPU核心模擬，確認**不受`core=normal`等CPU核心",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3939,
+   "excerpt_sha1": "2f975ec634d8a21ac632c198fbce5428eb064c16",
+   "excerpt": "觀察、未經第二個獨立session驗證）：45連敗更符合「session/UI輪詢實例",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3945,
+   "excerpt_sha1": "00b8b440727033f5624e15d989cd3ed7ffc22470",
+   "excerpt": "驗證可行性的方向是X11**協定層級**封包擷取（如`xtrace`）。建議正式",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 3961,
+   "excerpt_sha1": "efdefdd6cd90c68b59def45f700443e44b7f2165",
+   "excerpt": "都100%成功；方向鍵在15次失敗Enter之後緊接送出仍立即成功。逐位元組比對失敗",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4002,
+   "excerpt_sha1": "23c93438f76c12d92851cb448fd6b9539cc5b856",
+   "excerpt": "遠超過13欄×8列的地形（多棟建築、多個街區同時在畫面內），非單純字面數字驗證，",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4014,
+   "excerpt_sha1": "e28e429830a01cae0599008a83f6f2ce490b4a1a",
+   "excerpt": "- (d) **scroll/transition frame不縮水：未驗證（non-blocking gap）**——嘗試找一個",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4026,
+   "excerpt_sha1": "30f95e18c48895e803670e1fdc15f9183e10f687",
+   "excerpt": "also check」的加分項，這輪未能觸發、誠實記錄為未驗證而非「已通過」，不影響",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4028,
+   "excerpt_sha1": "347bf29a960bbd755e0979f66eb4af3440f14d62",
+   "excerpt": "regression都已用真機截圖佐證，僅剩一個低優先權、範圍明確的可選檢查尚未執行，",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4037,
+   "excerpt_sha1": "5e415cc85b08ed03e79b02682145ac5e930fefd0",
+   "excerpt": "的既有一行摘要「單位20→2；單位→1」逐位元組吻合，獨立方法論交叉驗證。四方",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4042,
+   "excerpt_sha1": "87d7097ead4c6a242976c50c7001d1592f18a755",
+   "excerpt": "truth「空魔神死亡」）**中高信心**確認`record[20]`就是ASR-06本尊——但這是靜態",
+   "verdict": "benign",
+   "note": "延續句，欄位offset討論多低於ADDR_MARKER門檻"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4046,
+   "excerpt_sha1": "2b2bc8053487102919b5f678a699edda316a8f95",
+   "excerpt": "animation-rendering.md`§9.11-9.12已證實的角色卡/結局renderer，全EXE",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4054,
+   "excerpt_sha1": "d44507730219686e679bfdb449525d830894dda5",
+   "excerpt": "live驗證過（THE END畫面+存檔md5不變）；本輪raw29分支結構類比但**未對這個",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4071,
+   "excerpt_sha1": "8fef96379cb1989a417397f6ddeb30a921b2306c",
+   "excerpt": "一樣被 `tools/export_story_index_map.py` 的 `OPEN_GLYPH=557` 使用；實測目前重跑",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4082,
+   "excerpt_sha1": "c16b1f9e6e2367ad48e061e8d9a661406a16843c",
+   "excerpt": "診斷輸出(`raw_utterance_count`/`story_line_count`)本輪改動前後逐位元組相同,已實測",
+   "verdict": "benign",
+   "note": "延續句，screenshot/位元組級/DOSBox-X驗證描述，證據context在同段落既有marker"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4113,
+   "excerpt_sha1": "45307d594066cbae6a552ae357a8417c4e4bfcc7",
+   "excerpt": "(13/12/9,含每個續行前導的全形空白縮排字元,與原版逐字逐行相同)**,原本點名的落差",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4119,
+   "excerpt_sha1": "0e6e62570115407d0de1bddfeecd3920fd756d9a",
+   "excerpt": "斷行來源),兩者内容上有這一處已知落差,不影響本輪驗證的斷行位置結論。",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4140,
+   "excerpt_sha1": "cba21bbdc7b2967744e55245a4e9e7e4de2c2936",
+   "excerpt": "與 `diagnostics` 兩個陣列逐位元組相同。因此**沒有需要人工複核的差異**,已提交的",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4157,
+   "excerpt_sha1": "7df559a37ca40703b2aebca74ba94a24f596d5e0",
+   "excerpt": "同一種**開框控制碼、operand 也 100% 等於她已確認的 11。這代表在 ch10 這個檔案裡,",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4174,
+   "excerpt_sha1": "7be1fa7ed12cdca9aebed8bc639e0e095ca034ce",
+   "excerpt": "確認的「兩個不同國王」結論**方向一致**,是正面佐證,但肉眼圖像風格比對本身不是",
+   "verdict": "benign",
+   "note": "明確保留用語/否定式聲明/自我修正，worklist逐項驗證記錄的誠實邊界慣例"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4176,
+   "excerpt_sha1": "51b671b335e9cf1950ea14fadca011e023a7105e",
+   "excerpt": "另外用 `grep -rl '\"portrait\":135'` 掃全部 `map*/​*_units.json`,確認 portrait135",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4180,
+   "excerpt_sha1": "ea763f81609a9deffc22664b074f14fafc4fe191",
+   "excerpt": "`native_constructor.branch` 欄位,發現一個先前沒人系統性驗證過的規律——**已確認的",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4227,
+   "excerpt_sha1": "1e15f637764b37c0a19420e31306f881eb13e892",
+   "excerpt": "`[\"索菲亞\"]`改成`[\"索菲亞\",\"卡納恩三世\"]`(比照commit`645d5df5`的驗證慣例，寫過",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 4228,
+   "excerpt_sha1": "27aac527a75f3c2dce5ab583c5d1caee6ac0ff20",
+   "excerpt": "一個throwaway test確認新unit存在/存活/不會誤判成lose，PASS後依慣例刪除，未留在",
+   "verdict": "benign",
+   "note": "延續句，91-worklist.md逐項驗證記錄的敘事延伸，屬同一大段既有marker段落的一部分"
   }
  ]
 }
