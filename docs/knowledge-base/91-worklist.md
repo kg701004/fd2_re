@@ -153,7 +153,7 @@
 1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。
 1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。
 1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。
-1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。
+1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。**2026-09-06複核**：doc57自己的row其實AOE/LOS/灰化三項已於2026-08-20閉合(本行文字未同步)，真正剩下的只有「native argument↔weapon min/max mapping」與「indexed item/effect presentation」、「global selector6 production owner」三個子項——維持D，範圍已收斂。順帶核對`item.json`的`range`欄位(215筆)跟pristine EXE逐byte吻合(見doc32「2026-09-06補記」)，證明資料抄寫沒錯，但**這個欄位名本身在doc32已被撤回「等於武器射程」的解讀**，不構成本項答案，只是排除了一種可能的資料錯誤來源。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - D - doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。

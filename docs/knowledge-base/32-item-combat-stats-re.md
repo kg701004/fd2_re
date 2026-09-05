@@ -319,6 +319,20 @@ ch24 謎團調查的關鍵未決點，remake 匯出的 map JSON 目前 `ap`/`dp`
 
 因此 remake 暫時只沿用已由 `weapon_range.json` 獨立驗證的 normalized 武器射程；不得把 raw `+0x0b..+0x0d` 臆測成 `AtkMin/AtkMax`。這輪只修正 provenance 斷言，不改變未證實的戰鬥公式。
 
+**2026-09-06 補記,一個資料衛生風險(回應 worklist L1117)**:`docs/data/exe_tables/item.json`
+**這個資料檔本身至今仍在用這一節已經撤回的四個欄位名**——`atk_attr`/`atk_rate`/
+`range`(即當年的 `range_min`/`range_max`)。直接讀 pristine `FD2.EXE`(md5 校驗過)
+在每一筆item的`off`位址核對,確認`range`欄位(record `+0x0c/+0x0d`)跟`ap`欄位
+(`+0x01/+0x02`)**215 筆全部與原始 byte 完全吻合**——這證實**資料本身沒有讀錯**,
+但**不代表`range`這個欄位名的語意是對的**:本節上文已經明確撤回「這是武器射程」
+這個解讀,`item.json`卻從沒同步改名或加註記,讓後續讀這份JSON的人(包含未來的
+remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用,重蹈本節已經
+踩過一次的坑。**這輪沒有動手改JSON的欄位名**(牽動範圍未知,可能有既有程式碼
+依賴這個欄位名,貿然改名風險大於好處)——只在這裡明確記錄這個落差,供
+下一輪決定要不要重新命名或加`_meta`欄位警告。worklist L1117 的
+「native argument↔weapon min/max mapping」本身依然是真正未解的開放問題,
+這次補記不構成解答,只是多排除了一種「JSON本身抄錯數字」的可能性。
+
 **2026-08-19 補完：row 內三個互不相同的「type」欄位，避免混淆**——這張表同時有三個
 語意完全不同、卻都可能被籠統叫做「type」的 byte，回應 worklist L366/L1354「未命名
 欄位語意」的要求，逐一列清楚：

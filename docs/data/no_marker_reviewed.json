@@ -32848,6 +32848,30 @@
    "excerpt": "的盜賊,截圖確認死亡台詞出現在螢幕上,用`--confirm-text`比對文字後才能記錄——",
    "verdict": "benign",
    "note": "對下一輪需要的驗證步驟建議，非證據宣稱"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 325,
+   "excerpt_sha1": "169c139cef5c4f16d2a5234395f747c608f47b5e",
+   "excerpt": "在每一筆item的`off`位址核對,確認`range`欄位(record `+0x0c/+0x0d`)跟`ap`欄位",
+   "verdict": "benign",
+   "note": "本輪對pristine FD2.EXE的真實靜態核對記錄，md5驗證過的原版EXE"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 326,
+   "excerpt_sha1": "546d5d3c420b73e212079e03f6cb862cef3a9fca",
+   "excerpt": "(`+0x01/+0x02`)**215 筆全部與原始 byte 完全吻合**——這證實**資料本身沒有讀錯**,",
+   "verdict": "benign",
+   "note": "同上，接續核對結果"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 329,
+   "excerpt_sha1": "9b96fbf579c8acf61a6730fab88fc79ab4f772c6",
+   "excerpt": "remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用,重蹈本節已經",
+   "verdict": "benign",
+   "note": "對資料衛生風險的分析說明，非新原版證據宣稱"
   }
  ]
 }
