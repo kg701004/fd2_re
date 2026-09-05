@@ -470,9 +470,21 @@ def main() -> int:
                 rest_unit(a.instance, blind=a.blind)
             # 事後驗證:該單位的 +5 bit7 必須真的被設起來,否則這一步是白做的。
             # 沒有這一步,失敗會安靜地累積成「跑了 N 回合、什麼都沒發生」。
+            #
+            # 2026-09-06:doc13 §27 live 測試發現一個真的誤判——idx1 攻擊真的命中
+            # (敵方HP從18掉到13,approach_then_act() 自己的即時回讀也確認了),但
+            # 這裡讀到的 acted 仍是 0x00,於是被當成「行動未生效」又對同一個單位
+            # 補一次 rest_unit()。Acted 位元設起來的時機顯然比傷害生效晚,不能只靠
+            # 它判斷這一步有沒有白做。改成:acted 沒設起來時,先比對這個單位行動
+            # 前後、敵方陣營有沒有任何單位 HP 下降——有的話視為已經生效,不重試、
+            # 不對它補按 rest(避免對一個其實已經行動完的單位亂送按鍵,這正是本輪
+            # 反覆撞到的「對錯誤畫面狀態送確認鍵」那類問題的又一個潛在來源)。
             _, snap2 = snapshot(a.instance, a.selector, a.count)
             done = next((u for u in snap2[1:] if u["idx"] == tgt["idx"]), None)
-            if done and not (done["acted"] & 0x80):
+            hp_before_action = {u["idx"]: u["hp"] for u in units if u["camp"] == 0x00}
+            enemy_hurt = any(u["camp"] == 0x00 and u["idx"] in hp_before_action
+                            and u["hp"] < hp_before_action[u["idx"]] for u in snap2[1:])
+            if done and not (done["acted"] & 0x80) and not enemy_hurt:
                 print(f"  idx{tgt['idx']} 行動未生效(acted 仍為 {done['acted']:#04x}),重試一次")
                 proved_this_turn = False
                 if wait_playable(a.instance):

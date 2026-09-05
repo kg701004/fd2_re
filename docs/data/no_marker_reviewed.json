@@ -32808,6 +32808,22 @@
    "excerpt": "工具鏈的可靠性,相較session開始時已經有實質、多次live驗證過的進步。",
    "verdict": "benign",
    "note": "同上，接續總結"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2940,
+   "excerpt_sha1": "5b99b19e87f414bddf8b3acc1c6f7ad3230b5c37",
+   "excerpt": "`main()`的事後驗證(`todo`迴圈裡)原本只看`done[\"acted\"] & 0x80`決定這一步",
+   "verdict": "benign",
+   "note": "描述本輪對tools/fd2_battle_autoplay.py main()的程式碼修改，工具開發記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2946,
+   "excerpt_sha1": "6bb7a30fce5143fac92f759a6d05805a89eb8871",
+   "excerpt": "狀態送確認鍵」問題的又一個潛在來源,雖然這輪沒有直接證據說這個特定誤判",
+   "verdict": "benign",
+   "note": "誠實邊界，明確標示這輪沒有直接證據，非證據宣稱"
   }
  ]
 }
