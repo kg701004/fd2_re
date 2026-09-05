@@ -911,6 +911,20 @@ boot、逐鍵手動重播相同輸入序列。這比 worklist L1565 原本「同
 替代 target 與 portrait9 專屬的「0x34」特例(§6.2)本輪未觸及——`ch15` 存檔沒有任何角色持有
 對應道具,需要額外的 inventory patch 才能實測。
 
+**額外交叉驗證(2026-09-06,回應 worklist L1245 的殘留疑點)**:`class_change_targets.json`
+(舊版位址 `0x31793`/`0x526a7`/`0x615fe` 靜態萃取)宣稱 current_portrait 5(騎士)→
+default_target 37、current_portrait 12(武者)→default_target 44。本節的兩次真實
+class-change trial 分別是「騎士→聖騎士」與「武者→武聖」——**跟這份 JSON 的數字逐一
+吻合**(37/44 這兩個 target portrait 各自對應的職業名稱,經教會 UI 畫面文字直接
+確認)。這是這份 2026-08-19 就存在的 JSON 表第一次被**原版活體實機**驗證(先前只有
+靜態反組譯+攻略道具表交叉比對,見 §6.5),而且是在完全獨立、不同輪次建立的新版
+EXE 位址(本節 §6.7 開頭)上驗證,不是同一次反組譯的自我複查。**誠實範圍**:只驗證
+了 default_target 這條路徑(current_portrait 5/12 兩筆),worklist L1245 提出的
+「portrait11/12/13 疑輪轉錯位」問題問的是 optional-override 的 `item_id` 欄位
+(0x526a7 table 本身),不是 default_target——這次的兩個樣本都沒有觸發 optional
+override(§6.2 提到的道具持有分支),所以**不構成對 portrait11-13 item_id 排序問題
+的驗證或反駁**,該問題仍然開放,維持 worklist 原本「需要大量前置工程」的判定不變。
+
 ### 6.8 對 remake 的現況
 
 `remake/internal/campaign/church.go`、`class_change_table.go`、`native_class_confirm.go`、

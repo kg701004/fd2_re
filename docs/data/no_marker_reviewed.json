@@ -32952,6 +32952,30 @@
    "excerpt": "(ch01海盜遭遇戰的登場台詞)。這段文字逐字對到`runtime_speaker_todo.json`裡",
    "verdict": "benign",
    "note": "承接同段DOSBox-X live驗證敘述結尾"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 914,
+   "excerpt_sha1": "dac0cbc980fb34c931d4e1dce64d61644564941e",
+   "excerpt": "**額外交叉驗證(2026-09-06,回應 worklist L1245 的殘留疑點)**:`class_change_targets.json`",
+   "verdict": "benign",
+   "note": "承接同節DOSBox-X live驗證，交叉核對class_change_targets.json"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 919,
+   "excerpt_sha1": "650ecfcda67e016d02d469ae3e24f4db247f37cd",
+   "excerpt": "確認)。這是這份 2026-08-19 就存在的 JSON 表第一次被**原版活體實機**驗證(先前只有",
+   "verdict": "benign",
+   "note": "同上，承接段落中段"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 926,
+   "excerpt_sha1": "dba6321ee5516c8e723a1568072875fcc451119a",
+   "excerpt": "的驗證或反駁**,該問題仍然開放,維持 worklist 原本「需要大量前置工程」的判定不變。",
+   "verdict": "benign",
+   "note": "同上，段落結尾誠實範圍句"
   }
  ]
 }
