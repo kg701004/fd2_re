@@ -2888,6 +2888,438 @@
    "excerpt": "**修正後的立場:靜態表是候選清單,不是已驗證資料。** 每一列都要有活體命中才算數。",
    "verdict": "benign",
    "note": "結論，明確否定式聲明「不是已驗證資料」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 4,
+   "excerpt_sha1": "655f7ab3c7244d22dc554a4351667ebf2d968521",
+   "excerpt": "> 本篇記錄**已確認**與**待續**(誠實標註,rulebook 62/63)。本輪深度有限,物品/轉職機制需後續多輪。",
+   "verdict": "benign",
+   "note": "誠實標註方法論宣告，明確保留用語「本輪深度有限,需後續多輪」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 23,
+   "excerpt_sha1": "5e7c7c1124c886f2effd98615a096326f20a6b92",
+   "excerpt": "runtime prefix，並在 docs 與 remake assets 各追蹤一份。這只閉合「已知 prefix",
+   "verdict": "benign",
+   "note": "明確保留用語「這只閉合...」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 26,
+   "excerpt_sha1": "449ed6829ee0c505c28bb1286c1c1176c05d2f26",
+   "excerpt": "### 1.1 2026-08-19 table 真正邊界/stride 最終閉合(215 rows,回應 worklist L366/L1354)[驗]",
+   "verdict": "benign",
+   "note": "章節標題含[驗]標記，證據在節內文"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 52,
+   "excerpt_sha1": "92b7d103906b16d5b0de8e65d0eb1f86dc11847b",
+   "excerpt": "相同——**證實物品表內容本身新舊版無差異，只有 file offset 位移了",
+   "verdict": "benign",
+   "note": "byte比對發現延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 72,
+   "excerpt_sha1": "c92a78beb15def826e03701d96f1887a475e9a84",
+   "excerpt": "逐 byte 驗證過的 class-change `target_portraits` class/mobility pair 表",
+   "verdict": "benign",
+   "note": "byte驗證表延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 85,
+   "excerpt_sha1": "a9dd2dca44f41d3c5dc48aee97cd9f1a8292161f",
+   "excerpt": "不存在更多未知 item row。215-row prefix 不再只是「已知前綴」，而是**證實",
+   "verdict": "benign",
+   "note": "延續句，否定「不存在更多未知item row」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 94,
+   "excerpt_sha1": "6fe634f3af3b1717cf5df88faf7e770cded80a0b",
+   "excerpt": "的「新版/舊版」對照表，並直接對 canonical EXE 讀 bytes 驗證每一個候選 offset：",
+   "verdict": "benign",
+   "note": "描述直接EXE byte讀取驗證方法論延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 96,
+   "excerpt_sha1": "bfe17d888c6049d03901072f39e34ebde790072b",
+   "excerpt": "| 表(ANCHORS key) | 舊版 offset | 新版 offset(已驗證) | 位移量 | anchor bytes |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 116,
+   "excerpt_sha1": "83cd2ec1d8ab5f2841c0e0b118c2778f0a2691f8",
+   "excerpt": "| 函式 | 用途 | 舊版 offset | 新版 offset(已驗證) |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 122,
+   "excerpt_sha1": "67566304d1969bdd89efa3a581d7203fd53937c8",
+   "excerpt": "`class_equip_types` 新版起點，零間隙銜接，與 §1.1 對 item 表邊界驗證用的同一",
+   "verdict": "benign",
+   "note": "交叉參照§1.1延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 123,
+   "excerpt_sha1": "f767689beb5827392c66e2f0d74a7579e42085c6",
+   "excerpt": "手法互相佐證位移量正確。`dump_growth`/`dump_unit` 另有兩處以舊版 offset",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 139,
+   "excerpt_sha1": "b71926f1bec84f297f9bda7c6badf0f8838354a4",
+   "excerpt": "> 背景：worklist 上這兩行的原始措辭仍是「base/stride/215-row prefix 仍未閉合」，但 §1.1/§1.2/",
+   "verdict": "benign",
+   "note": "描述文件互相矛盾查證過程延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 140,
+   "excerpt_sha1": "6628df361d6a39aa257a2a3a72981abcdd66871a",
+   "excerpt": "> §4.3 已在 2026-08-19～20 記錄「狀態：完成」。查證前先確認這不是文件互相矛盾——worklist 本身",
+   "verdict": "benign",
+   "note": "延續句，方法論(排除文件矛盾)"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 142,
+   "excerpt_sha1": "310b1db18cde78c2520d70869a974b88b25fb733",
+   "excerpt": "> 本輪不重新推導，只用純靜態證據**獨立**核對 §1.1 的三個關鍵斷言，確認沒有錯誤或遺漏。",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪不重新推導,只...獨立核對」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 169,
+   "excerpt_sha1": "650d20b16fdef3d0ff9de4b6e638e008699fae7a",
+   "excerpt": "byte-exact 吻合，沒有發現任何需要修正之處。**本項到此確認為真正閉合，worklist L366/L1354",
+   "verdict": "benign",
+   "note": "byte-exact比對結果延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 197,
+   "excerpt_sha1": "0905194e9696ecb5c7a9abc61c05dc84da625a44",
+   "excerpt": "(anchor 早已定義,缺 `dump_char()`),本輪用臨時腳本直讀驗證,未來若需其他角色可補上該函式。",
+   "verdict": "benign",
+   "note": "描述臨時腳本驗證方法，未來式「未來若需...可補上」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 211,
+   "excerpt_sha1": "abae43788550e0f28703e7daa8534b1945e7258e",
+   "excerpt": "角色底值(空身無裝備,list.md §7.3 交叉驗證) = char表base + LV×growth_min(AP/DP同理;HP/MP用(LV-1))",
+   "verdict": "benign",
+   "note": "公式推導延續句，交叉參照list.md §7.3"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 226,
+   "excerpt_sha1": "b436492f6cec08a053903d9531044c84476ef385",
+   "excerpt": "## 3.6 六張核心數值表對現有 EXE 逐 byte 驗證 [驗](2026-08-19)",
+   "verdict": "benign",
+   "note": "章節標題含[驗]標記，證據在節內文"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 257,
+   "excerpt_sha1": "655e5995c1174cc477c1238b345066af30b03790",
+   "excerpt": "**人物出場屬性表(24B)欄位語意確認**：使用者提供的版面把資料畫成 2 行 × 16 欄(共 32 格，含",
+   "verdict": "benign",
+   "note": "描述使用者提供版面的解讀延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 275,
+   "excerpt_sha1": "50fddf7666c4f1a480ecc023369251a1d76c82eb",
+   "excerpt": "表那組)才是玩家角色熟悉的 `base+(LV-1)*growth`。本輪用這張表(已逐 byte 驗證)實際代入",
+   "verdict": "benign",
+   "note": "交叉參照已逐byte驗證的表延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 282,
+   "excerpt_sha1": "2ee289c0691b0bc6dbfc8db211a1b85f3ed02d9e",
+   "excerpt": "佔位值(`20`/`12`/`6`)，不是依 growth 表算出的真實值，不能拿來當佐證或反證。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不是...不能拿來當佐證或反證」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 300,
+   "excerpt_sha1": "2c6b16e9a520601dabf897933299012fa6774d9a",
+   "excerpt": "因此目前安全結論是：`item.json` 的 normalized AP/HIT/DP/EV 與已驗證的",
+   "verdict": "benign",
+   "note": "明確保留用語「目前安全結論」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 320,
+   "excerpt_sha1": "4dc7c2b15ff32d58a36cb5d8c1f413fb0ffcfdda",
+   "excerpt": "因此 remake 暫時只沿用已由 `weapon_range.json` 獨立驗證的 normalized 武器射程；不得把 raw `+0x0b..+0x0d` 臆測成 `AtkMin/AtkMax`。這輪只修正 provenance 斷言，不改變未證實的戰鬥公式。",
+   "verdict": "benign",
+   "note": "明確否定式聲明「不得...臆測」「未證實的戰鬥公式」，offset低於門檻"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 335,
+   "excerpt_sha1": "232433da37e9a77e4442521a46ba6b1fbfcef711",
+   "excerpt": "完整閉合，本節只是把這個結論接回 row 欄位表，避免多份文件各自宣稱「未閉合」。",
+   "verdict": "benign",
+   "note": "延續句，避免多份文件矛盾宣稱"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 343,
+   "excerpt_sha1": "b2d67aa03003c8c74fd8470524a018645a30f130",
+   "excerpt": "且 §1.1 已證實 row215 起點與另一張表零 gap 銜接，故 `+0x16` 大機率只是這個 1-byte",
+   "verdict": "benign",
+   "note": "交叉參照§1.1，offset(+0x16)低於門檻"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 358,
+   "excerpt_sha1": "5f49d4eff65b9f8dd8aba9de1dc5941c1c5b9688",
+   "excerpt": "與 observed type5–24 mutation routes已閉合。重要 UI correction：",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 373,
+   "excerpt_sha1": "88efb67159b894f0435b6fc4eaa5fe3c3f6ff85b",
+   "excerpt": "表零 gap 銜接」證實 table 就是恰好 215 rows，不再是「未證實的前綴」。",
+   "verdict": "benign",
+   "note": "延續句，否定「不再是未證實的前綴」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 391,
+   "excerpt_sha1": "82d62bca24854fa6b820b1c1f1443195b25fe3d8",
+   "excerpt": "type17–19 由下列獨立欄位證據閉合，不套用 base AP/DP/DX 名稱。",
+   "verdict": "benign",
+   "note": "延續句，獨立欄位證據閉合"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 396,
+   "excerpt_sha1": "b02a6410cf03a4fa02bd13b8da5b0632565eb5a8",
+   "excerpt": "`+0x42`。dispatcher 尾端進一步證實 type5 restore 後跳",
+   "verdict": "benign",
+   "note": "offset(+0x42)低於門檻，延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 400,
+   "excerpt_sha1": "ae2621911235893d5a099005079f898be8b958c5",
+   "excerpt": "caller 不改變這兩條 item branch 的已證實語意。",
+   "verdict": "benign",
+   "note": "交叉參照已證實語意延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 405,
+   "excerpt_sha1": "b95a30fd2681fbca3777c2da26f3546418f89da1",
+   "excerpt": "此 helper 仍是 shared primitive；只有 caller 已閉合的 type5/13 item",
+   "verdict": "benign",
+   "note": "明確保留用語「只有caller已閉合」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 417,
+   "excerpt_sha1": "1122782bca1960b7c5aba46fa60f6024eff5f379",
+   "excerpt": "- type15/16 已閉合為 retained DP/AP modifier：marker",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 421,
+   "excerpt_sha1": "defce0572528c339bbb3ab97f62598d15cd741bb",
+   "excerpt": "- type17/18/19 已閉合為 consumable maxHP/maxMP/MV modifier：",
+   "verdict": "benign",
+   "note": "同417"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 434,
+   "excerpt_sha1": "42240c9e76dd22aa75fa33374a904a580223dea1",
+   "excerpt": "才保存 verified selector-success MP transaction。type20/21/24",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 501,
+   "excerpt_sha1": "831a0648bf6fb6193b1f9b1a95d3f3b563b76fe8",
+   "excerpt": "配合 `item.json` 的 AP/HIT/DP/EV/price 佐證：",
+   "verdict": "benign",
+   "note": "引用item.json資料檔佐證延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 533,
+   "excerpt_sha1": "328f0339964367647ccf4fadb8494f2dfae46e94",
+   "excerpt": "完全閉合——精確 215 rows(ID 0..214)、stride `0x17`、row215 與已知的 class-change",
+   "verdict": "benign",
+   "note": "215-row表結論延續句，offset(0x17)低於門檻"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 542,
+   "excerpt_sha1": "84fb2295747f6017896de17d1346cfbed0d70fa2",
+   "excerpt": "- **L368**：查證後確認這行 worklist 描述的「`+0x22/+0x23/+0x24` DX/race/multiplier」",
+   "verdict": "benign",
+   "note": "交叉參照worklist行號，offset低於門檻"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 549,
+   "excerpt_sha1": "af3aa3a4603aa8ce1985d0ac0b60d2c048b4a5bf",
+   "excerpt": "**狀態：與本表無關，已查明是另一結構且已在別處閉合；worklist 該行文字本身過時，",
+   "verdict": "benign",
+   "note": "文件同步修正說明延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 586,
+   "excerpt_sha1": "fd02b8c1aef15f0e0c03746592dd668c8a3473d7",
+   "excerpt": "的原生排除原因未證實(蘭斯洛特初始即聖騎士,見 §6.5 邊界案例)。",
+   "verdict": "benign",
+   "note": "明確保留用語「未證實」，交叉參照§6.5"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 615,
+   "excerpt_sha1": "929dada5dac5e87d22efacc740fc3ecd52f56de9",
+   "excerpt": "尾端指令是 `add word [target], ax`,不是覆寫(2026-07-20 由使用者實測 PTT 表回報",
+   "verdict": "benign",
+   "note": "「使用者實測」片語+PTT外部引用(語料庫低頻,3處,不值得擴大regex)"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 628,
+   "excerpt_sha1": "e9cb89d955c4766f7025c2cd812f1964da679987",
+   "excerpt": "regression test 覆蓋。外部佐證:[PTT 實測表](https://www.ptt.cc/bbs/Dynasty/M.1185344950.A.91B.html)",
+   "verdict": "benign",
+   "note": "PTT外部引用，同615低頻邊界案例"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 644,
+   "excerpt_sha1": "c8db78c5cf68140366e2737615a09d371074eb21",
+   "excerpt": "-noanalysis`，方法同 doc28 §6 的 ch26 亞奇梅吉輪)先鎖定新版上已確認穩定的錨點",
+   "verdict": "benign",
+   "note": "交叉參照doc28 §6，Ghidra方法論延續句(前文已有Ghidra marker匹配)"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 671,
+   "excerpt_sha1": "e4d4fc23d27a5265d8ee9eb7f9c50d46c6a3806b",
+   "excerpt": "default/optional/special 三層覆寫序**逐值吻合**，確認這就是 church 轉職服務的目標寫回",
+   "verdict": "benign",
+   "note": "位元組層級比對發現延續句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 692,
+   "excerpt_sha1": "750bbc8cc66524967c0e24d47e892bd3f6866ff4",
+   "excerpt": "**任何一次成功(YES 確認)的轉職都會執行這行**，不是特定 target/portrait 才觸發的特例。",
+   "verdict": "benign",
+   "note": "延續句，否定「不是特定target/portrait才觸發的特例」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 731,
+   "excerpt_sha1": "35d9013908964e17fad06069758963cb17bbae92",
+   "excerpt": "旁邊加一行 `u.Lv = 1`，讓角色轉職後從 Lv1 重新用轉職後的成長表(§6.4 已證的",
+   "verdict": "benign",
+   "note": "描述remake端Go程式碼修正，交叉參照§6.4已證結論"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 744,
+   "excerpt_sha1": "3c72241fe3cd7b4c06260eee6abe5ba5c45ad223",
+   "excerpt": "應與其餘本專案「純靜態、待 live 交叉驗證」項目同級看待。",
+   "verdict": "benign",
+   "note": "明確保留用語「純靜態、待live交叉驗證」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 746,
+   "excerpt_sha1": "6fa78061755eb58f231cb2b35840ccf49bf4e9f8",
+   "excerpt": "### 6.4 成長表切換 — 確認 7B215 起就是轉職後的 reroll/leveling 表",
+   "verdict": "benign",
+   "note": "章節標題，證據在節內文"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 751,
+   "excerpt_sha1": "0ec694cbf0ea18030203e2632100c774055128b9",
+   "excerpt": "| 證據來源 | 位址(舊版,SESSION-HANDOFF 2026-07-26) | 對應(新版,doc32 §3.6 已逐 byte 驗證) |",
+   "verdict": "benign",
+   "note": "純表格標題列"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 817,
+   "excerpt_sha1": "3bb8dbb8050f0fde46162aa1989f22163424bd77",
+   "excerpt": "EXE 已在 2026-08-14 確認遺失(見 memory「fd2_re EXE version mismatch」),專案現在唯一可用的是新版",
+   "verdict": "benign",
+   "note": "描述EXE遺失歷史事實，交叉參照project memory"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 834,
+   "excerpt_sha1": "5528a8b84a26b553e4cdf325df572ccb4db4921d",
+   "excerpt": "外部 PTT 實測交叉驗證,不因換版而改變的是遊戲邏輯本身),但**引用的具體位址目前只對舊版(已遺失)成立**,",
+   "verdict": "benign",
+   "note": "PTT外部引用+明確保留用語「只對舊版(已遺失)成立」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 859,
+   "excerpt_sha1": "ae0c9c5177c22b08609e4660bd00d7b6c55757d2",
+   "excerpt": "索菲亞/凱麗/貝克威轉職到錯誤的 item 需求,建議下一輪先確認(可能只是修正 JSON 三個欄位),再視需要",
+   "verdict": "benign",
+   "note": "未來式建議「建議下一輪先確認」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 883,
+   "excerpt_sha1": "4ce828db84404be19edf69c50a912d78990a961b",
+   "excerpt": "(2026-08-19)已用對話 identity-tag 交叉驗證把 38/135 組角色名定案,並明確記錄其餘約 97 組(泛用",
+   "verdict": "benign",
+   "note": "交叉參照doc49對話identity-tag方法既有結論"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 887,
+   "excerpt_sha1": "bd3808e93dc0a92cbfaa098838280941e1f40b35",
+   "excerpt": "- **L1118**(doc32 L169:remake 暫沿用獨立驗證的 normalized 武器射程,不得臆測 raw `+0x0b..+0x0d`,",
+   "verdict": "benign",
+   "note": "交叉參照worklist行號+doc32自身結論，offset低於門檻，明確保留用語「不得臆測」"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 893,
+   "excerpt_sha1": "cfea11121dea056d4490c4858a1939c6aa5de60e",
+   "excerpt": "gate minor 殘留範圍)：**已核對,確認完整、無需修改**。`FindNativeInventoryItemInUnit`/",
+   "verdict": "benign",
+   "note": "延續句，描述remake端Go函式核對結果"
   }
  ]
 }
