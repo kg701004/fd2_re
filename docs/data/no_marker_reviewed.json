@@ -32888,6 +32888,62 @@
    "excerpt": "當作已知法術/道具數量做邊界判斷)跟按確認鍵時的MP足夠判定,**同樣沒有直接寫",
    "verdict": "benign",
    "note": "本輪對FUN_0001d51d/FUN_00018409的排除性分析，非新原版證據宣稱，是分析推論"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 867,
+   "excerpt_sha1": "30ab26e7c38cde31f999ea4ba6708493305ec3ec",
+   "excerpt": "### 6.7 原版側獨立實機驗證(2026-09-06,非 remake,回應 worklist L1565)",
+   "verdict": "benign",
+   "note": "章節標題,內文含DOSBox-X/Ghidra標記"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 876,
+   "excerpt_sha1": "b2365eb3b43ccd35027b16e73ab5246b7e7da2c9",
+   "excerpt": "> 與 §6.1-§6.3 逐條吻合,是**同一機制在新版 EXE 上的獨立再確認**。",
+   "verdict": "benign",
+   "note": "承接上一段Ghidra/xref_to靜態方法論述"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 899,
+   "excerpt_sha1": "9fdfb27235bb8d56b64abf5846a232dfd6b4fb69",
+   "excerpt": "**結論二(worklist L1565 的解法驗證成功)**:#3 在完全相同的存檔與角色下,只因為進教會前多做了",
+   "verdict": "benign",
+   "note": "承接上文DOSBox-X live樣本表格的結論句"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 902,
+   "excerpt_sha1": "2bd2026c6a8a48cd4e432189607549222fe2807c",
+   "excerpt": "不代表方法無效)。**這證實了 doc58「2026-09-03 續五」提出的假說是對的**:讓 RNG 消費者狀態",
+   "verdict": "benign",
+   "note": "同上,承接DOSBox-X live樣本結論"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 904,
+   "excerpt_sha1": "b630eb15fdfa3f9160ca45d7b6c484c4d51db33d",
+   "excerpt": "的「大樣本 range 驗證仍未做」現在有一個已驗證可行的取樣方法**:每次取樣前,插入一段長度/內容",
+   "verdict": "benign",
+   "note": "同上"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 907,
+   "excerpt_sha1": "b54845a8960df0bffb12ead3178f141cd78159b1",
+   "excerpt": "**誠實範圍**:①只驗證了武者→武聖這一組轉換,STR/DEF/SPD/MHP/MOVE 五項也只各有 2-3 個樣本,",
+   "verdict": "benign",
+   "note": "誠實範圍段落,承接同節DOSBox-X live證據"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 912,
+   "excerpt_sha1": "904cde605a51e883830673a3a4a8ab7afff97b2b",
+   "excerpt": "對應道具,需要額外的 inventory patch 才能實測。",
+   "verdict": "benign",
+   "note": "同上"
   }
  ]
 }
