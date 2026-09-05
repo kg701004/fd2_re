@@ -67,6 +67,15 @@ verdict(live BPPM雙層命中+三重靜態交叉核對+獨立截圖佐證)，逐
 具體資產索引，套用「已解」標籤到1017會over-claim，已在1017-1020行內新增說明避免下一輪誤判。
 **第九輪複核後統計**：A=42、D=46。
 
+> **2026-09-06第十輪**：檢查native command系列(532/533/534/536/538/539/540/541，doc56
+L608-729一叢)是否符合「RE面已閉合、剩remake wiring」這個本專案既有A門檻。532(ID0-12
+damage)/533(ID13-16 heal)/534(同532/533彙整表格列)/538(command20/21/26/27狀態名稱+公式
+雙重印證)/539(command22封咒術，同538)這5項doc56原文都明確給出「數值/公式/命名層完全閉合，
+只剩專用renderer/SFX/UI/獨立resolver未接remake」的verdict，改標A。536/540/541這3項因
+措辭涉及「phase-expiry caller」「native command executor」「legality」等字眼，無法排除
+是RE缺口(而非純remake wiring缺口)，未深入逐一查證前保守維持D，避免误关。**第十輪複核後
+統計**：A=47、D=41。
+
 19 - E - UI-VIS-TOWN variant1(ch12)/variant2(ch03)已於2026-08-25用平行harness(townE2)DOSBox原版對照，5個真實selection視覺+統計比對確認，但非variant0等級的byte-exact RGB MD5，且secret gate reveal未成功，故仍標`[~]`。
 20 - E - UI-VIS-SHOP 自述下一gate為四人以上recipient scroll等，需DOSBox。
 24 - E - UI-SHOP-RECIPIENT-INPUT-E2 selection0↔1已閉合，僅剩四人以上scroll原版E2待DOSBox。
@@ -131,12 +140,12 @@ verdict(live BPPM雙層命中+三重靜態交叉核對+獨立截圖佐證)，逐
 463 - F - 完整逐欄佈局已由項目自身標記為[阻]設計面擱置(remake用自有struct，不需)。
 510 - D - 「0x1cff0 command table」部分已由524-531等[x]項與doc56閉合，但「完整native演出」子句仍未解，整項未達完整A門檻，保守留D。
 518 - E - 剩餘清單明文列出DOSBox visual diff為待辦項，須live比對。
-532 - D - doc56 L608-616補充更多反組譯細節，但獨立resolver/renderer/SFX/UI仍未接入remake，可續靜態RE。
-533 - D - doc56 L618-627與worklist敘述一致，renderer/UI/timing仍未接，可續靜態RE。
-534 - D - doc56 L775確認multi-hit/SFX/native UI未接，可續靜態RE。
+532 - A（2026-09-06由D複核關閉，RE面已閉合為單一numeric/MP/raw-completion contract，剩remake wiring非RE缺口）- doc56 L608-616補充更多反組譯細節，但獨立resolver/renderer/SFX/UI仍未接入remake，可續靜態RE。**2026-09-06複核**：doc56原文明確結論「IDs0..8與ID9 direct path、及IDs10..12 compositor tail都已閉合為同一numeric/MP/raw-completion contract；dispatch分流不表示state effect缺失，也不表示renderer等同」，`ExecuteNativeCommandDamage`已接對應state slice。剩「專用renderer、SFX、post-resolution、其他ID UI與screenshot oracle」都是remake端演出/UI接線，非RE缺口，比照本專案RE-only關閉慣例改標A。
+533 - A（2026-09-06由D複核關閉，同532性質，IDs13-16治療核心已完整證實）- doc56 L618-627與worklist敘述一致，renderer/UI/timing仍未接，可續靜態RE。**2026-09-06複核**：doc56原文「這直接證實IDs13..16是per-final-target HP restore（ID13 raw row為dmg=70,+3=4,+4=0,mp=3,target=1）」，公式、jump table(`0x21AD9/0x21B99/0x2211C/0x22153→0x21B18`)、MP扣除、HP回復公式(`floor(amount*9/10)+floor(rand()%100*amount/1000)`，clamp至`+0x42`)全數釘死，`ExecuteNativeCommandHeal`已接。剩「獨立resolver、專用renderer、SFX或UI」是remake接線，比照532改標A。
+534 - A（同532/533，2026-09-06由D複核關閉）- doc56 L775確認multi-hit/SFX/native UI未接，可續靜態RE。**2026-09-06複核**：doc56 L775本身就是彙整表格，對應532/533同一組已閉合的numeric contract(「9–12｜direct/`0x21548` tail → `1CA89→1C75E`｜`ExecuteNativeCommandDamage`｜未接；numeric共用不代表演出共用」)，比照532/533改標A。
 536 - D - doc56補充equipment recalc已接住，但command transaction/phase-expiry caller/UI仍未接。
-538 - D - doc56 2026-08-14補充(L677-689)以`command_labels.json`已解出command20/21/26/27狀態名稱，但engine/UI整合未接，未達整項A門檻。
-539 - D - 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。
+538 - A（2026-09-06由D複核關閉，RE面已雙重印證，剩remake wiring非RE缺口）- doc56 2026-08-14補充(L677-689)以`command_labels.json`已解出command20/21/26/27狀態名稱，但engine/UI整合未接，未達整項A門檻。**2026-09-06複核**：doc56 L677-689的內容遠不只是「查到名稱」——`+0x25`=中毒(command20清/26施)、`+0x26`=麻痺(21清/27施)、`+0x27`=封咒(22施，無清除指令)三個byte的語意，由「今天從`0x1A866`反組譯獨立推出的公式」與「`command_labels.json`的正式命名」雙重印證，公式(中毒`maxHP/10`)、綁定byte、command id、遊戲內名稱四者完全吻合。remake側`Unit.NativeTransient[6]`已保留raw ABI，唯一沒做的是「呼叫normalized TickStatus/接UI」這個架構性決定(刻意不做，非RE缺口，見doc56原文「它刻意不呼叫normalized TickStatus」)。比照本專案RE-only關閉慣例改標A。
+539 - A（同538，2026-09-06由D複核關閉）- 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。**2026-09-06複核**：與538同一份doc56段落、同一組雙重印證證據(`+0x27`=封咒，無清除指令，這個「無清除指令」本身也是RE已確認的結論，不是缺口)，比照538改標A。
 540 - D - doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。
 541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。
 548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
