@@ -158,6 +158,18 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 539 - A（同538，2026-09-06由D複核關閉）- 同538性質，command22="封咒術"名稱已由`command_labels.json`解出，但UI/expiry recompute整合未接。**2026-09-06複核**：與538同一份doc56段落、同一組雙重印證證據(`+0x27`=封咒，無清除指令，這個「無清除指令」本身也是RE已確認的結論，不是缺口)，比照538改標A。
 540 - D - doc56 L698-722已完整反組譯`0x1a30b`全流程並在`main.go:completeTurn()`接線，但equipment recompute/UI/status icon/native command executor未接，非完整關閉。
 541 - D - doc56 L724-729與worklist一致，legality/camera/render/UI仍未接，可續靜態RE。**2026-09-06複核，確認維持D，非過期標籤**：本行對應ID23(command-0x17特殊relocation，`0x2218A`/`0x22253`)。doc56原文明確：relocation本身的機制(離場/入場兩段indexed演出、寫入runtime`+0/+1`與cursor globals)已證實，但**「落點selection/legality...尚未閉合」是逐字的原文**——這是真正的RE缺口(不知道哪些落點合法)，不是remake wiring缺口，與536/540/862-867那類「機制全懂只差接線」的情況不同，正確維持D。
+**2026-09-06續：一度以為doc32§4.1已經給出答案，直接驗證後撤回，維持D不變**：doc32§4.1宣稱
+「落點mode-6 raw legality已定位⋯排除other raw-active occupant，依target class/race/unit+7
+選29×20`0x4e555` editable cost row，目的地terrain entry必須為20」，且點名remake函式
+`NativeRelocationDestinationAllowed`。本輪對現有`FD2Analysis3`project直接查證`0x4e555`：
+**`xref_to`零筆引用，該位址的原始bytes是合法x86指令(`A3`/`33 C0`/`8B E8`等mov/xor/mov
+opcode)，不是資料表**——doc32這個具體claim在目前這份EXE build上驗不過，很可能是舊版EXE
+位址平移問題(這個專案已知的既有陷阱，見`feedback_fd2_old_new_exe_address_instability`)，
+或`NativeRelocationDestinationAllowed`這個remake函式(已隨2026-09-02 remake移除)當時引用的
+是remake自己的常數而非直接對應到EXE位址。**沒有依這個未驗證的claim改標A，維持D**——這正是
+本專案「先查現有證據再動手，但不能盲信」的一次具體示範：查到claim卻沒有照單全收，用獨立
+驗證擋下一次可能的過度宣稱。下一輪若要真的關閉541，需要重新在`FD2Analysis3`上獨立定位
+legality判定的真正位址，不能沿用doc32§4.1這行文字。
 548 - D - doc56 L731-734確認IDs25-27 jump table，並受益於538的status name resolution，UI/status labels仍未接。
 555 - D - doc56 L600確認一致，scroll/composite/專用演出/SFX/UI仍未接，可續靜態RE。
 557 - A（2026-09-06由D複核關閉，doc27§6「worklist L555/L557/L572完成度」段落本身已明確結論，L557行標籤未同步）- AoE(range>0)、命中率完全未解，輔助系效果部分已推進但未整合進施法UI，可續靜態RE。**2026-09-06複核**：doc27§6自己的完成度段落明確給出兩個verdict——命中率「本輪以code-level反編譯二次核實，確認與物理HIT−EV完全獨立，可視為結論穩定」；AoE「2026-08-20續輪(§6.4)已用位址級反組譯完整追出上游生成器⋯鏈路完整，已關閉」。本行「完全未解」的舊文字與這兩個既有verdict直接矛盾，是標籤未同步，不是真的還沒解。剩餘缺口(逐ID數值核對、`FUN_0004e4be`/`FUN_0004e8a5`資料表細節、remake施法UI整合)不影響RE機制結論，比照本專案既有慣例(RE理解已閉合、remake接線另計)改標A。

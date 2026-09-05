@@ -470,6 +470,15 @@ remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用
   `0x4e555` editable cost row，目的地 terrain entry 必須為20。完整
   indexed renderer/Ebiten selector仍未接。
 
+  **⚠ 2026-09-06 未通過獨立驗證，本段落上面這個 `0x4e555` claim 暫不可信**：對現有
+  `FD2Analysis3` project 直接 `xref_to 0x4e555` 得零筆引用，且該位址原始 bytes 是合法
+  x86 指令(`A3`/`33 C0`/`8B E8` 等)，不是資料表——與本段落宣稱的「29×20 editable cost
+  row」矛盾。懷疑是舊版 EXE 位址平移問題(`NativeRelocationDestinationAllowed` 這個
+  remake 函式已隨 2026-09-02 remake 移除，其常數是否真的對應到這份 EXE 的 `0x4e555`
+  從未在目前 project 上重新驗證過)。**91-worklist.md L541 因此維持 D，不採信本段落這個
+  具體位址**，下一輪若要處理 L541 需要重新獨立定位。上面「actor gate/16-bit subtract/
+  destination cursor bytes寫入target+0/+1」等其餘敘述本輪未重新查證，暫時保留原判斷。
+
 ### 4.2 2026-08-19 續輪:`0x20c6f` type dispatch 全 25 種 case 窮舉閉合 + 武器命中特殊效果來源鏈(回應 worklist L246)
 
 > 方法:純靜態 Ghidra headless(`FD2Analysis3`,唯讀,`ProbeAudit0820.java`/`ProbeAudit0820b.java`)
