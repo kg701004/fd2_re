@@ -14112,6 +14112,350 @@
    "excerpt": "是執行消費端。兩者不能共用未證實的 ranking 或槽／command 身分。",
    "verdict": "benign",
    "note": "明確保留用語「不能共用未證實的」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 47,
+   "excerpt_sha1": "4e7fb6b392371e823e42db5a60abe6dc7e1e1fed",
+   "excerpt": "> 兩段獨立捕捉（今日 dosbox 連拍 + 使用者提供的原版錄影）在①③兩段的字幕文字**逐字吻合**，",
+   "verdict": "benign",
+   "note": "「dosbox」小寫無連字號(既有低頻邊界案例)+使用者提供原版錄影(影片oracle既有可接受類別)"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 89,
+   "excerpt_sha1": "705fb1905d4afb4c2c24c2082ce2c5a21867edcc",
+   "excerpt": "**證據鏈（三個獨立來源交叉確認 group 10/11 不該在開場）**：",
+   "verdict": "benign",
+   "note": "小標，證據在節內文"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 100,
+   "excerpt_sha1": "e752c14d9803501d4aea4cec2d3439542dfdb541",
+   "excerpt": "absence不能證明全遊戲「從未使用」。它們應保留為用途未證實的roster資料，",
+   "verdict": "benign",
+   "note": "明確保留用語「未證實」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 119,
+   "excerpt_sha1": "fe208dc1f7cac49f4779c4845b4c536ec3b3295d",
+   "excerpt": "**對照使用者原始回報 #1、#2**：均證實成立，且比使用者記憶更完整——不只「皇宮父子對話」缺失，",
+   "verdict": "benign",
+   "note": "延續句，使用者回報交叉核對"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 130,
+   "excerpt_sha1": "9963553c3cf2c66573aac34ffaeb1f967e490ca6",
+   "excerpt": "`forest_discover`)仍無對應 scene-decode 文件，確認本節「partial」判定未變。詳見 doc53 §G。",
+   "verdict": "benign",
+   "note": "交叉參照doc53 §G，否定式聲明"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 147,
+   "excerpt_sha1": "ce5607983ce56a71a628f44d3d12445a953ac8ea",
+   "excerpt": "**現象（使用者實測回報）**：remake 戰鬥中單位職業名顯示錯誤——原版**海盜**類單位，remake 顯示",
+   "verdict": "benign",
+   "note": "「使用者實測回報」片語，既有可接受設計取捨類別"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 163,
+   "excerpt_sha1": "c1822cbbdbe160efff73fb1f3d4e0656e40270b1",
+   "excerpt": "roster 記錄的 byte2/byte3，非衍生值）。實測 map0 全部單位：海盜（portrait96/97）、哈瓦特（portrait3）、",
+   "verdict": "benign",
+   "note": "延續句，交叉參照doc49已確認portrait id"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 169,
+   "excerpt_sha1": "391ab774ab46ee0042f0648aae714da2af918bab",
+   "excerpt": "`CLASS_NAMES = [\"龍\",\"劍士\",\"戰士\",\"騎士\",...,\"聖騎士\",...]`（25 個玩家職業 + 1 個「龍」，逐位元組",
+   "verdict": "benign",
+   "note": "延續句，逐位元組驗證"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 190,
+   "excerpt_sha1": "f0ae98f0b76c82621f7cb314706fd228aee5ab7b",
+   "excerpt": "不動，較像**裝飾性守衛雕像**而非可戰鬥單位，本輪未能確認它們是否會參戰、參戰時狀態欄文字為何）。",
+   "verdict": "benign",
+   "note": "明確保留用語「本輪未能確認」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 191,
+   "excerpt_sha1": "94a04c43d340edf7dc3f8638911591dcfa606f9f",
+   "excerpt": "「聖騎士」機制性錯用本身已用 doc02 交叉驗證坐實，「士兵」這個具體對照詞待下一輪影片/dosbox 補一張",
+   "verdict": "benign",
+   "note": "交叉參照doc02，未來式「待下一輪...補一張」，dosbox小寫邊界案例"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 194,
+   "excerpt_sha1": "b17d8cbb24fff54228ec32825310d51f039fda31",
+   "excerpt": "### 2.5 主角隊位置/朝向：區域正確，逐人格位分配**已修正**（高，2026-07-04 二輪核對後定案）；朝向欄位存在但預設值未驗證（中）",
+   "verdict": "benign",
+   "note": "小標，含保留用語「預設值未驗證」，證據在節內文"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 199,
+   "excerpt_sha1": "f0e6be18c02e4851aa1822c036bd2be997534107",
+   "excerpt": "- **位置（區域級別已驗證，逐人精確分配已於本輪核對修正）**：`ch01.json` 的 `deploy_cells`",
+   "verdict": "benign",
+   "note": "延續句，交叉參照ch01.json"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 224,
+   "excerpt_sha1": "bd3279772960b6abf522569954e6f0b24084826b",
+   "excerpt": "（可能各自不同，如 87 度側身)，**維持中優先、待後續逐人比對**，不算已證實的 bug，也不算已證實正確。",
+   "verdict": "benign",
+   "note": "明確保留用語「不算已證實的bug,也不算已證實正確」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 233,
+   "excerpt_sha1": "8e0f8e23eacaabcf97bef20bc7236ec677172933",
+   "excerpt": "| 2 | **職業名稱來源改用 portrait 查表，不用 (race,cls)**（§2.4） | 中：新建 portrait→名稱表（先補第一章用到的 96/97/103/76/68 等）+ 改 `export_units.py` 一處查表邏輯 | 影片狀態欄「盜賊」文字直接證據 + doc02 全篇交叉驗證「聖騎士」只用於玩家轉職語境,根因機制已鎖定 |",
+   "verdict": "benign",
+   "note": "表格row，引用影片直接證據+doc02交叉驗證"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 236,
+   "excerpt_sha1": "7dbe661391063f1d958b2c89c40c882cd04e569e",
+   "excerpt": "| 5 | ~~主角隊逐人格位分配精確驗證~~ **已修正**（§2.5 位置部分,2026-07-04）| 已完成:交換 `ch01.json` `deploy_cells[1]`/`[2]` | fig sprite 外觀比對 `orig_03_battle_start.png`/`f_029.png` 逐一核對亞雷斯/悠妮身分,發現原順序把兩人配對顛倒 |",
+   "verdict": "benign",
+   "note": "表格row，刪除線(已解決項)，fig sprite比對截圖佐證"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 237,
+   "excerpt_sha1": "f29d02ad0cdecece0587f6ff781e03bd085f2c9c",
+   "excerpt": "| 6 | 朝向（Dir）預設值逐人驗證（§2.5 朝向部分）| 中：需影片逐一比對 4 名主角個別朝向 | Dir 欄位存在且有預設值(0),未逐人比對正確性 |",
+   "verdict": "benign",
+   "note": "表格row，明確保留用語「未逐人比對正確性」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 244,
+   "excerpt_sha1": "bef41282a8e4322b2462ab0325c5e81291631026",
+   "excerpt": "本輪只確認了「turn_events 與章節0 cutscene 這兩條已知路徑都不會觸發它們」，未做窮舉排除；",
+   "verdict": "benign",
+   "note": "明確保留用語「未做窮舉排除」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 246,
+   "excerpt_sha1": "4986788c446a718698d9906f6f9a0e0ec3aa556a",
+   "excerpt": "連續多幀不動，較像**裝飾性守衛雕像**，但未能確認是否真的是 group10/11 對應的視覺、是否會參戰。",
+   "verdict": "benign",
+   "note": "明確保留用語「未能確認」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 247,
+   "excerpt_sha1": "d2f9d02cc1d737270cac063b56448d341ecf581a",
+   "excerpt": "如果之後想讓這兩組在原版真的會用到的地方登場（或確認它們就是純裝飾物、remake 完全不用管），",
+   "verdict": "benign",
+   "note": "未來式條件句"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 250,
+   "excerpt_sha1": "f1d18b184deaf6c58be120fc763adf819817c28a",
+   "excerpt": "誤用機制，「盜賊」已有逐幀影片文字證據，「士兵」目前只有 doc31 的既有記錄佐證，未在本輪影片重新",
+   "verdict": "benign",
+   "note": "交叉參照doc31，明確保留用語「未在本輪...重新[驗證]」"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 254,
+   "excerpt_sha1": "9e6b06ea79116408f71973e6830af8055f764e43",
+   "excerpt": "（見 §2.5、優先序表 5）：fig sprite 外觀比對影片/dosbox 截圖確認亞雷斯(fig4)/悠妮(fig9)兩人的",
+   "verdict": "benign",
+   "note": "dosbox小寫邊界案例，影片截圖比對延續句"
+  },
+  {
+   "file": "44-ch1-remake-vs-original.md",
+   "line": 255,
+   "excerpt_sha1": "310c4b3e362cdb8c50ffd08644eb11da2fe19788",
+   "excerpt": "`deploy_cells` 索引原本顛倒，已交換修正並截圖驗證。",
+   "verdict": "benign",
+   "note": "延續句，截圖驗證"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 10,
+   "excerpt_sha1": "5b73a28698f2f25154958ab9f57b84f4f91fc77b",
+   "excerpt": "- 破解並驗證 `.DAT` 通用容器格式(`LLLLLL` magic + uint32 offset 目錄)，寫成 `tools/unpack_dat.py`，",
+   "verdict": "benign",
+   "note": "跨輪反省摘要bullet，成就已在其他文件完整記載，本文件性質是摘要而非新主張"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 21,
+   "excerpt_sha1": "639f095cecd8e833366046f6a718acba4c414265",
+   "excerpt": "列為 [假設] 待第 2 輪驗證——**避免把未對齊的推論寫成定論**。",
+   "verdict": "benign",
+   "note": "明確標記[假設]待驗證，方法論教訓"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 28,
+   "excerpt_sha1": "626ec88ea1b708b6024eb17c8984e429fa678e67",
+   "excerpt": "- [假設] 圖像壓縮為 RLE — ✅ 第 2 輪已證並破解。",
+   "verdict": "benign",
+   "note": "摘要bullet，[假設]→✅進展標記"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 36,
+   "excerpt_sha1": "f6fe881f5557b09e340c9ec011c527c14f88717f",
+   "excerpt": "- **開發工具考證**:從 binary 指紋確認 Watcom C/C++32 + Rational DOS/4GW + Miles AIL v3(XMIDI 音樂)。",
+   "verdict": "benign",
+   "note": "摘要bullet，binary指紋方法論"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 42,
+   "excerpt_sha1": "8f92b62d5864ab679115a070f6449723dde46777",
+   "excerpt": "- **音樂**:確認 XMIDI,寫 `xmi2mid.py` 轉 15 首標準 MIDI;note on/off 平衡、tempo 直通。",
+   "verdict": "benign",
+   "note": "摘要bullet"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 61,
+   "excerpt_sha1": "850c5c181e1bb04e2eaa452f7304d114a27cbdf1",
+   "excerpt": "渲染驗證:索引 0–35 = 數字英文,高位 = 漢字;最常用字模正是 `，`/`的`/`我`。",
+   "verdict": "benign",
+   "note": "摘要延續句"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 63,
+   "excerpt_sha1": "c9eed2550f514626f958737688483d812afe3df0",
+   "excerpt": "- **動畫 sprite codec 調查**:用視覺回饋(rulebook 64)確認背景 RLE 不適用(渲染為亂條);",
+   "verdict": "benign",
+   "note": "摘要bullet，否定式發現"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 64,
+   "excerpt_sha1": "05576a0543694571718a98c3c8b8c43ef6c74aae",
+   "excerpt": "排除多種 escape/run 假設;確認 0xFE 是 escape 但連續長度僅 1–2、後接正常像素 → 非 bulk 透明。",
+   "verdict": "benign",
+   "note": "延續句，十六進位(0xFE)低於門檻"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 92,
+   "excerpt_sha1": "5c63a5dcd31bd5a575c96796b66bc7bff88f2730",
+   "excerpt": "→ FIGANI 用同家族**另一參數化變體**,不可因「長度對」就斷定 codec 正確(需視覺 + 相關雙重驗證)。",
+   "verdict": "benign",
+   "note": "方法論教訓，否定式聲明"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 107,
+   "excerpt_sha1": "7b4e97adae39e828638b362ee40fbef2cd24964a",
+   "excerpt": "- `tools/decode_figani.py`:把 **264 個動畫、2118 幀**全部解出。視覺驗證:騎士(藍灰盔甲+紅披風)",
+   "verdict": "benign",
+   "note": "摘要bullet，工具成就描述"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 123,
+   "excerpt_sha1": "8379d01a54e2fd3d0f4bbdf6af26eed76e418ef9",
+   "excerpt": "後續已證實 native command、transient lifecycle、player selector、battle UI、campaign/town flow 仍有大量未閉合資料流；現況以 SDD `56`、UI matrix `57` 與 worklist `91` 為準。",
+   "verdict": "benign",
+   "note": "明確保留用語「仍有大量未閉合」，交叉參照doc56/57/91"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 157,
+   "excerpt_sha1": "8ca44766ebba3eab019d906ad707a84307f1757f",
+   "excerpt": "(襲/態、責/青、黨/嘗、費/曹…都是這樣抓到)。比孤立逐字判讀可靠得多。",
+   "verdict": "benign",
+   "note": "方法論描述延續句"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 188,
+   "excerpt_sha1": "c221475606955648125b20a24655a6f79756fe8e",
+   "excerpt": "caller binding或scene composition已閉合；現況以doc56/57為準。",
+   "verdict": "benign",
+   "note": "交叉參照doc56/57為現況準則"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 193,
+   "excerpt_sha1": "6fc6048c8a17b3fc6f99dba9c75823df8046cf7b",
+   "excerpt": "- 第一性原理可行性確認(doc 20):9 項必要能力全具備,重製降為「工程整合」。",
+   "verdict": "benign",
+   "note": "摘要bullet，交叉參照doc20"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 195,
+   "excerpt_sha1": "733a7313d62a473c45a553c5f08d1acb49c219ee",
+   "excerpt": "- 技術驗證(doc 22):**本機桌面 Linux ELF(10.8MB)+ WASM(10.5MB)+ 資產管線**三項實證可建。",
+   "verdict": "benign",
+   "note": "摘要bullet，交叉參照doc22"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 210,
+   "excerpt_sha1": "15d89538721ae176be5e462f9d6bcda468f47d56",
+   "excerpt": "- ❌ 標題「旋轉動畫」→ ✅ 實為**角色立繪垂直捲動**(解圖兩面證實)。",
+   "verdict": "benign",
+   "note": "自我修正摘要bullet(❌→✅)"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 341,
+   "excerpt_sha1": "4f10af947a222905bf657fe8a664de19e4da629b",
+   "excerpt": "save state 交叉驗證。網路圖片只能協助辨認畫面結構，不能取代本機可重播",
+   "verdict": "benign",
+   "note": "方法論教訓，否定式聲明「不能取代」"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 429,
+   "excerpt_sha1": "81d0de1ef7bdcea210f6a09d11942eece02f56ce",
+   "excerpt": "因此 asset parser 只 decode 已由 caller 證實的 background／decoration，",
+   "verdict": "benign",
+   "note": "明確保留用語「只decode已由caller證實的」"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 512,
+   "excerpt_sha1": "9dcd8d221208b848df53ed6d7f678aa3a149f2be",
+   "excerpt": "consumable compositor 拒絕 equipment type，再獨立閉合",
+   "verdict": "benign",
+   "note": "延續句"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 551,
+   "excerpt_sha1": "f713f6aef5be530aa0437bf8d911a5a2c7851679",
+   "excerpt": "persistence。這個案例說明：已證實的順序、typed record生命週期、以及畫面E2",
+   "verdict": "benign",
+   "note": "方法論案例說明延續句"
+  },
+  {
+   "file": "99-reflections-log.md",
+   "line": 611,
+   "excerpt_sha1": "ac30f599666243fb4be6caf8aa986309d0ba72e3",
+   "excerpt": "驗證不能只信process exit：還要查mtime、尺寸並人工看圖，否則README很容易長期",
+   "verdict": "benign",
+   "note": "方法論教訓，否定式聲明「不能只信」(同feedback_wal_sqlite_mtime_not_a_change_signal同類教訓)"
   }
  ]
 }
