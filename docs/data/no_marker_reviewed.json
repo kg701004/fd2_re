@@ -32632,6 +32632,46 @@
    "excerpt": "刻意設計成「落點合法但確認後依然無效」的重現條件去追,而不是繼續盲測。",
    "verdict": "benign",
    "note": "對下一輪的具體建議事項，非證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2806,
+   "excerpt_sha1": "9f998e626b1ee91cd51aa087ad4e0f83eb0dd710",
+   "excerpt": "10輪印一模一樣的「確認落點後座標完全沒變」)時發現:這正是§18當初就已經記過、",
+   "verdict": "benign",
+   "note": "回顧§18/§24既有問題描述，非新原版證據宣稱"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2816,
+   "excerpt_sha1": "9946a0df9b0114c4e0d9397aafe1634b67a078de",
+   "excerpt": "`--rounds 10 --mv 6`。**修法確實生效**:idx1不再印「確認落點後座標完全沒變」",
+   "verdict": "benign",
+   "note": "live測試對真實原版EXE的修法驗證觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2820,
+   "excerpt_sha1": "a7dcedb47627a591b66ce744feeebf147100517d",
+   "excerpt": "回報『攻擊確認未生效』」,一模一樣的結果重複9次——因為Acted始終沒被設起來,",
+   "verdict": "benign",
+   "note": "同上，接續描述degenerate loop觀察"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2822,
+   "excerpt_sha1": "d16e39fe557fae3fc6d157767c44f327787313ad",
+   "excerpt": "不是本節修的這一層。第9輪之後又是array dump 3次全0,截圖確認**不是崩潰**",
+   "verdict": "benign",
+   "note": "截圖確認非崩潰的live觀察記錄"
+  },
+  {
+   "file": "13-battle-menu-system.md",
+   "line": 2832,
+   "excerpt_sha1": "c1fa077acffc753ef5ac52a4f58216d3641e2d6a",
+   "excerpt": "3. **一個值得記住的新線索**:idx1連續9輪的「攻擊確認未生效」結果完全一致",
+   "verdict": "benign",
+   "note": "新線索分析，非新原版證據宣稱"
   }
  ]
 }

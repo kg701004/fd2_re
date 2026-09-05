@@ -290,12 +290,24 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
         # 一樣,幾乎可以確定落點被拒絕、單位選擇已經被取消,不能再假設環是開著的。
         moved = post_me is not None and (post_me["x"], post_me["y"]) != (me["x"], me["y"])
         if (dx or dy) and not moved:
+            # 2026-09-06(續十一):doc13 §24/§25 發現舊版在這裡直接 `return`
+            # 放棄,會讓外層(`run_one_round()`/`main()`)下一輪重新選到**同一個
+            # 單位**、算出**同一個**必然超出範圍的落點,無窮重試(§18/§24 都
+            # 撞過這個 degenerate loop)。這裡改成**恢復性重試**:游標移回這個
+            # 單位原本的位置,重新選取,這次改用**零移動**(dx=dy=0,原地不動,
+            # 一定合法,不會再被同一個範圍問題擋下)去開環——保證能真的觸發
+            # 攻擊/待機分支之一,乾淨結束這個單位這一輪的行動,不再無窮迴圈。
             print(f"    idx{me['idx']} 確認落點後座標完全沒變(dx={dx},dy={dy})"
                   f"——落點很可能超出這個單位真實的移動力,遊戲已經悄悄取消單位選擇、"
-                  f"退回自由瀏覽游標,不是停在移動/環畫面。不再假設環是開著的,"
-                  f"直接放棄這個單位這一輪的行動(不嘗試攻擊/待機,避免對自由瀏覽"
-                  f"狀態亂送按鍵)")
-            return
+                  f"退回自由瀏覽游標。改成游標移回原地、原地開環(零移動一定合法),"
+                  f"避免無窮重試同一個必然失敗的落點")
+            stray_cursor = post_snap[0]["cursor"]
+            move_cursor(inst, stray_cursor, (me["x"], me["y"]))
+            press(inst, "confirm", 1.8)      # 重新選取這個單位
+            press(inst, "confirm", 2.2)      # 零移動,確認原地(必定合法)
+            _, post_snap = snapshot(inst, selector, count)
+            post_units = post_snap[1:]
+            post_me = next((u for u in post_units if u["idx"] == me["idx"]), None)
 
         still_adjacent = post_me is not None and adjacent_foe(post_me, post_units)
     if not still_adjacent:
