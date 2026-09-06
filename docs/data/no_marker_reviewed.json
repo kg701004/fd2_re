@@ -33248,6 +33248,30 @@
    "excerpt": "如果真的要拿到飛龍騎士卡的live證據,唯一實際可行的方向**:重新逐字核對doc35 §9.23.1當時使用的",
    "verdict": "benign",
    "note": "continuation of §9.28.3's summary sentence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4249,
+   "excerpt_sha1": "4fa2f9285f36320fc1e15b3710f14210dab0326a",
+   "excerpt": "**找到真正的候選機制並live驗證,結果是部分確認、部分推翻,比archival稽核更深一層的新理解**",
+   "verdict": "benign",
+   "note": "section heading for §9.29; live/static evidence documented in the subsections below"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4267,
+   "excerpt_sha1": "d26848f4cb831cfd3061c11a92b27570cdc45ffe",
+   "excerpt": "**觸發前(戰場上)基線值=`0x00`;卡在悠妮卡時=`0x01`**——證實這個全域確實在montage序列執行",
+   "verdict": "benign",
+   "note": "continuation of §9.29.2's live-observation sentence, full test procedure documented in same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4278,
+   "excerpt_sha1": "8846920ea6801f4254e9666ed5be173082ddad2f",
+   "excerpt": "### 9.29.3 對 `91-worklist.md` L1017-1020 的影響:找到一個更深層、可驗證的候選成因,但未能",
+   "verdict": "benign",
+   "note": "section heading for §9.29.3; evidence summarized in paragraph below"
   }
  ]
 }
