@@ -333,6 +333,17 @@ remake工程)有很高機率誤把它當成已驗證的武器min/max射程使用
 「native argument↔weapon min/max mapping」本身依然是真正未解的開放問題,
 這次補記不構成解答,只是多排除了一種「JSON本身抄錯數字」的可能性。
 
+**2026-09-06再補記,發現一個從未被本節引用過的命名矛盾(回應worklist L1117續)**：
+`docs/knowledge-base/13-battle-menu-system.md`(§1,`0x18d8c`小節)獨立記載了同一條
+`0x1b83d→0x1b722→0x4e8bc→0x14818`呼叫鏈,但把`itemRow+0xb`/`+0xc`命名成
+`weaponClass`/`weaponRange`——**兩個性質不同的獨立欄位,不是一組min/max**——跟本節
+撤回的`range_min/range_max`(同質區間pair)解讀是**不同的假說**，doc13從未被本節引用，
+本節的撤回也從未提及doc13這個平行解讀是否同樣站得住腳。這代表全專案至少有三種對這對
+byte的命名並存卻互不對話：(1)本節撤回的`range_min/range_max`、(2)doc13的
+`weaponClass/weaponRange`、(3)`item.json`現行的`range:[min,max]`(實質等同(1))。
+三者不可能同時為真，但本輪未逐一反組譯`0x14818`內部如何分別消費`mode`(=itemRow+0xc)
+與`radius`(=itemRow+0xb)兩個參數去仲裁哪個解讀正確——留給下一輪。
+
 **2026-08-19 補完：row 內三個互不相同的「type」欄位，避免混淆**——這張表同時有三個
 語意完全不同、卻都可能被籠統叫做「type」的 byte，回應 worklist L366/L1354「未命名
 欄位語意」的要求，逐一列清楚：
