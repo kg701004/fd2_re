@@ -502,6 +502,16 @@ D8滑入呼叫之前——即整個end-of-turn orchestrator跑一次只+1一次�
 「呼叫時機巧合」提升為「這個值在end-of-turn恰好被+1一次且立刻用已知digit-render路徑重繪」，
 但仍未100%語意確認(需要live DOSBox-X `BPLM`逐回合監看佐證，本輪純Windows端工具鏈不含這個
 環節)。詳見doc57續十三。維持D。
+
+**2026-09-06續十四——ENEMY/FRIEND banner resource-ID選擇點排除法搜尋，negative result**：
+完整反組譯`0x1f1cc`/`0x1f30a`(D8滑入)本體+其呼叫的`FUN_00015f0e`/`0x4ecbf`/`0x4ebab`/
+`0x15983`，確認**全部無條件執行、無side分支、無外部參數**——排除了D8滑入動畫本體與其
+blit/RLE解壓縮原語是banner內容選擇點的可能性。banner的resource-ID必然在呼叫`0x1f1cc`前
+已寫進某個全域；`FUN_0001a30b`裡跟`DAT_00053c03`(side索引)掛勾的`FUN_00025977()`資源
+cache-loader是僅存候選，但本輪未證實兩者是同一份資源，也還沒找到`DAT_00053c03`本身被
+寫入(翻轉side)的位置(目前xref只看到READ)。下一輪：`decompile FUN_000111ba`核對目的全域、
+`xref_to DAT_00053c03`找寫入點。額外小發現：`FUN_00015983`是空函式(只有`return`)。
+詳見doc57續十四。維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
