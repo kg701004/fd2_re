@@ -33216,6 +33216,38 @@
    "excerpt": "推論——這是本輪(從§9.25起算)唯一一次靜態+live推論之外、單純用畫面本身證實的結論。**仍未查清**:",
    "verdict": "benign",
    "note": "continuation of §9.27.4's summary sentence citing §9.27.1's screenshot evidence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4205,
+   "excerpt_sha1": "32440010b8e0cdc79b71077b50d83ef6148f60f5",
+   "excerpt": "本輪立即開新instance重複驗證:(1)在悠妮卡第一段文字後直接按`Space`→只是循環到第二段文字,",
+   "verdict": "benign",
+   "note": "continuation of §9.28.2's reproduction-attempt sentence, live test results documented in same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4210,
+   "excerpt_sha1": "f4af34ee96ff4f5ec2f8eab88f566eec460c07fa",
+   "excerpt": "按鍵剛好在那個時間點才被處理,或該次session本身走的是另一條code path,已無從迴溯確認)——",
+   "verdict": "benign",
+   "note": "continuation of the same paragraph's conclusion"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4215,
+   "excerpt_sha1": "24782d125e38125cabc76cc5a49d882a7b73ec97",
+   "excerpt": "### 9.28.3 對 `91-worklist.md` L1017-1020 的影響:飛龍騎士卡確認在目前已知路徑下無法用死亡",
+   "verdict": "benign",
+   "note": "section heading for §9.28.3; evidence in paragraph below"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4223,
+   "excerpt_sha1": "345bce82b105e5c5512eab8d941bb109ea6ef476",
+   "excerpt": "如果真的要拿到飛龍騎士卡的live證據,唯一實際可行的方向**:重新逐字核對doc35 §9.23.1當時使用的",
+   "verdict": "benign",
+   "note": "continuation of §9.28.3's summary sentence"
   }
  ]
 }
