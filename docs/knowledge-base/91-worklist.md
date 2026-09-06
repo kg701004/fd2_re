@@ -817,7 +817,25 @@ sub-type，不是itemRow`+0xd`本身，需要下一輪對照呼叫端傳入值)�
 即**item使用SFX的觸發機制存在且已定位**，但(a)確切播放哪一個樣本ID(`0x25a96`的
 `param_1`從哪個全域/表讀出，本輪未追)、(b)其餘effect type(5,6,7,9,10,12,14,15,16,
 17,19,21,22,23)是否也共用這個或另一個機制仍未查。SFX子項從「完全未觸及」進展為
-「觸發機制已定位，樣本身分未解」，item 1117維持D。（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
+「觸發機制已定位，樣本身分未解」，item 1117維持D。
+
+**2026-09-06再續九——追出`0x25a96`呼叫端傳入的`table_ptr`([0x53b13])來源，排除跟doc36
+既有兩個已知SFX池混淆的可能，但樣本語意本身仍未解**：`xref_to [0x53b13]`找到兩個WRITE點
+都在同一個43-byte函式`FUN_0001d4cb`裡，完整反組譯確認它**恆定**呼叫
+`FUN_000111ba(0x51a4d, 0, 0x50)`——固定參數，不依item/context變化。`bytes`直接讀
+`0x51a4d`確認那裡是**ASCII檔名字串"FDOTHER.DAT\0"**(緊接著"FDFIELD.DAT\0"/
+"FDSHAP.D...")，代表這通呼叫是**直接開檔讀取FDOTHER.DAT本體前0x50(80) bytes**(容器
+自己的directory/header)，不是讀某個已編號的sub-entry。**誠實排除**：doc36已記載的
+兩個UI/戰鬥SFX池分別是`[0x53eec]`(本文件resource#31的14個UI樣本，游標移動音等)與
+`[0x5411f]`(戰鬥攻擊動態表)——`[0x53b13]`兩者都不是，是第三個獨立、先前任何文件都
+沒有解過的池，跟`FUN_0001c4cc`裡的字面sample-index引數(如`1`)如何在讀出的80-byte
+header基礎上定位到具體PCM資料，本輪未繼續追。**item 1117 SFX子項最終狀態**：
+機制鏈`item type→FUN_0001c4cc→(index,[0x53b13]table_ptr)→0x25a96→AIL播放`已完整
+byte-exact追完到`table_ptr`的來源(`FDOTHER.DAT`檔頭本身)，但container內部的entry
+定址與實際PCM樣本身分仍是真正開放的缺口，需要下一輪對`FDOTHER.DAT`檔案格式本身做
+逐byte解析(不是靠反組譯就能推出，需要實際dump檔案內容核對)。維持D。
+
+1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
 1148 - E - 項目自陳仍待DOSBox E2 visual/input diff；doc57 UI-10 church row同樣列此為唯一剩餘缺口。
