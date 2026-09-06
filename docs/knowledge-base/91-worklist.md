@@ -478,10 +478,28 @@ if(byte[[0x53bf7]+EDX*0x50+8]==ECX) return 1;`——**這就是doc25 L833已經�
 這個stack-check前導碼開頭」，從緊接在thunk呼叫後的位元組開始手動反組譯,而不必被"不在任何function
 內"這個訊息擋住。
 
-`ch22_post.json`同檔另4個`unknown`(`0x247be`→`0x24b14` args:[100]；`0x24978`/`0x249c4`→`0x2189a`
-args:[10,15,1]/[16,30,1]；`0x24982`/`0x249ce`→`0x24b4d` args:[30]；`0x24a24`/`0x24ab4`→`0x11df2`
-args含`255,0`)本輪僅初步探測、**未完全解開**，誠實記錄現況供下一輪接手：`0x24b14`/`0x24b4d`同樣是
-`.object1`盲區(function_bounds回報「不在任何function內」)，需要比照上述`0x24bde`手法手動反組譯；
+**2026-09-06續，`0x24b14`已完全解開,並非新工作而是重複了doc99既有成果(誠實記錄這個方法論失誤)**：
+`0x24b14`同樣是`.object1`盲區，手動反組譯後得到`for(EBX=0;EBX<16;EBX++) if(FUN_0002aedb(EBX,ESI)
+!=-1) return 1; return -1;`——`grep`既有文件才發現`99-chapter-sweep-results.md`「Step 1」
+(2026-08-29「ch27sky」輪)**早已完整反組譯過`FUN_00024b14`本體並live驗證過**(Sol的inventory真實
+記憶體讀值逐位元組吻合模型)，跟本輪獨立反組譯出的結果**完全一致**——是一次獨立複驗，但也是一次
+沒先查文件就重做的方法論違規（[[feedback_check_existing_evidence_before_disasm]]）。已將
+`ch22_post.json`(`0x247be`)、`ch26_post.json`(`0x25186`)、`ch26_pre.json`(`0x33b3f`)三處相同
+`target:0x24b14, args:[100]`的`op:unknown`全部改為`op:inventory_has`並附引用note——這是本輪
+真正新增的產出(把已存在的RE知識接回三個先前未連結的呼叫點)，不是重新解出。item 100查
+`exe_tables/item.json`：`type:34,price:2`,ap/hit/dp/ev全0——非戰鬥屬性,價格極低,型態符合關鍵
+道具,但確切名稱未查(需FDTXT字串對照,超出本輪範圍)。
+
+`0x24b4d`(args:[30])反組譯**部分**成功但**未完全定案**：確認是`for(EBX=0;EBX<ESI;EBX++){...
+CALL 0x11eb0(...); CALL 0x3790a(0x14); EBX++}`(ESI=呼叫端傳入的30)——`0x11eb0`正是doc35§10.1
+已確認的**screen-present原語**(逐列320-byte memcpy)，配合迴圈跑30次、每次present後再呼叫
+`0x3790a(20)`(疑似固定20單位delay)，形狀與下方`0x2189a`的假說一致，指向**多步驟畫面轉場/wipe
+效果**；但迴圈本體開頭(`0x24b93`附近)反組譯時起始位址對錯一個位元組，導致前段幾個instruction
+解碼成明顯錯誤的亂碼(`ADD byte ptr[EAX],AL`等)，只有從`0x24ba7`起才重新對齊回正確instruction
+邊界——**在正確重新對齊反組譯之前,不可信任已解碼的3個PUSH參數細節**，下一輪需要從`0x24b93`
+(而非`0x24b95`)重新下手才能拿到byte-exact的完整參數。**維持D**（`0x24b14`三處已可判A/已修正,
+`0x24b4d`/`0x2189a`/`0x11df2`仍屬部分進展）。
+
 `0x2189a`已能decompile,本體是`stack_check→FUN_0003706e→FUN_00011eee→for(10次){FUN_0003771c;
 FUN_000219ad;FUN_000127a9;FUN_00011eb0}→FUN_0003776e→FUN_00011cac→FUN_00010b43`，其中
 `FUN_00011eb0`正是doc35§10.1已確認的**screen-present原語**(逐列320-byte memcpy)，強烈暗示這是一個

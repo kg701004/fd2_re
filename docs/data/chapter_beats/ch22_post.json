@@ -8,12 +8,13 @@
    "args": []
   },
   {
-   "op": "unknown",
+   "op": "inventory_has",
    "addr": "0x247be",
    "target": "0x24b14",
    "args": [
     100
-   ]
+   ],
+   "note": "2026-09-06: FUN_00024b14(item_id) is already fully decompiled and live-verified in 99-chapter-sweep-results.md 'Step 1' -- for char_idx 0..15, calls FUN_0002aedb(char_idx,item_id) (linear scan of that unit's up to 8 inventory slots via FUN_0001b8a6/FUN_0001b722), returns 1 if any unit carries item_id, else -1. item_id=100 is exe_tables/item.json id 100 (type 34, price 2, all combat stats 0 -- a non-combat/key item, name not yet decoded). Same target+args also appears unresolved in ch26_post.json/ch26_pre.json; fixed there too."
   },
   {
    "op": "dialog",

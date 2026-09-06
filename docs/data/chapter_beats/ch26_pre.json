@@ -34,12 +34,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "inventory_has",
    "addr": "0x33b3f",
    "target": "0x24b14",
    "args": [
     100
-   ]
+   ],
+   "note": "2026-09-06: FUN_00024b14(item_id) already fully decompiled+live-verified in 99-chapter-sweep-results.md 'Step 1' (scans all 16 party unit inventories for item_id via FUN_0002aedb/FUN_0001b8a6/FUN_0001b722, returns 1 if found). Same target+args in ch22_post.json/ch26_post.json. item_id=100 = exe_tables/item.json id 100 (type 34, price 2, no combat stats -- likely a key item)."
   },
   {
    "op": "dialog",
