@@ -457,6 +457,16 @@ raw/palette-band/solid-fill三模式blit函式)+`0x187d6`原始反組譯，找�
 繪製與D8面板**共用同一個FDOTHER.DAT resource #5(LMI1容器,doc57已知的`[0x53a81]`loader)**
 的直接靜態證據——不是猜測，是同一個資源指標`push`進同一個呼叫鏈。細節見doc57對應段落。
 下一輪建議直接dump resource #5全部entry做視覺比對，取代繼續反組譯呼叫鏈。
+
+**2026-09-06續九,誠實訂正——不需要dump，doc35§4.2.5早就記載過resource #5的完整數字glyph
+清單，本輪差點又重複「先做才查」的失誤**：grep既有文件發現doc35(早於本session)已完整記載
+FDOTHER#5的**三套6×8數字cell(0-9)**：`#31-40`=白/藍影(戰鬥狀態欄用)、`#42-51`=白/綠、
+`#119-128`=白/黃橘(`0x1875d`滿血/非滿血換色)。本輪的`0x187d6`「+0xa(10)」index偏移量跟這
+三套的起始index(31/42/119)沒有一個精確吻合，代表`0x187d6`呼叫`0x16886`時傳入的index並非
+LMI1的最終sub-resource index本身，中間還有其他base offset(可能在`FUN_0004e98d`內部或
+別的呼叫層)本輪未追出——但**這不影響「TURN候選數字繪製用的是resource #5共用glyph bank」
+這個結構性結論**，只是精確對到哪一套(31-40/42-51/119-128)三選一仍待查，不需要重新dump
+整份resource（doc35已經dump過，用既有結果核對index運算即可）。維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
