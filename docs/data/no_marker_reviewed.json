@@ -33472,6 +33472,22 @@
    "excerpt": "「單一caller確認」提升為「雙caller交叉印證，215筆逐一代入仍未做但機制層級已收斂」。",
    "verdict": "benign",
    "note": "Tail of the same decompile-sourced paragraph, marker is earlier in paragraph"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 112,
+   "excerpt_sha1": "ed0dc284e6829a810c14125fc43295622812bd0b",
+   "excerpt": "範圍**：這證實了**等級30是一個全角色通用的exp處理硬停止點**，但本輪沒有找到、也不宣稱",
+   "verdict": "benign",
+   "note": "Continuation of the decompile-sourced 0x1e292 paragraph, marker is earlier in it"
+  },
+  {
+   "file": "27-combat-rules-and-validation-checklist.md",
+   "line": 113,
+   "excerpt_sha1": "ac2027056c38fcff46e785b28d75b9ecab8dcb88",
+   "excerpt": "證實這代表「轉職(worklist #247)發生在30級」——只是一個新發現的、先前任何文件轉述都",
+   "verdict": "benign",
+   "note": "Continuation of the decompile-sourced 0x1e292 paragraph, marker is earlier in it"
   }
  ]
 }
