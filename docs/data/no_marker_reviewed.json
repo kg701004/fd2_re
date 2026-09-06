@@ -33416,6 +33416,22 @@
    "excerpt": "下方「仍缺的部分」第1點的訂正。9(咒殺術)卡在doc36引述的dispatch條件邊界外一格，關聯性未確認。",
    "verdict": "benign",
    "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 603,
+   "excerpt_sha1": "441cdbeb39f69e27f564ccfa0d97031342532b5e",
+   "excerpt": "全文(3876 bytes,先前輪次只轉述過pseudocode摘要,本輪首次拿到完整偽代碼)確認`param_2==9`",
+   "verdict": "benign",
+   "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 609,
+   "excerpt_sha1": "f97ca8fd0b6b4c959ca528b50a540c1a1719d8c5",
+   "excerpt": "證實`param_2==9`是這個函式刻意支援、常態會被呼叫到的合法輸入，不是「意外落在表尾的",
+   "verdict": "benign",
+   "note": "prose continuation"
   }
  ]
 }
