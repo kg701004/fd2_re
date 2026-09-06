@@ -33096,6 +33096,30 @@
    "excerpt": "呼叫做同樣的 live BPPM 核對,若兩者命中同一種「9+1」呼叫形狀卻服務完全不同的畫面內容,即可證實",
    "verdict": "benign",
    "note": "continuation of §9.26.3's downgraded-confidence next-steps sentence; the paragraph's evidence (grep cross-check of doc27 §6.5, decompile of FUN_000111ba) is on preceding lines"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4027,
+   "excerpt_sha1": "0528b063e2831241511d33433cfec802831fc463",
+   "excerpt": "本身。**下一輪如果還要用 live 方法確認立繪本體**,應該回到 work buffer 層(比照 §9.23.4),但",
+   "verdict": "benign",
+   "note": "continuation of §9.26.4's next-steps sentence; the live evidence (BPPM hits, disasm of the timing loop) is documented earlier in the same section"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4029,
+   "excerpt_sha1": "ff3e17736adbfffcb55f1549dc154f458ff0f409",
+   "excerpt": "(已在 §9.25.4 記錄過這個教訓)——或者改用單步(`T`/`P`)在確認 VGA 層有變化後往回單步幾條指令,",
+   "verdict": "benign",
+   "note": "continuation of the same next-steps sentence, citing already-reviewed §9.25.4"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4039,
+   "excerpt_sha1": "5b842a5d7d6355b56aeb7d8f3434def634ee20d6",
+   "excerpt": "1個已知不可行的驗證路徑(VGA層BPPM)+2個待試的替代驗證路徑(work buffer層BPPM、單步)」。",
+   "verdict": "benign",
+   "note": "summary sentence in §9.26.5 referencing §9.26.4's live BPPM finding, already reviewed"
   }
  ]
 }
