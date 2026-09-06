@@ -378,6 +378,16 @@ ring這條路徑，`+0xb`=distance/`+0xc`=mode是byte-exact反組譯確認的結
 weapon min/max mapping」子項可視為**部分收斂**：不是min/max pair，是distance+mode
 pair，維持D待doc13/item.json實際改名。
 
+**2026-09-06再續，完整decompile本節先前列出的另外4個caller，確認其中3個不相關、1個
+獨立支持distance假說**：`FUN_0001567e`/`FUN_0001bbdc`/`FUN_00020c6f`全部讀
+`itemRow+0xd`(離散特殊道具效果type dispatch，`0x05..0x18`分支)，完全不touch`+0xb`/
+`+0xc`，跟本節的distance/mode假說無關(不是反例，是問錯欄位)。唯一真正讀`+0xb`的是
+`FUN_0001debe`：`if(曼哈頓距離(actor,target)==1){ if(itemRow[+0xb]>1) return -1; ...}`
+——**這是把`+0xb`當距離threshold用的第二個獨立caller**(判定「近戰武器(射程<=1)且目標
+恰好相鄰」)，跟`0x18d8c`的用法(距離<radius才標記候選)方向一致，零反例。**doc13/worklist
+1117已同步更新**：weapon min/max子項現有2個獨立caller的byte-exact佐證，信心等級由
+「單一caller確認」提升為「雙caller交叉印證，215筆逐一代入仍未做但機制層級已收斂」。
+
 **2026-08-19 補完：row 內三個互不相同的「type」欄位，避免混淆**——這張表同時有三個
 語意完全不同、卻都可能被籠統叫做「type」的 byte，回應 worklist L366/L1354「未命名
 欄位語意」的要求，逐一列清楚：

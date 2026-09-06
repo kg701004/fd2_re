@@ -33456,6 +33456,22 @@
    "excerpt": "diamond路徑,語意比較像「幾何模式選擇」而非任何一種射程上下限。**誠實範圍**：這只確認了",
    "verdict": "benign",
    "note": "Continuation line of the same Ghidra-decompile paragraph (0x14818 decompile), source marker is earlier in the paragraph"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 388,
+   "excerpt_sha1": "a759e83cbb9df62f9ee9d5f0f9bc46d4d117e0e7",
+   "excerpt": "1117已同步更新**：weapon min/max子項現有2個獨立caller的byte-exact佐證，信心等級由",
+   "verdict": "benign",
+   "note": "Tail of the same decompile-sourced paragraph (0x1567e/0x1bbdc/0x20c6f/0x1debe decompile), marker is earlier in paragraph"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 389,
+   "excerpt_sha1": "85a8a27511cdb2b74811c42a065a16f11ca3c756",
+   "excerpt": "「單一caller確認」提升為「雙caller交叉印證，215筆逐一代入仍未做但機制層級已收斂」。",
+   "verdict": "benign",
+   "note": "Tail of the same decompile-sourced paragraph, marker is earlier in paragraph"
   }
  ]
 }

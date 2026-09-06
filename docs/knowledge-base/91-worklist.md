@@ -719,6 +719,23 @@ doc32已知其他caller(`0x1567e`/`0x1bbdc`/`0x20c6f`/`0x1debe`)對相鄰bytes�
 文字說明裡，尚未變成資料檔案本身的一部分；以及本輪只驗證了Attack ring這一個caller，
 其餘215筆item在`0x1567e`/`0x1bbdc`/`0x20c6f`/`0x1debe`等caller情境下的+0xb/+0xc語意
 是否同樣是「distance+mode」仍未逐一覆核。
+
+**2026-09-06再續三——完成剩餘4個caller的逐一decompile覆核，distance假說獲得第二個獨立
+caller支持，零反例**：`FUN_0001567e`/`FUN_0001bbdc`/`FUN_00020c6f`三個完整decompile後
+確認**全部讀的是`itemRow+0xd`(離散effect-type dispatch，`0x05`-`0x18`分十幾種特殊道具
+效果分支，如毒/加成/隊伍buff)，完全不碰`+0xb`/`+0xc`**——這3個不構成對distance+mode
+假說的檢驗對象，doc32早先的「另有各自用法」是對的但講的是不同的byte，不是同一組。
+唯一真正touch `+0xb`的是`FUN_0001debe(unitIdx)`：完整decompile顯示`if(曼哈頓距離==1)
+{...if(itemRow+0xb > 1){return -1;}...}`——**這就是「該單位是否恰好站在距離1的相鄰格
+且裝備的武器射程<=1(近戰限定)」的判定**，跟`0x18d8c`那條鏈把`+0xb`當距離threshold用
+的方式完全一致(都是"距離值跟某個threshold比較")，是**第二個獨立caller對distance假說
+的正面支持，本輪未找到任何反例**。**結論**：「native argument↔weapon min/max
+mapping」這個子項到此已有兩個獨立、互相印證、byte-exact的caller證據支持`+0xb`=距離值，
+`+0xc`=mode(僅在`0x18d8c`路徑驗證，`0x1debe`不使用`+0xc`)；子項本身信心等級可視為
+「高信心，非100%窮舉」(215筆item尚未每筆代入驗算，但機制層級的角色分配已由2個獨立呼叫點
+確認)。item 1117整項因為還有「indexed item/effect presentation」(即`itemRow+0xd`這組
+effect-type dispatch的完整語意)與「global selector6 production owner」兩個子項未解，
+維持D，但weapon min/max這個子項可視為本項目內部**事實上已收斂完成**。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
