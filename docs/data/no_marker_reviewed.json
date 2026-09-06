@@ -33368,6 +33368,30 @@
    "excerpt": "未證實的假說**——**本節稍後(同日續二)已撤回,見上方「仍缺的部分」第1點**：這個假說建立在",
    "verdict": "benign",
    "note": "prose continuation, retraction note"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 571,
+   "excerpt_sha1": "a510b7d6664c4050c88c1b79a510fe57b706a403",
+   "excerpt": "M1-M5名稱推導**」。doc13同時證實commands 17-30這個較高id範圍(狀態效果類,與本節action_id",
+   "verdict": "benign",
+   "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 578,
+   "excerpt_sha1": "d7d7961500ed23941bf9f50d2075f075431abe75",
+   "excerpt": "實測特定武器攻擊時觸發哪個action_id並對照UI顯示的招式文字。純靜態猜測到此為止,不再",
+   "verdict": "benign",
+   "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 579,
+   "excerpt_sha1": "a588357f6dc05df80234b087d56090b3f5d48b5a",
+   "excerpt": "產生新的「可能是武器類別/可能是角色技能」這類未經驗證的假說，避免違反本專案自己已經",
+   "verdict": "benign",
+   "note": "prose continuation"
   }
  ]
 }
