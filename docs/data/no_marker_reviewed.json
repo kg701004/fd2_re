@@ -33088,6 +33088,14 @@
    "excerpt": "§9.25.3 已驗證可跨session沿用的 VGA viewport 校準,直接核對命中瞬間的 VGA 座標是否落在立繪範圍",
    "verdict": "benign",
    "note": "continuation of a §9.26.3 next-steps sentence citing already-reviewed §9.25.3 VGA calibration; not a new unmarked claim"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4004,
+   "excerpt_sha1": "c9eaca56ca3a86b9dbf88750284902fe88ee0d94",
+   "excerpt": "呼叫做同樣的 live BPPM 核對,若兩者命中同一種「9+1」呼叫形狀卻服務完全不同的畫面內容,即可證實",
+   "verdict": "benign",
+   "note": "continuation of §9.26.3's downgraded-confidence next-steps sentence; the paragraph's evidence (grep cross-check of doc27 §6.5, decompile of FUN_000111ba) is on preceding lines"
   }
  ]
 }
