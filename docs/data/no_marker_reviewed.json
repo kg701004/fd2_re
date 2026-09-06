@@ -33128,6 +33128,30 @@
    "excerpt": "`CS=0080 Pr16`,佐證`BP`預期的是 real-mode 語意的 segment,不是我們 protected-mode 32-bit `CS`",
    "verdict": "benign",
    "note": "continuation of §9.26.4b's root-cause sentence explaining the live CS=0080/Pr16 observation; the HELP command output and BP test results are documented in the same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4061,
+   "excerpt_sha1": "74531339dbeba74d13b84b91361a95d66b2bc14e",
+   "excerpt": "中途渲染狀態截到圖,佐證卡片是「先畫立繪+背景、後畫文字面板」兩段式渲染,與 §9.23.1 記錄的",
+   "verdict": "benign",
+   "note": "continuation of §9.26.4c's scene-description sentence; the live screenshot evidence is described in the same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4065,
+   "excerpt_sha1": "f7e6a2b2abe0d7a59d8f67b9a2ebbcef970034c7",
+   "excerpt": "本session命中同一段tick等待迴圈,就能確認整個VGA層方法本身失效,不是立繪像素這個座標特有的問題。",
+   "verdict": "benign",
+   "note": "continuation of the same paragraph's methodology-rationale sentence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4089,
+   "excerpt_sha1": "6c875aa56959ace910a877f857c768207da33633",
+   "excerpt": "BPPM在**work buffer**（不是VGA）位址上命中才能達成，而work buffer位址本身又需要靠已經證實不可信",
+   "verdict": "benign",
+   "note": "continuation of §9.26.4c's conclusion sentence describing the circular dependency; the live evidence (D SS:ESP, function_bounds) is documented earlier in the same section"
   }
  ]
 }
