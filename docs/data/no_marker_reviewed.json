@@ -33336,6 +33336,14 @@
    "excerpt": "大小已確認同構——`0x6c/0x2c/0x74/0x54×2/0x6c/0x50/0x38/0x18`各不相同的stack frame暗示每個",
    "verdict": "benign",
    "note": "prose continuation, not an evidence marker gap"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 596,
+   "excerpt_sha1": "e5febcddd6831b1911f932833c0711eef7a491c5",
+   "excerpt": "旗標而非移動座標**，與action_id0的「7-step X/Y攻擊撲擊動畫」是完全不同類型的機制。這證實",
+   "verdict": "benign",
+   "note": "prose continuation, not an evidence marker gap"
   }
  ]
 }
