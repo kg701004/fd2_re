@@ -33192,6 +33192,30 @@
    "excerpt": "**維持D**,範圍已收斂到「1個具體候選函式+1個視覺佐證(凱旋動畫幀)+4個已知不可行的live驗證",
    "verdict": "benign",
    "note": "continuation of the same §9.26.5 summary sentence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4166,
+   "excerpt_sha1": "09bbbb4f0f797e2cfdb22976f08c9b244880ea9a",
+   "excerpt": "已經證實的結論,只是「立繪本身是否也是多幀動畫」這個更進一步的問題,本輪的證據還不夠格下定論。",
+   "verdict": "benign",
+   "note": "continuation of §9.27.2's honest-caveat sentence; the two screenshots being compared are documented in the surrounding paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4168,
+   "excerpt_sha1": "b720ca58f71e91a2119b8ca6c31c82140feb55f7",
+   "excerpt": "### 9.27.3 已知的悠妮卡卡死bug再次重現,確認是既有已記錄限制,非本輪新發現",
+   "verdict": "benign",
+   "note": "section heading for §9.27.3; the evidence (known bug cross-reference) is in the paragraph below"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4178,
+   "excerpt_sha1": "0b20b6343c52da1d5eff643b8f99755997c64e51",
+   "excerpt": "推論——這是本輪(從§9.25起算)唯一一次靜態+live推論之外、單純用畫面本身證實的結論。**仍未查清**:",
+   "verdict": "benign",
+   "note": "continuation of §9.27.4's summary sentence citing §9.27.1's screenshot evidence"
   }
  ]
 }
