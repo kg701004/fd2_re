@@ -33080,6 +33080,14 @@
    "excerpt": "記錄的「第三張、系列從未記錄過的飛龍騎士卡構圖明顯不同」現象吻合,值得下一輪優先展開驗證**),",
    "verdict": "benign",
    "note": "cross-reference sentence in §9.25.6 linking to §9.23.1's live-observed dragonrider card screenshot"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3993,
+   "excerpt_sha1": "301e69488a06c2c9986a1b1863b5ebc502b10bb7",
+   "excerpt": "§9.25.3 已驗證可跨session沿用的 VGA viewport 校準,直接核對命中瞬間的 VGA 座標是否落在立繪範圍",
+   "verdict": "benign",
+   "note": "continuation of a §9.26.3 next-steps sentence citing already-reviewed §9.25.3 VGA calibration; not a new unmarked claim"
   }
  ]
 }
