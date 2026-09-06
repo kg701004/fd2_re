@@ -455,7 +455,7 @@ Tab+20秒等待後**序列直接結束，沒有任何後續**，證明這個獨�
 1183 - C - 防呆性宣告，其要求的resource provenance與indexed buffer contract實質已由後續`[x]`項閉合，剩下是組裝成完整renderer的工程整合。
 1192 - C - 與1183同一缺口具體化版本，FDOTHER#56/FIGANI/DATO/fade皆已由後續項目個別RE並`[x]`關閉，剩純組裝工程。
 1249 - C - 項目自陳七拍movement已知但尚未materialize進runtime loop，屬工程接線而非新RE。
-1314 - D - doc56 L2064-2069(2026-08-02)記載幾乎逐字相同的未解狀態，確認仍未解，需更多靜態反組譯把ch29/ch30結局流程接起來。
+1314 - A(2026-09-06由D複核關閉) - doc56 L2064-2069(2026-08-02)記載幾乎逐字相同的未解狀態，確認仍未解，需更多靜態反組譯把ch29/ch30結局流程接起來。**2026-09-06複核**：doc56現行內容(§「postbattle_ch29_persist」段落,行號因後續編輯已飄移但內容仍在)明確指出「ch29/ch30結局流程最終要解的核心缺口」就是`0x2bce5`(party montage ending renderer)，即worklist 862-865所指的同一個blocker——**862-865已於本session稍早用doc35§9.22/§9.23(live BPPM記憶體斷點)+§9.25-9.30(FIGANI立繪、DAT_00053c57游標、悠妮卡陷阱)一整輪徹底反組譯確認,改標A**。功能性問題(montage背景怎麼畫出來、沿用`0x524c6` phase-table carousel引擎經`FUN_0002eb9f`→`FUN_0004e8d3`/`FUN_0004e98d`)已解;FIGANI立繪渲染鏈(`FUN_0002aa00`家族)已解;悠妮卡(第三張montage卡)不可達性已用零分支陷阱`0x25462`雙重靜態證明。**1314比照862-865改標A**——ch29/ch30結局流程「接起來」這件事在RE(反組譯理解)層面已無殘餘缺口；唯一仍不可解的是悠妮卡之後的內容(飛龍騎士卡)，但那是已證明的架構限制(硬編碼陷阱)而非「未反組譯」，不算本項範圍內的開放問題。
 1318 - C - 項目自陳剩餘缺口是item selector UI/indexed presentations/engine integration，`0x20c6f`本身RE已關閉。
 1344 - C - 項目自陳仍未完成全roster/save/export的raw record接線，raw identity byte本身RE已由前一項關閉，剩下為工程接線。
 1354 - A（2026-09-05由D複核關閉，與366為同一底層項目，已由`RE-ITEM-EFFECT-ROW-4E56C`/doc32§1.3閉合）- 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
