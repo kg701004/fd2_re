@@ -220,6 +220,18 @@ action_id1(`0x2bb33`)與action_id0同構(movement-lunge模板)但關鍵幀形狀
 (`0x2bd6c`)是完全不同的機制(狀態旗標`[0x53fb2..4]`套用/解除,非移動)。目前信心：
 template-A(movement lunge,action_id0/1確認)、template-B(狀態效果,action_id2確認)，
 action_id3-9(7個)機制未知，仍需逐一反組譯。詳見doc36對應段落。
+
+**2026-09-06再續二,一次批次反組譯剩餘6個(action_id3-8)，加上已知的action_id9，10個
+action函式100%完成結構分類(byte級關鍵幀語意只做了0/1/2三個，其餘用資料量/是否有byte[6]
+檢查/是否有literal常數三個結構特徵分類)**：movement類佔0/1/3/4/5/6/7共7個(其中4/5/7
+逐指令完全同構，是同一套「單軸10-dword」子模板的3個實例；action_id6額外寫入一個literal
+`0x3c8efa2d`,視為float≈0.0174弧度≈1度,疑似角度/拋物線類；action_id3規模最大，12+3+3
+三段資料)，狀態效果類佔2/8/9共3個(8的資料量最小、分流形狀最接近2/9)。**完整表格見
+doc36對應段落**。**worklist 584評估更新**：「sub-index觸發時機」這個子缺口在結構層面已經
+不再是「完全不知道」，而是「已知10個action分兩大類、movement類再分3種子形狀，缺的是
+逐一byte-exact的關鍵幀語意與對應到FIGANI/FDICON哪個具體資源」——**維持D**(仍有語意細節
+未定案，且「招式中文名稱」這一半完全沒碰)，但結構調查本身視為已完成，下一輪不需要再花
+時間分類，可以直接挑1-2個代表做byte-exact深挖或對照FIGANI/FDICON資源。
 587 - E - UI音效index 2-0xb語意畫面實測需要逐項操作介面聽測對應畫面，需live(DOSBox或使用者)驗證。
 603 - B - 使用者聽辨任務；本檔約599行僅解出FDMUS_018=商店，戰鬥曲聽辨本身仍待使用者。
 604 - A（2026-09-06由D關閉，見doc36「2026-09-06」段落找到`FUN_0001d51d`確認鍵分支透過`FUN_0001c269(unitIdx, bufPtr=目前ESP)`即時填值的完整鏈路）- 核心「index陣列填值上游、#48-64逐招對照」可續靜態RE，remake接入為次要工程部分。**2026-09-06複核，語意層級收斂為已解**：逐指令反組譯`FUN_0001d51d`確認鍵分支，找到`0x1d67b..0x1d698`的完整序列——`MOV EAX,ESP; PUSH EAX; PUSH unitIdx; CALL 0x1c269`把目前ESP當輸出緩衝區、寫進該單位已知法術/道具id清單，緊接著同一位址`[ESP+DAT_00053c57]`讀出commandId查record。這是`FUN_0001c269`通用bitfield掃描語意(doc36第11輪已證實過的同一函式)的第二個實例，`FUN_0001cff0`的`local_20`本質上是`FUN_0001d51d`借用caller已保留stack空間當scratch buffer，不是獨立具名陣列。填值鏈路語意自洽、可信度高，改標A；唯一保留邊界：兩邊stack offset的byte-exact算術吻合沒有逐一算完，不宣稱到那個精確度(不影響「填值來源找到了」這個結論)。
