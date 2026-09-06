@@ -147,7 +147,7 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 447 - D - 剩餘「完成LOADCH raw record materialization」屬靜態資料抽取延續工作。**2026-09-06複核，同446**：對應本檔案1780行「persistent raw-byte5 bridge」，剩餘工作是`syncPartyFromBattle`/`applyPersistentStats`(remake Go函式)移除E1 projection fallback——同樣是remake consumer端的工作，RE面(raw byte5/6語意、資料來源)已經解出。比照898的既有先例，維持D，阻塞原因改記為「remake consumer已移除，非RE缺口」，不再框架成「靜態資料抽取延續工作」誤導未來輪次以為還有新資料要挖。
 458 - E - 自述剩餘門檻是同roster/event/tick的未修改DOSBox一般玩家比較，須live DOSBox。
 463 - F - 完整逐欄佈局已由項目自身標記為[阻]設計面擱置(remake用自有struct，不需)。
-510 - D - 「0x1cff0 command table」部分已由524-531等[x]項與doc56閉合，但「完整native演出」子句仍未解，整項未達完整A門檻，保守留D。
+510 - A（2026-09-06由D複核關閉）- 「0x1cff0 command table」部分已由524-531等[x]項與doc56閉合，但「完整native演出」子句仍未解，整項未達完整A門檻，保守留D。**2026-09-06複核**：本輪(worklist 584/791調查同一輪)已完整decompile`FUN_0002ff01`(0x1cff0→id0-8直接呼叫的目標,3876 bytes全文,doc36對應段落已收錄)——這正是「完整native演出」子句要問的內容:單位record查表→3段資源表複製(`0x526bc`起)→依id分支(`id==8`/`id>3`特判override)→`DAT_000524c6[id*4]`動畫dispatch(初次呼叫+per-target迴圈內含傷害算式`FUN_0001c75e`+HP內插+最終收尾迴圈)→SFX交錯播放(`FUN_0002eb9f`,依`id!=9`門檻)→收尾色盤還原/淡出(`FUN_00025977`/`FUN_0003776e`×9)——**整條native演出的骨架與呼叫序列已達byte-exact反組譯完整度**，不再是「仍待」。剩餘的remake端接線(UI/法術特效呈現)已因2026-09-02`remake/`整體移除而不適用，比照本專案RE-only關閉慣例改標A。
 518 - E - 剩餘清單明文列出DOSBox visual diff為待辦項，須live比對。
 532 - A（2026-09-06由D複核關閉，RE面已閉合為單一numeric/MP/raw-completion contract，剩remake wiring非RE缺口）- doc56 L608-616補充更多反組譯細節，但獨立resolver/renderer/SFX/UI仍未接入remake，可續靜態RE。**2026-09-06複核**：doc56原文明確結論「IDs0..8與ID9 direct path、及IDs10..12 compositor tail都已閉合為同一numeric/MP/raw-completion contract；dispatch分流不表示state effect缺失，也不表示renderer等同」，`ExecuteNativeCommandDamage`已接對應state slice。剩「專用renderer、SFX、post-resolution、其他ID UI與screenshot oracle」都是remake端演出/UI接線，非RE缺口，比照本專案RE-only關閉慣例改標A。
 533 - A（2026-09-06由D複核關閉，同532性質，IDs13-16治療核心已完整證實）- doc56 L618-627與worklist敘述一致，renderer/UI/timing仍未接，可續靜態RE。**2026-09-06複核**：doc56原文「這直接證實IDs13..16是per-final-target HP restore（ID13 raw row為dmg=70,+3=4,+4=0,mp=3,target=1）」，公式、jump table(`0x21AD9/0x21B99/0x2211C/0x22153→0x21B18`)、MP扣除、HP回復公式(`floor(amount*9/10)+floor(rand()%100*amount/1000)`，clamp至`+0x42`)全數釘死，`ExecuteNativeCommandHeal`已接。剩「獨立resolver、專用renderer、SFX或UI」是remake接線，比照532改標A。
@@ -2203,7 +2203,7 @@ service0 Enter 後 Right `0→1`、Down `1→3`、Left `3→2`」）。**要重�
 - [x] **移動動畫** ✅(74bf386):battle.Path(BFS 路徑)+ walkAnim 沿路徑逐格走(方向幀+OffX/Y 內插,
       ~4-5 tick/格,走完進攻擊/待命,期間鎖輸入);AI 移動沿用瞬移(待接同管線)
 - [x] internal/battle 測試失敗已修 ✅(e09c68c):部署格斷言=舊設計殘留,對齊現行(部署格屬 spawn_party)
-- [~] **魔法系統** (第7-8輪完成資料與部分 runtime,commit 3c618c4/74366fa:暫定四向 action UI+法術+MP+青衫公式;code: ringInput/castSp/spells.json)——`0x18d8c` 已證實方向 result order，但 `0x1cff0` command table、完整 native 演出仍待；——本輪(2026-08-19續輪,`doc13`)未新增證據，維持既有D判定：「`0x1cff0` command table」部分已由其他項與doc56閉合，但「完整native演出」子句仍未解。
+- [~] **魔法系統** (第7-8輪完成資料與部分 runtime,commit 3c618c4/74366fa:暫定四向 action UI+法術+MP+青衫公式;code: ringInput/castSp/spells.json)——`0x18d8c` 已證實方向 result order，但 `0x1cff0` command table、完整 native 演出仍待；——本輪(2026-08-19續輪,`doc13`)未新增證據，維持既有D判定：「`0x1cff0` command table」部分已由其他項與doc56閉合，但「完整native演出」子句仍未解。**2026-09-06複核(見worklist 510同日補充)**：`FUN_0002ff01`(0x1cff0→id0-8)全文3876 bytes已完整decompile，「完整native演出」子句的RE面已閉合，剩餘僅remake端UI/法術特效呈現接線(因`remake/`已移除而不適用)。
       不存在獨立 spell-id→FIGANI 特效索引（doc37）；僅已證實施法者自身 FIGANI 組動畫，其他 spell runtime 保持 partial
 - [x] **音樂** ✅(e09c68c):audio.go(ebiten/audio+vorbis;忠實 play_bgm 0x26777:同曲不重播/換曲釋放/
       無限迴圈);campaign 節點 bgm 驅動;FD2_MUTE 靜默。待:非 campaign 模式場景→曲號自動對映(doc12 表)
