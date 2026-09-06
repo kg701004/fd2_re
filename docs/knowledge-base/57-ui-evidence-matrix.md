@@ -491,6 +491,30 @@ dump resource #5(本文件§4.2.5已經dump過)，用既有dump結果核對index
 第二次差點重複「檢查既有證據」紀律違規(第一次是ENEMY PHASE的「第一次目擊」誤稱)，誠實記錄
 避免再犯。
 
+**2026-09-06續十,追完最後一段呼叫鏈,確認index運算本身，結論：這是resource #5一個先前
+從未記錄過的第4組數字glyph(index 10-19)，不是既有的31-40/42-51/119-128任何一組**：
+反組譯`FUN_00016886`原始位元組(先前只拿到無用的薄decompile)：
+```
+0x16886(base_ptr, index):
+  stack_check(0x20)
+  EDX = base_ptr; EAX = index
+  EDX = EDX + [EDX + EAX*4 + 6]   ; 標準LMI1 directory查表(base+directory[idx*4+6])
+  FUN_0004e98d(entry_ptr=EDX, x=0, y=0, dst_stride/base=同一參數重複, param_6=-1)
+```
+`param_6=-1`(0xFFFFFFFF)正是`FUN_0004e98d`已知三模式的**「原樣寫入,不重著色」**模式——
+確認`FUN_0004e98d(ushort *param_1,...)`的`param_1`就是這裡算出來的LMI1 entry指標,不是
+index本身。**index運算精確等於`digit值+0xa(10)`**(來自`0x187d6`)——即digit 0→index 10、
+digit 9→index 19。**這個index範圍(10-19)跟doc35§4.2.5已記載的三組數字glyph(31-40/42-51/
+119-128)完全不重疊**——代表resource #5裡**還有一組先前任何一輪都沒記錄過的數字glyph
+(index 10-19)**，且用`param_6=-1`原樣複製(不像其他三組可能透過`0x4e8d3`的LUT重映射做
+變色)，暗示這組專門用於本篇的end-turn轉場數字顯示,不是共用戰鬥狀態欄的既有三組。**item 791
+的「TURN」候選欄位到此已達到高信心的靜態結論**：resource #5 index 10-19是一組獨立、先前
+未記錄的數字glyph，很可能就是end-turn轉場banner的回合數顯示，原樣複製不重著色。**誠實範圍**：
+仍未實際dump index 10-19去看glyph長相是否真的是0-9(理論上跟31-40等其他組同樣是6×8,但本輪
+沒有實際解出PNG核對)，也仍未100%證明這個數字欄位語意上真的是「回合數」而非其他計數——但
+呼叫鏈/index運算本身已經是byte-exact反組譯結論，不是猜測。維持D，但「TURN」欄位已經是本項目
+在791這條調查線上除了「ENEMY」之外最扎實的第二個具體發現。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始

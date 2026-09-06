@@ -467,6 +467,15 @@ LMI1的最終sub-resource index本身，中間還有其他base offset(可能在`
 別的呼叫層)本輪未追出——但**這不影響「TURN候選數字繪製用的是resource #5共用glyph bank」
 這個結構性結論**，只是精確對到哪一套(31-40/42-51/119-128)三選一仍待查，不需要重新dump
 整份resource（doc35已經dump過，用既有結果核對index運算即可）。維持D。
+
+**2026-09-06續十，追完index運算本身，byte-exact結論：resource #5存在第4組先前未記錄的
+數字glyph(index 10-19)**：反組譯`FUN_00016886`原始指令(先前只有薄decompile)確認它是標準
+LMI1 directory查表(`base+directory[idx*4+6]`)+呼叫`FUN_0004e98d`(`param_6=-1`=原樣複製
+不重著色)；傳入的index精確等於`digit值+0xa`(digit 0→10、digit 9→19)——**跟doc35§4.2.5
+已記載的31-40/42-51/119-128三組完全不重疊**，代表resource #5裡有第4組先前任何一輪都沒
+記錄過的0-9數字glyph。**item 791「TURN」候選欄位到此已達到高信心靜態結論**（呼叫鏈與index
+運算byte-exact，不是猜測），詳見doc57對應段落。維持D，剩餘缺口：實際dump index 10-19核對
+glyph長相、確認語意上是否真的是回合數、以及doc57原始5個代稱裡MAP/FRIEND/NPC三個仍完全未查。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
