@@ -1295,3 +1295,64 @@ e8 8a 37 ff ff     call 0x25a96
 獨立的、需要另外初始化的全域表。worklist L604/L622原本問的「填值上游」問題到此已有具體、
 自洽的答案,可以視為靜態RE層級收斂;唯一保留的誠實邊界是「兩邊stack offset的byte-exact
 算術吻合」這一步沒有逐一算完,不宣稱到那個精確度。
+
+## 2026-09-06:新發現的第三個SFX池——FDOTHER.DAT資源#80，item effect專用，live記憶體直接
+驗證，解開worklist item 1117多輪追不出來的「index→PCM樣本」矛盾
+
+**背景**:item 1117多輪靜態反組譯已byte-exact確認`0x25a96`(play_sfx_a)的index查表算式
+跟`tools/unpack_dat.py`的LLLLLL容器目錄格式逐byte吻合，但拿算出來的index(12/6/7/8/14/5等)
+直接去查FDOTHER.DAT**頂層**目錄，發現對應的resource是LMI1圖片/LLLLLL巢狀容器，不是音效——
+連續兩輪(續十二/十三)否證了兩個假說(writer可能不固定寫FDOTHER.DAT、extracted/可能是舊版)，
+矛盾仍未解開。本輪用已修正的WSL distro名稱(`Ubuntu`，不是先前誤用的`kali`，見persistent
+memory訂正)重新取得live DOSBox-X存取，直接對`[0x53b13]`(=table_ptr)下記憶體讀取。
+
+**決定性的live證據**：載入`FD2_ch27_test.SAV`存檔進入真實戰鬥後(先前在城鎮選單畫面
+`[0x53b13]`恆為0，證實FUN_0001d4cb在那些畫面沒被呼叫)，`mem dump`直接讀`[0x53b13]`的值
+是`0x00398018`——**這是一個真正的live記憶體位址值，不需要再套用ghidra↔live的靜態delta**
+(FUN_000111ba的回傳值是runtime配置的真實指標，不是靜態image offset)。直接對這個位址dump
+64 bytes，開頭正是`4c 4c 4c 4c 4c 4c`("LLLLLL"容器magic)，後面接著`4a 00 00 00`(=74)、
+`eb 19 00 00`(=6635)……一組合法的17-entry offset table。
+
+**關鍵一步——這組直接搜尋活體FDOTHER.DAT檔案找出真正位置**：把這組live bytes當
+byte-signature去搜真正的`FDOTHER.DAT`檔案，在檔案offset **2,863,791**處逐byte命中——用
+`unpack_dat.py`重新解FDOTHER.DAT頂層目錄後確認，這個offset剛好是**resource #80的起點**
+(第80筆，長度116165 bytes)。**真相大白**：`table_ptr`從來不是指向FDOTHER.DAT頂層目錄
+本身，而是指向FDOTHER.DAT**頂層resource #80**——這個resource自己又是一個獨立的、17個
+子項的LLLLLL巢狀容器，之前多輪查的都是頂層目錄(裝著圖片/巢狀容器完全正確)，但沒人想到
+`table_ptr`實際上是某個**子容器**的位址，不是頂層容器本身的位址。
+
+**resource #80子項統計特徵逐一確認是8-bit unsigned PCM**(用`tools/export_sfx.py --res 80`
+重新導出成標準WAV，取代手動bytes dump)：
+
+| sub-index | bytes | mean | stdev | min | max |
+|---|---|---|---|---|---|
+| 1 | 4452 | 127.4 | 8.7 | 88 | 168 |
+| 5 | 7138 | 127.6 | 14.0 | 80 | 173 |
+| 6 | 5530 | 127.3 | 22.2 | 48 | 208 |
+| 7 | 3438 | 127.2 | 12.8 | 68 | 181 |
+| 8 | 1812 | 127.3 | 15.7 | 89 | 169 |
+| 12 | 4550 | 127.7 | 13.5 | 84 | 168 |
+| 14 | 10099 | 125.0 | 7.3 | 93 | 162 |
+
+全部17個子項mean都落在127-128(unsigned 8-bit PCM的靜音中心值)、範圍對稱分布、無截波
+(clip)——教科書等級的PCM audio特徵，不是巧合。
+
+**item 1117 SFX子項最終解答**：`item.json`裡`itemRow+0xd`(effect type)透過
+`FUN_0001c4cc`本體的`local_60[param_2]`查表，得到的index是**FDOTHER.DAT resource #80這個
+巢狀容器自己的sub-index**，不是FDOTHER.DAT頂層resource編號。已知的type→sub-index對照
+(`param_2`→`local_60[param_2]`，見worklist item 1117續十一)：type5/13(HP恢復)/type11
+(MP恢復)=sub#12、type16(魔刃)=sub#6、type15(魔鎧)=sub#7、type12(風行)=sub#8；另有
+`FUN_0001c2da`("雙胞胎"函式，每個`FUN_0001c4cc`caller後面都會接著呼叫)固定用sub#1(不
+經過任何table查詢，疑似「使用道具」通用音效)。**這是本專案第一個byte-exact+live記憶體
+雙重驗證、含實際可播放WAV檔的item-effect SFX池**，輸出於`extracted/sfx/battle_80_NN.wav`
+(沿用`export_sfx.py`既有`--res`模式的檔名慣例，語意上是item/spell effect池非戰鬥池，
+未來若要重新命名需連帶更新`export_sfx.py`的prefix邏輯，本輪未做)。
+
+**取樣率**：沿用既有resource#31/battle家族的11025Hz推定值(見本文件開頭既有段落)，本輪
+沒有找到`AIL_set_sample_type`立即數呼叫點確認確切取樣率，維持既有已知限制。
+
+**誠實範圍**：只驗證了7個已知type對應的sub-index(1/5/6/7/8/12/14)，17個子項裡其餘10個
+(0/2/3/4/9/10/11/13/15/16)尚未對到具體item effect type；`FUN_0001d4cb`的其餘5個caller
+(`FUN_00015311`/`FUN_0001cff0`/2個unlabeled/`FUN_0002d80d`)沒有逐一確認是否也讀這同一個
+resource #80，還是各自另有目的(理論上因為`FUN_0001d4cb`本身完全hardcoded，答案必然相同，
+但本輪只在battle情境下實測過，未在其餘5個caller各自的情境下重複live驗證)。

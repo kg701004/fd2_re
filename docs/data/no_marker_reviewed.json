@@ -33488,6 +33488,54 @@
    "excerpt": "證實這代表「轉職(worklist #247)發生在30級」——只是一個新發現的、先前任何文件轉述都",
    "verdict": "benign",
    "note": "Continuation of the decompile-sourced 0x1e292 paragraph, marker is earlier in it"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1300,
+   "excerpt_sha1": "d3feb702b6170f95451586e001c1648bf75df885",
+   "excerpt": "驗證，解開worklist item 1117多輪追不出來的「index→PCM樣本」矛盾",
+   "verdict": "benign",
+   "note": "section heading continuation line; body cites live DOSBox-X mem dump + Ghidra/unpack_dat.py static analysis, both original-side"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1324,
+   "excerpt_sha1": "8f25949f6257b381825865b12b339ee5a11e17a4",
+   "excerpt": "**resource #80子項統計特徵逐一確認是8-bit unsigned PCM**(用`tools/export_sfx.py --res 80`",
+   "verdict": "benign",
+   "note": "statistical PCM check on bytes extracted from the real FDOTHER.DAT file via export_sfx.py --res 80, original-side asset"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1347,
+   "excerpt_sha1": "d39026485e0cfe8f53579998d7ff5e14942b754e",
+   "excerpt": "雙重驗證、含實際可播放WAV檔的item-effect SFX池**，輸出於`extracted/sfx/battle_80_NN.wav`",
+   "verdict": "benign",
+   "note": "summary sentence; underlying evidence is live DOSBox-X mem dump (0x53b13) cross-searched against the real FDOTHER.DAT file, original-side"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1352,
+   "excerpt_sha1": "0ab075ca839a4c39683fb3d72d0c3b5fd25ff8d4",
+   "excerpt": "沒有找到`AIL_set_sample_type`立即數呼叫點確認確切取樣率，維持既有已知限制。",
+   "verdict": "benign",
+   "note": "sample-rate caveat carried over from the existing resource#31/battle-family documentation earlier in this same file, original-side"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1354,
+   "excerpt_sha1": "aa057ab64c83bb7a24bf66154615f584330b77b0",
+   "excerpt": "**誠實範圍**：只驗證了7個已知type對應的sub-index(1/5/6/7/8/12/14)，17個子項裡其餘10個",
+   "verdict": "benign",
+   "note": "honest-scope paragraph summarizing the same live+static original-side investigation described in the preceding paragraphs"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1358,
+   "excerpt_sha1": "14edd9eb5c7430c9bb192963e9ab5e12d4b84934",
+   "excerpt": "但本輪只在battle情境下實測過，未在其餘5個caller各自的情境下重複live驗證)。",
+   "verdict": "benign",
+   "note": "continuation of the honest-scope paragraph, same original-side (live DOSBox-X + Ghidra) investigation"
   }
  ]
 }
