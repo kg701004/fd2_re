@@ -494,6 +494,14 @@ callers之一`FUN_00016f55`(end-turn確認分支)連續呼叫的`FUN_0001956b`/`
 `Space(0x39)`任一確認跳出——跟doc58全系列YES/NO框實測行為吻合。**791的5個開放子句可移除
 「YES/NO input」這一個**，剩餘開放的是MAP/TURN/ENEMY/FRIEND/NPC五個資源代稱本身(TURN已在
 續八~十一有具體進展，MAP/FRIEND/NPC三個仍完全未查)。詳見doc57續十二。維持D。
+
+**2026-09-06續十三——TURN候選欄位取得機制層級佐證**：完整反組譯`FUN_0001a30b`本體，找到
+`_DAT_00053bef = _DAT_00053bef + 1`卡在跟D8滑入動畫相同的三層`053ecc==0`閘門後、緊接第二次
+D8滑入呼叫之前——即整個end-of-turn orchestrator跑一次只+1一次；`xref_to`找到的兩個READ點
+恰好是續十二確認的`0x187d6`兩個呼叫的value參數(讀的正是這個剛incr過的值)。信心等級由
+「呼叫時機巧合」提升為「這個值在end-of-turn恰好被+1一次且立刻用已知digit-render路徑重繪」，
+但仍未100%語意確認(需要live DOSBox-X `BPLM`逐回合監看佐證，本輪純Windows端工具鏈不含這個
+環節)。詳見doc57續十三。維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。

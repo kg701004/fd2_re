@@ -571,6 +571,27 @@ resource #5**已知**白/綠數字集(`#42-51`)的3位數渲染，兩個call sit
   結論**：K/M(左右)切換、Enter/Space等4種掃描碼確認——這是byte-exact反組譯結果，不是猜測，
   可從doc57原始5個開放子句移除，維持D的僅剩MAP/TURN/ENEMY/FRIEND/NPC五個代稱本身。
 
+**2026-09-06續十三，item 791「TURN」候選欄位取得機制層級的語意佐證(仍非100%確認，但比
+「呼叫時機巧合」強得多)**：完整反組譯`FUN_0001a30b`本體(先前只反組譯過片段)，關鍵一行：
+`_DAT_00053bef = _DAT_00053bef + 1;`——這個increment**卡在跟D8滑入動畫完全相同的
+三層`DAT_00053ecc==0`(尚未分出勝負)閘門後面，且緊接在第二次`0x1f1cc/0x1f30a`(D8滑入)
+呼叫之前**，即整個`FUN_0001a30b`(已知的end-of-turn orchestrator)執行一次只會讓這個值
++1一次。`xref_to 0x53bef`(誠實範圍：`-noanalysis`下`xref_to`已知不完整，見`call_scan`
+說明，本輪未做`call_scan`交叉驗證)找到的兩個READ位址(`0x1a668`/`0x1a6d9`)恰好落在
+續十二確認的`0x187d6`(數字渲染)兩個呼叫點的push序列裡——**兩個呼叫都是拿這個剛incr過的
+值當`param_3`(要畫的value)去渲染**，不是兩個獨立數值。這兩個呼叫點分屬decompile裡兩個
+獨立迴圈(`for iVar4<9`內`6<iVar4`時呼叫2次、`for iVar4=2..4,9`內無條件呼叫4次，共6次
+動態呼叫)，每次呼叫算出的目的位址(`0xa726b`/`[0x53a49]+0x812f+EDI*456`類的算式，換算
+落在VGA framebuffer `0xA0000`bank內)彼此不同——**最可能的解讀是同一個(已incr過的)回合數
+以動畫式多幀重繪呈現(配合D8面板滑入)，而不是"incr前/incr後各畫一次"**；本輪未逐一算出
+6次呼叫各自的精確螢幕座標去證實"是同一個位置重繪還是逐位數/逐幀不同位置"，這仍是誠實
+缺口。**結論**：「TURN候選欄位在end-of-turn orchestrator裡恰好被+1一次，且incr後的
+值立刻用已確認的digit-render路徑(glyph `#42-51`)重繪」——這是比先前"呼叫時機吻合"更直接
+的機制證據，item 791的TURN子句信心等級由此再提升一階，但仍未達到「語意100%confirmed」
+(仍差一步：live記憶體watch，在DOSBox-X環境下對`0x53bef`(對應native+0x19C000後的live位址)
+下`BPLM`監看，逐回合確認數值真的遞增且螢幕顯示同步——這需要WSL2 DOSBox-X live環境，本輪
+純Windows端`ghidra_batch_probe.py`環境不含這個工具鏈，留給下一輪)。維持D。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
