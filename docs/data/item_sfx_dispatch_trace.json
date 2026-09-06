@@ -1,0 +1,521 @@
+[
+  {
+    "call_addr": "0x20dcd",
+    "in_function": "FUN_00020c6f",
+    "function_start": "0x20c6f",
+    "resolved_via": "capstone_linear_from_function_start (ghidra disasm truncated before call site)",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_4",
+        "push_addr": "0x20dbc"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x8c]",
+        "param": "param_3",
+        "push_addr": "0x20dbd"
+      },
+      {
+        "kind": "immediate",
+        "value": 13,
+        "raw": "0xd",
+        "param": "param_2",
+        "push_addr": "0x20dc4"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x8c]",
+        "param": "param_1",
+        "push_addr": "0x20dc6"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x20f80",
+    "in_function": "FUN_00020c6f",
+    "function_start": "0x20c6f",
+    "resolved_via": "capstone_linear_from_function_start (ghidra disasm truncated before call site)",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_4",
+        "push_addr": "0x20f6d"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x8c]",
+        "param": "param_3",
+        "push_addr": "0x20f6e"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x70]",
+        "param": "param_2",
+        "push_addr": "0x20f75"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x8c]",
+        "param": "param_1",
+        "push_addr": "0x20f79"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x2109e",
+    "in_function": "FUN_00021082",
+    "function_start": "0x21082",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "EBX",
+        "param": "param_4",
+        "push_addr": "0x21091"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x1c]",
+        "param": "param_3",
+        "push_addr": "0x21092"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x28]",
+        "param": "param_2",
+        "push_addr": "0x21096"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x14]",
+        "param": "param_1",
+        "push_addr": "0x2109a"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x2113a",
+    "in_function": "FUN_0002111a",
+    "function_start": "0x2111a",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "EDI",
+        "param": "param_4",
+        "push_addr": "0x21130"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x1c]",
+        "param": "param_3",
+        "push_addr": "0x21131"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "EBP",
+        "param": "param_2",
+        "push_addr": "0x21135"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x21136"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x211c2",
+    "in_function": "FUN_000211a4",
+    "function_start": "0x211a4",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "EBP",
+        "param": "param_4",
+        "push_addr": "0x211ba"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "EDI",
+        "param": "param_3",
+        "push_addr": "0x211bb"
+      },
+      {
+        "kind": "immediate",
+        "value": 13,
+        "raw": "0xd",
+        "param": "param_2",
+        "push_addr": "0x211bc"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x211be"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x21251",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x21227",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x21247"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_3",
+        "push_addr": "0x2124b"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "edi",
+        "param": "param_2",
+        "push_addr": "0x2124c"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x2124d"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x212e3",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x212b9",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x212d9"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_3",
+        "push_addr": "0x212dd"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "edi",
+        "param": "param_2",
+        "push_addr": "0x212de"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x212df"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x213e1",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x213b7",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x213d7"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_3",
+        "push_addr": "0x213db"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "edi",
+        "param": "param_2",
+        "push_addr": "0x213dc"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x213dd"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x214d1",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x214ad",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "ebx",
+        "param": "param_4",
+        "push_addr": "0x214c6"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x10]",
+        "param": "param_3",
+        "push_addr": "0x214c7"
+      },
+      {
+        "kind": "immediate",
+        "value": 9,
+        "raw": "9",
+        "param": "param_2",
+        "push_addr": "0x214cb"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x14]",
+        "param": "param_1",
+        "push_addr": "0x214cd"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x21b42",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x21b18",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x21b38"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "ebp",
+        "param": "param_3",
+        "push_addr": "0x21b3c"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "edi",
+        "param": "param_2",
+        "push_addr": "0x21b3d"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x21b3e"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x22740",
+    "in_function": "FUN_00022721",
+    "function_start": "0x22721",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x28]",
+        "param": "param_4",
+        "push_addr": "0x22732"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x28]",
+        "param": "param_3",
+        "push_addr": "0x22736"
+      },
+      {
+        "kind": "immediate",
+        "value": 17,
+        "raw": "0x11",
+        "param": "param_2",
+        "push_addr": "0x2273a"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x2c]",
+        "param": "param_1",
+        "push_addr": "0x2273c"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x22885",
+    "in_function": "FUN_00022866",
+    "function_start": "0x22866",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x28]",
+        "param": "param_4",
+        "push_addr": "0x22877"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x28]",
+        "param": "param_3",
+        "push_addr": "0x2287b"
+      },
+      {
+        "kind": "immediate",
+        "value": 18,
+        "raw": "0x12",
+        "param": "param_2",
+        "push_addr": "0x2287f"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x2c]",
+        "param": "param_1",
+        "push_addr": "0x22881"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x229b6",
+    "in_function": "FUN_00022997",
+    "function_start": "0x22997",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x229a8"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_3",
+        "push_addr": "0x229ac"
+      },
+      {
+        "kind": "immediate",
+        "value": 19,
+        "raw": "0x13",
+        "param": "param_2",
+        "push_addr": "0x229b0"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x24]",
+        "param": "param_1",
+        "push_addr": "0x229b2"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x22b14",
+    "in_function": "FUN_00022af6",
+    "function_start": "0x22af6",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_4",
+        "push_addr": "0x22b04"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_3",
+        "push_addr": "0x22b08"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_2",
+        "push_addr": "0x22b0c"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x20]",
+        "param": "param_1",
+        "push_addr": "0x22b10"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x22c39",
+    "in_function": null,
+    "resolved_via": "stack_check_prologue_backtrack+capstone",
+    "function_start": "0x22c04",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "esi",
+        "param": "param_4",
+        "push_addr": "0x22c31"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "edi",
+        "param": "param_3",
+        "push_addr": "0x22c32"
+      },
+      {
+        "kind": "immediate",
+        "value": 25,
+        "raw": "0x19",
+        "param": "param_2",
+        "push_addr": "0x22c33"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [esp + 0x1c]",
+        "param": "param_1",
+        "push_addr": "0x22c35"
+      }
+    ]
+  },
+  {
+    "call_addr": "0x22d3c",
+    "in_function": "FUN_00022d1b",
+    "function_start": "0x22d1b",
+    "resolved_via": "ghidra_disasm_from_function_start",
+    "args": [
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x24]",
+        "param": "param_4",
+        "push_addr": "0x22d2c"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x24]",
+        "param": "param_3",
+        "push_addr": "0x22d30"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x24]",
+        "param": "param_2",
+        "push_addr": "0x22d34"
+      },
+      {
+        "kind": "register_or_memory",
+        "raw": "dword ptr [ESP + 0x24]",
+        "param": "param_1",
+        "push_addr": "0x22d38"
+      }
+    ]
+  }
+]

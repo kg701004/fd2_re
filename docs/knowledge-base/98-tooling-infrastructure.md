@@ -3082,3 +3082,48 @@ bytes、同一個function內)的真實delta其實是`0x26014`(差0x600)。**根�
 寫的交叉檢查腳本時，同樣要對它做故障注入，否則「驗證通過」可能只是空殼恆真式；(3)少數幾個
 巧合一致的樣本點不足以推論全域公式，尤其是分頁式/分段式的記憶體佈局。已同步更新到持久記憶
 `fd2-live-ghidra-headless-probe`。commits：`556cf805`(file_offset)、`0743c4b9`(--selftest)。
+
+## 2026-09-06(續四)：使用者要求「新建多項工具完成item 1117測試」——3支新工具，解決item 1117
+SFX sample-identity調查裡2個具體的方法論瓶頸
+
+**動機**：item 1117剩下唯一真正開放的子項是「item使用時播放哪個SFX樣本」。前幾輪手動反組譯
+只查過1個caller(type11/MP恢復)的1個table index，逐一手動`bytes`+人工反組譯每個caller太慢，
+且撞到2個工具面的瓶頸：(a)`ghidra_batch_probe.py`的`disasm` action是Ghidra自己flow-directed
+反組譯，遇到`-noanalysis`模式下未辨識邊界的位址會回傳空結果，即使該位址是合法code；(b)同樣
+`-noanalysis`模式下有些函式完全沒被Ghidra辨識成function(`.object1`blind spot，Watcom stack-
+check prologue常見成因，見既有memory`fd2-live-ghidra-headless-probe`)，`function_bounds`/
+`decompile`對這些位址一律失敗。
+
+**新工具**：
+1. `tools/capstone_probe.py`——用`ghidra_batch_probe.py`的`bytes` action分段(<=32 bytes/次，
+   本專案實測單次上限)撈連續記憶體，本地串接餵給獨立capstone函式庫反組譯，完全繞開Ghidra
+   自己的指令資料庫，只要記憶體內容正確就一定能解出正確結果。只跑一次`analyzeHeadless`
+   (所有chunk查詢包在同一份queries.json裡)，不是每個chunk各自啟動JVM。內建`--selftest`，
+   pin本輪手動驗證過的10條指令(涵蓋`FUN_0001c4cc`開頭的stack-check prologue與SFX呼叫點
+   本身)，故障注入實測：故意改錯一條pinned指令，確認正確FAIL，還原後確認PASS。
+2. `tools/trace_item_sfx_dispatch.py`——自動化「`call_scan`找目標函式全部caller→對每個
+   call site反組譯出緊鄰的PUSH序列→回推stdcall各引數」，取代逐一手動反組譯。對(a)問題的
+   解法：優先用Ghidra`disasm`(快)，但若目標call位址沒出現在回傳的指令列表裡(代表被某個
+   無條件跳躍提前截斷)，自動fallback成`capstone_probe`對整個函式體做**線性**反組譯(不管
+   control flow，純粹逐byte往前解，反而更完整)。對(b)問題的解法：改用`call_scan(target=
+   0x3702f)`(已知的stack-check helper，全域300+呼叫端)回推最近的前置呼叫，函式真正入口
+   =那個call位址-5(即前面那個`PUSH frame_size`)。
+3. `tools/dump_item_sfx_tables.py`——一次dump `0x51f33`/`0x51f54`/`0x51f75`三張33-byte
+   表全部內容，並依一份`{type_name: param_2}`對照JSON查出每個type對應的觸發旗標/index/
+   max幀數，取代先前只手動查過1格的做法。
+
+**成果**：`call_scan(0x1c4cc)`用新工具重新窮舉，發現真正有16個caller(先前手動記錄只有
+9-11個)，16個全部成功回推出push序列，其中6個的`param_2`是immediate常數，byte-exact查出
+對應的SFX index值(12/6/7/8/14/5)，並訂正了一個誤述——先前以為SFX index來自per-unit
+runtime資料，實際上是純靜態per-type表查值，跟原本以為的`param_4`(其實是不相關的「受影響
+單位index陣列」)無關。連帶用既有解包產物(`extracted/raw/FDOTHER/FDOTHER_005/006/007/008/
+012/014.bin`)直接檢查、否證了「SFX index=FDOTHER.DAT自身resource編號」這個假說(這些
+resource其實是圖片/巢狀容器，不是音效)。完整記錄見`docs/knowledge-base/91-worklist.md`
+item 1117「2026-09-06再續十一」段落，資料見`docs/data/item_sfx_tables.json`/
+`item_sfx_dispatch_trace.json`。
+
+**教訓**：(1)Ghidra`-noanalysis`模式的兩個已知盲點(flow-directed disasm提前截斷、function
+boundary完全漏掉)都有通用、可重複使用的繞過手法，值得做成工具而非每次臨時手動處理；
+(2)一個看似「已知」的引數來源(先前的`param_4`)如果沒有逐位元組驗證，很容易在下一輪被
+不同investigator誤植到另一個引數上——這次的訂正靠的是重新從prologue的`mov ebp,[esp+0x8c]`
+往下手算偏移，不是相信前一輪的文字敘述。
