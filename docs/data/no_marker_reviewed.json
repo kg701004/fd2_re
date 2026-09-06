@@ -33352,6 +33352,22 @@
    "excerpt": "未證實的假說**：doc02 §5.1-5.8列出遊戲**恰好8種武器類別**(刀劍/匕首/槍矛/斧鎚/弓/杖/拳爪/",
    "verdict": "benign",
    "note": "explicitly-labeled hypothesis section, not an evidence marker gap"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 556,
+   "excerpt_sha1": "0c9245df893ceccc7748c394baf6e79f0a210834",
+   "excerpt": "實測值驗證(索爾0→FIGANI0、亞雷斯4→12、盜賊96→FIGANI288)。**這是「這個單位長什麼樣子/",
+   "verdict": "benign",
+   "note": "prose continuation citing an already-established doc06 finding"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 653,
+   "excerpt_sha1": "ce8497d7120d949d1a87fb71e8b66d8220f41aa0",
+   "excerpt": "未證實的假說**——**本節稍後(同日續二)已撤回,見上方「仍缺的部分」第1點**：這個假說建立在",
+   "verdict": "benign",
+   "note": "prose continuation, retraction note"
   }
  ]
 }
