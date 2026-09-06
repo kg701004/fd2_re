@@ -33272,6 +33272,62 @@
    "excerpt": "### 9.29.3 對 `91-worklist.md` L1017-1020 的影響:找到一個更深層、可驗證的候選成因,但未能",
    "verdict": "benign",
    "note": "section heading for §9.29.3; evidence summarized in paragraph below"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4290,
+   "excerpt_sha1": "b5662d4072433676b9dba4d2e96785f88c78c1a7",
+   "excerpt": "仍為0代表Yes、非0代表No」語意完全吻合,是這個全域第4個確認過的共用場景。但**新的一輪live測試",
+   "verdict": "benign",
+   "note": "prose continuation, not an evidence marker gap"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4306,
+   "excerpt_sha1": "5c5684e12c361b481568ecbc8d91dd5344229875",
+   "excerpt": "`BPLM 1EFC57`命中回推呼叫端,重複§9.25已驗證過的方法,但這次鎖定的是一個資料全域、不需要",
+   "verdict": "benign",
+   "note": "prose continuation describing BPLM technique"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4368,
+   "excerpt_sha1": "737f057b67e4cf6e05b9dbf4b26df40aefa86608",
+   "excerpt": "xref普查漏掉的全新寫入點,但同時證實這條調查線本身已經沒有繼續深挖的價值**",
+   "verdict": "benign",
+   "note": "section heading line 2"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4370,
+   "excerpt_sha1": "7808039e7c70335f48a954d3394c525fc251ee2c",
+   "excerpt": "### 9.30.1 live驗證:`BPLM`(linear memory breakpoint,不需selector)成功命中兩輪,兩次都停在",
+   "verdict": "benign",
+   "note": "subsection heading"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4428,
+   "excerpt_sha1": "9fb9ad7e6bf478e91173d761a13ad38bec62e68d",
+   "excerpt": "交錯、規模超出單輪可窮舉範圍、且下游有獨立且已證明不可繞過的陷阱使其不再具行動意義」——",
+   "verdict": "benign",
+   "note": "prose continuation, conclusion paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4433,
+   "excerpt_sha1": "b010a565fa25cae44af2a0c8f782ef70bcda49bf",
+   "excerpt": "**確認、且已用兩條獨立的靜態證明鎖死**(陷阱本身零分支;進入陷阱前的游標寫入即使解開也不影響",
+   "verdict": "benign",
+   "note": "prose continuation, worklist-impact paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4434,
+   "excerpt_sha1": "a92671c18506b930bb65e8499bcec6d2569639b8",
+   "excerpt": "陷阱本身無條件的事實)。此項調查**收斂關閉**,不再是D(待查)而是**確認的架構限制**——",
+   "verdict": "benign",
+   "note": "prose continuation, worklist-impact paragraph"
   }
  ]
 }
