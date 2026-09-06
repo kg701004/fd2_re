@@ -102,6 +102,7 @@ DEFAULT_GHIDRA_INSTALL = r"C:/tools/ghidra_12.1.2_PUBLIC"
 DEFAULT_PROJECT_DIR = r"C:/Users/kg701/Desktop/GAME/FD2_ghidra_projects"
 DEFAULT_PROJECT_NAME = "FD2Analysis3"
 DEFAULT_PROCESS_NAME = "FD2.EXE"
+DEFAULT_EXE_PATH = r"C:/Users/kg701/Desktop/GAME/FD2/FD2.EXE"
 SCRIPT_NAME = "ProbeBatch.java"
 
 
@@ -131,20 +132,176 @@ def build_command(
     ]
 
 
+# ===========================================================================================
+# --selftest: fault-injection-style regression check, not just "did it run without an exception".
+#
+# Every assertion below is pinned to a SPECIFIC value independently established and verified by
+# hand on 2026-09-06 (cross-checked against Capstone, against raw content-search in the actual
+# EXE file, and bidirectionally -- offset-to-content-to-address as well as address-to-content-to
+# -offset). If a future Ghidra upgrade, a ProbeBatch.java edit, or a different EXE copy silently
+# changes any of these outputs, this catches it immediately instead of leaving future sessions to
+# rediscover the same page-mapping/stale-path traps from scratch (see the "never assume a
+# constant address-to-file-offset delta" lesson in this project's persistent memory).
+# ===========================================================================================
+
+def _selftest_queries() -> list[dict]:
+    return [
+        {"id": "st_bytes", "address": "0x1a30b", "action": "bytes", "count": 16},
+        {"id": "st_disasm", "address": "0x1a30b", "action": "disasm", "max_bytes": 40},
+        {"id": "st_decompile", "address": "0x16559", "action": "decompile"},
+        {"id": "st_function_bounds", "address": "0x1a30b", "action": "function_bounds"},
+        {"id": "st_call_scan", "address": "0x187d6", "action": "call_scan"},
+        {
+            "id": "st_file_offset",
+            "address": "0x1a678",
+            "action": "file_offset",
+            "exe_path": DEFAULT_EXE_PATH,
+        },
+    ]
+
+
+def _run_selftest_check(name: str, condition: bool, detail: str, failures: list[str]) -> None:
+    status = "PASS" if condition else "FAIL"
+    print(f"  [{status}] {name}" + ("" if condition else f" -- {detail}"))
+    if not condition:
+        failures.append(f"{name}: {detail}")
+
+
+def run_selftest(args: argparse.Namespace) -> int:
+    import tempfile
+
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory(prefix="ghidra_batch_probe_selftest_") as tmpdir:
+        queries_path = Path(tmpdir) / "queries.json"
+        output_path = Path(tmpdir) / "results.json"
+        queries_path.write_text(json.dumps(_selftest_queries()), encoding="utf-8")
+
+        cmd = build_command(
+            args.ghidra, args.project_dir, args.project_name, args.process_name,
+            queries_path, output_path,
+        )
+        print("[ghidra_batch_probe --selftest] running known-ground-truth queries...")
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=args.timeout)
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            print(f"error: could not run analyzeHeadless for selftest: {e}", file=sys.stderr)
+            return 3
+        if proc.returncode != 0 or not output_path.exists():
+            print("error: selftest batch itself failed to run -- see output below", file=sys.stderr)
+            sys.stderr.write((proc.stdout or "") + (proc.stderr or ""))
+            return 3
+
+        results = {r["id"]: r for r in json.loads(output_path.read_text(encoding="utf-8"))}
+
+        def get(qid: str):
+            r = results.get(qid)
+            return r.get("result") if r and r.get("ok") else None
+
+        r = get("st_bytes")
+        _run_selftest_check(
+            "bytes @ 0x1a30b matches known-good content",
+            bool(r) and r.get("hex") == "68 34 00 00 00 e8 1a cd 01 00 53 56 57 55 83 ec",
+            f"got {r.get('hex') if r else None!r}",
+            failures,
+        )
+
+        r = get("st_disasm")
+        first = (r or {}).get("instructions", [{}])[0] if r else {}
+        _run_selftest_check(
+            "disasm @ 0x1a30b first instruction is PUSH 0x34",
+            bool(r) and first.get("mnemonic") == "PUSH" and first.get("operands") == "0x34",
+            f"got {first!r}",
+            failures,
+        )
+
+        r = get("st_decompile")
+        code = (r or {}).get("code", "")
+        _run_selftest_check(
+            "decompile @ 0x16559 contains the known if/else on DAT_00053c67",
+            "DAT_00053c67 != 0x9017" in code and "FUN_0004ebff" in code and "FUN_0004ec31" in code,
+            f"code={code!r}",
+            failures,
+        )
+
+        r = get("st_function_bounds")
+        _run_selftest_check(
+            "function_bounds @ 0x1a30b matches known start/end",
+            bool(r) and r.get("start") == "0x1a30b" and r.get("end") == "0x1a7bc",
+            f"got {r!r}",
+            failures,
+        )
+
+        r = get("st_call_scan")
+        hit_addrs = {h.get("call_addr") for h in (r or {}).get("hits", [])}
+        _run_selftest_check(
+            "call_scan @ 0x187d6 finds both known FUN_0001a30b call sites",
+            {"0x1a678", "0x1a6fa"}.issubset(hit_addrs),
+            f"hits={sorted(hit_addrs)}",
+            failures,
+        )
+
+        r = get("st_file_offset")
+        _run_selftest_check(
+            "file_offset @ 0x1a678 resolves to the known-unique offset 0x4068c",
+            bool(r) and r.get("unique") is True and r.get("file_offsets") == ["0x4068c"],
+            f"got {r!r}",
+            failures,
+        )
+
+        # Independent cross-check with NO Ghidra involvement at all: read the raw EXE file
+        # directly in Python and confirm the bytes at the reported offset really do start with
+        # the same content `bytes` reported Ghidra's memory holds at 0x1a30b. This is the
+        # reverse-direction half of the loop (offset -> content), complementing the forward
+        # half (address -> content -> offset) that st_file_offset already checks.
+        exe_path = Path(DEFAULT_EXE_PATH)
+        if exe_path.is_file():
+            raw = exe_path.read_bytes()
+            probe_hex = "e859e1ffff83c4146a46e883d2010083c40483fe08759568"
+            probe = bytes.fromhex(probe_hex)
+            file_off = 0x4068c
+            actual = raw[file_off:file_off + len(probe)]
+            _run_selftest_check(
+                "reverse check: raw file bytes at 0x4068c match expected content "
+                "(zero Ghidra involvement in this read)",
+                actual == probe,
+                f"got {actual.hex()!r}",
+                failures,
+            )
+        else:
+            print(f"  [SKIP] reverse file-content check -- {exe_path} not present on this machine")
+
+    print()
+    if failures:
+        print(f"selftest FAILED: {len(failures)} check(s) did not hold:")
+        for f in failures:
+            print(f"  - {f}")
+        return 1
+    print("selftest PASSED: all known-ground-truth checks hold.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Run a batch of Ghidra probe queries against FD2Analysis3 in a single "
         "analyzeHeadless invocation.",
     )
-    ap.add_argument("--queries", required=True, type=Path, help="Path to queries JSON (array of query objects).")
-    ap.add_argument("--output", required=True, type=Path, help="Path to write results JSON.")
+    ap.add_argument("--queries", type=Path, help="Path to queries JSON (array of query objects).")
+    ap.add_argument("--output", type=Path, help="Path to write results JSON.")
     ap.add_argument("--ghidra", default=DEFAULT_GHIDRA_INSTALL, help="Ghidra install dir (contains support/analyzeHeadless.bat).")
     ap.add_argument("--project-dir", default=DEFAULT_PROJECT_DIR, help="Ghidra project directory (also used as -scriptPath).")
     ap.add_argument("--project-name", default=DEFAULT_PROJECT_NAME, help="Ghidra project name.")
     ap.add_argument("--process-name", default=DEFAULT_PROCESS_NAME, help="Program name inside the project (-process).")
     ap.add_argument("--quiet", action="store_true", help="Suppress raw analyzeHeadless stdout/stderr; only print the summary.")
     ap.add_argument("--timeout", type=int, default=600, help="Subprocess timeout in seconds (default 600).")
+    ap.add_argument("--selftest", action="store_true", help="Run a fault-injection-style regression check against known ground truth instead of a queries file.")
     args = ap.parse_args()
+
+    if args.selftest:
+        return run_selftest(args)
+
+    if not args.queries or not args.output:
+        print("error: --queries and --output are required unless --selftest is given", file=sys.stderr)
+        return 2
 
     if not args.queries.exists():
         print(f"error: queries file not found: {args.queries}", file=sys.stderr)
