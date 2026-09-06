@@ -414,6 +414,25 @@ Enter→Down→Enter序列卻打開了索爾的個人狀態卡(而非系統End�
 本輪手動硬猜單一方向更穩健)，而不是重複本輪手動猜測單一方向的做法。維持D，791核心觸發
 時機問題(見上方2026-09-06訂正)已解，僅剩「真正執行到D8」這個live驗證步驟仍待更穩健的
 空地格定位方法。
+
+**2026-09-06續六,執行上述建議,直接呼叫`tools/fd2_chapter_sweep.py`模組本身的
+`find_empty_adjacent_tile()`(用`importlib`載入而非重寫)，成功找到空地格並完整跑完
+End-Turn序列,`91這個項目的核心懸案終於用live截圖直接證實**：確認鍵→系統環開啟(4個
+選項,`END`在正下方,與doc58記載完全吻合)→選`END`→`要結束本回合的行動嗎？YES/NO`確認框
+→確認YES→**畫面上直接出現橘黃色英文字樣「ENEMY PHASE」疊在戰場地圖上**（截圖存證：
+[`ch27-enemy-phase-banner-live-verify.png`](../figures/ch27-enemy-phase-banner-live-verify.png)）。
+**這極可能就是doc57當年（2026-07-25/26）用「MAP/TURN/ENEMY/FRIEND/NPC」這組英文代稱想描述
+的東西之一**——「ENEMY」這個代稱直接對應到這次實測看到的「ENEMY PHASE」字樣，doc57原作者
+當時只看到反組譯出的字串資源/呼叫模式，用自己的英文縮寫暫時代稱這些欄位，本輪則是第一次
+真正在畫面上看到對應的實際呈現。**誠實範圍**：本輪只live確認了「ENEMY PHASE」這一個字樣
+會出現、大致的呼叫路徑（End-Turn確認YES之後、AI回合開始前），還沒有：(a)反組譯出這個
+banner字串具體來自哪個FDTXT/FDOTHER resource id、(b)確認是否還有對應的「PLAYER PHASE」
+或其他doc57提到的MAP/TURN/FRIEND/NPC字樣(本輪AI回合结束後畫面直接回到普通戰鬥控制,未見
+其他banner文字，但AI可能因為距離太遠沒有真的移動，不能排除其他banner存在)、(c)確認這
+是不是與`0x1f1cc`/`0x1f30a`(先前反組譯確認的sprite/RLE blit滑入動畫)同一個視覺元素或
+是另一個獨立疊加的文字层。**item 791重大進展**：從「完全不知道D8是什麼、在哪裡」推進到
+「已經live看到具體畫面內容且有截圖證據」，是本項目在這條調查線上迄今最具體的正面證據，
+但反組譯字串來源、完整banner清單、與已知sprite動畫的疊加關係仍待下一輪，維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
