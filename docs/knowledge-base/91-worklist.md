@@ -512,6 +512,13 @@ cache-loader是僅存候選，但本輪未證實兩者是同一份資源，也�
 寫入(翻轉side)的位置(目前xref只看到READ)。下一輪：`decompile FUN_000111ba`核對目的全域、
 `xref_to DAT_00053c03`找寫入點。額外小發現：`FUN_00015983`是空函式(只有`return`)。
 詳見doc57續十四。維持D。
+
+**誠實訂正(2026-09-06續十五)——`DAT_00053c03`不是side flag，續十四假說作廢**：反組譯它的
+寫入site所在函式`FUN_00025ebb`，發現這是劇本/過場腳本播放器，`DAT_00053c03`只是逐筆記錄的
+opcode欄位(`record[+0xa00]`)，用來跳劇本指令handler，跟combat的ENEMY/PLAYER側別無關。
+`FUN_0001a30b`裡讀到的只是這個共用暫存器的殘值，不是side flag。ENEMY/FRIEND banner的
+resource-ID選擇點回到完全開放狀態(續十四排除D8滑入本體，本節排除side-flag假說，兩條路都
+死路)，下一輪需要live記憶體diff而非繼續猜靜態候選。詳見doc57續十五。維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。

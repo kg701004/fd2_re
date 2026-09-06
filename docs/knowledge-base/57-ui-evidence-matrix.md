@@ -611,6 +611,26 @@ resource loader，見續十三前的討論)是本輪僅存、跟"side索引`DAT_
 是否正好是`0x4ecbf`/`0x4ebab`讀取的來源，或改用`xref_to DAT_00053c03`直接列出所有讀寫點
 找出這個側標記(side flag)實際在哪裡被翻轉(目前只看到被讀，從未看到被寫的位置)。維持D。
 
+**誠實訂正(2026-09-06續十五)——`DAT_00053c03`不是side/phase flag，是劇本(story script)
+逐筆記錄的opcode欄位,續十四的假說作廢**：`xref_to DAT_00053c03`列出的寫入點裡，`0x25ed6`/
+`0x26067`兩筆都落在同一個函式`FUN_00025ebb`(`0x25ebb-0x26151`)。完整反組譯後發現這是一個
+**劇本/過場腳本播放器**：以`DAT_00053c57*0xa28+iVar1+0x312b`(每筆記錄2600 bytes，`DAT_00053c57`
+在這裡的用法是「目前劇本筆數索引」，跟同名全域在指令環context下的"選單狀態選擇器"用法完全
+是同一個scratch全域在不同執行時期的重用，不是矛盾)算出目前記錄位址，逐欄位讀出
+`DAT_00053c03=record[+0xa00]`、`DAT_00053bfb=record[+0xa01]`、`DAT_00053bf3=record[+0xa02]`
+(4 bytes)、`DAT_00051aab=record[+0xa06]`、`DAT_00053af9=record[+0xa07]`、`DAT_00051e61=
+record[+0xa08]`、`DAT_00051e62=record[+0xa09]`，再用`(&PTR_FUN_00051d71)[DAT_00053c03]()`
+跳到對應的**劇本指令handler**（很像`FUN_0002ff01`那條native command dispatch的姊妹結構，
+只是這裡是劇本/過場opcode，不是戰鬥指令opcode）。**這代表`FUN_0001a30b`裡讀到的
+`DAT_00053c03`只是「上一次執行過的劇本opcode」這個共用暫存器的殘值**，`(&DAT_00051e63)
+[DAT_00053c03] != (&DAT_00051e81)[DAT_00053c03]`這個比較很可能是「這個opcode對應的某個
+屬性(疑似palette/資源id)本輪跟上輪不同才需要`FUN_00025977()`重載」，**跟combat的
+ENEMY/PLAYER側別完全無關**——續十四提出的「`DAT_00053c03`=side flag，`FUN_00025977`=
+banner resource loader」假說到此正式排除，不是縮小範圍而是整條線索作廢。**ENEMY/FRIEND
+banner的真正resource-ID選擇點，本輪排除了D8滑入動畫本體(續十四)跟這條side-flag假說
+(本節)兩個方向，仍未找到，回到完全開放狀態**，下一輪需要換全新切入點(可能得從live
+DOSBox-X對banner出現當下的screenshot時間點做記憶體diff，而不是繼續猜靜態候選)。維持D。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
