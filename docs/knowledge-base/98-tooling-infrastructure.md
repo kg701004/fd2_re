@@ -3032,3 +3032,53 @@ command not recognized`)。
 - 批次多筆時，把整批指令寫成一支完整shell腳本、複製進WSL後單一次執行到底，比「Windows端bash
   迴圈逐次呼叫`wsl.exe`子行程」更快也更穩定(省去每次`wsl.exe`啟動的固定開銷，行為時序也更接近
   同一個bash行程內連續執行，減少不可預期的競爭窗口)。
+
+## 2026-09-06(續三)：`ghidra_batch_probe.py`工具驗證——用它做本session大量RE結論前，先反過來
+驗證這個工具本身；過程中發現並修正一個真實缺口(`file_offset`action + `--selftest`)
+
+**動機**：本session(791/1117等調查)大量依賴`tools/ghidra_batch_probe.py`(`bytes`/`disasm`/
+`decompile`/`function_bounds`/`call_scan`六種action)做byte-exact反組譯結論，使用者要求先確認
+這個工具本身可信，再繼續往下用。
+
+**驗證方法(多重交叉，非自證)**：
+1. `bytes`內容真實性：取3個本session大量使用的位址，把回傳的hex拿去對真實`FD2.EXE`(三份拷貝:
+   `FD2`/`FD2_USB`/`FD2_APK`)做全檔內容搜尋——全部唯一命中，證實不是快取/舊資料。
+2. `disasm`解碼正確性：同樣的raw bytes丟給獨立第三方引擎`capstone`(跟Ghidra完全不同的實作)，
+   逐指令比對助憶符/運算元/call目標——全部一致。
+3. `decompile`忠實度：用兩段獨立`disasm`(if/else兩分支)手動核對一個decompile輸出，確認邏輯
+   結構、呼叫、結束位址完全吻合，沒有幻覺。
+4. `call_scan`：5個分散呼叫點逐一內容搜尋+rel32解碼，全部通過。
+5. `audit_evidence_provenance.py --selftest`：61項既有故障注入+對照組全過，另在真實knowledge
+   base上找到7623筆真實主張(非空掃)。
+6. `decode_lmi.py`：用Python從零手動解析LMI1格式(跳過工具本身)，index 31/42/119的offset/w×h
+   跟工具輸出、跟doc35§4.2.5既有記載三方一致。
+
+**過程中的誠實記錄——自己的方法論錯誤，不是`call_scan`的bug**：驗證`call_scan`完整性時，一度
+假設「位址→EXE檔案offset」是全域固定delta(從3個位址推出`0x25a14`)，拿這個公式暴力掃描`.object1`
+區段驗證，結果0命中——一度懷疑`call_scan`有問題。追查後發現：`0x1a678`(離`0x1a30b`只有877
+bytes、同一個function內)的真實delta其實是`0x26014`(差0x600)。**根因**：這個LE執行檔的分頁表
+載入，實體檔案分頁順序跟線性記憶體位址順序不一致，3個位址剛好落在同一段連續頁只是巧合，不能
+推論成全域公式。改用逐一內容搜尋(不套公式)後，`call_scan`本身5/5全部驗證通過。
+
+**使用者接著問「可以改善解決這個問題嗎」，加了`file_offset`action(ProbeBatch.java)**：
+- 第一次嘗試用Ghidra「正規」的`MemoryBlockSourceInfo.getFileBytesOffset`/`FileBytes` API——
+  親測這個專案的loader完全沒有填`FileBytes`(每個block都回傳空的)，此路不通，誠實記錄而非硬拗。
+- 改用內容搜尋法(就是手動驗證用過、證實可靠的方法)做成內建action：讀`probe_length`(預設24)
+  bytes，對真正EXE檔案內容搜尋，回傳所有命中位置+`unique`旗標。**注意**：`currentProgram.
+  getExecutablePath()`回傳的是這個Ghidra project當初import時記錄的路徑，親測是別台機器的舊路徑
+  (`/D:/Codex/FD2_extracted/...`，這台機器不存在)——action需要query帶`"exe_path"`覆寫。
+- 3個位址逐一驗證，跟先前手動算出的offset完全吻合(`0x4068c`/`0x4031f`/`0x3e7ea`)；故意測一個
+  過短的`probe_length=2`確認「不唯一命中」的警告真的會觸發(11個命中，正確拒絕信任任何一個)。
+- **正反向都確認**：正向(位址→內容→搜尋→offset)已驗證；反向(只拿offset→直接讀真實檔案raw
+  bytes→丟給獨立capstone反組譯→比對回原始位址的預期內容)額外對3組全部驗證，完全不依賴Ghidra。
+
+**使用者再問「未來發生問題可以檢驗到嗎」，加了`--selftest`**：比照`audit_evidence_provenance.py`
+既有模式，把7項斷言(bytes/disasm/decompile/function_bounds/call_scan/file_offset的具體預期值
++一個零Ghidra依賴的反向檔案內容核對)寫死進`ghidra_batch_probe.py --selftest`。**故障注入實測**：
+故意把`function_bounds`的預期end位址改錯，重跑確認**正確回報FAIL、exit code 1**，不是空殼；
+還原後重跑確認乾淨PASS。另外確認一般`--queries`/`--output`用法輸出跟改動前逐byte相同(無回歸)。
+
+**教訓**：(1)工具鏈本身值得定期反向驗證，不能因為過去多次成功使用就假設永遠正確；(2)驗證自己
+寫的交叉檢查腳本時，同樣要對它做故障注入，否則「驗證通過」可能只是空殼恆真式；(3)少數幾個
+巧合一致的樣本點不足以推論全域公式，尤其是分頁式/分段式的記憶體佈局。已同步更新到持久記憶
+`fd2-live-ghidra-headless-probe`。commits：`556cf805`(file_offset)、`0743c4b9`(--selftest)。
