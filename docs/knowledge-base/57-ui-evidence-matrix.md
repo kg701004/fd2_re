@@ -515,6 +515,40 @@ digit 9→index 19。**這個index範圍(10-19)跟doc35§4.2.5已記載的三組
 呼叫鏈/index運算本身已經是byte-exact反組譯結論，不是猜測。維持D，但「TURN」欄位已經是本項目
 在791這條調查線上除了「ENEMY」之外最扎實的第二個具體發現。
 
+**誠實訂正(2026-09-06續十一，「第4組數字glyph(index 10-19)」結論錯誤，予以撤回)**：先跑了
+實際存在的`tools/decode_lmi.py`工具(前一輪只靠反組譯推論，從未真正dump過)：
+```
+python tools/decode_lmi.py extracted/raw/FDOTHER/FDOTHER_005.bin extracted/raw/FDOTHER/FDOTHER_000.bin .wsl_build/lmi_probe
+```
+結果resource #5的index 10-19尺寸完全不一致(`#10 3x16`、`#12 16x3`、`#13 16x16`、`#18/#19
+14x10`……)，**不是均一的6×8數字glyph形狀**，直接證偽續十的「第4組數字glyph」結論。回頭
+重新反組譯`0x187d6`的完整三條分支才發現先前的「+0xa」判讀只挑了其中一條分支，遺漏了另外
+兩條：
+- **3位數溢位分支**(`param_5==3`且值>999)：`0x1880f MOV EAX,[ESP+0x3c]; 0x18813 ADD EAX,0xa`
+  ——這裡的`[ESP+0x3c]`不是常數0，是**呼叫端傳入的第4參數(下方證實=42)**，「+0xa(10)」是
+  **相對於這個base的偏移**，不是絕對index 10-19。
+- **2位數溢位分支**(`param_5==2`且值>99)：直接`PUSH 0x5d(93)`——完全繞過base+offset運算，
+  push一個寫死的常數index，兩條溢位分支的index計算方式甚至不一樣，本來就不該套同一套規則。
+- **正常(非溢位)渲染路徑**(`0x1883c`起，本輪首次追到)：`MOV BL,[ESP+0x40]; ADD BL,0x30`
+  (位數轉ASCII字元'2'/'3')組出格式字串，`CALL 0x37b29`(等同`sprintf(buf,fmt,value)`)，
+  接著逐位數迴圈(`0x1885e`-`0x18886`)：`MOVZX EAX,[ESP+EBX]`(取sprintf輸出的第i個ASCII
+  字元)→`ADD EAX,[ESP+0x3c]`(**加上同一個第4參數base**)→`SUB EAX,0x30`(ASCII轉0-9再套base)
+  →組4個參數(含`x_pos=EBX*6`、`EBP`、`[0x53a81]`容器、算出的index)呼叫`0x16886`。
+
+**關鍵新證據——直接反組譯`FUN_0001a30b`兩個呼叫`0x187d6`的call site(`0x1a678`/`0x1a6fa`)
+的push序列**：兩處都是`PUSH 0x3(digit_count); PUSH 0x2a(42! glyph base); PUSH [某個live數值
+的table查表結果]; ...; CALL 0x187d6`——**兩個call site的glyph base參數都是42**，也就是說
+`0x187d6`的index運算是`(ASCII digit - 0x30) + 42`，**精確落在doc35§4.2.5早就記載的白/綠
+數字glyph`#42-51`裡**，不是新的第4組，也不是「10-19」。續十的「+0xa」只是溢位分支裡的一個
+特例(意義應該是同一個base之後的第10格，很可能是一個「溢位/滿格」提示符號，不是完整的
+0-9數字glyph重複組)，被誤判成整個函式的index公式。**index 10-19在decode_lmi.py裡量到的
+不規則尺寸小圖，跟這條數字渲染路徑完全無關**，只是resource #5裡剛好排在數字glyph前面的
+其他UI小圖，本輪之前的静态推論方向就走偏了。**item 791「TURN」候選欄位的正確結論**：這是
+resource #5**已知**白/綠數字集(`#42-51`)的3位數渲染，兩個call site各自從不同的global-table
+查表位置(`[0x53a49]+EDI*456+0x812f`與`[0x53a49]+0x8088`／`[0x53bef]`)取值渲染——語意上仍是
+「某個3位數HUD數值」，是否確實是「回合數」依然未證實(呼叫時機仍是本輪最強的間接證據，見
+續八/續九)，但**glyph來源已改判為既有的`#42-51`集，不再宣稱有未記錄的第4組**。維持D。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
