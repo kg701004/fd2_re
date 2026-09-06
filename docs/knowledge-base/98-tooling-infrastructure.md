@@ -2994,3 +2994,41 @@ C.16真的發生）。這支工具把這個手動序列封裝成一次呼叫，�
 3. 對一個真的不存在的instance名稱測試`no_tmux_session`路徑，也正確回報。
 
 修好後重新對同一個`hctest`instance跑，正確回報`verdict=healthy`/`window_child_count=1`。
+
+## 2026-09-06(續二)：`dosbox_harness.sh debugger-cmd`的`-l text`+`-l $'\r'`組合在批次寫入場景下
+不可靠——具名`Enter`鍵才是可靠做法
+
+**動機**：對FIGANI立繪投入live BPPM調查(見doc35 §9.25)時，需要對47+格敵方record批次`SMV`寫入
+死亡signature。第一次嘗試（bash `while read`迴圈逐次呼叫`fd2_dosbox_live_helper.py debugger-cmd`）
+75筆指令**全部失敗**——`tmux capture-pane`顯示指令全部黏成一長串從未送出Enter
+(`I-> 01SMV 26E48D 01SMV 26E4DD 01...`)，連鎖導致debugger把它們當亂碼指令拒收(`*** Debugger
+command not recognized`)。
+
+**根因排查**：
+1. 排除"stdin被消耗"的bash經典坑（`while read`迴圈內呼叫的指令若讀stdin會吃掉迴圈自己的輸入行，
+   導致迴圈只跑1次）——加`< /dev/null`後迴圈確實跑滿75次，但**寫入結果依然全部沒有落地**，證明
+   還有第二個獨立問題。
+2. 用「單獨呼叫一次」隔離變數：單獨執行一次`debugger-cmd ... SMV 26E48D 01`會成功（`mem
+   read-unit-record`核對`+5`確實變成`0x01`），但緊接著在迴圈裡再送幾十筆就會回到黏成一行的
+   狀態——**證明問題不是"迴圈"本身，是`cmd_debugger_cmd()`目前實作的兩段式`send-keys -l text` +
+   `send-keys -l $'\r'`在短時間內連續呼叫時不可靠**（`dosbox_harness.sh`原始碼裡的既有寫法，
+   `doc48 §8.4`原本的建議是「`-l`字面旗標必須用、Enter必須用獨立的字面`\r`、不能跟具名Enter/C-m
+   混用」——本輪的實測結果**推翻**這個建議的後半段）。
+3. **修法**：把Enter那一步從`tmux send-keys -l $'\r'`(字面`\r`)換成`tmux send-keys Enter`(具名
+   鍵)，其餘不變。同樣的75筆SMV批次(這次額外改成寫成一支完整shell腳本、單一WSL呼叫執行到底，
+   避免逐筆重開`wsl.exe`子行程的額外開銷/時序變異)，**100%全部乾淨送達**(逐筆`DEBUG: Memory
+   changed (1 bytes)`)，逐一核對slot16/26/50/62/90皆為`+5=0x01`，無殘留黏行。
+
+**教訓**（跟續六十二舊有的「避免bash迴圈+tmux send-keys不穩定」警告不是同一件事，本輪把兩者
+釐清開來，避免下一輪誤判修錯方向）：
+- 舊警告的真正根因是**具名Enter vs字面`\r`的可靠度差異**，不是"迴圈"或"多次WSL呼叫"本身的問題
+  ——單次呼叫用字面`\r`偶爾能矇混過關(本輪的第一個單獨測試就是巧合成功的案例)，但高頻連續呼叫
+  下失敗率趨近100%。
+- `tools/dosbox_harness.sh`的`cmd_debugger_cmd()`(約L402-411)目前仍是舊的兩段式`-l`寫法，
+  **本輪未修改共用工具本身**(只在呼叫端改用具名`Enter`繞過)，下一輪若要批次寫入多筆debugger
+  指令，建議：(a) 直接呼叫`tmux -L fd2harness send-keys -t harness-<name> Enter`取代
+  `debugger-cmd`工具本身，或(b) 修`dosbox_harness.sh`把`send-keys -l $'\r'`那行換成
+  `send-keys Enter`後重新驗證不影響既有單次呼叫的既有用法。
+- 批次多筆時，把整批指令寫成一支完整shell腳本、複製進WSL後單一次執行到底，比「Windows端bash
+  迴圈逐次呼叫`wsl.exe`子行程」更快也更穩定(省去每次`wsl.exe`啟動的固定開銷，行為時序也更接近
+  同一個bash行程內連續執行，減少不可預期的競爭窗口)。

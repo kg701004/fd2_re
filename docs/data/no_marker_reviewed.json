@@ -33024,6 +33024,62 @@
    "excerpt": "地形 cost table，而是兩層**都已在別處閉合**的既有機制：①目標單位資格閘門——",
    "verdict": "benign",
    "note": "L541真正legality機制段落，承接同段DOSBox-X/Ghidra反組譯核對"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3858,
+   "excerpt_sha1": "9189aa2535f8e96eb8451b90d3227c3de9cf3edd",
+   "excerpt": "> 框(左上角小頭像)的繪製機制本輪未觸及,只確認了背景圖層」,並在建議 5 提出「對 FIGANI 立繪與",
+   "verdict": "benign",
+   "note": "part of §9.25 intro sentence summarizing §9.23.6's own prior wording; evidence markers (BPPM/debugger) are in surrounding lines of the same section"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3869,
+   "excerpt_sha1": "95d22abb624c1f60ee2790b257c23c688a91ae75",
+   "excerpt": "本專案第一次確認具名 `Enter` 鍵在這個除錯器輸入通道上比字面 `\\r` 可靠**,值得列入下一輪工具備忘",
+   "verdict": "benign",
+   "note": "tooling-lesson sentence within §9.25.1, which documents live debugger-cmd/tmux verification in full above/below this line"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3879,
+   "excerpt_sha1": "2c160645595468f2b3e7b1a6f5d1117fe77f6394",
+   "excerpt": "在全新 instance 上驗證通過**——`D 0178:A0AAA` 讀出的灰階雲霧漸層(`0x60-0x64` 範圍)與 §9.23.2",
+   "verdict": "benign",
+   "note": "continuation of a sentence whose marker (D 0178:A0AAA debugger read) is on the same/adjacent line in §9.25.3"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3880,
+   "excerpt_sha1": "24221a6af9325dfd67db36d9212cd880fd96e779",
+   "excerpt": "記錄的數值幾乎一致,證實這個 viewport 校準不是綁死在特定 session 的偶然值,是這個視窗佈局的穩定",
+   "verdict": "benign",
+   "note": "continuation sentence of §9.25.3's VGA calibration finding, marker present earlier in same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3884,
+   "excerpt_sha1": "834ce8bd3b22fe4eb23cf092f4d6019476a74e10",
+   "excerpt": "單一灰階背景色,是立繪本體的多色像素),確認座標命中立繪而非背景。",
+   "verdict": "benign",
+   "note": "conclusion sentence of §9.25.3's VGA pixel read, marker (VGA address/byte values) present earlier in same paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3899,
+   "excerpt_sha1": "446f86cee101e0c69b830997051489a9063385b1",
+   "excerpt": "byte 對不上的結果——**改用 `D SS:ESP`/`[EBP+4]` 讀呼叫端返回位址**(§9.23.3 已驗證過的方法)",
+   "verdict": "benign",
+   "note": "method-description sentence in §9.25.5 citing the already-verified D SS:ESP technique from §9.23.3"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 3912,
+   "excerpt_sha1": "d9ac962128db7fec4df6bf8fe1ffa32523499ffd",
+   "excerpt": "記錄的「第三張、系列從未記錄過的飛龍騎士卡構圖明顯不同」現象吻合,值得下一輪優先展開驗證**),",
+   "verdict": "benign",
+   "note": "cross-reference sentence in §9.25.6 linking to §9.23.1's live-observed dragonrider card screenshot"
   }
  ]
 }

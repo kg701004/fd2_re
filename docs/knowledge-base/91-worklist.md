@@ -321,7 +321,19 @@ composite的呼叫點(「`0x29164`後先有`0x2b9a1`的20×1 BIOS-tick loop」)�
 從已確認可信的錨點(例如已知的`0x524c6` phase-table carousel引擎或`internal/figani`模組
 描述的decoder特徵)重新定位，而不是相信任何舊文件裡的字面位址。這是一個規模與本輪
 class-change調查相當的獨立任務，不在本輪範圍內完成。
-1018 - D - 同1017之montage解碼blocker。**本行已過期，同上；2026-09-06比照1017維持D，理由同1017新增段落。**
+**2026-09-06續二，執行上述建議，live BPPM首次觸及FIGANI立繪本體(§9.23.6明文排除的部分)，真實
+新進展**：新隔離instance重演postbattle montage，對悠妮卡立繪本體(非backdrop)螢幕座標換算VGA
+位址下`BPPM`，三層交叉核對後用`D SS:ESP`回溯呼叫端定位到`FUN_0002aa00`(native 0x2aa00-0x2ac7c，
+角色回顧卡逐人主迴圈，用已知的`[0x53a45]+unit*0x50`單位record公式逐一取出待顯示角色)→
+`FUN_0004e7dd`(native 0x4e7dd，`return &DAT_000615fe+(identity-0x20)*2`，per-identity 2-byte
+查表，僅3個呼叫點且全部集中在`FUN_0002aa00`同一cluster內，確認是montage專屬非通用工具)→寫回
+`unit_record+0x20`一個byte。完整方法論、work buffer delta不可跨session沿用的教訓、具名Enter鍵
+比字面`\r`可靠的工具發現，見doc35 §9.25。**仍未查清**(誠實列出)：`DAT_000615fe`表內容語意未
+dump、`unit_record+0x20`後續讀取端未追、`identity>=0x32`分流的`FUN_0002aedb`/`FUN_0001b8e7`
+(推測是飛龍騎士特殊卡)未展開、portrait框完全未觸及。**維持D**，但範圍已從「不知從何下手」收斂
+到「已知編排層3個具體位址，下一輪從`DAT_000615fe` dump與`unit_record+0x20`讀取端xref兩個方向
+continue即可」。
+1018 - D - 同1017之montage解碼blocker。**本行已過期，同上；2026-09-06比照1017維持D，理由同1017新增段落。同1017續二的`FUN_0002aa00`/`FUN_0004e7dd`新發現同樣適用。**
 1019 - D - frame-decoder contract大致關閉，剩餘gate同1017。**本行已過期，同上；2026-09-06比照1017維持D。**
 1020 - D - editable IR已建，卡在同1017之montage renderer。**本行已過期，同上；2026-09-06比照1017維持D。**
 1038 - A（2026-09-06由D複核關閉，見91-worklist.md本體「自動結束回合」項2026-08-20段落）- native end-turn完整caller/team predicate/AI completion timing未見後續doc關閉，可續靜態反組譯。**2026-09-06複核**：本文件自己的checkbox段落已結論「靜態RE前提已閉合(doc11)」——三個入口(`0x13565`自動判定、`0x16F55`selector1/selector3)與`0x1A30B`本體完整回答caller/team predicate/AI completion timing三個子問題，本項D-index點名的RE缺口已閉合。checkbox本身維持`[ ]`是因為剩下的是remake端工程接線(非新RE缺口)，以及`0x1728C`selector2子選單的獨立語意缺口(已由項目145追蹤，不重複列在這裡)。
