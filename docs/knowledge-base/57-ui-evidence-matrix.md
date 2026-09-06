@@ -408,20 +408,28 @@ choreography」是**不準確的框架**，只是碰巧`FUN_0001a30b`也會在�
 Return開系統環→↓選END→Enter→Enter確認YES」捷徑，`tools/fd2_chapter_sweep.py`已有實作
 可參考)，而不是只停在戰鬥開場畫面。
 
-#### D8 live首次目擊："ENEMY PHASE" banner 直接截圖確認 (2026-09-06)
+#### D8 與既有「ENEMY PHASE」/「PLAYER PHASE」live觀察首次交叉引用 (2026-09-06)
 
 `91-worklist.md` 791 這輪直接呼叫`tools/fd2_chapter_sweep.py`的`find_empty_adjacent_tile()`
 (importlib載入既有函式，不是重寫)找到空地格,跑完完整End-Turn序列(系統環→END→YES確認)，
 **確認YES後畫面直接疊出橘黃色英文字樣「ENEMY PHASE」在戰場地圖上**——截圖存證：
 [`ch27-enemy-phase-banner-live-verify.png`](../figures/ch27-enemy-phase-banner-live-verify.png)。
-**這是本節2026-07-25/26原始「D8」調查用「MAP/TURN/ENEMY/FRIEND/NPC」英文代稱描述未知欄位
-以來，第一次真正在畫面上直接看到對應內容**——「ENEMY」這個代稱與這次實測的「ENEMY PHASE」
-字樣直接吻合，強烈暗示原作者當時是從反組譯出的字串/呼叫模式**推測**有這類欄位存在，本輪
-是第一次獲得畫面級的正面證據。**誠實範圍**：尚未反組譯這個banner字串的來源resource id、
-未確認是否還有對應的「PLAYER PHASE」或MAP/TURN/FRIEND/NPC其餘代稱的實際畫面呈現(本輪AI
-回合結束後直接回到普通戰鬥控制,未見其他banner，但不能排除只是這次AI單位離得太遠沒觸發)、
-也未確認這個banner文字層與本節已反組譯的`0x1f1cc`/`0x1f30a`(sprite/RLE blit滑入動畫)是否
-為同一視覺元素或另一個獨立疊加層。下一輪應該對`FUN_0001a30b`呼叫鏈裡負責畫面疊字的呼叫點
+
+**誠實訂正(同日稍後發現)**：本輪commit最初把這個畫面稱為「D8調查以來第一次真正目擊」，
+這句話是錯的——`docs/knowledge-base/58-remake-live-verification-log.md`(續六十/續六十一等
+多輪，均早於本session)與`docs/knowledge-base/99-chapter-sweep-results.md`都已經**多次、
+獨立地**live觀察並記載過這個「ENEMY PHASE」banner(甚至還記載過對稱的「PLAYER PHASE」，
+99文件的「敵方因為全滅直接跳過」那個場景就是PLAYER PHASE觸發的例子)——`confirm_end_turn()`
+這個既有函式本身的docstring也早就假設End-Turn會跳出這個banner。**這不是全新發現，是本輪
+第一次把這個早已存在、多輪重複觀察過的live現象,跟doc57本節2026-07-25/26原始「D8」調查用
+「MAP/TURN/ENEMY/FRIEND/NPC」英文代稱描述的未知欄位接上關聯**——「ENEMY」這個代稱與「ENEMY
+PHASE」字樣吻合，暗示doc57原作者當時可能是從反組譯出的字串/呼叫模式推測有這類欄位存在，
+但doc57本身從未引用過doc58/doc99既有的live觀察紀錄去交叉核對這個假說，本輪才第一次把兩邊
+接起來。**誠實範圍**：尚未反組譯這個banner字串的來源resource id(doc58/doc99的多輪紀錄也
+都只是live觀察畫面內容，未反組譯字串來源)、doc99確認PLAYER PHASE也存在但doc57的MAP/TURN/
+FRIEND/NPC其餘三個代稱是否對應到別的畫面元素仍未查、也未確認這個banner文字層與本節已反組譯
+的`0x1f1cc`/`0x1f30a`(sprite/RLE blit滑入動畫)是否為同一視覺元素或另一個獨立疊加層。下一輪
+應該對`FUN_0001a30b`呼叫鏈裡負責畫面疊字的呼叫點
 做反組譯定位，而不是繼續被動live截圖等待更多banner出現。
 
 ### UI-04 geometry slice（2026-07-25，E0 partial）

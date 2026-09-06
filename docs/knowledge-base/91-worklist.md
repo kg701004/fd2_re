@@ -422,17 +422,25 @@ End-Turn序列,`91這個項目的核心懸案終於用live截圖直接證實**�
 →確認YES→**畫面上直接出現橘黃色英文字樣「ENEMY PHASE」疊在戰場地圖上**（截圖存證：
 [`ch27-enemy-phase-banner-live-verify.png`](../figures/ch27-enemy-phase-banner-live-verify.png)）。
 **這極可能就是doc57當年（2026-07-25/26）用「MAP/TURN/ENEMY/FRIEND/NPC」這組英文代稱想描述
-的東西之一**——「ENEMY」這個代稱直接對應到這次實測看到的「ENEMY PHASE」字樣，doc57原作者
-當時只看到反組譯出的字串資源/呼叫模式，用自己的英文縮寫暫時代稱這些欄位，本輪則是第一次
-真正在畫面上看到對應的實際呈現。**誠實範圍**：本輪只live確認了「ENEMY PHASE」這一個字樣
-會出現、大致的呼叫路徑（End-Turn確認YES之後、AI回合開始前），還沒有：(a)反組譯出這個
-banner字串具體來自哪個FDTXT/FDOTHER resource id、(b)確認是否還有對應的「PLAYER PHASE」
-或其他doc57提到的MAP/TURN/FRIEND/NPC字樣(本輪AI回合结束後畫面直接回到普通戰鬥控制,未見
-其他banner文字，但AI可能因為距離太遠沒有真的移動，不能排除其他banner存在)、(c)確認這
-是不是與`0x1f1cc`/`0x1f30a`(先前反組譯確認的sprite/RLE blit滑入動畫)同一個視覺元素或
-是另一個獨立疊加的文字层。**item 791重大進展**：從「完全不知道D8是什麼、在哪裡」推進到
-「已經live看到具體畫面內容且有截圖證據」，是本項目在這條調查線上迄今最具體的正面證據，
-但反組譯字串來源、完整banner清單、與已知sprite動畫的疊加關係仍待下一輪，維持D。
+的東西之一**——「ENEMY」這個代稱直接對應到這次實測看到的「ENEMY PHASE」字樣。
+
+**誠實訂正(同日稍後發現,不要重複這個方法論失誤)**：本行原本寫「本輪則是第一次真正在畫面上
+看到對應的實際呈現」，這句話是錯的——`docs/knowledge-base/58-remake-live-verification-log.md`
+(續六十/續六十一等多輪，皆早於本session)與`docs/knowledge-base/99-chapter-sweep-results.md`
+都已經**多次、獨立**live觀察並記載過「ENEMY PHASE」banner，甚至記載過對稱的「PLAYER PHASE」
+(doc99的「敵方全滅直接跳過enemy phase」場景)；`confirm_end_turn()`這個既有函式本身的docstring
+也早就預期End-Turn會跳出這個banner。**本輪真正新增的價值不是「發現這個畫面」(已知很久)，
+是「把這個早已存在、多輪重複觀察過的live現象，第一次跟doc57本節2026-07-25/26原始「D8」
+調查的MAP/TURN/ENEMY/FRIEND/NPC代稱接上關聯」**——這兩份文件此前從未互相引用過，這是一次
+本項目自己反覆強調的「檢查既有證據」紀律的違反(先live截圖才發現，事後才grep到既有記錄)，
+誠實記錄避免下一輪重蹈覆轍。**誠實範圍**：本輪確認了「ENEMY PHASE」出現的呼叫路徑（End-Turn
+確認YES之後、AI回合開始前），還沒有：(a)反組譯出這個banner字串具體來自哪個resource id(doc58/
+doc99的既有紀錄也只是live觀察畫面內容，同樣未反組譯字串來源)、(b)doc99已證實PLAYER PHASE
+也存在，但doc57提到的MAP/TURN/FRIEND/NPC其餘三個代稱是否對應到其他畫面元素仍未查、(c)確認
+這是不是與`0x1f1cc`/`0x1f30a`(先前反組譯確認的sprite/RLE blit滑入動畫)同一個視覺元素或是
+另一個獨立疊加的文字層。**item 791進展**：把D8調查跟既有的ENEMY/PLAYER PHASE live觀察正式
+接上關聯,是本項目在這條調查線上首次做到的跨文件交叉引用，但反組譯字串來源、完整banner清單、
+與已知sprite動畫的疊加關係仍待下一輪，維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
