@@ -592,6 +592,16 @@ resource #5**已知**白/綠數字集(`#42-51`)的3位數渲染，兩個call sit
 下`BPLM`監看，逐回合確認數值真的遞增且螢幕顯示同步——這需要WSL2 DOSBox-X live環境，本輪
 純Windows端`ghidra_batch_probe.py`環境不含這個工具鏈，留給下一輪)。維持D。
 
+**2026-09-07——上面「差一步」的live watch已補上，但不是用BPLM(那條路是死路，見doc48§7的
+既有量化結論：任何BPLM存在就讓RUN退化成近似單步，命中時CS:EIP還卡在real-mode callback讀
+不到暫存器)，改用輪詢式`mem dump`跑完一整輪真正取得數值變化**：`FD2_ch27_test.SAV`進入
+真實戰鬥，確認`[0x1EFBEF]`基準值`1`，END回合確認YES(此時再次dump仍是`1`)後畫面立即疊出
+「ENEMY PHASE」banner，推進過完整的敵方AI行動段落，控制權還給玩家後重新dump得到`2`——
+遞增恰好一次，且3秒後複查仍是`2`(排除自由跑動計數器)、同時`[0x1EFECC]`(勝負旗標)為`0`
+(排除靠假造勝利觸發)。item 791「TURN」候選欄位**正式達到語意100%confirmed**：這個回合
+orchestrator裡的`+1`不只是「時機/index運算byte-exact」，是真正在一次完整玩家+AI回合週期
+裡被觀察到遞增一次的回合計數器。完整過程見`91-worklist.md` 791項「2026-09-07再續十七」。
+
 **2026-09-06續十四，item 791 ENEMY/FRIEND banner的resource-ID選擇點搜尋——排除法縮小範圍，
 未找到選擇點本身，誠實記錄negative result**：完整反組譯`0x1f1cc`/`0x1f30a`(D8滑入動畫)本體
 確認**兩者完全沒有任何依side/phase的條件分支**——16格迴圈裡逐格呼叫`FUN_00015f0e()`(兩次)+
