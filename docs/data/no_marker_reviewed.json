@@ -33392,6 +33392,30 @@
    "excerpt": "產生新的「可能是武器類別/可能是角色技能」這類未經驗證的假說，避免違反本專案自己已經",
    "verdict": "benign",
    "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 459,
+   "excerpt_sha1": "7b61effaa302d89e2b51d53be7ae3f006c174273",
+   "excerpt": "走自己的 body ── ~~物理攻擊動畫~~(**2026-09-06訂正：`command_labels.json`證實",
+   "verdict": "benign",
+   "note": "inline correction annotation on original pseudocode transcript"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 597,
+   "excerpt_sha1": "a501ea87d0eb77398c86c24e2cb7469a20ebc2dd",
+   "excerpt": "最小資料量)則需要進一步確認為何用狀態機制而非位移(炎龍術有機會是延續既有全域旗標控制",
+   "verdict": "benign",
+   "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 681,
+   "excerpt_sha1": "5ab7e274ef090bae9548d0d72efcee428f7cdabb",
+   "excerpt": "下方「仍缺的部分」第1點的訂正。9(咒殺術)卡在doc36引述的dispatch條件邊界外一格，關聯性未確認。",
+   "verdict": "benign",
+   "note": "prose continuation"
   }
  ]
 }
