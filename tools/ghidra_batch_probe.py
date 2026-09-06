@@ -27,7 +27,8 @@ queries.json 格式(陣列,每筆一個 query):
       {"id": "q4", "address": "0x14818", "action": "function_bounds"},
       {"id": "q5", "address": "0x24d22", "action": "xref_from"},
       {"id": "q6", "address": "0x53a51", "action": "bytes", "count": 16},
-      {"id": "q7", "address": "0x205da", "action": "call_scan"}
+      {"id": "q7", "address": "0x205da", "action": "call_scan"},
+      {"id": "q8", "address": "0x1a678", "action": "file_offset"}
     ]
 
 action 說明(對應 ProbeBatch.java 的實作):
@@ -50,6 +51,23 @@ action 說明(對應 ProbeBatch.java 的實作):
                         probe 反組譯過」的呼叫點(親測:`xref_to 0x205da`只回3筆,`call_scan`才找到
                         真正的28筆,與doc25既有記錄的「28個直接caller」精確吻合)。呼叫多、位址範圍大
                         時較慢(全EXE約需額外1-2秒),但比手動窮舉可靠。
+  - file_offset:        (2026-09-06新增)把 address 換算成它在原始 FD2.EXE 檔案裡的真實offset,
+                        **不是套一個固定 delta**。背景:這個LE格式執行檔用分頁表載入,實體檔案
+                        裡的分頁順序跟線性記憶體位址順序不一致——親測過兩個位址只差877 bytes
+                        (同一個function內),換算出的檔案offset卻差了0x600,證明「位址+常數=
+                        檔案offset」這種假設在跨分頁時一定會悄悄算錯。實作上原本想用 Ghidra
+                        自己的 FileBytes API(`MemoryBlockSourceInfo.getFileBytesOffset`)這個
+                        「正規」做法,但親測這個專案的 loader 完全沒有填 FileBytes(每個 block
+                        都回傳空的)——已改成退而求其次但**驗證有效**的做法:從 Ghidra 記憶體讀
+                        `probe_length`(預設24)bytes,直接對真正的 EXE 檔案(`currentProgram.
+                        getExecutablePath()`)做內容搜尋,回傳所有命中位置+是否唯一
+                        (`unique`)。**命中不唯一時不要相信任何一個offset**,加大`probe_length`
+                        重跑。這是本session手動驗證3個位址時用過、證實可靠的方法,現在是內建
+                        action,不用再手動寫Python重複做。**注意**:`getExecutablePath()`回傳
+                        的是這個Ghidra project當初import時記錄的路徑,親測是別台機器的舊路徑
+                        (這台機器不存在)——這個action預設會先用它,不存在就回報清楚的note而
+                        不是裝作成功;需要query帶`"exe_path"`(這台機器的真實EXE路徑,如
+                        `C:/Users/kg701/Desktop/GAME/FD2/FD2.EXE`)覆寫。
 
 輸出格式:JSON 陣列,每筆對應輸入的 "id",含 "ok"(true/false)。單一 query 失敗不會讓整批
 中斷 —— 其餘 query 照跑,失敗的那筆在輸出裡帶 "error" 說明原因。
