@@ -464,6 +464,23 @@ for (iVar4 = 2; iVar4 < 6; iVar4++) {
 (卡在`0x53ecc`==0雙重確認之後、與D8的`0x15f0e`同一輪迴圈)是本輪能拿到最強的間接證據。
 下一輪應反組譯`FUN_00016886`本體與`0x187d6`的座標參數，確認繪製位置是否落在D8面板範圍內。
 
+**2026-09-06續八,反組譯`FUN_00016886`本體+`0x187d6`原始反組譯,找到與D8面板共用同一個資源
+容器的直接證據**：`FUN_00016886`本體只是包一層stack-check再呼叫`FUN_0004e98d()`——這正是
+本文件其他章節(town-hub investigation)已完整反組譯過的**raw/palette-band/solid-fill三模式
+blit函式**，證實`0x187d6`的逐位數繪製走的是**真正的blit呼叫**，不是字型渲染引擎，跟本篇
+「digit/overflow banks」既有記載的圖形化數字系統一致。**更關鍵的發現**：`0x187d6`原始
+反組譯顯示它呼叫`0x16886`前會`PUSH dword ptr [0x00053a81]`——**這正是本節同一份文件稍早
+已確認的loader provenance「[0x53a81]=FDOTHER.DAT resource #5的LMI1容器」全域**！這代表
+**這個疑似「TURN」計數器的數字繪製,跟D8面板本身(`0x1f1cc`/`0x1f30a`經`0x15f0e`)共用同一個
+FDOTHER.DAT resource #5容器**——不是巧合的資源重疊，是同一張圖(或同一個LMI1容器裡不同
+entry)同時提供了面板背景圖與數字字型glyph。另外`0x187d6`把要畫的值(`param_3`)`+0xa`(10)
+後才當index傳進`0x16886`,暗示這個LMI1容器裡index 0-9可能保留給其他用途(圖示/符號)，
+數字glyph 0-9實際存在index 10-19。**誠實範圍**：仍未反組譯出resource #5的完整entry清單
+去確認index 10-19真的是`0-9`數字字型(需要`tools/export_sfx.py`同類的LMI1 dump工具，本輪
+未執行)，也仍未證實這個數字欄位具體代表回合數而非其他數值——但「共用同一個resource #5
+容器」這個結構性事實已經是靜態證據，不是猜測。此結論已足夠支撐下一輪直接dump FDOTHER.DAT
+resource #5全部entry做視覺比對，而不需要再重複這輪的反組譯路徑。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始

@@ -451,6 +451,12 @@ primitive`0x15f0e`之後呼叫一個新反組譯的`FUN_000187d6(v,digits)`—�
 尚未展開，不能100%確認(這是通用工具函式，全遊戲共用，也可能畫其他數字)。詳見doc57對應
 段落。維持D，但「MAP/TURN/ENEMY/FRIEND/NPC」五個代稱中已有「ENEMY」(live截圖)+「TURN」
 (靜態推測)兩個有具體線索，剩MAP/FRIEND/NPC三個仍完全未知。
+
+**2026-09-06續八**：反組譯`FUN_00016886`(=`FUN_0004e98d`包裝，即town-hub章節已知的
+raw/palette-band/solid-fill三模式blit函式)+`0x187d6`原始反組譯，找到「TURN」候選數字
+繪製與D8面板**共用同一個FDOTHER.DAT resource #5(LMI1容器,doc57已知的`[0x53a81]`loader)**
+的直接靜態證據——不是猜測，是同一個資源指標`push`進同一個呼叫鏈。細節見doc57對應段落。
+下一輪建議直接dump resource #5全部entry做視覺比對，取代繼續反組譯呼叫鏈。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。
