@@ -33120,6 +33120,14 @@
    "excerpt": "1個已知不可行的驗證路徑(VGA層BPPM)+2個待試的替代驗證路徑(work buffer層BPPM、單步)」。",
    "verdict": "benign",
    "note": "summary sentence in §9.26.5 referencing §9.26.4's live BPPM finding, already reviewed"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4047,
+   "excerpt_sha1": "15299a8a760b9c91bb72dda79e9ad170e8f3ddf2",
+   "excerpt": "`CS=0080 Pr16`,佐證`BP`預期的是 real-mode 語意的 segment,不是我們 protected-mode 32-bit `CS`",
+   "verdict": "benign",
+   "note": "continuation of §9.26.4b's root-cause sentence explaining the live CS=0080/Pr16 observation; the HELP command output and BP test results are documented in the same paragraph"
   }
  ]
 }
