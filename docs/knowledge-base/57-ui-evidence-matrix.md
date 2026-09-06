@@ -657,6 +657,14 @@ banner共用同一個LMI1容器，靠這個call-site常數選容器內不同sub-
 偏移追蹤本輪未完全展開，留給下一輪用`capstone_probe`複查或live dump驗證。完整過程見
 `91-worklist.md` 791項「2026-09-07再續十八」。
 
+**2026-09-07——MAP/TURN/ENEMY/FRIEND/NPC全數live截圖確認，791正式關閉**：這組原始代稱(見
+doc46 2026-07-25)描述的不是自動播放過場，是玩家用「空地格→開系統環→上→上」可以隨時手動
+打開的戰鬥資訊選單——live截圖(`docs/figures/ch27-map-turn-enemy-friend-npc-menu-live-
+verify.png`)顯示`MAP·27 TURN·001`/勝利失敗條件文字/`ENEMY·47 FRIEND·13 NPC·00`，格式與
+doc46描述逐字吻合。同一輪也確認頂層系統環左邊圖示是「決定要行軍嗎?YES/NO」(doc46誤以為
+是MAP/TURN卡後自動接續的下一幕，實際是同一個選單的另一個分支選項)、右邊圖示是BGM/音效
+設定子選單。完整過程見`91-worklist.md` 791項「2026-09-07再續二十」與doc46對應訂正段落。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始

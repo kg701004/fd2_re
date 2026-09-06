@@ -33544,6 +33544,14 @@
    "excerpt": "> 誤跳過；也不排除是這裡描述的路徑與本輪走的路徑有分支差異。**不是「確認此畫面不存在」，",
    "verdict": "benign",
    "note": "本輪自己新增的live複查honest negative-result文字，非證據主張引用，無需追加marker"
+  },
+  {
+   "file": "46-ch1-opening-timeline.md",
+   "line": 44,
+   "excerpt_sha1": "57642f6c160d9d1f0200073ac343a5db82af3b7c",
+   "excerpt": "> 畫面格式與本節描述逐字吻合：`MAP·27 TURN·001`/勝利失敗條件/`ENEMY·47 FRIEND·13 NPC·00`，",
+   "verdict": "benign",
+   "note": "live截圖figure已在前一行引用(docs/figures/ch27-map-turn-enemy-friend-npc-menu-live-verify.png)，本行是延續敘述非獨立主張"
   }
  ]
 }
