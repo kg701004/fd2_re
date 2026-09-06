@@ -33448,6 +33448,14 @@
    "excerpt": "裡對應command_id(8/25/35/12/32/33/23/24/34)完全逐字吻合**，是本輪對「command_labels.json",
    "verdict": "benign",
    "note": "prose continuation"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 370,
+   "excerpt_sha1": "f9e15e0f2fa8f46300d7130c66bb9b56e3b411a1",
+   "excerpt": "diamond路徑,語意比較像「幾何模式選擇」而非任何一種射程上下限。**誠實範圍**：這只確認了",
+   "verdict": "benign",
+   "note": "Continuation line of the same Ghidra-decompile paragraph (0x14818 decompile), source marker is earlier in the paragraph"
   }
  ]
 }

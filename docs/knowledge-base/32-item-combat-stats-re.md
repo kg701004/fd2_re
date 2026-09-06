@@ -344,6 +344,40 @@ byte的命名並存卻互不對話：(1)本節撤回的`range_min/range_max`、(
 三者不可能同時為真，但本輪未逐一反組譯`0x14818`內部如何分別消費`mode`(=itemRow+0xc)
 與`radius`(=itemRow+0xb)兩個參數去仲裁哪個解讀正確——留給下一輪。
 
+**2026-09-06再續,完整decompile `0x14818`本體(`0x14818..0x149f7`,480 bytes),仲裁出上述
+三種命名矛盾裡哪個接近正確**：
+```c
+if (param_4 < 0x10) {                          // mode 是離散開關,不是距離值
+    FUN_0004e8a5(); FUN_0004e390();
+    if (param_5 != 0) {                        // radius==0時整段跳過,不畫marker
+        for (每個(x,y)格) {
+            d = FUN_00037932()+FUN_00037932(); // 曼哈頓距離(cx,cy)-(x,y)
+            if (d < param_5) grid[x][y] = 0xff; // ★radius是真正的幾何距離threshold★
+        }
+    }
+} else {                                        // mode>=0x10:完全不同的十字清除路徑
+    // 逐行/逐列比對 (iVar6 <= param_4 - 0x10)，radius(param_5)在這個分支完全沒被讀取
+}
+```
+**關鍵結論**：`param_5`(=`itemRow+0xb`,doc13稱`weaponClass`)在`mode<0x10`分支裡被當成
+貨真價實的**曼哈頓距離threshold**使用(`d<radius`才標記)，是名副其實的幾何射程；
+`param_4`(=`itemRow+0xc`,doc13稱`weaponRange`)則是一個**離散mode開關**(`<0x10`走
+diamond-marker路徑、`>=0x10`走完全不讀`radius`的十字清除路徑)，本身從未被當成距離值
+使用。**這代表doc13的命名剛好對調了**：`itemRow+0xb`才是真正的距離/射程值，`+0xc`是
+mode開關不是射程。也代表`item.json`現行`range:[min,max]`把這兩個byte當「同質區間pair」
+的框架同樣站不住腳——`0x14818`從頭到尾只吃一個距離參數(`radius`),沒有「min距離」跟
+「max距離」兩個獨立的幾何輸入；`+0xc`就樣本所見(row0-7全部是`1`)在低值時固定選擇
+diamond路徑,語意比較像「幾何模式選擇」而非任何一種射程上下限。**誠實範圍**：這只確認了
+`0x18d8c`(Attack ring)這一個caller的語意,doc32本節前文已經證實其他caller(`0x1567e`/
+`0x1bbdc`/`0x20c6f`/`0x1debe`)對相鄰bytes有各自不同用法,不代表全部215個item每一列的
+`+0xb/+0xc`在所有caller情境下都固定是「(distance, mode)」這個角色分配，但至少對Attack
+ring這條路徑，`+0xb`=distance/`+0xc`=mode是byte-exact反組譯確認的結論，doc13的變數命名
+建議下一輪對調成`weaponRange`(+0xb)/`geometryMode`(+0xc)，`item.json`的`range:[min,max]`
+欄位名建議加`_meta`警告或拆成`reach`(+0xb單值)+`mode`(+0xc)兩個獨立欄位，避免繼續讓
+下游(remake或未來分析)誤把`+0xc`當成射程上限使用。worklist L1117的「native argument↔
+weapon min/max mapping」子項可視為**部分收斂**：不是min/max pair，是distance+mode
+pair，維持D待doc13/item.json實際改名。
+
 **2026-08-19 補完：row 內三個互不相同的「type」欄位，避免混淆**——這張表同時有三個
 語意完全不同、卻都可能被籠統叫做「type」的 byte，回應 worklist L366/L1354「未命名
 欄位語意」的要求，逐一列清楚：

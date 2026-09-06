@@ -697,6 +697,18 @@ Tab+20秒等待後**序列直接結束，沒有任何後續**，證明這個獨�
 待下一輪決定：是doc13的「class/range分離」對，還是`item.json`的「min/max pair」對，兩者
 不可能同時為真。維持D，「native argument↔weapon min/max mapping」子項依然開放，這次沒有
 新增靜態證據，只發現了文件間的既有矛盾。
+
+**2026-09-06再續，完整decompile `0x14818`本體，仲裁出命名矛盾——不是min/max pair，是
+distance+mode pair**：`param_4`(mode,=itemRow+0xc)是離散開關(`<0x10`=diamond幾何路徑,
+`>=0x10`=完全不讀radius的十字清除路徑)；`param_5`(radius,=itemRow+0xb)在diamond路徑裡
+是貨真價實的曼哈頓距離threshold(`d<radius`才標記候選格)。**doc13的`weaponClass`(+0xb)/
+`weaponRange`(+0xc)命名剛好對調**——`+0xb`才是距離值,`+0xc`是mode不是距離；`item.json`
+現行`range:[min,max]`框架同樣不成立,`0x14818`從頭到尾只吃一個距離參數,沒有獨立的
+min/max兩個幾何輸入。**誠實範圍**：只確認了`0x18d8c`(Attack ring)這條caller路徑的語意，
+doc32已知其他caller(`0x1567e`/`0x1bbdc`/`0x20c6f`/`0x1debe`)對相鄰bytes另有各自用法，
+不代表全部215筆item每列的`+0xb/+0xc`在所有情境下都固定是這個角色分配。詳見doc32本節
+「2026-09-06再續」段落的完整反組譯佐證。子項狀態**由「完全開放」收斂為「distance+mode
+語意已確認，doc13/item.json欄位命名待對調」**，維持D。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
