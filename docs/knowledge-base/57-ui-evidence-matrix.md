@@ -367,6 +367,47 @@ MAP/TURN text source 與 YES/NO input ABI；在此之前不新增猜測性 rende
 
 官方 `0x1a30b` 本體沒有 `0x15f84` 呼叫；它先以 raw unit-record gates 做 `+0x40` 向 `+0x42` 的 `max/5` transition，再進 indexed redraw 與 `0x1f1cc/#0x52` slide。故目前 D8 證據只支持 battle-entry indexed choreography，不支持 MAP/TURN/ENEMY/FRIEND/NPC 字串或 YES/NO input；那些欄位仍是缺口。
 
+#### D8 觸發條件訂正："battle-entry" 這個框架本身不準確，`0x1a30b` 是回合結算/推進主流程，不是入場專屬 (2026-09-06)
+
+`91-worklist.md` 791 這輪(2026-09-06)完整反組譯了 `FUN_0001a30b`(即本節的 `0x1a30b`)全文，
+連同它呼叫的 `FUN_0001d80b`——結果顯示本節「battle-entry」這個框架從一開始就是誤導性簡化：
+
+```c
+FUN_0001a30b(void) {
+  ...(own regen / 逐單位掃描更新等)...
+  FUN_0001a813(); FUN_0001a866();
+  if (DAT_00053ecc == 0) {              // ← 關鍵閘門
+    FUN_0001a7bd(); FUN_0001d80b(); FUN_0001a7f1();
+    if (DAT_00053ecc == 0) {            // ← 再檢查一次，兩層都要通過
+      ...
+      FUN_0001f1cc(); thunk_FUN_0003e01d(); FUN_0001f30a();   // 就是D8本體(本節已知)
+      ...
+    }
+  }
+}
+```
+
+`DAT_00053ecc` **不是**「battle-entry phase counter」——`docs/knowledge-base/25-battle-event-
+system.md`(獨立、早於本輪的既有文件)已把它記載為**逐章戰場事件handler(`0x51b19`跳表)寫入
+的raw pending碼**(`0`=繼續、`1/2`=勝敗判定觸發)，`FUN_0001d80b`的迴圈本體逐一掃描存活敵方
+單位、呼叫`(**(&DAT_00051b19 + DAT_00053c03*4))()`(逐章handler)，**一旦某次呼叫把
+`DAT_00053ecc`寫成非0(判定出勝敗)，迴圈立刻break**。
+
+**這代表D8的`0x1f1cc`/`0x1f30a`slide只會在「完整跑過一輪全體單位win/loss掃描、確認勝敗都
+還沒發生」的時間點觸發**——也就是**每回合結算(end-turn)推進到下一回合之前**，不是「進入
+戰場的那一刻」。doc57先前(2026-07-25/26)把這整條呼叫鏈定性為「battle-entry indexed
+choreography」是**不準確的框架**，只是碰巧`FUN_0001a30b`也會在戰鬥剛開始時執行一次(初始化
+第一回合)，讓「入場」看起來像是合理的觸發時機，但真正的閘門條件(`[0x53ecc]==0`雙重檢查)
+綁定的是「這一輪掃描完，沒有人剛好輸贏」，不是「剛進入戰場」。
+
+**這完整解釋了91-worklist.md 791本輪三次live嘗試(截圖法×2、`BPLM`記憶體斷點×1)全數落空的
+原因**：三次嘗試都只走到LOAD→戰前過場→打開戰鬥指令環，**沒有一次真正執行完一整個回合**
+(End-Turn)，`FUN_0001a30b`很可能根本還沒被以「回合結算」模式呼叫過，`[0x53ecc]`自然全程
+維持初始值不變——不是這個live驗證方法有問題，是三次嘗試都還沒推進到真正會觸發它的遊戲
+階段。**下一輪如果要live驗證D8**，需要先讓玩家單位完成至少一次End-Turn(既有的「空地格→
+Return開系統環→↓選END→Enter→Enter確認YES」捷徑，`tools/fd2_chapter_sweep.py`已有實作
+可參考)，而不是只停在戰鬥開場畫面。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
