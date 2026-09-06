@@ -697,6 +697,20 @@ Y位移=`-10,-24,-30,-24,-10,4,10,4`(下探到-30再回升到+10的弧線)。**�
 是元素攻擊法術(火系×4/雷系×4/聖光×1)，不是doc36第10/11輪以來一直誤稱的「物理攻擊」，詳見
 下方「仍缺的部分」第1點的訂正。9(咒殺術)卡在doc36引述的dispatch條件邊界外一格，關聯性未確認。
 
+**2026-09-06 live獨立驗證**：用`tools/fd2_dosbox_live_helper.py`啟動一個全新instance(`d8probe`)，
+LOAD既有真實存檔(figaniA留下的ch27進度)，進入軍營帳篷→跟NPC對話開啟索爾的法術清單畫面，
+**實機截圖直接顯示**：聖光彈-MP24、行動術-MP24、暗邪鬼-MP36、裂地術-MP80、熾天使-MP76、
+風妖精-MP52、傳送術-MP20、破龍擊-MP22、破壞神-MP28——**這9個名稱與`command_labels.json`
+裡對應command_id(8/25/35/12/32/33/23/24/34)完全逐字吻合**，是本輪對「command_labels.json
+名稱真的會顯示在玩家看得到的畫面上」這件事的第一次**直接視覺獨立驗證**(先前只確認FDTXT
+字串解碼pipeline本身正確，沒有實機比對過畫面)。截圖存證：
+[`sol-spell-list-command-labels-live-verify.png`](../figures/sol-spell-list-command-labels-live-verify.png)。
+**副產品，誠實記錄**：本輪原目標是嘗試觸發worklist 791的「D8」battle-entry slide-in畫面
+(`0x1f1cc`/`0x1f30a`)，但這份存檔LOAD後停在軍營帳篷hub(NPC對話"還有事嗎？")，不是進行中的
+戰鬥——要從這裡走到真正的battle-entry轉場需要先離開帳篷、找到地圖上的戰鬥觸發點，屬於比
+本輪預期更長的導航路徑，本輪未繼續往791推進，只留下這個獨立的、有價值的command_labels.json
+live驗證副產品。
+
 **誠實範圍**:這張表是**結構分類**,不是完整語意解讀——`template-A`的4/5/7「單軸10-dword」
 是否代表「只有Y沒有X」或反過來、action_id6的角度常數具體怎麼用、action_id3為何比0/1多一組
 3+3的額外資料，都還沒反編譯到底。但比起本輪開始時「完全不知道10個action函式在幹嘛」，現在

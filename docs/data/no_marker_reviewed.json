@@ -33432,6 +33432,22 @@
    "excerpt": "證實`param_2==9`是這個函式刻意支援、常態會被呼叫到的合法輸入，不是「意外落在表尾的",
    "verdict": "benign",
    "note": "prose continuation"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 700,
+   "excerpt_sha1": "aecc4e3cf5d137fe37ae3ad6e6e7bb6d59a63a9f",
+   "excerpt": "**2026-09-06 live獨立驗證**：用`tools/fd2_dosbox_live_helper.py`啟動一個全新instance(`d8probe`)，",
+   "verdict": "benign",
+   "note": "prose describing live verification"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 704,
+   "excerpt_sha1": "4b2ca344c5dbb9b407d0a568a83371d701ff4479",
+   "excerpt": "裡對應command_id(8/25/35/12/32/33/23/24/34)完全逐字吻合**，是本輪對「command_labels.json",
+   "verdict": "benign",
+   "note": "prose continuation"
   }
  ]
 }
