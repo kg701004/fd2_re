@@ -3127,3 +3127,64 @@ boundary完全漏掉)都有通用、可重複使用的繞過手法，值得做�
 (2)一個看似「已知」的引數來源(先前的`param_4`)如果沒有逐位元組驗證，很容易在下一輪被
 不同investigator誤植到另一個引數上——這次的訂正靠的是重新從prologue的`mov ebp,[esp+0x8c]`
 往下手算偏移，不是相信前一輪的文字敘述。
+
+## 2026-09-07(續五)：再2支通用工具(`verify_dat_extraction_freshness.py`/`audit_global_writers.py`)，
+接著發現本session全程誤用WSL distro名稱——「live環境不可用」的結論本身是錯的
+
+**背景**：續四的3支工具把item 1117 SFX index值解出來後，代入FDOTHER.DAT頂層目錄查到的
+resource卻是圖片/巢狀容器不是音效，形成一個矛盾。使用者要求「先建立工具分析這個矛盾，
+再新建工具將未證實的部分分析清楚」，於是新增2支工具直接針對兩個候選假說做否證測試：
+
+1. `tools/verify_dat_extraction_freshness.py`——重新對活體`.DAT`檔案跑`unpack_dat.py`自己的
+   `parse_directory`，逐一比對每個resource index的(offset,length)跟`extracted/raw/<NAME>/`
+   既有解包產物的實際檔案大小，不是靠整檔hash比對(那只能證明「不是同一份檔案」，證明不了
+   「哪個index飄移了」)。跑在FDOTHER.DAT上：104/104全部逐byte吻合，否證「解包產物是舊版」
+   假說。
+2. `tools/audit_global_writers.py`——通用型：給一個全域資料位址，自動`xref_to`找WRITE點、
+   對每個writer函式用`call_scan`找出它自己的全部caller(交叉檢查`xref_to`本身在這個專案
+   `-noanalysis`模式下已知的不完整性)，再用`capstone_probe`原始反組譯該函式，自動判斷有沒有
+   讀取任何`[esp+..]`棧上引數(=有沒有可能隨caller變化)。跑在`[0x53b13]`上：唯一writer函式
+   `FUN_0001d4cb`真正有6個caller，但整個函式體零個`[esp+..]`讀取——三個引數全部是寫死的
+   immediate，否證「table_ptr可能不是固定FDOTHER.DAT」假說。
+
+兩個假說都被否證後，矛盾依然沒解開，但過程中發現`FUN_0001c4cc`的「雙胞胎」函式`FUN_0001c2da`
+(每個caller都會接著呼叫)也直接播放SFX，用的是寫死的`index=1`(不查表)——連這個理論上最不該
+出錯的固定值，指向的資源內容一樣是圖片格式，矛盾更精確但更難解釋。往下追`FUN_000111ba`的
+回傳值來源(`FUN_00037324`→`0x372f9`、`FUN_0003706e`→`0x3707e`)進入這個專案完全沒碰過的底層
+runtime/檔案I/O原語，止步於此，誠實記錄「需要專門一輪」。
+
+**使用者接著問「所以你建議是什麼」，本工具鏈給出的回答是「這裡到此為止，live驗證比繼續
+靜態反組譯便宜，但這個Windows-only session沒有DOSBox-X live工具鏈可用」——這個判斷後來
+被證明是錯的**。使用者問「你的建議呢」後回覆「逐項都進行」，促使重新檢查WSL環境，用
+`wsl.exe -l -v`才發現：真正的distro名稱是`kali-linux`與`Ubuntu`兩個，本session前面全程
+用`-d kali`(少了`-linux`)去嘗試，得到`WSL_E_DISTRO_NOT_FOUND`，長得完全像「這個環境在這台
+機器上不存在」，但其實只是distro名稱打錯——`Ubuntu`底下`~/fd2-run/`、`~/.fd2-harness/`、
+`~/.fd2-live-helper/`與`tools/fd2_dosbox_live_helper.py/.sh`全部完整可用，這個誤判讓本
+session前面所有「需要live驗證，本輪Windows-only環境無法繼續」的暫停判斷都建立在一個沒有
+先核對過的假設上。已修正持久記憶`fd2-dosbox-wsl2-native-build`加上「distro-name caution」
+段落，避免下一輪重蹈覆轍。
+
+**立刻用修正後的live環境把item 1117矛盾徹底解開**(完整技術細節見doc36/worklist item 1117
+本身，這裡只記工具鏈教訓)：載入既有存檔`FD2_ch27_test.SAV`進入真實戰鬥，用
+`fd2_dosbox_live_helper.py mem dump`直接讀`[0x53b13]`的runtime值(這是`FUN_000111ba`
+runtime配置出來的真實指標，不需要再套ghidra↔live delta)，把讀到的bytes當byte-signature
+反過來搜真正的`FDOTHER.DAT`檔案，找到命中位置剛好是頂層resource #80的起點——`table_ptr`
+從來不是指向FDOTHER.DAT頂層目錄本身，是指向頂層resource #80這個**巢狀**LLLLLL容器。用
+既有`tools/export_sfx.py --res 80`(不必新建，工具已支援任意resource編號)重新導出成WAV，
+逐子項統計特徵(mean≈127-128、對稱分布、無截波)確認是教科書等級的8-bit PCM。item 1117正式
+關閉(D→A)。
+
+**同一個live環境接著嘗試item 791的TURN候選欄位**(見worklist item 791續十六)：讀
+`DAT_00053bef`初始值=1，跑過一次「結束回合」UI流程後數值未變，接著意外進入一段大型敵方
+機甲部隊過場，推進幾步後依然是1——只測了「玩家單方結束回合」這一種path，還沒測到「完整
+一整輪(己方+敵方)」這個更可能是遞增時機的情境，因為過場長度不明、時間有限而中止，誠實
+記錄未完成，已乾淨teardown instance。
+
+**教訓**：(1)「這個環境不可用」這種結論在下結論前必須先核對過持久記憶裡是否已經有明確的
+反例記載——這次的memory檔案`fd2-dosbox-wsl2-native-build`其實從一開始就寫著正確的distro
+名稱`Ubuntu`，只是沒被重新讀過就被更早的錯誤假設蓋過去；(2)`wsl.exe -d <name>`打錯名稱的
+錯誤訊息(`WSL_E_DISTRO_NOT_FOUND`)看起來跟「這台機器沒有這個能力」一模一樣，是一個容易讓
+人誤判環境邊界的陷阱，下次任何「WSL環境疑似不可用」的判斷都應該先跑`wsl.exe -l -v`列出
+真正的distro清單，不能只靠一次失敗的`-d`猜測就下結論；(3)live驗證一旦真的可用，往往比
+繼續堆疊靜態假說更快解決問題——這次從「連續兩輪否證假說仍卡住」到「完全解開」只花了一次
+`mem dump`+一次byte-signature反搜，比之前好幾輪的純靜態反組譯加起來還快。
