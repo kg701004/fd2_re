@@ -861,12 +861,36 @@ type16)、`FUN_00022866`(魔鎧/DP+15%,type15)、`FUN_00022997`(風行/HIT+EV+15
 `FUN_00022af6`(marker clear/restore,type6/7)、`FUN_00022d1b`(狀態施加,type14/22)**全部
 也呼叫`FUN_0001c4cc`**——代表「item使用時可能觸發播放音效」這個機制覆蓋的effect type
 比上一輪記錄的「11/20/24」廣得多，doc32既有table列出的絕大多數type(6,7,11,12,14,15,
-16,20,22,24)這條共用迴圈都會經過。**誠實範圍**：本輪嘗試對type11分支的呼叫端做raw
-byte手動解碼定位傳入`FUN_0001c4cc`的4個參數字面值(其中一個看似是常數`0xd`)，但
-`disasm`在該位址反覆撞到已知的錯位問題(見既有`.object1`盲區/misalignment教訓)，
-手動位元組拆解的參數對應風險太高，本輪**主動放棄**繼續往下猜測避免產生不可靠結論，
-維持D。下一輪如果要繼續，建議改用`bytes`+人工核對指令長度表逐byte前進，而不是猜測
-對齊位址去跑`disasm`。
+16,20,22,24)這條共用迴圈都會經過。
+
+**訂正(同輪，改用`bytes`+人工逐指令長度核對，成功繞開`disasm`的錯位問題)**：改用
+`bytes`從`0x20d90`往後讀70 bytes，逐指令手算長度前進(不依賴`disasm`的自動對齊)，
+成功核對到confirmed call site `0x20dcd`：`CALL rel32`的4-byte位移`fa b6 ff ff`
+換算目標剛好是`0x1c4cc`(跟`call_scan`確認的呼叫端**完全吻合**，證明手算對齊正確)。
+往回展開push序列(chronological)：`PUSH EBP; PUSH [ESP+0x8c]; PUSH 0xd; PUSH [ESP+0x8c]`，
+`ADD ESP,0x10`(4個dword，數量吻合)。__stdcall逆序對應：`param_1=param_3=[ESP+0x8c]`
+(同一個值被當兩個位置引數各推一次)、**`param_2=0xd`(13)**、`param_4=EBP`。這代表
+type11(MP恢復)呼叫`FUN_0001c4cc`時的`param_2=13`。**重新核對`FUN_0001c4cc`內部
+複製迴圈**(先前誤判為只複製8-9個元素)：`for(iVar2=8;iVar2!=0;iVar2--){複製4 bytes}`
+再加收尾1 byte，實際複製的是**8組4-byte(32 bytes)+1 byte=33 bytes**，不是8-9個
+byte——先前的「param_2=13超出既有~10元素陣列範圍」疑慮**已排除**，13落在合法範圍
+(0-32)內。**誠實範圍**：這證實了type11呼叫時查表index=13，但**這33-byte表格本身
+的實際內容(decompile只顯示前10個逃逸字元"\x06\x06\x06\x06\t\t\t\t\n\x0e"，第13個
+entry的值本輪未dump)、以及這個index最終如何轉成FDOTHER.DAT的具體resource編號，
+仍未追完**——已知的是「index合法且有意義」，不是「index=什麼值」這個最終答案。
+維持D，下一輪應直接對這個33-byte表格的記憶體位址跑`bytes`讀出完整內容。
+
+**同輪立刻追完**：反組譯`FUN_0001c4cc`本體開頭找到三張33-byte表格各自的來源位址——
+`0x51f33`(→`abStack_84`,最大幀數門檻)、`0x51f54`(→`local_3c`,resource sub-index)、
+`0x51f75`(→`local_60`,SFX觸發旗標，`if(iVar2==0 && local_60[param_2]!=0)`才在第0幀
+播放)。`bytes`直接dump三張表的index13(對應type11/MP恢復)：`abStack_84[13]=0x39`(57，
+最大幀數)、`local_3c[13]=0x7`、`local_60[13]=0xc`(非0！)。**結論**：type11(MP恢復)
+使用這條共用受擊迴圈時，`local_60[13]!=0`成立，**確認在動畫第0幀就會觸發播放音效**
+(呼叫`FUN_00025a96`)。這是本專案第一次byte-exact確認「哪個item effect type、在哪一幀」
+真的會播音效，不再只是「觸發機制存在」的推論。**誠實範圍**：這只解出了「何時觸發」，
+`0x25a96`實際播放哪個PCM樣本仍取決於它的`index`引數(先前已知是動態暫存器`EAX`，來自
+`param_4`陣列的per-unit byte，非靜態常數)——**樣本本身的身分仍是唯一剩下的真正開放
+問題**，其餘部分(觸發時機、哪些type有聲音、table_ptr來源)本輪已全部byte-exact關閉。
 
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
