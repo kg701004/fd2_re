@@ -33328,6 +33328,14 @@
    "excerpt": "陷阱本身無條件的事實)。此項調查**收斂關閉**,不再是D(待查)而是**確認的架構限制**——",
    "verdict": "benign",
    "note": "prose continuation, worklist-impact paragraph"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 587,
+   "excerpt_sha1": "b89b4222a22800789805fb82884935689280959a",
+   "excerpt": "大小已確認同構——`0x6c/0x2c/0x74/0x54×2/0x6c/0x50/0x38/0x18`各不相同的stack frame暗示每個",
+   "verdict": "benign",
+   "note": "prose continuation, not an evidence marker gap"
   }
  ]
 }
