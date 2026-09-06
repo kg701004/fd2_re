@@ -783,12 +783,22 @@ live原版畫面證據的直接交叉印證。215筆全部解碼成功、零殘�
 真正的新增價值是：(1)把這句從未執行過的文字公式**真正跑過一次**，產出可重用的
 `tools/export_item_labels.py`/`docs/data/item_labels.json`；(2)用item.json與doc58
 live截圖做了先前從未做過的byte-exact/價格交叉驗證；(3)把這個早已存在但從未回頭連結的
-事實，正式接進worklist 1117「presentation子項」與doc32/doc57的討論脈絡。**誠實範圍**：
-這只解開「道具顯示**名稱**」，presentation子項另外兩部分——**icon渲染**(同一個
-`0x184c0`函式內另外呼叫`FUN_0001685c`/`FUN_00016886`依item type/effect分支畫icon，
-本輪定位到呼叫點但未反組譯`0x1685c`本體去解出icon index公式)與**SFX**(道具使用時
-播放的音效，本輪完全未觸及)——仍是真正開放的缺口。item 1117整項因此仍維持D，presentation
-子項細分為「名稱：已解」+「icon：呼叫點已定位、index公式未解」+「SFX：未觸及」。
+事實，正式接進worklist 1117「presentation子項」與doc32/doc57的討論脈絡。
+
+**誠實訂正(2026-09-06再續七)——上一段「icon index公式未解」的框架也是錯的，doc13
+同一段(第144-145行)早就寫著答案，本輪反組譯`0x1685c`只是再次確認了文字記載**：
+`FUN_0001685c`只是`FUN_0004ed0b`的stack-check薄包裝(跟`0x16886`包`0x4e98d`同構)，
+raw disasm確認呼叫端傳入的icon index正是doc13已記載的「row byte0 `<0x15`／`<0x20`／
+其他 選 icon59/60/61，equipped再+3」(對應本輪追到的字面值`0x3b/0x3c/0x3d`+條件式`+3`)。
+**presentation子項的「名稱」與「icon」兩部分其實doc13早就都寫過**，本輪的兩次反組譯都是
+沒先查證就重複造輪子——這是本次調查裡第2次犯同一個「檢查既有證據」紀律疏漏(第1次是
+名稱公式)，比第791/1117/584等item更早期已建立的「查文件優先」紀律這裡沒有貫徹到底，
+誠實記錄避免第三次。**真正剩下、目前確認全專案任何文件都未觸及的只有SFX**(道具使用時
+播放哪個音效)——`grep`過`13-battle-menu-system.md`/`32-item-combat-stats-re.md`/
+`36-sfx-audio-data.md`三份最可能記載的文件，只有doc32 L468那句既有的「renderer/SFX
+仍fail-closed」，沒有任何具體反組譯或位址。**item 1117 presentation子項最終狀態**：
+名稱=已解(本輪`item_labels.json`)、icon=已解(doc13既有記載，本輪僅確認)、SFX=真正
+開放，是item 1117剩下唯一貨真價實的缺口。維持D。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
