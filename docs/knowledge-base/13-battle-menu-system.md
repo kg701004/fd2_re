@@ -798,7 +798,7 @@ dispatch 邏輯,回答任務要問的核心問題:**指令環的 4 個選項不�
 
 | slot | 方向 | 選項 | disable 條件(`enableFlags[i]=1` 時該方向被跳過) |
 |---|---|---|---|
-| `[0]` | ↑ | 攻擊 | `FUN_0001b83d(unit,0)==-1`(**無武器類 slot**,見下)**或** `FUN_00014818(actorX,actorY,0,weaponRange,weaponClass,0)==0`(**該武器射程內找不到任何敵方 camp 候選**) |
+| `[0]` | ↑ | 攻擊 | `FUN_0001b83d(unit,0)==-1`(**無武器類 slot**,見下)**或** `FUN_00014818(actorX,actorY,0,geometryMode,weaponRange,0)==0`(**該武器射程內找不到任何敵方 camp 候選**) |
 | `[1]` | ← | 法術 | `FUN_0001c269(unit,0)==0`(**已知法術 bitfield`+0x1a..+0x1e`全空**)**或** `unit+0x27 != 0`(第二 gate,語意未定名,推測是封印/沉默一類狀態) |
 | `[2]` | → | 道具 | `FUN_0001b8a6(unit)==0`(**8 格道具欄全空**,bit7 clear 計數為 0——此位址已在 `verified_addresses.json` 收錄為 `RE-ITEM-AVAILABILITY-GATE-1B8A6`,本輪交叉核對一致) |
 | `[3]` | ↓ | 待機 | **永遠不 disable**——待機這個選項在目前反組譯範圍內沒有找到任何 gate,永遠可選。 |
@@ -816,12 +816,24 @@ else {
                                                       //   (即既有 verified_addresses.json
                                                       //    收錄的 0x602AD raw item-row 表,
                                                       //    stride 0x17=23 bytes)
-    weaponClass = itemRow[0xb];  weaponRange = itemRow[0xc];
-    if (FUN_00014818(actorX, actorY, /*outArray=*/0, weaponRange, weaponClass, /*camp=*/0) == 0)
+    weaponRange = itemRow[0xb];  geometryMode = itemRow[0xc];
+    if (FUN_00014818(actorX, actorY, /*outArray=*/0, geometryMode, weaponRange, /*camp=*/0) == 0)
         param_2[0] = 1;                             // 射程內無敵方候選 → 攻擊 disable
 }
 if (FUN_0001b8a6(unit) == 0)  param_2[2] = 1;       // 道具 disable
 if (FUN_0001c269(unit,0) == 0) param_2[1] = 1;      // 法術 disable(無已知法術)
+```
+
+**2026-09-06變數命名對調(回應worklist L1117，見doc32對應段落的完整反組譯佐證)**：本節
+原本把`itemRow[0xb]`叫`weaponClass`、`itemRow[0xc]`叫`weaponRange`，跟`0x14818`本體的
+完整反組譯結果對不上——`itemRow[0xc]`(傳進`0x14818`的`mode`參數)其實是離散開關(`<0x10`
+=diamond幾何路徑、`>=0x10`=完全不讀後面那個參數的十字清除路徑)，`itemRow[0xb]`(傳進
+`radius`參數)才是`mode<0x10`分支裡真正被拿來跟曼哈頓距離比較的幾何threshold。本節原本的
+命名剛好把這兩個角色對調了，已在上面兩段程式碼片段裡改成`weaponRange`(+0xb)/
+`geometryMode`(+0xc)，跟doc32「2026-09-06再續」段落的命名保持一致。這不影響本節其餘結論
+(disable條件/呼叫鏈本身沒有錯，只是兩個變數互相取錯了名字)。
+
+```c
 if (unit[+0x27] != 0)          param_2[1] = 1;      // 法術 disable(額外狀態 gate)
 do { iVar1 = FUN_000177fc(unit, param_2); } while (iVar1 == 0);   // 按鍵迴圈
 ```
@@ -960,7 +972,7 @@ iVar2 = FUN_0001b83d(unit, 0);                       // 武器 slot 查詢
 if (iVar2 == -1) { *param_2 = 1; }                    // 無武器 → 攻擊 disable
 else {
     FUN_0001b722(); iVar2 = FUN_0004e8bc();            // weapon class → item row(0x602AD 表)
-    weaponClass=itemRow[0xb]; weaponRange=itemRow[0xc];
+    weaponRange=itemRow[0xb]; geometryMode=itemRow[0xc];
     if (FUN_00014818(...) == 0) { *param_2 = 1; }      // 射程內無候選 → 攻擊 disable
     FUN_0004df4c();
 }
