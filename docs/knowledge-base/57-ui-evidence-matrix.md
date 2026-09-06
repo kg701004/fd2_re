@@ -641,6 +641,22 @@ banner的真正resource-ID選擇點，本輪排除了D8滑入動畫本體(續十
 (本節)兩個方向，仍未找到，回到完全開放狀態**，下一輪需要換全新切入點(可能得從live
 DOSBox-X對banner出現當下的screenshot時間點做記憶體diff，而不是繼續猜靜態候選)。維持D。
 
+**2026-09-07——找到了，不是全域寫入，是call-site literal參數**：續十四找錯了地方(在
+`0x1f1cc`/`0x1f30a`本體內找side分支)，真正的選擇點在**呼叫端**`FUN_0001a30b`。完整反組譯
+該函式裡兩次D8觸發點，發現兩處push進`0x1f1cc`/`0x1f30a`的常數不同——緊接在`0x1d80b`(item
+304已確認的敵軍掃描)之後push`0x52`，緊接在`0x1d8ba`(item 304已確認的友軍掃描，且緊接在
+`inc [0x53bef]`即TURN counter遞增**之前**)之後push`0x50`。追蹤這個常數：`0x1f1cc`原封
+不動轉呼叫`FUN_0001f42d(param_1,offset)`(迴圈5次)，`FUN_0001f42d`內部算出`ebx=0x55-
+param_1`(0x52→3，0x50→5)，這個差值成為`0x15f0e`(item 1117已確認的LMI1容器resource-fetch
+原語，讀取共用全域`[0x53a81]`=D8面板本身resource #5)的其中一個引數——**ENEMY/PLAYER
+banner共用同一個LMI1容器，靠這個call-site常數選容器內不同sub-entry**，跟item 1117的
+「同容器、靠index選子項」結構完全同構。本輪(見791項再續十七)自己live觀察到「結束回合YES
+後立即出現ENEMY PHASE banner」，時序精確對應`0x52`那個分支，是同一輪session內的直接
+交叉確認，不是巧合。**誠實範圍**：`0x55-param_1`算出的3/5在`0x15f0e`六個引數裡對應哪一個
+維度(row/col/index)、`FUN_0001f42d`內第二個`0x15f0e`呼叫是否也讀param_1，這兩點的ESP
+偏移追蹤本輪未完全展開，留給下一輪用`capstone_probe`複查或live dump驗證。完整過程見
+`91-worklist.md` 791項「2026-09-07再續十八」。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始

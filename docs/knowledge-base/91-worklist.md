@@ -575,6 +575,31 @@ TURN候選欄位`DAT_00053bef`確認會在「玩家完成End-Turn→敵方AI完�
 記憶體watch」誠實缺口至此填補。環境已用`teardown`乾淨收尾，`pgrep`確認無殘留`dosbox-x`/
 `Xvfb`行程。**791剩餘真正開放的只剩MAP/FRIEND/NPC三個代稱本身(完全未查)與ENEMY/FRIEND
 banner的resource-ID選擇點(續十四/十五排除法留下的開放狀態)**，維持D。
+
+**2026-09-07再續十八——ENEMY/FRIEND banner的resource-ID選擇點找到了，byte-exact靜態證據+
+本輪自己的live觀察雙重確認**：完整反組譯`FUN_0001a30b`裡兩次觸發D8(`0x1f1cc`/`0x1f30a`)的
+呼叫點，發現**兩處push進去的常數不同**——第一處(`0x1a527`/`0x1a53b`)緊接在`0x1d80b`(item
+304已確認的敵軍掃描函式)之後，push的是`0x52`；第二處(`0x1a5d1`/`0x1a5e8`，緊接在TURN
+counter`inc [0x53bef]`**之前**)緊接在`0x1d8ba`(item 304已確認的友軍掃描函式)之後，push的
+是`0x50`——這正是先前輪次(續十四)苦尋不到的「呼叫`0x1f1cc`/`0x1f30a`之前就寫進某個全域」，
+只是它不是全域寫入，是**直接當call的literal參數傳入**，比續十四假設的「全域旗標」更直接。
+追蹤這個參數的實際用途：`0x1f1cc`把它原封不動轉呼叫`FUN_0001f42d(param_1, ebx*25)`
+(迴圈5次,ebx=4..0)；`FUN_0001f42d`內部算出`ebx = 0x55 - param_1`(對`0x52`得3、對`0x50`
+得5)，這個差值被push進**跟item 1117同一個resource-fetch原語`0x15f0e`**(讀取共用全域
+`[0x53a81]`指向的LMI1容器，即已知的「D8面板本身」resource #5)當其中一個引數——**代表
+ENEMY跟PLAYER/FRIEND banner用的其實是同一個共用LMI1容器，靠這個常數(`0x52`→3 vs
+`0x50`→5)選到容器內不同的sub-entry**，跟item 1117「同一個容器、靠index選子項」的結構
+完全同構(不是巧合，是這個引擎D8/banner圖形管線的共同設計模式)。**live交叉確認**：本輪
+(再續十七)自己直接觀察到「結束回合YES確認後立即出現ENEMY PHASE banner」，時序上精確對應
+`0x1d80b`(敵軍掃描)之後、push`0x52`那個分支——不是巧檢，是同一輪live session裡的同一個
+事件。**誠實範圍**：`0x55-param_1`算出的3/5這個差值最終在`0x15f0e`的六個引數裡對應到
+哪一個(row/col/index?)、以及`FUN_0001f42d`內部第二個`0x15f0e`呼叫(`push 0x51/0x52`兩個
+額外hardcoded常數)是否也讀了param_1，這兩點本輪的手動ESP偏移追蹤沒有完全展開，需要下一輪
+用`capstone_probe`交叉驗證ESP算式或直接live dump確認；但「`0x52`=ENEMY分支、`0x50`=
+FRIEND/PLAYER分支、兩者共用同一個LMI1容器只是index不同」這個選擇點本身的定位已經是
+byte-exact反組譯結論。791原有5個代稱：TURN已於再續十七確認、YES/NO input已於續十二確認、
+**ENEMY/FRIEND的banner觸發機制本輪也確認**，剩MAP/NPC兩個代稱與上述`0x15f0e`引數精確映射
+的收尾細節，維持D。
 819 - C - batch1已提交，剩餘scope(#3 camera-on-party)屬實作工作。
 823 - B - 明文「待使用者釐清…不瞎編視覺」。
 848 - D - save/chest已由doc25§9解決，入隊/等級上限仍待逐一轉成可編輯規則，可續靜態RE。**2026-09-06複核**：doc25§9.3自己已在2026-08-19補充段落明確訂正「不在本輪範圍內」這句話「已過期」——入隊(JOIN)機制核心(`0x112a5` constructor)與等級上限機制核心(`0x1e292`的`cVar1==0x1e/0x1f→99上限，否則40上限`)**兩者原生mechanism早就有反組譯佐證**，本行文字未同步這個訂正。真正剩下的：(a)入隊——「逐章join_id/handler對應表」，doc25自己定性這是隨doc57 UI-07逐章稽核持續累積的副產品，不是獨立可一次關閉的任務；(b)等級上限——`cVar1`完整class對應表(社群攻略提到的「80」第三層級是否存在，`0x1e292`目前只看到兩分支)，這才是唯一還算得上「靜態RE缺口」的部分，另一半(remake執行接線)因remake已移除無法覆核。

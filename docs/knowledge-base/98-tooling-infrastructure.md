@@ -3228,3 +3228,17 @@ dump得到`2`,遞增恰好一次,3秒後複查穩定、`DAT_00053ecc`(勝負旗�
 警告文字(如"開場動畫按鍵會衝過標題")，光是抄錄不足以防止誤踩，只有真正built成操作習慣
 (先等待、後截圖確認、再按鍵)才有效；(3)這次任務刻意在踩雷後不迴避、誠實記錄成本輪本身
 的一部分，而不是事後假裝從一開始就走對——跟本專案一貫的誠實記錄慣例一致。
+
+## 2026-09-07(續七)：小筆記——`ghidra_batch_probe.py`系列工具背景執行時的project鎖競爭
+
+延續item 791 ENEMY/FRIEND banner調查(見91-worklist.md 791項再續十八、doc57對應段落)：本輪
+在`trace_item_sfx_dispatch.py`(對`0x15f0e`做`call_scan`，命中很多呼叫點、逐一per-site起
+`analyzeHeadless`)還在背景跑的時候,另外開一個前景`ghidra_batch_probe.py`查詢直接失敗
+(`FileNotFoundError`,output檔案從未被建立)——兩個`analyzeHeadless -readOnly`行程同時碰
+同一個Ghidra project(`FD2Analysis3`)會互相鎖死其中一個,不是我方腳本的bug。**教訓**：這系列
+工具(`ghidra_batch_probe.py`/`capstone_probe.py`/`trace_item_sfx_dispatch.py`/
+`audit_global_writers.py`,全部底層共用同一個project)不能並行呼叫;背景工作還在跑時，先用
+`tasklist | grep java`確認沒有殘留的`java.exe`再發下一個查詢，比盲目並行更省時間(本輪浪費
+了一次失敗查詢+一次不必要的`call_scan`全域掃描才發現這點，後者本身也因為目標函式呼叫點
+太多，改用直接讀已知位址(`0x1f1cc`/`0x1f30a`)的`function_bounds`+`capstone_probe`取代
+`call_scan`，更快也更準)。
