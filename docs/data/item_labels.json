@@ -1,0 +1,1087 @@
+{
+  "schema": "fd2.native_item_labels.v1",
+  "source": {
+    "resource": "FDTXT_000",
+    "string_index_formula": "0xb5 + item_id",
+    "item_id_count": 215,
+    "provenance": "0x184c0 -> 0x15f84([0x53a7d], 0xb5 + item_id, ...)"
+  },
+  "entries": [
+    {
+      "item_id": 0,
+      "string_index": 181,
+      "label": "短劍"
+    },
+    {
+      "item_id": 1,
+      "string_index": 182,
+      "label": "闊劍"
+    },
+    {
+      "item_id": 2,
+      "string_index": 183,
+      "label": "長劍"
+    },
+    {
+      "item_id": 3,
+      "string_index": 184,
+      "label": "巨劍"
+    },
+    {
+      "item_id": 4,
+      "string_index": 185,
+      "label": "黑暗劍"
+    },
+    {
+      "item_id": 5,
+      "string_index": 186,
+      "label": "戰士劍"
+    },
+    {
+      "item_id": 6,
+      "string_index": 187,
+      "label": "巨魔劍"
+    },
+    {
+      "item_id": 7,
+      "string_index": 188,
+      "label": "斬鐵劍"
+    },
+    {
+      "item_id": 8,
+      "string_index": 189,
+      "label": "流水劍"
+    },
+    {
+      "item_id": 9,
+      "string_index": 190,
+      "label": "大地之劍"
+    },
+    {
+      "item_id": 10,
+      "string_index": 191,
+      "label": "龍神劍"
+    },
+    {
+      "item_id": 11,
+      "string_index": 192,
+      "label": "炎龍劍"
+    },
+    {
+      "item_id": 12,
+      "string_index": 193,
+      "label": "小刀"
+    },
+    {
+      "item_id": 13,
+      "string_index": 194,
+      "label": "匕首"
+    },
+    {
+      "item_id": 14,
+      "string_index": 195,
+      "label": "淬毒刀"
+    },
+    {
+      "item_id": 15,
+      "string_index": 196,
+      "label": "盜賊匕首"
+    },
+    {
+      "item_id": 16,
+      "string_index": 197,
+      "label": "暗殺刀"
+    },
+    {
+      "item_id": 17,
+      "string_index": 198,
+      "label": "護手刀"
+    },
+    {
+      "item_id": 18,
+      "string_index": 199,
+      "label": "忍者刀"
+    },
+    {
+      "item_id": 19,
+      "string_index": 200,
+      "label": "地獄刀"
+    },
+    {
+      "item_id": 20,
+      "string_index": 201,
+      "label": "刺矛"
+    },
+    {
+      "item_id": 21,
+      "string_index": 202,
+      "label": "騎槍"
+    },
+    {
+      "item_id": 22,
+      "string_index": 203,
+      "label": "長戟"
+    },
+    {
+      "item_id": 23,
+      "string_index": 204,
+      "label": "先鋒矛"
+    },
+    {
+      "item_id": 24,
+      "string_index": 205,
+      "label": "斬馬刀"
+    },
+    {
+      "item_id": 25,
+      "string_index": 206,
+      "label": "惡魔之矛"
+    },
+    {
+      "item_id": 26,
+      "string_index": 207,
+      "label": "黃金之戟"
+    },
+    {
+      "item_id": 27,
+      "string_index": 208,
+      "label": "龍之槍"
+    },
+    {
+      "item_id": 28,
+      "string_index": 209,
+      "label": "破魔槍"
+    },
+    {
+      "item_id": 29,
+      "string_index": 210,
+      "label": "戰神戟"
+    },
+    {
+      "item_id": 30,
+      "string_index": 211,
+      "label": "聖之槍"
+    },
+    {
+      "item_id": 31,
+      "string_index": 212,
+      "label": "巨神戟"
+    },
+    {
+      "item_id": 32,
+      "string_index": 213,
+      "label": "手斧"
+    },
+    {
+      "item_id": 33,
+      "string_index": 214,
+      "label": "迴旋斧"
+    },
+    {
+      "item_id": 34,
+      "string_index": 215,
+      "label": "戰斧"
+    },
+    {
+      "item_id": 35,
+      "string_index": 216,
+      "label": "戰鎚"
+    },
+    {
+      "item_id": 36,
+      "string_index": 217,
+      "label": "巨斧"
+    },
+    {
+      "item_id": 37,
+      "string_index": 218,
+      "label": "血之斧"
+    },
+    {
+      "item_id": 38,
+      "string_index": 219,
+      "label": "閃電鎚"
+    },
+    {
+      "item_id": 39,
+      "string_index": 220,
+      "label": "狂暴之斧"
+    },
+    {
+      "item_id": 40,
+      "string_index": 221,
+      "label": "光之斧"
+    },
+    {
+      "item_id": 41,
+      "string_index": 222,
+      "label": "力量之斧"
+    },
+    {
+      "item_id": 42,
+      "string_index": 223,
+      "label": "大地之鎚"
+    },
+    {
+      "item_id": 43,
+      "string_index": 224,
+      "label": "魔神斧"
+    },
+    {
+      "item_id": 44,
+      "string_index": 225,
+      "label": "短弓"
+    },
+    {
+      "item_id": 45,
+      "string_index": 226,
+      "label": "長弓"
+    },
+    {
+      "item_id": 46,
+      "string_index": 227,
+      "label": "黑暗弓"
+    },
+    {
+      "item_id": 47,
+      "string_index": 228,
+      "label": "巨弓"
+    },
+    {
+      "item_id": 48,
+      "string_index": 229,
+      "label": "精靈弓"
+    },
+    {
+      "item_id": 49,
+      "string_index": 230,
+      "label": "狙擊弓"
+    },
+    {
+      "item_id": 50,
+      "string_index": 231,
+      "label": "封魔弓"
+    },
+    {
+      "item_id": 51,
+      "string_index": 232,
+      "label": "風神弓"
+    },
+    {
+      "item_id": 52,
+      "string_index": 233,
+      "label": "長棍"
+    },
+    {
+      "item_id": 53,
+      "string_index": 234,
+      "label": "釘頭鎚"
+    },
+    {
+      "item_id": 54,
+      "string_index": 235,
+      "label": "巨鎚"
+    },
+    {
+      "item_id": 55,
+      "string_index": 236,
+      "label": "槤枷"
+    },
+    {
+      "item_id": 56,
+      "string_index": 237,
+      "label": "魔法杖"
+    },
+    {
+      "item_id": 57,
+      "string_index": 238,
+      "label": "封咒杖"
+    },
+    {
+      "item_id": 58,
+      "string_index": 239,
+      "label": "力之杖"
+    },
+    {
+      "item_id": 59,
+      "string_index": 240,
+      "label": "黑暗杖"
+    },
+    {
+      "item_id": 60,
+      "string_index": 241,
+      "label": "龍之杖"
+    },
+    {
+      "item_id": 61,
+      "string_index": 242,
+      "label": "光之杖"
+    },
+    {
+      "item_id": 62,
+      "string_index": 243,
+      "label": "鐵指套"
+    },
+    {
+      "item_id": 63,
+      "string_index": 244,
+      "label": "鐵爪"
+    },
+    {
+      "item_id": 64,
+      "string_index": 245,
+      "label": "皇帝指環"
+    },
+    {
+      "item_id": 65,
+      "string_index": 246,
+      "label": "毒爪"
+    },
+    {
+      "item_id": 66,
+      "string_index": 247,
+      "label": "殭屍爪"
+    },
+    {
+      "item_id": 67,
+      "string_index": 248,
+      "label": "碎岩爪"
+    },
+    {
+      "item_id": 68,
+      "string_index": 249,
+      "label": "金鋼指環"
+    },
+    {
+      "item_id": 69,
+      "string_index": 250,
+      "label": "裂刃爪"
+    },
+    {
+      "item_id": 70,
+      "string_index": 251,
+      "label": "巨神指環"
+    },
+    {
+      "item_id": 71,
+      "string_index": 252,
+      "label": "魔龍爪"
+    },
+    {
+      "item_id": 72,
+      "string_index": 253,
+      "label": "威力手臂"
+    },
+    {
+      "item_id": 73,
+      "string_index": 254,
+      "label": "金鋼手臂"
+    },
+    {
+      "item_id": 74,
+      "string_index": 255,
+      "label": "雷神手臂"
+    },
+    {
+      "item_id": 75,
+      "string_index": 256,
+      "label": "衝擊手臂"
+    },
+    {
+      "item_id": 76,
+      "string_index": 257,
+      "label": "光束劍"
+    },
+    {
+      "item_id": 77,
+      "string_index": 258,
+      "label": "狙擊槍"
+    },
+    {
+      "item_id": 78,
+      "string_index": 259,
+      "label": "光束槍"
+    },
+    {
+      "item_id": 79,
+      "string_index": 260,
+      "label": "光束炮"
+    },
+    {
+      "item_id": 80,
+      "string_index": 261,
+      "label": "拳頭"
+    },
+    {
+      "item_id": 81,
+      "string_index": 262,
+      "label": "利爪"
+    },
+    {
+      "item_id": 82,
+      "string_index": 263,
+      "label": "觸手"
+    },
+    {
+      "item_id": 83,
+      "string_index": 264,
+      "label": "巨岩手臂"
+    },
+    {
+      "item_id": 84,
+      "string_index": 265,
+      "label": "激水炮"
+    },
+    {
+      "item_id": 85,
+      "string_index": 266,
+      "label": "風牙斬"
+    },
+    {
+      "item_id": 86,
+      "string_index": 267,
+      "label": "魔燄波"
+    },
+    {
+      "item_id": 87,
+      "string_index": 268,
+      "label": "空雷震"
+    },
+    {
+      "item_id": 88,
+      "string_index": 269,
+      "label": "聖者之戒"
+    },
+    {
+      "item_id": 89,
+      "string_index": 270,
+      "label": "勇者徽章"
+    },
+    {
+      "item_id": 90,
+      "string_index": 271,
+      "label": "精靈契印"
+    },
+    {
+      "item_id": 91,
+      "string_index": 272,
+      "label": "領悟之書"
+    },
+    {
+      "item_id": 92,
+      "string_index": 273,
+      "label": "心眼之書"
+    },
+    {
+      "item_id": 93,
+      "string_index": 274,
+      "label": "白金徽章"
+    },
+    {
+      "item_id": 94,
+      "string_index": 275,
+      "label": "生命之貫"
+    },
+    {
+      "item_id": 95,
+      "string_index": 276,
+      "label": "魔力水晶"
+    },
+    {
+      "item_id": 96,
+      "string_index": 277,
+      "label": "風精之羽"
+    },
+    {
+      "item_id": 97,
+      "string_index": 278,
+      "label": "十字弓"
+    },
+    {
+      "item_id": 98,
+      "string_index": 279,
+      "label": "水晶弓"
+    },
+    {
+      "item_id": 99,
+      "string_index": 280,
+      "label": "雷神鞭"
+    },
+    {
+      "item_id": 100,
+      "string_index": 281,
+      "label": "天空之鑰"
+    },
+    {
+      "item_id": 101,
+      "string_index": 282,
+      "label": "傳送法杖"
+    },
+    {
+      "item_id": 102,
+      "string_index": 283,
+      "label": "修理套件"
+    },
+    {
+      "item_id": 103,
+      "string_index": 284,
+      "label": "火燄"
+    },
+    {
+      "item_id": 104,
+      "string_index": 285,
+      "label": "火神弓"
+    },
+    {
+      "item_id": 105,
+      "string_index": 286,
+      "label": "鬥神指環"
+    },
+    {
+      "item_id": 106,
+      "string_index": 287,
+      "label": "冰燄"
+    },
+    {
+      "item_id": 107,
+      "string_index": 288,
+      "label": "黑暗波"
+    },
+    {
+      "item_id": 108,
+      "string_index": 289,
+      "label": ""
+    },
+    {
+      "item_id": 109,
+      "string_index": 290,
+      "label": ""
+    },
+    {
+      "item_id": 110,
+      "string_index": 291,
+      "label": ""
+    },
+    {
+      "item_id": 111,
+      "string_index": 292,
+      "label": ""
+    },
+    {
+      "item_id": 112,
+      "string_index": 293,
+      "label": ""
+    },
+    {
+      "item_id": 113,
+      "string_index": 294,
+      "label": ""
+    },
+    {
+      "item_id": 114,
+      "string_index": 295,
+      "label": ""
+    },
+    {
+      "item_id": 115,
+      "string_index": 296,
+      "label": ""
+    },
+    {
+      "item_id": 116,
+      "string_index": 297,
+      "label": ""
+    },
+    {
+      "item_id": 117,
+      "string_index": 298,
+      "label": ""
+    },
+    {
+      "item_id": 118,
+      "string_index": 299,
+      "label": ""
+    },
+    {
+      "item_id": 119,
+      "string_index": 300,
+      "label": ""
+    },
+    {
+      "item_id": 120,
+      "string_index": 301,
+      "label": ""
+    },
+    {
+      "item_id": 121,
+      "string_index": 302,
+      "label": ""
+    },
+    {
+      "item_id": 122,
+      "string_index": 303,
+      "label": ""
+    },
+    {
+      "item_id": 123,
+      "string_index": 304,
+      "label": "巨岩鎧"
+    },
+    {
+      "item_id": 124,
+      "string_index": 305,
+      "label": "魔神甲"
+    },
+    {
+      "item_id": 125,
+      "string_index": 306,
+      "label": "11"
+    },
+    {
+      "item_id": 126,
+      "string_index": 307,
+      "label": "22"
+    },
+    {
+      "item_id": 127,
+      "string_index": 308,
+      "label": "魔岩鎧"
+    },
+    {
+      "item_id": 128,
+      "string_index": 309,
+      "label": "布衣"
+    },
+    {
+      "item_id": 129,
+      "string_index": 310,
+      "label": "旅行裝"
+    },
+    {
+      "item_id": 130,
+      "string_index": 311,
+      "label": "精靈披風"
+    },
+    {
+      "item_id": 131,
+      "string_index": 312,
+      "label": "元素護體"
+    },
+    {
+      "item_id": 132,
+      "string_index": 313,
+      "label": "皮甲"
+    },
+    {
+      "item_id": 133,
+      "string_index": 314,
+      "label": "硬皮甲"
+    },
+    {
+      "item_id": 134,
+      "string_index": 315,
+      "label": "夜行裝"
+    },
+    {
+      "item_id": 135,
+      "string_index": 316,
+      "label": "魔法皮甲"
+    },
+    {
+      "item_id": 136,
+      "string_index": 317,
+      "label": "盜賊之衣"
+    },
+    {
+      "item_id": 137,
+      "string_index": 318,
+      "label": "忍者裝"
+    },
+    {
+      "item_id": 138,
+      "string_index": 319,
+      "label": "潛行服"
+    },
+    {
+      "item_id": 139,
+      "string_index": 320,
+      "label": "神祕裝"
+    },
+    {
+      "item_id": 140,
+      "string_index": 321,
+      "label": "暗殺服"
+    },
+    {
+      "item_id": 141,
+      "string_index": 322,
+      "label": "黑暗之衣"
+    },
+    {
+      "item_id": 142,
+      "string_index": 323,
+      "label": "惡魔皮甲"
+    },
+    {
+      "item_id": 143,
+      "string_index": 324,
+      "label": "雷神服"
+    },
+    {
+      "item_id": 144,
+      "string_index": 325,
+      "label": "環狀甲"
+    },
+    {
+      "item_id": 145,
+      "string_index": 326,
+      "label": "鎖子甲"
+    },
+    {
+      "item_id": 146,
+      "string_index": 327,
+      "label": "鱗甲"
+    },
+    {
+      "item_id": 147,
+      "string_index": 328,
+      "label": "連環鋼甲"
+    },
+    {
+      "item_id": 148,
+      "string_index": 329,
+      "label": "合金鎖甲"
+    },
+    {
+      "item_id": 149,
+      "string_index": 330,
+      "label": "魔法鱗甲"
+    },
+    {
+      "item_id": 150,
+      "string_index": 331,
+      "label": "血環甲"
+    },
+    {
+      "item_id": 151,
+      "string_index": 332,
+      "label": "金鋼鎖甲"
+    },
+    {
+      "item_id": 152,
+      "string_index": 333,
+      "label": "黑暗鱗甲"
+    },
+    {
+      "item_id": 153,
+      "string_index": 334,
+      "label": "力量鎖甲"
+    },
+    {
+      "item_id": 154,
+      "string_index": 335,
+      "label": "惡魔鱗甲"
+    },
+    {
+      "item_id": 155,
+      "string_index": 336,
+      "label": "龍鱗甲"
+    },
+    {
+      "item_id": 156,
+      "string_index": 337,
+      "label": "鎧甲"
+    },
+    {
+      "item_id": 157,
+      "string_index": 338,
+      "label": "銀鎧甲"
+    },
+    {
+      "item_id": 158,
+      "string_index": 339,
+      "label": "魔法鎧甲"
+    },
+    {
+      "item_id": 159,
+      "string_index": 340,
+      "label": "重鎧甲"
+    },
+    {
+      "item_id": 160,
+      "string_index": 341,
+      "label": "地獄鎧甲"
+    },
+    {
+      "item_id": 161,
+      "string_index": 342,
+      "label": "聖鎧甲"
+    },
+    {
+      "item_id": 162,
+      "string_index": 343,
+      "label": "大地鎧甲"
+    },
+    {
+      "item_id": 163,
+      "string_index": 344,
+      "label": "龍神鎧甲"
+    },
+    {
+      "item_id": 164,
+      "string_index": 345,
+      "label": "長袍"
+    },
+    {
+      "item_id": 165,
+      "string_index": 346,
+      "label": "法師袍"
+    },
+    {
+      "item_id": 166,
+      "string_index": 347,
+      "label": "僧侶袍"
+    },
+    {
+      "item_id": 167,
+      "string_index": 348,
+      "label": "祭司袍"
+    },
+    {
+      "item_id": 168,
+      "string_index": 349,
+      "label": "聖者袍"
+    },
+    {
+      "item_id": 169,
+      "string_index": 350,
+      "label": "霧之袍"
+    },
+    {
+      "item_id": 170,
+      "string_index": 351,
+      "label": "黑暗之袍"
+    },
+    {
+      "item_id": 171,
+      "string_index": 352,
+      "label": "天之袍"
+    },
+    {
+      "item_id": 172,
+      "string_index": 353,
+      "label": "武道服"
+    },
+    {
+      "item_id": 173,
+      "string_index": 354,
+      "label": "武鬥裝"
+    },
+    {
+      "item_id": 174,
+      "string_index": 355,
+      "label": "鬥士服"
+    },
+    {
+      "item_id": 175,
+      "string_index": 356,
+      "label": "武者鎧甲"
+    },
+    {
+      "item_id": 176,
+      "string_index": 357,
+      "label": "妖魔鬥服"
+    },
+    {
+      "item_id": 177,
+      "string_index": 358,
+      "label": "武神護甲"
+    },
+    {
+      "item_id": 178,
+      "string_index": 359,
+      "label": "戰鬥裝甲"
+    },
+    {
+      "item_id": 179,
+      "string_index": 360,
+      "label": "突擊裝甲"
+    },
+    {
+      "item_id": 180,
+      "string_index": 361,
+      "label": "重裝甲"
+    },
+    {
+      "item_id": 181,
+      "string_index": 362,
+      "label": "特殊裝甲"
+    },
+    {
+      "item_id": 182,
+      "string_index": 363,
+      "label": "硬皮"
+    },
+    {
+      "item_id": 183,
+      "string_index": 364,
+      "label": "青色硬皮"
+    },
+    {
+      "item_id": 184,
+      "string_index": 365,
+      "label": "龍鱗"
+    },
+    {
+      "item_id": 185,
+      "string_index": 366,
+      "label": "勒皮"
+    },
+    {
+      "item_id": 186,
+      "string_index": 367,
+      "label": "虛無護甲"
+    },
+    {
+      "item_id": 187,
+      "string_index": 368,
+      "label": "王袍"
+    },
+    {
+      "item_id": 188,
+      "string_index": 369,
+      "label": "鬥士護甲"
+    },
+    {
+      "item_id": 189,
+      "string_index": 370,
+      "label": "地之袍"
+    },
+    {
+      "item_id": 190,
+      "string_index": 371,
+      "label": "水之袍"
+    },
+    {
+      "item_id": 191,
+      "string_index": 372,
+      "label": "大地裝甲"
+    },
+    {
+      "item_id": 192,
+      "string_index": 373,
+      "label": "藥草"
+    },
+    {
+      "item_id": 193,
+      "string_index": 374,
+      "label": "回復劑"
+    },
+    {
+      "item_id": 194,
+      "string_index": 375,
+      "label": "再生藥"
+    },
+    {
+      "item_id": 195,
+      "string_index": 376,
+      "label": "神聖之水"
+    },
+    {
+      "item_id": 196,
+      "string_index": 377,
+      "label": "解毒劑"
+    },
+    {
+      "item_id": 197,
+      "string_index": 378,
+      "label": "退麻劑"
+    },
+    {
+      "item_id": 198,
+      "string_index": 379,
+      "label": "力量藥水"
+    },
+    {
+      "item_id": 199,
+      "string_index": 380,
+      "label": "耐力藥水"
+    },
+    {
+      "item_id": 200,
+      "string_index": 381,
+      "label": "速度藥水"
+    },
+    {
+      "item_id": 201,
+      "string_index": 382,
+      "label": "綠寶石"
+    },
+    {
+      "item_id": 202,
+      "string_index": 383,
+      "label": "紅寶石"
+    },
+    {
+      "item_id": 203,
+      "string_index": 384,
+      "label": "藍寶石"
+    },
+    {
+      "item_id": 204,
+      "string_index": 385,
+      "label": "鑽石"
+    },
+    {
+      "item_id": 205,
+      "string_index": 386,
+      "label": "飛龍卵"
+    },
+    {
+      "item_id": 206,
+      "string_index": 387,
+      "label": "魔法水"
+    },
+    {
+      "item_id": 207,
+      "string_index": 388,
+      "label": "水晶粒"
+    },
+    {
+      "item_id": 208,
+      "string_index": 389,
+      "label": "控制中樞"
+    },
+    {
+      "item_id": 209,
+      "string_index": 390,
+      "label": "黃金徽章"
+    },
+    {
+      "item_id": 210,
+      "string_index": 391,
+      "label": "星之眼"
+    },
+    {
+      "item_id": 211,
+      "string_index": 392,
+      "label": "光之眼"
+    },
+    {
+      "item_id": 212,
+      "string_index": 393,
+      "label": "暗之眼"
+    },
+    {
+      "item_id": 213,
+      "string_index": 394,
+      "label": "冰之眼"
+    },
+    {
+      "item_id": 214,
+      "string_index": 395,
+      "label": "火之眼"
+    }
+  ],
+  "semantic_status": "raw native item display names only; icon/SFX presentation is a separate, still-open question (worklist 1117)"
+}

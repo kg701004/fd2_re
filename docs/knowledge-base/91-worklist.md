@@ -759,6 +759,36 @@ data xref(`docs/data/ida/fd2_51a83_xrefs.txt`)閉合，doc57 UI-04 row(2026-08-2
 從未回頭核對就繼續標「仍待」，本輪已在doc57對應段落訂正。**item 1117現在只剩一個真正
 開放的子項**：presentation層級的道具名稱/icon/SFX對照(見再續四)。維持D，因為這一項
 本身仍是真正未解的開放問題，但範圍已經從「3個子項」收斂到「1個」。
+
+**2026-09-06再續六——道具顯示名稱byte-exact解出，presentation子項的「名稱」部分關閉，
+「icon/SFX」部分仍開放**：完整反組譯`FUN_000184c0`(item/status panel renderer，doc13/
+doc56既有記載的`0x184c0`，先前只知道「item兩欄四列layout」，未追過名稱來源)本體，找到
+逐格渲染流程：讀該slot裝備的item id→`FUN_0004e8bc(itemId)`取row指標→
+`MOV EAX,[item_id_slot]; ADD EAX,0xb5; PUSH EAX; PUSH [0x53a7d]; CALL 0x15f84`——
+跟`export_command_labels.py`記載的`0x1ceed→0x15f84([0x53a7d], 0x1b9+command_id)`
+是**同一條FDTXT_000渲染管線**，只是base offset不同(`0xb5`=181，不是`0x1b9`=441)。
+新增`tools/export_item_labels.py`(仿`export_command_labels.py`同構)，產出
+`docs/data/item_labels.json`(215筆，公式`string_index=0xb5+item_id`)。**三重獨立
+驗證全部通過**：(1)item_id=0解出「短劍」，跟`item.json`同筆記錄(type1/ap10/hit95，
+全表最弱武器)語意吻合；(2)item_id=4/14/7/18解出「黑暗劍」/「淬毒刀」/「斬鐵劍」/
+「忍者刀」，逐字對上doc02原本記載的武器機率特效敘述(黑暗劍/淬毒刀中毒、斬鐵劍/忍者刀
+暴擊)；(3)**最強證據**：item_id=31解出「巨神戟」，`item.json`該筆`price:24000`，
+乘上doc32已證實的「賣出價=原價75折」公式恰好等於**18000**，逐字精確對上doc58續八十五
+記錄的真實DOSBox-X shop對話截圖文字「這個巨神戟，18000元」——這是本次解碼與一筆獨立
+live原版畫面證據的直接交叉印證。215筆全部解碼成功、零殘留亂碼byte。
+
+**誠實記錄(檢查既有證據紀律)**：完成反組譯後才發現`docs/knowledge-base/13-battle-menu-system.md`
+第143/168行**早就寫著**「item文字取 FDTXT index `itemID+181`」——公式本身不是本輪新發現，
+是本輪沒有先grep doc13就重新反組譯了一次已經有文字記載的東西(0xb5=181，數字一致)。本輪
+真正的新增價值是：(1)把這句從未執行過的文字公式**真正跑過一次**，產出可重用的
+`tools/export_item_labels.py`/`docs/data/item_labels.json`；(2)用item.json與doc58
+live截圖做了先前從未做過的byte-exact/價格交叉驗證；(3)把這個早已存在但從未回頭連結的
+事實，正式接進worklist 1117「presentation子項」與doc32/doc57的討論脈絡。**誠實範圍**：
+這只解開「道具顯示**名稱**」，presentation子項另外兩部分——**icon渲染**(同一個
+`0x184c0`函式內另外呼叫`FUN_0001685c`/`FUN_00016886`依item type/effect分支畫icon，
+本輪定位到呼叫點但未反組譯`0x1685c`本體去解出icon index公式)與**SFX**(道具使用時
+播放的音效，本輪完全未觸及)——仍是真正開放的缺口。item 1117整項因此仍維持D，presentation
+子項細分為「名稱：已解」+「icon：呼叫點已定位、index公式未解」+「SFX：未觸及」。
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
