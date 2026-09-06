@@ -33152,6 +33152,46 @@
    "excerpt": "BPPM在**work buffer**（不是VGA）位址上命中才能達成，而work buffer位址本身又需要靠已經證實不可信",
    "verdict": "benign",
    "note": "continuation of §9.26.4c's conclusion sentence describing the circular dependency; the live evidence (D SS:ESP, function_bounds) is documented earlier in the same section"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4098,
+   "excerpt_sha1": "30ce46b5e4c86bebef695a6d8792205ce0d86be2",
+   "excerpt": "下 `BPLM`(理論上不需 delta 換算)——**同樣未能取得結果,但意外確認了一個真正有用的新視覺觀察**",
+   "verdict": "benign",
+   "note": "section heading/intro sentence for §9.26.4d; the live BPLM evidence is documented in the paragraph below"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4113,
+   "excerpt_sha1": "7a3e98ca6887dfe2cc6dd3737b4ebbdc5f1dbce3",
+   "excerpt": "姿勢**),數次confirm之後才穩定成已知的定格姿勢。**這證實角色回顧卡的立繪本身是有多幀動畫的",
+   "verdict": "benign",
+   "note": "continuation of §9.26.4d's screenshot-observation sentence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4117,
+   "excerpt_sha1": "2b08115513c590e2fbeb66546078a04a423d36a8",
+   "excerpt": "猜測的定性,補上了第一個獨立的視覺證據(此前只有結構上的推論,沒有實際畫面佐證)。下一輪如果要",
+   "verdict": "benign",
+   "note": "continuation of the same observation paragraph"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4127,
+   "excerpt_sha1": "76f34679878c9522a0d34dcd8f7ae7423b4ff405",
+   "excerpt": "取得可信EIP**,確認這個build裡code與data位址的live delta在不同區域都不均勻、且沒有找到任何",
+   "verdict": "benign",
+   "note": "continuation of §9.26.5's summary sentence citing §9.26.4b/c/d's already-documented live evidence"
+  },
+  {
+   "file": "35-battle-animation-rendering.md",
+   "line": 4132,
+   "excerpt_sha1": "bc9648ca5b698fdff4a376ae65d69b05a5db64ed",
+   "excerpt": "**維持D**,範圍已收斂到「1個具體候選函式+1個視覺佐證(凱旋動畫幀)+4個已知不可行的live驗證",
+   "verdict": "benign",
+   "note": "continuation of the same §9.26.5 summary sentence"
   }
  ]
 }
