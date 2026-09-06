@@ -829,11 +829,22 @@ sub-type，不是itemRow`+0xd`本身，需要下一輪對照呼叫端傳入值)�
 兩個UI/戰鬥SFX池分別是`[0x53eec]`(本文件resource#31的14個UI樣本，游標移動音等)與
 `[0x5411f]`(戰鬥攻擊動態表)——`[0x53b13]`兩者都不是，是第三個獨立、先前任何文件都
 沒有解過的池，跟`FUN_0001c4cc`裡的字面sample-index引數(如`1`)如何在讀出的80-byte
-header基礎上定位到具體PCM資料，本輪未繼續追。**item 1117 SFX子項最終狀態**：
-機制鏈`item type→FUN_0001c4cc→(index,[0x53b13]table_ptr)→0x25a96→AIL播放`已完整
-byte-exact追完到`table_ptr`的來源(`FDOTHER.DAT`檔頭本身)，但container內部的entry
-定址與實際PCM樣本身分仍是真正開放的缺口，需要下一輪對`FDOTHER.DAT`檔案格式本身做
-逐byte解析(不是靠反組譯就能推出，需要實際dump檔案內容核對)。維持D。
+header基礎上定位到具體PCM資料，本輪未繼續追。
+
+**補充釐清(同輪，重新核對push順序跟doc36既有calling convention是否吻合)**：doc36第9輪
+已記載`play_sfx_a`固定呼叫慣例是`push priority(恆為常數1); push index(常數或動態暫存器);
+push table_ptr; call 0x25a96`——本輪在`FUN_0001c4cc`實測到的push順序`PUSH 0x1; PUSH EAX;
+PUSH [0x53b13]`**逐項精確吻合**這個既有慣例(priority=1、index=EAX動態值、table_ptr=
+`[0x53b13]`)，不是矛盾或新變體。這代表`[0x53b13]`的角色跟`[0x53eec]`(UI池)/`[0x5411f]`
+(戰鬥池)完全同構——**都是`table_ptr`參數，由`play_sfx_a`內部用`index`去查表找到具體樣本
+位置**，`[0x53b13]`本身(FDOTHER.DAT檔案開頭80 bytes)很可能就是**容器自己的directory
+header**(`tools/unpack_dat.py`的`parse_directory`已經知道怎麼解析同一種格式，用於
+`tools/export_sfx.py`匯出resource #31/#48-53/#82-90等既有樣本家族)，不是需要全新格式
+解析的未知結構。**item 1117 SFX子項最終狀態**：機制鏈`item type→FUN_0001c4cc→(index,
+table_ptr)→0x25a96→AIL播放`已完整byte-exact追完，且跟doc36既有calling convention
+完全吻合；真正剩下的只是「index的實際動態值(來自`param_4`陣列的per-unit byte，屬於runtime
+資料而非靜態常數)對應到FDOTHER.DAT哪個resource編號」這一個具體查值問題，需要live記憶體
+讀值或針對`param_4`陣列來源做更深入的靜態dataflow追蹤，不是檔案格式本身未知。維持D。
 
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
