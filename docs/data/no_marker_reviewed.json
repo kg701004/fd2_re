@@ -33344,6 +33344,14 @@
    "excerpt": "旗標而非移動座標**，與action_id0的「7-step X/Y攻擊撲擊動畫」是完全不同類型的機制。這證實",
    "verdict": "benign",
    "note": "prose continuation, not an evidence marker gap"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 641,
+   "excerpt_sha1": "fa07914bc96088c73b2c82ed371fd4d9c45ac758",
+   "excerpt": "未證實的假說**：doc02 §5.1-5.8列出遊戲**恰好8種武器類別**(刀劍/匕首/槍矛/斧鎚/弓/杖/拳爪/",
+   "verdict": "benign",
+   "note": "explicitly-labeled hypothesis section, not an evidence marker gap"
   }
  ]
 }
