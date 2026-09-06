@@ -461,6 +461,35 @@ Tab+20秒等待後**序列直接結束，沒有任何後續**，證明這個獨�
 1354 - A（2026-09-05由D複核關閉，與366為同一底層項目，已由`RE-ITEM-EFFECT-ROW-4E56C`/doc32§1.3閉合）- 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
 1509 - E - doc58(約L2219-3451)記載此位址跨十餘輪live DOSBox-X session追至2026-08-19仍未解，使用者已決定暫緩，確屬需live驗證。
 1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。**2026-09-05複核，部分進展但未解**：`ghidra_batch_probe.py`確認`0x24838`的`CALL 0x24bde`(bytes `e8 a1 03 00 00`)byte級屬實，且`0x24bde`不在Ghidra自動分析辨識的任何function邊界內、xref_to回傳0筆——這正是本專案已知的`.object1`(disasm_le.py/預設分析範圍)盲區，不是不存在。手動反組譯確認`0x24bde`本體是`PUSH 0x8; CALL 0x3702f; ...`，`0x3702f`的decompile是`LOCK();UNLOCK();FUN_00037042(param_4);return param_1;`——鎖定/解鎖包一個helper呼叫再回傳原值的樣式，疑似DOS/4GW critical-section包裝，未能進一步定名。呼叫端(`0x24838`)本身的行為模式已確認:呼叫後`TEST EAX,EAX；JZ 0x248b5`，若非零才接著跑`dialog(target=0x15f84)`(對照同檔已有的dialog op，args pattern吻合)+`act(target=0x1366a)`+另一個`dialog`——**功能上這是一個條件閘門(gate)**，語意類似其他chapter handler已知的`roster_has`類gate op，但`0x24bde`內部呼叫鏈的最終語意(到底在檢查什麼條件)仍未定名，未解。下一輪建議:反組譯`FUN_00037042`本體，並用`args:[18]`這個呼叫端傳入值反推18代表的資源/索引種類。
+
+**2026-09-06複核，`0x24838`本身已解，`ch22_post.json`其餘4個unknown留待未來**：反編譯`FUN_00037042`
+發現它是通用的**Watcom stack-overflow guard**(`cmp esp,DAT_00052814`超界則呼叫`"Stack Overflow!"`
+handler)，`xref_to`確認它經`0x3702f`這層thunk被**至少314個不同呼叫端**使用——是編譯器自動插入的
+函式前導檢查stub,不是遊戲邏輯,這推翻了先前「疑似critical-section包裝」的猜測。真正關鍵是
+`0x24bde`本體:手動反組譯`0x24bef`之後的位元組,確認完整迴圈是`for(EDX=0;EDX<[0x53bfb];EDX++)
+if(byte[[0x53bf7]+EDX*0x50+8]==ECX) return 1;`——**這就是doc25 L833已經記錄過的`roster_has(id)`
+原語**(我方名冊`[0x53bf7]`,32槽×0x50B,byte[+8]==id),只是`0x24bde`是一個獨立編譯的第二實例
+(canonical entry point是`0x33499`),因為它的Watcom stack-check前導碼(`PUSH 0x8; CALL 0x3702f`)
+不符合Ghidra辨識函式邊界所需的`PUSH EBP`樣式,才會被Ghidra漏判為「不在任何function內」——
+和本專案已知的`.object1`盲區是同一類成因,現在有了具體機制解釋。`args:[18]`與`ch16_post.json`
+既有的`roster_has(target=0x33499,args:[18])`完全同一個id,交叉確認一致。**已更新
+`docs/data/chapter_beats/ch22_post.json`該筆op為`roster_has`並附反查note**。**方法論產出**：
+未來遇到「Ghidra找不到function邊界」的可疑呼叫端,可以先假設它是「函式本體以`PUSH n; CALL 0x3702f`
+這個stack-check前導碼開頭」，從緊接在thunk呼叫後的位元組開始手動反組譯,而不必被"不在任何function
+內"這個訊息擋住。
+
+`ch22_post.json`同檔另4個`unknown`(`0x247be`→`0x24b14` args:[100]；`0x24978`/`0x249c4`→`0x2189a`
+args:[10,15,1]/[16,30,1]；`0x24982`/`0x249ce`→`0x24b4d` args:[30]；`0x24a24`/`0x24ab4`→`0x11df2`
+args含`255,0`)本輪僅初步探測、**未完全解開**，誠實記錄現況供下一輪接手：`0x24b14`/`0x24b4d`同樣是
+`.object1`盲區(function_bounds回報「不在任何function內」)，需要比照上述`0x24bde`手法手動反組譯；
+`0x2189a`已能decompile,本體是`stack_check→FUN_0003706e→FUN_00011eee→for(10次){FUN_0003771c;
+FUN_000219ad;FUN_000127a9;FUN_00011eb0}→FUN_0003776e→FUN_00011cac→FUN_00010b43`，其中
+`FUN_00011eb0`正是doc35§10.1已確認的**screen-present原語**(逐列320-byte memcpy)，強烈暗示這是一個
+**多步驟畫面轉場/wipe效果**(loop 10次、每次present一次)，但decompile顯示的迴圈上界字面值「10」
+與呼叫端傳入的`[10,15,1]`/`[16,30,1]`不吻合，可能是Ghidra誤判參數對應，需要原始反組譯核對才能
+定案，不可直接採信偽代碼字面值；`0x11df2`本體是`stack_check→for(param_1<=param_2){FUN_00037ae5
+×4}`，配合呼叫端`[ebx/0, 255, 0]`與`repeat_hint`(64次)的語意,形狀很像**逐色階DAC/palette寫入
+迴圈**(0..255步進,每階寫4個東西)，但`FUN_00037ae5`本體未反編譯核對，同樣未定案。維持D。
 1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。**2026-09-05複核**：`remake/`已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 1578 - C - 成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE。
 1604 - F - 明文卡在動態turn-writer/group-formula通用pending-group binding及`battle.State`→`Game`/controller的原子handoff，屬更大範圍重構前置依賴。

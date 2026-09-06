@@ -50,12 +50,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "roster_has",
    "addr": "0x24838",
    "target": "0x24bde",
    "args": [
     18
-   ]
+   ],
+   "note": "2026-09-06: 0x24bde is a second, independently-compiled instance of the doc25 roster_has(id) pattern (linear scan [0x53bf7]+i*0x50, byte[+8]==id, count bound [0x53bfb]) -- NOT the canonical 0x33499 entry point, but bit-identical semantics; same id=18 already verified at ch16_post.json's 0x33499 call. Falls outside Ghidra's function-boundary detection because its Watcom stack-check prologue (PUSH 0x8; CALL 0x3702f) doesn't match the PUSH EBP pattern Ghidra's analyzer looks for -- same 'object1' blind spot documented elsewhere in this project."
   },
   {
    "op": "dialog",

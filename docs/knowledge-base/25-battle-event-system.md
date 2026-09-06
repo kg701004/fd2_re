@@ -832,6 +832,12 @@ ch11專屬),但**ch11專屬謎團現在有一個乾淨、有對照組、可重�
 | **繪事件畫面** | `0x15f84` | 6 | 全螢幕圖繪製(過場 / 事件畫面) | [驗] |
 | 我方名冊查詢 | `0x33499(id)` | 1(章16) | `roster_has(id)`:查我方名冊 `[0x53bf7]`(32槽×0x50B)byte[+8]==id | [驗] |
 
+> **2026-09-06補充(worklist 1511)**:`ch22_post.json`的`0x24838`(`CALL 0x24bde`,args:`[18]`)是
+> **同一個`roster_has(id)`原語的第二個獨立編譯實例**——反組譯確認`0x24bde`本體逐位元組實作與
+> `0x33499`相同的迴圈,只是位址不同、且因Watcom stack-check前導碼(`PUSH 0x8; CALL 0x3702f`)
+> 不符Ghidra判斷function邊界所需的`PUSH EBP`樣式而被漏判為「不在任何function內」。`args:[18]`
+> 與`ch16_post.json`既有的`0x33499(id=18)`交叉核對id一致。詳見91-worklist.md 1511行。
+
 > **更正(doc 26 補完，範圍限定)**:早先把各章 ×1 的 `0x33499` 等列為「增援/對話動作」；在
 > `battle_events.json` battle-event skeleton 的匯出範圍內，`0x33499` 是條件查詢(roster_has)，
 > 其餘記錄只保存控制流／設碼／繪圖。這不能外推到 postbattle/cutscene handlers；ch14/ch15
