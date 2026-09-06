@@ -817,3 +817,23 @@ UI-04 row與worklist 1117的「global selector6的production owner」子項應�
 真正剩下的只有「native argument↔weapon min/max mapping」(已由本文件2026-09-06系列
 commit收斂為distance+mode語意確認)與「indexed item/effect presentation」(已收斂為
 純presentation層級的道具名稱/icon/SFX缺口，見doc32/worklist對應段落)。
+
+**2026-09-06續，「native argument↔weapon min/max mapping」進一步收斂——重新對
+`0x14742`本體做獨立decompile(`ghidra_batch_probe.py`，非重複使用舊結果)，確認一個
+具體的負面結論**：本體只有一個距離比較`iVar2 + iVar1 < param_3`（曼哈頓距離嚴格小於
+`param_3`=`radius`=`[0x51a83]`=selector6同一個global，即command/item record的
+`range`欄位`+2`）——**全函式沒有任何下界/最小距離比較**，`param_5`(=targetCode，即
+0/1/2/3的陣營篩選，與續十二節同一套慣例)只影響`unit+6`的陣營比對，不影響距離判定。
+往上一層的`0x14818`候選陣列生成器（§UI-04 geometry slice，本文件既有段落）同樣只有
+「嚴格小於radius才寫入0xff marker」的單向比較，沒有第二個下界比較。**結論**：目前已
+窮盡的兩條native geometry路徑（候選陣列生成`0x14818`＋確認時合法性判定`0x14742`）
+都只實作單一「距離嚴格小於某個radius」的上界檢查，**沒有找到任何min-range(最小攻擊
+距離)的原生機制**——native端目前的證據顯示「min/max」這個框架本身可能問錯了問題：
+真正存在的只是一個由`range`欄位換算出的單一半徑值，加上一個mode/陣營選擇欄位
+（record`+3`/`+5`／`targetCode`），不是兩個獨立的min/max欄位。**誠實範圍**：這只
+排除了「min存在於這兩個已窮盡函式內部」的可能，不能排除min-range邏輯藏在完全
+不同、目前未被這條call chain連到的地方（例如某些近戰/遠程武器類型專屬的另一個
+legality path，或是某個從未被列入`0x14818`/`0x14742` call-xref的獨立分支）——未做
+`0x14818`/`0x14742`的`xref_from`全域反查，此路仍留待下一輪如果要繼續深挖。維持D，
+但「native argument↔weapon min/max mapping」現在有一個可驗證的具體候選答案（單一
+radius+mode，非min/max對），不再是完全空白的問句。
