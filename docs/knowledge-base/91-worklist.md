@@ -692,7 +692,7 @@ Tab+20秒等待後**序列直接結束，沒有任何後續**，證明這個獨�
 1042 - D - 庭院段已由`scene-decode/ch1-meadow.md`完整解出，但項目文字涵蓋的森林段仍由doc53 L44與doc44 L115-117標記partial，因半數仍開放不判A，保留半解狀態。**2026-09-06複核**：重讀doc53「密林」段落與doc44 §2.2發現，兩處標記partial的具體項目——「walk beat重排」、「acting_decoded銜接」、「campaign story_ch01節點的handler beats/indexed visuals」、「DOSBox E2同狀態比對」——全部是**remake campaign場景整合與remake↔原版視覺比對**層級的工作(依賴`campaign_full.json`/`story_ch01_*`節點與remake渲染輸出)，不是原版RE本身有缺口(raw byte writer/handler/FDFIELD座標等原版資料流doc53自己都標✅)。`remake/`已於2026-09-02整個移除，這半個partial因此**目前無法覆核**，比照本檔案274/372/849/851/898/1515等項目的既有處理方式，維持D並標註阻塞原因為「remake consumer已移除，非RE缺口」，不再是「可續靜態RE」的框架。
 1065 - D - 此項本身即doc57本身，該矩陣持續更新到2026-08-15仍多欄位partial，屬持續性靜態IDA/Capstone稽核工作。**2026-09-06複核**：doc57本身已持續更新到2026-09-06(遠晚於本行引用的2026-08-15)，本輪(見item 791/1117相關commit)已把UI-03「end-turn entry」子項完全靜態閉合、UI-04「global selector6 production owner」子項訂正為doc56/doc37早已閉合的stale標記，item 1117的weapon min/max/indexed item presentation兩個子項也各自收斂。矩陣本身性質不變(持續性稽核文件，永遠會有partial列)，維持D，但更新引用日期避免下一輪誤以為文件停在08-15的舊狀態。
 1069 - C - 項目內文子問題已由後續1100-1116(`[x]`)閉合，結尾自承唯一剩下的是「仍未接runtime renderer」，屬工程整合。
-1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。**2026-09-06複核**：doc57自己的row其實AOE/LOS/灰化三項已於2026-08-20閉合(本行文字未同步)，真正剩下的只有「native argument↔weapon min/max mapping」與「indexed item/effect presentation」、「global selector6 production owner」三個子項——維持D，範圍已收斂。順帶核對`item.json`的`range`欄位(215筆)跟pristine EXE逐byte吻合(見doc32「2026-09-06補記」)，證明資料抄寫沒錯，但**這個欄位名本身在doc32已被撤回「等於武器射程」的解讀**，不構成本項答案，只是排除了一種可能的資料錯誤來源。**誠實訂正(2026-09-06同輪內部同步)**：doc57本節稍後段落(「誠實訂正(2026-09-06)」小節)已進一步發現「global selector6 production owner」其實是stale標記——`docs/knowledge-base/56-fd2-remake-sdd.md`(2026-07-28)與`37-spell-effect-figani.md`§2(同日)早已用official IDA data xref(`docs/data/ida/fd2_51a83_xrefs.txt`)閉合這條線：`[0x51a83]`由4個具名writer(`0x15140`/`0x153b1`/`0x1bd14`/`0x1d188`)寫入，value6對應command/item record的`range`欄位恰為4時的公式結果，觸發FDFIELD selected-cell byte+3清除分支。此段本行(695)先前未同步item 1065(見693行)已記錄的這個訂正，現訂正：**「global selector6 production owner」子項改標已關閉**，1117真正剩下的開放子項收斂為兩個——「native argument↔weapon min/max mapping」(已收斂為distance+mode語意確認，見doc57 2026-09-06系列commit)與「indexed item/effect presentation」(已收斂為純presentation層級的道具名稱/icon/SFX缺口)。維持D，範圍再收斂一階。**2026-09-06再續**：獨立重新decompile `0x14742`(合法性判定本體，非重用舊結果)確認全函式只有一個`距離<radius`的上界比較，沒有任何下界/最小距離比較；上一層候選陣列生成器`0x14818`同樣只有單向上界比較。目前已窮盡的兩條native geometry路徑都找不到min-range機制，「weapon min/max mapping」子項現在有具體候選答案（單一radius=record.range+2、加mode/陣營選擇欄位，不是min/max兩個獨立欄位），但未做`0x14818`/`0x14742`的`xref_from`全域反查排除min邏輯藏在別處的可能，維持D。詳見doc57本節末新增段落。**2026-09-06再續十一(使用者要求「新建多項工具完成item 1117測試」)**：新增`tools/capstone_probe.py`(選型驗證過)/`trace_item_sfx_dispatch.py`/`dump_item_sfx_tables.py`三支工具，重新窮舉`FUN_0001c4cc`的callers(真正16個，非先前的9或11個)，其中6個的`param_2`(effect子類型index)是byte-exact確認的immediate值，並訂正一個誤述——「SFX index來自per-unit runtime資料」是錯的，其實是純靜態per-type表查值`local_60[param_2]`，6個type的實際index已解出(12/6/7/8/14/5)。真正剩下的缺口收斂為「這個index如何對應到具體PCM樣本」——`0x25a96`呼叫的4個AIL wrapper函式未反組譯，且「index=FDOTHER.DAT自身resource編號」假說已用既有解包產物直接檢查否證。詳見本行下方「續十一」完整段落與`docs/data/item_sfx_tables.json`/`item_sfx_dispatch_trace.json`。**2026-09-06再續十二**：反組譯`0x25a96`本體原始disasm(非decompile)，找到index→resource位址/長度的完整算式，byte-exact吻合`tools/unpack_dat.py`的LLLLLL容器目錄格式，但比對算出的目標內容(已解包的FDOTHER資源)後發現是圖片/巢狀容器而非音效——機制算式與內容比對兩者互相矛盾，誠實記錄為未解，見下方「續十二」段落。維持D。
+1117 - D - doc57 UI-04 row仍列native argument↔weapon min/max mapping/AOE/LOS/不可用目標灰化未解，與項目描述一致仍開放。**2026-09-06複核**：doc57自己的row其實AOE/LOS/灰化三項已於2026-08-20閉合(本行文字未同步)，真正剩下的只有「native argument↔weapon min/max mapping」與「indexed item/effect presentation」、「global selector6 production owner」三個子項——維持D，範圍已收斂。順帶核對`item.json`的`range`欄位(215筆)跟pristine EXE逐byte吻合(見doc32「2026-09-06補記」)，證明資料抄寫沒錯，但**這個欄位名本身在doc32已被撤回「等於武器射程」的解讀**，不構成本項答案，只是排除了一種可能的資料錯誤來源。**誠實訂正(2026-09-06同輪內部同步)**：doc57本節稍後段落(「誠實訂正(2026-09-06)」小節)已進一步發現「global selector6 production owner」其實是stale標記——`docs/knowledge-base/56-fd2-remake-sdd.md`(2026-07-28)與`37-spell-effect-figani.md`§2(同日)早已用official IDA data xref(`docs/data/ida/fd2_51a83_xrefs.txt`)閉合這條線：`[0x51a83]`由4個具名writer(`0x15140`/`0x153b1`/`0x1bd14`/`0x1d188`)寫入，value6對應command/item record的`range`欄位恰為4時的公式結果，觸發FDFIELD selected-cell byte+3清除分支。此段本行(695)先前未同步item 1065(見693行)已記錄的這個訂正，現訂正：**「global selector6 production owner」子項改標已關閉**，1117真正剩下的開放子項收斂為兩個——「native argument↔weapon min/max mapping」(已收斂為distance+mode語意確認，見doc57 2026-09-06系列commit)與「indexed item/effect presentation」(已收斂為純presentation層級的道具名稱/icon/SFX缺口)。維持D，範圍再收斂一階。**2026-09-06再續**：獨立重新decompile `0x14742`(合法性判定本體，非重用舊結果)確認全函式只有一個`距離<radius`的上界比較，沒有任何下界/最小距離比較；上一層候選陣列生成器`0x14818`同樣只有單向上界比較。目前已窮盡的兩條native geometry路徑都找不到min-range機制，「weapon min/max mapping」子項現在有具體候選答案（單一radius=record.range+2、加mode/陣營選擇欄位，不是min/max兩個獨立欄位），但未做`0x14818`/`0x14742`的`xref_from`全域反查排除min邏輯藏在別處的可能，維持D。詳見doc57本節末新增段落。**2026-09-06再續十一(使用者要求「新建多項工具完成item 1117測試」)**：新增`tools/capstone_probe.py`(選型驗證過)/`trace_item_sfx_dispatch.py`/`dump_item_sfx_tables.py`三支工具，重新窮舉`FUN_0001c4cc`的callers(真正16個，非先前的9或11個)，其中6個的`param_2`(effect子類型index)是byte-exact確認的immediate值，並訂正一個誤述——「SFX index來自per-unit runtime資料」是錯的，其實是純靜態per-type表查值`local_60[param_2]`，6個type的實際index已解出(12/6/7/8/14/5)。真正剩下的缺口收斂為「這個index如何對應到具體PCM樣本」——`0x25a96`呼叫的4個AIL wrapper函式未反組譯，且「index=FDOTHER.DAT自身resource編號」假說已用既有解包產物直接檢查否證。詳見本行下方「續十一」完整段落與`docs/data/item_sfx_tables.json`/`item_sfx_dispatch_trace.json`。**2026-09-06再續十二**：反組譯`0x25a96`本體原始disasm(非decompile)，找到index→resource位址/長度的完整算式，byte-exact吻合`tools/unpack_dat.py`的LLLLLL容器目錄格式，但比對算出的目標內容(已解包的FDOTHER資源)後發現是圖片/巢狀容器而非音效——機制算式與內容比對兩者互相矛盾，誠實記錄為未解，見下方「續十二」段落。維持D。**2026-09-06再續十三**：新增`tools/verify_dat_extraction_freshness.py`/`audit_global_writers.py`兩支工具，明確否證續十二提出的①(writer可能不固定寫FDOTHER.DAT)②(extracted/可能是舊版)兩個假說；過程中發現`FUN_0001c4cc`的「雙胞胎」函式`FUN_0001c2da`也直接呼叫`0x25a96`但用固定`index=1`，同樣指向看似圖片的資料，讓矛盾更精確但未解開；新增「`table_ptr`可能是完整檔案映射而非80-byte截斷快取」這個候選切入點，追到`FUN_000372f9`/`0x3707e`底層runtime原語邊界，本輪止步。詳見下方「續十三」段落。維持D。
 
 **2026-09-06續，追查`0x18d8c`「攻擊」分支到`0x14818`的完整呼叫鏈，確認是重新發現、非新解**：
 獨立反組譯`0x1b83d`(武器slot查詢)→`0x1b722`(讀slot byte)→`0x4e8bc`(=&`0x602ad`+id*0x17)→
@@ -993,6 +993,64 @@ table_ptr指向的容器第index筆資源，當一段raw PCM buffer直接交給A
 裡，但`FUN_0001d4cb`自己有多少個caller、是否每次都固定寫入FDOTHER.DAT內容，
 本輪未查)，要嘛用live記憶體讀值直接觀察播放當下`[0x53b13]`實際指向哪個檔案的
 內容。維持D。
+
+**2026-09-06再續十三(使用者要求「先建立工具分析這個矛盾，再新建工具將未證實的部分
+分析清楚」)——新增2支工具，①②兩個假說均被工具產出的硬證據明確否證，③假說本身
+未被否證但也未能證實，且過程中發現一個新的、更難解的可能性**：
+
+**新工具**：(1) `tools/verify_dat_extraction_freshness.py`——重新對活體`.DAT`檔案跑
+`unpack_dat.py`自己的`parse_directory`，逐一比對每個resource index的(offset,length)
+跟`extracted/raw/<NAME>/`目錄下對應編號檔案的實際大小，不靠整檔hash比對(那只能證明
+「不是同一份檔案」，不夠具體)。(2) `tools/audit_global_writers.py`——通用工具，給一個
+全域資料位址，自動跑`xref_to`找WRITE點、對每個WRITE點所在函式跑`call_scan`找出它
+自己的全部caller(交叉檢查`xref_to`本身在這個專案`-noanalysis`模式下已知的不完整性)、
+再用`capstone_probe`對該函式做原始反組譯，自動判斷函式體內有沒有讀取任何`[esp+..]`
+棧上引數(=有沒有可能隨caller而變化)，印出「HARDCODED」或「POSSIBLY PARAMETERIZED」
+判定。這是可重複用在本專案任何「一個全域被多處寫入，需要確認是不是每次都寫同一個
+值」情境的通用稽核工具，不是只為這個item寫的一次性腳本。
+
+**①假說(`[0x53b13]`可能不是`FDOTHER.DAT`本身)——被`audit_global_writers.py`明確否證**：
+對`0x53b13`跑工具，確認唯一writer函式`FUN_0001d4cb`(`xref_to`的2個WRITE點都在這裡)
+用`call_scan`找出真正有**6個caller**(先前只知道存在，沒查過確切數量)，但用
+`capstone_probe`對`FUN_0001d4cb`本體(僅16 bytes)做原始反組譯，逐指令核對後**確認
+全函式沒有讀取任何`[esp+..]`棧上引數**——`push 0x50; push 0; push 0x51a4d
+("FDOTHER.DAT"字串位址，literal immediate); call 0x111ba`三個引數全部是寫死的
+immediate，不是從呼叫端傳入的參數。**無論這6個caller是誰、什麼情境下呼叫，
+`FUN_0001d4cb`的行為保證完全相同，`[0x53b13]`只可能被填入`FDOTHER.DAT`的內容**。
+①假說到此正式排除，不是縮小範圍。
+
+**②假說(`extracted/raw/FDOTHER/`可能是舊版)——被`verify_dat_extraction_freshness.py`
+明確否證**：對活體`FDOTHER.DAT`(3382481 bytes,sha256=`882580df...`)重新解目錄，
+104筆resource的(offset,length)跟`extracted/raw/FDOTHER/`既有104個`.bin`檔案的實際
+大小**逐筆比對，0個mismatch**。②假說到此正式排除。
+
+**過程中的新發現，讓謎題變得更精確但沒有解開——`FUN_0001c4cc`呼叫`0x25a96`後，緊接著
+每個caller都會呼叫的「雙胞胎」函式`FUN_0001c2da`本身也直接呼叫`0x25a96`，但用的是
+**固定**`index=1`(不是type-dependent)**：原始反組譯`FUN_0001c2da`開頭，找到
+`push 1(priority); push 1(index，literal immediate，不經過任何table查詢); push
+[0x53b13](table_ptr); call 0x25a96`——這是一個完全獨立於`FUN_0001c4cc`那條
+type-indexed路徑之外的**固定音效播放**(可能是「使用道具」的通用音效，每次都播，
+不管type)。查`extracted/raw/FDOTHER/FDOTHER_001.bin`(resource#1，2235 bytes)：
+開頭bytes(`18 00 18 00 14 00 56 00 00 00 33 01...`)呈現跟本專案已知LMI1格式相同的
+「uint16 entry_count(20)接著monotonic uint32 offset table，起點恰好落在header+
+table結尾(0x56=86)」結構——**同樣看起來是圖片資料，不是音效**，這個「固定播放、
+理論上最沒有理由出錯」的index=1也一樣不指向明顯的audio bytes，讓「這只是index=
+12/6/7/8/14/5這幾個type剛好選錯」的解釋更難成立(如果連寫死的index=1都一樣是圖片，
+問題更可能出在`table_ptr`本身的性質，而不是個別index值)。
+
+**深挖`table_ptr`本身可能不是「80 bytes截斷快取」而是完整檔案映射，但止步於runtime
+library邊界**：`FUN_000111ba`(回傳值即`[0x53b13]`)decompile顯示`DAT_00053bff =
+piVar2[1] - *piVar2`(算出一個[start,end)區間的大小存進另一個全域)，這個計算看起來
+**不受「0x50」這個literal引數約束**——如果`FUN_000111ba`實際上是完整開檔/映射整個
+檔案(而不是只讀前0x50 bytes)，那`table_ptr+offsets[index]`這個算式本身依然合理，
+矛盾的根源可能不在「哪個檔案」或「index值對不對」，而在別處。往下追`FUN_00037324`
+(`→0x372f9`)/`FUN_0003706e`(`→0x3707e`)發現這兩層都只是轉發，已經進入這個專案尚未
+碰過的底層runtime/檔案I/O原語，本輪在此止步，誠實記錄「更往下挖需要專門一輪，不是
+這輪的零碎延伸」，不強行下結論。**item 1117 SFX子項最終狀態不變**：機制鏈本身已
+byte-exact窮盡到`0x25a96`與其呼叫的AIL wrapper邊界，①②假說明確排除，③假說(index
+轉換層)本輪未找到新轉換層但也未排除，新增的「`table_ptr`是否真的是完整檔案映射」
+這個問題是目前最有希望的下一個切入點，但需要專門追`FUN_000372f9`/`FUN_0003707e`
+往下的runtime原語，超出本輪零碎時間片段的合理範圍。維持D。
 
 1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。

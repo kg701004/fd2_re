@@ -1,0 +1,50 @@
+{
+  "address": "0x53b13",
+  "xref_write_sites": [
+    "0x1d4d5",
+    "0x1d4f0"
+  ],
+  "xref_read_sites": [
+    "0x1c303",
+    "0x1c656",
+    "0x1d504",
+    "0x1d512",
+    "0x1d6dc"
+  ],
+  "writer_functions": {
+    "0x1d4cb": {
+      "function_start": "0x1d4cb",
+      "write_sites": [
+        "0x1d4d5",
+        "0x1d4f0"
+      ],
+      "caller_count": 6,
+      "callers": [
+        "0x1540a",
+        "0x1d446",
+        "0x20c87",
+        "0x2462d",
+        "0x2474a",
+        "0x2ddbe"
+      ],
+      "reads_stack_relative_operand": false,
+      "verdict": "HARDCODED (no [esp+..] operand read anywhere in the function body -- behavior is identical for every caller)",
+      "disasm_preview": [
+        "0x1d4cb: push 0x10",
+        "0x1d4d0: call 0x3702f",
+        "0x1d4d5: mov dword ptr [0x53b13], 0",
+        "0x1d4df: push 0x50",
+        "0x1d4e1: push 0",
+        "0x1d4e3: push 0x51a4d",
+        "0x1d4e8: call 0x111ba",
+        "0x1d4ed: add esp, 0xc",
+        "0x1d4f0: mov dword ptr [0x53b13], eax",
+        "0x1d4f5: ret ",
+        "0x1d4f6: push 0x10",
+        "0x1d4fb: call 0x3702f",
+        "0x1d500: push 1",
+        "0x1d502: push -1"
+      ]
+    }
+  }
+}
