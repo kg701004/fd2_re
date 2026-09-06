@@ -173,12 +173,13 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "animate_toggle",
    "addr": "0x24982",
    "target": "0x24b4d",
    "args": [
     30
-   ]
+   ],
+   "note": "2026-09-06: FUN_00024b4d(count) is byte-exact disassembled -- for i in 0..count-1: src alternates between two buffers 0x1c8(456) bytes apart based on i&1 (base [0x53a49]+0x8088, +0x1c8 on odd i), calls the known present primitive FUN_00011eb0(dst=0xA0000+0x504, dstStride=0x140, src, srcStride=0x1c8, 0x138, rows=0xc0), then delays 20 units via FUN_0003790a. Shape strongly suggests a two-frame ping-pong animation played `count` times (not a monotonic wipe, since the source toggles back and forth). Exact screen region / which two images remain undetermined -- see 91-worklist.md 1511 for the full derivation."
   },
   {
    "op": "dialog",

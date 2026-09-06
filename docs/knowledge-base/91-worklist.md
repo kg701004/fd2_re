@@ -490,15 +490,27 @@ if(byte[[0x53bf7]+EDX*0x50+8]==ECX) return 1;`——**這就是doc25 L833已經�
 `exe_tables/item.json`：`type:34,price:2`,ap/hit/dp/ev全0——非戰鬥屬性,價格極低,型態符合關鍵
 道具,但確切名稱未查(需FDTXT字串對照,超出本輪範圍)。
 
-`0x24b4d`(args:[30])反組譯**部分**成功但**未完全定案**：確認是`for(EBX=0;EBX<ESI;EBX++){...
-CALL 0x11eb0(...); CALL 0x3790a(0x14); EBX++}`(ESI=呼叫端傳入的30)——`0x11eb0`正是doc35§10.1
-已確認的**screen-present原語**(逐列320-byte memcpy)，配合迴圈跑30次、每次present後再呼叫
-`0x3790a(20)`(疑似固定20單位delay)，形狀與下方`0x2189a`的假說一致，指向**多步驟畫面轉場/wipe
-效果**；但迴圈本體開頭(`0x24b93`附近)反組譯時起始位址對錯一個位元組，導致前段幾個instruction
-解碼成明顯錯誤的亂碼(`ADD byte ptr[EAX],AL`等)，只有從`0x24ba7`起才重新對齊回正確instruction
-邊界——**在正確重新對齊反組譯之前,不可信任已解碼的3個PUSH參數細節**，下一輪需要從`0x24b93`
-(而非`0x24b95`)重新下手才能拿到byte-exact的完整參數。**維持D**（`0x24b14`三處已可判A/已修正,
-`0x24b4d`/`0x2189a`/`0x11df2`仍屬部分進展）。
+**2026-09-06續二,`0x24b4d`從`0x24b93`(正確對齊位址)重新反組譯,拿到byte-exact完整參數,結論更新**：
+
+```
+for (EBX = 0; EBX < ESI; EBX++) {           // ESI=呼叫端傳入的30
+  EDX = (EBX & 1) * 0x1c8                    // 依EBX奇偶在0/456間切換
+  EAX = [0x53a49] + 0x8088 + EDX             // 來源指標,在兩個相隔456 byte的buffer間交替
+  0x11eb0(dst=0xA0000+0x504, dstStride=0x140, src=EAX, srcStride=0x1c8, 0x138, rows=0xc0)
+  0x3790a(0x14)                              // 固定20單位delay
+}
+```
+
+`0x11eb0`本體反組譯(`PUSH 0x20;CALL 0x3702f`前導碼之後)確認簽名是
+`(dst,dstStride,src,srcStride,?,rows)`(6參數,對應doc35§10.1的「rows,dstStride,src/dst,srcStride」
+描述),內部用**已知的**`FUN_0003771c`(逐byte/dword `memcpy`,反編譯確認就是通用memmove-safe複製,
+非本輪新發現)逐列複製`rows`(=0xc0=192)列。**新結論(比先前「疑似wipe」更具體)**：這是一個
+**雙緩衝來源交替的動畫播放迴圈**——來源指標依外層迴圈索引奇偶在兩個相隔`0x1c8`(456 byte)的
+buffer間切換、目的地固定在VGA framebuffer`0xA0000+0x504`,搭配30次迭代+每次20單位delay,形狀
+高度符合「**兩張畫面(A/B)交替播放的循環動畫**,播30輪」,而不是單向的wipe/transition(wipe通常
+是單調推進,不會在兩個來源間乒乓切換)。**確切內容仍未知**(哪兩張圖、`0xA0000+0x504`對應螢幕
+哪個矩形區域尚未反推),但迴圈骨架/參數已達byte-exact信心。**維持D**（`0x24b14`三處已可判A/已修正,
+`0x24b4d`骨架已定案但確切畫面內容未查,`0x2189a`/`0x11df2`仍屬部分進展,見下）。
 
 `0x2189a`已能decompile,本體是`stack_check→FUN_0003706e→FUN_00011eee→for(10次){FUN_0003771c;
 FUN_000219ad;FUN_000127a9;FUN_00011eb0}→FUN_0003776e→FUN_00011cac→FUN_00010b43`，其中
