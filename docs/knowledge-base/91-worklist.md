@@ -799,7 +799,25 @@ raw disasm確認呼叫端傳入的icon index正是doc13已記載的「row byte0 
 仍fail-closed」，沒有任何具體反組譯或位址。**item 1117 presentation子項最終狀態**：
 名稱=已解(本輪`item_labels.json`)、icon=已解(doc13既有記載，本輪僅確認)、SFX=真正
 開放，是item 1117剩下唯一貨真價實的缺口。維持D。
-1118 - A（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
+
+**2026-09-06再續八——SFX子項取得部分進展：確認觸發機制與哪些effect type有聲音，
+但確切樣本ID仍未解**：`call_scan`已知SFX播放原語`0x2eb9f`(戰鬥法術演出用)發現**0個**
+呼叫端落在item effect handler範圍(`0x20000-0x24000`)，item效果dispatch完全不用這個
+原語，方向正確排除一條死路。改查doc36已記載的另一個更底層原語`play_sfx_a`(`0x25a96`)，
+`call_scan`找到`FUN_00020c6f`(item effect主dispatcher)裡type`11`、`20`、`24`
+(`\x14`/`\x18`)分支呼叫的共用子函式`FUN_0001c4cc`**確實**在其內部呼叫`0x25a96`——
+完整反組譯`FUN_0001c4cc(param_1,param_2,param_3,param_4)`確認這是一個**多幀受擊/演出
+迴圈**(逐幀`FUN_0004ebab`(RLE blit)+`FUN_00011eb0`(present)+`FUN_00017aa9`(tick))，
+在特定幀觸發`FUN_00025a96()`(=`0x25a96`)——觸發時機由`param_2`(疑似細分的effect
+sub-type，不是itemRow`+0xd`本身，需要下一輪對照呼叫端傳入值)索引一個literal陣列
+`{6,6,6,6,9,9,9,9,10,14}`決定第0幀是否觸發，另有`param_2∈{8,9,0x12,0x13,0x19}`
+的硬編碼特例幀。`FUN_00025a96`本體確認是`play_sfx_a`真身：3個gate條件(`[0x53ef1]`/
+`[0x51e62]`/`[0x54133]`)通過後呼叫4個`0x39xxx`底層AIL SDK呼叫播放。**誠實範圍**：
+這確認了「item type 11/20/24用的共用受擊演出迴圈裡，某些幀真的會觸發播放音效」——
+即**item使用SFX的觸發機制存在且已定位**，但(a)確切播放哪一個樣本ID(`0x25a96`的
+`param_1`從哪個全域/表讀出，本輪未追)、(b)其餘effect type(5,6,7,9,10,12,14,15,16,
+17,19,21,22,23)是否也共用這個或另一個機制仍未查。SFX子項從「完全未觸及」進展為
+「觸發機制已定位，樣本身分未解」，item 1117維持D。（2026-09-06由D複核關閉，見doc32 L346-351/L888「懸念已釐清」）- doc32 L169明確remake暫沿用獨立驗證的normalized武器射程，不得臆測raw `+0x0b..+0x0d`，仍待對位`0x14344` caller，屬靜態RE。**2026-09-06複核**：doc32(2026-08-19續輪)已用Ghidra `getFunctionContaining(0x14344)`確認該位址就在既有已文件化的`0x14237`函式體內(`0x14237..0x145cc`)，不是獨立第二個caller，「這是不是另一條獨立資料流」的疑慮已排除。剩餘只有`+0x0b`vs`+0x0c`的byte級細節，doc32自己已標記為既有已知限制，非新缺口。
 1138 - A（2026-09-06由D關閉，答案已在doc11「0x16F55」節，見doc57「2026-09-06補完」段落交叉引用）- doc57 UI-03 row明列剩餘缺口含end-turn entry，需更多`0x1a30b`家族靜態trace，非必須live DOSBox。**2026-09-06複核**：doc11(2026-08-20)已經完整反組譯`0x16F55` selector3(END選單)的呼叫鏈——`0x1956B`確認對話→`0x19953`確認→等待200 tick→`0x196CB`收尾動畫→直接呼叫`0x1A30B`回合orchestrator，FDTXT字串(0x1A3/0x1A4)已渲染核對——這正是本行要問的「D8/END選單本身怎麼呼叫到回合結算」，只是doc11當時是為了回應L145/L1038才寫的，沒有交叉引用回L1138，本行因此以為還沒答案。完全靜態、不需要live DOSBox驗證。改標A。
 1139 - D - doc57 UI-07 postbattle row顯示大量逐章audit已完成，但仍有章節(如ch16)fail-closed待handler-offset層級靜態稽核。**2026-09-06複核**：本行舉例的`ch16`已於2026-08-18(doc26§7.3/§7.4)轉為active，`postbattle_ch16_persist`現有`handler_binding`，不再是恰當範例。`tools/audit_postbattle_binding_gates.py`現況是24節點、**19 active／5 blocked**(blocked清單：`ch17/ch22/ch23/ch24/ch29`，見91-worklist.md L1359既有記錄)。**維持D**，但改成以這5個仍blocked的章節為對象，不是ch16；其中ch23/ch24跟項目849/851是同一批，已因`remake/`於2026-09-02移除而無法覆核，實際還可靜態繼續的是ch17/ch22/ch29。
 1148 - E - 項目自陳仍待DOSBox E2 visual/input diff；doc57 UI-10 church row同樣列此為唯一剩餘缺口。
