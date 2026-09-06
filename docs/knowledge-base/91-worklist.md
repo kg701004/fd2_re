@@ -460,7 +460,7 @@ Tab+20秒等待後**序列直接結束，沒有任何後續**，證明這個獨�
 1344 - C - 項目自陳仍未完成全roster/save/export的raw record接線，raw identity byte本身RE已由前一項關閉，剩下為工程接線。
 1354 - A（2026-09-05由D複核關閉，與366為同一底層項目，已由`RE-ITEM-EFFECT-ROW-4E56C`/doc32§1.3閉合）- 項目自陳剩餘為`0x602ad` table真正邊界與未命名欄位語意，屬可續靜態Capstone/IDA分析。
 1509 - E - doc58(約L2219-3451)記載此位址跨十餘輪live DOSBox-X session追至2026-08-19仍未解，使用者已決定暫緩，確屬需live驗證。
-1511 - D - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。**2026-09-05複核，部分進展但未解**：`ghidra_batch_probe.py`確認`0x24838`的`CALL 0x24bde`(bytes `e8 a1 03 00 00`)byte級屬實，且`0x24bde`不在Ghidra自動分析辨識的任何function邊界內、xref_to回傳0筆——這正是本專案已知的`.object1`(disasm_le.py/預設分析範圍)盲區，不是不存在。手動反組譯確認`0x24bde`本體是`PUSH 0x8; CALL 0x3702f; ...`，`0x3702f`的decompile是`LOCK();UNLOCK();FUN_00037042(param_4);return param_1;`——鎖定/解鎖包一個helper呼叫再回傳原值的樣式，疑似DOS/4GW critical-section包裝，未能進一步定名。呼叫端(`0x24838`)本身的行為模式已確認:呼叫後`TEST EAX,EAX；JZ 0x248b5`，若非零才接著跑`dialog(target=0x15f84)`(對照同檔已有的dialog op，args pattern吻合)+`act(target=0x1366a)`+另一個`dialog`——**功能上這是一個條件閘門(gate)**，語意類似其他chapter handler已知的`roster_has`類gate op，但`0x24bde`內部呼叫鏈的最終語意(到底在檢查什麼條件)仍未定名，未解。下一輪建議:反組譯`FUN_00037042`本體，並用`args:[18]`這個呼叫端傳入值反推18代表的資源/索引種類。
+1511 - A(2026-09-06收斂,見下方最新複核) - `docs/data/chapter_beats/ch22_post.json`的`0x24838`呼叫仍標記`op:unknown`，campaign binding真正未解，可用靜態FDTXT對照方式續做（未深入查證確認能否完全靠靜態解決）。**2026-09-05複核，部分進展但未解**：`ghidra_batch_probe.py`確認`0x24838`的`CALL 0x24bde`(bytes `e8 a1 03 00 00`)byte級屬實，且`0x24bde`不在Ghidra自動分析辨識的任何function邊界內、xref_to回傳0筆——這正是本專案已知的`.object1`(disasm_le.py/預設分析範圍)盲區，不是不存在。手動反組譯確認`0x24bde`本體是`PUSH 0x8; CALL 0x3702f; ...`，`0x3702f`的decompile是`LOCK();UNLOCK();FUN_00037042(param_4);return param_1;`——鎖定/解鎖包一個helper呼叫再回傳原值的樣式，疑似DOS/4GW critical-section包裝，未能進一步定名。呼叫端(`0x24838`)本身的行為模式已確認:呼叫後`TEST EAX,EAX；JZ 0x248b5`，若非零才接著跑`dialog(target=0x15f84)`(對照同檔已有的dialog op，args pattern吻合)+`act(target=0x1366a)`+另一個`dialog`——**功能上這是一個條件閘門(gate)**，語意類似其他chapter handler已知的`roster_has`類gate op，但`0x24bde`內部呼叫鏈的最終語意(到底在檢查什麼條件)仍未定名，未解。下一輪建議:反組譯`FUN_00037042`本體，並用`args:[18]`這個呼叫端傳入值反推18代表的資源/索引種類。
 
 **2026-09-06複核，`0x24838`本身已解，`ch22_post.json`其餘4個unknown留待未來**：反編譯`FUN_00037042`
 發現它是通用的**Watcom stack-overflow guard**(`cmp esp,DAT_00052814`超界則呼叫`"Stack Overflow!"`
@@ -512,14 +512,42 @@ buffer間切換、目的地固定在VGA framebuffer`0xA0000+0x504`,搭配30次�
 哪個矩形區域尚未反推),但迴圈骨架/參數已達byte-exact信心。**維持D**（`0x24b14`三處已可判A/已修正,
 `0x24b4d`骨架已定案但確切畫面內容未查,`0x2189a`/`0x11df2`仍屬部分進展,見下）。
 
-`0x2189a`已能decompile,本體是`stack_check→FUN_0003706e→FUN_00011eee→for(10次){FUN_0003771c;
-FUN_000219ad;FUN_000127a9;FUN_00011eb0}→FUN_0003776e→FUN_00011cac→FUN_00010b43`，其中
-`FUN_00011eb0`正是doc35§10.1已確認的**screen-present原語**(逐列320-byte memcpy)，強烈暗示這是一個
-**多步驟畫面轉場/wipe效果**(loop 10次、每次present一次)，但decompile顯示的迴圈上界字面值「10」
-與呼叫端傳入的`[10,15,1]`/`[16,30,1]`不吻合，可能是Ghidra誤判參數對應，需要原始反組譯核對才能
-定案，不可直接採信偽代碼字面值；`0x11df2`本體是`stack_check→for(param_1<=param_2){FUN_00037ae5
-×4}`，配合呼叫端`[ebx/0, 255, 0]`與`repeat_hint`(64次)的語意,形狀很像**逐色階DAC/palette寫入
-迴圈**(0..255步進,每階寫4個東西)，但`FUN_00037ae5`本體未反編譯核對，同樣未定案。維持D。
+**2026-09-06續三,`0x2189a`/`0x11df2`兩者都從正確位址重新byte-exact反組譯,先前的「decompile
+字面值10與呼叫端不吻合」疑慮已排除(是本輪過度謹慎，非真的問題)——`ch22_post.json`本行(1511)
+標的的5個`op:unknown`現在**4個完全解開、1個確認是通用compiler runtime helper**：**item 1511
+本輪收斂關閉,不再是D**：
+
+- `0x24838`→`roster_has(18)`（前續已解）
+- `0x247be`/`0x25186`(ch26_post)/`0x33b3f`(ch26_pre)→`inventory_has(100)`（前續已解,見上）
+- `0x24982`/`0x249ce`→`animate_toggle(30)`：雙緩衝來源交替present迴圈(前續已解,見上)
+- `0x24978`/`0x249c4`/`0x24a10`→`play_effect_animation(unit_idx,frame_start,frame_step)`：
+  `FUN_0002189a`從正確位址重新反組譯，確認迴圈上界字面值「10」是**真的硬編碼**(`CMP EBX,0xa`)，
+  與呼叫端`args[0]`(10或16)只是巧合同值,不是Ghidra誤判——本輪對此的擔憂已排除。完整機制：算出
+  `unit_idx`在戰場上的螢幕像素位置(`[0x53a45]+unit_idx*0x50`的grid X/Y各×24減camera offset)，
+  呼叫`FUN_0003706e`拿到一個資源/緩衝控制碼，接著跑10格固定迴圈,每格從表`[0x53a6d]`查一個
+  per-frame offset、用已知memcpy(`FUN_0003771c`)搬資料、呼叫兩個未進一步定名的helper
+  (`FUN_000219ad`/`FUN_000127a9`)，用一個從`frame_start`起、每格加`frame_step`的累加器ESI，
+  最後present到螢幕(`FUN_00011eb0`,同`animate_toggle`共用的present呼叫)。淨效果：**在指定單位
+  的螢幕位置上,播放一段10格、以累加游標索引的特效動畫**——具體是什麼特效(治療光/魔法陣/其他)
+  未查,但機制骨架已byte-exact確認。
+- `0x24a24`/`0x24ab4`→`set_palette_range(start,end,delta)`：`FUN_00011df2`本體重新從正確位址
+  (`0x11e0d`而非之前誤判的位址)反組譯,得到一個乾淨、教科書等級的**VGA DAC調色盤寫入迴圈**：
+  `for(idx=start;idx<=end;idx++){ OUTPORTB(0x3C8,idx); 對R/G/B各做 OUTPORTB(0x3C9,
+  clamp(basePalette[[0x53a65]+idx*3+channel]+delta, 0, 0x3f)) }`——是doc35第220行已知的
+  `0x11d40`色盤淡入原語之外**第二個獨立的調色盤寫入原語**,用不同的base table。兩處呼叫的
+  `delta`都是0,代表這兩次呼叫其實是**把base palette原樣寫回/還原**,不是真的做淡入淡出。
+- 唯一保留`op:unknown`的是`0x24a92`→`0x4dbfc`(`FUN_0004dbe7`)：反編譯確認是**通用Watcom
+  runtime的64-bit shift/normalize helper**(classic unsigned-divide-by-shift模式,不碰任何
+  game-specific資料)，幾乎確定是某個數值計算(可能是百分比/分數格式化)的編譯器插入輔助函式，
+  不是獨立的game-logic gate——誠實保留`unknown`而非硬猜語意，因為呼叫端只顯示1個引數但
+  decompile簽名是2參數，對應關係未查清。
+
+**item 1511 結論**：`ch22_post.json`最初標的的核心`op:unknown`(`0x24838`)已完全解開為
+`roster_has`；同檔案其餘4類`op:unknown`目標中，3類(`inventory_has`/`animate_toggle`/
+`play_effect_animation`/`set_palette_range`，共4個不同target)已byte-exact機制解開並更新JSON，
+只剩1個(`0x4dbfc`)確認是**通用runtime helper**而非遊戲邏輯，不需要繼續當作gate語意去追。
+**改標記為已收斂(非D)**——`campaign binding`真正未解的部分(remake側consumer)已因2026-09-02
+`remake/`整體移除而不再適用；純RE面的op語意已達到本專案「已知機制、細節可留白」的合理終點。
 1515 - D - 核對`remake/internal/battle/native_inventory_search.go`與`main.go:2683-2695`，raw gate已完整實作並如實反映項目自身描述的minor殘留範圍，非其他doc額外解決，非A但近乎完成。**2026-09-05複核**：`remake/`已於2026-09-02整個移除，本項核對對象已不存在，**目前無法覆核**，維持D並標註阻塞原因。
 1578 - C - 成功/扣款動畫已由DOSBox E2閉合，剩餘阻擋是把其他子面板接進正常campaign/save生產路徑，屬工程整合而非新RE。
 1604 - F - 明文卡在動態turn-writer/group-formula通用pending-group binding及`battle.State`→`Game`/controller的原子handoff，屬更大範圍重構前置依賴。

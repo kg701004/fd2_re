@@ -163,14 +163,15 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "play_effect_animation",
    "addr": "0x24978",
    "target": "0x2189a",
    "args": [
     10,
     15,
     1
-   ]
+   ],
+   "note": "2026-09-06: FUN_0002189a(unit_idx, frame_start, frame_step) is byte-exact disassembled. Once: compute unit_idx's battlefield screen position from its grid X/Y ([0x53a45]+unit_idx*0x50, bytes 0/1, each *24(0x18) minus camera offsets [0x53aa9]/[0x53aad]), call FUN_0003706e(px,py,0x25680) -> EBP (a resource/buffer handle). Then a fixed 10-iteration loop (hardcoded CMP EBX,0xa -- NOT read from any argument, despite superficially matching this call's frame_start=10): each iteration looks up a per-frame offset from table [0x53a6d] indexed by the loop counter, copies via the known memcpy primitive FUN_0003771c, calls FUN_000219ad/FUN_000127a9 (uncharacterized helpers) with an accumulator ESI that starts at frame_start and increments by frame_step each frame, then presents via the same known primitive FUN_00011eb0(dst=0xA0000+0x504,...) used by 0x24b4d/animate_toggle. Net effect: plays a 10-frame animation over the given unit's screen position, indexed by an accumulating frame cursor. Exact visual content (which effect/sprite) undetermined -- see 91-worklist.md 1511."
   },
   {
    "op": "animate_toggle",
@@ -199,22 +200,24 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "play_effect_animation",
    "addr": "0x249c4",
    "target": "0x2189a",
    "args": [
     10,
     15,
     1
-   ]
+   ],
+   "note": "2026-09-06: same FUN_0002189a(unit_idx=10, frame_start=15, frame_step=1) as the 0x24978 call site -- see that note for the full derivation."
   },
   {
-   "op": "unknown",
+   "op": "animate_toggle",
    "addr": "0x249ce",
    "target": "0x24b4d",
    "args": [
     30
-   ]
+   ],
+   "note": "2026-09-06: same FUN_00024b4d(count=30) two-frame ping-pong animation as the 0x24982 call site -- see that note for the full derivation."
   },
   {
    "op": "dialog",
@@ -234,17 +237,18 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "play_effect_animation",
    "addr": "0x24a10",
    "target": "0x2189a",
    "args": [
     16,
     30,
     1
-   ]
+   ],
+   "note": "2026-09-06: same FUN_0002189a(unit_idx=16, frame_start=30, frame_step=1) as the 0x24978/0x249c4 call sites -- see that note for the full derivation."
   },
   {
-   "op": "unknown",
+   "op": "set_palette_range",
    "addr": "0x24a24",
    "target": "0x11df2",
    "args": [
@@ -252,6 +256,7 @@
     255,
     0
    ],
+   "note": "2026-09-06: FUN_00011df2(start,end,delta) is byte-exact disassembled -- a VGA DAC palette-write primitive, distinct from the already-known 0x11d40 fade primitive (doc35 line 220). For index=start..end: OUTPORTB(0x3C8,index) then 3x OUTPORTB(0x3C9, clamp(basePalette[[0x53a65]+index*3+channel] + delta, 0, 0x3f)) for R/G/B. delta=0 here means this writes the UNCHANGED base palette (a restore/copy, not a fade). args[0]='ebx' means start is a dynamic register value at this call site (the outer repeat_hint loop's own counter), not a constant.",
    "repeat_hint": {
     "loop_back_to": "0x24a1c",
     "limit": 64
@@ -293,7 +298,8 @@
    "target": "0x4dbfc",
    "args": [
     "dword ptr [0x3a51]"
-   ]
+   ],
+   "note": "2026-09-06: 0x4dbfc falls inside FUN_0004dbe7 (entry 0x4dbe7), decompiled and confirmed to be a generic Watcom-runtime 64-bit shift/normalize helper (classic unsigned-divide-by-shift pattern: shift both operands left/right together based on leading-zero position, no game-specific data touched) -- almost certainly compiler-inserted arithmetic support for a numeric computation elsewhere (e.g. percentage/score formatting), not a distinct game-logic gate. Genuinely still unresolved: which surrounding computation this feeds and why only one arg (dword ptr [0x3a51]) shows in this extraction against the decompile's 2-param signature. Left as unknown rather than guessed."
   },
   {
    "op": "prepare_chapter_aux_graphics",
@@ -311,14 +317,15 @@
    ]
   },
   {
-   "op": "unknown",
+   "op": "set_palette_range",
    "addr": "0x24ab4",
    "target": "0x11df2",
    "args": [
     0,
     255,
     0
-   ]
+   ],
+   "note": "2026-09-06: same FUN_00011df2 palette-write primitive as 0x24a24 (see that note), here writing the full base palette range 0..255 unchanged (delta=0)."
   },
   {
    "op": "act",
