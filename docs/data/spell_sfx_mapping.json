@@ -1,0 +1,70 @@
+{
+ "_source": "intersect the per-spell presentation handler table (0x51d01) with the play_sfx call-site inventory, 2026-09-07",
+ "_method": "a spell's handler owns the address range from its entry to the next distinct handler entry; any play_sfx call site inside that range belongs to that spell",
+ "_limit": "only sites with a LITERAL index are resolvable this way; register-computed indices and the 13 dynamic-table_ptr sites still need separate work. Spells whose handler contains no call site simply do not play a pooled sfx from their own handler.",
+ "mappings": [
+  {
+   "spell_id": 10,
+   "name": "碎岩術",
+   "handler": "0x21527",
+   "sfx_site": "0x217b2",
+   "pool": "0x53b13",
+   "sfx_index": 13,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 11,
+   "name": "地震術",
+   "handler": "0x2185f",
+   "sfx_site": "0x21873",
+   "pool": "0x53b13",
+   "sfx_index": 2,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 12,
+   "name": "裂地術",
+   "handler": "0x21a9e",
+   "sfx_site": "0x21ab2",
+   "pool": "0x53b13",
+   "sfx_index": 2,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 13,
+   "name": "治療術",
+   "handler": "0x21ad9",
+   "sfx_site": "0x21aed",
+   "pool": "0x53b13",
+   "sfx_index": 11,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 14,
+   "name": "回復術",
+   "handler": "0x21b99",
+   "sfx_site": "0x21bad",
+   "pool": "0x53b13",
+   "sfx_index": 11,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 15,
+   "name": "再生術",
+   "handler": "0x2211c",
+   "sfx_site": "0x22130",
+   "pool": "0x53b13",
+   "sfx_index": 11,
+   "handle": "play_sfx_a"
+  },
+  {
+   "spell_id": 16,
+   "name": "神恩術",
+   "handler": "0x22153",
+   "sfx_site": "0x22167",
+   "pool": "0x53b13",
+   "sfx_index": 11,
+   "handle": "play_sfx_a"
+  }
+ ]
+}
