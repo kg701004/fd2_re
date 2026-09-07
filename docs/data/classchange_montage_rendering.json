@@ -12,5 +12,19 @@
   "**真正的立繪繪製呼叫是 `0x2fd4c call 0x2eb9f`**,其第 5 個參數 `push dword ptr [esp+0x14]` —— 該處已先 push 了 4 個 dword(16 byte),故指向原始 `[esp+4]`,即**第二次 FIGANI 載入的緩衝**。Y 座標由 `0x2fd40 imul esi,esi,0xa / add esi,edi` 算出。",
   "`0x2fc05` 另外配置 `FUN_0003706e(0xfa00)` = 64000 byte = **320×200 全螢幕**,並以 `FUN_0003771c(buf, 0xa0000, 0xfa00)` 從 **VGA 記憶體 `0xa0000`** 複製進來,即 montage 開始前的螢幕快照。"
  ],
- "not_established": "未確立:(a) `[esp+0x20]`/`[esp+0x24]` 何者是轉職前、何者是轉職後(兩者皆為 portrait×3,但來源不同,需看 caller `FUN_0002aa00` 的傳參);(b) `FUN_0002eb9f` 本身是否直接寫 VGA,或還有下一層;(c) FIGANI 每角色 3 個子資源各自的語意。不臆測。"
+ "not_established": "未確立:(a) `[esp+0x20]`/`[esp+0x24]` 何者是轉職前、何者是轉職後(兩者皆為 portrait×3,但來源不同,需看 caller `FUN_0002aa00` 的傳參);(b) `FUN_0002eb9f` 本身是否直接寫 VGA,或還有下一層;(c) FIGANI 每角色 3 個子資源各自的語意。不臆測。",
+ "_resolved_2026_09_07_followups": {
+  "which_portrait_is_which": {
+   "call_site": "`0x2abcc call 0x2fb2c`,前面 `0x2abc7 push dword [esp+0x40]` / `0x2abcb push edi` —— 即 `FUN_0002fb2c(edi, [esp+0x40])`。callee 的 prologue(`push 0x38`+4 個 push+`sub esp,0xc`)使 arg1 落在 `[esp+0x20]`、arg2 落在 `[esp+0x24]`。",
+   "conclusion": "arg1 = `edi` = **unit index**,montage 內以它取 `record[+7]`;而 `FUN_0002aa00` 是在 **`record[+7] = 新 portrait` 之前**呼叫 montage 的,故第一次 FIGANI 載入取到的是**轉職前**的立繪。arg2 由 caller 直接傳入 portrait 值,是**轉職後**的立繪。",
+   "which_one_is_drawn": "`0x2fd4c call 0x2eb9f` 的緩衝參數指向原始 `[esp+4]` = **第二次載入 = 轉職後**的立繪——與 montage 應以新形象收尾的直覺一致。"
+  },
+  "is_0x2eb9f_a_vga_writer": "**不是**。反編譯顯示 `FUN_0002eb9f` 只是 `FUN_0003702f(); FUN_0004e98d(); return;` —— 一個薄包裝,委派給**與 BG 幀相同的 `FUN_0004e98d` blit 引擎**,不自己寫 VGA。",
+  "figani_triple_semantics": {
+   "status": "**部分定性**(不宣稱是普遍法則)",
+   "measurement": "以 `frameCount = u16 @0` 讀全部 409 個資源並按 portrait×3 分組:portrait 0x00-0x1f(32 組)子資源0 為 4 幀者 27/32、子資源2 為空者 29/32;portrait 0x20-0x41(34 組)子資源0 為 4 幀者 **32/34**、子資源2 為空者 31/34。子資源1 一律是較長的動畫(多為 5-20 幀)。",
+   "example": "凱麗 轉職前 portrait 0x0c → FIGANI 36/37/38 = 4 幀 / 16 幀 / 空;轉職後 0x3e → 186/187/188 = 4 幀 / 11 幀 / 空。同一組內 frame0 的 bound/real 尺寸一致。",
+   "honest_caveat": "少數資源的 `u16 @0` 讀出 271-291 這種不合理的幀數,代表**該欄位並非對每個資源都是幀數**(或那些資源不是動畫)。因此上述只是**主流形態的統計描述**,不是每筆都成立的結構律。portrait 0x42 以上的區間規律明顯更亂,而遊戲本來就不以 portrait×3 索引到那裡。"
+  }
+ }
 }
