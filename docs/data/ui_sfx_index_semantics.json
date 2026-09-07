@@ -122,5 +122,39 @@
    },
    "confidence": "LOW -- a 221ms sample on a 1-in-9 cadence does not obviously fit a tick; the enclosing function still needs to be decompiled"
   }
+ },
+ "_live_confirmation_2026_09_07": {
+  "tool": "tools/fd2_sfx_probe.py (built this round, --selftest pins index 0 + a known direction call site)",
+  "method": "breakpoint on play_sfx_a (Ghidra 0x25a96, live 0x1C1A96 at delta 0x19c000), resume, perform an action, then read the caller's 3-push frame off the stack: [esp+0] return address, [esp+4] table_ptr, [esp+8] index, [esp+c] priority",
+  "calling_convention": "doc36's documented 3-push order (table_ptr, index, priority) is now LIVE-VERIFIED, not just read off disassembly",
+  "index_0_CONFIRMED_LIVE": {
+   "observed_call_sites": [
+    "0x117a1",
+    "0x11a54",
+    "0x11a75",
+    "0x11a96"
+   ],
+   "note": "4 of the 5 direction-key branches doc36 lists were each observed firing with index 0 after pressing the matching direction key (left->0x11a75, right->0x11a96, down->0x11a54). Previously index 0 rested on waveform length plus static call-site reading."
+  },
+  "index_7_CONFIRMED_LIVE": {
+   "call_site": "0x1193a",
+   "trigger": "pressing confirm with the cursor on a unit whose bit test fails in FUN_000117e7",
+   "screen_at_the_call": "docs/figures/ch27-sfx-index7-refusal-moment.png -- the cursor sits on a unit (mini status card shows HP 782) and NO info card opens, which is the branch doc36 describes as 'test fails -> play 7, else call 0x17aed'",
+   "reproducible": "hit twice with the same call site",
+   "semantics": "refused / invalid action"
+  },
+  "index_10_NEW_not_in_doc36": {
+   "call_site": "0x32307",
+   "observation": "fired in battle after two DIFFERENT keys (an unbound key and a direction key), so it is not caused by the key pressed -- something plays it periodically",
+   "waveform": "sfx_10 is the quietest sample in the pool (rms 3.32, 72.3% within +/-2 of silence, 299.7ms)",
+   "semantics": "NOT established -- consistent with an ambient/idle loop, but not demonstrated"
+  },
+  "method_limitation": "probe() resumes and reports the NEXT play_sfx call, which is not necessarily the one the action caused. Whenever a periodic sound is active (as index 10 is in battle), a single observation cannot be attributed to a keypress; attribution needs either a quiet context or repeated trials that separate the two.",
+  "tool_defects_found_and_fixed_this_round": [
+   "the debugger's D view is 16-byte aligned, so an unaligned ESP silently produced no row and the observation was dropped",
+   "arm() calibrated the delta before entering the debugger, but MEMDUMPBIN does nothing while the guest runs",
+   "an empty dump was reported as a parse failure instead of the truth: no breakpoint hit",
+   "a stale pane could show an EIP a few bytes past the breakpoint and the stack was read anyway -- an unbound-key negative control exposed this as index=2129944 from a negative call site; the tool now requires EIP to equal the breakpoint exactly"
+  ]
  }
 }
