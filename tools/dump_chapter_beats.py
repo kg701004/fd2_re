@@ -21,6 +21,13 @@ import json
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from callgraph_le import CG, fixup_map
 
+# 2026-09-08:本檔輸出含 cp950 編不出的符號(✓/✗/⚠)。在本機主控台(cp950)下,
+# 第一個含該符號的 print 就會 UnicodeEncodeError 崩潰,而且崩得像「工具壞了」
+# ——dump_exe_tables.py 與 safe_output.py 都真的因此整支不能用。全 repo 統一作法。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 TABLE_PRE = 0x51d71   # 戰前/劇情 handler 跳表(章節 0~29 索引)
 TABLE_POST = 0x51de9  # phase-2 戰後 handler 跳表
 N_CHAPTERS = 30
