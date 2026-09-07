@@ -249,7 +249,7 @@ legality判定的真正位址，不能沿用doc32§4.1這行文字。
 
 **2026-09-06再續，真正做了新反組譯，找到legality的真正位址，正式關閉541**：`xref_to
 0x20c6f`(item效果dispatch，doc32§4.2已知)找到兩個caller——`0x1be45`(玩家路徑)與`0x152f0`
-(AI路徑，本輪未展開)。decompile `0x1be45`所在函式`FUN_0001bbdc`(0x1bbdc-0x1bffd)，逐指令
+(AI路徑，本輪未展開)。**2026-09-07補完這個殘留**：用`tools/find_enclosing_function.py`（Watcom序言回溯，自檢含與Ghidra `function_bounds`的交叉一致性檢查）定出`0x152f0`所在函式為**`FUN_00015055`**(`0x15055-0x15310`，700 bytes，Ghidra確實有boundary，兩者答案一致)。decompile顯示這是**AI側的道具使用演出**：`FUN_0001b722()`取道具→`FUN_0004e8bc()`取item-effect row(即366關閉時記載的`0x602ad`/stride `0x17`那張表的定址器)→依`row[+0x10]`分流`0x14818`(候選格)或`0x149f8`(道具指令法術分支)→一段演出→最後呼叫`FUN_00020c6f()`派送。**關鍵結論：AI路徑完全沒有玩家路徑那個type-0x17 legality閘門**。用raw disasm獨立交叉核對(不只信`-noanalysis`下的decompile)：整個700 bytes裡**對`0x17`/`0x18`/`0x14`的比較0筆**、讀取`unit[+8]`/`unit[+0x46]`/`item[+0xd]`(玩家路徑gate用的三個欄位)也**0筆**，而`call 0x20c6f`確實存在且僅1次——兩種方法一致。**誠實範圍**：這只證明「此函式不做該檢查」，不等於「AI能使用type-23道具」——AI上游的道具選擇評分是否會選到這類道具是另一個問題(屬敵方AI評分範疇)，本輪未追。。decompile `0x1be45`所在函式`FUN_0001bbdc`(0x1bbdc-0x1bffd)，逐指令
 核對到真正的type23(0x17)legality分支：
 ```
 if (*(char *)(iVar3 + 0xd) == '\x17') {  // item type == 0x17(23)relocation
