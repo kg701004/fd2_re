@@ -1,0 +1,71 @@
+{
+ "_source": "FUN_0002af28 (preparation/selection screen) -> FUN_0002b439 validator, read from the branch chain at 0x2b2c2..0x2b34d in the current EXE, 2026-09-07",
+ "_validator": {
+  "function": "FUN_0002b439(count, required_char_id)",
+  "logic": "scans roster records 1..count for record[+8] == required_char_id; if absent it sets DAT_00053ad9 = required_char_id + 1 (the name index for the message) and shows 「本章○○必須出場！」, returning 0",
+  "observed_consequence": "failing it clears the entire selection (live: 剩餘人數 back to the cap, all cells grey)"
+ },
+ "_after_validation": "the same chapter->id chain is repeated at 0x2b358..0x2b3af but calling FUN_0002b843(id) instead -- i.e. once validated, the mandatory character is put through that function before the final confirmation dialog (FDTXT 0x4b via 0x1956b)",
+ "_deployment_cap": {
+  "code": "FUN_0002af28: iVar3 = 0xf; if (0x1a < DAT_00053c03) iVar3 = 0x13;",
+  "meaning": "cap is 15 for raw chapter <= 0x1a, 19 above it",
+  "live_confirmed": "raw chapter 0x16 showed 出戰人數 ×15"
+ },
+ "_grid": "the selection cursor runs over DAT_00053bfb - 1 entries (roster_count minus the fixed record 0), 10 per row (up/down move by 10); live-confirmed as 17 cells for an 18-member roster and 18 for 19",
+ "_chapter_numbering": "displayed chapter = raw chapter + 1 (raw 0x1a = 第二十七章, per the load menu)",
+ "_known_names": {
+  "9": "悠妮",
+  "24": "希爾法"
+ },
+ "table": [
+  {
+   "raw_chapter": "0x10",
+   "chapter": 17,
+   "required_char_id": 18,
+   "note": "only when FUN_00033499(0x12) returns non-zero"
+  },
+  {
+   "raw_chapter": "0x11",
+   "chapter": 18,
+   "required_char_id": 9
+  },
+  {
+   "raw_chapter": "0x12",
+   "chapter": 19,
+   "required_char_id": 16
+  },
+  {
+   "raw_chapter": "0x13",
+   "chapter": 20,
+   "required_char_id": 9
+  },
+  {
+   "raw_chapter": "0x14",
+   "chapter": 21,
+   "required_char_id": 21
+  },
+  {
+   "raw_chapter": "0x15",
+   "chapter": 22,
+   "required_char_id": 24
+  },
+  {
+   "raw_chapter": "0x16",
+   "chapter": 23,
+   "required_char_id": 24,
+   "live_confirmed": "2026-09-07: a ch23 save without id 24 in the roster produced 「本章希爾法必須出場！」"
+  },
+  {
+   "raw_chapter": "0x19",
+   "chapter": 26,
+   "required_char_id": 9,
+   "second_required_char_id": 29,
+   "note": "id 9 is checked first; only if that passes is id 29 checked"
+  },
+  {
+   "raw_chapter": ">0x19",
+   "chapter": "27 and later",
+   "required_char_id": 9
+  }
+ ]
+}

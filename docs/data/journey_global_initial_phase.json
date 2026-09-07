@@ -1,0 +1,91 @@
+{
+ "_source": "FUN_00025bf4 (journey orchestrator) and FUN_00026152 / FUN_0002af28, current EXE, 2026-09-07",
+ "_answers": "worklist item 1160 -- the cross-battle/town journey's global initial phase",
+ "orchestrator": {
+  "function": "FUN_00025bf4",
+  "reached_from": "calls FUN_00025ebb (battle side) and FUN_00026152 (town/preparation side) in one loop",
+  "transition_selector": {
+   "global": "DAT_00053ecc",
+   "1": "DAT_00051aac=0; FUN_00022e5c(); DAT_00051aac=1; DAT_00053ecc=0",
+   "2": "DAT_00051aac=0; per-chapter PRE handler from the table at DAT_00051de9 indexed by DAT_00053c03; then FUN_00026152 (town / preparation); on success the per-chapter POST handler from the table at PTR_FUN_00051d71; DAT_00051aac=1; DAT_00053ecc=0"
+  }
+ },
+ "one_time_global_init": {
+  "note": "run once at the top of FUN_00025bf4, before the battle/town loop",
+  "conditional_pair": [
+   {
+    "global": "_DAT_00053ed8",
+    "from": "FUN_0003aa72()",
+    "if_nonzero": [
+     "DAT_00053ef0 = 1",
+     "DAT_00053ed0 = FUN_0003aca3(...)"
+    ]
+   },
+   {
+    "global": "DAT_00053edc",
+    "from": "FUN_0003908b()",
+    "if_nonzero": [
+     "DAT_00053ef1 = 1",
+     "DAT_00053ee4 = FUN_000392d0(...)",
+     "DAT_00053ee8 = FUN_000392d0()"
+    ]
+   }
+  ],
+  "resource_loads_via_FUN_000111ba": [
+   "DAT_00053eec",
+   "DAT_00053a4d",
+   "DAT_00053a89",
+   "DAT_00053a6d",
+   "DAT_00053a75",
+   "DAT_00053a81",
+   "DAT_00053a7d",
+   "DAT_00053ad1"
+  ],
+  "allocations_via_FUN_0003706e": [
+   "DAT_00053ad5",
+   "DAT_00053a49",
+   "DAT_00053bf7 (the persistent roster base fd2save.py documents)"
+  ],
+  "scalars": [
+   "_DAT_00053a8d = 0x13 then FUN_000370f0()",
+   "_DAT_00053c0f = _DAT_0000046c (BIOS tick snapshot)"
+  ]
+ },
+ "town_entry_reset": {
+  "function": "FUN_00026152",
+  "freed_and_zeroed": [
+   "DAT_00053a45",
+   "DAT_00053a55",
+   "DAT_00053a5d",
+   "DAT_00053a51"
+  ],
+  "freed_not_zeroed": [
+   "DAT_00053a61 (the FD2.TMP swap buffer)"
+  ],
+  "other": [
+   "DAT_00053bdf = 0",
+   "a per-roster-member loop calling FUN_00011019 for DAT_00053bfb members"
+  ],
+  "town_branch_initial_phase": {
+   "DAT_00053a5d": "re-allocated",
+   "DAT_00053f56": "town record pointer from FUN_0004e809()",
+   "DAT_00053f4a": "0  -- the location selection starts at index 0",
+   "DAT_00053f5a": "resource handle from FUN_000111ba()",
+   "DAT_00053f52": "0..3 animation counter, advanced on a 4-tick cadence",
+   "live_corroboration": "every live town entry in this project starts on 酒店, i.e. selection index 0"
+  },
+  "no_town_branch": "chapters whose (&DAT_000523e7)[chapter] byte is non-zero skip the town entirely and go straight to the 「要記錄戰況嗎？」 prompt then FUN_0002af28"
+ },
+ "preparation_initial_phase": {
+  "function": "FUN_0002af28",
+  "cap": "iVar3 = 0xf, or 0x13 when 0x1a < DAT_00053c03",
+  "allocations": [
+   "DAT_00053c5b",
+   "DAT_00053c5f",
+   "DAT_00053c63"
+  ],
+  "cursor": "uVar4 = 0 (first selectable cell = roster record 1; record 0 is fixed)",
+  "selection_flags": "local_3c[] all clear",
+  "live_corroboration": "docs/figures/ch23-preparation-screen-cap15-initial.png -- 出戰/剩餘人數 both 15, every cell grey, cursor on cell 0, info panel showing roster record 1"
+ }
+}
