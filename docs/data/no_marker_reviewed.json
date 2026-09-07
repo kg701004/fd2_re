@@ -33592,6 +33592,30 @@
    "excerpt": "本輪是以「index 57/58/76/78 四格同時吻合」間接佐證，未另行獨立推導基底本身。",
    "verdict": "benign",
    "note": "誠實範圍(c)：說明基底0x51b91沿用§11.7、本輪僅間接佐證，屬限制聲明"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1362,
+   "excerpt_sha1": "73cf18281d8b3169c4ab244881e27b4ae9110104",
+   "excerpt": "item 1117 關閉時的誠實範圍是「只驗證了 7 個已知 type 對應的 sub-index，17 個子項裡其餘 10 個",
+   "verdict": "benign",
+   "note": "引用item 1117既有誠實範圍的敘述句，本節後面即列出0x51f75表的逐格證據"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1363,
+   "excerpt_sha1": "1a9cc25456864cb67d110061d984e5dd73c0a48c",
+   "excerpt": "未對應」。本輪回頭處理這個殘留，發現**不需要新的 live 驗證，完整對照本來就在 `local_60`",
+   "verdict": "benign",
+   "note": "引用item 1117既有誠實範圍的敘述句，本節後面即列出0x51f75表的逐格證據"
+  },
+  {
+   "file": "36-sfx-audio-data.md",
+   "line": 1354,
+   "excerpt_sha1": "f23000eeb8e3e6f96dfcdd1ef948d12a6696d4a9",
+   "excerpt": "**⚠已於2026-09-07補完並訂正，見本檔案末「item 1117 殘留補完」段落。** **誠實範圍**：只驗證了7個已知type對應的sub-index(1/5/6/7/8/12/14)，17個子項裡其餘10個",
+   "verdict": "benign",
+   "note": "在既有誠實範圍句前加的前向指標，指向本檔末已附0x51f75逐格證據的補完段落"
   }
  ]
 }

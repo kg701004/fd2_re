@@ -473,3 +473,38 @@ worklist 第 570/571/609 行的「原版 `+0x22/+0x23/+0x24` DX/race/multiplier 
 工作是把已存在的三個 remake primitive 串成一個可執行的 `ExecuteNativeCommand17_19` command,那是
 implementation/engine-integration 工作,不是 RE 缺口。本節不修改 `91-worklist.md`(依任務指示由外部
 協調 session 同步),僅在此記錄查證結果與證據鏈供之後同步參考。
+
+## 2026-09-07：§6.5「hit-event 陣列」的來源查清——不是程式合成的陣列，是 FDOTHER 資源
+
+worklist L572 收斂後留下的唯一 RE 殘留是「hit-event 陣列（`FUN_000314de` 回傳）逐 byte 語意」。
+本輪逐指令反組譯 `FUN_000314de`（`0x314de`，本體 0x4b bytes），發現 §6.5 對它的描述框架需要訂正：
+
+```
+void* FUN_000314de(void* p) {
+    byte tbl[6];
+    memcpy(tbl, (void*)0x526e3, 6);       // movsd + movsw = 4+2 bytes
+    void* r = 0;
+    if (p != NULL && p[+4] != 0)
+        r = FUN_000111ba("FDOTHER.DAT"(0x51a4d), 0, tbl[ p[+4] - 1 ]);
+    return r;
+}
+```
+
+**它不建構任何陣列，而是載入一個 FDOTHER.DAT 資源**——`FUN_000111ba(descriptor, 0, index)` 正是
+item 1117 已釘死的資源載入器（同樣的 `0x51a4d` descriptor、同樣的三引數形狀）。索引來自
+`0x526e3` 的 6-byte 表，本輪 dump 出來是 `30 31 32 33 34 35`，即 **FDOTHER 資源 48/49/50/51/52/53**，
+由 `p[+4]`（1..6）選一。
+
+進一步用 `tools/unpack_dat.py` 的目錄解析直接看這六個資源：**六個都以 `4c 4c 4c 4c 4c 4c`
+（"LLLLLL"）開頭，是巢狀 LLLLLL 容器**（各 7-8 個子項，長度 19K-31K）——與 item 1117 追出的
+FDOTHER 資源 #80（item-effect SFX 巢狀池）**結構完全同構**。
+
+**因此 L572 殘留的性質改變了**：原本被描述成「一個未展開語意的程式內陣列」，實際上是
+「一組 FDOTHER 巢狀容器資源的內容格式未解碼」。這是資源格式解碼問題，跟 item 1117 走的是同一
+條路（該輪最後是靠 live 記憶體讀出容器指標 + byte-signature 反搜檔案才解開的）。
+
+**誠實範圍**：本輪只確定了「來源是哪些資源、以及它們是 LLLLLL 容器」，**沒有**解出 §6.5 所述
+消費端欄位（`local_28[2]`..`*local_28` 迴圈界限、`[event+4]`/`[event+5]` 兩個 gate）對應到容器
+內的哪些 byte——本輪嘗試把 §6.5 的索引直接套在資源原始 bytes 上會得到 76（即 'L' 字元），
+明顯是把 decompiler 選定的索引單位當成 byte 偏移的誤讀，故不採信、也不在此臆測。下一輪要解
+leaf-level 語意，應該從「解碼資源 48-53 的子項格式」切入，而不是繼續在呼叫端程式碼裡找。
