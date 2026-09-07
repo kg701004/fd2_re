@@ -665,6 +665,8 @@ doc46描述逐字吻合。同一輪也確認頂層系統環左邊圖示是「決
 是MAP/TURN卡後自動接續的下一幕，實際是同一個選單的另一個分支選項)、右邊圖示是BGM/音效
 設定子選單。完整過程見`91-worklist.md` 791項「2026-09-07再續二十」與doc46對應訂正段落。
 
+**2026-09-07訂正（`tools/esp_track.py`）**：上面「`0x55-param_1`算出的3/5」這個說法有誤——`FUN_0001f42d`的param_1其實是迴圈的`slot*25`、param_2才是banner常數(當時把cdecl的push順序看反)。`0x55 - slot*25`成為`0x15f0e`的**param_4**（目的位址位移，`ebp = param_5*param_3 + param_4`）；banner常數則直接成為**param_6 = 資源索引**。**「0x52/0x50選到不同sub-resource」的結論不變**，但路徑是直接索引傳入，不是經過該算術。詳見worklist 791「再續二十一」。
+
 ### UI-04 geometry slice（2026-07-25，E0 partial）
 
 `0x14818` 先以固定的 table record 0（`0x61646`，20 bytes）呼叫 `0x4e040`，並將原始
