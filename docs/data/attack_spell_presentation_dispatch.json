@@ -167,9 +167,21 @@
    "涵蓋範圍:入口條件 `bVar1 < 9` 需要 9 個索引,表有 10 筆,無溢位。",
    "命名交叉驗證:FDTXT_000 索引 441+id 對 4 個獨立已知值(13/14/16/24)4/4 精確相符,才用它命名 0..8。"
   ],
-  "not_verified": "handler 內索引 2/3 的觸發條件(多段演出的哪一段?暴擊?)未確立,不臆測。 另見 _open_detail_entry_9:第 10 筆(咒殺)與入口條件 `bVar1 < 9` 相矛盾,未解。"
+  "not_verified": "部分呼叫使用 play_sfx_b 而非 play_sfx_a,兩者的差異本輪未查。"
  },
  "_correction_2026_09_07": "**本檔原名 physical_attack_presentation_dispatch.json,標題把這 10 筆稱為「物理攻擊演出 handler」——那是錯的,已更正。** 既有的 `docs/data/spell_table_and_presentation.json` 早已載明:名稱表為 FDTXT_000 字串索引 `441 + id`,而 `generic_path_ids = [0..8, 24]`。實際解碼確認 id 0..8 是**基本攻擊法術**火炎術/烈炎術/炎龍術/天火術/電擊術/落雷術/轟雷術/神雷術/聖光彈,不是武器攻擊。命名表以 4 組已知值交叉驗證(id 13→治療術、14→回復術、16→神恩術、24→破龍擊)**4/4 精確相符**。機制面的發現(表位址、分派式、索引來源、各 handler 的音效索引)全部不受影響,錯的只有標籤。**教訓與本專案既有的『先查既有證據再反組譯』一致:spell_table_and_presentation.json 就在同一個目錄裡。**",
  "_where_physical_attack_actually_is": "普通(物理)攻擊的演出**不在這張表裡**,而是 `FUN_0002e2b0(攻擊方 idx, 防禦方 idx)` → `FUN_0002ebe1` 的**對戰動畫**,其音效索引來自資料紀錄 byte +5、音效池為執行期載入資源(見 sfx_pool_call_site_inventory.json)。**這才是 doc36「戰鬥音效逐招對照」在物理側始終無法收斂的真正原因:那一側是資料驅動,不在程式碼裡。**",
- "_open_detail_entry_9": "表的第 10 筆(index 9)是 `0x2ce1a`,名稱**咒　殺**。但 `FUN_0001cff0` 的入口條件是 `bVar1 < 9`,而 `spell_table_and_presentation.json` 也把 id 9 列在 `dedicated_path_ids`(走 `0x51d01` 專屬表)。**兩者相矛盾,本輪未解**:表裡有第 10 筆、卻不由這條路徑抵達。可能經由 `FUN_0002ff01` 內其他分派點(共 8 個,部分形式為 `call [eax + 0x524c6]`,eax 已是 byte offset,索引來源不同)進入,亦可能是未使用的槽。**不臆測,列為本表的已知未解點。**"
+ "_open_detail_entry_9": "**已解(2026-09-07)。矛盾不存在——兩張表服務兩個不同的呼叫端。** `FUN_0002ff01` 只有 2 個呼叫端:(1) `0x1d43c` 在 `FUN_0001cff0`(玩家指令環),閘為 `bVar1 < 9`;(2) **`0x15400` 在 `FUN_00015311`(AI/敵方路徑)**,參數取自全域 `[0x53c2f]`,閘為 `0x153de cmp dword [0x53c2f],0xa / jge 跳過` —— 即**允許 id 0..9,正好 10 筆**。該全域的寫入點 `0x15b12 mov [0x53c2f],eax` 位於 `FUN_0001598a`,本專案先前已定性為 AI 函式。**且 id 9 在兩條路徑上是不同的 handler**:玩家側 `0x51d01[9] = 0x214ad`(專屬),AI 側 `0x524c6[9] = 0x2ce1a`(本表)。所以「id 9 走專屬表」與「本表有第 10 筆」同時為真,咒　殺 的本表 handler 是**敵方施放時**才會用到的那一個。",
+ "_sfx_index_trigger_conditions": {
+  "resolved": "2026-09-07",
+  "finding": "索引 2/3 的觸發條件**一律是動畫階段或逐目標槽位狀態,沒有任何一個是戰鬥結果(暴擊/落空/連擊)**。",
+  "evidence": [
+   "0x2bd6c 炎龍術:全域階段計數 `[0x53fb2]` == 6 → idx 3(並把階段設為 0xa)、== 7 → idx 1、== 0x11 → idx 2、== 0x12 → 階段回設 0x10(循環)。",
+   "0x2c67d 轟雷術:區域 `[esp+0x68]`==0 → idx 2;階段 `eax`==6 → idx 3;迴圈計數 `ebx`!=5 → idx 1(play_sfx_b);`ebx`==2 → idx 1。",
+   "0x2ccf4 聖光彈:逐目標陣列 `[ebx*4 + 0x540ee]` == 0 → idx 1、== 4 → idx 2。",
+   "0x2bfd9 天火術:逐槽位 byte `[esp+eax+0x30]` != 0 → idx 2、== 0 → idx 1。"
+  ],
+  "rejected_overgeneralisation": "一度想把 `DAT_00053fb2` 當成 10 個 handler 共用的階段變數。**實測否決**:對 10 個 handler 逐一計算 `0x53fb2` 的參照次數,只有 `0x2bd6c` 有(15 次),其餘 9 個與分派器皆為 0。各 handler 使用各自的狀態來源(全域/區域/逐目標陣列),不是同一個變數。",
+  "note": "部分呼叫走 `play_sfx_b`(0x25b45) 而非 `play_sfx_a`(0x25a96);兩者差異(優先權/聲道)本輪未查。"
+ }
 }
