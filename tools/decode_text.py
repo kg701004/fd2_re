@@ -21,7 +21,11 @@
 """
 import sys
 import struct
-from PIL import Image
+
+# 2026-09-08:PIL 原本在模組層級 import,但只有字型/渲染那幾支函式用得到。
+# 後果是 `parse_strings()` 這種純位元組解析也被綁上 PIL,於是 decode_story_text.py 與
+# encode_text.py 的 selftest 在 **WSL python3(沒有 Pillow)** 下直接 ModuleNotFoundError
+# ——而 DOSBox harness 正是跑在 WSL。改成需要時才載入,純文字路徑就與 PIL 無關。
 
 GLYPH_W = GLYPH_H = 16
 GLYPH_BYTES = 32
@@ -36,6 +40,7 @@ def load_font(path):
 
 
 def render_glyph(font, idx):
+    from PIL import Image  # noqa: PLC0415 — 延遲載入,見檔頭說明
     g = font[idx * GLYPH_BYTES: idx * GLYPH_BYTES + GLYPH_BYTES]
     im = Image.new("L", (GLYPH_W, GLYPH_H), 0)
     if len(g) < GLYPH_BYTES:
@@ -76,6 +81,7 @@ def parse_strings(path):
 
 
 def font_atlas(font_path, out, cols=32):
+    from PIL import Image  # noqa: PLC0415 — 延遲載入,見檔頭說明
     font, n = load_font(font_path)
     rows = (n + cols - 1) // cols
     cell = GLYPH_W + 1
@@ -87,6 +93,7 @@ def font_atlas(font_path, out, cols=32):
 
 
 def render_text(font_path, txt_path, out, max_rows=40, cell=17):
+    from PIL import Image  # noqa: PLC0415 — 延遲載入,見檔頭說明
     font, _ = load_font(font_path)
     strings = parse_strings(txt_path)
     rows = [s for s in strings if any(c < 0x720 for c in s)][:max_rows]
