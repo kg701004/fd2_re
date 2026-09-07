@@ -3396,8 +3396,12 @@ retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半�
   必須得 0 分），每次突變後以 SHA-256 驗證逐位元組還原。
 * **負向控制當場抓到 harness 自己的缺陷**：突變 `return 0` → `return 1` 直接改退出碼、
   不經任何檢查就「得分」。已排除退出碼常數（`Return`/`sys.exit`/`raise` 下的常數）。
-* 離線工具結果：6 支中 5 支 DISCRIMINATING、1 支 BASELINE_FAIL（即上述 `safe_output`），
-  修好後亦為 6/12 DISCRIMINATING。
+* **最終結果：11 支工具（含需 Ghidra 的 5 支）全部 DISCRIMINATING、0 支 BASELINE_FAIL。**
+  修好前 `safe_output` 是唯一的 BASELINE_FAIL（它的 selftest 根本沒在跑）。
+* **取樣次數是實用陷阱**：`decode_story_text.py` 在 5 次時被判 WEAK（0/5），同一支在
+  10 次是 4/10、20 次是 5/20——命中率約 25%，5 次全抽不中的機率約 24%，足以每四次
+  誤報一次。預設已由 5 改為 12（誤報率約 3%）；要下結論請用 `--tries 20` 以上。
+* Ghidra 相關工具很慢：每支要跑 baseline + N 次，每次都啟動 headless JVM，5 支約 25 分鐘。
 
 ### 新方向 2：`tools/verify_docs_match_cli.py` —— 文件與 CLI 是否一致
 比對 docstring 用法區宣告的旗標 vs 程式碼實際實作，外加**跨工具的 `--selftest` 拼法契約**。
