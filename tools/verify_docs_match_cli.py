@@ -114,6 +114,54 @@ def check(path: Path) -> dict:
             "undocumented": sorted(f for f in i if f.startswith("--") and f not in d)}
 
 
+def console_encoding_risks() -> list[tuple[str, str]]:
+    """Tools that print characters the local console cannot encode.
+
+    2026-09-08: `safe_output.py` and `dump_exe_tables.py` were both **entirely
+    unusable** on this machine because they print `✓`/`✗`/`⚠` and the default
+    console codepage here is cp950, which has no U+2713. The first such `print`
+    raises `UnicodeEncodeError`, so the tool dies part-way and looks broken for
+    an unrelated reason — `dump_exe_tables.py`'s own "自驗結果" block had never
+    once executed. A sweep found 13 tools in this state.
+
+    The repo-wide fix is `sys.stdout.reconfigure(encoding="utf-8")`, so the check
+    is: does the file contain a symbol the console codepage lacks *without*
+    reconfiguring? Detection uses the live `locale.getpreferredencoding()` rather
+    than hardcoding cp950, so it stays meaningful on a UTF-8 machine (where it
+    correctly reports nothing).
+
+    **Known blind spot**: a tool that writes the symbol as an escape
+    (`print("\u2713")`) carries no such character in its source, so this scan
+    misses it while the runtime crash is identical. Found while writing this
+    check's own positive control, which failed for exactly that reason. Every
+    tool in this repo writes the literal character, so the scan is adequate
+    today -- but a clean run is not proof of absence for escape-written output.
+    """
+    import locale
+    enc = locale.getpreferredencoding(False) or "utf-8"
+    probe = "✓✗✔✘→←↑↓─│┌┐└┘█▓░●○★☆⚠✅❌"
+
+    def encodable(c: str) -> bool:
+        try:
+            c.encode(enc)
+            return True
+        except Exception:
+            return False
+
+    risky = {c for c in probe if not encodable(c)}
+    out = []
+    if not risky:
+        return out
+    for p in sorted(TOOLS.glob("*.py")):
+        if p.name.startswith("_"):
+            continue
+        src = p.read_text(encoding="utf-8", errors="replace")
+        used = "".join(sorted({c for c in risky if c in src}))
+        if used and "reconfigure(encoding" not in src:
+            out.append((p.name, f"輸出含主控台({enc})編不出的符號 {used},且未設 stdout 編碼"))
+    return out
+
+
 def convention_violations() -> list[tuple[str, str]]:
     """Cross-tool contract: if a tool has a selftest at all, `--selftest` must
     reach it. `tools/verify_all_tools.py` invokes exactly that spelling on every
@@ -194,15 +242,49 @@ def selftest() -> int:
         print(f"    {'PASS' if ok4 else 'FAIL'}: {r}")
         if not ok4:
             fails.append("argv 分派式工具被誤報")
+
+        print("\n(5) 主控台編碼檢查:必須抓到「用了編不出的符號卻沒設 stdout 編碼」")
+        import locale
+        enc = locale.getpreferredencoding(False) or "utf-8"
+        try:
+            "✓".encode(enc)
+            applicable = False
+        except Exception:
+            applicable = True
+        if not applicable:
+            # 在 UTF-8 主控台上這個檢查本來就不該報任何東西,強行斷言會是假通過。
+            print(f"    SKIP: 本機主控台是 {enc},編得出 ✓,此檢查在此環境不適用")
+        else:
+            # 兩個坑,兩個都是這個正向控制自己踩出來的:
+            # (1) 探針檔名不能以 `_` 開頭 —— `console_encoding_risks()` 會跳過那些,
+            #     用 tmp(_docscli_probe.py)當探針時它永遠抓不到。
+            # (2) 探針內容必須放**真的字元**。寫成 "\\u2713" 只是把跳脫序列的字面
+            #     文字寫進檔案,原始碼裡並沒有該字元,掃描自然掃不到。
+            enc_probe = TOOLS / "zz_encoding_probe.py"
+            enc_probe.write_text('"""t"""\nprint("✓ ok")\n', encoding="utf-8")
+            ok5 = enc_probe.name in [t for t, _ in console_encoding_risks()]
+            print(f"    {'PASS' if ok5 else 'FAIL'}: 明確違規檔被抓到={ok5}")
+            if not ok5:
+                fails.append("主控台編碼檢查抓不到明確的違規檔")
+            # 負向控制:同一個檔案補上 reconfigure 後就不該再被抓,
+            # 否則這個檢查等於「只要出現該符號就報」,對已修好的檔案會永遠誤報。
+            enc_probe.write_text('"""t"""\nimport sys\n'
+                                 'sys.stdout.reconfigure(encoding="utf-8")\n'
+                                 'print("✓ ok")\n', encoding="utf-8")
+            ok5b = enc_probe.name not in [t for t, _ in console_encoding_risks()]
+            print(f"    {'PASS' if ok5b else 'FAIL'}: 已修好的檔案不再被抓={ok5b}")
+            if not ok5b:
+                fails.append("主控台編碼檢查對已修好的檔案仍誤報")
     finally:
         tmp.unlink(missing_ok=True)
+        (TOOLS / "zz_encoding_probe.py").unlink(missing_ok=True)
 
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(1 正向 + 3 負向)。")
+    print("\n--selftest passed(2 正向 + 3 負向;正向含編碼檢查的違規探針)。")
     return 0
 
 
@@ -219,6 +301,9 @@ def main() -> int:
     conv = convention_violations()
     for t, why in conv:
         print(f"  CONVENTION {t:<38} {why}")
+    enc = console_encoding_risks()
+    for t, why in enc:
+        print(f"  ENCODING   {t:<38} {why}")
     for r in bad:
         print(f"  MISSING  {r['tool']:<40} 文件寫了但程式碼沒有:{r['missing']}")
     if a.show_info:
@@ -230,7 +315,9 @@ def main() -> int:
     print(f"\n共 {len(rows)} 支:一致 {n_ok} / 文件旗標缺實作 {len(bad)} / 無 docstring {n_nodoc}")
     if conv:
         print(f"  另有 {len(conv)} 支違反 --selftest 拼法慣例")
-    return 1 if (bad or conv) else 0
+    if enc:
+        print(f"  另有 {len(enc)} 支有主控台編碼崩潰風險")
+    return 1 if (bad or conv or enc) else 0
 
 
 if __name__ == "__main__":
