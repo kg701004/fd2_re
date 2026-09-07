@@ -1,0 +1,51 @@
+{
+ "_source": "2026-09-07 live DOSBox-X (instance fin2), ch02 battle from a fixed synthesised save",
+ "_what_this_answers": "worklist items 155/305 -- the AI's actually-selected command, observed at runtime rather than inferred",
+ "dispatcher": {
+  "function": "FUN_00013a9f (0x13a9f)",
+  "selector": "unit[+0x34] & 0x0f  -- the AI behaviour mode",
+  "branches_from_decompile": {
+   "0": "FUN_00014ef0() first (attack attempt); if it returns non-zero the action is done, otherwise fall through to FUN_00014121() then FUN_00013e9c() (approach)",
+   "1": "FUN_00014ef0() then FUN_00014121()",
+   "2": "FUN_00014ef0() then FUN_00014237()",
+   "3": "FUN_00014ef0(), then FUN_00012c60()/FUN_00012d7b()/FUN_00014b78() move pipeline",
+   "4": "no attack attempt -- DAT_00051a83 = 0 then FUN_00012d7b() directly",
+   "5": "FUN_00014ef0(), then a longer branch involving FUN_00015df3/FUN_00014b78/FUN_00025b45"
+  },
+  "early_out": "returns immediately if (unit[+5] & 5) != 0"
+ },
+ "live_observations": {
+  "enemy_pass": {
+   "caller": "FUN_0001d8ba (enemy camp0 scan)",
+   "units_caught": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "count": 9,
+   "mode_read": "unit[+0x34] = 0x00 for every one of them -> mode 0",
+   "method": "breakpoint at 0x13a9f (live 0x1AFA9F); at each stop the unit index was read from ESI and that unit's record+0x30 row was dumped separately, so each reading is at its own address"
+  },
+  "friendly_pass": {
+   "caller": "FUN_0001d80b -- identified from the return address on the stack (live 0x1B987B -> Ghidra 0x1d87b), which is inside the friendly scan, not the enemy one",
+   "unit": 10,
+   "camp": 1,
+   "mode_read": "unit[+0x34] = 0x04 -> mode 4 (the branch with no attack attempt)",
+   "stack_frame": "[esp+0]=return address, [esp+4]=unit index (10), [esp+8]=1"
+  },
+  "combat_actually_occurred": "in the preceding turn of the same run, an enemy moved adjacent to a player unit, attacked, and died to the counterattack -- its record+5 bit0 (dead) was set while every player unit was still flagged acted, so the kill can only have come from a counterattack"
+ },
+ "scenario_setup_technique": {
+  "why": "the harness's key delivery is unreliable enough that navigating the field system ring to end a turn failed most attempts; this makes the scenario deterministic instead",
+  "how": "the DOSBox-X debugger's `SM [seg]:[off] [val]..` writes memory directly. Used to (a) move enemy records' x,y (record+0/+1) next to a player unit and (b) set record+5 bit7 (acted) on all but one player unit, so a single UI action on the last one ends the turn through the game's own 'all acted' path",
+  "caution": "`SR EIP <addr>` to force-call a function does NOT work -- jumping into FUN_0001d8ba without a valid return frame dropped the guest out of protected mode into real-mode BIOS (CS=F000). Set up state with SM and let the game reach the code itself."
+ },
+ "correction_to_an_earlier_hypothesis": "[0x51a8f] was proposed as the chosen-action index. It is reset to 0xff per unit and dispatches through the DAT_00051b91 table, but it stayed 0xff across every observed enemy action including ones that attacked -- so it is not the ordinary attack/move selector. The real selector is unit[+0x34] & 0xf as decoded above.",
+ "tooling_bug_found": "breakpoints were first set one byte into the instruction: image_ref_scan reports the address of the matched dword, not of the instruction that contains it, so `mov eax,[0x51a8f]` at 0x1d956 was mis-derived as 0x1d957 and the breakpoint could never fire. Always disassemble from a known instruction boundary before trusting a scan-derived breakpoint address."
+}
