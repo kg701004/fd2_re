@@ -266,6 +266,23 @@
    "**開場隊伍**:post-town 索引 0(全遊戲第一個 post-town handler)加入索爾/悠妮/亞雷斯/蓋亞,正是初始隊伍。",
    "**因果核對(獨立路徑)**:`preparation_required_characters.json` 來自完全不同的程式路徑(整備畫面驗證器 FUN_0002b439 的分支鏈)。「某章必須出場」蘊含該角色在該章之前已加入。逐筆比對 **9/9 相符、0 違反**。"
   ],
-  "not_verified": "4 名角色(0x3 哈瓦特 / 0x5 洛娜 / 0xf 賽可邦勒 / 0x1d 亞奇梅吉)未出現在任何 JOIN 呼叫端,其入隊(或不入隊)途徑本輪未確立,不臆測。另有 4 個含 JOIN 的 handler(0x34531/0x35422/0x355b7/0x35a0d)不在這兩張逐章表內,應由其他事件入口抵達,亦未追。"
+  "not_verified": "無。上述兩項殘留已於同日解決。"
+ },
+ "_residuals_resolved_2026_09_07": {
+  "off_table_handlers": {
+   "finding": "4 個含 JOIN 但不在兩張逐章表內的 handler,全部是**戰鬥事件跳表 `0x51b91`** 的成員,即**戰鬥中由劇本事件觸發的入隊**,不是城鎮/章節切換時入隊。",
+   "entries": {
+    "index 0": "0x34531 → 哈諾",
+    "index 46": "0x35422 → 巴拿羅西亞",
+    "index 50": "0x355b7 → 莎拉",
+    "index 61": "0x35a0d → 渥德"
+   },
+   "base_verified": "表基底 0x51b91 由本專案先前獨立記錄的錨點(index 58 = 0x35854)反推一致。"
+  },
+  "never_joining_characters": {
+   "finding": "哈瓦特(0x3)、洛娜(0x5)、賽可邦勒(0xf)、亞奇梅吉(0x1d) 共 4 人,`call 0x112a5` 呼叫端數為 **0**,即**永不入隊**。",
+   "independent_confirmation": "以完全獨立的資料源(FDTXT 劇情文字,經 `docs/data/story_script.json`)交叉檢查:這 4 人**都有實際台詞**(哈瓦特 33 框、洛娜 13、賽可邦勒 15、亞奇梅吉 13),證明他們是真實存在的劇情角色,排除「未使用的佔位 id」這個對立解釋。結論:**有台詞但不可操作的 NPC/反派**。",
+   "why_this_is_confirmed_absence_not_sparse_evidence": "JOIN 掃描涵蓋全 image 100% 的 `call 0x112a5` 位址(位元組級 rel32 掃描,非抽樣),且其餘 **28/28** portrait 都各自命中恰好一個呼叫端。因此這 4 人的缺席是**正向發現**,不是掃描覆蓋不足。"
+  }
  }
 }
