@@ -43,8 +43,9 @@ Verification design (`--selftest`, 6 checks)
 --------------------------------------------
 1. Structural: every line that looks like an item header is claimed by exactly
    one item, and no item's body contains another item's header.
-2. The loose regex finds 138 items; the strict one finds 84 -- and **all 54 of
-   the difference are class A**. This pins cause (2) as real and characterised.
+2. The loose regex finds 146 items; the strict one finds 84. All but one of the
+   62-item difference are class A (the exception is 409, which uses '→'). This
+   pins cause (2) as real and characterised.
 3. Fault injection: swapping in the strict regex must make check 1 FAIL.
 4. Ordering: on the header line, the dated markers are non-decreasing in time.
 5. Reverse-bullet rule, pinned on a hand-verified item (587): its newest
@@ -67,16 +68,27 @@ if hasattr(sys.stdout, "reconfigure"):
 
 WORKLIST = Path(__file__).resolve().parent.parent / "docs/knowledge-base/91-worklist.md"
 
-# A worklist item header. The optional full-width/half-width parenthetical between
-# the class letter and the second dash is what the naive regex missed; keeping it
-# optional is the whole point of this pattern.
-ITEM = re.compile(r"^(\d+)\s*-\s*([A-F])\s*(?:[（(][^）)]*[）)]\s*)?-\s*")
+# A worklist item header. Anchored on "<number> - <class letter>" ONLY.
+# Two earlier, tighter patterns each missed real items: `^\d+ - [A-F] - ` missed the
+# 54 entries written `N - A（…）- ` (full-width parenthetical), and the follow-up that
+# allowed one parenthetical still missed 7 more whose parenthetical is NESTED, e.g.
+# `1042 - A（…原版資料流(raw byte writer/handler/FDFIELD座標)本身無缺口…）- `.
+# Matching only the stable prefix avoids the whole class of failure. The lookahead
+# also allows '→', because exactly one item (409) uses an arrow instead of the
+# second dash -- found by the containment check, not by guessing.
+ITEM = re.compile(r"^(\d+)\s*-\s*([A-F])(?=[\s（(\-→])")
 STRICT = re.compile(r"^(\d+) - ([A-F]) - ")
 # A dated ENTRY marker, not merely a date in bold. The distinction is real: item
 # 857's header contains `是**2026-08-19稽核當時…版本的行號**`, a date quoted
 # mid-sentence, which a bare `\*\*date` pattern reads as a new entry and thereby
 # reports the item's history as out of order. A genuine marker always opens at a
 # sentence boundary, so require start-of-line or a terminator before the `**`.
+# Used ONLY by the selftest's containment check. It must NOT reuse ITEM: the first
+# version of that check did, so it could never see a header that ITEM itself missed
+# -- a check validating a pattern with the same pattern. Anything that starts with
+# digits then a dash is treated as a candidate header here.
+AUDIT_HDR = re.compile(r"^\d+\s*-\s")
+
 DATE = re.compile(r"(?:^|(?<=[。．！？）)」\s]))\*\*\s*(\d{4}-\d\d-\d\d)")
 
 # Words that, in this file's house style, assert work that is still to be done.
@@ -229,8 +241,7 @@ def selftest() -> int:
     items = parse()
 
     print("(1) 結構:沒有任何項目的內文包含另一個項目的標題行")
-    bad = [(it.num, ITEM.match(l).group(1)) for it in items
-           for l in it.lines[1:] if ITEM.match(l)]
+    bad = [(it.num, l[:12]) for it in items for l in it.lines[1:] if AUDIT_HDR.match(l)]
     print(f"    {'PASS' if not bad else 'FAIL'}: {len(bad)} 個吞併" + (f" {bad[:5]}" if bad else ""))
     if bad:
         fails.append(f"項目內文吞併了其他項目:{bad[:5]}")
@@ -240,16 +251,15 @@ def selftest() -> int:
     lo = {it.num for it in loose}
     so = {it.num for it in strict}
     diff = [it for it in loose if it.num in lo - so]
-    non_a = [it.num for it in diff if it.cls != "A"]
-    ok = len(loose) == 138 and len(strict) == 84 and not non_a
+    non_a = [it.num for it in diff if it.cls != "A" and it.num != "409"]
+    ok = len(loose) == 146 and len(strict) == 84 and not non_a
     print(f"    {'PASS' if ok else 'FAIL'}: 寬鬆 {len(loose)} / 嚴格 {len(strict)} / "
           f"差額 {len(diff)} 全為 A 類={not non_a}" + (f" 非A={non_a[:5]}" if non_a else ""))
     if not ok:
         fails.append(f"loose={len(loose)} strict={len(strict)} 非A差額={non_a[:5]}")
 
     print("\n(3) 故障注入:改用嚴格正則後,檢查(1)必須失敗")
-    bad2 = [(it.num, ITEM.match(l).group(1)) for it in strict
-            for l in it.lines[1:] if ITEM.match(l)]
+    bad2 = [(it.num, l[:12]) for it in strict for l in it.lines[1:] if AUDIT_HDR.match(l)]
     print(f"    {'PASS' if bad2 else 'FAIL'}: 嚴格正則下有 {len(bad2)} 個吞併")
     if not bad2:
         fails.append("嚴格正則下沒有吞併——檢查(1)不具鑑別力")
