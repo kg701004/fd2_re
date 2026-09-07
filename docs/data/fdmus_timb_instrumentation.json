@@ -1,0 +1,817 @@
+{
+ "_source": "TIMB chunks parsed out of every FDMUS.DAT resource, 2026-09-07",
+ "_format": "XMI TIMB chunk: uint16 count, then <count> pairs of (patch, bank). doc07 records this as '每 2 byte: patch, bank/ch'.",
+ "_bank_split": "bank 0 entries are melodic voices; bank 127 entries are the rhythm part -- their values (36/38/42/45/46/48/49/51/64/65...) sit exactly where a drum kit's note numbers do",
+ "_IMPORTANT_caveat": "doc16 records that FD2 was written for the MT-32 ('FD2 既為 MT-32 編寫,直接送 munt 即正確發聲'). These patch numbers are therefore MT-32 program numbers. Labelling them with General MIDI instrument names would be an approximation, not a decode, so this file deliberately stops at the raw numbers. Choosing an MT-32->GM mapping is a separate decision, and judging whether a given SoundFont renders them acceptably is a listening task that stays with the user.",
+ "tracks": {
+  "0": {
+   "empty_placeholder": true
+  },
+  "1": {
+   "size": 6164,
+   "voice_count": 8,
+   "melodic_patches": [
+    66,
+    50,
+    97,
+    57
+   ],
+   "rhythm_notes": [
+    36,
+    42,
+    46,
+    38
+   ],
+   "raw_pairs": [
+    [
+     66,
+     0
+    ],
+    [
+     50,
+     0
+    ],
+    [
+     97,
+     0
+    ],
+    [
+     57,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     42,
+     127
+    ],
+    [
+     46,
+     127
+    ],
+    [
+     38,
+     127
+    ]
+   ],
+   "used_as": [
+    "enemy-phase track (0x51e81)"
+   ]
+  },
+  "2": {
+   "empty_placeholder": true
+  },
+  "3": {
+   "size": 6796,
+   "voice_count": 9,
+   "melodic_patches": [
+    66,
+    11,
+    95,
+    92
+   ],
+   "rhythm_notes": [
+    36,
+    42,
+    38,
+    46,
+    49
+   ],
+   "raw_pairs": [
+    [
+     66,
+     0
+    ],
+    [
+     11,
+     0
+    ],
+    [
+     95,
+     0
+    ],
+    [
+     92,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     42,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     46,
+     127
+    ],
+    [
+     49,
+     127
+    ]
+   ],
+   "used_as": [
+    "chapter base track (0x51e63)"
+   ]
+  },
+  "4": {
+   "size": 6264,
+   "voice_count": 9,
+   "melodic_patches": [
+    64,
+    22,
+    0,
+    95,
+    88,
+    74
+   ],
+   "rhythm_notes": [
+    38,
+    36,
+    49
+   ],
+   "raw_pairs": [
+    [
+     64,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     95,
+     0
+    ],
+    [
+     88,
+     0
+    ],
+    [
+     74,
+     0
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     49,
+     127
+    ]
+   ],
+   "used_as": [
+    "chapter base track (0x51e63)",
+    "enemy-phase track (0x51e81)"
+   ]
+  },
+  "5": {
+   "empty_placeholder": true
+  },
+  "6": {
+   "size": 9660,
+   "voice_count": 12,
+   "melodic_patches": [
+    66,
+    88,
+    52,
+    95,
+    24
+   ],
+   "rhythm_notes": [
+    36,
+    51,
+    49,
+    38,
+    45,
+    43,
+    41
+   ],
+   "raw_pairs": [
+    [
+     66,
+     0
+    ],
+    [
+     88,
+     0
+    ],
+    [
+     52,
+     0
+    ],
+    [
+     95,
+     0
+    ],
+    [
+     24,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     51,
+     127
+    ],
+    [
+     49,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     45,
+     127
+    ],
+    [
+     43,
+     127
+    ],
+    [
+     41,
+     127
+    ]
+   ],
+   "used_as": [
+    "enemy-phase track (0x51e81)"
+   ]
+  },
+  "7": {
+   "empty_placeholder": true
+  },
+  "8": {
+   "size": 12784,
+   "voice_count": 9,
+   "melodic_patches": [
+    64,
+    50,
+    95,
+    52,
+    92
+   ],
+   "rhythm_notes": [
+    36,
+    38,
+    49,
+    51
+   ],
+   "raw_pairs": [
+    [
+     64,
+     0
+    ],
+    [
+     50,
+     0
+    ],
+    [
+     95,
+     0
+    ],
+    [
+     52,
+     0
+    ],
+    [
+     92,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     49,
+     127
+    ],
+    [
+     51,
+     127
+    ]
+   ],
+   "used_as": [
+    "chapter base track (0x51e63)",
+    "enemy-phase track (0x51e81)"
+   ]
+  },
+  "9": {
+   "empty_placeholder": true
+  },
+  "10": {
+   "size": 5316,
+   "voice_count": 14,
+   "melodic_patches": [
+    11,
+    64,
+    60,
+    72
+   ],
+   "rhythm_notes": [
+    36,
+    42,
+    49,
+    37,
+    46,
+    64,
+    65,
+    38,
+    48,
+    45
+   ],
+   "raw_pairs": [
+    [
+     11,
+     0
+    ],
+    [
+     64,
+     0
+    ],
+    [
+     60,
+     0
+    ],
+    [
+     72,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     42,
+     127
+    ],
+    [
+     49,
+     127
+    ],
+    [
+     37,
+     127
+    ],
+    [
+     46,
+     127
+    ],
+    [
+     64,
+     127
+    ],
+    [
+     65,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     48,
+     127
+    ],
+    [
+     45,
+     127
+    ]
+   ],
+   "used_as": []
+  },
+  "11": {
+   "size": 3152,
+   "voice_count": 2,
+   "melodic_patches": [
+    0,
+    92
+   ],
+   "rhythm_notes": [],
+   "raw_pairs": [
+    [
+     0,
+     0
+    ],
+    [
+     92,
+     0
+    ]
+   ],
+   "used_as": []
+  },
+  "12": {
+   "size": 2542,
+   "voice_count": 7,
+   "melodic_patches": [
+    57,
+    92,
+    90,
+    64,
+    88
+   ],
+   "rhythm_notes": [
+    36,
+    38
+   ],
+   "raw_pairs": [
+    [
+     57,
+     0
+    ],
+    [
+     92,
+     0
+    ],
+    [
+     90,
+     0
+    ],
+    [
+     64,
+     0
+    ],
+    [
+     88,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     38,
+     127
+    ]
+   ],
+   "used_as": [
+    "enemy-phase track (0x51e81)"
+   ]
+  },
+  "13": {
+   "size": 6966,
+   "voice_count": 9,
+   "melodic_patches": [
+    64,
+    104,
+    22,
+    74,
+    108,
+    72
+   ],
+   "rhythm_notes": [
+    36,
+    37,
+    38
+   ],
+   "raw_pairs": [
+    [
+     64,
+     0
+    ],
+    [
+     104,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     74,
+     0
+    ],
+    [
+     108,
+     0
+    ],
+    [
+     72,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     37,
+     127
+    ],
+    [
+     38,
+     127
+    ]
+   ],
+   "used_as": []
+  },
+  "14": {
+   "size": 2924,
+   "voice_count": 10,
+   "melodic_patches": [
+    72,
+    90,
+    0,
+    57,
+    64
+   ],
+   "rhythm_notes": [
+    36,
+    38,
+    42,
+    46,
+    44
+   ],
+   "raw_pairs": [
+    [
+     72,
+     0
+    ],
+    [
+     90,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     57,
+     0
+    ],
+    [
+     64,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     42,
+     127
+    ],
+    [
+     46,
+     127
+    ],
+    [
+     44,
+     127
+    ]
+   ],
+   "used_as": []
+  },
+  "15": {
+   "size": 4128,
+   "voice_count": 9,
+   "melodic_patches": [
+    72,
+    90,
+    11,
+    57,
+    64
+   ],
+   "rhythm_notes": [
+    36,
+    42,
+    38,
+    46
+   ],
+   "raw_pairs": [
+    [
+     72,
+     0
+    ],
+    [
+     90,
+     0
+    ],
+    [
+     11,
+     0
+    ],
+    [
+     57,
+     0
+    ],
+    [
+     64,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     42,
+     127
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     46,
+     127
+    ]
+   ],
+   "used_as": []
+  },
+  "16": {
+   "size": 562,
+   "voice_count": 6,
+   "melodic_patches": [
+    88,
+    0,
+    64,
+    72
+   ],
+   "rhythm_notes": [
+    36,
+    38
+   ],
+   "raw_pairs": [
+    [
+     88,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     64,
+     0
+    ],
+    [
+     72,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     38,
+     127
+    ]
+   ],
+   "used_as": []
+  },
+  "17": {
+   "size": 1530,
+   "voice_count": 3,
+   "melodic_patches": [
+    88,
+    92,
+    22
+   ],
+   "rhythm_notes": [],
+   "raw_pairs": [
+    [
+     88,
+     0
+    ],
+    [
+     92,
+     0
+    ],
+    [
+     22,
+     0
+    ]
+   ],
+   "used_as": []
+  },
+  "18": {
+   "size": 9884,
+   "voice_count": 9,
+   "melodic_patches": [
+    92,
+    50,
+    52,
+    47,
+    88,
+    95,
+    117
+   ],
+   "rhythm_notes": [
+    38,
+    49
+   ],
+   "raw_pairs": [
+    [
+     92,
+     0
+    ],
+    [
+     50,
+     0
+    ],
+    [
+     52,
+     0
+    ],
+    [
+     47,
+     0
+    ],
+    [
+     88,
+     0
+    ],
+    [
+     95,
+     0
+    ],
+    [
+     117,
+     0
+    ],
+    [
+     38,
+     127
+    ],
+    [
+     49,
+     127
+    ]
+   ],
+   "used_as": [
+    "shop (already established)"
+   ]
+  },
+  "19": {
+   "size": 1590,
+   "voice_count": 6,
+   "melodic_patches": [
+    90,
+    92,
+    22,
+    88
+   ],
+   "rhythm_notes": [
+    36,
+    38
+   ],
+   "raw_pairs": [
+    [
+     90,
+     0
+    ],
+    [
+     92,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     88,
+     0
+    ],
+    [
+     36,
+     127
+    ],
+    [
+     38,
+     127
+    ]
+   ],
+   "used_as": [
+    "chapter base track (0x51e63)"
+   ]
+  },
+  "20": {
+   "empty_placeholder": true
+  }
+ }
+}
