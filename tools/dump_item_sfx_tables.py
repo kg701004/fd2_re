@@ -12,7 +12,11 @@ type都能直接查出自己的`local_60[param_2]`(SFX播放與否+sample index)
 
 用法:
     python tools/dump_item_sfx_tables.py
-    python tools/dump_item_sfx_tables.py --types-json docs/data/item_sfx_dispatch_types.json --output docs/data/item_sfx_tables.json
+    python tools/dump_item_sfx_tables.py --output docs/data/item_sfx_tables.json
+    # 2026-09-08 勘誤:本行原本還寫著 `--types-json docs/data/item_sfx_dispatch_types.json`,
+    # 但**那個輸入檔不在 repo 裡**,照抄會直接 FileNotFoundError。已提交的
+    # item_sfx_tables.json 的 `per_type_lookup` 區塊就是用它產的,因此該區塊目前無法重現;
+    # 核心的 `tables` 區塊不需要它,重生後與 committed 版逐位元組相同。
 """
 
 from __future__ import annotations
