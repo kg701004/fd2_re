@@ -33552,6 +33552,14 @@
    "excerpt": "> 畫面格式與本節描述逐字吻合：`MAP·27 TURN·001`/勝利失敗條件/`ENEMY·47 FRIEND·13 NPC·00`，",
    "verdict": "benign",
    "note": "live截圖figure已在前一行引用(docs/figures/ch27-map-turn-enemy-friend-npc-menu-live-verify.png)，本行是延續敘述非獨立主張"
+  },
+  {
+   "file": "32-item-combat-stats-re.md",
+   "line": 1081,
+   "excerpt_sha1": "a5a4138a2cec7f00f713c8030e8ce2e3694e39da",
+   "excerpt": "**已修正該 JSON**，並把它 `source` 欄位裡的舊版位址全部換成本輪驗證過的新版位址，另加",
+   "verdict": "benign",
+   "note": "本行是同段落結論的收尾敘述，位址證據(0x523d5/0x615fe/0x2ae0e/0x2ac7d)已在同節前面逐條列出"
   }
  ]
 }

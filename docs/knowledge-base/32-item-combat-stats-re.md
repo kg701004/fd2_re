@@ -1049,3 +1049,35 @@ class-portrait 寫回),並有對應 regression test(`church_test.go`/`class_chan
   這個「刻意保留的相容路徑」,不是未修的 raw gate 缺口。項目描述的「minor 殘留範圍」與程式碼現況完全
   相符,無需改動。
 
+
+## 2026-09-07：§6.5「portrait 11/12/13 輪轉錯位」定案——是本專案的建表錯誤，不是原版設計
+
+§6.6 當時的結論是「未解決，但探測方法已窮盡……要解開需要全檔 byte-signature 重新定位轉職相關
+函式，超出本輪可負擔的探測量」。本輪換了切入點就解開了：**不再對舊版位址做 spot-check，改從
+新版 EXE 裡仍然有效的資料表位址反查**。
+
+1. `xref_to 0x615fe`（target portrait→class/mobility 表）只有一筆 DATA 參照 `0x4e7e8`；其所在
+   函式 `FUN_0004e7dd`（`0x4e7dd..0x4e7f1`，21 bytes）逐指令確認就是
+   `&DAT_00615fe + (target-0x20)*2` 的定址 helper。
+2. 對它 `call_scan` 得 3 個真正呼叫者，decompile 後鎖定 **`FUN_0002ac7d`（`0x2ac7d`）就是新版的
+   轉職合成函式**（舊版位址 `0x31602`）：5 次 `FUN_0001e529` 成長累加、取 `0x615fe` 第 2 byte 當
+   mobility 增量加到 `unit+0x3b`、`FUN_0001b750` 重算衍生值、EXP(`+0x3c`) 歸零、
+   HP(`+0x40`)=MaxHP(`+0x42`)、MP(`+0x44`)=MaxMP(`+0x46`)——§6 記載的每一項行為逐條吻合。
+3. 其唯一 caller `FUN_0002aa00`（`0x2aa00`）是教會轉職 UI 迴圈，它呼叫 `FUN_0002ae0e`
+   （`0x2ae0e`，舊版位址 `0x31793`）建候選清單。**關鍵**：raw disasm `0x2ae85` 是
+   `movzx eax, byte ptr [ebx + 0x523d5]`（`ebx` = current portrait）——**道具表在新版 EXE 是
+   `0x523d5`，不是舊文件記載的 `0x526a7`**（後者在新版 0 個 xref、bytes 語意也對不上，本輪一併
+   確認為失效的舊版位址）；portrait 9 的特例則是 `0x2aea9: push 0x5a` 硬編碼。
+4. 同時解出資格閘與目標公式：`unit[+0x21] >= 0x14`（Lv≥20）AND `unit[+7] < 0x12` AND
+   `unit[+7] != 7`；預設 target = `current+0x20`，持有對應道具時 = `current+0x32`，
+   portrait 9 持 item `0x5a` 時 = `0x34`。
+
+**逐 byte 核對結果**：`docs/data/exe_tables/class_change_targets.json` 的 `target_portraits`
+34/34 完全正確；`current_portraits` 的 `item_id` 18 筆中 15 筆正確，**只有 portrait 11/12/13
+三筆錯**，錯法精確就是 §6.5 懷疑的「左旋一格」——EXE 實際是 `88, 91, 92`，檔案存成 `91, 92, 88`。
+修正後的配對（{9,10,11,14}→88、{8,13}→92、{12,15}→91、{1,3}→93、{4,5,6,7}→205、{0}→89）也比
+修正前更符合 §6.5「同職業配對應共用同一道具」的觀察。
+
+**已修正該 JSON**，並把它 `source` 欄位裡的舊版位址全部換成本輪驗證過的新版位址，另加
+`verification` 欄位記錄本次核對方法與結果。worklist L247/L370/L407 三項（同屬轉職子系統）
+一併關閉。
