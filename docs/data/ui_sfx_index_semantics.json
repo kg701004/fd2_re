@@ -1,0 +1,126 @@
+{
+ "_source": "2026-09-07. UI sfx pool = FDOTHER.DAT resource #31 (nested LLLLLL, 14 sub-samples), used as table_ptr [0x53eec] by play_sfx_a (0x25a96) / play_sfx_b (0x25b45).",
+ "_method": "No listening involved. Each index is judged from three independent sources: (a) the enclosing function of its play_sfx call site, decompiled and cross-referenced against functions this project had already named elsewhere; (b) measured properties of the corresponding raw 8-bit PCM sample, re-extracted from FDOTHER.DAT this round rather than reusing the deleted remake/assets copy; (c) how often / at what moment the call site fires. This is the same shape of argument that upgraded index 0 to CONFIRMED.",
+ "_waveform_measurements": "re-measured 2026-09-07 at the documented 11025Hz assumption; columns are bytes, ms, min, max, peak-to-peak, RMS about 128, and the share of samples within +/-2 of the 128 silence centre",
+ "_correction_to_doc36": "doc36's sub-sample table calls #5/#6 '幾乎全 0x80 (近似靜音段)'. Measured, they are rms 5.18 / 3.95 with peak-to-peak 40 / 32 -- quiet, but the same order as #0 (p2p 32, rms 9.16), not near-silence. 'Low amplitude' is accurate; 'nearly silent' overstates it.",
+ "indices": {
+  "0": {
+   "call_sites": "5 direction-key branches (0x117a1/0x11a33/0x11a54/0x11a75/0x11a96)",
+   "semantics": "cursor move",
+   "wave": {
+    "bytes": 160,
+    "ms": 14.5,
+    "p2p": 32,
+    "rms": 9.16,
+    "silent_pct": 12.5
+   },
+   "confidence": "CONFIRMED (pre-existing)"
+  },
+  "2": {
+   "call_site": "0x16546 in FUN_000164e8",
+   "enclosing": "UI main-loop animation tick: increments a counter, advances a 0..3 frame cycle every 2nd call, redraws (FUN_00016559), plays sfx on EVERY call; both callers (0x16139, 0x164a2) are inside FUN_00015f84, the core UI routine every town/church/shop loop calls",
+   "semantics": "per-frame UI animation tick",
+   "wave": {
+    "bytes": 667,
+    "ms": 60.5,
+    "p2p": 22,
+    "rms": 5.56,
+    "silent_pct": 18.4
+   },
+   "argument": "fires every tick, so a loud sample would be a continuous racket; it measures as one of the shortest and quietest in the pool",
+   "confidence": "HIGH"
+  },
+  "3": {
+   "call_site": "0x1ddaa in FUN_0001db65",
+   "enclosing": "death handler: scans every unit for record[+5]&1 == 0 (not yet flagged dead) AND HP-current (record+0x40) == 0, runs a 13-frame animation, then sets record[+5] = 1",
+   "semantics": "unit death",
+   "wave": {
+    "bytes": 6324,
+    "ms": 573.6,
+    "p2p": 143,
+    "rms": 20.41,
+    "silent_pct": 13.3
+   },
+   "argument": "longest sample in the pool and among the widest dynamic range; cross-checks with the 2026-09-07 revival work, which independently established record[+5]&1 = dead and that revival clears it and restores HP",
+   "confidence": "HIGH"
+  },
+  "4": {
+   "call_site": "0x1a3df in FUN_0001a30b",
+   "enclosing": "0x1A30B, the turn orchestrator doc11 documents as the single destination of all three end-turn entries",
+   "semantics": "turn change",
+   "wave": {
+    "bytes": 3438,
+    "ms": 311.8,
+    "p2p": 113,
+    "rms": 12.85,
+    "silent_pct": 28.5
+   },
+   "confidence": "HIGH"
+  },
+  "5": {
+   "call_site": "0x17c56 in FUN_00017aed",
+   "enclosing": "unit info / status card display (the same routine church service 0 calls after picking a member); this site is preceded by 0x4e8af taking a string pointer",
+   "semantics": "text/message shown inside the info card (unconfirmed which half)",
+   "wave": {
+    "bytes": 3058,
+    "ms": 277.4,
+    "p2p": 40,
+    "rms": 5.18,
+    "silent_pct": 55.7
+   },
+   "confidence": "MEDIUM -- 5 and 6 are byte-identical in length and both low amplitude, which suggests a paired open/close or show/hide, but the pairing direction is not established"
+  },
+  "6": {
+   "call_site": "0x17b2e in FUN_00017aed",
+   "enclosing": "same routine as index 5",
+   "semantics": "the other half of the same pair",
+   "wave": {
+    "bytes": 3058,
+    "ms": 277.4,
+    "p2p": 32,
+    "rms": 3.95,
+    "silent_pct": 62.1
+   },
+   "confidence": "MEDIUM (see index 5)"
+  },
+  "7": {
+   "call_site": "0x1193a in FUN_000117e7",
+   "enclosing": "field cursor/confirm handler -- doc11 records that this function calls the 0x16F55 system ring when there is no actionable friendly unit under the cursor; sfx 7 plays on the branch where a bit test FAILS",
+   "semantics": "invalid / refused selection",
+   "wave": {
+    "bytes": 160,
+    "ms": 14.5,
+    "p2p": 80,
+    "rms": 29.18,
+    "silent_pct": 0.0
+   },
+   "argument": "exactly the same length as index 0 (the soft cursor blip) but roughly 3x the RMS and zero silence -- a short, harsh, dense click, which is the shape a refusal buzzer has and a cursor tick does not",
+   "confidence": "HIGH"
+  },
+  "8": {
+   "call_site": "0x17495 in FUN_0001741c",
+   "enclosing": "ring key-reading routine (doc11 lists 0x1741C/0x177FC as the readers for the 0x16F55 system ring); the site follows setting four dwords to 0x390",
+   "semantics": "ring/menu open (probable)",
+   "wave": {
+    "bytes": 2652,
+    "ms": 240.5,
+    "p2p": 49,
+    "rms": 5.6,
+    "silent_pct": 55.1
+   },
+   "confidence": "MEDIUM"
+  },
+  "11": {
+   "call_site": "0x2cac3 in an un-boundaried function starting 0x2c67d (recovered with tools/find_enclosing_function.py; Ghidra has no boundary there, so no decompile)",
+   "semantics": "periodic, fires when some counter % 9 == 0",
+   "wave": {
+    "bytes": 2442,
+    "ms": 221.5,
+    "p2p": 54,
+    "rms": 10.83,
+    "silent_pct": 50.9
+   },
+   "confidence": "LOW -- a 221ms sample on a 1-in-9 cadence does not obviously fit a tick; the enclosing function still needs to be decompiled"
+  }
+ }
+}
