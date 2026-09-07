@@ -13,7 +13,11 @@
   "77..128": "unit type names and boss names",
   "129..133": "empty",
   "134..136": "女村民 / 男村民 / 卡納恩三世",
-  "137..140": "empty"
+  "137..140": "empty",
+  "141..150": "種族名(10 項):人類/精靈/豹人/龍人/魔族/機械/元素/獸人/其他/龍",
+  "151..178": "**玩家職業名(28 項)** —— 見 player_class_names_by_id",
+  "179..180": "empty",
+  "181..": "武器/道具名(短劍/闊劍/長劍…),本輪未逐一定界"
  },
  "_cross_validation": "all 13 roster names this project read live off the game on 2026-09-07 (docs/data/ch27_roster_character_names.json) match this table exactly: id0索爾 id1哈諾 id2鐵諾 id4亞雷斯 id5洛娜 id6萊汀 id8希莉亞 id9悠妮 id10瑪琳 id11索菲亞 id12凱麗 id13貝克威 id30蓋亞",
  "_evidence_images": [
@@ -122,5 +126,41 @@
   "135": "男村民",
   "136": "卡納恩三世"
  },
- "_transcription_correction": "id 28 was first transcribed 逢克塞 from the small rendered image; re-rendering that glyph at 8x shows 達, and docs/data/glyph_map.json independently says 達克塞. Corrected to 達克塞 -- the error was mine, not the map's."
+ "_transcription_correction": "id 28 was first transcribed 逢克塞 from the small rendered image; re-rendering that glyph at 8x shows 達, and docs/data/glyph_map.json independently says 達克塞. Corrected to 達克塞 -- the error was mine, not the map's.",
+ "player_class_names_by_id": {
+  "1": "劍士",
+  "2": "戰士",
+  "3": "騎士",
+  "4": "弓兵",
+  "5": "法師",
+  "6": "僧侶",
+  "7": "盜賊",
+  "8": "武者",
+  "9": "劍聖",
+  "10": "聖戰士",
+  "11": "聖騎士",
+  "12": "狙擊手",
+  "13": "大法師",
+  "14": "祭師",
+  "15": "龍劍士",
+  "16": "鬥士",
+  "17": "英雄",
+  "18": "魔戰士",
+  "19": "龍騎士",
+  "20": "神射手",
+  "21": "召喚師",
+  "22": "聖者",
+  "23": "忍者",
+  "24": "武聖",
+  "25": "機兵",
+  "26": "？？？",
+  "27": "　　",
+  "28": "？？？"
+ },
+ "_class_name_index_convention": {
+  "rule": "**職業名字串索引 = `unit[+0x20]`(職業 id) + 0x96(150)**,故職業 id 1 = 劍士。",
+  "instruction_level_evidence": "`FUN_0002ac7d`(轉職後數值處理)開頭:`0x2acc1 movzx eax, byte ptr [esi+0x20]` / `0x2acc5 add eax, 0x96` / `0x2acca mov dword ptr [0x53ad9], eax`。",
+  "why_this_matters": "本檔既有的 `_how_it_is_used.index_convention` 只記載了三個採用 `id + 1` 的寫入端(復活用 record[+8]+1、轉職用 record[+7]+1、整備必要角色用 id+1)。**`+0x96` 是第四種慣例,先前未記載** —— `DAT_00053ad9` 是一個共用的字串索引暫存器,不同呼叫端使用不同的基底偏移,不能假設一律 `+1`。全 image 共 11 個 `mov [0x53ad9],eax` 寫入點,本輪只逐一確認了 `0x2acca` 這一個的偏移。"
+ },
+ "_discrepancy_flagged_2026_09_07": "本檔既有的 `69..75 races` 標籤**存疑**:實際內容為 士兵/騎兵/傭兵/豹人/精靈/龍人/惡魔 —— 前三項是單位類型而非種族,與同檔 `77..128 unit type names` 的分類重疊。而 **141..150 才是結構乾淨的種族表**(以「其他」「龍」收尾)。本輪**不逕行改寫既有標籤**(未取得該段的程式碼側索引證據),僅標記此矛盾供後續解決。"
 }
