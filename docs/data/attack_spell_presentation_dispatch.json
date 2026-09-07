@@ -1,0 +1,175 @@
+{
+ "source": {
+  "handler_table": "FD2.EXE 0x524c6,stride 4,10 筆,全為 Watcom 函式入口;前後皆為 0,邊界乾淨",
+  "dispatcher": "FUN_0002ff01(param_1, param_2=指令/攻擊 id, param_3, param_4)。prologue `push 0x164` + push ebx/esi/edi/ebp + `sub esp,0x130`,故 `[esp+0x148]` 即 param_2;`0x2ff15 mov ebp,[esp+0x148]`,再於 `0x309fa call dword ptr [eax*4 + 0x524c6]`(eax=ebp)分派。另有 `call [eax + 0x524c6]`(eax 已是 byte offset)等共 8 個分派點,對應演出的不同階段。",
+  "entry_path": "FUN_0001cff0(指令選擇):`if ((bVar1 < 9) || (bVar1 == 0x18) || (0x1b < bVar1)) FUN_0002ff01();` —— 即 id<9 走本表,id==0x18 或 >0x1b 在 FUN_0002ff01 內改呼叫 FUN_0002cf30()。",
+  "sfx_pool": "全部 handler 的音效都取自池 [0x54153]"
+ },
+ "handlers": [
+  {
+   "index": 0,
+   "entry": "0x2b996",
+   "sfx": [
+    {
+     "site": "0x2ba63",
+     "index": 1
+    }
+   ],
+   "name": "火炎術"
+  },
+  {
+   "index": 1,
+   "entry": "0x2bb33",
+   "sfx": [
+    {
+     "site": "0x2bd62",
+     "index": 1
+    }
+   ],
+   "name": "烈炎術"
+  },
+  {
+   "index": 2,
+   "entry": "0x2bd6c",
+   "sfx": [
+    {
+     "site": "0x2bdfd",
+     "index": 3
+    },
+    {
+     "site": "0x2be85",
+     "index": 1
+    },
+    {
+     "site": "0x2bf61",
+     "index": 2
+    }
+   ],
+   "name": "炎龍術"
+  },
+  {
+   "index": 3,
+   "entry": "0x2bfd9",
+   "sfx": [
+    {
+     "site": "0x2c16c",
+     "index": 2
+    },
+    {
+     "site": "0x2c19f",
+     "index": 1
+    }
+   ],
+   "name": "天火術"
+  },
+  {
+   "index": 4,
+   "entry": "0x2c217",
+   "sfx": [
+    {
+     "site": "0x2c395",
+     "index": 1
+    }
+   ],
+   "name": "電擊術"
+  },
+  {
+   "index": 5,
+   "entry": "0x2c441",
+   "sfx": [
+    {
+     "site": "0x2c55a",
+     "index": 1
+    },
+    {
+     "site": "0x2c666",
+     "index": 1
+    }
+   ],
+   "name": "落雷術"
+  },
+  {
+   "index": 6,
+   "entry": "0x2c67d",
+   "sfx": [
+    {
+     "site": "0x2c70b",
+     "index": 2
+    },
+    {
+     "site": "0x2c7a3",
+     "index": 3
+    },
+    {
+     "site": "0x2ca32",
+     "index": 1
+    },
+    {
+     "site": "0x2cae8",
+     "index": 1
+    }
+   ],
+   "name": "轟雷術"
+  },
+  {
+   "index": 7,
+   "entry": "0x2cafc",
+   "sfx": [
+    {
+     "site": "0x2cc05",
+     "index": null
+    },
+    {
+     "site": "0x2ccdc",
+     "index": 1
+    }
+   ],
+   "name": "神雷術"
+  },
+  {
+   "index": 8,
+   "entry": "0x2ccf4",
+   "sfx": [
+    {
+     "site": "0x2cdc9",
+     "index": 1
+    },
+    {
+     "site": "0x2cde5",
+     "index": 2
+    }
+   ],
+   "name": "聖光彈"
+  },
+  {
+   "index": 9,
+   "entry": "0x2ce1a",
+   "sfx": [
+    {
+     "site": "0x2cef2",
+     "index": 1
+    },
+    {
+     "site": "0x2cf08",
+     "index": 2
+    }
+   ],
+   "name": "咒　殺"
+  }
+ ],
+ "finding": "9 個基本攻擊法術(id 0..8)共用同一張通用演出表;**每一個 handler 都含有音效索引 1**,索引 2、3 只出現在階數較高者(炎龍術/天火術/轟雷術/聖光彈等)的額外呼叫端,形狀符合「高階法術演出分多段」。與有專屬 handler 的那組(見 spell_sfx_mapping.json:治療系四招共用 11、地屬兩招共用 2)一樣呈現同系共用,但兩組走的是不同的分派路徑。",
+ "verification": {
+  "date": "2026-09-07",
+  "checks": [
+   "定址表邊界:0x524c6 前一個 dword(0x524c2)為 0,第 11 筆(0x524ee)亦非程式碼指標,10 筆是完整範圍。",
+   "全部 10 筆都落在獨立的 Watcom prologue 入口上(以全 image `call 0x3702f` 掃描出的 541 個入口比對)。",
+   "結構交叉核對:未被表收錄的 FUN_0002cf30 `image_ref_scan --kinds abs` 命中 0 筆,而它正是 FUN_0002ff01 內為『不走表的 id(0x18、>0x1b)』具名呼叫的那一個——不在表中與不被表定址兩件事互相印證。",
+   "涵蓋範圍:入口條件 `bVar1 < 9` 需要 9 個索引,表有 10 筆,無溢位。",
+   "命名交叉驗證:FDTXT_000 索引 441+id 對 4 個獨立已知值(13/14/16/24)4/4 精確相符,才用它命名 0..8。"
+  ],
+  "not_verified": "handler 內索引 2/3 的觸發條件(多段演出的哪一段?暴擊?)未確立,不臆測。 另見 _open_detail_entry_9:第 10 筆(咒殺)與入口條件 `bVar1 < 9` 相矛盾,未解。"
+ },
+ "_correction_2026_09_07": "**本檔原名 physical_attack_presentation_dispatch.json,標題把這 10 筆稱為「物理攻擊演出 handler」——那是錯的,已更正。** 既有的 `docs/data/spell_table_and_presentation.json` 早已載明:名稱表為 FDTXT_000 字串索引 `441 + id`,而 `generic_path_ids = [0..8, 24]`。實際解碼確認 id 0..8 是**基本攻擊法術**火炎術/烈炎術/炎龍術/天火術/電擊術/落雷術/轟雷術/神雷術/聖光彈,不是武器攻擊。命名表以 4 組已知值交叉驗證(id 13→治療術、14→回復術、16→神恩術、24→破龍擊)**4/4 精確相符**。機制面的發現(表位址、分派式、索引來源、各 handler 的音效索引)全部不受影響,錯的只有標籤。**教訓與本專案既有的『先查既有證據再反組譯』一致:spell_table_and_presentation.json 就在同一個目錄裡。**",
+ "_where_physical_attack_actually_is": "普通(物理)攻擊的演出**不在這張表裡**,而是 `FUN_0002e2b0(攻擊方 idx, 防禦方 idx)` → `FUN_0002ebe1` 的**對戰動畫**,其音效索引來自資料紀錄 byte +5、音效池為執行期載入資源(見 sfx_pool_call_site_inventory.json)。**這才是 doc36「戰鬥音效逐招對照」在物理側始終無法收斂的真正原因:那一側是資料驅動,不在程式碼裡。**",
+ "_open_detail_entry_9": "表的第 10 筆(index 9)是 `0x2ce1a`,名稱**咒　殺**。但 `FUN_0001cff0` 的入口條件是 `bVar1 < 9`,而 `spell_table_and_presentation.json` 也把 id 9 列在 `dedicated_path_ids`(走 `0x51d01` 專屬表)。**兩者相矛盾,本輪未解**:表裡有第 10 筆、卻不由這條路徑抵達。可能經由 `FUN_0002ff01` 內其他分派點(共 8 個,部分形式為 `call [eax + 0x524c6]`,eax 已是 byte offset,索引來源不同)進入,亦可能是未使用的槽。**不臆測,列為本表的已知未解點。**"
+}
