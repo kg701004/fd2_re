@@ -3425,3 +3425,10 @@ retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半�
 * `audit_evidence_provenance.py` 提及 `ANI.DAT`/`FD2.EXE`——出現在它**自己的 selftest
   斷言**裡，測試那些字串會被辨識為原版資產標記，不是引用已移除的目錄。
 
+### 新方向 5：重新產生已提交產物並比對 —— 抓到一個真漂移
+把 `docs/data/story_script.json` 重生後與 committed 版逐位元組比對:**同大小但 90 個
+位元組不同**。內容差異是「**賽**可邦勒」vs「**塞**可邦勒」等三個名字——因為本日稍後才
+把 `decode_story_text.py` 的 `PORT` 字典對齊**遊戲自己的名稱表**(FDTXT_000 索引 = id+1),
+而該 JSON 是在修正之前產生的。已重生並提交。這正是 memory
+`feedback_regenerate_committed_artifacts` 記載的形狀:產物會靜默落後於產生它的工具。
+

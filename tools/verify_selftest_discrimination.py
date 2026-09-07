@@ -37,6 +37,11 @@ a random mutation may land in a code path the selftest legitimately does not
 cover, so a zero score is a prompt to look, not a verdict. The per-tool mutation
 score (caught / attempted) is printed so the reader can judge.
 
+**Use enough tries.** These selftests have mutation hit-rates around 25%, so five
+attempts miss entirely about a quarter of the time -- `decode_story_text.py` was
+reported WEAK at 5 tries and DISCRIMINATING at both 10 (4/10) and 20 (5/20). The
+default is 12; treat anything below that as a smoke test, not a verdict.
+
 Safety
 ------
 Tools resolve repo paths from `__file__`, so they cannot be copied elsewhere to
@@ -307,6 +312,10 @@ def main() -> int:
     ap.add_argument("--tool")
     ap.add_argument("--offline", action="store_true", help="只跑不需 Ghidra/DOSBox 的工具")
     ap.add_argument("--include-ghidra", action="store_true")
+    # 2026-09-08:預設一度用 5,結果 `decode_story_text.py` 被判 WEAK(0/5),
+    # 同一支工具在 10 次時是 4/10、20 次時是 5/20 —— 純粹是取樣變異。
+    # 它的突變命中率約 25%,5 次抽不中的機率約 24%,足以每四次就誤報一次。
+    # 12 次把該機率降到約 3%;真的想下結論就用 --tries 20 以上。
     ap.add_argument("--tries", type=int, default=12)
     ap.add_argument("--timeout", type=int, default=300)
     ap.add_argument("--json")
