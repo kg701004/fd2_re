@@ -1,0 +1,72 @@
+{
+ "source": "live DOSBox-X (instance ebatch) 2026-09-07, ch27 save slot 0 shop recipient list read across 7 scroll steps",
+ "note": "character_id is the save record+0x08 byte; roster_index is the record's position in the slot's 32x0x50 roster block. Names were read off the original game's own recipient list, so this is an original-side mapping, not a remake asset.",
+ "cross_check": "roster_index 3/7/12 (蓋亞/瑪琳/萊汀) are exactly the three records patched dead for the revival test, and the revival candidate list showed those same three names",
+ "mapping": [
+  {
+   "roster_index": 0,
+   "character_id": 0,
+   "name": "索爾"
+  },
+  {
+   "roster_index": 1,
+   "character_id": 9,
+   "name": "悠妮"
+  },
+  {
+   "roster_index": 2,
+   "character_id": 4,
+   "name": "亞雷斯"
+  },
+  {
+   "roster_index": 3,
+   "character_id": 30,
+   "name": "蓋亞"
+  },
+  {
+   "roster_index": 4,
+   "character_id": 1,
+   "name": "哈諾"
+  },
+  {
+   "roster_index": 5,
+   "character_id": 8,
+   "name": "希莉亞"
+  },
+  {
+   "roster_index": 6,
+   "character_id": 2,
+   "name": "鐵諾"
+  },
+  {
+   "roster_index": 7,
+   "character_id": 10,
+   "name": "瑪琳"
+  },
+  {
+   "roster_index": 8,
+   "character_id": 13,
+   "name": "貝克威"
+  },
+  {
+   "roster_index": 9,
+   "character_id": 12,
+   "name": "凱麗"
+  },
+  {
+   "roster_index": 10,
+   "character_id": 5,
+   "name": "洛娜"
+  },
+  {
+   "roster_index": 11,
+   "character_id": 11,
+   "name": "索菲亞"
+  },
+  {
+   "roster_index": 12,
+   "character_id": 6,
+   "name": "萊汀"
+  }
+ ]
+}
