@@ -1,0 +1,271 @@
+{
+ "_source": {
+  "join_constructor": "FD2.EXE 0x112a5(doc25 早已定性的 JOIN 機制核心)。呼叫形狀一律為 `push <portrait id>; call 0x112a5; add esp,4` —— **單一參數**。",
+  "method": "全 image 掃 `call 0x112a5` 得 28 個呼叫端;以 `call 0x3702f` prologue 掃描出的 541 個函式入口把每個呼叫端歸到所屬函式;再與 `per_chapter_handler_tables.json` 的 pre-town(0x51de9)/post-town(0x51d71) 兩張 30 筆逐章表比對取得章別。",
+  "pitfall": "第一版用「call 前 24 byte 內的 push 清單」取參數,會把鄰近**別的函式**的參數(如 `push dword [0x53a79]` 其實屬於 `call 0x15f84`)誤認,且在指令邊界錯位時整組落空。已改為從函式入口線性反組譯後取 call 的前一道指令。",
+  "chapter_numbering": "索引即 DAT_00053c03 的原始章號;顯示章號 = 原始 + 1(沿用 preparation_required_characters.json 的既有定性)。"
+ },
+ "joins": [
+  {
+   "call_site": "0x230d9",
+   "handler": "0x22f37",
+   "pre_town_index": 1,
+   "post_town_index": null,
+   "char_id": 8,
+   "name": "希莉亞",
+   "arg_instruction": "push 8"
+  },
+  {
+   "call_site": "0x231af",
+   "handler": "0x230f2",
+   "pre_town_index": 2,
+   "post_town_index": null,
+   "char_id": 2,
+   "name": "鐵諾",
+   "arg_instruction": "push 2"
+  },
+  {
+   "call_site": "0x2327d",
+   "handler": "0x231f9",
+   "pre_town_index": 4,
+   "post_town_index": null,
+   "char_id": 10,
+   "name": "瑪琳",
+   "arg_instruction": "push 0xa"
+  },
+  {
+   "call_site": "0x232a2",
+   "handler": "0x23296",
+   "pre_town_index": 5,
+   "post_town_index": null,
+   "char_id": 13,
+   "name": "貝克威",
+   "arg_instruction": "push 0xd"
+  },
+  {
+   "call_site": "0x23389",
+   "handler": "0x232e8",
+   "pre_town_index": 6,
+   "post_town_index": null,
+   "char_id": 12,
+   "name": "凱麗",
+   "arg_instruction": "push 0xc"
+  },
+  {
+   "call_site": "0x23771",
+   "handler": "0x235f9",
+   "pre_town_index": 9,
+   "post_town_index": null,
+   "char_id": 11,
+   "name": "索菲亞",
+   "arg_instruction": "push 0xb"
+  },
+  {
+   "call_site": "0x2377b",
+   "handler": "0x235f9",
+   "pre_town_index": 9,
+   "post_town_index": null,
+   "char_id": 6,
+   "name": "萊汀",
+   "arg_instruction": "push 6"
+  },
+  {
+   "call_site": "0x237c8",
+   "handler": "0x23790",
+   "pre_town_index": 10,
+   "post_town_index": null,
+   "char_id": 14,
+   "name": "珊",
+   "arg_instruction": "push 0xe"
+  },
+  {
+   "call_site": "0x23892",
+   "handler": "0x237d5",
+   "pre_town_index": 11,
+   "post_town_index": null,
+   "char_id": 17,
+   "name": "米亞斯多德",
+   "arg_instruction": "push 0x11"
+  },
+  {
+   "call_site": "0x23b4a",
+   "handler": "0x23a0a",
+   "pre_town_index": 15,
+   "post_town_index": null,
+   "char_id": 18,
+   "name": "蜜蒂",
+   "arg_instruction": "push 0x12"
+  },
+  {
+   "call_site": "0x23cc1",
+   "handler": "0x23b5f",
+   "pre_town_index": 16,
+   "post_town_index": null,
+   "char_id": 16,
+   "name": "凱拉斯",
+   "arg_instruction": "push 0x10"
+  },
+  {
+   "call_site": "0x23e1b",
+   "handler": "0x23cd5",
+   "pre_town_index": 17,
+   "post_town_index": null,
+   "char_id": 21,
+   "name": "約拿",
+   "arg_instruction": "push 0x15"
+  },
+  {
+   "call_site": "0x23e25",
+   "handler": "0x23cd5",
+   "pre_town_index": 17,
+   "post_town_index": null,
+   "char_id": 7,
+   "name": "蘭斯洛特",
+   "arg_instruction": "push 7"
+  },
+  {
+   "call_site": "0x23ff1",
+   "handler": "0x23e74",
+   "pre_town_index": 19,
+   "post_town_index": null,
+   "char_id": 25,
+   "name": "謝多",
+   "arg_instruction": "push 0x19"
+  },
+  {
+   "call_site": "0x240be",
+   "handler": "0x23e74",
+   "pre_town_index": 19,
+   "post_town_index": null,
+   "char_id": 28,
+   "name": "達克賽",
+   "arg_instruction": "push 0x1c"
+  },
+  {
+   "call_site": "0x24312",
+   "handler": "0x240fa",
+   "pre_town_index": 20,
+   "post_town_index": null,
+   "char_id": 24,
+   "name": "希爾法",
+   "arg_instruction": "push 0x18"
+  },
+  {
+   "call_site": "0x2431c",
+   "handler": "0x240fa",
+   "pre_town_index": 20,
+   "post_town_index": null,
+   "char_id": 23,
+   "name": "羅蘭",
+   "arg_instruction": "push 0x17"
+  },
+  {
+   "call_site": "0x247f4",
+   "handler": "0x24754",
+   "pre_town_index": 22,
+   "post_town_index": null,
+   "char_id": 22,
+   "name": "卡里斯",
+   "arg_instruction": "push 0x16"
+  },
+  {
+   "call_site": "0x2492b",
+   "handler": "0x24754",
+   "pre_town_index": 22,
+   "post_town_index": null,
+   "char_id": 19,
+   "name": "羅德曼",
+   "arg_instruction": "push 0x13"
+  },
+  {
+   "call_site": "0x24e6c",
+   "handler": "0x24df2",
+   "pre_town_index": 24,
+   "post_town_index": null,
+   "char_id": 26,
+   "name": "聖寇拉斯",
+   "arg_instruction": "push 0x1a"
+  },
+  {
+   "call_site": "0x327f7",
+   "handler": "0x3231b",
+   "pre_town_index": null,
+   "post_town_index": 0,
+   "char_id": 0,
+   "name": "索爾",
+   "arg_instruction": "push 0"
+  },
+  {
+   "call_site": "0x32801",
+   "handler": "0x3231b",
+   "pre_town_index": null,
+   "post_town_index": 0,
+   "char_id": 9,
+   "name": "悠妮",
+   "arg_instruction": "push 9"
+  },
+  {
+   "call_site": "0x3280b",
+   "handler": "0x3231b",
+   "pre_town_index": null,
+   "post_town_index": 0,
+   "char_id": 4,
+   "name": "亞雷斯",
+   "arg_instruction": "push 4"
+  },
+  {
+   "call_site": "0x32815",
+   "handler": "0x3231b",
+   "pre_town_index": null,
+   "post_town_index": 0,
+   "char_id": 30,
+   "name": "蓋亞",
+   "arg_instruction": "push 0x1e"
+  },
+  {
+   "call_site": "0x3453e",
+   "handler": "0x34531",
+   "pre_town_index": null,
+   "post_town_index": null,
+   "char_id": 1,
+   "name": "哈諾",
+   "arg_instruction": "push 1"
+  },
+  {
+   "call_site": "0x3545f",
+   "handler": "0x35422",
+   "pre_town_index": null,
+   "post_town_index": null,
+   "char_id": 27,
+   "name": "巴拿羅西亞",
+   "arg_instruction": "push 0x1b"
+  },
+  {
+   "call_site": "0x355e3",
+   "handler": "0x355b7",
+   "pre_town_index": null,
+   "post_town_index": null,
+   "char_id": 20,
+   "name": "莎拉",
+   "arg_instruction": "push 0x14"
+  },
+  {
+   "call_site": "0x35b46",
+   "handler": "0x35a0d",
+   "pre_town_index": null,
+   "post_town_index": null,
+   "char_id": 31,
+   "name": "渥德",
+   "arg_instruction": "push 0x1f"
+  }
+ ],
+ "verification": {
+  "date": "2026-09-07",
+  "checks": [
+   "**無重複**:28 個 JOIN 事件對應 28 個相異 portrait id,沒有任何角色被加入兩次——這是一個結構性不變量,參數若抽錯極易破壞它。",
+   "**開場隊伍**:post-town 索引 0(全遊戲第一個 post-town handler)加入索爾/悠妮/亞雷斯/蓋亞,正是初始隊伍。",
+   "**因果核對(獨立路徑)**:`preparation_required_characters.json` 來自完全不同的程式路徑(整備畫面驗證器 FUN_0002b439 的分支鏈)。「某章必須出場」蘊含該角色在該章之前已加入。逐筆比對 **9/9 相符、0 違反**。"
+  ],
+  "not_verified": "4 名角色(0x3 哈瓦特 / 0x5 洛娜 / 0xf 賽可邦勒 / 0x1d 亞奇梅吉)未出現在任何 JOIN 呼叫端,其入隊(或不入隊)途徑本輪未確立,不臆測。另有 4 個含 JOIN 的 handler(0x34531/0x35422/0x355b7/0x35a0d)不在這兩張逐章表內,應由其他事件入口抵達,亦未追。"
+ }
+}
