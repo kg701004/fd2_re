@@ -1,0 +1,161 @@
+{
+ "source": {
+  "handler_table": "FD2.EXE 0x524c6,stride 4,10 筆,全為 Watcom 函式入口;前後皆為 0,邊界乾淨",
+  "dispatcher": "FUN_0002ff01(param_1, param_2=指令/攻擊 id, param_3, param_4)。prologue `push 0x164` + push ebx/esi/edi/ebp + `sub esp,0x130`,故 `[esp+0x148]` 即 param_2;`0x2ff15 mov ebp,[esp+0x148]`,再於 `0x309fa call dword ptr [eax*4 + 0x524c6]`(eax=ebp)分派。另有 `call [eax + 0x524c6]`(eax 已是 byte offset)等共 8 個分派點,對應演出的不同階段。",
+  "entry_path": "FUN_0001cff0(指令選擇):`if ((bVar1 < 9) || (bVar1 == 0x18) || (0x1b < bVar1)) FUN_0002ff01();` —— 即 id<9 走本表,id==0x18 或 >0x1b 在 FUN_0002ff01 內改呼叫 FUN_0002cf30()。",
+  "sfx_pool": "全部 handler 的音效都取自池 [0x54153]"
+ },
+ "handlers": [
+  {
+   "index": 0,
+   "entry": "0x2b996",
+   "sfx": [
+    {
+     "site": "0x2ba63",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "entry": "0x2bb33",
+   "sfx": [
+    {
+     "site": "0x2bd62",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "entry": "0x2bd6c",
+   "sfx": [
+    {
+     "site": "0x2bdfd",
+     "index": 3
+    },
+    {
+     "site": "0x2be85",
+     "index": 1
+    },
+    {
+     "site": "0x2bf61",
+     "index": 2
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "entry": "0x2bfd9",
+   "sfx": [
+    {
+     "site": "0x2c16c",
+     "index": 2
+    },
+    {
+     "site": "0x2c19f",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "entry": "0x2c217",
+   "sfx": [
+    {
+     "site": "0x2c395",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "entry": "0x2c441",
+   "sfx": [
+    {
+     "site": "0x2c55a",
+     "index": 1
+    },
+    {
+     "site": "0x2c666",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "entry": "0x2c67d",
+   "sfx": [
+    {
+     "site": "0x2c70b",
+     "index": 2
+    },
+    {
+     "site": "0x2c7a3",
+     "index": 3
+    },
+    {
+     "site": "0x2ca32",
+     "index": 1
+    },
+    {
+     "site": "0x2cae8",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "entry": "0x2cafc",
+   "sfx": [
+    {
+     "site": "0x2cc05",
+     "index": null
+    },
+    {
+     "site": "0x2ccdc",
+     "index": 1
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "entry": "0x2ccf4",
+   "sfx": [
+    {
+     "site": "0x2cdc9",
+     "index": 1
+    },
+    {
+     "site": "0x2cde5",
+     "index": 2
+    }
+   ]
+  },
+  {
+   "index": 9,
+   "entry": "0x2ce1a",
+   "sfx": [
+    {
+     "site": "0x2cef2",
+     "index": 1
+    },
+    {
+     "site": "0x2cf08",
+     "index": 2
+    }
+   ]
+  }
+ ],
+ "finding": "**10 個物理攻擊演出 handler 全部使用同一個音效索引 1**;索引 2、3 只出現在其中 4 個 handler 的額外呼叫端(0x2bd6c、0x2bfd9、0x2c67d、0x2ccf4、0x2ce1a)。因此物理攻擊**不是一招一個專屬音效**——這正可解釋 doc36「戰鬥音效逐招對照」在物理側始終無法收斂:該前提對物理攻擊不成立(法術側則相反,見 spell_sfx_mapping.json,治療系共用 11、地屬共用 2)。",
+ "verification": {
+  "date": "2026-09-07",
+  "checks": [
+   "定址表邊界:0x524c6 前一個 dword(0x524c2)為 0,第 11 筆(0x524ee)亦非程式碼指標,10 筆是完整範圍。",
+   "全部 10 筆都落在獨立的 Watcom prologue 入口上(以全 image `call 0x3702f` 掃描出的 541 個入口比對)。",
+   "結構交叉核對:未被表收錄的 FUN_0002cf30 `image_ref_scan --kinds abs` 命中 0 筆,而它正是 FUN_0002ff01 內為『不走表的 id(0x18、>0x1b)』具名呼叫的那一個——不在表中與不被表定址兩件事互相印證。",
+   "涵蓋範圍:入口條件 `bVar1 < 9` 需要 9 個索引,表有 10 筆,無溢位。"
+  ],
+  "not_verified": "尚未把 id 0..8 逐一對回玩家可見的武器/指令名稱;handler 內索引 2/3 的觸發條件(暴擊/落空/連擊?)未確立,不臆測。"
+ }
+}
