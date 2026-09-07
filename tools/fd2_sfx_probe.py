@@ -96,6 +96,92 @@ def arm(instance: str, delta: int | None = None, handle: str = "a") -> dict:
             "ghidra": hex(PLAY_SFX_A if handle == "a" else PLAY_SFX_B)}
 
 
+# doc36's per-index call sites (Ghidra addresses). Breaking HERE instead of at
+# play_sfx_a's entry pins which index fired without having to guess which action
+# caused the next generic call -- the limitation the first version documented.
+# Corrected 2026-09-07 by scanning the current EXE for the literal push sequence
+# `6a <prio>; 6a <index>; ff 35 ec 3e 05 00; e8 <rel32>`, which finds every site
+# that plays from the UI pool. doc36's entry for index 0xb (`0x2cac3`) does not
+# hold in this EXE -- that address is a `cmp`, not a `call`, and the counter next
+# to it is mod-10 with no `idiv`. The real and only 0xb site is 0x32307.
+CALL_SITES = {
+    2: 0x16546, 3: 0x1DDAA, 4: 0x1A3DF, 5: 0x17C56,
+    6: 0x17B2E, 7: 0x1193A, 8: 0x17495, 0xB: 0x32307,
+}
+# Every UI-pool site found by that scan, for reference (primary site first):
+ALL_CALL_SITES = {
+    0: [0x117A1, 0x11A33, 0x11A54, 0x11A75, 0x11A96, 0x1BA55],  # 35 total
+    1: [0x265A7],
+    2: [0x16546, 0x34126, 0x34162],
+    3: [0x1DDAA],
+    4: [0x1403D, 0x1A3DF],
+    5: [0x17C56, 0x17EDE, 0x29C8A, 0x2B08A],
+    6: [0x17B2E, 0x17D26, 0x2B1F1],
+    7: [0x1193A, 0x29D30, 0x29D6C, 0x2B0C7, 0x3417E],
+    8: [0x17495, 0x176D3],
+    0xB: [0x32307],
+    0xC: [0x13D13],
+}
+
+
+def arm_sites(instance: str, indices: list[int], delta: int | None = None) -> dict:
+    """Set a breakpoint at each index's own call site, all at once.
+
+    At a call-site breakpoint the three arguments are already pushed and the
+    return address is NOT yet on the stack, so the frame is shifted by 4 versus
+    a breakpoint at the function entry:  [esp]=table_ptr, [esp+4]=index,
+    [esp+8]=priority.
+    """
+    _helper("enter-debugger", "--instance", instance)
+    delta = calibrate(instance) if delta is None else delta
+    armed = {}
+    for i in indices:
+        site = CALL_SITES[i]
+        _helper("debugger-cmd", "--instance", instance, f"BP 0170:{site + delta:08X}")
+        armed[i] = f"0170:{site + delta:08X}"
+    _helper("resume", "--instance", instance)
+    return {"delta": hex(delta), "armed": armed}
+
+
+def read_site_frame(instance: str, delta: int) -> dict:
+    """Decode a stop at one of the armed call sites."""
+    pane = _pane(instance)
+    # While the guest is running, the TUI still shows the registers from the
+    # PREVIOUS stop, so reading them yields a real-looking but wrong frame. The
+    # debugger prints "(Running)" as its last output in that state -- use it as
+    # the paused/running discriminator instead of trusting the register block.
+    tail = [ln for ln in pane.splitlines() if ln.strip()]
+    if tail and tail[-1].strip() == "(Running)":
+        return {"hit": False, "note": "guest is still running -- no breakpoint hit yet"}
+    m = re.search(r"EIP=([0-9A-Fa-f]{8})", pane)
+    e = re.search(r"ESP=([0-9A-Fa-f]{8})", pane)
+    if not (m and e):
+        return {"hit": False, "note": "no EIP/ESP in pane"}
+    eip, esp = int(m.group(1), 16), int(e.group(1), 16)
+    ghidra = eip - delta
+    which = [i for i, s in CALL_SITES.items() if s == ghidra]
+    if not which:
+        return {"hit": False, "eip": hex(eip), "ghidra": hex(ghidra),
+                "note": "stopped somewhere that is not an armed call site"}
+    base, off = esp & ~0xF, esp & 0xF
+    _helper("debugger-cmd", "--instance", instance, f"D 0178:{base:08X}")
+    pane2 = _pane(instance)
+    b: list[int] = []
+    for r in range(2):
+        row = re.search(rf"0178:{base + r * 16:08X}\s+((?:[0-9A-Fa-f]{{2}} ){{16}})", pane2)
+        if not row:
+            break
+        b += [int(x, 16) for x in row.group(1).split()]
+    if len(b) < off + 12:
+        return {"hit": True, "expected_index": which[0], "call_site": hex(ghidra),
+                "note": "could not read the pushed frame"}
+    f = b[off:off + 12]
+    def dw(o): return f[o] | f[o+1] << 8 | f[o+2] << 16 | f[o+3] << 24
+    return {"hit": True, "call_site": hex(ghidra), "expected_index": which[0],
+            "table_ptr": hex(dw(0)), "index": dw(4), "priority": dw(8),
+            "matches_doc36": dw(4) == which[0]}
+
+
 def _screens_differ(instance: str, tag: str) -> bool:
     a = f".wsl_build/{instance}/probe_{tag}_1.png"
     b = f".wsl_build/{instance}/probe_{tag}_2.png"
@@ -214,11 +300,21 @@ def main() -> int:
     ap.add_argument("--action", help="space-separated keys to send before reading the frame")
     ap.add_argument("--label", default="", help="what that action is, for the printed record")
     ap.add_argument("--read", action="store_true", help="just decode the current stopped frame")
+    ap.add_argument("--arm-sites", help="comma-separated indices to break at their own call sites")
+    ap.add_argument("--read-site", action="store_true", help="decode a stop at an armed call site")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
 
     if a.selftest:
         return selftest(a.instance)
+    if a.arm_sites:
+        idx = [int(x, 0) for x in a.arm_sites.split(",")]
+        print(arm_sites(a.instance, idx, a.delta))
+        return 0
+    if a.read_site:
+        delta = a.delta if a.delta is not None else calibrate(a.instance)
+        print(read_site_frame(a.instance, delta))
+        return 0
     if a.arm:
         print(arm(a.instance, a.delta))
         return 0

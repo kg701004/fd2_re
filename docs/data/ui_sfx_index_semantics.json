@@ -156,5 +156,113 @@
    "an empty dump was reported as a parse failure instead of the truth: no breakpoint hit",
    "a stale pane could show an EIP a few bytes past the breakpoint and the stack was read anyway -- an unbound-key negative control exposed this as index=2129944 from a negative call site; the tool now requires EIP to equal the breakpoint exactly"
   ]
+ },
+ "_live_confirmation_round2_2026_09_07": {
+  "method": "breakpoint at each index's OWN call site (not at play_sfx_a's entry), so the stopped EIP identifies the index without having to guess which action caused the next generic call. At a call-site stop the frame is [esp]=table_ptr, [esp+4]=index, [esp+8]=priority.",
+  "all_seven_remaining_now_confirmed": [
+   2,
+   3,
+   4,
+   5,
+   6,
+   8,
+   11
+  ],
+  "index_2": {
+   "call_site": "0x16546",
+   "screen_at_call": "docs/figures/sfx-index2-moment-window-open.png",
+   "semantics": "played every UI main-loop tick while a message window animates open"
+  },
+  "index_3": {
+   "call_site": "0x1ddaa",
+   "screen_at_call": "docs/figures/sfx-index3-moment-unit-death.png",
+   "trigger_built": "a roster record patched to HP-current 0 AND HP-max 0 (max 0 makes the turn-start regen loop skip it, since that loop requires HP != HPmax) with the dead bit clear, so the death handler sees it",
+   "semantics": "unit death"
+  },
+  "index_4": {
+   "call_site": "0x1a3df",
+   "screen_at_call": "docs/figures/sfx-index4-moment-turn-regen.png",
+   "CORRECTION": "earlier this file recorded index 4 as 'turn change' with HIGH confidence. That label is WRONG. FUN_0001a30b's first loop sets a flag only for own-side units that are alive, status-free and BELOW full HP; the sfx is played only if that flag is set, and the loop right after it applies HP += HPmax/5.",
+   "semantics": "turn-start HP regeneration (plays only when at least one own unit is damaged)",
+   "paired_control": {
+    "negative": "all units at full HP -> turn counter [0x53bef] advanced 1->2 but the breakpoint did NOT fire",
+    "positive": "one unit patched to 306/918 -> breakpoint fired, index 4"
+   },
+   "regen_formula_confirmed_numerically": "306+918/5=489 and 0+780/5=156, both read back live"
+  },
+  "index_5_and_6": {
+   "call_sites": {
+    "6": "0x17b2e",
+    "5": "0x17c56"
+   },
+   "screens": [
+    "docs/figures/sfx-index6-moment-spell-list-open.png",
+    "docs/figures/sfx-index5-moment-spell-list-rendered.png"
+   ],
+   "CORRECTION": "earlier guessed as an open/close pair on equal sample lengths. They are SEQUENTIAL stages of the same spell-list display: 6 fires first, gated on FUN_0001c269 returning non-zero, then 5 fires right after FUN_0001ceed renders the list.",
+   "gate": "FUN_0001c269(unit, out) counts set bits across the 5 bytes at record+0x1a..0x1e, i.e. the unit's learned-spell bitmask; index 6 plays only when the unit knows at least one spell"
+  },
+  "index_8": {
+   "call_site": "0x17495",
+   "screen_at_call": "docs/figures/sfx-index8-moment-unit-info-card.png"
+  },
+  "index_11_and_9": {
+   "call_site": "0x32307 (shared)",
+   "finding": "doc36's site for 0xb (0x2cac3) does NOT hold in this EXE -- that address is a `cmp`, and the counter beside it is mod-10 with no idiv. The real site is 0x32307, inside FUN_00032230, and it serves TWO indices through a compiler tail-merge: 0x322c5 `push 1; push 9; jmp 0x32301` and 0x322fd `push 1; push 0xb` both fall into the shared `push pool; call` tail at 0x32301/0x32307.",
+   "selection": "a 29-byte class table at 0x52725 indexed by record+0x20 minus 1: byte 0 -> period 6, byte 1 -> period 4, both playing index 9; byte >=2 -> period 9, playing index 0xb. Distribution: 19 classes period 4, 6 classes period 6, 4 classes period 9 (classes 3, 11, 15, 19).",
+   "semantics": "per-unit periodic cadence tick driven by the global counter DAT_00054132",
+   "live": "12 consecutive hits all read index 9; moving the cursor to a different unit produced index 11, exactly as the class branch predicts",
+   "RETRACTION": "this file previously recorded 'index 10 from call site 0x32307, a new pair not in doc36'. That reading was taken BEFORE the probe had a running-state guard, so the register block it decoded was from an earlier stop. The correct values are 9 and 11."
+  },
+  "current_exe_call_site_table": {
+   "method": "byte-signature scan for `6a <prio>; 6a <index>; ff 35 ec 3e 05 00; e8 <rel32>`",
+   "caveat": "a signature scan cannot see tail-merged pushes -- 0x32307 was attributed to 0xb alone when it also serves index 9 from a jump into the middle of the sequence",
+   "sites": {
+    "0": 35,
+    "1": [
+     "0x265a7"
+    ],
+    "2": [
+     "0x16546",
+     "0x34126",
+     "0x34162"
+    ],
+    "3": [
+     "0x1ddaa"
+    ],
+    "4": [
+     "0x1403d",
+     "0x1a3df"
+    ],
+    "5": [
+     "0x17c56",
+     "0x17ede",
+     "0x29c8a",
+     "0x2b08a"
+    ],
+    "6": [
+     "0x17b2e",
+     "0x17d26",
+     "0x2b1f1"
+    ],
+    "7": [
+     "0x1193a",
+     "0x29d30",
+     "0x29d6c",
+     "0x2b0c7",
+     "0x3417e"
+    ],
+    "8": [
+     "0x17495",
+     "0x176d3"
+    ],
+    "11": [
+     "0x32307"
+    ],
+    "12": [
+     "0x13d13"
+    ]
+   }
+  }
  }
 }
