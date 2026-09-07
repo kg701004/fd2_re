@@ -1,0 +1,774 @@
+{
+ "_source": "byte-signature scan of every `call play_sfx_a/b` in the current EXE, 2026-09-07",
+ "_correction": "doc36 records the battle pools as [0x5411f] and [0x54117]. Neither address occurs as a `push dword [..]` operand anywhere in this EXE (0 sites). The pools actually used are listed below; 0x54153 and 0x5414b are the plausible current-EXE counterparts. This is the same stale-address class of error already found for the revival cost table (0x52669) and the sfx 0xb call site (0x2cac3).",
+ "_method_limit": "a literal index is only visible when the caller pushes `6a XX`; sites that compute the index in a register show index=null, and 13 sites compute the table_ptr itself and are listed separately A third blind spot: compiler tail-merge. When two branches push different indices and jump into a shared `push pool; call` tail, only the index physically adjacent to the pool push is seen. This is not hypothetical -- 0x32307 serves BOTH index 9 (pushed at 0x322c7, then `jmp 0x32301`) and index 0xb (pushed at 0x322ff), and this scan attributes it to 0xb alone. Treat 'indices_seen' as a lower bound.",
+ "pools": {
+  "0x53eec": {
+   "site_count": 60,
+   "indices_seen": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    11,
+    12
+   ],
+   "sites": [
+    {
+     "site": "0x117a1",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1193a",
+     "index": 7,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x11a33",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x11a54",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x11a75",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x11a96",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x13d13",
+     "index": 12,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x1403d",
+     "index": 4,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x16546",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x17495",
+     "index": 8,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x176d3",
+     "index": 8,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x17b2e",
+     "index": 6,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x17c56",
+     "index": 5,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x17d26",
+     "index": 6,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x17ede",
+     "index": 5,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x191a9",
+     "index": 12,
+     "priority": null,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x1a3df",
+     "index": 4,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1ba55",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1ba72",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1ba9d",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1babe",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1baee",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1bb2a",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d58c",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d5a9",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d5d5",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d5f6",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d627",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d65b",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1ddaa",
+     "index": 3,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x26504",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x26536",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x265a7",
+     "index": 1,
+     "priority": 3,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x26e5e",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x26e90",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x27625",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2768b",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x276d0",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x276fb",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x27e3b",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x27e99",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x27ede",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x27f0e",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2805f",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x280bb",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x29c8a",
+     "index": 5,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x29d30",
+     "index": 7,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x29d6c",
+     "index": 7,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b08a",
+     "index": 5,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b0c7",
+     "index": 7,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2b106",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b12c",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b155",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b17b",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2b1f1",
+     "index": 6,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x32307",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x34126",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x34162",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x3417e",
+     "index": 7,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x341e7",
+     "index": 0,
+     "priority": null,
+     "handle": "play_sfx_a"
+    }
+   ]
+  },
+  "0x54153": {
+   "site_count": 26,
+   "indices_seen": [
+    0,
+    1,
+    2,
+    3,
+    255
+   ],
+   "sites": [
+    {
+     "site": "0x2ba63",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2bd62",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2bdfd",
+     "index": 3,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2be85",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2bf61",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2c16c",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2c19f",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2c395",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2c55a",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2c666",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2c70b",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2c7a3",
+     "index": 3,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2ca32",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2cae8",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2cc05",
+     "index": null,
+     "priority": null,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2ccdc",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2cdc9",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2cde5",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2cef2",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2cf08",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2db01",
+     "index": 2,
+     "priority": null,
+     "handle": "play_sfx_b"
+    },
+    {
+     "site": "0x2db80",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2dc85",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2dd9e",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x30d1b",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x31015",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    }
+   ]
+  },
+  "0x53b13": {
+   "site_count": 16,
+   "indices_seen": [
+    0,
+    1,
+    2,
+    11,
+    13,
+    255
+   ],
+   "sites": [
+    {
+     "site": "0x1c309",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1c65c",
+     "index": null,
+     "priority": null,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d50a",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x1d6e2",
+     "index": 0,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x217b2",
+     "index": 13,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x21873",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x21ab2",
+     "index": 2,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x21aed",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x21bad",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x22130",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x22167",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x24685",
+     "index": 11,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x339eb",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x33a14",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x33a3d",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x33a66",
+     "index": 1,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    }
+   ]
+  },
+  "0x5414b": {
+   "site_count": 6,
+   "indices_seen": [
+    255
+   ],
+   "sites": [
+    {
+     "site": "0x2d535",
+     "index": null,
+     "priority": null,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2d770",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2e1c6",
+     "index": null,
+     "priority": null,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2e284",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x2e918",
+     "index": 255,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    },
+    {
+     "site": "0x30f74",
+     "index": null,
+     "priority": null,
+     "handle": "play_sfx_a"
+    }
+   ]
+  },
+  "0x53b0f": {
+   "site_count": 1,
+   "indices_seen": [
+    4
+   ],
+   "sites": [
+    {
+     "site": "0x1ea20",
+     "index": 4,
+     "priority": 1,
+     "handle": "play_sfx_a"
+    }
+   ]
+  }
+ },
+ "dynamic_table_ptr_sites": [
+  {
+   "site": "0x1fbd1",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x1fd24",
+   "handle": "play_sfx_b"
+  },
+  {
+   "site": "0x1fe7c",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x1fe9c",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x1fedb",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x1ff5e",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x2054d",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x20595",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x2232b",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x2ee2f",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x2ef0b",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x2f004",
+   "handle": "play_sfx_a"
+  },
+  {
+   "site": "0x32bcf",
+   "handle": "play_sfx_a"
+  }
+ ]
+}
