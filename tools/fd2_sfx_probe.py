@@ -51,6 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 HELPER = Path(__file__).resolve().parent / "fd2_dosbox_live_helper.py"
 PLAY_SFX_A = 0x25A96
@@ -61,14 +62,15 @@ TMUX_SOCKET = "fd2harness"
 
 def _helper(*args: str, timeout: int = 240) -> str:
     r = subprocess.run([sys.executable, str(HELPER), *args],
-                       capture_output=True, text=True, timeout=timeout)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       timeout=timeout)
     return (r.stdout or "") + (r.stderr or "")
 
 
 def _pane(instance: str, lines: int = 60) -> str:
     r = subprocess.run(["wsl.exe", "-d", "Ubuntu", "--", "bash", "-c",
                         f"tmux -L {TMUX_SOCKET} capture-pane -p -t harness-{instance}"],
-                       capture_output=True, text=True, timeout=120)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
     return r.stdout or ""
 
 

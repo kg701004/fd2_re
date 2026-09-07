@@ -264,5 +264,18 @@
     ]
    }
   }
+ },
+ "_live_call_site_confirmation_2026_09_08": {
+  "what_the_item_asked_for": "item 587 自陳「仍缺的一步:把高信心項升級為『確認』還差對呼叫端下斷點的實機命中比對」。本輪做到了,方法本身也因此得到驗證。",
+  "environment": "instance `sfx3`,ch27 存檔,教會服務 0(狀態卡)。以 `tools/fd2_sfx_probe.py --arm-sites` 同時在多個呼叫端下斷點,再逐一操作介面讀取命中。",
+  "results": [
+   "**index 5 = 開啟狀態卡**(呼叫端 `0x17c56`)——在名冊選單按確認開卡時命中,`index=5, priority=1`。",
+   "**index 6 = 關閉狀態卡**(呼叫端 `0x17b2e`)——按 Escape 關卡時命中,`index=6, priority=1`。",
+   "**這解掉本項自陳的『index 5/6 …配對方向未定』**:方向確定為 5=開、6=關,且是實機命中而非波形推論。",
+   "**index 2 的描述獲得修正**:本項原記『UI 主迴圈動畫 tick,所在函式每次呼叫都播』。實測:在**靜態狀態卡上靜置 8 秒完全不觸發**,但一按 Escape 或在名冊選單按方向鍵**立即命中**(`0x16546`,`index=2`)。故它是**重繪驅動**,不是時鐘 tick——「每次呼叫都播」成立,但「tick」這個字暗示的週期性不成立。"
+  ],
+  "method_now_proven": "三次獨立命中(5、6、2)全部 `matches_doc36: True`,證明『呼叫端斷點 + 讀取推入的 frame』這條路在本 build 可用,不受先前 VGA 層 BPPM 不可信問題影響(那是記憶體寫入斷點,這是執行斷點)。",
+  "bonus_finding": "狀態卡本身順帶獨立證實了 item 248 的職業名表:索爾顯示為「**魔族 劍聖**」,而其 record `+0x20`(職業)=9,經 `class + 0x96` 得 FDTXT_000 索引 159 = 劍聖;「魔族」則落在本輪新解出的 141..150 種族段(145)。**由遊戲自己的 UI 交叉驗證,不是自說自話。**",
+  "tool_bug_fixed": "`tools/fd2_sfx_probe.py` 的子行程輸出原本沿用系統預設編碼(本機 cp950),一遇到中文或非法位元組就以 `UnicodeDecodeError` 崩潰,且崩在校準階段、訊息誤導成「delta calibration failed」。已改為 `encoding='utf-8', errors='replace'`,並補上 stderr 的 utf-8 設定。"
  }
 }
