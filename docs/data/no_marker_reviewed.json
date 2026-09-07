@@ -33568,6 +33568,30 @@
    "excerpt": "> 鏈的新版對應」這個對照）。本輪是獨立重推一次並確認結果一致（可當交叉驗證），但**真正新的",
    "verdict": "benign",
    "note": "本行屬同輪自我訂正段落的中段敘述，位址證據在同段前後已列(0x523d5/0x2ac7d/0x2aa00/0x2ae0e)"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2683,
+   "excerpt_sha1": "53b01b45a7cd165671aa01c5d15769094f0b1e9b",
+   "excerpt": "**結論**：§11.7 的「三者 definitively 確認為 table artifact」**撤回**。event58 是真實 handler，",
+   "verdict": "benign",
+   "note": "結論句，位址證據(0x35854/0x51c79/0x51b91/0x5274e/0x3584f)在同節前面逐條列出"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2691,
+   "excerpt_sha1": "5b3fcf89aab145c3f04fa07d3c4288c8ccd9d5ec",
+   "excerpt": "逐一重驗**，但既然判定方法本身在這 3 個上都失效，其餘 11 個應視為**存疑待重驗**而非已確認；",
+   "verdict": "benign",
+   "note": "誠實範圍(a)：明說其餘11槽未逐一重驗、應視為存疑，屬範圍限縮敘述非證據主張"
+  },
+  {
+   "file": "25-battle-event-system.md",
+   "line": 2694,
+   "excerpt_sha1": "06f6fc5c8397f6600f93118ad9ef1e08d8e7f8ff",
+   "excerpt": "本輪是以「index 57/58/76/78 四格同時吻合」間接佐證，未另行獨立推導基底本身。",
+   "verdict": "benign",
+   "note": "誠實範圍(c)：說明基底0x51b91沿用§11.7、本輪僅間接佐證，屬限制聲明"
   }
  ]
 }

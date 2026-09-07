@@ -2423,7 +2423,7 @@ buffer間切換、目的地固定在VGA framebuffer`0xA0000+0x504`,搭配30次�
       (`0x1B8A6`/`0x5274E`/`0x1BB8C`/FDTXT`0x1E0`)不受影響仍為[驗]，但其真正所在函式`0x35854`
       目前查無任何已知靜態呼叫者，map25寶物slot在原版runtime真正的觸發路徑變成新的未解問題(見
       doc25§11.7.5，也牽動已標`[x]`的**REMAKE-TREASURE-EVENT58**——該項的遊戲規則描述本身未受
-      影響，僅其RE位址佐證`0x354FE`已知有誤，見該行附註)。**本項(58..89 handler高階語意)可視為
+      影響，僅其RE位址佐證`0x354FE`已知有誤，見該行附註)。**2026-09-07訂正，本行上方所述的「新的未解問題」已解，且連帶推翻 §11.7 的 artifact 判定**：用本日新建的`tools/image_ref_scan.py`（全image原始bytes掃描，繞過`xref_to`盲區）查`0x35854`，找到絕對參照於`0x51c79`——那是`0x51b91`事件跳表的 index 58 格（且 index 57/58/76/78 四格讀值精確等於§11.7獨立導出的raw值各加relocation `0x356`，兩條路徑互相印證）。逐指令反組譯確認`0x35854`是**有自己Watcom序言的獨立函式**且第一件事就是載入`0x5274e`（§11.7.5指名的map25寶物錨點），而index 57的handler在`0x3584f`已用`jmp`乾淨結束——「落在鄰居handler中段」不成立。event76(`0x360b6`)/event78(`0x36228`)同樣各有序言，也不是artifact。**map25寶物的runtime觸發路徑＝事件dispatcher經跳表index 58，§6.3原始歸因恢復成立**；§11.7「三者definitively是table artifact」撤回，其餘11個被標artifact的槽位應視為存疑待重驗。完整證據見doc25同日新增段落。 **本項(58..89 handler高階語意)可視為
       definitively收斂完成**；checkbox維持`[~]`僅因「各dispatcher selector生產路徑」子項仍未逐一
       閉合，與本輪解決的範圍無關。
 - [x] **RE-POST-RESOLUTION-1AA1D**：閉合 `{kind:u8,payload:u16le}`，kind0/1 為物品／金錢、kind2 dispatch 全域事件、kind3 為另一呈現分支；建構器只採 FDFIELD b22+b23..24，撤回 b23..25 24-bit payload。
