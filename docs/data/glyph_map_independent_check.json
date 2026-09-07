@@ -38,5 +38,32 @@
   "glyph_map_entries": 1825,
   "percent": 5.7
  },
- "conclusion": "glyph_map agrees with the font bitmaps and with live on-screen text on every one of the 104 glyphs actually exercised, with zero mismatches once my own transcription error is removed. This is a real independent check, unlike roundtrip. It does NOT cover the remaining 94.3% of entries -- widening it means exercising more strings, not re-running roundtrip."
+ "conclusion": "glyph_map agrees with the font bitmaps and with live on-screen text on every one of the 104 glyphs actually exercised, with zero mismatches once my own transcription error is removed. This is a real independent check, unlike roundtrip. It does NOT cover the remaining 94.3% of entries -- widening it means exercising more strings, not re-running roundtrip.",
+ "round2_2026_09_07": {
+  "_why": "worklist 659 asks for human proofreading of the 33-chapter transcription. The worklist body itself already records that premise as outdated (decode_story_text.py decodes all 35 FDTXT resources with ZERO unmapped characters), leaving 'spot-check that each glyph id maps to the right character' -- i.e. exactly this verification.",
+  "meaningful_denominator": {
+   "total_character_occurrences": 52568,
+   "distinct_glyphs_actually_used": 1792,
+   "note": "glyph_map has 1825 entries; 1792 of them are actually exercised by the game's text"
+  },
+  "automated_screen": {
+   "method": "render the game's 16x16 1bpp glyph and glyph_map's claimed character in MingLiU at 16px, take the best Jaccard overlap over a small alignment window",
+   "positive_control": "the 104 already eye-verified glyphs score median 0.483 (min 0.278)",
+   "negative_control": "pairing each of those glyphs with a DIFFERENT character scores median 0.287 (max 0.440)",
+   "honest_limit": "the two distributions OVERLAP (correct-min 0.278 < wrong-max 0.440), so this metric is a ranking/triage tool, NOT a decision rule -- the game font and MingLiU are different fonts"
+  },
+  "eye_check_of_the_worst": {
+   "checked": 24,
+   "result": "all 24 correct",
+   "figure": "docs/figures/glyphmap-worst24-game-vs-mingliu.png",
+   "brackets": "glyphs 558/561 scored lowest of all and were zoomed separately (docs/figures/glyphmap-bracket-zoom-558-561-180.png): the game draws double-stroke corner brackets 『 』 exactly as claimed; the apparent difference is MingLiU thinning them at 16px, not a mapping error. Punctuation scores low simply because it has few pixels."
+  },
+  "coverage": {
+   "eye_verified_glyphs": 128,
+   "eye_verified_weighted_pct": 27.1,
+   "metric_screened_not_eye_checked": 138,
+   "combined_weighted_pct": 75.2,
+   "reading": "128 glyphs have been read directly against the game's own bitmaps and cover 27.1% of every character occurrence in the game's text. A further 138 high-frequency glyphs were screened by the metric and all scored ABOVE the 24 that were eye-checked and found correct; counting them reaches 75.2%, but they were not individually inspected and should be described that way."
+  }
+ }
 }
