@@ -85,6 +85,22 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 尚未閉合」，不知道哪些落點合法，跟536/540「機制全懂只差接線」性質不同，正確維持D，避免
 本專案曾犯過的「泛用blocker措辭掩蓋真正缺口」錯誤重演。**第十一輪複核後統計**：A=49、D=39。
 
+> **2026-09-07（同日更晚），使用者指示「E類29項逐項進行live驗證」——先完成 triage，再啟動
+> 第一輪 live（instance `eclass1`），本輪實際驗完 3 項、另 2 項取得初步觀察；誠實記錄為
+> 多輪工作的第 1 輪**：
+> - **triage 的關鍵發現**：E 類的驗收條件（本專案所謂 E2）多數是「**原版 vs remake 逐幀/逐值
+>   比對**」。remake 已於 2026-09-02 移除，這些項目的 remake 那一側**已無對象**；但多數項目的
+>   **原版那一半仍可獨立驗證**，本輪據此把它們重新界定為純原版 live 驗證。純屬 remake 比對、
+>   原版側無獨立內容者（如 53 `UI-VIS-DIFF-HARNESS` 逐字就是「輸出 DOSBox 與 remake pixel
+>   diff」）應比照本檔 D 類的處理記為「範圍消失」。另有 587/605（UI 音效語意實測）**agent 無法
+>   代驗**——harness 的 DOSBox 以 `nosound` 執行（doc23 已記載此環境無音訊路徑），實質屬 B 類。
+> - **本輪已驗**：437 / 252（CONTINUE 與 current-battle restore 的真正來源＝`FD2.TMP`，見各行
+>   新增段落）、791 的 `DAT_00053c57` YES/NO 對應訂正（0=YES、1=NO，預設 YES）。
+> - **本輪初步觀察、未完成**：155 / 305（敵方 AI 階段確認會逐一把鏡頭平移到行動中的敵方單位，
+>   且整輪結束前回合計數不變，與 791 既有結論一致；但「實際選中哪個 command」尚未逐單位判讀）。
+> - **其餘 24 項**：triage 已標出各自的進場方式（多數可用既有 ch27 測試存檔或 `fd2save.py`
+>   chapter-jump 直達），留待後續輪次，不在本輪宣稱完成。
+
 > **2026-09-07（同日稍晚），使用者指示「自動逐項驗證D項剩下的16項」——16/16逐項查證完畢，11項關閉**：
 > 本輪先解決一個長期的定位問題：**D索引的數字是2026-08-19稽核當時`de1d402b^`版本的行號**（不是現行
 > 檔案行號，也不是任何ID），用`git show de1d402b^:docs/knowledge-base/91-worklist.md`取回該版本即可
@@ -134,7 +150,7 @@ byte各自的寫入公式/條件已由本輪532-539關閉的項目完整回答�
 246 - A（2026-09-06由D複核關閉，同一份claim已在本檔案1244行與doc32§3.5/§4.2閉合，本行標籤未同步）- 物品系統裝備加成精確累加點與使用效果碼仍未反組譯。**2026-09-06複核**：裝備加成精確累加點doc32§3.5(worklist第8輪後,對orig_07截圖逐位吻合,四條公式)已閉合；使用效果碼`0x1bbdc`/`0x20c6f`的type dispatch在doc32§4.2/§4.3已窮舉全25個值(0-24)並分類(20個有callee/5個no-op)。本行是同一件事在索引摘要頁的舊標籤未同步更新，不是獨立未解問題。
 247 - A（2026-09-07由D關閉，portrait 11/12/13輪轉問題定案為JSON建表錯誤並已修正，新版EXE轉職鏈路完整重新定位）- 核對doc32 L271/411-435，class_change_targets.json portrait11-13輪轉錯位仍「待查」，未被其他doc解決。**2026-09-06複核**：上一輪引用「doc32§L878」座標有誤(該行是無關的角色表列)，正確位置是**doc32§6.6(L1029-1032)**，內容不變：doc32§6.6(2026-08-30)已更新此項現況——舊版位址`0x31793`重新spot-check確認新版EXE同位址已是無關UI程式碼，同位址探測法已走到頭；要解開輪轉需全檔byte-signature重新定位轉職相關函式，doc32自己的結論是「維持D(可續但需大量前置工程)」。**維持D不變**，但下輪不必重複同位址探測，應直接規劃byte-signature重定位。 **2026-09-07，轉職子系統整條鏈路在新版EXE重新定位完成，本項核心問題(portrait 11/12/13輪轉)定案為JSON建表錯誤並已修正，改標A**：doc32 §6.5/§6.6結論是「未解決但探測方法已窮盡…需要全檔byte-signature重新定位轉職相關函式」——本輪換了方法：不再對舊版位址做spot-check，改**從新版EXE裡仍然有效的資料表位址反查**。`xref_to 0x615fe`(target portrait→class/mobility表，舊文件記載且本輪確認在新版仍有效)只有一筆DATA參照`0x4e7e8`，其所在函式`FUN_0004e7dd`(`0x4e7dd..0x4e7f1`)逐指令確認就是`&DAT_00615fe + (target-0x20)*2`的定址helper(跟town table的`FUN_0004e809`同一種形狀)。對它`call_scan`得3個真正呼叫者，decompile後鎖定**`FUN_0002ac7d`(`0x2ac7d`)就是新版的轉職合成函式**(舊位址`0x31602`)：5次`FUN_0001e529`成長累加、`FUN_0004e7dd`取byte1當mobility增量加到`unit+0x3b`、`FUN_0001b750`重算衍生值、EXP(`+0x3c`)歸零、HP(`+0x40`)=MaxHP(`+0x42`)、MP(`+0x44`)=MaxMP(`+0x46`)——doc32記載的每一項行為逐條吻合。再往上：唯一caller`FUN_0002aa00`(`0x2aa00`)是教會轉職UI迴圈，它呼叫`FUN_0002ae0e`(`0x2ae0e`，舊位址`0x31793`)建候選清單。**關鍵**：raw disasm `0x2ae85`是`movzx eax, byte ptr [ebx + 0x523d5]`(`ebx`=current portrait)——**道具表在新版EXE是`0x523d5`，不是舊文件的`0x526a7`**(後者在新版0個xref、bytes語意也對不上，本輪一併確認為失效的舊版位址)；portrait 9的特例則是`0x2aea9: push 0x5a`硬編碼。同時解出資格閘與目標公式：`unit[+0x21]>=0x14`(Lv≥20) AND `unit[+7]<0x12` AND `unit[+7]!=7`；預設target=`current+0x20`、持有對應道具時=`current+0x32`、portrait 9持0x5a時=0x34。**逐byte核對結果**：`docs/data/exe_tables/class_change_targets.json`的`target_portraits` 34/34完全正確；`current_portraits`的`item_id` 18筆中15筆正確，**只有portrait 11/12/13三筆錯**，且錯法精確就是doc32懷疑的左旋一格(EXE實際`88,91,92`→檔案存成`91,92,88`)。**結論：是本專案自己的建表錯誤，不是原版設計**，已直接修正該JSON並把`source`欄位的舊版位址全部更新成本輪驗證過的新版位址、附上verification欄位。doc32 §6.5的懸念至此關閉。**同輪自我訂正**：`FUN_0002ac7d`與`FUN_0002aa00`→`FUN_0002ae0e`這條caller鏈**不是本輪首次發現**(doc32 §6.3.1/L748/L949早已用`xref_to 0x2ac7d`記載過)，本輪是獨立重推並確認一致；**真正新的只有道具表位址`0x523d5`(先前全庫查無此值，正是輪轉懸念卡住的原因)與據此做的逐byte核對＋3筆修正**。
 248 - D - 角色名對應需逐圖解FDFIELD roster才能繼續補，屬可離線靜態分析。 **2026-09-07查證，確認仍是真開放，非過期標籤**：`49-character-id-name-table.md`L93-126明確結論——38組已定案(0-31共32 + 48/66/68/96/97 + 126)、1組已知待查(75)、97組仍未知，且其中大多數泛用怪物/路人**不可能靠對話反推**(對話走`-19/-20`場景相依索引，同一數字在不同章指向不同單位)，唯一可靠路徑是用`tools/export_units.py`逐張地圖解FDFIELD出場位置段的`byte[+7]`與`DATO_NNN`頭像交叉核對。doc32 L1033-1037同日複核亦記「狀態不變」。這是遠大於單輪範圍的工程量(每張地圖都要解)，維持D。
-252 - E - FD2.SAV剩餘主要gate為一般玩家有效槽E2與current-battle restore，需DOSBox。
+252 - E - FD2.SAV剩餘主要gate為一般玩家有效槽E2與current-battle restore，需DOSBox。 **2026-09-07 live 驗證（instance `eclass1`）**：標題選 CONTINUE **直接進入一張戰鬥地圖**（既未經四槽選單，也不是 `FD2.SAV` 的內容）。live 記憶體（delta `0x19c000` 以 `0x51f75` 簽章重新校準）讀到章節索引 `[0x53c03]`=**10**、回合 `[0x53bef]`=1、名冊 `[0x53bfb]`=13，但本 instance 的 `FD2.SAV` 是 ch27 測試存檔（slot0 章節=26；逐 byte diff 原始 ch10 存檔 vs 合成 ch27 存檔只有 3 bytes 不同＝章節、道具槽旗標、checksum，確認檔內章節確實是 26）。**故 CONTINUE 讀的不是 `FD2.SAV`**：workdir 內 `FD2.TMP`（207360 bytes、seed 是 8/26 的舊檔）在按下 CONTINUE 當下被讀取並改寫（md5 `bf767bb1…`→`ea2a3cec…`），章節 10 正是那份戰鬥中狀態。**CONTINUE 的語意＝從 `FD2.TMP` 恢復戰鬥中狀態，與四個存檔槽完全獨立**。同一輪另確認戰鬥中系統環第一層「上」的子環提供**「要記錄戰況嗎？」（左）/「要讀取戰況嗎？」（右）**一組戰況存讀，**這細化了 doc25 §9「戰鬥中不可存」**——該結論針對四槽 writer `0x30012`，戰況存讀是另一套機制。誠實範圍：`FD2.TMP` 內部格式與寫入時機本輪未反組譯；以 YES 確認「記錄戰況」時 `FD2.SAV` 只有 mtime 變、內容 md5 未變，原因未確定，不列為結論。
 264 - B - SoundFont試聽+TIMB配器對映屬人耳判斷，agent無法自主完成。
 272 - C - 讀`tools/decode_story_text.py`確認無`--script-json`旗標，純未實作。
 273 - C - `gen_campaign.py`自動生成campaign.json仍是純implementation，且本檔74行已將其降級為candidate scaffold。
@@ -219,7 +235,7 @@ secret三種商店)要不要逐位元組對應——**目前3個已驗證的vari
 429 - C - 自創戰場+自訂劇本屬內容創作工程工作。
 430 - C - 多分支劇情線/多結局屬功能實作工作。
 431 - C - 中文編碼回寫工具屬工具開發工作。
-437 - E - 剩餘核心「未修改一般玩家有效槽E2」，需DOSBox驗證CONTINUE/delete-overwrite語意。
+437 - E - 剩餘核心「未修改一般玩家有效槽E2」，需DOSBox驗證CONTINUE/delete-overwrite語意。 **2026-09-07 live 驗證（instance `eclass1`）**：標題選 CONTINUE **直接進入一張戰鬥地圖**（既未經四槽選單，也不是 `FD2.SAV` 的內容）。live 記憶體（delta `0x19c000` 以 `0x51f75` 簽章重新校準）讀到章節索引 `[0x53c03]`=**10**、回合 `[0x53bef]`=1、名冊 `[0x53bfb]`=13，但本 instance 的 `FD2.SAV` 是 ch27 測試存檔（slot0 章節=26；逐 byte diff 原始 ch10 存檔 vs 合成 ch27 存檔只有 3 bytes 不同＝章節、道具槽旗標、checksum，確認檔內章節確實是 26）。**故 CONTINUE 讀的不是 `FD2.SAV`**：workdir 內 `FD2.TMP`（207360 bytes、seed 是 8/26 的舊檔）在按下 CONTINUE 當下被讀取並改寫（md5 `bf767bb1…`→`ea2a3cec…`），章節 10 正是那份戰鬥中狀態。**CONTINUE 的語意＝從 `FD2.TMP` 恢復戰鬥中狀態，與四個存檔槽完全獨立**。同一輪另確認戰鬥中系統環第一層「上」的子環提供**「要記錄戰況嗎？」（左）/「要讀取戰況嗎？」（右）**一組戰況存讀，**這細化了 doc25 §9「戰鬥中不可存」**——該結論針對四槽 writer `0x30012`，戰況存讀是另一套機制。誠實範圍：`FD2.TMP` 內部格式與寫入時機本輪未反組譯；以 YES 確認「記錄戰況」時 `FD2.SAV` 只有 mtime 變、內容 md5 未變，原因未確定，不列為結論。
 446 - A（2026-09-07由D關閉——remake consumer已移除，原版RE(native_join_constructor.json等)本身無缺口，見下方說明）- 剩餘「補zero-HP初始record／所有LOADCH分支」屬靜態RE延續工作。**2026-09-06複核(同日訂正行號，內容不變)**：對應本檔案約2447行「handler raw-byte5 runtime bridge」(先前記錄的「1779行」座標已因後續編輯累積漂移，不是原本引用錯誤，只是行號隨檔案成長偏移)，該行明確指出剩餘工作是讓`cmd/fd2`的`any_unit_inactive`在strict binding缺raw時fail-closed——這是remake Go程式碼(`cmd/fd2`)本身的邏輯，不是RE缺口；靜態RE的那一半(JOIN default/growth公式、identity/race/class資料)已由`native_join_constructor.json`+`tools/sync_native_join_constructor.py`完整解出且獨立於remake存在(檔案仍在，未隨2026-09-02 remake移除而消失)。比照本檔案898行「`ComposeNativeTransitionFrame`屬remake/程式碼，已移除，核對對象已不存在，目前無法覆核」的既有處理方式，本行「可續靜態RE」的框架已經不準確——**不是還能做更多RE去關閉它，是關閉它需要的remake consumer已經不存在**。標籤維持D，但阻塞原因改記為「remake consumer已移除，非RE缺口」。**2026-09-07複核**：上一輪已明確結論「不是還能做更多RE去關閉它，是關閉它需要的remake consumer已經不存在」，符合本專案既有A門檻，本輪依使用者指示補上改標：改標A。
 447 - A（2026-09-07由D關閉，同446——remake consumer已移除，raw byte5/6語意等原版RE本身無缺口）- 剩餘「完成LOADCH raw record materialization」屬靜態資料抽取延續工作。**2026-09-06複核，同446(行號同樣因檔案成長漂移，已訂正)**：對應本檔案約2448行「persistent raw-byte5 bridge」，剩餘工作是`syncPartyFromBattle`/`applyPersistentStats`(remake Go函式)移除E1 projection fallback——同樣是remake consumer端的工作，RE面(raw byte5/6語意、資料來源)已經解出。比照898的既有先例，維持D，阻塞原因改記為「remake consumer已移除，非RE缺口」，不再框架成「靜態資料抽取延續工作」誤導未來輪次以為還有新資料要挖。**2026-09-07複核**：同446——RE面已明確結論解出，剩餘工作對象(remake Go函式)已不存在，改標A。
 458 - E - 自述剩餘門檻是同roster/event/tick的未修改DOSBox一般玩家比較，須live DOSBox。
