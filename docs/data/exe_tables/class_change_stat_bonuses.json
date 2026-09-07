@@ -281,5 +281,27 @@
    "語意內部一致:非施法職(0x21/0x23/0x24/0x25/0x26/0x27)MPmax bonus 為 0,施法職(0x20/0x22)非零;物理職 AP/HPmax 明顯較高。"
   ],
   "not_verified": "未做 live 轉職前後數值擷取。本檔確立的是「這條路徑寫了什麼」,不等於「實機跑出來的數字」。"
+ },
+ "_CORRECTION_2026_09_07_live": {
+  "what_was_wrong": "本檔原先把每列的 byte[+1]/[+3]/[+5]/[+7]/[+9] 當成**加成值本身**。錯了——它們是**每組配對的上限**。",
+  "correct_formula": "每列是 **5 組 [min,max] 配對 + 1 個尾位元組**;加成 = `min + RNG % (max - min)`,即 **`row[2k] + rng % (row[2k+1]-row[2k])`**。span 為 0 時跳過除法(避免除零),加成即 0。",
+  "raw_disassembly": "`FUN_0001e529` 原始反組譯:`0x1e53f movzx ebp,byte[eax]`(min) / `0x1e542 movzx esi,byte[eax+1]`(max) / `0x1e546 sub esi,ebp`(span) / `0x1e54a call 0x4ebe3`(RNG) / `0x1e554 idiv esi` / `0x1e558 add ebp,esi` / `0x1e55a mov [0x53ae1],ebp`。",
+  "why_the_static_pass_missed_it": "**Ghidra 反編譯把整段吃掉了**,輸出成 `DAT_00053ae1 = (uint)*(byte *)(param_2 + 1);` —— min、減法與 RNG 呼叫全部消失。這正是本專案「不能只信反編譯,要看原始反組譯」的既有教訓再一次命中。",
+  "live_confirmation": "凱麗(portrait 0xc→0x3e)實機轉職,列 = [12,15, 7,9, 3,6, 14,18, 0,0, 255]:AP 12+rng%3∈{12,13,14} 實得 **14**;DP {7,8} 實得 **7**;DX {3,4,5} 實得 **4**;HPmax {14..17} 實得 **16**;MPmax span=0 實得 **0**(畫面亦無 MP 訊息)。5/5 相符。"
+ },
+ "_live_verification_2026_09_07": {
+  "instance": "cc406, ch27 存檔槽 1, 凱麗(roster idx 9, portrait 0xc, class 8, Lv40)",
+  "exact_matches": {
+   "portrait": "0xc → 0x3e(預測 0x3e:持有道具 0x5b 故走 +0x32 分支)",
+   "class": "8 → 24(預測 24;畫面訊息「職業轉成武聖」,而 24+0x96=174 = FDTXT_000 索引 174 = 武聖,與 item 248 的職業名表一致)",
+   "level": "40 → 1",
+   "EXP": "99 → 0",
+   "MV": "29 → 30(+1,來自 0x615fe byte1 的單值,精確命中)",
+   "HPcur=HPmax": "1149 = 1149",
+   "MPcur=MPmax": "767 = 767"
+  },
+  "ui_label_to_field_mapping_confirmed": "畫面逐項訊息與記憶體差值完全一致:力量+14=AP(+0x37)、耐力+7=DP(+0x39)、速度+4=DX(+0x3e)、MHP+16=HPmax(+0x42)、移動力+1=MV(+0x3b)。**這獨立證實了本檔 5 個欄位偏移的對應**,不是靠反組譯自說自話。",
+  "blast_radius": "其餘 12 名成員的 record **逐位元組完全不變** —— 轉職只動了一筆。",
+  "candidate_list_check": "轉職候選清單恰好 2 人(凱麗 武者→武聖、洛娜 騎士→聖騎士),與 item 406 先前靜態算出的資格閘結果一致;且「武者」「騎士」正是 class 8/3 加 0x96 後的 FDTXT_000 索引 158/153。"
  }
 }
