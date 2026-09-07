@@ -25,7 +25,16 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
+
+# 2026-09-08:`--selftest` 本身會 `UnicodeEncodeError` 崩潰——它印 ✓/✗,而本機主控台
+# 預設 cp950 編不出 U+2713。一支叫「安全輸出」的工具敗在自己的輸出編碼上,而且崩在
+# 第一個 check() 就中止,後面的檢查一項也沒跑到。修法是把兩端都設成 UTF-8(既有工具
+# 的一貫作法),而不是把符號換成 ASCII——換符號會讓同一個問題在別的工具再出現一次。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 __all__ = ["guard_json_output", "UnsafeOutputPath"]
 

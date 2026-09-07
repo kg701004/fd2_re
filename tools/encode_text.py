@@ -240,8 +240,13 @@ def main(argv):
             f.write(data)
         print(f"套用 {len(edits)} 筆編輯 -> {out}({len(data)} byte)")
         return 0
-    if argv[1] == "selftest":
-        return selftest(argv[2], g2c, c2g)
+    # 兩種拼法都接受。全 repo 稽核 (tools/verify_all_tools.py) 統一以 `--selftest`
+    # 呼叫,而本檔原本只認位置子命令 `selftest`,於是稽核裡永遠落到最後的
+    # `print(__doc__); return 1`,被記成 FAIL——不是測試失敗,是拼法不合。
+    if argv[1] in ("selftest", "--selftest"):
+        # 目錄可省略,理由同 decode_story_text.py:全工具稽核以不帶參數的方式呼叫。
+        src = argv[2] if len(argv) > 2 else os.path.join(HERE, "..", "extracted", "raw", "FDTXT")
+        return selftest(src, g2c, c2g)
     print(__doc__); return 1
 
 

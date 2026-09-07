@@ -904,6 +904,16 @@ def layer_selftest(rep: Report, files: list[Path], skip_self: bool = True) -> No
             rep.add(p.name, "selftest", "PASS", tail[-1][:140] if tail else "")
         elif rc == -9:
             rep.add(p.name, "selftest", "FAIL", "timed out")
+        elif rc == 2 and "required" in blob and "--instance" in blob:
+            # The live-harness tools (fd2_sfx_probe, fd2_verified_input,
+            # fd2_dialogue_walker …) can only self-test against a running
+            # DOSBox-X instance, which this audit deliberately does not start.
+            # argparse's "missing required --instance" is that precondition
+            # being absent, not a failing test, and reporting it as FAIL buries
+            # real regressions under three permanent red rows. Matched narrowly
+            # (rc 2 AND the missing option is exactly --instance) so an ordinary
+            # argparse regression still shows up as FAIL.
+            rep.add(p.name, "selftest", "SKIP", "needs a live DOSBox instance (--instance)")
         else:
             rep.add(p.name, "selftest", "FAIL", f"rc={rc}: {tail[-1][:160] if tail else ''}")
 

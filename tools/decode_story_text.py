@@ -52,6 +52,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")   # 中止訊息也要看得懂,不能只顧 stdout
 
+DEFAULT_FDTXT_DIR = os.path.join(os.path.dirname(__file__), "..", "extracted", "raw", "FDTXT")
+
 OPEN, CLOSE, END = 558, 561, 0xFFFF
 OPEN_BOX = {0xFFEC, 0xFFED, 0xFFEE, 0xFFEF}  # 開對話框控制碼;0xFFFE(換行)、0xFFFD(翻頁)不開新框
 PORT = {0: "索爾", 1: "哈諾", 2: "鐵諾", 3: "哈瓦特", 4: "亞雷斯", 5: "洛娜",
@@ -390,7 +392,10 @@ def main(argv):
         write_script_json(argv[2], argv[3])
         return 0
     if argv[1] == "--selftest":
-        return selftest(argv[2])
+        # 目錄可省略。全 repo 的稽核工具 (tools/verify_all_tools.py) 以不帶參數的
+        # `--selftest` 呼叫每一支工具,原本這裡直接取 argv[2] 會 IndexError,於是
+        # 這個 selftest 在全工具稽核裡一直是 FAIL 而不是被執行。
+        return selftest(argv[2] if len(argv) > 2 else DEFAULT_FDTXT_DIR)
     if argv[1] == "--all":
         src, out = argv[2], argv[3]
         with open(out, "w", encoding="utf-8") as f:
