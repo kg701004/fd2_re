@@ -1,0 +1,246 @@
+{
+ "_source": "static disassembly of the current EXE, 2026-09-07 -- no listening involved",
+ "_player": {
+  "function": "FUN_00025977(track_index, 0) = play_bgm",
+  "how_found": "doc36 recorded play_bgm at 0x26777; that address is inside FUN_0002670e in this EXE and is stale. The real one was found by locating the \"FDMUS.DAT\" string (0x51a79), its single reference at 0x259f6, and the enclosing function 0x25977 -- which is also the address doc12's 2026-09-04 live round breakpointed, so the two agree.",
+  "semantics": "loads FDMUS.DAT resource <track_index>; index -1 (0xff) stops playback",
+  "call_sites": "32 total: 24 with a literal index, 8 computed"
+ },
+ "_tables": {
+  "base_track": "0x51e63, 30 bytes, one per chapter",
+  "enemy_phase_track": "0x51e81, 30 bytes, one per chapter"
+ },
+ "_which_is_which": {
+  "evidence": "in FUN_0001a30b (turn orchestrator) the order is: 0x1a4eb call 0x1d80b (friendly AI scan) -> compare the two tables -> 0x1a51d play_bgm(-1) -> 0x1a582 play_bgm(0x51e81[ch]) -> 0x1a58f call 0x1d8ba (ENEMY AI scan) -> compare again -> 0x1a5c7 play_bgm(-1) -> 0x1a618 play_bgm(0x51e63[ch])",
+  "conclusion": "0x51e81 is the track that plays across the enemy phase; 0x51e63 is the base track, played on chapter entry (title/load path at 0x25f26/0x2610a/0x26144) and restored after the enemy phase. The stop/start pair only runs when the two entries differ."
+ },
+ "_victory_music": "worklist 618 asks about a victory track. doc12's 2026-09-04 live round armed a breakpoint on play_bgm BEFORE deciding a battle and found it hit exactly once, with a STOP. This round's static scan corroborates: 11 call sites push -1. No evidence of a victory track played through play_bgm.",
+ "per_chapter": [
+  {
+   "raw_chapter": 0,
+   "chapter": 1,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 1,
+   "chapter": 2,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 2,
+   "chapter": 3,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 3,
+   "chapter": 4,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 4,
+   "chapter": 5,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 5,
+   "chapter": 6,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 6,
+   "chapter": 7,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 7,
+   "chapter": 8,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 8,
+   "chapter": 9,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 9,
+   "chapter": 10,
+   "base_track": 4,
+   "enemy_phase_track": 4,
+   "switches": false
+  },
+  {
+   "raw_chapter": 10,
+   "chapter": 11,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 11,
+   "chapter": 12,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 12,
+   "chapter": 13,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 13,
+   "chapter": 14,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 14,
+   "chapter": 15,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 15,
+   "chapter": 16,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 16,
+   "chapter": 17,
+   "base_track": 4,
+   "enemy_phase_track": 8,
+   "switches": true
+  },
+  {
+   "raw_chapter": 17,
+   "chapter": 18,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 18,
+   "chapter": 19,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 19,
+   "chapter": 20,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 20,
+   "chapter": 21,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 21,
+   "chapter": 22,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 22,
+   "chapter": 23,
+   "base_track": 4,
+   "enemy_phase_track": 8,
+   "switches": true
+  },
+  {
+   "raw_chapter": 23,
+   "chapter": 24,
+   "base_track": 19,
+   "enemy_phase_track": 12,
+   "switches": true
+  },
+  {
+   "raw_chapter": 24,
+   "chapter": 25,
+   "base_track": 3,
+   "enemy_phase_track": 6,
+   "switches": true
+  },
+  {
+   "raw_chapter": 25,
+   "chapter": 26,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 26,
+   "chapter": 27,
+   "base_track": 4,
+   "enemy_phase_track": 8,
+   "switches": true
+  },
+  {
+   "raw_chapter": 27,
+   "chapter": 28,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 28,
+   "chapter": 29,
+   "base_track": 19,
+   "enemy_phase_track": 1,
+   "switches": true
+  },
+  {
+   "raw_chapter": 29,
+   "chapter": 30,
+   "base_track": 8,
+   "enemy_phase_track": 8,
+   "switches": false
+  }
+ ],
+ "_distinct_tracks": {
+  "base": [
+   3,
+   4,
+   8,
+   19
+  ],
+  "enemy_phase": [
+   1,
+   4,
+   6,
+   8,
+   12
+  ]
+ },
+ "_known_anchor": "FDMUS_018 = 商店 (already established); 18 appears in neither table, consistent with shop music being played from the shop code (0x25db5 / 0x31a39) rather than per chapter"
+}
