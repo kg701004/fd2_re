@@ -1,0 +1,674 @@
+{
+ "_source": "FD2.EXE 0x6238d, 31(0x1f)-byte records indexed directly by chapter: record_addr = 0x6238d + (chapter-2)*0x1f, chapters 2..27 contiguous",
+ "_layout": {
+  "+0": "town background variant (0/1/2), consumed by FUN_000265ec",
+  "+1": "secret-shop gate: required current selection",
+  "+2": "secret-shop gate: BIOS Shift/Ctrl/Alt-F1..F10 scan code",
+  "+3..+0xE": "weapon shop item ids (12 bytes, 0xFF = empty slot)",
+  "+0xF..+0x16": "item shop item ids (8 bytes, 0xFF = empty slot)",
+  "+0x17..+0x1E": "secret shop item ids (8 bytes, 0xFF = empty slot)",
+  "_note": "3+12+8+8 = 31 = 0x1f, the whole record is accounted for, no unexplained bytes"
+ },
+ "_verification": "2026-09-07: all 69 shop entries in docs/data/shops.json (external strategy-guide sourced) match this table's decoded ids exactly, same ids and same order, 0 mismatches; negative control (weapon field shifted +1 byte) matched 0 chapters. Chapters 23/24/25 have all-zero records (no town in those chapters).",
+ "chapters": {
+  "2": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 84
+   },
+   "raw_hex": "000054808184a5ffffffffffffffffc0ffffffffffffff011635c0c184ffff",
+   "weapon_shop": [
+    128,
+    129,
+    132,
+    165
+   ],
+   "item_shop": [
+    192
+   ],
+   "secret_shop": [
+    1,
+    22,
+    53,
+    192,
+    193,
+    132
+   ]
+  },
+  "3": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 1,
+    "bios_scan_code": 95
+   },
+   "raw_hex": "02015f00012084a5ffffffffffffffc0ffffffffffffffc1ceffffffffffff",
+   "weapon_shop": [
+    0,
+    1,
+    32,
+    132,
+    165
+   ],
+   "item_shop": [
+    192
+   ],
+   "secret_shop": [
+    193,
+    206
+   ]
+  },
+  "4": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 2,
+    "bios_scan_code": 106
+   },
+   "raw_hex": "00026a01212d35818485a5ffffffffc0c1ffffffffffff60ceffffffffffff",
+   "weapon_shop": [
+    1,
+    33,
+    45,
+    53,
+    129,
+    132,
+    133,
+    165
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    96,
+    206
+   ]
+  },
+  "5": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 3,
+    "bios_scan_code": 87
+   },
+   "raw_hex": "000357010214158590ffffffffffffc0c1c4ffffffffffc6c7c85effffffff",
+   "weapon_shop": [
+    1,
+    2,
+    20,
+    21,
+    133,
+    144
+   ],
+   "item_shop": [
+    192,
+    193,
+    196
+   ],
+   "secret_shop": [
+    198,
+    199,
+    200,
+    94
+   ]
+  },
+  "6": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 4,
+    "bios_scan_code": 98
+   },
+   "raw_hex": "02046201021415212c2d9186a6ffffc0c1c4ffffffffffc2ceffffffffffff",
+   "weapon_shop": [
+    1,
+    2,
+    20,
+    21,
+    33,
+    44,
+    45,
+    145,
+    134,
+    166
+   ],
+   "item_shop": [
+    192,
+    193,
+    196
+   ],
+   "secret_shop": [
+    194,
+    206
+   ]
+  },
+  "7": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 109
+   },
+   "raw_hex": "02006d0102151621222d3536858691c0c1ffffffffffff585c5dcdffffffff",
+   "weapon_shop": [
+    1,
+    2,
+    21,
+    22,
+    33,
+    34,
+    45,
+    53,
+    54,
+    133,
+    134,
+    145
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    88,
+    92,
+    93,
+    205
+   ]
+  },
+  "8": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 1,
+    "bios_scan_code": 90
+   },
+   "raw_hex": "00015a020315162d22368691a6ffffc0c1ffffffffffff0417c2ceffffffff",
+   "weapon_shop": [
+    2,
+    3,
+    21,
+    22,
+    45,
+    34,
+    54,
+    134,
+    145,
+    166
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    4,
+    23,
+    194,
+    206
+   ]
+  },
+  "9": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 2,
+    "bios_scan_code": 101
+   },
+   "raw_hex": "0002650316232e3f8792adffffffffc0c1ffffffffffffc2ceffffffffffff",
+   "weapon_shop": [
+    3,
+    22,
+    35,
+    46,
+    63,
+    135,
+    146,
+    173
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    194,
+    206
+   ]
+  },
+  "10": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 3,
+    "bios_scan_code": 112
+   },
+   "raw_hex": "02037003232e363f8792a7ffffffffc0c1c4ffffffffff5e5fffffffffffff",
+   "weapon_shop": [
+    3,
+    35,
+    46,
+    54,
+    63,
+    135,
+    146,
+    167
+   ],
+   "item_shop": [
+    192,
+    193,
+    196
+   ],
+   "secret_shop": [
+    94,
+    95
+   ]
+  },
+  "11": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 4,
+    "bios_scan_code": 93
+   },
+   "raw_hex": "02045d03041718408893adffffffffc0c1ffffffffffffc2ceffffffffffff",
+   "weapon_shop": [
+    3,
+    4,
+    23,
+    24,
+    64,
+    136,
+    147,
+    173
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    194,
+    206
+   ]
+  },
+  "12": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 94
+   },
+   "raw_hex": "01005e04182437408893adffffffffc0c1ffffffffffffc2ceffffffffffff",
+   "weapon_shop": [
+    4,
+    24,
+    36,
+    55,
+    64,
+    136,
+    147,
+    173
+   ],
+   "item_shop": [
+    192,
+    193
+   ],
+   "secret_shop": [
+    194,
+    206
+   ]
+  },
+  "13": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 1,
+    "bios_scan_code": 105
+   },
+   "raw_hex": "0101690518242f8893a8adffffffffc1c2c4c5ffffffff071effffffffffff",
+   "weapon_shop": [
+    5,
+    24,
+    36,
+    47,
+    136,
+    147,
+    168,
+    173
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    7,
+    30
+   ]
+  },
+  "14": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 2,
+    "bios_scan_code": 86
+   },
+   "raw_hex": "0102560519242f8994a8aeffffffffc1c2c4c5ffffffffc2cdffffffffffff",
+   "weapon_shop": [
+    5,
+    25,
+    36,
+    47,
+    137,
+    148,
+    168,
+    174
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    194,
+    205
+   ]
+  },
+  "15": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 3,
+    "bios_scan_code": 97
+   },
+   "raw_hex": "010361061925308994a8aeffffffffc1c2c4c5ffffffffc3cfffffffffffff",
+   "weapon_shop": [
+    6,
+    25,
+    37,
+    48,
+    137,
+    148,
+    168,
+    174
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207
+   ]
+  },
+  "16": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 4,
+    "bios_scan_code": 108
+   },
+   "raw_hex": "01046c061925308994a9ffffffffffc1c2c4c5ffffffff5e5fc6c7ffffffff",
+   "weapon_shop": [
+    6,
+    25,
+    37,
+    48,
+    137,
+    148,
+    169
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    94,
+    95,
+    198,
+    199
+   ]
+  },
+  "17": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 88
+   },
+   "raw_hex": "0100581019253138418a95a99cffffc1c2c4c5ffffffffc3cf61ffffffffff",
+   "weapon_shop": [
+    16,
+    25,
+    37,
+    49,
+    56,
+    65,
+    138,
+    149,
+    169,
+    156
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207,
+    97
+   ]
+  },
+  "18": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 1,
+    "bios_scan_code": 100
+   },
+   "raw_hex": "010164121a263138418a95a99cafffc1c2c4c5ffffffff3acfffffffffffff",
+   "weapon_shop": [
+    18,
+    26,
+    38,
+    49,
+    56,
+    65,
+    138,
+    149,
+    169,
+    156,
+    175
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    58,
+    207
+   ]
+  },
+  "19": {
+   "town_variant": 2,
+   "secret_gate": {
+    "required_selection": 2,
+    "bios_scan_code": 111
+   },
+   "raw_hex": "02026f121a266138438b96a99dafffc1c2c4c5ffffffffc3cfffffffffffff",
+   "weapon_shop": [
+    18,
+    26,
+    38,
+    97,
+    56,
+    67,
+    139,
+    150,
+    169,
+    157,
+    175
+   ],
+   "item_shop": [
+    193,
+    194,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207
+   ]
+  },
+  "20": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 3,
+    "bios_scan_code": 92
+   },
+   "raw_hex": "01035c121a266139438b96aa9db0ffc1c2c3c4c5ffffffc3cfffffffffffff",
+   "weapon_shop": [
+    18,
+    26,
+    38,
+    97,
+    57,
+    67,
+    139,
+    150,
+    170,
+    157,
+    176
+   ],
+   "item_shop": [
+    193,
+    194,
+    195,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207
+   ]
+  },
+  "21": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 4,
+    "bios_scan_code": 103
+   },
+   "raw_hex": "010467131a276139448c97aa9eb0ffc1c2c3c4c5ffffff3245ffffffffffff",
+   "weapon_shop": [
+    19,
+    26,
+    39,
+    97,
+    57,
+    68,
+    140,
+    151,
+    170,
+    158,
+    176
+   ],
+   "item_shop": [
+    193,
+    194,
+    195,
+    196,
+    197
+   ],
+   "secret_shop": [
+    50,
+    69
+   ]
+  },
+  "22": {
+   "town_variant": 1,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 104
+   },
+   "raw_hex": "010068131b276239448c97bd9ebcffc1c2c3c4c5ffffffc3cfffffffffffff",
+   "weapon_shop": [
+    19,
+    27,
+    39,
+    98,
+    57,
+    68,
+    140,
+    151,
+    189,
+    158,
+    188
+   ],
+   "item_shop": [
+    193,
+    194,
+    195,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207
+   ]
+  },
+  "26": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 4,
+    "bios_scan_code": 88
+   },
+   "raw_hex": "000458091c29323c468e99a1abb1ffc2c3c4c5ffffffffc3cf28ffffffffff",
+   "weapon_shop": [
+    9,
+    28,
+    41,
+    50,
+    60,
+    70,
+    142,
+    153,
+    161,
+    171,
+    177
+   ],
+   "item_shop": [
+    194,
+    195,
+    196,
+    197
+   ],
+   "secret_shop": [
+    195,
+    207,
+    40
+   ]
+  },
+  "27": {
+   "town_variant": 0,
+   "secret_gate": {
+    "required_selection": 0,
+    "bios_scan_code": 99
+   },
+   "raw_hex": "0000630a1f2a683c698f9aa2abb1ffc3cfffffffffffffc3cfffffffffffff",
+   "weapon_shop": [
+    10,
+    31,
+    42,
+    104,
+    60,
+    105,
+    143,
+    154,
+    162,
+    171,
+    177
+   ],
+   "item_shop": [
+    195,
+    207
+   ],
+   "secret_shop": [
+    195,
+    207
+   ]
+  }
+ }
+}
