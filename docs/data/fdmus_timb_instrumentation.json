@@ -58,7 +58,19 @@
    ],
    "used_as": [
     "enemy-phase track (0x51e81)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 1337,
+    "channels_used": 5,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     9
+    ],
+    "raw_delay_ticks": 5420
+   }
   },
   "2": {
    "empty_placeholder": true
@@ -119,7 +131,20 @@
    ],
    "used_as": [
     "chapter base track (0x51e63)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 1422,
+    "channels_used": 6,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9
+    ],
+    "raw_delay_ticks": 6678
+   }
   },
   "4": {
    "size": 6264,
@@ -178,7 +203,22 @@
    "used_as": [
     "chapter base track (0x51e63)",
     "enemy-phase track (0x51e81)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 1393,
+    "channels_used": 8,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9
+    ],
+    "raw_delay_ticks": 7372
+   }
   },
   "5": {
    "empty_placeholder": true
@@ -254,7 +294,20 @@
    ],
    "used_as": [
     "enemy-phase track (0x51e81)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 2234,
+    "channels_used": 6,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9
+    ],
+    "raw_delay_ticks": 6903
+   }
   },
   "7": {
    "empty_placeholder": true
@@ -316,7 +369,21 @@
    "used_as": [
     "chapter base track (0x51e63)",
     "enemy-phase track (0x51e81)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 2846,
+    "channels_used": 7,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9
+    ],
+    "raw_delay_ticks": 14982
+   }
   },
   "9": {
    "empty_placeholder": true
@@ -400,7 +467,22 @@
      127
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 979,
+    "channels_used": 8,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9
+    ],
+    "raw_delay_ticks": 5759
+   }
   },
   "11": {
    "size": 3152,
@@ -420,7 +502,17 @@
      0
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 513,
+    "channels_used": 3,
+    "channel_ids": [
+     1,
+     2,
+     3
+    ],
+    "raw_delay_ticks": 13690
+   }
   },
   "12": {
    "size": 2542,
@@ -468,7 +560,20 @@
    ],
    "used_as": [
     "enemy-phase track (0x51e81)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 572,
+    "channels_used": 6,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9
+    ],
+    "raw_delay_ticks": 1440
+   }
   },
   "13": {
    "size": 6966,
@@ -524,7 +629,21 @@
      127
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 1591,
+    "channels_used": 7,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     9
+    ],
+    "raw_delay_ticks": 7679
+   }
   },
   "14": {
    "size": 2924,
@@ -585,7 +704,22 @@
      127
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 588,
+    "channels_used": 8,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9
+    ],
+    "raw_delay_ticks": 4607
+   }
   },
   "15": {
    "size": 4128,
@@ -641,7 +775,22 @@
      127
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 877,
+    "channels_used": 8,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     9
+    ],
+    "raw_delay_ticks": 5255
+   }
   },
   "16": {
    "size": 562,
@@ -682,7 +831,20 @@
      127
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 91,
+    "channels_used": 6,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     9
+    ],
+    "raw_delay_ticks": 320
+   }
   },
   "17": {
    "size": 1530,
@@ -707,7 +869,17 @@
      0
     ]
    ],
-   "used_as": []
+   "used_as": [],
+   "measured": {
+    "note_on_events": 56,
+    "channels_used": 3,
+    "channel_ids": [
+     1,
+     2,
+     3
+    ],
+    "raw_delay_ticks": 884
+   }
   },
   "18": {
    "size": 9884,
@@ -765,7 +937,24 @@
    ],
    "used_as": [
     "shop (already established)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 2256,
+    "channels_used": 10,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    "raw_delay_ticks": 8237
+   }
   },
   "19": {
    "size": 1590,
@@ -808,10 +997,28 @@
    ],
    "used_as": [
     "chapter base track (0x51e63)"
-   ]
+   ],
+   "measured": {
+    "note_on_events": 329,
+    "channels_used": 5,
+    "channel_ids": [
+     1,
+     2,
+     3,
+     4,
+     9
+    ],
+    "raw_delay_ticks": 2075
+   }
   },
   "20": {
    "empty_placeholder": true
   }
+ },
+ "_measurement_2026_09_07": {
+  "what": "為了把本項可客觀化的部分做到盡頭:自行解析每個資源的 XMI `EVNT` 事件流,量測 note-on 事件數與實際使用的聲道。",
+  "validation": "解析器不預設可信。以既有 TIMB 表做結構核對:**實際使用聲道 ≤ 宣告音色數 + 1**(+1 容許打擊聲道無對應旋律音色),**15/15 成立**。並做**負向控制**:以隨機聲道數取代解析結果,同一關係約 8/15 違反——證明這個關係不是恆真,解析器抽出的聲道確實帶資訊。",
+  "NOT_validated": "**時長(秒)不予採信,已從資料中移除**:XMI delay 累加值換算秒數需要 tick rate,而本輪未從檔案或程式碼取得該值,只能假設。僅保留原始 `raw_delay_ticks` 供日後換算。",
+  "what_this_does_and_does_not_close": "這讓「哪首曲子有多少音符、用幾個聲道、宣告哪些音色」全部成為**可查證的數字**。它**不**回答「好不好聽/像不像原曲」——那沒有可證偽的判準。"
  }
 }
