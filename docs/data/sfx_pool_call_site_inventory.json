@@ -720,55 +720,88 @@
  "dynamic_table_ptr_sites": [
   {
    "site": "0x1fbd1",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x1fd24",
-   "handle": "play_sfx_b"
+   "handle": "play_sfx_b",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x1fe7c",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x1fe9c",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x1fedb",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x1ff5e",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x1f894"
   },
   {
    "site": "0x2054d",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x20421"
   },
   {
    "site": "0x20595",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x20421"
   },
   {
    "site": "0x2232b",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x22253"
   },
   {
    "site": "0x2ee2f",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x2ebe1"
   },
   {
    "site": "0x2ef0b",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x2ebe1"
   },
   {
    "site": "0x2f004",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x2ebe1"
   },
   {
    "site": "0x32bcf",
-   "handle": "play_sfx_a"
+   "handle": "play_sfx_a",
+   "enclosing_function": "0x32999"
   }
- ]
+ ],
+ "dynamic_site_classification": {
+  "date": "2026-09-07",
+  "method": "tools/find_enclosing_function.py 逐站反查,再對 6 個函式反編譯定性",
+  "functions": {
+   "0x1f894": "開場動畫＋標題選單。0x217 幀動畫迴圈,關鍵幀音效表由 DAT_0005204e 複製 15 個 dword 到堆疊;選單處理上(0x48)/下(0x50)/確認,選項數依存檔是否存在(record+0x30c5 != -1)決定 2 或 3。",
+   "0x20421": "標題序列子程序,由 0x1f894 直接呼叫。",
+   "0x22253": "單位移動演出。param_1=unit index,寫入 record[+0]/[+1]=新 x,y,播音效後跑 0x18(或 0x12)幀動畫。即先前文件稱為『未實作的 choreography』的那個 0x22253。",
+   "0x2ebe1": "**本輪未完全定性**。5 參數,開頭從 DAT_0005266c 與 DAT_00052684 各複製 6 個 dword,並對 param_3 指向的結構(count 在 [0]、項目 stride 4 起於 +8)計數非零項。形狀像清單/選單類演出,但不做進一步宣稱。",
+   "0x32999": "戰場區域演出。12 幀迴圈,第 1 幀播音效,每幀對落在 (DAT_00053aa9,DAT_00053aad) 起、跨距 (DAT_00051a87,DAT_00051a8b) 矩形內的單位逐一處理。"
+  },
+  "counts": {
+   "0x1f894": 6,
+   "0x20421": 2,
+   "0x22253": 1,
+   "0x2ebe1": 3,
+   "0x32999": 1
+  },
+  "refuted_premise": "先前(同日稍早)把這 13 站假定為『物理攻擊逐招音效』那一側,並以此定義 item 584 的剩餘缺口。**該前提錯誤**:12/13 站分別屬於標題序列、單位移動演出與戰場區域演出,沒有任何一站是逐招攻擊音效;剩下 3 站所在的 0x2ebe1 也不像攻擊演出。因此 584 的物理攻擊側**不以這 13 站為前置**,必須另尋字面索引呼叫端。",
+  "residual": "0x2ebe1(3 站)未完全定性。"
+ }
 }
