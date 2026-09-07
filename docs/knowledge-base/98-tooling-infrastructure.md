@@ -3451,6 +3451,19 @@ retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半�
 * **固定 temp 路徑**:全工具掃過,沒有任何一支寫入固定 temp 檔名(17 支正確使用
   `tempfile`),所以重複或並行執行不會互相覆蓋。
 
-**結論**:多跑幾次沒有再挖出工具的新缺陷,但**挖出了驗證工具自己的一個缺陷**——
-這正是「驗證器也要被驗證」的實例。可重現性現在是這支工具的既有性質,不是碰運氣。
+* **換一個直譯器重跑,又抓到一個真缺陷**:在 WSL python3(無 Pillow)跑所有離線 selftest,
+  `encode_text` 與 `decode_story_text` 失敗於 `ModuleNotFoundError: No module named 'PIL'`
+  ——但它們的 selftest 根本不需要 PIL。根因是 `decode_text.py` 在**模組層級**
+  `from PIL import Image`,而那只有字型/渲染那幾支函式用得到;純位元組解析的
+  `parse_strings()` 因此被無謂綁上 PIL,使這兩支工具在 **DOSBox harness 所在的 WSL**
+  完全無法使用。改為延遲載入後:WSL 由 **6 PASS/2 FAIL → 8 PASS/0 FAIL**,
+  Windows 端兩支 selftest 與 `test_decode_story_text.py` 14 項全過、`render_glyph` 仍正常。
+* **稽核本身是穩定的**:第二次與第三次全層報告比對,716 → 722 筆中僅 6 筆相異,
+  且全部是新增的 `verify_docs_match_cli.py`(不存在 → 6 層 PASS);
+  **非我動過的工具狀態變化 0 筆**。
+
+**結論**:多跑幾次**確實找到別的問題**,而且兩個都在**驗證基礎設施自己**身上
+(不可重現的種子、擋住 WSL 的硬相依)。被驗證的工具本身沒有再冒出新缺陷。
+這正是「驗證器也要被驗證」的實例:加深取樣沒有動搖結論,但換軸(可重現性、
+執行環境)各挖出一個。
 
