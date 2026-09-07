@@ -19,12 +19,38 @@
     python3 decode_story_text.py --all <FDTXT目錄> <out.md>             # 全章合一檔
     python3 decode_story_text.py --add-lines <story.json> <FDTXT目錄>   # 補 lines[](見下)
     python3 decode_story_text.py --runtime-todo <FDTXT目錄> <out.json>  # 273 筆待解清單(見下)
+    python3 decode_story_text.py --script-json <FDTXT目錄|檔> <out.json> # 機器可讀劇本(見下)
+    python3 decode_story_text.py --selftest <FDTXT目錄>                 # 驗證上一項
+
+2026-09-07 新增 `--script-json`(worklist 272/348)。`--all` 產出的是給人讀的 Markdown,
+字串裡的 `- **名字**：` 前綴和換行都得靠正則再剖一次才能程式化使用;`--script-json`
+輸出同一份解碼結果的結構化形式,每個對話框一筆:
+
+    {"chapters":[{"fdtxt":"FDTXT_001","boxes":[
+       {"box_index":0,"string_index":0,"speaker":"索爾","speaker_kind":"identity",
+        "operand":0,"lines":["…","…"]}, …]}]}
+
+`speaker_kind` 把 `resolve_speaker()` 的三種輸出明確分開,**不讓呼叫端拿字串猜**:
+`identity`(靜態可解)/`runtime`(執行期 unit,operand 不是角色 id,見 doc09 B.6)/
+`unmatched`(前導碼不是開框碼)/`none`(續行框,無說話者)。`string_index` 是這個框
+所屬字串在 FDTXT 容器內的序號,可直接餵給 `tools/encode_text.py writeback` 定位回寫。
+
+**驗證設計(`--selftest`)**:核心解碼路徑一行未動,新路徑與舊路徑共用 `decode_string()`,
+所以自我比對會是廢的。真正有鑑別力的檢查是 (1) 把 script-json 依 `render_chapter()`
+的格式重組回文字,必須與 `render_chapter()` 的輸出**逐行完全相同**——新舊兩條輸出路徑
+的交叉核對;(2) `speaker_kind=="runtime"` 的框數必須等於 `--runtime-todo` 在同一檔
+數出的筆數(兩個獨立實作的判定,一個看開框碼、一個比對字串格式);(3) 故障注入:
+把說話者分類改壞後,(1) 必須失敗——證明檢查真的在測分類而不是恆真。
 """
 import sys
 import os
 import json
 import glob
 import re
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")   # 中止訊息也要看得懂,不能只顧 stdout
 
 OPEN, CLOSE, END = 558, 561, 0xFFFF
 OPEN_BOX = {0xFFEC, 0xFFED, 0xFFEE, 0xFFEF}  # 開對話框控制碼;0xFFFE(換行)、0xFFFD(翻頁)不開新框
@@ -77,8 +103,15 @@ def g2s(codes):
     return "".join(m.get(c, f"〈{c}〉") for c in codes)
 
 
-def decode_string(codes):
-    """回傳 list of (speaker_or_None, lines)。
+def decode_string(codes, with_meta=False):
+    """回傳 list of (speaker_or_None, lines);`with_meta=True` 時每筆多帶 (leading, operand)。
+
+    `with_meta` 是 2026-09-07 為 `--script-json` 加的,預設關閉、既有呼叫端行為完全不變。
+    它存在的理由是**驗證獨立性**:如果 script-json 也像 `find_runtime_todo()` 那樣拿
+    `resolve_speaker()` 產生的字串去比對正則來判斷「這框是不是執行期不可解」,那兩者就是
+    同一個機制的兩次執行,互相比對證明不了任何事(見 memory「degenerate verification
+    sample」)。改成直接回報**開框控制碼原值**,script-json 依控制碼分類、`--runtime-todo`
+    依字串分類,兩個獨立判定的數量一致才是有鑑別力的交叉核對。
 
     lines 是同一個對話框內、依 0xFFFE 原生換行切開的字串陣列(至少 1 個元素);
     呼叫端要單句可自行 "".join(lines)。與舊版(逐控制碼切、回傳單一字串)的差異只在
@@ -103,6 +136,7 @@ def decode_string(codes):
     out = []
     cur_speaker = None
     cur_lines = None
+    cur_meta = (None, None)
     for leading, seg in segs:
         if not seg:
             continue
@@ -112,20 +146,22 @@ def decode_string(codes):
             name = resolve_speaker(leading, spk)
             body = [c for c in seg[2:] if c not in (OPEN, CLOSE)]
             if cur_lines is not None:
-                out.append((cur_speaker, cur_lines))
-            cur_speaker, cur_lines = name, [g2s(body)]
+                out.append((cur_speaker, cur_lines, cur_meta))
+            cur_speaker, cur_lines, cur_meta = name, [g2s(body)], (leading, spk)
         else:
             body = [c for c in seg if c not in (OPEN, CLOSE)]
             text = g2s(body)
             if cur_lines is None:
                 # 防禦性 fallback(理論上不該發生,見不到開框段就先出現續行):
                 # 沿用舊行為,獨立輸出一個 speaker=None 項目,不強行掛在不存在的框上。
-                out.append((None, [text]))
+                out.append((None, [text], (None, None)))
             else:
                 cur_lines.append(text)
     if cur_lines is not None:
-        out.append((cur_speaker, cur_lines))
-    return out
+        out.append((cur_speaker, cur_lines, cur_meta))
+    if with_meta:
+        return out
+    return [(spk, lines) for spk, lines, _meta in out]
 
 
 _RUNTIME_SPK_RE = re.compile(r"^unit#(\d+)\(執行期決定\)$")
@@ -170,6 +206,130 @@ def render_chapter(path):
             else:
                 lines.append(f"  {text}")
     return lines
+
+
+def speaker_kind(leading):
+    """由**開框控制碼原值**分類說話者可解性(不看 resolve_speaker() 產生的字串)。"""
+    if leading is None:
+        return "none"
+    if leading in RUNTIME_BOX:
+        return "runtime"
+    if leading in IDENTITY_BOX:
+        return "identity"
+    return "unmatched"
+
+
+def script_boxes(path):
+    """這個 FDTXT 的所有非空對話框,結構化形式。
+
+    `box_index` 與 `render_chapter()` 的輸出行序、以及 `find_runtime_todo()` 的
+    `box_index` 對齊——三者用同一條「跳過純空白框」的規則,不能各自為政。
+    """
+    boxes = []
+    for si, codes in enumerate(parse_strings(path)):
+        for spk, lines, (leading, operand) in decode_string(codes, with_meta=True):
+            if not "".join(lines).strip():
+                continue
+            boxes.append({"box_index": len(boxes), "string_index": si,
+                          "speaker": spk, "speaker_kind": speaker_kind(leading),
+                          "operand": operand, "lines": lines})
+    return boxes
+
+
+def _fdtxt_paths(src):
+    if os.path.isdir(src):
+        return sorted(glob.glob(os.path.join(src, "*.bin")))
+    return [src]
+
+
+def write_script_json(src, out):
+    chapters = []
+    total = 0
+    for p in _fdtxt_paths(src):
+        boxes = script_boxes(p)
+        if not boxes:
+            continue
+        total += len(boxes)
+        chapters.append({"fdtxt": os.path.splitext(os.path.basename(p))[0], "boxes": boxes})
+    obj = {"_meta": {
+        "generator": "tools/decode_story_text.py --script-json",
+        "total_boxes": total,
+        "speaker_kind": {
+            "identity": "開框碼 0xFFEE/0xFFEF,operand 走 0x12C60 身分查找,靜態可解",
+            "runtime": "開框碼 0xFFEC/0xFFED,operand 是執行期 unit roster slot,"
+                       "**不是角色 id**,靜態不可解(見 doc09 B.6)",
+            "unmatched": "前導碼不是開框碼(實測 35 個 FDTXT 未出現,但不假設不會出現)",
+            "none": "續行框,無說話者"},
+        "note": "lines[] 是 0xFFFE 原生換行切開的框內斷行,非任何寬度估算的產物;"
+                "string_index 可餵給 tools/encode_text.py writeback 定位回寫"},
+        "chapters": chapters}
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    print(f"{total} 個對話框 / {len(chapters)} 章 -> {out}")
+
+
+def selftest(src, _break_kind=False):
+    """見模組 docstring「驗證設計」。`_break_kind` 是故障注入用,正常呼叫不要傳。"""
+    fails = []
+    paths = _fdtxt_paths(src)
+    print(f"(1) script-json 重組回文字,必須與 render_chapter() 逐行相同({len(paths)} 檔)")
+    bad = []
+    for p in paths:
+        rebuilt = []
+        for b in script_boxes(p):
+            text = "".join(b["lines"])
+            spk = b["speaker"]
+            if _break_kind:
+                spk = None          # 故障注入:抹掉說話者
+            rebuilt.append(f"- **{spk}**：{text}" if spk else f"  {text}")
+        if rebuilt != render_chapter(p):
+            bad.append(os.path.basename(p))
+    print(f"    {'PASS' if not bad else 'FAIL'}: {len(paths) - len(bad)}/{len(paths)} 相同"
+          + (f" 不符={bad[:5]}" if bad else ""))
+    if bad:
+        fails.append(f"script-json 與 render_chapter 輸出不一致:{bad[:5]}")
+
+    print("\n(2) runtime 框數 == --runtime-todo 的筆數(兩個獨立判定:控制碼 vs 字串正則)")
+    bad = []
+    for p in paths:
+        a = sum(1 for b in script_boxes(p) if b["speaker_kind"] == "runtime")
+        b_ = len(find_runtime_todo(p))
+        if a != b_:
+            bad.append((os.path.basename(p), a, b_))
+    print(f"    {'PASS' if not bad else 'FAIL'}: {len(paths) - len(bad)}/{len(paths)} 一致"
+          + (f" 不符={bad[:5]}" if bad else ""))
+    if bad:
+        fails.append(f"runtime 框數兩法不一致:{bad[:5]}")
+
+    if not _break_kind:
+        print("\n(3) 故障注入:抹掉說話者後,檢查(1)必須失敗")
+        # 注入標的**必須**是真的有說話者的檔案。第一版直接拿 paths[0],而 FDTXT_000 是
+        # 名稱表、整份沒有任何帶說話者的框,注入等於空操作、檢查(1)照樣通過——當場被這
+        # 個注入檢查自己抓到。這正是「退化樣本」:抹掉不存在的東西當然改不了輸出。
+        victim = next((p for p in paths if any(b["speaker"] for b in script_boxes(p))), None)
+        if victim is None:
+            fails.append("找不到任何含說話者的 FDTXT,故障注入無從執行")
+            print("    FAIL: 無可注入的檔案")
+            victim = paths[0]
+        import io
+        import contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            hurt = selftest(victim, _break_kind=True)
+        if hurt == 0:
+            fails.append("故障注入後檢查(1)仍然通過——該檢查沒有在測說話者")
+            print("    FAIL: 注入後仍通過")
+        else:
+            print("    PASS: 注入後如預期失敗")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed。")
+    return 0
 
 
 def add_lines_to_story(story_path, raw_dir):
@@ -226,6 +386,11 @@ def main(argv):
                       "todo": todo}, f, ensure_ascii=False, indent=1)
         print(f"{len(todo)} 筆執行期說話者待解 -> {out}")
         return 0
+    if argv[1] == "--script-json":
+        write_script_json(argv[2], argv[3])
+        return 0
+    if argv[1] == "--selftest":
+        return selftest(argv[2])
     if argv[1] == "--all":
         src, out = argv[2], argv[3]
         with open(out, "w", encoding="utf-8") as f:
