@@ -214,7 +214,13 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
 
     n = count_sites(src)
     out["mutation_sites"] = n
-    rng = random.Random(seed or hash(name) & 0xFFFF)
+    # 種子必須穩定。原本用 `hash(name)`,而 Python 對字串的 hash **每個行程都不同**
+    # (PYTHONHASHSEED 隨機化),於是同一支工具每次跑抽到不同突變、結果無法重現——
+    # `decode_story_text.py` 一次判 WEAK、一次判 DISCRIMINATING 就是這樣來的,
+    # 當時我誤以為只是取樣變異,其實還疊了一層不可重現性。改用 md5 固定;
+    # 要刻意探索不同樣本請用 --seed(見 --passes)。
+    base = int(hashlib.md5(name.encode("utf-8")).hexdigest()[:8], 16)
+    rng = random.Random(base + seed * 7919)
     picks = rng.sample(range(n), min(tries, n)) if n else []
     caught, attempted, examples = 0, 0, []
     try:
@@ -318,6 +324,10 @@ def main() -> int:
     # 12 次把該機率降到約 3%;真的想下結論就用 --tries 20 以上。
     ap.add_argument("--tries", type=int, default=12)
     ap.add_argument("--timeout", type=int, default=300)
+    ap.add_argument("--seed", type=int, default=0,
+                    help="位移取樣。同一支工具不同 seed 會抽到不同的突變集合")
+    ap.add_argument("--passes", type=int, default=1,
+                    help="連續跑 N 輪、每輪換一個 seed,累積涵蓋率(回答「多跑幾次會不會找到別的問題」)")
     ap.add_argument("--json")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--selftest", action="store_true")
@@ -337,11 +347,22 @@ def main() -> int:
         if not (TOOLS / n).exists():
             print(f"  {n:<40} 檔案不存在,跳過")
             continue
-        r = test_tool(n, a.tries, a.timeout)
-        rows.append(r)
-        v = r["verdict"]
-        extra = (f"{r.get('mutations_caught')}/{r.get('mutations_attempted')} 被抓到"
-                 if "mutations_attempted" in r else r.get("detail", ""))
+        best = None
+        caught_total = attempted_total = 0
+        for k in range(a.passes):
+            r = test_tool(n, a.tries, a.timeout, seed=a.seed + k)
+            caught_total += r.get("mutations_caught", 0)
+            attempted_total += r.get("mutations_attempted", 0)
+            # 跨輪取最好的判定:任何一輪抓到就是有鑑別力(WEAK 只在全部輪都 0 時成立)
+            if best is None or (r["verdict"] == "DISCRIMINATING" and best["verdict"] != "DISCRIMINATING"):
+                best = r
+        best["mutations_caught"], best["mutations_attempted"] = caught_total, attempted_total
+        best["passes"] = a.passes
+        rows.append(best)
+        v = best["verdict"]
+        extra = (f"{caught_total}/{attempted_total} 被抓到"
+                 + (f" ({a.passes} 輪累計)" if a.passes > 1 else "")
+                 if attempted_total else best.get("detail", ""))
         print(f"  {n:<40} {v:<16} {extra}")
     weak = [r["tool"] for r in rows if r["verdict"] == "WEAK"]
     bad = [r["tool"] for r in rows if r["verdict"] == "BASELINE_FAIL"]
