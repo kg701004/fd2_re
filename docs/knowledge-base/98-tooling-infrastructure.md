@@ -3365,3 +3365,63 @@ dump得到`2`,遞增恰好一次,3秒後複查穩定、`DAT_00053ecc`(勝負旗�
 **現況輸出**：`項目總數 146：A=61 B=7 C=38 D=6 E=29 F=5`，`最新一段仍主張有待辦工作的：0 項`。
 **副產物**：`409`（D 類）是本輪之前對所有掃描腳本都隱形的項目，經複核後補記——
 retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半隨 remake 移除已無對象。
+
+## 2026-09-08 — 全工具多方向交叉驗證：兩個新驗證層 + 6 個真缺陷
+
+使用者要求「多方向多重交叉驗證所有工具」。既有的 `verify_all_tools.py`（10 層）先跑，
+再補上兩個它結構上覆蓋不到的方向。
+
+### 起點：既有稽核出現回歸
+`verify_all_tools.py --selftest` 22/22 通過（可信），但全層稽核 **FAIL=6**，相對
+2026-09-03 的 FAIL=0 是回歸。逐項查完並修掉後回到 **FAIL=0（PASS 582 / WARN 2 / SKIP 95）**。
+
+**修掉的 6 個真缺陷**
+1. `safe_output.py --selftest` 印 `✓` 到 cp950 主控台即 `UnicodeEncodeError` 崩潰，
+   **7 項檢查一項都沒跑到**——一支叫「安全輸出」的工具敗在自己的輸出編碼上。
+2. `fd2_verified_input.py` 的 shebang 以 CR 結尾，Linux 下無法直接執行（本日以 Write
+   建檔時帶入；同一類問題本專案 2026-09-03 才修過 56 個）。
+3. `decode_story_text.py --selftest` 需要目錄參數，被稽核以無參數呼叫時 `IndexError`。
+4. `encode_text.py selftest` 同上，落到 `print(__doc__); return 1`。
+5. `encode_text.py` 只認位置子命令 `selftest`，而稽核統一用 `--selftest`；改為兩種都接受。
+6. `verify_all_tools.py` 把「缺少 `--instance`」記成 FAIL。那是活體前置條件不存在，
+   不是測試失敗；改為窄比對（rc=2 且缺的正好是 `--instance`）後標 SKIP，
+   一般 argparse 回歸仍會 FAIL。
+
+### 新方向 1：`tools/verify_selftest_discrimination.py` —— selftest 有沒有鑑別力
+既有稽核只問「selftest 有沒有通過」。**一個永遠通過的 selftest 毫無價值**，而本專案
+同一天就出過兩個（`decode_story_text` 的注入標的是零說話者的 FDTXT_000；`encode_text`
+的大小防護在 `pack_into` 之後才檢查）。本工具對每支工具的原始碼做 AST 突變
+（比較運算子反轉／常數擾動／布林反轉），要求 selftest 至少抓到一個。
+* 自身帶**正向控制**（會檢查東西的 selftest 必須被抓到）與**負向控制**（什麼都不檢查的
+  必須得 0 分），每次突變後以 SHA-256 驗證逐位元組還原。
+* **負向控制當場抓到 harness 自己的缺陷**：突變 `return 0` → `return 1` 直接改退出碼、
+  不經任何檢查就「得分」。已排除退出碼常數（`Return`/`sys.exit`/`raise` 下的常數）。
+* 離線工具結果：6 支中 5 支 DISCRIMINATING、1 支 BASELINE_FAIL（即上述 `safe_output`），
+  修好後亦為 6/12 DISCRIMINATING。
+
+### 新方向 2：`tools/verify_docs_match_cli.py` —— 文件與 CLI 是否一致
+比對 docstring 用法區宣告的旗標 vs 程式碼實際實作，外加**跨工具的 `--selftest` 拼法契約**。
+* 114 支中 0 個文件旗標缺實作。
+* **以真實歷史 bug 反向驗證**：暫時把 `encode_text.py` 還原成舊形狀，檢查確實抓到，
+  並逐位元組還原——不是用合成案例證明自己有效。
+* **第一版誤報 `fd2_audio_probe.py`**（它用 `add_parser("selftest")` 子命令，而稽核的
+  選擇邏輯會正確改用該拼法）。已改成鏡射稽核的實際選擇邏輯：只有當檔案裡出現
+  `--selftest` 字樣（於是稽核選了它）卻沒有實作時才算違反。
+
+### 新方向 3：資料側故障注入（與程式碼側互補）
+把 FDTXT 副本的每個 glyph 值整體 +1 後重跑：`encode_text` 的 roundtrip **有反應**（rc=1），
+`decode_story_text` 的 selftest **沒有反應**。這不是 bug 而是覆蓋界線——它三項檢查都是
+**兩條程式碼路徑之間的內部一致性**，資料等量壞掉時兩邊仍然一致。已寫進該工具的 docstring：
+它證明的是「新舊輸出路徑等價」，不是「解出來的字是對的」。
+
+### 新方向 4：shell 工具的行尾與真 Linux 語法
+10 支 `.sh` 全部 LF、無 CRLF；在**真的 WSL bash** 下 `bash -n` 10/10 通過
+（Windows 端的 `bash -n` 不等於 Linux 端，本專案 2026-09-03 有過 6 支 CRLF 不可執行的前例）。
+
+### 兩個 WARN 查證後都不是缺陷
+* `extract_event_id_groups.py`「缺少 usage guard」——它其實有清楚訊息，且註解明載為何用
+  `FileNotFoundError` 而非 `SystemExit`（後者繼承 `BaseException`，會穿過
+  `test_extract_event_id_groups.py` 的 `except Exception` 保護）。**不要「修」它。**
+* `audit_evidence_provenance.py` 提及 `ANI.DAT`/`FD2.EXE`——出現在它**自己的 selftest
+  斷言**裡，測試那些字串會被辨識為原版資產標記，不是引用已移除的目錄。
+
