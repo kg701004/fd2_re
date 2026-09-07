@@ -98,40 +98,65 @@ def find_entry(address: int, back: int = DEFAULT_BACK, stack_check: int = STACK_
                 "note": f"no `call {stack_check:#x}` within {back:#x} bytes before the address"}
     call_site = sites[-1]
     entry = call_site - 5
-    # does the candidate's body actually reach the target?
+    next_entry = _next_entry_after(address, stack_check)
+
+    # Two independent signals that the target really lives in this function.
+    #
+    # (a) structural: the target sits between this entry and the NEXT Watcom
+    #     prologue. This replaces the first two versions' "walk the body and
+    #     stop at a ret/jmp" rule, which produced false negatives twice:
+    #     a mid-function `ret` is an ordinary early-return path, and a forward
+    #     `jmp` past the target is an if/else join (caught 2026-09-07 on
+    #     0x29f48, whose `0x29f3d: jmp 0x29f4d` skips exactly over the call
+    #     being looked up).
+    # (b) decode alignment: linearly decoding from the entry lands exactly on
+    #     the target address rather than straddling it.
+    in_entry_range = next_entry is None or address < next_entry
     span = address - entry + 16
     ins = cprobe.disassemble(entry, cprobe.fetch_bytes(entry, span, quiet=True))
-    reaches, terminator = True, None
+    decode_aligned = any(int(t["address"], 16) == address for t in ins)
+
+    exits = None
     for t in ins:
         a = int(t["address"], 16)
         if a >= address:
             break
-        m = t["mnemonic"].lower()
-        if m == "ret":
-            reaches, terminator = False, t
-            continue
-        if m == "jmp":
-            # An unconditional jump only ends the function if it leaves the span
-            # we are walking. A forward jump to a later address inside the span
-            # is ordinary control flow (loop head, if/else join) -- treating it
-            # as a terminator was the first version's bug, caught by --selftest
-            # on 0x25186 (`0x25105: jmp 0x2511d` is a loop, not an exit).
+        if t["mnemonic"].lower() == "jmp":
             try:
                 dest = int(t["operands"].strip(), 16)
             except ValueError:
                 continue
-            if dest < entry or dest > address:
-                reaches, terminator = False, t
+            if dest < entry or (next_entry is not None and dest >= next_entry):
+                exits = t
     return {
         "address": hex(address),
         "found": True,
         "entry": hex(entry),
         "stack_check_call_at": hex(call_site),
+        "next_entry": hex(next_entry) if next_entry is not None else None,
         "prologue": f"{ins[0]['mnemonic']} {ins[0]['operands']}" if ins else "?",
-        "reaches_target": reaches,
-        "terminator_before_target": (f"{terminator['address']}: {terminator['mnemonic']} "
-                                     f"{terminator['operands']}") if terminator else None,
+        "in_entry_range": in_entry_range,
+        "decode_aligned": decode_aligned,
+        "reaches_target": in_entry_range and decode_aligned,
+        "jmp_leaving_function_before_target": (
+            f"{exits['address']}: {exits['mnemonic']} {exits['operands']}") if exits else None,
     }
+
+
+def _next_entry_after(address: int, stack_check: int, ahead: int = 0x2000) -> int | None:
+    """Entry of the next function after `address`, i.e. the next Watcom prologue."""
+    try:
+        data = _bytes(address, ahead)
+    except RuntimeError:
+        return None
+    for i in range(len(data) - 5):
+        if data[i] != 0xE8:
+            continue
+        rel = int.from_bytes(data[i + 1:i + 5], "little", signed=True)
+        site = address + i
+        if site + 5 + rel == stack_check:
+            return site - 5
+    return None
 
 
 def _ghidra_bounds(address: int) -> dict:
@@ -154,6 +179,16 @@ def selftest() -> int:
     print(f"    {'PASS' if ok else 'FAIL'}: {r}")
     if not ok:
         fails.append(f"0x25186 -> {r.get('entry')} (reaches={r.get('reaches_target')})")
+
+    print("\n(1b) if/else-join regression: 0x29f48 -> 0x29daa, reaches_target must be True")
+    # `0x29f3d: jmp 0x29f4d` jumps forward over this exact call site; the two
+    # earlier terminator rules both called that an exit and reported a false
+    # negative. Pinned 2026-09-07 while relocating the church hub for item 1150.
+    r = find_entry(0x29F48)
+    ok = r.get("entry") == "0x29daa" and r.get("reaches_target")
+    print(f"    {'PASS' if ok else 'FAIL'}: {r}")
+    if not ok:
+        fails.append(f"0x29f48 -> {r.get('entry')} (reaches={r.get('reaches_target')})")
 
     print("\n(2) cross-tool agreement with Ghidra on addresses it DID boundary")
     for probe in (0x2AC90, 0x15F30, 0x1F250):

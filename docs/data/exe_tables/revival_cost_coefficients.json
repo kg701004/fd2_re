@@ -1,0 +1,53 @@
+{
+ "name": "church_revival_cost_coefficients",
+ "base_address": "0x52397",
+ "entry_size_bytes": 2,
+ "entry_type": "uint16 little-endian",
+ "index": "unit class byte at record+0x20",
+ "entry_count": 31,
+ "end_address_exclusive": "0x523d5",
+ "formula": "cost = unit[+0x21] (level) * table[unit[+0x20] (class)]",
+ "consumer": "FUN_0002a43e (church service index 2), cost lookup at 0x2a560",
+ "gold_global": "DAT_00053bf3",
+ "dead_predicate": "FUN_00034894: record[+5] & 1",
+ "revive_writes": [
+  "record[+5] = 0",
+  "record[+0x40] (HP cur) = record[+0x42] (HP max)"
+ ],
+ "boundary_evidence": "0x523d5 is the independently-derived class-change item table, so the two tables abut exactly; entries 0..30 are hand-designed values (100/150/350/1000/1200/1400/1600/1800/3000) and index 31 onward is that other table's data",
+ "index0_note": "class 0 = 506 is out of family with the rest; no observed unit uses class 0",
+ "verified": {
+  "date": "2026-09-07",
+  "method": "live DOSBox-X (instance ebatch), ch27 save with 3 members patched dead",
+  "points": [
+   {
+    "member": "蓋亞",
+    "class": 25,
+    "level": 40,
+    "predicted": 14000,
+    "displayed": 14000
+   },
+   {
+    "member": "瑪琳",
+    "class": 22,
+    "level": 2,
+    "predicted": 2000,
+    "displayed": 2000
+   },
+   {
+    "member": "萊汀",
+    "class": 3,
+    "level": 18,
+    "predicted": 1800,
+    "displayed": 1800
+   }
+  ],
+  "deduction": {
+   "gold_before": 10070183,
+   "paid": 1800,
+   "gold_after": 10068383
+  },
+  "postcondition": "revived member disappeared from the candidate list"
+ },
+ "supersedes": "word_52669 (old-EXE address; proven 0 refs, its bytes are SFX ids 92/93/94)"
+}
