@@ -51,7 +51,7 @@
   "25": "謝多",
   "26": "聖寇拉斯",
   "27": "巴拿羅西亞",
-  "28": "逢克塞",
+  "28": "達克塞",
   "29": "亞齊梅吉",
   "30": "蓋亞",
   "31": "渥德"
@@ -121,5 +121,6 @@
   "134": "女村民",
   "135": "男村民",
   "136": "卡納恩三世"
- }
+ },
+ "_transcription_correction": "id 28 was first transcribed 逢克塞 from the small rendered image; re-rendering that glyph at 8x shows 達, and docs/data/glyph_map.json independently says 達克塞. Corrected to 達克塞 -- the error was mine, not the map's."
 }

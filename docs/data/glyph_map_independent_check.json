@@ -1,0 +1,42 @@
+{
+ "_purpose": "independently verify docs/data/glyph_map.json, because tools/encode_text.py's own docstring warns that its `roundtrip` check CANNOT do so: it builds both directions from the same map, so any self-consistent but wrong map passes (demonstrated there by rotating glyphs 500-599 by one -- story text visibly broke, yet 35/35 resources still round-tripped)",
+ "_method": "compare glyph_map's output against two sources that do not derive from it: (a) the 16x16 1bpp font bitmaps in FDOTHER.DAT resource 4, rendered and read directly, and (b) text this project read off the live game screen on 2026-09-07",
+ "result_character_names": {
+  "checked": 32,
+  "agree": 32,
+  "note": "first pass showed 31/32 with id 28 disputed: glyph_map said 達克塞, my transcription from the small rendered image said 逢克塞. Re-rendering that glyph at 8x settles it as 達 -- glyph_map was right and my transcription was wrong. Evidence: docs/figures/glyphmap-id28-zoom-da-not-feng.png. docs/data/fdtxt000_name_table.json corrected."
+ },
+ "result_sample_strings": {
+  "checked": 17,
+  "observed": [
+   "閃電鎚",
+   "魔神斧",
+   "精靈弓",
+   "魔法杖",
+   "鐵爪",
+   "碎岩爪",
+   "風精之羽",
+   "布衣",
+   "龍鱗",
+   "魔法水",
+   "那麼請稍等！",
+   "打開寶箱，發現！",
+   "防禦術",
+   "風妖精",
+   "道具店",
+   "第二十章",
+   "索爾死亡米亞斯多德死亡"
+  ],
+  "assessment": "all read as coherent, contextually correct Chinese (weapons, items, dialogue, spells, shop, chapter, defeat conditions)",
+  "live_cross_checks": [
+   "風妖精 appears in Sol's spell list read live off the battle screen",
+   "道具店 is a town location label read live off the camp screen"
+  ]
+ },
+ "coverage": {
+  "distinct_glyphs_exercised": 104,
+  "glyph_map_entries": 1825,
+  "percent": 5.7
+ },
+ "conclusion": "glyph_map agrees with the font bitmaps and with live on-screen text on every one of the 104 glyphs actually exercised, with zero mismatches once my own transcription error is removed. This is a real independent check, unlike roundtrip. It does NOT cover the remaining 94.3% of entries -- widening it means exercising more strings, not re-running roundtrip."
+}
