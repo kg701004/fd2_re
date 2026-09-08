@@ -55,7 +55,98 @@ def load_terrain_records(terrainp):
     return flags, costs, d
 
 
+def selftest():
+    """`MOVE_CODE_TO_WALK_COST` 與 `docs/data/exe_tables/terrain.json` 的
+    `move_code_meaning` 是**兩份獨立維護的資料**,講的是同一件事。它們一旦不同步,
+    不會報錯,只會讓地圖的可通行判定悄悄變成另一套規則。
+
+    另一個風險是 `.get(code, 1)`:沒收錄的 move code 會被**靜默當成可通行**。
+    所以第 (3) 題把真實地形控制表裡實際出現的 code 全掃一遍,要求它們都在表內。
+    """
+    import collections
+    import json
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tj = os.path.join(root, "docs", "data", "exe_tables", "terrain.json")
+
+    print("(1) 跨資料對照:兩邊涵蓋的 move code 必須完全相同")
+    if os.path.isfile(tj):
+        meaning = json.load(open(tj, encoding="utf-8"))["move_code_meaning"]
+        theirs = {int(k) for k in meaning}
+        mine = set(MOVE_CODE_TO_WALK_COST)
+        ok1 = mine == theirs
+        print(f"    {'PASS' if ok1 else 'FAIL'}: 對照表 {sorted(mine)} vs "
+              f"terrain.json {sorted(theirs)}")
+        if not ok1:
+            fails.append(f"code 集合不同:{sorted(mine ^ theirs)}")
+
+        print("\n(2) 語意一致:被標為「不可移動」的 code 必須對應 BLOCKED_COST,反之亦然")
+        blocked_doc = {int(k) for k, v in meaning.items() if "不可移動" in v}
+        blocked_code = {k for k, v in MOVE_CODE_TO_WALK_COST.items() if v == BLOCKED_COST}
+        ok2 = blocked_doc == blocked_code
+        print(f"    {'PASS' if ok2 else 'FAIL'}: terrain.json 標不可移動 {sorted(blocked_doc)}"
+              f" vs 對照表 BLOCKED {sorted(blocked_code)}")
+        if not ok2:
+            fails.append(f"不可移動的 code 不一致:{sorted(blocked_doc ^ blocked_code)}")
+    else:
+        print("    SKIP: 找不到 terrain.json")
+
+    print("\n(3) 真實地形控制表用到的 code 必須全部在表內"
+          "(否則 .get(code, 1) 會靜默當成可通行)")
+    d = os.path.join(root, "extracted", "raw", "FDSHAP")
+    codes = collections.Counter()
+    if os.path.isdir(d):
+        for fn in sorted(os.listdir(d)):
+            b = open(os.path.join(d, fn), "rb").read()
+            if len(b) != 1200:          # 1200B = 該 tileset 的地形控制表(300×4)
+                continue
+            for i in range(len(b) // 4):
+                codes[b[i * 4 + 1]] += 1
+    unknown = {k: v for k, v in codes.items() if k not in MOVE_CODE_TO_WALK_COST}
+    ok3 = bool(codes) and not unknown
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 實際出現 {dict(sorted(codes.items()))},"
+          f"未收錄 {unknown or '無'}")
+    if not codes:
+        fails.append("掃不到任何地形控制表 —— 這題是空的,不算通過")
+    elif unknown:
+        fails.append(f"未收錄的 move code 會被靜默當成可通行:{unknown}")
+
+    print("\n(4) load_terrain_records:回傳長度必須等於 len(d)//4,且 flags 取 byte0")
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "t.bin")
+        # 3 筆:flags 0xAA/0xBB/0xCC,move code 0/1/4
+        open(p, "wb").write(bytes([0xAA, 0, 0, 0, 0xBB, 1, 0, 0, 0xCC, 4, 0, 0]))
+        flags, costs, raw = load_terrain_records(p)
+        ok4 = (flags == [0xAA, 0xBB, 0xCC]
+               and costs == [1, BLOCKED_COST, 2] and len(raw) == 12)
+        print(f"    {'PASS' if ok4 else 'FAIL'}: flags {flags}、costs {costs}")
+        if not ok4:
+            fails.append(f"load_terrain_records 手算不符:{flags} / {costs}")
+
+    print("\n(5) 非恆真控制:不同 move code 必須真的算出不同成本")
+    ok5 = len({MOVE_CODE_TO_WALK_COST[c] for c in (0, 1, 4)}) == 3
+    print(f"    {'PASS' if ok5 else 'FAIL'}: code 0/1/4 -> "
+          f"{[MOVE_CODE_TO_WALK_COST[c] for c in (0, 1, 4)]}")
+    if not ok5:
+        fails.append("不同 move code 算出相同成本 —— 對照表沒有鑑別力")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(跨資料 code 集合 + 不可移動語意 + 真實資料涵蓋 + "
+          "手算 + 非恆真控制)。")
+    return 0
+
+
 def main(argv):
+    if len(argv) == 2 and argv[1] == "--selftest":
+        return selftest()
     if len(argv) < 5:
         print(__doc__); return 1
     fieldp, shapp, palp, out = argv[1], argv[2], argv[3], argv[4]
