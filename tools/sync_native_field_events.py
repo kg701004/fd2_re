@@ -101,7 +101,92 @@ def expected(raw, map_index, map_data):
     )
 
 
+def selftest():
+    """與 `sync_native_treasures` 同形狀,但**不是同一套斷言**。
+
+    這支回傳 5 個東西(turn_controls / slots / events / 來源檔名 / control 的
+    sha256),而且控制段固定 16 筆(含 turn=0xff 的休眠列)——那是這支特有的不變量,
+    直接照抄另一支的檢查會變成沒有內容的形式主義。
+
+    寫入側(remake/assets)已於 2026-09-02 刪除,不在檢查範圍;抽取側是純函式,
+    仍是有價值的原版知識。
+    """
+    import sys as _sys
+    if hasattr(_sys.stdout, "reconfigure"):
+        _sys.stdout.reconfigure(encoding="utf-8")
+        _sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    raw = os.path.join(root, "extracted", "raw")
+    if not os.path.isdir(os.path.join(raw, "FDFIELD")):
+        print("SKIP: 找不到 extracted/raw/FDFIELD")
+        return 0
+
+    fields = sorted(glob.glob(os.path.join(raw, "FDFIELD", "*.bin")), key=resource_index)
+    comp = open(fields[0], "rb").read()
+    w, h = struct.unpack_from("<HH", comp, 0)
+    md = {"w": w, "h": h, "tiles": [0] * (w * h)}
+
+    print("(1) 控制段固定 16 筆(含 turn=0xff 的休眠列)—— 這是這支特有的不變量")
+    controls, slots, events, srcname, digest = expected(raw, 0, md)
+    ok1 = len(controls) == 16
+    print(f"    {'PASS' if ok1 else 'FAIL'}: turn_controls {len(controls)} 筆(應為 16)")
+    if not ok1:
+        fails.append(f"控制段 {len(controls)} 筆,應為 16")
+
+    print("\n(2) 來源必須自我標示:回傳的檔名要對得上,sha256 要等於該檔的雜湊")
+    want_name = os.path.basename(fields[1])
+    want_hash = hashlib.sha256(open(fields[1], "rb").read()).hexdigest()
+    ok2 = srcname == want_name and digest == want_hash
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {srcname}(應 {want_name})、"
+          f"sha256 {'相符' if digest == want_hash else '不符'}")
+    if not ok2:
+        fails.append(f"來源標示不符:{srcname} vs {want_name}")
+
+    print("\n(3) 維度/來源檢查必須真的擋下不一致的 map_data")
+    for label, bad_md in (("w 不符", {"w": w + 1, "h": h, "tiles": [0] * (w * h)}),
+                          ("tiles 數不符", {"w": w, "h": h, "tiles": [0] * (w * h - 1)})):
+        try:
+            expected(raw, 0, bad_md)
+            print(f"    FAIL: 「{label}」沒有被擋下")
+            fails.append(f"{label} 沒有被擋下")
+        except ValueError:
+            print(f"    PASS: 「{label}」-> ValueError")
+
+    print("\n(4) 非恆真控制:slots 長度必須等於格數,且不是全部同一個值")
+    ok4 = len(slots) == w * h
+    print(f"    {'PASS' if ok4 else 'FAIL'}: slots {len(slots)}(應 {w * h})、"
+          f"相異值 {len(set(map(str, slots)))} 種")
+    if not ok4:
+        fails.append(f"slots 長度 {len(slots)} 不等於 {w * h}")
+
+    print("\n(5) 與 sync_native_treasures 對照:同一張圖的維度來源必須一致")
+    _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from sync_native_treasures import expected as t_expected
+        t_slots, _t_hidden, _t_chests = t_expected(raw, 0, md)
+        ok5 = len(t_slots) == len(slots)
+        print(f"    {'PASS' if ok5 else 'FAIL'}: treasures {len(t_slots)} vs "
+              f"field_events {len(slots)}")
+        if not ok5:
+            fails.append(f"兩支對同一張圖算出的格數不同:{len(t_slots)} vs {len(slots)}")
+    except ImportError as exc:
+        print(f"    SKIP: 無法 import sync_native_treasures({exc})")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(16 筆控制段不變量 + 來源自我標示 + 維度檢查 + "
+          "非恆真控制 + 跨工具對照)。")
+    return 0
+
+
 def main():
+    import sys
+    if len(sys.argv) == 2 and sys.argv[1] == "--selftest":
+        return selftest()
     parser = argparse.ArgumentParser()
     parser.add_argument("raw")
     parser.add_argument("assets")

@@ -33704,6 +33704,14 @@
    "excerpt": "- **2026-09-08 續十:兩支「靜默錯」型工具補 selftest**。這兩支的危險不是崩潰,是回傳看起來很正常的錯值。(a) `query_verified_address.normalize_addr` 是查詢的比對鍵——它一錯,查詢會**靜默查不到**而不是報錯。selftest 5 項:6 種寫法必須收斂到同一個鍵、7 個壞輸入必須回 None 而不是猜、大小寫與前導零不得產生不",
    "verdict": "benign",
    "note": "工具流程敘述:記錄兩支工具的 selftest 設計(比對鍵收斂、雜湊分塊邊界對照),對象是本 repo 工具的檢查方法,非原版遊戲的證據主張;同段落已列出 294 個真實位址與 13 個已提交指紋的實測數字作為依據"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 515,
+   "excerpt_sha1": "f84903ade6c268c7cbabfa1c5226b97397d20031",
+   "excerpt": "- **2026-09-08 續十五:把工具自己宣稱的東西當成待驗證項**。(a) `sync_native_field_events` 與 treasures 同形狀,但**刻意不是同一套斷言**——它回傳 5 個東西(turn_controls / slots / events / 來源檔名 / control 的 sha256),控制段固定 **16 筆**(含 turn=0xff 休眠列)",
+   "verdict": "benign",
+   "note": "工具流程敘述:記錄 sync_native_field_events 與 export_acting_resource_set 的 selftest 設計(特有不變量、5 條拒絕路徑、契約更正),對象是本 repo 工具的檢查方法,非原版遊戲的證據主張;同段落已列出 16 筆控制段、576 格、sha256 對照等實測數字"
   }
  ]
 }
