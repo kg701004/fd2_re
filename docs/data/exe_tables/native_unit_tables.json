@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "source": "FD2.EXE",
-  "source_size": 357074,
-  "source_md5": "b97caf2239a27a896069d03549d96e1e",
-  "source_sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f",
+  "source_size": 509158,
+  "source_md5": "33464c81e6a364fd0660141139aa8e6e",
+  "source_sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
   "tables": {
     "high_class": {
       "linear": "0x61af9",

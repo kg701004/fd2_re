@@ -57,6 +57,8 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parent.parent
 EXE = "org_game/炎龍騎士團/FLAME2/FD2.EXE"
 FDTXT = "extracted/raw/FDTXT"
+RAW = "extracted/raw"
+FDFIELD = "org_game/炎龍騎士團/FLAME2/FDFIELD.DAT"
 
 # (artifact, tool, argv template, mode). "{out}" is replaced by a temp path.
 #
@@ -100,6 +102,18 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
      "extract_native_field_event_rules.py", [EXE, "{out}"], "bytes"),
     ("docs/data/native_treasure_event_rules.json",
      "extract_native_treasure_event_rules.py", [EXE, "{out}"], "bytes"),
+    # 2026-09-08 第二批。這三個是 exe_tables/ 目錄項目與 fdfield 那支「不是
+    # dump_exe_tables.py 產出」的那幾個檔——原本落在登錄表的視線外。
+    # native_unit_tables.json 當時只差 source_size/md5/sha256 三個欄位(記的是
+    # 已遺失的舊版 EXE),**所有表格資料逐位元組相同**,即單位表跨版本沒有變動;
+    # 本輪重生把來源更正成實際存在的那一版。
+    ("docs/data/exe_tables/native_unit_tables.json",
+     "extract_native_unit_tables.py", [EXE, "{out}"], "bytes"),
+    ("docs/data/exe_tables/terrain.json",
+     "dump_terrain_table.py", [RAW, "{out}"], "bytes"),
+    # --source 不給就寫成 null;省掉它會產生一個「只有 provenance 不同」的假漂移。
+    ("docs/data/fdfield_native_ai_modes.json", "dump_native_ai_modes.py",
+     ["--source", FDFIELD, RAW, "{out}"], "bytes"),
 ]
 
 
@@ -270,13 +284,27 @@ def selftest() -> int:
     if changed:
         fails.append(f"本工具改動了已提交產物:{changed[:4]}")
 
+    print("\n(6) 涵蓋率報告必須兩邊都對:登錄的不算未涵蓋,未登錄的一定要出現在清單裡")
+    total, covered, missing = coverage()
+    reg_sample = "docs/data/native_treasure_event_rules.json"      # 直接登錄
+    dir_sample = "docs/data/exe_tables/spell.json"                 # 經 dir 模式涵蓋
+    ok_a = reg_sample not in missing and dir_sample not in missing
+    # 負向:隨便一個沒登錄的產物必須被列出來,否則這個報告只是印個好看的數字
+    ok_b = len(missing) > 0 and all((ROOT / m).exists() for m in missing[:20])
+    ok_c = total == covered + len(missing)
+    print(f"    {'PASS' if ok_a else 'FAIL'}: 已登錄的兩個樣本(含 dir 模式)不在未涵蓋清單")
+    print(f"    {'PASS' if ok_b else 'FAIL'}: 未涵蓋清單有 {len(missing)} 項且都是真實存在的檔")
+    print(f"    {'PASS' if ok_c else 'FAIL'}: {total} = {covered} + {len(missing)}")
+    if not (ok_a and ok_b and ok_c):
+        fails.append(f"涵蓋率報告不正確(total={total} covered={covered} missing={len(missing)})")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(正向/負向各 1 + 同大小案例 + overrides 放行與攔截的配對控制 "
-          "+ 不改動已提交檔案)。")
+          "+ 不改動已提交檔案 + 涵蓋率報告的正反向對照)。")
     return 0
 
 
@@ -304,20 +332,54 @@ def run_all(only: str | None = None, timeout: int = 900, quiet: bool = False) ->
     return rows
 
 
+def coverage() -> tuple[int, int, list[str]]:
+    """已提交的 docs/data 產物中,有幾個真的被這張登錄表涵蓋。
+
+    2026-09-08:加這個是因為「共 12 項:相同 12」讀起來像「全部都對」,但它其實
+    只說了登錄表裡那幾項——**沒有登錄項目的產物,在這份報告裡完全不存在**,
+    而那才是大多數。乾淨的總計會藏起缺席的列,所以把分母印出來。
+    """
+    registered = set()
+    for art, _, _, kind in REGISTRY:
+        p = ROOT / art
+        if kind == "dir" and p.is_dir():
+            registered.update(str(q.relative_to(ROOT)).replace("\\", "/")
+                              for q in p.rglob("*.json"))
+        else:
+            registered.add(art)
+    all_art = sorted(str(p.relative_to(ROOT)).replace("\\", "/")
+                     for p in (ROOT / "docs/data").rglob("*.json"))
+    missing = [a for a in all_art if a not in registered]
+    return len(all_art), len(all_art) - len(missing), missing
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only")
     ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument("--coverage", action="store_true",
+                    help="列出所有沒有登錄項目、因此從未被重生比對過的已提交產物")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.coverage:
+        total, covered, missing = coverage()
+        print(f"docs/data 已提交 JSON {total} 個,登錄表涵蓋 {covered} 個,"
+              f"**未涵蓋 {len(missing)} 個**(從未被重生比對過):")
+        for m in missing:
+            print("  ", m)
+        return 0
     rows = run_all(a.only, a.timeout)
     drift = [r for r in rows if r["verdict"] == "DRIFT"]
     err = [r for r in rows if r["verdict"] == "ERROR"]
+    total, covered, missing = coverage()
     print(f"\n共 {len(rows)} 項:相同 {sum(1 for r in rows if r['verdict']=='IDENTICAL')}"
           f" / 漂移 {len(drift)} / 無法執行 {len(err)}")
+    # 分母跟著印,否則上面那行讀起來像「全部產物都對」。
+    print(f"涵蓋率:docs/data 的 {total} 個已提交 JSON 中,{covered} 個有登錄項目,"
+          f"{len(missing)} 個**從未被重生比對過**(`--coverage` 可列出)")
     if drift:
         print("  **漂移(需人工判斷是工具變了還是產物被手改)**:", [r["artifact"] for r in drift])
     if err:

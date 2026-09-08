@@ -3575,6 +3575,40 @@ tests     15/15   wsl 8/8   worklist selftest 全過
   假設下都不是入口,兩邊都回 False,什麼也證明不了。改用有鑑別力的檢查(是不是 `E8`
   call、目標是誰)才得到 8/8 的乾淨結論。
 
+### 第二批登錄 + 讓報告把分母印出來
+
+登錄表再從 9 擴到 12,補的是 `exe_tables/` 裡**不是 `dump_exe_tables.py` 產出**的那幾個
+檔(原本落在視線外):`native_unit_tables.json`(`extract_native_unit_tables.py`)、
+`terrain.json`(`dump_terrain_table.py`)、`fdfield_native_ai_modes.json`
+(`dump_native_ai_modes.py`)。三個都通過,但過程有兩件事值得記:
+
+* `native_unit_tables.json` 一開始判為不同,而且**大小完全一樣**(17643 vs 17643)——
+  只比大小的檢查會整個漏掉。逐鍵比對後只有 3 個欄位不同:`source_size`/`source_md5`/
+  `source_sha256`,記的是**已遺失的舊版 EXE**(357074 B,`b97caf22…`;現行 `org_game`
+  那份是 509158 B)。而**三張表的資料逐位元組相同**(`0x61af9` high_class 68×10、
+  `0x61da1` lower_class 32×24、`0x620a1` lower_aux 68×11),即單位表跨版本沒有變動;
+  本輪重生把來源更正成 `org_game` 裡實際存在的那一版。
+* `fdfield_native_ai_modes.json` 一開始差 181 bytes,查下去是**我漏給 `--source`**,
+  工具就把 `source` 寫成 `null`(該旗標指向 `org_game` 的 FDFIELD.DAT,md5 `ecdb0436…`)。
+  補上旗標後逐位元組相同——登錄項目的引數寫錯會製造
+  假漂移,登錄時要連旗標一起驗。
+
+**更重要的是:「共 12 項:相同 12」讀起來像「全部產物都對」,但它只說了登錄表裡那幾項。**
+沒有登錄項目的產物在這份報告裡**完全不存在**,而那才是大多數。所以現在每次執行都跟著印
+分母,並加了 `--coverage` 列出未涵蓋清單:
+
+```
+共 12 項:相同 12 / 漂移 0 / 無法執行 0
+涵蓋率:docs/data 的 135 個已提交 JSON 中,26 個有登錄項目,109 個**從未被重生比對過**
+```
+
+selftest 加第 (6) 項的正反向對照(已登錄的樣本——含經 `dir` 模式涵蓋的——不得出現在
+未涵蓋清單;未涵蓋清單必須非空且每一項都是真實存在的檔;`total == covered + missing`)。
+另外查明 `exe_tables/` 有 **5 個檔連提到它的工具都沒有**(`characters.json`、
+`class_change_stat_bonuses.json`、`class_change_targets.json`、
+`revival_cost_coefficients.json`、`revive_fee_rates.json`)——手工或已消失的臨時腳本
+產物,登錄表涵蓋不到,現在至少會出現在未涵蓋清單裡而不是靜默缺席。
+
 **同一輪順手修掉 `audit_evidence_provenance.py --diff` 的一個假陽性。** 寫完上面那段
 doc25 補述後,`--diff` 擋下 3 行「新增的無標記主張」——但那 3 行**內容一字沒改**,而且
 早就登錄審閱過(判定 benign)。原因是 git 的 diff 配對:在一段文字上方插入夠像的新內容,
