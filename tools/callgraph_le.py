@@ -180,7 +180,107 @@ def parse_seeds(s):
     return [int(x, 16) for x in s.split(',') if x.strip()]
 
 
+def selftest():
+    """這支是 `dump_chapter_beats` 的地基,它的 `fixup_map` 一錯,整批 beats 的
+    handler 位址就全錯 —— 而且不會報錯,只會安靜地少 0x10000。
+
+    所以第 (2) 題不是自我一致性檢查,是拿 **`le_xref.parse_fixups` 這個獨立實作**
+    對照。兩者的 key 空間不同(這裡是線性位址、那裡是檔案位移),條目數必須相同、
+    而且逐筆換算後 target 必須一致 —— 要一起錯才騙得過去。
+    """
+    import os
+    import sys as _sys
+    if hasattr(_sys.stdout, "reconfigure"):
+        _sys.stdout.reconfigure(encoding="utf-8")
+        _sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    exe = os.path.join(root, "org_game", "炎龍騎士團", "FLAME2", "FD2.EXE")
+    if not os.path.isfile(exe):
+        print("SKIP: 找不到 org_game 的 FD2.EXE")
+        return 0
+    d = open(exe, "rb").read()
+    meta = parse_le(d)
+
+    print("(1) load_code / page_base_linear 的基本不變量")
+    code, base, vsize = load_code(d, meta)
+    ok1 = len(code) == vsize and base == meta["objs"][0]["base"] and vsize > 0x30000
+    print(f"    {'PASS' if ok1 else 'FAIL'}: code {len(code)} bytes, base {base:#x}, "
+          f"vsize {vsize:#x}")
+    if not ok1:
+        fails.append(f"load_code 不一致:len={len(code)} vsize={vsize}")
+    # 每個 object 的第一頁必須換算回它自己的 base
+    bad = [(o["base"], page_base_linear(meta, o["first"] - 1))
+           for o in meta["objs"] if page_base_linear(meta, o["first"] - 1) != o["base"]]
+    ok1b = not bad
+    print(f"    {'PASS' if ok1b else 'FAIL'}: {len(meta['objs'])} 個 object 的首頁"
+          + ("都換算回自己的 base" if ok1b else f",不符 {bad}"))
+    if not ok1b:
+        fails.append(f"page_base_linear 首頁換算錯誤:{bad}")
+
+    print("\n(2) 跨工具對照:與 le_xref.parse_fixups(獨立實作)必須一致")
+    _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from le_xref import parse_fixups
+    mine = fixup_map(d, meta)
+    theirs = parse_fixups(d, meta)
+    # key 空間不同:這裡是線性位址,那裡是檔案位移。逐筆換算後比 target。
+    def lin_to_file(addr):
+        for o in meta["objs"]:
+            if o["base"] <= addr < o["base"] + o["vsize"]:
+                return (meta["data_off"] + (o["first"] - 1) * meta["page_size"]
+                        + addr - o["base"])
+        return None
+    mism = []
+    for lin, tgt in mine.items():
+        f = lin_to_file(lin)
+        if f is None:
+            continue
+        if theirs.get(f) != tgt:
+            mism.append((hex(lin), hex(tgt), theirs.get(f)))
+    ok2 = len(mine) == len(theirs) and not mism
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 條目數 {len(mine)} vs {len(theirs)};"
+          f"換算後 target 不符 {len(mism)} 筆" + (f" 例:{mism[:2]}" if mism else ""))
+    if not ok2:
+        fails.append(f"與 le_xref.parse_fixups 不一致:{len(mine)}/{len(theirs)},"
+                     f"不符 {len(mism)} 筆")
+
+    print("\n(3) 已知錨點:事件跳表 0x51b91 第 58 格必須解出 0x35854")
+    got = mine.get(0x51B91 + 58 * 4)
+    ok3 = got == 0x35854
+    print(f"    {'PASS' if ok3 else 'FAIL'}: {got:#x}" if got else
+          f"    FAIL: 該格沒有 fixup 記錄")
+    if not ok3:
+        fails.append(f"跳表錨點解出 {got!r},應為 0x35854")
+
+    print("\n(4) 故障注入:把 object base 改掉,page_base_linear 必須跟著錯")
+    import copy
+    bad_meta = copy.deepcopy(meta)
+    bad_meta["objs"][0]["base"] += 0x1000
+    ok4 = page_base_linear(bad_meta, 0) != page_base_linear(meta, 0)
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 注入後 {page_base_linear(bad_meta, 0):#x} "
+          f"vs 原本 {page_base_linear(meta, 0):#x}")
+    if not ok4:
+        fails.append("page_base_linear 不受 object base 影響 —— 它沒有真的在用 meta")
+
+    print("\n(5) 非空控制:fixup 表必須有大量條目(空表會讓所有比對免費通過)")
+    ok5 = len(mine) > 1000
+    print(f"    {'PASS' if ok5 else 'FAIL'}: {len(mine)} 筆")
+    if not ok5:
+        fails.append(f"fixup 表只有 {len(mine)} 筆,對照題等於空跑")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(不變量 + 跨工具獨立實作對照 + 已知錨點 + "
+          "故障注入 + 非空控制)。")
+    return 0
+
+
 def main(av):
+    if len(av) == 2 and av[1] == '--selftest':
+        return selftest()
     if len(av) < 3:
         print(__doc__); return 1
     cg = CG(av[1]); cmd = av[2]

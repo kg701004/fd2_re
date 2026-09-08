@@ -103,6 +103,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "decode_image.py":           (["--selftest"], "offline"),
     "query_verified_address.py": (["--selftest"], "offline"),
     "hash_fd2_reference.py":     (["--selftest"], "offline"),
+    "callgraph_le.py":           (["--selftest"], "offline"),
+    "dump_remap.py":             (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),

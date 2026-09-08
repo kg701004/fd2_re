@@ -7,11 +7,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "callgraph_le.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "char_summary.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
@@ -28,11 +23,6 @@
   },
   {
    "name": "dosbox_exec_trace_analyze.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "dump_remap.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
