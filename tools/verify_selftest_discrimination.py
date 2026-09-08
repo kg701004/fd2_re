@@ -119,6 +119,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "event_handler_dump.py":     (["--selftest"], "ghidra"),
     "export_story_index_map.py": (["--selftest"], "offline"),
     "export_sfx.py":             (["--selftest"], "offline"),
+    "font_grid.py":              (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
