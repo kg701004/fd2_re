@@ -183,5 +183,14 @@
   ],
   "rejected_overgeneralisation": "一度想把 `DAT_00053fb2` 當成 10 個 handler 共用的階段變數。**實測否決**:對 10 個 handler 逐一計算 `0x53fb2` 的參照次數,只有 `0x2bd6c` 有(15 次),其餘 9 個與分派器皆為 0。各 handler 使用各自的狀態來源(全域/區域/逐目標陣列),不是同一個變數。",
   "note": "部分呼叫走 `play_sfx_b`(0x25b45) 而非 `play_sfx_a`(0x25a96);兩者差異(優先權/聲道)本輪未查。"
+ },
+ "_boundary_reproved_2026_09_08": {
+  "why": "重驗時一支腳本把本表算成 11 筆,查清後是**判準**的問題,不是工具也不是原始結論。以下把邊界用三條互相獨立的證據釘死,並寫下正確的判準,避免再被弱測試動搖。",
+  "evidence_1_code_bound": "**不看表的內容**:AI 路徑 `0x153de cmp dword [0x53c2f],0xa` 之後 `jge` 跳過呼叫,玩家路徑閘為 `bVar1 < 9` —— 索引最大 9,故可被分派的項目最多 10。",
+  "evidence_2_eleventh_is_a_trap": "第 11 個 dword 為 `0x00010000`;`0x10000` 反組譯為 `int3 / jmp 0x10000 / nop…`,是映像基底的陷阱樁,且不是 `push N; call 0x3702f` 的 Watcom prologue,故不是 handler。",
+  "evidence_3_next_structure": "`0x524f5` 起是 stride 4 的小數值表(0x28,0x46,0x78,0x50,0x32,0x64,0x46),不是函式指標序列。",
+  "what_actually_differed": "兩次讀到的位元組完全相同。原始那次的 dump 從 `0x524a0` 起 4-byte 對齊,而表在 `0x524c6`——**錯位**,每列都跨在兩個表項之間,因此當時是人工讀位元組序列定邊界;那次的輸出**同樣**用了 `0x10000<=v<0x40000` 的寬鬆測試並**同樣**冒出一個假的 code-ptr 標記,只是沒有被採信。重測時對齊正確,卻把同一個寬鬆測試當成機械判準,而 `0x00010000` **恰好等於下界**。",
+  "correct_criterion": "判定一個 dword 是否為 handler,必須要求它**是一個 Watcom 函式入口**(全 image 掃 `call 0x3702f` 得到的入口集合),不能只看數值落在程式碼位址範圍內。",
+  "unresolved_and_not_over_claimed": "第 11 個 dword 指向陷阱樁,**可能**是刻意的守衛槽、也可能只是下一個結構的位元組,本輪無法分辨。無論哪種,可分派的 handler 數皆為 10,因為程式碼的索引上界獨立地限死了它。"
  }
 }
