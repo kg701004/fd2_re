@@ -88,6 +88,104 @@ def parse_fdtxt_strings(path: Path) -> list[list[int]]:
     return strings
 
 
+def selftest() -> int:
+    """釘住一個**已被用來下結論**的計數,以及 docstring 宣稱的嚴格驗證。
+
+    第 (1) 題不是隨便挑的數字:2026-08-31 用這個計數判定 FDTXT_032/033 屬於
+    `ch00_meadow` / `ch00_palace`(40/40、41/41 完全吻合),而 ch32.json/ch33.json
+    原本宣稱的歸屬則以 `utterance_count_mismatch` 被否決。那個結論至今生效,
+    所以計數一旦飄掉,結論就失去依據 —— 這裡讓它每次重跑。
+
+    第 (2) 題驗 `parse_fdtxt_strings` 的 docstring 宣稱:「malformed offset table
+    raises ValueError instead of silently manufacturing a different string layout」
+    —— 那是可驗證的,不是願望。
+    """
+    import sys
+    import tempfile
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = Path(__file__).resolve().parent.parent
+    fdtxt = root / "extracted" / "raw" / "FDTXT"
+
+    print("(1) 回歸:FDTXT_032/033 的邏輯發話數必須是 40/41(ch00 歸屬的依據)")
+    if fdtxt.is_dir():
+        got = {}
+        for n in (32, 33):
+            p = fdtxt / f"FDTXT_{n:03d}.bin"
+            if p.is_file():
+                got[n] = sum(count_logical_utterances(w)
+                             for w in parse_fdtxt_strings(p))
+        ok1 = got.get(32) == 40 and got.get(33) == 41
+        print(f"    {'PASS' if ok1 else 'FAIL'}: FDTXT_032={got.get(32)}(應 40)、"
+              f"FDTXT_033={got.get(33)}(應 41)")
+        if not ok1:
+            fails.append(f"計數與 2026-08-31 的歸屬依據不符:{got}")
+    else:
+        print("    SKIP: 找不到 extracted/raw/FDTXT")
+
+    print("\n(2) docstring 宣稱的嚴格驗證:壞的 offset table 必須丟 ValueError")
+    with tempfile.TemporaryDirectory() as td:
+        cases = [
+            ("空檔", b""),
+            ("只有 1 byte", b"\x00"),
+            ("首個 offset 為 0", struct.pack("<H", 0) + b"\x00" * 8),
+            ("offset 超出檔尾", struct.pack("<H", 0x7FFF) + b"\x00" * 8),
+        ]
+        for label, blob in cases:
+            p = Path(td) / "bad.bin"
+            p.write_bytes(blob)
+            try:
+                parse_fdtxt_strings(p)
+                print(f"    FAIL: 「{label}」沒有被擋下")
+                fails.append(f"{label} 沒有被擋下")
+            except ValueError:
+                print(f"    PASS: 「{label}」-> ValueError")
+            except Exception as exc:                          # noqa: BLE001
+                print(f"    FAIL: 「{label}」丟出 {type(exc).__name__}")
+                fails.append(f"{label} 丟出 {type(exc).__name__} 而非 ValueError")
+
+    print("\n(3) 不變量:每個字串都不得含終止符 0xFFFF(docstring 說已排除)")
+    bad = []
+    if fdtxt.is_dir():
+        for p in sorted(fdtxt.glob("FDTXT_*.bin"))[:20]:
+            try:
+                for i, w in enumerate(parse_fdtxt_strings(p)):
+                    if 0xFFFF in w:
+                        bad.append(f"{p.name}#{i}")
+            except ValueError:
+                continue
+    ok3 = not bad
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 前 20 個資源"
+          + ("全部不含 0xFFFF" if ok3 else f",含終止符的 {bad[:3]}"))
+    if not ok3:
+        fails.append(f"字串仍含終止符:{bad[:3]}")
+
+    print("\n(4) 非恆真控制:不同資源必須算出不同的發話數,且都 > 0")
+    counts = {}
+    if fdtxt.is_dir():
+        for n in (26, 32, 33):
+            p = fdtxt / f"FDTXT_{n:03d}.bin"
+            if p.is_file():
+                counts[n] = sum(count_logical_utterances(w)
+                                for w in parse_fdtxt_strings(p))
+    ok4 = len(counts) >= 3 and len(set(counts.values())) == len(counts) \
+        and all(v > 0 for v in counts.values())
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {counts}")
+    if not ok4:
+        fails.append(f"計數沒有鑑別力或有 0:{counts}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(ch00 歸屬計數回歸 + 嚴格驗證 4 種 + 終止符不變量 + "
+          "非恆真控制)。")
+    return 0
+
+
 def count_logical_utterances(words: list[int]) -> int:
     """Count displayed utterances, joining FFxx-wrapped visual rows.
 
@@ -338,6 +436,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) == 1 and argv[0] == '--selftest':
+        return selftest()
     args = parse_args(argv)
     try:
         manifest = build_manifest(args.raw_fdtxt_dir, args.story_json_dir)

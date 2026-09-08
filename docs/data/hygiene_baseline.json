@@ -27,11 +27,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "export_story_index_map.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "extract_all.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
