@@ -3493,3 +3493,39 @@ retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半�
 記成工具的副作用**。本輪就因此多出一個 `render_map.py` 的假 WARN(指向我當時正在編輯的
 `verify_docs_match_cli.py`);停止編輯後重跑即回到 PASS=43 / WARN=1。
 
+## 2026-09-08 最終：兩支新工具補上最大缺口 + 單一入口的多輪自檢
+
+### `tools/verify_generated_artifacts.py` —— 把「輸出可重生」變成可驗證
+補的正是量出來的最大缺口:99 支工具中 61 支只被證明「能跑」。對會產出**已提交檔案**的
+那些,重生並比對是最便宜也最強的檢查(它第一次手動使用時就抓到 `story_script.json` 的漂移)。
+
+**7 個登錄項目全部 IDENTICAL。** 但過程中出現的兩個「DRIFT」,查證後**都不是漂移,
+而是比對方式錯了**——因此新增兩種模式:
+* **`gen_keys`**:只要求**產生器產出的頂層鍵**一致;只存在於 committed 的鍵是人工增補。
+  `item_sfx_tables.json` 就是這個形狀:核心 `tables` 逐位元組相同,`per_type_lookup`
+  需要一個**已不在 repo 的輸入檔**、`_remaining_callers_dataflow_*` 是手寫分析。
+* **`overrides`**:committed 檔帶 `manual_overrides` 時,被指名的項目允許不同、
+  **其餘一律不得不同**。這比忽略該檔更強——每輪都重新證明那些覆寫仍是唯一偏差。
+  `command_labels.json` 有兩處(id 9 咒殺術、id 27 麻痺術),各附書面理由
+  (`glyph 181` 的 16×16 點陣全零,raw decode 會解成空白)。
+* **關鍵的配對控制**:被指名的覆寫放行,但**未被指名的 `entries[0]` 改動仍判 DRIFT**
+  ——證明這個放寬沒有把檢查關掉。另有安全性斷言:實跑一輪後 23 個已提交產物雜湊完全不變。
+* 順帶修掉 `dump_item_sfx_tables.py` 的過期用法行(引用 repo 裡不存在的
+  `docs/data/item_sfx_dispatch_types.json`,照抄會 FileNotFoundError)。
+
+### `tools/verify_everything.py` —— 七個軸的單一入口
+`audit` / `discrim` / `docs_cli` / `artifacts` / `worklist` / `tests` / `wsl`。
+`--rounds N` 讓每輪**不同**:`discrim` 每輪推進突變種子,第 2 輪會抽到第 1 輪沒試過的突變。
+**跨輪結果不一致會單獨報成 UNSTABLE**——會飄的驗證器本身就是問題。
+兩個已知良性 WARN 連同「不應修」的理由寫進清單並隨執行印出,避免它靜默腐爛。
+
+**實測結果(2026-09-08)**:
+```
+7 個軸 × 2 輪全部通過,無跨輪不一致
+audit     PASS=599  WARN=2(兩個已知良性)  SKIP=96  FAIL=0   兩輪逐項相同
+discrim   6/6 有鑑別力(每輪換 seed)
+docs_cli  116 支:0 個文件旗標缺實作、0 個編碼風險
+artifacts 7/7 相同
+tests     15/15   wsl 8/8   worklist selftest 全過
+```
+
