@@ -78,6 +78,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import locale
 import re
 import sys
 from pathlib import Path
@@ -120,6 +121,48 @@ def _module_level_imports(tree: ast.AST) -> set[str]:
             for h in getattr(node, "handlers", []):
                 stack.extend(h.body)
     return out
+
+
+def docstring_console_risk(src: str) -> str | None:
+    """`print(__doc__)` + docstring 含本機主控台編不出的字元 = 執行即崩。
+
+    2026-09-08:`verify_docs_match_cli.console_encoding_risks()` 只看 print 的
+    **字面字串**,所以完全看不到這條路徑。實測 `disasm_le.py` 與 `le_xref.py`
+    的 docstring 都含 `↔`,而兩支在無參數時都會 `print(__doc__)` —— 在 cp950
+    主控台上那一行直接 UnicodeEncodeError,看起來像「工具壞了」。這正是本 repo
+    已經修過 15 支的同一個類別,只是換了一條路徑進來。
+    """
+    if "reconfigure" in src:
+        return None
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return None
+    doc = ast.get_docstring(tree) or ""
+    if not doc:
+        return None
+    prints_doc = any(
+        isinstance(n, ast.Call) and getattr(n.func, "id", None) == "print"
+        and any(isinstance(a, ast.Name) and a.id == "__doc__" for a in n.args)
+        for n in ast.walk(tree))
+    if not prints_doc:
+        return None
+    enc = locale.getpreferredencoding(False)
+    try:
+        doc.encode(enc)
+    except (UnicodeEncodeError, LookupError):
+        bad = sorted({c for c in doc if not _encodable(c, enc)})
+        return (f"print(__doc__) 但 docstring 含 {enc} 編不出的字元 "
+                f"{bad[:5]} —— 無參數執行時會 UnicodeEncodeError")
+    return None
+
+
+def _encodable(ch: str, enc: str) -> bool:
+    try:
+        ch.encode(enc)
+        return True
+    except (UnicodeEncodeError, LookupError):
+        return False
 
 
 def lazy_import_gaps(src: str) -> list[str]:
@@ -235,6 +278,10 @@ def violations() -> list[dict]:
         if p.name in risky:
             out.append({"kind": "tool", "name": p.name, "rule": "console",
                         "detail": "輸出非 ASCII 但沒有 reconfigure stdout"})
+        doc_risk = docstring_console_risk(src)
+        if doc_risk and p.name not in risky:
+            out.append({"kind": "tool", "name": p.name, "rule": "console",
+                        "detail": doc_risk})
         for gap in lazy_import_gaps(src):
             out.append({"kind": "tool", "name": p.name, "rule": "lazy_import",
                         "detail": gap})
@@ -439,6 +486,28 @@ def selftest() -> int:
     if not ok2c:
         fails.append(f"lazy_import 規則失衡:漏抓={not okA}、"
                      f"try 形式偽陽性={bool(tryform)}、函式內偽陽性={bool(local)}")
+
+    print("\n(2d) docstring 編碼風險:print(__doc__) 這條路徑的配對控制")
+    # verify_docs_match_cli 只看 print 的字面字串,看不到 print(__doc__)。
+    # disasm_le.py / le_xref.py 的 docstring 都含 `↔`,兩支無參數執行時都會崩,
+    # 而 console 規則報 0 筆 —— 用修正前的真實形狀當正對照,不是合成案例。
+    pre = '"""說明 linear ↔ file 的對應。"""\nimport sys\ndef main():\n    print(__doc__)\n'
+    post = ('"""說明 linear ↔ file 的對應。"""\nimport sys\n'
+            'sys.stdout.reconfigure(encoding="utf-8")\ndef main():\n    print(__doc__)\n')
+    plain = '"""Plain ASCII doc."""\ndef main():\n    print(__doc__)\n'
+    noprint = '"""說明 linear ↔ file 的對應。"""\ndef main():\n    return 0\n'
+    okA = docstring_console_risk(pre) is not None
+    okB = docstring_console_risk(post) is None
+    okC = docstring_console_risk(plain) is None
+    okD = docstring_console_risk(noprint) is None
+    ok2d = okA and okB and okC and okD
+    print(f"    {'PASS' if okA else 'FAIL'}: 修正前的真實形狀 -> 抓到")
+    print(f"    {'PASS' if okB else 'FAIL'}: 已 reconfigure -> 不算")
+    print(f"    {'PASS' if okC else 'FAIL'}: 純 ASCII docstring -> 不算")
+    print(f"    {'PASS' if okD else 'FAIL'}: 沒有 print(__doc__) -> 不算")
+    if not ok2d:
+        fails.append(f"docstring 編碼偵測失衡:抓到={okA}、"
+                     f"三種不該報的分別為 {okB}/{okC}/{okD}")
 
     print("\n(3b) 每一筆「永久豁免」都要有可執行的證明,不能只是基準線裡的一句話")
     base_p = load_baseline()

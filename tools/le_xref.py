@@ -17,6 +17,13 @@ import sys
 import struct
 import re
 
+# 2026-09-08:本檔的 docstring 含 cp950 編不出的字元(如 ↔),而無參數時會
+# `print(__doc__)` —— 在本機 cp950 主控台上那一行直接 UnicodeEncodeError,
+# 看起來像「工具壞了」。原本的偵測器只看 print 的字面字串,看不到這條路徑。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def parse_le(d):
     le = d.find(b"LE\x00\x00", 0x2000)

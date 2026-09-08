@@ -12,11 +12,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "disasm_le.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "dosbox_exec_trace_analyze.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
