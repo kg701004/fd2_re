@@ -10,8 +10,7 @@ linear ↔ file:**必須逐 object 換算**(2026-09-08 修正)。
 
   舊版說明寫 `file = data_off + (linear - 0x10000)`,那只對 object 1 成立。
   object 2(base 0x50000)偏 0x1000、object 3(base 0x60000)偏 0xD000 ——
-  後者甚至讀到檔案結尾之外。既有記錄「本工具即使在已知正確位址也產出垃圾」
-  講的就是這件事,那些位址都在資料段。
+  後者甚至讀到檔案結尾之外。**只影響資料段**;程式碼段(obj1)新舊公式等價。
 
 用法:
   python3 disasm_le.py <FD2.EXE> dis <linear_hex> [count]      反組譯 count 條指令
@@ -51,9 +50,12 @@ def lin2file(meta, lin):
         0x51b91 / 0x5274e (obj2)  偏 +0x1000 → 讀到全 0,不是真的表格位元組
         0x620a1           (obj3)  偏 +0xD000 → **直接讀到檔案結尾之外**
 
-    這正是既有記錄「disasm_le 即使在已知正確位址也產出垃圾」的根因 ——
-    那些「已知正確位址」都是資料段的 0x5xxxx / 0x6xxxx。程式碼段(obj1)一直
-    是對的,所以問題看起來時有時無。
+    **範圍限定(2026-09-08 自我更正)**:這**不是**既有記錄
+    [[feedback_fd2_disasm_le_range_bug]](2026-08-14,症狀位址 `0x13a9f`)的根因。
+    那個位址在 object 1,而新舊公式對 obj1 **完全等價**(實測整個 obj1 範圍內
+    兩者差異位址數 = 0),所以本次修正在數學上不可能改變它。那個症狀是
+    2026-09-03 的 `55988977`(le_xref 的 page mapping)修好的。
+    本次修的是**另一個、只影響資料段的獨立 bug**。
 
     正確公式與 callgraph_le.page_base_linear / le_xref 的換算一致:
         data_off + (obj.first - 1) * page_size + (lin - obj.base)
