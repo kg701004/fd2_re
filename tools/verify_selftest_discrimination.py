@@ -88,7 +88,12 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "audit_evidence_provenance.py": (["--selftest"], "offline"),
     "safe_output.py":            (["--selftest"], "offline"),
     "fd2_env_healthcheck.py":    (["--selftest"], "offline"),
+    # 2026-09-08:這幾支「檢查器本身」原本不在表內,等於檢查別人的東西自己沒被檢查。
+    "verify_docs_match_cli.py":  (["--selftest"], "offline"),
+    "verify_generated_artifacts.py": (["--selftest"], "offline"),
+    "verify_everything.py":      (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
+    "verify_findings.py":        (["--selftest"], "ghidra"),
     "find_enclosing_function.py": (["--selftest"], "ghidra"),
     "image_ref_scan.py":         (["--selftest"], "ghidra"),
     "ghidra_batch_probe.py":     (["--selftest"], "ghidra"),

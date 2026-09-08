@@ -24,6 +24,11 @@ The axes, and what each exists to catch
                crash class.
   artifacts    `verify_generated_artifacts.py` -- re-runs generators and diffs
                against the committed output. Proves outputs still reproduce.
+  findings     `verify_findings.py` -- re-derives the recorded numeric findings
+               from the image, under the strict function-entry criterion, and
+               cross-checks three of them against an independent implementation.
+               `artifacts` proves the FILES still reproduce; this proves the
+               CONCLUSIONS still do.
   worklist     `worklist_status.py --selftest` -- the worklist parser.
   tests        every `tools/test_*.py`.
   wsl          the same offline selftests under the OTHER interpreter. This axis
@@ -113,6 +118,18 @@ def axis_discrim(round_no: int, timeout: int) -> dict:
     return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}")}
 
 
+def axis_findings(timeout: int) -> dict:
+    """Its selftest has to pass first: the strict-vs-loose criterion contrast is
+    what makes the re-derivation meaningful, so a broken criterion must not be
+    allowed to report 'all findings still hold'."""
+    rc0, _ = run([PY, "tools/verify_findings.py", "--selftest"], timeout)
+    if rc0 != 0:
+        return {"ok": False, "detail": "findings selftest 失敗(判準本身壞了)"}
+    rc, out = run([PY, "tools/verify_findings.py", "--cross-check"], timeout)
+    tail = [l for l in out.splitlines() if l.strip().startswith("共")]
+    return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}")}
+
+
 def axis_tests(timeout: int) -> dict:
     fails = []
     files = sorted((ROOT / "tools").glob("test_*.py"))
@@ -151,6 +168,7 @@ AXES = {
     "discrim": lambda r, t: axis_discrim(r, t),
     "docs_cli": lambda r, t: axis_simple("docs_cli", ["tools/verify_docs_match_cli.py"], t),
     "artifacts": lambda r, t: axis_simple("artifacts", ["tools/verify_generated_artifacts.py"], t),
+    "findings": lambda r, t: axis_findings(t),
     "worklist": lambda r, t: axis_simple("worklist", ["tools/worklist_status.py", "--selftest"], t),
     "tests": lambda r, t: axis_tests(t),
     "wsl": lambda r, t: axis_wsl(t),
@@ -162,7 +180,8 @@ def selftest() -> int:
     fails. A driver that reports OK regardless is worse than not having one."""
     fails = []
     print("(1) 每個軸都必須真的被呼叫到,且名稱與 AXES 表一致")
-    ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "worklist", "tests", "wsl"}
+    ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "findings",
+                        "worklist", "tests", "wsl"}
     print(f"    {'PASS' if ok1 else 'FAIL'}: {sorted(AXES)}")
     if not ok1:
         fails.append("AXES 表與預期不符")

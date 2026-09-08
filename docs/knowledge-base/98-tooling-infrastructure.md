@@ -3513,8 +3513,9 @@ retreat 整備那一半 2026-08-30 已靜態閉合，`protect` schema 那一半�
 * 順帶修掉 `dump_item_sfx_tables.py` 的過期用法行(引用 repo 裡不存在的
   `docs/data/item_sfx_dispatch_types.json`,照抄會 FileNotFoundError)。
 
-### `tools/verify_everything.py` —— 七個軸的單一入口
-`audit` / `discrim` / `docs_cli` / `artifacts` / `worklist` / `tests` / `wsl`。
+### `tools/verify_everything.py` —— 單一入口(當日七軸,後續擴為八軸)
+`audit` / `discrim` / `docs_cli` / `artifacts` / `worklist` / `tests` / `wsl`
+(第八軸 `findings` 於同日稍後加入,見下)。
 `--rounds N` 讓每輪**不同**:`discrim` 每輪推進突變種子,第 2 輪會抽到第 1 輪沒試過的突變。
 **跨輪結果不一致會單獨報成 UNSTABLE**——會飄的驗證器本身就是問題。
 兩個已知良性 WARN 連同「不應修」的理由寫進清單並隨執行印出,避免它靜默腐爛。
@@ -3528,4 +3529,33 @@ docs_cli  116 支:0 個文件旗標缺實作、0 個編碼風險
 artifacts 7/7 相同
 tests     15/15   wsl 8/8   worklist selftest 全過
 ```
+
+### `tools/verify_findings.py` —— 把「判準」寫進程式,而不是只寫進文件
+
+`verify_generated_artifacts.py` 證明**產出的檔案**還能重生;這支證明**寫在文件裡的
+數字結論**還能被重新推導出來。它直接源自同日那次假不符:`0x524c6` 被臨時腳本算成
+11 筆而非 10 筆,原因不是工具或原始結論偏差,而是**那支臨時腳本的判準比它取代的推理更弱**
+——它問「這個 dword 是否落在程式碼位址範圍內」,而表尾那個 dword 是 `0x00010000`,
+**恰好等於下界**。
+
+所以這支工具做兩件事,而且兩件都是那次事故的直接對策:
+
+1. **判準只寫一次,寫在程式裡。** `is_function_entry()` 用的是全 image 掃出來的
+   Watcom stack-check prologue(`push N; call 0x3702f`,入口 = call 位址 − 5)
+   **集合成員資格**,不是位址範圍。往後任何指標表問題都該呼叫它,而不是各自重寫。
+2. **重新推導要可重複。** 每筆結論同時帶著「記錄值」與「重新推導它的程式碼」,
+   所以「這些結論還成立嗎?」是一道指令,不是又一支臨時腳本——而**又一支臨時腳本**
+   正是出事的地方。
+
+**selftest 的第 (2) 項是重點**:它同時跑弱判準與嚴格判準,並**要求**弱判準算出 11、
+嚴格判準算出 10。這把當初的假不符變成一個永久的回歸測試——不是把結論記下來,
+而是把**兩種判準的差別**釘住。另有故障注入(把 stack-check 位址改掉,入口集合必須
+從 541 崩成 0)與正向控制(刻意寫錯的期望值必須被判為不符)。
+
+**交叉比對用獨立實作**:`--cross-check` 會另外呼叫 `image_ref_scan.py`(不同的實作、
+自己的 rel32 故障注入 selftest、且會跟 Ghidra 的 xref 資料庫互查),三個呼叫端計數
+必須一致——同一段程式碼跑兩次不算互相印證。
+
+**實測結果(2026-09-08)**:`共 15 項:相符 15 / 不符 0`(12 筆重新推導 + 3 筆獨立實作比對)。
+已納入 `verify_everything.py` 的第 8 個軸 `findings`。
 
