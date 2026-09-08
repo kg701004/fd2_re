@@ -92,7 +92,63 @@ ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
 BASELINE = ROOT / "docs" / "data" / "hygiene_baseline.json"
 
-RULES = ("docstring", "correctness", "console", "shebang", "regenerable")
+RULES = ("docstring", "correctness", "console", "shebang", "lazy_import", "regenerable")
+
+# 延遲 import 常用的第三方名稱。把模組層 import 改成函式內延遲 import 時,很容易
+# 漏掉其中一條路徑 —— 2026-09-08 改 decode_fdicon.py 時就漏了 `--overview` 分支,
+# 那條路徑會 NameError。這個規則專門擋這一類。
+LAZY_NAMES = ("Image", "ImageDraw", "ImageFont", "np", "numpy", "cv2")
+
+
+def _module_level_imports(tree: ast.AST) -> set[str]:
+    """模組層 import 進來的名稱,**包含包在 try/except ImportError 裡的**。
+
+    第一版只看 `tree.body` 裡的 ImportFrom,結果把 7 支用
+    `try: from PIL import Image / except ImportError: ...` 的檔案全報成缺 import
+    —— 全是偽陽性。可選相依套件在這個 repo 就是這樣寫的。
+    """
+    out: set[str] = set()
+    stack = list(getattr(tree, "body", []))
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            out |= {a.asname or a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, (ast.Try, ast.If, ast.With)):
+            stack.extend(node.body)
+            stack.extend(getattr(node, "orelse", []))
+            stack.extend(getattr(node, "finalbody", []))
+            for h in getattr(node, "handlers", []):
+                stack.extend(h.body)
+    return out
+
+
+def lazy_import_gaps(src: str) -> list[str]:
+    """函式用了延遲 import 的名稱,但那個函式裡沒有把它 import 進來。"""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return []
+    have = _module_level_imports(tree)
+    gaps = []
+    for fn in [n for n in ast.walk(tree)
+               if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+        used = {n.value.id for n in ast.walk(fn)
+                if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name)
+                and n.value.id in LAZY_NAMES}
+        used |= {n.func.id for n in ast.walk(fn)
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                 and n.func.id in LAZY_NAMES}
+        used -= have
+        if not used:
+            continue
+        local = set()
+        for n in ast.walk(fn):
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                local |= {a.asname or a.name.split(".")[0] for a in n.names}
+        missing = used - local
+        if missing:
+            gaps.append(f"{fn.name}() 用了 {sorted(missing)} 但沒有 import")
+    return gaps
 
 
 def tool_files() -> list[Path]:
@@ -179,6 +235,9 @@ def violations() -> list[dict]:
         if p.name in risky:
             out.append({"kind": "tool", "name": p.name, "rule": "console",
                         "detail": "輸出非 ASCII 但沒有 reconfigure stdout"})
+        for gap in lazy_import_gaps(src):
+            out.append({"kind": "tool", "name": p.name, "rule": "lazy_import",
+                        "detail": gap})
 
     import verify_generated_artifacts as vg
     _, _, missing = vg.coverage()
@@ -357,6 +416,29 @@ def selftest() -> int:
           f"已登錄不再違規={len(fixed2)}(應 1,且是 gone.py)")
     if not ok3:
         fails.append("棘輪比對不正確")
+
+    print("\n(2c) lazy_import 規則的配對控制:漏 import 要抓到,包在 try 裡的不算漏")
+    # 這條規則是為了擋「把模組層 import 改成延遲 import 時漏掉某條路徑」——
+    # 2026-09-08 改 decode_fdicon.py 時真的漏了一次(`--overview` 分支會 NameError)。
+    # 但第一版的偵測把 `try: from PIL import Image / except ImportError:` 這種
+    # **可選相依**的寫法全報成缺 import,7 個全是偽陽性。兩邊都要測。
+    miss = lazy_import_gaps(
+        "def f():\n    return Image.new('RGB', (1, 1))\n")
+    okA = len(miss) == 1
+    tryform = lazy_import_gaps(
+        "try:\n    from PIL import Image\nexcept ImportError:\n    Image = None\n"
+        "def f():\n    return Image.new('RGB', (1, 1))\n")
+    okB = not tryform
+    local = lazy_import_gaps(
+        "def f():\n    from PIL import Image\n    return Image.new('RGB', (1, 1))\n")
+    okC = not local
+    ok2c = okA and okB and okC
+    print(f"    {'PASS' if okA else 'FAIL'}: 真的漏 import -> 抓到 {len(miss)} 筆(應 1)")
+    print(f"    {'PASS' if okB else 'FAIL'}: 模組層 try/except import -> {tryform or '不算漏'}")
+    print(f"    {'PASS' if okC else 'FAIL'}: 函式內延遲 import -> {local or '不算漏'}")
+    if not ok2c:
+        fails.append(f"lazy_import 規則失衡:漏抓={not okA}、"
+                     f"try 形式偽陽性={bool(tryform)}、函式內偽陽性={bool(local)}")
 
     print("\n(3b) 每一筆「永久豁免」都要有可執行的證明,不能只是基準線裡的一句話")
     base_p = load_baseline()
