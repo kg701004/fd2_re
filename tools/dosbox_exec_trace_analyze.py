@@ -61,6 +61,82 @@ DEFAULT_CS = "0170"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def selftest() -> int:
+    """`parse_trace` 把 live 追蹤的 `CS:EIP` 換算回 native 位址。
+
+    這個換算錯了不會報錯,只會讓整批 native 位址一起偏掉 —— 而那些位址正是拿去
+    比對 Ghidra 反組譯、判斷「哪段程式碼真的被執行到」的依據。所以第 (1) 題用
+    **手算**驗:`0170:001AC000` 減 `0x19C000` 必須得到 `0x10000`。
+
+    第 (2)(3) 題釘住兩個容易被忽略的靜默丟棄:CS 不符的行、以及換算後為負的行,
+    都會被跳過而不出現在結果裡。那是對的行為(不同 segment 的 EIP 沒有意義),
+    但必須是**刻意**的,不能是意外。
+
+    預設 `delta=0x19C000` / `CS=0170` 與本專案 live harness 的既有記錄一致
+    (資料選擇器 0178、程式碼 0170);第 (4) 題把它釘住。
+    """
+    import sys
+    import tempfile
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    def run(text, cs=DEFAULT_CS, delta=DEFAULT_DELTA):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "t.txt"
+            p.write_text(text, encoding="utf-8")
+            return parse_trace(p, cs, delta)
+
+    print("(1) 手算:0170:001AC000 - 0x19C000 = 0x10000")
+    nat, counts = run("0170:001AC000\n0170:001AC005\n")
+    ok1 = nat == {0x10000, 0x10005} and counts["0170"] == 2
+    print(f"    {'PASS' if ok1 else 'FAIL'}: natives={sorted(hex(n) for n in nat)}、"
+          f"CS 計數={dict(counts)}")
+    if not ok1:
+        fails.append(f"換算不符手算:{sorted(nat)}")
+
+    print("\n(2) CS 不符的行必須被跳過,但仍要計入 CS 統計")
+    nat2, counts2 = run("0170:001AC000\n0178:001AC000\n0028:00001234\n")
+    ok2 = nat2 == {0x10000} and counts2["0178"] == 1 and counts2["0028"] == 1
+    print(f"    {'PASS' if ok2 else 'FAIL'}: natives={sorted(hex(n) for n in nat2)}、"
+          f"CS 計數={dict(counts2)}")
+    if not ok2:
+        fails.append(f"CS 過濾或統計不正確:{sorted(nat2)} / {dict(counts2)}")
+
+    print("\n(3) 換算後為負、無冒號、EIP 非十六進位的行必須靜默跳過而不崩")
+    nat3, _ = run("0170:00000010\n0170:ZZZZ\nnotacolonline\n\n0170:001AC000\n")
+    ok3 = nat3 == {0x10000}
+    print(f"    {'PASS' if ok3 else 'FAIL'}: natives={sorted(hex(n) for n in nat3)}"
+          f"(只有合法且非負的那一行)")
+    if not ok3:
+        fails.append(f"壞行處理不正確:{sorted(nat3)}")
+
+    print("\n(4) 預設常數必須與 live harness 的既有記錄一致")
+    ok4 = DEFAULT_DELTA == 0x19C000 and DEFAULT_CS == "0170"
+    print(f"    {'PASS' if ok4 else 'FAIL'}: delta={DEFAULT_DELTA:#x}(應 0x19C000)、"
+          f"CS={DEFAULT_CS}(應 0170)")
+    if not ok4:
+        fails.append(f"預設常數與記錄不符:delta={DEFAULT_DELTA:#x} CS={DEFAULT_CS}")
+
+    print("\n(5) 非恆真控制:換一個 delta,同一份輸入必須算出不同的 native")
+    nat5, _ = run("0170:001AC000\n", delta=0x19C000 + 0x1000)
+    ok5 = nat5 == {0xF000} and nat5 != nat
+    print(f"    {'PASS' if ok5 else 'FAIL'}: delta+0x1000 -> "
+          f"{sorted(hex(n) for n in nat5)}(應 ['0xf000'])")
+    if not ok5:
+        fails.append("delta 沒有真的參與運算")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(換算手算 + CS 過濾與統計 + 壞行靜默跳過 + "
+          "預設常數 + delta 非恆真控制)。")
+    return 0
+
+
 def parse_trace(src: Path, cs_filter: str, delta: int) -> tuple[set[int], Counter]:
     natives: set[int] = set()
     cs_counts: Counter = Counter()
@@ -190,16 +266,21 @@ def cluster(addrs: list[int], gap: int) -> list[tuple[int, int]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("trace_file", type=Path, help="trace_unique_cseip.txt from dosbox_exec_trace.sh dedup")
+    ap.add_argument("trace_file", type=Path, help="trace_unique_cseip.txt from dosbox_exec_trace.sh dedup", nargs="?")
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--cs", default=DEFAULT_CS, help=f"live CS segment to translate (default {DEFAULT_CS} = main game code)")
     ap.add_argument("--delta", type=lambda s: int(s, 0), default=DEFAULT_DELTA, help=f"native = live_eip - delta (default 0x{DEFAULT_DELTA:X})")
     ap.add_argument("--cluster-gap", type=lambda s: int(s, 0), default=0x40, help="max byte gap to merge category-c addresses into one cluster (default 0x40)")
-    ap.add_argument("--out-dir", type=Path, required=True, help="directory to write natives.json/ghidra_results.json/summary.{json,txt}")
+    ap.add_argument("--out-dir", type=Path, help="directory to write natives.json/ghidra_results.json/summary.{json,txt}")
     ap.add_argument("--skip-docs-grep", action="store_true", help="skip the best-effort docs/*.md grep classification pass (faster for very large in_function sets)")
     ap.add_argument("--ghidra", help="passed through to ghidra_batch_probe.py --ghidra")
     ap.add_argument("--project-dir", help="passed through to ghidra_batch_probe.py --project-dir")
     ap.add_argument("--project-name", help="passed through to ghidra_batch_probe.py --project-name")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if args.trace_file is None or args.out_dir is None:
+        ap.error("需要 trace_file 與 --out-dir(或用 --selftest)")
 
     if not args.trace_file.exists():
         print(f"error: trace file not found: {args.trace_file}", file=sys.stderr)
