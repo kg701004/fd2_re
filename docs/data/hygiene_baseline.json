@@ -17,11 +17,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "export_sfx.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "export_sprites.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
