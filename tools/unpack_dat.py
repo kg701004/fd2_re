@@ -22,6 +22,10 @@ import os
 import sys
 import struct
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 MAGIC = b"LLLLLL"
 
 
@@ -72,10 +76,109 @@ def unpack(path: str, out_dir: str):
     return len(entries)
 
 
+def _make_container(offsets, payloads, magic=MAGIC):
+    """組一個合成容器,讓 selftest 能用手算的預期值檢查,而不是只跑真實檔案。"""
+    body = b"".join(payloads)
+    return magic + b"".join(struct.pack("<I", o) for o in offsets) + body
+
+
+def selftest():
+    """正向 + 5 種故障注入 + 真實檔案的配對控制。
+
+    重點是**壞輸入必須明確失敗**。這個 parser 的每一條健全性檢查都對應一種
+    「靜默解出垃圾」的失敗模式:magic 不對就當成容器解、目錄起點不合理就算出
+    離譜的 n、目錄非單調遞增就切出負長度、最後一筆超出檔尾就讀到檔案外面。
+    只驗「好輸入能解」證明不了任何一條。
+    """
+    fails = []
+
+    print("(1) 正向:手算的合成容器必須解出預期的 (offset, length)")
+    # 2 筆目錄 -> first = 6 + 2*4 = 14(0xe);payload 各 3、5 bytes
+    data = _make_container([14, 17], [b"abc", b"defgh"])
+    got = parse_directory(data)
+    ok1 = got == [(14, 3), (17, 5)]
+    print(f"    {'PASS' if ok1 else 'FAIL'}: {got}(預期 [(14, 3), (17, 5)])")
+    if not ok1:
+        fails.append(f"正向解析錯誤:{got}")
+
+    print("\n(2) 故障注入:每一種壞輸入都必須丟 NotAContainer,不能靜默解出垃圾")
+    cases = [
+        ("magic 不對", _make_container([14, 17], [b"abc", b"defgh"], magic=b"XXXXXX")),
+        ("目錄起點 < 6", MAGIC + struct.pack("<I", 4) + b"junkjunk"),
+        ("目錄起點未對齊 4", MAGIC + struct.pack("<I", 15) + b"j" * 20),
+        ("目錄非單調遞增", _make_container([20, 14], [b"abcdefgh", b"ij"])),
+        # n=1 時最後一筆就是 first,而 first<=len 前面已檢查過,那條規則永遠不會觸發
+        # —— 必須用 n=2 才測得到。第一版寫成 n=1,這題白過了一次。
+        ("最後一筆超出檔尾",
+         MAGIC + struct.pack("<I", 14) + struct.pack("<I", 9999) + b"payload"),
+    ]
+    for label, blob in cases:
+        try:
+            parse_directory(blob)
+            print(f"    FAIL: 「{label}」沒有被擋下")
+            fails.append(f"{label} 沒有被擋下")
+        except NotAContainer:
+            print(f"    PASS: 「{label}」-> NotAContainer")
+        except Exception as exc:                          # noqa: BLE001
+            # 丟別的例外也算漏 —— 呼叫端接的是 NotAContainer(見 main 的 --all)
+            print(f"    FAIL: 「{label}」丟出 {type(exc).__name__} 而非 NotAContainer")
+            fails.append(f"{label} 丟出 {type(exc).__name__}")
+
+    print("\n(3) 配對控制:真實 .DAT 要解得開,而真實的**非**容器檔要被擋下")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # 注意:`extracted/raw/` 放的是**已解包後**的子資源(ANI_000.bin 之類),
+    # 本身不是容器 —— 拿它當正向樣本會讓這題永遠失敗。原始 .DAT 在 org_game。
+    game = os.path.join(root, "org_game", "炎龍騎士團", "FLAME2")
+    real, hit, miss = None, 0, None
+    if os.path.isdir(game):
+        for fn in sorted(os.listdir(game)):
+            if not fn.upper().endswith(".DAT"):
+                continue
+            p2 = os.path.join(game, fn)
+            try:
+                hit = len(parse_directory(open(p2, "rb").read()))
+                real = p2
+                break
+            except (NotAContainer, OSError, IndexError, struct.error):
+                continue
+    exe = os.path.join(root, "org_game", "炎龍騎士團", "FLAME2", "FD2.EXE")
+    if os.path.isfile(exe):
+        try:
+            parse_directory(open(exe, "rb").read())
+            miss = False           # EXE 不該被當成容器
+        except NotAContainer:
+            miss = True
+    print(f"    真實資源檔 {os.path.basename(real) if real else '(找不到)'}: "
+          f"{'解出 %d 筆' % hit if hit else '無法解析'}")
+    print(f"    FD2.EXE 被擋下: {miss}")
+    if miss is False:
+        fails.append("FD2.EXE 被誤判為容器 —— magic 檢查沒有鑑別力")
+    if not real or hit <= 0:
+        fails.append("找不到任何解得開的真實容器 —— 這題的正向那半是空的,不算通過")
+
+    print("\n(4) 邊界:單筆目錄的容器,長度必須一路吃到檔尾")
+    one = MAGIC + struct.pack("<I", 10) + b"payload!!"
+    got4 = parse_directory(one)
+    ok4 = got4 == [(10, len(one) - 10)]
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {got4}")
+    if not ok4:
+        fails.append(f"單筆目錄邊界錯誤:{got4}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(手算正向 + 5 種故障注入 + 真實檔案配對控制 + 邊界)。")
+    return 0
+
+
 def main(argv):
     if len(argv) < 2:
         print(__doc__)
         return 1
+    if argv[1] == "--selftest":
+        return selftest()
     if argv[1] == "--list":
         list_container(argv[2])
         return 0

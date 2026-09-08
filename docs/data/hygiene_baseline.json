@@ -42,16 +42,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "decode_lmi.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "decode_sprite.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "disasm_le.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
@@ -62,22 +52,7 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "dump_item_sfx_tables.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "dump_native_ai_modes.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "dump_remap.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "dump_terrain_table.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
@@ -97,17 +72,7 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "export_command_labels.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "export_engine_assets.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "export_item_labels.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
@@ -133,11 +98,6 @@
   },
   {
    "name": "extract_maps.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "extract_native_field_event_rules.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
@@ -178,11 +138,6 @@
   },
   {
    "name": "fd2_sfx_screen_map.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "fd2_sfx_static_reachability.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
@@ -298,11 +253,6 @@
   },
   {
    "name": "trace_item_sfx_dispatch.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "unpack_dat.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },

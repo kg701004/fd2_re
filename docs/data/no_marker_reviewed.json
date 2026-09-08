@@ -33656,6 +33656,30 @@
    "excerpt": "Watcom 入口,以 `verify_findings.is_function_entry` 交叉確認)。**位移不是常數**——",
    "verdict": "benign",
    "note": "換行造成的接續句;同段落前一行已列出 0x375b2/0x3790a/0x3453e/0x34894 與呼叫端計數作為原版側依據"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3617,
+   "excerpt_sha1": "651ba8e8fb620ceea8a9fdd6471dd01110c4c773",
+   "excerpt": "第三種來源,並配**配對控制**:三種來源都沒有的工具必須照樣被抓到(實測登錄表放行 7 支、",
+   "verdict": "benign",
+   "note": "描述 verify_tool_hygiene 的 correctness 規則放寬與其配對控制,對象是本 repo 工具鏈的檢查涵蓋,非原版遊戲的證據主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3631,
+   "excerpt_sha1": "620af99eb8e401337d5cf3f63845f337715029aa",
+   "excerpt": "截斷。同一個函式對同一種壞輸入有兩種行為,其中一種是崩潰。**實測 36 個真實子資源會",
+   "verdict": "benign",
+   "note": "換行造成的接續句;同段落已載明 decode_sprite 的模式 0/dither 分支與 464/36 的逐檔對照結果,原版側依據是 extracted/raw 的真實子資源"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3640,
+   "excerpt_sha1": "3d52e23865ee9b82e973a9087f1cc94a5c36e7ee",
+   "excerpt": "並在 selftest 裡**實際起一個 `python -O` 子行程**驗證擋得住。",
+   "verdict": "benign",
+   "note": "描述 decode_lmi selftest 以 python -O 子行程驗證 assert→例外 的修正,對象是工具行為,非原版證據主張"
   }
  ]
 }

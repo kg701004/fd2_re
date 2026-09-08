@@ -33,8 +33,18 @@ What counts as checked
 ----------------------
 Per tool (`tools/*.py`, excluding `test_*.py`):
   docstring   a module docstring (a tool nobody can read is a tool nobody runs)
-  correctness a `--selftest`/`selftest` subcommand, or a `test_*.py` that
-              imports/invokes it
+  correctness a `--selftest`/`selftest` subcommand, a `test_*.py` that
+              imports/invokes it, **or** an entry in
+              `verify_generated_artifacts.REGISTRY` — a generator whose output
+              is regenerated and byte-diffed against the committed artifact on
+              every run is checked, and checked hard: that axis is what caught
+              `extract_native_treasure_event_rules.py` emitting `0x35baa` and
+              `dump_native_ai_modes.py`'s missing `--source`. Counting only
+              selftests marked 7 such tools as unchecked when they were in fact
+              under the strongest check in the repo. (The widening is paired
+              with a control in the selftest: a tool with *none* of the three
+              must still be flagged, or this would just be switching the rule
+              off.)
   console     no unguarded non-ASCII output (the cp950 class that silently
               killed 14 tools' output on this machine)
   shebang     LF, not CRLF (the Write tool produces CRLF here; a CR-terminated
@@ -128,10 +138,21 @@ def covered_by_tests() -> set[str]:
     return out
 
 
+def registry_tools() -> set[str]:
+    """Tools whose output is regenerated and byte-diffed every run.
+
+    Reads `verify_generated_artifacts.REGISTRY` rather than keeping a second
+    list, so the two cannot drift apart.
+    """
+    import verify_generated_artifacts as vg
+    return {tool for _art, tool, _argv, _kind in vg.REGISTRY}
+
+
 def violations() -> list[dict]:
     """Every current violation, as {kind, name, rule, detail}."""
     out: list[dict] = []
     tested = covered_by_tests()
+    regen = registry_tools()
 
     import verify_docs_match_cli as vd
     risky = {name for name, _ in vd.console_encoding_risks()}
@@ -151,9 +172,10 @@ def violations() -> list[dict]:
         if not doc:
             out.append({"kind": "tool", "name": p.name, "rule": "docstring",
                         "detail": "沒有模組 docstring"})
-        if not has_selftest(src) and p.name not in tested:
+        if not has_selftest(src) and p.name not in tested and p.name not in regen:
             out.append({"kind": "tool", "name": p.name, "rule": "correctness",
-                        "detail": "沒有 selftest,也沒有任何 test_*.py 涵蓋"})
+                        "detail": "沒有 selftest、沒有 test_*.py 涵蓋,"
+                                  "也不在產物重生登錄表裡"})
         if p.name in risky:
             out.append({"kind": "tool", "name": p.name, "rule": "console",
                         "detail": "輸出非 ASCII 但沒有 reconfigure stdout"})
@@ -253,6 +275,25 @@ def selftest() -> int:
             fails.append(f"補齊後仍被抓到 {sorted(got2)}")
     finally:
         probe.unlink(missing_ok=True)
+
+    print("\n(2b) correctness 三種來源的配對控制:三者皆無仍必須被抓到")
+    # 「在產物登錄表裡也算通過」是一個放寬。放寬與「把規則關掉」只差一步,所以這裡
+    # 同時測兩邊:登錄表裡的工具放行,而三種來源都沒有的工具**必須**照樣被抓到。
+    regen = registry_tools()
+    tested = covered_by_tests()
+    withself = {p.name for p in tool_files()
+                if has_selftest(p.read_text(encoding="utf-8", errors="replace"))}
+    v3 = {r["name"] for r in violations() if r["rule"] == "correctness"}
+    passed_by_regen = sorted(regen - withself - tested)
+    leaked = [n for n in passed_by_regen if n in v3]
+    none_of_three = sorted({p.name for p in tool_files()} - withself - tested - regen)
+    missed = [n for n in none_of_three if n not in v3]
+    ok2b = not leaked and not missed and passed_by_regen and none_of_three
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 只靠登錄表通過的 {len(passed_by_regen)} 支"
+          f"(仍被抓到的 {leaked or '無'});三者皆無的 {len(none_of_three)} 支"
+          f"(漏抓的 {missed or '無'})")
+    if not ok2b:
+        fails.append(f"correctness 放寬失衡:漏放 {leaked}、漏抓 {missed}")
 
     print("\n(3) 棘輪必須雙向:未登錄的違規要失敗,已修好的登錄項目也要失敗")
     cur = [{"kind": "tool", "name": "a.py", "rule": "docstring", "detail": ""}]
