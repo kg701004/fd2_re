@@ -92,6 +92,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "verify_docs_match_cli.py":  (["--selftest"], "offline"),
     "verify_generated_artifacts.py": (["--selftest"], "offline"),
     "verify_everything.py":      (["--selftest"], "offline"),
+    "extract_native_treasure_event_rules.py": (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
     "verify_findings.py":        (["--selftest"], "ghidra"),
     "find_enclosing_function.py": (["--selftest"], "ghidra"),

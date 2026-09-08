@@ -518,7 +518,7 @@ def scan_diff(base: str = "HEAD") -> list[Claim]:
     return parse_diff_claims(r.stdout or "")
 
 
-def parse_diff_claims(diff_text: str) -> list[Claim]:
+def parse_diff_claims(diff_text: str, reviewed: set | None = None) -> list[Claim]:
     """`scan_diff()` 的純解析部分,拆出來是為了能不碰真實 git/檔案系統就測試。
 
     2026-09-05:使用者要求「新建工具請正反向驗證」——`scan_diff()` 直接呼叫
@@ -526,7 +526,18 @@ def parse_diff_claims(diff_text: str) -> list[Claim]:
     不佔行號」這類邏輯,勢必要嘛真的改檔案跑 git diff(慢、會弄髒工作區、
     測試失敗時還要確保還原),要嘛把「解析 unified diff 文字」單獨拆成純函式、
     餵合成的 diff 字串進去。選後者。
+
+    2026-09-08:加上 `reviewed` 過濾。git 的 diff 配對會把**內容完全沒變**的既有段落
+    報成「新增」——只要在它上方插入一段夠像的文字就會發生。本輪就踩到:doc25 有 3 行
+    早已登錄審閱過(判定 benign),卻因為上方插入了 28 行而被 `--diff` 當成新增主張擋下,
+    逼人對舊文字補上無意義的標記。審閱表的 key 是 `(file, excerpt_sha1)`——**內容導向,
+    行號漂移不影響**——所以這裡直接查表跳過,而不是去修 diff 的配對。
     """
+    if reviewed is None:
+        try:
+            reviewed = {(r["file"], r["excerpt_sha1"]) for r in load_no_marker_reviews()}
+        except (OSError, KeyError, json.JSONDecodeError):
+            reviewed = set()
     claims: list[Claim] = []
     cur_file = None
     cur_line = None
@@ -543,7 +554,8 @@ def parse_diff_claims(diff_text: str) -> list[Claim]:
         if raw.startswith("+"):
             if cur_file is not None and cur_line is not None:
                 s = raw[1:].strip()
-                if len(s) >= 30 and EXCLUSION_TAG not in s:
+                if (len(s) >= 30 and EXCLUSION_TAG not in s
+                        and (cur_file, _sha(s[:200])) not in reviewed):
                     got = classify(s)
                     if got is not None:
                         status, hr, ho = got
@@ -869,6 +881,21 @@ def selftest() -> int:
     if [c.line for c in got] != [5, 6]:
         fails.append(f"parse_diff_claims 刪除行失敗:期望新增的兩行落在 [5, 6],"
                      f"實得 {[c.line for c in got]}——代表『-』行被誤算進新檔案行號")
+
+    # --- 已審閱行的跳過,必須是配對控制:跳過已登錄的,但仍抓得到真正新的 ---
+    # 2026-09-08:git 的 diff 配對會把內容沒變的既有段落報成「新增」(只要在它上方
+    # 插入夠像的文字)。跳過已審閱行是對的,但「跳過」與「把檢查關掉」只差一步,
+    # 所以這裡兩邊都測:未登錄的同類主張**必須**還是被抓到,否則這個放寬沒有意義。
+    checks += 1
+    _hdr = "+++ b/docs/knowledge-base/99-fake.md\n@@ -1,0 +1,1 @@\n"
+    _line = "這條結論已經確認無誤,完全沒有寫出任何來源標記,占滿三十字元供配對控制使用。"
+    _reviewed = {("99-fake.md", _sha(_line[:200]))}
+    _skipped = parse_diff_claims(_hdr + "+" + _line, reviewed=_reviewed)
+    _caught = parse_diff_claims(_hdr + "+" + _line, reviewed=set())
+    if _skipped or not _caught:
+        fails.append(f"已審閱跳過的配對控制失敗:已登錄應跳過(實得 {len(_skipped)} 筆,"
+                     f"應為 0),未登錄應抓到(實得 {len(_caught)} 筆,應 >0)——"
+                     "單邊通過代表這個放寬其實是把檢查關掉了")
 
     # --- stratify_no_marker:負對照,原版知識文件裡的 NO_MARKER 必須落在「要處理」---
     checks += 1

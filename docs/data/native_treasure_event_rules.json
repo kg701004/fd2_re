@@ -1,9 +1,12 @@
 {
   "source": {
     "file": "FD2.EXE",
-    "size": 357074,
-    "md5": "b97caf2239a27a896069d03549d96e1e",
-    "sha256": "222b7d067ad4450eb9c5f6e6bce1797d54bb050417ba39ced6067f8039f28c4f"
+    "size": 509158,
+    "md5": "33464c81e6a364fd0660141139aa8e6e",
+    "sha256": "8f4fdf4a86826b9e6a45a9464d30f313c2506febc67162d4a349094d566cb96b",
+    "edition": "新版(1998 重打包版,509158 B)",
+    "handler_source": "讀自事件跳表 0x51b91 第 58 格",
+    "stack_check": "0x3702f"
   },
   "rules": [
     {
