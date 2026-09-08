@@ -123,6 +123,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "patch_units_ap_dp_mv.py":   (["--selftest"], "offline"),
     "patch_units_hit_ev.py":     (["--selftest"], "offline"),
     "verify_dat_extraction_freshness.py": (["--selftest"], "offline"),
+    "trace_item_sfx_dispatch.py": (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),

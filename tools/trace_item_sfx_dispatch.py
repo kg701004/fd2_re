@@ -82,6 +82,87 @@ def _extract_pushes_before_call(instructions: list[dict], call_addr: int, num_ar
     return pushes[-num_args:]
 
 
+def selftest() -> int:
+    """`_classify_operand` 決定一個 push 是「常數 sfx index」還是「執行期才知道的值」。
+
+    分錯的後果不是崩潰,是**憑空生出一個 sfx index**(把暫存器當成常數)或
+    **漏掉一個已知常數**(把立即數當成暫存器)。所以這裡逐一釘住實際行為,
+    包含幾個容易忽略的邊界。
+
+    刻意記錄一個**已知的寬鬆處**:`int(operand, 0)` 會接受 Python 的底線分隔
+    數字(`"1_0"` -> 10)與二/八進位字面(`"0b101"` -> 5)。capstone 不會產生
+    這些寫法,所以實務上碰不到;但這代表分類器接受的比它該接受的寬,寫在這裡
+    以免日後有人把它當成嚴格的 x86 立即數解析器來用。
+    """
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    print("(1) capstone 實際會產生的兩類 operand 必須分對")
+    cases = [
+        ("0x11", "immediate", 17),
+        ("1", "immediate", 1),
+        ("0x0", "immediate", 0),
+        ("eax", "register_or_memory", None),
+        ("dword ptr [eax + 0x10]", "register_or_memory", None),
+        ("word ptr [ebp - 8]", "register_or_memory", None),
+    ]
+    for op, kind, val in cases:
+        got = _classify_operand(op)
+        ok = got["kind"] == kind and got.get("value") == val
+        print(f"    {'PASS' if ok else 'FAIL'}: {op!r:26} -> {got['kind']}"
+              f"{'' if val is None else ' = ' + str(got.get('value'))}")
+        if not ok:
+            fails.append(f"{op!r} 分類成 {got}")
+
+    print("\n(2) 前後空白不得影響分類(capstone 的 op_str 常帶空白)")
+    ok2 = _classify_operand(" 0x20 ") == {"kind": "immediate", "value": 32,
+                                          "raw": "0x20"}
+    print(f"    {'PASS' if ok2 else 'FAIL'}: ' 0x20 ' -> {_classify_operand(' 0x20 ')}")
+    if not ok2:
+        fails.append("空白沒有被正確處理(raw 應為去空白後的字串)")
+
+    print("\n(3) 不完整/空 operand 必須落到 register_or_memory,不能丟例外")
+    for op in ("0x", "", "   ", "ptr"):
+        try:
+            got = _classify_operand(op)
+            ok = got["kind"] == "register_or_memory"
+            print(f"    {'PASS' if ok else 'FAIL'}: {op!r:8} -> {got['kind']}")
+            if not ok:
+                fails.append(f"{op!r} 被當成 immediate")
+        except Exception as exc:                              # noqa: BLE001
+            print(f"    FAIL: {op!r} 丟出 {type(exc).__name__}")
+            fails.append(f"{op!r} 丟出 {type(exc).__name__}")
+
+    print("\n(4) 已知的寬鬆處:記錄現況,而不是假裝它不存在")
+    loose = {op: _classify_operand(op).get("value")
+             for op in ("1_0", "0b101", "0o17", "-5")}
+    ok4 = loose == {"1_0": 10, "0b101": 5, "0o17": 15, "-5": -5}
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {loose}")
+    print("    (capstone 不產生這些寫法,所以實務上碰不到;此題只是把現況釘住,"
+          "行為若改變會被看見)")
+    if not ok4:
+        fails.append(f"寬鬆處的行為變了:{loose}")
+
+    print("\n(5) 非恆真控制:兩類必須真的分得開,不能全部落到同一邊")
+    kinds = {_classify_operand(o)["kind"] for o in ("0x11", "eax")}
+    ok5 = len(kinds) == 2
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 分出 {sorted(kinds)}")
+    if not ok5:
+        fails.append("兩類 operand 被分到同一邊 —— 分類器沒有鑑別力")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(兩類分類 + 空白處理 + 不完整輸入 + 已知寬鬆處 + "
+          "非恆真控制)。")
+    return 0
+
+
 def _classify_operand(operand: str) -> dict:
     operand = operand.strip()
     try:
@@ -208,8 +289,9 @@ def trace(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--target", type=lambda s: int(s, 0), required=True, help="Address of the function whose callers to trace (e.g. 0x1c4cc).")
+    ap.add_argument("--target", type=lambda s: int(s, 0), help="Address of the function whose callers to trace (e.g. 0x1c4cc).")
     ap.add_argument("--num-args", type=int, default=4, help="Number of stdcall arguments to try to recover (default 4).")
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--output", type=Path, help="Optional path to write the full report as JSON.")
     ap.add_argument("--ghidra", default=gbp.DEFAULT_GHIDRA_INSTALL)
     ap.add_argument("--project-dir", default=gbp.DEFAULT_PROJECT_DIR)
@@ -218,6 +300,10 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if args.target is None:
+        ap.error("需要 --target(或用 --selftest)")
 
     report = trace(
         args.target, args.num_args,
