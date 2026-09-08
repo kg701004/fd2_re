@@ -113,6 +113,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "xmi2mid.py":                (["--selftest"], "offline"),
     "render_map.py":             (["--selftest"], "offline"),
     "sync_native_join_constructor.py": (["--selftest"], "offline"),
+    "export_acting_resources.py": (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),

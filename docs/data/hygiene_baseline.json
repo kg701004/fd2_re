@@ -27,11 +27,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "export_acting_resources.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "export_engine_assets.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
