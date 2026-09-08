@@ -154,32 +154,38 @@
   {
    "name": "ida_dump_bytes.py",
    "rule": "correctness",
-   "reason": "既有存量,尚未處理"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "ida_dump_pseudocode.py",
    "rule": "correctness",
-   "reason": "既有存量,尚未處理"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "ida_export_fd2_xrefs.py",
    "rule": "correctness",
-   "reason": "既有存量,尚未處理"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "ida_native_probe.py",
    "rule": "correctness",
-   "reason": "IDA Pro 內嵌腳本:import 的 ida_* 模組只存在於 IDA 直譯器裡,一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,交叉驗證管道見該檔 docstring。"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "ida_probe_data_xrefs.py",
    "rule": "correctness",
-   "reason": "既有存量,尚未處理"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "ida_probe_functions.py",
    "rule": "correctness",
-   "reason": "既有存量,尚未處理"
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
   },
   {
    "name": "patch_units_ap_dp_mv.py",

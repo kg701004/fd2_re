@@ -192,6 +192,32 @@ def key(v: dict) -> tuple[str, str]:
     return (v["name"], v["rule"])
 
 
+# 永久豁免的種類 -> 驗證這個宣稱的函式。
+#
+# 2026-09-08:「永久豁免」如果只是基準線裡的一個字串,它就是一張沒人查的免死金牌
+# ——而且會混進「還沒做」的數字裡,讓剩餘量看起來比實際可清的多。所以每一種豁免
+# 都要有**可執行的證明**,由 selftest 每次重跑。
+def _proves_ida_embedded(name: str) -> tuple[bool, str]:
+    """跑一次,必須因為 IDA 內嵌模組不存在而失敗。
+
+    這比「檔案裡有 import ida_*」強:後者只是文字比對,前者證明它在這台機器的
+    一般 python 下**確實不可執行**,因此不可能有 selftest。
+    """
+    import subprocess
+    p = TOOLS / name
+    if not p.exists():
+        return False, "檔案不存在"
+    r = subprocess.run([sys.executable, str(p)], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=120)
+    err = (r.stderr or "")
+    ok = r.returncode != 0 and "ModuleNotFoundError" in err and "ida" in err
+    tail = [l for l in err.strip().splitlines() if l.strip()]
+    return ok, (tail[-1][:70] if tail else f"rc={r.returncode}")
+
+
+PERMANENT_PROOFS = {"ida_embedded": _proves_ida_embedded}
+
+
 def load_baseline(path: Path = BASELINE) -> dict:
     if not path.exists():
         return {"_policy": "", "entries": []}
@@ -309,6 +335,27 @@ def selftest() -> int:
     if not ok3:
         fails.append("棘輪比對不正確")
 
+    print("\n(3b) 每一筆「永久豁免」都要有可執行的證明,不能只是基準線裡的一句話")
+    base_p = load_baseline()
+    perm = [e for e in base_p.get("entries", []) if e.get("permanent")]
+    unproven, disproven = [], []
+    for e in perm:
+        kind = e.get("permanent")
+        prover = PERMANENT_PROOFS.get(kind)
+        if prover is None:
+            unproven.append(f"{e['name']}({kind}:沒有對應的驗證函式)")
+            continue
+        ok, detail = prover(e["name"])
+        if not ok:
+            disproven.append(f"{e['name']}: {detail}")
+    ok3b = perm and not unproven and not disproven
+    print(f"    {'PASS' if ok3b else 'FAIL'}: {len(perm)} 筆永久豁免,"
+          f"無法驗證 {unproven or '無'},驗證不成立 {disproven or '無'}")
+    if unproven or disproven:
+        fails.append(f"永久豁免的宣稱站不住:{(unproven + disproven)[:3]}")
+    elif not perm:
+        fails.append("基準線裡沒有任何永久豁免 —— 若確實沒有,請移除這條檢查")
+
     print("\n(4) 基準線每一筆都要指向真實存在的東西,且附理由(避免腐爛成免死金牌)")
     base = load_baseline()
     bad = []
@@ -381,10 +428,18 @@ def main() -> int:
         return 0
 
     if a.update_baseline:
-        entries = [{"name": v["name"], "rule": v["rule"],
-                    "reason": next((e.get("reason") for e in base.get("entries", [])
-                                    if (e["name"], e["rule"]) == key(v)), "既有存量,尚未處理")}
-                   for v in sorted(cur, key=lambda x: (x["rule"], x["name"]))]
+        prev = {(e["name"], e["rule"]): e for e in base.get("entries", [])}
+        entries = []
+        for v in sorted(cur, key=lambda x: (x["rule"], x["name"])):
+            old = prev.get(key(v), {})
+            ent = {"name": v["name"], "rule": v["rule"],
+                   "reason": old.get("reason", "既有存量,尚未處理")}
+            # permanent 是「這一筆永遠不可能清掉」的標記,由 selftest 逐筆實跑驗證
+            # (見 PERMANENT_PROOFS)。重建基準線時必須保留,否則證明過的豁免會
+            # 悄悄退回成「還沒做」,讓剩餘量看起來比實際可清的多。
+            if old.get("permanent"):
+                ent["permanent"] = old["permanent"]
+            entries.append(ent)
         BASELINE.parent.mkdir(parents=True, exist_ok=True)
         BASELINE.write_text(json.dumps(
             {"_policy": "本檔是棘輪基準線:只准變短。新違規不得加入,"
@@ -400,7 +455,11 @@ def main() -> int:
             print(f"  - {e['rule']:<12} {e['name']}")
         return 0
 
-    print(f"目前違規 {len(cur)} 筆,基準線 {len(base.get('entries', []))} 筆")
+    perm = [e for e in base.get("entries", []) if e.get("permanent")]
+    print(f"目前違規 {len(cur)} 筆,基準線 {len(base.get('entries', []))} 筆"
+          f"(其中**永久豁免 {len(perm)} 筆**,實際待處理 {len(cur) - len(perm)} 筆)")
+    # 分母要誠實:把「永遠不可能清」和「還沒做」混在同一個數字裡,會讓進度看起來
+    # 比實際差,也會讓終點看起來比實際遠。
     if a.cross_check:
         print("\n跨工具交叉驗證:")
         bad_x = False
