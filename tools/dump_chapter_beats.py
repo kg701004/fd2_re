@@ -15,6 +15,7 @@ cdecl 從右到左 push,故「最近 N 個 push」reverse 後才是函式簽名�
   python3 dump_chapter_beats.py <EXE> all <outdir>          全 30 章 pre/post,寫 outdir/chNN_{pre,post}.json
   python3 dump_chapter_beats.py <EXE> handler <hex> [end]   單支 handler(除錯用)
 """
+import os
 import sys
 import json
 
@@ -43,7 +44,8 @@ PRIM = {
     0x25977: ('bgm', 2),       # (track,loop?) — push(0,-1)->reversed(-1,0)=doc47 "(-1,0)=停止" ✓
     0x13185: ('scroll_step', 1), # (unit_idx)往上逐格走並視需要跟焦；完整 body 0x13185..0x13314
     0x1f525: ('palfade', 0),   # 無參數；delta 64→0 共65次 0x11d40(0,255,delta)，每次 delay 2ms
-    0x375b2: ('delay', 1),     # (ms) — doc47 "0x375b2(200ms)" ✓
+    0x375b2: ('delay', 1),     # (ms) — doc47 "0x375b2(200ms)" ✓ **舊版位址**
+    0x3790a: ('delay', 1),     # 同一函式在現行參考版的位址(見 EDITION_MOVED)
     0x32975: ('deactivate_unit', 1), # (unit_idx)直接設 unit[+5]=1；原版是死亡／隱藏／未啟用
     0x32999: ('spawn_intro', 1),   # (group)內部 call 0x10b4e 後做 FDOTHER #9 的 12-pass 轉場；acting 由 caller 另行呼叫
     0x134e4: ('reset_pose', 0),    # 所有 materialized units pose=down，然後 delay(20ms)
@@ -53,7 +55,8 @@ PRIM = {
     0x233c6: ('layout_units', 0),  # 依 call-site 的 X/Y/pose 陣列佈置單位；由 address-keyed binding script 化
     0x205da: ('loadch_call', 0),  # 章節載入呼叫本身 0 參數;章節號由前面 mov [0x3c03] 設定,見 loadch_var
     # 本輪(2026-07-04)unknown×既有原語表交叉補上(event_handler_dump.py PRIM/VAR + doc25/26):
-    0x3453e: ('unit_inactive', 1), # (idx) 查 [0x53a45]+idx*0x50+5 bit0；1=死亡／隱藏，0=有效存活
+    0x3453e: ('unit_inactive', 1), # (idx) 查 [0x53a45]+idx*0x50+5 bit0；1=死亡／隱藏，0=有效存活 **舊版位址**
+    0x34894: ('unit_inactive', 1), # 同一函式在現行參考版的位址(見 EDITION_MOVED)
     0x33499: ('roster_has', 1),   # (char_id) 查我方名冊 [0x53bf7](doc26 已知)
     0x111ba: ('load_res', 0),     # 載資源(純 fopen/fseek/fread,doc47 §5 已知,參數個數未逐一核對)
     0x25a96: ('play_sfx', 1),     # 播音效(event_handler_dump.py 已知,參數個數未逐一核對)
@@ -64,8 +67,29 @@ PRIM = {
     0x10652: ('prepare_chapter_aux_graphics', 0),
     0x11cac: ('redraw', 1),       # 主重繪函式,每幀呼叫(doc25 已知「每幀呼叫」)
 }
+# 2026-09-08:上面 PRIM 與下面 SKIP 原本**全部是舊版(357074 B,已遺失)位址**。
+# 在現行參考版下它們指向的東西不存在,結果不是報錯,而是靜默降級——該被認出來的
+# 原語變成 `op: unknown`,該被跳過的編譯器輔助函式變成一條假 beat。實測整批章節的
+# unknown 數 82 → 222(+140),沒有任何錯誤訊息。
+#
+# 判定方式(每一項都實測過,不是照 delta 換算——delay 移了 0x358、unit_inactive 移了
+# 0x356,**位移不是常數**):在現行 EXE 裡數呼叫端。舊位址全部是 0 個呼叫端;
+# 新位址 delay=186、unit_inactive=50、stack-check=541。
+#
+# 對應關係是靠**同一個呼叫點**建立的(章節 handler 裡同一個位置,舊版呼叫舊位址、
+# 新版呼叫新位址),不是靠位址算術。
+EDITION_MOVED = {
+    # op 名 -> (舊版位址, 現行參考版位址)
+    'delay':         (0x375b2, 0x3790a),
+    'unit_inactive': (0x3453e, 0x34894),
+}
+UNIT_INACTIVE_OPSTRS = {hex(a) for a in EDITION_MOVED['unit_inactive']}
+
 # 非原語(編譯器插入的堆疊探測/輔助函式),線性掃描時直接跳過、清空 pushes 不記 beat:
-SKIP = {0x36cd7, 0x375c0}  # 0x375c0 本輪核對過等同 event_handler_dump.py 的 SKIP 清單
+# 0x36cd7 / 0x375c0 是舊版位址(現行 EXE 各 0 個呼叫端,保留只為讓舊資料仍可重現);
+# 0x3702f 是現行版本的 Watcom stack-check(541 個呼叫端),缺了它每個 handler 的序頭
+# 都會被記成一條假 beat。
+SKIP = {0x36cd7, 0x375c0, 0x3702f}
 
 # Official IDA Pro 9.4 data xrefs plus Docker Capstone direct-instruction
 # validation close every writer of [0x53AFA].  These three chapter-handler
@@ -255,7 +279,10 @@ def structure_control_flow(insns, beats):
     # The raw predicate call is absorbed into the structured condition, and the
     # shared merge suffix is emitted once.
     for call_idx, call in enumerate(insns):
-        if call.mnemonic != 'call' or call.op_str != '0x3453e':
+        # 2026-09-08:原本硬編 '0x3453e' 這個**舊版**位址,在現行參考版下這個
+        # 條件永遠不成立——不會報錯,只是這整段結構化條件的處理靜默不執行。
+        # 改成比對 EDITION_MOVED['unit_inactive'] 的整組別名。
+        if call.mnemonic != 'call' or call.op_str not in UNIT_INACTIVE_OPSTRS:
             continue
 
         slot = None
@@ -471,7 +498,7 @@ def cmd_handler(cg, fx, start, end):
         print(json.dumps(b, ensure_ascii=False))
 
 
-def cmd_all(cg, fx, outdir):
+def cmd_all(cg, fx, outdir, quiet=False):
     import os
     os.makedirs(outdir, exist_ok=True)
     pre_entries = resolve_table(fx, TABLE_PRE, N_CHAPTERS)
@@ -504,14 +531,109 @@ def cmd_all(cg, fx, outdir):
     with open(os.path.join(outdir, '_stats.json'), 'w', encoding='utf-8') as f:
         json.dump({'per_chapter': stats, 'unknown_targets': all_unknown}, f, ensure_ascii=False, indent=1)
 
-    print(f"寫出 {len(stats)} 個 chNN_{{pre,post}}.json 到 {outdir}")
-    print(f"unknown 原語(位址→出現次數,依次數排序):")
-    for addr, cnt in sorted(all_unknown.items(), key=lambda kv: -kv[1]):
-        print(f"  {addr}: {cnt}")
+    if not quiet:
+        print(f"寫出 {len(stats)} 個 chNN_{{pre,post}}.json 到 {outdir}")
+        print(f"unknown 原語(位址→出現次數,依次數排序):")
+        for addr, cnt in sorted(all_unknown.items(), key=lambda kv: -kv[1]):
+            print(f"  {addr}: {cnt}")
     return stats, all_unknown
 
 
+DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'org_game', '炎龍騎士團', 'FLAME2', 'FD2.EXE')
+# 2026-09-08 實測值(修好位址表之後)。這是天花板不是目標:允許往下,不允許悄悄變多。
+UNKNOWN_CEILING = 110
+
+
+def resolvable(cg, addr):
+    """這個位址在**當前這份 EXE** 裡有沒有人呼叫。
+
+    位址表過期不會報錯,只會靜默降級(認得的原語變 unknown、該跳過的變假 beat)。
+    唯一可靠的訊號就是「現行 image 裡有沒有 call 指到它」——舊位址一律 0。
+    """
+    n = 0
+    for lo, blob in ((cg.base, cg.code),):
+        for i in range(len(blob) - 5):
+            if blob[i] != 0xE8:
+                continue
+            rel = int.from_bytes(blob[i + 1:i + 5], 'little', signed=True)
+            if lo + i + 5 + rel == addr:
+                n += 1
+    return n
+
+
+def selftest():
+    fails = []
+    cg = CG(DEFAULT_EXE)
+    fx = fixup_map(cg.d, cg.meta)
+
+    print("(1) 位址表必須在當前 EXE 裡解得開 —— 過期不會報錯,只會靜默降級")
+    dead_prim = sorted(a for a in PRIM if resolvable(cg, a) == 0)
+    dead_skip = sorted(a for a in SKIP if resolvable(cg, a) == 0)
+    # 舊版位址刻意保留(讓舊資料仍可重現),所以只要求「每個 op 至少有一個活的位址」。
+    live_ops = {}
+    for a, (op, _n) in PRIM.items():
+        live_ops[op] = live_ops.get(op, False) or resolvable(cg, a) > 0
+    starved = sorted(op for op, live in live_ops.items() if not live)
+    ok1 = not starved
+    print(f"    {'PASS' if ok1 else 'FAIL'}: {len(live_ops)} 個 op,完全解不開的 {starved or '無'}")
+    print(f"    (參考:PRIM 中 {len(dead_prim)} 個舊版位址、SKIP 中 {len(dead_skip)} 個,"
+          f"皆為刻意保留)")
+    if not ok1:
+        fails.append(f"這些 op 在當前 EXE 完全沒有可用位址:{starved}")
+
+    print("\n(2) stack-check 必須在 SKIP 裡,否則每個 handler 序頭都會變成一條假 beat")
+    sc = [a for a in SKIP if resolvable(cg, a) > 100]
+    ok2 = bool(sc)
+    print(f"    {'PASS' if ok2 else 'FAIL'}: SKIP 中高呼叫量(>100)的項目 {[hex(a) for a in sc]}")
+    if not ok2:
+        fails.append("SKIP 裡沒有任何一個看起來像 stack-check 的項目")
+
+    print("\n(3) 故障注入:把某個 op 的所有位址換成解不開的,第 (1) 項必須失敗")
+    keep = dict(PRIM)
+    try:
+        for a, (op, n) in list(PRIM.items()):
+            if op == 'delay':
+                del PRIM[a]
+        PRIM[0xDEAD00] = ('delay', 1)
+        live = any(resolvable(cg, a) > 0 for a, (op, _) in PRIM.items() if op == 'delay')
+        ok3 = not live
+        print(f"    {'PASS' if ok3 else 'FAIL'}: 注入後 delay 仍有可用位址={live}(應為 False)")
+        if not ok3:
+            fails.append("故障注入沒有生效,第 (1) 項是白過的")
+    finally:
+        PRIM.clear()
+        PRIM.update(keep)
+
+    print("\n(4) unknown 數量不得悄悄變多(天花板 %d)" % UNKNOWN_CEILING)
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        _stats, unknown = cmd_all(cg, fx, td, quiet=True)
+    n = sum(unknown.values())
+    ok4 = n <= UNKNOWN_CEILING
+    print(f"    {'PASS' if ok4 else 'FAIL'}: unknown {n} 個(上限 {UNKNOWN_CEILING})")
+    if not ok4:
+        fails.append(f"unknown 從 {UNKNOWN_CEILING} 增加到 {n} —— 很可能又有位址表過期")
+
+    print("\n(5) 非空控制:必須真的抽出 30 章 × pre/post")
+    ok5 = len(_stats) == 60
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 抽出 {len(_stats)} 筆(應為 60)")
+    if not ok5:
+        fails.append(f"只抽出 {len(_stats)} 筆")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + 故障注入 + "
+          "unknown 天花板 + 非空控制)。")
+    return 0
+
+
 def main(argv):
+    if len(argv) == 2 and argv[1] == '--selftest':
+        return selftest()
     if len(argv) < 3:
         print(__doc__)
         return 1

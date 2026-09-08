@@ -1,3 +1,16 @@
+"""fd2_re - IDA Pro 內部腳本:傾印單一函式的反編譯結果。
+
+**這支不是給命令列跑的**,它 import 的 `ida_auto`/`idaapi`/`ida_hexrays` 只存在於
+IDA Pro 的內嵌直譯器裡,在一般 python 下必定 `ModuleNotFoundError`。用法是把它
+交給 IDA 的批次模式(容器內路徑 `/work/decomp.out` 是輸出),目標位址由環境變數
+`IDA_TARGET` 指定,預設 `0x1B8E7`。
+
+因此它也**沒有、而且不可能有 selftest**:任何自檢都得先進得了 IDA 的執行環境。
+它在 `docs/data/hygiene_baseline.json` 裡以這個理由列管。與它對應的、跑得起來的
+交叉驗證管道是 `tools/ida_export_fd2_xrefs.py` 的輸出,以及本專案主要使用的
+Ghidra 路徑(`tools/ghidra_batch_probe.py`)。
+"""
+
 import ida_auto
 import ida_funcs
 import ida_xref

@@ -1,0 +1,870 @@
+{
+ "_policy": "本檔是棘輪基準線:只准變短。新違規不得加入,除非附上具體理由;不再違規的項目必須移除,否則會誤放行。由 tools/verify_tool_hygiene.py --update-baseline 產生。",
+ "entries": [
+  {
+   "name": "audit_global_writers.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "callgraph_le.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "char_summary.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_ani.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_dato.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_fdicon.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_figani.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_image.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_lmi.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "decode_sprite.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "disasm_le.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "dosbox_exec_trace_analyze.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "dump_item_sfx_tables.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "dump_native_ai_modes.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "dump_remap.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "dump_terrain_table.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "event_handler_dump.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_acting_resource_set.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_acting_resources.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_command_labels.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_engine_assets.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_item_labels.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_sfx.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_sprites.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "export_story_index_map.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "extract_all.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "extract_maps.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "extract_native_field_event_rules.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_battle_autoplay.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_chapter_sweep.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_crash_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_crash_ladder.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_floodfill_stack_probe.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_game_state.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_in_battle_check.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_sfx_screen_map.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_sfx_static_reachability.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_speaker_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_stat_override.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_zero_read_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "font_grid.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "gtl2wopl.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "hash_fd2_reference.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_dump_bytes.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_dump_pseudocode.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_export_fd2_xrefs.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_native_probe.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_* 模組只存在於 IDA 直譯器裡,一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,交叉驗證管道見該檔 docstring。"
+  },
+  {
+   "name": "ida_probe_data_xrefs.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_probe_functions.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "patch_units_ap_dp_mv.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "patch_units_hit_ev.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "query_verified_address.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "realesrgan_batch.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "realesrgan_upscale.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "render_map.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "render_story.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "sync_native_field_events.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "sync_native_join_constructor.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "sync_native_treasures.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "trace_item_sfx_dispatch.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "unpack_dat.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "verify_dat_extraction_freshness.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "xmi2mid.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ai_action_dispatch_live_trace.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/attack_spell_presentation_dispatch.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/audit_53b13_writers.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/battle_events.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/battle_sfx_map.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/bgm_per_chapter_tables.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/campaign_sample.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ch24_enemy_template.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ch27_roster_character_names.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/chapter_beats/_stats.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch00_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch00_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch01_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch01_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch02_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch02_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch03_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch03_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch04_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch04_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch05_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch05_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch06_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch06_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch07_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch07_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch08_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch08_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch09_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch09_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch10_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch10_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch11_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch11_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch12_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch12_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch13_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch13_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch14_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch14_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch15_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch15_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch16_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch16_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch17_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch17_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch18_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch18_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch19_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch19_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch20_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch20_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch21_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch21_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch22_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch22_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch23_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch23_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch24_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch24_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch25_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch25_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch26_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch26_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch27_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch27_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch28_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch28_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch29_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch29_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/classchange_montage_rendering.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/fd2-reference-files.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/fdmus_timb_instrumentation.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/fdtxt000_name_table.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/glyph_map.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/glyph_map_independent_check.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/hygiene_baseline.json",
+   "rule": "regenerable",
+   "reason": "這是 verify_tool_hygiene.py 自己的棘輪基準線,由 --update-baseline 產生。把它登錄進重生比對是套套邏輯——重生它必然與自身相同,證明不了任何事。**永久豁免**,但刻意留在清單裡而不是從分母裡消失,否則就變成一個看不見的例外。"
+  },
+  {
+   "name": "docs/data/ida/fd2_xrefs.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/item_sfx_dispatch_trace.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/item_sfx_known_types.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/journey_global_initial_phase.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/known_address_errata.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/native_chapter_tables.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/native_join_constructor.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/native_town_records.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/no_marker_reviewed.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/per_chapter_handler_tables.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/per_chapter_join_table.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/play_sfx_a_0x25a96_disasm.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/portrait_names.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/preparation_required_characters.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/remake_excluded_claims.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/runtime_speaker_resolved.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/sfx_call_sites_by_function.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/sfx_index_callers.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/sfx_pool_call_site_inventory.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/shops.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/spell_sfx_mapping.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/spell_table_and_presentation.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/turn_events.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/save-town-boundary-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-church-class-change-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-church-revive-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-hotel-raw-return-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-preparation-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-shop-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui_sfx_index_semantics.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/unicode_to_glyph.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/verified_addresses.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/weapon_range.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  }
+ ]
+}

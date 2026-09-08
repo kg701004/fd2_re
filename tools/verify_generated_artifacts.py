@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -353,9 +354,42 @@ def coverage() -> tuple[int, int, list[str]]:
     return len(all_art), len(all_art) - len(missing), missing
 
 
+def discover() -> list[tuple[str, list[str]]]:
+    """Propose (tool, artifacts) pairs for the uncovered backlog.
+
+    The registry is curated on purpose — a name match is a lead, not proof, and
+    every entry here has to be confirmed by an actual regeneration. But going
+    through 109 uncovered artifacts by hand needs a starting list, and writing
+    that list as a throwaway script is exactly the habit that produced a false
+    mismatch earlier today. So it lives here, next to the registry it feeds.
+
+    A tool is proposed only if it *writes* (json.dump / open(...,"w") /
+    write_text) and mentions the artifact's basename; readers are excluded,
+    which is what separates `char_summary.py` (reads characters.json, emits a
+    PNG) from a real generator.
+    """
+    _, _, missing = coverage()
+    by_base: dict[str, list[str]] = {}
+    for m in missing:
+        by_base.setdefault(Path(m).name, []).append(m)
+    out = []
+    for tool in sorted((ROOT / "tools").glob("*.py")):
+        if tool.name.startswith("test_") or tool.name.startswith("verify_"):
+            continue
+        src = tool.read_text(encoding="utf-8", errors="replace")
+        if not re.search(r"json\.dump|write_text\(|open\([^)]*[\"']w[\"btx+]*[\"']", src):
+            continue
+        hits = sorted({a for base, arts in by_base.items() if base in src for a in arts})
+        if hits:
+            out.append((tool.name, hits))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--discover", action="store_true",
+                    help="列出未涵蓋產物的候選產生器(是線索,不是證明——每一項仍須實跑確認)")
     ap.add_argument("--only")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--coverage", action="store_true",
@@ -364,6 +398,15 @@ def main() -> int:
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.discover:
+        props = discover()
+        print(f"未涵蓋產物的候選產生器 {len(props)} 支"
+              f"(**線索,不是證明**——每一項都要實跑重生比對過才可登錄):")
+        for tool, arts in props:
+            print(f"  {tool}")
+            for x in arts:
+                print(f"      {x}")
+        return 0
     if a.coverage:
         total, covered, missing = coverage()
         print(f"docs/data 已提交 JSON {total} 個,登錄表涵蓋 {covered} 個,"

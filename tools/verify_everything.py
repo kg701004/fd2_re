@@ -29,6 +29,12 @@ The axes, and what each exists to catch
                cross-checks three of them against an independent implementation.
                `artifacts` proves the FILES still reproduce; this proves the
                CONCLUSIONS still do.
+  hygiene      `verify_tool_hygiene.py` -- the ratchet. Every other axis asks
+               "is what we have correct?"; this one asks "did something arrive
+               without the checks that would have caught it?", and is the only
+               axis that can fail on a file nobody has thought about yet. It
+               fails on a violation not in the baseline AND on a baseline entry
+               that no longer violates, so the backlog can only shrink.
   worklist     `worklist_status.py --selftest` -- the worklist parser.
   tests        every `tools/test_*.py`.
   wsl          the same offline selftests under the OTHER interpreter. This axis
@@ -118,6 +124,18 @@ def axis_discrim(round_no: int, timeout: int) -> dict:
     return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}")}
 
 
+def axis_hygiene(timeout: int) -> dict:
+    """Selftest first (its cross-tool checks are what stop it drifting from the
+    tools that own each rule), then the gate with --cross-check."""
+    rc0, _ = run([PY, "tools/verify_tool_hygiene.py", "--selftest"], timeout)
+    if rc0 != 0:
+        return {"ok": False, "detail": "hygiene selftest 失敗(棘輪本身壞了)"}
+    rc, out = run([PY, "tools/verify_tool_hygiene.py", "--cross-check"], timeout)
+    tail = [l for l in out.splitlines() if l.strip()]
+    return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}"),
+            "fails": [l.strip() for l in out.splitlines() if "**" in l][:3]}
+
+
 def axis_findings(timeout: int) -> dict:
     """Its selftest has to pass first: the strict-vs-loose criterion contrast is
     what makes the re-derivation meaningful, so a broken criterion must not be
@@ -169,6 +187,7 @@ AXES = {
     "docs_cli": lambda r, t: axis_simple("docs_cli", ["tools/verify_docs_match_cli.py"], t),
     "artifacts": lambda r, t: axis_simple("artifacts", ["tools/verify_generated_artifacts.py"], t),
     "findings": lambda r, t: axis_findings(t),
+    "hygiene": lambda r, t: axis_hygiene(t),
     "worklist": lambda r, t: axis_simple("worklist", ["tools/worklist_status.py", "--selftest"], t),
     "tests": lambda r, t: axis_tests(t),
     "wsl": lambda r, t: axis_wsl(t),
@@ -181,7 +200,7 @@ def selftest() -> int:
     fails = []
     print("(1) 每個軸都必須真的被呼叫到,且名稱與 AXES 表一致")
     ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "findings",
-                        "worklist", "tests", "wsl"}
+                        "hygiene", "worklist", "tests", "wsl"}
     print(f"    {'PASS' if ok1 else 'FAIL'}: {sorted(AXES)}")
     if not ok1:
         fails.append("AXES 表與預期不符")

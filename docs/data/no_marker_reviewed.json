@@ -33616,6 +33616,46 @@
    "excerpt": "**⚠已於2026-09-07補完並訂正，見本檔案末「item 1117 殘留補完」段落。** **誠實範圍**：只驗證了7個已知type對應的sub-index(1/5/6/7/8/12/14)，17個子項裡其餘10個",
    "verdict": "benign",
    "note": "在既有誠實範圍句前加的前向指標，指向本檔末已附0x51f75逐格證據的補完段落"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3581,
+   "excerpt_sha1": "b7a7bdb89c1fb832195fb7c6efdc2490cc0b31b2",
+   "excerpt": "使用者問「為什麼每次驗證都會多出新問題」,量出來的答案是:**重複跑同樣的檢查找不到新東西**(5 輪八軸零跨輪不一致、8 支 selftest",
+   "verdict": "benign",
+   "note": "工具流程敘述(重複執行 vs 擴大涵蓋的命中率對比),陳述的是本 repo 驗證器的執行結果,不是對原版遊戲的證據主張;不應要求原版側標記"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3582,
+   "excerpt_sha1": "2393cb219dab086f0bee70a74399eca490a9f3de",
+   "excerpt": "跑 5 次逐位元組相同、同軸加深取樣仍全數有鑑別力),**但每一次擴大涵蓋都會中**——登錄表加",
+   "verdict": "benign",
+   "note": "同上一行的接續句,對象是登錄表擴充的命中率,非原版證據主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3602,
+   "excerpt_sha1": "b3d16947c3fb1a94ffb5aae72b1cc2eeffd0d68f",
+   "excerpt": "工具鏈時實測出來的)。`--cross-check` 再斷言本檔的判定與",
+   "verdict": "benign",
+   "note": "描述 verify_tool_hygiene 與 verify_selftest_discrimination 的交叉斷言機制,對象是工具之間的一致性,非原版證據主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3608,
+   "excerpt_sha1": "7e21d5876a167b4649c3f86dd0fec31afe09a593",
+   "excerpt": "且附理由)、非恆假、三項跨工具交叉驗證;突變評分 7/12 DISCRIMINATING。2026-09-08 基準線:**173 筆**(correctness 63、regenerable 110);`console`/`shebang` 皆為 0。",
+   "verdict": "benign",
+   "note": "selftest 項目清單與棘輪基準線筆數,對象是本工具自身狀態,非原版證據主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3620,
+   "excerpt_sha1": "083b4f7a0629c58d158137612585475069745aed",
+   "excerpt": "Watcom 入口,以 `verify_findings.is_function_entry` 交叉確認)。**位移不是常數**——",
+   "verdict": "benign",
+   "note": "換行造成的接續句;同段落前一行已列出 0x375b2/0x3790a/0x3453e/0x34894 與呼叫端計數作為原版側依據"
   }
  ]
 }
