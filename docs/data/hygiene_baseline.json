@@ -147,11 +147,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "hash_fd2_reference.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "ida_dump_bytes.py",
    "rule": "correctness",
    "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
@@ -194,11 +189,6 @@
   },
   {
    "name": "patch_units_hit_ev.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "query_verified_address.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
   },
