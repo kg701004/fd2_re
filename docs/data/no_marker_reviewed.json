@@ -33680,6 +33680,14 @@
    "excerpt": "並在 selftest 裡**實際起一個 `python -O` 子行程**驗證擋得住。",
    "verdict": "benign",
    "note": "描述 decode_lmi selftest 以 python -O 子行程驗證 assert→例外 的修正,對象是工具行為,非原版證據主張"
+  },
+  {
+   "file": "98-tooling-infrastructure.md",
+   "line": 3641,
+   "excerpt_sha1": "d267024b3a8b0ea6e2448dfff9dfca3631593ca8",
+   "excerpt": "(實測抓到 6 個 IndexError),同一段邏輯補上守衛後必須判 OK。沒有這一對,「7/7 安全」",
+   "verdict": "benign",
+   "note": "描述 verify_truncation_robustness selftest 的配對控制(刻意無守衛的合成解碼器判 CRASH / 補守衛後判 OK),對象是本工具的鑑別力,非原版遊戲的證據主張"
   }
  ]
 }

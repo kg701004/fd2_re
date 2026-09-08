@@ -61,20 +61,119 @@ FRAME_BYTES = W * H  # 64000
 
 def rle_2mode(data, pos, dst, dst_off, count):
     """opcode 2 / 6 共用的 2-mode RLE:高2bit==0b11 → run,否則單一 literal。"""
+    # 2026-09-08:這個迴圈的條件只看 `written < count`,**完全沒有位置邊界**——
+    # 截斷或損壞的 script 會讓 `data[pos]` 直接 IndexError 整支崩掉。另外
+    # `ctrl == 0xC0` 時 `n = 0`,written 不前進,只能靠讀到檔尾崩潰才停下來。
+    # 兩者都改成「資料用完或無法前進就停」,把已寫入的部分交回給呼叫端。
     written = 0
+    end_of_data = len(data)
     while written < count:
+        if pos >= end_of_data:
+            break
         ctrl = data[pos]; pos += 1
         if (ctrl & 0xC0) == 0xC0:
             n = ctrl & 0x3F
+            if pos >= end_of_data:
+                break
             val = data[pos]; pos += 1
             end = min(dst_off + written + n, dst_off + count)
             for i in range(dst_off + written, end):
                 dst[i] = val
+            if n == 0:
+                # 0 長度的 run 不前進;照原樣會空轉到讀爆為止。當成資料結束。
+                break
             written += n
         else:
+            if dst_off + written >= len(dst):
+                break
             dst[dst_off + written] = ctrl
             written += 1
     return pos
+
+
+def selftest():
+    """手算 2-mode RLE + 兩個剛修掉的缺陷的回歸測試。
+
+    這個迴圈原本的終止條件**只看 written < count**,沒有任何位置邊界:截斷或
+    損壞的 script 會讓 `data[pos]` 直接 IndexError;而 `ctrl == 0xC0` 時
+    `n = 0`、written 不前進,只能靠讀到檔尾崩潰才停下來。兩者都要有回歸測試,
+    否則下次重寫這個迴圈會再犯一次。
+    """
+    import sys as _sys
+    if hasattr(_sys.stdout, "reconfigure"):
+        _sys.stdout.reconfigure(encoding="utf-8")
+        _sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    print("(1) 手算:高 2 bit == 0b11 是 run(長度 = ctrl & 0x3F),否則單一 literal")
+    dst = bytearray(8)
+    pos = rle_2mode(b"\xC3\x77\x05\x06", 0, dst, 0, 5)
+    ok1 = bytes(dst[:5]) == b"\x77\x77\x77\x05\x06" and pos == 4
+    print(f"    {'PASS' if ok1 else 'FAIL'}: {bytes(dst[:5]).hex()} pos={pos}"
+          f"(預期 777777 0506, pos=4)")
+    if not ok1:
+        fails.append(f"手算不符:{bytes(dst[:5]).hex()} pos={pos}")
+
+    print("\n(2) 回歸:截斷的 script 以前會 IndexError —— 現在必須安全返回")
+    for label, data, count in (("控制位元組後就沒了", b"\xC3", 5),
+                               ("完全空的", b"", 5),
+                               ("literal 中途截斷", b"\x01\x02", 8)):
+        d2 = bytearray(16)
+        try:
+            p = rle_2mode(data, 0, d2, 0, count)
+            print(f"    PASS: 「{label}」-> pos={p}")
+        except Exception as exc:                              # noqa: BLE001
+            print(f"    FAIL: 「{label}」丟出 {type(exc).__name__}")
+            fails.append(f"{label} 丟出 {type(exc).__name__}")
+
+    print("\n(3) 回歸:ctrl == 0xC0 是 0 長度的 run,written 不前進,以前只能讀爆才停")
+    d3 = bytearray(16)
+    try:
+        p3 = rle_2mode(b"\xC0\x00" * 200, 0, d3, 0, 16)
+        ok3 = True
+        print(f"    PASS: 200 個 0 長度 run -> pos={p3},沒有空轉到讀爆")
+    except Exception as exc:                                  # noqa: BLE001
+        ok3 = False
+        print(f"    FAIL: 丟出 {type(exc).__name__}")
+        fails.append(f"0 長度 run 仍會 {type(exc).__name__}")
+
+    print("\n(4) 不變量:永遠不會寫超出 dst,pos 永遠落在 [0, len(data)]")
+    bad = []
+    import random as _r
+    rng = _r.Random(1234)
+    for _ in range(300):
+        data = bytes(rng.randrange(256) for _ in range(rng.randint(0, 40)))
+        size = rng.randint(1, 32)
+        d4 = bytearray(size)
+        try:
+            p = rle_2mode(data, 0, d4, 0, size)
+            if not (0 <= p <= len(data)):
+                bad.append((data[:6].hex(), size, p))
+        except Exception as exc:                              # noqa: BLE001
+            bad.append((data[:6].hex(), size, type(exc).__name__))
+    ok4 = not bad
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 300 組隨機輸入"
+          + ("" if ok4 else f",異常 {bad[:3]}"))
+    if not ok4:
+        fails.append(f"隨機輸入下的不變量被破壞:{bad[:3]}")
+
+    print("\n(5) 非恆真控制:合法輸入必須真的寫進 dst,而不是每次都提早 break")
+    d5 = bytearray(16)
+    rle_2mode(b"\xCF\xAB", 0, d5, 0, 15)
+    written = sum(1 for b in d5[:15] if b == 0xAB)
+    ok5 = written == 15
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 0xCF(run 15) 寫入 {written}/15")
+    if not ok5:
+        fails.append(f"合法 run 只寫入 {written}/15 —— 守衛加得太嚴,把正常路徑也擋掉了")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(手算 + 截斷回歸 + 0 長度 run 回歸 + "
+          "隨機輸入不變量 + 非恆真控制)。")
+    return 0
 
 
 def run_vm(script, cmd_count, palette, framebuf):
@@ -210,6 +309,8 @@ def cmd_frames(path, out_dir):
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] == "--selftest":
+        return selftest()
     if len(argv) < 3:
         print(__doc__)
         return 1

@@ -20,7 +20,13 @@ import sys
 import os
 import struct
 import glob
-from PIL import Image
+# 2026-09-08:PIL 改成延遲 import。純解碼(rle)不需要 Pillow,模組層 hard import
+# 會讓整支工具在沒有 Pillow 的 WSL python3 下直接 ModuleNotFoundError
+# ——decode_text / decode_sprite / decode_lmi 都踩過同一個坑。
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 def load_palette(path):
@@ -41,9 +47,82 @@ def rle(body, total):
         if b <= 0xC0:
             out.append(b)
         else:
+            # 2026-09-08:原本直接 `body[i]`,run 的控制位元組落在資料尾端時
+            # IndexError 整支崩掉。以真實 FIGANI 前綴掃 401 個截斷長度,實測
+            # 有 10 個會踩到。decode_sprite / decode_lmi / decode_ani 同一類。
+            if i >= n:
+                break
             v = body[i]; i += 1
             out += bytes([v]) * (b - 0xC0)
     return bytes(out[:total]).ljust(total, b"\0")
+
+
+def selftest():
+    """手算 codec + 截斷回歸 + 跨工具同族對照。
+
+    這支的 codec 與 `decode_lmi.decode_pixels` 是同一族(<=0xC0 是單一 literal,
+    >0xC0 是 (c-0xC0) 次的 run)。兩支各自獨立實作,所以第 (3) 題拿它們互相對照
+    ——比只驗自己的預期值強:要一起錯才騙得過去。
+    """
+    fails = []
+
+    print("(1) codec 手算")
+    cases = [
+        ("literal 0x05", b"\x05", 1, b"\x05"),
+        ("邊界 0xC0 仍是 literal", b"\xC0", 1, b"\xC0"),
+        ("run 0xC3 -> 3 次", b"\xC3\x77", 3, b"\x77\x77\x77"),
+        ("混合", b"\x01\xC2\x09\x02", 4, b"\x01\x09\x09\x02"),
+        ("不足時補 0", b"\x01", 4, b"\x01\x00\x00\x00"),
+    ]
+    for label, body, total, want in cases:
+        got = rle(body, total)
+        ok = got == want
+        print(f"    {'PASS' if ok else 'FAIL'}: {label} -> {got.hex()}"
+              + ("" if ok else f"(預期 {want.hex()})"))
+        if not ok:
+            fails.append(f"{label}: {got.hex()} != {want.hex()}")
+
+    print("\n(2) 回歸:run 的控制位元組落在資料尾端,以前會 IndexError 整支崩掉")
+    try:
+        got2 = rle(b"\x01\xC5", 6)
+        ok2 = got2 == b"\x01" + b"\x00" * 5
+        shown = got2.hex()
+    except IndexError:
+        ok2, shown = False, "(IndexError)"
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {shown}")
+    if not ok2:
+        fails.append("截斷的 run 沒有被安全處理")
+
+    print("\n(3) 跨工具對照:同族 codec 的獨立實作必須給出相同結果")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from decode_lmi import decode_pixels
+        diff = [c[0] for c in cases if decode_pixels(c[1], c[2]) != rle(c[1], c[2])]
+        ok3 = not diff
+        print(f"    {'PASS' if ok3 else 'FAIL'}: 5 個案例"
+              + ("全部一致" if ok3 else f",不一致 {diff}"))
+        if not ok3:
+            fails.append(f"與 decode_lmi 同族 codec 不一致:{diff}")
+    except ImportError as exc:
+        print(f"    SKIP: 無法 import decode_lmi({exc})")
+
+    print("\n(4) 不變量:輸出長度永遠等於 total,不論輸入多短")
+    bad = [(b.hex(), t, len(rle(b, t)))
+           for b in (b"", b"\xC5", b"\x01" * 9, b"\xFF" * 5)
+           for t in (1, 8, 576) if len(rle(b, t)) != t]
+    ok4 = not bad
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 12 組組合"
+          + ("" if ok4 else f",不符 {bad[:3]}"))
+    if not ok4:
+        fails.append(f"輸出長度不等於 total:{bad[:3]}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(codec 手算 + 截斷回歸 + 跨工具同族對照 + 長度不變量)。")
+    return 0
 
 
 def frames(path):
@@ -72,12 +151,15 @@ def save(path, palp, outdir):
     os.makedirs(outdir, exist_ok=True)
     base = os.path.splitext(os.path.basename(path))[0]
     for k, (w, h, px) in enumerate(frames(path)):
+        from PIL import Image
         im = Image.frombytes("P", (w, h), px)
         im.putpalette(pal)
         im.convert("RGB").save(os.path.join(outdir, f"{base}_m{k}.png"))
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] == "--selftest":
+        return selftest()
     if len(argv) < 4:
         print(__doc__); return 1
     if argv[1] == "--batch":

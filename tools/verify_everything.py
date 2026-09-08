@@ -35,6 +35,10 @@ The axes, and what each exists to catch
                axis that can fail on a file nobody has thought about yet. It
                fails on a violation not in the baseline AND on a baseline entry
                that no longer violates, so the backlog can only shrink.
+  truncation   `verify_truncation_robustness.py` -- feeds every byte-level
+               decoder truncated and corrupted input and requires it to degrade
+               rather than crash. Four decoders had the same unguarded-index
+               bug; 36 real sub-resources hit one of them.
   worklist     `worklist_status.py --selftest` -- the worklist parser.
   tests        every `tools/test_*.py`.
   wsl          the same offline selftests under the OTHER interpreter. This axis
@@ -136,6 +140,18 @@ def axis_hygiene(timeout: int) -> dict:
             "fails": [l.strip() for l in out.splitlines() if "**" in l][:3]}
 
 
+def axis_truncation(timeout: int) -> dict:
+    """Selftest first: its fault injection is what makes a clean run mean
+    anything -- "7/7 safe" from a checker that cannot detect an unguarded
+    decoder is not a result."""
+    rc0, _ = run([PY, "tools/verify_truncation_robustness.py", "--selftest"], timeout)
+    if rc0 != 0:
+        return {"ok": False, "detail": "truncation selftest 失敗(故障注入抓不到)"}
+    rc, out = run([PY, "tools/verify_truncation_robustness.py"], timeout)
+    tail = [l for l in out.splitlines() if l.strip().startswith("共")]
+    return {"ok": rc == 0, "detail": (tail[-1][:110] if tail else f"rc={rc}")}
+
+
 def axis_findings(timeout: int) -> dict:
     """Its selftest has to pass first: the strict-vs-loose criterion contrast is
     what makes the re-derivation meaningful, so a broken criterion must not be
@@ -188,6 +204,7 @@ AXES = {
     "artifacts": lambda r, t: axis_simple("artifacts", ["tools/verify_generated_artifacts.py"], t),
     "findings": lambda r, t: axis_findings(t),
     "hygiene": lambda r, t: axis_hygiene(t),
+    "truncation": lambda r, t: axis_truncation(t),
     "worklist": lambda r, t: axis_simple("worklist", ["tools/worklist_status.py", "--selftest"], t),
     "tests": lambda r, t: axis_tests(t),
     "wsl": lambda r, t: axis_wsl(t),
@@ -200,7 +217,7 @@ def selftest() -> int:
     fails = []
     print("(1) 每個軸都必須真的被呼叫到,且名稱與 AXES 表一致")
     ok1 = set(AXES) == {"audit", "discrim", "docs_cli", "artifacts", "findings",
-                        "hygiene", "worklist", "tests", "wsl"}
+                        "hygiene", "truncation", "worklist", "tests", "wsl"}
     print(f"    {'PASS' if ok1 else 'FAIL'}: {sorted(AXES)}")
     if not ok1:
         fails.append("AXES 表與預期不符")

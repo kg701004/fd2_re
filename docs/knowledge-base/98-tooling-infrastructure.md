@@ -3607,6 +3607,52 @@ selftest 6 項:故障注入(缺 docstring/selftest 的合成工具必須被抓�
 後必須不再被抓到,否則規則恆為真)、雙向棘輪、基準線完整性(每筆都要指向真實存在的東西
 且附理由)、非恆假、三項跨工具交叉驗證;突變評分 7/12 DISCRIMINATING。2026-09-08 基準線:**173 筆**(correctness 63、regenerable 110);`console`/`shebang` 皆為 0。
 
+### 第二批:同一個 bug 類別在 4 支解碼器上,做成常設工具 `verify_truncation_robustness.py`
+
+第一批在 `decode_sprite.py` 抓到「直接索引 `body[i]` 不做邊界檢查」之後,問題是
+**這個類別還在哪裡**。用 grep 找 `x = buf[i]` 得到 29 個命中,但其中大半是偽陽性
+——守衛寫在 `while` 標頭上(例如 `while len(out) < total and i < n:`)。
+
+所以改用**執行**當地面真相:拿真實 `org_game`/`extracted/raw` 資料的每一個前綴去打
+每個純解碼函式,看誰真的丟例外。結果乾淨俐落:
+
+| 解碼器 | 401 個截斷長度 |
+|---|---|
+| `decode_sprite.decode_rle_sprite` | 無(第一批已修) |
+| `decode_lmi.decode_pixels` | 無(第一批已修) |
+| `decode_image.decode_rle` | 無 —— 本來就有守衛 |
+| **`decode_dato.rle`** | **`IndexError` × 10** |
+
+`decode_ani.rle_2mode` 更嚴重:它的迴圈條件**只看 `written < count`,完全沒有位置
+邊界**,而且 `ctrl == 0xC0` 時 `n = 0`、`written` 不前進——只能靠讀到檔尾崩潰才停。
+兩者都已修成「資料用完或無法前進就停」。
+
+**新工具 `tools/verify_truncation_robustness.py`。** 這個類別不該靠下次有人想起來
+才發現,所以做成常設檢查:對登錄的 7 個解碼入口,餵每個前綴長度 + 位元翻轉 +
+全 `0xC0`/`0xFF`/`0x00` 的極端輸入(每支 244 次呼叫),要求**只能丟它自己宣告的例外**。
+容器 parser 本來就該拒絕非容器,所以 `NotAContainer`/`NotLMI` 是合法的;`IndexError`
+這種「讀過頭」一律是發現。
+
+判準是「降級,不要崩」而不是「解得對」——截斷的資源沒有正確答案。理由很實際:這些
+解碼器的呼叫端通常是 `extract_all.py`/`export_sprites.py` 那種跑幾百個子資源的批次
+迴圈,一個 `IndexError` 會**殺掉整輪**,而且看起來像「工具壞了」而不是「這個資源比較短」。
+
+selftest 5 項,關鍵是第 (1)(2) 的配對:一個**刻意沒有守衛**的合成解碼器必須被判 CRASH
+(實測抓到 6 個 IndexError),同一段邏輯補上守衛後必須判 OK。沒有這一對,「7/7 安全」
+只是一句沒有內容的話。第 (3) 題再證明「合法例外清單」不是萬用赦免:同一個函式宣告
+`NotAContainer` 時判 OK、不宣告時判 CRASH。已接為 `verify_everything` 第 10 軸。
+
+`decode_dato` 的 selftest 另有一個**跨工具對照**:它的 codec 與 `decode_lmi.decode_pixels`
+同族但各自獨立實作,5 個手算案例要求兩邊結果一致——要一起錯才騙得過去。
+`decode_ani` 的 selftest 有 300 組隨機輸入的不變量檢查,外加一個**非恆真控制**
+(合法的 `0xCF` run 必須真的寫滿 15 個 byte),否則「加守衛」可能只是把正常路徑也擋掉。
+
+突變評分:decode_dato 2/12、decode_ani 1/12、verify_truncation_robustness 5/12,
+皆 DISCRIMINATING。decode_ani 偏低是因為該檔大半是 `run_vm` 等 selftest 未涵蓋的區域,
+突變多落在那裡——這是涵蓋範圍的事實,不是 selftest 失效。
+
+**基準線 163 → 161。** `correctness` 53 → 51。
+
 ### 開始清基準線:第一批 173 → 163,過程抓到 3 個真缺陷
 
 棘輪只保證欠帳不會長大,不會自己變短。第一批逐項處理:
