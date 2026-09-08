@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -354,6 +355,26 @@ def coverage() -> tuple[int, int, list[str]]:
     return len(all_art), len(all_art) - len(missing), missing
 
 
+def no_generator_set() -> set[str]:
+    """已由 hygiene 棘輪**證明沒有產生器**的產物。
+
+    2026-09-08:分母要一路誠實。「110 個從未被重生比對過」在 40 個已證明沒有
+    產生器之後就變成誤導 —— 那 40 個不是「還沒做」,是「這條路不適用」。
+    來源是 `docs/data/hygiene_baseline.json` 的 `permanent: no_generator`,
+    而那個標記本身由 `verify_tool_hygiene` 第 (3b) 項每次實跑驗證(它會回頭呼叫
+    本檔的 `discover()`,只要有人寫了產生器就會失敗)。兩邊互相牽制,不會各自漂移。
+    """
+    p = ROOT / "docs" / "data" / "hygiene_baseline.json"
+    if not p.exists():
+        return set()
+    try:
+        entries = json.loads(p.read_text(encoding="utf-8")).get("entries", [])
+    except (OSError, ValueError):
+        return set()
+    return {e["name"] for e in entries
+            if e.get("rule") == "regenerable" and e.get("permanent") == "no_generator"}
+
+
 def discover() -> list[tuple[str, list[str]]]:
     """Propose (tool, artifacts) pairs for the uncovered backlog.
 
@@ -372,6 +393,12 @@ def discover() -> list[tuple[str, list[str]]]:
     by_base: dict[str, list[str]] = {}
     for m in missing:
         by_base.setdefault(Path(m).name, []).append(m)
+    # 2026-09-08:第一版只要求「這支工具會寫檔」且「原始碼裡提到這個檔名」,
+    # 結果把一堆**讀取者**列成候選(七支工具都提到 glyph_map.json,沒有一支產生它)。
+    # 改成要求檔名出現在**寫入語境**:同一行或前後兩行內有寫入呼叫,或該行本身
+    # 是把路徑指派給看起來像輸出的變數。仍然只是線索,但雜訊少很多。
+    WRITE = re.compile(r"json\.dump|write_text\(|\bopen\([^)]*[\"']w[\"btx+]*[\"']"
+                       r"|\bout\w*\s*=|\bdst\w*\s*=|--output|--json\b")
     out = []
     for tool in sorted((ROOT / "tools").glob("*.py")):
         if tool.name.startswith("test_") or tool.name.startswith("verify_"):
@@ -379,9 +406,17 @@ def discover() -> list[tuple[str, list[str]]]:
         src = tool.read_text(encoding="utf-8", errors="replace")
         if not re.search(r"json\.dump|write_text\(|open\([^)]*[\"']w[\"btx+]*[\"']", src):
             continue
-        hits = sorted({a for base, arts in by_base.items() if base in src for a in arts})
+        lines = src.splitlines()
+        hits = set()
+        for i, line in enumerate(lines):
+            for base, arts in by_base.items():
+                if base not in line:
+                    continue
+                ctx = "\n".join(lines[max(0, i - 2):i + 3])
+                if WRITE.search(ctx):
+                    hits.update(arts)
         if hits:
-            out.append((tool.name, hits))
+            out.append((tool.name, sorted(hits)))
     return out
 
 
@@ -409,9 +444,16 @@ def main() -> int:
         return 0
     if a.coverage:
         total, covered, missing = coverage()
-        print(f"docs/data 已提交 JSON {total} 個,登錄表涵蓋 {covered} 個,"
-              f"**未涵蓋 {len(missing)} 個**(從未被重生比對過):")
-        for m in missing:
+        nogen = no_generator_set()
+        pending = [m for m in missing if m not in nogen]
+        print(f"docs/data 已提交 JSON {total} 個:登錄表涵蓋 {covered} 個、"
+              f"已證明沒有產生器 {len(nogen)} 個、**尚待處理 {len(pending)} 個**")
+        print("\n尚待處理(有機會登錄,或需要查清楚):")
+        for m in pending:
+            print("  ", m)
+        print("\n已證明沒有產生器(人工記錄的 RE 分析/工具狀態檔;"
+              "宣稱由 hygiene 第 (3b) 項驗證):")
+        for m in sorted(nogen):
             print("  ", m)
         return 0
     rows = run_all(a.only, a.timeout)
@@ -420,9 +462,13 @@ def main() -> int:
     total, covered, missing = coverage()
     print(f"\n共 {len(rows)} 項:相同 {sum(1 for r in rows if r['verdict']=='IDENTICAL')}"
           f" / 漂移 {len(drift)} / 無法執行 {len(err)}")
-    # 分母跟著印,否則上面那行讀起來像「全部產物都對」。
-    print(f"涵蓋率:docs/data 的 {total} 個已提交 JSON 中,{covered} 個有登錄項目,"
-          f"{len(missing)} 個**從未被重生比對過**(`--coverage` 可列出)")
+    # 分母跟著印,否則上面那行讀起來像「全部產物都對」;而未涵蓋的那堆還要再拆一次,
+    # 否則「已證明沒有產生器」會被混進「還沒做」裡,讓剩餘量看起來比實際多。
+    nogen = no_generator_set()
+    pending = [m for m in missing if m not in nogen]
+    print(f"涵蓋率:docs/data 的 {total} 個已提交 JSON 中,{covered} 個有登錄項目、"
+          f"{len(nogen)} 個**已證明沒有產生器**(重生比對不適用)、"
+          f"{len(pending)} 個**尚待處理**(`--coverage` 可列出)")
     if drift:
         print("  **漂移(需人工判斷是工具變了還是產物被手改)**:", [r["artifact"] for r in drift])
     if err:

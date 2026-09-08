@@ -215,7 +215,30 @@ def _proves_ida_embedded(name: str) -> tuple[bool, str]:
     return ok, (tail[-1][:70] if tail else f"rc={r.returncode}")
 
 
-PERMANENT_PROOFS = {"ida_embedded": _proves_ida_embedded}
+def _proves_no_generator(name: str) -> tuple[bool, str]:
+    """證明「這個產物沒有產生器」——所以重生比對這條路本身不適用。
+
+    這不是把檢查關掉:證明的內容是**可證偽的**。`verify_generated_artifacts.discover()`
+    會掃全部工具,找出在寫入語境裡提到這個檔名的候選;只要有人日後寫了產生器,
+    這個宣稱就會立刻失敗,逼人回來重新處理。
+
+    repo 裡大多數 `docs/data` JSON 是人工記錄的 RE 分析結果(反組譯發現、dispatch
+    表、位址庫),本來就沒有東西可以重生。把它們留在「還沒做」裡,只會讓剩餘量
+    看起來比實際可清的多。
+    """
+    import verify_generated_artifacts as vg
+    if not (ROOT / name).exists():
+        return False, "檔案不存在"
+    for tool, arts in vg.discover():
+        if name in arts:
+            return False, f"{tool} 看起來會產生它 —— 宣稱不成立,請登錄或查清楚"
+    return True, "沒有任何工具在寫入語境提到它"
+
+
+PERMANENT_PROOFS = {
+    "ida_embedded": _proves_ida_embedded,
+    "no_generator": _proves_no_generator,
+}
 
 
 def load_baseline(path: Path = BASELINE) -> dict:
