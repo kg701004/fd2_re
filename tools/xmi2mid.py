@@ -73,6 +73,95 @@ def find_evnt_timb(d):
     return seqs
 
 
+def selftest():
+    """`find_evnt_timb` 的危險在於它**逐 byte 掃描**找 tag(因為 XMI 內含非
+    chunk 對齊),所以任何 4 個 byte 剛好等於 `TIMB`/`EVNT` 都會被當成 chunk。
+    這種掃描器不會崩,只會安靜地多認或少認一首曲子。
+
+    所以這裡驗的是:合成資料的手算結果、TIMB 只綁到**其後最近**的 EVNT、
+    以及真實 FDMUS 的曲目數與 timb 長度。
+    """
+    import os
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    def chunk(tag, body):
+        return tag + struct.pack(">I", len(body)) + body + (b"\x00" if len(body) & 1 else b"")
+
+    print("(1) 手算:TIMB 之後的第一個 EVNT 取到那份 timb,第二個 EVNT 取不到")
+    blob = (chunk(b"TIMB", b"\x01\x02\x03\x04")
+            + chunk(b"EVNT", b"\xAA" * 6)
+            + chunk(b"EVNT", b"\xBB" * 4))
+    got = find_evnt_timb(blob)
+    ok1 = (len(got) == 2 and got[0][0] == b"\x01\x02\x03\x04" and got[1][0] == b""
+           and got[0][2] == 6 and got[1][2] == 4)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: {len(got)} 首,timb 長度 "
+          f"{[len(t) for t, _o, _l in got]},evnt 長度 {[l for _t, _o, l in got]}")
+    if not ok1:
+        fails.append(f"TIMB/EVNT 綁定錯誤:{[(len(t), o, l) for t, o, l in got]}")
+
+    print("\n(2) 手算:沒有前置 TIMB 的 EVNT,timb 必須是空的(不能沿用更早的)")
+    blob2 = chunk(b"EVNT", b"\xCC" * 4) + chunk(b"TIMB", b"\x09") + chunk(b"EVNT", b"\xDD" * 2)
+    got2 = find_evnt_timb(blob2)
+    ok2 = len(got2) == 2 and got2[0][0] == b"" and got2[1][0] == b"\x09"
+    print(f"    {'PASS' if ok2 else 'FAIL'}: timb 長度 {[len(t) for t, _o, _l in got2]}"
+          f"(應為 [0, 1])")
+    if not ok2:
+        fails.append(f"無前置 TIMB 的處理錯誤:{[len(t) for t, _o, _l in got2]}")
+
+    print("\n(3) 截斷不得崩潰:逐一掃過每個前綴長度")
+    bad = {}
+    for cut in range(len(blob) + 1):
+        try:
+            find_evnt_timb(blob[:cut])
+            list(iter_chunks(blob[:cut], 0, cut))
+        except Exception as exc:                              # noqa: BLE001
+            bad[type(exc).__name__] = bad.get(type(exc).__name__, 0) + 1
+    ok3 = not bad
+    print(f"    {'PASS' if ok3 else 'FAIL'}: {len(blob) + 1} 個前綴"
+          + ("全部安全" if ok3 else f",例外 {bad}"))
+    if not ok3:
+        fails.append(f"截斷時丟出例外:{bad}")
+
+    print("\n(4) 真實 FDMUS:有曲目的檔案必須各解出 1 首,且 timb 長度合理")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    d = os.path.join(root, "extracted", "raw", "FDMUS")
+    withseq = badlen = 0
+    if os.path.isdir(d):
+        for fn in sorted(os.listdir(d)):
+            s = find_evnt_timb(open(os.path.join(d, fn), "rb").read())
+            if not s:
+                continue
+            withseq += 1
+            for timb, off, ln in s:
+                if not (0 < len(timb) <= 256 and ln > 0):
+                    badlen += 1
+    ok4 = withseq > 10 and badlen == 0
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {withseq} 個檔案有曲目,"
+          f"timb/evnt 長度異常 {badlen}")
+    if not ok4:
+        fails.append(f"真實 FDMUS:{withseq} 個有曲目、{badlen} 個長度異常")
+
+    print("\n(5) 非恆真控制:純雜訊裡不應該憑空冒出曲目")
+    noise = bytes((i * 71 + 13) & 0xFF for i in range(4096))
+    n5 = len(find_evnt_timb(noise))
+    ok5 = n5 == 0
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 4096 bytes 雜訊 -> {n5} 首(應為 0)")
+    if not ok5:
+        fails.append(f"雜訊中誤認 {n5} 首曲 —— 逐 byte 掃描的偽陽性")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(TIMB/EVNT 綁定手算 ×2 + 截斷窮舉 + 真實 FDMUS + "
+          "雜訊非恆真控制)。")
+    return 0
+
+
 def parse_evnt(d, off, ln):
     """解析一段 EVNT → 絕對時間事件清單。回傳 (events, stats)。
     events: list of (abs_tick, midi_bytes)。"""
@@ -187,6 +276,8 @@ def convert(d, out_path=None, verbose=True):
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] == '--selftest':
+        return selftest()
     if len(argv) < 2:
         print(__doc__); return 1
     if argv[1] == "--info":

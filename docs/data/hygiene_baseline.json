@@ -203,11 +203,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "xmi2mid.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "docs/data/ai_action_dispatch_live_trace.json",
    "rule": "regenerable",
    "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
