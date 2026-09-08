@@ -106,6 +106,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "callgraph_le.py":           (["--selftest"], "offline"),
     "dump_remap.py":             (["--selftest"], "offline"),
     "decode_fdicon.py":          (["--selftest"], "offline"),
+    "sync_native_treasures.py":  (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),

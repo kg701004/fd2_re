@@ -208,11 +208,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "sync_native_treasures.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "trace_item_sfx_dispatch.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
