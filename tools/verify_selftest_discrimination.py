@@ -120,6 +120,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "export_story_index_map.py": (["--selftest"], "offline"),
     "export_sfx.py":             (["--selftest"], "offline"),
     "font_grid.py":              (["--selftest"], "offline"),
+    "patch_units_ap_dp_mv.py":   (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),

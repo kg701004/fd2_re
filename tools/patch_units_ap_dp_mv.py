@@ -38,6 +38,93 @@ posture as native_record_word42/46.
 """
 import sys, os, json
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+
+def selftest():
+    """釘住 doc03 那隻 ch24 LV14 惡魔 —— AP/DP/MV/DX 公式的唯一手算錨點。
+
+    這支工具的目標檔(`remake/assets` 的 mapN_units.json)已於 2026-09-02 隨
+    remake/ 移除,所以**寫入側沒有目標可寫**。但它依賴的
+    `export_units.native_*_for_raw_unit_key()` 是 2026-08-31 從 constructor
+    `FUN_00010c50`(0x10d7f..0x10e23)完整反組譯推導出來的公式,而 doc03 用
+    ch24 那隻 LV14 惡魔(`record=[5,26,40,0,5,30,18,6,6,180]`)手算驗過:
+    **AP=30×14=420、DP=18×14=252、MV=6(flat)、DX=6×14=84**。
+
+    那組數字是這些公式唯一的獨立錨點。公式一旦被改壞,不會有任何錯誤訊息 ——
+    只會讓全部 1818 個單位的數值一起偏掉(當初就是這樣:舊 flat 值與正確值的
+    不同比例高達 98%/98%/87%)。所以這裡讓它每次重跑。
+    """
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tp = os.path.join(root, "docs", "data", "exe_tables", "native_unit_tables.json")
+    if not os.path.isfile(tp):
+        print("SKIP: 找不到 native_unit_tables.json")
+        return 0
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import export_units as E
+    tables = json.load(open(tp, encoding="utf-8"))
+
+    print("(1) 先找出 doc03 那隻惡魔:record 必須唯一命中")
+    want = bytes([5, 26, 40, 0, 5, 30, 18, 6, 6, 180]).hex()
+    idxs = [r["index"] for r in tables["tables"]["high_class"]["records"]
+            if r["bytes_hex"] == want]
+    ok1 = len(idxs) == 1
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 命中 high_class index {idxs}(應恰好 1 個)")
+    if not ok1:
+        fails.append(f"錨點 record 命中 {len(idxs)} 筆,無法定位")
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    key = 0x44 + idxs[0]
+
+    print("\n(2) 回歸:LV14 的 AP/DP/MV/DX 必須等於 doc03 的手算值")
+    got = {
+        "AP": E.native_ap_for_raw_unit_key(tables, key, 14),
+        "DP": E.native_dp_for_raw_unit_key(tables, key, 14),
+        "MV": E.native_mv_for_raw_unit_key(tables, key),
+        "DX": E.native_dx_for_raw_unit_key(tables, key, 14),
+    }
+    want_vals = {"AP": 420, "DP": 252, "MV": 6, "DX": 84}
+    ok2 = got == want_vals
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {got}(應 {want_vals})")
+    if not ok2:
+        fails.append(f"LV14 惡魔的公式輸出與 doc03 不符:{got}")
+
+    print("\n(3) 形狀:AP/DP/DX 隨等級線性成長,MV 不隨等級變(doc03 明載 flat)")
+    lin = all(
+        E.native_ap_for_raw_unit_key(tables, key, lv) == 30 * lv
+        and E.native_dp_for_raw_unit_key(tables, key, lv) == 18 * lv
+        and E.native_dx_for_raw_unit_key(tables, key, lv) == 6 * lv
+        for lv in (1, 7, 14, 30))
+    flat = len({E.native_mv_for_raw_unit_key(tables, key) for _ in range(3)}) == 1
+    ok3 = lin and flat
+    print(f"    {'PASS' if ok3 else 'FAIL'}: growth×level 成立={lin}、MV 為 flat={flat}")
+    if not ok3:
+        fails.append("公式形狀不符 doc03(AP/DP/DX 應 growth×level、MV 應 flat)")
+
+    print("\n(4) 非恆真控制:不同單位必須算出不同的值")
+    others = [0x44 + r["index"] for r in tables["tables"]["high_class"]["records"][:8]]
+    vals = {E.native_ap_for_raw_unit_key(tables, k, 14) for k in others}
+    ok4 = len(vals) > 1
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 前 8 個單位的 LV14 AP 有 {len(vals)} 種相異值")
+    if not ok4:
+        fails.append("所有單位算出同一個 AP —— 公式沒有真的查表")
+
+    print("\n(5) 寫入側:目標 mapN_units.json 已隨 remake/ 移除,不在檢查範圍")
+    print("    (刻意寫出來,而不是默默略過 —— 見本檔 docstring)")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(錨點定位 + LV14 四值回歸 + 公式形狀 + 非恆真控制)。")
+    return 0
+
 sys.path.insert(0, os.path.dirname(__file__))
 from export_units import (
     native_ap_for_raw_unit_key,
@@ -51,6 +138,8 @@ DEFAULT_NATIVE_TABLES = os.path.join(
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] == '--selftest':
+        return selftest()
     if len(argv) < 2:
         print(__doc__)
         return 1

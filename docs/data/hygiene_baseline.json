@@ -123,11 +123,6 @@
    "permanent": "ida_embedded"
   },
   {
-   "name": "patch_units_ap_dp_mv.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "patch_units_hit_ev.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
