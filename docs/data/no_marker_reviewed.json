@@ -33712,6 +33712,14 @@
    "excerpt": "- **2026-09-08 續十五:把工具自己宣稱的東西當成待驗證項**。(a) `sync_native_field_events` 與 treasures 同形狀,但**刻意不是同一套斷言**——它回傳 5 個東西(turn_controls / slots / events / 來源檔名 / control 的 sha256),控制段固定 **16 筆**(含 turn=0xff 休眠列)",
    "verdict": "benign",
    "note": "工具流程敘述:記錄 sync_native_field_events 與 export_acting_resource_set 的 selftest 設計(特有不變量、5 條拒絕路徑、契約更正),對象是本 repo 工具的檢查方法,非原版遊戲的證據主張;同段落已列出 16 筆控制段、576 格、sha256 對照等實測數字"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 516,
+   "excerpt_sha1": "5b9825a63e95951913354410f7501a1d451e7d4b",
+   "excerpt": "- **2026-09-08 續十六:把已記錄的 RE 結論變成每次重跑的檢查**。`gtl2wopl.parse_gtl` 的 selftest 第 (1) 項釘住的不是隨便一個數字,是 doc16 那個**已推翻又重新確立**的結論:SAMPLE.AD 不是「TIMB 編號 = MT-32 program number」,而是一張 **162 筆的目錄**,鍵為 `(bank<<8)|patc",
+   "verdict": "benign",
+   "note": "工具流程敘述:記錄 gtl2wopl selftest 把 SAMPLE.AD 的 162=128+34 目錄形狀釘成回歸檢查,並修掉空檔靜默回空 dict 與越界 struct.error;原版側依據(162 個樂器、bank 分布、raw 11 bytes)已在同段落列出實測數字"
   }
  ]
 }

@@ -53,9 +53,28 @@ def parse_gtl(path):
             break
         heads.append((patch, bank, foff))
 
+    # 2026-09-08:原本沒有任何邊界檢查,結果有兩種壞行為。
+    #   * 空檔或不足 6 bytes:迴圈一次都不跑,**靜默回空 dict** —— 呼叫端會以為
+    #     這份 SAMPLE.AD 沒有樂器,而不是「檔案是壞的」。
+    #   * 截斷檔:下面的 unpack_from 丟原始 struct.error(「需要至少 N bytes」),
+    #     呼叫端無法分辨「不是 GTL」與「這支工具有 bug」。
+    # 兩者都改成有意義的 ValueError。
+    if not heads:
+        raise ValueError(
+            f"{path}: 解不出任何 GTL 索引項(檔案 {len(data)} bytes)——"
+            "空的目錄幾乎必然代表檔案是壞的,不是這份素材真的沒有樂器")
+
     insts = {}
     for patch, bank, foff in heads:
+        if foff + 2 > len(data):
+            raise ValueError(
+                f"{path}: patch={patch} bank={bank} 的 fileOffset {foff} "
+                f"超出檔案大小 {len(data)}")
         size = struct.unpack_from('<H', data, foff)[0]
+        if foff + size > len(data):
+            raise ValueError(
+                f"{path}: patch={patch} bank={bank} 宣稱 size={size},"
+                f"從 {foff} 起超出檔案大小 {len(data)}")
         if size != 0x0E:
             raise NotImplementedError(
                 f"4-op 樂器(size=0x{size:02x}, patch={patch} bank={bank})不在 FD2 SAMPLE.AD "
@@ -64,6 +83,102 @@ def parse_gtl(path):
         transpose = body[0]
         insts[(bank, patch)] = dict(transpose=transpose, raw=body[1:])  # raw: 11 bytes
     return insts
+
+
+def selftest():
+    """釘住 SAMPLE.AD 的目錄形狀 —— 那是一個**已記錄的 RE 結論**,不是隨便一個數字。
+
+    doc16 曾沿用「TIMB 編號就是 MT-32 program number」的說法,後來實測推翻:
+    SAMPLE.AD 是一張 162 筆的目錄,鍵是 `(bank<<8)|patch`,形狀是
+    **bank 0 的 128 筆(patch 0..127)+ bank 127 的 34 筆(patch 35..75)**
+    —— 一個 GM 形狀的空間。這裡把那個結論變成每次都會重跑的檢查。
+
+    另外兩件事在同一輪修掉:空檔原本**靜默回空 dict**(呼叫端會以為這份素材
+    沒有樂器,而不是檔案壞了),截斷檔丟原始 struct.error。
+    """
+    import collections
+    import os
+    import tempfile
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ad = os.path.join(root, "org_game", "炎龍騎士團", "FLAME2", "SAMPLE.AD")
+
+    if os.path.isfile(ad):
+        print("(1) 真實 SAMPLE.AD 的目錄形狀必須符合已記錄的 RE 結論")
+        insts = parse_gtl(ad)
+        banks = collections.Counter(b for b, _ in insts)
+        lo = sorted(p for b, p in insts if b == 0)
+        hi = sorted(p for b, p in insts if b == 127)
+        ok1 = (len(insts) == 162 and banks.get(0) == 128 and banks.get(127) == 34
+               and lo == list(range(128)) and min(hi) == 35 and max(hi) == 75)
+        print(f"    {'PASS' if ok1 else 'FAIL'}: {len(insts)} 個樂器,"
+              f"bank 分布 {dict(banks)},bank0 patch {lo[0]}..{lo[-1]},"
+              f"bank127 patch {min(hi)}..{max(hi)}")
+        if not ok1:
+            fails.append(f"目錄形狀與記錄不符:{len(insts)} 個,{dict(banks)}")
+
+        print("\n(2) 每個樂器的 raw 必須是 11 bytes(size=0x0E 的 2-op 格式)")
+        badlen = [(k, len(v["raw"])) for k, v in insts.items() if len(v["raw"]) != 11]
+        ok2 = not badlen
+        print(f"    {'PASS' if ok2 else 'FAIL'}: {len(insts)} 個"
+              + ("全部 11 bytes" if ok2 else f",長度異常 {badlen[:3]}"))
+        if not ok2:
+            fails.append(f"raw 長度異常:{badlen[:3]}")
+    else:
+        print("    SKIP: 找不到 org_game 的 SAMPLE.AD")
+
+    print("\n(3) 回歸:空檔以前**靜默回空 dict**,現在必須丟有意義的錯")
+    with tempfile.TemporaryDirectory() as td:
+        for label, blob in (("空檔", b""), ("只有 3 bytes", b"\x00\x00\x00"),
+                            ("只有結束標記", b"\xff\xff\x00\x00\x00\x00")):
+            p = os.path.join(td, "e.ad")
+            open(p, "wb").write(blob)
+            try:
+                got = parse_gtl(p)
+                print(f"    FAIL: 「{label}」回傳 {got}(應丟錯)")
+                fails.append(f"{label} 靜默回傳 {got}")
+            except ValueError:
+                print(f"    PASS: 「{label}」-> ValueError")
+            except Exception as exc:                          # noqa: BLE001
+                print(f"    FAIL: 「{label}」丟出 {type(exc).__name__}")
+                fails.append(f"{label} 丟出 {type(exc).__name__}")
+
+    print("\n(4) 回歸:fileOffset 超出檔尾必須丟 ValueError,而非原始 struct.error")
+    with tempfile.TemporaryDirectory() as td:
+        p = os.path.join(td, "oob.ad")
+        # 一筆索引 patch=0 bank=0 指到 0x99999,接結束標記
+        blob = (struct.pack("<BBI", 0, 0, 0x99999)
+                + struct.pack("<BBI", 0xFF, 0xFF, 0))
+        open(p, "wb").write(blob)
+        try:
+            parse_gtl(p)
+            ok4, why = False, "沒有被擋下"
+        except ValueError as exc:
+            ok4, why = True, str(exc)[:60]
+        except Exception as exc:                              # noqa: BLE001
+            ok4, why = False, f"丟出 {type(exc).__name__}"
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {why}")
+    if not ok4:
+        fails.append(f"越界 fileOffset:{why}")
+
+    print("\n(5) 非恆真控制:上面全都丟錯也會通過,所以確認合法檔仍解得出樂器")
+    ok5 = os.path.isfile(ad) and len(parse_gtl(ad)) > 100
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 真實 SAMPLE.AD 解出 "
+          f"{len(parse_gtl(ad)) if os.path.isfile(ad) else 0} 個")
+    if not ok5:
+        fails.append("合法檔案解不出樂器")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(目錄形狀釘住已記錄結論 + raw 長度 + 空檔/越界回歸 + "
+          "非恆真控制)。")
+    return 0
 
 
 def _blank_instrument():
@@ -142,6 +257,8 @@ def build_wopl(ad_path, out_path, bank_label="FD2 SAMPLE.AD (SB/AdLib OPL2)"):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2 and sys.argv[1] == '--selftest':
+        sys.exit(selftest())
     if len(sys.argv) < 3:
         print(__doc__)
         sys.exit(1)
