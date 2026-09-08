@@ -33688,6 +33688,14 @@
    "excerpt": "(實測抓到 6 個 IndexError),同一段邏輯補上守衛後必須判 OK。沒有這一對,「7/7 安全」",
    "verdict": "benign",
    "note": "描述 verify_truncation_robustness selftest 的配對控制(刻意無守衛的合成解碼器判 CRASH / 補守衛後判 OK),對象是本工具的鑑別力,非原版遊戲的證據主張"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 508,
+   "excerpt_sha1": "9e624b73209f7dc2ff80380ab55d280aa19ba5b8",
+   "excerpt": "- **2026-09-08 續八:新工具自己的取樣太稀疏,漏掉第 5 個實例**。把 `decode_figani.decode_rle` 與 `render_map._tile_rle` 加進截斷登錄表後,decode_figani 報 **OK**——但讀原始碼它的模式 0/1 明明都是無守衛的 `v = body[i]`。讀與跑不一致,追下去是**新工具自己的問題**:截斷那一維原本等距抽",
+   "verdict": "benign",
+   "note": "工具流程敘述:記錄 verify_truncation_robustness 自身取樣策略的缺陷與修正(等距抽樣改窮舉),對象是本 repo 檢查工具的方法學,非原版遊戲的證據主張;同段落已列出 decode_figani/decode_dato 的實測數字作為原版側依據"
   }
  ]
 }

@@ -21,7 +21,8 @@ import sys
 import os
 import struct
 import glob
-from PIL import Image
+# 2026-09-08:PIL 延遲 import(純解碼不需要 Pillow;模組層 hard import 會讓整支
+# 工具在沒有 Pillow 的 WSL python3 下不可用)。
 
 
 def load_palette(path):
@@ -58,6 +59,84 @@ def decode_rle(body, target):
     return bytes(out) if len(out) == target else None
 
 
+def selftest():
+    """手算 + 契約檢查 + 邊界守衛的回歸。
+
+    這支的 RLE 是 repo 裡**唯一原本就正確守衛**的一個(`if i >= n: break`),
+    2026-09-08 逐一掃全 401 個截斷長度也確實 0 例外。所以這裡的第 (3) 題是
+    **回歸測試**:它是對照組,證明其他四支的修法是回到這個已知正確的形狀,
+    而不是各自發明一種。
+
+    另外它的契約與其他解碼器**不同**:輸出長度不等於 target 時回傳 `None`,
+    而不是補滿。這個差異必須釘住,否則呼叫端會誤以為所有解碼器行為一致。
+    """
+    import sys as _sys
+    if hasattr(_sys.stdout, "reconfigure"):
+        _sys.stdout.reconfigure(encoding="utf-8")
+        _sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    print("(1) 手算:c>=0x80 是 literal((c&0x7f)+1 個),c<0x80 是 run(重複 c+1 次)")
+    cases = [
+        ("literal 0x82 -> 3 個", b"\x82\x01\x02\x03", 3, b"\x01\x02\x03"),
+        ("run 0x02 -> 重複 3 次", b"\x02\xAA", 3, b"\xAA\xAA\xAA"),
+        ("run 0x00 -> 重複 1 次", b"\x00\x09", 1, b"\x09"),
+        ("literal 0xFF -> 128 個", b"\xFF" + bytes(range(128)), 128, bytes(range(128))),
+        ("混合", b"\x80\x11\x01\x22", 3, b"\x11\x22\x22"),
+    ]
+    for label, body, target, want in cases:
+        got = decode_rle(body, target)
+        ok = got == want
+        print(f"    {'PASS' if ok else 'FAIL'}: {label} -> "
+              f"{got.hex() if got else None}"
+              + ("" if ok else f"(預期 {want.hex()})"))
+        if not ok:
+            fails.append(f"{label}: {got.hex() if got else None} != {want.hex()}")
+
+    print("\n(2) 契約:**只有**長度恰好等於 target 才回 bytes,不足與過長都回 None")
+    # 2026-09-08:第一版把「過長」寫成期望回 bytes,是我讀錯了契約——
+    # `return bytes(out) if len(out) == target else None` 是嚴格相等,兩邊都回 None。
+    # 這個契約與其他解碼器(補滿到 target)**不同**,呼叫端不能假設一致,所以要釘住。
+    short = decode_rle(b"\x02\xAA", 999)          # 只解出 3,不足
+    over = decode_rle(b"\xFF" + bytes(200), 3)    # literal 128 個,過長
+    exact = decode_rle(b"\x02\xAA", 3)            # 恰好
+    ok2 = short is None and over is None and exact == b"\xAA\xAA\xAA"
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 不足 -> {short};過長 -> {over};"
+          f"恰好 -> {exact.hex() if exact else None}")
+    if not ok2:
+        fails.append(f"契約不符:不足={short}、過長={over}、恰好={exact}")
+
+    print("\n(3) 回歸:run 的值位元組落在資料尾端 —— 這支本來就有守衛,是對照組")
+    bad = []
+    for body in (b"\x02", b"", b"\x7F", b"\x82\x01"):
+        try:
+            decode_rle(body, 576)
+        except Exception as exc:                              # noqa: BLE001
+            bad.append((body.hex(), type(exc).__name__))
+    ok3 = not bad
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 4 個截斷輸入"
+          + ("(全部安全,與 2026-09-08 逐一掃 401 個長度的結果一致)" if ok3
+             else f",異常 {bad}"))
+    if not ok3:
+        fails.append(f"對照組竟然也會崩:{bad}")
+
+    print("\n(4) 非恆真控制:合法輸入必須真的解出東西,不能永遠回 None")
+    got4 = decode_rle(b"\x02\xAA", 3)
+    ok4 = got4 == b"\xAA\xAA\xAA"
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 合法 run 解出 "
+          f"{got4.hex() if got4 else None}")
+    if not ok4:
+        fails.append("合法輸入沒有解出預期結果")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(手算 + None 契約 + 守衛回歸(對照組) + 非恆真控制)。")
+    return 0
+
+
 def decode_image(path):
     """回傳 (w, h, indices_bytes_or_None, mode)。"""
     d = open(path, "rb").read()
@@ -76,12 +155,15 @@ def decode_image(path):
 
 
 def save_png(w, h, idx, palette, out):
+    from PIL import Image
     im = Image.frombytes("P", (w, h), bytes(idx))
     im.putpalette(palette)
     im.convert("RGB").save(out)
 
 
 def main(argv):
+    if len(argv) == 2 and argv[1] == '--selftest':
+        return selftest()
     if len(argv) < 2:
         print(__doc__); return 1
     if argv[1] == "--batch":

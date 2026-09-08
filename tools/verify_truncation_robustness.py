@@ -59,7 +59,7 @@ RAW = ROOT / "extracted" / "raw"
 GAME = ROOT / "org_game" / "炎龍騎士團" / "FLAME2"
 
 
-def _sample(subdir: str, limit: int = 2000) -> bytes:
+def _sample(subdir: str, limit: int = 600) -> bytes:
     d = RAW / subdir
     if not d.is_dir():
         return b""
@@ -70,7 +70,7 @@ def _sample(subdir: str, limit: int = 2000) -> bytes:
     return b""
 
 
-def _dat(name: str, limit: int = 4000) -> bytes:
+def _dat(name: str, limit: int = 600) -> bytes:
     p = GAME / name
     return p.read_bytes()[:limit] if p.is_file() else b""
 
@@ -89,6 +89,10 @@ DECODERS = [
      lambda: _sample("DATO"), lambda b: ((b, 576), {}), ()),
     ("decode_ani", "rle_2mode", "ANI opcode 2/6 的 2-mode RLE",
      lambda: _sample("ANI"), lambda b: ((b, 0, bytearray(576), 0, 576), {}), ()),
+    ("decode_figani", "decode_rle", "FIGANI 戰鬥動畫 RLE(24×24 文法的變體)",
+     lambda: _sample("FIGANI"), lambda b: ((b, 24, 24), {}), ()),
+    ("render_map", "_tile_rle", "地圖 tile RLE(native 0x4deda)",
+     lambda: _sample("FDSHAP"), lambda b: ((b, 24, 24), {}), ()),
     ("unpack_dat", "parse_directory", "LLLLLL 容器目錄",
      lambda: _dat("ANI.DAT"), lambda b: ((b,), {}), ("NotAContainer", "error")),
     ("decode_lmi", "lmi_offsets", "LMI1 目錄",
@@ -125,8 +129,13 @@ def probe(entry, steps: int, seed: int = 0) -> dict:
 
     # (1) 每一個前綴長度(含 0)。截斷是真實情況:FIGANI 用的是另一參數化變體,
     #     套用 24×24 文法會提早耗盡。
-    cuts = sorted({int(len(body) * i / max(1, steps)) for i in range(steps + 1)})
-    for c in cuts:
+    # 2026-09-08:這裡原本等距抽 `steps` 個切點,結果 `decode_figani.decode_rle`
+    # 被判 OK —— 但它的模式 0/1 明明沒有邊界守衛。崩潰只發生在「控制位元組剛好是
+    # 最後一個 byte」那幾個特定長度,等距抽樣直接跳過。`decode_dato` 當初是用逐一
+    # 長度掃出來的(401 個裡 10 個),換成抽樣就會漏。截斷是一維且有界的維度,
+    # 沒有理由抽樣:取樣資料改成上限 600 byte,用窮舉換掉抽樣。
+    # `steps` 只留給位元翻轉(那個空間太大,只能抽樣)。
+    for c in range(len(body) + 1):
         run(body[:c])
     # (2) 位元翻轉:截斷之外,損壞的控制位元組會走到不同分支。
     for _ in range(steps):

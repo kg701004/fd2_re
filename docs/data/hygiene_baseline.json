@@ -22,16 +22,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "decode_figani.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "decode_image.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "disasm_le.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"

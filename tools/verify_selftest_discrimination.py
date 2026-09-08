@@ -99,6 +99,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "decode_lmi.py":             (["--selftest"], "offline"),
     "decode_dato.py":            (["--selftest"], "offline"),
     "decode_ani.py":             (["--selftest"], "offline"),
+    "decode_figani.py":          (["--selftest"], "offline"),
+    "decode_image.py":           (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
