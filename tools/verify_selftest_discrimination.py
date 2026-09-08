@@ -116,6 +116,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "export_acting_resources.py": (["--selftest"], "offline"),
     "export_engine_assets.py":    (["--selftest"], "offline"),
     "disasm_le.py":              (["--selftest"], "ghidra"),
+    "event_handler_dump.py":     (["--selftest"], "ghidra"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
