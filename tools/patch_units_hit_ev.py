@@ -35,7 +35,83 @@ DEFAULT_NATIVE_TABLES = os.path.join(
 )
 
 
+def selftest():
+    """釘住 doc03 的 HIT/EV 手算錨點,以及它與 AP/DP/MV 那輪共用的 DX 修正。
+
+    同一隻 ch24 LV14 惡魔:`DX = record[7] × 14 = 6 × 14 = 84`;出場 inventory
+    前兩格 `[81, 183]` 依 `spawn_equipped_item_ids()` 判定已裝備,item 81
+    hit=110/ev=0、item 183 hit=0/ev=0,所以 **hit = 84+110 = 194、ev = 84+0 = 84**。
+
+    這組數字的意義不只是「算得對」:舊值是 `hit=114/ev=4`,對應舊的 flat
+    `dx=4` —— 也就是說 HIT/EV 曾經吃的是 `base_stats()` 那個 race/cls 對錯列、
+    又沒乘等級的 dx。修正後跨 30 張圖 1826 個單位有 **98.7%** 的 hit/ev 值改變,
+    與 AP/DP/MV 那輪同一量級。所以這裡不只驗結果,也驗**舊的錯誤值不會再出現**。
+    """
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ip = os.path.join(root, "docs", "data", "exe_tables", "item.json")
+    if not os.path.isfile(ip):
+        print("SKIP: 找不到 item.json")
+        return 0
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from export_units import hit_ev_for_unit
+    items = {i["id"]: i for i in json.load(open(ip, encoding="utf-8"))}
+
+    print("(1) 前提:doc03 引用的兩件裝備數值必須與 item.json 一致")
+    ok1 = (items.get(81, {}).get("hit") == 110 and items.get(81, {}).get("ev") == 0
+           and items.get(183, {}).get("hit") == 0 and items.get(183, {}).get("ev") == 0)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: item81 hit/ev="
+          f"{items.get(81, {}).get('hit')}/{items.get(81, {}).get('ev')}、"
+          f"item183={items.get(183, {}).get('hit')}/{items.get(183, {}).get('ev')}")
+    if not ok1:
+        fails.append("doc03 引用的裝備數值與 item.json 不符,錨點前提不成立")
+
+    print("\n(2) 回歸:LV14 惡魔(DX=84)配 [81,183] 必須算出 hit=194 / ev=84")
+    got = hit_ev_for_unit(84, [81, 183, 255, 255, 255, 255, 255, 255], items)
+    ok2 = got == (194, 84)
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {got}(應 (194, 84))")
+    if not ok2:
+        fails.append(f"HIT/EV 與 doc03 手算不符:{got}")
+
+    print("\n(3) 回歸:修正前的錯誤值 (114, 4) 不得再出現")
+    # 舊值來自 base_stats() 那個 race/cls 對錯列、又沒乘等級的 flat dx=4。
+    old = hit_ev_for_unit(4, [81, 183, 255, 255, 255, 255, 255, 255], items)
+    ok3 = old == (114, 4) and got != old
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 用舊的 flat dx=4 會得到 {old},"
+          f"與正確值 {got} 不同")
+    if not ok3:
+        fails.append(f"舊/新值的對照不成立:舊={old}、新={got}")
+
+    print("\n(4) 形狀:hit/ev 都應隨 base_dx 線性增加(裝備加成為常數項)")
+    lin = all(hit_ev_for_unit(dx, [81, 183] + [255] * 6, items) == (dx + 110, dx)
+              for dx in (0, 1, 40, 84, 200))
+    print(f"    {'PASS' if lin else 'FAIL'}: 5 個 base_dx 都符合 (dx+110, dx)")
+    if not lin:
+        fails.append("hit/ev 對 base_dx 的關係不是線性常數項")
+
+    print("\n(5) 非恆真控制:空 inventory 時加成必須為 0")
+    bare = hit_ev_for_unit(84, [255] * 8, items)
+    ok5 = bare == (84, 84)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 無裝備 -> {bare}(應 (84, 84))")
+    if not ok5:
+        fails.append(f"空 inventory 仍有加成:{bare}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(裝備數值前提 + LV14 HIT/EV 回歸 + 舊錯誤值對照 + "
+          "線性形狀 + 空裝備控制)。")
+    return 0
+
+
 def main(argv):
+    if len(argv) == 2 and argv[1] == "--selftest":
+        return selftest()
     if len(argv) < 4:
         print(__doc__)
         return 1
