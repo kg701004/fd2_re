@@ -67,6 +67,7 @@ import json
 import random
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -146,6 +147,14 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "esp_track.py":              (["--selftest"], "live"),
     # verify_all_tools.py is excluded: its selftest already IS fault injection,
     # and mutating it while it audits the same tree is not interpretable.
+    #
+    # 本檔自己也不在表內,2026-09-09 明確記下理由(先前只是沒登錄,沒說為什麼)。
+    # 突變自己是**會造成實際損害**的:突變體會成為那個「執行突變」的行程,而
+    # 第 (3b) 題會 spawn 一個子行程再殺掉它——被突變過的殺行程邏輯可能留下孤兒
+    # 行程,被突變過的 recover_orphaned_backups 可能動到別的工具的備份。
+    # 代替方案不是「不驗」:本檔 selftest 的第 (1)(2) 題本來就是拿**探針檔**做
+    # 正負向控制(一個真的會檢查東西的 selftest 必須被抓到、一個什麼都不檢查的
+    # 必須得 0 分),那就是這支工具的鑑別力測試,只是施加在探針而非自己身上。
 }
 
 
@@ -243,8 +252,42 @@ def mutate(src: str, idx: int) -> tuple[str | None, str]:
         return None, ""
 
 
+BACKUP_SUFFIX = ".premutation"
+
+
+def _backup_path(path: Path) -> Path:
+    return path.with_name(path.name + BACKUP_SUFFIX)
+
+
+def recover_orphaned_backups(root: Path = TOOLS) -> list[str]:
+    """把上一次被**中途砍掉**的突變還原回去。回傳被還原的檔名。
+
+    2026-09-09,實際發生過:本工具是**就地改寫原始碼再還原**的,而還原寫在
+    `finally` 裡——正常結束與例外都救得到,但行程被 kill 時 `finally` 根本不會
+    執行,檔案就停在突變狀態。更糟的是突變體是 `ast.unparse` 產生的,**註解與
+    shebang 全部消失**(docstring 是 AST 節點所以留著,註解不是),當時那支工具
+    還沒提交,git 也救不回來,只能整份重寫。
+
+    所以在第一次改寫前先寫一份 sidecar 備份,還原成功就刪掉;下次啟動看到殘留的
+    備份,就代表上一輪沒有正常結束——直接還原並大聲說出來。`finally` 擋不住
+    SIGKILL,但落地的檔案擋得住。
+    """
+    restored = []
+    for bak in sorted(root.glob(f"*{BACKUP_SUFFIX}")):
+        target = bak.with_name(bak.name[:-len(BACKUP_SUFFIX)])
+        data = bak.read_bytes()
+        if not target.exists() or target.read_bytes() != data:
+            target.write_bytes(data)
+            restored.append(target.name)
+        bak.unlink()
+    if restored:
+        print(f"** 偵測到上一輪未正常結束,已從備份還原:{', '.join(restored)} **")
+    return restored
+
+
 def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
     path = TOOLS / name
+    recover_orphaned_backups()
     original = path.read_bytes()
     digest = hashlib.sha256(original).hexdigest()
     src = original.decode("utf-8")
@@ -279,6 +322,10 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
             except SyntaxError:
                 continue
             attempted += 1
+            # 備份必須在**第一次改寫之前**就落地,否則被砍時沒有東西可還原。
+            bak = _backup_path(path)
+            if not bak.exists():
+                bak.write_bytes(original)
             path.write_text(mutated, encoding="utf-8")
             try:
                 passed, _ = run_selftest(name, timeout)
@@ -292,8 +339,13 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
         path.write_bytes(original)
         restored = hashlib.sha256(path.read_bytes()).hexdigest()
         out["restored_ok"] = restored == digest
-        if not out["restored_ok"]:
-            raise SystemExit(f"FATAL: {name} 未能還原到原始內容,已中止")
+        # 只有確定還原成功才刪備份——還原失敗時備份是最後一條退路,不能丟。
+        if out["restored_ok"]:
+            _backup_path(path).unlink(missing_ok=True)
+        else:
+            raise SystemExit(
+                f"FATAL: {name} 未能還原到原始內容,已中止。"
+                f"備份留在 {_backup_path(path).name}")
 
     out.update(mutations_attempted=attempted, mutations_caught=caught,
                examples=examples,
@@ -339,6 +391,65 @@ def selftest() -> int:
     print(f"    {'PASS' if ok2 else 'FAIL'}: {blind['mutations_caught']}/{blind['mutations_attempted']} 被抓到(應為 0)")
     if not ok2:
         fails.append(f"負向控制被誤判為有鑑別力:{blind}")
+
+    print("\n(3b) 中斷復原:被砍掉的那一輪必須能從備份救回來(含註解與 shebang)")
+    # 用**真的殺掉一個子行程**來測,不是只呼叫還原函式:`finally` 擋不住 SIGKILL,
+    # 而這一題要證的正是「finally 沒跑到時還救不救得回來」。
+    import subprocess as _sp
+    import textwrap as _tw
+    victim = TOOLS / "_kill_probe.py"
+    ORIGINAL = ('#!/usr/bin/env python3\n'
+                '"""probe."""\n'
+                '# 這行註解是這題的重點:ast.unparse 會把它吃掉。\n'
+                'import sys\n'
+                'def selftest():\n'
+                '    return 0\n'
+                'if __name__ == "__main__":\n'
+                '    sys.exit(selftest())\n')
+    victim.write_bytes(ORIGINAL.encode("utf-8"))
+    killer = TOOLS / "_kill_probe_runner.py"
+    killer.write_text(_tw.dedent(f'''
+        import sys, time, pathlib
+        sys.path.insert(0, {str(TOOLS)!r})
+        import verify_selftest_discrimination as V
+        p = pathlib.Path({str(victim)!r})
+        V._backup_path(p).write_bytes(p.read_bytes())
+        p.write_text("import sys\\ndef selftest():\\n    return 0\\n", encoding="utf-8")
+        time.sleep(60)
+    '''), encoding="utf-8")
+    proc = _sp.Popen([sys.executable, str(killer)])
+    for _ in range(100):                      # 等它把備份與突變都落地
+        if _backup_path(victim).exists() and victim.read_bytes() != ORIGINAL.encode("utf-8"):
+            break
+        time.sleep(0.05)
+    proc.kill()
+    proc.wait(timeout=10)
+    damaged = victim.read_bytes() != ORIGINAL.encode("utf-8")
+    had_backup = _backup_path(victim).exists()
+    recovered = recover_orphaned_backups()
+    ok3b = (damaged and had_backup
+            and victim.read_bytes() == ORIGINAL.encode("utf-8")
+            and victim.name in recovered
+            and not _backup_path(victim).exists())
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 被砍當下檔案確實損毀={damaged}、"
+          f"備份存在={had_backup}、還原後逐位元組相同="
+          f"{victim.read_bytes() == ORIGINAL.encode('utf-8')}、備份已清除="
+          f"{not _backup_path(victim).exists()}")
+    if not ok3b:
+        fails.append(f"中斷復原不成立:damaged={damaged}、backup={had_backup}")
+
+    print("\n(3c) 負向控制:沒有備份的檔案不得被還原邏輯動到")
+    victim.write_bytes(b"# untouched\n")
+    before = victim.read_bytes()
+    touched = recover_orphaned_backups()
+    ok3c = not touched and victim.read_bytes() == before
+    print(f"    {'PASS' if ok3c else 'FAIL'}: 還原了 {touched}(應為空)、內容未變="
+          f"{victim.read_bytes() == before}")
+    if not ok3c:
+        fails.append(f"還原邏輯動到沒有備份的檔案:{touched}")
+    victim.unlink(missing_ok=True)
+    killer.unlink(missing_ok=True)
+    _backup_path(victim).unlink(missing_ok=True)
 
     print("\n(3) 還原:突變後檔案必須逐位元組還原")
     ok3 = sharp.get("restored_ok") and blind.get("restored_ok")
