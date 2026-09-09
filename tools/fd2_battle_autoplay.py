@@ -212,8 +212,32 @@ def attack_unit(inst: str, selector: str = "0170", blind: bool = False) -> bool:
     return True
 
 
+# `record[+5]` 這個 byte **至少承載兩個語意不同的位元**,而 helper 把整個原始
+# byte 取名叫 `acted`(fd2_dosbox_live_helper.py:898),名字只講了其中一個。
+# 2026-09-09 差點因此改壞東西:本檔用 `& 0x01` 篩敵人、`& 0x80` 驗攻擊生效,
+# 而 fd2_crash_capture 用 `& 0x80` 篩我方,看起來像同一件事寫了三種版本。
+# 逐一查證後**兩邊都是對的**,因為它們問的根本不是同一個問題:
+#
+#   bit0 (0x01)  死亡／隱藏。證據:dump_chapter_beats.PRIM 的
+#                `0x3453e unit_inactive` — 「查 [0x53a45]+idx*0x50+5 bit0;
+#                1=死亡／隱藏,0=有效存活」。
+#   bit7 (0x80)  **已行動**(acted)。證據:doc13 §523 逐指令反組譯
+#                「`AND record[+5], 0x7f` 清除該 bit(**這正是「acted」旗標**,
+#                `SetNativeRecordBit7`/`ClearNativeRecordBit7All` 的同一個 bit)」。
+#
+# doc13:287 另記「end-turn 的組合條件仍待 evidence」——所以不要把這兩個位元
+# 合併成一條規則,也不要因為名字相同就把其中一處「修」成另一處。
+BIT_INACTIVE = 0x01   # 死亡／隱藏
+BIT_ACTED = 0x80      # 已行動
+
+
 def is_attackable_foe(v: dict) -> bool:
-    """可以打的敵人:敵方陣營、還沒行動過、**而且活著**。
+    """可以打的敵人:敵方陣營、**沒有死亡／隱藏**、而且 HP > 0。
+
+    注意這裡用的是 `BIT_INACTIVE`(bit0)而不是 `BIT_ACTED`(bit7)——問的是
+    「這個槽是不是一個還在場上的敵人」,不是「它這回合行動過沒有」。敵方有沒有
+    行動過與我方能不能打它無關。欄位名稱 `acted` 是 helper 給整個 byte 取的,
+    見上方常數的說明。
 
     2026-09-09:這條判準原本寫了兩次,而兩次不一樣——`nearest_foe` 有 `hp > 0`,
     `adjacent_foe` **沒有**。後果不是理論上的:第 464 行用 `adjacent_foe` 把守
@@ -226,7 +250,7 @@ def is_attackable_foe(v: dict) -> bool:
 
     兩個使用端現在共用這一個 predicate;要改判準只有一個地方可以改。
     """
-    return v["camp"] == 0x00 and not (v["acted"] & 0x01) and v["hp"] > 0
+    return v["camp"] == 0x00 and not (v["acted"] & BIT_INACTIVE) and v["hp"] > 0
 
 
 def manhattan(a: dict, b: dict) -> int:
@@ -357,7 +381,7 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
             _, verify_snap = snapshot(inst, selector, count)
             verify_units = verify_snap[1:]
             verify_me = next((u for u in verify_units if u["idx"] == me["idx"]), None)
-            acted_now = verify_me is not None and (verify_me["acted"] & 0x80) != 0
+            acted_now = verify_me is not None and (verify_me["acted"] & BIT_ACTED) != 0
             hp_before = {u["idx"]: u["hp"] for u in post_units if u["camp"] == 0x00}
             hurt = [(u["idx"], hp_before.get(u["idx"]), u["hp"]) for u in verify_units
                     if u["camp"] == 0x00 and u["idx"] in hp_before
@@ -601,7 +625,28 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"距離或最近選擇不正確:{wrongd}")
 
-    print("\n(5) 非平凡性 + 負向控制")
+    print("\n(5) record[+5] 的兩個位元語意不同,不得互相取代")
+    # 這一題是為了擋下一次「看起來像不一致、其實兩邊都對」的誤修。2026-09-09
+    # 我自己就差點把 is_attackable_foe 的 bit0 改成 bit7,理由是 fd2_crash_capture
+    # 與本檔的攻擊驗證都用 0x80。逐一查證後:
+    #   bit0 = 死亡／隱藏(dump_chapter_beats.PRIM 的 0x3453e unit_inactive)
+    #   bit7 = 已行動    (doc13 §523 `AND record[+5], 0x7f`,「這正是 acted 旗標」)
+    # doc13:287 另記「end-turn 的組合條件仍待 evidence」,所以也不要把兩者合併。
+    dead_not_acted = _u(idx=1, x=5, y=6, hp=9, acted=BIT_INACTIVE)
+    acted_alive = _u(idx=2, x=5, y=4, hp=9, acted=BIT_ACTED)
+    ok5 = (BIT_INACTIVE == 0x01 and BIT_ACTED == 0x80
+           and is_attackable_foe(dead_not_acted) is False      # bit0 -> 排除
+           and is_attackable_foe(acted_alive) is True          # bit7 -> 不影響可否被打
+           and adjacent_foe(me, [dead_not_acted]) is False
+           # 相鄰的「已行動」敵人**仍然可以打**——這正是本題的重點,寫成 False
+           # 就等於把 bit7 當成 bit0 用了(第一版就是這樣寫,被自己抓到)。
+           and adjacent_foe(me, [acted_alive]) is True)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: bit0(死亡/隱藏)排除目標、"
+          f"bit7(已行動)不影響敵人可否被打(相鄰仍為 True)")
+    if not ok5:
+        fails.append("兩個位元的語意被混用")
+
+    print("\n(6) 非平凡性 + 負向控制")
     none_left = [_u(idx=1, x=5, y=6, hp=0), _u(idx=2, x=5, y=4, hp=9, acted=1)]
     ok5 = (nearest_foe(me, none_left) is None and adjacent_foe(me, none_left) is False
            and nearest_foe(me, []) is None and adjacent_foe(me, []) is False
@@ -617,7 +662,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(屍體目標回歸 + 判準唯一性 + 分派後果 "
-           "+ 距離手算 + 非平凡性與負向控制)。UI 驅動層未涵蓋,見 docstring。")
+           "+ 距離手算 + 兩個位元的語意區別 + 非平凡性與負向控制)。UI 驅動層未涵蓋,見 docstring。")
     return 0
 
 
