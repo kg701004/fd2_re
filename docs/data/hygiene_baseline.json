@@ -7,11 +7,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "fd2_crash_ladder.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "fd2_floodfill_stack_probe.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"
