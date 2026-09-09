@@ -79,6 +79,28 @@ def capture_state(inst: str, out_dir: Path, why: str) -> dict:
     return record
 
 
+OURS = 0x02
+
+
+def pick_unit(cursor: tuple[int, int], units: list[dict]) -> dict | None:
+    """這一輪要操作誰:離游標最近、**還沒行動過**的我方存活單位。沒有就回 None。
+
+    「還沒行動過」是承重的,不是保險。本檔 docstring 記載的第一版失敗就是這一點:
+    當時盲送同一個算好一次的方向、不重讀單位,實跑 43 輪(3 個 instance、mv 4/6/8)
+    **全部存活**,遠高於 C.16 已知的死亡率——因為重複的方向多半打在**已經行動過**
+    的單位或不存在的落點上,根本沒有真的重跑一次完整的移動+確認流程。
+
+    位元用 `fd2_battle_autoplay.BIT_ACTED`(0x80),不再寫裸數字:`record[+5]` 同時
+    還有 bit0(死亡／隱藏),兩者名字都叫 `acted`,混用過一次就很難再看出來。
+    這裡問的是「我方這回合還能不能動」,所以用 bit7。
+    """
+    todo = [u for u in units
+            if u["camp"] == OURS and u["hp"] > 0 and not (u["acted"] & AP.BIT_ACTED)]
+    if not todo:
+        return None
+    return min(todo, key=lambda u: AP.manhattan(u, {"x": cursor[0], "y": cursor[1]}))
+
+
 def run_one_round(inst: str, selector: str, count: int, mv: int) -> bool:
     """跟 `fd2_battle_autoplay.py` 主迴圈同一套邏輯選單位、算落點、attack。
 
@@ -87,10 +109,9 @@ def run_one_round(inst: str, selector: str, count: int, mv: int) -> bool:
     """
     base, snap = AP.snapshot(inst, selector, count)
     cur, units = snap[0]["cursor"], snap[1:]
-    todo = [u for u in units if u["camp"] == 0x02 and u["hp"] > 0 and not (u["acted"] & 0x80)]
-    if not todo:
+    tgt = pick_unit(cur, units)
+    if tgt is None:
         return False
-    tgt = min(todo, key=lambda u: abs(u["x"] - cur[0]) + abs(u["y"] - cur[1]))
     AP.move_cursor(inst, cur, (tgt["x"], tgt["y"]))
     if AP.adjacent_foe(tgt, units):
         AP.attack_unit(inst, selector)
@@ -154,5 +175,78 @@ def main() -> int:
     return 3
 
 
+def _u(idx=0, camp=OURS, x=0, y=0, hp=10, acted=0):
+    return {"idx": idx, "camp": camp, "x": x, "y": y, "hp": hp, "acted": acted}
+
+
+def selftest() -> int:
+    """選單位那一層。武裝斷點、送鍵、偵測凍結需要活的 DOSBox,不在範圍內——
+    但**選錯單位**正是第一版失敗的原因,而那完全是離線可判的。"""
+    fails = []
+    cursor = (5, 5)
+
+    print("(1) 第一版失敗的根因:已行動過的單位不得被選中")
+    # 盲送同方向、不重讀單位,實跑 43 輪全部存活——因為重複的方向多半打在已經
+    # 行動過的單位上,根本沒有真的重跑一次完整流程。
+    units = [_u(0, OURS, 5, 6, 10, AP.BIT_ACTED), _u(1, OURS, 5, 9, 10, 0)]
+    picked = pick_unit(cursor, units)
+    ok1 = picked is not None and picked["idx"] == 1
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 選中 idx{picked['idx'] if picked else None}"
+          f"(idx0 較近但已行動,應選較遠的 idx1)")
+    if not ok1:
+        fails.append(f"選到已行動的單位:{picked}")
+
+    print("\n(2) 對照:同一組單位,若 idx0 未行動就必須選它(否則第 (1) 題只是距離)")
+    units2 = [_u(0, OURS, 5, 6, 10, 0), _u(1, OURS, 5, 9, 10, 0)]
+    p2 = pick_unit(cursor, units2)
+    ok2 = p2 is not None and p2["idx"] == 0
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 選中 idx{p2['idx'] if p2 else None}(應 0,最近)")
+    if not ok2:
+        fails.append(f"距離判定不正確:{p2}")
+
+    print("\n(3) 陣營與存活:敵方、死亡的我方都不得被選")
+    units3 = [_u(0, 0x00, 5, 6, 10, 0), _u(1, OURS, 5, 7, 0, 0), _u(2, OURS, 5, 9, 10, 0)]
+    p3 = pick_unit(cursor, units3)
+    ok3 = p3 is not None and p3["idx"] == 2
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 選中 idx{p3['idx'] if p3 else None}"
+          f"(idx0 敵方、idx1 HP=0,應選 idx2)")
+    if not ok3:
+        fails.append(f"陣營或存活篩選不正確:{p3}")
+
+    print("\n(4) 兩個位元不得混用:bit0(死亡/隱藏)不該擋下我方選取")
+    # record[+5] 的 bit0 是死亡／隱藏、bit7 才是已行動(見 fd2_battle_autoplay
+    # 的常數說明)。這裡問的是「還能不能動」,所以只看 bit7;HP>0 的存活判斷
+    # 由 hp 欄位負責,不要拿 bit0 來重複做一次還做錯。
+    units4 = [_u(0, OURS, 5, 6, 10, AP.BIT_INACTIVE)]
+    p4 = pick_unit(cursor, units4)
+    ok4 = (p4 is not None and p4["idx"] == 0
+           and pick_unit(cursor, [_u(0, OURS, 5, 6, 10, AP.BIT_ACTED)]) is None)
+    print(f"    {'PASS' if ok4 else 'FAIL'}: bit0 置起仍可選={p4 is not None}、"
+          f"bit7 置起不可選")
+    if not ok4:
+        fails.append("bit0/bit7 在選單位時被混用")
+
+    print("\n(5) 非平凡性 + 負向控制")
+    all_acted = [_u(i, OURS, 5, 6 + i, 10, AP.BIT_ACTED) for i in range(3)]
+    picks = {(pick_unit(cursor, u) or {}).get("idx") for u in (units, units2, units3)}
+    ok5 = (pick_unit(cursor, all_acted) is None and pick_unit(cursor, []) is None
+           and len(picks) == 3)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 全部已行動 -> None、空陣列 -> None、"
+          f"三組輸入選出 {len(picks)} 個不同單位 {sorted(x for x in picks if x is not None)}")
+    if not ok5:
+        fails.append(f"選取結果不隨輸入變化:{picks}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(第一版失敗根因的回歸 + 距離對照 + 陣營與存活 "
+          "+ 兩個位元不混用 + 非平凡性)。斷點與凍結捕捉未涵蓋,見 docstring。")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(selftest())
     sys.exit(main())

@@ -143,6 +143,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "realesrgan_batch.py":        (["--selftest"], "offline"),
     # 寫入計畫與位址算術是離線可判的;實際 SMV 寫入需要活的 DOSBox,不涵蓋。
     "fd2_stat_override.py":       (["--selftest"], "offline"),
+    "fd2_crash_capture.py":       (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
