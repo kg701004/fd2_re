@@ -145,6 +145,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_stat_override.py":       (["--selftest"], "offline"),
     "fd2_crash_capture.py":       (["--selftest"], "offline"),
     "fd2_crash_ladder.py":        (["--selftest"], "offline"),
+    "fd2_zero_read_capture.py":   (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
