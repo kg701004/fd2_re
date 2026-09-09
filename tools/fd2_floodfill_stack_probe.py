@@ -57,6 +57,45 @@ NEIGHBOURS = {0x60000: "(未命名)", 0x60060: "地形成本表指標",
               0x60068: "格陣列寬", 0x60069: "格陣列高"}
 
 
+BYTES_PER_LEVEL = 7      # doc13:word XY + byte 預算 + dword 格指標
+GRID_MIN, GRID_MAX = 4, 64   # 實際地圖最小 18×26、最大 50×50,界線刻意放寬
+
+
+def addr_check(w: int | None, h: int | None) -> tuple[bool, str]:
+    """位址對映是否成立。**這一關過不了時,任何量測結果都不是「沒被用到」。**
+
+    2026-09-04 第一次跑就踩到:`mem_read_global` 用程式碼校準出的 delta,其
+    docstring 宣稱「executable is flat, so code and data share one load-time
+    delta」——**對 0x60xxx 不成立**。當時 `[0x60068]`/`[0x60069]` 讀到 0/0
+    (真實地圖是 24×24),整段 dump 全 0,於是「兩次 dump 完全相同」看起來像是
+    「flood-fill 沒用到軟堆疊」。正對照:同一時刻 0x53xxx 的全域(BGM/單位數/
+    陣列指標)全部正確,所以問題只在這個區段的位址對映,不是 debugger 壞了。
+    """
+    if not w or not h or not (GRID_MIN <= w <= GRID_MAX and GRID_MIN <= h <= GRID_MAX):
+        return False, (f"[0x60068]/[0x60069] 讀到 {w}/{h},不是合理的格陣列尺寸。"
+                       "**這代表 0x60xxx 的位址對映不成立,不是「軟堆疊沒被用到」。**")
+    return True, f"格陣列 {w}×{h}"
+
+
+def analyse_diff(before: bytes, after: bytes, want: int) -> dict:
+    """比較兩次 dump。回傳 kind ∈ {short_read, no_change, measured}。
+
+    `no_change` **必須是自己的一種狀態**,不能回 0:兩次 dump 相同不代表軟堆疊
+    沒被用到——flood-fill 可能寫入了與殘留值相同的內容,或這次按鍵根本沒進到
+    移動選格層。回 0 會被讀成「量到了,答案是 0」,那是把讀取失敗當成負面結果。
+    """
+    if len(before) < want or len(after) < want:
+        return {"kind": "short_read",
+                "before_len": len(before), "after_len": len(after)}
+    diff = [i for i, (x, y) in enumerate(zip(before, after)) if x != y]
+    if not diff:
+        return {"kind": "no_change"}
+    high = diff[-1]
+    return {"kind": "measured", "changed": len(diff), "low": diff[0], "high": high,
+            "bytes_used": high + 1, "levels": (high + 1) // BYTES_PER_LEVEL,
+            "hit_edge": high + 1 >= want}
+
+
 def dump(inst: str, selector: str, addr: int, n: int, tag: str) -> bytes:
     d = H.DEFAULT_SHOT_DIR / inst / "ffstack"
     d.mkdir(parents=True, exist_ok=True)
@@ -100,13 +139,13 @@ def main() -> int:
     h = H.mem_read_global(a.instance, a.selector, 0x60069, 1,
                           H.DEFAULT_SHOT_DIR / a.instance / "ffstack").get("u8")
     H.resume(a.instance)
-    if not (w and h and 4 <= w <= 64 and 4 <= h <= 64):
-        print(f"\n位址自我檢查失敗:[0x60068]/[0x60069] 讀到 {w}/{h},不是合理的格陣列尺寸。")
-        print("**這代表 0x60xxx 的位址對映不成立,不是「軟堆疊沒被用到」。**")
+    ok_addr, addr_msg = addr_check(w, h)
+    if not ok_addr:
+        print(f"\n位址自我檢查失敗:{addr_msg}")
         print("要用這支工具,得先用簽章搜尋(例如在活體記憶體裡找該地圖的寬高位元組組合)")
         print("為這個區段獨立求出 delta;`mem_read_global` 的程式碼 delta 在此不適用。")
         return 2
-    print(f"位址自我檢查通過:格陣列 {w}×{h}")
+    print(f"位址自我檢查通過:{addr_msg}")
 
     H.enter_debugger(a.instance)
     before = dump(a.instance, a.selector, SOFT_STACK_GHIDRA, n, "before")
@@ -126,22 +165,97 @@ def main() -> int:
         print(f"事後 dump 只拿到 {len(after)}/{n} bytes,中止")
         return 2
 
-    diff = [i for i, (x, y) in enumerate(zip(before, after)) if x != y]
-    if not diff:
+    r = analyse_diff(before, after, n)
+    if r["kind"] == "no_change":
         print("\n兩次 dump 完全相同——**這不代表軟堆疊沒被用到**:"
               "flood-fill 可能寫入了與殘留值相同的內容,或這次按鍵沒有進到移動選格層。"
               "先確認層級(fd2_game_state)再重跑,不要把它讀成 0。")
         return 1
 
-    print(f"\n改動的 byte 數:{len(diff)}")
-    print(f"最低改動 offset:+0x{diff[0]:x}(絕對 0x{SOFT_STACK_GHIDRA + diff[0]:x})")
-    print(f"**最高改動 offset:+0x{diff[-1]:x}(絕對 0x{SOFT_STACK_GHIDRA + diff[-1]:x})**")
-    print(f"→ 本次 flood-fill 至少用掉 {diff[-1] + 1} bytes 軟堆疊 "
-          f"≈ {(diff[-1] + 1) // 7} 層遞迴(每層 7 bytes)")
-    if diff[-1] + 1 >= n:
+    print(f"\n改動的 byte 數:{r['changed']}")
+    print(f"最低改動 offset:+0x{r['low']:x}(絕對 0x{SOFT_STACK_GHIDRA + r['low']:x})")
+    print(f"**最高改動 offset:+0x{r['high']:x}(絕對 0x{SOFT_STACK_GHIDRA + r['high']:x})**")
+    print(f"→ 本次 flood-fill 至少用掉 {r['bytes_used']} bytes 軟堆疊 "
+          f"≈ {r['levels']} 層遞迴(每層 {BYTES_PER_LEVEL} bytes)")
+    if r["hit_edge"]:
         print("⚠ 改動一路延伸到觀察範圍邊緣——真正的高度可能更高,請加大 --bytes 重測")
     return 0
 
 
+def selftest() -> int:
+    """位址自我檢查與差異分析。實機 dump 需要活的 DOSBox,不在範圍內——但這兩層
+    正是 2026-09-04 出錯的地方,而它們完全離線可判。"""
+    fails = []
+
+    print("(1) 2026-09-04 事故:讀到 0/0 必須判成「對映不成立」,不是「沒被用到」")
+    ok_bad, msg_bad = addr_check(0, 0)
+    ok_good, msg_good = addr_check(24, 24)
+    ok1 = (not ok_bad and "位址對映不成立" in msg_bad and "沒被用到" in msg_bad
+           and ok_good and "24×24" in msg_good)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 0/0 -> 拒絕且訊息點名對映問題、"
+          f"24×24 -> 通過")
+    if not ok1:
+        fails.append(f"位址自我檢查不正確:{ok_bad}/{ok_good}")
+
+    print("\n(2) 界線:真實地圖尺寸都要過,明顯的殘留值都要擋")
+    # 實測 33 張地圖最小 18×26、最大 50×50(見 extract_maps 的錨點)。
+    real = [(24, 24), (27, 21), (18, 26), (50, 50), (31, 45), (18, 51)]
+    junk = [(0, 24), (24, 0), (None, 24), (3, 24), (65, 24), (255, 255)]
+    bad_real = [g for g in real if not addr_check(*g)[0]]
+    bad_junk = [g for g in junk if addr_check(*g)[0]]
+    ok2 = not bad_real and not bad_junk
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 6 個真實尺寸全過(不過的 {bad_real})、"
+          f"6 個殘留值全擋(漏放的 {bad_junk})")
+    if not ok2:
+        fails.append(f"界線不正確:real={bad_real} junk={bad_junk}")
+
+    print("\n(3) 「兩次相同」必須是自己的狀態,不能回 0")
+    # 回 0 會被讀成「量到了,答案是 0」——那是把讀取失敗當成負面結果。
+    same = analyse_diff(bytes(64), bytes(64), 64)
+    ok3 = same["kind"] == "no_change" and "bytes_used" not in same
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 相同 -> {same['kind']!r},"
+          f"且**不提供** bytes_used")
+    if not ok3:
+        fails.append(f"no_change 被當成量到 0:{same}")
+
+    print("\n(4) 高度換算:最高改動 offset -> bytes -> 層數(每層 7 bytes)")
+    before = bytes(64)
+    after = bytearray(64)
+    after[3] = 1
+    after[20] = 1                      # 最高改動 offset = 20 -> 21 bytes -> 3 層
+    r = analyse_diff(before, bytes(after), 64)
+    edge = bytearray(64)
+    edge[63] = 1                       # 一路到邊緣 -> hit_edge
+    r_edge = analyse_diff(before, bytes(edge), 64)
+    ok4 = (r["kind"] == "measured" and r["changed"] == 2 and r["low"] == 3
+           and r["high"] == 20 and r["bytes_used"] == 21 and r["levels"] == 3
+           and not r["hit_edge"] and r_edge["hit_edge"] and BYTES_PER_LEVEL == 7)
+    print(f"    {'PASS' if ok4 else 'FAIL'}: high=20 -> {r['bytes_used']} bytes / "
+          f"{r['levels']} 層、改動到第 63 byte -> hit_edge={r_edge['hit_edge']}")
+    if not ok4:
+        fails.append(f"高度換算不正確:{r}")
+
+    print("\n(5) 短讀必須獨立成一類,且鄰近全域都在軟堆疊下方")
+    short = analyse_diff(bytes(10), bytes(64), 64)
+    above = {hex(a): v for a, v in NEIGHBOURS.items() if a >= SOFT_STACK_GHIDRA}
+    ok5 = (short["kind"] == "short_read" and not above
+           and analyse_diff(bytes(64), bytes(10), 64)["kind"] == "short_read")
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 任一側短讀 -> short_read、"
+          f"NEIGHBOURS 位於軟堆疊上方的 {above or '無'}(上方才是未知區)")
+    if not ok5:
+        fails.append(f"短讀或鄰近全域假設不成立:{short} / {above}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(2026-09-04 對映失敗的回歸 + 尺寸界線雙向 + "
+          "no_change 獨立狀態 + 高度換算 + 短讀與鄰近全域)。實機 dump 未涵蓋。")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(selftest())
     sys.exit(main())
