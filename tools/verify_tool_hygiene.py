@@ -535,6 +535,21 @@ def cross_check() -> list[tuple[bool, str]]:
                 f"與 verify_generated_artifacts.coverage() 一致"
                 f"(未涵蓋 {len(missing)} 個 / 本工具算出 {len(mine)} 個)"))
 
+    # 2026-09-09:上面那條只比「未涵蓋」的原始集合,兩邊一直是一致的——但**扣掉永久
+    # 豁免之後的「實際待處理」曾經不一致**:本檔說 0 筆,而 vg 說 7 個,因為 vg 的
+    # `no_generator_set()` 只認 `no_generator` 一種永久豁免,後來新增的 `lost_input`
+    # 與 `remake_derived` 它看不到。兩支工具對**同一批檔案**給出不同答案,而它們本來
+    # 就是設計成互相牽制的。原始集合一致掩蓋了這件事,所以這裡改比最終那個數字。
+    exempt = {e["name"] for e in load_baseline().get("entries", [])
+              if e.get("rule") == "regenerable" and e.get("permanent")}
+    mine_pending = mine - exempt
+    vg_pending = set(missing) - vg.no_generator_set()
+    out.append((mine_pending == vg_pending,
+                f"與 verify_generated_artifacts 的**實際待處理**一致"
+                f"(本工具 {len(mine_pending)} 筆 / vg {len(vg_pending)} 個)"
+                + (f":只在一邊的 {sorted(mine_pending ^ vg_pending)[:3]}"
+                   if mine_pending != vg_pending else "")))
+
     # 有 selftest 的工具集合,必須被 verify_all_tools 的 selftest 層實際執行過。
     # 這裡不重跑那個(很慢),只確認兩邊對「哪些工具有 selftest」的判定同源:
     # 本檔的 has_selftest() 是照抄它的兩種拼法,若上游改了而這裡沒跟上,

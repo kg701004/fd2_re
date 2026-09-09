@@ -33744,6 +33744,14 @@
    "excerpt": "**2026-09-09 續九:一則被自己的閘門擋下的記錄,以及它暴露的診斷訊息缺陷**。續八那則是純工具流程敘述,沒有任何原版側標記,`--diff` 依規則擋下——這部分是對的。問題出在補登錄的路徑上:`--mark-reviewed` 的 `file` 參數其實只吃**基本檔名**(掃描結果就是這樣存的),但沒有任何地方說明,而傳 repo 相對路徑時它一律回「行號可能已經漂移(檔案被改過)",
    "verdict": "benign",
    "note": "工具流程記錄:audit_evidence_provenance --mark-reviewed 的診斷訊息缺陷與修法,不宣稱任何遊戲行為,因此沒有原版側證據可附。"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 223,
+   "excerpt_sha1": "2de99a2c3dec9f61385532bb74f363aad5d0d02f",
+   "excerpt": "**2026-09-09 續十:兩支互相牽制的工具對同一批檔案給出不同答案,而原有的交叉驗證看不到**。續八把 hygiene 的實際待處理清到 0,但 `artifacts` 軸同時還在說「尚待處理 7 個」。查下去那 7 個正是 6 個 ui-traces(hygiene 已標 `remake_derived`)加 `docs/data/ida/fd2_xrefs.json`(已標 `lost",
+   "verdict": "benign",
+   "note": "工具流程記錄:兩支驗證工具對永久豁免種類的認定不一致與其修法,不宣稱任何遊戲行為。"
   }
  ]
 }

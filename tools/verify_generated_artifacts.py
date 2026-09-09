@@ -516,8 +516,16 @@ def no_generator_set() -> set[str]:
         entries = json.loads(p.read_text(encoding="utf-8")).get("entries", [])
     except (OSError, ValueError):
         return set()
+    # 2026-09-09:原本只認 `no_generator` 一種,結果本檔說「尚待處理 7 個」而
+    # `verify_tool_hygiene` 對**同一批檔案**說「實際待處理 0 筆」——兩支工具對同一個
+    # 事實給出不同答案,而它們本來就是設計成互相牽制的。差在後來新增的兩種永久豁免:
+    # `lost_input`(產生器還在,但它吃的那份位元組已經不存在)與 `remake_derived`
+    # (產生它的 remake 測試已隨目錄移除)。這三種說的都是同一件事——**重生比對這條路
+    # 對這個產物不適用**——所以三種都算。`ida_embedded` 不算:那是工具側的規則
+    # (correctness),不是產物側的。
     return {e["name"] for e in entries
-            if e.get("rule") == "regenerable" and e.get("permanent") == "no_generator"}
+            if e.get("rule") == "regenerable"
+            and e.get("permanent") in {"no_generator", "lost_input", "remake_derived"}}
 
 
 WRITE_CTX = re.compile(r"json\.dump|write_text\(|\bopen\([^)]*[\"']w[\"btx+]*[\"']"
@@ -673,12 +681,12 @@ def main() -> int:
         nogen = no_generator_set()
         pending = [m for m in missing if m not in nogen]
         print(f"docs/data 已提交 JSON {total} 個:登錄表涵蓋 {covered} 個、"
-              f"已證明沒有產生器 {len(nogen)} 個、**尚待處理 {len(pending)} 個**")
+              f"已證明重生比對不適用 {len(nogen)} 個、**尚待處理 {len(pending)} 個**")
         print("\n尚待處理(有機會登錄,或需要查清楚):")
         for m in pending:
             print("  ", m)
-        print("\n已證明沒有產生器(人工記錄的 RE 分析/工具狀態檔;"
-              "宣稱由 hygiene 第 (3b) 項驗證):")
+        print("\n已證明重生比對不適用(無產生器/輸入已遺失/remake 產出;"
+              "宣稱由 hygiene 第 (3b)(3c)(3d) 項各自驗證):")
         for m in sorted(nogen):
             print("  ", m)
         return 0
@@ -693,7 +701,7 @@ def main() -> int:
     nogen = no_generator_set()
     pending = [m for m in missing if m not in nogen]
     print(f"涵蓋率:docs/data 的 {total} 個已提交 JSON 中,{covered} 個有登錄項目、"
-          f"{len(nogen)} 個**已證明沒有產生器**(重生比對不適用)、"
+          f"{len(nogen)} 個**已證明重生比對不適用**(無產生器/輸入已遺失/remake 產出)、"
           f"{len(pending)} 個**尚待處理**(`--coverage` 可列出)")
     if drift:
         print("  **漂移(需人工判斷是工具變了還是產物被手改)**:", [r["artifact"] for r in drift])
