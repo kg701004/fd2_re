@@ -130,6 +130,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "extract_maps.py":            (["--selftest"], "offline"),
     "render_story.py":            (["--selftest"], "offline"),
     "derive_native_argcounts.py": (["--selftest"], "offline"),
+    "export_sprites.py":          (["--selftest"], "offline"),
+    "extract_all.py":             (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

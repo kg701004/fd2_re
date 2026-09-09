@@ -1,703 +1,693 @@
 {
-  "_policy": "本檔是棘輪基準線:只准變短。新違規不得加入,除非附上具體理由;不再違規的項目必須移除,否則會誤放行。由 tools/verify_tool_hygiene.py --update-baseline 產生。",
-  "entries": [
-    {
-      "name": "export_sprites.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "extract_all.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_battle_autoplay.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_chapter_sweep.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_crash_capture.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_crash_ladder.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_floodfill_stack_probe.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_game_state.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_in_battle_check.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_sfx_screen_map.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_speaker_capture.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_stat_override.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "fd2_zero_read_capture.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "ida_dump_bytes.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "ida_dump_pseudocode.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "ida_export_fd2_xrefs.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "ida_native_probe.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "ida_probe_data_xrefs.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "ida_probe_functions.py",
-      "rule": "correctness",
-      "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
-      "permanent": "ida_embedded"
-    },
-    {
-      "name": "realesrgan_batch.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "realesrgan_upscale.py",
-      "rule": "correctness",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ai_action_dispatch_live_trace.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/attack_spell_presentation_dispatch.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/audit_53b13_writers.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/battle_events.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/battle_sfx_map.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/bgm_per_chapter_tables.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/campaign_sample.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/ch24_enemy_template.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/ch27_roster_character_names.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/chapter_beats/_stats.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch00_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch00_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch01_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch01_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch02_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch02_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch03_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch03_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch04_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch04_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch05_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch05_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch06_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch06_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch07_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch07_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch08_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch08_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch09_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch09_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch10_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch10_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch11_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch11_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch12_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch12_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch13_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch13_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch14_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch14_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch15_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch15_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch16_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch16_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch17_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch17_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch18_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch18_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch19_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch19_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch20_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch20_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch21_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch21_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch22_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch22_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch23_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch23_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch24_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch24_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch25_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch25_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch26_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch26_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch27_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch27_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch28_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch28_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch29_post.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/chapter_beats/ch29_pre.json",
-      "rule": "regenerable",
-      "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
-    },
-    {
-      "name": "docs/data/classchange_montage_rendering.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/fd2-reference-files.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/fdmus_timb_instrumentation.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/fdtxt000_name_table.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/glyph_map.json",
-      "rule": "regenerable",
-      "reason": "人工轉錄的字模→字元對照表(1824 筆,需人眼看渲染圖逐一辨字),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。2026-09-09 註:先前 discover() 因判準過寬,把它的三個**讀取者**(decode_story_text / export_command_labels / export_item_labels)認成產生器,使這個宣稱一直無法成立;判準改成 AST 角色判定後才解開。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/glyph_map_independent_check.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/hygiene_baseline.json",
-      "rule": "regenerable",
-      "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/ida/fd2_xrefs.json",
-      "rule": "regenerable",
-      "reason": "產生器的**輸入已永久消失**:本產物記錄的輸入是 357074 bytes / md5 b97caf22 的舊版 FD2.EXE,現行基準是 509158 bytes / md5 33464c81 —— 兩者是不同的二進位檔,使用者已於 2026-09-09 確認舊版永久刪除(USB 備份也是同一份)。所以「重跑產生器再比對」在定義上做不到,**不是**缺 IDA:裝上 IDA 也解不了,缺的是輸入不是工具。**永久豁免**,但宣稱是可證偽的三層:產物必須自己記錄 input_md5;該 md5 必須正好是 fd2-reference-files.json 裡登錄的 previous_edition(而非現行基準);repo 內若出現任何 md5 相符的檔案,宣稱立刻失敗。要建立一份**現行版本**的等價 xref 產物是另一個獨立工作項,不是這一項的重生 —— 同 chapter_beats 那 61 個的區分方式。",
-      "permanent": "lost_input"
-    },
-    {
-      "name": "docs/data/item_sfx_dispatch_trace.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/item_sfx_known_types.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/journey_global_initial_phase.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/known_address_errata.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/native_chapter_tables.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/native_join_constructor.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/native_town_records.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/no_marker_reviewed.json",
-      "rule": "regenerable",
-      "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/per_chapter_handler_tables.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/per_chapter_join_table.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/play_sfx_a_0x25a96_disasm.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/portrait_names.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/preparation_required_characters.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/remake_excluded_claims.json",
-      "rule": "regenerable",
-      "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/runtime_speaker_resolved.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/sfx_call_sites_by_function.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/sfx_index_callers.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/sfx_pool_call_site_inventory.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/shops.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/spell_sfx_mapping.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/spell_table_and_presentation.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/turn_events.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/ui-traces/save-town-boundary-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui-traces/town-church-class-change-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui-traces/town-church-revive-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui-traces/town-hotel-raw-return-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui-traces/town-preparation-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui-traces/town-shop-ch02.json",
-      "rule": "regenerable",
-      "reason": "既有存量,尚未處理"
-    },
-    {
-      "name": "docs/data/ui_sfx_index_semantics.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/verified_addresses.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    },
-    {
-      "name": "docs/data/weapon_range.json",
-      "rule": "regenerable",
-      "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
-      "permanent": "no_generator"
-    }
-  ]
+ "_policy": "本檔是棘輪基準線:只准變短。新違規不得加入,除非附上具體理由;不再違規的項目必須移除,否則會誤放行。由 tools/verify_tool_hygiene.py --update-baseline 產生。",
+ "entries": [
+  {
+   "name": "fd2_battle_autoplay.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_chapter_sweep.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_crash_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_crash_ladder.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_floodfill_stack_probe.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_game_state.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_in_battle_check.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_sfx_screen_map.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_speaker_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_stat_override.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "fd2_zero_read_capture.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "ida_dump_bytes.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "ida_dump_pseudocode.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "ida_export_fd2_xrefs.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "ida_native_probe.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "ida_probe_data_xrefs.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "ida_probe_functions.py",
+   "rule": "correctness",
+   "reason": "IDA Pro 內嵌腳本:import 的 ida_*/idaapi/idc 只存在於 IDA 的內嵌直譯器裡,在一般 python 下必定 ModuleNotFoundError,任何 selftest 都得先進得了那個環境。**永久豁免**,且此宣稱由 verify_tool_hygiene 的第 (3b) 項每次實跑驗證(要求它確實因 ida_* 模組不存在而失敗),不是一句沒人查的話。",
+   "permanent": "ida_embedded"
+  },
+  {
+   "name": "realesrgan_batch.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "realesrgan_upscale.py",
+   "rule": "correctness",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ai_action_dispatch_live_trace.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/attack_spell_presentation_dispatch.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/audit_53b13_writers.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/battle_events.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/battle_sfx_map.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/bgm_per_chapter_tables.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/campaign_sample.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/ch24_enemy_template.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/ch27_roster_character_names.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/chapter_beats/_stats.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch00_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch00_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch01_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch01_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch02_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch02_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch03_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch03_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch04_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch04_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch05_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch05_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch06_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch06_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch07_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch07_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch08_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch08_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch09_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch09_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch10_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch10_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch11_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch11_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch12_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch12_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch13_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch13_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch14_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch14_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch15_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch15_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch16_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch16_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch17_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch17_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch18_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch18_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch19_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch19_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch20_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch20_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch21_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch21_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch22_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch22_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch23_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch23_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch24_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch24_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch25_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch25_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch26_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch26_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch27_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch27_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch28_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch28_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch29_post.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/chapter_beats/ch29_pre.json",
+   "rule": "regenerable",
+   "reason": "已提交版本是用**已遺失的舊版 EXE** 產出、且事後由 doc25/26 人工補過 op 名(工具 docstring 自述),因此無法逐位元組重生。工具本身的位址表已於 2026-09-08 修正到現行參考版(unknown 222→101);要讓這 61 個檔遷移到現行版本,必須先逐一驗證 8 個尚未收錄原語的參數個數,那是獨立的 RE 工作,見 91-worklist L212。"
+  },
+  {
+   "name": "docs/data/classchange_montage_rendering.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/fd2-reference-files.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/fdmus_timb_instrumentation.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/fdtxt000_name_table.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/glyph_map.json",
+   "rule": "regenerable",
+   "reason": "人工轉錄的字模→字元對照表(1824 筆,需人眼看渲染圖逐一辨字),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。2026-09-09 註:先前 discover() 因判準過寬,把它的三個**讀取者**(decode_story_text / export_command_labels / export_item_labels)認成產生器,使這個宣稱一直無法成立;判準改成 AST 角色判定後才解開。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/glyph_map_independent_check.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/hygiene_baseline.json",
+   "rule": "regenerable",
+   "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/ida/fd2_xrefs.json",
+   "rule": "regenerable",
+   "reason": "產生器的**輸入已永久消失**:本產物記錄的輸入是 357074 bytes / md5 b97caf22 的舊版 FD2.EXE,現行基準是 509158 bytes / md5 33464c81 —— 兩者是不同的二進位檔,使用者已於 2026-09-09 確認舊版永久刪除(USB 備份也是同一份)。所以「重跑產生器再比對」在定義上做不到,**不是**缺 IDA:裝上 IDA 也解不了,缺的是輸入不是工具。**永久豁免**,但宣稱是可證偽的三層:產物必須自己記錄 input_md5;該 md5 必須正好是 fd2-reference-files.json 裡登錄的 previous_edition(而非現行基準);repo 內若出現任何 md5 相符的檔案,宣稱立刻失敗。要建立一份**現行版本**的等價 xref 產物是另一個獨立工作項,不是這一項的重生 —— 同 chapter_beats 那 61 個的區分方式。",
+   "permanent": "lost_input"
+  },
+  {
+   "name": "docs/data/item_sfx_dispatch_trace.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/item_sfx_known_types.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/journey_global_initial_phase.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/known_address_errata.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/native_chapter_tables.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/native_join_constructor.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/native_town_records.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/no_marker_reviewed.json",
+   "rule": "regenerable",
+   "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/per_chapter_handler_tables.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/per_chapter_join_table.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/play_sfx_a_0x25a96_disasm.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/portrait_names.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/preparation_required_characters.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/remake_excluded_claims.json",
+   "rule": "regenerable",
+   "reason": "工具自身的狀態檔(由該工具的 --update-baseline / --mark-reviewed 維護)。把它登錄進重生比對是套套邏輯——重生它必然與自身相同。**永久豁免**,但刻意留在清單裡而不是從分母消失。宣稱由 verify_tool_hygiene 第 (3b) 項每次驗證:只要有工具開始在寫入語境提到它,宣稱就會失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/runtime_speaker_resolved.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/sfx_call_sites_by_function.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/sfx_index_callers.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/sfx_pool_call_site_inventory.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/shops.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/spell_sfx_mapping.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/spell_table_and_presentation.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/turn_events.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/ui-traces/save-town-boundary-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-church-class-change-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-church-revive-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-hotel-raw-return-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-preparation-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui-traces/town-shop-ch02.json",
+   "rule": "regenerable",
+   "reason": "既有存量,尚未處理"
+  },
+  {
+   "name": "docs/data/ui_sfx_index_semantics.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/verified_addresses.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  },
+  {
+   "name": "docs/data/weapon_range.json",
+   "rule": "regenerable",
+   "reason": "人工記錄的 RE 分析結果(反組譯發現/dispatch 表/位址庫等),**沒有產生器**,重生比對這條路本身不適用。**永久豁免**,但宣稱是可證偽的:verify_tool_hygiene 第 (3b) 項每次以 verify_generated_artifacts.discover() 掃全部工具,只要日後有人寫了產生器,這個宣稱就會立刻失敗。",
+   "permanent": "no_generator"
+  }
+ ]
 }
