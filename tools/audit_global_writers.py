@@ -69,6 +69,84 @@ def _leading_pushes(instructions: list[dict], entry: int, max_pushes: int = 6) -
     return out
 
 
+def selftest() -> int:
+    """`_leading_pushes` 的輸出是拿來判斷「這個函式會不會讀棧上引數」的原料。
+
+    它有一個**容易誤讀的地方**,值得明確釘住:Watcom 函式的真入口是
+    `push <frame>; call 0x3702f`,所以從真入口起收集,第一個 push 是
+    **stack-check 的 frame size,不是參數** —— 緊接的 `call` 會中斷收集,
+    所以只會拿到那一個。要看暫存器保存序列,必須從 `call` 之後起算。
+
+    這個區別如果搞錯,會把 frame size 當成函式的形式參數,進而對「這個全域
+    是不是每次都寫同樣的值」得出相反結論 —— 而那正是這支工具唯一的用途。
+    """
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    fails = []
+
+    def ins(a, m, o=""):
+        return {"address": hex(a), "mnemonic": m, "op_str": o}
+
+    # 典型 Watcom 序頭 + 暫存器保存
+    seq = [ins(0x1000, "push", "0x30"), ins(0x1002, "call", "0x3702f"),
+           ins(0x1007, "push", "ebx"), ins(0x1008, "push", "esi"),
+           ins(0x1009, "sub", "esp, 0x10")]
+
+    print("(1) 從真入口起:只會拿到 stack-check 的 frame size,call 立刻中斷收集")
+    got1 = [i["op_str"] for i in _leading_pushes(seq, 0x1000)]
+    ok1 = got1 == ["0x30"]
+    print(f"    {'PASS' if ok1 else 'FAIL'}: {got1}(應 ['0x30'] —— 這是 frame size,不是參數)")
+    if not ok1:
+        fails.append(f"真入口起的收集不符:{got1}")
+
+    print("\n(2) 從 call 之後起:才是暫存器保存序列")
+    got2 = [i["op_str"] for i in _leading_pushes(seq, 0x1007)]
+    ok2 = got2 == ["ebx", "esi"]
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {got2}(應 ['ebx', 'esi'];sub 中斷收集)")
+    if not ok2:
+        fails.append(f"call 之後的收集不符:{got2}")
+
+    print("\n(3) max_pushes 必須真的封頂")
+    got3 = [i["op_str"] for i in _leading_pushes(seq, 0x1007, 1)]
+    ok3 = got3 == ["ebx"]
+    print(f"    {'PASS' if ok3 else 'FAIL'}: max_pushes=1 -> {got3}")
+    if not ok3:
+        fails.append(f"max_pushes 沒有生效:{got3}")
+
+    print("\n(4) 輸入順序不得影響結果(函式自己會依位址排序)")
+    got4 = [i["op_str"] for i in _leading_pushes(list(reversed(seq)), 0x1007)]
+    ok4 = got4 == got2
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 亂序輸入 -> {got4}(應與正序相同)")
+    if not ok4:
+        fails.append(f"亂序輸入結果不同:{got4} vs {got2}")
+
+    print("\n(5) 邊界:入口在所有指令之後、以及第一條就不是 push,都必須回空")
+    got5a = _leading_pushes(seq, 0x9999)
+    got5b = _leading_pushes([ins(0x2000, "mov", "eax, 1"), ins(0x2002, "push", "ebx")], 0x2000)
+    ok5 = got5a == [] and got5b == []
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 入口在尾端後={got5a}、"
+          f"首條非 push={[i['op_str'] for i in got5b]}")
+    if not ok5:
+        fails.append("邊界情形沒有回空")
+
+    print("\n(6) 非恆真控制:不同起點必須給出不同結果,否則這個函式沒在看 entry")
+    ok6 = got1 != got2
+    print(f"    {'PASS' if ok6 else 'FAIL'}: {got1} vs {got2}")
+    if not ok6:
+        fails.append("不同起點得到相同結果 —— entry 參數沒有作用")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(序頭 frame size vs 暫存器保存的區別 + max_pushes + "
+          "排序不變性 + 邊界 + 非恆真控制)。")
+    return 0
+
+
 def audit(address: int, *, ghidra_install, project_dir, project_name, process_name, timeout, quiet) -> dict:
     xrefs = _run_batch(
         [{"id": "x", "address": hex(address), "action": "xref_to"}],
@@ -144,7 +222,7 @@ def audit(address: int, *, ghidra_install, project_dir, project_name, process_na
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--address", type=lambda s: int(s, 0), required=True)
+    ap.add_argument("--address", type=lambda s: int(s, 0))
     ap.add_argument("--output", type=Path)
     ap.add_argument("--ghidra", default=gbp.DEFAULT_GHIDRA_INSTALL)
     ap.add_argument("--project-dir", default=gbp.DEFAULT_PROJECT_DIR)
@@ -152,7 +230,12 @@ def main() -> int:
     ap.add_argument("--process-name", default=gbp.DEFAULT_PROCESS_NAME)
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if args.address is None:
+        ap.error("需要 --address(或用 --selftest)")
 
     report = audit(
         args.address,

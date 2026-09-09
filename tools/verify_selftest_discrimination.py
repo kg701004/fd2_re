@@ -125,6 +125,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "verify_dat_extraction_freshness.py": (["--selftest"], "offline"),
     "trace_item_sfx_dispatch.py": (["--selftest"], "offline"),
     "dosbox_exec_trace_analyze.py": (["--selftest"], "offline"),
+    "audit_global_writers.py":    (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
     "capstone_probe.py":         (["--selftest"], "ghidra"),
