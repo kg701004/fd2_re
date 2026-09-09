@@ -77,6 +77,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import functools
 import json
 import locale
 import re
@@ -348,9 +349,94 @@ def _proves_no_generator(name: str) -> tuple[bool, str]:
     return True, "沒有任何工具在寫入語境提到它"
 
 
+REFERENCE_FILES = ROOT / "docs" / "data" / "fd2-reference-files.json"
+
+
+@functools.lru_cache(maxsize=1)
+def _repo_size_index() -> dict[int, tuple[Path, ...]]:
+    """檔案大小 -> repo 內該大小的檔案。整棵樹只走一次。
+
+    走一次約 4.6 秒(extracted/ 底下有上萬個檔),而 _proves_lost_input 是
+    每個永久豁免項目呼叫一次的——同一輪裡重複走樹就是上一批剛修過的那種
+    效能回歸。索引與要找哪個 md5 無關,所以算一次就好。
+    """
+    idx: dict[int, list[Path]] = {}
+    for f in ROOT.rglob("*"):
+        if ".git" in f.parts:
+            continue
+        try:
+            if f.is_file():
+                idx.setdefault(f.stat().st_size, []).append(f)
+        except OSError:
+            continue
+    return {k: tuple(v) for k, v in idx.items()}
+
+
+def _repo_files_of_size(size: int | None) -> tuple[Path, ...]:
+    if not size:
+        return ()
+    return _repo_size_index().get(size, ())
+
+
+def _proves_lost_input(name: str) -> tuple[bool, str]:
+    """證明「這個產物的產生器輸入已經不存在」——重生比對這條路本身不適用。
+
+    這跟 `no_generator` 是不同的情況:產生器可能還在(甚至還跑得動),但它
+    吃的那個位元組序列已經沒了,所以「重跑一次比對輸出」在定義上做不到。
+    `docs/data/ida/fd2_xrefs.json` 是已知的一例——它記錄的輸入是
+    357074 bytes 的舊版 FD2.EXE,而現行的是 509158 bytes,兩者是不同的
+    二進位檔;使用者已於 2026-09-09 確認舊版永久刪除。裝上 IDA 也解不了,
+    因為缺的是輸入不是工具。
+
+    宣稱是可證偽的,而且有三層:
+      1. 產物自己必須記錄 `input_md5`——沒有記錄就無從主張;
+      2. 那個 md5 必須正好是 `fd2-reference-files.json` 裡某個檔案的
+         **previous_edition**(已退役的版本),而不是現行基準。若日後基準
+         改回去、或那筆記錄被移除,這裡立刻失敗;
+      3. repo 內若出現任何一份 md5 相符的檔案,宣稱立刻失敗——輸入回來了,
+         就該回頭重生比對。
+
+    要建立一份**現行版本**的等價產物是另一件事,不是這一項的重生。
+    """
+    import hashlib
+    p = ROOT / name
+    if not p.exists():
+        return False, "檔案不存在"
+    try:
+        art = json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:                                      # noqa: BLE001
+        return False, f"讀不出來:{type(exc).__name__}"
+    md5 = art.get("input_md5") or art.get("source_md5")
+    size = art.get("input_size") or art.get("source_size")
+    if not md5:
+        return False, "產物沒有記錄 input_md5,無從主張輸入已遺失"
+    if not REFERENCE_FILES.exists():
+        return False, f"找不到 {REFERENCE_FILES.name},無法核對版本身分"
+    ref = json.loads(REFERENCE_FILES.read_text(encoding="utf-8"))
+    retired, current = set(), set()
+    for f in ref.get("files", []):
+        if f.get("md5"):
+            current.add(f["md5"])
+        prev = f.get("previous_edition") or {}
+        if prev.get("md5"):
+            retired.add(prev["md5"])
+    if md5 in current:
+        return False, f"{md5[:8]} 是**現行基準**,輸入還在——請直接重生比對"
+    if md5 not in retired:
+        return False, f"{md5[:8]} 不在參考檔登錄的已退役版本裡,身分不明"
+    for f in _repo_files_of_size(size):
+        try:
+            if hashlib.md5(f.read_bytes()).hexdigest() == md5:
+                return False, f"{f.relative_to(ROOT)} 的 md5 就是它——輸入回來了"
+        except OSError:
+            continue
+    return True, f"輸入 {md5[:8]}({size} bytes)是已退役版本,repo 內不存在"
+
+
 PERMANENT_PROOFS = {
     "ida_embedded": _proves_ida_embedded,
     "no_generator": _proves_no_generator,
+    "lost_input": _proves_lost_input,
 }
 
 
@@ -541,6 +627,30 @@ def selftest() -> int:
           f"無法驗證 {unproven or '無'},驗證不成立 {disproven or '無'}")
     if unproven or disproven:
         fails.append(f"永久豁免的宣稱站不住:{(unproven + disproven)[:3]}")
+
+    print("\n(3c) lost_input 的配對控制:三種不成立的情況都必須被擋下")
+    # 正例只證明它會說 True。這三個反例來自 repo 裡真的存在的產物,分別對應
+    # 「輸入還在」「沒有記錄輸入」「身分不明」——少了它們,一個永遠回 True 的
+    # 實作也會通過上一題。
+    lost_cases = [
+        ("docs/data/ida/fd2_xrefs.json", True, "輸入是已退役版本"),
+        ("docs/data/exe_tables/native_unit_tables.json", False, "輸入是現行基準"),
+        ("docs/data/glyph_map.json", False, "沒有記錄 input_md5"),
+    ]
+    lost_bad = []
+    for art, want, why in lost_cases:
+        if not (ROOT / art).exists():
+            lost_bad.append(f"{art} 不存在")
+            continue
+        got, detail = _proves_lost_input(art)
+        if got != want:
+            lost_bad.append(f"{art}({why}): 得 {got},應 {want} —— {detail}")
+    both_poles = {w for _, w, _ in lost_cases} == {True, False}
+    ok3c = not lost_bad and both_poles
+    print(f"    {'PASS' if ok3c else 'FAIL'}: 3 個真實產物"
+          + ("全部相符,且正反例俱在" if ok3c else f",不符 {lost_bad}"))
+    if not ok3c:
+        fails.append(f"lost_input 配對控制不成立:{lost_bad}")
     elif not perm:
         fails.append("基準線裡沒有任何永久豁免 —— 若確實沒有,請移除這條檢查")
 
