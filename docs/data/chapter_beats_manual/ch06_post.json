@@ -1,0 +1,101 @@
+{
+  "_provenance": "手工結構化,不是任何工具的輸出,所以從 docs/data/chapter_beats/ 移出來(2026-09-09)。那個目錄現在整個由 `dump_chapter_beats.py <EXE> all` 產生並逐位元組比對,留一個產不出來的檔在裡面會讓登錄項目永遠報漂移。本檔用的是 export_handler_scripts 的 IR schema,而且比它產得出來的還多兩層:外層 `if native_event_state_eq(index=17,value=1,slot_count=44)` 沒有任何抽取器產得出來(structure_control_flow 只認 any_unit_inactive 那種 diamond),內層的 any_unit_inactive diamond 在現行參考版 EXE 也沒被形狀比對命中——後者是獨立待查項:要嘛是現行版的指令形狀真的不同,要嘛是比對條件過嚴。在查清楚之前不重生、不覆蓋,原樣保留。",
+  "schema_version": 1,
+  "chapter": 6,
+  "phase": "post",
+  "handler": "0x232e8",
+  "beats": [
+    {
+      "op": "sync_party",
+      "source": {
+        "addr": "0x23319",
+        "target": "0x11506"
+      }
+    },
+    {
+      "op": "if",
+      "condition": {
+        "op": "native_event_state_eq",
+        "event_state_index": 17,
+        "event_state_value": 1,
+        "required_slot_count": 44
+      },
+      "source": {
+        "addr": "0x2331e"
+      },
+      "then": [
+        {
+          "op": "if",
+          "condition": {
+            "op": "any_unit_inactive",
+            "unit_slots": [
+              43
+            ]
+          },
+          "source": {
+            "addr": "0x2332e",
+            "target": "0x3453e"
+          },
+          "then": [
+            {
+              "op": "dialog",
+              "text_index": 5,
+              "source": {
+                "addr": "0x233b2",
+                "target": "0x15f84"
+              },
+              "text_table": "dword ptr [0x3a79]"
+            }
+          ],
+          "else": [
+            {
+              "op": "layout_units",
+              "source": {
+                "addr": "0x23358",
+                "target": "0x233c6"
+              }
+            },
+            {
+              "op": "dialog",
+              "text_index": 4,
+              "source": {
+                "addr": "0x2337f",
+                "target": "0x15f84"
+              },
+              "text_table": "dword ptr [0x3a79]"
+            },
+            {
+              "op": "join",
+              "char_id": 12,
+              "source": {
+                "addr": "0x23389",
+                "target": "0x112a5"
+              }
+            }
+          ]
+        }
+      ],
+      "else": [
+        {
+          "op": "dialog",
+          "text_index": 5,
+          "source": {
+            "addr": "0x233b2",
+            "target": "0x15f84"
+          },
+          "text_table": "dword ptr [0x3a79]"
+        }
+      ]
+    },
+    {
+      "op": "set_chapter",
+      "chapter": 7,
+      "source": {
+        "addr": "0x233ba"
+      }
+    }
+  ],
+  "diagnostics": {
+    "unknown_ops": 0
+  }
+}

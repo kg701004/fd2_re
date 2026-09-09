@@ -33728,6 +33728,22 @@
    "excerpt": "**2026-09-09 續九:Real-ESRGAN 兩支——分塊幾何可以在沒有權重的情況下驗死**。先更正一個歸類:這兩支先前被我列成「需要 GPU/模型,被擋住」,實際上 `torch 2.11.0+cu128` 與 `tools/models/RealESRGAN_x4plus.pth` **本來就都在**,從來沒被擋。**關鍵手法**:用一個位移不變的假模型(nearest-neighb",
    "verdict": "benign",
    "note": "純工具流程敘述:本機 torch/權重的可用性、Real-ESRGAN 分塊拼接幾何的不變量、以及同一條 alpha 規則被寫兩次的修正。不含任何對原版遊戲的 RE 主張,因此沒有原版側位址可引用。"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 221,
+   "excerpt_sha1": "de908e2e1575e08a9a765444eb5e0dfe25042c0c",
+   "excerpt": "**2026-09-09 續八:hygiene 棘輪的「實際待處理」歸零,而登錄過程本身挖出一個隱形漏洞**。(A) `docs/data/chapter_beats` 整個目錄登錄進 `verify_generated_artifacts.REGISTRY`(產生器 `dump_chapter_beats.py <EXE> all`,目錄模式本來就有),實跑 **IDENTICAL,61 個檔,",
+   "verdict": "benign",
+   "note": "工具流程記錄,不是關於遊戲的事實主張:內容是 verify_generated_artifacts 的目錄登錄與 coverage() 的身分繼承漏洞,沒有原版側證據可附,因為它不宣稱任何遊戲行為。"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 222,
+   "excerpt_sha1": "ab5e54781af1f3d3926f8d0d4c581ac90c955c4c",
+   "excerpt": "**2026-09-09 續九:一則被自己的閘門擋下的記錄,以及它暴露的診斷訊息缺陷**。續八那則是純工具流程敘述,沒有任何原版側標記,`--diff` 依規則擋下——這部分是對的。問題出在補登錄的路徑上:`--mark-reviewed` 的 `file` 參數其實只吃**基本檔名**(掃描結果就是這樣存的),但沒有任何地方說明,而傳 repo 相對路徑時它一律回「行號可能已經漂移(檔案被改過)",
+   "verdict": "benign",
+   "note": "工具流程記錄:audit_evidence_provenance --mark-reviewed 的診斷訊息缺陷與修法,不宣稱任何遊戲行為,因此沒有原版側證據可附。"
   }
  ]
 }

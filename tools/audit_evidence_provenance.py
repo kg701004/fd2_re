@@ -393,10 +393,25 @@ def _build_review_entry(file: str, line: int, verdict: str, note: str,
     讓 `--mark-reviewed-batch` 能一次驗證整批、只成功寫入一次檔案)。"""
     if verdict not in NO_MARKER_VERDICTS:
         return None, f"verdict 必須是 {sorted(NO_MARKER_VERDICTS)} 之一,收到 {verdict!r}"
+    # 2026-09-09:`file` 一直只吃**基本檔名**(掃描結果就是這樣存的),但沒有任何地方
+    # 說明,而失敗時一律回「行號可能已經漂移」——實際踩到時因此去查行號,查了三次才
+    # 發現真正的原因是我傳了 repo 相對路徑。診斷訊息把人指向錯的地方,比沒有訊息更貴。
+    # 現在:路徑照樣接受(正規化成基本檔名),而且「檔案不在掃描結果裡」與「檔案在、
+    # 行號不在」分成兩種訊息——這正是「讀取失敗不是負面結果」那條規則的同一個形狀。
+    file = Path(file).name
     match = claims_by_key.get((file, line))
     if match is None:
-        return None, (f"{file}:{line} 不是目前掃描結果裡的 NO_MARKER 主張——"
-                      "行號可能已經漂移(檔案被改過),重新掃一次確認正確行號再登錄。")
+        lines_in_file = sorted(ln for f, ln in claims_by_key if f == file)
+        if not lines_in_file:
+            files = sorted({f for f, _ in claims_by_key})
+            near = [f for f in files if f == file]
+            return None, (f"{file} 在目前的掃描結果裡沒有任何 NO_MARKER 主張"
+                          + ("(這份文件目前是乾淨的)。" if near else
+                             f",檔名也不在掃描範圍內(掃到 {len(files)} 份文件)。"))
+        return None, (f"{file}:{line} 不是 NO_MARKER 主張,但同檔有 "
+                      f"{len(lines_in_file)} 筆(最近的行號:"
+                      f"{min(lines_in_file, key=lambda n: abs(n - line))})——"
+                      "行號可能已經漂移,重新掃一次確認正確行號再登錄。")
     sha = _sha(match.excerpt)
     if (file, sha) in already:
         return None, f"{file}:{line} 已經登錄過,不重複新增(如果判定要改,先手動刪除舊條目)。"
@@ -416,7 +431,9 @@ def mark_reviewed(file: str, line: int, verdict: str, note: str,
         return 2
     reg["reviews"].append(entry)
     registry.write_text(json.dumps(reg, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"已登錄 {file}:{line} verdict={verdict}")
+    # 印**實際寫進去的**檔名(已正規化成基本檔名),不是使用者打的那個字串——
+    # 否則訊息會讓人以為登錄表存的是完整路徑,下次拿路徑去查表就找不到。
+    print(f"已登錄 {entry['file']}:{line} verdict={verdict}")
     return 0
 
 
@@ -1015,6 +1032,33 @@ def selftest() -> int:
             if len(load_no_marker_reviews(tmp_reg3)) != 1:
                 fails.append("mark_reviewed_batch 負對照失敗:同一批裡對同一筆主張"
                              "登錄兩次,應該只留 1 筆卻沒有")
+
+        # --- _build_review_entry 的四種輸入必須各自可辨(2026-09-09)---
+        # 起因是實際踩到:傳 repo 相對路徑被拒,而訊息說「行號可能已經漂移」,
+        # 於是去查行號,查了三次才發現真正的原因是檔名格式。指錯方向的診斷比沒有
+        # 診斷更貴,所以四種情況現在各有各的結果,而且成對驗證——只驗「路徑能過」
+        # 的話,一個把所有輸入都放行的實作也會通過。
+        probe = {("91-worklist.md", 221): Claim("91-worklist.md", 221, "NO_MARKER",
+                                                [], [], "x"),
+                 ("91-worklist.md", 400): Claim("91-worklist.md", 400, "NO_MARKER",
+                                                [], [], "y")}
+        cases = [
+            ("docs/knowledge-base/91-worklist.md", 221, True, None),   # 路徑要被接受
+            ("91-worklist.md", 221, True, None),                       # 基本檔名
+            ("91-worklist.md", 999, False, "行號"),                     # 同檔、行號不存在
+            ("30-nonexistent-doc.md", 5, False, "掃描範圍"),            # 檔案不在掃描結果裡
+        ]
+        for f, ln, want_ok, want_word in cases:
+            checks += 1
+            entry, err = _build_review_entry(f, ln, "benign", "n", probe, set())
+            if want_ok and entry is None:
+                fails.append(f"_build_review_entry 應接受 {f}:{ln},卻回 {err}")
+            elif not want_ok:
+                if entry is not None:
+                    fails.append(f"_build_review_entry 應拒絕 {f}:{ln},卻接受了")
+                elif want_word not in err:
+                    fails.append(f"_build_review_entry 拒絕 {f}:{ln} 的理由沒有指出"
+                                 f"「{want_word}」,訊息會把人指向錯的地方:{err[:70]}")
 
         # --- 對真實登錄表的合理性檢查:不能有重複鍵(同一個 file+sha1 出現兩次) ---
         checks += 1

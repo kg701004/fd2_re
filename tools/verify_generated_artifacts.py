@@ -132,7 +132,38 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 比對,判準一改就會立刻看得出來。
     ("docs/data/native_argcounts.json", "derive_native_argcounts.py",
      ["--wide", "--json", "{out}"], "bytes"),
+    # 2026-09-09:61 個 chapter_beats。它們是 hygiene 基準線裡最後一批「實際待處理」,
+    # 而擋住登錄的一直是「已提交檔是舊版產出、事後人工補過 op 名」。逐檔比對後,
+    # 人工補充只剩兩類且都已處理:12 條註記移到 chapter_beats_notes.json 由匯出時
+    # 貼回(貼不上就丟錯),唯一手工結構化的 ch06_post.json 移到 chapter_beats_manual/
+    # (它的外層 `if native_event_state_eq` 沒有任何抽取器產得出來)。留一個產不出來
+    # 的檔在目錄裡,登錄項目會永遠報漂移——所以先把它移出去,再讓整個目錄可比對。
+    ("docs/data/chapter_beats", "dump_chapter_beats.py", [EXE, "all", "{out}"], "dir"),
 ]
+
+# 已登錄目錄裡**不是該產生器產出**的檔案。
+#
+# 2026-09-09 發現的漏洞:`coverage()` 對 `dir` 項目是 rglob 整個目錄,所以目錄裡的
+# 每個 .json 都拿到「已登錄」身分;但逐位元組比對只比對產生器**實際產出**的那些。
+# 兩者的差集因此既不會被比對、也不會出現在待處理清單裡——完全隱形。實測
+# `docs/data/exe_tables/` 有 7 個這種檔,其中 5 個既沒有各自的登錄項目、也沒有
+# 無產生器證明。`characters.json` 就在裡面,而本 session 稍早正是在它裡面抓到
+# 三個錯的角色名。這與「乾淨的總計藏起缺席的列」是同一個模式。
+#
+# 處理方式不是放寬,而是把差集**明列出來並附理由**,再由 selftest 兩邊夾:
+# 實際的差集不能有沒列到的,列到的也必須真的沒有產生器(`discover()` 每次實掃)。
+DIR_ORPHANS: dict[str, str] = {
+    # 各自有獨立登錄項目(產生器不同,不是 dump_exe_tables.py 產的)。
+    "docs/data/exe_tables/native_unit_tables.json": "另有獨立登錄項目",
+    "docs/data/exe_tables/terrain.json": "另有獨立登錄項目",
+    # 人工記錄的 RE 結果,沒有產生器。`characters.json` 的三個角色名 2026-09-09
+    # 依 fdtxt000_name_table.json 更正過,更正方式是直接改檔,不存在重生這條路。
+    "docs/data/exe_tables/characters.json": "人工 RE 記錄,無產生器",
+    "docs/data/exe_tables/class_change_stat_bonuses.json": "人工 RE 記錄,無產生器",
+    "docs/data/exe_tables/class_change_targets.json": "人工 RE 記錄,無產生器",
+    "docs/data/exe_tables/revival_cost_coefficients.json": "人工 RE 記錄,無產生器",
+    "docs/data/exe_tables/revive_fee_rates.json": "人工 RE 記錄,無產生器",
+}
 
 
 def _hash(p: Path) -> str:
@@ -369,6 +400,50 @@ def selftest() -> int:
     if not ok8:
         fails.append(f"每次查詢都重新解析:{len(calls)} 次")
 
+    print("\n(9) 已登錄目錄裡的每個檔,都必須真的被某個東西涵蓋(兩邊夾)")
+    # 漏洞:coverage() 對 dir 項目 rglob 整個目錄,但比對只涵蓋產生器**實際產出**
+    # 的檔;差集因此拿到「已登錄」身分卻從未被比對,也不會出現在待處理清單裡。
+    orphan_bad = []
+    seen_orphans = set()
+    for art, tool, argv, kind in REGISTRY:
+        if kind != "dir":
+            continue
+        # 直接跑:實測兩個目錄產生器合計 1.3 秒。先前為此加過跨行程快取,
+        # 但量測顯示這支 selftest 的 23.5 秒其實在第 (5) 題(它會實跑一輪完整驗證),
+        # 與這裡無關——快取是在解一個不存在的問題,還多一個過期快取的失效面,已撤除。
+        with tempfile.TemporaryDirectory(prefix="orphan_") as td:
+            out = Path(td) / "regen_dir"
+            real = [a.replace("{out}", str(out)) for a in argv]
+            subprocess.run([sys.executable, str(ROOT / "tools" / tool), *real],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", cwd=str(ROOT), timeout=600)
+            made = {f.name for f in out.glob("*.json")} if out.is_dir() else set()
+        for q in sorted((ROOT / art).glob("*.json")):
+            rel = f"{art}/{q.name}"
+            if q.name in made:
+                continue
+            seen_orphans.add(rel)
+            if rel not in DIR_ORPHANS:
+                orphan_bad.append(f"{rel}:在已登錄目錄裡,但不是產生器產出、也沒列進 DIR_ORPHANS")
+    # 反向:列進 DIR_ORPHANS 的必須真的是差集(否則清單會腐爛成免死金牌),
+    # 而且宣稱「無產生器」的那幾筆,discover() 每次實掃都必須掃不到產生器。
+    registered_names = {a for a, _, _, _ in REGISTRY}
+    found = dict(discover())
+    for rel, why in sorted(DIR_ORPHANS.items()):
+        if rel not in seen_orphans:
+            orphan_bad.append(f"{rel}:已不在差集裡,請從 DIR_ORPHANS 移除")
+        elif "無產生器" in why:
+            gen = [t for t, arts in found.items() if rel in arts]
+            if gen:
+                orphan_bad.append(f"{rel}:宣稱無產生器,但 {gen} 看起來會產生它")
+        elif rel not in registered_names:
+            orphan_bad.append(f"{rel}:宣稱另有登錄項目,但登錄表裡找不到")
+    ok9 = not orphan_bad and len(seen_orphans) >= 5
+    print(f"    {'PASS' if ok9 else 'FAIL'}: 差集 {len(seen_orphans)} 個,"
+          + ("全部有明列理由且理由成立" if ok9 else f"問題 {orphan_bad[:3]}"))
+    if not ok9:
+        fails.append(f"已登錄目錄有未涵蓋的檔:{orphan_bad[:3]}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -376,7 +451,7 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(正向/負向各 1 + 同大小案例 + overrides 放行與攔截的配對控制 "
           "+ 不改動已提交檔案 + 涵蓋率報告的正反向對照 + discover() 判準的五個真實案例 "
-          "+ 效能回歸防呆)。")
+          "+ 效能回歸防呆 + 已登錄目錄差集的兩邊夾)。")
     return 0
 
 
