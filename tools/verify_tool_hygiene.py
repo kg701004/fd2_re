@@ -123,8 +123,15 @@ def _module_level_imports(tree: ast.AST) -> set[str]:
     return out
 
 
-def docstring_console_risk(src: str) -> str | None:
-    """`print(__doc__)` + docstring 含本機主控台編不出的字元 = 執行即崩。
+def docstring_console_risk(src: str, encoding: str | None = None) -> str | None:
+    """`print(__doc__)` + docstring 含主控台編不出的字元 = 執行即崩。
+
+    `encoding` 不給就用本機 locale(實際使用情境);給了就用指定的編碼。
+    2026-09-09 加這個參數是因為第 (2d) 題的**正對照原本依賴執行環境**:在
+    `PYTHONUTF8=1` / `python -X utf8` 之下 `↔` 編得出來,偵測器正確地什麼都
+    不報,而斷言「必須抓到」於是失敗,訊息卻寫得像偵測邏輯壞了。判準本身
+    (「這份 docstring 在編碼 E 下印得出來嗎」)跟跑測試的機器無關,不該由
+    機器的 locale 決定測得到測不到。
 
     2026-09-08:`verify_docs_match_cli.console_encoding_risks()` 只看 print 的
     **字面字串**,所以完全看不到這條路徑。實測 `disasm_le.py` 與 `le_xref.py`
@@ -147,7 +154,7 @@ def docstring_console_risk(src: str) -> str | None:
         for n in ast.walk(tree))
     if not prints_doc:
         return None
-    enc = locale.getpreferredencoding(False)
+    enc = encoding or locale.getpreferredencoding(False)
     try:
         doc.encode(enc)
     except (UnicodeEncodeError, LookupError):
@@ -496,17 +503,24 @@ def selftest() -> int:
             'sys.stdout.reconfigure(encoding="utf-8")\ndef main():\n    print(__doc__)\n')
     plain = '"""Plain ASCII doc."""\ndef main():\n    print(__doc__)\n'
     noprint = '"""說明 linear ↔ file 的對應。"""\ndef main():\n    return 0\n'
-    okA = docstring_console_risk(pre) is not None
-    okB = docstring_console_risk(post) is None
-    okC = docstring_console_risk(plain) is None
-    okD = docstring_console_risk(noprint) is None
-    ok2d = okA and okB and okC and okD
-    print(f"    {'PASS' if okA else 'FAIL'}: 修正前的真實形狀 -> 抓到")
+    # 編碼寫死成 cp950。這一題問的是判準——「這份 docstring 在 cp950 下印得
+    # 出來嗎」——而那跟跑測試的機器用什麼 locale 無關。原本用環境 locale,於是
+    # 在 `python -X utf8` 下 `↔` 編得出來、偵測器正確地不報,斷言卻失敗。
+    okA = docstring_console_risk(pre, "cp950") is not None
+    okB = docstring_console_risk(post, "cp950") is None
+    okC = docstring_console_risk(plain, "cp950") is None
+    okD = docstring_console_risk(noprint, "cp950") is None
+    # 非平凡性:同一份會被 cp950 擋下的原始碼,在 utf-8 下必須**不**被報——
+    # 否則「抓到」可能只是因為它永遠都報。
+    okE = docstring_console_risk(pre, "utf-8") is None
+    ok2d = okA and okB and okC and okD and okE
+    print(f"    {'PASS' if okA else 'FAIL'}: 修正前的真實形狀(cp950)-> 抓到")
     print(f"    {'PASS' if okB else 'FAIL'}: 已 reconfigure -> 不算")
     print(f"    {'PASS' if okC else 'FAIL'}: 純 ASCII docstring -> 不算")
     print(f"    {'PASS' if okD else 'FAIL'}: 沒有 print(__doc__) -> 不算")
+    print(f"    {'PASS' if okE else 'FAIL'}: 同一份原始碼在 utf-8 下 -> 不算(非平凡性)")
     if not ok2d:
-        fails.append(f"docstring 編碼偵測失衡:抓到={okA}、"
+        fails.append(f"docstring 編碼偵測失衡:cp950 抓到={okA}、utf-8 不報={okE}、"
                      f"三種不該報的分別為 {okB}/{okC}/{okD}")
 
     print("\n(3b) 每一筆「永久豁免」都要有可執行的證明,不能只是基準線裡的一句話")

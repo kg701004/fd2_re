@@ -43,6 +43,8 @@ Usage
 from __future__ import annotations
 
 import argparse
+import ast
+import functools
 import hashlib
 import json
 import re
@@ -116,6 +118,14 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # --source 不給就寫成 null;省掉它會產生一個「只有 provenance 不同」的假漂移。
     ("docs/data/fdfield_native_ai_modes.json", "dump_native_ai_modes.py",
      ["--source", FDFIELD, RAW, "{out}"], "bytes"),
+    # 2026-09-09:這個產生器一直都在,只是沒人登錄——`encode_text.py revtable`
+    # 把 glyph_map.json 反轉成 Unicode->glyph(重複字取最小索引),規則就寫在
+    # 產物自己的 `_comment` 裡。它先前被歸進「尚待處理」的 70 個之一,而實測
+    # 逐位元組相同(19064 bytes)。發現過程見同輪的 discover() 誤判修正:
+    # 舊判準把它的**讀取者** encode_text 認成 glyph_map.json 的產生器,卻反而
+    # 沒讓人注意到它真的是 unicode_to_glyph.json 的產生器。
+    ("docs/data/unicode_to_glyph.json", "encode_text.py",
+     ["revtable", "{out}"], "bytes"),
 ]
 
 
@@ -300,13 +310,67 @@ def selftest() -> int:
     if not (ok_a and ok_b and ok_c):
         fails.append(f"涵蓋率報告不正確(total={total} covered={covered} missing={len(missing)})")
 
+    print("\n(7) discover() 的判準:對真實原始碼區分「寫入目標」與「離寫入很近」")
+    # 五個案例全部來自 repo 裡真的長這樣的程式碼,不是合成的。前四個是舊判準
+    # 的三種誤判來源(內容字串 / 別人的引數 / 讀取路徑),第五個是真的產生器
+    # ——只有反向不成立才算數:全判 EXCLUDE 也能通過前四題。
+    ROLE_CASES = [
+        ("decode_story_text.py",     "glyph_map.json",        False),
+        ("export_command_labels.py", "glyph_map.json",        False),
+        ("export_item_labels.py",    "glyph_map.json",        False),
+        ("encode_text.py",           "glyph_map.json",        False),
+        ("encode_text.py",           "unicode_to_glyph.json", True),
+    ]
+    wrong = []
+    for tool, base, want in ROLE_CASES:
+        p = ROOT / "tools" / tool
+        if not p.exists():
+            wrong.append(f"{tool} 不存在")
+            continue
+        got = bool(write_target_lines(p.read_text(encoding="utf-8"), base))
+        if got != want:
+            wrong.append(f"{tool}/{base}: 得 {got},應 {want}")
+    # 非平凡性:這五題必須同時包含正例與反例,否則一個「永遠回 False」的實作
+    # 也會全過。
+    both = {w for _, _, w in ROLE_CASES} == {True, False}
+    ok7 = not wrong and both
+    print(f"    {'PASS' if ok7 else 'FAIL'}: 5 個真實案例"
+          + ("全部相符,且正反例俱在" if ok7 else f",不符 {wrong}、正反例俱在={both}"))
+    if not ok7:
+        fails.append(f"discover() 判準不符:{wrong}")
+
+    print("\n(8) 效能回歸防呆:同一份原始碼不論查幾個檔名,只准解析一次")
+    # 用解析次數而不是耗時來斷言——耗時會隨機器飄,次數不會。這一題是實際
+    # 事故的回歸:判準第一版寫成 f(src, basename),discover() 的 109 個產物 ×
+    # 119 支工具各自重新 ast.parse 一次,單次 discover() 32 秒,而
+    # _proves_no_generator 每個永久豁免項目呼叫一次(47 項),
+    # verify_tool_hygiene 於是在全工具稽核裡 timed out(1220s,平時 320s)。
+    src8 = (ROOT / "tools" / "encode_text.py").read_text(encoding="utf-8")
+    real_parse, calls = ast.parse, []
+    def counting_parse(*a, **k):                                  # noqa: ANN
+        calls.append(1)
+        return real_parse(*a, **k)
+    _write_target_index.cache_clear()
+    ast.parse = counting_parse
+    try:
+        for i in range(60):
+            write_target_lines(src8, f"nonexistent_{i}.json")
+        write_target_lines(src8, "unicode_to_glyph.json")
+    finally:
+        ast.parse = real_parse
+    ok8 = len(calls) == 1
+    print(f"    {'PASS' if ok8 else 'FAIL'}: 61 次查詢共解析 {len(calls)} 次(應為 1)")
+    if not ok8:
+        fails.append(f"每次查詢都重新解析:{len(calls)} 次")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(正向/負向各 1 + 同大小案例 + overrides 放行與攔截的配對控制 "
-          "+ 不改動已提交檔案 + 涵蓋率報告的正反向對照)。")
+          "+ 不改動已提交檔案 + 涵蓋率報告的正反向對照 + discover() 判準的五個真實案例 "
+          "+ 效能回歸防呆)。")
     return 0
 
 
@@ -375,6 +439,93 @@ def no_generator_set() -> set[str]:
             if e.get("rule") == "regenerable" and e.get("permanent") == "no_generator"}
 
 
+WRITE_CTX = re.compile(r"json\.dump|write_text\(|\bopen\([^)]*[\"']w[\"btx+]*[\"']"
+                       r"|\bout\w*\s*=|\bdst\w*\s*=|--output|--json\b")
+
+
+_PATH_CTORS = {"Path", "PurePath", "join", "joinpath", "resolve", "expanduser"}
+_CONTENT_CALLS = {"write", "writelines", "print"}
+_SINK_CALLS = {"open", "write_text", "write_bytes", "dump"}
+
+
+@functools.lru_cache(maxsize=512)
+def _write_target_index(src: str) -> tuple[tuple[int, str], ...]:
+    """一份原始碼裡所有「以寫入目標身分出現」的字串字面值 (行號, 值)。
+
+    **與檔名無關,所以整份快取。** 2026-09-09:第一版把角色判定寫成
+    `f(src, basename)`,於是 `discover()` 的 109 個產物 × 119 支工具會各自
+    重新 `ast.parse` 一次整份原始碼——一萬三千次。單次 `discover()` 因此要
+    32 秒,而 `_proves_no_generator` 每個永久豁免項目呼叫一次(47 項),
+    `verify_tool_hygiene` 直接在全工具稽核裡 **timed out**(1220s,平時 320s)。
+    判準本身是對的,代價下在錯的地方:角色與寫入語境都只跟原始碼有關,
+    跟要找哪個檔名無關,所以應該算一次就好。
+    """
+    role = _path_role_lines(src)
+    rows = src.splitlines()
+    return tuple((n, v) for n, v in sorted(role)
+                 if WRITE_CTX.search("\n".join(rows[max(0, n - 3):n + 2])))
+
+
+def _path_role_lines(src: str) -> set[tuple[int, str]]:
+    """所有以「路徑」身分(而非內容、也非別人的引數)出現的字串字面值。
+
+    從字串字面值往上走,先跳過純粹在組路徑的包裝(`Path(...)`、`os.path.join`、
+    `/` 運算),再看**第一個非路徑組裝的節點**決定它的角色:
+
+    - `.write()`/`print()` 的引數 -> 它是被寫出去的**內容**,不是路徑
+    - `open`/`write_text`/`json.dump` 的引數 -> 它就是**寫入目標**
+    - 指派敘述 -> 這個字面值在為某條路徑命名,是候選
+    - 其他任何呼叫的引數 -> 它是**別人的輸入**,不是這支工具的輸出
+
+    三種誤判都出自同一個毛病——「檔名離寫入很近」被當成「檔名是寫入目標」:
+      1. `decode_story_text.py:410` `f.write("> 由 FDTXT.DAT + glyph_map.json
+         自動解碼...")`,一句寫進 markdown 的出處註記(內容)
+      2. `export_command_labels.py:72` `output = export(..., ".../glyph_map.json")`,
+         檔名是 `export()` 的讀取輸入,真正的寫入目標是 `Path(argv[2])`;正則
+         被同一行的 `output =` 命中
+      3. `decode_story_text.py:104` `d = os.path.join(..., "glyph_map.json")`,
+         是路徑沒錯,但那是 `json.load` 的讀取路徑——這一種靠下面的 ±2 行
+         寫入語境擋掉,兩個條件缺一不可
+
+    已知限制:多行字串只記起始行。
+    """
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return set()
+    parents = {c: p for p in ast.walk(tree) for c in ast.iter_child_nodes(p)}
+    found: set[tuple[int, str]] = set()
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Constant) and isinstance(node.value, str)):
+            continue
+        cur = parents.get(node)
+        while cur is not None:
+            if isinstance(cur, ast.BinOp) and isinstance(cur.op, ast.Div):
+                cur = parents.get(cur)
+                continue
+            if isinstance(cur, ast.Call):
+                f = cur.func
+                name = f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", "")
+                if name in _PATH_CTORS:
+                    cur = parents.get(cur)
+                    continue
+                if name in _SINK_CALLS:
+                    found.add((node.lineno, node.value))
+                break
+            if isinstance(cur, (ast.Assign, ast.AnnAssign)):
+                found.add((node.lineno, node.value))
+                break
+            if isinstance(cur, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
+                break
+            cur = parents.get(cur)
+    return found
+
+
+def write_target_lines(src: str, basename: str) -> list[int]:
+    """檔名以**寫入目標**身分出現的行號(1-based)。角色與寫入語境都要成立。"""
+    return [n for n, v in _write_target_index(src) if basename in v]
+
+
 def discover() -> list[tuple[str, list[str]]]:
     """Propose (tool, artifacts) pairs for the uncovered backlog.
 
@@ -395,10 +546,9 @@ def discover() -> list[tuple[str, list[str]]]:
         by_base.setdefault(Path(m).name, []).append(m)
     # 2026-09-08:第一版只要求「這支工具會寫檔」且「原始碼裡提到這個檔名」,
     # 結果把一堆**讀取者**列成候選(七支工具都提到 glyph_map.json,沒有一支產生它)。
-    # 改成要求檔名出現在**寫入語境**:同一行或前後兩行內有寫入呼叫,或該行本身
-    # 是把路徑指派給看起來像輸出的變數。仍然只是線索,但雜訊少很多。
-    WRITE = re.compile(r"json\.dump|write_text\(|\bopen\([^)]*[\"']w[\"btx+]*[\"']"
-                       r"|\bout\w*\s*=|\bdst\w*\s*=|--output|--json\b")
+    # 改成要求檔名出現在**寫入語境**:同一行或前後兩行內有寫入呼叫。
+    # 2026-09-09:那還是不夠——見 write_target_lines,「離寫入很近」和「是寫入
+    # 目標」是兩回事,寫進輸出檔的一句出處註記同時滿足前者。改用兩者的合取。
     out = []
     for tool in sorted((ROOT / "tools").glob("*.py")):
         if tool.name.startswith("test_") or tool.name.startswith("verify_"):
@@ -406,15 +556,10 @@ def discover() -> list[tuple[str, list[str]]]:
         src = tool.read_text(encoding="utf-8", errors="replace")
         if not re.search(r"json\.dump|write_text\(|open\([^)]*[\"']w[\"btx+]*[\"']", src):
             continue
-        lines = src.splitlines()
         hits = set()
-        for i, line in enumerate(lines):
-            for base, arts in by_base.items():
-                if base not in line:
-                    continue
-                ctx = "\n".join(lines[max(0, i - 2):i + 3])
-                if WRITE.search(ctx):
-                    hits.update(arts)
+        for base, arts in by_base.items():
+            if write_target_lines(src, base):
+                hits.update(arts)
         if hits:
             out.append((tool.name, sorted(hits)))
     return out

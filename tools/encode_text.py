@@ -190,7 +190,11 @@ def main(argv):
         print(__doc__); return 1
     g2c, c2g = load_maps()
     if argv[1] == "revtable":
-        out = os.path.join(HERE, "..", "docs", "data", "unicode_to_glyph.json")
+        # 第二個參數是選用的輸出路徑。加它是為了讓 verify_generated_artifacts
+        # 能把重生結果寫到暫存檔去比對——寫死路徑的產生器沒辦法被登錄驗證,
+        # 於是這個產物一直掛在「尚待處理」裡,而它其實每次都逐位元組相同。
+        out = argv[2] if len(argv) > 2 else \
+            os.path.join(HERE, "..", "docs", "data", "unicode_to_glyph.json")
         # 以 codepoint 排序輸出
         obj = {"_comment": "炎龍騎士團2 Unicode→glyph 反向表(中文化重打用)。重複字取最小 glyph 索引;多字元 key 為代號/數字字模(整體符號)。",
                **{k: c2g[k] for k in sorted(c2g)}}
