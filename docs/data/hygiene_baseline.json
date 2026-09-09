@@ -27,16 +27,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "fd2_sfx_screen_map.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
-   "name": "fd2_speaker_capture.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "fd2_stat_override.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"

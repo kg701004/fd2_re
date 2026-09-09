@@ -20,6 +20,7 @@ index→呼叫端對映(`docs/data/sfx_index_callers.json`,doc36 2026-09-04 段�
 ----
     python tools/fd2_sfx_screen_map.py --instance sfx1 --arm 2,3,4,5,6,7,8,11
     python tools/fd2_sfx_screen_map.py --instance sfx1 --probe confirm
+    python tools/fd2_sfx_screen_map.py --selftest
 """
 
 from __future__ import annotations
@@ -109,7 +110,10 @@ def eip(inst: str) -> str | None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    if "--selftest" in sys.argv:
+        return selftest()
     ap.add_argument("--instance", required=True)
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--arm", help="要武裝的 index,逗號分隔(例:2,3,4,5,6,7,8,11)")
     ap.add_argument("--probe", help="送出一個鍵,回報命中哪個呼叫點")
     ap.add_argument("--baseline", type=int, metavar="N",
@@ -191,6 +195,80 @@ def main() -> int:
 
     ap.error("需要 --arm 或 --probe")
     return 2
+
+
+# 2026-09-04 的實測事故:probe 命中 0x32307 時,工具照靜態表印出「index 11」,
+# 而該呼叫點的活體值是 9——**工具給了一個看起來正常的錯數字**。這是判讀層的
+# 錯,不是算術的錯,所以要測的是下結論的那個函式本身。
+MISATTRIBUTED_SITE = 0x32307
+MISATTRIBUTED_STATIC, MISATTRIBUTED_LIVE = 11, 9
+LIVE_VERIFIED_SAMPLE = {0x1193a: 7, 0x176d3: 8, 0x1403d: 4, 0x17ede: 5, 0x17d26: 6}
+
+
+def selftest() -> int:
+    """`describe_hit` 是**判讀層**:同一個命中,它決定要不要把靜態 index 當結論。
+
+    **範圍限制是刻意的**:下斷點、按鍵、讀 EIP 那一層需要活的 DOSBox,不在這裡
+    涵蓋;這裡驗的是「拿到命中之後怎麼講」,而 2026-09-04 出錯的正是這一層。
+    """
+    fails = []
+    ok_map, bad_map = load_verification()
+
+    print("(1) 2026-09-04 事故回歸:已知歸屬錯誤的呼叫點不得給出靜態 index")
+    text = describe_hit(MISATTRIBUTED_SITE, MISATTRIBUTED_STATIC)
+    ok1 = (str(MISATTRIBUTED_LIVE) in text and "已知靜態歸屬為錯" in text
+           and f"**index {MISATTRIBUTED_STATIC}**" not in text)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 提到活體值 {MISATTRIBUTED_LIVE}、"
+          f"標明歸屬為錯、未把靜態 {MISATTRIBUTED_STATIC} 當結論")
+    if not ok1:
+        fails.append(f"誤把靜態 index 當結論:{text[:120]}")
+
+    print("\n(2) 已活體確認的呼叫點才可以給裸 index")
+    wrong = [hex(s) for s, idx in LIVE_VERIFIED_SAMPLE.items()
+             if f"**index {idx}**(已活體確認)" not in describe_hit(s, idx)]
+    ok2 = not wrong and ok_map == {**ok_map, **LIVE_VERIFIED_SAMPLE}
+    print(f"    {'PASS' if ok2 else 'FAIL'}: {len(LIVE_VERIFIED_SAMPLE)} 個樣本"
+          + ("全部給出已確認的 index" if ok2 else f",不符 {wrong}"))
+    if not ok2:
+        fails.append(f"已確認的呼叫點未給裸 index:{wrong}")
+
+    print("\n(3) 未經確認的呼叫點必須明說不可當成已確認")
+    unknown = describe_hit(0xDEAD, 3)
+    ok3 = ("未經活體確認" in unknown and "不可當成已確認" in unknown
+           and "**index 3**" not in unknown)
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 明確拒絕把靜態值當結論")
+    if not ok3:
+        fails.append(f"未確認的呼叫點被當成已確認:{unknown[:120]}")
+
+    print("\n(4) 非平凡性:三條分支必須給出可區分的不同說法")
+    # 少了這題,一個「永遠回同一句話」的實作也會通過前三題的關鍵字檢查。
+    a = describe_hit(MISATTRIBUTED_SITE, MISATTRIBUTED_STATIC)
+    b = describe_hit(0x1193a, 7)
+    c = describe_hit(0xDEAD, 3)
+    ok4 = len({a, b, c}) == 3
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 三條分支得出 {len({a, b, c})} 種不同輸出(應 3)")
+    if not ok4:
+        fails.append("三條分支輸出不可區分")
+
+    print("\n(5) 靜態表結構 + 負向控制")
+    m = load_map()
+    all_sites = {s for v in m.values() for s in v}
+    ok5 = (len(m) == 11 and all(isinstance(k, int) for k in m)
+           and MISATTRIBUTED_SITE in all_sites and 0xDEAD not in all_sites)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: {len(m)} 個 index(應 11)、"
+          f"{len(all_sites)} 個呼叫點、已知錯歸屬的 {MISATTRIBUTED_SITE:#x} 在表內="
+          f"{MISATTRIBUTED_SITE in all_sites}")
+    if not ok5:
+        fails.append(f"靜態表結構不符:{len(m)} indices")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(2026-09-04 誤報回歸 + 已確認/未確認的區別 "
+          "+ 三分支非平凡性 + 靜態表結構與負向控制)。實機探測層未涵蓋,見 docstring。")
+    return 0
 
 
 if __name__ == "__main__":

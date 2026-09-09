@@ -87,17 +87,31 @@ def main(argv):
     return 0
 
 
-# 改讀 JSON 前硬編在本檔裡的 0–21;釘成回歸,證明換來源沒有動到任何既有標籤。
-OLD_NAMES_0_21 = {
+# 遊戲自己的名字表:FDTXT 資源 0 的字模渲染後人工轉錄,證據圖已入庫,且其中
+# 13 個名字與 2026-09-07 實機讀出的 ch27 名冊逐一吻合。這是**權威來源**。
+NAME_TABLE = os.path.join(REPO, "docs", "data", "fdtxt000_name_table.json")
+
+# 改讀 JSON 前硬編在本檔裡的 0–21。
+# 2026-09-09 訂正:第 (2) 題原本要求「換來源後必須與這張舊表逐一相同」——那是
+# **驗兩個副本一致,不是驗與權威來源一致**,於是它把錯誤鎖住了。舊表的 id15 是
+# 「賽可邦勒」,而遊戲自己的名字表寫的是「塞可邦勒」;`decode_story_text.PORT`
+# 早在 2026-08-30 就照權威表改對,`characters.json` 沒跟著改,而我這張硬編表
+# 是從 characters.json 抄的,於是三處一起錯。舊值保留在下面純粹當**歷史對照**,
+# 用來證明修正確實發生過,不再當成「必須相同」的基準。
+OLD_NAMES_0_21_BEFORE_2026_09_09 = {
     0: "索爾", 1: "哈諾", 2: "鐵諾", 3: "哈瓦特", 4: "亞雷斯", 5: "洛娜", 6: "萊汀",
     7: "蘭斯洛特", 8: "希莉亞", 9: "悠妮", 10: "瑪琳", 11: "索菲亞", 12: "凱麗",
     13: "貝克威", 14: "珊", 15: "賽可邦勒", 16: "凱拉斯", 17: "米亞斯多德", 18: "蜜蒂",
     19: "羅德曼", 20: "莎拉", 21: "約拿",
 }
-# 本次補上的缺口(舊表完全沒有這 10 人)。
+# 權威表與舊表不一致的三筆(2026-09-09 修正)。
+CORRECTED_NAMES = {15: ("賽可邦勒", "塞可邦勒"), 28: ("達克賽", "達克塞"),
+                   29: ("亞奇梅吉", "亞齊梅吉")}
+# 2026-09-09 補上的缺口(舊表完全沒有這 10 人)。id28/29 用權威表的寫法——
+# 第一版從 characters.json 抄,連同那兩個錯字一起抄了進來,是第 (1) 題自己抓到的。
 GAP_22_31 = {
     22: "卡里斯", 23: "羅蘭", 24: "希爾法", 25: "謝多", 26: "聖寇拉斯",
-    27: "巴拿羅西亞", 28: "達克賽", 29: "亞奇梅吉", 30: "蓋亞", 31: "渥德",
+    27: "巴拿羅西亞", 28: "達克塞", 29: "亞齊梅吉", 30: "蓋亞", 31: "渥德",
 }
 
 
@@ -117,13 +131,32 @@ def selftest() -> int:
     if not ok1:
         fails.append(f"22–31 名稱缺口未補齊:{miss} {wrong}")
 
-    print("\n(2) 回歸:0–21 換來源後必須逐一與舊硬編表相同")
-    diff = [(g, OLD_NAMES_0_21[g], names.get(g)) for g in OLD_NAMES_0_21
-            if names.get(g) != OLD_NAMES_0_21[g]]
-    print(f"    {'PASS' if not diff else 'FAIL'}: 22 筆全同" if not diff
-          else f"    FAIL: {diff}")
-    if diff:
-        fails.append(f"改讀 JSON 動到既有標籤:{diff}")
+    print("\n(2) 與**權威來源**一致:遊戲自己的名字表,不是另一份副本")
+    # 這一題原本問的是「換來源後有沒有跟舊硬編表一致」。那是驗兩個副本互相一致,
+    # 而兩個副本可以一起錯——實際上就一起錯了三筆(見 CORRECTED_NAMES)。
+    # 現在改成對 fdtxt000_name_table.json 逐一核對:那是把 FDTXT 字模渲染後人工
+    # 轉錄的,證據圖已入庫,且 13 個名字與實機讀出的 ch27 名冊吻合。
+    with open(NAME_TABLE, encoding="utf-8") as fh:
+        auth = json.load(fh)["character_names_by_id"]
+    diff = [(g, names.get(g), auth[str(g)]) for g in range(32)
+            if str(g) in auth and names.get(g) != auth[str(g)]]
+    ok2 = not diff and len(auth) >= 32
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 32 筆與權威表逐一相同"
+          if ok2 else f"    FAIL: {diff}")
+    if not ok2:
+        fails.append(f"與權威名字表不符:{diff}")
+
+    print("\n(2b) 修正確實發生過:三個舊名不得再出現在任何一處")
+    # 沒有這一題,第 (2) 題在「權威表也被改成舊值」時仍會通過。這裡釘住的是
+    # **差異本身**,不是任一邊的值。
+    stale = {g: (old, new) for g, (old, new) in CORRECTED_NAMES.items()
+             if names.get(g) == old or auth.get(str(g)) == old}
+    still_new = all(names.get(g) == new for g, (_, new) in CORRECTED_NAMES.items())
+    ok2b = not stale and still_new
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 三筆皆為修正後的值={still_new}、"
+          f"殘留舊值 {stale or '無'}")
+    if not ok2b:
+        fails.append(f"名稱修正回退:{stale}")
 
     print("\n(3) 統一角色編號恆等(doc31):face_portrait 必須等於 index")
     with open(CHARACTERS_JSON, encoding="utf-8") as fh:
@@ -159,9 +192,9 @@ def selftest() -> int:
     labelled = character_label(30, names)      # 蓋亞,舊表沒有
     unknown = character_label(200, names)      # 沒有人的組號
     ok6 = (labelled == "30 蓋亞" and unknown == "200"
-           and character_label(30, OLD_NAMES_0_21) == "30")
+           and character_label(30, OLD_NAMES_0_21_BEFORE_2026_09_09) == "30")
     print(f"    {'PASS' if ok6 else 'FAIL'}: 新表 {labelled!r}、未知組 {unknown!r}、"
-          f"舊表同一組 {character_label(30, OLD_NAMES_0_21)!r}")
+          f"舊表同一組 {character_label(30, OLD_NAMES_0_21_BEFORE_2026_09_09)!r}")
     if not ok6:
         fails.append(f"標籤行為不符:{labelled!r}/{unknown!r}")
 
@@ -171,7 +204,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(缺口回歸 + 既有標籤不變 + 編號恆等 + 合併保全 "
-          "+ 索引公式 + 非平凡性)。圖片組裝未涵蓋,見 docstring。")
+          "+ 索引公式 + 非平凡性 + 權威名字表核對)。圖片組裝未涵蓋,見 docstring。")
     return 0
 
 

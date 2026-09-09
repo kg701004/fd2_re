@@ -168,9 +168,86 @@ def cmd_resolve_todo(a) -> int:
     return 0
 
 
+NAME_TABLE = Path(__file__).resolve().parent.parent / "docs" / "data" / "fdtxt000_name_table.json"
+# 2026-09-09 在 characters.json 發現的三個錯字。`decode_story_text.PORT`(本檔用的
+# 那張)早在 2026-08-30 就照遊戲自己的名字表改對了,characters.json 沒跟著改。
+CORRECTED_NAMES = {15: ("賽可邦勒", "塞可邦勒"), 28: ("達克賽", "達克塞"),
+                   29: ("亞奇梅吉", "亞齊梅吉")}
+
+
+def selftest() -> int:
+    """`resolve_dato` 的對照。實機讀取層需要活的 DOSBox,不在範圍內。"""
+    fails = []
+
+    print("(1) PORT 必須與遊戲自己的名字表逐一相同(權威來源,不是另一份副本)")
+    # 這張表是把 FDTXT 資源 0 的字模渲染後人工轉錄的,證據圖已入庫,且 13 個名字
+    # 與 2026-09-07 實機讀出的 ch27 名冊吻合。用它裁決,而不是比對另一個副本——
+    # 兩個副本可以一起錯,characters.json 與舊硬編表就一起錯了三筆。
+    with open(NAME_TABLE, encoding="utf-8") as fh:
+        auth = json.load(fh)["character_names_by_id"]
+    diff = [(k, PORT.get(k), auth[str(k)]) for k in range(0x20)
+            if str(k) in auth and PORT.get(k) != auth[str(k)]]
+    ok1 = not diff and len(PORT) == 32
+    print(f"    {'PASS' if ok1 else 'FAIL'}: PORT {len(PORT)} 筆"
+          + ("與權威表逐一相同" if ok1 else f",不符 {diff}"))
+    if not ok1:
+        fails.append(f"PORT 與權威名字表不符:{diff}")
+
+    print("\n(2) 三筆修正必須是修正後的值(釘住差異本身,不是任一邊)")
+    stale = {k: v for k, (old, new) in CORRECTED_NAMES.items()
+             for v in [PORT.get(k)] if v == old}
+    ok2 = not stale and all(PORT.get(k) == new for k, (_, new) in CORRECTED_NAMES.items())
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 殘留舊值 {stale or '無'}")
+    if not ok2:
+        fails.append(f"PORT 名稱回退:{stale}")
+
+    print("\n(3) 三條分支:主角 / NPC 敵方 / 範圍外")
+    hero = resolve_dato(0x09)
+    npc = resolve_dato(0x50)
+    ok3 = (hero == PORT[0x09] and "NPC/敵" in npc and "0x50" in npc
+           and len({hero, npc}) == 2)
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 主角 -> {hero!r}、"
+          f"DATO=0x50 -> 標為 NPC/敵")
+    if not ok3:
+        fails.append(f"分支不正確:{hero!r} / {npc!r}")
+
+    print("\n(4) 第三條分支目前不可達(誠實記錄,不是通過條件的裝飾)")
+    # PORT 完整覆蓋 0x00-0x1F,而第二條分支吃掉 > 0x1F,所以「不在主角範圍也不是
+    # 已知 NPC 慣例」那條 return 只有負數才進得去——byte 讀不出負數。記下來,
+    # 免得日後有人以為它有在運作。
+    covered = set(range(0x20)) <= set(PORT)
+    unreachable = covered and all(
+        (PORT.get(d) is not None and resolve_dato(d) == PORT[d])
+        or "NPC/敵" in resolve_dato(d)
+        for d in range(0, 0x100))
+    print(f"    {'PASS' if unreachable else 'FAIL'}: PORT 覆蓋 0x00-0x1F={covered}、"
+          f"0x00-0xFF 全部落在前兩條分支={unreachable}")
+    if not unreachable:
+        fails.append("第三條分支的可達性假設變了,請重新檢視")
+
+    print("\n(5) 非平凡性 + 負向控制")
+    names = {resolve_dato(d) for d in (0, 1, 9, 0x1F, 0x20, 0xFF)}
+    ok5 = len(names) == 6 and resolve_dato(0x20) != resolve_dato(0xFF)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 6 個不同 DATO 得出 {len(names)} 種不同輸出")
+    if not ok5:
+        fails.append(f"輸出不可區分:{len(names)}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(權威名字表核對 + 修正回歸 + 分支區別 "
+          "+ 不可達分支的誠實記錄 + 非平凡性)。實機讀取層未涵蓋,見 docstring。")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    if "--selftest" in sys.argv:
+        return selftest()
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--instance", required=True)
     ap.add_argument("--selector", default="0170")
     ap.add_argument("--count", type=int, default=24,

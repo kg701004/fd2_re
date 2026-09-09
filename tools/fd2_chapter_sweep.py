@@ -196,7 +196,7 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
   chapter's guard list) gives a HIGH-CONFIDENCE, not-yet-individually-
   verified prediction for the other flagged chapters: ch22(希爾法/24),
   ch23(希爾法/24+卡里斯/22+羅德曼/19), ch25(聖寇拉斯/26), and
-  ch26(悠妮/9 real + 亞奇梅吉/29 NOT real, so still blocked because BOTH are
+  ch26(悠妮/9 real + 亞齊梅吉/29 NOT real, so still blocked because BOTH are
   required) should all hit this same wall; ch24 (no guard character listed)
   and ch28/29/30 (guard=悠妮/9, already real) should NOT be blocked by this
   specific mechanism and their continued "needs_manual_followup" status
@@ -212,7 +212,7 @@ HONESTY / KNOWN LIMITS (read before trusting a "pass")
 - 2026-08-29 CORRECTION (see doc99's "map-native guard" and subsequent
   "8 個 DAT_00053a45 WRITE xref" rounds): the "本章XX必須出場" check's actual
   guard character id is NOT reliably doc28's 額外護衛 column -- that column
-  matches ch26 (id9 悠妮 + id29 亞奇梅吉, verified byte-for-byte against the
+  matches ch26 (id9 悠妮 + id29 亞齊梅吉, verified byte-for-byte against the
   disassembled push args) but is WRONG for ch21 (doc28 says 羅蘭/id23 +
   希爾法/id24; disassembling FUN_0002af28's actual `PUSH`es before its
   `CALL 0x2b439` proves it checks id21/約拿 instead -- 23/24 are ch21's map-
@@ -2517,7 +2517,7 @@ GUARD_CHARACTER_IDS: dict[int, list[int]] = {
     21: [21],       # raw 0x14 -- 約拿 Jonah (live-verified, instance jonah21)
     22: [24],       # raw 0x15 -- 希爾法 Sylph
     23: [24],       # raw 0x16 -- 希爾法 Sylph
-    26: [9, 29],    # raw 0x19 -- 悠妮 Yuni, then 亞奇梅吉 Archmage (both required, in this order)
+    26: [9, 29],    # raw 0x19 -- 悠妮 Yuni, then 亞齊梅吉 Archmage (both required, in this order)
     28: [9],        # raw 0x1b -- falls into the raw>0x19 catch-all -- 悠妮 Yuni
 }
 

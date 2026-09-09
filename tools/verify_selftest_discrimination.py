@@ -135,6 +135,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     # 這兩支雖然是實機工具,但純邏輯(判準)已抽出可離線驗;實機取得層不涵蓋。
     "fd2_in_battle_check.py":     (["--selftest"], "offline"),
     "fd2_game_state.py":          (["--selftest"], "offline"),
+    "fd2_sfx_screen_map.py":      (["--selftest"], "offline"),
+    "fd2_speaker_capture.py":     (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
