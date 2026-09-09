@@ -3479,5 +3479,90 @@ def main(argv=None):
     return 0
 
 
+# 2026-08-29 那輪為了確定 chapter_beats 的索引慣例而做的兩個獨立交叉核對,
+# 釘成回歸(見 natural_join_order 的 docstring)。
+CH17_POST_JOINS = [21, 7]      # 對照反組譯已證的 ch21 guard id 21/約拿
+CH20_POST_JOINS = [24, 23]     # 羅蘭/希爾法——ch21 自己的 map-native,不是 ch21 之前的招募
+
+
+def selftest() -> int:
+    """名冊推導那一層。整支工具是實機章節掃描(在 verify_all_tools 的 NO_EXEC
+    裡),但**「這一章開打前隊上有誰」**完全由已提交的 chapter_beats 決定,
+    離線可判——而那正是 2026-08-29 那輪最容易搞錯的地方。"""
+    fails = []
+
+    print("(1) chapter_beats 的索引慣例:兩個獨立交叉核對")
+    got17, got20 = [], []
+    for ch, out in ((17, got17), (20, got20)):
+        p = CHAPTER_BEATS_DIR / f"ch{ch:02d}_post.json"
+        _walk_join_beats(json.loads(p.read_text(encoding="utf-8")).get("beats", []), out)
+    ok1 = got17 == CH17_POST_JOINS and got20 == CH20_POST_JOINS
+    print(f"    {'PASS' if ok1 else 'FAIL'}: ch17_post={got17}(應 {CH17_POST_JOINS})、"
+          f"ch20_post={got20}(應 {CH20_POST_JOINS})")
+    if not ok1:
+        fails.append(f"索引慣例的錨點漂移:{got17} / {got20}")
+
+    print("\n(2) **刻意的範圍差異**:自己那一章的 map-native 不得算成先前的招募")
+    # natural_join_order 用 range(0, n-1),estimate_roster_size 用 range(1, n)。
+    # docstring 明寫「不要為了一致而『修』,除非先重新推導哪一個才是錯的」。
+    # 這裡釘的是差異造成的**可觀察後果**:ch20_post 的 23/24 是 ch21 自己的
+    # map-native,所以 natural_join_order(21) 不得含它們。
+    roster21 = natural_join_order(21)
+    leaked = [c for c in CH20_POST_JOINS if c in roster21]
+    ok2 = not leaked and 21 in roster21 and 7 in roster21
+    print(f"    {'PASS' if ok2 else 'FAIL'}: ch21 開打前名冊 {len(roster21)} 人、"
+          f"混進 ch21 自己的 map-native {leaked or '無'}、含 ch18 招募的 21/7")
+    if not ok2:
+        fails.append(f"範圍差異失效,map-native 混入:{leaked}")
+
+    print("\n(3) 對照:把範圍改成 estimate_roster_size 的寫法就會混進來")
+    # 沒有這一題,第 (2) 題對一個「永遠不含 23/24」的實作也會通過。
+    wrong: list[int] = []
+    seen: set[int] = set()
+    for ch in range(1, 21):                      # estimate_roster_size 的範圍
+        p = CHAPTER_BEATS_DIR / f"ch{ch:02d}_post.json"
+        if not p.exists():
+            continue
+        found: list[int] = []
+        _walk_join_beats(json.loads(p.read_text(encoding="utf-8")).get("beats", []), found)
+        for cid in found:
+            if cid not in seen:
+                seen.add(cid)
+                wrong.append(cid)
+    ok3 = all(c in wrong for c in CH20_POST_JOINS)
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 用 range(1, n) 會混進 "
+          f"{[c for c in CH20_POST_JOINS if c in wrong]}(證明差異是實質的)")
+    if not ok3:
+        fails.append("兩種範圍其實沒有差別,docstring 的警告需要重新檢視")
+
+    print("\n(4) 時序去重:先加入的排前面,重複只留第一次")
+    ok4 = (len(roster21) == len(set(roster21))
+           and roster21.index(21) > roster21.index(8)      # ch18 招募晚於早期
+           and roster21[0] == 8)
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 無重複、時序遞增、首位 id{roster21[0]}")
+    if not ok4:
+        fails.append(f"時序或去重不正確:{roster21}")
+
+    print("\n(5) 非平凡性 + 邊界")
+    sizes = {len(natural_join_order(n)) for n in (2, 5, 10, 21, 30)}
+    ok5 = (natural_join_order(1) == [] and natural_join_order(0) == []
+           and len(sizes) >= 4)
+    print(f"    {'PASS' if ok5 else 'FAIL'}: ch0/ch1 -> 空、五個章節得出 {len(sizes)} 種"
+          f"名冊大小 {sorted(sizes)}")
+    if not ok5:
+        fails.append(f"名冊不隨章節變化:{sorted(sizes)}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(索引慣例的兩個交叉核對 + 刻意範圍差異的後果 + "
+          "反向對照 + 時序去重 + 非平凡性)。實機掃描未涵蓋(NO_EXEC),見 docstring。")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(selftest())
     sys.exit(main())

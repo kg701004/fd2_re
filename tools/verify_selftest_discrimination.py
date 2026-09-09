@@ -147,6 +147,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_crash_ladder.py":        (["--selftest"], "offline"),
     "fd2_zero_read_capture.py":   (["--selftest"], "offline"),
     "fd2_floodfill_stack_probe.py": (["--selftest"], "offline"),
+    # 整支是 NO_EXEC 的實機掃描,但名冊推導那一層由已提交的 chapter_beats 決定,離線可判。
+    "fd2_chapter_sweep.py":       (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
