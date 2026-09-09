@@ -126,6 +126,12 @@ REGISTRY: list[tuple[str, str, list[str], str]] = [
     # 沒讓人注意到它真的是 unicode_to_glyph.json 的產生器。
     ("docs/data/unicode_to_glyph.json", "encode_text.py",
      ["revtable", "{out}"], "bytes"),
+    # 2026-09-09:27 個未收錄原語的參數個數(呼叫端清理 + 緊鄰 push 兩個獨立訊號,
+    # 再與 15 個文件簽名核對)。dump_chapter_beats 用它決定 unknown beat 的 args
+    # 要切幾個、要不要反轉,所以這份證據不該只活在記憶體裡——登錄進來,每輪重生
+    # 比對,判準一改就會立刻看得出來。
+    ("docs/data/native_argcounts.json", "derive_native_argcounts.py",
+     ["--wide", "--json", "{out}"], "bytes"),
 ]
 
 

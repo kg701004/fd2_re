@@ -1,0 +1,384 @@
+{
+  "0x11d40": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 29,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "12": 29
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x11df2": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 34,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "12": 34
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x12cea": {
+    "argc": 2,
+    "argc_from_pushes": 2,
+    "verdict": "CONFIRMED",
+    "sites": 15,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "8": 15
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x13536": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "CONFIRMED",
+    "sites": 5,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "None": 5
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x17aa9": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 96,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 96
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x1b8e7": {
+    "argc": 2,
+    "argc_from_pushes": 2,
+    "verdict": "CONFIRMED",
+    "sites": 13,
+    "agreement": 0.923,
+    "flags": [
+      "callsites_disagree"
+    ],
+    "cleanup_distribution": {
+      "8": 12,
+      "None": 1
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x1c2da": {
+    "argc": 4,
+    "argc_from_pushes": 4,
+    "verdict": "CONFIRMED",
+    "sites": 11,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "16": 11
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x1f882": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "WEAK",
+    "sites": 38,
+    "agreement": 1.0,
+    "flags": [
+      "merged_cleanup_risk"
+    ],
+    "cleanup_distribution": {
+      "None": 38
+    },
+    "merged_cleanup_sites": [
+      "0x233e0",
+      "0x23623",
+      "0x23eba",
+      "0x3403b"
+    ],
+    "known_op": null
+  },
+  "0x2189a": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 6,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "12": 6
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x22253": {
+    "argc": 5,
+    "argc_from_pushes": 1,
+    "verdict": "LIKELY",
+    "sites": 5,
+    "agreement": 1.0,
+    "flags": [
+      "signals_disagree"
+    ],
+    "cleanup_distribution": {
+      "20": 5
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24336": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "WEAK",
+    "sites": 1,
+    "agreement": 1.0,
+    "flags": [
+      "single_callsite"
+    ],
+    "cleanup_distribution": {
+      "None": 1
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24618": {
+    "argc": 4,
+    "argc_from_pushes": 2,
+    "verdict": "LIKELY",
+    "sites": 8,
+    "agreement": 1.0,
+    "flags": [
+      "signals_disagree"
+    ],
+    "cleanup_distribution": {
+      "16": 8
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24b14": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 3,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 3
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24b4d": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 15,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 15
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24bde": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "WEAK",
+    "sites": 1,
+    "agreement": 1.0,
+    "flags": [
+      "single_callsite"
+    ],
+    "cleanup_distribution": {
+      "4": 1
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x24d22": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 4,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 4
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x25052": {
+    "argc": 2,
+    "argc_from_pushes": 2,
+    "verdict": "CONFIRMED",
+    "sites": 6,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "8": 6
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x25089": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "WEAK",
+    "sites": 4,
+    "agreement": 1.0,
+    "flags": [
+      "merged_cleanup_risk"
+    ],
+    "cleanup_distribution": {
+      "None": 4
+    },
+    "merged_cleanup_sites": [
+      "0x25458"
+    ],
+    "known_op": null
+  },
+  "0x2aedb": {
+    "argc": 2,
+    "argc_from_pushes": 2,
+    "verdict": "CONFIRMED",
+    "sites": 7,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "8": 7
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x31529": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "CONFIRMED",
+    "sites": 2,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "None": 2
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x33f78": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 10,
+    "agreement": 0.9,
+    "flags": [
+      "callsites_disagree"
+    ],
+    "cleanup_distribution": {
+      "12": 9,
+      "None": 1
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x35b78": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 16,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "12": 16
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x35f10": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 4,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 4
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x361b0": {
+    "argc": 0,
+    "argc_from_pushes": 0,
+    "verdict": "CONFIRMED",
+    "sites": 7,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "None": 7
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x3776e": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 205,
+    "agreement": 0.99,
+    "flags": [
+      "callsites_disagree"
+    ],
+    "cleanup_distribution": {
+      "4": 203,
+      "None": 2
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x37910": {
+    "argc": 3,
+    "argc_from_pushes": 3,
+    "verdict": "CONFIRMED",
+    "sites": 81,
+    "agreement": 0.988,
+    "flags": [
+      "callsites_disagree"
+    ],
+    "cleanup_distribution": {
+      "12": 80,
+      "None": 1
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  },
+  "0x4df4c": {
+    "argc": 1,
+    "argc_from_pushes": 1,
+    "verdict": "CONFIRMED",
+    "sites": 32,
+    "agreement": 1.0,
+    "flags": [],
+    "cleanup_distribution": {
+      "4": 32
+    },
+    "merged_cleanup_sites": [],
+    "known_op": null
+  }
+}
