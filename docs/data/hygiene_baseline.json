@@ -2,11 +2,6 @@
  "_policy": "本檔是棘輪基準線:只准變短。新違規不得加入,除非附上具體理由;不再違規的項目必須移除,否則會誤放行。由 tools/verify_tool_hygiene.py --update-baseline 產生。",
  "entries": [
   {
-   "name": "fd2_battle_autoplay.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "fd2_chapter_sweep.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"

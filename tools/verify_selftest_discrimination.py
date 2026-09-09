@@ -137,6 +137,7 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_game_state.py":          (["--selftest"], "offline"),
     "fd2_sfx_screen_map.py":      (["--selftest"], "offline"),
     "fd2_speaker_capture.py":     (["--selftest"], "offline"),
+    "fd2_battle_autoplay.py":     (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),

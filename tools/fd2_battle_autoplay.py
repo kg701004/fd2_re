@@ -212,11 +212,32 @@ def attack_unit(inst: str, selector: str = "0170", blind: bool = False) -> bool:
     return True
 
 
+def is_attackable_foe(v: dict) -> bool:
+    """可以打的敵人:敵方陣營、還沒行動過、**而且活著**。
+
+    2026-09-09:這條判準原本寫了兩次,而兩次不一樣——`nearest_foe` 有 `hp > 0`,
+    `adjacent_foe` **沒有**。後果不是理論上的:第 464 行用 `adjacent_foe` 把守
+    「原地攻擊」那一支,所以只要旁邊有一具**屍體**(hp=0 但 acted 未設),就會
+    走進原地攻擊,而遊戲的 `enableFlags[0]` 正確判定射程內無活候選、把攻擊
+    disable 掉——那正是 doc13 §12/§13 記載、\
+`fd2_crash_capture.py` 多輪「環選擇是 2/3(期望 0)」的症狀形狀。
+    更糟的是真正活著的敵人在遠處時,單位會一直原地打屍體而不去接近,重現
+    2026-09-04 那個「四回合都四人全動但敵方數字不動」的失敗形狀。
+
+    兩個使用端現在共用這一個 predicate;要改判準只有一個地方可以改。
+    """
+    return v["camp"] == 0x00 and not (v["acted"] & 0x01) and v["hp"] > 0
+
+
+def manhattan(a: dict, b: dict) -> int:
+    return abs(a["x"] - b["x"]) + abs(a["y"] - b["y"])
+
+
 def nearest_foe(u: dict, units: list[dict]) -> dict | None:
-    foes = [v for v in units if v["camp"] == 0x00 and not (v["acted"] & 0x01) and v["hp"] > 0]
+    foes = [v for v in units if is_attackable_foe(v)]
     if not foes:
         return None
-    return min(foes, key=lambda v: abs(v["x"] - u["x"]) + abs(v["y"] - u["y"]))
+    return min(foes, key=lambda v: manhattan(v, u))
 
 
 def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
@@ -358,9 +379,8 @@ def approach_then_act(inst: str, me: dict, foe: dict, mv: int,
 
 
 def adjacent_foe(u: dict, units: list[dict]) -> bool:
-    return any(v["camp"] == 0x00 and not (v["acted"] & 0x01)
-               and abs(v["x"] - u["x"]) + abs(v["y"] - u["y"]) == 1
-               for v in units)
+    """相鄰處有沒有**可以打的**敵人。判準與 `nearest_foe` 共用,見 is_attackable_foe。"""
+    return any(is_attackable_foe(v) and manhattan(v, u) == 1 for v in units)
 
 
 def rest_unit(inst: str, blind: bool = False) -> None:
@@ -376,6 +396,9 @@ def rest_unit(inst: str, blind: bool = False) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    if "--selftest" in sys.argv:
+        return selftest()
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--instance", required=True)
     ap.add_argument("--selector", default="0170")
     ap.add_argument("--count", type=int, default=12)
@@ -511,6 +534,90 @@ def main() -> int:
         if not alive:
             print("敵方已全滅")
             break
+    return 0
+
+
+def _u(idx=0, camp=0x00, x=0, y=0, hp=10, acted=0):
+    return {"idx": idx, "camp": camp, "x": x, "y": y, "hp": hp, "acted": acted}
+
+
+def selftest() -> int:
+    """格子幾何與目標篩選的對照。驅動 UI 那一層需要活的 DOSBox,不在範圍內。"""
+    fails = []
+    me = _u(idx=9, camp=0x02, x=5, y=5, hp=20)
+
+    print("(1) 本次修的 bug:相鄰的**屍體**不得被當成可攻擊目標")
+    # 舊的 adjacent_foe 沒有 hp>0,於是旁邊躺一具 hp=0 的敵人就會回 True,
+    # 走進「原地攻擊」那一支,而遊戲的 enableFlags[0] 會 disable 攻擊。
+    corpse = [_u(idx=1, x=5, y=6, hp=0)]
+    old_rule = any(v["camp"] == 0x00 and not (v["acted"] & 0x01)
+                   and manhattan(v, me) == 1 for v in corpse)
+    ok1 = (adjacent_foe(me, corpse) is False and old_rule is True)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 現行 -> {adjacent_foe(me, corpse)}"
+          f"(應 False)、舊判準 -> {old_rule}(應 True,證明這個 bug 真的存在過)")
+    if not ok1:
+        fails.append(f"屍體仍被當成可攻擊:{adjacent_foe(me, corpse)} / {old_rule}")
+
+    print("\n(2) 判準必須只有一份:兩個使用端的篩選結果逐一相同")
+    # 這一題釘的是**兩者的關係**,不是各自的值——判準寫兩次才是這個 bug 的成因。
+    pool = [_u(idx=1, x=5, y=6, hp=0), _u(idx=2, x=5, y=4, hp=8),
+            _u(idx=3, x=5, y=6, hp=9, acted=1), _u(idx=4, camp=0x02, x=5, y=6, hp=9),
+            _u(idx=5, x=9, y=9, hp=7)]
+    by_pred = {v["idx"] for v in pool if is_attackable_foe(v)}
+    adj_by_pred = {v["idx"] for v in pool
+                   if is_attackable_foe(v) and manhattan(v, me) == 1}
+    ok2 = (by_pred == {2, 5} and adj_by_pred == {2}
+           and adjacent_foe(me, pool) is True
+           and nearest_foe(me, pool)["idx"] == 2)
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 可攻擊集合 {sorted(by_pred)}(應 [2, 5])、"
+          f"相鄰可攻擊 {sorted(adj_by_pred)}(應 [2])、nearest_foe -> "
+          f"idx{nearest_foe(me, pool)['idx']}")
+    if not ok2:
+        fails.append(f"兩個使用端不一致:{by_pred} / {adj_by_pred}")
+
+    print("\n(3) 分派後果:屍體相鄰 + 活敵在遠處,必須選「接近」而不是「原地攻擊」")
+    # 這是 main() 第 464-467 行的分支條件。沒有這一題,前兩題只證明了函式本身,
+    # 沒證明它改變了工具實際會做的事。
+    mixed = [_u(idx=1, x=5, y=6, hp=0), _u(idx=2, x=5, y=8, hp=9)]
+    in_place = adjacent_foe(me, mixed)
+    approach = (not in_place) and nearest_foe(me, mixed) is not None
+    ok3 = (in_place is False and approach is True
+           and nearest_foe(me, mixed)["idx"] == 2)
+    print(f"    {'PASS' if ok3 else 'FAIL'}: 原地攻擊={in_place}(應 False)、"
+          f"改為接近={approach}、目標 idx{nearest_foe(me, mixed)['idx']}")
+    if not ok3:
+        fails.append(f"分派選擇不正確:in_place={in_place} approach={approach}")
+
+    print("\n(4) 曼哈頓距離與最近選擇")
+    cases = [((5, 5), (5, 6), 1), ((5, 5), (7, 5), 2), ((5, 5), (8, 9), 7),
+             ((0, 0), (0, 0), 0)]
+    wrongd = [(a, b, e, manhattan(_u(x=a[0], y=a[1]), _u(x=b[0], y=b[1])))
+              for a, b, e in cases
+              if manhattan(_u(x=a[0], y=a[1]), _u(x=b[0], y=b[1])) != e]
+    far = [_u(idx=1, x=5, y=9, hp=9), _u(idx=2, x=5, y=7, hp=9), _u(idx=3, x=9, y=5, hp=9)]
+    ok4 = not wrongd and nearest_foe(me, far)["idx"] == 2
+    print(f"    {'PASS' if ok4 else 'FAIL'}: 4 個距離手算相符={not wrongd}、"
+          f"三個候選取最近 -> idx{nearest_foe(me, far)['idx']}(應 2)")
+    if not ok4:
+        fails.append(f"距離或最近選擇不正確:{wrongd}")
+
+    print("\n(5) 非平凡性 + 負向控制")
+    none_left = [_u(idx=1, x=5, y=6, hp=0), _u(idx=2, x=5, y=4, hp=9, acted=1)]
+    ok5 = (nearest_foe(me, none_left) is None and adjacent_foe(me, none_left) is False
+           and nearest_foe(me, []) is None and adjacent_foe(me, []) is False
+           and adjacent_foe(me, pool) != adjacent_foe(me, none_left))
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 全部不可攻擊 -> None/False、"
+          f"空陣列 -> None/False、不同輸入給出不同答案")
+    if not ok5:
+        fails.append("空輸入或非平凡性不成立")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(屍體目標回歸 + 判準唯一性 + 分派後果 "
+           "+ 距離手算 + 非平凡性與負向控制)。UI 驅動層未涵蓋,見 docstring。")
     return 0
 
 
