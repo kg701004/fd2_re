@@ -22,11 +22,6 @@
    "reason": "既有存量,尚未處理"
   },
   {
-   "name": "fd2_stat_override.py",
-   "rule": "correctness",
-   "reason": "既有存量,尚未處理"
-  },
-  {
    "name": "fd2_zero_read_capture.py",
    "rule": "correctness",
    "reason": "既有存量,尚未處理"

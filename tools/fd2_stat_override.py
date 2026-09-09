@@ -110,14 +110,152 @@ def read_array(instance: str, selector: str, n: int) -> tuple[int, list[dict]]:
     return int(res["array_base"], 16), res.get("records", [])
 
 
+def u16_le(value: int) -> tuple[int, int]:
+    """u16 拆成 little-endian 的兩個位元組。寫反不會報錯,只會安靜寫出錯的數字。"""
+    return (value & 0xFF, (value >> 8) & 0xFF)
+
+
+def field_addr(base: int, rec_index: int, offset: int) -> int:
+    """單位記錄裡某個欄位的絕對位址。"""
+    return base + rec_index * STRIDE + offset
+
+
+def build_plan(recs: list[dict], n: int, ours_hp: int, ours_mp: int,
+               ours_ap: int, enemy_hp: int, ours_mv: int
+               ) -> tuple[list[tuple[int, int, int, str]], list[tuple[int, int]]]:
+    """(u16 寫入計畫, MV 的 u8 計畫)。**0 一律代表「不動這一項」。**
+
+    2026-09-04 記載的事故:三項的預設值是 9999,而只有 MV 有「0 = 不動」的逃生口,
+    所以想「只改敵方」而單下 `--enemy-hp` 時,我方也會被一起灌大——正好毀掉那種
+    對照組要隔離的變因。現在四項都有這個逃生口,而這個函式讓它變成可測的。
+
+    空槽(hp_max == 0)一律跳過:超出 `[0x53beb]` 計數的槽是殘留值,它們的 hp_max
+    常常非零,會通過「非空槽」檢查而被誤寫——與 fd2_in_battle_check 第二版踩過的
+    是同一個坑。
+    """
+    plan: list[tuple[int, int, int, str]] = []
+    mv_plan: list[tuple[int, int]] = []
+    for r in recs[:n]:
+        i, camp = r["index"], r["camp"]
+        if r["hp_max"] == 0:
+            continue
+        if camp == OURS:
+            if ours_mv:
+                mv_plan.append((i, ours_mv))
+            if ours_hp:
+                plan += [(i, F_HPMAX, ours_hp, "HPmax"), (i, F_HPCUR, ours_hp, "HPcur")]
+            if ours_mp:
+                plan += [(i, F_MPMAX, ours_mp, "MPmax"), (i, F_MPCUR, ours_mp, "MPcur")]
+            if ours_ap:
+                plan += [(i, F_AP, ours_ap, "AP")]
+        elif camp == ENEMY:
+            if enemy_hp:
+                plan += [(i, F_HPMAX, enemy_hp, "HPmax"), (i, F_HPCUR, enemy_hp, "HPcur")]
+    return plan, mv_plan
+
+
 def write_u16(instance: str, addr: int, value: int) -> None:
-    for i in range(2):
-        H.debugger_cmd(instance, f"SMV {addr + i:08x} {(value >> (8 * i)) & 0xFF:02x}")
+    for i, byte in enumerate(u16_le(value)):
+        H.debugger_cmd(instance, f"SMV {addr + i:08x} {byte:02x}")
+
+
+MV_MAX = 60          # 可移動格是 flood fill,地圖才 ~20x60,設上萬沒有意義
+MV_ADVISED = (8, 12)  # 見 docstring 的 DOS-exit 段落:保守,不是已知的修復
+
+
+def _rec(index=0, camp=OURS, hp_max=100, hp_cur=100):
+    return {"index": index, "camp": camp, "hp_max": hp_max, "hp_cur": hp_cur}
+
+
+def selftest() -> int:
+    """寫入計畫與位址算術的對照。實際寫入需要活的 DOSBox,不在範圍內——
+    但**決定要寫什麼、寫到哪裡**完全是離線可判的,而那正是 2026-09-04 出事的地方。"""
+    fails = []
+
+    print("(1) 2026-09-04 事故回歸:只改敵方時不得動到我方")
+    # 三項的預設值是 9999,而當時只有 MV 有「0 = 不動」的逃生口,於是想做
+    # 「只改敵方」的對照組時,我方也被一起灌大——正好毀掉要隔離的變因。
+    units = [_rec(0, OURS, 50, 40), _rec(1, ENEMY, 30, 30), _rec(2, OURS, 60, 60)]
+    plan, mv = build_plan(units, 3, ours_hp=0, ours_mp=0, ours_ap=0,
+                          enemy_hp=1, ours_mv=0)
+    touched_ours = {i for i, _, _, _ in plan if units[i]["camp"] == OURS}
+    ok1 = (not touched_ours and mv == []
+           and {i for i, _, _, _ in plan} == {1}
+           and sorted(lab for _, _, _, lab in plan) == ["HPcur", "HPmax"])
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 我方被動到的 {touched_ours or '無'}、"
+          f"只寫 idx{sorted({i for i, _, _, _ in plan})} 的 HPcur/HPmax")
+    if not ok1:
+        fails.append(f"只改敵方仍動到我方:{touched_ours}")
+
+    print("\n(2) 對照:不給逃生口(沿用 9999 預設)時我方確實會被寫")
+    # 沒有這一題,第 (1) 題對一個「永遠什麼都不寫」的實作也會通過。
+    plan2, mv2 = build_plan(units, 3, 9999, 9999, 9999, 1, 10)
+    ours2 = {i for i, _, _, _ in plan2 if units[i]["camp"] == OURS}
+    ok2 = ours2 == {0, 2} and {i for i, _ in mv2} == {0, 2} and len(plan2) == 12
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 我方 idx{sorted(ours2)} 被寫、"
+          f"MV 計畫 {len(mv2)} 筆、u16 共 {len(plan2)} 筆")
+    if not ok2:
+        fails.append(f"預設路徑沒有寫入我方:{ours2} / {len(plan2)}")
+
+    print("\n(3) 空槽必須跳過(超出計數的殘留值曾經被誤寫)")
+    with_empty = [_rec(0, OURS, 0, 0), _rec(1, ENEMY, 30, 30), _rec(2, OURS, 60, 60)]
+    plan3, mv3 = build_plan(with_empty, 3, 9999, 0, 0, 1, 9)
+    ok3 = 0 not in {i for i, _, _, _ in plan3} and 0 not in {i for i, _ in mv3}
+    print(f"    {'PASS' if ok3 else 'FAIL'}: idx0(hp_max=0)未被寫入")
+    if not ok3:
+        fails.append("空槽被寫入")
+
+    print("\n(4) u16 是 little-endian,且位址 = base + idx*STRIDE + offset")
+    # 位元組序寫反不會報錯,只會安靜寫出錯的數字;STRIDE/offset 算錯會寫到別人身上。
+    le_cases = [(0, (0x00, 0x00)), (1, (0x01, 0x00)), (0x1234, (0x34, 0x12)),
+                (9999, (0x0F, 0x27)), (0xFFFF, (0xFF, 0xFF))]
+    le_bad = [(v, e, u16_le(v)) for v, e in le_cases if u16_le(v) != e]
+    addr_ok = (field_addr(0x1000, 0, F_HPCUR) == 0x1040
+               and field_addr(0x1000, 1, F_HPCUR) == 0x1000 + STRIDE + 0x40
+               and field_addr(0x1000, 3, F_AP) == 0x1000 + 3 * 0x50 + 0x48)
+    ok4 = not le_bad and addr_ok and STRIDE == 0x50
+    print(f"    {'PASS' if ok4 else 'FAIL'}: LE 5 例相符={not le_bad}、"
+          f"位址算術相符={addr_ok}、STRIDE={STRIDE:#x}")
+    if not ok4:
+        fails.append(f"LE 或位址算術不正確:{le_bad} / {addr_ok}")
+
+    print("\n(5) cur/max 兩個都寫(2026-09-04 更正過順序,不是只寫一個)")
+    plan5, _ = build_plan([_rec(0, OURS, 50, 10)], 1, 777, 0, 0, 0, 0)
+    offs = {off for _, off, _, _ in plan5}
+    ok5 = (offs == {F_HPCUR, F_HPMAX} and F_HPCUR == 0x40 and F_HPMAX == 0x42
+           and all(v == 777 for _, _, v, _ in plan5))
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 寫入偏移 {sorted(hex(o) for o in offs)}"
+          f"(cur=0x40 在前、max=0x42)")
+    if not ok5:
+        fails.append(f"cur/max 寫入不完整:{offs}")
+
+    print("\n(6) 非平凡性 + 負向控制")
+    empty_plan, empty_mv = build_plan([], 0, 9999, 9999, 9999, 1, 10)
+    sizes = {len(build_plan(units, 3, h, 0, 0, e, 0)[0])
+             for h, e in ((0, 0), (0, 1), (1, 0), (1, 1))}
+    ok6 = (empty_plan == [] and empty_mv == [] and len(sizes) >= 3
+           and MV_MAX == 60 and MV_ADVISED == (8, 12))
+    print(f"    {'PASS' if ok6 else 'FAIL'}: 空輸入 -> 空計畫、"
+          f"四種旗標組合得出 {len(sizes)} 種計畫大小 {sorted(sizes)}")
+    if not ok6:
+        fails.append(f"計畫不隨輸入變化:{sorted(sizes)}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(只改敵方的事故回歸 + 反向對照 + 空槽跳過 "
+          "+ LE 與位址算術 + cur/max 完整 + 非平凡性)。實際寫入未涵蓋,見 docstring。")
+    return 0
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    if "--selftest" in sys.argv:
+        return selftest()
+    ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--instance", required=True)
     ap.add_argument("--selector", default="0170")
     ap.add_argument("--count", type=int, default=16, help="要處理的記錄數(取 [0x53beb] 之內)")
@@ -154,32 +292,13 @@ def main() -> int:
 
     if not 0 <= a.ours_mv <= 60:
         raise SystemExit(f"MV={a.ours_mv} 超出合理範圍(0-60);可移動格是 flood fill")
-    plan: list[tuple[int, int, int, str]] = []   # (rec, offset, value, label)
-    mv_plan: list[tuple[int, int]] = []          # (rec, mv) —— MV 是 u8,單獨處理
-    for r in recs[:n]:
-        i, camp = r["index"], r["camp"]
-        if r["hp_max"] == 0:
-            continue                              # 空槽,跳過
-        if camp == OURS:
-            # 0 = 不動,與 --ours-mv 一致。2026-09-04 補:先前只有 MV 有這個逃生口,
-            # 其餘三項的**預設值是 9999**,所以想「只改敵方」而單下 --enemy-hp 時,
-            # 我方也會被一起灌大——正好毀掉那種對照組要隔離的變因。
-            if a.ours_mv:
-                mv_plan.append((i, a.ours_mv))
-            if a.ours_hp:
-                plan += [(i, F_HPMAX, a.ours_hp, "HPmax"), (i, F_HPCUR, a.ours_hp, "HPcur")]
-            if a.ours_mp:
-                plan += [(i, F_MPMAX, a.ours_mp, "MPmax"), (i, F_MPCUR, a.ours_mp, "MPcur")]
-            if a.ours_ap:
-                plan += [(i, F_AP, a.ours_ap, "AP")]
-        elif camp == ENEMY:
-            if a.enemy_hp:
-                plan += [(i, F_HPMAX, a.enemy_hp, "HPmax"), (i, F_HPCUR, a.enemy_hp, "HPcur")]
+    plan, mv_plan = build_plan(recs, n, a.ours_hp, a.ours_mp, a.ours_ap,
+                               a.enemy_hp, a.ours_mv)
 
     print(f"預定寫入 {len(plan)} 個 u16 欄位({len(plan)*2} 次 SMV)")
     if a.dry_run:
         for rec, off, val, lab in plan[:20]:
-            print(f"  idx{rec:2} {lab:5} @ {base + rec*STRIDE + off:#x} <- {val}")
+            print(f"  idx{rec:2} {lab:5} @ {field_addr(base, rec, off):#x} <- {val}")
         if len(plan) > 20:
             print(f"  ...(其餘 {len(plan)-20} 筆略)")
         H.resume(a.instance)

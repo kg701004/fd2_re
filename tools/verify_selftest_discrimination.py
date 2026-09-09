@@ -141,6 +141,8 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     # torch 與權重都在本機;selftest 用一個位移不變的假模型驗分塊幾何,不載權重。
     "realesrgan_upscale.py":      (["--selftest"], "offline"),
     "realesrgan_batch.py":        (["--selftest"], "offline"),
+    # 寫入計畫與位址算術是離線可判的;實際 SMV 寫入需要活的 DOSBox,不涵蓋。
+    "fd2_stat_override.py":       (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
