@@ -132,6 +132,9 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "derive_native_argcounts.py": (["--selftest"], "offline"),
     "export_sprites.py":          (["--selftest"], "offline"),
     "extract_all.py":             (["--selftest"], "offline"),
+    # 這兩支雖然是實機工具,但純邏輯(判準)已抽出可離線驗;實機取得層不涵蓋。
+    "fd2_in_battle_check.py":     (["--selftest"], "offline"),
+    "fd2_game_state.py":          (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
@@ -257,6 +260,39 @@ def mutate(src: str, idx: int) -> tuple[str | None, str]:
 BACKUP_SUFFIX = ".premutation"
 
 
+def _root_entries() -> set[str]:
+    return {p.name for p in ROOT.iterdir()}
+
+
+def quarantine_side_effects(before: set[str]) -> list[str]:
+    """把突變過的工具寫進 repo 根目錄的東西搬出去。回傳被搬走的名稱。
+
+    2026-09-09,實際發生過並且推上了 GitHub:突變測試以 `cwd=ROOT` 執行工具
+    (不能改——很多工具用 `extracted/`、`org_game/` 這類相對路徑),而**突變過的
+    工具會產生真實副作用**。`export_sprites` 被突變後參數索引偏移,輸出目錄變成
+    字面值 `"0"`,於是它把 12 個 FDICON sprite 寫進 repo 根目錄的 `0/`;那是
+    著作權資產,而 `.gitignore` 只排除 `extracted/`,根目錄的 `0/` 不在任何忽略
+    規則裡,接著就被 `git add -A` 一起提交了。
+
+    `verify_all_tools` 的 invoke 層早就為了同一件事在空的暫存 cwd 執行工具;
+    這裡不能那樣做,所以改成事後偵測:比對根目錄項目,新出現的一律**搬到 repo
+    之外**並大聲報告。搬而不刪,是因為那可能是別人正在進行的工作;搬出 repo
+    而不是加進 .gitignore,是因為忽略只會讓問題安靜下來,不會讓它消失。
+    """
+    import shutil
+    import tempfile
+    new = sorted(_root_entries() - before)
+    if not new:
+        return []
+    dest = Path(tempfile.gettempdir()) / "fd2_mutation_sideeffects" / time.strftime("%Y%m%d-%H%M%S")
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in new:
+        shutil.move(str(ROOT / name), str(dest / name))
+    print(f"** 突變過的工具在 repo 根目錄產生了 {len(new)} 個項目:{new};"
+          f"已搬到 {dest}(不刪除)。**")
+    return new
+
+
 def _backup_path(path: Path) -> Path:
     return path.with_name(path.name + BACKUP_SUFFIX)
 
@@ -313,6 +349,7 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
     rng = random.Random(base + seed * 7919)
     picks = rng.sample(range(n), min(tries, n)) if n else []
     caught, attempted, examples = 0, 0, []
+    root_before = _root_entries()
     try:
         for idx in picks:
             mutated, what = mutate(src, idx)
@@ -339,6 +376,7 @@ def test_tool(name: str, tries: int, timeout: int, seed: int = 0) -> dict:
                     examples.append(what)
     finally:
         path.write_bytes(original)
+        out["side_effects"] = quarantine_side_effects(root_before)
         restored = hashlib.sha256(path.read_bytes()).hexdigest()
         out["restored_ok"] = restored == digest
         # 只有確定還原成功才刪備份——還原失敗時備份是最後一條退路,不能丟。
@@ -452,6 +490,31 @@ def selftest() -> int:
     victim.unlink(missing_ok=True)
     killer.unlink(missing_ok=True)
     _backup_path(victim).unlink(missing_ok=True)
+
+    print("\n(3d) 副作用隔離:突變過的工具寫進 repo 根目錄的東西必須被搬走")
+    # 2026-09-09 這件事真的發生並且推上了 GitHub(見 quarantine_side_effects
+    # 的 docstring),所以這一題釘的是實際事故,不是假想。
+    probe_dir = ROOT / "_sideeffect_probe"
+    before = _root_entries()
+    probe_dir.mkdir()
+    (probe_dir / "leaked.png").write_bytes(b"\x89PNG fake")
+    moved = quarantine_side_effects(before)
+    ok3d = (moved == ["_sideeffect_probe"] and not probe_dir.exists())
+    print(f"    {'PASS' if ok3d else 'FAIL'}: 搬走 {moved}、repo 內已不存在="
+          f"{not probe_dir.exists()}")
+    if not ok3d:
+        fails.append(f"副作用未被隔離:{moved}、still_there={probe_dir.exists()}")
+        import shutil as _sh
+        _sh.rmtree(probe_dir, ignore_errors=True)
+
+    print("\n(3e) 負向控制:沒有新增項目時不得動任何東西")
+    snapshot = _root_entries()
+    untouched = quarantine_side_effects(snapshot)
+    ok3e = untouched == [] and _root_entries() == snapshot
+    print(f"    {'PASS' if ok3e else 'FAIL'}: 搬走 {untouched}(應為空)、"
+          f"根目錄未變={_root_entries() == snapshot}")
+    if not ok3e:
+        fails.append(f"無副作用時仍動了東西:{untouched}")
 
     print("\n(3) 還原:突變後檔案必須逐位元組還原")
     ok3 = sharp.get("restored_ok") and blind.get("restored_ok")

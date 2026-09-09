@@ -32,6 +32,7 @@
 ----
     python tools/fd2_game_state.py --instance win2
     python tools/fd2_game_state.py --instance win2 --wait-playable 60
+    python tools/fd2_game_state.py --selftest
 """
 
 from __future__ import annotations
@@ -187,13 +188,106 @@ def wait_playable(inst: str, timeout: float = 60.0, gap: float = 4.0
     return last
 
 
+def _rec(index=0, camp=0x02, hp_cur=100, hp_max=100):
+    return {"index": index, "camp": camp, "hp_cur": hp_cur, "hp_max": hp_max}
+
+
+def selftest() -> int:
+    """`classify_units` 的對照。它是純函式,兩個實機事件都有記錄可釘。
+
+    **範圍限制是刻意的**:`BROWSE_CURSOR` 要靠在 `0x18890` 下斷點後按 Enter 是否
+    命中來自證,那必須有活的 DOSBox,不在這裡涵蓋;這裡驗的是「拿到單位陣列之後
+    怎麼判斷」那一層,而 2026-09-04 那天壞掉的正是這一層。
+    """
+    fails = []
+
+    print("(1) 2026-09-04 事件一:回合轉換瞬間 12 個槽全讀成同一陣營")
+    # 實測記錄在本檔 docstring:此時任何基於該陣列的判斷都不可信,必須明確回報
+    # 不可讀,而不是硬給一個數字。
+    st_all_enemy, why1 = classify_units([_rec(i, 0x00, 50, 60) for i in range(12)])
+    st_all_ours, _ = classify_units([_rec(i, 0x02, 50, 60) for i in range(12)])
+    ok1 = (st_all_enemy is GameState.TRANSITION_UNREADABLE
+           and st_all_ours is GameState.TRANSITION_UNREADABLE)
+    print(f"    {'PASS' if ok1 else 'FAIL'}: 全 0x00 -> {st_all_enemy.value}、"
+          f"全 0x02 -> {st_all_ours.value}(皆應 TRANSITION_UNREADABLE)")
+    if not ok1:
+        fails.append(f"轉換窗口未被辨識:{st_all_enemy} / {st_all_ours}")
+
+    print("\n(2) 2026-09-04 事件二:stat_override 寫 9999 後升級變 10016")
+    # 舊的 `<= 9999` 界線會把一場進行中的戰鬥判成 NOT_IN_BATTLE。這裡同時釘住
+    # 現行判斷正確、以及**舊判斷確實會錯**——否則第一句可能只是恆真。
+    live = [_rec(0, 0x02, 782, 10016), _rec(1, 0x02, 50, 60), _rec(2, 0x00, 30, 40)]
+    st2, why2 = classify_units(live)
+    old_rule_bad = [r for r in live if not (0 < r["hp_max"] <= 9999)]
+    ok2 = (st2 is GameState.IN_BATTLE_NOT_PLAYABLE and len(old_rule_bad) == 1)
+    print(f"    {'PASS' if ok2 else 'FAIL'}: 現行 -> {st2.value}、"
+          f"舊的 <=9999 會判 {len(old_rule_bad)} 筆超界(應 1)")
+    if not ok2:
+        fails.append(f"HP 界線回歸不成立:{st2} / {old_rule_bad}")
+
+    print("\n(3) 內部一致性:各種壞資料必須落在 NOT_IN_BATTLE")
+    bad_cases = {
+        "沒有非空槽": [_rec(0, 0x02, 0, 0), _rec(1, 0x02, 0, 0)],
+        "camp 超出列舉": [_rec(0, 0x07, 50, 60), _rec(1, 0x02, 40, 40), _rec(2, 0x00, 30, 40)],
+        "HP>maxHP": [_rec(0, 0x02, 99, 60), _rec(1, 0x02, 40, 40), _rec(2, 0x00, 30, 40)],
+        "maxHP=0 但 HP 非 0": [_rec(0, 0x02, 50, 0), _rec(1, 0x02, 40, 40), _rec(2, 0x00, 30, 40)],
+    }
+    wrong = {k: classify_units(v)[0].value for k, v in bad_cases.items()
+             if classify_units(v)[0] is not GameState.NOT_IN_BATTLE}
+    ok3 = not wrong
+    print(f"    {'PASS' if ok3 else 'FAIL'}: {len(bad_cases)} 種壞資料"
+          + ("全部 -> NOT_IN_BATTLE" if ok3 else f",不符 {wrong}"))
+    if not ok3:
+        fails.append(f"壞資料未被擋下:{wrong}")
+
+    print("\n(4) 跨工具:與 fd2_in_battle_check 的判準必須一致")
+    # 兩支曾經各自實作半套(見 fd2_in_battle_check 檔頭「判準的擁有權」)。
+    import fd2_in_battle_check as IB
+    cases = [live] + list(bad_cases.values())
+    disagree = []
+    for rows in cases:
+        st, _ = classify_units(rows)
+        rc, _ = IB.verdict([{"idx": r["index"], "camp": r["camp"], "hp": r["hp_cur"],
+                             "mhp": r["hp_max"], "mp": 0, "ap": 10, "dp": 10, "hit": 50}
+                            for r in rows])
+        if (st is not GameState.NOT_IN_BATTLE) != (rc == 0):
+            disagree.append((st.value, rc))
+    ok4 = not disagree and IB.MAX_HP_CEILING == 0xFFFF
+    print(f"    {'PASS' if ok4 else 'FAIL'}: {len(cases)} 組方向一致"
+          f"{'' if not disagree else str(disagree)}、共用界線 {IB.MAX_HP_CEILING:#x}")
+    if not ok4:
+        fails.append(f"與 fd2_in_battle_check 不一致:{disagree}")
+
+    print("\n(5) 非平凡性 + 負向控制")
+    states = {classify_units(v)[0] for v in list(bad_cases.values()) + [live,
+              [_rec(i, 0x00, 50, 60) for i in range(12)]]}
+    empty_st, empty_why = classify_units([])
+    ok5 = len(states) >= 3 and empty_st is GameState.NOT_IN_BATTLE and "空槽" in empty_why
+    print(f"    {'PASS' if ok5 else 'FAIL'}: 得出 {len(states)} 種不同狀態 "
+          f"{sorted(s.value for s in states)}、空輸入 -> {empty_st.value}")
+    if not ok5:
+        fails.append(f"狀態恆定或空輸入不正確:{states} / {empty_st}")
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed(兩個 2026-09-04 實機事件的回歸 + 內部一致性 "
+          "+ 跨工具判準一致 + 非平凡性與負向控制)。實機證明層未涵蓋,見 docstring。")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    if "--selftest" in sys.argv:
+        return selftest()
     ap.add_argument("--instance", required=True)
     ap.add_argument("--selector", default="0170")
     ap.add_argument("--no-prove", action="store_true", help="只做讀值層級判斷,不動遊戲")
     ap.add_argument("--wait-playable", type=float, metavar="SEC")
+    ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.wait_playable:
         st, why = wait_playable(a.instance, a.wait_playable)
