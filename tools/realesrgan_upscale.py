@@ -146,9 +146,155 @@ def upscale(model, device, img_rgb):
     return Image.fromarray((out * 255.0).round().astype(np.uint8))
 
 
+def upscale_image(model, device, src):
+    """Upscale a PIL image, alpha included. **One owner for the alpha rule.**
+
+    2026-09-09: these six lines existed twice -- here and in
+    `realesrgan_batch.py` -- with no test on either. The pretrained weights are
+    3-channel, so alpha cannot go through the network and is resampled with
+    LANCZOS instead; that is a real decision, and a decision written down twice
+    is one that can silently diverge. Two other cases of exactly this were fixed
+    the same day (`fd2_in_battle_check.why` vs `fd2_game_state.classify_units`,
+    `adjacent_foe` vs `nearest_foe`), so it is folded into one function here.
+    """
+    rgb = src.convert("RGB")
+    out_rgb = upscale(model, device, rgb)
+    if src.mode != "RGBA":
+        return out_rgb
+    alpha = src.split()[3].resize(out_rgb.size, Image.LANCZOS)
+    return Image.merge("RGBA", (*out_rgb.split(), alpha))
+
+
+class _NearestModel:
+    """A stand-in for RRDBNet that upscales x4 by nearest-neighbour.
+
+    The point is shift invariance: for such a model, splitting the image into
+    tiles and stitching MUST reproduce the whole-image result byte for byte.
+    That turns the tiling geometry -- padding, cropping, placement -- into
+    something checkable without the 64MB weights and without a GPU. The real
+    network is not shift invariant, which is exactly why `TILE_OVERLAP` exists;
+    but a geometry bug shows up under both, and only this one is testable here.
+    """
+
+    def __call__(self, t):
+        return F.interpolate(t, scale_factor=SCALE, mode="nearest")
+
+
+def _selftest():
+    """Tiling geometry. The weights and the network itself are out of scope --
+    a wrong tile stitch is a bug this file owns; a wrong pixel from RRDBNet is
+    not something a selftest can adjudicate."""
+    global TILE, TILE_OVERLAP
+    fails = []
+    rng = np.random.default_rng(20260909)
+    img = Image.fromarray(rng.integers(0, 256, (137, 211, 3), dtype=np.uint8), "RGB")
+    model, dev = _NearestModel(), torch.device("cpu")
+    keep_tile, keep_ov = TILE, TILE_OVERLAP
+
+    def run(tile, overlap):
+        global TILE, TILE_OVERLAP
+        TILE, TILE_OVERLAP = tile, overlap
+        return np.array(upscale(model, dev, img))
+
+    try:
+        print("(1) Output geometry is exactly SCALE x the input")
+        whole = run(10_000, 0)                       # single-tile path
+        ok1 = whole.shape == (137 * SCALE, 211 * SCALE, 3)
+        print(f"    {'PASS' if ok1 else 'FAIL'}: {whole.shape} for 211x137 input, SCALE={SCALE}")
+        if not ok1:
+            fails.append(f"geometry {whole.shape}")
+
+        print("\n(2) Tiling must not change the result -- 4 tilings, byte identical")
+        # Every one of these splits the image differently (1, 2x2, 4x3, 46x30
+        # tiles) and uses a different overlap. With a shift-invariant model the
+        # stitched output must equal the whole-image output exactly. A wrong
+        # crop offset, a wrong destination slice or an off-by-one in the edge
+        # padding all break this and nothing else in the pipeline would.
+        variants = {(10_000, 0): whole, (128, 16): run(128, 16),
+                    (64, 7): run(64, 7), (5, 3): run(5, 3)}
+        bad = {k: int(np.abs(v.astype(int) - whole.astype(int)).sum())
+               for k, v in variants.items() if not np.array_equal(v, whole)}
+        ok2 = not bad
+        print(f"    {'PASS' if ok2 else 'FAIL'}: "
+              + ("all 4 tilings identical" if ok2 else f"differing {bad}"))
+        if not bad:
+            pass
+        else:
+            fails.append(f"tiling changes output: {bad}")
+
+        print("\n(3) Negative control: a 1px placement error must be caught")
+        # Without this, (2) would also pass for an implementation that ignores
+        # its inputs and returns a constant.
+        shifted = np.roll(whole, 1, axis=1)
+        ok3 = not np.array_equal(shifted, whole) and whole.std() > 0
+        print(f"    {'PASS' if ok3 else 'FAIL'}: a 1px roll is detectable "
+              f"(image is not uniform, std={whole.std():.1f})")
+        if not ok3:
+            fails.append("comparison cannot detect a shift")
+
+        print("\n(4) Overlap is context only -- it must never reach the output")
+        # TILE_OVERLAP exists to give the network real neighbouring pixels at
+        # tile edges; it is cropped back off afterwards. If any of it survived
+        # into the output, (2) would already have failed, so this pins the
+        # reason rather than the symptom: same tile size, three overlaps.
+        same = [run(64, o) for o in (0, 8, 31)]
+        ok4 = all(np.array_equal(s, whole) for s in same)
+        print(f"    {'PASS' if ok4 else 'FAIL'}: overlap 0/8/31 all identical")
+        if not ok4:
+            fails.append("overlap leaks into the output")
+
+        print("\n(5) Alpha never goes through the network")
+        # The weights are 3-channel. If alpha were fed in, either the call would
+        # fail or -- worse -- a 4-channel input would be silently truncated and
+        # the result would look right while the alpha came from nowhere.
+        TILE, TILE_OVERLAP = keep_tile, keep_ov
+        rgba = Image.fromarray(
+            rng.integers(0, 256, (23, 31, 4), dtype=np.uint8), "RGBA")
+        out_rgba = upscale_image(model, dev, rgba)
+        out_rgb_only = upscale_image(model, dev, rgba.convert("RGB"))
+        a_in = np.array(rgba.split()[3])
+        a_out = np.array(out_rgba.split()[3])
+        expect_a = np.array(rgba.split()[3].resize(out_rgba.size, Image.LANCZOS))
+        ok_a = (out_rgba.mode == "RGBA" and out_rgb_only.mode == "RGB"
+                and out_rgba.size == (31 * SCALE, 23 * SCALE)
+                and np.array_equal(a_out, expect_a)
+                and np.array_equal(np.array(out_rgba.convert("RGB")),
+                                   np.array(out_rgb_only))
+                and a_in.std() > 0)
+        print(f"    {'PASS' if ok_a else 'FAIL'}: RGBA->RGBA / RGB->RGB, "
+              f"alpha is the LANCZOS resample, RGB identical either way")
+        if not ok_a:
+            fails.append("alpha handling diverges from the documented rule")
+
+        print("\n(6) Constants match the documented rationale")
+        # Compare against the saved originals, not the module globals -- `run()`
+        # has been reassigning those, so reading them here measures the last
+        # variant rather than the shipped constant.
+        ok5 = (SCALE == 4 and keep_ov == 16 and keep_tile == 400)
+        print(f"    {'PASS' if ok5 else 'FAIL'}: SCALE={SCALE}, TILE={keep_tile}, "
+              f"TILE_OVERLAP={keep_ov}")
+        if not ok5:
+            fails.append(f"constants drifted: {SCALE}/{keep_tile}/{keep_ov}")
+    finally:
+        TILE, TILE_OVERLAP = keep_tile, keep_ov
+
+    if fails:
+        print("\nSELFTEST FAILED:")
+        for f in fails:
+            print("  -", f)
+        return 1
+    print("\n--selftest passed (geometry + tiling invariance across 4 splits + "
+          "negative control + overlap containment + alpha rule + constants). "
+          "The network and its weights are out of scope; see _selftest.__doc__.")
+    return 0
+
+
 def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "--selftest":
+        sys.exit(_selftest())
     if len(sys.argv) != 3:
         print("usage: realesrgan_upscale.py <input.png> <output.png>", file=sys.stderr)
+        print("       realesrgan_upscale.py --selftest", file=sys.stderr)
         sys.exit(1)
     src_path, dst_path = sys.argv[1], sys.argv[2]
 
@@ -158,19 +304,8 @@ def main():
     model = load_model(weights, device)
 
     src = Image.open(src_path)
-    has_alpha = src.mode == 'RGBA'
-    rgb = src.convert('RGB')
     print(f"input: {src_path} {src.size} mode={src.mode}")
-
-    out_rgb = upscale(model, device, rgb)
-
-    if has_alpha:
-        alpha = src.split()[3]
-        out_alpha = alpha.resize(out_rgb.size, Image.LANCZOS)
-        out = Image.merge('RGBA', (*out_rgb.split(), out_alpha))
-    else:
-        out = out_rgb
-
+    out = upscale_image(model, device, src)
     out.save(dst_path)
     print(f"output: {dst_path} {out.size}")
 

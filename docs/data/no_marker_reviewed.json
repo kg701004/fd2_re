@@ -33720,6 +33720,14 @@
    "excerpt": "- **2026-09-08 續十六:把已記錄的 RE 結論變成每次重跑的檢查**。`gtl2wopl.parse_gtl` 的 selftest 第 (1) 項釘住的不是隨便一個數字,是 doc16 那個**已推翻又重新確立**的結論:SAMPLE.AD 不是「TIMB 編號 = MT-32 program number」,而是一張 **162 筆的目錄**,鍵為 `(bank<<8)|patc",
    "verdict": "benign",
    "note": "工具流程敘述:記錄 gtl2wopl selftest 把 SAMPLE.AD 的 162=128+34 目錄形狀釘成回歸檢查,並修掉空檔靜默回空 dict 與越界 struct.error;原版側依據(162 個樂器、bank 分布、raw 11 bytes)已在同段落列出實測數字"
+  },
+  {
+   "file": "91-worklist.md",
+   "line": 549,
+   "excerpt_sha1": "a5b1d1ee842a83855263d34bc61eb3f4b1e477b2",
+   "excerpt": "**2026-09-09 續九:Real-ESRGAN 兩支——分塊幾何可以在沒有權重的情況下驗死**。先更正一個歸類:這兩支先前被我列成「需要 GPU/模型,被擋住」,實際上 `torch 2.11.0+cu128` 與 `tools/models/RealESRGAN_x4plus.pth` **本來就都在**,從來沒被擋。**關鍵手法**:用一個位移不變的假模型(nearest-neighb",
+   "verdict": "benign",
+   "note": "純工具流程敘述:本機 torch/權重的可用性、Real-ESRGAN 分塊拼接幾何的不變量、以及同一條 alpha 規則被寫兩次的修正。不含任何對原版遊戲的 RE 主張,因此沒有原版側位址可引用。"
   }
  ]
 }

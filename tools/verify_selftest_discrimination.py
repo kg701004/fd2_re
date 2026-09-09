@@ -138,6 +138,9 @@ INVOKE: dict[str, tuple[list[str], str]] = {
     "fd2_sfx_screen_map.py":      (["--selftest"], "offline"),
     "fd2_speaker_capture.py":     (["--selftest"], "offline"),
     "fd2_battle_autoplay.py":     (["--selftest"], "offline"),
+    # torch 與權重都在本機;selftest 用一個位移不變的假模型驗分塊幾何,不載權重。
+    "realesrgan_upscale.py":      (["--selftest"], "offline"),
+    "realesrgan_batch.py":        (["--selftest"], "offline"),
     "char_summary.py":            (["--selftest"], "offline"),
     "verify_truncation_robustness.py": (["--selftest"], "offline"),
     "verify_tool_hygiene.py":    (["--selftest"], "offline"),
