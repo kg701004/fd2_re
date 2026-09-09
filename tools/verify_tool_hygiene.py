@@ -433,10 +433,62 @@ def _proves_lost_input(name: str) -> tuple[bool, str]:
     return True, f"輸入 {md5[:8]}({size} bytes)是已退役版本,repo 內不存在"
 
 
+def _json_string_values(node) -> list[str]:
+    """遞迴取出所有字串**值**(不含 key)。判準只看值,key 名稱不算自述。"""
+    out: list[str] = []
+    stack = [node]
+    while stack:
+        o = stack.pop()
+        if isinstance(o, str):
+            out.append(o)
+        elif isinstance(o, dict):
+            stack.extend(o.values())
+        elif isinstance(o, list):
+            stack.extend(o)
+    return out
+
+
+def _proves_remake_derived(name: str) -> tuple[bool, str]:
+    """證明「這個產物是已移除的 remake 產生的」——所以它沒有、也不會再有產生器。
+
+    這跟 `no_generator` 與 `lost_input`都不同:產生器**曾經存在**(是 remake 的
+    Go 測試,例如 `TestCampaignTownPreparationInputTrace`),但整個 `remake/` 已於
+    2026-09-02 依使用者指示移除,理由是「remake 驗證過的資料本身就有問題,驗出來的
+    也會有問題」。所以這些檔案既不能重生,其內容依專案自己的規則也不算證據。
+    刪不刪是另一件事——它們是 worklist 既有記錄的一部分,保留但標明來源。
+
+    宣稱是可證偽的,三層:
+      1. 檔案必須**自述**為 remake 產出(某個字串**值**裡提到 remake,例如
+         `source_campaign: remake/...`、`format: remake-json-v1`、
+         `artifacts: ...-remake.png`)。只看值不看 key,免得靠欄位名蒙混;
+      2. repo 內不得存在 `remake/` 目錄——它一旦回來,這些就重新變成可重生的,
+         宣稱必須立刻失敗,逼人回頭處理;
+      3. 不得有任何工具在寫入語境提到這個檔名(與 `no_generator` 同一條判準)。
+    """
+    import verify_generated_artifacts as vg
+    p = ROOT / name
+    if not p.exists():
+        return False, "檔案不存在"
+    try:
+        art = json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:                                      # noqa: BLE001
+        return False, f"讀不出來:{type(exc).__name__}"
+    marks = [s for s in _json_string_values(art) if "remake" in s.lower()]
+    if not marks:
+        return False, "檔案沒有自述為 remake 產出,不能用這個理由豁免"
+    if (ROOT / "remake").exists():
+        return False, "remake/ 回來了 —— 這些產物重新變成可重生的,請回頭處理"
+    for tool, arts in vg.discover():
+        if name in arts:
+            return False, f"{tool} 看起來會產生它 —— 宣稱不成立"
+    return True, f"自述 remake 產出({marks[0][:44]}),remake/ 已移除且無產生器"
+
+
 PERMANENT_PROOFS = {
     "ida_embedded": _proves_ida_embedded,
     "no_generator": _proves_no_generator,
     "lost_input": _proves_lost_input,
+    "remake_derived": _proves_remake_derived,
 }
 
 
@@ -654,6 +706,30 @@ def selftest() -> int:
     elif not perm:
         fails.append("基準線裡沒有任何永久豁免 —— 若確實沒有,請移除這條檢查")
 
+    print("\n(3d) remake_derived 也要配對:真的是 remake 產出的過、原版側的必須不過")
+    # 這 6 個 trace 的 `source_campaign` 指向 remake/、圖是 *-remake.png、
+    # `format` 寫 remake-json-v1,而產生它們的 remake Go 測試已隨目錄一起移除。
+    # 負例挑原版側的產物:它們同樣沒有 remake 出身,絕不能靠這個理由被豁免。
+    remake_cases = [
+        ("docs/data/ui-traces/town-shop-ch02.json", True, "source_campaign 指向 remake/"),
+        ("docs/data/ui-traces/save-town-boundary-ch02.json", True, "format = remake-json-v1"),
+        ("docs/data/native_argcounts.json", False, "原版 EXE 推導,與 remake 無關"),
+        ("docs/data/glyph_map.json", False, "原版側的人工 RE 記錄"),
+    ]
+    rd_bad = []
+    for art, want, why in remake_cases:
+        if not (ROOT / art).exists():
+            rd_bad.append(f"{art} 不存在")
+            continue
+        got, detail = _proves_remake_derived(art)
+        if got != want:
+            rd_bad.append(f"{art}({why}): 得 {got},應 {want} —— {detail}")
+    ok3d = not rd_bad and {w for _, w, _ in remake_cases} == {True, False}
+    print(f"    {'PASS' if ok3d else 'FAIL'}: {len(remake_cases)} 個真實產物"
+          + ("全部相符,且正反例俱在" if ok3d else f",不符 {rd_bad}"))
+    if not ok3d:
+        fails.append(f"remake_derived 配對控制不成立:{rd_bad}")
+
     print("\n(4) 基準線每一筆都要指向真實存在的東西,且附理由(避免腐爛成免死金牌)")
     base = load_baseline()
     bad = []
@@ -695,6 +771,7 @@ def selftest() -> int:
             print("  -", f)
         return 1
     print("\n--selftest passed(故障注入 + 配對控制 + 雙向棘輪 + 基準線完整性 "
+          "+ lost_input / remake_derived 兩組永久豁免證明的正反例 "
           "+ 非恆假 + 三項跨工具交叉驗證)。")
     return 0
 

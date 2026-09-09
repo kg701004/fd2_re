@@ -579,32 +579,38 @@
   {
    "name": "docs/data/ui-traces/save-town-boundary-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui-traces/town-church-class-change-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui-traces/town-church-revive-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui-traces/town-hotel-raw-return-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui-traces/town-preparation-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui-traces/town-shop-ch02.json",
    "rule": "regenerable",
-   "reason": "既有存量,尚未處理"
+   "reason": "依使用者 2026-09-02 的裁定,remake 產生的資料本身不可採信,而產生它們的 remake Go 測試已隨整個 remake/ 目錄移除——所以這 6 個 trace 既不能重生,內容也不算證據。**永久豁免**,但宣稱是可證偽的:_proves_remake_derived 每次檢查(1) 檔案自述為 remake 產出、(2) remake/ 確實不在 repo 裡、(3) 沒有任何工具在寫入語境提到它;remake/ 一旦回來就立刻失敗。",
+   "permanent": "remake_derived"
   },
   {
    "name": "docs/data/ui_sfx_index_semantics.json",

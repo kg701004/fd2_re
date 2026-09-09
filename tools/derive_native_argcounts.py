@@ -35,10 +35,20 @@ cdecl 的呼叫端同時要做兩件事,兩者都編碼了參數個數,而且是
 完全獨立,而實測 27 個目標的參數個數在兩種機制下**沒有一個改變**,儘管呼叫端
 數量差到 3~6 倍。這比「兩個訊號一致」更強,因為連取樣母體都換了。
 
-範圍誠實
---------
-這支只解參數**個數**,不解 op **名稱**與語意。worklist 說的「填錯比留 unknown
-更糟」主要針對語意,那是另一件事,不要混為一談。
+op 名稱(2026-09-09 加入,與參數個數是**兩種不同的主張**)
+--------------------------------------------------------
+`DOC_OP_NAMES` 只收「repo 文件裡已經反組譯過、而且引文可以逐字定位」的名稱,一律不
+用推的。入場規則是:引文必須逐字存在,**而且**該位址要寫在引文的 ±3 行內。第二個
+條件不是裝飾——建表時先用純鄰近掃描得到「22/27 有完整反組譯」,查證後發現
+`91-worklist.md` L213 是本工具自己那條列了一堆位址的摘要行,被算成六個位址各自的
+證據,`0x31529`/`0x25089` 也都是假陽性。錨點每次呼叫都會複驗,文件被改掉就自動失效。
+
+**名稱不會帶動參數個數**:`0x22253` 有完整的 5 參數 ABI 記載(所以有名稱),但呼叫端
+母體擴大後判定 LIKELY,它的 `args` 仍然保留原始 push 並標記。反過來也一樣。這是刻意
+的——worklist 說的「填錯比留 unknown 更糟」主要針對語意,兩件事不混為一談。
+
+27 個目標中 11 個有名稱;`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無命名段落,
+維持 unknown。
 
 用法
 ----
@@ -273,6 +283,9 @@ def report(exe: str, only_unknown: bool = True, wide: bool = False) -> dict:
     for t in targets:
         d = derive(collect_wide(cg, t) if wide else sites.get(t, []))
         d["known_op"] = DC.PRIM.get(t, (None, None))[0]
+        # 名稱與參數個數是兩種主張,所以分開存:`known_op` 來自原生位址表,
+        # `doc_op_name` 來自 repo 文件裡可逐字定位的反組譯記載(見 DOC_OP_NAMES)。
+        d["doc_op_name"] = doc_op_name(t)
         out[hex(t)] = d
     return out
 
@@ -342,6 +355,81 @@ DOC_SIGNATURES = {
     0x24bde: (1, "`0x24bde(18)`"),
     0x4df4c: (1, "verified_addresses:精確呼叫位址 `PUSH [0x53a51]; CALL 0x4df4c`"),
 }
+
+# --- op 名稱:只收「文件已反組譯、且引文可逐字定位」的 ---------------------------
+# 背景:91-worklist 這一項自己寫著「**填錯比留 unknown 更糟**」,所以名稱不能用推的。
+# 一度以為 doc50 §3.1(「疑是」)與 doc31 §9.6(「已完整反組譯」)對 `0x24b4d` 的
+# 信心度互相矛盾、需要先收斂。實際查證**沒有矛盾**:兩者對可觀察量完全一致(同樣的
+# `0x11eee` + `0x11cac` + present 迴圈 + delay、同樣 15 個呼叫點),doc31 只是把「疑」
+# 拿掉,並且**修正了語意標籤**——不是漸現(reveal),是兩張緩衝區來回閃爍 N 次。
+#
+# 入場規則(見 `anchor_lines`):引文必須逐字存在,**而且**該位址要寫在引文的
+# ±ANCHOR_WINDOW 行內。第二個條件不是裝飾:建這張表時先用純鄰近掃描得到「22/27 有
+# 完整反組譯」,查證後發現 `91-worklist.md` L213 是本工具自己那條列了一堆位址的摘要行,
+# 被算成六個位址各自的證據;`0x31529`(其實在講鄰近的 `FUN_00031266`)與 `0x25089`
+# (一張排除假說的表格)也都是假陽性。名稱與參數個數是兩種不同的主張,所以這張表
+# **不參與 args 切割**——切割仍然只採信 CONFIRMED(見 dump_chapter_beats._confirmed_argc)。
+DOCS = ROOT / "docs" / "knowledge-base"
+ANCHOR_WINDOW = 3
+
+# 位址 -> (op 名稱, 文件記載的參數個數, 文件檔名, 必須逐字出現的引文)
+DOC_OP_NAMES = {
+    0x37910: ("memset", 3, "58-remake-live-verification-log.md",
+              "FUN_00037910(dest,byteVal,n)"),
+    0x2aedb: ("find_item_slot", 2, "99-chapter-sweep-results.md",
+              "FUN_0002aedb(char_idx, item_id)"),
+    0x24b14: ("party_has_item", 1, "99-chapter-sweep-results.md",
+              "FUN_00024b14(item_id)"),
+    0x1b8e7: ("remove_inventory_slot", 2, "56-fd2-remake-sdd.md",
+              "sub_1B8E7(int unit, int slot)"),
+    0x12cea: ("camera_step_to", 2, "58-remake-live-verification-log.md",
+              "0x12cea(param_1, param_2)"),
+    0x22253: ("unit_present", 5, "35-battle-animation-rendering.md",
+              "(unitSlot,newX,newY,visualX,visualY)"),
+    0x24b4d: ("buffer_flicker", 1, "31-map-unit-sprites-fdicon.md",
+              "indexed double-buffer visual adapter"),
+    0x24d22: ("reveal_wipe", 1, "58-remake-live-verification-log.md",
+              "設定/觸發」雙模式函式"),
+    0x2189a: ("sprite_walk_on", 3, "58-remake-live-verification-log.md",
+              "10-iteration 的 sprite walk-on 動畫迴圈"),
+    0x11d40: ("palette_brightness_ramp", 3, "35-battle-animation-rendering.md",
+              "figure/台座的色盤淡入(brightness ramp 0→48)"),
+    0x11df2: ("palette_delta_ramp", 3, "50-cutscene-script-system-design.md",
+              "是獨立的調色盤/淡變數值計算函式"),
+}
+# 刻意留在 unknown 的:`0x33f78`/`0x35f10`/`0x361b0`/`0x13536` 全庫查無任何命名段落;
+# `0x31529`/`0x25089`/`0x3776e` 只有假陽性或旁證(`0x3776e` 的鄰居 `0x3771c` 才是被
+# 反組譯成 memmove 的那個,不是它本身);`0x24336`/`0x24bde` 全 image 只有一個呼叫端。
+
+
+def anchor_lines(doc: str, quote: str, addr: int) -> list[int]:
+    """引文逐字出現、**且**該位址就寫在 ±ANCHOR_WINDOW 行內的行號(1-based)。
+
+    只比對引文會被「同一份文件別處提到過這串字」騙(實測 doc99 的
+    `FUN_0002aedb(char_idx, item_id)` 出現兩次,只有一處旁邊有位址)。
+    """
+    lines = (DOCS / doc).read_text(encoding="utf-8").split("\n")
+    hexa = hex(addr)
+    out = []
+    for i, line in enumerate(lines):
+        if quote not in line:
+            continue
+        lo, hi = max(0, i - ANCHOR_WINDOW), min(len(lines), i + ANCHOR_WINDOW + 1)
+        if any(hexa in lines[j] for j in range(lo, hi)):
+            out.append(i + 1)
+    return out
+
+
+def doc_op_name(target: int) -> str | None:
+    """該位址的 op 名稱,錨點當場複驗過才回傳(文件被改掉就自動失效)。"""
+    entry = DOC_OP_NAMES.get(target)
+    if entry is None:
+        return None
+    name, _argc, doc, quote = entry
+    try:
+        return name if anchor_lines(doc, quote, target) else None
+    except OSError:
+        return None
 
 
 def selftest() -> int:
@@ -475,6 +563,50 @@ def selftest() -> int:
     if not ok8:
         fails.append(f"與文件簽名不符:{sig_bad}")
 
+    print("\n(10) op 名稱:每一筆的引文都要能定位,且文件記載的參數個數要與推導相符")
+    name_bad = []
+    for addr, (name, want, doc, quote) in sorted(DOC_OP_NAMES.items()):
+        where = anchor_lines(doc, quote, addr)
+        if not where:
+            name_bad.append(f"{addr:#07x} {name}: 引文在 {doc} 找不到(或位址不在 ±{ANCHOR_WINDOW} 行內)")
+            continue
+        got = derive(collect_wide(cg, addr))["argc"]
+        if got != want:
+            name_bad.append(f"{addr:#07x} {name}: 文件 {want}、推得 {got}({doc}:{where[0]})")
+    # 非平凡性:名稱不得重複,也不得與 PRIM 既有 op 名撞名(撞名代表其中一邊認錯函式)。
+    names = [n for n, _, _, _ in DOC_OP_NAMES.values()]
+    prim_names = {n for n, _ in DC.PRIM.values()}
+    dup = sorted({n for n in names if names.count(n) > 1} | (set(names) & prim_names))
+    if dup:
+        name_bad.append(f"名稱重複或與 PRIM 撞名:{dup}")
+    ok10 = not name_bad and len(DOC_OP_NAMES) >= 10
+    print(f"    {'PASS' if ok10 else 'FAIL'}: {len(DOC_OP_NAMES)} 筆 op 名稱"
+          + ("全部定位成功且參數個數相符" if ok10 else f",問題 {name_bad}"))
+    if not ok10:
+        fails.append(f"op 名稱錨點失效:{name_bad}")
+
+    print("\n(10b) 負向控制:錯配的引文與位址必須被同一條規則擋下")
+    # 沒有這一題,第 (10) 題對一個「永遠回傳有結果」的 anchor_lines 也會通過。
+    ctrl = []
+    # (a) 引文對、位址換成另一個目標 -> 必須落空(否則鄰近條件是裝飾)。
+    if anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x11d40):
+        ctrl.append("換位址仍然定位成功")
+    # (b) 引文不存在 -> 必須落空。
+    if anchor_lines("58-remake-live-verification-log.md", "這串字不存在於任何文件", 0x37910):
+        ctrl.append("不存在的引文仍然定位成功")
+    # (c) 真實的假陽性回歸:doc99 那句話出現兩次,只有一處旁邊有 0x2aedb。
+    #     這是建表時實際踩到的那一類——純比對引文會多收一處。
+    body = (DOCS / "99-chapter-sweep-results.md").read_text(encoding="utf-8")
+    raw_hits = sum(1 for l in body.split("\n") if "FUN_0002aedb(char_idx, item_id)" in l)
+    kept = anchor_lines("99-chapter-sweep-results.md", "FUN_0002aedb(char_idx, item_id)", 0x2aedb)
+    if not (raw_hits > len(kept) >= 1):
+        ctrl.append(f"假陽性回歸失效:純比對 {raw_hits} 處、加鄰近後 {len(kept)} 處")
+    ok10b = not ctrl
+    print(f"    {'PASS' if ok10b else 'FAIL'}: 三個控制"
+          + (f"全部如預期(假陽性 {raw_hits} -> {len(kept)})" if ok10b else f",問題 {ctrl}"))
+    if not ok10b:
+        fails.append(f"op 名稱負向控制失效:{ctrl}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
@@ -482,7 +614,8 @@ def selftest() -> int:
         return 1
     print("\n--selftest passed(PRIM 正向對照 + 雙訊號交叉驗證 + doc56 第三方裁決 "
           "+ 兩種已知失效模式的標記 + 離群值回歸 + 非平凡性與負向控制 "
-          "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對)。")
+          "+ 兩種呼叫端發現機制的一致性 + 函式入口數回歸 + 15 個文件簽名的第三方核對 "
+          "+ 11 個 op 名稱的錨點複驗與三個負向控制)。")
     return 0
 
 

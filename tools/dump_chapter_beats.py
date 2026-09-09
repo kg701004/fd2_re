@@ -10,6 +10,15 @@ beats JSON,供轉換器接手做成 remake cutscene 節點(doc50 §3 管線第 1
 handler 實際反組譯逐一核對過 push 順序與 doc47 記法一致(見下方 PRIM 註解)。
 cdecl 從右到左 push,故「最近 N 個 push」reverse 後才是函式簽名的左到右參數順序。
 
+未收錄在 PRIM 的呼叫目標(2026-09-09):
+  * **參數個數**取自 `derive_native_argcounts`,而且只採信 CONFIRMED;WEAK/LIKELY
+    維持原始 push 並標記 `args_are_raw_pushes`,因為猜錯個數比留著原樣更糟。
+  * **op 名稱**另走一條獨立的路:`derive_native_argcounts.DOC_OP_NAMES` 只收 repo
+    文件裡已反組譯、且引文可逐字定位(位址須在引文 ±3 行內)的名稱,命中時把
+    `op` 換掉並附 `op_name_source: doc-anchored`。11 個名稱共命中 52 條 beat,
+    unknown 101 -> 49。
+  * 兩者**不互相帶動**:`0x22253` 有名稱但參數個數判 LIKELY,args 仍是原始 push。
+
 用法:
   python3 dump_chapter_beats.py <EXE> ch0                  只跑序章(0x3231b),核對 doc47 §7
   python3 dump_chapter_beats.py <EXE> all <outdir>          全 30 章 pre/post,寫 outdir/chNN_{pre,post}.json
@@ -122,6 +131,20 @@ def _confirmed_argc(target: int):
             # 推導不可用(例如缺 EXE)時退回原本的行為,不要讓整批抽取失敗。
             _ARGC_CACHE = {}
     return _ARGC_CACHE.get(target)
+
+
+def _doc_op_name(target: int):
+    """未收錄原語的 op 名稱,只在 repo 文件裡有可逐字定位的反組譯記載時回傳。
+
+    名稱與參數個數是**兩種不同的主張**,所以這條路徑與 `_confirmed_argc` 完全獨立:
+    有名稱不代表 args 可以切(0x22253 就是有名稱但判定 LIKELY,args 仍保留原始
+    push);沒名稱也不影響已經可切的 args。錨點每次都會重驗,文件被改掉就自動失效。
+    """
+    try:
+        import derive_native_argcounts as DA
+        return DA.doc_op_name(target)
+    except Exception:                                       # noqa: BLE001
+        return None
 
 
 def _direct_target(ins):
@@ -288,6 +311,12 @@ def extract_beats(insns):
                     a = pushes[-nargs:] if nargs > 0 else []
                     beat = {'op': 'unknown', 'addr': hex(ins.address),
                             'target': hex(t), 'args': list(reversed(a))}
+                # 名稱獨立於參數個數:文件裡有可逐字定位的反組譯記載才換掉 'unknown',
+                # 並且一定留下出處,消費端才分得出「原生表收錄的」與「文件錨定的」。
+                doc_name = _doc_op_name(t)
+                if doc_name:
+                    beat['op'] = doc_name
+                    beat['op_name_source'] = 'doc-anchored'
             hint = find_loop_hint(insns, i, ins.address)
             if hint:
                 beat['repeat_hint'] = hint
@@ -587,7 +616,11 @@ def cmd_all(cg, fx, outdir, quiet=False):
 DEFAULT_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            'org_game', '炎龍騎士團', 'FLAME2', 'FD2.EXE')
 # 2026-09-08 實測值(修好位址表之後)。這是天花板不是目標:允許往下,不允許悄悄變多。
-UNKNOWN_CEILING = 110
+# 2026-09-09:11 個 doc 錨定的 op 名稱上線後實測 49(101 -> 49),天花板隨之收緊到 55。
+UNKNOWN_CEILING = 55
+# 這 11 個名稱在全 30 章實際命中的 beat 數(實測值)。第 (3d) 題用它擋「名稱加了卻
+# 一個都沒對上」——那代表位址認錯,而錯名比留 unknown 更糟,正是本項的原始警語。
+DOC_NAMED_BEATS = 52
 
 
 def resolvable(cg, addr):
@@ -674,13 +707,54 @@ def selftest():
 
     print("\n(4) unknown 數量不得悄悄變多(天花板 %d)" % UNKNOWN_CEILING)
     import tempfile
+    named: dict[str, int] = {}
+    raw_push_named = []
     with tempfile.TemporaryDirectory() as td:
         _stats, unknown = cmd_all(cg, fx, td, quiet=True)
+        for fn in sorted(os.listdir(td)):
+            if not fn.endswith('.json'):
+                continue
+            with open(os.path.join(td, fn), encoding='utf-8') as fh:
+                doc = json.load(fh)
+            stack = [doc]
+            while stack:
+                o = stack.pop()
+                if isinstance(o, dict):
+                    if o.get('op_name_source') == 'doc-anchored':
+                        named[o['op']] = named.get(o['op'], 0) + 1
+                        if o.get('args_are_raw_pushes'):
+                            raw_push_named.append(o['target'])
+                    stack.extend(o.values())
+                elif isinstance(o, list):
+                    stack.extend(o)
     n = sum(unknown.values())
     ok4 = n <= UNKNOWN_CEILING
     print(f"    {'PASS' if ok4 else 'FAIL'}: unknown {n} 個(上限 {UNKNOWN_CEILING})")
     if not ok4:
         fails.append(f"unknown 從 {UNKNOWN_CEILING} 增加到 {n} —— 很可能又有位址表過期")
+
+    print("\n(4b) 每一個 doc 錨定的名稱都必須真的命中,不能加了名稱卻一個都沒對上")
+    import derive_native_argcounts as DA
+    want_names = {nm for nm, _a, _d, _q in DA.DOC_OP_NAMES.values()}
+    missing = sorted(want_names - set(named))
+    tot = sum(named.values())
+    ok4b = not missing and tot >= DOC_NAMED_BEATS
+    print(f"    {'PASS' if ok4b else 'FAIL'}: {len(named)}/{len(want_names)} 個名稱有命中,"
+          f"共 {tot} 條 beat(應 >= {DOC_NAMED_BEATS})" + (f",沒命中的 {missing}" if missing else ""))
+    if not ok4b:
+        fails.append(f"doc 錨定名稱沒有全部命中:missing={missing}、beats={tot}")
+
+    print("\n(4c) 獨立性控制:有名稱**不等於**參數個數可信,兩種主張不得互相帶動")
+    # 0x22253 是這條規則的實例:doc31/doc35 反組譯出它的 5 參數 ABI(所以有名稱),
+    # 但呼叫端母體擴大後一致度掉到 1.0 以下、判定 LIKELY,所以 args 仍須保留原始
+    # push 並標記。若哪天名稱一上去就順手把 args 切了,這一題會失敗。
+    ok4c = ('unit_present' in named and _confirmed_argc(0x22253) is None
+            and hex(0x22253) in raw_push_named)
+    print(f"    {'PASS' if ok4c else 'FAIL'}: 0x22253 有名稱={('unit_present' in named)}、"
+          f"參數個數採信={_confirmed_argc(0x22253)}(應 None)、"
+          f"args 仍標記為原始 push={hex(0x22253) in raw_push_named}")
+    if not ok4c:
+        fails.append("名稱與參數個數兩種主張沒有保持獨立(0x22253)")
 
     print("\n(5) 非空控制:必須真的抽出 30 章 × pre/post")
     ok5 = len(_stats) == 60
@@ -693,8 +767,9 @@ def selftest():
         for f in fails:
             print("  -", f)
         return 1
-    print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + 故障注入 + "
-          "unknown 天花板 + 非空控制)。")
+    print("\n--selftest passed(位址表可解 + stack-check 在 SKIP + 故障注入 + 未收錄原語的"
+          "參數個數與 WEAK 不採信 + unknown 天花板 + doc 錨定名稱的命中率與獨立性控制 + "
+          "非空控制)。")
     return 0
 
 
