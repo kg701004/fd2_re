@@ -408,8 +408,37 @@ def structure_control_flow(insns, beats):
         if not fallthrough_jumps:
             continue
         merge_addr = int(fallthrough_jumps[-1].op_str, 16)
-        if not any(ins.mnemonic == 'jmp' and ins.op_str == hex(merge_addr)
-                   for ins in insns if target_addr <= ins.address < merge_addr):
+        # 被跳往的那一臂也必須抵達同一個 merge —— 但**落下去和跳過去一樣算抵達**。
+        # 2026-09-09:原本只認顯式 `jmp merge`,於是 ch06_post 整個 diamond 認不出來:
+        # 它的 taken 臂結尾是 `0x233b7 add esp,0x24`,下一個位址就是 merge `0x233ba`,
+        # 編譯器沒有理由多發一條跳到下一條指令的 jmp。判準比它想測的性質嚴,結果不是
+        # 報錯而是靜默降級成扁平 beats——而該章的手工 IR 早就把這個結構寫對了。
+        # 收緊的意圖(不要把不相關的提前返回/巢狀分支壓平)仍然保留:落下去只在
+        # 最後一條指令**剛好結束於** merge、而且它不是無條件轉移時才算。
+        tail = sorted((ins for ins in insns if target_addr <= ins.address < merge_addr),
+                      key=lambda x: x.address)
+        reaches = any(ins.mnemonic == 'jmp' and ins.op_str == hex(merge_addr)
+                      for ins in tail)
+        if not reaches and tail:
+            last = tail[-1]
+            reaches = (last.address + last.size == merge_addr
+                       and last.mnemonic not in ('jmp', 'ret', 'retf', 'iret'))
+        if not reaches:
+            continue
+
+        # 共用 else = 短路條件,單一判準的 `if` 會是**不完整的條件主張**。
+        # 2026-09-09,放寬落下去判準後立刻踩到:ch06_post 的 `0x2332a jne 0x23393`
+        # 與 `0x23338 jne 0x23393` **跳到同一個位址**——那是 `if (A && B)` 的編譯結果,
+        # 兩個判準共用一個 else 臂。只認後面那個 diamond 的話,產出的
+        # `if any_unit_inactive([43])` 會斷言「只要 43 號單位還活著就執行」,而真實
+        # 條件還要求事件旗標 `[0x3ad5]+0x11 == 1`(該位元組實測由戰鬥事件 handler
+        # 以 `mov byte [eax+0x11],1` 設定,共 5 處)。**假的結構比扁平更糟**:扁平
+        # 至少看得出有損,假結構會被下游當成完整條件。所以維持扁平,留給
+        # 「條件是連接詞」這件事單獨處理。
+        if any(ins.mnemonic in ('je', 'jz', 'jne', 'jnz')
+               and ins.op_str == hex(target_addr)
+               and ins.address < branch.address
+               for ins in insns):
             continue
 
         prefix = [beat for beat in beats if int(beat['addr'], 16) < call.address]
@@ -704,6 +733,39 @@ def selftest():
     print(f"    {'PASS' if ok2 else 'FAIL'}: SKIP 中高呼叫量(>100)的項目 {[hex(a) for a in sc]}")
     if not ok2:
         fails.append("SKIP 裡沒有任何一個看起來像 stack-check 的項目")
+
+    print("\n(2b) diamond 辨識:落下去抵達 merge 算抵達,但共用 else 必須維持扁平")
+    # 兩題成對,缺任一題都會過:
+    #   放寬前——只認顯式 `jmp merge`,ch06_post 的 diamond 靜默認不出來(它的 taken
+    #   臂結尾 `add esp,0x24` 的下一個位址就是 merge,編譯器不會多發一條 jmp)。
+    #   只放寬——ch06_post 會產出 `if any_unit_inactive([43])`,那是**假的結構主張**:
+    #   真實條件是 `0x2332a jne 0x23393` 與 `0x23338 jne 0x23393` 兩個判準跳到同一個
+    #   else,即短路 AND;外層還要求事件旗標 `[0x3ad5]+0x11 == 1`(該位元組實測由戰鬥
+    #   事件 handler 以 `mov byte [eax+0x11],1` 設定,全 image 5 處)。假結構會被下游
+    #   當成完整條件,比扁平更糟——扁平至少看得出有損。
+    class _I:                                               # noqa: N801
+        def __init__(self, a, m, o='', sz=1):
+            self.address, self.mnemonic, self.op_str, self.size = a, m, o, sz
+
+    def _stream(extra=()):
+        return list(extra) + [
+            _I(0x100, 'call', '0x11506'), _I(0x101, 'push', '6'),
+            _I(0x102, 'call', '0x34894'), _I(0x103, 'add', 'esp, 4'),
+            _I(0x104, 'test', 'eax, eax'), _I(0x105, 'je', '0x120'),
+            _I(0x106, 'push', '7'), _I(0x107, 'push', 'dword ptr [0x3a79]'),
+            _I(0x108, 'call', '0x15f84'), _I(0x109, 'jmp', '0x140'),
+            _I(0x120, 'push', '8'), _I(0x121, 'call', '0x1366a'),
+            _I(0x122, 'add', 'esp, 4', 0x1e),               # 剛好結束於 merge 0x140
+            _I(0x140, 'call', '0x11506')]
+
+    plain = _stream()
+    shared = _stream([_I(0x0f0, 'jne', '0x120')])            # 更早的條件跳,同一個 else
+    got_plain = [b['op'] for b in structure_control_flow(plain, extract_beats(plain))]
+    got_shared = [b['op'] for b in structure_control_flow(shared, extract_beats(shared))]
+    ok2b = 'if' in got_plain and 'if' not in got_shared
+    print(f"    {'PASS' if ok2b else 'FAIL'}: 落下去 -> {got_plain}、共用 else -> {got_shared}")
+    if not ok2b:
+        fails.append(f"diamond 辨識的兩極不成立:落下去={got_plain}、共用 else={got_shared}")
 
     print("\n(3) 故障注入:把某個 op 的所有位址換成解不開的,第 (1) 項必須失敗")
     keep = dict(PRIM)
