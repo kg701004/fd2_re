@@ -99,6 +99,31 @@ SKIP = {0x36cd7, 0x375c0, 0x3702f}
 RAW_PLACEMENT_GATE_ONE_CALLS = {0x32E50, 0x331B2, 0x33419}
 
 
+_ARGC_CACHE: dict[int, int] | None = None
+
+
+def _confirmed_argc(target: int):
+    """未收錄原語的參數個數,只在 derive_native_argcounts 判定 CONFIRMED 時回傳。
+
+    延遲 import 是刻意的:`derive_native_argcounts` 會 import 本檔取 PRIM 與跳表
+    位址,模組層互相 import 會成環。整批只算一次。
+    """
+    global _ARGC_CACHE
+    if _ARGC_CACHE is None:
+        try:
+            import derive_native_argcounts as DA
+            cg, _ = DA.build_graph(str(DA.DEFAULT_EXE))
+            _ARGC_CACHE = {}
+            for t in DA.UNKNOWN_TARGETS:
+                d = DA.derive(DA.collect_wide(cg, t))
+                if d["verdict"] == "CONFIRMED" and d["argc"] is not None:
+                    _ARGC_CACHE[t] = d["argc"]
+        except Exception:                                   # noqa: BLE001
+            # 推導不可用(例如缺 EXE)時退回原本的行為,不要讓整批抽取失敗。
+            _ARGC_CACHE = {}
+    return _ARGC_CACHE.get(target)
+
+
 def _direct_target(ins):
     if ins.mnemonic == 'jmp' or ins.mnemonic.startswith('j'):
         if ins.op_str.startswith('0x'):
@@ -242,7 +267,27 @@ def extract_beats(insns):
                         1 if ins.address in RAW_PLACEMENT_GATE_ONE_CALLS else 0
                     )
             else:
-                beat = {'op': 'unknown', 'addr': hex(ins.address), 'target': hex(t), 'args': list(pushes)}
+                # 2026-09-09:未收錄的原語原本記 `list(pushes)`——**沒有依參數個數
+                # 切,也沒有 reversed()**,而上面已收錄的那一支兩件都做了。後果是
+                # 同一個檔案裡兩種 beat 的 args 順序相反:cdecl 由右到左 push,所以
+                # 未反轉的就是簽名順序的倒序。實測 `0x11d40` 記成 [64, 255, 0],
+                # 而 doc 記載的簽名是 `0x11d40(0, 0xff, esi*6)`——**反轉後
+                # [0, 255, 64] 才對得上**,這是獨立的佐證,不是推論。101 個 unknown
+                # beat 裡有 59 個 args>=2、順序有意義。
+                #
+                # 參數個數改用 derive_native_argcounts 推導(呼叫端的 `add esp,N`
+                # 與緊鄰 push 數兩個獨立訊號,再與 15 個文件簽名核對過),**只採信
+                # CONFIRMED 的**;WEAK/LIKELY 維持原本的「全部 push」行為並標記,
+                # 因為在那些目標上猜錯個數比留著原樣更糟。
+                nargs = _confirmed_argc(t)
+                if nargs is None:
+                    beat = {'op': 'unknown', 'addr': hex(ins.address),
+                            'target': hex(t), 'args': list(pushes),
+                            'args_are_raw_pushes': True}
+                else:
+                    a = pushes[-nargs:] if nargs > 0 else []
+                    beat = {'op': 'unknown', 'addr': hex(ins.address),
+                            'target': hex(t), 'args': list(reversed(a))}
             hint = find_loop_hint(insns, i, ins.address)
             if hint:
                 beat['repeat_hint'] = hint
@@ -604,6 +649,28 @@ def selftest():
     finally:
         PRIM.clear()
         PRIM.update(keep)
+
+    print("\n(3b) 未收錄原語的 args 必須與已收錄的同一套規則:切到參數個數再反轉")
+    # 2026-09-09 找到的 bug:已收錄的 op 會 `pushes[-nargs:]` 再 `reversed()`,
+    # 未收錄的直接 `list(pushes)`——同一個檔案裡兩種 beat 的 args 順序相反。
+    # 驗證錨點不是我自己算的:doc 記載 `0x11d40(0, 0xff, esi*6)`,而修正前記成
+    # [64, 255, 0]、修正後是 [0, 255, 64],**反轉後才對得上簽名**。
+    argc_11d40 = _confirmed_argc(0x11D40)
+    ok3b = argc_11d40 == 3
+    print(f"    {'PASS' if ok3b else 'FAIL'}: 0x11d40 推導參數個數 = {argc_11d40}"
+          f"(應 3,與 doc 簽名 `0x11d40(0, 0xff, esi*6)` 的三個參數相符)")
+    if not ok3b:
+        fails.append(f"未收錄原語的參數個數推導失效:0x11d40 -> {argc_11d40}")
+
+    print("\n(3c) 只採信 CONFIRMED:WEAK 的目標必須保留原始 push 並標記")
+    # 0x1f882 有合併清理風險(judged WEAK),它的「args」實測是 ebx/esi/edi ——
+    # 那是被呼叫端的暫存器保存,不是參數。猜錯個數比留著原樣更糟,所以不動它,
+    # 但要標記出來,讓消費端知道那一筆的 args 不是簽名順序。
+    weak = _confirmed_argc(0x1F882)
+    ok3c = weak is None
+    print(f"    {'PASS' if ok3c else 'FAIL'}: 0x1f882(WEAK)-> {weak}(應 None,不採信)")
+    if not ok3c:
+        fails.append(f"WEAK 的目標被採信了:0x1f882 -> {weak}")
 
     print("\n(4) unknown 數量不得悄悄變多(天花板 %d)" % UNKNOWN_CEILING)
     import tempfile
