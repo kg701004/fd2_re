@@ -176,13 +176,38 @@ def selftest() -> int:
     if not ok4:
         fails.append(f"計數沒有鑑別力或有 0:{counts}")
 
+    print("\n(5) 對照:OPEN_GLYPH 是承重的常數,換成舊的 557 三個回歸值必須全變")
+    def count_with(words, og):
+        starts, chunk = 0, []
+        for w in [*words, 0xFFFF]:
+            if w >= CONTROL_MIN:
+                if len(chunk) >= 2 and chunk[1] == og:
+                    starts += 1
+                chunk = []
+            else:
+                chunk.append(w)
+        if starts:
+            return starts
+        return int(any(w < CONTROL_MIN and w not in (0x00B5, og) for w in words))
+    got557 = {}
+    if fdtxt.is_dir():
+        for n in (26, 32, 33):
+            p = fdtxt / f"FDTXT_{n:03d}.bin"
+            if p.is_file():
+                got557[n] = sum(count_with(w, 557) for w in parse_fdtxt_strings(p))
+    ok5 = OPEN_GLYPH == 558 and got557 == {26: 12, 32: 11, 33: 6}
+    print(f"    {'PASS' if ok5 else 'FAIL'}: OPEN_GLYPH={OPEN_GLYPH}、"
+          f"改用 557 得到 {got557}(應 {{26: 12, 32: 11, 33: 6}},與 {counts} 全不同)")
+    if not ok5:
+        fails.append(f"OPEN_GLYPH 對照不成立:{OPEN_GLYPH} / {got557}")
+
     if fails:
         print("\nSELFTEST FAILED:")
         for f in fails:
             print("  -", f)
         return 1
     print("\n--selftest passed(ch00 歸屬計數回歸 + 嚴格驗證 4 種 + 終止符不變量 + "
-          "非恆真控制)。")
+          "非恆真控制 + OPEN_GLYPH 承重對照)。")
     return 0
 
 
@@ -190,7 +215,12 @@ def count_logical_utterances(words: list[int]) -> int:
     """Count displayed utterances, joining FFxx-wrapped visual rows.
 
     In a dialogue stream a new utterance starts at a non-control chunk whose
-    second word is the opening quote glyph (557).  Subsequent chunks until the
+    second word is the opening quote glyph (558 -- see OPEN_GLYPH; this prose
+    said 557 until 2026-09-09, a leftover from before decode_story_text.py's
+    2026-08-30 correction of the same constant.  557 is not a near-miss: it
+    yields 12/11/6 for FDTXT_026/032/033 instead of the recorded 63/40/41,
+    so the wrong number here described a criterion that would have overturned
+    the ch00 attribution this docstring exists to justify).  Subsequent chunks until the
     next such start are page/wrap fragments of that same utterance.  This is a
     structural count only; it intentionally does not attach a character name
     to the leading operand because some resources reuse that operand by scene.
